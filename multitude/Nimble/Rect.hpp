@@ -63,9 +63,10 @@ namespace Nimble {
 
     //RectT & operator=(const RectT & bs) { m_low = bs.m_low; m_high = bs.m_high; return *this; }
 
-    /// Multiply the coordinates with a scalar
+    /// Scales the rectangle uniformly
     void scale(T v) { m_low = m_low * v; m_high = m_high * v; }    
-    //inline void scale(const Vector2T<T> &v);
+    /// Scales the rectangle
+    inline void scale(const Vector2T<T> &v);
     
     /// Translate the rectangle by v
     void move(const Vector2T<T> &v) { m_low += v; m_high += v; }
