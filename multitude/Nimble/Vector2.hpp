@@ -225,6 +225,7 @@ namespace Nimble {
 
   namespace Math {
 
+    /// Round the vector component-wise to the given vector
     template <class T>
     inline Vector2T<int> Round(const Vector2T<T>  & that)
     {
