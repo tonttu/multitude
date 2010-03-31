@@ -1,0 +1,38 @@
+#!/bin/sh
+
+echo "A version of bin, with the links removed"
+
+rm -rf osx-bin
+
+cp -r /opt/local/bin osx-bin
+rpl /opt/local /usr/local osx-bin/*
+
+echo "Getting ffmpeg"
+
+install -d ffmpeg-libs
+cp -R /opt/local/lib/libav* ffmpeg-libs/
+
+
+# This is truly ugly. GraphicsMagick knows the default path to the
+# image codecs, which are under /opt/local/. Here we take the
+# libraries and modify them so that GraphicsMagick thinks it is
+# installed under /usr/local (which it will be, by our installer).
+
+echo "Getting and modifying GraphicsMagick"
+
+install -d gm
+cp -r /opt/local/lib/libGraphics* gm/
+rpl opt/local usr/local gm/*
+
+echo "Getting and modifying pkgconfig"
+
+cp -r /opt/local/lib/pkgconfig .
+rpl /opt/local /usr/local pkgconfig/*.pc
+
+echo "Getting libexec"
+
+cp -r /opt/local/libexec .
+rpl opt/local usr/local libexec/*/*
+
+
+

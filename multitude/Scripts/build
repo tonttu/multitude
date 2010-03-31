@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# A script to build all Multitude components.
+
+# This script does not execute clean-up operations
+
+qmake
+time make -j 6
+
+

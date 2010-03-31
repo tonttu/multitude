@@ -1,0 +1,10 @@
+<xsd:schema
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <xsd:element name="country" type="Country"/>
+    <xsd:complexType name="Country">
+        <xsd:sequence>
+            <xsd:element name="name" type="xsd:string"/>
+            <xsd:element name="population" type="xsd:decimal"/>
+        </xsd:sequence>
+    </xsd:complexType>
+</xsd:schema>

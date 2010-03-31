@@ -1,0 +1,28 @@
+Compiling FFMPEG 18966
+
+1-install minWG
+2-install MSys
+3-replace the make in MSys with a make version 3.81
+4-run the msys
+	1-go to ffmpeg path
+	2-./configure --enable-shared --disable-static --enable-memalign-hack --extra-cflags="-fno-common" --disable-debug
+	3-make 
+	4-make install
+
+5-search for the dlls and .a files in the ffmpeg directory
+6-rename the .a files to .lib files and remove the "lib" prefix 
+7-copy the required dlls and libs and the include files to the desired directory
+8- the include files can be found in the msys/local/include directory
+9- recompile your project.
+
+At phase 6 you may need to use the MSVC "lib" tool to create the
+"*.lib" files, since gcc may fail to do this in an MSVC-compatible
+way, resulting in warnings like:
+
+libavcodec.a(utils.o) : warning LNK4078: multiple '.text' sections
+found with different attributes (E0000020)
+
+http://www.mingw.org/wiki/MSVC_and_MinGW_DLLs
+
+more information on how to compile can be found on the following site:
+http://blog.csdn.net/WuOu/archive/2009/04/08/4057357.aspx

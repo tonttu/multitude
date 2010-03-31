@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# This is truly ugly. GraphicsMagick knows the default path to the
+# image codecs, which are under /opt/local/. Here we take the
+# libraries and modify them so that GraphicsMagick thinks it is
+# installed under /usr/local (which it will be, by our installer).
+
+install -d gm
+cp -r /opt/local/lib/libGraphics* gm/
+rpl opt/local usr/local gm/*
+
+
