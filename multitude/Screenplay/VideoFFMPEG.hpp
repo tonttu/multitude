@@ -42,6 +42,7 @@ namespace Screenplay {
     VideoInputFFMPEG();
     virtual ~VideoInputFFMPEG();
 
+    /// Reads and decodes the current frame from the video
     virtual const Radiant::VideoImage * captureImage();
     /// The time-stamp of the latest video frame
     Radiant::TimeStamp frameTime() { return m_lastTS; }
@@ -51,7 +52,10 @@ namespace Screenplay {
     the video file.  */
     Radiant::TimeStamp audioTime() const { return m_audioTS; }
 
+    /** This function does not actually decode anything, it just returns data
+      decoded in the "captureFrame". */
     virtual const void * captureAudio(int * frameCount);
+    /** Get audio parameters from the video */
     virtual void getAudioParameters(int * channels,
                     int * sample_rate,
                     Radiant::AudioSampleFormat * format);
@@ -64,6 +68,7 @@ namespace Screenplay {
     virtual float fps() const;
     /// Native image format of the stream.
     virtual Radiant::ImageFormat imageFormat() const;
+    /// Returns the dimensions of a single frame
     virtual unsigned int size() const;
 
     bool open(const char * filename,

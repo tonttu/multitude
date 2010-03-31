@@ -393,9 +393,6 @@ namespace Screenplay {
     return & m_image;
   }
 
-  /** This function does not decode anything, it just returns data
-    decoded in the "captureFrame". */
-
   const void * VideoInputFFMPEG::captureAudio(int * frameCount)
   {
     /* trace2("VideoInputFFMPEG::captureAudio # %d %d",
