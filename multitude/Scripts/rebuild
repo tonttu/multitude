@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# A script to rebuild all Multitude components from scratch
+
+rm lib/*
+make distclean
+qmake
+time make -j 6
+
+

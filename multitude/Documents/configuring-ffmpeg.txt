@@ -1,0 +1,37 @@
+   GUIDE FOR CONFIGURING FFMPEG TO BE USED WITH MULTITUDE/MULTITOUCH
+
+Multitude expects FFMPEG that is compiled as a shared library. As we
+are dealing in various jurisdictions, it makes sense to pay attention
+to potential IP problems. Whenever we distribute the FFMPEG library,
+we make sure that we distribute a version which is 1) licensed under
+the LGPL, and 2) does not contain any patented algorithms. The
+recipient of the software may rebuild the FFMPEG in a different way,
+and use that version, without recompiling anything.
+
+
+Here are two handy commands for setting up FFMPEG, depending on your
+conditions:
+
+1) For minimal IP-problems, this is used for creating libs that we
+distribute:
+
+./configure --prefix=/usr --enable-shared --disable-encoders --disable-decoders --enable-decoder=mjpeg --enable-decoder=vorbis --enable-decoder=theora  --enable-decoder=pcm_s16le --enable-decoder=pcm_s16be --enable-decoder=pcm_s8 --enable-decoder=wav  --disable-bsfs
+
+The ffmpeg library will still contain parsers/muxers for various
+formats with patent restrictions. How-ever, the decoders that would
+really infringe on someones patents have been removed.
+
+
+2) For maximal decoding capability, this is useful if you can use the
+relevant decoders legally. Note that this command also switches on
+GPL, which may have implications for distributing your software in
+binary form.
+
+./configure --enable-shared --prefix=/usr/ --enable-libfaad --enable-libfaac --enable-gpl  --enable-liba52 --enable-libgsm --enable-libxvid
+
+
+Helpful tips
+============
+
+One can install both types of FFMPEG on a single machine and select
+the version to use depending on the purpose.

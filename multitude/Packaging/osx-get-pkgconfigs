@@ -1,0 +1,6 @@
+#!/bin/sh
+
+cp -r /opt/local/lib/pkgconfig .
+rpl /opt/local /usr/local pkgconfig/*.pc
+
+

@@ -1,0 +1,7 @@
+#!/bin/sh
+
+
+install -d Documents/HTML
+doxygen Documents/multitude.dox
+
+

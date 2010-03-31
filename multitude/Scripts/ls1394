@@ -1,0 +1,269 @@
+#!/bin/bash
+#
+# ls1394 - list connected FireWire devices
+#
+# Requires Linux 2.6.
+# This implementation uses only information from sysfs.
+# Option --fetch-oui-db requires sed and one of wget or curl.
+#
+# TODO: Print information about unit directories.
+#       Print information about host devices.
+#       Improve speed if many devices are present.
+#
+# Check http://me.in-berlin.de/~s5r6/linux1394/ls1394/ for updates.
+#
+# Recognized environment variables, mainly for use in installation scripts:
+# LS1394_OUIDB, LS1394_OUITXT, LS1394_FETCH
+
+prog="ls1394"
+version="v20070103"
+
+
+# defaults
+opt_verbose=""
+opt_bus=""
+opt_node=""
+opt_company=""
+opt_guid=""
+opt_active=""
+opt_remote=""
+opt_ouidb=${LS1394_OUIDB:-"/usr/share/misc/oui.db"}
+opt_ouitxt=${LS1394_OUITXT:-"http://standards.ieee.org/regauth/oui/oui.txt"}
+which wget >/dev/null 2>&1 && def_fetch="wget -O -" || def_fetch="curl"
+opt_fetch=${LS1394_FETCH:-$def_fetch}
+opt_dofetch=""
+
+
+# helpers
+function print_usage () {
+	echo >&2 "\
+Usage: $prog [-h|--help] [-v|--verbose] [-s [[bus]:][device]]\
+ [-d [companyid:][guid]] [-a|--active] [-r|--remote] [-i file]\
+ [--fetch-oui-db] [-V|--version]"
+}
+
+function print_help () {
+	cat >&2 <<-EOF
+	Usage: $prog [options]
+	List FireWire devices
+
+	Options:
+	  -h, --help
+	      Show this help
+	  -v, --verbose
+	      Increase verbosity
+	  -s [[bus]:][node]
+	      Show only devices at selected bus (in decimal) and/or with specified
+	      node number (node ID or physical ID, in hexadecimal)
+	  -d [companyid:][guid]
+	      Show only devices with specified company ID or GUID (in hexadecimal)
+	  -a, --active
+	      Show only nodes with active link and general ROM
+	  -r, --remote
+	      Show only remote nodes
+	  -i file
+	      Use specified company ID (OUI) database instead of
+	      $opt_ouidb
+	  --fetch-oui-db
+	      Read $opt_ouitxt and save
+	      $opt_ouidb; required for translation of company IDs to
+	      company names; location of $(basename "$opt_ouidb") can be overridden by -i file
+	  -V, --version
+	      Show version of program
+	EOF
+}
+
+
+# attributes to show
+node_attributes_list=("capabilities" "vendor_id" "vendor_name_kv")
+
+
+# evaluate options
+while [ -n "$1" ]
+do
+	case "$1" in
+		-h|--help)	print_help; exit $?;;
+		-v|--verbose)	opt_verbose="y";;
+		-s)		shift; opt_node="$1";;
+		-d)		shift; opt_guid="$1";;
+		-a|--active)	opt_active="y";;
+		-r|--remote)	opt_remote="y";;
+		-i)		shift; opt_ouidb="$1";;
+		--fetch-oui-db)	opt_dofetch="y";;
+		-V|--version)	echo "$prog $version"; exit $?;;
+
+		-av|-va)	opt_verbose="y" opt_active="y";;
+		-rv|-vr)	opt_verbose="y" opt_remote="y";;
+		-ar|-ra)	opt_active="y"  opt_remote="y";;
+		-arv|-avr|-rav|-rva|-var|-vra)
+				opt_verbose="y" opt_active="y" opt_remote="y";;
+
+		*)		echo >&2 "$prog: Invalid option $1"
+				print_usage; exit 1;;
+	esac
+	shift
+done
+if [ "${opt_node%:*}" != "$opt_node" ]
+then
+	opt_bus="${opt_node%%:*}"
+	opt_node="${opt_node##*:}"
+fi
+if [ "${opt_guid%:*}" != "$opt_guid" ]
+then
+	opt_company="${opt_guid%%:*}"
+	opt_guid="${opt_guid##*:}"
+fi
+if [ -z "$opt_ouidb" ]
+then
+	echo >&2 "$prog: Option -i must be followed by filename"
+	print_usage
+	exit 1
+fi
+
+
+# install oui.db
+if [ "$opt_dofetch" = "y" ]
+then
+	$opt_fetch "$opt_ouitxt" |
+	egrep -e '(base 16).*\w+.*$' |
+	sed -e 's/\s*(base 16)\s*/ /' > "$opt_ouidb"
+	exit $?
+fi
+
+
+# normalize output of other utilities
+unset LANG
+
+
+# check for oui.db
+if [ -n "$opt_verbose" -a ! -f "$opt_ouidb" ]
+then
+	echo >&2 "$prog: $opt_ouidb: No such file"
+	echo >&2 "Try to install it with \"$prog --fetch-oui-db [-i file]\""
+	x="/usr/src/linux/drivers/ieee1394/oui.db"
+	[ -f "$x" ] &&
+	echo >&2 "or use \"$prog -i $x\""
+	echo >&2
+fi
+
+
+# get buses
+sys=$(mount -t sysfs | cut -f3 -d' ')
+[ -z "$sys" ] && echo >&2 "$prog: Sysfs not mounted" && exit 1
+
+x="$sys/class/ieee1394_host/"
+[ ! -d "$x" ] && echo >&2 "$prog: $x: No such directory" && exit 1
+
+x=$(ls "$x" | cut -c8-)
+[ -z "$x" ] && echo >&2 "$prog: No FireWire hosts" && exit 0
+bus_id_list=($x)
+bus_count=${#bus_id_list[@]}
+
+
+# iterate over buses
+for ((b=0; b<$bus_count; ++b))
+do
+	bus_id=${bus_id_list[$b]}
+	[ -n "$opt_bus" -a "$opt_bus" != "$bus_id" ] && continue
+
+	x="$sys/class/ieee1394_host/fw-host$bus_id/device"
+	[ ! -L "$x" ] && echo >&2 "$prog: $x: No such link" && exit 1
+	x=$(readlink -f "$x")
+	[ ! -d "$x" ] && echo >&2 "$prog: $x: No such directory" && exit 1
+	bus_device="$x"
+
+	x="$bus_device/in_bus_reset"
+	[ -f "$x" ] &&
+	[ "$(< "$x")" = "1" ] &&
+	echo >&2 "$prog: Bus $b is in reset" && continue
+
+	x="$bus_device/node_count"
+	[ ! -f "$x" ] && echo >&2 "$prog: $x: No such file" && exit 1
+	node_count="$(< "$x")"
+	[ -z "$node_count" ] && echo >&2 "$prog: $x: No nodes" && exit 1
+
+	# iterate over nodes
+	for ((n=0; n<"$node_count"; ++n))
+	do
+		node_id=$(printf "%x" $((0xffc0 + $n)))
+		[ -n "$opt_node" \
+		  -a "$opt_node" != "$node_id" \
+		  -a "$opt_node" != "$n" \
+		  -a "$opt_node" != $(printf "%x" "$n") ] && continue
+		node_guid=""
+		node_is_local=""
+
+		#find GUID
+		for node_device in "$bus_device/"[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]
+		do
+			x="$node_device/in_limbo"
+			[ -f "$x" ] && [ "$(< "$x")" = "1" ] && continue
+			x="$node_device/nodeid"
+			[ -f "$x" ] || continue
+			[ $(< "$x") = "0x$node_id" ] || continue
+			node_guid=$(basename "$node_device")
+			break;
+		done
+		if [ -z "$node_guid" ]
+		then
+			[ "$opt_active" = "y" ] && continue
+			[ -n "$opt_guid" -o -n "$opt_company" ] && continue
+		else
+			[ -n "$opt_guid" \
+			  -a "$opt_guid" != "$node_guid" ] && continue
+			[ -n "$opt_company" \
+			  -a "$opt_company" != "${node_guid:0:6}" ] && continue
+			x="$bus_device/host_id"
+			if [ -L "$x" -a \
+			     "$(basename "$(readlink -f "$x")")" = "$node_guid" ]
+			then
+				[ "$opt_remote" = "y" ] && continue
+				node_is_local="y"
+			fi
+		fi
+
+		# show node information
+		printf "%s:%s %s" "$bus_id" "$node_id" "${node_guid:-"unknown"}"
+		if [ -n "$node_guid" ]
+		then
+			[ -f "$opt_ouidb" ] &&
+			printf " %s" "$(egrep -i -e "^${node_guid:0:6}" \
+						"$opt_ouidb" | cut -c8-)"
+			for x in $(find "$node_device/" -name "model_name_kv")
+			do
+				printf " \'%s\'" "$(< "$x")"
+			done
+			[ "$node_is_local" = "y" ] && printf " (local)"
+		fi
+		echo
+		[ -z "$opt_verbose" ] && continue
+		if [ -n "$node_guid" ]
+		then
+			x="$node_device/bus_options"
+			if [ -f "$x" ]
+			then
+				y="$(cut -f-6 -d' ' < "$x")"
+				[ -n "$y" ] && printf "\t%s\n" "$y"
+				y="$(cut -f7- -d' ' < "$x")"
+				[ -n "$y" ] && printf "\t%s\n" "$y"
+			fi
+			for x in "${node_attributes_list[@]}"
+			do
+				y="$node_device/$x"
+				[ -f "$y" ] || continue
+				y="$(< "$y")"
+				printf "\t%s: %s" "$x" "$y"
+				if [ "$x" = "vendor_id" -a \
+				     -n "$y" -a -f "$opt_ouidb" ]
+				then
+					printf " %s" "$(egrep -i -e "^${y:2}"\
+						"$opt_ouidb" | cut -c8-)"
+				fi
+				echo
+			done
+		fi
+
+		# TODO: show unit directories information
+		echo
+	done
+done
