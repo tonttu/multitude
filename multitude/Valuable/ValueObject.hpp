@@ -167,6 +167,28 @@ namespace Valuable
     friend class HasValues;
   };
 
+  // Every ValueObject is some kind of ValueBase<T> object.
+  // Common functionality should be in either here or in ValueObject
+  template <typename T> class ValueTyped : public ValueObject
+  {
+  public:
+    ValueTyped(HasValues * parent, const std::string & name, const T & v = T(), bool transit = false)
+      : ValueObject(parent, name, transit),
+      m_value(v) {}
+
+    ValueTyped()
+      : ValueObject(),
+      m_value(T()) {}
+
+    const T & operator * () const { return m_value; }
+
+    virtual ~ValueTyped() {}
+
+  protected:
+    T m_value;
+  };
+
+
 }
 
 #endif
