@@ -38,12 +38,15 @@ template <typename T>
       m_points[1] = p2;
     }
 
+    /// Compares the end points of two line segments and returns true if they are equal
     inline bool operator == (const LineSegment2T & that) const
     { 
       return (m_points[0] == that.m_points[0]) &&
         (m_points[1] == that.m_points[1]);
     }
 
+    /// Compares the given point against both end points and returns true if the point is
+    /// equal to either one
     inline bool pointMatch(const LineSegment2T & that) const
     {
       for(int i = 0; i < 2; i++)
@@ -54,6 +57,9 @@ template <typename T>
       return false;
     }
 
+    /// Returns true if the two line segments intersect
+    /// @param that line segment to compare
+    /// @param point optional intersection point
     inline bool intersects(const LineSegment2T & that,
                            Vector2T<T> * point = 0) const
     {
@@ -68,10 +74,14 @@ template <typename T>
       return r;
     }
 
+    /// Returns the first end point of the line segment
     Vector2T<T> & begin() { return m_points[0]; }
+    /// Returns the first end point of the line segment
     const Vector2T<T> & begin() const { return m_points[0]; }
 
+    /// Returns the second end point of the line segment
     Vector2T<T> & end() { return m_points[1]; }
+    /// Returns the second end point of the line segment
     const Vector2T<T> & end() const { return m_points[1]; }
     
   private:

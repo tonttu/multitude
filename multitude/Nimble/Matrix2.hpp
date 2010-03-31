@@ -30,11 +30,14 @@ namespace Nimble {
   class Matrix2T
   {
   public:
-    /// Create a matrix without initializing the elements
+    /// Creates a matrix without initializing the elements
     Matrix2T() {}
+    /// Constructs a matrix and initializes it to the given values
     Matrix2T(T v11, T v12, T v21, T v22) { m[0].make(v11, v12); m[1].make(v21, v22); }
+    /// Copy constructor
     Matrix2T(const Matrix2T &that) { m[0] = that.m[0]; m[1] = that.m[1]; }
     template <class S>
+    /// Creates a matrix and initializes it with the given row vectors
     Matrix2T(const Vector2T<S> & r1, const Vector2T<S> & r2)
     { m[0] = r1; m[1] = r2; }
     /// Empty destructor
@@ -43,6 +46,7 @@ namespace Nimble {
 	  eliminate this function. */
     ~Matrix2T() {}
 
+    /// Fills the matrix with the given values
     void make(T v11, T v12, T v21, T v22) { m[0].make(v11, v12); m[1].make(v21, v22); }
 
     /// Returns a reference to a row
@@ -77,13 +81,13 @@ namespace Nimble {
     inline void        rotate(T);
     /// Create a scaling matrix
     void               scale(T s)             { m[0].make(s, 0.0); m[1].make(0.0, s); }
-
+    /// Adds the given scalar to each element
     void               add(T v)        { m[0][0]+=v;m[0][1]+=v;m[1][0]+=v;m[1][1]+=v; }
-
+    /// Returns the inverse of the matrix
     inline Matrix2T inverse() const;
-
+    /// Returns the determinant of the matrix
     float det() const                  { return m[0][0]*m[1][1] - m[0][1] * m[1][0]; }
-
+    /// Multiplies the matrix by a scalar
     Matrix2T operator *= (T s)         { m[0] *= s; m[1] *= s; return * this; }
 
     /// Returns the number of rows in this matrix type
@@ -105,6 +109,7 @@ namespace Nimble {
     Vector2T<T> m[2];
   };
 
+  /// Swaps two matrices
   template <class T>
   inline void Matrix2T<T>::swap(T &a, T& b)
   {
@@ -113,6 +118,8 @@ namespace Nimble {
     b = t;
   }
 
+  /// Creates a rotation matrix
+  /// @param a rotation in radians
   template <class T>
   inline void Matrix2T<T>::rotate(T a)
   {
@@ -122,6 +129,7 @@ namespace Nimble {
     m[1].make(sa, ca);
   }
 
+  /// Returns the inverse of the matrix
   template <class T>
   inline Matrix2T<T> Matrix2T<T>::inverse() const
   {

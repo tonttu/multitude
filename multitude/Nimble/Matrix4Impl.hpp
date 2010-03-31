@@ -30,6 +30,7 @@ namespace Nimble {
 
   }
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
   /// @todo Move test out of the header
   template <class T>
   void Matrix4T<T>::test()
@@ -112,7 +113,7 @@ namespace Nimble {
     b3 = a.getRotation();
     assert(a3 == b3);
   }
-
+#endif
 
 }
 

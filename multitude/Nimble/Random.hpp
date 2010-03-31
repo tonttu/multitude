@@ -39,6 +39,7 @@ namespace Nimble {
   class NIMBLE_API RandomUniform
   {
   public:
+    /// Constructs a new random number generator with the given seed value
     RandomUniform(uint32_t val = 0) : m_val(val) {}
     ~RandomUniform() {}
 
@@ -146,6 +147,7 @@ namespace Nimble {
       return Nimble::Vector2f(cosf(a), sinf(a));
     }
 
+    /// Returns a reference to an instance
     static RandomUniform & instance() { return m_instance; }
 
     /// @todo add static members inside Nimble::Math ?
