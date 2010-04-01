@@ -300,11 +300,13 @@ namespace Luminous {
 
       if(!item)
         continue;
-      item->m_unUsed += dt;
 
-      if(item->m_unUsed > purgeTime && purgeTime >= 0) {
-	//&& item->m_state == FINISHED && 
-	// trace("CPUMipmaps:: # Dropping level %d from CPU", i);
+      if (item->m_state == FINISHED)
+        item->m_unUsed += dt;
+
+      // remove if failed or finished and inactive for too long
+      if(item->m_state == FAILED || (item->m_state == FINISHED && item->m_unUsed > purgeTime && purgeTime >= 0)) {
+        info("CPUMipmaps:: # Dropping level %d from CPU", i);
         m_stack[i].clear();
       }
     }
