@@ -180,7 +180,7 @@ namespace Luminous {
 
       inline bool working() const
       {
-    return (m_scaler != 0) || (m_loader != 0) || (m_state != FINISHED);
+        return (m_scaler != 0) || (m_loader != 0) || (m_state != FINISHED);
       }
 
     private:
@@ -202,22 +202,16 @@ namespace Luminous {
       return Luminous::Task::PRIORITY_NORMAL;
     }
 
-    bool savebleMipmap(int i)
+    /// should level i mipmap be saved on disk
+    bool shouldSaveLevel(int i)
     { return i == DEFAULT_MAP1 || i == DEFAULT_MAP2; }
 
     void createLevelScalers(int level);
 
-    void cacheFileName(std::string &, int level);
+    /// writes cache filename for level to given string
+    void cacheFileName(std::string & str, int level);
 
-    BGThread * bgt() { return BGThread::instance(); }
-
-    bool needsLoader(int i)
-    {
-      CPUItem * ci = m_stack[i].ptr();
-      if(!ci)
-        return true;
-      return ci->needsLoader();
-    }
+    bool needsLoader(int i);
 
     std::string m_filename;
 
@@ -225,6 +219,7 @@ namespace Luminous {
     Nimble::Vector2i m_nativeSize;
     int              m_maxLevel;
     // What level files are available as mip-maps.
+    // bit n set <=> level n mipmap available
     uint32_t         m_fileMask;
     bool             m_hasAlpha;
     Radiant::TimeStamp m_startedLoading;
