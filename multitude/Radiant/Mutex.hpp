@@ -18,7 +18,6 @@
 
 #include <Patterns/NotCopyable.hpp>
 
-#include <Radiant/Config.hpp>
 #include <Radiant/Export.hpp>
 
 namespace Radiant {

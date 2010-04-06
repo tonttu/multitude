@@ -14,7 +14,6 @@
  */
 #include <Radiant/ResourceLocator.hpp>
 
-#include <Radiant/Endian.hpp>
 #include <Radiant/Trace.hpp>
 #include <Radiant/FileUtils.hpp>
 #include <Radiant/PlatformUtils.hpp>
