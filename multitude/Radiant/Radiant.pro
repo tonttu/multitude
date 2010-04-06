@@ -25,7 +25,6 @@ HEADERS += IODefs.hpp
 HEADERS += Log.hpp
 HEADERS += Mutex.hpp
 HEADERS += PlatformUtils.hpp
-HEADERS += Priority.hpp
 HEADERS += Radiant.hpp
 HEADERS += RGBA.hpp
 HEADERS += RefObj.hpp
