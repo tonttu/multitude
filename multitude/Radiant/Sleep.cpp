@@ -58,31 +58,6 @@ namespace Radiant {
     return true;
   }
 
-  /** Sleep until time indicated in the stamp object is passed.  The
-      initialization time of this object is added to the stamp, before
-      calculating sleeping period.
-
-      The second argument should contain a locked mutex. The mutex
-      will be freed while the (potential) sleeping is taking place and
-      locked again.  */
-  long SleepSync::sleepTo(const TimeStamp *stamp, Mutex *mutex)
-  {
-    TimeStamp now = TimeStamp::getTime();
-
-    TimeStamp left = *stamp - now;
-
-    if(left < 0)
-      return left;
-
-    mutex->unlock();
-
-    Sleep::sleepUs(left.secondsD() * 1000000.0);
-
-    mutex->lock();
-
-    return 0;
-  }
-
   /** Sleep in synchronous mode. The argument value is added to
       current time value. The return value tells how many microseconds
       early or late the function call returns. Zero is optimal,
