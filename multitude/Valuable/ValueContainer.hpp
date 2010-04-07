@@ -6,7 +6,7 @@
 
 namespace Valuable
 {
-  template<typename T> class ValueContainerCommon : public ValueObject
+  template<typename T> class ValueContainer : public ValueObject
   {
   public:
     typedef typename T::iterator iterator;
@@ -14,15 +14,13 @@ namespace Valuable
     typedef typename T::reverse_iterator reverse_iterator;
     typedef typename T::value_type value_type;
 
-    ValueContainerCommon() {}
+    ValueContainer() {}
 
-    ValueContainerCommon(HasValues * parent, const std::string & name)
+    ValueContainer(HasValues * parent, const std::string & name)
       : ValueObject(parent, name, false)
     {}
 
     virtual const char* type() const { return "container"; }
-
-    virtual bool deserializeXML(DOMElement element) = 0;
 
     virtual DOMElement serializeXML(DOMDocument * doc)
     {
@@ -31,6 +29,16 @@ namespace Valuable
         elem.appendChild(Serializer::serializeXML(doc, *it));
       }
       return elem;
+    }
+
+    virtual bool deserializeXML(DOMElement element)
+    {
+      DOMElement::NodeList list = element.getChildNodes();
+      std::insert_iterator<T> inserter(m_container, m_container.end());
+      for(DOMElement::NodeList::iterator it = list.begin(); it != list.end(); it++) {
+        *inserter = Serializer::deserializeXML<typename T::value_type>(*it);
+      }
+      return true;
     }
 
     /// @todo should be in ValueTyped
@@ -45,27 +53,6 @@ namespace Valuable
 
   protected:
     T m_container;
-  };
-
-  template<typename T> class ValueContainer : public ValueContainerCommon<T>
-  {
-  public:
-    ValueContainer() {}
-
-    ValueContainer(HasValues * parent, const std::string & name)
-      : ValueContainerCommon<T>(parent, name)
-    {}
-
-    virtual bool deserializeXML(DOMElement element)
-    {
-      DOMElement::NodeList list = element.getChildNodes();
-      std::insert_iterator<T> inserter(ValueContainerCommon<T>::m_container,
-                                       ValueContainerCommon<T>::m_container.end());
-      for(DOMElement::NodeList::iterator it = list.begin(); it != list.end(); it++) {
-        *inserter = Serializer::deserialize<typename T::value_type>(*it);
-      }
-      return true;
-    }
   };
 }
 
