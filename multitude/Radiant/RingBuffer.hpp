@@ -156,9 +156,9 @@ namespace Radiant {
 
   protected:
 
-    TElem   *m_line;   // Data buffer
-    unsigned    m_mask;   // Mask for determining index.
-    unsigned    m_size;   // Real size
+    TElem   *m_line;   ///< Data buffer
+    unsigned    m_mask;   ///< Mask for determining index.
+    unsigned    m_size;   ///< Real size
   };
 
 
@@ -185,6 +185,7 @@ namespace Radiant {
   {
   public:
     RingBufferDelay() : m_position(0) {}
+    /// Constructs a new buffer and initializes it to the given size
     RingBufferDelay(unsigned size) : RingBuffer<TElem>(size), m_position(0) {}
     virtual ~RingBufferDelay() {}
 
@@ -198,6 +199,7 @@ namespace Radiant {
     inline TElem &getNewest(unsigned nDelay)
     { return this->m_line[(m_position - nDelay) & this->m_mask]; }
 
+    /// @copydoc getNewest
     inline const TElem &getNewest(unsigned nDelay) const
     { return this->m_line[(m_position - nDelay) & this->m_mask]; }
 
@@ -232,6 +234,7 @@ namespace Radiant {
 
   protected:
 
+    /// The current position in the buffer
     unsigned   m_position;
   };
 

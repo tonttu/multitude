@@ -169,7 +169,7 @@ namespace Radiant
   {
     return m_d->waitForReadyRead(waitMicroSeconds / 1000);
   }
-
+/*
   void TCPSocket::debug()
   {
     Radiant::info("TCPSocket::debug #");
@@ -177,7 +177,7 @@ namespace Radiant
     Radiant::info("\tVALID %d", m_d->isValid());
     Radiant::info("\tERROR %d", m_d->error());
   }
-
+*/
   void TCPSocket::moveToThread(Thread * t) {
     QThread * qt = t->qtThread();
     if(qt) m_d->moveToThread(qt);

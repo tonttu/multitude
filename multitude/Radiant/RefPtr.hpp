@@ -20,7 +20,8 @@
 
 namespace Radiant {
   
-  /// Helper class for RefPtr
+  /// @cond
+  // Helper class for RefPtr
   template <typename T>
   class RefPtrInt
   {
@@ -31,6 +32,7 @@ namespace Radiant {
     T *m_object;
     unsigned m_count;
   };
+  /// @endcond
 
   /// Smart pointer with reference counter
   /** This class is used to hold a pointer to some object. The object
@@ -65,7 +67,9 @@ namespace Radiant {
 	to it. */
     ~RefPtr() { breakLink(); }
 
+    /// Returns a pointer to the contained object
     T * ptr() { return m_holder ? m_holder->m_object : 0; }
+    /// @copydoc ptr
     const T * ptr() const { return m_holder ? m_holder->m_object : 0; }
 
     /// Operator that returns a pointer to the project
@@ -73,6 +77,7 @@ namespace Radiant {
     /// Operator that returns a constant pointer to the project
     const T & operator *() const { return m_holder ? m_holder->m_object : 0; }
 
+    /// Creates a link to the given object
     RefPtr &link(T * obj) { return ((*this) = obj); }
     /// Clears the link, calling breakLink.
     void clear() { breakLink(); }
@@ -122,7 +127,9 @@ namespace Radiant {
     bool operator == (const T * that) const
     { return ptr() == that; }
 
+    /// Returns a pointer to the contained object
     T * operator -> () { return m_holder->m_object; }
+    /// Returns a const pointer to the contained object
     const T * operator -> () const { return m_holder->m_object; }
 
   private:

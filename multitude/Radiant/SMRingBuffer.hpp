@@ -16,6 +16,8 @@
 #ifndef SHARED_MEMORY_HPP
 #define SHARED_MEMORY_HPP
 
+/// @cond
+
 #include <Radiant/BinaryData.hpp>
 #include <Radiant/Export.hpp>
 
@@ -309,5 +311,7 @@ namespace Radiant
   };
 
 }
+
+/// @endcond
 
 #endif

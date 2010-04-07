@@ -23,17 +23,19 @@ namespace Radiant {
 
   /* Note: these are all inline classes so do not dllexport them on win32 */
 
-  /// Utility for RefObj
+  /// @cond
+  // Utility for RefObj
   template <typename T>
   class RefObjInt
   {
   public:
     RefObjInt() : m_count(1) {}
-    /// @internal
+
     T m_object;
-    /// @internal
+
     unsigned m_count;
   };
+  /// @endcond
 
   /// Smart object reference
   /** This class can be used to share an object between several

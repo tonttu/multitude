@@ -16,6 +16,8 @@
 #ifndef RADIANT_DIRECTORY_HPP
 #define RADIANT_DIRECTORY_HPP
 
+#include <Patterns/NotCopyable.hpp>
+
 #include <Radiant/Export.hpp>
 
 #include <stdexcept>
@@ -38,9 +40,10 @@ namespace Radiant
 
       @author Esa Nuuros
   */
-  class RADIANT_API Directory
+  class RADIANT_API Directory : public Patterns::NotCopyable
   {
   public:
+    /// Flags to filter directory contents
     enum FilterFlags
     {
       Dirs  = 0x001,
@@ -50,9 +53,12 @@ namespace Radiant
       AllEntries = Dirs | Files      
     };
 
+    /// Flags to sort files
     enum SortFlag
     {
+      /// Sort by name
       Name = 0x00,
+      /// Do not sort
       Unsorted = 0x03
     };
 
@@ -67,6 +73,15 @@ namespace Radiant
     */
     Directory(const char * pathname,
 	      int filters = AllEntries, SortFlag sortFlag = Name);
+    /// Construct a directory listing
+    /** Creating a Directory object immediately scans the contents
+  of the directory. Entries matching the given filters are
+  included.
+
+  @param pathname directory path
+  @param filters one or more filter flags OR'ed together
+  @param sortFlag flag indicating how the results should be sorted
+    */
     Directory(const std::string & pathname,
 	      int filters = AllEntries, SortFlag sortFlag = Name);
     /// Construct a directory listing
@@ -109,16 +124,14 @@ namespace Radiant
 
     /// Creates a new directory.
     static bool mkdir(const char * dirname);
+    /// Creates a new directory.
     static bool mkdir(const std::string & dirname);
+    /// Creates a new directory recursively
     static bool mkdirRecursive(const std::string & dirname);
+    /// Checks if the given directory exists
     static bool exists(const std::string & dir);
 
   private:
-
-    /// @todo make use of NotCopyable
-    Directory(const Directory &) {}
-    Directory & operator = (const Directory &) { return * this;}
-
     // Calling a constructor from another is evil but we
     // can put all dupplicated code in the same private
     // method

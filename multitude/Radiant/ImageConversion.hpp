@@ -34,24 +34,39 @@ namespace Radiant {
     /// Convert from a random format to another random format
     static bool convert(const VideoImage * source, VideoImage * target);
 
+    /// @deprecated not implemented
     static void YUV411ToRGB(const VideoImage * source, VideoImage * target);
+    /// Converts YUV411P to RGB
     static void YUV411PToRGB(const VideoImage * source, VideoImage * target);
+    /// Converts YUV411P to RGBA
     static void YUV411PToRGBA(const VideoImage * source, VideoImage * target);
+    /// Converts YUV411 to grayscale
     static void YUV411ToGrayscale(const VideoImage * source, VideoImage * target);
 
+    /// Converts YUV420P to grayscale
     static void YUV420PToGrayscale(const VideoImage * source, VideoImage * target);
+    /// Converts YUV420 to grayscale
     static void YUV420ToGrayscale(const VideoImage * source, VideoImage * target);
+    /// @deprecated not implemented
     static void YUV420ToRGBA(const VideoImage * source, VideoImage * target);
+    /// Converts YUV420P to RGBA
     static void YUV420PToRGBA(const VideoImage * source, VideoImage * target);
+    /// Converts YUV420P to RGB
     static void YUV420PToRGB(const VideoImage * source, VideoImage * target);
 
+    /// Converts YUV422P to RGBA
     static void YUV422PToRGBA(const VideoImage * source, VideoImage * target);
+    /// Converts YUV422P to grayscale
     static void YUV422PToGrayscale(const VideoImage * source, VideoImage * target);
 
+    /// Converts grayscale to RGB
     static void grayscaleToRGB(const VideoImage * source, VideoImage * target);
+    /// Converts RGB to grayscale
     static void RGBToGrayscale(const VideoImage * source, VideoImage * target);
 
+    /// Converts bayer to RGB
     static void bayerToRGB(const VideoImage * source, VideoImage * target);
+    /// Converts bayer to grayscale
     static void bayerToGrayscale(const VideoImage * source, VideoImage * target);
   };
 
