@@ -28,7 +28,6 @@ namespace Nimble {
       Like all classed in Nimble Vector2T has been optimized for
       speed. In general, there are no safety checks in any
       functions. */
-
   template <class T>
   class NIMBLE_API Vector2T
   {
@@ -286,7 +285,6 @@ namespace Nimble {
   /// @arg line2Start, line2End, second line.
   /// @arg interPoint, optional pointer to vector to receive the intersection point.
   /// @return true if line segments intersect.
-
   NIMBLE_API bool linesIntersect(Nimble::Vector2f line1Start, Nimble::Vector2f line1End,
                       Nimble::Vector2f line2Start, Nimble::Vector2f line2End,
                       Nimble::Vector2f * interPoint = 0);
@@ -300,5 +298,15 @@ inline S &operator<<(S &os, const Nimble::Vector2T<T> &t)
   os << t.x << ' ' << t.y;
   return os;
 }
+
+// These are needed under Windows
+#ifdef WIN32
+#   ifdef NIMBLE_EXPORT
+        template Nimble::Vector2T<float>;
+        template Nimble::Vector2T<unsigned char>;
+        template Nimble::Vector2T<int>;
+        template Nimble::Vector2T<double>;
+#   endif
+#endif
 
 #endif

@@ -26,6 +26,10 @@
 #include <cassert>
 #include <fstream>
 
+#ifdef WIN32
+#define snprintf _snprintf
+#endif
+
 namespace Luminous {
 
   using namespace Radiant;
@@ -283,7 +287,8 @@ namespace Luminous {
   /////////////////////////////////////////////////////////////////////////////
   
   CPUMipmaps::CPUMipmaps()
-    : m_nativeSize(100, 100),
+    : m_fileModified(0),
+    m_nativeSize(100, 100),
     m_maxLevel(0),
     m_fileMask(0),
     m_hasAlpha(false),
@@ -435,6 +440,7 @@ namespace Luminous {
     debug("CPUMipmaps::startLoading # %s, %d", filename, immediate);
     m_startedLoading = Radiant::TimeStamp::getTime();
     m_filename = filename;
+    m_fileModified = FileUtils::lastModified(m_filename);
 
     for(int i = 0; i < MAX_MAPS; i++) {
       m_stack[i].clear();
@@ -475,7 +481,8 @@ namespace Luminous {
         std::string cachefile;
         cacheFileName(cachefile, i);
 
-        if(FileUtils::fileReadable(cachefile.c_str())) {
+        // cached file must be readable and newer than original
+        if(FileUtils::fileReadable(cachefile.c_str()) && FileUtils::lastModified(cachefile) >= m_fileModified) {
           m_fileMask = m_fileMask | (1 << i);
         }
       }

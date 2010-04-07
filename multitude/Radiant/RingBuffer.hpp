@@ -16,6 +16,8 @@
 #ifndef RADIANT_RINGBUFFER_HPP
 #define RADIANT_RINGBUFFER_HPP
 
+#include <Radiant/Export.hpp>
+
 namespace Radiant {
 
   /** 
@@ -35,7 +37,7 @@ namespace Radiant {
   */
 
   template <class TElem>
-  class RingBuffer
+  class RADIANT_API RingBuffer
   {
   public:
     /**@name Constructors */
@@ -179,7 +181,7 @@ namespace Radiant {
       @author Tommi Ilmonen*/
 
   template <class TElem>
-  class RingBufferDelay : public RingBuffer<TElem>
+  class RADIANT_API RingBufferDelay : public RingBuffer<TElem>
   {
   public:
     RingBufferDelay() : m_position(0) {}

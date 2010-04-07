@@ -214,6 +214,7 @@ namespace Luminous {
     bool needsLoader(int i);
 
     std::string m_filename;
+    unsigned long int m_fileModified;
 
     Radiant::RefPtr<CPUItem> m_stack[MAX_MAPS];
     Nimble::Vector2i m_nativeSize;

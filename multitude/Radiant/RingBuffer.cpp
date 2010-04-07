@@ -18,10 +18,12 @@
 
 #include <Nimble/Vector2.hpp>
 
-namespace Nimble {
+namespace Radiant
+{
 
+    template class RingBuffer<float>;
+    template class RingBuffer<int>;
+    template class RingBuffer<Nimble::Vector2>;
+
+    template class RingBufferDelay<Nimble::Vector2>;
 }
-
-template class Radiant::RingBuffer<float>;
-template class Radiant::RingBuffer<int>;
-template class Radiant::RingBuffer<Nimble::Vector2>;
