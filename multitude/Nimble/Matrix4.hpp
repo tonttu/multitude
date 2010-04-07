@@ -29,10 +29,12 @@ namespace Nimble {
   class Matrix4T
   {
   public:
+    /// Constructs a matrix and fills it from memory
     template <class S>
     Matrix4T(const S * x) { const S * end = x + 16; T * my = data(); while(x!=end) *my++ = *x++; }
-
+    /// Constructs a matrix without initializing it
     Matrix4T() {}
+    /// Constructs a matrix and fills it with given values
     Matrix4T(T x11, T x12, T x13, T x14,
          T x21, T x22, T x23, T x24,
          T x31, T x32, T x33, T x34,
@@ -43,32 +45,50 @@ namespace Nimble {
       m[2].make(x31, x32, x33, x34);
       m[3].make(x41, x42, x43, x44);
     }
+    /// Constructs a matrix and initializes it with given row vectors
     Matrix4T(const Vector4T<T>& a, const Vector4T<T>& b, const Vector4T<T>& c, const Vector4T<T>& d)
     { m[0] = a; m[1] = b; m[2] = c; m[3] = d; }
+    /// Returns the ith row
     Vector4T<T>&       row(int i)             { return m[i]; }
+    /// Returns the ith row
     const Vector4T<T>& row(int i) const       { return m[i]; }
 
+    /// Returns the ith column vector
     Vector4T<T>        column(int i) const    { return Vector4T<T>(m[0][i],m[1][i],m[2][i],m[3][i]); }
+    /// Sets the ith column vector
     void               setColumn(int i, const Vector4T<T> &v) { m[0][i] = v[0]; m[1][i] = v[1]; m[2][i] = v[2]; m[3][i] = v[3]; }
-    void               setColumn3(int i, const Vector3T<T> &v) { m[0][i] = v[0]; m[1][i] = v[1]; m[2][i] = v[2]; m[3][i] = 1.0; }
-    void               setColumn3b(int i, const Vector3T<T> &v) { m[0][i] = v[0]; m[1][i] = v[1]; m[2][i] = v[2]; }
-    void               addToColumn(int i, const Vector4T<T> &v) { m[0][i] += v[0]; m[1][i] += v[1]; m[2][i] += v[2]; m[3][i] += v[3]; }
-    void               addToColumn(int i, const Vector3T<T> &v) { m[0][i] += v[0]; m[1][i] += v[1]; m[2][i] += v[2]; }
 
+    //void               setColumn3(int i, const Vector3T<T> &v) { m[0][i] = v[0]; m[1][i] = v[1]; m[2][i] = v[2]; m[3][i] = 1.0; }
+    //void               setColumn3b(int i, const Vector3T<T> &v) { m[0][i] = v[0]; m[1][i] = v[1]; m[2][i] = v[2]; }
+    //void               addToColumn(int i, const Vector4T<T> &v) { m[0][i] += v[0]; m[1][i] += v[1]; m[2][i] += v[2]; m[3][i] += v[3]; }
+    //void               addToColumn(int i, const Vector3T<T> &v) { m[0][i] += v[0]; m[1][i] += v[1]; m[2][i] += v[2]; }
+
+    /// Sets the diagonal to given vector
     void               setDiagonal(const Vector4T<T> &v) { m[0][0] = v[0]; m[1][1] = v[1]; m[2][2] = v[2]; m[3][3] += v[3]; }
-    void               setDiagonal(const Vector3T<T> &v) { m[0][0] = v[0]; m[1][1] = v[1]; m[2][2] = v[2]; m[3][3] = (T) 1.0; }
+    /// void               setDiagonal(const Vector3T<T> &v) { m[0][0] = v[0]; m[1][1] = v[1]; m[2][2] = v[2]; m[3][3] = (T) 1.0; }
 
+    /// Returns the ith row
     Vector4T<T>&       operator[](int i)      { return row(i); }
+    /// Returns the ith row
     const Vector4T<T>& operator[](int i) const{ return row(i); }
+    /// Replaces the upper-left 3x3 matrix
     inline void               setRotation(const Nimble::Matrix3T<T>& that);
+    /// Returns the upper-left 3x3 matrix
     inline Matrix3T<T>        getRotation() const;
+    /// Sets the translation part of a 4x4 transformation matrix
     void                      setTranslation(const Vector3T<T> & v);
+    /// Returns the translation part of a 4x4 matrix
     Vector3T<T>               getTranslation() const;
 
+    /// Transposes the matrix
     inline Matrix4T<T>&       transpose();
+    /// Fills the matrix with zeroes
     void                      clear()         { m[0].clear(); m[1].clear(); m[2].clear(); m[3].clear(); }
+    /// Sets the matrix to identity
     inline void               identity();
+    /// Sets the matrix to a scaling matrix
     inline void               scalingMatrix(const Vector3T<T> &);
+    /// Fills the matrix with given values
     void                      make(T x11, T x12, T x13, T x14,
                 T x21, T x22, T x23, T x24,
                 T x31, T x32, T x33, T x34,
@@ -79,33 +99,52 @@ namespace Nimble {
     m[2].make(x31, x32, x33, x34);
     m[3].make(x41, x42, x43, x44);
       }
+    /// Returns the inverse of the matrix
     inline Matrix4T<T>        inverse(bool * ok) const;
 
+    /// Multiplies two matrices together
     inline Matrix4T<T>&       operator*=(const Matrix4T<T>& that);
+    /// Multiplies the matrix with a scalar
     Matrix4T<T>&              operator *= (T s) { T * p = data(); for(unsigned i=0; i < 16; i++) p[i] *= s; return * this; }
+    /// Compares if two matrices are equal
     inline bool               operator==(const Matrix4T<T>& that) const;
+    /// Compares if two matrices differ
     inline bool               operator!=(const Matrix4T<T>& that) const;
 
+    /// Returns the number of rows (4)
     static int                rows() { return 4; }
+    /// Returns the number of columns (4)
     static int                columns() { return 4; }
-    NIMBLE_API static void    test();
 
+    /// Returns a pointer to the first element
     T *       data()       { return m[0].data(); }
+    /// Returns a pointer to the first element
     const T * data() const { return m[0].data(); }
 
+    /// Fills the matrix by copying values from memory
     template <class S>
     void copy (const S * x) { const S * end = x + 16; T * my = data(); while(x!=end) *my++ = (T) *x++; }
+    /// Fills the matrix by copying transposed values from memory
     template <class S>
     void copyTranspose (const S * x) { for(int i = 0; i < 4; i++) for(int j = 0; j < 4; j++) m[j][i] = (T) x[i*4+j]; }
 
     /// @todo duplicates (makeTranslation vs. translate3D)
+    /// Create a rotation matrix
     static Matrix4T<T> makeRotation(T radians, const Vector3T<T> & axis);
+    /// Create a translation matrix
     static Matrix4T<T> makeTranslation(const Vector3T<T> & v);
+    /// Create a translation matrix
     NIMBLE_API static Matrix4T<T> translate3D(const Vector3T<T> & v);
+    /// Create a scaling matrix
     NIMBLE_API static Matrix4T<T> scale3D(const Vector3T<T> & v);
 
     /** Identity matrix. */
     NIMBLE_API static const Matrix4T<T> IDENTITY;
+
+    /// @cond
+    // Run internal test function
+    NIMBLE_API static void    test();
+    /// @endcond
 
   private:
     inline static void swap(T &a, T& b);
@@ -113,6 +152,7 @@ namespace Nimble {
     Vector4T<T> m[4];
   };
 
+  /// Swaps two matrices
   template <class T>
   inline void Matrix4T<T>::swap(T &a, T& b)
   {

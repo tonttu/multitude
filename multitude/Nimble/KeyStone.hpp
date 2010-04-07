@@ -7,10 +7,10 @@
  * See file "Nimble.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef NIMBLE_KEYSTONE_HPP
@@ -29,13 +29,13 @@ namespace Nimble {
   /** Keystone class for transforming between different (skewed) 2D
       coordinate systems, while taking account possible radial (camera
       lens) distortion.
-      
+
       Conceptually the keystone correction works in following
       fashion. In practice the linear operations are accumulated to a
       single matrix multiplication.
 
       <OL>
-      
+
       <LI> We fix the camera lens correction using object of type
       Nimble::LensCorrection. This is simple third-order polynomial
       radial mapping. In the future we can offer a customizeable
@@ -46,7 +46,7 @@ namespace Nimble {
       normalized coordinates in range [0,1]. This transformation is
       based on knowledge of the four corners that represent the area
       to be tracked.
-      
+
       <LI> Then we apply extension matrix within the [0,1] space
       (more about that later)
 
@@ -76,17 +76,17 @@ namespace Nimble {
     virtual ~KeyStone() {}
 
     /// Set vertices, and other parameters.
-    void setVertices(const char * str, 
+    void setVertices(const char * str,
                      int w, int h,
                      int dpyw, int dpyh,
                      int dpyx, int dpyy);
 
     /// Set vertices, and other parameters.
-    void setVertices(const Nimble::Vector2 * vertices, 
+    void setVertices(const Nimble::Vector2 * vertices,
                      int w, int h,
                      int dpyw, int dpyh,
                      int dpyx, int dpyy);
-    
+
     /// Sets the output (display) geometry
     void setOutputGeometry(unsigned w, unsigned h, int x, int y);
 
@@ -111,7 +111,7 @@ namespace Nimble {
       Nimble::Vector3 p = m * v;
       return Nimble::Vector2(p.x / p.z, p.y / p.z);
     }
-    
+
     /** Do inverse projection (from screen to camera coordinates),
   ignoring the camera barrel distortion. Useful as a rough
   estimation of the point location on the camera image. x*/
@@ -159,9 +159,14 @@ namespace Nimble {
   inside the camera area and width of the camera area, per
   scanline. */
     const std::vector<Nimble::Vector2i> & limits() const { return m_limits; }
+    /// Information on which pixels are part of the image rocessing area
+    /** The returned values work like the values returned from #limits. */
     const std::vector<Nimble::Vector2i> & extraLimits() const
     { return m_extraLimits; }
 
+    /// Add extra processing borders around one edge.
+    /** @param index The index to the edge (0-3).
+        @param v The number of pixels to add or subtract. */
     void addExtra(int index, float v);
 
     /// Number of pixels that this keystone camera area contains
@@ -172,6 +177,7 @@ namespace Nimble {
     /// The height of the output display area
     int dpyHeight() const { return m_dpyHeight; }
 
+    /// The size of the display area (in pixels) that matches this keystone area
     Nimble::Vector2f dpySize() const
     { return Nimble::Vector2i(m_dpyWidth, m_dpyHeight); }
 
@@ -182,7 +188,7 @@ namespace Nimble {
 
     Nimble::Vector2f dpyOffset() const
     { return Nimble::Vector2i(m_dpyX, m_dpyY); }
-    
+
     /// The output area of the screen
     /** This function basically returns the information you would
   get from dpyWidth, dpyheight, dpyX and dpyY. */
@@ -192,7 +198,7 @@ namespace Nimble {
 
     /// Reference to the lens correction
     LensCorrection & lensCorrection() { return m_lensCorrection; }
-    
+
     /// Adjusts the lens correction
     void setLensParam(int i, float v);
     /** Applies correction, based on four screen-space coordinate pairs.
@@ -212,16 +218,21 @@ namespace Nimble {
     /** By default the extension matrix is set to identity. */
     void setOutputExtension(const Nimble::Matrix3 & m);
 
+    /// Returns the extra pixels around the edges
     const Nimble::Vector4f & extraBorders() const { return m_extra; }
+    /// Sets the extra pixels around the edges
     void setExtraBorders(const Nimble::Vector4f & borders)
     { m_extra = borders; updateLimits(); }
 
+    /// Returns information about the center shift
+    /** Center shift means that coordinates at the center of the image get this offset. */
     Nimble::Vector3 centerShift()
     { return Vector3(m_centerShift.x, m_centerShift.y, m_centerShiftSpan); }
+    /// Sets the parameters for the center shifting
     void setCenterShift(Nimble::Vector3 params)
     { m_centerShift = params.xy(); m_centerShiftSpan = params[2]; }
 
-
+    /// Recalculates the limits of which pixels are inside the tracking area, and which are not.
     void updateLimits();
 
     /** Returns the version number of the object. Whenever the
@@ -230,6 +241,7 @@ namespace Nimble {
   check is they need to update some of their data structures.*/
     int version() const { return m_version; }
 
+    /// Controls if this keystone object uses the center shift features.
     void setUseCenterShift(bool use) { m_useCenterShift = use; }
 
     /// Calculates the projection matrix.
@@ -241,7 +253,7 @@ namespace Nimble {
 
     void updated() { m_version++; }
 
-    void updateLimits(std::vector<Nimble::Vector2i> & limits, 
+    void updateLimits(std::vector<Nimble::Vector2i> & limits,
                       const Vector4 * offsets = 0);
 
 
@@ -267,7 +279,7 @@ namespace Nimble {
     // Camera width/height
     int            m_width;
     int            m_height;
-    
+
     // Display area width/height
     int            m_dpyWidth;
     int            m_dpyHeight;
@@ -287,7 +299,7 @@ namespace Nimble {
     int            m_containedPixelCount;
     int            m_version;
   };
-  
+
 }
 
 

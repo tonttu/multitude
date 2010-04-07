@@ -48,14 +48,10 @@ namespace Poetic
 
   CPUWrapperFont * FontManager::getFont(const std::string & name)
   {
-    assert(!name.empty());
-    
-    /*
     if(name.empty()) {
       Radiant::error("FontManager::getFont # empty fontname");
       return 0;
     }
-    */
 
     container::iterator it = m_managedFonts.find(name);
 

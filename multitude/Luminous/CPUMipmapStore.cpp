@@ -23,8 +23,8 @@ namespace Luminous {
 
   static Radiant::MutexStatic __mutex;
 
-  /* Note that the mipmaps are not deleted opun application exit. This
-     is done on purpose: As we are daeling with static data one easily
+  /* Note that the mipmaps are not deleted upon application exit. This
+     is done on purpose: As we are dealing with static data one easily
      gets conflicts with the order of deleting resources. As a result
      it is safest to not delete the resources. Anyhow, the operating
      system should be able to clear the resources as the application

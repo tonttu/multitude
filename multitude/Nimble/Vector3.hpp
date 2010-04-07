@@ -29,76 +29,115 @@ namespace Nimble {
   class NIMBLE_API Vector3T
   {
   public:
+    /// Data type of the vector
     typedef T type;
 
     T		x;										///< x-component of the vector
     T		y;										///< y-component of the vector
     T		z;										///< z-component of the vector
     Vector3T()							   {}
+    /// Constructs a vector initializing all components to given value
     explicit Vector3T(T xyz)		           { x = y = z = xyz; }
+    /// Constructs a vector initializing it to given values
     Vector3T(T cx, T cy, T cz)		           { x = cx;	y = cy;		z = cz; }
+    /// Constructs a vector copying values from memory
     template <class S> Vector3T(const S * v) { x = (T)v[0]; y = (T)v[1]; z = (T)v[2]; }
+    /// Constructs a vector copying it from another vector
     template <class S> Vector3T(const Vector3T<S>& v)		   { x = (T)v.x;	y = (T)v.y; z = (T)v.z; }
+    /// Constructs a vector using a 2d vector and a scalar component
     template <class S> Vector3T(const Vector2T<S>& v, S az)		   { x = (T)v.x;	y = (T)v.y; z = az; }
+    /// Copies a vector
     template <class S> Vector3T& operator=(const Vector3T<S>& v)	   { x = (T)v.x; y = (T)v.y; z = (T)v.z; return *this; }
+    /// Fills the vector with zeroes
     Vector3T&	clear		(void)				   { x = (T)(0);  y = (T)(0); z = (T)(0); return *this;	}
+    /// Sets the vector to given values
     Vector3T&	make		(T cx, T cy, T cz)  { x = (cx); y = (cy); z = (cz); return *this; }
+    /// Fills the vector with given value
     Vector3T&	make		(T xyz)			   { x = (xyz); y = (xyz); z = (xyz); return *this; }
+    /// Returns a pointer to the first element
     T * data() { return &x; }
+    /// Returns a pointer to the first element
     const T * data() const { return &x; }
+    /// Compares if two vectors are equal
     bool		operator==  (const Vector3T& src) const		   { return (x == src.x && y == src.y && z == src.z); }
+    /// Compares if two vectors differ
     bool		operator!=  (const Vector3T& src) const		   { return !(x == src.x && y == src.y && z == src.z); }
 
+    /// Adds two vectors
     Vector3T      operator+	(const Vector3T& v) const { return Vector3T(x + v.x, y + v.y, z + v.z); }
+    /// Subtract two vectors
     Vector3T      operator-	(const Vector3T& v) const { return Vector3T(x - v.x, y - v.y, z - v.z); }
+    /// Returns the negation of the vector
     Vector3T      operator-	()                  const { return Vector3T(-x, -y, -z); }
+    /// Multiplies a vector with a scalar
     Vector3T      operator*	(T s) const               { return Vector3T(x * s, y * s, z * s); }
+    /// Divides a vector with a scalar
     Vector3T      operator/	(T s) const               { return Vector3T(x / s, y / s, z / s); }
 
+    /// Adds two vectors
     Vector3T&	operator+=	(const Vector3T& v)		   { x += v.x; y += v.y; z += v.z;  return *this; }
-
+    /// Subtract two vectors
     Vector3T&	operator-=	(const Vector3T& v)		   { x -= v.x; y -= v.y; z -= v.z;  return *this; }
 
+    /// Multiplies a vector with a scalar
     Vector3T&	operator*=	(T s)			   { x = (x*s), y = (y*s); z = (z*s); return *this; }
+    /// Divides a vector with a scalar
     Vector3T&	operator/=	(T s)			   { s = T(1)/s; x = (x*s), y = (y*s); z = (z*s); return *this; }
 
+    /// Check if all components are one
     bool		isOne		(void) const			   { return (x == 1.0f && y == 1.0f && z == 1.0f); }
+    /// Check if all components are zero
     bool		isZero		(void) const			   { return (x == 0.0f && y == 0.0f && z == 0.0f); }
-/// @todo Replace this - finite() is obsolete
-//  bool isFinite (void) const { return finite(x) && finite(y) && finite(z); }
+    /// Returns the length of the vector
     double	length		(void) const			   { return (double)Math::Sqrt(x*x+y*y+z*z); }
+    /// Returns the squared length of the vector
     double	lengthSqr	(void) const			   { return x*x+y*y+z*z; }
+    /// Returns the negation of the vector
     Vector3T&	negate		(void)				   { x=-x; y=-y; z=-z; return *this; }
+    /// Normalizes the vector to given length
     Vector3T&	normalize	(double len = 1.0)	   { double l = length(); if (l!=0.0) *this *= T(len/l); return *this; }
+    /// Multiply component-wise
     Vector3T&	scale		(const Vector3T& v)		   { x *= v.x; y *= v.y; z *= v.z; return *this; }
+    /// Divide component-wise
     Vector3T&	descale		(const Vector3T& v)		   { x /= v.x; y /= v.y; z /= v.z; return *this; }
+    /// Clamps components to range [0,1]
     Vector3T&	clampUnit	(void)				   { if(x <= (T)0.0) x = (T)0.0; else if(x >= (T)1.0) x = (T)1.0; if(y <= (T)0.0) y = (T)0.0; else if(y >= (T)1.0) y = (T)1.0; if(z <= (T)0.0) z = (T)0.0; else if(z >= (T)1.0) z = (T)1.0; return *this; }
 
     /// Returns a vector with components reordered.
     Vector3T    shuffle         (int i1, int i2, int i3) const { return Vector3T(get(i1), get(i2), get(i3)); }
 
+    /// Returns the ith component
     const	T&	operator[]	(int i) const	                   { return ((T*)this)[i]; }
+    /// Multiply component-wise
     T&		operator[]	(int i)				   { return ((T*)this)[i]; }
 
+    /// Multiply component-wise
     T&            get(int i)        { return ((T*)this)[i]; }
+    /// Multiply component-wise
     const T&      get(int i) const  { return ((T*)this)[i]; }
 
+    /// Sets the ith component
     void		set(int i, T v)              			   { ((T*)this)[i] = v; }
 
+    /// Returns the largest component
     T             maximum() const { T t = x > y ? x : y; return t > z ? t : z; }
+    /// Returns the smallest component
     T             minimum() const { T t = x < y ? x : y; return t < z ? t : z; }
     /// Sum of all components
     T             sum() const { return x + y + z; }
 
-    template <class S>
-    void copy(const S * data) { x = data[0]; y = data[1]; z = data[2]; }
+    //template <class S>
+    //void copy(const S * data) { x = data[0]; y = data[1]; z = data[2]; }
 
-    static Vector3T & cast(T * ptr) { return * (Vector3T *) ptr; }
-    static const Vector3T & cast(const T * ptr) { return * (Vector3T *) ptr; }
+    //static Vector3T & cast(T * ptr) { return * (Vector3T *) ptr; }
+    //static const Vector3T & cast(const T * ptr) { return * (Vector3T *) ptr; }
 
+    /// @todo duplicates (vector2(), xy())
+    /// Returns a vector containing the two first components
     Vector2T<T> & vector2() { return * (Vector2T<T> *) this; }
+    /// Returns a vector containing the two first components
     const Vector2T<T> & vector2() const { return * (Vector2T<T> *) this; }
-
+    /// Returns a vector containing the two first components
     Vector2T<T> xy() const { return Vector2T<T>(x, y); }
   };
 

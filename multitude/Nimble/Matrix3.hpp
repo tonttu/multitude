@@ -33,6 +33,7 @@ namespace Nimble {
   public:
     /// Constructs the matrix without initializing any values.
     Matrix3T() {}
+    /// Constructs a matrix and initializes it from memory
     template <class S>
     Matrix3T(const S * x)
     {
@@ -40,7 +41,9 @@ namespace Nimble {
       m[1][0] = x[3]; m[1][1] = x[4]; m[1][2] = x[5];
       m[2][0] = x[6]; m[2][1] = x[7]; m[2][2] = x[8];
     }
+    /// Constructs a matrix and initializes it with the given rows
     Matrix3T(const Vector3T<T>& a, const Vector3T<T>& b, const Vector3T<T>& c) { m[0] = a; m[1] = b; m[2] = c; }
+    /// Constructs a matrix and initializes it with the given values
     Matrix3T(T v11, T v12, T v13, T v21, T v22, T v23, T v31, T v32, T v33)
     { m[0].make(v11, v12, v13); m[1].make(v21, v22, v23); m[2].make(v31, v32, v33); }
     /// Returns a reference to one row in the matrix
@@ -51,8 +54,11 @@ namespace Nimble {
     /** As the matrix is is of row-major type, this method returns a
     copy of the values of the column. */
     Vector3T<T>        column(int i) const    { return Vector3T<T>(m[0][i],m[1][i],m[2][i]); }
+    /// Returns the ith row
     Vector3T<T>&       operator[](int i)      { return row(i); }
+    /// Returns the ith row
     const Vector3T<T>& operator[](int i) const{ return row(i); }
+    /// Set the value of the given element
     void               set(int r, int c, T v) { m[r][c] = v; }
     /// Gets one element from the matrix
     T &                get(int r, int c)       { return m[r][c]; }
@@ -66,8 +72,11 @@ namespace Nimble {
     void               make(T v11, T v12, T v13, T v21, T v22, T v23, T v31, T v32, T v33)
     { m[0].make(v11, v12, v13); m[1].make(v21, v22, v23); m[2].make(v31, v32, v33); }
 
+    /// Transposes the matrix
     inline void               transpose();
+    /// Fills the matrix with zeroes
     void                      clear() { m[0].clear(); m[1].clear(); m[2].clear(); }
+    /// Makes the matrix an identity matrix
     inline void               identity();
     /// Create a rotation matrix, around X axis
     inline void               rotateX(T a);
@@ -81,11 +90,16 @@ namespace Nimble {
     inline void               rotateAroundAxis(const Vector3T<T>& axis, T radians);
     /// Assuming that this a rotation matrix, calculate rotation around XYZ axis
     inline bool               getRotationXYZ (T & xa, T & ya, T & za);
+    /// Multiplies two matrices together
     inline Matrix3T<T>&       operator*=(const Matrix3T<T>& that);
+    /// Compares if two matrices are equal
     inline bool               operator==(const Matrix3T<T>& that) const;
+    /// Compares if two matrices are different
     inline bool               operator!=(const Matrix3T<T>& that) const;
-    /// Run internal test function.
+
+    /// Run internal test function.*/
     inline static void        test();
+
     /// Returns the number of rows in the matrix (=3)
     /** This function can be used when you build template-based
     functions. */
@@ -108,7 +122,8 @@ namespace Nimble {
     inline Matrix3T<T>        inverse(bool * ok = 0, T tolerance = 1.0e-8) const;
 
     /// Create a matrix that performs 2D translation
-    static Matrix3T<T> translation(const Vector2T<T> & t) { Matrix3T<T> m; m.identity(); m.set(0, 2, t.x); m.set(1, 2, t.y); return m; }
+    static Matrix3T<T> translation(const Vector2T<T> & t) { Matrix3T<T> m; m.identity(); m.set(0, 2, t.x); m.set(1, 2, t.y); return m; }    
+    /// Create a matrix that performs 2D translation
     static Matrix3T<T> translation(const T & x, const T & y) { Matrix3T<T> m; m.identity(); m.set(0, 2, x); m.set(1, 2, y); return m; }
     /// Create a matrix that performs 2D translation
     inline static Matrix3T<T> translate2D(const Vector2T<T> & t);
@@ -117,10 +132,12 @@ namespace Nimble {
     { return translate2D(Vector2T<T>(x, y)); }
     /// Create a matrix that performs 2D scaling
     inline static Matrix3T<T> scale2D(const Vector2T<T> & s);
+    /// Create a matrix that performs 2D scaling
     inline static Matrix3T<T> scale2D(const T & xscale, const T & yscale);
     /// Create a matrix that performs 2D scaling
     inline static Matrix3T<T> scaleUniform2D(const T & s)
     { return scale2D(Vector2T<T>(s, s)); }
+    /// Create a matrix that performs uniform scaling around the given point
     NIMBLE_API static Matrix3T<T> scaleUniformAroundPoint2D(Vector2T<T> p,
                                                      T s);
 
@@ -133,13 +150,15 @@ namespace Nimble {
     */
     NIMBLE_API static Matrix3T<T> rotateAroundPoint2D(Vector2T<T> p,
                                            T radians);
-
+    /// Create a rotation matrix
     inline static Matrix3T<T> makeRotation(T radians, const Vector3T<T> & axis);
 
     /// Extract the scaling factor from a homogenous 2D transformation matrix
     inline T extractScale() const;
 
+    /// Multiply the given point with the matrix and perform the homogenous divide
     inline Vector2T<T> project(const Vector2T<T> & v) const;
+    /// Multiply the given point with the matrix and perform the homogenous divide
     inline Vector2T<T> project(const T & x, const T & y) const;
 
     /** Identity matrix. */

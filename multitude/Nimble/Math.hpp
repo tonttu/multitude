@@ -32,55 +32,92 @@ namespace Nimble {
   {
     // Constants:
 
-    // for real number comparisons
+    /// Tolerance used when comparing floating point numbers
     const double TOLERANCE  = 0.000001f;
 
+    /// Pi
     const double PI         = 3.1415926535897931;
+    /// Pi times two
     const double TWO_PI     = 6.2831853071795862;
+    /// Pi divided by two
     const double HALF_PI    = 1.57079632679489660;
+    /// Pi divided by four
     const double QUARTER_PI = 0.78539816339744828;
 
+    /// Square root of two
     const double SQRT2      = 1.41421356237309514547;
+    /// Square root of two divided by two
     const double SQRT2_PER2 = 0.70710678118654757273;
+    /// A small number
     const double EPSILON    = 1.0e-10;
 
     // float & double inlines:
 
+    /// Returns the cosine
     inline float Cos(float v)  { return cosf(v); }
-    inline float Sin(float v)  { return sinf(v); }  
-    inline float Tan(float v)  { return tanf(v); }  
+    /// Returns the sine
+    inline float Sin(float v)  { return sinf(v); }
+    /// Returns the tangent
+    inline float Tan(float v)  { return tanf(v); }
+    /// Returns the square root
     inline float Sqrt(float v) { return sqrtf(v); }
+    /// Returns the inverse square root
     inline float InvSqrt(float v) { return 1.0f / sqrtf(v); }
+    /// Returns the exponential function
     inline float Exp(float v)  { return expf(v); }
+    /// Returns the logarithm in base 10
     inline float Log(float v)  { return logf(v); }
-	inline float Log2(float v) { return Log(v) / Log(2.f); }
+    /// Returns the logarithm in base 2
+    inline float Log2(float v) { return Log(v) / Log(2.f); }
+    /// Raises x to the yth power
     inline float Pow(float x, float y)    { return powf(x, y); }
 
+    /// Returns the arccosine
     inline float ACos(float v)  { return acosf(v); }
+    /// Returns the arcsine
     inline float ASin(float v)  { return asinf(v); }
+    /// Returns the arctangent
     inline float ATan(float v)  { return atanf(v); }
+    /// Returns the arctangent
     inline float ATan2(float x, float y)  { return atan2f(x, y); }
 
+    /// Returns the cosine
     inline double Cos(double v)  { return cos(v); }
+    /// Returns the sine
     inline double Sin(double v)  { return sin(v); } 
-    inline double Tan(double v)  { return tan(v); }  
+    /// Returns the tangent
+    inline double Tan(double v)  { return tan(v); }
+    /// Returns the square root
     inline double Sqrt(double v) { return sqrt(v); }
+    /// Returns the inverse square root
     inline double InvSqrt(double v) { return 1.0 / sqrt(v); }
+    /// Returns the exponential function
     inline double Exp(double v)  { return exp(v); }
+    /// Returns the logarithm in base 10
     inline double Log(double v)  { return log(v); }
-	inline double Log2(double v)  { return Log(v) / Log(2.0); }
+    /// Returns the logarithm in base 2
+    inline double Log2(double v)  { return Log(v) / Log(2.0); }
+    /// Raises x to the yth power
     inline double Pow(double x, double y)    { return pow(x, y); }
 
+    /// Returns the arccosine
     inline double ACos(double v)  { return acos(v); }
+    /// Returns the arcsine
     inline double ASin(double v)  { return asin(v); }
+    /// Returns the arctangent
     inline double ATan(double v)  { return atan(v); }
+    /// Returns the arctangent
     inline double ATan2(double x, double y)  { return atan2(x, y); }
 
+    /// Returns the square root
     inline float Sqrt(int v) { return sqrtf(float(v)); }
 
+    /// Converts degrees into radians
     inline double degToRad(const double degrees) { return (degrees * PI / 180.0); }
+    /// Converts radians to degrees
     inline double radToDeg(const double radians) { return (radians * 180.0 / PI); }
 
+    /// Checks if the given value if finite
     inline bool isFinite(float v) 
 	{
 #ifdef WIN32
@@ -89,7 +126,7 @@ namespace Nimble {
     return finite(v);
 #endif      
     }
-	
+  /// Checks if the given number is not one
 	inline bool isNAN(float v)
 	{
 #ifdef WIN32
@@ -105,17 +142,23 @@ namespace Nimble {
 
     // Min & Max inlines:
 
+    /// Returns the maximum of the values
     template <class T>
     inline T Max(T x, T y) { return x > y ? x : y; }
-    template <class T>
+    /// Returns the maximum of the values
+    template <class T>        
     inline T Max(T a, T b, T c) { return Max(a, Max(b,c)); }
+    /// Returns the maximum of the values
     template <class T>
     inline T Max(T a, T b, T c, T d) { return Max(Max(a, b), Max(c, d)); }
 
+    /// Returns the minimum of the values
     template <class T>
     inline T Min(T x, T y) { return x < y ? x : y; }
+    /// Returns the minimum of the values
     template <class T>
     inline T Min(T a, T b, T c) { return Min(a, Min(b, c)); }
+    /// Returns the minimum of the values
     template <class T>
     inline T Min(T a, T b, T c, T d) { return Min(Min(a, b), Min(c, d)); }
 
@@ -173,11 +216,16 @@ namespace Nimble {
       return Abs(a - b) < limit;
     }
 
+    /// Rounds the given number to nearest integer
     inline int Round(float x) { return x > 0.0f ? (int) (x + 0.5f) : (int) (x - 0.5f); }
+    /// Rounds the given number to nearest integer
     inline int Round(double x) { return x > 0.0 ? (int) (x + 0.5) : (int) (x - 0.5); }
 
+    /// Rounds the given number up to nearest integer
     inline int Ceil(float x) { return x >= 0.0f ? (int) (x + 0.99999f) : (int) (x); }
+    /// Rounds the given number down to nearest integer
     inline int Floor(float x) { return x >= 0.0f ? (int)x : (int) (x - 0.9999f); }
+    /// Rounds the given number down to nearest integer
     inline int Floor(double x) { return x >= 0.0f ? (int)x : (int) (x - 0.9999); }
 
     /// Convert degrees to radians
@@ -225,24 +273,25 @@ namespace Nimble {
       return (a + b) * 0.5f;
     }
 
+    /// Given three points on a line, interpolate between them
     template <class T>
-    inline T threePointInterpolation
-    (float x1, const T & v1, float x2, const T & v2, float x3, const T & v3, 
-     float x)
+        inline T threePointInterpolation
+        (float x1, const T & v1, float x2, const T & v2, float x3, const T & v3,
+         float x)
     {
       if(x < x1)
-	return v1;
+        return v1;
       else if(x > x3)
-	return v3;
+        return v3;
       else if(x < x2) {
-	float dx = x2 - x1;
-	float rel = (x - x1) / dx;
-	return rel * v2 + (1.0f - rel) * v1;
+        float dx = x2 - x1;
+        float rel = (x - x1) / dx;
+        return rel * v2 + (1.0f - rel) * v1;
       }
       else {
-	float dx = x3 - x2;
-	float rel = (x - x2) / dx;
-	return rel * v3 + (1.0f - rel) * v2;
+        float dx = x3 - x2;
+        float rel = (x - x2) / dx;
+        return rel * v3 + (1.0f - rel) * v2;
       }
     }
   }

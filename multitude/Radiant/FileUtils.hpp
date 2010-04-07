@@ -26,7 +26,6 @@ namespace Radiant
   /// FileUtils contains functions for platform independent file-handing
   namespace FileUtils
   {
-    
     /// Get the size of a file.
     RADIANT_API unsigned long getFileLen(std::ifstream& file);
     RADIANT_API unsigned long getFileLen(const std::string & filename);
@@ -92,6 +91,8 @@ namespace Radiant
     RADIANT_API bool looksLikeImage(const std::string & filePath);
     RADIANT_API bool looksLikeVideo(const std::string & filePath);
 
+    /// @return seconds from epoch, 0 in case of error
+    RADIANT_API unsigned long int lastModified(const std::string & filePath);
   }
 }
 

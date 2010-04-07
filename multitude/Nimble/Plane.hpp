@@ -28,7 +28,9 @@ namespace Nimble
   {
   public:
     Plane();
+    /// Constructs a new plance given the plane normal and the constant
     Plane(const Nimble::Vector3f & normal, float constant);
+    /// Constructs a new plance given the plane normal and a point on the plane
     Plane(const Nimble::Vector3f & normal, const Nimble::Vector3f & point);
   
     /// Compute the signed distance to the plane. Distance is positive if the

@@ -23,14 +23,16 @@
 #include <sstream>
 #include <string.h>
 
+#include <sys/stat.h>
+
 #ifdef WIN32
 #include <io.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #endif
+
 
 using namespace std;
 
@@ -280,6 +282,14 @@ namespace Radiant
     suffixMatch(filePath, "mov");
     }
 
+    unsigned long int lastModified(const std::string & filePath)
+    {
+      struct stat file;
+      if(stat(filePath.c_str(), &file) == -1) {
+        return 0;
+      }
+      return file.st_mtime;
+    }
   }
 
 
