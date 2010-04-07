@@ -190,6 +190,14 @@ namespace Nimble {
   /// Histogram of signed integers
   typedef Histogram<int,256> Histogrami256;
 
+  // This is needed on Windows
+#ifdef WIN32
+#ifdef NIMBLE_EXPORT
+  template Histogram<unsigned int, 256>;
+  template Histogram<int, 256>;
+#endif
+#endif
+
 } // namespace
 
 #endif

@@ -209,6 +209,16 @@ inline std::istream &operator>>(std::istream &is, Nimble::Vector3T<T> &t)
 }
 
 /// @todo never use 'using' in a header file!
-using Nimble::operator *;
+//using Nimble::operator *;
+
+// These are needed under Windows
+#ifdef WIN32
+#   ifdef NIMBLE_EXPORT
+        template Nimble::Vector3T<float>;
+        template Nimble::Vector3T<unsigned char>;
+        template Nimble::Vector3T<int>;
+        template Nimble::Vector3T<double>;
+#   endif
+#endif
 
 #endif

@@ -16,6 +16,8 @@
 #ifndef RADIANT_RINGBUFFER_HPP
 #define RADIANT_RINGBUFFER_HPP
 
+#include <Radiant/Export.hpp>
+
 namespace Radiant {
 
   /** 
@@ -35,7 +37,7 @@ namespace Radiant {
   */
 
   template <class TElem>
-  class RingBuffer
+  class RADIANT_API RingBuffer
   {
   public:
     /**@name Constructors */
@@ -179,7 +181,7 @@ namespace Radiant {
       @author Tommi Ilmonen*/
 
   template <class TElem>
-  class RingBufferDelay : public RingBuffer<TElem>
+  class RADIANT_API RingBufferDelay : public RingBuffer<TElem>
   {
   public:
     RingBufferDelay() : m_position(0) {}
@@ -231,153 +233,6 @@ namespace Radiant {
   protected:
 
     unsigned   m_position;
-  };
-
-
-
-  /////////////////////////////////////////////////////////////////////////////
-  /////////////////////////////////////////////////////////////////////////////
-
-  /** Filter coefficients for third-order Lagrangian fractional delay
-      interpolation filters. */
-#define LAG3_INTCOEFFS 32
-
-  extern float lag3IntCoeffs[LAG3_INTCOEFFS * 4];
-
-  /** Buffer templates for float-buffer delays. This class introduces
-      methods that are used by many floating-point DSP-algorithms
-      (fractional delays, arithmetic operations).
-
-      <B>For fractional delays</B>, see the doctoral thesis by Vesa
-      V?im?i:
-      www.acoustics.hut.fi/~vpv/publications/vesan_vaitos/ch3_pt2_lagrange.pdf
-      (Especially page 86).
-
-      @author Tommi Ilmonen
-  */
-
-  /// @todo rename or remove
-  template <class TElem>
-  class RingBuffer2 : public RingBufferDelay<TElem>
-  {
-  public:
-    /// Creates an empty ring buffer with zero size
-    RingBuffer2() {} 
-    RingBuffer2(unsigned size) 
-      : RingBufferDelay<TElem>(size) {}
-
-    virtual ~RingBuffer2() {}
-
-    bool resize(unsigned size, bool reset = true)
-    {
-      bool ok = RingBuffer<TElem>::resize(size);
-      if(reset)
-	this->setAll((TElem) 0);
-      return ok;
-    }
-    
-    /** Get sample with first order Lagrangian fractional delay. 
-      
-	The interpolation method is the most simple possible first order 
-	interpolation.
-
-	You should use this method when dealing with {\em double} buffers.
-    */
-    inline TElem getInterpolatedNewest1D(double dDelay) const
-    {
-      const unsigned nDelay = (unsigned) dDelay;
-      const double d = dDelay - (double) nDelay;
-      return (TElem) (this->getNewestConst(nDelay) * (1.0 - d) +
-		      this->getNewestConst(nDelay+1) * d);
-    }
-  
-    /** Get sample with first order Lagrangian fractional delay.  
-      
-	The interpolation method is the most simple possible first order 
-	interpolation.
-
-	You should use this method only when dealing with {\em floating
-	point} buffers.
-    */
-    inline TElem getInterpolatedNewest1F(float fDelay) const
-    {
-      const unsigned nDelay = (unsigned) fDelay;
-      const float d = fDelay - (float) nDelay;
-      return (TElem) ((TElem) (this->getNewestConst(nDelay) * (1.0f - d)) +
-		      (TElem) (this->getNewestConst(nDelay+1) * d));
-    }
-
-    /** Get sample with second order Lagrangian fractional delay. 
-     */
-    inline TElem getInterpolatedNewest2D(double delay) const
-    {
-      const unsigned ndelay = (unsigned) delay;
-      const double d = delay - (double) ndelay;
-      const double dm1p2 = (d-1) * 0.5;
-      const double dm2 = d-2;
-      return (TElem) (this->getNewestConst(ndelay) * dm1p2 * dm2 +
-		      this->getNewestConst(ndelay+1) * -d * dm2 +
-		      this->getNewestConst(ndelay+2) * d * dm1p2);
-    }
-
-    /** Get sample with third order Lagrangian fractional delay. 
-     */
-    inline double getInterpolatedNewest3D(double delay) const
-    {
-      const unsigned ndelay = (unsigned) delay;
-      const double d = delay - (double) ndelay + 1.0;
-      const double dm1 = d-1;
-      const double dm2 = d-2;
-      const double dm3 = d-3;
-      const double dm12p6 = dm1 * dm2 * 0.16666666667;
-      const double dm03p2 = d * dm3 * 0.5;
-      return (TElem) 
-	(this->getNewestConst(ndelay-1) * -dm12p6 * dm3 +
-	 this->getNewestConst(ndelay)   *  dm03p2 * dm2 +
-	 this->getNewestConst(ndelay+1) * -dm03p2 * dm1 +
-	 this->getNewestConst(ndelay+2) *  dm12p6 * d);
-    }
-
-    /** Get sample with third order Lagrangian fractional delay.  This
-	method uses table lookup to avoid calculating the coefficients.
-
-	As a result it is a bit less accurate than the "slow" method
-	(getInterpolatedNewest3D).
-    */
-    inline double getInterpolatedNewest3DFast(double delay) const
-    {
-      const unsigned ndelay = (unsigned) delay;
-      const double d = delay - (double) ndelay;
-      const float * c = & lag3IntCoeffs[((unsigned) (d * LAG3_INTCOEFFS)) * 4];
-    
-      return (TElem) 
-	(this->getNewestConst(ndelay-1) * c[0] + 
-	 this->getNewestConst(ndelay)   * c[1] + 
-	 this->getNewestConst(ndelay+1) * c[2] + 
-	 this->getNewestConst(ndelay+2) * c[3]);
-    }
-
-    /// Get the maximum value from certain time range.
-    TElem getMax(unsigned nTime) const;
-
-    /// Get the maximum value from certain time range.
-    TElem getMin(unsigned nTime) const;
-
-    /// Calculate mean of absolute values.
-    TElem getMeanAbs() const 
-    {
-      TElem *x1 = this->m_line; TElem *xmax = &this->m_line[this->m_size];
-      TElem sum = 0;
-      while(x1 < xmax) sum += abs(*x1++);
-      return sum;
-    }
-
-    TElem autoCorrelation(unsigned deltaTime, unsigned countSamples) const;
-    TElem autoCorrelation2(unsigned deltaTime, 
-			   unsigned countSamples, 
-			   unsigned skipSamples) const;
-
-    //@}
   };
 
 } // namespace

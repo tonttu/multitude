@@ -391,6 +391,15 @@ namespace Nimble {
   /// Rectangle of doubles
   typedef RectT<double> Rectd;
 
+  // These are needed under Windows
+  #ifdef WIN32
+  #   ifdef NIMBLE_EXPORT
+          template Nimble::RectT<float>;
+          template Nimble::RectT<int>;
+          template Nimble::RectT<double>;
+  #   endif
+  #endif
+
 }
 
 #endif
