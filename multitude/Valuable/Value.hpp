@@ -5,7 +5,7 @@
 #include "ValueFloat.hpp"
 #include "ValueVector.hpp"
 
-#define DefineType(_Type, _Klass) template <> struct Value< _Type > { typedef _Klass klass; }
+#define DefineType(_Type, _Klass) template <> struct Value< _Type > { typedef _Klass Type; }
 #define DefineTypeT(_Type, _Klass) DefineType(_Type, _Klass< _Type >)
 
 namespace Valuable
@@ -13,7 +13,7 @@ namespace Valuable
 
   template <typename T> struct Value
   {
-    typedef ValueTyped<T> klass;
+    typedef ValueTyped<T> Type;
   };
 
   DefineTypeT(int, ValueIntT);
