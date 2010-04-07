@@ -308,7 +308,7 @@ namespace Luminous {
 
       // remove if failed or finished and inactive for too long
       if(item->m_state == FAILED || (item->m_state == FINISHED && item->m_unUsed > purgeTime && purgeTime >= 0)) {
-        info("CPUMipmaps:: # Dropping level %d from CPU", i);
+        debug("CPUMipmaps:: # Dropping level %d from CPU", i);
         m_stack[i].clear();
       }
     }
