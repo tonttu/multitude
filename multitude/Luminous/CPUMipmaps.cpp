@@ -26,6 +26,10 @@
 #include <cassert>
 #include <fstream>
 
+#ifdef WIN32
+#define snprintf _snprintf
+#endif
+
 namespace Luminous {
 
   using namespace Radiant;
