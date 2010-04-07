@@ -202,7 +202,8 @@ namespace VideoDisplay {
                                  Vector2 topleft, Vector2 bottomright,
                                  const Nimble::Matrix3f * transform = 0,
                                  Poetic::GPUFont * subtitleFont = 0,
-                                 float subTitleSpace = 0);
+                                 float subTitleSpace = 0,
+                                 float alpha = 1.0f);
 
     /// Pixel size of the video image.
     VIDEODISPLAY_API Nimble::Vector2i size() const;
