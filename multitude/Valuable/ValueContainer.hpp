@@ -6,6 +6,21 @@
 
 namespace Valuable
 {
+  /// Template class for all STL-like containers
+  /**
+    The container type can be nested STL-style container (like
+    ValueContainer<std::map<int, std::vector<float> > >), it will be
+    (de)serialized recursively.
+
+    Example:
+    \code
+    typedef ValueContainer<std::list<int> > List;
+    HasValue values;
+    List list(values, "list");
+    list->push_back(4);
+    List::iterator it = list->begin();
+    \endcode
+  */
   template<typename T> class ValueContainer : public ValueObject
   {
   public:

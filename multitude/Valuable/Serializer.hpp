@@ -35,10 +35,12 @@ namespace Valuable
   namespace Serializer
   {
     /// Trait class for compile time separation of different kinds of serializable objects
-    /** Usage: Trait<int>::type == Type::other
-               Trait<ValueInt>::type == Type::serializable
-               Trait<std::list<int> >::type == Type::container
-               Trait<std::pair<int, int> >::type == Type::pair
+    /** \code
+        Trait<int>::type == Type::other
+        Trait<ValueInt>::type == Type::serializable
+        Trait<std::list<int> >::type == Type::container
+        Trait<std::pair<int, int> >::type == Type::pair
+        \endcode
     */
     template <typename T> class Trait
     {

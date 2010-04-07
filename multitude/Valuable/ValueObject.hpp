@@ -176,8 +176,8 @@ namespace Valuable
     friend class HasValues;
   };
 
-  // Every ValueObject is some kind of ValueBase<T> object.
-  // Common functionality should be in either here or in ValueObject
+  /// Every ValueObject is some kind of ValueType<T> object.
+  /// Common functionality should be in either here or in ValueObject
   template <typename T> class ValueTyped : public ValueObject
   {
   public:
