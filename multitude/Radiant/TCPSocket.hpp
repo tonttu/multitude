@@ -38,6 +38,9 @@ namespace Radiant {
     TCPSocket(int fd);
     ~TCPSocket();
 
+    /** Turn the Nagle algorithm on or off. This controls the queuing of messages to fill packets.
+      @param noDelay if true, the queing is not used and packets are sent immediately
+    */
     bool setNoDelay(bool noDelay);
 
     /// Opens a TCP socket to desired host:port
@@ -50,7 +53,9 @@ namespace Radiant {
     /// Returns true of the socket is open.
     bool isOpen() const;
 
+    /// Returns the hostname
     const char * host() const;
+    /// Returns the port number
     int port() const;
 
     /// Read bytes from the socket
@@ -72,10 +77,13 @@ namespace Radiant {
     /// Convert an IP address to in_addr structure
     static struct in_addr *atoaddr(const char *address);
 
-    void debug();
+    //void debug();
 
+    /** Moves the ownership of the socket to another thread. Sockets can not be
+    created and used in different threads unless the ownership is moved with
+    this function. */
     void moveToThread(Thread * t);
-    
+
   private:
     friend class TCPServerSocket;
     

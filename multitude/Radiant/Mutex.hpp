@@ -18,7 +18,6 @@
 
 #include <Patterns/NotCopyable.hpp>
 
-#include <Radiant/Config.hpp>
 #include <Radiant/Export.hpp>
 
 namespace Radiant {
@@ -40,7 +39,7 @@ namespace Radiant {
 
 		Recursion should work on all platforms. */
 
-                /// @todo useless parameters (except recursive), get rid of them
+    /// @todo useless parameters (except recursive), get rid of them
 		bool init(bool shared = false, 
 			bool prio_inherit = true,
 			bool recursive = false);
@@ -65,7 +64,11 @@ namespace Radiant {
 
 		class D;
 		D * m_d;
-	protected:
+
+  protected:
+
+    /// Flag used to initialize static mutexes on non-linux platforms
+    /// @todo shouldn't this be moved to MutexStatic?
 		bool            m_active;
 	};
 
@@ -140,24 +143,25 @@ namespace Radiant {
 	class Guard : public Patterns::NotCopyable
 	{
 	public:
-		/// Locks the mutex
+    /// Constructs a new guard and locks the mutex
 		Guard(Mutex * mutex) : m_mutex(mutex) { m_mutex->lock(); }
-		Guard(Mutex & mutex) : m_mutex(&mutex) { m_mutex->lock(); }
+    /// Constructs a new guard and locks the mutex
+    Guard(Mutex & mutex) : m_mutex(&mutex) { m_mutex->lock(); }
 
 		/// Unlocks the mutex
 		~Guard() { m_mutex->unlock(); }
 
 	private:
 		Mutex * m_mutex;
-
 	};
 
 	/** A guard class for static mutexes. */
 	class GuardStatic : public Patterns::NotCopyable
 	{
 	public:
-		/// Locks the mutex
+    /// Constructs a new guard and locks the mutex
 		GuardStatic(MutexStatic * mutex) : m_mutex(mutex) { m_mutex->lock(); }
+    /// Constructs a new guard and locks the mutex
 		GuardStatic(MutexStatic & mutex) : m_mutex(&mutex) { m_mutex->lock(); }
 
 		/// Unlocks the mutex
@@ -165,7 +169,6 @@ namespace Radiant {
 
 	private:
 		MutexStatic * m_mutex;
-
 	};
 
 	/** A guard class that only releases a locked mutex. This class is
@@ -173,13 +176,13 @@ namespace Radiant {
 
 	@see Guard
 	*/
-
 	class ReleaseGuard : public Patterns::NotCopyable
 	{
 	public:
-		/// Locks the mutex
+    /// Constructs a new guard
 		ReleaseGuard(Mutex * mutex) : m_mutex(mutex) { }
-		ReleaseGuard(Mutex & mutex) : m_mutex( & mutex) { }
+    /// Constructs a new guard
+    ReleaseGuard(Mutex & mutex) : m_mutex( & mutex) { }
 
 		/// Unlocks the mutex
 		~ReleaseGuard() { m_mutex->unlock(); }
@@ -189,6 +192,5 @@ namespace Radiant {
 	};
 
 }
-
 
 #endif

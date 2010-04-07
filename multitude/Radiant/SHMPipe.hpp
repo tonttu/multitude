@@ -16,6 +16,8 @@
 #ifndef RADIANT_SM_PIPE_HPP
 #define RADIANT_SM_PIPE_HPP
 
+/// @cond
+
 #include <Radiant/BinaryData.hpp>
 #include <Radiant/Export.hpp>
 
@@ -163,5 +165,7 @@ namespace Radiant
   };
 
 }
+
+/// @endcond
 
 #endif

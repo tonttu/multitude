@@ -207,4 +207,14 @@ inline std::istream &operator>>(std::istream &is, Nimble::Vector4T<T> &t)
   return is;
 }
 
+// These are needed under Windows
+#ifdef WIN32
+#   ifdef NIMBLE_EXPORT
+        template Nimble::Vector4T<float>;
+        template Nimble::Vector4T<unsigned char>;
+        template Nimble::Vector4T<int>;
+        template Nimble::Vector4T<double>;
+#   endif
+#endif
+
 #endif

@@ -18,37 +18,12 @@
 
 #include <Nimble/Vector2.hpp>
 
-namespace Nimble {
+namespace Radiant
+{
 
-  float lag3IntCoeffs[LAG3_INTCOEFFS * 4];
+    template class RingBuffer<float>;
+    template class RingBuffer<int>;
+    template class RingBuffer<Nimble::Vector2>;
 
-  /// Initializes the lag3IntCoeffs structure.
-  bool lag3IntCoeffsCalculate()
-  {
-    for(unsigned i=0; i < LAG3_INTCOEFFS; i++) {
-      double delay = (double) i / (double) LAG3_INTCOEFFS;
-
-      /*const ulong ndelay = (ulong) delay;
-    const double d = delay - (double) ndelay;*/
-      const double d = delay + 1.0;
-      const double dm1 = d-1;
-      const double dm2 = d-2;
-      const double dm3 = d-3;
-      const double dm12p6 = dm1 * dm2 * (1.0 / 6.0);
-      const double dm03p2 = d * dm3 * 0.5;
-
-      float * target = lag3IntCoeffs + i * 4;
-
-      *target++ = (float) (-dm12p6 * dm3);
-      *target++ = (float) ( dm03p2 * dm2);
-      *target++ = (float) (-dm03p2 * dm1);
-      *target   = (float) ( dm12p6 * d);
-    }
-    return true;
-  }
-
+    template class RingBufferDelay<Nimble::Vector2>;
 }
-
-template class Radiant::RingBuffer<float>;
-template class Radiant::RingBuffer<int>;
-template class Radiant::RingBuffer<Nimble::Vector2>;

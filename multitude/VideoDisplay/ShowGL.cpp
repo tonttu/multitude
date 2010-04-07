@@ -576,7 +576,8 @@ namespace VideoDisplay {
                       Vector2 topleft, Vector2 bottomright,
                       const Nimble::Matrix3f * transform,
                       Poetic::GPUFont * subtitleFont,
-                      float subTitleSpace)
+                      float subTitleSpace,
+                      float alpha)
   {
 
     debug("ShowGL::render");
@@ -626,7 +627,7 @@ namespace VideoDisplay {
 
     glEnable(GL_BLEND);
 
-    Nimble::Vector4 white(1, 1, 1, 1);
+    Nimble::Vector4 white(1, 1, 1, alpha);
 
     if(transform) {
       Nimble::Matrix3 m = *transform * Nimble::Matrix3::translate2D(topleft);

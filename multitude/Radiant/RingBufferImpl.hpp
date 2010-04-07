@@ -81,66 +81,6 @@ namespace Radiant {
     return *this;
   }
 
-  /////////////////////////////////////////////////////////////////////////////
-  /////////////////////////////////////////////////////////////////////////////
-
-  template <class TElem>
-  TElem RingBuffer2<TElem>::getMax(unsigned nTime) const
-  {
-    TElem xRes = this->getNewestConst();
-    for(unsigned nI=1; nI < nTime; nI++) {
-      const TElem *xpTmp = &this->getNewestConst(nI);
-      if(*xpTmp > xRes)
-	xRes = *xpTmp;
-    }
-    return xRes;
-  }
-
-  template <class TElem>
-  TElem RingBuffer2<TElem>::getMin(unsigned nTime) const
-  {
-    TElem xRes = this->getNewestConst();
-    for(unsigned nI=1; nI < nTime; nI++) {
-      const TElem *xpTmp = &this->getNewestConst(nI);
-      if(*xpTmp < xRes)
-	xRes = *xpTmp;
-    }
-    return xRes;
-  }
-
-  /** Calculates the autocorrelation of the signal. 
-
-      @arg deltaTime The time difference of the correlation function.
-
-      @arg countSamples The number of samples to be for autocorrelation
-      calculus.
-  */
-
-  template <class TElem>
-  TElem RingBuffer2<TElem>::autoCorrelation
-  (unsigned deltaTime, unsigned countSamples) const
-  {
-    TElem correlation = 0;
-
-    for(unsigned i=0; i < countSamples; i++)
-      correlation += this->getNewestConst(i) * this->getNewestConst(i + deltaTime);
-
-    return correlation;
-  }
-
-  template <class TElem>
-  TElem RingBuffer2<TElem>::autoCorrelation2(unsigned deltaTime, 
-					     unsigned countSamples, 
-					     unsigned skipSamples) const
-  {
-    TElem correlation = 0;
-
-    for(unsigned i=0; i < countSamples; i += skipSamples)
-      correlation += this->getNewestConst(i) * this->getNewestConst(i + deltaTime);
-
-    return correlation;
-  }
-
 }
 
 #endif

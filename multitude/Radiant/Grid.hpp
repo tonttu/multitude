@@ -33,18 +33,23 @@ namespace Radiant {
   class RADIANT_API GridMemT
   {
   public:
+    /// Constructs a new grid with the given size
     GridMemT(unsigned w = 0, unsigned h = 0);
+    /// Constructs a copy
     GridMemT(const GridMemT & that) : m_data(0), m_width(0), m_height(0) 
     { *this = that; }
     ~GridMemT();
 
+    /// Resizes the grid
     void resize(unsigned w, unsigned h);
+    /// Resizes the grid
     void resize(Nimble::Vector2i size) { resize(size.x, size.y); }
     
     /** frees up the memory, and sets the width and height of this
 	object to zero. */ 
     void clear() { delete [] m_data; m_width = m_height = 0; m_data = 0; }
 
+    /// Copies data from memory
     void copy(T * src, unsigned w, unsigned h)
     {
       resize(w, h);
@@ -56,16 +61,20 @@ namespace Radiant {
       }
     }
 
+    /// Copies a grid
     GridMemT & operator = (const GridMemT & that)
     {
       copy(that.m_data, that.m_width, that.m_height);
       return *this;
     }
 
-
   protected:
+    /// Pointer to the raw data
     T * m_data;
-    unsigned m_width, m_height;
+    /// Width of the grid
+    unsigned m_width;
+    /// Height of the grid
+    unsigned m_height;
   };
 
   /// Grid base class without memory management
@@ -76,15 +85,18 @@ namespace Radiant {
   class RADIANT_API GridNoMemT
   {
   public:
+    /// Constructs a new grid with the given size
     GridNoMemT(T * data = 0, unsigned w = 0, unsigned h = 0)
       : m_data(data), m_width(w), m_height(h)
     {}
 
+    /// Constructs a shallow copy of the grid
     template <class S>
     GridNoMemT(S & that)
       : m_data(that.data()), m_width(that.width()), m_height(that.height())
     {}
 
+    /// Makes a shallow copy of the grid
     template <class S>
     GridNoMemT & operator = (S & that)
     {
@@ -94,10 +106,16 @@ namespace Radiant {
       return * this;
     }
 
+    /// Clears the internal variables. Does not release memory
     void clear() { m_width = m_height = 0; m_data = 0; }
+
   protected:
+    /// Pointer to raw data
     T * m_data;
-    unsigned m_width, m_height;
+    /// Width of the grid
+    unsigned m_width;
+    /// Height of the grid
+    unsigned m_height;
   };
 
 #if 0
@@ -119,19 +137,23 @@ namespace Radiant {
   class RADIANT_API GridT : public Base
   {
   public:
+    /// Iterator for the grid
     typedef T * iterator;
+    /// Const iterator for the grid
     typedef const T * const_iterator;
     
     GridT() {}
 
+    /// Constructs a copy
     template <class S>
     GridT(S & that) : Base(that) {}
+
+    /// @todo Is this #define needed?
 #ifndef WIN32
     /** Constructor that takes the elements from the data pointer,
 	with given width and height. */
     GridT(T * data, unsigned w, unsigned h) : Base(data, w, h) {}
 #else
-
     GridT(T * data, unsigned w, unsigned h)
     {
       this->m_width = w;
@@ -140,11 +162,14 @@ namespace Radiant {
     }
 #endif
 
+    /// Checks if the given point is inside the grid
     inline bool isInside(unsigned x, unsigned y)
     { return (x < this->m_width) && (y < this->m_height); }
+    /// Checks if the given point is inside the grid
     inline bool isInside(const Nimble::Vector2i & v)
     { return ((unsigned) v.x < this->m_width) &&
         ((unsigned) v.y < this->m_height); }
+    /// Checks if the given point is inside the grid
     inline bool isInside(const Nimble::Vector2f & v)
     { return ((unsigned) v.x < this->m_width) &&
         ((unsigned) v.y < this->m_height); }
@@ -156,14 +181,17 @@ namespace Radiant {
 	data. */
     inline T & get(unsigned x, unsigned y)
     { GRID_CHECK(x,y); return this->m_data[this->m_width * y + x]; }
+    /// @copydoc get
     inline const T & get(unsigned x, unsigned y) const
     { GRID_CHECK(x,y); return this->m_data[this->m_width * y + x]; }
 
+    /// @copydoc get
     inline T & get(const Nimble::Vector2i & v)
     { GRID_CHECK2(v); return this->m_data[this->m_width * v.y + v.x]; }
+    /// @copydoc get
     inline const T & get(const Nimble::Vector2i & v) const
     { GRID_CHECK2(v); return this->m_data[this->m_width * v.y + v.x]; }
-
+    /// @copydoc get
     inline T & get(const Nimble::Vector2f & v)
     { 
       GRID_CHECK2(v); 
@@ -174,6 +202,7 @@ namespace Radiant {
 	the grid area, then zero is returned. */
     inline T getSafe(const Nimble::Vector2i & v)
     { if(isInside(v)) return this->m_data[this->m_width * v.y + v.x];return 0;}
+    /// @copydoc getSafe
     inline T getSafe(int x, int y)
     { if(isInside(x, y)) return this->m_data[this->m_width * y + x];return 0;}
 
@@ -187,16 +216,17 @@ namespace Radiant {
       return this->m_data[this->m_width * y + x];
     }
     
-    // Return a pointer to one line (aka row)
+    /// Return a pointer to one line (aka row)
     inline T * line(int y)
     { return & this->m_data[this->m_width * y]; }
-    // Return a clonst pointer to one line (aka row)
+    /// Return a const pointer to one line (aka row)
     inline const T * line(int y) const 
     { return & this->m_data[this->m_width * y]; }
     
     /// Writes zeroes over the memory buffer (using bzero)
     inline void zero() { bzero(this->data(), size() * sizeof(T)); }
 
+    /// Fills the grid with the given value
     inline void fill(const T & val, int xlow, int ylow, int width, int height);
 
     /// Sets all grid elements to the given value
@@ -244,34 +274,25 @@ namespace Radiant {
     }
   }
 
+  /// A grid of bytes without memory management
   typedef GridT<uint8_t, GridNoMemT<uint8_t> > PtrGrid8u;
+  /// A grid of bytes with memory management
   typedef GridT<uint8_t, GridMemT<uint8_t> >   MemGrid8u;
 
+  /// A grid of 16-bit values without memory management
   typedef GridT<uint16_t, GridNoMemT<uint16_t> > PtrGrid16u;
+  /// A grid of 16-bit values with memory management
   typedef GridT<uint16_t, GridMemT<uint16_t> >   MemGrid16u;
 
+  /// A grid of floats without memory management
   typedef GridT<float, GridNoMemT<float> > PtrGrid32f;
+  /// A grid of floats with memory management
   typedef GridT<float, GridMemT<float> >   MemGrid32f;
 
+  /// A grid of color values without memory management
   typedef GridT<RGBAu8, GridNoMemT<RGBAu8> > PtrGridRGBAu8;
+  /// A grid of color values with memory management
   typedef GridT<RGBAu8, GridMemT<RGBAu8> >   MemGridRGBAu8;
-
-#ifdef WIN32
-#ifdef RADIANT_EXPORT
-  // In WIN32 template classes must be instantiated to be exported
-  template class GridT<uint8_t, GridNoMemT<uint8_t>>;
-  template class GridT<uint8_t, GridMemT<uint8_t>>;
-
-  template class GridT<uint16_t, GridNoMemT<uint16_t>>;
-  template class GridT<uint16_t, GridMemT<uint16_t>>;
-
-  template class GridT<float, GridNoMemT<float>>;
-  template class GridT<float, GridMemT<float>>;
-
-  template class GridT<RGBAu8, GridNoMemT<RGBAu8>>;
-  template class GridT<RGBAu8, GridMemT<RGBAu8>>;
-#endif
-#endif
 
 }
 

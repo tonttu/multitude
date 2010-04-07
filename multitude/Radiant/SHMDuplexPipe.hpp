@@ -16,6 +16,8 @@
 #ifndef RADIANT_SM_DUPLEX_PIPE_HPP
 #define RADIANT_SM_DUPLEX_PIPE_HPP
 
+/// @cond
+
 #include <Radiant/SHMPipe.hpp>
 
 namespace Radiant
@@ -49,6 +51,8 @@ namespace Radiant
   };
 
 }
+
+/// @endcond
 
 #endif
 

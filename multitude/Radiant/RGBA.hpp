@@ -34,26 +34,30 @@ namespace Radiant {
   class RADIANT_API RGBAT
   {
   public:
+    /// Constructs a new color with the given values
     RGBAT(T r = 0, T g = 0, T b = 0, T a = 0) : r(r), g(g), b(b), a(a) { }
 
+    /// Compares two colors
     inline bool operator == (const RGBAT & that) const
     {
       return r == that.r && g == that.g && b == that.b && a == that.a;
     }
 
+    /// Checks if the alpha is zero
     inline bool isBlank() const { return a == 0; }
 
-    T r, g, b, a;
+    /// Red component
+    T r;
+    /// Green component
+    T g;
+    /// Blue component
+    T b;
+    /// Alpha component
+    T a;
   };
 
+  /// RGBA color of four bytes
   typedef RGBAT<uint8_t> RGBAu8;
-
-#ifdef WIN32
-#ifdef RADIANT_EXPORT
-  // In WIN32 template classes must be instantiated to be exported
-  template class RGBAT<uint8_t>;
-#endif
-#endif
 
 }
 

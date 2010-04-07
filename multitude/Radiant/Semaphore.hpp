@@ -20,22 +20,36 @@
 
 namespace Radiant {
 
-    class Semaphore : public Patterns::NotCopyable
-    {
-    public:
-        Semaphore(int n = 0);
-        ~Semaphore();
+  /** Provides a general counting semaphore. */
+  class Semaphore : public Patterns::NotCopyable
+  {
+  public:
+    /// Initialize the semaphore to guard n resources
+    /// @param n number of resources to guard (default 0)
+    Semaphore(int n = 0);
+    ~Semaphore();
 
-        void acquire(int n = 1);
-        void release(int n = 1);
+    /// Try to acquire resources. This will block until available() >= n.
+    /// @param n number of resources to acquire
+    void acquire(int n = 1);
+    /// Release resources
+    /// @param n number of resources to release
+    void release(int n = 1);
 
-        void tryAcquire(int n = 1);
-        void tryAcquire(int n, int timeoutMs);
+    /// Try to acquire resources. Does not block.
+    /// @param n number of resources to acquire
+    /// @return true if requested resources were available, otherwise false
+    bool tryAcquire(int n = 1);
+    /// Try to acquire resources. This call will block for at most the given timeout if available() < n.
+    /// @param n number of resources to acquire
+    /// @param timeoutMs time to wait for resources if they are not avaible
+    /// @return true if requested resources were acquired, otherwise false
+    bool tryAcquire(int n, int timeoutMs);
 
-    private:
-        class D;
-        D * m_d;
-    };
+  private:
+    class D;
+    D * m_d;
+  };
 
 }
 

@@ -17,7 +17,6 @@
 #define RESONANT_AUDIO_FILE_HANDLER_HPP
 
 #include <Radiant/Condition.hpp>
-#include <Radiant/Config.hpp>
 #include <Radiant/IODefs.hpp>
 #include <Radiant/Thread.hpp>
 

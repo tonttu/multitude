@@ -16,6 +16,8 @@
 #ifndef RADIANT_FIXED_STR_IMPL_HPP
 #define RADIANT_FIXED_STR_IMPL_HPP
 
+/// @cond
+
 #include "FixedStr.hpp"
 
 namespace Radiant
@@ -119,5 +121,7 @@ namespace Radiant
   }
 
 }
+
+/// @endcond
 
 #endif

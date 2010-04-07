@@ -24,12 +24,8 @@
 #include <time.h>
 
 #ifndef WIN32
-#include <unistd.h>
-#include <sys/time.h>
-#else
-
-//#include <WinPort.h>		// for sleep() and nanosleep()
-//#include <pthread.h>		// for struct timespec
+#  include <unistd.h>
+#  include <sys/time.h>
 #endif
 
 #define RADIANT_BILLION 1000000000
@@ -37,64 +33,7 @@
 
 namespace Radiant {
 
-  class Mutex;
   class TimeStamp;
-
-  enum Timing {
-    TIMING_GOOD,
-    TIMING_LATE,
-    TIMING_EARLY
-  };
-
-  // POSIX-specific functions:
-#ifndef WIN32
-  /// @todo Check if these functions are needed.
-  inline void addTimeNs(struct timespec *tspec, long ns)
-  {
-    tspec->tv_nsec += ns;
-    if(tspec->tv_nsec >= RADIANT_BILLION) {
-      long tmp = tspec->tv_nsec / RADIANT_BILLION;
-      tspec->tv_sec += tmp;
-      tspec->tv_nsec = tspec->tv_nsec - tmp * RADIANT_BILLION;
-    }
-  }
-
-  inline void addTimeUs(struct timeval *tspec, long us)
-  {
-    tspec->tv_usec += us;
-    if(tspec->tv_usec >= RADIANT_MILLION) {
-      long tmp = tspec->tv_usec / RADIANT_MILLION;
-      tspec->tv_sec += tmp;
-      tspec->tv_usec = tspec->tv_usec - tmp * RADIANT_MILLION;
-    }
-  }
-
-  inline void addTime(struct timeval *tspec, const struct timeval *tspecAdd)
-  {
-    tspec->tv_sec  += tspecAdd->tv_sec;
-    tspec->tv_usec += tspecAdd->tv_usec;
-    if(tspec->tv_usec >= RADIANT_MILLION) {
-      long tmp = tspec->tv_usec / RADIANT_MILLION;
-      tspec->tv_sec += tmp;
-      tspec->tv_usec = tspec->tv_usec - tmp * RADIANT_MILLION;
-    }
-  }
-
-  inline long timeDiffNs(const struct timespec *tspecOld,
-             const struct timespec *tspecNew)
-  {
-    return long((tspecNew->tv_sec - tspecOld->tv_sec) * RADIANT_BILLION +
-      tspecNew->tv_nsec - tspecOld->tv_nsec);
-  }
-
-  inline long timeDiffUs(const struct timeval *tspecOld,
-             const struct timeval *tspecNew)
-  {
-    return long((tspecNew->tv_sec - tspecOld->tv_sec) * RADIANT_MILLION +
-      tspecNew->tv_usec - tspecOld->tv_usec);
-  }
-
-#endif // !WIN32
 
   /** Sleeping services. This class contains only static member
       functions. The constructor and destructor are included to prevent
@@ -147,9 +86,6 @@ namespace Radiant {
     /** This function calculates how much time has passed since the
     last sleep and sleeps to fulfill the required time period. */
     long sleepSynchroUs(long us);
-
-    // @todo Unused(?), remove
-    long sleepTo(const TimeStamp *stamp, Mutex *mutex = 0);
 
   private:
 

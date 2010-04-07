@@ -27,8 +27,10 @@ namespace Radiant {
   class ClonablePtr
   {
   public:
+    /// Constructs a new pointer
     ClonablePtr(T * obj = 0) : m_object(obj) {}
 
+    /// Constructs a copy
     ClonablePtr(const ClonablePtr &that)
     {
       if(that.m_object)
@@ -39,6 +41,7 @@ namespace Radiant {
 
     ~ClonablePtr() { delete m_object; }
 
+    /// Copies a pointer
     ClonablePtr & operator = (const ClonablePtr &that)
     {
       delete m_object;
@@ -49,7 +52,9 @@ namespace Radiant {
 	m_object = 0;
     }
 
+    /// Returns a raw pointer to the object
     T * ptr() { return m_object; }
+    /// Returns a raw pointer to the object
     const T * ptr() const { return m_object; }
     
   private:

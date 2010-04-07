@@ -47,10 +47,15 @@ namespace Radiant
 
       */
       Color(const char * color);
+      /// Constructs a color from the given bytes
       Color(unsigned char r, unsigned char g, unsigned char b, unsigned char a = 255);
+      /// Constructs a color from the given integers. The values are expected to be [0,255]
       Color(int r, int g, int b, int a = 255);
+      /// Constructs a color from the given floats. The values are expected to be [0,1]
       Color(float r, float g, float b, float a = 1.f);
+      /// Constructs a color from the given doubles. The values are expected to be [0,1]
       Color(double r, double g, double b, double a = 1.f);
+      /// Constructs a color from the given vector. The component values are expected to be [0,1]
       Color(const Nimble::Vector4f & v);
       ~Color();
 

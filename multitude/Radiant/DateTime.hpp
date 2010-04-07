@@ -27,6 +27,7 @@ namespace Radiant {
   {
   public:
 
+    /// Format for date & time
     enum DateFormat {
       /// Date and time in ISO format
       DATE_TIME_ISO,
@@ -35,6 +36,7 @@ namespace Radiant {
     };
 
     DateTime();
+    /// Constructs a copy
     DateTime(const TimeStamp & );
     ~DateTime();
 
@@ -52,29 +54,42 @@ namespace Radiant {
     int minute() const { return m_minute; }
     /// Seconds since last full minute (0-59)
     int second() const { return m_second; }
+    /// Milliseconds since last full minute (0-59)
     int milliSecond() const { return m_microsecond / 1000; }
+    /// Microseconds since last full minute (0-59)
     int microSecond() const { return m_microsecond; }
     /// Reset the hour, minute and second values to zero
     void clearTime();
 
+    /// Set the year
     void setYear(int year) { m_year = year; }
+    /// Set the month
     void setMonth(int month) { m_month = month; }
+    /// Set the day of the month
     void setMonthDay(int monthDay) { m_monthDay = monthDay; }
+    /// Set the day of the week
     void setWeekDay(int weekDay) { m_weekDay = weekDay; }
+    /// Set the hour
     void setHour(int hour) { m_hour = hour; }
+    /// Set the minute
     void setMinute(int minute) { m_minute = minute; }
+    /// Set the second
     void setSecond(int second) { m_second = second; }
 
+    /// Advance time to next year
     void toNextYear();
+    /// Advance time to next month
     void toNextMonth();
+    /// Advance time to next day of the month
     void toNextMonthDay();
+    /// Read time and date from a string
     bool fromString(const std::string & s, DateFormat format = DATE_ISO);
 
     /** Returns the number of days in the month. This function does
     take the leap years into account, so the length of Febuary changes
     between 28 and 29 days, depending on the year.
 
-    @todo Make the leap-year calculations take the loonger cycles
+    @todo Make the leap-year calculations take the longer cycles
     into account.
     */
     static int daysInMonth(int month, int year);
@@ -83,6 +98,7 @@ namespace Radiant {
     takes the leap-years into account. */
     int daysInMonth();
 
+    /// Return the date and time as a TimeStamp
     TimeStamp asTimeStamp() const;
 
     /** Prints the date-time information to a string. */

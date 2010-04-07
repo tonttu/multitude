@@ -186,6 +186,7 @@ namespace Nimble {
     /// The y offset to the origin of the output display area
     int dpyY()  const { return m_dpyY; }
 
+    /// The offset to the origin of the output display area
     Nimble::Vector2f dpyOffset() const
     { return Nimble::Vector2i(m_dpyX, m_dpyY); }
 

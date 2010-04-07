@@ -1,6 +1,8 @@
 #ifndef RADIANT_VIDEOCAMERAPTGREY_HPP
 #define RADIANT_VIDEOCAMERAPTGREY_HPP
 
+/// @cond
+
 #include <Radiant/Export.hpp>
 #include <Radiant/VideoCamera.hpp>
 #include <Radiant/CameraDriver.hpp>
@@ -83,5 +85,7 @@ namespace Radiant
   };
 
 }
+
+/// @endcond
 
 #endif

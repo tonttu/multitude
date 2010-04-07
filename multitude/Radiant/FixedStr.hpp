@@ -16,6 +16,8 @@
 #ifndef RADIANT_FIXED_STR_HPP
 #define RADIANT_FIXED_STR_HPP
 
+/// @cond
+
 #include <Nimble/Matrix3.hpp>
 #include <Nimble/Vector4.hpp>
 
@@ -64,5 +66,7 @@ namespace Radiant {
   };
 
 }
+
+/// @endcond
 
 #endif

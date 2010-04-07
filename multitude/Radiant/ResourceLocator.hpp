@@ -44,13 +44,17 @@ namespace Radiant
         front of the list, otherwise it is put at the end of the
         list. **/
       void addPath(const std::string & path, bool front = false);
+      /** @copydoc addPath*/
       void addModuleDataPath(const std::string & module, bool front = false);
 
       /// Locate a file
       std::string locate(const std::string & file) const;
+      /// Locate a file that can be written
       std::string locateWriteable(const std::string & file) const;
+      /// Locate an existing file that can be written
       std::string locateOverWriteable(const std::string & file) const;
 
+      /// Returns a ResourceLocator instance
       static ResourceLocator & instance() { return s_instance; }
 
     private:

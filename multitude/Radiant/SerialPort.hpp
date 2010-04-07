@@ -21,12 +21,11 @@
 #include <stdint.h>
 
 #ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-//#include <WinPort.h>
+# define WIN32_LEAN_AND_MEAN
+# include <windows.h>
 #else
-#include <stdint.h>
-#include <unistd.h>
+# include <stdint.h>
+# include <unistd.h>
 #endif
 
 #include <string>
@@ -48,19 +47,21 @@ namespace Radiant
     ~SerialPort();
   
     /// Opens a serial port for communications
-    /** If the port was open, this method will close it before opening it. */
+    /** If the port was open, this method will close it before opening it.
+      @param device name of the device to open
+      @param stopBit Use stop bit?
+      @param parityBit Use parity stop bit?
+      @param baud The baud rate
+      @param bits The number of data bits
+      @param waitBytes The number of bytes to read before returning
+      @param waitTimeUS Time to wait in microseconds
+      */
     bool open(const char * device, 
-	      /// Use stop bit
 	      bool stopBit, 
-	      /// Use parity bit
 	      bool parityBit,
-	      /// The baud rate
 	      int baud, 
-	      /// The number of data bits
 	      int bits, 
-	      /// The number of bytes to be read before returning
 	      int waitBytes, 
-	      /// Time to wait in microseconds
 	      int waitTimeUS);
     /// Close the serial port.
     bool close();
@@ -68,13 +69,15 @@ namespace Radiant
     /// Write bytes to the port
     /** This method returns the number of bytes written. */
     int write(const void * buf, int bytes);
+    /// Writes a byte to the port
     int writeByte(uint8_t byte);
     /// Read bytes from the port
     /** This method returns the number of bytes read. */
     int read(void * buf, int bytes);
 
+    /// Checks if the port is open
     bool isOpen() const;
-  
+    /// Returns the name of the device
     const std::string & deviceName() { return m_device; }
 
   private:

@@ -42,7 +42,9 @@ namespace Radiant {
     /// Returns true of the socket is open.
     bool isOpen() const;
 
+    /// Returns the hostname
     const char * host() const;
+    /// Returns the port number
     int port() const;
 
     /// Return 'true' if connection pending.
