@@ -30,14 +30,14 @@ namespace Radiant
         m_d->release(n);
     }
 
-    void Semaphore::tryAcquire(int n)
+    bool Semaphore::tryAcquire(int n)
     {
-        m_d->tryAcquire(n);
+        return m_d->tryAcquire(n);
     }
 
-    void Semaphore::tryAcquire(int n, int timeoutMs)
+    bool Semaphore::tryAcquire(int n, int timeoutMs)
     {
-        m_d->tryAcquire(n, timeoutMs);
+        return m_d->tryAcquire(n, timeoutMs);
     }
 
 

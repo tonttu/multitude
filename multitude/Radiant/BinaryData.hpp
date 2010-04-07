@@ -73,6 +73,7 @@ namespace Radiant {
   {
   public:
     BinaryData();
+    /// Copy constructor
     BinaryData(const BinaryData & );
     ~BinaryData();
 
@@ -93,6 +94,7 @@ namespace Radiant {
 
     /// Write a null-terminated string to the buffer
     void writeString(const char *);
+    /// Write a string to the buffer
     void writeString(const std::string & str) { writeString(str.c_str()); }
     /** Writes a wide-string to the buffer. The string is internally
     stored as 32-bit integers, since that is the typical
@@ -118,8 +120,10 @@ namespace Radiant {
     /// Writes a 4D 32-bit float vector to the data buffer
     void writeVector4Float32(const Nimble::Vector4f &);
 
+    /// Appends another BinaryData object to this
     void append(const BinaryData & that);
 
+    /// Read a value from the data
     template <class T> inline T read(bool * ok = 0);
 
     /// Reads a 32-bit floating point number from the data buffer
@@ -135,6 +139,7 @@ namespace Radiant {
     int64_t readTimeStamp(bool * ok = 0);
     /// Read a null-terminated string from the buffer
     bool readString(char * str, size_t maxbytes);
+    /// Read a string from the buffer
     bool readString(std::string & str);
     /// Reads a wide string from the buffer
     bool readWString(std::wstring & str);
@@ -163,15 +168,22 @@ namespace Radiant {
     /// Rewind the index pointer to the beginning
     inline void rewind() { m_current = 0; }
 
+    /// Returns the total number of bytes used by this buffer
     inline int total() const { return m_total; }
+    /// Sets the total number of bytes used by this buffer
     inline void setTotal(int bytes) { m_total = bytes; }
 
+    /// Writes the buffer into a stream
     bool write(Radiant::BinaryStream *);
+    /// Reads the buffer from a stream
     bool read(Radiant::BinaryStream *);
 
+    /// Returns a pointer to the buffer
     inline char * data() { return & m_buf[0]; }
+    /// Returns a pointer to the buffer
     inline const char * data() const { return & m_buf[0]; }
 
+    /// Makes the buffer point to existing memory. The shared memory will not be freed when the BinaryData object is destroyed.
     void linkTo(void * data, int capacity);
 
     /// Ensure that at least required amount of bytes is available
@@ -179,6 +191,7 @@ namespace Radiant {
     /// Rewind the buffer and fill it with zeroes
     void clear();
 
+    /// Copy a buffer object
     inline BinaryData & operator = (const BinaryData & that)
     { rewind(); append(that); return * this;}
 

@@ -38,6 +38,7 @@ namespace Radiant {
     FPS_COUNT
   };
 
+  /// Flags for video input stream
   enum VideoInputFlags {
     DONT_CARE = -1,
     /// Try to decode the video data from the data stream
@@ -50,7 +51,9 @@ namespace Radiant {
     MONOPHONIZE_AUDIO = 0x8
   };
 
+  /// Convert enumerated frame rate into floating point
   RADIANT_API float asFloat(FrameRate);
+  /// Return the closest enumerated frame rate given a floating point value
   RADIANT_API FrameRate closestFrameRate(float fps);
 
   /// Base class for video input classes.
@@ -64,8 +67,6 @@ namespace Radiant {
   class RADIANT_API VideoInput
   {
   public:
-
-
     virtual ~VideoInput();
 
     /**

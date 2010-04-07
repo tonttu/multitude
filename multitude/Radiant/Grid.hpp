@@ -244,34 +244,25 @@ namespace Radiant {
     }
   }
 
+  /// A grid of bytes without memory management
   typedef GridT<uint8_t, GridNoMemT<uint8_t> > PtrGrid8u;
+  /// A grid of bytes with memory management
   typedef GridT<uint8_t, GridMemT<uint8_t> >   MemGrid8u;
 
+  /// A grid of 16-bit values without memory management
   typedef GridT<uint16_t, GridNoMemT<uint16_t> > PtrGrid16u;
+  /// A grid of 16-bit values with memory management
   typedef GridT<uint16_t, GridMemT<uint16_t> >   MemGrid16u;
 
+  /// A grid of floats without memory management
   typedef GridT<float, GridNoMemT<float> > PtrGrid32f;
+  /// A grid of floats with memory management
   typedef GridT<float, GridMemT<float> >   MemGrid32f;
 
+  /// A grid of color values without memory management
   typedef GridT<RGBAu8, GridNoMemT<RGBAu8> > PtrGridRGBAu8;
+  /// A grid of color values with memory management
   typedef GridT<RGBAu8, GridMemT<RGBAu8> >   MemGridRGBAu8;
-
-#ifdef WIN32
-#ifdef RADIANT_EXPORT
-  // In WIN32 template classes must be instantiated to be exported
-  template class GridT<uint8_t, GridNoMemT<uint8_t>>;
-  template class GridT<uint8_t, GridMemT<uint8_t>>;
-
-  template class GridT<uint16_t, GridNoMemT<uint16_t>>;
-  template class GridT<uint16_t, GridMemT<uint16_t>>;
-
-  template class GridT<float, GridNoMemT<float>>;
-  template class GridT<float, GridMemT<float>>;
-
-  template class GridT<RGBAu8, GridNoMemT<RGBAu8>>;
-  template class GridT<RGBAu8, GridMemT<RGBAu8>>;
-#endif
-#endif
 
 }
 

@@ -84,6 +84,7 @@ namespace Radiant {
       to the user. Otherwise they are silently ignored
   */
   RADIANT_API void enableVerboseOutput(bool enable);
+  /// Returns true if the #debug function output is displayed
   RADIANT_API bool enabledVerboseOutput();
   
   /** Sets the application name to be used in debug output. 

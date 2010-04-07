@@ -31,20 +31,14 @@ namespace Radiant {
       quotation marks around the main content.
       The quotation marks are removed in the reading process, as are leading-, and trailing
       spaces.
-
   */
-
-
   class RADIANT_API CSVDocument
   {
   public:
 
-    class RADIANT_API Row : public std::vector<std::wstring>
-    {
-    public:
-      Row() {}
-    };
-
+    /// A single row of data
+    typedef std::vector<std::wstring> Row;
+    /// A list of rows
     typedef std::list<Row> Rows;
 
     CSVDocument();
@@ -69,9 +63,11 @@ namespace Radiant {
 
     /// Returns an iterator to the first row in the document
     Rows::iterator begin() { return m_rows.begin(); }
+    /// Returns an iterator to the first row in the document
     Rows::const_iterator begin() const { return m_rows.begin(); }
     /// Returns an iterator after the last row of the document
     Rows::iterator end() { return m_rows.end(); }
+    /// Returns an iterator after the last row of the document
     Rows::const_iterator end() const { return m_rows.end(); }
 
     /// Returns the number of rows in the document

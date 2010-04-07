@@ -46,14 +46,8 @@ namespace Radiant {
     T r, g, b, a;
   };
 
+  /// RGBA color of four bytes
   typedef RGBAT<uint8_t> RGBAu8;
-
-#ifdef WIN32
-#ifdef RADIANT_EXPORT
-  // In WIN32 template classes must be instantiated to be exported
-  template class RGBAT<uint8_t>;
-#endif
-#endif
 
 }
 

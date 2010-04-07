@@ -54,16 +54,21 @@ namespace Radiant {
 	{
 	public:
 		Condition();
-
 		~Condition();
 
+    /** Waits on the wait condition. The mutex must be locked by the calling thread and is released. If the mutex is not locked the function will return immediately. */
 		int wait(Mutex &mutex);
+    /** Waits on the wait condition for at most the given time. The mutex must be locked by the calling thread and is released. If the mutex is not locked the function will return immediately. */
 		int wait(Mutex &mutex, int millsecs);
 
+    /// Wakes all threads waiting on the condition
 		int wakeAll();
+    /// Wakes all threads waiting on the condition
 		int wakeAll(Mutex &mutex);
 
+    /// Wakes one thread waiting on the condition (the woken thread can not be controlled or predicted)
 		int wakeOne();
+    /// Wakes one thread waiting on the condition (the woken thread can not be controlled or predicted)
 		int wakeOne(Mutex &mutex);
 
 	private:

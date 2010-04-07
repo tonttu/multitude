@@ -40,44 +40,66 @@ namespace Radiant {
 
     /// @todo add global chunk support, document, examples, remove this and
     /// use Valuable::ConfigReader
+  /// @deprecated This class will be removed. Use Valuable::ConfigDocument
   class RADIANT_API Variant
   {
   public:
-
     Variant();
+    /// Constructs a new variable and sets it value
     Variant(const std::string & a, const char * doc = 0);
+    /// Constructs a new variable and sets it value
     Variant(const char *, const char * doc = 0);
-
+    /// Constructs a new variable and sets it value
     Variant(int, const char * doc = 0);
+    /// Constructs a new variable and sets it value
     Variant(unsigned, const char * doc = 0);
+    /// Constructs a new variable and sets it value
     Variant(double, const char * doc = 0);
+    /// Constructs a new variable and sets it value
     Variant(const float *, int, const char * doc = 0);
+    /// Constructs a new variable and sets it value
     Variant(const int *, int, const char * doc = 0);
-  
+
     ~Variant();
 
+    /// Returns the value as integer
     operator int () const;
+    /// Returns the value as double
     operator double () const;
+    /// Returns the value as string
     operator const std::string & () const;
 
+    /// Returns the value as double
     double              getDouble(double def = 0.0f) const;
+    /// Returns the value as float
     float               getFloat(float def = 0.f) const;
+    /// Returns the value as int
     int                 getInt(int def = 0) const;
+    /// Returns the value as string or the given default value if the value has not been set
     const std::string & getString(const std::string & def) const;
+    /// Returns the value as string
     const std::string & getString() const;
 
+    /// Returns the value as several integers
     int                 getInts(int *, int);
+    /// Returns the value as several floats
     int                 getFloats(float *, int);
+    /// Returns the value as several doubles
     int                 getDoubles(double *, int);
 
+    /// Sets the value
     void                set(const std::string &s);
 
+    /// Prints the value to given stream
     void                dump(std::ostream& os) const;
 
+    /// Returns true if the value has not been set
     bool                isEmpty() const;
 
+    /// Returns true if the variable has been documented
     bool                hasDocumentation() const;
     
+    /// Returns the documentation
     const std::string & documentation() const;
 
   private:
@@ -115,8 +137,7 @@ namespace Radiant {
       @author Tommi Ilmonen (may contain some original code by Janne
       Kontkanen)
   */
-
-  /// @internal
+  /// @deprecated This class will be removed. Use Valuable::ConfigDocument
   template <class T>
   class RADIANT_API ChunkT {
   public:
@@ -131,6 +152,10 @@ namespace Radiant {
 	with the given id, then an element will be created withthe
 	default constructor. */
     T                  get(const std::string &id);
+    /** Gets an element from the chunk.
+      @param id the primary id to search for
+      @param alternateId if the primary id does not match, alternate is used
+      */
     T                  get(const std::string &id,
                            const std::string &alternateId);
 
@@ -141,7 +166,7 @@ namespace Radiant {
     /** If there are other elements with the same id before, then
 	this element is added among those. */
     void               set(const std::string & id, const T &v);
-	
+  /// Sets the flag to inform whether an old value should be removed before defining a new
 	void setClearFlag(bool clearF);
     /// Adds an element to the chunk, erasing any elements with identical id
     /** After calling this method, the chunk will contain only one
@@ -177,10 +202,14 @@ bool clearFirst;
     std::multimap<std::string, T> m_variants;
   };
 
+  /// A chunk of configuration variables
   typedef ChunkT<Variant> Chunk;
+  /// A chunk of chunks
   typedef ChunkT<Chunk>   Config;
 
+  /// Read a configuration from a file
   bool RADIANT_API readConfig(Config *c, const char *filename);
+  /// Write the given configuration into a file
   bool RADIANT_API writeConfig(Config *c, const char *filename);
   
 } // namespace

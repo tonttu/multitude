@@ -16,6 +16,8 @@
 #ifndef RADIANT_VIDEO_CAMERA_CMU_HPP
 #define RADIANT_VIDEO_CAMERA_CMU_HPP
 
+/// @cond
+
 #include <Radiant/Export.hpp>
 #include <Radiant/VideoCamera.hpp>
 #include <Radiant/CameraDriver.hpp>
@@ -94,5 +96,7 @@ namespace Radiant {
     };
 
 }
+
+/// @endcond
 
 #endif
