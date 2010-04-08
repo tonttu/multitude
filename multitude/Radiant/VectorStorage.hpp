@@ -61,6 +61,7 @@ namespace Radiant {
   template <typename T> class VectorStorage
   {
   public:
+    /// Iterator
     typedef typename std::vector<T>::iterator iterator;
 
     /// Creates an empty vector storage object
@@ -70,6 +71,7 @@ namespace Radiant {
     /** This function does not erase any objects. */
     void reset() { m_count = 0; }
 
+    /// Returns true if the vector is empty
     bool empty() const { return m_points.empty(); }
 
     /// Resets the internal object counter to n.
@@ -86,32 +88,39 @@ namespace Radiant {
     avoid the need to resize the buffer later on. */
     void expand(size_t size)
     { if(size > m_points.size()) m_points.resize(size); }
+    /// Resizes the vector
     void resize(unsigned size)
     { expand(size); m_count = size; }
 
     /// Gets an object, and check that the index is valid
     const T & getSafe(unsigned index) const
     { assert(index < m_count); return m_points[index]; }
+    /// @copydoc getSafe
     T & getSafe(unsigned index)
     { assert(index < m_count); return m_points[index]; }
-
+    /// Gets a value from the vector and expand the vector if necessary
     T & getExpand(unsigned index)
     {
       if(index >= m_count) {
-    expand(index + 10);
-    m_count = index + 1;
+        expand(index + 10);
+        m_count = index + 1;
       }
       return m_points[index];
     }
 
     /// Gets an object, without safety checks
     const T & get(size_t index) const { return m_points[index]; }
+    /// @copydoc get
     T & get(size_t index) { return m_points[index]; }
+    /// Returns the element at size() - 1
     T & getLast() { return m_points[m_count - 1]; }
+    /// @copydoc getLast
     T & last() { return m_points[m_count - 1]; }
-    /// Ges the last object in the storage array
+    /// @copydoc getLast
     const T & getLast() const { return m_points[m_count - 1]; }
+    /// Gets the element at size() - n - 1
     const T & getLast(int n) const { return m_points[m_count - 1 - n]; }
+    /// Gets the element at size() - n - 1
     const T & last(int n) const { return m_points[m_count - 1 - n]; }
 
     /// Appends an object to the vector
@@ -119,7 +128,7 @@ namespace Radiant {
     void append(const T & x)
     {
       if(m_count >= m_points.size())
-    m_points.resize(m_count + 100);
+        m_points.resize(m_count + 100);
 
       m_points[m_count++] = x;
     }
@@ -179,6 +188,7 @@ namespace Radiant {
     m_points[m_count++] = that.get(i);
     }
 
+    /// Fills the vector with the given value
     void setAll(const T & value)
     {
       for(unsigned i = 0; i < size(); i++)
@@ -186,7 +196,9 @@ namespace Radiant {
 
     }
 
+    /// Returns a pointer to the first element
     T * data() { return & m_points[0]; }
+    /// @copydoc data
     const T * data() const { return & m_points[0]; }
 
     /// Returns an iterator to the beginning of the vector
@@ -195,9 +207,12 @@ namespace Radiant {
     iterator end()
     { iterator tmp = m_points.begin(); tmp += m_count; return tmp;}
 
+    /// Returns the element at the given index
     inline T & operator [] (unsigned i) { return m_points[i]; }
+    /// Returns the element at the given index
     inline const T & operator [] (unsigned i) const { return m_points[i]; }
 
+    /// Copies a vector
     VectorStorage & operator = (const VectorStorage & that)
     {
       m_count = that.m_count;

@@ -39,6 +39,9 @@ namespace Radiant
   {
   public:
     UDPSocket();
+
+    /** Constructs a new UDP socket and initializes it to the given file
+    descriptor*/
     UDPSocket(int fd);
     ~UDPSocket();
     
@@ -58,6 +61,7 @@ namespace Radiant
     /** Closes the socket. */
     bool close();
     
+    /// Returns true if the socket is open
     bool isOpen() const;
     
     /** Reads one datagram packet from the socket. 

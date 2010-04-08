@@ -96,11 +96,6 @@ namespace Radiant {
 
     dc1394camera_t * dc1394Camera() { return m_camera; }
 
-    /** Returns the number of frames that would be immediately readable.
-
-        This function is not implemented on all platforms, so use it
-        with some care.
-     */
     virtual int framesBehind() const { return m_framesBehind; }
 
   private:
