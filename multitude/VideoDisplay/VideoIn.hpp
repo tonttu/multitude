@@ -128,19 +128,19 @@ namespace VideoDisplay {
 
     VIDEODISPLAY_API virtual float fps() = 0;
 
-    int latestFrame() const { return m_decodedFrames - 1; }
+    size_t latestFrame() const { return m_decodedFrames - 1; }
     VIDEODISPLAY_API bool atEnd();
     bool isFrameAvailable(int frame) const
     { return(int) m_decodedFrames > frame && frame >= 0;}
 
     /// Finds the closest frame to the given time
     int selectFrame(int starfrom, Radiant::TimeStamp time) const;
-    uint decodedFrames() const { return m_decodedFrames; }
-    uint frameRingBufferSize() const { return m_frames.size(); }
+    size_t decodedFrames() const { return m_decodedFrames; }
+    size_t frameRingBufferSize() const { return m_frames.size(); }
 
     virtual double durationSeconds() = 0;
 
-    uint finalFrames()   const { return m_finalFrames; }
+    size_t finalFrames()   const { return m_finalFrames; }
 
     const char * name() { return m_name.c_str(); }
 
@@ -172,7 +172,7 @@ namespace VideoDisplay {
     VIDEODISPLAY_API virtual void videoStop() = 0;
 
     /** An implmentation should use the methods below: */
-    VIDEODISPLAY_API void allocateFrames(uint frameCount, uint width, uint height,
+    VIDEODISPLAY_API void allocateFrames(size_t frameCount, size_t width, size_t height,
                                          Radiant::ImageFormat fmt);
 
     VIDEODISPLAY_API void deallocateFrames();
@@ -203,10 +203,10 @@ namespace VideoDisplay {
 
     VideoInfo m_info;
 
-    volatile uint m_decodedFrames;
-    volatile uint m_consumedFrames;
-    volatile uint m_consumedAuFrames;
-    volatile uint m_finalFrames;
+    volatile size_t m_decodedFrames;
+    volatile size_t m_consumedFrames;
+    volatile size_t m_consumedAuFrames;
+    volatile size_t m_finalFrames;
 
     volatile bool m_breakBack;
     volatile bool m_playing;
@@ -216,8 +216,8 @@ namespace VideoDisplay {
     int m_sample_rate;
     Radiant::AudioSampleFormat m_auformat;
 
-    uint m_auBufferSize;
-    uint m_auFrameBytes;
+    size_t m_auBufferSize;
+    size_t m_auFrameBytes;
 
     volatile bool m_continue;
 

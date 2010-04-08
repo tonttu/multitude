@@ -76,15 +76,15 @@ namespace Radiant {
     void truncate(unsigned n) { m_count = n; }
 
     /// The number of objecs in the array
-    unsigned size() const { return m_count; }
+    size_t size() const { return m_count; }
 
     /// The number of allocated objects
-    unsigned reserved() const { return m_points.size(); }
+    size_t reserved() const { return m_points.size(); }
 
     /// Expand the size of the storage buffer to desired size
     /** This function can be run in software initialization phase, to
     avoid the need to resize the buffer later on. */
-    void expand(unsigned size)
+    void expand(size_t size)
     { if(size > m_points.size()) m_points.resize(size); }
     void resize(unsigned size)
     { expand(size); m_count = size; }
@@ -105,8 +105,8 @@ namespace Radiant {
     }
 
     /// Gets an object, without safety checks
-    const T & get(int index) const { return m_points[index]; }
-    T & get(int index) { return m_points[index]; }
+    const T & get(size_t index) const { return m_points[index]; }
+    T & get(size_t index) { return m_points[index]; }
     T & getLast() { return m_points[m_count - 1]; }
     T & last() { return m_points[m_count - 1]; }
     /// Ges the last object in the storage array
@@ -147,7 +147,7 @@ namespace Radiant {
       if(m_count >= m_points.size())
     m_points.resize(m_count + 100);
 
-      for(unsigned i = m_count; i >= 1; i--) {
+      for(size_t i = m_count; i >= 1; i--) {
     m_points[i] = m_points[i - 1];
       }
 
@@ -212,7 +212,7 @@ namespace Radiant {
     }
 
   private:
-    unsigned m_count;
+    size_t m_count;
     std::vector<T> m_points;
   };
 

@@ -62,7 +62,7 @@ namespace VideoDisplay {
 
     bool readSrt(const char * filename); 
 
-    unsigned size() const { return m_texts.size(); }
+    size_t size() const { return m_texts.size(); }
  
     // Temporary for a project (esa) 
     std::string getLongestSubtitle() const;

@@ -42,7 +42,7 @@ namespace VideoDisplay {
     }
 
     if(m_index >= (int) m_texts.size()) {
-      m_index = m_texts.size() - 1;
+      m_index = (int)m_texts.size() - 1;
     }
     else if(m_index < 0)
       m_index = 0;

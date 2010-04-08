@@ -5,7 +5,7 @@
 #ifdef __APPLE_CC__
 #   define RADIANT_OSX 1
 // Is this Windows?
-#elif __WIN32__
+#elif WIN32
 #   define RADIANT_WIN32 1
 // Is this Linux?
 #elif __linux__

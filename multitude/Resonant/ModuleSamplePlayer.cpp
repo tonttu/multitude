@@ -74,13 +74,13 @@ namespace Resonant {
     if(!m_data.empty())
       bzero( & m_data[0], m_data.size() * sizeof(float));
 
-    uint block = 1000;
+    size_t block = 1000;
 
     unsigned pos = 0;
 
     while(pos < m_d->m_info.frames) {
-      uint get = Nimble::Math::Min((uint) (m_d->m_info.frames - pos), block);
-      uint n = get * m_d->m_info.channels;
+      size_t get = Nimble::Math::Min((size_t) (m_d->m_info.frames - pos), block);
+      size_t n = get * m_d->m_info.channels;
 
       sf_read_float(sndf, & m_data[pos * m_d->m_info.channels], n);
 
@@ -471,7 +471,7 @@ namespace Resonant {
 
   void ModuleSamplePlayer::process(float ** , float ** out, int n)
   {
-    uint i;
+    size_t i;
 
     // First zero the outputs
     for(i = 0; i < m_channels; i++)
@@ -640,7 +640,7 @@ namespace Resonant {
   void ModuleSamplePlayer::dropVoice(unsigned i)
   {
     // trace("ModuleSamplePlayer::dropVoice # %d", i);
-    assert((uint) i < m_active);
+    assert((size_t) i < m_active);
     m_active--;
     m_voiceptrs[i]->clear();
     for( ; i < m_active; i++) {

@@ -70,7 +70,7 @@ namespace Resonant {
 
   int DSPNetwork::Item::findInInput(float * ptr) const
   {
-    for(uint i = 0; i < m_ins.size(); i++)
+    for(size_t i = 0; i < m_ins.size(); i++)
       if(m_ins[i] == ptr)
         return i;
     return -1;
@@ -78,7 +78,7 @@ namespace Resonant {
 
   int DSPNetwork::Item::findInOutput(float * ptr) const
   {
-    for(uint i = 0; i < m_outs.size(); i++)
+    for(size_t i = 0; i < m_outs.size(); i++)
       if(m_outs[i] == ptr)
         return i;
     return -1;
@@ -135,7 +135,7 @@ namespace Resonant {
     if(m_instance == this)
       m_instance = 0;
 
-    for(uint i = 0; i < m_buffers.size(); i++)
+    for(size_t i = 0; i < m_buffers.size(); i++)
       m_buffers[i].clear();
 
     delete m_collect;
@@ -601,9 +601,9 @@ namespace Resonant {
 
   DSPNetwork::Buf & DSPNetwork::findFreeBuf(int location)
   {
-    uint s = m_buffers.size();
+    size_t s = m_buffers.size();
 
-    for(uint i = 0; i < s; i++) {
+    for(size_t i = 0; i < s; i++) {
       if(bufIsFree(i, location)) {
         debug("DSPNetwork::findFreeBuf # Found %d -> %u", location, i);
         return m_buffers[i];
@@ -634,7 +634,7 @@ namespace Resonant {
 
     iterator other = it;
 
-    for(uint i = 0; i < m_items.size(); i++) {
+    for(size_t i = 0; i < m_items.size(); i++) {
       other++;
       if(other == m_items.end())
         other = m_items.begin();
@@ -701,7 +701,7 @@ namespace Resonant {
     if(!item)
       return 0;
 
-    if(item->m_outs.size() >= (uint) channel)
+    if(item->m_outs.size() >= (size_t) channel)
       return item->m_outs[channel];
     return 0;
   }

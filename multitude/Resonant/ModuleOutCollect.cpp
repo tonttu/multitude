@@ -131,7 +131,7 @@ namespace Resonant {
     if(!m_interleaved.empty())
       bzero( & m_interleaved[0], sizeof(float) * n * chans);
 
-    for(uint i = 0; i < m_map.size(); i++) {
+    for(size_t i = 0; i < m_map.size(); i++) {
 
       int to = m_map[i].to;
       
