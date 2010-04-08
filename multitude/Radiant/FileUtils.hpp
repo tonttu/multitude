@@ -28,16 +28,16 @@ namespace Radiant
   {
     /// Get the size of a file.
     RADIANT_API unsigned long getFileLen(std::ifstream& file);
+    /// @copydoc getFileLen
     RADIANT_API unsigned long getFileLen(const std::string & filename);
 
     /// Load a text file.
     /** The contents of the file are returned as a zero-terminated
 	string. The caller is responsible for freeing the memory,
 	using a call to <b>delete []</b>.*/
-
     /// @todo rename to loadTextFileCStr, loadTextFileWStr
-
     RADIANT_API char * loadTextFile(const char* filename);
+    /// Reads the contents of a text file and returns them
     RADIANT_API std::wstring readTextFile(const std::string & file);
 
     /// Writes a string to a text file.
@@ -46,6 +46,7 @@ namespace Radiant
 
     /// Check if a given file is readable.
     RADIANT_API bool fileReadable(const char* filename);
+    /// @copydoc fileReadable
     RADIANT_API bool fileReadable(const std::string & filename);
 
     /// Check if the user can append to a given file.
@@ -85,13 +86,15 @@ namespace Radiant
     /// cannot be found, then return filename.
     RADIANT_API std::string findOverWritable(const std::string & filename,
                                              const std::string & paths);
-
+    /// Opens the given file for writing and creates the directories in the path if they don't exist
     RADIANT_API FILE * createFilePath(const std::string & filePath);
 
+    /// Does the given filename look like an image (checks the extension)
     RADIANT_API bool looksLikeImage(const std::string & filePath);
+    /// Does the given filename look like a video (checks the extension)
     RADIANT_API bool looksLikeVideo(const std::string & filePath);
 
-    /// @return seconds from epoch, 0 in case of error
+    /// Returns seconds from epoch, 0 in case of error
     RADIANT_API unsigned long int lastModified(const std::string & filePath);
   }
 }

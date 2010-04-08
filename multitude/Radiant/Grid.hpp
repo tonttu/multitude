@@ -148,7 +148,7 @@ namespace Radiant {
     template <class S>
     GridT(S & that) : Base(that) {}
 
-    /// @todo Is this #define needed?
+    /// @todo Is this define really needed?
 #ifndef WIN32
     /** Constructor that takes the elements from the data pointer,
 	with given width and height. */
