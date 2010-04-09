@@ -32,9 +32,9 @@ namespace Valuable
   {
     for(int i = 0; i < (int) m_values.size(); i++) {
 
-      if(m_values[i].m_key == key) {
-	return & m_values[i];
-	break;
+      if(m_values[i].key() == key) {
+        return & m_values[i];
+        break;
       }
     }
 
