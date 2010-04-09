@@ -47,7 +47,7 @@ namespace Valuable
 
     operator const T & () const { return Base::m_value; }
     /// Returns the data in its native format
-    const T & native() const { return Base::m_value; }
+    const T & data() const { return Base::m_value; }
 
     ValueIntT<T> & operator |= (T i) { Base::m_value |= i; VALUEMIT_STD_OP }
     ValueIntT<T> & operator &= (T i) { Base::m_value &= i; VALUEMIT_STD_OP }

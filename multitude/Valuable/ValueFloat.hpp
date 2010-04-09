@@ -33,7 +33,6 @@ namespace Valuable
       etc.
 
       @see ValueFloat. */
-  ///@todo rename "native" to "data"
   template<class T>
   class VALUABLE_API ValueFloatT : public ValueNumeric<T>
   {
@@ -53,7 +52,7 @@ namespace Valuable
       inline operator const T & () const { return Base::m_value; }
 
       /// Returns the data in its native format
-      const T & native() const { return Base::m_value; }
+      const T & data() const { return Base::m_value; }
 
       const char * type() const { return VO_TYPE_FLOAT; }
 
