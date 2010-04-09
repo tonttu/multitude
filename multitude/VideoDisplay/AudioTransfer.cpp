@@ -43,6 +43,7 @@ namespace VideoDisplay {
       m_ending(false),
       m_end(false),
       m_audioLatency(0.0f),
+      m_gain(1.0f),
       m_mutex(false, false, true)
   {
     const char * lat = getenv("RESONANT_LATENCY");
@@ -282,11 +283,13 @@ namespace VideoDisplay {
 
     debug("AudioTransfer::deInterleave # %d %d %d", chans, frames, offset);
 
+    const float gain = m_gain;
+
     for(int c = 0; c < chans; c++) {
       float * d = dest[c] + offset;
       const float * s = src + c;
       for(int f = 0; f < frames; f++) {
-        *d = *s;
+        *d = *s * gain;
         d++;
         s += chans;
       }
