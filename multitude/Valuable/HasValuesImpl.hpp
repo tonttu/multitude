@@ -23,6 +23,7 @@
 namespace Valuable
 {
 
+  /// Sets the named value
   template<class Type>
       bool HasValues::setValue(const std::string & name, const Type & v)
   {

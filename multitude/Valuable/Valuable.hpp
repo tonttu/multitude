@@ -20,15 +20,12 @@
 
     The purpose of this framework is to handle:
 
-    <UL>
 
-    <LI> Saving classes with members to XML files
+    * Saving classes with members to XML files
     
-    <LI> Loading classes with members from XML files
+    * Loading classes with members from XML files
 
-    <LI> Set/get parameter member values dynamically by string name
-
-    </UL>
+    * Set/get parameter member values dynamically by string name
  */
 
 #include <Valuable/Export.hpp>

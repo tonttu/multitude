@@ -27,23 +27,26 @@ namespace Valuable
 {
   class DOMElement;
 
-  /// Wrapper for QDomDocument or xercesc::DOMDocument
-  ///@todo Doc
+  /// Represents a DOM document
   class VALUABLE_API DOMDocument
   {
   public:
-    struct Wrapped;
-
     ~DOMDocument();
 
+    /// Creates a new DOM document
     static DOMDocument * createDocument();
 
+    /// Creates a new DOM element with the given name
     DOMElement createElement(const char * name);
+    /// @copydoc createElement
     DOMElement createElement(const std::string & name);
 
+    /// Appends an element to the document
     void appendChild(DOMElement element);
 
+    /// Writes the document to a file
     bool writeToFile(const char * filename);
+    /// Writes the document to memory
     bool writeToMem(std::vector<char> & buf);
 
     /// Parse a document from a file.
@@ -53,9 +56,12 @@ namespace Valuable
     /// @return true if there were no errors
     bool readFromFile(const char * filename, bool validate = false);
 
+    /// Returns the main document element
     DOMElement getDocumentElement();
 
   private:
+    struct Wrapped;
+
     DOMDocument(Wrapped * doc);
     DOMDocument();
 

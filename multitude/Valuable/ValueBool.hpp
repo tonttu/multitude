@@ -26,7 +26,8 @@ namespace Valuable
   /// A value object for boolean.
   class VALUABLE_API ValueBool : public ValueObject
   {
-  public:
+  public:    
+    /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
     ValueBool(HasValues * parent, const std::string & name, bool value, bool transit = false);
     virtual ~ValueBool();
 
@@ -34,8 +35,10 @@ namespace Valuable
     bool deserializeXML(DOMElement element);
     virtual void processMessage(const char *, Radiant::BinaryData & data);
 
+    /// Copies a value
     ValueBool & operator = (bool v) { m_value = v; VALUEMIT_STD_OP }
 
+    /// Converts the value object to a boolean
     operator bool () const { return m_value; }
 
     std::string asString(bool * const ok = 0) const;

@@ -76,24 +76,20 @@ namespace Valuable
     bool deserializeXML(DOMElement element);
   };
 
-  /// Integer value object.
+  /// 32-bit integer value object.
   typedef ValueIntT<int32_t> ValueInt;
+  /// 32-bit integer value object.
   typedef ValueIntT<int32_t> ValueInt32;
+  /// 32-bit unsigned integer value object.
   typedef ValueIntT<uint32_t> ValueUInt32;
+  /// 64-bit integer value object.
   typedef ValueIntT<int64_t> ValueInt64;
+  /// 64-bit unsigned integer value object.
   typedef ValueIntT<uint64_t> ValueUInt64;
 
   /// Time-stamp value object.
   typedef ValueIntT<Radiant::TimeStamp> ValueTimeStamp;
-  /*
-#ifdef WIN32
-#ifdef VALUABLE_EXPORT
-  // In WIN32 template classes must be instantiated to be exported
-  template class ValueIntT<int>;
-  template class ValueIntT<Radiant::TimeStamp>;
-#endif
-#endif
-*/
+
 }
 
 #undef VALUEMIT_STD_OP

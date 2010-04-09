@@ -31,7 +31,6 @@ namespace Valuable
   /// String value
   /** This template class is used to implement both normal 7/8-bit
       strings and wide strings*/
-  ///@todo Doc
   template<class T>
       class VALUABLE_API ValueStringT : public ValueObject
   {
@@ -77,7 +76,9 @@ namespace Valuable
     T m_value;
   };
 
+  /// A byte string value object
   typedef ValueStringT<std::string> ValueString;
+  /// A wide-byte string value object
   typedef ValueStringT<std::wstring> ValueWString;
 
   // Instantiation of template classes

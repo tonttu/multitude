@@ -30,11 +30,16 @@ namespace Valuable
     ConfigDocument(void);
     virtual ~ConfigDocument(void);
 
+    /// Reads a configuration from a file
     void readConfigFile(const char *fileName);
+    /// Writes the configuration to a file
     void writeConfigFile(const char *fileName);
+    /// Writes the configuration to a stream
     void writeConfig(std::ostream &);
 
+    /// Returns the root configuration element
     ConfigElement &root() { return m_doc; }
+
     ConfigElement *getConfigElement(std::string elementName);
     ConfigElement *getConfigElement(std::string key,std::string value);
 
@@ -61,7 +66,9 @@ namespace Valuable
     ConfigElement m_doc;
   };
 
-  void VALUABLE_API convert(DOMDocument  & doc, DOMElement & to, const ConfigElement & from);
+  /// Converts from text element to XML element
+  void VALUABLE_API convert(DOMDocument  & doc, DOMElement & to, const ConfigElement & from);  
+  /// Converts from XML element to text element
   void VALUABLE_API convert(ConfigElement & to, DOMElement from);
 
 }

@@ -35,8 +35,10 @@ namespace Valuable
   class DOMDocument;
 
 
-  /// Base class for values
-  /** Typical child classes include some POD (plain old data) elements
+
+  /** The base class for value objects.
+
+      Typical child classes include some POD (plain old data) elements
       (floats, ints, vector2) etc, that can be accessed through the
       API. The ValueObjects have names (std::string), that can be used to access
       ValueObjects that are stored inside HasValues objects.
@@ -58,16 +60,14 @@ namespace Valuable
     ValueObject();
     /// The copy constructor creates a copy of the ValueObject WITHOUT the
     /// link to parent
-    ValueObject(const ValueObject & o);
-    /// The most usual constructor
-    /** This constructor is typically used when attaching the value
-    object to its parent.
+    ValueObject(const ValueObject & o);    
+    /** Constructs a new value object and attaches it to its parent.
 
     @arg parent The parent object. This object is automatically
     added to the parent.
 
     @arg name The name (or id) of this value. Names are typically
-    semi human readable. The names should not contain white-spaces
+    human-readable. The names should not contain white-spaces
     as they may be used in XML files etc.
 
     @arg transit Should value changes be transmitted forward. This

@@ -25,25 +25,32 @@ namespace Valuable
 
   class ValueObject;
 
-  /** Stores information about changed ValueObjects. */
-  class VALUABLE_API ChangeMap 
+  /** Stores information about changed ValueObjects. This can be used for
+  notifying other processes about changes. */
+  /// @todo this should propably be a singleton
+  class VALUABLE_API ChangeMap
   {
     public:
       ChangeMap();
       virtual ~ChangeMap();
 
+      /// Object was deleted
       static void addDelete(ValueObject * vo);
+      /// Object was changed
       static void addChange(ValueObject * vo);
 
     protected:
+      /// Inserts a change to the internal set of changes
       virtual void queueChange(ValueObject * vo);
 
+      /// Holds an instance of the change map
       static ChangeMap * instance;
 
+      /// Container for the change set
       typedef std::set<ValueObject *> container;
+      /// Current change set
       container m_changes;
   };
-
 
 }
 

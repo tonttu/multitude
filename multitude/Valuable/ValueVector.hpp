@@ -92,12 +92,18 @@ namespace Valuable
       VectorType m_value;
   };
 
+  /// An integer vector2 value object
   typedef ValueVector<Nimble::Vector2i, int, 2> ValueVector2i;
+  /// An integer vector3 value object
   typedef ValueVector<Nimble::Vector3i, int, 3> ValueVector3i;
+  /// An integer vector4 value object
   typedef ValueVector<Nimble::Vector4i, int, 4> ValueVector4i;
 
+  /// A float vector2 value object
   typedef ValueVector<Nimble::Vector2f, float, 2> ValueVector2f;
+  /// A float vector3 value object
   typedef ValueVector<Nimble::Vector3f, float, 3> ValueVector3f;
+  /// A float vector4 value object
   typedef ValueVector<Nimble::Vector4f, float, 4> ValueVector4f;
 
 }
