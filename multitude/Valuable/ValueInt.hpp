@@ -39,34 +39,46 @@ namespace Valuable
 
   public:
     ValueIntT() : Base() {}
+    /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
     ValueIntT(HasValues * parent, const std::string & name, T v, bool transit = false)
         : ValueNumeric<T>(parent, name, v, transit)
     {}
 
+    /// Copy an integer
     ValueIntT<T> & operator = (T i) { Base::m_value = i; VALUEMIT_STD_OP }
 
+    /// Convert the value object to integer
     operator const T & () const { return Base::m_value; }
     /// Returns the data in its native format
     const T & data() const { return Base::m_value; }
 
+    /// Does a logical OR for the integer
     ValueIntT<T> & operator |= (T i) { Base::m_value |= i; VALUEMIT_STD_OP }
+    /// Does a logical AND for the integer
     ValueIntT<T> & operator &= (T i) { Base::m_value &= i; VALUEMIT_STD_OP }
 
-    // Postfix
+    /// Postfix increment
     ValueIntT<T> & operator ++ (int) { Base::m_value++; VALUEMIT_STD_OP }
+    /// Postfix decrement
     ValueIntT<T> & operator -- (int) { Base::m_value--; VALUEMIT_STD_OP }
 
-    // Prefix
+    /// Prefix increment
     ValueIntT<T> & operator ++ () { ++Base::m_value; VALUEMIT_STD_OP }
+    /// Prefix decrement
     ValueIntT<T> & operator -- () { --Base::m_value; VALUEMIT_STD_OP }
 
-    // Shift
+    /// Shift left
     ValueIntT<T> & operator <<= (int i) { Base::m_value <<= i; VALUEMIT_STD_OP }
+    /// Shift right
     ValueIntT<T> & operator >>= (int i) { Base::m_value >>= i; VALUEMIT_STD_OP }
 
+    /// Compares less than
     bool operator < (const T & i) const { return Base::m_value < i; }
+    /// Compares less or equal than
     bool operator <= (const T & i) const { return Base::m_value <= i; }
+    /// Compares greater than
     bool operator > (const T & i) const { return Base::m_value > i; }
+    /// Compares greater or equal than
     bool operator >= (const T & i) const { return Base::m_value >= i; }
 
     const char * type() const { return VO_TYPE_INT; }

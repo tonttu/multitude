@@ -130,6 +130,7 @@ namespace Valuable
   {}
   */
 
+  /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
   template<>
   ValueStringT<std::wstring>::ValueStringT(HasValues * parent, const std::string & name,
 					   const char * v, bool transit)
@@ -139,7 +140,7 @@ namespace Valuable
     Radiant::StringUtils::utf8ToStdWstring(m_value, tmp); 
   }
 
-
+  /// Assigns a string
   template <>
   ValueStringT<std::wstring> & ValueStringT<std::wstring>::operator=(const ValueStringT<std::wstring> & i)
   {
@@ -147,6 +148,7 @@ namespace Valuable
     VALUEMIT_STD_OP
   }
 
+  /// Assigns a string
   template <>
   ValueStringT<std::wstring> & ValueStringT<std::wstring>::operator=(const std::wstring & i)
   {
@@ -154,6 +156,7 @@ namespace Valuable
     VALUEMIT_STD_OP
   }
 
+  /// Converts the string to float
   template <>
   float ValueStringT<std::wstring>::asFloat(bool * const ok) const 
   { 
@@ -163,6 +166,7 @@ namespace Valuable
     return float(atof(tmp.c_str()));
   }
 
+  /// Converts the string to integer
   template <>
   int ValueStringT<std::wstring>::asInt(bool * const ok) const 
   { 
@@ -172,6 +176,7 @@ namespace Valuable
     return atoi(tmp.c_str()); 
   }
 
+  /// Converts the wide-byte string to ascii string
   template<>
   std::string ValueStringT<std::wstring>::asString(bool * const ok) const 
   { 
@@ -181,6 +186,7 @@ namespace Valuable
     return tmp; 
   }
 
+  /// Converts the wide-byte string to ascii string
   template<>
   std::wstring ValueStringT<std::wstring>::asWString(bool * const ok) const 
   { 

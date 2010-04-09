@@ -30,22 +30,23 @@ namespace Valuable
   class VALUABLE_API ValueRect : public ValueObject
   {
     public:
+      /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
       ValueRect(HasValues * parent, const std::string & name, const Nimble::Rect & r, bool transit = false);
 
+      /// Copies a rectangle
       ValueRect & operator = (const Nimble::Rect & r) { m_rect = r; VALUEMIT_STD_OP }
 
-    const char * type() const { return "rect"; }
+      const char * type() const { return "rect"; }
 
-    ///@todo virtual void processMessage(const char * id, Radiant::BinaryData & data);
       std::string asString(bool * const ok = 0) const;
 
       bool deserializeXML(DOMElement element);
 
+      /// Converts the object to rectangle
       Nimble::Rect asRect() const { return m_rect; }
 
-      //virtual bool set(const Nimble::Vector4f & v);
-
     protected:
+      /// The rectangle data
       Nimble::Rect m_rect;
   };
 

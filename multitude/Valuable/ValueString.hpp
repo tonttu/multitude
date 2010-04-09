@@ -36,29 +36,39 @@ namespace Valuable
   {
   public:
     ValueStringT() : ValueObject() {}
+    /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
     ValueStringT(HasValues * parent, const std::string & name,
                  const T & v, bool transit = false);
-
+    /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
     ValueStringT(HasValues * parent, const std::string & name,
                  const char * v, bool transit = false);
-
+    /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
     ValueStringT(HasValues * parent, const std::string & name,
                  bool transit = false);
 
     virtual void processMessage(const char * id, Radiant::BinaryData & data);
 
+    /// Copies a string
     ValueStringT<T> & operator = (const ValueStringT<T> & i)
                                  { m_value = i.m_value; VALUEMIT_STD_OP }
+    /// Copies a string
     ValueStringT<T> & operator = (const T & i) { m_value = i; VALUEMIT_STD_OP }
 
+    /// Compares if two strings are equal
     bool operator == (const T & that) { return that == m_value; }
+    /// Compares if two strings are not equal
     bool operator != (const T & that) { return that != m_value; }
 
+    /// Returns the value as float
     float asFloat(bool * const ok = 0) const;
+    /// Returns the value as integer
     int asInt(bool * const ok = 0) const;
+    /// Returns the value as string
     std::string asString(bool * const ok = 0) const;
+    /// Returns the value as wide-byte string
     std::wstring asWString(bool * const ok = 0) const;
 
+    /// Returns the string
     const T & str() const { return m_value; }
 
     virtual bool set(const std::string & v);
@@ -68,8 +78,10 @@ namespace Valuable
     DOMElement serializeXML(DOMDocument * doc);
     bool deserializeXML(DOMElement element);
 
+    /// Makes the string empty
     void clear() { m_value.clear(); }
 
+    /// Returns the length of the string
     unsigned size() const { return m_value.size(); }
 
   private:

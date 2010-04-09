@@ -79,8 +79,9 @@ namespace Valuable
 
     /// Returns the name of the object.
     const std::string & name() const { return m_name; }
+    /// Sets the name of the object
     void setName(const std::string & s);
-
+    /// Returns the path (separated by '/'s) from the root
     std::string path() const;
 
     /// Process a message
@@ -124,10 +125,15 @@ namespace Valuable
         ok pointer to false (if it is non-null). */
     virtual std::string asString(bool * const ok = 0) const;
 
+    /// Sets the value of the object
     virtual bool set(float v);
+    /// Sets the value of the object
     virtual bool set(int v);
+    /// Sets the value of the object
     virtual bool set(const std::string & v);
+    /// Sets the value of the object
     virtual bool set(const Nimble::Vector2f & v);
+    /// Sets the value of the object
     virtual bool set(const Nimble::Vector4f & v);
 
     /// Get the type id of the type
