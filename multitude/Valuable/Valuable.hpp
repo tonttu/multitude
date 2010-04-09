@@ -36,9 +36,6 @@
 namespace Valuable
 {
 
-  void VALUABLE_API initialize();
-  void VALUABLE_API terminate();
-
 }
 
 #endif

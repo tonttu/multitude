@@ -32,8 +32,6 @@ public:
 
 int main(int, char **)
 {
-  Valuable::initialize();
-
   MyValues values1, values2;
 
   bool res = values1.saveToFileXML("test.xml");
@@ -43,8 +41,6 @@ int main(int, char **)
   res = values2.loadFromFileXML("test.xml");
 
   printf("load %s.\n", res ? "ok" : "fail");
-
-  Valuable::terminate();
 
   return 0;
 }
