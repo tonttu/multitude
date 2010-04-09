@@ -321,6 +321,7 @@ namespace VideoDisplay {
       m_dsp(0),
       m_audio(0),
       m_targetChannel(-1),
+      m_gain(1.0f),
       m_videoFrame(-1),
       m_count(0),
       m_state(PAUSE),
