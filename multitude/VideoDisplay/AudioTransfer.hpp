@@ -7,10 +7,10 @@
  * See file "VideoDisplay.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef VIDEODISPLAY_AUDIO_TRANSFER_HPP
@@ -25,8 +25,8 @@
 
 namespace VideoDisplay {
 
-  /** Transer sound stream from video input to audio output.
-
+  /** Transer sound stream from video input to audio output. 
+      
       This class transfers sound data from the low-level video input
       thread to audio playback engine.
 
@@ -48,7 +48,7 @@ namespace VideoDisplay {
     bool started() const { return m_started; }
     bool stopped() const { return m_stopped; }
 
-    bool atEnd() const { return m_end; }
+    bool atEnd() const { return m_end; } 
 
     /// Returns the video frame that should be played right now.
     unsigned videoFrame();
@@ -56,14 +56,12 @@ namespace VideoDisplay {
     /// Forgets the video source object, and shuts down.
     void forgetVideo();
 
-    void setGain(float gain) { m_gain = gain; }
-
   private:
 
-    void deInterleave(float ** dest, const float * src,
-                 int chans, int frames, int offset);
+    static void deInterleave(float ** dest, const float * src,
+			     int chans, int frames, int offset);
     static void zero(float ** dest,
-             int chans, int frames, int offset);
+		     int chans, int frames, int offset);
 
     void checkEnd(const VideoIn::Frame * f)
     {
@@ -93,7 +91,6 @@ namespace VideoDisplay {
     bool      m_end;
     bool      m_first;
     double    m_audioLatency;
-    float     m_gain;
     Radiant::MutexAuto m_mutex;
   };
 
