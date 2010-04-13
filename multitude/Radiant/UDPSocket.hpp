@@ -44,24 +44,11 @@ namespace Radiant
     descriptor*/
     UDPSocket(int fd);
     ~UDPSocket();
-    
-    /** Opens a UDP socket in either client or server mode. 
 
-        @return On success, zero is returned. On failure an error code
-        is returned.
-    */
-    int open(const char * host, int port, bool client = true);
-    /** Opens a UDP socket in server mode.
-    */
+    /** Binds this socket to the given address and port. This is useful when you want to read from a UDP socket. */
+    bool bind(const std::string & address, uint16_t port);
 
-    int openServer(const char * host, int port);
-    /** Opens a UDP socket in client mode.
-    */
-    int openClient(const char * host, int port);
-    /** Closes the socket. */
-    bool close();
-    
-    /// Returns true if the socket is open
+    /// Returns true if the socket is open. Does not make much sense in the case of UDPSockets.
     bool isOpen() const;
     
     /** Reads one datagram packet from the socket. 
@@ -73,14 +60,19 @@ namespace Radiant
         this function multiple times, even if the buffer was large
         enough to contain multiple packets.
     */
-    int read(void * buffer, int bytes, bool waitfordata = true);
+    int readDatagram(char * data, size_t maxSize, std::string * fromAddr, uint16_t * fromPort = 0);
 
     /** Writes one datagram packet to the socket. 
 
         @return The number of bytes written is returned.
     
     */
-    int write(const void * buffer, int bytes);
+    int writeDatagram(const char * data, size_t bytes, const std::string & host, uint16_t port);
+
+    /// Not implemented for UDPSocket
+    virtual int read(void *, int , bool ) { return -1; }
+    /// Not implemented for UDPSocket
+    virtual int write(const void *, int ) { return -1; }
     
   private:
     class D;

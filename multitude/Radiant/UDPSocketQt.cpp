@@ -41,92 +41,31 @@ namespace Radiant
     delete m_d;
   }
 
-  
-  int UDPSocket::open(const char * host, int port, bool client)
-  {
-    if(client)
-      return openClient(host, port);
-    else
-      return openServer(host, port);
-  }
-
-  int UDPSocket::openClient(const char * host, int port)
-  {
-    close();
-
-    // m_d->bind(QHostAddress(QString(host)), port);
-    m_d->connectToHost(host, port);
-	if(!m_d->waitForConnected())
-		return 1;
-
-    return 0; 
-  }
-
-  int UDPSocket::openServer(const char * host, int port)
-  {
-    close();
-
-    if(!m_d->bind(QHostAddress(QString(host)), port))
-	  return 1;
-    //m_d->connectToHost(host, port);
-
-    return 0; 
-  }
-
-  bool UDPSocket::close()
-  {
-    m_d->close();
-
-    return true;
-  }
-
   bool UDPSocket::isOpen() const
   {
     return m_d->isValid();
   }
 
-  static inline bool __stateOk(QAbstractSocket::SocketState s)
+  bool UDPSocket::bind(const std::string &address, uint16_t port)
   {
-	return (s == QAbstractSocket::ConnectedState) ||
-		   (s == QAbstractSocket::BoundState);
+      return m_d->bind(QHostAddress(address.c_str()), port);
   }
 
-  int UDPSocket::read(void * buffer, int bytes, bool waitForData)
+  int UDPSocket::readDatagram(char *data, size_t maxSize, std::string *fromAddr, uint16_t *fromPort)
   {
-    int got = 0;
-    char * ptr = (char *) buffer;
-    int loops = 0;
+      QHostAddress from;
 
-    if(!__stateOk(m_d->state())) {
-      error("UDPSocket::read # Socket not connected # %d",
-	    (int) m_d->state());
-      return -1;
-    }
+      int result = m_d->readDatagram(data, maxSize, (fromAddr ? &from : 0), fromPort);
 
-    if(waitForData) {
-      while((got < bytes) && !__stateOk(m_d->state())) {
+      if(fromAddr)
+          *fromAddr = from.toString().toStdString();
 
-        // bool something = m_d->waitForReadyRead(1);
-	
-        int n = m_d->read(ptr + got, bytes - got);
-        got += n;
-        loops++;
-	
-        if(!waitForData) {
-	  return got;
-        }
-      }
-    }
-    else if(m_d->hasPendingDatagrams()) {
-      got = m_d->readDatagram(ptr, bytes);
-    }
-    
-    return got;
+      return result;
   }
 
-  int UDPSocket::write(const void * buffer, int bytes)
+  int UDPSocket::writeDatagram(const char *data, size_t bytes, const std::string & addr, uint16_t port)
   {
-    return m_d->write((const char *)buffer, bytes);
+      return m_d->writeDatagram(data, bytes, QHostAddress(addr.c_str()), port);
   }
  
 }
