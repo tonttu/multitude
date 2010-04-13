@@ -19,6 +19,8 @@
 #include <Radiant/BinaryStream.hpp>
 
 #include <string>
+#include <stdint.h>
+
 
 namespace Radiant
 {
