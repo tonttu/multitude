@@ -31,11 +31,16 @@ namespace Valuable
   {
   }
 
-  void ConfigDocument::readConfigFile(const char *fileName)
+  bool ConfigDocument::readConfigFile(const char *fileName)
   {
     std::string str;
 
     std::ifstream input (fileName);
+
+    if(!input.good()) {
+        Radiant::error("ConfigDocument::readConfigFile # failed to open '%s' for reading", fileName);
+        return false;
+    }
 
     int depth = 0;
     bool flag = false, atFlag = false;
@@ -162,6 +167,8 @@ namespace Valuable
 	c1 = ConfigElement(c1.child(0));
       }
     }
+
+    return true;
   }
 
   void ConfigDocument::writeConfigFile(const char *fileName)

@@ -31,7 +31,7 @@ namespace Valuable
     virtual ~ConfigDocument(void);
 
     /// Reads a configuration from a file
-    void readConfigFile(const char *fileName);
+    bool readConfigFile(const char *fileName);
     /// Writes the configuration to a file
     void writeConfigFile(const char *fileName);
     /// Writes the configuration to a stream
