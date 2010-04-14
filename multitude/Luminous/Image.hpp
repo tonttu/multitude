@@ -138,6 +138,10 @@ namespace Luminous
     */
     void bind(GLenum textureUnit = GL_TEXTURE0, bool withmimaps = true);
 
+    /// Returns the alpha value [0,255] for the given relative coordinates in the image.
+    /// @return alpha of the given pixel or 255 if image does not have alpha channel
+    unsigned char pixelAlpha(Nimble::Vector2 relativeCoord) const;
+
   protected:
 
     void sample(float x1, float y1, float x2, float y2, Image & dest, int destX, int destY) const;

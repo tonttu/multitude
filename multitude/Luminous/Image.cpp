@@ -696,4 +696,18 @@ dest = *this;
       tex.loadImage(*this, withmimaps);
   }
 
+  unsigned char Image::pixelAlpha(Nimble::Vector2 relativeCoord) const
+  {
+      Nimble::Vector2i absolute(relativeCoord.x * width(), relativeCoord.y * height());
+
+      size_t offset = absolute.y * width() + absolute.x;
+
+      if(pixelFormat() == PixelFormat::alphaUByte())
+          return m_data[offset];
+      else if(pixelFormat() == PixelFormat::rgbaUByte())
+          return m_data[4 * offset + 3];
+
+      return 255;
+  }
+
 }
