@@ -4,6 +4,9 @@
 #include <vector>
 
 #include <Nimble/Vector2.hpp>
+namespace Luminous {
+  class RenderContext;
+}
 
 namespace Nimble
 {
@@ -37,7 +40,7 @@ namespace Nimble
           void remove(Index ii);
           Index size() const { return m_points.size(); }
 
-          friend class RenderContext;
+          friend class Luminous::RenderContext;
         };
 
     }
