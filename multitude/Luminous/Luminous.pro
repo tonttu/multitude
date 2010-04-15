@@ -77,13 +77,12 @@ LIBS += $$LIB_RADIANT \
     $$LIB_PATTERNS \
     $$LIB_GLEW
 unix { 
-    LIBS += -ljpeg \
-        -lpng
-    !contains(HAS_QT_45,YES) { 
+   !contains(HAS_QT_45,YES) { 
         HEADERS += ImageCodecPNG.hpp
         HEADERS += ImageCodecTGA.hpp
         SOURCES += ImageCodecJPEG.cpp
         SOURCES += ImageCodecPNG.cpp
+	LIBS += -ljpeg -lpng
     }
 }
 win32:DEFINES += LUMINOUS_EXPORT
