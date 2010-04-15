@@ -24,6 +24,12 @@
 
 #define DEFAULT_RECURSION_LIMIT 4
 
+namespace Nimble {
+  namespace Splines {
+    class Interpolating;
+  }
+
+}
 namespace Luminous
 {
 
@@ -444,7 +450,7 @@ namespace Luminous
     const Matrix3f& m = transform();
     const float tx = center.x;
     const float ty = center.y;
-		
+
     static const GLfloat rect_vertices[] = {
       -1.0, -1.0,
       1.0, -1.0,
@@ -510,7 +516,7 @@ namespace Luminous
     Vector2f dirPrev;
 
     int nextIdx = 1;
-    while ((vertices[nextIdx]-cprev).length() < 3.0f && nextIdx < n-1) {
+    while ((vertices[nextIdx]-cnow).lengthSqr() < 9.0f && nextIdx < n-1) {
       nextIdx++;
     }
 
@@ -536,11 +542,11 @@ namespace Luminous
       cnow = cnext;
 
       // at least 3 pixels gap between vertices
-      while (nextIdx < n-1 && (vertices[nextIdx]-cnow).length() < 3.0f) {
+      while (nextIdx < n-1 && (vertices[nextIdx]-cnow).lengthSqr() < 9.0f) {
         nextIdx++;
       }
       if (nextIdx > n-1) {
-        cnext = (cnow - cprev) + cnow;
+        cnext = 2.0f*cnow - cprev;
       } else {
         cnext = m.project(vertices[nextIdx]);
       }
@@ -549,14 +555,14 @@ namespace Luminous
       dirNext = cnext - cnow;
       
       float max = Math::Max(1-(dirNext.length()/40.0f), 0.1f);
-      
+
       if (dirNext.length() < 1e-5f) {
         dirNext = dirPrev;
       } else {
         dirNext.normalize();
       }
 
-      Vector2 avg = (dirPrev + dirNext).perpendicular();
+      avg = (dirPrev + dirNext).perpendicular();
       avg.normalize();
 
       float dp = dot(avg, dirPrev.perpendicular());
@@ -579,15 +585,45 @@ namespace Luminous
     for (unsigned int i=0; i < vertexArr.size(); i++) {
       attribs[i] = i%2 == 0 ? 1.0f : -1.0f;
     }
+
     glColor4fv(rgba);    
     glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat *>(&vertexArr[0]));
     glVertexAttribPointer(loc, 1, GL_FLOAT, GL_FALSE, 0, attribs);
     glEnableClientState(GL_VERTEX_ARRAY);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, vertexArr.size());
+    glDrawArrays(GL_QUAD_STRIP, 0, vertexArr.size());
     glDisableClientState(GL_VERTEX_ARRAY);
     m_polyline_shader->unbind();
     glDisableVertexAttribArray(loc);
-    delete[] attribs;    
+    delete[] attribs;
+  }
+
+  void RenderContext::drawSpline(Nimble::Splines::Interpolating & s, float width, const float * rgba, float step)
+  {
+    const float len = s.size();
+
+    if (len < 2)
+      return;
+    std::vector<Vector2> points;
+
+    for(float t = 0.f; t < len - 1; t += step) {
+      int ii = static_cast<int>(t);
+      float t2 = t - ii;
+      Vector2 point = s.getPoint(ii, t2);
+
+      if (points.size() >= 2) {
+          Vector2 p1 = (point - points[points.size()-2]);
+          Vector2 p2 = (point - points[points.size()-1]);
+          p1.normalize();
+          p2.normalize();
+          // 3 degrees
+          if (dot(p1, p2) > 0.99862953475457383) {
+              points.pop_back();
+          }
+
+      }
+      points.push_back(point);
+    }
+    drawPolyLine(&points[0], points.size(), width, rgba);
   }
 
 
