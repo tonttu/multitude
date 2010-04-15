@@ -230,6 +230,7 @@ namespace Luminous
           "  pos = gl_Vertex; "\
           "  mat4 transform = gl_ProjectionMatrix * matrix;"\
           "  gl_Position = transform * gl_Vertex;"\
+          "  gl_ClipVertex = gl_ModelViewMatrix * matrix * gl_Vertex;"
           "  gl_FrontColor = gl_Color;"\
           "}";
       const char * circ_frag_shader = ""\
@@ -258,6 +259,7 @@ namespace Luminous
                           "void main() {"\
                           "p = coord;"\
                           "gl_Position = gl_ProjectionMatrix * gl_Vertex;"\
+                          "gl_ClipVertex = gl_ModelViewMatrix * gl_Vertex;"\
                           "gl_FrontColor = gl_Color;"\
                           "}";
       m_polyline_shader->loadStrings(polyline_vert, polyline_frag);
