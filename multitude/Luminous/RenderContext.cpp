@@ -299,7 +299,7 @@ namespace Luminous
 
   void RenderContext::pushClipRect(const Nimble::Rectangle & r)
   {
-      Radiant::info("RenderContext::pushClipRect # (%f,%f) (%f,%f)", r.center().x, r.center().y, r.size().x, r.size().y);
+//      Radiant::info("RenderContext::pushClipRect # (%f,%f) (%f,%f)", r.center().x, r.center().y, r.size().x, r.size().y);
 
     m_data->m_clipStack.push_back(r);
   }
@@ -311,10 +311,10 @@ namespace Luminous
 
   bool RenderContext::isVisible(const Nimble::Rectangle & area)
   {
-      Radiant::info("RenderContext::isVisible # area (%f,%f) (%f,%f)", area.center().x, area.center().y, area.size().x, area.size().y);
+//      Radiant::info("RenderContext::isVisible # area (%f,%f) (%f,%f)", area.center().x, area.center().y, area.size().x, area.size().y);
 
       if(m_data->m_clipStack.empty()) {
-          Radiant::info("\tclip stack is empty");
+//          Radiant::info("\tclip stack is empty");
           return true;
       } else {
 
