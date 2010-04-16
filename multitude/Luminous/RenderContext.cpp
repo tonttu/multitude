@@ -182,7 +182,8 @@ namespace Luminous
     size_t m_recursionLimit;
     size_t m_recursionDepth;
 
-    std::stack<Nimble::Rectangle> m_clipStack;
+    //std::stack<Nimble::Rectangle> m_clipStack;
+    std::vector<Nimble::Rectangle> m_clipStack;
 
     typedef std::list<Radiant::RefPtr<FBOPackage> > FBOPackages;
 
@@ -208,7 +209,7 @@ namespace Luminous
 
     // Make sure the clip stack is empty
     while(!m_data->m_clipStack.empty())
-      m_data->m_clipStack.pop();
+      m_data->m_clipStack.pop_back();
   }
 
   RenderContext::~RenderContext()
@@ -223,7 +224,7 @@ namespace Luminous
 
     // Make sure the clip stack is empty
     while(!m_data->m_clipStack.empty())
-      m_data->m_clipStack.pop();
+      m_data->m_clipStack.pop_back();
 
 
     static bool once = true;
@@ -298,25 +299,47 @@ namespace Luminous
 
   void RenderContext::pushClipRect(const Nimble::Rectangle & r)
   {
-    m_data->m_clipStack.push(r);
+      Radiant::info("RenderContext::pushClipRect # (%f,%f) (%f,%f)", r.center().x, r.center().y, r.size().x, r.size().y);
+
+    m_data->m_clipStack.push_back(r);
   }
 
   void RenderContext::popClipRect()
   {
-    m_data->m_clipStack.pop();
+    m_data->m_clipStack.pop_back();
   }
 
   bool RenderContext::isVisible(const Nimble::Rectangle & area)
   {
-    if(m_data->m_clipStack.empty())
-      return true;
-    else
-      return m_data->m_clipStack.top().intersects(area);
+      Radiant::info("RenderContext::isVisible # area (%f,%f) (%f,%f)", area.center().x, area.center().y, area.size().x, area.size().y);
+
+      if(m_data->m_clipStack.empty()) {
+          Radiant::info("\tclip stack is empty");
+          return true;
+      } else {
+
+          // Since we have no proper clipping algorithm, we compare against every clip rectangle in the stack
+          bool inside = true;
+
+          for(std::vector<Nimble::Rectangle>::const_reverse_iterator it = m_data->m_clipStack.rbegin(); it != m_data->m_clipStack.rend(); it++) {
+            inside &= (*it).intersects(area);
+          }
+
+          /*
+          const Nimble::Rectangle & clipArea = m_data->m_clipStack.top();
+
+          bool inside = m_data->m_clipStack.top().intersects(area);
+
+          Radiant::info("\tclip area (%f,%f) (%f,%f) : inside %d", clipArea.center().x, clipArea.center().y, clipArea.size().x, clipArea.size().y, inside);
+          */
+
+          return inside;          
+      }
   }
 
   const Nimble::Rectangle & RenderContext::visibleArea() const
   {
-    return m_data->m_clipStack.top();
+    return m_data->m_clipStack.back();
   }
 
   void RenderContext::setScreenSize(Nimble::Vector2i size)
