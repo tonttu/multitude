@@ -28,6 +28,7 @@ namespace Luminous {
   class EnableStep : public Patterns::NotCopyable
   {
   public:
+    /// Enables the given feature for the lifetime of this object
     EnableStep(GLenum feature) : m_feature(feature) { glEnable(feature); }
     ~EnableStep() { glDisable(m_feature); }
   private:

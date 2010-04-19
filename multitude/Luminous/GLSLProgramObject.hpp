@@ -35,29 +35,48 @@ namespace Luminous
   class LUMINOUS_API GLSLProgramObject : public GLResource, public Patterns::NotCopyable
   {
   public:
+
+    /// Constructs new program object and puts it in the given resources
+    /// collection
     GLSLProgramObject(GLResources * resources = 0);
     virtual ~GLSLProgramObject();
 
+    /// Adds a shader object to the program to be linked
     void addObject(GLSLShaderObject* obj);
 
+    /// Links the attached shader objects to create the program object
     virtual bool link();
+
+    /// Removes all attached shader objects from the program
     virtual void clear();
 
+    /// Returns a log of the linking process
     const char * linkerLog();
 
+    /// Binds the program to make it active
     virtual void bind();
+    /// Clears any binded programs
     virtual void unbind();
 
+    /// Gets the location of the given uniform variable
     int getUniformLoc(const std::string & name);
+    /// Gets the location of the given uniform variable
     int getUniformLoc(const char * name);
 
+    /// Gets the location of the given attribute variable
     int getAttribLoc(const std::string & name);
+    /// Gets the location of the given attribute variable
     int getAttribLoc(const char * name);
 
+    /// Sets the value of the given uniform
     bool setUniformInt(const char * name, int value);
+    /// @copydoc setUniformInt
     bool setUniformFloat(const char * name, float value);
+    /// @copydoc setUniformInt
     bool setUniformVector2(const char * name, Nimble::Vector2f value);
 
+    /// Validates the program
+    /// @return true if the program is valid and can be used
     bool validate();
 
     /** Create a GLSLProgramObject from vertex- and fragment shader files.
@@ -90,21 +109,29 @@ namespace Luminous
     static GLSLProgramObject* fromStrings
     (const char* vsString, const char* fsString);
 
+    /// Loads a program object from the given strings
+    /// @param vsString vertex shader code
+    /// @param fsString fragment shader code
     bool loadStrings(const char* vsString, const char* fsString);
 
+    /// Returns the number of shader objects attached to the program
     int shaderObjectCount() const { return (int) m_shaderObjects.size(); } 
 
+    /// Returns the OpenGL handle for this program
     GLuint handle() const { return m_handle; }
 
+    /// Returns true if the program has been linked successfully
     bool isLinked() const { return m_isLinked; }
 
   protected:
-
+    /// The linker log
     std::vector<GLchar> m_linkerLog;
+    /// True if the program has been linked
     bool m_isLinked;
+    /// Lis of shader objects making up this program
     std::list<GLSLShaderObject*> m_shaderObjects;
+    /// The OpenGL handle for the program
     GLuint m_handle;
-
   };
 
 }

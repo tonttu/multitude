@@ -103,17 +103,11 @@ namespace Luminous
         GLuint m_bufferId;
     };
 
+  /// An OpenGL vertex buffer
   typedef BufferObject<GL_ARRAY_BUFFER> VertexBuffer;
+  /// An OpenGL index buffer
   typedef BufferObject<GL_ELEMENT_ARRAY_BUFFER> IndexBuffer;
-  /*
-#ifdef WIN32
-#ifdef LUMINOUS_EXPORT
-  // In WIN32 template classes must be instantiated to be exported
-  template class BufferObject<GL_ARRAY_BUFFER>;
-  template class BufferObject<GL_ELEMENT_ARRAY_BUFFER>;
-#endif
-#endif
-*/
+
 }
 
 #endif

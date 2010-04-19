@@ -114,9 +114,12 @@ namespace Luminous
   public:
     friend class GLResources;
 
+    /// Constructs a new resource and associates it with the given resources
+    /// collection
     GLResource(GLResources * resources = 0);
     virtual ~GLResource();
 
+    /// Returns the resources collection this resource belongs to
     GLResources * resources() { return m_resources; }
 
     /** Change the current resource host. This function can only be

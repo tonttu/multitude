@@ -1,6 +1,8 @@
 #ifndef IMAGECODECSVG_HPP
 #define IMAGECODECSVG_HPP
 
+/// @cond
+
 #include <Luminous/ImageCodec.hpp>
 
 class QSvgRenderer;
@@ -25,5 +27,7 @@ private:
 };
 
 } // namespace Luminous
+
+/// @endcond
 
 #endif // IMAGECODECSVG_HPP

@@ -47,16 +47,21 @@ namespace Luminous
   };
 
   /// An abstraction of an off-screen render target.
-  /// @todo Doc
   class LUMINOUS_API Renderbuffer
   {
   public:
     Renderbuffer();
     ~Renderbuffer();
 
+    /// Binds the buffer and creates it if necessary.
     void bind();
+    /// Removes any GL_RENDERBUFFER bindings
     void unbind();
 
+    /// Defines the format for the render buffer
+    /// @param width width of the buffer
+    /// @param height height of the buffer
+    /// @param format pixel format for the render buffer
     void storageFormat(int width, int height, GLenum format);
 
   private:
@@ -68,40 +73,53 @@ namespace Luminous
   };
 
   /// Abstraction of an off-screen render target that can be used as a texture.
-  /// @todo Doc
   class LUMINOUS_API Framebuffer
   {
   public:
     Framebuffer();
     ~Framebuffer();
 
+    /// Binds the framebuffer
     void bind();
+    /// Clears any GL_FRAMEBUFFER bindings
     void unbind();
 
+    /// Checks the framebuffer for validity @return true if the framebuffer is
+    /// valid and can be rendered into. Possible errors are sent to cerr.
     bool check();
 
+    /// Attaches the framebuffer as 1D texture to the given attachment
     void attachTexture1D(Texture1D* texture,
              FramebufferAttachment attachment,
              int mipmapLevel = 0);
+    /// Detaches the given 1D texture attachment
     void detachTexture1D(FramebufferAttachment attachment);
 
+    /// Attaches the framebuffer as 2D texture to the given attachment
     void attachTexture2D(Texture2D* texture,
              FramebufferAttachment attachment,
              int mipmapLevel = 0);
+    /// Detaches the given 2D texture attachment
     void detachTexture2D(FramebufferAttachment attachment);
 
+    /// Attaches the framebuffer as 3D texture to the given attachment
     void attachTexture3D(Texture3D* texture,
              FramebufferAttachment attachment,
              int zSlice, int mipmapLevel = 0);
+    /// Detaches the given 3D texture attachment
     void detachTexture3D(FramebufferAttachment attachment);
 
+    /// Attaches the framebuffer as a single face of a cube texture to the given attachment
     void attachTextureCube(TextureCube* texture,
                FramebufferAttachment attachment,
                int face, int mipmapLevel = 0);
+    /// Detaches the given cube texture attachment
     void detachTextureCube(FramebufferAttachment attachment, int face);
 
+    /// Attaches the framebuffer as a renderbuffer attachment
     void attachRenderbuffer(Renderbuffer* renderbuffer,
                 FramebufferAttachment attachment);
+    /// Detaches the given renderbuffer attachment
     void detachRenderbuffer(FramebufferAttachment attachment);
 
   private:

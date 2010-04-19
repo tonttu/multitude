@@ -29,12 +29,14 @@ namespace Luminous
 {
   class BGThread;
 
+  /// Priority for the tasks
   typedef float Priority;
 
   /// Task is a base class for tasks that can be executed within BGThread. 
   class LUMINOUS_API Task : Patterns::NotCopyable
   {
   public:
+    /// Standard priorities for tasks
     enum {
       PRIORITY_LOW = 1,
       PRIORITY_NORMAL = 500,

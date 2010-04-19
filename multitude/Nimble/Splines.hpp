@@ -25,6 +25,7 @@ namespace Nimble
         T evalCatmullRom(float t, const std::vector<T> & cp, size_t index = 0);
 
         /// Catmull-Rom
+        /// @todo doc
         class Interpolating {
           typedef std::vector<Nimble::Vector2> PointList;
           typedef PointList::size_type Index;

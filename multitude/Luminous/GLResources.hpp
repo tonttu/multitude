@@ -53,10 +53,7 @@ namespace Luminous
   class LUMINOUS_API GLResources
   {
   public:
-
-    typedef std::map<const Collectable *, GLResource *> container;
-    typedef container::iterator iterator;
-
+    /// Constructs a new resource collection
     GLResources(Radiant::ResourceLocator & rl);
     virtual ~GLResources();
 
@@ -89,23 +86,36 @@ namespace Luminous
       rendering the OpenGL scene. */
     void resetSumCounters() { m_deallocationSum = m_allocationSum = 0; }
 
+    /// Delete the given resource after certain number of frames have passed
     void deleteAfter(GLResource * resource, int frames);
     /** Sets the threshold for deleting old objects from GPU memory. */
     void setComfortableGPURAM(long bytes)
     { m_comfortableGPURAM = bytes; }
 
+    /// Returns the resource locator associated with this resource collection
     Radiant::ResourceLocator & resourceLocator() { return m_resourceLocator; }
 
-    // static void setThreadResources(GLResources *);
-    static void setThreadResources(GLResources *,
-				   const MultiHead::Window *,
-				   const MultiHead::Area *);
+    // static void setThreadResources(GLResources *);    
+
+    /// Associates the resource collection to the calling thread
+    /// @param resources resource collection
+    /// @todo not implemented on Windows
+    static void setThreadResources(GLResources * resources,
+           const MultiHead::Window * window,
+           const MultiHead::Area * area);
+
+    /// Returns the resource collection for the calling thread    
+    /// @todo not implemented on Windows
     static GLResources * getThreadResources();
+
+
     static void getThreadMultiHead(const MultiHead::Window ** w,
 				   const MultiHead::Area **);
  
  private:
-    
+    typedef std::map<const Collectable *, GLResource *> container;
+    typedef container::iterator iterator;
+
     void eraseOnce();
 
     container m_resources;
