@@ -38,6 +38,7 @@ namespace Luminous
     friend class Framebuffer;
 
   public:
+    /// Constructs a texture and adds it to the given resource collection
     TextureT(GLResources * res = 0)
     : GLResource(res),
       m_textureId(0),
@@ -48,6 +49,7 @@ namespace Luminous
     {}
     virtual ~TextureT();
 
+    /// Allocates the texture object. Does not allocate memory for the texture data.
     void allocate()
     {
       if(!m_textureId)
@@ -62,6 +64,7 @@ namespace Luminous
       glBindTexture(TextureType, m_textureId);
     }
 
+    /// @copydoc bind
     void bindN(int textureUnit)
     {
       allocate();

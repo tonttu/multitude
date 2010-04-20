@@ -38,8 +38,8 @@ namespace Luminous {
   {
   public:
     LUMINOUS_API Shader();
+    /// Constructs a shader
     LUMINOUS_API Shader(Valuable::HasValues * parent, const char * name);
-
     LUMINOUS_API virtual ~Shader();
 
     /** Sets the source code for the fragment (aka pixel) shader.
@@ -70,8 +70,8 @@ namespace Luminous {
         tests for the presence of shader strings.
     */
     LUMINOUS_API bool isDefined() const;
-  private:
 
+  private:
     class Params;
     class Self;
     Self * m_self;

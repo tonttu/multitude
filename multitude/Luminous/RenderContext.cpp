@@ -336,12 +336,12 @@ namespace Luminous
           return inside;          
       }
   }
-
+/*
   const Nimble::Rectangle & RenderContext::visibleArea() const
   {
     return m_data->m_clipStack.back();
   }
-
+*/
   void RenderContext::setScreenSize(Nimble::Vector2i size)
   {
     m_data->m_screenSize = size;

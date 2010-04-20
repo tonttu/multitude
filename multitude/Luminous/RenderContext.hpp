@@ -36,6 +36,7 @@ namespace Luminous
   {
   public:
 
+    /// Blending function type
     enum BlendFunc {
       BLEND_USUAL,
       BLEND_NONE,
@@ -45,7 +46,7 @@ namespace Luminous
 
     class FBOPackage;
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+/// @cond
     /** Experimental support for getting temporary FBOs for this context.
         */
     class FBOHolder
@@ -84,33 +85,53 @@ namespace Luminous
       LOD_MAXIMUM = 8
     };
 
-#endif
+/// @endcond
 
+    /// Constructs a new render context and associates the given resources to it
     RenderContext(Luminous::GLResources * resources);
     virtual ~RenderContext();
 
+    /// Returns the resources of this context
     Luminous::GLResources * resources() { return m_resources; }
 
+    /// Prepares the context for rendering a frame. This is called once for
+    /// every frame before rendering.
     virtual void prepare();
+
+    /// Notifies the context that a frame has been renreded. This is called
+    /// once after each frame.
     virtual void finish();
 
-    void setRecursionLimit(size_t limit) ;
+    /// Sets the rendering recursion limit for the context. This is relevant
+    /// for ViewWidgets which can cause recursive rendering of the scene.
+    void setRecursionLimit(size_t limit) ;    
+    /// Returns the recursion limit
     size_t recursionLimit() const;
 
+    /// Sets the current recursion depth.
     void setRecursionDepth(size_t rd);
+    /// Returns current recursion depth
     size_t recursionDepth() const;
 
+    /// Pushes a clipping rectangle to the context
     void pushClipRect(const Nimble::Rectangle & r);
+    /// Pops a clipping rectangle from the context
     void popClipRect();
 
+    /// Checks if the given rectangle is visible (not clipped).
     bool isVisible(const Nimble::Rectangle & area);
-    const Nimble::Rectangle & visibleArea() const;
 
+    // Returns the visible area (bottom of the clip stack).
+    // @todo does not return anything useful
+    //const Nimble::Rectangle & visibleArea() const;
+
+    /// Sets the screen size for the context
     void setScreenSize(Nimble::Vector2i size);
 
-    ///@internal
+    /// @cond
     FBOHolder getTemporaryFBO(Nimble::Vector2 basicsize,
                               float scaling, uint32_t flags = 0);
+    /// @endcond
 
     // Render functions:
 
@@ -155,6 +176,7 @@ namespace Luminous
         then it will be ignored.
     */
     void drawTexRect(Nimble::Vector2 size, const float * rgba);
+    /// @copydoc
     void drawTexRect(Nimble::Vector2 size, const float * rgba,
                      const Nimble::Rect & texUV);
     void drawTexRect(Nimble::Vector2 size, const float * rgba,
