@@ -67,6 +67,7 @@ namespace Radiant {
         std::wstring & str = (*it2);
         // Strip leading white-space
 
+
         while(str.size() && (str[0] == ' ' || str[0] == '\"'))
           str.erase(0, 1);
 
