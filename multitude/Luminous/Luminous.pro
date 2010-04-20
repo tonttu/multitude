@@ -23,7 +23,6 @@ HEADERS += ImageCodec.hpp
 HEADERS += ImageCodecSVG.hpp
 HEADERS += ImageCodecTGA.hpp
 HEADERS += Image.hpp
-HEADERS += ImagePyramid.hpp
 HEADERS += Luminous.hpp
 HEADERS += MatrixStep.hpp
 HEADERS += MultiHead.hpp
