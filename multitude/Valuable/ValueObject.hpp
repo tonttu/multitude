@@ -22,6 +22,7 @@
 
 #include <Radiant/BinaryData.hpp>
 
+#include <Valuable/Archive.hpp>
 #include <Valuable/Export.hpp>
 #include <Valuable/ValueListener.hpp>
 
@@ -40,10 +41,10 @@ namespace Valuable
   {
   public:
     /// Serializes (writes) this object to an XML element, and returns the new element.
-    virtual DOMElement serialize(DOMDocument * doc) = 0;
+    virtual ArchiveElement & serialize(Archive & archive) = 0;
     /// Deserializes (reads) this object from an XML element.
     /** @return Returns true if the read process worked correctly, and false otherwise. */
-    virtual bool deserialize(DOMElement element) = 0;
+    virtual bool deserialize(ArchiveElement & element) = 0;
   };
 
 
@@ -151,7 +152,7 @@ namespace Valuable
     virtual const char * type() const = 0;
 
     /** The object is serialized using its name as a tag name. */
-    virtual DOMElement serialize(DOMDocument * doc);
+    virtual ArchiveElement & serialize(Archive &archive);
 
     /** The parent object of the value object (is any). */
     HasValues * parent() { return m_parent; }

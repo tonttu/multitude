@@ -61,7 +61,7 @@ namespace Valuable
     };
 
     template <typename T>
-    DOMElement serialize(DOMDocument *doc, T & t);
+    ArchiveElement & serialize(Archive &archive, T & t);
 
     template <typename T>
     T deserialize(const DOMElement & element);
@@ -72,10 +72,10 @@ namespace Valuable
     template <typename T, int type_id = Trait<T>::type>
     struct Impl
     {
-      static DOMElement serialize(DOMDocument * doc, T & t)
+      static ArchiveElement & serialize(Archive &archive, T & t)
       {
-        DOMElement elem = doc->createElement(typeid(t).name());
-        elem.setTextContent(Radiant::StringUtils::stringify(t));
+        ArchiveElement & elem = archive.createElement(typeid(t).name());
+        elem.xml()->setTextContent(Radiant::StringUtils::stringify(t));
         return elem;
       }
       static T deserialize(const DOMElement & element)
@@ -90,7 +90,7 @@ namespace Valuable
     template <typename T>
     struct Impl<T, Type::serializable>
     {
-      static DOMElement serialize(DOMDocument * doc, T & t)
+      static ArchiveElement & serialize(Archive &doc, T & t)
       {
         return t.serialize(doc);
       }
@@ -105,7 +105,7 @@ namespace Valuable
     template <typename T>
     struct Impl<T*, Type::serializable>
     {
-      static DOMElement serialize(DOMDocument * doc, T * t)
+      static ArchiveElement & serialize(Archive &doc, T * t)
       {
         return t->serialize(doc);
       }
@@ -120,18 +120,18 @@ namespace Valuable
     template <typename T>
     struct Impl<T, Type::pair>
     {
-      static DOMElement serialize(DOMDocument * doc, T & pair)
+      static ArchiveElement & serialize(Archive &archive, T & pair)
       {
-        DOMElement elem = doc->createElement("pair");
-        elem.appendChild(Serializer::serialize(doc, pair.first));
-        elem.appendChild(Serializer::serialize(doc, pair.second));
+        ArchiveElement & elem = archive.createElement("pair");
+        elem.xml()->appendChild(Serializer::serialize(archive, pair.first));
+        elem.xml()->appendChild(Serializer::serialize(archive, pair.second));
         return elem;
       }
-      static T deserialize(const DOMElement & element)
+      static T deserialize(ArchiveElement & element)
       {
         typedef typename T::first_type A;
         typedef typename T::second_type B;
-        DOMElement::NodeList nodes = element.getChildNodes();
+        DOMElement::NodeList nodes = element.xml()->getChildNodes();
         if(nodes.size() == 2) {
           return std::make_pair(Serializer::deserialize<A>(nodes.front()),
                                 Serializer::deserialize<B>(nodes.back()));
@@ -143,9 +143,9 @@ namespace Valuable
     };
 
     template <typename T>
-    DOMElement serialize(DOMDocument *doc, T & t)
+    ArchiveElement & serialize(Archive &archive, T & t)
     {
-      return Impl<T>::serialize(doc, t);
+      return Impl<T>::serialize(archive, t);
     }
 
     template <typename T>
@@ -158,13 +158,13 @@ namespace Valuable
     template <typename T>
     bool serialize(const std::string & filename, T t)
     {
-      Radiant::RefPtr<DOMDocument> doc = DOMDocument::createDocument();
-      DOMElement e = serialize(doc.ptr(), t);
-      if(e.isNull()) {
+      XMLArchive archive;
+      ArchiveElement & e = serialize(archive, t);
+      if(e.xml()->isNull()) {
         return false;
       }
-      doc->appendChild(e);
-      return doc->writeToFile(filename.c_str());
+      archive.doc()->appendChild(*e.xml());
+      return archive.doc()->writeToFile(filename.c_str());
     }
 
     /// Deserialize object from file

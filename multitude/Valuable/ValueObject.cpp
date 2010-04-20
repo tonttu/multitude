@@ -148,17 +148,17 @@ namespace Valuable
     return "";
   }
 
-  DOMElement ValueObject::serialize(DOMDocument * doc)
+  ArchiveElement & ValueObject::serialize(Archive &archive)
   {
     if(m_name.empty()) {
       Radiant::error(
 "ValueObject::serialize # attempt to serialize object with no name");
-      return DOMElement();
+      return archive.emptyElement();
     }
 
-    DOMElement elem = doc->createElement(m_name.c_str());
-    elem.setAttribute("type", type());
-    elem.setTextContent(asString());
+    ArchiveElement & elem = archive.createElement(m_name.c_str());
+    elem.xml()->setAttribute("type", type());
+    elem.xml()->setTextContent(asString());
 
     return elem;
   }

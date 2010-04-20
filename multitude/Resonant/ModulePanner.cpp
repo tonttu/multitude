@@ -42,9 +42,9 @@ namespace Resonant {
   ModulePanner::~ModulePanner()
   {}
 
-  Valuable::DOMElement ModulePanner::serialize(Valuable::DOMDocument * doc)
+  Valuable::ArchiveElement & ModulePanner::serialize(Valuable::Archive &doc)
   {
-    Valuable::DOMElement e = Module::serialize(doc);
+    Valuable::ArchiveElement & e = Module::serialize(doc);
 
     return e;
   }
@@ -54,12 +54,12 @@ namespace Resonant {
   {
     if(element.getTagName() == "speaker") {
       LoudSpeaker * ls = new LoudSpeaker;
-      bool ok = ls->deserialize(element);
+/*      bool ok = ls->deserialize(element);
 
       if(ok) {
         m_speakers.push_back(ls);
         return true;
-      }
+      }*/
     }
 
     return false;

@@ -47,7 +47,7 @@ namespace Luminous {
   MultiHead::Area::~Area()
   {}
 
-  bool MultiHead::Area::deserialize(Valuable::DOMElement element)
+  bool MultiHead::Area::deserialize(Valuable::ArchiveElement & element)
   {
     bool ok = HasValues::deserialize(element);
 
@@ -320,7 +320,7 @@ namespace Luminous {
       Area * area = new Area(this);
       // Add as child & recurse
       addValue(name, area);
-      area->deserialize(ce);
+      //area->deserialize(ce);
       m_areas.push_back(area);
     } else {
       return false;
@@ -563,7 +563,7 @@ namespace Luminous {
     return (int) (bottom - top);
   }
 
-  bool MultiHead::deserialize(Valuable::DOMElement element)
+  bool MultiHead::deserialize(Valuable::ArchiveElement & element)
   {
     m_windows.clear();
 
@@ -597,7 +597,7 @@ namespace Luminous {
 
       // Add as child & recurse
       addValue(name, win);
-      win->deserialize(ce);
+      //win->deserialize(ce);
 
       m_windows.push_back(win);
     } else {

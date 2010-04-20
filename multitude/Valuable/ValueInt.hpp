@@ -85,7 +85,7 @@ namespace Valuable
 
     virtual void processMessage(const char * id, Radiant::BinaryData & data);
 
-    bool deserialize(DOMElement element);
+    bool deserialize(ArchiveElement & element);
   };
 
   /// 32-bit integer value object.

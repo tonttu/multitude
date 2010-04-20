@@ -79,8 +79,8 @@ namespace Valuable
 
     const char * type() const { return VO_TYPE_STRING; }
 
-    DOMElement serialize(DOMDocument * doc);
-    bool deserialize(DOMElement element);
+    ArchiveElement & serialize(Archive &doc);
+    bool deserialize(ArchiveElement & element);
 
     /// Makes the string empty
     void clear() { m_value.clear(); }

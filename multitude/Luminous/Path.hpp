@@ -62,8 +62,8 @@ namespace Luminous {
 
     virtual const char * type() const { return "Path"; }
 
-      virtual Valuable::DOMElement serialize(Valuable::DOMDocument * doc);
-      virtual bool deserialize(Valuable::DOMElement element);
+      virtual Valuable::ArchiveElement & serialize(Valuable::Archive &doc);
+      virtual bool deserialize(Valuable::ArchiveElement & element);
 
       Nimble::Vector2f center() const;
 

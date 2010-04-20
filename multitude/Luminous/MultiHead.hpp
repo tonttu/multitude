@@ -63,7 +63,7 @@ namespace Luminous {
       LUMINOUS_API Area(Window * window = 0);
       LUMINOUS_API virtual ~Area();
 
-      LUMINOUS_API bool deserialize(Valuable::DOMElement element);
+      LUMINOUS_API bool deserialize(Valuable::ArchiveElement & element);
 
       void setGeometry(int x, int y, int w, int h, bool copyToGraphics = true)
       {
@@ -309,7 +309,7 @@ namespace Luminous {
     /** Total height of the display area, in graphics pixels. */
     LUMINOUS_API int height();
 
-    LUMINOUS_API bool deserialize(Valuable::DOMElement element);
+    LUMINOUS_API bool deserialize(Valuable::ArchiveElement & element);
 
     void addWindow(Window * w) { m_windows.push_back(w); }
 
