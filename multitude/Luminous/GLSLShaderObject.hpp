@@ -32,7 +32,7 @@ namespace Luminous
   public:
     /// Creates a new shader of the given type.
     /// @param type either GL_VERTEX_SHADER or GL_FRAGMENT_SHADER
-    /// @param sources resource collection
+    /// @param resources resource collection
     GLSLShaderObject(GLenum type, GLResources * resources = 0);
     ~GLSLShaderObject();
 

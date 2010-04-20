@@ -291,6 +291,7 @@ namespace Luminous {
     size_t windowCount() const { return m_windows.size(); }
     /// Access one of the windows
     LUMINOUS_API Window & window(size_t i);
+    /// @copydoc window
     LUMINOUS_API const Window & window(size_t i) const;
 
     /// Total size of all the windows
@@ -298,7 +299,7 @@ namespace Luminous {
 
     LUMINOUS_API Rect graphicsBounds() const;
 
-
+    /// Returns the size of the total display in graphics pixels
     Nimble::Vector2i size()
     { return Nimble::Vector2i(width(), height()); }
     LUMINOUS_API float seam();
@@ -311,9 +312,12 @@ namespace Luminous {
 
     LUMINOUS_API bool deserializeXML(Valuable::DOMElement element);
 
+    /// Adds a window to the collection
     void addWindow(Window * w) { m_windows.push_back(w); }
 
+    /// Sets the edited flag
     void setEdited(bool edited) { m_edited = edited; }
+    /// Returns true if the edited flag has been set
     bool isEdited() const { return m_edited; }
 
     float gamma() const { return m_gamma; }
