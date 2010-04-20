@@ -71,6 +71,10 @@ namespace Valuable
     /// Returns the string
     const T & str() const { return m_value; }
 
+    /// @todo use ValueTyped<T> or something similar instead
+    operator const T & () const { return m_value; }
+    const T * operator->() const { return &m_value; }
+
     virtual bool set(const std::string & v);
 
     const char * type() const { return VO_TYPE_STRING; }

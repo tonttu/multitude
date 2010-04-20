@@ -41,7 +41,7 @@ namespace Valuable
     public:
       ValueFloatT() : Base() {}
       /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
-      ValueFloatT(HasValues * parent, const std::string & name, T v, bool transit = false)
+      ValueFloatT(HasValues * parent, const std::string & name, T v = T(), bool transit = false)
       : ValueNumeric<T>(parent, name, v, transit)
       {}
 

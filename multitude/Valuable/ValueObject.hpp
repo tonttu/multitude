@@ -35,6 +35,17 @@ namespace Valuable
   class DOMDocument;
 
 
+  /// The base class for all serializable objects.
+  class VALUABLE_API Serializable
+  {
+  public:
+    /// Serializes (writes) this object to an XML element, and returns the new element.
+    virtual DOMElement serializeXML(DOMDocument * doc) = 0;
+    /// Deserializes (reads) this object from an XML element.
+    /** @return Returns true if the read process worked correctly, and false otherwise. */
+    virtual bool deserializeXML(DOMElement element) = 0;
+  };
+
 
   /** The base class for value objects.
 
@@ -54,7 +65,7 @@ namespace Valuable
   /// @todo the "set" functions are duplicating the processMessage functionality
   /// @todo processMessage should be renamed to eventProcess (can be tricky to do)
   /// @todo Doc
-  class VALUABLE_API ValueObject
+  class VALUABLE_API ValueObject : public Serializable
   {
   public:
     ValueObject();
@@ -139,11 +150,8 @@ namespace Valuable
     /// Get the type id of the type
     virtual const char * type() const = 0;
 
-    /// Serializes (writes) this ValueObject to an XML element, and returns the new element.
+    /** The object is serialized using its name as a tag name. */
     virtual DOMElement serializeXML(DOMDocument * doc);
-    /// Deserializes (reads) this object from an XML element.
-    /** @return Returns true if the read process worked correctly, and false otherwise. */
-    virtual bool deserializeXML(DOMElement element) = 0;
 
     /** The parent object of the value object (is any). */
     HasValues * parent() { return m_parent; }
@@ -172,6 +180,28 @@ namespace Valuable
 
     friend class HasValues;
   };
+
+  /// Every ValueObject is some kind of ValueType<T> object.
+  /// Common functionality should be in either here or in ValueObject
+  template <typename T> class ValueTyped : public ValueObject
+  {
+  public:
+    ValueTyped(HasValues * parent, const std::string & name, const T & v = T(), bool transit = false)
+      : ValueObject(parent, name, transit),
+      m_value(v) {}
+
+    ValueTyped()
+      : ValueObject(),
+      m_value(T()) {}
+
+    const T & operator * () const { return m_value; }
+
+    virtual ~ValueTyped() {}
+
+  protected:
+    T m_value;
+  };
+
 
 }
 

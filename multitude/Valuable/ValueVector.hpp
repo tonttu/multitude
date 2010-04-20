@@ -41,7 +41,7 @@ namespace Valuable
     public:
       ValueVector() : ValueObject() {}
       /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
-      ValueVector(HasValues * parent, const std::string & name, const VectorType & v, bool transit = false) : ValueObject(parent, name, transit), m_value(v) {}
+      ValueVector(HasValues * parent, const std::string & name, const VectorType & v = VectorType(), bool transit = false) : ValueObject(parent, name, transit), m_value(v) {}
 
       virtual ~ValueVector();
 
@@ -101,6 +101,10 @@ namespace Valuable
         m_value.normalize(len);
         emitChange();
       }
+
+      /// @todo use ValueTyped<T> or something similar instead
+      operator const VectorType & () const { return m_value; }
+      const VectorType * operator-> () const { return &m_value; }
     private:
       VectorType m_value;
   };
