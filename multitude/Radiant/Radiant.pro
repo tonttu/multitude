@@ -85,11 +85,19 @@ SOURCES += VideoInput.cpp
 SOURCES += WatchDog.cpp
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS
 
-linux-*:SOURCES += PlatformUtilsLinux.cpp
+linux-* {
+	SOURCES += PlatformUtilsLinux.cpp
+	SOURCES += XFaker.cpp
+	HEADERS += XFaker.hpp
+	
+	LIBS += -lX11 -lXtst
+}
+
 macx {
     SOURCES += PlatformUtilsOSX.cpp
     LIBS += -framework,CoreFoundation
 }
+
 unix {
     HEADERS += VideoCamera1394.hpp
     SOURCES += DirectoryPosix.cpp

@@ -38,6 +38,7 @@ namespace Luminous
     friend class Framebuffer;
 
   public:
+    /// Constructs a texture and adds it to the given resource collection
     TextureT(GLResources * res = 0)
     : GLResource(res),
       m_textureId(0),
@@ -48,6 +49,7 @@ namespace Luminous
     {}
     virtual ~TextureT();
 
+    /// Allocates the texture object. Does not allocate memory for the texture data.
     void allocate()
     {
       if(!m_textureId)
@@ -59,13 +61,6 @@ namespace Luminous
     {
       allocate();
       glActiveTexture(textureUnit);
-      glBindTexture(TextureType, m_textureId);
-    }
-
-    void bindN(int textureUnit)
-    {
-      allocate();
-      glActiveTexture(GL_TEXTURE0 + textureUnit);
       glBindTexture(TextureType, m_textureId);
     }
 
@@ -85,7 +80,13 @@ namespace Luminous
     Nimble::Vector2i size() const
     { return Nimble::Vector2i(m_width, m_height); }
 
+    /** Sets the width of the texture. This is not used by the object for
+    anything but allows the user to query texture dimension from the texture
+    object.*/
     void setWidth(int w) { m_width = w; }
+    /** Sets the height of the texture. This is not used by the object for
+    anything but allows the user to query texture dimension from the texture
+    object.*/
     void setHeight(int h) { m_height = h; }
 
     /// Returns the number of pixels in this texture.
@@ -117,10 +118,15 @@ namespace Luminous
     const PixelFormat & pixelFormat() const { return m_pf; }
 
   protected:
+    /// OpenGL texture handle
     GLuint m_textureId;
+    /// Width of the texture
     int m_width;
+    /// Height of the texture
     int m_height;
+    /// Pixel format of the texture
     PixelFormat m_pf;
+    /// Does the texture have mipmaps
     bool m_haveMipmaps;
   };
 
@@ -128,9 +134,12 @@ namespace Luminous
   class LUMINOUS_API Texture1D : public TextureT<GL_TEXTURE_1D>
   {
   public:
+    /// Constructs a 1D texture and adds it to the given resource collection
     Texture1D(GLResources * resources = 0) : TextureT<GL_TEXTURE_1D> (resources) {}
 
+    /// Constructs a 1D texture by loading it from a file
     static Texture1D* fromImage(Image & image, bool buildMipmaps = true, GLResources * resources = 0);
+    /// Constructs a 1D texture by loading it from memory
     static Texture1D* fromBytes(GLenum internalFormat, int w, const void* data, const PixelFormat& srcFormat, bool buildMipmaps = true, GLResources * resources = 0);
   };
 
@@ -138,6 +147,7 @@ namespace Luminous
   class LUMINOUS_API Texture2D : public TextureT<GL_TEXTURE_2D>
   {
   public:
+    /// Constructs a 2D texture and adds it to the given resource collection
     Texture2D(GLResources * resources = 0) : TextureT<GL_TEXTURE_2D>(resources) {}
 
     /// Load the texture from an image file
@@ -168,6 +178,7 @@ namespace Luminous
   class LUMINOUS_API Texture3D : public TextureT<GL_TEXTURE_3D>
   {
   public:
+    /// Constructs a 3D texture and adds it to the given resource collection
     Texture3D(GLResources * resources = 0) : TextureT<GL_TEXTURE_3D> (resources) {}
   };
 
@@ -175,6 +186,7 @@ namespace Luminous
   class LUMINOUS_API TextureCube : public TextureT<GL_TEXTURE_CUBE_MAP>
   {
   public:
+    /// Constructs a cube texture and adds it to the given resource collection
     TextureCube(GLResources * resources = 0)
         : TextureT<GL_TEXTURE_CUBE_MAP> (resources) {}
 

@@ -38,8 +38,8 @@ namespace Luminous {
   {
   public:
     LUMINOUS_API Shader();
+    /// Constructs a shader
     LUMINOUS_API Shader(Valuable::HasValues * parent, const char * name);
-
     LUMINOUS_API virtual ~Shader();
 
     /** Sets the source code for the fragment (aka pixel) shader.
@@ -62,7 +62,9 @@ namespace Luminous {
     /** Returns a compiled OpenGL shader program. */
     LUMINOUS_API GLSLProgramObject * bind();
 
-    LUMINOUS_API void addShaderVarying(const Valuable::ValueObject *);
+    // Adds a ValueObject as a shader attribute
+    //LUMINOUS_API void addShaderAttribute(const Valuable::ValueObject *);
+    /// Adds a ValueObject as a shader uniform
     LUMINOUS_API void addShaderUniform(const Valuable::ValueObject *);
 
     /** Returns true if the shader code is defined.
@@ -70,8 +72,8 @@ namespace Luminous {
         tests for the presence of shader strings.
     */
     LUMINOUS_API bool isDefined() const;
-  private:
 
+  private:
     class Params;
     class Self;
     Self * m_self;

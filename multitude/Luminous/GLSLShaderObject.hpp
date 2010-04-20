@@ -24,19 +24,28 @@
 namespace Luminous 
 {
 
-  /// OpenGL shading language shader object  
+  /** OpenGL shading language shader object. Usually shader programs consist of
+  multiple shader objects that are first compiled and then linked together to
+  create the final shader program that can be executed.*/
   class LUMINOUS_API GLSLShaderObject : public GLResource, public Patterns::NotCopyable
   {
   public:
+    /// Creates a new shader of the given type.
+    /// @param type either GL_VERTEX_SHADER or GL_FRAGMENT_SHADER
+    /// @param resources resource collection
     GLSLShaderObject(GLenum type, GLResources * resources = 0);
     ~GLSLShaderObject();
 
+    /// Compiles the shader
     bool compile();
+
+    /// Returns the compiler log of the shader
     const char* compilerLog();   
 
+    /// Sets the source code for the shader
     void setSource(const char* code);
 
-  protected:
+  private:
 
     char*   m_compilerLog;
     bool    m_isCompiled;

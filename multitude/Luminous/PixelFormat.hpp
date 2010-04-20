@@ -32,6 +32,7 @@ namespace Luminous
   {
     public:
 
+    /// Data type of a single channel
       enum ChannelType
       {
         TYPE_UNKNOWN,
@@ -45,6 +46,7 @@ namespace Luminous
         TYPE_DOUBLE       = GL_DOUBLE
       };
 
+      /// Layout of channels
       enum ChannelLayout
       {
         LAYOUT_UNKNOWN,
@@ -63,34 +65,47 @@ namespace Luminous
         LAYOUT_LUMINANCE_ALPHA      = GL_LUMINANCE_ALPHA
       };
 
+      /// Constructs a copy
       PixelFormat(const PixelFormat& pf);
+      /// Constructs a pixel format with the given info
       PixelFormat(ChannelLayout layout = LAYOUT_UNKNOWN, ChannelType type = TYPE_UNKNOWN);
       ~PixelFormat();
 
+      /// Returns the number of channels
       int numChannels() const;
+      /// Returns the layout of the channels
       ChannelLayout layout() const { return m_layout; }
+      /// Returns the data type of the channels
       ChannelType type() const { return m_type; }
+      /// Returns the number of bytes in a single pixel
       int bytesPerPixel() const;
 
+      /// Constructs an 8-bit RGB pixel format
     static PixelFormat rgbUByte()
     { return PixelFormat(LAYOUT_RGB, TYPE_UBYTE); }
+    /// Constructs an 8-bit RGBA pixel format
     static PixelFormat rgbaUByte()
     { return PixelFormat(LAYOUT_RGBA, TYPE_UBYTE); }
+    /// Constructs an 8-bit alpha-only pixel format
     static PixelFormat alphaUByte()
     { return PixelFormat(LAYOUT_ALPHA, TYPE_UBYTE); }
+    /// Constructs an 8-bit luminance (grayscale) pixel format
     static PixelFormat luminanceUByte()
     { return PixelFormat(LAYOUT_LUMINANCE, TYPE_UBYTE); }
+    /// Constructs a floating-point luminance pixel format
     static PixelFormat luminanceFloat()
     { return PixelFormat(LAYOUT_LUMINANCE, TYPE_FLOAT); }
 
+    /// Compare if two pixel formats are the same
     inline bool operator == (const PixelFormat & that) const
     {
       return m_layout == that.m_layout && m_type == that.m_type;
     }
 
+    /// Converts the pixel format into a human-readable string
     std::string toString() const;
 
-    protected:
+    private:
       ChannelLayout m_layout;
       ChannelType m_type;
   };

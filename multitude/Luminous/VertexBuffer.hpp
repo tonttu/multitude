@@ -88,18 +88,26 @@ namespace Luminous
         BufferObject();
         ~BufferObject();
 
+        /// Allocates memory for the vertex buffer
         void allocate(size_t bytes, Usage usage);
 
+        /// Binds the vertex buffer
         void bind() const;
+        /// Unbinds any vertex buffers
         void unbind() const;
 
+        /// Fills the vertex buffer with data
         void fill(void * data, size_t bytes, Usage usage);
+        /// Fills a part of the vertex buffer with data
         void partialFill(size_t start, void * data, size_t count);
 
+        /// Maps the vertex buffer to CPU memory. The pointer is valid until unmap() is called.
         void * map(AccessMode mode);
+        /// Unmaps the vertex buffer from CPU memory. The pointer to the buffer is invalidated.
         void unmap();
 
       protected:
+        /// OpenGL handle for the vertex buffer
         GLuint m_bufferId;
     };
 

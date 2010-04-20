@@ -97,9 +97,12 @@ namespace Luminous
 
     // static void setThreadResources(GLResources *);    
 
-    /// Associates the resource collection to the calling thread
-    /// @param resources resource collection
-    /// @todo not implemented on Windows
+    /** Associates the resource collection, window, and area to the calling
+    thread. @sa getThreadMultiHead
+    @param resources resource collection
+    @param window window to associate with the calling thread
+    @param area area to associate with the calling thread
+    @todo not implemented on Windows */
     static void setThreadResources(GLResources * resources,
            const MultiHead::Window * window,
            const MultiHead::Area * area);
@@ -108,9 +111,11 @@ namespace Luminous
     /// @todo not implemented on Windows
     static GLResources * getThreadResources();
 
-
+    /** Get rendering data associated with the calling thread.
+    @param w window associated with the calling thread
+    @param a area associated with the calling thread */
     static void getThreadMultiHead(const MultiHead::Window ** w,
-				   const MultiHead::Area **);
+           const MultiHead::Area ** a);
  
  private:
     typedef std::map<const Collectable *, GLResource *> container;

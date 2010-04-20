@@ -46,6 +46,7 @@ namespace Luminous
       PRIORITY_OFFSET_BIT_LOWER = -1
     };
 
+      /// Constructs a task with the given priority
       Task(Priority p = PRIORITY_NORMAL);
       virtual ~Task();
 
@@ -63,7 +64,7 @@ namespace Luminous
       /// Get the current state of the task
       State state() const { return m_state; }
 
-      ///< The actual work the task does should be implemented in here. Override
+      /// The actual work the task does should be implemented in here. Override
       /// in the derived class
       virtual void doTask() = 0;
   
@@ -74,12 +75,10 @@ namespace Luminous
       /// Schedule the next execution time for this task
       void scheduleFromNow(Radiant::TimeStamp wait) 
       { m_scheduled = Radiant::TimeStamp::getTime() + wait; }
-      void scheduleFromNowSecs(double seconds) 
+      /// @copydoc scheduleFromNow
+      void scheduleFromNowSecs(double seconds)
       { m_scheduled = Radiant::TimeStamp::getTime() + 
           Radiant::TimeStamp::createSecondsD(seconds); }
-
-      /// @internal 
-      //bool canBeDeleted() const { return m_canDelete; }
 
     Radiant::Mutex * generalMutex();
 
@@ -90,14 +89,18 @@ namespace Luminous
       /// processed
       virtual void finished();
 
+      /// Sets the task state
       void setState(State s) { m_state = s; }
 
+      /// State of the task
       State m_state;
+      /// Priority of the task
       Priority m_priority;
-      //bool m_canDelete;
 
+      /// When is the task scheduled to run
       Radiant::TimeStamp m_scheduled;
 
+      /// The background thread where this task is executed
       BGThread * m_host;
     
       friend class BGThread;

@@ -34,8 +34,11 @@ namespace Luminous
   /// queried (with Image::ping) without loading the full image.
   struct ImageInfo {
     ImageInfo() : width(0), height(0) {}
+    /// Width of the image
     int width;
+    /// Height of the image
     int height;
+    /// Pixel format of the image
     PixelFormat pf;
   };
 
@@ -51,6 +54,7 @@ namespace Luminous
   {
   public:
     Image();
+    /// Constructs a deep copy
     Image(const Image& img);
     virtual ~Image();
 
@@ -93,6 +97,7 @@ namespace Luminous
     void fromData(const unsigned char * bytes, int width, int height,
           PixelFormat format);
 
+    /// Returns the pixel format of the image
     const PixelFormat& pixelFormat() const { return m_pixelFormat; }
 
     /// Clears the image, freeing the data.
