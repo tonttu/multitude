@@ -254,17 +254,33 @@ namespace Luminous
 
       m_polyline_shader = new GLSLProgramObject();
       const char * polyline_frag = ""\
-                          "varying float p;"\
-                          "uniform float border_start;"\
+                          "#version 120\n"\
+                          "flat varying vec2 p1;"\
+                          "flat varying vec2 p2;"\
+                          "varying vec2 vertexcoord;"\
+                          "uniform float width;"\
                           "void main() {"\
                           "gl_FragColor = gl_Color;"\
-                          "gl_FragColor.w *= smoothstep(1.0, border_start, abs(p));"\
-                          "}";
-      const char * polyline_vert = "attribute float coord;"\
-                          "uniform float border_start;"\
-                          "varying float p;"\
+                          "vec2 pp = p2-p1;"\
+                          "float t = ((vertexcoord.x-p1.x)*(p2.x-p1.x)+(vertexcoord.y-p1.y)*(p2.y-p1.y))/dot(pp,pp);"\
+                          "t = clamp(t, 0.0, 1.0);"\
+                          "vec2 point_on_line = p1+t*(p2-p1);"\
+                          "float dist = length(vertexcoord-point_on_line);"\
+                          "gl_FragColor.w *= clamp(width-dist, 0.0, 1.0);"\
+                          "}";      
+
+      const char * polyline_vert = ""\
+                          "#version 120\n"\
+                          "attribute vec2 coord;"\
+                          "attribute vec2 coord2;"\
+                          "uniform float width;"\
+                          "flat varying vec2 p1;"\
+                          "flat varying vec2 p2;"\
+                          "varying vec2 vertexcoord;"\
                           "void main() {"\
-                          "p = coord;"\
+                          "p1 = coord;"\
+                          "p2 = coord2;"\
+                          "vertexcoord = gl_Vertex.xy;"\
                           "gl_Position = gl_ProjectionMatrix * gl_Vertex;"\
                           "gl_ClipVertex = gl_ModelViewMatrix * gl_Vertex;"\
                           "gl_FrontColor = gl_Color;"\
@@ -531,6 +547,8 @@ namespace Luminous
 
     const Matrix3 & m = transform();
     std::vector<Nimble::Vector2> vertexArr;
+    std::vector<Vector2> attribArr;
+    std::vector<Vector2> attribArr2;
     Vector2f cprev;
     Vector2f cnow = m.project(vertices[0]);
     Vector2f cnext;
@@ -559,6 +577,12 @@ namespace Luminous
     vertexArr.push_back(cnow - avg);
     vertexArr.push_back(cnow + avg);
 
+    attribArr.push_back(cnow);
+    attribArr.push_back(cnow);
+
+    attribArr2.push_back(Vector2());
+    attribArr2.push_back(Vector2());
+
     for (int i = nextIdx; i < n; ) {
       nextIdx = i+1;
       cprev = cnow;      
@@ -577,8 +601,6 @@ namespace Luminous
       dirPrev = dirNext;
       dirNext = cnext - cnow;
       
-      float max = Math::Max(1-(dirNext.length()/40.0f), 0.1f);
-
       if (dirNext.length() < 1e-5f) {
         dirNext = dirPrev;
       } else {
@@ -588,36 +610,41 @@ namespace Luminous
       avg = (dirPrev + dirNext).perpendicular();
       avg.normalize();
 
-      float dp = dot(avg, dirPrev.perpendicular());
-      /// @todo: use bevel join if angle too small
-      if (dp > 0.1f)
-        avg /= Math::Max(dp, max);
+      float dp = Math::Clamp(dot(avg, dirPrev.perpendicular()), 1e-2f, 1.0f);
+      avg /= dp;
       avg *= width;
       vertexArr.push_back(cnow-avg);
       vertexArr.push_back(cnow+avg);
+
+      attribArr.push_back(cnow);
+      attribArr.push_back(cnow);
+
+      attribArr2.push_back(cprev);
+      attribArr2.push_back(cprev);
 
       i = nextIdx;
     }
 
     GLuint loc = m_polyline_shader->getAttribLoc("coord");
     glEnableVertexAttribArray(loc);
-    m_polyline_shader->bind();
-    m_polyline_shader->setUniformFloat("border_start", 1.0f-1.0f/(width-0.5f));
+    GLuint loc2 = m_polyline_shader->getAttribLoc("coord2");
+    glEnableVertexAttribArray(loc2);
 
-    GLfloat * attribs = new GLfloat[vertexArr.size()];
-    for (unsigned int i=0; i < vertexArr.size(); i++) {
-      attribs[i] = i%2 == 0 ? 1.0f : -1.0f;
-    }
+    m_polyline_shader->bind();
+    m_polyline_shader->setUniformFloat("width", width);
 
     glColor4fv(rgba);    
     glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat *>(&vertexArr[0]));
-    glVertexAttribPointer(loc, 1, GL_FLOAT, GL_FALSE, 0, attribs);
+    glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&attribArr[0]));
+    glVertexAttribPointer(loc2, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&attribArr2[0]));
     glEnableClientState(GL_VERTEX_ARRAY);
-    glDrawArrays(GL_QUAD_STRIP, 0, vertexArr.size());
+
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, vertexArr.size());
+
     glDisableClientState(GL_VERTEX_ARRAY);
-    m_polyline_shader->unbind();
     glDisableVertexAttribArray(loc);
-    delete[] attribs;
+    glDisableVertexAttribArray(loc2);
+    m_polyline_shader->unbind();
   }
 
   void RenderContext::drawSpline(Nimble::Splines::Interpolating & s, float width, const float * rgba, float step)
