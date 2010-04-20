@@ -64,14 +64,6 @@ namespace Luminous
       glBindTexture(TextureType, m_textureId);
     }
 
-    /// @copydoc bind
-    void bindN(int textureUnit)
-    {
-      allocate();
-      glActiveTexture(GL_TEXTURE0 + textureUnit);
-      glBindTexture(TextureType, m_textureId);
-    }
-
     /** Bind this texture to the currently active tecture unit. */
     void bind()
     {
