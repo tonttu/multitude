@@ -33,19 +33,25 @@ namespace Valuable
 {
   /** Base class for objects that include member variables with automatic IO.
 
-      This base class has a list of #ValueObject child objects (aka
+      This base class has a list of #Valuable::ValueObject child objects (aka
       member variables) that are named with unique string.
 
       Deleting the child objects is the responsibility of the child
       classes, HasValues simply maintains a list of children.
   */
-  /// @todo Doc, Examples
+  /// @todo Examples
   class VALUABLE_API HasValues : public ValueObject
   {
   public:
+    /// Universally unique identifier type
     typedef int64_t Uuid;
 
     HasValues();
+    /** Constructs a new HasValues and adds it under the given parent
+      @param parent parent
+      @param name name of the object
+      @param transit should the object changes be transmitted
+    */
     HasValues(HasValues * parent, const std::string & name, bool transit = false);
     virtual ~HasValues();
 
@@ -115,10 +121,14 @@ namespace Valuable
     /// Prints the contents of this ValueObject to the terinal
     void debugDump();
 
+    /// Container for key-value object pairs
     typedef std::map<std::string, ValueObject *> container;
+    /// Iterator for the container
     typedef container::iterator iterator;
 
+    /// Returns an iterator to the beginning of the values
     iterator valuesBegin() { return m_children.begin(); }
+    /// Returns an iterator to the end of the values
     iterator valuesEnd() { return m_children.end(); }
 
     /** Add an event listener to this object.
@@ -140,19 +150,21 @@ namespace Valuable
                           const char * to,
                           Valuable::HasValues * obj,
                           const Radiant::BinaryData * defaultData = 0);
-    /**
-
+    /** Removes event listeners from this object.
       @return number of listeners removed
       */
     int eventRemoveListener(Valuable::HasValues * obj, const char * from = 0, const char * to = 0);
-    /** Adds */
+    /// Adds an event source
     void eventAddSource(Valuable::HasValues * source);
+    /// Removes an event source
     void eventRemoveSource(Valuable::HasValues * source);
 
+    /// Returns the number of event sources
     unsigned eventSourceCount() const {  return (unsigned) m_eventSources.size(); }
+    /// Returns the number of event listeners
     unsigned eventListenerCount() const { return (unsigned) m_elisteners.size(); }
 
-
+    /// Control whether events are passed
     void eventPassingEnable(bool enable) { m_eventsEnabled = enable; }
 
     /// The main event processing function
@@ -181,13 +193,18 @@ namespace Valuable
     */
     virtual void processMessage(const char * type, Radiant::BinaryData & data);
 
+    /// Generates a unique identifier
     static Uuid generateId();
+    /// Returns the unique id
     Uuid id() const;
 
   protected:
 
+    /// Sends an event to all listeners on this object
     void eventSend(const std::string & id, Radiant::BinaryData &);
+    /// @copydoc eventSend
     void eventSend(const char *, Radiant::BinaryData &);
+    /// @copydoc eventSend
     void eventSend(const char *);
 
   private:

@@ -104,7 +104,7 @@ namespace VideoDisplay {
       virtual void unbind();
       void doTextures(int frame, Radiant::VideoImage *);
 
-      Vector2i planeSize(const Radiant::VideoImage *img, uint i);
+      Vector2i planeSize(const Radiant::VideoImage *img, size_t i);
 
       Luminous::Texture2D & blankTex() { return m_blankTex; }
 
@@ -224,7 +224,7 @@ namespace VideoDisplay {
     /** Information on how the frames have been displayed. The
     histogram information is useful mostly for debug purposes. */
     int histogramPoint(int index) const { return m_histogram[index]; }
-    int histogramIndex() const { return m_updates; }
+    size_t histogramIndex() const { return m_updates; }
 
     /** Returns true if this video has been loaded with subtitles. */
     bool hasSubTitles() { return m_subTitles.size() != 0; }
@@ -260,7 +260,7 @@ namespace VideoDisplay {
     int                     m_count;
     State                   m_state;
     int                     m_histogram[HISTOGRAM_POINTS];
-    uint                    m_updates;
+    size_t                  m_updates;
     bool                    m_seeking;
 
     Radiant::TimeStamp      m_duration;

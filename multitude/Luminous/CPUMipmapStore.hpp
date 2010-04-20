@@ -33,6 +33,8 @@ namespace Luminous {
         #Luminous::CPUMipmaps object, and return that (if opened successfully).
      */
     static CPUMipmaps * acquire(const std::string & filename, bool immediate = true);
+    /// @copydoc acquire
+    /// @todo remove (implicit conversion should work?)
     static CPUMipmaps * acquire(const char * filename, bool immediate = true);
 
     /** Release a #Luminous::CPUMipmaps object. If there are no references to

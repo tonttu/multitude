@@ -16,6 +16,8 @@
 #ifndef CODEC_PNG_HPP
 #define CODEC_PNG_HPP
 
+/// @cond
+
 #include <Luminous/ImageCodec.hpp>
 
 namespace Luminous
@@ -36,5 +38,7 @@ namespace Luminous
   };
 
 }
+
+/// @endcond
 
 #endif

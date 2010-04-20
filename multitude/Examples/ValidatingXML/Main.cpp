@@ -13,15 +13,11 @@ int main(int argc, char ** argv)
     return 1;
   }
 
-  Valuable::initialize();
-
   Radiant::RefPtr<DOMDocument> doc = DOMDocument::createDocument();
 
   if(!doc->readFromFile(argv[1], true))
     fprintf(stderr, "Failed to load '%s'\n", argv[1]);
   return 1;
-
-  Valuable::terminate();
 
   return 0;
 }

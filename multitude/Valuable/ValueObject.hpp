@@ -35,7 +35,7 @@ namespace Valuable
   class DOMDocument;
 
 
-  /// Base class for all serializable objects.
+  /// The base class for all serializable objects.
   class VALUABLE_API Serializable
   {
   public:
@@ -47,8 +47,9 @@ namespace Valuable
   };
 
 
-  /// Base class for values
-  /** Typical child classes include some POD (plain old data) elements
+  /** The base class for value objects.
+
+      Typical child classes include some POD (plain old data) elements
       (floats, ints, vector2) etc, that can be accessed through the
       API. The ValueObjects have names (std::string), that can be used to access
       ValueObjects that are stored inside HasValues objects.
@@ -70,16 +71,14 @@ namespace Valuable
     ValueObject();
     /// The copy constructor creates a copy of the ValueObject WITHOUT the
     /// link to parent
-    ValueObject(const ValueObject & o);
-    /// The most usual constructor
-    /** This constructor is typically used when attaching the value
-    object to its parent.
+    ValueObject(const ValueObject & o);    
+    /** Constructs a new value object and attaches it to its parent.
 
     @arg parent The parent object. This object is automatically
     added to the parent.
 
     @arg name The name (or id) of this value. Names are typically
-    semi human readable. The names should not contain white-spaces
+    human-readable. The names should not contain white-spaces
     as they may be used in XML files etc.
 
     @arg transit Should value changes be transmitted forward. This
@@ -91,8 +90,9 @@ namespace Valuable
 
     /// Returns the name of the object.
     const std::string & name() const { return m_name; }
+    /// Sets the name of the object
     void setName(const std::string & s);
-
+    /// Returns the path (separated by '/'s) from the root
     std::string path() const;
 
     /// Process a message
@@ -136,10 +136,15 @@ namespace Valuable
         ok pointer to false (if it is non-null). */
     virtual std::string asString(bool * const ok = 0) const;
 
+    /// Sets the value of the object
     virtual bool set(float v);
+    /// Sets the value of the object
     virtual bool set(int v);
+    /// Sets the value of the object
     virtual bool set(const std::string & v);
+    /// Sets the value of the object
     virtual bool set(const Nimble::Vector2f & v);
+    /// Sets the value of the object
     virtual bool set(const Nimble::Vector4f & v);
 
     /// Get the type id of the type

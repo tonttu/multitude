@@ -32,6 +32,8 @@ namespace Luminous {
   class LUMINOUS_API GPUMipmaps : public GLResource
   {
   public:
+    /// Constructs new GPUMipmaps for the given CPUMipmaps and puts it in
+    /// the given resources collection
     GPUMipmaps(CPUMipmaps *, GLResources * resources = 0);
     virtual ~GPUMipmaps();
 

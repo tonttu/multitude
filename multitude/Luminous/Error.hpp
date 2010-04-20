@@ -22,10 +22,12 @@
 
 namespace Luminous
 {
-  /// @todo remove?
+  /// Converts OpenGL texture internal format enum into human-readable string
   const char * glInternalFormatToString(GLint format);
+  /// Converts OpenGL texture format enum into human-readable string
   const char * glFormatToString(GLenum format);
 
+  /// Converts OpenGL error into a human-readalbe string
   std::string glErrorToString();
 
 }

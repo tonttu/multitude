@@ -23,9 +23,13 @@
 
 namespace Luminous {
 
+  /// Per-context 1D texture
   typedef ContextVariableT<Texture1D> ContextTexture1D;
+  /// Per-context 2D texture
   typedef ContextVariableT<Texture2D> ContextTexture2D;
+  /// Per-context 3D texture
   typedef ContextVariableT<Texture3D> ContextTexture3D;
+  /// Per-context GLSL shader
   typedef ContextVariableT<GLSLProgramObject> ContextGLSLProgramObject;
 
 }

@@ -109,7 +109,7 @@ namespace Luminous {
     /// Returns the location of the vertex that is closest to the argument v.
     Nimble::Vector2 closest(Nimble::Vector2 v) const;
 
-  protected:
+  private:
     Valuable::ValueVector2f m_vertices[4];
     Nimble::Matrix4 m_matrix;
     int     m_selected;

@@ -88,7 +88,9 @@ namespace Luminous {
     GPUMipmaps object does not exist yet, it is created and
     returned. */
     LUMINOUS_API GPUMipmaps * getGPUMipmaps(GLResources *);
+    /// @copydoc getGPUMipmaps
     LUMINOUS_API GPUMipmaps * getGPUMipmaps();
+    /// Binds a texture that matches the given size parameters.
     LUMINOUS_API bool bind(GLResources *,
                const Nimble::Matrix3 & transform,
                Nimble::Vector2 pixelsize);
@@ -105,6 +107,7 @@ namespace Luminous {
     inline float aspect() const
     { return (float)m_nativeSize.x / (float)m_nativeSize.y; }
 
+    /// Returns true if the images have alpha channel
     inline bool hasAlpha() const { return m_hasAlpha; }
 
     /// Not finished

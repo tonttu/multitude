@@ -206,7 +206,7 @@ namespace VideoDisplay {
     m_frame = frame;
   }
 
-  Vector2i ShowGL::MyTextures::planeSize(const Radiant::VideoImage *img, uint i)
+  Vector2i ShowGL::MyTextures::planeSize(const Radiant::VideoImage *img, size_t i)
   {
     Vector2i area(img->m_width, img->m_height);
 

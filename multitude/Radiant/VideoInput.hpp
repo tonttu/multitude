@@ -76,7 +76,6 @@ namespace Radiant {
      * @see #Radiant::ImageConversion for conversions into application video formats
      * @note The device has to be initialized, and the stream transmission has
      * to be started before this method can be called.
-     * @see #open()
      * @see #start()
      */
     virtual const Radiant::VideoImage * captureImage() = 0;
@@ -87,7 +86,7 @@ namespace Radiant {
 
     /// Get audio data
     /** This function returns a pointer to the internal audio PCM buffer. The audio PCM buffer
-        is filled in the #captureFrame function, and this function only returns a pointer to the
+        is filled in the #captureImage function, and this function only returns a pointer to the
         captured data.
 
         This function should be called frequently, typically after each video frame.
@@ -127,7 +126,7 @@ namespace Radiant {
     virtual ImageFormat imageFormat() const = 0;
     /// Returns the total size of one captured image frame in bytes.
     virtual unsigned int size() const = 0;
-
+    /// Sets the gamma correction value
     virtual void setGamma(float);
     /** Sets the shutter time. Larger values lead to longer shutter
     times. Negative values tell the system to use automatic shutter

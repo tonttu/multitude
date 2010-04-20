@@ -148,7 +148,7 @@ namespace Radiant {
     template <class S>
     GridT(S & that) : Base(that) {}
 
-    /// @todo Is this #define needed?
+    /// @todo Is this define really needed?
 #ifndef WIN32
     /** Constructor that takes the elements from the data pointer,
 	with given width and height. */
@@ -293,6 +293,22 @@ namespace Radiant {
   typedef GridT<RGBAu8, GridNoMemT<RGBAu8> > PtrGridRGBAu8;
   /// A grid of color values with memory management
   typedef GridT<RGBAu8, GridMemT<RGBAu8> >   MemGridRGBAu8;
+
+#ifdef WIN32
+    #ifdef RADIANT_EXPORT
+        template class GridT<uint8_t, GridNoMemT<uint8_t>>;
+        template class GridT<uint8_t, GridMemT<uint8_t>>;
+
+        template class GridT<uint16_t, GridNoMemT<uint16_t>>;
+        template class GridT<uint16_t, GridMemT<uint16_t>>;
+
+        template class GridT<float, GridNoMemT<float>>;
+        template class GridT<float, GridMemT<float>>;
+
+        template class GridT<RGBAu8, GridNoMemT<RGBAu8>>;
+        template class GridT<RGBAu8, GridMemT<RGBAu8>>;
+    #endif
+#endif
 
 }
 

@@ -16,6 +16,8 @@
 #ifndef LUMINOUS_IMAGE_CODEC_QT_HPP
 #define LUMINOUS_IMAGE_CODEC_QT_HPP
 
+/// @cond
+
 #ifndef USE_QT45
 #error "This code is only to be used with Qt version 4.5."
 #endif
@@ -44,5 +46,7 @@ namespace Luminous
   };
 
 }
+
+/// @endcond
 
 #endif

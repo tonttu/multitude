@@ -31,6 +31,8 @@ namespace Radiant {
   class RADIANT_API VideoCamera : public VideoInput
   {
   public:
+    /// Constructs a new video
+    /// @param driver camera driver from where the camera was instantiated from
     VideoCamera(CameraDriver * driver);
     virtual ~VideoCamera();
 
@@ -114,56 +116,112 @@ namespace Radiant {
 
     /// A container of basic camera feature information.
     struct CameraFeature {
+      /// Id number of the feature
       FeatureType id;
+      /// Minimum value for the feature (integer)
       uint32_t min;
+      /// Maximum value for the feature (integer)
       uint32_t max;
+      /// Current value for the feature (integer)
       uint32_t value;
+      /// Is this feature available?
       bool available;
+      /// Does this feature support absolute mode?
       bool absolute_capable;
+      /// Can this feature be read?
       bool readout_capable;
+      /// Does this feature support on/off mode?
       bool on_off_capable;
+      /// Does this feature support polarity
       bool polarity_capable;
+      /// Is this feature enabled
       bool is_on;
 
+      /// Current mode the feature is in
       FeatureMode current_mode;
+      /// Number of different modes this feature supports
       uint32_t num_modes;
+      /// The different modes this feature supports
       FeatureMode modes[MODE_MAX];
 
+      /// Current value for the feature (float)
       float abs_value;
+      /// Minimum value for the feature (float)
       float abs_min;
+      /// Maximum value for the feature (float)
       float abs_max;
     };
 
+    /** Opens a connection to the camera and initializes the image capture parameters.
+  @param euid hardware id of the camera
+  @param width width of the camera image
+  @param height height of the camera image
+  @param fmt image format
+  @param framerate framerate of the camera
+  */
     virtual bool open(uint64_t euid, int width, int height, ImageFormat fmt = IMAGE_UNKNOWN, FrameRate framerate = FPS_IGNORE) = 0;
+    /** Opens a connection to the camera and sets up format7 image capture.
+      @param cameraeuid hardware id of the camera
+      @param roi region of interest
+      @param fps desired frames per second
+      @param mode desired format7 mode
+      */
     virtual bool openFormat7(uint64_t cameraeuid, Nimble::Recti roi, float fps, int mode) = 0;
 
-    virtual void getFeatures(std::vector<CameraFeature> * features) = 0;
+    /** Gets the different features that the camera supports */ virtual void
+    getFeatures(std::vector<CameraFeature> * features) = 0;
+
+    /** Sets the relative value of a feature based on the minimum and maximum
+    values. If the value is negative, the feature is set to automatic mode.
+    @param id id of the feature to set
+    @param value value to set
+      */
     virtual void setFeature(FeatureType id, float value) = 0;
+    /** Sets the absolute value of a feature.
+      @param id id of the feature to set
+      @param value value of the feature to set
+    */
     virtual void setFeatureRaw(FeatureType id, int32_t value) = 0;
+    /** Returns a human-readable name for a feature given the feature id */
     static const char * featureName(FeatureType id);
 
+    /** Checks if the given camera feature supports a certain mode */
     static bool hasMode(const CameraFeature & feature, FeatureMode mode);
+    /** Checks if the given camera feature supports a automatic mode */
     static bool hasAutoMode(const CameraFeature & feature)
     { return hasMode(feature, MODE_AUTO); }
+    /** Checks if the given camera feature supports a manual mode */
     static bool hasManualMode(const CameraFeature & feature)
     { return hasMode(feature, MODE_MANUAL); }
 
-
+    /** Sets the value of the PAN feature */
     virtual void setPan(float value);
+    /** Sets the value of the TILT feature */
     virtual void setTilt(float value);
+    /** Sets the value of the GAMMA feature */
     virtual void setGamma(float value);
+    /** Sets the value of the SHUTTER feature */
     virtual void setShutter(float value);
+    /** Sets the value of the GAIN feature */
     virtual void setGain(float value);
+    /** Sets the value of the EXPOSURE feature */
     virtual void setExposure(float value);
+    /** Sets the value of the BRIGHTNESS feature */
     virtual void setBrightness(float value);
+    /** Sets the value of the FOCUS feature */
     virtual void setFocus(float value);
+    /** Sets the timeout for waiting for a new frame from the camera */
     virtual bool setCaptureTimeout(int ms) = 0;
+    /** @deprecated not implemented */
     virtual void setWhiteBalance(float u_to_blue, float v_to_red) = 0;
 
-    /// Sets the triggering mode for the camera
+    /// Enables external triggering of the camera
     virtual bool enableTrigger(TriggerSource src) = 0;
+    /// Sets the triggering mode for the camera
     virtual bool setTriggerMode(TriggerMode mode) = 0;
+    /// Sets the trigger polarity of the camera
     virtual bool setTriggerPolarity(TriggerPolarity polarity) = 0;
+    /// Disables external trigger for the camera
     virtual bool disableTrigger() = 0;
     /// Sends a software trigger signal to the camera
     virtual void sendSoftwareTrigger() = 0;
@@ -171,10 +229,15 @@ namespace Radiant {
     /// Returns information about this particular camera object
     virtual CameraInfo cameraInfo() = 0;
 
+    /** Returns the number of frames that would be immediately readable.
+      Currently, this function is only implemented for the libdc1394 driver.
+     */
     virtual int framesBehind() const = 0;
 
+    /// Returns an instance of the camera driver factory
     static CameraDriverFactory & drivers();
 
+    /// Returns the driver which created this camera
     CameraDriver * driver() { return m_driver; }
     private:
     CameraDriver * m_driver;

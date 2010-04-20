@@ -16,6 +16,8 @@
 #ifndef CODEC_TGA_HPP
 #define CODEC_TGA_HPP
 
+/// @cond
+
 #include <Luminous/ImageCodec.hpp>
 
 namespace Luminous
@@ -36,5 +38,7 @@ namespace Luminous
   };
 
 }
+
+/// @endcond
 
 #endif

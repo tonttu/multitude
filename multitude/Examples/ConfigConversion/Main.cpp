@@ -27,8 +27,6 @@
 int main(int argc, char ** argv)
 {
 
-  Valuable::initialize();
-  
   for(int i = 1; i < argc; i++) {
 
     const char * file = argv[i];
@@ -65,8 +63,6 @@ int main(int argc, char ** argv)
     
     delete xdoc;
   }
-
-  Valuable::terminate();
 
   return 0;
 }

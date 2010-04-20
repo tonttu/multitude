@@ -85,6 +85,7 @@ namespace Radiant {
   class RADIANT_API VideoImage
   {
   public:
+    /// Constructs a new video image
     VideoImage(ImageFormat fmt = IMAGE_UNKNOWN, int w = 0, int h = 0)
       : m_format(fmt), m_width(w), m_height(h) {}
     ~VideoImage();
@@ -97,9 +98,11 @@ namespace Radiant {
     public:
       Plane() : m_data(0), m_linesize(0), m_type(PLANE_UNKNOWN) {}
 
+      /// Makes a shallow copy of the data
       void set(unsigned char * data, int linesize, PlaneType type)
       { m_data = data; m_linesize = linesize; m_type = type; }
 
+      /// Frees the memory associated with the plane
       void freeMemory();
 
       /// Get a line from the image
@@ -178,6 +181,7 @@ namespace Radiant {
       m_planes[3].m_type = PLANE_UNKNOWN;
     }
 
+    /// Returns the size of an image plane in bytes
     static Nimble::Vector2i planeSize(ImageFormat fmt, int w, int h, int plane);
 
     /// Allocates memory and sets the image format.
@@ -231,8 +235,10 @@ namespace Radiant {
     Plane m_planes[4];
     /// Image format
     ImageFormat m_format;
-    /// Width and height
-    int m_width, m_height;
+    /// Width of the image
+    int m_width;
+    /// Height of the image
+    int m_height;
   };
 
 }

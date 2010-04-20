@@ -22,18 +22,28 @@
 
 namespace Valuable
 {  
+  /// A configurable value
   class VALUABLE_API ConfigValue
   {
   public:
     ConfigValue(void);
+    /** Constructs a new value with the given
+    @param k name of the value
+    @param v value */
     ConfigValue(std::string k, std::string v);
     ~ConfigValue(void);
     
+    /// Gets the name (key) of the value
     const std::string & key() const { return m_key; }
+    /// Gets the value
     const std::string & value() const { return m_value; }
 
+  private:
+    friend class ConfigDocument;
+
     int m_depth;
-    std::string m_key, m_value;
+    std::string m_key;
+    std::string m_value;
   };
 }
 

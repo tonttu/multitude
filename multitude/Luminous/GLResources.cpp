@@ -192,13 +192,9 @@ namespace Luminous
   typedef std::map<unsigned int, TGLRes> ResourceMap;
 #endif
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-
   static ResourceMap __resources;
   static MutexStatic __mutex;
   
-#endif
-
   void GLResources::setThreadResources(GLResources * rsc, 
 				       const MultiHead::Window *w, const MultiHead::Area *a)
   {

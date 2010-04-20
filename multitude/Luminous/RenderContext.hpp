@@ -25,6 +25,7 @@
 #include <Luminous/GLSLProgramObject.hpp>
 #include <Nimble/Rectangle.hpp>
 #include <Nimble/Vector2.hpp>
+#include <Nimble/Splines.hpp>
 
 namespace Luminous
 {
@@ -144,6 +145,8 @@ namespace Luminous
      */
     void drawPolyLine(const Nimble::Vector2f * vertices, int n,
                       float width, const float * rgba);
+
+    void drawSpline(Nimble::Splines::Interpolating & spline, float width, const float * rgba=0, float step=1.0f);
     /** Draw a textured rectangle with given color.
 
         @arg size The size of the rectangle to be drawn.

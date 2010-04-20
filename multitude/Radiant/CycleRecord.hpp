@@ -57,7 +57,7 @@ namespace Radiant {
       reset();
     }
     /// The number of bins
-    unsigned size() const { return m_records.size(); }
+    size_t size() const { return m_records.size(); }
     /// Reset the records to zero
     void reset() { for(unsigned i = 0; i < size(); i++) m_records[i] = 0.0; }
     /// Update the tick counter, without putting the value to any bucket

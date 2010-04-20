@@ -52,11 +52,17 @@ namespace Luminous
     ///@todo Check that it works in all cases
     virtual void setPriority(Task * task, Priority p);
 
+    /// Returns an instance to a previously created BGThread if one has been
+    /// created before. This function will not create a new instance.
+    /// @return pointer to an instance or NULL if no BGThread has yet been created
     static BGThread * instance();
 
+    /// Container for the tasks
     typedef std::multimap<Priority, Task *, std::greater<Priority> > container;
+    /// Objects stored in the task container
     typedef std::pair<Priority, Task * > contained;
 
+    /// Returns the number of tasks this thread is handling
     unsigned taskCount();
 
     /** This method returns a mutex that Task objects and their
@@ -72,7 +78,7 @@ namespace Luminous
     */
     Radiant::Mutex * generalMutex();
 
-  protected:
+  private:
     virtual void childLoop();
 
     Task * pickNextTask(Radiant::TimeStamp & wait);

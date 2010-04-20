@@ -36,18 +36,22 @@ namespace Radiant
   namespace StringUtils
   {
 
+    /// A list of strings
     typedef std::list<std::string>    StringList;
+    /// A list of wide-byte strings
     typedef std::list<std::wstring>   WStringList;
 
     /// Check if wstring a begins with b
     RADIANT_API bool beginsWith(const std::wstring & a,
                                 const std::wstring & b);
 
+    /// @copydoc beginsWith
     RADIANT_API bool beginsWith(const std::string & a,
                                 const std::string & b);
 
     /// Remove non-visible characters from std::string.
     RADIANT_API void eraseNonVisibles(std::string & s);
+    /// @copydoc eraseNonVisibles
     RADIANT_API void eraseNonVisibles(std::wstring & s);
 
     /// Convert std::string to double.
@@ -70,8 +74,10 @@ namespace Radiant
     /// Split std::wstring into sub-strings.
     RADIANT_API void split(const std::wstring & ws, const std::wstring & delim, WStringList & out);
 
+    /// Merges a list of strings into a single string
     RADIANT_API void merge(std::wstring & dest, const WStringList & src);
 
+    /// Locate char in string
     RADIANT_API const char * strchrnul(const char * str, int c);
 
     /// Count the number of lines in the string.
@@ -96,9 +102,10 @@ namespace Radiant
     RADIANT_API int utf8DecodedLength(const std::string & src);
     /// Count the number of encoded utf8 bytes characters in a wide string.
     RADIANT_API int utf8EncodedLength(const std::wstring & src);
-    // Returns the lower-case version of the ascii string
+    /// Returns the lower-case version of the ascii string
     RADIANT_API std::string lowerCase(const std::string & src);
 
+    /// Converts ASCII string to uppercase
     RADIANT_API char upperCaseASCII(char c);
 
     /** Finds the str in strings and return the index. The
@@ -110,6 +117,7 @@ namespace Radiant
     not found in the strings, then -1 is returned. */
     RADIANT_API int which(const StringList & strings, const std::string & str);
 
+    /// Converts to string
     /// @todo Rename to toString
     template<class T>
     inline std::string stringify(T x) {
@@ -118,6 +126,7 @@ namespace Radiant
         return os.str();
     }
 
+    /// Converts from string
     template <class T>
     inline T fromString(const char * str)
     { return T(atoll(str)); }
@@ -136,6 +145,7 @@ namespace Radiant
     { return atoll(str); }
     */
 
+    /// Returns "yes" or "no" given the parameter
     RADIANT_API const char * yesNo(bool yes);
 
 #ifdef WIN32

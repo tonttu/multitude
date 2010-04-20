@@ -30,15 +30,18 @@ namespace Valuable
   class VALUABLE_API ValueColor : public ValueVector<Nimble::Vector4f,float,4>
   {
   public:
+    /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
     ValueColor(HasValues * parent, const std::string & name, const Radiant::Color & c, bool transit = false);
     
     virtual ~ValueColor();
 
+    /// Copies a color
     ValueColor & operator = (const Radiant::Color & c)
       { (* (ValueVector<Nimble::Vector4f,float,4> *) this) = c; return *this; }
     
     const char * type() const { return "color"; }
     
+    /// Converts the value object to color
     Radiant::Color asColor() const { return asVector(); }
     
     /// Returns the red comoponent of the color (0-1).

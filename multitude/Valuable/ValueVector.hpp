@@ -40,24 +40,31 @@ namespace Valuable
   {
     public:
       ValueVector() : ValueObject() {}
+      /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
       ValueVector(HasValues * parent, const std::string & name, const VectorType & v = VectorType(), bool transit = false) : ValueObject(parent, name, transit), m_value(v) {}
 
       virtual ~ValueVector();
 
+      /// Assigns a vector
       ValueVector<VectorType, ElementType, N> & operator =
       (const VectorType & v) { m_value = v; emitChange(); return *this; }
 
+      /// Assigns by addition
       ValueVector<VectorType, ElementType, N> & operator +=
       (const VectorType & v) { m_value += v; emitChange(); return *this; }
+      /// Assigns by subtraction
       ValueVector<VectorType, ElementType, N> & operator -=
       (const VectorType & v) { m_value -= v; emitChange(); return *this; }
 
-    VectorType operator -
+    /// Subtract
+      VectorType operator -
       (const VectorType & v) const { return m_value - v; }
+      /// Add
     VectorType operator +
       (const VectorType & v) const { return m_value + v; }
 
-      ElementType operator [] (int i) const { return m_value[i]; }
+    /// Returns the ith element
+    ElementType operator [] (int i) const { return m_value[i]; }
 
     /// Returns the data in its native format
      const ElementType * native() const
@@ -68,6 +75,7 @@ namespace Valuable
 
     const char * type() const;
 
+    /// Sets the value
       virtual bool set(const VectorType & v);
 
       /** Returns the internal vector object as a constant reference. */
@@ -77,12 +85,17 @@ namespace Valuable
 
       std::string asString(bool * const ok = 0) const;
 
+      /// Returns the ith element
       inline const ElementType & get(int i) const { return m_value[i]; }
+      /// Returns a pointer to the first element
       inline const ElementType * data() const { return m_value.data(); }
 
+      /// Returns the first component
       inline const ElementType & x() const { return m_value[0]; }
+      /// Returns the second component
       inline const ElementType & y() const { return m_value[1]; }
 
+      /// Normalizes the vector
       inline void normalize(ElementType len = 1.0)
       {
         m_value.normalize(len);
@@ -96,12 +109,18 @@ namespace Valuable
       VectorType m_value;
   };
 
+  /// An integer vector2 value object
   typedef ValueVector<Nimble::Vector2i, int, 2> ValueVector2i;
+  /// An integer vector3 value object
   typedef ValueVector<Nimble::Vector3i, int, 3> ValueVector3i;
+  /// An integer vector4 value object
   typedef ValueVector<Nimble::Vector4i, int, 4> ValueVector4i;
 
+  /// A float vector2 value object
   typedef ValueVector<Nimble::Vector2f, float, 2> ValueVector2f;
+  /// A float vector3 value object
   typedef ValueVector<Nimble::Vector3f, float, 3> ValueVector3f;
+  /// A float vector4 value object
   typedef ValueVector<Nimble::Vector4f, float, 4> ValueVector4f;
 
 }

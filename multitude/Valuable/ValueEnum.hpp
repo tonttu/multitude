@@ -16,15 +16,19 @@
 #ifndef VALUABLE_VALUE_ENUM_HPP
 #define VALUABLE_VALUE_ENUM_HPP
 
+/// @cond
+
 #include <Valuable/ValueInt.hpp>
 
 namespace Valuable
 {
 
-  ///@todo document, use properly
+  ///@todo document, use properly, finish implementation
+
   class VALUABLE_API ValueEnum : public ValueIntT<int32_t>
   {
   public:
+    /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
     ValueEnum(Valuable::HasValues * host, const char * name,
               const char ** enumnames, int current);
     virtual ~ValueEnum();
@@ -36,4 +40,7 @@ namespace Valuable
   };
 
 }
+
+/// @endcond
+
 #endif // VALUEENUM_HPP

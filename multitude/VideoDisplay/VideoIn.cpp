@@ -188,7 +188,7 @@ namespace VideoDisplay {
     /* Radiant::debug("VideoIn::nextFrame # dec = %u cons = %u",
           m_decodedFrames, m_consumedFrames);
     */
-    if((int) m_decodedFrames <= index)
+    if(m_decodedFrames <= index)
       index = m_decodedFrames - 1;
 
     if(!m_continue && m_decodedFrames <= m_consumedFrames)
@@ -313,7 +313,7 @@ namespace VideoDisplay {
 
     if(bottom < 0)
       bottom = 0;
-    int latest = latestFrame();
+    size_t latest = latestFrame();
 
     int best = latest; // Nimble::Math::Min(latest, startfrom);
     int low = Nimble::Math::Min((int) m_consumedFrames,
@@ -507,7 +507,7 @@ namespace VideoDisplay {
   void VideoIn::ignorePreviousFrames()
   {
     debug("VideoIn::ignorePreviousFrames # %d", m_decodedFrames);
-    for(uint i = m_consumedFrames; (i + 1) < m_decodedFrames; i++) {
+    for(size_t i = m_consumedFrames; (i + 1) < m_decodedFrames; i++) {
       Frame * f = m_frames[i % m_frames.size()].ptr();
       if(f)
         f->m_type = FRAME_IGNORE;

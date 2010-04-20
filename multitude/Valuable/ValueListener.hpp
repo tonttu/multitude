@@ -25,8 +25,7 @@ namespace Valuable
   class ValueObject;
   class ValueListeners;
 
-  /// Base class for classes that need to listen on the changes on ValueObjects
-  /// @todo Options: Document, deprecate, remove.
+  /// Base class for classes that need to listen on the changes on ValueObjects  
   class VALUABLE_API ValueListener
   {
   public:
@@ -59,12 +58,14 @@ namespace Valuable
   class VALUABLE_API ValueListeners
   {
   public:
+    /// A List of listeners
     typedef std::list<ValueListener *> container;
+    /// Iterator for the list
     typedef container::iterator iterator;
 
     ValueListeners() : m_list(0) {}
+    /// Constructs a copy
     ValueListeners(const ValueListeners & that);
-
     ~ValueListeners();
 
     /// Adds a listener to the listener list
@@ -85,6 +86,7 @@ namespace Valuable
     /// Invokes the valueDeleted- method of all the listeners in the list
     void emitDelete(ValueObject *);
 
+    /// Copies a listener
     ValueListeners & operator = (const ValueListeners & that);
 
   private:

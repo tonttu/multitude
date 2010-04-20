@@ -63,7 +63,7 @@ namespace Radiant {
     /// The number of ticks that take place during one day
     static type ticksPerDay()    { return 1449551462400ll; }
 
-
+    /// Constructs a timestamp
     TimeStamp(type val = 0) : m_val(val) {}
     ~TimeStamp() {}
 
@@ -109,13 +109,16 @@ namespace Radiant {
       return tmp + ticksPerDay() * (type) days;
     }
 
+    /** Creates a timestamp from date string */
     static TimeStamp createDate(const char * date,
                 const char * delim = "-",
                 bool yearfirst = true);
 
+    /** Creates a timestamp from time string */
     static TimeStamp createTime(const char * time,
                 const char * delim = ":");
 
+    /** Creates a timestamp from data and time string */
     static TimeStamp createDateTime(const char * date,
                     const char * delim,
                     bool yearfirst,

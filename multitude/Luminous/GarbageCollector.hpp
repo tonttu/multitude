@@ -67,8 +67,9 @@ namespace Luminous
   class LUMINOUS_API GarbageCollector
   {
   public:
-
+    /// Container for Collectables
     typedef std::set<Collectable *> container;
+    /// Iterator for the container
     typedef container::iterator iterator;
 
     /// Empties the garbage list.
@@ -88,13 +89,16 @@ namespace Luminous
       changed. */
     static Collectable * getObject(iterator & it) { return (*it); }
 
+    /// Returns the number of collectables in the garbage collector
     static int size() { return (int) m_items.size(); }
 
+    /// Mutex to control access to the garbage collector
     static Radiant::MutexStatic & mutex();
+    
   private:
-
     GarbageCollector();
     ~GarbageCollector();
+
 
     static container m_items;
 

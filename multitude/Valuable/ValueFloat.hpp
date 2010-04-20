@@ -33,7 +33,6 @@ namespace Valuable
       etc.
 
       @see ValueFloat. */
-  ///@todo rename "native" to "data"
   template<class T>
   class VALUABLE_API ValueFloatT : public ValueNumeric<T>
   {
@@ -41,16 +40,19 @@ namespace Valuable
 
     public:
       ValueFloatT() : Base() {}
+      /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
       ValueFloatT(HasValues * parent, const std::string & name, T v = T(), bool transit = false)
       : ValueNumeric<T>(parent, name, v, transit)
       {}
 
+      /// Copies a float
       inline ValueFloatT<T> & operator = (T i) { Base::m_value = i; VALUEMIT_STD_OP }
 
+      /// Converts the value object to a float
       inline operator const T & () const { return Base::m_value; }
 
       /// Returns the data in its native format
-      const T & native() const { return Base::m_value; }
+      const T & data() const { return Base::m_value; }
 
       const char * type() const { return VO_TYPE_FLOAT; }
 

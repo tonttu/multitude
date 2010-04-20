@@ -20,8 +20,6 @@
 
 #include <GL/glew.h>
 
-// #include <Luminous/lumiglew.hpp>
-
 /// Luminous library is a collection of C++ classes for computer graphics, using OpenGL.
 
 /** \b Copyright: The Luminous library has been developed in Helsinki
@@ -37,17 +35,22 @@
 namespace Luminous
 {
 
-  /// Initializes the Luminous library.
-  /** In practice this function only initializes the GLEW and checks
+  /** Initializes the Luminous library.
+      In practice this function only initializes the GLEW and checks
       the capabilities of the underlying OpenGL implementation. If the
-      OpenGL version is below 2.0, then a warnign message is
-      issued. 
+      OpenGL version is below 2.0, then a warning message is
+      issued.
       
       @return true if all relevant resources were successfully
       initialized, false if something was left missing (for example
       too low OpenGL version).
   */
   LUMINOUS_API bool initLuminous();
+
+  /** Initializes the default image codecs.
+  The image codecs are loaded as plugins that need to be loaded before they can
+  be used. This functions does just that.
+  */
   LUMINOUS_API void initDefaultImageCodecs();
 
 }
