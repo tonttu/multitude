@@ -42,30 +42,33 @@ namespace Luminous
   bool ImageCodecQT::ping(ImageInfo & info, FILE * file)
   {
     QFile f;
-    if(!f.open(file, QIODevice::ReadOnly)) {	
-		Radiant::error("ImageCodecQT::ping # failed to open file");
+    if(!f.open(file, QIODevice::ReadOnly)) {
+        Radiant::error("ImageCodecQT::ping # failed to open file");
       return false;
-	}
-	
+    }
+
     QImageReader r(&f);
 
     if(!r.canRead()) {
-		Radiant::error("ImageCodecQT::ping # no valid data or the file format is not supported");
+        Radiant::error("ImageCodecQT::ping # no valid data or the file format is not supported");
       return false;
-	}
+    }
 
     QImage::Format fmt = r.imageFormat();
 
+    QSize s = r.size();
+
     if(fmt == QImage::Format_RGB32)
+      info.pf = PixelFormat::rgbUByte();
+    else if(fmt == QImage::Format_Indexed8)
       info.pf = PixelFormat::rgbUByte();
     else if(fmt == QImage::Format_ARGB32)
       info.pf = PixelFormat::rgbaUByte();
     else {
-		Radiant::error("ImageCodecQT::ping # image has unsupported pixel format");
+      Radiant::error("ImageCodecQT::ping # image has unsupported pixel format (%d: %dx%d)", fmt, s.width(), s.height());
       return false;
-	}
+    }
 
-    QSize s = r.size();
     info.width = s.width();
     info.height = s.height();
 
@@ -84,7 +87,10 @@ namespace Luminous
 
     QImage::Format fmt = r.imageFormat();
     PixelFormat pf;
+
     if(fmt == QImage::Format_RGB32)
+      pf = PixelFormat::rgbUByte();
+    else if(fmt == QImage::Format_Indexed8)
       pf = PixelFormat::rgbUByte();
     else if(fmt == QImage::Format_ARGB32)
       pf = PixelFormat::rgbaUByte();
@@ -94,6 +100,12 @@ namespace Luminous
     QImage qi;
     if(!r.read(&qi))
       return false;
+
+    if(fmt == QImage::Format_Indexed8) {
+      QImage tmp = qi.convertToFormat(QImage::Format_RGB32);
+      qi = tmp;
+      fmt = QImage::Format_RGB32;
+    }
 
     image.allocate(qi.width(), qi.height(), pf);
 

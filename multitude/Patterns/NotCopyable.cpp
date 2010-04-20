@@ -9,7 +9,6 @@ namespace Patterns
   NotCopyable::~NotCopyable()
   {}
 
-
   NotCopyable::NotCopyable(const NotCopyable &)
   {}
 
