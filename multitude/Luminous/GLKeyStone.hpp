@@ -51,7 +51,7 @@ namespace Luminous {
     virtual const char * type() const { return "glkeystone"; }
 
     /// Reads in variables from the DOMElement and calculates the matrix
-    virtual bool deserializeXML(Valuable::DOMElement e);
+    virtual bool deserialize(Valuable::DOMElement e);
 
     /// Returns the index to the closest keystone vertex
     int closestVertex(Nimble::Vector2 loc);

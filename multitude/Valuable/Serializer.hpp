@@ -28,9 +28,9 @@ namespace Valuable
   template <typename T> struct remove_const { typedef T Type; };
   template <typename T> struct remove_const<const T> { typedef T Type; };
 
-  /// XML Serializer namespace that has handles the (de)serializeXML dispatching
+  /// XML Serializer namespace that has handles the (de)serialize dispatching
   /** Correct way to save/load object state to/from XML is to use static
-      serializeXML/deserializeXML methods.
+      serialize/deserialize methods.
   */
   namespace Serializer
   {
@@ -61,10 +61,10 @@ namespace Valuable
     };
 
     template <typename T>
-    DOMElement serializeXML(DOMDocument *doc, T & t);
+    DOMElement serialize(DOMDocument *doc, T & t);
 
     template <typename T>
-    T deserializeXML(const DOMElement & element);
+    T deserialize(const DOMElement & element);
 
 
     /// Default implementation for "other" types.
@@ -72,13 +72,13 @@ namespace Valuable
     template <typename T, int type_id = Trait<T>::type>
     struct Impl
     {
-      static DOMElement serializeXML(DOMDocument * doc, T & t)
+      static DOMElement serialize(DOMDocument * doc, T & t)
       {
         DOMElement elem = doc->createElement(typeid(t).name());
         elem.setTextContent(Radiant::StringUtils::stringify(t));
         return elem;
       }
-      static T deserializeXML(const DOMElement & element)
+      static T deserialize(const DOMElement & element)
       {
         std::istringstream is(element.getTextContent());
         typename remove_const<T>::Type t;
@@ -90,14 +90,14 @@ namespace Valuable
     template <typename T>
     struct Impl<T, Type::serializable>
     {
-      static DOMElement serializeXML(DOMDocument * doc, T & t)
+      static DOMElement serialize(DOMDocument * doc, T & t)
       {
-        return t.serializeXML(doc);
+        return t.serialize(doc);
       }
-      static T deserializeXML(const DOMElement & element)
+      static T deserialize(const DOMElement & element)
       {
         T t;
-        t.deserializeXML(element);
+        t.deserialize(element);
         return t;
       }
     };
@@ -105,14 +105,14 @@ namespace Valuable
     template <typename T>
     struct Impl<T*, Type::serializable>
     {
-      static DOMElement serializeXML(DOMDocument * doc, T * t)
+      static DOMElement serialize(DOMDocument * doc, T * t)
       {
-        return t->serializeXML(doc);
+        return t->serialize(doc);
       }
-      static T * deserializeXML(const DOMElement & element)
+      static T * deserialize(const DOMElement & element)
       {
         T * t = new T;
-        t->deserializeXML(element);
+        t->deserialize(element);
         return t;
       }
     };
@@ -120,21 +120,21 @@ namespace Valuable
     template <typename T>
     struct Impl<T, Type::pair>
     {
-      static DOMElement serializeXML(DOMDocument * doc, T & pair)
+      static DOMElement serialize(DOMDocument * doc, T & pair)
       {
         DOMElement elem = doc->createElement("pair");
-        elem.appendChild(Serializer::serializeXML(doc, pair.first));
-        elem.appendChild(Serializer::serializeXML(doc, pair.second));
+        elem.appendChild(Serializer::serialize(doc, pair.first));
+        elem.appendChild(Serializer::serialize(doc, pair.second));
         return elem;
       }
-      static T deserializeXML(const DOMElement & element)
+      static T deserialize(const DOMElement & element)
       {
         typedef typename T::first_type A;
         typedef typename T::second_type B;
         DOMElement::NodeList nodes = element.getChildNodes();
         if(nodes.size() == 2) {
-          return std::make_pair(Serializer::deserializeXML<A>(nodes.front()),
-                                Serializer::deserializeXML<B>(nodes.back()));
+          return std::make_pair(Serializer::deserialize<A>(nodes.front()),
+                                Serializer::deserialize<B>(nodes.back()));
         } else {
           Radiant::error("pair size is not 2");
           return T();
@@ -143,23 +143,23 @@ namespace Valuable
     };
 
     template <typename T>
-    DOMElement serializeXML(DOMDocument *doc, T & t)
+    DOMElement serialize(DOMDocument *doc, T & t)
     {
-      return Impl<T>::serializeXML(doc, t);
+      return Impl<T>::serialize(doc, t);
     }
 
     template <typename T>
-    T deserializeXML(const DOMElement & element)
+    T deserialize(const DOMElement & element)
     {
-      return Impl<T>::deserializeXML(element);
+      return Impl<T>::deserialize(element);
     }
 
     /// Serialize object to file
     template <typename T>
-    bool serializeXML(const std::string & filename, T t)
+    bool serialize(const std::string & filename, T t)
     {
       Radiant::RefPtr<DOMDocument> doc = DOMDocument::createDocument();
-      DOMElement e = serializeXML(doc.ptr(), t);
+      DOMElement e = serialize(doc.ptr(), t);
       if(e.isNull()) {
         return false;
       }
@@ -169,7 +169,7 @@ namespace Valuable
 
     /// Deserialize object from file
     template <typename T>
-    T deserializeXML(const std::string & filename)
+    T deserialize(const std::string & filename)
     {
       Radiant::RefPtr<DOMDocument> doc = DOMDocument::createDocument();
 
@@ -177,7 +177,7 @@ namespace Valuable
         return T();
 
       DOMElement e = doc->getDocumentElement();
-      return deserializeXML<T>(e);
+      return deserialize<T>(e);
     }
   }
 }

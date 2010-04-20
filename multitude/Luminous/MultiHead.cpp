@@ -47,9 +47,9 @@ namespace Luminous {
   MultiHead::Area::~Area()
   {}
 
-  bool MultiHead::Area::deserializeXML(Valuable::DOMElement element)
+  bool MultiHead::Area::deserialize(Valuable::DOMElement element)
   {
-    bool ok = HasValues::deserializeXML(element);
+    bool ok = HasValues::deserialize(element);
 
     updateBBox();
 
@@ -320,7 +320,7 @@ namespace Luminous {
       Area * area = new Area(this);
       // Add as child & recurse
       addValue(name, area);
-      area->deserializeXML(ce);
+      area->deserialize(ce);
       m_areas.push_back(area);
     } else {
       return false;
@@ -563,11 +563,11 @@ namespace Luminous {
     return (int) (bottom - top);
   }
 
-  bool MultiHead::deserializeXML(Valuable::DOMElement element)
+  bool MultiHead::deserialize(Valuable::DOMElement element)
   {
     m_windows.clear();
 
-    bool ok = HasValues::deserializeXML(element);
+    bool ok = HasValues::deserialize(element);
 
     const float pixelSizeCm = m_widthcm.asFloat() / width();
 
@@ -597,7 +597,7 @@ namespace Luminous {
 
       // Add as child & recurse
       addValue(name, win);
-      win->deserializeXML(ce);
+      win->deserialize(ce);
 
       m_windows.push_back(win);
     } else {

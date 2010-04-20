@@ -31,7 +31,7 @@ namespace Valuable
     /**
      * If there is a ValueObject named "foo" in opts, it can be set in command
      * line like this: <tt>--foo param</tt>
-     * where param will be parsed with deserializeXML().
+     * where param will be parsed with deserialize().
      *
      * If the ValueObject name is only one letter, then the parser also recognizes
      * the command like argument that begins with one dash, like <tt>-o dir</tt>

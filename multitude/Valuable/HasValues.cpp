@@ -115,7 +115,7 @@ namespace Valuable
   bool HasValues::saveToFileXML(const char * filename)
   {
     Radiant::RefPtr<DOMDocument> doc = DOMDocument::createDocument();
-    DOMElement e = serializeXML(doc.ptr());
+    DOMElement e = serialize(doc.ptr());
     if(e.isNull()) {
       Radiant::error(
           "HasValues::saveToFileXML # object failed to serialize");
@@ -130,7 +130,7 @@ namespace Valuable
   bool HasValues::saveToMemoryXML(std::vector<char> & buffer)
   {
     Radiant::RefPtr<DOMDocument> doc = DOMDocument::createDocument();
-    doc->appendChild(serializeXML(doc.ptr()));
+    doc->appendChild(serialize(doc.ptr()));
 
     return doc->writeToMem(buffer);
   }
@@ -143,21 +143,21 @@ namespace Valuable
       return false;
 
     DOMElement e = doc->getDocumentElement();
-    return deserializeXML(e);
+    return deserialize(e);
   }
 
-  DOMElement HasValues::serializeXML(DOMDocument * doc)
+  DOMElement HasValues::serialize(DOMDocument * doc)
   {
     if(m_name.empty()) {
       Radiant::error(
-          "HasValues::serializeXML # attempt to serialize object with no name");
+          "HasValues::serialize # attempt to serialize object with no name");
       return DOMElement();
     }
 
     DOMElement elem = doc->createElement(m_name.c_str());
     if(elem.isNull()) {
       Radiant::error(
-          "HasValues::serializeXML # failed to create XML element");
+          "HasValues::serialize # failed to create XML element");
       return DOMElement();
     }
 
@@ -166,7 +166,7 @@ namespace Valuable
     for(container::iterator it = m_children.begin(); it != m_children.end(); it++) {
       ValueObject * vo = it->second;
 
-      DOMElement child = vo->serializeXML(doc);
+      DOMElement child = vo->serialize(doc);
       if(!child.isNull())
         elem.appendChild(child);
     }
@@ -174,7 +174,7 @@ namespace Valuable
     return elem;
   }
 
-  bool HasValues::deserializeXML(DOMElement element)
+  bool HasValues::deserialize(DOMElement element)
   {
     // Name
     m_name = element.getTagName();
@@ -192,10 +192,10 @@ namespace Valuable
       // If the value exists, just deserialize it. Otherwise, pass the element
       // to readElement()
       if(vo)
-        vo->deserializeXML(elem);
+        vo->deserialize(elem);
       else if(!readElement(elem)) {
         Radiant::error(
-            "HasValues::deserializeXML # (%s) don't know how to handle element '%s'", type(), name.c_str());
+            "HasValues::deserialize # (%s) don't know how to handle element '%s'", type(), name.c_str());
         return false;
       }
     }

@@ -37,21 +37,21 @@ namespace Valuable
 
     virtual const char* type() const { return "container"; }
 
-    virtual DOMElement serializeXML(DOMDocument * doc)
+    virtual DOMElement serialize(DOMDocument * doc)
     {
       DOMElement elem = doc->createElement((name().empty() ? type() : name()).c_str());
       for(iterator it = m_container.begin(); it != m_container.end(); it++) {
-        elem.appendChild(Serializer::serializeXML(doc, *it));
+        elem.appendChild(Serializer::serialize(doc, *it));
       }
       return elem;
     }
 
-    virtual bool deserializeXML(DOMElement element)
+    virtual bool deserialize(DOMElement element)
     {
       DOMElement::NodeList list = element.getChildNodes();
       std::insert_iterator<T> inserter(m_container, m_container.end());
       for(DOMElement::NodeList::iterator it = list.begin(); it != list.end(); it++) {
-        *inserter = Serializer::deserializeXML<typename T::value_type>(*it);
+        *inserter = Serializer::deserialize<typename T::value_type>(*it);
       }
       return true;
     }

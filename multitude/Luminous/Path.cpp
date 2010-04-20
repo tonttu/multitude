@@ -192,23 +192,23 @@ void Path::simplify(float clusterTolerance, float dpTolerance)
 //  Radiant::trace("Path::simplify # after stage 2: %d points", m_points.size());
 }
 
-Valuable::DOMElement Path::serializeXML(Valuable::DOMDocument * doc)
+Valuable::DOMElement Path::serialize(Valuable::DOMDocument * doc)
 {
-  Valuable::DOMElement e = HasValues::serializeXML(doc);
+  Valuable::DOMElement e = HasValues::serialize(doc);
 
   for(container::iterator it = m_points.begin(); it != m_points.end(); it++) {
    Nimble::Vector2f p = *it;
 
     Valuable::ValueVector2f vv(0, "Point", p);
-    e.appendChild(vv.serializeXML(doc));
+    e.appendChild(vv.serialize(doc));
   }
 
   return e;
 }
 
-bool Path::deserializeXML(Valuable::DOMElement e)
+bool Path::deserialize(Valuable::DOMElement e)
 {
-  //bool r = HasValues::deserializeXML(e, cl);
+  //bool r = HasValues::deserialize(e, cl);
   using namespace Valuable;
 
   const DOMElement::NodeList & nodes = e.getChildNodes();
@@ -217,7 +217,7 @@ bool Path::deserializeXML(Valuable::DOMElement e)
     const DOMElement & pe = *it;
 
     Valuable::ValueVector2f vv(0, "Point", Nimble::Vector2f(0, 0));
-    vv.deserializeXML(pe);
+    vv.deserialize(pe);
 
     m_points.push_back(vv.asVector());
   }

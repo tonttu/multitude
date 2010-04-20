@@ -23,7 +23,7 @@ namespace Valuable
 {
 
   template<class T>
-  bool ValueFloatT<T>::deserializeXML(DOMElement e)
+  bool ValueFloatT<T>::deserialize(DOMElement e)
   {
     Base::m_value = atof(e.getTextContent().c_str());
     return true;

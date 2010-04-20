@@ -45,7 +45,7 @@ namespace Resonant {
     RESONANT_API ModulePanner(Application *);
     RESONANT_API virtual ~ModulePanner();
 
-    RESONANT_API virtual Valuable::DOMElement serializeXML(Valuable::DOMDocument * doc);
+    RESONANT_API virtual Valuable::DOMElement serialize(Valuable::DOMDocument * doc);
     RESONANT_API virtual bool readElement(Valuable::DOMElement element);
     
     RESONANT_API virtual bool prepare(int & channelsIn, int & channelsOut);

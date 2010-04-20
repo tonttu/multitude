@@ -26,7 +26,7 @@ namespace Valuable
     m_rect(r)
   {}
 
-  bool ValueRect::deserializeXML(DOMElement element) {
+  bool ValueRect::deserialize(DOMElement element) {
     std::stringstream in(element.getTextContent());
 
     Nimble::Vector2f lo, hi;

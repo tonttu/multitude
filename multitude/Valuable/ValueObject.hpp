@@ -40,10 +40,10 @@ namespace Valuable
   {
   public:
     /// Serializes (writes) this object to an XML element, and returns the new element.
-    virtual DOMElement serializeXML(DOMDocument * doc) = 0;
+    virtual DOMElement serialize(DOMDocument * doc) = 0;
     /// Deserializes (reads) this object from an XML element.
     /** @return Returns true if the read process worked correctly, and false otherwise. */
-    virtual bool deserializeXML(DOMElement element) = 0;
+    virtual bool deserialize(DOMElement element) = 0;
   };
 
 
@@ -151,7 +151,7 @@ namespace Valuable
     virtual const char * type() const = 0;
 
     /** The object is serialized using its name as a tag name. */
-    virtual DOMElement serializeXML(DOMDocument * doc);
+    virtual DOMElement serialize(DOMDocument * doc);
 
     /** The parent object of the value object (is any). */
     HasValues * parent() { return m_parent; }

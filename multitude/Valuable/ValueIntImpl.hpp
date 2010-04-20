@@ -25,7 +25,7 @@ namespace Valuable
 {
 
   template<class T>
-  bool ValueIntT<T>::deserializeXML(DOMElement e)
+  bool ValueIntT<T>::deserialize(DOMElement e)
   {
     Base::m_value = Radiant::StringUtils::fromString<T>(e.getTextContent().c_str());
     
@@ -33,9 +33,9 @@ namespace Valuable
   }
   /*
 template<>
-  bool ValueIntT<Radiant::TimeStamp>::deserializeXML(DOMElement )
+  bool ValueIntT<Radiant::TimeStamp>::deserialize(DOMElement )
   {
-    Radiant::error("ValueIntT<Radiant::TimeStamp>::deserializeXML # not implemented!");
+    Radiant::error("ValueIntT<Radiant::TimeStamp>::deserialize # not implemented!");
     return false;
   }
 

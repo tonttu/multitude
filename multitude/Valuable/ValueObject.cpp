@@ -148,11 +148,11 @@ namespace Valuable
     return "";
   }
 
-  DOMElement ValueObject::serializeXML(DOMDocument * doc)
+  DOMElement ValueObject::serialize(DOMDocument * doc)
   {
     if(m_name.empty()) {
       Radiant::error(
-"ValueObject::serializeXML # attempt to serialize object with no name");
+"ValueObject::serialize # attempt to serialize object with no name");
       return DOMElement();
     }
 
