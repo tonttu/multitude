@@ -161,7 +161,7 @@ namespace Valuable
     T deserialize(DOMElement & element)
     {
       XMLArchiveElement e(element);
-      return Impl<T>::deserialize(e);
+      return deserialize<T>(e);
     }
 
     /// Serialize object to file
