@@ -28,6 +28,12 @@ namespace Valuable
 {
   using namespace Radiant;
 
+  bool Serializable::deserialize(DOMElement &element)
+  {
+    XMLArchiveElement ae(element);
+    return deserialize(ae);
+  }
+
   ValueObject::ValueObject()
   : m_parent(0),
     m_transit(false)
@@ -157,8 +163,8 @@ namespace Valuable
     }
 
     ArchiveElement & elem = archive.createElement(m_name.c_str());
-    elem.xml()->setAttribute("type", type());
-    elem.xml()->setTextContent(asString());
+    elem.add("type", type());
+    elem.set(asString());
 
     return elem;
   }

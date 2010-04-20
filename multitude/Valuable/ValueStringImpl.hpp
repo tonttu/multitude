@@ -67,7 +67,7 @@ namespace Valuable
   template<class T>
   bool ValueStringT<T>::deserialize(ArchiveElement & element)
   {
-    m_value = T(element.xml()->getTextContent());
+    m_value = T(element.get());
 
     STD_EM;
 
@@ -203,13 +203,13 @@ namespace Valuable
   }
 
   template<>
-  ArchiveElement & ValueStringT<std::string>::serialize(Archive &archive)
+  ArchiveElement & ValueStringT<std::string>::serialize(Archive & archive)
   {
     return ValueObject::serialize(archive);
   }
 
   template<>
-  ArchiveElement & ValueStringT<std::wstring>::serialize(Archive &archive)
+  ArchiveElement & ValueStringT<std::wstring>::serialize(Archive & archive)
   {
     if(name().empty()) {
       Radiant::error("ValueWString::serialize # attempt to serialize object with no name");
@@ -217,10 +217,10 @@ namespace Valuable
     }
 
     ArchiveElement & elem = archive.createElement(name().c_str());
-    elem.xml()->setAttribute("type", type());
+    elem.add("type", type());
   
     std::wstring ws = asWString();
-    elem.xml()->setTextContent(ws);
+    elem.set(ws);
 
     return elem;
   }
@@ -228,7 +228,7 @@ namespace Valuable
   template<>
   bool ValueStringT<std::wstring>::deserialize(ArchiveElement & element)
   {
-    m_value = element.xml()->getTextContentW();
+    m_value = element.getW();
     STD_EM;
     return true;
   }

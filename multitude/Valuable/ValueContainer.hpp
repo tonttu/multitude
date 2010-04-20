@@ -37,22 +37,23 @@ namespace Valuable
 
     virtual const char* type() const { return "container"; }
 
-    virtual ArchiveElement & serialize(Archive &doc)
+    virtual ArchiveElement & serialize(Archive & archive)
     {
-/*      DOMElement elem = doc->createElement((name().empty() ? type() : name()).c_str());
+      ArchiveElement & elem = archive.createElement((name().empty() ? type() : name()).c_str());
       for(iterator it = m_container.begin(); it != m_container.end(); it++) {
-        elem.appendChild(Serializer::serialize(doc, *it));
+        elem.add(Serializer::serialize(archive, *it));
       }
-      return elem;*/
-      return doc.emptyElement();
+      return elem;
     }
 
     virtual bool deserialize(ArchiveElement & element)
     {
+      /// @todo Don't use xml()
       DOMElement::NodeList list = element.xml()->getChildNodes();
       std::insert_iterator<T> inserter(m_container, m_container.end());
       for(DOMElement::NodeList::iterator it = list.begin(); it != list.end(); it++) {
-        //*inserter = Serializer::deserialize<typename T::value_type>(*it);
+        XMLArchiveElement ae(*it);
+        *inserter = Serializer::deserialize<typename T::value_type>(ae);
       }
       return true;
     }

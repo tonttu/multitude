@@ -14,7 +14,7 @@ namespace Valuable
 
   bool ValueBool::deserialize(ArchiveElement & e)
   {
-    m_value = (bool)Radiant::StringUtils::fromString<int32_t>(e.xml()->getTextContent().c_str());
+    m_value = (bool)Radiant::StringUtils::fromString<int32_t>(e.get().c_str());
     return true;
   }
 

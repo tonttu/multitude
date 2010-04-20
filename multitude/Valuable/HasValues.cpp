@@ -125,44 +125,44 @@ namespace Valuable
   bool HasValues::saveToMemoryXML(std::vector<char> & buffer)
   {
     XMLArchive archive;
-    archive.doc()->appendChild(*serialize(archive).xml());
+    archive.add(serialize(archive));
 
-    return archive.doc()->writeToMem(buffer);
+    return archive.writeToMem(buffer);
   }
 
   bool HasValues::loadFromFileXML(const char * filename)
   {
     XMLArchive archive;
 
-    if(!archive.doc()->readFromFile(filename))
+    if(!archive.readFromFile(filename))
       return false;
 
     return deserialize(archive.root());
   }
 
-  ArchiveElement & HasValues::serialize(Archive & doc)
+  ArchiveElement & HasValues::serialize(Archive & archive)
   {
     if(m_name.empty()) {
       Radiant::error(
           "HasValues::serialize # attempt to serialize object with no name");
-      return doc.emptyElement();
+      return archive.emptyElement();
     }
 
-    ArchiveElement & elem = doc.createElement(m_name.c_str());
-    if(elem.xml()->isNull()) {
+    ArchiveElement & elem = archive.createElement(m_name.c_str());
+    if(elem.isNull()) {
       Radiant::error(
-          "HasValues::serialize # failed to create XML element");
-      return doc.emptyElement();
+          "HasValues::serialize # failed to create element");
+      return archive.emptyElement();
     }
 
-    elem.xml()->setAttribute("type", type());
+    elem.add("type", type());
 
     for(container::iterator it = m_children.begin(); it != m_children.end(); it++) {
       ValueObject * vo = it->second;
 
-      ArchiveElement & child = vo->serialize(doc);
-      if(!child.xml()->isNull())
-        elem.xml()->appendChild(*child.xml());
+      ArchiveElement & child = vo->serialize(archive);
+      if(!child.isNull())
+        elem.add(child);
     }
 
     return elem;
@@ -171,13 +171,14 @@ namespace Valuable
   bool HasValues::deserialize(ArchiveElement & element)
   {
     // Name
-    m_name = element.xml()->getTagName();
+    m_name = element.name();
 
     // Children
+    /// @todo Don't use xml(), create a common child-interface to ArchiveElement
     DOMElement::NodeList list = element.xml()->getChildNodes();
 
     for(DOMElement::NodeList::iterator it = list.begin(); it != list.end(); it++) {
-      const DOMElement & elem = *it;
+      DOMElement & elem = *it;
 
       std::string name = elem.getTagName();
 
@@ -185,16 +186,21 @@ namespace Valuable
 
       // If the value exists, just deserialize it. Otherwise, pass the element
       // to readElement()
-/*      if(vo)
-        vo->deserialize(elem);
+      if(vo)
+        vo->Serializable::deserialize(elem);
       else if(!readElement(elem)) {
         Radiant::error(
             "HasValues::deserialize # (%s) don't know how to handle element '%s'", type(), name.c_str());
         return false;
-      }*/
+      }
     }
 
     return true;
+  }
+
+  bool HasValues::deserialize(DOMElement &element)
+  {
+    return Serializable::deserialize(element);
   }
 
   void HasValues::debugDump() {

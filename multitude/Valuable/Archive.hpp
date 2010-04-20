@@ -14,6 +14,14 @@ namespace Valuable {
     DOMElement * xml();
 
     virtual void add(ArchiveElement & element) = 0;
+    virtual void add(const char * name, const char * value) = 0;
+    virtual std::string get(const char * name) const = 0;
+    virtual std::string get() const = 0;
+    virtual void set(const std::string & s) = 0;
+    virtual void set(const std::wstring & s) = 0;
+    virtual std::wstring getW() = 0;
+    virtual std::string name() const = 0;
+    virtual bool isNull() const = 0;
 
   protected:
     virtual ~ArchiveElement() {}
@@ -30,7 +38,10 @@ namespace Valuable {
     virtual ArchiveElement & emptyElement() = 0;
     virtual ArchiveElement & root() = 0;
 
-    //friend class ArchiveElement;
+    virtual void add(ArchiveElement & element) = 0;
+    virtual bool writeToFile(const char * file) = 0;
+    virtual bool writeToMem(std::vector<char> & buffer) = 0;
+    virtual bool readFromFile(const char * filename) = 0;
   };
 
   class XMLArchiveElement : public ArchiveElement
@@ -43,6 +54,18 @@ namespace Valuable {
     void add(ArchiveElement & element) {
       m_element.appendChild(*element.xml());
     }
+
+    void add(const char * name, const char * value) { m_element.setAttribute(name, value); }
+
+    std::string get(const char * name) const { return m_element.getAttribute(name); }
+    std::string get() const { return m_element.getTextContent(); }
+
+    void set(const std::string & s) { m_element.setTextContent(s); }
+    void set(const std::wstring & s) { m_element.setTextContent(s); }
+    std::wstring getW() { return m_element.getTextContentW(); }
+
+    std::string name() const { return m_element.getTagName(); }
+    bool isNull() const { return m_element.isNull(); }
 
   protected:
     DOMElement m_element;
@@ -67,6 +90,11 @@ namespace Valuable {
       m_elements.push_back(XMLArchiveElement(m_document->getDocumentElement()));
       return m_elements.back();
     }
+
+    void add(ArchiveElement & element) { m_document->appendChild(*element.xml()); }
+    bool writeToFile(const char * file) { return m_document->writeToFile(file); }
+    bool writeToMem(std::vector<char> & buffer) { return m_document->writeToMem(buffer); }
+    bool readFromFile(const char * filename) { return m_document->readFromFile(filename); }
 
   protected:
     std::list<XMLArchiveElement> m_elements;

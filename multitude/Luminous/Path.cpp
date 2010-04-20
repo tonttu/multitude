@@ -192,15 +192,15 @@ void Path::simplify(float clusterTolerance, float dpTolerance)
 //  Radiant::trace("Path::simplify # after stage 2: %d points", m_points.size());
 }
 
-Valuable::ArchiveElement & Path::serialize(Valuable::Archive &doc)
+Valuable::ArchiveElement & Path::serialize(Valuable::Archive & archive)
 {
-  Valuable::ArchiveElement & e = HasValues::serialize(doc);
+  Valuable::ArchiveElement & e = HasValues::serialize(archive);
 
   for(container::iterator it = m_points.begin(); it != m_points.end(); it++) {
     Nimble::Vector2f p = *it;
 
     Valuable::ValueVector2f vv(0, "Point", p);
-    e.xml()->appendChild(*vv.serialize(doc).xml());
+    e.add(vv.serialize(archive));
   }
 
   return e;
@@ -211,13 +211,14 @@ bool Path::deserialize(Valuable::ArchiveElement & e)
   //bool r = HasValues::deserialize(e, cl);
   using namespace Valuable;
 
-  const DOMElement::NodeList & nodes = e.xml()->getChildNodes();
+  /// @todo Do not use xml(), put the nodes thing to a ValueContainer
+  DOMElement::NodeList nodes = e.xml()->getChildNodes();
 
-  for(DOMElement::NodeList::const_iterator it = nodes.begin(); it != nodes.end(); it++) {
-    const DOMElement & pe = *it;
+  for(DOMElement::NodeList::iterator it = nodes.begin(); it != nodes.end(); it++) {
+    DOMElement & pe = *it;
 
     Valuable::ValueVector2f vv(0, "Point", Nimble::Vector2f(0, 0));
-//    vv.deserialize(pe);
+    vv.Serializable::deserialize(pe);
 
     m_points.push_back(vv.asVector());
   }

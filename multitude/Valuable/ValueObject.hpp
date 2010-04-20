@@ -29,10 +29,11 @@
 #include <set>
 #include <string>
 
+#include <Valuable/DOMElement.hpp>
 namespace Valuable
 {
   class HasValues;
-  class DOMElement;
+  //class DOMElement;
   class DOMDocument;
 
 
@@ -42,9 +43,14 @@ namespace Valuable
   public:
     /// Serializes (writes) this object to an XML element, and returns the new element.
     virtual ArchiveElement & serialize(Archive & archive) = 0;
+
     /// Deserializes (reads) this object from an XML element.
     /** @return Returns true if the read process worked correctly, and false otherwise. */
     virtual bool deserialize(ArchiveElement & element) = 0;
+
+    /// Deserializes (reads) this object from an XML element.
+    /** @return Returns true if the read process worked correctly, and false otherwise. */
+    virtual bool deserialize(DOMElement & element);
   };
 
 
@@ -184,6 +190,7 @@ namespace Valuable
 
   /// Every ValueObject is some kind of ValueType<T> object.
   /// Common functionality should be in either here or in ValueObject
+  /// @todo rename to ValueObjectT
   template <typename T> class ValueTyped : public ValueObject
   {
   public:

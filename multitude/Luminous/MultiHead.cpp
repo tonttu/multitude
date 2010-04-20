@@ -320,7 +320,7 @@ namespace Luminous {
       Area * area = new Area(this);
       // Add as child & recurse
       addValue(name, area);
-      //area->deserialize(ce);
+      area->Serializable::deserialize(ce);
       m_areas.push_back(area);
     } else {
       return false;
@@ -597,7 +597,7 @@ namespace Luminous {
 
       // Add as child & recurse
       addValue(name, win);
-      //win->deserialize(ce);
+      win->deserialize(ce);
 
       m_windows.push_back(win);
     } else {
