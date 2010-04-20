@@ -176,9 +176,10 @@ namespace Luminous
         then it will be ignored.
     */
     void drawTexRect(Nimble::Vector2 size, const float * rgba);
-    /// @copydoc
+    /// @copydoc drawTexRect
     void drawTexRect(Nimble::Vector2 size, const float * rgba,
                      const Nimble::Rect & texUV);
+    /// @copydoc drawTexRect
     void drawTexRect(Nimble::Vector2 size, const float * rgba,
                      Nimble::Vector2 texUV);
 
@@ -186,6 +187,7 @@ namespace Luminous
     /** If the function is BLEND_NONE, then blending is disabled. */
     void setBlendFunc(BlendFunc f);
 
+    /// Returns a pointer to an array of human-readable blending mode strings
     static const char ** blendFuncNames();
 
   private:

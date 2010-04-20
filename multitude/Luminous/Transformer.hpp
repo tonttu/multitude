@@ -40,6 +40,7 @@ namespace Luminous
     /// Apply inverse of the current transformation matrix on a 2D vector.
     Nimble::Vector2 unproject(Nimble::Vector2) const;
 
+    /// Extracts the scaling from the transform. Only valid for uniform scaling.
     float scale() const;
 
     /// Pops the top matrix from the stack
@@ -65,19 +66,19 @@ namespace Luminous
 
     /// Multiply the top matrix from the left with the given matrix
     /// The end result is equivalent to:
-    ///  @codeline renderContext.setTransform(m * renderContext.transform());
+    ///  @code renderContext.setTransform(m * renderContext.transform()); @endcode
     void leftMul(const Nimble::Matrix3 & m);
 
     /// Multiply the top matrix from the right with the given matrix
     /// The end result is equivalent to:
-    ///  @codeline renderContext.setTransform(renderContext.transform() * m);
+    ///  @code renderContext.setTransform(renderContext.transform() * m); @endcode
     void rightMul(const Nimble::Matrix3 & m);
 
     /// Clears the stack so it only contains an identity matrix
     void resetTransform();
 
-
   protected:
+    /// The transformation stack
     std::stack<Nimble::Matrix3> m_stack;
   };
 }

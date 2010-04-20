@@ -62,7 +62,9 @@ namespace Luminous {
     /** Returns a compiled OpenGL shader program. */
     LUMINOUS_API GLSLProgramObject * bind();
 
-    LUMINOUS_API void addShaderVarying(const Valuable::ValueObject *);
+    // Adds a ValueObject as a shader attribute
+    //LUMINOUS_API void addShaderAttribute(const Valuable::ValueObject *);
+    /// Adds a ValueObject as a shader uniform
     LUMINOUS_API void addShaderUniform(const Valuable::ValueObject *);
 
     /** Returns true if the shader code is defined.

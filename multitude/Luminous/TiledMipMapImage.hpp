@@ -16,6 +16,8 @@
 #ifndef LUMINOUS_TILED_MIPMAP_IMAGE_HPP
 #define LUMINOUS_TILED_MIPMAP_IMAGE_HPP
 
+/// @cond
+
 #include <Luminous/BGThread.hpp>
 #include <Luminous/Image.hpp>
 #include <Luminous/Texture.hpp>
@@ -97,5 +99,6 @@ namespace Luminous
   };
 }
 
+/// @endcond
 
 #endif

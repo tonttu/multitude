@@ -166,10 +166,11 @@ namespace Luminous {
     m_self->m_dirty = true;
   }
 
-  void Shader::addShaderVarying(const Valuable::ValueObject * obj)
+  /*
+  void Shader::addShaderAttribute(const Valuable::ValueObject * obj)
   {
     m_self->m_varyings.add(obj);
-  }
+  }*/
 
   void Shader::addShaderUniform(const Valuable::ValueObject * obj)
   {
