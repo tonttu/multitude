@@ -35,9 +35,9 @@ namespace Valuable
   {
     std::string str;
 
-    std::ifstream input (fileName);
+    FILE * input = fopen(fileName, "rb");
 
-    if(!input.good()) {
+    if(!input) {
         Radiant::error("ConfigDocument::readConfigFile # failed to open '%s' for reading", fileName);
         return false;
     }
@@ -47,7 +47,7 @@ namespace Valuable
 
     int k = 0;
 
-    while(std::getline(input,str)) {
+    while(getline(input,str)) {
 
       if(str == "")
 	continue;
@@ -78,7 +78,7 @@ namespace Valuable
 	elm.m_nodes.push_back(e);
 	k++;
 
-	while(std::getline(input,s)) {
+	while(getline(input,s)) {
 	  if(s!="") {
 	    if(parseLine(s)==ELEMENT_START) {
 	      depth++;
@@ -159,7 +159,7 @@ namespace Valuable
 	}
       }
     }
-    input.close();
+    fclose(input);
 
     for(unsigned i = 0; i < m_doc.childCount(); i++) {
       ConfigElement & c1 = m_doc.child(i);
@@ -170,6 +170,8 @@ namespace Valuable
 
     return true;
   }
+
+
 
   void ConfigDocument::writeConfigFile(const char *fileName)
   {
@@ -337,6 +339,28 @@ namespace Valuable
       else
 	return ATTRIBUTE;
     }
+  }
+
+  bool ConfigDocument::getline(FILE * input, std::string & str)
+  {
+    str.clear();
+    bool ok = true;
+    int n = 0;
+    while(ok) {
+      char tmp = 0;
+      int got = fread(& tmp, 1, 1, input);
+      if(got) {
+        if(tmp != '\n')
+          str += tmp;
+        else if(n)
+          return true;
+        n++;
+      }
+      else 
+        ok = false;
+    }
+
+    return n != 0;
   }
 
   /////////////////////////////////////////////////////////////////////////////
