@@ -42,6 +42,7 @@ namespace Valuable
   {
   public:
     virtual ~Serializable() {}
+
     /// Serializes (writes) this object to an XML element, and returns the new element.
     virtual ArchiveElement & serialize(Archive & archive) = 0;
 
@@ -51,7 +52,7 @@ namespace Valuable
 
     /// Deserializes (reads) this object from an XML element.
     /** @return Returns true if the read process worked correctly, and false otherwise. */
-    virtual bool deserialize(DOMElement & element);
+    virtual bool deserializeXML(DOMElement & element);
   };
 
 

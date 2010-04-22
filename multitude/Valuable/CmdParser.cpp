@@ -50,7 +50,7 @@ namespace Valuable
         } else if (i < argc - 1) {
           Valuable::DOMElement e = tmpDoc->createElement("tmp");
           e.setTextContent(argv[++i]);
-          obj->deserialize(e);
+          obj->deserializeXML(e);
         } else {
           list.push_back(arg);
           Radiant::error("Command line parameter %s is missing an argument", name.c_str());
