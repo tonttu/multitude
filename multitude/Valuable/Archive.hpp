@@ -33,13 +33,9 @@ namespace Valuable
   protected:
     /// ArchiveElements should not be freed when they are handled as plain
     /// ArchiveElement pointers. Memory management is handle by Archive.
-    virtual ~ArchiveElement() {}
+    virtual ~ArchiveElement();
 
   public:
-    /// If this is actually a XMLArchiveElement, return the wrapped DOMElement
-    /// Default implementation returns NULL
-    virtual DOMElement * xml();
-
     /// Adds a new child element
     virtual void add(ArchiveElement & element) = 0;
 
@@ -55,12 +51,16 @@ namespace Valuable
     /// Reads the element contents
     virtual std::string get() const = 0;
     /// Reads the element contents as a wide character string
-    virtual std::wstring getW() = 0;
+    virtual std::wstring getW() const = 0;
 
     /// @todo do we need this?
     virtual std::string name() const = 0;
     /// @todo document
     virtual bool isNull() const = 0;
+
+    /// If this is actually a XMLArchiveElement, return the wrapped DOMElement
+    /// Default implementation returns NULL
+    virtual DOMElement * xml();
   };
 
   /**
@@ -84,14 +84,11 @@ namespace Valuable
   class Archive : public SerializationOptions
   {
   public:
+    /// Destructor should also delete all ArchiveElements this Archive owns
+    virtual ~Archive();
+
     /// Create a new element that is owned by the Archive
     virtual ArchiveElement & createElement(const char * name) = 0;
-    /// Destructor should also delete all ArchiveElements this Archive owns
-    virtual ~Archive() {}
-
-    /// If this is actually a XMLArchive, return the wrapped DOMDocument
-    /// Default implementation returns NULL
-    virtual DOMDocument * xml();
 
     /// Create an empty ArchiveElement
     /// @todo rename to something that includes "null"
@@ -113,6 +110,10 @@ namespace Valuable
     virtual bool writeToMem(std::vector<char> & buffer) = 0;
     /// Reads the archive from a file
     virtual bool readFromFile(const char * filename) = 0;
+
+    /// If this is actually a XMLArchive, return the wrapped DOMDocument
+    /// Default implementation returns NULL
+    virtual DOMDocument * xml();
   };
 }
 #endif // ARCHIVE_HPP
