@@ -8,6 +8,7 @@
 
 namespace Valuable
 {
+  class Archive;
 
   /**
    * Options that define the behaviour of the (de)serialize() methods.
@@ -22,11 +23,16 @@ namespace Valuable
    * The (de)serialize() methods should use this interface to actually
    * read/write data.
    *
-   * For one object, the element can write the objects contents, any number of
-   * named attributes (key/value pairs), and any number of child objects.
-   * It can respectively read the contents, attributes by name, and iterate
-   * over all child objects.
+   * For one object, the element can write the object name, it's contents,
+   * any number of named attributes (key/value pairs), and any number of
+   * child objects.
+   * It can respectively read the name, contents, attributes by name,
+   * and iterate over all child objects.
    * Every backend should implement this kind of data structure.
+   *
+   * There is also special "NULL" or "empty" element, that is usually used
+   * in case of errors or similar. It can be created / returned by using
+   * Archive::emptyElement().
    */
   class ArchiveElement
   {
@@ -36,8 +42,37 @@ namespace Valuable
     virtual ~ArchiveElement();
 
   public:
+    /// Child iterator for ArchiveElement children
+    class Iterator
+    {
+    public:
+      virtual ~Iterator();
+
+      /// Returns NULL if the iterator is not valid anymore. Can be used like
+      /// for(it = foo.children(); it; ++it) {}
+      virtual operator const void * () = 0;
+
+      /// Returns the current child, or empty element in case of invalid iterator
+      virtual ArchiveElement & operator * () = 0;
+      /// Returns the current child, or empty element in case of invalid iterator
+      virtual ArchiveElement * operator -> () = 0;
+
+      /// Prefix increment operator
+      virtual Iterator & operator ++ () = 0;
+      /// Postfix increment operator, slower than prefix version, since the new
+      /// iterator will have to be copied and stored to the old one.
+      virtual Iterator & operator ++ (int) = 0;
+
+      /// Compares if the iterators point to the same element
+      virtual bool operator == (const Iterator & other) = 0;
+      /// Compares if the iterators point to different elements
+      virtual bool operator != (const Iterator & other) = 0;
+    };
+
     /// Adds a new child element
     virtual void add(ArchiveElement & element) = 0;
+    /// Returns the child iterator that is owned by this element
+    virtual Iterator & children() = 0;
 
     /// Writes a new named attribute, name should be unique along this object
     virtual void add(const char * name, const char * value) = 0;
@@ -53,9 +88,9 @@ namespace Valuable
     /// Reads the element contents as a wide character string
     virtual std::wstring getW() const = 0;
 
-    /// @todo do we need this?
+    /// Reads the element name
     virtual std::string name() const = 0;
-    /// @todo document
+    /// Is this a NULL element, created by Archive::emptyElement()
     virtual bool isNull() const = 0;
 
     /// If this is actually a XMLArchiveElement, return the wrapped DOMElement
@@ -91,16 +126,13 @@ namespace Valuable
     virtual ArchiveElement & createElement(const char * name) = 0;
 
     /// Create an empty ArchiveElement
-    /// @todo rename to something that includes "null"
     /// @see ArchiveElement::isNull
     virtual ArchiveElement & emptyElement() = 0;
     /// Returns the root element
     virtual ArchiveElement & root() = 0;
 
     /// Sets the root element
-    /// @todo rename to setRoot
-    /// @todo Is this surely called only once?
-    virtual void add(ArchiveElement & element) = 0;
+    virtual void setRoot(ArchiveElement & element) = 0;
 
     /// Writes the archive to file
     virtual bool writeToFile(const char * file) = 0;

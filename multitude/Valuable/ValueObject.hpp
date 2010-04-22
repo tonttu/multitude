@@ -41,6 +41,7 @@ namespace Valuable
   class VALUABLE_API Serializable
   {
   public:
+    virtual ~Serializable() {}
     /// Serializes (writes) this object to an XML element, and returns the new element.
     virtual ArchiveElement & serialize(Archive & archive) = 0;
 

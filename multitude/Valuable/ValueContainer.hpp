@@ -48,12 +48,9 @@ namespace Valuable
 
     virtual bool deserialize(ArchiveElement & element)
     {
-      /// @todo Don't use xml()
-      DOMElement::NodeList list = element.xml()->getChildNodes();
       std::insert_iterator<T> inserter(m_container, m_container.end());
-      for(DOMElement::NodeList::iterator it = list.begin(); it != list.end(); it++) {
-        XMLArchiveElement ae(*it);
-        *inserter = Serializer::deserialize<typename T::value_type>(ae);
+      for(ArchiveElement::Iterator & it = element.children(); it; ++it) {
+        *inserter = Serializer::deserialize<typename T::value_type>(*it);
       }
       return true;
     }

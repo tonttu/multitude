@@ -136,7 +136,8 @@ namespace {
 namespace Luminous {
 
 Path::Path()
-  : HasValues(0, "Path", false)
+  : HasValues(0, "Path", false),
+  m_points(this, "points")
 {}
 
 void Path::render() 
@@ -147,8 +148,8 @@ void Path::render()
 void Path::renderDebug() const
 {
   glBegin(GL_LINE_STRIP);
-  for(size_t i = 0; i < m_points.size(); i++) {
-    glVertex2fv(m_points[i].data());
+  for(size_t i = 0; i < m_points->size(); i++) {
+    glVertex2fv((*m_points)[i].data());
   }
   glEnd();
 }
@@ -156,82 +157,48 @@ void Path::renderDebug() const
 
 void Path::simplify(float clusterTolerance, float dpTolerance)
 {
-//  Radiant::trace("Path::simplify # starting from %d points", m_points.size());
+//  Radiant::trace("Path::simplify # starting from %d points", m_points->size());
   const float to2 = clusterTolerance * clusterTolerance;    
 
   container buffer;
-  buffer.reserve(m_points.size());
+  buffer.reserve(m_points->size());
 
   // Stage 1, remove adjacent vertices that are too close to each other
-  buffer.push_back(m_points[0]);
+  buffer.push_back((*m_points)[0]);
   size_t pv = 0;
-  for(size_t i = 1; i < m_points.size(); i++) {
-    if( (m_points[i] - m_points[pv]).lengthSqr() < to2)
+  for(size_t i = 1; i < m_points->size(); i++) {
+    if( ((*m_points)[i] - (*m_points)[pv]).lengthSqr() < to2)
       continue;
 
-    buffer.push_back(m_points[i]);
+    buffer.push_back((*m_points)[i]);
     pv = i;
   }
   // Make sure the last vertex is in
-  if(pv < m_points.size() - 1)
-    buffer.push_back(m_points.back());
+  if(pv < m_points->size() - 1)
+    buffer.push_back(m_points->back());
 
 //  Radiant::trace("Path::simplify # after stage 1: %d points", buffer.size());
 
   // Stage 2, Douglas-Peucker simplification
-  std::vector<bool> markers(m_points.size(), false);
+  std::vector<bool> markers(m_points->size(), false);
   markers[0] = markers[buffer.size() - 1] = true;
   simplifyDP(dpTolerance, buffer, 0, buffer.size() - 1, markers);
 
   // Copy the marked vertices to output
-  m_points.clear();
+  m_points->clear();
   for(size_t i = 0; i < markers.size(); i++)
     if(markers[i]) 
-      m_points.push_back(buffer[i]);
+      m_points->push_back(buffer[i]);
 
-//  Radiant::trace("Path::simplify # after stage 2: %d points", m_points.size());
-}
-
-Valuable::ArchiveElement & Path::serialize(Valuable::Archive & archive)
-{
-  Valuable::ArchiveElement & e = HasValues::serialize(archive);
-
-  for(container::iterator it = m_points.begin(); it != m_points.end(); it++) {
-    Nimble::Vector2f p = *it;
-
-    Valuable::ValueVector2f vv(0, "Point", p);
-    e.add(vv.serialize(archive));
-  }
-
-  return e;
-}
-
-bool Path::deserialize(Valuable::ArchiveElement & e)
-{
-  //bool r = HasValues::deserialize(e, cl);
-  using namespace Valuable;
-
-  /// @todo Do not use xml(), put the nodes thing to a ValueContainer
-  DOMElement::NodeList nodes = e.xml()->getChildNodes();
-
-  for(DOMElement::NodeList::iterator it = nodes.begin(); it != nodes.end(); it++) {
-    DOMElement & pe = *it;
-
-    Valuable::ValueVector2f vv(0, "Point", Nimble::Vector2f(0, 0));
-    vv.Serializable::deserialize(pe);
-
-    m_points.push_back(vv.asVector());
-  }
-
-  return true;
+//  Radiant::trace("Path::simplify # after stage 2: %d points", m_points->size());
 }
 
 void Path::transform(const Nimble::Matrix3f & m)
 {
-  for(size_t i = 0; i < m_points.size(); i++) {
-    Nimble::Vector3f p(m_points[i].x, m_points[i].y, 1);
+  for(size_t i = 0; i < m_points->size(); i++) {
+    Nimble::Vector3f p((*m_points)[i].x, (*m_points)[i].y, 1);
 
-    m_points[i] = (m * p).xy();
+    (*m_points)[i] = (m * p).xy();
   }
 }
 
@@ -240,10 +207,10 @@ void Path::simplifyAngular(float degrees)
   size_t i = 0;
   float cuma = 0.f;
 
-  while(i < m_points.size() - 2) {
-    Nimble::Vector2f p0 = m_points[i + 0];
-    Nimble::Vector2f p1 = m_points[i + 1];
-    Nimble::Vector2f p2 = m_points[i + 2];
+  while(i < m_points->size() - 2) {
+    Nimble::Vector2f p0 = (*m_points)[i + 0];
+    Nimble::Vector2f p1 = (*m_points)[i + 1];
+    Nimble::Vector2f p2 = (*m_points)[i + 2];
 
     Nimble::Vector2f v0(p1 - p0);
     Nimble::Vector2f v1(p2 - p1);
@@ -254,7 +221,7 @@ void Path::simplifyAngular(float degrees)
     cuma += float(acos(dot(v0, v1)) * 180.0 / M_PI);
 
     if(cuma < degrees) {
-      m_points.erase(m_points.begin() + i + 1);
+      m_points->erase(m_points->begin() + i + 1);
     } else { 
       cuma = fmodf(cuma, degrees);
       i++;
@@ -266,17 +233,17 @@ Nimble::Vector2f Path::center() const
 {
   Nimble::Vector2f c(0, 0);
 
-  for(size_t i = 0; i < m_points.size(); i++) {
-    c += m_points[i];    
+  for(size_t i = 0; i < m_points->size(); i++) {
+    c += (*m_points)[i];
   }
 
-  return c / m_points.size();
+  return c / m_points->size();
 }
 
 // Just brute force
 bool Path::intersect(const Path & p1, const Nimble::Matrix3f & m1, const Path & p2, const Nimble::Matrix3f & m2)
 {
-  for(container::const_iterator i1 = p1.m_points.begin(); i1 != p1.m_points.end() - 1; i1++) {
+  for(container::const_iterator i1 = p1.m_points->begin(); i1 != p1.m_points->end() - 1; i1++) {
 
     Nimble::Vector2f v0 = *i1;
     Nimble::Vector2f v1 = *(i1 + 1);
@@ -286,7 +253,7 @@ bool Path::intersect(const Path & p1, const Nimble::Matrix3f & m1, const Path & 
 
     Segment s1 = { v0, v1 };
 
-    for(container::const_iterator i2 = p2.m_points.begin(); i2 != p2.m_points.end() - 1; i2++) {
+    for(container::const_iterator i2 = p2.m_points->begin(); i2 != p2.m_points->end() - 1; i2++) {
 
       Nimble::Vector2f w0 = *i2;
       Nimble::Vector2f w1 = *(i2 + 1);
@@ -306,10 +273,10 @@ bool Path::intersect(const Path & p1, const Nimble::Matrix3f & m1, const Path & 
 
 bool Path::isDegenerate() const
 {  
-  if(m_points.size() == 2) {
+  if(m_points->size() == 2) {
 
-    const Nimble::Vector2f v0 = m_points[0];
-    const Nimble::Vector2f v1 = m_points[1];
+    const Nimble::Vector2f v0 = (*m_points)[0];
+    const Nimble::Vector2f v1 = (*m_points)[1];
 
     Nimble::Vector2f u(v1 - v0);
     if(u.lengthSqr() < 1e3) 
@@ -321,9 +288,9 @@ bool Path::isDegenerate() const
 
 TCBSpline2 * Path::spline() 
 {
-  if(m_points.size() < 3) return 0;
+  if(m_points->size() < 3) return 0;
 
-  size_t segments = m_points.size() - 1;
+  size_t segments = m_points->size() - 1;
 
   std::vector<float> zeros(segments + 1, 0.f);
   std::vector<float> times(segments + 1);
@@ -332,7 +299,7 @@ TCBSpline2 * Path::spline()
 
   float len = 0.f;
   for(size_t i = 1; i < segments + 1; i++) {
-    Nimble::Vector2f u = (m_points[i] - m_points[i - 1]);
+    Nimble::Vector2f u = ((*m_points)[i] - (*m_points)[i - 1]);
     len += u.length();
 
     times[i] = len;
@@ -343,11 +310,11 @@ TCBSpline2 * Path::spline()
 
 void Path::renderSpline() 
 {
-  if(m_points.size() < 3) {
+  if(m_points->size() < 3) {
     glBegin(GL_LINE_STRIP);
 
-    for(size_t i = 0; i < m_points.size(); i++) 
-      glVertex2fv(m_points[i].data());
+    for(size_t i = 0; i < m_points->size(); i++)
+      glVertex2fv((*m_points)[i].data());
 
     glEnd();
 
@@ -365,8 +332,8 @@ void Path::renderSpline()
 void Path::renderLineStrip(const Nimble::Matrix3f & m) const
 {
   glBegin(GL_LINE_STRIP);
-  for(size_t i = 0; i < m_points.size(); i++) {
-    glVertex2fv((m * m_points[i]).data());
+  for(size_t i = 0; i < m_points->size(); i++) {
+    glVertex2fv((m * (*m_points)[i]).data());
   }
   glEnd();
 }
@@ -376,7 +343,7 @@ void Path::debugDump() const
   Radiant::debug("Path::debugDump");
 
   int i = 0;
-  for(container::const_iterator it = m_points.begin(); it != m_points.end(); it++) {
+  for(container::const_iterator it = m_points->begin(); it != m_points->end(); it++) {
     Nimble::Vector2f p = *it;
 
     Radiant::debug("\tpoint %d: %f,%f", i++, p.x, p.y);
@@ -385,16 +352,16 @@ void Path::debugDump() const
 
 void Path::prepare()
 {
-  size_t segments = m_points.size() - 1;
+  size_t segments = m_points->size() - 1;
   assert(segments > 0);
 
   if(segments > 1) return;
 
-  const Nimble::Vector2f v0 = m_points[0];
-  const Nimble::Vector2f v1 = m_points[1];
+  const Nimble::Vector2f v0 = (*m_points)[0];
+  const Nimble::Vector2f v1 = (*m_points)[1];
 
-  m_points[1] = v0 + 0.5f * (v1 - v0);
-  m_points.push_back(v1);
+  (*m_points)[1] = v0 + 0.5f * (v1 - v0);
+  m_points->push_back(v1);
 }
 
 }

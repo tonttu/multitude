@@ -2,6 +2,11 @@
 
 namespace Valuable
 {
+  ArchiveElement::Iterator::~Iterator()
+  {}
+
+  //////////////////////////////////////////////////////////////////////////
+
   ArchiveElement::~ArchiveElement()
   {}
 
