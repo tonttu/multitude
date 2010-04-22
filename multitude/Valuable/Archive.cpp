@@ -2,6 +2,13 @@
 
 namespace Valuable
 {
+
+  SerializationOptions::SerializationOptions(Options options)
+    : m_options(options)
+  {}
+
+  //////////////////////////////////////////////////////////////////////////
+
   ArchiveElement::Iterator::~Iterator()
   {}
 
@@ -16,6 +23,10 @@ namespace Valuable
   }
 
   //////////////////////////////////////////////////////////////////////////
+
+  Archive::Archive(Options options)
+    : SerializationOptions(options)
+  {}
 
   Archive::~Archive()
   {}

@@ -172,6 +172,8 @@ namespace Valuable
     /// Removes a listener from the listener list
     void removeListener(ValueListener * l) { m_listeners.remove(l); }
 
+    virtual bool isChanged() const;
+
   protected:
 
     /// Invokes the change valueChanged function of all listeners
@@ -182,6 +184,7 @@ namespace Valuable
   private:
     // The object that holds this object
     HasValues * m_parent;
+    bool m_changed;
     std::string m_name;
     bool m_transit;
 

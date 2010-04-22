@@ -140,8 +140,9 @@ namespace Valuable
 
   ///////////////////////////////////////////////////////////////////////////
 
-  XMLArchive::XMLArchive()
-    : m_document(DOMDocument::createDocument())
+  XMLArchive::XMLArchive(Options options)
+    : Archive(options),
+    m_document(DOMDocument::createDocument())
   {}
 
   XMLArchive::~XMLArchive()

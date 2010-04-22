@@ -62,7 +62,7 @@ namespace Valuable
     };
 
     template <typename T>
-    ArchiveElement & serialize(Archive &archive, T & t);
+    ArchiveElement & serialize(Archive &archive, T t);
 
     template <typename T>
     typename remove_const<T>::Type deserialize(ArchiveElement & element);
@@ -150,7 +150,7 @@ namespace Valuable
     };
 
     template <typename T>
-    ArchiveElement & serialize(Archive &archive, T & t)
+    ArchiveElement & serialize(Archive &archive, T t)
     {
       return Impl<T>::serialize(archive, t);
     }

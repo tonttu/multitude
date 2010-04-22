@@ -37,11 +37,13 @@ namespace Valuable
 
   ValueObject::ValueObject()
   : m_parent(0),
+    m_changed(false),
     m_transit(false)
   {}
 
   ValueObject::ValueObject(HasValues * parent, const std::string & name, bool transit)
     : m_parent(0),
+      m_changed(false),
       m_name(name),
       m_transit(transit)
   {
@@ -50,7 +52,8 @@ namespace Valuable
   }
 
   ValueObject::ValueObject(const ValueObject & o)
-    : m_parent(0)
+    : m_parent(0),
+    m_changed(false)
   {
     m_name = o.m_name;
     m_transit = o.m_transit;
@@ -173,6 +176,7 @@ namespace Valuable
   void ValueObject::emitChange()
   {
 //    Radiant::trace("ValueObject::emitChange # '%s'", m_name.c_str());
+    m_changed = true;
     m_listeners.emitChange(this);
     ChangeMap::addChange(this);
   }
@@ -190,6 +194,11 @@ namespace Valuable
       m_parent->removeValue(this);
       m_parent = 0;
     }
+  }
+
+  bool ValueObject::isChanged() const
+  {
+    return m_changed;
   }
 
   bool ValueObject::set(float )

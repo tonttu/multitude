@@ -160,9 +160,11 @@ namespace Valuable
     for(container::iterator it = m_children.begin(); it != m_children.end(); it++) {
       ValueObject * vo = it->second;
 
-      ArchiveElement & child = vo->serialize(archive);
-      if(!child.isNull())
-        elem.add(child);
+      if (!archive.checkFlag(Archive::ONLY_CHANGED) || vo->isChanged()) {
+        ArchiveElement & child = vo->serialize(archive);
+        if(!child.isNull())
+          elem.add(child);
+      }
     }
 
     return elem;

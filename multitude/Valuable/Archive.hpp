@@ -15,6 +15,14 @@ namespace Valuable
    */
   class SerializationOptions
   {
+  public:
+    enum Options { DEFAULTS = 0, ONLY_CHANGED = 1 };
+
+    SerializationOptions(Options options = DEFAULTS);
+
+    bool checkFlag(unsigned int flag) { return (m_options & flag) == flag; }
+  protected:
+    Options m_options;
   };
 
   /**
@@ -119,6 +127,7 @@ namespace Valuable
   class Archive : public SerializationOptions
   {
   public:
+    Archive(Options options = DEFAULTS);
     /// Destructor should also delete all ArchiveElements this Archive owns
     virtual ~Archive();
 

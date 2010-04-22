@@ -74,7 +74,7 @@ namespace Valuable
   {
   public:
     /// Creates a new DOMDocument
-    XMLArchive();
+    XMLArchive(Options options = DEFAULTS);
     /// Frees every ArchiveElement this Archive have ever created
     virtual ~XMLArchive();
 
