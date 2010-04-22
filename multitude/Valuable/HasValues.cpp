@@ -185,7 +185,7 @@ namespace Valuable
       // to readElement()
       if(vo)
         vo->Serializable::deserialize(elem);
-      else if(!elem.xml2() || !readElement(*elem.xml2())) {
+      else if(!elem.xml() || !readElement(*elem.xml())) {
         Radiant::error(
             "HasValues::deserialize # (%s) don't know how to handle element '%s'", type(), name.c_str());
         return false;
