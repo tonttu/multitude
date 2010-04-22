@@ -184,7 +184,7 @@ namespace Valuable
       // If the value exists, just deserialize it. Otherwise, pass the element
       // to readElement()
       if(vo)
-        vo->Serializable::deserialize(elem);
+        vo->deserialize(elem);
       else if(!elem.xml() || !readElement(*elem.xml())) {
         Radiant::error(
             "HasValues::deserialize # (%s) don't know how to handle element '%s'", type(), name.c_str());
@@ -193,11 +193,6 @@ namespace Valuable
     }
 
     return true;
-  }
-
-  bool HasValues::deserialize(DOMElement &element)
-  {
-    return Serializable::deserialize(element);
   }
 
   void HasValues::debugDump() {

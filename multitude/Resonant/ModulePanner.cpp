@@ -54,7 +54,7 @@ namespace Resonant {
   {
     if(element.getTagName() == "speaker") {
       LoudSpeaker * ls = new LoudSpeaker;
-      bool ok = ls->deserialize(element);
+      bool ok = ls->deserializeXML(element);
 
       if(ok) {
         m_speakers.push_back(ls);

@@ -29,7 +29,7 @@ namespace Valuable
 {
   using namespace Radiant;
 
-  bool Serializable::deserialize(DOMElement &element)
+  bool Serializable::deserializeXML(DOMElement &element)
   {
     XMLArchiveElement ae(element);
     return deserialize(ae);

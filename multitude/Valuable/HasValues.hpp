@@ -115,7 +115,6 @@ namespace Valuable
     virtual ArchiveElement & serialize(Archive &doc);
     /// De-serializes this object (and its children) from a DOM node
     virtual bool deserialize(ArchiveElement & element);
-    virtual bool deserialize(DOMElement & element);
 
     /** Handles a DOM element that lacks automatic handlers. */
     virtual bool readElement(DOMElement element);

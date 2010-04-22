@@ -68,7 +68,7 @@ namespace Valuable
     typename remove_const<T>::Type deserialize(ArchiveElement & element);
 
     template <typename T>
-    typename remove_const<T>::Type deserialize(DOMElement & element);
+    typename remove_const<T>::Type deserializeXML(DOMElement & element);
 
     /// Default implementation for "other" types.
     /// Implementations need to be inside of a struct because of partial template specialization
@@ -162,7 +162,7 @@ namespace Valuable
     }
 
     template <typename T>
-    typename remove_const<T>::Type deserialize(DOMElement & element)
+    typename remove_const<T>::Type deserializeXML(DOMElement & element)
     {
       XMLArchiveElement e(element);
       return deserialize<T>(e);
