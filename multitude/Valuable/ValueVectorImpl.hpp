@@ -66,8 +66,8 @@ namespace Valuable
 */
 
   template<class VectorType, typename ElementType, int N>
-  bool ValueVector<VectorType, ElementType, N>::deserializeXML(DOMElement element) {
-    std::stringstream in(element.getTextContent());
+  bool ValueVector<VectorType, ElementType, N>::deserialize(ArchiveElement & element) {
+    std::stringstream in(element.get());
 
     for(int i = 0; i < N; i++)
       in >> m_value[i];

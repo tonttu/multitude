@@ -23,9 +23,9 @@ namespace Valuable
 {
 
   template<class T>
-  bool ValueFloatT<T>::deserializeXML(DOMElement e)
+  bool ValueFloatT<T>::deserialize(ArchiveElement & e)
   {
-    Base::m_value = atof(e.getTextContent().c_str());
+    Base::m_value = atof(e.get().c_str());
     return true;
   }
 

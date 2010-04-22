@@ -28,9 +28,9 @@ namespace Valuable
   template <typename T> struct remove_const { typedef T Type; };
   template <typename T> struct remove_const<const T> { typedef T Type; };
 
-  /// XML Serializer namespace that has handles the (de)serializeXML dispatching
+  /// XML Serializer namespace that has handles the (de)serialize dispatching
   /** Correct way to save/load object state to/from XML is to use static
-      serializeXML/deserializeXML methods.
+      serialize/deserialize methods.
   */
   namespace Serializer
   {
@@ -61,26 +61,28 @@ namespace Valuable
     };
 
     template <typename T>
-    DOMElement serializeXML(DOMDocument *doc, T & t);
+    ArchiveElement & serialize(Archive &archive, T & t);
 
     template <typename T>
-    T deserializeXML(const DOMElement & element);
+    T deserialize(ArchiveElement & element);
 
+    template <typename T>
+    T deserialize(DOMElement & element);
 
     /// Default implementation for "other" types.
     /// Implementations need to be inside of a struct because of partial template specialization
     template <typename T, int type_id = Trait<T>::type>
     struct Impl
     {
-      static DOMElement serializeXML(DOMDocument * doc, T & t)
+      static ArchiveElement & serialize(Archive &archive, T & t)
       {
-        DOMElement elem = doc->createElement(typeid(t).name());
-        elem.setTextContent(Radiant::StringUtils::stringify(t));
+        ArchiveElement & elem = archive.createElement(typeid(t).name());
+        elem.set(Radiant::StringUtils::stringify(t));
         return elem;
       }
-      static T deserializeXML(const DOMElement & element)
+      static typename remove_const<T>::Type deserialize(ArchiveElement & element)
       {
-        std::istringstream is(element.getTextContent());
+        std::istringstream is(element.get());
         typename remove_const<T>::Type t;
         is >> t;
         return t;
@@ -90,14 +92,14 @@ namespace Valuable
     template <typename T>
     struct Impl<T, Type::serializable>
     {
-      static DOMElement serializeXML(DOMDocument * doc, T & t)
+      static ArchiveElement & serialize(Archive &doc, T & t)
       {
-        return t.serializeXML(doc);
+        return t.serialize(doc);
       }
-      static T deserializeXML(const DOMElement & element)
+      static T deserialize(ArchiveElement & element)
       {
         T t;
-        t.deserializeXML(element);
+        t.deserialize(element);
         return t;
       }
     };
@@ -105,14 +107,14 @@ namespace Valuable
     template <typename T>
     struct Impl<T*, Type::serializable>
     {
-      static DOMElement serializeXML(DOMDocument * doc, T * t)
+      static ArchiveElement & serialize(Archive &doc, T * t)
       {
-        return t->serializeXML(doc);
+        return t->serialize(doc);
       }
-      static T * deserializeXML(const DOMElement & element)
+      static T * deserialize(ArchiveElement & element)
       {
         T * t = new T;
-        t->deserializeXML(element);
+        t->deserialize(element);
         return t;
       }
     };
@@ -120,21 +122,22 @@ namespace Valuable
     template <typename T>
     struct Impl<T, Type::pair>
     {
-      static DOMElement serializeXML(DOMDocument * doc, T & pair)
+      static ArchiveElement & serialize(Archive &archive, T & pair)
       {
-        DOMElement elem = doc->createElement("pair");
-        elem.appendChild(Serializer::serializeXML(doc, pair.first));
-        elem.appendChild(Serializer::serializeXML(doc, pair.second));
+        ArchiveElement & elem = archive.createElement("pair");
+        elem.add(Serializer::serialize(archive, pair.first));
+        elem.add(Serializer::serialize(archive, pair.second));
         return elem;
       }
-      static T deserializeXML(const DOMElement & element)
+      static T deserialize(ArchiveElement & element)
       {
         typedef typename T::first_type A;
         typedef typename T::second_type B;
-        DOMElement::NodeList nodes = element.getChildNodes();
+        /// @todo do not use xml()
+        DOMElement::NodeList nodes = element.xml()->getChildNodes();
         if(nodes.size() == 2) {
-          return std::make_pair(Serializer::deserializeXML<A>(nodes.front()),
-                                Serializer::deserializeXML<B>(nodes.back()));
+          return std::make_pair(Serializer::deserialize<A>(nodes.front()),
+                                Serializer::deserialize<B>(nodes.back()));
         } else {
           Radiant::error("pair size is not 2");
           return T();
@@ -143,41 +146,48 @@ namespace Valuable
     };
 
     template <typename T>
-    DOMElement serializeXML(DOMDocument *doc, T & t)
+    ArchiveElement & serialize(Archive &archive, T & t)
     {
-      return Impl<T>::serializeXML(doc, t);
+      return Impl<T>::serialize(archive, t);
     }
 
     template <typename T>
-    T deserializeXML(const DOMElement & element)
+    T deserialize(ArchiveElement & element)
     {
-      return Impl<T>::deserializeXML(element);
+      return Impl<T>::deserialize(element);
+    }
+
+    template <typename T>
+    T deserialize(DOMElement & element)
+    {
+      XMLArchiveElement e(element);
+      return deserialize<T>(e);
     }
 
     /// Serialize object to file
     template <typename T>
-    bool serializeXML(const std::string & filename, T t)
+    bool serialize(const std::string & filename, T t)
     {
-      Radiant::RefPtr<DOMDocument> doc = DOMDocument::createDocument();
-      DOMElement e = serializeXML(doc.ptr(), t);
+      XMLArchive archive;
+      ArchiveElement & e = serialize(archive, t);
       if(e.isNull()) {
         return false;
       }
-      doc->appendChild(e);
-      return doc->writeToFile(filename.c_str());
+      archive.add(e);
+      return archive.writeToFile(filename.c_str());
     }
 
     /// Deserialize object from file
     template <typename T>
-    T deserializeXML(const std::string & filename)
+    T deserialize(const std::string & filename)
     {
-      Radiant::RefPtr<DOMDocument> doc = DOMDocument::createDocument();
+      XMLArchive archive;
 
-      if(!doc->readFromFile(filename.c_str()))
+      if(!archive.readFromFile(filename.c_str()))
         return T();
 
-      DOMElement e = doc->getDocumentElement();
-      return deserializeXML<T>(e);
+      ArchiveElement & e = archive.root();
+      return deserialize<T>(e);
     }
   }
 }

@@ -22,16 +22,18 @@
 
 #include <Radiant/BinaryData.hpp>
 
+#include <Valuable/Archive.hpp>
 #include <Valuable/Export.hpp>
 #include <Valuable/ValueListener.hpp>
 
 #include <set>
 #include <string>
 
+#include <Valuable/DOMElement.hpp>
 namespace Valuable
 {
   class HasValues;
-  class DOMElement;
+  //class DOMElement;
   class DOMDocument;
 
 
@@ -40,10 +42,15 @@ namespace Valuable
   {
   public:
     /// Serializes (writes) this object to an XML element, and returns the new element.
-    virtual DOMElement serializeXML(DOMDocument * doc) = 0;
+    virtual ArchiveElement & serialize(Archive & archive) = 0;
+
     /// Deserializes (reads) this object from an XML element.
     /** @return Returns true if the read process worked correctly, and false otherwise. */
-    virtual bool deserializeXML(DOMElement element) = 0;
+    virtual bool deserialize(ArchiveElement & element) = 0;
+
+    /// Deserializes (reads) this object from an XML element.
+    /** @return Returns true if the read process worked correctly, and false otherwise. */
+    virtual bool deserialize(DOMElement & element);
   };
 
 
@@ -151,7 +158,7 @@ namespace Valuable
     virtual const char * type() const = 0;
 
     /** The object is serialized using its name as a tag name. */
-    virtual DOMElement serializeXML(DOMDocument * doc);
+    virtual ArchiveElement & serialize(Archive &archive);
 
     /** The parent object of the value object (is any). */
     HasValues * parent() { return m_parent; }
@@ -183,6 +190,7 @@ namespace Valuable
 
   /// Every ValueObject is some kind of ValueType<T> object.
   /// Common functionality should be in either here or in ValueObject
+  /// @todo rename to ValueObjectT
   template <typename T> class ValueTyped : public ValueObject
   {
   public:

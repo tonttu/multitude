@@ -50,7 +50,7 @@ namespace Valuable
           *b = true;
         } else if (i < argc - 1) {
           e.setTextContent(argv[++i]);
-          obj->deserializeXML(e);
+          obj->deserialize(e);
         } else {
           list.push_back(arg);
           Radiant::error("Command line parameter %s is missing an argument", name.c_str());
