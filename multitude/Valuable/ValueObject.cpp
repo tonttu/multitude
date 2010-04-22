@@ -19,6 +19,7 @@
 
 #include "DOMElement.hpp"
 #include "DOMDocument.hpp"
+#include "XMLArchive.hpp"
 
 #include <Radiant/Trace.hpp>
 

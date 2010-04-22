@@ -125,7 +125,7 @@ namespace Valuable
   bool HasValues::saveToMemoryXML(std::vector<char> & buffer)
   {
     XMLArchive archive;
-    archive.add(serialize(archive));
+    archive.setRoot(serialize(archive));
 
     return archive.writeToMem(buffer);
   }
@@ -174,13 +174,10 @@ namespace Valuable
     m_name = element.name();
 
     // Children
-    /// @todo Don't use xml(), create a common child-interface to ArchiveElement
-    DOMElement::NodeList list = element.xml()->getChildNodes();
+    for(ArchiveElement::Iterator & it = element.children(); it; ++it) {
+      ArchiveElement & elem = *it;
 
-    for(DOMElement::NodeList::iterator it = list.begin(); it != list.end(); it++) {
-      DOMElement & elem = *it;
-
-      std::string name = elem.getTagName();
+      std::string name = elem.name();
 
       ValueObject * vo = getValue(name);
 
@@ -188,7 +185,7 @@ namespace Valuable
       // to readElement()
       if(vo)
         vo->Serializable::deserialize(elem);
-      else if(!readElement(elem)) {
+      else if(!elem.xml() || !readElement(*elem.xml())) {
         Radiant::error(
             "HasValues::deserialize # (%s) don't know how to handle element '%s'", type(), name.c_str());
         return false;

@@ -4,6 +4,7 @@
 #include "DOMElement.hpp"
 #include "DOMDocument.hpp"
 #include "ValueObject.hpp"
+#include "XMLArchive.hpp"
 
 #include "Radiant/StringUtils.hpp"
 
@@ -133,15 +134,18 @@ namespace Valuable
       {
         typedef typename T::first_type A;
         typedef typename T::second_type B;
-        /// @todo do not use xml()
-        DOMElement::NodeList nodes = element.xml()->getChildNodes();
-        if(nodes.size() == 2) {
-          return std::make_pair(Serializer::deserialize<A>(nodes.front()),
-                                Serializer::deserialize<B>(nodes.back()));
-        } else {
+
+        ArchiveElement::Iterator & it = element.children();
+        ArchiveElement & a = *it++;
+        ArchiveElement & b = *it;
+
+        if (!it || ++it) {
           Radiant::error("pair size is not 2");
           return T();
         }
+
+        return std::make_pair(Serializer::deserialize<A>(a),
+                              Serializer::deserialize<B>(b));
       }
     };
 
@@ -173,7 +177,7 @@ namespace Valuable
       if(e.isNull()) {
         return false;
       }
-      archive.add(e);
+      archive.setRoot(e);
       return archive.writeToFile(filename.c_str());
     }
 

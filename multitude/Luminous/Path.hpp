@@ -26,6 +26,7 @@
 #include <Valuable/DOMDocument.hpp>
 #include <Valuable/DOMElement.hpp>
 #include <Valuable/HasValues.hpp>
+#include <Valuable/ValueContainer.hpp>
 
 #include <vector>
 
@@ -38,9 +39,9 @@ namespace Luminous {
     public:
       Path();
 
-      void addPoint(Nimble::Vector2f p) { m_points.push_back(p); }
+      void addPoint(Nimble::Vector2f p) { m_points->push_back(p); }
 
-      void clear() { m_points.clear(); }
+      void clear() { m_points->clear(); }
 
       void render();
 
@@ -57,13 +58,10 @@ namespace Luminous {
 
       void transform(const Nimble::Matrix3f & m);
 
-      size_t size() const { return m_points.size(); }
-      Nimble::Vector2f point(size_t i) const { return m_points[i]; }
+      size_t size() const { return m_points->size(); }
+      Nimble::Vector2f point(size_t i) const { return (*m_points)[i]; }
 
     virtual const char * type() const { return "Path"; }
-
-      virtual Valuable::ArchiveElement & serialize(Valuable::Archive &doc);
-      virtual bool deserialize(Valuable::ArchiveElement & element);
 
       Nimble::Vector2f center() const;
 
@@ -81,7 +79,7 @@ namespace Luminous {
 
     protected:
 
-      container m_points;
+      Valuable::ValueContainer<container> m_points;
   };
 
 }
