@@ -72,7 +72,8 @@ namespace Resonant {
 
   AudioLoop::~AudioLoop()
   {
-    assert(isRunning() == false);
+    if (isRunning())
+      Radiant::error("AudioLoop::~AudioLoop(): audio still running");
 
     delete m_d;
   }
@@ -241,23 +242,9 @@ namespace Resonant {
     if(!isRunning())
       return true;
 
-    m_continue = false;
+    m_isRunning = false;
 
-    int i = 0;
-
-    int err = Pa_StopStream(m_d->m_stream);
-    if(err != paNoError) {
-      trace(Radiant::FAILURE, "AudioLoop::stop # Could not stop the stream");
-
-      while(isRunning() && i < 100) {
-        Pa_Sleep(5);
-        i++;
-      }
-    }
-    else
-      m_isRunning = false;
-
-    err = Pa_CloseStream(m_d->m_stream);
+    int err = Pa_CloseStream(m_d->m_stream);
     if(err != paNoError) {
       trace(Radiant::FAILURE, "AudioLoop::stop # Could not close stream");
     }

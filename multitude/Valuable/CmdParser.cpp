@@ -28,7 +28,6 @@ namespace Valuable
     Radiant::StringUtils::StringList list;
 
     Radiant::RefPtr<Valuable::DOMDocument> tmpDoc(Valuable::DOMDocument::createDocument());
-    Valuable::DOMElement e = tmpDoc->createElement("useless");
 
     for(int i = 1; i < argc; i++) {
       std::string arg = argv[i];
@@ -49,6 +48,7 @@ namespace Valuable
         if(b) {
           *b = true;
         } else if (i < argc - 1) {
+          Valuable::DOMElement e = tmpDoc->createElement("tmp");
           e.setTextContent(argv[++i]);
           obj->deserializeXML(e);
         } else {
