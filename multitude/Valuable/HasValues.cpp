@@ -18,6 +18,7 @@
 #include <Valuable/DOMElement.hpp>
 
 #include <Valuable/HasValues.hpp>
+#include <Valuable/Serializer.hpp>
 
 #include <Radiant/TimeStamp.hpp>
 #include <Radiant/Trace.hpp>
@@ -114,88 +115,79 @@ namespace Valuable
 
   bool HasValues::saveToFileXML(const char * filename)
   {
-    Radiant::RefPtr<DOMDocument> doc = DOMDocument::createDocument();
-    DOMElement e = serializeXML(doc.ptr());
-    if(e.isNull()) {
-      Radiant::error(
-          "HasValues::saveToFileXML # object failed to serialize");
-      return false;
+    bool ok = Serializer::serialize(filename, this);
+    if (!ok) {
+      Radiant::error("HasValues::saveToFileXML # object failed to serialize");
     }
-
-    doc->appendChild(e);
-
-    return doc->writeToFile(filename);
+    return ok;
   }
 
   bool HasValues::saveToMemoryXML(std::vector<char> & buffer)
   {
-    Radiant::RefPtr<DOMDocument> doc = DOMDocument::createDocument();
-    doc->appendChild(serializeXML(doc.ptr()));
+    XMLArchive archive;
+    archive.setRoot(serialize(archive));
 
-    return doc->writeToMem(buffer);
+    return archive.writeToMem(buffer);
   }
 
   bool HasValues::loadFromFileXML(const char * filename)
   {
-    Radiant::RefPtr<DOMDocument> doc = DOMDocument::createDocument();
+    XMLArchive archive;
 
-    if(!doc->readFromFile(filename))
+    if(!archive.readFromFile(filename))
       return false;
 
-    DOMElement e = doc->getDocumentElement();
-    return deserializeXML(e);
+    return deserialize(archive.root());
   }
 
-  DOMElement HasValues::serializeXML(DOMDocument * doc)
+  ArchiveElement & HasValues::serialize(Archive & archive)
   {
     if(m_name.empty()) {
       Radiant::error(
-          "HasValues::serializeXML # attempt to serialize object with no name");
-      return DOMElement();
+          "HasValues::serialize # attempt to serialize object with no name");
+      return archive.emptyElement();
     }
 
-    DOMElement elem = doc->createElement(m_name.c_str());
+    ArchiveElement & elem = archive.createElement(m_name.c_str());
     if(elem.isNull()) {
       Radiant::error(
-          "HasValues::serializeXML # failed to create XML element");
-      return DOMElement();
+          "HasValues::serialize # failed to create element");
+      return archive.emptyElement();
     }
 
-    elem.setAttribute("type", type());
+    elem.add("type", type());
 
     for(container::iterator it = m_children.begin(); it != m_children.end(); it++) {
       ValueObject * vo = it->second;
 
-      DOMElement child = vo->serializeXML(doc);
+      ArchiveElement & child = vo->serialize(archive);
       if(!child.isNull())
-        elem.appendChild(child);
+        elem.add(child);
     }
 
     return elem;
   }
 
-  bool HasValues::deserializeXML(DOMElement element)
+  bool HasValues::deserialize(ArchiveElement & element)
   {
     // Name
-    m_name = element.getTagName();
+    m_name = element.name();
 
     // Children
-    DOMElement::NodeList list = element.getChildNodes();
+    for(ArchiveElement::Iterator & it = element.children(); it; ++it) {
+      ArchiveElement & elem = *it;
 
-    for(DOMElement::NodeList::iterator it = list.begin(); it != list.end(); it++) {
-      const DOMElement & elem = *it;
-
-      std::string name = elem.getTagName();
+      std::string name = elem.name();
 
       ValueObject * vo = getValue(name);
 
       // If the value exists, just deserialize it. Otherwise, pass the element
       // to readElement()
       if(vo)
-        vo->deserializeXML(elem);
-      else if(!readElement(elem)) {
+        vo->deserialize(elem);
+      else if(!elem.xml() || !readElement(*elem.xml())) {
         Radiant::error(
-            "HasValues::deserializeXML # (%s) don't know how to handle element '%s'", type(), name.c_str());
+            "HasValues::deserialize # (%s) don't know how to handle element '%s'", type(), name.c_str());
         return false;
       }
     }

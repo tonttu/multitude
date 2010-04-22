@@ -12,9 +12,9 @@ namespace Valuable
 
   ValueBool::~ValueBool() {}
 
-  bool ValueBool::deserializeXML(DOMElement e)
+  bool ValueBool::deserialize(ArchiveElement & e)
   {
-    m_value = (bool)Radiant::StringUtils::fromString<int32_t>(e.getTextContent().c_str());
+    m_value = (bool)Radiant::StringUtils::fromString<int32_t>(e.get().c_str());
     return true;
   }
 

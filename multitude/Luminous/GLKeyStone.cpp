@@ -45,9 +45,9 @@ namespace Luminous {
   GLKeyStone::~GLKeyStone()
   {}
 
-  bool GLKeyStone::deserializeXML(Valuable::DOMElement e)
+  bool GLKeyStone::deserialize(Valuable::ArchiveElement & e)
   {
-    if(!Valuable::HasValues::deserializeXML(e))
+    if(!Valuable::HasValues::deserialize(e))
       return false;
 
     calculateMatrix();

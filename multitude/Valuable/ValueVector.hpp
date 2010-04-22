@@ -71,7 +71,7 @@ namespace Valuable
     { return m_value.data(); }
 
     virtual void processMessage(const char * id, Radiant::BinaryData & data);
-    virtual bool deserializeXML(DOMElement element);
+    virtual bool deserialize(ArchiveElement & element);
 
     const char * type() const;
 

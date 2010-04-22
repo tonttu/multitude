@@ -47,9 +47,9 @@ namespace Luminous {
   MultiHead::Area::~Area()
   {}
 
-  bool MultiHead::Area::deserializeXML(Valuable::DOMElement element)
+  bool MultiHead::Area::deserialize(Valuable::ArchiveElement & element)
   {
-    bool ok = HasValues::deserializeXML(element);
+    bool ok = HasValues::deserialize(element);
 
     updateBBox();
 
@@ -563,11 +563,11 @@ namespace Luminous {
     return (int) (bottom - top);
   }
 
-  bool MultiHead::deserializeXML(Valuable::DOMElement element)
+  bool MultiHead::deserialize(Valuable::ArchiveElement & element)
   {
     m_windows.clear();
 
-    bool ok = HasValues::deserializeXML(element);
+    bool ok = HasValues::deserialize(element);
 
     const float pixelSizeCm = m_widthcm.asFloat() / width();
 

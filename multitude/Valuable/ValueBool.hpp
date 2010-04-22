@@ -32,7 +32,7 @@ namespace Valuable
     virtual ~ValueBool();
 
     const char * type() const { return "bool"; }
-    bool deserializeXML(DOMElement element);
+    bool deserialize(ArchiveElement & element);
     virtual void processMessage(const char *, Radiant::BinaryData & data);
 
     /// Copies a value

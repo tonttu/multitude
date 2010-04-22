@@ -40,7 +40,7 @@ namespace Valuable
 
       std::string asString(bool * const ok = 0) const;
 
-      bool deserializeXML(DOMElement element);
+      bool deserialize(ArchiveElement & element);
 
       /// Converts the object to rectangle
       Nimble::Rect asRect() const { return m_rect; }

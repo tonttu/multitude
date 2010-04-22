@@ -65,9 +65,9 @@ namespace Valuable
   }
 
   template<class T>
-  bool ValueStringT<T>::deserializeXML(DOMElement element)
+  bool ValueStringT<T>::deserialize(ArchiveElement & element)
   {
-    m_value = T(element.getTextContent());
+    m_value = T(element.get());
 
     STD_EM;
 
@@ -203,32 +203,32 @@ namespace Valuable
   }
 
   template<>
-  DOMElement ValueStringT<std::string>::serializeXML(DOMDocument * doc)
+  ArchiveElement & ValueStringT<std::string>::serialize(Archive & archive)
   {
-    return ValueObject::serializeXML(doc);
+    return ValueObject::serialize(archive);
   }
 
   template<>
-  DOMElement ValueStringT<std::wstring>::serializeXML(DOMDocument * doc)
+  ArchiveElement & ValueStringT<std::wstring>::serialize(Archive & archive)
   {
     if(name().empty()) {
-      Radiant::error("ValueWString::serializeXML # attempt to serialize object with no name");
-      return DOMElement();
+      Radiant::error("ValueWString::serialize # attempt to serialize object with no name");
+      return archive.emptyElement();
     }
 
-    DOMElement elem = doc->createElement(name().c_str());
-    elem.setAttribute("type", type());
+    ArchiveElement & elem = archive.createElement(name().c_str());
+    elem.add("type", type());
   
     std::wstring ws = asWString();
-    elem.setTextContent(ws);
+    elem.set(ws);
 
     return elem;
   }
 
   template<>
-  bool ValueStringT<std::wstring>::deserializeXML(DOMElement element)
+  bool ValueStringT<std::wstring>::deserialize(ArchiveElement & element)
   {
-    m_value = element.getTextContentW();
+    m_value = element.getW();
     STD_EM;
     return true;
   }
