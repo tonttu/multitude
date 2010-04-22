@@ -40,12 +40,14 @@ namespace Luminous
       the capabilities of the underlying OpenGL implementation. If the
       OpenGL version is below 2.0, then a warning message is
       issued.
+
+      @param initOpenGL if set to false, glew will not be initialized
       
       @return true if all relevant resources were successfully
       initialized, false if something was left missing (for example
       too low OpenGL version).
   */
-  LUMINOUS_API bool initLuminous();
+  LUMINOUS_API bool initLuminous(bool initOpenGL = true);
 
   /** Initializes the default image codecs.
   The image codecs are loaded as plugins that need to be loaded before they can

@@ -38,8 +38,12 @@
 namespace Luminous
 {
 
-  bool initLuminous()
+  bool initLuminous(bool initOpenGL)
   {
+    initDefaultImageCodecs();
+
+    if(initOpenGL) {
+
     GLenum err = glewInit();
 
     std::ostringstream versionMsg;
@@ -72,14 +76,13 @@ namespace Luminous
 
     Radiant::info("%s (%s)", versionMsg.str().c_str(), glslMsg.c_str());
 
-    initDefaultImageCodecs();
 
     if(warn) { 
       Radiant::error("OpenGL 2.0 is not supported by this computer, "
 		     "some applications may fail.");
       return false;
     }
-
+}
 
     return true;
   }
