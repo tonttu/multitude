@@ -65,10 +65,10 @@ namespace Valuable
     ArchiveElement & serialize(Archive &archive, T & t);
 
     template <typename T>
-    T deserialize(ArchiveElement & element);
+    typename remove_const<T>::Type deserialize(ArchiveElement & element);
 
     template <typename T>
-    T deserialize(DOMElement & element);
+    typename remove_const<T>::Type deserialize(DOMElement & element);
 
     /// Default implementation for "other" types.
     /// Implementations need to be inside of a struct because of partial template specialization
@@ -153,13 +153,13 @@ namespace Valuable
     }
 
     template <typename T>
-    T deserialize(ArchiveElement & element)
+    typename remove_const<T>::Type deserialize(ArchiveElement & element)
     {
       return Impl<T>::deserialize(element);
     }
 
     template <typename T>
-    T deserialize(DOMElement & element)
+    typename remove_const<T>::Type deserialize(DOMElement & element)
     {
       XMLArchiveElement e(element);
       return deserialize<T>(e);
