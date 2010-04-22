@@ -1,6 +1,7 @@
 #ifndef VALUABLE_SERIALIZER_HPP
 #define VALUABLE_SERIALIZER_HPP
 
+#include <Valuable/Export.hpp>
 #include "DOMElement.hpp"
 #include "DOMDocument.hpp"
 #include "ValueObject.hpp"
@@ -78,7 +79,7 @@ namespace Valuable
         elem.setTextContent(Radiant::StringUtils::stringify(t));
         return elem;
       }
-      static T deserializeXML(const DOMElement & element)
+      inline static T deserializeXML(const DOMElement & element)
       {
         std::istringstream is(element.getTextContent());
         typename remove_const<T>::Type t;
@@ -94,7 +95,7 @@ namespace Valuable
       {
         return t.serializeXML(doc);
       }
-      static T deserializeXML(const DOMElement & element)
+      inline static T deserializeXML(const DOMElement & element)
       {
         T t;
         t.deserializeXML(element);
@@ -109,7 +110,7 @@ namespace Valuable
       {
         return t->serializeXML(doc);
       }
-      static T * deserializeXML(const DOMElement & element)
+      inline static T * deserializeXML(const DOMElement & element)
       {
         T * t = new T;
         t->deserializeXML(element);
@@ -127,7 +128,7 @@ namespace Valuable
         elem.appendChild(Serializer::serializeXML(doc, pair.second));
         return elem;
       }
-      static T deserializeXML(const DOMElement & element)
+      inline static T deserializeXML(const DOMElement & element)
       {
         typedef typename T::first_type A;
         typedef typename T::second_type B;
@@ -143,13 +144,13 @@ namespace Valuable
     };
 
     template <typename T>
-    DOMElement serializeXML(DOMDocument *doc, T & t)
+    inline DOMElement serializeXML(DOMDocument *doc, T & t)
     {
       return Impl<T>::serializeXML(doc, t);
     }
 
     template <typename T>
-    T deserializeXML(const DOMElement & element)
+    inline T deserializeXML(const DOMElement & element)
     {
       return Impl<T>::deserializeXML(element);
     }
@@ -169,7 +170,7 @@ namespace Valuable
 
     /// Deserialize object from file
     template <typename T>
-    T deserializeXML(const std::string & filename)
+    inline T deserializeXML(const std::string & filename)
     {
       Radiant::RefPtr<DOMDocument> doc = DOMDocument::createDocument();
 

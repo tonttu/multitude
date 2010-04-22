@@ -1,6 +1,8 @@
 #ifndef NIMBLE_SPLINES_HPP
 #define NIMBLE_SPLINES_HPP
 
+#include <Nimble/Export.hpp>
+
 #include <vector>
 
 #include <Nimble/Vector2.hpp>
@@ -26,7 +28,7 @@ namespace Nimble
 
         /// Catmull-Rom
         /// @todo doc
-        class Interpolating {
+        class NIMBLE_API Interpolating {
           typedef std::vector<Nimble::Vector2> PointList;
           typedef PointList::size_type Index;
 
