@@ -5,6 +5,9 @@
 
 namespace Valuable
 {
+  /**
+   * Wrapper for DOMElement that implements the ArchiveElement interface.
+   */
   class XMLArchiveElement : public ArchiveElement
   {
   public:
@@ -24,6 +27,7 @@ namespace Valuable
     std::string name() const;
     bool isNull() const;
 
+    /// Returns a pointer to m_element
     DOMElement * xml();
 
   protected:
@@ -31,12 +35,18 @@ namespace Valuable
   };
 
   /**
-   * DOMDocument wrapper.
+   * Wrapper for DOMDocument that implements the Archive interface.
+   *
+   * All ArchiveElements are instances of XMLArchiveElement, constructed in
+   * createElement and owned by XMLArchive. They will be freed only when the
+   * XMLArhive object is destroyed.
    */
   class XMLArchive : public Archive
   {
   public:
+    /// Creates a new DOMDocument
     XMLArchive();
+    /// Frees every ArchiveElement this Archive have ever created
     virtual ~XMLArchive();
 
     ArchiveElement & createElement(const char * name);
@@ -50,6 +60,7 @@ namespace Valuable
     bool writeToMem(std::vector<char> & buffer);
     bool readFromFile(const char * filename);
 
+    /// Returns m_document.ptr()
     DOMDocument * xml();
 
   protected:
