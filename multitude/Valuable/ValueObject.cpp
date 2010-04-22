@@ -19,6 +19,7 @@
 
 #include "DOMElement.hpp"
 #include "DOMDocument.hpp"
+#include "XMLArchive.hpp"
 
 #include <Radiant/Trace.hpp>
 
@@ -27,6 +28,12 @@
 namespace Valuable
 {
   using namespace Radiant;
+
+  bool Serializable::deserializeXML(DOMElement &element)
+  {
+    XMLArchiveElement ae(element);
+    return deserialize(ae);
+  }
 
   ValueObject::ValueObject()
   : m_parent(0),
@@ -148,17 +155,17 @@ namespace Valuable
     return "";
   }
 
-  DOMElement ValueObject::serializeXML(DOMDocument * doc)
+  ArchiveElement & ValueObject::serialize(Archive &archive)
   {
     if(m_name.empty()) {
       Radiant::error(
-"ValueObject::serializeXML # attempt to serialize object with no name");
-      return DOMElement();
+"ValueObject::serialize # attempt to serialize object with no name");
+      return archive.emptyElement();
     }
 
-    DOMElement elem = doc->createElement(m_name.c_str());
-    elem.setAttribute("type", type());
-    elem.setTextContent(asString());
+    ArchiveElement & elem = archive.createElement(m_name.c_str());
+    elem.add("type", type());
+    elem.set(asString());
 
     return elem;
   }

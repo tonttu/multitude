@@ -56,7 +56,7 @@ namespace Valuable
 
       const char * type() const { return VO_TYPE_FLOAT; }
 
-      bool deserializeXML(DOMElement element);
+      bool deserialize(ArchiveElement & element);
 
     virtual void processMessage(const char * id, Radiant::BinaryData & data);
 
