@@ -53,10 +53,15 @@ public:
   static void setContrast(float contrast)
   { m_contrast = contrast; }
 
+  static void setFullScreen(bool fs)
+  { m_fullScreen = fs; }
+
 public slots:
 
   /** Perform some random operation as part of the stress testing. */
   void randomOperation();
+
+  void toggleFullScreen();
 
 protected:
 
@@ -79,8 +84,6 @@ protected:
   virtual void initializeGL();
   virtual void paintGL();
 
-  void toggleFullScreen();
-
   container m_movies;
 
   Resonant::DSPNetwork    m_dsp;
@@ -97,6 +100,7 @@ protected:
   static float m_contrast;
   bool   m_showProgress;
   bool   m_showSteps;
+  static bool m_fullScreen;
 };
 
 #endif
