@@ -253,10 +253,10 @@ namespace Resonant {
 
   void ModuleSamplePlayer::SampleVoice::setSample(Sample * s)
   {
-    if(m_state != WAITING_FOR_SAMPLE) {
+    if(m_state == WAITING_FOR_SAMPLE) {
 
-      fatal("ModuleSamplePlayer::SampleVoice::setSample # Wrong state %p",
-            this);
+      error("ModuleSamplePlayer::SampleVoice::setSample # Wrong state %p %d",
+            this, (int) m_state);
     }
     m_sample = s;
     m_state = PLAYING;
@@ -442,7 +442,7 @@ namespace Resonant {
       int sampleind = findSample(buf);
 
       if(sampleind < 0) {
-        Radiant::trace(Radiant::DEBUG, "ModuleSamplePlayer::control # No sample \"%s\"", buf);
+        debug("ModuleSamplePlayer::control # No sample \"%s\"", buf);
 
         m_loader->addLoadable(buf, & voice);
 
