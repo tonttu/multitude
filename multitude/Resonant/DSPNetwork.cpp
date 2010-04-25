@@ -29,10 +29,7 @@
 
 #include <portaudio.h>
 
-
 namespace Resonant {
-
-
 
   using namespace Radiant;
 

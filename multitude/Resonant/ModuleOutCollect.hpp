@@ -7,10 +7,10 @@
  * See file "Resonant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef RESONANT_MODULE_OUT_COLLECT_HPP
@@ -35,7 +35,7 @@ namespace Resonant {
   public:
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-    class Move 
+    class Move
     {
     public:
       Move() : from(0), to(0) { sourceId[0] = 0; }
@@ -50,7 +50,7 @@ namespace Resonant {
     virtual bool prepare(int & channelsIn, int & channelsOut);
     virtual void processMessage(const char *, Radiant::BinaryData *);
     virtual void process(float ** in, float ** out, int n);
-    
+
     const float * interleaved() const { return & m_interleaved[0]; }
 
     int channels() const { return m_channels; }
@@ -58,6 +58,7 @@ namespace Resonant {
   private:
 
     int  m_channels;
+    int  m_subwooferChannel;
     DSPNetwork * m_host;
     std::vector<float> m_interleaved;
 
@@ -67,9 +68,9 @@ namespace Resonant {
   };
 
   inline bool operator == (const ModuleOutCollect::Move & a,
-			   const ModuleOutCollect::Move & b)
+               const ModuleOutCollect::Move & b)
   {
-    return (a.from == b.from)  && (a.to == b.to) && 
+    return (a.from == b.from)  && (a.to == b.to) &&
       (strcmp(a.sourceId, b.sourceId) == 0);
   }
 }
