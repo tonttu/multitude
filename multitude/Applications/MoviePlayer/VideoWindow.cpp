@@ -375,8 +375,10 @@ void VideoWindow::toggleFullScreen()
   info("VideoWindow::toggleFullScreen");
   setWindowState(windowState() ^ Qt::WindowFullScreen);
 
-  if(windowState() & Qt::WindowFullScreen)
+  if(windowState() & Qt::WindowFullScreen) {
     setCursor( QCursor( Qt::BlankCursor ) );
+    resize(4000, 2000);
+  }
   else
     setCursor( QCursor( Qt::ArrowCursor ) );
 
