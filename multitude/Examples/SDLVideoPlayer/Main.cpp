@@ -43,6 +43,18 @@ int main(int argc, char ** argv)
       file = arg2;
       i++;
     }
+    else {
+      printf("Unknown argument \"%s\"\n"
+                          "Usage:\n"
+                          "%s --file filename [options]\n"
+                          " --file  +filename  Set the file to be played\n"
+                          " -- width  +int     Set the width of the playback window\n"
+                          " --height  +int     Set the height of the playback window\n"
+                          " --fullscreen       Turn on fullscreen mode\n"
+                          "Example: %s --fullscreen ---width 7680 --height 2160 --file anthem.mov\n",
+                          arg, argv[0], argv[0]);
+      return 0;
+    }
   }
 
   SDL_Init(SDL_INIT_VIDEO);
