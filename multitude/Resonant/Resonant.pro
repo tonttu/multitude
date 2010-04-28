@@ -1,6 +1,5 @@
 include(../multitude.pri)
-HEADERS += Application.hpp \
-    AudioStreamer.hpp
+HEADERS += Application.hpp
 HEADERS += AudioFileHandler.hpp
 HEADERS += AudioLoop.hpp
 HEADERS += DSPNetwork.hpp
@@ -11,8 +10,7 @@ HEADERS += ModuleGain.hpp
 HEADERS += ModuleOutCollect.hpp
 HEADERS += ModuleSamplePlayer.hpp
 HEADERS += ModulePanner.hpp
-SOURCES += Application.cpp \
-    AudioStreamer.cpp
+SOURCES += Application.cpp
 SOURCES += AudioFileHandler.cpp
 SOURCES += AudioLoop.cpp
 SOURCES += DSPNetwork.cpp
