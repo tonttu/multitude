@@ -1,0 +1,117 @@
+
+#include <Luminous/Luminous.hpp>
+
+#include <SDL/SDL.h>
+
+#include <Luminous/GLResources.hpp>
+#include <Luminous/Image.hpp>
+#include <Luminous/Texture.hpp>
+#include <Luminous/Utils.hpp>
+
+#include <Radiant/Trace.hpp>
+
+#include <Resonant/DSPNetwork.hpp>
+
+#include <VideoDisplay/ShowGL.hpp>
+
+using namespace Radiant;
+
+int main(int argc, char ** argv)
+{
+
+  uint flags = SDL_OPENGL;
+  int width = 800;
+  int height = 400;
+
+  const char * file = 0;
+
+  for(int i = 1; i < argc; i++) {
+    const char * arg = argv[i];
+    const char * arg2 = (i + 1) < argc ? argv[i+1] : 0;
+
+    if(strcmp(arg, "--fullscreen") == 0)
+      flags = flags | SDL_FULLSCREEN;
+    else if(strcmp(arg, "--width") == 0&& arg2) {
+      width = atoi(arg2);
+      i++;
+    }
+    else if(strcmp(arg, "--height") == 0 && arg2) {
+      height = atoi(arg2);
+      i++;
+    }
+    else if(strcmp(arg, "--file") == 0&& arg2) {
+      file = arg2;
+      i++;
+    }
+  }
+
+  SDL_Init(SDL_INIT_VIDEO);
+
+  SDL_GL_SetAttribute(SDL_GL_RED_SIZE,   8);
+  SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,  8);
+  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16 );
+  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1 );
+
+  SDL_SetVideoMode(width, height, 0, flags);
+
+  Luminous::initLuminous();
+
+  glViewport(0, 0, width, height);
+
+  Luminous::GLResources rsc(Radiant::ResourceLocator::instance());
+  Luminous::GLResources::setThreadResources( & rsc, 0, 0);
+
+  Resonant::DSPNetwork dsp;
+  dsp.start();
+
+  VideoDisplay::ShowGL show;
+
+  show.init(file, & dsp);
+
+  for(bool running = true; running; ) {
+    SDL_Event event;
+
+    if(SDL_PollEvent(&event)) {
+      if(event.type == SDL_QUIT) {
+        running = false;
+        Radiant::info("Quit called, stopping now");
+        break;
+      }
+      else if(event.type == SDL_KEYDOWN) {
+        int ascii = (int) event.key.keysym.sym;
+        if(ascii == 'q') {
+          Radiant::info("Quit called, stopping now");
+          break;
+        }
+        else if(ascii == ' ') {
+          show.togglePause();
+        }
+      }
+
+    }
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, 0, 1);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glClearColor(1.f, 0.f, 0.f, 1.f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    show.update();
+    show.render( & rsc, Nimble::Vector2(0,0), Nimble::Vector2(width, height));
+
+    Luminous::Utils::glCheck("Main.cpp");
+
+    SDL_GL_SwapBuffers();
+  }
+
+  info("Stopping video player");
+  show.stop();
+  info("Stopping DSP network");
+  dsp.stop();
+
+  return 0;
+}
