@@ -106,4 +106,5 @@ contains(QT_MAJOR_VERSION,4) {
 }
 
 # Use ccache if available
-exists(/usr/bin/ccache):QMAKE_CXX=ccache g++
+linux:exists(/usr/bin/ccache):QMAKE_CXX=ccache g++
+macx:exists(/sw/bin/ccache):QMAKE_CXX=ccache g++
