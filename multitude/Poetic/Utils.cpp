@@ -79,9 +79,14 @@ namespace Poetic
         split(* itSub, delim, words, afterSpace);
 
         // Make the lines
-
-        while(words.size())
+        int tries = 0;
+        // 10 tries per character ought to be enough
+        ///@todo fix for real, this probably didn't terminate if width < one character
+        int maxTries = ws.size() * 10;
+        while(words.size() && tries < maxTries)
         {
+          ++tries;
+
           // First try to fit it in as separate words
 
           const int   numWords = words.size();
