@@ -337,7 +337,8 @@ namespace Luminous
           // Since we have no proper clipping algorithm, we compare against every clip rectangle in the stack
           bool inside = true;
 
-          for(std::vector<Nimble::Rectangle>::const_reverse_iterator it = m_data->m_clipStack.rbegin(); it != m_data->m_clipStack.rend(); it++) {
+          // Why does const_reverse_iterator not work on OSX :(
+          for(std::vector<Nimble::Rectangle>::reverse_iterator it = m_data->m_clipStack.rbegin(); it != m_data->m_clipStack.rend(); it++) {
             inside &= (*it).intersects(area);
           }
 
