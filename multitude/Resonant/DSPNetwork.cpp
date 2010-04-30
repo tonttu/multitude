@@ -22,15 +22,14 @@
 #include <Radiant/FixedStr.hpp>
 #include <Radiant/Trace.hpp>
 
+#include <strings.h>
+
 #include <algorithm>
 #include <typeinfo>
 
 #include <portaudio.h>
 
-
 namespace Resonant {
-
-
 
   using namespace Radiant;
 
@@ -227,8 +226,13 @@ namespace Resonant {
 
     doCycle(framesPerBuffer);
     const float * res = m_collect->interleaved();
-    assert(res != 0);
-    memcpy(out, res, 4 * framesPerBuffer * outChannels());
+    if(res != 0) {
+      memcpy(out, res, 4 * framesPerBuffer * outChannels());
+    }
+    else {
+      error("DSPNetwork::callback # No data to play");
+      bzero(out, 4 * framesPerBuffer * outChannels());
+    }
 
     return paContinue;
   }

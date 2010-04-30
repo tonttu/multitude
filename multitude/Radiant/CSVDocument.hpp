@@ -60,6 +60,8 @@ namespace Radiant {
         pointer to the row.
     */
     Row * findRow(const std::wstring & key, unsigned col);
+    /// A version of findRow, with UTF-8 encoded key.
+    Row * findRow(const std::string & key, unsigned col);
 
     /// Returns an iterator to the first row in the document
     Rows::iterator begin() { return m_rows.begin(); }

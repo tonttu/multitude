@@ -15,8 +15,10 @@
 
 #include "BinaryData.hpp"
 
-#include <Radiant/BinaryStream.hpp>
 #include "DateTime.hpp"
+#include "StringUtils.hpp"
+
+#include <Radiant/BinaryStream.hpp>
 #include <Radiant/Trace.hpp>
 #include <Radiant/ConfigReader.hpp>
 
@@ -460,19 +462,34 @@ namespace Radiant {
   {
     int32_t marker = getRef<int32_t>();
 
-    if(marker != WSTRING_MARKER) {
+    if(marker == WSTRING_MARKER) {
+      
+      int len = getRef<int32_t>();
+      
+      str.resize(len);
+      
+      for(int i = 0; i < len; i++) {
+        str[i] = getRef<int32_t>();
+      }
+      
+      return true;
+    }
+    else if(marker == STRING_MARKER) {
+
+      std::string tmp;
+      
+      const char * source = & m_buf[m_current];
+      
+      skipParameter(marker);
+      
+      StringUtils::utf8ToStdWstring(str, source);
+
+      return true;
+    }
+    else {
       skipParameter(marker);
       return false;
     }
-    int len = getRef<int32_t>();
-
-    str.resize(len);
-
-    for(int i = 0; i < len; i++) {
-      str[i] = getRef<int32_t>();
-    }
-
-    return true;
   }
 
   bool BinaryData::readBlob(void * ptr, int n)

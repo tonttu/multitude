@@ -173,7 +173,7 @@ namespace Radiant
       // Loop until no delimiters left
       while(pos != wscopy.npos)
       {
-        out.push_back(wscopy.substr(0, pos + 1));
+        out.push_back(wscopy.substr(0, pos));
         wscopy.erase(0, pos + 1);
         pos = wscopy.find_first_of(delim);
       }
