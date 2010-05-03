@@ -91,6 +91,8 @@ namespace Resonant {
 
       /// Frees the buffer data
       void clear() { delete [] m_data; m_data = 0; m_size = 0; }
+    private:
+      friend class DSPNetwork;
 
       float * m_data;
       int     m_size;
