@@ -59,13 +59,6 @@ namespace Resonant {
     virtual void processMessage(const char * address, Radiant::BinaryData *);
     virtual void process(float ** in, float ** out, int n);
 
-    bool addSample(const char * filename, const char * name);
-
-    int findFreeVoice();
-    int findSample(const char * );
-
-    void loadSamples();
-
     /** Adds a few voices that will play an ambount sound background.
         All files in the given directory are loaded looped
         for-ever. In practice one wants to put 3-5 audio files with
@@ -112,6 +105,13 @@ namespace Resonant {
                     bool loop = false);
 
   private:
+
+    bool addSample(const char * filename, const char * name);
+
+    int findFreeVoice();
+    int findSample(const char * );
+
+    void loadSamples();
 
     class SampleInfo
     {
