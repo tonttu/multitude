@@ -50,8 +50,9 @@ namespace Resonant {
   {
   public:
 
-
+    /// Audio sample player module
     ModuleSamplePlayer(Application *);
+    /// Delete the sample player
     virtual ~ModuleSamplePlayer();
 
     virtual bool prepare(int & channelsIn, int & channelsOut);
