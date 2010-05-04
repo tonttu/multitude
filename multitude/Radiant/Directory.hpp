@@ -59,7 +59,7 @@ namespace Radiant
       /// Sort by name
       Name = 0x00,
       /// Do not sort
-      Unsorted = 0x03
+      NotSorted = 0x03
     };
 
     /// Construct a directory listing
