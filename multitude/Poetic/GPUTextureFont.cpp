@@ -168,7 +168,14 @@ namespace Poetic
 
     GPUTextureGlyph::resetActiveTexture();
 
+    glEnable(GL_VERTEX_ARRAY);
+    glEnable(GL_TEXTURE_COORD_ARRAY);
+
+
     GPUFontBase::internalRender(str, n, m);
+
+    glDisable(GL_VERTEX_ARRAY);
+    glDisable(GL_TEXTURE_COORD_ARRAY);
   }
 
   void GPUTextureFont::internalRender(const wchar_t * str, int n,
@@ -179,7 +186,13 @@ namespace Poetic
 
     GPUTextureGlyph::resetActiveTexture();
 
+    glEnable(GL_VERTEX_ARRAY);
+    glEnable(GL_TEXTURE_COORD_ARRAY);
+
     GPUFontBase::internalRender(str, n, m);
+
+    glDisable(GL_VERTEX_ARRAY);
+    glDisable(GL_TEXTURE_COORD_ARRAY);
   }
 
   void GPUTextureFont::faceSizeChanged()

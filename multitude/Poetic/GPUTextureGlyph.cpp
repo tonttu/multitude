@@ -80,24 +80,42 @@ namespace Poetic
     Vector2f v3 = pen + Vector2f(m_width + m_pos.x,     m_pos.y);
 #endif
 
-    Vector4f p0 = Luminous::Utils::project(m, v0);
-    Vector4f p1 = Luminous::Utils::project(m, v1);
-    Vector4f p2 = Luminous::Utils::project(m, v2);
-    Vector4f p3 = Luminous::Utils::project(m, v3);
+    Nimble::Vector2f v[] = {
+      m.project(v0),
+      m.project(v1),
+      m.project(v2),
+      m.project(v3)
+    };
 
+#if 1
+
+    const GLfloat uvs[] = {
+      m_uv[0].x, m_uv[0].y,
+      m_uv[0].x, m_uv[1].y,
+      m_uv[1].x, m_uv[1].y,
+      m_uv[1].x, m_uv[0].y
+    };
+
+    glTexCoordPointer(2, GL_FLOAT, 0, uvs);
+    glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat*>(v));
+
+    glDrawArrays(GL_QUADS, 0, 4);
+
+#else
     glBegin(GL_QUADS);
     glTexCoord2f(m_uv[0].x, m_uv[0].y);
-    glVertex4fv(p0.data());
+    glVertex2fv(v[0].data());
 
     glTexCoord2f(m_uv[0].x, m_uv[1].y);
-    glVertex4fv(p1.data());
+    glVertex2fv(v[1].data());
 
     glTexCoord2f(m_uv[1].x, m_uv[1].y);
-    glVertex4fv(p2.data());
+    glVertex2fv(v[2].data());
 
     glTexCoord2f(m_uv[1].x, m_uv[0].y);
-    glVertex4fv(p3.data());
+    glVertex2fv(v[3].data());
     glEnd();
+#endif
 
     return m_advance + pen;
   }
