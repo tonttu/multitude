@@ -527,9 +527,8 @@ namespace Luminous {
 
     GPUMipmaps * gpumaps = getGPUMipmaps(r);
 
-    gpumaps->bind(transform, pixelsize);
-
-    return true;
+    return gpumaps->bind(transform, pixelsize);
+    //return true;
   }
 
   bool CPUMipmaps::isActive()

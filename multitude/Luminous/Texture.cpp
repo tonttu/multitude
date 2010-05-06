@@ -174,8 +174,22 @@ namespace Luminous
              glInternalFormatToString(internalFormat),
              glFormatToString(srcFormat.layout()), w, h);
       */
-      glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0,
-           srcFormat.layout(), srcFormat.type(), data);
+
+      GLint width;
+      glTexImage2D(GL_PROXY_TEXTURE_2D, 0, internalFormat, w, h, 0,
+           srcFormat.layout(), srcFormat.type(), 0);
+
+      glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+
+      if(width == 0) {
+        Radiant::error("Texture2D::loadBytes: Cannot load texture, too big? (%d x %d)", w, h);
+        changeByteConsumption(used, consumesBytes());
+        return false;
+      } else {
+        /* should succeed */
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0,
+             srcFormat.layout(), srcFormat.type(), data);
+      }
     }
 
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);

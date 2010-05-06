@@ -114,9 +114,15 @@ namespace Luminous {
       }
       else if(closest >= 0) {
         tex = new Texture2D(resources());
-        resources()->addResource(m_keys + closest, tex);
-        tex->loadImage(*m_cpumaps->getImage(closest),
-		       closest == CPUMipmaps::lowestLevel());
+        bool ok = tex->loadImage(*m_cpumaps->getImage(closest),
+           closest == CPUMipmaps::lowestLevel());
+        if (ok) {
+          resources()->addResource(m_keys + closest, tex);
+        } else { // failed, use a smaller texture
+          delete tex;
+          tex = dynamic_cast<Texture2D *> (res);
+        }
+        assert(tex);
         tex->bind();
       }      
     }
