@@ -74,6 +74,9 @@ namespace Luminous
     bool setUniformFloat(const char * name, float value);
     /// @copydoc setUniformInt
     bool setUniformVector2(const char * name, Nimble::Vector2f value);
+    /// @copydoc setUniformInt
+    /// The matrix is automatically transposed for OpenGL
+    bool setUniformMatrix3(const char * name, const Nimble::Matrix3f & value);
 
     /// Validates the program
     /// @return true if the program is valid and can be used

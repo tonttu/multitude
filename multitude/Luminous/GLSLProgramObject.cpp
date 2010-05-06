@@ -215,6 +215,18 @@ namespace Luminous
     return true;
   }
 
+  bool GLSLProgramObject::setUniformMatrix3(const char * name, const Nimble::Matrix3f & value)
+  {
+    int loc = getUniformLoc(name);
+
+    if(loc < 0)
+      return false;
+
+    glUniformMatrix3fv(loc, 1, true, value.data());
+
+    return true;
+  }
+
   bool GLSLProgramObject::validate()
   {
     glValidateProgram(m_handle);
