@@ -1,6 +1,7 @@
 #ifndef VALUABLE_SERIALIZER_HPP
 #define VALUABLE_SERIALIZER_HPP
 
+#include <Valuable/Export.hpp>
 #include "DOMElement.hpp"
 #include "DOMDocument.hpp"
 #include "ValueObject.hpp"
@@ -81,7 +82,8 @@ namespace Valuable
         elem.set(Radiant::StringUtils::stringify(t));
         return elem;
       }
-      static typename remove_const<T>::Type deserialize(ArchiveElement & element)
+
+      inline static typename remove_const<T>::Type deserialize(ArchiveElement & element)
       {
         std::istringstream is(element.get());
         typename remove_const<T>::Type t;
@@ -97,7 +99,8 @@ namespace Valuable
       {
         return t.serialize(doc);
       }
-      static T deserialize(ArchiveElement & element)
+
+      inline static T deserialize(ArchiveElement & element)
       {
         T t;
         t.deserialize(element);
@@ -112,7 +115,8 @@ namespace Valuable
       {
         return t->serialize(doc);
       }
-      static T * deserialize(ArchiveElement & element)
+
+      inline static T * deserialize(ArchiveElement & element)
       {
         T * t = new T;
         t->deserialize(element);
@@ -130,7 +134,8 @@ namespace Valuable
         elem.add(Serializer::serialize(archive, pair.second));
         return elem;
       }
-      static T deserialize(ArchiveElement & element)
+
+      inline static T deserialize(ArchiveElement & element)
       {
         typedef typename T::first_type A;
         typedef typename T::second_type B;
@@ -150,19 +155,19 @@ namespace Valuable
     };
 
     template <typename T>
-    ArchiveElement & serialize(Archive &archive, T t)
+    inline ArchiveElement & serialize(Archive & archive, T t)
     {
       return Impl<T>::serialize(archive, t);
     }
 
     template <typename T>
-    typename remove_const<T>::Type deserialize(ArchiveElement & element)
+    inline typename remove_const<T>::Type deserialize(ArchiveElement & element)
     {
       return Impl<T>::deserialize(element);
     }
 
     template <typename T>
-    typename remove_const<T>::Type deserializeXML(DOMElement & element)
+    inline typename remove_const<T>::Type deserializeXML(DOMElement & element)
     {
       XMLArchiveElement e(element);
       return deserialize<T>(e);
@@ -183,7 +188,7 @@ namespace Valuable
 
     /// Deserialize object from file
     template <typename T>
-    T deserialize(const std::string & filename)
+    inline T deserialize(const std::string & filename)
     {
       XMLArchive archive;
 
@@ -195,4 +200,5 @@ namespace Valuable
     }
   }
 }
+
 #endif // VALUABLE_SERIALIZER_HPP

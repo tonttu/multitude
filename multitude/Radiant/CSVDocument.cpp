@@ -67,10 +67,11 @@ namespace Radiant {
         std::wstring & str = (*it2);
         // Strip leading white-space
 
+
         while(str.size() && (str[0] == ' ' || str[0] == '\"'))
           str.erase(0, 1);
 
-        while(str.size() && ((str[str.size() - 1] == 58) ||
+        while(str.size() && ((str[str.size() - 1] == delimiter[0]) ||
                              str[str.size() - 1] == 34 ||
                              str[str.size() - 1] == 8203))
           str.erase(str.size() - 1, 1);
@@ -101,6 +102,13 @@ namespace Radiant {
 
     return 0;
   }
+
+  CSVDocument::Row * CSVDocument::findRow(const std::string & key, unsigned col)
+  {
+
+    return findRow(StringUtils::utf8AsStdWstring(key), col);
+  }
+
 
   CSVDocument::Row * CSVDocument::row(unsigned index)
   {

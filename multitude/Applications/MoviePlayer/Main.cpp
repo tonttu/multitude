@@ -90,6 +90,10 @@ int main(int argc, char ** argv)
       float contrast = atof(argv[++i]);
       VideoWindow::setContrast(contrast);
     }
+    else if(strcmp(argv[i], "--fullscreen") == 0) {
+      info("Need fullscreen");
+      vw->toggleFullScreen();
+    }
     else {
       filename = argv[i];
 

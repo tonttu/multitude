@@ -37,6 +37,7 @@ using namespace Nimble;
 using namespace Radiant;
 
 float VideoWindow::m_contrast = 1.0f;
+bool VideoWindow::m_fullScreen = false;
 
 VideoWindow::VideoWindow()
     : m_subCPUFont(0),
@@ -47,6 +48,9 @@ VideoWindow::VideoWindow()
 {
   connect( & m_timer, SIGNAL(timeout()), this, SLOT(updateGL()));
   m_timer.start(10);
+
+  if(m_fullScreen)
+    toggleFullScreen();
 }
 
 VideoWindow::~VideoWindow()
@@ -266,7 +270,7 @@ void VideoWindow::paintGL()
 
   float maxDisplay = 6.0f;
 
-  m_showProgress = inactsecs < maxDisplay;
+  m_showProgress = inactsecs < maxDisplay && !(windowState() & Qt::WindowFullScreen);
 
   for(iterator it = m_movies.begin(); it != m_movies.end(); it++) {
 
@@ -364,11 +368,19 @@ void VideoWindow::paintGL()
     }
   }
 
-
 }
 
 void VideoWindow::toggleFullScreen()
 {
+  info("VideoWindow::toggleFullScreen");
   setWindowState(windowState() ^ Qt::WindowFullScreen);
+
+  if(windowState() & Qt::WindowFullScreen) {
+    setCursor( QCursor( Qt::BlankCursor ) );
+    resize(4000, 2000);
+  }
+  else
+    setCursor( QCursor( Qt::ArrowCursor ) );
+
 }
 

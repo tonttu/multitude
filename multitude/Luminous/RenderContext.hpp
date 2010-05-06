@@ -167,6 +167,13 @@ namespace Luminous
     void drawPolyLine(const Nimble::Vector2f * vertices, int n,
                       float width, const float * rgba);
 
+    /** Draw a cubic bézier curve
+        @arg controlPoints array of 4 control points
+        @arg width width of the curve
+        @arg rgba array of 4 color components
+    */
+    void drawCurve(Nimble::Vector2* controlPoints, float width, const float * rgba=0);
+
     void drawSpline(Nimble::Splines::Interpolating & spline, float width, const float * rgba=0, float step=1.0f);
     /** Draw a textured rectangle with given color.
 

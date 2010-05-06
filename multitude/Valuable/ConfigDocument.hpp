@@ -53,6 +53,8 @@ namespace Valuable
     ConfigElement *findConfigElement(ConfigElement &e,std::string elementName,bool &found);
     ConfigElement *findConfigElement(ConfigElement &e,bool &found,std::string key,std::string value);
 
+    bool getline(FILE * source, std::string & str);
+
     enum ParseFlags
     {
       ELEMENT_START,

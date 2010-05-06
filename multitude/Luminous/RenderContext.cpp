@@ -337,7 +337,8 @@ namespace Luminous
           // Since we have no proper clipping algorithm, we compare against every clip rectangle in the stack
           bool inside = true;
 
-          for(std::vector<Nimble::Rectangle>::const_reverse_iterator it = m_data->m_clipStack.rbegin(); it != m_data->m_clipStack.rend(); it++) {
+          // Why does const_reverse_iterator not work on OSX :(
+          for(std::vector<Nimble::Rectangle>::reverse_iterator it = m_data->m_clipStack.rbegin(); it != m_data->m_clipStack.rend(); it++) {
             inside &= (*it).intersects(area);
           }
 
@@ -645,6 +646,39 @@ namespace Luminous
     glDisableVertexAttribArray(loc);
     glDisableVertexAttribArray(loc2);
     m_polyline_shader->unbind();
+  }
+  void RenderContext::drawCurve(Vector2* controlPoints, float width, const float * rgba) {
+
+    struct Subdivider {
+      std::vector<Vector2> & points;
+
+      void subdivide(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, int level=0) {
+        Vector2 p12 = 0.5f*(p1+p2);
+        Vector2 p23 = 0.5f*(p2+p3);
+        Vector2 p34 = 0.5f*(p3+p4);
+        Vector2 p123 = 0.5f*(p12+p23);
+        Vector2 p234 = 0.5f*(p23+p34);
+        Vector2 p1234 = 0.5f*(p123 + p234);
+
+        ///@todo could do collinearity detection
+        if (level != 0 && (level > 20 || fabs( (p1234 - 0.5f*(p1+p4)).lengthSqr() ) < 1e-1f)) {
+          //points.push_back(p1);
+          //points.push_back(p4);
+          points.push_back(p23);
+        } else {
+          subdivide(p1, p12, p123, p1234, level+1);
+          subdivide(p1234, p234, p34, p4, level+1);
+        }
+      }
+    };
+    std::vector<Nimble::Vector2f> points;
+    points.push_back(controlPoints[0]);
+
+    Subdivider sub = {points};
+    sub.subdivide( controlPoints[0], controlPoints[1], controlPoints[2], controlPoints[3] );
+    points.push_back(controlPoints[3]);
+
+    drawPolyLine(&points[0], points.size(), width, rgba);
   }
 
   void RenderContext::drawSpline(Nimble::Splines::Interpolating & s, float width, const float * rgba, float step)

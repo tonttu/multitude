@@ -27,6 +27,7 @@ namespace Valuable
     typedef typename T::iterator iterator;
     typedef typename T::const_iterator const_iterator;
     typedef typename T::reverse_iterator reverse_iterator;
+    typedef typename T::const_reverse_iterator const_reverse_iterator;
     typedef typename T::value_type value_type;
 
     ValueContainer() {}

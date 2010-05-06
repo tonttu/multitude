@@ -16,6 +16,8 @@
 #ifndef RESONANT_AUDIO_LOOP_HPP
 #define RESONANT_AUDIO_LOOP_HPP
 
+#include <Patterns/NotCopyable.hpp>
+
 #include <Resonant/Export.hpp>
 
 namespace Resonant {
@@ -26,10 +28,12 @@ namespace Resonant {
       utility class that hides all the PortAudio code behind a bit easier API.
   */
 
-  class RESONANT_API AudioLoop
+  class RESONANT_API AudioLoop : public Patterns::NotCopyable
   {
   public:
+    /// Creates a new audio IO object
     AudioLoop();
+    /// Deletes an audio OI object
     virtual ~AudioLoop();
 
     /// Initialize the global/static structure for audio playback
