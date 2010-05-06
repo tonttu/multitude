@@ -111,9 +111,9 @@ namespace Valuable
     template <typename T>
     struct Impl<T*, Type::serializable>
     {
-      static ArchiveElement & serialize(Archive &doc, T * t)
+      static ArchiveElement & serialize(Archive & archive, T * t)
       {
-        return t->serialize(doc);
+        return t->serialize(archive);
       }
 
       inline static T * deserialize(ArchiveElement & element)
@@ -127,7 +127,7 @@ namespace Valuable
     template <typename T>
     struct Impl<T, Type::pair>
     {
-      static ArchiveElement & serialize(Archive &archive, T & pair)
+      static ArchiveElement & serialize(Archive & archive, T & pair)
       {
         ArchiveElement & elem = archive.createElement("pair");
         elem.add(Serializer::serialize(archive, pair.first));
