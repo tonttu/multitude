@@ -22,22 +22,24 @@
 
 #define DEFAULT_PADDING 3
 
+#include <Luminous/Shader.hpp>
+
 namespace Poetic
 {
 
-  /*inline GLuint nextPowerOf2(GLuint in)
-  {
-     in -= 1;
+  static const char * g_fontShaderSource =
+      "uniform sampler2D fontTexture;\n"
+      "uniform mat3   transform;\n"
+      "void main (void) {\n"
+      "  vec3 pos = transform * vec3(gl_Vertex.x, gl_Vertex.y, 1);\n"
+      "  pos.xy = pos.xy / pos.z;\n"
+      "  pos.z = 1;\n"
+      "  gl_TexCoord[0] = gl_MultiTexCoord0\n;"
+      "  gl_FrontColor = gl_Color\n;"
+      "  gl_Position = gl_ModelViewProjectionMatrix * vec4(pos.x, pos.y, pos.z, 1);\n"
+      "}\n";
 
-     in |= in >> 16;
-     in |= in >> 8;
-     in |= in >> 4;
-     in |= in >> 2;
-     in |= in >> 1;
-
-     return in + 1;
-  }
-  */
+  Luminous::Shader g_fontShader;
 
   /* Creates a number that is a multiple of four. Four is used as the
      buggy OSX (NVidia) drivers cannot handle arbitratry textures,
@@ -168,14 +170,23 @@ namespace Poetic
 
     GPUTextureGlyph::resetActiveTexture();
 
+    if(!g_fontShader.isDefined())
+      g_fontShader.setVertexShader(g_fontShaderSource);
+
+    Luminous::GLSLProgramObject * shader = g_fontShader.bind();
+
+    shader->setUniformMatrix3("transform", m);
+    shader->setUniformInt("fontTexture", 0);
+
     glEnable(GL_VERTEX_ARRAY);
     glEnable(GL_TEXTURE_COORD_ARRAY);
-
 
     GPUFontBase::internalRender(str, n, m);
 
     glDisable(GL_VERTEX_ARRAY);
     glDisable(GL_TEXTURE_COORD_ARRAY);
+
+    glUseProgram(0);
   }
 
   void GPUTextureFont::internalRender(const wchar_t * str, int n,
@@ -186,6 +197,14 @@ namespace Poetic
 
     GPUTextureGlyph::resetActiveTexture();
 
+    if(!g_fontShader.isDefined())
+      g_fontShader.setVertexShader(g_fontShaderSource);
+
+    Luminous::GLSLProgramObject * shader = g_fontShader.bind();
+
+    shader->setUniformMatrix3("transform", m);
+    shader->setUniformInt("fontTexture", 0);
+
     glEnable(GL_VERTEX_ARRAY);
     glEnable(GL_TEXTURE_COORD_ARRAY);
 
@@ -193,6 +212,8 @@ namespace Poetic
 
     glDisable(GL_VERTEX_ARRAY);
     glDisable(GL_TEXTURE_COORD_ARRAY);
+
+    glUseProgram(0);
   }
 
   void GPUTextureFont::faceSizeChanged()
@@ -215,4 +236,3 @@ namespace Poetic
   }
 
 }
-

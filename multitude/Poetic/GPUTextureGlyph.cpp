@@ -80,14 +80,14 @@ namespace Poetic
     Vector2f v3 = pen + Vector2f(m_width + m_pos.x,     m_pos.y);
 #endif
 
-    Nimble::Vector2f v[] = {
-      m.project(v0),
-      m.project(v1),
-      m.project(v2),
-      m.project(v3)
-    };
 
 #if 1
+    Nimble::Vector2f v[] = {
+      v0,
+      v1,
+      v2,
+      v3
+    };
 
     const GLfloat uvs[] = {
       m_uv[0].x, m_uv[0].y,
@@ -102,6 +102,14 @@ namespace Poetic
     glDrawArrays(GL_QUADS, 0, 4);
 
 #else
+
+    Nimble::Vector2f v[] = {
+      m.project(v0),
+      m.project(v1),
+      m.project(v2),
+      m.project(v3)
+    };
+
     glBegin(GL_QUADS);
     glTexCoord2f(m_uv[0].x, m_uv[0].y);
     glVertex2fv(v[0].data());
