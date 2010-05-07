@@ -31,8 +31,9 @@ namespace Poetic
       GPUTextureGlyph(const CPUBitmapGlyph * glyph, int texId, int xOff, int yOff, GLsizei width, GLsizei height);
       virtual ~GPUTextureGlyph();
 
-      virtual Nimble::Vector2 render(Nimble::Vector2 pen, const Nimble::Matrix3 & m);
+      virtual Nimble::Vector2 render(Nimble::Vector2 pen, const Nimble::Matrix3 & m, Nimble::Vector2f ** ptr);
 
+      static GLuint activeTexture() { return s_activeTexture; }
       static void resetActiveTexture() { s_activeTexture = 0; }
     private:
       int m_width;

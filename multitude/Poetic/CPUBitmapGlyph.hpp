@@ -27,7 +27,7 @@ namespace Poetic
       CPUBitmapGlyph(FT_GlyphSlotRec_ * glyph);
       virtual ~CPUBitmapGlyph();
 
-      virtual Nimble::Vector2 render(Nimble::Vector2 pen, const Nimble::Matrix3 & m);
+      virtual Nimble::Vector2 render(Nimble::Vector2 pen, const Nimble::Matrix3 & m, Nimble::Vector2f ** ptr);
 
     private:
       Nimble::Vector2i m_size;

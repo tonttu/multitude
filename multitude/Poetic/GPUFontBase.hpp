@@ -42,8 +42,8 @@ namespace Poetic
 
       virtual void faceSizeChanged();
 
-      virtual void internalRender(const char * str, int n, const Nimble::Matrix3 & transform);
-      virtual void internalRender(const wchar_t * str, int n, const Nimble::Matrix3 & transform);
+      virtual void internalRender(const char * str, int n, const Nimble::Matrix3 & transform, Nimble::Vector2f ** ptr);
+      virtual void internalRender(const wchar_t * str, int n, const Nimble::Matrix3 & transform, Nimble::Vector2f ** ptr);
 
     private:
       inline bool checkGlyph(unsigned int charCode);

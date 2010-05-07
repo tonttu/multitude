@@ -19,6 +19,8 @@
 
 #include <Nimble/Vector4.hpp>
 
+#include <Radiant/Trace.hpp>
+
 #include <ft2build.h>
 #include FT_GLYPH_H
 
@@ -61,7 +63,7 @@ namespace Poetic
   GPUTextureGlyph::~GPUTextureGlyph()
   {}
 
-  Nimble::Vector2 GPUTextureGlyph::render(Nimble::Vector2 pen, const Nimble::Matrix3 & m)
+  Nimble::Vector2 GPUTextureGlyph::render(Nimble::Vector2 pen, const Nimble::Matrix3 & m, Nimble::Vector2f ** ptr)
   {
     if(s_activeTexture != m_textureId) {
       glBindTexture(GL_TEXTURE_2D, m_textureId);
@@ -82,46 +84,55 @@ namespace Poetic
 
 
 #if 1
-    Nimble::Vector2f v[] = {
-      v0,
-      v1,
-      v2,
-      v3
-    };
 
-    const GLfloat uvs[] = {
-      m_uv[0].x, m_uv[0].y,
-      m_uv[0].x, m_uv[1].y,
-      m_uv[1].x, m_uv[1].y,
-      m_uv[1].x, m_uv[0].y
-    };
+    Nimble::Vector2f uv0(m_uv[0].x, m_uv[0].y);
+    Nimble::Vector2f uv1(m_uv[0].x, m_uv[1].y);
+    Nimble::Vector2f uv2(m_uv[1].x, m_uv[1].y);
+    Nimble::Vector2f uv3(m_uv[1].x, m_uv[0].y);
 
-    glTexCoordPointer(2, GL_FLOAT, 0, uvs);
-    glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat*>(v));
+/*
+    Radiant::info("pen (%f,%f)", pen.x, pen.y);
+    Radiant::info("\tV0 (%f,%f", v0.x, v0.y);
+    Radiant::info("\tV1 (%f,%f", v1.x, v1.y);
+    Radiant::info("\tV2 (%f,%f", v2.x, v2.y);
+    Radiant::info("\tV3 (%f,%f", v3.x, v3.y);
 
-    glDrawArrays(GL_QUADS, 0, 4);
+    Radiant::info("\tUV0 (%f,%f", uv0.x, uv0.y);
+    Radiant::info("\tUV1 (%f,%f", uv1.x, uv1.y);
+    Radiant::info("\tUV2 (%f,%f", uv2.x, uv2.y);
+    Radiant::info("\tUV3 (%f,%f", uv3.x, uv3.y);
+*/
+    *((*ptr)++) = v0;
+    *((*ptr)++) = uv0;
+
+    *((*ptr)++) = v1;
+    *((*ptr)++) = uv1;
+
+    *((*ptr)++) = v2;
+    *((*ptr)++) = uv2;
+
+    *((*ptr)++) = v3;
+    *((*ptr)++) = uv3;
 
 #else
 
-    Nimble::Vector2f v[] = {
-      m.project(v0),
-      m.project(v1),
-      m.project(v2),
-      m.project(v3)
-    };
+    v0 = m.project(v0);
+    v1 = m.project(v1);
+    v2 = m.project(v2);
+    v3 = m.project(v3);
 
     glBegin(GL_QUADS);
     glTexCoord2f(m_uv[0].x, m_uv[0].y);
-    glVertex2fv(v[0].data());
+    glVertex2fv(v0.data());
 
     glTexCoord2f(m_uv[0].x, m_uv[1].y);
-    glVertex2fv(v[1].data());
+    glVertex2fv(v1.data());
 
     glTexCoord2f(m_uv[1].x, m_uv[1].y);
-    glVertex2fv(v[2].data());
+    glVertex2fv(v2.data());
 
     glTexCoord2f(m_uv[1].x, m_uv[0].y);
-    glVertex2fv(v[3].data());
+    glVertex2fv(v3.data());
     glEnd();
 #endif
 

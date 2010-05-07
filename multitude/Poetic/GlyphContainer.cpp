@@ -75,7 +75,7 @@ namespace Poetic
     return m_glyphs[index];
   }  
 
-  Nimble::Vector2 GlyphContainer::render(unsigned int charCode, unsigned int nextCharCode, Nimble::Vector2 penPos, const Nimble::Matrix3 & m)
+  Nimble::Vector2 GlyphContainer::render(unsigned int charCode, unsigned int nextCharCode, Nimble::Vector2 penPos, const Nimble::Matrix3 & m, Nimble::Vector2f ** ptr)
   {
     Nimble::Vector2 advance(0.f, 0.f);
 
@@ -88,7 +88,7 @@ namespace Poetic
       unsigned int index = m_charmap->glyphListIndex(charCode);
       Glyph * glyph = m_glyphs[index];
       assert(glyph);
-      advance = glyph->render(penPos, m);
+      advance = glyph->render(penPos, m, ptr);
     }
 
     kernAdvance += advance; 

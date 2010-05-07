@@ -53,7 +53,7 @@ namespace Poetic
   }
 
 
-  Nimble::Vector2 CPUBitmapGlyph::render(Nimble::Vector2 pen, const Nimble::Matrix3 & )
+  Nimble::Vector2 CPUBitmapGlyph::render(Nimble::Vector2 pen, const Nimble::Matrix3 & , Nimble::Vector2f ** )
   {
     Radiant::error("CPUBitmapGlyph::render # not implemented");
 
