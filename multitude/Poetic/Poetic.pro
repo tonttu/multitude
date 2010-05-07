@@ -45,7 +45,7 @@ SOURCES += GPUWrapperFont.cpp
 SOURCES += Size.cpp
 SOURCES += Utils.cpp
 
-DEFINES += POETIC_FLIP_Y
+DEFINES += POETIC_FLIP_Y 
 
 unix: PKGCONFIG += freetype2
 
