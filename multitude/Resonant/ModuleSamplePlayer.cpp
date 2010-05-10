@@ -383,7 +383,8 @@ namespace Resonant {
   ModuleSamplePlayer::ModuleSamplePlayer(Application * a)
       : Module(a),
       m_channels(1),
-      m_active(0)
+      m_active(0),
+      m_masterGain(1.0f)
   {
     m_voices.resize(256);
     m_voiceptrs.resize(m_voices.size());
@@ -484,6 +485,13 @@ namespace Resonant {
       else
         i++;
     }
+
+    for(i = 0; i < m_channels; i++) {
+      float * ptr = out[i];
+      for(float * sentinel = ptr + n; ptr < sentinel; ptr++)
+        *ptr *= m_masterGain;
+    }
+
 
     /* for(i = 0; i < m_channels; i++)
        info("ModuleSamplePlayer::process # %d %p %f", i, out[i], *out[i]);

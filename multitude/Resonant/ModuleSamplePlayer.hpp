@@ -110,6 +110,7 @@ namespace Resonant {
                     int samplechannel,
                     bool loop = false);
 
+    void setMasterGain(float gain) { m_masterGain = gain; }
   private:
 
     class SampleInfo
@@ -168,6 +169,7 @@ namespace Resonant {
       void setSample(Sample * s);
 
       void clear() { m_state = INACTIVE; m_sample = 0; }
+
 
     private:
       enum State {
@@ -262,6 +264,8 @@ namespace Resonant {
 
     unsigned m_channels;
     unsigned m_active;
+
+    float    m_masterGain;
 
     BGLoader * m_loader;
   };
