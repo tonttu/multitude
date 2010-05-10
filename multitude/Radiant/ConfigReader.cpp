@@ -514,8 +514,6 @@ namespace Radiant {
   {
     cleardocs();
 
-    std::string base = FileUtils::baseFilename(filename);
-
     std::string tmpfile = std::string(filename) + ".tmp";
 
     std::ofstream out;
