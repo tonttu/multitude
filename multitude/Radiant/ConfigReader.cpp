@@ -16,6 +16,7 @@
 #include <Radiant/ConfigReaderTmpl.hpp>
 
 #include <Radiant/Mutex.hpp>
+#include <Radiant/FileUtils.hpp>
 
 #include <math.h>
 #include <stdlib.h>
@@ -513,15 +514,25 @@ namespace Radiant {
   {
     cleardocs();
 
+    std::string base = FileUtils::baseFilename(filename);
+
+    std::string tmpfile = std::string(filename) + ".tmp";
+
     std::ofstream out;
-    out.open(filename);
+    out.open(tmpfile.c_str());
 
     if(!out.good())
       return false;
-    
-    config->dump(out);
 
-    return true;
+    config->dump(out);
+    out.close();
+
+    // remove original and replace with temporary
+    // there doesn't seem to be a portable way to do this atomically
+    if (FileUtils::removeFile(filename)) {
+      return FileUtils::renameFile(tmpfile.c_str(), filename);
+    }
+    return false;
   }
 
 } // namespace

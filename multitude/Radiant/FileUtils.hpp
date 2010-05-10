@@ -59,6 +59,9 @@ namespace Radiant
     /// Rename a file.
     RADIANT_API bool renameFile(const char * from, const char * to);
 
+    /// Remove a file
+    RADIANT_API bool removeFile(const char * filename);
+
     /// Extract path.
     RADIANT_API std::string path(const std::string & filepath);
     /// Extract filename.
