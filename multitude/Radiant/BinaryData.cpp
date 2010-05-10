@@ -796,7 +796,7 @@ namespace Radiant {
       m_size = need + 128 + need / 16;
       m_buf = (char *) realloc(m_buf, m_size);
     }
-    // m_total = m_current + bytes;
+    m_total = m_current + bytes;
   }
 
   void BinaryData::clear()
