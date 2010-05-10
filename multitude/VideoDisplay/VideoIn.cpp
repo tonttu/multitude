@@ -537,7 +537,7 @@ namespace VideoDisplay {
       }
     }
 
-    info("VideoIn::freeFreeableMemory # %p %d frames left", this, left);
+    // info("VideoIn::freeFreeableMemory # %p %d frames left", this, left);
   }
 
   void VideoIn::pushRequest(const Req & r)
