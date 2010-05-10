@@ -71,18 +71,18 @@ namespace Radiant {
 
   BinaryData::BinaryData()
     : m_current(0),
-      m_total(0),
-      m_size(0),
-      m_shared(false),
-      m_buf(0)
-    {}
+    m_total(0),
+    m_size(0),
+    m_shared(false),
+    m_buf(0)
+  {}
 
   BinaryData::BinaryData(const BinaryData & that)
     : m_current(0),
-      m_total(0),
-      m_size(0),
-      m_shared(false),
-      m_buf(0)
+    m_total(0),
+    m_size(0),
+    m_shared(false),
+    m_buf(0)
   {
     *this = that;
   }
@@ -250,11 +250,11 @@ namespace Radiant {
       char * end = (char *) source;
       double d = strtod(m_buf + m_current, & end);
       if(end == (char *) source) {
-    if(ok)
-      *ok = false;
+        if(ok)
+          *ok = false;
       }
       else {
-    return d;
+        return d;
       }
     }
     else if(ok)
@@ -514,18 +514,18 @@ namespace Radiant {
 
 #define BD_STR_TO_VEC(type, n, ok) \
   const char * source = & m_buf[m_current]; \
-  Radiant::Variant v(source); \
-  skipParameter(marker); \
-  type vect; \
-  vect.clear(); \
-  if(v.getFloats(vect.data(), n) == n) \
-    return vect; \
-  else { \
-    if(ok) \
-      *ok = false; \
-    vect.clear(); \
-    return vect; \
-  }
+                        Radiant::Variant v(source); \
+                        skipParameter(marker); \
+                        type vect; \
+                        vect.clear(); \
+                        if(v.getFloats(vect.data(), n) == n) \
+                        return vect; \
+                        else { \
+                               if(ok) \
+                               *ok = false; \
+                                     vect.clear(); \
+                                     return vect; \
+                                   }
 
   Nimble::Vector2f BinaryData::readVector2Float32(bool * ok)
   {
@@ -575,7 +575,7 @@ namespace Radiant {
     else {
       skipParameter(marker);
       if(ok)
-    *ok = false;
+        *ok = false;
 
       return Nimble::Vector2f(0, 0);
     }
@@ -606,7 +606,7 @@ namespace Radiant {
     else {
       skipParameter(marker);
       if(ok)
-    *ok = false;
+        *ok = false;
 
       return Nimble::Vector3f(0, 0, 0);
     }
@@ -634,7 +634,7 @@ namespace Radiant {
     else {
       skipParameter(marker);
       if(ok)
-    *ok = false;
+        *ok = false;
 
       return Nimble::Vector2f(0, 0);
     }
@@ -662,7 +662,7 @@ namespace Radiant {
     else {
       skipParameter(marker);
       if(ok)
-    *ok = false;
+        *ok = false;
 
       return Nimble::Vector3f(0, 0, 0);
     }
@@ -690,7 +690,7 @@ namespace Radiant {
     else {
       skipParameter(marker);
       if(ok)
-    *ok = false;
+        *ok = false;
 
       return Nimble::Vector4i(0, 0, 0, 1);
     }
@@ -722,7 +722,7 @@ namespace Radiant {
     else {
       skipParameter(marker);
       if(ok)
-    *ok = false;
+        *ok = false;
 
       return Nimble::Vector4f(0, 0, 0, 1);
     }
@@ -736,6 +736,8 @@ namespace Radiant {
     if(stream->write(&s, 4) != 4)
       return false;
 
+    // info("BinaryData::write # %d", pos());
+
     return stream->write( & m_buf[0], s) == s;
   }
 
@@ -745,22 +747,26 @@ namespace Radiant {
     m_current = 0;
     m_total = 0;
 
-    if(stream->read(&s, 4) != 4)
+    if(stream->read(&s, 4) != 4) {
+      error("BinaryData::read # Could not read the 4 header bytes");
       return false;
+    }
 
     if(m_size < s) {
       if(s > 500000000) { // Not more than 500 MB at once, please
         Radiant::error("BinaryData::read # Attempting extraordinary read (%d bytes)", s);
-    return false;
+        return false;
       }
       ensure(s + 8);
       // m_size = s;
     }
 
+    bzero(&m_buf[0], m_size);
+
     int n = stream->read( & m_buf[0], s);
     if(n != (int) s) {
       error("BinaryData::read # buffer read failed (got %d != %d)",
-        n, s);
+            n, s);
       return false;
     }
 
@@ -785,12 +791,12 @@ namespace Radiant {
     size_t need = m_current + bytes;
     if(need > m_size) {
       if(m_shared)
-    fatal("BinaryData::ensure # Sharing data, cannot ensure required space");
+        fatal("BinaryData::ensure # Sharing data, cannot ensure required space");
 
       m_size = need + 128 + need / 16;
       m_buf = (char *) realloc(m_buf, m_size);
     }
-    m_total = m_current + bytes;
+    // m_total = m_current + bytes;
   }
 
   void BinaryData::clear()
@@ -806,10 +812,10 @@ namespace Radiant {
        marker == FLOAT_MARKER)
       m_current += 4;
     else if(marker == INT64_MARKER ||
-        marker == DOUBLE_MARKER ||
-        marker == TS_MARKER ||
-        marker == VECTOR2F_MARKER ||
-        marker == VECTOR2I_MARKER)
+            marker == DOUBLE_MARKER ||
+            marker == TS_MARKER ||
+            marker == VECTOR2F_MARKER ||
+            marker == VECTOR2I_MARKER)
       m_current += 8;
     else if(marker == STRING_MARKER) {
       const char * str = & m_buf[m_current];
@@ -840,7 +846,7 @@ namespace Radiant {
     if(!__verbose)
       return;
     Radiant::error("%s # Not enough data available (at %u/%u)",
-           func, m_current, m_total);
+                   func, m_current, m_total);
   }
 
 }
