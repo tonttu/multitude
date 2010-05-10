@@ -37,10 +37,10 @@ namespace VideoDisplay {
   int    __framecount = 0;
 
   VideoIn::Frame::Frame()
-      : m_audio(0),
-      m_allocatedAudio(0),
-      m_audioFrames(0),
-      m_type(FRAME_INVALID)
+    : m_audio(0),
+    m_allocatedAudio(0),
+    m_audioFrames(0),
+    m_type(FRAME_INVALID)
   {
     int tmp = 0;
     {
@@ -48,7 +48,7 @@ namespace VideoDisplay {
       __framecount++;
       tmp = __framecount;
     }
-    debug("VideoIn::Frame::Frame # %p Instance count at %d", this, tmp);
+    info("VideoIn::Frame::Frame # %p Instance count at %d", this, tmp);
   }
 
   VideoIn::Frame::~Frame()
@@ -59,7 +59,7 @@ namespace VideoDisplay {
       __framecount--;
       tmp = __framecount;
     }
-    debug("VideoIn::Frame::~Frame # %p Instance count at %d", this, tmp);
+    info("VideoIn::Frame::~Frame # %p Instance count at %d", this, tmp);
     m_image.freeMemory();
     if(m_audio)
       free(m_audio);
@@ -74,13 +74,13 @@ namespace VideoDisplay {
     if((m_allocatedAudio < n) ||
        (n < 10000 && m_allocatedAudio > 20000)) {
       /* If there is not enough space we need to allocate memory.
-         If there is too muuch space we can free some memory. */
+         If there is too much space we can free some memory. */
       debug("VideoIn::Frame::copyAudio # %d -> %d", m_allocatedAudio, n);
 
       free(m_audio);
       m_audio = (float *) malloc(n * sizeof(float));
       m_allocatedAudio = n;
-  }
+    }
 
     if(format == Radiant::ASF_INT16) {
       const int16_t * au16 = (const int16_t *) audio;
@@ -97,7 +97,7 @@ namespace VideoDisplay {
                                  int channels, int samplerate)
   {
     debug("VideoIn::Frame::skipAudio # %lf %d %d", amount.secondsD(), channels,
-         samplerate);
+          samplerate);
 
     if(amount <= 0)
       return;
@@ -128,29 +128,29 @@ namespace VideoDisplay {
   int VideoIn::m_debug = 1;
 
   VideoIn::VideoIn()
-      : m_decodedFrames(0),
-      m_consumedFrames(0),
-      m_consumedAuFrames(0),
-      m_playing(false),
+    : m_decodedFrames(0),
+    m_consumedFrames(0),
+    m_consumedAuFrames(0),
+    m_playing(false),
 
-      m_flags(Radiant::WITH_VIDEO | Radiant::WITH_AUDIO),
-      m_channels(0),
-      m_sample_rate(44100),
-      m_auformat(ASF_INT16),
-      m_auBufferSize(0),
-      m_auFrameBytes(0),
-      m_continue(true),
-      m_vmutex(false, false, false),
-      m_amutex(false, false, false),
-      m_fps(30.0),
-      m_done(false),
-      m_ending(false),
-      m_decoding(true),
-      m_atEnd(false),
-      m_consumedRequests(0),
-      m_queuedRequests(0),
-      m_listener(0),
-      m_mutex(false, false, false)
+    m_flags(Radiant::WITH_VIDEO | Radiant::WITH_AUDIO),
+    m_channels(0),
+    m_sample_rate(44100),
+    m_auformat(ASF_INT16),
+    m_auBufferSize(0),
+    m_auFrameBytes(0),
+    m_continue(true),
+    m_vmutex(false, false, false),
+    m_amutex(false, false, false),
+    m_fps(30.0),
+    m_done(false),
+    m_ending(false),
+    m_decoding(true),
+    m_atEnd(false),
+    m_consumedRequests(0),
+    m_queuedRequests(0),
+    m_listener(0),
+    m_mutex(false, false, false)
   {
     debug("VideoIn::VideoIn # %p", this);
   }
@@ -188,7 +188,7 @@ namespace VideoDisplay {
     /* Radiant::debug("VideoIn::nextFrame # dec = %u cons = %u",
           m_decodedFrames, m_consumedFrames);
     */
-    if(m_decodedFrames <= index)
+    if((int) m_decodedFrames <= index)
       index = m_decodedFrames - 1;
 
     if(!m_continue && m_decodedFrames <= m_consumedFrames)
@@ -516,18 +516,28 @@ namespace VideoDisplay {
 
   void VideoIn::freeFreeableMemory()
   {
+    
     Radiant::Guard g(mutex());
 
     Radiant::TimeStamp limit = Radiant::TimeStamp::getTime() -
                                Radiant::TimeStamp::createSecondsI(10);
 
+    int left = 0;
+
     for(unsigned i = 0; i < m_frames.size(); i++) {
       Frame * f = m_frames[i].ptr();
 
-      if(f && (f->m_lastUse < limit)) {
-        m_frames[i] = 0;
+      if(f) {
+        if (f->m_lastUse < limit) {
+          m_frames[i] = 0;
+          info("VideoIn::freeFreeableMemory # %p %p", this, f);
+        }
+        else
+          left++;
       }
     }
+
+    info("VideoIn::freeFreeableMemory # %p %d frames left", this, left);
   }
 
   void VideoIn::pushRequest(const Req & r)
