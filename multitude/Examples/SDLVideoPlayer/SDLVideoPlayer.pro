@@ -1,0 +1,16 @@
+include(../Examples.pri)
+
+SOURCES += Main.cpp
+
+unix {
+	CONFIG += link_pkgconfig
+	PKGCONFIG += sdl
+}
+
+LIBS += $$LIB_RESONANT $$LIB_RADIANT $$LIB_PATTERNS $$LIB_LUMINOUS $$LIB_VALUABLE $$LIB_OPENGL $$LIB_NIMBLE
+LIBS += $$LIB_VIDEODISPLAY $$LIB_POETIC $$LIB_SCREENPLAY
+LIBS += $$MULTI_FFMPEG_LIBS
+
+win32 {
+	LIBS += -lSDL -lSDLmain 
+}

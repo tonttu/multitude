@@ -212,6 +212,14 @@ namespace Radiant {
     /// Returns the element at the given index
     inline const T & operator [] (unsigned i) const { return m_points[i]; }
 
+    inline void swap(VectorStorage & that)
+    {
+      m_points.swap(that.m_points);
+      size_t tmp = m_count;
+      m_count = that.m_count;
+      that.m_count = tmp;
+    }
+
     /// Copies a vector
     VectorStorage & operator = (const VectorStorage & that)
     {

@@ -17,7 +17,7 @@
 
 #include <Nimble/Rect.hpp>
 
-#include <X11/extensions/Xinerama.h>
+// #include <X11/extensions/Xinerama.h>
 #include <X11/extensions/XTest.h>
 #include <X11/X.h>
 #include <X11/Xlib.h>
