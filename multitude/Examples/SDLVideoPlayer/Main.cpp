@@ -19,7 +19,7 @@ using namespace Radiant;
 int main(int argc, char ** argv)
 {
 
-  uint flags = SDL_OPENGL;
+  Uint32 flags = SDL_OPENGL;
   int width = 800;
   int height = 400;
 
