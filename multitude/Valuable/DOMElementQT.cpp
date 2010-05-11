@@ -169,6 +169,10 @@ namespace Valuable
     if(str.size() > 0 && str.size() < 100) {
       fprintf(f, " TEXT = \"%s\"", str.c_str());
     }
+    else {
+      std::string tmp = str.substr(0, 100) + "...";
+      fprintf(f, " TEXT = \"%s\"", tmp.c_str());
+    }
 
     fprintf(f, "\n");
 
