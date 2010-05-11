@@ -547,9 +547,8 @@ namespace Luminous
     width += 1; // for antialiasing
 
     const Matrix3 & m = transform();
-    std::vector<Nimble::Vector2> vertexArr;
-    std::vector<Vector2> attribArr;
-    std::vector<Vector2> attribArr2;
+    std::vector<Nimble::Vector2> verts;
+    std::vector<Vector2> attribs;
     Vector2f cprev;
     Vector2f cnow = m.project(vertices[0]);
     Vector2f cnext;
@@ -575,14 +574,14 @@ namespace Luminous
     avg *= width;
 
 
-    vertexArr.push_back(cnow - avg);
-    vertexArr.push_back(cnow + avg);
+    verts.push_back(cnow - avg);
+    verts.push_back(cnow + avg);
 
-    attribArr.push_back(cnow);
-    attribArr.push_back(cnow);
+    attribs.push_back(Vector2());
+    attribs.push_back(Vector2());
 
-    attribArr2.push_back(Vector2());
-    attribArr2.push_back(Vector2());
+    attribs.push_back(cnow);
+    attribs.push_back(cnow);
 
     for (int i = nextIdx; i < n; ) {
       nextIdx = i+1;
@@ -614,14 +613,11 @@ namespace Luminous
       float dp = Math::Clamp(dot(avg, dirPrev.perpendicular()), 1e-2f, 1.0f);
       avg /= dp;
       avg *= width;
-      vertexArr.push_back(cnow-avg);
-      vertexArr.push_back(cnow+avg);
+      verts.push_back(cnow-avg);
+      verts.push_back(cnow+avg);
 
-      attribArr.push_back(cnow);
-      attribArr.push_back(cnow);
-
-      attribArr2.push_back(cprev);
-      attribArr2.push_back(cprev);
+      attribs.push_back(cnow);
+      attribs.push_back(cnow);
 
       i = nextIdx;
     }
@@ -635,12 +631,12 @@ namespace Luminous
     m_polyline_shader->setUniformFloat("width", width);
 
     glColor4fv(rgba);    
-    glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat *>(&vertexArr[0]));
-    glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&attribArr[0]));
-    glVertexAttribPointer(loc2, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&attribArr2[0]));
+    glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat *>(&verts[0]));
+    glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&attribs[2]));
+    glVertexAttribPointer(loc2, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&attribs[0]));
     glEnableClientState(GL_VERTEX_ARRAY);
 
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, vertexArr.size());
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, verts.size());
 
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableVertexAttribArray(loc);
