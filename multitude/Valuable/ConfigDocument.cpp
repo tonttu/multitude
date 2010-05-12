@@ -36,12 +36,14 @@ namespace Valuable
   {
     std::string str;
 
-    std::ifstream input(fileName, std::ifstream::binary);
+    std::ifstream input(fileName, std::ios_base::in);
 
     if(!input) {
         Radiant::error("ConfigDocument::readConfigFile # failed to open '%s' for reading", fileName);
         return false;
     }
+
+
 
     int depth = 0;
     bool flag = false, atFlag = false;
@@ -49,12 +51,10 @@ namespace Valuable
     int k = 0;
 
     while(std::getline(input,str)) {
-
       if(str == "")
 	continue;
 
       if(parseLine(str)==ELEMENT_START) {
-
 	std::string s;
 	depth++;
 	ConfigElement elm,e;
@@ -80,8 +80,10 @@ namespace Valuable
 	k++;
 
   while(std::getline(input,s)) {
+    
 	  if(s!="") {
 	    if(parseLine(s)==ELEMENT_START) {
+
 	      depth++;
 	      ConfigElement child=ConfigElement();
 	      size_t ps=s.find(",");
@@ -168,7 +170,6 @@ namespace Valuable
 	c1 = ConfigElement(c1.child(0));
       }
     }
-
     return true;
   }
 
@@ -188,7 +189,7 @@ namespace Valuable
     //	for(int i=ss.size()-1;i>=0;i--)
     //		output<<ss[i];
 
-    output << aa;  
+    output << aa;
   }
 
   void ConfigDocument::trimSpaces( std::string& str)  
@@ -295,8 +296,8 @@ namespace Valuable
     std::string ind(__indent(recursion));
     std::string ind2(ind + "  ");
 
-    printf("Element name \"%s\" (%d)\n", e.m_elementName.c_str(),
-	   recursion);
+   /* printf("Element name \"%s\" (%d)\n", e.m_elementName.c_str(),
+     recursion);*/
 
     {
       if(e.m_elementName != "") {
@@ -328,7 +329,6 @@ namespace Valuable
 
   ConfigDocument::ParseFlags ConfigDocument::parseLine(std::string line)
   {
-
     if(line[line.length()-1]=='{')
       return ELEMENT_START;
     else if(line[line.length()-1]=='}')
