@@ -19,6 +19,7 @@
 #include <Radiant/Trace.hpp>
 
 #include <fstream>
+#include <istream>
 
 namespace Valuable
 {  
@@ -35,7 +36,7 @@ namespace Valuable
   {
     std::string str;
 
-    FILE * input = fopen(fileName, "rb");
+    std::ifstream input(fileName, std::ifstream::binary);
 
     if(!input) {
         Radiant::error("ConfigDocument::readConfigFile # failed to open '%s' for reading", fileName);
@@ -47,7 +48,7 @@ namespace Valuable
 
     int k = 0;
 
-    while(getline(input,str)) {
+    while(std::getline(input,str)) {
 
       if(str == "")
 	continue;
@@ -78,7 +79,7 @@ namespace Valuable
 	elm.m_nodes.push_back(e);
 	k++;
 
-	while(getline(input,s)) {
+  while(std::getline(input,s)) {
 	  if(s!="") {
 	    if(parseLine(s)==ELEMENT_START) {
 	      depth++;
@@ -159,7 +160,7 @@ namespace Valuable
 	}
       }
     }
-    fclose(input);
+    input.close();
 
     for(unsigned i = 0; i < m_doc.childCount(); i++) {
       ConfigElement & c1 = m_doc.child(i);
