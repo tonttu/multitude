@@ -584,6 +584,10 @@ namespace Luminous {
 
   void CPUMipmaps::createLevelScalers(int level)
   {
+    Radiant::MutexStatic mutex;
+    Radiant::GuardStatic g(&mutex);
+
+
     debug("CPUMipmaps::createLevelScalers # %s (level %d)", m_filename.c_str(), level);
     if(!m_ok)
       return;
@@ -642,11 +646,16 @@ namespace Luminous {
 
 
         CPUItem * ci = m_stack[DEFAULT_MAP1].ptr();
-        Loader * load = new Loader(levelPriority(DEFAULT_MAP1),
-                                   this, ci, cachefile);
-        ci->m_loader = load;
-        BGThread::instance()->addTask(load);
 
+        if(!ci->m_loader) {
+
+          assert(ci->m_loader == 0);
+
+          Loader * load = new Loader(levelPriority(DEFAULT_MAP1),
+                                     this, ci, cachefile);
+          ci->m_loader = load;
+          BGThread::instance()->addTask(load);
+        }
         // trace("Added loader thumb # %p %d", ci, DEFAULT_MAP1);
       }
 
@@ -668,11 +677,13 @@ namespace Luminous {
 
             Guard g(BGThread::instance()->generalMutex());
             
-            Loader * load = new Loader(levelPriority(i),
-                                       this, m_stack[i].ptr(), cachefile);
-            m_stack[i].ptr()->m_loader = load;
-            higher = i;
-            BGThread::instance()->addTask(load);
+            if(!m_stack[i].ptr()->m_loader) {
+              Loader * load = new Loader(levelPriority(i),
+                                         this, m_stack[i].ptr(), cachefile);
+              m_stack[i].ptr()->m_loader = load;
+              higher = i;
+              BGThread::instance()->addTask(load);
+            }
 
             // trace("Added loader 2 # %p %d", m_stack[i].ptr(), i);
             
