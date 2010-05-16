@@ -125,7 +125,7 @@ namespace Luminous {
     return -1;
   }
 
-  Image * CPUMipmaps::getImage(int i)
+  ImageTex * CPUMipmaps::getImage(int i)
   {
     CPUItem & item = m_stack[i];
 
@@ -364,7 +364,7 @@ namespace Luminous {
       if(Radiant::FileUtils::fileReadable(filename) &&
          FileUtils::lastModified(filename) > m_fileModified) {
 
-        Luminous::Image * im = new Image();
+        Luminous::ImageTex * im = new ImageTex();
 
         if(!im->read(filename.c_str())) {
           error("CPUMipmaps::recursiveLoad # Could not read %s", filename.c_str());
@@ -385,8 +385,8 @@ namespace Luminous {
 
       // Load original, and scale to useful dimensions:
 
-      Luminous::Image * im = new Image();
-      Radiant::RefPtr<Luminous::Image> rim(im);
+      Luminous::ImageTex * im = new ImageTex();
+      Radiant::RefPtr<Luminous::ImageTex> rim(im);
 
       if(!im->read(m_filename.c_str())) {
         error("CPUMipmaps::recursiveLoad # Could not read %s", m_filename.c_str());
@@ -414,8 +414,8 @@ namespace Luminous {
           s.y--;
         }
 
-        Luminous::Image * im2 = new Image();
-        Radiant::RefPtr<Luminous::Image> rim2(im2);
+        Luminous::ImageTex * im2 = new ImageTex();
+        Radiant::RefPtr<Luminous::ImageTex> rim2(im2);
 
         im2->copyResample(*im, s.x, s.y);
 
@@ -439,8 +439,8 @@ namespace Luminous {
 
     // Scale down from higher-level mipmap
 
-    Luminous::Image * imsrc = src.m_image.ptr();
-    Luminous::Image * imdest = new Luminous::Image();
+    Luminous::ImageTex * imsrc = src.m_image.ptr();
+    Luminous::ImageTex * imdest = new Luminous::ImageTex();
 
     Nimble::Vector2i ss = imsrc->size();
     Nimble::Vector2i is(ss.x >> 1, ss.y >> 1);

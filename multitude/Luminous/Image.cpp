@@ -678,23 +678,14 @@ dest = *this;
     if(codec) {
       result = codec->ping(info, file);
     } else {
-		Radiant::error("No suitable image codec found for '%s'", filename);
-	}
+        Radiant::error("No suitable image codec found for '%s'", filename);
+    }
 
     fclose(file);
 
     return result;
   }
 
-  void Image::bind(GLenum textureUnit, bool withmimaps)
-  {
-    Texture2D & tex = ref();
-    tex.bind(textureUnit);
-
-    if(tex.width() != width() ||
-       tex.height() != height())
-      tex.loadImage(*this, withmimaps);
-  }
 
   unsigned char Image::pixelAlpha(Nimble::Vector2 relativeCoord) const
   {
@@ -708,6 +699,27 @@ dest = *this;
           return m_data[4 * offset + 3];
 
       return 255;
+  }
+
+
+  void ImageTex::bind(GLenum textureUnit, bool withmimaps)
+  {
+    Texture2D & tex = ref();
+    tex.bind(textureUnit);
+
+    if(tex.width() != width() ||
+       tex.height() != height())
+      tex.loadImage(*this, withmimaps);
+  }
+
+  void ImageTex::bind(GLResources * resources, GLenum textureUnit, bool withmimaps)
+  {
+    Texture2D & tex = ref(resources);
+    tex.bind(textureUnit);
+
+    if(tex.width() != width() ||
+       tex.height() != height())
+      tex.loadImage(*this, withmimaps);
   }
 
 }

@@ -59,7 +59,7 @@ namespace Luminous {
       return false;
     }
 
-    Luminous::Image * img = m_cpumaps->getImage(best);
+    Luminous::ImageTex * img = m_cpumaps->getImage(best);
 
     img->bind(GL_TEXTURE0, false);
 
