@@ -43,7 +43,7 @@ namespace Luminous {
       environments.
   */
   /// @todo examples
-  class CPUMipmaps : Collectable
+  class CPUMipmaps : public Luminous::Collectable, public Luminous::Task
   {
   private:
   public:
@@ -92,8 +92,8 @@ namespace Luminous {
     LUMINOUS_API GPUMipmaps * getGPUMipmaps();
     /// Binds a texture that matches the given size parameters.
     LUMINOUS_API bool bind(GLResources *,
-               const Nimble::Matrix3 & transform,
-               Nimble::Vector2 pixelsize);
+                           const Nimble::Matrix3 & transform,
+                           Nimble::Vector2 pixelsize);
 
     /** Returns the highest possible mipmap-level. This is basically
     the level of the mipmap with native resolution. */
@@ -105,66 +105,39 @@ namespace Luminous {
     LUMINOUS_API bool isActive();
     /** Returns the aspect ratio of the image. */
     inline float aspect() const
-    { return (float)m_nativeSize.x / (float)m_nativeSize.y; }
+    { return (float) m_nativeSize.x / (float)m_nativeSize.y; }
 
     /// Returns true if the images have alpha channel
     inline bool hasAlpha() const { return m_hasAlpha; }
 
     /// Not finished
     LUMINOUS_API int pixelAlpha(Nimble::Vector2 relLoc);
+
+    /// Mark this object as done
+    LUMINOUS_API void finish();
+
+  protected:
+
+    LUMINOUS_API virtual void doTask();
+
   private:
+
+    // Load given level from a file
+    bool doLoad(int level);
+    // Scale down given level from the level above
+    bool doScale(int level);
 
     class CPUItem;
 
-    class Loader : public Task
-    {
-    public:
-      friend class CPUItem;
-      Loader(Luminous::Priority prio,
-         CPUMipmaps * master, CPUItem * dest, const std::string file);
-      virtual ~Loader();
-
-      virtual void doTask();
-
-    private:
-      CPUMipmaps * m_master;
-      CPUItem    * m_dest;
-      std::string  m_file;
-    };
-
-    class Scaler : public Task
-    {
-    public:
-      friend class CPUMipmaps;
-      friend class CPUItem;
-
-      Scaler(Luminous::Priority prio,
-         CPUMipmaps *, CPUItem * dest, CPUItem * source, int level);
-
-      virtual ~Scaler();
-
-      virtual void doTask();
-
-    private:
-
-      CPUMipmaps * m_master;
-      CPUItem * m_source;
-      CPUItem * m_dest;
-      int       m_level;
-      std::string m_file;
-      bool      m_quartering;
-    };
-
-    enum {
+    enum SpecialLevels {
       DEFAULT_MAP1 = 6,
       DEFAULT_MAP2 = 9,
       MAX_MAPS = 13
-    };
+               };
 
     enum ItemState {
       WAITING,
-      WORKING,
-      FINISHED,
+      READY,
       FAILED
     };
 
@@ -172,25 +145,20 @@ namespace Luminous {
     {
     public:
       friend class CPUMipmaps;
-      friend class Loader;
-      friend class Scaler;
 
       CPUItem();
 
       ~CPUItem();
-      inline bool needsLoader() const
-      { return (m_state != FINISHED) && (m_scaler == 0) && (m_loader == 0); }
 
-      inline bool working() const
+      void clear()
       {
-        return (m_scaler != 0) || (m_loader != 0) || (m_state != FINISHED);
+        m_state = WAITING;
+        m_image = 0;
+        m_unUsed = 0.0f;
       }
 
     private:
       ItemState m_state;
-      Scaler  * m_scalerOut;
-      Scaler  * m_scaler;
-      Loader  * m_loader;
       Radiant::RefPtr<Image> m_image;
       float     m_unUsed;
     };
@@ -199,8 +167,8 @@ namespace Luminous {
     Luminous::Priority levelPriority(int level)
     {
       if(level <= DEFAULT_MAP1)
-    return Luminous::Task::PRIORITY_NORMAL +
-      Luminous::Task::PRIORITY_OFFSET_BIT_HIGHER;
+        return Luminous::Task::PRIORITY_NORMAL +
+            Luminous::Task::PRIORITY_OFFSET_BIT_HIGHER;
 
       return Luminous::Task::PRIORITY_NORMAL;
     }
@@ -216,10 +184,15 @@ namespace Luminous {
 
     bool needsLoader(int i);
 
+    void recursiveLoad(int level);
+
+    static inline int maxDimension()
+    { return 1 << MAX_MAPS; }
+
     std::string m_filename;
     unsigned long int m_fileModified;
 
-    Radiant::RefPtr<CPUItem> m_stack[MAX_MAPS];
+    CPUItem          m_stack[MAX_MAPS];
     Nimble::Vector2i m_nativeSize;
     int              m_maxLevel;
     // What level files are available as mip-maps.
@@ -227,6 +200,7 @@ namespace Luminous {
     uint32_t         m_fileMask;
     bool             m_hasAlpha;
     Radiant::TimeStamp m_startedLoading;
+    bool             m_timeOut;
 
     Luminous::ImageInfo m_info;
     bool                m_ok;

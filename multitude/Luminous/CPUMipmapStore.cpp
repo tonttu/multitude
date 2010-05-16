@@ -44,7 +44,7 @@ namespace Luminous {
     {
       m_linkCount--;
       if(m_linkCount == 0) {
-        delete m_mipmaps;
+        m_mipmaps->finish();
         m_mipmaps = 0;
       }
     }
@@ -74,6 +74,8 @@ namespace Luminous {
       delete mipmaps;
       return 0;
     }
+
+    Luminous::BGThread::instance()->addTask(mipmaps);
 
     __mipmaps[filename].m_mipmaps = mipmaps;
     __mipmaps[filename].incrCount();
