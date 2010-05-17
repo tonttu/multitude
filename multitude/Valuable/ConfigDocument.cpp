@@ -51,6 +51,7 @@ namespace Valuable
     int k = 0;
 
     while(std::getline(input,str)) {
+      trimSpaces(str);
       if(str == "")
 	continue;
 
@@ -80,7 +81,7 @@ namespace Valuable
 	k++;
 
   while(std::getline(input,s)) {
-    
+    trimSpaces(s);
 	  if(s!="") {
 	    if(parseLine(s)==ELEMENT_START) {
 
