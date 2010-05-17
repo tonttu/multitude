@@ -316,13 +316,11 @@ namespace Luminous
       }
       avg *= width;
 
-
-      verts.push_back(cnow - avg);
       verts.push_back(cnow + avg);
+      verts.push_back(cnow - avg);
 
-      attribs.push_back(Vector2());
-      attribs.push_back(Vector2());
-
+      attribs.push_back(cnow);
+      attribs.push_back(cnow);
       attribs.push_back(cnow);
       attribs.push_back(cnow);
 
@@ -359,6 +357,11 @@ namespace Luminous
         verts.push_back(cnow-avg);
         verts.push_back(cnow+avg);
 
+        verts.push_back(cnow+avg);
+        verts.push_back(cnow-avg);
+
+        attribs.push_back(cnow);
+        attribs.push_back(cnow);
         attribs.push_back(cnow);
         attribs.push_back(cnow);
 
@@ -375,11 +378,11 @@ namespace Luminous
 
       glColor4fv(rgba);
       glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat *>(&verts[0]));
-      glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&attribs[2]));
-      glVertexAttribPointer(loc2, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&attribs[0]));
+      glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&attribs[0]));
+      glVertexAttribPointer(loc2, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&attribs[4]));
       glEnableClientState(GL_VERTEX_ARRAY);
 
-      glDrawArrays(GL_TRIANGLE_STRIP, 0, verts.size());
+      glDrawArrays(GL_QUADS, 0, verts.size());
 
       glDisableClientState(GL_VERTEX_ARRAY);
       glDisableVertexAttribArray(loc);
