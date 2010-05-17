@@ -156,7 +156,8 @@ namespace Luminous
     Internal()
         : m_recursionLimit(DEFAULT_RECURSION_LIMIT),
         m_recursionDepth(0),
-        m_fboStackIndex(-1)
+        m_fboStackIndex(-1),
+        m_initialized(false)
     {
       bzero(m_fboStack, sizeof(m_fboStack));
     }
@@ -179,6 +180,213 @@ namespace Luminous
       return 0;
     }
 
+    void initialize() {
+      if(!m_initialized) {
+        m_initialized = true;
+        const char * circ_vert_shader = ""\
+            "uniform mat4 matrix;"\
+            "varying vec2 pos;"\
+            "void main(void) {"\
+            "  pos = gl_Vertex.xy; "\
+            "  mat4 transform = gl_ProjectionMatrix * matrix;"\
+            "  gl_Position = transform * gl_Vertex;"\
+            "  gl_ClipVertex = gl_ModelViewMatrix * matrix * gl_Vertex;"
+            "  gl_FrontColor = gl_Color;"\
+            "}";
+        const char * circ_frag_shader = ""\
+            "varying vec2 pos;"\
+            "uniform float border_start;"\
+            "void main(void) {"\
+            "  float r = length(pos);"\
+            "  gl_FragColor = gl_Color;"\
+            "  gl_FragColor.w *= smoothstep(1.00, border_start, r);"\
+            "}";
+
+        m_circle_shader = new GLSLProgramObject();
+        m_circle_shader->loadStrings(circ_vert_shader, circ_frag_shader);
+
+        m_polyline_shader = new GLSLProgramObject();
+        const char * polyline_frag = ""
+                            " varying vec2 p1;\n"\
+                            " varying vec2 p2;\n"\
+                            "varying vec2 vertexcoord;\n"\
+                            "uniform float width;\n"\
+                            "void main() {\n"\
+                            "gl_FragColor = gl_Color;\n"\
+                            "vec2 pp = p2-p1;\n"\
+                            "float t = ((vertexcoord.x-p1.x)*(p2.x-p1.x)+(vertexcoord.y-p1.y)*(p2.y-p1.y))/dot(pp,pp);\n"\
+                            "t = clamp(t, 0.0, 1.0);\n"\
+                            "vec2 point_on_line = p1+t*(p2-p1);\n"\
+                            "float dist = length(vertexcoord-point_on_line);\n"\
+                            "gl_FragColor.w *= clamp(width-dist, 0.0, 1.0);\n"\
+                            "}";
+
+        const char * polyline_vert = "\n"
+                            "attribute vec2 coord;\n"\
+                            "attribute vec2 coord2;\n"\
+                            "uniform float width;\n"\
+                            " varying vec2 p1;\n"\
+                            " varying vec2 p2;\n"\
+                            "varying vec2 vertexcoord;\n"\
+                            "void main() {\n"\
+                            "p1 = coord;\n"\
+                            "p2 = coord2;\n"\
+                            "vertexcoord = gl_Vertex.xy;\n"\
+                            "gl_Position = gl_ProjectionMatrix * gl_Vertex;\n"\
+                            "gl_ClipVertex = gl_ModelViewMatrix * gl_Vertex;\n"\
+                            "gl_FrontColor = gl_Color;\n"\
+                            "}\n";
+        m_polyline_shader->loadStrings(polyline_vert, polyline_frag);
+      }
+    }
+
+    void drawCircle(RenderContext & r, Nimble::Vector2f center, float radius,
+                                   const float * rgba) {
+
+      const Matrix3f& m = r.transform();
+      const float tx = center.x;
+      const float ty = center.y;
+
+      static const GLfloat rect_vertices[] = {
+        -1.0, -1.0,
+        1.0, -1.0,
+        1.0, 1.0,
+        -1.0, 1.0
+      };
+
+      // translate(tx, ty) & scale(radius)
+      Matrix4f t(m[0][0]*radius, m[0][1]*radius, 0, m[0][2] + m[0][1]*ty+m[0][0]*tx,
+                 m[1][0]*radius, m[1][1]*radius, 0, m[1][2] + m[1][1]*ty+m[1][0]*tx,
+                 0         , 0         , 1, 0,
+                 m[2][0]*radius, m[2][1]*radius, 0, m[2][2]  + m[2][1]*ty+m[2][0]*tx);
+
+      if(rgba)
+        glColor4fv(rgba);
+
+      m_circle_shader->bind();
+
+      // uniform scaling assumed, should work fine with "reasonable" non-uniform scaling
+      float totalRadius = m.extractScale() * radius;
+      float border = Nimble::Math::Min(1.0f, totalRadius-2.0f);
+      m_circle_shader->setUniformFloat("border_start", (totalRadius-border)/totalRadius);
+      GLint matrixLoc = m_circle_shader->getUniformLoc("matrix");
+      glUniformMatrix4fv(matrixLoc, 1, GL_TRUE, t.data());
+
+      // using a VBO with 4 vertices is actually slower than this
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_FLOAT, 0, rect_vertices);
+      glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+      glDisableClientState(GL_VERTEX_ARRAY);
+      m_circle_shader->unbind();
+    }
+
+    void drawPolyLine(RenderContext& r, const Nimble::Vector2f * vertices, int n,
+                                     float width, const float * rgba)
+    {
+      if(n < 2)
+        return;
+
+      width *= r.scale() * 0.5f;
+      width += 1; // for antialiasing
+
+      const Matrix3 & m = r.transform();
+      std::vector<Nimble::Vector2> verts;
+      std::vector<Vector2> attribs;
+      Vector2f cprev;
+      Vector2f cnow = m.project(vertices[0]);
+      Vector2f cnext;
+      Vector2f avg;
+      Vector2f dirNext;
+      Vector2f dirPrev;
+
+      int nextIdx = 1;
+      while ((vertices[nextIdx]-cnow).lengthSqr() < 9.0f && nextIdx < n-1) {
+        nextIdx++;
+      }
+
+      cnext = m.project(vertices[nextIdx]);
+      dirNext = cnext - cnow;
+      dirNext.normalize();
+      avg = dirNext.perpendicular();
+
+      if (avg.length() < 1e-5) {
+        avg.make(1,0);
+      } else {
+        avg.normalize();
+      }
+      avg *= width;
+
+
+      verts.push_back(cnow - avg);
+      verts.push_back(cnow + avg);
+
+      attribs.push_back(Vector2());
+      attribs.push_back(Vector2());
+
+      attribs.push_back(cnow);
+      attribs.push_back(cnow);
+
+      for (int i = nextIdx; i < n; ) {
+        nextIdx = i+1;
+        cprev = cnow;
+        cnow = cnext;
+
+        // at least 3 pixels gap between vertices
+        while (nextIdx < n-1 && (vertices[nextIdx]-cnow).lengthSqr() < 9.0f) {
+          nextIdx++;
+        }
+        if (nextIdx > n-1) {
+          cnext = 2.0f*cnow - cprev;
+        } else {
+          cnext = m.project(vertices[nextIdx]);
+        }
+
+        dirPrev = dirNext;
+        dirNext = cnext - cnow;
+
+        if (dirNext.length() < 1e-5f) {
+          dirNext = dirPrev;
+        } else {
+          dirNext.normalize();
+        }
+
+        avg = (dirPrev + dirNext).perpendicular();
+        avg.normalize();
+
+        float dp = Math::Clamp(dot(avg, dirPrev.perpendicular()), 1e-2f, 1.0f);
+        avg /= dp;
+        avg *= width;
+        verts.push_back(cnow-avg);
+        verts.push_back(cnow+avg);
+
+        attribs.push_back(cnow);
+        attribs.push_back(cnow);
+
+        i = nextIdx;
+      }
+
+      GLuint loc = m_polyline_shader->getAttribLoc("coord");
+      glEnableVertexAttribArray(loc);
+      GLuint loc2 = m_polyline_shader->getAttribLoc("coord2");
+      glEnableVertexAttribArray(loc2);
+
+      m_polyline_shader->bind();
+      m_polyline_shader->setUniformFloat("width", width);
+
+      glColor4fv(rgba);
+      glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat *>(&verts[0]));
+      glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&attribs[2]));
+      glVertexAttribPointer(loc2, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&attribs[0]));
+      glEnableClientState(GL_VERTEX_ARRAY);
+
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, verts.size());
+
+      glDisableClientState(GL_VERTEX_ARRAY);
+      glDisableVertexAttribArray(loc);
+      glDisableVertexAttribArray(loc2);
+      m_polyline_shader->unbind();
+    }
+
     size_t m_recursionLimit;
     size_t m_recursionDepth;
 
@@ -192,8 +400,11 @@ namespace Luminous
 
     FBOPackage * m_fboStack[FBO_STACK_SIZE];
     int m_fboStackIndex;
-    // temporarilly having screen size to make it work for lod and AA.
-    Vector2i m_screenSize;
+
+    Luminous::GLSLProgramObject * m_circle_shader;
+    Luminous::GLSLProgramObject * m_polyline_shader;
+
+    bool m_initialized;
   };
 
   ///////////////////////////////////////////////////////////////////
@@ -220,71 +431,13 @@ namespace Luminous
   void RenderContext::prepare()
   {
     resetTransform();
+    m_data->initialize();
     m_data->m_recursionDepth = 0;
 
     // Make sure the clip stack is empty
     while(!m_data->m_clipStack.empty())
       m_data->m_clipStack.pop_back();
 
-
-    static bool once = true;
-    if(once) {
-      once = false;
-      const char * circ_vert_shader = ""\
-          "uniform mat4 matrix;"\
-          "varying vec2 pos;"\
-          "void main(void) {"\
-          "  pos = gl_Vertex.xy; "\
-          "  mat4 transform = gl_ProjectionMatrix * matrix;"\
-          "  gl_Position = transform * gl_Vertex;"\
-          "  gl_ClipVertex = gl_ModelViewMatrix * matrix * gl_Vertex;"
-          "  gl_FrontColor = gl_Color;"\
-          "}";
-      const char * circ_frag_shader = ""\
-          "varying vec2 pos;"\
-          "uniform float border_start;"\
-          "void main(void) {"\
-          "  float r = length(pos);"\
-          "  gl_FragColor = gl_Color;"\
-          "  gl_FragColor.w *= smoothstep(1.00, border_start, r);"\
-          "}";
-
-      m_circle_shader = new GLSLProgramObject();
-      m_circle_shader->loadStrings(circ_vert_shader, circ_frag_shader);
-
-      m_polyline_shader = new GLSLProgramObject();
-      const char * polyline_frag = ""
-                          " varying vec2 p1;\n"\
-                          " varying vec2 p2;\n"\
-                          "varying vec2 vertexcoord;\n"\
-                          "uniform float width;\n"\
-                          "void main() {\n"\
-                          "gl_FragColor = gl_Color;\n"\
-                          "vec2 pp = p2-p1;\n"\
-                          "float t = ((vertexcoord.x-p1.x)*(p2.x-p1.x)+(vertexcoord.y-p1.y)*(p2.y-p1.y))/dot(pp,pp);\n"\
-                          "t = clamp(t, 0.0, 1.0);\n"\
-                          "vec2 point_on_line = p1+t*(p2-p1);\n"\
-                          "float dist = length(vertexcoord-point_on_line);\n"\
-                          "gl_FragColor.w *= clamp(width-dist, 0.0, 1.0);\n"\
-                          "}";
-
-      const char * polyline_vert = "\n"
-                          "attribute vec2 coord;\n"\
-                          "attribute vec2 coord2;\n"\
-                          "uniform float width;\n"\
-                          " varying vec2 p1;\n"\
-                          " varying vec2 p2;\n"\
-                          "varying vec2 vertexcoord;\n"\
-                          "void main() {\n"\
-                          "p1 = coord;\n"\
-                          "p2 = coord2;\n"\
-                          "vertexcoord = gl_Vertex.xy;\n"\
-                          "gl_Position = gl_ProjectionMatrix * gl_Vertex;\n"\
-                          "gl_ClipVertex = gl_ModelViewMatrix * gl_Vertex;\n"\
-                          "gl_FrontColor = gl_Color;\n"\
-                          "}\n";
-      m_polyline_shader->loadStrings(polyline_vert, polyline_frag);
-    }
   }
 
   void RenderContext::finish()
@@ -356,11 +509,7 @@ namespace Luminous
   {
     return m_data->m_clipStack.back();
   }
-*/
-  void RenderContext::setScreenSize(Nimble::Vector2i size)
-  {
-    m_data->m_screenSize = size;
-  }
+*/  
 
   RenderContext::FBOHolder RenderContext::getTemporaryFBO
       (Nimble::Vector2f basicsize, float scaling, uint32_t flags)
@@ -485,41 +634,7 @@ namespace Luminous
 
   void RenderContext::drawCircleImpl(Nimble::Vector2f center, float radius,
                                  const float * rgba) {
-    const Matrix3f& m = transform();
-    const float tx = center.x;
-    const float ty = center.y;
-
-    static const GLfloat rect_vertices[] = {
-      -1.0, -1.0,
-      1.0, -1.0,
-      1.0, 1.0,
-      -1.0, 1.0
-    };
-
-    // translate(tx, ty) & scale(radius)
-    Matrix4f t(m[0][0]*radius, m[0][1]*radius, 0, m[0][2] + m[0][1]*ty+m[0][0]*tx,
-               m[1][0]*radius, m[1][1]*radius, 0, m[1][2] + m[1][1]*ty+m[1][0]*tx,
-               0         , 0         , 1, 0,
-               m[2][0]*radius, m[2][1]*radius, 0, m[2][2]  + m[2][1]*ty+m[2][0]*tx);
-
-    if(rgba)
-      glColor4fv(rgba);
-
-    m_circle_shader->bind();
-
-    // uniform scaling assumed, should work fine with "reasonable" non-uniform scaling
-    float totalRadius = m.extractScale() * radius;
-    float border = Nimble::Math::Min(1.0f, totalRadius-2.0f);
-    m_circle_shader->setUniformFloat("border_start", (totalRadius-border)/totalRadius);
-    GLint matrixLoc = m_circle_shader->getUniformLoc("matrix");
-    glUniformMatrix4fv(matrixLoc, 1, GL_TRUE, t.data());
-
-    // using a VBO with 4 vertices is actually slower than this
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(2, GL_FLOAT, 0, rect_vertices);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    m_circle_shader->unbind();
+    m_data->drawCircle(*this, center, radius, rgba);
   }
 
   void RenderContext::drawCircleWithSegments(Nimble::Vector2f center, float radius,
@@ -538,108 +653,7 @@ namespace Luminous
   void RenderContext::drawPolyLine(const Nimble::Vector2f * vertices, int n,
                                    float width, const float * rgba)
   {
-    if(n < 2)
-      return;
-
-    width *= scale() * 0.5f;
-    width += 1; // for antialiasing
-
-    const Matrix3 & m = transform();
-    std::vector<Nimble::Vector2> verts;
-    std::vector<Vector2> attribs;
-    Vector2f cprev;
-    Vector2f cnow = m.project(vertices[0]);
-    Vector2f cnext;
-    Vector2f avg;
-    Vector2f dirNext;
-    Vector2f dirPrev;
-
-    int nextIdx = 1;
-    while ((vertices[nextIdx]-cnow).lengthSqr() < 9.0f && nextIdx < n-1) {
-      nextIdx++;
-    }
-
-    cnext = m.project(vertices[nextIdx]);
-    dirNext = cnext - cnow;
-    dirNext.normalize();
-    avg = dirNext.perpendicular();
-
-    if (avg.length() < 1e-5) {
-      avg.make(1,0);
-    } else {
-      avg.normalize();
-    }
-    avg *= width;
-
-
-    verts.push_back(cnow - avg);
-    verts.push_back(cnow + avg);
-
-    attribs.push_back(Vector2());
-    attribs.push_back(Vector2());
-
-    attribs.push_back(cnow);
-    attribs.push_back(cnow);
-
-    for (int i = nextIdx; i < n; ) {
-      nextIdx = i+1;
-      cprev = cnow;
-      cnow = cnext;
-
-      // at least 3 pixels gap between vertices
-      while (nextIdx < n-1 && (vertices[nextIdx]-cnow).lengthSqr() < 9.0f) {
-        nextIdx++;
-      }
-      if (nextIdx > n-1) {
-        cnext = 2.0f*cnow - cprev;
-      } else {
-        cnext = m.project(vertices[nextIdx]);
-      }
-
-      dirPrev = dirNext;
-      dirNext = cnext - cnow;
-
-      if (dirNext.length() < 1e-5f) {
-        dirNext = dirPrev;
-      } else {
-        dirNext.normalize();
-      }
-
-      avg = (dirPrev + dirNext).perpendicular();
-      avg.normalize();
-
-      float dp = Math::Clamp(dot(avg, dirPrev.perpendicular()), 1e-2f, 1.0f);
-      avg /= dp;
-      avg *= width;
-      verts.push_back(cnow-avg);
-      verts.push_back(cnow+avg);
-
-      attribs.push_back(cnow);
-      attribs.push_back(cnow);
-
-      i = nextIdx;
-    }
-
-    GLuint loc = m_polyline_shader->getAttribLoc("coord");
-    glEnableVertexAttribArray(loc);
-    GLuint loc2 = m_polyline_shader->getAttribLoc("coord2");
-    glEnableVertexAttribArray(loc2);
-
-    m_polyline_shader->bind();
-    m_polyline_shader->setUniformFloat("width", width);
-
-    glColor4fv(rgba);
-    glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat *>(&verts[0]));
-    glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&attribs[2]));
-    glVertexAttribPointer(loc2, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&attribs[0]));
-    glEnableClientState(GL_VERTEX_ARRAY);
-
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, verts.size());
-
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableVertexAttribArray(loc);
-    glDisableVertexAttribArray(loc2);
-    m_polyline_shader->unbind();
+    m_data->drawPolyLine(*this, vertices, n, width, rgba);
   }
   void RenderContext::drawCurve(Vector2* controlPoints, float width, const float * rgba) {
 

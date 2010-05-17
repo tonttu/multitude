@@ -125,9 +125,6 @@ namespace Luminous
     // @todo does not return anything useful
     //const Nimble::Rectangle & visibleArea() const;
 
-    /// Sets the screen size for the context
-    void setScreenSize(Nimble::Vector2i size);
-
     /// @cond
     FBOHolder getTemporaryFBO(Nimble::Vector2 basicsize,
                               float scaling, uint32_t flags = 0);
@@ -206,8 +203,6 @@ namespace Luminous
     Luminous::GLResources * m_resources;
     class Internal;
     Internal * m_data;
-    Luminous::GLSLProgramObject * m_circle_shader;
-    Luminous::GLSLProgramObject * m_polyline_shader;
   };
 
 }
