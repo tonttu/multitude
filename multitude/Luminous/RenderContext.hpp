@@ -104,7 +104,7 @@ namespace Luminous
 
     /// Sets the rendering recursion limit for the context. This is relevant
     /// for ViewWidgets which can cause recursive rendering of the scene.
-    void setRecursionLimit(size_t limit) ;    
+    void setRecursionLimit(size_t limit) ;
     /// Returns the recursion limit
     size_t recursionLimit() const;
 
@@ -196,6 +196,8 @@ namespace Luminous
 
     /// Returns a pointer to an array of human-readable blending mode strings
     static const char ** blendFuncNames();
+
+    void addRenderCounter();
 
   private:
     void drawCircleWithSegments(Nimble::Vector2f center, float radius, const float *rgba, int segments);

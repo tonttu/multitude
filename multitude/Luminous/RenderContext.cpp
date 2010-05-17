@@ -156,7 +156,9 @@ namespace Luminous
     Internal()
         : m_recursionLimit(DEFAULT_RECURSION_LIMIT),
         m_recursionDepth(0),
-        m_fboStackIndex(-1)
+        m_fboStackIndex(-1),
+        m_renderCount(0),
+        m_frameCount(0)
     {
       bzero(m_fboStack, sizeof(m_fboStack));
     }
@@ -194,6 +196,9 @@ namespace Luminous
     int m_fboStackIndex;
     // temporarilly having screen size to make it work for lod and AA.
     Vector2i m_screenSize;
+
+    unsigned long m_renderCount;
+    unsigned long m_frameCount;
   };
 
   ///////////////////////////////////////////////////////////////////
@@ -214,6 +219,9 @@ namespace Luminous
 
   RenderContext::~RenderContext()
   {
+    info("Closing OpenGL context. Rendered %lu things in %lu frames, %lu things per frame",
+         m_data->m_renderCount, m_data->m_frameCount,
+         m_data->m_renderCount / Nimble::Math::Max(m_data->m_frameCount, (unsigned long) 1));
     delete m_data;
   }
 
@@ -221,6 +229,7 @@ namespace Luminous
   {
     resetTransform();
     m_data->m_recursionDepth = 0;
+    m_data->m_frameCount++;
 
     // Make sure the clip stack is empty
     while(!m_data->m_clipStack.empty())
@@ -520,6 +529,11 @@ namespace Luminous
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     glDisableClientState(GL_VERTEX_ARRAY);
     m_circle_shader->unbind();
+  }
+
+  void RenderContext::addRenderCounter()
+  {
+    m_data->m_renderCount++;
   }
 
   void RenderContext::drawCircleWithSegments(Nimble::Vector2f center, float radius,
