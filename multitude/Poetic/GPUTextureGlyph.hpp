@@ -33,8 +33,6 @@ namespace Poetic
 
       virtual Nimble::Vector2 render(Nimble::Vector2 pen, const Nimble::Matrix3 & m, Nimble::Vector2f ** ptr);
 
-      static GLuint activeTexture() { return s_activeTexture; }
-      static void resetActiveTexture() { s_activeTexture = 0; }
     private:
       int m_width;
       int m_height;
@@ -46,7 +44,7 @@ namespace Poetic
 
       // Attempt to minimize texture changes
       /// @todo this is not thread-safe
-      static GLuint s_activeTexture;
+      // static GLuint s_activeTexture;
   };
 
 }
