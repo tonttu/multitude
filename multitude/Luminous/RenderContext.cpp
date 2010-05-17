@@ -234,7 +234,7 @@ namespace Luminous
           "uniform mat4 matrix;"\
           "varying vec2 pos;"\
           "void main(void) {"\
-          "  pos = gl_Vertex; "\
+          "  pos = gl_Vertex.xy; "\
           "  mat4 transform = gl_ProjectionMatrix * matrix;"\
           "  gl_Position = transform * gl_Vertex;"\
           "  gl_ClipVertex = gl_ModelViewMatrix * matrix * gl_Vertex;"
@@ -253,38 +253,36 @@ namespace Luminous
       m_circle_shader->loadStrings(circ_vert_shader, circ_frag_shader);
 
       m_polyline_shader = new GLSLProgramObject();
-      const char * polyline_frag = ""\
-                          "#version 120\n"\
-                          "flat varying vec2 p1;"\
-                          "flat varying vec2 p2;"\
-                          "varying vec2 vertexcoord;"\
-                          "uniform float width;"\
-                          "void main() {"\
-                          "gl_FragColor = gl_Color;"\
-                          "vec2 pp = p2-p1;"\
-                          "float t = ((vertexcoord.x-p1.x)*(p2.x-p1.x)+(vertexcoord.y-p1.y)*(p2.y-p1.y))/dot(pp,pp);"\
-                          "t = clamp(t, 0.0, 1.0);"\
-                          "vec2 point_on_line = p1+t*(p2-p1);"\
-                          "float dist = length(vertexcoord-point_on_line);"\
-                          "gl_FragColor.w *= clamp(width-dist, 0.0, 1.0);"\
-                          "}";      
-
-      const char * polyline_vert = ""\
-                          "#version 120\n"\
-                          "attribute vec2 coord;"\
-                          "attribute vec2 coord2;"\
-                          "uniform float width;"\
-                          "flat varying vec2 p1;"\
-                          "flat varying vec2 p2;"\
-                          "varying vec2 vertexcoord;"\
-                          "void main() {"\
-                          "p1 = coord;"\
-                          "p2 = coord2;"\
-                          "vertexcoord = gl_Vertex.xy;"\
-                          "gl_Position = gl_ProjectionMatrix * gl_Vertex;"\
-                          "gl_ClipVertex = gl_ModelViewMatrix * gl_Vertex;"\
-                          "gl_FrontColor = gl_Color;"\
+      const char * polyline_frag = ""
+                          " varying vec2 p1;\n"\
+                          " varying vec2 p2;\n"\
+                          "varying vec2 vertexcoord;\n"\
+                          "uniform float width;\n"\
+                          "void main() {\n"\
+                          "gl_FragColor = gl_Color;\n"\
+                          "vec2 pp = p2-p1;\n"\
+                          "float t = ((vertexcoord.x-p1.x)*(p2.x-p1.x)+(vertexcoord.y-p1.y)*(p2.y-p1.y))/dot(pp,pp);\n"\
+                          "t = clamp(t, 0.0, 1.0);\n"\
+                          "vec2 point_on_line = p1+t*(p2-p1);\n"\
+                          "float dist = length(vertexcoord-point_on_line);\n"\
+                          "gl_FragColor.w *= clamp(width-dist, 0.0, 1.0);\n"\
                           "}";
+
+      const char * polyline_vert = "\n"
+                          "attribute vec2 coord;\n"\
+                          "attribute vec2 coord2;\n"\
+                          "uniform float width;\n"\
+                          " varying vec2 p1;\n"\
+                          " varying vec2 p2;\n"\
+                          "varying vec2 vertexcoord;\n"\
+                          "void main() {\n"\
+                          "p1 = coord;\n"\
+                          "p2 = coord2;\n"\
+                          "vertexcoord = gl_Vertex.xy;\n"\
+                          "gl_Position = gl_ProjectionMatrix * gl_Vertex;\n"\
+                          "gl_ClipVertex = gl_ModelViewMatrix * gl_Vertex;\n"\
+                          "gl_FrontColor = gl_Color;\n"\
+                          "}\n";
       m_polyline_shader->loadStrings(polyline_vert, polyline_frag);
     }
   }
@@ -350,7 +348,7 @@ namespace Luminous
           Radiant::info("\tclip area (%f,%f) (%f,%f) : inside %d", clipArea.center().x, clipArea.center().y, clipArea.size().x, clipArea.size().y, inside);
           */
 
-          return inside;          
+          return inside;
       }
   }
 /*
@@ -564,7 +562,7 @@ namespace Luminous
     cnext = m.project(vertices[nextIdx]);
     dirNext = cnext - cnow;
     dirNext.normalize();
-    avg = dirNext.perpendicular();    
+    avg = dirNext.perpendicular();
 
     if (avg.length() < 1e-5) {
       avg.make(1,0);
@@ -585,7 +583,7 @@ namespace Luminous
 
     for (int i = nextIdx; i < n; ) {
       nextIdx = i+1;
-      cprev = cnow;      
+      cprev = cnow;
       cnow = cnext;
 
       // at least 3 pixels gap between vertices
@@ -600,7 +598,7 @@ namespace Luminous
 
       dirPrev = dirNext;
       dirNext = cnext - cnow;
-      
+
       if (dirNext.length() < 1e-5f) {
         dirNext = dirPrev;
       } else {
@@ -630,7 +628,7 @@ namespace Luminous
     m_polyline_shader->bind();
     m_polyline_shader->setUniformFloat("width", width);
 
-    glColor4fv(rgba);    
+    glColor4fv(rgba);
     glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat *>(&verts[0]));
     glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&attribs[2]));
     glVertexAttribPointer(loc2, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&attribs[0]));
@@ -708,7 +706,7 @@ namespace Luminous
 
 
   void RenderContext::drawTexRect(Nimble::Vector2 size, const float * rgba)
-  {    
+  {
     drawTexRect(size, rgba, Nimble::Rect(0, 0, 1, 1));
   }
 
