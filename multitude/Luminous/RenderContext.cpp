@@ -157,6 +157,8 @@ namespace Luminous
         : m_recursionLimit(DEFAULT_RECURSION_LIMIT),
         m_recursionDepth(0),
         m_fboStackIndex(-1),
+        m_renderCount(0),
+        m_frameCount(0),
         m_initialized(false)
     {
       bzero(m_fboStack, sizeof(m_fboStack));
@@ -403,6 +405,11 @@ namespace Luminous
 
     FBOPackage * m_fboStack[FBO_STACK_SIZE];
     int m_fboStackIndex;
+    // temporarilly having screen size to make it work for lod and AA.
+    Vector2i m_screenSize;
+
+    unsigned long m_renderCount;
+    unsigned long m_frameCount;
 
     Luminous::GLSLProgramObject * m_circle_shader;
     Luminous::GLSLProgramObject * m_polyline_shader;
@@ -428,6 +435,9 @@ namespace Luminous
 
   RenderContext::~RenderContext()
   {
+    info("Closing OpenGL context. Rendered %lu things in %lu frames, %lu things per frame",
+         m_data->m_renderCount, m_data->m_frameCount,
+         m_data->m_renderCount / Nimble::Math::Max(m_data->m_frameCount, (unsigned long) 1));
     delete m_data;
   }
 
@@ -436,6 +446,7 @@ namespace Luminous
     resetTransform();
     m_data->initialize();
     m_data->m_recursionDepth = 0;
+    m_data->m_frameCount++;
 
     // Make sure the clip stack is empty
     while(!m_data->m_clipStack.empty())
@@ -512,7 +523,7 @@ namespace Luminous
   {
     return m_data->m_clipStack.back();
   }
-*/  
+*/
 
   RenderContext::FBOHolder RenderContext::getTemporaryFBO
       (Nimble::Vector2f basicsize, float scaling, uint32_t flags)
@@ -638,6 +649,11 @@ namespace Luminous
   void RenderContext::drawCircleImpl(Nimble::Vector2f center, float radius,
                                  const float * rgba) {
     m_data->drawCircle(*this, center, radius, rgba);
+  }
+
+  void RenderContext::addRenderCounter()
+  {
+    m_data->m_renderCount++;
   }
 
   void RenderContext::drawCircleWithSegments(Nimble::Vector2f center, float radius,
