@@ -194,6 +194,8 @@ namespace Luminous
     /// Returns a pointer to an array of human-readable blending mode strings
     static const char ** blendFuncNames();
 
+    /// Adds the render counter by one
+    /** */
     void addRenderCounter();
 
   private:
