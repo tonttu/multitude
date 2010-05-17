@@ -228,7 +228,7 @@ namespace Luminous {
 
     Guard g(generalMutex());
 
-    if(m_dest) {
+    if(m_dest && m_dest->m_scaler == this) {
       assert(m_dest->m_scaler == this);
 
       m_dest->m_scaler = 0;
