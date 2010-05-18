@@ -51,8 +51,8 @@ namespace Luminous {
 
     class Window;
 
-    /// One OpenGL area
-    /** Areas are roughly equivalent to OpenGL viewports. Multiple
+    /** One OpenGL area
+    Areas are roughly equivalent to OpenGL viewports. Multiple
     areas can share the same OpenGL context, as one window can
     have may areas inside it.*/
     /// @todo rename to ViewPort?
@@ -60,11 +60,18 @@ namespace Luminous {
     public Collectable
     {
     public:
+      /// Constructs a new area for the given window
       LUMINOUS_API Area(Window * window = 0);
       LUMINOUS_API virtual ~Area();
 
       LUMINOUS_API bool deserialize(Valuable::ArchiveElement & element);
 
+      /// Sets the geometry (size & offset) of the area
+      /// @param x x offset
+      /// @param y y offset
+      /// @param w width
+      /// @param h height
+      /// @param copyToGraphics if true, the settings are copied to graphics coordinates
       void setGeometry(int x, int y, int w, int h, bool copyToGraphics = true)
       {
         m_location = Nimble::Vector2i(x, y);
@@ -74,11 +81,13 @@ namespace Luminous {
           setGraphicsGeometry(x, y, w, h);
       }
 
+      /// Sets the size of the area
       void setSize(Vector2i size)
       {
         m_size = size;
       }
 
+      /// Sets the graphics geometry of the area
       void setGraphicsGeometry(int x, int y, int w, int h)
       {
         m_graphicsLocation = Nimble::Vector2i(x, y);
@@ -86,29 +95,39 @@ namespace Luminous {
         updateBBox();
       }
 
+      /// Sets the seams for the area
       void setSeams(float left, float right, float bottom, float top)
       {
         m_seams = Nimble::Vector4f(left, right, bottom, top);
         updateBBox();
       }
 
+      /// Returns the width of the largest seam
       float maxSeam() { return m_seams.asVector().maximum(); }
 
+      /// Applies an orthogonal projection to OpenGL defined by the graphics geometry of the area
       LUMINOUS_API void applyGlState() const;
+      /// Blends the edges defined by seams
       LUMINOUS_API void cleanEdges() const;
 
       virtual const char * type() const { return "area"; }
 
+      /// Returns the keystone correction
       GLKeyStone & keyStone() { return m_keyStone; }
+      /// @copydoc keyStone
       const GLKeyStone & keyStone() const { return m_keyStone; }
 
       /// The pixel location of the area on the window
       const Vector2i & location() const { return m_location.asVector(); }
+      /// The coordinate of the pixel location
       int x() const { return m_location[0]; }
+      /// The coordinate of the pixel location
       int y() const { return m_location[1]; }
       /// The pixel size of the area on the window
       const Vector2i & size() const { return m_size.asVector(); }
+      /// The width of the area in the window
       int width() const { return m_size[0]; }
+      /// The width of the area in the window
       int height() const { return m_size[1]; }
 
       /// The offset of the graphics inside the area (virtual pixels)
@@ -297,6 +316,7 @@ namespace Luminous {
     /// Total size of all the windows
     LUMINOUS_API Nimble::Vector2i totalSize();
 
+    /// Returns the total graphics size
     LUMINOUS_API Rect graphicsBounds() const;
 
     /// Returns the size of the total display in graphics pixels
@@ -305,9 +325,9 @@ namespace Luminous {
     LUMINOUS_API float seam();
     LUMINOUS_API void setSeam(float seam);
 
-    /** Total width of the display area, in graphics pixels. */
+    /// Total width of the display area, in graphics pixels.
     LUMINOUS_API int width();
-    /** Total height of the display area, in graphics pixels. */
+    /// Total height of the display area, in graphics pixels.
     LUMINOUS_API int height();
 
     LUMINOUS_API bool deserialize(Valuable::ArchiveElement & element);

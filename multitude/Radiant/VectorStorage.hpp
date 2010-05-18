@@ -212,6 +212,7 @@ namespace Radiant {
     /// Returns the element at the given index
     inline const T & operator [] (unsigned i) const { return m_points[i]; }
 
+    /// Swaps two VectorStorages
     inline void swap(VectorStorage & that)
     {
       m_points.swap(that.m_points);

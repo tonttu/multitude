@@ -15,43 +15,21 @@
 
 #include <Luminous/Error.hpp>
 
+#include <Radiant/Trace.hpp>
+
 namespace Luminous
 {
 
-  std::string glErrorToString()
+  void glErrorToString(const std::string & msg, int line)
   {
-    GLenum err = glGetError();
+    GLenum err;
 
-    switch(err)
-    {
-      case GL_NO_ERROR:
-        return "GL_NO_ERROR";
-        break;
-      case GL_INVALID_ENUM:
-        return "GL_INVALID_ENUM";
-        break;
-      case GL_INVALID_VALUE:
-        return "GL_INVALID_VALUE";
-        break;
-      case GL_INVALID_OPERATION:
-        return "GL_INVALID_OPERATION";
-        break;
-      case GL_STACK_OVERFLOW:
-        return "GL_STACK_OVERFLOW";
-        break;
-      case GL_STACK_UNDERFLOW:  
-        return "GL_STACK_UNDERFLOW";
-        break;
-      case GL_OUT_OF_MEMORY:
-        return "GL_OUT_OF_MEMORY";
-        break;
-      case GL_TABLE_TOO_LARGE:
-        return "GL_TABLE_TOO_LARGE";
-        break;
-      default:
-        return "Unknown error occured.";
-        break;
-    };    
+    while((err = glGetError()) != GL_NO_ERROR) {
+
+      const char * glErrMsg = (const char*)gluErrorString(err);
+
+      Radiant::error("%s:%d: %s", msg.c_str(), line, glErrMsg);
+    };
   }
 
   const char * glInternalFormatToString(GLint format)
