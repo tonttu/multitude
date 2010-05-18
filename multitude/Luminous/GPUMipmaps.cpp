@@ -7,15 +7,16 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #include "CPUMipmaps.hpp"
 
 #include "GPUMipmaps.hpp"
+#include "Utils.hpp"
 
 #include <Luminous/GLResources.hpp>
 
@@ -51,20 +52,28 @@ namespace Luminous {
 
   bool GPUMipmaps::bind(Nimble::Vector2 pixelsize)
   {
-    int best = m_cpumaps->getOptimal(pixelsize);
+    int best = m_cpumaps->getClosest(pixelsize);
 
     if(best < 0) {
       // trace("GPUMipmaps::bind # No mipmap");
       return false;
     }
 
+    Luminous::ImageTex * img = m_cpumaps->getImage(best);
+
+    img->bind(GL_TEXTURE0, false);
+
+    Luminous::Utils::glCheck("GPUMipmaps::bind");
+
+    return true;
+    /*
     // trace("GPUMipmaps::bind %f %f %d", pixelsize.x, pixelsize.y, best);
 
 
     Collectable * key = m_keys + best;
 
     GLResource * res = resources()->getResource(key);
-    
+
     Texture2D * tex = 0;
 
     if(res) {
@@ -100,7 +109,7 @@ namespace Luminous {
           }
         }
       }
-      
+
       // See what is in CPU RAM
 
       int closest = m_cpumaps->getClosest(pixelsize);
@@ -124,9 +133,9 @@ namespace Luminous {
         }
         assert(tex);
         tex->bind();
-      }      
+      }
     }
-    
+
     if(tex) {
       resources()->deleteAfter(tex, 10);
     }
@@ -134,10 +143,11 @@ namespace Luminous {
       return false;
 
     return true;
+    */
   }
 
-  bool GPUMipmaps::bind(const Nimble::Matrix3 & transform, 
-			Nimble::Vector2 pixelsize)
+  bool GPUMipmaps::bind(const Nimble::Matrix3 & transform,
+            Nimble::Vector2 pixelsize)
   {
     return bind(transform.extractScale() * pixelsize);
   }

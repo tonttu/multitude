@@ -331,6 +331,8 @@ namespace Luminous
       if(!vs->compile()) {
         error("GLSLProgramObject::fromStrings # vertex shader compile error:\n%s",
               vs->compilerLog());
+        error("GLSLProgramObject::fromStrings # When compiling:\n%s\n",
+              vsString);
         delete vs;
         return 0;
       }

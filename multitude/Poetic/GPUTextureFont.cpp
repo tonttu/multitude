@@ -29,6 +29,7 @@
 
 namespace Poetic
 {
+  using namespace Radiant;
 
   static const char * g_fontVShaderSource =
       "uniform mat3   transform;\n"
@@ -79,7 +80,13 @@ namespace Poetic
     m_yOffset(0),
     m_reset(false)
   {
-      m_remGlyphs = m_numGlyphs = m_cpuFont->face()->numGlyphs();
+
+    if(!g_fontShader.isDefined()) {
+      g_fontShader.setVertexShader(g_fontVShaderSource);
+      g_fontShader.setFragmentShader(g_fontFShaderSource);
+    }
+
+    m_remGlyphs = m_numGlyphs = m_cpuFont->face()->numGlyphs();
   }
 
   GPUTextureFont::~GPUTextureFont()
@@ -184,14 +191,11 @@ namespace Poetic
     if(m_reset) 
       resetGLResources();
 
-    GPUTextureGlyph::resetActiveTexture();
+    // GPUTextureGlyph::resetActiveTexture();
 
-    if(!g_fontShader.isDefined()) {
-      g_fontShader.setVertexShader(g_fontVShaderSource);
-      g_fontShader.setFragmentShader(g_fontFShaderSource);
-    }
-
+    // info("GPUTextureFont::internalRender # in");
     Luminous::GLSLProgramObject * shader = g_fontShader.bind();
+    // info("GPUTextureFont::internalRender # out");
 
     shader->setUniformMatrix3("transform", m);
     shader->setUniformInt("fontTexture", 0);
@@ -210,7 +214,7 @@ namespace Poetic
 
     //vbo->partialFill(0, &tmp[0], 4*n*2*sizeof(Nimble::Vector2f));
 
-    glBindTexture(GL_TEXTURE_2D, GPUTextureGlyph::activeTexture());
+    // glBindTexture(GL_TEXTURE_2D, m_);
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -241,7 +245,7 @@ namespace Poetic
     if(m_reset)
       resetGLResources();
 
-    GPUTextureGlyph::resetActiveTexture();
+    // GPUTextureGlyph::resetActiveTexture();
 
     if(!g_fontShader.isDefined()) {
       g_fontShader.setVertexShader(g_fontVShaderSource);
@@ -267,7 +271,7 @@ namespace Poetic
 
     //vbo->partialFill(0, &tmp[0], 4*n*2*sizeof(Nimble::Vector2f));
 
-    glBindTexture(GL_TEXTURE_2D, GPUTextureGlyph::activeTexture());
+    // glBindTexture(GL_TEXTURE_2D, GPUTextureGlyph::activeTexture());
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
