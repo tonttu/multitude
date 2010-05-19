@@ -1,6 +1,6 @@
 include(../multitude.pri)
-
-HEADERS += BGThread.hpp
+HEADERS += BGThread.hpp \
+    FramebufferResource.hpp
 HEADERS += CodecRegistry.hpp
 HEADERS += Collectable.hpp
 HEADERS += ContextVariable.hpp
@@ -35,8 +35,8 @@ HEADERS += Transformer.hpp
 HEADERS += Utils.hpp
 HEADERS += VertexBuffer.hpp
 HEADERS += VertexBufferImpl.hpp
-
-SOURCES += BGThread.cpp
+SOURCES += BGThread.cpp \
+    FramebufferResource.cpp
 SOURCES += CodecRegistry.cpp
 SOURCES += Collectable.cpp
 SOURCES += ContextVariable.cpp
@@ -64,7 +64,6 @@ SOURCES += Texture.cpp
 SOURCES += Transformer.cpp
 SOURCES += Utils.cpp
 SOURCES += VertexBuffer.cpp
-
 LIBS += $$LIB_RADIANT \
     $$LIB_OPENGL \
     $$LIB_VALUABLE \

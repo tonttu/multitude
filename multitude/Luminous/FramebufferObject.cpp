@@ -14,6 +14,8 @@
  */
 
 #include <Luminous/FramebufferObject.hpp>
+#include <Luminous/Error.hpp>
+
 #include <iostream>
 #include <cassert>
 
@@ -73,6 +75,7 @@ namespace Luminous
   {
     create();
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_bufferId);
+    Luminous::glErrorToString(__FILE__, __LINE__);
   }
 
   void Framebuffer::unbind()
@@ -191,6 +194,15 @@ namespace Luminous
   {
     if(m_bufferId == (GLuint) -1)
       glGenFramebuffersEXT(1, &m_bufferId);
+    Luminous::glErrorToString(__FILE__, __LINE__);
+  }
+
+  void Framebuffer::destroy()
+  {
+    if(m_bufferId != (GLuint)-1) {
+      glDeleteFramebuffersEXT(1, &m_bufferId);
+      m_bufferId = (GLuint)-1;
+    }
   }
 
 }

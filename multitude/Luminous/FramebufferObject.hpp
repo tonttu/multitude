@@ -122,6 +122,7 @@ namespace Luminous
     /// Detaches the given renderbuffer attachment
     void detachRenderbuffer(FramebufferAttachment attachment);
 
+    void destroy();
   private:
     void create();
     GLuint m_bufferId;

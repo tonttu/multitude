@@ -20,7 +20,7 @@
 
 #include <iostream>
 
-#define CHECK_GL_ERROR Luminous::glErrorToString(__FILE__, __LINE__)
+#define CHECK_GL_ERROR Luminous::glErrorToString()
 
 namespace Luminous
 {
@@ -30,7 +30,9 @@ namespace Luminous
   const char * glFormatToString(GLenum format);
 
   /// Converts OpenGL error into a human-readalbe string
-  void glErrorToString(const std::string & msg = "", int line = 0);
+  void glErrorToString(const std::string & msg = __FILE__, int line = __LINE__);
+
+
 }
 
 #endif
