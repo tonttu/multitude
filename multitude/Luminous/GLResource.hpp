@@ -129,6 +129,9 @@ namespace Luminous
     /// Returns the number of bytes this object consumes at the moment
     virtual long consumesBytes();
 
+    void setGeneration(int g) { m_generation = g; }
+    int generation() const { return m_generation; }
+
   protected:
 
     /// To be called when changing memory consumption
@@ -138,6 +141,7 @@ namespace Luminous
     GLResources * m_resources;
 
     long m_deleteOnFrame;
+    int  m_generation;
   };
 }
 

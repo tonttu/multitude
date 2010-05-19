@@ -43,7 +43,7 @@ int main(int argc, char ** argv)
     printf("%s : %d x %d\n", file, info.width, info.height);
   }
 
-  Luminous::Image image;
+  Luminous::ImageTex image;
   if(!image.read(file)) {
     printf("failed to open %s\n", file);
     return 1;
@@ -56,7 +56,7 @@ int main(int argc, char ** argv)
       switch(event.type) {
       case SDL_QUIT:
         running = false;
-	Radiant::info("Quit called, stopping now");
+    Radiant::info("Quit called, stopping now");
         break;
       };
     }

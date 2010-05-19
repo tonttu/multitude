@@ -28,7 +28,7 @@ namespace Poetic
 {
   using namespace Nimble;
 
-  GLuint GPUTextureGlyph::s_activeTexture = 0;
+  // GLuint GPUTextureGlyph::s_activeTexture = 0;
 
   GPUTextureGlyph::GPUTextureGlyph(const CPUBitmapGlyph * glyph, int texId, int xOff, int yOff, GLsizei width, GLsizei height)
     : Glyph(*glyph),
@@ -65,10 +65,10 @@ namespace Poetic
 
   Nimble::Vector2 GPUTextureGlyph::render(Nimble::Vector2 pen, const Nimble::Matrix3 & m, Nimble::Vector2f ** ptr)
   {
-    if(s_activeTexture != m_textureId) {
-      glBindTexture(GL_TEXTURE_2D, m_textureId);
-      s_activeTexture = m_textureId;
-    }
+    // if(s_activeTexture != m_textureId) {
+    glBindTexture(GL_TEXTURE_2D, m_textureId);
+    // s_activeTexture = m_textureId;
+    // }
 
 #ifdef POETIC_FLIP_Y
     Vector2f v0 = pen + Vector2f(m_pos.x,              -m_pos.y);
