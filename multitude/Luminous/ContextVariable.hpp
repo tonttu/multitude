@@ -17,6 +17,7 @@
 #define LUMINOUS_CONTEXTVARIABLE_HPP
 
 #include <Luminous/Collectable.hpp>
+#include <Luminous/GLResources.hpp>
 
 namespace Luminous {
 
@@ -26,15 +27,19 @@ namespace Luminous {
   /** The purpose of this class is to simplify the management of OpenGL resources,
       for threaded applications. */
   template <class T>
-      class LUMINOUS_API ContextVariableT : public Luminous::Collectable
+      class ContextVariableT : public Luminous::Collectable
   {
   public:
     ContextVariableT() {}
-    virtual ~ContextVariableT();
+    virtual ~ContextVariableT() {}
     /// Gets a reference to the OpenGL resource
     /** Before calling this function you should have a valid OpenGL context, with
         the right GLResources main object set for this thread. */
-    T & ref();
+    T & ref()
+    {
+      GLRESOURCE_ENSURE3(T, obj, this);
+      return *obj;
+    }
 
     /// Gets a reference to the OpenGL resource
     /** Before calling this function you should have a valid OpenGL context, with
@@ -44,7 +49,11 @@ namespace Luminous {
         gets a direct pointer to the GLResources object, it is slightly faster than
         the function without this argument.
     */
-    T & ref(GLResources * rs);
+    T & ref(GLResources * rs)
+    {
+      GLRESOURCE_ENSURE(T, obj, this, rs);
+      return *obj;
+    }
 
   };
 

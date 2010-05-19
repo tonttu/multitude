@@ -6,7 +6,7 @@
 namespace Luminous
 {
 
-  class FramebufferResource : public Luminous::GLResource
+  class LUMINOUS_API FramebufferResource : public Luminous::GLResource
   {
   public:
     FramebufferResource(Luminous::GLResources * r = 0);
