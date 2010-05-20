@@ -27,14 +27,15 @@ namespace Valuable
 {
 
   /// A valuable object holding a Nimble::Rect object
-  class VALUABLE_API ValueRect : public ValueObject
+  class VALUABLE_API ValueRect : public ValueObjectT<Nimble::Rect>
   {
+    typedef ValueObjectT<Nimble::Rect> Base;
     public:
       /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
       ValueRect(HasValues * parent, const std::string & name, const Nimble::Rect & r, bool transit = false);
 
       /// Copies a rectangle
-      ValueRect & operator = (const Nimble::Rect & r) { m_rect = r; VALUEMIT_STD_OP }
+      ValueRect & operator = (const Nimble::Rect & r) { Base::m_value = r; VALUEMIT_STD_OP }
 
       const char * type() const { return "rect"; }
 
@@ -43,11 +44,7 @@ namespace Valuable
       bool deserialize(ArchiveElement & element);
 
       /// Converts the object to rectangle
-      Nimble::Rect asRect() const { return m_rect; }
-
-    protected:
-      /// The rectangle data
-      Nimble::Rect m_rect;
+      Nimble::Rect asRect() const { return Base::m_value; }
   };
 
 }

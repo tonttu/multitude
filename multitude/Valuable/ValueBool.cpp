@@ -6,8 +6,7 @@ namespace Valuable
 {
   ValueBool::ValueBool(HasValues * parent, const std::string & name,
                        bool value, bool transit)
-    : ValueObject(parent, name, transit),
-    m_value(value)
+    : ValueObjectT<bool>(parent, name, value, transit)
   {}
 
   ValueBool::~ValueBool() {}

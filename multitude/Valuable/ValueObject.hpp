@@ -193,26 +193,31 @@ namespace Valuable
     friend class HasValues;
   };
 
-  /// Every ValueObject is some kind of ValueType<T> object.
+  /// Every ValueObject is some kind of ValueObjectT<T> object.
   /// Common functionality should be in either here or in ValueObject
-  /// @todo rename to ValueObjectT
-  template <typename T> class ValueTyped : public ValueObject
+  template <typename T> class ValueObjectT : public ValueObject
   {
   public:
-    ValueTyped(HasValues * parent, const std::string & name, const T & v = T(), bool transit = false)
+    ValueObjectT(HasValues * parent, const std::string & name, const T & v = T(), bool transit = false)
       : ValueObject(parent, name, transit),
-      m_value(v) {}
+      m_value(v),
+      m_orig(v) {}
 
-    ValueTyped()
-      : ValueObject(),
-      m_value(T()) {}
+    ValueObjectT()
+      : ValueObject() {}
+
+    virtual ~ValueObjectT() {}
 
     const T & operator * () const { return m_value; }
+    operator T & () { return m_value; }
+    operator const T & () const { return m_value; }
+    const T * operator->() const { return &m_value; }
 
-    virtual ~ValueTyped() {}
+    const T & orig() const { return m_orig; }
 
   protected:
     T m_value;
+    T m_orig;
   };
 
 

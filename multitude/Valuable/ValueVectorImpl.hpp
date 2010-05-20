@@ -70,7 +70,7 @@ namespace Valuable
     std::stringstream in(element.get());
 
     for(int i = 0; i < N; i++)
-      in >> m_value[i];
+      in >> Base::m_value[i];
 
     return true;
   }
@@ -79,10 +79,10 @@ namespace Valuable
   std::string ValueVector<VectorType, ElementType, N>::asString(bool * const ok) const {
     if(ok) *ok = true;
 
-    std::string r = Radiant::StringUtils::stringify(m_value[0]);
+    std::string r = Radiant::StringUtils::stringify(Base::m_value[0]);
 
     for(int i = 1; i < N; i++) 
-      r += std::string(" ") + Radiant::StringUtils::stringify(m_value[i]);
+      r += std::string(" ") + Radiant::StringUtils::stringify(Base::m_value[i]);
 
     return r;
   }
@@ -90,7 +90,7 @@ namespace Valuable
   template<class VectorType, typename ElementType, int N>
   bool ValueVector<VectorType, ElementType, N>::set(const VectorType & v)
   {
-    m_value = v;
+    Base::m_value = v;
     return true;
   }
  
