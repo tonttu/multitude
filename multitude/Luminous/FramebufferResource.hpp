@@ -2,11 +2,12 @@
 #define LUMINOUS_FRAMEBUFFER_RESOURCE_HPP
 
 #include <Luminous/FramebufferObject.hpp>
+#include <Luminous/Export.hpp>
 
 namespace Luminous
 {
 
-  class FramebufferResource : public Luminous::GLResource
+  class LUMINOUS_API FramebufferResource : public Luminous::GLResource
   {
   public:
     FramebufferResource(Luminous::GLResources * r = 0);
@@ -16,12 +17,12 @@ namespace Luminous
     void setSize(Nimble::Vector2i size);
 
     /// Returns the framebuffer object for this resource
-    Luminous::Framebuffer & framebuffer() { return m_fbo; }
+    inline Luminous::Framebuffer & framebuffer() { return m_fbo; }
     /// Returns the texture object for this resource
-    Luminous::Texture2D & texture() { return m_tex; }
+    inline Luminous::Texture2D & texture() { return m_tex; }
 
-    void setGeneration(size_t g) { m_generationCounter = g; }
-    size_t generation() const { return m_generationCounter; }
+    inline void setGeneration(size_t g) { m_generationCounter = g; }
+    inline size_t generation() const { return m_generationCounter; }
 
   private:
     Luminous::Framebuffer   m_fbo;

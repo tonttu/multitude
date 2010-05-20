@@ -17,6 +17,7 @@
 #define ERROR_HPP
 
 #include <Luminous/Luminous.hpp>
+#include <Luminous/Export.hpp>
 
 #include <iostream>
 
@@ -30,7 +31,7 @@ namespace Luminous
   const char * glFormatToString(GLenum format);
 
   /// Converts OpenGL error into a human-readalbe string
-  void glErrorToString(const std::string & msg = __FILE__, int line = __LINE__);
+  LUMINOUS_API void glErrorToString(const std::string & msg = __FILE__, int line = __LINE__);
 
 
 }

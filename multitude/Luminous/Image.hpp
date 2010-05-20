@@ -150,7 +150,7 @@ namespace Luminous
     unsigned char* m_data;
   };
 
-  class ImageTex : public Luminous::Image, public Luminous::ContextVariableT<Luminous::Texture2D>
+  class LUMINOUS_API ImageTex : public Luminous::Image, public Luminous::ContextVariableT<Luminous::Texture2D>
   {
   public:
 
