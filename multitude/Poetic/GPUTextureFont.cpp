@@ -16,28 +16,44 @@
 #include "GPUTextureGlyph.hpp"
 #include "CPUBitmapGlyph.hpp"
 #include "CPUFont.hpp"
+#include "FontManager.hpp"
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
 #define DEFAULT_PADDING 3
 
+#define VERTEX_ARRAY_SIZE 512
+
+#include <Luminous/Shader.hpp>
+
 namespace Poetic
 {
+  using namespace Radiant;
 
-  /*inline GLuint nextPowerOf2(GLuint in)
-  {
-     in -= 1;
+  static const char * g_fontVShaderSource =
+      "uniform mat3   transform;\n"
+      "varying vec4   color;\n"
+      "varying vec4   uv;\n"
+      "void main (void) {\n"
+      "  vec3 pos = transform * vec3(gl_Vertex.x, gl_Vertex.y, 1);\n"
+      "  pos.xy = pos.xy / pos.z;\n"
+      "  pos.z = 1.0;\n"
+      "  uv = gl_MultiTexCoord0;\n"
+      "  color = gl_Color\n;"
+      "  gl_Position = gl_ModelViewProjectionMatrix * vec4(pos.x, pos.y, pos.z, 1);\n"
+      "}\n";
 
-     in |= in >> 16;
-     in |= in >> 8;
-     in |= in >> 4;
-     in |= in >> 2;
-     in |= in >> 1;
+  static const char * g_fontFShaderSource =
+      "uniform sampler2D fontTexture;\n"
+      "varying vec4 color;\n"
+      "varying vec4 uv;\n"
+      "void main (void) {\n"
+      "gl_FragColor = color;\n"
+      "gl_FragColor.a *= texture2D(fontTexture, uv.st).a;\n"
+      "}\n";
 
-     return in + 1;
-  }
-  */
+  Luminous::Shader g_fontShader;
 
   /* Creates a number that is a multiple of four. Four is used as the
      buggy OSX (NVidia) drivers cannot handle arbitratry textures,
@@ -64,7 +80,13 @@ namespace Poetic
     m_yOffset(0),
     m_reset(false)
   {
-      m_remGlyphs = m_numGlyphs = m_cpuFont->face()->numGlyphs();
+
+    if(!g_fontShader.isDefined()) {
+      g_fontShader.setVertexShader(g_fontVShaderSource);
+      g_fontShader.setFragmentShader(g_fontFShaderSource);
+    }
+
+    m_remGlyphs = m_numGlyphs = m_cpuFont->face()->numGlyphs();
   }
 
   GPUTextureFont::~GPUTextureFont()
@@ -104,7 +126,7 @@ namespace Poetic
             tempGlyph->bbox().low().x + m_padding);
       --m_remGlyphs;
       return tempGlyph;            
-    }    
+    }
 
     return 0;
   }
@@ -163,36 +185,112 @@ namespace Poetic
   void GPUTextureFont::internalRender(const char * str, int n,
 				      const Nimble::Matrix3 & m)
   {
+    if(!n)
+      return;
+
     if(m_reset) 
       resetGLResources();
 
-    GPUTextureGlyph::resetActiveTexture();
+    // GPUTextureGlyph::resetActiveTexture();
 
-    glEnable(GL_VERTEX_ARRAY);
-    glEnable(GL_TEXTURE_COORD_ARRAY);
+    // info("GPUTextureFont::internalRender # in");
+    Luminous::GLSLProgramObject * shader = g_fontShader.bind();
+    // info("GPUTextureFont::internalRender # out");
 
+    shader->setUniformMatrix3("transform", m);
+    shader->setUniformInt("fontTexture", 0);
 
-    GPUFontBase::internalRender(str, n, m);
+    Nimble::Vector2f tmp[VERTEX_ARRAY_SIZE];
+    Nimble::Vector2f * ptr = &tmp[0];
 
-    glDisable(GL_VERTEX_ARRAY);
-    glDisable(GL_TEXTURE_COORD_ARRAY);
+    if(VERTEX_ARRAY_SIZE < 4 * n * 2) {
+      Radiant::error("GPUTextureFont::internalRender # string too long to fit into vertex array.");
+      n = VERTEX_ARRAY_SIZE / (4 * 2);
+    }
+
+    GPUFontBase::internalRender(str, n, m, &ptr);
+
+    //Luminous::VertexBuffer * vbo = FontManager::instance().fontVBO(0);
+
+    //vbo->partialFill(0, &tmp[0], 4*n*2*sizeof(Nimble::Vector2f));
+
+    // glBindTexture(GL_TEXTURE_2D, m_);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+    const GLsizei vertexSize = 2 * sizeof(Nimble::Vector2f);
+
+//    glVertexPointer(2, GL_FLOAT, vertexSize, BUFFER_OFFSET(0));
+//    glTexCoordPointer(2, GL_FLOAT, vertexSize, BUFFER_OFFSET(sizeof(Nimble::Vector2f)));
+    glVertexPointer(2, GL_FLOAT, vertexSize, &tmp[0]);
+    glTexCoordPointer(2, GL_FLOAT, vertexSize, &tmp[1]);
+
+    glDrawArrays(GL_QUADS, 0, 4 * n);
+
+    //vbo->unbind();
+
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+    glUseProgram(0);
   }
 
   void GPUTextureFont::internalRender(const wchar_t * str, int n,
 				      const Nimble::Matrix3 & m)
   {
+    if(!n)
+      return;
+
     if(m_reset)
       resetGLResources();
 
-    GPUTextureGlyph::resetActiveTexture();
+    // GPUTextureGlyph::resetActiveTexture();
 
-    glEnable(GL_VERTEX_ARRAY);
-    glEnable(GL_TEXTURE_COORD_ARRAY);
+    if(!g_fontShader.isDefined()) {
+      g_fontShader.setVertexShader(g_fontVShaderSource);
+      g_fontShader.setFragmentShader(g_fontFShaderSource);
+    }
 
-    GPUFontBase::internalRender(str, n, m);
+    Luminous::GLSLProgramObject * shader = g_fontShader.bind();
 
-    glDisable(GL_VERTEX_ARRAY);
-    glDisable(GL_TEXTURE_COORD_ARRAY);
+    shader->setUniformMatrix3("transform", m);
+    shader->setUniformInt("fontTexture", 0);
+
+    Nimble::Vector2f tmp[VERTEX_ARRAY_SIZE];
+    Nimble::Vector2f * ptr = &tmp[0];
+
+    if(VERTEX_ARRAY_SIZE < 4 * n * 2) {
+      Radiant::error("GPUTextureFont::internalRender # string too long to fit into vertex array.");
+      n = VERTEX_ARRAY_SIZE / (4 * 2);
+    }
+
+    GPUFontBase::internalRender(str, n, m, &ptr);
+
+    //Luminous::VertexBuffer * vbo = FontManager::instance().fontVBO(0);
+
+    //vbo->partialFill(0, &tmp[0], 4*n*2*sizeof(Nimble::Vector2f));
+
+    // glBindTexture(GL_TEXTURE_2D, GPUTextureGlyph::activeTexture());
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+    const GLsizei vertexSize = 2 * sizeof(Nimble::Vector2f);
+
+    //glVertexPointer(2, GL_FLOAT, vertexSize, BUFFER_OFFSET(0));
+    //glTexCoordPointer(2, GL_FLOAT, vertexSize, BUFFER_OFFSET(sizeof(Nimble::Vector2f)));
+    glVertexPointer(2, GL_FLOAT, vertexSize, &tmp[0]);
+    glTexCoordPointer(2, GL_FLOAT, vertexSize, &tmp[1]);
+
+    glDrawArrays(GL_QUADS, 0, 4 * n);
+
+    //vbo->unbind();
+
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+    glUseProgram(0);
   }
 
   void GPUTextureFont::faceSizeChanged()
@@ -215,4 +313,3 @@ namespace Poetic
   }
 
 }
-

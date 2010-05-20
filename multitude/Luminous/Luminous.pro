@@ -1,6 +1,7 @@
 include(../multitude.pri)
 
 HEADERS += BGThread.hpp
+HEADERS += FramebufferResource.hpp
 HEADERS += CodecRegistry.hpp
 HEADERS += Collectable.hpp
 HEADERS += ContextVariable.hpp
@@ -30,7 +31,6 @@ HEADERS += PixelFormat.hpp
 HEADERS += RenderContext.hpp
 HEADERS += Shader.hpp
 HEADERS += Task.hpp
-HEADERS += TCBSpline.hpp
 HEADERS += Texture.hpp
 HEADERS += Transformer.hpp
 HEADERS += Utils.hpp
@@ -38,6 +38,7 @@ HEADERS += VertexBuffer.hpp
 HEADERS += VertexBufferImpl.hpp
 
 SOURCES += BGThread.cpp
+SOURCES += FramebufferResource.cpp
 SOURCES += CodecRegistry.cpp
 SOURCES += Collectable.cpp
 SOURCES += ContextVariable.cpp
@@ -61,12 +62,10 @@ SOURCES += PixelFormat.cpp
 SOURCES += RenderContext.cpp
 SOURCES += Shader.cpp
 SOURCES += Task.cpp
-SOURCES += TCBSpline.cpp
 SOURCES += Texture.cpp
 SOURCES += Transformer.cpp
 SOURCES += Utils.cpp
 SOURCES += VertexBuffer.cpp
-
 LIBS += $$LIB_RADIANT \
     $$LIB_OPENGL \
     $$LIB_VALUABLE \
@@ -74,7 +73,7 @@ LIBS += $$LIB_RADIANT \
     $$LIB_NIMBLE \
     $$LIB_PATTERNS \
     $$LIB_GLEW
-unix:!contains(HAS_QT_45,YES) { 
+unix:!contains(HAS_QT_45,YES) {
     HEADERS += ImageCodecPNG.hpp
     HEADERS += ImageCodecTGA.hpp
     SOURCES += ImageCodecJPEG.cpp
@@ -83,7 +82,7 @@ unix:!contains(HAS_QT_45,YES) {
         -lpng
 }
 win32:DEFINES += LUMINOUS_EXPORT
-contains(HAS_QT_45,YES) { 
+contains(HAS_QT_45,YES) {
     message(Including QT Image codecs)
     HEADERS += ImageCodecQT.hpp
     SOURCES += ImageCodecQT.cpp

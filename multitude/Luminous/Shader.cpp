@@ -115,7 +115,7 @@ namespace Luminous {
   class Shader::Self
   {
   public:
-    Self() : m_dirty(false) {}
+    Self() : m_generation(0) {}
 
     Params m_uniforms;
     Params m_varyings;
@@ -123,7 +123,7 @@ namespace Luminous {
     std::string m_fragmentShader;
     std::string m_vertexShader;
 
-    bool m_dirty;
+    int m_generation;
   };
 
 
@@ -144,7 +144,7 @@ namespace Luminous {
   void Shader::setFragmentShader(const char * shadercode)
   {
     m_self->m_fragmentShader = shadercode;
-    m_self->m_dirty = true;
+    m_self->m_generation++;
   }
 
   bool Shader::loadFragmentShader(const char * filename)
@@ -163,7 +163,7 @@ namespace Luminous {
   void Shader::setVertexShader(const char * shadercode)
   {
     m_self->m_vertexShader = shadercode;
-    m_self->m_dirty = true;
+    m_self->m_generation++;
   }
 
   /*
@@ -183,7 +183,7 @@ namespace Luminous {
 
     GLSLProgramObject & prog = ref();
 
-    if(m_self->m_dirty) {
+    if(m_self->m_generation != prog.generation()) {
       const char * vs = m_self->m_vertexShader.empty() ?
                         0 : m_self->m_vertexShader.c_str();
       const char * fs = m_self->m_fragmentShader.empty() ?
@@ -197,7 +197,7 @@ namespace Luminous {
         // info("Compiled shader");
       }
 
-      m_self->m_dirty = false;
+      prog.setGeneration(m_self->m_generation);
     }
 
     Luminous::Utils::glCheck("Shader::bind # Before bind");

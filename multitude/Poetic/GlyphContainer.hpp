@@ -39,7 +39,7 @@ namespace Poetic
 
       const Glyph * glyph(unsigned int characterCode) const;
 
-      Nimble::Vector2 render(unsigned int charCode, unsigned int nextCharCode, Nimble::Vector2 penPos, const Nimble::Matrix3 & m);
+      Nimble::Vector2 render(unsigned int charCode, unsigned int nextCharCode, Nimble::Vector2 penPos, const Nimble::Matrix3 & m, Nimble::Vector2f ** ptr);
 
     private:
       Face * m_face;

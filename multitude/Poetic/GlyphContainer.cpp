@@ -75,20 +75,24 @@ namespace Poetic
     return m_glyphs[index];
   }  
 
-  Nimble::Vector2 GlyphContainer::render(unsigned int charCode, unsigned int nextCharCode, Nimble::Vector2 penPos, const Nimble::Matrix3 & m)
+  Nimble::Vector2 GlyphContainer::render(unsigned int charCode, unsigned int nextCharCode, Nimble::Vector2 penPos, const Nimble::Matrix3 & m, Nimble::Vector2f ** ptr)
   {
-    Nimble::Vector2 advance(0.f, 0.f);
+    Nimble::Vector2 advance;
 
+#ifdef POETIC_ENABLE_KERNING
     unsigned int left = m_charmap->fontIndex(charCode);
     unsigned int right = m_charmap->fontIndex(nextCharCode);
 
     Nimble::Vector2 kernAdvance = m_face->kernAdvance(left, right);
+#else
+    Nimble::Vector2 kernAdvance(0, 0);
+#endif
 
     if(!m_face->error()) {
       unsigned int index = m_charmap->glyphListIndex(charCode);
       Glyph * glyph = m_glyphs[index];
       assert(glyph);
-      advance = glyph->render(penPos, m);
+      advance = glyph->render(penPos, m, ptr);
     }
 
     kernAdvance += advance; 

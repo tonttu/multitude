@@ -163,19 +163,46 @@ namespace Luminous
     GLint minFilter = GL_LINEAR;
     GLint magFilter = GL_LINEAR;
 
+
+    // set byte alignment to maximum possible: 1,2,4 or 8
+    int alignment = 1;
+    while (alignment < 8) {
+      if ((m_width * m_pf.bytesPerPixel()) % (alignment*2)) {
+        break;
+      }
+      alignment *= 2;
+    }
+
+
     // ...or trilinear if we have mipmaps
     if(buildMipmaps) minFilter = GL_LINEAR_MIPMAP_LINEAR;
 
-    if(buildMipmaps)
+    if(buildMipmaps) {
+      glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
       gluBuild2DMipmaps(GL_TEXTURE_2D, srcFormat.numChannels(),
             w, h, srcFormat.layout(), srcFormat.type(), data);
-    else {
+    } else {
       /* Radiant::debug("TEXTURE UPLOAD :: INTERNAL %s FORMAT %s [%d %d]",
              glInternalFormatToString(internalFormat),
              glFormatToString(srcFormat.layout()), w, h);
       */
-      glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0,
-           srcFormat.layout(), srcFormat.type(), data);
+
+      GLint width;
+      glTexImage2D(GL_PROXY_TEXTURE_2D, 0, internalFormat, w, h, 0,
+           srcFormat.layout(), srcFormat.type(), 0);
+
+      glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+
+      if(width == 0) {
+        Radiant::error("Texture2D::loadBytes: Cannot load texture, too big? (%d x %d)", w, h);
+        changeByteConsumption(used, consumesBytes());
+        return false;
+      } else {
+        glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
+        /* should succeed */
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0,
+             srcFormat.layout(), srcFormat.type(), data);
+      }
     }
 
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -194,7 +221,8 @@ namespace Luminous
     long uses = consumesBytes();
 
     changeByteConsumption(used, uses);
-
+    /* try not to interfere with other users of glTexImage2d etc */
+    if (alignment > 4) glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
     return true;
   }
 
@@ -206,7 +234,16 @@ namespace Luminous
     }
     else
     {
+      int alignment = 1;
+      while (alignment < 8) {
+        if ((w * m_pf.bytesPerPixel()) % (alignment*2)) {
+          break;
+        }
+        alignment *= 2;
+      }
+      glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
       glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, w, h, m_pf.layout(), m_pf.type(), data);
+      if (alignment > 4) glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
     }
   }
 

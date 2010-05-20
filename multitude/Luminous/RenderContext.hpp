@@ -104,7 +104,7 @@ namespace Luminous
 
     /// Sets the rendering recursion limit for the context. This is relevant
     /// for ViewWidgets which can cause recursive rendering of the scene.
-    void setRecursionLimit(size_t limit) ;    
+    void setRecursionLimit(size_t limit) ;
     /// Returns the recursion limit
     size_t recursionLimit() const;
 
@@ -124,9 +124,6 @@ namespace Luminous
     // Returns the visible area (bottom of the clip stack).
     // @todo does not return anything useful
     //const Nimble::Rectangle & visibleArea() const;
-
-    /// Sets the screen size for the context
-    void setScreenSize(Nimble::Vector2i size);
 
     /// @cond
     FBOHolder getTemporaryFBO(Nimble::Vector2 basicsize,
@@ -197,6 +194,10 @@ namespace Luminous
     /// Returns a pointer to an array of human-readable blending mode strings
     static const char ** blendFuncNames();
 
+    /// Adds the render counter by one
+    /** */
+    void addRenderCounter();
+
   private:
     void drawCircleWithSegments(Nimble::Vector2f center, float radius, const float *rgba, int segments);
     void drawCircleImpl(Nimble::Vector2f center, float radius, const float *rgba);
@@ -206,8 +207,6 @@ namespace Luminous
     Luminous::GLResources * m_resources;
     class Internal;
     Internal * m_data;
-    Luminous::GLSLProgramObject * m_circle_shader;
-    Luminous::GLSLProgramObject * m_polyline_shader;
   };
 
 }

@@ -106,6 +106,9 @@ namespace Luminous
         /// Unmaps the vertex buffer from CPU memory. The pointer to the buffer is invalidated.
         void unmap();
 
+        /// Returns the OpenGL handle for the buffer
+        GLuint handle() const { return m_bufferId; }
+
       protected:
         /// OpenGL handle for the vertex buffer
         GLuint m_bufferId;

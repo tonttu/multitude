@@ -31,7 +31,7 @@ namespace Poetic
       Glyph(FT_GlyphSlotRec_ * glyph);
       virtual ~Glyph();
 
-      virtual Nimble::Vector2 render(Nimble::Vector2 pen, const Nimble::Matrix3 & m) = 0;
+      virtual Nimble::Vector2 render(Nimble::Vector2 pen, const Nimble::Matrix3 & m, Nimble::Vector2f ** ptr) = 0;
 
       Nimble::Vector2 advance() const { return m_advance; }
       const BBox & bbox() const { return m_bbox; }

@@ -19,6 +19,7 @@
 #include <Radiant/Trace.hpp>
 
 #include <fstream>
+#include <istream>
 
 namespace Valuable
 {  
@@ -35,25 +36,26 @@ namespace Valuable
   {
     std::string str;
 
-    FILE * input = fopen(fileName, "rb");
+    std::ifstream input(fileName, std::ios_base::in);
 
     if(!input) {
         Radiant::error("ConfigDocument::readConfigFile # failed to open '%s' for reading", fileName);
         return false;
     }
 
+
+
     int depth = 0;
     bool flag = false, atFlag = false;
 
     int k = 0;
 
-    while(getline(input,str)) {
-
+    while(std::getline(input,str)) {
+      trimSpaces(str);
       if(str == "")
 	continue;
 
       if(parseLine(str)==ELEMENT_START) {
-
 	std::string s;
 	depth++;
 	ConfigElement elm,e;
@@ -78,9 +80,11 @@ namespace Valuable
 	elm.m_nodes.push_back(e);
 	k++;
 
-	while(getline(input,s)) {
+  while(std::getline(input,s)) {
+    trimSpaces(s);
 	  if(s!="") {
 	    if(parseLine(s)==ELEMENT_START) {
+
 	      depth++;
 	      ConfigElement child=ConfigElement();
 	      size_t ps=s.find(",");
@@ -159,7 +163,7 @@ namespace Valuable
 	}
       }
     }
-    fclose(input);
+    input.close();
 
     for(unsigned i = 0; i < m_doc.childCount(); i++) {
       ConfigElement & c1 = m_doc.child(i);
@@ -167,7 +171,6 @@ namespace Valuable
 	c1 = ConfigElement(c1.child(0));
       }
     }
-
     return true;
   }
 
@@ -187,7 +190,7 @@ namespace Valuable
     //	for(int i=ss.size()-1;i>=0;i--)
     //		output<<ss[i];
 
-    output << aa;  
+    output << aa;
   }
 
   void ConfigDocument::trimSpaces( std::string& str)  
@@ -294,8 +297,8 @@ namespace Valuable
     std::string ind(__indent(recursion));
     std::string ind2(ind + "  ");
 
-    printf("Element name \"%s\" (%d)\n", e.m_elementName.c_str(),
-	   recursion);
+   /* printf("Element name \"%s\" (%d)\n", e.m_elementName.c_str(),
+     recursion);*/
 
     {
       if(e.m_elementName != "") {
@@ -327,7 +330,6 @@ namespace Valuable
 
   ConfigDocument::ParseFlags ConfigDocument::parseLine(std::string line)
   {
-
     if(line[line.length()-1]=='{')
       return ELEMENT_START;
     else if(line[line.length()-1]=='}')

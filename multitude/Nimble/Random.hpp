@@ -141,10 +141,23 @@ namespace Nimble {
     }
 
     /// Random 2d vector on a unit circle
-    inline Nimble::Vector2f randVecOnCircle()
+    inline Nimble::Vector2f randVecOnCircle(float radius = 1.0f)
     {
       float a = rand0X(Math::TWO_PI);
-      return Nimble::Vector2f(cosf(a), sinf(a));
+      return Nimble::Vector2f(cosf(a) * radius, sinf(a) * radius);
+    }
+
+    /// Random 2d vector on a unit circle
+    inline Nimble::Vector2f randVecInCircle(float radius = 1.0f)
+    {
+      while(true) {
+        Nimble::Vector2f v(rand11(), rand11());
+        if(v.lengthSqr() > 1.0f)
+          continue;
+
+        v *= radius;
+        return v;
+      }
     }
 
     /// Returns a reference to an instance

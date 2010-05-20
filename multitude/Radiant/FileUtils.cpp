@@ -91,6 +91,11 @@ namespace Radiant
       return (ok == 0);
     }
 
+    bool removeFile(const char * filename)
+    {
+      return remove(filename) == 0;
+    }
+
     char* loadTextFile(const char* filename)
     {
       ifstream file;

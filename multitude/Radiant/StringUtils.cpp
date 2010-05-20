@@ -325,6 +325,11 @@ namespace Radiant
           Radiant::error("stdWstringToUtf8 # Bad Unicode character %x", c);
         }
       }
+
+      /*
+      int got = ptr - & dest[0];
+
+      dest.resize(got);*/
     }
 
     std::string stdWstringAsUtf8(const std::wstring & src)
@@ -386,7 +391,7 @@ namespace Radiant
       size_t n = src.size();
 
       for(unsigned i = 0; i < n; i++) {
-        unsigned c = src[0];
+        unsigned c = src[i];
 
         if(c <= 0x7f)
           bytes++;

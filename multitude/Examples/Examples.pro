@@ -10,6 +10,7 @@ unix:SUBDIRS += SharedMemory
 SUBDIRS += SocketExample
 SUBDIRS += UDPExample
 SUBDIRS += VertexBuffers
+SUBDIRS += SDLVideoPlayer
 SUBDIRS += ShaderExample
 SUBDIRS += ValueTest
 SUBDIRS += ValidatingXML

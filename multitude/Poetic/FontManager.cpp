@@ -44,7 +44,10 @@ namespace Poetic
   }
 
   FontManager::~FontManager()
-  {}
+  {
+    for(TextureVBOMap::iterator it = m_vbos.begin(); it != m_vbos.end(); it++)
+      delete it->second;
+  }
 
   CPUWrapperFont * FontManager::getFont(const std::string & name)
   {
@@ -95,6 +98,25 @@ namespace Poetic
   {
     return m_locator;
   }
+
+  Luminous::VertexBuffer * FontManager::fontVBO(GLuint textureId)
+  {
+    TextureVBOMap::iterator it = m_vbos.find(textureId);
+
+    // No vbo found, create new
+    if(it == m_vbos.end()) {
+      std::pair<TextureVBOMap::iterator, bool> tmp = m_vbos.insert(std::make_pair(textureId, new Luminous::VertexBuffer()));
+      it = tmp.first;
+
+      it->second->allocate(4 * sizeof(GLfloat) * 1024, Luminous::VertexBuffer::DYNAMIC_DRAW);
+
+      Radiant::info("CREATE NEW FONT VBO");
+    }
+
+    return it->second;
+  }
+
+
 
 }
 

@@ -352,6 +352,8 @@ namespace VideoDisplay {
   {
     debug("ShowGL::init # %s", filename);
 
+    assert(filename != 0);
+
     if(m_filename == filename) {
       return true;
     }

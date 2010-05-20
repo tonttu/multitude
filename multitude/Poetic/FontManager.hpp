@@ -23,6 +23,8 @@
 
 #include <Patterns/Singleton.hpp>
 
+#include <Luminous/VertexBuffer.hpp>
+
 namespace Poetic
 {
 
@@ -38,6 +40,8 @@ namespace Poetic
       std::string locate(const std::string & name);
       Radiant::ResourceLocator & locator();
 
+      Luminous::VertexBuffer * fontVBO(GLuint textureId);
+
     private:
       FontManager();
       ~FontManager();
@@ -47,6 +51,9 @@ namespace Poetic
       container m_managedFonts;
 
       Radiant::ResourceLocator m_locator;
+
+      typedef std::map<GLuint, Luminous::VertexBuffer *> TextureVBOMap;
+      TextureVBOMap m_vbos;
 
       friend class Patterns::Singleton<FontManager>;
   };

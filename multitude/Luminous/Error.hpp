@@ -20,6 +20,8 @@
 
 #include <iostream>
 
+#define CHECK_GL_ERROR Luminous::glErrorToString()
+
 namespace Luminous
 {
   /// Converts OpenGL texture internal format enum into human-readable string
@@ -28,7 +30,8 @@ namespace Luminous
   const char * glFormatToString(GLenum format);
 
   /// Converts OpenGL error into a human-readalbe string
-  std::string glErrorToString();
+  void glErrorToString(const std::string & msg = __FILE__, int line = __LINE__);
+
 
 }
 

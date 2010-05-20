@@ -45,12 +45,12 @@ SOURCES += GPUWrapperFont.cpp
 SOURCES += Size.cpp
 SOURCES += Utils.cpp
 
-DEFINES += POETIC_FLIP_Y
+DEFINES += POETIC_FLIP_Y 
 
 unix: PKGCONFIG += freetype2
 
 LIBS += $$LIB_LUMINOUS $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS
-LIBS += $$LIB_OPENGL
+LIBS += $$LIB_OPENGL $$LIB_GLEW
 
 macx:LIBS += -framework,OpenGL
 

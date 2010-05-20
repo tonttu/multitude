@@ -49,8 +49,7 @@ namespace Luminous
       The image data is stored in a single, straightforward buffer.
   */
   /// @todo Split this into two classes, so that "Image" does not inherit ContextVariableT
-  class LUMINOUS_API Image :
-      public Luminous::ContextVariableT<Luminous::Texture2D>
+  class LUMINOUS_API Image
   {
   public:
     Image();
@@ -134,15 +133,6 @@ namespace Luminous
     /** Returns a pointer to the file-format codecs. */
     static CodecRegistry * codecs();
 
-    /** Binds a texture representing this image to the current OpenGL context.
-
-        @arg textureUnit The OpenGL texture unit to bind to
-        @arg withmipmaps Should we use mimaps, or not. This argument only
-        makes difference the first time this function executed for the context
-        (and the texture is created), after that the the same texture is used.
-    */
-    void bind(GLenum textureUnit = GL_TEXTURE0, bool withmimaps = true);
-
     /// Returns the alpha value [0,255] for the given relative coordinates in the image.
     /// @return alpha of the given pixel or 255 if image does not have alpha channel
     unsigned char pixelAlpha(Nimble::Vector2 relativeCoord) const;
@@ -159,6 +149,32 @@ namespace Luminous
     PixelFormat m_pixelFormat;
     unsigned char* m_data;
   };
+
+  class ImageTex : public Luminous::Image, public Luminous::ContextVariableT<Luminous::Texture2D>
+  {
+  public:
+
+    /** Binds a texture representing this image to the current OpenGL context.
+
+        @arg textureUnit The OpenGL texture unit to bind to
+        @arg withmipmaps Should we use mimaps, or not. This argument only
+        makes difference the first time this function executed for the context
+        (and the texture is created), after that the the same texture is used.
+    */
+    void bind(GLenum textureUnit = GL_TEXTURE0, bool withmimaps = true);
+
+    /** Binds a texture representing this image to the current OpenGL context.
+
+        @arg resources The OpenGL resource handler
+        @arg textureUnit The OpenGL texture unit to bind to
+        @arg withmipmaps Should we use mimaps, or not. This argument only
+        makes difference the first time this function executed for the context
+        (and the texture is created), after that the the same texture is used.
+    */
+    void bind(GLResources * resources, GLenum textureUnit = GL_TEXTURE0, bool withmimaps = true);
+
+  };
+
 
 }
 
