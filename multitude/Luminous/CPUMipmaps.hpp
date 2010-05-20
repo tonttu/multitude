@@ -200,7 +200,7 @@ namespace Luminous {
     uint32_t         m_fileMask;
     bool             m_hasAlpha;
     Radiant::TimeStamp m_startedLoading;
-    bool             m_timeOut;
+    float            m_timeOut;
 
     Luminous::ImageInfo m_info;
     bool                m_ok;

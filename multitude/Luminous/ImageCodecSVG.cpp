@@ -99,7 +99,7 @@ namespace Luminous {
   }
 
   /// Not supported (could use QSvgGenerator to render bitmap as SVG, but why?)
-  bool ImageCodecSVG::write(const Image & image, FILE * file)
+  bool ImageCodecSVG::write(const Image & /*image*/, FILE * /*file*/)
   {    
     return false;
   }

@@ -47,8 +47,6 @@ namespace Valuable
     /// Copy an integer
     ValueIntT<T> & operator = (T i) { Base::m_value = i; VALUEMIT_STD_OP }
 
-    /// Convert the value object to integer
-    operator const T & () const { return Base::m_value; }
     /// Returns the data in its native format
     const T & data() const { return Base::m_value; }
 

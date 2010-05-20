@@ -48,9 +48,6 @@ namespace Valuable
       /// Copies a float
       inline ValueFloatT<T> & operator = (T i) { Base::m_value = i; VALUEMIT_STD_OP }
 
-      /// Converts the value object to a float
-      inline operator const T & () const { return Base::m_value; }
-
       /// Returns the data in its native format
       const T & data() const { return Base::m_value; }
 

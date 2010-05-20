@@ -209,8 +209,8 @@ namespace Valuable
     virtual ~ValueObjectT() {}
 
     const T & operator * () const { return m_value; }
-    operator T & () { return m_value; }
-    operator const T & () const { return m_value; }
+    inline operator T & () { return m_value; }
+    inline operator const T & () const { return m_value; }
     const T * operator->() const { return &m_value; }
 
     const T & orig() const { return m_orig; }

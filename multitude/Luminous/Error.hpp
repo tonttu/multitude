@@ -17,6 +17,7 @@
 #define ERROR_HPP
 
 #include <Luminous/Luminous.hpp>
+#include <Luminous/Export.hpp>
 
 #include <iostream>
 

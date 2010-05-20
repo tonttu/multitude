@@ -20,6 +20,7 @@
 
 #include <Valuable/DOMElement.hpp>
 #include <Valuable/DOMDocument.hpp>
+#include <Valuable/ValueObject.hpp>
 
 #include <assert.h>
 #include <string.h>
