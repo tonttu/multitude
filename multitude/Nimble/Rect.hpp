@@ -182,7 +182,11 @@ namespace Nimble {
 	@arg col The column of the quarter (0-1)
     */
     inline RectT quarter(int row, int col) const;
-  
+
+    inline bool operator == (const RectT<T> & o) const {
+      return m_low == o.m_low && m_high == o.m_high;
+    }
+
   private:
     Vector2T<T> m_low, m_high;
   };

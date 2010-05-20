@@ -32,10 +32,12 @@ namespace Valuable
   /** This template class is used to implement both normal 7/8-bit
       strings and wide strings*/
   template<class T>
-      class VALUABLE_API ValueStringT : public ValueObject
+      class VALUABLE_API ValueStringT : public ValueObjectT<T>
   {
+    typedef ValueObjectT<T> Base;
+
   public:
-    ValueStringT() : ValueObject() {}
+    ValueStringT() : Base() {}
     /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
     ValueStringT(HasValues * parent, const std::string & name,
                  const T & v, bool transit = false);
@@ -50,14 +52,14 @@ namespace Valuable
 
     /// Copies a string
     ValueStringT<T> & operator = (const ValueStringT<T> & i)
-                                 { m_value = i.m_value; VALUEMIT_STD_OP }
+                                 { Base::m_value = i.m_value; VALUEMIT_STD_OP }
     /// Copies a string
-    ValueStringT<T> & operator = (const T & i) { m_value = i; VALUEMIT_STD_OP }
+    ValueStringT<T> & operator = (const T & i) { Base::m_value = i; VALUEMIT_STD_OP }
 
     /// Compares if two strings are equal
-    bool operator == (const T & that) { return that == m_value; }
+    bool operator == (const T & that) { return that == Base::m_value; }
     /// Compares if two strings are not equal
-    bool operator != (const T & that) { return that != m_value; }
+    bool operator != (const T & that) { return that != Base::m_value; }
 
     /// Returns the value as float
     float asFloat(bool * const ok = 0) const;
@@ -69,11 +71,7 @@ namespace Valuable
     std::wstring asWString(bool * const ok = 0) const;
 
     /// Returns the string
-    const T & str() const { return m_value; }
-
-    /// @todo use ValueTyped<T> or something similar instead
-    operator const T & () const { return m_value; }
-    const T * operator->() const { return &m_value; }
+    const T & str() const { return Base::m_value; }
 
     virtual bool set(const std::string & v);
 
@@ -83,13 +81,10 @@ namespace Valuable
     bool deserialize(ArchiveElement & element);
 
     /// Makes the string empty
-    void clear() { m_value.clear(); }
+    void clear() { Base::m_value.clear(); }
 
     /// Returns the length of the string
-    unsigned size() const { return m_value.size(); }
-
-  private:
-    T m_value;
+    unsigned size() const { return Base::m_value.size(); }
   };
 
   /// A byte string value object

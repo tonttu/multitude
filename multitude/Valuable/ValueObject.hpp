@@ -172,6 +172,8 @@ namespace Valuable
     /// Removes a listener from the listener list
     void removeListener(ValueListener * l) { m_listeners.remove(l); }
 
+    virtual bool isChanged() const;
+
   protected:
 
     /// Invokes the change valueChanged function of all listeners
@@ -182,6 +184,7 @@ namespace Valuable
   private:
     // The object that holds this object
     HasValues * m_parent;
+    bool m_changed;
     std::string m_name;
     bool m_transit;
 
@@ -190,26 +193,35 @@ namespace Valuable
     friend class HasValues;
   };
 
-  /// Every ValueObject is some kind of ValueType<T> object.
+  /// Every ValueObject is some kind of ValueObjectT<T> object.
   /// Common functionality should be in either here or in ValueObject
-  /// @todo rename to ValueObjectT
-  template <typename T> class ValueTyped : public ValueObject
+  template <typename T> class ValueObjectT : public ValueObject
   {
   public:
-    ValueTyped(HasValues * parent, const std::string & name, const T & v = T(), bool transit = false)
+    ValueObjectT(HasValues * parent, const std::string & name, const T & v = T(), bool transit = false)
       : ValueObject(parent, name, transit),
-      m_value(v) {}
+      m_value(v),
+      m_orig(v) {}
 
-    ValueTyped()
-      : ValueObject(),
-      m_value(T()) {}
+    ValueObjectT()
+      : ValueObject() {}
+
+    virtual ~ValueObjectT() {}
 
     const T & operator * () const { return m_value; }
+    operator T & () { return m_value; }
+    operator const T & () const { return m_value; }
+    const T * operator->() const { return &m_value; }
 
-    virtual ~ValueTyped() {}
+    const T & orig() const { return m_orig; }
+
+    /// Is the value different from the original value
+    // use !( == ) instead of != because != isn't always implemented
+    virtual bool isChanged() const { return !(m_value == m_orig); }
 
   protected:
     T m_value;
+    T m_orig;
   };
 
 

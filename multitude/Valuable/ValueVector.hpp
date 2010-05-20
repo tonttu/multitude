@@ -36,39 +36,41 @@ namespace Valuable
       objects.
    */
   template<class VectorType, typename ElementType, int N>
-  class VALUABLE_API ValueVector : public ValueObject
+  class VALUABLE_API ValueVector : public ValueObjectT<VectorType>
   {
+    typedef ValueObjectT<VectorType> Base;
     public:
-      ValueVector() : ValueObject() {}
+      ValueVector() : Base() {}
       /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
-      ValueVector(HasValues * parent, const std::string & name, const VectorType & v = VectorType(), bool transit = false) : ValueObject(parent, name, transit), m_value(v) {}
+      ValueVector(HasValues * parent, const std::string & name, const VectorType & v = VectorType(), bool transit = false)
+        : Base(parent, name, v, transit) {}
 
       virtual ~ValueVector();
 
       /// Assigns a vector
       ValueVector<VectorType, ElementType, N> & operator =
-      (const VectorType & v) { m_value = v; emitChange(); return *this; }
+      (const VectorType & v) { Base::m_value = v; Base::emitChange(); return *this; }
 
       /// Assigns by addition
       ValueVector<VectorType, ElementType, N> & operator +=
-      (const VectorType & v) { m_value += v; emitChange(); return *this; }
+      (const VectorType & v) { Base::m_value += v; Base::emitChange(); return *this; }
       /// Assigns by subtraction
       ValueVector<VectorType, ElementType, N> & operator -=
-      (const VectorType & v) { m_value -= v; emitChange(); return *this; }
+      (const VectorType & v) { Base::m_value -= v; Base::emitChange(); return *this; }
 
     /// Subtract
       VectorType operator -
-      (const VectorType & v) const { return m_value - v; }
+      (const VectorType & v) const { return Base::m_value - v; }
       /// Add
     VectorType operator +
-      (const VectorType & v) const { return m_value + v; }
+      (const VectorType & v) const { return Base::m_value + v; }
 
     /// Returns the ith element
-    ElementType operator [] (int i) const { return m_value[i]; }
+    ElementType operator [] (int i) const { return Base::m_value[i]; }
 
     /// Returns the data in its native format
      const ElementType * native() const
-    { return m_value.data(); }
+    { return Base::m_value.data(); }
 
     virtual void processMessage(const char * id, Radiant::BinaryData & data);
     virtual bool deserialize(ArchiveElement & element);
@@ -79,34 +81,28 @@ namespace Valuable
       virtual bool set(const VectorType & v);
 
       /** Returns the internal vector object as a constant reference. */
-      const VectorType & asVector() const { return m_value; }
+      const VectorType & asVector() const { return Base::m_value; }
       /** Returns the internal vector object as a constant reference. */
-      const VectorType & operator * () const { return m_value; }
+      const VectorType & operator * () const { return Base::m_value; }
 
       std::string asString(bool * const ok = 0) const;
 
       /// Returns the ith element
-      inline const ElementType & get(int i) const { return m_value[i]; }
+      inline const ElementType & get(int i) const { return Base::m_value[i]; }
       /// Returns a pointer to the first element
-      inline const ElementType * data() const { return m_value.data(); }
+      inline const ElementType * data() const { return Base::m_value.data(); }
 
       /// Returns the first component
-      inline const ElementType & x() const { return m_value[0]; }
+      inline const ElementType & x() const { return Base::m_value[0]; }
       /// Returns the second component
-      inline const ElementType & y() const { return m_value[1]; }
+      inline const ElementType & y() const { return Base::m_value[1]; }
 
       /// Normalizes the vector
       inline void normalize(ElementType len = 1.0)
       {
-        m_value.normalize(len);
-        emitChange();
+        Base::m_value.normalize(len);
+        Base::emitChange();
       }
-
-      /// @todo use ValueTyped<T> or something similar instead
-      operator const VectorType & () const { return m_value; }
-      const VectorType * operator-> () const { return &m_value; }
-    private:
-      VectorType m_value;
   };
 
   /// An integer vector2 value object

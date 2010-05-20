@@ -29,15 +29,15 @@ namespace Valuable
   /** The actual value classes are inherited from this template
       class. */
   template<class T>
-  class ValueNumeric : public ValueTyped<T>
+  class ValueNumeric : public ValueObjectT<T>
   {
-    typedef ValueTyped<T> Base;
+    typedef ValueObjectT<T> Base;
 
   public:
-      ValueNumeric() : ValueTyped<T>() {}
+      ValueNumeric() : ValueObjectT<T>() {}
       /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
       ValueNumeric(HasValues * parent, const std::string & name, T v, bool transit = false)
-      : ValueTyped<T>(parent, name, v, transit)
+      : Base(parent, name, v, transit)
       {}
 
       /// Copies a numeric value

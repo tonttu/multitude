@@ -115,7 +115,7 @@ namespace Valuable
 
   bool HasValues::saveToFileXML(const char * filename)
   {
-    bool ok = Serializer::serialize(filename, this);
+    bool ok = Serializer::serializeXML(filename, this);
     if (!ok) {
       Radiant::error("HasValues::saveToFileXML # object failed to serialize");
     }
@@ -160,9 +160,11 @@ namespace Valuable
     for(container::iterator it = m_children.begin(); it != m_children.end(); it++) {
       ValueObject * vo = it->second;
 
-      ArchiveElement & child = vo->serialize(archive);
-      if(!child.isNull())
-        elem.add(child);
+      if (!archive.checkFlag(Archive::ONLY_CHANGED) || vo->isChanged()) {
+        ArchiveElement & child = vo->serialize(archive);
+        if(!child.isNull())
+          elem.add(child);
+      }
     }
 
     return elem;

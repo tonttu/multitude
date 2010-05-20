@@ -24,7 +24,7 @@ namespace Valuable
 {
 
   /// A value object for boolean.
-  class VALUABLE_API ValueBool : public ValueObject
+  class VALUABLE_API ValueBool : public ValueObjectT<bool>
   {
   public:    
     /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
@@ -38,13 +38,7 @@ namespace Valuable
     /// Copies a value
     ValueBool & operator = (bool v) { m_value = v; VALUEMIT_STD_OP }
 
-    /// Converts the value object to a boolean
-    operator bool () const { return m_value; }
-
     std::string asString(bool * const ok = 0) const;
-
-  private:
-    bool m_value;
   };
 
 }

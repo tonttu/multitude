@@ -56,6 +56,8 @@ namespace Valuable
       return true;
     }
 
+    virtual bool isChanged() const { return !m_container.empty(); }
+
     /// @todo should be in ValueTyped
     operator T & () { return m_container; }
     operator const T & () const { return m_container; }

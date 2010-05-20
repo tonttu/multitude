@@ -22,8 +22,7 @@ namespace Valuable
 {
 
   ValueRect::ValueRect(HasValues * parent, const std::string & name, const Nimble::Rect & r, bool transit)
-    : ValueObject(parent, name, transit),
-    m_rect(r)
+    : Base(parent, name, r, transit)
   {}
 
   bool ValueRect::deserialize(ArchiveElement & element) {
@@ -36,8 +35,8 @@ namespace Valuable
     in >> hi[0]; 
     in >> hi[1]; 
 
-    m_rect.setLow(lo);
-    m_rect.setHigh(hi);
+    m_value.setLow(lo);
+    m_value.setHigh(hi);
 
     return true;
   }
@@ -45,8 +44,8 @@ namespace Valuable
   std::string ValueRect::asString(bool * const ok) const {
     if(ok) *ok = true;
 
-    const Nimble::Vector2f & lo = m_rect.low();
-    const Nimble::Vector2f & hi = m_rect.high();
+    const Nimble::Vector2f & lo = m_value.low();
+    const Nimble::Vector2f & hi = m_value.high();
 
   
     

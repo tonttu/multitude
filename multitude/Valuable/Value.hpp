@@ -13,7 +13,7 @@ namespace Valuable
 
   template <typename T> struct Value
   {
-    typedef ValueTyped<T> Type;
+    typedef ValueObjectT<T> Type;
   };
 
   DefineTypeT(int, ValueIntT);

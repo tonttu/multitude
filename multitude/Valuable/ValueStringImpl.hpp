@@ -32,21 +32,20 @@ namespace Valuable
   template<class T>
   ValueStringT<T>::ValueStringT(HasValues * parent, const std::string & name,
 				const T & v, bool transit)
-    : ValueObject(parent, name, transit), m_value(v)
+    : Base(parent, name, v, transit)
   {}
 
   template<class T>
   ValueStringT<T>::ValueStringT(HasValues * parent, const std::string & name,
 				const char * v, bool transit)
-  : ValueObject(parent, name, transit),
-    m_value(v)
+    : Base(parent, name, v, transit)
   {}
 
     
   template<class T>
   ValueStringT<T>::ValueStringT(HasValues * parent, const std::string & name,
 				bool transit)
-    : ValueObject(parent, name, transit)
+    : Base(parent, name, T(), transit)
   {}
 
 
@@ -67,7 +66,7 @@ namespace Valuable
   template<class T>
   bool ValueStringT<T>::deserialize(ArchiveElement & element)
   {
-    m_value = T(element.get());
+    Base::m_value = T(element.get());
 
     STD_EM;
 
@@ -78,21 +77,21 @@ namespace Valuable
   float ValueStringT<T>::asFloat(bool * const ok) const 
   { 
     if(ok) *ok = true; 
-    return float(atof(m_value.c_str()));
+    return float(atof(Base::m_value.c_str()));
   }
 
   template<class T>
   int ValueStringT<T>::asInt(bool * const ok) const 
   {
     if(ok) *ok = true; 
-    return atoi(m_value.c_str());
+    return atoi(Base::m_value.c_str());
   }
 
   template<class T>
   std::string ValueStringT<T>::asString(bool * const ok) const 
   { 
     if(ok) *ok = true; 
-    return m_value; 
+    return Base::m_value;
   }
 
   template<class T>
@@ -100,14 +99,14 @@ namespace Valuable
   { 
     if(ok) *ok = true; 
     std::wstring tmp;
-    Radiant::StringUtils::utf8ToStdWstring(tmp, m_value);
+    Radiant::StringUtils::utf8ToStdWstring(tmp, Base::m_value);
     return tmp; 
   }
 
   template<class T>
   bool ValueStringT<T>::set(const std::string & v) 
   { 
-    m_value = T(v); 
+    Base::m_value = T(v);
     STD_EM;
     return true; 
   }
@@ -134,10 +133,11 @@ namespace Valuable
   template<>
   ValueStringT<std::wstring>::ValueStringT(HasValues * parent, const std::string & name,
 					   const char * v, bool transit)
-    : ValueObject(parent, name, transit)
+    : Base(parent, name, std::wstring(), transit)
   {
     std::string tmp(v);
     Radiant::StringUtils::utf8ToStdWstring(m_value, tmp); 
+    m_orig = m_value;
   }
 
   /// Assigns a string
