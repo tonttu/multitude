@@ -215,6 +215,10 @@ namespace Valuable
 
     const T & orig() const { return m_orig; }
 
+    /// Is the value different from the original value
+    // use !( == ) instead of != because != isn't always implemented
+    virtual bool isChanged() const { return !(m_value == m_orig); }
+
   protected:
     T m_value;
     T m_orig;

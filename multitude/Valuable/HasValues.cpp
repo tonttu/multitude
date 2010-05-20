@@ -115,7 +115,7 @@ namespace Valuable
 
   bool HasValues::saveToFileXML(const char * filename)
   {
-    bool ok = Serializer::serialize(filename, this);
+    bool ok = Serializer::serializeXML(filename, this);
     if (!ok) {
       Radiant::error("HasValues::saveToFileXML # object failed to serialize");
     }

@@ -202,11 +202,12 @@ namespace Valuable
       return deserialize<T>(e);
     }
 
-    /// Serialize object to file
+    /// Serialize object to a XML file
     template <typename T>
-    inline bool serialize(const std::string & filename, T t)
+    inline bool serializeXML(const std::string & filename, T t,
+                            SerializationOptions::Options opts = SerializationOptions::DEFAULTS)
     {
-      XMLArchive archive;
+      XMLArchive archive(opts);
       ArchiveElement & e = serialize(archive, t);
       if(e.isNull()) {
         return false;
@@ -215,9 +216,9 @@ namespace Valuable
       return archive.writeToFile(filename.c_str());
     }
 
-    /// Deserialize object from file
+    /// Deserialize object from a XML file
     template <typename T>
-    inline T deserialize(const std::string & filename)
+    inline T deserializeXML(const std::string & filename)
     {
       XMLArchive archive;
 
