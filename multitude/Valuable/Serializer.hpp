@@ -62,6 +62,37 @@ namespace Valuable
                     ? sizeof(Type::serializable_trait) : sizeof(test<T>(0)._) };
     };
 
+    // FactoryInfo<T>::have_create is true, if there is T* T::create(ArchiveElement &)
+    template <typename T> struct FactoryInfo {
+      typedef T * (*Func)(ArchiveElement &);
+      template <Func> struct Test {};
+      template <class C> static char test(Test<&C::create>*);
+      template <class C> static long test(...);
+      static const bool have_create = sizeof(test<T>(0)) == sizeof(char);
+    };
+
+    /// Creator<T>::func() will return a pointer to a function of type T * (*)(ArchiveElement &)
+    /// that can create and deserialize instances of T. If there is a static method T::create
+    /// that is correct type, then it is used. Otherwise we have a default implementation that
+    /// just calls default constuctor and deserialize(element).
+    ///
+    /// Typical use: T * t = Creator<T>::func()(element);
+    template <typename T, bool have_create = FactoryInfo<T>::have_create> struct Creator
+    {
+      inline static typename FactoryInfo<T>::Func func() { return &create; }
+      static T * create(ArchiveElement & element)
+      {
+        T * t = new T();
+        t->deserialize(element);
+        return t;
+      }
+    };
+
+    template <typename T> struct Creator<T, true>
+    {
+      inline static typename FactoryInfo<T>::Func func() { return &T::create; }
+    };
+
     template <typename T>
     ArchiveElement & serialize(Archive &archive, T t);
 
@@ -76,7 +107,7 @@ namespace Valuable
     template <typename T, int type_id = Trait<T>::type>
     struct Impl
     {
-      static ArchiveElement & serialize(Archive &archive, T & t)
+      inline static ArchiveElement & serialize(Archive &archive, T & t)
       {
         ArchiveElement & elem = archive.createElement(typeid(t).name());
         elem.set(Radiant::StringUtils::stringify(t));
@@ -95,7 +126,7 @@ namespace Valuable
     template <typename T>
     struct Impl<T, Type::serializable>
     {
-      static ArchiveElement & serialize(Archive &doc, T & t)
+      inline static ArchiveElement & serialize(Archive &doc, T & t)
       {
         return t.serialize(doc);
       }
@@ -111,23 +142,21 @@ namespace Valuable
     template <typename T>
     struct Impl<T*, Type::serializable>
     {
-      static ArchiveElement & serialize(Archive & archive, T * t)
+      inline static ArchiveElement & serialize(Archive & archive, T * t)
       {
         return t->serialize(archive);
       }
 
       inline static T * deserialize(ArchiveElement & element)
       {
-        T * t = new T;
-        t->deserialize(element);
-        return t;
+        return Creator<T>::func()(element);
       }
     };
 
     template <typename T>
     struct Impl<T, Type::pair>
     {
-      static ArchiveElement & serialize(Archive & archive, T & pair)
+      inline static ArchiveElement & serialize(Archive & archive, T & pair)
       {
         ArchiveElement & elem = archive.createElement("pair");
         elem.add(Serializer::serialize(archive, pair.first));
@@ -175,7 +204,7 @@ namespace Valuable
 
     /// Serialize object to file
     template <typename T>
-    bool serialize(const std::string & filename, T t)
+    inline bool serialize(const std::string & filename, T t)
     {
       XMLArchive archive;
       ArchiveElement & e = serialize(archive, t);
