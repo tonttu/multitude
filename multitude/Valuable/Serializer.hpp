@@ -1,7 +1,6 @@
 #ifndef VALUABLE_SERIALIZER_HPP
 #define VALUABLE_SERIALIZER_HPP
 
-#include <Valuable/Export.hpp>
 #include "DOMElement.hpp"
 #include "DOMDocument.hpp"
 #include "ValueObject.hpp"
@@ -80,7 +79,7 @@ namespace Valuable
     template <typename T, bool have_create = FactoryInfo<T>::have_create> struct Creator
     {
       inline static typename FactoryInfo<T>::Func func() { return &create; }
-      static T * create(ArchiveElement & element)
+      inline static T * create(ArchiveElement & element)
       {
         T * t = new T();
         t->deserialize(element);

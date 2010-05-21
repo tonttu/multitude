@@ -1,8 +1,9 @@
 #ifndef ARCHIVE_HPP
 #define ARCHIVE_HPP
 
-#include <Valuable/DOMDocument.hpp>
-#include <Valuable/DOMElement.hpp>
+#include "DOMDocument.hpp"
+#include "DOMElement.hpp"
+#include "Export.hpp"
 
 #include <cassert>
 
@@ -13,14 +14,14 @@ namespace Valuable
   /**
    * Options that define the behaviour of the (de)serialize() methods.
    */
-  class SerializationOptions
+  class VALUABLE_API SerializationOptions
   {
   public:
     enum Options { DEFAULTS = 0, ONLY_CHANGED = 1 };
 
     SerializationOptions(Options options = DEFAULTS);
 
-    bool checkFlag(unsigned int flag) { return (m_options & flag) == flag; }
+    inline bool checkFlag(unsigned int flag) { return (m_options & flag) == flag; }
   protected:
     Options m_options;
   };
@@ -42,7 +43,7 @@ namespace Valuable
    * in case of errors or similar. It can be created / returned by using
    * Archive::emptyElement().
    */
-  class ArchiveElement
+  class VALUABLE_API ArchiveElement
   {
   protected:
     /// ArchiveElements should not be freed when they are handled as plain
@@ -51,7 +52,7 @@ namespace Valuable
 
   public:
     /// Child iterator for ArchiveElement children
-    class Iterator
+    class VALUABLE_API Iterator
     {
     public:
       virtual ~Iterator();
@@ -124,7 +125,7 @@ namespace Valuable
    *
    * Archive has one "root" ArchiveElement, that may have more child elements.
    */
-  class Archive : public SerializationOptions
+  class VALUABLE_API Archive : public SerializationOptions
   {
   public:
     Archive(Options options = DEFAULTS);
