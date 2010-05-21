@@ -54,6 +54,7 @@ namespace Luminous {
       GLRESOURCE_ENSURE(T, obj, this, rs);
       return *obj;
     }
+
   };
 
 } // namespace

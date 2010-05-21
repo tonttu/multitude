@@ -26,9 +26,9 @@
 namespace Luminous
 {
   /// Converts OpenGL texture internal format enum into human-readable string
-  const char * glInternalFormatToString(GLint format);
+  LUMINOUS_API const char * glInternalFormatToString(GLint format);
   /// Converts OpenGL texture format enum into human-readable string
-  const char * glFormatToString(GLenum format);
+  LUMINOUS_API const char * glFormatToString(GLenum format);
 
   /// Converts OpenGL error into a human-readalbe string
   LUMINOUS_API void glErrorToString(const std::string & msg = __FILE__, int line = __LINE__);
