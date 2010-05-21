@@ -2,6 +2,7 @@
 #define XMLARCHIVE_HPP
 
 #include "Archive.hpp"
+#include "Export.hpp"
 
 namespace Valuable
 {
@@ -10,7 +11,7 @@ namespace Valuable
   /**
    * Wrapper for DOMElement that implements the ArchiveElement interface.
    */
-  class XMLArchiveElement : public ArchiveElement
+  class VALUABLE_API XMLArchiveElement : public ArchiveElement
   {
   public:
     class XMLIterator : public Iterator
@@ -70,7 +71,7 @@ namespace Valuable
    * createElement and owned by XMLArchive. They will be freed only when the
    * XMLArhive object is destroyed.
    */
-  class XMLArchive : public Archive
+  class VALUABLE_API XMLArchive : public Archive
   {
   public:
     /// Creates a new DOMDocument
