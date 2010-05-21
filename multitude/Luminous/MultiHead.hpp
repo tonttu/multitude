@@ -165,14 +165,20 @@ namespace Luminous {
       */
       LUMINOUS_API Nimble::Vector2f windowToGraphics(Nimble::Vector2f loc, int windowheight, bool & insideArea) const;
 
+      /// Returns true if the area is active (graphics will be drawn to it)
       int active() const { return m_active.asInt(); }
 
+      /// Sets the width of a single pixel in centimeters
       void setPixelSizeCm(float sizeCm) { m_pixelSizeCm = sizeCm; }
+      /// Returns the width of a single pixel in centimeters
       float pixelSizeCm() const { return m_pixelSizeCm; }
+      /// Converts centimeters to pixels
       float cmToPixels(float cm) { return cm / m_pixelSizeCm; }
 
+      /// Returns the view transform matrix
       Nimble::Matrix3 viewTransform();
 
+      /// Swaps the width and height of the graphics size
       void swapGraphicsWidthHeight()
       {
         m_graphicsSize = m_graphicsSize.asVector().shuffle();
@@ -206,14 +212,14 @@ namespace Luminous {
       float      m_pixelSizeCm;
     };
 
-    /// One OpenGL window.
-    /** A window is responsible for one OpenGL context. */
+    /** One OpenGL window.
+    A window is responsible for one OpenGL context.*/
     class Window : public Valuable::HasValues
     {
-
     public:
       friend class Area;
 
+      /// Constructs a new window for the given screen
       LUMINOUS_API Window(MultiHead * screen = 0);
       LUMINOUS_API ~Window();
 
@@ -240,10 +246,13 @@ namespace Luminous {
       /// Get one of the areas
       const Area & area(size_t i) const { return * m_areas[i].ptr(); }
 
+      /// Returns the union of the areas' graphics bounds
       LUMINOUS_API Nimble::Rect graphicsBounds() const;
 
+      /// Sets the seam for each area
       LUMINOUS_API void setSeam(float seam);
 
+      /// Adds an area to the window
       void addArea(Area * a) { m_areas.push_back(a); }
 
       /// Location of the window on the computer display
@@ -271,9 +280,10 @@ namespace Luminous {
       /// Should the window be resizeable
       bool resizeable() const { return ((m_resizeable.asInt() == 0) ? false : true); }
 
+      /// Sets the width of a pixel in centimeters to each area inside this window
       LUMINOUS_API void setPixelSizeCm(float sizeCm);
 
-    protected:
+    private:
       LUMINOUS_API virtual bool readElement(Valuable::DOMElement ce);
 
       MultiHead                *m_screen;
@@ -322,8 +332,6 @@ namespace Luminous {
     /// Returns the size of the total display in graphics pixels
     Nimble::Vector2i size()
     { return Nimble::Vector2i(width(), height()); }
-    LUMINOUS_API float seam();
-    LUMINOUS_API void setSeam(float seam);
 
     /// Total width of the display area, in graphics pixels.
     LUMINOUS_API int width();
@@ -340,9 +348,10 @@ namespace Luminous {
     /// Returns true if the edited flag has been set
     bool isEdited() const { return m_edited; }
 
+    /// Returns the gamma value used for edge blending with projector setups.
     float gamma() const { return m_gamma; }
 
-  protected:
+  private:
     LUMINOUS_API virtual bool readElement(Valuable::DOMElement ce);
 
     std::vector<Radiant::RefPtr<Window> > m_windows;

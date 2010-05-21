@@ -253,7 +253,7 @@ namespace Luminous {
 
   Nimble::Rect MultiHead::Window::graphicsBounds() const
   {
-    if(!m_areas.size())
+    if(m_areas.empty())
       return Nimble::Rect(0,0, 1, 1);
 
     Rect r = m_areas[0].ptr()->graphicsBounds();
@@ -499,21 +499,6 @@ namespace Luminous {
     }
 
     return r;
-  }
-
-  float MultiHead::seam()
-  {
-    assert(areaCount() > 0);
-
-    return area(0).maxSeam();
-  }
-
-  void MultiHead::setSeam(float seam)
-  {
-    assert(areaCount() > 0);
-
-    for(size_t i = 0; i < m_windows.size(); i++)
-      m_windows[i].ptr()->setSeam(seam);
   }
 
   int MultiHead::width()

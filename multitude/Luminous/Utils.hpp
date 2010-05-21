@@ -30,11 +30,11 @@ namespace Luminous {
   /// OpenGL utility functions
   /** This class has functions for drawing various simple primitives -
       circles, lines, textured rectangles, etc.*/
-  /// @todo deprecate, do new things in RenderContext
+  /// @deprecated use RenderContext instead
   class LUMINOUS_API Utils
   {
   public:
-
+/// @cond
     static void blendCenterSeamHorizontal(int w, int h,
                       int seamWidth,
                       bool withGrid = false);
@@ -282,6 +282,7 @@ namespace Luminous {
 
   };
 
+  /// @endcond
 }
 
 #endif

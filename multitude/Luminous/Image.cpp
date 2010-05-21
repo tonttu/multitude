@@ -624,45 +624,6 @@ dest = *this;
 #endif
 }
 */
-  /// @todo currently ignores alpha channel
-  void Image::sample(float x1, float y1, float x2, float y2, Image & dest, int destX, int destY) const
-  {
-    int begX = (int)x1;
-    int begY = (int)y1;
-    int endX = (int)x2;
-    int endY = (int)y2;
-
-    int nc = m_pixelFormat.numChannels();
-
-    for(int y = begY; y < endY; y++) {
-      for(int x = begX; x < endX; x++) {
-
-        float w = computeWeight(x, y, x1, y1, x2, y2);
-
-        assert(w > 0.0f && w <= 1.0f);
-
-        unsigned int dstOffset = destY * dest.width() + destX;
-        unsigned int srcOffset = y * m_width + x;
-
-        for(int c = 0; c < nc; c++)
-          dest.m_data[nc * dstOffset + c] += (unsigned char)(w * m_data[nc * srcOffset + c]);
-      }
-    }
-  }
-
-
-  float Image::computeWeight(int x, int y, float x1, float y1, float x2, float y2) const
-  {
-    float sx = (x < x1 ? x1 : x);
-    float sy = (y < y1 ? y1 : y);
-
-    x++; y++;
-
-    float ex = (x < x2 ? x : x2);
-    float ey = (y < y2 ? y : y2);
-
-    return (ex - sx) * (ey - sy);
-  }
 
   bool Image::ping(const char * filename, ImageInfo & info)
   {

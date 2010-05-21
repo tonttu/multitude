@@ -36,14 +36,6 @@ namespace Luminous
   Task::~Task()
   {}
 
-  Radiant::Mutex * Task::generalMutex()
-  {
-    if(m_host)
-      return m_host->generalMutex();
-
-    return 0;
-  }
-
   void Task::initialize()
   {}
 

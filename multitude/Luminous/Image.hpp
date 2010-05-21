@@ -47,8 +47,7 @@ namespace Luminous
       It provides minimal image processing support (resizing).
 
       The image data is stored in a single, straightforward buffer.
-  */
-  /// @todo Split this into two classes, so that "Image" does not inherit ContextVariableT
+  */  
   class LUMINOUS_API Image
   {
   public:
@@ -137,11 +136,6 @@ namespace Luminous
     /// @return alpha of the given pixel or 255 if image does not have alpha channel
     unsigned char pixelAlpha(Nimble::Vector2 relativeCoord) const;
 
-  protected:
-
-    void sample(float x1, float y1, float x2, float y2, Image & dest, int destX, int destY) const;
-    float computeWeight(int x, int y, float x1, float y1, float x2, float y2) const;
-
   private:
 
     int m_width;
@@ -150,6 +144,9 @@ namespace Luminous
     unsigned char* m_data;
   };
 
+  /** ImageTex provides an easy way to create OpenGL textures from images in a
+  way that handles multiple rendering contexts.
+  */
   class LUMINOUS_API ImageTex : public Luminous::Image, public Luminous::ContextVariableT<Luminous::Texture2D>
   {
   public:

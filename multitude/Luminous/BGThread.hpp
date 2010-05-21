@@ -65,25 +65,11 @@ namespace Luminous
     /// Returns the number of tasks this thread is handling
     unsigned taskCount();
 
-    /** This method returns a mutex that Task objects and their
-    clients can use to perform temporary mutex locking.
-
-    This mutex is provided so that one can do locking related to
-    accessing the tasks, without the need to create a separate
-    mutex for each class. It is assumed that in general the mutex
-    is going to be used by few threads only - the background
-    thread and one or few client threads.
-
-    BGThread does not use this mutex for anything.
-    */
-    Radiant::Mutex * generalMutex();
-
   private:
     virtual void childLoop();
 
     Task * pickNextTask(Radiant::TimeStamp & wait);
 
-    Radiant::MutexAuto m_generalMutex;
     Radiant::MutexAuto m_mutex;
     Radiant::MutexAuto m_mutexWait;
     Radiant::Condition m_wait;

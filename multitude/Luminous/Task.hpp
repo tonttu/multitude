@@ -80,8 +80,6 @@ namespace Luminous
       { m_scheduled = Radiant::TimeStamp::getTime() + 
           Radiant::TimeStamp::createSecondsD(seconds); }
 
-    Radiant::Mutex * generalMutex();
-
     protected:
        /// Initialize the task. Called by BGThread before the task is processed
       virtual void initialize();
