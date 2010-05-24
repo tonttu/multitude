@@ -14,6 +14,7 @@ namespace Valuable
   class VALUABLE_API XMLArchiveElement : public ArchiveElement
   {
   public:
+    /// Iterator for XMLArchiveElement children
     class XMLIterator : public Iterator
     {
     public:
@@ -37,6 +38,7 @@ namespace Valuable
       bool m_valid;
     };
 
+    /// Creates a new wrapper object for given DOMElement object
     XMLArchiveElement(DOMElement element);
     virtual ~XMLArchiveElement();
 
@@ -57,9 +59,11 @@ namespace Valuable
     /// Returns a pointer to m_element
     DOMElement * xml();
 
+    /// @cond
     static XMLArchiveElement s_emptyElement;
+    /// @endcond
 
-  protected:
+  private:
     std::list<XMLIterator> m_iterators;
     DOMElement m_element;
   };
@@ -80,6 +84,7 @@ namespace Valuable
     virtual ~XMLArchive();
 
     ArchiveElement & createElement(const char * name);
+    /// Wraps the given DOMElement to XMLArchiveElement
     XMLArchiveElement & createElement(const DOMElement & element);
 
     ArchiveElement & emptyElement();
@@ -94,7 +99,7 @@ namespace Valuable
     /// Returns m_document.ptr()
     DOMDocument * xml();
 
-  protected:
+  private:
     std::list<XMLArchiveElement> m_elements;
     Radiant::RefPtr<DOMDocument> m_document;
   };

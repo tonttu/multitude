@@ -17,12 +17,18 @@ namespace Valuable
   class VALUABLE_API SerializationOptions
   {
   public:
-    enum Options { DEFAULTS = 0, ONLY_CHANGED = 1 };
+    /// Serialization bitflags
+    enum Options { DEFAULTS = 0,    /// Normal behaviour, serialize everything
+                   ONLY_CHANGED = 1 /// Serialize only values that are different from the original values
+                 };
 
+    /// Construct an options object with given flags.
     SerializationOptions(Options options = DEFAULTS);
 
+    /// Returns true if given flag is enabled with in the options.
     inline bool checkFlag(unsigned int flag) { return (m_options & flag) == flag; }
   protected:
+    /// Actual bitmask of flags
     Options m_options;
   };
 
@@ -128,6 +134,8 @@ namespace Valuable
   class VALUABLE_API Archive : public SerializationOptions
   {
   public:
+    /// Creates a new Archive and initializes the SerializationOptions with given options.
+    /// @todo Options should be uint32?
     Archive(Options options = DEFAULTS);
     /// Destructor should also delete all ArchiveElements this Archive owns
     virtual ~Archive();
