@@ -280,6 +280,11 @@ namespace Luminous {
       /// Should the window be resizeable
       bool resizeable() const { return ((m_resizeable.asInt() == 0) ? false : true); }
 
+      /// X11 display number for threaded rendering, -1 if not specified
+      int displaynumber() const { return m_displaynumber.asInt(); }
+      /// X11 screen number for threaded rendering, -1 if not specified
+      int screennumber() const { return m_screennumber.asInt(); }
+
       /// Sets the width of a pixel in centimeters to each area inside this window
       LUMINOUS_API void setPixelSizeCm(float sizeCm);
 
@@ -292,6 +297,8 @@ namespace Luminous {
       Valuable::ValueInt        m_frameless;
       Valuable::ValueInt        m_fullscreen;
       Valuable::ValueInt        m_resizeable;
+      Valuable::ValueInt        m_displaynumber; // for X11
+      Valuable::ValueInt        m_screennumber; // for X11
       /// Pixel size in centimeters
       float      m_pixelSizeCm;
 

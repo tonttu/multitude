@@ -234,6 +234,8 @@ namespace Luminous {
       m_frameless(this, "frameless", 1),
       m_fullscreen(this, "fullscreen", 0),
       m_resizeable(this, "resizeable", 0),
+      m_displaynumber(this, "displaynumber", -1),
+      m_screennumber(this, "screennumber", -1),
       m_pixelSizeCm(0.1f)
   {
   }
