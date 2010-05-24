@@ -31,26 +31,41 @@ namespace Poetic
     public:
       virtual ~GPUFont() {}
 
+      /// Returns the CPU font for this GPU font
       virtual CPUFont * cpuFont() = 0;
 
+      /// Renders a string
       void render(const char * str);
+      /// @copydoc render
       void render(const char * str, Nimble::Vector2 loc);
+      /// @copydoc render
       void render(const char * str, float scale, Nimble::Vector2 loc);
+      /// @copydoc render
       void render(const char * str, const Nimble::Matrix3 & transform);
+      /// @copydoc render
       void render(const char * str, float x, float y);
+      /// @copydoc render
       void render(const char * str, int n, const Nimble::Matrix3 & transform);
 
+      /// @copydoc render
       void render(const std::string & str);
+      /// @copydoc render
       void render(const std::string & str, const Nimble::Matrix3 & transform);
+      /// @copydoc render
       void render(const std::string & str, const Nimble::Vector2 & location);
 
+      /// @copydoc render
       void render(const std::wstring & str);
+      /// @copydoc render
       void render(const std::wstring & str, const Nimble::Matrix3 & transform);
+      /// @copydoc render
       void render(const std::wstring & str, const Nimble::Vector2 & location);
 
-
+      /// @copydoc render
       void render(const wchar_t * str);
+      /// @copydoc render
       void render(const wchar_t * str, const Nimble::Matrix3 & transform);
+      /// @copydoc render
       void render(const wchar_t * str, int n,
                   const Nimble::Matrix3 & transform);
 
@@ -65,10 +80,13 @@ namespace Poetic
       void renderCentered(const wchar_t * str,
 			  const Nimble::Matrix3 & transform);
 
+      /// Renders the given string as lines. Used to approximate text that is too small to read.
       void renderLines(const char * str, Nimble::Vector2 loc);
     protected:
       // The actual rendering methods, override these in derived classes
+      /// The actual rendering function implemented in derived classes.
       virtual void internalRender(const char * str, int n, const Nimble::Matrix3 & transform) = 0;
+      /// @copydoc internalRender
       virtual void internalRender(const wchar_t * str, int n, const Nimble::Matrix3 & transform) = 0;
   };
 

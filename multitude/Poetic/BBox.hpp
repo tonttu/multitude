@@ -29,6 +29,7 @@ namespace Poetic
   {
     public:
       BBox();
+      /// Constructs a bounding box for the given glyph
       BBox(FT_GlyphSlotRec_ * glyph);
   };
 

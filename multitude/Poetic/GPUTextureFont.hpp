@@ -29,6 +29,7 @@ namespace Poetic
   class POETIC_API GPUTextureFont : public GPUFontBase
   {
   public:
+    /// Constructs a new GPU texture font
     GPUTextureFont(CPUFontBase * cpuFont);
     virtual ~GPUTextureFont();
 

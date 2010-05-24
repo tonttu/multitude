@@ -24,6 +24,7 @@ namespace Poetic
   class CPUBitmapGlyph : public Glyph
   {
     public:
+      /// Constructs a new bitmap for the given glyph
       CPUBitmapGlyph(FT_GlyphSlotRec_ * glyph);
       virtual ~CPUBitmapGlyph();
 

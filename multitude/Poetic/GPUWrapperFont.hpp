@@ -28,6 +28,7 @@ namespace Poetic
   class GPUWrapperFont : public GPUFont
   {
   public:
+    /// Constructs a new GPU wrapper font
     GPUWrapperFont(GPUManagedFont * gf, CPUWrapperFont * cf);
     ~GPUWrapperFont();
 

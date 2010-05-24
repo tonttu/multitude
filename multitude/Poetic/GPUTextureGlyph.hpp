@@ -28,6 +28,7 @@ namespace Poetic
   class GPUTextureGlyph : public Glyph
   {
     public:
+      /// Constructs a new texture glyph
       GPUTextureGlyph(const CPUBitmapGlyph * glyph, int texId, int xOff, int yOff, GLsizei width, GLsizei height);
       virtual ~GPUTextureGlyph();
 
