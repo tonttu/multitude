@@ -35,12 +35,17 @@ namespace Poetic
   class POETIC_API FontManager : public Patterns::Singleton<FontManager>
   {
     public:
+      /// Returns a font that matches the given name
       CPUWrapperFont * getFont(const std::string & name);
 
+      /// Locates a file by searching through the FontManager's resource paths
       std::string locate(const std::string & name);
+      /// Returns the ResourceLocator of the FontManager
       Radiant::ResourceLocator & locator();
 
+      /// @cond
       Luminous::VertexBuffer * fontVBO(GLuint textureId);
+      /// @endcond
 
     private:
       FontManager();

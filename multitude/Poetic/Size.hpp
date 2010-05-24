@@ -28,19 +28,23 @@ namespace Poetic
   {
     public:
       Size();
-//      ~Size();
 
+      /// Sets the character dimensions of the given face object
       bool charSize(FT_FaceRec_ ** face, int pointSize, int xRes, int yRes);
-
+      /// Returns the character size
       int charSize() const { return m_size; }
 
+      /// Returns the ascender height
       float ascender() const;
+      /// Returns the descender height
       float descender() const;
 
+      /// Returns the width
       float width() const;
+      /// Returns the height
       float height() const;
-      float underline() const { return 0.f; }
 
+      /// Returns the last error
       int error() const { return m_error; }
 
     private:

@@ -28,21 +28,29 @@ namespace Poetic
   class Face
   {
     public:
+      /// Constructs a new face from the given .ttf file
       Face(const char * fontFilePath);
       virtual ~Face();
 
+      /// Returns the freetype face
       FT_FaceRec_ ** freetype() const { return m_ftFace; }
 
+      /// Returns the kerning between two characters
       Nimble::Vector2 kernAdvance(unsigned int index1, unsigned int index2);
 
+      /// Returns the freetype glyph for the given character
       FT_GlyphSlotRec_ * glyph(unsigned int index, signed int flags);
     
+      /// Returns the number of glyphs in the face
       int numGlyphs() const { return m_numGlyphs; }
   
+      /// Returns the character size for the face
       const Size & size(int size, int res);
 
+      /// Returns the last error
       int error() const { return m_error; }
 
+      /// Returns the path for the file that this face was loaded from
       std::string fontFilePath() const { return m_fontFilePath; }
 
     private:
