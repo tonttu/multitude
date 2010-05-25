@@ -106,9 +106,9 @@ unix {
     SOURCES += TCPSocketQt.cpp
     SOURCES += UDPSocketQt.cpp
     SOURCES += VideoCamera1394.cpp
-    SOURCES += ConditionPT.cpp
-    SOURCES += MutexPT.cpp
-    SOURCES += ThreadPT.cpp
+    SOURCES += ConditionPt.cpp
+    SOURCES += MutexPt.cpp
+    SOURCES += ThreadPt.cpp
 
     LIBS += -lpthread $$LIB_RT -ldl
 
