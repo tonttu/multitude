@@ -26,9 +26,9 @@
 
 namespace Radiant
 {
-    /// @todo move to Color class
 
   /// ColorUtils contains color conversion utilities
+  /// @todo move to Color class
   namespace ColorUtils
   {
 
