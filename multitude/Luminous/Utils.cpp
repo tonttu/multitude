@@ -1242,12 +1242,7 @@ namespace Luminous {
 
     float delta = (toRadians - fromRadians) / lineSegments;
 
-	 // -- JJK: msvc is not C99 compliant
-#ifndef WIN32
-    Vector2f  vertices[lineSegments + 1];
-#else
-	Vector2f* vertices = new Vector2f[lineSegments + 1];
-#endif
+    Vector2f* vertices = new Vector2f[lineSegments + 1];
 
     for(int i = 0; i <= lineSegments; i++)
     {
@@ -1268,10 +1263,7 @@ namespace Luminous {
     glLine(centerx, centery, vertices[0].x, vertices[0].y);
     glLine(centerx, centery, vertices[lineSegments].x, vertices[lineSegments].y);
 
-	// -- JJK 080410: msvc is not C99 compliant
-	#ifdef WIN32
 		delete [] vertices;
-	#endif
   }
 
   void Utils::glFilledSectorf(float centerx, float centery, float radius,
