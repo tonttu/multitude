@@ -37,6 +37,9 @@ namespace Valuable
 
     ValueContainer() {}
 
+    /// Constructs a new container
+    /// @param parent parent object
+    /// @param name name of the value
     ValueContainer(HasValues * parent, const std::string & name)
       : ValueObject(parent, name, false)
     {}

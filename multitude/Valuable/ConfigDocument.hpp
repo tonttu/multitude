@@ -23,7 +23,9 @@
 
 namespace Valuable
 {
-  ///@todo Doc, rename getXyz to xyz
+
+  /// Text document used to configure various settings with key-value pairs.
+  /// @todo Doc, rename getXyz to xyz
   class VALUABLE_API ConfigDocument
   {
   public:
@@ -40,9 +42,13 @@ namespace Valuable
     /// Returns the root configuration element
     ConfigElement &root() { return m_doc; }
 
-    ConfigElement *getConfigElement(std::string elementName);
+    /// Gets the configuration element with the given name
+    /// @param key name of the element
+    /// @return pointer to the element or 0 if element is not found
+    ConfigElement *getConfigElement(std::string key);
+    /// @copydoc getConfigElement
     ConfigElement *getConfigElement(std::string key,std::string value);
-
+    /// Returns the configuration as string
     static std::string getConfigText(ConfigElement e, int recursion = 0);
 
   private:

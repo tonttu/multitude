@@ -34,7 +34,11 @@ namespace Valuable
     /// The original type without const
     typedef T Type;
   };
-  template <typename T> struct remove_const<const T> { typedef T Type; };
+  /// @copydoc remove_const
+  template <typename T> struct remove_const<const T> {
+      /// The original type without const
+      typedef T Type;
+   };
 
   /// XML Serializer namespace that has handles the (de)serialize dispatching
   /** Correct way to save/load object state to/from XML is to use static
@@ -71,6 +75,7 @@ namespace Valuable
     };
 
     /// @cond
+
     /// FactoryInfo<T>::have_create is true, if there is T* T::create(ArchiveElement &)
     template <typename T> struct FactoryInfo {
       typedef T * (*Func)(ArchiveElement &);
@@ -101,6 +106,7 @@ namespace Valuable
     {
       inline static typename FactoryInfo<T>::Func func() { return &T::create; }
     };
+
     /// @endcond
 
     /// Serializes object t to new element that is added to the archive.
@@ -118,6 +124,7 @@ namespace Valuable
     typename remove_const<T>::Type deserializeXML(DOMElement & element);
 
     /// @cond
+
     /// Default implementation for "other" types.
     /// Implementations need to be inside of a struct because of partial template specialization
     template <typename T, int type_id = Trait<T>::type>
@@ -198,6 +205,7 @@ namespace Valuable
                               Serializer::deserialize<B>(b));
       }
     };
+
     /// @endcond
 
     template <typename T>

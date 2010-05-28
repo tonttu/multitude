@@ -200,7 +200,10 @@ namespace Valuable
   {
   public:
     /// Creates a new ValueObjectT and stores the original and current value as a separate variables.
+    /// @param parent parent object
+    /// @param name name of the value
     /// @param v the default/original value of the object
+    /// @param transit ignored
     ValueObjectT(HasValues * parent, const std::string & name, const T & v = T(), bool transit = false)
       : ValueObject(parent, name, transit),
       m_value(v),
@@ -215,6 +218,7 @@ namespace Valuable
     inline const T & operator * () const { return m_value; }
     /// Typecast operator for the wrapped value
     inline operator T & () { return m_value; }
+    /// Typecast operator for the wrapped value
     inline operator const T & () const { return m_value; }
     /// Use the arrow operator to access fields inside the wrapped object.
     inline const T * operator->() const { return &m_value; }

@@ -18,9 +18,11 @@ namespace Valuable
     class XMLIterator : public Iterator
     {
     public:
+      /// Constructs a new iterator
       XMLIterator(XMLArchiveElement & parent);
+      /// Constructs a copy of an iterator
       XMLIterator(const XMLIterator & it);
-
+/// @cond
       operator const void * ();
       ArchiveElement & operator * ();
       ArchiveElement * operator -> ();
@@ -28,7 +30,7 @@ namespace Valuable
       Iterator & operator ++ (int);
       bool operator == (const Iterator & other);
       bool operator != (const Iterator & other);
-
+/// @endcond
     private:
       XMLArchiveElement & m_parent;
       DOMElement::NodeList m_nodes;
