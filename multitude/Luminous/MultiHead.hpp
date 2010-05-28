@@ -277,13 +277,19 @@ namespace Luminous {
       bool frameless() const { return ((m_frameless.asInt() == 0) ? false : true); }
       /// Should the window be full-screen
       bool fullscreen() const { return ((m_fullscreen.asInt() == 0) ? false : true); }
+      /// Sets the fullscreen flag
+      void setFullscreen(bool f) { m_fullscreen = f; }
       /// Should the window be resizeable
       bool resizeable() const { return ((m_resizeable.asInt() == 0) ? false : true); }
 
       /// X11 display number for threaded rendering, -1 if not specified
       int displaynumber() const { return m_displaynumber.asInt(); }
+      /// Sets X11 display number for threaded rendering, -1 disables
+      void setSisplaynumber(int s) { m_displaynumber = s; }
       /// X11 screen number for threaded rendering, -1 if not specified
       int screennumber() const { return m_screennumber.asInt(); }
+      /// Sets X11 screen number for threaded rendering, -1 disables
+      void setScreennumber(int s) { m_screennumber = s; }
 
       /// Sets the width of a pixel in centimeters to each area inside this window
       LUMINOUS_API void setPixelSizeCm(float sizeCm);
@@ -314,14 +320,6 @@ namespace Luminous {
     /** This method traverses all the windows to find the area with
     given index. */
     LUMINOUS_API Area & area(size_t i, Window ** winptr = 0);
-    /// Create 1 window with 1 area.
-    LUMINOUS_API void makeSingle(int x, int y, int w, int h);
-    /// Create 1 window with 2 areas horizontally side by side.
-    LUMINOUS_API void makeDouble(int x, int y, int w, int h, float seam);
-    /// Create 1 window with 4 rotated areas
-    /** This is useful for making a setup with four
-        projectors/displays that are aligned in portrait mode. */
-    LUMINOUS_API void makeQuadSideways(int x, int y, int w, int h, float seam);
 
     /// The number of windows
     size_t windowCount() const { return m_windows.size(); }
