@@ -70,6 +70,9 @@ namespace Luminous
     if(it == m_resources.end())
       return 0;
 
+    // delete if getResource not called for 120 frames
+    deleteAfter(it->second, 100);
+
     return (*it).second;
   }
 
@@ -119,15 +122,17 @@ namespace Luminous
                   Luminous::GarbageCollector::size());
     */
     eraseOnce();
-
     m_frame++;
-    
+
+    // memory usage counters don't tell much, destroy resources always
+    m_comfortableGPURAM = 0;
 
     for(iterator it = m_resources.begin();
 	(m_consumingBytes >= m_comfortableGPURAM) && 
 	  (it != m_resources.end()); ) {
       
       GLResource * r = (*it).second;
+
 
       if(r->m_deleteOnFrame && r->m_deleteOnFrame < m_frame) {
 	
@@ -249,20 +254,12 @@ namespace Luminous
       *a = (*it).second.m_area;
   }
   
+  /// add globally removed objects
   void GLResources::eraseOnce()
   {
-    GarbageCollector::mutex().lock();
-    for(GarbageCollector::iterator it = GarbageCollector::begin();
-    it != GarbageCollector::end(); it++) {
-
-      GarbageCollector::mutex().unlock();
-      const Collectable * key = GarbageCollector::getObject(it);
-      eraseResource(key);
-
-      GarbageCollector::mutex().lock();
+    const GarbageCollector::container & objs = GarbageCollector::previousObjects();
+    for(GarbageCollector::iterator it = objs.begin(); it != objs.end(); ++it) {
+      eraseResource(*it);
     }
-    GarbageCollector::mutex().unlock();
   }
-
-
 }
