@@ -35,6 +35,8 @@
 #include <QtGui/QMouseEvent>
 #include <QtGui/QPainter>
 
+#include <cmath>
+
 namespace FireView {
 
   using namespace Radiant;
@@ -367,6 +369,9 @@ namespace FireView {
       m_halfToThird(AS_HALF),
       m_doAnalysis(false),
       m_imageScale(1),
+      m_doFocus(false),
+      m_focusidx(0),
+      m_peakidx(0),
       m_foo(300, 100, QImage::Format_ARGB32)
   {
     // QTimer::singleShot(1000, this, SLOT(locate()));
@@ -380,6 +385,9 @@ namespace FireView {
 
     connect(t, SIGNAL(timeout()), this, SLOT(triggerAnalysis()));
     t->start(1000);
+
+    memset(m_focus, 0, sizeof(m_focus));
+    memset(m_peak, 0, sizeof(m_peak));
   }
 
   CamView::~CamView()
@@ -545,6 +553,8 @@ namespace FireView {
 
       if(m_doAnalysis)
         doAnalysis();
+      if(m_doFocus)
+        checkFocus();
     }
 
 
@@ -649,8 +659,41 @@ namespace FireView {
                    warningtext);
       }
     }
-    glColor3f(1.0f, 1.0f, 1.0f);
 
+    if(m_doFocus) {
+      const int n = sizeof(m_focus)/sizeof(*m_focus);
+      float focus = 0;
+      float focus_peak = 0.0f;
+      for(int i = m_focusidx+n-10; i < m_focusidx+n; ++i) focus += m_focus[i%n];
+
+      focus *= 7.0f/10.0f;
+      m_peak[m_peakidx++ % 100] = focus;
+      for(int i = 0; i < 100; ++i) if (m_peak[i] > focus_peak) focus_peak = m_peak[i];
+
+      glColor3f(0.5f, 0.5f, 1.0f);
+      glBegin(GL_QUADS);
+      glVertex2f(0.1f*dw, dh);
+      glVertex2f(0.2f*dw, dh);
+      glVertex2f(0.2f*dw, dh-focus);
+      glVertex2f(0.1f*dw, dh-focus);
+
+      glColor3f(1.0f, 1.0f, 1.0f);
+      glVertex2f(0.09f*dw, dh-focus_peak+1);
+      glVertex2f(0.21f*dw, dh-focus_peak+1);
+      glVertex2f(0.21f*dw, dh-focus_peak);
+      glVertex2f(0.09f*dw, dh-focus_peak);
+      glEnd();
+
+      /*glLineWidth(3);
+      glColor3f(0.0f, 1.0f, 0.0f);
+      glBegin(GL_LINE_STRIP);
+      for(int i = 0; i < n; ++i) {
+        glVertex2f(n/2.0f+i/n*dw, dh-m_focus[i]*7.0f);
+      }
+      glEnd();*/
+    }
+
+    glColor3f(1.0f, 1.0f, 1.0f);
     char state[64];
     sprintf(state, "%.4f FPS %d frames", m_thread.m_lastCheckFps,
             m_thread.m_frameCount);
@@ -799,5 +842,40 @@ namespace FireView {
     }
 
     m_doAnalysis = false;
+  }
+
+  void CamView::checkFocus()
+  {
+    Rect a = getEffectiveArea();
+
+    Vector2 span = a.span();
+
+    Radiant::VideoImage frame = m_thread.m_frame; // Already mutex locked, safe access
+
+    float size = 1.0f / 8.0f;
+
+    int ly = (int) (a.low().y + span.y * (0.5f - 0.5f*size));
+    int hy = (int) (a.low().y + span.y * (0.5f + 0.5f*size));
+    int lx = (int) (a.low().x + span.x * (0.5f - 0.5f*size));
+    int hx = (int) (a.low().x + span.x * (0.5f + 0.5f*size));
+
+    const int r = frame.m_planes[0].m_linesize;
+    long gsum = 0;
+    for(int y = ly; y <= hy; y++) {
+      const uint8_t * pixel = frame.m_planes[0].line(y) + lx;
+      const uint8_t * sentinel = pixel + hx - lx;
+
+      while(pixel <= sentinel) {
+        // sobel operator
+        int gx = 2 * *(pixel+1) + *(pixel+1-r) + *(pixel+1+r)
+               - 2 * *(pixel-1) - *(pixel-1-r) - *(pixel-1+r);
+        int gy = 2 * *(pixel+r) + *(pixel+r-1) + *(pixel+r+1)
+               - 2 * *(pixel-r) - *(pixel-r-1) - *(pixel-r+1);
+        gsum += std::sqrt(gx*gx + gy*gy);
+        ++pixel;
+      }
+    }
+
+    m_focus[m_focusidx++ % (sizeof(m_focus) / sizeof(*m_focus))] = float(gsum) / ((hx-lx+1)*(hy-ly+1));
   }
 }

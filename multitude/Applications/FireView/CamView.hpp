@@ -105,6 +105,7 @@ namespace FireView {
     
     Rect getEffectiveArea();
     void doAnalysis();
+    void checkFocus();
 
     class InputThread : public Radiant::Thread
     {
@@ -185,6 +186,11 @@ namespace FireView {
     HalfToThird m_halfToThird;
     bool        m_doAnalysis;
     float       m_imageScale;
+
+    bool        m_doFocus;
+    int         m_focusidx, m_peakidx;
+    float       m_focus[100];
+    float       m_peak[100];
 
     QString     m_text;
     Nimble::Vector2i m_textLoc;
