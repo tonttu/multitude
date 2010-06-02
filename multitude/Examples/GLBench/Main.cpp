@@ -12,7 +12,7 @@
 
 using namespace Radiant;
 
-int main(int argc, char ** argv)
+int main(int, char **)
 {
   SDL_Init(SDL_INIT_VIDEO);
 
@@ -69,32 +69,45 @@ int main(int argc, char ** argv)
     glClearColor(1.f, 0.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    info("\nFRAME %d", i);
+
     for(i = 5; i < levels; i++) {
+
       Radiant::TimeStamp t1 = Radiant::TimeStamp::getTime();
 
       for(j = 0; j < texturesperlevel; j++) {
-        // info("DOing tex %d %d", i, j);
         // Create textures without loading:
         textures[j].loadBytes(GL_RGB, images[i].width(), images[i].height(), 0,
                               Luminous::PixelFormat::rgbUByte(), false);
       }
 
-      info("Created %d textures with dimensions %d %d in %.3lf milliseconds per image",
-           texturesperlevel, images[i].width(), images[i].height(), t1.sinceSecondsD() * 1000 / texturesperlevel);
+      double createTime = t1.sinceSecondsD() * 1000 / texturesperlevel;
+
 
       t1 = Radiant::TimeStamp::getTime();
 
       for(j = 0; j < texturesperlevel; j++) {
-        // info("DOing tex %d %d", i, j);
-        // Create textures without loading:
+        // Create textures and load the actual data:
         textures[j].loadBytes(GL_RGB, images[i].width(), images[i].height(),
                               images[i].data(),
                               Luminous::PixelFormat::rgbUByte(), false);
       }
 
-      info("Loaded %d textures with dimensions %d %d in %.3lf milliseconds per image",
-           texturesperlevel, images[i].width(), images[i].height(),
-           t1.sinceSecondsD() * 1000 / texturesperlevel);
+      double loadTime = t1.sinceSecondsD() * 1000 / texturesperlevel;
+
+      t1 = Radiant::TimeStamp::getTime();
+
+      for(j = 0; j < texturesperlevel; j++) {
+        // Create textures and load the actual data:
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, images[i].width(), images[i].height(),
+                        GL_RGB, GL_UNSIGNED_BYTE, images[i].data());
+      }
+
+      double subloadTime = t1.sinceSecondsD() * 1000 / texturesperlevel;
+
+      info("Texture dimensions %d %d, create = %.3lf, load = %.3lf reload = %.3lf milliseconds",
+           images[i].width(), images[i].height(),
+           createTime, loadTime, subloadTime);
 
 
     }
