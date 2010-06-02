@@ -13,10 +13,10 @@ MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat
 
 withbundles = $$(MULTI_BUNDLES)
 
-# Try to guess Win64
+# Try to identify used compiler on Windows (32 vs 64)
 win32 {
-    BITS=$$(PROCESSOR_ARCHITECTURE)
-    contains(BITS,AMD64):CONFIG+=win64
+	COMPILER_OUTPUT=$$system(cl 2>&1)
+	contains(COMPILER_OUTPUT,x64):CONFIG+=win64		
 }
 
 LIB_POETIC = -lPoetic
