@@ -198,7 +198,7 @@ namespace Radiant {
   private:
 
     template <class T>
-    inline T * getPtr(int advance = sizeof(T))
+    inline T * getPtr(size_t advance = sizeof(T))
     { T * tmp = (T*) & m_buf[m_current]; m_current += advance; return tmp; }
     template <class T>
     inline T & getRef()
