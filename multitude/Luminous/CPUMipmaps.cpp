@@ -407,11 +407,11 @@ namespace Luminous {
           s = Nimble::Vector2(s) * scale;
         }
 
-        while(s.x & 0xF) {
-          s.x--;
+        while(s.x & 0xFF) {
+          s.x++;
         }
-        while(s.y & 0xF) {
-          s.y--;
+        while(s.y & 0xFF) {
+          s.y++;
         }
 
         Luminous::ImageTex * im2 = new ImageTex();
