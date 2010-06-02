@@ -19,8 +19,15 @@
 
 #include <map>
 #include <vector>
+#include <algorithm>
 
 namespace VideoDisplay {
+  namespace
+  {
+    /// how many videos to cache
+    /// @see FFVideodebug
+    const int s_MaxCached = 100;
+  }
 
   class FFVideodebug
   {
@@ -188,6 +195,10 @@ namespace VideoDisplay {
       Radiant::GuardStatic g(&__mutex);
 
       video.getAudioParameters( & m_channels, & m_sampleRate, & m_auformat);
+      // remove the item with the smallest timestamp
+      if (__ffcache.size() >= s_MaxCached) {
+        __ffcache.erase(std::min_element(__ffcache.begin(), __ffcache.end(), __ffcache.value_comp()));
+      }
 
       FFVideodebug & vi2 = __ffcache[filename];
 
