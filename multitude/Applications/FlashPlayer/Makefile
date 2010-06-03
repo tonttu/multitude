@@ -452,6 +452,7 @@ test-rpc-%-server.o: $(SRC_PATH)/tests/test-rpc-%.c
 flash-player: flash-player.c
 	$(CC) -o $@ $<
 install-multitouch: flash-player $(npplayer_PROGRAM)
+	mkdir -p $(DESTDIR)$(bindir) $(DESTDIR)$(prefix)/share/applications $(DESTDIR)$(prefix)/share/icons/hicolor/48x48/apps
 	$(INSTALL) -m 755 $(STRIP_OPT) $(npplayer_PROGRAM) $(DESTDIR)$(bindir)/nspluginplayer-mt
 	$(INSTALL) -m 755 $(STRIP_OPT) flash-player $(DESTDIR)$(bindir)/flash-player
 	$(INSTALL) -m 644 flash-player.desktop $(DESTDIR)$(prefix)/share/applications/flash-player.desktop
