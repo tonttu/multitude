@@ -170,37 +170,6 @@ namespace Nimble {
     template <class T>
     inline T Fraction(T x) { return x - (int) x; }
 
-    /// Seeks the maximum value in an vector
-    /** VMax = vector maximum. 
-     */
-    template <class T>
-    inline T VMax(const T * vals, int n)
-    {
-      T v = *vals;
-      const T * sentinel = vals;
-      vals++;
-
-      for(; vals < sentinel; vals++)
-	if(v < *vals) v = * vals;
-
-      return v;
-    }
-
-    /// Seeks the minimum value in an vector
-    /** VMin = vector minimum. */
-    template <class T>
-    inline T VMin(const T * vals, int n)
-    {
-      T v = *vals;
-      const T * sentinel = vals;
-      vals++;
-
-      for(; vals < sentinel; vals++)
-	if(v > *vals) v = * vals;
-
-      return v;
-    }
-
     /** Checks if two (floating point) numbers are close to each
       other.  This function is usually used to check if two
       floating-point numbers are close to each other - the numbers do

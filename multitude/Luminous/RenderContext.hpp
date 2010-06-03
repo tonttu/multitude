@@ -171,6 +171,12 @@ namespace Luminous
     */
     void drawCurve(Nimble::Vector2* controlPoints, float width, const float * rgba=0);
 
+    /** Draws a spline.
+      @arg spline spline to draw
+      @arg width width of the spline
+      @arg rgba color of the spline
+      @arg step step to use when evaluating the spline
+    */
     void drawSpline(Nimble::Splines::Interpolating & spline, float width, const float * rgba=0, float step=1.0f);
     /** Draw a textured rectangle with given color.
 

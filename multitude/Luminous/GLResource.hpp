@@ -129,7 +129,9 @@ namespace Luminous
     /// Returns the number of bytes this object consumes at the moment
     virtual long consumesBytes();
 
+    /// Sets the generation for the resource. Used to determine if a resource is up-to-date for a rendering context.
     void setGeneration(int g) { m_generation = g; }
+    /// Returns the generation of the resource.
     int generation() const { return m_generation; }
 
   protected:

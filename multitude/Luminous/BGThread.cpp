@@ -146,11 +146,6 @@ namespace Luminous
     return m_taskQueue.size();
   }
 
-  Radiant::Mutex * BGThread::generalMutex()
-  {
-    return & m_generalMutex;
-  }
-
 /*
  * For TimeStamps: use Condition::wait(mutex, timeout)
  *

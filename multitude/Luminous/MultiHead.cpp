@@ -234,6 +234,8 @@ namespace Luminous {
       m_frameless(this, "frameless", 1),
       m_fullscreen(this, "fullscreen", 0),
       m_resizeable(this, "resizeable", 0),
+      m_displaynumber(this, "displaynumber", -1),
+      m_screennumber(this, "screennumber", -1),
       m_pixelSizeCm(0.1f)
   {
   }
@@ -253,7 +255,7 @@ namespace Luminous {
 
   Nimble::Rect MultiHead::Window::graphicsBounds() const
   {
-    if(!m_areas.size())
+    if(m_areas.empty())
       return Nimble::Rect(0,0, 1, 1);
 
     Rect r = m_areas[0].ptr()->graphicsBounds();
@@ -343,74 +345,6 @@ namespace Luminous {
   MultiHead::~MultiHead()
   {}
 
-  void MultiHead::makeSingle(int x, int y, int w, int h)
-  {
-    m_windows.clear();
-
-    Area * a = new Area();
-    a->setGeometry(0, 0, w, h);
-
-    Window * wi = new Window();
-    wi->setGeometry(x, y, w, h);
-
-    wi->addArea(a);
-
-    m_windows.push_back(wi);
-  }
-
-  void MultiHead::makeDouble(int x, int y, int w, int h, float seam)
-  {
-    m_windows.clear();
-
-    int w2 = w / 2;
-
-    Area * a1 = new Area();
-    a1->setGeometry(0, 0, w2, h);
-    a1->setSeams(0, seam, 0, 0);
-
-    Area * a2 = new Area();
-    a2->setGeometry(w2, 0, w2, h);
-    a2->setSeams(seam, 0, 0, 0);
-
-    Window * wi = new Window();
-    wi->setGeometry(x, y, w, h);
-
-    wi->addArea(a1);
-    wi->addArea(a2);
-
-    m_windows.push_back(wi);
-  }
-
-  void MultiHead::makeQuadSideways
-      (int x, int y, int w, int h, float seam)
-  {
-    m_windows.clear();
-
-    int w4 = w / 4;
-
-    int visibleWidth = h;
-    int visibleHeight = w4;
-
-    Window * wi = new Window();
-    wi->setGeometry(x, y, w, h);
-
-    for(int i = 0; i < 4; i++) {
-      Area * a = new Area();
-      a->setGeometry(i * w4, 0, w4, h, false);
-      a->setGraphicsGeometry(i * visibleWidth, 0,
-                             visibleWidth, visibleHeight);
-      a->keyStone().rotateVertices();
-      a->keyStone().rotateVertices();
-      a->keyStone().rotateVertices();
-      // a->keyStone().rotateVertices();
-      a->setSeams(i == 0 ? 0 : seam, i == 3 ? 0 : seam, 0, 0);
-
-      wi->addArea(a);
-    }
-
-    m_windows.push_back(wi);
-  }
-
   MultiHead::Window & MultiHead::window(size_t i)
   {
     if(i >= m_windows.size()) {
@@ -499,21 +433,6 @@ namespace Luminous {
     }
 
     return r;
-  }
-
-  float MultiHead::seam()
-  {
-    assert(areaCount() > 0);
-
-    return area(0).maxSeam();
-  }
-
-  void MultiHead::setSeam(float seam)
-  {
-    assert(areaCount() > 0);
-
-    for(size_t i = 0; i < m_windows.size(); i++)
-      m_windows[i].ptr()->setSeam(seam);
   }
 
   int MultiHead::width()

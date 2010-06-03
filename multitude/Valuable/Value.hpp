@@ -11,17 +11,22 @@
 namespace Valuable
 {
 
+  /// Value struct helps finding the correct ValueObject for any type T.
+  /// For example Value<int>::Type == ValueInt
   template <typename T> struct Value
   {
+    /// The actual ValueObject type
     typedef ValueObjectT<T> Type;
   };
 
+  /// @cond
   DefineTypeT(int, ValueIntT);
   DefineTypeT(float, ValueFloatT);
-  /// @todo do these correctly
+  /// @todo do these correctly, that is, with some more generic thing
   DefineType(Nimble::Vector2f, ValueVector2f);
   DefineType(Nimble::Vector3f, ValueVector3f);
   DefineType(Nimble::Vector4f, ValueVector4f);
+  /// @endcond
 
   // Value<int> or Value<Vector4> are just better ways to say Numeric<int> or Vector<Vector4>.
   // ValueObjects with type T can be defined by Value<T>.

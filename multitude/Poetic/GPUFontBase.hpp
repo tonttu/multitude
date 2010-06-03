@@ -30,19 +30,26 @@ namespace Poetic
   class POETIC_API GPUFontBase : public GPUFont
   {
     public:
+      /// Constructs a new GPU font
       GPUFontBase(CPUFontBase * font);
       virtual ~GPUFontBase();
 
+      /// Returns the CPU font
       CPUFont * cpuFont() { return dynamic_cast<CPUFont *> (m_cpuFont); }
 
     protected:
+      /// CPU font that this GPU font uses
       CPUFontBase * m_cpuFont;
 
+      /// Creates a new glyph
       virtual Glyph * makeGlyph(const Glyph * cpuGlyph) = 0;
 
+      /// Callback to notify that the face size has been changed
       virtual void faceSizeChanged();
 
+      /// Performs the actual rendering
       virtual void internalRender(const char * str, int n, const Nimble::Matrix3 & transform, Nimble::Vector2f ** ptr);
+      /// @copydoc internalRender
       virtual void internalRender(const wchar_t * str, int n, const Nimble::Matrix3 & transform, Nimble::Vector2f ** ptr);
 
     private:

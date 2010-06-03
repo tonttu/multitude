@@ -26,8 +26,7 @@
 
 namespace Luminous {
 
-  /// Work in progress
-  /** This is a utility class for mananing shaders. Objects of this type
+  /** This is a utility class for managing shaders. Objects of this type
       can be created in any thread, with or without a valid OpenGL context.
       Valid OpenGL context is only needed when one wants to use use the
       GLSLProgramObject that is bound to this Shader handler.

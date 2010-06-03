@@ -31,10 +31,13 @@ struct FT_LibraryRec_;
 namespace Poetic
 {
 
+  /// Initialize Poetic. This function must be called before using any other functions in the library.
   bool initialize();
   
+  /// Returns a handle to the freetype library
   FT_LibraryRec_ ** freetype();
 
+  /// Returns the last freetype error
   int error();
 }
 

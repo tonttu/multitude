@@ -31,13 +31,18 @@ namespace Poetic
     public:
       CPUManagedFont();
 
+      /// Loads the font from the given .ttf file
       bool load(const char * fontFilePath);
 
+      /// Selects a font by its size
       uint32_t selectFont(float pointSize);
 
+      /// Returns the number of fonts contained by this managed font
       int fontCount() const { return static_cast<int> (m_fonts.size()); }
+      /// Gets the ith font
       CPUFont * getFont(int i);
 
+      /// Gets the metric font (used to do the size calculations)
       CPUFont * getMetricFont() { return m_metricFont; }
 
     private:

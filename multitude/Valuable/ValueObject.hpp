@@ -172,6 +172,7 @@ namespace Valuable
     /// Removes a listener from the listener list
     void removeListener(ValueListener * l) { m_listeners.remove(l); }
 
+    /// Returns true if the current value of the object is different from the original value.
     virtual bool isChanged() const;
 
   protected:
@@ -198,6 +199,11 @@ namespace Valuable
   template <typename T> class ValueObjectT : public ValueObject
   {
   public:
+    /// Creates a new ValueObjectT and stores the original and current value as a separate variables.
+    /// @param parent parent object
+    /// @param name name of the value
+    /// @param v the default/original value of the object
+    /// @param transit ignored
     ValueObjectT(HasValues * parent, const std::string & name, const T & v = T(), bool transit = false)
       : ValueObject(parent, name, transit),
       m_value(v),
@@ -208,19 +214,26 @@ namespace Valuable
 
     virtual ~ValueObjectT() {}
 
-    const T & operator * () const { return m_value; }
+    /// Access the wrapped object with the dereference operator
+    inline const T & operator * () const { return m_value; }
+    /// Typecast operator for the wrapped value
     inline operator T & () { return m_value; }
+    /// Typecast operator for the wrapped value
     inline operator const T & () const { return m_value; }
-    const T * operator->() const { return &m_value; }
+    /// Use the arrow operator to access fields inside the wrapped object.
+    inline const T * operator->() const { return &m_value; }
 
-    const T & orig() const { return m_orig; }
+    /// The original value (the value given in constructor) of the ValueObject.
+    inline const T & orig() const { return m_orig; }
 
     /// Is the value different from the original value
     // use !( == ) instead of != because != isn't always implemented
     virtual bool isChanged() const { return !(m_value == m_orig); }
 
   protected:
+    /// The actual value of this object
     T m_value;
+    /// The original value given in constructor
     T m_orig;
   };
 

@@ -30,8 +30,10 @@ namespace Poetic
     CPUBitmapFont();
     virtual ~CPUBitmapFont();
 
+    /// Sets the size of the font in points
     virtual bool setFaceSize(int size, int resolution = POETIC_DEFAULT_RESOLUTION);
 
+    /// Creates a GPU font object for this font
     virtual GPUTextureFont * createGPUFont();
 
   private:

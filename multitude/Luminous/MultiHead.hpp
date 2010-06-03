@@ -165,14 +165,20 @@ namespace Luminous {
       */
       LUMINOUS_API Nimble::Vector2f windowToGraphics(Nimble::Vector2f loc, int windowheight, bool & insideArea) const;
 
+      /// Returns true if the area is active (graphics will be drawn to it)
       int active() const { return m_active.asInt(); }
 
+      /// Sets the width of a single pixel in centimeters
       void setPixelSizeCm(float sizeCm) { m_pixelSizeCm = sizeCm; }
+      /// Returns the width of a single pixel in centimeters
       float pixelSizeCm() const { return m_pixelSizeCm; }
+      /// Converts centimeters to pixels
       float cmToPixels(float cm) { return cm / m_pixelSizeCm; }
 
+      /// Returns the view transform matrix
       Nimble::Matrix3 viewTransform();
 
+      /// Swaps the width and height of the graphics size
       void swapGraphicsWidthHeight()
       {
         m_graphicsSize = m_graphicsSize.asVector().shuffle();
@@ -206,14 +212,14 @@ namespace Luminous {
       float      m_pixelSizeCm;
     };
 
-    /// One OpenGL window.
-    /** A window is responsible for one OpenGL context. */
+    /** One OpenGL window.
+    A window is responsible for one OpenGL context.*/
     class Window : public Valuable::HasValues
     {
-
     public:
       friend class Area;
 
+      /// Constructs a new window for the given screen
       LUMINOUS_API Window(MultiHead * screen = 0);
       LUMINOUS_API ~Window();
 
@@ -240,10 +246,13 @@ namespace Luminous {
       /// Get one of the areas
       const Area & area(size_t i) const { return * m_areas[i].ptr(); }
 
+      /// Returns the union of the areas' graphics bounds
       LUMINOUS_API Nimble::Rect graphicsBounds() const;
 
+      /// Sets the seam for each area
       LUMINOUS_API void setSeam(float seam);
 
+      /// Adds an area to the window
       void addArea(Area * a) { m_areas.push_back(a); }
 
       /// Location of the window on the computer display
@@ -268,12 +277,24 @@ namespace Luminous {
       bool frameless() const { return ((m_frameless.asInt() == 0) ? false : true); }
       /// Should the window be full-screen
       bool fullscreen() const { return ((m_fullscreen.asInt() == 0) ? false : true); }
+      /// Sets the fullscreen flag
+      void setFullscreen(bool f) { m_fullscreen = f; }
       /// Should the window be resizeable
       bool resizeable() const { return ((m_resizeable.asInt() == 0) ? false : true); }
 
+      /// X11 display number for threaded rendering, -1 if not specified
+      int displaynumber() const { return m_displaynumber.asInt(); }
+      /// Sets X11 display number for threaded rendering, -1 disables
+      void setSisplaynumber(int s) { m_displaynumber = s; }
+      /// X11 screen number for threaded rendering, -1 if not specified
+      int screennumber() const { return m_screennumber.asInt(); }
+      /// Sets X11 screen number for threaded rendering, -1 disables
+      void setScreennumber(int s) { m_screennumber = s; }
+
+      /// Sets the width of a pixel in centimeters to each area inside this window
       LUMINOUS_API void setPixelSizeCm(float sizeCm);
 
-    protected:
+    private:
       LUMINOUS_API virtual bool readElement(Valuable::DOMElement ce);
 
       MultiHead                *m_screen;
@@ -282,6 +303,8 @@ namespace Luminous {
       Valuable::ValueInt        m_frameless;
       Valuable::ValueInt        m_fullscreen;
       Valuable::ValueInt        m_resizeable;
+      Valuable::ValueInt        m_displaynumber; // for X11
+      Valuable::ValueInt        m_screennumber; // for X11
       /// Pixel size in centimeters
       float      m_pixelSizeCm;
 
@@ -297,14 +320,6 @@ namespace Luminous {
     /** This method traverses all the windows to find the area with
     given index. */
     LUMINOUS_API Area & area(size_t i, Window ** winptr = 0);
-    /// Create 1 window with 1 area.
-    LUMINOUS_API void makeSingle(int x, int y, int w, int h);
-    /// Create 1 window with 2 areas horizontally side by side.
-    LUMINOUS_API void makeDouble(int x, int y, int w, int h, float seam);
-    /// Create 1 window with 4 rotated areas
-    /** This is useful for making a setup with four
-        projectors/displays that are aligned in portrait mode. */
-    LUMINOUS_API void makeQuadSideways(int x, int y, int w, int h, float seam);
 
     /// The number of windows
     size_t windowCount() const { return m_windows.size(); }
@@ -322,8 +337,6 @@ namespace Luminous {
     /// Returns the size of the total display in graphics pixels
     Nimble::Vector2i size()
     { return Nimble::Vector2i(width(), height()); }
-    LUMINOUS_API float seam();
-    LUMINOUS_API void setSeam(float seam);
 
     /// Total width of the display area, in graphics pixels.
     LUMINOUS_API int width();
@@ -340,9 +353,10 @@ namespace Luminous {
     /// Returns true if the edited flag has been set
     bool isEdited() const { return m_edited; }
 
+    /// Returns the gamma value used for edge blending with projector setups.
     float gamma() const { return m_gamma; }
 
-  protected:
+  private:
     LUMINOUS_API virtual bool readElement(Valuable::DOMElement ce);
 
     std::vector<Radiant::RefPtr<Window> > m_windows;

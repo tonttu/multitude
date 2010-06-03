@@ -28,16 +28,23 @@ namespace Poetic
   class Charmap
   {
     public:
+      /// Constructs a charmap for the given font face
       Charmap(Face * face);
       ~Charmap();
 
+      /// Selects a charmap by its encoding tag
       bool charmap(int encoding);
+      /// Returns the encoding tag of the charmap
       int encoding() const { return m_ftEncoding; }
 
+      /// Returns the index to the glyph in the glyplist given its character code
       unsigned int glyphListIndex(unsigned int charCode);
+      /// Returns the glyph index of the given character code
       unsigned int fontIndex(unsigned int charCode);
+      /// Inserts an index for character code
       void insertIndex(unsigned int charCode, unsigned int index);
 
+      /// Returns the last error occured
       int error() const { return m_error; }
 
     private:

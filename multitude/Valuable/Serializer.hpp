@@ -1,7 +1,6 @@
 #ifndef VALUABLE_SERIALIZER_HPP
 #define VALUABLE_SERIALIZER_HPP
 
-#include <Valuable/Export.hpp>
 #include "DOMElement.hpp"
 #include "DOMDocument.hpp"
 #include "ValueObject.hpp"
@@ -17,18 +16,29 @@ namespace Valuable
   /** Boost & TR1 have is_base_of & similar template hacks that basically do this */
   namespace Type
   {
+    /// Every object is one of these types, see Serializer::Trait
     enum { pair = 1, container = 2, serializable = 3, other = 4 };
     // All structs have same _ element with different size, so we can use
     // sizeof operator to make decisions in templates
+    /// @cond
     struct pair_trait { char _[1]; };
     struct container_trait { char _[2]; };
     struct serializable_trait { char _[3]; };
     struct default_trait { char _[4]; };
+    /// @endcond
   }
 
   /// Removes const from type: remove_const<const Foo>::Type == Foo
-  template <typename T> struct remove_const { typedef T Type; };
-  template <typename T> struct remove_const<const T> { typedef T Type; };
+  /// Works also with non-const types, remove_const<Foo>::Type == Foo
+  template <typename T> struct remove_const {
+    /// The original type without const
+    typedef T Type;
+  };
+  /// @copydoc remove_const
+  template <typename T> struct remove_const<const T> {
+      /// The original type without const
+      typedef T Type;
+   };
 
   /// XML Serializer namespace that has handles the (de)serialize dispatching
   /** Correct way to save/load object state to/from XML is to use static
@@ -58,11 +68,15 @@ namespace Valuable
       template <typename Y> static Type::default_trait s_test(...);
 
     public:
+      /// @cond
       enum { type = sizeof(s_test<T>(t())._) == sizeof(Type::serializable_trait)
                     ? sizeof(Type::serializable_trait) : sizeof(test<T>(0)._) };
+      /// @endcond
     };
 
-    // FactoryInfo<T>::have_create is true, if there is T* T::create(ArchiveElement &)
+    /// @cond
+
+    /// FactoryInfo<T>::have_create is true, if there is T* T::create(ArchiveElement &)
     template <typename T> struct FactoryInfo {
       typedef T * (*Func)(ArchiveElement &);
       template <Func> struct Test {};
@@ -80,7 +94,7 @@ namespace Valuable
     template <typename T, bool have_create = FactoryInfo<T>::have_create> struct Creator
     {
       inline static typename FactoryInfo<T>::Func func() { return &create; }
-      static T * create(ArchiveElement & element)
+      inline static T * create(ArchiveElement & element)
       {
         T * t = new T();
         t->deserialize(element);
@@ -93,14 +107,23 @@ namespace Valuable
       inline static typename FactoryInfo<T>::Func func() { return &T::create; }
     };
 
+    /// @endcond
+
+    /// Serializes object t to new element that is added to the archive.
     template <typename T>
     ArchiveElement & serialize(Archive & archive, T t);
 
+    /// Deserializes an element. If deserialization fails or the template type
+    /// is not compatible with the data in the element, an object of T created
+    /// by its default constructor or NULL is returned.
     template <typename T>
     typename remove_const<T>::Type deserialize(ArchiveElement & element);
 
+    /// Compatibility function that deserializes DOMElement. Use deserialize(ArchiveElement&) instead.
     template <typename T>
     typename remove_const<T>::Type deserializeXML(DOMElement & element);
+
+    /// @cond
 
     /// Default implementation for "other" types.
     /// Implementations need to be inside of a struct because of partial template specialization
@@ -183,6 +206,8 @@ namespace Valuable
       }
     };
 
+    /// @endcond
+
     template <typename T>
     inline ArchiveElement & serialize(Archive & archive, T t)
     {
@@ -202,7 +227,8 @@ namespace Valuable
       return deserialize<T>(e);
     }
 
-    /// Serialize object to a XML file
+    /// Serialize object to a XML file. Example usage:
+    /// Serializer::serializeXML("widget.xml", widget, SerializationOptions::ONLY_CHANGED);
     template <typename T>
     inline bool serializeXML(const std::string & filename, T t,
                             SerializationOptions::Options opts = SerializationOptions::DEFAULTS)
@@ -216,7 +242,8 @@ namespace Valuable
       return archive.writeToFile(filename.c_str());
     }
 
-    /// Deserialize object from a XML file
+    /// Deserialize object from a XML file. Example usage:
+    /// Widget * widget = Serializer::deserializeXML<Widget*>("widget.xml");
     template <typename T>
     inline T deserializeXML(const std::string & filename)
     {

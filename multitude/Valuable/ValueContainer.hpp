@@ -24,14 +24,22 @@ namespace Valuable
   template<typename T> class ValueContainer : public ValueObject
   {
   public:
+    /// STL-compatible iterator
     typedef typename T::iterator iterator;
+    /// STL-compatible const iterator
     typedef typename T::const_iterator const_iterator;
+    /// STL-compatible reverse iterator
     typedef typename T::reverse_iterator reverse_iterator;
+    /// STL-compatible const reverse iterator
     typedef typename T::const_reverse_iterator const_reverse_iterator;
+    /// STL-like typedef for value type inside of T
     typedef typename T::value_type value_type;
 
     ValueContainer() {}
 
+    /// Constructs a new container
+    /// @param parent parent object
+    /// @param name name of the value
     ValueContainer(HasValues * parent, const std::string & name)
       : ValueObject(parent, name, false)
     {}
@@ -58,17 +66,24 @@ namespace Valuable
 
     virtual bool isChanged() const { return !m_container.empty(); }
 
-    /// @todo should be in ValueTyped
+    /// Typecast operator for the wrapped container
     operator T & () { return m_container; }
+    /// Typecast operator for the const reference of the wrapped container
     operator const T & () const { return m_container; }
 
+    /// Returns a reference to the wrapped container
     T & operator * () { return m_container; }
+    /// Returns a const reference to the wrapped container
     const T & operator * () const { return m_container; }
 
+    /// Use the arrow operator for accessing fields inside the wrapper container.
+    /// Example: container->end();
     T * operator -> () { return &m_container; }
+    /// @see operator->
     const T * operator -> () const { return &m_container; }
 
   protected:
+    /// The actual container that this ValueContainer wraps.
     T m_container;
   };
 }

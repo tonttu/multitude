@@ -122,6 +122,7 @@ namespace Luminous
     /// Detaches the given renderbuffer attachment
     void detachRenderbuffer(FramebufferAttachment attachment);
 
+    /// Deallocates the framebuffer object from the GPU
     void destroy();
   private:
     void create();

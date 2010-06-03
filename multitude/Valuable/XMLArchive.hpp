@@ -2,6 +2,7 @@
 #define XMLARCHIVE_HPP
 
 #include "Archive.hpp"
+#include "Export.hpp"
 
 namespace Valuable
 {
@@ -10,15 +11,18 @@ namespace Valuable
   /**
    * Wrapper for DOMElement that implements the ArchiveElement interface.
    */
-  class XMLArchiveElement : public ArchiveElement
+  class VALUABLE_API XMLArchiveElement : public ArchiveElement
   {
   public:
+    /// Iterator for XMLArchiveElement children
     class XMLIterator : public Iterator
     {
     public:
+      /// Constructs a new iterator
       XMLIterator(XMLArchiveElement & parent);
+      /// Constructs a copy of an iterator
       XMLIterator(const XMLIterator & it);
-
+/// @cond
       operator const void * ();
       ArchiveElement & operator * ();
       ArchiveElement * operator -> ();
@@ -26,7 +30,7 @@ namespace Valuable
       Iterator & operator ++ (int);
       bool operator == (const Iterator & other);
       bool operator != (const Iterator & other);
-
+/// @endcond
     private:
       XMLArchiveElement & m_parent;
       DOMElement::NodeList m_nodes;
@@ -36,6 +40,7 @@ namespace Valuable
       bool m_valid;
     };
 
+    /// Creates a new wrapper object for given DOMElement object
     XMLArchiveElement(DOMElement element);
     virtual ~XMLArchiveElement();
 
@@ -56,9 +61,11 @@ namespace Valuable
     /// Returns a pointer to m_element
     DOMElement * xml();
 
+    /// @cond
     static XMLArchiveElement s_emptyElement;
+    /// @endcond
 
-  protected:
+  private:
     std::list<XMLIterator> m_iterators;
     DOMElement m_element;
   };
@@ -70,7 +77,7 @@ namespace Valuable
    * createElement and owned by XMLArchive. They will be freed only when the
    * XMLArhive object is destroyed.
    */
-  class XMLArchive : public Archive
+  class VALUABLE_API XMLArchive : public Archive
   {
   public:
     /// Creates a new DOMDocument
@@ -79,6 +86,7 @@ namespace Valuable
     virtual ~XMLArchive();
 
     ArchiveElement & createElement(const char * name);
+    /// Wraps the given DOMElement to XMLArchiveElement
     XMLArchiveElement & createElement(const DOMElement & element);
 
     ArchiveElement & emptyElement();
@@ -93,7 +101,7 @@ namespace Valuable
     /// Returns m_document.ptr()
     DOMDocument * xml();
 
-  protected:
+  private:
     std::list<XMLArchiveElement> m_elements;
     Radiant::RefPtr<DOMDocument> m_document;
   };

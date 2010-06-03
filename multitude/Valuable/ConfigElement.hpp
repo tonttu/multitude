@@ -26,41 +26,58 @@
 namespace Valuable
 {  
 
+  /// Configuration block in ConfigDocument
   class VALUABLE_API ConfigElement
   {
   public:
     ConfigElement();
     virtual ~ConfigElement();
 
+    /// Gets the value with the given name
+    /// @param key name of the value
+    /// @return pointer to the value or 0 if the value is not found
     ConfigValue *getConfigValue(const std::string & key);
+    /// Gets the value with the given name
+    /// @param key name of the value
+    /// @return copy of the value or an empty value if the given key is not found
     ConfigValue getConfigValueSafe(const std::string & key);
 
+    /// Removes all values from the element
     void clear();
 
+    /// Sets the type of the element
     void setType(const std::string & type)
     { m_type = type; }
 
+    /// Returns the name of the element
     const std::string & elementName() const { return m_elementName; }
+    /// Sets the name of the element
     void setElementName(const std::string & name)
     { m_elementName = name; }
 
+    /// Adds a sub-element to the element
     void addElement(const ConfigElement & e)
     { m_nodes.push_back(e); }
 
+    /// Adds a value to the element
     void addValue(const ConfigValue & v)
     { m_values.push_back(v); }
 
-    unsigned valueCount() const { return (unsigned) m_values.size(); }
+    /// Returns the number of values in the element
+    size_t valueCount() const { return m_values.size(); }
 
-    const ConfigValue & value(unsigned n) const
+    /// Returns the ith value
+    const ConfigValue & value(size_t n) const
     { return m_values[n]; }
 
-    unsigned childCount() const { return (unsigned) m_nodes.size(); }
+    /// Returns the number of sub-elements
+    size_t childCount() const { return m_nodes.size(); }
 
-    const ConfigElement & child(unsigned n) const
+    /// Returns the ith sub-element
+    const ConfigElement & child(size_t n) const
     { return m_nodes[n]; }
-
-    ConfigElement & child(unsigned n)
+    /// @copydoc child
+    ConfigElement & child(size_t n)
     { return m_nodes[n]; }
 
   private:
