@@ -3,6 +3,7 @@ TEMPLATE = subdirs
 SUBDIRS += AudioPanning
 SUBDIRS += AmbientSounds
 SUBDIRS += ConfigConversion
+SUBDIRS += GLBench
 SUBDIRS += ImageExample
 SUBDIRS += PlatformExample
 !win32:SUBDIRS += SamplePlayer

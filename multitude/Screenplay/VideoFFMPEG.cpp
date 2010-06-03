@@ -76,8 +76,6 @@ namespace Screenplay {
 
     m_lastSeek = 0;
 
-    m_pkt = new AVPacket();
-    av_init_packet(m_pkt);
 
     int tmp = 0;
     {
@@ -91,8 +89,6 @@ namespace Screenplay {
   VideoInputFFMPEG::~VideoInputFFMPEG()
   {
     close();
-    av_free_packet(m_pkt);
-    delete m_pkt;
 
     int tmp = 0;
     {
@@ -503,6 +499,11 @@ namespace Screenplay {
     if(m_vcodec)
       close();
 
+    if(!m_pkt) {
+      m_pkt = new AVPacket();
+      av_init_packet(m_pkt);
+    }
+
     assert(filename != 0 && m_vcodec == 0);
 
     m_flags = 0;
@@ -655,8 +656,16 @@ namespace Screenplay {
 
     if(m_ic)
       av_close_input_file(m_ic);
+    
+    if(m_pkt) {
+      av_free_packet(m_pkt);
+      delete m_pkt;
+      m_pkt = 0;
+    }
+    
+    std::vector<int16_t> tmp;
+    m_audioBuffer.swap(tmp);
 
-    m_audioBuffer.clear();
     m_audioFrames = 0;
 
     m_frame = 0;
