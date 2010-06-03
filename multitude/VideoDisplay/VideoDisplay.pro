@@ -14,7 +14,7 @@ SOURCES += AudioTransfer.cpp
 SOURCES += ShowGL.cpp
 SOURCES += SubTitles.cpp
 
-unix:PKGCONFIG += libavutil
+unix:LIBS += $$MULTI_FFMPEG_LIBS
 
 DEFINES += __STDC_CONSTANT_MACROS
 
