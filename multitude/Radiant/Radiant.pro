@@ -24,6 +24,7 @@ HEADERS += ImageConversion.hpp
 HEADERS += IODefs.hpp
 HEADERS += Log.hpp
 HEADERS += Mutex.hpp
+HEADERS += Platform.hpp
 HEADERS += PlatformUtils.hpp
 HEADERS += Radiant.hpp
 HEADERS += RGBA.hpp
@@ -86,11 +87,11 @@ SOURCES += WatchDog.cpp
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS
 
 linux-* {
-	SOURCES += PlatformUtilsLinux.cpp
-	SOURCES += XFaker.cpp
-	HEADERS += XFaker.hpp
-	
-	LIBS += -lX11 -lXtst
+    SOURCES += PlatformUtilsLinux.cpp
+    SOURCES += XFaker.cpp
+    HEADERS += XFaker.hpp
+
+    LIBS += -lX11 -lXtst
 }
 
 macx {
@@ -148,7 +149,7 @@ win32 {
     PTGREY_PATH = "C:\Program Files\Point Grey Research\FlyCapture2"
     exists($$PTGREY_PATH/include) {
         DEFINES += CAMERA_DRIVER_PGR
-	message(Using PTGrey camera drivers)
+    message(Using PTGrey camera drivers)
 
         HEADERS += VideoCameraPTGrey.hpp
         SOURCES += VideoCameraPTGrey.cpp
