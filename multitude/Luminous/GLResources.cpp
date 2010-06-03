@@ -258,7 +258,7 @@ namespace Luminous
   void GLResources::eraseOnce()
   {
     const GarbageCollector::container & objs = GarbageCollector::previousObjects();
-    for(GarbageCollector::iterator it = objs.begin(); it != objs.end(); ++it) {
+    for(GarbageCollector::const_iterator it = objs.begin(); it != objs.end(); ++it) {
       eraseResource(*it);
     }
   }

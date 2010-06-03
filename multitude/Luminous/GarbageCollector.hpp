@@ -71,6 +71,7 @@ namespace Luminous
     typedef std::set<Collectable *> container;
     /// Iterator for the container
     typedef container::iterator iterator;
+    typedef container::const_iterator const_iterator;
 
     /// Empties the garbage list.
     /// (also swaps the buffers, so this should be called only once per frame)
