@@ -662,6 +662,11 @@ dest = *this;
       return 255;
   }
 
+  void Image::zero()
+  {
+    size_t byteCount = pixelFormat().bytesPerPixel() * width() * height();
+    memset(data(), 0, byteCount);
+  }
 
   void ImageTex::bind(GLenum textureUnit, bool withmimaps)
   {
