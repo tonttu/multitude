@@ -38,11 +38,11 @@ namespace VideoDisplay {
 
     /// how many videos to cache
     /// @see FFVideodebug
-    const int s_MaxCached = 100;
+    const unsigned int s_MaxCached = 100;
 
-    bool comp_ffvideodebug_timestamp(const FFVideodebug & a, const FFVideodebug & b)
+    bool comp_ffvideodebug_timestamp(const std::pair<std::string, FFVideodebug> & a, const std::pair<std::string, FFVideodebug> & b)
     {
-      return a.m_used < b.m_used;
+      return a.second.m_used < b.second.m_used;
     }
   }
 
@@ -202,7 +202,7 @@ namespace VideoDisplay {
       video.getAudioParameters( & m_channels, & m_sampleRate, & m_auformat);
       // remove the item with the smallest timestamp
       if (__ffcache.size() >= s_MaxCached) {
-        __ffcache.erase(std::min_element(__ffcache.begin(), __ffcache.end(), comp_ffvideodebug_timestamp);
+        __ffcache.erase(std::min_element(__ffcache.begin(), __ffcache.end(), comp_ffvideodebug_timestamp));
       }
 
       FFVideodebug & vi2 = __ffcache[filename];
