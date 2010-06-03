@@ -2420,6 +2420,15 @@ on_key_press_event_cb (GtkWidget *widget, GdkEventKey *event, gpointer user_data
 
   switch (event->keyval)
     {
+    case GDK_F:
+    case GDK_f:
+      if (g_xinerama_w > 0 && g_xinerama_h > 0) {
+        gtk_window_set_default_size (GTK_WINDOW (widget), g_xinerama_w, g_xinerama_h);
+        gtk_widget_set_size_request (widget, g_xinerama_w, g_xinerama_h);
+        gtk_window_move( GTK_WINDOW (widget), g_xinerama_x, g_xinerama_y);
+        gtk_window_resize (GTK_WINDOW (widget), g_xinerama_w, g_xinerama_h);
+      }
+      break;
     case GDK_Escape:
     case GDK_Q:
     case GDK_q:
