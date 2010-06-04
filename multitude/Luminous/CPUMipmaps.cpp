@@ -125,16 +125,17 @@ namespace Luminous {
     return -1;
   }
 
-  ImageTex * CPUMipmaps::getImage(int i)
+  Radiant::RefPtr<ImageTex> CPUMipmaps::getImage(int i)
   {
     CPUItem & item = m_stack[i];
 
     item.m_unUsed = 0.0f;
 
+    Radiant::RefPtr<ImageTex> image = item.m_image;
     if(item.m_state != READY)
       return 0;
 
-    return item.m_image.ptr();
+    return image;
   }
 
   void CPUMipmaps::markImage(int i)
@@ -248,9 +249,9 @@ namespace Luminous {
     // info("CPUMipmaps::pixelAlpha # %f %f", relLoc.x, relLoc.y);
 
     for(int i = MAX_MAPS - 1; i >= 1; i--) {
-      Image * im = getImage(i);
+      Radiant::RefPtr<ImageTex> im = getImage(i);
 
-      if(!im) continue;
+      if(!im.ptr()) continue;
 
       Nimble::Vector2f locf(im->size());
       locf.scale(relLoc);
@@ -439,8 +440,10 @@ namespace Luminous {
 
     // Scale down from higher-level mipmap
 
-    Luminous::ImageTex * imsrc = src.m_image.ptr();
-    Luminous::ImageTex * imdest = new Luminous::ImageTex();
+    Radiant::RefPtr<Luminous::ImageTex> imsrcr = src.m_image;
+    Luminous::ImageTex * imsrc = imsrcr.ptr();
+
+    Radiant::RefPtr<Luminous::ImageTex> imdest(new Luminous::ImageTex());
 
     Nimble::Vector2i ss = imsrc->size();
     Nimble::Vector2i is(ss.x >> 1, ss.y >> 1);

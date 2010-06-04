@@ -26,11 +26,14 @@ namespace Radiant {
   class RefPtrInt
   {
   public:
-    RefPtrInt(T * obj = 0) : m_object(obj), m_count(1) {}
+    explicit RefPtrInt(T * obj = 0) : m_object(obj), m_count(1) {}
     ~RefPtrInt() { delete m_object; }
-  
+
     T *m_object;
+    /// @todo QAtomicInt
     unsigned m_count;
+  private:
+    RefPtrInt(const RefPtrInt &) {}
   };
   /// @endcond
 
@@ -58,7 +61,7 @@ namespace Radiant {
     /// Share a link with another RefPtr
     RefPtr(const RefPtr &that)
     {
-      m_holder = ((RefPtr *) & that)->m_holder; 
+      m_holder = that.m_holder;
       if(m_holder) m_holder->m_count++;
     }
   
@@ -72,10 +75,10 @@ namespace Radiant {
     /// @copydoc ptr
     const T * ptr() const { return m_holder ? m_holder->m_object : 0; }
 
-    /// Operator that returns a pointer to the project
+    /// Operator that returns a pointer to the object
     T * operator *() { return m_holder ? m_holder->m_object : 0; }
-    /// Operator that returns a constant pointer to the project
-    const T & operator *() const { return m_holder ? m_holder->m_object : 0; }
+    /// Operator that returns a constant pointer to the object
+    const T * operator *() const { return m_holder ? m_holder->m_object : 0; }
 
     /// Creates a link to the given object
     RefPtr &link(T * obj) { return ((*this) = obj); }
@@ -88,9 +91,9 @@ namespace Radiant {
       if(m_holder == that.m_holder) return *this;
 
       breakLink(); 
-      m_holder = ((RefPtr *) & that)->m_holder; 
+      m_holder = that.m_holder;
       if(m_holder)
-	m_holder->m_count++;
+  m_holder->m_count++;
 
       return *this;
     }
@@ -99,9 +102,8 @@ namespace Radiant {
     /** If this RefPtr already links to another, the link is removed. */
     RefPtr & operator = (T *obj)
     { 
-      if(m_holder)
-	if(obj == m_holder->m_object)
-	  return * this;
+      if(m_holder && obj == m_holder->m_object)
+    return * this;
 
       breakLink(); 
       if(obj) 
