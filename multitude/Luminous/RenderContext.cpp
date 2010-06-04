@@ -79,12 +79,11 @@ namespace Luminous
 
   RenderContext::FBOHolder::FBOHolder()
       : m_context(0),
-      m_package(0),
       m_texUV(1,1)
   {
   }
 
-  RenderContext::FBOHolder::FBOHolder(RenderContext * context, FBOPackage * package)
+  RenderContext::FBOHolder::FBOHolder(RenderContext * context, std::shared_ptr<FBOPackage> package)
       : m_context(context), m_package(package),
       m_texUV(1,1)
   {
@@ -140,7 +139,7 @@ namespace Luminous
         m_context->clearTemporaryFBO(m_package);
       }
 
-      m_package = 0;
+      m_package.reset();
       m_context = 0;
     }
   }
@@ -164,14 +163,14 @@ namespace Luminous
       bzero(m_fboStack, sizeof(m_fboStack));
     }
 
-    void pushFBO(FBOPackage * fbo)
+    void pushFBO(std::shared_ptr<FBOPackage> fbo)
     {
       m_fboStackIndex++;
       assert(m_fboStackIndex < FBO_STACK_SIZE);
       m_fboStack[m_fboStackIndex] = fbo;
     }
 
-    FBOPackage * popFBO(FBOPackage * fbo)
+    std::shared_ptr<FBOPackage> popFBO(std::shared_ptr<FBOPackage> fbo)
     {
       assert(fbo == m_fboStack[m_fboStackIndex]);
       m_fboStackIndex--;
@@ -179,7 +178,7 @@ namespace Luminous
       if(m_fboStackIndex >= 0)
         return m_fboStack[m_fboStackIndex];
 
-      return 0;
+      return std::shared_ptr<FBOPackage>();
     }
 
     void initialize() {
@@ -403,7 +402,7 @@ namespace Luminous
     FBOPackages m_fbos;
 
 
-    FBOPackage * m_fboStack[FBO_STACK_SIZE];
+    std::shared_ptr<FBOPackage> m_fboStack[FBO_STACK_SIZE];
     int m_fboStackIndex;
     // temporarilly having screen size to make it work for lod and AA.
     Vector2i m_screenSize;
@@ -537,11 +536,11 @@ namespace Luminous
     long maxpixels = 2 * minimumsize.x * minimumsize.y;
 
     FBOHolder ret;
-    FBOPackage * fbo = 0;
+    std::shared_ptr<FBOPackage> fbo;
 
     for(Internal::FBOPackages::iterator it = m_data->m_fbos.begin();
     it != m_data->m_fbos.end(); it++) {
-      fbo = (*it).get();
+      fbo = *it;
 
       if(flags & FBO_EXACT_SIZE) {
         if(fbo->userCount() ||
@@ -562,7 +561,7 @@ namespace Luminous
     if(!ret.m_package) {
       // Nothing available, we need to create a new FBOPackage
       // info("Creating a new FBOPackage");
-      fbo = new FBOPackage();
+      fbo.reset(new FBOPackage());
       Vector2i useSize = minimumsize;
       if(!(flags & FBO_EXACT_SIZE))
         useSize += minimumsize / 4;
@@ -817,7 +816,7 @@ namespace Luminous
     return names;
   }
 
-  void RenderContext::clearTemporaryFBO(FBOPackage * fbo)
+  void RenderContext::clearTemporaryFBO(std::shared_ptr<FBOPackage> fbo)
   {
     assert(fbo->userCount() == 0);
 
