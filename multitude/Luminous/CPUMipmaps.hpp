@@ -163,6 +163,7 @@ namespace Luminous {
       float     m_unUsed;
     };
 
+    typedef std::map<int, CPUItem> StackMap;
 
     Luminous::Priority levelPriority(int level)
     {
@@ -184,13 +185,16 @@ namespace Luminous {
 
     bool needsLoader(int i);
 
-    void recursiveLoad(int level);
+    void recursiveLoad(StackMap & stack, int level);
 
     static inline int maxDimension()
     { return 1 << MAX_MAPS; }
 
     std::string m_filename;
     unsigned long int m_fileModified;
+
+    StackMap         m_stackChange;
+    Radiant::MutexAuto m_stackMutex;
 
     CPUItem          m_stack[MAX_MAPS];
     Nimble::Vector2i m_nativeSize;

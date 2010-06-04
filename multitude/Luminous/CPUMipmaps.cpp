@@ -73,6 +73,11 @@ namespace Luminous {
     for(int i = DEFAULT_MAP1; i <= m_maxLevel; i++) {
       m_stack[i].m_unUsed += dt;
     }
+
+    Radiant::Guard g(&m_stackMutex);
+    for(StackMap::iterator it = m_stackChange.begin(); it != m_stackChange.end(); ++it)
+      m_stack[it->first] = it->second;
+    m_stackChange.clear();
   }
 
   int CPUMipmaps::getOptimal(Nimble::Vector2f size)
@@ -286,6 +291,7 @@ namespace Luminous {
 
   void CPUMipmaps::doTask()
   {
+    StackMap stack;
     // Start loading whatever is needed, recursively
 
     // info("CPUMipmaps::doTask # %s %d", m_filename.c_str(), m_maxLevel);
@@ -293,7 +299,7 @@ namespace Luminous {
     // Load everything that maybe should be loaded:
     for(int i = lowestLevel(); i < m_maxLevel; i++) {
       if((m_stack[i].m_unUsed < m_timeOut) && (m_stack[i].m_state == WAITING)) {
-        recursiveLoad(i);
+        recursiveLoad(stack, i);
       }
     }
 
@@ -305,12 +311,20 @@ namespace Luminous {
 
       if((item.m_unUsed > m_timeOut) && (item.m_state == READY)) {
         // info("CPUMipmaps::doTask # Dropping %s %d", m_filename.c_str(), i);
-        item.m_state = WAITING;
-        item.m_image.reset();
+        stack[i] = item;
+        stack[i].m_state = WAITING;
+        stack[i].m_image.reset();
       }
     }
 
     // info("CPUMipmaps::doTask # %s %d EXIT", m_filename.c_str(), m_maxLevel);
+
+    if(!stack.empty())
+    {
+      Radiant::Guard g(&m_stackMutex);
+      for(StackMap::iterator it = stack.begin(); it != stack.end(); ++it)
+        m_stackChange[it->first] = it->second;
+    }
 
     scheduleFromNowSecs(0.5f);
   }
@@ -345,9 +359,9 @@ namespace Luminous {
       name += "png";
   }
 
-  void CPUMipmaps::recursiveLoad(int level)
+  void CPUMipmaps::recursiveLoad(StackMap & stack, int level)
   {
-    CPUItem & item = m_stack[level];
+    CPUItem & item = stack[level];
 
     // info("CPUMipmaps::recursiveLoad # %s %d %d", m_filename.c_str(), level, m_maxLevel);
 
@@ -377,6 +391,7 @@ namespace Luminous {
 
           item.m_image.reset(im);
           item.m_state = READY;
+          return;
         }
       }
     }
@@ -390,7 +405,6 @@ namespace Luminous {
 
       if(!im->read(m_filename.c_str())) {
         error("CPUMipmaps::recursiveLoad # Could not read %s", m_filename.c_str());
-        delete im;
         item.m_state = FAILED;
         return;
       }
@@ -427,9 +441,9 @@ namespace Luminous {
 
     // Load the higher level, and scale down from that:
 
-    recursiveLoad(level + 1);
+    recursiveLoad(stack, level + 1);
 
-    CPUItem & src = m_stack[level + 1];
+    CPUItem & src = stack[level + 1];
 
     if(src.m_state != READY) {
       error("Failed to get mipmap %d", level + 1);
