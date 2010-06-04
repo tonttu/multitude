@@ -343,7 +343,6 @@ namespace Resonant {
           }
 
           if(!good) {
-            delete s;
             for(int j = 0; j < LoadItem::WAITING_COUNT; i++) {
               SampleVoice * voice = it.m_waiting[i];
               if(!voice)
@@ -451,7 +450,7 @@ namespace Resonant {
       }
 
       voice.init(sampleind >= 0 ?
-                 m_samples[sampleind].ptr() : 0, data);
+                 m_samples[sampleind].get() : 0, data);
       m_active++;
 
       debug("ModuleSamplePlayer::control # Started sample %s (%d/%d)",
@@ -609,7 +608,7 @@ namespace Resonant {
   int ModuleSamplePlayer::findSample(const char * name)
   {
     for(unsigned i = 0; i < m_samples.size(); i++) {
-      Sample * s = m_samples[i].ptr();
+      Sample * s = m_samples[i].get();
 
       if(s)
         if(s->name() == name)
@@ -625,7 +624,7 @@ namespace Resonant {
 
     for(std::list<SampleInfo>::iterator it = m_sampleList.begin();
     it != m_sampleList.end(); it++) {
-      Radiant::RefPtr<Sample> s(new Sample());
+      std::shared_ptr<Sample> s(new Sample());
       if(s->load((*it).m_filename.c_str(), (*it).m_name.c_str()))
         m_samples.push_back(s);
     }
@@ -634,12 +633,12 @@ namespace Resonant {
   bool ModuleSamplePlayer::addSample(Sample * s)
   {
     for(unsigned i = 0; i < m_samples.size(); i++) {
-      if(!m_samples[i].ptr()) {
-        m_samples[i] = s;
+      if(!m_samples[i]) {
+        m_samples[i].reset(s);
         return true;
       }
       debug("ModuleSamplePlayer::addSample # m_samples[%u] = %p",
-            i, m_samples[i].ptr());
+            i, m_samples[i].get());
     }
 
     return false;

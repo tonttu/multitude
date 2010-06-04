@@ -59,9 +59,9 @@ namespace Luminous {
       return false;
     }
 
-    Radiant::RefPtr<ImageTex> img = m_cpumaps->getImage(best);
+    std::shared_ptr<ImageTex> img = m_cpumaps->getImage(best);
 
-    if(!img.ptr()) return false;
+    if(!img) return false;
 
     img->bind(GL_TEXTURE0, false);
 

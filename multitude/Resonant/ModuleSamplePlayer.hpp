@@ -258,7 +258,7 @@ namespace Resonant {
 
     std::list<SampleInfo> m_sampleList;
 
-    std::vector<Radiant::RefPtr<Sample> > m_samples;
+    std::vector<std::shared_ptr<Sample> > m_samples;
 
     std::vector<SampleVoice> m_voices;
     std::vector<SampleVoice *> m_voiceptrs;

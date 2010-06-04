@@ -398,7 +398,7 @@ namespace Luminous
     //std::stack<Nimble::Rectangle> m_clipStack;
     std::vector<Nimble::Rectangle> m_clipStack;
 
-    typedef std::list<Radiant::RefPtr<FBOPackage> > FBOPackages;
+    typedef std::list<std::shared_ptr<FBOPackage> > FBOPackages;
 
     FBOPackages m_fbos;
 
@@ -541,7 +541,7 @@ namespace Luminous
 
     for(Internal::FBOPackages::iterator it = m_data->m_fbos.begin();
     it != m_data->m_fbos.end(); it++) {
-      fbo = (*it).ptr();
+      fbo = (*it).get();
 
       if(flags & FBO_EXACT_SIZE) {
         if(fbo->userCount() ||
@@ -567,7 +567,7 @@ namespace Luminous
       if(!(flags & FBO_EXACT_SIZE))
         useSize += minimumsize / 4;
       fbo->setSize(useSize);
-      m_data->m_fbos.push_back(fbo);
+      m_data->m_fbos.push_back(std::shared_ptr<FBOPackage>(fbo));
 
       ret = FBOHolder(this, fbo);
     }

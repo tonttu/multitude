@@ -38,7 +38,6 @@ namespace Luminous {
 
   CPUMipmaps::CPUItem::CPUItem()
     : m_state(WAITING),
-    m_image(0),
     m_unUsed(0)
   {
     // info("CPUMipmaps::CPUItem::CPUItem # %d", ++__cpcount);
@@ -125,15 +124,15 @@ namespace Luminous {
     return -1;
   }
 
-  Radiant::RefPtr<ImageTex> CPUMipmaps::getImage(int i)
+  std::shared_ptr<ImageTex> CPUMipmaps::getImage(int i)
   {
     CPUItem & item = m_stack[i];
 
     item.m_unUsed = 0.0f;
 
-    Radiant::RefPtr<ImageTex> image = item.m_image;
+    std::shared_ptr<ImageTex> image = item.m_image;
     if(item.m_state != READY)
-      return 0;
+      return std::shared_ptr<ImageTex>();
 
     return image;
   }
@@ -249,9 +248,9 @@ namespace Luminous {
     // info("CPUMipmaps::pixelAlpha # %f %f", relLoc.x, relLoc.y);
 
     for(int i = MAX_MAPS - 1; i >= 1; i--) {
-      Radiant::RefPtr<ImageTex> im = getImage(i);
+      std::shared_ptr<ImageTex> im = getImage(i);
 
-      if(!im.ptr()) continue;
+      if(!im) continue;
 
       Nimble::Vector2f locf(im->size());
       locf.scale(relLoc);
@@ -307,7 +306,7 @@ namespace Luminous {
       if((item.m_unUsed > m_timeOut) && (item.m_state == READY)) {
         // info("CPUMipmaps::doTask # Dropping %s %d", m_filename.c_str(), i);
         item.m_state = WAITING;
-        item.m_image = 0;
+        item.m_image.reset();
       }
     }
 
@@ -376,7 +375,7 @@ namespace Luminous {
           if(im->hasAlpha())
             m_hasAlpha = true;
 
-          item.m_image = im;
+          item.m_image.reset(im);
           item.m_state = READY;
         }
       }
@@ -387,7 +386,7 @@ namespace Luminous {
       // Load original, and scale to useful dimensions:
 
       Luminous::ImageTex * im = new ImageTex();
-      Radiant::RefPtr<Luminous::ImageTex> rim(im);
+      std::shared_ptr<Luminous::ImageTex> rim(im);
 
       if(!im->read(m_filename.c_str())) {
         error("CPUMipmaps::recursiveLoad # Could not read %s", m_filename.c_str());
@@ -416,7 +415,7 @@ namespace Luminous {
         }
 
         Luminous::ImageTex * im2 = new ImageTex();
-        Radiant::RefPtr<Luminous::ImageTex> rim2(im2);
+        std::shared_ptr<Luminous::ImageTex> rim2(im2);
 
         im2->copyResample(*im, s.x, s.y);
 
@@ -440,10 +439,9 @@ namespace Luminous {
 
     // Scale down from higher-level mipmap
 
-    Radiant::RefPtr<Luminous::ImageTex> imsrcr = src.m_image;
-    Luminous::ImageTex * imsrc = imsrcr.ptr();
+    std::shared_ptr<Luminous::ImageTex> imsrc = src.m_image;
 
-    Radiant::RefPtr<Luminous::ImageTex> imdest(new Luminous::ImageTex());
+    std::shared_ptr<Luminous::ImageTex> imdest(new Luminous::ImageTex());
 
     Nimble::Vector2i ss = imsrc->size();
     Nimble::Vector2i is(ss.x >> 1, ss.y >> 1);

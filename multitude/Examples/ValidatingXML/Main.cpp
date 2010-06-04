@@ -13,7 +13,7 @@ int main(int argc, char ** argv)
     return 1;
   }
 
-  Radiant::RefPtr<DOMDocument> doc = DOMDocument::createDocument();
+  std::shared_ptr<DOMDocument> doc(DOMDocument::createDocument());
 
   if(!doc->readFromFile(argv[1], true))
     fprintf(stderr, "Failed to load '%s'\n", argv[1]);

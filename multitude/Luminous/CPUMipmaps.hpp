@@ -70,7 +70,7 @@ namespace Luminous {
     LUMINOUS_API int getClosest(Nimble::Vector2f size);
     /** Gets the mipmap image on level i. If the level does not
     contain a valid mipmap, then 0 is returned. */
-    LUMINOUS_API Radiant::RefPtr<ImageTex> getImage(int i);
+    LUMINOUS_API std::shared_ptr<ImageTex> getImage(int i);
     /** Mark an image used. This method resets the idle-counter of the
     level, preventing it from being dropped from the memory in the
     near future. */
@@ -153,13 +153,13 @@ namespace Luminous {
       void clear()
       {
         m_state = WAITING;
-        m_image = 0;
+        m_image.reset();
         m_unUsed = 0.0f;
       }
 
     private:
       ItemState m_state;
-      Radiant::RefPtr<ImageTex> m_image;
+      std::shared_ptr<ImageTex> m_image;
       float     m_unUsed;
     };
 

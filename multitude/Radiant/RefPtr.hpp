@@ -16,130 +16,21 @@
 #ifndef RADIANT_REF_PTR_HPP
 #define RADIANT_REF_PTR_HPP
 
-#include <Radiant/Export.hpp>
+#include "Radiant/Platform.hpp"
 
-namespace Radiant {
-  
-  /// @cond
-  // Helper class for RefPtr
-  template <typename T>
-  class RefPtrInt
-  {
-  public:
-    explicit RefPtrInt(T * obj = 0) : m_object(obj), m_count(1) {}
-    ~RefPtrInt() { delete m_object; }
+#include <cstddef>
 
-    T *m_object;
-    /// @todo QAtomicInt
-    unsigned m_count;
-  private:
-    RefPtrInt(const RefPtrInt &) {}
-  };
-  /// @endcond
+#if defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
+#include <tr1/memory>
+#elif defined(RADIANT_WIN32) && defined(_HAS_TR1)
+#include <memory>
+#else
+#include <boost/tr1/memory.hpp>
+#endif
 
-  /// Smart pointer with reference counter
-  /** This class is used to hold a pointer to some object. The object
-      is deleted as the last link to that object is deleted.
-
-      The object type "T" can be an abstract class if necessary.
-
-      You have to be quite careful, not to create multiple RefPtr
-      objects that link to the same object, without sharing the
-      reference counter.
-  */
-  template <typename T>
-  class RefPtr
-  {
-  public:
-    /// Create a reference to pointer, with NULL pointer
-    RefPtr() : m_holder(0) {}
-    /// Create a reference to a given pointer
-    /** The object will be deleted by RefPtr, so you need to be
-	careful with not deleting the objec yourself. */
-    RefPtr(T *obj) 
-      : m_holder(obj ? new RefPtrInt<T>(obj) : 0) { }
-    /// Share a link with another RefPtr
-    RefPtr(const RefPtr &that)
-    {
-      m_holder = that.m_holder;
-      if(m_holder) m_holder->m_count++;
-    }
-  
-    /// Deletes this object
-    /** The object will be deleted if this is the last RefPtr linking
-	to it. */
-    ~RefPtr() { breakLink(); }
-
-    /// Returns a pointer to the contained object
-    T * ptr() { return m_holder ? m_holder->m_object : 0; }
-    /// @copydoc ptr
-    const T * ptr() const { return m_holder ? m_holder->m_object : 0; }
-
-    /// Operator that returns a pointer to the object
-    T * operator *() { return m_holder ? m_holder->m_object : 0; }
-    /// Operator that returns a constant pointer to the object
-    const T * operator *() const { return m_holder ? m_holder->m_object : 0; }
-
-    /// Creates a link to the given object
-    RefPtr &link(T * obj) { return ((*this) = obj); }
-    /// Clears the link, calling breakLink.
-    void clear() { breakLink(); }
-
-    /// Link to the source object
-    RefPtr & operator = (const RefPtr &that)
-    { 
-      if(m_holder == that.m_holder) return *this;
-
-      breakLink(); 
-      m_holder = that.m_holder;
-      if(m_holder)
-  m_holder->m_count++;
-
-      return *this;
-    }
-
-    /// Link to the given object
-    /** If this RefPtr already links to another, the link is removed. */
-    RefPtr & operator = (T *obj)
-    { 
-      if(m_holder && obj == m_holder->m_object)
-    return * this;
-
-      breakLink(); 
-      if(obj) 
-	m_holder = new RefPtrInt<T>(obj); 
-      return * this;
-    }
-
-    /// Break the link to the object, potentially deleting the object
-    void breakLink()
-    { 
-      if(!m_holder) return; 
-      if(! --m_holder->m_count) 
-	delete m_holder; 
-      m_holder = 0;
-    }
-
-    /** Returns true if the pointers of these two objects are
-	identical. */
-    bool operator == (const RefPtr &that) const
-    { return ptr() == that.ptr(); }
-
-    /** Returns true if this RefPtr links to the given pointer. */
-    bool operator == (const T * that) const
-    { return ptr() == that; }
-
-    /// Returns a pointer to the contained object
-    T * operator -> () { return m_holder->m_object; }
-    /// Returns a const pointer to the contained object
-    const T * operator -> () const { return m_holder->m_object; }
-
-  private:
-  
-    RefPtrInt<T> *m_holder;
-  };
-
-
+namespace std
+{
+  using tr1::shared_ptr;
 }
 
 #endif

@@ -54,7 +54,7 @@ namespace Resonant {
   bool ModulePanner::readElement(Valuable::DOMElement element)
   {
     if(element.getTagName() == "speaker") {
-      LoudSpeaker * ls = new LoudSpeaker;
+      std::shared_ptr<LoudSpeaker> ls(new LoudSpeaker);
       bool ok = ls->deserializeXML(element);
 
       if(ok) {
@@ -172,12 +172,12 @@ namespace Resonant {
     LoudSpeaker * ls = new LoudSpeaker;
 
     ls->m_location = Vector2(0, 540);
-    m_speakers.push_back(ls);
+    m_speakers.push_back(std::shared_ptr<LoudSpeaker>(ls));
 
     ls = new LoudSpeaker;
 
     ls->m_location = Vector2(1920, 540);
-    m_speakers.push_back(ls);
+    m_speakers.push_back(std::shared_ptr<LoudSpeaker>(ls));
 
     m_maxRadius = 1200;
   }
@@ -192,7 +192,7 @@ namespace Resonant {
     LoudSpeaker * ls = new LoudSpeaker;
 
     ls->m_location = location;
-    m_speakers[i] = ls;
+    m_speakers[i].reset(ls);
   }
 
   void ModulePanner::setSpeaker(unsigned i, float x, float y)
@@ -226,7 +226,7 @@ namespace Resonant {
     int interpSamples = 2000;
 
     for(unsigned i = 0; i < m_speakers.size(); i++) {
-      LoudSpeaker * ls = m_speakers[i].ptr();
+      LoudSpeaker * ls = m_speakers[i].get();
 
       if(!ls)
         continue;
