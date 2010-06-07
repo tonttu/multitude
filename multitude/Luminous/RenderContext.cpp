@@ -150,35 +150,27 @@ namespace Luminous
   class RenderContext::Internal
   {
   public:
-    enum { FBO_STACK_SIZE = 100 };
 
     Internal()
         : m_recursionLimit(DEFAULT_RECURSION_LIMIT),
         m_recursionDepth(0),
-        m_fboStackIndex(-1),
         m_renderCount(0),
         m_frameCount(0),
         m_initialized(false)
     {
-      bzero(m_fboStack, sizeof(m_fboStack));
     }
 
     void pushFBO(std::shared_ptr<FBOPackage> fbo)
     {
-      m_fboStackIndex++;
-      assert(m_fboStackIndex < FBO_STACK_SIZE);
-      m_fboStack[m_fboStackIndex] = fbo;
+      m_fboStack.push(fbo);
     }
 
     std::shared_ptr<FBOPackage> popFBO(std::shared_ptr<FBOPackage> fbo)
     {
-      assert(fbo == m_fboStack[m_fboStackIndex]);
-      m_fboStackIndex--;
+      assert(fbo == m_fboStack.top());
+      m_fboStack.pop();
 
-      if(m_fboStackIndex >= 0)
-        return m_fboStack[m_fboStackIndex];
-
-      return std::shared_ptr<FBOPackage>();
+      return m_fboStack.empty() ? std::shared_ptr<FBOPackage>() : m_fboStack.top();
     }
 
     void initialize() {
@@ -203,10 +195,10 @@ namespace Luminous
             "  gl_FragColor.w *= smoothstep(1.00, border_start, r);"\
             "}";
 
-        m_circle_shader = new GLSLProgramObject();
+        m_circle_shader.reset(new GLSLProgramObject());
         m_circle_shader->loadStrings(circ_vert_shader, circ_frag_shader);
 
-        m_polyline_shader = new GLSLProgramObject();
+        m_polyline_shader.reset(new GLSLProgramObject());
         const char * polyline_frag = ""
                             " varying vec2 p1;\n"\
                             " varying vec2 p2;\n"\
@@ -402,16 +394,16 @@ namespace Luminous
     FBOPackages m_fbos;
 
 
-    std::shared_ptr<FBOPackage> m_fboStack[FBO_STACK_SIZE];
-    int m_fboStackIndex;
+    std::stack<std::shared_ptr<FBOPackage> > m_fboStack;
+
     // temporarilly having screen size to make it work for lod and AA.
     Vector2i m_screenSize;
 
     unsigned long m_renderCount;
     unsigned long m_frameCount;
 
-    Luminous::GLSLProgramObject * m_circle_shader;
-    Luminous::GLSLProgramObject * m_polyline_shader;
+    std::shared_ptr<Luminous::GLSLProgramObject> m_circle_shader;
+    std::shared_ptr<Luminous::GLSLProgramObject> m_polyline_shader;
 
     bool m_initialized;
   };
