@@ -349,6 +349,7 @@ namespace Luminous
         error("GLSLProgramObject::fromStrings # fragment shader "
               "compile error:\n%s", fs->compilerLog());
         delete fs;
+        if(vs) delete vs;
         return 0;
       }
     }
