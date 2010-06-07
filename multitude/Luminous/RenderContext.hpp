@@ -88,7 +88,7 @@ namespace Luminous
 /// @endcond
 
     /// Constructs a new render context and associates the given resources to it
-    RenderContext(Luminous::GLResources * resources);
+    RenderContext(Luminous::GLResources * resources, const Luminous::MultiHead::Window * window);
     virtual ~RenderContext();
 
     /// Returns the resources of this context
@@ -203,6 +203,14 @@ namespace Luminous
     /// Adds the render counter by one
     /** */
     void addRenderCounter();
+
+    Nimble::Vector2 contextSize() const;
+
+    /// @internal
+    void pushViewStack();
+    /// @internal
+    /// Pops view stack, leaves current texture attached
+    void popViewStack();
 
   private:
     void drawCircleWithSegments(Nimble::Vector2f center, float radius, const float *rgba, int segments);
