@@ -23,7 +23,7 @@
 
 #define DEFAULT_PADDING 3
 
-#define VERTEX_ARRAY_SIZE 512
+#define VERTEX_ARRAY_SIZE 1024
 
 #include <Luminous/Shader.hpp>
 
