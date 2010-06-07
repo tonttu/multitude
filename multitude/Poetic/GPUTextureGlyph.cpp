@@ -63,7 +63,7 @@ namespace Poetic
   GPUTextureGlyph::~GPUTextureGlyph()
   {}
 
-  Nimble::Vector2 GPUTextureGlyph::render(Nimble::Vector2 pen, const Nimble::Matrix3 & m, Nimble::Vector2f ** ptr)
+  Nimble::Vector2 GPUTextureGlyph::render(Nimble::Vector2 pen, const Nimble::Matrix3 & /*m*/, Nimble::Vector2f ** ptr)
   {
     // if(s_activeTexture != m_textureId) {
     glBindTexture(GL_TEXTURE_2D, m_textureId);

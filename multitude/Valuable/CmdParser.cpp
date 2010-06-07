@@ -27,7 +27,7 @@ namespace Valuable
   {
     Radiant::StringUtils::StringList list;
 
-    Radiant::RefPtr<Valuable::DOMDocument> tmpDoc(Valuable::DOMDocument::createDocument());
+    std::shared_ptr<Valuable::DOMDocument> tmpDoc(Valuable::DOMDocument::createDocument());
 
     for(int i = 1; i < argc; i++) {
       std::string arg = argv[i];

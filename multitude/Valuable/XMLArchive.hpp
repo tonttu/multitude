@@ -103,7 +103,7 @@ namespace Valuable
 
   private:
     std::list<XMLArchiveElement> m_elements;
-    Radiant::RefPtr<DOMDocument> m_document;
+    std::shared_ptr<DOMDocument> m_document;
   };
 }
 

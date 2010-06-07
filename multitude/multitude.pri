@@ -10,6 +10,12 @@ INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
 
 MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat
+linux-* {
+  exists(/opt/multitouch-ffmpeg/include/libavcodec/avcodec.h) {
+    MULTI_FFMPEG_LIBS = -L/opt/multitouch-ffmpeg/lib -lavcodec-multitouch -lavutil-multitouch -lavformat-multitouch
+    INCLUDEPATH += /opt/multitouch-ffmpeg/include
+  }
+}
 
 withbundles = $$(MULTI_BUNDLES)
 

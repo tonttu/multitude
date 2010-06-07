@@ -148,9 +148,9 @@ namespace Screenplay {
       got_picture = 0;
 
       if (m_pkt->stream_index == m_vindex) {
-        vlen = avcodec_decode_video(m_vcontext,
-                                    m_frame, & got_picture,
-                                    m_pkt->data, m_pkt->size);
+        vlen = avcodec_decode_video2(m_vcontext,
+                                     m_frame, & got_picture,
+                                     m_pkt);
         // printf("|");fflush(0);
 
         if (got_picture) {
@@ -237,9 +237,9 @@ namespace Screenplay {
           }
         }
 
-        avcodec_decode_audio2(m_acontext,
+        avcodec_decode_audio3(m_acontext,
                               & m_audioBuffer[index],
-                              & aframes, m_pkt->data, m_pkt->size);
+                              & aframes, m_pkt);
 
         aframes /= (2 * m_audioChannels);
         int64_t pts = m_pkt->pts;

@@ -59,7 +59,9 @@ namespace Luminous {
       return false;
     }
 
-    Luminous::ImageTex * img = m_cpumaps->getImage(best);
+    std::shared_ptr<ImageTex> img = m_cpumaps->getImage(best);
+
+    if(!img) return false;
 
     img->bind(GL_TEXTURE0, false);
 
@@ -149,7 +151,18 @@ namespace Luminous {
   bool GPUMipmaps::bind(const Nimble::Matrix3 & transform,
             Nimble::Vector2 pixelsize)
   {
-    return bind(transform.extractScale() * pixelsize);
+    Nimble::Vector2 lb = transform.project(0, 0);
+    Nimble::Vector2 rb = transform.project(pixelsize.x, 0);
+    Nimble::Vector2 lt = transform.project(0, pixelsize.y);
+    Nimble::Vector2 rt = transform.project(pixelsize.x, pixelsize.y);
+
+    float x1 = (rb-lb).length();
+    float x2 = (rt-lt).length();
+
+    float y1 = (lt-lb).length();
+    float y2 = (rt-rb).length();
+
+    return bind(Nimble::Vector2(std::max(x1, x2), std::max(y1, y2)));
   }
 
 }
