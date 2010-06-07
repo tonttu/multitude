@@ -871,7 +871,7 @@ namespace FireView {
                - 2 * *(pixel-1) - *(pixel-1-r) - *(pixel-1+r);
         int gy = 2 * *(pixel+r) + *(pixel+r-1) + *(pixel+r+1)
                - 2 * *(pixel-r) - *(pixel-r-1) - *(pixel-r+1);
-        gsum += std::sqrt(gx*gx + gy*gy);
+        gsum += std::sqrt(static_cast<float>(gx*gx + gy*gy));
         ++pixel;
       }
     }

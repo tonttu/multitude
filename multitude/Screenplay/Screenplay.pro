@@ -5,14 +5,12 @@ HEADERS += VideoFFMPEG.hpp
 
 SOURCES += VideoFFMPEG.cpp
 
-unix:PKGCONFIG += libavutil libavformat libavcodec
+LIBS += $$MULTI_FFMPEG_LIBS
 
 LIBS += $$LIB_RADIANT $$LIB_PATTERNS
 
 win32 {
 	DEFINES += SCREENPLAY_EXPORT	
-	
-	LIBS += -lavcodec -lavutil -lavformat
 	
 	win64:INCLUDEPATH += ../Win64x/include/ffmpeg
 	else:INCLUDEPATH += ../Win32x/include/ffmpeg

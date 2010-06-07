@@ -71,36 +71,28 @@ namespace Luminous
     typedef std::set<Collectable *> container;
     /// Iterator for the container
     typedef container::iterator iterator;
+    typedef container::const_iterator const_iterator;
 
     /// Empties the garbage list.
+    /// (also swaps the buffers, so this should be called only once per frame)
     static void clear();
 
     /// Adds the obj to the list of deleted objects
     static void objectDeleted(Collectable * obj);
 
-    /// Iterator to the beginning of the list
-    static iterator begin() { return m_items.begin(); }
-    /// Iterator to the end of the list
-    static iterator end() { return m_items.end(); }
-
-    /// Gets an object from an interator
-    /** By using this method to access the object, you can guarantee
-      that your code will work even if the container type is
-      changed. */
-    static Collectable * getObject(iterator & it) { return (*it); }
-
     /// Returns the number of collectables in the garbage collector
-    static int size() { return (int) m_items.size(); }
+    static int size() { return (int) m_current->size(); }
 
-    /// Mutex to control access to the garbage collector
-    static Radiant::MutexStatic & mutex();
-    
+    static const container & previousObjects();
   private:
     GarbageCollector();
     ~GarbageCollector();
 
 
-    static container m_items;
+    // items are double-buffered to ensure free access to previous container
+    static container * m_current;
+    static container m_items1;
+    static container m_items2;
 
   };
 }

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Fullscreen flash player
+Comment=Play flash files in fullscreen with xinerama
+Exec=flash-player %U
+Terminal=false
+Type=Application
+StartupNotify=true
+Icon=multitouch
+MimeType=application/x-shockwave-flash;
+Categories=GTK;AudioVideo;Audio;Video;Player;

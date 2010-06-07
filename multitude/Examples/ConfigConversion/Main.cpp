@@ -47,14 +47,14 @@ int main(int argc, char ** argv)
 	
 	Valuable::convert(ce, xdoc->getDocumentElement());
 	
-	printf(Valuable::ConfigDocument::getConfigText(ce).c_str());
+	printf("%s", Valuable::ConfigDocument::getConfigText(ce).c_str());
       }
     }
     else {
       Valuable::ConfigDocument cdoc;
       cdoc.readConfigFile(file);
 
-      printf(Valuable::ConfigDocument::getConfigText(cdoc.root()).c_str());
+      printf("%s", Valuable::ConfigDocument::getConfigText(cdoc.root()).c_str());
 
       Valuable::DOMElement e(xdoc->getDocumentElement());
       cdoc.root().setElementName("X");

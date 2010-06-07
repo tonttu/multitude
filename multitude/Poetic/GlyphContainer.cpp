@@ -85,6 +85,7 @@ namespace Poetic
 
     Nimble::Vector2 kernAdvance = m_face->kernAdvance(left, right);
 #else
+    (void)nextCharCode; // get rid of the unused parameter warning
     Nimble::Vector2 kernAdvance(0, 0);
 #endif
 

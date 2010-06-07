@@ -97,7 +97,7 @@ namespace CodingGuide {
 
 	Below is a handy way to avoid writing the long typenames (for
 	iterators etc) in the member functions. The use of
-	Radiant::RefPtr etc reduce the need for manual resource
+	std::shared_ptr etc reduce the need for manual resource
 	deallocation - which is the most dangerous part of C++. 
 	
 	BTW: We avoid the GNU-style typedef mania (where every single
@@ -106,7 +106,7 @@ namespace CodingGuide {
 	number of useful mappings when you need to specify some
 	bit-depth for a number etc.
     */
-    typedef std::list<Radiant::RefPtr<Item> > container;
+    typedef std::list<std::shared_ptr<Item> > container;
     typedef container::iterator iterator;
 
     /* Then the constructors and destructor. */
@@ -120,7 +120,7 @@ namespace CodingGuide {
 	that the return value may be zero (aka NULL, but we never write
         "NULL").
 
-	BTW: We could return also Radiant::RefPtr<Item> which would
+	BTW: We could return also std::shared_ptr<Item> which would
 	better support reference counting (if the caller would use
 	that information).
 
@@ -139,12 +139,12 @@ namespace CodingGuide {
     Item * findNearest(Nimble::Vector2f location);
     
     /// Ad an item to the internal storage.
-    /* Here we use the Radiant::RefPtr so that we can share the object
+    /* Here we use the std::shared_ptr so that we can share the object
        counters between this object, and other objects.  */
-    void addItem(Radiant::RefPtr<Item> &);
+    void addItem(std::shared_ptr<Item> &);
     /* We use function overloading. This is may be not the most
        relevant example, btu still... */
-    void addItem(Radiant::RefPtr<Item> &, bool tofront);
+    void addItem(std::shared_ptr<Item> &, bool tofront);
     
     /* After the public stuff, comes the section of protected
        functions and after that the private members. The words

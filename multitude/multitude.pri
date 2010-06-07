@@ -10,13 +10,19 @@ INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
 
 MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat
+linux-* {
+  exists(/opt/multitouch-ffmpeg/include/libavcodec/avcodec.h) {
+    MULTI_FFMPEG_LIBS = -L/opt/multitouch-ffmpeg/lib -lavcodec-multitouch -lavutil-multitouch -lavformat-multitouch
+    INCLUDEPATH += /opt/multitouch-ffmpeg/include
+  }
+}
 
 withbundles = $$(MULTI_BUNDLES)
 
-# Try to guess Win64
+# Try to identify used compiler on Windows (32 vs 64)
 win32 {
-    BITS=$$(PROCESSOR_ARCHITECTURE)
-    contains(BITS,AMD64):CONFIG+=win64
+	COMPILER_OUTPUT=$$system(cl 2>&1)
+	contains(COMPILER_OUTPUT,x64):CONFIG+=win64		
 }
 
 LIB_POETIC = -lPoetic
