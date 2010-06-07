@@ -242,9 +242,9 @@ namespace Luminous {
       /// Number of areas that this window holds
       size_t areaCount() const { return m_areas.size(); }
       /// Get one of the areas
-      Area & area(size_t i) { return * m_areas[i].ptr(); }
+      Area & area(size_t i) { return * m_areas[i].get(); }
       /// Get one of the areas
-      const Area & area(size_t i) const { return * m_areas[i].ptr(); }
+      const Area & area(size_t i) const { return * m_areas[i].get(); }
 
       /// Returns the union of the areas' graphics bounds
       LUMINOUS_API Nimble::Rect graphicsBounds() const;
@@ -253,7 +253,7 @@ namespace Luminous {
       LUMINOUS_API void setSeam(float seam);
 
       /// Adds an area to the window
-      void addArea(Area * a) { m_areas.push_back(a); }
+      void addArea(Area * a) { m_areas.push_back(std::shared_ptr<Area>(a)); }
 
       /// Location of the window on the computer display
       const Vector2i & location() const { return m_location.asVector(); }
@@ -308,7 +308,7 @@ namespace Luminous {
       /// Pixel size in centimeters
       float      m_pixelSizeCm;
 
-      std::vector<Radiant::RefPtr<Area> > m_areas;
+      std::vector<std::shared_ptr<Area> > m_areas;
     };
 
     LUMINOUS_API MultiHead();
@@ -346,7 +346,7 @@ namespace Luminous {
     LUMINOUS_API bool deserialize(Valuable::ArchiveElement & element);
 
     /// Adds a window to the collection
-    void addWindow(Window * w) { m_windows.push_back(w); }
+    void addWindow(Window * w) { m_windows.push_back(std::shared_ptr<Window>(w)); }
 
     /// Sets the edited flag
     void setEdited(bool edited) { m_edited = edited; }
@@ -359,7 +359,7 @@ namespace Luminous {
   private:
     LUMINOUS_API virtual bool readElement(Valuable::DOMElement ce);
 
-    std::vector<Radiant::RefPtr<Window> > m_windows;
+    std::vector<std::shared_ptr<Window> > m_windows;
     Valuable::ValueFloat m_widthcm;
     Valuable::ValueFloat m_gamma;
     bool m_edited;

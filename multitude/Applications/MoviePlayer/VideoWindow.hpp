@@ -73,7 +73,7 @@ protected:
     VideoDisplay::ShowGL    m_show;
   };
 
-  typedef std::list<Radiant::RefPtr<Item> > container;
+  typedef std::list<std::shared_ptr<Item> > container;
   typedef container::iterator iterator;
 
   virtual void keyPressEvent(QKeyEvent * event);

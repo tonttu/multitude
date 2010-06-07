@@ -112,7 +112,7 @@ namespace CodingGuide {
     return res;
   }
 
-  void SomeClass::addItem(Radiant::RefPtr<Item> & item)
+  void SomeClass::addItem(std::shared_ptr<Item> & item)
   {
     /* One can also use "assert" for detecting fatal errors (if it
        feels like it). Usually assert is a bit too aggressive -
@@ -123,7 +123,7 @@ namespace CodingGuide {
     m_items.push_back(item);
   }
 
-  void SomeClass::addItem(Radiant::RefPtr<Item> &, bool tofront)
+  void SomeClass::addItem(std::shared_ptr<Item> &, bool tofront)
   {
     assert(item.ptr() != 0);
 

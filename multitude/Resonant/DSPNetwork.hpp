@@ -32,7 +32,7 @@
 
 namespace Resonant {
 
-  using Radiant::RefPtr;
+  using std::shared_ptr;
 
   class ModuleOutCollect;
   class ModulePanner;

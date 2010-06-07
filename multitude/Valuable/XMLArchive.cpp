@@ -193,6 +193,6 @@ namespace Valuable
 
   DOMDocument * XMLArchive::xml()
   {
-    return m_document.ptr();
+    return m_document.get();
   }
 }

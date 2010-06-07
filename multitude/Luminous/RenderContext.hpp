@@ -55,7 +55,7 @@ namespace Luminous
     public:
 
       LUMINOUS_API FBOHolder();
-      LUMINOUS_API FBOHolder(RenderContext * context, FBOPackage * package);
+      LUMINOUS_API FBOHolder(RenderContext * context, std::shared_ptr<FBOPackage> package);
       LUMINOUS_API FBOHolder(const FBOHolder & that);
 
       LUMINOUS_API ~FBOHolder();
@@ -72,7 +72,7 @@ namespace Luminous
       void release();
 
       RenderContext * m_context;
-      FBOPackage    * m_package;
+      std::shared_ptr<FBOPackage> m_package;
       Nimble::Vector2 m_texUV;
     };
 
@@ -208,7 +208,7 @@ namespace Luminous
     void drawCircleWithSegments(Nimble::Vector2f center, float radius, const float *rgba, int segments);
     void drawCircleImpl(Nimble::Vector2f center, float radius, const float *rgba);
 
-    void clearTemporaryFBO(FBOPackage * fbo);
+    void clearTemporaryFBO(std::shared_ptr<FBOPackage> fbo);
 
     Luminous::GLResources * m_resources;
     class Internal;

@@ -112,7 +112,7 @@ namespace Resonant {
     };
 
     typedef std::vector<Radiant::RefObj<Source> > Sources;
-    typedef std::vector<Radiant::RefPtr<LoudSpeaker> > LoudSpeakers;
+    typedef std::vector<std::shared_ptr<LoudSpeaker> > LoudSpeakers;
 
     Sources      m_sources;
     LoudSpeakers m_speakers;
