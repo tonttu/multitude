@@ -21,7 +21,10 @@
 namespace Luminous
 {
   /** Abstract interface for OpenGL contexts. This class is implemented separately for each
-      operating system. At the moment it is properly supported only under Linux/X11/ThreadedRendering. */
+      operating system. At the moment it is properly supported only under Linux/X11/ThreadedRendering.
+
+      This class is still experimental, and its API and operation may yet change.
+ */
   class GLContext
   {
   public:
@@ -38,6 +41,7 @@ namespace Luminous
         and one should not use the mutex. */
     virtual Radiant::Mutex * mutex() = 0;
 
+    /** A guard implementation that checks if the mutex is non-null. */
     class Guard
     {
     public:

@@ -30,6 +30,7 @@
 namespace Luminous
 {
   class Texture2D;
+  class GLContext;
 
   /// RenderContext contains the current rendering state.
   class LUMINOUS_API RenderContext : public Transformer
@@ -211,6 +212,14 @@ namespace Luminous
     /// @internal
     /// Pops view stack, leaves current texture attached
     void popViewStack();
+
+    /// @internal
+    /// Sets the current rendering context
+    void setGLContext(Luminous::GLContext *);
+
+    /// Returns a handle to the current OpenGL rendering context
+    /** This function is seldom necessary. */
+    Luminous::GLContext * glContext();
 
   private:
     void drawCircleWithSegments(Nimble::Vector2f center, float radius, const float *rgba, int segments);
