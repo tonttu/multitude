@@ -49,7 +49,6 @@ namespace Luminous
 
   Radiant::Mutex * GLDummyContext::mutex()
   {
-    error("GLDummyContext::mutex # Method not implemented for this platform");
     return 0;
   }
 
