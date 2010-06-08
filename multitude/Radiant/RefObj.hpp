@@ -71,7 +71,7 @@ namespace Radiant {
     RefObj(const T &obj)
         : m_holder(new RefObjInt<T>) { m_holder->m_object = obj; }
     /// Share the object pointer with another RefObj
-    RefObj(const RefObj &that)
+    RefObj(const RefObj<T> &that)
     {
       m_holder = ((RefObj *) & that)->m_holder;
       if(m_holder)
@@ -90,8 +90,6 @@ namespace Radiant {
     T & operator *() { check(); return m_holder->m_object; }
     /// An operator to get a constant reference to the object
     const T & operator *() const { check(); return m_holder->m_object; }
-
-    T * operator &() const { check(); return &m_holder->m_object; }
 
     /// Create a deep copy of the object
     /** Instead of sharing a link to an object, this method creates a
