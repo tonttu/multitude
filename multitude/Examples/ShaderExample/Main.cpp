@@ -10,7 +10,7 @@
 
 #include <SDL/SDL.h>
 
-int main()
+int main(int, char**)
 {
   Radiant::enableVerboseOutput(true);
 
