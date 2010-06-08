@@ -126,6 +126,10 @@ namespace Nimble {
     /// Returns the ith component
     T&			        operator[]	(int i)				{ return ((T*)this)[i]; }
 
+    bool operator< (const Vector2T<T>& v2) const
+    {
+      return x == v2.x ? y < v2.y : x < v2.x;
+    }
     //template <class S>
     //void copy(const S * data) { x = data[0]; y = data[1]; }
   };
