@@ -91,6 +91,8 @@ namespace Radiant {
     /// An operator to get a constant reference to the object
     const T & operator *() const { check(); return m_holder->m_object; }
 
+    T * operator &() const { check(); return &m_holder->m_object; }
+
     /// Create a deep copy of the object
     /** Instead of sharing a link to an object, this method creates a
     real copy of the object. */
