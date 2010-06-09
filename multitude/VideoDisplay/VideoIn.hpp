@@ -199,7 +199,7 @@ namespace VideoDisplay {
       REQUEST_QUEUE_SIZE = 32
     };
 
-    std::vector<Radiant::RefPtr<Frame> > m_frames;
+    std::vector<std::shared_ptr<Frame> > m_frames;
 
     VideoInfo m_info;
 

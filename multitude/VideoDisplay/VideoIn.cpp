@@ -194,7 +194,7 @@ namespace VideoDisplay {
     if(!m_continue && m_decodedFrames <= m_consumedFrames)
       return 0;
 
-    Frame * im = m_frames[index % m_frames.size()].ptr();
+    Frame * im = m_frames[index % m_frames.size()].get();
 
     if(!im)
       return 0;
@@ -328,7 +328,7 @@ namespace VideoDisplay {
     double close = -1.0;
 
     for(int i = best; i >= low; i--) {
-      const Frame * f = m_frames[i % m_frames.size()].ptr();
+      const Frame * f = m_frames[i % m_frames.size()].get();
 
       if(!f)
         continue;
@@ -461,13 +461,13 @@ namespace VideoDisplay {
 
     Radiant::Guard g(mutex());
 
-    RefPtr<Frame> & rf = m_frames[m_decodedFrames % m_frames.size()];
+    std::shared_ptr<Frame> & rf = m_frames[m_decodedFrames % m_frames.size()];
 
-    if(!rf.ptr()) {
-      rf = new Frame;
+    if(!rf) {
+      rf.reset(new Frame);
     }
 
-    Frame & f = * rf.ptr();
+    Frame & f = * rf;
 
     f.m_type = type;
     f.m_time = show;
@@ -508,7 +508,7 @@ namespace VideoDisplay {
   {
     debug("VideoIn::ignorePreviousFrames # %d", m_decodedFrames);
     for(size_t i = m_consumedFrames; (i + 1) < m_decodedFrames; i++) {
-      Frame * f = m_frames[i % m_frames.size()].ptr();
+      Frame * f = m_frames[i % m_frames.size()].get();
       if(f)
         f->m_type = FRAME_IGNORE;
     }
@@ -525,11 +525,11 @@ namespace VideoDisplay {
     int left = 0;
 
     for(unsigned i = 0; i < m_frames.size(); i++) {
-      Frame * f = m_frames[i].ptr();
+      Frame * f = m_frames[i].get();
 
       if(f) {
         if (f->m_lastUse < limit) {
-          m_frames[i] = 0;
+          m_frames[i].reset();
           info("VideoIn::freeFreeableMemory # %p %p", this, f);
         }
         else

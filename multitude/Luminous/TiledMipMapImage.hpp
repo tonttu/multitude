@@ -79,8 +79,8 @@ namespace Luminous
         Image    m_image;
         int      m_level;
 
-        Radiant::RefPtr<Texture2D> m_texture;
-        Radiant::RefPtr<Tile>      m_children[2][2];
+        std::shared_ptr<Texture2D> m_texture;
+        std::shared_ptr<Tile>      m_children[2][2];
 
         Nimble::Rect m_area;
     };

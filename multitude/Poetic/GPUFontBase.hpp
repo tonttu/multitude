@@ -52,6 +52,7 @@ namespace Poetic
       /// @copydoc internalRender
       virtual void internalRender(const wchar_t * str, int n, const Nimble::Matrix3 & transform, Nimble::Vector2f ** ptr);
 
+      float getLastAdvance() { return m_pen.x; }
     private:
       inline bool checkGlyph(unsigned int charCode);
 

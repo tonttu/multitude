@@ -71,7 +71,7 @@ namespace Radiant {
     RefObj(const T &obj)
         : m_holder(new RefObjInt<T>) { m_holder->m_object = obj; }
     /// Share the object pointer with another RefObj
-    RefObj(const RefObj &that)
+    RefObj(const RefObj<T> &that)
     {
       m_holder = ((RefObj *) & that)->m_holder;
       if(m_holder)
