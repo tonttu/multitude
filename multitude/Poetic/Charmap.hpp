@@ -18,6 +18,23 @@
 #include "Face.hpp"
 #include <map>
 
+// try to detect c++0x
+#if __cplusplus > 199711L
+  #include <unordered_map>
+#else
+  #if defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
+    #include <tr1/unordered_map>
+  #elif defined(RADIANT_WIN32) && defined(_HAS_TR1)
+    #include <unordered_map>
+  #else
+    #include <boost/tr1/unordered_map.hpp>
+  #endif
+  namespace std
+  {
+    using tr1::unordered_map;
+  }
+#endif
+
 struct FT_FaceRec_;
 
 namespace Poetic
@@ -51,7 +68,7 @@ namespace Poetic
       int m_ftEncoding;
       FT_FaceRec_ * m_ftFace;
 
-      typedef std::map<unsigned long, unsigned long> container;
+      typedef std::unordered_map<unsigned long, unsigned long> container;
 
       container m_charmap;
 
