@@ -20,12 +20,21 @@
 
 #include <cstddef>
 
-#if defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
-#include <tr1/memory>
-#elif defined(RADIANT_WIN32) && defined(_HAS_TR1)
-#include <memory>
+// try to detect c++0x
+#if __cplusplus > 199711L
+  #include <memory>
 #else
-#include <boost/tr1/memory.hpp>
+  #if defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
+    #include <tr1/memory>
+  #elif defined(RADIANT_WIN32) && defined(_HAS_TR1)
+    #include <memory>
+  #else
+    #include <boost/tr1/memory.hpp>
+  #endif
+  namespace std
+  {
+    using tr1::shared_ptr;
+  }
 #endif
 
 namespace std
