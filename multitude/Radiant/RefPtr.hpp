@@ -7,10 +7,10 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef RADIANT_REF_PTR_HPP
@@ -21,7 +21,7 @@
 #include <cstddef>
 
 // try to detect c++0x
-#if __cplusplus > 199711L
+#if defined(RADIANT_CPP0X)
   #include <memory>
 #else
   #if defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
@@ -37,9 +37,5 @@
   }
 #endif
 
-namespace std
-{
-  using tr1::shared_ptr;
-}
 
 #endif
