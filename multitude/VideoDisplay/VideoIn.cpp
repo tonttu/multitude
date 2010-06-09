@@ -48,7 +48,7 @@ namespace VideoDisplay {
       __framecount++;
       tmp = __framecount;
     }
-    info("VideoIn::Frame::Frame # %p Instance count at %d", this, tmp);
+    debug("VideoIn::Frame::Frame # %p Instance count at %d", this, tmp);
   }
 
   VideoIn::Frame::~Frame()
@@ -59,7 +59,7 @@ namespace VideoDisplay {
       __framecount--;
       tmp = __framecount;
     }
-    info("VideoIn::Frame::~Frame # %p Instance count at %d", this, tmp);
+    debug("VideoIn::Frame::~Frame # %p Instance count at %d", this, tmp);
     m_image.freeMemory();
     if(m_audio)
       free(m_audio);

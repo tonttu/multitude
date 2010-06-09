@@ -73,7 +73,7 @@ namespace Resonant {
     {
     public:
       LoudSpeaker()
-	: m_location(this, "location", Nimble::Vector2(0,0))
+  : m_location(this, "location", Nimble::Vector2(1111111,0))
       {
         setName("speaker");
       }
@@ -116,8 +116,6 @@ namespace Resonant {
 
     Sources      m_sources;
     LoudSpeakers m_speakers;
-
-    int m_outChannels;
 
     Valuable::ValueFloat m_maxRadius;
   };
