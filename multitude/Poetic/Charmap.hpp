@@ -68,7 +68,7 @@ namespace Poetic
       int m_ftEncoding;
       FT_FaceRec_ * m_ftFace;
 
-      typedef std::unordered_map<unsigned long, unsigned long> container;
+      typedef std::unordered_map<unsigned int, unsigned int> container;
 
       container m_charmap;
 
