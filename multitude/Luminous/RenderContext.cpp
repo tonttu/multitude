@@ -396,7 +396,7 @@ namespace Luminous
       int w = m_window->size().x;
       int h = m_window->size().y;
       ++m_viewStackPos;
-      if (m_viewTextures.size() == m_viewStackPos) {
+      if ((int)m_viewTextures.size() == m_viewStackPos) {
         m_viewTextures.push_back(new Luminous::Texture2D);
         Luminous::Texture2D & tex = *m_viewTextures.back();
         tex.setWidth(w);
