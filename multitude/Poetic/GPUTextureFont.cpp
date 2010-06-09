@@ -23,7 +23,7 @@
 
 #define DEFAULT_PADDING 3
 
-#define VERTEX_ARRAY_SIZE 512
+#define VERTEX_ARRAY_SIZE 1024
 
 #include <Luminous/Shader.hpp>
 
@@ -202,38 +202,40 @@ namespace Poetic
     Luminous::GLSLProgramObject * shader = g_fontShader.bind();
     // info("GPUTextureFont::internalRender # out");
 
-    shader->setUniformMatrix3("transform", m);
     shader->setUniformInt("fontTexture", 0);
 
     Nimble::Vector2f tmp[VERTEX_ARRAY_SIZE];
-    Nimble::Vector2f * ptr = &tmp[0];
 
-    if(VERTEX_ARRAY_SIZE < 4 * n * 2) {
-      Radiant::error("GPUTextureFont::internalRender # string too long to fit into vertex array.");
-      n = VERTEX_ARRAY_SIZE / (4 * 2);
-    }
+    int used = 0;
+    int use = 0;
+    const GLsizei vertexSize = 2 * sizeof(Nimble::Vector2f);
 
-    GPUFontBase::internalRender(str, n, m, &ptr);
-
-    //Luminous::VertexBuffer * vbo = FontManager::instance().fontVBO(0);
-
-    //vbo->partialFill(0, &tmp[0], 4*n*2*sizeof(Nimble::Vector2f));
-
-    // glBindTexture(GL_TEXTURE_2D, m_);
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-    const GLsizei vertexSize = 2 * sizeof(Nimble::Vector2f);
 
-//    glVertexPointer(2, GL_FLOAT, vertexSize, BUFFER_OFFSET(0));
-//    glTexCoordPointer(2, GL_FLOAT, vertexSize, BUFFER_OFFSET(sizeof(Nimble::Vector2f)));
-    glVertexPointer(2, GL_FLOAT, vertexSize, &tmp[0]);
-    glTexCoordPointer(2, GL_FLOAT, vertexSize, &tmp[1]);
+    Nimble::Matrix3 trans = m;
+    while (true) {
+      shader->setUniformMatrix3("transform", trans);
 
-    glDrawArrays(GL_QUADS, 0, 4 * n);
+      use = std::min(VERTEX_ARRAY_SIZE/8, n-used);
+      Nimble::Vector2f * ptr = &tmp[0];
 
-    //vbo->unbind();
+      GPUFontBase::internalRender(str+used, use, trans, &ptr);
+
+      glVertexPointer(2, GL_FLOAT, vertexSize, &tmp[0]);
+      glTexCoordPointer(2, GL_FLOAT, vertexSize, &tmp[1]);
+      glDrawArrays(GL_QUADS, 0, 4 * use);
+
+      if (VERTEX_ARRAY_SIZE >= 4*2*(n-used))
+        break;
+
+      float offset = getLastAdvance();
+      //float offset = cpuFont()->advance(str+used, use);
+      trans *= Nimble::Matrix3::translate2D(offset, .0f);
+      used += use;
+    }
 
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -241,6 +243,7 @@ namespace Poetic
     glUseProgram(0);
   }
 
+  /// exactly the same code as below
   void GPUTextureFont::internalRender(const wchar_t * str, int n,
 				      const Nimble::Matrix3 & m)
   {
@@ -252,45 +255,44 @@ namespace Poetic
 
     // GPUTextureGlyph::resetActiveTexture();
 
-    if(!g_fontShader.isDefined()) {
-      g_fontShader.setVertexShader(g_fontVShaderSource);
-      g_fontShader.setFragmentShader(g_fontFShaderSource);
-    }
-
+    // info("GPUTextureFont::internalRender # in");
     Luminous::GLSLProgramObject * shader = g_fontShader.bind();
+    // info("GPUTextureFont::internalRender # out");
 
-    shader->setUniformMatrix3("transform", m);
     shader->setUniformInt("fontTexture", 0);
 
     Nimble::Vector2f tmp[VERTEX_ARRAY_SIZE];
-    Nimble::Vector2f * ptr = &tmp[0];
 
-    if(VERTEX_ARRAY_SIZE < 4 * n * 2) {
-      Radiant::error("GPUTextureFont::internalRender # string too long to fit into vertex array.");
-      n = VERTEX_ARRAY_SIZE / (4 * 2);
-    }
+    int used = 0;
+    int use = 0;
+    const GLsizei vertexSize = 2 * sizeof(Nimble::Vector2f);
 
-    GPUFontBase::internalRender(str, n, m, &ptr);
-
-    //Luminous::VertexBuffer * vbo = FontManager::instance().fontVBO(0);
-
-    //vbo->partialFill(0, &tmp[0], 4*n*2*sizeof(Nimble::Vector2f));
-
-    // glBindTexture(GL_TEXTURE_2D, GPUTextureGlyph::activeTexture());
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-    const GLsizei vertexSize = 2 * sizeof(Nimble::Vector2f);
 
-    //glVertexPointer(2, GL_FLOAT, vertexSize, BUFFER_OFFSET(0));
-    //glTexCoordPointer(2, GL_FLOAT, vertexSize, BUFFER_OFFSET(sizeof(Nimble::Vector2f)));
-    glVertexPointer(2, GL_FLOAT, vertexSize, &tmp[0]);
-    glTexCoordPointer(2, GL_FLOAT, vertexSize, &tmp[1]);
+    Nimble::Matrix3 trans = m;
+    while (true) {
+      shader->setUniformMatrix3("transform", trans);
 
-    glDrawArrays(GL_QUADS, 0, 4 * n);
+      use = std::min(VERTEX_ARRAY_SIZE/8, n-used);
+      Nimble::Vector2f * ptr = &tmp[0];
 
-    //vbo->unbind();
+      GPUFontBase::internalRender(str+used, use, trans, &ptr);
+
+      glVertexPointer(2, GL_FLOAT, vertexSize, &tmp[0]);
+      glTexCoordPointer(2, GL_FLOAT, vertexSize, &tmp[1]);
+      glDrawArrays(GL_QUADS, 0, 4 * use);
+
+      if (VERTEX_ARRAY_SIZE >= 4*2*(n-used))
+        break;
+
+      float offset = getLastAdvance();
+      //float offset = cpuFont()->advance(str+used, use);
+      trans *= Nimble::Matrix3::translate2D(offset, .0f);
+      used += use;
+    }
 
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
