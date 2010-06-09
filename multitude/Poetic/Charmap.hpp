@@ -16,7 +16,7 @@
 #define POETIC_CHARMAP_HPP
 
 #include "Face.hpp"
-#include <map>
+#include <Radiant/Platform.hpp>
 
 // try to detect c++0x
 #if __cplusplus > 199711L
