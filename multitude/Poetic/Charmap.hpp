@@ -19,7 +19,7 @@
 #include <Radiant/Platform.hpp>
 
 // try to detect c++0x
-#if __cplusplus > 199711L
+#if defined(RADIANT_CPP0X)
   #include <unordered_map>
 #else
   #if defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
