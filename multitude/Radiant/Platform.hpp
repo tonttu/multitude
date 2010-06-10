@@ -1,6 +1,10 @@
 #ifndef RADIANT_PLATFORM_HPP
 #define RADIANT_PLATFORM_HPP
 
+#if __cplusplus > 199711L
+  #define RADIANT_CPP0X 1
+#endif
+
 // Is this OS X?
 #ifdef __APPLE_CC__
 #   define RADIANT_OSX 1

@@ -5,6 +5,8 @@
 #include <Nimble/Vector2.hpp>
 #include <Nimble/Matrix3.hpp>
 
+#include <vector>
+
 namespace Nimble {
 
   /** A rectangle is defined by origin (O), two unit-length axis vectors
@@ -44,6 +46,15 @@ namespace Nimble {
 
       /// Return the size of the rectangle
       Nimble::Vector2 size() const;
+
+      /// Computes the corner vertices of the rectangle and appends the to the given vector
+      /// @param corners vector of points where the four corners are appended
+      void computeCorners(std::vector<Nimble::Vector2f> & corners) const;
+
+      /// Returns a rectangle that contains the two given rectangles. The
+      /// result is not guaranteed to be the smallest rectangle containing the
+      /// input rectangles.
+      static Nimble::Rectangle merge(const Nimble::Rectangle & a, const Nimble::Rectangle & b);
 
     private:
       Nimble::Vector2f m_origin;
