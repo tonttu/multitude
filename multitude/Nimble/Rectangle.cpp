@@ -1,5 +1,7 @@
 #include "Rectangle.hpp"
 
+#include <numeric>
+
 namespace Nimble
 {
   Rectangle::Rectangle()
@@ -73,11 +75,6 @@ namespace Nimble
       return false;  
 
     return true;
-  }
-
-  Nimble::Vector2f Rectangle::center() const
-  {
-    return m_origin;
   }
 
   Nimble::Vector2 Rectangle::size() const
@@ -164,6 +161,29 @@ namespace Nimble
     box.m_extent1 = 0.5f * (max[1] - min[1]);
 
     return box;
+  }
+
+//  void dumpRectangle(const Rectangle & r)
+//  {
+//    Radiant::info("Rectangle o(%f,%f) a0(%f,%f) e0(%f) a1(%f,%f) e1(%f)", r.center().x, r.center().y, r.axis0().x, r.axis0().y, r.extent0(), r.axis1().x, r.axis1().y, r.extent1());
+//  }
+
+  void Rectangle::transform(const Nimble::Matrix3 &m)
+  {
+    std::vector<Nimble::Vector2> vertex;
+    computeCorners(vertex);
+
+    for(size_t i = 0; i < 4; i++)
+      vertex[i] = m.project(vertex[i]);
+
+    m_origin = 0.25f * std::accumulate(vertex.begin(), vertex.end(), Nimble::Vector2(0, 0));
+    m_axis0 = vertex[1] - vertex[0];
+    m_extent0 = 0.5f * m_axis0.length();
+    m_axis0.normalize();
+
+    m_extent1 = 0.5f * (vertex[3] - vertex[0]).length();
+    m_axis1 = m_axis0.perpendicular();
+    m_axis1.normalize();
   }
 
 }
