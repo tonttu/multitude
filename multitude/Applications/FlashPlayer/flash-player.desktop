@@ -1,7 +1,7 @@
 [Desktop Entry]
-Name=Fullscreen flash player
-Comment=Play flash files in fullscreen with xinerama
-Exec=flash-player %U
+Name=MultiTouch Flash Player
+Comment=Play Flash files with MultiTouch displays
+Exec=FlashPlayer %U
 Terminal=false
 Type=Application
 StartupNotify=true
