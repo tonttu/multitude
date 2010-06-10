@@ -38,9 +38,14 @@ namespace Nimble
           Nimble::Vector2 getPoint(Index ii, float t) const;
         public:
           Nimble::Vector2 getDerivative(Index ii, float t) const;
+          /// Evaluates the spline at given t
+          /// @param t position where to evaluate the spline. 0 <= t <= size() - 1
           Nimble::Vector2 get(float t) const;
+          /// Adds a control point
           void add(Nimble::Vector2 point);
+          /// Removes the control point at the given index
           void remove(Index ii);
+          /// Returns the number of control points
           Index size() const { return m_points.size(); }
 
           friend class Luminous::RenderContext;
