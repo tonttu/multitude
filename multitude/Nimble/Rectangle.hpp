@@ -42,7 +42,15 @@ namespace Nimble {
       bool intersects(const Rectangle & r) const;
       
       /// Return the center point of the rectangle
-      Nimble::Vector2f center() const;
+      Nimble::Vector2f center() const { return m_origin; }
+      /// Returns the first axis of the rectangle
+      Nimble::Vector2f axis0() const { return m_axis0; }
+      /// Returns the second axis of the rectangle
+      Nimble::Vector2f axis1() const { return m_axis1; }
+      /// Returns the extent along axis0
+      float extent0() const { return m_extent0; }
+      /// Returns the extent along axis1
+      float extent1() const { return m_extent1; }
 
       /// Return the size of the rectangle
       Nimble::Vector2 size() const;
@@ -55,6 +63,11 @@ namespace Nimble {
       /// result is not guaranteed to be the smallest rectangle containing the
       /// input rectangles.
       static Nimble::Rectangle merge(const Nimble::Rectangle & a, const Nimble::Rectangle & b);
+
+      /// Transforms the rectangle with the given matrix. If the matrix is not
+      /// orthogonal, the results are undefined.
+      /// @param m transformation matrix
+      void transform(const Nimble::Matrix3 & m);
 
     private:
       Nimble::Vector2f m_origin;
