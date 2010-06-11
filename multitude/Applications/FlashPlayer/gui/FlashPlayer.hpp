@@ -4,13 +4,8 @@
 #include <QVector>
 #include <QRect>
 
-class Screens
+namespace FlashPlayer
 {
-public:
-  bool update();
-  QString id() const;
-
-private:
   struct Screen
   {
     int screen;
@@ -20,10 +15,22 @@ private:
     {
       return QRect(x, y, width, height);
     }
+    static QString rectToId(const QRect & rect);
+    static QRect idToRect(const QString & id);
   };
 
-  QVector<Screen> m_screens;
-  QRect m_view;
-};
+  class Screens
+  {
+  public:
+    bool update();
+    QString id() const;
+    size_t size() const { return m_screens.size(); }
+    Screen operator[] (int num) const { return m_screens[num]; }
+
+  private:
+    QVector<Screen> m_screens;
+    QRect m_view;
+  };
+}
 
 #endif
