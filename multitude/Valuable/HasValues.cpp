@@ -236,10 +236,6 @@ namespace Valuable
       obj->eventAddSource(this);
     }
   }
-  void eventAddListener(const char * from,
-                        const char * to,
-                        Valuable::HasValues * obj,
-                        const Radiant::BinaryData & defaultData );
 
   int HasValues::eventRemoveListener(Valuable::HasValues * obj, const char * from, const char * to)
   {
