@@ -33,7 +33,9 @@
 #include <errno.h>
 
 
-
+#ifndef WIN32
+#include <poll.h>
+#endif
 
 namespace Radiant
 {
@@ -167,7 +169,18 @@ namespace Radiant
 
   bool TCPSocket::isPendingInput(unsigned int waitMicroSeconds)
   {
+#ifndef WIN32
+    struct pollfd pfd;
+    bzero( & pfd, sizeof(pfd));
+
+    pfd.fd = m_d->socketDescriptor();
+    pfd.events = POLLIN;
+    poll(&pfd, 1, waitMicroSeconds / 1000);
+
+    return pfd.revents & POLLIN;
+#else
     return m_d->waitForReadyRead(waitMicroSeconds / 1000);
+#endif
   }
 /*
   void TCPSocket::debug()

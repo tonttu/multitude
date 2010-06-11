@@ -210,26 +210,33 @@ namespace Poetic
     int use = 0;
     const GLsizei vertexSize = 2 * sizeof(Nimble::Vector2f);
 
+
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
+
     Nimble::Matrix3 trans = m;
-    do {
+    while (true) {
       shader->setUniformMatrix3("transform", trans);
 
       use = std::min(VERTEX_ARRAY_SIZE/8, n-used);
       Nimble::Vector2f * ptr = &tmp[0];
 
       GPUFontBase::internalRender(str+used, use, trans, &ptr);
+
       glVertexPointer(2, GL_FLOAT, vertexSize, &tmp[0]);
       glTexCoordPointer(2, GL_FLOAT, vertexSize, &tmp[1]);
       glDrawArrays(GL_QUADS, 0, 4 * use);
 
-      float offset = cpuFont()->advance(str+used, use);
-      trans *= Nimble::Matrix3::translate2D(offset, .0f);
+      if (VERTEX_ARRAY_SIZE >= 4*2*(n-used))
+        break;
 
+      float offset = getLastAdvance();
+      //float offset = cpuFont()->advance(str+used, use);
+      trans *= Nimble::Matrix3::translate2D(offset, .0f);
       used += use;
-    } while (VERTEX_ARRAY_SIZE < 4*2*(n-used+use));
+    }
+
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
@@ -260,26 +267,33 @@ namespace Poetic
     int use = 0;
     const GLsizei vertexSize = 2 * sizeof(Nimble::Vector2f);
 
+
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
+
     Nimble::Matrix3 trans = m;
-    do {
+    while (true) {
       shader->setUniformMatrix3("transform", trans);
 
       use = std::min(VERTEX_ARRAY_SIZE/8, n-used);
       Nimble::Vector2f * ptr = &tmp[0];
 
       GPUFontBase::internalRender(str+used, use, trans, &ptr);
+
       glVertexPointer(2, GL_FLOAT, vertexSize, &tmp[0]);
       glTexCoordPointer(2, GL_FLOAT, vertexSize, &tmp[1]);
       glDrawArrays(GL_QUADS, 0, 4 * use);
 
-      float offset = cpuFont()->advance(str+used, use);
-      trans *= Nimble::Matrix3::translate2D(offset, .0f);
+      if (VERTEX_ARRAY_SIZE >= 4*2*(n-used))
+        break;
 
+      float offset = getLastAdvance();
+      //float offset = cpuFont()->advance(str+used, use);
+      trans *= Nimble::Matrix3::translate2D(offset, .0f);
       used += use;
-    } while (VERTEX_ARRAY_SIZE < 4*2*(n-used+use));
+    }
+
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 

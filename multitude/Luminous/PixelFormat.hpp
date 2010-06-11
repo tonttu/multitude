@@ -102,6 +102,12 @@ namespace Luminous
       return m_layout == that.m_layout && m_type == that.m_type;
     }
 
+    /// Compare if two pixel formats are not the same
+    inline bool operator != (const PixelFormat & that) const
+    {
+      return m_layout != that.m_layout || m_type == that.m_type;
+    }
+
     /// Converts the pixel format into a human-readable string
     std::string toString() const;
 
