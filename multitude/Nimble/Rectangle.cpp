@@ -84,4 +84,86 @@ namespace Nimble
   {
     return Nimble::Vector2(2 * m_extent0, 2 * m_extent1);
   }
+
+  void Rectangle::computeCorners(std::vector<Nimble::Vector2f> &corners) const
+  {
+    Nimble::Vector2f extAxis0 = m_axis0 * m_extent0;
+    Nimble::Vector2f extAxis1 = m_axis1 * m_extent1;
+
+    corners.push_back(m_origin - extAxis0 - extAxis1);
+    corners.push_back(m_origin + extAxis0 - extAxis1);
+    corners.push_back(m_origin + extAxis0 + extAxis1);
+    corners.push_back(m_origin - extAxis0 + extAxis1);
+  }
+
+  Nimble::Rectangle Nimble::Rectangle::merge(const Nimble::Rectangle &a, const Nimble::Rectangle &b)
+  {
+    Rectangle box;
+
+    // Average the centers
+    box.m_origin = 0.5f * (a.center() + b.center());
+
+    // Average the box axii (and negate if necessary)
+    if(Nimble::dot(a.m_axis0, b.m_axis0) >= 0.f) {
+      box.m_axis0 = 0.5f * (a.m_axis0 + b.m_axis0);
+      box.m_axis0.normalize();
+    } else {
+      box.m_axis0 = 0.5f * (a.m_axis0 - b.m_axis0);
+      box.m_axis0.normalize();
+    }
+
+    box.m_axis1 = -box.m_axis0.perpendicular();
+    box.m_axis1.normalize();
+
+    // Project input corner points on the new axii and compute the extents
+    std::vector<Nimble::Vector2f> vertex;
+    Nimble::Vector2f min(0, 0);
+    Nimble::Vector2f max(0, 0);
+    const Nimble::Vector2f axii[] =  { box.m_axis0, box.m_axis1 };
+
+    a.computeCorners(vertex);
+
+    for(int i = 0; i < 4; i++) {
+
+      Nimble::Vector2f diff = vertex[i] - box.center();
+
+      for(int j = 0; j < 2; j++) {
+
+        float dotp = dot(diff, axii[j]);
+
+        if(dotp > max[j])
+          max[j] = dotp;
+        else if(dotp < min[j])
+          min[j] = dotp;
+      }
+    }
+
+    vertex.clear();
+    b.computeCorners(vertex);
+
+    for(int i = 0; i < 4; i++) {
+
+      Nimble::Vector2f diff = vertex[i] - box.center();
+
+      for(int j = 0; j < 2; j++) {
+
+        float dotp = dot(diff, axii[j]);
+
+        if(dotp > max[j])
+          max[j] = dotp;
+        else if(dotp < min[j])
+          min[j] = dotp;
+      }
+    }
+
+    // Adjust the center and extents so the origin is at the center of the box
+    box.m_origin += box.m_axis0 * 0.5f * (max[0] + min[0]);
+    box.m_extent0 = 0.5f * (max[0] - min[0]);
+
+    box.m_origin += box.m_axis1 * 0.5f * (max[1] + min[1]);
+    box.m_extent1 = 0.5f * (max[1] - min[1]);
+
+    return box;
+  }
+
 }

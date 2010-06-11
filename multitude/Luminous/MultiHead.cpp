@@ -249,7 +249,7 @@ namespace Luminous {
 
     if(m_areas.size() == 1) {
       Radiant::debug("MultiHead::Window::resizeEvent");
-      m_areas[0].ptr()->setSize(size);
+      m_areas[0]->setSize(size);
     }
   }
 
@@ -258,10 +258,10 @@ namespace Luminous {
     if(m_areas.empty())
       return Nimble::Rect(0,0, 1, 1);
 
-    Rect r = m_areas[0].ptr()->graphicsBounds();
+    Rect r = m_areas[0]->graphicsBounds();
 
     for(size_t i = 1; i < m_areas.size(); i++) {
-      r.expand(m_areas[i].ptr()->graphicsBounds());
+      r.expand(m_areas[i]->graphicsBounds());
     }
 
     return r;
@@ -270,7 +270,7 @@ namespace Luminous {
   void MultiHead::Window::setSeam(float seam)
   {
     for(size_t i = 0; i < m_areas.size(); i++) {
-      m_areas[i].ptr()->setSeams(i == 0 ? 0 : seam,
+      m_areas[i]->setSeams(i == 0 ? 0 : seam,
                                  i + 1 >= m_areas.size() ? 0 : seam,
                                  0, 0);
     }
@@ -282,7 +282,7 @@ namespace Luminous {
 
     for(size_t i = 0; i < m_areas.size(); i++) {
       bool ok = false;
-      Nimble::Vector2f res = m_areas[i].ptr()->windowToGraphics(loc, m_size[1], ok);
+      Nimble::Vector2f res = m_areas[i]->windowToGraphics(loc, m_size[1], ok);
 
       if(ok) {
         convOk = true;
@@ -302,7 +302,7 @@ namespace Luminous {
     m_pixelSizeCm = sizeCm;
 
     for(size_t i = 0; i < m_areas.size(); i++)
-      m_areas[i].ptr()->setPixelSizeCm(sizeCm);
+      m_areas[i]->setPixelSizeCm(sizeCm);
   }
 
   bool MultiHead::Window::readElement(Valuable::DOMElement ce)
@@ -323,7 +323,7 @@ namespace Luminous {
       // Add as child & recurse
       addValue(name, area);
       area->deserializeXML(ce);
-      m_areas.push_back(area);
+      m_areas.push_back(std::shared_ptr<Area>(area));
     } else {
       return false;
     }
@@ -352,7 +352,7 @@ namespace Luminous {
                      i, m_windows.size());
     }
 
-    return * m_windows[i].ptr();
+    return * m_windows[i];
   }
 
   const MultiHead::Window & MultiHead::window(size_t i) const
@@ -362,7 +362,7 @@ namespace Luminous {
                      i, m_windows.size());
     }
 
-    return * m_windows[i].ptr();
+    return * m_windows[i];
   }
 
   size_t MultiHead::areaCount()
@@ -370,7 +370,7 @@ namespace Luminous {
     size_t n = 0;
 
     for(size_t i = 0; i < m_windows.size(); i++)
-      n += m_windows[i].ptr()->areaCount();
+      n += m_windows[i]->areaCount();
 
     return n;
   }
@@ -380,18 +380,18 @@ namespace Luminous {
     size_t used = 0;
 
     for(size_t i = 0; i < m_windows.size(); i++) {
-      int n = m_windows[i].ptr()->areaCount();
+      int n = m_windows[i]->areaCount();
       if(used + n > index) {
         if(winptr)
-          *winptr = m_windows[i].ptr();
-        return m_windows[i].ptr()->area(index - used);
+          *winptr = m_windows[i].get();
+        return m_windows[i]->area(index - used);
       }
       used += n;
     }
 
     assert(false); // Out of range
 
-    return m_windows[0].ptr()->area(0); // Unreachable
+    return m_windows[0]->area(0); // Unreachable
   }
 
   Nimble::Vector2i MultiHead::totalSize()
@@ -518,7 +518,7 @@ namespace Luminous {
       addValue(name, win);
       win->deserializeXML(ce);
 
-      m_windows.push_back(win);
+      m_windows.push_back(std::shared_ptr<Window>(win));
     } else {
       return false;
     }

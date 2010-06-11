@@ -24,6 +24,7 @@ HEADERS += ImageConversion.hpp
 HEADERS += IODefs.hpp
 HEADERS += Log.hpp
 HEADERS += Mutex.hpp
+HEADERS += Platform.hpp
 HEADERS += PlatformUtils.hpp
 HEADERS += Radiant.hpp
 HEADERS += RGBA.hpp
@@ -86,11 +87,11 @@ SOURCES += WatchDog.cpp
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS
 
 linux-* {
-	SOURCES += PlatformUtilsLinux.cpp
-	SOURCES += XFaker.cpp
-	HEADERS += XFaker.hpp
-	
-	LIBS += -lX11 -lXtst
+    SOURCES += PlatformUtilsLinux.cpp
+    SOURCES += XFaker.cpp
+    HEADERS += XFaker.hpp
+
+    LIBS += -lX11 -lXtst
 }
 
 macx {
@@ -145,21 +146,23 @@ win32 {
     CONFIG += qt
     QT = core \
         network
+
     PTGREY_PATH = "C:\Program Files\Point Grey Research\FlyCapture2"
-    exists($$PTGREY_PATH/include) {
-        DEFINES += CAMERA_DRIVER_PGR
-	message(Using PTGrey camera drivers)
+    !exists($$PTGREY_PATH/include):error(PTGrey driver must be installed on Windows)
 
-        HEADERS += VideoCameraPTGrey.hpp
-        SOURCES += VideoCameraPTGrey.cpp
+    DEFINES += CAMERA_DRIVER_PGR
+    message(Using PTGrey camera drivers)
 
-        INCLUDEPATH += $$PTGREY_PATH/include
+    HEADERS += VideoCameraPTGrey.hpp
+    SOURCES += VideoCameraPTGrey.cpp
 
-        # 64bit libs have different path
-        win64:LIBPATH += $$PTGREY_PATH/lib64
-        else:LIBPATH += $$PTGREY_PATH/lib
+    INCLUDEPATH += $$PTGREY_PATH/include
 
-        LIBS += FlyCapture2.lib
-    }
+    # 64bit libs have different path
+    win64:LIBPATH += $$PTGREY_PATH/lib64
+    else:LIBPATH += $$PTGREY_PATH/lib
+
+    LIBS += FlyCapture2.lib
 }
+
 include(../library.pri)

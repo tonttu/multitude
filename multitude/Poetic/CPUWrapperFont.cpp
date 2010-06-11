@@ -36,11 +36,13 @@ namespace Poetic
 
     GPUWrapperFont * gf = dynamic_cast<GPUWrapperFont *> (glr->getResource(this));
 
+    // Get the managed GPU font; force getResource call to keep resource alive
+    GPUManagedFont * gmf = dynamic_cast<GPUManagedFont *> (glr->getResource(m_managedFont));
+
     if(gf) 
       return gf;
 
-    // Get the managed GPU font
-    GPUManagedFont * gmf = dynamic_cast<GPUManagedFont *> (glr->getResource(m_managedFont));
+
     if(!gmf) {
       gmf = new GPUManagedFont(m_managedFont, glr);
       glr->addResource(m_managedFont, gmf);

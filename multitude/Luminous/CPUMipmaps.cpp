@@ -38,7 +38,6 @@ namespace Luminous {
 
   CPUMipmaps::CPUItem::CPUItem()
     : m_state(WAITING),
-    m_image(0),
     m_unUsed(0)
   {
     // info("CPUMipmaps::CPUItem::CPUItem # %d", ++__cpcount);
@@ -74,6 +73,11 @@ namespace Luminous {
     for(int i = DEFAULT_MAP1; i <= m_maxLevel; i++) {
       m_stack[i].m_unUsed += dt;
     }
+
+    Radiant::Guard g(&m_stackMutex);
+    for(StackMap::iterator it = m_stackChange.begin(); it != m_stackChange.end(); ++it)
+      m_stack[it->first] = it->second;
+    m_stackChange.clear();
   }
 
   int CPUMipmaps::getOptimal(Nimble::Vector2f size)
@@ -125,16 +129,17 @@ namespace Luminous {
     return -1;
   }
 
-  ImageTex * CPUMipmaps::getImage(int i)
+  std::shared_ptr<ImageTex> CPUMipmaps::getImage(int i)
   {
     CPUItem & item = m_stack[i];
 
     item.m_unUsed = 0.0f;
 
+    std::shared_ptr<ImageTex> image = item.m_image;
     if(item.m_state != READY)
-      return 0;
+      return std::shared_ptr<ImageTex>();
 
-    return item.m_image.ptr();
+    return image;
   }
 
   void CPUMipmaps::markImage(int i)
@@ -248,7 +253,7 @@ namespace Luminous {
     // info("CPUMipmaps::pixelAlpha # %f %f", relLoc.x, relLoc.y);
 
     for(int i = MAX_MAPS - 1; i >= 1; i--) {
-      Image * im = getImage(i);
+      std::shared_ptr<ImageTex> im = getImage(i);
 
       if(!im) continue;
 
@@ -286,6 +291,7 @@ namespace Luminous {
 
   void CPUMipmaps::doTask()
   {
+    StackMap stack;
     // Start loading whatever is needed, recursively
 
     // info("CPUMipmaps::doTask # %s %d", m_filename.c_str(), m_maxLevel);
@@ -293,7 +299,7 @@ namespace Luminous {
     // Load everything that maybe should be loaded:
     for(int i = lowestLevel(); i < m_maxLevel; i++) {
       if((m_stack[i].m_unUsed < m_timeOut) && (m_stack[i].m_state == WAITING)) {
-        recursiveLoad(i);
+        recursiveLoad(stack, i);
       }
     }
 
@@ -305,12 +311,20 @@ namespace Luminous {
 
       if((item.m_unUsed > m_timeOut) && (item.m_state == READY)) {
         // info("CPUMipmaps::doTask # Dropping %s %d", m_filename.c_str(), i);
-        item.m_state = WAITING;
-        item.m_image = 0;
+        stack[i] = item;
+        stack[i].m_state = WAITING;
+        stack[i].m_image.reset();
       }
     }
 
     // info("CPUMipmaps::doTask # %s %d EXIT", m_filename.c_str(), m_maxLevel);
+
+    if(!stack.empty())
+    {
+      Radiant::Guard g(&m_stackMutex);
+      for(StackMap::iterator it = stack.begin(); it != stack.end(); ++it)
+        m_stackChange[it->first] = it->second;
+    }
 
     scheduleFromNowSecs(0.5f);
   }
@@ -345,9 +359,9 @@ namespace Luminous {
       name += "png";
   }
 
-  void CPUMipmaps::recursiveLoad(int level)
+  void CPUMipmaps::recursiveLoad(StackMap & stack, int level)
   {
-    CPUItem & item = m_stack[level];
+    CPUItem & item = stack[level];
 
     // info("CPUMipmaps::recursiveLoad # %s %d %d", m_filename.c_str(), level, m_maxLevel);
 
@@ -375,8 +389,9 @@ namespace Luminous {
           if(im->hasAlpha())
             m_hasAlpha = true;
 
-          item.m_image = im;
+          item.m_image.reset(im);
           item.m_state = READY;
+          return;
         }
       }
     }
@@ -386,11 +401,10 @@ namespace Luminous {
       // Load original, and scale to useful dimensions:
 
       Luminous::ImageTex * im = new ImageTex();
-      Radiant::RefPtr<Luminous::ImageTex> rim(im);
+      std::shared_ptr<Luminous::ImageTex> rim(im);
 
       if(!im->read(m_filename.c_str())) {
         error("CPUMipmaps::recursiveLoad # Could not read %s", m_filename.c_str());
-        delete im;
         item.m_state = FAILED;
         return;
       }
@@ -407,15 +421,15 @@ namespace Luminous {
           s = Nimble::Vector2(s) * scale;
         }
 
-        while(s.x & 0xF) {
-          s.x--;
+        while(s.x & 0xFF) {
+          s.x++;
         }
-        while(s.y & 0xF) {
-          s.y--;
+        while(s.y & 0xFF) {
+          s.y++;
         }
 
         Luminous::ImageTex * im2 = new ImageTex();
-        Radiant::RefPtr<Luminous::ImageTex> rim2(im2);
+        std::shared_ptr<Luminous::ImageTex> rim2(im2);
 
         im2->copyResample(*im, s.x, s.y);
 
@@ -427,9 +441,9 @@ namespace Luminous {
 
     // Load the higher level, and scale down from that:
 
-    recursiveLoad(level + 1);
+    recursiveLoad(stack, level + 1);
 
-    CPUItem & src = m_stack[level + 1];
+    CPUItem & src = stack[level + 1];
 
     if(src.m_state != READY) {
       error("Failed to get mipmap %d", level + 1);
@@ -439,8 +453,9 @@ namespace Luminous {
 
     // Scale down from higher-level mipmap
 
-    Luminous::ImageTex * imsrc = src.m_image.ptr();
-    Luminous::ImageTex * imdest = new Luminous::ImageTex();
+    std::shared_ptr<Luminous::ImageTex> imsrc = src.m_image;
+
+    std::shared_ptr<Luminous::ImageTex> imdest(new Luminous::ImageTex());
 
     Nimble::Vector2i ss = imsrc->size();
     Nimble::Vector2i is(ss.x >> 1, ss.y >> 1);

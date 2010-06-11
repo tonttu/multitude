@@ -18,7 +18,9 @@
 namespace Luminous
 {
 
-  GarbageCollector::container GarbageCollector::m_items;
+  GarbageCollector::container GarbageCollector::m_items1;
+  GarbageCollector::container GarbageCollector::m_items2;
+  GarbageCollector::container * GarbageCollector::m_current = &GarbageCollector::m_items1;
 
   static Radiant::MutexStatic __garbmutex;
 
@@ -31,17 +33,19 @@ namespace Luminous
   void GarbageCollector::clear()
   {
     Radiant::GuardStatic g(__garbmutex);
-    m_items.clear();
+    // swap and clear current
+    m_current = m_current == &m_items1 ? &m_items2 : &m_items1;
+    m_current->clear();
   }
 
   void GarbageCollector::objectDeleted(Collectable * obj)
   {
     Radiant::GuardStatic g(__garbmutex);
-    m_items.insert(obj);
+    m_current->insert(obj);
   }
 
-  Radiant::MutexStatic & GarbageCollector::mutex()
+  const GarbageCollector::container & GarbageCollector::previousObjects()
   {
-    return __garbmutex;
+    return m_current == &m_items1 ? m_items2 : m_items1;
   }
 }

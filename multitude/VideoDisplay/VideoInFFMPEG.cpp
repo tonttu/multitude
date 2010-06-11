@@ -19,20 +19,32 @@
 
 #include <map>
 #include <vector>
+#include <algorithm>
 
 namespace VideoDisplay {
-
-  class FFVideodebug
+  namespace
   {
-  public:
-    FFVideodebug() : m_channels(0), m_duration(0.0f) {}
+    class FFVideodebug
+    {
+    public:
+      FFVideodebug() : m_channels(0), m_duration(0.0f) {}
 
-    Radiant::VideoImage m_firstFrame;
-    int   m_channels;
-    float m_duration;
-    /* Can be used later on to drop frames out of memory selectively. */
-    Radiant::TimeStamp m_used;
-  };
+      Radiant::VideoImage m_firstFrame;
+      int   m_channels;
+      float m_duration;
+      /* Can be used later on to drop frames out of memory selectively. */
+      Radiant::TimeStamp m_used;
+    };
+
+    /// how many videos to cache
+    /// @see FFVideodebug
+    const unsigned int s_MaxCached = 100;
+
+    bool comp_ffvideodebug_timestamp(const std::pair<std::string, FFVideodebug> & a, const std::pair<std::string, FFVideodebug> & b)
+    {
+      return a.second.m_used < b.second.m_used;
+    }
+  }
 
   /* Here we cache the first frames off all viedos. */
   static std::map<std::string, FFVideodebug> __ffcache;
@@ -188,6 +200,10 @@ namespace VideoDisplay {
       Radiant::GuardStatic g(&__mutex);
 
       video.getAudioParameters( & m_channels, & m_sampleRate, & m_auformat);
+      // remove the item with the smallest timestamp
+      if (__ffcache.size() >= s_MaxCached) {
+        __ffcache.erase(std::min_element(__ffcache.begin(), __ffcache.end(), comp_ffvideodebug_timestamp));
+      }
 
       FFVideodebug & vi2 = __ffcache[filename];
 

@@ -905,6 +905,10 @@ namespace Radiant {
     if(m_timeoutUs > 0) {
 
       int fd = dc1394_capture_get_fileno(m_camera);
+      if(fd == -1) {
+        Radiant::error("VideoCamera1394::captureImage # dc1394_capture_get_fileno failed");
+        return 0;
+      }
       fd_set fds;
       struct timeval tv;
 

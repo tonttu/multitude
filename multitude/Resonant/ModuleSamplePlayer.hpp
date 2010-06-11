@@ -161,15 +161,15 @@ namespace Resonant {
 
       bool synthesize(float ** out, int n);
 
-      void init(Sample * sample, Radiant::BinaryData * data);
+      void init(std::shared_ptr<Sample> sample, Radiant::BinaryData * data);
 
       bool isActive() { return m_state != INACTIVE; }
 
       void loadFailed() { m_state = INACTIVE; }
 
-      void setSample(Sample * s);
+      void setSample(std::shared_ptr<Sample> s);
 
-      void clear() { m_state = INACTIVE; m_sample = 0; }
+      void clear() { m_state = INACTIVE; m_sample.reset(); }
 
 
     private:
@@ -188,7 +188,7 @@ namespace Resonant {
       int      m_sampleChannel;
       int      m_targetChannel;
       bool     m_loop;
-      Sample * m_sample;
+      std::shared_ptr<Sample> m_sample;
       unsigned m_position;
     };
 
@@ -252,13 +252,13 @@ namespace Resonant {
       volatile bool m_continue;
     };
 
-    bool addSample(Sample * s);
+    bool addSample(std::shared_ptr<Sample> s);
 
     void dropVoice(unsigned index);
 
     std::list<SampleInfo> m_sampleList;
 
-    std::vector<Radiant::RefPtr<Sample> > m_samples;
+    std::vector<std::shared_ptr<Sample> > m_samples;
 
     std::vector<SampleVoice> m_voices;
     std::vector<SampleVoice *> m_voiceptrs;

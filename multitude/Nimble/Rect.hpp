@@ -325,35 +325,22 @@ namespace Nimble {
   template<class T>
   void RectT<T>::transform(const Matrix3T<T>& m)
   {
+    using Math::Min;
+    using Math::Max;
     Vector2T<T> v0(m_low.x, m_low.y);
     Vector2T<T> v1(m_high.x, m_low.y);
     Vector2T<T> v2(m_high.x, m_high.y);
     Vector2T<T> v3(m_low.x, m_high.y);
 
-    Vector3T<T> t0 = m * v0;
-    Vector3T<T> t1 = m * v1;
-    Vector3T<T> t2 = m * v2;
-    Vector3T<T> t3 = m * v3;
+    Vector2T<T> t0 = m.project(v0);
+    Vector2T<T> t1 = m.project(v1);
+    Vector2T<T> t2 = m.project(v2);
+    Vector2T<T> t3 = m.project(v3);
 
-    T xmin = Math::Min(t0.x, t1.x);
-    T ymin = Math::Min(t0.y, t1.y);
-    T xmax = Math::Max(t0.x, t1.x);
-    T ymax = Math::Max(t0.y, t1.y);
-
-    xmin = Math::Min(xmin, t2.x);
-    ymin = Math::Min(ymin, t2.y);
-    xmax = Math::Max(xmax, t2.x);
-    ymax = Math::Max(ymax, t2.y);
-
-    xmin = Math::Min(xmin, t3.x);
-    ymin = Math::Min(ymin, t3.y);
-    xmax = Math::Max(xmax, t3.x);
-    ymax = Math::Max(ymax, t3.y);
-
-    m_low.x = xmin;
-    m_low.y = ymin;
-    m_high.x = xmax;
-    m_high.y = ymax;
+    m_low.x = Min(Min(Min(t0.x, t1.x), t2.x), t3.x);
+    m_low.y = Min(Min(Min(t0.y, t1.y), t2.y), t3.y);
+    m_high.x = Max(Max(Max(t0.x, t1.x), t2.x), t3.x);
+    m_high.y = Max(Max(Max(t0.y, t1.y), t2.y), t3.y);
   }
 
   template<class T>

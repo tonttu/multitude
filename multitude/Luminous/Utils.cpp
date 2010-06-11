@@ -308,6 +308,33 @@ namespace Luminous {
     glEnd();
   }
 
+  void Utils::glTexRect(Nimble::Vector2 size, const Nimble::Matrix3 & m,
+                        Nimble::Vector2f uv1, Nimble::Vector2f uv2)
+  {
+    const Vector4 v[4] = {
+      project(m, Vector2(0,       0)),
+      project(m, Vector2(size.x,  0)),
+      project(m, Vector2(size.x,  size.y)),
+      project(m, Vector2(0,       size.y))
+    };
+
+    glBegin(GL_QUADS);
+
+    glTexCoord2f(uv1.x, uv1.y);
+    glVertex4fv(v[0].data());
+
+    glTexCoord2f(uv2.x, uv1.y);
+    glVertex4fv(v[1].data());
+
+    glTexCoord2f(uv2.x, uv2.y);
+    glVertex4fv(v[2].data());
+
+    glTexCoord2f(uv1.x, uv2.y);
+    glVertex4fv(v[3].data());
+
+    glEnd();
+  }
+
   void Utils::glTexRectAA(const Nimble::Rect & r, const float * rgba)
   {
     glTexRectAA(r.size(), Matrix3::translate2D(r.low()), rgba);

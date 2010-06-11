@@ -67,9 +67,9 @@ bool VideoWindow::open(const char * filename, const char * audiodev)
       return false;
   }
 
-  Radiant::RefPtr<Item> item = new Item();
+  std::shared_ptr<Item> item(new Item());
 
-  item.ptr()->m_show.setContrast(m_contrast);
+  item->m_show.setContrast(m_contrast);
   std::string srtfile = Radiant::FileUtils::baseFilename(filename) + ".srt";
 
   item->m_show.loadSubTitles(srtfile.c_str());
@@ -112,7 +112,7 @@ void VideoWindow::randomOperation()
   for(int i = 0; i < index; i++)
     it++;
 
-  VideoDisplay::ShowGL & show = (*it).ptr()->m_show;
+  VideoDisplay::ShowGL & show = (*it)->m_show;
 
   int operation = m_rand.randN(OPERATIONS_COUNT);
 
@@ -135,11 +135,11 @@ void VideoWindow::randomOperation()
   else if(operation == RECREATE) {
 
     std::string filename = show.filename();
-    (*it) = 0; // delete old
+    it->reset(); // delete old
 
-    Radiant::RefPtr<Item> item = new Item();
+    std::shared_ptr<Item> item(new Item());
 
-    if(!item.ptr()->m_show.init(filename.c_str(), & m_dsp, 0, 0)) {
+    if(!item->m_show.init(filename.c_str(), & m_dsp, 0, 0)) {
       Radiant::error("Could not recreate video player for \"%s\"", filename.c_str());
     }
     else
