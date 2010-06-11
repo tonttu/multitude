@@ -1,3 +1,9 @@
+flash-player (1.2.2-mt2) unstable; urgency=low
+
+  * Screen configuration support
+
+ -- Riku Palomäki <riku@multitouch.fi>  Fri, 11 Jun 2010 16:10:35 +0300
+
 flash-player (1.2.2-mt1) unstable; urgency=low
 
   * Initial Release.

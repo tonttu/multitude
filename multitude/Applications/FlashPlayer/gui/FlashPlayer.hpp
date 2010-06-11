@@ -26,6 +26,7 @@ namespace FlashPlayer
     QString id() const;
     size_t size() const { return m_screens.size(); }
     Screen operator[] (int num) const { return m_screens[num]; }
+    QRect rect() const { return m_view; }
 
   private:
     QVector<Screen> m_screens;

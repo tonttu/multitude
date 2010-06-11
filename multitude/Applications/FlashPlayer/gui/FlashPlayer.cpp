@@ -92,7 +92,7 @@ namespace FlashPlayer
       QDomNode n = root.firstChild();
       while(!n.isNull()) {
         QDomElement e = n.toElement();
-        if(!e.isNull() && e.tagName() == "config" && e.attribute("id") == id) {
+        if(!e.isNull() && e.tagName() == "config" && e.attribute("match") == id) {
           ConfigLine line;
           QString a = e.attribute("automatic");
           line.automatic = a == "yes" || a == "1" || a == "true" || a == "t";
@@ -107,6 +107,10 @@ namespace FlashPlayer
     void set(QString id, ConfigLine line)
     {
       QDomElement root = m_document.documentElement();
+      if(root.isNull()) {
+        root = m_document.createElement("flash");
+        m_document.appendChild(root);
+      }
 
       QDomNode n = root.firstChild();
       while(!n.isNull()) {
@@ -124,7 +128,7 @@ namespace FlashPlayer
       e.setAttribute("automatic", line.automatic ? "yes" : "no");
       e.setAttribute("match", id);
       e.appendChild(m_document.createTextNode(line.view));
-      root.firstChild().appendChild(e);
+      root.appendChild(e);
     }
 
     void save()
@@ -180,11 +184,16 @@ int main(int argc, char * argv[])
       line = config["default"];
 
     if(!line.automatic) {
-      // open gui, get result, update config
-      FlashPlayer::Options options(screens, FlashPlayer::Screen::idToRect(id));
+      FlashPlayer::Options options(screens, FlashPlayer::Screen::idToRect(line.view.isEmpty() ? id : line.view),
+                                   line.view.isEmpty());
       options.show();
       app.exec();
 
+      if(!options.ok())
+        return 1;
+
+      line.automatic = options.automatic();
+      line.view = options.view();
       config.set(id, line);
       config.save();
     }
@@ -204,10 +213,12 @@ int main(int argc, char * argv[])
   }
 
   char * argv2[args.size()+1];
-  for(size_t i = 0; i < args.size(); ++i)
+  for(size_t i = 0; i < args.size(); ++i) {
     argv2[i] = strdup(args[i].c_str());
+  }
   argv2[args.size()] = 0;
 
   args.clear();
-  return execv(binary, argv2);
+
+  return execvp(binary, argv2);
 }

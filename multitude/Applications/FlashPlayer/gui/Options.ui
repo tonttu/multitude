@@ -19,18 +19,33 @@
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
-     <widget class="QGraphicsView" name="scene">
+     <widget class="FlashPlayer::ScreenView" name="view">
       <property name="minimumSize">
        <size>
         <width>400</width>
         <height>0</height>
        </size>
       </property>
+      <property name="verticalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOff</enum>
+      </property>
+      <property name="horizontalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOff</enum>
+      </property>
+      <property name="renderHints">
+       <set>QPainter::TextAntialiasing</set>
+      </property>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
         <widget class="QTableWidget" name="screenlist">
+         <property name="minimumSize">
+          <size>
+           <width>250</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="selectionBehavior">
           <enum>QAbstractItemView::SelectRows</enum>
          </property>
@@ -88,7 +103,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="view"/>
+        <widget class="QLineEdit" name="text"/>
        </item>
       </layout>
      </widget>
@@ -125,6 +140,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>FlashPlayer::ScreenView</class>
+   <extends>QGraphicsView</extends>
+   <header>Options.hpp</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>
