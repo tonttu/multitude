@@ -65,15 +65,16 @@ struct ConfigLine
 class Config
 {
 public:
-  Config(QString dir, QString file) : m_document("flash")
+  Config(QString dir, QString file) : m_document("flash"), m_filename(dir+"/"+file)
   {
     QDir qdir;
     qdir.mkpath(dir);
-    QFile qfile(dir + "/" + file);
+    QFile qfile(m_filename);
     if(qfile.open(QIODevice::ReadOnly)) {
       m_document.setContent(&qfile);
     }
   }
+
   ConfigLine operator[](QString id) const
   {
     QDomElement root = m_document.documentElement();
@@ -93,15 +94,69 @@ public:
     return ConfigLine();
   }
 
+  void set(QString id, ConfigLine line)
+  {
+    QDomElement root = m_document.documentElement();
+
+    QDomNode n = root.firstChild();
+    while(!n.isNull()) {
+      QDomElement e = n.toElement();
+      if(!e.isNull() && e.tagName() == "config" && e.attribute("match") == id) {
+        e.setAttribute("automatic", line.automatic ? "yes" : "no");
+        while(e.hasChildNodes())
+          e.removeChild(e.childNodes().at(0));
+        e.appendChild(m_document.createTextNode(line.view));
+        return;
+      }
+      n = n.nextSibling();
+    }
+    QDomElement e = m_document.createElement("config");
+    e.setAttribute("automatic", line.automatic ? "yes" : "no");
+    e.setAttribute("match", id);
+    e.appendChild(m_document.createTextNode(line.view));
+    root.firstChild().appendChild(e);
+  }
+
+  void save()
+  {
+    QFile qfile(m_filename);
+    if(qfile.open(QIODevice::WriteOnly)) {
+      qfile.write(m_document.toByteArray());
+    }
+  }
+
 private:
   QDomDocument m_document;
+  QString m_filename;
 };
 
 int main(int argc, char * argv[])
 {
-  bool fullscreen = false;
-  char * view = 0;
-  char * src = 0;
+  const char * binary = "nspluginplayer-mt";
+  std::vector<std::string> args;
+  args.push_back(binary);
+
+  for(int i = 1; i < argc; ++i) {
+    if(argv[i] == std::string("--help") || argv[i] == std::string("-h")) {
+      std::cout << "Usage: " << argv[0] << " <options> <filename or URI> <attributes>\n"
+      "\n"
+      "Options:\n"
+      "  --verbose               enable verbose mode\n"
+      "  --fullscreen            start in fullscreen mode\n"
+      "  --view=<WxH+X+Y>        window size & position\n"
+      "                          (example --view 400x300+100+0)\n"
+      "\n"
+      "Common attributes include:\n"
+      "  embed                   use NP_EMBED mode\n"
+      "  full                    use NP_FULL mode (default)\n"
+      "  type=MIME-TYPE          MIME type of the object\n"
+      "  width=WIDTH             width (in pixels)\n"
+      "  height=HEIGHT           height (in pixels)\n"
+      "\n"
+      "Other attributes will be passed down to the plugin (e.g. flashvars)" << std::endl;
+      return 0;
+    }
+  }
 
   {
     QApplication app(argc, argv);
@@ -110,27 +165,34 @@ int main(int argc, char * argv[])
     QString id = screens.id();
     Config config(QDir::homePath() + "/.MultiTouch", "flash.xml");
     ConfigLine line = config[id];
-    if(line.automatic) {
-      view = strdup(line.view.toAscii().data());
+    if(line.view.isEmpty())
+      line = config["default"];
+
+    if(!line.automatic) {
+      // open gui, get result, update config
+      config.set(id, line);
+      config.save();
+    }
+
+    if(!line.view.isEmpty())
+      args.push_back(("--view="+line.view).toStdString());
+
+    bool got_file = false;
+    for(int i = 1; i < argc; ++i) {
+      if(!got_file && argv[i][0] != 0 && argv[i][0] != '-') {
+        got_file = true;
+        args.push_back(std::string("src=")+argv[i]);
+      } else {
+        args.push_back(argv[i]);
+      }
     }
   }
 
-  if(!src) {
-    if(argc != 2) {
-      std::cerr << "Usage: " << argv[0] << " <file>" << std::endl;
-      return 1;
-    }
-    src = new char[strlen(argv[1])+5];
-    strcpy(src, "src=");
-    strcat(src, argv[1]);
-  }
+  char * argv2[args.size()+1];
+  for(size_t i = 0; i < args.size(); ++i)
+    argv2[i] = strdup(args[i].c_str());
+  argv2[args.size()] = 0;
 
-  if(fullscreen && view)
-    return execlp("nspluginplayer-mt", "nspluginplayer-mt", "--fullscreen", "--view", view, src, NULL);
-  else if(fullscreen)
-    return execlp("nspluginplayer-mt", "nspluginplayer-mt", "--fullscreen", src, NULL);
-  else if(view)
-    return execlp("nspluginplayer-mt", "nspluginplayer-mt", "--view", view, src, NULL);
-  else
-    return execlp("nspluginplayer-mt", "nspluginplayer-mt", src, NULL);
+  args.clear();
+  return execv(binary, argv2);
 }

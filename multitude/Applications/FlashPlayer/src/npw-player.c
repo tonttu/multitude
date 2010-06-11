@@ -2227,7 +2227,7 @@ print_help (const gchar *program_name)
   g_print ("Options:\n");
   g_print ("  -v|--verbose            enable verbose mode\n");
   g_print ("  --fullscreen            start in fullscreen mode\n");
-  g_print ("  --view <WxH+X+Y>        Window size & position\n");
+  g_print ("  --view=<WxH+X+Y>        Window size & position\n");
   g_print ("                          (example --view 400x300+100+0)\n");
   g_print ("\n");
 
@@ -2529,10 +2529,9 @@ main (int argc, char *argv[])
 	g_is_fullscreen = FALSE;
       else if (strcmp (arg, "--fullscreen") == 0)
 	g_is_fullscreen = TRUE;
-      else if (strcmp (arg, "--view") == 0 && (i+1 < argc)) {
-        ++i;
+      else if (strncmp (arg, "--view=", 7) == 0) {
         int w = 0, h = 0, x = 0, y = 0;
-        if(sscanf(argv[i], "%dx%d+%d+%d", &w, &h, &x, &y) == 4) {
+        if(sscanf(arg+7, "%dx%d+%d+%d", &w, &h, &x, &y) == 4) {
           g_screen_w = w;
           g_screen_h = h;
           g_screen_x = x;
