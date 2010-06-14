@@ -60,11 +60,18 @@ namespace Resonant {
   using Radiant::FAILURE;
 
   AudioLoop::AudioLoop()
-  : m_isRunning(false)
+    : m_isRunning(false),
+    m_initialized(false)
   {
     m_d = new AudioLoopInternal();
 
-    init();
+    // Initializes PortAudio / increases the usage counter.
+    PaError e = Pa_Initialize();
+    if(e == paNoError) {
+      m_initialized = true;
+    } else {
+      Radiant::error("AudioLoop::init # %s", Pa_GetErrorText(e));
+    }
 
     bzero( &m_d->m_inParams,  sizeof(PaStreamParameters));
     bzero( &m_d->m_outParams, sizeof(PaStreamParameters));
@@ -76,40 +83,23 @@ namespace Resonant {
       Radiant::error("AudioLoop::~AudioLoop(): audio still running");
 
     delete m_d;
+
+    if(m_initialized) {
+      // Decreases usage counter, if this is the last AudioLoop using PA, the library is closed.
+      // From Pa API: Pa_Terminate() MUST be called before exiting a program
+      //              which uses PortAudio. Failure to do so may result in
+      //              serious resource leaks, such as audio devices not being
+      //              available until the next reboot.
+      PaError e = Pa_Terminate();
+      if(e != paNoError) {
+        Radiant::error("AudioLoop::cleanup # %s", Pa_GetErrorText(e));
+      }
+    }
   }
 
   int AudioLoop::outChannels() const
   {
     return m_d->m_outParams.channelCount;
-  }
-
-  bool AudioLoop::init()
-  {
-    static bool once = false;
-
-    if(once)
-      return true;
-
-    once = true;
-
-    PaError e = Pa_Initialize();
-    if(e != paNoError) {
-      Radiant::error("AudioLoop::init # %s", Pa_GetErrorText(e));
-      return false;
-    }
-
-    return true;
-  }
-
-  bool AudioLoop::cleanup()
-  {
-    PaError e = Pa_Terminate();
-    if(e != paNoError) {
-      Radiant::error("AudioLoop::cleanup # %s", Pa_GetErrorText(e));
-      return false;
-    }
-
-    return true;
   }
 
   bool AudioLoop::startReadWrite(int samplerate, int channels)
