@@ -400,8 +400,7 @@ namespace Luminous {
 
       // Load original, and scale to useful dimensions:
 
-      Luminous::ImageTex * im = new ImageTex();
-      std::shared_ptr<Luminous::ImageTex> rim(im);
+      std::shared_ptr<Luminous::ImageTex> im(new ImageTex);
 
       if(!im->read(m_filename.c_str())) {
         error("CPUMipmaps::recursiveLoad # Could not read %s", m_filename.c_str());
@@ -428,12 +427,11 @@ namespace Luminous {
           s.y++;
         }
 
-        Luminous::ImageTex * im2 = new ImageTex();
-        std::shared_ptr<Luminous::ImageTex> rim2(im2);
+        std::shared_ptr<Luminous::ImageTex> im2(new ImageTex);
 
         im2->copyResample(*im, s.x, s.y);
 
-        item.m_image = rim2;
+        item.m_image = im2;
         item.m_state = READY;
         return;
       }
