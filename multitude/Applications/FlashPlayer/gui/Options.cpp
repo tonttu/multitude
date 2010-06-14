@@ -108,11 +108,11 @@ namespace FlashPlayer
     m_accepted = true;
   }
 
-  void Options::setRect(QRect rect, bool updateText)
+  void Options::setRect(QRect rect, bool updateText, bool updateCheckboxes)
   {
     m_rect = rect;
     m_viewport->setRect(rect);
-    for(size_t i = 0; i < m_screens.size(); ++i) {
+    for(size_t i = 0; updateCheckboxes && i < m_screens.size(); ++i) {
       Screen s = m_screens[i];
       if(rect.contains(s)) {
         m_checkboxes[i]->setTristate(false);
@@ -148,7 +148,7 @@ namespace FlashPlayer
         rect |= m_screens[i];
       }
     }
-    setRect(rect);
+    setRect(rect, true, false);
   }
 
   void Options::changeEvent(QEvent * e)

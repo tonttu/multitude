@@ -51,7 +51,7 @@ namespace FlashPlayer
     explicit Options(Screens screens, QRect rect, bool automatic);
     virtual ~Options();
 
-    void setRect(QRect rect, bool updateText = true);
+    void setRect(QRect rect, bool updateText = true, bool updateCheckboxes = true);
     bool ok() const { return m_accepted; }
     bool automatic() const;
     QString view() const;
