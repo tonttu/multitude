@@ -148,15 +148,18 @@ namespace FlashPlayer
 int main(int argc, char * argv[])
 {
   const char * binary = "nspluginplayer-mt";
-  std::vector<std::string> args;
-  args.push_back(binary);
+  QVector<QString> args;
+  args << binary;
+  bool open_config = false;
+  bool got_file = false;
 
   for(int i = 1; i < argc; ++i) {
-    if(argv[i] == std::string("--help") || argv[i] == std::string("-h")) {
+    if(argv[i] == QString("--help") || argv[i] == QString("-h")) {
       std::cout << "Usage: " << argv[0] << " <options> <filename or URI> <attributes>\n"
       "\n"
       "Options:\n"
       "  --verbose               enable verbose mode\n"
+      "  --config                always open the configuration window\n"
       "  --fullscreen            start in fullscreen mode\n"
       "  --view=<WxH+X+Y>        window size & position\n"
       "                          (example --view 400x300+100+0)\n"
@@ -170,6 +173,13 @@ int main(int argc, char * argv[])
       "\n"
       "Other attributes will be passed down to the plugin (e.g. flashvars)" << std::endl;
       return 0;
+    } else if(argv[i] == QString("--config")) {
+      open_config = true;
+    } else if(!got_file && argv[i][0] != 0 && argv[i][0] != '-') {
+      got_file = true;
+      args << QString("src=") + argv[i];
+    } else {
+      args << argv[i];
     }
   }
 
@@ -183,9 +193,9 @@ int main(int argc, char * argv[])
     if(line.view.isEmpty())
       line = config["default"];
 
-    if(!line.automatic) {
+    if(!line.automatic || open_config || !got_file) {
       FlashPlayer::Options options(screens, FlashPlayer::Screen::idToRect(line.view.isEmpty() ? id : line.view),
-                                   line.view.isEmpty());
+                                   line.automatic);
       options.show();
       app.exec();
 
@@ -199,22 +209,12 @@ int main(int argc, char * argv[])
     }
 
     if(!line.view.isEmpty())
-      args.push_back(("--view="+line.view).toStdString());
-
-    bool got_file = false;
-    for(int i = 1; i < argc; ++i) {
-      if(!got_file && argv[i][0] != 0 && argv[i][0] != '-') {
-        got_file = true;
-        args.push_back(std::string("src=")+argv[i]);
-      } else {
-        args.push_back(argv[i]);
-      }
-    }
+      args.insert(1, "--view="+line.view);
   }
 
   char * argv2[args.size()+1];
-  for(size_t i = 0; i < args.size(); ++i) {
-    argv2[i] = strdup(args[i].c_str());
+  for(int i = 0; i < args.size(); ++i) {
+    argv2[i] = strdup(args[i].toUtf8().data());
   }
   argv2[args.size()] = 0;
 
