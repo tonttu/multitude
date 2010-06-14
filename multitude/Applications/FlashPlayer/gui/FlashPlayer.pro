@@ -8,3 +8,6 @@ LIBS += -lXinerama
 
 FORMS += \
     Options.ui
+
+RESOURCES += \
+    resources.qrc

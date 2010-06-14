@@ -196,6 +196,7 @@ int main(int argc, char * argv[])
     if(!line.automatic || open_config || !got_file) {
       FlashPlayer::Options options(screens, FlashPlayer::Screen::idToRect(line.view.isEmpty() ? id : line.view),
                                    line.automatic);
+      options.setWindowIcon(QIcon(":/icons/window.png"));
       options.show();
       app.exec();
 
