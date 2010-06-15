@@ -21,6 +21,12 @@
 #include <cmath>
 #include <cassert>
 
+#define GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX          0x9047
+#define GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX    0x9048
+#define GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX  0x9049
+#define GPU_MEMORY_INFO_EVICTION_COUNT_NVX            0x904A
+#define GPU_MEMORY_INFO_EVICTED_MEMORY_NVX            0x904B
+
 namespace Luminous {
 
   using namespace Nimble;
@@ -2010,4 +2016,24 @@ namespace Luminous {
     glEnd();
   }
 
+  long Utils::availableGPUMemory()
+  {
+    static bool nv_supported = false, checked = false;
+    GLint res = 0;
+    if(!checked) {
+      checked = true;
+      glGetIntegerv(GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &res);
+      nv_supported = glGetError() == GL_NO_ERROR;
+    } else if (nv_supported) {
+      glGetIntegerv(GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &res);
+    }
+
+    return res;
+  }
+  long Utils::maxGPUMemory()
+  {
+    GLint res = 0;
+    glGetIntegerv(GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, &res);
+    return res;
+  }
 }

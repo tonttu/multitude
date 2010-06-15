@@ -282,6 +282,9 @@ namespace Luminous {
 
     static void glRedYellowGreenRamp(float x0, float y0, float x1, float y1, const Nimble::Matrix3 & m);
 
+    static long availableGPUMemory();
+    static long maxGPUMemory();
+
   };
 
   /// @endcond
