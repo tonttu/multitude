@@ -86,8 +86,11 @@ contains(HAS_QT_45,YES) {
     CONFIG += qt
     QT += gui
     QT += svg
-    qt_plugin_install.path += /bin
-    qt_plugin_install.files = $$[QT_INSTALL_PLUGINS]
-    INSTALLS += qt_plugin_install
+    # On Windows we need to install the Qt plugins
+    win32 {
+      qt_plugin_install.path += /bin
+      qt_plugin_install.files = $$[QT_INSTALL_PLUGINS]
+      INSTALLS += qt_plugin_install
+    }
 }
 include(../library.pri)
