@@ -65,12 +65,11 @@ namespace Luminous {
 
   CPUMipmaps::~CPUMipmaps()
   {
-
   }
 
   void CPUMipmaps::update(float dt, float )
   {
-    for(int i = DEFAULT_MAP1; i <= m_maxLevel; i++) {
+    for(int i = lowestLevel(); i <= m_maxLevel; i++) {
       m_stack[i].m_unUsed += dt;
     }
 
@@ -107,10 +106,16 @@ namespace Luminous {
     CPUItem &  item = m_stack[bestlevel];
 
     item.m_unUsed = 0.0f;
+    if(item.m_state == READY)
+      return bestlevel;
+
+    BGThread::instance()->removeTask(this);
+    scheduleFromNowSecs(0);
+    BGThread::instance()->addTask(this);
 
     // Scan for the best available mip-map.
 
-    for(int i = bestlevel; i <= m_maxLevel; i++) {
+    for(int i = bestlevel+1; i <= m_maxLevel; i++) {
 
       if(m_stack[i].m_state == READY) {
         m_stack[i].m_unUsed = 0.0f;
@@ -132,8 +137,6 @@ namespace Luminous {
   std::shared_ptr<ImageTex> CPUMipmaps::getImage(int i)
   {
     CPUItem & item = m_stack[i];
-
-    item.m_unUsed = 0.0f;
 
     std::shared_ptr<ImageTex> image = item.m_image;
     if(item.m_state != READY)
@@ -157,7 +160,7 @@ namespace Luminous {
     if(dt > 3.0f)
       return true;
 
-    for(int i = lowestLevel(); i < m_maxLevel; i++) {
+    for(int i = lowestLevel(); i <= m_maxLevel; i++) {
       CPUItem & ci = m_stack[i];
 
       if(ci.m_state == WAITING && ci.m_unUsed < m_timeOut)
@@ -291,25 +294,21 @@ namespace Luminous {
 
   void CPUMipmaps::doTask()
   {
+    double delay = 60.0;
     StackMap stack;
-    // Start loading whatever is needed, recursively
 
-    // info("CPUMipmaps::doTask # %s %d", m_filename.c_str(), m_maxLevel);
-
-    // Load everything that maybe should be loaded:
-    for(int i = lowestLevel(); i < m_maxLevel; i++) {
-      if((m_stack[i].m_unUsed < m_timeOut) && (m_stack[i].m_state == WAITING)) {
-        recursiveLoad(stack, i);
-      }
-    }
-
-    // Purge unused images from memory
-
-    for(int i = lowestLevel(); i < m_maxLevel; i++) {
-
+    for(int i = lowestLevel(); i <= m_maxLevel; i++) {
       CPUItem & item = m_stack[i];
+      double time_to_expire = m_timeOut - item.m_unUsed;
 
-      if((item.m_unUsed > m_timeOut) && (item.m_state == READY)) {
+      if(time_to_expire > 0) {
+        if(item.m_state == WAITING) {
+          recursiveLoad(stack, i);
+        } else {
+          if(time_to_expire < delay)
+            delay = time_to_expire;
+        }
+      } else if(item.m_state == READY) { // unused image
         // info("CPUMipmaps::doTask # Dropping %s %d", m_filename.c_str(), i);
         stack[i] = item;
         stack[i].m_state = WAITING;
@@ -317,16 +316,14 @@ namespace Luminous {
       }
     }
 
-    // info("CPUMipmaps::doTask # %s %d EXIT", m_filename.c_str(), m_maxLevel);
+    /// @todo what if the task has been already re-scheduled form another thread?
+    scheduleFromNowSecs(delay+0.01);
 
-    if(!stack.empty())
-    {
+    if(!stack.empty()) {
       Radiant::Guard g(&m_stackMutex);
       for(StackMap::iterator it = stack.begin(); it != stack.end(); ++it)
         m_stackChange[it->first] = it->second;
     }
-
-    scheduleFromNowSecs(0.5f);
   }
 
   void CPUMipmaps::cacheFileName(std::string & name, int level)
@@ -361,7 +358,13 @@ namespace Luminous {
 
   void CPUMipmaps::recursiveLoad(StackMap & stack, int level)
   {
+    // info("recursiveLoad (%d)", level);
+    if(m_stack[level].m_state == READY)
+      return;
+
     CPUItem & item = stack[level];
+    if(item.m_state == READY)
+      return;
 
     // info("CPUMipmaps::recursiveLoad # %s %d %d", m_filename.c_str(), level, m_maxLevel);
 
@@ -386,6 +389,7 @@ namespace Luminous {
         }
         else {
 
+          //info("cache file %s loaded (%d)", filename.c_str(), level);
           if(im->hasAlpha())
             m_hasAlpha = true;
 
@@ -405,9 +409,9 @@ namespace Luminous {
       if(!im->read(m_filename.c_str())) {
         error("CPUMipmaps::recursiveLoad # Could not read %s", m_filename.c_str());
         item.m_state = FAILED;
-        return;
       }
       else {
+        // info("original file %s loaded (%d)", m_filename.c_str(), level);
 
         if(im->hasAlpha())
           m_hasAlpha = true;
@@ -427,31 +431,39 @@ namespace Luminous {
           s.y++;
         }
 
-        std::shared_ptr<Luminous::ImageTex> im2(new ImageTex);
+        if(s == im->size()) {
+          item.m_image = im;
+        } else {
+          std::shared_ptr<Luminous::ImageTex> im2(new ImageTex);
+          // info("resampled (%d) [%d,%d] -> [%d,%d]", level, im->size().x, im->size().y, s.x, s.y);
 
-        im2->copyResample(*im, s.x, s.y);
+          im2->copyResample(*im, s.x, s.y);
 
-        item.m_image = im2;
+          item.m_image = im2;
+        }
         item.m_state = READY;
-        return;
       }
+      return;
     }
 
     // Load the higher level, and scale down from that:
 
     recursiveLoad(stack, level + 1);
-
-    CPUItem & src = stack[level + 1];
-
-    if(src.m_state != READY) {
-      error("Failed to get mipmap %d", level + 1);
-      item.m_state = FAILED;
-      return;
+    const CPUItem * src = 0;
+    if(m_stack[level+1].m_state == READY) {
+      src = &m_stack[level+1];
+    } else {
+      src = &stack[level+1];
+      if(src->m_state != READY) {
+        error("Failed to get mipmap %d", level + 1);
+        item.m_state = FAILED;
+        return;
+      }
     }
 
     // Scale down from higher-level mipmap
 
-    std::shared_ptr<Luminous::ImageTex> imsrc = src.m_image;
+    std::shared_ptr<Luminous::ImageTex> imsrc = src->m_image;
 
     std::shared_ptr<Luminous::ImageTex> imdest(new Luminous::ImageTex());
 
@@ -468,6 +480,8 @@ namespace Luminous {
       imdest->copyResample(*imsrc, is.x, is.y);
     }
 
+    // info("resampled (%d)", level);
+
     item.m_image = imdest;
     item.m_state = READY;
 
@@ -476,6 +490,7 @@ namespace Luminous {
       cacheFileName(filename, level);
       Directory::mkdir(FileUtils::path(filename));
       imdest->write(filename.c_str());
+      // info("wrote cache %s (%d)", filename.c_str(), level);
     }
   }
 
