@@ -20,7 +20,7 @@ CONFIG += ordered
 
 # Install some build files to the source package
 stuff.path = /src/MultiTouch/multitude
-stuff.files = LGPL.txt multitude.pro multitude.pri library.pri app_src_inst.pri
+stuff.files = LGPL.txt multitude.pro multitude.pri library.pri 
 
 INSTALLS += stuff
 
