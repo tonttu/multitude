@@ -96,7 +96,9 @@ namespace Poetic
 
   GPUTextureFont::~GPUTextureFont()
   {
-    glDeleteTextures(m_textures.size(), (const GLuint *)&m_textures[0]);
+    // Accessing [0] on empty vectors crashes on Windows
+    if(!m_textures.empty())
+    	glDeleteTextures(m_textures.size(), (const GLuint *)&m_textures[0]);
   }
 
   Glyph * GPUTextureFont::makeGlyph(const Glyph * glyph)
