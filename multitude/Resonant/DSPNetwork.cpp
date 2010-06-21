@@ -125,12 +125,19 @@ namespace Resonant {
 
     m_newItems.push_back(tmp);
 
+    debug("DSPNetwork::DSPNetwork # %p %p", this, m_instance);
+
     if(!m_instance)
       m_instance = this;
+    else {
+      info("DSPNetwork::DSPNetwork # Multiple DSPNetworks in use(!)");
+    }
   }
 
   DSPNetwork::~DSPNetwork()
   {
+    debug("DSPNetwork::~DSPNetwork # %p %p", this, m_instance);
+
     if(m_instance == this)
       m_instance = 0;
 
@@ -143,6 +150,8 @@ namespace Resonant {
 
   bool DSPNetwork::start(const char * device)
   {
+    debug("DSPNetwork::start # %p %p", this, m_instance);
+
     if(isRunning())
       return false;
 
@@ -159,6 +168,8 @@ namespace Resonant {
 
   void DSPNetwork::addModule(Item & i)
   {
+    debug("DSPNetwork::addModule # %p %p", this, m_instance);
+
     Radiant::Guard g( & m_newMutex);
 
     m_newItems.push_back(i);
@@ -179,6 +190,8 @@ namespace Resonant {
 
   void DSPNetwork::send(Radiant::BinaryData & control)
   {
+    debug("DSPNetwork::send # %p %p", this, m_instance);
+
     Radiant::Guard g( & m_inMutex);
     m_incoming.append(control);
   }
