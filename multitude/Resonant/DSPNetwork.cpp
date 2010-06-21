@@ -38,9 +38,7 @@ namespace Resonant {
       m_compiled(false),
       m_done(false),
       m_targetChannel(-1)
-  {
-
-  }
+  {}
 
   DSPNetwork::Item::~Item()
   {}
@@ -125,7 +123,7 @@ namespace Resonant {
 
     m_newItems.push_back(tmp);
 
-    debug("DSPNetwork::DSPNetwork # %p %p", this, m_instance);
+    info("DSPNetwork::DSPNetwork # %p %p", this, m_instance);
 
     if(!m_instance)
       m_instance = this;
@@ -136,7 +134,7 @@ namespace Resonant {
 
   DSPNetwork::~DSPNetwork()
   {
-    debug("DSPNetwork::~DSPNetwork # %p %p", this, m_instance);
+    info("DSPNetwork::~DSPNetwork # %p %p", this, m_instance);
 
     if(m_instance == this)
       m_instance = 0;
@@ -190,7 +188,7 @@ namespace Resonant {
 
   void DSPNetwork::send(Radiant::BinaryData & control)
   {
-    debug("DSPNetwork::send # %p %p", this, m_instance);
+    info("DSPNetwork::send # %p %p", this, m_instance);
 
     Radiant::Guard g( & m_inMutex);
     m_incoming.append(control);
