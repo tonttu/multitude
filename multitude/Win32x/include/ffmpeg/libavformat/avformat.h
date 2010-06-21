@@ -22,7 +22,7 @@
 #define AVFORMAT_AVFORMAT_H
 
 #define LIBAVFORMAT_VERSION_MAJOR 52
-#define LIBAVFORMAT_VERSION_MINOR 46
+#define LIBAVFORMAT_VERSION_MINOR 62
 #define LIBAVFORMAT_VERSION_MICRO  0
 
 #define LIBAVFORMAT_VERSION_INT AV_VERSION_INT(LIBAVFORMAT_VERSION_MAJOR, \
@@ -63,7 +63,9 @@ struct AVFormatContext;
 /*
  * Public Metadata API.
  * The metadata API allows libavformat to export metadata tags to a client
- * application using a sequence of key/value pairs.
+ * application using a sequence of key/value pairs. Like all strings in FFmpeg,
+ * metadata must be stored as UTF-8 encoded Unicode. Note that metadata
+ * exported by demuxers isn't checked to be valid UTF-8 in most cases.
  * Important concepts to keep in mind:
  * 1. Keys are unique; there can never be 2 tags with the same key. This is
  *    also meant semantically, i.e., a demuxer should not knowingly produce
@@ -73,17 +75,51 @@ struct AVFormatContext;
  * 2. Metadata is flat, not hierarchical; there are no subtags. If you
  *    want to store, e.g., the email address of the child of producer Alice
  *    and actor Bob, that could have key=alice_and_bobs_childs_email_address.
- * 3. A tag whose value is localized for a particular language is appended
- *    with a dash character ('-') and the ISO 639-2/B 3-letter language code.
- *    For example: Author-ger=Michael, Author-eng=Mike
- *    The original/default language is in the unqualified "Author" tag.
- *    A demuxer should set a default if it sets any translated tag.
+ * 3. Several modifiers can be applied to the tag name. This is done by
+ *    appending a dash character ('-') and the modifier name in the order
+ *    they appear in the list below -- e.g. foo-eng-sort, not foo-sort-eng.
+ *    a) language -- a tag whose value is localized for a particular language
+ *       is appended with the ISO 639-2/B 3-letter language code.
+ *       For example: Author-ger=Michael, Author-eng=Mike
+ *       The original/default language is in the unqualified "Author" tag.
+ *       A demuxer should set a default if it sets any translated tag.
+ *    b) sorting  -- a modified version of a tag that should be used for
+ *       sorting will have '-sort' appended. E.g. artist="The Beatles",
+ *       artist-sort="Beatles, The".
+ *
+ * 4. Tag names are normally exported exactly as stored in the container to
+ *    allow lossless remuxing to the same format. For container-independent
+ *    handling of metadata, av_metadata_conv() can convert it to ffmpeg generic
+ *    format. Follows a list of generic tag names:
+ *
+ * album        -- name of the set this work belongs to
+ * album_artist -- main creator of the set/album, if different from artist.
+ *                 e.g. "Various Artists" for compilation albums.
+ * artist       -- main creator of the work
+ * comment      -- any additional description of the file.
+ * composer     -- who composed the work, if different from artist.
+ * copyright    -- name of copyright holder.
+ * date         -- date when the work was created, preferably in ISO 8601.
+ * disc         -- number of a subset, e.g. disc in a multi-disc collection.
+ * encoder      -- name/settings of the software/hardware that produced the file.
+ * encoded_by   -- person/group who created the file.
+ * filename     -- original name of the file.
+ * genre        -- <self-evident>.
+ * language     -- main language in which the work is performed, preferably
+ *                 in ISO 639-2 format.
+ * performer    -- artist who performed the work, if different from artist.
+ *                 E.g for "Also sprach Zarathustra", artist would be "Richard
+ *                 Strauss" and performer "London Philharmonic Orchestra".
+ * publisher    -- name of the label/publisher.
+ * title        -- name of the work.
+ * track        -- number of this work in the set, can be in form current/total.
  */
 
 #define AV_METADATA_MATCH_CASE      1
 #define AV_METADATA_IGNORE_SUFFIX   2
 #define AV_METADATA_DONT_STRDUP_KEY 4
 #define AV_METADATA_DONT_STRDUP_VAL 8
+#define AV_METADATA_DONT_OVERWRITE 16   ///< Don't overwrite existing tags.
 
 typedef struct {
     char *key;
@@ -96,6 +132,7 @@ typedef struct AVMetadataConv AVMetadataConv;
 /**
  * Gets a metadata element with matching key.
  * @param prev Set to the previous matching element to find the next.
+ *             If set to NULL the first matching element is returned.
  * @param flags Allows case as well as suffix-insensitive comparisons.
  * @return Found tag or NULL, changing key or value leads to undefined behavior.
  */
@@ -108,8 +145,9 @@ av_metadata_get(AVMetadata *m, const char *key, const AVMetadataTag *prev, int f
  * @param key tag key to add to m (will be av_strduped)
  * @param value tag value to add to m (will be av_strduped)
  * @return >= 0 on success otherwise an error code <0
+ * @deprecated Use av_metadata_set2() instead.
  */
-int av_metadata_set(AVMetadata **pm, const char *key, const char *value);
+attribute_deprecated int av_metadata_set(AVMetadata **pm, const char *key, const char *value);
 #endif
 
 /**
@@ -122,7 +160,8 @@ int av_metadata_set2(AVMetadata **pm, const char *key, const char *value, int fl
 
 /**
  * Converts all the metadata sets from ctx according to the source and
- * destination conversion tables.
+ * destination conversion tables. If one of the tables is NULL, then
+ * tags are converted to/from ffmpeg generic tag names.
  * @param d_conv destination tags format conversion table
  * @param s_conv source tags format conversion table
  */
@@ -208,6 +247,7 @@ typedef struct AVFormatParameters {
 #define AVFMT_GENERIC_INDEX 0x0100 /**< Use generic index building code. */
 #define AVFMT_TS_DISCONT    0x0200 /**< Format allows timestamp discontinuities. */
 #define AVFMT_VARIABLE_FPS  0x0400 /**< Format allows variable fps. */
+#define AVFMT_NODIMENSIONS  0x0800 /**< Format does not need width/height */
 
 typedef struct AVOutputFormat {
     const char *name;
@@ -484,6 +524,11 @@ typedef struct AVStream {
      * Average framerate
      */
     AVRational avg_frame_rate;
+
+    /**
+     * Number of frames that have been demuxed during av_find_stream_info()
+     */
+    int codec_info_nb_frames;
 } AVStream;
 
 #define AV_PROGRAM_RUNNING 1
@@ -520,7 +565,11 @@ typedef struct AVChapter {
     AVMetadata *metadata;
 } AVChapter;
 
+#if LIBAVFORMAT_VERSION_MAJOR < 53
 #define MAX_STREAMS 20
+#else
+#define MAX_STREAMS 100
+#endif
 
 /**
  * Format I/O context.
@@ -564,8 +613,9 @@ typedef struct AVFormatContext {
        It is deduced from the AVStream values.  */
     int64_t start_time;
     /** Decoding: duration of the stream, in AV_TIME_BASE fractional
-       seconds. NEVER set this value directly: it is deduced from the
-       AVStream values.  */
+       seconds. Only set this value if you know none of the individual stream
+       durations and also dont set any of them. This is deduced from the
+       AVStream values if not set.  */
     int64_t duration;
     /** decoding: total file size, 0 if unknown */
     int64_t file_size;
@@ -600,6 +650,9 @@ typedef struct AVFormatContext {
 #define AVFMT_FLAG_GENPTS       0x0001 ///< Generate missing pts even if it requires parsing future frames.
 #define AVFMT_FLAG_IGNIDX       0x0002 ///< Ignore index.
 #define AVFMT_FLAG_NONBLOCK     0x0004 ///< Do not block when reading packets from input.
+#define AVFMT_FLAG_IGNDTS       0x0008 ///< Ignore DTS on frames that contain both DTS & PTS
+#define AVFMT_FLAG_NOFILLIN     0x0010 ///< Do not infer any values from other values, just return what is stored in the container
+#define AVFMT_FLAG_NOPARSE      0x0020 ///< Do not use AVParsers, you also must set AVFMT_FLAG_NOFILLIN as the fillin code works on frames and no parsing -> no frames. Also seeking to frames can not work if parsing to find frame boundaries has been disabled
 
     int loop_input;
     /** decoding: size of data to probe; encoding: unused. */
@@ -679,6 +732,15 @@ typedef struct AVFormatContext {
      */
 #define RAW_PACKET_BUFFER_SIZE 2500000
     int raw_packet_buffer_remaining_size;
+
+    /**
+     * Start time of the stream in real world time, in microseconds
+     * since the unix epoch (00:00 1st January 1970). That is, pts=0
+     * in the stream was captured at this real world time.
+     * - encoding: Set by user.
+     * - decoding: Unused.
+     */
+    int64_t start_time_realtime;
 } AVFormatContext;
 
 typedef struct AVPacketList {
@@ -747,7 +809,7 @@ AVOutputFormat *av_guess_format(const char *short_name,
  */
 enum CodecID av_guess_codec(AVOutputFormat *fmt, const char *short_name,
                             const char *filename, const char *mime_type,
-                            enum CodecType type);
+                            enum AVMediaType type);
 
 /**
  * Sends a nice hexadecimal dump of a buffer to the specified file stream.
@@ -824,6 +886,19 @@ AVInputFormat *av_find_input_format(const char *short_name);
  *                  demuxers with or without AVFMT_NOFILE are probed.
  */
 AVInputFormat *av_probe_input_format(AVProbeData *pd, int is_opened);
+
+/**
+ * Guesses the file format.
+ *
+ * @param is_opened Whether the file is already opened; determines whether
+ *                  demuxers with or without AVFMT_NOFILE are probed.
+ * @param score_max A probe score larger that this is required to accept a
+ *                  detection, the variable is set to the actual detection
+ *                  score afterwards.
+ *                  If the score is <= AVPROBE_SCORE_MAX / 4 it is recommended
+ *                  to retry with a larger probe buffer.
+ */
+AVInputFormat *av_probe_input_format2(AVProbeData *pd, int is_opened, int *score_max);
 
 /**
  * Allocates all the structures needed to read an input stream.
@@ -946,7 +1021,7 @@ int av_seek_frame(AVFormatContext *s, int stream_index, int64_t timestamp,
  * @param ts target timestamp
  * @param max_ts largest acceptable timestamp
  * @param flags flags
- * @returns >=0 on success, error code otherwise
+ * @return >=0 on success, error code otherwise
  *
  * @NOTE This is part of the new seek API which is still under construction.
  *       Thus do not use this yet. It may change at any time, do not expect
@@ -1268,47 +1343,6 @@ int av_filename_number_test(const char *filename);
  */
 int avf_sdp_create(AVFormatContext *ac[], int n_files, char *buff, int size);
 
-#ifdef HAVE_AV_CONFIG_H
-
-void ff_dynarray_add(intptr_t **tab_ptr, int *nb_ptr, intptr_t elem);
-
-#ifdef __GNUC__
-#define dynarray_add(tab, nb_ptr, elem)\
-do {\
-    __typeof__(tab) _tab = (tab);\
-    __typeof__(elem) _elem = (elem);\
-    (void)sizeof(**_tab == _elem); /* check that types are compatible */\
-    ff_dynarray_add((intptr_t **)_tab, nb_ptr, (intptr_t)_elem);\
-} while(0)
-#else
-#define dynarray_add(tab, nb_ptr, elem)\
-do {\
-    ff_dynarray_add((intptr_t **)(tab), nb_ptr, (intptr_t)(elem));\
-} while(0)
-#endif
-
-time_t mktimegm(struct tm *tm);
-struct tm *brktimegm(time_t secs, struct tm *tm);
-const char *small_strptime(const char *p, const char *fmt,
-                           struct tm *dt);
-
-struct in_addr;
-int resolve_host(struct in_addr *sin_addr, const char *hostname);
-
-void url_split(char *proto, int proto_size,
-               char *authorization, int authorization_size,
-               char *hostname, int hostname_size,
-               int *port_ptr,
-               char *path, int path_size,
-               const char *url);
-
-#if LIBAVFORMAT_VERSION_MAJOR < 53
-/**
- * @deprecated Use av_match_ext() instead.
- */
-attribute_deprecated int match_ext(const char *filename, const char *extensions);
-#endif
-
 /**
  * Returns a positive value if the given filename has one of the given
  * extensions, 0 otherwise.
@@ -1316,7 +1350,5 @@ attribute_deprecated int match_ext(const char *filename, const char *extensions)
  * @param extensions a comma-separated list of filename extensions
  */
 int av_match_ext(const char *filename, const char *extensions);
-
-#endif /* HAVE_AV_CONFIG_H */
 
 #endif /* AVFORMAT_AVFORMAT_H */
