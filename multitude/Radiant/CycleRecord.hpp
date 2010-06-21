@@ -19,6 +19,7 @@
 #include <Radiant/cycle.h>
 #include <Radiant/Trace.hpp>
 
+#include <stdio.h>
 #include <vector>
 
 namespace Radiant {
