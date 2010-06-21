@@ -69,8 +69,8 @@ namespace Luminous
     if(it == m_resources.end())
       return 0;
 
-    // delete if getResource not called for 120 frames
-    deleteAfter(it->second, 100);
+    // delete if getResource not called for 110 frames
+    deleteAfter(it->second, 110);
 
     return (*it).second;
   }

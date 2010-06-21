@@ -45,8 +45,8 @@ namespace Luminous {
       error("GPUMipmaps::~GPUMipmaps # %p resources object is needed for clean delete", this);
     }
     else {
-      for(int i = 0; i < CPUMipmaps::MAX_MAPS; i++)
-        resources()->eraseResource(m_keys + i);
+/*      for(int i = 0; i < CPUMipmaps::MAX_MAPS; i++)
+        resources()->eraseResource(m_keys + i);*/
     }
   }
 

@@ -41,6 +41,9 @@ namespace Luminous
     /// Add a task to be executed
     virtual void addTask(Task * task);
 
+    /// Remove the task from the BGThread
+    virtual bool removeTask(Task * task);
+
     // Queue a task for deletion. The time of deletion is not guaranteed to be
     // immediate
     //virtual void markForDeletion(Task * task);

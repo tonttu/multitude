@@ -25,6 +25,8 @@
 
 #include <Radiant/RefPtr.hpp>
 
+#include <limits>
+
 namespace Luminous {
 
   class GLResources;
@@ -154,7 +156,7 @@ namespace Luminous {
       {
         m_state = WAITING;
         m_image.reset();
-        m_unUsed = 0.0f;
+        m_unUsed = std::numeric_limits<float>::max();
       }
 
     private:

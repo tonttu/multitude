@@ -21,6 +21,18 @@
 #include <cmath>
 #include <cassert>
 
+// GL_NVX_gpu_memory_info (NVIDIA)
+#define GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX          0x9047
+#define GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX    0x9048
+#define GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX  0x9049
+#define GPU_MEMORY_INFO_EVICTION_COUNT_NVX            0x904A
+#define GPU_MEMORY_INFO_EVICTED_MEMORY_NVX            0x904B
+
+// GL_ATI_meminfo
+#define VBO_FREE_MEMORY_ATI                     0x87FB
+#define TEXTURE_FREE_MEMORY_ATI                 0x87FC
+#define RENDERBUFFER_FREE_MEMORY_ATI            0x87FD
+
 namespace Luminous {
 
   using namespace Nimble;
@@ -2010,4 +2022,44 @@ namespace Luminous {
     glEnd();
   }
 
+  long Utils::availableGPUMemory()
+  {
+    static bool nv_supported = false, ati_supported = false, checked = false;
+    GLint res[4] = {0};
+    if(!checked) {
+      checked = true;
+      glGetIntegerv(GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, res);
+      nv_supported = glGetError() == GL_NO_ERROR;
+      if(nv_supported)
+        return res[0];
+
+      glGetIntegerv(TEXTURE_FREE_MEMORY_ATI, res);
+      ati_supported = glGetError() == GL_NO_ERROR;
+    } else if (nv_supported) {
+      glGetIntegerv(GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, res);
+    } else if (ati_supported) {
+      glGetIntegerv(TEXTURE_FREE_MEMORY_ATI, res);
+    }
+
+    return res[0];
+  }
+  long Utils::maxGPUMemory()
+  {
+    GLint res[4] = {0};
+    glGetIntegerv(GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, res);
+    if(glGetError() == GL_NO_ERROR)
+      return res[0];
+
+    glGetIntegerv(TEXTURE_FREE_MEMORY_ATI, res);
+    if(glGetError() == GL_NO_ERROR) {
+      /*
+      param[0] - total memory free in the pool
+      param[1] - largest available free block in the pool
+      param[2] - total auxiliary memory free
+      param[3] - largest auxiliary free block
+      */
+      return res[0];
+    }
+    return 0;
+  }
 }

@@ -36,11 +36,6 @@ namespace Resonant {
     /// Deletes an audio OI object
     virtual ~AudioLoop();
 
-    /// Initialize the global/static structure for audio playback
-    static bool init();
-    /// Cleanup the global/static structure for audio playback
-    static bool cleanup();
-
     /// Start the AudioLoop.
     /** In pratice this spans a new thread that is managed by the PortAudio (or rather,
         the operating system audio engine). */
@@ -71,6 +66,7 @@ namespace Resonant {
         ) = 0;
 
     bool       m_isRunning;
+    bool       m_initialized;
     bool       m_continue;
 
     class AudioLoopInternal;

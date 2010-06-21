@@ -233,7 +233,7 @@ namespace Luminous
                             "}\n";
         m_polyline_shader->loadStrings(polyline_vert, polyline_frag);
 
-        m_viewFBO = new Luminous::Framebuffer();
+        m_viewFBO.reset(new Luminous::Framebuffer());
       }
     }
     Nimble::Vector2 contextSize() const
@@ -462,7 +462,7 @@ namespace Luminous
 
     const Luminous::MultiHead::Window * m_window;
     /// fbo for views
-    Luminous::Framebuffer * m_viewFBO;
+    std::shared_ptr<Luminous::Framebuffer> m_viewFBO;
     /// fbo texture stack for views
     std::vector<Luminous::Texture2D *> m_viewTextures;
     int m_viewStackPos;
