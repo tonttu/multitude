@@ -14,6 +14,8 @@
  */
 
 #include "RenderContext.hpp"
+
+#include "GLContext.hpp"
 #include "Texture.hpp"
 #include "FramebufferObject.hpp"
 
@@ -158,6 +160,7 @@ namespace Luminous
         m_frameCount(0),
         m_window(win),
         m_viewStackPos(-1),
+        m_glContext(new GLDummyContext),
         m_initialized(false)
     {
     }
@@ -396,7 +399,7 @@ namespace Luminous
       int w = m_window->size().x;
       int h = m_window->size().y;
       ++m_viewStackPos;
-      if ((int)m_viewTextures.size() == m_viewStackPos) {
+      if ((int) m_viewTextures.size() == m_viewStackPos) {
         m_viewTextures.push_back(new Luminous::Texture2D);
         Luminous::Texture2D & tex = *m_viewTextures.back();
         tex.setWidth(w);
@@ -467,6 +470,7 @@ namespace Luminous
     std::vector<Luminous::Texture2D *> m_viewTextures;
     int m_viewStackPos;
 
+    Luminous::GLContext * m_glContext;
 
     bool m_initialized;
   };
@@ -912,6 +916,16 @@ namespace Luminous
     popTransform();
   }
 
+  void RenderContext::setGLContext(Luminous::GLContext * ctx)
+  {
+    delete m_data->m_glContext;
+    m_data->m_glContext = ctx;
+  }
+
+  Luminous::GLContext * RenderContext::glContext()
+  {
+    return m_data->m_glContext;
+  }
 
 }
 
