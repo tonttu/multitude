@@ -48,12 +48,8 @@ namespace Radiant
     {
       if(ptr) ptr->ref();
     }
-    IntrusivePtr(const IntrusivePtr<T> & iptr) : m_ptr(iptr.m_ptr)
-    {
-      if(m_ptr) m_ptr->ref();
-    }
     template <typename Y>
-    IntrusivePtr(const IntrusivePtr<Y> & iptr) : m_ptr(iptr.m_ptr)
+    IntrusivePtr(const IntrusivePtr<Y> & iptr) : m_ptr(iptr.get())
     {
       if(m_ptr) m_ptr->ref();
     }
@@ -62,17 +58,11 @@ namespace Radiant
       deref();
     }
 
-    IntrusivePtr<T> & operator= (const IntrusivePtr<T> & iptr)
-    {
-      deref();
-      ref(iptr.m_ptr);
-      return *this;
-    }
     template <typename Y>
     IntrusivePtr<T> & operator= (const IntrusivePtr<Y> & iptr)
     {
       deref();
-      ref(iptr.m_ptr);
+      ref(iptr.get());
       return *this;
     }
 
@@ -81,6 +71,12 @@ namespace Radiant
       deref();
       ref(ptr);
       return *this;
+    }
+
+    template <typename Y>
+    IntrusivePtr<Y> cast()
+    {
+      return IntrusivePtr<Y>(dynamic_cast<Y*>(m_ptr));
     }
 
     T & operator* ()
@@ -105,14 +101,21 @@ namespace Radiant
       return m_ptr;
     }
 
-    T * get() { return m_ptr; }
-    const T * get() const { return m_ptr; }
+    inline T * get() { return m_ptr; }
+    inline const T * get() const { return m_ptr; }
 
     /// Implicit "bool" conversion
     typedef T * IntrusivePtr::*bool_type;
     operator bool_type() const { return m_ptr ? &IntrusivePtr<T>::m_ptr : 0; }
 
     bool operator! () const { return m_ptr == 0; }
+
+    template <typename Y>
+    bool operator== (const Y * ptr) { return m_ptr == ptr; }
+    template <typename Y>
+    bool operator!= (const Y * ptr) const { return m_ptr != ptr; }
+    template <typename Y>
+    bool operator< (const IntrusivePtr<Y> & ptr) const { return m_ptr < ptr.get(); }
 
   private:
     inline void deref()
