@@ -37,5 +37,66 @@
   }
 #endif
 
+namespace Radiant
+{
+  template <typename T>
+  class IntrusivePtr
+  {
+  public:
+    IntrusivePtr() : m_ptr(0) {}
+    IntrusivePtr(T * ptr) : m_ptr(ptr)
+    {
+      if(ptr) ptr->ref();
+    }
+    IntrusivePtr(const IntrusivePtr<T> & iptr) : m_ptr(iptr.m_ptr)
+    {
+      if(m_ptr) m_ptr->ref();
+    }
+    template <typename Y>
+    IntrusivePtr(const IntrusivePtr<Y> & iptr) : m_ptr(iptr.m_ptr)
+    {
+      if(m_ptr) m_ptr->ref();
+    }
+    virtual ~IntrusivePtr()
+    {
+      deref();
+    }
+
+    IntrusivePtr<T> & operator= (const IntrusivePtr<T> & iptr)
+    {
+      deref();
+      ref(iptr.m_ptr);
+      return *this;
+    }
+    template <typename Y>
+    IntrusivePtr<T> & operator= (const IntrusivePtr<Y> & iptr)
+    {
+      deref();
+      ref(iptr.m_ptr);
+      return *this;
+    }
+
+    IntrusivePtr<T> & operator= (T * ptr)
+    {
+      deref();
+      ref(ptr);
+      return *this;
+    }
+
+  private:
+    inline void deref()
+    {
+      if(m_ptr && !m_ptr->deref())
+        delete m_ptr;
+    }
+    inline void ref(T * ptr)
+    {
+      m_ptr = ptr;
+      if(ptr) ptr->ref();
+    }
+
+    T * m_ptr;
+  };
+}
 
 #endif
