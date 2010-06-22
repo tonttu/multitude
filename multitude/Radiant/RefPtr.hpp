@@ -83,6 +83,31 @@ namespace Radiant
       return *this;
     }
 
+    T & operator* ()
+    {
+      // assert(m_ptr);
+      return *m_ptr;
+    }
+    const T & operator* () const
+    {
+      // assert(m_ptr);
+      return *m_ptr;
+    }
+
+    T * operator-> ()
+    {
+      // assert(m_ptr);
+      return m_ptr;
+    }
+    const T * operator-> () const
+    {
+      // assert(m_ptr);
+      return m_ptr;
+    }
+
+    T * get() { return m_ptr; }
+    const T * get() const { return m_ptr; }
+
   private:
     inline void deref()
     {
