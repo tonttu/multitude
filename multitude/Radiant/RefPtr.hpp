@@ -108,6 +108,12 @@ namespace Radiant
     T * get() { return m_ptr; }
     const T * get() const { return m_ptr; }
 
+    /// Implicit "bool" conversion
+    typedef T * IntrusivePtr::*bool_type;
+    operator bool_type() const { return m_ptr ? &IntrusivePtr<T>::m_ptr : 0; }
+
+    bool operator! () const { return m_ptr == 0; }
+
   private:
     inline void deref()
     {
