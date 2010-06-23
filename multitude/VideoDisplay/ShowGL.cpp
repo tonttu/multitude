@@ -363,7 +363,11 @@ namespace VideoDisplay {
     }
 
     m_filename = filename;
-    m_dsp = dsp;
+    if(dsp)
+      m_dsp = dsp;
+    else
+      m_dsp = Resonant::DSPNetwork::instance();
+
     m_targetChannel = targetChannel;
 
     VideoInFFMPEG * ffmpg = new VideoInFFMPEG();
