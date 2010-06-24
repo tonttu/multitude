@@ -747,6 +747,9 @@ namespace VideoDisplay {
 
   void ShowGL::panAudioTo(Nimble::Vector2 location)
   {
+    debug("ShowGL::panAudioTo # %p %p %p [%.2f %.2f]", this, m_video, m_audio,
+          location.x, location.y);
+
     if(!m_video)
       return;
 

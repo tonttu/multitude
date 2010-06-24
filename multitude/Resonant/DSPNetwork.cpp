@@ -488,6 +488,9 @@ namespace Resonant {
       const char * commandid,
       Radiant::BinaryData & data)
   {
+    debug("DSPNetwork::deliverControl # %p %s %s %d", this, moduleid, commandid,
+          data.total());
+
     for(iterator it = m_items.begin(); it != m_items.end(); it++) {
       Module * m = (*it).m_module;
       if(strcmp(m->id(), moduleid) == 0) {
