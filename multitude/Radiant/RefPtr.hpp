@@ -101,8 +101,7 @@ namespace Radiant
       return m_ptr;
     }
 
-    inline T * get() { return m_ptr; }
-    inline const T * get() const { return m_ptr; }
+    inline T * get() const { return m_ptr; }
 
     /// Implicit "bool" conversion
     typedef T * IntrusivePtr::*bool_type;
