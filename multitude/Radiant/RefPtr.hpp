@@ -43,6 +43,8 @@ namespace Radiant
   class IntrusivePtr
   {
   public:
+    typedef T element_type;
+
     IntrusivePtr() : m_ptr(0) {}
     IntrusivePtr(T * ptr) : m_ptr(ptr)
     {
