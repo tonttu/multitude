@@ -48,14 +48,27 @@ namespace Radiant
     {
       if(ptr) ptr->ref();
     }
+
+    IntrusivePtr(const IntrusivePtr<T> & iptr) : m_ptr(iptr.m_ptr)
+    {
+      if(m_ptr) m_ptr->ref();
+    }
     template <typename Y>
     IntrusivePtr(const IntrusivePtr<Y> & iptr) : m_ptr(iptr.get())
     {
       if(m_ptr) m_ptr->ref();
     }
+
     virtual ~IntrusivePtr()
     {
       deref();
+    }
+
+    IntrusivePtr<T> & operator= (const IntrusivePtr<T> & iptr)
+    {
+      deref();
+      ref(iptr.m_ptr);
+      return *this;
     }
 
     template <typename Y>
