@@ -8,6 +8,7 @@
 #include <Luminous/Texture.hpp>
 #include <Luminous/Utils.hpp>
 
+#include <Radiant/Sleep.hpp>
 #include <Radiant/Trace.hpp>
 
 #include <Valuable/CmdParser.hpp>
@@ -113,6 +114,8 @@ int main(int argc, char ** argv)
 
 
         double createTime = t1.sinceSecondsD() * 1000 / usetextures;
+
+        // Radiant::Sleep::sleepMs(500);
 
         Luminous::Utils::glCheck("Texture test 1/3");
 
