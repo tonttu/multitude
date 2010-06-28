@@ -10,9 +10,11 @@
 
 #include <Radiant/Trace.hpp>
 
+#include <Valuable/CmdParser.hpp>
+
 using namespace Radiant;
 
-int main(int, char **)
+int main(int argc, char ** argv)
 {
   SDL_Init(SDL_INIT_VIDEO);
 
@@ -32,11 +34,22 @@ int main(int, char **)
   Luminous::GLResources::setThreadResources( & rsc, 0, 0);
 
   int i, j = 0;
-  const int levels = 12;
+
+  const int levels = 13;
   const int texturesperlevel = 5;
   const int formatsperlevel = 3;
 
+  Valuable::HasValues opts;
+  Valuable::ValueInt uselevels(&opts, "levels", 12);
+  Valuable::ValueInt drawrects(&opts, "drawrects", 0);
+
+  Valuable::CmdParser::parse(argc, argv, opts);
+
+  uselevels = Nimble::Math::Clamp((int) uselevels, 6, levels);
+
   Luminous::Image images[levels][formatsperlevel];
+
+  const char * formatnames[formatsperlevel] = { "RGB ", "RGBA", "BGRA" };
 
   for(i = 0; i < levels; i++) {
     int dim = 1 << i;
@@ -75,7 +88,7 @@ int main(int, char **)
 
     info("\nFRAME %d", frame);
 
-    for(i = 5; i < levels; i++) {
+    for(i = 5; i < uselevels; i++) {
 
       printf("\n");
 
@@ -83,9 +96,14 @@ int main(int, char **)
 
         GLenum glLayout = (k == 0) ? GL_RGB : GL_RGBA;
 
+        int usetextures = texturesperlevel;
+
+        if(images[i][k].width() > 2048)
+          usetextures = 1;
+
         Radiant::TimeStamp t1 = Radiant::TimeStamp::getTime();
 
-        for(j = 0; j < texturesperlevel; j++) {
+        for(j = 0; j < usetextures; j++) {
           // Create textures without loading:
           textures[j][k].loadBytes(glLayout, images[i][k].width(), images[i][k].height(), 0,
                                    images[i][k].pixelFormat(), false);
@@ -94,42 +112,44 @@ int main(int, char **)
         }
 
 
-        double createTime = t1.sinceSecondsD() * 1000 / texturesperlevel;
+        double createTime = t1.sinceSecondsD() * 1000 / usetextures;
 
         Luminous::Utils::glCheck("Texture test 1/3");
 
         t1 = Radiant::TimeStamp::getTime();
 
 
-        for(j = 0; j < texturesperlevel; j++) {
+        for(j = 0; j < usetextures; j++) {
           // Create textures and load the actual data:
           textures[j][k].loadBytes(glLayout, images[i][k].width(), images[i][k].height(),
                                    images[i][k].data(),
                                    images[i][k].pixelFormat(), false);
-          Luminous::Utils::glTexRect(Nimble::Vector2(0,0), Nimble::Vector2(10, 10));
+          if(drawrects)
+            Luminous::Utils::glTexRect(Nimble::Vector2(0,0), Nimble::Vector2(10, 10));
         }
 
 
-        double loadTime = t1.sinceSecondsD() * 1000 / texturesperlevel;
+        double loadTime = t1.sinceSecondsD() * 1000 / usetextures;
 
         Luminous::Utils::glCheck("Texture test 2/3");
 
         t1 = Radiant::TimeStamp::getTime();
 
-        for(j = 0; j < texturesperlevel; j++) {
+        for(j = 0; j < usetextures; j++) {
           // reload the actual data:
           textures[j][k].bind();
           glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, images[i][k].width(), images[i][k].height(),
                           images[i][k].pixelFormat().layout(), GL_UNSIGNED_BYTE, images[i][k].data());
-          Luminous::Utils::glTexRect(Nimble::Vector2(10,10), Nimble::Vector2(20, 20));
+          if(drawrects)
+            Luminous::Utils::glTexRect(Nimble::Vector2(10,10), Nimble::Vector2(20, 20));
         }
 
-        double subloadTime = t1.sinceSecondsD() * 1000 / texturesperlevel;
+        double subloadTime = t1.sinceSecondsD() * 1000 / usetextures;
 
         Luminous::Utils::glCheck("Texture test 3/3");
 
-        info("Texture dimensions %d %d, fmtindex = %d, create = %.3lf, load = %.3lf reload = %.3lf milliseconds",
-             images[i][k].width(), images[i][k].height(), k,
+        info("%s %d x %d, create = %.3lf, load = %.3lf reload = %.3lf ms",
+             formatnames[k], images[i][k].width(), images[i][k].height(),
              createTime, loadTime, subloadTime);
 
       }
