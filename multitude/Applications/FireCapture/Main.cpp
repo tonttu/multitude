@@ -19,6 +19,7 @@
 #include <Radiant/Thread.hpp>
 #include <Radiant/Trace.hpp>
 #include <Radiant/CameraDriver.hpp>
+#include <Radiant/ConfigReader.hpp>
 
 #include <Luminous/Image.hpp>
 
@@ -26,6 +27,8 @@
 #include <string.h>
 #include <cassert>
 
+bool format7 = false;
+Nimble::Recti format7area(0, 0, 640, 480);
 int triggerSource = -1;
 int triggerMode = -1;
 Radiant::FrameRate rate = Radiant::FPS_15;
@@ -49,7 +52,7 @@ public:
     waitEnd();
   }
 
-protected:
+private:
 
   virtual void childLoop()
   {
@@ -57,9 +60,20 @@ protected:
         
     m_camera = Radiant::VideoCamera::drivers().createPreferredCamera();
 
-    if(!m_camera->open(m_cameraId, 640, 480, Radiant::IMAGE_UNKNOWN, rate)) {
+    if(format7) {
+
+      if(!m_camera->openFormat7(m_cameraId, format7area, Radiant::asFloat(rate), 1)) {
+        Radiant::error("CameraThread::childLoop # failed to open camera (format7);");
+        return;
+      }
+
+    } else {
+
+      if(!m_camera->open(m_cameraId, 640, 480, Radiant::IMAGE_UNKNOWN, rate)) {
         Radiant::error("CameraThread::childLoop # failed to open camera");
-        assert(0);
+        return;
+      }
+
     }
 
     if(triggerMode >= 0) {
@@ -118,20 +132,11 @@ protected:
     m_camera->stop();
   }
 
-private:
-  
   volatile bool m_continue;
   uint64_t      m_cameraId;
   std::string   m_dir;
 
   Radiant::VideoCamera * m_camera;
-
-};
-
-
-enum Task {
-  TASK_SHOW_CAMERAS,
-  TASK_SCAN_BUS
 };
 
 void helper(const char * app)
@@ -145,9 +150,9 @@ void helper(const char * app)
      " --triggerpolarity   +up/down - Selects the trigger polarity, either "
           "\"up\" or \"down\"\n"
      " --triggersource +int - Selects the trigger source, range: 0-%d\n"
+     " --format7area +int +int +int +int - Selects the format7 area\n"
      "\nEXAMPLES:\n"
      " %s --rate 60 --triggersource 0  - Run all cameras at max 60 fps with hardware trigger\n"
-//     , (int) DC1394_TRIGGER_MODE_NUM - 1, (int) DC1394_TRIGGER_SOURCE_NUM - 1,
      , 7, 3,
      app);
   fflush(0);
@@ -161,8 +166,6 @@ int main(int argc, char ** argv)
   float fps = -1.0f;
 
   int i, res = 0;
-  bool format7 = false;
-  bool listmodes = false;
 
   std::string baseDir("capture/");
 
@@ -172,15 +175,22 @@ int main(int argc, char ** argv)
     if(strcmp(arg, "--format7") == 0) {
       format7 = true;
     }
+    else if(strcmp(arg, "--format7area") == 0 && (i+1) < argc) {
+      format7 = true;
+      Radiant::Variant tmp(argv[++i]);
+
+      Nimble::Vector4f vals(0, 0, 1920, 1080);
+
+      tmp.getFloats(vals.data(), 4);
+
+      format7area.set(vals[0], vals[1], vals[2], vals[3]);
+    }
     else if(strcmp(arg, "--fps") == 0 && (i+1) < argc) {
       fps = atof(argv[++i]);
     }
     else if(strcmp(arg, "--help") == 0) {
       helper(argv[0]);
       return 0;
-    }
-    else if(strcmp(arg, "--listformat7modes") == 0) {
-      listmodes = true;
     }
     else if(strcmp(arg, "--rate") == 0 && (i+1) < argc) {
       rate = Radiant::closestFrameRate(atof(argv[++i]));

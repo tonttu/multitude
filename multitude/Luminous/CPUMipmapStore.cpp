@@ -86,11 +86,6 @@ namespace Luminous {
     return mipmaps;
   }
 
-  CPUMipmaps * CPUMipmapStore::acquire(const char * filename, bool immediate)
-  {
-    return acquire(std::string(filename), immediate);
-  }
-
   void CPUMipmapStore::release(CPUMipmaps * mipmaps)
   {
     if(!mipmaps)

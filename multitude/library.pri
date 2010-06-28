@@ -13,6 +13,8 @@ contains(EXPORT_SOURCES, nothing) {
   PROJECT_FILE=
 }
 
+# Default location to install libraries (override in platform specific sections
+# below)
 target.path = /lib
 
 # Installation target for header files 
@@ -30,7 +32,10 @@ src_code.files = $$EXPORT_SOURCES $$EXPORT_HEADERS
 src_code.files += $$FLEXSOURCES $$BISONSOURCES
 src_code.files += $$PROJECT_FILE
 
-INSTALLS += target includes src_code extra_inc
+INSTALLS += target
+
+# Source code & headers go with the framework on OS X
+!macx:INSTALLS += includes src_code extra_inc
 
 # On Windows, put DLLs into /bin with the exes
 win32 {
@@ -61,39 +66,21 @@ win32 {
 macx {
     CONFIG += lib_bundle
 
-    TAKE_HEADERS = $$EXPORT_HEADERS
-    
-    isEmpty(EXPORT_HEADERS) {
-      message(Taking all headers)
-      TAKE_HEADERS = $$HEADERS
-    }
-    else {
-      message(Selected headers $$EXPORT_HEADERS)
-    }
-
-    TAKE_HEADERS += $$EXTRA_HEADERS
-
-    message(More headers $$EXTRA_HEADERS)
+    target.path = /Library/Frameworks
 
     FRAMEWORK_HEADERS.version = Versions
-    FRAMEWORK_HEADERS.files = $$TAKE_HEADERS
+    FRAMEWORK_HEADERS.files = $$EXPORT_HEADERS $$EXTRA_HEADERS
     FRAMEWORK_HEADERS.path = Headers
 
     QMAKE_BUNDLE_DATA += FRAMEWORK_HEADERS
 
-    isEmpty(EXPORT_SOURCES) {
+    !isEmpty(EXPORT_SOURCES) {
 
-    }
-    else {
       FRAMEWORK_SOURCES.version = Versions
       FRAMEWORK_SOURCES.files = $$EXPORT_SOURCES $$EXTRA_SOURCES
       FRAMEWORK_SOURCES.path = Source
 
       QMAKE_BUNDLE_DATA += FRAMEWORK_SOURCES
-
-      message(Selected sources $$FRAMEWORK_SOURCES.files)
-
     }
 
-    message(Creating OSX bundle)
 }

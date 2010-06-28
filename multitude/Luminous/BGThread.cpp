@@ -68,7 +68,33 @@ namespace Luminous
 
     m_wait.wakeAll();
   }
-/*
+
+  bool BGThread::removeTask(Task * task)
+  {
+    if(task->m_host != this)
+      return false;
+
+    Radiant::Guard g(m_mutex);
+    std::pair<container::iterator, container::iterator> range = m_taskQueue.equal_range(task->priority());
+
+    for(container::iterator it = range.first; it != range.second; ++it) {
+      if(it->second == task) {
+        m_taskQueue.erase(it);
+        return true;
+      }
+    }
+
+    for(container::iterator it = m_taskQueue.begin(); it != m_taskQueue.end(); ++it) {
+      if(it->second == task) {
+        m_taskQueue.erase(it);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /*
   void BGThread::markForDeletion(Task * task)
   {
     assert(task);
