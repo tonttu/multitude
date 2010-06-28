@@ -177,7 +177,11 @@ namespace Radiant
     pfd.events = POLLIN;
     poll(&pfd, 1, waitMicroSeconds / 1000);
 
-    return pfd.revents & POLLIN;
+    bool pending = (pfd.revents & POLLIN) != 0;
+
+    // info("TCPSocket::isPendingInput # %d", (int) pending);
+
+    return pending;
 #else
     return m_d->waitForReadyRead(waitMicroSeconds / 1000);
 #endif
