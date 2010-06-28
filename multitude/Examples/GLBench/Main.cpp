@@ -123,6 +123,24 @@ int main(int argc, char ** argv)
 
 
         for(j = 0; j < usetextures; j++) {
+          // Create textures and load part of the actual data:
+          textures[j][k].loadBytes(glLayout, images[i][k].width(), images[i][k].height(), 0,
+                                   images[i][k].pixelFormat(), false);
+          glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, images[i][k].width(), images[i][k].height() / 8,
+                          images[i][k].pixelFormat().layout(), GL_UNSIGNED_BYTE, images[i][k].data());
+          if(drawrects)
+            Luminous::Utils::glTexRect(Nimble::Vector2(0,0), Nimble::Vector2(10, 10));
+        }
+
+
+        double someTime = t1.sinceSecondsD() * 1000 / usetextures;
+
+        Luminous::Utils::glCheck("Texture test 2/4");
+
+        t1 = Radiant::TimeStamp::getTime();
+
+
+        for(j = 0; j < usetextures; j++) {
           // Create textures and load the actual data:
           textures[j][k].loadBytes(glLayout, images[i][k].width(), images[i][k].height(),
                                    images[i][k].data(),
@@ -134,7 +152,7 @@ int main(int argc, char ** argv)
 
         double loadTime = t1.sinceSecondsD() * 1000 / usetextures;
 
-        Luminous::Utils::glCheck("Texture test 2/3");
+        Luminous::Utils::glCheck("Texture test 3/4");
 
         t1 = Radiant::TimeStamp::getTime();
 
@@ -149,11 +167,11 @@ int main(int argc, char ** argv)
 
         double subloadTime = t1.sinceSecondsD() * 1000 / usetextures;
 
-        Luminous::Utils::glCheck("Texture test 3/3");
+        Luminous::Utils::glCheck("Texture test 4/5");
 
-        info("%s %d x %d, create = %.3lf, load = %.3lf reload = %.3lf ms",
+        info("%s %d x %d, create = %.3lf, some = %.3lf, load = %.3lf reload = %.3lf ms",
              formatnames[k], images[i][k].width(), images[i][k].height(),
-             createTime, loadTime, subloadTime);
+             createTime, someTime, loadTime, subloadTime);
 
       }
 
