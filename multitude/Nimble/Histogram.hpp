@@ -18,6 +18,8 @@
 
 #include <Nimble/Export.hpp>
 
+#include <string>
+
 namespace Nimble {
 
   /// Histogram calculation
