@@ -33,14 +33,15 @@
 namespace FireView {
 
   MainWindow::MainWindow(Radiant::FrameRate rate, 
-                         float customFps, Radiant::VideoCamera::TriggerSource triggerSource, Radiant::VideoCamera::TriggerMode triggerMode,
-			 bool format7)
-    : m_mdi(0),
-      m_rate(rate),
-      m_customFps(customFps),
-      m_triggerSource(triggerSource),
-      m_triggerMode(triggerMode),
-      m_format7(format7)
+                         float customFps, Radiant::VideoCamera::TriggerSource triggerSource,
+                         Radiant::VideoCamera::TriggerMode triggerMode,
+                         bool format7)
+                           : m_mdi(0),
+                           m_rate(rate),
+                           m_customFps(customFps),
+                           m_triggerSource(triggerSource),
+                           m_triggerMode(triggerMode),
+                           m_format7(format7)
   {
     QMenuBar * bar = new QMenuBar(this);
     QMenu * menu = new QMenu("&File", this);
@@ -57,7 +58,7 @@ namespace FireView {
     Radiant::debug("MainWindow::~MainWindow");
     
     for(std::set<QWidget *>::iterator it = m_displays.begin();
-        it != m_displays.end(); it++) {
+    it != m_displays.end(); it++) {
       delete (*it);
     }
   }
@@ -73,7 +74,7 @@ namespace FireView {
 
     checkCameras();
 
-        /*
+    /*
     QTimer * timer = new QTimer(this);
 
     connect(timer, SIGNAL(timeout()), this, SLOT(checkCameras()));
@@ -97,53 +98,53 @@ namespace FireView {
         ;
       else if(m_cameras.find(euid) == m_cameras.end()) {
 
-	qDebug("Adding camera %d %llx",
-	       (int) m_cameras.size() + 1, (long long) euid);
+        qDebug("Adding camera %d/%d %llx",
+               (int) m_cameras.size() + 1, (int) infos.size(), (long long) euid);
 
-	QWidget * base = new QWidget();
+        QWidget * base = new QWidget();
 
-	int loc = m_cameras.size() * 30;
-	base->move(loc % 800 + 30, loc % 300 + 30);
-	base->resize(640, 480);
+        int loc = m_cameras.size() * 30;
+        base->move(loc % 800 + 30, loc % 300 + 30);
+        base->resize(640, 480);
 
-	QMenuBar * mb = new QMenuBar(base);
-	QMenu * menu = new QMenu(mb);
-	CamView * cv = new CamView(base);
+        QMenuBar * mb = new QMenuBar(base);
+        QMenu * menu = new QMenu(mb);
+        CamView * cv = new CamView(base);
 
-	menu->addAction("OpenGL Image Filtering", cv, SLOT(toggleFiltering()));
-	menu->addAction("Parameters...", cv, SLOT(openParams()));
-	menu->addAction("Show averages", cv, SLOT(showAverages()));
-	menu->addAction("1/2\" -> 1/3\"", cv,
-			SLOT(toggleHalfInchToThirdInch()));
-	menu->addAction("Update Screen", cv, SLOT(updateScreen()));
-	menu->setTitle("Configuration");
+        menu->addAction("OpenGL Image Filtering", cv, SLOT(toggleFiltering()));
+        menu->addAction("Parameters...", cv, SLOT(openParams()));
+        menu->addAction("Show averages", cv, SLOT(showAverages()));
+        menu->addAction("1/2\" -> 1/3\"", cv,
+                        SLOT(toggleHalfInchToThirdInch()));
+        menu->addAction("Update Screen", cv, SLOT(updateScreen()));
+        menu->setTitle("Configuration");
         QAction * q = new QAction("Quit", base);
         q->setShortcut(tr("Ctrl+Q"));
         connect(q, SIGNAL(triggered()),
                 QCoreApplication::instance(), SLOT(quit()));
         menu->addAction(q);
-	mb->addMenu(menu);
-	
-	QVBoxLayout * layout = new QVBoxLayout(base);
+        mb->addMenu(menu);
 
-	layout->setSpacing(0);
+        QVBoxLayout * layout = new QVBoxLayout(base);
+
+        layout->setSpacing(0);
 #if QT_VERSION >= 0x040300
-	layout->setContentsMargins(0, 0, 0, 0);
+        layout->setContentsMargins(0, 0, 0, 0);
 #endif
-	layout->addWidget(mb);
-	layout->addWidget(cv, 100);
-	
-	if(cv->start(euid, m_rate, m_customFps,
-		     m_triggerSource, m_triggerMode, m_format7)) {
+        layout->addWidget(mb);
+        layout->addWidget(cv, 100);
 
-	  base->raise();
-	  base->show();
+        if(cv->start(euid, m_rate, m_customFps,
+                     m_triggerSource, m_triggerMode, m_format7)) {
+
+          base->raise();
+          base->show();
           m_displays.insert(base);
-	}
-	else
-	  delete base;
+        }
+        else
+          delete base;
 
-	m_cameras.insert(euid);
+        m_cameras.insert(euid);
       }
     }
   }
