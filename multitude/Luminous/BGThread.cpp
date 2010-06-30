@@ -53,7 +53,7 @@ namespace Luminous
     stop();
 
     /// @todo Free resources, should we do this?
-    // for_each(m_taskQueue.begin(), m_taskQueue.end(), g_deletePred2);
+    // for_each(m_taskQueue.begin(), m_taskQueue.end(), g_deletePred2);    
   }
 
   void BGThread::addTask(Task * task)
@@ -110,9 +110,9 @@ namespace Luminous
   {
     m_continue = false;
 
-    if(isRunning()) 
-    {
-      m_wait.wakeAll();
+    if(isRunning())
+    {      
+      m_wait.wakeAll(m_mutexWait);
       waitEnd();
     }
   }
@@ -182,14 +182,15 @@ namespace Luminous
   void BGThread::childLoop()
   {
     while(m_continue) {
-//      Radiant::trace("BGThread::childLoop # running");
+      //Radiant::info("BGThread::childLoop # running");
 
       // Pick a task to run
       Radiant::TimeStamp toWait;
       Task * task = pickNextTask(toWait);
 
       // Run the task
-      if(task) {
+      if(m_continue && task) {
+        //Radiant::info("BGThread::childLoop # got task still running");
 
 	/* Radiant::trace("Picked a task %s with priority %f",
            typeid(*task).name(), task->priority());*/
@@ -215,7 +216,7 @@ namespace Luminous
           m_taskQueue.insert(contained(task->priority(), task));
           m_mutex.unlock();
         }
-      } else if(!m_taskQueue.empty()) {
+      } else if(m_continue && !m_taskQueue.empty()) {
         // There was nothing to run, wait until the next task can be run (or we
         // get interrupted)
 //        Radiant::trace("BGTHREAD: NOTHING TO RUN; WAITING %d MSECS", (int)(toWait.secondsD() * 1000.0));
@@ -233,15 +234,12 @@ namespace Luminous
 
       // Wait for new tasks to appear
       while(m_taskQueue.empty() && m_continue) {
-//        Radiant::trace("BGTHREAD: QUEUE EMPTY; WAITING FOR MORE");
+        //Radiant::info("BGTHREAD: QUEUE EMPTY; WAITING FOR MORE");
         m_mutexWait.lock();
         m_wait.wait(m_mutexWait);
         m_mutexWait.unlock();
       }
     }
-
-    // Down use all the cpu
-    Radiant::Sleep::sleepS(1);
   }
 
   Task * BGThread::pickNextTask(Radiant::TimeStamp & wait)
