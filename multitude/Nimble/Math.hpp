@@ -18,7 +18,7 @@
 
 #include <Nimble/Export.hpp>
 
-#include <math.h>
+#include <cmath>
 #ifdef WIN32
 #	include <float.h>
 #endif
@@ -111,6 +111,7 @@ namespace Nimble {
 
     /// Returns the square root
     inline float Sqrt(int v) { return sqrtf(float(v)); }
+    inline float Sqrt(long v) { return sqrtf(float(v)); }
 
     /// Converts degrees into radians
     inline double degToRad(const double degrees) { return (degrees * PI / 180.0); }
