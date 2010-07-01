@@ -223,6 +223,7 @@ namespace Radiant {
   {
     ensure(that.pos());
     memcpy(getPtr<char>(that.pos()), that.data(), that.pos());
+    m_total += that.m_total;
   }
 
   float BinaryData::readFloat32(bool * ok)
@@ -772,6 +773,8 @@ namespace Radiant {
 
     m_current = 0;
     m_total = s;
+
+    // info("BinaryData::read # %d bytes read", (int) s);
 
     return true;
   }
