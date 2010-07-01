@@ -489,7 +489,7 @@ namespace Luminous
 
   RenderContext::~RenderContext()
   {
-    info("Closing OpenGL context. Rendered %lu things in %lu frames, %lu things per frame",
+    debug("Closing OpenGL context. Rendered %lu things in %lu frames, %lu things per frame",
          m_data->m_renderCount, m_data->m_frameCount,
          m_data->m_renderCount / Nimble::Math::Max(m_data->m_frameCount, (unsigned long) 1));
     delete m_data;
