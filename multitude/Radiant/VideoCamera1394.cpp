@@ -1014,6 +1014,21 @@ namespace Radiant {
     return info;
   }
 
+  void VideoCamera1394::busReset()
+  {
+    info("Performing FireWire bus reset");
+
+    CameraDriver1394 driver;
+
+    std::vector<VideoCamera::CameraInfo> tmp;
+    driver.queryCameras(tmp);
+
+    for(int c = 0; c < (int) g_infos.size(); c++) {
+      dc1394_reset_bus(g_infos[c]);
+      Sleep::sleepMs(100);
+    }
+  }
+
   bool VideoCamera1394::findCamera(uint64_t euid)
   {
     const char * fname = "VideoCamera1394::findCamera";

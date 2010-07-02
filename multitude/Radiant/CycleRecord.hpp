@@ -19,6 +19,7 @@
 #include <Radiant/cycle.h>
 #include <Radiant/Trace.hpp>
 
+#include <stdio.h>
 #include <vector>
 
 namespace Radiant {
@@ -71,16 +72,19 @@ namespace Radiant {
     }
 
     /// Normalize the accumulation buffers, so that one can print the report
-    void normalize()
+    /** This method returns the total CPU cycle count. */
+    double normalize()
     {
       unsigned i;
       double sum = 0.0;
 
       for(i = 0; i < m_records.size(); i++) 
-	sum += m_records[i];
+        sum += m_records[i];
       
       for(i = 0; i < m_records.size() && sum != 0.0; i++)
-	m_records[i] /= sum;
+        m_records[i] /= sum;
+
+      return sum;
     }
 
     /// Print a CPU cycle report to the screen.
@@ -89,7 +93,7 @@ namespace Radiant {
       normalize();
       
       for(unsigned i = 0; i < m_records.size(); i++)
-        printf("CPU cycles  %u   %.2lf\n", i, m_records[i] * 100.0);
+        Radiant::info("CPU cycles  %u   %.2lf\n", i, m_records[i] * 100.0);
     }
 
     /// The latest CPU cycle counter value

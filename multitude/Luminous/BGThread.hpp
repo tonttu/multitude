@@ -79,7 +79,7 @@ namespace Luminous
 
     container m_taskQueue;
 
-    bool m_continue;
+    volatile bool m_continue;
     static BGThread * m_instance;
   };
 

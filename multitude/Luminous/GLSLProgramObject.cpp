@@ -319,7 +319,7 @@ namespace Luminous
       return false;
     }
 
-    info("GLSLProgramObject::loadStrings # %p %p", vsString, fsString);
+    //info("GLSLProgramObject::loadStrings # %p %p", vsString, fsString);
 
     // Load & compile vertex shader
     GLSLShaderObject* vs = 0;

@@ -363,7 +363,11 @@ namespace VideoDisplay {
     }
 
     m_filename = filename;
-    m_dsp = dsp;
+    if(dsp)
+      m_dsp = dsp;
+    else
+      m_dsp = Resonant::DSPNetwork::instance();
+
     m_targetChannel = targetChannel;
 
     VideoInFFMPEG * ffmpg = new VideoInFFMPEG();
@@ -743,6 +747,9 @@ namespace VideoDisplay {
 
   void ShowGL::panAudioTo(Nimble::Vector2 location)
   {
+    debug("ShowGL::panAudioTo # %p %p %p [%.2f %.2f]", this, m_video, m_audio,
+          location.x, location.y);
+
     if(!m_video)
       return;
 

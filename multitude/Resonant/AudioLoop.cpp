@@ -130,8 +130,7 @@ namespace Resonant {
       long decoded = end - devkey;
       if(decoded == (long) strlen(devkey)) {
         m_d->m_outParams.device = i;
-        Radiant::info("AudioLoop::startReadWrite # Selected device %d (%s)",
-                       (int) m_d->m_outParams.device, devkey);
+        Radiant::debug("AudioLoop::startReadWrite # Selected device %d (%s)", (int) m_d->m_outParams.device, devkey);
 
       }
       else {
@@ -152,7 +151,7 @@ namespace Resonant {
 
     const PaDeviceInfo * info = Pa_GetDeviceInfo(m_d->m_outParams.device);
 
-    Radiant::info("AudioLoop::startReadWrite # Got audio device %d = %s",
+    Radiant::debug("AudioLoop::startReadWrite # Got audio device %d = %s",
           (int) m_d->m_outParams.device, info->name);
 
     if(Radiant::enabledVerboseOutput()) {
@@ -170,12 +169,12 @@ namespace Resonant {
     int minchans = info->maxOutputChannels;
 
     if(channels < minchans) {
-      Radiant::info("AudioLoop::startReadWrite # Expanding to %d channels",
+      Radiant::debug("AudioLoop::startReadWrite # Expanding to %d channels",
                     minchans);
       channels = minchans;
     }
 
-    Radiant::info("AudioLoop::startReadWrite # channels = %d limits = %d %d",
+    Radiant::debug("AudioLoop::startReadWrite # channels = %d limits = %d %d",
                   channels, info->maxInputChannels, info->maxOutputChannels);
 
     // channels = 26;
@@ -236,7 +235,7 @@ namespace Resonant {
 
     int err = Pa_CloseStream(m_d->m_stream);
     if(err != paNoError) {
-      trace(Radiant::FAILURE, "AudioLoop::stop # Could not close stream");
+      Radiant::error("AudioLoop::stop # Could not close stream");
     }
 
     m_d->m_stream = 0;

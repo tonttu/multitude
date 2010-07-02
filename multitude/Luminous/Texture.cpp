@@ -163,7 +163,6 @@ namespace Luminous
     GLint minFilter = GL_LINEAR;
     GLint magFilter = GL_LINEAR;
 
-
     // set byte alignment to maximum possible: 1,2,4 or 8
     int alignment = 1;
     while (alignment < 8) {
@@ -195,13 +194,24 @@ namespace Luminous
 
       if(width == 0) {
         Radiant::error("Texture2D::loadBytes: Cannot load texture, too big? (%d x %d)", w, h);
-        changeByteConsumption(used, consumesBytes());
         return false;
       } else {
         glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
         /* should succeed */
+
+#if 0
+
         glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0,
-             srcFormat.layout(), srcFormat.type(), data);
+                     srcFormat.layout(), srcFormat.type(), data);
+#else
+        /* This seems to be faster on Linux and OSX at least. */
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0,
+                     srcFormat.layout(), srcFormat.type(), 0);
+
+        if(data)
+          glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h,
+                          srcFormat.layout(), srcFormat.type(), data);
+#endif
       }
     }
 

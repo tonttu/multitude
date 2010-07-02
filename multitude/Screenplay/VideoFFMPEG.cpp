@@ -630,7 +630,7 @@ namespace Screenplay {
       // return false;
     }
 
-    info("%s # Opened file %s,  (%d x %d %s, %s %d chans @ %d Hz) %d (%d, %f)",
+    debug("%s # Opened file %s,  (%d x %d %s, %s %d chans @ %d Hz) %d (%d, %f)",
           fname, filename, width(), height(), vcname, acname, m_audioChannels,
           m_audioSampleRate,
           (int) m_image.m_format, (int) m_vcontext->pix_fmt, ratio);

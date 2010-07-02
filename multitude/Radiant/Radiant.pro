@@ -137,9 +137,9 @@ win32 {
     SOURCES += TCPServerSocketQt.cpp
     SOURCES += TCPSocketQt.cpp
     SOURCES += UDPSocketQt.cpp
-    SOURCES += ConditionQT.cpp
-    SOURCES += MutexQT.cpp
-    SOURCES += ThreadQT.cpp
+    SOURCES += ConditionQt.cpp
+    SOURCES += MutexQt.cpp
+    SOURCES += ThreadQt.cpp
 
     LIBS +=  wsock32.lib ShLwApi.lib shell32.lib psapi.lib
 
