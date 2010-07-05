@@ -986,7 +986,9 @@ namespace Radiant {
       stop();
 
     if(m_camera) {
+#ifdef __linux__
       dc1394_camera_free(m_camera);
+#endif
     }
 
     m_initialized = false;
