@@ -84,7 +84,7 @@ namespace Nimble {
     /// Adds the given scalar to each element
     void               add(T v)        { m[0][0]+=v;m[0][1]+=v;m[1][0]+=v;m[1][1]+=v; }
     /// Returns the inverse of the matrix
-    inline Matrix2T inverse() const;
+    inline Matrix2T inverse(bool * ok = 0, T tolerance = 1.0e-8) const;
     /// Returns the determinant of the matrix
     float det() const                  { return m[0][0]*m[1][1] - m[0][1] * m[1][0]; }
     /// Multiplies the matrix by a scalar
@@ -131,28 +131,23 @@ namespace Nimble {
 
   /// Returns the inverse of the matrix
   template <class T>
-  inline Matrix2T<T> Matrix2T<T>::inverse() const
+  inline Matrix2T<T> Matrix2T<T>::inverse(bool * ok, T tolerance) const
   {
     Matrix2T<T> inv;
 
     // Code from WidMagic4
 
     T fDet = det();
-    if (Math::Abs(fDet) > 1.0e-8) {
-        T fInvDet = ((T)1.0)/fDet;
-        inv.data()[0] =  data()[3]*fInvDet;
-        inv.data()[1] = -data()[1]*fInvDet;
-        inv.data()[2] = -data()[2]*fInvDet;
-        inv.data()[3] =  data()[0]*fInvDet;
+    if (Math::Abs(fDet) > tolerance) {
+      T fInvDet = ((T)1.0)/fDet;
+      inv.data()[0] =  data()[3]*fInvDet;
+      inv.data()[1] = -data()[1]*fInvDet;
+      inv.data()[2] = -data()[2]*fInvDet;
+      inv.data()[3] =  data()[0]*fInvDet;
+      if(ok) *ok = true;
+    } else {
+      if(ok) *ok = false;
     }
-    else
-    {
-        inv.data()[0] = (T)0.0;
-        inv.data()[1] = (T)0.0;
-        inv.data()[2] = (T)0.0;
-        inv.data()[3] = (T)0.0;
-    }
-
     return inv;
   }
 
