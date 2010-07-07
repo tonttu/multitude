@@ -69,6 +69,7 @@ namespace Radiant
     /// of that size; if size == 0, references the existing buffer identified by smKey.
     RADIANT_API SHMPipe(key_t smKey, uint32_t size);
     RADIANT_API SHMPipe(int id);
+    RADIANT_API static SHMPipe * create(uint32_t size);
 #endif
 
     /// Reads data from the buffer.
@@ -95,6 +96,8 @@ namespace Radiant
 
     /// Clears the transfer counters
     RADIANT_API void clear();
+
+    RADIANT_API int id() const;
 
   private:
     /// Access functions.

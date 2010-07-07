@@ -57,6 +57,7 @@ namespace Radiant
 
     void * data() { return m_data; }
     int size() const { return m_size; }
+    int id() const { return m_id; }
 
   private:
     void * m_data;
@@ -265,6 +266,15 @@ namespace Radiant
   {
     info("Opened client SHMPipe with %u buffer bytes", size());
   }
+
+  SHMPipe * SHMPipe::create(uint32_t size)
+  {
+    // shmget(2) BUGS section:
+    // The name choice IPC_PRIVATE was perhaps unfortunate,
+    // IPC_NEW would more clearly show its function.
+    return new SHMPipe(IPC_PRIVATE, size);
+  }
+
 #endif
 
 #ifdef WIN32
@@ -431,6 +441,11 @@ namespace Radiant
     m_data.written = 0;
     m_data.writePos = 0;
     m_data.readPos = 0;
+  }
+
+  int SHMPipe::id() const
+  {
+    return m_holder->id();
   }
 
   // Diagnostics.
