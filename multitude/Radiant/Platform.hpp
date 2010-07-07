@@ -11,6 +11,7 @@
 #   define RADIANT_OSX 1
 // Is this Windows?
 #elif WIN32
+#	include <yvals.h>
 #   define RADIANT_WIN32 1
 // Check for TR1
 #	ifndef _HAS_TR1
