@@ -985,10 +985,16 @@ namespace Radiant {
     if (m_started)
       stop();
 
+
+    for(std::vector<dc1394camera_t *>::iterator it = g_infos.begin(); it != g_infos.end(); it++) {
+      if(m_camera == *it) {
+        g_infos.erase(it);
+        break;
+      }
+    }
+
     if(m_camera) {
-#ifdef __linux__
       dc1394_camera_free(m_camera);
-#endif
     }
 
     m_initialized = false;
@@ -1252,21 +1258,8 @@ namespace Radiant {
       return false;
     }
 
-#ifndef __linux__
-    // For OSX
-    static bool first = true;
-
-    if(!first) {
-      goto fillquery;
-    }
-
-    first = false;
-#endif
-
     if((err = dc1394_camera_enumerate(g_dc, & camlist))
       != DC1394_SUCCESS) {
-
-      // if(err != DC1394_NO_CAMERA)
 
 #ifdef __linux__
       const char * username = getenv("USERNAME");
@@ -1298,8 +1291,6 @@ namespace Radiant {
 
     debug("%s::Getting %d FireWire cameras", fname, (int) camlist->num);
 
-    g_infos.clear();
-
     for(i = 0; i < camlist->num; i++) {
       bool already = false;
 
@@ -1312,12 +1303,6 @@ namespace Radiant {
     }
 
     debug("Copying FireWire camera information to user", (int) camlist->num);
-
-#ifndef __linux__
-    fillquery:
-#endif
-
-    //query->clear();
 
     for(i = 0; i < g_infos.size(); i++) {
       dc1394camera_t * c = g_infos[i];
@@ -1343,9 +1328,7 @@ namespace Radiant {
 
     debug("Clearing camera list");
 
-#ifdef __linux__
     dc1394_camera_free_list(camlist);
-#endif
 
     return true;
   }
