@@ -333,7 +333,7 @@ namespace Radiant
 
 #endif
 
-  int SHMPipe::read(void * dest, int n, bool block)
+  int SHMPipe::read(void * dest, int n, bool block, bool peek)
   {
     if(block) {
       readAvailable(n);
@@ -351,13 +351,18 @@ namespace Radiant
       int n1 = size() - readPos();
       memcpy(dest, m_data.pipe + readPos(), n1);
       memcpy(reinterpret_cast<char*>(dest) + n1, m_data.pipe, n - n1);
-      m_data.readPos = n - n1;
+      if(!peek) m_data.readPos = n - n1;
     } else {
       memcpy(dest, m_data.pipe + readPos(), n);
-      m_data.readPos += n;
+      if(!peek) m_data.readPos += n;
     }
 
     return n;
+  }
+
+  void SHMPipe::consume(int n)
+  {
+    m_data.readPos = (m_data.readPos + n) % m_data.size;
   }
 
   int SHMPipe::read(BinaryData & data)
