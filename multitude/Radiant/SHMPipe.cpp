@@ -373,7 +373,7 @@ namespace Radiant
     uint32_t rp = readPos();
     uint32_t wp = writePos();
 
-    return wp > rp ? wp - rp : wp + size() - rp;
+    return wp >= rp ? wp - rp : wp + size() - rp;
   }
 
   int SHMPipe::write(const void * src, int n)
