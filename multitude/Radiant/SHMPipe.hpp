@@ -74,10 +74,11 @@ namespace Radiant
 
     /// Reads data from the buffer.
     /** @return This function returns the number of bytes read from the buffer. */
-    RADIANT_API int read(void * ptr, int n);
+    RADIANT_API int read(void * ptr, int n, bool block = false);
     RADIANT_API int read(BinaryData &);
     /// The number of bytes available for reading immediately
     RADIANT_API uint32_t readAvailable();
+    RADIANT_API uint32_t readAvailable(uint32_t require);
 
     /// Stores data into the buffer, without flushing it.
     /** 
@@ -129,6 +130,7 @@ namespace Radiant
       /// Write position (might be unfinished writing)
       uint32_t written;
       uint32_t readPos;
+      int sem;
       uint8_t pipe[];
     } & m_data;
   };

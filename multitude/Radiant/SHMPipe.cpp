@@ -28,7 +28,7 @@
 #include <memory>
 #include <sstream>
 #include <stdexcept>
-
+#include <sys/sem.h>
 #include <string.h>
 
 #ifndef WIN32
@@ -58,11 +58,13 @@ namespace Radiant
     void * data() { return m_data; }
     int size() const { return m_size; }
     int id() const { return m_id; }
+    int sem() const { return m_sem; }
 
   private:
     void * m_data;
     int m_id;
     int m_size;
+    int m_sem;
   };
 
   SHMPipe::SHMHolder::SHMHolder(key_t key, uint32_t size)
@@ -89,6 +91,21 @@ namespace Radiant
       throw std::runtime_error("shmget failed");
     }
 
+    m_sem = semget(IPC_PRIVATE, 1, 0660 | IPC_CREAT | IPC_EXCL);
+    if(m_sem != -1) {
+      debug("%s # Successfully created new semaphore for shared memory area.", fnName);
+    } else {
+      error("%s # Failed to create new semaphore for shared memory area (%s).",
+            fnName, shmError());
+      throw std::runtime_error("semget failed");
+    }
+
+    if(semctl(m_sem, 0, SETVAL, 0) == -1) {
+      error("%s # Failed to set semaphore value to 0 (%s).",
+            fnName, shmError());
+      throw std::runtime_error("semctl failed");
+    }
+
     attach();
 
     // Mark the segment to be destroyed. It will be destroyed when
@@ -103,7 +120,8 @@ namespace Radiant
 
   SHMPipe::SHMHolder::SHMHolder(int id)
     : m_id(id),
-    m_size(0)
+    m_size(0),
+    m_sem(0)
   {
     attach();
   }
@@ -257,6 +275,7 @@ namespace Radiant
     m_data(*reinterpret_cast<Data*>(m_holder->data()))
   {
     m_data.size = m_holder->size();
+    m_data.sem = m_holder->sem();
     clear();
   }
 
@@ -314,14 +333,18 @@ namespace Radiant
 
 #endif
 
-  int SHMPipe::read(void * dest, int n)
+  int SHMPipe::read(void * dest, int n, bool block)
   {
-    uint32_t avail = readAvailable();
+    if(block) {
+      readAvailable(n);
+    } else {
+      uint32_t avail = readAvailable();
 
-    if(static_cast<int>(avail) < n) {
-      //debug("SHMPipe::read # Only %d available, %d needed (%u %u)",
-      // (int) avail, n, (unsigned) readPos(), (unsigned) writePos());
-      return 0;
+      if(static_cast<int>(avail) < n) {
+        //debug("SHMPipe::read # Only %d available, %d needed (%u %u)",
+        // (int) avail, n, (unsigned) readPos(), (unsigned) writePos());
+        return 0;
+      }
     }
 
     if(readPos() + n > size()) {
@@ -376,6 +399,21 @@ namespace Radiant
     return wp >= rp ? wp - rp : wp + size() - rp;
   }
 
+  uint32_t SHMPipe::readAvailable(uint32_t require)
+  {
+    int times = 0;
+    uint32_t avail = readAvailable();
+    struct sembuf sb;
+    sb.sem_num = 0;
+    sb.sem_op = -1;
+    sb.sem_flg = 0;
+    while(avail < require) {
+      semop(m_data.sem, &sb, 1);
+      avail = readAvailable();
+    }
+    return avail;
+  }
+
   int SHMPipe::write(const void * src, int n)
   {
     uint32_t avail = writeAvailable();
@@ -391,6 +429,17 @@ namespace Radiant
       memcpy(m_data.pipe + m_data.written, src, n);
       m_data.written += n;
     }
+
+    // if SEMVMX wasn't so small, we could use the semaphore value as "writeAvailable"
+    /*
+    struct sembuf sb;
+    sb.sem_num = 0;
+    sb.sem_op = n;
+    sb.sem_flg = 0;
+    semop(m_data.sem, &sb, 1);*/
+
+    semctl(m_data.sem, 0, SETVAL, 1);
+
     return n;
   }
 
