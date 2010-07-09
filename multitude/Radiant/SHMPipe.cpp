@@ -91,17 +91,22 @@ namespace Radiant
       throw std::runtime_error("shmget failed");
     }
 
-    m_sem = semget(IPC_PRIVATE, 1, 0660 | IPC_CREAT | IPC_EXCL);
+    m_sem = semget(IPC_PRIVATE, 2, 0660 | IPC_CREAT | IPC_EXCL);
     if(m_sem != -1) {
       debug("%s # Successfully created new semaphore for shared memory area.", fnName);
     } else {
       error("%s # Failed to create new semaphore for shared memory area (%s).",
             fnName, shmError());
-      throw std::runtime_error("semget failed");
     }
 
-    if(semctl(m_sem, 0, SETVAL, 0) == -1) {
+    if(m_sem != -1 && semctl(m_sem, 0, SETVAL, 0) == -1) {
       error("%s # Failed to set semaphore value to 0 (%s).",
+            fnName, shmError());
+      throw std::runtime_error("semctl failed");
+    }
+
+    if(m_sem != -1 &&  semctl(m_sem, 1, SETVAL, 1) == -1) {
+      error("%s # Failed to set semaphore value to 1 (%s).",
             fnName, shmError());
       throw std::runtime_error("semctl failed");
     }
@@ -121,14 +126,40 @@ namespace Radiant
   SHMPipe::SHMHolder::SHMHolder(int id)
     : m_id(id),
     m_size(0),
-    m_sem(0)
+    m_sem(-1)
   {
     attach();
+    SHMPipe::Data * d = reinterpret_cast<SHMPipe::Data*>(m_data);
+    m_size = d->size;
+    m_sem = d->sem;
+
+    if(m_sem != -1) {
+      struct sembuf sb;
+      sb.sem_num = 1;
+      sb.sem_op = 1;
+      sb.sem_flg = 0;
+      semop(m_sem, &sb, 1);
+    }
   }
 
   SHMPipe::SHMHolder::~SHMHolder()
   {
     const char * const fnName = "SHMHolder::~SHMHolder";
+
+    if(m_sem != -1) {
+      struct sembuf sb;
+      sb.sem_num = 1;
+      sb.sem_op = -1;
+      sb.sem_flg = 0;
+      semop(m_sem, &sb, 1);
+
+      sb.sem_num = 1;
+      sb.sem_op = 0;
+      sb.sem_flg = IPC_NOWAIT;
+      if(semop(m_sem, &sb, 1) == 0) {
+        semctl(m_sem, 0, IPC_RMID);
+      }
+    }
 
     if(shmdt(m_data) != -1) {
       debug("%s # Successfully detached shared memory area.", fnName);
@@ -413,7 +444,10 @@ namespace Radiant
     sb.sem_op = -1;
     sb.sem_flg = 0;
     while(avail < require) {
-      semop(m_data.sem, &sb, 1);
+      if(m_data.sem != -1)
+        semop(m_data.sem, &sb, 1);
+      else
+        Sleep::sleepMs(2);
       avail = readAvailable();
     }
     return avail;
@@ -434,16 +468,6 @@ namespace Radiant
       memcpy(m_data.pipe + m_data.written, src, n);
       m_data.written += n;
     }
-
-    // if SEMVMX wasn't so small, we could use the semaphore value as "writeAvailable"
-    /*
-    struct sembuf sb;
-    sb.sem_num = 0;
-    sb.sem_op = n;
-    sb.sem_flg = 0;
-    semop(m_data.sem, &sb, 1);*/
-
-    semctl(m_data.sem, 0, SETVAL, 1);
 
     return n;
   }
@@ -487,6 +511,18 @@ namespace Radiant
   void SHMPipe::flush()
   {
     m_data.writePos = m_data.written;
+
+
+    // if SEMVMX wasn't so small, we could use the semaphore value as "writeAvailable"
+    /*
+    struct sembuf sb;
+    sb.sem_num = 0;
+    sb.sem_op = n;
+    sb.sem_flg = 0;
+    semop(m_data.sem, &sb, 1);*/
+
+    if(m_data.sem != -1)
+      semctl(m_data.sem, 0, SETVAL, 1);
     // info("SHMPipe::flush # Flushed out written data (%u)",(unsigned) m_written);
   }
 
