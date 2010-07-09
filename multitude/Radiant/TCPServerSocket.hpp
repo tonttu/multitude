@@ -45,7 +45,7 @@ namespace Radiant {
     /// Returns the hostname
     const char * host() const;
     /// Returns the port number
-    int port() const;
+    //int port() const;
 
     /// Return 'true' if connection pending.
     bool isPendingConnection(unsigned int waitMicroSeconds = 0);
