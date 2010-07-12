@@ -24,7 +24,45 @@
 #if defined(RADIANT_CPP0X)
   #include <memory>
 #else
-  #if defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
+  #if defined(__GCCXML__)
+    #include <memory>
+    namespace tr1 {
+      template<class T> class shared_ptr {
+      public:
+        typedef T element_type;
+
+        shared_ptr(); // never throws
+        template<class Y> explicit shared_ptr(Y * p);
+        template<class Y, class D> shared_ptr(Y * p, D d);
+        template<class Y, class D, class A> shared_ptr(Y * p, D d, A a);
+        ~shared_ptr(); // never throws
+
+        shared_ptr(shared_ptr const & r); // never throws
+        template<class Y> shared_ptr(shared_ptr<Y> const & r); // never throws
+        template<class Y> shared_ptr(shared_ptr<Y> const & r, T * p); // never throws
+        template<class Y> explicit shared_ptr(std::auto_ptr<Y> & r);
+
+        shared_ptr & operator=(shared_ptr const & r); // never throws
+        template<class Y> shared_ptr & operator=(shared_ptr<Y> const & r); // never throws
+        template<class Y> shared_ptr & operator=(std::auto_ptr<Y> & r);
+
+        void reset(); // never throws
+        template<class Y> void reset(Y * p);
+        template<class Y, class D> void reset(Y * p, D d);
+        template<class Y, class D, class A> void reset(Y * p, D d, A a);
+        template<class Y> void reset(shared_ptr<Y> const & r, T * p); // never throws
+
+        T & operator*() const; // never throws
+        T * operator->() const; // never throws
+        T * get() const; // never throws
+
+        bool unique() const; // never throws
+        long use_count() const; // never throws
+
+        void swap(shared_ptr & b); // never throws
+      };
+    }
+  #elif defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
     #include <tr1/memory>
   #elif defined(RADIANT_WIN32) && defined(_HAS_TR1)
     #include <memory>
