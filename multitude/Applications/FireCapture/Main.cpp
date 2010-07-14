@@ -13,7 +13,9 @@
  * 
  */
 
+#include <Radiant/ConfigReader.hpp>
 #include <Radiant/Directory.hpp>
+#include <Radiant/FileUtils.hpp>
 #include <Radiant/Sleep.hpp>
 #include <Radiant/TimeStamp.hpp>
 #include <Radiant/Thread.hpp>
@@ -40,6 +42,8 @@ public:
   CameraThread(uint64_t cameraId, const std::string & dir)
     : m_continue(true),
       m_cameraId(cameraId),
+      m_format7Area(0, 0, 640, 480),
+      m_format7Mode(-1),
       m_dir(dir),
       m_camera(0)
   {
@@ -52,6 +56,13 @@ public:
     waitEnd();
   }
 
+  void setFormat7Mode(int v) { m_format7Mode = v; }
+
+  void setFormat7Area(const Nimble::Recti & r)
+  {
+    m_format7Area = r;
+  }
+
 private:
 
   virtual void childLoop()
@@ -60,9 +71,9 @@ private:
         
     m_camera = Radiant::VideoCamera::drivers().createPreferredCamera();
 
-    if(format7) {
+    if(m_format7Mode >= 0) {
 
-      if(!m_camera->openFormat7(m_cameraId, format7area, Radiant::asFloat(rate), 1)) {
+      if(!m_camera->openFormat7(m_cameraId, m_format7Area, Radiant::asFloat(rate), 1)) {
         Radiant::error("CameraThread::childLoop # failed to open camera (format7);");
         return;
       }
@@ -134,6 +145,10 @@ private:
 
   volatile bool m_continue;
   uint64_t      m_cameraId;
+
+  Nimble::Recti m_format7Area;
+  int           m_format7Mode;
+
   std::string   m_dir;
 
   Radiant::VideoCamera * m_camera;
@@ -151,6 +166,7 @@ void helper(const char * app)
           "\"up\" or \"down\"\n"
      " --triggersource +int - Selects the trigger source, range: 0-%d\n"
      " --format7area +int +int +int +int - Selects the format7 area\n"
+     " --config config.txt      - Selects config file"
      "\nEXAMPLES:\n"
      " %s --rate 60 --triggersource 0  - Run all cameras at max 60 fps with hardware trigger\n"
      , 7, 3,
@@ -168,6 +184,9 @@ int main(int argc, char ** argv)
   int i, res = 0;
 
   std::string baseDir("capture/");
+
+  std::string configFile;
+  bool defaultconfig = false;
 
   for(i = 1; i < argc; i++) {
     const char * arg = argv[i];
@@ -219,6 +238,12 @@ int main(int argc, char ** argv)
       puts("Verbose mode");
       Radiant::enableVerboseOutput(true);
     }
+    else if(strcmp(arg, "--config") == 0) {
+      if ( (i + 1) < argc)
+        configFile = argv[++i];
+      else
+        defaultconfig = true;
+    }
     else {
       printf("%s Could not handle argument %s\n", argv[0], arg);
       helper(argv[0]);
@@ -231,6 +256,38 @@ int main(int argc, char ** argv)
 	   argv[0]);
     return -1;
   }
+
+  Radiant::Config conf;
+
+  if(defaultconfig) {
+    // Try to find a default configuration
+    Radiant::ResourceLocator locator;
+    locator.addModuleDataPath("MultiTouch/");
+    locator.addPath(".", true);
+    configFile = locator.locate("config.txt");
+
+    if(!configFile.size()) {
+      Radiant::error("FireCapture: Could not locate the standard configuration file");
+      return -1;
+    }
+  }
+
+  if(!Radiant::FileUtils::fileReadable(configFile.c_str())) {
+    Radiant::error("FireCapture: Configuration file %s is not readable", configFile.c_str());
+    return -1;
+  }
+
+  if(!readConfig( & conf, configFile.c_str())) {
+    Radiant::error("Failed to read MultiTouch configuration file: %s", configFile.c_str());
+    return -1;
+  } else {
+    // Overwrite globals if specified
+    Radiant::Chunk globals = conf.get("Globals");
+    triggerSource = globals.get("camera-sync-source").getInt(-1);
+    triggerMode = globals.get("camera-sync-method").getInt(-1);;
+    rate = Radiant::closestFrameRate(globals.get("camera-sync-fps").getFloat(-1));
+  }
+
 
   std::vector<Radiant::VideoCamera::CameraInfo> cameras;
   Radiant::CameraDriver * cd = Radiant::VideoCamera::drivers().getPreferredCameraDriver();
@@ -255,8 +312,27 @@ int main(int argc, char ** argv)
            cam.m_vendor.c_str(), cam.m_model.c_str());
     fflush(0);
 
-    sprintf(buf, "/%llx/", (long long) cam.m_euid64);
+    sprintf(buf, "raw-frames-/%llx/", (long long) cam.m_euid64);
     CameraThread * thread = new CameraThread(cam.m_euid64, baseDir + buf);
+
+    thread->setFormat7Mode(format7);
+    thread->setFormat7Area(format7area);
+
+    // Use config file if specified
+    for(Radiant::Config::iterator it = conf.begin(); it != conf.end(); it++) {
+      if(Radiant::Config::getName(it) == "Camera") {
+        Radiant::Chunk & camChunk = Radiant::Config::getType(it);
+        int64_t camUID = strtoll(camChunk.get("devuid").getString().c_str(), 0, 16);
+
+        if(camUID == cam.m_euid64) {
+          thread->setFormat7Mode(camChunk.get("format7mode").getInt(-1));
+
+          Nimble::Recti f7a;
+          if(camChunk.get("format7area").getInts( f7a.low().data(), 4) == 4)
+            thread->setFormat7Area(f7a);
+        }
+      }
+    }
 
     threads.push_back(thread);
 
