@@ -43,7 +43,7 @@ namespace Radiant {
     bool isOpen() const;
 
     /// Returns the hostname
-    const char * host() const;
+    //const char * host() const;
     /// Returns the port number
     //int port() const;
 
