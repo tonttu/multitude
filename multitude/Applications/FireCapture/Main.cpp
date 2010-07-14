@@ -187,6 +187,7 @@ int main(int argc, char ** argv)
 
   std::string configFile;
   bool defaultconfig = false;
+  bool useConfig = false;
 
   for(i = 1; i < argc; i++) {
     const char * arg = argv[i];
@@ -243,6 +244,8 @@ int main(int argc, char ** argv)
         configFile = argv[++i];
       else
         defaultconfig = true;
+
+      useConfig = true;
     }
     else {
       printf("%s Could not handle argument %s\n", argv[0], arg);
@@ -272,22 +275,23 @@ int main(int argc, char ** argv)
     }
   }
 
-  if(!Radiant::FileUtils::fileReadable(configFile.c_str())) {
+  if(useConfig && !Radiant::FileUtils::fileReadable(configFile.c_str())) {
     Radiant::error("FireCapture: Configuration file %s is not readable", configFile.c_str());
     return -1;
   }
 
-  if(!readConfig( & conf, configFile.c_str())) {
-    Radiant::error("Failed to read MultiTouch configuration file: %s", configFile.c_str());
-    return -1;
-  } else {
-    // Overwrite globals if specified
-    Radiant::Chunk globals = conf.get("Globals");
-    triggerSource = globals.get("camera-sync-source").getInt(-1);
-    triggerMode = globals.get("camera-sync-method").getInt(-1);;
-    rate = Radiant::closestFrameRate(globals.get("camera-sync-fps").getFloat(-1));
+  if (useConfig) {
+    if(!readConfig( & conf, configFile.c_str())) {
+      Radiant::error("Failed to read MultiTouch configuration file: %s", configFile.c_str());
+      return -1;
+    } else {
+      // Overwrite globals if specified
+      Radiant::Chunk globals = conf.get("Globals");
+      triggerSource = globals.get("camera-sync-source").getInt(-1);
+      triggerMode = globals.get("camera-sync-method").getInt(-1);;
+      rate = Radiant::closestFrameRate(globals.get("camera-sync-fps").getFloat(-1));
+    }
   }
-
 
   std::vector<Radiant::VideoCamera::CameraInfo> cameras;
   Radiant::CameraDriver * cd = Radiant::VideoCamera::drivers().getPreferredCameraDriver();
@@ -312,7 +316,7 @@ int main(int argc, char ** argv)
            cam.m_vendor.c_str(), cam.m_model.c_str());
     fflush(0);
 
-    sprintf(buf, "raw-frames-/%llx/", (long long) cam.m_euid64);
+    sprintf(buf, "/raw-frames-%llx/", (long long) cam.m_euid64);
     CameraThread * thread = new CameraThread(cam.m_euid64, baseDir + buf);
 
     thread->setFormat7Mode(format7);
@@ -322,14 +326,28 @@ int main(int argc, char ** argv)
     for(Radiant::Config::iterator it = conf.begin(); it != conf.end(); it++) {
       if(Radiant::Config::getName(it) == "Camera") {
         Radiant::Chunk & camChunk = Radiant::Config::getType(it);
-        int64_t camUID = strtoll(camChunk.get("devuid").getString().c_str(), 0, 16);
+        int64_t camUID;
 
-        if(camUID == cam.m_euid64) {
+        #ifdef WIN32
+            long long lltmp = 0;
+            sscanf(camChunk.get("devuid").getString().c_str(), "%llx", &lltmp);
+            camUID = lltmp;
+        #else
+            camUID = strtoll(camChunk.get("devuid").getString().c_str(), 0, 16);
+        #endif
+
+        if(camUID == cam.m_euid64 || cameras.size() == 1) {
           thread->setFormat7Mode(camChunk.get("format7mode").getInt(-1));
 
           Nimble::Recti f7a;
           if(camChunk.get("format7area").getInts( f7a.low().data(), 4) == 4)
             thread->setFormat7Area(f7a);
+
+          std::string cameraType(buf);
+
+          camChunk.setClearFlag(true);
+          camChunk.set("device",Radiant::Variant(cameraType.substr(1,25), ""));
+          camChunk.setClearFlag(false);
         }
       }
     }
@@ -338,6 +356,14 @@ int main(int argc, char ** argv)
 
     thread->run();
   }
+
+  std::string outConfigFile = (baseDir + std::string("config.txt"));
+  // Cheat Radiant::writeConfig
+  std::ofstream out;
+  out.open(outConfigFile.c_str());
+  out.close();
+
+  Radiant::writeConfig( & conf, outConfigFile.c_str());
 
   Radiant::Sleep::sleepS(secs);
 
