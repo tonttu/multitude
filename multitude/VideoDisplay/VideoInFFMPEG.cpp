@@ -252,8 +252,7 @@ namespace VideoDisplay {
 
   void VideoInFFMPEG::videoPlay(Radiant::TimeStamp pos)
   {
-
-    info("VideoInFFMPEG::videoPlay # %lf", pos.secondsD());
+    //info("VideoInFFMPEG::videoPlay # %lf", pos.secondsD());
 
     if(!m_video.open(m_name.c_str(), m_flags)) {
       endOfFile();

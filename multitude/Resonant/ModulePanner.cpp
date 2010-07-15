@@ -151,7 +151,7 @@ namespace Resonant {
           }
         }
 
-        info("ModulePanner::process # source %d, pipe %d -> %d, gain = %f "
+        debug("ModulePanner::process # source %d, pipe %d -> %d, gain = %f "
               "in = %p %f out = %f",
               i, j, p.m_to, p.m_ramp.value(), in[i], *in[i], out[p.m_to][0]);
 
