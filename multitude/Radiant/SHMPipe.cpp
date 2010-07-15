@@ -95,7 +95,7 @@ namespace Radiant
     if(m_sem != -1) {
       debug("%s # Successfully created new semaphore for shared memory area.", fnName);
     } else {
-      error("%s # Failed to create new semaphore for shared memory area (%s).",
+      error("%s # Failed to create new semaphore for shared memory area, using polling (%s).",
             fnName, shmError());
     }
 
