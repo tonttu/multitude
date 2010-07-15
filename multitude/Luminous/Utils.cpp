@@ -1667,12 +1667,15 @@ namespace Luminous {
 
   bool Utils::glCheck(const char * msg)
   {
-    GLenum e = glGetError();
-    if(e) {
+    bool result = true;
+    GLenum e;
+
+    while((e = glGetError()) != GL_NO_ERROR) {
       Radiant::error("%s # GL ERROR %s", msg, gluErrorString(e));
+      result = false;
     }
 
-    return e == 0;
+    return result;
   }
 
   void Utils::glCircularHalo(float x, float y, float inside, float outside,

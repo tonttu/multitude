@@ -523,7 +523,7 @@ namespace VideoDisplay {
     if(m_audio) {
       videoFrame = m_audio->videoFrame();
       if(m_audio->atEnd()) {
-        info("ShowGL::update # At end");
+        debug("ShowGL::update # At end");
         stop();
 
         Radiant::BinaryData bd;

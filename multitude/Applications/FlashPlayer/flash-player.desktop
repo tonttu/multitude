@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=MultiTouch Flash Player
 Comment=Play Flash files with MultiTouch displays
-Exec=FlashPlayer %U
+Exec=flash-player %U
 Terminal=false
 Type=Application
 StartupNotify=true

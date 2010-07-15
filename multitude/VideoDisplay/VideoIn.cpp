@@ -530,7 +530,7 @@ namespace VideoDisplay {
       if(f) {
         if (f->m_lastUse < limit) {
           m_frames[i].reset();
-          info("VideoIn::freeFreeableMemory # %p %p", this, f);
+          //info("VideoIn::freeFreeableMemory # %p %p", this, f);
         }
         else
           left++;

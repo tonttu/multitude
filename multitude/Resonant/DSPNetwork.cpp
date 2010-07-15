@@ -352,7 +352,7 @@ namespace Resonant {
         int outchans = m_collect->channels(); // hardware output channels
 
         if(m_panner) {
-          info("Adding %d inputs to the panner", mchans);
+          //info("Adding %d inputs to the panner", mchans);
 
           Item * oi = findItem(m_panner->id());
           for(int i = 0; i < mchans; i++) {

@@ -151,7 +151,7 @@ namespace Resonant {
           }
         }
 
-        info("ModulePanner::process # source %d, pipe %d -> %d, gain = %f "
+        debug("ModulePanner::process # source %d, pipe %d -> %d, gain = %f "
               "in = %p %f out = %f",
               i, j, p.m_to, p.m_ramp.value(), in[i], *in[i], out[p.m_to][0]);
 
@@ -225,11 +225,7 @@ namespace Resonant {
       if(!ls)
         continue;
 
-      float d = (location - ls->m_location.asVector()).length();
-      float rel = d / m_maxRadius;
-
-      float inv = 1.0f - rel;
-      float gain = Nimble::Math::Min(inv * 2.0f, 1.0f);
+      float gain = computeGain(ls, location);
 
       if(gain <= 0.0000001f) {
 
@@ -299,4 +295,13 @@ namespace Resonant {
     error("ModulePanner::removeSource # No such source: \"%s\"", id.c_str());
   }
 
+  float ModulePanner::computeGain(const LoudSpeaker * ls, Nimble::Vector2 srcLocation) const
+  {
+    float d = (srcLocation - ls->m_location.asVector()).length();
+    float rel = d / m_maxRadius;
+
+    float inv = 1.0f - rel;
+
+    return Nimble::Math::Min(inv * 2.0f, 1.0f);
+  }
 }

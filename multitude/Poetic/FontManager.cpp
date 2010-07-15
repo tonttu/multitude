@@ -37,7 +37,7 @@ namespace Poetic
     "/usr/share/fonts/truetype/ttf-dejavu"
 #else
     // Mac OSX
-    "/Library/Frameworks/MultiTouch.framework/Fonts"
+    "/Library/Frameworks/MultiTouch.framework/data/Fonts"
 #endif
   );
     m_locator.addPath(".");

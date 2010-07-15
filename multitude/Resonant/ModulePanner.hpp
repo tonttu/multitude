@@ -111,6 +111,9 @@ namespace Resonant {
       Pipe m_pipes[PIPES_PER_SOURCE];
     };
 
+    /// Computes the gain for the given speaker based on sound source location
+    virtual float computeGain(const LoudSpeaker * ls, Nimble::Vector2 srcLocation) const;
+
     typedef std::vector<Radiant::RefObj<Source> > Sources;
     typedef std::vector<std::shared_ptr<LoudSpeaker> > LoudSpeakers;
 
