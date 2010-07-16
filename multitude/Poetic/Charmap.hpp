@@ -23,6 +23,7 @@
   #include <unordered_map>
 #else
   #if defined(__GCCXML__)
+#include <map>
     namespace tr1 {
       template <typename A, typename B>
       class unordered_map : public std::map<A, B>
