@@ -2,6 +2,7 @@ TEMPLATE = subdirs
 
 include(multitude.pri)
 
+SUBDIRS += v8
 SUBDIRS += Patterns
 SUBDIRS += Nimble
 SUBDIRS += Radiant

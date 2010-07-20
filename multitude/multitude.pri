@@ -7,6 +7,7 @@ CONFIG += thread
 CONFIG += embed_manifest_exe
 
 INCLUDEPATH += $$PWD
+INCLUDEPATH += $$PWD/v8/include
 DEPENDPATH += $$PWD
 
 MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat
