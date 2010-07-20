@@ -24,6 +24,8 @@
 
 #include <Radiant/Color.hpp>
 
+#include <v8.h>
+
 #include <map>
 #include <string>
 
@@ -151,6 +153,10 @@ namespace Valuable
                           const char * to,
                           Valuable::HasValues * obj,
                           const Radiant::BinaryData * defaultData = 0);
+    void eventAddListener(const char * from,
+                          const char * to,
+                          v8::Persistent<v8::Function> func,
+                          const Radiant::BinaryData * defaultData = 0);
     /** Removes event listeners from this object.
       @return number of listeners removed
       */
@@ -221,9 +227,10 @@ namespace Valuable
 
       inline bool operator == (const ValuePass & that) const
       { return (m_listener == that.m_listener) && (m_from == that.m_from) &&
-      (m_to == that.m_to); }
+      (m_to == that.m_to) && *m_func == *m_func; }
 
       Valuable::HasValues * m_listener;
+      v8::Persistent<v8::Function> m_func;
       Radiant::BinaryData   m_defaultData;
       std::string m_from;
       std::string m_to;

@@ -53,9 +53,11 @@ namespace Valuable
 
     for(Listeners::iterator it = m_elisteners.begin();
     it != m_elisteners.end(); it++) {
-      (*it).m_listener->eventRemoveSource(this);
+      if(it->m_listener)
+        it->m_listener->eventRemoveSource(this);
+      else
+        it->m_func.Dispose();
     }
-
   }
 
   ValueObject * HasValues::getValue(const std::string & name)
@@ -237,6 +239,28 @@ namespace Valuable
     }
   }
 
+  void HasValues::eventAddListener(const char * from,
+                                   const char * to,
+                                   v8::Persistent<v8::Function> func,
+                                   const Radiant::BinaryData * defaultData)
+  {
+    ValuePass vp;
+    vp.m_func = func;
+    vp.m_from = from;
+    vp.m_to = to;
+
+    if(defaultData)
+      vp.m_defaultData = *defaultData;
+
+    if(std::find(m_elisteners.begin(), m_elisteners.end(), vp) !=
+       m_elisteners.end())
+      debug("Widget::eventAddListener # Already got item %s -> %s",
+            from, to);
+    else {
+      m_elisteners.push_back(vp);
+    }
+  }
+
   int HasValues::eventRemoveListener(Valuable::HasValues * obj, const char * from, const char * to)
   {
     int removed = 0;
@@ -328,8 +352,13 @@ namespace Valuable
 
         bdsend.rewind();
 
-        vp.m_listener->processMessage(vp.m_to.c_str(), bdsend);
-
+        if(vp.m_listener)
+          vp.m_listener->processMessage(vp.m_to.c_str(), bdsend);
+        else {
+          /// @todo wrap bdsend
+          /// @todo what is the correct receiver?
+          vp.m_func->Call(v8::Handle<v8::Object>(), 0, 0);
+        }
       }
     }
   }
