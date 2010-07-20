@@ -13,14 +13,14 @@ namespace Resonant
   {
   public:
     /// Constructs a new module
-    ModuleRectPanner(Resonant::Application * app = 0);
+    RESONANT_API ModuleRectPanner(Resonant::Application * app = 0);
 
     /// Adds a rectangle defining a sound region to the module
-    void addSoundRectangle(const SoundRectangle & r);
+    RESONANT_API void addSoundRectangle(const SoundRectangle & r);
 
   protected:
     /// Computes the gain for individual speakers
-    virtual float computeGain(const LoudSpeaker *ls, Nimble::Vector2 srcLocation) const;
+    RESONANT_API virtual float computeGain(const LoudSpeaker *ls, Nimble::Vector2 srcLocation) const;
 
   private:
     const SoundRectangle * getContainingRectangle(const LoudSpeaker * ls) const;

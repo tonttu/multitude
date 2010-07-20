@@ -1,6 +1,8 @@
 #ifndef RESONANT_SOUNDRECTANGLE_HPP
 #define RESONANT_SOUNDRECTANGLE_HPP
 
+#include "Export.hpp"
+
 #include <Valuable/HasValues.hpp>
 #include <Valuable/ValueVector.hpp>
 #include <Valuable/ValueFloat.hpp>
@@ -21,7 +23,7 @@ where the gain falls to zero if the sound source moves outside the rectangle.
   {
   public:
     /// Constructs a sound rectangle
-    SoundRectangle();
+    RESONANT_API SoundRectangle();
     /** Constructs a sound rectangle with given parameters
      @param loc location of the upper-left corner of the rectangle
      @param size size of the rectangle
@@ -34,7 +36,7 @@ where the gain falls to zero if the sound source moves outside the rectangle.
     @param leftChannel id of the channel on the left side of the rectangle
     @param rightChannel id of the channel on the right side of the rectangle
     */
-    SoundRectangle(Nimble::Vector2i loc, Nimble::Vector2i size, float stereoPan, int fadeWidth, int leftChannel, int rightChannel);
+    RESONANT_API SoundRectangle(Nimble::Vector2i loc, Nimble::Vector2i size, float stereoPan, int fadeWidth, int leftChannel, int rightChannel);
 
     /// Sets the location of the rectangle
     void setLocation(Nimble::Vector2i loc) { m_location = loc; }
