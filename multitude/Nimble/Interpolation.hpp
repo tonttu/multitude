@@ -38,8 +38,8 @@ namespace Nimble
     /// @param t position to interpolate at
     /// @return interpolated value
     T interpolate(float t) const
-    {
-      typename Keys::const_iterator i = std::lower_bound(m_keys.begin(), m_keys.end(), t, funky_compare);
+    {        
+        typename Keys::const_iterator i = std::lower_bound(m_keys.begin(), m_keys.end(), std::make_pair(t, T()), funky_compare);
 
       const Key & a = *(i - 1);
       const Key & b = *(i - 0);
@@ -51,7 +51,7 @@ namespace Nimble
 
   private:
     // Compare float to pair with float in the first field
-    static bool funky_compare(const Key & a, float b) { return a.first < b; }
+    static bool funky_compare(const Key & a, const Key & b) { return a.first < b.first; }
 
     Keys m_keys;
   };
