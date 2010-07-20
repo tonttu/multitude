@@ -520,7 +520,7 @@ namespace Radiant {
     const char * fname = "VideoCamera1394::initialize";
 
     if(!findCamera(euid)) {
-      error("%s # Could not find FireWire camera %s", fname, euid);
+      error("%s # Could not find FireWire camera %x", fname, euid);
       return false;
     }
 
