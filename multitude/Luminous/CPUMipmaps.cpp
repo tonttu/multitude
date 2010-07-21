@@ -33,32 +33,14 @@
 namespace Luminous {
 
   using namespace Radiant;
-
-  volatile static int __cpcount = 0;
-
-  CPUMipmaps::CPUItem::CPUItem()
-    : m_state(WAITING),
-    m_unUsed(0)
-  {
-    // info("CPUMipmaps::CPUItem::CPUItem # %d", ++__cpcount);
-  }
-
-  CPUMipmaps::CPUItem::~CPUItem()
-  {
-    // info("CPUMipmaps::CPUItem::~CPUItem # %d", --__cpcount);
-  }
-
-  /////////////////////////////////////////////////////////////////////////////
-  /////////////////////////////////////////////////////////////////////////////
-
   CPUMipmaps::CPUMipmaps()
     : m_fileModified(0),
-    m_nativeSize(100, 100),
+    m_stack(1),
+    m_nativeSize(0, 0),
     m_maxLevel(0),
-    m_fileMask(0),
     m_hasAlpha(false),
     m_timeOut(3.0f),
-    m_ok(true)
+    m_keepMaxLevel(true)
   {
     scheduleFromNowSecs(0.0f);
   }
@@ -69,9 +51,11 @@ namespace Luminous {
 
   void CPUMipmaps::update(float dt, float )
   {
-    for(int i = lowestLevel(); i <= m_maxLevel; i++) {
+    for(int i = 0; i < m_maxLevel; i++) {
       m_stack[i].m_unUsed += dt;
     }
+    if(!m_keepMaxLevel)
+      m_stack[m_maxLevel].m_unUsed += dt;
 
     Radiant::Guard g(&m_stackMutex);
     for(StackMap::iterator it = m_stackChange.begin(); it != m_stackChange.end(); ++it)
@@ -81,18 +65,15 @@ namespace Luminous {
 
   int CPUMipmaps::getOptimal(Nimble::Vector2f size)
   {
-    float bigdim = Nimble::Math::Min(size.maximum(),
-                                     (float) m_nativeSize.maximum());
+    float ask = size.maximum(), orig = m_nativeSize.maximum();
 
-    int bestlevel = Nimble::Math::Round(log(bigdim) / log(2.0) + 0.0f);
+    if(ask >= orig)
+      return 0;
+
+    int bestlevel = Nimble::Math::Floor(log(ask/orig) / log(0.5));
 
     if(bestlevel > m_maxLevel)
       bestlevel = m_maxLevel;
-    else if(bestlevel < lowestLevel())
-      bestlevel = lowestLevel();
-
-    //trace("CPUMipmaps::getOptimal # %dx%d -> %d",
-    // (int) size.x, (int) size.y, bestlevel);
 
     return bestlevel;
   }
@@ -100,12 +81,9 @@ namespace Luminous {
   int CPUMipmaps::getClosest(Nimble::Vector2f size)
   {
     int bestlevel = getOptimal(size);
+    CPUItem & item = m_stack[bestlevel];
+    markImage(bestlevel);
 
-    // trace("CPUMipmaps::getClosest # Best would be %d", bestlevel);
-
-    CPUItem &  item = m_stack[bestlevel];
-
-    item.m_unUsed = 0.0f;
     if(item.m_state == READY)
       return bestlevel;
 
@@ -115,16 +93,14 @@ namespace Luminous {
 
     // Scan for the best available mip-map.
 
-    for(int i = bestlevel+1; i <= m_maxLevel; i++) {
-
+    for(int i = bestlevel-1; i >= 0; --i) {
       if(m_stack[i].m_state == READY) {
         m_stack[i].m_unUsed = 0.0f;
         return i;
       }
     }
 
-    for(int i = bestlevel-1; i > 0; i--) {
-
+    for(int i = bestlevel+1; i <= m_maxLevel; ++i) {
       if(m_stack[i].m_state == READY) {
         m_stack[i].m_unUsed = 0.0f;
         return i;
@@ -152,15 +128,7 @@ namespace Luminous {
 
   bool CPUMipmaps::isReady()
   {
-    // return true;
-
-    float dt = Radiant::TimeStamp
-               (Radiant::TimeStamp::getTime() - m_startedLoading).secondsD();
-
-    if(dt > 3.0f)
-      return true;
-
-    for(int i = lowestLevel(); i <= m_maxLevel; i++) {
+    for(int i = 0; i <= m_maxLevel; i++) {
       CPUItem & ci = m_stack[i];
 
       if(ci.m_state == WAITING && ci.m_unUsed < m_timeOut)
@@ -170,17 +138,10 @@ namespace Luminous {
     return true;
   }
 
-  bool CPUMipmaps::startLoading(const char * filename, bool immediate)
+  bool CPUMipmaps::startLoading(const char * filename, bool)
   {
-    debug("CPUMipmaps::startLoading # %s, %d", filename, immediate);
-    m_startedLoading = Radiant::TimeStamp::getTime();
     m_filename = filename;
     m_fileModified = FileUtils::lastModified(m_filename);
-
-    for(int i = 0; i < MAX_MAPS; i++) {
-      m_stack[i].clear();
-    }
-
     m_info = Luminous::ImageInfo();
 
     if(!Luminous::Image::ping(filename, m_info)) {
@@ -189,18 +150,21 @@ namespace Luminous {
       return false;
     }
 
+    m_shouldSave.clear();
+    m_stack.clear();
     m_nativeSize.make(m_info.width, m_info.height);
 
     if(!m_nativeSize.minimum())
       return false;
 
-    int smax = m_nativeSize.maximum();
+    // m_maxLevel and m_nativeSize have to be set before running getOptimal
+    m_maxLevel = std::numeric_limits<int>::max();
+    m_maxLevel = getOptimal(Nimble::Vector2f(SMALLEST_IMAGE, SMALLEST_IMAGE));
 
-    for(m_maxLevel = 0; (1 << m_maxLevel) < smax; m_maxLevel++)
-      ;
+    m_shouldSave.insert(getOptimal(Nimble::Vector2f(DEFAULT_SAVE_SIZE1, DEFAULT_SAVE_SIZE1)));
+    m_shouldSave.insert(getOptimal(Nimble::Vector2f(DEFAULT_SAVE_SIZE2, DEFAULT_SAVE_SIZE2)));
 
-    if(m_maxLevel >= MAX_MAPS)
-      m_maxLevel = MAX_MAPS - 1;
+    m_stack.resize(m_maxLevel+1);
 
     return true;
   }
@@ -217,7 +181,7 @@ namespace Luminous {
 
     GPUMipmaps * gm = dynamic_cast<GPUMipmaps *> (r);
 
-    assert(gm != 0);
+    assert(gm);
 
     return gm;
   }
@@ -237,12 +201,11 @@ namespace Luminous {
     GPUMipmaps * gpumaps = getGPUMipmaps(r);
 
     return gpumaps->bind(transform, pixelsize);
-    //return true;
   }
 
   bool CPUMipmaps::isActive()
   {
-    for(int i = lowestLevel(); i <= m_maxLevel; i++) {
+    for(int i = 0; i <= m_maxLevel; i++) {
 
       if(m_stack[i].m_state == WAITING)
         return true;
@@ -255,7 +218,7 @@ namespace Luminous {
   {
     // info("CPUMipmaps::pixelAlpha # %f %f", relLoc.x, relLoc.y);
 
-    for(int i = MAX_MAPS - 1; i >= 1; i--) {
+    for(int i = 0; i <= m_maxLevel; ++i) {
       std::shared_ptr<ImageTex> im = getImage(i);
 
       if(!im) continue;
@@ -282,8 +245,6 @@ namespace Luminous {
       }
     }
 
-    // info("No mipmaps for alpha calculus");
-
     return 255;
   }
 
@@ -297,7 +258,7 @@ namespace Luminous {
     double delay = 60.0;
     StackMap stack;
 
-    for(int i = lowestLevel(); i <= m_maxLevel; i++) {
+    for(int i = 0; i <= m_maxLevel; i++) {
       CPUItem & item = m_stack[i];
       double time_to_expire = m_timeOut - item.m_unUsed;
 
@@ -336,7 +297,7 @@ namespace Luminous {
       name += "/";
     name += ".imagecache/";
 
-    snprintf(buf, sizeof(buf), "%.2d_", level);
+    snprintf(buf, sizeof(buf), "level%02d_", level);
 
     name += buf;
     name += Radiant::FileUtils::filename(m_filename);
@@ -349,16 +310,12 @@ namespace Luminous {
 
     name.erase(i + 1);
 
-    if(m_info.pf.layout() == PixelFormat::LAYOUT_RGB ||
-       m_info.pf.layout() == PixelFormat::LAYOUT_LUMINANCE)
-      name += "jpg";
-    else // if(m_info.pf.layout() == PixelFormat::LAYOUT_RGBA)
-      name += "png";
+    // always use png
+    name += "png";
   }
 
   void CPUMipmaps::recursiveLoad(StackMap & stack, int level)
   {
-    // info("recursiveLoad (%d)", level);
     if(m_stack[level].m_state == READY)
       return;
 
@@ -366,16 +323,10 @@ namespace Luminous {
     if(item.m_state == READY)
       return;
 
-    // info("CPUMipmaps::recursiveLoad # %s %d %d", m_filename.c_str(), level, m_maxLevel);
-
-    if(level == DEFAULT_MAP1 || level == DEFAULT_MAP2) {
-
-      // info("Testing for previews");
-
+    if(m_shouldSave.find(level) != m_shouldSave.end()) {
       // Try loading a pre-generated smaller-scale mipmap
 
       std::string filename;
-
       cacheFileName(filename, level);
 
       if(Radiant::FileUtils::fileReadable(filename) &&
@@ -389,7 +340,6 @@ namespace Luminous {
         }
         else {
 
-          //info("cache file %s loaded (%d)", filename.c_str(), level);
           if(im->hasAlpha())
             m_hasAlpha = true;
 
@@ -400,10 +350,8 @@ namespace Luminous {
       }
     }
 
-    if(level == m_maxLevel) {
-
-      // Load original, and scale to useful dimensions:
-
+    if(level == 0) {
+      // Load original
       std::shared_ptr<Luminous::ImageTex> im(new ImageTex);
 
       if(!im->read(m_filename.c_str())) {
@@ -411,67 +359,35 @@ namespace Luminous {
         item.m_state = FAILED;
       }
       else {
-        // info("original file %s loaded (%d)", m_filename.c_str(), level);
-
         if(im->hasAlpha())
           m_hasAlpha = true;
-
-        Nimble::Vector2i s = im->size();
-        int smax = s.maximum();
-
-        if(smax > maxDimension()) {
-          float scale = maxDimension() / smax;
-          s = Nimble::Vector2(s) * scale;
-        }
-
-        while(s.x & 0xFF) {
-          s.x++;
-        }
-        while(s.y & 0xFF) {
-          s.y++;
-        }
-
-        if(s == im->size()) {
-          item.m_image = im;
-        } else {
-          std::shared_ptr<Luminous::ImageTex> im2(new ImageTex);
-          // info("resampled (%d) [%d,%d] -> [%d,%d]", level, im->size().x, im->size().y, s.x, s.y);
-
-          im2->copyResample(*im, s.x, s.y);
-
-          item.m_image = im2;
-        }
+        item.m_image = im;
         item.m_state = READY;
       }
       return;
     }
 
-    // Load the higher level, and scale down from that:
+    // Load the bigger image from lower level, and scale down from that:
+    recursiveLoad(stack, level - 1);
 
-    recursiveLoad(stack, level + 1);
     const CPUItem * src = 0;
-    if(m_stack[level+1].m_state == READY) {
-      src = &m_stack[level+1];
+    if(m_stack[level-1].m_state == READY) {
+      src = &m_stack[level-1];
     } else {
-      src = &stack[level+1];
+      src = &stack[level-1];
       if(src->m_state != READY) {
-        error("Failed to get mipmap %d", level + 1);
+        error("Failed to get mipmap %d", level - 1);
         item.m_state = FAILED;
         return;
       }
     }
 
-    // Scale down from higher-level mipmap
-
+    // Scale down from bigger mipmap
     std::shared_ptr<Luminous::ImageTex> imsrc = src->m_image;
-
     std::shared_ptr<Luminous::ImageTex> imdest(new Luminous::ImageTex());
 
     Nimble::Vector2i ss = imsrc->size();
-    Nimble::Vector2i is(ss.x >> 1, ss.y >> 1);
-
-    if(is.x & 0x1) is.x--;
-    if(is.y & 0x1) is.y--;
+    Nimble::Vector2i is = ss / 2;
 
     if(is * 2 == ss) {
       imdest->quarterSize(*imsrc);
@@ -480,12 +396,10 @@ namespace Luminous {
       imdest->copyResample(*imsrc, is.x, is.y);
     }
 
-    // info("resampled (%d)", level);
-
     item.m_image = imdest;
     item.m_state = READY;
 
-    if(level == DEFAULT_MAP1 || level == DEFAULT_MAP2) {
+    if(m_shouldSave.find(level) != m_shouldSave.end()) {
       std::string filename;
       cacheFileName(filename, level);
       Directory::mkdir(FileUtils::path(filename));
