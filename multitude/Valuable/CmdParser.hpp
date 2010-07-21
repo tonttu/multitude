@@ -16,7 +16,8 @@
 #ifndef VALUABLE_CMDPARSER_HPP
 #define VALUABLE_CMDPARSER_HPP
 
-#include <Radiant/Export.hpp>
+#include <Valuable/Export.hpp>
+
 #include <Radiant/StringUtils.hpp>
 
 namespace Valuable
@@ -24,7 +25,7 @@ namespace Valuable
   class HasValues;
 
   /// Command line parser.
-  class RADIANT_API CmdParser
+  class VALUABLE_API CmdParser
   {
   public:
     /// Parses command line arguments to given HasValues object.
