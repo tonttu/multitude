@@ -874,11 +874,15 @@ namespace Radiant {
    */
   bool VideoCamera1394::stop()
   {
-    assert(isInitialized());
+    if(!m_initialized) {
+      Radiant::error("VideoCamera1394::stop # camera has not been initialized");
+      return false;
+    }
 
-    assert(m_started);
+    if(dc1394_capture_stop(m_camera) != DC1394_SUCCESS) {
+      Radiant::error("VideoCamera1394::stop # unable to stop capture");
+    }
 
-    dc1394_capture_stop(m_camera);
     if (dc1394_video_set_transmission(m_camera, DC1394_OFF) !=DC1394_SUCCESS) {
       Radiant::error("VideoCamera1394::stop # unable to stop iso transmission");
     }
