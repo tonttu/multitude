@@ -21,6 +21,8 @@
 
 #include <vector>
 
+#include <stdio.h>
+
 namespace Radiant {
 
   /** CPU cycle record for performance analysis. */
