@@ -219,7 +219,7 @@ namespace Radiant {
 
   VideoCamera1394::~VideoCamera1394()
   {
-    if (m_initialized)
+    if (m_initialized || m_camera)
       close();
 
     g_count--;
@@ -1047,7 +1047,8 @@ namespace Radiant {
 
     uint32_t i;
 
-    bzero( & m_camera, sizeof(m_camera));
+    if(m_camera)
+      close();
 
     m_euid = euid ? euid : m_euid;
 
