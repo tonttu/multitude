@@ -159,7 +159,7 @@ namespace Nimble {
   inside the camera area and width of the camera area, per
   scanline. */
     const std::vector<Nimble::Vector2i> & limits() const { return m_limits; }
-    /// Information on which pixels are part of the image rocessing area
+    /// Information on which pixels are part of the image processing area
     /** The returned values work like the values returned from #limits. */
     const std::vector<Nimble::Vector2i> & extraLimits() const
     { return m_extraLimits; }
@@ -196,6 +196,8 @@ namespace Nimble {
     Nimble::Rect outputBounds();
     /// Test the keystone correction routines
     static void testCorrection();
+
+    Nimble::Rect boundsROI() const { return m_boundsROI; }
 
     /// Reference to the lens correction
     LensCorrection & lensCorrection() { return m_lensCorrection; }
@@ -299,6 +301,8 @@ namespace Nimble {
     // Total number of pixels to traverse.
     int            m_containedPixelCount;
     int            m_version;
+
+    Nimble::Rect m_boundsROI;
   };
 
 }
