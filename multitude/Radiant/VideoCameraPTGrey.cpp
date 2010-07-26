@@ -781,7 +781,7 @@ namespace Radiant
       //uint64_t c = cameraInfo.configROM.unitSpecId;
       uint64_t d = cameraInfo.configROM.chipIdLo;
 
-      // This is a complete guess. Need to verify if this is actually correct
+      // This is how they do it in libdc1394 (in enumeration.c)
       uint64_t uuid = (a << 40) | (b << 32) | (d);
 
       g_guidMap.insert(std::make_pair(uuid, guid));
