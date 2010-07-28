@@ -95,14 +95,14 @@ namespace Luminous {
 
     for(int i = bestlevel-1; i >= 0; --i) {
       if(m_stack[i].m_state == READY) {
-        m_stack[i].m_unUsed = 0.0f;
+        markImage(i);
         return i;
       }
     }
 
     for(int i = bestlevel+1; i <= m_maxLevel; ++i) {
       if(m_stack[i].m_state == READY) {
-        m_stack[i].m_unUsed = 0.0f;
+        markImage(i);
         return i;
       }
     }
