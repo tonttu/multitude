@@ -29,4 +29,10 @@ namespace Valuable
     if(ok) *ok = true;
     return Radiant::StringUtils::stringify((int32_t)m_value);
   }
+
+  bool ValueBool::set(int value)
+  {
+    *this = !!value;
+    return true;
+  }
 }
