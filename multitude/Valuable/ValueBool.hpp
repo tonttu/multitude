@@ -38,6 +38,9 @@ namespace Valuable
     /// Copies a value
     ValueBool & operator = (bool v) { m_value = v; VALUEMIT_STD_OP }
 
+    /// Boolean values can be set as integers in CSS files
+    bool set(int v);
+
     std::string asString(bool * const ok = 0) const;
   };
 
