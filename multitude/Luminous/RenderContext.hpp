@@ -197,6 +197,8 @@ namespace Luminous
     /// Sets the current blend function, and enables blending
     /** If the function is BLEND_NONE, then blending is disabled. */
     void setBlendFunc(BlendFunc f);
+    /// Enables the current blend mode defined with setBlendFunc
+    void useCurrentBlendMode();
 
     /// Returns a pointer to an array of human-readable blending mode strings
     static const char ** blendFuncNames();

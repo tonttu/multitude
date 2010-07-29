@@ -161,7 +161,8 @@ namespace Luminous
         m_window(win),
         m_viewStackPos(-1),
         m_glContext(new GLDummyContext),
-        m_initialized(false)
+        m_initialized(false),
+        m_blendFunc(BLEND_USUAL)
     {
     }
 
@@ -473,6 +474,8 @@ namespace Luminous
     Luminous::GLContext * m_glContext;
 
     bool m_initialized;
+
+    BlendFunc m_blendFunc;
   };
 
   ///////////////////////////////////////////////////////////////////
@@ -850,21 +853,28 @@ namespace Luminous
 
   void RenderContext::setBlendFunc(BlendFunc f)
   {
-    if(f == BLEND_NONE) {
+    m_data->m_blendFunc = f;
+
+    useCurrentBlendMode();
+  }
+
+  void RenderContext::useCurrentBlendMode()
+  {
+    //Radiant::info("RenderContext::useCurrentBlendMode # %s", blendFuncNames()[m_data->m_blendFunc]);
+
+    if(m_data->m_blendFunc == BLEND_NONE) {
       glDisable(GL_BLEND);
       return;
     }
 
     glEnable(GL_BLEND);
 
-    if(f == BLEND_USUAL)
+    if(m_data->m_blendFunc == BLEND_USUAL)
       Utils::glUsualBlend();
-    else if(f == BLEND_ADDITIVE)
+    else if(m_data->m_blendFunc == BLEND_ADDITIVE)
       Utils::glAdditiveBlend();
-    else if(f == BLEND_SUBTRACTIVE) {
+    else if(m_data->m_blendFunc == BLEND_SUBTRACTIVE)
       Utils::glSubtractiveBlend();
-    }
-
   }
 
   const char ** RenderContext::blendFuncNames()
