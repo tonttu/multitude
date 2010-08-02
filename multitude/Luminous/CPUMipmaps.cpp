@@ -42,7 +42,6 @@ namespace Luminous {
     m_timeOut(3.0f),
     m_keepMaxLevel(true)
   {
-    scheduleFromNowSecs(0.0f);
   }
 
   CPUMipmaps::~CPUMipmaps()
@@ -161,10 +160,16 @@ namespace Luminous {
     m_maxLevel = std::numeric_limits<int>::max();
     m_maxLevel = getOptimal(Nimble::Vector2f(SMALLEST_IMAGE, SMALLEST_IMAGE));
 
+    m_shouldSave.insert(getOptimal(Nimble::Vector2f(SMALLEST_IMAGE, SMALLEST_IMAGE)));
     m_shouldSave.insert(getOptimal(Nimble::Vector2f(DEFAULT_SAVE_SIZE1, DEFAULT_SAVE_SIZE1)));
     m_shouldSave.insert(getOptimal(Nimble::Vector2f(DEFAULT_SAVE_SIZE2, DEFAULT_SAVE_SIZE2)));
+    m_shouldSave.erase(0);
 
     m_stack.resize(m_maxLevel+1);
+
+    m_priority = Luminous::Task::PRIORITY_HIGH;
+    markImage(m_maxLevel);
+    scheduleFromNowSecs(0.0f);
 
     return true;
   }
@@ -255,6 +260,8 @@ namespace Luminous {
 
   void CPUMipmaps::doTask()
   {
+    m_priority = Luminous::Task::PRIORITY_NORMAL;
+
     double delay = 60.0;
     StackMap stack;
 
