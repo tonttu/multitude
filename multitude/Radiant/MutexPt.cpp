@@ -145,7 +145,7 @@ namespace Radiant {
     const char *fname = "Mutex::trylock ";
 
     int e = pthread_mutex_trylock(&m_d->m_ptmutex);
-    if(e) std::cerr << fname << strerror(e) << " " << this << std::endl;
+    if(e && e != EBUSY) std::cerr << fname << strerror(e) << " " << this << std::endl;
     return !e;
   }
 

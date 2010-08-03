@@ -21,6 +21,18 @@
 #include <cmath>
 #include <cassert>
 
+// GL_NVX_gpu_memory_info (NVIDIA)
+#define GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX          0x9047
+#define GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX    0x9048
+#define GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX  0x9049
+#define GPU_MEMORY_INFO_EVICTION_COUNT_NVX            0x904A
+#define GPU_MEMORY_INFO_EVICTED_MEMORY_NVX            0x904B
+
+// GL_ATI_meminfo
+#define VBO_FREE_MEMORY_ATI                     0x87FB
+#define TEXTURE_FREE_MEMORY_ATI                 0x87FC
+#define RENDERBUFFER_FREE_MEMORY_ATI            0x87FD
+
 namespace Luminous {
 
   using namespace Nimble;
@@ -303,6 +315,33 @@ namespace Luminous {
     glVertex4fv(v[2].data());
     
     glTexCoord2f(0.0f, 1.0f);
+    glVertex4fv(v[3].data());
+
+    glEnd();
+  }
+
+  void Utils::glTexRect(Nimble::Vector2 size, const Nimble::Matrix3 & m,
+                        Nimble::Vector2f uv1, Nimble::Vector2f uv2)
+  {
+    const Vector4 v[4] = {
+      project(m, Vector2(0,       0)),
+      project(m, Vector2(size.x,  0)),
+      project(m, Vector2(size.x,  size.y)),
+      project(m, Vector2(0,       size.y))
+    };
+
+    glBegin(GL_QUADS);
+
+    glTexCoord2f(uv1.x, uv1.y);
+    glVertex4fv(v[0].data());
+
+    glTexCoord2f(uv2.x, uv1.y);
+    glVertex4fv(v[1].data());
+
+    glTexCoord2f(uv2.x, uv2.y);
+    glVertex4fv(v[2].data());
+
+    glTexCoord2f(uv1.x, uv2.y);
     glVertex4fv(v[3].data());
 
     glEnd();
@@ -1983,4 +2022,44 @@ namespace Luminous {
     glEnd();
   }
 
+  long Utils::availableGPUMemory()
+  {
+    static bool nv_supported = false, ati_supported = false, checked = false;
+    GLint res[4] = {0};
+    if(!checked) {
+      checked = true;
+      glGetIntegerv(GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, res);
+      nv_supported = glGetError() == GL_NO_ERROR;
+      if(nv_supported)
+        return res[0];
+
+      glGetIntegerv(TEXTURE_FREE_MEMORY_ATI, res);
+      ati_supported = glGetError() == GL_NO_ERROR;
+    } else if (nv_supported) {
+      glGetIntegerv(GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, res);
+    } else if (ati_supported) {
+      glGetIntegerv(TEXTURE_FREE_MEMORY_ATI, res);
+    }
+
+    return res[0];
+  }
+  long Utils::maxGPUMemory()
+  {
+    GLint res[4] = {0};
+    glGetIntegerv(GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, res);
+    if(glGetError() == GL_NO_ERROR)
+      return res[0];
+
+    glGetIntegerv(TEXTURE_FREE_MEMORY_ATI, res);
+    if(glGetError() == GL_NO_ERROR) {
+      /*
+      param[0] - total memory free in the pool
+      param[1] - largest available free block in the pool
+      param[2] - total auxiliary memory free
+      param[3] - largest auxiliary free block
+      */
+      return res[0];
+    }
+    return 0;
+  }
 }

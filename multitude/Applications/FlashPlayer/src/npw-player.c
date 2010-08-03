@@ -32,7 +32,6 @@
 #include "gtk2xtbin.h"
 #include "npw-rpc.h"
 
-#include <X11/extensions/Xinerama.h>
 
 #define XP_UNIX 1
 #define MOZ_X11 1
@@ -58,10 +57,10 @@ static gboolean g_verbose     = FALSE;
 static guint g_backend        = BACKEND_GTK;
 static guint g_n_plugins      = 0;
 
-static int g_xinerama_w = 0,
-           g_xinerama_h = 0,
-           g_xinerama_x = INT_MAX,
-           g_xinerama_y = INT_MAX;
+static int g_screen_w = 0,
+           g_screen_h = 0,
+           g_screen_x = 0,
+           g_screen_y = 0;
 
 typedef struct _Plugin		Plugin;
 typedef struct _PluginDataType	PluginDataType;
@@ -2227,7 +2226,9 @@ print_help (const gchar *program_name)
 
   g_print ("Options:\n");
   g_print ("  -v|--verbose            enable verbose mode\n");
-  g_print ("  -f|--fullscreen         start in fullscreen mode\n");
+  g_print ("  --fullscreen            start in fullscreen mode\n");
+  g_print ("  --view=<WxH+X+Y>        Window size & position\n");
+  g_print ("                          (example --view 400x300+100+0)\n");
   g_print ("\n");
 
   g_print ("Common attributes include:\n");
@@ -2248,16 +2249,21 @@ on_configure_event_cb (GtkWidget         *widget,
 		       GdkEventConfigure *event,
 		       PlayerApp         *app)
 {
+  static int s_resize_retries = 0;
+
   if (g_backend != BACKEND_GTK)
     return FALSE;
 
   // Sometimes the fullscreen mode fails with 4 displays (sync problems with X?), so we just keep trying.
-  if (g_xinerama_w > 0 && g_xinerama_h > 0 && g_is_fullscreen && (event->x > 0 || event->y > 0)) {
-    gtk_window_fullscreen (GTK_WINDOW (widget));
-    gtk_window_set_default_size (GTK_WINDOW (widget), g_xinerama_w, g_xinerama_h);
-    gtk_widget_set_size_request (widget, g_xinerama_w, g_xinerama_h);
-    gtk_window_move( GTK_WINDOW (widget), g_xinerama_x, g_xinerama_y);
-    gtk_window_resize (GTK_WINDOW (widget), g_xinerama_w, g_xinerama_h);
+  if (g_screen_w > 0 && g_screen_h > 0 && s_resize_retries < 100 &&
+      (g_screen_x != event->x || g_screen_y != event->y)) {
+    if (g_is_fullscreen)
+      gtk_window_fullscreen (GTK_WINDOW (widget));
+    gtk_window_set_default_size (GTK_WINDOW (widget), g_screen_w, g_screen_h);
+    gtk_widget_set_size_request (widget, g_screen_w, g_screen_h);
+    gtk_window_move( GTK_WINDOW (widget), g_screen_x, g_screen_y);
+    gtk_window_resize (GTK_WINDOW (widget), g_screen_w, g_screen_h);
+    s_resize_retries++;
   }
 
   if (event->width == app->width && event->height == app->height)
@@ -2432,12 +2438,12 @@ on_key_press_event_cb (GtkWidget *widget, GdkEventKey *event, gpointer user_data
     {
     case GDK_F:
     case GDK_f:
-      if (g_xinerama_w > 0 && g_xinerama_h > 0) {
-        gtk_window_fullscreen (GTK_WINDOW (widget));
-        gtk_window_set_default_size (GTK_WINDOW (widget), g_xinerama_w, g_xinerama_h);
-        gtk_widget_set_size_request (widget, g_xinerama_w, g_xinerama_h);
-        gtk_window_move( GTK_WINDOW (widget), g_xinerama_x, g_xinerama_y);
-        gtk_window_resize (GTK_WINDOW (widget), g_xinerama_w, g_xinerama_h);
+      if (g_screen_w > 0 && g_screen_h > 0) {
+        // gtk_window_fullscreen (GTK_WINDOW (widget));
+        gtk_window_set_default_size (GTK_WINDOW (widget), g_screen_w, g_screen_h);
+        gtk_widget_set_size_request (widget, g_screen_w, g_screen_h);
+        gtk_window_move( GTK_WINDOW (widget), g_screen_x, g_screen_y);
+        gtk_window_resize (GTK_WINDOW (widget), g_screen_w, g_screen_h);
       }
       break;
     case GDK_Escape:
@@ -2523,7 +2529,15 @@ main (int argc, char *argv[])
 	g_is_fullscreen = FALSE;
       else if (strcmp (arg, "--fullscreen") == 0)
 	g_is_fullscreen = TRUE;
-      else if (strcmp (arg, "--plugin") == 0)
+      else if (strncmp (arg, "--view=", 7) == 0) {
+        int w = 0, h = 0, x = 0, y = 0;
+        if(sscanf(arg+7, "%dx%d+%d+%d", &w, &h, &x, &y) == 4) {
+          g_screen_w = w;
+          g_screen_h = h;
+          g_screen_x = x;
+          g_screen_y = y;
+        }
+      } else if (strcmp (arg, "--plugin") == 0)
 	{
 	  if (plugin_desc)
 	    g_ptr_array_add (plugin_descs, plugin_desc);
@@ -2625,43 +2639,15 @@ main (int argc, char *argv[])
 	  if (g_is_fullscreen)
       gtk_window_fullscreen (GTK_WINDOW (window));
 
-    GdkDisplay *gdisplay = gtk_widget_get_display (window);
-    Display *display = 0;
-    int manual_open = 0;
-
-    if (gdisplay) display = gdk_x11_display_get_xdisplay (gdisplay);
-    if (display) {
-      manual_open = 1;
-      display = XOpenDisplay(NULL);
-    }
-
-    if (XineramaIsActive(display)) {
-      int nscreens = 0;
-      XineramaScreenInfo *data = XineramaQueryScreens(display, &nscreens);
-      int xmax = INT_MIN, ymax = INT_MIN;
-      for (int i = 0; i < nscreens; ++i) {
-        if (data[i].width+data[i].x_org > xmax) xmax = data[i].width+data[i].x_org;
-        if (data[i].height+data[i].y_org > ymax) ymax = data[i].height+data[i].y_org;
-        if (data[i].x_org < g_xinerama_x) g_xinerama_x = data[i].x_org;
-        if (data[i].y_org < g_xinerama_y) g_xinerama_y = data[i].y_org;
-      }
-      if (nscreens > 1) {
-        g_xinerama_w = xmax - g_xinerama_x;
-        g_xinerama_h = ymax - g_xinerama_y;
-      }
-    }
-
-    if (manual_open) XCloseDisplay(display);
-
 	  gtk_widget_show (window);
 
-    if (g_is_fullscreen && g_xinerama_w > 0 && g_xinerama_h > 0) {
+    if (g_screen_w > 0 && g_screen_h > 0) {
       gtk_window_set_keep_above (GTK_WINDOW (window), TRUE);
       gtk_window_set_decorated (GTK_WINDOW (window), FALSE);
-      gtk_window_set_default_size (GTK_WINDOW (window), g_xinerama_w, g_xinerama_h);
-      gtk_widget_set_size_request (window, g_xinerama_w, g_xinerama_h);
-      gtk_window_move( GTK_WINDOW (window), g_xinerama_x, g_xinerama_y);
-      gtk_window_resize (GTK_WINDOW (window), g_xinerama_w, g_xinerama_h);
+      gtk_window_set_default_size (GTK_WINDOW (window), g_screen_w, g_screen_h);
+      gtk_widget_set_size_request (window, g_screen_w, g_screen_h);
+      gtk_window_move( GTK_WINDOW (window), g_screen_x, g_screen_y);
+      gtk_window_resize (GTK_WINDOW (window), g_screen_w, g_screen_h);
     }
 
 	  /* Ensure focus window is this window not gtk's proxy for non XEMBED case */

@@ -14,6 +14,8 @@
  */
 
 #include "RenderContext.hpp"
+
+#include "GLContext.hpp"
 #include "Texture.hpp"
 #include "FramebufferObject.hpp"
 
@@ -22,7 +24,7 @@
 
 #include <strings.h>
 
-#define DEFAULT_RECURSION_LIMIT 4
+#define DEFAULT_RECURSION_LIMIT 8
 
 namespace Nimble {
   namespace Splines {
@@ -150,35 +152,30 @@ namespace Luminous
   class RenderContext::Internal
   {
   public:
-    enum { FBO_STACK_SIZE = 100 };
 
-    Internal()
+    Internal(const Luminous::MultiHead::Window * win)
         : m_recursionLimit(DEFAULT_RECURSION_LIMIT),
         m_recursionDepth(0),
-        m_fboStackIndex(-1),
         m_renderCount(0),
         m_frameCount(0),
+        m_window(win),
+        m_viewStackPos(-1),
+        m_glContext(new GLDummyContext),
         m_initialized(false)
     {
-      bzero(m_fboStack, sizeof(m_fboStack));
     }
 
     void pushFBO(std::shared_ptr<FBOPackage> fbo)
     {
-      m_fboStackIndex++;
-      assert(m_fboStackIndex < FBO_STACK_SIZE);
-      m_fboStack[m_fboStackIndex] = fbo;
+      m_fboStack.push(fbo);
     }
 
     std::shared_ptr<FBOPackage> popFBO(std::shared_ptr<FBOPackage> fbo)
     {
-      assert(fbo == m_fboStack[m_fboStackIndex]);
-      m_fboStackIndex--;
+      assert(fbo == m_fboStack.top());
+      m_fboStack.pop();
 
-      if(m_fboStackIndex >= 0)
-        return m_fboStack[m_fboStackIndex];
-
-      return std::shared_ptr<FBOPackage>();
+      return m_fboStack.empty() ? std::shared_ptr<FBOPackage>() : m_fboStack.top();
     }
 
     void initialize() {
@@ -203,10 +200,10 @@ namespace Luminous
             "  gl_FragColor.w *= smoothstep(1.00, border_start, r);"\
             "}";
 
-        m_circle_shader = new GLSLProgramObject();
+        m_circle_shader.reset(new GLSLProgramObject());
         m_circle_shader->loadStrings(circ_vert_shader, circ_frag_shader);
 
-        m_polyline_shader = new GLSLProgramObject();
+        m_polyline_shader.reset(new GLSLProgramObject());
         const char * polyline_frag = ""
                             " varying vec2 p1;\n"\
                             " varying vec2 p2;\n"\
@@ -238,7 +235,13 @@ namespace Luminous
                             "gl_FrontColor = gl_Color;\n"\
                             "}\n";
         m_polyline_shader->loadStrings(polyline_vert, polyline_frag);
+
+        m_viewFBO.reset(new Luminous::Framebuffer());
       }
+    }
+    Nimble::Vector2 contextSize() const
+    {
+      return m_window->size();
     }
 
     void drawCircle(RenderContext & r, Nimble::Vector2f center, float radius,
@@ -391,6 +394,56 @@ namespace Luminous
       m_polyline_shader->unbind();
     }
 
+    void pushViewStack()
+    {
+      int w = m_window->size().x;
+      int h = m_window->size().y;
+      ++m_viewStackPos;
+      if ((int) m_viewTextures.size() == m_viewStackPos) {
+        m_viewTextures.push_back(new Luminous::Texture2D);
+        Luminous::Texture2D & tex = *m_viewTextures.back();
+        tex.setWidth(w);
+        tex.setHeight(h);
+        tex.bind();
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+      }
+      attachViewTexture();
+      glPushAttrib(GL_VIEWPORT_BIT);
+      glViewport(0, 0, w, h);
+      glClearColor(0, 0, 0, 1);
+      glClear(GL_COLOR_BUFFER_BIT);
+    }
+    void popViewStack()
+    {
+      glPopAttrib();
+      --m_viewStackPos;
+      // if wasn't last
+      if (m_viewStackPos >= 0) {
+        attachViewTexture();
+      } else {
+        unattachViewTexture();
+      }
+      assert(m_viewStackPos >= -1);
+      glEnable(GL_TEXTURE_2D);
+      m_viewTextures[m_viewStackPos+1]->bind();
+    }
+
+    void attachViewTexture()
+    {
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      m_viewFBO->attachTexture2D(m_viewTextures[m_viewStackPos], Luminous::COLOR0);
+      m_viewFBO->check();
+      // attachTexture2D should do this as a side effect already?
+      glDrawBuffer(Luminous::COLOR0);
+    }
+    void unattachViewTexture() {
+      m_viewFBO->unbind();
+      glDrawBuffer(GL_BACK);
+    }
+
     size_t m_recursionLimit;
     size_t m_recursionDepth;
 
@@ -402,16 +455,22 @@ namespace Luminous
     FBOPackages m_fbos;
 
 
-    std::shared_ptr<FBOPackage> m_fboStack[FBO_STACK_SIZE];
-    int m_fboStackIndex;
-    // temporarilly having screen size to make it work for lod and AA.
-    Vector2i m_screenSize;
+    std::stack<std::shared_ptr<FBOPackage> > m_fboStack;
 
     unsigned long m_renderCount;
     unsigned long m_frameCount;
 
-    Luminous::GLSLProgramObject * m_circle_shader;
-    Luminous::GLSLProgramObject * m_polyline_shader;
+    std::shared_ptr<Luminous::GLSLProgramObject> m_circle_shader;
+    std::shared_ptr<Luminous::GLSLProgramObject> m_polyline_shader;
+
+    const Luminous::MultiHead::Window * m_window;
+    /// fbo for views
+    std::shared_ptr<Luminous::Framebuffer> m_viewFBO;
+    /// fbo texture stack for views
+    std::vector<Luminous::Texture2D *> m_viewTextures;
+    int m_viewStackPos;
+
+    Luminous::GLContext * m_glContext;
 
     bool m_initialized;
   };
@@ -419,10 +478,10 @@ namespace Luminous
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
 
-  RenderContext::RenderContext(Luminous::GLResources * resources)
+  RenderContext::RenderContext(Luminous::GLResources * resources, const Luminous::MultiHead::Window * win)
       : Transformer(),
       m_resources(resources),
-      m_data(new Internal)
+      m_data(new Internal(win))
   {
     resetTransform();
     m_data->m_recursionDepth = 0;
@@ -784,6 +843,10 @@ namespace Luminous
   {
     drawTexRect(size, rgba, Rect(Vector2(0,0), texUV));
   }
+  Nimble::Vector2 RenderContext::contextSize() const
+  {
+    return m_data->contextSize();
+  }
 
   void RenderContext::setBlendFunc(BlendFunc f)
   {
@@ -816,6 +879,16 @@ namespace Luminous
     return names;
   }
 
+  void RenderContext::pushViewStack()
+  {
+    m_data->pushViewStack();
+  }
+
+  void RenderContext::popViewStack()
+  {
+    m_data->popViewStack();
+  }
+
   void RenderContext::clearTemporaryFBO(std::shared_ptr<FBOPackage> fbo)
   {
     assert(fbo->userCount() == 0);
@@ -843,6 +916,16 @@ namespace Luminous
     popTransform();
   }
 
+  void RenderContext::setGLContext(Luminous::GLContext * ctx)
+  {
+    delete m_data->m_glContext;
+    m_data->m_glContext = ctx;
+  }
+
+  Luminous::GLContext * RenderContext::glContext()
+  {
+    return m_data->m_glContext;
+  }
 
 }
 

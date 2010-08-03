@@ -464,6 +464,10 @@ namespace Luminous
   {
     unsigned int bytes = width * height * pf.numChannels();
     unsigned int mybytes = m_width * m_height * m_pixelFormat.numChannels();
+
+    if(width && height)
+      assert(pf.numChannels() > 0);
+
     /*
     Radiant::debug("Image::allocate # PARAMS(%d, %d, %s) CURRENT(%d, %d, %s)", width, height, pf.toString().c_str(), m_width, m_height, m_pixelFormat.toString().c_str());
     Radiant::debug("\tbytes = %u, mybytes = %u", bytes, mybytes);
@@ -662,6 +666,11 @@ dest = *this;
       return 255;
   }
 
+  void Image::zero()
+  {
+    size_t byteCount = pixelFormat().bytesPerPixel() * width() * height();
+    memset(data(), 0, byteCount);
+  }
 
   void ImageTex::bind(GLenum textureUnit, bool withmimaps)
   {

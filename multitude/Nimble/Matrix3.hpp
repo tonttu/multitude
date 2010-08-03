@@ -164,6 +164,24 @@ namespace Nimble {
     /** Identity matrix. */
     NIMBLE_API static const Matrix3T<T> IDENTITY;
 
+    /// Returns a 2d transformation matrix that does scale, rotate & translation (in this order)
+    /// @arg rad rotation angle (counter-clockwise)
+    /// @arg sx x scale
+    /// @arg sy y scale
+    /// @arg tx x translate
+    /// @arg ty y translate
+    inline static Matrix3T<T> transformation(float rad, float sx, float sy, float tx, float ty)
+    {
+      const T st = rad == 0.0f ? 0.0f : Nimble::Math::Sin(rad);
+      const T ct = rad == 0.0f ? 1.0f : Nimble::Math::Cos(rad);
+
+      return Matrix3T<T>(
+          sx*ct, -sy*st, tx,
+          sx*st,  sy*ct, ty,
+          0    ,      0,  1
+          );
+    }
+
   private:
     inline static void swap(T &a, T& b);
 

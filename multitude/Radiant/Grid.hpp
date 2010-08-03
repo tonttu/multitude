@@ -197,7 +197,23 @@ namespace Radiant {
       GRID_CHECK2(v); 
       return this->m_data[this->m_width * (unsigned) v.y + (unsigned) v.x];
     }
-    
+
+    /** Gets an element from the grid. If the aruments are outside the grid area, then
+        they are returned inside the image area with modulo logic. */
+    inline T & getCyclic(int x, int y)
+    {
+      x = x % (int) this->m_width;
+      y = y % (int) this->m_height;
+      if(x < 0)
+        x += this->m_width;
+      if(y < 0)
+        y += this->m_height;
+
+      return this->m_data[this->m_width * y + x];
+    }
+
+
+
     /** Returns an element from a grid. If the arguments are outside
 	the grid area, then zero is returned. */
     inline T getSafe(const Nimble::Vector2i & v)

@@ -7,10 +7,10 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef RADIANT_REF_PTR_HPP
@@ -20,17 +20,22 @@
 
 #include <cstddef>
 
-#if defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
-#include <tr1/memory>
-#elif defined(RADIANT_WIN32) && defined(_HAS_TR1)
-#include <memory>
+// try to detect c++0x
+#if defined(RADIANT_CPP0X)
+  #include <memory>
 #else
-#include <boost/tr1/memory.hpp>
+  #if defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
+    #include <tr1/memory>
+  #elif defined(RADIANT_WIN32) && defined(_HAS_TR1)
+    #include <memory>
+  #else
+    #include <boost/tr1/memory.hpp>
+  #endif
+  namespace std
+  {
+    using tr1::shared_ptr;
+  }
 #endif
 
-namespace std
-{
-  using tr1::shared_ptr;
-}
 
 #endif

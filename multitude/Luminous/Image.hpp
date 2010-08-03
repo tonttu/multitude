@@ -136,6 +136,9 @@ namespace Luminous
     /// @return alpha of the given pixel or 255 if image does not have alpha channel
     unsigned char pixelAlpha(Nimble::Vector2 relativeCoord) const;
 
+    /// Fills the image with zeros
+    void zero();
+
   private:
 
     int m_width;

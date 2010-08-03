@@ -449,11 +449,12 @@ test-rpc-%-server.o: $(SRC_PATH)/tests/test-rpc-%.c
 	$(CC) -o $@ -c $< $(test_rpc_server_CPPFLAGS) $(test_rpc_CFLAGS)
 %-server.o: $(SRC_PATH)/src/%.c
 	$(CC) -o $@ -c $< $(test_rpc_server_CPPFLAGS) $(test_rpc_CFLAGS)
-flash-player: flash-player.c
-	$(CC) -o $@ $<
-install-multitouch: flash-player $(npplayer_PROGRAM)
+FlashPlayer:
+	cd gui && qmake && make
+install-multitouch: FlashPlayer $(npplayer_PROGRAM)
 	mkdir -p $(DESTDIR)$(bindir) $(DESTDIR)$(prefix)/share/applications $(DESTDIR)$(prefix)/share/icons/hicolor/48x48/apps
 	$(INSTALL) -m 755 $(STRIP_OPT) $(npplayer_PROGRAM) $(DESTDIR)$(bindir)/nspluginplayer-mt
-	$(INSTALL) -m 755 $(STRIP_OPT) flash-player $(DESTDIR)$(bindir)/flash-player
+	$(INSTALL) -m 755 $(STRIP_OPT) gui/FlashPlayer $(DESTDIR)$(bindir)/FlashPlayer
+	cp gui/flash-player $(DESTDIR)$(bindir)/flash-player
 	$(INSTALL) -m 644 flash-player.desktop $(DESTDIR)$(prefix)/share/applications/flash-player.desktop
 	$(INSTALL) -m 644 multitouch.png $(DESTDIR)$(prefix)/share/icons/hicolor/48x48/apps/multitouch.png

@@ -33,7 +33,6 @@ namespace Resonant {
 
   ModulePanner::ModulePanner(Application * a)
       : Module(a),
-      m_outChannels(8),
       m_maxRadius(this, "max-radius", 1500)
   {
     setName("pan2d");
@@ -82,12 +81,7 @@ namespace Resonant {
 
     bool ok = true;
 
-    if(strcmp(id, "channels") == 0) {
-      int n = data->readInt32( & ok);
-      if(ok)
-        m_outChannels = n;
-    }
-    else if(strcmp(id, "fullhdstereo") == 0) {
+    if(strcmp(id, "fullhdstereo") == 0) {
       makeFullHDStereo();
     }
     else if(strcmp(id, "addsource") == 0) {
@@ -157,10 +151,10 @@ namespace Resonant {
           }
         }
 
-        /* debug("ModulePanner::process # source %d, pipe %d, gain = %f "
+        info("ModulePanner::process # source %d, pipe %d -> %d, gain = %f "
               "in = %p %f out = %f",
-              i, j, p.m_ramp.value(), in[i], *in[i], out[p.m_to][0]);
-        */
+              i, j, p.m_to, p.m_ramp.value(), in[i], *in[i], out[p.m_to][0]);
+
       }
     }
   }

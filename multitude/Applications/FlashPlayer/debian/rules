@@ -33,7 +33,7 @@ build-stamp:  config.status
 	dh_testdir
 
 	# Add here commands to compile the package.
-	$(MAKE) npviewer flash-player
+	$(MAKE) npviewer FlashPlayer
 	#docbook-to-man debian/flash-player.sgml > flash-player.1
 
 	touch $@

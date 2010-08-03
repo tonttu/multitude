@@ -15,7 +15,7 @@ namespace Luminous
   using namespace Radiant;
 
   ImageCodecQT::ImageCodecQT(const char * suffix)
-      : m_suffix(suffix)
+    : m_suffix(suffix)
   {}
 
   ImageCodecQT::~ImageCodecQT()
@@ -43,14 +43,14 @@ namespace Luminous
   {
     QFile f;
     if(!f.open(file, QIODevice::ReadOnly)) {
-        Radiant::error("ImageCodecQT::ping # failed to open file");
+      Radiant::error("ImageCodecQT::ping # failed to open file");
       return false;
     }
 
     QImageReader r(&f);
 
     if(!r.canRead()) {
-        Radiant::error("ImageCodecQT::ping # no valid data or the file format is not supported");
+      Radiant::error("ImageCodecQT::ping # no valid data or the file format is not supported");
       return false;
     }
 
@@ -110,17 +110,29 @@ namespace Luminous
     image.allocate(qi.width(), qi.height(), pf);
 
     const uint8_t * src = qi.bits();
-    const uint8_t * sentinel = src + 4 * qi.width() * qi.height();
+    const uint32_t  chl = qi.depth() == 8? 1 : 4;
+    const uint8_t * sentinel = src + chl * qi.width() * qi.height();
     uint8_t * dest = image.data();
 
     if(fmt == QImage::Format_ARGB32) {
-      while(src < sentinel) {
-        dest[0] = src[2];
-        dest[1] = src[1];
-        dest[2] = src[0];
-        dest[3] = src[3];
-        src += 4;
-        dest += 4;
+      if(qi.depth() != 8) {
+        while(src < sentinel) {
+          dest[0] = src[2];
+          dest[1] = src[1];
+          dest[2] = src[0];
+          dest[3] = src[3];
+          src += 4;
+          dest += 4;
+        }
+      } else {
+        while(src < sentinel) {
+          dest[0] = src[0];
+          dest[1] = src[0];
+          dest[2] = src[0];
+          dest[3] = 255;
+          src++;
+          dest += 4;
+        }
       }
     }
     else if(fmt == QImage::Format_RGB32) {
@@ -142,8 +154,8 @@ namespace Luminous
 
     const uint8_t *src = image.data();
     const uint8_t *sentinel = src +
-        image.pixelFormat().bytesPerPixel() * image.width() *
-        image.height();
+                              image.pixelFormat().bytesPerPixel() * image.width() *
+                              image.height();
 
     if(image.pixelFormat() == PixelFormat::rgbUByte()) {
 
