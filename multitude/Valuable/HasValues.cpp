@@ -357,7 +357,8 @@ namespace Valuable
         else {
           /// @todo wrap bdsend
           /// @todo what is the correct receiver?
-          vp.m_func->Call(v8::Handle<v8::Object>(), 0, 0);
+          v8::Local<v8::Value> argv[] = {v8::String::New(vp.m_to.c_str())};
+          vp.m_func->Call(v8::Context::GetCurrent()->Global(), 1, argv);
         }
       }
     }
