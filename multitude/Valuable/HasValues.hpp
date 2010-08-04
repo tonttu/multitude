@@ -227,7 +227,7 @@ namespace Valuable
 
       inline bool operator == (const ValuePass & that) const
       { return (m_listener == that.m_listener) && (m_from == that.m_from) &&
-      (m_to == that.m_to) && *m_func == *m_func; }
+      (m_to == that.m_to) && *m_func == *that.m_func; }
 
       Valuable::HasValues * m_listener;
       v8::Persistent<v8::Function> m_func;
