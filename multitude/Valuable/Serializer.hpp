@@ -153,19 +153,36 @@ namespace Valuable
     };
 
     template <typename T>
+    struct Impl<T*, Type::other>
+    {
+      inline static ArchiveElement & serialize(Archive & archive, T * t)
+      {
+        ArchiveElement & elem = archive.createElement(typeid(*t).name());
+        elem.set(Radiant::StringUtils::stringify(*t));
+        return elem;
+      }
+
+      inline static T * deserialize(ArchiveElement & element)
+      {
+        typedef typename remove_const<T>::Type T2;
+        std::istringstream is(element.get());
+        T2 * t = new T2;
+        is >> *t;
+        return t;
+      }
+    };
+
+    template <typename T>
     struct Impl<T, Type::smart_ptr>
     {
       inline static ArchiveElement & serialize(Archive & archive, T & t)
       {
-        // return Serializer::serialize(archive, t.get());
-        /// for now we assume, that the object inside the smart_ptr is always serializable
-        return t->serialize(archive);
+        return Serializer::serialize(archive, t.get());
       }
 
       inline static typename remove_const<T>::Type deserialize(ArchiveElement & element)
       {
         return T(Serializer::deserialize<typename T::element_type*>(element));
-        /// return Creator<typename remove_const<typename T::element_type>::Type>::func()(element);
       }
     };
 
