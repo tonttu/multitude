@@ -12,41 +12,41 @@
 
 namespace Valuable
 {
-  /// helper structs and enum for template specializations
-  /** Boost & TR1 have is_base_of & similar template hacks that basically do this */
-  namespace Type
-  {
-    /// Every object is one of these types, see Serializer::Trait
-    enum { pair = 1, container = 2, serializable = 3, smart_ptr = 4, other = 5 };
-    // All structs have same _ element with different size, so we can use
-    // sizeof operator to make decisions in templates
-    /// @cond
-    struct pair_trait { char _[1]; };
-    struct container_trait { char _[2]; };
-    struct serializable_trait { char _[3]; };
-    struct smart_ptr_trait { char _[4]; };
-    struct default_trait { char _[5]; };
-    /// @endcond
-  }
-
-  /// Removes const from type: remove_const<const Foo>::Type == Foo
-  /// Works also with non-const types, remove_const<Foo>::Type == Foo
-  template <typename T> struct remove_const {
-    /// The original type without const
-    typedef T Type;
-  };
-  /// @copydoc remove_const
-  template <typename T> struct remove_const<const T> {
-      /// The original type without const
-      typedef T Type;
-   };
-
   /// XML Serializer namespace that has handles the (de)serialize dispatching
   /** Correct way to save/load object state to/from XML is to use static
       serialize/deserialize methods.
   */
   namespace Serializer
   {
+    /// helper structs and enum for template specializations
+    /** Boost & TR1 have is_base_of & similar template hacks that basically do this */
+    namespace Type
+    {
+      /// Every object is one of these types, see Serializer::Trait
+      enum { pair = 1, container = 2, serializable = 3, smart_ptr = 4, other = 5 };
+      // All structs have same _ element with different size, so we can use
+      // sizeof operator to make decisions in templates
+      /// @cond
+      struct pair_trait { char _[1]; };
+      struct container_trait { char _[2]; };
+      struct serializable_trait { char _[3]; };
+      struct smart_ptr_trait { char _[4]; };
+      struct default_trait { char _[5]; };
+      /// @endcond
+    }
+
+    /// Removes const from type: remove_const<const Foo>::Type == Foo
+    /// Works also with non-const types, remove_const<Foo>::Type == Foo
+    template <typename T> struct remove_const {
+      /// The original type without const
+      typedef T Type;
+    };
+    /// @copydoc remove_const
+    template <typename T> struct remove_const<const T> {
+      /// The original type without const
+      typedef T Type;
+    };
+
     /// Trait class for compile time separation of different kinds of serializable objects
     /** \code
         Trait<int>::type == Type::other
