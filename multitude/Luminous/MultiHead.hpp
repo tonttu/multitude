@@ -152,7 +152,7 @@ namespace Luminous {
           how-ever that information is not exactly correct as the
           bounds also need to include the small extra areas, if one is
           using edge-blending. */
-      LUMINOUS_API const Rect & graphicsBounds() const
+      const Rect & graphicsBounds() const
       { return m_graphicsBounds; }
 
       /** Converts a screen-space coordinate to image-space coordinate.
