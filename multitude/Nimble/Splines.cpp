@@ -72,5 +72,11 @@ namespace Nimble
       m_points.erase(m_points.begin() + ii);
       m_tangents.erase(m_tangents.begin() + ii);
     }
+
+    void Interpolating::clear()
+    {
+      m_points.clear();
+      m_tangents.clear();
+    }
   }
 }

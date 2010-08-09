@@ -48,6 +48,8 @@ namespace Nimble
           /// Returns the number of control points
           Index size() const { return m_points.size(); }
 
+          void clear();
+
           friend class Luminous::RenderContext;
         };
 
