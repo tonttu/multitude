@@ -36,7 +36,7 @@ namespace Radiant {
 
   WatchDog::WatchDog()
     : m_continue(true),
-      m_intervalSeconds(60.0f)
+    m_intervalSeconds(60.0f)
   {}
 
   WatchDog::~WatchDog()
@@ -61,13 +61,13 @@ namespace Radiant {
 	 return early. The method below should be more robust. */
 
       for(int i = 0; i < n && m_continue; i++)
-	Radiant::Sleep::sleepMs(100);
+        Radiant::Sleep::sleepMs(100);
 
       if(!m_check && m_continue) {
-	error("WATCHDOG: THE APPLICATION HAS BEEN UNRESPONSIVE FOR %.0f\n"
-	      "SECONDS. IT HAS PROBABLY LOCKED, SHUTTING DOWN NOW.\n"
-	      "TO DISABLE THIS FEATURE, DISABLE THE WATCHDOG WITH:\n\n"
-	      "export NO_WATCHDOG=1;\n", (float) m_intervalSeconds);
+        error("WATCHDOG: THE APPLICATION HAS BEEN UNRESPONSIVE FOR %.0f\n"
+              "SECONDS. IT HAS PROBABLY LOCKED, SHUTTING DOWN NOW.\n"
+              "TO DISABLE THIS FEATURE, DISABLE THE WATCHDOG WITH:\n\n"
+              "export NO_WATCHDOG=1;\n", (float) m_intervalSeconds);
 
 #ifdef RADIANT_LINUX
         FILE * pattern = fopen("/proc/sys/kernel/core_pattern", "r");
@@ -93,17 +93,17 @@ namespace Radiant {
         setrlimit(RLIMIT_CORE, &limit);
 #endif
 
-	// Stop the app:
-	abort();
+        // Stop the app:
+        abort();
 
-	// Stop it again:
-	Sleep::sleepS(1);
-	Sleep::sleepS(1);
-	int * bad = 0;
-	*bad = 123456;
+        // Stop it again:
+        Sleep::sleepS(1);
+        Sleep::sleepS(1);
+        int * bad = 0;
+        *bad = 123456;
 
-	// And again:
-	exit(0);
+        // And again:
+        exit(0);
       }
 
       debug("WATCHDOG CHECK");
