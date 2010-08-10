@@ -97,7 +97,7 @@ namespace Resonant {
       unsigned m_to;
     };
 
-    enum { PIPES_PER_SOURCE = 6 };
+    enum { PIPES_PER_SOURCE = 12 };
 
     class Source
     {
