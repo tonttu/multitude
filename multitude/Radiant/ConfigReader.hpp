@@ -143,6 +143,7 @@ namespace Radiant {
   public:
     /// Iterator for traversing all elements
     typedef typename std::multimap<std::string, T>::iterator iterator;
+    typedef typename std::multimap<std::string, T>::const_iterator const_iterator;
 
     ChunkT() {clearFirst=false;}
     ~ChunkT() {}
@@ -151,16 +152,16 @@ namespace Radiant {
     /** @return The first element of type T. If there is no element
 	with the given id, then an element will be created withthe
 	default constructor. */
-    T                  get(const std::string &id);
+    T                  get(const std::string &id) const;
     /** Gets an element from the chunk.
       @param id the primary id to search for
       @param alternateId if the primary id does not match, alternate is used
       */
     T                  get(const std::string &id,
-                           const std::string &alternateId);
+                           const std::string &alternateId) const;
 
     /// Check if this chunk contains an element with given id
-    bool               contains(const std::string &id);
+    bool               contains(const std::string &id) const;
 
     /// Adds an element to the chunk
     /** If there are other elements with the same id before, then

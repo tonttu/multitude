@@ -21,9 +21,9 @@
 namespace Radiant {
   
   template <class T>
-  T ChunkT<T>::get(const std::string &id)
+  T ChunkT<T>::get(const std::string &id) const
   {
-    iterator it = m_variants.find(id);
+    const_iterator it = m_variants.find(id);
     if(it != m_variants.end())
     return (*it).second;
 
@@ -32,9 +32,9 @@ namespace Radiant {
 
   template <class T>
   T ChunkT<T>::get(const std::string &id,
-                   const std::string &alternateId)
+                   const std::string &alternateId) const
   {
-    iterator it = m_variants.find(id);
+    const_iterator it = m_variants.find(id);
     if(it != m_variants.end())
       return (*it).second;
 
@@ -47,7 +47,7 @@ namespace Radiant {
   }
   
   template <class T>
-  bool ChunkT<T>::contains(const std::string &id)
+  bool ChunkT<T>::contains(const std::string &id) const
   {
     return m_variants.find(id) != m_variants.end();
   }
