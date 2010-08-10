@@ -192,10 +192,17 @@ namespace Radiant {
     /// Iterator to the after-the-end element
     iterator end()   { return m_variants.end(); }
 
+    /// Iterator to the first element
+    const_iterator begin() const { return m_variants.begin(); }
+    /// Iterator to the after-the-end element
+    const_iterator end()   const { return m_variants.end(); }
+
     /// Gets the element from an iterator
     static T & getType(iterator & it) { return (*it).second; }
+    static const T & getType(const_iterator & it) { return (*it).second; }
         /// Gets the name (id) from an iterator
     static const std::string & getName(iterator & it) { return (*it).first; }
+    static const std::string & getName(const_iterator & it) { return (*it).first; }
     
   private:
 
