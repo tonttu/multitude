@@ -33,6 +33,7 @@ namespace Resonant {
 
   ModulePanner::ModulePanner(Application * a)
       : Module(a),
+      m_generation(0),
       m_maxRadius(this, "max-radius", 1500)
   {
     setName("pan2d");
@@ -58,6 +59,7 @@ namespace Resonant {
 
       if(ok) {
         m_speakers.push_back(ls);
+        ++m_generation;
         return true;
       }
     }
@@ -125,7 +127,7 @@ namespace Resonant {
 
       Source & s = *m_sources[i];
 
-      for(int j = 0; j < PIPES_PER_SOURCE; j++) {
+      for(int j = 0; j < s.m_pipes.size(); j++) {
 
         Pipe & p = s.m_pipes[j];
 
@@ -174,6 +176,7 @@ namespace Resonant {
     m_speakers.push_back(std::shared_ptr<LoudSpeaker>(ls));
 
     m_maxRadius = 1200;
+    ++m_generation;
   }
 
   void ModulePanner::setSpeaker(unsigned i, Nimble::Vector2 location)
@@ -187,6 +190,7 @@ namespace Resonant {
 
     ls->m_location = location;
     m_speakers[i].reset(ls);
+    ++m_generation;
   }
 
   void ModulePanner::setSpeaker(unsigned i, float x, float y)
@@ -215,6 +219,10 @@ namespace Resonant {
       return;
     }
 
+    if(s->m_location == location && s->m_generation == m_generation)
+      return;
+
+    s->m_generation = m_generation;
     s->m_location = location;
 
     int interpSamples = 2000;
@@ -230,9 +238,9 @@ namespace Resonant {
       if(gain <= 0.0000001f) {
 
         // Silence that output:
-        for(unsigned j = 0; j < PIPES_PER_SOURCE; j++) {
+        for(unsigned j = 0; j < s->m_pipes.size(); j++) {
           Pipe & p = s->m_pipes[j];
-          if(p.m_to == i && p.m_ramp.target() > 0.0001f) {
+          if(p.m_to == i && p.m_ramp.target() >= 0.0001f) {
             p.m_ramp.setTarget(0.0f, interpSamples);
             debug("ModulePanner::setSourceLocation # Silencing %u", i);
 
@@ -243,13 +251,13 @@ namespace Resonant {
         bool found = false;
 
         // Find existing pipe:
-        for(unsigned j = 0; j < PIPES_PER_SOURCE && !found; j++) {
+        for(unsigned j = 0; j < s->m_pipes.size() && !found; j++) {
           Pipe & p = s->m_pipes[j];
 
           debug("Checking %u: %u %f -> %f", j, p.m_to,
                 p.m_ramp.value(), p.m_ramp.target());
 
-          if(p.m_to == i && p.m_ramp.target() > 0.0001f) {
+          if(p.m_to == i) {
             debug("ModulePanner::setSourceLocation # Adjusting %u", j);
             p.m_ramp.setTarget(gain, interpSamples);
             found = true;
@@ -259,7 +267,11 @@ namespace Resonant {
         if(!found) {
 
           // Pick up a new pipe:
-          for(unsigned j = 0; j < PIPES_PER_SOURCE && !found; j++) {
+          for(unsigned j = 0; j <= s->m_pipes.size() && !found; j++) {
+            if(j == s->m_pipes.size()) {
+              s->m_pipes.resize(j+1);
+              debug("ModulePanner::setSourceLocation # pipes resize to %d", j+1);
+            }
             Pipe & p = s->m_pipes[j];
             if(p.done()) {
               debug("ModulePanner::setSourceLocation # "
