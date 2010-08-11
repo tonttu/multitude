@@ -148,6 +148,9 @@ namespace Radiant {
     ChunkT() {clearFirst=false;}
     ~ChunkT() {}
     
+    /// Returns the number of elements with given id/tag
+    int numberOf(const std::string & id) const;
+
     /// Gets an element from the chunk
     /** @return The first element of type T. If there is no element
 	with the given id, then an element will be created withthe

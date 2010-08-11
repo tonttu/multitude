@@ -19,7 +19,21 @@
 #include <Radiant/ConfigReader.hpp>
 
 namespace Radiant {
-  
+
+  template <class T>
+  int ChunkT<T>::numberOf(const std::string & id) const
+  {
+    const_iterator it = m_variants.find(id);
+    if(it == m_variants.end())
+      return 0;
+
+    int n = 1;
+    for(it++ ; (it != m_variants.end()) && ((*it).first == id); it++)
+      n++;
+
+    return n;
+  }
+
   template <class T>
   T ChunkT<T>::get(const std::string &id) const
   {
