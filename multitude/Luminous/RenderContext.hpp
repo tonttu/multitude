@@ -23,9 +23,12 @@
 #include <Luminous/Export.hpp>
 #include <Luminous/VertexBuffer.hpp>
 #include <Luminous/GLSLProgramObject.hpp>
+
 #include <Nimble/Rectangle.hpp>
 #include <Nimble/Vector2.hpp>
 #include <Nimble/Splines.hpp>
+
+#include <Radiant/Defines.hpp>
 
 namespace Luminous
 {
@@ -220,8 +223,10 @@ namespace Luminous
     void setGLContext(Luminous::GLContext *);
 
     /// Returns a handle to the current OpenGL rendering context
-    /** This function is seldom necessary. */
-    Luminous::GLContext * glContext();
+    /** This function is seldom necessary, and its use is deprecated and unsupported.
+        On some platforms this call may return null.
+        */
+    Luminous::GLContext * glContext() MULTI_ATTR_DEPRECATED;
 
   private:
     void drawCircleWithSegments(Nimble::Vector2f center, float radius, const float *rgba, int segments);
