@@ -226,7 +226,7 @@ namespace Luminous
     /** This function is seldom necessary, and its use is deprecated and unsupported.
         On some platforms this call may return null.
         */
-    Luminous::GLContext * glContext() MULTI_ATTR_DEPRECATED;
+    Luminous::GLContext * MULTI_ATTR_DEPRECATED(glContext());
 
   private:
     void drawCircleWithSegments(Nimble::Vector2f center, float radius, const float *rgba, int segments);
