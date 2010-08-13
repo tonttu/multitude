@@ -58,7 +58,7 @@ namespace Luminous
     virtual ~GLResources();
 
     /// Get a handle to a resource 
-    GLResource * getResource(const Collectable * key);
+    GLResource * getResource(const Collectable * key, int deleteAfterFrames=110);
     /// Adds a resource
     void addResource(const Collectable * key, GLResource * resource);
     /// Erases a single GLResource
@@ -87,7 +87,9 @@ namespace Luminous
     void resetSumCounters() { m_deallocationSum = m_allocationSum = 0; }
 
     /// Delete the given resource after certain number of frames have passed
+    /// (negative value means to never delete)
     void deleteAfter(GLResource * resource, int frames);
+
     /** Sets the threshold for deleting old objects from GPU memory. */
     void setComfortableGPURAM(long bytes)
     { m_comfortableGPURAM = bytes; }
