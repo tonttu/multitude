@@ -68,7 +68,6 @@ namespace VideoDisplay {
 
     Screenplay::VideoInputFFMPEG m_video;
 
-    std::vector<float> m_audiobuf;
     int m_buffered;
 
     int m_channels;
