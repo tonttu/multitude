@@ -17,6 +17,8 @@ namespace Resonant {
     bool prepare(int & channelsIn, int & channelsOut);
     void process(float ** in, float ** out, int n);
 
+    bool stop();
+
   protected:
     bool m_ready;
     pa_stream * m_stream;
@@ -27,6 +29,7 @@ namespace Resonant {
     size_t m_bufferSize; // in samples
 
     void openStream();
+    void beforeShutdown();
   };
 }
 

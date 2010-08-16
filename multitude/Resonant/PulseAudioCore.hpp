@@ -39,6 +39,7 @@ namespace Resonant
   protected:
     void childLoop();
     void runClient();
+    virtual void beforeShutdown() {}
     void restart();
 
     pa_context * m_context;

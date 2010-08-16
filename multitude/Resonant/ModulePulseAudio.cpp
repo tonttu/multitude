@@ -125,29 +125,59 @@ namespace Resonant
     if(n) {
       const void * data;
       pa_threaded_mainloop_lock(m_mainloop);
-      pa_stream_peek(m_stream, &data, &m_bufferSize);
-      if(m_bufferData.size() < m_bufferSize)
-        m_bufferData.resize(m_bufferSize);
-      m_buffer = &m_bufferData[0];
+      if(!m_stream) {
+        m_bufferSize = 0;
+      } else {
+        pa_stream_peek(m_stream, &data, &m_bufferSize);
+        if(m_bufferData.size() < m_bufferSize)
+          m_bufferData.resize(m_bufferSize);
+        m_buffer = &m_bufferData[0];
 
-      memcpy(m_buffer, data, m_bufferSize);
-      pa_stream_drop(m_stream);
-      pa_threaded_mainloop_unlock(m_mainloop);
+        memcpy(m_buffer, data, m_bufferSize);
+        pa_stream_drop(m_stream);
+        pa_threaded_mainloop_unlock(m_mainloop);
 
-      m_bufferSize /= 4;
+        m_bufferSize /= 4;
 
-      if(m_bufferSize) {
-        int tmp = Nimble::Math::Min<int>(n, m_bufferSize);
-        memcpy(out[0] + pos, m_buffer, tmp*4);
-        m_bufferSize -= tmp;
-        m_buffer += tmp;
-        n -= tmp;
-        pos += tmp;
+        if(m_bufferSize) {
+          int tmp = Nimble::Math::Min<int>(n, m_bufferSize);
+          memcpy(out[0] + pos, m_buffer, tmp*4);
+          m_bufferSize -= tmp;
+          m_buffer += tmp;
+          n -= tmp;
+          pos += tmp;
+        }
       }
     }
 
     if(n) {
       memset(out[0] + pos, 0, n*4);
+    }
+  }
+
+  bool ModulePulseAudio::stop()
+  {
+    if(m_mainloop)
+      pa_threaded_mainloop_lock(m_mainloop);
+    m_running = false;
+    m_ready = false;
+    if(m_mainloop) {
+      pa_threaded_mainloop_signal(m_mainloop, 0);
+      pa_threaded_mainloop_unlock(m_mainloop);
+    }
+    waitEnd();
+    return true;
+  }
+
+  void ModulePulseAudio::beforeShutdown()
+  {
+    if(m_stream && m_mainloop) {
+      pa_threaded_mainloop_lock(m_mainloop);
+      m_ready = false;
+      pa_stream_disconnect(m_stream);
+      pa_stream_unref(m_stream);
+      m_stream = 0;
+      pa_threaded_mainloop_unlock(m_mainloop);
     }
   }
 }

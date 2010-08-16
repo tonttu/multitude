@@ -99,9 +99,9 @@ namespace Resonant
   void PulseAudioCore::contextSuccess(int success)
   {
     if(success) {
-      Radiant::info("PulseManager ready");
+      Radiant::info("PulseAudio ready");
     } else {
-      Radiant::error("PulseManager initialization failed");
+      Radiant::error("PulseAudio initialization failed");
     }
   }
 
@@ -147,6 +147,8 @@ namespace Resonant
     while(m_running && !m_restart) {
       pa_threaded_mainloop_wait(m_mainloop);
     }
+
+    beforeShutdown();
 
     Radiant::info("%p pa_mainloop_run exit", this);
     pa_threaded_mainloop_stop(m_mainloop);
