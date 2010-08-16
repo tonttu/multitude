@@ -1,6 +1,8 @@
 include(../multitude.pri)
 
-HEADERS += Application.hpp
+HEADERS += Application.hpp \
+    ModulePulseAudio.hpp \
+    PulseAudioCore.hpp
 HEADERS += AudioFileHandler.hpp
 HEADERS += AudioLoop.hpp
 HEADERS += DSPNetwork.hpp
@@ -14,7 +16,9 @@ HEADERS += ModuleRectPanner.hpp
 HEADERS += ModuleSamplePlayer.hpp
 HEADERS += SoundRectangle.hpp
 
-SOURCES += Application.cpp
+SOURCES += Application.cpp \
+    ModulePulseAudio.cpp \
+    PulseAudioCore.cpp
 SOURCES += AudioFileHandler.cpp
 SOURCES += AudioLoop.cpp
 SOURCES += DSPNetwork.cpp
@@ -27,7 +31,7 @@ SOURCES += ModuleRectPanner.cpp
 SOURCES += ModuleSamplePlayer.cpp
 SOURCES += SoundRectangle.cpp
 
-LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_VALUABLE
+LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_VALUABLE -lpulse
 
 
 unix: PKGCONFIG += portaudio-2.0 sndfile
