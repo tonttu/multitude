@@ -74,7 +74,7 @@ namespace VideoDisplay {
       m_auformat(ASF_INT16)
 
   {
-    m_audiobuf.resize(2 * 44100);
+    // m_audiobuf.resize(2 * 44100);
   }
 
   VideoInFFMPEG::~VideoInFFMPEG()
@@ -148,8 +148,6 @@ namespace VideoDisplay {
 
     if(!video.open(filename, m_flags))
       return false;
-
-    video.getAudioParameters( & m_channels, & m_sample_rate, & m_auformat);
 
     if(!video.hasVideoCodec()) {
       Radiant::error("%s # No video codec", fname);
@@ -252,8 +250,7 @@ namespace VideoDisplay {
 
   void VideoInFFMPEG::videoPlay(Radiant::TimeStamp pos)
   {
-
-    info("VideoInFFMPEG::videoPlay # %lf", pos.secondsD());
+    //info("VideoInFFMPEG::videoPlay # %lf", pos.secondsD());
 
     if(!m_video.open(m_name.c_str(), m_flags)) {
       endOfFile();

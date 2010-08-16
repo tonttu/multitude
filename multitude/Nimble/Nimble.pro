@@ -2,6 +2,7 @@ include(../multitude.pri)
 
 HEADERS += Export.hpp
 HEADERS += Histogram.hpp 
+HEADERS += Interpolation.hpp
 HEADERS += KeyStone.hpp 
 HEADERS += LensCorrection.hpp 
 HEADERS += LineSegment2.hpp 

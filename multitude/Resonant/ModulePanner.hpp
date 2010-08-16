@@ -62,7 +62,7 @@ namespace Resonant {
     RESONANT_API void setSpeaker(unsigned i, Nimble::Vector2 location);
     RESONANT_API void setSpeaker(unsigned i, float x, float y);
 
-    void setCaptureRadius(float r) { m_maxRadius = r; }
+    void setCaptureRadius(float r) { m_maxRadius = r; ++m_generation; }
 
   protected:
 
@@ -97,25 +97,29 @@ namespace Resonant {
       unsigned m_to;
     };
 
-    enum { PIPES_PER_SOURCE = 6 };
-
     class Source
     {
     public:
-      Source() : m_location(0, 0), m_updates(0) {}
+      Source() : m_location(0, 0), m_updates(0), m_generation(-1), m_pipes(6) {}
       
       Nimble::Vector2 m_location;
       bool  m_updates;
       std::string  m_id;
+      long m_generation; /// @see ModulePanner::m_generation
 
-      Pipe m_pipes[PIPES_PER_SOURCE];
+      std::vector<Pipe> m_pipes;
     };
+
+    /// Computes the gain for the given speaker based on sound source location
+    virtual float computeGain(const LoudSpeaker * ls, Nimble::Vector2 srcLocation) const;
 
     typedef std::vector<Radiant::RefObj<Source> > Sources;
     typedef std::vector<std::shared_ptr<LoudSpeaker> > LoudSpeakers;
 
     Sources      m_sources;
     LoudSpeakers m_speakers;
+    /// generation is increased every time speaker setup is changed
+    long m_generation;
 
     Valuable::ValueFloat m_maxRadius;
   };

@@ -219,7 +219,7 @@ namespace Radiant {
 
   VideoCamera1394::~VideoCamera1394()
   {
-    if (m_initialized)
+    if (m_initialized || m_camera)
       close();
 
     g_count--;
@@ -520,7 +520,7 @@ namespace Radiant {
     const char * fname = "VideoCamera1394::initialize";
 
     if(!findCamera(euid)) {
-      error("%s # Could not find FireWire camera %s", fname, euid);
+      error("%s # Could not find FireWire camera %x", fname, euid);
       return false;
     }
 
@@ -874,11 +874,15 @@ namespace Radiant {
    */
   bool VideoCamera1394::stop()
   {
-    assert(isInitialized());
+    if(!m_initialized) {
+      Radiant::error("VideoCamera1394::stop # camera has not been initialized");
+      return false;
+    }
 
-    assert(m_started);
+    if(dc1394_capture_stop(m_camera) != DC1394_SUCCESS) {
+      Radiant::error("VideoCamera1394::stop # unable to stop capture");
+    }
 
-    dc1394_capture_stop(m_camera);
     if (dc1394_video_set_transmission(m_camera, DC1394_OFF) !=DC1394_SUCCESS) {
       Radiant::error("VideoCamera1394::stop # unable to stop iso transmission");
     }
@@ -985,6 +989,14 @@ namespace Radiant {
     if (m_started)
       stop();
 
+
+    for(std::vector<dc1394camera_t *>::iterator it = g_infos.begin(); it != g_infos.end(); it++) {
+      if(m_camera == *it) {
+        g_infos.erase(it);
+        break;
+      }
+    }
+
     if(m_camera) {
       dc1394_camera_free(m_camera);
     }
@@ -1035,7 +1047,8 @@ namespace Radiant {
 
     uint32_t i;
 
-    bzero( & m_camera, sizeof(m_camera));
+    if(m_camera)
+      close();
 
     m_euid = euid ? euid : m_euid;
 
@@ -1250,21 +1263,8 @@ namespace Radiant {
       return false;
     }
 
-#ifndef __linux__
-    // For OSX
-    static bool first = true;
-
-    if(!first) {
-      goto fillquery;
-    }
-
-    first = false;
-#endif
-
     if((err = dc1394_camera_enumerate(g_dc, & camlist))
       != DC1394_SUCCESS) {
-
-      // if(err != DC1394_NO_CAMERA)
 
 #ifdef __linux__
       const char * username = getenv("USERNAME");
@@ -1296,8 +1296,6 @@ namespace Radiant {
 
     debug("%s::Getting %d FireWire cameras", fname, (int) camlist->num);
 
-    g_infos.clear();
-
     for(i = 0; i < camlist->num; i++) {
       bool already = false;
 
@@ -1310,12 +1308,6 @@ namespace Radiant {
     }
 
     debug("Copying FireWire camera information to user", (int) camlist->num);
-
-#ifndef __linux__
-    fillquery:
-#endif
-
-    //query->clear();
 
     for(i = 0; i < g_infos.size(); i++) {
       dc1394camera_t * c = g_infos[i];
@@ -1341,9 +1333,7 @@ namespace Radiant {
 
     debug("Clearing camera list");
 
-#ifdef __linux__
     dc1394_camera_free_list(camlist);
-#endif
 
     return true;
   }

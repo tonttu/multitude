@@ -9,8 +9,4 @@ unix {
 
 LIBS += $$LIB_RADIANT $$LIB_PATTERNS $$LIB_LUMINOUS $$LIB_VALUABLE $$LIB_OPENGL $$LIB_NIMBLE
 
-LIBS += $$LIB_GLEW
-
-win32 {
-    LIBS += -lSDL -lSDLmain
-}
+LIBS += $$LIB_GLEW -lSDL -lSDLmain

@@ -523,7 +523,7 @@ namespace VideoDisplay {
     if(m_audio) {
       videoFrame = m_audio->videoFrame();
       if(m_audio->atEnd()) {
-        info("ShowGL::update # At end");
+        debug("ShowGL::update # At end");
         stop();
 
         Radiant::BinaryData bd;
@@ -637,8 +637,6 @@ namespace VideoDisplay {
     Nimble::Vector4 white(1, 1, 1, alpha);
 
     if(transform) {
-      Nimble::Matrix3 m = *transform * Nimble::Matrix3::translate2D(topleft);
-
       Luminous::Utils::glTexRectAA(bottomright - topleft, *transform,
                                    white.data());
     }
@@ -722,14 +720,9 @@ namespace VideoDisplay {
     if(time < 0)
       time = 0;
     else if(time >= m_duration)
-      time = m_duration;
+      time = m_duration - Radiant::TimeStamp::createSecondsD(2);
 
     m_position = time;
-
-    if(time < 0)
-      time = 0;
-    else if(time >= m_duration)
-      time = m_duration - Radiant::TimeStamp::createSecondsD(2);
 
     debug("ShowGL::seekTo # %lf", time.secondsD());
 
@@ -747,14 +740,15 @@ namespace VideoDisplay {
 
   void ShowGL::panAudioTo(Nimble::Vector2 location)
   {
-    debug("ShowGL::panAudioTo # %p %p %p [%.2f %.2f]", this, m_video, m_audio,
-          location.x, location.y);
 
     if(!m_video)
       return;
 
     if(!m_audio)
       return;
+
+    debug("ShowGL::panAudioTo # %p %p %p [%.2f %.2f]", this, m_video, m_audio,
+          location.x, location.y);
 
     char buf[128];
 

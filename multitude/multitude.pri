@@ -38,6 +38,8 @@ LIB_VIDEODISPLAY = -lVideoDisplay
 LIB_VALUABLE = -lValuable
 LIB_PATTERNS = -lPatterns
 
+LIB_BOX2D = -lBox2D
+
 MULTI_LIB_FLAG = -L
 
 linux-*:LIB_GLEW = -lGLEW
@@ -67,6 +69,8 @@ macx {
     LIB_VALUABLE = -framework,Valuable
     LIB_VIDEODISPLAY = -framework,VideoDisplay
     LIB_PATTERNS = -framework,Patterns
+
+    LIB_BOX2D = -framework,Box2D
   }
 
   # change architecture to x86_64 if snow leopard
@@ -114,3 +118,4 @@ contains(QT_MAJOR_VERSION,4) {
 # Use ccache if available
 linux-*:exists(/usr/bin/ccache):QMAKE_CXX=ccache g++
 macx:exists(/sw/bin/ccache):QMAKE_CXX=ccache g++
+macx:exists(/opt/local/bin/ccache):QMAKE_CXX=ccache g++

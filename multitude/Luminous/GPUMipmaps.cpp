@@ -61,91 +61,14 @@ namespace Luminous {
 
     std::shared_ptr<ImageTex> img = m_cpumaps->getImage(best);
 
-    if(!img) return false;
+    if(!img)
+      return false;
 
     img->bind(GL_TEXTURE0, false);
 
     Luminous::Utils::glCheck("GPUMipmaps::bind");
 
     return true;
-    /*
-    // trace("GPUMipmaps::bind %f %f %d", pixelsize.x, pixelsize.y, best);
-
-
-    Collectable * key = m_keys + best;
-
-    GLResource * res = resources()->getResource(key);
-
-    Texture2D * tex = 0;
-
-    if(res) {
-      // trace("Got optimal texture");
-      m_cpumaps->markImage(best);
-      tex = dynamic_cast<Texture2D *> (res);
-      assert(tex);
-      tex->bind();
-    }
-    else {
-
-      int mybest = -1;
-
-      // Try to find a ready texture object already in GPU RAM
-
-      for(int i = 0; i < m_cpumaps->maxLevel() && !res; i++) {
-        int index = best + i;
-
-        if(index <= m_cpumaps->maxLevel()) {
-
-          res = resources()->getResource(m_keys + index);
-          if(res) {
-            mybest = index;
-          }
-        }
-
-        index = best - i;
-
-        if(index >= 0 && !res) {
-          res = resources()->getResource(m_keys + index);
-          if(res) {
-            mybest = index;
-          }
-        }
-      }
-
-      // See what is in CPU RAM
-
-      int closest = m_cpumaps->getClosest(pixelsize);
-
-      if(((closest < 0) || Math::Abs(mybest - best) <= Math::Abs(closest - best))
-         && mybest >= 0) {
-
-        tex = dynamic_cast<Texture2D *> (res);
-        assert(tex);
-        tex->bind();
-      }
-      else if(closest >= 0) {
-        tex = new Texture2D(resources());
-        bool ok = tex->loadImage(*m_cpumaps->getImage(closest),
-           closest == CPUMipmaps::lowestLevel());
-        if (ok) {
-          resources()->addResource(m_keys + closest, tex);
-        } else { // failed, use a smaller texture
-          delete tex;
-          tex = dynamic_cast<Texture2D *> (res);
-        }
-        assert(tex);
-        tex->bind();
-      }
-    }
-
-    if(tex) {
-      resources()->deleteAfter(tex, 10);
-    }
-    else
-      return false;
-
-    return true;
-    */
   }
 
   bool GPUMipmaps::bind(const Nimble::Matrix3 & transform,

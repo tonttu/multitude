@@ -62,15 +62,14 @@ namespace Luminous
                      m_consumingBytes);
   }
 
-  GLResource * GLResources::getResource(const Collectable * key)
+  GLResource * GLResources::getResource(const Collectable * key, int deleteAfterFrames)
   {
     iterator it = m_resources.find(key);
 
     if(it == m_resources.end())
       return 0;
 
-    // delete if getResource not called for 110 frames
-    deleteAfter(it->second, 110);
+    deleteAfter(it->second, deleteAfterFrames);
 
     return (*it).second;
   }
@@ -176,7 +175,7 @@ namespace Luminous
     if(frames >= 0)
       resource->m_deleteOnFrame = m_frame + frames;
     else
-      resource->m_deleteOnFrame = -1;
+      resource->m_deleteOnFrame = 0;
   }
 
   // Doesn't work under windows where pthread_t (id_t) is a struct
