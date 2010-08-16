@@ -169,7 +169,7 @@ namespace Luminous
   unsigned BGThread::taskCount() 
   {
     Radiant::Guard guard(&m_mutex);
-    return m_taskQueue.size();
+    return (unsigned) m_taskQueue.size();
   }
 
 /*

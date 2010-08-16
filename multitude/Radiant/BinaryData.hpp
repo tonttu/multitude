@@ -199,7 +199,7 @@ namespace Radiant {
 
     template <class T>
     inline T * getPtr(size_t advance = sizeof(T))
-    { T * tmp = (T*) & m_buf[m_current]; m_current += advance; return tmp; }
+    { T * tmp = (T*) & m_buf[m_current]; m_current += (unsigned) advance; return tmp; }
     template <class T>
     inline T & getRef()
     { T * tmp = (T*) & m_buf[m_current]; m_current += sizeof(T); return *tmp; }

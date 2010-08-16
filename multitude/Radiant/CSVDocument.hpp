@@ -73,7 +73,7 @@ namespace Radiant {
     Rows::const_iterator end() const { return m_rows.end(); }
 
     /// Returns the number of rows in the document
-    unsigned rowCount() const { return m_rows.size(); }
+    unsigned rowCount() const { return (unsigned) m_rows.size(); }
 
     /** Returns a given row. If the index is out of range, zero pointer is returned.
 
