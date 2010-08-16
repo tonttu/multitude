@@ -85,8 +85,10 @@ namespace Resonant
 
   PulseAudioCore::PulseAudioCore()
     : m_context(0),
+    m_mainloop(0),
     m_mainloopApi(0),
-    m_running(true)
+    m_running(true),
+    m_restart(false)
   {
   }
 
@@ -116,17 +118,20 @@ namespace Resonant
 
   void PulseAudioCore::runClient()
   {
-    pa_mainloop * mainloop = pa_mainloop_new();
-    if(!mainloop) {
+    Radiant::info("%p runClient", this);
+    m_restart = false;
+    m_mainloop = pa_threaded_mainloop_new();
+    if(!m_mainloop) {
       Radiant::error("pa_mainloop_new() failed");
       return;
     }
 
-    m_mainloopApi = pa_mainloop_get_api(mainloop);
+    m_mainloopApi = pa_threaded_mainloop_get_api(m_mainloop);
 
+    Radiant::info("%p pa_context_new", this);
     if(!(m_context = pa_context_new(m_mainloopApi, "Cornerstone"))) {
       Radiant::error("pa_context_new() failed.");
-      pa_mainloop_free(mainloop);
+      pa_threaded_mainloop_free(m_mainloop);
       return;
     }
 
@@ -134,15 +139,27 @@ namespace Resonant
 
     pa_context_connect(m_context, 0, (pa_context_flags_t)0, 0);
 
-    int ret;
-    if(pa_mainloop_run(mainloop, &ret) < 0) {
-      Radiant::error("pa_mainloop_run() failed");
+    Radiant::info("%p pa_mainloop_run", this);
+    if(pa_threaded_mainloop_start(m_mainloop) != 0) {
+      Radiant::error("pa_threaded_mainloop_run() failed");
     }
 
+    while(m_running && !m_restart) {
+      pa_threaded_mainloop_wait(m_mainloop);
+    }
+
+    Radiant::info("%p pa_mainloop_run exit", this);
+    pa_threaded_mainloop_stop(m_mainloop);
     pa_context_unref(m_context);
-    pa_mainloop_free(mainloop);
+    pa_threaded_mainloop_free(m_mainloop);
     m_context = 0;
     m_mainloopApi = 0;
+  }
+
+  void PulseAudioCore::restart()
+  {
+    m_restart = true;
+    pa_threaded_mainloop_signal(m_mainloop, 0);
   }
 
   void PulseAudioCore::contextChange(pa_context_state_t state)
@@ -159,7 +176,8 @@ namespace Resonant
       case PA_CONTEXT_FAILED:
         Radiant::error("PulseAudio connection failure: %s", pa_strerror(pa_context_errno(m_context)));
       case PA_CONTEXT_TERMINATED:
-        m_mainloopApi->quit(m_mainloopApi, 0);
+        m_restart = true;
+        pa_threaded_mainloop_signal(m_mainloop, 0);
         break;
 
       default:

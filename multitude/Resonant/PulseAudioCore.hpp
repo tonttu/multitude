@@ -39,11 +39,13 @@ namespace Resonant
   protected:
     void childLoop();
     void runClient();
+    void restart();
 
     pa_context * m_context;
+    pa_threaded_mainloop * m_mainloop;
     pa_mainloop_api * m_mainloopApi;
 
-    bool m_running;
+    bool m_running, m_restart;
   };
 }
 
