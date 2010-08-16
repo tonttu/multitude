@@ -148,7 +148,8 @@ namespace Luminous
   {
   public:
     /// Constructs a 2D texture and adds it to the given resource collection
-    Texture2D(GLResources * resources = 0) : TextureT<GL_TEXTURE_2D>(resources) {}
+    Texture2D(GLResources * resources = 0) :
+        TextureT<GL_TEXTURE_2D>(resources), m_loadedLines(0) {}
 
     /// Load the texture from an image file
     bool loadImage(const char * filename, bool buildMipmaps = true);
@@ -163,6 +164,9 @@ namespace Luminous
     /// Laod a sub-texture.
     void loadSubBytes(int x, int y, int w, int h, const void * subData);
 
+    /// Laod some lines to the texture:
+    void loadLines(int y, int h, const void * data, const PixelFormat& srcFormat);
+
     /// Create a new texture, from an image file
     static Texture2D * fromFile(const char * filename, bool buildMipmaps = true, GLResources * resources = 0);
     /// Create a new texture, from an image
@@ -172,6 +176,11 @@ namespace Luminous
                 const void * data,
                 const PixelFormat& srcFormat,
                 bool buildMipmaps = true, GLResources * resources = 0);
+    /// Returns the number of scan-lines that have been loaded into the GPU
+    /** This function is mostly useful if one is using progressive image loading. */
+    inline unsigned loadedLines() const { return m_loadedLines; }
+  private:
+    unsigned m_loadedLines;
   };
 
   /// A 3D texture

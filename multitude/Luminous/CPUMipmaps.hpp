@@ -116,6 +116,8 @@ namespace Luminous {
     /// Mark this object as done
     LUMINOUS_API void finish();
 
+    /// Returns the number of images in the stack
+    inline unsigned stackSize() const { return (unsigned) m_stack.size(); }
   protected:
 
     LUMINOUS_API virtual void doTask();
