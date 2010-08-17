@@ -119,16 +119,9 @@ namespace Luminous {
     /// Returns the number of images in the stack
     inline unsigned stackSize() const { return (unsigned) m_stack.size(); }
   protected:
-
     LUMINOUS_API virtual void doTask();
 
   private:
-
-    // Load given level from a file
-    bool doLoad(int level);
-    // Scale down given level from the level above
-    bool doScale(int level);
-
     enum ItemState {
       WAITING,
       READY,
@@ -166,6 +159,8 @@ namespace Luminous {
       return Luminous::Task::PRIORITY_NORMAL;
     }*/
 
+    CPUItem getStack(int index);
+
     /// writes cache filename for level to given string
     void cacheFileName(std::string & str, int level);
 
@@ -176,6 +171,7 @@ namespace Luminous {
 
     StackMap         m_stackChange;
     Radiant::MutexAuto m_stackMutex;
+    Radiant::MutexAuto m_stackChangeMutex;
 
     std::vector<CPUItem> m_stack;
     Nimble::Vector2i m_nativeSize;
