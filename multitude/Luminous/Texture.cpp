@@ -274,6 +274,17 @@ namespace Luminous
   {
     // Utils::glCheck("Texture2D::loadLines # in");
     bind();
+
+    // Flush the data by drawing a zero-size triangle
+    glColor4f(0,0,0,0);
+    glBegin(GL_TRIANGLES);
+    // info("BEGIN %.2lf", now.sinceSecondsD() * 1000);
+    glVertex2f(0,0);
+    glVertex2f(0,0);
+    glVertex2f(0,0);
+    //info("VERTI %.2lf", now.sinceSecondsD() * 1000);
+    glEnd();
+
     if(m_haveMipmaps)
     {
       error("Texture2D::loadLines # Cannot be used with mipmaps");

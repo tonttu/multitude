@@ -64,7 +64,7 @@ namespace Luminous {
 
     std::shared_ptr<ImageTex> img = m_cpumaps->getImage(best);
 
-    if(img->isFullyLoadedToGPU() || (img->width()  < 1000 && img->height() < 1000)) {
+    if(img->isFullyLoadedToGPU() || ((img->width() * img->height()) < 500000)) {
       img->bind(GL_TEXTURE0, false);
       return true;
     }
@@ -72,8 +72,7 @@ namespace Luminous {
 
       // Then perform incremental texture upload:
 
-      // info("Partial image upload.");
-      img->uploadBytesToGPU(0, 1000000);
+      img->uploadBytesToGPU(0, 2000000);
 
       // Lets check if we find something to use:
       for(unsigned i = 0; i < m_cpumaps->stackSize(); i++) {
@@ -82,7 +81,7 @@ namespace Luminous {
         if(!test)
           continue;
 
-        if(test->isFullyLoadedToGPU() || (test->width() < 1000 && test->height() < 1000)) {
+        if(test->isFullyLoadedToGPU() || ((test->width() * test->height()) < 500000)) {
           test->bind(GL_TEXTURE0, false);
           return true;
         }
