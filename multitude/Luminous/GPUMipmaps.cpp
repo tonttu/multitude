@@ -72,7 +72,7 @@ namespace Luminous {
 
       // Then perform incremental texture upload:
 
-      img->uploadBytesToGPU(0, 2000000);
+      img->uploadBytesToGPU(resources(), 2000000);
 
       // Lets check if we find something to use:
       for(unsigned i = 0; i < m_cpumaps->stackSize(); i++) {
