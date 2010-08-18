@@ -387,7 +387,7 @@ namespace Luminous
       glVertexAttribPointer(loc2, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&attribs[4]));
       glEnableClientState(GL_VERTEX_ARRAY);
 
-      glDrawArrays(GL_QUADS, 0, verts.size());
+      glDrawArrays(GL_QUADS, 0, (GLsizei) verts.size());
 
       glDisableClientState(GL_VERTEX_ARRAY);
       glDisableVertexAttribArray(loc);
@@ -766,7 +766,7 @@ namespace Luminous
     sub.subdivide( controlPoints[0], controlPoints[1], controlPoints[2], controlPoints[3] );
     points.push_back(controlPoints[3]);
 
-    drawPolyLine(&points[0], points.size(), width, rgba);
+    drawPolyLine(&points[0], (int) points.size(), width, rgba);
   }
 
   void RenderContext::drawSpline(Nimble::Splines::Interpolating & s, float width, const float * rgba, float step)
@@ -795,7 +795,7 @@ namespace Luminous
       }
       points.push_back(point);
     }
-    drawPolyLine(&points[0], points.size(), width, rgba);
+    drawPolyLine(&points[0], (int) points.size(), width, rgba);
   }
 
 

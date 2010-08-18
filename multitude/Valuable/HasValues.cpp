@@ -286,7 +286,7 @@ namespace Valuable
       skip++;
     }
     else
-      skip = key.size();
+      skip = (int) key.size();
 
     // info("HasValues::processMessage # Child id = %s", key.c_str());
 

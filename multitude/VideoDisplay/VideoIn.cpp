@@ -189,7 +189,7 @@ namespace VideoDisplay {
           m_decodedFrames, m_consumedFrames);
     */
     if((int) m_decodedFrames <= index)
-      index = m_decodedFrames - 1;
+      index = (int) m_decodedFrames - 1;
 
     if(!m_continue && m_decodedFrames <= m_consumedFrames)
       return 0;
@@ -315,7 +315,7 @@ namespace VideoDisplay {
       bottom = 0;
     size_t latest = latestFrame();
 
-    int best = latest; // Nimble::Math::Min(latest, startfrom);
+    int best = (int) latest; // Nimble::Math::Min(latest, startfrom);
     int low = Nimble::Math::Min((int) m_consumedFrames,
                                 (int) m_consumedAuFrames);
     if(low < bottom)

@@ -107,7 +107,7 @@ namespace VideoDisplay {
     m_started = true;
     m_stopped = false;
     m_availAudio = 1000000;
-    m_videoFrame = m_video->latestFrame() + 1;
+    m_videoFrame = (int) m_video->latestFrame() + 1;
 
     if(m_videoFrame < 0)
       m_videoFrame = 0;

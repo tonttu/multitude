@@ -1,6 +1,6 @@
 include(../multitude.pri)
-
-HEADERS += CameraDriver.hpp
+HEADERS += CameraDriver.hpp \
+    Defines.hpp
 HEADERS += CSVDocument.hpp
 HEADERS += UDPSocket.hpp
 HEADERS += BinaryData.hpp
@@ -84,22 +84,20 @@ SOURCES += Trace.cpp
 SOURCES += VideoImage.cpp
 SOURCES += VideoInput.cpp
 SOURCES += WatchDog.cpp
-LIBS += $$LIB_NIMBLE $$LIB_PATTERNS
-
-linux-* {
+LIBS += $$LIB_NIMBLE \
+    $$LIB_PATTERNS
+linux-* { 
     SOURCES += PlatformUtilsLinux.cpp
     SOURCES += XFaker.cpp
     HEADERS += XFaker.hpp
-
-    LIBS += -lX11 -lXtst
+    LIBS += -lX11 \
+        -lXtst
 }
-
-macx {
+macx { 
     SOURCES += PlatformUtilsOSX.cpp
     LIBS += -framework,CoreFoundation
 }
-
-unix {
+unix { 
     HEADERS += VideoCamera1394.hpp
     SOURCES += DirectoryPosix.cpp
     SOURCES += SerialPortPosix.cpp
@@ -110,27 +108,24 @@ unix {
     SOURCES += ConditionPt.cpp
     SOURCES += MutexPt.cpp
     SOURCES += ThreadPt.cpp
-
-    LIBS += -lpthread $$LIB_RT -ldl
-
+    LIBS += -lpthread \
+        $$LIB_RT \
+        -ldl
     PKGCONFIG += libdc1394-2
     DEFINES += CAMERA_DRIVER_1394
-
     CONFIG += qt
     QT = core \
         network
 }
-win32 {
+win32 { 
     message(Radiant on Windows)
-
     DEFINES += RADIANT_EXPORT
-    !win64 {
+    !win64 { 
         DEFINES += CAMERA_DRIVER_CMU
         HEADERS += VideoCameraCMU.hpp
         SOURCES += VideoCameraCMU.cpp
         LIBS += 1394camera.lib
     }
-
     SOURCES += PlatformUtilsWin32.cpp
     SOURCES += SerialPortWin32.cpp
     SOURCES += DirectoryQt.cpp
@@ -140,29 +135,24 @@ win32 {
     SOURCES += ConditionQt.cpp
     SOURCES += MutexQt.cpp
     SOURCES += ThreadQt.cpp
-
-    LIBS +=  wsock32.lib ShLwApi.lib shell32.lib psapi.lib
-
+    LIBS += wsock32.lib \
+        ShLwApi.lib \
+        shell32.lib \
+        psapi.lib
     CONFIG += qt
     QT = core \
         network
-
     PTGREY_PATH = "C:\Program Files\Point Grey Research\FlyCapture2"
     !exists($$PTGREY_PATH/include):error(PTGrey driver must be installed on Windows)
-
     DEFINES += CAMERA_DRIVER_PGR
     message(Using PTGrey camera drivers)
-
     HEADERS += VideoCameraPTGrey.hpp
     SOURCES += VideoCameraPTGrey.cpp
-
     INCLUDEPATH += $$PTGREY_PATH/include
-
+    
     # 64bit libs have different path
     win64:LIBPATH += $$PTGREY_PATH/lib64
     else:LIBPATH += $$PTGREY_PATH/lib
-
     LIBS += FlyCapture2.lib
 }
-
 include(../library.pri)

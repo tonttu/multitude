@@ -49,7 +49,7 @@ namespace Radiant
 
 	char * foo = 0;
 	int val = strtol(tmp, & foo,  16);
-	get(i) = val / 255.0f;
+        get((int) i) = val / 255.0f;
 	// printf("Got color %d, %f", i, val / 255.0f);
       }
     }

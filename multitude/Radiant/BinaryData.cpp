@@ -146,8 +146,8 @@ namespace Radiant {
   {
     ensure(8 + str.size() * 4);
 
-    getRef<int32_t>() = WSTRING_MARKER;
-    getRef<int32_t>() = str.size();
+    getRef<int32_t>() = (int32_t) WSTRING_MARKER;
+    getRef<int32_t>() = (int32_t) str.size();
 
     for(unsigned i = 0; i < str.size(); i++) {
       getRef<int32_t>() = str[i];
@@ -796,10 +796,10 @@ namespace Radiant {
       if(m_shared)
         fatal("BinaryData::ensure # Sharing data, cannot ensure required space");
 
-      m_size = need + 128 + need / 16;
+      m_size = (unsigned) (need + 128 + need / 16);
       m_buf = (char *) realloc(m_buf, m_size);
     }
-    m_total = m_current + bytes;
+    m_total = (unsigned) (m_current + bytes);
   }
 
   void BinaryData::clear()
@@ -822,7 +822,7 @@ namespace Radiant {
       m_current += 8;
     else if(marker == STRING_MARKER) {
       const char * str = & m_buf[m_current];
-      m_current += stringSpace(str);
+      m_current += (unsigned) stringSpace(str);
     }
     else if(marker == WSTRING_MARKER) {
       int len = getRef<int32_t>();

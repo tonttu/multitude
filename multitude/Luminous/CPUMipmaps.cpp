@@ -310,7 +310,7 @@ namespace Luminous {
     name += Radiant::FileUtils::filename(m_filename);
 
     // Put in the right suffix
-    unsigned i = name.size() - 1;
+    size_t i = name.size() - 1;
 
     while(i && name[i] != '.' && name[i] != '/')
       i--;

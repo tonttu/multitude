@@ -130,7 +130,7 @@ namespace Valuable
 	      if(depth==0) {
 		k=0;
 
-		for(int i=elm.m_nodes.size()-1;i>0;i--) {
+                for(int i= (int) elm.m_nodes.size()-1;i>0;i--) {
 		  if(elm.m_nodes[i].m_depth>elm.m_nodes[i-1].m_depth) {
 		    elm.m_nodes[i-1].m_nodes.push_back(elm.m_nodes[i]);
 		    // Radiant::info("E3 : %s", elm.m_nodes[i].m_elementName.c_str());
@@ -350,7 +350,7 @@ namespace Valuable
     int n = 0;
     while(ok) {
       char tmp = 0;
-      int got = fread(& tmp, 1, 1, input);
+      int got = (int) fread(& tmp, 1, 1, input);
       if(got) {
         if(tmp != '\n')
           str += tmp;

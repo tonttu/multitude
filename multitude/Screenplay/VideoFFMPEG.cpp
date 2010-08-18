@@ -226,11 +226,11 @@ namespace Screenplay {
 
         int index = m_audioFrames * actualChannels();
 
-        int aframes = (m_audioBuffer.size() - index) * 2;
+        int aframes = ((int) m_audioBuffer.size() - index) * 2;
 
         if(aframes < AVCODEC_MAX_AUDIO_FRAME_SIZE) {
           m_audioBuffer.resize(m_audioBuffer.size() + AVCODEC_MAX_AUDIO_FRAME_SIZE * m_audioChannels);
-          aframes = (m_audioBuffer.size() - index) * 2;
+          aframes = ((int) m_audioBuffer.size() - index) * 2;
           if(m_audioBuffer.size() > 1000000) {
             info("VideoInputFFMPEG::captureImage # %p Audio buffer is very large now: %d (%d)",
                  this, (int) m_audioBuffer.size(), m_capturedVideo);

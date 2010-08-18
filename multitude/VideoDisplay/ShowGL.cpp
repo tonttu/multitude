@@ -536,7 +536,7 @@ namespace VideoDisplay {
       m_video->freeUnusedMemory();
       // videoFrame = m_videoFrame;
       if(m_seeking)
-        videoFrame = m_video->latestFrame();
+        videoFrame = (int) m_video->latestFrame();
       else
         videoFrame = m_videoFrame;
       // info("Video has frame %d", videoFrame);

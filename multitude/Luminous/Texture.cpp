@@ -17,6 +17,7 @@
 
 #include "Image.hpp"
 #include "PixelFormat.hpp"
+#include "Utils.hpp"
 
 #include <cassert>
 #include <iostream>
@@ -24,10 +25,13 @@
 
 #include <Radiant/Trace.hpp>
 
-using namespace std;
 
 namespace Luminous
 {
+
+  using namespace std;
+  using namespace Radiant;
+
   template <GLenum TextureType>
   TextureT<TextureType>::~TextureT()
   {
@@ -230,16 +234,25 @@ namespace Luminous
 
     long uses = consumesBytes();
 
+
     changeByteConsumption(used, uses);
     /* try not to interfere with other users of glTexImage2d etc */
     if (alignment > 4) glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+
+    if(data)
+      m_loadedLines = h;
+    else
+      m_loadedLines = 0;
+
     return true;
   }
 
   void Texture2D::loadSubBytes(int x, int y, int w, int h, const void * data)
   {
+    bind();
     if(m_haveMipmaps)
     {
+      error("Texture2D::loadSubBytes # Cannot be used with mipmaps");
       // @todo
     }
     else
@@ -256,6 +269,52 @@ namespace Luminous
       if (alignment > 4) glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
     }
   }
+
+  void Texture2D::loadLines(int y, int h, const void * data, const PixelFormat& pf)
+  {
+    // Utils::glCheck("Texture2D::loadLines # in");
+    bind();
+
+    // Flush the data by drawing a zero-size triangle
+    glColor4f(0,0,0,0);
+    glBegin(GL_TRIANGLES);
+    // info("BEGIN %.2lf", now.sinceSecondsD() * 1000);
+    glVertex2f(0,0);
+    glVertex2f(0,0);
+    glVertex2f(0,0);
+    //info("VERTI %.2lf", now.sinceSecondsD() * 1000);
+    glEnd();
+
+    if(m_haveMipmaps)
+    {
+      error("Texture2D::loadLines # Cannot be used with mipmaps");
+
+      // @todo
+    }
+    else
+    {
+      int alignment = 1;
+      while (alignment < 8) {
+        if ((width() * pf.bytesPerPixel()) % (alignment*2)) {
+          break;
+        }
+        alignment *= 2;
+      }
+      glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
+      glTexSubImage2D(GL_TEXTURE_2D, 0, 0, y, width(), h, pf.layout(), pf.type(), data);
+      if (alignment > 4) glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+    }
+
+    // Utils::glCheck("Texture2D::loadLines");
+
+    if((unsigned) y == m_loadedLines)
+      m_loadedLines += h;
+
+    unsigned bytes = h * width() * pf.bytesPerPixel();
+
+    changeByteConsumption(bytes, bytes);
+  }
+
 
   Texture2D* Texture2D::fromImage
   (Luminous::Image & image, bool buildMipmaps, GLResources * resources)
