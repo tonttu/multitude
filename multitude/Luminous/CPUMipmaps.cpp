@@ -88,9 +88,8 @@ namespace Luminous {
     if(item.m_state == READY)
       return bestlevel;
 
-    BGThread::instance()->removeTask(this);
-    scheduleFromNowSecs(0);
-    BGThread::instance()->addTask(this);
+    scheduleFromNow(0);
+    BGThread::instance()->reschedule(this);
 
     // Scan for the best available mip-map.
 

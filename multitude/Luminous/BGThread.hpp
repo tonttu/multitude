@@ -21,17 +21,18 @@
 
 #include <Radiant/Condition.hpp>
 #include <Radiant/Mutex.hpp>
-#include <Radiant/Thread.hpp>
+#include <Radiant/ThreadPool.hpp>
 
 #include <list>
 #include <map>
+#include <set>
 
 namespace Luminous
 {
 
-  /// A class used to execute tasks in a separate thread.
+  /// A class used to execute tasks in a separated threads.
 
-  class LUMINOUS_API BGThread : public Radiant::Thread
+  class LUMINOUS_API BGThread : public Radiant::ThreadPool
   {
 
   public:
@@ -44,20 +45,14 @@ namespace Luminous
     /// Remove the task from the BGThread
     virtual bool removeTask(Task * task);
 
-    // Queue a task for deletion. The time of deletion is not guaranteed to be
-    // immediate
-    //virtual void markForDeletion(Task * task);
-
-    /// Stop the thread and wait for it to terminate
-    virtual void stop();
+    /// Update the changed task timestamp to queue
+    virtual void reschedule(Task * task);
 
     /// Change the priority of a task
-    ///@todo Check that it works in all cases
     virtual void setPriority(Task * task, Priority p);
 
-    /// Returns an instance to a previously created BGThread if one has been
-    /// created before. This function will not create a new instance.
-    /// @return pointer to an instance or NULL if no BGThread has yet been created
+    /// Returns the global BGThread instance. If no BGThread has been created
+    /// yet, one will be created now.
     static BGThread * instance();
 
     /// Container for the tasks
@@ -65,21 +60,22 @@ namespace Luminous
     /// Objects stored in the task container
     typedef std::pair<Priority, Task * > contained;
 
-    /// Returns the number of tasks this thread is handling
+    /// Returns the number of tasks in the BGThread.
     unsigned taskCount();
 
   private:
     virtual void childLoop();
 
-    Task * pickNextTask(Radiant::TimeStamp & wait);
+    Task * pickNextTask();
 
-    Radiant::MutexAuto m_mutex;
-    Radiant::MutexAuto m_mutexWait;
-    Radiant::Condition m_wait;
+    container::iterator findTask(Task * task);
 
+    // locked with m_mutexWait
     container m_taskQueue;
 
-    volatile bool m_continue;
+    // a thread is already waiting for these tasks
+    std::set<Task*> m_reserved;
+
     static BGThread * m_instance;
   };
 
