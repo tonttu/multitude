@@ -61,8 +61,6 @@ namespace Nimble {
       : m_low(xlow, ylow), m_high(xhigh, yhigh) {}
     ~RectT() {}
 
-    //RectT & operator=(const RectT & bs) { m_low = bs.m_low; m_high = bs.m_high; return *this; }
-
     /// Scales the rectangle uniformly
     void scale(T v) { m_low = m_low * v; m_high = m_high * v; }    
     /// Scales the rectangle
