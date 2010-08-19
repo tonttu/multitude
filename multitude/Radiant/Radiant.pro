@@ -1,6 +1,7 @@
 include(../multitude.pri)
-HEADERS += CameraDriver.hpp \
-    Defines.hpp
+HEADERS += CameraDriver.hpp
+HEADERS += Defines.hpp
+HEADERS += ThreadPool.hpp
 HEADERS += CSVDocument.hpp
 HEADERS += UDPSocket.hpp
 HEADERS += BinaryData.hpp
@@ -56,6 +57,7 @@ HEADERS += WatchDog.hpp
 HEADERS += ClonablePtr.hpp
 HEADERS += VideoCamera.hpp
 SOURCES += CameraDriver.cpp
+SOURCES += ThreadPoolQt.cpp
 SOURCES += CSVDocument.cpp
 SOURCES += BinaryData.cpp
 SOURCES += VideoCamera.cpp
