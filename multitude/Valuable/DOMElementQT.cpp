@@ -219,7 +219,8 @@ namespace Valuable
           return std::string();
       }
 
-    return m_wrapped->x.text().toStdString();
+      std::string tmp(m_wrapped->x.text().toUtf8().data());
+      return tmp;
   }
 
   std::wstring DOMElement::getTextContentW() const
