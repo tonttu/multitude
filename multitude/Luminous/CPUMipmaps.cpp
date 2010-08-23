@@ -301,7 +301,7 @@ namespace Luminous {
   CPUMipmaps::CPUItem CPUMipmaps::getStack(int index)
   {
     Radiant::Guard g(&m_stackMutex);
-    assert(index >= 0 && index < m_stack.size());
+    assert(index >= 0 && index < (int) m_stack.size());
     const CPUItem item = m_stack[index];
     return item;
   }
