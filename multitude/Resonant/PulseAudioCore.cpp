@@ -3,6 +3,36 @@
 #include <Radiant/Trace.hpp>
 #include <Radiant/Sleep.hpp>
 
+// these four for stat()
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
+
+namespace
+{
+  using namespace Resonant;
+  void s_moduleInfoCb(pa_context * c, const pa_module_info * i, int eol, void * self)
+  {
+    if(c && self) {
+      PulseAudioCleaner * pac = static_cast<PulseAudioCleaner*>(self);
+      if(pac->context() == c) {
+        pac->moduleInfo(i, eol);
+      }
+    }
+  }
+
+  void s_unloadSuccessCb(pa_context * c, int /*success*/, void * self)
+  {
+    if(c && self) {
+      PulseAudioCleaner * pac = static_cast<PulseAudioCleaner*>(self);
+      if(pac->context() == c) {
+        pac->ready();
+      }
+    }
+  }
+}
+
 namespace Resonant
 {
   void g_contextStateCb(pa_context * c, void * self)
@@ -88,7 +118,8 @@ namespace Resonant
     m_mainloop(0),
     m_mainloopApi(0),
     m_running(true),
-    m_restart(false)
+    m_restart(false),
+    m_retry(true)
   {
   }
 
@@ -110,7 +141,7 @@ namespace Resonant
   {
     while(m_running) {
       runClient();
-      if(!m_running) break;
+      if(!m_running || !m_retry) break;
 
       Radiant::Sleep::sleepS(2);
     }
@@ -118,7 +149,7 @@ namespace Resonant
 
   void PulseAudioCore::runClient()
   {
-    Radiant::info("%p runClient", this);
+    Radiant::debug("%p runClient", this);
     m_restart = false;
     m_mainloop = pa_threaded_mainloop_new();
     if(!m_mainloop) {
@@ -128,7 +159,7 @@ namespace Resonant
 
     m_mainloopApi = pa_threaded_mainloop_get_api(m_mainloop);
 
-    Radiant::info("%p pa_context_new", this);
+    Radiant::debug("%p pa_context_new", this);
     if(!(m_context = pa_context_new(m_mainloopApi, "Cornerstone"))) {
       Radiant::error("pa_context_new() failed.");
       pa_threaded_mainloop_free(m_mainloop);
@@ -139,7 +170,7 @@ namespace Resonant
 
     pa_context_connect(m_context, 0, (pa_context_flags_t)0, 0);
 
-    Radiant::info("%p pa_mainloop_run", this);
+    Radiant::debug("%p pa_mainloop_run", this);
     if(pa_threaded_mainloop_start(m_mainloop) != 0) {
       Radiant::error("pa_threaded_mainloop_run() failed");
     }
@@ -213,5 +244,71 @@ namespace Resonant
 
   void PulseAudioCore::moduleLoaded(uint32_t)
   {
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+
+  PulseAudioCleaner::PulseAudioCleaner() : m_counter(0)
+  {
+    m_retry = false;
+  }
+
+  PulseAudioCleaner::~PulseAudioCleaner()
+  {
+  }
+
+  void PulseAudioCleaner::clean(bool force)
+  {
+    static bool once = false;
+    if(once && !force)
+      return;
+    once = true;
+
+    PulseAudioCleaner * pac = new PulseAudioCleaner;
+    pac->run();
+    pac->waitEnd();
+    delete pac;
+  }
+
+
+  void PulseAudioCleaner::contextChange(pa_context_state_t state)
+  {
+    if(state == PA_CONTEXT_READY) {
+      ++m_counter;
+      pa_operation * op = pa_context_get_module_info_list(m_context, s_moduleInfoCb, this);
+      pa_operation_unref(op);
+    } else {
+      PulseAudioCore::contextChange(state);
+    }
+  }
+
+  void PulseAudioCleaner::ready()
+  {
+    if(--m_counter <= 0) {
+      m_running = false;
+      pa_threaded_mainloop_signal(m_mainloop, 0);
+    }
+  }
+
+  void PulseAudioCleaner::moduleInfo(const pa_module_info * i, int eol)
+  {
+    if(eol) {
+      ready();
+    } else if(strcmp(i->name, "module-null-sink") == 0) {
+      int pid = 0;
+      if(sscanf(i->argument, "sink_name=\"Cornerstone.%d\"", &pid) == 1) {
+        struct stat buf;
+        char path[64];
+        sprintf(path, "/proc/%d", pid);
+        if(stat(path, &buf) == -1 && errno == ENOENT) {
+          Radiant::info("PulseAudioCleaner: Unloading old module %s", i->argument);
+          ++m_counter;
+          pa_operation * op = pa_context_unload_module(m_context, i->index,
+                                                       s_unloadSuccessCb, this);
+          pa_operation_unref(op);
+        }
+      }
+    }
   }
 }

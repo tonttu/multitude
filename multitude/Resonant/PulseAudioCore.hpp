@@ -46,7 +46,24 @@ namespace Resonant
     pa_threaded_mainloop * m_mainloop;
     pa_mainloop_api * m_mainloopApi;
 
-    bool m_running, m_restart;
+    bool m_running, m_restart, m_retry;
+  };
+
+  /// Removes all null modules that belong to dead processes
+  class PulseAudioCleaner : public PulseAudioCore
+  {
+  public:
+    PulseAudioCleaner();
+    virtual ~PulseAudioCleaner();
+
+    static void clean(bool force = false);
+
+    void contextChange(pa_context_state_t state);
+    void moduleInfo(const pa_module_info * i, int eol);
+    void ready();
+
+  protected:
+    int m_counter;
   };
 }
 
