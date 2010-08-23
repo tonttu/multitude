@@ -118,7 +118,8 @@ namespace Resonant
     m_mainloop(0),
     m_mainloopApi(0),
     m_running(true),
-    m_restart(false)
+    m_restart(false),
+    m_retry(true)
   {
   }
 
@@ -140,7 +141,7 @@ namespace Resonant
   {
     while(m_running) {
       runClient();
-      if(!m_running) break;
+      if(!m_running || !m_retry) break;
 
       Radiant::Sleep::sleepS(2);
     }
@@ -250,6 +251,7 @@ namespace Resonant
 
   PulseAudioCleaner::PulseAudioCleaner() : m_counter(0)
   {
+    m_retry = false;
   }
 
   PulseAudioCleaner::~PulseAudioCleaner()
