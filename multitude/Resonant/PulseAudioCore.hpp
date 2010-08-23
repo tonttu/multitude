@@ -48,6 +48,23 @@ namespace Resonant
 
     bool m_running, m_restart;
   };
+
+  /// Removes all null modules that belong to dead processes
+  class PulseAudioCleaner : public PulseAudioCore
+  {
+  public:
+    PulseAudioCleaner();
+    virtual ~PulseAudioCleaner();
+
+    static void clean(bool force = false);
+
+    void contextChange(pa_context_state_t state);
+    void moduleInfo(const pa_module_info * i, int eol);
+    void ready();
+
+  protected:
+    int m_counter;
+  };
 }
 
 #endif // RESONANT_PULSEAUDIOCORE_HPP
