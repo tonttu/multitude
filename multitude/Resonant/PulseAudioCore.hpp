@@ -46,7 +46,7 @@ namespace Resonant
     pa_threaded_mainloop * m_mainloop;
     pa_mainloop_api * m_mainloopApi;
 
-    bool m_running, m_restart;
+    bool m_running, m_restart, m_retry;
   };
 
   /// Removes all null modules that belong to dead processes
