@@ -175,13 +175,15 @@ namespace Resonant
       Radiant::error("pa_threaded_mainloop_run() failed");
     }
 
+    pa_threaded_mainloop_lock(m_mainloop);
     while(m_running && !m_restart) {
       pa_threaded_mainloop_wait(m_mainloop);
     }
+    pa_threaded_mainloop_unlock(m_mainloop);
 
     beforeShutdown();
 
-    Radiant::info("%p pa_mainloop_run exit", this);
+    Radiant::debug("%p pa_mainloop_run exit", this);
     pa_threaded_mainloop_stop(m_mainloop);
     pa_context_unref(m_context);
     pa_threaded_mainloop_free(m_mainloop);
@@ -287,7 +289,9 @@ namespace Resonant
   {
     if(--m_counter <= 0) {
       m_running = false;
+      pa_threaded_mainloop_lock(m_mainloop);
       pa_threaded_mainloop_signal(m_mainloop, 0);
+      pa_threaded_mainloop_unlock(m_mainloop);
     }
   }
 
