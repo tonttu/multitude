@@ -118,7 +118,7 @@ namespace Resonant
 
   void PulseAudioCore::runClient()
   {
-    Radiant::info("%p runClient", this);
+    Radiant::debug("%p runClient", this);
     m_restart = false;
     m_mainloop = pa_threaded_mainloop_new();
     if(!m_mainloop) {
@@ -128,7 +128,7 @@ namespace Resonant
 
     m_mainloopApi = pa_threaded_mainloop_get_api(m_mainloop);
 
-    Radiant::info("%p pa_context_new", this);
+    Radiant::debug("%p pa_context_new", this);
     if(!(m_context = pa_context_new(m_mainloopApi, "Cornerstone"))) {
       Radiant::error("pa_context_new() failed.");
       pa_threaded_mainloop_free(m_mainloop);
@@ -139,7 +139,7 @@ namespace Resonant
 
     pa_context_connect(m_context, 0, (pa_context_flags_t)0, 0);
 
-    Radiant::info("%p pa_mainloop_run", this);
+    Radiant::debug("%p pa_mainloop_run", this);
     if(pa_threaded_mainloop_start(m_mainloop) != 0) {
       Radiant::error("pa_threaded_mainloop_run() failed");
     }
