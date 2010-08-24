@@ -88,7 +88,7 @@ namespace Luminous {
     if(item.m_state == READY)
       return bestlevel;
 
-    scheduleFromNow(0);
+    reschedule();
     BGThread::instance()->reschedule(this);
 
     // Scan for the best available mip-map.
@@ -172,7 +172,7 @@ namespace Luminous {
 
     m_priority = Luminous::Task::PRIORITY_HIGH;
     markImage(m_maxLevel);
-    scheduleFromNowSecs(0.0f);
+    reschedule();
 
     return true;
   }
@@ -264,9 +264,10 @@ namespace Luminous {
 
   void CPUMipmaps::doTask()
   {
-    m_priority = Luminous::Task::PRIORITY_NORMAL;
-
     double delay = 60.0;
+    m_priority = Luminous::Task::PRIORITY_NORMAL;
+    reschedule(delay, true);
+
     StackMap stack;
 
     for(int i = 0; i <= m_maxLevel; i++) {
@@ -288,8 +289,7 @@ namespace Luminous {
       }
     }
 
-    /// @todo what if the task has been already re-scheduled form another thread?
-    scheduleFromNowSecs(delay+0.01);
+    reschedule(delay+0.0001);
 
     if(!stack.empty()) {
       Radiant::Guard g(&m_stackChangeMutex);
@@ -427,4 +427,12 @@ namespace Luminous {
     }
   }
 
+  void CPUMipmaps::reschedule(double delay, bool allowLater)
+  {
+    Radiant::Guard g(m_rescheduleMutex);
+    Radiant::TimeStamp next = Radiant::TimeStamp::getTime() +
+                              Radiant::TimeStamp::createSecondsD(delay);
+    if(allowLater || next < scheduled())
+      schedule(next);
+  }
 }

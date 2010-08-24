@@ -165,6 +165,7 @@ namespace Luminous {
     void cacheFileName(std::string & str, int level);
 
     void recursiveLoad(StackMap & stack, int level);
+    void reschedule(double delay = 0.0, bool allowLater = false);
 
     std::string m_filename;
     unsigned long int m_fileModified;
@@ -172,6 +173,7 @@ namespace Luminous {
     StackMap         m_stackChange;
     Radiant::MutexAuto m_stackMutex;
     Radiant::MutexAuto m_stackChangeMutex;
+    Radiant::MutexAuto m_rescheduleMutex;
 
     std::vector<CPUItem> m_stack;
     Nimble::Vector2i m_nativeSize;
