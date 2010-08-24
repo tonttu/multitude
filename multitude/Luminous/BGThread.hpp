@@ -71,11 +71,18 @@ namespace Luminous
 
     container::iterator findTask(Task * task);
 
+    void wakeThread();
+    void wakeAll();
+
     // locked with m_mutexWait
     container m_taskQueue;
 
     // a thread is already waiting for these tasks
     std::set<Task*> m_reserved;
+
+    // number of idle threads, excluding ones that are reserving a task
+    int m_idle;
+    Radiant::Condition m_idleWait;
 
     static BGThread * m_instance;
   };
