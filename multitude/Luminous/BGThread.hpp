@@ -62,7 +62,8 @@ namespace Luminous
 
     /// Returns the number of tasks in the BGThread.
     unsigned taskCount();
-
+    /// Dump information about the tasks at hand
+    void dumpInfo(FILE * f = 0, int indent = 0);
   private:
     virtual void childLoop();
 
@@ -70,11 +71,18 @@ namespace Luminous
 
     container::iterator findTask(Task * task);
 
+    void wakeThread();
+    void wakeAll();
+
     // locked with m_mutexWait
     container m_taskQueue;
 
     // a thread is already waiting for these tasks
     std::set<Task*> m_reserved;
+
+    // number of idle threads, excluding ones that are reserving a task
+    int m_idle;
+    Radiant::Condition m_idleWait;
 
     static BGThread * m_instance;
   };

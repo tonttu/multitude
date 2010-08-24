@@ -54,7 +54,7 @@ SOURCES += ValueString.cpp
 SOURCES += ValueVector.cpp
 
 LIBS += $$LIB_RADIANT \
-    $$LIB_NIMBLE
+    $$LIB_NIMBLE $$LIB_PATTERNS
 
 win32:DEFINES += VALUABLE_EXPORT
 
@@ -63,7 +63,7 @@ contains(HAS_QT_45,YES) {
 
   SOURCES += DOMDocumentQT.cpp
   SOURCES += DOMElementQT.cpp
-  
+
   CONFIG += qt
   QT += xml
 } else {
@@ -73,7 +73,7 @@ contains(HAS_QT_45,YES) {
   SOURCES += DOMElementXerces.cpp
 
   unix:LIBS += -lxerces-c
-  win32 { 
+  win32 {
     DEFINES += VALUABLE_EXPORT
     LIBS += xerces-c_2.lib
     QMAKE_CXXFLAGS += -Zc:wchar_t

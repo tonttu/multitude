@@ -17,7 +17,10 @@
 #define RADIANT_WATCHDOG_HPP
 
 #include <Radiant/Export.hpp>
+#include <Radiant/Mutex.hpp>
 #include <Radiant/Thread.hpp>
+
+#include <map>
 
 namespace Radiant {
 
@@ -33,7 +36,8 @@ namespace Radiant {
     virtual ~WatchDog();
 
     /** Inform the watchdog that the host application is working. */
-    void hostIsAlive();
+    void hostIsAlive(void * key);
+    void forgetHost(void * key);
 
     /** Sets the interval for checking if the host is alive. */
     void setInterval(float seconds)
@@ -42,13 +46,30 @@ namespace Radiant {
     /** Stops the watchdog. */
     void stop();
 
+    /** Gets the first watchdog instance. */
+    static WatchDog * instance() { return m_instance; }
+
   private:
     
     virtual void childLoop();
 
-    volatile bool m_check;
+    class Item
+    {
+    public:
+      Item() : m_check(true) {}
+      volatile bool m_check;
+    };
+
+    typedef std::map<void *, Item> container;
+
+    container  m_items;
+
+    Radiant::MutexAuto m_mutex;
     volatile bool m_continue;
     float m_intervalSeconds;
+
+    static WatchDog *m_instance;
+
   };
   
 }

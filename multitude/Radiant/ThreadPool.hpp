@@ -74,6 +74,8 @@ namespace Radiant {
     /// This function is thread-safe.
     bool running() const;
 
+    virtual void wakeAll();
+
     /// Every time when we want to delete a thread, this condition variable
     /// will signaled.
     Radiant::Condition m_wait;

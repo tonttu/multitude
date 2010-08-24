@@ -7,16 +7,17 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #include <Luminous/BGThread.hpp>
 
 #include <Nimble/Math.hpp>
 
+#include <Radiant/FileUtils.hpp>
 #include <Radiant/Sleep.hpp>
 #include <Radiant/Trace.hpp>
 
@@ -29,7 +30,7 @@ namespace Luminous
 
   BGThread * BGThread::m_instance = 0;
 
-  BGThread::BGThread()
+  BGThread::BGThread() : m_idle(0)
   {
     if(m_instance == 0)
       m_instance = this;
@@ -49,7 +50,7 @@ namespace Luminous
 
     Radiant::Guard g(m_mutexWait);
     m_taskQueue.insert(contained(task->priority(), task));
-    m_wait.wakeOne();
+    wakeThread();
   }
 
   bool BGThread::removeTask(Task * task)
@@ -77,7 +78,7 @@ namespace Luminous
     Radiant::Guard g(m_mutexWait);
     if(m_reserved.find(task) != m_reserved.end()) {
       m_wait.wakeAll();
-    }
+    } else wakeThread();
   }
 
   void BGThread::setPriority(Task * task, Priority p)
@@ -91,6 +92,9 @@ namespace Luminous
       // Move the task in the queue and update its priority
       m_taskQueue.erase(it);
       m_taskQueue.insert(contained(p, task));
+      if(m_reserved.find(task) != m_reserved.end()) {
+        m_wait.wakeAll();
+      } else wakeThread();
     }
   }
 
@@ -100,14 +104,34 @@ namespace Luminous
        m_instance = new BGThread();
        m_instance->run();
      }
+     else if(!m_instance->isRunning())
+       m_instance->run();
 
      return m_instance;
    }
 
-  unsigned BGThread::taskCount() 
+  unsigned BGThread::taskCount()
   {
     Radiant::Guard guard(m_mutexWait);
     return (unsigned) m_taskQueue.size();
+  }
+
+  void BGThread::dumpInfo(FILE * f, int indent)
+  {
+    Radiant::Guard guard(m_mutexWait);
+
+    if(!f)
+      f = stdout;
+
+    for(container::iterator it = m_taskQueue.begin(); it != m_taskQueue.end(); it++) {
+      Radiant::FileUtils::indent(f, indent);
+      Task * t = it->second;
+      fprintf(f, "TASK %s %p\n", typeid(*t).name(), t);
+      Radiant::FileUtils::indent(f, indent + 1);
+      fprintf(f, "PRIORITY = %d UNTIL = %.3f\n", (int) t->priority(),
+              (float) -t->scheduled().sinceSecondsD());
+
+    }
   }
 
   void BGThread::childLoop()
@@ -167,7 +191,9 @@ namespace Luminous
       }
 
       if(nextTask == m_taskQueue.end()) {
-        m_wait.wait(m_mutexWait);
+        ++m_idle;
+        m_idleWait.wait(m_mutexWait);
+        --m_idle;
       } else {
         Task * task = nextTask->second;
         m_reserved.insert(task);
@@ -195,5 +221,24 @@ namespace Luminous
       if(it->second == task) return it;
 
     return it;
+  }
+
+  void BGThread::wakeThread()
+  {
+    // assert(locked)
+    // if there is at least one idle thread, we can just wake any of those threads randomly
+    if(m_idle > 0)
+      m_idleWait.wakeOne();
+    else if(!m_reserved.empty())
+      // wake all threads that are reserving any tasks,
+      // since those could all be waiting for wrong tasks
+      m_wait.wakeAll();
+    // if there are no idle/reserving threads, then there is no point waking up anybody
+  }
+
+  void BGThread::wakeAll()
+  {
+    ThreadPool::wakeAll();
+    m_idleWait.wakeAll();
   }
 }

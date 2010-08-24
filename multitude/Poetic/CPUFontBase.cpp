@@ -51,6 +51,8 @@ namespace Poetic
 
   void CPUFontBase::detach(GPUFontBase * gpuFont)
   {
+    Radiant::Guard g(m_mutex);
+
     assert(gpuFont->cpuFont() == this);
 
     gpuFont->m_cpuFont = 0;
@@ -68,6 +70,8 @@ namespace Poetic
 
   bool CPUFontBase::setFaceSize(int size, int resolution)
   {
+    Radiant::Guard g(m_mutex);
+
     if(!m_face) {
       Radiant::error("CPUFontBase::setSize # no font loaded yet!");
       return false;
@@ -134,6 +138,8 @@ namespace Poetic
   /// @todo check the bbox calculations, there seems to be some error here
   void CPUFontBase::bbox(const char * str, BBox & bbox)
   {
+    Radiant::Guard g(m_mutex);
+
     if(str && (*str != '\0')) {
         const unsigned char * c = (unsigned char *)str;
         float advance = 0.f;
@@ -155,6 +161,7 @@ namespace Poetic
 
   void CPUFontBase::bbox(const wchar_t * wstr, BBox & bbox)
   {
+    Radiant::Guard g(m_mutex);
     if(wstr && (*wstr != wchar_t('\0')))
     {
 #ifndef WIN32
@@ -185,8 +192,6 @@ namespace Poetic
 
   bool CPUFontBase::checkGlyph(unsigned int characterCode)
   {
-    Radiant::Guard g( & m_mutex);
-
     if(m_glyphList->glyph(characterCode) == 0)
     {
         unsigned int glyphIndex = m_glyphList->fontIndex(characterCode);
@@ -206,6 +211,7 @@ namespace Poetic
 
   float CPUFontBase::advance(const char * str, int n)
   {
+    Radiant::Guard g(m_mutex);
     const unsigned char * c = (unsigned char *)str;
     float width = 0.f;
 
@@ -227,6 +233,7 @@ namespace Poetic
 
   float CPUFontBase::advance(const wchar_t * str, int n)
   {
+    Radiant::Guard g(m_mutex);
     const wchar_t * c = str;
     float width = 0.f;
 
@@ -249,7 +256,7 @@ namespace Poetic
 
   const Glyph * CPUFontBase::getGlyph(unsigned int charCode)
   {
-    // Guard guard(m_mutex);
+    Radiant::Guard g(m_mutex);
     if(checkGlyph(charCode))
       return m_glyphList->glyph(charCode);
     
