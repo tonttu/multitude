@@ -62,7 +62,8 @@ namespace Luminous
 
     /// Returns the number of tasks in the BGThread.
     unsigned taskCount();
-
+    /// Dump information about the tasks at hand
+    void dumpInfo(FILE * f = 0, int indent = 0);
   private:
     virtual void childLoop();
 

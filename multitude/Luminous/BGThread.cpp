@@ -7,16 +7,17 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #include <Luminous/BGThread.hpp>
 
 #include <Nimble/Math.hpp>
 
+#include <Radiant/FileUtils.hpp>
 #include <Radiant/Sleep.hpp>
 #include <Radiant/Trace.hpp>
 
@@ -100,14 +101,34 @@ namespace Luminous
        m_instance = new BGThread();
        m_instance->run();
      }
+     else if(!m_instance->isRunning())
+       m_instance->run();
 
      return m_instance;
    }
 
-  unsigned BGThread::taskCount() 
+  unsigned BGThread::taskCount()
   {
     Radiant::Guard guard(m_mutexWait);
     return (unsigned) m_taskQueue.size();
+  }
+
+  void BGThread::dumpInfo(FILE * f, int indent)
+  {
+    Radiant::Guard guard(m_mutexWait);
+
+    if(!f)
+      f = stdout;
+
+    for(container::iterator it = m_taskQueue.begin(); it != m_taskQueue.end(); it++) {
+      Radiant::FileUtils::indent(f, indent);
+      Task * t = it->second;
+      fprintf(f, "TASK %s %p\n", typeid(*t).name(), t);
+      Radiant::FileUtils::indent(f, indent + 1);
+      fprintf(f, "PRIORITY = %d UNTIL = %.3f\n", (int) t->priority(),
+              (float) -t->scheduled().sinceSecondsD());
+
+    }
   }
 
   void BGThread::childLoop()

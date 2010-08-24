@@ -264,6 +264,8 @@ namespace Luminous {
 
   void CPUMipmaps::doTask()
   {
+    info("CPUMipmaps::doTask # %p %s", this, m_filename.c_str());
+
     m_priority = Luminous::Task::PRIORITY_NORMAL;
 
     double delay = 60.0;
@@ -288,7 +290,7 @@ namespace Luminous {
       }
     }
 
-    /// @todo what if the task has been already re-scheduled form another thread?
+    /// @todo what if the task has been already re-scheduled from another thread?
     scheduleFromNowSecs(delay+0.01);
 
     if(!stack.empty()) {
@@ -417,6 +419,8 @@ namespace Luminous {
 
     item.m_image = imdest;
     item.m_state = READY;
+
+    info("Loaded image %s %d", m_filename.c_str(), is.x);
 
     if(m_shouldSave.find(level) != m_shouldSave.end()) {
       std::string filename;

@@ -58,6 +58,8 @@ namespace Luminous {
 
   CPUMipmaps * CPUMipmapStore::acquire(const std::string & filename, bool immediate)
   {
+    info("CPUMipmapStore::acquire # %s", filename.c_str());
+
     Radiant::GuardStatic g( & __mutex);
 
     MipMapItemContainer::iterator it = __mipmaps.find(filename);
