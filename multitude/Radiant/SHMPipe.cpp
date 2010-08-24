@@ -412,7 +412,7 @@ namespace Radiant
     if(bytes > m_data.size) {
       error("SHMPipe::read # Too large object to read, stream corrupted %u",
             (int) bytes);
-      return 0;
+      return n;
     }
 
     data.ensure(bytes);
@@ -459,8 +459,8 @@ namespace Radiant
 
     n = Nimble::Math::Min<uint32_t>(n, avail);
 
-    if(writePos() + n > size()) {
-      int n1 = size() - writePos();
+    if(m_data.written + n > size()) {
+      int n1 = size() - m_data.written;
       memcpy(m_data.pipe + m_data.written, src, n1);
       memcpy(m_data.pipe, reinterpret_cast<const char*>(src) + n1, n - n1);
       m_data.written = n - n1;

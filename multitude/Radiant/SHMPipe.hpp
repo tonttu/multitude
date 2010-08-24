@@ -129,7 +129,7 @@ namespace Radiant
 
     struct Data {
       uint32_t size;
-      /// Flushed write position, writePos >= written
+      /// Flushed write position
       uint32_t writePos;
       /// Write position (might be unfinished writing)
       uint32_t written;
