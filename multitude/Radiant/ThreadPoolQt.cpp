@@ -156,9 +156,8 @@ namespace Radiant {
 
   bool ThreadPool::run(int number)
   {
-    if(m_p->setThreads(number)) {
-      m_wait.wakeAll(m_mutexWait);
-    }
+    if(m_p->setThreads(number))
+      wakeAll();
     return true;
   }
 
@@ -188,5 +187,10 @@ namespace Radiant {
   {
     Radiant::Guard g(m_p->m_mutex);
     return m_p->m_threads[QThread::currentThread()] == RUNNING;
+  }
+
+  void ThreadPool::wakeAll()
+  {
+    m_wait.wakeAll(m_mutexWait);
   }
 }
