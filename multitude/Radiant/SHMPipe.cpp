@@ -54,6 +54,7 @@ namespace Radiant
     ~SHMHolder();
 
     void attach();
+    void attachToExisting();
 
     void * data() { return m_data; }
     int size() const { return m_size; }
@@ -72,10 +73,25 @@ namespace Radiant
   {
     const char * const fnName = "SHMHolder::SHMHolder";
 
-/*    unsigned s = 1;
-    while(s < size)
-      s = s << 1;
-    m_size = size = s;*/
+    if(size == 0) {
+      m_id = shmget(key, 0, 0660);
+      if(m_id == -1) {
+        error("SHMPipe::attach # Failed to attach to shared memory area (%s).", shmError());
+        throw std::runtime_error("shmget failed");
+      }
+      attachToExisting();
+      return;
+    }
+
+    // Clear any existing SMA with this key
+    m_id = shmget(key, 0, 0660);
+    if(m_id > 0) {
+      if(shmctl(m_id, IPC_RMID, 0) != -1) {
+        debug("%s # Successfully removed existing shared memory area with same key..", fnName);
+      } else {
+        error("%s # Failed to remove existing shared memory area with same key (%s).", fnName, shmError());
+      }
+    }
 
     // Create the new SMA
     /* shmget() rounds up size to nearest page size, so actual size
@@ -113,6 +129,12 @@ namespace Radiant
 
     attach();
 
+    // It could be handy to mark the m_id segment to be destroyed here, since
+    // it will be destroyed only when the last user detaches it. Unfortunately
+    // while shmat() with correct ID continues working after that, shmget with
+    // the same KEY won't work.
+    /// @todo Maybe we could do this if key includes IPC_PRIVATE?
+    /*
     // Mark the segment to be destroyed. It will be destroyed when
     // last user detached it
     if(shmctl(m_id, IPC_RMID, 0) != -1) {
@@ -120,7 +142,7 @@ namespace Radiant
     } else {
       error("%s # Failed to destroy shared memory area (%s).",
             fnName, shmError());
-    }
+    }*/
   }
 
   SHMPipe::SHMHolder::SHMHolder(int id)
@@ -128,23 +150,13 @@ namespace Radiant
     m_size(0),
     m_sem(-1)
   {
-    attach();
-    SHMPipe::Data * d = reinterpret_cast<SHMPipe::Data*>(m_data);
-    m_size = d->size;
-    m_sem = d->sem;
-
-    if(m_sem != -1) {
-      struct sembuf sb;
-      sb.sem_num = 1;
-      sb.sem_op = 1;
-      sb.sem_flg = 0;
-      semop(m_sem, &sb, 1);
-    }
+    attachToExisting();
   }
 
   SHMPipe::SHMHolder::~SHMHolder()
   {
     const char * const fnName = "SHMHolder::~SHMHolder";
+    bool last = false;
 
     if(m_sem != -1) {
       struct sembuf sb;
@@ -158,6 +170,7 @@ namespace Radiant
       sb.sem_flg = IPC_NOWAIT;
       if(semop(m_sem, &sb, 1) == 0) {
         semctl(m_sem, 0, IPC_RMID);
+        last = true;
       }
     }
 
@@ -166,6 +179,17 @@ namespace Radiant
     } else {
       error("%s # Failed to detach shared memory area (%s).",
             fnName, shmError());
+    }
+
+    if(last) {
+      // Mark the segment to be destroyed. It will be destroyed when
+      // last user detached it
+      if(shmctl(m_id, IPC_RMID, 0) != -1) {
+        info("%s # Successfully destroyed shared memory area.", fnName);
+      } else {
+        error("%s # Failed to destroy shared memory area (%s).",
+              fnName, shmError());
+      }
     }
   }
 
@@ -185,6 +209,21 @@ namespace Radiant
     }
   }
 
+  void SHMPipe::SHMHolder::attachToExisting()
+  {
+    attach();
+    SHMPipe::Data * d = reinterpret_cast<SHMPipe::Data*>(m_data);
+    m_size = d->size;
+    m_sem = d->sem;
+
+    if(m_sem != -1) {
+      struct sembuf sb;
+      sb.sem_num = 1;
+      sb.sem_op = 1;
+      sb.sem_flg = 0;
+      semop(m_sem, &sb, 1);
+    }
+  }
 
   // Class SHMPipe.
 
@@ -307,7 +346,6 @@ namespace Radiant
   {
     m_data.size = m_holder->size();
     m_data.sem = m_holder->sem();
-    clear();
   }
 
   SHMPipe::SHMPipe(int id)
