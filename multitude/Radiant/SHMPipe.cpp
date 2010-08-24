@@ -475,7 +475,6 @@ namespace Radiant
 
   uint32_t SHMPipe::readAvailable(uint32_t require)
   {
-    int times = 0;
     uint32_t avail = readAvailable();
     struct sembuf sb;
     sb.sem_num = 0;
