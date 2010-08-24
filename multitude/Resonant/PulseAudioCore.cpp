@@ -299,7 +299,7 @@ namespace Resonant
       ready();
     } else if(strcmp(i->name, "module-null-sink") == 0) {
       int pid = 0;
-      if(sscanf(i->argument, "sink_name=\"Cornerstone.%d\"", &pid) == 1) {
+      if(i->argument && sscanf(i->argument, "sink_name=\"Cornerstone.%d\"", &pid) == 1) {
         struct stat buf;
         char path[64];
         sprintf(path, "/proc/%d", pid);
