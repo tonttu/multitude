@@ -23,6 +23,7 @@
 #include <Luminous/Utils.hpp>
 #include <Luminous/PixelFormat.hpp>
 
+#include <Radiant/ImageConversion.hpp>
 #include <Radiant/StringUtils.hpp>
 #include <Radiant/Trace.hpp>
 #include <Radiant/CameraDriver.hpp>
@@ -357,6 +358,8 @@ namespace FireView {
   Radiant::VideoCamera::TriggerPolarity CamView::m_triggerPolarity = Radiant::VideoCamera::TriggerPolarity(-1);
   int CamView::m_format7mode = 1;
 
+  int CamView::m_debayer = 0;
+
   Nimble::Recti CamView::m_format7rect(0, 0, 2000, 1500);
 
   static int __interval = 50;
@@ -392,6 +395,7 @@ namespace FireView {
 
   CamView::~CamView()
   {
+    m_rgb.freeMemory();
     delete m_params;
     m_thread.stop();
   }
@@ -530,23 +534,38 @@ namespace FireView {
       Radiant::Guard g( & m_thread.m_mutex);
       Radiant::VideoImage frame = m_thread.m_frame;
 
-      if((m_tex->width()  != frame.width()) || (m_tex->height() != frame.height())) {
+      if(!m_debayer) {
+
+        if((m_tex->width()  != frame.width()) || (m_tex->height() != frame.height())) {
 
           m_tex->loadBytes(GL_LUMINANCE, frame.width(), frame.height(), frame.m_planes[0].m_data, PixelFormat(PixelFormat::LAYOUT_LUMINANCE, PixelFormat::TYPE_UBYTE), false);
 
+        }
+        else {
+          m_tex->bind();
+
+          // puts("subimage");
+
+          //  if(!frame.m_planes.empty())
+          //    bzero(frame.m_planes[0].m_data, 640 * 20); // black strip
+
+          glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
+                          frame.width(), frame.height(),
+                          GL_LUMINANCE, GL_UNSIGNED_BYTE,
+                          frame.m_planes[0].m_data);
+        }
       }
-      else {
-        m_tex->bind();
+      else if(m_debayer == 1) {
+        if(m_rgb.width() != frame.width())
+          m_rgb.allocateMemory(Radiant::IMAGE_RGB_24, frame.width(), frame.height());
 
-        // puts("subimage");
+        Radiant::ImageConversion::bayerToRGB(&frame, &m_rgb);
 
-        //  if(!frame.m_planes.empty())
-        //    bzero(frame.m_planes[0].m_data, 640 * 20); // black strip
 
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
-                        frame.width(), frame.height(),
-                        GL_LUMINANCE, GL_UNSIGNED_BYTE,
-                        frame.m_planes[0].m_data);
+        m_tex->loadBytes(GL_RGB, m_rgb.width(), m_rgb.height(),
+                         m_rgb.m_planes[0].m_data,
+                         PixelFormat(PixelFormat::LAYOUT_RGB, PixelFormat::TYPE_UBYTE), false);
+
       }
 
       m_texFrame = m_thread.m_frameCount;
