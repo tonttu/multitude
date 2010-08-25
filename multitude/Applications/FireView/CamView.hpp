@@ -71,6 +71,8 @@ namespace FireView {
     static int format7Mode()
     { return m_format7mode; }
 
+    static void setDebayer(int mode) { m_debayer = mode; }
+
   public slots:
 
     void openParams();
@@ -156,6 +158,7 @@ namespace FireView {
       int                m_lastCheckFrame;
       float              m_lastCheckFps;
 
+
       uint64_t m_euid64;
     };
 
@@ -196,6 +199,8 @@ namespace FireView {
     Nimble::Vector2i m_textLoc;
     float       m_textColor;
 
+    Radiant::VideoImage m_rgb;
+
     Analysis   m_averages[AREA_COUNT]; // Grid.
     QImage     m_foo;
     static bool m_verbose;
@@ -203,6 +208,7 @@ namespace FireView {
 
     static Nimble::Recti m_format7rect;
     static int           m_format7mode;
+    static int           m_debayer;
   };
 
 }
