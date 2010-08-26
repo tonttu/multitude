@@ -24,7 +24,8 @@ namespace Resonant
 {
   ModulePulseAudio::ModulePulseAudio(const std::string & monitorName, uint32_t sinkInput)
     : Module(0), m_ready(false), m_stream(0), m_monitorName(monitorName),
-    m_sinkInput(sinkInput), m_buffer(0), m_bufferSize(0)
+    m_sinkInput(sinkInput), m_buffer(0), m_bufferSize(0),
+    m_syncCount(0), m_canSync(false)
   {
   }
 
@@ -85,7 +86,16 @@ namespace Resonant
     }
 
     Radiant::debug("starting record");
-    if(pa_stream_connect_record(m_stream, m_monitorName.c_str(), NULL,
+    pa_buffer_attr attr;
+    attr.maxlength = attr.tlength = attr.prebuf = attr.minreq = (uint32_t)-1;
+    double latency = getenv("MODULE_PULSEAUDIO_FRAGSIZE")
+                     ? atof(getenv("MODULE_PULSEAUDIO_FRAGSIZE"))
+                     : 30.0;
+    attr.fragsize = pa_usec_to_bytes(latency * 1000, &ss);
+    if(getenv("MODULE_PULSEAUDIO_BUFFERSIZE"))
+      attr.maxlength = pa_usec_to_bytes(atof(getenv("MODULE_PULSEAUDIO_BUFFERSIZE")) * 1000, &ss);
+
+    if(pa_stream_connect_record(m_stream, m_monitorName.c_str(), &attr,
                                 (pa_stream_flags_t)
                                 (PA_STREAM_INTERPOLATE_TIMING |
                                  PA_STREAM_ADJUST_LATENCY |
@@ -112,6 +122,18 @@ namespace Resonant
     if(!m_ready) {
       memset(out[0], 0, n*4);
       return;
+    }
+
+    if(m_syncCount < 20 && m_bufferSize > 0 && m_canSync) {
+      pa_threaded_mainloop_lock(m_mainloop);
+      size_t bsize = pa_stream_readable_size(m_stream);
+      pa_threaded_mainloop_unlock(m_mainloop);
+      if(bsize > 0) {
+        Radiant::info("ModulePulseAudio dropping %d bytes", m_bufferSize);
+        m_syncCount++;
+        m_bufferSize = 0;
+        m_canSync = false;
+      }
     }
 
     int pos = Nimble::Math::Min<int>(n, m_bufferSize);
@@ -146,6 +168,7 @@ namespace Resonant
           m_buffer += tmp;
           n -= tmp;
           pos += tmp;
+          m_canSync = true;
         }
       }
     }
