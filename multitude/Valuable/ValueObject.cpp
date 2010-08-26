@@ -64,6 +64,7 @@ namespace Valuable
         std::cerr << strings[i] << std::endl;
       }
     }
+    std::cerr << std::endl;
     free (strings);
   }
 
@@ -119,9 +120,14 @@ namespace Valuable
       if(s_map.empty())
         Radiant::info("All Serializables were released correctly");
 
-      for(it = s_map.begin(); it != s_map.end(); ++it) {
+      int count = 0;
+      for(it = s_map.begin(); it != s_map.end(); ++it, ++count) {
         std::cerr << "Unreleased: " << it->first << std::endl;
         print_bt(it->second.first, it->second.second);
+        if(count == 1000) {
+          std::cerr << ".. limiting error printing to 1000 errors (there are " << s_map.size() << " errors)" << std::endl;
+          break;
+        }
       }
     }
   };
