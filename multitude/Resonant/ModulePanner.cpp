@@ -127,7 +127,7 @@ namespace Resonant {
 
       Source & s = *m_sources[i];
 
-      for(int j = 0; j < s.m_pipes.size(); j++) {
+      for(int j = 0; j < (int) s.m_pipes.size(); j++) {
 
         Pipe & p = s.m_pipes[j];
 

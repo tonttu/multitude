@@ -7,10 +7,10 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef RADIANT_FILEUTILS_HPP
@@ -33,15 +33,15 @@ namespace Radiant
 
     /// Load a text file.
     /** The contents of the file are returned as a zero-terminated
-	string. The caller is responsible for freeing the memory,
-	using a call to <b>delete []</b>.*/
+    string. The caller is responsible for freeing the memory,
+    using a call to <b>delete []</b>.*/
     /// @todo rename to loadTextFileCStr, loadTextFileWStr
     RADIANT_API char * loadTextFile(const char* filename);
     /// Reads the contents of a text file and returns them
     RADIANT_API std::wstring readTextFile(const std::string & file);
 
     /// Writes a string to a text file.
-    RADIANT_API bool writeTextFile(const char * filename, 
+    RADIANT_API bool writeTextFile(const char * filename,
                                    const char * contents);
 
     /// Check if a given file is readable.
@@ -77,7 +77,7 @@ namespace Radiant
 
     /// Check if a suffix matches
     RADIANT_API bool suffixMatch(const std::string & filename,
-				 const std::string & suffix);
+                 const std::string & suffix);
 
     /// Find a file given a list of paths to search. The directory names are
     /// separated by colon or semicolon in typical Windows or UNIX fashion
@@ -99,6 +99,8 @@ namespace Radiant
 
     /// Returns seconds from epoch, 0 in case of error
     RADIANT_API unsigned long int lastModified(const std::string & filePath);
+
+    RADIANT_API void indent(FILE * f, int levels);
   }
 }
 

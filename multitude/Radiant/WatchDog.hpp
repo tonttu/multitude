@@ -17,7 +17,10 @@
 #define RADIANT_WATCHDOG_HPP
 
 #include <Radiant/Export.hpp>
+#include <Radiant/Mutex.hpp>
 #include <Radiant/Thread.hpp>
+
+#include <map>
 
 namespace Radiant {
 
@@ -32,8 +35,16 @@ namespace Radiant {
     WatchDog();
     virtual ~WatchDog();
 
-    /** Inform the watchdog that the host application is working. */
-    void hostIsAlive();
+    /** Inform the watchdog that the host application is working. You can call this function
+        at any time, and the call is fully thread-safe. After calling this method for the first time,
+        you need to keep calling it periodically, to make sure that the watchdog knows you are there.
+
+        @param key The identifier of the calling object. This is usually a point to some object
+        which provides a handy way of generating unique keys in C/C++.
+    */
+    void hostIsAlive(void * key);
+    /** Instructs the Watchdog to forger some hosting object. */
+    void forgetHost(void * key);
 
     /** Sets the interval for checking if the host is alive. */
     void setInterval(float seconds)
@@ -42,13 +53,30 @@ namespace Radiant {
     /** Stops the watchdog. */
     void stop();
 
+    /** Gets the first watchdog instance. */
+    static WatchDog * instance() { return m_instance; }
+
   private:
     
     virtual void childLoop();
 
-    volatile bool m_check;
+    class Item
+    {
+    public:
+      Item() : m_check(true) {}
+      volatile bool m_check;
+    };
+
+    typedef std::map<void *, Item> container;
+
+    container  m_items;
+
+    Radiant::MutexAuto m_mutex;
     volatile bool m_continue;
     float m_intervalSeconds;
+
+    static WatchDog *m_instance;
+
   };
   
 }
