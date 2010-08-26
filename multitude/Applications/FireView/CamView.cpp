@@ -359,6 +359,7 @@ namespace FireView {
   int CamView::m_format7mode = 1;
 
   int CamView::m_debayer = 0;
+  bool CamView::m_colorCheck = false;
 
   Nimble::Recti CamView::m_format7rect(0, 0, 2000, 1500);
 
@@ -377,6 +378,7 @@ namespace FireView {
       m_peakidx(0),
       m_foo(300, 100, QImage::Format_ARGB32)
   {
+    m_colorBalance.clear();
     // QTimer::singleShot(1000, this, SLOT(locate()));
     connect( & m_timer, SIGNAL(timeout()), this, SLOT(updateGL()));
     bzero(m_averages, sizeof(m_averages));
@@ -556,11 +558,10 @@ namespace FireView {
         }
       }
       else if(m_debayer == 1) {
-        if(m_rgb.width() != frame.width())
-          m_rgb.allocateMemory(Radiant::IMAGE_RGB_24, frame.width(), frame.height());
+        if(m_rgb.width() != frame.width() / 2)
+          m_rgb.allocateMemory(Radiant::IMAGE_RGB_24, frame.width() / 2, frame.height() / 2);
 
         Radiant::ImageConversion::bayerToRGB(&frame, &m_rgb);
-
 
         m_tex->loadBytes(GL_RGB, m_rgb.width(), m_rgb.height(),
                          m_rgb.m_planes[0].m_data,
@@ -574,6 +575,8 @@ namespace FireView {
         doAnalysis();
       if(m_doFocus)
         checkFocus();
+      if(m_colorCheck)
+        checkColorBalance();
     }
 
 
@@ -710,6 +713,21 @@ namespace FireView {
         glVertex2f(n/2.0f+i/n*dw, dh-m_focus[i]*7.0f);
       }
       glEnd();*/
+    }
+
+    if(m_colorCheck) {
+
+      float barHeight = 100;
+      float h = height();
+      float bot = h - 10;
+      glDisable(GL_TEXTURE_2D);
+      glColor3f(1, 0, 0);
+      glRectf(10, bot, 20, bot - barHeight * m_colorBalance[0]);
+      glColor3f(0, 1, 0);
+      glRectf(30, bot, 40, bot - barHeight * m_colorBalance[1]);
+      glColor3f(0, 0, 1);
+      glRectf(50, bot, 60, bot - barHeight * m_colorBalance[2]);
+
     }
 
     glColor3f(1.0f, 1.0f, 1.0f);
@@ -896,5 +914,27 @@ namespace FireView {
     }
 
     m_focus[m_focusidx++ % (sizeof(m_focus) / sizeof(*m_focus))] = float(gsum) / ((hx-lx+1)*(hy-ly+1));
+  }
+
+  void CamView::checkColorBalance()
+  {
+    if(!m_rgb.width() || !m_rgb.height())
+      return;
+
+    Nimble::Vector3T<uint64_t> sum(0,0,0);
+
+    const uint8_t * rgb = m_rgb.m_planes[0].m_data;
+    const uint8_t * end = rgb + 3 * m_rgb.width() * m_rgb.height();
+
+    for(; rgb < end; rgb += 3) {
+      for(int j = 0; j < 3; j++)
+        sum[j] += rgb[j];
+    }
+
+    float peak = sum.maximum();
+    if(peak <= 0.5f)
+      peak = 1;
+
+    m_colorBalance =  Nimble::Vector3(sum[0] / peak, sum[1] / peak, sum[2] / peak);
   }
 }

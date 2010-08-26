@@ -35,8 +35,15 @@ namespace Radiant {
     WatchDog();
     virtual ~WatchDog();
 
-    /** Inform the watchdog that the host application is working. */
+    /** Inform the watchdog that the host application is working. You can call this function
+        at any time, and the call is fully thread-safe. After calling this method for the first time,
+        you need to keep calling it periodically, to make sure that the watchdog knows you are there.
+
+        @param key The identifier of the calling object. This is usually a point to some object
+        which provides a handy way of generating unique keys in C/C++.
+    */
     void hostIsAlive(void * key);
+    /** Instructs the Watchdog to forger some hosting object. */
     void forgetHost(void * key);
 
     /** Sets the interval for checking if the host is alive. */
