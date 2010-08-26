@@ -393,7 +393,7 @@ namespace Luminous
       glVertexAttribPointer(loc2, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&m_attribs[4]));
       glEnableClientState(GL_VERTEX_ARRAY);
 
-      glDrawArrays(GL_QUADS, 0, m_verts.size());
+      glDrawArrays(GL_QUADS, 0, (GLsizei) m_verts.size());
 
       glDisableClientState(GL_VERTEX_ARRAY);
       glDisableVertexAttribArray(loc);
