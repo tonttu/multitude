@@ -30,6 +30,9 @@
 #include <string>
 
 #include <Valuable/DOMElement.hpp>
+
+// #define VALUEOBJECT_MEMCHECK
+
 namespace Valuable
 {
   class HasValues;
@@ -41,7 +44,14 @@ namespace Valuable
   class VALUABLE_API Serializable
   {
   public:
+#ifndef VALUEOBJECT_MEMCHECK
     virtual ~Serializable() {}
+#else
+    Serializable();
+    Serializable(const Serializable & s);
+    virtual ~Serializable();
+    Serializable & operator=(const Serializable & s);
+#endif
 
     /// Serializes (writes) this object to an XML element, and returns the new element.
     virtual ArchiveElement & serialize(Archive & archive) = 0;
