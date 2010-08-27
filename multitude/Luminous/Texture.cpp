@@ -53,10 +53,11 @@ namespace Luminous
                      buildMipmaps, resources);
   }
 
-  Texture1D* Texture1D::fromBytes(GLenum internalFormat, int h,
-                  const void* data,
-                  const PixelFormat& srcFormat,
-                  bool buildMipmaps, GLResources * resources)
+  Texture1D* Texture1D::fromBytes(GLenum internalFormat,
+                            int h,
+                            const void* data,
+                            const PixelFormat& srcFormat, bool buildMipmaps,
+                            GLResources * resources)
   {
     Texture1D * tex = new Texture1D(resources);
 
@@ -76,12 +77,14 @@ namespace Luminous
     // Check dimensions
     if(!GL_ARB_texture_non_power_of_two) {
       bool isPowerOfTwo = !((h - 1) & h);
+
       if(!isPowerOfTwo) {
         cerr << "ERROR: non-power-of-two textures are not supported" << endl;
         return false;
       }
     }
 
+    long used = consumesBytes();
 
     m_haveMipmaps = buildMipmaps;
     m_width = 1;
@@ -112,8 +115,14 @@ namespace Luminous
             srcFormat.layout(), srcFormat.type(), data);
     }
 
+    long uses = consumesBytes();
+
+    changeByteConsumption(used, uses);
+
     return true;
+
   }
+
 
   bool Texture2D::loadImage(const char * filename, bool buildMipmaps) {
       Luminous::Image img;

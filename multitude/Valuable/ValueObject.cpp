@@ -121,11 +121,19 @@ namespace Valuable
         Radiant::info("All Serializables were released correctly");
 
       int count = 0;
-      for(it = s_map.begin(); it != s_map.end(); ++it, ++count) {
-        std::cerr << "Unreleased: " << it->first << std::endl;
-        print_bt(it->second.first, it->second.second);
-        if(count == 1000) {
-          std::cerr << ".. limiting error printing to 1000 errors (there are " << s_map.size() << " errors)" << std::endl;
+      std::multimap<int, MemMap::value_type> sorted;
+      for(it = s_map.begin(); it != s_map.end(); ++it)
+        sorted.insert(std::pair<int, MemMap::value_type>(it->second.second, *it));
+
+      for(std::multimap<int, MemMap::value_type>::iterator it2 = sorted.begin(); it2 != sorted.end(); ++it2, ++count) {
+        size_t size = it2->first;
+        Serializable * obj = it2->second.first;
+        void ** data = it2->second.second.first;
+
+        std::cerr << "Unreleased: " << obj << std::endl;
+        print_bt(data, size);
+        if(count == 500) {
+          std::cerr << ".. limiting error printing to 500 errors (there are " << s_map.size() << " errors)" << std::endl;
           break;
         }
       }
