@@ -128,6 +128,9 @@ namespace Radiant {
 
     /// Reads a 32-bit floating point number from the data buffer
     float readFloat32(bool * ok = 0);
+    /// Reads a 32-bit floating point number from the data buffer
+    /** If the value cannot be read, then the default is returned. */
+    float readFloat32(float defval, bool * ok = 0);
     /// Reads a 64-bit floating point number from the data buffer
     double readFloat64(bool * ok = 0);
     /// Reads a 32-bit integer from the data buffer

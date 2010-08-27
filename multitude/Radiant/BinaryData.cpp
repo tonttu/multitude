@@ -266,6 +266,20 @@ namespace Radiant {
     return 0.0f;
   }
 
+  float BinaryData::readFloat32(float defval, bool *ok)
+  {
+    bool good = true;
+    float tmp = readFloat32( & good);
+
+    if(ok)
+      *ok = good;
+
+    if(good)
+      return tmp;
+    else
+      return defval;
+  }
+
   double BinaryData::readFloat64(bool * ok)
   {
     if(ok)
@@ -464,25 +478,25 @@ namespace Radiant {
     int32_t marker = getRef<int32_t>();
 
     if(marker == WSTRING_MARKER) {
-      
+
       int len = getRef<int32_t>();
-      
+
       str.resize(len);
-      
+
       for(int i = 0; i < len; i++) {
         str[i] = getRef<int32_t>();
       }
-      
+
       return true;
     }
     else if(marker == STRING_MARKER) {
 
       std::string tmp;
-      
+
       const char * source = & m_buf[m_current];
-      
+
       skipParameter(marker);
-      
+
       StringUtils::utf8ToStdWstring(str, source);
 
       return true;
