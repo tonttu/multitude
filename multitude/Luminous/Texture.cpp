@@ -53,7 +53,26 @@ namespace Luminous
                      buildMipmaps, resources);
   }
 
-  bool Texture1D::loadBytes(GLenum internalFormat, int h, const void *data, const PixelFormat &srcFormat, bool buildMipmaps)
+  Texture1D* Texture1D::fromBytes(GLenum internalFormat,
+                            int h,
+                            const void* data,
+                            const PixelFormat& srcFormat, bool buildMipmaps,
+                            GLResources * resources)
+  {
+    Texture1D * tex = new Texture1D(resources);
+
+    if(!tex->loadBytes(internalFormat, h, data, srcFormat, buildMipmaps)) {
+      delete tex;
+      return 0;
+    }
+
+    return tex;
+  }
+
+  bool Texture1D::loadBytes(GLenum internalFormat, int h,
+                            const void* data,
+                            const PixelFormat& srcFormat,
+                            bool buildMipmaps)
   {
     // Check dimensions
     if(!GL_ARB_texture_non_power_of_two) {
@@ -104,28 +123,6 @@ namespace Luminous
 
   }
 
-  Texture1D* Texture1D::fromBytes(GLenum internalFormat, int h,
-                  const void* data,
-                  const PixelFormat& srcFormat,
-                  bool buildMipmaps, GLResources * resources)
-  {
-    // Check dimensions
-    if(!GL_ARB_texture_non_power_of_two) {
-      bool isPowerOfTwo = !((h - 1) & h);
-      if(!isPowerOfTwo) {
-        cerr << "ERROR: non-power-of-two textures are not supported" << endl;
-        return 0;
-      }
-    }
-
-    Texture1D* tex = new Texture1D(resources);
-    if(!tex->loadBytes(internalFormat, h, data, srcFormat, buildMipmaps)) {
-      delete tex;
-      return 0;
-    }
-
-    return tex;
-  }
 
   bool Texture2D::loadImage(const char * filename, bool buildMipmaps) {
       Luminous::Image img;
