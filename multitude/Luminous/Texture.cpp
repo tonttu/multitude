@@ -53,7 +53,7 @@ namespace Luminous
                      buildMipmaps, resources);
   }
 
-  bool Texture1D::loadBytes(GLenum internalFormat, int h, const void *data, const PixelFormat &srcFormat, bool buildMipmaps, GLResources *resources)
+  bool Texture1D::loadBytes(GLenum internalFormat, int h, const void *data, const PixelFormat &srcFormat, bool buildMipmaps)
   {
     // Check dimensions
     if(!GL_ARB_texture_non_power_of_two) {

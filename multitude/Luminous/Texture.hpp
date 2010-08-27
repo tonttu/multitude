@@ -141,8 +141,7 @@ namespace Luminous
     bool loadBytes(GLenum internalFormat, int h,
                    const void* data,
                    const PixelFormat& srcFormat,
-                   bool buildMipmaps = true,
-                   GLResources * resources = 0);
+                   bool buildMipmaps = true);
 
     /// Constructs a 1D texture by loading it from a file
     static Texture1D* fromImage(Image & image, bool buildMipmaps = true, GLResources * resources = 0);
