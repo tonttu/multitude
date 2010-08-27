@@ -53,29 +53,27 @@ namespace Luminous
                      buildMipmaps, resources);
   }
 
-  Texture1D* Texture1D::fromBytes(GLenum internalFormat, int h,
-                  const void* data,
-                  const PixelFormat& srcFormat,
-                  bool buildMipmaps, GLResources * resources)
+  bool Texture1D::loadBytes(GLenum internalFormat, int h, const void *data, const PixelFormat &srcFormat, bool buildMipmaps, GLResources *resources)
   {
     // Check dimensions
     if(!GL_ARB_texture_non_power_of_two) {
       bool isPowerOfTwo = !((h - 1) & h);
+
       if(!isPowerOfTwo) {
         cerr << "ERROR: non-power-of-two textures are not supported" << endl;
-        return 0;
+        return false;
       }
     }
 
-    Texture1D* tex = new Texture1D(resources);
+    long used = consumesBytes();
 
-    tex->m_haveMipmaps = buildMipmaps;
-    tex->m_width = 1;
-    tex->m_height = h;
+    m_haveMipmaps = buildMipmaps;
+    m_width = 1;
+    m_height = h;
     /// @todo this is actually wrong, should convert from internalFormat really
-    tex->m_pf = srcFormat;
+    m_pf = srcFormat;
 
-    tex->bind();
+    bind();
 
     // Default to bilinear filtering
     GLint minFilter = GL_LINEAR;
@@ -96,6 +94,34 @@ namespace Luminous
       gluBuild1DMipmaps(GL_TEXTURE_1D,
             srcFormat.numChannels(), h,
             srcFormat.layout(), srcFormat.type(), data);
+    }
+
+    long uses = consumesBytes();
+
+    changeByteConsumption(used, uses);
+
+    return true;
+
+  }
+
+  Texture1D* Texture1D::fromBytes(GLenum internalFormat, int h,
+                  const void* data,
+                  const PixelFormat& srcFormat,
+                  bool buildMipmaps, GLResources * resources)
+  {
+    // Check dimensions
+    if(!GL_ARB_texture_non_power_of_two) {
+      bool isPowerOfTwo = !((h - 1) & h);
+      if(!isPowerOfTwo) {
+        cerr << "ERROR: non-power-of-two textures are not supported" << endl;
+        return 0;
+      }
+    }
+
+    Texture1D* tex = new Texture1D(resources);
+    if(!tex->loadBytes(internalFormat, h, data, srcFormat, buildMipmaps)) {
+      delete tex;
+      return 0;
     }
 
     return tex;
