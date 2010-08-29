@@ -106,14 +106,15 @@ namespace Luminous
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, minFilter);
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, magFilter);
 
-    glTexImage1D(GL_TEXTURE_1D, 0, internalFormat, h, 0,
-                 srcFormat.layout(), srcFormat.type(), data);
 
     if(buildMipmaps) {
       gluBuild1DMipmaps(GL_TEXTURE_1D,
             srcFormat.numChannels(), h,
             srcFormat.layout(), srcFormat.type(), data);
     }
+    else
+      glTexImage1D(GL_TEXTURE_1D, 0, internalFormat, h, 0,
+                   srcFormat.layout(), srcFormat.type(), data);
 
     long uses = consumesBytes();
 
