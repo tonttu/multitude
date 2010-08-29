@@ -12,8 +12,10 @@
  * from the GNU organization (www.gnu.org).
  * 
  */
+
+#include <Luminous/Luminous.hpp>
+
 #include "CPUBitmapGlyph.hpp"
-#include <GL/glew.h>
 #include <Radiant/Trace.hpp>
 
 #include <ft2build.h>
