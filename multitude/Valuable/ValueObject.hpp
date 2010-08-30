@@ -30,8 +30,7 @@
 #include <string>
 
 #include <Valuable/DOMElement.hpp>
-
-// #define VALUEOBJECT_MEMCHECK
+#include "MemCheck.hpp"
 
 namespace Valuable
 {
@@ -42,16 +41,12 @@ namespace Valuable
 
   /// The base class for all serializable objects.
   class VALUABLE_API Serializable
+#ifdef MULTI_MEMCHECK
+    : public MemCheck
+#endif
   {
   public:
-#ifndef VALUEOBJECT_MEMCHECK
     virtual ~Serializable() {}
-#else
-    Serializable();
-    Serializable(const Serializable & s);
-    virtual ~Serializable();
-    Serializable & operator=(const Serializable & s);
-#endif
 
     /// Serializes (writes) this object to an XML element, and returns the new element.
     virtual ArchiveElement & serialize(Archive & archive) = 0;

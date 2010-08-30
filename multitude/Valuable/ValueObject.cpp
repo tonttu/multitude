@@ -24,125 +24,10 @@
 #include <Radiant/Trace.hpp>
 #include <Radiant/Mutex.hpp>
 
-#ifdef VALUEOBJECT_MEMCHECK
-#ifdef __GNUC__
-#include <execinfo.h>
-#include <cxxabi.h>
-#endif
-#endif
 
 namespace Valuable
 {
   using namespace Radiant;
-
-#ifdef VALUEOBJECT_MEMCHECK
-#ifdef __GNUC__
-  typedef std::map<Serializable*, std::pair<void **, size_t> > MemMap;
-  static MemMap s_map;
-  static Radiant::MutexStatic s_mutex;
-
-  inline void print_bt(void ** data, size_t size) {
-    char ** strings = backtrace_symbols(data, size);
-
-    int status;
-    for(size_t i = 0; i < size; i++) {
-      char * a = index(strings[i], '(');
-      char * b = index(strings[i], '+');
-      char * c = index(strings[i], ')');
-
-      if(a && b && c && b > a + 1) {
-        *b = '\0';
-        char * tmp = abi::__cxa_demangle(a + 1, 0, 0, &status);
-        if(tmp) {
-          *a = '\0';
-          std::cerr << tmp << ' ' << strings[i] << std::endl;
-          free(tmp);
-        } else {
-          std::cerr << strings[i] << '+' << (b+1) << std::endl;
-        }
-      } else {
-        std::cerr << strings[i] << std::endl;
-      }
-    }
-    std::cerr << std::endl;
-    free (strings);
-  }
-
-  Serializable::Serializable()
-  {
-    void ** bt = new void*[50];
-    size_t size = backtrace(bt, 50);
-
-    Radiant::Guard g(s_mutex);
-    s_map[this] = std::make_pair(bt, size);
-  }
-
-  Serializable::Serializable(const Serializable &)
-  {
-    void ** bt = new void*[50];
-    size_t size = backtrace(bt, 50);
-
-    Radiant::Guard g(s_mutex);
-    s_map[this] = std::make_pair(bt, size);
-  }
-
-  Serializable & Serializable::operator=(const Serializable &)
-  {
-    void ** bt = new void*[50];
-    size_t size = backtrace(bt, 50);
-
-    Radiant::Guard g(s_mutex);
-    s_map[this] = std::make_pair(bt, size);
-
-    return *this;
-  }
-
-  Serializable::~Serializable() {
-    Radiant::Guard g(s_mutex);
-    MemMap::iterator it = s_map.find(this);
-    if(it == s_map.end()) {
-      std::cerr << "~Serializable: Couldn't find object " << this << std::endl;
-      void ** bt = new void*[50];
-      size_t size = backtrace(bt, 50);
-      print_bt(bt, size);
-      delete[] bt;
-    } else {
-      delete[] it->second.first;
-      s_map.erase(it);
-    }
-  }
-
-  class Checker {
-  public:
-    virtual ~Checker() {
-      MemMap::iterator it;
-      Radiant::GuardStatic g(s_mutex);
-      if(s_map.empty())
-        Radiant::info("All Serializables were released correctly");
-
-      int count = 0;
-      std::multimap<int, MemMap::value_type> sorted;
-      for(it = s_map.begin(); it != s_map.end(); ++it)
-        sorted.insert(std::pair<int, MemMap::value_type>(it->second.second, *it));
-
-      for(std::multimap<int, MemMap::value_type>::iterator it2 = sorted.begin(); it2 != sorted.end(); ++it2, ++count) {
-        size_t size = it2->first;
-        Serializable * obj = it2->second.first;
-        void ** data = it2->second.second.first;
-
-        std::cerr << "Unreleased: " << obj << std::endl;
-        print_bt(data, size);
-        if(count == 500) {
-          std::cerr << ".. limiting error printing to 500 errors (there are " << s_map.size() << " errors)" << std::endl;
-          break;
-        }
-      }
-    }
-  };
-
-  static Checker s_checker;
-#endif
-#endif
 
   bool Serializable::deserializeXML(DOMElement &element)
   {
@@ -166,11 +51,8 @@ namespace Valuable
       parent->addValue(name, this);
   }
 
-  ValueObject::ValueObject(const ValueObject & o) :
-#ifdef VALUEOBJECT_MEMCHECK
-    Serializable(o),
-#endif
-    m_parent(0),
+  ValueObject::ValueObject(const ValueObject & o)
+    : m_parent(0),
     m_changed(false)
   {
     m_name = o.m_name;
