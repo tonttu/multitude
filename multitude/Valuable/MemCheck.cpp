@@ -71,8 +71,10 @@ namespace Valuable {
     virtual ~Checker()
     {
       Radiant::GuardStatic g(s_mutex);
-      Radiant::info("%d of %d MemCheck objects were not released", s_map.size(), s_total);
-      if(!s_set.empty()) {
+      if(s_set.empty()) {
+        Radiant::info("All %d MemCheck objects were released", s_total);
+      } else {
+        Radiant::info("%d of %d MemCheck objects were not released", s_map.size(), s_total);
         std::map<std::string, int> map;
         for(MemSet::iterator it = s_set.begin(); it != s_set.end(); ++it)
           ++map[typeid(**it).name()];
@@ -168,8 +170,10 @@ namespace Valuable {
     virtual ~Checker()
     {
       Radiant::GuardStatic g(s_mutex);
-      Radiant::info("%d of %d MemCheck objects were not released", s_map.size(), s_total);
-      if(!s_map.empty()) {
+      if(s_map.empty()) {
+        Radiant::info("All %d MemCheck objects were released", s_total);
+      } else {
+        Radiant::info("%d of %d MemCheck objects were not released", s_map.size(), s_total);
         std::multimap<int, MemMap::value_type> sorted;
         for(MemMap::iterator it = s_map.begin(); it != s_map.end(); ++it)
           sorted.insert(std::pair<int, MemMap::value_type>(it->second.second, *it));
