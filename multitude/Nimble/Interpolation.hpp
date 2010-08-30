@@ -15,7 +15,7 @@ namespace Nimble
     /// Type of key
     typedef std::pair<float, T> Key;
     /// Array of keys
-    typedef std::vector<Key > Keys;
+    typedef std::vector<Key> Keys;
 
     /// Constructs an empty interpolator
     LinearInterpolator() {}
@@ -38,8 +38,15 @@ namespace Nimble
     /// @param t position to interpolate at
     /// @return interpolated value
     T interpolate(float t) const
-    {        
-        typename Keys::const_iterator i = std::lower_bound(m_keys.begin(), m_keys.end(), std::make_pair(t, T()), funky_compare);
+    {
+      assert(!m_keys.empty());
+
+      typename Keys::const_iterator i = std::lower_bound(m_keys.begin(), m_keys.end(), std::make_pair(t, T()), funky_compare);
+
+      if(i == m_keys.end())
+        return m_keys.back().second;
+      else if(i == m_keys.begin())
+        return m_keys.front().second;
 
       const Key & a = *(i - 1);
       const Key & b = *(i - 0);
@@ -48,6 +55,9 @@ namespace Nimble
 
       return a.second * (1.f - tt) + b.second * tt;
     }
+
+    const Keys & keys() const { return m_keys; }
+    void clear() { m_keys.clear(); }
 
   private:
     // Compare float to pair with float in the first field
