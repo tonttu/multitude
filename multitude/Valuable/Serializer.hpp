@@ -12,41 +12,41 @@
 
 namespace Valuable
 {
-  /// helper structs and enum for template specializations
-  /** Boost & TR1 have is_base_of & similar template hacks that basically do this */
-  namespace Type
-  {
-    /// Every object is one of these types, see Serializer::Trait
-    enum { pair = 1, container = 2, serializable = 3, smart_ptr = 4, other = 5 };
-    // All structs have same _ element with different size, so we can use
-    // sizeof operator to make decisions in templates
-    /// @cond
-    struct pair_trait { char _[1]; };
-    struct container_trait { char _[2]; };
-    struct serializable_trait { char _[3]; };
-    struct smart_ptr_trait { char _[4]; };
-    struct default_trait { char _[5]; };
-    /// @endcond
-  }
-
-  /// Removes const from type: remove_const<const Foo>::Type == Foo
-  /// Works also with non-const types, remove_const<Foo>::Type == Foo
-  template <typename T> struct remove_const {
-    /// The original type without const
-    typedef T Type;
-  };
-  /// @copydoc remove_const
-  template <typename T> struct remove_const<const T> {
-      /// The original type without const
-      typedef T Type;
-   };
-
   /// XML Serializer namespace that has handles the (de)serialize dispatching
   /** Correct way to save/load object state to/from XML is to use static
       serialize/deserialize methods.
   */
   namespace Serializer
   {
+    /// helper structs and enum for template specializations
+    /** Boost & TR1 have is_base_of & similar template hacks that basically do this */
+    namespace Type
+    {
+      /// Every object is one of these types, see Serializer::Trait
+      enum { pair = 1, container = 2, serializable = 3, smart_ptr = 4, other = 5 };
+      // All structs have same _ element with different size, so we can use
+      // sizeof operator to make decisions in templates
+      /// @cond
+      struct pair_trait { char _[1]; };
+      struct container_trait { char _[2]; };
+      struct serializable_trait { char _[3]; };
+      struct smart_ptr_trait { char _[4]; };
+      struct default_trait { char _[5]; };
+      /// @endcond
+    }
+
+    /// Removes const from type: remove_const<const Foo>::Type == Foo
+    /// Works also with non-const types, remove_const<Foo>::Type == Foo
+    template <typename T> struct remove_const {
+      /// The original type without const
+      typedef T Type;
+    };
+    /// @copydoc remove_const
+    template <typename T> struct remove_const<const T> {
+      /// The original type without const
+      typedef T Type;
+    };
+
     /// Trait class for compile time separation of different kinds of serializable objects
     /** \code
         Trait<int>::type == Type::other
@@ -153,19 +153,36 @@ namespace Valuable
     };
 
     template <typename T>
+    struct Impl<T*, Type::other>
+    {
+      inline static ArchiveElement & serialize(Archive & archive, T * t)
+      {
+        ArchiveElement & elem = archive.createElement(typeid(*t).name());
+        elem.set(Radiant::StringUtils::stringify(*t));
+        return elem;
+      }
+
+      inline static T * deserialize(ArchiveElement & element)
+      {
+        typedef typename remove_const<T>::Type T2;
+        std::istringstream is(element.get());
+        T2 * t = new T2;
+        is >> *t;
+        return t;
+      }
+    };
+
+    template <typename T>
     struct Impl<T, Type::smart_ptr>
     {
       inline static ArchiveElement & serialize(Archive & archive, T & t)
       {
-        // return Serializer::serialize(archive, t.get());
-        /// for now we assume, that the object inside the smart_ptr is always serializable
-        return t->serialize(archive);
+        return Serializer::serialize(archive, t.get());
       }
 
       inline static typename remove_const<T>::Type deserialize(ArchiveElement & element)
       {
         return T(Serializer::deserialize<typename T::element_type*>(element));
-        /// return Creator<typename remove_const<typename T::element_type>::Type>::func()(element);
       }
     };
 

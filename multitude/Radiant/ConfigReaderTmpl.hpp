@@ -19,11 +19,25 @@
 #include <Radiant/ConfigReader.hpp>
 
 namespace Radiant {
-  
+
   template <class T>
-  T ChunkT<T>::get(const std::string &id)
+  int ChunkT<T>::numberOf(const std::string & id) const
   {
-    iterator it = m_variants.find(id);
+    const_iterator it = m_variants.find(id);
+    if(it == m_variants.end())
+      return 0;
+
+    int n = 1;
+    for(it++ ; (it != m_variants.end()) && ((*it).first == id); it++)
+      n++;
+
+    return n;
+  }
+
+  template <class T>
+  T ChunkT<T>::get(const std::string &id) const
+  {
+    const_iterator it = m_variants.find(id);
     if(it != m_variants.end())
     return (*it).second;
 
@@ -32,9 +46,9 @@ namespace Radiant {
 
   template <class T>
   T ChunkT<T>::get(const std::string &id,
-                   const std::string &alternateId)
+                   const std::string &alternateId) const
   {
-    iterator it = m_variants.find(id);
+    const_iterator it = m_variants.find(id);
     if(it != m_variants.end())
       return (*it).second;
 
@@ -47,7 +61,7 @@ namespace Radiant {
   }
   
   template <class T>
-  bool ChunkT<T>::contains(const std::string &id)
+  bool ChunkT<T>::contains(const std::string &id) const
   {
     return m_variants.find(id) != m_variants.end();
   }
@@ -59,6 +73,23 @@ namespace Radiant {
 	  m_variants.erase(name);
     m_variants.insert(std::pair<std::string, T>(name, v));
 	
+  }
+
+  template <class T>
+  void ChunkT<T>::addChunk(const std::string & name, const ChunkT<T> &v)
+  {
+    m_chunks.insert(std::make_pair(name, v));
+  }
+
+  template <class T>
+  const ChunkT<T> & ChunkT<T>::getChunk(const std::string &id) const
+  {
+    static ChunkT<T> empty;
+    const_chunk_iterator it = m_chunks.find(id);
+    if (it == m_chunks.end())
+      return empty;
+    else
+      return it->second;
   }
    
   template <class T>
@@ -78,12 +109,19 @@ namespace Radiant {
   }
 
   template <class T>
-  void ChunkT<T>::dump(std::ostream& os)
+  void ChunkT<T>::dump(std::ostream& os, int indent)
   {
+    std::string ws(indent, ' ');
+    for(chunk_iterator it = chunkBegin(); it != chunkEnd(); ++it) {
+      os << ws << it->first << " {\n";
+      it->second.dump(os, indent+2);
+      os << ws << "}\n";
+    }
+
     for(iterator it = m_variants.begin();it != m_variants.end(); it++) {
-      os << (*it).first << " {\n";
-      (*it).second.dump(os);
-      os << "}\n\n";
+      os << ws << (*it).first << " {\n";
+      (*it).second.dump(os, indent+2);
+      os << ws << "}\n\n";
     }
   }
 

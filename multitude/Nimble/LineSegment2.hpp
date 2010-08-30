@@ -74,6 +74,9 @@ template <typename T>
       return r;
     }
 
+    /// Returns true if the line segment intersects with the given bezier curve
+    bool intersectsBezier(Vector2f cp[4]);
+
     /// Returns the first end point of the line segment
     Vector2T<T> & begin() { return m_points[0]; }
     /// Returns the first end point of the line segment

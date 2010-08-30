@@ -30,6 +30,8 @@
 #include <string>
 
 #include <Valuable/DOMElement.hpp>
+#include "MemCheck.hpp"
+
 namespace Valuable
 {
   class HasValues;
@@ -39,6 +41,9 @@ namespace Valuable
 
   /// The base class for all serializable objects.
   class VALUABLE_API Serializable
+#ifdef MULTI_MEMCHECK
+    : public MemCheck
+#endif
   {
   public:
     virtual ~Serializable() {}

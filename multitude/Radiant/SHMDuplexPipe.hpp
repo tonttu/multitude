@@ -33,18 +33,18 @@ namespace Radiant
          const key_t readKey,  const uint32_t readSize);
     RADIANT_API virtual ~SHMDuplexPipe();
 
-    RADIANT_API int read(void * ptr, int n) { return m_in.read(ptr, n); }
-    RADIANT_API int read(BinaryData & bd) { return m_in.read(bd); }
-    RADIANT_API uint32_t readAvailable() { return m_in.readAvailable(); }
+    inline int read(void * ptr, int n) { return m_in.read(ptr, n); }
+    inline int read(BinaryData & bd) { return m_in.read(bd); }
+    inline uint32_t readAvailable() { return m_in.readAvailable(); }
 
-    RADIANT_API int write(const void * ptr, int n) { return m_out.write(ptr, n); }
+    inline int write(const void * ptr, int n) { return m_out.write(ptr, n); }
     inline int write(const BinaryData & bd, bool doflush)
     { int n = m_out.write(bd); if(doflush) flush(); return n ; }
     inline uint32_t writeAvailable() { return m_out.writeAvailable(); }
     /// Flush the written data to the buffer
     inline void flush() { m_out.flush(); }
-    /** Zeroes out the input- and output pipes.*/
-    inline void zero() { m_out.zero(); m_in.zero(); }
+    /** Clears the input- and output pipes counters .*/
+    inline void clear() { m_out.clear(); m_in.clear(); }
   private:
     SHMPipe m_out;
     SHMPipe m_in;

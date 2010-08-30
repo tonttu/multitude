@@ -59,16 +59,40 @@ namespace Luminous {
       return false;
     }
 
+
+    // We can upload the image at once:
+
     std::shared_ptr<ImageTex> img = m_cpumaps->getImage(best);
 
-    if(!img)
-      return false;
+    if(img->isFullyLoadedToGPU() || ((img->width() * img->height()) < 500000)) {
+      img->bind(GL_TEXTURE0, false);
+      return true;
+    }
+    else {
 
-    img->bind(GL_TEXTURE0, false);
+      // Then perform incremental texture upload:
 
-    Luminous::Utils::glCheck("GPUMipmaps::bind");
+      img->uploadBytesToGPU(resources(), 2000000);
 
-    return true;
+      // Lets check if we find something to use:
+      for(unsigned i = 0; i < m_cpumaps->stackSize(); i++) {
+        std::shared_ptr<ImageTex> test = m_cpumaps->getImage(i);
+
+        if(!test)
+          continue;
+
+        if(test->isFullyLoadedToGPU() || ((test->width() * test->height()) < 500000)) {
+          test->bind(GL_TEXTURE0, false);
+          return true;
+        }
+      }
+
+    }
+
+
+    //Luminous::Utils::glCheck("GPUMipmaps::bind");
+
+    return false;
   }
 
   bool GPUMipmaps::bind(const Nimble::Matrix3 & transform,

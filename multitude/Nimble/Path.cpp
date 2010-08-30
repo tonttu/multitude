@@ -157,7 +157,7 @@ namespace Nimble {
     // Stage 2, Douglas-Peucker simplification
     std::vector<bool> markers(m_points.size(), false);
     markers[0] = markers[buffer.size() - 1] = true;
-    simplifyDP(dpTolerance, buffer, 0, buffer.size() - 1, markers);
+    simplifyDP(dpTolerance, buffer, 0, (int) buffer.size() - 1, markers);
 
     // Copy the marked vertices to output
     m_points.clear();

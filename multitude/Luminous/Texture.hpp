@@ -137,10 +137,21 @@ namespace Luminous
     /// Constructs a 1D texture and adds it to the given resource collection
     Texture1D(GLResources * resources = 0) : TextureT<GL_TEXTURE_1D> (resources) {}
 
+    /// Load the texture from from raw data, provided by the user
+    bool loadBytes(GLenum internalFormat, int h,
+                   const void* data,
+                   const PixelFormat& srcFormat,
+                   bool buildMipmaps = true);
+
     /// Constructs a 1D texture by loading it from a file
     static Texture1D* fromImage(Image & image, bool buildMipmaps = true, GLResources * resources = 0);
     /// Constructs a 1D texture by loading it from memory
-    static Texture1D* fromBytes(GLenum internalFormat, int w, const void* data, const PixelFormat& srcFormat, bool buildMipmaps = true, GLResources * resources = 0);
+    static Texture1D* fromBytes(GLenum internalFormat,
+                                int h,
+                                const void* data,
+                                const PixelFormat& srcFormat, bool buildMipmaps = true,
+                                GLResources * resources = 0);
+
   };
 
   /// A 2D texture
@@ -148,7 +159,8 @@ namespace Luminous
   {
   public:
     /// Constructs a 2D texture and adds it to the given resource collection
-    Texture2D(GLResources * resources = 0) : TextureT<GL_TEXTURE_2D>(resources) {}
+    Texture2D(GLResources * resources = 0) :
+        TextureT<GL_TEXTURE_2D>(resources), m_loadedLines(0) {}
 
     /// Load the texture from an image file
     bool loadImage(const char * filename, bool buildMipmaps = true);
@@ -160,8 +172,11 @@ namespace Luminous
                    const void* data,
                    const PixelFormat& srcFormat,
                    bool buildMipmaps = true);
-    /// Laod a sub-texture.
+    /// Load a sub-texture.
     void loadSubBytes(int x, int y, int w, int h, const void * subData);
+
+    /// Load some lines to the texture:
+    void loadLines(int y, int h, const void * data, const PixelFormat& srcFormat);
 
     /// Create a new texture, from an image file
     static Texture2D * fromFile(const char * filename, bool buildMipmaps = true, GLResources * resources = 0);
@@ -172,6 +187,11 @@ namespace Luminous
                 const void * data,
                 const PixelFormat& srcFormat,
                 bool buildMipmaps = true, GLResources * resources = 0);
+    /// Returns the number of scan-lines that have been loaded into the GPU
+    /** This function is mostly useful if one is using progressive image loading. */
+    inline unsigned loadedLines() const { return m_loadedLines; }
+  private:
+    unsigned m_loadedLines;
   };
 
   /// A 3D texture

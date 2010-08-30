@@ -93,6 +93,7 @@ namespace Radiant {
     { expand(size); m_count = size; }
 
     /// Gets an object, and check that the index is valid
+    /** If the index is not valid, then assertion is raised, and the software stops. */
     const T & getSafe(unsigned index) const
     { assert(index < m_count); return m_points[index]; }
     /// @copydoc getSafe

@@ -14,6 +14,8 @@ HEADERS += ModuleRectPanner.hpp
 HEADERS += ModuleSamplePlayer.hpp
 HEADERS += SoundRectangle.hpp
 
+linux-*:HEADERS += ModulePulseAudio.hpp PulseAudioCore.hpp
+
 SOURCES += Application.cpp
 SOURCES += AudioFileHandler.cpp
 SOURCES += AudioLoop.cpp
@@ -27,7 +29,12 @@ SOURCES += ModuleRectPanner.cpp
 SOURCES += ModuleSamplePlayer.cpp
 SOURCES += SoundRectangle.cpp
 
+linux-*:SOURCES += ModulePulseAudio.cpp PulseAudioCore.cpp
+
+
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_VALUABLE
+
+linux-*:LIBS += -lpulse
 
 
 unix: PKGCONFIG += portaudio-2.0 sndfile

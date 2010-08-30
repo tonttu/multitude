@@ -19,7 +19,7 @@
 namespace Resonant {
   /** Abstract application base class for Resonant. The Application
       object is at the moment mostly unused, but it is included as it
-      will be needed to deliver core information to the audio lugins
+      will be needed to deliver core information to the audio plugins
       (application time etc.). */
   class Application
   {

@@ -127,6 +127,10 @@ namespace Radiant {
 
     /// Returns the number of complete days this timestamp spans
     int64_t days() const { return m_val / ticksPerDay(); }
+    /// Returns the number of complete hours this timestamp spans
+    int64_t hours() const { return m_val / ticksPerHour(); }
+    /// Returns the number of complete hours this timestamp spans
+    int64_t minutes() const { return m_val / ticksPerMinute(); }
     /// Returns the number of days (including fractions of a day) this timestamp spans
     double  daysD() const { return m_val / (double) ticksPerDay(); }
     /// Returns the number of full seconds that this time-stamp includes

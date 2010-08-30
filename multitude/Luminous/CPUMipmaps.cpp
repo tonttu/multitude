@@ -50,13 +50,14 @@ namespace Luminous {
 
   void CPUMipmaps::update(float dt, float )
   {
+    Radiant::Guard g(&m_stackMutex);
     for(int i = 0; i < m_maxLevel; i++) {
       m_stack[i].m_unUsed += dt;
     }
     if(!m_keepMaxLevel)
       m_stack[m_maxLevel].m_unUsed += dt;
 
-    Radiant::Guard g(&m_stackMutex);
+    Radiant::Guard g2(&m_stackChangeMutex);
     for(StackMap::iterator it = m_stackChange.begin(); it != m_stackChange.end(); ++it)
       m_stack[it->first] = it->second;
     m_stackChange.clear();
@@ -80,28 +81,28 @@ namespace Luminous {
   int CPUMipmaps::getClosest(Nimble::Vector2f size)
   {
     int bestlevel = getOptimal(size);
-    CPUItem & item = m_stack[bestlevel];
+    Radiant::Guard g(&m_stackMutex);
+    const CPUItem & item = m_stack[bestlevel];
     markImage(bestlevel);
 
     if(item.m_state == READY)
       return bestlevel;
 
-    BGThread::instance()->removeTask(this);
-    scheduleFromNowSecs(0);
-    BGThread::instance()->addTask(this);
+    reschedule();
+    BGThread::instance()->reschedule(this);
 
     // Scan for the best available mip-map.
 
     for(int i = bestlevel-1; i >= 0; --i) {
       if(m_stack[i].m_state == READY) {
-        m_stack[i].m_unUsed = 0.0f;
+        markImage(i);
         return i;
       }
     }
 
     for(int i = bestlevel+1; i <= m_maxLevel; ++i) {
       if(m_stack[i].m_state == READY) {
-        m_stack[i].m_unUsed = 0.0f;
+        markImage(i);
         return i;
       }
     }
@@ -111,7 +112,7 @@ namespace Luminous {
 
   std::shared_ptr<ImageTex> CPUMipmaps::getImage(int i)
   {
-    CPUItem & item = m_stack[i];
+    const CPUItem item = getStack(i);
 
     std::shared_ptr<ImageTex> image = item.m_image;
     if(item.m_state != READY)
@@ -122,11 +123,13 @@ namespace Luminous {
 
   void CPUMipmaps::markImage(int i)
   {
+    /// assert(is locked)
     m_stack[i].m_unUsed = 0.0f;
   }
 
   bool CPUMipmaps::isReady()
   {
+    Radiant::Guard g(&m_stackMutex);
     for(int i = 0; i <= m_maxLevel; i++) {
       CPUItem & ci = m_stack[i];
 
@@ -169,7 +172,7 @@ namespace Luminous {
 
     m_priority = Luminous::Task::PRIORITY_HIGH;
     markImage(m_maxLevel);
-    scheduleFromNowSecs(0.0f);
+    reschedule();
 
     return true;
   }
@@ -210,6 +213,7 @@ namespace Luminous {
 
   bool CPUMipmaps::isActive()
   {
+    Radiant::Guard g(&m_stackMutex);
     for(int i = 0; i <= m_maxLevel; i++) {
 
       if(m_stack[i].m_state == WAITING)
@@ -260,13 +264,14 @@ namespace Luminous {
 
   void CPUMipmaps::doTask()
   {
-    m_priority = Luminous::Task::PRIORITY_NORMAL;
-
     double delay = 60.0;
+    m_priority = Luminous::Task::PRIORITY_NORMAL;
+    reschedule(delay, true);
+
     StackMap stack;
 
     for(int i = 0; i <= m_maxLevel; i++) {
-      CPUItem & item = m_stack[i];
+      const CPUItem item = getStack(i);
       double time_to_expire = m_timeOut - item.m_unUsed;
 
       if(time_to_expire > 0) {
@@ -284,14 +289,22 @@ namespace Luminous {
       }
     }
 
-    /// @todo what if the task has been already re-scheduled form another thread?
-    scheduleFromNowSecs(delay+0.01);
+    /// @todo what if the task has been already re-scheduled from another thread?
+    reschedule(delay+0.0001);
 
     if(!stack.empty()) {
-      Radiant::Guard g(&m_stackMutex);
+      Radiant::Guard g(&m_stackChangeMutex);
       for(StackMap::iterator it = stack.begin(); it != stack.end(); ++it)
         m_stackChange[it->first] = it->second;
     }
+  }
+
+  CPUMipmaps::CPUItem CPUMipmaps::getStack(int index)
+  {
+    Radiant::Guard g(&m_stackMutex);
+    assert(index >= 0 && index < (int) m_stack.size());
+    const CPUItem item = m_stack[index];
+    return item;
   }
 
   void CPUMipmaps::cacheFileName(std::string & name, int level)
@@ -310,7 +323,7 @@ namespace Luminous {
     name += Radiant::FileUtils::filename(m_filename);
 
     // Put in the right suffix
-    unsigned i = name.size() - 1;
+    size_t i = name.size() - 1;
 
     while(i && name[i] != '.' && name[i] != '/')
       i--;
@@ -323,7 +336,7 @@ namespace Luminous {
 
   void CPUMipmaps::recursiveLoad(StackMap & stack, int level)
   {
-    if(m_stack[level].m_state == READY)
+    if(getStack(level).m_state == READY)
       return;
 
     CPUItem & item = stack[level];
@@ -377,20 +390,20 @@ namespace Luminous {
     // Load the bigger image from lower level, and scale down from that:
     recursiveLoad(stack, level - 1);
 
-    const CPUItem * src = 0;
-    if(m_stack[level-1].m_state == READY) {
-      src = &m_stack[level-1];
+    std::shared_ptr<Luminous::ImageTex> imsrc;
+    const CPUItem level1 = getStack(level-1);
+    if(level1.m_state == READY) {
+      imsrc = level1.m_image;
     } else {
-      src = &stack[level-1];
-      if(src->m_state != READY) {
+      if(stack[level-1].m_state != READY) {
         error("Failed to get mipmap %d", level - 1);
         item.m_state = FAILED;
         return;
       }
+      imsrc = stack[level-1].m_image;
     }
 
     // Scale down from bigger mipmap
-    std::shared_ptr<Luminous::ImageTex> imsrc = src->m_image;
     std::shared_ptr<Luminous::ImageTex> imdest(new Luminous::ImageTex());
 
     Nimble::Vector2i ss = imsrc->size();
@@ -406,6 +419,8 @@ namespace Luminous {
     item.m_image = imdest;
     item.m_state = READY;
 
+    // info("Loaded image %s %d", m_filename.c_str(), is.x);
+
     if(m_shouldSave.find(level) != m_shouldSave.end()) {
       std::string filename;
       cacheFileName(filename, level);
@@ -415,4 +430,12 @@ namespace Luminous {
     }
   }
 
+  void CPUMipmaps::reschedule(double delay, bool allowLater)
+  {
+    Radiant::Guard g(m_rescheduleMutex);
+    Radiant::TimeStamp next = Radiant::TimeStamp::getTime() +
+                              Radiant::TimeStamp::createSecondsD(delay);
+    if(allowLater || next < scheduled())
+      schedule(next);
+  }
 }
