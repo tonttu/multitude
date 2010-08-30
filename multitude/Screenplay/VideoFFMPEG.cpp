@@ -693,7 +693,7 @@ namespace Screenplay {
     if(m_acontext)
       avcodec_flush_buffers(m_acontext);
 
-    if(timeSeconds == 0.0) {
+    if(timeSeconds <= 1e-10) {
       close();
       std::string tmp = m_fileName;
       open(tmp.c_str(), m_flags);
