@@ -145,6 +145,10 @@ namespace Radiant {
     typedef typename std::multimap<std::string, T>::iterator iterator;
     typedef typename std::multimap<std::string, T>::const_iterator const_iterator;
 
+    typedef typename std::multimap<std::string, ChunkT<T> >::iterator chunk_iterator;
+    typedef typename std::multimap<std::string, ChunkT<T> >::const_iterator const_chunk_iterator;
+
+
     ChunkT() {clearFirst=false;}
     ~ChunkT() {}
     
@@ -170,6 +174,10 @@ namespace Radiant {
     /** If there are other elements with the same id before, then
 	this element is added among those. */
     void               set(const std::string & id, const T &v);
+
+    void               addChunk(const std::string & id, const ChunkT<T> &v);
+    const ChunkT<T> &        getChunk(const std::string & id) const;
+
   /// Sets the flag to inform whether an old value should be removed before defining a new
 	void setClearFlag(bool clearF);
     /// Adds an element to the chunk, erasing any elements with identical id
@@ -179,7 +187,7 @@ namespace Radiant {
 
     /// Dumps this chunk into the stream
     /** May be specialized at each level. */
-    void               dump(std::ostream& os);
+    void               dump(std::ostream& os, int indent=0);
 
     /// Empties this chunk
     void               clear() { m_variants.clear(); }
@@ -200,6 +208,9 @@ namespace Radiant {
     /// Iterator to the after-the-end element
     const_iterator end()   const { return m_variants.end(); }
 
+    chunk_iterator chunkBegin() { return m_chunks.begin(); }
+    chunk_iterator chunkEnd() { return m_chunks.end(); }
+
     /// Gets the element from an iterator
     static T & getType(iterator & it) { return (*it).second; }
     static const T & getType(const_iterator & it) { return (*it).second; }
@@ -209,8 +220,9 @@ namespace Radiant {
     
   private:
 
-bool clearFirst;
+    bool clearFirst;
     std::multimap<std::string, T> m_variants;
+    std::multimap<std::string, ChunkT<T> > m_chunks;
   };
 
   /// A chunk of configuration variables
@@ -220,6 +232,7 @@ bool clearFirst;
 
   /// Read a configuration from a file
   bool RADIANT_API readConfig(Config *c, const char *filename);
+  bool  RADIANT_API readConfig(Config *c, const char * buf, int n);
   /// Write the given configuration into a file
   bool RADIANT_API writeConfig(Config *c, const char *filename);
   
