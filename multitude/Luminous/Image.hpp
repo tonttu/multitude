@@ -47,7 +47,7 @@ namespace Luminous
       It provides minimal image processing support (resizing).
 
       The image data is stored in a single, straightforward buffer.
-  */  
+  */
   class LUMINOUS_API Image
   {
   public:
@@ -173,6 +173,10 @@ namespace Luminous
     */
     void bind(GLResources * resources, GLenum textureUnit = GL_TEXTURE0, bool withmimaps = true);
 
+    /// Checks if the image data is fully loaded to the GPU, inside a texture
+    bool isFullyLoadedToGPU(GLResources * resources = 0);
+
+    void uploadBytesToGPU(GLResources * resources, unsigned bytes);
   };
 
 

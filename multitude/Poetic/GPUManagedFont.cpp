@@ -29,6 +29,7 @@ namespace Poetic
     m_cmf(cmf),
     m_resources(glrc)
   {
+    assert(m_cmf != 0);
     m_fonts.resize(m_cmf->fontCount());
   }
 

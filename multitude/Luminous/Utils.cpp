@@ -353,7 +353,7 @@ namespace Luminous {
   }
 
   void Utils::glTexRectAA(Nimble::Vector2 size, const Nimble::Matrix3 & m,
-			  const float * rgba)
+                          const float * rgba, Nimble::Vector2f uv1, Nimble::Vector2f uv2)
   {
     float r = rgba[0];
     float g = rgba[1];
@@ -379,47 +379,47 @@ namespace Luminous {
 
     glBegin(GL_QUADS);
 
-    glTexCoord2f(e, e);
+    glTexCoord2f(uv1.x + e, uv1.y + e);
     glVertex4fv(v[0].data());
 
-    glTexCoord2f(1.0f - e, e);
+    glTexCoord2f(uv2.x - e, uv1.y + e);
     glVertex4fv(v[1].data());
   
-    glTexCoord2f(1.0f - e, 1.0f-e);
+    glTexCoord2f(uv2.x - e, uv2.y - e);
     glVertex4fv(v[2].data());
     
-    glTexCoord2f(e, 1.0f - e);
+    glTexCoord2f(uv1.x, uv2.y - e);
     glVertex4fv(v[3].data());
 
     glEnd();
 
     glBegin(GL_TRIANGLE_STRIP);
 
-    glTexCoord2f(e, e);
+    glTexCoord2f(uv1.x, uv1.y + e);
     glColor4f(r, g, b, 0);
     glVertex4fv((v[0] - up - right).data());
     glColor4f(r, g, b, a);
     glVertex4fv(v[0].data());
 
-    glTexCoord2f(1.0f - e, e);
+    glTexCoord2f(uv2.x - e, uv1.y + e);
     glColor4f(r, g, b, 0);
     glVertex4fv((v[1] - up + right).data());
     glColor4f(r, g, b, a);
     glVertex4fv(v[1].data());
     
-    glTexCoord2f(1.0f - e, 1.0f - e);
+    glTexCoord2f(uv2.x - e, uv2.y - e);
     glColor4f(r, g, b, 0);
     glVertex4fv((v[2] + up + right).data());
     glColor4f(r, g, b, a);
     glVertex4fv(v[2].data());
     
-    glTexCoord2f(e, 1.0f - e);
+    glTexCoord2f(uv1.x, uv2.y - e);
     glColor4f(r, g, b, 0);
     glVertex4fv((v[3] + up - right).data());
     glColor4f(r, g, b, a);
     glVertex4fv(v[3].data());
     
-    glTexCoord2f(e, e);
+    glTexCoord2f(uv1.x + e, uv1.y + e);
     glColor4f(r, g, b, 0);
     glVertex4fv((v[0] - up - right).data());
     glColor4f(r, g, b, a);

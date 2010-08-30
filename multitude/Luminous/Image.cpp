@@ -692,4 +692,51 @@ dest = *this;
       tex.loadImage(*this, withmimaps);
   }
 
+  bool ImageTex::isFullyLoadedToGPU(GLResources * resources)
+  {
+    if(!width() || !height())
+      return false;
+
+    if(!resources)
+      resources = GLResources::getThreadResources();
+
+    if(!resources->getResource(this))
+      return false;
+
+    Texture2D & tex = ref(resources);
+
+    return tex.loadedLines() == (unsigned) height();
+  }
+
+  void ImageTex::uploadBytesToGPU(GLResources * resources, unsigned bytes)
+  {
+    if(!resources)
+      resources = GLResources::getThreadResources();
+
+    Texture2D & tex = ref(resources);
+
+    if(tex.width() != width() || tex.height() != height()) {
+      // Allocate texture memory, this is always fast.
+      tex.loadBytes(pixelFormat().layout(),
+                    width(), height(), 0,
+                    pixelFormat(), false);
+    }
+
+
+    if(tex.loadedLines() >= (unsigned) height()) {
+      // We are ready
+      return;
+    }
+
+    int lines = bytes / (pixelFormat().bytesPerPixel() * width()) + 1;
+
+    int avail = height() - tex.loadedLines();
+
+    lines = Nimble::Math::Min(lines, avail);
+
+    tex.loadLines(tex.loadedLines(), lines, line(tex.loadedLines()), pixelFormat());
+
+  }
+
+
 }

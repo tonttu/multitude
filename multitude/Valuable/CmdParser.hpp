@@ -16,8 +16,7 @@
 #ifndef VALUABLE_CMDPARSER_HPP
 #define VALUABLE_CMDPARSER_HPP
 
-#include <Valuable/Export.hpp>
-
+#include "Export.hpp"
 #include <Radiant/StringUtils.hpp>
 
 namespace Valuable

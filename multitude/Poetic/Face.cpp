@@ -36,7 +36,7 @@ namespace Poetic
       m_ftFace = 0;
     } else {
       m_numGlyphs = (*m_ftFace)->num_glyphs;
-      m_hasKerningTable = bool(FT_HAS_KERNING((*m_ftFace)));
+      m_hasKerningTable = (FT_HAS_KERNING((*m_ftFace))) != 0;
     }
   }
 

@@ -219,7 +219,7 @@ namespace Radiant {
 
   VideoCamera1394::~VideoCamera1394()
   {
-    if (m_initialized)
+    if (m_initialized || m_camera)
       close();
 
     g_count--;
@@ -874,11 +874,15 @@ namespace Radiant {
    */
   bool VideoCamera1394::stop()
   {
-    assert(isInitialized());
+    if(!m_initialized) {
+      Radiant::error("VideoCamera1394::stop # camera has not been initialized");
+      return false;
+    }
 
-    assert(m_started);
+    if(dc1394_capture_stop(m_camera) != DC1394_SUCCESS) {
+      Radiant::error("VideoCamera1394::stop # unable to stop capture");
+    }
 
-    dc1394_capture_stop(m_camera);
     if (dc1394_video_set_transmission(m_camera, DC1394_OFF) !=DC1394_SUCCESS) {
       Radiant::error("VideoCamera1394::stop # unable to stop iso transmission");
     }
@@ -1043,7 +1047,8 @@ namespace Radiant {
 
     uint32_t i;
 
-    bzero( & m_camera, sizeof(m_camera));
+    if(m_camera)
+      close();
 
     m_euid = euid ? euid : m_euid;
 

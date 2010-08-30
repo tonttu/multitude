@@ -512,6 +512,13 @@ namespace Nimble {
     if(!offsets)
       m_containedPixelCount = count;
 
+    m_boundsROI.clear();
+    for (int y=0; y < (int) m_limits.size(); ++y) {
+      if (!m_limits[y][1])
+        continue;
+      m_boundsROI.expand(Nimble::Rect(Nimble::Vector2(m_limits[y][0], y), Nimble::Vector2(m_limits[y][0]+m_limits[y][1], y)));
+    }
+
     updated();
   }
 }

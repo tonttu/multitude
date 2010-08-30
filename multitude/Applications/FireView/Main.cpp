@@ -83,7 +83,13 @@ int main(int argc, char ** argv)
     const char * arg = argv[i];
 
 
-    if(strcmp(arg, "--format7") == 0 && (i+1) < argc) {
+    if(strcmp(arg, "--debayer") == 0) {
+      FireView::CamView::setDebayer(1);
+    }
+    else if(strcmp(arg, "--colorbal") == 0) {
+      FireView::CamView::calculateColorBalance();
+    }
+    else if(strcmp(arg, "--format7") == 0 && (i+1) < argc) {
       format7 = true;
 
       FireView::CamView::setFormat7mode(atoi(argv[++i]));

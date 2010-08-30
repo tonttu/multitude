@@ -59,93 +59,40 @@ namespace Luminous {
       return false;
     }
 
+
+    // We can upload the image at once:
+
     std::shared_ptr<ImageTex> img = m_cpumaps->getImage(best);
 
-    if(!img) return false;
-
-    img->bind(GL_TEXTURE0, false);
-
-    Luminous::Utils::glCheck("GPUMipmaps::bind");
-
-    return true;
-    /*
-    // trace("GPUMipmaps::bind %f %f %d", pixelsize.x, pixelsize.y, best);
-
-
-    Collectable * key = m_keys + best;
-
-    GLResource * res = resources()->getResource(key);
-
-    Texture2D * tex = 0;
-
-    if(res) {
-      // trace("Got optimal texture");
-      m_cpumaps->markImage(best);
-      tex = dynamic_cast<Texture2D *> (res);
-      assert(tex);
-      tex->bind();
+    if(img->isFullyLoadedToGPU() || ((img->width() * img->height()) < 500000)) {
+      img->bind(GL_TEXTURE0, false);
+      return true;
     }
     else {
 
-      int mybest = -1;
+      // Then perform incremental texture upload:
 
-      // Try to find a ready texture object already in GPU RAM
+      img->uploadBytesToGPU(resources(), 2000000);
 
-      for(int i = 0; i < m_cpumaps->maxLevel() && !res; i++) {
-        int index = best + i;
+      // Lets check if we find something to use:
+      for(unsigned i = 0; i < m_cpumaps->stackSize(); i++) {
+        std::shared_ptr<ImageTex> test = m_cpumaps->getImage(i);
 
-        if(index <= m_cpumaps->maxLevel()) {
+        if(!test)
+          continue;
 
-          res = resources()->getResource(m_keys + index);
-          if(res) {
-            mybest = index;
-          }
-        }
-
-        index = best - i;
-
-        if(index >= 0 && !res) {
-          res = resources()->getResource(m_keys + index);
-          if(res) {
-            mybest = index;
-          }
+        if(test->isFullyLoadedToGPU() || ((test->width() * test->height()) < 500000)) {
+          test->bind(GL_TEXTURE0, false);
+          return true;
         }
       }
 
-      // See what is in CPU RAM
-
-      int closest = m_cpumaps->getClosest(pixelsize);
-
-      if(((closest < 0) || Math::Abs(mybest - best) <= Math::Abs(closest - best))
-         && mybest >= 0) {
-
-        tex = dynamic_cast<Texture2D *> (res);
-        assert(tex);
-        tex->bind();
-      }
-      else if(closest >= 0) {
-        tex = new Texture2D(resources());
-        bool ok = tex->loadImage(*m_cpumaps->getImage(closest),
-           closest == CPUMipmaps::lowestLevel());
-        if (ok) {
-          resources()->addResource(m_keys + closest, tex);
-        } else { // failed, use a smaller texture
-          delete tex;
-          tex = dynamic_cast<Texture2D *> (res);
-        }
-        assert(tex);
-        tex->bind();
-      }
     }
 
-    if(tex) {
-      resources()->deleteAfter(tex, 10);
-    }
-    else
-      return false;
 
-    return true;
-    */
+    //Luminous::Utils::glCheck("GPUMipmaps::bind");
+
+    return false;
   }
 
   bool GPUMipmaps::bind(const Nimble::Matrix3 & transform,

@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 #ifndef LUMINOUS_TASK_HPP
 #define LUMINOUS_TASK_HPP
@@ -32,7 +32,7 @@ namespace Luminous
   /// Priority for the tasks
   typedef float Priority;
 
-  /// Task is a base class for tasks that can be executed within BGThread. 
+  /// Task is a base class for tasks that can be executed within BGThread.
   class LUMINOUS_API Task : Patterns::NotCopyable
   {
   public:
@@ -67,17 +67,17 @@ namespace Luminous
       /// The actual work the task does should be implemented in here. Override
       /// in the derived class
       virtual void doTask() = 0;
-  
+
       /// Return a timestamp for the next execution of the task
       Radiant::TimeStamp scheduled() const { return m_scheduled; }
       /// Schedule the next execution time for this task
       void schedule(Radiant::TimeStamp ts) { m_scheduled = ts; }
       /// Schedule the next execution time for this task
-      void scheduleFromNow(Radiant::TimeStamp wait) 
+      void scheduleFromNow(Radiant::TimeStamp wait)
       { m_scheduled = Radiant::TimeStamp::getTime() + wait; }
       /// @copydoc scheduleFromNow
       void scheduleFromNowSecs(double seconds)
-      { m_scheduled = Radiant::TimeStamp::getTime() + 
+      { m_scheduled = Radiant::TimeStamp::getTime() +
           Radiant::TimeStamp::createSecondsD(seconds); }
 
     protected:
@@ -100,7 +100,7 @@ namespace Luminous
 
       /// The background thread where this task is executed
       BGThread * m_host;
-    
+
       friend class BGThread;
   };
 

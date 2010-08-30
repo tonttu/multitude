@@ -161,8 +161,14 @@ namespace Luminous
         m_window(win),
         m_viewStackPos(-1),
         m_glContext(new GLDummyContext),
-        m_initialized(false)
+        m_initialized(false),
+        m_blendFunc(BLEND_USUAL)
     {
+      m_attribs.resize(10000);
+      m_attribs.clear();
+
+      m_verts.resize(10000);
+      m_verts.clear();
     }
 
     void pushFBO(std::shared_ptr<FBOPackage> fbo)
@@ -294,8 +300,6 @@ namespace Luminous
       width += 1; // for antialiasing
 
       const Matrix3 & m = r.transform();
-      std::vector<Nimble::Vector2> verts;
-      std::vector<Vector2> attribs;
       Vector2f cprev;
       Vector2f cnow = m.project(vertices[0]);
       Vector2f cnext;
@@ -320,13 +324,16 @@ namespace Luminous
       }
       avg *= width;
 
-      verts.push_back(cnow + avg);
-      verts.push_back(cnow - avg);
+      m_verts.clear();
+      m_verts.push_back(cnow + avg);
+      m_verts.push_back(cnow - avg);
 
-      attribs.push_back(cnow);
-      attribs.push_back(cnow);
-      attribs.push_back(cnow);
-      attribs.push_back(cnow);
+      m_attribs.clear();
+
+      m_attribs.push_back(cnow);
+      m_attribs.push_back(cnow);
+      m_attribs.push_back(cnow);
+      m_attribs.push_back(cnow);
 
       for (int i = nextIdx; i < n; ) {
         nextIdx = i+1;
@@ -358,16 +365,16 @@ namespace Luminous
         float dp = Math::Clamp(dot(avg, dirPrev.perpendicular()), 1e-2f, 1.0f);
         avg /= dp;
         avg *= width;
-        verts.push_back(cnow-avg);
-        verts.push_back(cnow+avg);
+        m_verts.push_back(cnow-avg);
+        m_verts.push_back(cnow+avg);
 
-        verts.push_back(cnow+avg);
-        verts.push_back(cnow-avg);
+        m_verts.push_back(cnow+avg);
+        m_verts.push_back(cnow-avg);
 
-        attribs.push_back(cnow);
-        attribs.push_back(cnow);
-        attribs.push_back(cnow);
-        attribs.push_back(cnow);
+        m_attribs.push_back(cnow);
+        m_attribs.push_back(cnow);
+        m_attribs.push_back(cnow);
+        m_attribs.push_back(cnow);
 
         i = nextIdx;
       }
@@ -381,12 +388,12 @@ namespace Luminous
       m_polyline_shader->setUniformFloat("width", width);
 
       glColor4fv(rgba);
-      glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat *>(&verts[0]));
-      glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&attribs[0]));
-      glVertexAttribPointer(loc2, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&attribs[4]));
+      glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat *>(&m_verts[0]));
+      glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&m_attribs[0]));
+      glVertexAttribPointer(loc2, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&m_attribs[4]));
       glEnableClientState(GL_VERTEX_ARRAY);
 
-      glDrawArrays(GL_QUADS, 0, verts.size());
+      glDrawArrays(GL_QUADS, 0, (GLsizei) m_verts.size());
 
       glDisableClientState(GL_VERTEX_ARRAY);
       glDisableVertexAttribArray(loc);
@@ -469,10 +476,14 @@ namespace Luminous
     /// fbo texture stack for views
     std::vector<Luminous::Texture2D *> m_viewTextures;
     int m_viewStackPos;
+    std::vector<Nimble::Vector2> m_attribs;
+    std::vector<Nimble::Vector2> m_verts;
 
     Luminous::GLContext * m_glContext;
 
     bool m_initialized;
+
+    BlendFunc m_blendFunc;
   };
 
   ///////////////////////////////////////////////////////////////////
@@ -553,7 +564,7 @@ namespace Luminous
 //      Radiant::info("RenderContext::isVisible # area (%f,%f) (%f,%f)", area.center().x, area.center().y, area.size().x, area.size().y);
 
       if(m_data->m_clipStack.empty()) {
-        Radiant::info("\tclip stack is empty");
+        Radiant::debug("\tclip stack is empty");
         return true;
       } else {
 
@@ -763,7 +774,7 @@ namespace Luminous
     sub.subdivide( controlPoints[0], controlPoints[1], controlPoints[2], controlPoints[3] );
     points.push_back(controlPoints[3]);
 
-    drawPolyLine(&points[0], points.size(), width, rgba);
+    drawPolyLine(&points[0], (int) points.size(), width, rgba);
   }
 
   void RenderContext::drawSpline(Nimble::Splines::Interpolating & s, float width, const float * rgba, float step)
@@ -792,7 +803,7 @@ namespace Luminous
       }
       points.push_back(point);
     }
-    drawPolyLine(&points[0], points.size(), width, rgba);
+    drawPolyLine(&points[0], (int) points.size(), width, rgba);
   }
 
 
@@ -850,21 +861,28 @@ namespace Luminous
 
   void RenderContext::setBlendFunc(BlendFunc f)
   {
-    if(f == BLEND_NONE) {
+    m_data->m_blendFunc = f;
+
+    useCurrentBlendMode();
+  }
+
+  void RenderContext::useCurrentBlendMode()
+  {
+    //Radiant::info("RenderContext::useCurrentBlendMode # %s", blendFuncNames()[m_data->m_blendFunc]);
+
+    if(m_data->m_blendFunc == BLEND_NONE) {
       glDisable(GL_BLEND);
       return;
     }
 
     glEnable(GL_BLEND);
 
-    if(f == BLEND_USUAL)
+    if(m_data->m_blendFunc == BLEND_USUAL)
       Utils::glUsualBlend();
-    else if(f == BLEND_ADDITIVE)
+    else if(m_data->m_blendFunc == BLEND_ADDITIVE)
       Utils::glAdditiveBlend();
-    else if(f == BLEND_SUBTRACTIVE) {
+    else if(m_data->m_blendFunc == BLEND_SUBTRACTIVE)
       Utils::glSubtractiveBlend();
-    }
-
   }
 
   const char ** RenderContext::blendFuncNames()

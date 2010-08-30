@@ -128,6 +128,9 @@ namespace Radiant {
 
     /// Reads a 32-bit floating point number from the data buffer
     float readFloat32(bool * ok = 0);
+    /// Reads a 32-bit floating point number from the data buffer
+    /** If the value cannot be read, then the default is returned. */
+    float readFloat32(float defval, bool * ok = 0);
     /// Reads a 64-bit floating point number from the data buffer
     double readFloat64(bool * ok = 0);
     /// Reads a 32-bit integer from the data buffer
@@ -199,7 +202,7 @@ namespace Radiant {
 
     template <class T>
     inline T * getPtr(size_t advance = sizeof(T))
-    { T * tmp = (T*) & m_buf[m_current]; m_current += advance; return tmp; }
+    { T * tmp = (T*) & m_buf[m_current]; m_current += (unsigned) advance; return tmp; }
     template <class T>
     inline T & getRef()
     { T * tmp = (T*) & m_buf[m_current]; m_current += sizeof(T); return *tmp; }

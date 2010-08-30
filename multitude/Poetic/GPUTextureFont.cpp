@@ -98,7 +98,7 @@ namespace Poetic
   {
     // Accessing [0] on empty vectors crashes on Windows
     if(!m_textures.empty())
-    	glDeleteTextures(m_textures.size(), (const GLuint *)&m_textures[0]);
+        glDeleteTextures((GLsizei) m_textures.size(), (const GLuint *)&m_textures[0]);
   }
 
   Glyph * GPUTextureFont::makeGlyph(const Glyph * glyph)
@@ -316,7 +316,7 @@ namespace Poetic
   void GPUTextureFont::resetGLResources()
   {
     if(!m_textures.empty()) {
-      glDeleteTextures(m_textures.size(), (const GLuint *)&m_textures[0]);
+      glDeleteTextures((GLsizei) m_textures.size(), (const GLuint *)&m_textures[0]);
       m_textures.clear();
     }
   }

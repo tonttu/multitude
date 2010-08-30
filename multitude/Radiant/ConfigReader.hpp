@@ -143,24 +143,28 @@ namespace Radiant {
   public:
     /// Iterator for traversing all elements
     typedef typename std::multimap<std::string, T>::iterator iterator;
+    typedef typename std::multimap<std::string, T>::const_iterator const_iterator;
 
     ChunkT() {clearFirst=false;}
     ~ChunkT() {}
     
+    /// Returns the number of elements with given id/tag
+    int numberOf(const std::string & id) const;
+
     /// Gets an element from the chunk
     /** @return The first element of type T. If there is no element
 	with the given id, then an element will be created withthe
 	default constructor. */
-    T                  get(const std::string &id);
+    T                  get(const std::string &id) const;
     /** Gets an element from the chunk.
       @param id the primary id to search for
       @param alternateId if the primary id does not match, alternate is used
       */
     T                  get(const std::string &id,
-                           const std::string &alternateId);
+                           const std::string &alternateId) const;
 
     /// Check if this chunk contains an element with given id
-    bool               contains(const std::string &id);
+    bool               contains(const std::string &id) const;
 
     /// Adds an element to the chunk
     /** If there are other elements with the same id before, then
@@ -191,10 +195,17 @@ namespace Radiant {
     /// Iterator to the after-the-end element
     iterator end()   { return m_variants.end(); }
 
+    /// Iterator to the first element
+    const_iterator begin() const { return m_variants.begin(); }
+    /// Iterator to the after-the-end element
+    const_iterator end()   const { return m_variants.end(); }
+
     /// Gets the element from an iterator
     static T & getType(iterator & it) { return (*it).second; }
+    static const T & getType(const_iterator & it) { return (*it).second; }
         /// Gets the name (id) from an iterator
     static const std::string & getName(iterator & it) { return (*it).first; }
+    static const std::string & getName(const_iterator & it) { return (*it).first; }
     
   private:
 

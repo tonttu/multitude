@@ -18,7 +18,17 @@
 
 #include <Luminous/Export.hpp>
 
+// #define MULTI_WITHOUT_GLEW 1
+
+#ifdef MULTI_WITHOUT_GLEW
+// This define is for glext.h
+#define GL_GLEXT_PROTOTYPES 1
+#include <GL/gl.h>
+#include <GL/glext.h>
+#include <GL/glu.h>
+#else
 #include <GL/glew.h>
+#endif
 
 /// Luminous library is a collection of C++ classes for computer graphics, using OpenGL.
 

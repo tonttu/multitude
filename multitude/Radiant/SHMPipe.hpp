@@ -18,8 +18,9 @@
 
 /// @cond
 
-#include <Radiant/BinaryData.hpp>
-#include <Radiant/Export.hpp>
+#include "BinaryData.hpp"
+#include "Export.hpp"
+#include "RefPtr.hpp"
 
 #ifdef WIN32
 #	define WIN32_LEAN_AND_MEAN
@@ -67,17 +68,21 @@ namespace Radiant
     /// @param size Size in bytes of the ring buffer: if size > 0, creates a new ring buffer
     /// of that size; if size == 0, references the existing buffer identified by smKey.
     RADIANT_API SHMPipe(key_t smKey, uint32_t size);
+    RADIANT_API SHMPipe(int id);
+    RADIANT_API static SHMPipe * create(uint32_t size);
 #endif
-
-    /// Destructor.
-    RADIANT_API virtual ~SHMPipe();
 
     /// Reads data from the buffer.
     /** @return This function returns the number of bytes read from the buffer. */
-    RADIANT_API int read(void * ptr, int n);
+    RADIANT_API int read(void * ptr, int n, bool block = false, bool peek = false);
     RADIANT_API int read(BinaryData &);
+    RADIANT_API int peek(void * ptr, int n, bool block = false)
+    { return read(ptr, n, block, true); }
     /// The number of bytes available for reading immediately
     RADIANT_API uint32_t readAvailable();
+    RADIANT_API uint32_t readAvailable(uint32_t require);
+
+    RADIANT_API void consume(int n);
 
     /// Stores data into the buffer, without flushing it.
     /** 
@@ -86,58 +91,30 @@ namespace Radiant
     RADIANT_API int write(const void * ptr, int n);
     RADIANT_API int write(const BinaryData &);
     /// The number of bytes available for writing immediately
-    RADIANT_API uint32_t writeAvailable(int require = 0);
+    RADIANT_API uint32_t writeAvailable(uint32_t require);
+    RADIANT_API uint32_t writeAvailable();
     /// Flush the written data to the buffer
     RADIANT_API void flush();
 
     /// Returns the size of the shared memory area
-    RADIANT_API uint32_t size() const { return m_size; }
+    RADIANT_API uint32_t size() const { return m_data.size; }
 
-    /// Zeroes the buffer and the transfer counters
-    /** Only the owner of the shared memory area should call this function. */
-    RADIANT_API void zero();
+    /// Clears the transfer counters
+    RADIANT_API void clear();
+
+    RADIANT_API int id() const;
 
   private:
-
-    static uint32_t smDefaultPermissions();
-
-    RADIANT_API const char * shmError();
-
-    enum {
-      SHM_SIZE_LOC = 0,
-      SHM_WRITE_LOC  = 4,
-      SHM_READ_LOC = 8,
-      // Leave bytes 12-19 free, so we can use those later, if needed.
-      SHM_PIPE_LOC = 20,
-      SHM_HEADER_SIZE = SHM_PIPE_LOC
-    };
-
     /// Access functions.
 
     /// Return the read position.
-    uint32_t readHeaderValue(int loc) const
-    { return * ((uint32_t *)(m_shm + loc)); }
+    inline uint32_t readPos() const { return m_data.readPos; }
 
     /// Return the read position.
-    uint32_t readPos() const
-    {
-      return readHeaderValue(SHM_READ_LOC);
-    }
-
-    /// Return the read position.
-    uint32_t writePos() const
-    {
-      return * ((uint32_t *)(m_shm + SHM_WRITE_LOC));
-    }
+    inline uint32_t writePos() const { return m_data.writePos; }
     
-    void storeHeaderValue(int loc, uint32_t val)
-    { * ((uint32_t *)(m_shm + loc)) = val; }
-
     /// Output attributes and properties.
     void dump() const;
-
-    /// true if this is the creator object, false if it is a reference object.
-    bool    m_isCreator;
 
 #ifdef WIN32
     /// User-defined name for the shared memory area.
@@ -145,23 +122,21 @@ namespace Radiant
 
     /// Handle to shared memory area.
     HANDLE  m_hMapFile;
-#else
-    /// User-defined key to the shared memory area.
-    key_t   m_smKey;
-
-    /// ID of the shared memory area.
-    int     m_id;
 #endif
 
-    uint32_t m_size;
-    uint32_t m_written;
-    uint32_t m_read;
-    uint32_t m_mask;
-    // Pointer the actual shared memory:
-    uint8_t  * m_shm;
-    // Pointer to the pipe area:
-    uint8_t  * m_pipe;
+    class SHMHolder;
+    std::shared_ptr<SHMHolder> m_holder;
 
+    struct Data {
+      uint32_t size;
+      /// Flushed write position
+      uint32_t writePos;
+      /// Write position (might be unfinished writing)
+      uint32_t written;
+      uint32_t readPos;
+      int sem;
+      uint8_t pipe[];
+    } & m_data;
   };
 
 }

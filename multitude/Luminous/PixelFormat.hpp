@@ -105,6 +105,9 @@ namespace Luminous
     /// Constructs a floating-point luminance pixel format
     static PixelFormat luminanceFloat()
     { return PixelFormat(LAYOUT_LUMINANCE, TYPE_FLOAT); }
+    /// Constructs a floating-point luminance-alpha pixel format
+    static PixelFormat luminanceAlphaFloat()
+    { return PixelFormat(LAYOUT_LUMINANCE_ALPHA, TYPE_FLOAT); }
 
     /// Compare if two pixel formats are the same
     inline bool operator == (const PixelFormat & that) const

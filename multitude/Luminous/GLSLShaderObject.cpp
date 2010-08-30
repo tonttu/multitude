@@ -88,7 +88,7 @@ namespace Luminous
 
   void GLSLShaderObject::setSource(const char* code)
   {
-    int len = strlen(code) + 1;
+    int len = (int) strlen(code) + 1;
 
     delete[] m_shaderSource;
     m_shaderSource = new char [len];
