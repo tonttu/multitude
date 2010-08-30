@@ -1,5 +1,4 @@
 
-// #include <GL/glew.h>
 
 #include <Luminous/Luminous.hpp>
 #include <Luminous/Shader.hpp>

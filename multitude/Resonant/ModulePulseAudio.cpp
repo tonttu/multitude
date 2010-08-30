@@ -113,7 +113,7 @@ namespace Resonant
     return true;
   }
 
-  void ModulePulseAudio::dataAvailable(pa_stream * p, size_t nbytes)
+  void ModulePulseAudio::dataAvailable(pa_stream *, size_t)
   {
   }
 
