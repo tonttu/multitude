@@ -564,7 +564,7 @@ namespace Luminous
 //      Radiant::info("RenderContext::isVisible # area (%f,%f) (%f,%f)", area.center().x, area.center().y, area.size().x, area.size().y);
 
       if(m_data->m_clipStack.empty()) {
-        Radiant::info("\tclip stack is empty");
+        Radiant::debug("\tclip stack is empty");
         return true;
       } else {
 

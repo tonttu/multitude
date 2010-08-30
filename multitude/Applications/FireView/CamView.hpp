@@ -71,6 +71,14 @@ namespace FireView {
     static int format7Mode()
     { return m_format7mode; }
 
+    static void setDebayer(int mode) { m_debayer = mode; }
+
+    static void calculateColorBalance()
+    {
+      setDebayer(1);
+      m_colorCheck = true;
+    }
+
   public slots:
 
     void openParams();
@@ -106,6 +114,7 @@ namespace FireView {
     Rect getEffectiveArea();
     void doAnalysis();
     void checkFocus();
+    void checkColorBalance();
 
     class InputThread : public Radiant::Thread
     {
@@ -156,6 +165,7 @@ namespace FireView {
       int                m_lastCheckFrame;
       float              m_lastCheckFps;
 
+
       uint64_t m_euid64;
     };
 
@@ -195,6 +205,8 @@ namespace FireView {
     QString     m_text;
     Nimble::Vector2i m_textLoc;
     float       m_textColor;
+    Nimble::Vector3 m_colorBalance;
+    Radiant::VideoImage m_rgb;
 
     Analysis   m_averages[AREA_COUNT]; // Grid.
     QImage     m_foo;
@@ -203,6 +215,8 @@ namespace FireView {
 
     static Nimble::Recti m_format7rect;
     static int           m_format7mode;
+    static int           m_debayer;
+    static bool          m_colorCheck;
   };
 
 }

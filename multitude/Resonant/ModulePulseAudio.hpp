@@ -28,6 +28,9 @@ namespace Resonant {
     std::vector<float> m_bufferData; // actual storage
     size_t m_bufferSize; // in samples
 
+    int m_syncCount;
+    bool m_canSync;
+
     void openStream();
     void beforeShutdown();
   };

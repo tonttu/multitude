@@ -44,7 +44,14 @@ LIB_BOX2D = -lBox2D
 
 MULTI_LIB_FLAG = -L
 
-linux-*:LIB_GLEW = -lGLEW
+linux-*{
+  contains(USEGLEW,no) {
+    DEFINES += MULTI_WITHOUT_GLEW=1
+  }
+  else {
+    linux-*:LIB_GLEW = -lGLEW
+  }
+}
 
 macx {
 
