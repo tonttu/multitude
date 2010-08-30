@@ -53,6 +53,12 @@ linux-*{
   }
 }
 
+linux-*{
+  contains(MEMCHECK,yes) {
+    DEFINES += MULTI_MEMCHECK=1
+  }
+}
+
 macx {
 
   # withbundles = $$(MULTI_BUNDLES)
