@@ -74,6 +74,23 @@ namespace Radiant {
     m_variants.insert(std::pair<std::string, T>(name, v));
 	
   }
+
+  template <class T>
+  void ChunkT<T>::addChunk(const std::string & name, const ChunkT<T> &v)
+  {
+    m_chunks.insert(std::make_pair(name, v));
+  }
+
+  template <class T>
+  const ChunkT<T> & ChunkT<T>::getChunk(const std::string &id) const
+  {
+    static ChunkT<T> empty;
+    const_chunk_iterator it = m_chunks.find(id);
+    if (it == m_chunks.end())
+      return empty;
+    else
+      return it->second;
+  }
    
   template <class T>
   void ChunkT<T>::setClearFlag(bool clearF)
@@ -92,12 +109,19 @@ namespace Radiant {
   }
 
   template <class T>
-  void ChunkT<T>::dump(std::ostream& os)
+  void ChunkT<T>::dump(std::ostream& os, int indent)
   {
+    std::string ws(indent, ' ');
+    for(chunk_iterator it = chunkBegin(); it != chunkEnd(); ++it) {
+      os << ws << it->first << " {\n";
+      it->second.dump(os, indent+2);
+      os << ws << "}\n";
+    }
+
     for(iterator it = m_variants.begin();it != m_variants.end(); it++) {
-      os << (*it).first << " {\n";
-      (*it).second.dump(os);
-      os << "}\n\n";
+      os << ws << (*it).first << " {\n";
+      (*it).second.dump(os, indent+2);
+      os << ws << "}\n\n";
     }
   }
 
