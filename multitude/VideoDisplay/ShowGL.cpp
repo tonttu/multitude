@@ -404,6 +404,13 @@ namespace VideoDisplay {
   }
 
 
+  void ShowGL::setGain(float gain)
+  {
+    m_gain = gain;
+    if(m_audio)
+      m_audio->setGain(gain);
+  }
+
   bool ShowGL::start(bool fromOldPos)
   {
     static int __count = 1;
@@ -420,6 +427,7 @@ namespace VideoDisplay {
     sprintf(buf, "showgl-audiotransfer-%p-%.4d", this, __count++);
 
     au->setId(buf);
+    au->setGain(m_gain);
 
     m_dspItem = Resonant::DSPNetwork::Item();
     m_dspItem.setModule(au);
@@ -428,6 +436,7 @@ namespace VideoDisplay {
     m_dsp->addModule(m_dspItem);
 
     m_audio = au;
+    m_audio->setGain(m_gain);
 
     if(fromOldPos)
       m_video->play();

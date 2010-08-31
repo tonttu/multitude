@@ -170,7 +170,7 @@ namespace VideoDisplay {
     /// Sets the gain factor for the video sounds
     /** The gain coefficient is a linear multiplier for the video sound-track.
         Default value for the gain is 1.0, which equals unity gain. */
-    void setGain(float gain) { m_gain = gain; }
+    void setGain(float gain);
 
     /// Opens the file for playing.
     /* VIDEODISPLAY_API bool open(const char * filename, Resonant::DSPNetwork  * dsp,
