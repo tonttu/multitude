@@ -17,6 +17,7 @@
 #include "ImageCodec.hpp"
 #include "Luminous.hpp"
 #include "CodecRegistry.hpp"
+#include "Utils.hpp"
 
 #include <Nimble/Math.hpp>
 
@@ -684,12 +685,19 @@ dest = *this;
 
   void ImageTex::bind(GLResources * resources, GLenum textureUnit, bool withmimaps)
   {
+    // Luminous::Utils::glCheck("ImageTex::bind # 0");
+
     Texture2D & tex = ref(resources);
     tex.bind(textureUnit);
 
+    // Luminous::Utils::glCheck("ImageTex::bind # 1");
+
     if(tex.width() != width() ||
-       tex.height() != height())
+       tex.height() != height()) {
       tex.loadImage(*this, withmimaps);
+
+      // Luminous::Utils::glCheck("ImageTex::bind # 2");
+    }
   }
 
   bool ImageTex::isFullyLoadedToGPU(GLResources * resources)
@@ -710,6 +718,9 @@ dest = *this;
 
   void ImageTex::uploadBytesToGPU(GLResources * resources, unsigned bytes)
   {
+
+    Utils::glCheck("ImageTex::uploadBytesToGPU # 0");
+
     if(!resources)
       resources = GLResources::getThreadResources();
 
@@ -720,6 +731,7 @@ dest = *this;
       tex.loadBytes(pixelFormat().layout(),
                     width(), height(), 0,
                     pixelFormat(), false);
+      Utils::glCheck("ImageTex::uploadBytesToGPU # 1");
     }
 
 
@@ -736,6 +748,7 @@ dest = *this;
 
     tex.loadLines(tex.loadedLines(), lines, line(tex.loadedLines()), pixelFormat());
 
+    Utils::glCheck("ImageTex::uploadBytesToGPU # 3");
   }
 
 

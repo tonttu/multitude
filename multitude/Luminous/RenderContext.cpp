@@ -164,6 +164,7 @@ namespace Luminous
         m_initialized(false),
         m_blendFunc(BLEND_USUAL)
     {
+
       m_attribs.resize(10000);
       m_attribs.clear();
 

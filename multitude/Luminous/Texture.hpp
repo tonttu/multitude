@@ -50,11 +50,7 @@ namespace Luminous
     virtual ~TextureT();
 
     /// Allocates the texture object. Does not allocate memory for the texture data.
-    void allocate()
-    {
-      if(!m_textureId)
-        glGenTextures(1, & m_textureId);
-    }
+    void allocate();
 
     /** Activate textureUnit and bind this texture to that unit. */
     void bind(GLenum textureUnit)

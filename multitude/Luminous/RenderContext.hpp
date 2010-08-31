@@ -228,6 +228,7 @@ namespace Luminous
         */
     MULTI_ATTR_DEPRECATED(Luminous::GLContext * glContext());
 
+
   private:
     void drawCircleWithSegments(Nimble::Vector2f center, float radius, const float *rgba, int segments);
     void drawCircleImpl(Nimble::Vector2f center, float radius, const float *rgba);
