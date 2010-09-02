@@ -230,7 +230,7 @@ namespace Luminous
 
       GLint width = w;
 
-      if(!resources()->isBrokenProxyTexture2D()) {
+      if(resources() && !resources()->isBrokenProxyTexture2D()) {
         /* On ATI/Linux combination it seems that the GL_PROXY_TEXTURE_2D is
          broken, and cannot be trusted to give correct answers.
          It will at times fail with 1024x768 RGB textures. Sigh. */
