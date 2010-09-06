@@ -100,7 +100,7 @@ namespace Nimble {
     m[3].make(x41, x42, x43, x44);
       }
     /// Returns the inverse of the matrix
-    inline Matrix4T<T>        inverse(bool * ok) const;
+    inline Matrix4T<T>        inverse(bool * ok = 0) const;
 
     /// Multiplies two matrices together
     inline Matrix4T<T>&       operator*=(const Matrix4T<T>& that);
@@ -230,13 +230,13 @@ namespace Nimble {
 
     T fDet = fA0*fB5-fA1*fB4+fA2*fB3+fA3*fB2-fA4*fB1+fA5*fB0;
     if ( Math::Abs(fDet) <= 1.0e-10 ) {
-      *ok = false;
+      if(ok) *ok = false;
       Matrix4T<T> tmp;
       tmp.identity();
       return tmp;
     }
 
-    *ok = true;
+    if(ok) *ok = true;
 
     Matrix4T<T> inv;
     inv[0][0] = + my[ 5]*fB5 - my[ 6]*fB4 + my[ 7]*fB3;
