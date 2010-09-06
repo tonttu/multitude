@@ -139,12 +139,17 @@ namespace Luminous
     /// Fills the image with zeros
     void zero();
 
+    /// This function should be called when the image has been modified.
+    void changed() { m_generation++; }
+    int generation() const { return m_generation; }
+
   private:
 
     int m_width;
     int m_height;
     PixelFormat m_pixelFormat;
     unsigned char* m_data;
+    int m_generation;
   };
 
   /** ImageTex provides an easy way to create OpenGL textures from images in a
