@@ -360,15 +360,15 @@ inline std::ostream& operator<<(std::ostream& os, const Nimble::Matrix4T<T>& m)
 template<class T>
 void Nimble::Matrix4T<T>::setTranslation(const Nimble::Vector3T<T> & v)
 {
-  m[3][0] = v.x;
-  m[3][1] = v.y;
-  m[3][2] = v.z;
+  m[0][3] = v.x;
+  m[1][3] = v.y;
+  m[2][3] = v.z;
 }
 
 template<class T>
 Nimble::Vector3T<T> Nimble::Matrix4T<T>::getTranslation() const
 {
-  return Nimble::Vector3T<T>(m[3][0], m[3][1], m[3][2]);
+  return Nimble::Vector3T<T>(m[0][3], m[1][3], m[2][3]);
 }
 
 template<class T>
