@@ -85,7 +85,7 @@ namespace Nimble {
     /// Create a rotation matrix, around Z axis
     inline void               rotateZ(T a);
     /// Assuming that this a rotation matrix, calculate rotation axis and angle
-    inline void               getRotateAroundAxis(Vector3T<T>& axis, T & radians);
+    inline void               getRotateAroundAxis(Vector3T<T>& axis, T & radians) const;
     /// Create a rotation axis, based on rotation axis and angle
     inline void               rotateAroundAxis(const Vector3T<T>& axis, T radians);
     /// Assuming that this a rotation matrix, calculate rotation around XYZ axis
@@ -319,7 +319,7 @@ namespace Nimble {
   }
 
   template <class T>
-  inline void Matrix3T<T>::getRotateAroundAxis(Vector3T<T>& axis, T & radians)
+  inline void Matrix3T<T>::getRotateAroundAxis(Vector3T<T>& axis, T & radians) const
   {
     // Let (x,y,z) be the unit-length axis and let A be an angle of rotation.
     // The rotation matrix is R = I + sin(A)*P + (1-cos(A))*P^2 where
