@@ -121,8 +121,9 @@ namespace Luminous {
     return image;
   }
 
-  void CPUMipmaps::markImage(int i)
+  void CPUMipmaps::markImage(size_t i)
   {
+    assert(i < m_stack.size());
     /// assert(is locked)
     m_stack[i].m_unUsed = 0.0f;
   }

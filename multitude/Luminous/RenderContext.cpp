@@ -716,6 +716,71 @@ namespace Luminous
     }
   }
 
+  void RenderContext::drawArc(Nimble::Vector2f center, float radius, float fromRadians, float toRadians, float width, float blendWidth, const float * color, int linesegments)
+  {
+    // Make 0 radians be "on the right"
+    fromRadians += Nimble::Math::PI / 2.f;
+    toRadians += Nimble::Math::PI / 2.f;
+
+    float r = color[0];
+    float g = color[1];
+    float b = color[2];
+    float a = color[3];
+
+    // Angle increases counter-clockwise
+    float delta = -(toRadians - fromRadians) / linesegments;
+
+    width *= 0.5f;
+
+    float rs[4] = {
+      radius - width - blendWidth, radius - width,
+      radius + width, radius + width + blendWidth
+    };
+
+    for(int i = 0; i < linesegments; i++) {
+      float a1 = fromRadians + i * delta;
+      float a2 = fromRadians + (i + 1) * delta;
+      float sa1 = sinf(a1);
+      float ca1 = - cosf(a1);
+      float sa2 = sinf(a2);
+      float ca2 = - cosf(a2);
+
+      glBegin(GL_QUAD_STRIP);
+
+      glColor4f(r, g, b, 0.0f);
+
+      Nimble::Vector2f v0 = transform().project(sa1 * rs[0] + center.x, ca1 * rs[0] + center.y);
+      Nimble::Vector2f v1 = transform().project(sa2 * rs[0] + center.x, ca2 * rs[0] + center.y);
+
+      glVertex2fv(v0.data());
+      glVertex2fv(v1.data());
+
+      glColor4f(r, g, b, a);
+
+      Nimble::Vector2f v2 = transform().project(sa1 * rs[1] + center.x, ca1 * rs[1] + center.y);
+      Nimble::Vector2f v3 = transform().project(sa2 * rs[1] + center.x, ca2 * rs[1] + center.y);
+
+      glVertex2fv(v2.data());
+      glVertex2fv(v3.data());
+
+      Nimble::Vector2f v4 = transform().project(sa1 * rs[2] + center.x, ca1 * rs[2] + center.y);
+      Nimble::Vector2f v5 = transform().project(sa2 * rs[2] + center.x, ca2 * rs[2] + center.y);
+
+      glVertex2fv(v4.data());
+      glVertex2fv(v5.data());
+
+      glColor4f(r, g, b, 0.0f);
+
+      Nimble::Vector2f v6 = transform().project(sa1 * rs[3] + center.x, ca1 * rs[3] + center.y);
+      Nimble::Vector2f v7 = transform().project(sa2 * rs[3] + center.x, ca2 * rs[3] + center.y);
+
+      glVertex2fv(v6.data());
+      glVertex2fv(v7.data());
+
+      glEnd();
+    }
+  }
+
   void RenderContext::drawCircleImpl(Nimble::Vector2f center, float radius,
                                  const float * rgba) {
     m_data->drawCircle(*this, center, radius, rgba);
