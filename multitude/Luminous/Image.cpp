@@ -55,14 +55,18 @@ namespace Luminous
       : m_width(0),
       m_height(0),
       m_pixelFormat(PixelFormat::LAYOUT_UNKNOWN, PixelFormat::TYPE_UNKNOWN),
-      m_data(0)
+      m_data(0),
+      m_dataReady(false),
+      m_ready(false)
   {}
 
   Image::Image(const Image& img)
       : m_width(0),
       m_height(0),
       m_pixelFormat(PixelFormat::LAYOUT_UNKNOWN, PixelFormat::TYPE_UNKNOWN),
-      m_data(0)
+      m_data(0),
+      m_dataReady(false),
+      m_ready(false)
   {
     allocate(img.m_width, img.m_height, img.m_pixelFormat);
 
@@ -511,18 +515,21 @@ namespace Luminous
     FILE * file = fopen(filename, "rb");
     if(!file) {
       error("Image::read # failed to open file '%s'", filename);
+      m_ready = true;
       return false;
     }
 
     ImageCodec * codec = codecs()->getCodec(filename, file);
     if(codec) {
       result = codec->read(*this, file);
+      m_dataReady = result;
     } else {
       error("Image::read # no suitable codec found for '%s'", filename);
     }
 
     fclose(file);
 
+    m_ready = true;
     return result;
   }
 
@@ -716,7 +723,7 @@ dest = *this;
     return tex.loadedLines() == (unsigned) height();
   }
 
-  void ImageTex::uploadBytesToGPU(GLResources * resources, unsigned bytes)
+  unsigned ImageTex::uploadBytesToGPU(GLResources * resources, unsigned bytes)
   {
 
     Utils::glCheck("ImageTex::uploadBytesToGPU # 0");
@@ -737,7 +744,7 @@ dest = *this;
 
     if(tex.loadedLines() >= (unsigned) height()) {
       // We are ready
-      return;
+      return 0;
     }
 
     int lines = bytes / (pixelFormat().bytesPerPixel() * width()) + 1;
@@ -749,7 +756,31 @@ dest = *this;
     tex.loadLines(tex.loadedLines(), lines, line(tex.loadedLines()), pixelFormat());
 
     Utils::glCheck("ImageTex::uploadBytesToGPU # 3");
+
+    return lines * (pixelFormat().bytesPerPixel() * width());
   }
 
+  bool ImageTex::tryBind(unsigned & limit)
+  {
+    if(limit == 0 && width() == 0)
+      return false;
 
+    GLResources * resources = GLResources::getThreadResources();
+    if(isFullyLoadedToGPU(resources)) {
+      bind(resources);
+      return true;
+    }
+
+    if(limit == 0)
+      return false;
+
+    unsigned tmp = uploadBytesToGPU(resources, limit);
+    limit = tmp > limit ? 0 : limit - tmp;
+
+    if(isFullyLoadedToGPU(resources)) {
+      bind(resources);
+      return true;
+    }
+    return false;
+  }
 }
