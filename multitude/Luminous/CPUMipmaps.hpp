@@ -79,7 +79,7 @@ namespace Luminous {
     /** Mark an image used. This method resets the idle-counter of the
     level, preventing it from being dropped from the memory in the
     near future. */
-    LUMINOUS_API void markImage(int i);
+    LUMINOUS_API void markImage(size_t i);
     /** Returns true if the object has loaded enough mipmaps. */
     /// @todo what does "enought" mean?
     LUMINOUS_API bool isReady();
