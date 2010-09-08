@@ -219,7 +219,6 @@ int main(int argc, char ** argv)
       secs = atoi(argv[++i]);
     }
     else if(strcmp(arg, "--triggermode") == 0 && (i+1) < argc) {
-//      triggerMode = (atoi(argv[++i]) + DC1394_TRIGGER_MODE_0);
       triggerMode = (atoi(argv[++i]));
     }
     else if(strcmp(arg, "--triggerpolarity") == 0 && (i+1) < argc) {
@@ -232,7 +231,6 @@ int main(int argc, char ** argv)
       }
     }
     else if(strcmp(arg, "--triggersource") == 0 && (i+1) < argc) {
-//      triggerSource = (atoi(argv[++i]) + DC1394_TRIGGER_SOURCE_0);
         triggerSource = (atoi(argv[++i]));
     }
     else if(strcmp(arg, "--verbose") == 0) {
