@@ -199,7 +199,7 @@ namespace Radiant {
     bool               isEmpty() const { return m_variants.size() == 0; }
 
     /// Check if at least one variant with given name exists
-    bool               containsVariant(std::string & variantName) const
+    bool               containsVariant(const std::string & variantName) const
     { return m_variants.find(variantName) != m_variants.end(); }
 
     /// Iterator to the first element
@@ -215,7 +215,7 @@ namespace Radiant {
     chunk_iterator chunkBegin() { return m_chunks.begin(); }
     chunk_iterator chunkEnd() { return m_chunks.end(); }
 
-    /// Gets the element from an iterator
+    /// Gets the data element from an iterator
     static T & getType(iterator & it) { return (*it).second; }
     static const T & getType(const_iterator & it) { return (*it).second; }
         /// Gets the name (id) from an iterator
