@@ -431,6 +431,14 @@ namespace Radiant
       return c + ('A' - 'a');
     }
 
+    void replace(std::string & str, char from, char to)
+    {
+      for(unsigned i = 0; i < str.size(); i++) {
+        if(str[i] == from)
+          str[i] = to;
+      }
+    }
+
     int which(const char ** strings, const char * str)
     {
       const char * tmp;

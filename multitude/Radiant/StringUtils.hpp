@@ -108,6 +108,10 @@ namespace Radiant
     /// Converts ASCII string to uppercase
     RADIANT_API char upperCaseASCII(char c);
 
+    /// Replaces given characters of the string with other characters
+    RADIANT_API void replace(std::string & str, char from, char to);
+
+
     /** Finds the str in strings and return the index. The
     strings-variable is terminated by null string. If the str is
     not found in the strings, then -1 is returned. */
