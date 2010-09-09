@@ -121,6 +121,8 @@ namespace Nimble {
     /// Returns a pointer to the first element
     const T * data() const { return m[0].data(); }
 
+    NIMBLE_API Matrix4T<T> orthoNormalize();
+
     /// Fills the matrix by copying values from memory
     template <class S>
     void copy (const S * x) { const S * end = x + 16; T * my = data(); while(x!=end) *my++ = (T) *x++; }
@@ -189,6 +191,26 @@ namespace Nimble {
     swap(m[1][3],m[3][1]);
     swap(m[2][3],m[3][2]);
     return *this;
+  }
+
+  /// @todo could improve numerical stability easily etc.
+  template <class T>
+  inline Matrix4T<T> Matrix4T<T>::orthoNormalize()
+  {
+    transpose();
+    Matrix4T<T> res(*this);
+    for (int i=0; i < 4; ++i) {
+      Vector4T<T> & v = res.row(i);
+      for (int j=0; j < i; ++j) {
+        v -= projection(res.row(j), row(i));
+      }
+    }
+
+    for (int i=0; i < 4; ++i)
+      res.row(i).normalize();
+
+    res.transpose();
+    return res;
   }
 
   template <class T>
