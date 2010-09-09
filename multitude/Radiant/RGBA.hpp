@@ -31,7 +31,7 @@ namespace Radiant {
       hold RGBA image data.
    */
   template <class T>
-  class RADIANT_API RGBAT
+  class RGBAT
   {
   public:
     /// Constructs a new color with the given values
