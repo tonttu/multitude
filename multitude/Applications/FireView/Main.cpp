@@ -7,10 +7,10 @@
  * See file "Applications/FireView.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #include "CamView.hpp"
@@ -68,7 +68,7 @@ void helper(const char * app)
 int main(int argc, char ** argv)
 {
   QApplication qa(argc, argv);
-  
+
   float fps = -1.0f;
 
   Radiant::VideoCamera::TriggerSource triggerSource = Radiant::VideoCamera::TRIGGER_SOURCE_MAX;
@@ -153,7 +153,7 @@ int main(int argc, char ** argv)
 
   if(triggerMode >= 0 && triggerSource < 0) {
     printf("%s If you set trigger mode, you also need to set trigger mode\n",
-	   argv[0]);
+       argv[0]);
     return -1;
   }
 
@@ -166,8 +166,8 @@ int main(int argc, char ** argv)
 
     for(i = 0; i < (int) cameras.size(); i++) {
       const Radiant::VideoCamera::CameraInfo & cam = cameras[i];
-      printf("Camera %d: ID = %llx, VENDOR = %s, MODEL = %s, DRIVER = %s\n",
-	     i + 1, (long long) cam.m_euid64,
+      printf("Camera %d: ID = %llx VENDOR = %s, MODEL = %s, DRIVER = %s\n",
+         i + 1, (long long) cam.m_euid64,
        cam.m_vendor.c_str(), cam.m_model.c_str(), cam.m_driver.c_str());
       fflush(0);
 
@@ -178,14 +178,14 @@ int main(int argc, char ** argv)
 
     FireView::MainWindow * mw =
       new FireView::MainWindow(rate, fps, triggerSource, triggerMode, format7);
-    
+
     mw->resize(800, 600);
     mw->init();
     mw->show();
 
     QObject::connect( & qa, SIGNAL(lastWindowClosed()), & qa, SLOT(quit()));
     res = qa.exec();
-    
+
     delete mw;
   }
 
