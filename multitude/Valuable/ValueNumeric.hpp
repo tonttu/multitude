@@ -62,9 +62,9 @@ namespace Valuable
       std::string asString(bool * const ok = 0) const { if(ok) *ok = true; return Radiant::StringUtils::stringify(Base::m_value); }
 
       /// Sets the numberic value
-      inline virtual bool set(int v) { Base::m_value = static_cast<T> (v); return true; }
+      inline virtual bool set(int v) { Base::m_value = static_cast<T> (v); ValueObject::emitChange(); return true; }
       /// @copydoc set
-      inline virtual bool set(float v) { Base::m_value = static_cast<T> (v); return true; }
+      inline virtual bool set(float v) { Base::m_value = static_cast<T> (v); ValueObject::emitChange(); return true; }
   };
 
 }
