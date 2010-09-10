@@ -19,7 +19,6 @@ namespace Nimble {
 
     QuaternionT(T s_) : x(0), y(0), z(0), w(s_) {}
 
-    QuaternionT(const Vector3T<T> & v) : x(v.x), y(v.y), z(v.z), w(0) {}
     QuaternionT(T s_, const Vector3T<T> & v) : x(v.x), y(v.y), z(v.z), w(s_) {}
 
     QuaternionT(T x_, T y_, T z_, T s_) : x(x_), y(y_), z(z_), w(s_) {}
@@ -29,14 +28,13 @@ namespace Nimble {
       *this = m;
     }
 
-    template <typename Y>
-    Vector3T<Y> operator*(const Vector3T<Y> & v) const
+    Vector3T<T> operator*(const Vector3T<T> & v) const
     {
       // borrowed from Ogre
       // nVidia SDK implementation
-      Vector3T<Y> qvec(x, y, z);
-      Vector3T<Y> uv = cross(qvec, v);
-      Vector3T<Y> uuv = cross(qvec, uv);
+      Vector3T<T> qvec(x, y, z);
+      Vector3T<T> uv = cross(qvec, v);
+      Vector3T<T> uuv = cross(qvec, uv);
       uv *= (2.0f * w);
       uuv *= 2.0f;
       return v + uv + uuv;
