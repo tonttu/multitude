@@ -29,6 +29,28 @@ namespace Nimble {
       *this = m;
     }
 
+    template <typename Y>
+    Vector3T<Y> operator*(const Vector3T<Y> & v) const
+    {
+      // borrowed from Ogre
+      // nVidia SDK implementation
+      Vector3T<Y> qvec(x, y, z);
+      Vector3T<Y> uv = cross(qvec, v);
+      Vector3T<Y> uuv = cross(qvec, uv);
+      uv *= (2.0f * w);
+      uuv *= 2.0f;
+      return v + uv + uuv;
+    }
+
+    QuaternionT operator+(const QuaternionT & v)
+    {
+      return QuaternionT(x+v.x, y+v.y, z+v.z, w+v.w);
+    }
+    QuaternionT operator-(const QuaternionT & v)
+    {
+      return QuaternionT(x-v.x, y-v.y, z-v.z, w-v.w);
+    }
+
     QuaternionT & operator+=(const QuaternionT & v)
     {
       x += v.x; y += v.y; z += v.z; w += v.w; return *this;
@@ -226,6 +248,21 @@ namespace Nimble {
             z*b.x-x*b.z+w*b.y+y*b.w,
             x*b.y-y*b.x+w*b.z+z*b.w,
             w*b.w-x*b.x-y*b.y-z*b.z);
+    }
+
+    void getAngleAxis(float & angle, Vector3T<T> & axis)
+    {
+      T len = x*x + y*y + z*z;
+      if(len > T(0.0)) {
+        T ilen = Nimble::Math::InvSqrt(len);
+        angle = T(2.0) * Nimble::Math::ACos(w);
+        axis.x = x*ilen;
+        axis.y = y*ilen;
+        axis.z = z*ilen;
+      } else {
+        angle = T(0);
+        axis.make(1.0, 0.0, 0.0);
+      }
     }
 
     static QuaternionT rotation(T angle, Vector3T<T> axis)
