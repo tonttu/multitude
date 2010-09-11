@@ -64,7 +64,7 @@ namespace Luminous
 
     /// The width ofthe image in pixels
     int width() const { return m_width; }
-    /// The height ofthe image in pixels
+    /// The height of the image in pixels
     int height() const { return m_height; }
     /// The size of the image in pixels
     Nimble::Vector2i size() const
