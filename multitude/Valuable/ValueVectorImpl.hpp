@@ -7,10 +7,10 @@
  * See file "Valuable.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef VALUABLE_VECTOR_SPECIALIZATION_HPP
@@ -27,15 +27,34 @@ namespace Valuable
   {}
 
   template <class T, typename S, int N>
-  void ValueVector<T,S,N>::processMessage(const char *,
-					  Radiant::BinaryData & data)
+  void ValueVector<T,S,N>::processMessage(const char * id,
+                      Radiant::BinaryData & data)
   {
-    bool ok = true;
+    if(id && strlen(id)) {
+      int index = strtol(id, 0, 10);
+      if(index >= N) {
+        return;
+      }
 
-    T v = data.read<T>(&ok);
+      bool ok = true;
 
-    if(ok)
-      (*this) = v;
+      S v = data.read<S>(&ok);
+
+      if(ok) {
+        T tmp = Base::m_value;
+        tmp[index] = v;
+        (*this) = tmp;
+      }
+    }
+    else {
+
+      bool ok = true;
+
+      T v = data.read<T>(&ok);
+
+      if(ok)
+        (*this) = v;
+    }
   }
 
   template<class VectorType, typename ElementType, int N>
@@ -43,25 +62,25 @@ namespace Valuable
 
 
   /// @todo Under WIN32 these specializations conflict with the class instantiation
-  /// in ValueVector.hpp. Remove them and if possible modify the template function 
+  /// in ValueVector.hpp. Remove them and if possible modify the template function
   /// above to handle all types.
 /*
   template<>
   const char * const ValueVector<Nimble::Vector2f, float, 2>::type() const { return "vec2f"; }
 
-  template<> 
+  template<>
   const char * const ValueVector<Nimble::Vector3f, float, 3>::type() const { return "vec3f"; }
 
-  template<> 
+  template<>
   const char * const ValueVector<Nimble::Vector4f, float, 4>::type() const { return "vec4f"; }
 
-  template<> 
+  template<>
   const char * const ValueVector<Nimble::Vector2i, int, 2>::type() const { return "vec2i"; }
 
-  template<> 
+  template<>
   const char * const ValueVector<Nimble::Vector3i, int, 3>::type() const { return "vec3i"; }
 
-  template<> 
+  template<>
   const char * const ValueVector<Nimble::Vector4i, int, 4>::type() const { return "vec4i"; }
 */
 
@@ -81,7 +100,7 @@ namespace Valuable
 
     std::string r = Radiant::StringUtils::stringify(Base::m_value[0]);
 
-    for(int i = 1; i < N; i++) 
+    for(int i = 1; i < N; i++)
       r += std::string(" ") + Radiant::StringUtils::stringify(Base::m_value[i]);
 
     return r;
@@ -93,7 +112,7 @@ namespace Valuable
     Base::m_value = v;
     return true;
   }
- 
+
 }
 
 #endif
