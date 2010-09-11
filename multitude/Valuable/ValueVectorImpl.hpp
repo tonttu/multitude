@@ -19,6 +19,8 @@
 #include "ValueVector.hpp"
 #include "DOMElement.hpp"
 
+#include <string.h>
+
 namespace Valuable
 {
 
