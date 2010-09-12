@@ -86,8 +86,8 @@ namespace Luminous {
 
     if (Nimble::Math::isFinite(size.x) && Nimble::Math::isFinite(size.y))
         bestlevel = getOptimal(size);
-    else
-        Radiant::error("CPUMipmaps::getClosest(): requesting image for invalid dimensions (%f,%f)", size.x, size.y);
+//    else
+//        Radiant::error("CPUMipmaps::getClosest(): requesting image for invalid dimensions (%f,%f)", size.x, size.y);
     const CPUItem & item = m_stack[bestlevel];
     markImage(bestlevel);
 
