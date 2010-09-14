@@ -257,18 +257,6 @@ namespace Luminous
     const int sh = source.height();
     int h = sh / 2;
 
-    // Make even:
-    /* if(w & 0x1)
-       w--;
-       if(h & 0x1)
-       h--;
-       */
-
-    while(w & 0x3)
-      w--;
-    while(h & 0x3)
-      h--;
-
     if(source.pixelFormat() == PixelFormat::alphaUByte() ||
        source.pixelFormat() == PixelFormat::luminanceUByte()) {
 
