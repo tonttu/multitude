@@ -118,6 +118,9 @@ namespace Luminous {
 
     /// Returns the number of images in the stack
     inline unsigned stackSize() const { return (unsigned) m_stack.size(); }
+
+    LUMINOUS_API Nimble::Vector2i mipmapSize(int level);
+
   protected:
     LUMINOUS_API virtual void doTask();
 
@@ -177,6 +180,7 @@ namespace Luminous {
 
     std::vector<CPUItem> m_stack;
     Nimble::Vector2i m_nativeSize;
+    Nimble::Vector2i m_firstLevelSize;
     int              m_maxLevel;
 
     bool             m_hasAlpha;
