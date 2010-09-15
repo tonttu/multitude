@@ -45,6 +45,9 @@ namespace Luminous
     virtual void addTask(Task * task);
 
     /// Remove the task from the BGThread
+    /** If you just want to delete the task, then it is generally better to set the state of
+        the task to finished, and schedule it immediately for processing (and thus removal).
+    */
     virtual bool removeTask(Task * task);
 
     /// Update the changed task timestamp to queue

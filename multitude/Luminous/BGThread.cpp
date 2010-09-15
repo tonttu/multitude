@@ -151,7 +151,8 @@ namespace Luminous
         task->m_state = Task::RUNNING;
       }
 
-      task->doTask();
+      if(task->state() != Task::DONE)
+        task->doTask();
 
       // Did the task complete?
       if(task->state() == Task::DONE) {
