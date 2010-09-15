@@ -23,8 +23,8 @@ withbundles = $$(MULTI_BUNDLES)
 
 # Try to identify used compiler on Windows (32 vs 64)
 win32 {
-	COMPILER_OUTPUT=$$system(cl 2>&1)
-	contains(COMPILER_OUTPUT,x64):CONFIG+=win64		
+    COMPILER_OUTPUT=$$system(cl 2>&1)
+    contains(COMPILER_OUTPUT,x64):CONFIG+=win64
 }
 
 LIB_POETIC = -lPoetic
@@ -131,6 +131,6 @@ contains(QT_MAJOR_VERSION,4) {
 }
 
 # Use ccache if available
-linux-*:exists(/usr/bin/ccache):QMAKE_CXX=ccache g++
-macx:exists(/sw/bin/ccache):QMAKE_CXX=ccache g++
-macx:exists(/opt/local/bin/ccache):QMAKE_CXX=ccache g++
+unix:exists(/usr/bin/ccache):QMAKE_CXX=ccache g++
+unix:exists(/sw/bin/ccache):QMAKE_CXX=/sw/bin/ccache g++
+unix:exists(/opt/local/bin/ccache):QMAKE_CXX=/opt/local/bin/ccache g++
