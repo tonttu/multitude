@@ -40,6 +40,8 @@ namespace Luminous
     virtual ~BGThread();
 
     /// Add a task to be executed
+    /** The task is the property of the BGThread, which will delete the object when its
+        operation is finished. */
     virtual void addTask(Task * task);
 
     /// Remove the task from the BGThread

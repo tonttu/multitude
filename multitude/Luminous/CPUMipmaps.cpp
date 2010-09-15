@@ -33,6 +33,9 @@
 namespace Luminous {
 
   using namespace Radiant;
+
+  // static int __count = 0;
+
   CPUMipmaps::CPUMipmaps()
     : m_fileModified(0),
     m_stack(1),
@@ -42,10 +45,14 @@ namespace Luminous {
     m_timeOut(3.0f),
     m_keepMaxLevel(true)
   {
+    // __count++;
   }
 
   CPUMipmaps::~CPUMipmaps()
   {
+    /* __count--;
+    info("CPUMipmaps::~CPUMipmaps # %d", __count);
+    */
   }
 
   void CPUMipmaps::update(float dt, float )
@@ -260,10 +267,14 @@ namespace Luminous {
   void CPUMipmaps::finish()
   {
     setState(Task::DONE);
+    reschedule(0, 0);
   }
 
   void CPUMipmaps::doTask()
   {
+    if(state() == Task::DONE)
+      return;
+
     double delay = 60.0;
     m_priority = Luminous::Task::PRIORITY_NORMAL;
     reschedule(delay, true);

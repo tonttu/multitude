@@ -156,6 +156,7 @@ namespace Luminous
       // Did the task complete?
       if(task->state() == Task::DONE) {
         task->finished();
+        delete task;
       } else {
         // If we are still running, push the task to the back of the given
         // priority range so that other tasks with the same priority will be
