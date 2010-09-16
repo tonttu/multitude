@@ -18,10 +18,12 @@
 
 #include <Luminous/Export.hpp>
 
+#include <Radiant/MemCheck.hpp>
+
 namespace Luminous
 {
   /// A utility class to make the work of GarbageCollector easier.
-  class LUMINOUS_API Collectable
+  class LUMINOUS_API Collectable : public Radiant::MemCheck
   {
   public:
     Collectable();
