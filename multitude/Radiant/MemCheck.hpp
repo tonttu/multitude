@@ -1,7 +1,7 @@
-#ifndef VALUABLE_MEMCHECK_HPP
-#define VALUABLE_MEMCHECK_HPP
+#ifndef RADIANT_MEMCHECK_HPP
+#define RADIANT_MEMCHECK_HPP
 
-namespace Valuable {
+namespace Radiant {
   class MemCheck
   {
   public:
@@ -14,4 +14,4 @@ namespace Valuable {
   };
 }
 
-#endif // VALUABLE_MEMCHECK_HPP
+#endif // RADIANT_MEMCHECK_HPP

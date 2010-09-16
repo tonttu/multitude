@@ -17,7 +17,7 @@
 #define LUMINOUS_GLRESOURCE_HPP
 
 #include <Luminous/Export.hpp>
-#include <Valuable/MemCheck.hpp>
+#include <Radiant/MemCheck.hpp>
 
 namespace Luminous
 {
@@ -112,7 +112,7 @@ namespace Luminous
   */
   class LUMINOUS_API GLResource
 #ifdef MULTI_MEMCHECK
-    : public Valuable::MemCheck
+    : public Radiant::MemCheck
 #endif
   {
   public:
