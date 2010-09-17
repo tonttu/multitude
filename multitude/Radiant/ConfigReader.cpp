@@ -126,6 +126,20 @@ namespace Radiant {
 
     return def;
   }
+  uint64_t Variant::getFromHex64(uint64_t def) const
+  {
+    if (m_var.empty())
+      return def;
+
+    long long lltmp = 0;
+#ifdef WIN32
+    sscanf(m_var.c_str(), "%llx", &lltmp);
+#else
+    lltmp = strtoll(m_var.c_str(), 0, 16);
+#endif
+    return lltmp;
+  }
+
 
   const std::string & Variant::getString(const std::string & def) const
   {
@@ -374,7 +388,6 @@ namespace Radiant {
 
     bool longVariant = false;
 
-    int depth = 0;
     int i;
     for(i=0; i < size; i++) {
       char c1 = buf[i];
@@ -558,8 +571,10 @@ namespace Radiant {
 
 
     std::vector<char> buf;
-    buf.resize(size);
+    buf.resize(size);    
     size_t n = fread(&buf[0], 1, size, in);
+    // only way to suppress warn_unused_result warnings with gcc?
+    (void)n;
     fclose(in);
 
     return readConfig(c, &buf[0], size);
