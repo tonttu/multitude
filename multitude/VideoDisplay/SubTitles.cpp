@@ -182,7 +182,7 @@ namespace VideoDisplay {
       //Radiant::StringUtils::eraseNonVisibles(tmp.m_lines[0]);
       //Radiant::StringUtils::eraseNonVisibles(tmp.m_lines[1]);
 
-      Radiant::debug("Subtitle chunk %lf -> %lf %d lines",
+      Radiant::debug("Subtitle chunk %lf -> %lf %lu lines",
         tmp.m_begin.secondsD(), tmp.m_end.secondsD(),
         tmp.m_lines.size());
         

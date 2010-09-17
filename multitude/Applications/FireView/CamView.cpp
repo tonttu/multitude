@@ -147,7 +147,7 @@ namespace FireView {
       const Radiant::VideoImage * img = m_camera->captureImage();
 
       if (img == 0) {
-        error("No video image after waiting %lf ms", timeout);
+        error("No video image after waiting %d ms", timeout);
 
         m_camera->close();
         if(m_frameCount > 10) {

@@ -129,7 +129,7 @@ namespace Resonant
       size_t bsize = pa_stream_readable_size(m_stream);
       pa_threaded_mainloop_unlock(m_mainloop);
       if(bsize > 0) {
-        Radiant::info("ModulePulseAudio dropping %d bytes", m_bufferSize);
+        Radiant::info("ModulePulseAudio dropping %lu bytes", m_bufferSize);
         m_syncCount++;
         m_bufferSize = 0;
         m_canSync = false;

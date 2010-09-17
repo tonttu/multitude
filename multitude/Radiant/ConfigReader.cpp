@@ -374,7 +374,6 @@ namespace Radiant {
 
     bool longVariant = false;
 
-    int depth = 0;
     int i;
     for(i=0; i < size; i++) {
       char c1 = buf[i];
@@ -562,7 +561,7 @@ namespace Radiant {
     size_t n = fread(&buf[0], 1, size, in);
     fclose(in);
 
-    return readConfig(c, &buf[0], size);
+    return n <= 0 ? false : readConfig(c, &buf[0], size);
   }
 
   bool writeConfig(Config *config, const char *filename)

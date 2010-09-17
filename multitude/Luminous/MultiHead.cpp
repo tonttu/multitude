@@ -348,7 +348,7 @@ namespace Luminous {
   MultiHead::Window & MultiHead::window(size_t i)
   {
     if(i >= m_windows.size()) {
-      Radiant::fatal("MultiHead::window # Array index %u exceeds array size %ld",
+      Radiant::fatal("MultiHead::window # Array index %lu exceeds array size %lu",
                      i, m_windows.size());
     }
 
@@ -358,7 +358,7 @@ namespace Luminous {
   const MultiHead::Window & MultiHead::window(size_t i) const
   {
     if(i >= m_windows.size()) {
-      Radiant::fatal("MultiHead::window # Array index %u exceeds array size %ld",
+      Radiant::fatal("MultiHead::window # Array index %lu exceeds array size %lu",
                      i, m_windows.size());
     }
 
@@ -442,7 +442,7 @@ namespace Luminous {
 
     size_t n = areaCount();
 
-    Radiant::debug("MultiHead::width # %d", n);
+    Radiant::debug("MultiHead::width # %lu", n);
 
     for(size_t i = 0; i < n; i++) {
       Area & a = area(i);

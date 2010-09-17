@@ -298,7 +298,7 @@ namespace Resonant {
       Source & s = * (*it);
       if(s.m_id == id) {
         m_sources.erase(it);
-        debug("ModulePanner::removeSource # Removed source %s, now %u",
+        debug("ModulePanner::removeSource # Removed source %s, now %lu",
               id.c_str(), m_sources.size());
         return;
       }

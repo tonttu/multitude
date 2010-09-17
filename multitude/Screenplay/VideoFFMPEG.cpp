@@ -232,7 +232,7 @@ namespace Screenplay {
           m_audioBuffer.resize(m_audioBuffer.size() + AVCODEC_MAX_AUDIO_FRAME_SIZE * m_audioChannels);
           aframes = ((int) m_audioBuffer.size() - index) * 2;
           if(m_audioBuffer.size() > 1000000) {
-            info("VideoInputFFMPEG::captureImage # %p Audio buffer is very large now: %d (%d)",
+            info("VideoInputFFMPEG::captureImage # %p Audio buffer is very large now: %d (%ld)",
                  this, (int) m_audioBuffer.size(), m_capturedVideo);
           }
         }
@@ -298,7 +298,7 @@ namespace Screenplay {
         m_capturedAudio += aframes;
 
         if((uint)(m_audioFrames * m_audioChannels) >= m_audioBuffer.size()) {
-          Radiant::error("VideoInputFFMPEG::captureImage # %p Audio trouble %d %d (%d)",
+          Radiant::error("VideoInputFFMPEG::captureImage # %p Audio trouble %d %d (%ld)",
                          this, aframes, m_audioFrames, m_capturedVideo);
         }
         // printf("_"); fflush(0);
