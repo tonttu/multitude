@@ -565,7 +565,7 @@ namespace Resonant {
       if(strcmp(nc.m_targetId, item.m_module->id()) == 0) {
         item.m_inputs.push_back(Connection(nc.m_sourceId,
                        nc.m_sourceChannel));
-        debug("Item[%d].m_inputs[%d] = [%d,%d]", location, i,
+        debug("Item[%d].m_inputs[%d] = [%s,%d]", location, i,
             nc.m_sourceId, nc.m_sourceChannel);
       }
       i++;
@@ -623,7 +623,7 @@ namespace Resonant {
 
     for(size_t i = 0; i < s; i++) {
       if(bufIsFree(i, location)) {
-        debug("DSPNetwork::findFreeBuf # Found %d -> %u", location, i);
+        debug("DSPNetwork::findFreeBuf # Found %d -> %lu", location, i);
         return m_buffers[i];
       }
     }
@@ -632,7 +632,7 @@ namespace Resonant {
 
     m_buffers[s].init();
 
-    debug("DSPNetwork::findFreeBuf # Created %d -> %u", location, s);
+    debug("DSPNetwork::findFreeBuf # Created %d -> %lu", location, s);
 
     return m_buffers[s];
   }

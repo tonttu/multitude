@@ -347,7 +347,7 @@ namespace VideoDisplay {
         break;
     }
 
-    debug("VideoIn::selectFrame # %d (%d %d) (%d %d) %lf %lf",
+    debug("VideoIn::selectFrame # %d (%d %lu) (%lu %lu) %lf %lf",
           best, low, latest, m_consumedFrames, m_consumedAuFrames,
           close, time.secondsD());
 
@@ -494,10 +494,10 @@ namespace VideoDisplay {
     m_vcond.wakeAll();
 
     if(m_debug)
-      debug("VideoIn::putFrame # %p %u %u %lf",
+      debug("VideoIn::putFrame # %p %lu %lu %lf",
             & f, m_decodedFrames, m_consumedFrames, absolute.secondsD());
 
-    debug("VideoIn::putFrame # %d", m_decodedFrames);
+    debug("VideoIn::putFrame # %lu", m_decodedFrames);
 
     f.m_lastUse = Radiant::TimeStamp::getTime();
 
@@ -506,7 +506,7 @@ namespace VideoDisplay {
 
   void VideoIn::ignorePreviousFrames()
   {
-    debug("VideoIn::ignorePreviousFrames # %d", m_decodedFrames);
+    debug("VideoIn::ignorePreviousFrames # %lu", m_decodedFrames);
     for(size_t i = m_consumedFrames; (i + 1) < m_decodedFrames; i++) {
       Frame * f = m_frames[i % m_frames.size()].get();
       if(f)

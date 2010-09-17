@@ -73,7 +73,7 @@ namespace Radiant
 
       if(size > maxSize)
       {
-        error("%s # Requested size %ul is greater than maximum size %ul.",
+        error("%s # Requested size %lu is greater than maximum size %lu.",
           fnName, (unsigned long)(size), (unsigned long)(maxSize));
         assert(0);
       }
@@ -167,7 +167,7 @@ namespace Radiant
 
       if(size > maxSize)
       {
-        Radiant::error("%s # Requested size %ul is greater than maximum size %ul.",
+        Radiant::error("%s # Requested size %lu is greater than maximum size %lu.",
           fnName, (unsigned long)(size), (unsigned long)(maxSize));
         assert(0);
       }
@@ -390,7 +390,7 @@ namespace Radiant
 
     if(numBytes > totalAvl)
     {
-//      error("SMRingBuffer::write # Insufficient space, %ul requested, %ul available.",
+//      error("SMRingBuffer::write # Insufficient space, %lu requested, %lu available.",
 //        (unsigned long)(numBytes), (unsigned long)(totalAvl));
       return 0;
     }
@@ -527,7 +527,7 @@ namespace Radiant
     const uint32_t   totalUsd = used(& firstUsd);
     if(numBytes > totalUsd)
     {
-//     error("SMRingBuffer::peek # Insufficient data, %ul requested, %ul in use.",
+//     error("SMRingBuffer::peek # Insufficient data, %lu requested, %lu in use.",
 //        (unsigned long)(numBytes), (unsigned long)(totalUsd));
       return 0;
     }
@@ -824,18 +824,18 @@ namespace Radiant
     debug("m_smName = %s", m_smName.c_str());
     debug("m_hMapFile = %p", m_hMapFile);
 #else
-    debug("m_smKey = %ul", (unsigned long)(m_smKey));
+    debug("m_smKey = %lu", (unsigned long)(m_smKey));
     debug("m_id = %d", m_id);
 #endif
-    debug("size() = %ul", (unsigned long)(size()));
+    debug("size() = %lu", (unsigned long)(size()));
     debug("m_startPtr = %p", m_startPtr);
 
-    debug("writePos() = %ul", (unsigned long)(writePos()));
-    debug("readPos() = %ul", (unsigned long)(readPos()));
-    debug("readWriteState() = %ul", (unsigned long)(readWriteState()));
+    debug("writePos() = %lu", (unsigned long)(writePos()));
+    debug("readPos() = %lu", (unsigned long)(readPos()));
+    debug("readWriteState() = %lu", (unsigned long)(readWriteState()));
 
-    debug("used = %ul", (unsigned long)(used()));
-    debug("available() = %ul", (unsigned long)(available()));
+    debug("used = %lu", (unsigned long)(used()));
+    debug("available() = %lu", (unsigned long)(available()));
 
     debug("isEmpty() = %s", isEmpty() ? "true" : "false");
     debug("isFull() = %s", isFull() ? "true" : "false");

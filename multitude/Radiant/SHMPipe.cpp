@@ -259,7 +259,7 @@ namespace Radiant
 
       if(size > maxSize)
       {
-        error("%s # Requested size %ul is greater than maximum size %ul.",
+        error("%s # Requested size %lu is greater than maximum size %lu.",
           fnName, (unsigned long)(size), (unsigned long)(maxSize));
         assert(0);
       }
@@ -583,15 +583,15 @@ namespace Radiant
     debug("m_hMapFile = %p", m_hMapFile);
 #else
 #endif
-    debug("size() = %ul", (unsigned long)(size()));
+    debug("size() = %lu", (unsigned long)(size()));
 
-    debug("writePos() = %ul", (unsigned long)(writePos()));
-    debug("readPos() = %ul", (unsigned long)(readPos()));
+    debug("writePos() = %lu", (unsigned long)(writePos()));
+    debug("readPos() = %lu", (unsigned long)(readPos()));
     /*
-    debug("readWriteState() = %ul", (unsigned long)(readWriteState()));
+    debug("readWriteState() = %lu", (unsigned long)(readWriteState()));
 
-    debug("used = %ul", (unsigned long)(used()));
-    debug("available() = %ul", (unsigned long)(available()));
+    debug("used = %lu", (unsigned long)(used()));
+    debug("available() = %lu", (unsigned long)(available()));
 
     debug("isEmpty() = %s", isEmpty() ? "true" : "false");
     debug("isFull() = %s", isFull() ? "true" : "false");

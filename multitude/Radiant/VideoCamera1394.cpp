@@ -15,6 +15,8 @@
 
 // Some original source code by Juha Laitinen still may be around.
 
+#define __STDC_FORMAT_MACROS
+
 #include "VideoCamera1394.hpp"
 
 #include <Radiant/Trace.hpp>
@@ -34,6 +36,7 @@
 #include <dc1394/camera.h>
 
 #include <sys/utsname.h>
+#include <inttypes.h>
 
 #define NUM_BUFFERS 10
 
@@ -520,7 +523,7 @@ namespace Radiant {
     const char * fname = "VideoCamera1394::initialize";
 
     if(!findCamera(euid)) {
-      error("%s # Could not find FireWire camera %x", fname, euid);
+      error("%s # Could not find FireWire camera %lx", fname, euid);
       return false;
     }
 
@@ -1307,7 +1310,7 @@ namespace Radiant {
         g_infos.push_back(dc1394_camera_new(g_dc, camlist->ids[i].guid));
     }
 
-    debug("Copying FireWire camera information to user", (int) camlist->num);
+    debug("Copying FireWire camera #%d information to user", (int) camlist->num);
 
     for(i = 0; i < g_infos.size(); i++) {
       dc1394camera_t * c = g_infos[i];
@@ -1321,7 +1324,7 @@ namespace Radiant {
       if(!c->guid || !c->vendor || !c->model)
         continue;
 
-      debug("Got camera %p: %s %s (%llx)", c, c->vendor, c->model, c->guid);
+      debug("Got camera %p: %s %s (%"PRIx64")", c, c->vendor, c->model, c->guid);
 
       ci.m_euid64 = c->guid;
       ci.m_vendor = c->vendor;

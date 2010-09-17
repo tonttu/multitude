@@ -72,8 +72,7 @@ namespace Luminous {
 
   int CPUMipmaps::getOptimal(Nimble::Vector2f size)
   {
-    float ask = size.maximum(), orig = m_nativeSize.maximum(),
-          first = m_firstLevelSize.maximum();
+    float ask = size.maximum(), first = m_firstLevelSize.maximum();
 
     if(ask >= first)
       return 0;
