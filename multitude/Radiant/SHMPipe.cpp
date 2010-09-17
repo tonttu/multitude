@@ -575,6 +575,19 @@ namespace Radiant
     return m_holder->id();
   }
 
+  void SHMPipe::deleteShm(int id)
+  {
+    Data * data = reinterpret_cast<Data*>(shmat(id, 0, 0));
+    if(data == (void *)(-1))
+      return;
+
+    if(data->sem != -1)
+      semctl(data->sem, 0, IPC_RMID);
+
+    shmdt(data);
+    shmctl(id, IPC_RMID, 0);
+  }
+
   // Diagnostics.
   void SHMPipe::dump() const
   {
