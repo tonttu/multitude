@@ -139,6 +139,10 @@ namespace Luminous
     /// Fills the image with zeros
     void zero();
 
+    /// Gets the color of a given pixel.
+    /** The color is normalized, with each component in range 0-1. */
+    Nimble::Vector4 pixel(unsigned x, unsigned y);
+
   private:
 
     int m_width;

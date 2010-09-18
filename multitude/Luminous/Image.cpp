@@ -661,6 +661,32 @@ dest = *this;
     memset(data(), 0, byteCount);
   }
 
+  Nimble::Vector4 Image::pixel(unsigned x, unsigned y)
+  {
+    if(empty())
+      return Nimble::Vector4(0, 0, 0, 1);
+
+    if(x >= width())
+      x = width() - 1;
+    if(y >= height())
+      y = height() - 1;
+
+    const uint8_t * px = line(y);
+    px += m_pixelFormat.bytesPerPixel() * x;
+
+    const float s = 1.0f / 255.0f;
+
+    if(m_pixelFormat == PixelFormat::alphaUByte())
+      return Nimble::Vector4(1, 1, 1, px[0] * s);
+    else if(m_pixelFormat == PixelFormat::rgbUByte())
+      return Nimble::Vector4(px[0] * s, px[1] * s, px[2] * s, 1);
+    else if(m_pixelFormat == PixelFormat::rgbaUByte())
+      return Nimble::Vector4(px[0] * s, px[1] * s, px[2] * s, px[3] * s);
+
+    return Nimble::Vector4(0, 0, 0, 1);
+  }
+
+
   void ImageTex::bind(GLenum textureUnit, bool withmimaps)
   {
     Texture2D & tex = ref();
