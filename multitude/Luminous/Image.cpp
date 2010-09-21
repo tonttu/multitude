@@ -666,9 +666,9 @@ dest = *this;
     if(empty())
       return Nimble::Vector4(0, 0, 0, 1);
 
-    if(x >= width())
+    if(int(x) >= width())
       x = width() - 1;
-    if(y >= height())
+    if(int(y) >= height())
       y = height() - 1;
 
     const uint8_t * px = line(y);
