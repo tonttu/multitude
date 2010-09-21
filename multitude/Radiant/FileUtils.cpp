@@ -18,6 +18,7 @@
 #include "StringUtils.hpp"
 #include "Directory.hpp"
 
+#include <assert.h>
 #include <fcntl.h>
 #include <iostream>
 #include <sstream>
@@ -294,6 +295,14 @@ namespace Radiant
         return 0;
       }
       return file.st_mtime;
+    }
+
+    void indent(FILE * f, int levels)
+    {
+      assert(f != 0);
+      for(int i = 0; i < levels; i++) {
+        fprintf(f, "  ");
+      }
     }
   }
 

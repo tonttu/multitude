@@ -10,6 +10,8 @@ INCLUDEPATH += $$PWD
 INCLUDEPATH += $$PWD/v8/include
 DEPENDPATH += $$PWD
 
+QMAKE_LIBDIR += /usr/lib/nvidia-current
+
 MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat
 linux-* {
   exists(/opt/multitouch-ffmpeg/include/libavcodec/avcodec.h) {
@@ -39,9 +41,24 @@ LIB_VIDEODISPLAY = -lVideoDisplay
 LIB_VALUABLE = -lValuable
 LIB_PATTERNS = -lPatterns
 
+LIB_BOX2D = -lBox2D
+
 MULTI_LIB_FLAG = -L
 
-linux-*:LIB_GLEW = -lGLEW
+linux-*{
+  contains(USEGLEW,no) {
+    DEFINES += MULTI_WITHOUT_GLEW=1
+  }
+  else {
+    linux-*:LIB_GLEW = -lGLEW
+  }
+}
+
+linux-*{
+  contains(MEMCHECK,yes) {
+    DEFINES += MULTI_MEMCHECK=1
+  }
+}
 
 macx {
 
@@ -68,6 +85,8 @@ macx {
     LIB_VALUABLE = -framework,Valuable
     LIB_VIDEODISPLAY = -framework,VideoDisplay
     LIB_PATTERNS = -framework,Patterns
+
+    LIB_BOX2D = -framework,Box2D
   }
 
   # change architecture to x86_64 if snow leopard
@@ -115,3 +134,4 @@ contains(QT_MAJOR_VERSION,4) {
 # Use ccache if available
 linux-*:exists(/usr/bin/ccache):QMAKE_CXX=ccache g++
 macx:exists(/sw/bin/ccache):QMAKE_CXX=ccache g++
+macx:exists(/opt/local/bin/ccache):QMAKE_CXX=ccache g++

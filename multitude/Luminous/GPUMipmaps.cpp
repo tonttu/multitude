@@ -51,7 +51,9 @@ namespace Luminous {
   }
 
   bool GPUMipmaps::bind(Nimble::Vector2 pixelsize)
-  {
+  {   
+    // Luminous::Utils::glCheck("GPUMipmaps::bind # 0");
+
     int best = m_cpumaps->getClosest(pixelsize);
 
     if(best < 0) {
@@ -59,93 +61,60 @@ namespace Luminous {
       return false;
     }
 
+
+    // We can upload the image at once:
+
     std::shared_ptr<ImageTex> img = m_cpumaps->getImage(best);
 
-    if(!img) return false;
-
-    img->bind(GL_TEXTURE0, false);
-
-    Luminous::Utils::glCheck("GPUMipmaps::bind");
-
-    return true;
-    /*
-    // trace("GPUMipmaps::bind %f %f %d", pixelsize.x, pixelsize.y, best);
-
-
-    Collectable * key = m_keys + best;
-
-    GLResource * res = resources()->getResource(key);
-
-    Texture2D * tex = 0;
-
-    if(res) {
-      // trace("Got optimal texture");
-      m_cpumaps->markImage(best);
-      tex = dynamic_cast<Texture2D *> (res);
-      assert(tex);
-      tex->bind();
+    if(img->isFullyLoadedToGPU()) {
+      img->bind(resources(), GL_TEXTURE0, false);
+      Luminous::Utils::glCheck("GPUMipmaps::bind # 1");
+      return true;
     }
+
+    long instantLimit = 1500000;
+
+    if(((img->width() * img->height()) < instantLimit) /* &&
+       (resources()->canUseGPUBandwidth(80.0f))*/) {
+      img->bind(resources(), GL_TEXTURE0, false);
+
+      // Luminous::Utils::glCheck("GPUMipmaps::bind # 2");
+      return true;
+    }
+
     else {
 
-      int mybest = -1;
+      // Then perform incremental texture upload:
 
-      // Try to find a ready texture object already in GPU RAM
+      // if(resources()->canUseGPUBandwidth(50.0f))
+      img->uploadBytesToGPU(resources(), instantLimit);
 
-      for(int i = 0; i < m_cpumaps->maxLevel() && !res; i++) {
-        int index = best + i;
+      // Lets check if we find something to use:
+      for(unsigned i = 0; i < m_cpumaps->stackSize(); i++) {
+        std::shared_ptr<ImageTex> test = m_cpumaps->getImage(i);
 
-        if(index <= m_cpumaps->maxLevel()) {
+        if(!test)
+          continue;
 
-          res = resources()->getResource(m_keys + index);
-          if(res) {
-            mybest = index;
-          }
-        }
+        int area = test->width() * test->height();
 
-        index = best - i;
-
-        if(index >= 0 && !res) {
-          res = resources()->getResource(m_keys + index);
-          if(res) {
-            mybest = index;
-          }
+        if(test->isFullyLoadedToGPU() ||
+           (area >= 64 && (area < (instantLimit / 3)))) {
+          test->bind(resources(), GL_TEXTURE0, false);
+          /*if(!Luminous::Utils::glCheck("GPUMipmaps::bind # 3"))
+            error("GPUMipmaps::bind # %.5d %p %d x %d",
+                  (int) test->ref().id(), resources(),
+                  (int)test->width(), (int) test->height());
+                  */
+          return true;
         }
       }
 
-      // See what is in CPU RAM
-
-      int closest = m_cpumaps->getClosest(pixelsize);
-
-      if(((closest < 0) || Math::Abs(mybest - best) <= Math::Abs(closest - best))
-         && mybest >= 0) {
-
-        tex = dynamic_cast<Texture2D *> (res);
-        assert(tex);
-        tex->bind();
-      }
-      else if(closest >= 0) {
-        tex = new Texture2D(resources());
-        bool ok = tex->loadImage(*m_cpumaps->getImage(closest),
-           closest == CPUMipmaps::lowestLevel());
-        if (ok) {
-          resources()->addResource(m_keys + closest, tex);
-        } else { // failed, use a smaller texture
-          delete tex;
-          tex = dynamic_cast<Texture2D *> (res);
-        }
-        assert(tex);
-        tex->bind();
-      }
     }
 
-    if(tex) {
-      resources()->deleteAfter(tex, 10);
-    }
-    else
-      return false;
+    // Luminous::Utils::glCheck("GPUMipmaps::bind");
 
-    return true;
-    */
+    return false;
   }
 
   bool GPUMipmaps::bind(const Nimble::Matrix3 & transform,

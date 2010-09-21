@@ -17,6 +17,7 @@
 #include "ImageCodec.hpp"
 #include "Luminous.hpp"
 #include "CodecRegistry.hpp"
+#include "Utils.hpp"
 
 #include <Nimble/Math.hpp>
 
@@ -256,18 +257,6 @@ namespace Luminous
     const int sh = source.height();
     int h = sh / 2;
 
-    // Make even:
-    /* if(w & 0x1)
-       w--;
-       if(h & 0x1)
-       h--;
-       */
-
-    while(w & 0x3)
-      w--;
-    while(h & 0x3)
-      h--;
-
     if(source.pixelFormat() == PixelFormat::alphaUByte() ||
        source.pixelFormat() == PixelFormat::luminanceUByte()) {
 
@@ -464,6 +453,10 @@ namespace Luminous
   {
     unsigned int bytes = width * height * pf.numChannels();
     unsigned int mybytes = m_width * m_height * m_pixelFormat.numChannels();
+
+    if(width && height)
+      assert(pf.numChannels() > 0);
+
     /*
     Radiant::debug("Image::allocate # PARAMS(%d, %d, %s) CURRENT(%d, %d, %s)", width, height, pf.toString().c_str(), m_width, m_height, m_pixelFormat.toString().c_str());
     Radiant::debug("\tbytes = %u, mybytes = %u", bytes, mybytes);
@@ -668,6 +661,32 @@ dest = *this;
     memset(data(), 0, byteCount);
   }
 
+  Nimble::Vector4 Image::pixel(unsigned x, unsigned y)
+  {
+    if(empty())
+      return Nimble::Vector4(0, 0, 0, 1);
+
+    if(int(x) >= width())
+      x = width() - 1;
+    if(int(y) >= height())
+      y = height() - 1;
+
+    const uint8_t * px = line(y);
+    px += m_pixelFormat.bytesPerPixel() * x;
+
+    const float s = 1.0f / 255.0f;
+
+    if(m_pixelFormat == PixelFormat::alphaUByte())
+      return Nimble::Vector4(1, 1, 1, px[0] * s);
+    else if(m_pixelFormat == PixelFormat::rgbUByte())
+      return Nimble::Vector4(px[0] * s, px[1] * s, px[2] * s, 1);
+    else if(m_pixelFormat == PixelFormat::rgbaUByte())
+      return Nimble::Vector4(px[0] * s, px[1] * s, px[2] * s, px[3] * s);
+
+    return Nimble::Vector4(0, 0, 0, 1);
+  }
+
+
   void ImageTex::bind(GLenum textureUnit, bool withmimaps)
   {
     Texture2D & tex = ref();
@@ -680,12 +699,71 @@ dest = *this;
 
   void ImageTex::bind(GLResources * resources, GLenum textureUnit, bool withmimaps)
   {
+    // Luminous::Utils::glCheck("ImageTex::bind # 0");
+
     Texture2D & tex = ref(resources);
     tex.bind(textureUnit);
 
+    // Luminous::Utils::glCheck("ImageTex::bind # 1");
+
     if(tex.width() != width() ||
-       tex.height() != height())
+       tex.height() != height()) {
       tex.loadImage(*this, withmimaps);
+
+      // Luminous::Utils::glCheck("ImageTex::bind # 2");
+    }
   }
+
+  bool ImageTex::isFullyLoadedToGPU(GLResources * resources)
+  {
+    if(!width() || !height())
+      return false;
+
+    if(!resources)
+      resources = GLResources::getThreadResources();
+
+    if(!resources->getResource(this))
+      return false;
+
+    Texture2D & tex = ref(resources);
+
+    return tex.loadedLines() == (unsigned) height();
+  }
+
+  void ImageTex::uploadBytesToGPU(GLResources * resources, unsigned bytes)
+  {
+
+    Utils::glCheck("ImageTex::uploadBytesToGPU # 0");
+
+    if(!resources)
+      resources = GLResources::getThreadResources();
+
+    Texture2D & tex = ref(resources);
+
+    if(tex.width() != width() || tex.height() != height()) {
+      // Allocate texture memory, this is always fast.
+      tex.loadBytes(pixelFormat().layout(),
+                    width(), height(), 0,
+                    pixelFormat(), false);
+      Utils::glCheck("ImageTex::uploadBytesToGPU # 1");
+    }
+
+
+    if(tex.loadedLines() >= (unsigned) height()) {
+      // We are ready
+      return;
+    }
+
+    int lines = bytes / (pixelFormat().bytesPerPixel() * width()) + 1;
+
+    int avail = height() - tex.loadedLines();
+
+    lines = Nimble::Math::Min(lines, avail);
+
+    tex.loadLines(tex.loadedLines(), lines, line(tex.loadedLines()), pixelFormat());
+
+    Utils::glCheck("ImageTex::uploadBytesToGPU # 3");
+  }
+
 
 }

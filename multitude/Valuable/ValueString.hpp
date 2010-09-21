@@ -84,7 +84,7 @@ namespace Valuable
     void clear() { Base::m_value.clear(); }
 
     /// Returns the length of the string
-    unsigned size() const { return Base::m_value.size(); }
+    unsigned size() const { return (unsigned) Base::m_value.size(); }
   };
 
   /// A byte string value object

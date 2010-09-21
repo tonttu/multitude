@@ -57,8 +57,13 @@ namespace Luminous
     GLResources(Radiant::ResourceLocator & rl);
     virtual ~GLResources();
 
+    /// Initialize the GLResources object.
+    /** This function performs checks on the underlying OpenGL implementation.
+        */
+    bool init();
+
     /// Get a handle to a resource 
-    GLResource * getResource(const Collectable * key);
+    GLResource * getResource(const Collectable * key, int deleteAfterFrames=110);
     /// Adds a resource
     void addResource(const Collectable * key, GLResource * resource);
     /// Erases a single GLResource
@@ -86,8 +91,16 @@ namespace Luminous
       rendering the OpenGL scene. */
     void resetSumCounters() { m_deallocationSum = m_allocationSum = 0; }
 
+    /// Checks if one is allowed to load more material to the GPU
+    /** Different upload needs have a different priority. Video frames typically
+        must hit the display pretty much instantly, while some other things
+        (very high-res images for example) might not be such a hurry. */
+    bool canUseGPUBandwidth(float priority = 50.0f);
+
     /// Delete the given resource after certain number of frames have passed
+    /// (negative value means to never delete)
     void deleteAfter(GLResource * resource, int frames);
+
     /** Sets the threshold for deleting old objects from GPU memory. */
     void setComfortableGPURAM(long bytes)
     { m_comfortableGPURAM = bytes; }
@@ -116,7 +129,17 @@ namespace Luminous
     @param a area associated with the calling thread */
     static void getThreadMultiHead(const MultiHead::Window ** w,
            const MultiHead::Area ** a);
- 
+
+    /// Query if the PROXY_TEXTURE_2D extension seems to be broken.
+    /** On Linux, with ATI cards, this OpenGL feature appears to be broken, and
+        cannot be used. To overcome this issue, one can use this function
+        to detect these cases, and avoid the usage of this OpenGL feature.
+
+        @return This function returns true if the OpenGL driver vendor is ATI.
+
+        @see Texture.cpp
+   */
+    bool isBrokenProxyTexture2D();
  private:
     typedef std::map<const Collectable *, GLResource *> container;
     typedef container::iterator iterator;
@@ -131,11 +154,14 @@ namespace Luminous
     /** This number is likely to be quite approximate as we cannot
 	estimate exactly much GPU memory a particular object uses. */
     long m_consumingBytes;
-    /** The maximum amount of GPU RAM to use before starting to erase
-	objects. */
-    long m_comfortableGPURAM;
+    /* The number of bytes that have been uploaded to the GPU during this
+       frame. This value is used to estimate if one can still upload more to
+       the GPU. */
+    long m_transferDuringThisFrame;
 
+    long m_comfortableGPURAM;
     long m_frame;
+    bool m_brokenProxyTexture2D;
 
     Radiant::ResourceLocator & m_resourceLocator;
   };

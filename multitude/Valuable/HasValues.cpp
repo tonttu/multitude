@@ -20,6 +20,7 @@
 #include <Valuable/HasValues.hpp>
 #include <Valuable/Serializer.hpp>
 
+#include <Radiant/Mutex.hpp>
 #include <Radiant/TimeStamp.hpp>
 #include <Radiant/Trace.hpp>
 #include <Radiant/RefPtr.hpp>
@@ -310,7 +311,7 @@ namespace Valuable
       skip++;
     }
     else
-      skip = key.size();
+      skip = (int) key.size();
 
     // info("HasValues::processMessage # Child id = %s", key.c_str());
 
@@ -325,8 +326,10 @@ namespace Valuable
 
   HasValues::Uuid HasValues::generateId()
   {
-    static Uuid id = static_cast<Uuid>(Radiant::TimeStamp::getTime());
-    return id++;
+    static Radiant::MutexAuto s_mutex;
+    Radiant::Guard g(s_mutex);
+    static Uuid s_id = static_cast<Uuid>(Radiant::TimeStamp::getTime());
+    return s_id++;
   }
 
   HasValues::Uuid HasValues::id() const

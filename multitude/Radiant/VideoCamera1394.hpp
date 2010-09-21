@@ -98,6 +98,9 @@ namespace Radiant {
 
     virtual int framesBehind() const { return m_framesBehind; }
 
+    /// Reset all Firewire buses
+    static void busReset();
+
   private:
     bool enableCameraFeature(unsigned int feature,
                              const std::string & description,

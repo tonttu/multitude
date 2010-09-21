@@ -34,14 +34,11 @@ namespace Poetic
   {
     Luminous::GLResources * glr = Luminous::GLResources::getThreadResources();
 
-    GPUWrapperFont * gf = dynamic_cast<GPUWrapperFont *> (glr->getResource(this));
+    GPUWrapperFont * gf = dynamic_cast<GPUWrapperFont *> (glr->getResource(this, -1));
+    GPUManagedFont * gmf = dynamic_cast<GPUManagedFont *> (glr->getResource(m_managedFont, -1));
 
-    // Get the managed GPU font; force getResource call to keep resource alive
-    GPUManagedFont * gmf = dynamic_cast<GPUManagedFont *> (glr->getResource(m_managedFont));
-
-    if(gf) 
+    if(gf)
       return gf;
-
 
     if(!gmf) {
       gmf = new GPUManagedFont(m_managedFont, glr);

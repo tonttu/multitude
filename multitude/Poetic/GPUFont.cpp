@@ -31,17 +31,17 @@ namespace Poetic
     transform[0][2] = x;
     transform[1][2] = y;
 
-    internalRender(str, strlen(str), transform);
+    internalRender(str, (int) strlen(str), transform);
   }
 
   void GPUFont::render(const char * str, const Nimble::Matrix3 & m)
   {
-    internalRender(str, strlen(str), m);
+    internalRender(str, (int) strlen(str), m);
   }
 
   void GPUFont::render(const wchar_t * str, const Nimble::Matrix3 & m)
   {
-    internalRender(str, wcslen(str), m);
+    internalRender(str, (int) wcslen(str), m);
   }
 
   void GPUFont::render(const wchar_t * str, int n,
@@ -52,18 +52,18 @@ namespace Poetic
 
   void GPUFont::render(const std::string & str, const Nimble::Matrix3 & transform)
   {
-    internalRender(str.c_str(), str.size(), transform);
+    internalRender(str.c_str(), (int) str.size(), transform);
   }
 
   void GPUFont::render(const std::string & str, const Nimble::Vector2 & location)
   {
-    internalRender(str.c_str(), str.size(),
+    internalRender(str.c_str(), (int) str.size(),
 		   Nimble::Matrix3::translate2D(location));
   }
 
   void GPUFont::render(const std::wstring & str, const Nimble::Vector2 & location)
   {
-    internalRender(str.c_str(), str.size(),
+    internalRender(str.c_str(), (int) str.size(),
 		   Nimble::Matrix3::translate2D(location));
   }
 
@@ -71,28 +71,28 @@ namespace Poetic
   {
     Nimble::Matrix3 transform;
     transform.identity();
-    internalRender(str.c_str(), str.size(), transform);
+    internalRender(str.c_str(), (int) str.size(), transform);
   }
 
   void GPUFont::render(const char * str)
   {
     Nimble::Matrix3 transform;
     transform.identity();
-    internalRender(str, strlen(str), transform);
+    internalRender(str, (int) strlen(str), transform);
   }
 
   void GPUFont::render(const wchar_t * str)
   {
     Nimble::Matrix3 transform;
     transform.identity();
-    internalRender(str, wcslen(str), transform);
+    internalRender(str, (int) wcslen(str), transform);
   }
 
   void GPUFont::render(const std::wstring & str)
   {
     Nimble::Matrix3 transform;
     transform.identity();
-    internalRender(str.c_str(), str.length(), transform);
+    internalRender(str.c_str(), (int) str.length(), transform);
   }
 
   void GPUFont::render(const char * str, Nimble::Vector2 loc)
@@ -101,7 +101,7 @@ namespace Poetic
     transform.identity();
     transform[0][2] = loc.x;
     transform[1][2] = loc.y;
-    internalRender(str, strlen(str), transform);    
+    internalRender(str, (int) strlen(str), transform);
   }
 
   void GPUFont::render(const char * str, float scale, Nimble::Vector2 loc)
@@ -112,7 +112,7 @@ namespace Poetic
     transform[1][1] = scale;
     transform[0][2] = loc.x;
     transform[1][2] = loc.y;
-    internalRender(str, strlen(str), transform);    
+    internalRender(str, (int) strlen(str), transform);
   }
 
   void GPUFont::render(const char * str, int n,
@@ -123,7 +123,7 @@ namespace Poetic
 
   void GPUFont::render(const std::wstring & str, const Nimble::Matrix3 & transform)
   {
-    internalRender(str.c_str(), str.length(), transform);
+    internalRender(str.c_str(), (int) str.length(), transform);
   }
 
 
@@ -165,7 +165,7 @@ namespace Poetic
   {
     float lh = cpuFont()->lineHeight();
 
-    int left = strlen(str);
+    int left = (int) strlen(str);
     int linelen = Radiant::StringUtils::strchrnul(str, '\n') - str;
 
     while(left) {
@@ -181,7 +181,7 @@ namespace Poetic
       if(linelen >= left)
         left = 0;
       else {
-        left = strlen(str);
+        left = (int) strlen(str);
         linelen = Radiant::StringUtils::strchrnul(str, '\n') - str;
       }
     }

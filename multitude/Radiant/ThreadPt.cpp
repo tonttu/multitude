@@ -59,6 +59,9 @@ namespace Radiant {
 
   bool Thread::run(bool prefer_system)
   {
+    if(m_state == RUNNING)
+      return true;
+
     if(m_threadDebug)
       std::cout << "Thread::run " << prefer_system << " " << this << std::endl;
 
@@ -93,8 +96,6 @@ namespace Radiant {
 
     if(e && (m_threadDebug || m_threadWarnings))
       std::cout << "failed - " << strerror(e) << std::endl;
-    else
-      m_state = RUNNING;
 
     return !e;
   }
@@ -120,8 +121,6 @@ namespace Radiant {
 
     if(e && (m_threadDebug || m_threadWarnings))
       std::cout << "failed - " << strerror(e) << std::endl;
-    else
-      m_state = RUNNING;
 
     return !e;
   }
@@ -179,7 +178,9 @@ namespace Radiant {
       std::cout << "Thread::mainLoop " << this <<  " pid: " << getpid() << std::endl;
     }
 
+    m_state = RUNNING;
     childLoop();
+    m_state = STOPPING;
   }
 
   void *Thread::entry(void *t)
@@ -188,7 +189,6 @@ namespace Radiant {
       std::cout << "Thread::entry " << t << std::endl;
 
     ((Thread *) t)->mainLoop();
-    ((Thread *) t)->m_state = STOPPING;
 
     return 0;
   }

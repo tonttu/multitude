@@ -23,13 +23,17 @@
 #include <Luminous/Export.hpp>
 #include <Luminous/VertexBuffer.hpp>
 #include <Luminous/GLSLProgramObject.hpp>
+
 #include <Nimble/Rectangle.hpp>
 #include <Nimble/Vector2.hpp>
 #include <Nimble/Splines.hpp>
 
+#include <Radiant/Defines.hpp>
+
 namespace Luminous
 {
   class Texture2D;
+  class GLContext;
 
   /// RenderContext contains the current rendering state.
   class LUMINOUS_API RenderContext : public Transformer
@@ -145,11 +149,23 @@ namespace Luminous
 
         @arg rgba The color of the circle in RGBA format
 
-        @arg segments Number of segments used in the circle. Deprecated, spesifying segments will actually slow rendering.
+        @arg segments Number of segments used in the circle. Deprecated, specifying segments will actually slow rendering.
 
     */
     void drawCircle(Nimble::Vector2f center, float radius,
                     const float * rgba, int segments = -1);
+
+    /** Draws an arc
+      @arg center center of the arc
+      @arg radius radius of the arc
+      @arg fromRadians start angle in radians
+      @arg toRadians end angle in radians
+      @arg width width of the arc
+      @arg blendWidth width of the blending region
+      @arg rgba color of the arc in RGBA format
+      @arg segments number of segments to use
+      */
+    void drawArc(Nimble::Vector2f center, float radius, float fromRadians, float toRadians, float width, float blendWidth, const float * rgba, int segments);
 
     /** Draws a line that contains multiple segments.
 
@@ -196,6 +212,8 @@ namespace Luminous
     /// Sets the current blend function, and enables blending
     /** If the function is BLEND_NONE, then blending is disabled. */
     void setBlendFunc(BlendFunc f);
+    /// Enables the current blend mode defined with setBlendFunc
+    void useCurrentBlendMode();
 
     /// Returns a pointer to an array of human-readable blending mode strings
     static const char ** blendFuncNames();
@@ -211,6 +229,17 @@ namespace Luminous
     /// @internal
     /// Pops view stack, leaves current texture attached
     void popViewStack();
+
+    /// @internal
+    /// Sets the current rendering context
+    void setGLContext(Luminous::GLContext *);
+
+    /// Returns a handle to the current OpenGL rendering context
+    /** This function is seldom necessary, and its use is deprecated and unsupported.
+        On some platforms this call may return null.
+        */
+    MULTI_ATTR_DEPRECATED(Luminous::GLContext * glContext());
+
 
   private:
     void drawCircleWithSegments(Nimble::Vector2f center, float radius, const float *rgba, int segments);

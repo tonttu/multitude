@@ -22,8 +22,8 @@
 #include "XMLArchive.hpp"
 
 #include <Radiant/Trace.hpp>
+#include <Radiant/Mutex.hpp>
 
-#include <typeinfo>
 
 namespace Valuable
 {

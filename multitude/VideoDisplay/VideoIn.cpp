@@ -48,7 +48,7 @@ namespace VideoDisplay {
       __framecount++;
       tmp = __framecount;
     }
-    info("VideoIn::Frame::Frame # %p Instance count at %d", this, tmp);
+    debug("VideoIn::Frame::Frame # %p Instance count at %d", this, tmp);
   }
 
   VideoIn::Frame::~Frame()
@@ -59,7 +59,7 @@ namespace VideoDisplay {
       __framecount--;
       tmp = __framecount;
     }
-    info("VideoIn::Frame::~Frame # %p Instance count at %d", this, tmp);
+    debug("VideoIn::Frame::~Frame # %p Instance count at %d", this, tmp);
     m_image.freeMemory();
     if(m_audio)
       free(m_audio);
@@ -189,7 +189,7 @@ namespace VideoDisplay {
           m_decodedFrames, m_consumedFrames);
     */
     if((int) m_decodedFrames <= index)
-      index = m_decodedFrames - 1;
+      index = (int) m_decodedFrames - 1;
 
     if(!m_continue && m_decodedFrames <= m_consumedFrames)
       return 0;
@@ -315,7 +315,7 @@ namespace VideoDisplay {
       bottom = 0;
     size_t latest = latestFrame();
 
-    int best = latest; // Nimble::Math::Min(latest, startfrom);
+    int best = (int) latest; // Nimble::Math::Min(latest, startfrom);
     int low = Nimble::Math::Min((int) m_consumedFrames,
                                 (int) m_consumedAuFrames);
     if(low < bottom)
@@ -347,7 +347,7 @@ namespace VideoDisplay {
         break;
     }
 
-    debug("VideoIn::selectFrame # %d (%d %d) (%d %d) %lf %lf",
+    debug("VideoIn::selectFrame # %d (%d %lu) (%lu %lu) %lf %lf",
           best, low, latest, m_consumedFrames, m_consumedAuFrames,
           close, time.secondsD());
 
@@ -494,10 +494,10 @@ namespace VideoDisplay {
     m_vcond.wakeAll();
 
     if(m_debug)
-      debug("VideoIn::putFrame # %p %u %u %lf",
+      debug("VideoIn::putFrame # %p %lu %lu %lf",
             & f, m_decodedFrames, m_consumedFrames, absolute.secondsD());
 
-    debug("VideoIn::putFrame # %d", m_decodedFrames);
+    debug("VideoIn::putFrame # %lu", m_decodedFrames);
 
     f.m_lastUse = Radiant::TimeStamp::getTime();
 
@@ -506,7 +506,7 @@ namespace VideoDisplay {
 
   void VideoIn::ignorePreviousFrames()
   {
-    debug("VideoIn::ignorePreviousFrames # %d", m_decodedFrames);
+    debug("VideoIn::ignorePreviousFrames # %lu", m_decodedFrames);
     for(size_t i = m_consumedFrames; (i + 1) < m_decodedFrames; i++) {
       Frame * f = m_frames[i % m_frames.size()].get();
       if(f)
@@ -530,7 +530,7 @@ namespace VideoDisplay {
       if(f) {
         if (f->m_lastUse < limit) {
           m_frames[i].reset();
-          info("VideoIn::freeFreeableMemory # %p %p", this, f);
+          //info("VideoIn::freeFreeableMemory # %p %p", this, f);
         }
         else
           left++;

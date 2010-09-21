@@ -15,34 +15,61 @@
 
 #include "WatchDog.hpp"
 
-#include <Radiant/Sleep.hpp>
-#include <Radiant/Trace.hpp>
+#include "Platform.hpp"
+#include "Sleep.hpp"
+#include "Trace.hpp"
 
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef RADIANT_LINUX
+#include "DateTime.hpp"
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#endif
+
 namespace Radiant {
+
+  WatchDog * WatchDog::m_instance = 0;
 
   WatchDog::WatchDog()
     : m_continue(true),
-      m_intervalSeconds(60.0f)
-  {}
+    m_intervalSeconds(60.0f)
+  {
+    if(!m_instance)
+      m_instance = this;
+  }
 
   WatchDog::~WatchDog()
   {
     stop();
+    if(m_instance == this)
+      m_instance = 0;
   }
 
-  void WatchDog::hostIsAlive()
+  void WatchDog::hostIsAlive(void * key)
   {
-    m_check = true; 
+    Radiant::Guard g(m_mutex);
+    m_items[key].m_check = true;
   }
+
+  void WatchDog::forgetHost(void * key)
+  {
+    Radiant::Guard g(m_mutex);
+
+    container::iterator it = m_items.find(key);
+    if(it != m_items.end())
+      m_items.erase(it);
+  }
+
 
   void WatchDog::childLoop()
   {
     m_continue = true;
-    m_check = true; 
 
     while(m_continue) {
       int n = (int) ceilf(m_intervalSeconds * 10.0f);
@@ -51,30 +78,67 @@ namespace Radiant {
 	 return early. The method below should be more robust. */
 
       for(int i = 0; i < n && m_continue; i++)
-	Radiant::Sleep::sleepMs(100);
+        Radiant::Sleep::sleepMs(100);
 
-      if(!m_check && m_continue) {
-	error("WATCHDOG: THE APPLICATION HAS BEEN UNRESPONSIVE FOR %.0f\n"
-	      "SECONDS. IT HAS PROBABLY LOCKED, SHUTTING DOWN NOW.\n"
-	      "TO DISABLE THIS FEATURE, DISABLE THE WATCHDOG WITH:\n\n"
-	      "export NO_WATCHDOG=1;\n", (float) m_intervalSeconds);
+      bool ok = true;
+      {
+        Radiant::Guard g(m_mutex);
+        for(container::iterator it = m_items.begin(); it != m_items.end(); it++) {
+          Item & item = it->second;
+          if(item.m_check == false)
+            ok = false;
 
-	// Stop the app:
-	abort();
+          item.m_check = false;
+        }
+      }
 
-	// Stop it again:
-	Sleep::sleepS(1);
-	Sleep::sleepS(1);
-	int * bad = 0;
-	*bad = 123456;
+      if(!ok && m_continue) {
+        error("WATCHDOG: THE APPLICATION HAS BEEN UNRESPONSIVE FOR %.0f\n"
+              "SECONDS. IT HAS PROBABLY LOCKED, SHUTTING DOWN NOW.\n"
+              "TO DISABLE THIS FEATURE, DISABLE THE WATCHDOG WITH:\n\n"
+              "export NO_WATCHDOG=1;\n", (float) m_intervalSeconds);
 
-	// And again:
-	exit(0);
+#ifdef RADIANT_LINUX
+        FILE * pattern = fopen("/proc/sys/kernel/core_pattern", "r");
+        char buffer[5] = {0};
+        char * foo1 = fgets(buffer, sizeof(buffer), pattern);
+        (void) foo1;
+        fclose(pattern);
+
+        // If there isn't any fancy core naming rule,
+        // put the core in /tmp/core-timestamp directory
+        if(strcmp(buffer, "core") == 0) {
+          DateTime dt(TimeStamp::getTime());
+          char filename[255];
+          sprintf(filename, "/tmp/core-%d.%04d-%02d-%02d", getpid(), dt.year(), dt.month()+1, dt.monthDay()+1);
+          mkdir(filename, 0700);
+          int foo = chdir(filename);
+          (void) foo; // Silence the GCC warning
+          info("Changing working directory to %s", filename);
+        }
+
+        // Set the maximum core size limit
+        struct rlimit limit;
+        getrlimit(RLIMIT_CORE, &limit);
+        limit.rlim_cur = limit.rlim_max;
+        setrlimit(RLIMIT_CORE, &limit);
+#endif
+
+        // Stop the app:
+        abort();
+
+        // Stop it again:
+        Sleep::sleepS(1);
+        Sleep::sleepS(1);
+        int * bad = 0;
+        *bad = 123456;
+
+        // And again:
+        exit(0);
       }
 
       debug("WATCHDOG CHECK");
 
-      m_check = false;
     }
   }
 

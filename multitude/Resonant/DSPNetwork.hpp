@@ -163,7 +163,7 @@ namespace Resonant {
       /// Returns a pointer to the DSP module
       Module * module() { return m_module; }
 
-      /// Sets the defualt target channel of the module
+      /// Sets the default target channel of the module
       void setTargetChannel(int channel)
       {
         m_targetChannel = channel;

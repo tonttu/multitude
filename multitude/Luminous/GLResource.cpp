@@ -24,7 +24,10 @@ namespace Luminous
     : m_resources(resources),
       m_deleteOnFrame(0),
       m_generation(-1)
-  {}
+  {
+    if(!resources)
+      m_resources = GLResources::getThreadResources();
+  }
   
   GLResource::~GLResource()
   {}
@@ -35,7 +38,6 @@ namespace Luminous
       return;
 
     assert(m_resources == 0);
-
 
     m_resources = resources;
     changeByteConsumption(0, consumesBytes());
@@ -48,6 +50,8 @@ namespace Luminous
 
   void GLResource::changeByteConsumption(long deallocated, long allocated)
   {
+
+
     if(m_resources)
       m_resources->changeByteConsumption(deallocated, allocated);
   }

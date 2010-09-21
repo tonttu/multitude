@@ -226,13 +226,13 @@ namespace Screenplay {
 
         int index = m_audioFrames * actualChannels();
 
-        int aframes = (m_audioBuffer.size() - index) * 2;
+        int aframes = ((int) m_audioBuffer.size() - index) * 2;
 
         if(aframes < AVCODEC_MAX_AUDIO_FRAME_SIZE) {
           m_audioBuffer.resize(m_audioBuffer.size() + AVCODEC_MAX_AUDIO_FRAME_SIZE * m_audioChannels);
-          aframes = (m_audioBuffer.size() - index) * 2;
+          aframes = ((int) m_audioBuffer.size() - index) * 2;
           if(m_audioBuffer.size() > 1000000) {
-            info("VideoInputFFMPEG::captureImage # %p Audio buffer is very large now: %d (%d)",
+            info("VideoInputFFMPEG::captureImage # %p Audio buffer is very large now: %d (%ld)",
                  this, (int) m_audioBuffer.size(), m_capturedVideo);
           }
         }
@@ -298,7 +298,7 @@ namespace Screenplay {
         m_capturedAudio += aframes;
 
         if((uint)(m_audioFrames * m_audioChannels) >= m_audioBuffer.size()) {
-          Radiant::error("VideoInputFFMPEG::captureImage # %p Audio trouble %d %d (%d)",
+          Radiant::error("VideoInputFFMPEG::captureImage # %p Audio trouble %d %d (%ld)",
                          this, aframes, m_audioFrames, m_capturedVideo);
         }
         // printf("_"); fflush(0);
@@ -630,7 +630,7 @@ namespace Screenplay {
       // return false;
     }
 
-    info("%s # Opened file %s,  (%d x %d %s, %s %d chans @ %d Hz) %d (%d, %f)",
+    debug("%s # Opened file %s,  (%d x %d %s, %s %d chans @ %d Hz) %d (%d, %f)",
           fname, filename, width(), height(), vcname, acname, m_audioChannels,
           m_audioSampleRate,
           (int) m_image.m_format, (int) m_vcontext->pix_fmt, ratio);
@@ -693,7 +693,7 @@ namespace Screenplay {
     if(m_acontext)
       avcodec_flush_buffers(m_acontext);
 
-    if(timeSeconds == 0.0) {
+    if(timeSeconds <= 1e-10) {
       close();
       std::string tmp = m_fileName;
       open(tmp.c_str(), m_flags);

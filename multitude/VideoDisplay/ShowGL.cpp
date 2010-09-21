@@ -363,7 +363,11 @@ namespace VideoDisplay {
     }
 
     m_filename = filename;
-    m_dsp = dsp;
+    if(dsp)
+      m_dsp = dsp;
+    else
+      m_dsp = Resonant::DSPNetwork::instance();
+
     m_targetChannel = targetChannel;
 
     VideoInFFMPEG * ffmpg = new VideoInFFMPEG();
@@ -400,6 +404,13 @@ namespace VideoDisplay {
   }
 
 
+  void ShowGL::setGain(float gain)
+  {
+    m_gain = gain;
+    if(m_audio)
+      m_audio->setGain(gain);
+  }
+
   bool ShowGL::start(bool fromOldPos)
   {
     static int __count = 1;
@@ -416,6 +427,7 @@ namespace VideoDisplay {
     sprintf(buf, "showgl-audiotransfer-%p-%.4d", this, __count++);
 
     au->setId(buf);
+    au->setGain(m_gain);
 
     m_dspItem = Resonant::DSPNetwork::Item();
     m_dspItem.setModule(au);
@@ -424,6 +436,7 @@ namespace VideoDisplay {
     m_dsp->addModule(m_dspItem);
 
     m_audio = au;
+    m_audio->setGain(m_gain);
 
     if(fromOldPos)
       m_video->play();
@@ -519,7 +532,7 @@ namespace VideoDisplay {
     if(m_audio) {
       videoFrame = m_audio->videoFrame();
       if(m_audio->atEnd()) {
-        info("ShowGL::update # At end");
+        debug("ShowGL::update # At end");
         stop();
 
         Radiant::BinaryData bd;
@@ -532,7 +545,7 @@ namespace VideoDisplay {
       m_video->freeUnusedMemory();
       // videoFrame = m_videoFrame;
       if(m_seeking)
-        videoFrame = m_video->latestFrame();
+        videoFrame = (int) m_video->latestFrame();
       else
         videoFrame = m_videoFrame;
       // info("Video has frame %d", videoFrame);
@@ -633,8 +646,6 @@ namespace VideoDisplay {
     Nimble::Vector4 white(1, 1, 1, alpha);
 
     if(transform) {
-      Nimble::Matrix3 m = *transform * Nimble::Matrix3::translate2D(topleft);
-
       Luminous::Utils::glTexRectAA(bottomright - topleft, *transform,
                                    white.data());
     }
@@ -718,14 +729,9 @@ namespace VideoDisplay {
     if(time < 0)
       time = 0;
     else if(time >= m_duration)
-      time = m_duration;
+      time = m_duration - Radiant::TimeStamp::createSecondsD(2);
 
     m_position = time;
-
-    if(time < 0)
-      time = 0;
-    else if(time >= m_duration)
-      time = m_duration - Radiant::TimeStamp::createSecondsD(2);
 
     debug("ShowGL::seekTo # %lf", time.secondsD());
 
@@ -743,11 +749,15 @@ namespace VideoDisplay {
 
   void ShowGL::panAudioTo(Nimble::Vector2 location)
   {
+
     if(!m_video)
       return;
 
     if(!m_audio)
       return;
+
+    debug("ShowGL::panAudioTo # %p %p %p [%.2f %.2f]", this, m_video, m_audio,
+          location.x, location.y);
 
     char buf[128];
 

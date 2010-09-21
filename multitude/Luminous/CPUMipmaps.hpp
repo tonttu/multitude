@@ -43,6 +43,9 @@ namespace Luminous {
       amounts of images, so that neither the CPU or the GPU memory is
       exceeded. The classes work in both single- and multi-threaded
       environments.
+
+      Mipmap level 0 is the original image, level 1 is the
+      original image * 0.5 etc.
   */
   /// @todo examples
   class CPUMipmaps : public Luminous::Collectable, public Luminous::Task
@@ -76,8 +79,9 @@ namespace Luminous {
     /** Mark an image used. This method resets the idle-counter of the
     level, preventing it from being dropped from the memory in the
     near future. */
-    LUMINOUS_API void markImage(int i);
+    LUMINOUS_API void markImage(size_t i);
     /** Returns true if the object has loaded enough mipmaps. */
+    /// @todo what does "enought" mean?
     LUMINOUS_API bool isReady();
 
     /** Starts to load given file, and build the mipmaps. */
@@ -97,12 +101,6 @@ namespace Luminous {
                            const Nimble::Matrix3 & transform,
                            Nimble::Vector2 pixelsize);
 
-    /** Returns the highest possible mipmap-level. This is basically
-    the level of the mipmap with native resolution. */
-    int maxLevel() const { return m_maxLevel; }
-    /** Returns the lowest mipmap level that is ever going to be
-    created. */
-    static int lowestLevel() { return 5; }
     /** Returns true if the mipmaps are still being loaded. */
     LUMINOUS_API bool isActive();
     /** Returns the aspect ratio of the image. */
@@ -118,25 +116,15 @@ namespace Luminous {
     /// Mark this object as done
     LUMINOUS_API void finish();
 
-  protected:
+    /// Returns the number of images in the stack
+    inline unsigned stackSize() const { return (unsigned) m_stack.size(); }
 
+    LUMINOUS_API Nimble::Vector2i mipmapSize(int level);
+
+  protected:
     LUMINOUS_API virtual void doTask();
 
   private:
-
-    // Load given level from a file
-    bool doLoad(int level);
-    // Scale down given level from the level above
-    bool doScale(int level);
-
-    class CPUItem;
-
-    enum SpecialLevels {
-      DEFAULT_MAP1 = 6,
-      DEFAULT_MAP2 = 9,
-      MAX_MAPS = 13
-               };
-
     enum ItemState {
       WAITING,
       READY,
@@ -148,9 +136,7 @@ namespace Luminous {
     public:
       friend class CPUMipmaps;
 
-      CPUItem();
-
-      ~CPUItem();
+      CPUItem() { clear(); }
 
       void clear()
       {
@@ -167,49 +153,52 @@ namespace Luminous {
 
     typedef std::map<int, CPUItem> StackMap;
 
-    Luminous::Priority levelPriority(int level)
+    /*Luminous::Priority levelPriority(int level)
     {
       if(level <= DEFAULT_MAP1)
         return Luminous::Task::PRIORITY_NORMAL +
             Luminous::Task::PRIORITY_OFFSET_BIT_HIGHER;
 
       return Luminous::Task::PRIORITY_NORMAL;
-    }
+    }*/
 
-    /// should level i mipmap be saved on disk
-    bool shouldSaveLevel(int i)
-    { return i == DEFAULT_MAP1 || i == DEFAULT_MAP2; }
-
-    void createLevelScalers(int level);
+    CPUItem getStack(int index);
 
     /// writes cache filename for level to given string
     void cacheFileName(std::string & str, int level);
 
-    bool needsLoader(int i);
-
     void recursiveLoad(StackMap & stack, int level);
-
-    static inline int maxDimension()
-    { return 1 << MAX_MAPS; }
+    void reschedule(double delay = 0.0, bool allowLater = false);
 
     std::string m_filename;
     unsigned long int m_fileModified;
 
     StackMap         m_stackChange;
     Radiant::MutexAuto m_stackMutex;
+    Radiant::MutexAuto m_stackChangeMutex;
+    Radiant::MutexAuto m_rescheduleMutex;
 
-    CPUItem          m_stack[MAX_MAPS];
+    std::vector<CPUItem> m_stack;
     Nimble::Vector2i m_nativeSize;
+    Nimble::Vector2i m_firstLevelSize;
     int              m_maxLevel;
-    // What level files are available as mip-maps.
-    // bit n set <=> level n mipmap available
-    uint32_t         m_fileMask;
+
     bool             m_hasAlpha;
-    Radiant::TimeStamp m_startedLoading;
     float            m_timeOut;
 
+    // keep the smallest mipmap image (biggest mipmap level m_maxLevel) always ready
+    bool             m_keepMaxLevel;
+    // what levels should be saved to file
+    std::set<int>    m_shouldSave;
+
+    // default save sizes
+    enum {
+      DEFAULT_SAVE_SIZE1 = 64,
+      DEFAULT_SAVE_SIZE2 = 512,
+      SMALLEST_IMAGE = 32
+    };
+
     Luminous::ImageInfo m_info;
-    bool                m_ok;
   };
 
 

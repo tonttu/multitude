@@ -38,9 +38,7 @@ namespace Resonant {
       m_compiled(false),
       m_done(false),
       m_targetChannel(-1)
-  {
-
-  }
+  {}
 
   DSPNetwork::Item::~Item()
   {}
@@ -354,7 +352,7 @@ namespace Resonant {
         int outchans = m_collect->channels(); // hardware output channels
 
         if(m_panner) {
-          info("Adding %d inputs to the panner", mchans);
+          //info("Adding %d inputs to the panner", mchans);
 
           Item * oi = findItem(m_panner->id());
           for(int i = 0; i < mchans; i++) {
@@ -490,6 +488,9 @@ namespace Resonant {
       const char * commandid,
       Radiant::BinaryData & data)
   {
+    debug("DSPNetwork::deliverControl # %p %s %s %d", this, moduleid, commandid,
+          data.total());
+
     for(iterator it = m_items.begin(); it != m_items.end(); it++) {
       Module * m = (*it).m_module;
       if(strcmp(m->id(), moduleid) == 0) {
@@ -564,7 +565,7 @@ namespace Resonant {
       if(strcmp(nc.m_targetId, item.m_module->id()) == 0) {
         item.m_inputs.push_back(Connection(nc.m_sourceId,
                        nc.m_sourceChannel));
-        debug("Item[%d].m_inputs[%d] = [%d,%d]", location, i,
+        debug("Item[%d].m_inputs[%d] = [%s,%d]", location, i,
             nc.m_sourceId, nc.m_sourceChannel);
       }
       i++;
@@ -622,7 +623,7 @@ namespace Resonant {
 
     for(size_t i = 0; i < s; i++) {
       if(bufIsFree(i, location)) {
-        debug("DSPNetwork::findFreeBuf # Found %d -> %u", location, i);
+        debug("DSPNetwork::findFreeBuf # Found %d -> %lu", location, i);
         return m_buffers[i];
       }
     }
@@ -631,7 +632,7 @@ namespace Resonant {
 
     m_buffers[s].init();
 
-    debug("DSPNetwork::findFreeBuf # Created %d -> %u", location, s);
+    debug("DSPNetwork::findFreeBuf # Created %d -> %lu", location, s);
 
     return m_buffers[s];
   }

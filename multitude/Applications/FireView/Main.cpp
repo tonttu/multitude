@@ -25,6 +25,10 @@
 
 #include <QtGui/QApplication>
 
+#ifndef WIN32
+#include <Radiant/VideoCamera1394.hpp>
+#endif
+
 enum Task {
   TASK_SHOW_CAMERAS,
   TASK_SCAN_BUS
@@ -78,11 +82,24 @@ int main(int argc, char ** argv)
   for(i = 1; i < argc; i++) {
     const char * arg = argv[i];
 
-    if(strcmp(arg, "--format7") == 0 && (i+1) < argc) {
+
+    if(strcmp(arg, "--debayer") == 0) {
+      FireView::CamView::setDebayer(1);
+    }
+    else if(strcmp(arg, "--colorbal") == 0) {
+      FireView::CamView::calculateColorBalance();
+    }
+    else if(strcmp(arg, "--format7") == 0 && (i+1) < argc) {
       format7 = true;
 
       FireView::CamView::setFormat7mode(atoi(argv[++i]));
     }
+#ifndef WIN32
+    else if(strcmp(arg, "--busreset") == 0) {
+      Radiant::VideoCamera1394::busReset();
+      return 0;
+    }
+#endif
     else if(strcmp(arg, "--format7area") == 0 && (i+1) < argc) {
       format7 = true;
       Radiant::Variant tmp(argv[++i]);

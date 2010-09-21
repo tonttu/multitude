@@ -33,7 +33,7 @@ namespace Resonant {
 
   ModulePanner::ModulePanner(Application * a)
       : Module(a),
-      m_outChannels(8),
+      m_generation(0),
       m_maxRadius(this, "max-radius", 1500)
   {
     setName("pan2d");
@@ -59,6 +59,7 @@ namespace Resonant {
 
       if(ok) {
         m_speakers.push_back(ls);
+        ++m_generation;
         return true;
       }
     }
@@ -82,12 +83,7 @@ namespace Resonant {
 
     bool ok = true;
 
-    if(strcmp(id, "channels") == 0) {
-      int n = data->readInt32( & ok);
-      if(ok)
-        m_outChannels = n;
-    }
-    else if(strcmp(id, "fullhdstereo") == 0) {
+    if(strcmp(id, "fullhdstereo") == 0) {
       makeFullHDStereo();
     }
     else if(strcmp(id, "addsource") == 0) {
@@ -131,7 +127,7 @@ namespace Resonant {
 
       Source & s = *m_sources[i];
 
-      for(int j = 0; j < PIPES_PER_SOURCE; j++) {
+      for(int j = 0; j < (int) s.m_pipes.size(); j++) {
 
         Pipe & p = s.m_pipes[j];
 
@@ -157,10 +153,10 @@ namespace Resonant {
           }
         }
 
-        /* debug("ModulePanner::process # source %d, pipe %d, gain = %f "
+        debug("ModulePanner::process # source %d, pipe %d -> %d, gain = %f "
               "in = %p %f out = %f",
-              i, j, p.m_ramp.value(), in[i], *in[i], out[p.m_to][0]);
-        */
+              i, j, p.m_to, p.m_ramp.value(), in[i], *in[i], out[p.m_to][0]);
+
       }
     }
   }
@@ -180,6 +176,7 @@ namespace Resonant {
     m_speakers.push_back(std::shared_ptr<LoudSpeaker>(ls));
 
     m_maxRadius = 1200;
+    ++m_generation;
   }
 
   void ModulePanner::setSpeaker(unsigned i, Nimble::Vector2 location)
@@ -193,6 +190,7 @@ namespace Resonant {
 
     ls->m_location = location;
     m_speakers[i].reset(ls);
+    ++m_generation;
   }
 
   void ModulePanner::setSpeaker(unsigned i, float x, float y)
@@ -221,6 +219,10 @@ namespace Resonant {
       return;
     }
 
+    if(s->m_location == location && s->m_generation == m_generation)
+      return;
+
+    s->m_generation = m_generation;
     s->m_location = location;
 
     int interpSamples = 2000;
@@ -231,18 +233,14 @@ namespace Resonant {
       if(!ls)
         continue;
 
-      float d = (location - ls->m_location.asVector()).length();
-      float rel = d / m_maxRadius;
-
-      float inv = 1.0f - rel;
-      float gain = Nimble::Math::Min(inv * 2.0f, 1.0f);
+      float gain = computeGain(ls, location);
 
       if(gain <= 0.0000001f) {
 
         // Silence that output:
-        for(unsigned j = 0; j < PIPES_PER_SOURCE; j++) {
+        for(unsigned j = 0; j < s->m_pipes.size(); j++) {
           Pipe & p = s->m_pipes[j];
-          if(p.m_to == i && p.m_ramp.target() > 0.0001f) {
+          if(p.m_to == i && p.m_ramp.target() >= 0.0001f) {
             p.m_ramp.setTarget(0.0f, interpSamples);
             debug("ModulePanner::setSourceLocation # Silencing %u", i);
 
@@ -253,13 +251,13 @@ namespace Resonant {
         bool found = false;
 
         // Find existing pipe:
-        for(unsigned j = 0; j < PIPES_PER_SOURCE && !found; j++) {
+        for(unsigned j = 0; j < s->m_pipes.size() && !found; j++) {
           Pipe & p = s->m_pipes[j];
 
           debug("Checking %u: %u %f -> %f", j, p.m_to,
                 p.m_ramp.value(), p.m_ramp.target());
 
-          if(p.m_to == i && p.m_ramp.target() > 0.0001f) {
+          if(p.m_to == i) {
             debug("ModulePanner::setSourceLocation # Adjusting %u", j);
             p.m_ramp.setTarget(gain, interpSamples);
             found = true;
@@ -269,7 +267,11 @@ namespace Resonant {
         if(!found) {
 
           // Pick up a new pipe:
-          for(unsigned j = 0; j < PIPES_PER_SOURCE && !found; j++) {
+          for(unsigned j = 0; j <= s->m_pipes.size() && !found; j++) {
+            if(j == s->m_pipes.size()) {
+              s->m_pipes.resize(j+1);
+              debug("ModulePanner::setSourceLocation # pipes resize to %d", j+1);
+            }
             Pipe & p = s->m_pipes[j];
             if(p.done()) {
               debug("ModulePanner::setSourceLocation # "
@@ -296,7 +298,7 @@ namespace Resonant {
       Source & s = * (*it);
       if(s.m_id == id) {
         m_sources.erase(it);
-        debug("ModulePanner::removeSource # Removed source %s, now %u",
+        debug("ModulePanner::removeSource # Removed source %s, now %lu",
               id.c_str(), m_sources.size());
         return;
       }
@@ -305,4 +307,13 @@ namespace Resonant {
     error("ModulePanner::removeSource # No such source: \"%s\"", id.c_str());
   }
 
+  float ModulePanner::computeGain(const LoudSpeaker * ls, Nimble::Vector2 srcLocation) const
+  {
+    float d = (srcLocation - ls->m_location.asVector()).length();
+    float rel = d / m_maxRadius;
+
+    float inv = 1.0f - rel;
+
+    return Nimble::Math::Min(inv * 2.0f, 1.0f);
+  }
 }

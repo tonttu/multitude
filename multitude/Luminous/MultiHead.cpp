@@ -348,7 +348,7 @@ namespace Luminous {
   MultiHead::Window & MultiHead::window(size_t i)
   {
     if(i >= m_windows.size()) {
-      Radiant::fatal("MultiHead::window # Array index %u exceeds array size %ld",
+      Radiant::fatal("MultiHead::window # Array index %lu exceeds array size %lu",
                      i, m_windows.size());
     }
 
@@ -358,7 +358,7 @@ namespace Luminous {
   const MultiHead::Window & MultiHead::window(size_t i) const
   {
     if(i >= m_windows.size()) {
-      Radiant::fatal("MultiHead::window # Array index %u exceeds array size %ld",
+      Radiant::fatal("MultiHead::window # Array index %lu exceeds array size %lu",
                      i, m_windows.size());
     }
 
@@ -380,7 +380,7 @@ namespace Luminous {
     size_t used = 0;
 
     for(size_t i = 0; i < m_windows.size(); i++) {
-      int n = m_windows[i]->areaCount();
+      size_t n = m_windows[i]->areaCount();
       if(used + n > index) {
         if(winptr)
           *winptr = m_windows[i].get();
@@ -440,11 +440,11 @@ namespace Luminous {
     float left =  1000000;
     float right =-1000000;
 
-    int n = areaCount();
+    size_t n = areaCount();
 
-    Radiant::debug("MultiHead::width # %d", n);
+    Radiant::debug("MultiHead::width # %lu", n);
 
-    for(int i = 0; i < n; i++) {
+    for(size_t i = 0; i < n; i++) {
       Area & a = area(i);
 
       if(!a.active())
@@ -467,9 +467,9 @@ namespace Luminous {
     float top = 1000000;
     float bottom = -1000000;
 
-    int n = areaCount();
+    size_t n = areaCount();
 
-    for(int i = 0; i < n; i++) {
+    for(size_t i = 0; i < n; i++) {
       Area & a = area(i);
 
       float wtop = a.graphicsLocation().y;

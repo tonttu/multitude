@@ -14,6 +14,8 @@
  */
 
 #include "RenderContext.hpp"
+
+#include "GLContext.hpp"
 #include "Texture.hpp"
 #include "FramebufferObject.hpp"
 
@@ -158,8 +160,16 @@ namespace Luminous
         m_frameCount(0),
         m_window(win),
         m_viewStackPos(-1),
-        m_initialized(false)
+        m_glContext(new GLDummyContext),
+        m_initialized(false),
+        m_blendFunc(BLEND_USUAL)
     {
+
+      m_attribs.resize(10000);
+      m_attribs.clear();
+
+      m_verts.resize(10000);
+      m_verts.clear();
     }
 
     void pushFBO(std::shared_ptr<FBOPackage> fbo)
@@ -291,8 +301,6 @@ namespace Luminous
       width += 1; // for antialiasing
 
       const Matrix3 & m = r.transform();
-      std::vector<Nimble::Vector2> verts;
-      std::vector<Vector2> attribs;
       Vector2f cprev;
       Vector2f cnow = m.project(vertices[0]);
       Vector2f cnext;
@@ -317,13 +325,16 @@ namespace Luminous
       }
       avg *= width;
 
-      verts.push_back(cnow + avg);
-      verts.push_back(cnow - avg);
+      m_verts.clear();
+      m_verts.push_back(cnow + avg);
+      m_verts.push_back(cnow - avg);
 
-      attribs.push_back(cnow);
-      attribs.push_back(cnow);
-      attribs.push_back(cnow);
-      attribs.push_back(cnow);
+      m_attribs.clear();
+
+      m_attribs.push_back(cnow);
+      m_attribs.push_back(cnow);
+      m_attribs.push_back(cnow);
+      m_attribs.push_back(cnow);
 
       for (int i = nextIdx; i < n; ) {
         nextIdx = i+1;
@@ -355,16 +366,16 @@ namespace Luminous
         float dp = Math::Clamp(dot(avg, dirPrev.perpendicular()), 1e-2f, 1.0f);
         avg /= dp;
         avg *= width;
-        verts.push_back(cnow-avg);
-        verts.push_back(cnow+avg);
+        m_verts.push_back(cnow-avg);
+        m_verts.push_back(cnow+avg);
 
-        verts.push_back(cnow+avg);
-        verts.push_back(cnow-avg);
+        m_verts.push_back(cnow+avg);
+        m_verts.push_back(cnow-avg);
 
-        attribs.push_back(cnow);
-        attribs.push_back(cnow);
-        attribs.push_back(cnow);
-        attribs.push_back(cnow);
+        m_attribs.push_back(cnow);
+        m_attribs.push_back(cnow);
+        m_attribs.push_back(cnow);
+        m_attribs.push_back(cnow);
 
         i = nextIdx;
       }
@@ -378,12 +389,12 @@ namespace Luminous
       m_polyline_shader->setUniformFloat("width", width);
 
       glColor4fv(rgba);
-      glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat *>(&verts[0]));
-      glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&attribs[0]));
-      glVertexAttribPointer(loc2, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&attribs[4]));
+      glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat *>(&m_verts[0]));
+      glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&m_attribs[0]));
+      glVertexAttribPointer(loc2, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&m_attribs[4]));
       glEnableClientState(GL_VERTEX_ARRAY);
 
-      glDrawArrays(GL_QUADS, 0, verts.size());
+      glDrawArrays(GL_QUADS, 0, (GLsizei) m_verts.size());
 
       glDisableClientState(GL_VERTEX_ARRAY);
       glDisableVertexAttribArray(loc);
@@ -396,7 +407,7 @@ namespace Luminous
       int w = m_window->size().x;
       int h = m_window->size().y;
       ++m_viewStackPos;
-      if ((int)m_viewTextures.size() == m_viewStackPos) {
+      if ((int) m_viewTextures.size() == m_viewStackPos) {
         m_viewTextures.push_back(new Luminous::Texture2D);
         Luminous::Texture2D & tex = *m_viewTextures.back();
         tex.setWidth(w);
@@ -466,9 +477,14 @@ namespace Luminous
     /// fbo texture stack for views
     std::vector<Luminous::Texture2D *> m_viewTextures;
     int m_viewStackPos;
+    std::vector<Nimble::Vector2> m_attribs;
+    std::vector<Nimble::Vector2> m_verts;
 
+    Luminous::GLContext * m_glContext;
 
     bool m_initialized;
+
+    BlendFunc m_blendFunc;
   };
 
   ///////////////////////////////////////////////////////////////////
@@ -489,7 +505,7 @@ namespace Luminous
 
   RenderContext::~RenderContext()
   {
-    info("Closing OpenGL context. Rendered %lu things in %lu frames, %lu things per frame",
+    debug("Closing OpenGL context. Rendered %lu things in %lu frames, %lu things per frame",
          m_data->m_renderCount, m_data->m_frameCount,
          m_data->m_renderCount / Nimble::Math::Max(m_data->m_frameCount, (unsigned long) 1));
     delete m_data;
@@ -549,7 +565,7 @@ namespace Luminous
 //      Radiant::info("RenderContext::isVisible # area (%f,%f) (%f,%f)", area.center().x, area.center().y, area.size().x, area.size().y);
 
       if(m_data->m_clipStack.empty()) {
-        Radiant::info("\tclip stack is empty");
+        Radiant::debug("\tclip stack is empty");
         return true;
       } else {
 
@@ -700,6 +716,71 @@ namespace Luminous
     }
   }
 
+  void RenderContext::drawArc(Nimble::Vector2f center, float radius, float fromRadians, float toRadians, float width, float blendWidth, const float * color, int linesegments)
+  {
+    // Make 0 radians be "on the right"
+    fromRadians += Nimble::Math::PI / 2.f;
+    toRadians += Nimble::Math::PI / 2.f;
+
+    float r = color[0];
+    float g = color[1];
+    float b = color[2];
+    float a = color[3];
+
+    // Angle increases counter-clockwise
+    float delta = -(toRadians - fromRadians) / linesegments;
+
+    width *= 0.5f;
+
+    float rs[4] = {
+      radius - width - blendWidth, radius - width,
+      radius + width, radius + width + blendWidth
+    };
+
+    for(int i = 0; i < linesegments; i++) {
+      float a1 = fromRadians + i * delta;
+      float a2 = fromRadians + (i + 1) * delta;
+      float sa1 = sinf(a1);
+      float ca1 = - cosf(a1);
+      float sa2 = sinf(a2);
+      float ca2 = - cosf(a2);
+
+      glBegin(GL_QUAD_STRIP);
+
+      glColor4f(r, g, b, 0.0f);
+
+      Nimble::Vector2f v0 = transform().project(sa1 * rs[0] + center.x, ca1 * rs[0] + center.y);
+      Nimble::Vector2f v1 = transform().project(sa2 * rs[0] + center.x, ca2 * rs[0] + center.y);
+
+      glVertex2fv(v0.data());
+      glVertex2fv(v1.data());
+
+      glColor4f(r, g, b, a);
+
+      Nimble::Vector2f v2 = transform().project(sa1 * rs[1] + center.x, ca1 * rs[1] + center.y);
+      Nimble::Vector2f v3 = transform().project(sa2 * rs[1] + center.x, ca2 * rs[1] + center.y);
+
+      glVertex2fv(v2.data());
+      glVertex2fv(v3.data());
+
+      Nimble::Vector2f v4 = transform().project(sa1 * rs[2] + center.x, ca1 * rs[2] + center.y);
+      Nimble::Vector2f v5 = transform().project(sa2 * rs[2] + center.x, ca2 * rs[2] + center.y);
+
+      glVertex2fv(v4.data());
+      glVertex2fv(v5.data());
+
+      glColor4f(r, g, b, 0.0f);
+
+      Nimble::Vector2f v6 = transform().project(sa1 * rs[3] + center.x, ca1 * rs[3] + center.y);
+      Nimble::Vector2f v7 = transform().project(sa2 * rs[3] + center.x, ca2 * rs[3] + center.y);
+
+      glVertex2fv(v6.data());
+      glVertex2fv(v7.data());
+
+      glEnd();
+    }
+  }
+
   void RenderContext::drawCircleImpl(Nimble::Vector2f center, float radius,
                                  const float * rgba) {
     m_data->drawCircle(*this, center, radius, rgba);
@@ -759,7 +840,7 @@ namespace Luminous
     sub.subdivide( controlPoints[0], controlPoints[1], controlPoints[2], controlPoints[3] );
     points.push_back(controlPoints[3]);
 
-    drawPolyLine(&points[0], points.size(), width, rgba);
+    drawPolyLine(&points[0], (int) points.size(), width, rgba);
   }
 
   void RenderContext::drawSpline(Nimble::Splines::Interpolating & s, float width, const float * rgba, float step)
@@ -788,7 +869,7 @@ namespace Luminous
       }
       points.push_back(point);
     }
-    drawPolyLine(&points[0], points.size(), width, rgba);
+    drawPolyLine(&points[0], (int) points.size(), width, rgba);
   }
 
 
@@ -846,21 +927,28 @@ namespace Luminous
 
   void RenderContext::setBlendFunc(BlendFunc f)
   {
-    if(f == BLEND_NONE) {
+    m_data->m_blendFunc = f;
+
+    useCurrentBlendMode();
+  }
+
+  void RenderContext::useCurrentBlendMode()
+  {
+    //Radiant::info("RenderContext::useCurrentBlendMode # %s", blendFuncNames()[m_data->m_blendFunc]);
+
+    if(m_data->m_blendFunc == BLEND_NONE) {
       glDisable(GL_BLEND);
       return;
     }
 
     glEnable(GL_BLEND);
 
-    if(f == BLEND_USUAL)
+    if(m_data->m_blendFunc == BLEND_USUAL)
       Utils::glUsualBlend();
-    else if(f == BLEND_ADDITIVE)
+    else if(m_data->m_blendFunc == BLEND_ADDITIVE)
       Utils::glAdditiveBlend();
-    else if(f == BLEND_SUBTRACTIVE) {
+    else if(m_data->m_blendFunc == BLEND_SUBTRACTIVE)
       Utils::glSubtractiveBlend();
-    }
-
   }
 
   const char ** RenderContext::blendFuncNames()
@@ -912,6 +1000,16 @@ namespace Luminous
     popTransform();
   }
 
+  void RenderContext::setGLContext(Luminous::GLContext * ctx)
+  {
+    delete m_data->m_glContext;
+    m_data->m_glContext = ctx;
+  }
+
+  Luminous::GLContext * RenderContext::glContext()
+  {
+    return m_data->m_glContext;
+  }
 
 }
 

@@ -146,8 +146,8 @@ namespace Radiant {
   {
     ensure(8 + str.size() * 4);
 
-    getRef<int32_t>() = WSTRING_MARKER;
-    getRef<int32_t>() = str.size();
+    getRef<int32_t>() = (int32_t) WSTRING_MARKER;
+    getRef<int32_t>() = (int32_t) str.size();
 
     for(unsigned i = 0; i < str.size(); i++) {
       getRef<int32_t>() = str[i];
@@ -223,6 +223,7 @@ namespace Radiant {
   {
     ensure(that.pos());
     memcpy(getPtr<char>(that.pos()), that.data(), that.pos());
+    m_total += that.m_total;
   }
 
   float BinaryData::readFloat32(bool * ok)
@@ -263,6 +264,20 @@ namespace Radiant {
     skipParameter(marker);
 
     return 0.0f;
+  }
+
+  float BinaryData::readFloat32(float defval, bool *ok)
+  {
+    bool good = true;
+    float tmp = readFloat32( & good);
+
+    if(ok)
+      *ok = good;
+
+    if(good)
+      return tmp;
+    else
+      return defval;
   }
 
   double BinaryData::readFloat64(bool * ok)
@@ -463,25 +478,25 @@ namespace Radiant {
     int32_t marker = getRef<int32_t>();
 
     if(marker == WSTRING_MARKER) {
-      
+
       int len = getRef<int32_t>();
-      
+
       str.resize(len);
-      
+
       for(int i = 0; i < len; i++) {
         str[i] = getRef<int32_t>();
       }
-      
+
       return true;
     }
     else if(marker == STRING_MARKER) {
 
       std::string tmp;
-      
+
       const char * source = & m_buf[m_current];
-      
+
       skipParameter(marker);
-      
+
       StringUtils::utf8ToStdWstring(str, source);
 
       return true;
@@ -773,6 +788,8 @@ namespace Radiant {
     m_current = 0;
     m_total = s;
 
+    // info("BinaryData::read # %d bytes read", (int) s);
+
     return true;
   }
 
@@ -793,10 +810,10 @@ namespace Radiant {
       if(m_shared)
         fatal("BinaryData::ensure # Sharing data, cannot ensure required space");
 
-      m_size = need + 128 + need / 16;
+      m_size = (unsigned) (need + 128 + need / 16);
       m_buf = (char *) realloc(m_buf, m_size);
     }
-    m_total = m_current + bytes;
+    m_total = (unsigned) (m_current + bytes);
   }
 
   void BinaryData::clear()
@@ -819,7 +836,7 @@ namespace Radiant {
       m_current += 8;
     else if(marker == STRING_MARKER) {
       const char * str = & m_buf[m_current];
-      m_current += stringSpace(str);
+      m_current += (unsigned) stringSpace(str);
     }
     else if(marker == WSTRING_MARKER) {
       int len = getRef<int32_t>();

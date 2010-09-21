@@ -12,6 +12,7 @@ SUBDIRS += Poetic
 SUBDIRS += Resonant
 SUBDIRS += Screenplay
 SUBDIRS += VideoDisplay
+SUBDIRS += Box2D
 
 exists(Examples/Examples.pro):SUBDIRS += Examples
 

@@ -26,23 +26,54 @@
 #include <string.h>
 #include <strings.h>
 
+#include <algorithm>
+
 namespace Radiant {
 
   /// Grid (aka 2D array) base class with memory management
   template <class T>
-  class RADIANT_API GridMemT
+  class GridMemT
   {
   public:
+
     /// Constructs a new grid with the given size
-    GridMemT(unsigned w = 0, unsigned h = 0);
+    GridMemT(unsigned w = 0, unsigned h = 0)
+        : m_width(w), m_height(h)
+    {
+      unsigned s = w * h;
+      if(s)
+        m_data = new T[s];
+      else
+        m_data = 0;
+    }
     /// Constructs a copy
     GridMemT(const GridMemT & that) : m_data(0), m_width(0), m_height(0) 
     { *this = that; }
-    ~GridMemT();
 
-    /// Resizes the grid
-    void resize(unsigned w, unsigned h);
-    /// Resizes the grid
+    ~GridMemT()
+    {
+        delete [] m_data;
+    }
+
+    void resize(unsigned w, unsigned h)
+    {
+      unsigned s = w * h;
+      unsigned smy = m_width * m_height;
+
+      m_width = w;
+      m_height = h;
+
+      if(s == smy)
+        return;
+
+      delete [] m_data;
+
+      if(s)
+        m_data = new T[s];
+      else
+        m_data = 0;
+    }
+
     void resize(Nimble::Vector2i size) { resize(size.x, size.y); }
     
     /** frees up the memory, and sets the width and height of this
@@ -82,7 +113,7 @@ namespace Radiant {
       objects. It is up the the user to ensure that the memory area is
       not invalidated while this object is being used. */
   template <class T>
-  class RADIANT_API GridNoMemT
+  class GridNoMemT
   {
   public:
     /// Constructs a new grid with the given size
@@ -134,7 +165,7 @@ namespace Radiant {
 
   /// Access to the grid elements
   template <typename T, class Base>
-  class RADIANT_API GridT : public Base
+  class GridT : public Base
   {
   public:
     /// Iterator for the grid
@@ -197,7 +228,23 @@ namespace Radiant {
       GRID_CHECK2(v); 
       return this->m_data[this->m_width * (unsigned) v.y + (unsigned) v.x];
     }
-    
+
+    /** Gets an element from the grid. If the aruments are outside the grid area, then
+        they are returned inside the image area with modulo logic. */
+    inline T & getCyclic(int x, int y)
+    {
+      x = x % (int) this->m_width;
+      y = y % (int) this->m_height;
+      if(x < 0)
+        x += this->m_width;
+      if(y < 0)
+        y += this->m_height;
+
+      return this->m_data[this->m_width * y + x];
+    }
+
+
+
     /** Returns an element from a grid. If the arguments are outside
 	the grid area, then zero is returned. */
     inline T getSafe(const Nimble::Vector2i & v)
@@ -258,6 +305,13 @@ namespace Radiant {
     void copyFast(const S & that)
     { memcpy(this->m_data, that.data(), sizeof(T) * size()); }
 
+    template <typename S>
+        void swap(S & that)
+    {
+      std::swap(this->m_data, that.m_data);
+      std::swap(this->m_width, that.m_width);
+      std::swap(this->m_height, that.m_height);
+    }
     
   };
 

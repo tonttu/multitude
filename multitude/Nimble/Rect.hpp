@@ -61,8 +61,6 @@ namespace Nimble {
       : m_low(xlow, ylow), m_high(xhigh, yhigh) {}
     ~RectT() {}
 
-    //RectT & operator=(const RectT & bs) { m_low = bs.m_low; m_high = bs.m_high; return *this; }
-
     /// Scales the rectangle uniformly
     void scale(T v) { m_low = m_low * v; m_high = m_high * v; }    
     /// Scales the rectangle
@@ -152,6 +150,8 @@ namespace Nimble {
     inline Vector2T<T> size() const { return m_high - m_low; }
     /// Returns the surface area of the rectangle
     inline T area() const { Vector2T<T> s(size()); return s.x * s.y; }
+
+    inline RectT intersection(const RectT &) const;
 
     /// Check if two rectangles intersect
     inline bool intersects(const RectT &) const;
@@ -247,6 +247,17 @@ namespace Nimble {
     return Vector2T<T>((m_low.x + m_high.x) * T(0.5), m_high.y);
   }
 
+  template <class T>
+  RectT<T> RectT<T>::intersection(const RectT & b) const
+  {
+    RectT<T> ret;
+    for(int i = 0; i < 2; i++) {
+      ret.m_low[i] = Math::Max(m_low[i], b.m_low[i]);
+      ret.m_high[i] = Math::Min(m_high[i], b.m_high[i]);
+    }
+    return ret;
+  }
+
   template <class T> 
   bool RectT<T>::intersects(const RectT &b) const
   {
@@ -257,7 +268,6 @@ namespace Nimble {
 
     return true;
   }
-
 
   template <class T> 
   inline bool RectT<T>::contains(T x, T y) const

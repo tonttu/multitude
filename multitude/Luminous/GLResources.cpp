@@ -16,6 +16,7 @@
 #include "GLResources.hpp"
 #include "GarbageCollector.hpp"
 #include "GLResource.hpp"
+#include "Luminous.hpp"
 
 #include <Nimble/Math.hpp>
 
@@ -40,6 +41,7 @@ namespace Luminous
       m_consumingBytes(0),
       m_comfortableGPURAM((1 << 20) * 70), // 70 MB
       m_frame(0),
+      m_brokenProxyTexture2D(false),
       m_resourceLocator(rl)
   {
     const char * envgp = getenv("MULTI_GPU_RAM");
@@ -49,6 +51,7 @@ namespace Luminous
       m_comfortableGPURAM = Nimble::Math::Max(atol(envgp) * (1 << 20),
 					      m_comfortableGPURAM);
     }
+
   }
 
   GLResources::~GLResources()
@@ -62,15 +65,27 @@ namespace Luminous
                      m_consumingBytes);
   }
 
-  GLResource * GLResources::getResource(const Collectable * key)
+  bool GLResources::init()
+  {
+
+    const char * glvendor = (const char *) glGetString(GL_VENDOR);
+    if(strstr(glvendor, "ATI")) {
+      m_brokenProxyTexture2D = true;
+    }
+    else
+      m_brokenProxyTexture2D = false;
+
+    return true;
+  }
+
+  GLResource * GLResources::getResource(const Collectable * key, int deleteAfterFrames)
   {
     iterator it = m_resources.find(key);
 
     if(it == m_resources.end())
       return 0;
 
-    // delete if getResource not called for 110 frames
-    deleteAfter(it->second, 110);
+    deleteAfter(it->second, deleteAfterFrames);
 
     return (*it).second;
   }
@@ -166,9 +181,30 @@ namespace Luminous
   {
     m_deallocationSum += deallocated;
     m_allocationSum   += allocated;
-    m_consumingBytes  += (allocated - deallocated);
+    // m_consumingBytes  += (allocated - deallocated);
 
-    assert(m_consumingBytes >= 0);
+    // assert(m_consumingBytes >= 0);
+  }
+
+  bool GLResources::canUseGPUBandwidth(float priority)
+  {
+    return true;
+
+    // Overriding priority: Always go.
+    if(priority >= 100.0f)
+      return true;
+
+    float perframe = 100000;
+    float rel = m_allocationSum / perframe;
+
+    // Not much used -> always go
+    if(rel < 0.3f)
+      return true;
+
+    // Some bandwidth used -> select if uploads are to go.
+    rel = (rel - 0.3f) / 0.007f;
+
+    return rel < priority;
   }
 
   void GLResources::deleteAfter(GLResource * resource, int frames)
@@ -176,7 +212,7 @@ namespace Luminous
     if(frames >= 0)
       resource->m_deleteOnFrame = m_frame + frames;
     else
-      resource->m_deleteOnFrame = -1;
+      resource->m_deleteOnFrame = 0;
   }
 
   // Doesn't work under windows where pthread_t (id_t) is a struct
@@ -252,7 +288,12 @@ namespace Luminous
     if(a)
       *a = (*it).second.m_area;
   }
-  
+
+  bool GLResources::isBrokenProxyTexture2D()
+  {
+    return m_brokenProxyTexture2D;
+  }
+
   /// add globally removed objects
   void GLResources::eraseOnce()
   {

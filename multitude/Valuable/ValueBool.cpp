@@ -13,7 +13,7 @@ namespace Valuable
 
   bool ValueBool::deserialize(ArchiveElement & e)
   {
-    m_value = (bool)Radiant::StringUtils::fromString<int32_t>(e.get().c_str());
+    m_value = Radiant::StringUtils::fromString<int32_t>(e.get().c_str()) != 0;
     return true;
   }
 
@@ -21,12 +21,18 @@ namespace Valuable
   {
     bool ok = true;
     int32_t v = data.readInt32(&ok);
-    if(ok) *this = (bool)v;
+    if(ok) *this = (v != 0);
   }
 
   std::string ValueBool::asString(bool * const ok) const
   {
     if(ok) *ok = true;
     return Radiant::StringUtils::stringify((int32_t)m_value);
+  }
+
+  bool ValueBool::set(int value)
+  {
+    *this = !!value;
+    return true;
   }
 }

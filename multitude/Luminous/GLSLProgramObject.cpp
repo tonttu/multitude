@@ -215,6 +215,32 @@ namespace Luminous
     return true;
   }
 
+  bool GLSLProgramObject::setUniformVector3(const char * name,
+                                            Nimble::Vector3f value)
+  {
+    int loc = getUniformLoc(name);
+
+    if(loc < 0)
+      return false;
+
+    glUniform3f(loc, value.x, value.y, value.z);
+
+    return true;
+  }
+
+  bool GLSLProgramObject::setUniformVector4(const char * name,
+                                            Nimble::Vector4f value)
+  {
+    int loc = getUniformLoc(name);
+
+    if(loc < 0)
+      return false;
+
+    glUniform4f(loc, value.x, value.y, value.z, value.w);
+
+    return true;
+  }
+
   bool GLSLProgramObject::setUniformMatrix3(const char * name, const Nimble::Matrix3f & value)
   {
     int loc = getUniformLoc(name);
@@ -319,7 +345,7 @@ namespace Luminous
       return false;
     }
 
-    debug("GLSLProgramObject::loadStrings # %p %p", vsString, fsString);
+    //info("GLSLProgramObject::loadStrings # %p %p", vsString, fsString);
 
     // Load & compile vertex shader
     GLSLShaderObject* vs = 0;
