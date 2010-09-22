@@ -152,7 +152,10 @@ namespace Radiant
 
   int SerialPort::write(const void * buf, int bytes)
   {
-    assert(isOpen());
+    if(!isOpen()) {
+      error("SerialPort::write # device not open");
+      return -1;
+    }
 
     DWORD   bytesWritten = 0;
     WriteFile(m_hPort, buf, bytes, & bytesWritten, 0);
@@ -173,7 +176,10 @@ namespace Radiant
 
   int SerialPort::read(void * buf, int bytes)
   {
-    assert(isOpen());
+    if(!isOpen()) {
+      error("SerialPort::read # device not open");
+      return -1;
+    }
 
     DWORD   bytesRead = 0;
     if(ReadFile(m_hPort, buf, bytes, & bytesRead, 0) == FALSE)
