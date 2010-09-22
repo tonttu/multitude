@@ -320,8 +320,8 @@ namespace Radiant {
     }
 
     for(iterator it = m_variants.begin();it != m_variants.end(); it++) {
-      if(writedocs((*it).second))
-        os << ws << "/* " << (*it).second.documentation() << " */\n";
+      // if(writedocs((*it).second))
+      // os << ws << "/* " << (*it).second.documentation() << " */\n";
       os << ws << (*it).first << " = \"" << (*it).second << "\"\n";
     }
   }
