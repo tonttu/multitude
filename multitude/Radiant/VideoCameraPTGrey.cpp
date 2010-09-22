@@ -431,19 +431,20 @@ namespace Radiant
     Radiant::info("VideoCameraPTGrey::close");
     m_camera.Disconnect();
 
-	m_state = UNINITIALIZED;
+    m_state = UNINITIALIZED;
 
     return true;
   }
 
   const Radiant::VideoImage * VideoCameraPTGrey::captureImage()
   {
-    GuardStatic g(__cmutex);
+    // GuardStatic g(__cmutex);
 
     FlyCapture2::Image img;
     FlyCapture2::Error err = m_camera.RetrieveBuffer(&img);
     if(err != FlyCapture2::PGRERROR_OK) {
-      Radiant::error("VideoCameraPTGrey::captureImage # %s", err.GetDescription());
+      Radiant::error("VideoCameraPTGrey::captureImage # %llx %s",
+                     m_info.m_euid64, err.GetDescription());
       return false;
     }
     /*
