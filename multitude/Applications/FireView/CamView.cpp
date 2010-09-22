@@ -246,6 +246,11 @@ namespace FireView {
       }
 
       Nimble::Recti r = CamView::format7Area();
+
+      /* static int index = 0;
+      r.low().x += index * 4;
+      index++; */
+
       ok = m_camera->openFormat7(m_euid64, r, m_customFps, CamView::format7Mode());
     }
 
