@@ -100,7 +100,7 @@ namespace Nimble {
     m[3].make(x41, x42, x43, x44);
       }
     /// Returns the inverse of the matrix
-    inline Matrix4T<T>        inverse(bool * ok) const;
+    inline Matrix4T<T>        inverse(bool * ok = 0) const;
 
     /// Multiplies two matrices together
     inline Matrix4T<T>&       operator*=(const Matrix4T<T>& that);
@@ -120,6 +120,8 @@ namespace Nimble {
     T *       data()       { return m[0].data(); }
     /// Returns a pointer to the first element
     const T * data() const { return m[0].data(); }
+
+    NIMBLE_API Matrix4T<T> orthoNormalize();
 
     /// Fills the matrix by copying values from memory
     template <class S>
@@ -191,6 +193,26 @@ namespace Nimble {
     return *this;
   }
 
+  /// @todo could improve numerical stability easily etc.
+  template <class T>
+  inline Matrix4T<T> Matrix4T<T>::orthoNormalize()
+  {
+    transpose();
+    Matrix4T<T> res(*this);
+    for (int i=0; i < 4; ++i) {
+      Vector4T<T> & v = res.row(i);
+      for (int j=0; j < i; ++j) {
+        v -= projection(res.row(j), row(i));
+      }
+    }
+
+    for (int i=0; i < 4; ++i)
+      res.row(i).normalize();
+
+    res.transpose();
+    return res;
+  }
+
   template <class T>
   inline void Matrix4T<T>::identity()
   {
@@ -230,13 +252,13 @@ namespace Nimble {
 
     T fDet = fA0*fB5-fA1*fB4+fA2*fB3+fA3*fB2-fA4*fB1+fA5*fB0;
     if ( Math::Abs(fDet) <= 1.0e-10 ) {
-      *ok = false;
+      if(ok) *ok = false;
       Matrix4T<T> tmp;
       tmp.identity();
       return tmp;
     }
 
-    *ok = true;
+    if(ok) *ok = true;
 
     Matrix4T<T> inv;
     inv[0][0] = + my[ 5]*fB5 - my[ 6]*fB4 + my[ 7]*fB3;
@@ -360,15 +382,15 @@ inline std::ostream& operator<<(std::ostream& os, const Nimble::Matrix4T<T>& m)
 template<class T>
 void Nimble::Matrix4T<T>::setTranslation(const Nimble::Vector3T<T> & v)
 {
-  m[3][0] = v.x;
-  m[3][1] = v.y;
-  m[3][2] = v.z;
+  m[0][3] = v.x;
+  m[1][3] = v.y;
+  m[2][3] = v.z;
 }
 
 template<class T>
 Nimble::Vector3T<T> Nimble::Matrix4T<T>::getTranslation() const
 {
-  return Nimble::Vector3T<T>(m[3][0], m[3][1], m[3][2]);
+  return Nimble::Vector3T<T>(m[0][3], m[1][3], m[2][3]);
 }
 
 template<class T>

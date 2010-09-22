@@ -50,6 +50,11 @@ void helper(const char * app)
      " --triggerpolarity   +up/down - Selects the trigger polarity, either "
           "\"up\" or \"down\"\n"
      " --triggersource +int - Selects the trigger source, range: 0-%d\n"
+     " --debayer - Enable de-Bayer filter\n"
+     " --colorbal - Show color balance of color camera\n"
+#ifndef WIN32
+     " --busreset - Resets the firewire bus\n"
+#endif
      "\nEXAMPLES:\n"
      " %s             - Run all cameras at 15 fps\n"
      " %s --scanbus   - List cameras, with IDs\n"

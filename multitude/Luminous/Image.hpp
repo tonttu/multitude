@@ -64,7 +64,7 @@ namespace Luminous
 
     /// The width ofthe image in pixels
     int width() const { return m_width; }
-    /// The height ofthe image in pixels
+    /// The height of the image in pixels
     int height() const { return m_height; }
     /// The size of the image in pixels
     Nimble::Vector2i size() const
@@ -150,6 +150,11 @@ namespace Luminous
     PixelFormat m_pixelFormat;
     unsigned char* m_data;
     int m_generation;
+
+  public:
+    /// @todo
+    bool m_dataReady;
+    bool m_ready;
   };
 
   /** ImageTex provides an easy way to create OpenGL textures from images in a
@@ -181,7 +186,9 @@ namespace Luminous
     /// Checks if the image data is fully loaded to the GPU, inside a texture
     bool isFullyLoadedToGPU(GLResources * resources = 0);
 
-    void uploadBytesToGPU(GLResources * resources, unsigned bytes);
+    unsigned uploadBytesToGPU(GLResources * resources, unsigned bytes);
+
+    bool tryBind(unsigned & limit);
   };
 
 

@@ -195,8 +195,13 @@ namespace Radiant {
       uint lines = linecount[i];
       uint bytes = rowbytes[i];
 
-      for(uint y = 0; y < lines; y++)
-        memcpy(dest.line(y), src.line(y), bytes);
+      for(uint y = 0; y < lines; y++) {
+        /* Take separate pointers, so that if something goes wrong we can check out the
+        situation with debugger. */
+        uint8_t * destptr = dest.line(y);
+        const uint8_t * srcptr = src.line(y);
+        memcpy(destptr, srcptr, bytes);
+      }
     }
 
     return true;

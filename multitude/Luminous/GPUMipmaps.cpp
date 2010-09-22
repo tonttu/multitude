@@ -51,7 +51,9 @@ namespace Luminous {
   }
 
   bool GPUMipmaps::bind(Nimble::Vector2 pixelsize)
-  {
+  {   
+    // Luminous::Utils::glCheck("GPUMipmaps::bind # 0");
+
     int best = m_cpumaps->getClosest(pixelsize);
 
     if(best < 0) {
@@ -64,15 +66,28 @@ namespace Luminous {
 
     std::shared_ptr<ImageTex> img = m_cpumaps->getImage(best);
 
-    if(img->isFullyLoadedToGPU() || ((img->width() * img->height()) < 500000)) {
-      img->bind(GL_TEXTURE0, false);
+    if(img->isFullyLoadedToGPU()) {
+      img->bind(resources(), GL_TEXTURE0, false);
+      Luminous::Utils::glCheck("GPUMipmaps::bind # 1");
       return true;
     }
+
+    long instantLimit = 1500000;
+
+    if(((img->width() * img->height()) < instantLimit) /* &&
+       (resources()->canUseGPUBandwidth(80.0f))*/) {
+      img->bind(resources(), GL_TEXTURE0, false);
+
+      // Luminous::Utils::glCheck("GPUMipmaps::bind # 2");
+      return true;
+    }
+
     else {
 
       // Then perform incremental texture upload:
 
-      img->uploadBytesToGPU(resources(), 2000000);
+      // if(resources()->canUseGPUBandwidth(50.0f))
+      img->uploadBytesToGPU(resources(), instantLimit);
 
       // Lets check if we find something to use:
       for(unsigned i = 0; i < m_cpumaps->stackSize(); i++) {
@@ -81,16 +96,23 @@ namespace Luminous {
         if(!test)
           continue;
 
-        if(test->isFullyLoadedToGPU() || ((test->width() * test->height()) < 500000)) {
-          test->bind(GL_TEXTURE0, false);
+        int area = test->width() * test->height();
+
+        if(test->isFullyLoadedToGPU() ||
+           (area >= 64 && (area < (instantLimit / 3)))) {
+          test->bind(resources(), GL_TEXTURE0, false);
+          /*if(!Luminous::Utils::glCheck("GPUMipmaps::bind # 3"))
+            error("GPUMipmaps::bind # %.5d %p %d x %d",
+                  (int) test->ref().id(), resources(),
+                  (int)test->width(), (int) test->height());
+                  */
           return true;
         }
       }
 
     }
 
-
-    //Luminous::Utils::glCheck("GPUMipmaps::bind");
+    // Luminous::Utils::glCheck("GPUMipmaps::bind");
 
     return false;
   }

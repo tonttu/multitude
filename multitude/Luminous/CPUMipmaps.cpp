@@ -87,8 +87,14 @@ namespace Luminous {
 
   int CPUMipmaps::getClosest(Nimble::Vector2f size)
   {
-    int bestlevel = getOptimal(size);
     Radiant::Guard g(&m_stackMutex);
+
+    int bestlevel = m_maxLevel;
+
+    if (Nimble::Math::isFinite(size.x) && Nimble::Math::isFinite(size.y))
+        bestlevel = getOptimal(size);
+//    else
+//        Radiant::error("CPUMipmaps::getClosest(): requesting image for invalid dimensions (%f,%f)", size.x, size.y);
     const CPUItem & item = m_stack[bestlevel];
     markImage(bestlevel);
 
@@ -128,8 +134,9 @@ namespace Luminous {
     return image;
   }
 
-  void CPUMipmaps::markImage(int i)
+  void CPUMipmaps::markImage(size_t i)
   {
+    assert(i < m_stack.size());
     /// assert(is locked)
     m_stack[i].m_unUsed = 0.0f;
   }
