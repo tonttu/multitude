@@ -1,6 +1,7 @@
 #include "VideoCameraPTGrey.hpp"
 
 #include "Mutex.hpp"
+#include "Sleep.hpp"
 #include "Trace.hpp"
 
 #include <map>
@@ -346,7 +347,9 @@ namespace Radiant
 
     // f7pi.recommendedBytesPerPacket = 1056;
 
+    // err = m_camera.SetFormat7Configuration( &f7s, f7pi.recommendedBytesPerPacket);
     err = m_camera.SetFormat7Configuration( &f7s, f7pi.recommendedBytesPerPacket);
+
     if(err != FlyCapture2::PGRERROR_OK) {
       Radiant::error("VideoCameraPTGrey::openFormat7 # SetFormat7Configuration %s",
                      err.GetDescription());
@@ -426,7 +429,7 @@ namespace Radiant
 
   bool VideoCameraPTGrey::close()
   {
-    // GuardStatic g(__cmutex);
+    GuardStatic g(__cmutex);
 
     Radiant::info("VideoCameraPTGrey::close");
     m_camera.Disconnect();
@@ -438,7 +441,9 @@ namespace Radiant
 
   const Radiant::VideoImage * VideoCameraPTGrey::captureImage()
   {
-    // GuardStatic g(__cmutex);
+    GuardStatic g(__cmutex);
+
+    Sleep::sleepMs(2);
 
     FlyCapture2::Image img;
     FlyCapture2::Error err = m_camera.RetrieveBuffer(&img);
@@ -741,7 +746,7 @@ namespace Radiant
   {
     // Initialize the mutex.
     __cmutex.lock();
-	__cmutex.unlock();
+    __cmutex.unlock();
   }
 
   size_t CameraDriverPTGrey::queryCameras(std::vector<VideoCamera::CameraInfo> & suppliedCameras)
@@ -759,7 +764,7 @@ namespace Radiant
 
     if(!g_bus) g_bus = new FlyCapture2::BusManager();
 
-    g_bus->RegisterCallback(g_busResetCallback, FlyCapture2::BUS_RESET, 0, 0);
+    // g_bus->RegisterCallback(g_busResetCallback, FlyCapture2::BUS_RESET, 0, 0);
 
     // Get the number of available cameras
     unsigned int numCameras;
