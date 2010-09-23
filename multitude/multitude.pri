@@ -31,6 +31,7 @@ LIB_POETIC = -lPoetic
 LIB_FLUFFY = -lFluffy
 LIB_LUMINOUS = -lLuminous
 LIB_NIMBLE = -lNimble
+LIB_OPENCL = -lOpenCL
 LIB_OPENGL = -lGL -lGLU
 LIB_GLU = -lGLU
 LIB_RADIANT = -lRadiant -lPatterns
@@ -64,6 +65,7 @@ macx {
   # withbundles = $$(MULTI_BUNDLES)
   withbundles = YES
 
+  LIB_OPENCL = -framework,OpenCL
   LIB_OPENGL = -framework,OpenGL
   LIB_GLU =
   LIB_GLEW = -lGLEW
