@@ -193,7 +193,7 @@ namespace Radiant {
     void               dump(std::ostream& os, int indent=0);
 
     /// Empties this chunk
-    void               clear() { m_variants.clear(); }
+    void               clear() { m_variants.clear(); m_chunks.clear(); }
 
     /// Number of elements
     size_t size() const { return m_variants.size(); }
