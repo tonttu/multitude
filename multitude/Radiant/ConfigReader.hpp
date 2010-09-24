@@ -20,6 +20,7 @@
 
 #include <string>
 #include <map>
+#include <stdint.h>
 
 #include <iostream>
 
@@ -75,6 +76,8 @@ namespace Radiant {
     float               getFloat(float def = 0.f) const;
     /// Returns the value as int
     int                 getInt(int def = 0) const;
+    /// Returns the value as unsigned 64 bit integer (interpreted as hexadecimal)
+    uint64_t            getFromHex64(uint64_t def = 0) const;
     /// Returns the value as string or the given default value if the value has not been set
     const std::string & getString(const std::string & def) const;
     /// Returns the value as string

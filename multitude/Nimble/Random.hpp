@@ -160,6 +160,16 @@ namespace Nimble {
       }
     }
 
+    /// Random boolean
+    /// @todo does this work with 32-bit computers too?
+    inline bool randBool()
+    {
+      // count bits in 13 bit random value
+      return (rand0X(uint32_t(1 << 13)) * 0x200040008001ULL
+              & 0x111111111111111ULL) % 0xf < 7;
+    }
+
+
     /// Returns a reference to an instance
     static RandomUniform & instance() { return m_instance; }
 

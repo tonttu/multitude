@@ -40,9 +40,14 @@ namespace Luminous
     virtual ~BGThread();
 
     /// Add a task to be executed
+    /** The task is the property of the BGThread, which will delete the object when its
+        operation is finished. */
     virtual void addTask(Task * task);
 
     /// Remove the task from the BGThread
+    /** If you just want to delete the task, then it is generally better to set the state of
+        the task to finished, and schedule it immediately for processing (and thus removal).
+    */
     virtual bool removeTask(Task * task);
 
     /// Update the changed task timestamp to queue

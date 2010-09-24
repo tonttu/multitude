@@ -55,14 +55,20 @@ namespace Luminous
       : m_width(0),
       m_height(0),
       m_pixelFormat(PixelFormat::LAYOUT_UNKNOWN, PixelFormat::TYPE_UNKNOWN),
-      m_data(0)
+      m_data(0),
+      m_generation(0),
+      m_dataReady(false),
+      m_ready(false)
   {}
 
   Image::Image(const Image& img)
       : m_width(0),
       m_height(0),
       m_pixelFormat(PixelFormat::LAYOUT_UNKNOWN, PixelFormat::TYPE_UNKNOWN),
-      m_data(0)
+      m_data(0),
+      m_generation(0),
+      m_dataReady(false),
+      m_ready(false)
   {
     allocate(img.m_width, img.m_height, img.m_pixelFormat);
 
@@ -96,10 +102,14 @@ namespace Luminous
         l2++;
       };
     }
+
+    changed();
   }
 
   bool Image::copyResample(const Image & source, int w, int h)
   {
+    changed();
+
     if(source.pixelFormat() == PixelFormat::rgbUByte()) {
 
       allocate(w, h, source.pixelFormat());
@@ -251,6 +261,8 @@ namespace Luminous
 
   bool Image::quarterSize(const Image & source)
   {
+    changed();
+
     const int sw = source.width();
     int w = sw / 2;
 
@@ -388,6 +400,8 @@ namespace Luminous
     if(n <= 0)
       return true;
 
+    changed();
+
     if(pixelFormat() == PixelFormat::rgbUByte()) {
       int linewidth = m_width * 3;
       int newlinewidth = (m_width - n) * 3;
@@ -414,11 +428,16 @@ namespace Luminous
       m_height = 0;
     else
       m_height -= n;
+
+    changed();
   }
 
   void Image::forgetLastLine()
   {
-    if(m_height) m_height--;
+    if(m_height) {
+      m_height--;
+      changed();
+    }
   }
 
   bool Image::hasAlpha() const
@@ -446,6 +465,8 @@ namespace Luminous
     unsigned int bytes = m_width * m_height * m_pixelFormat.numChannels();
     memcpy(m_data, img.m_data, bytes);
 
+    changed();
+
     return *this;
   }
 
@@ -472,6 +493,8 @@ namespace Luminous
       else
         m_data = 0;
     }
+
+    changed();
   }
   /*
   // Guess the filetype from the extension
@@ -499,17 +522,23 @@ namespace Luminous
     FILE * file = fopen(filename, "rb");
     if(!file) {
       error("Image::read # failed to open file '%s'", filename);
+      m_ready = true;
       return false;
     }
 
     ImageCodec * codec = codecs()->getCodec(filename, file);
     if(codec) {
       result = codec->read(*this, file);
+      m_dataReady = result;
     } else {
       error("Image::read # no suitable codec found for '%s'", filename);
     }
 
     fclose(file);
+
+    changed();
+
+    m_ready = true;
 
     return result;
   }
@@ -549,6 +578,8 @@ namespace Luminous
 
     if(bytes)
       memcpy( & m_data[0], bytes, nbytes);
+
+    changed();
   }
 
 
@@ -561,6 +592,7 @@ namespace Luminous
     m_height = 0;
     m_pixelFormat = PixelFormat(PixelFormat::LAYOUT_UNKNOWN,
                                 PixelFormat::TYPE_UNKNOWN);
+    changed();
   }
   /*
      void Image::scale(int reqWidth, int reqHeight, bool keepAspectRatio, Image& dest) const
@@ -659,6 +691,7 @@ dest = *this;
   {
     size_t byteCount = pixelFormat().bytesPerPixel() * width() * height();
     memset(data(), 0, byteCount);
+    changed();
   }
 
   Nimble::Vector4 Image::pixel(unsigned x, unsigned y)
@@ -693,8 +726,11 @@ dest = *this;
     tex.bind(textureUnit);
 
     if(tex.width() != width() ||
-       tex.height() != height())
+       tex.height() != height() ||
+       tex.generation() != generation()) {
       tex.loadImage(*this, withmimaps);
+      tex.setGeneration(generation());
+    }
   }
 
   void ImageTex::bind(GLResources * resources, GLenum textureUnit, bool withmimaps)
@@ -707,10 +743,10 @@ dest = *this;
     // Luminous::Utils::glCheck("ImageTex::bind # 1");
 
     if(tex.width() != width() ||
-       tex.height() != height()) {
+       tex.height() != height() ||
+       tex.generation() != generation()) {
       tex.loadImage(*this, withmimaps);
-
-      // Luminous::Utils::glCheck("ImageTex::bind # 2");
+      tex.setGeneration(generation());
     }
   }
 
@@ -730,7 +766,7 @@ dest = *this;
     return tex.loadedLines() == (unsigned) height();
   }
 
-  void ImageTex::uploadBytesToGPU(GLResources * resources, unsigned bytes)
+  unsigned ImageTex::uploadBytesToGPU(GLResources * resources, unsigned bytes)
   {
 
     Utils::glCheck("ImageTex::uploadBytesToGPU # 0");
@@ -745,13 +781,15 @@ dest = *this;
       tex.loadBytes(pixelFormat().layout(),
                     width(), height(), 0,
                     pixelFormat(), false);
+
+      tex.setGeneration(generation());
       Utils::glCheck("ImageTex::uploadBytesToGPU # 1");
     }
 
 
     if(tex.loadedLines() >= (unsigned) height()) {
       // We are ready
-      return;
+      return 0;
     }
 
     int lines = bytes / (pixelFormat().bytesPerPixel() * width()) + 1;
@@ -763,7 +801,31 @@ dest = *this;
     tex.loadLines(tex.loadedLines(), lines, line(tex.loadedLines()), pixelFormat());
 
     Utils::glCheck("ImageTex::uploadBytesToGPU # 3");
+
+    return lines * (pixelFormat().bytesPerPixel() * width());
   }
 
+  bool ImageTex::tryBind(unsigned & limit)
+  {
+    if(limit == 0 && width() == 0)
+      return false;
 
+    GLResources * resources = GLResources::getThreadResources();
+    if(isFullyLoadedToGPU(resources)) {
+      bind(resources);
+      return true;
+    }
+
+    if(limit == 0)
+      return false;
+
+    unsigned tmp = uploadBytesToGPU(resources, limit);
+    limit = tmp > limit ? 0 : limit - tmp;
+
+    if(isFullyLoadedToGPU(resources)) {
+      bind(resources);
+      return true;
+    }
+    return false;
+  }
 }

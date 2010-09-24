@@ -172,6 +172,11 @@ namespace Luminous
       m_verts.clear();
     }
 
+    ~Internal()
+    {
+      delete m_glContext;
+    }
+
     void pushFBO(std::shared_ptr<FBOPackage> fbo)
     {
       m_fboStack.push(fbo);

@@ -39,7 +39,11 @@ namespace Radiant {
     /// A container of basic camera information. CameraInfo objects
     /// are used to store information about a particular camera.
     class CameraInfo {
-        public:
+    public:
+      CameraInfo()
+        : m_euid64(0)
+      {}
+
       /// The 64-bit unique FireWire identifier
       int64_t m_euid64;
       /// Vendor name, in a human-readable format

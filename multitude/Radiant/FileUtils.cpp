@@ -184,6 +184,12 @@ namespace Radiant
     filepath.substr(cut1, cut2 - cut1) : filepath.substr(0, cut2);
     }
 
+    std::string baseFilenameWithPath(const std::string & filepath)
+    {
+      size_t cut2 = filepath.rfind(".");
+      return filepath.substr(0, cut2);
+    }
+
     std::string withoutSuffix(const std::string & filepath)
     {
       size_t cut = filepath.rfind(".");

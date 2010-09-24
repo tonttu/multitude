@@ -52,7 +52,8 @@ namespace Valuable
   }
 
   ValueObject::ValueObject(const ValueObject & o)
-    : m_parent(0),
+    : Serializable(), // GCC wants this
+    m_parent(0),
     m_changed(false)
   {
     m_name = o.m_name;

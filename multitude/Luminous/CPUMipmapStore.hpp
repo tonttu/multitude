@@ -37,6 +37,9 @@ namespace Luminous {
     /** Release a #Luminous::CPUMipmaps object. If there are no references to
     the object, then its memory is freed. */
     static void release(Luminous::CPUMipmaps *);
+
+    /** Returns the number of mipmaps currently within the store. */
+    static unsigned count();
   };
 }
 

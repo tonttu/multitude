@@ -66,8 +66,10 @@ namespace Radiant
     RADIANT_API std::string path(const std::string & filepath);
     /// Extract filename.
     RADIANT_API std::string filename(const std::string & filepath);
-    /// Extract filename without suffix.
+    /// Extract filename without suffix or path
     RADIANT_API std::string baseFilename(const std::string & filepath);
+    /// Extract filename without suffix, but with the full path
+    RADIANT_API std::string baseFilenameWithPath(const std::string & filepath);
     /// Extract full path (including filename) without suffix.
     RADIANT_API std::string withoutSuffix(const std::string & filepath);
     /// Extract suffix.
