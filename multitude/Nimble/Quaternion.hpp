@@ -265,7 +265,7 @@ namespace Nimble {
     {
       angle *= 0.5;
       axis.normalize();
-      return QuaternionT(Math::Cos(angle), axis*Math::Sin(angle));
+      return QuaternionT(axis*Math::Sin(angle), Math::Cos(angle));
     }
   };
 
