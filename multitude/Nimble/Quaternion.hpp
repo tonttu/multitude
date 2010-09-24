@@ -17,11 +17,9 @@ namespace Nimble {
     QuaternionT() {}
     QuaternionT(const QuaternionT<T> & o) : x(o.x), y(o.y), z(o.z), w(o.w) {}
 
-    QuaternionT(T s_) : x(0), y(0), z(0), w(s_) {}
+    QuaternionT(const Vector3T<T> & v, T w_) : x(v.x), y(v.y), z(v.z), w(w_) {}
 
-    QuaternionT(T s_, const Vector3T<T> & v) : x(v.x), y(v.y), z(v.z), w(s_) {}
-
-    QuaternionT(T x_, T y_, T z_, T s_) : x(x_), y(y_), z(z_), w(s_) {}
+    QuaternionT(T x_, T y_, T z_, T w_) : x(x_), y(y_), z(z_), w(w_) {}
 
     QuaternionT(const Matrix3T<T> & m)
     {

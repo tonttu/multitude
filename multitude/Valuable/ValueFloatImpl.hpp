@@ -26,6 +26,7 @@ namespace Valuable
   bool ValueFloatT<T>::deserialize(ArchiveElement & e)
   {
     Base::m_value = atof(e.get().c_str());
+    this->emitChange();
     return true;
   }
 
