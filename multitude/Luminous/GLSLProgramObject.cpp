@@ -79,7 +79,7 @@ namespace Luminous
 
     glLinkProgram(m_handle);
 
-    GLint linked;
+    GLint linked = 1;
     glGetProgramiv(m_handle, GL_LINK_STATUS, &linked);
 
     if(linked) {
@@ -88,7 +88,9 @@ namespace Luminous
       if(log)
         debug("GLSLProgramObject::link # log:\n%s", log);
     } else  {
-      error("GLSLProgramObject::link # linking failed");
+      const char * log = linkerLog();
+      error("GLSLProgramObject::link # linking failed, log: %s",
+            log);
       m_isLinked = false;
     }
 
