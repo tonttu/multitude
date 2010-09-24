@@ -311,25 +311,6 @@ namespace Luminous {
     }
   }
 
-  Nimble::Vector2i CPUMipmaps::mipmapSize(int level)
-  {
-    if(level == 0) return m_nativeSize;
-    if(level <= resizes+1) {
-      return Nimble::Vector2i(m_firstLevelSize.x >> (level-1),
-                              m_firstLevelSize.y >> (level-1));
-    } else {
-      Nimble::Vector2i v(m_firstLevelSize.x >> resizes,
-                         m_firstLevelSize.y >> resizes);
-      level -= resizes+1;
-      while(level-- > 0) {
-        v = v / 2;
-        if (v.x == 0 || v.y == 0)
-          return Nimble::Vector2i(0, 0);
-      }
-      return v;
-    }
-  }
-
   void CPUMipmaps::doTask()
   {
     if(state() == Task::DONE)
