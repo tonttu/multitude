@@ -38,6 +38,7 @@ namespace Valuable
     m_value.setLow(lo);
     m_value.setHigh(hi);
 
+    emitChange();
     return true;
   }
 
@@ -47,8 +48,6 @@ namespace Valuable
     const Nimble::Vector2f & lo = m_value.low();
     const Nimble::Vector2f & hi = m_value.high();
 
-  
-    
     std::string r = Radiant::StringUtils::stringify(lo[0]);
     r += std::string(" ") + Radiant::StringUtils::stringify(lo[1]);
     r += std::string(" ") + Radiant::StringUtils::stringify(hi[0]);

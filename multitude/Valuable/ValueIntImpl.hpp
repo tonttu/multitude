@@ -28,6 +28,7 @@ namespace Valuable
   bool ValueIntT<T>::deserialize(ArchiveElement & e)
   {
     Base::m_value = Radiant::StringUtils::fromString<T>(e.get().c_str());
+    this->emitChange();
     
     return true;
   }
