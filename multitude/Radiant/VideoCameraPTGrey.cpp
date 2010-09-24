@@ -441,9 +441,9 @@ namespace Radiant
 
   const Radiant::VideoImage * VideoCameraPTGrey::captureImage()
   {
-    // GuardStatic g(__cmutex);
+    GuardStatic g(__cmutex);
 
-    // Sleep::sleepMs(2);
+    Sleep::sleepMs(2);
 
     FlyCapture2::Image img;
     FlyCapture2::Error err = m_camera.RetrieveBuffer(&img);
