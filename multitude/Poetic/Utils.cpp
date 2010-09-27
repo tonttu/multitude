@@ -25,7 +25,7 @@ namespace Poetic
     using namespace StringUtils;
 
     void breakToLines(const std::wstring & ws, const float width,
-      CPUFont & bitmapFont, WStringList & lines, const bool afterSpace)
+      CPUFont & fnt, WStringList & lines, const bool afterSpace)
     {
       // Ensure line list empty
       /*
@@ -100,7 +100,7 @@ namespace Poetic
             {
               ln += * itWord;
             }
-            bitmapFont.bbox((wchar_t *)(ln.data()), bBox);
+            fnt.bbox((wchar_t *)(ln.data()), bBox);
             if(bBox.width() <= width)
             {
               lines.push_back(ln);
@@ -124,7 +124,7 @@ namespace Poetic
           for(int i = numChars - 1; i >= 1 && !got; i--)
           {
             const std::wstring  ln = word.substr(0, i + 1);
-            bitmapFont.bbox((wchar_t *)(ln.data()), bBox);
+            fnt.bbox((wchar_t *)(ln.data()), bBox);
             if(bBox.width() <= width)
             {
               lines.push_back(ln);
