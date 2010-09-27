@@ -376,7 +376,8 @@ namespace FireView {
       m_doFocus(false),
       m_focusidx(0),
       m_peakidx(0),
-      m_foo(300, 100, QImage::Format_ARGB32)
+      m_foo(300, 100, QImage::Format_ARGB32),
+      m_glrs(Radiant::ResourceLocator::instance())
   {
     m_colorBalance.clear();
     // QTimer::singleShot(1000, this, SLOT(locate()));
@@ -527,6 +528,8 @@ namespace FireView {
   void CamView::paintGL()
   {
     using Luminous::PixelFormat;
+
+    Luminous::GLResources::setThreadResources( & m_glrs, 0, 0);
 
     if(!m_tex)
       m_tex = new Luminous::Texture2D;
