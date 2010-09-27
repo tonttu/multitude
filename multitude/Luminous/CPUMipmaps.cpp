@@ -233,9 +233,6 @@ namespace Luminous {
                         const Nimble::Matrix3 & transform,
                         Nimble::Vector2 pixelsize)
   {
-    if(!this)
-      return false;
-
     GPUMipmaps * gpumaps = getGPUMipmaps(r);
 
     return gpumaps->bind(transform, pixelsize);
