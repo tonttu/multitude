@@ -148,6 +148,8 @@ namespace Resonant {
 
   bool DSPNetwork::start(const char * device)
   {
+    Radiant::Guard g(&m_startupMutex);
+
     debug("DSPNetwork::start # %p %p", this, m_instance);
 
     if(isRunning())
