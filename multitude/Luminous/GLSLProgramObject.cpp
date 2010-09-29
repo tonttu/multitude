@@ -30,6 +30,7 @@ namespace Luminous
       m_isLinked(false)
   {
     m_handle = glCreateProgram();
+    setPersistent(true);
   }
 
   GLSLProgramObject::~GLSLProgramObject()

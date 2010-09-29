@@ -48,6 +48,19 @@ namespace Luminous
     return 0;
   }
 
+  void GLResource::setPersistent(bool b)
+  {
+    if(b)
+      m_deleteOnFrame = PERSISTENT;
+    else if(resources()) {
+      // Some random timeout:
+      m_deleteOnFrame = resources()->frame() + 100;
+    }
+    else
+      m_deleteOnFrame = 10;
+  }
+
+
   void GLResource::changeByteConsumption(long deallocated, long allocated)
   {
 
