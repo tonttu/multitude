@@ -7,10 +7,10 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef RADIANT_CONFIG_READER_HPP
@@ -31,7 +31,7 @@ namespace Radiant {
   /** A single variant. All variants are stored as text strings. This
       class provides methods to convert the string to the most simple
       variable types including integers, doubles and float vectors.
-      
+
       In addition to the actual variable information, a variant may
       contain a documentation string.
 
@@ -101,7 +101,7 @@ namespace Radiant {
 
     /// Returns true if the variable has been documented
     bool                hasDocumentation() const;
-    
+
     /// Returns the documentation
     const std::string & documentation() const;
 
@@ -125,7 +125,7 @@ namespace Radiant {
       ok = ok && Radiant::readConfig(&config, "second-config");
 
       // Now retrieve values from the configuration:
-      
+
       Radiant::Chunk chunk = config.get("Scene");
 
       // Now read two variants from the config
@@ -154,14 +154,14 @@ namespace Radiant {
 
     ChunkT() {clearFirst=false;}
     ~ChunkT() {}
-    
+
     /// Returns the number of elements with given id/tag
     int numberOf(const std::string & id) const;
 
     /// Gets an element from the chunk
     /** @return The first element of type T. If there is no element
-	with the given id, then an element will be created withthe
-	default constructor. */
+    with the given id, then an element will be created withthe
+    default constructor. */
     T                  get(const std::string &id) const;
     /** Gets an element from the chunk.
       @param id the primary id to search for
@@ -175,17 +175,17 @@ namespace Radiant {
 
     /// Adds an element to the chunk
     /** If there are other elements with the same id before, then
-	this element is added among those. */
+    this element is added among those. */
     void               set(const std::string & id, const T &v);
 
     void               addChunk(const std::string & id, const ChunkT<T> &v);
     const ChunkT<T> &        getChunk(const std::string & id) const;
 
   /// Sets the flag to inform whether an old value should be removed before defining a new
-	void setClearFlag(bool clearF);
+    void setClearFlag(bool clearF);
     /// Adds an element to the chunk, erasing any elements with identical id
     /** After calling this method, the chunk will contain only one
-	element this this id. */
+    element this this id. */
     void               override(const std::string & id, const T &v);
 
     /// Dumps this chunk into the stream
@@ -201,6 +201,10 @@ namespace Radiant {
     /// Check if the chunk is empty
     bool               isEmpty() const { return m_variants.size() == 0; }
 
+    /// Check if at least one variant with given name exists
+    bool               containsVariant(const std::string & variantName) const
+    { return m_variants.find(variantName) != m_variants.end(); }
+
     /// Iterator to the first element
     iterator begin() { return m_variants.begin(); }
     /// Iterator to the after-the-end element
@@ -214,13 +218,13 @@ namespace Radiant {
     chunk_iterator chunkBegin() { return m_chunks.begin(); }
     chunk_iterator chunkEnd() { return m_chunks.end(); }
 
-    /// Gets the element from an iterator
+    /// Gets the data element from an iterator
     static T & getType(iterator & it) { return (*it).second; }
     static const T & getType(const_iterator & it) { return (*it).second; }
         /// Gets the name (id) from an iterator
     static const std::string & getName(iterator & it) { return (*it).first; }
     static const std::string & getName(const_iterator & it) { return (*it).first; }
-    
+
   private:
 
     bool clearFirst;
@@ -238,14 +242,14 @@ namespace Radiant {
   bool  RADIANT_API readConfig(Config *c, const char * buf, int n);
   /// Write the given configuration into a file
   bool RADIANT_API writeConfig(Config *c, const char *filename);
-  
+
 } // namespace
 
 /**
  * Output operator for Radiant::Variant
  */
 
-inline std::ostream & operator << 
+inline std::ostream & operator <<
 (std::ostream & os, const Radiant::Variant & v)
 {
   v.dump(os);

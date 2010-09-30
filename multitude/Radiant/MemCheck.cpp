@@ -2,9 +2,9 @@
 
 #ifdef MULTI_MEMCHECK
 
-#include <Radiant/Mutex.hpp>
+#include "Mutex.hpp"
+#include "Trace.hpp"
 #include <typeinfo>
-#include <Radiant/Trace.hpp>
 
 #ifndef __GNUC__
 
@@ -22,8 +22,8 @@
 #endif
 
 
-namespace Valuable {
-  static Radiant::MutexStatic s_mutex;
+namespace Radiant {
+  static MutexStatic s_mutex;
   static long s_total = 0;
 
 #ifndef __GNUC__
@@ -33,21 +33,21 @@ namespace Valuable {
 
   MemCheck::MemCheck()
   {
-    Radiant::Guard g(s_mutex);
+    Guard g(s_mutex);
     s_set.insert(this);
     ++s_total;
   }
 
   MemCheck::MemCheck(const MemCheck &)
   {
-    Radiant::Guard g(s_mutex);
+    Guard g(s_mutex);
     s_set.insert(this);
     ++s_total;
   }
 
   MemCheck & MemCheck::operator=(const MemCheck &)
   {
-    Radiant::Guard g(s_mutex);
+    Guard g(s_mutex);
     s_set.insert(this);
     ++s_total;
 
@@ -56,7 +56,7 @@ namespace Valuable {
 
   MemCheck::~MemCheck()
   {
-    Radiant::Guard g(s_mutex);
+    Guard g(s_mutex);
 
     MemSet::iterator it = s_set.find(this);
     if(it == s_set.end()) {
@@ -70,16 +70,16 @@ namespace Valuable {
   public:
     virtual ~Checker()
     {
-      Radiant::GuardStatic g(s_mutex);
+      GuardStatic g(s_mutex);
       if(s_set.empty()) {
-        Radiant::info("All %d MemCheck objects were released", s_total);
+        info("All %d MemCheck objects were released", s_total);
       } else {
-        Radiant::info("%d of %d MemCheck objects were not released", s_map.size(), s_total);
+        info("%d of %d MemCheck objects were not released", s_map.size(), s_total);
         std::map<std::string, int> map;
         for(MemSet::iterator it = s_set.begin(); it != s_set.end(); ++it)
           ++map[typeid(**it).name()];
         for(std::map<std::string, int>::iterator it = map.begin(); it != map.end(); ++it) {
-          Radiant::error("%d %s objects were not released", it->second, it->first);
+          error("%d %s objects were not released", it->second, it->first);
         }
       }
     }
@@ -122,7 +122,7 @@ namespace Valuable {
     void ** bt = new void*[50];
     size_t size = backtrace(bt, 50);
 
-    Radiant::Guard g(s_mutex);
+    Guard g(s_mutex);
     s_map[this] = std::make_pair(bt, size);
     ++s_total;
   }
@@ -132,7 +132,7 @@ namespace Valuable {
     void ** bt = new void*[50];
     size_t size = backtrace(bt, 50);
 
-    Radiant::Guard g(s_mutex);
+    Guard g(s_mutex);
     s_map[this] = std::make_pair(bt, size);
     ++s_total;
   }
@@ -142,7 +142,7 @@ namespace Valuable {
     void ** bt = new void*[50];
     size_t size = backtrace(bt, 50);
 
-    Radiant::Guard g(s_mutex);
+    Guard g(s_mutex);
     s_map[this] = std::make_pair(bt, size);
     ++s_total;
 
@@ -151,10 +151,10 @@ namespace Valuable {
 
   MemCheck::~MemCheck()
   {
-    Radiant::Guard g(s_mutex);
+    Guard g(s_mutex);
     MemMap::iterator it = s_map.find(this);
     if(it == s_map.end()) {
-      Radiant::error("~MemCheck: Couldn't find object %p", this);
+      error("~MemCheck: Couldn't find object %p", this);
       void ** bt = new void*[50];
       size_t size = backtrace(bt, 50);
       print_bt(bt, size);
@@ -169,11 +169,11 @@ namespace Valuable {
   public:
     virtual ~Checker()
     {
-      Radiant::GuardStatic g(s_mutex);
+      GuardStatic g(s_mutex);
       if(s_map.empty()) {
-        Radiant::info("All %d MemCheck objects were released", s_total);
+        info("All %d MemCheck objects were released", s_total);
       } else {
-        Radiant::info("%d of %d MemCheck objects were not released", s_map.size(), s_total);
+        info("%d of %d MemCheck objects were not released", s_map.size(), s_total);
         std::multimap<int, MemMap::value_type> sorted;
         for(MemMap::iterator it = s_map.begin(); it != s_map.end(); ++it)
           sorted.insert(std::pair<int, MemMap::value_type>(it->second.second, *it));
@@ -186,12 +186,12 @@ namespace Valuable {
 
           int status;
           char * tmp = abi::__cxa_demangle(typeid(*obj).name(), 0, 0, &status);
-          Radiant::error("MemCheck object %s was not released", tmp ? tmp : typeid(*obj).name());
+          error("MemCheck object %s was not released", tmp ? tmp : typeid(*obj).name());
           free(tmp);
 
           print_bt(data, size);
           if(count == 500) {
-            Radiant::error(".. limiting error printing to 500 errors (there are %d errors)", s_map.size());
+            error(".. limiting error printing to 500 errors (there are %d errors)", s_map.size());
             break;
           }
         }

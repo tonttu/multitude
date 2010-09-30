@@ -33,12 +33,24 @@ namespace Luminous
   using namespace Radiant;
 
   template <GLenum TextureType>
-  TextureT<TextureType>::~TextureT()
+      TextureT<TextureType>::~TextureT()
   {
-    if(m_textureId) glDeleteTextures(1, &m_textureId);
+
+    if(m_textureId)  {
+      glDeleteTextures(1, &m_textureId);
+      Radiant::debug("Deallocated texture %.5d %p", (int) m_textureId, resources());
+    }
     changeByteConsumption(consumesBytes(), 0);
   }
 
+  template <GLenum TextureType>
+      void TextureT<TextureType>::allocate()
+  {
+    if(!m_textureId) {
+      glGenTextures(1, & m_textureId);
+      Radiant::debug("Allocated texture %.5d %p", (int) m_textureId, resources());
+    }
+  }
 
   template class TextureT<GL_TEXTURE_1D>;
   template class TextureT<GL_TEXTURE_2D>;
@@ -54,10 +66,10 @@ namespace Luminous
   }
 
   Texture1D* Texture1D::fromBytes(GLenum internalFormat,
-                            int h,
-                            const void* data,
-                            const PixelFormat& srcFormat, bool buildMipmaps,
-                            GLResources * resources)
+                                  int h,
+                                  const void* data,
+                                  const PixelFormat& srcFormat, bool buildMipmaps,
+                                  GLResources * resources)
   {
     Texture1D * tex = new Texture1D(resources);
 
@@ -109,8 +121,8 @@ namespace Luminous
 
     if(buildMipmaps) {
       gluBuild1DMipmaps(GL_TEXTURE_1D,
-            srcFormat.numChannels(), h,
-            srcFormat.layout(), srcFormat.type(), data);
+                        srcFormat.numChannels(), h,
+                        srcFormat.layout(), srcFormat.type(), data);
     }
     else
       glTexImage1D(GL_TEXTURE_1D, 0, internalFormat, h, 0,
@@ -126,14 +138,14 @@ namespace Luminous
 
 
   bool Texture2D::loadImage(const char * filename, bool buildMipmaps) {
-      Luminous::Image img;
+    Luminous::Image img;
 
-      if(!img.read(filename)) return false;
+    if(!img.read(filename)) return false;
 
-      return loadImage(img, buildMipmaps);
+    return loadImage(img, buildMipmaps);
   }
 
-/*
+  /*
   bool Texture2D::loadImage(const char * filename, bool buildMipmaps)
   {
       Radiant::trace("Texture2D::LoadImage");
@@ -157,15 +169,15 @@ namespace Luminous
   bool Texture2D::loadImage(const Luminous::Image & image, bool buildMipmaps)
   {
     return loadBytes(image.pixelFormat().layout(),
-             image.width(), image.height(),
-             image.bytes(),
-             image.pixelFormat(), buildMipmaps);
+                     image.width(), image.height(),
+                     image.bytes(),
+                     image.pixelFormat(), buildMipmaps);
   }
 
   bool Texture2D::loadBytes(GLenum internalFormat, int w, int h,
-                const void * data,
-                const PixelFormat& srcFormat,
-                bool buildMipmaps)
+                            const void * data,
+                            const PixelFormat& srcFormat,
+                            bool buildMipmaps)
   {
     // Check dimensions
     if(!GL_ARB_texture_non_power_of_two) {
@@ -207,40 +219,53 @@ namespace Luminous
     if(buildMipmaps) {
       glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
       gluBuild2DMipmaps(GL_TEXTURE_2D, srcFormat.numChannels(),
-            w, h, srcFormat.layout(), srcFormat.type(), data);
+                        w, h, srcFormat.layout(), srcFormat.type(), data);
     } else {
       /* Radiant::debug("TEXTURE UPLOAD :: INTERNAL %s FORMAT %s [%d %d]",
              glInternalFormatToString(internalFormat),
              glFormatToString(srcFormat.layout()), w, h);
       */
 
-      GLint width;
-      glTexImage2D(GL_PROXY_TEXTURE_2D, 0, internalFormat, w, h, 0,
-           srcFormat.layout(), srcFormat.type(), 0);
+      glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
 
-      glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+      GLint width = w;
 
-      if(width == 0) {
-        Radiant::error("Texture2D::loadBytes: Cannot load texture, too big? (%d x %d)", w, h);
-        return false;
-      } else {
-        glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
-        /* should succeed */
+      if(resources() && !resources()->isBrokenProxyTexture2D()) {
+        /* On ATI/Linux combination it seems that the GL_PROXY_TEXTURE_2D is
+         broken, and cannot be trusted to give correct answers.
+         It will at times fail with 1024x768 RGB textures. Sigh. */
+        glTexImage2D(GL_PROXY_TEXTURE_2D, 0, internalFormat, w, h, 0,
+                     srcFormat.layout(), srcFormat.type(), 0);
+
+        glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+
+
+        if(width == 0) {
+          Radiant::error("Texture2D::loadBytes: Cannot load texture, too big? "
+                         "(%d x %d, id = %.5d)", w, h, (int) id());
+
+          glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+          return false;
+        }
+      }
+
+
+      /* should succeed */
 
 #if 0
 
-        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0,
-                     srcFormat.layout(), srcFormat.type(), data);
+      glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0,
+                   srcFormat.layout(), srcFormat.type(), data);
 #else
-        /* This seems to be faster on Linux and OSX at least. */
-        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0,
-                     srcFormat.layout(), srcFormat.type(), 0);
+      /* This seems to be faster on Linux and OSX at least. */
+      glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0,
+                   srcFormat.layout(), srcFormat.type(), 0);
 
-        if(data)
-          glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h,
-                          srcFormat.layout(), srcFormat.type(), data);
+      if(data)
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h,
+                        srcFormat.layout(), srcFormat.type(), data);
 #endif
-      }
+
     }
 
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -259,7 +284,9 @@ namespace Luminous
     long uses = consumesBytes();
 
 
-    changeByteConsumption(used, uses);
+    if(data)
+      changeByteConsumption(used, uses);
+
     /* try not to interfere with other users of glTexImage2d etc */
     if (alignment > 4) glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
@@ -296,8 +323,9 @@ namespace Luminous
 
   void Texture2D::loadLines(int y, int h, const void * data, const PixelFormat& pf)
   {
-    // Utils::glCheck("Texture2D::loadLines # in");
+    Utils::glCheck("Texture2D::loadLines # in");
     bind();
+
 
     // Flush the data by drawing a zero-size triangle
     glColor4f(0,0,0,0);
@@ -308,6 +336,8 @@ namespace Luminous
     glVertex2f(0,0);
     //info("VERTI %.2lf", now.sinceSecondsD() * 1000);
     glEnd();
+
+    Utils::glCheck("Texture2D::loadLines # Dummy TRI");
 
     if(m_haveMipmaps)
     {
@@ -327,6 +357,9 @@ namespace Luminous
       glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
       glTexSubImage2D(GL_TEXTURE_2D, 0, 0, y, width(), h, pf.layout(), pf.type(), data);
       if (alignment > 4) glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+
+      if(!Utils::glCheck("Texture2D::loadLines # TEX SUB"))
+        error("PARAMS = %.5d %d %d %d", (int) id(), y, width(), h);
     }
 
     // Utils::glCheck("Texture2D::loadLines");
@@ -341,7 +374,7 @@ namespace Luminous
 
 
   Texture2D* Texture2D::fromImage
-  (Luminous::Image & image, bool buildMipmaps, GLResources * resources)
+      (Luminous::Image & image, bool buildMipmaps, GLResources * resources)
   {
     return fromBytes(GL_RGBA, image.width(), image.height(), image.bytes(), image.pixelFormat(),
                      buildMipmaps, resources);
@@ -356,9 +389,9 @@ namespace Luminous
   }
 
   Texture2D* Texture2D::fromBytes(GLenum internalFormat, int w, int h,
-                  const void* data,
-                  const PixelFormat& srcFormat,
-                  bool buildMipmaps, GLResources * resources)
+                                  const void* data,
+                                  const PixelFormat& srcFormat,
+                                  bool buildMipmaps, GLResources * resources)
   {
     // Check dimensions
     if(!GL_ARB_texture_non_power_of_two) {

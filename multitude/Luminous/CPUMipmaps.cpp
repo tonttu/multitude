@@ -30,6 +30,12 @@
 #define snprintf _snprintf
 #endif
 
+namespace {
+  // after first resize modify the dimensions so that we can resize
+  // 5 times with quarterSize
+  const int resizes = 5;
+}
+
 namespace Luminous {
 
   using namespace Radiant;
@@ -40,6 +46,7 @@ namespace Luminous {
     : m_fileModified(0),
     m_stack(1),
     m_nativeSize(0, 0),
+    m_firstLevelSize(0, 0),
     m_maxLevel(0),
     m_hasAlpha(false),
     m_timeOut(3.0f),
@@ -72,12 +79,12 @@ namespace Luminous {
 
   int CPUMipmaps::getOptimal(Nimble::Vector2f size)
   {
-    float ask = size.maximum(), orig = m_nativeSize.maximum();
+    float ask = size.maximum(), first = m_firstLevelSize.maximum();
 
-    if(ask >= orig)
+    if(ask >= first)
       return 0;
 
-    int bestlevel = Nimble::Math::Floor(log(ask/orig) / log(0.5));
+    int bestlevel = Nimble::Math::Floor(log(ask/first) / log(0.5)) + 1;
 
     if(bestlevel > m_maxLevel)
       bestlevel = m_maxLevel;
@@ -87,8 +94,14 @@ namespace Luminous {
 
   int CPUMipmaps::getClosest(Nimble::Vector2f size)
   {
-    int bestlevel = getOptimal(size);
     Radiant::Guard g(&m_stackMutex);
+
+    int bestlevel = m_maxLevel;
+
+    if (Nimble::Math::isFinite(size.x) && Nimble::Math::isFinite(size.y))
+        bestlevel = getOptimal(size);
+//    else
+//        Radiant::error("CPUMipmaps::getClosest(): requesting image for invalid dimensions (%f,%f)", size.x, size.y);
     const CPUItem & item = m_stack[bestlevel];
     markImage(bestlevel);
 
@@ -128,8 +141,9 @@ namespace Luminous {
     return image;
   }
 
-  void CPUMipmaps::markImage(int i)
+  void CPUMipmaps::markImage(size_t i)
   {
+    assert(i < m_stack.size());
     /// assert(is locked)
     m_stack[i].m_unUsed = 0.0f;
   }
@@ -166,7 +180,15 @@ namespace Luminous {
     if(!m_nativeSize.minimum())
       return false;
 
-    // m_maxLevel and m_nativeSize have to be set before running getOptimal
+    m_firstLevelSize = m_nativeSize / 2;
+
+    // Make sure that we can make "resizes" amount of resizes with quarterSize
+    // after first resize
+    const int mask = (1 << resizes) - 1;
+    m_firstLevelSize.x += ((~(m_firstLevelSize.x & mask) & mask) + 1) & mask;
+    m_firstLevelSize.y += ((~(m_firstLevelSize.y & mask) & mask) + 1) & mask;
+
+    // m_maxLevel, m_firstLevelSize and m_nativeSize have to be set before running getOptimal
     m_maxLevel = std::numeric_limits<int>::max();
     m_maxLevel = getOptimal(Nimble::Vector2f(SMALLEST_IMAGE, SMALLEST_IMAGE));
 
@@ -210,9 +232,6 @@ namespace Luminous {
                         const Nimble::Matrix3 & transform,
                         Nimble::Vector2 pixelsize)
   {
-    if(!this)
-      return false;
-
     GPUMipmaps * gpumaps = getGPUMipmaps(r);
 
     return gpumaps->bind(transform, pixelsize);
@@ -268,6 +287,25 @@ namespace Luminous {
   {
     setState(Task::DONE);
     reschedule(0, 0);
+  }
+
+  Nimble::Vector2i CPUMipmaps::mipmapSize(int level)
+  {
+    if(level == 0) return m_nativeSize;
+    if(level <= resizes+1) {
+      return Nimble::Vector2i(m_firstLevelSize.x >> (level-1),
+                              m_firstLevelSize.y >> (level-1));
+    } else {
+      Nimble::Vector2i v(m_firstLevelSize.x >> resizes,
+                         m_firstLevelSize.y >> resizes);
+      level -= resizes+1;
+      while(level-- > 0) {
+        v = v / 2;
+        if (v.x == 0 || v.y == 0)
+          return Nimble::Vector2i(0, 0);
+      }
+      return v;
+    }
   }
 
   void CPUMipmaps::doTask()
@@ -368,9 +406,12 @@ namespace Luminous {
         if(!im->read(filename.c_str())) {
           error("CPUMipmaps::recursiveLoad # Could not read %s", filename.c_str());
           delete im;
-        }
-        else {
-
+        } else if(mipmapSize(level) != im->size()) {
+          // unexpected size (corrupted or just old image)
+          error("CPUMipmaps::recursiveLoad # Cache image '%s'' size was (%d, %d), expected (%d, %d)",
+                filename.c_str(), im->width(), im->height(), mipmapSize(level).x, mipmapSize(level).y);
+          delete im;
+        } else {
           if(im->hasAlpha())
             m_hasAlpha = true;
 
@@ -418,7 +459,7 @@ namespace Luminous {
     std::shared_ptr<Luminous::ImageTex> imdest(new Luminous::ImageTex());
 
     Nimble::Vector2i ss = imsrc->size();
-    Nimble::Vector2i is = ss / 2;
+    Nimble::Vector2i is = level == 1 ? m_firstLevelSize : ss / 2;
 
     if(is * 2 == ss) {
       imdest->quarterSize(*imsrc);

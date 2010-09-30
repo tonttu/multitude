@@ -298,6 +298,8 @@ DSPNetwork::instance().send(control);
 
     Radiant::MutexAuto m_newMutex;
 
+    Radiant::MutexAuto m_startupMutex;
+
     static DSPNetwork * m_instance;
   };
 

@@ -31,12 +31,15 @@ namespace Valuable
   /// String value
   /** This template class is used to implement both normal 7/8-bit
       strings and wide strings*/
-  template<class T>
+  template<typename T>
       class VALUABLE_API ValueStringT : public ValueObjectT<T>
   {
     typedef ValueObjectT<T> Base;
 
   public:
+
+    typedef typename T::value_type char_type;
+
     ValueStringT() : Base() {}
     /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
     ValueStringT(HasValues * parent, const std::string & name,
@@ -55,6 +58,21 @@ namespace Valuable
                                  { Base::m_value = i.m_value; VALUEMIT_STD_OP }
     /// Copies a string
     ValueStringT<T> & operator = (const T & i) { Base::m_value = i; VALUEMIT_STD_OP }
+
+    T operator + (const ValueStringT<T> & i) const
+    { return Base::m_value + i.m_value; }
+
+    T operator + (const T & i) const
+    { return Base::m_value + i; }
+
+
+    T operator + (const char_type * i) const
+    { return Base::m_value + T(i); }
+
+        /*
+    T operator + (const char * i) const
+    { return Base::m_value + i; }
+*/
 
     /// Compares if two strings are equal
     bool operator == (const T & that) { return that == Base::m_value; }
@@ -95,6 +113,12 @@ namespace Valuable
   // Instantiation of template classes
   // See ValueStringImpl.hpp for std::wstring member specializations
 
+}
+
+template <class T>
+    T operator + (const T & a, const Valuable::ValueStringT<T> & b)
+{
+  return a + b.str();
 }
 
 #undef VALUEMIT_STD_OP

@@ -17,6 +17,7 @@
 #include "ImageCodec.hpp"
 #include "Luminous.hpp"
 #include "CodecRegistry.hpp"
+#include "Utils.hpp"
 
 #include <Nimble/Math.hpp>
 
@@ -55,7 +56,9 @@ namespace Luminous
       m_height(0),
       m_pixelFormat(PixelFormat::LAYOUT_UNKNOWN, PixelFormat::TYPE_UNKNOWN),
       m_data(0),
-      m_generation(0)
+      m_generation(0),
+      m_dataReady(false),
+      m_ready(false)
   {}
 
   Image::Image(const Image& img)
@@ -63,7 +66,9 @@ namespace Luminous
       m_height(0),
       m_pixelFormat(PixelFormat::LAYOUT_UNKNOWN, PixelFormat::TYPE_UNKNOWN),
       m_data(0),
-      m_generation(0)
+      m_generation(0),
+      m_dataReady(false),
+      m_ready(false)
   {
     allocate(img.m_width, img.m_height, img.m_pixelFormat);
 
@@ -263,18 +268,6 @@ namespace Luminous
 
     const int sh = source.height();
     int h = sh / 2;
-
-    // Make even:
-    /* if(w & 0x1)
-       w--;
-       if(h & 0x1)
-       h--;
-       */
-
-    while(w & 0x3)
-      w--;
-    while(h & 0x3)
-      h--;
 
     if(source.pixelFormat() == PixelFormat::alphaUByte() ||
        source.pixelFormat() == PixelFormat::luminanceUByte()) {
@@ -529,12 +522,14 @@ namespace Luminous
     FILE * file = fopen(filename, "rb");
     if(!file) {
       error("Image::read # failed to open file '%s'", filename);
+      m_ready = true;
       return false;
     }
 
     ImageCodec * codec = codecs()->getCodec(filename, file);
     if(codec) {
       result = codec->read(*this, file);
+      m_dataReady = result;
     } else {
       error("Image::read # no suitable codec found for '%s'", filename);
     }
@@ -542,6 +537,8 @@ namespace Luminous
     fclose(file);
 
     changed();
+
+    m_ready = true;
 
     return result;
   }
@@ -697,6 +694,32 @@ dest = *this;
     changed();
   }
 
+  Nimble::Vector4 Image::pixel(unsigned x, unsigned y)
+  {
+    if(empty())
+      return Nimble::Vector4(0, 0, 0, 1);
+
+    if(int(x) >= width())
+      x = width() - 1;
+    if(int(y) >= height())
+      y = height() - 1;
+
+    const uint8_t * px = line(y);
+    px += m_pixelFormat.bytesPerPixel() * x;
+
+    const float s = 1.0f / 255.0f;
+
+    if(m_pixelFormat == PixelFormat::alphaUByte())
+      return Nimble::Vector4(1, 1, 1, px[0] * s);
+    else if(m_pixelFormat == PixelFormat::rgbUByte())
+      return Nimble::Vector4(px[0] * s, px[1] * s, px[2] * s, 1);
+    else if(m_pixelFormat == PixelFormat::rgbaUByte())
+      return Nimble::Vector4(px[0] * s, px[1] * s, px[2] * s, px[3] * s);
+
+    return Nimble::Vector4(0, 0, 0, 1);
+  }
+
+
   void ImageTex::bind(GLenum textureUnit, bool withmimaps)
   {
     Texture2D & tex = ref();
@@ -712,8 +735,12 @@ dest = *this;
 
   void ImageTex::bind(GLResources * resources, GLenum textureUnit, bool withmimaps)
   {
+    // Luminous::Utils::glCheck("ImageTex::bind # 0");
+
     Texture2D & tex = ref(resources);
     tex.bind(textureUnit);
+
+    // Luminous::Utils::glCheck("ImageTex::bind # 1");
 
     if(tex.width() != width() ||
        tex.height() != height() ||
@@ -739,8 +766,11 @@ dest = *this;
     return tex.loadedLines() == (unsigned) height();
   }
 
-  void ImageTex::uploadBytesToGPU(GLResources * resources, unsigned bytes)
+  unsigned ImageTex::uploadBytesToGPU(GLResources * resources, unsigned bytes)
   {
+
+    Utils::glCheck("ImageTex::uploadBytesToGPU # 0");
+
     if(!resources)
       resources = GLResources::getThreadResources();
 
@@ -751,13 +781,15 @@ dest = *this;
       tex.loadBytes(pixelFormat().layout(),
                     width(), height(), 0,
                     pixelFormat(), false);
+
       tex.setGeneration(generation());
+      Utils::glCheck("ImageTex::uploadBytesToGPU # 1");
     }
 
 
     if(tex.loadedLines() >= (unsigned) height()) {
       // We are ready
-      return;
+      return 0;
     }
 
     int lines = bytes / (pixelFormat().bytesPerPixel() * width()) + 1;
@@ -768,7 +800,32 @@ dest = *this;
 
     tex.loadLines(tex.loadedLines(), lines, line(tex.loadedLines()), pixelFormat());
 
+    Utils::glCheck("ImageTex::uploadBytesToGPU # 3");
+
+    return lines * (pixelFormat().bytesPerPixel() * width());
   }
 
+  bool ImageTex::tryBind(unsigned & limit)
+  {
+    if(limit == 0 && width() == 0)
+      return false;
 
+    GLResources * resources = GLResources::getThreadResources();
+    if(isFullyLoadedToGPU(resources)) {
+      bind(resources);
+      return true;
+    }
+
+    if(limit == 0)
+      return false;
+
+    unsigned tmp = uploadBytesToGPU(resources, limit);
+    limit = tmp > limit ? 0 : limit - tmp;
+
+    if(isFullyLoadedToGPU(resources)) {
+      bind(resources);
+      return true;
+    }
+    return false;
+  }
 }

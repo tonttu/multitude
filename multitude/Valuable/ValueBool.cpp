@@ -13,7 +13,7 @@ namespace Valuable
 
   bool ValueBool::deserialize(ArchiveElement & e)
   {
-    m_value = Radiant::StringUtils::fromString<int32_t>(e.get().c_str()) != 0;
+    *this = Radiant::StringUtils::fromString<int32_t>(e.get().c_str()) != 0;
     return true;
   }
 

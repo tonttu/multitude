@@ -19,6 +19,7 @@
 
 #include <Patterns/NotCopyable.hpp>
 
+#include <Radiant/MemCheck.hpp>
 #include <Radiant/TimeStamp.hpp>
 
 namespace Radiant {
@@ -33,7 +34,7 @@ namespace Luminous
   typedef float Priority;
 
   /// Task is a base class for tasks that can be executed within BGThread.
-  class LUMINOUS_API Task : Patterns::NotCopyable
+  class LUMINOUS_API Task : Patterns::NotCopyable, Radiant::MemCheck
   {
   public:
     /// Standard priorities for tasks

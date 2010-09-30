@@ -9,6 +9,7 @@ namespace Resonant {
   {
   public:
     ModulePulseAudio(const std::string & monitorName, uint32_t sinkInput);
+    virtual ~ModulePulseAudio();
 
     void contextChange(pa_context_state_t state);
     void dataAvailable(pa_stream * p, size_t nbytes);

@@ -16,6 +16,7 @@ HEADERS += Matrix4Impl.hpp
 HEADERS += Nimble.hpp
 HEADERS += Path.hpp
 HEADERS += Plane.hpp
+HEADERS += Quaternion.hpp
 HEADERS += Ramp.hpp 
 HEADERS += Random.hpp 
 HEADERS += Rectangle.hpp

@@ -26,6 +26,8 @@
 #include <string.h>
 #include <strings.h>
 
+#include <algorithm>
+
 namespace Radiant {
 
   /// Grid (aka 2D array) base class with memory management
@@ -303,6 +305,13 @@ namespace Radiant {
     void copyFast(const S & that)
     { memcpy(this->m_data, that.data(), sizeof(T) * size()); }
 
+    template <typename S>
+        void swap(S & that)
+    {
+      std::swap(this->m_data, that.m_data);
+      std::swap(this->m_width, that.m_width);
+      std::swap(this->m_height, that.m_height);
+    }
     
   };
 

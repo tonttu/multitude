@@ -149,11 +149,23 @@ namespace Luminous
 
         @arg rgba The color of the circle in RGBA format
 
-        @arg segments Number of segments used in the circle. Deprecated, spesifying segments will actually slow rendering.
+        @arg segments Number of segments used in the circle. Deprecated, specifying segments will actually slow rendering.
 
     */
     void drawCircle(Nimble::Vector2f center, float radius,
                     const float * rgba, int segments = -1);
+
+    /** Draws an arc
+      @arg center center of the arc
+      @arg radius radius of the arc
+      @arg fromRadians start angle in radians
+      @arg toRadians end angle in radians
+      @arg width width of the arc
+      @arg blendWidth width of the blending region
+      @arg rgba color of the arc in RGBA format
+      @arg segments number of segments to use
+      */
+    void drawArc(Nimble::Vector2f center, float radius, float fromRadians, float toRadians, float width, float blendWidth, const float * rgba, int segments);
 
     /** Draws a line that contains multiple segments.
 
@@ -227,6 +239,7 @@ namespace Luminous
         On some platforms this call may return null.
         */
     MULTI_ATTR_DEPRECATED(Luminous::GLContext * glContext());
+
 
   private:
     void drawCircleWithSegments(Nimble::Vector2f center, float radius, const float *rgba, int segments);

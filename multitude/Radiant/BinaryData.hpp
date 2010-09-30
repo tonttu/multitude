@@ -228,6 +228,10 @@ namespace Radiant {
   template <> inline double BinaryData::read(bool * ok)
   { return readFloat64(ok); }
 
+  template <> inline int BinaryData::read(bool * ok)
+  { return readInt32(ok); }
+
+
   template <> inline Nimble::Vector2f BinaryData::read(bool * ok)
   { return readVector2Float32(ok); }
 

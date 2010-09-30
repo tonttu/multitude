@@ -79,7 +79,7 @@ namespace Luminous
 
     glLinkProgram(m_handle);
 
-    GLint linked;
+    GLint linked = 1;
     glGetProgramiv(m_handle, GL_LINK_STATUS, &linked);
 
     if(linked) {
@@ -88,7 +88,9 @@ namespace Luminous
       if(log)
         debug("GLSLProgramObject::link # log:\n%s", log);
     } else  {
-      error("GLSLProgramObject::link # linking failed");
+      const char * log = linkerLog();
+      error("GLSLProgramObject::link # linking failed, log: %s",
+            log);
       m_isLinked = false;
     }
 
@@ -211,6 +213,32 @@ namespace Luminous
       return false;
 
     glUniform2f(loc, value.x, value.y);
+
+    return true;
+  }
+
+  bool GLSLProgramObject::setUniformVector3(const char * name,
+                                            Nimble::Vector3f value)
+  {
+    int loc = getUniformLoc(name);
+
+    if(loc < 0)
+      return false;
+
+    glUniform3f(loc, value.x, value.y, value.z);
+
+    return true;
+  }
+
+  bool GLSLProgramObject::setUniformVector4(const char * name,
+                                            Nimble::Vector4f value)
+  {
+    int loc = getUniformLoc(name);
+
+    if(loc < 0)
+      return false;
+
+    glUniform4f(loc, value.x, value.y, value.z, value.w);
 
     return true;
   }

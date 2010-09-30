@@ -104,6 +104,8 @@ namespace Radiant
 
     RADIANT_API int id() const;
 
+    RADIANT_API static void deleteShm(int id);
+
   private:
     /// Access functions.
 

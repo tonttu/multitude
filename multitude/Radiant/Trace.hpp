@@ -58,25 +58,32 @@ namespace Radiant {
     FATAL    
   };
 
+#ifdef __GNUC__
+#define RADIANT_PRINTF_CHECK(STR_IDX, FIRST_TO_CHECK) \
+  __attribute__ ((format (printf, (STR_IDX), (FIRST_TO_CHECK))))
+#else
+#define RADIANT_PRINTF_CHECK(STR_IDX, FIRST_TO_CHECK)
+#endif
+
   /// Display useful output.
-  RADIANT_API void trace(Severity s, const char * msg, ...);
+  RADIANT_API void trace(Severity s, const char * msg, ...) RADIANT_PRINTF_CHECK(2, 3);
   /// Display debug output
   /** This function calls trace to do the final work and it is
       effectively the same as calling debug(...). */
-  RADIANT_API void debug(const char * msg, ...);
+  RADIANT_API void debug(const char * msg, ...) RADIANT_PRINTF_CHECK(1, 2);
   /// Display information output
   /** This function calls trace to do the final work and it is
       effectively the same as calling trace(INFO, ...). */
-  RADIANT_API void info(const char * msg, ...);
+  RADIANT_API void info(const char * msg, ...) RADIANT_PRINTF_CHECK(1, 2);
   /// Display error output
   /** This function calls trace to do the final work and it is
       effectively the same as calling trace(FAILURE, ...). */
-  RADIANT_API void error(const char * msg, ...);
+  RADIANT_API void error(const char * msg, ...) RADIANT_PRINTF_CHECK(1, 2);
 
   /// Display error output, with a fatal message
   /** This function calls trace to do the final work and it is
       effectively the same as calling trace(FATAL, ...). */
-  RADIANT_API void fatal(const char * msg, ...);
+  RADIANT_API void fatal(const char * msg, ...) RADIANT_PRINTF_CHECK(1, 2);
 
   /** Toggle verbose output.
 

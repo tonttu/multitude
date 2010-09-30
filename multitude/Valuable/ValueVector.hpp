@@ -49,14 +49,14 @@ namespace Valuable
 
       /// Assigns a vector
       ValueVector<VectorType, ElementType, N> & operator =
-      (const VectorType & v) { Base::m_value = v; Base::emitChange(); return *this; }
+      (const VectorType & v) { Base::m_value = v; this->emitChange(); return *this; }
 
       /// Assigns by addition
       ValueVector<VectorType, ElementType, N> & operator +=
-      (const VectorType & v) { Base::m_value += v; Base::emitChange(); return *this; }
+      (const VectorType & v) { Base::m_value += v; this->emitChange(); return *this; }
       /// Assigns by subtraction
       ValueVector<VectorType, ElementType, N> & operator -=
-      (const VectorType & v) { Base::m_value -= v; Base::emitChange(); return *this; }
+      (const VectorType & v) { Base::m_value -= v; this->emitChange(); return *this; }
 
     /// Subtract
       VectorType operator -
@@ -101,7 +101,7 @@ namespace Valuable
       inline void normalize(ElementType len = 1.0)
       {
         Base::m_value.normalize(len);
-        Base::emitChange();
+        this->emitChange();
       }
   };
 
