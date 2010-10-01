@@ -146,6 +146,7 @@ namespace Nimble {
   /* A bunch of specializations, so that compiler does not warn about
      negating vectors with unsigned components.
   */
+#ifdef WIN32
   template <>
       Vector3T<unsigned char>
       Vector3T<unsigned char>::operator-	() const { return * this; }
@@ -169,6 +170,7 @@ namespace Nimble {
   template <>
       Vector3T<uint64_t> &
       Vector3T<uint64_t>::negate() { return * this; }
+#endif
 
   /// Vector of three floats
   typedef Vector3T<float> Vector3;
