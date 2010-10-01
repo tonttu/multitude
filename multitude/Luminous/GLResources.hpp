@@ -140,6 +140,8 @@ namespace Luminous
         @see Texture.cpp
    */
     bool isBrokenProxyTexture2D();
+
+    long frame() const { return m_frame; }
  private:
     typedef std::map<const Collectable *, GLResource *> container;
     typedef container::iterator iterator;

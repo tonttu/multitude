@@ -29,7 +29,8 @@ namespace Poetic
   class POETIC_API GPUFont : public Luminous::GLResource
   {
     public:
-      virtual ~GPUFont() {}
+    GPUFont();
+      virtual ~GPUFont();
 
       /// Returns the CPU font for this GPU font
       virtual CPUFont * cpuFont() = 0;
