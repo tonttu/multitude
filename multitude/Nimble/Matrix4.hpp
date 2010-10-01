@@ -121,7 +121,7 @@ namespace Nimble {
     /// Returns a pointer to the first element
     const T * data() const { return m[0].data(); }
 
-    NIMBLE_API Matrix4T<T> orthoNormalize();
+    Matrix4T<T> orthoNormalize();
 
     /// Fills the matrix by copying values from memory
     template <class S>
