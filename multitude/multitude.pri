@@ -9,7 +9,7 @@ CONFIG += embed_manifest_exe
 INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
 
-QMAKE_LIBDIR += /usr/lib/nvidia-current
+linux-*: QMAKE_LIBDIR += /usr/lib/nvidia-current
 
 MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat
 linux-* {
