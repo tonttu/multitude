@@ -147,7 +147,6 @@ namespace Nimble {
   /* A bunch of specializations, so that the compiler does not warn about
      negating vectors with unsigned components.
   */
-#ifdef WIN32
   template <>
       Vector3T<unsigned char>
       Vector3T<unsigned char>::operator-	() const { return * this; }
