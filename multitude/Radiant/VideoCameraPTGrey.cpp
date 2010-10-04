@@ -15,9 +15,9 @@
 
 namespace Radiant
 {
-  /* It seems that ptgrey drivers are not 100% thread-safe. To overcome this we 
+  /* It seems that ptgrey drivers are not 100% thread-safe. To overcome this we
      use a mutex to lock captureImage calls to one-thread at a time. */
-  static MutexStatic __cmutex; 
+  static MutexStatic __cmutex;
 
   typedef std::map<uint64_t, FlyCapture2::PGRGuid> GuidMap;
   GuidMap g_guidMap;
@@ -116,6 +116,8 @@ namespace Radiant
 
   static FlyCapture2::BusManager * g_bus = 0;
 
+  bool VideoCameraPTGrey::m_fakeFormat7 = true;
+
   void g_busResetCallback(void * /*param*/)
   {
     Radiant::info("FIREWIRE BUS RESET");
@@ -123,8 +125,15 @@ namespace Radiant
 
   VideoCameraPTGrey::VideoCameraPTGrey(CameraDriver * driver)
     : VideoCamera(driver),
-      m_state(UNINITIALIZED)
+    m_state(UNINITIALIZED)
   {
+  }
+
+  VideoCameraPTGrey::~VideoCameraPTGrey()
+  {
+    m_image.freeMemory();
+    if(m_state != UNINITIALIZED)
+      close();
   }
 
   bool VideoCameraPTGrey::open(uint64_t euid, int , int , ImageFormat , FrameRate framerate)
@@ -132,7 +141,9 @@ namespace Radiant
 
     GuardStatic g(__cmutex);
 
-	debug("VideoCameraPTGrey::open # %llx", (long long) euid);
+    m_fakeFormat7 = false;
+
+    debug("VideoCameraPTGrey::open # %llx", (long long) euid);
 
     FlyCapture2::PGRGuid guid;
 
@@ -237,6 +248,13 @@ namespace Radiant
   {
     GuardStatic g(__cmutex);
     fps = 180.0f;
+
+    m_format7Rect = roi;
+
+    if(m_fakeFormat7) {
+      // Expand the ROI to include everything, this will be clamped later on.
+      roi.set(0, 0, 100000, 100000);
+    }
 
     debug("VideoCameraPTGrey::openFormat7 # %llx", (long long) euid);
 
@@ -350,6 +368,10 @@ namespace Radiant
     // err = m_camera.SetFormat7Configuration( &f7s, f7pi.recommendedBytesPerPacket);
     err = m_camera.SetFormat7Configuration( &f7s, f7pi.recommendedBytesPerPacket);
 
+    roi.high().make(f7s.offsetX + f7s.width, f7s.offsetY + f7s.height);
+    m_format7Rect.high() = roi.clamp(m_format7Rect.high());
+    m_format7Rect.low() = roi.clamp(m_format7Rect.low());
+
     if(err != FlyCapture2::PGRERROR_OK) {
       Radiant::error("VideoCameraPTGrey::openFormat7 # SetFormat7Configuration %s",
                      err.GetDescription());
@@ -357,10 +379,10 @@ namespace Radiant
       return false;
     }
 
-    // Allocate space for image
-    m_image.allocateMemory(IMAGE_GRAYSCALE, f7s.width, f7s.height);
+    // Allocate space for the image
+    m_image.allocateMemory(IMAGE_GRAYSCALE, m_format7Rect.width(), m_format7Rect.height());
 
-	m_state = OPENED;
+    m_state = OPENED;
 
     FlyCapture2::CameraInfo camInfo;
     err = m_camera.GetCameraInfo(&camInfo);
@@ -407,13 +429,13 @@ namespace Radiant
 
   bool VideoCameraPTGrey::stop()
   {
-    // GuardStatic g(__cmutex);
+    GuardStatic g(__cmutex);
 
-	  if(m_state != RUNNING) {
-		  error("VideoCameraPTGrey::stop # State != RUNNING");
-		  /* If the device is already stopped, then return true. */
-		  return m_state == OPENED;
-	  }
+    if(m_state != RUNNING) {
+      debug("VideoCameraPTGrey::stop # State != RUNNING");
+      /* If the device is already stopped, then return true. */
+      return m_state == OPENED;
+    }
 
     Radiant::info("VideoCameraPTGrey::stop");
     FlyCapture2::Error err = m_camera.StopCapture();
@@ -429,6 +451,9 @@ namespace Radiant
 
   bool VideoCameraPTGrey::close()
   {
+    if(m_state == UNINITIALIZED)
+      return true;
+
     GuardStatic g(__cmutex);
 
     Radiant::info("VideoCameraPTGrey::close");
@@ -460,7 +485,26 @@ namespace Radiant
       //assert(m_image.size() == img.GetDataSize());
     }
 */
-    memcpy(m_image.m_planes[0].m_data, img.GetData(), m_image.size());
+
+    if(m_fakeFormat7 && m_format7Rect.width() > 1) {
+      // info("FAKE FORMAT 7 CAPTURE");
+      // Copy only part of the image
+      /* The fake format7 mode. This is done so that one can use Format7 ROI even
+         when the feature is broken. One many Windows systems this only causes BSODs.
+      */
+      int w = m_format7Rect.width();
+      const unsigned char * src = img.GetData();
+      src += img.GetCols() * m_format7Rect.low().y + m_format7Rect.low().x;
+      unsigned char * dest = m_image.m_planes[0].m_data;
+
+      for(int y = m_format7Rect.low().y; y < m_format7Rect.high().y; y++) {
+        memcpy(dest, src, w);
+        src += img.GetCols();
+        dest += w;
+      }
+    }
+    else
+      memcpy(m_image.m_planes[0].m_data, img.GetData(), m_image.size());
 
     return &m_image;
   }
@@ -499,6 +543,8 @@ namespace Radiant
   
   void VideoCameraPTGrey::setFeature(FeatureType id, float value)
   {
+    GuardStatic g(__cmutex);
+
     // Radiant::debug("VideoCameraPTGrey::setFeature # %d %f", id, value);
 
     // If less than zero, use automatic mode
