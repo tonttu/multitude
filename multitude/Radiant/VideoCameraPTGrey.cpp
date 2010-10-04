@@ -487,7 +487,7 @@ namespace Radiant
 */
 
     if(m_fakeFormat7 && m_format7Rect.width() > 1) {
-      info("FAKE FORMAT 7 CAPTURE");
+      // info("FAKE FORMAT 7 CAPTURE");
       // Copy only part of the image
       /* The fake format7 mode. This is done so that one can use Format7 ROI even
          when the feature is broken. One many Windows systems this only causes BSODs.
