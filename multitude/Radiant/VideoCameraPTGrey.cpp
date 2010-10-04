@@ -116,7 +116,7 @@ namespace Radiant
 
   static FlyCapture2::BusManager * g_bus = 0;
 
-  bool VideoCameraPTGrey::m_fakeFormat7 = false;
+  bool VideoCameraPTGrey::m_fakeFormat7 = true;
 
   void g_busResetCallback(void * /*param*/)
   {
@@ -132,7 +132,7 @@ namespace Radiant
   VideoCameraPTGrey::~VideoCameraPTGrey()
   {
     m_image.freeMemory();
-    if(m_state != )
+    if(m_state != UNINITIALIZED)
       close();
   }
 
@@ -452,7 +452,7 @@ namespace Radiant
   bool VideoCameraPTGrey::close()
   {
     if(m_state == UNINITIALIZED)
-      return;
+      return true;
 
     GuardStatic g(__cmutex);
 
@@ -487,18 +487,19 @@ namespace Radiant
 */
 
     if(m_fakeFormat7 && m_format7Rect.width() > 1) {
+      info("FAKE FORMAT 7 CAPTURE");
       // Copy only part of the image
       /* The fake format7 mode. This is done so that one can use Format7 ROI even
          when the feature is broken. One many Windows systems this only causes BSODs.
       */
       int w = m_format7Rect.width();
-      const char * src = img.GetData();
-      src += img.Width() * m_format7Rect.low().y + m_format7Rect.low().x;
-      char * dest = m_image.m_planes[0].m_data;
+      const unsigned char * src = img.GetData();
+      src += img.GetCols() * m_format7Rect.low().y + m_format7Rect.low().x;
+      unsigned char * dest = m_image.m_planes[0].m_data;
 
       for(int y = m_format7Rect.low().y; y < m_format7Rect.high().y; y++) {
         memcpy(dest, src, w);
-        src += img.Width();
+        src += img.GetCols();
         dest += w;
       }
     }
