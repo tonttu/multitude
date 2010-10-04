@@ -499,6 +499,8 @@ namespace Radiant
   
   void VideoCameraPTGrey::setFeature(FeatureType id, float value)
   {
+    GuardStatic g(__cmutex);
+
     // Radiant::debug("VideoCameraPTGrey::setFeature # %d %f", id, value);
 
     // If less than zero, use automatic mode
