@@ -208,6 +208,8 @@ namespace Luminous
     /// @copydoc drawTexRect
     void drawTexRect(Nimble::Vector2 size, const float * rgba,
                      Nimble::Vector2 texUV);
+    /// @copydoc drawTexRect
+    void drawTexRect(const Nimble::Rect & area, const float * rgba);
 
     /// Sets the current blend function, and enables blending
     /** If the function is BLEND_NONE, then blending is disabled. */
