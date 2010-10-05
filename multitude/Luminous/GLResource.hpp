@@ -115,6 +115,8 @@ namespace Luminous
     : public Radiant::MemCheck
 #endif
   {
+    enum { PERSISTENT = -2 };
+
   public:
     friend class GLResources;
 
@@ -137,6 +139,13 @@ namespace Luminous
     void setGeneration(int g) { m_generation = g; }
     /// Returns the generation of the resource.
     int generation() const { return m_generation; }
+
+    /// Tells if this object is persistent
+    /** Persistent GPU resources should not be deleted, unless the Collectable is deleted.
+        Default implementation returns false. */
+    bool persistent() { return m_deleteOnFrame == PERSISTENT; }
+
+    void setPersistent(bool b);
 
   protected:
 

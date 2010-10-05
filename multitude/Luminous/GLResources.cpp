@@ -148,7 +148,7 @@ namespace Luminous
       GLResource * r = (*it).second;
 
 
-      if(r->m_deleteOnFrame && r->m_deleteOnFrame < m_frame) {
+      if(!r->persistent() && r->m_deleteOnFrame && r->m_deleteOnFrame < m_frame) {
 	
         //Radiant::info("GLResources::eraseResource # Resource %s for %p erased", typeid(*(*it).second).name(), (*it).first);
         // Radiant::trace("GLResources::eraseResources # Removing old");
@@ -209,7 +209,9 @@ namespace Luminous
 
   void GLResources::deleteAfter(GLResource * resource, int frames)
   {
-    if(frames >= 0)
+    if(resource->m_deleteOnFrame == GLResource::PERSISTENT)
+      ;
+    else if(frames >= 0)
       resource->m_deleteOnFrame = m_frame + frames;
     else
       resource->m_deleteOnFrame = 0;

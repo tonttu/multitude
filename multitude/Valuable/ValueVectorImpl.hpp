@@ -93,6 +93,8 @@ namespace Valuable
     for(int i = 0; i < N; i++)
       in >> Base::m_value[i];
 
+    this->emitChange();
+
     return true;
   }
 
@@ -112,6 +114,7 @@ namespace Valuable
   bool ValueVector<VectorType, ElementType, N>::set(const VectorType & v)
   {
     Base::m_value = v;
+    this->emitChange();
     return true;
   }
 

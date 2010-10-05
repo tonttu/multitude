@@ -24,6 +24,14 @@
 namespace Poetic
 {
 
+  GPUFont::GPUFont()
+  {
+    setPersistent(true);
+  }
+
+  GPUFont::~GPUFont()
+  {}
+
   void GPUFont::render(const char * str, float x, float y)
   {
     Nimble::Matrix3 transform;
@@ -159,7 +167,6 @@ namespace Poetic
 
     render(str, transform * Nimble::Matrix3::translate2D(-center.x, center.y));
   }
-
 
   void GPUFont::renderLines(const char * str, Nimble::Vector2 loc)
   {

@@ -9,7 +9,7 @@ CONFIG += embed_manifest_exe
 INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
 
-QMAKE_LIBDIR += /usr/lib/nvidia-current
+linux-*: QMAKE_LIBDIR += /usr/lib/nvidia-current
 
 MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat
 linux-* {
@@ -48,9 +48,8 @@ MULTI_LIB_FLAG = -L
 linux-*{
   contains(USEGLEW,no) {
     DEFINES += MULTI_WITHOUT_GLEW=1
-  }
-  else {
-    linux-*:LIB_GLEW = -lGLEW
+  } else {
+    LIB_GLEW=-lGLEW
   }
 }
 
@@ -61,6 +60,9 @@ linux-*{
 }
 
 macx {
+  !exists(/opt/multitouch):error(Cornerstone dependencies not installed.)
+  INCLUDEPATH+=/opt/multitouch/include
+  QMAKE_LIBDIR+=/opt/multitouch/lib
 
   # withbundles = $$(MULTI_BUNDLES)
   withbundles = YES

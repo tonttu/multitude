@@ -32,6 +32,7 @@ namespace Luminous
       m_shaderSource(0)
   {
     m_handle = glCreateShader(shaderType);
+    setPersistent(true);
   }
 
   GLSLShaderObject::~GLSLShaderObject()

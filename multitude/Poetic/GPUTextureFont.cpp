@@ -63,7 +63,10 @@ namespace Poetic
   /* Creates a number that is a multiple of four. Four is used as the
      buggy OSX (NVidia) drivers cannot handle arbitratry textures,
      even OpenGL 2.0 spec-compliant multiples-of-two -textures do not
-     work in all conditions (sigh). */
+     work in all conditions (sigh).
+
+     Well, the issue really is with OpenGL
+*/
   inline GLuint nextSize(GLuint in)
   {
     if((in & 0x3) == 0)

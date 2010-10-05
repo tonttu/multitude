@@ -925,6 +925,14 @@ namespace Luminous
   {
     drawTexRect(size, rgba, Rect(Vector2(0,0), texUV));
   }
+
+  void RenderContext::drawTexRect(const Nimble::Rect & area, const float * rgba)
+  {
+    pushTransformRightMul(Nimble::Matrix3::translate2D(area.low()));
+    drawTexRect(area.span(), rgba);
+    popTransform();
+  }
+
   Nimble::Vector2 RenderContext::contextSize() const
   {
     return m_data->contextSize();
