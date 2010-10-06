@@ -95,6 +95,8 @@ namespace Luminous
     RenderContext(Luminous::GLResources * resources, const Luminous::MultiHead::Window * window);
     virtual ~RenderContext();
 
+    void setWindow(const Luminous::MultiHead::Window * window);
+
     /// Returns the resources of this context
     Luminous::GLResources * resources() { return m_resources; }
 

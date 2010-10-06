@@ -191,6 +191,9 @@ namespace Luminous
     }
 
     void initialize() {
+
+      assert(m_window != 0);
+
       if(!m_initialized) {
         m_initialized = true;
         const char * circ_vert_shader = ""\
@@ -519,8 +522,14 @@ namespace Luminous
     delete m_data;
   }
 
+  void RenderContext::setWindow(const Luminous::MultiHead::Window * window)
+  {
+    m_data->m_window = window;
+  }
+
   void RenderContext::prepare()
   {
+
     resetTransform();
     m_data->initialize();
     m_data->m_recursionDepth = 0;
