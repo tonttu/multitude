@@ -297,115 +297,7 @@ namespace Luminous
     }
 
     void drawPolyLine(RenderContext& r, const Nimble::Vector2f * vertices, int n,
-                                     float width, const float * rgba)
-    {
-      if(n < 2)
-        return;
-
-      width *= r.scale() * 0.5f;
-      width += 1; // for antialiasing
-
-      const Matrix3 & m = r.transform();
-      Vector2f cprev;
-      Vector2f cnow = m.project(vertices[0]);
-      Vector2f cnext;
-      Vector2f avg;
-      Vector2f dirNext;
-      Vector2f dirPrev;
-
-      int nextIdx = 1;
-      while ((vertices[nextIdx]-cnow).lengthSqr() < 9.0f && nextIdx < n-1) {
-        nextIdx++;
-      }
-
-      cnext = m.project(vertices[nextIdx]);
-      dirNext = cnext - cnow;
-      dirNext.normalize();
-      avg = dirNext.perpendicular();
-
-      if (avg.length() < 1e-5) {
-        avg.make(1,0);
-      } else {
-        avg.normalize();
-      }
-      avg *= width;
-
-      m_verts.clear();
-      m_verts.push_back(cnow + avg);
-      m_verts.push_back(cnow - avg);
-
-      m_attribs.clear();
-
-      m_attribs.push_back(cnow);
-      m_attribs.push_back(cnow);
-      m_attribs.push_back(cnow);
-      m_attribs.push_back(cnow);
-
-      for (int i = nextIdx; i < n; ) {
-        nextIdx = i+1;
-        cprev = cnow;
-        cnow = cnext;
-
-        // at least 3 pixels gap between vertices
-        while (nextIdx < n-1 && (vertices[nextIdx]-cnow).lengthSqr() < 9.0f) {
-          nextIdx++;
-        }
-        if (nextIdx > n-1) {
-          cnext = 2.0f*cnow - cprev;
-        } else {
-          cnext = m.project(vertices[nextIdx]);
-        }
-
-        dirPrev = dirNext;
-        dirNext = cnext - cnow;
-
-        if (dirNext.length() < 1e-5f) {
-          dirNext = dirPrev;
-        } else {
-          dirNext.normalize();
-        }
-
-        avg = (dirPrev + dirNext).perpendicular();
-        avg.normalize();
-
-        float dp = Math::Clamp(dot(avg, dirPrev.perpendicular()), 1e-2f, 1.0f);
-        avg /= dp;
-        avg *= width;
-        m_verts.push_back(cnow-avg);
-        m_verts.push_back(cnow+avg);
-
-        m_verts.push_back(cnow+avg);
-        m_verts.push_back(cnow-avg);
-
-        m_attribs.push_back(cnow);
-        m_attribs.push_back(cnow);
-        m_attribs.push_back(cnow);
-        m_attribs.push_back(cnow);
-
-        i = nextIdx;
-      }
-
-      GLuint loc = m_polyline_shader->getAttribLoc("coord");
-      glEnableVertexAttribArray(loc);
-      GLuint loc2 = m_polyline_shader->getAttribLoc("coord2");
-      glEnableVertexAttribArray(loc2);
-
-      m_polyline_shader->bind();
-      m_polyline_shader->setUniformFloat("width", width);
-
-      glColor4fv(rgba);
-      glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat *>(&m_verts[0]));
-      glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&m_attribs[0]));
-      glVertexAttribPointer(loc2, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&m_attribs[4]));
-      glEnableClientState(GL_VERTEX_ARRAY);
-
-      glDrawArrays(GL_QUADS, 0, (GLsizei) m_verts.size());
-
-      glDisableClientState(GL_VERTEX_ARRAY);
-      glDisableVertexAttribArray(loc);
-      glDisableVertexAttribArray(loc2);
-      m_polyline_shader->unbind();
-    }
+                      float width, const float * rgba);
 
     void pushViewStack()
     {
@@ -491,6 +383,117 @@ namespace Luminous
 
     BlendFunc m_blendFunc;
   };
+
+  void RenderContext::Internal::drawPolyLine(RenderContext& r, const Nimble::Vector2f * vertices, int n,
+                                             float width, const float * rgba)
+  {
+    if(n < 2)
+      return;
+
+    width *= r.scale() * 0.5f;
+    width += 1; // for antialiasing
+
+    const Matrix3 & m = r.transform();
+    Vector2f cprev;
+    Vector2f cnow = m.project(vertices[0]);
+    Vector2f cnext;
+    Vector2f avg;
+    Vector2f dirNext;
+    Vector2f dirPrev;
+
+    int nextIdx = 1;
+    while ((vertices[nextIdx]-cnow).lengthSqr() < 9.0f && nextIdx < n-1) {
+      nextIdx++;
+    }
+
+    cnext = m.project(vertices[nextIdx]);
+    dirNext = cnext - cnow;
+    dirNext.normalize();
+    avg = dirNext.perpendicular();
+
+    if (avg.length() < 1e-5) {
+      avg.make(1,0);
+    } else {
+      avg.normalize();
+    }
+    avg *= width;
+
+    m_verts.clear();
+    m_verts.push_back(cnow + avg);
+    m_verts.push_back(cnow - avg);
+
+    m_attribs.clear();
+
+    m_attribs.push_back(cnow);
+    m_attribs.push_back(cnow);
+    m_attribs.push_back(cnow);
+    m_attribs.push_back(cnow);
+
+    for (int i = nextIdx; i < n; ) {
+      nextIdx = i+1;
+      cprev = cnow;
+      cnow = cnext;
+
+      // at least 3 pixels gap between vertices
+      while (nextIdx < n-1 && (vertices[nextIdx]-cnow).lengthSqr() < 9.0f) {
+        nextIdx++;
+      }
+      if (nextIdx > n-1) {
+        cnext = 2.0f*cnow - cprev;
+      } else {
+        cnext = m.project(vertices[nextIdx]);
+      }
+
+      dirPrev = dirNext;
+      dirNext = cnext - cnow;
+
+      if (dirNext.length() < 1e-5f) {
+        dirNext = dirPrev;
+      } else {
+        dirNext.normalize();
+      }
+
+      avg = (dirPrev + dirNext).perpendicular();
+      avg.normalize();
+
+      float dp = Math::Clamp(dot(avg, dirPrev.perpendicular()), 1e-2f, 1.0f);
+      avg /= dp;
+      avg *= width;
+      m_verts.push_back(cnow-avg);
+      m_verts.push_back(cnow+avg);
+
+      m_verts.push_back(cnow+avg);
+      m_verts.push_back(cnow-avg);
+
+      m_attribs.push_back(cnow);
+      m_attribs.push_back(cnow);
+      m_attribs.push_back(cnow);
+      m_attribs.push_back(cnow);
+
+      i = nextIdx;
+    }
+
+    GLuint loc = m_polyline_shader->getAttribLoc("coord");
+    glEnableVertexAttribArray(loc);
+    GLuint loc2 = m_polyline_shader->getAttribLoc("coord2");
+    glEnableVertexAttribArray(loc2);
+
+    m_polyline_shader->bind();
+    m_polyline_shader->setUniformFloat("width", width);
+
+    glColor4fv(rgba);
+    glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat *>(&m_verts[0]));
+    glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&m_attribs[0]));
+    glVertexAttribPointer(loc2, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&m_attribs[4]));
+    glEnableClientState(GL_VERTEX_ARRAY);
+
+    glDrawArrays(GL_QUADS, 0, (GLsizei) m_verts.size());
+
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableVertexAttribArray(loc);
+    glDisableVertexAttribArray(loc2);
+    m_polyline_shader->unbind();
+  }
 
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
@@ -814,6 +817,14 @@ namespace Luminous
   {
     m_data->drawPolyLine(*this, vertices, n, width, rgba);
   }
+
+  void RenderContext::drawLine(Nimble::Vector2f p1, Nimble::Vector2f p2,
+                               float width, const float * rgba)
+  {
+    Nimble::Vector2f vs[2] = { p1, p2 };
+    drawPolyLine(vs, 2, width, rgba);
+  }
+
   void RenderContext::drawCurve(Vector2* controlPoints, float width, const float * rgba) {
 
     struct Subdivider {
