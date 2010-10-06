@@ -235,6 +235,7 @@ namespace Radiant {
       }
       return * this;
     }
+    std::vector<T> & vector() { return m_points; }
 
   private:
     size_t m_count;
