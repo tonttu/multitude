@@ -20,6 +20,7 @@
 
 #include "BinaryData.hpp"
 #include "Export.hpp"
+#include "MemCheck.hpp"
 #include "RefPtr.hpp"
 
 #ifdef WIN32
@@ -52,7 +53,7 @@ namespace Radiant
 
       @see SHMDuplexPipe
   */
-  class SHMPipe
+  class SHMPipe : public Radiant::MemCheck
   {
   public:
 
