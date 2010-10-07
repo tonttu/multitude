@@ -908,6 +908,7 @@ namespace Luminous
       low.x, high.y
     };
 
+#if 0
     glEnable(GL_VERTEX_ARRAY);
     glEnable(GL_TEXTURE_COORD_ARRAY);
 
@@ -917,6 +918,16 @@ namespace Luminous
 
     glDisable(GL_VERTEX_ARRAY);
     glDisable(GL_TEXTURE_COORD_ARRAY);
+#else
+    glBegin(GL_QUADS);
+
+    for(int i = 0; i < 4; i++) {
+      glTexCoord2fv(&texCoords[i * 2]);
+      glVertex2fv(v[i].data());
+    }
+
+    glEnd();
+#endif
 
   }
 
