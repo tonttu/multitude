@@ -15,7 +15,9 @@
 
 #include "Thread.hpp"
 #include "Mutex.hpp"
+#include "Platform.hpp"
 #include "Sleep.hpp"
+#include "Trace.hpp"
 
 #include <errno.h>
 #include <signal.h>
@@ -133,6 +135,13 @@ namespace Radiant {
 
     int e;
 
+#ifdef RADIANT_OSX
+    if(timeoutms) {
+      error("Thread::waitEnd # Timeout unimplemented on OSX");
+    }
+    e = pthread_join(m_d->m_pthread, 0);
+#else
+
     if(timeoutms) {
       Radiant::TimeStamp now(Radiant::TimeStamp::getTime());
       now += Radiant::TimeStamp::createSecondsD(timeoutms * 0.001);
@@ -144,6 +153,8 @@ namespace Radiant {
     else {
       e = pthread_join(m_d->m_pthread, 0);
     }
+
+#endif
 
     if(e) {
       if(m_threadDebug || m_threadWarnings)
