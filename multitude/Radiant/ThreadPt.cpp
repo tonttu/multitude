@@ -125,17 +125,29 @@ namespace Radiant {
     return !e;
   }
 
-  bool Thread::waitEnd()
+  bool Thread::waitEnd(int timeoutms)
   {
     if(m_threadDebug) {
       std::cout << "Thread::waitEnd " << this << std::endl;
     }
 
-    int e = pthread_join(m_d->m_pthread, 0);
+    int e;
+
+    if(timeoutms) {
+      Radiant::TimeStamp now(Radiant::TimeStamp::getTime());
+      now += Radiant::TimeStamp::createSecondsD(timeoutms * 0.001);
+      timespec ts;
+      ts.tv_sec = now.seconds();
+      ts.tv_nsec = now.subSecondsD() * 1000.0f;
+      e = pthread_timedjoin_np(m_d->m_pthread, 0, &ts);
+    }
+    else {
+      e = pthread_join(m_d->m_pthread, 0);
+    }
 
     if(e) {
       if(m_threadDebug || m_threadWarnings)
-    std::cerr << "Thread::waitEnd failed - " << strerror(e) << std::endl;
+        std::cerr << "Thread::waitEnd failed - " << strerror(e) << std::endl;
       return false;
     }
     return true;
