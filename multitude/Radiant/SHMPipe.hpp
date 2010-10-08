@@ -73,6 +73,8 @@ namespace Radiant
     RADIANT_API static SHMPipe * create(uint32_t size);
 #endif
 
+
+    RADIANT_API virtual ~SHMPipe();
     /// Reads data from the buffer.
     /** @return This function returns the number of bytes read from the buffer. */
     RADIANT_API int read(void * ptr, int n, bool block = false, bool peek = false);
