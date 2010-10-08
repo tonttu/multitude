@@ -125,8 +125,11 @@ namespace Nimble {
       return (v1 & 0xFFFF0000) | (v2 >> 16);
     }
 
-    /** Get random numbers between 0 and range-1. */
-    inline uint32_t randN(uint32_t range)
+    /** Get random numbers between 0 and range-1.
+
+        @arg range The maximum output value. This value must not exceed 2^24-1.
+    */
+    inline uint32_t randN24(uint32_t range)
     {
       m_val = m_val * m_randMul + 1;
       return (m_val >> 8) % range;

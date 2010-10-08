@@ -908,7 +908,8 @@ namespace Luminous
       low.x, high.y
     };
 
-#if 0
+#ifndef RADIANT_OSX
+    // This fails on OSX
     glEnable(GL_VERTEX_ARRAY);
     glEnable(GL_TEXTURE_COORD_ARRAY);
 
