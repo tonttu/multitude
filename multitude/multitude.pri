@@ -70,7 +70,7 @@ macx {
   LIB_OPENCL = -framework,OpenCL
   LIB_OPENGL = -framework,OpenGL
   LIB_GLU =
-  LIB_GLEW = -lGLEW
+  # LIB_GLEW = -lGLEW
 
   # DEFINES += __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__=1050
 

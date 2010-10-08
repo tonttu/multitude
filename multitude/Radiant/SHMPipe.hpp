@@ -20,6 +20,7 @@
 
 #include "BinaryData.hpp"
 #include "Export.hpp"
+#include "MemCheck.hpp"
 #include "RefPtr.hpp"
 
 #ifdef WIN32
@@ -52,7 +53,7 @@ namespace Radiant
 
       @see SHMDuplexPipe
   */
-  class SHMPipe
+  class SHMPipe : public Radiant::MemCheck
   {
   public:
 
@@ -72,6 +73,8 @@ namespace Radiant
     RADIANT_API static SHMPipe * create(uint32_t size);
 #endif
 
+
+    RADIANT_API virtual ~SHMPipe();
     /// Reads data from the buffer.
     /** @return This function returns the number of bytes read from the buffer. */
     RADIANT_API int read(void * ptr, int n, bool block = false, bool peek = false);

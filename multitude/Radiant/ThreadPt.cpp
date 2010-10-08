@@ -15,7 +15,9 @@
 
 #include "Thread.hpp"
 #include "Mutex.hpp"
+#include "Platform.hpp"
 #include "Sleep.hpp"
+#include "Trace.hpp"
 
 #include <errno.h>
 #include <signal.h>
@@ -125,17 +127,38 @@ namespace Radiant {
     return !e;
   }
 
-  bool Thread::waitEnd()
+  bool Thread::waitEnd(int timeoutms)
   {
     if(m_threadDebug) {
       std::cout << "Thread::waitEnd " << this << std::endl;
     }
 
-    int e = pthread_join(m_d->m_pthread, 0);
+    int e;
+
+#ifdef RADIANT_OSX
+    if(timeoutms) {
+      error("Thread::waitEnd # Timeout unimplemented on OSX");
+    }
+    e = pthread_join(m_d->m_pthread, 0);
+#else
+
+    if(timeoutms) {
+      Radiant::TimeStamp now(Radiant::TimeStamp::getTime());
+      now += Radiant::TimeStamp::createSecondsD(timeoutms * 0.001);
+      timespec ts;
+      ts.tv_sec = now.seconds();
+      ts.tv_nsec = now.subSecondsD() * 1000.0f;
+      e = pthread_timedjoin_np(m_d->m_pthread, 0, &ts);
+    }
+    else {
+      e = pthread_join(m_d->m_pthread, 0);
+    }
+
+#endif
 
     if(e) {
       if(m_threadDebug || m_threadWarnings)
-    std::cerr << "Thread::waitEnd failed - " << strerror(e) << std::endl;
+        std::cerr << "Thread::waitEnd failed - " << strerror(e) << std::endl;
       return false;
     }
     return true;

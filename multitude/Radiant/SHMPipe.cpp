@@ -46,7 +46,7 @@ namespace Radiant
     return str;
   }
 
-  class SHMPipe::SHMHolder
+  class SHMPipe::SHMHolder : public Radiant::MemCheck
   {
   public:
     SHMHolder(key_t key, uint32_t size);
@@ -401,6 +401,9 @@ namespace Radiant
   */
 
 #endif
+
+  SHMPipe::~SHMPipe()
+  {}
 
   int SHMPipe::read(void * dest, int n, bool block, bool peek)
   {
