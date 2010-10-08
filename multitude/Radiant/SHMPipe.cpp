@@ -414,6 +414,9 @@ namespace Radiant
 
 #endif
 
+  SHMPipe::~SHMPipe()
+  {}
+
   int SHMPipe::read(void * dest, int n, bool block, bool peek)
   {
     if(!m_data) return 0;
