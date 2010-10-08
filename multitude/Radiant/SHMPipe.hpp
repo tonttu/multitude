@@ -98,7 +98,7 @@ namespace Radiant
     RADIANT_API void flush();
 
     /// Returns the size of the shared memory area
-    RADIANT_API uint32_t size() const { return m_data.size; }
+    RADIANT_API uint32_t size() const { return m_data ? m_data->size : 0; }
 
     /// Clears the transfer counters
     RADIANT_API void clear();
@@ -111,10 +111,10 @@ namespace Radiant
     /// Access functions.
 
     /// Return the read position.
-    inline uint32_t readPos() const { return m_data.readPos; }
+    inline uint32_t readPos() const { return m_data ? m_data->readPos : 0; }
 
     /// Return the read position.
-    inline uint32_t writePos() const { return m_data.writePos; }
+    inline uint32_t writePos() const { return m_data ? m_data->writePos : 0; }
     
     /// Output attributes and properties.
     void dump() const;
@@ -139,7 +139,7 @@ namespace Radiant
       uint32_t readPos;
       int sem;
       uint8_t pipe[];
-    } & m_data;
+    } * m_data;
   };
 
 }
