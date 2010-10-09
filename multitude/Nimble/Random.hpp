@@ -16,7 +16,7 @@
 #ifndef NIMBLE_RANDOM_HPP
 #define NIMBLE_RANDOM_HPP
 
-#include <Nimble/Vector2.hpp>
+#include <Nimble/Rect.hpp>
 
 #include <stdint.h>
 
@@ -141,6 +141,13 @@ namespace Nimble {
     inline Nimble::Vector2f randVec2()
     {
       return randVecOnCircle();
+    }
+
+    /// Random 2d vector inside a rectangle
+    inline Nimble::Vector2f randVec2InRect(const Nimble::Rectf & r)
+    {
+      return Nimble::Vector2f(randMinMax(r.low().x, r.high().x),
+                              randMinMax(r.low().y, r.high().y));
     }
 
     /// Random 2d vector on a unit circle

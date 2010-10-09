@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #include "GLResources.hpp"
@@ -32,7 +32,7 @@
 
 namespace Luminous
 {
-  
+
   using namespace Radiant;
 
   GLResources::GLResources(Radiant::ResourceLocator & rl)
@@ -49,7 +49,7 @@ namespace Luminous
     if(envgp) {
 
       m_comfortableGPURAM = Nimble::Math::Max(atol(envgp) * (1 << 20),
-					      m_comfortableGPURAM);
+                          m_comfortableGPURAM);
     }
 
   }
@@ -58,7 +58,7 @@ namespace Luminous
   {
     while(m_resources.size())
       eraseResource((*m_resources.begin()).first);
-    
+
     if(m_consumingBytes != 0)
       Radiant::error("GLResources::~GLResources # The GPU memory is left at %ld -> "
                      "there is a bug in your application.",
@@ -95,7 +95,10 @@ namespace Luminous
     iterator it = m_resources.find(key);
 
     if(it != m_resources.end()) {
-      Radiant::error("GLResources::addResource # There already is a resource for %p", key);
+      Radiant::error("GLResources::addResource # "
+                     "There already is a resource %p for %p (%s) in %p",
+                     it->second, key,
+                     typeid(*it->second).name(), this);
       eraseResource(key);
     }
 
@@ -121,7 +124,7 @@ namespace Luminous
     m_consumingBytes  -= bytes;
     m_deallocationSum += bytes;
     */
-    
+
     // Radiant::info("GLResources::eraseResource # Resource %s for %p erased", typeid(*resource).name(), key);
 
     delete resource;
@@ -142,14 +145,14 @@ namespace Luminous
     m_comfortableGPURAM = 0;
 
     for(iterator it = m_resources.begin();
-	(m_consumingBytes >= m_comfortableGPURAM) && 
-	  (it != m_resources.end()); ) {
-      
+    (m_consumingBytes >= m_comfortableGPURAM) &&
+      (it != m_resources.end()); ) {
+
       GLResource * r = (*it).second;
 
 
       if(!r->persistent() && r->m_deleteOnFrame && r->m_deleteOnFrame < m_frame) {
-	
+
         //Radiant::info("GLResources::eraseResource # Resource %s for %p erased", typeid(*(*it).second).name(), (*it).first);
         // Radiant::trace("GLResources::eraseResources # Removing old");
 
@@ -236,9 +239,9 @@ namespace Luminous
 
   static ResourceMap __resources;
   static MutexStatic __mutex;
-  
-  void GLResources::setThreadResources(GLResources * rsc, 
-				       const MultiHead::Window *w, const MultiHead::Area *a)
+
+  void GLResources::setThreadResources(GLResources * rsc,
+                       const MultiHead::Window *w, const MultiHead::Area *a)
   {
     GuardStatic g(&__mutex);
     TGLRes tmp;
@@ -255,7 +258,7 @@ namespace Luminous
   GLResources * GLResources::getThreadResources()
   {
     GuardStatic g(&__mutex);
-    
+
 #ifndef WIN32
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
 #else
@@ -266,14 +269,14 @@ namespace Luminous
       error("No OpenGL resources for current thread");
       return 0;
     }
-    
+
     return (*it).second.m_glr;
   }
-  
+
   void GLResources::getThreadMultiHead(const MultiHead::Window ** w, const MultiHead::Area ** a)
   {
     GuardStatic g(&__mutex);
-    
+
 #ifndef WIN32
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
 #else
@@ -284,7 +287,7 @@ namespace Luminous
       error("No OpenGL resources for current thread");
       return;
     }
-    
+
     if(w)
       *w = (*it).second.m_window;
     if(a)

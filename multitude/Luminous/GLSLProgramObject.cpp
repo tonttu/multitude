@@ -256,6 +256,11 @@ namespace Luminous
     return true;
   }
 
+  void GLSLProgramObject::setProgramParameter(GLenum pname, GLint value)
+  {
+    glProgramParameteriEXT(handle(), pname, value);
+  }
+
   bool GLSLProgramObject::validate()
   {
     glValidateProgram(m_handle);
