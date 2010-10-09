@@ -9,23 +9,9 @@ CONFIG += embed_manifest_exe
 INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
 
-linux-*: QMAKE_LIBDIR += /usr/lib/nvidia-current
-
-MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat
-linux-* {
-  exists(/opt/multitouch-ffmpeg/include/libavcodec/avcodec.h) {
-    MULTI_FFMPEG_LIBS = -L/opt/multitouch-ffmpeg/lib -lavcodec-multitouch -lavutil-multitouch -lavformat-multitouch
-    INCLUDEPATH += /opt/multitouch-ffmpeg/include
-  }
-}
-
 withbundles = $$(MULTI_BUNDLES)
 
-# Try to identify used compiler on Windows (32 vs 64)
-win32 {
-    COMPILER_OUTPUT=$$system(cl 2>&1)
-    contains(COMPILER_OUTPUT,x64):CONFIG+=win64
-}
+MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat
 
 LIB_POETIC = -lPoetic
 LIB_FLUFFY = -lFluffy
@@ -51,19 +37,20 @@ linux-*{
   } else {
     LIB_GLEW=-lGLEW
   }
-}
 
-linux-*{
+  QMAKE_LIBDIR += /usr/lib/nvidia-current
+
+  exists(/opt/multitouch-ffmpeg/include/libavcodec/avcodec.h) {
+    MULTI_FFMPEG_LIBS = -L/opt/multitouch-ffmpeg/lib -lavcodec-multitouch -lavutil-multitouch -lavformat-multitouch
+    INCLUDEPATH += /opt/multitouch-ffmpeg/include
+  }
+
   contains(MEMCHECK,yes) {
     DEFINES += MULTI_MEMCHECK=1
   }
 }
 
 macx {
-  !exists(/opt/multitouch):error(Cornerstone dependencies not installed.)
-  INCLUDEPATH+=/opt/multitouch/include
-  QMAKE_LIBDIR+=/opt/multitouch/lib
-
   # withbundles = $$(MULTI_BUNDLES)
   withbundles = YES
 
@@ -71,6 +58,7 @@ macx {
   LIB_OPENGL = -framework,OpenGL
   LIB_GLU =
   # LIB_GLEW = -lGLEW
+  LIBS += -L$$PWD/lib
 
   # DEFINES += __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__=1050
 
@@ -116,12 +104,15 @@ win32 {
     LIB_GLU = -lglu32
     QMAKE_CXXFLAGS += -D_CRT_SECURE_NO_WARNINGS -wd4244 -wd4251 -wd4355
     DEFINES += WIN32
+
+    # Try to identify used compiler on Windows (32 vs 64)
+    COMPILER_OUTPUT=$$system(cl 2>&1)
+    contains(COMPILER_OUTPUT,x64):CONFIG+=win64
 }
 
 MULTI_VIDEO_LIBS = $$LIB_SCREENPLAY $$LIB_RESONANT $$LIB_VIDEODISPLAY
 
 LIBS += $${MULTI_LIB_FLAG}$$PWD/lib
-macx:LIBS += -L$$PWD/lib
 
 # message(QT version is $${QT_MAJOR_VERSION}.$${QT_MINOR_VERSION}.$${QT_PATCH_VERSION})
 
