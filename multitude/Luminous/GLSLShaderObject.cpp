@@ -119,7 +119,7 @@ namespace Luminous
     }
 
     if(!shader->compile()) {
-      error("GLSLShaderObject::fromFile # %s", shader->compilerLog());
+      error("GLSLShaderObject::fromFile # %s\n%s", filename, shader->compilerLog());
       delete shader;
       return 0;
     }

@@ -23,6 +23,7 @@ class Item
 public:
   Nimble::Vector2 pos;
   float size;
+  float alpha;
 };
 
 int main(int /*argc*/, char ** /*argv*/)
@@ -74,14 +75,15 @@ int main(int /*argc*/, char ** /*argv*/)
 
   Luminous::Utils::glCheck("Creating the geometry shader");
 
-  const int n = 256;
-  Item items[n];
+  const int n = 40000;
+  std::vector<Item> items(n);
 
   Nimble::Rectf rect(Nimble::Vector2(0,0), size);
 
   for(int i = 0; i < n; i++) {
-    items[i].pos  = Nimble::RandomUniform::instance().randVec2InRect(rect);
-    items[i].size = Nimble::RandomUniform::instance().randMinMax(5, 10);
+    items[i].pos   = Nimble::RandomUniform::instance().randVec2InRect(rect);
+    items[i].size  = Nimble::RandomUniform::instance().randMinMax(5, 20);
+    items[i].alpha = Nimble::RandomUniform::instance().randMinMax(0.01f, 0.1f);
   }
 
   Luminous::VertexBuffer vbo;
@@ -94,14 +96,21 @@ int main(int /*argc*/, char ** /*argv*/)
 
   prog.bind();
 
-  prog.setUniformVector2("viewsize", size);
+  prog.setUniformVector2("vsiz", size);
 
   int ppos = prog.getAttribLoc("pos");
-  int psiz = prog.getAttribLoc("in_size");
+  int psiz = prog.getAttribLoc("size");
+  int palp = prog.getAttribLoc("alpha");
 
-  info("Attribute locations: %d %d", ppos, psiz);
+  info("Attribute locations: %d %d %d", ppos, psiz, palp);
 
-  while(!stop) {
+  Luminous::Utils::glUsualBlend();
+
+  Radiant::TimeStamp begin(Radiant::TimeStamp::getTime());
+
+  int frames = 0;
+
+  for( ; !stop; frames++) {
     SDL_Event event;
 
     if(SDL_PollEvent(&event)) {
@@ -122,18 +131,29 @@ int main(int /*argc*/, char ** /*argv*/)
     glClear(GL_COLOR_BUFFER_BIT);
 
     glColor4f(1, 1, 1, 1);
+
+
+    for(int i = 0; i < n; i++) {
+      items[i].pos = Nimble::RandomUniform::instance().randVec2InRect(rect);
+    }
+
+    vbo.fill( & items[0], n * sizeof(Item), Luminous::VertexBuffer::DYNAMIC_DRAW);
+
     prog.bind();
     vbo.bind();
     glEnableVertexAttribArray(ppos);
     glEnableVertexAttribArray(psiz);
+    glEnableVertexAttribArray(palp);
 
     glVertexAttribPointer(ppos, 2, GL_FLOAT, GL_FALSE, sizeof(Item), BUFFER_OFFSET(0));
     glVertexAttribPointer(psiz, 1, GL_FLOAT, GL_FALSE, sizeof(Item), BUFFER_OFFSET(sizeof(float) * 2));
+    glVertexAttribPointer(palp, 1, GL_FLOAT, GL_FALSE, sizeof(Item), BUFFER_OFFSET(sizeof(float) * 3));
 
     glDrawArrays(GL_POINTS, 0, n);
 
     glDisableVertexAttribArray(ppos);
     glDisableVertexAttribArray(psiz);
+    glDisableVertexAttribArray(palp);
 
     vbo.unbind();
 
@@ -143,6 +163,9 @@ int main(int /*argc*/, char ** /*argv*/)
 
     SDL_GL_SwapBuffers();
   }
+
+  float fps = frames / begin.sinceSecondsD();
+  info("Rendered %d quads per frames, %.2f fps ", n, fps);
 
   return 0;
 }
