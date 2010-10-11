@@ -11,8 +11,9 @@ void main(void)
 {
   for(int i = 0; i < gl_VerticesIn; i++) {
 
+    /* Since we are working in normalized coordinates, we need to account
+       for the viewport size. */
     vec2 s = vec2(gs_size[i] / vsiz.x, gs_size[i] / vsiz.y);
-    /* vec2 s = vec2(0.01, 0.01); */
 
     fs_alpha = gs_alpha[i];
     vec2 p = gl_PositionIn[i].xy + vec2(-s.x, -s.y);
@@ -28,8 +29,6 @@ void main(void)
     EmitVertex();
 
     EndPrimitive();
-
-
 
     p = gl_PositionIn[i].xy + vec2(s.x, -s.y);
     gl_Position = vec4(p, 0, 1);

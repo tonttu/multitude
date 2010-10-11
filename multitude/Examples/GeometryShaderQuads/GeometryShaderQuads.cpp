@@ -18,7 +18,10 @@
 
 using namespace Radiant;
 
-class Item
+/* The data for a single quad. These are the paramters that are different
+   between the different quads.
+*/
+class Point
 {
 public:
   Nimble::Vector2 pos;
@@ -28,6 +31,10 @@ public:
 
 int main(int /*argc*/, char ** /*argv*/)
 {
+  // The size of our display
+  Nimble::Vector2 size(1000, 600);
+
+  // Initialize SDL & OpenGL:
   SDL_Init(SDL_INIT_VIDEO);
 
   SDL_GL_SetAttribute(SDL_GL_RED_SIZE,   8);
@@ -35,8 +42,6 @@ int main(int /*argc*/, char ** /*argv*/)
   SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,  8);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16 );
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1 );
-
-  Nimble::Vector2 size(1000, 600);
 
   SDL_SetVideoMode(size.x, size.y, 0, SDL_OPENGL);
 
@@ -47,6 +52,7 @@ int main(int /*argc*/, char ** /*argv*/)
   Luminous::GLResources rsc(Radiant::ResourceLocator::instance());
   Luminous::GLResources::setThreadResources( & rsc, 0, 0);
 
+  // Create the GLSL program, and load the variosu shaders into it
   Luminous::GLSLProgramObject prog;
 
   Luminous::GLSLShaderObject * geoshader =
@@ -67,7 +73,7 @@ int main(int /*argc*/, char ** /*argv*/)
 
   bool stop = false;
 
-
+  // Set up the processing parameters for the geometry shader
   prog.setProgramParameter(GL_GEOMETRY_INPUT_TYPE_EXT, GL_POINTS);
   Luminous::Utils::glCheck("Creating the geometry shader 1");
   prog.setProgramParameter(GL_GEOMETRY_OUTPUT_TYPE_EXT, GL_TRIANGLE_STRIP);
@@ -75,8 +81,9 @@ int main(int /*argc*/, char ** /*argv*/)
 
   Luminous::Utils::glCheck("Creating the geometry shader");
 
+  // Create some random points
   const int n = 40000;
-  std::vector<Item> items(n);
+  std::vector<Point> items(n);
 
   Nimble::Rectf rect(Nimble::Vector2(0,0), size);
 
@@ -86,14 +93,13 @@ int main(int /*argc*/, char ** /*argv*/)
     items[i].alpha = Nimble::RandomUniform::instance().randMinMax(0.01f, 0.1f);
   }
 
-  Luminous::VertexBuffer vbo;
-  vbo.fill( & items[0], n * sizeof(Item), Luminous::VertexBuffer::DYNAMIC_DRAW);
 
   if(!prog.link()) {
     error("When linking program: %s", prog.linkerLog());
     return -1;
   }
 
+  // Set the GLSL program parameters
   prog.bind();
 
   prog.setUniformVector2("vsiz", size);
@@ -104,6 +110,10 @@ int main(int /*argc*/, char ** /*argv*/)
 
   info("Attribute locations: %d %d %d", ppos, psiz, palp);
 
+  // VBO for rendering the points
+  Luminous::VertexBuffer vbo;
+
+  // Start the rendering
   Luminous::Utils::glUsualBlend();
 
   Radiant::TimeStamp begin(Radiant::TimeStamp::getTime());
@@ -111,6 +121,8 @@ int main(int /*argc*/, char ** /*argv*/)
   int frames = 0;
 
   for( ; !stop; frames++) {
+
+    // Check if we should exit:
     SDL_Event event;
 
     if(SDL_PollEvent(&event)) {
@@ -121,6 +133,7 @@ int main(int /*argc*/, char ** /*argv*/)
       };
     }
 
+    // Setup basic transformations:
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0, size.x, 0, size.y, 0, 1);
@@ -132,38 +145,48 @@ int main(int /*argc*/, char ** /*argv*/)
 
     glColor4f(1, 1, 1, 1);
 
+    /* Randomize the locations of the points. This way we get new data
+       for every frame. */
 
     for(int i = 0; i < n; i++) {
       items[i].pos = Nimble::RandomUniform::instance().randVec2InRect(rect);
     }
 
-    vbo.fill( & items[0], n * sizeof(Item), Luminous::VertexBuffer::DYNAMIC_DRAW);
+    // Load the data.
+    vbo.fill( & items[0], n * sizeof(Point), Luminous::VertexBuffer::DYNAMIC_DRAW);
 
+    // Bind the VBO and GLSL program
     prog.bind();
     vbo.bind();
+
+    // Set up the VBO for rendering
     glEnableVertexAttribArray(ppos);
     glEnableVertexAttribArray(psiz);
     glEnableVertexAttribArray(palp);
 
-    glVertexAttribPointer(ppos, 2, GL_FLOAT, GL_FALSE, sizeof(Item), BUFFER_OFFSET(0));
-    glVertexAttribPointer(psiz, 1, GL_FLOAT, GL_FALSE, sizeof(Item), BUFFER_OFFSET(sizeof(float) * 2));
-    glVertexAttribPointer(palp, 1, GL_FLOAT, GL_FALSE, sizeof(Item), BUFFER_OFFSET(sizeof(float) * 3));
+    glVertexAttribPointer(ppos, 2, GL_FLOAT, GL_FALSE, sizeof(Point), BUFFER_OFFSET(0));
+    glVertexAttribPointer(psiz, 1, GL_FLOAT, GL_FALSE, sizeof(Point), BUFFER_OFFSET(sizeof(float) * 2));
+    glVertexAttribPointer(palp, 1, GL_FLOAT, GL_FALSE, sizeof(Point), BUFFER_OFFSET(sizeof(float) * 3));
 
+    // Draw all the points (aka squares)
     glDrawArrays(GL_POINTS, 0, n);
 
     glDisableVertexAttribArray(ppos);
     glDisableVertexAttribArray(psiz);
     glDisableVertexAttribArray(palp);
 
+    // Unbind the VBO and the GLSL program
     vbo.unbind();
-
     prog.unbind();
 
+    // Check that everything went fine
     Luminous::Utils::glCheck("After rendering a frame");
 
+    // The frame is rendered, now swap the buffer
     SDL_GL_SwapBuffers();
   }
 
+  // Report the FPS to the user
   float fps = frames / begin.sinceSecondsD();
   info("Rendered %d quads per frames, %.2f fps ", n, fps);
 
