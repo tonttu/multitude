@@ -9,6 +9,7 @@ LIBS += $$LIB_RADIANT \
     $$LIB_LUMINOUS \
     $$LIB_VALUABLE \
     $$LIB_OPENGL \
+    $$LIB_GLEW \
     $$LIB_NIMBLE
 win32:LIBS += -lSDL \
     -lSDLmain

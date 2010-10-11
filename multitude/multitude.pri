@@ -88,6 +88,10 @@ macx {
 }
 
 win32 {
+    # Try to identify used compiler on Windows (32 vs 64)
+    COMPILER_OUTPUT=$$system(cl 2>&1)
+    contains(COMPILER_OUTPUT,x64):CONFIG+=win64
+
     win64:WINPORT_INCLUDE = $$PWD\Win64x\include
     else:WINPORT_INCLUDE = $$PWD\Win32x\include
 
@@ -105,9 +109,6 @@ win32 {
     QMAKE_CXXFLAGS += -D_CRT_SECURE_NO_WARNINGS -wd4244 -wd4251 -wd4355
     DEFINES += WIN32
 
-    # Try to identify used compiler on Windows (32 vs 64)
-    COMPILER_OUTPUT=$$system(cl 2>&1)
-    contains(COMPILER_OUTPUT,x64):CONFIG+=win64
 }
 
 MULTI_VIDEO_LIBS = $$LIB_SCREENPLAY $$LIB_RESONANT $$LIB_VIDEODISPLAY
