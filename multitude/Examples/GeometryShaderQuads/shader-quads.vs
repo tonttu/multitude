@@ -8,7 +8,6 @@ varying float gs_alpha;
 
 void main()
 {
-  //Transform the vertex (ModelViewProj matrix)
 
   gl_Position = gl_ModelViewProjectionMatrix * vec4(pos, 0, 1);
   gs_size = size;
