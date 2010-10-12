@@ -70,9 +70,9 @@ namespace Radiant {
     /// Returns the value as string
     operator const std::string & () const;
 
-    /// Returns the value as double
+    /// Returns the value as a double
     double              getDouble(double def = 0.0f) const;
-    /// Returns the value as float
+    /// Returns the value as a float
     float               getFloat(float def = 0.f) const;
     /// Returns the value as int
     int                 getInt(int def = 0) const;

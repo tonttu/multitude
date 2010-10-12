@@ -928,6 +928,8 @@ namespace Luminous
       low.x, high.y
     };
 
+#ifndef RADIANT_OSX
+    // This fails on OSX
     glEnable(GL_VERTEX_ARRAY);
     glEnable(GL_TEXTURE_COORD_ARRAY);
 
@@ -937,6 +939,16 @@ namespace Luminous
 
     glDisable(GL_VERTEX_ARRAY);
     glDisable(GL_TEXTURE_COORD_ARRAY);
+#else
+    glBegin(GL_QUADS);
+
+    for(int i = 0; i < 4; i++) {
+      glTexCoord2fv(&texCoords[i * 2]);
+      glVertex2fv(v[i].data());
+    }
+
+    glEnd();
+#endif
 
   }
 
@@ -945,6 +957,14 @@ namespace Luminous
   {
     drawTexRect(size, rgba, Rect(Vector2(0,0), texUV));
   }
+
+  void RenderContext::drawTexRect(const Nimble::Rect & area, const float * rgba)
+  {
+    pushTransformRightMul(Nimble::Matrix3::translate2D(area.low()));
+    drawTexRect(area.span(), rgba);
+    popTransform();
+  }
+
   Nimble::Vector2 RenderContext::contextSize() const
   {
     return m_data->contextSize();

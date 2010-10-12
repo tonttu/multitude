@@ -105,7 +105,7 @@ void VideoWindow::randomOperation()
   };
 
   // Select movie object to stress:
-  int index = m_rand.randN(m_movies.size());
+  int index = m_rand.randN24(m_movies.size());
 
   iterator it = m_movies.begin();
 
@@ -114,7 +114,7 @@ void VideoWindow::randomOperation()
 
   VideoDisplay::ShowGL & show = (*it)->m_show;
 
-  int operation = m_rand.randN(OPERATIONS_COUNT);
+  int operation = m_rand.randN24(OPERATIONS_COUNT);
 
   Radiant::info("Random operation %d on item %d", operation, index);
 
@@ -149,7 +149,7 @@ void VideoWindow::randomOperation()
   }
 
   // Call this function again, after a random interval:
-  int time = m_rand.randN(2000.0f / (float) m_movies.size());
+  int time = m_rand.randN24(2000.0f / (float) m_movies.size());
   QTimer::singleShot(time, this, SLOT(randomOperation()));
 }
 

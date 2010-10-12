@@ -51,6 +51,9 @@ namespace Luminous {
     */
     inline T & ref(GLResources * rs)
     {
+      if(!rs) {
+        return ref();
+      }
       GLRESOURCE_ENSURE(T, obj, this, rs);
       return *obj;
     }

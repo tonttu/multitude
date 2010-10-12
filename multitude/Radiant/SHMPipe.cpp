@@ -37,6 +37,8 @@
 #include <sys/types.h>
 #endif
 
+bool s_forceRemove = true;
+
 namespace Radiant
 {
   const char * shmError()
@@ -46,7 +48,7 @@ namespace Radiant
     return str;
   }
 
-  class SHMPipe::SHMHolder
+  class SHMPipe::SHMHolder : public Radiant::MemCheck
   {
   public:
     SHMHolder(key_t key, uint32_t size);
@@ -69,7 +71,10 @@ namespace Radiant
   };
 
   SHMPipe::SHMHolder::SHMHolder(key_t key, uint32_t size)
-    : m_size(size)
+    : m_data(0),
+    m_id(-1),
+    m_size(size),
+    m_sem(-1)
   {
     const char * const fnName = "SHMHolder::SHMHolder";
 
@@ -77,7 +82,8 @@ namespace Radiant
       m_id = shmget(key, 0, 0660);
       if(m_id == -1) {
         error("SHMPipe::attach # Failed to attach to shared memory area (%s).", shmError());
-        throw std::runtime_error("shmget failed");
+        return;
+        //throw std::runtime_error("shmget failed");
       }
       attachToExisting();
       return;
@@ -104,7 +110,8 @@ namespace Radiant
     } else {
       error("%s # Failed to create new shared memory area (%s).",
             fnName, shmError());
-      throw std::runtime_error("shmget failed");
+      return;
+      //throw std::runtime_error("shmget failed");
     }
 
     m_sem = semget(IPC_PRIVATE, 2, 0660 | IPC_CREAT | IPC_EXCL);
@@ -118,13 +125,13 @@ namespace Radiant
     if(m_sem != -1 && semctl(m_sem, 0, SETVAL, 0) == -1) {
       error("%s # Failed to set semaphore value to 0 (%s).",
             fnName, shmError());
-      throw std::runtime_error("semctl failed");
+      //throw std::runtime_error("semctl failed");
     }
 
     if(m_sem != -1 &&  semctl(m_sem, 1, SETVAL, 1) == -1) {
       error("%s # Failed to set semaphore value to 1 (%s).",
             fnName, shmError());
-      throw std::runtime_error("semctl failed");
+      //throw std::runtime_error("semctl failed");
     }
 
     attach();
@@ -146,7 +153,8 @@ namespace Radiant
   }
 
   SHMPipe::SHMHolder::SHMHolder(int id)
-    : m_id(id),
+    : m_data(0),
+    m_id(id),
     m_size(0),
     m_sem(-1)
   {
@@ -168,7 +176,7 @@ namespace Radiant
       sb.sem_num = 1;
       sb.sem_op = 0;
       sb.sem_flg = IPC_NOWAIT;
-      if(semop(m_sem, &sb, 1) == 0) {
+      if(semop(m_sem, &sb, 1) == 0 || s_forceRemove) {
         semctl(m_sem, 0, IPC_RMID);
         last = true;
       }
@@ -181,13 +189,13 @@ namespace Radiant
             fnName, shmError());
     }
 
-    if(last) {
+    if(last || s_forceRemove) {
       // Mark the segment to be destroyed. It will be destroyed when
       // last user detached it
       if(shmctl(m_id, IPC_RMID, 0) != -1) {
-        info("%s # Successfully destroyed shared memory area.", fnName);
+        debug("%s # Successfully destroyed shared memory area.", fnName);
       } else {
-        error("%s # Failed to destroy shared memory area (%s).",
+        debug("%s # Failed to destroy shared memory area (%s).",
               fnName, shmError());
       }
     }
@@ -205,7 +213,9 @@ namespace Radiant
     } else {
       error("%s # Failed to obtain pointer to shared memory area (%s)",
             fnName, shmError());
-      throw std::runtime_error("shmat failed");
+      m_data = 0;
+      return;
+      //throw std::runtime_error("shmat failed");
     }
   }
 
@@ -342,15 +352,17 @@ namespace Radiant
 #else
   SHMPipe::SHMPipe(key_t key, uint32_t size)
     : m_holder(new SHMHolder(key, size)),
-    m_data(*reinterpret_cast<Data*>(m_holder->data()))
+    m_data(reinterpret_cast<Data*>(m_holder->data()))
   {
-    m_data.size = m_holder->size();
-    m_data.sem = m_holder->sem();
+    if(m_data) {
+      m_data->size = m_holder->size();
+      m_data->sem = m_holder->sem();
+    }
   }
 
   SHMPipe::SHMPipe(int id)
     : m_holder(new SHMHolder(id)),
-    m_data(*reinterpret_cast<Data*>(m_holder->data()))
+    m_data(reinterpret_cast<Data*>(m_holder->data()))
   {
     info("Opened client SHMPipe with %u buffer bytes", size());
   }
@@ -402,8 +414,13 @@ namespace Radiant
 
 #endif
 
+  SHMPipe::~SHMPipe()
+  {}
+
   int SHMPipe::read(void * dest, int n, bool block, bool peek)
   {
+    if(!m_data) return 0;
+
     if(block) {
       readAvailable(n);
     } else {
@@ -418,12 +435,12 @@ namespace Radiant
 
     if(readPos() + n > size()) {
       int n1 = size() - readPos();
-      memcpy(dest, m_data.pipe + readPos(), n1);
-      memcpy(reinterpret_cast<char*>(dest) + n1, m_data.pipe, n - n1);
-      if(!peek) m_data.readPos = n - n1;
+      memcpy(dest, m_data->pipe + readPos(), n1);
+      memcpy(reinterpret_cast<char*>(dest) + n1, m_data->pipe, n - n1);
+      if(!peek) m_data->readPos = n - n1;
     } else {
-      memcpy(dest, m_data.pipe + readPos(), n);
-      if(!peek) m_data.readPos += n;
+      memcpy(dest, m_data->pipe + readPos(), n);
+      if(!peek) m_data->readPos += n;
     }
 
     return n;
@@ -431,11 +448,14 @@ namespace Radiant
 
   void SHMPipe::consume(int n)
   {
-    m_data.readPos = (m_data.readPos + n) % m_data.size;
+    if(m_data)
+      m_data->readPos = (m_data->readPos + n) % m_data->size;
   }
 
   int SHMPipe::read(BinaryData & data)
   {
+    if(!m_data) return 0;
+
     data.rewind();
 
     uint32_t bytes = 0;
@@ -447,7 +467,7 @@ namespace Radiant
       return n;
     }
 
-    if(bytes > m_data.size) {
+    if(bytes > m_data->size) {
       error("SHMPipe::read # Too large object to read, stream corrupted %u",
             (int) bytes);
       return n;
@@ -467,6 +487,8 @@ namespace Radiant
 
   uint32_t SHMPipe::readAvailable()
   {
+    if(!m_data) return 0;
+
     uint32_t rp = readPos();
     uint32_t wp = writePos();
 
@@ -475,14 +497,16 @@ namespace Radiant
 
   uint32_t SHMPipe::readAvailable(uint32_t require)
   {
+    if(!m_data) return 0;
+
     uint32_t avail = readAvailable();
     struct sembuf sb;
     sb.sem_num = 0;
     sb.sem_op = -1;
     sb.sem_flg = 0;
     while(avail < require) {
-      if(m_data.sem != -1)
-        semop(m_data.sem, &sb, 1);
+      if(m_data->sem != -1)
+        semop(m_data->sem, &sb, 1);
       else
         Sleep::sleepMs(2);
       avail = readAvailable();
@@ -492,18 +516,19 @@ namespace Radiant
 
   int SHMPipe::write(const void * src, int n)
   {
+    if(!m_data) return 0;
     uint32_t avail = writeAvailable();
 
     n = Nimble::Math::Min<uint32_t>(n, avail);
 
-    if(m_data.written + n > size()) {
-      int n1 = size() - m_data.written;
-      memcpy(m_data.pipe + m_data.written, src, n1);
-      memcpy(m_data.pipe, reinterpret_cast<const char*>(src) + n1, n - n1);
-      m_data.written = n - n1;
+    if(m_data->written + n > size()) {
+      int n1 = size() - m_data->written;
+      memcpy(m_data->pipe + m_data->written, src, n1);
+      memcpy(m_data->pipe, reinterpret_cast<const char*>(src) + n1, n - n1);
+      m_data->written = n - n1;
     } else {
-      memcpy(m_data.pipe + m_data.written, src, n);
-      m_data.written += n;
+      memcpy(m_data->pipe + m_data->written, src, n);
+      m_data->written += n;
     }
 
     return n;
@@ -511,10 +536,12 @@ namespace Radiant
 
   int SHMPipe::write(const BinaryData & data)
   {
+    if(!m_data) return 0;
+
     uint32_t wavail = writeAvailable(data.pos() + 4);
     if(wavail < (uint32_t) data.pos() + 4) {
       error("SHMPipe::write # Not enough space in the pipe (%u, %u < %u)",
-            (unsigned) m_data.written, (unsigned) wavail, (unsigned) data.pos() + 4 );
+            (unsigned) m_data->written, (unsigned) wavail, (unsigned) data.pos() + 4 );
       return 0;
     }
 
@@ -527,14 +554,18 @@ namespace Radiant
 
   uint32_t SHMPipe::writeAvailable()
   {
+    if(!m_data) return 0;
+
     uint32_t rp = readPos();
-    uint32_t wp = m_data.written;
+    uint32_t wp = m_data->written;
 
     return wp >= rp ? rp + size() - wp : rp - wp;
   }
 
   uint32_t SHMPipe::writeAvailable(uint32_t require)
   {
+    if(!m_data) return 0;
+
     int times = 0;
     uint32_t avail = writeAvailable();
 
@@ -547,7 +578,9 @@ namespace Radiant
 
   void SHMPipe::flush()
   {
-    m_data.writePos = m_data.written;
+    if(!m_data) return;
+
+    m_data->writePos = m_data->written;
 
 
     // if SEMVMX wasn't so small, we could use the semaphore value as "writeAvailable"
@@ -556,18 +589,19 @@ namespace Radiant
     sb.sem_num = 0;
     sb.sem_op = n;
     sb.sem_flg = 0;
-    semop(m_data.sem, &sb, 1);*/
+    semop(m_data->sem, &sb, 1);*/
 
-    if(m_data.sem != -1)
-      semctl(m_data.sem, 0, SETVAL, 1);
+    if(m_data->sem != -1)
+      semctl(m_data->sem, 0, SETVAL, 1);
     // info("SHMPipe::flush # Flushed out written data (%u)",(unsigned) m_written);
   }
 
   void SHMPipe::clear()
   {
-    m_data.written = 0;
-    m_data.writePos = 0;
-    m_data.readPos = 0;
+    if(!m_data) return;
+    m_data->written = 0;
+    m_data->writePos = 0;
+    m_data->readPos = 0;
   }
 
   int SHMPipe::id() const

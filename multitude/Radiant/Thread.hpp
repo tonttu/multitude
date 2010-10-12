@@ -81,7 +81,7 @@ namespace Radiant {
     /** Waits until thread is finished. This method does nothing to
     kill the thread, it simply waits until the thread has run its
     course. */
-    bool waitEnd();
+    bool waitEnd(int timeoutms = 0);
 
     /** Kills the thread. A violent way to shut down a thread. You
     should only call this method in emergency situations. May result

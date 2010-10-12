@@ -122,6 +122,7 @@ namespace Luminous {
 
     std::string m_fragmentShader;
     std::string m_vertexShader;
+    std::string m_geometryShader;
 
     int m_generation;
   };
@@ -166,6 +167,38 @@ namespace Luminous {
     m_self->m_generation++;
   }
 
+  bool Shader::loadVertexShader(const char * filename)
+  {
+    char * str = Radiant::FileUtils::loadTextFile(filename);
+
+    if(!str)
+      return false;
+
+    setVertexShader(str);
+    delete [] str;
+
+    return true;
+  }
+
+  void Shader::setGeometryShader(const char * shadercode)
+  {
+    m_self->m_geometryShader = shadercode;
+    m_self->m_generation++;
+  }
+
+  bool Shader::loadGeometryShader(const char * filename)
+  {
+    char * str = Radiant::FileUtils::loadTextFile(filename);
+
+    if(!str)
+      return false;
+
+    setGeometryShader(str);
+    delete [] str;
+
+    return true;
+  }
+
   /*
   void Shader::addShaderAttribute(const Valuable::ValueObject * obj)
   {
@@ -181,23 +214,20 @@ namespace Luminous {
   {
     Luminous::Utils::glCheck("Shader::bind # Before entry");
 
-    GLSLProgramObject & prog = ref();
+    GLSLProgramObject & prog = *program();
 
-    if(m_self->m_generation != prog.generation()) {
-      const char * vs = m_self->m_vertexShader.empty() ?
-                        0 : m_self->m_vertexShader.c_str();
-      const char * fs = m_self->m_fragmentShader.empty() ?
-                  0 : m_self->m_fragmentShader.c_str();
-      bool ok = prog.loadStrings(vs, fs);
+    if(!prog.isLinked()) {
+
+      bool ok = prog.link();
 
       if(!ok) {
         error("Shader::program # Shader compilation failed: %s", prog.linkerLog());
+        return 0;
       }
       else {
         // info("Compiled shader");
       }
 
-      prog.setGeneration(m_self->m_generation);
     }
 
     Luminous::Utils::glCheck("Shader::bind # Before bind");
@@ -210,6 +240,37 @@ namespace Luminous {
          (int) prog.validate(), prog.shaderObjectCount());
          */
     m_self->m_uniforms.applyUniforms( & prog);
+
+    return & prog;
+  }
+
+
+  GLSLProgramObject * Shader::program(Luminous::GLResources * res)
+  {
+    GLSLProgramObject & prog = ref(res);
+
+    if(m_self->m_generation != prog.generation()) {
+
+      bool ok = true;
+
+      if(!m_self->m_vertexShader.empty())
+        ok = ok && prog.loadString(GL_VERTEX_SHADER, m_self->m_vertexShader.c_str());
+
+      if(!m_self->m_fragmentShader.empty())
+        ok = ok && prog.loadString(GL_FRAGMENT_SHADER, m_self->m_fragmentShader.c_str());
+
+      if(!m_self->m_geometryShader.empty())
+        ok = ok && prog.loadString(GL_GEOMETRY_SHADER_EXT,
+                                   m_self->m_geometryShader.c_str());
+
+      /* Set the generation even if something has failed. */
+      prog.setGeneration(m_self->m_generation);
+
+      if(!ok || !prog.shaderObjectCount()) {
+        return 0;
+      }
+
+    }
 
     return & prog;
   }

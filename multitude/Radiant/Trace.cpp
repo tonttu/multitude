@@ -55,7 +55,7 @@ namespace Radiant {
 
   static void g_output(Severity s, const char * msg)
   {
-    FILE * out = (s > WARNING) ? stdout : stderr;
+    FILE * out = (s > WARNING) ? stderr : stdout;
 
     if(__outfile)
       out = __outfile;

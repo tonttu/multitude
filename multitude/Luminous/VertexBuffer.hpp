@@ -19,6 +19,8 @@
 #include <Luminous/Export.hpp>
 #include <Luminous/Luminous.hpp>
 
+#include <Luminous/GLResource.hpp>
+
 #include <stdlib.h> // size_t
 
 #define BUFFER_OFFSET(bytes) ((GLubyte *)0 + (bytes))
@@ -30,7 +32,7 @@ namespace Luminous
   /// BufferObject provides an abstraction for the Buffer Objects (vertex
   /// buffers, index buffers) in OpenGL.
   template<GLenum type>
-    class LUMINOUS_API BufferObject
+  class LUMINOUS_API BufferObject : public Luminous::GLResource
     {
       public:
 
@@ -87,8 +89,8 @@ namespace Luminous
           DYNAMIC_COPY = GL_DYNAMIC_COPY
         };
 
-        BufferObject();
-        ~BufferObject();
+        BufferObject(Luminous::GLResources * resources = 0);
+        virtual ~BufferObject();
 
         /// Allocates memory for the vertex buffer
         void allocate(size_t bytes, Usage usage);
@@ -111,15 +113,33 @@ namespace Luminous
         /// Returns the OpenGL handle for the buffer
         GLuint handle() const { return m_bufferId; }
 
+        /** Returns the current number of filled bytes in the boffer. */
+        size_t filled() const { return m_filled; }
       protected:
         /// OpenGL handle for the vertex buffer
         GLuint m_bufferId;
+        size_t m_filled;
     };
 
   /// An OpenGL vertex buffer
-  typedef BufferObject<GL_ARRAY_BUFFER> VertexBuffer;
+
+  class VertexBuffer : public BufferObject<GL_ARRAY_BUFFER>
+  {
+  public:
+    VertexBuffer(Luminous::GLResources * resources = 0)
+      : BufferObject<GL_ARRAY_BUFFER>(resources)
+    {}
+  };
+
   /// An OpenGL index buffer
-  typedef BufferObject<GL_ELEMENT_ARRAY_BUFFER> IndexBuffer;
+  class IndexBuffer : public BufferObject<GL_ELEMENT_ARRAY_BUFFER>
+  {
+  public:
+    IndexBuffer(Luminous::GLResources * resources = 0)
+      : BufferObject<GL_ELEMENT_ARRAY_BUFFER>(resources)
+    {}
+
+  };
 
 }
 

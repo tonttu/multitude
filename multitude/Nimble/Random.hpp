@@ -16,7 +16,7 @@
 #ifndef NIMBLE_RANDOM_HPP
 #define NIMBLE_RANDOM_HPP
 
-#include <Nimble/Vector2.hpp>
+#include <Nimble/Rect.hpp>
 
 #include <stdint.h>
 
@@ -125,8 +125,11 @@ namespace Nimble {
       return (v1 & 0xFFFF0000) | (v2 >> 16);
     }
 
-    /** Get random numbers between 0 and range-1. */
-    inline uint32_t randN(uint32_t range)
+    /** Get random numbers between 0 and range-1.
+
+        @arg range The maximum output value. This value must not exceed 2^24-1.
+    */
+    inline uint32_t randN24(uint32_t range)
     {
       m_val = m_val * m_randMul + 1;
       return (m_val >> 8) % range;
@@ -138,6 +141,13 @@ namespace Nimble {
     inline Nimble::Vector2f randVec2()
     {
       return randVecOnCircle();
+    }
+
+    /// Random 2d vector inside a rectangle
+    inline Nimble::Vector2f randVec2InRect(const Nimble::Rectf & r)
+    {
+      return Nimble::Vector2f(randMinMax(r.low().x, r.high().x),
+                              randMinMax(r.low().y, r.high().y));
     }
 
     /// Random 2d vector on a unit circle

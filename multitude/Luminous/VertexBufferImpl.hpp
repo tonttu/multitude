@@ -7,33 +7,44 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #include <Luminous/VertexBuffer.hpp>
 
+#include <Nimble/Math.hpp>
+
+#include <Radiant/Trace.hpp>
+
 namespace Luminous
 {
+  using namespace Radiant;
 
   template<GLenum type>
-  BufferObject<type>::BufferObject()
+  BufferObject<type>::BufferObject(Luminous::GLResources * resources)
+    : GLResource(resources),
+    m_filled(0)
   {
+    // info("BufferObject<type>::BufferObject # %p", this);
     glGenBuffers(1, &m_bufferId);
+    setPersistent(true);
   }
 
   template<GLenum type>
   BufferObject<type>::~BufferObject()
   {
+    // info("BufferObject<type>::~BufferObject # %p", this);
     glDeleteBuffers(1, &m_bufferId);
   }
 
   template<GLenum type>
   void BufferObject<type>::allocate(size_t bytes, Usage usage)
   {
-    fill(0, bytes, usage); 
+    fill(0, bytes, usage);
+    m_filled = bytes;
   }
 
   template<GLenum type>
@@ -53,6 +64,7 @@ namespace Luminous
   {
     bind();
     glBufferData(type, bytes, data, usage);
+    m_filled = bytes;
   }
 
   template<GLenum type>
@@ -60,6 +72,7 @@ namespace Luminous
   {
     bind();
     glBufferSubData(type, offsetInBytes, bytes, data);
+    m_filled = Nimble::Math::Max(m_filled, offsetInBytes + bytes);
   }
 
   template<GLenum type>

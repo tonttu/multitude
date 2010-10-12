@@ -171,9 +171,10 @@ namespace Radiant {
     {
       GuardStatic g(s_mutex);
       if(s_map.empty()) {
-        info("All %d MemCheck objects were released", s_total);
+        info("All %ld MemCheck objects were released", s_total);
       } else {
-        info("%d of %d MemCheck objects were not released", s_map.size(), s_total);
+        info("%ld of %ld MemCheck objects were not released",
+             (long) s_map.size(), (long) s_total);
         std::multimap<int, MemMap::value_type> sorted;
         for(MemMap::iterator it = s_map.begin(); it != s_map.end(); ++it)
           sorted.insert(std::pair<int, MemMap::value_type>(it->second.second, *it));
@@ -191,7 +192,8 @@ namespace Radiant {
 
           print_bt(data, size);
           if(count == 500) {
-            error(".. limiting error printing to 500 errors (there are %d errors)", s_map.size());
+            error(".. limiting error printing to 500 errors (there are %ld errors)",
+                  (long) s_map.size());
             break;
           }
         }

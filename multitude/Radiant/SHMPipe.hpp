@@ -20,6 +20,7 @@
 
 #include "BinaryData.hpp"
 #include "Export.hpp"
+#include "MemCheck.hpp"
 #include "RefPtr.hpp"
 
 #ifdef WIN32
@@ -52,7 +53,7 @@ namespace Radiant
 
       @see SHMDuplexPipe
   */
-  class SHMPipe
+  class SHMPipe : public Radiant::MemCheck
   {
   public:
 
@@ -72,6 +73,8 @@ namespace Radiant
     RADIANT_API static SHMPipe * create(uint32_t size);
 #endif
 
+
+    RADIANT_API virtual ~SHMPipe();
     /// Reads data from the buffer.
     /** @return This function returns the number of bytes read from the buffer. */
     RADIANT_API int read(void * ptr, int n, bool block = false, bool peek = false);
@@ -97,7 +100,7 @@ namespace Radiant
     RADIANT_API void flush();
 
     /// Returns the size of the shared memory area
-    RADIANT_API uint32_t size() const { return m_data.size; }
+    RADIANT_API uint32_t size() const { return m_data ? m_data->size : 0; }
 
     /// Clears the transfer counters
     RADIANT_API void clear();
@@ -110,10 +113,10 @@ namespace Radiant
     /// Access functions.
 
     /// Return the read position.
-    inline uint32_t readPos() const { return m_data.readPos; }
+    inline uint32_t readPos() const { return m_data ? m_data->readPos : 0; }
 
     /// Return the read position.
-    inline uint32_t writePos() const { return m_data.writePos; }
+    inline uint32_t writePos() const { return m_data ? m_data->writePos : 0; }
     
     /// Output attributes and properties.
     void dump() const;
@@ -138,7 +141,7 @@ namespace Radiant
       uint32_t readPos;
       int sem;
       uint8_t pipe[];
-    } & m_data;
+    } * m_data;
   };
 
 }
