@@ -15,6 +15,8 @@
 
 #include <Luminous/VertexBuffer.hpp>
 
+#include <Nimble/Math.hpp>
+
 #include <Radiant/Trace.hpp>
 
 namespace Luminous
@@ -23,7 +25,8 @@ namespace Luminous
 
   template<GLenum type>
   BufferObject<type>::BufferObject(Luminous::GLResources * resources)
-    : GLResource(resources)
+    : GLResource(resources),
+    m_filled(0)
   {
     // info("BufferObject<type>::BufferObject # %p", this);
     glGenBuffers(1, &m_bufferId);
@@ -41,6 +44,7 @@ namespace Luminous
   void BufferObject<type>::allocate(size_t bytes, Usage usage)
   {
     fill(0, bytes, usage);
+    m_filled = bytes;
   }
 
   template<GLenum type>
@@ -60,6 +64,7 @@ namespace Luminous
   {
     bind();
     glBufferData(type, bytes, data, usage);
+    m_filled = bytes;
   }
 
   template<GLenum type>
@@ -67,6 +72,7 @@ namespace Luminous
   {
     bind();
     glBufferSubData(type, offsetInBytes, bytes, data);
+    m_filled = Nimble::Math::Max(m_filled, offsetInBytes + bytes);
   }
 
   template<GLenum type>

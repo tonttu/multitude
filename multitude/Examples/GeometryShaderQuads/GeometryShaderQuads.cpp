@@ -52,7 +52,7 @@ int main(int /*argc*/, char ** /*argv*/)
   Luminous::GLResources rsc(Radiant::ResourceLocator::instance());
   Luminous::GLResources::setThreadResources( & rsc, 0, 0);
 
-  // Create the GLSL program, and load the variosu shaders into it
+  // Create the GLSL program, and load the various shaders into it
   Luminous::GLSLProgramObject prog;
 
   Luminous::GLSLShaderObject * geoshader =
@@ -75,7 +75,6 @@ int main(int /*argc*/, char ** /*argv*/)
 
   // Set up the processing parameters for the geometry shader
   prog.setProgramParameter(GL_GEOMETRY_INPUT_TYPE_EXT, GL_POINTS);
-  Luminous::Utils::glCheck("Creating the geometry shader 1");
   prog.setProgramParameter(GL_GEOMETRY_OUTPUT_TYPE_EXT, GL_TRIANGLE_STRIP);
   prog.setProgramParameter(GL_GEOMETRY_VERTICES_OUT_EXT, 6);
 

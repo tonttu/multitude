@@ -128,6 +128,11 @@ namespace Luminous
     /// Returns the number of shader objects attached to the program
     int shaderObjectCount() const { return (int) m_shaderObjects.size(); }
 
+    /** Loads a shader from a file, and adds it to this program object. */
+    bool loadFile(GLenum shaderType, const char * filename);
+
+    bool loadString(GLenum shaderType, const char * shaderCode);
+
     /// Returns the OpenGL handle for this program
     GLuint handle() const { return m_handle; }
 

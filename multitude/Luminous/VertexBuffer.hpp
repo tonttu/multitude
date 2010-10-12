@@ -113,9 +113,12 @@ namespace Luminous
         /// Returns the OpenGL handle for the buffer
         GLuint handle() const { return m_bufferId; }
 
+        /** Returns the current number of filled bytes in the boffer. */
+        size_t filled() const { return m_filled; }
       protected:
         /// OpenGL handle for the vertex buffer
         GLuint m_bufferId;
+        size_t m_filled;
     };
 
   /// An OpenGL vertex buffer

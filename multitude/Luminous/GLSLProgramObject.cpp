@@ -397,8 +397,42 @@ namespace Luminous
       return false;
     }
 
+    return true;
+  }
+
+  bool GLSLProgramObject::loadFile(GLenum shaderType, const char * filename)
+  {
+    GLSLShaderObject * shader = new GLSLShaderObject(shaderType);
+    if(!shader->loadSourceFile(filename)) {
+      return false;
+    }
+
+    if(!shader->compile()) {
+      return false;
+    }
+
+    addObject(shader);
 
     return true;
+  }
+
+  bool GLSLProgramObject::loadString(GLenum shaderType, const char * shaderCode)
+  {
+    assert(shaderCode != 0);
+
+    GLSLShaderObject * shader = new GLSLShaderObject(shaderType);
+    shader->setSource(shaderCode);
+
+    if(!shader->compile()) {
+      error("GLSLProgramObject::loadString # Compilation failed : %s",
+            shader->compilerLog());
+      return false;
+    }
+
+    addObject(shader);
+
+    return true;
+
   }
 
 }
