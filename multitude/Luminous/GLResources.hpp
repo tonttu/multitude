@@ -130,6 +130,9 @@ namespace Luminous
     static void getThreadMultiHead(const MultiHead::Window ** w,
            const MultiHead::Area ** a);
 
+    static const MultiHead::Area * getThreadMultiHeadArea();
+    static const MultiHead::Window * getThreadMultiHeadWindow();
+
     /// Query if the PROXY_TEXTURE_2D extension seems to be broken.
     /** On Linux, with ATI cards, this OpenGL feature appears to be broken, and
         cannot be used. To overcome this issue, one can use this function

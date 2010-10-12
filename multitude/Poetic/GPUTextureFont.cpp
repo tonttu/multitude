@@ -213,9 +213,9 @@ namespace Poetic
 
     int used = 0;
     int use = 0;
-    const GLsizei vertexSize = 2 * sizeof(Nimble::Vector2f);
 
 #if 0
+    const GLsizei vertexSize = 2 * sizeof(Nimble::Vector2f);
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
@@ -298,11 +298,9 @@ namespace Poetic
 
     int used = 0;
     int use = 0;
-    const GLsizei vertexSize = 2 * sizeof(Nimble::Vector2f);
-
-
 
 #if 0
+    const GLsizei vertexSize = 2 * sizeof(Nimble::Vector2f);
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 

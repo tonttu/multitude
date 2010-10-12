@@ -294,6 +294,42 @@ namespace Luminous
       *a = (*it).second.m_area;
   }
 
+  const MultiHead::Area * GLResources::getThreadMultiHeadArea()
+  {
+    GuardStatic g(&__mutex);
+
+#ifndef WIN32
+    ResourceMap::iterator it = __resources.find(Thread::myThreadId());
+#else
+    ResourceMap::iterator it = __resources.find(0);
+#endif
+
+    if(it == __resources.end()) {
+      error("No OpenGL resources for current thread");
+      return 0;
+    }
+
+    return (*it).second.m_area;
+  }
+
+  const MultiHead::Window * GLResources::getThreadMultiHeadWindow()
+  {
+    GuardStatic g(&__mutex);
+
+#ifndef WIN32
+    ResourceMap::iterator it = __resources.find(Thread::myThreadId());
+#else
+    ResourceMap::iterator it = __resources.find(0);
+#endif
+
+    if(it == __resources.end()) {
+      error("No OpenGL resources for current thread");
+      return 0;
+    }
+
+    return (*it).second.m_window;
+  }
+
   bool GLResources::isBrokenProxyTexture2D()
   {
     return m_brokenProxyTexture2D;
