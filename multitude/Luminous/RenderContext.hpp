@@ -17,6 +17,7 @@
 #define LUMINOUS_RENDERCONTEXT_HPP
 
 #include <Luminous/Luminous.hpp>
+#include <Luminous/FramebufferObject.hpp>
 #include <Luminous/Transformer.hpp>
 #include <Luminous/GLResource.hpp>
 #include <Luminous/GLResources.hpp>
@@ -49,6 +50,33 @@ namespace Luminous
     };
 
     class FBOPackage;
+
+    class FBOPackage : public GLResource
+    {
+    public:
+      friend class FBOHolder;
+      friend class RenderContext;
+
+      FBOPackage(Luminous::GLResources *res = 0) : m_fbo(res), m_rbo(res), m_tex(res), m_users(0) {}
+      virtual ~FBOPackage();
+
+      void setSize(Nimble::Vector2i size);
+      void attach();
+
+      void activate(RenderContext & r);
+      void deactivate(RenderContext & r);
+
+      Luminous::Texture2D & texture() { return m_tex; }
+
+    private:
+
+      int userCount() const { return m_users; }
+
+      Luminous::Framebuffer   m_fbo;
+      Luminous::Renderbuffer  m_rbo;
+      Luminous::Texture2D     m_tex;
+      int m_users;
+    };
 
 /// @cond
     /** Experimental support for getting temporary FBOs for this context.
@@ -124,6 +152,9 @@ namespace Luminous
 
     /// Checks if the given rectangle is visible (not clipped).
     bool isVisible(const Nimble::Rectangle & area);
+
+    void pushDrawBuffer(GLenum dest, FBOPackage * );
+    void popDrawBuffer();
 
     // Returns the visible area (bottom of the clip stack).
     // @todo does not return anything useful
