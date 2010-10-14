@@ -128,7 +128,11 @@ namespace Radiant
 
     opts.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); // make raw
     opts.c_oflag &= ~OPOST; // make raw
-    
+
+    // disable CR-NL translation/mapping
+    opts.c_iflag &= ~(INLCR | ICRNL);
+    opts.c_oflag &= ~(OCRNL | ONLCR);
+
 #if 0
     opts.c_iflag = (IGNBRK | IGNPAR);  /* Ignore break & parity errs */
     opts.c_oflag = 0;                  /* Raw output, leave tabs alone */

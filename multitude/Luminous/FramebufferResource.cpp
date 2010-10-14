@@ -5,8 +5,7 @@ namespace Luminous
 {
 
   FramebufferResource::FramebufferResource(Luminous::GLResources * r)
-    : GLResource(r),
-    m_generationCounter(0)
+    : GLResource(r)
   {}
 
   FramebufferResource::~FramebufferResource()

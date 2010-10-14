@@ -62,9 +62,10 @@ namespace Luminous
   template<GLenum type>
   void BufferObject<type>::fill(void * data, size_t bytes, Usage usage)
   {
-    bind();
-    glBufferData(type, bytes, data, usage);
     m_filled = bytes;
+    bind();
+    if(bytes)
+      glBufferData(type, bytes, data, usage);
   }
 
   template<GLenum type>

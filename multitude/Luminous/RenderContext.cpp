@@ -15,6 +15,7 @@
 
 #include "RenderContext.hpp"
 
+#include "Error.hpp"
 #include "GLContext.hpp"
 #include "Texture.hpp"
 #include "FramebufferObject.hpp"
@@ -37,44 +38,70 @@ namespace Luminous
 
   using namespace Nimble;
   using namespace Radiant;
-  using namespace Luminous;
 
-  class RenderContext::FBOPackage : public GLResource
+
+  RenderContext::FBOPackage::~FBOPackage()
+  {}
+
+  void RenderContext::FBOPackage::setSize(Nimble::Vector2i size)
+
   {
-  public:
-    friend class FBOHolder;
+    if(size == m_tex.size())
+      return;
 
+    m_tex.bind();
+    m_tex.setWidth(size.x);
+    m_tex.setHeight(size.y);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0,
+                 GL_RGBA, GL_UNSIGNED_BYTE, 0);
 
-    FBOPackage() : m_users(0) {}
-    virtual ~FBOPackage() {}
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // <- essential on Nvidia
+  }
 
-    void setSize(Nimble::Vector2i size)
-    {
-      m_tex.bind();
-      m_tex.setWidth(size.x);
-      m_tex.setHeight(size.y);
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0,
-                   GL_RGBA, GL_UNSIGNED_BYTE, 0);
+  void RenderContext::FBOPackage::attach()
+  {
+    m_fbo.attachTexture2D(&m_tex, Luminous::COLOR0, 0);
+    m_fbo.check();
+  }
 
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // <- essential on Nvidia
-    }
+  void RenderContext::FBOPackage::activate(RenderContext & r)
+  {
+    glPushAttrib(GL_TRANSFORM_BIT | GL_VIEWPORT_BIT);
 
-    void activate()
-    {
-      m_fbo.attachTexture2D(&m_tex, Luminous::COLOR0, 0);
-      m_fbo.check();
-    }
+    attach();
+    r.pushDrawBuffer(Luminous::COLOR0, this);
+    // Save and setup viewport to match the FBO
+    glViewport(0, 0, m_tex.width(), m_tex.height());
 
-    int userCount() const { return m_users; }
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    gluOrtho2D(0, m_tex.width(), 0, m_tex.height());
+  }
 
-    Luminous::Framebuffer   m_fbo;
-    Luminous::Renderbuffer  m_rbo;
-    Luminous::Texture2D     m_tex;
-    int m_users;
-  };
+  void RenderContext::FBOPackage::deactivate(RenderContext & r)
+  {
+    Luminous::glErrorToString(__FILE__, __LINE__);
+    m_fbo.unbind();
+    Luminous::glErrorToString(__FILE__, __LINE__);
+    glPopAttrib();
+
+    Luminous::glErrorToString(__FILE__, __LINE__);
+    r.popDrawBuffer();
+    Luminous::glErrorToString(__FILE__, __LINE__);
+    // Restore matrix stack
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+    Luminous::glErrorToString(__FILE__, __LINE__);
+  }
 
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
@@ -250,6 +277,10 @@ namespace Luminous
 
         m_viewFBO.reset(new Luminous::Framebuffer());
       }
+
+      while(!m_drawBufferStack.empty())
+        m_drawBufferStack.pop();
+      m_drawBufferStack.push(DrawBuf(GL_BACK, 0)); // Start off by rendering to the back buffer
     }
     Nimble::Vector2 contextSize() const
     {
@@ -470,6 +501,17 @@ namespace Luminous
 
     std::stack<std::shared_ptr<FBOPackage> > m_fboStack;
 
+    class DrawBuf
+    {
+    public:
+      DrawBuf() : m_fbo(0), m_dest(GL_BACK) {}
+      DrawBuf(GLenum dest, FBOPackage * fbo) : m_fbo(fbo), m_dest(dest) {}
+      FBOPackage * m_fbo;
+      GLenum m_dest;
+    };
+
+    std::stack<DrawBuf> m_drawBufferStack;
+
     unsigned long m_renderCount;
     unsigned long m_frameCount;
 
@@ -600,6 +642,40 @@ namespace Luminous
   }
 */
 
+  void RenderContext::pushDrawBuffer(GLenum dest, FBOPackage * fbo)
+  {
+    if(m_data->m_drawBufferStack.size() > 1000) {
+      error("RenderContext::pushDrawBuffer # Stack is very deep %d",
+            (int) m_data->m_drawBufferStack.size());
+    }
+
+    m_data->m_drawBufferStack.push(Internal::DrawBuf(dest, fbo));
+    glDrawBuffer(dest);
+  }
+
+  void RenderContext::popDrawBuffer()
+  {
+    if(m_data->m_drawBufferStack.empty()) {
+      error("RenderContext::popDrawBuffer # empty stack");
+      glDrawBuffer(GL_BACK);
+      return;
+    }
+    m_data->m_drawBufferStack.pop();
+
+    if(m_data->m_drawBufferStack.empty()) {
+      error("RenderContext::popDrawBuffer # empty stack (phase 2)");
+      glDrawBuffer(GL_BACK);
+      return;
+    }
+    Internal::DrawBuf buf = m_data->m_drawBufferStack.top();
+    // info("DrawBuffer = %d %x", (int) buf.m_dest, (int) buf.m_dest);
+    if(buf.m_fbo)
+      buf.m_fbo->attach();
+
+    glDrawBuffer(buf.m_dest);
+  }
+
+
   RenderContext::FBOHolder RenderContext::getTemporaryFBO
       (Nimble::Vector2f basicsize, float scaling, uint32_t flags)
   {
@@ -655,10 +731,10 @@ namespace Luminous
     for(int i = 0; i < 6; i++)
       glDisable(GL_CLIP_PLANE0 + i);
 
-    ret.m_package->activate();
+    ret.m_package->attach();
 
     // Draw into color attachment 0
-    glDrawBuffer(Luminous::COLOR0);
+    pushDrawBuffer(Luminous::COLOR0, &*ret.m_package);
 
     // Save and setup viewport to match the FBO
     glViewport(0, 0, fbo->m_tex.width(), fbo->m_tex.height());
@@ -908,8 +984,8 @@ namespace Luminous
       low.x, high.y
     };
 
-#ifndef RADIANT_OSX
-    // This fails on OSX
+#if 0
+    // This fails when some other OpenGL features are used (FBOs, VBOs)
     glEnable(GL_VERTEX_ARRAY);
     glEnable(GL_TEXTURE_COORD_ARRAY);
 
@@ -929,7 +1005,6 @@ namespace Luminous
 
     glEnd();
 #endif
-
   }
 
   void RenderContext::drawTexRect(Nimble::Vector2 size, const float * rgba,
@@ -1007,12 +1082,9 @@ namespace Luminous
     fbo = m_data->popFBO(fbo);
 
     if(fbo) {
-      fbo->activate();
+      fbo->attach();
     }
-    else {
-      // info("Back to back-buffer");
-      glDrawBuffer(GL_BACK);
-    }
+    popDrawBuffer();
 
     glPopAttrib();
 
