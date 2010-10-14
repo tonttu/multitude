@@ -47,10 +47,10 @@ namespace Luminous
   };
 
   /// An abstraction of an off-screen render target.
-  class LUMINOUS_API Renderbuffer
+  class LUMINOUS_API Renderbuffer : public Luminous::GLResource
   {
   public:
-    Renderbuffer();
+    Renderbuffer(Luminous::GLResources * res = 0);
     ~Renderbuffer();
 
     /// Binds the buffer and creates it if necessary.
@@ -73,10 +73,10 @@ namespace Luminous
   };
 
   /// Abstraction of an off-screen render target that can be used as a texture.
-  class LUMINOUS_API Framebuffer
+  class LUMINOUS_API Framebuffer : public Luminous::GLResource
   {
   public:
-    Framebuffer();
+    Framebuffer(Luminous::GLResources * res = 0);
     ~Framebuffer();
 
     /// Binds the framebuffer

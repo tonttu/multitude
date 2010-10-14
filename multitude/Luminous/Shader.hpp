@@ -56,10 +56,27 @@ namespace Luminous {
         compiled in this stage.
     */
     LUMINOUS_API bool loadFragmentShader(const char * filename);
+    bool loadFragmentShader(const std::string & filename)
+    { return loadFragmentShader(filename.c_str()); }
+
     /** Sets the source code for the vertex shader. */
     LUMINOUS_API void setVertexShader(const char * shadercode);
-    /** Returns a compiled OpenGL shader program. */
+    /** Loads a vertex shader source code from a file. */
+    LUMINOUS_API bool loadVertexShader(const char * filename);
+    bool loadVertexShader(const std::string & filename)
+    { return loadVertexShader(filename.c_str()); }
+
+    LUMINOUS_API void setGeometryShader(const char * shadercode);
+    /** Loads a geometry shader source code from a file. */
+    LUMINOUS_API bool loadGeometryShader(const char * filename);
+    bool loadGeometryShader(const std::string & filename)
+    { return loadGeometryShader(filename.c_str()); }
+
+    /** Returns a compiled and bound OpenGL shader program. */
     LUMINOUS_API GLSLProgramObject * bind();
+
+    /** Returns a non-compiled OpenGL shader program. */
+    LUMINOUS_API GLSLProgramObject * program(Luminous::GLResources * res = 0);
 
     // Adds a ValueObject as a shader attribute
     //LUMINOUS_API void addShaderAttribute(const Valuable::ValueObject *);

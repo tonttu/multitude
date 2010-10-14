@@ -167,12 +167,12 @@ namespace Radiant {
     {
     public:
     /// Constructs a new guard and locks the mutex
-        GuardStatic(MutexStatic * mutex) : m_mutex(mutex) { m_mutex->lock(); }
+    GuardStatic(MutexStatic * mutex) : m_mutex(mutex) { m_mutex->MutexStatic::lock(); }
     /// Constructs a new guard and locks the mutex
-        GuardStatic(MutexStatic & mutex) : m_mutex(&mutex) { m_mutex->lock(); }
+    GuardStatic(MutexStatic & mutex) : m_mutex(&mutex) { m_mutex->MutexStatic::lock(); }
 
-        /// Unlocks the mutex
-        ~GuardStatic() { m_mutex->unlock(); }
+		/// Unlocks the mutex
+    ~GuardStatic() { m_mutex->MutexStatic::unlock(); }
 
     private:
         MutexStatic * m_mutex;

@@ -17,6 +17,7 @@
 #define LUMINOUS_RENDERCONTEXT_HPP
 
 #include <Luminous/Luminous.hpp>
+#include <Luminous/FramebufferObject.hpp>
 #include <Luminous/Transformer.hpp>
 #include <Luminous/GLResource.hpp>
 #include <Luminous/GLResources.hpp>
@@ -49,6 +50,33 @@ namespace Luminous
     };
 
     class FBOPackage;
+
+    class FBOPackage : public GLResource
+    {
+    public:
+      friend class FBOHolder;
+      friend class RenderContext;
+
+      FBOPackage(Luminous::GLResources *res = 0) : m_fbo(res), m_rbo(res), m_tex(res), m_users(0) {}
+      virtual ~FBOPackage();
+
+      void setSize(Nimble::Vector2i size);
+      void attach();
+
+      void activate(RenderContext & r);
+      void deactivate(RenderContext & r);
+
+      Luminous::Texture2D & texture() { return m_tex; }
+
+    private:
+
+      int userCount() const { return m_users; }
+
+      Luminous::Framebuffer   m_fbo;
+      Luminous::Renderbuffer  m_rbo;
+      Luminous::Texture2D     m_tex;
+      int m_users;
+    };
 
 /// @cond
     /** Experimental support for getting temporary FBOs for this context.
@@ -95,6 +123,8 @@ namespace Luminous
     RenderContext(Luminous::GLResources * resources, const Luminous::MultiHead::Window * window);
     virtual ~RenderContext();
 
+    void setWindow(const Luminous::MultiHead::Window * window);
+
     /// Returns the resources of this context
     Luminous::GLResources * resources() { return m_resources; }
 
@@ -124,6 +154,9 @@ namespace Luminous
 
     /// Checks if the given rectangle is visible (not clipped).
     bool isVisible(const Nimble::Rectangle & area);
+
+    void pushDrawBuffer(GLenum dest, FBOPackage * );
+    void popDrawBuffer();
 
     // Returns the visible area (bottom of the clip stack).
     // @todo does not return anything useful
@@ -180,6 +213,19 @@ namespace Luminous
     void drawPolyLine(const Nimble::Vector2f * vertices, int n,
                       float width, const float * rgba);
 
+    /** Draws a line between two points.
+
+        @arg p1 The first point
+        @arg p2 The second point
+
+        @arg width Width of the line
+
+        @arg rgba The line color in RGBA format
+    */
+
+    void drawLine(Nimble::Vector2f p1, Nimble::Vector2f p2,
+                  float width, const float * rgba);
+
     /** Draw a cubic bézier curve
         @arg controlPoints array of 4 control points
         @arg width width of the curve
@@ -208,6 +254,8 @@ namespace Luminous
     /// @copydoc drawTexRect
     void drawTexRect(Nimble::Vector2 size, const float * rgba,
                      Nimble::Vector2 texUV);
+    /// @copydoc drawTexRect
+    void drawTexRect(const Nimble::Rect & area, const float * rgba);
 
     /// Sets the current blend function, and enables blending
     /** If the function is BLEND_NONE, then blending is disabled. */

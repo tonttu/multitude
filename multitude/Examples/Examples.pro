@@ -4,6 +4,7 @@ SUBDIRS += AudioPanning
 SUBDIRS += AmbientSounds
 SUBDIRS += ConfigConversion
 SUBDIRS += GLBench
+SUBDIRS += GeometryShaderQuads
 SUBDIRS += ImageExample
 SUBDIRS += PlatformExample
 !win32:SUBDIRS += SamplePlayer

@@ -82,6 +82,10 @@ namespace Luminous
     /// The matrix is automatically transposed for OpenGL
     bool setUniformMatrix3(const char * name, const Nimble::Matrix3f & value);
 
+    /// Sets a given program parameter
+    /** This is in practice a call to glProgramParameteriEXT */
+    void setProgramParameter(GLenum pname, GLint value);
+
     /// Validates the program
     /// @return true if the program is valid and can be used
     bool validate();
@@ -122,7 +126,12 @@ namespace Luminous
     bool loadStrings(const char* vsString, const char* fsString);
 
     /// Returns the number of shader objects attached to the program
-    int shaderObjectCount() const { return (int) m_shaderObjects.size(); } 
+    int shaderObjectCount() const { return (int) m_shaderObjects.size(); }
+
+    /** Loads a shader from a file, and adds it to this program object. */
+    bool loadFile(GLenum shaderType, const char * filename);
+
+    bool loadString(GLenum shaderType, const char * shaderCode);
 
     /// Returns the OpenGL handle for this program
     GLuint handle() const { return m_handle; }

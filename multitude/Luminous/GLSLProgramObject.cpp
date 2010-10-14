@@ -210,9 +210,10 @@ namespace Luminous
   {
     int loc = getUniformLoc(name);
 
-    if(loc < 0)
+    if(loc < 0) {
+      error("GLSLProgramObject::setUniformVector2 # %s undefined", name);
       return false;
-
+    }
     glUniform2f(loc, value.x, value.y);
 
     return true;
@@ -254,6 +255,11 @@ namespace Luminous
     glUniformMatrix3fv(loc, 1, true, value.data());
 
     return true;
+  }
+
+  void GLSLProgramObject::setProgramParameter(GLenum pname, GLint value)
+  {
+    glProgramParameteriEXT(handle(), pname, value);
   }
 
   bool GLSLProgramObject::validate()
@@ -392,8 +398,42 @@ namespace Luminous
       return false;
     }
 
+    return true;
+  }
+
+  bool GLSLProgramObject::loadFile(GLenum shaderType, const char * filename)
+  {
+    GLSLShaderObject * shader = new GLSLShaderObject(shaderType);
+    if(!shader->loadSourceFile(filename)) {
+      return false;
+    }
+
+    if(!shader->compile()) {
+      return false;
+    }
+
+    addObject(shader);
 
     return true;
+  }
+
+  bool GLSLProgramObject::loadString(GLenum shaderType, const char * shaderCode)
+  {
+    assert(shaderCode != 0);
+
+    GLSLShaderObject * shader = new GLSLShaderObject(shaderType);
+    shader->setSource(shaderCode);
+
+    if(!shader->compile()) {
+      error("GLSLProgramObject::loadString # Compilation failed : %s",
+            shader->compilerLog());
+      return false;
+    }
+
+    addObject(shader);
+
+    return true;
+
   }
 
 }

@@ -17,6 +17,7 @@
 #include <Luminous/GLSLShaderObject.hpp>
 #include <Luminous/Luminous.hpp>
 
+#include <Radiant/FileUtils.hpp>
 #include <Radiant/Trace.hpp>
 
 #include <string.h>
@@ -97,4 +98,32 @@ namespace Luminous
     strcpy(m_shaderSource, code);
   }
 
+  bool GLSLShaderObject::loadSourceFile(const char* filename)
+  {
+    char * str = Radiant::FileUtils::loadTextFile(filename);
+    if(!str)
+      return false;
+    setSource(str);
+    delete [] str;
+    return true;
+  }
+
+  GLSLShaderObject * GLSLShaderObject::fromFile(GLenum type, const char* filename)
+  {
+    GLSLShaderObject * shader = new GLSLShaderObject(type);
+
+    if(!shader->loadSourceFile(filename)) {
+      error("GLSLShaderObject::fromFile # Could not load \"%s\"", filename);
+      delete shader;
+      return 0;
+    }
+
+    if(!shader->compile()) {
+      error("GLSLShaderObject::fromFile # %s\n%s", filename, shader->compilerLog());
+      delete shader;
+      return 0;
+    }
+
+    return shader;
+  }
 }

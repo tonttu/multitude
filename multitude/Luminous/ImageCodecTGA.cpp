@@ -157,7 +157,7 @@ namespace Luminous
     // Allocate memory
     image.allocate(width, height, pf);
 
-    unsigned int size = width * height * bytesPerPixel;
+    unsigned int size = (unsigned) (width * height * bytesPerPixel);
 
     // Skip the ident field if present
     if(header.identSize > 0) 
@@ -176,7 +176,7 @@ namespace Luminous
       // Compressed image
       int pixels = width * height;
       int currentPixel = 0;
-      int currentByte = 0;
+      size_t currentByte = 0;
       unsigned char * pixel = new unsigned char [bytesPerPixel];      
 
       do {

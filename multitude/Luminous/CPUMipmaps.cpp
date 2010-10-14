@@ -459,7 +459,8 @@ namespace Luminous {
     std::shared_ptr<Luminous::ImageTex> imdest(new Luminous::ImageTex());
 
     Nimble::Vector2i ss = imsrc->size();
-    Nimble::Vector2i is = level == 1 ? m_firstLevelSize : ss / 2;
+    // Nimble::Vector2i is = level == 1 ? m_firstLevelSize : ss / 2;
+    Nimble::Vector2i is = mipmapSize(level);
 
     if(is * 2 == ss) {
       imdest->quarterSize(*imsrc);

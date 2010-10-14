@@ -70,9 +70,9 @@ namespace Radiant {
     /// Returns the value as string
     operator const std::string & () const;
 
-    /// Returns the value as double
+    /// Returns the value as a double
     double              getDouble(double def = 0.0f) const;
-    /// Returns the value as float
+    /// Returns the value as a float
     float               getFloat(float def = 0.f) const;
     /// Returns the value as int
     int                 getInt(int def = 0) const;
@@ -193,7 +193,7 @@ namespace Radiant {
     void               dump(std::ostream& os, int indent=0);
 
     /// Empties this chunk
-    void               clear() { m_variants.clear(); }
+    void               clear() { m_variants.clear(); m_chunks.clear(); }
 
     /// Number of elements
     size_t size() const { return m_variants.size(); }

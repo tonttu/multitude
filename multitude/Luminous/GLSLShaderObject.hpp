@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef LUMINOUS_GLSLSHADEROBJECT_HPP
@@ -21,7 +21,7 @@
 
 #include <Patterns/NotCopyable.hpp>
 
-namespace Luminous 
+namespace Luminous
 {
 
   /** OpenGL shading language shader object. Usually shader programs consist of
@@ -40,10 +40,17 @@ namespace Luminous
     bool compile();
 
     /// Returns the compiler log of the shader
-    const char* compilerLog();   
+    const char* compilerLog();
 
     /// Sets the source code for the shader
     void setSource(const char* code);
+
+    /// Loads the source for the shader from a given file
+    bool loadSourceFile(const char* filename);
+
+    /// Create a ne shader object from a file
+    /** @return A compiled shader object, or NULL (if it could not be compiled). */
+    static GLSLShaderObject * fromFile(GLenum type, const char* filename);
 
   private:
 
