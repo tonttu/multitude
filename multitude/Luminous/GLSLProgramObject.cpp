@@ -210,9 +210,10 @@ namespace Luminous
   {
     int loc = getUniformLoc(name);
 
-    if(loc < 0)
+    if(loc < 0) {
+      error("GLSLProgramObject::setUniformVector2 # %s undefined", name);
       return false;
-
+    }
     glUniform2f(loc, value.x, value.y);
 
     return true;
