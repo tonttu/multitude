@@ -123,6 +123,8 @@ namespace Luminous
     RenderContext(Luminous::GLResources * resources, const Luminous::MultiHead::Window * window);
     virtual ~RenderContext();
 
+    void setWindow(const Luminous::MultiHead::Window * window);
+
     /// Returns the resources of this context
     Luminous::GLResources * resources() { return m_resources; }
 
@@ -210,6 +212,19 @@ namespace Luminous
      */
     void drawPolyLine(const Nimble::Vector2f * vertices, int n,
                       float width, const float * rgba);
+
+    /** Draws a line between two points.
+
+        @arg p1 The first point
+        @arg p2 The second point
+
+        @arg width Width of the line
+
+        @arg rgba The line color in RGBA format
+    */
+
+    void drawLine(Nimble::Vector2f p1, Nimble::Vector2f p2,
+                  float width, const float * rgba);
 
     /** Draw a cubic bézier curve
         @arg controlPoints array of 4 control points

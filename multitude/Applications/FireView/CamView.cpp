@@ -42,6 +42,8 @@ namespace FireView {
 
   using namespace Radiant;
 
+  MutexStatic __cvmutex;
+
   CamView::InputThread::InputThread()
       : m_camera(0),
       m_state(UNINITIALIZED),
@@ -50,6 +52,8 @@ namespace FireView {
       m_lastCheckFrame(0),
       m_lastCheckFps(0)
   {
+    __cvmutex.lock();
+    __cvmutex.unlock();
   }
 
   CamView::InputThread::~InputThread()
@@ -141,13 +145,15 @@ namespace FireView {
         m_camera->sendSoftwareTrigger();
       }
 
-      int timeout = m_frameCount ? 8000 : 15000;
-      m_camera->setCaptureTimeout(timeout);
+
+#ifdef WIN32
+      Radiant::Sleep::sleepMs(5);
+#endif
 
       const Radiant::VideoImage * img = m_camera->captureImage();
 
       if (img == 0) {
-        error("No video image after waiting %d ms", timeout);
+        error("Video image capture failed");
 
         m_camera->close();
         if(m_frameCount > 10) {
@@ -229,8 +235,13 @@ namespace FireView {
 
   }
 
+
   bool CamView::InputThread::openCamera()
   {
+    Radiant::GuardStatic g(__cvmutex);
+
+    Radiant::Sleep::sleepMs(200);
+
     bool ok;
 
     m_camera = Radiant::VideoCamera::drivers().createPreferredCamera();
@@ -246,6 +257,11 @@ namespace FireView {
       }
 
       Nimble::Recti r = CamView::format7Area();
+
+      /* static int index = 0;
+      r.low().x += index * 4;
+      index++; */
+
       ok = m_camera->openFormat7(m_euid64, r, m_customFps, CamView::format7Mode());
     }
 
@@ -341,6 +357,8 @@ namespace FireView {
       m_autoSend = m_featureSend;
     }
 
+    m_camera->setCaptureTimeout(8000);
+
     debug("Starting video capture");
     if(!m_camera->start()) {
       m_state = UNINITIALIZED;
@@ -376,7 +394,8 @@ namespace FireView {
       m_doFocus(false),
       m_focusidx(0),
       m_peakidx(0),
-      m_foo(300, 100, QImage::Format_ARGB32)
+      m_foo(300, 100, QImage::Format_ARGB32),
+      m_glrs(Radiant::ResourceLocator::instance())
   {
     m_colorBalance.clear();
     // QTimer::singleShot(1000, this, SLOT(locate()));
@@ -527,6 +546,8 @@ namespace FireView {
   void CamView::paintGL()
   {
     using Luminous::PixelFormat;
+
+    Luminous::GLResources::setThreadResources( & m_glrs, 0, 0);
 
     if(!m_tex)
       m_tex = new Luminous::Texture2D;
