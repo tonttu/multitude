@@ -811,67 +811,78 @@ namespace Luminous
 
   void RenderContext::drawArc(Nimble::Vector2f center, float radius, float fromRadians, float toRadians, float width, float blendWidth, const float * color, int linesegments)
   {
-    // Make 0 radians be "on the right"
-    fromRadians += Nimble::Math::PI / 2.f;
-    toRadians += Nimble::Math::PI / 2.f;
+    float delta = (toRadians - fromRadians) / linesegments;
+
+    float tanFactor = tan(delta);
+    float radFactor = 1.f - cos(delta);
 
     float r = color[0];
     float g = color[1];
     float b = color[2];
     float a = color[3];
 
-    // Angle increases counter-clockwise
-    float delta = -(toRadians - fromRadians) / linesegments;
-
-    width *= 0.5f;
-
-    float rs[4] = {
+    float radii[4] = {
       radius - width - blendWidth, radius - width,
       radius + width, radius + width + blendWidth
     };
 
-    for(int i = 0; i < linesegments; i++) {
-      float a1 = fromRadians + i * delta;
-      float a2 = fromRadians + (i + 1) * delta;
-      float sa1 = sinf(a1);
-      float ca1 = - cosf(a1);
-      float sa2 = sinf(a2);
-      float ca2 = - cosf(a2);
+    Nimble::Vector2 p[4];
+    for(int k = 0; k < 4; k++)
+      p[k] = center + radii[k] * Nimble::Vector2f(cos(fromRadians), sin(fromRadians));
+
+    for(size_t i = 0; i < linesegments; i++) {
+
+      Nimble::Vector2 v[4];
+
+      for(int k = 0; k < 4; k++) {
+        v[k] = p[k];
+
+        Nimble::Vector2f t(-(p[k].y - center.y), p[k].x - center.x);
+        p[k] += tanFactor * t;
+        Nimble::Vector2f r = center - p[k];
+        p[k] += radFactor * r;
+      }
 
       glBegin(GL_QUAD_STRIP);
 
-      glColor4f(r, g, b, 0.0f);
+      glColor4f(r, g, b, 0.f);
 
-      Nimble::Vector2f v0 = transform().project(sa1 * rs[0] + center.x, ca1 * rs[0] + center.y);
-      Nimble::Vector2f v1 = transform().project(sa2 * rs[0] + center.x, ca2 * rs[0] + center.y);
-
-      glVertex2fv(v0.data());
-      glVertex2fv(v1.data());
+      glVertex2fv(transform().project(v[0]).data());
+      glVertex2fv(transform().project(p[0]).data());
 
       glColor4f(r, g, b, a);
 
-      Nimble::Vector2f v2 = transform().project(sa1 * rs[1] + center.x, ca1 * rs[1] + center.y);
-      Nimble::Vector2f v3 = transform().project(sa2 * rs[1] + center.x, ca2 * rs[1] + center.y);
+      glVertex2fv(transform().project(v[1]).data());
+      glVertex2fv(transform().project(p[1]).data());
 
-      glVertex2fv(v2.data());
-      glVertex2fv(v3.data());
+      glVertex2fv(transform().project(v[2]).data());
+      glVertex2fv(transform().project(p[2]).data());
 
-      Nimble::Vector2f v4 = transform().project(sa1 * rs[2] + center.x, ca1 * rs[2] + center.y);
-      Nimble::Vector2f v5 = transform().project(sa2 * rs[2] + center.x, ca2 * rs[2] + center.y);
+      glColor4f(r, g, b, 0.f);
 
-      glVertex2fv(v4.data());
-      glVertex2fv(v5.data());
-
-      glColor4f(r, g, b, 0.0f);
-
-      Nimble::Vector2f v6 = transform().project(sa1 * rs[3] + center.x, ca1 * rs[3] + center.y);
-      Nimble::Vector2f v7 = transform().project(sa2 * rs[3] + center.x, ca2 * rs[3] + center.y);
-
-      glVertex2fv(v6.data());
-      glVertex2fv(v7.data());
+      glVertex2fv(transform().project(v[3]).data());
+      glVertex2fv(transform().project(p[3]).data());
 
       glEnd();
     }
+  }
+
+  void RenderContext::drawWedge(Nimble::Vector2f center, float radius1, float radius2, float fromRadians, float toRadians, float width, float blendWidth, const float *rgba, int segments)
+  {
+    // Draw two arcs
+    drawArc(center, radius1, fromRadians, toRadians, width, blendWidth, rgba, segments);
+    drawArc(center, radius2, fromRadians, toRadians, width, blendWidth, rgba, segments);
+
+    // Draw sector edges
+    /// @todo these look a bit crappy as the blending doesn't match the arcs properly
+    Nimble::Vector2f p0 = center + radius1 * Nimble::Vector2f(cos(fromRadians), sin(fromRadians));
+    Nimble::Vector2f p1 = center + radius2 * Nimble::Vector2f(cos(fromRadians), sin(fromRadians));
+
+    Nimble::Vector2f p2 = center + radius1 * Nimble::Vector2f(cos(toRadians), sin(toRadians));
+    Nimble::Vector2f p3 = center + radius2 * Nimble::Vector2f(cos(toRadians), sin(toRadians));
+
+    drawLine(p0, p1, width, rgba);
+    drawLine(p2, p3, width, rgba);
   }
 
   void RenderContext::drawCircleImpl(Nimble::Vector2f center, float radius,

@@ -200,6 +200,19 @@ namespace Luminous
       */
     void drawArc(Nimble::Vector2f center, float radius, float fromRadians, float toRadians, float width, float blendWidth, const float * rgba, int segments);
 
+    /** Draws a cut sector in a circle or a wedge.
+      @param center center of the circle
+      @param radius1 inner radius
+      @param radius2 outer radius
+      @param fromRadians start angle in radians
+      @param toRadians end angle in radians
+      @param width width of the wedge edge
+      @param blendWidth width of the blending region
+      @param rgba color of the wedge
+      @param segments number of segments to use
+      */
+    void drawWedge(Nimble::Vector2f center, float radius1, float radius2, float fromRadians, float toRadians, float width, float blendWidth, const float * rgba, int segments);
+
     /** Draws a line that contains multiple segments.
 
         @arg vertices Pointer to the line vertices
