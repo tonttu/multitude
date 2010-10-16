@@ -51,7 +51,7 @@ namespace Luminous
 
     class FBOPackage;
 
-    class FBOPackage : public GLResource
+    class LUMINOUS_API FBOPackage : public GLResource
     {
     public:
       friend class FBOHolder;
