@@ -972,6 +972,88 @@ namespace Luminous
   }
 
 
+  void RenderContext::drawTexRect(const Nimble::Rect & area, const float * rgba,
+                                  const Nimble::Rect & texUV)
+  {
+    const Nimble::Matrix3 & m = transform();
+
+    Nimble::Vector2 v[] = {
+      m.project(area.low()),
+      m.project(area.highLow()),
+      m.project(area.high()),
+      m.project(area.lowHigh())
+    };
+
+    if(rgba)
+      glColor4fv(rgba);
+
+    const Vector2 & low = texUV.low();
+    const Vector2 & high = texUV.high();
+
+    const GLfloat texCoords[] = {
+      low.x, low.y,
+      high.x, low.y,
+      high.x, high.y,
+      low.x, high.y
+    };
+
+#if 0
+    // This fails when some other OpenGL features are used (FBOs, VBOs)
+    glEnable(GL_VERTEX_ARRAY);
+    glEnable(GL_TEXTURE_COORD_ARRAY);
+
+    glTexCoordPointer(2, GL_FLOAT, 0, texCoords);
+    glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat*>(v));
+    glDrawArrays(GL_QUADS, 0, 4);
+
+    glDisable(GL_VERTEX_ARRAY);
+    glDisable(GL_TEXTURE_COORD_ARRAY);
+#else
+    glBegin(GL_QUADS);
+
+    for(int i = 0; i < 4; i++) {
+      glTexCoord2fv(&texCoords[i * 2]);
+      glVertex2fv(v[i].data());
+    }
+
+    glEnd();
+#endif
+  }
+
+
+  void RenderContext::drawTexRect(const Nimble::Rect & area, const float * rgba,
+                                  const Nimble::Rect * texUV, int uvCount)
+  {
+    if(rgba)
+      glColor4fv(rgba);
+
+    const Nimble::Matrix3 & m = transform();
+
+    glBegin(GL_QUADS);
+
+    for(int i = 0; i < uvCount; i++) {
+      glMultiTexCoord2fv(GL_TEXTURE0 + i, texUV[i].low().data());
+    }
+    glVertex2fv(m.project(area.low()).data());
+
+    for(int i = 0; i < uvCount; i++) {
+      glMultiTexCoord2fv(GL_TEXTURE0 + i, texUV[i].highLow().data());
+    }
+    glVertex2fv(m.project(area.highLow()).data());
+
+    for(int i = 0; i < uvCount; i++) {
+      glMultiTexCoord2fv(GL_TEXTURE0 + i, texUV[i].high().data());
+    }
+    glVertex2fv(m.project(area.high()).data());
+
+    for(int i = 0; i < uvCount; i++) {
+      glMultiTexCoord2fv(GL_TEXTURE0 + i, texUV[i].lowHigh().data());
+    }
+    glVertex2fv(m.project(area.lowHigh()).data());
+
+    glEnd();
+  }
+
   void RenderContext::drawTexRect(Nimble::Vector2 size, const float * rgba)
   {
     drawTexRect(size, rgba, Nimble::Rect(0, 0, 1, 1));
