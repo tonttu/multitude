@@ -70,6 +70,8 @@ namespace Radiant {
     /// Resets the internal object counter to zero.
     /** This function does not erase any objects. */
     void reset() { m_count = 0; }
+    /** @copydoc reset */
+    void clear() { m_count = 0; }
 
     /// Returns true if the vector is empty
     bool empty() const { return m_points.empty(); }
