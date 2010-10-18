@@ -119,6 +119,11 @@ namespace Luminous
         /// OpenGL handle for the vertex buffer
         GLuint m_bufferId;
         size_t m_filled;
+
+        GLuint m_mapBindedBuffer;
+
+        /// Currently binded buffer, or 0 if no buffer is binded
+        static GLuint s_bindedBuffer;
     };
 
   /// An OpenGL vertex buffer
