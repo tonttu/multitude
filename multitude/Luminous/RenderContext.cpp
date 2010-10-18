@@ -371,14 +371,12 @@ namespace Luminous
     {
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
       m_viewFBO->attachTexture2D(m_viewTextures[m_viewStackPos], Luminous::COLOR0);
       m_viewFBO->check();
       // attachTexture2D should do this as a side effect already?
       glDrawBuffer(Luminous::COLOR0);
     }
-    void unattachViewTexture() {
+    void unattachViewTexture() {      
       m_viewFBO->unbind();
       glDrawBuffer(GL_BACK);
     }
