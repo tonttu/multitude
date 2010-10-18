@@ -1024,6 +1024,15 @@ namespace Radiant {
     return true;
   }
 
+  uint64_t VideoCamera1394::uid()
+  {
+    if(!m_camera)
+      return 0;
+
+    return m_camera->guid;
+  }
+
+
   VideoCamera1394::CameraInfo VideoCamera1394::cameraInfo()
   {
     CameraInfo info;
