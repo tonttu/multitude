@@ -427,6 +427,7 @@ namespace Luminous
     if(!shader->compile()) {
       error("GLSLProgramObject::loadString # Compilation failed : %s",
             shader->compilerLog());
+      error("%s", shaderCode);
       return false;
     }
 
