@@ -99,26 +99,19 @@ namespace Radiant {
     loaded. For these cases there is an implementation that
     initializes when the mutex is first used.
 
-    This can be problematic, if the mutex is accessed from two
-    threads at exactly the same time for the first time. How-over,
-    the probability of getting errors in that phase are extremely
-    small. */
-    class RADIANT_API MutexStatic : public Mutex
-    {
-    public:
-        MutexStatic(bool shared = false,
-                    bool prio_inherit = true,
-                    bool recursive = false)
-                      : m_shared(shared), m_prio_inherit(prio_inherit), m_recursive(recursive)
-        {}
+	This can be problematic, if the mutex is accessed from two
+	threads at exactly the same time for the first time. How-over,
+	the probability of getting errors in that phase are extremely
+	small. */
+	class MutexStatic : public Mutex
+	{
+	public:
+		MutexStatic() {}
 
-      bool lock() { if(!m_active) init(m_shared, m_prio_inherit, m_recursive); return Mutex::lock(); }
-      bool lock(bool b) { if(!m_active) init(m_shared, m_prio_inherit, m_recursive); return Mutex::lock(b); }
-      bool tryLock() { if(!m_active) init(m_shared, m_prio_inherit, m_recursive); return Mutex::tryLock(); }
-
-    private:
-      bool m_shared, m_prio_inherit, m_recursive;
-    };
+	  bool lock() { if(!m_active) init(false, false, true); return Mutex::lock(); }
+	  bool lock(bool b) { if(!m_active) init(false, false, true); return Mutex::lock(b); }
+	  bool tryLock() { if(!m_active) init(false, false, true); return Mutex::tryLock(); }
+	};
 #endif
 
     /** A guard class. This class is used to automatically lock and
