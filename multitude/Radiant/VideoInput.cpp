@@ -85,4 +85,8 @@ namespace Radiant {
   void VideoInput::setBrightness(float)
   {}
 
+  uint64_t VideoInput::uid()
+  {
+    return 0;
+  }
 }

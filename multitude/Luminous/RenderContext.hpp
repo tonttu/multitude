@@ -265,6 +265,12 @@ namespace Luminous
     void drawTexRect(Nimble::Vector2 size, const float * rgba,
                      const Nimble::Rect & texUV);
     /// @copydoc drawTexRect
+    void drawTexRect(const Nimble::Rect & area, const float * rgba,
+                     const Nimble::Rect & texUV);
+    /// @copydoc drawTexRect
+    void drawTexRect(const Nimble::Rect & area, const float * rgba,
+                     const Nimble::Rect * texUV, int uvCount);
+    /// @copydoc drawTexRect
     void drawTexRect(Nimble::Vector2 size, const float * rgba,
                      Nimble::Vector2 texUV);
     /// @copydoc drawTexRect
