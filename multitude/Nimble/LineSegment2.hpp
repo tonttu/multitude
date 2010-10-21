@@ -30,6 +30,12 @@ template <typename T>
   {
   public:
     inline LineSegment2T() {}
+    inline LineSegment2T(T x1, T y1, T x2, T y2)
+    {
+      m_points[0].make(x1, y1);
+      m_points[1].make(x2, y2);
+    }
+
     /// Constructs a new line segment between two points
     inline LineSegment2T(const Vector2T<T> & p1,
                          const Vector2T<T> & p2)
@@ -43,6 +49,11 @@ template <typename T>
     { 
       return (m_points[0] == that.m_points[0]) &&
         (m_points[1] == that.m_points[1]);
+    }
+
+    inline T length() const
+    {
+      return (m_points[1] - m_points[0]).length();
     }
 
     /// Compares the given point against both end points and returns true if the point is
@@ -72,6 +83,30 @@ template <typename T>
         * point = tmp;
 
       return r;
+    }
+
+    inline bool intersectsInfinite(const LineSegment2T & that,
+                                   Vector2T<T> * point = 0) const
+    {
+      float a1 = this->end().y - this->begin().y;
+      float b1 = this->begin().x - this->end().x;
+      float c1 = this->end().x * this->begin().y - this->begin().x * this->end().y;
+
+      float a2 = that.end().y - that.begin().y;
+      float b2 = that.begin().x - that.end().x;
+      float c2 = that.end().x * that.begin().y - that.begin().x * that.end().y;//   { a2*x + b2*y + c2 = 0 is line 2 }
+
+      float denom = a1*b2 - a2*b1;
+
+      if(Math::Abs(denom) > 1.0e-6) {
+        point->x = (b1*c2 - b2*c1)/denom;
+        point->y = (a2*c1 - a1*c2)/denom;
+        return true;
+      }
+      else {
+        point->clear();
+        return false;
+      }
     }
 
     /// Returns true if the line segment intersects with the given bezier curve
