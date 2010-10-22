@@ -126,7 +126,7 @@ namespace Nimble {
     /// Returns the ith component
     T&			        operator[]	(int i)				{ return ((T*)this)[i]; }
 
-    bool isFinite() const { return isfinite(x) && isfinite(y); }
+    bool isFinite() const { return Math::isFinite(x) && Math::isFinite(y); }
 
     bool operator< (const Vector2T<T>& v2) const
     {
