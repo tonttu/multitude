@@ -7,10 +7,10 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef RADIANT_GRID_HPP
@@ -47,7 +47,7 @@ namespace Radiant {
         m_data = 0;
     }
     /// Constructs a copy
-    GridMemT(const GridMemT & that) : m_data(0), m_width(0), m_height(0) 
+    GridMemT(const GridMemT & that) : m_data(0), m_width(0), m_height(0)
     { *this = that; }
 
     ~GridMemT()
@@ -75,9 +75,9 @@ namespace Radiant {
     }
 
     void resize(Nimble::Vector2i size) { resize(size.x, size.y); }
-    
+
     /** frees up the memory, and sets the width and height of this
-	object to zero. */ 
+    object to zero. */
     void clear() { delete [] m_data; m_width = m_height = 0; m_data = 0; }
 
     /// Copies data from memory
@@ -172,7 +172,7 @@ namespace Radiant {
     typedef T * iterator;
     /// Const iterator for the grid
     typedef const T * const_iterator;
-    
+
     GridT() {}
 
     /// Constructs a copy
@@ -182,7 +182,7 @@ namespace Radiant {
     /// @todo Is this define really needed?
 #ifndef WIN32
     /** Constructor that takes the elements from the data pointer,
-	with given width and height. */
+    with given width and height. */
     GridT(T * data, unsigned w, unsigned h) : Base(data, w, h) {}
 #else
     GridT(T * data, unsigned w, unsigned h)
@@ -204,12 +204,12 @@ namespace Radiant {
     inline bool isInside(const Nimble::Vector2f & v)
     { return ((unsigned) v.x < this->m_width) &&
         ((unsigned) v.y < this->m_height); }
-    
+
     /** Gets an element from the grid. If the arguments are outside
-	the grid area, then result is undefined. In certain debug
-	builds, the program stops with an assertion, while on typical
-	release builds the function will simply return invalid
-	data. */
+    the grid area, then result is undefined. In certain debug
+    builds, the program stops with an assertion, while on typical
+    release builds the function will simply return invalid
+    data. */
     inline T & get(unsigned x, unsigned y)
     { GRID_CHECK(x,y); return this->m_data[this->m_width * y + x]; }
     /// @copydoc get
@@ -224,8 +224,8 @@ namespace Radiant {
     { GRID_CHECK2(v); return this->m_data[this->m_width * v.y + v.x]; }
     /// @copydoc get
     inline T & get(const Nimble::Vector2f & v)
-    { 
-      GRID_CHECK2(v); 
+    {
+      GRID_CHECK2(v);
       return this->m_data[this->m_width * (unsigned) v.y + (unsigned) v.x];
     }
 
@@ -246,7 +246,7 @@ namespace Radiant {
 
 
     /** Returns an element from a grid. If the arguments are outside
-	the grid area, then zero is returned. */
+    the grid area, then zero is returned. */
     inline T getSafe(const Nimble::Vector2i & v)
     { if(isInside(v)) return this->m_data[this->m_width * v.y + v.x];return 0;}
     /// @copydoc getSafe
@@ -254,22 +254,45 @@ namespace Radiant {
     { if(isInside(x, y)) return this->m_data[this->m_width * y + x];return 0;}
 
     /** Returns a reference to the grid element that is closest to the
-	argument vector. */
+    argument vector. */
     inline T & getNearest(const Nimble::Vector2f & v)
-    { 
+    {
       unsigned x = (unsigned) (v.x+0.5f);
       unsigned y = (unsigned) (v.y+0.5f);
       GRID_CHECK(x,y);
       return this->m_data[this->m_width * y + x];
     }
-    
+
+    /** Interpolates an element from the grid values.
+        This function requires that the grid template type can be multiplied from the right
+        with a floating point number. */
+    inline T getInterpolated(const Nimble::Vector2f & v)
+    {
+      int left = v.x;
+      int top = v.y;
+      int right = left+1;
+      int bot = top + 1;
+
+      float wxr = v.x - left;
+      float wyb = v.y - top;
+
+      float wxl = 1.0f - wxr;
+      float wyt = 1.0f - wyb;
+
+      GRID_CHECK(left,top);
+      GRID_CHECK(right,bot);
+
+      return get(left, top) * wxl * wyt + get(right, top) * wxr * wyt +
+          get(left, bot) * wxl * wyb + get(right, bot) * wxr * wyb;
+    }
+
     /// Return a pointer to one line (aka row)
     inline T * line(int y)
     { return & this->m_data[this->m_width * y]; }
     /// Return a const pointer to one line (aka row)
-    inline const T * line(int y) const 
+    inline const T * line(int y) const
     { return & this->m_data[this->m_width * y]; }
-    
+
     /// Writes zeroes over the memory buffer (using bzero)
     inline void zero() { bzero(this->data(), size() * sizeof(T)); }
 
@@ -292,7 +315,7 @@ namespace Radiant {
     /// Number of elements
     inline unsigned size()   const { return this->m_width * this->m_height; }
     /// Returns the dimensions of the grid
-    inline Nimble::Vector2i geometry() const 
+    inline Nimble::Vector2i geometry() const
     { return Nimble::Vector2i(this->m_width, this->m_height); }
 
     /// Checks if the width and height of this and that are identical
@@ -312,18 +335,18 @@ namespace Radiant {
       std::swap(this->m_width, that.m_width);
       std::swap(this->m_height, that.m_height);
     }
-    
+
   };
 
-  
+
   template <typename T, class Base>
-  void GridT<T, Base>::fill(const T & val, 
-			    int xlow, int ylow, int width, int height)
+  void GridT<T, Base>::fill(const T & val,
+                int xlow, int ylow, int width, int height)
   {
     for(int y = ylow; y <= ylow + height; y++) {
       T * dest = & get(xlow, y);
       for(T * sentinel = dest + width; dest < sentinel; dest++) {
-	*dest = val;
+    *dest = val;
       }
     }
   }
