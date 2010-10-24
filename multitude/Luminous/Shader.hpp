@@ -75,6 +75,9 @@ namespace Luminous {
     /** Returns a compiled and bound OpenGL shader program. */
     LUMINOUS_API GLSLProgramObject * bind();
 
+    /** Unbinds the shader. */
+    LUMINOUS_API void unbind();
+
     /** Returns a non-compiled OpenGL shader program. */
     LUMINOUS_API GLSLProgramObject * program(Luminous::GLResources * res = 0);
 
