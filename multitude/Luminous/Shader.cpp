@@ -216,6 +216,10 @@ namespace Luminous {
 
     GLSLProgramObject & prog = *program();
 
+    if(&prog == 0) {
+      return 0;
+    }
+
     if(!prog.isLinked()) {
 
       bool ok = prog.link();
@@ -244,6 +248,10 @@ namespace Luminous {
     return & prog;
   }
 
+  void Shader::unbind()
+  {
+    glUseProgram(0);
+  }
 
   GLSLProgramObject * Shader::program(Luminous::GLResources * res)
   {
