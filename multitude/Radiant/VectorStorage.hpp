@@ -229,6 +229,7 @@ namespace Radiant {
     {
         if(that.empty()) {
             reset();
+            return * this;
         } else {
             m_count = that.m_count;
             expand(m_count);
