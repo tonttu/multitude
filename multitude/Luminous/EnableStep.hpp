@@ -23,7 +23,29 @@
 
 namespace Luminous {
 
-  /** Enables some OpenGL feature while this object exists. */
+  /** Enables some OpenGL feature while this object exists.
+      In OpenGL applications it is commong that some special feature needs
+      to be enabled for the duration of one function. This class can
+      be used o make sure that the feature is disabled, as the function is
+      finished.
+
+      Example:
+
+      @code
+      void myrender()
+      {
+        Luminous::EnableStep clip5(GL_CLIP_PLANE5);
+
+        drawThings();
+
+        if(isEnough())
+          return; // GL_CLIP_PLANE5 is automatically disabled
+
+        drawMoreThings();
+      }
+      @endcode
+    */
+
   /// @todo The state management needs fixing anyhow
   class EnableStep : public Patterns::NotCopyable
   {

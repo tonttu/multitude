@@ -31,6 +31,7 @@ namespace Luminous {
       Valid OpenGL context is only needed when one wants to use use the
       GLSLProgramObject that is bound to this Shader handler.
 
+      @see ShaderExample demo application
 */
   class Shader : public ContextVariableT<GLSLProgramObject>,
   public Valuable::HasValues
@@ -39,6 +40,7 @@ namespace Luminous {
     LUMINOUS_API Shader();
     /// Constructs a shader
     LUMINOUS_API Shader(Valuable::HasValues * parent, const char * name);
+    /// Deletes the shader
     LUMINOUS_API virtual ~Shader();
 
     /** Sets the source code for the fragment (aka pixel) shader.
@@ -81,7 +83,16 @@ namespace Luminous {
     // Adds a ValueObject as a shader attribute
     //LUMINOUS_API void addShaderAttribute(const Valuable::ValueObject *);
     /// Adds a ValueObject as a shader uniform
-    LUMINOUS_API void addShaderUniform(const Valuable::ValueObject *);
+    /** Once the ValueObject has been added to this shader its value
+        is automatically used with the shader, as the shader is bound.
+        This feature can be used to automatically set the uniforms of the shader
+        so that one does not need to set them via some parameter.
+
+        The name of the object should match some of the uniforms of the shader.
+
+        @arg vo The object to be used
+    */
+    LUMINOUS_API void addShaderUniform(const Valuable::ValueObject * vo);
 
     /** Returns true if the shader code is defined.
         Note that the shader might not be compiled, as this function only

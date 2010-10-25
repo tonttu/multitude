@@ -39,7 +39,7 @@ namespace Luminous {
       projector-based systems where aligning the projectors physically
       is either impossible or very difficult.
   */
-  /// @todo the "rotations" is stupid, and should be removed.
+  /// @todo the "rotations" is not very descriptive, and should be removed.
   class LUMINOUS_API GLKeyStone : public Valuable::HasValues
   {
   public:

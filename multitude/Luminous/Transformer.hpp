@@ -29,7 +29,9 @@ namespace Luminous
   class LUMINOUS_API Transformer
   {
   public:
+    /// Creates an empty transformation stack
     Transformer();
+    /// Deletes the transformation stack
     ~Transformer();
 
     /// Get the top matrix of the stack
