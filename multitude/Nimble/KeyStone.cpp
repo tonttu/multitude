@@ -20,7 +20,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <strings.h>
 
 namespace Nimble {
 
@@ -424,6 +424,7 @@ namespace Nimble {
   void KeyStone::updateLimits(std::vector<Nimble::Vector2i> & limits,
                               const Vector4 * offsets)  {
     limits.resize(m_height);
+    bzero( & limits[0], limits.size() * sizeof(Nimble::Vector2i));
 
     Rect bounds(0, 0, 1, 1);
 
