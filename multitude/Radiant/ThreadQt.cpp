@@ -78,9 +78,9 @@ namespace Radiant {
   bool Thread::waitEnd(int timeoutms)
   {
     if(timeoutms)
-      return m_d->wait();
-    else
       return m_d->wait(timeoutms * 1000); // Guess that it is microseconds...
+    else
+      return m_d->wait();
   }
 
   void Thread::kill()

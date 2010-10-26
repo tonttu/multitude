@@ -30,6 +30,7 @@ namespace Radiant
     virtual bool start();
     virtual bool stop();
     virtual bool close();
+    virtual uint64_t uid();
 
     virtual const Radiant::VideoImage * captureImage();
 

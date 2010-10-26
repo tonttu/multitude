@@ -19,6 +19,9 @@
 
 #include <Radiant/Trace.hpp>
 
+template <GLenum type>
+GLuint Luminous::BufferObject<type>::s_bindedBuffer = 0;
+
 namespace Luminous
 {
   using namespace Radiant;
@@ -26,7 +29,8 @@ namespace Luminous
   template<GLenum type>
   BufferObject<type>::BufferObject(Luminous::GLResources * resources)
     : GLResource(resources),
-    m_filled(0)
+    m_filled(0),
+    m_mapBindedBuffer(0)
   {
     // info("BufferObject<type>::BufferObject # %p", this);
     glGenBuffers(1, &m_bufferId);
@@ -51,43 +55,64 @@ namespace Luminous
   void BufferObject<type>::bind() const
   {
     glBindBuffer(type, m_bufferId);
+    s_bindedBuffer = m_bufferId;
   }
 
   template<GLenum type>
   void BufferObject<type>::unbind() const
   {
     glBindBuffer(type, 0);
+    s_bindedBuffer = 0;
   }
 
   template<GLenum type>
   void BufferObject<type>::fill(void * data, size_t bytes, Usage usage)
   {
     m_filled = bytes;
-    bind();
+    GLuint current = s_bindedBuffer;
+    if(current != m_bufferId)
+      bind();
     if(bytes)
       glBufferData(type, bytes, data, usage);
+    if(current != m_bufferId) {
+      glBindBuffer(type, current);
+      s_bindedBuffer = current;
+    }
   }
 
   template<GLenum type>
   void BufferObject<type>::partialFill(size_t offsetInBytes, void * data, size_t bytes)
   {
-    bind();
+    GLuint current = s_bindedBuffer;
+    if(current != m_bufferId)
+      bind();
     glBufferSubData(type, offsetInBytes, bytes, data);
     m_filled = Nimble::Math::Max(m_filled, offsetInBytes + bytes);
+    if(current != m_bufferId) {
+      glBindBuffer(type, current);
+      s_bindedBuffer = current;
+    }
   }
 
   template<GLenum type>
   void * BufferObject<type>::map(AccessMode mode)
   {
-    bind();
+    m_mapBindedBuffer = s_bindedBuffer;
+    if(m_mapBindedBuffer != m_bufferId)
+      bind();
     return glMapBuffer(type, mode);
   }
 
   template<GLenum type>
   void BufferObject<type>::unmap()
   {
-    bind();
+    if(s_bindedBuffer != m_bufferId)
+      bind();
     glUnmapBuffer(type);
+    if(s_bindedBuffer != m_mapBindedBuffer) {
+      glBindBuffer(type, m_mapBindedBuffer);
+      s_bindedBuffer = m_mapBindedBuffer;
+    }
   }
 
 }

@@ -87,6 +87,7 @@ namespace Radiant {
     virtual bool start();
     virtual bool stop();
     virtual bool close();
+    virtual uint64_t uid();
 
     /// Sets the camera EUID that will be used to select the camera
     void setCameraEuid64(uint64_t euid) { m_euid = euid; }

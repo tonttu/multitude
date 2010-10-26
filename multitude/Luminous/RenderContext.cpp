@@ -371,14 +371,12 @@ namespace Luminous
     {
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
       m_viewFBO->attachTexture2D(m_viewTextures[m_viewStackPos], Luminous::COLOR0);
       m_viewFBO->check();
       // attachTexture2D should do this as a side effect already?
       glDrawBuffer(Luminous::COLOR0);
     }
-    void unattachViewTexture() {
+    void unattachViewTexture() {      
       m_viewFBO->unbind();
       glDrawBuffer(GL_BACK);
     }
@@ -811,67 +809,78 @@ namespace Luminous
 
   void RenderContext::drawArc(Nimble::Vector2f center, float radius, float fromRadians, float toRadians, float width, float blendWidth, const float * color, int linesegments)
   {
-    // Make 0 radians be "on the right"
-    fromRadians += Nimble::Math::PI / 2.f;
-    toRadians += Nimble::Math::PI / 2.f;
+    float delta = (toRadians - fromRadians) / linesegments;
+
+    float tanFactor = tan(delta);
+    float radFactor = 1.f - cos(delta);
 
     float r = color[0];
     float g = color[1];
     float b = color[2];
     float a = color[3];
 
-    // Angle increases counter-clockwise
-    float delta = -(toRadians - fromRadians) / linesegments;
-
-    width *= 0.5f;
-
-    float rs[4] = {
+    float radii[4] = {
       radius - width - blendWidth, radius - width,
       radius + width, radius + width + blendWidth
     };
 
-    for(int i = 0; i < linesegments; i++) {
-      float a1 = fromRadians + i * delta;
-      float a2 = fromRadians + (i + 1) * delta;
-      float sa1 = sinf(a1);
-      float ca1 = - cosf(a1);
-      float sa2 = sinf(a2);
-      float ca2 = - cosf(a2);
+    Nimble::Vector2 p[4];
+    for(int k = 0; k < 4; k++)
+      p[k] = center + radii[k] * Nimble::Vector2f(cos(fromRadians), sin(fromRadians));
+
+    for(size_t i = 0; i < linesegments; i++) {
+
+      Nimble::Vector2 v[4];
+
+      for(int k = 0; k < 4; k++) {
+        v[k] = p[k];
+
+        Nimble::Vector2f t(-(p[k].y - center.y), p[k].x - center.x);
+        p[k] += tanFactor * t;
+        Nimble::Vector2f r = center - p[k];
+        p[k] += radFactor * r;
+      }
 
       glBegin(GL_QUAD_STRIP);
 
-      glColor4f(r, g, b, 0.0f);
+      glColor4f(r, g, b, 0.f);
 
-      Nimble::Vector2f v0 = transform().project(sa1 * rs[0] + center.x, ca1 * rs[0] + center.y);
-      Nimble::Vector2f v1 = transform().project(sa2 * rs[0] + center.x, ca2 * rs[0] + center.y);
-
-      glVertex2fv(v0.data());
-      glVertex2fv(v1.data());
+      glVertex2fv(transform().project(v[0]).data());
+      glVertex2fv(transform().project(p[0]).data());
 
       glColor4f(r, g, b, a);
 
-      Nimble::Vector2f v2 = transform().project(sa1 * rs[1] + center.x, ca1 * rs[1] + center.y);
-      Nimble::Vector2f v3 = transform().project(sa2 * rs[1] + center.x, ca2 * rs[1] + center.y);
+      glVertex2fv(transform().project(v[1]).data());
+      glVertex2fv(transform().project(p[1]).data());
 
-      glVertex2fv(v2.data());
-      glVertex2fv(v3.data());
+      glVertex2fv(transform().project(v[2]).data());
+      glVertex2fv(transform().project(p[2]).data());
 
-      Nimble::Vector2f v4 = transform().project(sa1 * rs[2] + center.x, ca1 * rs[2] + center.y);
-      Nimble::Vector2f v5 = transform().project(sa2 * rs[2] + center.x, ca2 * rs[2] + center.y);
+      glColor4f(r, g, b, 0.f);
 
-      glVertex2fv(v4.data());
-      glVertex2fv(v5.data());
-
-      glColor4f(r, g, b, 0.0f);
-
-      Nimble::Vector2f v6 = transform().project(sa1 * rs[3] + center.x, ca1 * rs[3] + center.y);
-      Nimble::Vector2f v7 = transform().project(sa2 * rs[3] + center.x, ca2 * rs[3] + center.y);
-
-      glVertex2fv(v6.data());
-      glVertex2fv(v7.data());
+      glVertex2fv(transform().project(v[3]).data());
+      glVertex2fv(transform().project(p[3]).data());
 
       glEnd();
     }
+  }
+
+  void RenderContext::drawWedge(Nimble::Vector2f center, float radius1, float radius2, float fromRadians, float toRadians, float width, float blendWidth, const float *rgba, int segments)
+  {
+    // Draw two arcs
+    drawArc(center, radius1, fromRadians, toRadians, width, blendWidth, rgba, segments);
+    drawArc(center, radius2, fromRadians, toRadians, width, blendWidth, rgba, segments);
+
+    // Draw sector edges
+    /// @todo these look a bit crappy as the blending doesn't match the arcs properly
+    Nimble::Vector2f p0 = center + radius1 * Nimble::Vector2f(cos(fromRadians), sin(fromRadians));
+    Nimble::Vector2f p1 = center + radius2 * Nimble::Vector2f(cos(fromRadians), sin(fromRadians));
+
+    Nimble::Vector2f p2 = center + radius1 * Nimble::Vector2f(cos(toRadians), sin(toRadians));
+    Nimble::Vector2f p3 = center + radius2 * Nimble::Vector2f(cos(toRadians), sin(toRadians));
+
+    drawLine(p0, p1, width, rgba);
+    drawLine(p2, p3, width, rgba);
   }
 
   void RenderContext::drawCircleImpl(Nimble::Vector2f center, float radius,
@@ -973,6 +982,88 @@ namespace Luminous
     drawPolyLine(&points[0], (int) points.size(), width, rgba);
   }
 
+
+  void RenderContext::drawTexRect(const Nimble::Rect & area, const float * rgba,
+                                  const Nimble::Rect & texUV)
+  {
+    const Nimble::Matrix3 & m = transform();
+
+    Nimble::Vector2 v[] = {
+      m.project(area.low()),
+      m.project(area.highLow()),
+      m.project(area.high()),
+      m.project(area.lowHigh())
+    };
+
+    if(rgba)
+      glColor4fv(rgba);
+
+    const Vector2 & low = texUV.low();
+    const Vector2 & high = texUV.high();
+
+    const GLfloat texCoords[] = {
+      low.x, low.y,
+      high.x, low.y,
+      high.x, high.y,
+      low.x, high.y
+    };
+
+#if 0
+    // This fails when some other OpenGL features are used (FBOs, VBOs)
+    glEnable(GL_VERTEX_ARRAY);
+    glEnable(GL_TEXTURE_COORD_ARRAY);
+
+    glTexCoordPointer(2, GL_FLOAT, 0, texCoords);
+    glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat*>(v));
+    glDrawArrays(GL_QUADS, 0, 4);
+
+    glDisable(GL_VERTEX_ARRAY);
+    glDisable(GL_TEXTURE_COORD_ARRAY);
+#else
+    glBegin(GL_QUADS);
+
+    for(int i = 0; i < 4; i++) {
+      glTexCoord2fv(&texCoords[i * 2]);
+      glVertex2fv(v[i].data());
+    }
+
+    glEnd();
+#endif
+  }
+
+
+  void RenderContext::drawTexRect(const Nimble::Rect & area, const float * rgba,
+                                  const Nimble::Rect * texUV, int uvCount)
+  {
+    if(rgba)
+      glColor4fv(rgba);
+
+    const Nimble::Matrix3 & m = transform();
+
+    glBegin(GL_QUADS);
+
+    for(int i = 0; i < uvCount; i++) {
+      glMultiTexCoord2fv(GL_TEXTURE0 + i, texUV[i].low().data());
+    }
+    glVertex2fv(m.project(area.low()).data());
+
+    for(int i = 0; i < uvCount; i++) {
+      glMultiTexCoord2fv(GL_TEXTURE0 + i, texUV[i].highLow().data());
+    }
+    glVertex2fv(m.project(area.highLow()).data());
+
+    for(int i = 0; i < uvCount; i++) {
+      glMultiTexCoord2fv(GL_TEXTURE0 + i, texUV[i].high().data());
+    }
+    glVertex2fv(m.project(area.high()).data());
+
+    for(int i = 0; i < uvCount; i++) {
+      glMultiTexCoord2fv(GL_TEXTURE0 + i, texUV[i].lowHigh().data());
+    }
+    glVertex2fv(m.project(area.lowHigh()).data());
+
+    glEnd();
+  }
 
   void RenderContext::drawTexRect(Nimble::Vector2 size, const float * rgba)
   {

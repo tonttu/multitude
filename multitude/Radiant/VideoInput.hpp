@@ -159,6 +159,9 @@ namespace Radiant {
      */
     virtual bool close() = 0;
 
+    /// Returns the unique identifier for the input device
+    virtual uint64_t uid();
+
   protected:
     /// Disabled
     VideoInput() {}

@@ -250,7 +250,6 @@ namespace Radiant
     fps = 180.0f;
 
     m_format7Rect = roi;
-
     if(m_fakeFormat7) {
       // Expand the ROI to include everything, this will be clamped later on.
       roi.set(0, 0, 100000, 100000);
@@ -462,6 +461,11 @@ namespace Radiant
     m_state = UNINITIALIZED;
 
     return true;
+  }
+
+  uint64_t VideoCameraPTGrey::uid()
+  {
+    return m_info.m_euid64;
   }
 
   const Radiant::VideoImage * VideoCameraPTGrey::captureImage()

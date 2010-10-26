@@ -266,7 +266,7 @@ namespace Luminous
 #endif
 
     if(it == __resources.end()) {
-      error("No OpenGL resources for current thread");
+      debug("No OpenGL resources for current thread");
       return 0;
     }
 

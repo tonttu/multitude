@@ -16,7 +16,7 @@
 #include "Collectable.hpp"
 
 #include "GarbageCollector.hpp"
-
+/*
 namespace Luminous
 {
   Collectable::Collectable()
@@ -31,4 +31,4 @@ namespace Luminous
   {
     GarbageCollector::objectDeleted(this);
   }
-}
+}*/

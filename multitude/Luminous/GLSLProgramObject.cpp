@@ -425,8 +425,8 @@ namespace Luminous
     shader->setSource(shaderCode);
 
     if(!shader->compile()) {
-      error("GLSLProgramObject::loadString # Compilation failed : %s",
-            shader->compilerLog());
+      error("GLSLProgramObject::loadString # Compilation failed : %s\n%s",
+            shader->compilerLog(), shaderCode);
       return false;
     }
 
