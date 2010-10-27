@@ -92,9 +92,11 @@ template <typename T>
       return r;
     }
 
+    /** Intersection between two lines, with the lines being treated as infinite lines. */
     inline bool intersectsInfinite(const LineSegment2T & that,
-                                   Vector2T<T> * point = 0) const
+                                   Vector2T<T> * point) const
     {
+      /*
       Vector2T<T> v1 = begin();
       Vector2T<T> v2 = v1 + directionNormalized();
 
@@ -118,17 +120,20 @@ template <typename T>
       float b_dot_d_perp = bx*dy - by*dx;
 
       if(b_dot_d_perp == 0) {
-        point->clear();
+
+        if(point)
+          point->clear();
         return false;
       }
       float cx = x3-x1;
       float cy = y3-y1;
       float t = (cx*dy - cy*dx) / b_dot_d_perp;
 
-      point->make(x1+t*bx, y1+t*by);
+      if(point)
+        point->make(x1+t*bx, y1+t*by);
       return true;
+      */
 
-      /*
       float a1 = this->end().y - this->begin().y;
       float b1 = this->begin().x - this->end().x;
       float c1 = this->end().x * this->begin().y - this->begin().x * this->end().y;
@@ -140,15 +145,18 @@ template <typename T>
       float denom = a1*b2 - a2*b1;
 
       if(Math::Abs(denom) > 1.0e-6) {
-        point->x = (b1*c2 - b2*c1)/denom;
-        point->y = (a2*c1 - a1*c2)/denom;
+        if(point) {
+          point->x = (b1*c2 - b2*c1)/denom;
+          point->y = (a2*c1 - a1*c2)/denom;
+        }
         return true;
       }
       else {
-        point->clear();
+        if(point)
+          point->clear();
         return false;
       }
-      */
+
     }
 
     /// Returns true if the line segment intersects with the given bezier curve
