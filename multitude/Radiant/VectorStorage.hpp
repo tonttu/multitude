@@ -228,8 +228,8 @@ namespace Radiant {
     VectorStorage & operator = (const VectorStorage & that)
     {
         if(that.empty()) {
-            reset();
-            return *this;
+          reset();
+          return *this;
         } else {
             m_count = that.m_count;
             expand(m_count);
