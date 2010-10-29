@@ -69,6 +69,7 @@ namespace Resonant {
     void setSourceLocation(const std::string &, Nimble::Vector2 location);
     void removeSource(const std::string &);
 
+    /// @cond
     class LoudSpeaker : public Valuable::HasValues
     {
     public:
@@ -122,6 +123,7 @@ namespace Resonant {
     long m_generation;
 
     Valuable::ValueFloat m_maxRadius;
+    /// @endcond
   };
 
 }

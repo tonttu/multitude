@@ -186,6 +186,7 @@ namespace VideoDisplay {
     VIDEODISPLAY_API void ignorePreviousFrames();
     VIDEODISPLAY_API void freeFreeableMemory();
 
+    /// @cond
     class Req
     {
     public:
@@ -248,10 +249,13 @@ namespace VideoDisplay {
     AudioTransfer     *m_listener;
 
     Radiant::MutexAuto m_mutex;
+
+    /// @endcond
   private:
     /// Disabled
     VideoIn(const VideoIn & ) : Radiant::Thread() {}
     void pushRequest(const Req & r);
+
 
   };
 

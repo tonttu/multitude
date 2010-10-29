@@ -8,6 +8,11 @@
 
 namespace Nimble {
 
+  /// A quaternion class
+  /** Quaternion are typically used to present 3D rotations in a way that can be
+      easily interpolated, and which is not susceptible to the artifacts that plague
+      the "pitch/roll/yaw" definition.
+  */
   template <typename T>
   class QuaternionT
   {
@@ -16,13 +21,21 @@ namespace Nimble {
 
     T x,y,z,w;
 
+    /// Constructs a quaternion object, with uninitialized values
     QuaternionT() {}
+    /// Constructs a quaternion object, with values copied from another quaternion object
+    /// @param o The quaternion to copy
     QuaternionT(const QuaternionT<T> & o) : x(o.x), y(o.y), z(o.z), w(o.w) {}
 
+    /// Constructs a quaternion object, with values copied from a 3D vector and a float
+    /// @param v The 3D vector that defines the x, y, z value for this uaternion
+    /// @param w_ The w value
     QuaternionT(const Vector3T<T> & v, T w_) : x(v.x), y(v.y), z(v.z), w(w_) {}
 
+    /// Constructs a quaternion with given values
     QuaternionT(T x_, T y_, T z_, T w_) : x(x_), y(y_), z(z_), w(w_) {}
 
+    /// Converts a rotation matrix to quaternion format
     QuaternionT(const Matrix3T<T> & m)
     {
       *this = m;
@@ -40,27 +53,33 @@ namespace Nimble {
       return v + uv + uuv;
     }
 
+    /// Addition operator
     QuaternionT operator+(const QuaternionT & v)
     {
       return QuaternionT(x+v.x, y+v.y, z+v.z, w+v.w);
     }
+    /// Subtraction operator
     QuaternionT operator-(const QuaternionT & v)
     {
       return QuaternionT(x-v.x, y-v.y, z-v.z, w-v.w);
     }
-
+    /// Accumulation add operator
     QuaternionT & operator+=(const QuaternionT & v)
     {
       x += v.x; y += v.y; z += v.z; w += v.w; return *this;
     }
+    /// Accumulation minus operator
     QuaternionT & operator-=(const QuaternionT & v)
     {
       x -= v.x; y -= v.y; z -= v.z; w -= v.w; return *this;
     }
+    /// Multiply the quaternion components
+    /// @param v The multiplier
     QuaternionT & operator*=(T v)
     {
       x *= v; y *= v; z *= v; w *= v; return *this;
     }
+    /// Multiply this quaterion with another, and store the result into this quaternion
     QuaternionT & operator*=(const QuaternionT & v)
     {
       T nx = y*v.z-z*v.y+w*v.x+x*v.w;
@@ -70,25 +89,35 @@ namespace Nimble {
       x = nx, y = ny, z = nz;
       return *this; 
     }
+    /// Multiply the components of this quaternion directly with the components of another quaternion
     QuaternionT & operator^=(const QuaternionT & v)
     {
       x *= v.x; y *= v.y; z *= v.z; w *= v.w; return *this;
     }
+    /// Negate a quaternion
+    /// @return Returns the values of this quaternion, multiplied with -1
     const QuaternionT operator-() const
     {
       return QuaternionT(-x,-y,-z,-w);
     }
 
+    /// Negate the x, y, and z value of this quaternion
+    /** @return Returns the x, y, z, values of this quaternion, multiplied with -1, and the
+        w value as such.
+      */
     const QuaternionT operator~() const
     {
       return QuaternionT(-x,-y,-z,w);
     }
 
+    /// Extracts the rotation part of a 4x4 matrix, and calculates the quaternion values from that
     void operator=(const Matrix4T<T> & m)
     {
       *this = m.getRotation();
     }
 
+    /// Calculates quaternion values from a 3x3 rotation matrix
+    /** @param m The matrix to be copied. */
     void operator=(const Matrix3T<T> & m)
     {
       Vector3T<T> axis;
@@ -114,6 +143,7 @@ namespace Nimble {
       return(x*v.x+y*v.y+z*v.z+w*v.w);
     }
 
+    /// Converts this quaternion into a 3x3 rotation matrix
     operator Nimble::Matrix3T<T>() const
     {
       Nimble::Matrix3T<T> m;
@@ -144,6 +174,9 @@ namespace Nimble {
       return m;
     }
 
+    /// Converts this quaternion into a 4x4 matrix
+    /** @return The top-left 3x3 components of the matrix are set to a rotation matrix.
+        The remaining components are from an identity matrix. */
     operator Nimble::Matrix4T<T>() const
     {
       Nimble::Matrix4T<T> m;
@@ -202,6 +235,7 @@ namespace Nimble {
       aff.C[1*4+0]=leninv*(xy-sz);    
     }
 */
+    /// Performs slerp interpolation between two quaternions
     static QuaternionT slerp(const QuaternionT & q1, QuaternionT q2, T t)
     {
       T sinom, scale0, scale1, theta;
@@ -248,6 +282,7 @@ namespace Nimble {
             w*b.w-x*b.x-y*b.y-z*b.z);
     }
 
+    /// Converts this quaternion to angle/axis format
     void getAngleAxis(float & angle, Vector3T<T> & axis)
     {
       T len = x*x + y*y + z*z;
