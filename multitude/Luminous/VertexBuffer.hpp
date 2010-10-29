@@ -110,11 +110,15 @@ namespace Luminous
         /// Unmaps the vertex buffer from CPU memory. The pointer to the buffer is invalidated.
         void unmap();
 
-        /// Returns the OpenGL handle for the buffer
-        /** This function should be used with care, since it may break the OpenGL state tracking. */
+        /** Access the OpenGL handle id.
+
+            This function should be used with care, since it may break the OpenGL state tracking.
+
+            @return Returns the OpenGL handle for the buffer
+         */
         GLuint handle() const { return m_bufferId; }
 
-        /** Returns the current number of filled bytes in the boffer. */
+        /** @return Returns the current number of filled bytes in the boffer. */
         size_t filled() const { return m_filled; }
       protected:
         /// OpenGL handle for the vertex buffer

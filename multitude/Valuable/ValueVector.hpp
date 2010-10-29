@@ -42,6 +42,7 @@ namespace Valuable
     public:
       ValueVector() : Base() {}
       /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
+      /// @param v The value of this object
       ValueVector(HasValues * parent, const std::string & name, const VectorType & v = VectorType(), bool transit = false)
         : Base(parent, name, v, transit) {}
 
@@ -58,14 +59,16 @@ namespace Valuable
       ValueVector<VectorType, ElementType, N> & operator -=
       (const VectorType & v) { Base::m_value -= v; this->emitChange(); return *this; }
 
-    /// Subtract
+    /// Subtraction operator
       VectorType operator -
       (const VectorType & v) const { return Base::m_value - v; }
-      /// Add
+      /// Addition operator
     VectorType operator +
       (const VectorType & v) const { return Base::m_value + v; }
 
-    /// Returns the ith element
+    /** Access vector elements by their index.
+
+        @return Returns the ith element. */
     ElementType operator [] (int i) const { return Base::m_value[i]; }
 
     /// Returns the data in its native format

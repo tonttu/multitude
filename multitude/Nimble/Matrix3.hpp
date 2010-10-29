@@ -145,8 +145,8 @@ namespace Nimble {
     inline static Matrix3T<T> rotate2D(T radians);
 
     /// Rotate around a given point
-    /** @arg p The center point of rotation
-        @arg radians The amount of roration, in radians
+    /** @param p The center point of rotation
+        @param radians The amount of roration, in radians
     */
     NIMBLE_API static Matrix3T<T> rotateAroundPoint2D(Vector2T<T> p,
                                            T radians);
@@ -165,11 +165,11 @@ namespace Nimble {
     NIMBLE_API static const Matrix3T<T> IDENTITY;
 
     /// Returns a 2d transformation matrix that does scale, rotate & translation (in this order)
-    /// @arg rad rotation angle (counter-clockwise)
-    /// @arg sx x scale
-    /// @arg sy y scale
-    /// @arg tx x translate
-    /// @arg ty y translate
+    /// @param rad rotation angle (counter-clockwise)
+    /// @param sx x scale
+    /// @param sy y scale
+    /// @param tx x translate
+    /// @param ty y translate
     inline static Matrix3T<T> transformation(float rad, float sx, float sy, float tx, float ty)
     {
       const T st = rad == 0.0f ? 0.0f : Nimble::Math::Sin(rad);

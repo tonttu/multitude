@@ -170,22 +170,22 @@ namespace Luminous
 
     /** Binds a texture representing this image to the current OpenGL context.
 
-        @arg textureUnit The OpenGL texture unit to bind to
-        @arg withmipmaps Should we use mimaps, or not. This argument only
+        @param textureUnit The OpenGL texture unit to bind to
+        @param withmipmaps Should we use mimaps, or not. This argument only
         makes difference the first time this function executed for the context
         (and the texture is created), after that the the same texture is used.
     */
-    void bind(GLenum textureUnit = GL_TEXTURE0, bool withmimaps = true);
+    void bind(GLenum textureUnit = GL_TEXTURE0, bool withmipmaps = true);
 
     /** Binds a texture representing this image to the current OpenGL context.
 
-        @arg resources The OpenGL resource handler
-        @arg textureUnit The OpenGL texture unit to bind to
-        @arg withmipmaps Should we use mimaps, or not. This argument only
+        @param resources The OpenGL resource handler
+        @param textureUnit The OpenGL texture unit to bind to
+        @param withmipmaps Should we use mimaps, or not. This argument only
         makes difference the first time this function executed for the context
         (and the texture is created), after that the the same texture is used.
     */
-    void bind(GLResources * resources, GLenum textureUnit = GL_TEXTURE0, bool withmimaps = true);
+    void bind(GLResources * resources, GLenum textureUnit = GL_TEXTURE0, bool withmipmaps = true);
 
     /// Checks if the image data is fully loaded to the GPU, inside a texture
     bool isFullyLoadedToGPU(GLResources * resources = 0);

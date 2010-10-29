@@ -178,14 +178,14 @@ namespace Luminous
     object is created. This macro will also define the object so that
     it is available after this macro has been called.
 
-    @arg type The class name of the object to be found (e.g. Texture2D etc).
+    @param type The class name of the object to be found (e.g. Texture2D etc).
 
-    @arg name The variable name for this object (e.g. mytex etc.).
+    @param name The variable name for this object (e.g. mytex etc.).
 
-    @arg ey The object that this resource is related to. Often the
+    @param ey The object that this resource is related to. Often the
     this-pointer is used as the key, but one can create other keys.
 
-    @arg resources The GLResources object that is holding the OpenGL
+    @param resources The GLResources object that is holding the OpenGL
     resources for this thread.
 */
 #define GLRESOURCE_ENSURE(type, name, key, resources)	\

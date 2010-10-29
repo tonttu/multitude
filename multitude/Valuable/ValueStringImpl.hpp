@@ -129,7 +129,7 @@ namespace Valuable
   {}
   */
 
-  /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
+  // @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
   template<>
   ValueStringT<std::wstring>::ValueStringT(HasValues * parent, const std::string & name,
 					   const char * v, bool transit)

@@ -30,21 +30,22 @@ namespace Valuable
   class VALUABLE_API ValueRect : public ValueObjectT<Nimble::Rect>
   {
     typedef ValueObjectT<Nimble::Rect> Base;
-    public:
-      /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
-      ValueRect(HasValues * parent, const std::string & name, const Nimble::Rect & r, bool transit = false);
+  public:
+    /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
+    /// @param r The rectangle to be stored in the ValueRect
+    ValueRect(HasValues * parent, const std::string & name, const Nimble::Rect & r, bool transit = false);
 
-      /// Copies a rectangle
-      ValueRect & operator = (const Nimble::Rect & r) { Base::m_value = r; VALUEMIT_STD_OP }
+    /// Copies a rectangle
+    ValueRect & operator = (const Nimble::Rect & r) { Base::m_value = r; VALUEMIT_STD_OP }
 
-      const char * type() const { return "rect"; }
+    const char * type() const { return "rect"; }
 
-      std::string asString(bool * const ok = 0) const;
+    std::string asString(bool * const ok = 0) const;
 
-      bool deserialize(ArchiveElement & element);
+    bool deserialize(ArchiveElement & element);
 
-      /// Converts the object to rectangle
-      Nimble::Rect asRect() const { return Base::m_value; }
+    /// Converts the object to rectangle
+    Nimble::Rect asRect() const { return Base::m_value; }
   };
 
 }

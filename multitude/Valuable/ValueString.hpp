@@ -42,9 +42,11 @@ namespace Valuable
 
     ValueStringT() : Base() {}
     /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
+    /// @param v The string to store in this object
     ValueStringT(HasValues * parent, const std::string & name,
                  const T & v, bool transit = false);
     /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
+    /// @param v The string to store in this object
     ValueStringT(HasValues * parent, const std::string & name,
                  const char * v, bool transit = false);
     /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
@@ -59,12 +61,14 @@ namespace Valuable
     /// Copies a string
     ValueStringT<T> & operator = (const T & i) { Base::m_value = i; VALUEMIT_STD_OP }
 
+    /// Concatenates two strings
+    /// @param i The string to be appended to this string
+    /// @return A new string that contains both this string, and the argument string.
     T operator + (const ValueStringT<T> & i) const
     { return Base::m_value + i.m_value; }
 
     T operator + (const T & i) const
     { return Base::m_value + i; }
-
 
     T operator + (const char_type * i) const
     { return Base::m_value + T(i); }

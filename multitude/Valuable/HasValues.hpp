@@ -137,13 +137,13 @@ namespace Valuable
         This function is part of the experimental event passing
         framework.
 
-        @arg from The event id to match when in the eventSend.
+        @param from The event id to match when in the eventSend.
 
-        @arg to The event id to to use when delivering the event
+        @param to The event id to to use when delivering the event
 
-        @arg obj The listening object
+        @param obj The listening object
 
-        @arg defaultData The default binary data to be used when
+        @param defaultData The default binary data to be used when
         delivering the message.
 
     */
@@ -168,31 +168,10 @@ namespace Valuable
     /// Control whether events are passed
     void eventPassingEnable(bool enable) { m_eventsEnabled = enable; }
 
-    /// The main event processing function
-    /** To capture and process events, you need to override this function. The default implemendation
-        tries to find a child object with the name found in the "type" argument,
-        and passes the arguments to that object.
-
-        Typical implementation of a custom processMessage function could look like:
-
-        \code
-        void MyClass::processMessage(const char * type, Radiant::BinaryData & data)
-        {
-          if(strcmp(type, "jump") == 0)
-            doJump();
-          else if(strcmp(type, "crawl") == 0) {
-            bool ok;
-            int speed = data.readInt32(&ok);
-            if(ok)
-              doCrawl(speed);
-          }
-          else
-            HasValues::processMessage(type, data);
-        }
-        \endcode
-
-    */
+    /// @cond
     virtual void processMessage(const char * type, Radiant::BinaryData & data);
+
+    /// @endcond
 
     /// Generates a unique identifier
     static Uuid generateId();

@@ -72,11 +72,11 @@ namespace Resonant {
     virtual void processMessage(const char * address, Radiant::BinaryData *);
     /** Processes one cycle of audio data.
 
-    @arg in Input audio data.
+    @param in Input audio data.
 
-    @arg out Output audio data.
+    @param out Output audio data.
 
-    @arg n Number of samples to process. Guaranteed to be between
+    @param n Number of samples to process. Guaranteed to be between
     1 and #MAX_CYCLE.
      */
     virtual void process(float ** in, float ** out, int n) = 0;

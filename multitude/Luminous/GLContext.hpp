@@ -37,7 +37,7 @@ namespace Luminous
     virtual GLContext * createSharedContext() = 0;
 
     /// A mutex that can be used to lock the OpenGL access
-    /** If the context is not shared, then this function returns null,
+    /** @return If the context is not shared, then this function returns null,
         and one should not use the mutex. */
     virtual Radiant::Mutex * mutex() = 0;
 

@@ -28,8 +28,11 @@ namespace Luminous {
   public:
     /** Gets a pointer to an image file CPU-side mipmap.
 
-    @return If the file already open, then an old pointer is
-    returned. Otherwise CPUMipmapStore will create a new
+        @param filename The name of the image file
+        @param immediate Indicate if the file should be loaded immediately (as opposed to on-demand).
+
+        @return If the file already open, then an old pointer is
+        returned. Otherwise CPUMipmapStore will create a new
         #Luminous::CPUMipmaps object, and return that (if opened successfully).
      */
     static CPUMipmaps * acquire(const std::string & filename, bool immediate = true);
@@ -38,7 +41,7 @@ namespace Luminous {
     the object, then its memory is freed. */
     static void release(Luminous::CPUMipmaps *);
 
-    /** Returns the number of mipmaps currently within the store. */
+    /** @return Returns the number of mipmaps currently within the store. */
     static unsigned count();
   };
 }

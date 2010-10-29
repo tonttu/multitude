@@ -127,7 +127,7 @@ namespace Nimble {
 
     /** Get random numbers between 0 and range-1.
 
-        @arg range The maximum output value. This value must not exceed 2^24-1.
+        @param range The maximum output value. This value must not exceed 2^24-1.
     */
     inline uint32_t randN24(uint32_t range)
     {

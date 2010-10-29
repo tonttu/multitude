@@ -93,7 +93,7 @@ namespace Luminous {
 
         The name of the object should match some of the uniforms of the shader.
 
-        @arg vo The object to be used
+        @param vo The object to be used
     */
     LUMINOUS_API void addShaderUniform(const Valuable::ValueObject * vo);
 

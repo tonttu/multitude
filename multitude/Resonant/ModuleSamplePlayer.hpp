@@ -67,11 +67,9 @@ namespace Resonant {
         nice ambient background that does not sound like it is
         looping.
 
-        @arg network The DSP network to attach the ambient sound player to.
+        @param directory Where the files are loaded from.
 
-        @arg directory Where the files are loaded from.
-
-        @arg gain The gain (volume) to give to the background material.
+        @param gain The gain (volume) to give to the background material.
 
     */
 
@@ -80,30 +78,34 @@ namespace Resonant {
     /// Plays an audio sample
     /** This function starts the playback of an audio sample.
 
-        @arg filename The name of the audio sample file.
+        @param filename The name of the audio sample file.
 
-        @arg gain The gain coefficient for playback. Setting gain to one
+        @param gain The gain coefficient for playback. Setting gain to one
         plays the file back at the original volume.
 
-        @arg relpitch The pitch for the playback. If the pitch is set to one,
+        @param relpitch The pitch for the playback. If the pitch is set to one,
         then the file will play back at the original speed. With pitch of 0.5
         the file will play back one octave below original pitch, and last
         twice as long as nominal file duration.
 
-        @arg targeChannel Select the channel where the sound is going to.
+        @param targetChannel Select the channel where the sound is going to.
         For example in 8-channel environment, this parameter can range from zero
         to seven.
 
-        @arg loop Turns of looping if necessary. With looping the sample will play
+        @param sampleChannel Select the channel of the source file that should be used as the
+        source.
+
+        @param loop Turns of looping if necessary. With looping the sample will play
         back for-ever.
     */
     void playSample(const char * filename,
                     float gain,
                     float relpitch,
                     int targetChannel,
-                    int samplechannel,
+                    int sampleChannel,
                     bool loop = false);
 
+    /** Sets the master gain */
     void setMasterGain(float gain) { m_masterGain = gain; }
   private:
 

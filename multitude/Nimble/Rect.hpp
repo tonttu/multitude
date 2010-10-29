@@ -178,8 +178,8 @@ namespace Nimble {
 
     /** Returns one quarter of the rectangle.
 
-    @arg row The row of the quarter (0-1)
-    @arg col The column of the quarter (0-1)
+    @param row The row of the quarter (0-1)
+    @param col The column of the quarter (0-1)
     */
     inline RectT quarter(int row, int col) const;
 
