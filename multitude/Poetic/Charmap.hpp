@@ -18,6 +18,9 @@
 #include "Face.hpp"
 #include <Radiant/Platform.hpp>
 
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
 // try to detect c++0x
 #if defined(RADIANT_CPP0X)
   #include <unordered_map>
@@ -34,6 +37,8 @@
     using tr1::unordered_map;
   }
 #endif
+
+#endif DOXYGEN_SHOULD_SKIP_THIS
 
 struct FT_FaceRec_;
 

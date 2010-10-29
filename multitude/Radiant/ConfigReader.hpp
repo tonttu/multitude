@@ -41,7 +41,7 @@ namespace Radiant {
 
     /// @todo add global chunk support, document, examples, remove this and
     /// use Valuable::ConfigReader
-  /// @deprecated This class will be removed. Use Valuable::ConfigDocument
+  // @deprecated This class will be removed. Use Valuable::ConfigDocument  - or maybe not.
   class RADIANT_API Variant
   {
   public:

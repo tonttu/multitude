@@ -18,13 +18,10 @@
 namespace Poetic
 {
 
-  namespace Utils
-  {
-
     using namespace Radiant;
     using namespace StringUtils;
 
-    void breakToLines(const std::wstring & ws, const float width,
+    void Utils::breakToLines(const std::wstring & ws, const float width,
       CPUFont & fnt, WStringList & lines, const bool afterSpace)
     {
       // Ensure line list empty
@@ -156,7 +153,7 @@ namespace Poetic
       */
     }
 
-    void split(const std::wstring & ws, const std::wstring & delim,
+    void Utils::split(const std::wstring & ws, const std::wstring & delim,
       WStringList & out, const bool afterDelim)
     {
       out.clear();
@@ -202,6 +199,5 @@ namespace Poetic
       }
     }
 
-  }
 
 }

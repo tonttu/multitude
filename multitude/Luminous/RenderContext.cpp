@@ -27,12 +27,6 @@
 
 #define DEFAULT_RECURSION_LIMIT 8
 
-namespace Nimble {
-  namespace Splines {
-    class Interpolating;
-  }
-
-}
 namespace Luminous
 {
 
@@ -828,7 +822,7 @@ namespace Luminous
     for(int k = 0; k < 4; k++)
       p[k] = center + radii[k] * Nimble::Vector2f(cos(fromRadians), sin(fromRadians));
 
-    for(size_t i = 0; i < linesegments; i++) {
+    for(size_t i = 0; i < (size_t) linesegments; i++) {
 
       Nimble::Vector2 v[4];
 
@@ -953,7 +947,7 @@ namespace Luminous
     drawPolyLine(&points[0], (int) points.size(), width, rgba);
   }
 
-  void RenderContext::drawSpline(Nimble::Splines::Interpolating & s, float width, const float * rgba, float step)
+  void RenderContext::drawSpline(Nimble::Interpolating & s, float width, const float * rgba, float step)
   {
     const float len = s.size();
 

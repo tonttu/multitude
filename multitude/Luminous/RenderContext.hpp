@@ -49,7 +49,9 @@ namespace Luminous
       BLEND_SUBTRACTIVE
     };
 
-    class FBOPackage;
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+    class FBOPackage;    
 
     class LUMINOUS_API FBOPackage : public GLResource
     {
@@ -77,6 +79,8 @@ namespace Luminous
       Luminous::Texture2D     m_tex;
       int m_users;
     };
+
+#endif // DOXYGEN_SHOULD_SKIP_THIS
 
 /// @cond
     /** Experimental support for getting temporary FBOs for this context.
@@ -252,7 +256,7 @@ namespace Luminous
       @arg rgba color of the spline
       @arg step step to use when evaluating the spline
     */
-    void drawSpline(Nimble::Splines::Interpolating & spline, float width, const float * rgba=0, float step=1.0f);
+    void drawSpline(Nimble::Interpolating & spline, float width, const float * rgba=0, float step=1.0f);
     /** Draw a textured rectangle with given color.
 
         @arg size The size of the rectangle to be drawn.
@@ -306,7 +310,6 @@ namespace Luminous
         On some platforms this call may return null.
         */
     MULTI_ATTR_DEPRECATED(Luminous::GLContext * glContext());
-
 
   private:
     void drawCircleWithSegments(Nimble::Vector2f center, float radius, const float *rgba, int segments);
