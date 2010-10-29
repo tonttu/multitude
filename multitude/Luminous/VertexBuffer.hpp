@@ -96,9 +96,9 @@ namespace Luminous
         void allocate(size_t bytes, Usage usage);
 
         /// Binds the vertex buffer
-        void bind() const;
+        void bind();
         /// Unbinds any vertex buffers
-        void unbind() const;
+        void unbind();
 
         /// Fills the vertex buffer with data
         void fill(void * data, size_t bytes, Usage usage);
@@ -111,6 +111,7 @@ namespace Luminous
         void unmap();
 
         /// Returns the OpenGL handle for the buffer
+        /** This function should be used with care, since it may break the OpenGL state tracking. */
         GLuint handle() const { return m_bufferId; }
 
         /** Returns the current number of filled bytes in the boffer. */
@@ -119,11 +120,8 @@ namespace Luminous
         /// OpenGL handle for the vertex buffer
         GLuint m_bufferId;
         size_t m_filled;
-
-        GLuint m_mapBindedBuffer;
-
-        /// Currently binded buffer, or 0 if no buffer is binded
-        static GLuint s_bindedBuffer;
+        /// Is the buffer bound or not
+        bool   m_bound;
     };
 
   /// An OpenGL vertex buffer

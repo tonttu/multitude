@@ -229,7 +229,6 @@ namespace Poetic
 
       GPUFontBase::internalRender(str+used, use, trans, &ptr);
 
-
       glVertexPointer(2, GL_FLOAT, vertexSize, &tmp[0]);
       glTexCoordPointer(2, GL_FLOAT, vertexSize, &tmp[1]);
       glDrawArrays(GL_QUADS, 0, 4 * use);

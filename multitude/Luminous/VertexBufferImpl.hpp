@@ -19,8 +19,6 @@
 
 #include <Radiant/Trace.hpp>
 
-template <GLenum type>
-GLuint Luminous::BufferObject<type>::s_bindedBuffer = 0;
 
 namespace Luminous
 {
@@ -30,7 +28,7 @@ namespace Luminous
   BufferObject<type>::BufferObject(Luminous::GLResources * resources)
     : GLResource(resources),
     m_filled(0),
-    m_mapBindedBuffer(0)
+    m_bound(false)
   {
     // info("BufferObject<type>::BufferObject # %p", this);
     glGenBuffers(1, &m_bufferId);
@@ -52,67 +50,58 @@ namespace Luminous
   }
 
   template<GLenum type>
-  void BufferObject<type>::bind() const
+  void BufferObject<type>::bind()
   {
     glBindBuffer(type, m_bufferId);
-    s_bindedBuffer = m_bufferId;
+    m_bound = true;
   }
 
   template<GLenum type>
-  void BufferObject<type>::unbind() const
+  void BufferObject<type>::unbind()
   {
     glBindBuffer(type, 0);
-    s_bindedBuffer = 0;
+    m_bound = false;
   }
 
   template<GLenum type>
   void BufferObject<type>::fill(void * data, size_t bytes, Usage usage)
   {
     m_filled = bytes;
-    GLuint current = s_bindedBuffer;
-    if(current != m_bufferId)
-      bind();
+
+    if(!m_bound)
+      glBindBuffer(type, m_bufferId);
+
     if(bytes)
       glBufferData(type, bytes, data, usage);
-    if(current != m_bufferId) {
-      glBindBuffer(type, current);
-      s_bindedBuffer = current;
-    }
+
+    if(!m_bound)
+      glBindBuffer(type, 0);
   }
 
   template<GLenum type>
   void BufferObject<type>::partialFill(size_t offsetInBytes, void * data, size_t bytes)
   {
-    GLuint current = s_bindedBuffer;
-    if(current != m_bufferId)
-      bind();
+    if(!m_bound)
+      glBindBuffer(type, m_bufferId);
+
     glBufferSubData(type, offsetInBytes, bytes, data);
     m_filled = Nimble::Math::Max(m_filled, offsetInBytes + bytes);
-    if(current != m_bufferId) {
-      glBindBuffer(type, current);
-      s_bindedBuffer = current;
-    }
+
+    if(!m_bound)
+      glBindBuffer(type, 0);
   }
 
   template<GLenum type>
   void * BufferObject<type>::map(AccessMode mode)
   {
-    m_mapBindedBuffer = s_bindedBuffer;
-    if(m_mapBindedBuffer != m_bufferId)
-      bind();
+    bind();
     return glMapBuffer(type, mode);
   }
 
   template<GLenum type>
   void BufferObject<type>::unmap()
   {
-    if(s_bindedBuffer != m_bufferId)
-      bind();
     glUnmapBuffer(type);
-    if(s_bindedBuffer != m_mapBindedBuffer) {
-      glBindBuffer(type, m_mapBindedBuffer);
-      s_bindedBuffer = m_mapBindedBuffer;
-    }
   }
 
 }
