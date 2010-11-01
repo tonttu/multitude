@@ -191,21 +191,22 @@ namespace Valuable
     friend class ValueObject; // So that ValueObject can call the function below.
 
     void childRenamed(const std::string & was, const std::string & now);
+    void addNews();
 
     container m_children;
 
     class ValuePass {
     public:
-      ValuePass() : m_listener(0) {}
+      ValuePass() : m_listener(0), m_valid(true), m_frame(-1) {}
 
-      inline bool operator == (const ValuePass & that) const
-      { return (m_listener == that.m_listener) && (m_from == that.m_from) &&
-      (m_to == that.m_to); }
+      inline bool operator == (const ValuePass & that) const;
 
       Valuable::HasValues * m_listener;
       Radiant::BinaryData   m_defaultData;
       std::string m_from;
       std::string m_to;
+      bool        m_valid;
+      int         m_frame;
     };
 
     typedef std::list<ValuePass> Listeners;
@@ -216,6 +217,8 @@ namespace Valuable
     bool m_eventsEnabled;
 
     Valuable::ValueIntT<Uuid> m_id;
+    // For invalidating the too new ValuePass objects
+    int m_frame;
   };
 
 }
