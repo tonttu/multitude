@@ -27,9 +27,9 @@
 
 namespace Nimble {
 
-  /// Mathematics functions and constants for Nimble.
-  /** This namespace contains mathematics constants (pi, ln2 etc.) and
-      basic functions. */
+  /** Math functions and constants for Nimble.
+      This namespace contains mathematics constants (pi, ln2 etc.) and
+      basic functions. **/
   namespace Math
   {
     // Constants:
