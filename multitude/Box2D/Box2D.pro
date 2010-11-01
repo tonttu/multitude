@@ -2,6 +2,8 @@ include(../multitude.pri)
 
 CONFIG -= qt
 
+win32:CONFIG += staticlib
+
 S1 += Collision/b2BroadPhase.cpp \
   Collision/b2CollideCircle.cpp \
   Collision/b2CollidePolygon.cpp \
