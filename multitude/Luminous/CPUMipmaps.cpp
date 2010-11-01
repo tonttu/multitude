@@ -40,8 +40,6 @@ namespace Luminous {
 
   using namespace Radiant;
 
-  // static int __count = 0;
-
   CPUMipmaps::CPUMipmaps()
     : m_fileModified(0),
     m_stack(1),
@@ -52,14 +50,10 @@ namespace Luminous {
     m_timeOut(3.0f),
     m_keepMaxLevel(true)
   {
-    // __count++;
   }
 
   CPUMipmaps::~CPUMipmaps()
   {
-    /* __count--;
-    info("CPUMipmaps::~CPUMipmaps # %d", __count);
-    */
   }
 
   void CPUMipmaps::update(float dt, float )
