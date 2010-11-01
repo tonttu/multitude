@@ -46,11 +46,16 @@ namespace Radiant
           @param front If true, then the new path is placed in front of the path list, and
           future searches will start from it. Otherwise the new path is placed at the end
           of the path list.
-
        */
       void addPath(const std::string & path, bool front = false);
-      /** @copydoc addPath*/
-      /// @param module The name of the module for which we are looking for some data.
+      /** @copybrief addPath
+
+          @param module The name of the module for which we are looking for some data.
+
+          @param front If true, then the new path is placed in front of the path list, and
+          future searches will start from it. Otherwise the new path is placed at the end
+          of the path list.
+      **/
       void addModuleDataPath(const std::string & module, bool front = false);
 
       /// Locate a file
