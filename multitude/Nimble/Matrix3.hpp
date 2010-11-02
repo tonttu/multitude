@@ -52,7 +52,8 @@ namespace Nimble {
     const Vector3T<T>& row(int i) const       { return m[i]; }
     /// Returns one column of the matrix
     /** As the matrix is is of row-major type, this method returns a
-    copy of the values of the column. */
+    copy of the values of the column.
+    @param i column number */
     Vector3T<T>        column(int i) const    { return Vector3T<T>(m[0][i],m[1][i],m[2][i]); }
     /// Returns the ith row
     Vector3T<T>&       operator[](int i)      { return row(i); }
@@ -473,7 +474,8 @@ namespace Nimble {
 
   }
 
-  /** this = this * that. */
+  /** Assign multiplication
+  @param that matrix to multiply with */
   template <class T>
   inline Matrix3T<T>& Matrix3T<T>::operator*= (const Matrix3T<T>& that)
   {
@@ -584,6 +586,7 @@ inline Nimble::Vector3T<T> operator*(const Nimble::Vector3T<T>& m2,
 }
 
 /// Insert a 2x2 matrix to the upper-left corner of the 3x3 matrix
+/// @param b matrix to insert
 template<class T>
 inline void Matrix3T<T>::insert(const Matrix2T<T>& b)
 {

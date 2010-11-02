@@ -68,6 +68,7 @@ namespace Nimble {
     /// void               setDiagonal(const Vector3T<T> &v) { m[0][0] = v[0]; m[1][1] = v[1]; m[2][2] = v[2]; m[3][3] = (T) 1.0; }
 
     /// Returns the ith row
+    /// @param i row number
     Vector4T<T>&       operator[](int i)      { return row(i); }
     /// Returns the ith row
     const Vector4T<T>& operator[](int i) const{ return row(i); }
@@ -132,6 +133,8 @@ namespace Nimble {
 
     /// @todo duplicates (makeTranslation vs. translate3D)
     /// Create a rotation matrix
+    /// @param radians angle in radians
+    /// @param axis axis to rotate around
     static Matrix4T<T> makeRotation(T radians, const Vector3T<T> & axis);
     /// Create a translation matrix
     static Matrix4T<T> makeTranslation(const Vector3T<T> & v);
@@ -231,8 +234,8 @@ namespace Nimble {
   }
 
   /** Inverts the matrix. The boolean argument is set to true or false
-      depending on how well the operation went. */
-
+      depending on how well the operation went.
+  @param ok (optional) false if the inversion fails, otherwise true */
   template <class T>
   Matrix4T<T> Matrix4T<T>::inverse(bool * ok) const
   {
