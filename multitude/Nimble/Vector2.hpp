@@ -172,6 +172,8 @@ namespace Nimble {
   }
 */
   /// Compute the dot product of two vectors
+  /// @param t1 first dot product vector
+  /// @param t2 second dot product vector
   template <class T>
   inline float dot(const Vector2T<T> &t1, const Vector2T<T> &t2)
   {
