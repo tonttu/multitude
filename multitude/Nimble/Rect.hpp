@@ -173,6 +173,7 @@ namespace Nimble {
     inline void shrinkRelative(float xs, float ys);
     /// Increases the size of the rectangle uniformly
     /// @todo duplicate with smaller() mostly (make a single function that works with negative values)
+    /// @param add amount to enlarge
     inline void increaseSize(T add)
     { m_low.x -= add; m_low.y -= add; m_high.x += add; m_high.y += add; }
 
