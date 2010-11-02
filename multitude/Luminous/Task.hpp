@@ -94,7 +94,8 @@ namespace Luminous
       /// Schedule the next execution time for this task
       void scheduleFromNow(Radiant::TimeStamp wait)
       { m_scheduled = Radiant::TimeStamp::getTime() + wait; }
-      /// @copydoc scheduleFromNow
+      /// @copybrief scheduleFromNow
+      /// @param seconds number of seconds before next execution
       void scheduleFromNowSecs(double seconds)
       { m_scheduled = Radiant::TimeStamp::getTime() +
           Radiant::TimeStamp::createSecondsD(seconds); }
