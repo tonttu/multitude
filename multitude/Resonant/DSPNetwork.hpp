@@ -86,7 +86,7 @@ namespace Resonant {
         }
       }
 
-      /// Allocates #Module::MAX_CYCLE samples for buffer space
+      /// Allocates #Resonant::Module::MAX_CYCLE samples for buffer space
       void init() { allocate(Module::MAX_CYCLE); }
 
       /// Frees the buffer data
@@ -158,7 +158,7 @@ namespace Resonant {
     public:
       Item();
       ~Item();
-      /// Sets the DSP #Module that this Item contains.
+      /// Sets the DSP #Resonant::Module that this Item contains.
       void setModule(Module *m) { m_module = m; }
       /// Returns a pointer to the DSP module
       Module * module() { return m_module; }
@@ -221,7 +221,7 @@ namespace Resonant {
     */
     bool start(const char * device = 0);
 
-    /// Adds a DSP #Module to the signal processing graph
+    /// Adds a DSP #Resonant::Module to the signal processing graph
     /** This function does not perform the actual addition, but puts the module into a FIFO,
         for the signal processing thread. */
     void addModule(Item &);
@@ -232,7 +232,7 @@ namespace Resonant {
     /** Send binary control data to the DSP network.
         When sending messages, the BinaryData object should contain an identifier string
         in the beginning. The DSPNetwork will read this string, and pass the command to the
-        corresponding #Module. Typical example of use could be:
+        corresponding #Resonant::Module. Typical example of use could be:
 
         \code
 Radiant::BinaryData control;
