@@ -92,7 +92,9 @@ template <typename T>
       return r;
     }
 
-    /** Intersection between two lines, with the lines being treated as infinite lines. */
+    /** Tests for intersection with a given line.
+    @param that line to test against
+    @param point (optional) intersection point if found */
     inline bool intersectsInfinite(const LineSegment2T & that,
                                    Vector2T<T> * point) const
     {
