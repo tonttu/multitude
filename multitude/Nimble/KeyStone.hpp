@@ -218,7 +218,8 @@ namespace Nimble {
     /// Returns the extension (fine-tuning) matrix
     const Nimble::Matrix3 & outputExtension() const { return m_matrixExtension;}
     /// Sets the extension (fine-tuning) matrix
-    /** By default the extension matrix is set to identity. */
+    /** By default the extension matrix is set to identity.
+    @param m extension matrix */
     void setOutputExtension(const Nimble::Matrix3 & m);
 
     /// Returns the extra pixels around the edges
@@ -249,7 +250,8 @@ namespace Nimble {
 
     /// Calculates the projection matrix.
     /** See Paul Heckbert's master's thesis, pages 19-21. Often you
-        need to invert this. */
+        need to invert this.
+    @param vertices an array of four corner vertices */
     static Nimble::Matrix3 projectionMatrix(const Nimble::Vector2 * vertices);
 
   private:
