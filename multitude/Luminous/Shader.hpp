@@ -49,10 +49,13 @@ namespace Luminous {
         the program.
 
         It is safe to call this method without a valid OpenGL context.
+
+        @param shadercode shader source code
     */
     LUMINOUS_API void setFragmentShader(const char * shadercode);
     /** Loads a fragment shader from a file.
 
+        @param filename name of the file to load
         @return Returns true if the file was read successfully. Note that
         this does not necessarily mean that the shader works, as the shader is not
         compiled in this stage.
@@ -61,15 +64,18 @@ namespace Luminous {
     bool loadFragmentShader(const std::string & filename)
     { return loadFragmentShader(filename.c_str()); }
 
-    /** Sets the source code for the vertex shader. */
+    /** Sets the source code for the vertex shader.
+    @param shadercode shader source code */
     LUMINOUS_API void setVertexShader(const char * shadercode);
-    /** Loads a vertex shader source code from a file. */
+    /** Loads a vertex shader source code from a file.
+    @param filename name of the file to load */
     LUMINOUS_API bool loadVertexShader(const char * filename);
     bool loadVertexShader(const std::string & filename)
     { return loadVertexShader(filename.c_str()); }
 
     LUMINOUS_API void setGeometryShader(const char * shadercode);
-    /** Loads a geometry shader source code from a file. */
+    /// Loads a geometry shader source code from a file.
+    /// @param filename name of the source code filename
     LUMINOUS_API bool loadGeometryShader(const char * filename);
     bool loadGeometryShader(const std::string & filename)
     { return loadGeometryShader(filename.c_str()); }
@@ -80,7 +86,8 @@ namespace Luminous {
     /** Unbinds the shader. */
     LUMINOUS_API void unbind();
 
-    /** Returns a non-compiled OpenGL shader program. */
+    /** Returns a non-compiled OpenGL shader program.
+    @param res resource container to associate the shader program with */
     LUMINOUS_API GLSLProgramObject * program(Luminous::GLResources * res = 0);
 
     // Adds a ValueObject as a shader attribute
