@@ -55,7 +55,8 @@ namespace Nimble {
 
     /// Adds the histogram bin "index" by one
     /** It is ok to exceed the array towards top - i.e. index exceeds
-          the histogram bin count. */
+          the histogram bin count.
+    @param index bin index */
     void putSafe(int index)
     {
       if(index < N)
@@ -65,7 +66,9 @@ namespace Nimble {
       m_count++;
     }
 
-    /** It is ok to exceed the array towards any direction. */
+    /** Adds the histogram bin by one.
+    It is ok to exceed the array towards any direction.
+    @param index bin index */
     void putSafest(int index)
     {
       if(index >= N)
