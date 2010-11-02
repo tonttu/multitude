@@ -235,8 +235,8 @@ namespace Luminous {
       /// Resize the window, and automatically one child area
       /** This method is used when the window contains only one child
           area, and automatially changes the size of the area to match
-          the area of the window. */
-
+          the area of the window.
+      @param size new window size */
       LUMINOUS_API void resizeEvent(Vector2i size);
 
       /// Number of areas that this window holds
@@ -318,12 +318,16 @@ namespace Luminous {
     LUMINOUS_API size_t areaCount();
     /// Access the areas
     /** This method traverses all the windows to find the area with
-    given index. */
-    LUMINOUS_API Area & area(size_t i, Window ** winptr = 0);
+    given index.
+    @param index window index to look for
+    @param winptr pointer to a window if the area is found
+    @return area with the given index or the first area if no match is found */
+    LUMINOUS_API Area & area(size_t index, Window ** winptr = 0);
 
-    /// The number of windows
+    /// Returns the number of windows
     size_t windowCount() const { return m_windows.size(); }
-    /// Access one of the windows
+    /// Access the ith window
+    /// @param i window index
     LUMINOUS_API Window & window(size_t i);
     /// @copydoc window
     LUMINOUS_API const Window & window(size_t i) const;
