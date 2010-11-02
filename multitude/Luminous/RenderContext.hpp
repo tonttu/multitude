@@ -260,34 +260,45 @@ namespace Luminous
     /** Draw a textured rectangle with given color.
 
         @param size The size of the rectangle to be drawn.
-
         @param rgba The color in RGBA format. If the argument is null,
         then it will be ignored.
     */
     void drawTexRect(Nimble::Vector2 size, const float * rgba);
-    /// @copydoc drawTexRect
-    /// @param texUV The maximum texture coordinate values
+    /** @copybrief drawTexRect
+
+        @param size The size of the rectangle to be drawn.
+        @param rgba The color in RGBA format. If the argument is null,
+               then it will be ignored.
+        @param texUV The maximum texture coordinate values **/
     void drawTexRect(Nimble::Vector2 size, const float * rgba,
                      const Nimble::Rect & texUV);
-    /// @copydoc drawTexRect(Nimble::Vector2 size, const float * rgba, const Nimble::Rect & texUV)
-    /// @param area The rectangle to draw.
+    /** @copybrief drawTexRect
+    @param area The rectangle to draw.
+    @param rgba The color in RGBA format. If the argument is null,
+           then it will be ignored.
+    @param texUV The maximum texture coordinate values **/
     void drawTexRect(const Nimble::Rect & area, const float * rgba,
                      const Nimble::Rect & texUV);
-    /// @copydoc drawTexRect
-    /// @param area The rectangle to draw.
-    /** @param texUV Array of texture coordinates for multitexturing.
-        @param uvCount The number of texture coordinates to fill.
-    */
+    /** @copybrief drawTexRect
+    @param area The rectangle to draw.
+    @param rgba The color in RGBA format. If the argument is null,
+           then it will be ignored.
+    @param texUV Array of texture coordinates for multitexturing.
+    @param uvCount The number of texture coordinates to fill.**/
     void drawTexRect(const Nimble::Rect & area, const float * rgba,
                      const Nimble::Rect * texUV, int uvCount);
-    /// @copydoc drawTexRect
-    /// @param texUV The maximum texture coordinate values
+    /** @copybrief drawTexRect
+        @param size The size of the rectangle to be drawn.
+        @param rgba The color in RGBA format. If the argument is null,
+               then it will be ignored.
+        @param texUV The maximum texture coordinate values **/
     void drawTexRect(Nimble::Vector2 size, const float * rgba,
                      Nimble::Vector2 texUV);
-    /// @copydoc drawTexRect
-    /// @param area The rectangle to drawn
+    /** @copybrief drawTexRect
+        @param rgba The color in RGBA format. If the argument is null,
+               then it will be ignored.
+        @param area The rectangle to drawn **/
     void drawTexRect(const Nimble::Rect & area, const float * rgba);
-
     /// Sets the current blend function, and enables blending
     /** If the function is BLEND_NONE, then blending is disabled. */
     void setBlendFunc(BlendFunc f);

@@ -36,7 +36,8 @@ namespace Valuable
 
   inline bool HasValues::ValuePass::operator == (const ValuePass & that) const
   {
-    return m_valid && (m_listener == that.m_listener) && (m_from == that.m_from) &&
+    return m_valid && that.m_valid &&
+        (m_listener == that.m_listener) && (m_from == that.m_from) &&
         (m_to == that.m_to);
   }
 
