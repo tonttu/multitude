@@ -64,7 +64,8 @@ namespace Luminous {
     /// Selects the closest vertex
     /** This function is used to select the vertex, so that it can be
     moved later on with moveLastVertex. This function is typically
-    used by keystone calibration GUI. */
+    used by keystone calibration GUI.
+    @param loc vertex to select*/
     void selectVertex(Nimble::Vector2 loc);
     /// Moves the index of the selected vertex by one.
     void selectNextVertex()
@@ -93,10 +94,13 @@ namespace Luminous {
     /** Returns the OpenGL keystone matrix. */
     const Nimble::Matrix4 & matrix() const { return m_matrix; }
     /** Projects the vector v using internal matrix, WITHOUT applying
-    perspective correction. */
+    perspective correction.
+    @param v vector to project*/
     Nimble::Vector4 project(Nimble::Vector2 v);
     /** Projects the vector v using matrix m, applying perspective
-    correction. */
+    correction.
+    @param m projection matrix
+    @param v vector to project*/
     static Nimble::Vector4 projectCorrected(const Nimble::Matrix4 & m,
                         Nimble::Vector2 v);
     /// Applies the keystone matrix to the current OpenGL context

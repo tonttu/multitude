@@ -191,6 +191,7 @@ namespace Luminous
 
   bool GLResources::canUseGPUBandwidth(float priority)
   {
+    /// @todo why?
     return true;
 
     // Overriding priority: Always go.

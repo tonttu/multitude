@@ -48,8 +48,10 @@ namespace Luminous
     /// Loads the source for the shader from a given file
     bool loadSourceFile(const char* filename);
 
-    /// Create a ne shader object from a file
-    /** @return A compiled shader object, or NULL (if it could not be compiled). */
+    /** Creates and loads a shader object from a file and compiles it.
+    @param type type of the shader
+    @param filename name of the source code file
+    @return A compiled shader object, or NULL (if it could not be compiled). */
     static GLSLShaderObject * fromFile(GLenum type, const char* filename);
 
   private:

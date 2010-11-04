@@ -86,12 +86,18 @@ namespace Luminous
     /// Check if a file is readable, and returns its core information
     static bool ping(const char * filename, ImageInfo & info);
 
-    /** Read a file to this Image object. */
+    /** Read a file to this Image object.
+    @param filename name of the file to read from */
     bool read(const char * filename);
-    /** Write this Image to a file. */
+    /** Write this Image to a file.
+    @param filename name of the file to write to */
     bool write(const char * filename);
 
-    /** Create an image object from data provided by the user. */
+    /** Create an image object from data provided by the user.
+    @param bytes pointer to image data
+    @param width width of the image data
+    @param height height of the image data
+    @param format pixel format of the image data*/
     void fromData(const unsigned char * bytes, int width, int height,
           PixelFormat format);
 
@@ -108,14 +114,20 @@ namespace Luminous
     void flipVertical();
 
     /** Resample a source image using straightforward bilinear
-    interpolation. */
+    interpolation.
+    @param source image to resample
+    @param w new width
+    @param h new height */
     bool copyResample(const Image & source, int w, int h);
 
-    /** Down-sample the image to quarter size. */
+    /** Down-sample the given image to quarter size.
+    @param source image to resample */
     bool quarterSize(const Image & source);
-    /** Remove pixels from the right edge of the image. */
+    /** Remove pixels from the right edge of the image.
+    @param n number of pixels to remove */
     bool forgetLastPixels(int n);
-    /** Remove lines from the bottom of the image. */
+    /** Remove lines from the bottom of the image.
+    @param n number of lines to remove */
     void forgetLastLines(int n);
     /** Removes the last line from the image. */
     void forgetLastLine();
@@ -126,13 +138,15 @@ namespace Luminous
     void makeValidTexture();
     /** Returns true if the image has an alpha channel. */
     bool hasAlpha() const;
-    /** Copies the argument image to this image. */
+    /** Copies the argument image to this image.
+    @param img image to compare to */
     Image & operator = (const Image& img);
 
     /** Returns a pointer to the file-format codecs. */
     static CodecRegistry * codecs();
 
     /// Returns the alpha value [0,255] for the given relative coordinates in the image.
+    /// @param relativeCoord relative pixel coordinate x,y in [0,1]
     /// @return alpha of the given pixel or 255 if image does not have alpha channel
     unsigned char pixelAlpha(Nimble::Vector2 relativeCoord) const;
 
@@ -140,7 +154,9 @@ namespace Luminous
     void zero();
 
     /// Gets the color of a given pixel.
-    /** The color is normalized, with each component in range 0-1. */
+    /** The color is normalized, with each component in range 0-1.
+    @param x pixel x coordinate
+    @param y pixel y coordinate */
     Nimble::Vector4 pixel(unsigned x, unsigned y);
 
     /// This function should be called when the image has been modified.

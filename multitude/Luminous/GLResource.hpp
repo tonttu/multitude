@@ -129,7 +129,8 @@ namespace Luminous
     GLResources * resources() { return m_resources; }
 
     /** Change the current resource host. This function can only be
-      called once. */
+      called once.
+    @param resources new resource host*/
     virtual void setResources(GLResources * resources);
 
     /// Returns the number of bytes this object consumes at the moment

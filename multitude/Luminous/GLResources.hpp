@@ -75,7 +75,9 @@ namespace Luminous
     /// Tell the resource manager that byte consumption was changed
     /** Individual resource objects should call this function when
       their byte consumption changes. A typical example might be a
-      texture object that is resized, or gets new mipmaps. */
+      texture object that is resized, or gets new mipmaps.
+      @param deallocated number of bytes released
+      @param allocated number of bytes allocated*/
     void changeByteConsumption(long deallocated, long allocated);
 
     /// Total number of bytes used on the GPU
@@ -94,14 +96,19 @@ namespace Luminous
     /// Checks if one is allowed to load more material to the GPU
     /** Different upload needs have a different priority. Video frames typically
         must hit the display pretty much instantly, while some other things
-        (very high-res images for example) might not be such a hurry. */
+        (very high-res images for example) might not be such a hurry.
+        @param priority to check
+        @returns true if bandwidth can be used
+        @todo always returns true
+    */
     bool canUseGPUBandwidth(float priority = 50.0f);
 
     /// Delete the given resource after certain number of frames have passed
     /// (negative value means to never delete)
     void deleteAfter(GLResource * resource, int frames);
 
-    /** Sets the threshold for deleting old objects from GPU memory. */
+    /** Sets the threshold for deleting old objects from GPU memory.
+    @param bytes number of bytes that can be safely consumed*/
     void setComfortableGPURAM(long bytes)
     { m_comfortableGPURAM = bytes; }
 

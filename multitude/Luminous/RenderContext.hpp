@@ -124,9 +124,13 @@ namespace Luminous
 /// @endcond
 
     /// Constructs a new render context and associates the given resources to it
+    /// @param resources OpenGL resource container to associate with the context
+    /// @param window window to associate this context with
     RenderContext(Luminous::GLResources * resources, const Luminous::MultiHead::Window * window);
     virtual ~RenderContext();
 
+    /// Sets the associated window for this context
+    /// @param window window to associate
     void setWindow(const Luminous::MultiHead::Window * window);
 
     /// Returns the resources of this context
@@ -142,6 +146,7 @@ namespace Luminous
 
     /// Sets the rendering recursion limit for the context. This is relevant
     /// for ViewWidgets which can cause recursive rendering of the scene.
+    /// @param limit recursion depth limit
     void setRecursionLimit(size_t limit) ;
     /// Returns the recursion limit
     size_t recursionLimit() const;
@@ -173,10 +178,15 @@ namespace Luminous
 
     // Render functions:
 
-    /** Draw a line rectangle, with given thickness and color. */
+    /** Draw a rectangle outline with given thickness and color.
+    @param rect rectangle to draw
+    @param thickness thickness of the outline
+    @param rgba color of the outline */
     void drawLineRect(const Nimble::Rectf & rect, float thickness, const float * rgba);
-    /** Draws a solid (antialiased) rectangle, with given color. If textures are active,
-        the rectangle is filled with the current texture */
+    /** Draws a solid, anti-aliased rectangle, with given color. If textures are active,
+        the rectangle is filled with the current texture modulated by the given color.
+    @param rect rectangle to draw
+    @param rgba fill color */
     void drawRect(const Nimble::Rectf & rect, const float * rgba);
 
     /** Draws a solid, antialiased circle
@@ -187,7 +197,6 @@ namespace Luminous
         @param rgba The color of the circle in RGBA format
 
         @param segments Number of segments used in the circle. Deprecated, specifying segments will actually slow rendering.
-
     */
     void drawCircle(Nimble::Vector2f center, float radius,
                     const float * rgba, int segments = -1);
@@ -300,7 +309,8 @@ namespace Luminous
         @param area The rectangle to drawn **/
     void drawTexRect(const Nimble::Rect & area, const float * rgba);
     /// Sets the current blend function, and enables blending
-    /** If the function is BLEND_NONE, then blending is disabled. */
+    /** If the function is BLEND_NONE, then blending is disabled.
+    @param f blend function */
     void setBlendFunc(BlendFunc f);
     /// Enables the current blend mode defined with setBlendFunc
     void useCurrentBlendMode();
@@ -329,6 +339,7 @@ namespace Luminous
     /** This function is seldom necessary, and its use is deprecated and unsupported.
         On some platforms this call may return null.
         */
+    /// @internal
     MULTI_ATTR_DEPRECATED(Luminous::GLContext * glContext());
 
   private:

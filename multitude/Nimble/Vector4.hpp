@@ -49,6 +49,7 @@ namespace Nimble {
     template <class S> Vector4T(const Vector4T<S>& v)	       { x = (T)v.x;   y = (T)v.y;  z = (T)v.z;  w = (T) v.w; }
     /// @todo remove the conversion (make static functions)
     /// Constructs a vector from memory
+    /// @param v array of four decimals
     template <class S> Vector4T(const S * v)	               { x = (T)v[0];  y = (T)v[1]; z = (T)v[2]; w = (T) v[3]; }
     //template <class S> Vector4T& operator=(const Vector4T<S>& v) { x = (T)v.x; y = (T)v.y; z = (T)v.z; w = (T) v.w; return *this; }
     /// Fills the vector with zeroes
@@ -118,7 +119,8 @@ namespace Nimble {
     /// Copy some data
     template <class S>
     void copy(const S * data) { x = data[0]; y = data[1]; z = data[2]; w = data[3]; }
-    /** Copies three elements without affecting the fourth element. */
+    /** Copies three elements without affecting the fourth element.
+    @param data array of three decimals */
     template <class S>
     void copy3(const S * data) { x = data[0]; y = data[1]; z = data[2]; }
   };
