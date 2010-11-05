@@ -20,6 +20,7 @@
 #include <Radiant/Platform.hpp>
 
 #ifdef RADIANT_OSX
+// We do not use GLEW on OSX
 #define MULTI_WITHOUT_GLEW 1
 #endif
 
@@ -40,17 +41,13 @@
 #include <GL/glew.h>
 #endif
 
-/// Luminous library is a collection of C++ classes for computer graphics, using OpenGL.
-
-/** \b Copyright: The Luminous library has been developed in Helsinki
+/// Luminous is a library of C++ classes for computer graphics, using OpenGL.
+/** Copyright: The Luminous library has been developed in Helsinki
     Institute for Information Technology (HIIT, 2006-2008) and
     MultiTouch Oy (2007-2008).
 
     Luminous is released under the GNU Lesser General Public License
     (LGPL), version 2.1.
-
-    @author Tommi Ilmonen, Esa Nuuros
-
 */
 namespace Luminous
 {
