@@ -63,7 +63,7 @@ namespace Luminous {
       /// Constructs a new area for the given window
       LUMINOUS_API Area(Window * window = 0);
       LUMINOUS_API virtual ~Area();
-
+      /// Deserializes this area from an archive element
       LUMINOUS_API bool deserialize(Valuable::ArchiveElement & element);
 
       /// Sets the geometry (size & offset) of the area
@@ -110,6 +110,7 @@ namespace Luminous {
       /// Blends the edges defined by seams
       LUMINOUS_API void cleanEdges() const;
 
+      /// Returns the type name for areas (="area").
       virtual const char * type() const { return "area"; }
 
       /// Returns the keystone correction
