@@ -55,6 +55,15 @@ namespace Radiant {
         delete [] m_data;
     }
 
+    /// Resizes this grid, by allocating new memory as necessary
+    /** Any old data will be lost in this function call.
+
+        If the number of elements in the grid stays the same, then only the
+        dimensions of the grid are updated, but not the contents.
+
+        @param w The new width of the grid
+        @param h The new height of the grid
+    */
     void resize(unsigned w, unsigned h)
     {
       unsigned s = w * h;
@@ -74,6 +83,8 @@ namespace Radiant {
         m_data = 0;
     }
 
+    /// Resizes the grid
+    /// @see resize(unsigned w, unsigned h)
     void resize(Nimble::Vector2i size) { resize(size.x, size.y); }
 
     /** frees up the memory, and sets the width and height of this
@@ -328,6 +339,7 @@ namespace Radiant {
     void copyFast(const S & that)
     { memcpy(this->m_data, that.data(), sizeof(T) * size()); }
 
+    /// Swaps the contents between this grid, and the other grid
     template <typename S>
         void swap(S & that)
     {

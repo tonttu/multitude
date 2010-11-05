@@ -74,6 +74,7 @@ namespace Radiant {
     /// This function is thread-safe.
     bool running() const;
 
+    /// Wakes all threads to perform their duties
     virtual void wakeAll();
 
     /// Every time when we want to delete a thread, this condition variable

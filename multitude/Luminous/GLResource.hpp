@@ -146,6 +146,12 @@ namespace Luminous
         Default implementation returns false. */
     bool persistent() { return m_deleteOnFrame == PERSISTENT; }
 
+    /// Makes this resource persistent
+    /** Generally #GLResource objects are deleted if they are not used for a given number of frames.
+        By making the objects persistent this can be avoided.
+
+        @param b If true this #GLResource will not be deleted based on the timeout parameters.
+    */
     void setPersistent(bool b);
 
   protected:

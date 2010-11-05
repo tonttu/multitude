@@ -50,7 +50,7 @@ namespace Luminous {
 
         It is safe to call this method without a valid OpenGL context.
 
-        @param shadercode shader source code
+        @param shadercode Shader source code
     */
     LUMINOUS_API void setFragmentShader(const char * shadercode);
     /** Loads a fragment shader from a file.
@@ -61,22 +61,27 @@ namespace Luminous {
         compiled in this stage.
     */
     LUMINOUS_API bool loadFragmentShader(const char * filename);
+    /// @copydoc loadFragmentShader(const char * filename);
     bool loadFragmentShader(const std::string & filename)
     { return loadFragmentShader(filename.c_str()); }
 
     /** Sets the source code for the vertex shader.
-    @param shadercode shader source code */
+    @param shadercode Shader source code */
     LUMINOUS_API void setVertexShader(const char * shadercode);
     /** Loads a vertex shader source code from a file.
     @param filename name of the file to load */
     LUMINOUS_API bool loadVertexShader(const char * filename);
+    /// @copydoc loadVertexShader(const char * filename);
     bool loadVertexShader(const std::string & filename)
     { return loadVertexShader(filename.c_str()); }
 
+    /** Sets the source code for the geometry shader.
+    @param shadercode Shader source code */
     LUMINOUS_API void setGeometryShader(const char * shadercode);
     /// Loads a geometry shader source code from a file.
     /// @param filename name of the source code filename
     LUMINOUS_API bool loadGeometryShader(const char * filename);
+    /// @copydoc loadGeometryShader(const char * filename);
     bool loadGeometryShader(const std::string & filename)
     { return loadGeometryShader(filename.c_str()); }
 

@@ -67,12 +67,15 @@ namespace Resonant {
     container m_map;
   };
 
+  /// @cond
   inline bool operator == (const ModuleOutCollect::Move & a,
-               const ModuleOutCollect::Move & b)
+                           const ModuleOutCollect::Move & b)
   {
     return (a.from == b.from)  && (a.to == b.to) &&
       (strcmp(a.sourceId, b.sourceId) == 0);
   }
+
+  /// @endcond
 }
 
 #endif

@@ -102,6 +102,9 @@ namespace Radiant
     /// Returns seconds from epoch, 0 in case of error
     RADIANT_API unsigned long int lastModified(const std::string & filePath);
 
+    /// Adds indentation space to the given stream
+    /** This function is typically used when writing object hierarchies for
+        human-readable output. */
     RADIANT_API void indent(FILE * f, int levels);
   }
 }

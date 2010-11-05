@@ -29,6 +29,7 @@ namespace Valuable
   class VALUABLE_API ConfigDocument
   {
   public:
+    /// Creates an empty ConfigDocument object
     ConfigDocument(void);
     virtual ~ConfigDocument(void);
 
@@ -75,7 +76,7 @@ namespace Valuable
   };
 
   /// Converts from text element to XML element
-  void VALUABLE_API convert(DOMDocument  & doc, DOMElement & to, const ConfigElement & from);  
+  void VALUABLE_API convert(DOMDocument  & doc, DOMElement & to, const ConfigElement & from);
   /// Converts from XML element to text element
   void VALUABLE_API convert(ConfigElement & to, DOMElement from);
 

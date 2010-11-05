@@ -151,6 +151,7 @@ namespace Nimble {
     /// Returns the surface area of the rectangle
     inline T area() const { Vector2T<T> s(size()); return s.x * s.y; }
 
+    /// Calculates the intersection area of two rectangles.
     inline RectT intersection(const RectT &) const;
 
     /// Check if two rectangles intersect
@@ -184,6 +185,7 @@ namespace Nimble {
     */
     inline RectT quarter(int row, int col) const;
 
+    /// Check if two rectangles are identical
     inline bool operator == (const RectT<T> & o) const {
       return m_low == o.m_low && m_high == o.m_high;
     }

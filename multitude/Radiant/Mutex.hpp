@@ -106,11 +106,15 @@ namespace Radiant {
     class RADIANT_API MutexStatic : public Mutex
     {
     public:
-        MutexStatic(bool shared = false,
-                    bool prio_inherit = true,
-                    bool recursive = false)
-                      : m_shared(shared), m_prio_inherit(prio_inherit), m_recursive(recursive)
-        {}
+      /// Creates a mutex, without initializing it
+      /// @param shared Request a shared mutex
+      /// @param prio_inherit Request a mutex with priority inheritance
+      /// @param recursive Request a recursive mutex
+      MutexStatic(bool shared = false,
+                  bool prio_inherit = true,
+                  bool recursive = false)
+                    : m_shared(shared), m_prio_inherit(prio_inherit), m_recursive(recursive)
+      {}
 
       bool lock() { if(!m_active) init(m_shared, m_prio_inherit, m_recursive); return Mutex::lock(); }
       bool lock(bool b) { if(!m_active) init(m_shared, m_prio_inherit, m_recursive); return Mutex::lock(b); }
@@ -171,7 +175,7 @@ namespace Radiant {
     /// Constructs a new guard and locks the mutex
     GuardStatic(MutexStatic & mutex) : m_mutex(&mutex) { m_mutex->MutexStatic::lock(); }
 
-		/// Unlocks the mutex
+        /// Unlocks the mutex
     ~GuardStatic() { m_mutex->MutexStatic::unlock(); }
 
     private:

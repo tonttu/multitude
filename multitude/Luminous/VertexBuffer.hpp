@@ -89,6 +89,7 @@ namespace Luminous
           DYNAMIC_COPY = GL_DYNAMIC_COPY
         };
 
+        /// Creates an empty OpenGL buffer object.
         BufferObject(Luminous::GLResources * resources = 0);
         virtual ~BufferObject();
 
@@ -120,7 +121,7 @@ namespace Luminous
 
         /** @return Returns the current number of filled bytes in the boffer. */
         size_t filled() const { return m_filled; }
-      protected:
+      private:
         /// OpenGL handle for the vertex buffer
         GLuint m_bufferId;
         size_t m_filled;
@@ -133,6 +134,7 @@ namespace Luminous
   class VertexBuffer : public BufferObject<GL_ARRAY_BUFFER>
   {
   public:
+    /// Constructs an empty vertex buffer.
     VertexBuffer(Luminous::GLResources * resources = 0)
       : BufferObject<GL_ARRAY_BUFFER>(resources)
     {}
@@ -142,6 +144,7 @@ namespace Luminous
   class IndexBuffer : public BufferObject<GL_ELEMENT_ARRAY_BUFFER>
   {
   public:
+    /// Constructs an empty index buffer.
     IndexBuffer(Luminous::GLResources * resources = 0)
       : BufferObject<GL_ELEMENT_ARRAY_BUFFER>(resources)
     {}
