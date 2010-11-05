@@ -161,6 +161,9 @@ namespace Luminous
 
     /// This function should be called when the image has been modified.
     void changed() { m_generation++; }
+    /// The generation count of the image object
+    /** The generation count can be used to indicate that the image has changed, and one should
+        update the corresponding OpenGL texture wo match the same generation. */
     int generation() const { return m_generation; }
 
   private:
@@ -171,10 +174,11 @@ namespace Luminous
     unsigned char* m_data;
     int m_generation;
 
-  public:
-    /// @todo
+    /*
+  private:
     bool m_dataReady;
     bool m_ready;
+    */
   };
 
   /** ImageTex provides an easy way to create OpenGL textures from images in a
@@ -206,8 +210,19 @@ namespace Luminous
     /// Checks if the image data is fully loaded to the GPU, inside a texture
     bool isFullyLoadedToGPU(GLResources * resources = 0);
 
+    /** Loads part of the image to the GPU.
+
+        @return The number of bytes uploaded.
+    */
     unsigned uploadBytesToGPU(GLResources * resources, unsigned bytes);
 
+    /// Try binding this texture
+    /** The condition for binding this texture is that either it has been fully uploaded to the GPU,
+        or it can be uploaded within given limits.
+
+        @param limit The maximum number of bytes to upload.
+        @return True if the bind operation could be done, false otherwise.
+    */
     bool tryBind(unsigned & limit);
   };
 
