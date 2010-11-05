@@ -44,7 +44,8 @@ namespace Valuable
       /// The original type without const
       typedef T Type;
     };
-    /// @copydoc remove_const
+    /// Removes const from type: remove_const<const Foo>::Type == Foo
+    /// Works also with non-const types, remove_const<Foo>::Type == Foo
     template <typename T> struct remove_const<const T> {
       /// The original type without const
       typedef T Type;

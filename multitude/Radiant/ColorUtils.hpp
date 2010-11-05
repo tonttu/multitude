@@ -29,20 +29,20 @@ namespace Radiant
 
   /// ColorUtils contains color conversion utilities
   /// @todo move to Color class
-  namespace ColorUtils
+  class ColorUtils
   {
-
+  public:
     /// Conversion between RGB and HSV using code published in Hearn, D. and Baker, M.
     /// (1997) "Computer Graphics", New Jersey: Prentice Hall Inc. (pp. 578-579.).
-    RADIANT_API void rgbTohsv(float r, float g, float b, float & h, float & s, float & v);
+    RADIANT_API static void rgbTohsv(float r, float g, float b, float & h, float & s, float & v);
     /// @copydoc rgbTohsv
-    RADIANT_API void rgbTohsv(Nimble::Vector3f & rgb, Nimble::Vector3f & hsv);
+    RADIANT_API static void rgbTohsv(Nimble::Vector3f & rgb, Nimble::Vector3f & hsv);
     /// @copydoc rgbTohsv
-    RADIANT_API void hsvTorgb(float h, float s, float v, float & r, float & g, float & b);
+    RADIANT_API static void hsvTorgb(float h, float s, float v, float & r, float & g, float & b);
     /// @copydoc rgbTohsv
-    RADIANT_API void hsvTorgb(Nimble::Vector3f & hsv, Nimble::Vector3f & rgb);
+    RADIANT_API static void hsvTorgb(Nimble::Vector3f & hsv, Nimble::Vector3f & rgb);
 
-  }
+  };
 
 }
 
