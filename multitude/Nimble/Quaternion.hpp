@@ -49,6 +49,7 @@ namespace Nimble {
       *this = m;
     }
 
+    /// Transforms the argument vector this quaternion transformation
     template <typename Y>
     Vector3T<Y> operator*(const Vector3T<Y> & v) const
     {

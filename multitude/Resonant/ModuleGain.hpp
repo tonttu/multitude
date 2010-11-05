@@ -27,6 +27,7 @@ namespace Resonant {
   class ModuleGain : public Module
   {
   public:
+    /// Constructs a new gain controller module
     ModuleGain(Application *);
     virtual ~ModuleGain();
 

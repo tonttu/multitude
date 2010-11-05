@@ -47,7 +47,7 @@ namespace Valuable
     /// @param key name of the element
     /// @return pointer to the element or 0 if element is not found
     ConfigElement *getConfigElement(std::string key);
-    /// @copydoc getConfigElement
+    /// @copybrief getConfigElement
     ConfigElement *getConfigElement(std::string key,std::string value);
     /// Returns the configuration as string
     static std::string getConfigText(ConfigElement e, int recursion = 0);

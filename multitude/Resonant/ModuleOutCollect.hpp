@@ -44,6 +44,7 @@ namespace Resonant {
     };
 #endif
 
+    /// Creates a new ModuleOutCollect
     ModuleOutCollect(Application *, DSPNetwork *);
     virtual ~ModuleOutCollect();
 
@@ -51,8 +52,10 @@ namespace Resonant {
     virtual void processMessage(const char *, Radiant::BinaryData *);
     virtual void process(float ** in, float ** out, int n);
 
+    /// Access the collected frames, which have been interleaved
     const float * interleaved() const { return & m_interleaved[0]; }
 
+    /// Returns the number of channels that are collected by this module
     int channels() const { return m_channels; }
 
   private:

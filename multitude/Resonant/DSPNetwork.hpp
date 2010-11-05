@@ -102,13 +102,19 @@ namespace Resonant {
     class RESONANT_API Connection
     {
     public:
+      /// Creates an empty connection object, with undefined connections.
       Connection() : m_channel(0),m_buf(0) { m_moduleId[0] = '\0'; }
+      /// Creates a connection object
+      /** @param moduleId The id of the module that we are connecting to.
+          @param channel The channel to connect to.
+      */
       Connection(const char * moduleId, int channel)
           : m_channel(channel),m_buf(0)
       {
         setModuleId(moduleId);
       }
 
+      /// Sets the id of the connected module
       void setModuleId(const char * id)
       {
         if(id)
@@ -121,15 +127,21 @@ namespace Resonant {
           m_moduleId[0] = '\0';
       }
 
+      /// Compare two Connection objects
       inline bool operator == (const Connection & that) const
       {
         return (strcmp(m_moduleId, that.m_moduleId) == 0) &&
             (m_channel == that.m_channel);
       }
 
+    private:
+      friend class DSPNetwork;
+
+      /// @cond
       char        m_moduleId[Module::MAX_ID_LENGTH];
       int         m_channel;
       Buf        *m_buf;
+      /// @endcond
     };
 
     /** Objects that store the information necessary to create new connections.
@@ -207,8 +219,10 @@ namespace Resonant {
       int  m_targetChannel;
     };
 
+    /// @cond
     typedef std::list<Item> container;
     typedef container::iterator iterator;
+    /// @endcond
 
     /// Creates an empty DSPNetwork object.
     DSPNetwork();

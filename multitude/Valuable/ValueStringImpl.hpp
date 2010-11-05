@@ -7,10 +7,10 @@
  * See file "Valuable.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef VALUABLE_VALUE_STRING_IMPL_HPP
@@ -25,26 +25,28 @@
 #define STD_EM this->emitChange();
 #define VALUEMIT_STD_OP this->emitChange(); return *this;
 
+/// @cond
+
 namespace Valuable
 {
 
-  
+
   template<class T>
   ValueStringT<T>::ValueStringT(HasValues * parent, const std::string & name,
-				const T & v, bool transit)
+                const T & v, bool transit)
     : Base(parent, name, v, transit)
   {}
 
   template<class T>
   ValueStringT<T>::ValueStringT(HasValues * parent, const std::string & name,
-				const char * v, bool transit)
+                const char * v, bool transit)
     : Base(parent, name, v, transit)
   {}
 
-    
+
   template<class T>
   ValueStringT<T>::ValueStringT(HasValues * parent, const std::string & name,
-				bool transit)
+                bool transit)
     : Base(parent, name, T(), transit)
   {}
 
@@ -56,7 +58,7 @@ namespace Valuable
       bool ok = true;
       T tmp = data.read<T>(&ok);
       if(ok)
-	*this = tmp;
+    *this = tmp;
       /*
       Radiant::info("ValueStringT<T>::processMessage # Ok = %d %s",
                     (int) ok, m_value.c_str());
@@ -74,41 +76,41 @@ namespace Valuable
   }
 
   template<class T>
-  float ValueStringT<T>::asFloat(bool * const ok) const 
-  { 
-    if(ok) *ok = true; 
+  float ValueStringT<T>::asFloat(bool * const ok) const
+  {
+    if(ok) *ok = true;
     return float(atof(Base::m_value.c_str()));
   }
 
   template<class T>
-  int ValueStringT<T>::asInt(bool * const ok) const 
+  int ValueStringT<T>::asInt(bool * const ok) const
   {
-    if(ok) *ok = true; 
+    if(ok) *ok = true;
     return atoi(Base::m_value.c_str());
   }
 
   template<class T>
-  std::string ValueStringT<T>::asString(bool * const ok) const 
-  { 
-    if(ok) *ok = true; 
+  std::string ValueStringT<T>::asString(bool * const ok) const
+  {
+    if(ok) *ok = true;
     return Base::m_value;
   }
 
   template<class T>
-  std::wstring ValueStringT<T>::asWString(bool * const ok) const 
-  { 
-    if(ok) *ok = true; 
+  std::wstring ValueStringT<T>::asWString(bool * const ok) const
+  {
+    if(ok) *ok = true;
     std::wstring tmp;
     Radiant::StringUtils::utf8ToStdWstring(tmp, Base::m_value);
-    return tmp; 
+    return tmp;
   }
 
   template<class T>
-  bool ValueStringT<T>::set(const std::string & v) 
-  { 
+  bool ValueStringT<T>::set(const std::string & v)
+  {
     Base::m_value = T(v);
     STD_EM;
-    return true; 
+    return true;
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -121,7 +123,7 @@ namespace Valuable
   ValueStringT<std::wstring>::ValueStringT()
   : ValueObject()
   {}
-  
+
   template <>
   ValueStringT<std::wstring>::ValueStringT(HasValues * parent, const std::string & name, const std::wstring & v, bool transit)
   : ValueObject(parent, name, transit),
@@ -129,37 +131,35 @@ namespace Valuable
   {}
   */
 
-  // @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
+  // copybrief ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
   template<>
   ValueStringT<std::wstring>::ValueStringT(HasValues * parent, const std::string & name,
-					   const char * v, bool transit)
+                       const char * v, bool transit)
     : Base(parent, name, std::wstring(), transit)
   {
     std::string tmp(v);
-    Radiant::StringUtils::utf8ToStdWstring(m_value, tmp); 
+    Radiant::StringUtils::utf8ToStdWstring(m_value, tmp);
     m_orig = m_value;
   }
 
-  /// Assigns a string
-  template <>
-  ValueStringT<std::wstring> & ValueStringT<std::wstring>::operator=(const ValueStringT<std::wstring> & i)
+
+  template <> ValueStringT<std::wstring> & ValueStringT<std::wstring>::operator = (const ValueStringT<std::wstring> & i)
   {
     m_value = i.m_value;
     VALUEMIT_STD_OP
   }
 
-  /// Assigns a string
   template <>
-  ValueStringT<std::wstring> & ValueStringT<std::wstring>::operator=(const std::wstring & i)
-  {
+      ValueStringT<std::wstring> & ValueStringT<std::wstring>::operator=(const std::wstring & i)
+                                                                        {
     m_value = i;
     VALUEMIT_STD_OP
   }
 
-  /// Converts the string to float
   template <>
-  float ValueStringT<std::wstring>::asFloat(bool * const ok) const 
-  { 
+      /// Converts the string to float
+  float ValueStringT<std::wstring>::asFloat(bool * const ok) const
+  {
     if(ok) *ok = true;
     std::string tmp;
     Radiant::StringUtils::stdWstringToUtf8(tmp, m_value);
@@ -168,38 +168,38 @@ namespace Valuable
 
   /// Converts the string to integer
   template <>
-  int ValueStringT<std::wstring>::asInt(bool * const ok) const 
-  { 
-    if(ok) *ok = true; 
+  int ValueStringT<std::wstring>::asInt(bool * const ok) const
+  {
+    if(ok) *ok = true;
     std::string tmp;
     Radiant::StringUtils::stdWstringToUtf8(tmp, m_value);
-    return atoi(tmp.c_str()); 
+    return atoi(tmp.c_str());
   }
 
-  /// Converts the wide-byte string to ascii string
   template<>
-  std::string ValueStringT<std::wstring>::asString(bool * const ok) const 
-  { 
-    if(ok) *ok = true; 
+  /// Converts the wide-byte string to ascii string
+  std::string ValueStringT<std::wstring>::asString(bool * const ok) const
+  {
+    if(ok) *ok = true;
     std::string tmp;
     Radiant::StringUtils::stdWstringToUtf8(tmp, m_value);
-    return tmp; 
+    return tmp;
   }
 
-  /// Converts the wide-byte string to ascii string
   template<>
-  std::wstring ValueStringT<std::wstring>::asWString(bool * const ok) const 
-  { 
-    if(ok) *ok = true; 
+  /// Converts the wide-byte string to ascii string
+  std::wstring ValueStringT<std::wstring>::asWString(bool * const ok) const
+  {
+    if(ok) *ok = true;
     return m_value;
   }
 
   template<>
-  bool ValueStringT<std::wstring>::set(const std::string & v) 
-  { 
-    Radiant::StringUtils::utf8ToStdWstring(m_value, v); 
+  bool ValueStringT<std::wstring>::set(const std::string & v)
+  {
+    Radiant::StringUtils::utf8ToStdWstring(m_value, v);
     STD_EM;
-    return true; 
+    return true;
   }
 
   template<>
@@ -218,7 +218,7 @@ namespace Valuable
 
     ArchiveElement & elem = archive.createElement(name().c_str());
     elem.add("type", type());
-  
+
     std::wstring ws = asWString();
     elem.set(ws);
 
@@ -232,8 +232,10 @@ namespace Valuable
     STD_EM;
     return true;
   }
- 
+
 }
+
+/// @endcond
 
 #undef VALUEMIT_STD_OP
 #undef STD_EN

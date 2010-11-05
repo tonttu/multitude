@@ -38,6 +38,8 @@ namespace Valuable
 
   public:
 
+    /// The character type of this string class
+    /** This type depends on the template class. */
     typedef typename T::value_type char_type;
 
     ValueStringT() : Base() {}
@@ -67,9 +69,12 @@ namespace Valuable
     T operator + (const ValueStringT<T> & i) const
     { return Base::m_value + i.m_value; }
 
+
+    /// Concatenates two strings
     T operator + (const T & i) const
     { return Base::m_value + i; }
 
+    /// Concatenates two strings
     T operator + (const char_type * i) const
     { return Base::m_value + T(i); }
 

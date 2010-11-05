@@ -44,6 +44,7 @@ namespace Resonant {
       MAX_CYCLE = 1024
     };
 
+    /// Constructs a new module base object.s
     Module(Application *);
     virtual ~Module();
 

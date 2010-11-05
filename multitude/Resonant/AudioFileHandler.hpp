@@ -67,8 +67,10 @@ namespace Resonant {
       /** Read frames from the file. */
       int readFrames(float * data, int frames);
 
+      /// @copydoc writeFrames(float * data, int frames)
       int writeFrames(int * data, int frames)
       { return writeFrames((float *) data, frames); }
+      /// readFrames(float * data, int frames)
       int readFrames(int * data, int frames)
       { return readFrames((float *) data, frames); }
 
@@ -150,7 +152,8 @@ namespace Resonant {
     Handle * readFile(const char * filename, long startFrame,
               Radiant::AudioSampleFormat userFormat = Radiant::ASF_FLOAT32);
     /// Starts the writing process for a file.
-    /** @param channels The number of audio channels in the file.
+    /** @param filename The name of the audio file
+        @param channels The number of audio channels in the file.
         @param samplerate The sampling rate of the audio file, typically 44100, 48000 etc.
         @param sfFormat The format of the sound file. The format is created by combining libsndfile
         sample type with lbsndfile file type. For example SF_FORMAT_WAV | SF_FORMAT_PCM_24
