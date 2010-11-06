@@ -175,7 +175,6 @@ namespace Valuable
     return atoi(tmp.c_str());
   }
 
-  template<>
   /// Converts the wide-byte string to ascii string
   template<>
   std::string ValueStringT<std::wstring>::asString(bool * const ok) const
@@ -186,7 +185,6 @@ namespace Valuable
     return tmp;
   }
 
-  template<>
   /// Converts the wide-byte string to ascii string
   template<>
   std::wstring ValueStringT<std::wstring>::asWString(bool * const ok) const
