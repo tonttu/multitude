@@ -146,12 +146,15 @@ namespace Radiant {
   public:
     /// Iterator for traversing all elements
     typedef typename std::multimap<std::string, T>::iterator iterator;
+    /// Constant iterator for traversing all elements
     typedef typename std::multimap<std::string, T>::const_iterator const_iterator;
 
+    /// Iterator for traversing chunks
     typedef typename std::multimap<std::string, ChunkT<T> >::iterator chunk_iterator;
+    /// Constant iterator for traversing chunks
     typedef typename std::multimap<std::string, ChunkT<T> >::const_iterator const_chunk_iterator;
 
-
+    /// Creates an empty configuration chunk
     ChunkT() {clearFirst=false;}
     ~ChunkT() {}
 
@@ -177,8 +180,9 @@ namespace Radiant {
     /** If there are other elements with the same id before, then
     this element is added among those. */
     void               set(const std::string & id, const T &v);
-
+    /// Adds a new child node to this chunk
     void               addChunk(const std::string & id, const ChunkT<T> &v);
+    /// Gets a child chunk
     const ChunkT<T> &        getChunk(const std::string & id) const;
 
   /// Sets the flag to inform whether an old value should be removed before defining a new
@@ -215,14 +219,18 @@ namespace Radiant {
     /// Iterator to the after-the-end element
     const_iterator end()   const { return m_variants.end(); }
 
+    /// Iterator to the first child chunk
     chunk_iterator chunkBegin() { return m_chunks.begin(); }
+    /// Iterator to the after-the-end chunk
     chunk_iterator chunkEnd() { return m_chunks.end(); }
 
     /// Gets the data element from an iterator
     static T & getType(iterator & it) { return (*it).second; }
+    /// Gets the data element from an constant iterator
     static const T & getType(const_iterator & it) { return (*it).second; }
-        /// Gets the name (id) from an iterator
+    /// Gets the name (id) from an iterator
     static const std::string & getName(iterator & it) { return (*it).first; }
+    /// Gets the name (id) from a constant iterator
     static const std::string & getName(const_iterator & it) { return (*it).first; }
 
   private:
@@ -239,6 +247,11 @@ namespace Radiant {
 
   /// Read a configuration from a file
   bool RADIANT_API readConfig(Config *c, const char *filename);
+  /// Read the configuration from a string
+  /** @param c The configuration object to fill.
+      @param buf The configuration string.
+      @param n The length of the configuration string
+  */
   bool  RADIANT_API readConfig(Config *c, const char * buf, int n);
   /// Write the given configuration into a file
   bool RADIANT_API writeConfig(Config *c, const char *filename);

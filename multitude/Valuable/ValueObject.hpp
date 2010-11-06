@@ -85,7 +85,7 @@ namespace Valuable
     ValueObject();
     /// The copy constructor creates a copy of the ValueObject WITHOUT the
     /// link to parent
-    ValueObject(const ValueObject & o);    
+    ValueObject(const ValueObject & o);
     /** Constructs a new value object and attaches it to its parent.
 
     @param parent The parent object. This object is automatically
@@ -139,9 +139,9 @@ namespace Valuable
         }
         \endcode
 
-        @param id The indentifier for the message. Typically this quite human-readable
+        @param id The indentifier for the message. Typically this is quite human-readable
 
-        @param data Binary blob that contain the argument data in easily parseable format.
+        @param data Binary blob that contains the argument data in easily parseable format.
 
     */
     virtual void processMessage(const char * id, Radiant::BinaryData & data);

@@ -50,6 +50,7 @@ namespace Luminous
   class LUMINOUS_API Renderbuffer : public Luminous::GLResource
   {
   public:
+    /// Creates an empty Renderbuffer object
     Renderbuffer(Luminous::GLResources * res = 0);
     ~Renderbuffer();
 
@@ -76,6 +77,7 @@ namespace Luminous
   class LUMINOUS_API Framebuffer : public Luminous::GLResource
   {
   public:
+    /// Creates an empty FrameBuffer object
     Framebuffer(Luminous::GLResources * res = 0);
     ~Framebuffer();
 

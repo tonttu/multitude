@@ -14,20 +14,20 @@ namespace Nimble
     if (t <= 0) return m_points.front();
     if (t >= size()-1) return m_points.back();
 
-    Index ii = static_cast<int>(t);
+    size_t ii = static_cast<int>(t);
     t -= ii;
 
     return getPoint(ii, t);
   }
 
 
-  Vector2 Interpolating::get(Index ii, float h1, float h2, float h3, float h4) const
+  Vector2 Interpolating::get(size_t ii, float h1, float h2, float h3, float h4) const
   {
     return h1 * m_points[ii]   + h2 * m_points[ii+1]
         + h3 * m_tangents[ii] + h4 * m_tangents[ii+1];
   }
 
-  Vector2 Interpolating::getPoint(Index ii, float t) const
+  Vector2 Interpolating::getPoint(size_t ii, float t) const
   {
     // Hermite curve
     float tt = t*t;
@@ -40,7 +40,7 @@ namespace Nimble
     return get(ii, h1, h2, h3, h4);
   }
 
-  Vector2 Interpolating::getDerivative(Index ii, float t) const
+  Vector2 Interpolating::getDerivative(size_t ii, float t) const
   {
     // derivative of getPoint with respect to t.
     float tt = t*t;
@@ -58,7 +58,7 @@ namespace Nimble
       m_tangents.push_back(Vector2(0, 0));
       return;
     }
-    Index last = m_points.size() - 1;
+    size_t last = m_points.size() - 1;
 
     if (last >= 1) m_tangents[last] = 0.5f * (point - m_points[last-1]);
     m_points.push_back(point);
@@ -66,7 +66,7 @@ namespace Nimble
     last++;
   }
 
-  void Interpolating::remove(Index ii) {
+  void Interpolating::remove(size_t ii) {
     m_points.erase(m_points.begin() + ii);
     m_tangents.erase(m_tangents.begin() + ii);
   }

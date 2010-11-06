@@ -281,7 +281,7 @@ namespace Luminous
     }
     Nimble::Vector2 contextSize() const
     {
-      return m_window->size();
+      return m_window ? m_window->size() : Nimble::Vector2i(10, 10);
     }
 
     void drawCircle(RenderContext & r, Nimble::Vector2f center, float radius,
@@ -370,7 +370,7 @@ namespace Luminous
       // attachTexture2D should do this as a side effect already?
       glDrawBuffer(Luminous::COLOR0);
     }
-    void unattachViewTexture() {      
+    void unattachViewTexture() {
       m_viewFBO->unbind();
       glDrawBuffer(GL_BACK);
     }

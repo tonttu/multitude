@@ -243,6 +243,7 @@ namespace Radiant {
             return * this;
         }
     }
+    /// Returns the internal data storage area
     std::vector<T> & vector() { return m_points; }
 
   private:

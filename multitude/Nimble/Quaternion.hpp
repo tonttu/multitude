@@ -17,9 +17,17 @@ namespace Nimble {
   class QuaternionT
   {
   public:
+    /// The quaternion type
     typedef T type;
 
-    T x,y,z,w;
+    /// The quaternion x element value
+    T x;
+    /// The quaternion y element value
+    T y;
+    /// The quaternion z element value
+    T z;
+    /// The quaternion w element value
+    T w;
 
     /// Constructs a quaternion object, with uninitialized values
     QuaternionT() {}
@@ -41,6 +49,7 @@ namespace Nimble {
       *this = m;
     }
 
+    /// Transforms the argument vector this quaternion transformation
     template <typename Y>
     Vector3T<Y> operator*(const Vector3T<Y> & v) const
     {
@@ -87,7 +96,7 @@ namespace Nimble {
       T nz = x*v.y-y*v.x+w*v.z+z*v.w;
       w = w*v.w-x*v.x-y*v.y-z*v.z;
       x = nx, y = ny, z = nz;
-      return *this; 
+      return *this;
     }
     /// Multiply the components of this quaternion directly with the components of another quaternion
     QuaternionT & operator^=(const QuaternionT & v)
@@ -134,10 +143,13 @@ namespace Nimble {
 
     }
 
+    /// The squared length of this quaterion
+    /** This function returns x*x+y*y+z*z+w*w. */
     T lensq(void) const
     {
       return(x*x+y*y+z*z+w*w);
     }
+    /// Returns dot product between this quatertion and the argument quaternion
     T dotp(const QuaternionT & v) const
     {
       return(x*v.x+y*v.y+z*v.z+w*v.w);
@@ -188,7 +200,7 @@ namespace Nimble {
     Matrix33 Rmatrix() const {
       Matrix33 ret;
       T leninv = lensq();
-      if(leninv==0) 
+      if(leninv==0)
         return(Matrix33(0));
       else
         leninv=(T)1.0/(T)sqrt(leninv);
@@ -200,19 +212,19 @@ namespace Nimble {
 
       T sx = s*x, yz = y*z;
       ret.C[1*3+2]=2*(yz+sx);
-      ret.C[2*3+1]=2*(yz-sx);    
+      ret.C[2*3+1]=2*(yz-sx);
       T sy = s*y, zx = z*x;
       ret.C[0*3+2]=2*(zx-sy);
-      ret.C[2*3+0]=2*(zx+sy);    
+      ret.C[2*3+0]=2*(zx+sy);
       T sz = s*z, xy = x*y;
       ret.C[0*3+1]=2*(xy+sz);
-      ret.C[1*3+0]=2*(xy-sz);    
+      ret.C[1*3+0]=2*(xy-sz);
       return(ret);
     }
 
     void fillAffine33(Affine33 &aff) const {
       T leninv = lensq();
-      if(leninv==0) 
+      if(leninv==0)
         return;
       else
         leninv=(T)1.0/(T)sqrt(leninv);
@@ -226,13 +238,13 @@ namespace Nimble {
 
       T sx = s*x, yz = y*z;
       aff.C[1*4+2]=leninv*(yz+sx);
-      aff.C[2*4+1]=leninv*(yz-sx);    
+      aff.C[2*4+1]=leninv*(yz-sx);
       T sy = s*y, zx = z*x;
       aff.C[0*4+2]=leninv*(zx-sy);
-      aff.C[2*4+0]=leninv*(zx+sy);    
+      aff.C[2*4+0]=leninv*(zx+sy);
       T sz = s*z, xy = x*y;
       aff.C[0*4+1]=leninv*(xy+sz);
-      aff.C[1*4+0]=leninv*(xy-sz);    
+      aff.C[1*4+0]=leninv*(xy-sz);
     }
 */
     /// Performs slerp interpolation between two quaternions
@@ -274,6 +286,7 @@ namespace Nimble {
       return QuaternionT(xx, yy, zz, ww);
     }
 
+    /// Multiplies two quaterions.
     inline QuaternionT operator*(const QuaternionT & b)
     {
       return QuaternionT( y*b.z-z*b.y+w*b.x+x*b.w,
@@ -298,6 +311,9 @@ namespace Nimble {
       }
     }
 
+    /// Create a new quaternion based on rotation around an axis
+    /// @param angle The rotation angle, in radians
+    /// @param axis The axis, around which the rotation is performed
     static QuaternionT rotation(T angle, Vector3T<T> axis)
     {
       angle *= 0.5;
@@ -306,14 +322,18 @@ namespace Nimble {
     }
   };
 
+  /// Serialization operator for Quaternions
   template <typename T>
   inline std::ostream& operator<<(std::ostream& s, const QuaternionT<T> & v)
   {
     return s << "(" << v.x << " " << v.y << " " << v.z << " ;" << v.w << ")";
   }
 
+  /// Quaternion of type float
   typedef QuaternionT<float> Quaternionf;
+  /// Quaternion of type double
   typedef QuaternionT<double> Quaterniond;
+  /// Default (float) quaternion type
   typedef QuaternionT<float> Quaternion;
 }
 #endif

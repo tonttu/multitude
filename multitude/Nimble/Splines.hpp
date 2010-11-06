@@ -25,28 +25,30 @@ namespace Nimble
   /// Catmull-Rom
   /// @todo doc
   class NIMBLE_API Interpolating {
-    typedef std::vector<Nimble::Vector2> PointList;
-    typedef PointList::size_type Index;
-
-    PointList m_points;
-    PointList m_tangents;
-    Nimble::Vector2 get(Index ii, float h1, float h2, float h3, float h4) const;
-    Nimble::Vector2 getPoint(Index ii, float t) const;
   public:
-    Nimble::Vector2 getDerivative(Index ii, float t) const;
+    /// Get derivative at the given interpolation point
+    Nimble::Vector2 getDerivative(size_t ii, float t) const;
     /// Evaluates the spline at given t
     /// @param t position where to evaluate the spline. 0 <= t <= size() - 1
     Nimble::Vector2 get(float t) const;
     /// Adds a control point
     void add(Nimble::Vector2 point);
     /// Removes the control point at the given index
-    void remove(Index ii);
+    void remove(size_t ii);
     /// Returns the number of control points
-    Index size() const { return m_points.size(); }
+    size_t size() const { return m_points.size(); }
 
+    /// Clears the interpolation key-points
     void clear();
 
     friend class Luminous::RenderContext;
+  private:
+    typedef std::vector<Nimble::Vector2> PointList;
+
+    PointList m_points;
+    PointList m_tangents;
+    Nimble::Vector2 get(size_t ii, float h1, float h2, float h3, float h4) const;
+    Nimble::Vector2 getPoint(size_t ii, float t) const;
   };
 
 }

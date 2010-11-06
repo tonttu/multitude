@@ -56,9 +56,9 @@ namespace Luminous
       m_height(0),
       m_pixelFormat(PixelFormat::LAYOUT_UNKNOWN, PixelFormat::TYPE_UNKNOWN),
       m_data(0),
-      m_generation(0),
-      m_dataReady(false),
-      m_ready(false)
+      m_generation(0)
+      // m_dataReady(false),
+      // m_ready(false)
   {}
 
   Image::Image(const Image& img)
@@ -66,9 +66,9 @@ namespace Luminous
       m_height(0),
       m_pixelFormat(PixelFormat::LAYOUT_UNKNOWN, PixelFormat::TYPE_UNKNOWN),
       m_data(0),
-      m_generation(0),
-      m_dataReady(false),
-      m_ready(false)
+      m_generation(0)
+      // m_dataReady(false),
+      // m_ready(false)
   {
     allocate(img.m_width, img.m_height, img.m_pixelFormat);
 
@@ -522,14 +522,14 @@ namespace Luminous
     FILE * file = fopen(filename, "rb");
     if(!file) {
       error("Image::read # failed to open file '%s'", filename);
-      m_ready = true;
+      // m_ready = true;
       return false;
     }
 
     ImageCodec * codec = codecs()->getCodec(filename, file);
     if(codec) {
       result = codec->read(*this, file);
-      m_dataReady = result;
+      // m_dataReady = result;
     } else {
       error("Image::read # no suitable codec found for '%s'", filename);
     }
@@ -538,7 +538,7 @@ namespace Luminous
 
     changed();
 
-    m_ready = true;
+    // m_ready = true;
 
     return result;
   }

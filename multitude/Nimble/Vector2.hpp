@@ -126,8 +126,17 @@ namespace Nimble {
     /// Returns the ith component
     T&			        operator[]	(int i)				{ return ((T*)this)[i]; }
 
+    /// Check that vector elements are finite
+    /** This function can be useful if you suspect that contents of the
+        vector might be corrupt floating point numbers.
+
+        @return True if the vector elements are finite, false if are non-finite
+        (i.e. infinite or nan).
+    */
     bool isFinite() const { return Math::isFinite(x) && Math::isFinite(y); }
 
+    /** Less-than operator, with arbitrary internal logic. This method is used
+        if you want to sort vectors. */
     bool operator< (const Vector2T<T>& v2) const
     {
       return x == v2.x ? y < v2.y : x < v2.x;

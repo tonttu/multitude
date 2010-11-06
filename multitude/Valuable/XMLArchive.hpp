@@ -44,6 +44,7 @@ namespace Valuable
     XMLArchiveElement(DOMElement element);
     virtual ~XMLArchiveElement();
 
+    /// @cond
     void add(ArchiveElement & element);
     Iterator & children();
 
@@ -61,7 +62,6 @@ namespace Valuable
     /// Returns a pointer to m_element
     DOMElement * xml();
 
-    /// @cond
     static XMLArchiveElement s_emptyElement;
     /// @endcond
 

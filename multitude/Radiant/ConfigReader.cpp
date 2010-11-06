@@ -294,7 +294,7 @@ namespace Radiant {
     if(!var.hasDocumentation())
       return false;
 
-    Radiant::Guard g( & __mutex);
+    Radiant::GuardStatic g( & __mutex);
 
     std::set<std::string>::iterator it = 
       __writtenDocs.find(var.documentation());

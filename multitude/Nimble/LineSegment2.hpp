@@ -29,7 +29,9 @@ template <typename T>
   class NIMBLE_API LineSegment2T
   {
   public:
+    /// Construct line segment object, without initializing its values.
     inline LineSegment2T() {}
+    /// Initialize line segment from given coordinate values
     inline LineSegment2T(T x1, T y1, T x2, T y2)
     {
       m_points[0].make(x1, y1);
@@ -51,11 +53,13 @@ template <typename T>
         (m_points[1] == that.m_points[1]);
     }
 
+    /// Returns the length of the line segment
     inline T length() const
     {
       return (m_points[1] - m_points[0]).length();
     }
 
+    /// Returns normalized direction of this line segment.
     inline Vector2T<T> directionNormalized() const
     {
       Vector2T<T> dir = end() - begin();

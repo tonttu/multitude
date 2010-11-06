@@ -51,7 +51,7 @@ namespace Luminous
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
-    class FBOPackage;    
+    class FBOPackage;
 
     class LUMINOUS_API FBOPackage : public GLResource
     {
@@ -164,6 +164,7 @@ namespace Luminous
     /// Checks if the given rectangle is visible (not clipped).
     bool isVisible(const Nimble::Rectangle & area);
 
+    /// @cond
     void pushDrawBuffer(GLenum dest, FBOPackage * );
     void popDrawBuffer();
 
@@ -171,7 +172,6 @@ namespace Luminous
     // @todo does not return anything useful
     //const Nimble::Rectangle & visibleArea() const;
 
-    /// @cond
     FBOHolder getTemporaryFBO(Nimble::Vector2 basicsize,
                               float scaling, uint32_t flags = 0);
     /// @endcond
@@ -323,11 +323,14 @@ namespace Luminous
         last reset. Thsi can be useful for checking that object culling works as intended. */
     void addRenderCounter();
 
+    /** Returns the size of the window of this #RenderContext object.
+
+        @return If the window is null, then Nimble::Vector2(10,10) is returned.
+    */
     Nimble::Vector2 contextSize() const;
 
-    /// @internal
+    /// @cond
     void pushViewStack();
-    /// @internal
     /// Pops view stack, leaves current texture attached
     void popViewStack();
 
@@ -342,6 +345,7 @@ namespace Luminous
     /// @internal
     MULTI_ATTR_DEPRECATED(Luminous::GLContext * glContext());
 
+    /// @endcond
   private:
     void drawCircleWithSegments(Nimble::Vector2f center, float radius, const float *rgba, int segments);
     void drawCircleImpl(Nimble::Vector2f center, float radius, const float *rgba);

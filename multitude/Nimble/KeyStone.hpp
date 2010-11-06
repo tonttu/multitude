@@ -197,6 +197,8 @@ namespace Nimble {
     /// Test the keystone correction routines
     static void testCorrection();
 
+    /// The rectangle which contains the ROI of this keystone
+    /** This is the ROI in camera images. */
     Nimble::Rect boundsROI() const { return m_boundsROI; }
 
     /// Reference to the lens correction

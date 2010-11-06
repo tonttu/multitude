@@ -71,25 +71,36 @@ namespace Screenplay {
     /// Returns the dimensions of a single frame
     virtual unsigned int size() const;
 
+    /// Opens a video file
     bool open(const char * filename,
           int flags = Radiant::WITH_VIDEO);
 
     virtual bool start();
+    /// Check if the video has been started
     virtual bool isStarted() const;
     virtual bool stop();
     virtual bool close();
 
     // void configure(const char * filename, const char * codecname = 0);
 
+    /// Returns the total number of decoded audio frames
     long capturedAudio() { return m_capturedAudio; }
+    /// Returns the total number of decoded video frames
     long capturedVideo() { return m_capturedVideo; }
 
+    /// Seeks to a given position in the file
+    /** Seek operation may not be entirely accurate, since the encoding strategy
+        of the file may prevent proper seeking. */
     bool seekPosition(double timeSeconds);
+    /// The duration of the video in seconds
     double durationSeconds();
 
+    /// Returns true if there is an audio codec for this video
     bool hasAudioCodec() const { return m_acodec != 0; }
+    /// Returns true if there is a video codec for this video
     bool hasVideoCodec() const { return m_vcodec != 0; }
 
+    /// Returns the audio sampling rate of this video, if known.
     int audioSampleRate() const { return m_audioSampleRate; }
 
     /*

@@ -137,8 +137,14 @@ namespace Luminous
     static void getThreadMultiHead(const MultiHead::Window ** w,
            const MultiHead::Area ** a);
 
-    static const MultiHead::Area * getThreadMultiHeadArea();
-    static const MultiHead::Window * getThreadMultiHeadWindow();
+    /// Get the current #Luminous::MultiHead::Area for this thread
+    /** @return The current area which has been set with #setThreadResources, or
+        null if the area has not been set. */
+    static const Luminous::MultiHead::Area * getThreadMultiHeadArea();
+    /// Get the current #Luminous::MultiHead::Window for this thread
+    /** @return The current window which has been set with #setThreadResources, or
+        null if the window has not been set. */
+    static const Luminous::MultiHead::Window * getThreadMultiHeadWindow();
 
     /// Query if the PROXY_TEXTURE_2D extension seems to be broken.
     /** On Linux, with ATI cards, this OpenGL feature appears to be broken, and
@@ -150,7 +156,7 @@ namespace Luminous
         @see Texture.cpp
    */
     bool isBrokenProxyTexture2D();
-
+    /// The current rendering frame counter.
     long frame() const { return m_frame; }
  private:
     typedef std::map<const Collectable *, GLResource *> container;

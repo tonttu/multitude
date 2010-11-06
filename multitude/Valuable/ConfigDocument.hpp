@@ -29,6 +29,7 @@ namespace Valuable
   class VALUABLE_API ConfigDocument
   {
   public:
+    /// Creates an empty ConfigDocument object
     ConfigDocument(void);
     virtual ~ConfigDocument(void);
 
@@ -46,7 +47,7 @@ namespace Valuable
     /// @param key name of the element
     /// @return pointer to the element or 0 if element is not found
     ConfigElement *getConfigElement(std::string key);
-    /// @copydoc getConfigElement
+    /// @copybrief getConfigElement
     ConfigElement *getConfigElement(std::string key,std::string value);
     /// Returns the configuration as string
     static std::string getConfigText(ConfigElement e, int recursion = 0);
@@ -75,7 +76,7 @@ namespace Valuable
   };
 
   /// Converts from text element to XML element
-  void VALUABLE_API convert(DOMDocument  & doc, DOMElement & to, const ConfigElement & from);  
+  void VALUABLE_API convert(DOMDocument  & doc, DOMElement & to, const ConfigElement & from);
   /// Converts from XML element to text element
   void VALUABLE_API convert(ConfigElement & to, DOMElement from);
 
