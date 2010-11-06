@@ -4,11 +4,18 @@
 
 #include <stdint.h>
 
-#include <QSvgRenderer>
+#include <QFile>
 #include <QImageReader>
 #include <QXmlStreamReader>
-#include <QFile>
 #include <QPainter>
+
+/* On Mac OSX, with Qt 4.7.0, it seems that QT_NO_SVGRENDERER gets defined by
+   someone. Lets do our best to undefine it.   */
+#ifdef QT_NO_SVGRENDERER
+# undef QT_NO_SVGRENDERER
+#endif
+
+#include <QSvgRenderer>
 
 namespace Luminous {
 
@@ -55,7 +62,7 @@ namespace Luminous {
   }
 
   bool ImageCodecSVG::ping(ImageInfo & info, FILE * file)
-  {  
+  {
 
     QSvgRenderer * r = updateSVG(file);
     // always this
@@ -100,7 +107,7 @@ namespace Luminous {
 
   /// Not supported (could use QSvgGenerator to render bitmap as SVG, but why?)
   bool ImageCodecSVG::write(const Image & /*image*/, FILE * /*file*/)
-  {    
+  {
     return false;
   }
 

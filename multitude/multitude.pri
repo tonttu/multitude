@@ -60,6 +60,8 @@ macx {
   # LIB_GLEW = -lGLEW
   LIBS += -L$$PWD/lib
 
+DEFINES += QT_MAC_USE_COCOA Q_OS_MAC64
+
   # DEFINES += __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__=1050
 
   contains(withbundles,YES) {
