@@ -52,12 +52,13 @@ namespace Luminous
     }
   }
 
-  template class TextureT<GL_TEXTURE_1D>;
   template class TextureT<GL_TEXTURE_2D>;
-  template class TextureT<GL_TEXTURE_3D>;
+  LUMINOUS_IN_FULL_OPENGL(template class TextureT<GL_TEXTURE_1D>;)
+  LUMINOUS_IN_FULL_OPENGL(template class TextureT<GL_TEXTURE_3D>;)
 
   //////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
+#ifndef LUMINOUS_OPENGLES
 
   Texture1D * Texture1D::fromImage(Luminous::Image & image, bool buildMipmaps, GLResources * resources)
   {
@@ -135,6 +136,7 @@ namespace Luminous
     return true;
 
   }
+#endif // LUMINOUS_OPENGLES
 
 
   bool Texture2D::loadImage(const char * filename, bool buildMipmaps) {
@@ -179,6 +181,7 @@ namespace Luminous
                             const PixelFormat& srcFormat,
                             bool buildMipmaps)
   {
+#ifndef LUMINOUS_OPENGLES
     // Check dimensions
     if(!GL_ARB_texture_non_power_of_two) {
       bool isPowerOfTwo1 = !((w - 1) & w);
@@ -189,6 +192,7 @@ namespace Luminous
         return false;
       }
     }
+#endif // LUMINOUS_OPENGLES
 
     long used = consumesBytes();
 
@@ -212,14 +216,21 @@ namespace Luminous
       alignment *= 2;
     }
 
+#ifdef LUMINOUS_OPENGLES
+    buildMipmaps = false;
+#endif // LUMINOUS_OPENGLES
 
     // ...or trilinear if we have mipmaps
     if(buildMipmaps) minFilter = GL_LINEAR_MIPMAP_LINEAR;
 
     if(buildMipmaps) {
+#ifndef LUMINOUS_OPENGLES
+
       glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
       gluBuild2DMipmaps(GL_TEXTURE_2D, srcFormat.numChannels(),
                         w, h, srcFormat.layout(), srcFormat.type(), data);
+#endif // LUMINOUS_OPENGLES
+
     } else {
       /* Radiant::debug("TEXTURE UPLOAD :: INTERNAL %s FORMAT %s [%d %d]",
              glInternalFormatToString(internalFormat),
@@ -229,6 +240,7 @@ namespace Luminous
       glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
 
       GLint width = w;
+#ifndef LUMINOUS_OPENGLES
 
       if(resources() && !resources()->isBrokenProxyTexture2D()) {
         /* On ATI/Linux combination it seems that the GL_PROXY_TEXTURE_2D is
@@ -248,6 +260,7 @@ namespace Luminous
           return false;
         }
       }
+#endif // LUMINOUS_OPENGLES
 
 
       /* should succeed */
@@ -277,9 +290,12 @@ namespace Luminous
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter);
 
+#ifndef LUMINOUS_OPENGLES
+
     float whitef[4] = { 1, 1, 1, 1 };
 
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, whitef);
+#endif // LUMINOUS_OPENGLES
 
     long uses = consumesBytes();
 
@@ -326,6 +342,7 @@ namespace Luminous
     Utils::glCheck("Texture2D::loadLines # in");
     bind();
 
+#ifndef LUMINOUS_OPENGLES
 
     // Flush the data by drawing a zero-size triangle
     glColor4f(0,0,0,0);
@@ -338,6 +355,7 @@ namespace Luminous
     glEnd();
 
     Utils::glCheck("Texture2D::loadLines # Dummy TRI");
+#endif // LUMINOUS_OPENGLES
 
     if(m_haveMipmaps)
     {
@@ -393,6 +411,8 @@ namespace Luminous
                                   const PixelFormat& srcFormat,
                                   bool buildMipmaps, GLResources * resources)
   {
+#ifndef LUMINOUS_OPENGLES
+
     // Check dimensions
     if(!GL_ARB_texture_non_power_of_two) {
       bool isPowerOfTwo1 = !((w - 1) & w);
@@ -403,6 +423,8 @@ namespace Luminous
         return 0;
       }
     }
+#endif // LUMINOUS_OPENGLES
+
 
     Texture2D* tex = new Texture2D(resources);
     if(!tex->loadBytes(internalFormat, w, h, data, srcFormat, buildMipmaps)) {

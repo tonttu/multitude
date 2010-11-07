@@ -30,7 +30,7 @@ namespace Luminous
   class Image;
 
   /// Base class for different textures
-  /** Texture objects can be create without a valid OpenGL context, but their actual
+  /** Texture objects can be created without a valid OpenGL context, but their actual
       usage requires a valid OpenGL context. */
   template<GLenum TextureType>
   class LUMINOUS_API TextureT : public GLResource, public Patterns::NotCopyable
@@ -129,6 +129,7 @@ namespace Luminous
     bool m_haveMipmaps;
   };
 
+#ifndef LUMINOUS_OPENGLES
   /// A 1D texture
   class LUMINOUS_API Texture1D : public TextureT<GL_TEXTURE_1D>
   {
@@ -152,6 +153,7 @@ namespace Luminous
                                 GLResources * resources = 0);
 
   };
+#endif // LUMINOUS_OPENGLES
 
   /// A 2D texture
   class LUMINOUS_API Texture2D : public TextureT<GL_TEXTURE_2D>
@@ -193,6 +195,8 @@ namespace Luminous
     unsigned m_loadedLines;
   };
 
+#ifndef LUMINOUS_OPENGLES
+
   /// A 3D texture
   class LUMINOUS_API Texture3D : public TextureT<GL_TEXTURE_3D>
   {
@@ -210,6 +214,7 @@ namespace Luminous
         : TextureT<GL_TEXTURE_CUBE_MAP> (resources) {}
 
   };
+#endif // LUMINOUS_OPENGLES
 
 }
 

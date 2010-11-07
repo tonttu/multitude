@@ -1089,7 +1089,7 @@ namespace Luminous
       low.x, high.y
     };
 
-#if 0
+#if 1
     // This fails when some other OpenGL features are used (FBOs, VBOs)
     glEnable(GL_VERTEX_ARRAY);
     glEnable(GL_TEXTURE_COORD_ARRAY);

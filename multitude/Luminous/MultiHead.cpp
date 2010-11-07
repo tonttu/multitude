@@ -55,6 +55,7 @@ namespace Luminous {
 
     return ok;
   }
+#ifndef LUMINOUS_OPENGLES
 
   void MultiHead::Area::applyGlState() const
   {
@@ -162,6 +163,7 @@ namespace Luminous {
     if(m_method != METHOD_TEXTURE_READBACK)
       m_keyStone.cleanExterior();
   }
+#endif // LUMINOUS_OPENGLES
 
   Nimble::Vector2f MultiHead::Area::windowToGraphics
       (Nimble::Vector2f loc, int windowheight, bool & isInside) const

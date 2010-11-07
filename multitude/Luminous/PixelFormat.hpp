@@ -40,29 +40,37 @@ namespace Luminous
       TYPE_UBYTE        = GL_UNSIGNED_BYTE,
       TYPE_SHORT        = GL_SHORT,
       TYPE_USHORT       = GL_UNSIGNED_SHORT,
+
+      TYPE_FLOAT        = GL_FLOAT,
+
+#ifndef LUMINOUS_OPENGLES
       TYPE_INT          = GL_INT,
       TYPE_UINT         = GL_UNSIGNED_INT,
-      TYPE_FLOAT        = GL_FLOAT,
       TYPE_DOUBLE       = GL_DOUBLE
+#endif // LUMINOUS_OPENGLES
                         };
 
     /// Layout of channels
     enum ChannelLayout
     {
       LAYOUT_UNKNOWN,
+      LAYOUT_ALPHA                = GL_ALPHA,
+      LAYOUT_RGB                  = GL_RGB,
+      LAYOUT_RGBA                 = GL_RGBA,
+      LAYOUT_LUMINANCE            = GL_LUMINANCE,
+      LAYOUT_LUMINANCE_ALPHA      = GL_LUMINANCE_ALPHA,
+
+#ifndef LUMINOUS_OPENGLES
       LAYOUT_COLOR_INDEX          = GL_COLOR_INDEX,
       LAYOUT_STENCIL_INDEX        = GL_STENCIL_INDEX,
       LAYOUT_DEPTH_COMPONENT      = GL_DEPTH_COMPONENT,
       LAYOUT_RED                  = GL_RED,
       LAYOUT_GREEN                = GL_GREEN,
       LAYOUT_BLUE                 = GL_BLUE,
-      LAYOUT_ALPHA                = GL_ALPHA,
-      LAYOUT_RGB                  = GL_RGB,
-      LAYOUT_RGBA                 = GL_RGBA,
       LAYOUT_BGR                  = GL_BGR,
       LAYOUT_BGRA                 = GL_BGRA,
-      LAYOUT_LUMINANCE            = GL_LUMINANCE,
-      LAYOUT_LUMINANCE_ALPHA      = GL_LUMINANCE_ALPHA
+#endif // LUMINOUS_OPENGLES
+
                                   };
 
     /// Constructs a copy
@@ -87,6 +95,8 @@ namespace Luminous
     static PixelFormat rgbaUByte()
     { return PixelFormat(LAYOUT_RGBA, TYPE_UBYTE); }
 
+
+#ifndef LUMINOUS_OPENGLES
         /// Constructs an 8-bit BGR pixel format
     /** Some platforms do not support this format. */
         static PixelFormat bgrUByte()
@@ -96,18 +106,20 @@ namespace Luminous
     static PixelFormat bgraUByte()
     { return PixelFormat(LAYOUT_BGRA, TYPE_UBYTE); }
 
-    /// Constructs an 8-bit alpha-only pixel format
-    static PixelFormat alphaUByte()
-    { return PixelFormat(LAYOUT_ALPHA, TYPE_UBYTE); }
-    /// Constructs an 8-bit luminance (grayscale) pixel format
-    static PixelFormat luminanceUByte()
-    { return PixelFormat(LAYOUT_LUMINANCE, TYPE_UBYTE); }
     /// Constructs a floating-point luminance pixel format
     static PixelFormat luminanceFloat()
     { return PixelFormat(LAYOUT_LUMINANCE, TYPE_FLOAT); }
     /// Constructs a floating-point luminance-alpha pixel format
     static PixelFormat luminanceAlphaFloat()
     { return PixelFormat(LAYOUT_LUMINANCE_ALPHA, TYPE_FLOAT); }
+#endif
+
+    /// Constructs an 8-bit alpha-only pixel format
+    static PixelFormat alphaUByte()
+    { return PixelFormat(LAYOUT_ALPHA, TYPE_UBYTE); }
+    /// Constructs an 8-bit luminance (grayscale) pixel format
+    static PixelFormat luminanceUByte()
+    { return PixelFormat(LAYOUT_LUMINANCE, TYPE_UBYTE); }
     /// Constructs an 8-bit luminance-alpha pixel format
     static PixelFormat luminanceAlphaUByte()
     { return PixelFormat(LAYOUT_LUMINANCE_ALPHA, TYPE_UBYTE); }

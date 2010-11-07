@@ -63,7 +63,14 @@ win32 {
 	}
 }
 
+iphone* {
+  message(This is for iPhone)
+  CONFIG += static
+  DEFINES += RADIANT_IOS
+}
+
 macx {
+  !iphone* {
     CONFIG += lib_bundle
 
     target.path = /Library/Frameworks
@@ -82,5 +89,5 @@ macx {
 
       QMAKE_BUNDLE_DATA += FRAMEWORK_SOURCES
     }
-
+  }
 }

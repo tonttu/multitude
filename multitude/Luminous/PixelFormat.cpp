@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #include <Luminous/PixelFormat.hpp>
@@ -20,34 +20,38 @@
 namespace Luminous
 {
   /*
-     PixelFormat::PixelFormat() 
+     PixelFormat::PixelFormat()
      : m_layout(LAYOUT_UNKNOWN),
      m_type(TYPE_UNKNOWN)
      {}
      */
-  PixelFormat::PixelFormat(const PixelFormat& pf) 
+  PixelFormat::PixelFormat(const PixelFormat& pf)
   {
     m_layout = pf.m_layout;
     m_type = pf.m_type;
   }
 
   PixelFormat::PixelFormat(ChannelLayout layout, ChannelType type):
-    m_layout(layout), 
+    m_layout(layout),
     m_type(type)
   {}
 
   PixelFormat::~PixelFormat()
   {}
 
-  int PixelFormat::numChannels() const 
+  int PixelFormat::numChannels() const
   {
     switch(m_layout) {
+#ifndef LUMINOUS_OPENGLES
+
       case LAYOUT_COLOR_INDEX:
       case LAYOUT_STENCIL_INDEX:
       case LAYOUT_DEPTH_COMPONENT:
       case LAYOUT_RED:
       case LAYOUT_GREEN:
       case LAYOUT_BLUE:
+#endif // LUMINOUS_OPENGLES
+
       case LAYOUT_ALPHA:
       case LAYOUT_LUMINANCE:
         return 1;
@@ -56,13 +60,13 @@ namespace Luminous
         return 2;
         break;
       case LAYOUT_RGB:
-      case LAYOUT_BGR:
+      LUMINOUS_IN_FULL_OPENGL(case LAYOUT_BGR:)
         return 3;
         break;
       case LAYOUT_RGBA:
-      case LAYOUT_BGRA:
+      LUMINOUS_IN_FULL_OPENGL(case LAYOUT_BGRA:)
         return 4;
-        break;          
+        break;
       default:
         return 0;
     }
@@ -81,20 +85,24 @@ namespace Luminous
       case TYPE_USHORT:
         return 2 * nc;
         break;
-      case TYPE_INT:
-      case TYPE_UINT:
+      LUMINOUS_IN_FULL_OPENGL(case TYPE_INT:)
+    LUMINOUS_IN_FULL_OPENGL(case TYPE_UINT:)
       case TYPE_FLOAT:
         return 4 * nc;
         break;
-      case TYPE_DOUBLE:
+#ifndef LUMINOUS_OPENGLES
+
+    case TYPE_DOUBLE:
         return 8 * nc;
         break;
-      default:
+#endif // LUMINOUS_OPENGLES
+
+    default:
         return 0;
     }
   }
 
-  static std::string typeToString(PixelFormat::ChannelType type) 
+  static std::string typeToString(PixelFormat::ChannelType type)
   {
     switch(type)
     {
@@ -108,14 +116,17 @@ namespace Luminous
         return "TYPE_SHORT";
       case PixelFormat::TYPE_USHORT:
         return "TYPE_USHORT";
+    case PixelFormat::TYPE_FLOAT:
+      return "TYPE_FLOAT";
+
+#ifndef LUMINOUS_OPENGLES
       case PixelFormat::TYPE_INT:
         return "TYPE_INT";
       case PixelFormat::TYPE_UINT:
         return "TYPE_UINT";
-      case PixelFormat::TYPE_FLOAT:
-        return "TYPE_FLOAT";
       case PixelFormat::TYPE_DOUBLE:
         return "TYPE_DOUBLE";
+#endif // LUMINOUS_OPENGLES
       default:
         return "Invalid value (should never happen";
     }
@@ -126,30 +137,35 @@ namespace Luminous
   {
     switch(layout)
     {
+#ifndef LUMINOUS_OPENGLES
+
+    case PixelFormat::LAYOUT_COLOR_INDEX:
+      return "LAYOUT_COLOR_INDEX";
+    case PixelFormat::LAYOUT_STENCIL_INDEX:
+      return "LAYOUT_STENCIL_INDEX";
+    case PixelFormat::LAYOUT_DEPTH_COMPONENT:
+      return "LAYOUT_DEPTH_COMPONENT";
+    case PixelFormat::LAYOUT_RED:
+      return "LAYOUT_RED";
+    case PixelFormat::LAYOUT_GREEN:
+      return "LAYOUT_GREEN";
+    case PixelFormat::LAYOUT_BLUE:
+      return "LAYOUT_BLUE";
+
+    case PixelFormat::LAYOUT_BGR:
+      return "LAYOUT_BGR";
+    case PixelFormat::LAYOUT_BGRA:
+      return "LAYOUT_BGRA";
+#endif // LUMINOUS_OPENGLES
+
       case PixelFormat::LAYOUT_UNKNOWN:
         return "LAYOUT_UNKNOWN";
-      case PixelFormat::LAYOUT_COLOR_INDEX:
-        return "LAYOUT_COLOR_INDEX";
-      case PixelFormat::LAYOUT_STENCIL_INDEX:
-        return "LAYOUT_STENCIL_INDEX";
-      case PixelFormat::LAYOUT_DEPTH_COMPONENT:
-        return "LAYOUT_DEPTH_COMPONENT";
-      case PixelFormat::LAYOUT_RED:
-        return "LAYOUT_RED";
-      case PixelFormat::LAYOUT_GREEN:
-        return "LAYOUT_GREEN";
-      case PixelFormat::LAYOUT_BLUE:
-        return "LAYOUT_BLUE";
       case PixelFormat::LAYOUT_ALPHA:
         return "LAYOUT_ALPHA";
       case PixelFormat::LAYOUT_RGB:
         return "LAYOUT_RGB";
       case PixelFormat::LAYOUT_RGBA:
         return "LAYOUT_RGBA";
-      case PixelFormat::LAYOUT_BGR:
-        return "LAYOUT_BGR";
-      case PixelFormat::LAYOUT_BGRA:
-        return "LAYOUT_BGRA";
       case PixelFormat::LAYOUT_LUMINANCE:
         return "LAYOUT_LUMINANCE";
       case PixelFormat::LAYOUT_LUMINANCE_ALPHA:

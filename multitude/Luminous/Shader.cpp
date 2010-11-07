@@ -267,9 +267,11 @@ namespace Luminous {
       if(!m_self->m_fragmentShader.empty())
         ok = ok && prog.loadString(GL_FRAGMENT_SHADER, m_self->m_fragmentShader.c_str());
 
+#ifndef LUMINOUS_OPENGLES
       if(!m_self->m_geometryShader.empty())
         ok = ok && prog.loadString(GL_GEOMETRY_SHADER_EXT,
                                    m_self->m_geometryShader.c_str());
+#endif // LUMINOUS_OPENGLES
 
       /* Set the generation even if something has failed. */
       prog.setGeneration(m_self->m_generation);

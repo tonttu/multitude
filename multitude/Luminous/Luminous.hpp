@@ -28,9 +28,18 @@
 // This define is for glext.h
 #ifdef RADIANT_OSX
 #define GL_GLEXT_PROTOTYPES 1
+
+#ifdef RADIANT_IOS
+// #include <OpenGLES/EAGL.h>
+#include <OpenGLES/ES2/gl.h>
+// #include <OpenGLES/ES2/glext.h>
+#define LUMINOUS_OPENGLES 1
+#else
 #include <OpenGL/gl.h>
 #include <OpenGL/glext.h>
 #include <OpenGL/glu.h>
+#endif
+
 #else
 #define GL_GLEXT_PROTOTYPES 1
 #include <GL/gl.h>
@@ -39,6 +48,12 @@
 #endif
 #else
 #include <GL/glew.h>
+#endif
+
+#ifdef LUMINOUS_OPENGLES
+# define LUMINOUS_IN_FULL_OPENGL(x)
+#else
+# define LUMINOUS_IN_FULL_OPENGL(x) x
 #endif
 
 /// Luminous is a library of C++ classes for computer graphics, using OpenGL.

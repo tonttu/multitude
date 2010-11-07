@@ -221,6 +221,7 @@ namespace Luminous {
     glEnd();
   }
 
+
   Vector2 GLKeyStone::closest(Vector2 loc) const
   {
     int index = 0;

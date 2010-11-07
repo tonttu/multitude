@@ -42,16 +42,16 @@ SOURCES += Collectable.cpp
 SOURCES += CPUMipmaps.cpp
 SOURCES += CPUMipmapStore.cpp
 SOURCES += Error.cpp
-SOURCES += FramebufferObject.cpp
+!iphone*:SOURCES += FramebufferObject.cpp
 SOURCES += GarbageCollector.cpp
-SOURCES += GLKeyStone.cpp
+!iphone*:SOURCES += GLKeyStone.cpp
 SOURCES += GLResource.cpp
 SOURCES += GLResources.cpp
 SOURCES += GLSLProgramObject.cpp
 SOURCES += GLSLShaderObject.cpp
 SOURCES += GPUMipmaps.cpp
 SOURCES += ImageCodecSVG.cpp
-SOURCES += ImageCodecTGA.cpp
+!iphone*:SOURCES += ImageCodecTGA.cpp
 SOURCES += Image.cpp
 SOURCES += Luminous.cpp
 SOURCES += MultiHead.cpp
@@ -70,7 +70,7 @@ LIBS += $$LIB_RADIANT \
     $$LIB_NIMBLE \
     $$LIB_PATTERNS \
     $$LIB_GLEW
-unix:!contains(HAS_QT_45,YES) { 
+unix:!contains(HAS_QT_45,YES) {
     HEADERS += ImageCodecPNG.hpp
     HEADERS += ImageCodecTGA.hpp
     SOURCES += ImageCodecJPEG.cpp
@@ -79,7 +79,7 @@ unix:!contains(HAS_QT_45,YES) {
         -lpng
 }
 win32:DEFINES += LUMINOUS_EXPORT
-contains(HAS_QT_45,YES) { 
+contains(HAS_QT_45,YES) {
     message(Including QT Image codecs)
     HEADERS += ImageCodecQT.hpp
     SOURCES += ImageCodecQT.cpp

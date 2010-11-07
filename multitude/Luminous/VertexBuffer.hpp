@@ -38,6 +38,8 @@ namespace Luminous
 
         /// The policy for mapping a buffer object
         enum AccessMode {
+#ifndef LUMINOUS_OPENGLES
+
           /// The client may perform a read operation on the pointer while the
           /// buffer is mapped.
           READ_ONLY = GL_READ_ONLY,
@@ -47,6 +49,12 @@ namespace Luminous
           /// The client may perform both read and write operation on the
           /// pointer while the buffer is mapped.
           READ_WRITE = GL_READ_WRITE
+#else
+                       READ_ONLY,
+                       WRITE_ONLY,
+                       READ_WRITE
+#endif // LUMINOUS_OPENGLES
+
         };
 
         /// A hint for the GL implementation as how a buffer object's data will
@@ -58,6 +66,7 @@ namespace Luminous
           /// times as the source for GL drawing and image specification
           /// commands.
           STREAM_DRAW = GL_STREAM_DRAW,
+#ifndef LUMINOUS_OPENGLES
           /// The buffer contents will be specified once by reading data from
           /// the GL and used at most a few times by the application.
           STREAM_READ = GL_STREAM_READ,
@@ -65,10 +74,12 @@ namespace Luminous
           /// the GL and used at most a few times as the source for GL drawing
           /// and image specification commands.
           STREAM_COPY = GL_STREAM_COPY,
+#endif // LUMINOUS_OPENGLES
 
           /// The buffer contents will be specified once, and used many times as
           /// the source for GL drawing and image specification commands.
           STATIC_DRAW = GL_STATIC_DRAW,
+#ifndef LUMINOUS_OPENGLES
           /// The buffer contents will be specified once by reading data from
           /// the GL, and used many times by the application.
           STATIC_READ = GL_STATIC_READ,
@@ -76,10 +87,12 @@ namespace Luminous
           /// the GL, and used many times as the source for GL drawing and image
           /// specification commands.
           STATIC_COPY = GL_STATIC_COPY,
+#endif // LUMINOUS_OPENGLES
 
           /// The buffer contents will be specified repeatedly, and used many
           // /times as the source for GL drawing and image specification commands.
           DYNAMIC_DRAW = GL_DYNAMIC_DRAW,
+#ifndef LUMINOUS_OPENGLES
           /// The buffer contents will be specified repeatedly by reading data
           /// from the GL, and used many times by the application.
           DYNAMIC_READ = GL_DYNAMIC_READ,
@@ -87,6 +100,7 @@ namespace Luminous
           /// from the GL, and used many times as the source for GL drawing and
           /// image specification commands.
           DYNAMIC_COPY = GL_DYNAMIC_COPY
+#endif // LUMINOUS_OPENGLES
         };
 
         /// Creates an empty OpenGL buffer object.
@@ -106,10 +120,13 @@ namespace Luminous
         /// Fills a part of the vertex buffer with data
         void partialFill(size_t start, void * data, size_t count);
 
+#ifndef LUMINOUS_OPENGLES
+
         /// Maps the vertex buffer to CPU memory. The pointer is valid until unmap() is called.
         void * map(AccessMode mode);
         /// Unmaps the vertex buffer from CPU memory. The pointer to the buffer is invalidated.
         void unmap();
+#endif // LUMINOUS_OPENGLES
 
         /** Access the OpenGL handle id.
 

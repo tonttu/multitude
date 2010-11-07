@@ -24,7 +24,9 @@
 #include <mach/mach_traps.h>
 #include <mach/mach.h>
 
+#ifndef RADIANT_IOS
 #include <CoreFoundation/CoreFoundation.h>
+#endif
 
 namespace Radiant
 {
@@ -32,6 +34,7 @@ namespace Radiant
   namespace PlatformUtils
   {
 
+#ifndef RADIANT_IOS
     std::string getExecutablePath()
     {
       CFURLRef url = CFBundleCopyBundleURL(CFBundleGetMainBundle());
@@ -42,6 +45,14 @@ namespace Radiant
                        (UInt8*) buf.str(), buf.capacity());
       return buf.str();
     }
+#else
+    std::string getExecutablePath()
+    {
+      return std::string();
+    }
+
+
+#endif
 
     std::string getUserHomePath()
     {

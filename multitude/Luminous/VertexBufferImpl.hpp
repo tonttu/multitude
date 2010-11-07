@@ -91,6 +91,7 @@ namespace Luminous
       glBindBuffer(type, 0);
   }
 
+#ifndef LUMINOUS_OPENGLES
   template<GLenum type>
   void * BufferObject<type>::map(AccessMode mode)
   {
@@ -103,5 +104,6 @@ namespace Luminous
   {
     glUnmapBuffer(type);
   }
+#endif // LUMINOUS_OPENGLES
 
 }

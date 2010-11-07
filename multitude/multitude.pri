@@ -60,33 +60,35 @@ macx {
   # LIB_GLEW = -lGLEW
   LIBS += -L$$PWD/lib
 
-DEFINES += QT_MAC_USE_COCOA Q_OS_MAC64
+  !iphone* {
 
-  # DEFINES += __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__=1050
+    DEFINES += QT_MAC_USE_COCOA Q_OS_MAC64
 
-  contains(withbundles,YES) {
+    # DEFINES += __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__=1050
 
-    MULTI_LIB_FLAG = -F
+    contains(withbundles,YES) {
 
-    LIB_POETIC = -framework,Poetic
-    LIB_FLUFFY = -framework,Fluffy
-    LIB_LUMINOUS = -framework,Luminous
-    LIB_NIMBLE = -framework,Nimble
-    LIB_RADIANT = -framework,Radiant
-    LIB_RESONANT = -framework,Resonant -lsndfile
-    LIB_SCREENPLAY = -framework,Screenplay
-    LIB_VALUABLE = -framework,Valuable
-    LIB_VIDEODISPLAY = -framework,VideoDisplay
-    LIB_PATTERNS = -framework,Patterns
+      MULTI_LIB_FLAG = -F
 
-    LIB_BOX2D = -framework,Box2D
+      LIB_POETIC = -framework,Poetic
+      LIB_FLUFFY = -framework,Fluffy
+      LIB_LUMINOUS = -framework,Luminous
+      LIB_NIMBLE = -framework,Nimble
+      LIB_RADIANT = -framework,Radiant
+      LIB_RESONANT = -framework,Resonant -lsndfile
+      LIB_SCREENPLAY = -framework,Screenplay
+      LIB_VALUABLE = -framework,Valuable
+      LIB_VIDEODISPLAY = -framework,VideoDisplay
+      LIB_PATTERNS = -framework,Patterns
+
+      LIB_BOX2D = -framework,Box2D
+    }
+
+    # change architecture to x86_64 if snow leopard
+    system([ `uname -r | cut -d . -f1` -gt 9 ] )  {
+      CONFIG += x86_64
+    }
   }
-
-  # change architecture to x86_64 if snow leopard
-  system([ `uname -r | cut -d . -f1` -gt 9 ] )  {
-  CONFIG += x86_64
-  }
-
 }
 
 win32 {
@@ -119,9 +121,11 @@ LIBS += $${MULTI_LIB_FLAG}$$PWD/lib
 
 # message(QT version is $${QT_MAJOR_VERSION}.$${QT_MINOR_VERSION}.$${QT_PATCH_VERSION})
 
+iphone*:DEFINES += __IPHONE_OS_VERSION_MIN_REQUIRED=__IPHONE_4_0
+
 contains(QT_MAJOR_VERSION,4) {
 
-  contains(QT_MINOR_VERSION,5) || contains(QT_MINOR_VERSION,6) {
+  contains(QT_MINOR_VERSION,5) || contains(QT_MINOR_VERSION,6) || contains(QT_MINOR_VERSION,7) {
     HAS_QT_45=YES
     DEFINES += USE_QT45
   }

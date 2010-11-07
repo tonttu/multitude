@@ -257,10 +257,14 @@ namespace Luminous
     return true;
   }
 
+#ifndef LUMINOUS_OPENGLES
+
   void GLSLProgramObject::setProgramParameter(GLenum pname, GLint value)
   {
     glProgramParameteriEXT(handle(), pname, value);
   }
+#endif // LUMINOUS_OPENGLES
+
 
   bool GLSLProgramObject::validate()
   {

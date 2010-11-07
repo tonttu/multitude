@@ -29,3 +29,5 @@ win32 {
 	win64:include(Win64x/Win64x.pri)
 	else:include(Win32x/Win32x.pri)
 }
+
+# message(Config is $${CONFIG})

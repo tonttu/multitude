@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #include "ImageCodecTGA.hpp"
@@ -30,7 +30,7 @@ namespace Luminous
     unsigned char colormapType;
     unsigned char imageType;
 
-    unsigned char ignored[5]; 
+    unsigned char ignored[5];
 
     unsigned char xStartLo;
     unsigned char xStartHi;
@@ -50,7 +50,7 @@ namespace Luminous
   {}
 
   bool ImageCodecTGA::canRead(FILE * file)
-  {    
+  {
     TGAHeader header;
 
     long pos = ftell(file);
@@ -64,7 +64,7 @@ namespace Luminous
 
     fseek(file, pos, SEEK_SET);
 
-    return (w > 0) && (h > 0) && ((bpp == 8) || (bpp == 24) || (bpp == 32));    
+    return (w > 0) && (h > 0) && ((bpp == 8) || (bpp == 24) || (bpp == 32));
   }
 
   std::string ImageCodecTGA::extensions() const
@@ -76,7 +76,7 @@ namespace Luminous
   {
     return std::string("targa");
   }
-  
+
   bool ImageCodecTGA::ping(ImageInfo & info, FILE * file)
   {
     TGAHeader header;
@@ -106,7 +106,7 @@ namespace Luminous
     return true;
   }
 
-  bool ImageCodecTGA::read(Image & image, FILE * file) 
+  bool ImageCodecTGA::read(Image & image, FILE * file)
   {
     TGAHeader header;
 
@@ -114,7 +114,7 @@ namespace Luminous
     size_t r = fread(&header, sizeof(TGAHeader), 1, file);
     if(r != 1) {
       Radiant::error("ImageCodecTGA::read # failed to read image header");
-	    return false;
+        return false;
     }
 
     // Check image type
@@ -126,13 +126,13 @@ namespace Luminous
       case 10:  // RGB+RLE
       case 11:  // Grayscale+RLE
         typeGood = true;
-    };  
+    };
 
     int width = header.widthLo + (header.widthHi << 8);
     int height = header.heightLo + (header.heightHi << 8);
     size_t bytesPerPixel = (header.bpp >> 3);
 
-    if(!typeGood || width == 0 || height == 0) 
+    if(!typeGood || width == 0 || height == 0)
       return false;
 
     // Choose pixel format
@@ -160,7 +160,7 @@ namespace Luminous
     unsigned int size = (unsigned) (width * height * bytesPerPixel);
 
     // Skip the ident field if present
-    if(header.identSize > 0) 
+    if(header.identSize > 0)
       fseek(file, header.identSize, SEEK_CUR);
 
     if(header.imageType == 2 || header.imageType == 3) {
@@ -177,7 +177,7 @@ namespace Luminous
       int pixels = width * height;
       int currentPixel = 0;
       size_t currentByte = 0;
-      unsigned char * pixel = new unsigned char [bytesPerPixel];      
+      unsigned char * pixel = new unsigned char [bytesPerPixel];
 
       do {
         unsigned char chunkHeader = 0;
@@ -219,7 +219,7 @@ namespace Luminous
 
       delete[] pixel;
     }
-  
+
     // Check flip bit
 //    if(header.descriptor & (1 << 5))
 //      flipVertical();

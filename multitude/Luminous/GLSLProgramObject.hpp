@@ -84,11 +84,14 @@ namespace Luminous
     /// The matrix is automatically transposed for OpenGL
     bool setUniformMatrix3(const char * name, const Nimble::Matrix3f & value);
 
+#ifndef LUMINOUS_OPENGLES
+
     /// Sets a given program parameter
     /** This is in practice a call to glProgramParameteriEXT
     @param pname parameter to set
     @param value parameter value*/
     void setProgramParameter(GLenum pname, GLint value);
+#endif // LUMINOUS_OPENGLES
 
     /// Validates the program
     /// @return true if the program is valid and can be used
