@@ -1674,7 +1674,11 @@ namespace Luminous {
     GLenum e;
 
     while((e = glGetError()) != GL_NO_ERROR) {
+#ifndef LUMINOUS_OPENGLES
       Radiant::error("%s # GL ERROR %s", msg, gluErrorString(e));
+#else
+      Radiant::error("%s # GL ERROR %d", msg, (int) e);
+#endif
       result = false;
     }
 

@@ -127,46 +127,46 @@ namespace Luminous
     return false;
   }
 
-  void Framebuffer::attachTexture1D(Texture1D* texture, FramebufferAttachment attachment, int level)
+  void Framebuffer::attachTexture1D(Texture1D* texture, GLenum attachment, int level)
   {
     bind();
     glFramebufferTexture1DEXT(GL_FRAMEBUFFER_EXT, attachment,
                   GL_TEXTURE_1D, texture->id(), level);
   }
 
-  void Framebuffer::detachTexture1D(FramebufferAttachment attachment)
+  void Framebuffer::detachTexture1D(GLenum attachment)
   {
     bind();
     glFramebufferTexture1DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_1D, 0, 0);
   }
 
-  void Framebuffer::attachTexture2D(Texture2D* texture, FramebufferAttachment attachment, int level)
+  void Framebuffer::attachTexture2D(Texture2D* texture, GLenum attachment, int level)
   {
     bind();
     glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_2D,
                   texture->id(), level);
   }
 
-  void Framebuffer::detachTexture2D(FramebufferAttachment attachment)
+  void Framebuffer::detachTexture2D(GLenum attachment)
   {
     bind();
     glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_2D, 0, 0);
   }
 
-  void Framebuffer::attachTexture3D(Texture3D* texture, FramebufferAttachment attachment, int zOffset, int level)
+  void Framebuffer::attachTexture3D(Texture3D* texture, GLenum attachment, int zOffset, int level)
   {
     bind();
     glFramebufferTexture3DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_3D,
                   texture->id(), level, zOffset);
   }
 
-  void Framebuffer::detachTexture3D(FramebufferAttachment attachment)
+  void Framebuffer::detachTexture3D(GLenum attachment)
   {
     bind();
     glFramebufferTexture3DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_3D, 0, 0, 0);
   }
 
-  void Framebuffer::attachTextureCube(TextureCube* texture, FramebufferAttachment attachment, int face, int level)
+  void Framebuffer::attachTextureCube(TextureCube* texture, GLenum attachment, int face, int level)
   {
     bind();
     glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, attachment,
@@ -174,19 +174,19 @@ namespace Luminous
                   texture->id(), level);
   }
 
-  void Framebuffer::detachTextureCube(FramebufferAttachment attachment, int face)
+  void Framebuffer::detachTextureCube(GLenum attachment, int face)
   {
     bind();
     glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB + face, 0, 0);
   }
 
-  void Framebuffer::attachRenderbuffer(Renderbuffer* renderbuffer, FramebufferAttachment attachment)
+  void Framebuffer::attachRenderbuffer(Renderbuffer* renderbuffer, GLenum attachment)
   {
     bind();
     glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, attachment, GL_RENDERBUFFER_EXT, renderbuffer->m_bufferId);
   }
 
-  void Framebuffer::detachRenderbuffer(FramebufferAttachment attachment)
+  void Framebuffer::detachRenderbuffer(GLenum attachment)
   {
     bind();
     glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, attachment, GL_RENDERBUFFER_EXT, 0);

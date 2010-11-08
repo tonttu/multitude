@@ -1,6 +1,7 @@
 include(../multitude.pri)
 HEADERS += BGThread.hpp \
-    GLContext.hpp
+    GLContext.hpp \
+    DummyOpenGL.hpp
 HEADERS += FramebufferResource.hpp
 HEADERS += CodecRegistry.hpp
 HEADERS += Collectable.hpp
@@ -70,7 +71,7 @@ LIBS += $$LIB_RADIANT \
     $$LIB_NIMBLE \
     $$LIB_PATTERNS \
     $$LIB_GLEW
-unix:!contains(HAS_QT_45,YES) {
+unix:!contains(HAS_QT_45,YES) { 
     HEADERS += ImageCodecPNG.hpp
     HEADERS += ImageCodecTGA.hpp
     SOURCES += ImageCodecJPEG.cpp
@@ -79,18 +80,19 @@ unix:!contains(HAS_QT_45,YES) {
         -lpng
 }
 win32:DEFINES += LUMINOUS_EXPORT
-contains(HAS_QT_45,YES) {
+contains(HAS_QT_45,YES) { 
     message(Including QT Image codecs)
     HEADERS += ImageCodecQT.hpp
     SOURCES += ImageCodecQT.cpp
     CONFIG += qt
     QT += gui
     QT += svg
+    
     # On Windows we need to install the Qt plugins
-    win32 {
-      qt_plugin_install.path += /bin
-      qt_plugin_install.files = $$[QT_INSTALL_PLUGINS]
-      INSTALLS += qt_plugin_install
+    win32 { 
+        qt_plugin_install.path += /bin
+        qt_plugin_install.files = $$[QT_INSTALL_PLUGINS]
+        INSTALLS += qt_plugin_install
     }
 }
 include(../library.pri)

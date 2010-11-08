@@ -263,18 +263,16 @@ namespace Luminous {
                const float * rgba,
                const Nimble::Matrix3 & m);
 
-#ifndef LUMINOUS_OPENGLES
-
     static inline void glVertex2(const Nimble::Matrix3 & m, const Nimble::Vector2 & v)
     {
-      glVertex2fv((m * v).data());
+      Nimble::Vector2 tmp((m * v).data());
+      glVertex2f(tmp.x, tmp.y);
     }
 
     static inline void glVertex2(const Nimble::Matrix3 & m, float x, float y)
     {
       glVertex2fv((m * Nimble::Vector2(x, y)).data());
     }
-#endif // LUMINOUS_OPENGLES
 
     static inline Nimble::Vector4 project(const Nimble::Matrix3 & m,
                       const Nimble::Vector2 & xy)

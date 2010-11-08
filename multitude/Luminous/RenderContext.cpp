@@ -57,13 +57,13 @@ namespace Luminous
 
   void RenderContext::FBOPackage::attach()
   {
-    m_fbo.attachTexture2D(&m_tex, Luminous::COLOR0, 0);
+    m_fbo.attachTexture2D(&m_tex, GL_COLOR_ATTACHMENT0, 0);
     m_fbo.check();
   }
 
   void RenderContext::FBOPackage::activate(RenderContext & r)
   {
-    glPushAttrib(GL_TRANSFORM_BIT | GL_VIEWPORT_BIT);
+    LUMINOUS_IN_FULL_OPENGL(glPushAttrib(GL_TRANSFORM_BIT | GL_VIEWPORT_BIT));
 
     attach();
     r.pushDrawBuffer(Luminous::COLOR0, this);
@@ -76,7 +76,7 @@ namespace Luminous
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
-    gluOrtho2D(0, m_tex.width(), 0, m_tex.height());
+    glOrthof(0, m_tex.width(), 0, m_tex.height(), -1, 1);
   }
 
   void RenderContext::FBOPackage::deactivate(RenderContext & r)
@@ -524,7 +524,7 @@ namespace Luminous
     glVertexAttribPointer(loc2, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&m_attribs[4]));
     glEnableClientState(GL_VERTEX_ARRAY);
 
-    glDrawArrays(GL_QUADS, 0, (GLsizei) m_verts.size());
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, (GLsizei) m_verts.size());
 
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableVertexAttribArray(loc);
@@ -753,7 +753,7 @@ namespace Luminous
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
-    gluOrtho2D(0, minimumsize.x, 0, minimumsize.y);
+    glOrthof(0, minimumsize.x, 0, minimumsize.y, -1, 1);
 
     m_data->pushFBO(ret.m_package);
 
@@ -1096,7 +1096,7 @@ namespace Luminous
 
     glTexCoordPointer(2, GL_FLOAT, 0, texCoords);
     glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat*>(v));
-    glDrawArrays(GL_QUADS, 0, 4);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
     glDisable(GL_VERTEX_ARRAY);
     glDisable(GL_TEXTURE_COORD_ARRAY);

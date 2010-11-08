@@ -11,7 +11,7 @@ DEPENDPATH += $$PWD
 
 withbundles = $$(MULTI_BUNDLES)
 
-MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat
+!iphone*:MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat
 
 LIB_POETIC = -lPoetic
 LIB_FLUFFY = -lFluffy
@@ -22,14 +22,16 @@ LIB_OPENGL = -lGL -lGLU
 LIB_GLU = -lGLU
 LIB_RADIANT = -lRadiant -lPatterns
 LIB_RESONANT = -lResonant
-LIB_SCREENPLAY = -lScreenplay
-LIB_VIDEODISPLAY = -lVideoDisplay
+!iphone*:LIB_SCREENPLAY = -lScreenplay
+!iphoeneLIB_VIDEODISPLAY = -lVideoDisplay
 LIB_VALUABLE = -lValuable
 LIB_PATTERNS = -lPatterns
 
 LIB_BOX2D = -lBox2D
 
 MULTI_LIB_FLAG = -L
+
+
 
 linux-*{
   contains(USEGLEW,no) {
@@ -49,6 +51,10 @@ linux-*{
     DEFINES += MULTI_MEMCHECK=1
   }
 }
+
+iphone*:INCLUDES += /usr/local/include
+
+!iphone*:LIB_SDL = -lSDL
 
 macx {
   # withbundles = $$(MULTI_BUNDLES)

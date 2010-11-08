@@ -88,25 +88,25 @@ SOURCES += VideoInput.cpp
 SOURCES += WatchDog.cpp
 LIBS += $$LIB_NIMBLE \
     $$LIB_PATTERNS
-linux-* { 
+linux-* {
     SOURCES += PlatformUtilsLinux.cpp
     SOURCES += XFaker.cpp
     HEADERS += XFaker.hpp
     LIBS += -lX11 \
         -lXtst
 }
-macx { 
+macx {
     SOURCES += PlatformUtilsOSX.cpp
     LIBS += -framework,CoreFoundation
 }
-unix { 
-    HEADERS += VideoCamera1394.hpp
+unix {
+    !iphone*:HEADERS += VideoCamera1394.hpp
     SOURCES += DirectoryPosix.cpp
     SOURCES += SerialPortPosix.cpp
     SOURCES += TCPServerSocketQt.cpp
     SOURCES += TCPSocketQt.cpp
     SOURCES += UDPSocketQt.cpp
-    SOURCES += VideoCamera1394.cpp
+    !iphone*:SOURCES += VideoCamera1394.cpp
     SOURCES += ConditionPt.cpp
     SOURCES += MutexPt.cpp
     SOURCES += ThreadPt.cpp
@@ -119,10 +119,10 @@ unix {
     QT = core \
         network
 }
-win32 { 
+win32 {
     message(Radiant on Windows)
     DEFINES += RADIANT_EXPORT
-    !win64 { 
+    !win64 {
         DEFINES += CAMERA_DRIVER_CMU
         HEADERS += VideoCameraCMU.hpp
         SOURCES += VideoCameraCMU.cpp
@@ -151,7 +151,7 @@ win32 {
     HEADERS += VideoCameraPTGrey.hpp
     SOURCES += VideoCameraPTGrey.cpp
     INCLUDEPATH += $$PTGREY_PATH/include
-    
+
     # 64bit libs have different path
     win64:LIBPATH += $$PTGREY_PATH/lib64
     else:LIBPATH += $$PTGREY_PATH/lib

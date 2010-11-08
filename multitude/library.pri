@@ -8,7 +8,7 @@ isEmpty(DESTDIR):DESTDIR = $$PWD/lib
 
 isEmpty(EXPORT_HEADERS):EXPORT_HEADERS = $$HEADERS
 isEmpty(EXPORT_SOURCES):EXPORT_SOURCES = $$SOURCES
-contains(EXPORT_SOURCES, nothing) { 
+contains(EXPORT_SOURCES, nothing) {
   EXPORT_SOURCES=
   PROJECT_FILE=
 }
@@ -17,7 +17,7 @@ contains(EXPORT_SOURCES, nothing) {
 # below)
 target.path = /lib
 
-# Installation target for header files 
+# Installation target for header files
 includes.path = /include/$$TARGET
 includes.files = $$EXPORT_HEADERS
 
@@ -39,34 +39,33 @@ INSTALLS += target
 
 # On Windows, put DLLs into /bin with the exes
 win32 {
-	DLLDESTDIR = $$PWD/bin
+    DLLDESTDIR = $$PWD/bin
 
-	# For some reason DESTDIR_TARGET doesn't work here
-	tt = $$join(TARGET, "", "$(DESTDIR)", ".dll")
-	dlls.path = /bin
-	dlls.files += $$tt
-	dlls.CONFIG += no_check_exist
-	
-	INSTALLS += dlls
-	
-	!isEmpty(WINDOWS_INSTALL_SDK_LIB) {
-		# For some reason DESTDIR_TARGET doesn't work here
-		sdk_lib.path = /src/MultiTouch/lib
-		sdk_lib.files += $$join(TARGET, "", "$(DESTDIR)", ".lib")
-		sdk_lib.CONFIG += no_check_exist
-	
-		sdk_dll.path = /src/MultiTouch/lib
-		sdk_dll.files += $$join(TARGET, "", "$(DESTDIR)", ".dll")
-		sdk_dll.CONFIG += no_check_exist
-		
-		INSTALLS += sdk_lib sdk_dll
-	}
+    # For some reason DESTDIR_TARGET doesn't work here
+    tt = $$join(TARGET, "", "$(DESTDIR)", ".dll")
+    dlls.path = /bin
+    dlls.files += $$tt
+    dlls.CONFIG += no_check_exist
+
+    INSTALLS += dlls
+
+    !isEmpty(WINDOWS_INSTALL_SDK_LIB) {
+        # For some reason DESTDIR_TARGET doesn't work here
+        sdk_lib.path = /src/MultiTouch/lib
+        sdk_lib.files += $$join(TARGET, "", "$(DESTDIR)", ".lib")
+        sdk_lib.CONFIG += no_check_exist
+
+        sdk_dll.path = /src/MultiTouch/lib
+        sdk_dll.files += $$join(TARGET, "", "$(DESTDIR)", ".dll")
+        sdk_dll.CONFIG += no_check_exist
+
+        INSTALLS += sdk_lib sdk_dll
+    }
 }
 
 iphone* {
   message(This is for iPhone)
   CONFIG += static
-  DEFINES += RADIANT_IOS
 }
 
 macx {

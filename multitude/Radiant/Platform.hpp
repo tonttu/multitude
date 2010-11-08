@@ -24,4 +24,8 @@
 #   error "Unsupported platform!"
 #endif
 
+#ifdef IPHONE
+# define RADIANT_IOS 1
+#endif
+
 #endif

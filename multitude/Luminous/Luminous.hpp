@@ -31,6 +31,7 @@
 
 #ifdef RADIANT_IOS
 // #include <OpenGLES/EAGL.h>
+#include <OpenGLES/ES1/gl.h>
 #include <OpenGLES/ES2/gl.h>
 // #include <OpenGLES/ES2/glext.h>
 #define LUMINOUS_OPENGLES 1
@@ -54,6 +55,10 @@
 # define LUMINOUS_IN_FULL_OPENGL(x)
 #else
 # define LUMINOUS_IN_FULL_OPENGL(x) x
+#endif
+
+#ifdef LUMINOUS_OPENGLES
+#include <Luminous/DummyOpenGL.hpp>
 #endif
 
 /// Luminous is a library of C++ classes for computer graphics, using OpenGL.
