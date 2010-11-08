@@ -23,6 +23,7 @@
 #include <Luminous/ImageCodecQT.hpp>
 #include <QImageWriter>
 #include <QImageReader>
+#include <QCoreApplication>
 #else
 #include <Luminous/ImageCodecPNG.hpp>
 #include <Luminous/ImageCodecJPEG.hpp>
@@ -103,6 +104,11 @@ namespace Luminous
       return;
 
     done = true;
+
+#ifdef WIN32
+    // Make sure Qt plugins are found
+    QCoreApplication::addLibraryPath("C:\\Cornerstone\\bin\\plugins");
+#endif
 
 #ifdef USE_QT45
     // Debug output supported image formats
