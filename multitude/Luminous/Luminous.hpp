@@ -26,29 +26,30 @@
 
 #ifdef MULTI_WITHOUT_GLEW
 // This define is for glext.h
-#ifdef RADIANT_OSX
-#define GL_GLEXT_PROTOTYPES 1
+# define GL_GLEXT_PROTOTYPES 1
 
-#ifdef RADIANT_IOS
-// #include <OpenGLES/EAGL.h>
-#include <OpenGLES/ES1/gl.h>
-#include <OpenGLES/ES2/gl.h>
-// #include <OpenGLES/ES2/glext.h>
-#define LUMINOUS_OPENGLES 1
+# ifdef RADIANT_OSX
+#  ifdef RADIANT_IOS
+#   include <OpenGLES/ES1/gl.h>
+#   include <OpenGLES/ES2/gl.h>
+#   ifdef LUMINOUS_COMPILE
+#    include <OpenGLES/ES1/glext.h>
+#    include <OpenGLES/ES2/glext.h>
+#   endif
+#   define LUMINOUS_OPENGLES 1
+#  else
+#   include <OpenGL/gl.h>
+#   include <OpenGL/glext.h>
+#   include <OpenGL/glu.h>
+#  endif
+# else
+#  define GL_GLEXT_PROTOTYPES 1
+#  include <GL/gl.h>
+#  include <GL/glext.h>
+#  include <GL/glu.h>
+# endif
 #else
-#include <OpenGL/gl.h>
-#include <OpenGL/glext.h>
-#include <OpenGL/glu.h>
-#endif
-
-#else
-#define GL_GLEXT_PROTOTYPES 1
-#include <GL/gl.h>
-#include <GL/glext.h>
-#include <GL/glu.h>
-#endif
-#else
-#include <GL/glew.h>
+# include <GL/glew.h>
 #endif
 
 #ifdef LUMINOUS_OPENGLES
@@ -58,7 +59,32 @@
 #endif
 
 #ifdef LUMINOUS_OPENGLES
-#include <Luminous/DummyOpenGL.hpp>
+# include <Luminous/DummyOpenGL.hpp>
+
+# define glGenRenderbuffersEXT glGenRenderbuffersOES
+# define glDeleteRenderbuffersEXT glDeleteRenderbuffersOES
+# define glBindRenderbufferEXT glBindRenderbufferOES
+# define glRenderbufferStorageEXT glRenderbufferStorageOES
+# define GL_RENDERBUFFER_EXT GL_RENDERBUFFER_OES
+
+# define glGenFramebuffersEXT glGenFramebuffersOES
+# define glDeleteFramebuffersEXT glDeleteFramebuffersOES
+# define glBindFramebufferEXT glBindFramebufferOES
+# define glCheckFramebufferStatusEXT glCheckFramebufferStatusOES
+# define glFramebufferRenderbufferEXT glFramebufferRenderbufferOES
+# define glFramebufferRenderbufferEXT glFramebufferRenderbufferOES
+# define glFramebufferTexture2DEXT glFramebufferTexture2DOES
+
+# define GL_FRAMEBUFFER_EXT GL_FRAMEBUFFER_OES
+# define GL_FRAMEBUFFER_COMPLETE_EXT GL_FRAMEBUFFER_COMPLETE_OES
+# define GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_OES
+# define GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_OES
+# define GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_OES
+# define GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT GL_FRAMEBUFFER_INCOMPLETE_FORMATS_OES
+# define GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_OES
+# define GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_OES
+# define GL_FRAMEBUFFER_UNSUPPORTED_EXT GL_FRAMEBUFFER_UNSUPPORTED_OES
+
 #endif
 
 /// Luminous is a library of C++ classes for computer graphics, using OpenGL.

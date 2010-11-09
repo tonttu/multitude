@@ -108,12 +108,14 @@ namespace Luminous
       case GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT:
         cerr << "Error: Framebuffer object incomplete - formats." << endl;
         break;
-     case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT:
+#ifndef LUMINOUS_OPENGLES
+    case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT:
         cerr << "Error: Framebuffer object incomplete - draw buffer." << endl;
         break;
       case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT:
         cerr << "Error: Framebuffer object incomplete - read buffer." << endl;
         break;
+#endif
       case GL_FRAMEBUFFER_UNSUPPORTED_EXT:
         // Choose different format
         cerr << "Warning: Unsupported framebuffer object format. Try another format." << endl;
@@ -127,19 +129,6 @@ namespace Luminous
     return false;
   }
 
-  void Framebuffer::attachTexture1D(Texture1D* texture, GLenum attachment, int level)
-  {
-    bind();
-    glFramebufferTexture1DEXT(GL_FRAMEBUFFER_EXT, attachment,
-                  GL_TEXTURE_1D, texture->id(), level);
-  }
-
-  void Framebuffer::detachTexture1D(GLenum attachment)
-  {
-    bind();
-    glFramebufferTexture1DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_1D, 0, 0);
-  }
-
   void Framebuffer::attachTexture2D(Texture2D* texture, GLenum attachment, int level)
   {
     bind();
@@ -151,6 +140,21 @@ namespace Luminous
   {
     bind();
     glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_2D, 0, 0);
+  }
+
+#ifndef LUMINOUS_OPENGLES
+
+  void Framebuffer::attachTexture1D(Texture1D* texture, GLenum attachment, int level)
+  {
+    bind();
+    glFramebufferTexture1DEXT(GL_FRAMEBUFFER_EXT, attachment,
+                  GL_TEXTURE_1D, texture->id(), level);
+  }
+
+  void Framebuffer::detachTexture1D(GLenum attachment)
+  {
+    bind();
+    glFramebufferTexture1DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_1D, 0, 0);
   }
 
   void Framebuffer::attachTexture3D(Texture3D* texture, GLenum attachment, int zOffset, int level)
@@ -179,6 +183,8 @@ namespace Luminous
     bind();
     glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB + face, 0, 0);
   }
+
+#endif // LUMINOUS_OPENGLES
 
   void Framebuffer::attachRenderbuffer(Renderbuffer* renderbuffer, GLenum attachment)
   {

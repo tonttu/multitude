@@ -199,7 +199,7 @@ namespace Luminous {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    gluOrtho2D(0, 1, 0, 1);
+    glOrthof(0, 1, 0, 1, -1, 1);
 
     glBegin(GL_TRIANGLE_STRIP);
 

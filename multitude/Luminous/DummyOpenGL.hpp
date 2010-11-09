@@ -26,6 +26,9 @@ namespace Luminous
 //  DUMMY_OPENGL_0(glPopMatrix);
   DUMMY_OPENGL_0(glEnd);
 
+#define glMultTransposeMatrixf(a) DUMMY_OPENGL_M(glMultTransposeMatrixf)
+
+
 #define glBegin(a) DUMMY_OPENGL_M(glBegin)
 #define glPushAttrib(a) DUMMY_OPENGL_M(glPushAttrib)
 #define glPopAttrib() DUMMY_OPENGL_M(glPopAttrib)
@@ -53,6 +56,15 @@ namespace Luminous
 
 #define glColor3f(a,b,c) DUMMY_OPENGL_M(glColor3f)
 #define glColor3fv(a) DUMMY_OPENGL_M(glColor3fv)
+
+  /*
+  inline glMultTransposeMatrixf(float * data)
+  {
+    float tmp[16];
+    tmp[0] = data[0];
+    glMultMatrixf(tmp);
+  }
+*/
 /*
 inline void gluOrtho2D(float left, float right, float bot, float top)
 {

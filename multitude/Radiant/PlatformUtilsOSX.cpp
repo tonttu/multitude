@@ -16,6 +16,7 @@
 #include "PlatformUtils.hpp"
 
 #include "FixedStr.hpp"
+#include "Platform.hpp"
 #include "Trace.hpp"
 
 #include <dlfcn.h>
@@ -25,7 +26,7 @@
 #include <mach/mach.h>
 
 #ifndef RADIANT_IOS
-#include <CoreFoundation/CoreFoundation.h>
+# include <CoreFoundation/CoreFoundation.h>
 #endif
 
 namespace Radiant
@@ -50,8 +51,6 @@ namespace Radiant
     {
       return std::string();
     }
-
-
 #endif
 
     std::string getUserHomePath()
@@ -65,10 +64,10 @@ namespace Radiant
       char buf[312];
 
       if(isapplication) {
-    sprintf(buf, "/Applications/%s.app/Contents/Resources", module);
+        sprintf(buf, "/Applications/%s.app/Contents/Resources", module);
       }
       else {
-    sprintf(buf, "/Library/Frameworks/%s.framework", module);
+        sprintf(buf, "/Library/Frameworks/%s.framework", module);
       }
       return buf;
     }

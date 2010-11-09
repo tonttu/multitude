@@ -1,5 +1,10 @@
 #include "CameraDriver.hpp"
+#include "Platform.hpp"
 #include "Trace.hpp"
+
+#ifdef RADIANT_IOS
+# undef CAMERA_DRIVER_1394
+#endif // RADIANT_IOS
 
 #ifdef CAMERA_DRIVER_CMU
 #	include <Radiant/VideoCameraCMU.hpp>
@@ -12,6 +17,7 @@
 #ifdef CAMERA_DRIVER_1394
 #	include <Radiant/VideoCamera1394.hpp>
 #endif
+
 
 namespace Radiant
 {
@@ -58,7 +64,7 @@ namespace Radiant
 #endif
 
 #ifdef CAMERA_DRIVER_PGR
-	  registerDriver(new CameraDriverPTGrey());
+      registerDriver(new CameraDriverPTGrey());
 #endif
 
 #ifdef CAMERA_DRIVER_1394
@@ -92,13 +98,13 @@ namespace Radiant
       CameraDriver * cd = getCameraDriver((*it));
 
       debug("CameraDriverFactory::getPreferredCameraDriver # Checking driver %s = %p",
-			(*it).c_str(), cd);
+            (*it).c_str(), cd);
       if(cd) {
         // Make sure there is at least one camera available using this driver
-		  size_t cameraCount = cd->queryCameras(cameras);
-        
-		if(cameraCount > 0) 
-			return cd;
+          size_t cameraCount = cd->queryCameras(cameras);
+
+        if(cameraCount > 0)
+            return cd;
       }
     }
 

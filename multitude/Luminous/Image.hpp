@@ -16,6 +16,7 @@
 #ifndef LUMINOUS_IMAGE_HPP
 #define LUMINOUS_IMAGE_HPP
 
+#include <Luminous/Luminous.hpp>
 #include <Luminous/ContextVariable.hpp>
 #include <Luminous/Export.hpp>
 #include <Luminous/PixelFormat.hpp>

@@ -43,15 +43,15 @@ SOURCES += Collectable.cpp
 SOURCES += CPUMipmaps.cpp
 SOURCES += CPUMipmapStore.cpp
 SOURCES += Error.cpp
-!iphone*:SOURCES += FramebufferObject.cpp
+SOURCES += FramebufferObject.cpp
 SOURCES += GarbageCollector.cpp
-!iphone*:SOURCES += GLKeyStone.cpp
+SOURCES += GLKeyStone.cpp
 SOURCES += GLResource.cpp
 SOURCES += GLResources.cpp
 SOURCES += GLSLProgramObject.cpp
 SOURCES += GLSLShaderObject.cpp
 SOURCES += GPUMipmaps.cpp
-SOURCES += ImageCodecSVG.cpp
+# TGA loader tries to create BGR & BGRA textures, which are not availale on OpenGL ES
 !iphone*:SOURCES += ImageCodecTGA.cpp
 SOURCES += Image.cpp
 SOURCES += Luminous.cpp
@@ -71,25 +71,31 @@ LIBS += $$LIB_RADIANT \
     $$LIB_NIMBLE \
     $$LIB_PATTERNS \
     $$LIB_GLEW
-unix:!contains(HAS_QT_45,YES) { 
+
+DEFINES += LUMINOUS_COMPILE
+
+iphone*{
+  HAS_QT_45=NO
+}
+unix:!contains(HAS_QT_45,YES) {
     HEADERS += ImageCodecPNG.hpp
-    HEADERS += ImageCodecTGA.hpp
     SOURCES += ImageCodecJPEG.cpp
     SOURCES += ImageCodecPNG.cpp
     LIBS += -ljpeg \
         -lpng
 }
 win32:DEFINES += LUMINOUS_EXPORT
-contains(HAS_QT_45,YES) { 
+contains(HAS_QT_45,YES) {
     message(Including QT Image codecs)
     HEADERS += ImageCodecQT.hpp
     SOURCES += ImageCodecQT.cpp
+    SOURCES += ImageCodecSVG.cpp
     CONFIG += qt
     QT += gui
     QT += svg
-    
+
     # On Windows we need to install the Qt plugins
-    win32 { 
+    win32 {
         qt_plugin_install.path += /bin
         qt_plugin_install.files = $$[QT_INSTALL_PLUGINS]
         INSTALLS += qt_plugin_install

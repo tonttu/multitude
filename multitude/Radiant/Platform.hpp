@@ -24,7 +24,7 @@
 #   error "Unsupported platform!"
 #endif
 
-#ifdef IPHONE
+#if defined(IPHONE) || defined(__IPHONE_OS_VERSION_MIN_REQUIRED)
 # define RADIANT_IOS 1
 #endif
 
