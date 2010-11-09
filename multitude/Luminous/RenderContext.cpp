@@ -378,7 +378,6 @@ namespace Luminous
     size_t m_recursionLimit;
     size_t m_recursionDepth;
 
-    //std::stack<Nimble::Rectangle> m_clipStack;
     std::vector<Nimble::Rectangle> m_clipStack;
 
     typedef std::list<std::shared_ptr<FBOPackage> > FBOPackages;
@@ -413,6 +412,8 @@ namespace Luminous
     int m_viewStackPos;
     std::vector<Nimble::Vector2> m_attribs;
     std::vector<Nimble::Vector2> m_verts;
+    std::vector<Nimble::Vector2> m_texcoords;
+    std::vector<Nimble::Vector4> m_colors;
 
     Luminous::GLContext * m_glContext;
 
@@ -1002,14 +1003,14 @@ namespace Luminous
       low.x, high.y
     };
 
-#if 0
+#if 1
     // This fails when some other OpenGL features are used (FBOs, VBOs)
     glEnable(GL_VERTEX_ARRAY);
     glEnable(GL_TEXTURE_COORD_ARRAY);
 
     glTexCoordPointer(2, GL_FLOAT, 0, texCoords);
     glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat*>(v));
-    glDrawArrays(GL_QUADS, 0, 4);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
     glDisable(GL_VERTEX_ARRAY);
     glDisable(GL_TEXTURE_COORD_ARRAY);
@@ -1072,12 +1073,10 @@ namespace Luminous
     Nimble::Vector2 v[] = {
       m.project(0, 0),
       m.project(size.x, 0),
-      m.project(size.x, size.y),
-      m.project(0, size.y)
+      m.project(0, size.y),
+      m.project(size.x, size.y)
     };
 
-    if(rgba)
-      glColor4fv(rgba);
 
     const Vector2 & low = texUV.low();
     const Vector2 & high = texUV.high();
@@ -1085,23 +1084,38 @@ namespace Luminous
     const GLfloat texCoords[] = {
       low.x, low.y,
       high.x, low.y,
-      high.x, high.y,
-      low.x, high.y
+      low.x, high.y,
+      high.x, high.y
     };
 
 #if 1
+
+    Nimble::Vector4 c(rgba[0], rgba[1], rgba[2], rgba[3]);
+    Nimble::Vector4 colors[4] = {
+      c, c, c, c
+    };
+
     // This fails when some other OpenGL features are used (FBOs, VBOs)
-    glEnable(GL_VERTEX_ARRAY);
-    glEnable(GL_TEXTURE_COORD_ARRAY);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glEnableClientState(GL_COLOR_ARRAY);
 
     glTexCoordPointer(2, GL_FLOAT, 0, texCoords);
     glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat*>(v));
+    glColorPointer(4, GL_FLOAT, 0, colors);
+
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-    glDisable(GL_VERTEX_ARRAY);
-    glDisable(GL_TEXTURE_COORD_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+
 #else
-    glBegin(GL_QUADS);
+
+    if(rgba)
+      glColor4fv(rgba);
+
+    glBegin(GL_TRIANGLE_STRIP);
 
     for(int i = 0; i < 4; i++) {
       glTexCoord2fv(&texCoords[i * 2]);

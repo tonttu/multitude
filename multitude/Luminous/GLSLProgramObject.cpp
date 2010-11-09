@@ -154,6 +154,7 @@ namespace Luminous
     }
 
     glUseProgram(m_handle);
+
   }
 
   void GLSLProgramObject::unbind()

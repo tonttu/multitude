@@ -429,7 +429,6 @@ namespace Luminous {
     glVertex4fv(v[0].data());
 
     glEnd();
-
   }
 
   void Utils::glTexRect(Nimble::Vector2f v1, Nimble::Vector2f v2,
