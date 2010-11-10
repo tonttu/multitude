@@ -4,7 +4,8 @@
 /* Dummy implementations of various OpenGL functions/macros which are present in
    full OpenGL, but not in OpenGL ES 2.0.
 
-
+   The point of these macros is to make the software compile. At the same time they will give out
+   a warning about where these illegal functions are used.
 */
 
 namespace Luminous
