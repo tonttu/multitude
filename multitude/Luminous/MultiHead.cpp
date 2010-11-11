@@ -258,7 +258,7 @@ namespace Luminous {
   Nimble::Rect MultiHead::Window::graphicsBounds() const
   {
     if(m_areas.empty())
-      return Nimble::Rect(0,0, 1, 1);
+      return Nimble::Rect(0,0, 99, 99);
 
     Rect r = m_areas[0]->graphicsBounds();
 
