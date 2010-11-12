@@ -17,8 +17,10 @@
 #define LUMINOUS_RENDERCONTEXT_HPP
 
 #include <Luminous/Luminous.hpp>
+
 #include <Luminous/FramebufferObject.hpp>
 #include <Luminous/Transformer.hpp>
+#include <Luminous/Fill.hpp>
 #include <Luminous/GLResource.hpp>
 #include <Luminous/GLResources.hpp>
 #include <Luminous/Export.hpp>
@@ -37,7 +39,7 @@ namespace Luminous
   class GLContext;
 
   /// RenderContext contains the current rendering state.
-  class LUMINOUS_API RenderContext : public Transformer
+  class LUMINOUS_API RenderContext : public Transformer, public GLResources
   {
   public:
 
@@ -126,7 +128,7 @@ namespace Luminous
     /// Constructs a new render context and associates the given resources to it
     /// @param resources OpenGL resource container to associate with the context
     /// @param window window to associate this context with
-    RenderContext(Luminous::GLResources * resources, const Luminous::MultiHead::Window * window);
+    RenderContext(const Luminous::MultiHead::Window * window);
     virtual ~RenderContext();
 
     /// Sets the associated window for this context
@@ -134,7 +136,8 @@ namespace Luminous
     void setWindow(const Luminous::MultiHead::Window * window);
 
     /// Returns the resources of this context
-    Luminous::GLResources * resources() { return m_resources; }
+    /// @todo make deprecated
+    Luminous::GLResources * resources() { return this; }
 
     /// Prepares the context for rendering a frame. This is called once for
     /// every frame before rendering.
@@ -143,6 +146,8 @@ namespace Luminous
     /// Notifies the context that a frame has been renreded. This is called
     /// once after each frame.
     virtual void finish();
+
+    void setViewTransform(const Nimble::Matrix4 &);
 
     /// Sets the rendering recursion limit for the context. This is relevant
     /// for ViewWidgets which can cause recursive rendering of the scene.
@@ -308,6 +313,9 @@ namespace Luminous
                then it will be ignored.
         @param area The rectangle to drawn **/
     void drawTexRect(const Nimble::Rect & area, const float * rgba);
+
+    void drawRect(const Nimble::Rect & area, const Fill & fill);
+
     /// Sets the current blend function, and enables blending
     /** If the function is BLEND_NONE, then blending is disabled.
     @param f blend function */
@@ -355,6 +363,28 @@ namespace Luminous
     Luminous::GLResources * m_resources;
     class Internal;
     Internal * m_data;
+  };
+
+
+  class VertexAttribArrayStep : public Patterns::NotCopyable
+  {
+  public:
+    VertexAttribArrayStep(int pos, int elems, GLenum type, size_t stride,
+                          void * offset)
+                            : m_pos(pos)
+    {
+      glEnableVertexAttribArray(pos);
+      glVertexAttribPointer(pos, elems, type, GL_FALSE,
+                            stride, offset);
+    }
+
+    ~VertexAttribArrayStep ()
+    {
+      glDisableVertexAttribArray(m_pos);
+    }
+
+  private:
+    int m_pos;
   };
 
 }

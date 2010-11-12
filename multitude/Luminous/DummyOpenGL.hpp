@@ -11,7 +11,10 @@
 namespace Luminous
 {
   void dumymWarn(const char * funcname, const char * file, int line);
+  int dummyEnum(const char * file, int line);
 }
+
+#define DUMMY_OPENGL_E(enu) Luminous::dummyEnum(__FILE__, __LINE__)
 
 #define DUMMY_OPENGL_M(macro) \
   { Luminous::dumymWarn("##macro", __FILE__, __LINE__); }
@@ -23,12 +26,42 @@ namespace Luminous
 
 // #define GL_QUADS
 
-//  DUMMY_OPENGL_0(glPushMatrix);
-//  DUMMY_OPENGL_0(glPopMatrix);
-  DUMMY_OPENGL_0(glEnd);
+DUMMY_OPENGL_0(glPushMatrix);
+DUMMY_OPENGL_0(glPopMatrix);
+DUMMY_OPENGL_0(glEnd);
 
 #define glMultTransposeMatrixf(a) DUMMY_OPENGL_M(glMultTransposeMatrixf)
+#define glMatrixMode(a) DUMMY_OPENGL_M(glMatrixMode)
+#define glLoadIdentity() DUMMY_OPENGL_M(glLoadIdentity)
 
+
+#define glEnableClientState(a) DUMMY_OPENGL_M(glEnableClientState)
+#define glDisableClientState(a) DUMMY_OPENGL_M(glDisableClientState)
+
+#define glVertexPointer(a, b, c, d) DUMMY_OPENGL_M(glVertexPointer)
+#define glTexCoordPointer(a, b, c, d) DUMMY_OPENGL_M(glTexCoordPointer)
+#define glColorPointer(a, b, c, d) DUMMY_OPENGL_M(glColorPointer)
+
+#define GL_VERTEX_ARRAY DUMMY_OPENGL_E(GL_VERTEX_ARRAY)
+#define GL_TEXTURE_COORD_ARRAY DUMMY_OPENGL_E(GL_TEXTURE_COORD_ARRAY)
+#define GL_COLOR_ARRAY DUMMY_OPENGL_E(GL_COLOR_ARRAY)
+
+#define glClipPlanef(a, b) DUMMY_OPENGL_M(glClipPlanef)
+
+#define GL_CLIP_PLANE0 DUMMY_OPENGL_E(GL_CLIP_PLANE0)
+#define GL_CLIP_PLANE1 DUMMY_OPENGL_E(GL_CLIP_PLANE1)
+#define GL_CLIP_PLANE2 DUMMY_OPENGL_E(GL_CLIP_PLANE2)
+#define GL_CLIP_PLANE3 DUMMY_OPENGL_E(GL_CLIP_PLANE3)
+#define GL_CLIP_PLANE4 DUMMY_OPENGL_E(GL_CLIP_PLANE4)
+#define GL_CLIP_PLANE5 DUMMY_OPENGL_E(GL_CLIP_PLANE5)
+
+#define glPointSize(a) DUMMY_OPENGL_M(glPointSize)
+#define GL_POINT_SMOOTH DUMMY_OPENGL_E(GL_POINT_SMOOTH)
+
+#define glTranslatef(a, b, c) DUMMY_OPENGL_M(glTranslatef)
+#define glScalef(a, b, c) DUMMY_OPENGL_M(glScalef)
+
+#define glOrthof(a, b, c, d, e, f) DUMMY_OPENGL_M(glOrthof)
 
 #define glBegin(a) DUMMY_OPENGL_M(glBegin)
 #define glPushAttrib(a) DUMMY_OPENGL_M(glPushAttrib)

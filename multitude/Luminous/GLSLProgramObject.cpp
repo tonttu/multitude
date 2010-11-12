@@ -258,6 +258,19 @@ namespace Luminous
     return true;
   }
 
+
+  bool GLSLProgramObject::setUniformMatrix4(const char * name, const Nimble::Matrix4f & value)
+  {
+    int loc = getUniformLoc(name);
+
+    if(loc < 0)
+      return false;
+
+    glUniformMatrix4fv(loc, 1, true, value.data());
+
+    return true;
+  }
+
 #ifndef LUMINOUS_OPENGLES
 
   void GLSLProgramObject::setProgramParameter(GLenum pname, GLint value)

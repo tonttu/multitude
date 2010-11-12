@@ -43,6 +43,10 @@ namespace Luminous
   {
     Radiant::error("Unimplemented OpenGL call: %s in %s:%d", funcname, file, line);
   }
+  int dummyEnum(const char * file, int line)
+  {
+    Radiant::error("Unimplemented OpenGL call: %s:%d", file, line);
+  }
 
 #endif
 

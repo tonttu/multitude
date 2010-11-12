@@ -16,6 +16,7 @@
 #include "MultiHead.hpp"
 
 #include "GLResources.hpp"
+#include "RenderContext.hpp"
 #include "Texture.hpp"
 #include "Utils.hpp"
 
@@ -55,14 +56,20 @@ namespace Luminous {
 
     return ok;
   }
-#ifndef LUMINOUS_OPENGLES
 
-  void MultiHead::Area::applyGlState() const
+  void MultiHead::Area::applyViewportAndTransform(Luminous::RenderContext & r) const
   {
     /* info("MultiHead::Area::applyGlState # %d %d %d %d",
        m_location[0], m_location[1], m_size[0], m_size[1]);
     */
     glViewport(m_location[0], m_location[1], m_size[0], m_size[1]);
+    Nimble::Rect b = graphicsBounds();
+    Nimble::Matrix4 m = Nimble::Matrix4::ortho3D(b.low().x, b.high().x,
+                                                 b.high().y, b.low().y,
+                                                 -1.0f, 1.0f);
+    r.setViewTransform(m);
+
+    /*
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
@@ -78,11 +85,12 @@ namespace Luminous {
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+    */
   }
 
   void MultiHead::Area::cleanEdges() const
   {
-
+    /*
     glViewport(m_location[0], m_location[1], m_size[0], m_size[1]);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -162,8 +170,8 @@ namespace Luminous {
 
     if(m_method != METHOD_TEXTURE_READBACK)
       m_keyStone.cleanExterior();
+      */
   }
-#endif // LUMINOUS_OPENGLES
 
   Nimble::Vector2f MultiHead::Area::windowToGraphics
       (Nimble::Vector2f loc, int windowheight, bool & isInside) const

@@ -34,6 +34,12 @@ namespace Luminous
   using namespace Radiant;
 
 
+  template <class A, class B>
+      inline size_t offsetBytes(const A & higher, const B & lower)
+  {
+    return ((uint8_t *) & higher) - ((uint8_t *) & lower);
+  }
+
   RenderContext::FBOPackage::~FBOPackage()
   {}
 
@@ -179,13 +185,15 @@ namespace Luminous
         m_recursionDepth(0),
         m_renderCount(0),
         m_frameCount(0),
+        m_area(0),
         m_window(win),
         m_viewStackPos(-1),
         m_glContext(new GLDummyContext),
+        m_boundProgram(0),
         m_initialized(false),
         m_blendFunc(BLEND_USUAL)
     {
-
+      m_viewTransform.identity();
       m_attribs.resize(10000);
       m_attribs.clear();
 
@@ -217,6 +225,7 @@ namespace Luminous
 
       if(!m_initialized) {
         m_initialized = true;
+#ifndef LUMINOUS_OPENGLES
         const char * circ_vert_shader = ""\
             "uniform mat4 matrix;"\
             "varying vec2 pos;"\
@@ -271,8 +280,18 @@ namespace Luminous
                             "gl_FrontColor = gl_Color;\n"\
                             "}\n";
         m_polyline_shader->loadStrings(polyline_vert, polyline_frag);
+#endif
+
+        Radiant::ResourceLocator & rl = Radiant::ResourceLocator::instance();
+        rl.addPath("/Users/tommi/cornerstone/share/MultiTouch/");
+        GLSLProgramObject * basic = GLSLProgramObject::fromFiles(rl.locate("Shaders/basic_tex.vs").c_str(),
+                                                                 rl.locate("Shaders/basic_tex.fs").c_str());
+        if(!basic)
+          fatal("Could not load basic shader for rendering");
+        m_basic_shader.reset(basic);
 
         m_viewFBO.reset(new Luminous::Framebuffer());
+        info("RenderContext::Internal # init ok");
       }
 
       while(!m_drawBufferStack.empty())
@@ -398,12 +417,26 @@ namespace Luminous
 
     std::stack<DrawBuf> m_drawBufferStack;
 
+    class Vertex
+    {
+    public:
+      Vertex() { bzero(this, sizeof (*this)); }
+      Nimble::Vector2 m_location;
+      Nimble::Vector4 m_color;
+      Nimble::Vector2 m_texCoord;
+      float           m_useTexture;
+    };
+
+    std::vector<Vertex> m_vertices;
+
     unsigned long m_renderCount;
     unsigned long m_frameCount;
 
     std::shared_ptr<Luminous::GLSLProgramObject> m_circle_shader;
     std::shared_ptr<Luminous::GLSLProgramObject> m_polyline_shader;
+    std::shared_ptr<Luminous::GLSLProgramObject> m_basic_shader;
 
+    const Luminous::MultiHead::Area * m_area;
     const Luminous::MultiHead::Window * m_window;
     /// fbo for views
     std::shared_ptr<Luminous::Framebuffer> m_viewFBO;
@@ -415,7 +448,10 @@ namespace Luminous
     std::vector<Nimble::Vector2> m_texcoords;
     std::vector<Nimble::Vector4> m_colors;
 
+    Nimble::Matrix4 m_viewTransform;
+
     Luminous::GLContext * m_glContext;
+    GLSLProgramObject * m_boundProgram;
 
     bool m_initialized;
 
@@ -536,9 +572,8 @@ namespace Luminous
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
 
-  RenderContext::RenderContext(Luminous::GLResources * resources, const Luminous::MultiHead::Window * win)
+  RenderContext::RenderContext(const Luminous::MultiHead::Window * win)
       : Transformer(),
-      m_resources(resources),
       m_data(new Internal(win))
   {
     resetTransform();
@@ -564,7 +599,6 @@ namespace Luminous
 
   void RenderContext::prepare()
   {
-
     resetTransform();
     m_data->initialize();
     m_data->m_recursionDepth = 0;
@@ -573,11 +607,15 @@ namespace Luminous
     // Make sure the clip stack is empty
     while(!m_data->m_clipStack.empty())
       m_data->m_clipStack.pop_back();
-
   }
 
   void RenderContext::finish()
   {
+  }
+
+  void RenderContext::setViewTransform(const Nimble::Matrix4 & m)
+  {
+    m_data->m_viewTransform = m;
   }
 
   void RenderContext::setRecursionLimit(size_t limit)
@@ -1137,6 +1175,57 @@ namespace Luminous
     pushTransformRightMul(Nimble::Matrix3::translate2D(area.low()));
     drawTexRect(area.span(), rgba);
     popTransform();
+  }
+
+  void RenderContext::drawRect(const Nimble::Rect & area, const Fill & fill)
+  {
+    info("RenderContext::drawRect");
+
+    m_data->m_vertices.clear();
+
+    Internal::Vertex v;
+    v.m_color = fill.color();
+    v.m_useTexture = fill.texturing();
+
+    GLSLProgramObject & prog = *m_data->m_basic_shader;
+    prog.bind();
+    prog.setUniformMatrix4("view_transform", m_data->m_viewTransform);
+    prog.setUniformMatrix3("object_transform", transform());
+
+    v.m_location = area.low();
+    v.m_texCoord = fill.texCoords().lowHigh();
+    m_data->m_vertices.push_back(v);
+
+    v.m_location = area.highLow();
+    v.m_texCoord = fill.texCoords().high();
+    m_data->m_vertices.push_back(v);
+
+    v.m_location = area.lowHigh();
+    v.m_texCoord = fill.texCoords().low();
+    m_data->m_vertices.push_back(v);
+
+    v.m_location = area.high();
+    v.m_texCoord = fill.texCoords().highLow();
+    m_data->m_vertices.push_back(v);
+
+    const int vsize = sizeof(Internal::Vertex);
+
+    Internal::Vertex & vr = m_data->m_vertices[0];
+
+    VertexAttribArrayStep ls(prog.getAttribLoc("location"), 2, GL_FLOAT,
+                             vsize, & vr.m_location);
+    VertexAttribArrayStep cs(prog.getAttribLoc("color"), 4, GL_FLOAT,
+                             vsize, & vr.m_color);
+    VertexAttribArrayStep ts(prog.getAttribLoc("tex_coord"), 4, GL_FLOAT,
+                             vsize, & vr.m_texCoord);
+    VertexAttribArrayStep ut(prog.getAttribLoc("use_tex"), 1, GL_FLOAT,
+                             vsize, & vr.m_useTexture);
+
+    info("RenderContext::drawRect # almost");
+
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+    info("RenderContext::drawRect # EXIT");
   }
 
   Nimble::Vector2 RenderContext::contextSize() const

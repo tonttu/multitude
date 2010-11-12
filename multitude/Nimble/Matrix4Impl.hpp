@@ -30,6 +30,24 @@ namespace Nimble {
 
   }
 
+  template <class T> Matrix4T<T> Matrix4T<T>::ortho3D
+      (T left, T right, T bottom, T top, T near, T far)
+  {
+    T tx = (right + left) / (right - left);
+    T ty = (top + bottom) / (top - bottom);
+    T tz = (far + near) / (far - near);
+
+    Matrix4T<T> m;
+
+    m[0].make(2 / (right - left), 0, 0, tx);
+    m[1].make(0, 2 / (top - bottom), 0, ty);
+    m[2].make(0, 0, 2 / (far - near), tz);
+    m[3].make(0, 0, 0, 1);
+
+    return m;
+  }
+
+
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
   /// @todo Move test out of the header
   template <class T>

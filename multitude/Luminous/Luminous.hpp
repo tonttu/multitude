@@ -30,10 +30,10 @@
 
 # ifdef RADIANT_OSX
 #  ifdef RADIANT_IOS
-#   include <OpenGLES/ES1/gl.h>
+//#   include <OpenGLES/ES1/gl.h>
 #   include <OpenGLES/ES2/gl.h>
 #   ifdef LUMINOUS_COMPILE
-#    include <OpenGLES/ES1/glext.h>
+//#    include <OpenGLES/ES1/glext.h>
 #    include <OpenGLES/ES2/glext.h>
 #   endif
 #   define LUMINOUS_OPENGLES 1
@@ -61,29 +61,29 @@
 #ifdef LUMINOUS_OPENGLES
 # include <Luminous/DummyOpenGL.hpp>
 
-# define glGenRenderbuffersEXT glGenRenderbuffersOES
-# define glDeleteRenderbuffersEXT glDeleteRenderbuffersOES
-# define glBindRenderbufferEXT glBindRenderbufferOES
-# define glRenderbufferStorageEXT glRenderbufferStorageOES
-# define GL_RENDERBUFFER_EXT GL_RENDERBUFFER_OES
+# define glGenRenderbuffersEXT glGenRenderbuffers
+# define glDeleteRenderbuffersEXT glDeleteRenderbuffers
+# define glBindRenderbufferEXT glBindRenderbuffer
+# define glRenderbufferStorageEXT glRenderbufferStorage
+# define GL_RENDERBUFFER_EXT GL_RENDERBUFFER
 
-# define glGenFramebuffersEXT glGenFramebuffersOES
-# define glDeleteFramebuffersEXT glDeleteFramebuffersOES
-# define glBindFramebufferEXT glBindFramebufferOES
-# define glCheckFramebufferStatusEXT glCheckFramebufferStatusOES
-# define glFramebufferRenderbufferEXT glFramebufferRenderbufferOES
-# define glFramebufferRenderbufferEXT glFramebufferRenderbufferOES
-# define glFramebufferTexture2DEXT glFramebufferTexture2DOES
+# define glGenFramebuffersEXT glGenFramebuffers
+# define glDeleteFramebuffersEXT glDeleteFramebuffers
+# define glBindFramebufferEXT glBindFramebuffer
+# define glCheckFramebufferStatusEXT glCheckFramebufferStatus
+# define glFramebufferRenderbufferEXT glFramebufferRenderbuffer
+# define glFramebufferRenderbufferEXT glFramebufferRenderbuffer
+# define glFramebufferTexture2DEXT glFramebufferTexture2D
 
-# define GL_FRAMEBUFFER_EXT GL_FRAMEBUFFER_OES
-# define GL_FRAMEBUFFER_COMPLETE_EXT GL_FRAMEBUFFER_COMPLETE_OES
-# define GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_OES
-# define GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_OES
-# define GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_OES
-# define GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT GL_FRAMEBUFFER_INCOMPLETE_FORMATS_OES
-# define GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_OES
-# define GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_OES
-# define GL_FRAMEBUFFER_UNSUPPORTED_EXT GL_FRAMEBUFFER_UNSUPPORTED_OES
+# define GL_FRAMEBUFFER_EXT GL_FRAMEBUFFER
+# define GL_FRAMEBUFFER_COMPLETE_EXT GL_FRAMEBUFFER_COMPLETE
+# define GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT
+# define GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT
+# define GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS
+# define GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT GL_FRAMEBUFFER_INCOMPLETE_FORMATS
+# define GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER
+# define GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER
+# define GL_FRAMEBUFFER_UNSUPPORTED_EXT GL_FRAMEBUFFER_UNSUPPORTED
 
 #endif
 

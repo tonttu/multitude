@@ -105,10 +105,10 @@ namespace Luminous
       case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT:
         cerr << "Error: Framebuffer object incomplete - dimensions." << endl;
         break;
+#ifndef LUMINOUS_OPENGLES
       case GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT:
         cerr << "Error: Framebuffer object incomplete - formats." << endl;
         break;
-#ifndef LUMINOUS_OPENGLES
     case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT:
         cerr << "Error: Framebuffer object incomplete - draw buffer." << endl;
         break;

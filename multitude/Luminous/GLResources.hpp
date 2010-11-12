@@ -54,7 +54,7 @@ namespace Luminous
   {
   public:
     /// Constructs a new resource collection
-    GLResources(Radiant::ResourceLocator & rl);
+    GLResources(Radiant::ResourceLocator & rl = Radiant::ResourceLocator::instance());
     virtual ~GLResources();
 
     /// Initialize the GLResources object.

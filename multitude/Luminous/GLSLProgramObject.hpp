@@ -83,6 +83,9 @@ namespace Luminous
     /// @copydoc setUniformInt
     /// The matrix is automatically transposed for OpenGL
     bool setUniformMatrix3(const char * name, const Nimble::Matrix3f & value);
+    /// @copydoc setUniformInt
+    /// The matrix is automatically transposed for OpenGL
+    bool setUniformMatrix4(const char * name, const Nimble::Matrix4f & value);
 
 #ifndef LUMINOUS_OPENGLES
 

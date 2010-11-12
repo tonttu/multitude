@@ -143,6 +143,12 @@ namespace Nimble {
     /// Create a scaling matrix
     NIMBLE_API static Matrix4T<T> scale3D(const Vector3T<T> & v);
 
+    /// Creates an orthogonal projection matrix in 3D
+    /** This function works in a way similar to glOrtho
+        (http://lmb.informatik.uni-freiburg.de/people/reisert/opengl/doc/glOrtho.html).
+    */
+    NIMBLE_API static Matrix4T<T> ortho3D(T left, T right, T bottom, T top, T near, T far);
+
     /** Identity matrix. */
     NIMBLE_API static const Matrix4T<T> IDENTITY;
 
@@ -355,7 +361,7 @@ inline Nimble::Vector3T<T> operator*(const Nimble::Matrix4T<T>& m1,const Nimble:
   return res;
 }
 
-/// @todo Vector4 * Matrix4 is not defined. This implicitly transposes the vector. This should not 
+/// @todo Vector4 * Matrix4 is not defined. This implicitly transposes the vector. This should not
 /// operator should not be defined. Also check other Matrix classes.
 template <class T>
 inline Nimble::Vector4T<T> operator*(const Nimble::Vector4T<T>& m2, const Nimble::Matrix4T<T>& m1)
