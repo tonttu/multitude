@@ -38,7 +38,7 @@ namespace Valuable
     /// This method is called when some of the listened values changes
     virtual void valueChanged(ValueObject *) = 0;
     /// This method is called when some of the listened values is deleted
-    virtual void valueDeleted(ValueObject *) = 0;
+    virtual void valueDeleted(ValueObject *);
 
   private:
 
