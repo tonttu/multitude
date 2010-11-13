@@ -617,9 +617,9 @@ namespace Luminous
 
   void RenderContext::setViewTransform(const Nimble::Matrix4 & m)
   {
-    Radiant::info("NEW View matrix = %s", Radiant::FixedStr256(m).str());
+    // Radiant::info("NEW View matrix = %s", Radiant::FixedStr256(m, 5).str());
 
-    // m_data->m_viewTransform = m;
+    m_data->m_viewTransform = m;
   }
 
   void RenderContext::setRecursionLimit(size_t limit)
@@ -1181,6 +1181,15 @@ namespace Luminous
     popTransform();
   }
 
+  Nimble::Vector4 proj(const Nimble::Matrix4 & m4, const Nimble::Matrix3 & m3,
+                       Nimble::Vector2 v)
+  {
+    Nimble::Vector3 v3(v.x, v.y, 1);
+    v3 = m3 * v3;
+    Nimble::Vector4 v4(v3.x, v3.y, 0, v3.z);
+    return m4 * v4;
+  }
+
   void RenderContext::drawRect(const Nimble::Rect & area, const Fill & fill)
   {
     info("RenderContext::drawRect");
@@ -1195,15 +1204,17 @@ namespace Luminous
     prog.bind();
     Nimble::Matrix4 tmp4;
     tmp4.identity();
-    // prog.setUniformMatrix4("view_transform", m_data->m_viewTransform);
-    prog.setUniformMatrix4("view_transform", tmp4);
-    Radiant::info("View matrix = %s", Radiant::FixedStr256(m_data->m_viewTransform).str());
-    // prog.setUniformMatrix3("object_transform", transform());
-    Nimble::Matrix3 tmp;
+    prog.setUniformMatrix4("view_transform", m_data->m_viewTransform);
+    // prog.setUniformMatrix4("view_transform", tmp4);
+    // Radiant::info("View matrix = %s", Radiant::FixedStr256(m_data->m_viewTransform).str());
+    prog.setUniformMatrix3("object_transform", transform());
+    Radiant::info("Object matrix = %s", Radiant::FixedStr256(transform()).str());
+
+    /*Nimble::Matrix3 tmp;
     tmp.identity();
     if(!prog.setUniformMatrix3("object_transform", tmp))
       fatal("RenderContext::drawRect # could not set object_transform");
-
+*/
     // assert(prog.setUniformFloat("move", 0.0));
 
     v.m_location = area.low();
@@ -1221,6 +1232,12 @@ namespace Luminous
     v.m_location = area.high();
     v.m_texCoord = fill.texCoords().highLow();
     m_data->m_vertices.push_back(v);
+
+    for(int i = 0; i < 4; i++) {
+      Nimble::Vector4 p = proj(m_data->m_viewTransform, transform(),
+                                   m_data->m_vertices[i].m_location);
+      info("V[%d] = [%f %f %f %f]", i, p.x, p.y, p.z, p.w);
+    }
 
     const int vsize = sizeof(Internal::Vertex);
 
