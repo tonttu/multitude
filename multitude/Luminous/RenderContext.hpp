@@ -139,6 +139,8 @@ namespace Luminous
     /// @todo make deprecated
     Luminous::GLResources * resources() { return this; }
 
+    static std::string locateStandardShader(const std::string & filename);
+
     /// Prepares the context for rendering a frame. This is called once for
     /// every frame before rendering.
     virtual void prepare();
@@ -147,6 +149,8 @@ namespace Luminous
     /// once after each frame.
     virtual void finish();
 
+    void pushViewTransform();
+    void popViewTransform();
     void setViewTransform(const Nimble::Matrix4 &);
 
     /// Sets the rendering recursion limit for the context. This is relevant

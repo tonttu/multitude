@@ -77,7 +77,10 @@ namespace Luminous
     r.pushDrawBuffer(Luminous::COLOR0, this);
     // Save and setup viewport to match the FBO
     glViewport(0, 0, m_tex.width(), m_tex.height());
-
+    // error("RenderContext::FBOPackage::activate # unimplemented");
+    r.pushViewTransform();
+    r.setViewTransform(Nimble::Matrix4::ortho3D(0, m_tex.width(), 0, m_tex.height(), -1, 1));
+    /*
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -85,6 +88,7 @@ namespace Luminous
     glPushMatrix();
     glLoadIdentity();
     glOrthof(0, m_tex.width(), 0, m_tex.height(), -1, 1);
+    */
   }
 
   void RenderContext::FBOPackage::deactivate(RenderContext & r)
@@ -98,10 +102,13 @@ namespace Luminous
     r.popDrawBuffer();
     Luminous::glErrorToString(__FILE__, __LINE__);
     // Restore matrix stack
+    /*
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
+    */
+    r.popViewTransform();
     Luminous::glErrorToString(__FILE__, __LINE__);
   }
 
@@ -196,6 +203,7 @@ namespace Luminous
         m_blendFunc(BLEND_USUAL)
     {
       m_viewTransform.identity();
+      m_viewTransformStack.push_back(m_viewTransform);
       m_attribs.resize(10000);
       m_attribs.clear();
 
@@ -284,10 +292,12 @@ namespace Luminous
         m_polyline_shader->loadStrings(polyline_vert, polyline_frag);
 #endif
 
-        Radiant::ResourceLocator & rl = Radiant::ResourceLocator::instance();
-        rl.addPath("/Users/tommi/cornerstone/share/MultiTouch/");
-        GLSLProgramObject * basic = GLSLProgramObject::fromFiles(rl.locate("Shaders/basic_tex.vs").c_str(),
-                                                                 rl.locate("Shaders/basic_tex.fs").c_str());
+        Radiant::ResourceLocator::instance().addPath
+            ("/Users/tommi/cornerstone/share/MultiTouch/");
+
+        GLSLProgramObject * basic =
+            GLSLProgramObject::fromFiles(locateStandardShader("basic_tex.vs").c_str(),
+                                         locateStandardShader("basic_tex.fs").c_str());
         if(!basic)
           fatal("Could not load basic shader for rendering");
         m_basic_shader.reset(basic);
@@ -450,6 +460,8 @@ namespace Luminous
     std::vector<Nimble::Vector2> m_texcoords;
     std::vector<Nimble::Vector4> m_colors;
 
+    std::vector<Nimble::Matrix4> m_viewTransformStack;
+
     Nimble::Matrix4 m_viewTransform;
 
     Luminous::GLContext * m_glContext;
@@ -599,6 +611,19 @@ namespace Luminous
     m_data->m_window = window;
   }
 
+  std::string RenderContext::locateStandardShader(const std::string & filename)
+  {
+    std::string pathname;
+#ifdef LUMINOUS_OPENGL_FULL
+    pathname = "../MultiTouch/GL20Shaders/";
+#else
+    pathname = "../MultiTouch/ES20Shaders/";
+#endif
+    pathname += filename;
+
+    return Radiant::ResourceLocator::instance().locate(pathname);
+  }
+
   void RenderContext::prepare()
   {
     resetTransform();
@@ -613,6 +638,28 @@ namespace Luminous
 
   void RenderContext::finish()
   {
+  }
+
+  void RenderContext::pushViewTransform()
+  {
+    m_data->m_viewTransformStack.push_back(m_data->m_viewTransform);
+    if(m_data->m_viewTransformStack.size() > 200) {
+      error("RenderContext::pushViewTransform # stack extremely deep (%d)",
+            (int) m_data->m_viewTransformStack.size());
+    }
+  }
+
+  void RenderContext::popViewTransform()
+  {
+    if(!m_data->m_viewTransformStack.empty()) {
+      m_data->m_viewTransformStack.pop_back();
+      if(!m_data->m_viewTransformStack.empty()) {
+        m_data->m_viewTransform = m_data->m_viewTransformStack.back();
+      }
+    }
+    else {
+      error("RenderContext::popViewTransform # Stack empty");
+    }
   }
 
   void RenderContext::setViewTransform(const Nimble::Matrix4 & m)
@@ -790,6 +837,7 @@ namespace Luminous
     glViewport(0, 0, minimumsize.x, minimumsize.y);
 
     // Save matrix stack
+    /*
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -797,7 +845,9 @@ namespace Luminous
     glPushMatrix();
     glLoadIdentity();
     glOrthof(0, minimumsize.x, 0, minimumsize.y, -1, 1);
-
+    */
+    pushViewTransform();
+    setViewTransform(Nimble::Matrix4::ortho3D(0, minimumsize.x, 0, minimumsize.y, -1, 1));
     m_data->pushFBO(ret.m_package);
 
     // Lets adjust the matrix stack to take into account the new
@@ -1192,7 +1242,7 @@ namespace Luminous
 
   void RenderContext::drawRect(const Nimble::Rect & area, const Fill & fill)
   {
-    info("RenderContext::drawRect");
+    // info("RenderContext::drawRect");
 
     m_data->m_vertices.clear();
 
@@ -1208,7 +1258,7 @@ namespace Luminous
     // prog.setUniformMatrix4("view_transform", tmp4);
     // Radiant::info("View matrix = %s", Radiant::FixedStr256(m_data->m_viewTransform).str());
     prog.setUniformMatrix3("object_transform", transform());
-    Radiant::info("Object matrix = %s", Radiant::FixedStr256(transform()).str());
+    // Radiant::info("Object matrix = %s", Radiant::FixedStr256(transform()).str());
 
     /*Nimble::Matrix3 tmp;
     tmp.identity();
@@ -1233,11 +1283,12 @@ namespace Luminous
     v.m_texCoord = fill.texCoords().highLow();
     m_data->m_vertices.push_back(v);
 
-    for(int i = 0; i < 4; i++) {
+    /* for(int i = 0; i < 4; i++) {
       Nimble::Vector4 p = proj(m_data->m_viewTransform, transform(),
                                    m_data->m_vertices[i].m_location);
       info("V[%d] = [%f %f %f %f]", i, p.x, p.y, p.z, p.w);
     }
+    */
 
     const int vsize = sizeof(Internal::Vertex);
 
@@ -1252,11 +1303,12 @@ namespace Luminous
     VertexAttribArrayStep ut(prog.getAttribLoc("use_tex"), 1, GL_FLOAT,
                              vsize, & vr.m_useTexture);
 
-    info("RenderContext::drawRect # almost");
+    // info("RenderContext::drawRect # almost");
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-    info("RenderContext::drawRect # EXIT");
+    prog.unbind();
+    // info("RenderContext::drawRect # EXIT");
   }
 
   Nimble::Vector2 RenderContext::contextSize() const

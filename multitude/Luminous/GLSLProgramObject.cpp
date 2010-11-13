@@ -317,8 +317,9 @@ namespace Luminous
       delete [] code;
 
       if(!vs->compile()) {
-        error("GLSLProgramObject::fromFiles # vertex shader compile error: %s",
-              vs->compilerLog());
+        error("GLSLProgramObject::fromFiles # vertex shader %s compile error: %s",
+              vsFile, vs->compilerLog());
+        error("%s", vs->source());
         delete vs;
         return 0;
       }
@@ -335,8 +336,9 @@ namespace Luminous
       delete [] code;
 
       if(!fs->compile()) {
-        error("GLSLProgramObject::fromFiles # fragment shader "
-              "compile error:%s", fs->compilerLog());
+        error("GLSLProgramObject::fromFiles # fragment shader %s"
+              "compile error:%s", fsFile, fs->compilerLog());
+        error("%s", fs->source());
         delete fs;
         return 0;
       }

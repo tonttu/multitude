@@ -45,6 +45,10 @@ namespace Luminous
     /// Sets the source code for the shader
     void setSource(const char* code);
 
+    /// Returns the current source code for this shader
+    const char * source() const
+    { return m_shaderSource; }
+
     /// Loads the source for the shader from a given file
     bool loadSourceFile(const char* filename);
 

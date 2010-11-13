@@ -1,4 +1,4 @@
-k
+
 #include "ImageCodecSVG.hpp"
 
 #include <Luminous/Image.hpp>
