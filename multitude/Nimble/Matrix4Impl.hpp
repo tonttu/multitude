@@ -33,6 +33,16 @@ namespace Nimble {
   template <class T> Matrix4T<T> Matrix4T<T>::ortho3D
       (T left, T right, T bottom, T top, T near, T far)
   {
+    Matrix4T m1 = scale3D(Nimble::Vector3T<T>(1.0 / (right - left),
+                                              1.0 / (top - bottom),
+                                              1.0 / (far - near)));
+    Matrix4T m2 = translate3D(Nimble::Vector3T<T>(-left, -bottom, -near));
+
+    Matrix4T m3 = scale3D(Nimble::Vector3T<T>(2, 2, 2));
+    Matrix4T m4 = translate3D(Nimble::Vector3T<T>(-1, -1, -1));
+
+    return mul(mul(m4, m3), mul(m1, m2));
+    /*
     T tx = (right + left) / (right - left);
     T ty = (top + bottom) / (top - bottom);
     T tz = (far + near) / (far - near);
@@ -44,8 +54,8 @@ namespace Nimble {
     r.row(1).make(0, 2.0 / (top - bottom), 0, ty);
     r.row(2).make(0, 0, 2.0 / (far - near), tz);
     r.row(3).make(0, 0, 0, 1);
-
     return r;
+    */
   }
 
 

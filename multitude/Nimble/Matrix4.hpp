@@ -358,6 +358,12 @@ inline Nimble::Matrix4T<T> operator*(const Nimble::Matrix4T<T>& m1,const Nimble:
 }
 
 template <class T>
+inline Nimble::Matrix4T<T> mul(const Nimble::Matrix4T<T>& m1,const Nimble::Matrix4T<T>& m2)
+{
+  return m1 * m2;
+}
+
+template <class T>
 inline Nimble::Vector4T<T> operator*(const Nimble::Matrix4T<T>& m1,const Nimble::Vector4T<T>& m2)
 {
   Nimble::Vector4T<T> res;
@@ -368,7 +374,7 @@ inline Nimble::Vector4T<T> operator*(const Nimble::Matrix4T<T>& m1,const Nimble:
 
 
 template <class T>
-inline Nimble::Vector3T<T> operator*(const Nimble::Matrix4T<T>& m1,const Nimble::Vector3T<T>& m2)
+    inline Nimble::Vector3T<T> operator*(const Nimble::Matrix4T<T>& m1,const Nimble::Vector3T<T>& m2)
 {
   Nimble::Vector3T<T> res;
   for(int i = 0; i < 3; i++)
