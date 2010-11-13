@@ -252,9 +252,13 @@ namespace Luminous
 
     if(loc < 0)
       return false;
+    // info("GLSLProgramObject::setUniformMatrix3 # %d %s", loc, name);
 
+#ifdef LUMINOUS_OPENGL_FULL
     glUniformMatrix3fv(loc, 1, true, value.data());
-
+#else
+    glUniformMatrix3fv(loc, 1, false, value.transposed().data());
+#endif
     return true;
   }
 
@@ -266,7 +270,12 @@ namespace Luminous
     if(loc < 0)
       return false;
 
+#ifdef LUMINOUS_OPENGL_FULL
     glUniformMatrix4fv(loc, 1, true, value.data());
+
+#else
+    glUniformMatrix4fv(loc, 1, false, value.transposed().data());
+#endif
 
     return true;
   }

@@ -55,6 +55,7 @@
 #ifdef LUMINOUS_OPENGLES
 # define LUMINOUS_IN_FULL_OPENGL(x)
 #else
+# define LUMINOUS_OPENGL_FULL
 # define LUMINOUS_IN_FULL_OPENGL(x) x
 #endif
 

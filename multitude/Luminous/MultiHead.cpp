@@ -20,6 +20,7 @@
 #include "Texture.hpp"
 #include "Utils.hpp"
 
+#include <Radiant/FixedStr.hpp>
 #include <Radiant/Trace.hpp>
 
 #include <Valuable/DOMElement.hpp>
@@ -64,9 +65,15 @@ namespace Luminous {
     */
     glViewport(m_location[0], m_location[1], m_size[0], m_size[1]);
     Nimble::Rect b = graphicsBounds();
+
+    info("MultiHead::Area::applyViewportAndTransform # %f %f %f %f",
+         b.low().x, b.high().x,
+         b.high().y, b.low().y);
     Nimble::Matrix4 m = Nimble::Matrix4::ortho3D(b.low().x, b.high().x,
                                                  b.high().y, b.low().y,
-                                                 -1.0f, 1.0f);
+                                                 -1000.0f, 1000.0f);
+    Radiant::info("Matrix = %s", Radiant::FixedStr256(m).str());
+
     r.setViewTransform(m);
 
     /*

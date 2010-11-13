@@ -79,8 +79,10 @@ namespace Luminous {
         m_location = Nimble::Vector2i(x, y);
         m_size = Nimble::Vector2i(w, h);
 
-        if(copyToGraphics)
+        if(copyToGraphics) {
           setGraphicsGeometry(x, y, w, h);
+          updateBBox();
+        }
       }
 
       /// Sets the size of the area

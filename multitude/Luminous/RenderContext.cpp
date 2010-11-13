@@ -23,6 +23,8 @@
 #include "Utils.hpp"
 #include "GLSLProgramObject.hpp"
 
+#include <Radiant/FixedStr.hpp>
+
 #include <strings.h>
 
 #define DEFAULT_RECURSION_LIMIT 8
@@ -615,7 +617,9 @@ namespace Luminous
 
   void RenderContext::setViewTransform(const Nimble::Matrix4 & m)
   {
-    m_data->m_viewTransform = m;
+    Radiant::info("NEW View matrix = %s", Radiant::FixedStr256(m).str());
+
+    // m_data->m_viewTransform = m;
   }
 
   void RenderContext::setRecursionLimit(size_t limit)
@@ -1189,8 +1193,18 @@ namespace Luminous
 
     GLSLProgramObject & prog = *m_data->m_basic_shader;
     prog.bind();
-    prog.setUniformMatrix4("view_transform", m_data->m_viewTransform);
-    prog.setUniformMatrix3("object_transform", transform());
+    Nimble::Matrix4 tmp4;
+    tmp4.identity();
+    // prog.setUniformMatrix4("view_transform", m_data->m_viewTransform);
+    prog.setUniformMatrix4("view_transform", tmp4);
+    Radiant::info("View matrix = %s", Radiant::FixedStr256(m_data->m_viewTransform).str());
+    // prog.setUniformMatrix3("object_transform", transform());
+    Nimble::Matrix3 tmp;
+    tmp.identity();
+    if(!prog.setUniformMatrix3("object_transform", tmp))
+      fatal("RenderContext::drawRect # could not set object_transform");
+
+    // assert(prog.setUniformFloat("move", 0.0));
 
     v.m_location = area.low();
     v.m_texCoord = fill.texCoords().lowHigh();

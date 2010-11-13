@@ -75,6 +75,8 @@ namespace Nimble {
 
     /// Transposes the matrix
     inline void               transpose();
+    /// Returns a transposed matrix
+    inline Matrix3T<T>        transposed() const;
     /// Fills the matrix with zeroes
     void                      clear() { m[0].clear(); m[1].clear(); m[2].clear(); }
     /// Makes the matrix an identity matrix
@@ -123,7 +125,7 @@ namespace Nimble {
     inline Matrix3T<T>        inverse(bool * ok = 0, T tolerance = 1.0e-8) const;
 
     /// Create a matrix that performs 2D translation
-    static Matrix3T<T> translation(const Vector2T<T> & t) { Matrix3T<T> m; m.identity(); m.set(0, 2, t.x); m.set(1, 2, t.y); return m; }    
+    static Matrix3T<T> translation(const Vector2T<T> & t) { Matrix3T<T> m; m.identity(); m.set(0, 2, t.x); m.set(1, 2, t.y); return m; }
     /// Create a matrix that performs 2D translation
     static Matrix3T<T> translation(const T & x, const T & y) { Matrix3T<T> m; m.identity(); m.set(0, 2, x); m.set(1, 2, y); return m; }
     /// Create a matrix that performs 2D translation
@@ -281,6 +283,19 @@ namespace Nimble {
     swap(m[1][2],m[2][1]);
   }
 
+  template <class T>
+  inline Matrix3T<T> Matrix3T<T>::transposed() const
+  {
+    Matrix3T<T> r;
+
+    for(int i = 0; i < 3; i++) {
+      for(int j = 0; j < 3; j++) {
+        r[i][j] = m[j][i];
+      }
+    }
+
+    return r;
+  }
   template <class T>
   inline void Matrix3T<T>::identity()
   {

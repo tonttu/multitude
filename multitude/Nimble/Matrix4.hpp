@@ -82,7 +82,9 @@ namespace Nimble {
     Vector3T<T>               getTranslation() const;
 
     /// Transposes the matrix
-    inline Matrix4T<T>&       transpose();
+    inline void              transpose();
+    /// Returns a transposed matrix
+    inline Matrix4T<T>       transposed() const;
     /// Fills the matrix with zeroes
     void                      clear()         { m[0].clear(); m[1].clear(); m[2].clear(); m[3].clear(); }
     /// Sets the matrix to identity
@@ -191,7 +193,7 @@ namespace Nimble {
   }
 
   template <class T>
-  inline Matrix4T<T>& Matrix4T<T>::transpose()
+  inline void Matrix4T<T>::transpose()
   {
     swap(m[0][1],m[1][0]);
     swap(m[0][2],m[2][0]);
@@ -199,7 +201,20 @@ namespace Nimble {
     swap(m[1][2],m[2][1]);
     swap(m[1][3],m[3][1]);
     swap(m[2][3],m[3][2]);
-    return *this;
+  }
+
+  template <class T>
+  inline Matrix4T<T> Matrix4T<T>::transposed() const
+  {
+    Matrix4T<T> r;
+
+    for(int i = 0; i < 4; i++) {
+      for(int j = 0; j < 4; j++) {
+        r[i][j] = m[j][i];
+      }
+    }
+
+    return r;
   }
 
   /// @todo could improve numerical stability easily etc.

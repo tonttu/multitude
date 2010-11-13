@@ -37,14 +37,15 @@ namespace Nimble {
     T ty = (top + bottom) / (top - bottom);
     T tz = (far + near) / (far - near);
 
-    Matrix4T<T> m;
+    Matrix4T<T> r;
+    // r.identity();
 
-    m[0].make(2 / (right - left), 0, 0, tx);
-    m[1].make(0, 2 / (top - bottom), 0, ty);
-    m[2].make(0, 0, 2 / (far - near), tz);
-    m[3].make(0, 0, 0, 1);
+    r.row(0).make(2.0 / (right - left), 0, 0, tx);
+    r.row(1).make(0, 2.0 / (top - bottom), 0, ty);
+    r.row(2).make(0, 0, 2.0 / (far - near), tz);
+    r.row(3).make(0, 0, 0, 1);
 
-    return m;
+    return r;
   }
 
 
