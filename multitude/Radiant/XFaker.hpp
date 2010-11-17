@@ -1,16 +1,16 @@
 /* COPYRIGHT
  *
- * This file is part of MultiWidgets.
+ * This file is part of Radiant.
  *
- * Copyright: MultiTouch Oy, Finland, http://multitou.ch
+ * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
  *
- * All rights reserved, 2007-2009
+ * See file "Radiant.hpp" for authors and more details.
  *
- * You may use this file only for purposes for which you have a
- * specific, written permission from MultiTouch Oy.
- *
- * See file "MultiWidgets.hpp" for authors and more details.
- *
+ * This file is licensed under GNU Lesser General Public
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
+ * from the GNU organization (www.gnu.org).
+ * 
  */
 
 #ifndef XFAKER_HPP

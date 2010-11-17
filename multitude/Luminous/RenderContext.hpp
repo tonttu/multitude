@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef LUMINOUS_RENDERCONTEXT_HPP
@@ -255,7 +255,7 @@ namespace Luminous
     void drawLine(Nimble::Vector2f p1, Nimble::Vector2f p2,
                   float width, const float * rgba);
 
-    /** Draw a cubic bézier curve
+    /** Draw a cubic bzier curve
         @param controlPoints array of 4 control points
         @param width width of the curve
         @param rgba array of 4 color components

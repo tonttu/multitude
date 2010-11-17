@@ -55,7 +55,7 @@ namespace Radiant
     }
     else {
       error("Color::Color(const char * color) # "
-	    "Argument string should start with ´#´");
+	    "Argument string should start with #");
     }
   }
 
