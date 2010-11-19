@@ -59,13 +59,17 @@ namespace Resonant {
     virtual void processMessage(const char * address, Radiant::BinaryData *);
     virtual void process(float ** in, float ** out, int n);
 
-    /** Adds a few voices that will play an ambount sound background.
+    /** Adds a few voices that will play an ambient sound background.
         All files in the given directory are loaded looped
         for-ever. In practice one wants to put 3-5 audio files with
         different lengths in the directory. The length of the files
-        should be in the 20-30 second range. The end result will be a
+        should be usually in the 20-30 second range. The end result will be a
         nice ambient background that does not sound like it is
         looping.
+
+        The ambient sounds are replicated accross given number of channels, with channel rotation
+        to ensure that each loudspeaker will generate slightly different
+        sounds.
 
         @param directory Where the files are loaded from.
 
@@ -97,7 +101,7 @@ namespace Resonant {
         @param sampleChannel Select the channel of the source file that should be used as the
         source.
 
-        @param loop Turns of looping if necessary. With looping the sample will play
+        @param loop Turns on looping if necessary. With looping the sample will play
         back for-ever.
     */
     void playSample(const char * filename,

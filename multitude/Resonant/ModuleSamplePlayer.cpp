@@ -524,12 +524,11 @@ namespace Resonant {
   void ModuleSamplePlayer::createAmbientBackground
       (const char * directory, float gain, int fillchannels)
   {
-    using Radiant::Directory;
-    Directory dir(directory, Directory::Files);
+    Radiant::Directory dir(directory, Directory::Files);
 
     int n = 0;
 
-    if(fillchannels > channels())
+    if((unsigned) fillchannels > channels())
       fillchannels = channels();
 
     for(int i = 0; i < dir.count(); i++) {
