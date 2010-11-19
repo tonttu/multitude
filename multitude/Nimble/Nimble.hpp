@@ -16,7 +16,7 @@
 #ifndef NIMBLE_NIMBLE_HPP
 #define NIMBLE_NIMBLE_HPP
 
-/// Nimble libary is a collection of C++ classes for 2D/3D graphics.
+/// Nimble library is a collection of C++ classes for 2D/3D graphics.
 
 /** Nimble is used mostly for simple arithmetic/geometric
     calculations. The code is optimized for performance, thus there
