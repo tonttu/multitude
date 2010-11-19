@@ -61,7 +61,7 @@ namespace Poetic
   Luminous::Shader g_fontShader;
 
   /* Creates a number that is a multiple of four. Four is used as the
-     buggy OSX (NVidia) drivers cannot handle arbitratry textures,
+     buggy OS X (NVidia) drivers cannot handle arbitratry textures,
      even OpenGL 2.0 spec-compliant multiples-of-two -textures do not
      work in all conditions (sigh).
 
@@ -171,7 +171,7 @@ namespace Poetic
       assert(m_maxTextureSize);
 
       /* Limit the maximum dimensions of the texture. This is done so
-	 that OSX would not crash (Leopard) or corrupt the graphics
+	 that OS X would not crash (Leopard) or corrupt the graphics
 	 (Tiger).*/
       if(m_maxTextureSize > 2048)
 	m_maxTextureSize = 2048;

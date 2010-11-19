@@ -257,7 +257,7 @@ namespace Luminous
       glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0,
                    srcFormat.layout(), srcFormat.type(), data);
 #else
-      /* This seems to be faster on Linux and OSX at least. */
+      /* This seems to be faster on Linux and OS X at least. */
       glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0,
                    srcFormat.layout(), srcFormat.type(), 0);
 

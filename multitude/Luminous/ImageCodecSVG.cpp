@@ -24,7 +24,7 @@
 #include <QXmlStreamReader>
 #include <QPainter>
 
-/* On Mac OSX, with Qt 4.7.0, it seems that QT_NO_SVGRENDERER gets defined by
+/* On Mac OS X, with Qt 4.7.0, it seems that QT_NO_SVGRENDERER gets defined by
    someone. Lets do our best to undefine it.   */
 #ifdef QT_NO_SVGRENDERER
 # undef QT_NO_SVGRENDERER
