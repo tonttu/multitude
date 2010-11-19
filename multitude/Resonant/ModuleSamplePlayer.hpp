@@ -124,7 +124,7 @@ namespace Resonant {
     };
 
     /* This class holds audio sample data in RAM. */
-    class Sample
+    class Sample : public Patterns::NotCopyable
     {
     public:
       Sample();

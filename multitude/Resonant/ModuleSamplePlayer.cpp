@@ -42,11 +42,14 @@ namespace Resonant {
 
   ModuleSamplePlayer::Sample::Sample()
   {
+    info("ModuleSamplePlayer::Sample::Sample # %p", this);
     m_d = new Internal();
   }
 
   ModuleSamplePlayer::Sample::~Sample()
   {
+    info("ModuleSamplePlayer::Sample::~Sample # %p", this);
+
     delete m_d;
   }
 
@@ -95,7 +98,6 @@ namespace Resonant {
 
     return true;
   }
-
 
   unsigned ModuleSamplePlayer::Sample::available(unsigned pos) const
   {
@@ -253,7 +255,7 @@ namespace Resonant {
 
   void ModuleSamplePlayer::SampleVoice::setSample(std::shared_ptr<Sample> s)
   {
-    if(m_state == WAITING_FOR_SAMPLE) {
+    if(m_state != WAITING_FOR_SAMPLE) {
 
       error("ModuleSamplePlayer::SampleVoice::setSample # Wrong state %p %d",
             this, (int) m_state);
