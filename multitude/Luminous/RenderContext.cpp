@@ -615,7 +615,8 @@ namespace Luminous
   {
     std::string pathname;
 #ifdef LUMINOUS_OPENGL_FULL
-    pathname = "../MultiTouch/GL20Shaders/";
+    // pathname = "../MultiTouch/GL20Shaders/";
+    pathname = "../MultiTouch/ES20Shaders/";
 #else
     pathname = "../MultiTouch/ES20Shaders/";
 #endif
