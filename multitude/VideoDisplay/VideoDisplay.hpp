@@ -26,7 +26,7 @@
     Institute for Information Technology (HIIT, 2006-2007) and
     MultiTouch Oy (2007).
     
-    Videodisplay is released under the GNU Lesser General Public License
+    VideoDisplay is released under the GNU Lesser General Public License
     (LGPL), version 2.1.
 
     @author Tommi Ilmonen, Esa Nuuros
