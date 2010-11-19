@@ -107,6 +107,8 @@ namespace Resonant {
 
     /** Sets the master gain */
     void setMasterGain(float gain) { m_masterGain = gain; }
+
+    inline unsigned channels() const { return m_channels; }
   private:
 
     bool addSample(const char * filename, const char * name);
@@ -161,7 +163,7 @@ namespace Resonant {
           m_sample(s), m_position(0)
       {}
 
-      bool synthesize(float ** out, int n);
+      bool synthesize(float ** out, int n, ModuleSamplePlayer *);
 
       void init(std::shared_ptr<Sample> sample, Radiant::BinaryData * data);
 
@@ -187,8 +189,8 @@ namespace Resonant {
       float m_relPitch;
       double m_dpos;
 
-      int      m_sampleChannel;
-      int      m_targetChannel;
+      unsigned m_sampleChannel;
+      unsigned m_targetChannel;
       bool     m_loop;
       std::shared_ptr<Sample> m_sample;
       unsigned m_position;

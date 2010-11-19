@@ -118,7 +118,7 @@ namespace Resonant {
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  bool ModuleSamplePlayer::SampleVoice::synthesize(float ** out, int n)
+  bool ModuleSamplePlayer::SampleVoice::synthesize(float ** out, int n, ModuleSamplePlayer * host)
   {
     if(m_state != PLAYING) {
       //printf(":"); fflush(0);
@@ -129,6 +129,13 @@ namespace Resonant {
 
     if((int) avail > n)
       avail = n;
+
+    if(m_targetChannel >= host->channels()) {
+      error("ModuleSamplePlayer::SampleVoice::synthesize # channel count exceeded"
+            "%u >= %u", m_targetChannel, host->channels());
+      m_state = INACTIVE;
+      return false;
+    }
 
     float * b1 = out[m_targetChannel];
     float gain = m_gain;
@@ -481,7 +488,7 @@ namespace Resonant {
 
     // Then fill the outputs with audio
     for(i = 0; i < m_active; ) {
-      if(!m_voiceptrs[i]->synthesize(out, n))
+      if(!m_voiceptrs[i]->synthesize(out, n, this))
         dropVoice(i);
       else
         i++;
@@ -539,7 +546,7 @@ namespace Resonant {
       sf_close(sndf);
 
       for(int c = 0; c < info.channels; c++) {
-        playSample(file.c_str(), gain, 1.0f, c, c, true);
+        playSample(file.c_str(), gain, 1.0f, (c+i) % channels(), c, true);
       }
     }
 
