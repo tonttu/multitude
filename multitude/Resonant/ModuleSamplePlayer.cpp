@@ -131,8 +131,9 @@ namespace Resonant {
       avail = n;
 
     if(m_targetChannel >= host->channels()) {
-      error("ModuleSamplePlayer::SampleVoice::synthesize # channel count exceeded"
-            "%u >= %u", m_targetChannel, host->channels());
+      error("ModuleSamplePlayer::SampleVoice::synthesize # channel count exceeded for %s "
+            "%u >= %u", m_sample->name().c_str(),
+            m_targetChannel, host->channels());
       m_state = INACTIVE;
       return false;
     }
@@ -521,12 +522,15 @@ namespace Resonant {
   }
 
   void ModuleSamplePlayer::createAmbientBackground
-      (const char * directory, float gain)
+      (const char * directory, float gain, int fillchannels)
   {
     using Radiant::Directory;
     Directory dir(directory, Directory::Files);
 
     int n = 0;
+
+    if(fillchannels > channels())
+      fillchannels = channels();
 
     for(int i = 0; i < dir.count(); i++) {
 
@@ -545,8 +549,8 @@ namespace Resonant {
 
       sf_close(sndf);
 
-      for(int c = 0; c < info.channels; c++) {
-        playSample(file.c_str(), gain, 1.0f, (c+i) % channels(), c, true);
+      for(int c = 0; c < fillchannels; c++) {
+        playSample(file.c_str(), gain, 1.0f, (c+i) % channels(), c % info.channels, true);
       }
     }
 

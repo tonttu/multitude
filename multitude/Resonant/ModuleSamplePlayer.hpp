@@ -71,9 +71,11 @@ namespace Resonant {
 
         @param gain The gain (volume) to give to the background material.
 
+        @param fillchannels The number of output channels to fill. This number is limited
+        by the active channel number.
     */
 
-    void createAmbientBackground(const char * directory, float gain);
+    void createAmbientBackground(const char * directory, float gain, int fillchannels = 1000);
 
     /// Plays an audio sample
     /** This function starts the playback of an audio sample.
