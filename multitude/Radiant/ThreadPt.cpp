@@ -137,7 +137,7 @@ namespace Radiant {
 
 #ifdef RADIANT_OSX
     if(timeoutms) {
-      error("Thread::waitEnd # Timeout unimplemented on OSX");
+      error("Thread::waitEnd # Timeout unimplemented on OS X");
     }
     e = pthread_join(m_d->m_pthread, 0);
 #else
