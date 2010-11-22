@@ -152,7 +152,26 @@ namespace Valuable
                           Valuable::HasValues * obj,
                           const Radiant::BinaryData * defaultData = 0);
     /** Removes event listeners from this object.
-      @return number of listeners removed
+
+      @code
+      // Remove all event links between two widgets:
+      myWidget1->eventRemoveListener(myWidget2);
+
+      // Remove selected event links between two widgets:
+      myWidget1->eventRemoveListener(myWidget3, "interactionbegin");
+      myWidget1->eventRemoveListener(myWidget4, 0, "clear");
+      @endcode
+
+
+      @param obj The target object for which the events should be cleared
+
+      @param from The name of the originating event that should be cleared. If this parameter
+      is null, then all all originating events are matched.
+
+      @param to The name of of the destination event that should be cleared. If this parameter
+      is null, then all all destination events are matched.
+
+      @return number of event listener links removed
       */
     int eventRemoveListener(Valuable::HasValues * obj, const char * from = 0, const char * to = 0);
     /// Adds an event source
