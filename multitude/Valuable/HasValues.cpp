@@ -261,6 +261,7 @@ namespace Valuable
           it->m_valid = false;
           /* We cannot erase the list iterator, since that might invalidate iterators
              elsewhere. */
+          removed++;
         }
       }
     }
