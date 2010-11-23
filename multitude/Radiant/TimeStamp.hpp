@@ -167,7 +167,12 @@ namespace Radiant {
     inline operator const type & () const { return m_val; }
 
     /** Returns the current time value, by looking at the wall clock. */
+    /// @see getCurrent()
     static type getTime();
+
+    /// Copies the current tame value into this object.
+    /// @see getTime()
+    inline void getCurrent() { *this = getTime(); }
 
     /** Converts the time-stamp to a string. */
     std::string asString() const;
