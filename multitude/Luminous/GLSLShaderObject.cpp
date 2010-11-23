@@ -104,7 +104,8 @@ namespace Luminous
       int len = strlen(removes[i]);
       while((s = strstr(tmp.c_str(), removes[i]))) {
         int place = s - tmp.c_str();
-        tmp.erase(place, place + len);
+        tmp.erase(place, len);
+        tmp.insert(place, " ");
       }
     }
 
