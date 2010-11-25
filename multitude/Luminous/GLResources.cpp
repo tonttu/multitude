@@ -167,7 +167,7 @@ namespace Luminous
     }
   }
 
-  void GLResources::clear()
+  void GLResources::clearResources()
   {
     while(m_resources.size()) {
       GLResource * res = (*m_resources.begin()).second;

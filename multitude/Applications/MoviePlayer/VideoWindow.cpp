@@ -169,7 +169,7 @@ void VideoWindow::keyPressEvent(QKeyEvent * e)
     m_showSteps = !m_showSteps;
   else if(e->key() == Qt::Key_Escape || e->key() == Qt::Key_Q) {
     makeCurrent();
-    m_glResources.clear();
+    m_glResources.clearResources();
     m_movies.clear();
     QCoreApplication::exit();
   }
