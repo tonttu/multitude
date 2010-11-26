@@ -21,6 +21,15 @@ namespace Luminous
     void setTexturing(float texturing) { m_texturing = texturing; }
     float texturing() const { return m_texturing; }
 
+    /// Flips the y-coordinates used for texturing
+    /** This function is handy if you find that your image is upside-down. */
+    void flipTextureYCoordinates()
+    {
+      float tmp = m_texCoords.low().y;
+      m_texCoords.low().y = m_texCoords.high().y;
+      m_texCoords.high().y = tmp;
+    }
+
   private:
 
     Nimble::Vector4 m_color;
