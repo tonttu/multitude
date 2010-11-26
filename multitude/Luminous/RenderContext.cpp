@@ -1241,15 +1241,15 @@ namespace Luminous
     return m4 * v4;
   }
 
-  void RenderContext::drawRect(const Nimble::Rect & area, const Fill & fill)
+  void RenderContext::drawRect(const Nimble::Rect & area, const Style & style)
   {
     // info("RenderContext::drawRect");
 
     m_data->m_vertices.clear();
 
     Internal::Vertex v;
-    v.m_color = fill.color();
-    v.m_useTexture = fill.texturing();
+    v.m_color = style.color();
+    v.m_useTexture = style.texturing();
 
     GLSLProgramObject & prog = *m_data->m_basic_shader;
     prog.bind();
@@ -1269,19 +1269,19 @@ namespace Luminous
     // assert(prog.setUniformFloat("move", 0.0));
 
     v.m_location = area.low();
-    v.m_texCoord = fill.texCoords().lowHigh();
+    v.m_texCoord = style.texCoords().lowHigh();
     m_data->m_vertices.push_back(v);
 
     v.m_location = area.highLow();
-    v.m_texCoord = fill.texCoords().high();
+    v.m_texCoord = style.texCoords().high();
     m_data->m_vertices.push_back(v);
 
     v.m_location = area.lowHigh();
-    v.m_texCoord = fill.texCoords().low();
+    v.m_texCoord = style.texCoords().low();
     m_data->m_vertices.push_back(v);
 
     v.m_location = area.high();
-    v.m_texCoord = fill.texCoords().highLow();
+    v.m_texCoord = style.texCoords().highLow();
     m_data->m_vertices.push_back(v);
 
     /* for(int i = 0; i < 4; i++) {

@@ -20,7 +20,7 @@
 
 #include <Luminous/FramebufferObject.hpp>
 #include <Luminous/Transformer.hpp>
-#include <Luminous/Fill.hpp>
+#include <Luminous/Style.hpp>
 #include <Luminous/GLResource.hpp>
 #include <Luminous/GLResources.hpp>
 #include <Luminous/Export.hpp>
@@ -318,7 +318,7 @@ namespace Luminous
         @param area The rectangle to drawn **/
     void drawTexRect(const Nimble::Rect & area, const float * rgba);
 
-    void drawRect(const Nimble::Rect & area, const Fill & fill);
+    void drawRect(const Nimble::Rect & area, const Style & fill);
 
     /// Sets the current blend function, and enables blending
     /** If the function is BLEND_NONE, then blending is disabled.

@@ -1,24 +1,19 @@
-#ifndef LUMINOUS_FILL_HPP
-#define LUMINOUS_FILL_HPP
+#ifndef LUMINOUS_STYLE_HPP
+#define LUMINOUS_STYLE_HPP
 
 #include <Nimble/Rect.hpp>
 #include <Nimble/Vector4.hpp>
 
-do not include
-
-
-#error
-
 namespace Luminous
 {
 
-  class Fill
+  class Style
   {
   public:
-    Fill();
+    Style();
 
     const Nimble::Vector4 & color () const { return m_color; }
-    void setColor(Nimble::Vector4 & c) { m_color = c; }
+    void setColor(const Nimble::Vector4 & c) { m_color = c; }
 
     const Nimble::Rect & texCoords () const { return m_texCoords; }
     void setTexCoords(const Nimble::Rect &tc) { m_texCoords = tc; }
@@ -34,4 +29,4 @@ namespace Luminous
   };
 
 }
-#endif // FILL_HPP
+#endif // LUMINOUS_STYLE_HPP
