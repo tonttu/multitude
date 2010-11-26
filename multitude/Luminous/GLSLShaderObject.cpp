@@ -93,7 +93,8 @@ namespace Luminous
 
     delete[] m_shaderSource;
 
-#ifdef LUMINOUS_IN_FULL_OPENGL
+#ifdef LUMINOUS_OPENGL_FULL
+
     std::string tmp(code);
     static const char * removes [] = {
       " mediump ", " highp ", " lowp ", 0

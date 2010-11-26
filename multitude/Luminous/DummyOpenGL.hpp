@@ -47,6 +47,7 @@ DUMMY_OPENGL_0(glEnd);
 #define GL_COLOR_ARRAY DUMMY_OPENGL_E(GL_COLOR_ARRAY)
 
 #define glClipPlanef(a, b) DUMMY_OPENGL_M(glClipPlanef)
+#define glClipPlane(a, b) DUMMY_OPENGL_M(glClipPlane)
 
 #define GL_CLIP_PLANE0 DUMMY_OPENGL_E(GL_CLIP_PLANE0)
 #define GL_CLIP_PLANE1 DUMMY_OPENGL_E(GL_CLIP_PLANE1)
