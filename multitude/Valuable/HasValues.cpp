@@ -361,7 +361,7 @@ namespace Valuable
 
     m_frame++;
 
-    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); ) {
+    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); ++it) {
       ValuePass & vp = *it;
 
       if(!vp.m_valid) {

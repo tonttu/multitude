@@ -165,9 +165,15 @@ namespace Radiant
     bool operator! () const { return m_ptr == 0; }
 
     template <typename Y>
-    bool operator== (const Y * ptr) { return m_ptr == ptr; }
+    bool operator== (const Y * ptr) const { return m_ptr == ptr; }
     template <typename Y>
     bool operator!= (const Y * ptr) const { return m_ptr != ptr; }
+
+    template <typename Y>
+    bool operator== (const IntrusivePtr<Y> & that) const { return m_ptr == that.m_ptr; }
+    template <typename Y>
+    bool operator!= (const IntrusivePtr<Y> & that) const { return m_ptr != that.m_ptr; }
+
     template <typename Y>
     bool operator< (const IntrusivePtr<Y> & ptr) const { return m_ptr < ptr.get(); }
 
