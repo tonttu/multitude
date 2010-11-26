@@ -25,7 +25,7 @@ namespace Luminous
 
   using namespace Radiant;
 
-  GLSLProgramObject::GLSLProgramObject(GLResources * resources)
+  GLSLProgramObject::GLSLProgramObject(RenderContext * resources)
       : GLResource(resources),
       m_isLinked(false)
   {

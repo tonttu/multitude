@@ -253,7 +253,7 @@ namespace Luminous {
     glUseProgram(0);
   }
 
-  GLSLProgramObject * Shader::program(Luminous::GLResources * res)
+  GLSLProgramObject * Shader::program(Luminous::RenderContext * res)
   {
     GLSLProgramObject & prog = ref(res);
 

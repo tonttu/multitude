@@ -26,7 +26,7 @@ namespace Luminous
 {
   using namespace Radiant;
 
-  GLSLShaderObject::GLSLShaderObject(GLenum shaderType, GLResources * resources)
+  GLSLShaderObject::GLSLShaderObject(GLenum shaderType, RenderContext * resources)
     : GLResource(resources),
       m_compilerLog(0),
       m_isCompiled(false),

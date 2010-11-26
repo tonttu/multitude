@@ -39,7 +39,7 @@ namespace Luminous
 
   public:
     /// Constructs a texture and adds it to the given resource collection
-    TextureT(GLResources * res = 0)
+    TextureT(RenderContext * res = 0)
     : GLResource(res),
       m_textureId(0),
       m_width(0),
@@ -135,7 +135,7 @@ namespace Luminous
   {
   public:
     /// Constructs a 1D texture and adds it to the given resource collection
-    Texture1D(GLResources * resources = 0) : TextureT<GL_TEXTURE_1D> (resources) {}
+    Texture1D(RenderContext * context = 0) : TextureT<GL_TEXTURE_1D> (context) {}
 
     /// Load the texture from from raw data, provided by the user
     bool loadBytes(GLenum internalFormat, int h,
@@ -144,13 +144,13 @@ namespace Luminous
                    bool buildMipmaps = true);
 
     /// Constructs a 1D texture by loading it from a file
-    static Texture1D* fromImage(Image & image, bool buildMipmaps = true, GLResources * resources = 0);
+    static Texture1D* fromImage(Image & image, bool buildMipmaps = true, RenderContext * context = 0);
     /// Constructs a 1D texture by loading it from memory
     static Texture1D* fromBytes(GLenum internalFormat,
                                 int h,
                                 const void* data,
                                 const PixelFormat& srcFormat, bool buildMipmaps = true,
-                                GLResources * resources = 0);
+                                RenderContext * context = 0);
 
   };
 #endif // LUMINOUS_OPENGLES
@@ -160,8 +160,8 @@ namespace Luminous
   {
   public:
     /// Constructs a 2D texture and adds it to the given resource collection
-    Texture2D(GLResources * resources = 0) :
-        TextureT<GL_TEXTURE_2D>(resources), m_loadedLines(0) {}
+    Texture2D(RenderContext * context = 0) :
+        TextureT<GL_TEXTURE_2D>(context), m_loadedLines(0) {}
 
     /// Load the texture from an image file
     bool loadImage(const char * filename, bool buildMipmaps = true);
@@ -180,14 +180,14 @@ namespace Luminous
     void loadLines(int y, int h, const void * data, const PixelFormat& srcFormat);
 
     /// Create a new texture, from an image file
-    static Texture2D * fromFile(const char * filename, bool buildMipmaps = true, GLResources * resources = 0);
+    static Texture2D * fromFile(const char * filename, bool buildMipmaps = true, RenderContext * context = 0);
     /// Create a new texture, from an image
-    static Texture2D * fromImage(Luminous::Image & img, bool buildMipmaps = true, GLResources * resources = 0);
+    static Texture2D * fromImage(Luminous::Image & img, bool buildMipmaps = true, RenderContext * context = 0);
     /// Create a new texture from raw image data, provided by the user
     static Texture2D * fromBytes(GLenum internalFormat, int w, int h,
                 const void * data,
                 const PixelFormat& srcFormat,
-                bool buildMipmaps = true, GLResources * resources = 0);
+                bool buildMipmaps = true, RenderContext * context = 0);
     /// Returns the number of scan-lines that have been loaded into the GPU
     /** This function is mostly useful if one is using progressive image loading. */
     inline unsigned loadedLines() const { return m_loadedLines; }
@@ -202,7 +202,7 @@ namespace Luminous
   {
   public:
     /// Constructs a 3D texture and adds it to the given resource collection
-    Texture3D(GLResources * resources = 0) : TextureT<GL_TEXTURE_3D> (resources) {}
+    Texture3D(RenderContext * context = 0) : TextureT<GL_TEXTURE_3D> (context) {}
   };
 
   /// A cubemap texture
@@ -210,8 +210,8 @@ namespace Luminous
   {
   public:
     /// Constructs a cube texture and adds it to the given resource collection
-    TextureCube(GLResources * resources = 0)
-        : TextureT<GL_TEXTURE_CUBE_MAP> (resources) {}
+    TextureCube(RenderContext * context = 0)
+        : TextureT<GL_TEXTURE_CUBE_MAP> (context) {}
 
   };
 #endif // LUMINOUS_OPENGLES

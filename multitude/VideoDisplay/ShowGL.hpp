@@ -74,7 +74,7 @@ namespace VideoDisplay {
     class YUVProgram : public Luminous::GLSLProgramObject
     {
     public:
-      YUVProgram(Luminous::GLResources * resources);
+      YUVProgram(Luminous::RenderContext * resources);
       virtual ~YUVProgram();
 
       bool init();
@@ -97,7 +97,7 @@ namespace VideoDisplay {
     class MyTextures : public Luminous::GLResource
     {
     public:
-      MyTextures(Luminous::GLResources * resources);
+      MyTextures(Luminous::RenderContext * resources);
       ~MyTextures();
 
       virtual void bind();
@@ -226,7 +226,7 @@ namespace VideoDisplay {
 
         @param alpha The alpha value of the video
     */
-    VIDEODISPLAY_API void render(Luminous::GLResources * resources,
+    VIDEODISPLAY_API void render(Luminous::RenderContext * resources,
                                  Vector2 topleft,
                                  Vector2 bottomright,
                                  const Nimble::Matrix3f * transform = 0,

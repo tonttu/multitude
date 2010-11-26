@@ -104,7 +104,7 @@ namespace Luminous
         };
 
         /// Creates an empty OpenGL buffer object.
-        BufferObject(Luminous::GLResources * resources = 0);
+        BufferObject(Luminous::RenderContext * resources = 0);
         virtual ~BufferObject();
 
         /// Allocates memory for the vertex buffer
@@ -152,7 +152,7 @@ namespace Luminous
   {
   public:
     /// Constructs an empty vertex buffer.
-    VertexBuffer(Luminous::GLResources * resources = 0)
+    VertexBuffer(Luminous::RenderContext * resources = 0)
       : BufferObject<GL_ARRAY_BUFFER>(resources)
     {}
   };
@@ -162,7 +162,7 @@ namespace Luminous
   {
   public:
     /// Constructs an empty index buffer.
-    IndexBuffer(Luminous::GLResources * resources = 0)
+    IndexBuffer(Luminous::RenderContext * resources = 0)
       : BufferObject<GL_ELEMENT_ARRAY_BUFFER>(resources)
     {}
 

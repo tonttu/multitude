@@ -7,10 +7,10 @@
  * See file "Poetic.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 #ifndef POETIC_GPU_MANAGED_FONT_HPP
 #define POETIC_GPU_MANAGED_FONT_HPP
@@ -33,7 +33,7 @@ namespace Poetic
   {
     public:
       /// Contructs a new managed GPU font
-      GPUManagedFont(CPUManagedFont * font, Luminous::GLResources * glrc);
+      GPUManagedFont(CPUManagedFont * font, Luminous::RenderContext * glrc);
 
       /// Render a string
       void render(const std::string & text, int pointSize,
@@ -56,9 +56,8 @@ namespace Poetic
                              GPUFont ** gf, float * scale, float minimumSize);
 
       GPUFontBase * getFont(int fontNo);
-      
-      CPUManagedFont * m_cmf;  
-      Luminous::GLResources * m_resources;
+
+      CPUManagedFont * m_cmf;
       container m_fonts;
   };
 

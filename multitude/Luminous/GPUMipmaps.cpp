@@ -18,7 +18,7 @@
 #include "GPUMipmaps.hpp"
 #include "Utils.hpp"
 
-#include <Luminous/GLResources.hpp>
+#include <Luminous/RenderContext.hpp>
 
 #include <Radiant/Trace.hpp>
 
@@ -29,29 +29,29 @@ namespace Luminous {
   using namespace Nimble;
   using namespace Radiant;
 
-  GPUMipmaps::GPUMipmaps(CPUMipmaps * cpumaps, GLResources * resources)
-    : GLResource(resources),
+  GPUMipmaps::GPUMipmaps(CPUMipmaps * cpumaps, RenderContext * context)
+    : GLResource(context),
       m_cpumaps(cpumaps)
   {
     /* for(int i = 0; i < CPUMipmaps::MAX_MAPS; i++) {
-      m_textures[i].setResources(resources);
+      m_textures[i].setcontext(context);
     }
     */
   }
 
   GPUMipmaps::~GPUMipmaps()
   {
-    if(!resources()) {
-      error("GPUMipmaps::~GPUMipmaps # %p resources object is needed for clean delete", this);
+    if(!context()) {
+      error("GPUMipmaps::~GPUMipmaps # %p context object is needed for clean delete", this);
     }
     else {
 /*      for(int i = 0; i < CPUMipmaps::MAX_MAPS; i++)
-        resources()->eraseResource(m_keys + i);*/
+        context()->eraseResource(m_keys + i);*/
     }
   }
 
   bool GPUMipmaps::bind(Nimble::Vector2 pixelsize)
-  {   
+  {
     // Luminous::Utils::glCheck("GPUMipmaps::bind # 0");
 
     int best = m_cpumaps->getClosest(pixelsize);
@@ -67,7 +67,7 @@ namespace Luminous {
     std::shared_ptr<ImageTex> img = m_cpumaps->getImage(best);
 
     if(img->isFullyLoadedToGPU()) {
-      img->bind(resources(), GL_TEXTURE0, false);
+      img->bind(context(), GL_TEXTURE0, false);
       Luminous::Utils::glCheck("GPUMipmaps::bind # 1");
       return true;
     }
@@ -75,8 +75,8 @@ namespace Luminous {
     long instantLimit = 1500000;
 
     if(((img->width() * img->height()) < instantLimit) /* &&
-       (resources()->canUseGPUBandwidth(80.0f))*/) {
-      img->bind(resources(), GL_TEXTURE0, false);
+       (context()->canUseGPUBandwidth(80.0f))*/) {
+      img->bind(context(), GL_TEXTURE0, false);
 
       // Luminous::Utils::glCheck("GPUMipmaps::bind # 2");
       return true;
@@ -86,8 +86,8 @@ namespace Luminous {
 
       // Then perform incremental texture upload:
 
-      // if(resources()->canUseGPUBandwidth(50.0f))
-      img->uploadBytesToGPU(resources(), instantLimit);
+      // if(context()->canUseGPUBandwidth(50.0f))
+      img->uploadBytesToGPU(context(), instantLimit);
 
       // Lets check if we find something to use:
       for(unsigned i = 0; i < m_cpumaps->stackSize(); i++) {
@@ -100,10 +100,10 @@ namespace Luminous {
 
         if(test->isFullyLoadedToGPU() ||
            (area >= 64 && (area < (instantLimit / 3)))) {
-          test->bind(resources(), GL_TEXTURE0, false);
+          test->bind(context(), GL_TEXTURE0, false);
           /*if(!Luminous::Utils::glCheck("GPUMipmaps::bind # 3"))
             error("GPUMipmaps::bind # %.5d %p %d x %d",
-                  (int) test->ref().id(), resources(),
+                  (int) test->ref().id(), context(),
                   (int)test->width(), (int) test->height());
                   */
           return true;

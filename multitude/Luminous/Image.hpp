@@ -206,16 +206,16 @@ namespace Luminous
         makes difference the first time this function executed for the context
         (and the texture is created), after that the the same texture is used.
     */
-    void bind(GLResources * resources, GLenum textureUnit = GL_TEXTURE0, bool withmipmaps = true);
+    void bind(RenderContext * resources, GLenum textureUnit = GL_TEXTURE0, bool withmipmaps = true);
 
     /// Checks if the image data is fully loaded to the GPU, inside a texture
-    bool isFullyLoadedToGPU(GLResources * resources = 0);
+    bool isFullyLoadedToGPU(RenderContext * resources = 0);
 
     /** Loads part of the image to the GPU.
 
         @return The number of bytes uploaded.
     */
-    unsigned uploadBytesToGPU(GLResources * resources, unsigned bytes);
+    unsigned uploadBytesToGPU(RenderContext * resources, unsigned bytes);
 
     /// Try binding this texture
     /** The condition for binding this texture is that either it has been fully uploaded to the GPU,

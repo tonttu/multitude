@@ -221,6 +221,7 @@ namespace Luminous
       resource->m_deleteOnFrame = 0;
   }
 
+  /*
   // Doesn't work under windows where pthread_t (id_t) is a struct
   //typedef std::map<Thread::id_t, GLResources *> ResourceMap;
   class TGLRes
@@ -256,7 +257,7 @@ namespace Luminous
 #endif
   }
 
-  GLResources * GLResources::getThreadResources()
+  GLResources * GLResources::getThreadContext()
   {
     GuardStatic g(&__mutex);
 
@@ -330,7 +331,7 @@ namespace Luminous
 
     return (*it).second.m_window;
   }
-
+*/
   bool GLResources::isBrokenProxyTexture2D()
   {
     return m_brokenProxyTexture2D;

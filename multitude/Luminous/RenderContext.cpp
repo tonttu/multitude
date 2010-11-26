@@ -24,6 +24,8 @@
 #include "GLSLProgramObject.hpp"
 
 #include <Radiant/FixedStr.hpp>
+#include <Radiant/Mutex.hpp>
+#include <Radiant/Thread.hpp>
 
 #include <strings.h>
 
@@ -606,9 +608,21 @@ namespace Luminous
     delete m_data;
   }
 
-  void RenderContext::setWindow(const Luminous::MultiHead::Window * window)
+  void RenderContext::setWindow(const Luminous::MultiHead::Window * window,
+                                const Luminous::MultiHead::Area * area)
   {
     m_data->m_window = window;
+    m_data->m_area = area;
+  }
+
+  const Luminous::MultiHead::Window * RenderContext::window() const
+  {
+    return m_data->m_window;
+  }
+
+  const Luminous::MultiHead::Area * RenderContext::area() const
+  {
+    return m_data->m_area;
   }
 
   std::string RenderContext::locateStandardShader(const std::string & filename)
@@ -1393,6 +1407,54 @@ namespace Luminous
   {
     delete m_data->m_glContext;
     m_data->m_glContext = ctx;
+  }
+
+  // Doesn't work under windows where pthread_t (id_t) is a struct
+  //typedef std::map<Thread::id_t, RenderContext *> ResourceMap;
+  class TGLRes
+  {
+  public:
+    TGLRes() : m_context(0) {}
+    RenderContext       * m_context;
+  };
+
+#ifndef WIN32
+  typedef std::map<Radiant::Thread::id_t, TGLRes> ResourceMap;
+#else
+  typedef std::map<unsigned int, TGLRes> ResourceMap;
+#endif
+
+  static ResourceMap __resources;
+  static MutexStatic __mutex;
+
+  void RenderContext::setThreadContext(RenderContext * rsc)
+  {
+    GuardStatic g(&__mutex);
+    TGLRes tmp;
+    tmp.m_context = rsc;
+#ifndef WIN32
+    __resources[Radiant::Thread::myThreadId()] = tmp;
+#else
+    __resources[0] = tmp;
+#endif
+  }
+
+  RenderContext * RenderContext::getThreadContext()
+  {
+    GuardStatic g(&__mutex);
+
+#ifndef WIN32
+    ResourceMap::iterator it = __resources.find(Radiant::Thread::myThreadId());
+#else
+    ResourceMap::iterator it = __resources.find(0);
+#endif
+
+    if(it == __resources.end()) {
+      debug("No OpenGL resources for current thread");
+      return 0;
+    }
+
+    return (*it).second.m_context;
   }
 
   Luminous::GLContext * RenderContext::glContext()

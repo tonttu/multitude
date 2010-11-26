@@ -38,7 +38,7 @@ namespace Luminous
 
     /// Constructs new program object and puts it in the given resources
     /// collection
-    GLSLProgramObject(GLResources * resources = 0);
+    GLSLProgramObject(RenderContext * resources = 0);
     virtual ~GLSLProgramObject();
 
     /// Adds a shader object to the program to be linked

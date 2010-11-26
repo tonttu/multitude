@@ -25,7 +25,7 @@ namespace Luminous
   using namespace Radiant;
 
   template<GLenum type>
-  BufferObject<type>::BufferObject(Luminous::GLResources * resources)
+  BufferObject<type>::BufferObject(Luminous::RenderContext * resources)
     : GLResource(resources),
     m_filled(0),
     m_bound(false)

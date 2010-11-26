@@ -23,6 +23,7 @@
 #include <Luminous/Style.hpp>
 #include <Luminous/GLResource.hpp>
 #include <Luminous/GLResources.hpp>
+#include <Luminous/RenderContext.hpp>
 #include <Luminous/Export.hpp>
 #include <Luminous/VertexBuffer.hpp>
 #include <Luminous/GLSLProgramObject.hpp>
@@ -61,7 +62,7 @@ namespace Luminous
       friend class FBOHolder;
       friend class RenderContext;
 
-      FBOPackage(Luminous::GLResources *res = 0) : m_fbo(res), m_rbo(res), m_tex(res), m_users(0) {}
+      FBOPackage(Luminous::RenderContext *res = 0) : m_fbo(res), m_rbo(res), m_tex(res), m_users(0) {}
       virtual ~FBOPackage();
 
       void setSize(Nimble::Vector2i size);
@@ -133,11 +134,15 @@ namespace Luminous
 
     /// Sets the associated window for this context
     /// @param window window to associate
-    void setWindow(const Luminous::MultiHead::Window * window);
+    void setWindow(const Luminous::MultiHead::Window * window,
+                   const Luminous::MultiHead::Area * area);
+
+    const Luminous::MultiHead::Window * window() const;
+    const Luminous::MultiHead::Area * area() const;
 
     /// Returns the resources of this context
     /// @todo make deprecated
-    Luminous::GLResources * resources() { return this; }
+    Luminous::RenderContext * resources() { return this; }
 
     static std::string locateStandardShader(const std::string & filename);
 
@@ -358,13 +363,20 @@ namespace Luminous
     MULTI_ATTR_DEPRECATED(Luminous::GLContext * glContext());
 
     /// @endcond
+
+    static void setThreadContext(RenderContext * rsc);
+
+    /// Returns the RenderContext for the calling thread
+    /// @todo not really implemented on Windows
+    static RenderContext * getThreadContext();
+
   private:
     void drawCircleWithSegments(Nimble::Vector2f center, float radius, const float *rgba, int segments);
     void drawCircleImpl(Nimble::Vector2f center, float radius, const float *rgba);
 
     void clearTemporaryFBO(std::shared_ptr<FBOPackage> fbo);
 
-    Luminous::GLResources * m_resources;
+    Luminous::RenderContext * m_resources;
     class Internal;
     Internal * m_data;
   };
