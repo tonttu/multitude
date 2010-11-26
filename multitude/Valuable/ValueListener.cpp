@@ -29,6 +29,9 @@ namespace Valuable
       (*it)->remove(this);
   }
 
+  void ValueListener::valueDeleted(ValueObject *)
+  {}
+
   void ValueListener::removeObject(ValueListeners * obj)
   {
     vliterator it = std::find(m_listening.begin(), m_listening.end(), obj);

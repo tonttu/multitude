@@ -702,6 +702,11 @@ namespace Luminous
     m_data->m_clipStack.pop_back();
   }
 
+  const Nimble::Rectangle * RenderContext::clipRect() const
+  {
+    return m_data->m_clipStack.empty() ? 0 : &m_data->m_clipStack.back();
+  }
+
   bool RenderContext::isVisible(const Nimble::Rectangle & area)
   {
 //      Radiant::info("RenderContext::isVisible # area (%f,%f) (%f,%f)", area.center().x, area.center().y, area.size().x, area.size().y);

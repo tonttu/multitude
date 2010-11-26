@@ -95,7 +95,7 @@ namespace Radiant {
     static bool setThreadRealTimePriority(int priority);
 
     /** Drive some self tests. */
-    static void test();
+    //static void test();
 
     /// Access the internal QThread
     QThread * qtThread();

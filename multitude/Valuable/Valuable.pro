@@ -54,7 +54,7 @@ SOURCES += ValueString.cpp
 SOURCES += ValueVector.cpp
 
 LIBS += $$LIB_RADIANT \
-    $$LIB_NIMBLE $$LIB_PATTERNS
+    $$LIB_NIMBLE $$LIB_PATTERNS -lv8
 
 win32:DEFINES += VALUABLE_EXPORT
 

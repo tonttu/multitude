@@ -38,7 +38,7 @@ namespace Valuable
   {
     return m_valid && that.m_valid &&
         (m_listener == that.m_listener) && (m_from == that.m_from) &&
-        (m_to == that.m_to);
+        (m_to == that.m_to) && (*m_func == *that.m_func);
   }
 
   HasValues::HasValues()
@@ -63,10 +63,13 @@ namespace Valuable
 
     for(Listeners::iterator it = m_elisteners.begin();
     it != m_elisteners.end(); it++) {
-      if(it->m_valid)
-        (*it).m_listener->eventRemoveSource(this);
+      if(it->m_valid) {
+        if(it->m_listener)
+          it->m_listener->eventRemoveSource(this);
+        else
+          it->m_func.Dispose();
+      }
     }
-
   }
 
   ValueObject * HasValues::getValue(const std::string & name)
@@ -250,6 +253,28 @@ namespace Valuable
     }
   }
 
+  void HasValues::eventAddListener(const char * from,
+                                   const char * to,
+                                   v8::Persistent<v8::Function> func,
+                                   const Radiant::BinaryData * defaultData)
+  {
+    ValuePass vp;
+    vp.m_func = func;
+    vp.m_from = from;
+    vp.m_to = to;
+
+    if(defaultData)
+      vp.m_defaultData = *defaultData;
+
+    if(std::find(m_elisteners.begin(), m_elisteners.end(), vp) !=
+       m_elisteners.end())
+      debug("Widget::eventAddListener # Already got item %s -> %s",
+            from, to);
+    else {
+      m_elisteners.push_back(vp);
+    }
+  }
+
   int HasValues::eventRemoveListener(Valuable::HasValues * obj, const char * from, const char * to)
   {
     int removed = 0;
@@ -336,15 +361,15 @@ namespace Valuable
 
     m_frame++;
 
-    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); ) {
+    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); ++it) {
       ValuePass & vp = *it;
 
       if(!vp.m_valid) {
         it = m_elisteners.erase(it);
+        continue;
       }
       else if(vp.m_frame == m_frame) {
         /* The listener was added during this function call. Lets not call it yet. */
-        it++;
       }
       else if(vp.m_from == id) {
 
@@ -352,11 +377,15 @@ namespace Valuable
 
         bdsend.rewind();
 
-        vp.m_listener->processMessage(vp.m_to.c_str(), bdsend);
-        it++;
+        if(vp.m_listener) {
+          vp.m_listener->processMessage(vp.m_to.c_str(), bdsend);
+        } else {
+          /// @todo wrap bdsend
+          /// @todo what is the correct receiver?
+          v8::Local<v8::Value> argv[] = {v8::String::New(vp.m_to.c_str())};
+          vp.m_func->Call(v8::Context::GetCurrent()->Global(), 1, argv);
+        }
       }
-      else
-        it++;
     }
   }
 

@@ -170,6 +170,9 @@ namespace Luminous
     /// Pops a clipping rectangle from the context
     void popClipRect();
 
+    /// Returns the clipping rectangle
+    const Nimble::Rectangle * clipRect() const;
+
     /// Checks if the given rectangle is visible (not clipped).
     bool isVisible(const Nimble::Rectangle & area);
 

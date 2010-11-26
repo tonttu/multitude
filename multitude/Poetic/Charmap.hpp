@@ -25,7 +25,14 @@
 #if defined(RADIANT_CPP0X)
   #include <unordered_map>
 #else
-  #if defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
+  #if defined(__GCCXML__)
+#include <map>
+    namespace tr1 {
+      template <typename A, typename B>
+      class unordered_map : public std::map<A, B>
+      {};
+    }
+  #elif defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
     #include <tr1/unordered_map>
   #elif defined(RADIANT_WIN32) && defined(_HAS_TR1)
     #include <unordered_map>
