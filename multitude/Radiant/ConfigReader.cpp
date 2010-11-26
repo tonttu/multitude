@@ -126,6 +126,20 @@ namespace Radiant {
 
     return def;
   }
+  uint64_t Variant::getFromHex64(uint64_t def) const
+  {
+    if (m_var.empty())
+      return def;
+
+    long long lltmp = 0;
+#ifdef WIN32
+    sscanf(m_var.c_str(), "%llx", &lltmp);
+#else
+    lltmp = strtoll(m_var.c_str(), 0, 16);
+#endif
+    return lltmp;
+  }
+
 
   const std::string & Variant::getString(const std::string & def) const
   {
@@ -280,7 +294,7 @@ namespace Radiant {
     if(!var.hasDocumentation())
       return false;
 
-    Radiant::Guard g( & __mutex);
+    Radiant::GuardStatic g( & __mutex);
 
     std::set<std::string>::iterator it = 
       __writtenDocs.find(var.documentation());
@@ -306,7 +320,7 @@ namespace Radiant {
     }
 
     for(iterator it = m_variants.begin();it != m_variants.end(); it++) {
-      if(writedocs((*it).second))
+      if((*it).second.hasDocumentation() && writedocs((*it).second))
         os << ws << "/* " << (*it).second.documentation() << " */\n";
       os << ws << (*it).first << " = \"" << (*it).second << "\"\n";
     }
@@ -557,8 +571,10 @@ namespace Radiant {
 
 
     std::vector<char> buf;
-    buf.resize(size);
+    buf.resize(size);    
     size_t n = fread(&buf[0], 1, size, in);
+    // only way to suppress warn_unused_result warnings with gcc?
+    (void)n;
     fclose(in);
 
     return n <= 0 ? false : readConfig(c, &buf[0], size);

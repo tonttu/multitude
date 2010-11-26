@@ -27,9 +27,9 @@
 
 namespace Nimble {
 
-  /// Mathematics functions and constants for Nimble.
-  /** This namespace contains mathematics constants (pi, ln2 etc.) and
-      basic functions. */
+  /** Math functions and constants for Nimble.
+      This namespace contains mathematics constants (pi, ln2 etc.) and
+      basic functions. **/
   namespace Math
   {
     // Constants:
@@ -133,6 +133,7 @@ namespace Nimble {
 #endif      
     }
   /// Checks if the given number is not one
+  /// @param v number to check
 	inline bool isNAN(float v)
 	{
 #ifdef WIN32
@@ -231,7 +232,11 @@ namespace Nimble {
     }
 
     /** Calculates the determinant of a 2x2 matrix, which is given in
-	the argument values. */
+  the argument values.
+    @param a upper-left of the matrix
+    @param b upper-right of the matrix
+    @param c lower-left of the matrix
+    @param d lower-right of the matrix */
     template <class T>
     inline T Det(T a, T b, T c, T d) 
     { 
@@ -239,8 +244,9 @@ namespace Nimble {
     }
 
     /** Calculates the average of arguments a and b.
-	
-	@return (a + b) * 0.5f;
+    @param a first argument
+    @param b second argument
+    @return (a + b) * 0.5f;
      */
     template <class T>
     inline T Average(const T & a, const T & b)

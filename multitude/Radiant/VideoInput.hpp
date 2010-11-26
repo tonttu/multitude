@@ -84,6 +84,10 @@ namespace Radiant {
     the resources that relate to a particular frame. */
     virtual void doneImage();
 
+    /// @return Focal point projected to image coordinates
+    /// Default implementation returns the center of the image
+    virtual Nimble::Vector2i focalPoint() const;
+
     /// Get audio data
     /** This function returns a pointer to the internal audio PCM buffer. The audio PCM buffer
         is filled in the #captureImage function, and this function only returns a pointer to the
@@ -154,6 +158,9 @@ namespace Radiant {
      * Close the device.
      */
     virtual bool close() = 0;
+
+    /// Returns the unique identifier for the input device
+    virtual uint64_t uid();
 
   protected:
     /// Disabled

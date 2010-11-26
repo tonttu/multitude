@@ -62,6 +62,8 @@ namespace Nimble {
       /// Returns a rectangle that contains the two given rectangles. The
       /// result is not guaranteed to be the smallest rectangle containing the
       /// input rectangles.
+      /// @param a rectangle to merge
+      /// @param b rectangle to merge
       static Nimble::Rectangle merge(const Nimble::Rectangle & a, const Nimble::Rectangle & b);
 
       /// Transforms the rectangle with the given matrix. If the matrix is not

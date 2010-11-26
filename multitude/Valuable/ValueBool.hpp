@@ -28,12 +28,16 @@ namespace Valuable
   {
   public:    
     /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
+    /// @param value The value of this object
     ValueBool(HasValues * parent, const std::string & name, bool value, bool transit = false);
     virtual ~ValueBool();
 
     const char * type() const { return "bool"; }
     bool deserialize(ArchiveElement & element);
+
+    /// @cond
     virtual void processMessage(const char *, Radiant::BinaryData & data);
+    /// @endcond
 
     /// Copies a value
     ValueBool & operator = (bool v) { m_value = v; VALUEMIT_STD_OP }

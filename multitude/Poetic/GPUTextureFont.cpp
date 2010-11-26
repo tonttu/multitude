@@ -63,7 +63,10 @@ namespace Poetic
   /* Creates a number that is a multiple of four. Four is used as the
      buggy OSX (NVidia) drivers cannot handle arbitratry textures,
      even OpenGL 2.0 spec-compliant multiples-of-two -textures do not
-     work in all conditions (sigh). */
+     work in all conditions (sigh).
+
+     Well, the issue really is with OpenGL
+*/
   inline GLuint nextSize(GLuint in)
   {
     if((in & 0x3) == 0)
@@ -210,9 +213,9 @@ namespace Poetic
 
     int used = 0;
     int use = 0;
+
+#if 0
     const GLsizei vertexSize = 2 * sizeof(Nimble::Vector2f);
-
-
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
@@ -241,7 +244,34 @@ namespace Poetic
 
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+#else
 
+    Nimble::Matrix3 trans = m;
+    while (true) {
+      shader->setUniformMatrix3("transform", trans);
+
+      use = std::min(VERTEX_ARRAY_SIZE/8, n-used);
+      Nimble::Vector2f * ptr = &tmp[0];
+
+      GPUFontBase::internalRender(str+used, use, trans, &ptr);
+
+      glBegin(GL_QUADS);
+      for(int i = 0; i < (use * 2 * 4); i += 2) {
+        glTexCoord2fv(tmp[i+1].data());
+        glVertex2fv(tmp[i].data());
+      }
+
+      glEnd();
+
+      if (VERTEX_ARRAY_SIZE >= 4*2*(n-used))
+        break;
+
+      float offset = getLastAdvance();
+
+      trans *= Nimble::Matrix3::translate2D(offset, .0f);
+      used += use;
+    }
+#endif
     glUseProgram(0);
   }
 
@@ -267,9 +297,9 @@ namespace Poetic
 
     int used = 0;
     int use = 0;
+
+#if 0
     const GLsizei vertexSize = 2 * sizeof(Nimble::Vector2f);
-
-
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
@@ -298,6 +328,37 @@ namespace Poetic
 
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+#else
+
+
+    Nimble::Matrix3 trans = m;
+    while (true) {
+      shader->setUniformMatrix3("transform", trans);
+
+      use = std::min(VERTEX_ARRAY_SIZE/8, n-used);
+      Nimble::Vector2f * ptr = &tmp[0];
+
+      GPUFontBase::internalRender(str+used, use, trans, &ptr);
+
+      glBegin(GL_QUADS);
+      for(int i = 0; i < (use * 2 * 4); i += 2) {
+        glTexCoord2fv(tmp[i+1].data());
+        glVertex2fv(tmp[i].data());
+      }
+
+      glEnd();
+
+      if (VERTEX_ARRAY_SIZE >= 4*2*(n-used))
+        break;
+
+      float offset = getLastAdvance();
+
+      trans *= Nimble::Matrix3::translate2D(offset, .0f);
+      used += use;
+    }
+
+
+#endif
 
     glUseProgram(0);
   }

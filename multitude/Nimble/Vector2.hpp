@@ -126,6 +126,17 @@ namespace Nimble {
     /// Returns the ith component
     T&			        operator[]	(int i)				{ return ((T*)this)[i]; }
 
+    /// Check that vector elements are finite
+    /** This function can be useful if you suspect that contents of the
+        vector might be corrupt floating point numbers.
+
+        @return True if the vector elements are finite, false if are non-finite
+        (i.e. infinite or nan).
+    */
+    bool isFinite() const { return Math::isFinite(x) && Math::isFinite(y); }
+
+    /** Less-than operator, with arbitrary internal logic. This method is used
+        if you want to sort vectors. */
     bool operator< (const Vector2T<T>& v2) const
     {
       return x == v2.x ? y < v2.y : x < v2.x;
@@ -170,6 +181,8 @@ namespace Nimble {
   }
 */
   /// Compute the dot product of two vectors
+  /// @param t1 first dot product vector
+  /// @param t2 second dot product vector
   template <class T>
   inline float dot(const Vector2T<T> &t1, const Vector2T<T> &t2)
   {
@@ -256,9 +269,10 @@ namespace Nimble {
   };
 
   /// Compute slope of line.
-  /// @arg lineStart, lineEnd, the line.
-  /// @arg slopeType, reference to int to receive slope type.
-  /// @arg delta, reference to Vector2f to receive delta.
+  /// @param lineStart Line starting point
+  /// @param lineEnd Line end point
+  /// @param slopeType reference to int to receive slope type.
+  /// @param delta reference to Vector2f to receive delta.
   /// @return Slope value.
   inline float lineSlope(const Vector2f lineStart, const Vector2f lineEnd,
     int & slopeType, Vector2f & delta)
@@ -285,9 +299,9 @@ namespace Nimble {
   }
 
   /// Test for intersection of line segments.
-  /// @arg line1Start, line1End, first line.
-  /// @arg line2Start, line2End, second line.
-  /// @arg interPoint, optional pointer to vector to receive the intersection point.
+  /// @param line1Start, line1End first line.
+  /// @param line2Start, line2End second line.
+  /// @param interPoint optional pointer to vector to receive the intersection point.
   /// @return true if line segments intersect.
   NIMBLE_API bool linesIntersect(Nimble::Vector2f line1Start, Nimble::Vector2f line1End,
                       Nimble::Vector2f line2Start, Nimble::Vector2f line2End,

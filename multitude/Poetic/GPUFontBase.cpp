@@ -52,7 +52,8 @@ namespace Poetic
     m_glyphList = new GlyphContainer(m_cpuFont->face());
   }
 
-  void GPUFontBase::internalRender(const wchar_t * str, int n, const Nimble::Matrix3 & transform, Nimble::Vector2f ** ptr)
+  void GPUFontBase::internalRender(const wchar_t * str, int n,
+                                   const Nimble::Matrix3 & transform, Nimble::Vector2f ** ptr)
   {
     const wchar_t * c = str;
     m_pen.x = m_pen.y = 0.f;
@@ -65,7 +66,8 @@ namespace Poetic
     }
   }
 
-  void GPUFontBase::internalRender(const char * str, int n, const Nimble::Matrix3 & transform, Nimble::Vector2f ** ptr)
+  void GPUFontBase::internalRender(const char * str, int n,
+                                   const Nimble::Matrix3 & transform, Nimble::Vector2f ** ptr)
   {
     const unsigned char * c = (unsigned char *)str;
     m_pen.x = m_pen.y = 0.f;

@@ -50,6 +50,11 @@ namespace Radiant {
   void VideoInput::doneImage()
   {}
 
+  Nimble::Vector2i VideoInput::focalPoint() const
+  {
+    return Nimble::Vector2i(width()/2, height()/2);
+  }
+
   const void * VideoInput::captureAudio(int * frameCount)
   {
     * frameCount = 0;
@@ -80,4 +85,8 @@ namespace Radiant {
   void VideoInput::setBrightness(float)
   {}
 
+  uint64_t VideoInput::uid()
+  {
+    return 0;
+  }
 }

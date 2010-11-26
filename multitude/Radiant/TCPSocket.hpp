@@ -59,9 +59,9 @@ namespace Radiant {
     int port() const;
 
     /// Read bytes from the socket
-    /** @arg buffer pointer to a buffer to store the read data to
-        @arg bytes how many bytes the buffer has room for
-        @arg waitfordata Conditionally wait for all the data to arrive.
+    /** @param buffer pointer to a buffer to store the read data to
+        @param bytes how many bytes the buffer has room for
+        @param waitfordata Conditionally wait for all the data to arrive.
         @return the number of bytes actually read
         */
     int read(void * buffer, int bytes, bool waitfordata = true);

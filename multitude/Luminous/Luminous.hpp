@@ -7,40 +7,47 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef LUMINOUS_LUMINOUS_HPP
 #define LUMINOUS_LUMINOUS_HPP
 
 #include <Luminous/Export.hpp>
+#include <Radiant/Platform.hpp>
 
-// #define MULTI_WITHOUT_GLEW 1
+#ifdef RADIANT_OSX
+// We do not use GLEW on OSX
+#define MULTI_WITHOUT_GLEW 1
+#endif
 
 #ifdef MULTI_WITHOUT_GLEW
 // This define is for glext.h
+#ifdef RADIANT_OSX
+#define GL_GLEXT_PROTOTYPES 1
+#include <OpenGL/gl.h>
+#include <OpenGL/glext.h>
+#include <OpenGL/glu.h>
+#else
 #define GL_GLEXT_PROTOTYPES 1
 #include <GL/gl.h>
 #include <GL/glext.h>
 #include <GL/glu.h>
+#endif
 #else
 #include <GL/glew.h>
 #endif
 
-/// Luminous library is a collection of C++ classes for computer graphics, using OpenGL.
-
-/** \b Copyright: The Luminous library has been developed in Helsinki
+/// Luminous is a library of C++ classes for computer graphics, using OpenGL.
+/** Copyright: The Luminous library has been developed in Helsinki
     Institute for Information Technology (HIIT, 2006-2008) and
     MultiTouch Oy (2007-2008).
-        
+
     Luminous is released under the GNU Lesser General Public License
     (LGPL), version 2.1.
-
-    @author Tommi Ilmonen, Esa Nuuros
-    
 */
 namespace Luminous
 {
@@ -52,7 +59,7 @@ namespace Luminous
       issued.
 
       @param initOpenGL if set to false, glew will not be initialized
-      
+
       @return true if all relevant resources were successfully
       initialized, false if something was left missing (for example
       too low OpenGL version).

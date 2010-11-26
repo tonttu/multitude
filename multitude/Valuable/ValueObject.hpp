@@ -85,17 +85,17 @@ namespace Valuable
     ValueObject();
     /// The copy constructor creates a copy of the ValueObject WITHOUT the
     /// link to parent
-    ValueObject(const ValueObject & o);    
+    ValueObject(const ValueObject & o);
     /** Constructs a new value object and attaches it to its parent.
 
-    @arg parent The parent object. This object is automatically
+    @param parent The parent object. This object is automatically
     added to the parent.
 
-    @arg name The name (or id) of this value. Names are typically
+    @param name The name (or id) of this value. Names are typically
     human-readable. The names should not contain white-spaces
     as they may be used in XML files etc.
 
-    @arg transit Should value changes be transmitted forward. This
+    @param transit Should value changes be transmitted forward. This
     is related to future uses, and can be largely ignored at the
     moment.
     */
@@ -122,6 +122,27 @@ namespace Valuable
         This function is overridden in number of classes that need to receive and
         process events. In a typical case, when overriding this function, you should
         either process the message, or call the function of the parent class.
+
+        \code
+        void MyClass::processMessage(const char * type, Radiant::BinaryData & data)
+        {
+          if(strcmp(type, "jump") == 0)
+            doJump();
+          else if(strcmp(type, "crawl") == 0) {
+            bool ok;
+            int speed = data.readInt32(&ok);
+            if(ok)
+              doCrawl(speed);
+          }
+          else
+            Parent::processMessage(type, data);
+        }
+        \endcode
+
+        @param id The indentifier for the message. Typically this is quite human-readable
+
+        @param data Binary blob that contains the argument data in easily parseable format.
+
     */
     virtual void processMessage(const char * id, Radiant::BinaryData & data);
     /// Utility function for sending string message to the object

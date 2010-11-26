@@ -66,18 +66,6 @@ contains(HAS_QT_45,YES) {
 
   CONFIG += qt
   QT += xml
-} else {
-  message(Using Xerces XML parser)
-
-  SOURCES += DOMDocumentXerces.cpp
-  SOURCES += DOMElementXerces.cpp
-
-  unix:LIBS += -lxerces-c
-  win32 {
-    DEFINES += VALUABLE_EXPORT
-    LIBS += xerces-c_2.lib
-    QMAKE_CXXFLAGS += -Zc:wchar_t
-  }
 }
 
 include(../library.pri)

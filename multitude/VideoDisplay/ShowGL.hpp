@@ -122,15 +122,19 @@ namespace VideoDisplay {
 
   public:
 
+    /// The playback state of the video display
     enum State {
       PLAY,
       PAUSE
     };
 
+    /// @cond
     enum {
       HISTOGRAM_POINTS = 256
                        };
+    /// @endcond
 
+    /// Constructs an empty ShowGL object
     VIDEODISPLAY_API ShowGL();
     VIDEODISPLAY_API ~ShowGL();
 
@@ -141,12 +145,15 @@ namespace VideoDisplay {
     /** Does not actually start playback, just loads in information
         about the video.
 
-        @arg filename The name ofthe video file to play.
+        @param filename The name ofthe video file to play.
 
-        @arg dsp The DSP graph that is used for audio playback. If null, then
+        @param dsp The DSP graph that is used for audio playback. If null, then
         this method will pick up the default network.
 
-        @arg targetChannel The sound output channel for the audio. If this value
+        @param previewpos The position for taking the preview frame from the video.
+        Currently ignored.
+
+        @param targetChannel The sound output channel for the audio. If this value
         is less than zero, then the sound-track of the video will be spread over
         all output channels. For example if the file had two channels, and one was
         running a sound system with 8 loudspeaker, then the stereo sound would be
@@ -156,7 +163,7 @@ namespace VideoDisplay {
         to the specified channel, and the other channels go to the speakers
         after the first channel.
 
-        @arg flags Flags for the video playback. For the playback to work, the flags
+        @param flags Flags for the video playback. For the playback to work, the flags
         should include Radiant::WITH_VIDEO and Radiant::WITH_AUDIO.
 
     */
@@ -184,28 +191,44 @@ namespace VideoDisplay {
     /// Toggles play/pause state
     VIDEODISPLAY_API bool togglePause();
 
+    /// Pauses the video
     VIDEODISPLAY_API bool pause();
 
+    /// Starts video playback from current position
     VIDEODISPLAY_API bool unpause();
 
     // VIDEODISPLAY_API void enableLooping(bool enable);
 
+    /// Returns the state of this video
     State state() const { return m_state; }
 
     /// Update the video image from reader-thread
     VIDEODISPLAY_API void update();
     /// Render the video to the specified rectangle
-    /**
-        @arg topleft Top-left corner of the video image
+    /** @param resources The container of the OpenGL resources
 
-        @arg bottomright Bottom-right corner of the video image. If
+        @param topleft Top-left corner of the video image
+
+        @param bottomright Bottom-right corner of the video image. If
         bottomright = topleft, then the player will use the size of
         the video.
 
-        @arg ransform The coordinates can be optionally transformed
-        with the "transform" matrix. */
+        @param transform The coordinates can be optionally transformed
+        with the "transform" matrix.
+
+        @param subtitleFont The font to be used for rendering subtitles
+
+        @param subTitleSpace The amount of space allocated for the subtitles
+        The caller can indicate the amount of space it has allocated beneath the
+        video widget for the subtitles. The player will place the subtitles beneath
+        the player if there is enough spaec for two lines of text. Otherwise the
+        the subtitles will be placed inside the video area.
+
+        @param alpha The alpha value of the video
+    */
     VIDEODISPLAY_API void render(Luminous::GLResources * resources,
-                                 Vector2 topleft, Vector2 bottomright,
+                                 Vector2 topleft,
+                                 Vector2 bottomright,
                                  const Nimble::Matrix3f * transform = 0,
                                  Poetic::GPUFont * subtitleFont = 0,
                                  float subTitleSpace = 0,
@@ -214,7 +237,9 @@ namespace VideoDisplay {
     /// Pixel size of the video image.
     VIDEODISPLAY_API Nimble::Vector2i size() const;
 
+    /// Returns the duration (lenght) of the video
     Radiant::TimeStamp duration() { return m_duration; }
+    /// Returns the current playback position of the video
     Radiant::TimeStamp position() { return m_position; }
     /// The relative playback position of the current video
     double relativePosition() { return position() / (double) duration(); }
@@ -222,14 +247,20 @@ namespace VideoDisplay {
     /** Seek to given position. Due to limitations of underlying seek
     algorithms, this method is usually not exact. */
     VIDEODISPLAY_API void seekTo(Radiant::TimeStamp time);
+    /// Seeks to a relative position within the video
+    /** @param relative The relative position, in range [0,1]. */
     VIDEODISPLAY_API void seekToRelative(double relative);
+
+    /// Seek forward, or backward by a given amount
     void seekBy(const Radiant::TimeStamp & ts) { seekTo(position() + ts); }
 
+    /// Pans the video sounds to a given location
     VIDEODISPLAY_API void panAudioTo(Nimble::Vector2 location);
 
     /** Information on how the frames have been displayed. The
     histogram information is useful mostly for debug purposes. */
     int histogramPoint(int index) const { return m_histogram[index]; }
+    /// Returns the number of histogram updates.
     size_t histogramIndex() const { return m_updates; }
 
     /** Returns true if this video has been loaded with subtitles. */

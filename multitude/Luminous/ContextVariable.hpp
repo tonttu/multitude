@@ -34,23 +34,31 @@ namespace Luminous {
     virtual ~ContextVariableT() {}
     /// Gets a reference to the OpenGL resource
     /** Before calling this function you should have a valid OpenGL context, with
-        the right GLResources main object set for this thread. */
+        the right GLResources main object set for this thread.
+
+        Since this function
+        gets a direct pointer to the GLResources object, it is slightly faster than
+        the function without this argument.
+
+        @return Returns a reference to the OpenGL resource.
+    */
     inline T & ref()
     {
       GLRESOURCE_ENSURE3(T, obj, this);
       return *obj;
     }
 
-    /// Gets a reference to the OpenGL resource
-    /** Before calling this function you should have a valid OpenGL context, with
-        the right GLResources main object set for this thread.
 
-        Since this function
-        gets a direct pointer to the GLResources object, it is slightly faster than
-        the function without this argument.
-    */
+
+    /** @copydoc ref
+        @param rs Pointer to the OpenGL resource container
+
+        */
     inline T & ref(GLResources * rs)
     {
+      if(!rs) {
+        return ref();
+      }
       GLRESOURCE_ENSURE(T, obj, this, rs);
       return *obj;
     }

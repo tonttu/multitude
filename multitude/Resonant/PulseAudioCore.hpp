@@ -5,6 +5,8 @@
 
 #include <pulse/pulseaudio.h>
 
+/// @cond
+
 namespace Resonant
 {
   void g_contextStateCb(pa_context * c, void * self);
@@ -66,5 +68,7 @@ namespace Resonant
     int m_counter;
   };
 }
+
+/// @endcond
 
 #endif // RESONANT_PULSEAUDIOCORE_HPP

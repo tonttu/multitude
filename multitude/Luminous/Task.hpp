@@ -34,6 +34,24 @@ namespace Luminous
   typedef float Priority;
 
   /// Task is a base class for tasks that can be executed within BGThread.
+  /** The purpose of #Task is to make it easy to move time-consuing operations
+      away from the main thread of the application. Tasks are placed in the
+      #Luminous::BGThread, that schedules and runs them as specified.
+
+      Typical operations that can be implemented with tasks are:
+
+      <UL>
+      <LI>Loading data from disk</LI>
+      <LI>Creating new widgets, before inserting them into the scene</LI>
+      <LI>Checking for changes in the application configuration files</LI>
+      </UL>
+
+      <B>Please note</B> that Tasks are expected to execute fast. In other words,
+      a task should not perform long, blocking operations. Such operations (for
+      example database queries, or network file transfers), are best handled by
+      launching a separate thread for them. For this purpose,
+      see #Radiant::Thread.
+    */
   class LUMINOUS_API Task : Patterns::NotCopyable, Radiant::MemCheck
   {
   public:
@@ -76,7 +94,8 @@ namespace Luminous
       /// Schedule the next execution time for this task
       void scheduleFromNow(Radiant::TimeStamp wait)
       { m_scheduled = Radiant::TimeStamp::getTime() + wait; }
-      /// @copydoc scheduleFromNow
+      /// @copybrief scheduleFromNow
+      /// @param seconds number of seconds before next execution
       void scheduleFromNowSecs(double seconds)
       { m_scheduled = Radiant::TimeStamp::getTime() +
           Radiant::TimeStamp::createSecondsD(seconds); }

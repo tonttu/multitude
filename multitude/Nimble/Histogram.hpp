@@ -55,7 +55,8 @@ namespace Nimble {
 
     /// Adds the histogram bin "index" by one
     /** It is ok to exceed the array towards top - i.e. index exceeds
-          the histogram bin count. */
+          the histogram bin count.
+    @param index bin index */
     void putSafe(int index)
     {
       if(index < N)
@@ -65,7 +66,9 @@ namespace Nimble {
       m_count++;
     }
 
-    /** It is ok to exceed the array towards any direction. */
+    /** Adds the histogram bin by one.
+    It is ok to exceed the array towards any direction.
+    @param index bin index */
     void putSafest(int index)
     {
       if(index >= N)
@@ -79,17 +82,17 @@ namespace Nimble {
     }
 
     /// Find the bin below which there are required number of samples
-    /** @arg ratio relative ratio for selection (0-1). */
+    /** @param ratio relative ratio for selection (0-1). */
     int getLowValueRelative(float ratio) const
     { return getLowValueFixed((int) (ratio * m_count)); }
 
     /// Find the bin above which there are required number of samples
-    /** @arg ratio relative ratio for selection (0-1). */
+    /** @param ratio relative ratio for selection (0-1). */
     int getHighValueRelative(float ratio) const
     { return getHighValueFixed((int) (ratio * m_count)); }
 
     /// Find the bin below which there are required number of samples
-    /** @arg need required sum of bins (0-count()). */
+    /** @param need required sum of bins (0-count()). */
     int getLowValueFixed(int need) const
     {
       int count = 0;
@@ -102,7 +105,7 @@ namespace Nimble {
     }
 
     /// Find the bin above which there are required number of samples
-    /** @arg need required sum of bins (0-count()). */
+    /** @param need required sum of bins (0-count()). */
     int getHighValueFixed(int need) const
     {
       int count = 0;

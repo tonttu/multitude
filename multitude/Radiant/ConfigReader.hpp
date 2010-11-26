@@ -20,6 +20,7 @@
 
 #include <string>
 #include <map>
+#include <stdint.h>
 
 #include <iostream>
 
@@ -40,7 +41,7 @@ namespace Radiant {
 
     /// @todo add global chunk support, document, examples, remove this and
     /// use Valuable::ConfigReader
-  /// @deprecated This class will be removed. Use Valuable::ConfigDocument
+  // @deprecated This class will be removed. Use Valuable::ConfigDocument  - or maybe not.
   class RADIANT_API Variant
   {
   public:
@@ -69,12 +70,14 @@ namespace Radiant {
     /// Returns the value as string
     operator const std::string & () const;
 
-    /// Returns the value as double
+    /// Returns the value as a double
     double              getDouble(double def = 0.0f) const;
-    /// Returns the value as float
+    /// Returns the value as a float
     float               getFloat(float def = 0.f) const;
     /// Returns the value as int
     int                 getInt(int def = 0) const;
+    /// Returns the value as unsigned 64 bit integer (interpreted as hexadecimal)
+    uint64_t            getFromHex64(uint64_t def = 0) const;
     /// Returns the value as string or the given default value if the value has not been set
     const std::string & getString(const std::string & def) const;
     /// Returns the value as string
@@ -143,12 +146,15 @@ namespace Radiant {
   public:
     /// Iterator for traversing all elements
     typedef typename std::multimap<std::string, T>::iterator iterator;
+    /// Constant iterator for traversing all elements
     typedef typename std::multimap<std::string, T>::const_iterator const_iterator;
 
+    /// Iterator for traversing chunks
     typedef typename std::multimap<std::string, ChunkT<T> >::iterator chunk_iterator;
+    /// Constant iterator for traversing chunks
     typedef typename std::multimap<std::string, ChunkT<T> >::const_iterator const_chunk_iterator;
 
-
+    /// Creates an empty configuration chunk
     ChunkT() {clearFirst=false;}
     ~ChunkT() {}
 
@@ -174,8 +180,9 @@ namespace Radiant {
     /** If there are other elements with the same id before, then
     this element is added among those. */
     void               set(const std::string & id, const T &v);
-
+    /// Adds a new child node to this chunk
     void               addChunk(const std::string & id, const ChunkT<T> &v);
+    /// Gets a child chunk
     const ChunkT<T> &        getChunk(const std::string & id) const;
 
   /// Sets the flag to inform whether an old value should be removed before defining a new
@@ -190,7 +197,7 @@ namespace Radiant {
     void               dump(std::ostream& os, int indent=0);
 
     /// Empties this chunk
-    void               clear() { m_variants.clear(); }
+    void               clear() { m_variants.clear(); m_chunks.clear(); }
 
     /// Number of elements
     size_t size() const { return m_variants.size(); }
@@ -212,14 +219,18 @@ namespace Radiant {
     /// Iterator to the after-the-end element
     const_iterator end()   const { return m_variants.end(); }
 
+    /// Iterator to the first child chunk
     chunk_iterator chunkBegin() { return m_chunks.begin(); }
+    /// Iterator to the after-the-end chunk
     chunk_iterator chunkEnd() { return m_chunks.end(); }
 
     /// Gets the data element from an iterator
     static T & getType(iterator & it) { return (*it).second; }
+    /// Gets the data element from an constant iterator
     static const T & getType(const_iterator & it) { return (*it).second; }
-        /// Gets the name (id) from an iterator
+    /// Gets the name (id) from an iterator
     static const std::string & getName(iterator & it) { return (*it).first; }
+    /// Gets the name (id) from a constant iterator
     static const std::string & getName(const_iterator & it) { return (*it).first; }
 
   private:
@@ -236,6 +247,11 @@ namespace Radiant {
 
   /// Read a configuration from a file
   bool RADIANT_API readConfig(Config *c, const char *filename);
+  /// Read the configuration from a string
+  /** @param c The configuration object to fill.
+      @param buf The configuration string.
+      @param n The length of the configuration string
+  */
   bool  RADIANT_API readConfig(Config *c, const char * buf, int n);
   /// Write the given configuration into a file
   bool RADIANT_API writeConfig(Config *c, const char *filename);

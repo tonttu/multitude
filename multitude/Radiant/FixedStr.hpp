@@ -65,6 +65,11 @@ namespace Radiant {
     char m_buf[N+1];
   };
 
+  typedef FixedStrT<32> FixedStr32;
+  typedef FixedStrT<64> FixedStr64;
+  typedef FixedStrT<128> FixedStr128;
+  typedef FixedStrT<256> FixedStr256;
+  typedef FixedStrT<512> FixedStr512;
 }
 
 /// @endcond

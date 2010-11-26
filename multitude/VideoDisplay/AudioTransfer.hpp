@@ -38,6 +38,7 @@ namespace VideoDisplay {
   class AudioTransfer : public Resonant::Module
   {
   public:
+    /// Constructs an audio transfer object
     AudioTransfer(Resonant::Application *, VideoIn * video);
     virtual ~AudioTransfer();
 
@@ -45,9 +46,12 @@ namespace VideoDisplay {
     virtual void process(float ** in, float ** out, int n);
     virtual bool stop();
 
+    /// Returns true if the audio transfer has actually started
     bool started() const { return m_started; }
+    /// Returns true if the audio transfer has been stopped
     bool stopped() const { return m_stopped; }
 
+    /// Check if the file has reached its end
     bool atEnd() const { return m_end; }
 
     /// Returns the video frame that should be played right now.
@@ -56,6 +60,7 @@ namespace VideoDisplay {
     /// Forgets the video source object, and shuts down.
     void forgetVideo();
 
+    /// Sets the gain factor for the sound-track
     void setGain(float gain) { m_gain = gain; }
 
   private:

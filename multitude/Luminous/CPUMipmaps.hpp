@@ -68,46 +68,81 @@ namespace Luminous {
      */
     LUMINOUS_API void update(float dt, float purgeTime);
 
-    /** Returns the index of the mipmap level that would best match
-    the actual output pixel resolution. */
+    /** Calculates the best-looking mipmap-level for rendering the image with given size.
+
+        @param size The pixel-size to be used for rendering
+
+        @return Returns the index of the mipmap level that would best match
+        the actual output pixel resolution.
+    */
     LUMINOUS_API int getOptimal(Nimble::Vector2f size);
-    /** Returns the index of the closest available mipmap-level. */
+    /** Get the index of the closest available mipmap-level.
+
+        @param size The on-screen pixel size of the image
+        @return Returns the index of the closest available mipmap-level.
+    */
     LUMINOUS_API int getClosest(Nimble::Vector2f size);
     /** Gets the mipmap image on level i. If the level does not
-    contain a valid mipmap, then 0 is returned. */
+        contain a valid mipmap, then 0 is returned.
+
+        @param i The index of the mipmap
+        @return Pointer to the image, which may be null.
+    */
     LUMINOUS_API std::shared_ptr<ImageTex> getImage(int i);
     /** Mark an image used. This method resets the idle-counter of the
-    level, preventing it from being dropped from the memory in the
-    near future. */
+        level, preventing it from being dropped from the memory in the
+        near future.
+
+        @param i The index of the mipmap-level to be marked
+    */
     LUMINOUS_API void markImage(size_t i);
-    /** Returns true if the object has loaded enough mipmaps. */
+    /** Check ifthe mipmaps are ready for rendering.
+        @return Returns true if the object has loaded enough mipmaps. */
     /// @todo what does "enought" mean?
     LUMINOUS_API bool isReady();
 
-    /** Starts to load given file, and build the mipmaps. */
+    /** Starts to load given file, and build the mipmaps.
+
+        This function call may take some time, since it will check that the image file exists,
+        and obtain its resolution. If the most fluent interaction is required, then
+        you should call this function in another thread, for example using the #Luminous::BGThread
+        background tasking framework.
+
+        @param filename The name of the image file
+        @param immediate True if the files should be loaded immediately (as
+        opposed to loading them later, as needed).
+        @return True if the image file could be opened successfully.
+    */
     LUMINOUS_API bool startLoading(const char * filename, bool immediate);
 
-    /** Returns the native size of the image, in pixels. */
+    /** @return Returns the native size of the image, in pixels. */
     const Nimble::Vector2i & nativeSize() const { return m_nativeSize;}
 
     /** Fetch corresponding GPU mipmaps from a resource set. If the
-    GPUMipmaps object does not exist yet, it is created and
-    returned. */
-    LUMINOUS_API GPUMipmaps * getGPUMipmaps(GLResources *);
-    /// @copydoc getGPUMipmaps
+        GPUMipmaps object does not exist yet, it is created and
+        returned.
+
+        @return The GPUMipmaps that correspond to these CPUMipmaps
+    */
     LUMINOUS_API GPUMipmaps * getGPUMipmaps();
+    /// @copydoc getGPUMipmaps
+    /// @param rs A pointer to the OpenGL resource container
+    LUMINOUS_API GPUMipmaps * getGPUMipmaps(GLResources * rs);
     /// Binds a texture that matches the given size parameters.
     LUMINOUS_API bool bind(GLResources *,
                            const Nimble::Matrix3 & transform,
                            Nimble::Vector2 pixelsize);
 
-    /** Returns true if the mipmaps are still being loaded. */
+    /** Check if the mipmaps are still being loaded.
+
+        @return Returns true if the mipmaps are still being loaded.
+    */
     LUMINOUS_API bool isActive();
-    /** Returns the aspect ratio of the image. */
+    /** @return Returns the aspect ratio of the image. */
     inline float aspect() const
     { return (float) m_nativeSize.x / (float)m_nativeSize.y; }
 
-    /// Returns true if the images have alpha channel
+    /// @return Returns true if the images have alpha channel
     inline bool hasAlpha() const { return m_hasAlpha; }
 
     /// Not finished
@@ -119,6 +154,7 @@ namespace Luminous {
     /// Returns the number of images in the stack
     inline unsigned stackSize() const { return (unsigned) m_stack.size(); }
 
+    /// Returns the size of the mipmap level
     LUMINOUS_API Nimble::Vector2i mipmapSize(int level);
 
   protected:

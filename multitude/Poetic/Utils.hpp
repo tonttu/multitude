@@ -26,9 +26,9 @@ namespace Poetic
 
   /** Utility functions for the Poetic font rendering engine. */
 
-  namespace Utils
+  class Utils
   {
-
+  public:
     /// Zero-width space character is used as new line character.
     //enum { W_NEWLINE = 0x200B };
     enum { W_NEWLINE = 10 };
@@ -44,9 +44,9 @@ namespace Poetic
       * @param afterSpace true to break lines after inter-word spaces.
       */
     /// @todo move inside CPUFont
-    void POETIC_API breakToLines(const std::wstring & ws, const float width,
-      CPUFont & bitmapFont, Radiant::StringUtils::WStringList & lines,
-      const bool afterSpace = true);
+    static void POETIC_API breakToLines(const std::wstring & ws, const float width,
+                                        CPUFont & bitmapFont, Radiant::StringUtils::WStringList & lines,
+                                        const bool afterSpace = true);
 
     /**
       * @brief Tokenize wstring.
@@ -56,11 +56,13 @@ namespace Poetic
       * @param afterDelim true to split string after delimiter.
       */
     /// @todo Remove, the same is in Radiant::StringUtils
-    void POETIC_API split(const std::wstring & ws, const std::wstring & delim,
-      Radiant::StringUtils::WStringList & out, const bool afterDelim = true);
+    static void POETIC_API split(const std::wstring & ws, const std::wstring & delim,
+                                 Radiant::StringUtils::WStringList & out, const bool afterDelim = true);
 
-  }
+
+  };
 
 }
+
 
 #endif

@@ -1,6 +1,7 @@
 #include "VideoCameraPTGrey.hpp"
 
 #include "Mutex.hpp"
+#include "Sleep.hpp"
 #include "Trace.hpp"
 
 #include <map>
@@ -14,9 +15,9 @@
 
 namespace Radiant
 {
-  /* It seems that ptgrey drivers are not 100% thread-safe. To overcome this we 
+  /* It seems that ptgrey drivers are not 100% thread-safe. To overcome this we
      use a mutex to lock captureImage calls to one-thread at a time. */
-  static MutexStatic __cmutex; 
+  static MutexStatic __cmutex;
 
   typedef std::map<uint64_t, FlyCapture2::PGRGuid> GuidMap;
   GuidMap g_guidMap;
@@ -115,6 +116,8 @@ namespace Radiant
 
   static FlyCapture2::BusManager * g_bus = 0;
 
+  bool VideoCameraPTGrey::m_fakeFormat7 = true;
+
   void g_busResetCallback(void * /*param*/)
   {
     Radiant::info("FIREWIRE BUS RESET");
@@ -122,8 +125,15 @@ namespace Radiant
 
   VideoCameraPTGrey::VideoCameraPTGrey(CameraDriver * driver)
     : VideoCamera(driver),
-      m_state(UNINITIALIZED)
+    m_state(UNINITIALIZED)
   {
+  }
+
+  VideoCameraPTGrey::~VideoCameraPTGrey()
+  {
+    m_image.freeMemory();
+    if(m_state != UNINITIALIZED)
+      close();
   }
 
   bool VideoCameraPTGrey::open(uint64_t euid, int , int , ImageFormat , FrameRate framerate)
@@ -131,16 +141,18 @@ namespace Radiant
 
     GuardStatic g(__cmutex);
 
-	debug("VideoCameraPTGrey::open # %llx", (long long) euid);
+    m_fakeFormat7 = false;
+
+    debug("VideoCameraPTGrey::open # %llx", (long long) euid);
 
     FlyCapture2::PGRGuid guid;
 
     // If the euid is zero, take the first camera
     if(euid == 0) {
-		if(g_guidMap.empty()) {
-				error("VideoCameraPTGrey::open # No Cameras found");
+      if(g_guidMap.empty()) {
+        error("VideoCameraPTGrey::open # No Cameras found");
         return false;
-		}
+      }
       guid = g_guidMap.begin()->second;
     } else {
       GuidMap::iterator it = g_guidMap.find(euid);
@@ -215,7 +227,7 @@ namespace Radiant
       return false;
     }
 
-	m_state = OPENED;
+    m_state = OPENED;
 
 
     FlyCapture2::CameraInfo camInfo;
@@ -226,7 +238,7 @@ namespace Radiant
 
     m_info.m_vendor = camInfo.vendorName;
     m_info.m_model = camInfo.modelName;
-    m_info.m_euid64 = 0;
+    m_info.m_euid64 = euid;
     m_info.m_driver = driver()->driverName();
 
     return true;
@@ -235,8 +247,15 @@ namespace Radiant
   bool VideoCameraPTGrey::openFormat7(uint64_t euid, Nimble::Recti roi, float fps, int mode)
   {
     GuardStatic g(__cmutex);
+    fps = 180.0f;
 
-	debug("VideoCameraPTGrey::openFormat7 # %llx", (long long) euid);
+    m_format7Rect = roi;
+    if(m_fakeFormat7) {
+      // Expand the ROI to include everything, this will be clamped later on.
+      roi.set(0, 0, 100000, 100000);
+    }
+
+    debug("VideoCameraPTGrey::openFormat7 # %llx", (long long) euid);
 
     // Look up PGRGuid from our map (updated in queryCameras())
     GuidMap::iterator it = g_guidMap.find(euid);
@@ -250,7 +269,7 @@ namespace Radiant
     // Connect camera
     FlyCapture2::Error err = m_camera.Connect(&guid);
     if(err != FlyCapture2::PGRERROR_OK) {
-      Radiant::error("VideoCameraPTGrey::open # %s", err.GetDescription());
+      Radiant::error("VideoCameraPTGrey::openFormat7 # Connect %s", err.GetDescription());
       return false;
     }
 
@@ -258,7 +277,7 @@ namespace Radiant
     FlyCapture2::FC2Config config;
     err = m_camera.GetConfiguration(&config);
     if(err != FlyCapture2::PGRERROR_OK) {
-      Radiant::error("VideoCameraPTGrey::open # %s", err.GetDescription());
+      Radiant::error("VideoCameraPTGrey::openFormat7 # GetConfiguration %s", err.GetDescription());
       return false;
     }
 
@@ -269,7 +288,7 @@ namespace Radiant
 
     err = m_camera.SetConfiguration(&config);
     if(err != FlyCapture2::PGRERROR_OK) {
-      Radiant::error("VideoCameraPTGrey::open # %s", err.GetDescription());
+      Radiant::error("VideoCameraPTGrey::openFormat7 # SetConfiguration %s", err.GetDescription());
       return false;
     }
 
@@ -286,16 +305,20 @@ namespace Radiant
     bool supported;
     err = m_camera.GetFormat7Info(&f7info, &supported);
     if(err != FlyCapture2::PGRERROR_OK) {
-      Radiant::error("VideoCameraPTGrey::open # %s", err.GetDescription());
+      Radiant::error("VideoCameraPTGrey::openFormat7 # GetFormat7Info %s", err.GetDescription());
       return false;
     }
 
     // Set Format7 frame size
     FlyCapture2::Format7ImageSettings f7s;
+    bzero(&f7s, sizeof(f7s));
     f7s.offsetX = roi.low().x;
     f7s.offsetY = roi.low().y;
-    f7s.width = (roi.width() < int(f7info.maxWidth)) ? roi.width() : f7info.maxWidth;
-    f7s.height = (roi.height() < int(f7info.maxHeight)) ? roi.height() : f7info.maxHeight;
+    Nimble::Vector2i avail(f7info.maxWidth, f7info.maxHeight);
+    avail -= roi.low();
+
+    f7s.width = Nimble::Math::Min(roi.width(), avail.x);
+    f7s.height = Nimble::Math::Min(roi.height(), avail.y);
     f7s.pixelFormat = FlyCapture2::PIXEL_FORMAT_MONO8;
     f7s.mode = FlyCapture2::Mode(mode);
 
@@ -312,52 +335,67 @@ namespace Radiant
 
     // If the requested packetSize exceeds the maximum supported, clamp it
     if(packetSize > f7info.maxPacketSize) {
-      Radiant::error("VideoCameraPTGrey::open # requested camera fps (%f) is too high. Using slower.", fps);
+      Radiant::info("VideoCameraPTGrey::openFormat7 # requested camera fps (%f) is too high. Using slower.", fps);
       packetSize = f7info.maxPacketSize;
     }
 
     // Validate
     Radiant::info("Validating format7 settings...");
     FlyCapture2::Format7PacketInfo f7pi;
+    bzero(&f7pi, sizeof(f7pi));
     err = m_camera.ValidateFormat7Settings(&f7s, &supported, &f7pi);
     if(err != FlyCapture2::PGRERROR_OK) {
-      Radiant::error("VideoCameraPTGrey::open # %s", err.GetDescription());
+      Radiant::error("VideoCameraPTGrey::openFormat7 # ValidateFormat7Settings %s", err.GetDescription());
       err.PrintErrorTrace();
     }
 
     Radiant::info("FORMAT7 SETTINGS:");
     Radiant::info("\tOffset %d %d", f7s.offsetX, f7s.offsetY);
-    Radiant::info("\tSize %d %d", f7s.width, f7s.height);
+    Radiant::info("\tSize %d %d [%d %d]", f7s.width, f7s.height,
+                  f7info.maxWidth, f7info.maxHeight);
     Radiant::info("\tMode %d", f7s.mode);
-    Radiant::info("\tPacket size: %d [%d, %d]", packetSize, f7info.minPacketSize, f7info.maxPacketSize);
+    Radiant::info("\tPacket size: %d [%d, %d]", packetSize,
+                  f7info.minPacketSize, f7info.maxPacketSize);
 
     Radiant::info("PACKET INFO");
     Radiant::info("\tRecommended packet size: %d", f7pi.recommendedBytesPerPacket);
     Radiant::info("\tMax bytes packet size: %d", f7pi.maxBytesPerPacket);
     Radiant::info("\tUnit bytes per packet: %d", f7pi.unitBytesPerPacket);
 
+    // f7pi.recommendedBytesPerPacket = 1056;
+
+    // err = m_camera.SetFormat7Configuration( &f7s, f7pi.recommendedBytesPerPacket);
     err = m_camera.SetFormat7Configuration( &f7s, f7pi.recommendedBytesPerPacket);
+
+    roi.high().make(f7s.offsetX + f7s.width, f7s.offsetY + f7s.height);
+    m_format7Rect.high() = roi.clamp(m_format7Rect.high());
+    m_format7Rect.low() = roi.clamp(m_format7Rect.low());
+
     if(err != FlyCapture2::PGRERROR_OK) {
-      Radiant::error("VideoCameraPTGrey::open # %s", err.GetDescription());
+      Radiant::error("VideoCameraPTGrey::openFormat7 # SetFormat7Configuration %s",
+                     err.GetDescription());
       err.PrintErrorTrace();
       return false;
     }
 
-    // Allocate space for image
-    m_image.allocateMemory(IMAGE_GRAYSCALE, f7s.width, f7s.height);
+    // Allocate space for the image
+    m_image.allocateMemory(IMAGE_GRAYSCALE, m_format7Rect.width(), m_format7Rect.height());
 
-	m_state = OPENED;
+    m_state = OPENED;
 
     FlyCapture2::CameraInfo camInfo;
     err = m_camera.GetCameraInfo(&camInfo);
     if(err != FlyCapture2::PGRERROR_OK) {
-      Radiant::error("VideoCameraPTGrey::open # %s", err.GetDescription());
+      Radiant::error("VideoCameraPTGrey::openFormat7 # GetCameraInfo failed %s",
+                     err.GetDescription());
     }
 
     m_info.m_vendor = camInfo.vendorName;
-    m_info.m_model = camInfo.modelName;
-    m_info.m_euid64 = 0;
+    m_info.m_model  = camInfo.modelName;
+    m_info.m_euid64 = euid;
     m_info.m_driver = driver()->driverName();
+
+    Radiant::info("VideoCameraPTGrey::openFormat7 # Success (%llx)", euid);
 
     return true;
   }
@@ -366,11 +404,15 @@ namespace Radiant
   {
     GuardStatic g(__cmutex);
 
-	  if(m_state != OPENED) {
-		  error("VideoCameraPTGrey::start # State != OPENED");
-		  /* If the device is already running, then return true. */
-		  return m_state == RUNNING;
-	  }
+    if(m_state != OPENED) {
+      /* If the device is already running, then return true. */
+      if(m_state == RUNNING)
+        return true;
+
+      error("VideoCameraPTGrey::start # State != OPENED (%llx)",
+            (long long) m_info.m_euid64);
+      return false;
+    }
 
     FlyCapture2::Error err = m_camera.StartCapture();
     if(err != FlyCapture2::PGRERROR_OK) {
@@ -379,20 +421,20 @@ namespace Radiant
       return false;
     }
 
-	m_state = RUNNING;
+    m_state = RUNNING;
 
     return true;
   }
 
   bool VideoCameraPTGrey::stop()
   {
-    // GuardStatic g(__cmutex);
+    GuardStatic g(__cmutex);
 
-	  if(m_state != RUNNING) {
-		  error("VideoCameraPTGrey::stop # State != RUNNING");
-		  /* If the device is already stopped, then return true. */
-		  return m_state == OPENED;
-	  }
+    if(m_state != RUNNING) {
+      debug("VideoCameraPTGrey::stop # State != RUNNING");
+      /* If the device is already stopped, then return true. */
+      return m_state == OPENED;
+    }
 
     Radiant::info("VideoCameraPTGrey::stop");
     FlyCapture2::Error err = m_camera.StopCapture();
@@ -401,31 +443,42 @@ namespace Radiant
       return false;
     }
 
-	m_state = OPENED;
+    m_state = OPENED;
 
     return true;
   }
 
   bool VideoCameraPTGrey::close()
   {
-    // GuardStatic g(__cmutex);
+    if(m_state == UNINITIALIZED)
+      return true;
+
+    GuardStatic g(__cmutex);
 
     Radiant::info("VideoCameraPTGrey::close");
     m_camera.Disconnect();
 
-	m_state = UNINITIALIZED;
+    m_state = UNINITIALIZED;
 
     return true;
+  }
+
+  uint64_t VideoCameraPTGrey::uid()
+  {
+    return m_info.m_euid64;
   }
 
   const Radiant::VideoImage * VideoCameraPTGrey::captureImage()
   {
     GuardStatic g(__cmutex);
 
+    Sleep::sleepMs(2);
+
     FlyCapture2::Image img;
     FlyCapture2::Error err = m_camera.RetrieveBuffer(&img);
     if(err != FlyCapture2::PGRERROR_OK) {
-      Radiant::error("VideoCameraPTGrey::captureImage # %s", err.GetDescription());
+      Radiant::error("VideoCameraPTGrey::captureImage # %llx %s",
+                     m_info.m_euid64, err.GetDescription());
       return false;
     }
     /*
@@ -436,7 +489,26 @@ namespace Radiant
       //assert(m_image.size() == img.GetDataSize());
     }
 */
-    memcpy(m_image.m_planes[0].m_data, img.GetData(), m_image.size());
+
+    if(m_fakeFormat7 && m_format7Rect.width() > 1) {
+      // info("FAKE FORMAT 7 CAPTURE");
+      // Copy only part of the image
+      /* The fake format7 mode. This is done so that one can use Format7 ROI even
+         when the feature is broken. One many Windows systems this only causes BSODs.
+      */
+      int w = m_format7Rect.width();
+      const unsigned char * src = img.GetData();
+      src += img.GetCols() * m_format7Rect.low().y + m_format7Rect.low().x;
+      unsigned char * dest = m_image.m_planes[0].m_data;
+
+      for(int y = m_format7Rect.low().y; y < m_format7Rect.high().y; y++) {
+        memcpy(dest, src, w);
+        src += img.GetCols();
+        dest += w;
+      }
+    }
+    else
+      memcpy(m_image.m_planes[0].m_data, img.GetData(), m_image.size());
 
     return &m_image;
   }
@@ -445,7 +517,7 @@ namespace Radiant
   {
     // GuardStatic g(__cmutex);
     return m_info;
-	
+
   }
 
   int VideoCameraPTGrey::width() const
@@ -472,9 +544,11 @@ namespace Radiant
   {
     return width() * height() * sizeof(uint8_t);
   }
-  
+
   void VideoCameraPTGrey::setFeature(FeatureType id, float value)
   {
+    GuardStatic g(__cmutex);
+
     // Radiant::debug("VideoCameraPTGrey::setFeature # %d %f", id, value);
 
     // If less than zero, use automatic mode
@@ -488,8 +562,8 @@ namespace Radiant
 
     FlyCapture2::Error err = m_camera.GetPropertyInfo(&pinfo);
     if(err != FlyCapture2::PGRERROR_OK) {
-		Radiant::debug("VideoCameraPTGrey::setFeature # Failed: \"%s\"",
-			err.GetDescription());
+      Radiant::debug("VideoCameraPTGrey::setFeature # Failed: \"%s\"",
+                     err.GetDescription());
       return;
     }
 
@@ -527,8 +601,8 @@ namespace Radiant
 
     FlyCapture2::Error err = m_camera.SetProperty(&prop);
     if(err != FlyCapture2::PGRERROR_OK) {
-		Radiant::debug("VideoCameraPTGrey::setFeatureRaw # Failed: \"%s\"",
-			err.GetDescription());
+      Radiant::debug("VideoCameraPTGrey::setFeatureRaw # Failed: \"%s\"",
+                     err.GetDescription());
       err.PrintErrorTrace();
     }
     /*
@@ -722,7 +796,7 @@ namespace Radiant
   {
     // Initialize the mutex.
     __cmutex.lock();
-	__cmutex.unlock();
+    __cmutex.unlock();
   }
 
   size_t CameraDriverPTGrey::queryCameras(std::vector<VideoCamera::CameraInfo> & suppliedCameras)
@@ -730,17 +804,17 @@ namespace Radiant
     static bool wasRun = false;
     if(wasRun) {
       suppliedCameras.insert(suppliedCameras.begin(), g_cameras.begin(), g_cameras.end());
-	  return g_cameras.size();
+      return g_cameras.size();
     }
 
-	std::vector<VideoCamera::CameraInfo> myCameras;
+    std::vector<VideoCamera::CameraInfo> myCameras;
 
     // Clear guid map
     g_guidMap.clear();
 
     if(!g_bus) g_bus = new FlyCapture2::BusManager();
 
-    g_bus->RegisterCallback(g_busResetCallback, FlyCapture2::BUS_RESET, 0, 0);
+    // g_bus->RegisterCallback(g_busResetCallback, FlyCapture2::BUS_RESET, 0, 0);
 
     // Get the number of available cameras
     unsigned int numCameras;
@@ -795,12 +869,12 @@ namespace Radiant
 
       myCameras.push_back(myInfo);
     }
-	
-	// Cache the results for later
-	/// @todo caching the results is not so good idea, because you can't hotplug cameras now	
-	g_cameras = myCameras;
-	// Append to the camera vector
-	suppliedCameras.insert(suppliedCameras.end(), myCameras.begin(), myCameras.end());
+
+    // Cache the results for later
+    /// @todo caching the results is not so good idea, because you can't hotplug cameras now
+    g_cameras = myCameras;
+    // Append to the camera vector
+    suppliedCameras.insert(suppliedCameras.end(), myCameras.begin(), myCameras.end());
 
     wasRun = true;
 

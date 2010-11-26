@@ -198,6 +198,7 @@ namespace Radiant {
 
   static dc1394_t * g_dc = 0;
   static int g_count = 0;
+  static int s_openDelay = 850;
 
   VideoCamera1394::VideoCamera1394(CameraDriver * driver)
       : VideoCamera(driver),
@@ -216,6 +217,13 @@ namespace Radiant {
 
     if(!g_dc)
       g_dc = dc1394_new();
+
+    if (g_count == 0) {
+      char * s = getenv("MULTI_CAM_OPEN_DELAY");
+      if (s) {
+        s_openDelay = atoi(s);
+      }
+    }
 
     g_count++;
   }
@@ -514,7 +522,7 @@ namespace Radiant {
     GuardStatic guard(&g_mutex);
 
     /* On some systems, sleep is needed for proper multi-camera operation. Sigh.*/
-    Radiant::Sleep::sleepMs(850);
+    Radiant::Sleep::sleepMs(s_openDelay);
 
     std::string videodevice("/dev/video1394");
 
@@ -523,7 +531,7 @@ namespace Radiant {
     const char * fname = "VideoCamera1394::initialize";
 
     if(!findCamera(euid)) {
-      error("%s # Could not find FireWire camera %lx", fname, euid);
+      error("%s # Could not find FireWire camera %"PRIx64, fname, euid);
       return false;
     }
 
@@ -653,7 +661,7 @@ namespace Radiant {
   {
     GuardStatic guard(&g_mutex);
 
-    Radiant::Sleep::sleepMs(850);
+    Radiant::Sleep::sleepMs(s_openDelay);
 
     const char * fname = "VideoCamera1394::openFormat7";
 
@@ -1015,6 +1023,15 @@ namespace Radiant {
 
     return true;
   }
+
+  uint64_t VideoCamera1394::uid()
+  {
+    if(!m_camera)
+      return 0;
+
+    return m_camera->guid;
+  }
+
 
   VideoCamera1394::CameraInfo VideoCamera1394::cameraInfo()
   {

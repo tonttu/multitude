@@ -35,6 +35,7 @@ namespace Nimble
   
     /// Compute the signed distance to the plane. Distance is positive if the
     /// point is on the positive side of the plane negative if vice-versa.
+    /// @param point point to test
     float distanceTo(const Nimble::Vector3f & point) const;
 
     /// Does a ray intersect the plane?

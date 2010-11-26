@@ -46,14 +46,15 @@ void runRead(const char * host, int port)
   }
 
   for(int i = 0; i < g_iterations; i++) {
-      std::string fromAddr;
-      uint16_t fromPort;
+      std::string fromAddr(host);
+      uint16_t fromPort(port);
 
       int gotBytes = socket.readDatagram(buf, 1024, &fromAddr, &fromPort);
 
-      info("Got %d bytes (%s) from %s:%d", gotBytes, buf, fromAddr.c_str(), fromPort);
+      info("Got %d bytes (%s) from %s:%d", gotBytes, buf, fromAddr.c_str(), (int) port);
 
-      Radiant::Sleep::sleepMs(500);
+      if(gotBytes < 1)
+        Radiant::Sleep::sleepMs(500);
   }
 }
 

@@ -21,7 +21,7 @@
 #include <Valuable/Export.hpp>
 #include <Valuable/ValueObject.hpp>
 
-#define VALUEMIT_STD_OP ValueObject::emitChange(); return *this;
+#define VALUEMIT_STD_OP this->emitChange(); return *this;
 
 namespace Valuable
 {
@@ -36,6 +36,7 @@ namespace Valuable
   public:
       ValueNumeric() : ValueObjectT<T>() {}
       /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
+      /// @param v The numeric value of this object.
       ValueNumeric(HasValues * parent, const std::string & name, T v, bool transit = false)
       : Base(parent, name, v, transit)
       {}
@@ -62,9 +63,9 @@ namespace Valuable
       std::string asString(bool * const ok = 0) const { if(ok) *ok = true; return Radiant::StringUtils::stringify(Base::m_value); }
 
       /// Sets the numberic value
-      inline virtual bool set(int v) { Base::m_value = static_cast<T> (v); return true; }
+      inline virtual bool set(int v) { Base::m_value = static_cast<T> (v); this->emitChange(); return true; }
       /// @copydoc set
-      inline virtual bool set(float v) { Base::m_value = static_cast<T> (v); return true; }
+      inline virtual bool set(float v) { Base::m_value = static_cast<T> (v); this->emitChange(); return true; }
   };
 
 }

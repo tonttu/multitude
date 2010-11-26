@@ -31,17 +31,24 @@ namespace Valuable
   /// String value
   /** This template class is used to implement both normal 7/8-bit
       strings and wide strings*/
-  template<class T>
+  template<typename T>
       class VALUABLE_API ValueStringT : public ValueObjectT<T>
   {
     typedef ValueObjectT<T> Base;
 
   public:
+
+    /// The character type of this string class
+    /** This type depends on the template class. */
+    typedef typename T::value_type char_type;
+
     ValueStringT() : Base() {}
     /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
+    /// @param v The string to store in this object
     ValueStringT(HasValues * parent, const std::string & name,
                  const T & v, bool transit = false);
     /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
+    /// @param v The string to store in this object
     ValueStringT(HasValues * parent, const std::string & name,
                  const char * v, bool transit = false);
     /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
@@ -55,6 +62,26 @@ namespace Valuable
                                  { Base::m_value = i.m_value; VALUEMIT_STD_OP }
     /// Copies a string
     ValueStringT<T> & operator = (const T & i) { Base::m_value = i; VALUEMIT_STD_OP }
+
+    /// Concatenates two strings
+    /// @param i The string to be appended to this string
+    /// @return A new string that contains both this string, and the argument string.
+    T operator + (const ValueStringT<T> & i) const
+    { return Base::m_value + i.m_value; }
+
+
+    /// Concatenates two strings
+    T operator + (const T & i) const
+    { return Base::m_value + i; }
+
+    /// Concatenates two strings
+    T operator + (const char_type * i) const
+    { return Base::m_value + T(i); }
+
+        /*
+    T operator + (const char * i) const
+    { return Base::m_value + i; }
+*/
 
     /// Compares if two strings are equal
     bool operator == (const T & that) { return that == Base::m_value; }
@@ -95,6 +122,12 @@ namespace Valuable
   // Instantiation of template classes
   // See ValueStringImpl.hpp for std::wstring member specializations
 
+}
+
+template <class T>
+    T operator + (const T & a, const Valuable::ValueStringT<T> & b)
+{
+  return a + b.str();
 }
 
 #undef VALUEMIT_STD_OP

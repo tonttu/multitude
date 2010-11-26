@@ -29,7 +29,9 @@ namespace Luminous
   class LUMINOUS_API Transformer
   {
   public:
+    /// Creates an empty transformation stack
     Transformer();
+    /// Deletes the transformation stack
     ~Transformer();
 
     /// Get the top matrix of the stack
@@ -60,18 +62,22 @@ namespace Luminous
     ///  renderContext.pushTransform();
     ///  renderContext.setTransform(m);
     /// @endcode
+    /// @param m matrix to push
     void pushTransform(const Nimble::Matrix3 & m);
-    /// Sets the current transformation
+    /// Replaces the top matrix with the given matrix
+    /// @param m matrix to set
     void setTransform(const Nimble::Matrix3 & m);
 
     /// Multiply the top matrix from the left with the given matrix
     /// The end result is equivalent to:
     ///  @code renderContext.setTransform(m * renderContext.transform()); @endcode
+    /// @param m matrix to multiply with
     void leftMul(const Nimble::Matrix3 & m);
 
     /// Multiply the top matrix from the right with the given matrix
     /// The end result is equivalent to:
-    ///  @code renderContext.setTransform(renderContext.transform() * m); @endcode
+    /// @code renderContext.setTransform(renderContext.transform() * m); @endcode
+    /// @param m matrix to multiply with
     void rightMul(const Nimble::Matrix3 & m);
 
     /// Clears the stack so it only contains an identity matrix

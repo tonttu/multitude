@@ -64,7 +64,7 @@ namespace Luminous
 
     /// The width ofthe image in pixels
     int width() const { return m_width; }
-    /// The height ofthe image in pixels
+    /// The height of the image in pixels
     int height() const { return m_height; }
     /// The size of the image in pixels
     Nimble::Vector2i size() const
@@ -86,12 +86,18 @@ namespace Luminous
     /// Check if a file is readable, and returns its core information
     static bool ping(const char * filename, ImageInfo & info);
 
-    /** Read a file to this Image object. */
+    /** Read a file to this Image object.
+    @param filename name of the file to read from */
     bool read(const char * filename);
-    /** Write this Image to a file. */
+    /** Write this Image to a file.
+    @param filename name of the file to write to */
     bool write(const char * filename);
 
-    /** Create an image object from data provided by the user. */
+    /** Create an image object from data provided by the user.
+    @param bytes pointer to image data
+    @param width width of the image data
+    @param height height of the image data
+    @param format pixel format of the image data*/
     void fromData(const unsigned char * bytes, int width, int height,
           PixelFormat format);
 
@@ -108,14 +114,20 @@ namespace Luminous
     void flipVertical();
 
     /** Resample a source image using straightforward bilinear
-    interpolation. */
+    interpolation.
+    @param source image to resample
+    @param w new width
+    @param h new height */
     bool copyResample(const Image & source, int w, int h);
 
-    /** Down-sample the image to quarter size. */
+    /** Down-sample the given image to quarter size.
+    @param source image to resample */
     bool quarterSize(const Image & source);
-    /** Remove pixels from the right edge of the image. */
+    /** Remove pixels from the right edge of the image.
+    @param n number of pixels to remove */
     bool forgetLastPixels(int n);
-    /** Remove lines from the bottom of the image. */
+    /** Remove lines from the bottom of the image.
+    @param n number of lines to remove */
     void forgetLastLines(int n);
     /** Removes the last line from the image. */
     void forgetLastLine();
@@ -126,13 +138,15 @@ namespace Luminous
     void makeValidTexture();
     /** Returns true if the image has an alpha channel. */
     bool hasAlpha() const;
-    /** Copies the argument image to this image. */
+    /** Copies the argument image to this image.
+    @param img image to compare to */
     Image & operator = (const Image& img);
 
     /** Returns a pointer to the file-format codecs. */
     static CodecRegistry * codecs();
 
     /// Returns the alpha value [0,255] for the given relative coordinates in the image.
+    /// @param relativeCoord relative pixel coordinate x,y in [0,1]
     /// @return alpha of the given pixel or 255 if image does not have alpha channel
     unsigned char pixelAlpha(Nimble::Vector2 relativeCoord) const;
 
@@ -140,8 +154,17 @@ namespace Luminous
     void zero();
 
     /// Gets the color of a given pixel.
-    /** The color is normalized, with each component in range 0-1. */
+    /** The color is normalized, with each component in range 0-1.
+    @param x pixel x coordinate
+    @param y pixel y coordinate */
     Nimble::Vector4 pixel(unsigned x, unsigned y);
+
+    /// This function should be called when the image has been modified.
+    void changed() { m_generation++; }
+    /// The generation count of the image object
+    /** The generation count can be used to indicate that the image has changed, and one should
+        update the corresponding OpenGL texture wo match the same generation. */
+    int generation() const { return m_generation; }
 
   private:
 
@@ -149,6 +172,13 @@ namespace Luminous
     int m_height;
     PixelFormat m_pixelFormat;
     unsigned char* m_data;
+    int m_generation;
+
+    /*
+  private:
+    bool m_dataReady;
+    bool m_ready;
+    */
   };
 
   /** ImageTex provides an easy way to create OpenGL textures from images in a
@@ -160,27 +190,40 @@ namespace Luminous
 
     /** Binds a texture representing this image to the current OpenGL context.
 
-        @arg textureUnit The OpenGL texture unit to bind to
-        @arg withmipmaps Should we use mimaps, or not. This argument only
+        @param textureUnit The OpenGL texture unit to bind to
+        @param withmipmaps Should we use mimaps, or not. This argument only
         makes difference the first time this function executed for the context
         (and the texture is created), after that the the same texture is used.
     */
-    void bind(GLenum textureUnit = GL_TEXTURE0, bool withmimaps = true);
+    void bind(GLenum textureUnit = GL_TEXTURE0, bool withmipmaps = true);
 
     /** Binds a texture representing this image to the current OpenGL context.
 
-        @arg resources The OpenGL resource handler
-        @arg textureUnit The OpenGL texture unit to bind to
-        @arg withmipmaps Should we use mimaps, or not. This argument only
+        @param resources The OpenGL resource handler
+        @param textureUnit The OpenGL texture unit to bind to
+        @param withmipmaps Should we use mimaps, or not. This argument only
         makes difference the first time this function executed for the context
         (and the texture is created), after that the the same texture is used.
     */
-    void bind(GLResources * resources, GLenum textureUnit = GL_TEXTURE0, bool withmimaps = true);
+    void bind(GLResources * resources, GLenum textureUnit = GL_TEXTURE0, bool withmipmaps = true);
 
     /// Checks if the image data is fully loaded to the GPU, inside a texture
     bool isFullyLoadedToGPU(GLResources * resources = 0);
 
-    void uploadBytesToGPU(GLResources * resources, unsigned bytes);
+    /** Loads part of the image to the GPU.
+
+        @return The number of bytes uploaded.
+    */
+    unsigned uploadBytesToGPU(GLResources * resources, unsigned bytes);
+
+    /// Try binding this texture
+    /** The condition for binding this texture is that either it has been fully uploaded to the GPU,
+        or it can be uploaded within given limits.
+
+        @param limit The maximum number of bytes to upload.
+        @return True if the bind operation could be done, false otherwise.
+    */
+    bool tryBind(unsigned & limit);
   };
 
 

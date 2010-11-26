@@ -19,5 +19,7 @@
 #include "FixedStrImpl.hpp"
 
 template class Radiant::FixedStrT<32> ;
+template class Radiant::FixedStrT<64> ;
+template class Radiant::FixedStrT<128> ;
 template class Radiant::FixedStrT<256> ;
 template class Radiant::FixedStrT<512> ;

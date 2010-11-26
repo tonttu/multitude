@@ -69,6 +69,8 @@ namespace Luminous
     int getAttribLoc(const char * name);
 
     /// Sets the value of the given uniform
+    /// @param name name of the uniform to set
+    /// @param value uniform value
     bool setUniformInt(const char * name, int value);
     /// @copydoc setUniformInt
     bool setUniformFloat(const char * name, float value);
@@ -81,6 +83,12 @@ namespace Luminous
     /// @copydoc setUniformInt
     /// The matrix is automatically transposed for OpenGL
     bool setUniformMatrix3(const char * name, const Nimble::Matrix3f & value);
+
+    /// Sets a given program parameter
+    /** This is in practice a call to glProgramParameteriEXT
+    @param pname parameter to set
+    @param value parameter value*/
+    void setProgramParameter(GLenum pname, GLint value);
 
     /// Validates the program
     /// @return true if the program is valid and can be used
@@ -122,7 +130,17 @@ namespace Luminous
     bool loadStrings(const char* vsString, const char* fsString);
 
     /// Returns the number of shader objects attached to the program
-    int shaderObjectCount() const { return (int) m_shaderObjects.size(); } 
+    int shaderObjectCount() const { return (int) m_shaderObjects.size(); }
+
+    /** Loads a #Luminous::GLSLShaderObject from a file, and adds it to this program object.
+    @param shaderType type of the shader
+    @param filename shader source code filename*/
+    bool loadFile(GLenum shaderType, const char * filename);
+
+    /** Loads a #Luminous::GLSLShaderObject from a string and adds it to this program object.
+    @param shaderType type of the shader
+    @param shaderCode source code for the shader */
+    bool loadString(GLenum shaderType, const char * shaderCode);
 
     /// Returns the OpenGL handle for this program
     GLuint handle() const { return m_handle; }

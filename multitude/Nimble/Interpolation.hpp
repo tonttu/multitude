@@ -56,7 +56,9 @@ namespace Nimble
       return a.second * (1.f - tt) + b.second * tt;
     }
 
+    /// Gets a reference to the key-point list
     const Keys & keys() const { return m_keys; }
+    /// Remove all key-points
     void clear() { m_keys.clear(); }
 
   private:

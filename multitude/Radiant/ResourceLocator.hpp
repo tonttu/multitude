@@ -39,12 +39,23 @@ namespace Radiant
       /// Return the paths.
       const std::string & paths() const { return  m_paths; }
 
-      /** Add a path to the list to search though
-        @arg front If front is true, then the new path is put to the
-        front of the list, otherwise it is put at the end of the
-        list. **/
+      /** Add a path to the list to search though.
+
+          @param path The directory path to be added to the search paths.
+
+          @param front If true, then the new path is placed in front of the path list, and
+          future searches will start from it. Otherwise the new path is placed at the end
+          of the path list.
+       */
       void addPath(const std::string & path, bool front = false);
-      /** @copydoc addPath*/
+      /** @copybrief addPath
+
+          @param module The name of the module for which we are looking for some data.
+
+          @param front If true, then the new path is placed in front of the path list, and
+          future searches will start from it. Otherwise the new path is placed at the end
+          of the path list.
+      **/
       void addModuleDataPath(const std::string & module, bool front = false);
 
       /// Locate a file

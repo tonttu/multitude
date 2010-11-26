@@ -19,7 +19,7 @@ namespace Radiant
     CameraDriver();
     virtual ~CameraDriver();
     /// Get a list of available cameras on the system that this driver supports
-    /// @arg cameras array of cameras where the new cameras will be appended to
+    /// @param cameras array of cameras where the new cameras will be appended to
     /// @return number of cameras found by this driver
     virtual size_t queryCameras(std::vector<VideoCamera::CameraInfo> & cameras) = 0;
     /// Create a new camera object using this interface
@@ -50,11 +50,11 @@ namespace Radiant
 
     /// Register a new camera driver. The memory used by the driver is freed when the
     /// factory is destroyed.
-    /// @arg driver driver to register
+    /// @param driver driver to register
     void registerDriver(CameraDriver * driver);
 
     /// Specify the preferred order of using drivers
-    /// @arg pref driver names separated by comma, e.g. "libdc,ptgrey,cmu"
+    /// @param pref driver names separated by comma, e.g. "libdc,ptgrey,cmu"
     void setDriverPreference(const std::string & pref);
 
   private:

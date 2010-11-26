@@ -44,6 +44,7 @@ namespace Resonant {
     };
 #endif
 
+    /// Creates a new ModuleOutCollect
     ModuleOutCollect(Application *, DSPNetwork *);
     virtual ~ModuleOutCollect();
 
@@ -51,8 +52,10 @@ namespace Resonant {
     virtual void processMessage(const char *, Radiant::BinaryData *);
     virtual void process(float ** in, float ** out, int n);
 
+    /// Access the collected frames, which have been interleaved
     const float * interleaved() const { return & m_interleaved[0]; }
 
+    /// Returns the number of channels that are collected by this module
     int channels() const { return m_channels; }
 
   private:
@@ -67,12 +70,15 @@ namespace Resonant {
     container m_map;
   };
 
+  /// @cond
   inline bool operator == (const ModuleOutCollect::Move & a,
-               const ModuleOutCollect::Move & b)
+                           const ModuleOutCollect::Move & b)
   {
     return (a.from == b.from)  && (a.to == b.to) &&
       (strcmp(a.sourceId, b.sourceId) == 0);
   }
+
+  /// @endcond
 }
 
 #endif

@@ -18,6 +18,8 @@ namespace Valuable
   */
   namespace Serializer
   {
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
     /// helper structs and enum for template specializations
     /** Boost & TR1 have is_base_of & similar template hacks that basically do this */
     namespace Type
@@ -34,6 +36,7 @@ namespace Valuable
       struct default_trait { char _[5]; };
       /// @endcond
     }
+#endif
 
     /// Removes const from type: remove_const<const Foo>::Type == Foo
     /// Works also with non-const types, remove_const<Foo>::Type == Foo
@@ -41,7 +44,8 @@ namespace Valuable
       /// The original type without const
       typedef T Type;
     };
-    /// @copydoc remove_const
+    /// Removes const from type: remove_const<const Foo>::Type == Foo
+    /// Works also with non-const types, remove_const<Foo>::Type == Foo
     template <typename T> struct remove_const<const T> {
       /// The original type without const
       typedef T Type;

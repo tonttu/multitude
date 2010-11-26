@@ -68,6 +68,7 @@ namespace Nimble {
     /// void               setDiagonal(const Vector3T<T> &v) { m[0][0] = v[0]; m[1][1] = v[1]; m[2][2] = v[2]; m[3][3] = (T) 1.0; }
 
     /// Returns the ith row
+    /// @param i row number
     Vector4T<T>&       operator[](int i)      { return row(i); }
     /// Returns the ith row
     const Vector4T<T>& operator[](int i) const{ return row(i); }
@@ -121,6 +122,8 @@ namespace Nimble {
     /// Returns a pointer to the first element
     const T * data() const { return m[0].data(); }
 
+    Matrix4T<T> orthoNormalize();
+
     /// Fills the matrix by copying values from memory
     template <class S>
     void copy (const S * x) { const S * end = x + 16; T * my = data(); while(x!=end) *my++ = (T) *x++; }
@@ -130,6 +133,8 @@ namespace Nimble {
 
     /// @todo duplicates (makeTranslation vs. translate3D)
     /// Create a rotation matrix
+    /// @param radians angle in radians
+    /// @param axis axis to rotate around
     static Matrix4T<T> makeRotation(T radians, const Vector3T<T> & axis);
     /// Create a translation matrix
     static Matrix4T<T> makeTranslation(const Vector3T<T> & v);
@@ -191,6 +196,26 @@ namespace Nimble {
     return *this;
   }
 
+  /// @todo could improve numerical stability easily etc.
+  template <class T>
+  inline Matrix4T<T> Matrix4T<T>::orthoNormalize()
+  {
+    transpose();
+    Matrix4T<T> res(*this);
+    for (int i=0; i < 4; ++i) {
+      Vector4T<T> & v = res.row(i);
+      for (int j=0; j < i; ++j) {
+        v -= projection(res.row(j), row(i));
+      }
+    }
+
+    for (int i=0; i < 4; ++i)
+      res.row(i).normalize();
+
+    res.transpose();
+    return res;
+  }
+
   template <class T>
   inline void Matrix4T<T>::identity()
   {
@@ -209,8 +234,8 @@ namespace Nimble {
   }
 
   /** Inverts the matrix. The boolean argument is set to true or false
-      depending on how well the operation went. */
-
+      depending on how well the operation went.
+  @param ok (optional) false if the inversion fails, otherwise true */
   template <class T>
   Matrix4T<T> Matrix4T<T>::inverse(bool * ok) const
   {

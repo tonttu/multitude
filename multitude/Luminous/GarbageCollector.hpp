@@ -71,6 +71,7 @@ namespace Luminous
     typedef std::set<Collectable *> container;
     /// Iterator for the container
     typedef container::iterator iterator;
+    /// Const iterator for the container
     typedef container::const_iterator const_iterator;
 
     /// Empties the garbage list.
@@ -83,6 +84,7 @@ namespace Luminous
     /// Returns the number of collectables in the garbage collector
     static int size() { return (int) m_current->size(); }
 
+    /// Returns the list of objects that have been previously deleted.
     static const container & previousObjects();
   private:
     GarbageCollector();

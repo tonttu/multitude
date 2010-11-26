@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef LUMINOUS_VERTEX_BUFFER_HPP
@@ -18,6 +18,10 @@
 
 #include <Luminous/Export.hpp>
 #include <Luminous/Luminous.hpp>
+
+#include <Luminous/GLResource.hpp>
+
+#include <stdlib.h> // size_t
 
 #define BUFFER_OFFSET(bytes) ((GLubyte *)0 + (bytes))
 
@@ -28,7 +32,7 @@ namespace Luminous
   /// BufferObject provides an abstraction for the Buffer Objects (vertex
   /// buffers, index buffers) in OpenGL.
   template<GLenum type>
-    class LUMINOUS_API BufferObject 
+  class LUMINOUS_API BufferObject : public Luminous::GLResource
     {
       public:
 
@@ -85,16 +89,17 @@ namespace Luminous
           DYNAMIC_COPY = GL_DYNAMIC_COPY
         };
 
-        BufferObject();
-        ~BufferObject();
+        /// Creates an empty OpenGL buffer object.
+        BufferObject(Luminous::GLResources * resources = 0);
+        virtual ~BufferObject();
 
         /// Allocates memory for the vertex buffer
         void allocate(size_t bytes, Usage usage);
 
         /// Binds the vertex buffer
-        void bind() const;
+        void bind();
         /// Unbinds any vertex buffers
-        void unbind() const;
+        void unbind();
 
         /// Fills the vertex buffer with data
         void fill(void * data, size_t bytes, Usage usage);
@@ -106,18 +111,45 @@ namespace Luminous
         /// Unmaps the vertex buffer from CPU memory. The pointer to the buffer is invalidated.
         void unmap();
 
-        /// Returns the OpenGL handle for the buffer
+        /** Access the OpenGL handle id.
+
+            This function should be used with care, since it may break the OpenGL state tracking.
+
+            @return Returns the OpenGL handle for the buffer
+         */
         GLuint handle() const { return m_bufferId; }
 
-      protected:
+        /** @return Returns the current number of filled bytes in the boffer. */
+        size_t filled() const { return m_filled; }
+      private:
         /// OpenGL handle for the vertex buffer
         GLuint m_bufferId;
+        size_t m_filled;
+        /// Is the buffer bound or not
+        bool   m_bound;
     };
 
   /// An OpenGL vertex buffer
-  typedef BufferObject<GL_ARRAY_BUFFER> VertexBuffer;
+
+  class VertexBuffer : public BufferObject<GL_ARRAY_BUFFER>
+  {
+  public:
+    /// Constructs an empty vertex buffer.
+    VertexBuffer(Luminous::GLResources * resources = 0)
+      : BufferObject<GL_ARRAY_BUFFER>(resources)
+    {}
+  };
+
   /// An OpenGL index buffer
-  typedef BufferObject<GL_ELEMENT_ARRAY_BUFFER> IndexBuffer;
+  class IndexBuffer : public BufferObject<GL_ELEMENT_ARRAY_BUFFER>
+  {
+  public:
+    /// Constructs an empty index buffer.
+    IndexBuffer(Luminous::GLResources * resources = 0)
+      : BufferObject<GL_ELEMENT_ARRAY_BUFFER>(resources)
+    {}
+
+  };
 
 }
 

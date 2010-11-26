@@ -4,7 +4,11 @@
 #include "Module.hpp"
 #include "PulseAudioCore.hpp"
 
+/// @cond
+
 namespace Resonant {
+
+
   class RESONANT_API ModulePulseAudio : public Module, public PulseAudioCore
   {
   public:
@@ -36,5 +40,7 @@ namespace Resonant {
     void beforeShutdown();
   };
 }
+
+/// @endcond
 
 #endif // RESONANT_MODULEPULSEAUDIO_HPP

@@ -20,16 +20,18 @@
 
 #include <Radiant/MemCheck.hpp>
 
+#include "GarbageCollector.hpp"
+
 namespace Luminous
 {
   /// A utility class to make the work of GarbageCollector easier.
-  class LUMINOUS_API Collectable : public Radiant::MemCheck
+  class Collectable : public Radiant::MemCheck
   {
   public:
-    Collectable();
-    virtual ~Collectable();
+      Collectable() {}
+    virtual ~Collectable() {GarbageCollector::objectDeleted(this);}
     /** Instructs the resource manager(s) to free linked resources.*/
-    void freeLinkedResources();
+    inline void freeLinkedResources() {GarbageCollector::objectDeleted(this);}
   };
 
 }

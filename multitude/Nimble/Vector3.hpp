@@ -143,6 +143,35 @@ namespace Nimble {
     inline Vector2T<T> xy() const { return Vector2T<T>(x, y); }
   };
 
+#ifdef WIN32
+  /* A bunch of specializations, so that the compiler does not warn about
+     negating vectors with unsigned components.
+  */
+  template <>
+      Vector3T<unsigned char>
+      Vector3T<unsigned char>::operator-	() const { return * this; }
+
+  template <>
+      Vector3T<unsigned>
+      Vector3T<unsigned>::operator-	() const { return * this; }
+
+  template <>
+      Vector3T<uint64_t>
+      Vector3T<uint64_t>::operator-	() const { return * this; }
+
+  template <>
+      Vector3T<unsigned char> &
+      Vector3T<unsigned char>::negate() { return * this; }
+
+  template <>
+      Vector3T<unsigned> &
+      Vector3T<unsigned>::negate() { return * this; }
+
+  template <>
+      Vector3T<uint64_t> &
+      Vector3T<uint64_t>::negate() { return * this; }
+#endif
+
   /// Vector of three floats
   typedef Vector3T<float> Vector3;
   /// Vector of three floats

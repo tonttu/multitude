@@ -557,7 +557,7 @@ namespace Resonant {
     SNDFILE * sndf = sf_open(filename, SFM_READ, & info);
 
     if(!sndf) {
-      Radiant::debug("ModuleSamplePlayer::playSample # failed to load '%s'",
+      Radiant::error("ModuleSamplePlayer::playSample # failed to load '%s'",
                      filename);
       return;
     }

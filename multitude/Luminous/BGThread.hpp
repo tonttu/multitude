@@ -40,9 +40,20 @@ namespace Luminous
     virtual ~BGThread();
 
     /// Add a task to be executed
+    /** The task is the property of the BGThread, which will delete the object when its
+        operation is finished.
+
+        @param task The task that needs to be added.
+    */
     virtual void addTask(Task * task);
 
     /// Remove the task from the BGThread
+    /** If you just want to delete the task, then it is generally better to set the state of
+        the task to finished, and schedule it immediately for processing (and thus removal).
+
+        @param task The task to be removed
+        @return True if the task was successfully removes, false otherwise.
+    */
     virtual bool removeTask(Task * task);
 
     /// Update the changed task timestamp to queue
@@ -51,8 +62,9 @@ namespace Luminous
     /// Change the priority of a task
     virtual void setPriority(Task * task, Priority p);
 
-    /// Returns the global BGThread instance. If no BGThread has been created
-    /// yet, one will be created now.
+    /** @return Returns the global BGThread instance. If no BGThread has been created
+        yet, one will be created now.
+        */
     static BGThread * instance();
 
     /// Container for the tasks

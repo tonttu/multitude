@@ -29,8 +29,10 @@ namespace Radiant
   class SHMDuplexPipe
   {
   public:
+    /// Creates a full-duplex shared memory pipe
     RADIANT_API SHMDuplexPipe(const key_t writeKey, const uint32_t writeSize,
          const key_t readKey,  const uint32_t readSize);
+    /// Deletes the full-duplex pipe
     RADIANT_API virtual ~SHMDuplexPipe();
 
     inline int read(void * ptr, int n) { return m_in.read(ptr, n); }

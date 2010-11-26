@@ -52,7 +52,8 @@ namespace Luminous
     /// Allocates the texture object. Does not allocate memory for the texture data.
     void allocate();
 
-    /** Activate textureUnit and bind this texture to that unit. */
+    /** Activate textureUnit and bind this texture to that unit.
+    @param textureUnit texture unit to bind to*/
     void bind(GLenum textureUnit)
     {
       allocate();
@@ -78,11 +79,13 @@ namespace Luminous
 
     /** Sets the width of the texture. This is not used by the object for
     anything but allows the user to query texture dimension from the texture
-    object.*/
+    object.
+    @param w texture width */
     void setWidth(int w) { m_width = w; }
     /** Sets the height of the texture. This is not used by the object for
     anything but allows the user to query texture dimension from the texture
-    object.*/
+    object.
+    @param h texture height */
     void setHeight(int h) { m_height = h; }
 
     /// Returns the number of pixels in this texture.

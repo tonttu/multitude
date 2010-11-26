@@ -7,10 +7,10 @@
  * See file "Resonant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef RESONANT_AUDIO_FILE_HANDLER_HPP
@@ -38,6 +38,8 @@ namespace Resonant {
 
   public:
 
+    /// @cond
+    // The status of the file opening process.
     enum OpenStatus {
       OPEN_NOT,
       OPEN_DONE,
@@ -45,30 +47,45 @@ namespace Resonant {
       OPEN_EOF,
       OPEN_CLOSED
     };
+    /// @endcond
 
-    /** A handle that offers access to the audio files. */
+    /** A handle that offers access to the audio files. Each handle corresponds
+        to a single audio file. */
     class Handle
     {
     public:
       friend class AudioFileHandler;
 
+      /// Blocks until the file has been opened
+      /** @return True if the file was opened successfully. */
       bool waitOpen();
+      /** Checks if the file is now open. */
       bool isOpen() const { return m_file != 0; }
 
+      /** Write frames into the file (asynchronously). */
       int writeFrames(float * data, int frames);
+      /** Read frames from the file. */
       int readFrames(float * data, int frames);
 
-      int writeFrames(int * data, int frames) 
+      /// @copydoc writeFrames(float * data, int frames)
+      int writeFrames(int * data, int frames)
       { return writeFrames((float *) data, frames); }
+      /// readFrames(float * data, int frames)
       int readFrames(int * data, int frames)
       { return readFrames((float *) data, frames); }
 
+      /// The number of channels in the sound file.
       int channels()   const;
+      /// The sampling rate of the sound file
       int sampleRate() const;
+      /// The total number of frames in the sound file
       long frames()    const;
+      /// Current read/write frame counter
       long currentFrame() const { return m_userFrames; }
 
+      /// Rewinds the file to a given frame
       void rewind(long frame);
+      /// Check if the file is ready for using.
       bool isReady();
 
     private:
@@ -79,8 +96,8 @@ namespace Resonant {
       void signalCond() { m_host->signalCond(); }
 
       Handle(AudioFileHandler * host,
-	     const char * filename, Radiant::IoMode mode, long startFrame, 
-	     Radiant::AudioSampleFormat userFormat);
+         const char * filename, Radiant::IoMode mode, long startFrame,
+         Radiant::AudioSampleFormat userFormat);
       ~Handle();
 
       bool update();
@@ -122,28 +139,58 @@ namespace Resonant {
     AudioFileHandler();
     ~AudioFileHandler();
 
+    /// Returns the first AudioFileHandler instance
     static AudioFileHandler * instance() { return m_instance; }
 
-    Handle * readFile(const char * filename, long startFrame, 
-		      Radiant::AudioSampleFormat userFormat = Radiant::ASF_FLOAT32);
-    Handle * writeFile(const char * filename, 
-		       int channels, 
-		       int samplerate, 
-		       int sfFormat,
-		       // Either ASF_FLOAT32 or ASF_INT32
-		       Radiant::AudioSampleFormat userFormat = Radiant::ASF_FLOAT32);
+    /// Starts the reading process for a given file
+    /** @param filename The name of the file to read
+        @param startFrame The initial frame for reading.
+        This value is usually zero, for reading from the beginning of the file.
+        @param userFormat The sample format the user of the handle is going to use.
 
+        */
+    Handle * readFile(const char * filename, long startFrame,
+              Radiant::AudioSampleFormat userFormat = Radiant::ASF_FLOAT32);
+    /// Starts the writing process for a file.
+    /** @param filename The name of the audio file
+        @param channels The number of audio channels in the file.
+        @param samplerate The sampling rate of the audio file, typically 44100, 48000 etc.
+        @param sfFormat The format of the sound file. The format is created by combining libsndfile
+        sample type with lbsndfile file type. For example SF_FORMAT_WAV | SF_FORMAT_PCM_24
+        will give file in wav format, with 24-bits per sample.
+        @param userFormat The sample format the user of the handle is going to use.
+
+        @see http://www.mega-nerd.com/libsndfile/api.html#open
+
+    */
+    Handle * writeFile(const char * filename,
+               int channels,
+               int samplerate,
+               int sfFormat,
+               // Either ASF_FLOAT32 or ASF_INT32
+               Radiant::AudioSampleFormat userFormat = Radiant::ASF_FLOAT32);
+
+    /// Tells the handler, that a given file handle can be deleted
+    /** After calling this function, you should not use this handle any more. */
     void done(Handle *);
 
+    /// Start the audio file IO thread
     void start();
+    /// Stop the audio file IO thread
     void stop();
 
+    /// Gets information about a given audio file
+    /** @param filename The name of the audio file.
+        @param info The information structure, that will be filled with relevant information
+        @return True if the information was successfully obtained, and false otherwise.
+
+    */
     static bool getInfo(const char * filename, SF_INFO * info);
 
   private:
 
     virtual void childLoop();
-  
+
     bool update();
 
     void lock()   { m_mutex.lock(); }
@@ -155,7 +202,7 @@ namespace Resonant {
     typedef container::iterator iterator;
 
     container m_files;
-  
+
     Radiant::MutexAuto m_mutex, m_mutex2;
     Radiant::Condition m_cond;
 

@@ -115,6 +115,8 @@ namespace Luminous
     : public Radiant::MemCheck
 #endif
   {
+    enum { PERSISTENT = -2 };
+
   public:
     friend class GLResources;
 
@@ -127,7 +129,8 @@ namespace Luminous
     GLResources * resources() { return m_resources; }
 
     /** Change the current resource host. This function can only be
-      called once. */
+      called once.
+    @param resources new resource host*/
     virtual void setResources(GLResources * resources);
 
     /// Returns the number of bytes this object consumes at the moment
@@ -137,6 +140,19 @@ namespace Luminous
     void setGeneration(int g) { m_generation = g; }
     /// Returns the generation of the resource.
     int generation() const { return m_generation; }
+
+    /// Tells if this object is persistent
+    /** Persistent GPU resources should not be deleted, unless the Collectable is deleted.
+        Default implementation returns false. */
+    bool persistent() { return m_deleteOnFrame == PERSISTENT; }
+
+    /// Makes this resource persistent
+    /** Generally #GLResource objects are deleted if they are not used for a given number of frames.
+        By making the objects persistent this can be avoided.
+
+        @param b If true this #GLResource will not be deleted based on the timeout parameters.
+    */
+    void setPersistent(bool b);
 
   protected:
 

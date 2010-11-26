@@ -52,7 +52,8 @@ namespace Nimble {
     const Vector3T<T>& row(int i) const       { return m[i]; }
     /// Returns one column of the matrix
     /** As the matrix is is of row-major type, this method returns a
-    copy of the values of the column. */
+    copy of the values of the column.
+    @param i column number */
     Vector3T<T>        column(int i) const    { return Vector3T<T>(m[0][i],m[1][i],m[2][i]); }
     /// Returns the ith row
     Vector3T<T>&       operator[](int i)      { return row(i); }
@@ -145,8 +146,8 @@ namespace Nimble {
     inline static Matrix3T<T> rotate2D(T radians);
 
     /// Rotate around a given point
-    /** @arg p The center point of rotation
-        @arg radians The amount of roration, in radians
+    /** @param p The center point of rotation
+        @param radians The amount of roration, in radians
     */
     NIMBLE_API static Matrix3T<T> rotateAroundPoint2D(Vector2T<T> p,
                                            T radians);
@@ -165,11 +166,11 @@ namespace Nimble {
     NIMBLE_API static const Matrix3T<T> IDENTITY;
 
     /// Returns a 2d transformation matrix that does scale, rotate & translation (in this order)
-    /// @arg rad rotation angle (counter-clockwise)
-    /// @arg sx x scale
-    /// @arg sy y scale
-    /// @arg tx x translate
-    /// @arg ty y translate
+    /// @param rad rotation angle (counter-clockwise)
+    /// @param sx x scale
+    /// @param sy y scale
+    /// @param tx x translate
+    /// @param ty y translate
     inline static Matrix3T<T> transformation(float rad, float sx, float sy, float tx, float ty)
     {
       const T st = rad == 0.0f ? 0.0f : Nimble::Math::Sin(rad);
@@ -473,7 +474,8 @@ namespace Nimble {
 
   }
 
-  /** this = this * that. */
+  /** Assign multiplication
+  @param that matrix to multiply with */
   template <class T>
   inline Matrix3T<T>& Matrix3T<T>::operator*= (const Matrix3T<T>& that)
   {
@@ -584,6 +586,7 @@ inline Nimble::Vector3T<T> operator*(const Nimble::Vector3T<T>& m2,
 }
 
 /// Insert a 2x2 matrix to the upper-left corner of the 3x3 matrix
+/// @param b matrix to insert
 template<class T>
 inline void Matrix3T<T>::insert(const Matrix2T<T>& b)
 {

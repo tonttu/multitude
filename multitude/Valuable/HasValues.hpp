@@ -139,13 +139,13 @@ namespace Valuable
         This function is part of the experimental event passing
         framework.
 
-        @arg from The event id to match when in the eventSend.
+        @param from The event id to match when in the eventSend.
 
-        @arg to The event id to to use when delivering the event
+        @param to The event id to to use when delivering the event
 
-        @arg obj The listening object
+        @param obj The listening object
 
-        @arg defaultData The default binary data to be used when
+        @param defaultData The default binary data to be used when
         delivering the message.
 
     */
@@ -174,31 +174,10 @@ namespace Valuable
     /// Control whether events are passed
     void eventPassingEnable(bool enable) { m_eventsEnabled = enable; }
 
-    /// The main event processing function
-    /** To capture and process events, you need to override this function. The default implemendation
-        tries to find a child object with the name found in the "type" argument,
-        and passes the arguments to that object.
-
-        Typical implementation of a custom processMessage function could look like:
-
-        \code
-        void MyClass::processMessage(const char * type, Radiant::BinaryData & data)
-        {
-          if(strcmp(type, "jump") == 0)
-            doJump();
-          else if(strcmp(type, "crawl") == 0) {
-            bool ok;
-            int speed = data.readInt32(&ok);
-            if(ok)
-              doCrawl(speed);
-          }
-          else
-            HasValues::processMessage(type, data);
-        }
-        \endcode
-
-    */
+    /// @cond
     virtual void processMessage(const char * type, Radiant::BinaryData & data);
+
+    /// @endcond
 
     /// Generates a unique identifier
     static Uuid generateId();
@@ -218,22 +197,23 @@ namespace Valuable
     friend class ValueObject; // So that ValueObject can call the function below.
 
     void childRenamed(const std::string & was, const std::string & now);
+    void addNews();
 
     container m_children;
 
     class ValuePass {
     public:
-      ValuePass() : m_listener(0) {}
+      ValuePass() : m_listener(0), m_valid(true), m_frame(-1) {}
 
-      inline bool operator == (const ValuePass & that) const
-      { return (m_listener == that.m_listener) && (m_from == that.m_from) &&
-      (m_to == that.m_to) && *m_func == *that.m_func; }
+      inline bool operator == (const ValuePass & that) const;
 
       Valuable::HasValues * m_listener;
       v8::Persistent<v8::Function> m_func;
       Radiant::BinaryData   m_defaultData;
       std::string m_from;
       std::string m_to;
+      bool        m_valid;
+      int         m_frame;
     };
 
     typedef std::list<ValuePass> Listeners;
@@ -244,6 +224,8 @@ namespace Valuable
     bool m_eventsEnabled;
 
     Valuable::ValueIntT<Uuid> m_id;
+    // For invalidating the too new ValuePass objects
+    int m_frame;
   };
 
 }

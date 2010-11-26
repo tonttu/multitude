@@ -41,7 +41,8 @@ namespace Valuable
     public:
       ValueFloatT() : Base() {}
       /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
-      ValueFloatT(HasValues * parent, const std::string & name, T v = T(), bool transit = false)
+      /// @param v The numeric value of this object
+      ValueFloatT(HasValues * parent, const std::string & name, T v = T(0), bool transit = false)
       : ValueNumeric<T>(parent, name, v, transit)
       {}
 
@@ -55,7 +56,9 @@ namespace Valuable
 
       bool deserialize(ArchiveElement & element);
 
-    virtual void processMessage(const char * id, Radiant::BinaryData & data);
+      /// @cond
+      virtual void processMessage(const char * id, Radiant::BinaryData & data);
+      /// @endcond
 
   };
 

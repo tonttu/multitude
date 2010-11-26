@@ -33,6 +33,9 @@
 
 #include <vector>
 
+// This library-internal class
+/// @cond
+
 namespace VideoDisplay {
 
 
@@ -51,6 +54,7 @@ namespace VideoDisplay {
       MAX_AUDIO_SAMPLES_IN_FRAME = MAX_AUDIO_CHANS * 28000
     };
     */
+    /// The type of frame
     enum FrameType {
       FRAME_INVALID,
       FRAME_IGNORE,
@@ -59,7 +63,7 @@ namespace VideoDisplay {
       FRAME_SNAPSHOT
     };
 
-    /* Request from the host. */
+    /** Request from the host. */
     enum Request {
       NO_REQUEST,
       START,
@@ -186,6 +190,7 @@ namespace VideoDisplay {
     VIDEODISPLAY_API void ignorePreviousFrames();
     VIDEODISPLAY_API void freeFreeableMemory();
 
+    /// @cond
     class Req
     {
     public:
@@ -248,13 +253,18 @@ namespace VideoDisplay {
     AudioTransfer     *m_listener;
 
     Radiant::MutexAuto m_mutex;
+
+    /// @endcond
   private:
     /// Disabled
     VideoIn(const VideoIn & ) : Radiant::Thread() {}
     void pushRequest(const Req & r);
 
+
   };
 
 }
+
+/// @endcond
 
 #endif

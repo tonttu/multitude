@@ -86,7 +86,7 @@ namespace Resonant {
         }
       }
 
-      /// Allocates #Module::MAX_CYCLE samples for buffer space
+      /// Allocates #Resonant::Module::MAX_CYCLE samples for buffer space
       void init() { allocate(Module::MAX_CYCLE); }
 
       /// Frees the buffer data
@@ -102,13 +102,19 @@ namespace Resonant {
     class RESONANT_API Connection
     {
     public:
+      /// Creates an empty connection object, with undefined connections.
       Connection() : m_channel(0),m_buf(0) { m_moduleId[0] = '\0'; }
+      /// Creates a connection object
+      /** @param moduleId The id of the module that we are connecting to.
+          @param channel The channel to connect to.
+      */
       Connection(const char * moduleId, int channel)
           : m_channel(channel),m_buf(0)
       {
         setModuleId(moduleId);
       }
 
+      /// Sets the id of the connected module
       void setModuleId(const char * id)
       {
         if(id)
@@ -121,15 +127,21 @@ namespace Resonant {
           m_moduleId[0] = '\0';
       }
 
+      /// Compare two Connection objects
       inline bool operator == (const Connection & that) const
       {
         return (strcmp(m_moduleId, that.m_moduleId) == 0) &&
             (m_channel == that.m_channel);
       }
 
+    private:
+      friend class DSPNetwork;
+
+      /// @cond
       char        m_moduleId[Module::MAX_ID_LENGTH];
       int         m_channel;
       Buf        *m_buf;
+      /// @endcond
     };
 
     /** Objects that store the information necessary to create new connections.
@@ -158,7 +170,7 @@ namespace Resonant {
     public:
       Item();
       ~Item();
-      /// Sets the DSP #Module that this Item contains.
+      /// Sets the DSP #Resonant::Module that this Item contains.
       void setModule(Module *m) { m_module = m; }
       /// Returns a pointer to the DSP module
       Module * module() { return m_module; }
@@ -207,8 +219,10 @@ namespace Resonant {
       int  m_targetChannel;
     };
 
+    /// @cond
     typedef std::list<Item> container;
     typedef container::iterator iterator;
+    /// @endcond
 
     /// Creates an empty DSPNetwork object.
     DSPNetwork();
@@ -221,7 +235,7 @@ namespace Resonant {
     */
     bool start(const char * device = 0);
 
-    /// Adds a DSP #Module to the signal processing graph
+    /// Adds a DSP #Resonant::Module to the signal processing graph
     /** This function does not perform the actual addition, but puts the module into a FIFO,
         for the signal processing thread. */
     void addModule(Item &);
@@ -232,7 +246,7 @@ namespace Resonant {
     /** Send binary control data to the DSP network.
         When sending messages, the BinaryData object should contain an identifier string
         in the beginning. The DSPNetwork will read this string, and pass the command to the
-        corresponding #Module. Typical example of use could be:
+        corresponding #Resonant::Module. Typical example of use could be:
 
         \code
 Radiant::BinaryData control;
@@ -297,6 +311,8 @@ DSPNetwork::instance().send(control);
     int         m_doneCount;
 
     Radiant::MutexAuto m_newMutex;
+
+    Radiant::MutexAuto m_startupMutex;
 
     static DSPNetwork * m_instance;
   };

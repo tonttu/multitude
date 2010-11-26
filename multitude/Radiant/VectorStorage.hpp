@@ -1,4 +1,4 @@
-/* COPYRIGHT
+    /* COPYRIGHT
  *
  * This file is part of Radiant.
  *
@@ -70,6 +70,8 @@ namespace Radiant {
     /// Resets the internal object counter to zero.
     /** This function does not erase any objects. */
     void reset() { m_count = 0; }
+    /** @copydoc reset */
+    void clear() { m_count = 0; }
 
     /// Returns true if the vector is empty
     bool empty() const { return m_points.empty(); }
@@ -225,16 +227,24 @@ namespace Radiant {
     /// Copies a vector
     VectorStorage & operator = (const VectorStorage & that)
     {
-      m_count = that.m_count;
-      expand(m_count);
-      T * dest = & m_points[0];
-      T * sentinel = dest + m_count;
-      const T * src = & that.m_points[0];
-      while(dest < sentinel) {
-    *dest++ = *src++;
-      }
-      return * this;
+        if(that.empty()) {
+            reset();
+            return * this;
+        }
+        else {
+          m_count = that.m_count;
+            expand(m_count);
+            T * dest = & m_points[0];
+            T * sentinel = dest + m_count;
+            const T * src = & that.m_points[0];
+            while(dest < sentinel) {
+                *dest++ = *src++;
+            }
+            return * this;
+        }
     }
+    /// Returns the internal data storage area
+    std::vector<T> & vector() { return m_points; }
 
   private:
     size_t m_count;

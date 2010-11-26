@@ -108,4 +108,10 @@ namespace Luminous {
     }
   }
 
+  unsigned CPUMipmapStore::count()
+  {
+    Radiant::GuardStatic g( & __mutex);
+    return (unsigned) __mipmaps.size();
+  }
+
 }

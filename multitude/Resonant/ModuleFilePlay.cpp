@@ -7,10 +7,10 @@
  * See file "Resonant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #include "ModuleFilePlay.hpp"
@@ -23,13 +23,13 @@ namespace Resonant {
 
   ModuleFilePlay::~ModuleFilePlay()
   {}
-  
+
   bool ModuleFilePlay::prepare(int & channelsIn, int & channelsOut)
   {
     AudioFileHandler * afh = AudioFileHandler::instance();
 
     m_file = afh->readFile(m_filename.c_str(), 0, Radiant::ASF_FLOAT32);
-    
+
     bool ok = m_file->waitOpen();
 
     if(!ok) {
@@ -44,7 +44,7 @@ namespace Resonant {
     return true;
   }
 
-  void ModuleFilePlay::process(Radiant::BinaryData *, float **, float ** out, int n)
+  void ModuleFilePlay::process(float **, float ** out, int n)
   {
     // assert(m_file);
 
@@ -53,7 +53,7 @@ namespace Resonant {
     int m = n < left ? n : left;
 
     m_file->readFrames( & m_interleaved[0], m);
-    
+
     int chans = m_file->channels();
 
 
@@ -63,16 +63,16 @@ namespace Resonant {
       float * sentinel = dest + m;
 
       while(dest < sentinel) {
-	*dest = * src;
-	dest++;
-	src += chans;
+    *dest = * src;
+    dest++;
+    src += chans;
       }
 
-      for(int k = m; k < n; k++) 
-	*dest++ = 0.0f;
+      for(int k = m; k < n; k++)
+    *dest++ = 0.0f;
     }
   }
-    
+
   bool ModuleFilePlay::stop()
   {
     if(!m_file)
@@ -81,7 +81,7 @@ namespace Resonant {
     AudioFileHandler * afh = AudioFileHandler::instance();
 
     afh->done(m_file);
-    
+
     m_file = 0;
 
     m_interleaved.clear();

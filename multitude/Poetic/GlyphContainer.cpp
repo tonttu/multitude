@@ -75,7 +75,8 @@ namespace Poetic
     return m_glyphs[index];
   }  
 
-  Nimble::Vector2 GlyphContainer::render(unsigned int charCode, unsigned int nextCharCode, Nimble::Vector2 penPos, const Nimble::Matrix3 & m, Nimble::Vector2f ** ptr)
+  Nimble::Vector2 GlyphContainer::render(unsigned int charCode, unsigned int nextCharCode,
+                                         Nimble::Vector2 penPos, const Nimble::Matrix3 & m, Nimble::Vector2f ** ptr)
   {
     Nimble::Vector2 advance;
 

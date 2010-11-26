@@ -33,10 +33,19 @@ namespace Valuable
 {
   using namespace Radiant;
 
+
+  inline bool HasValues::ValuePass::operator == (const ValuePass & that) const
+  {
+    return m_valid && that.m_valid &&
+        (m_listener == that.m_listener) && (m_from == that.m_from) &&
+        (m_to == that.m_to) && (*m_func == *that.m_func);
+  }
+
   HasValues::HasValues()
       : ValueObject(),
       m_eventsEnabled(true),
-      m_id(this, "id", generateId())
+      m_id(this, "id", generateId()),
+      m_frame(0)
   {}
 
   HasValues::HasValues(HasValues * parent, const std::string & name, bool transit)
@@ -54,10 +63,12 @@ namespace Valuable
 
     for(Listeners::iterator it = m_elisteners.begin();
     it != m_elisteners.end(); it++) {
-      if(it->m_listener)
-        it->m_listener->eventRemoveSource(this);
-      else
-        it->m_func.Dispose();
+      if(it->m_valid) {
+        if(it->m_listener)
+          it->m_listener->eventRemoveSource(this);
+        else
+          it->m_func.Dispose();
+      }
     }
   }
 
@@ -226,6 +237,7 @@ namespace Valuable
     vp.m_listener = obj;
     vp.m_from = from;
     vp.m_to = to;
+    vp.m_frame = m_frame;
 
     if(defaultData)
       vp.m_defaultData = *defaultData;
@@ -235,6 +247,7 @@ namespace Valuable
       debug("Widget::eventAddListener # Already got item %s -> %s (%p)",
             from, to, obj);
     else {
+      // m_elisteners.push_back(vp);
       m_elisteners.push_back(vp);
       obj->eventAddSource(this);
     }
@@ -265,17 +278,16 @@ namespace Valuable
   int HasValues::eventRemoveListener(Valuable::HasValues * obj, const char * from, const char * to)
   {
     int removed = 0;
-    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end();){
-      if((*it).m_listener == obj) {
+    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); it++){
+      if(it->m_listener == obj && it->m_valid) {
         // match from & to if specified
         if ( (!from || it->m_from == from) &&
              (!to || it->m_to == to) ) {
-          it = m_elisteners.erase(it);
-          ++removed;
+          it->m_valid = false;
+          /* We cannot erase the list iterator, since that might invalidate iterators
+             elsewhere. */
         }
       }
-      else
-        it++;
     }
     return removed;
   }
@@ -347,17 +359,27 @@ namespace Valuable
     if(!id || !m_eventsEnabled)
       return;
 
-    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); it++) {
+    m_frame++;
+
+    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); ) {
       ValuePass & vp = *it;
-      if(vp.m_from == id) {
+
+      if(!vp.m_valid) {
+        it = m_elisteners.erase(it);
+        continue;
+      }
+      else if(vp.m_frame == m_frame) {
+        /* The listener was added during this function call. Lets not call it yet. */
+      }
+      else if(vp.m_from == id) {
 
         BinaryData & bdsend = vp.m_defaultData.total() ? vp.m_defaultData : bd;
 
         bdsend.rewind();
 
-        if(vp.m_listener)
+        if(vp.m_listener) {
           vp.m_listener->processMessage(vp.m_to.c_str(), bdsend);
-        else {
+        } else {
           /// @todo wrap bdsend
           /// @todo what is the correct receiver?
           v8::Local<v8::Value> argv[] = {v8::String::New(vp.m_to.c_str())};

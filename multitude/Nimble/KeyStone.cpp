@@ -20,7 +20,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <strings.h>
 
 namespace Nimble {
 
@@ -30,9 +30,9 @@ namespace Nimble {
       m_useCenterShift(true),
       m_width(640),
       m_height(480),
-      m_dpyWidth(2048),
-      m_dpyHeight(768),
-      m_dpyCenter(1024, 384),
+      m_dpyWidth(1920),
+      m_dpyHeight(1080),
+      m_dpyCenter(960, 540),
       m_dpyX(0),
       m_dpyY(0),
       m_extra(0, 0, 0, 0),
@@ -424,6 +424,7 @@ namespace Nimble {
   void KeyStone::updateLimits(std::vector<Nimble::Vector2i> & limits,
                               const Vector4 * offsets)  {
     limits.resize(m_height);
+    bzero( & limits[0], limits.size() * sizeof(Nimble::Vector2i));
 
     Rect bounds(0, 0, 1, 1);
 

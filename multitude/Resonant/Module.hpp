@@ -44,6 +44,7 @@ namespace Resonant {
       MAX_CYCLE = 1024
     };
 
+    /// Constructs a new module base object.s
     Module(Application *);
     virtual ~Module();
 
@@ -53,12 +54,12 @@ namespace Resonant {
     will need to override this method to perform some preparation
     work.
 
-    @arg channelsIn The number of desired input channels.  If
+    @param channelsIn The number of desired input channels.  If
     necessary, the number of input and output channels is changed
     (for example if the module is stereo-only, but the host
     requested mono operation).
 
-    @arg channelsOut The number of desired output channels.
+    @param channelsOut The number of desired output channels.
 
 
     @return Returns true if the module prepared successfully.
@@ -72,11 +73,11 @@ namespace Resonant {
     virtual void processMessage(const char * address, Radiant::BinaryData *);
     /** Processes one cycle of audio data.
 
-    @arg in Input audio data.
+    @param in Input audio data.
 
-    @arg out Output audio data.
+    @param out Output audio data.
 
-    @arg n Number of samples to process. Guaranteed to be between
+    @param n Number of samples to process. Guaranteed to be between
     1 and #MAX_CYCLE.
      */
     virtual void process(float ** in, float ** out, int n) = 0;

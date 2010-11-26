@@ -16,6 +16,7 @@
 #ifndef FIREVIEW_CAMVIEW_HPP
 #define FIREVIEW_CAMVIEW_HPP
 
+#include <Luminous/GLResources.hpp>
 #include <Luminous/Texture.hpp>
 
 #include <Nimble/Rect.hpp>
@@ -210,6 +211,8 @@ namespace FireView {
 
     Analysis   m_averages[AREA_COUNT]; // Grid.
     QImage     m_foo;
+    Luminous::GLResources m_glrs;
+
     static bool m_verbose;
     static Radiant::VideoCamera::TriggerPolarity m_triggerPolarity;
 
@@ -217,6 +220,7 @@ namespace FireView {
     static int           m_format7mode;
     static int           m_debayer;
     static bool          m_colorCheck;
+
   };
 
 }

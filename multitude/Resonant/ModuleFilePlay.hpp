@@ -7,10 +7,10 @@
  * See file "Resonant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef RESONANT_MODULE_FILE_PLAY_HPP
@@ -23,20 +23,21 @@
 namespace Resonant {
 
   /** Audio file player module. */
-  class ModuleFilePlay : public Module
+  class ModuleFilePlay : public Resonant::Module
   {
   public:
+    /// Constructs a new audio file player
     RESONANT_API ModuleFilePlay(Application *);
     RESONANT_API virtual ~ModuleFilePlay();
 
     RESONANT_API virtual bool prepare(int & channelsIn, int & channelsOut);
-    RESONANT_API virtual void process(Radiant::BinaryData *, float ** in, float ** out, int n);
+    RESONANT_API virtual void process(float ** in, float ** out, int n);
     RESONANT_API virtual bool stop();
-    
+
   private:
 
     Resonant::AudioFileHandler::Handle * m_file;
-    
+
     std::string m_filename;
     std::vector<float> m_interleaved;
   };

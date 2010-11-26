@@ -10,28 +10,15 @@ INCLUDEPATH += $$PWD
 INCLUDEPATH += $$PWD/v8/include
 DEPENDPATH += $$PWD
 
-QMAKE_LIBDIR += /usr/lib/nvidia-current
-
-MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat
-linux-* {
-  exists(/opt/multitouch-ffmpeg/include/libavcodec/avcodec.h) {
-    MULTI_FFMPEG_LIBS = -L/opt/multitouch-ffmpeg/lib -lavcodec-multitouch -lavutil-multitouch -lavformat-multitouch
-    INCLUDEPATH += /opt/multitouch-ffmpeg/include
-  }
-}
-
 withbundles = $$(MULTI_BUNDLES)
 
-# Try to identify used compiler on Windows (32 vs 64)
-win32 {
-	COMPILER_OUTPUT=$$system(cl 2>&1)
-	contains(COMPILER_OUTPUT,x64):CONFIG+=win64		
-}
+MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat
 
 LIB_POETIC = -lPoetic
 LIB_FLUFFY = -lFluffy
 LIB_LUMINOUS = -lLuminous
 LIB_NIMBLE = -lNimble
+LIB_OPENCL = -lOpenCL
 LIB_OPENGL = -lGL -lGLU
 LIB_GLU = -lGLU
 LIB_RADIANT = -lRadiant -lPatterns
@@ -48,26 +35,33 @@ MULTI_LIB_FLAG = -L
 linux-*{
   contains(USEGLEW,no) {
     DEFINES += MULTI_WITHOUT_GLEW=1
+  } else {
+    LIB_GLEW=-lGLEW
   }
-  else {
-    linux-*:LIB_GLEW = -lGLEW
-  }
-}
 
-linux-*{
+  QMAKE_LIBDIR += /usr/lib/nvidia-current
+
+  exists(/opt/multitouch-ffmpeg/include/libavcodec/avcodec.h) {
+    MULTI_FFMPEG_LIBS = -L/opt/multitouch-ffmpeg/lib -lavcodec-multitouch -lavutil-multitouch -lavformat-multitouch
+    INCLUDEPATH += /opt/multitouch-ffmpeg/include
+  }
+
   contains(MEMCHECK,yes) {
     DEFINES += MULTI_MEMCHECK=1
   }
 }
 
 macx {
-
   # withbundles = $$(MULTI_BUNDLES)
   withbundles = YES
 
+  LIB_OPENCL = -framework,OpenCL
   LIB_OPENGL = -framework,OpenGL
   LIB_GLU =
-  LIB_GLEW = -lGLEW
+  # LIB_GLEW = -lGLEW
+  LIBS += -L$$PWD/lib
+
+DEFINES += QT_MAC_USE_COCOA Q_OS_MAC64
 
   # DEFINES += __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__=1050
 
@@ -97,6 +91,10 @@ macx {
 }
 
 win32 {
+    # Try to identify used compiler on Windows (32 vs 64)
+    COMPILER_OUTPUT=$$system(cl 2>&1)
+    contains(COMPILER_OUTPUT,x64):CONFIG+=win64
+
     win64:WINPORT_INCLUDE = $$PWD\Win64x\include
     else:WINPORT_INCLUDE = $$PWD\Win32x\include
 
@@ -113,12 +111,12 @@ win32 {
     LIB_GLU = -lglu32
     QMAKE_CXXFLAGS += -D_CRT_SECURE_NO_WARNINGS -wd4244 -wd4251 -wd4355
     DEFINES += WIN32
+
 }
 
 MULTI_VIDEO_LIBS = $$LIB_SCREENPLAY $$LIB_RESONANT $$LIB_VIDEODISPLAY
 
 LIBS += $${MULTI_LIB_FLAG}$$PWD/lib
-macx:LIBS += -L$$PWD/lib
 
 # message(QT version is $${QT_MAJOR_VERSION}.$${QT_MINOR_VERSION}.$${QT_PATCH_VERSION})
 
@@ -132,6 +130,6 @@ contains(QT_MAJOR_VERSION,4) {
 }
 
 # Use ccache if available
-linux-*:exists(/usr/bin/ccache):QMAKE_CXX=ccache g++
-macx:exists(/sw/bin/ccache):QMAKE_CXX=ccache g++
-macx:exists(/opt/local/bin/ccache):QMAKE_CXX=ccache g++
+unix:exists(/usr/bin/ccache):QMAKE_CXX=ccache g++
+unix:exists(/sw/bin/ccache):QMAKE_CXX=/sw/bin/ccache g++
+unix:exists(/opt/local/bin/ccache):QMAKE_CXX=/opt/local/bin/ccache g++

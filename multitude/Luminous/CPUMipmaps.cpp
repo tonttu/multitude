@@ -39,6 +39,7 @@ namespace {
 namespace Luminous {
 
   using namespace Radiant;
+
   CPUMipmaps::CPUMipmaps()
     : m_fileModified(0),
     m_stack(1),
@@ -87,8 +88,14 @@ namespace Luminous {
 
   int CPUMipmaps::getClosest(Nimble::Vector2f size)
   {
-    int bestlevel = getOptimal(size);
     Radiant::Guard g(&m_stackMutex);
+
+    int bestlevel = m_maxLevel;
+
+    if (Nimble::Math::isFinite(size.x) && Nimble::Math::isFinite(size.y))
+        bestlevel = getOptimal(size);
+//    else
+//        Radiant::error("CPUMipmaps::getClosest(): requesting image for invalid dimensions (%f,%f)", size.x, size.y);
     const CPUItem & item = m_stack[bestlevel];
     markImage(bestlevel);
 
@@ -219,9 +226,6 @@ namespace Luminous {
                         const Nimble::Matrix3 & transform,
                         Nimble::Vector2 pixelsize)
   {
-    if(!this)
-      return false;
-
     GPUMipmaps * gpumaps = getGPUMipmaps(r);
 
     return gpumaps->bind(transform, pixelsize);
@@ -276,6 +280,7 @@ namespace Luminous {
   void CPUMipmaps::finish()
   {
     setState(Task::DONE);
+    reschedule(0, 0);
   }
 
   Nimble::Vector2i CPUMipmaps::mipmapSize(int level)
@@ -299,6 +304,9 @@ namespace Luminous {
 
   void CPUMipmaps::doTask()
   {
+    if(state() == Task::DONE)
+      return;
+
     double delay = 60.0;
     m_priority = Luminous::Task::PRIORITY_NORMAL;
     reschedule(delay, true);
@@ -445,7 +453,8 @@ namespace Luminous {
     std::shared_ptr<Luminous::ImageTex> imdest(new Luminous::ImageTex());
 
     Nimble::Vector2i ss = imsrc->size();
-    Nimble::Vector2i is = level == 1 ? m_firstLevelSize : ss / 2;
+    // Nimble::Vector2i is = level == 1 ? m_firstLevelSize : ss / 2;
+    Nimble::Vector2i is = mipmapSize(level);
 
     if(is * 2 == ss) {
       imdest->quarterSize(*imsrc);

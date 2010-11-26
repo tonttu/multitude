@@ -22,6 +22,7 @@ namespace Radiant
   {
   public:
     VideoCameraPTGrey(CameraDriver * driver);
+    virtual ~VideoCameraPTGrey();
 
     virtual bool open(uint64_t euid, int width, int height, ImageFormat fmt = IMAGE_UNKNOWN, FrameRate framerate = FPS_IGNORE);
     virtual bool openFormat7(uint64_t cameraeuid, Nimble::Recti roi, float fps, int mode);
@@ -29,6 +30,7 @@ namespace Radiant
     virtual bool start();
     virtual bool stop();
     virtual bool close();
+    virtual uint64_t uid();
 
     virtual const Radiant::VideoImage * captureImage();
 
@@ -55,23 +57,28 @@ namespace Radiant
 
     virtual int framesBehind() const { return 0; }
 
+    static void useFakeFormat7(bool fake) { m_fakeFormat7 = fake; }
+
   private:
 
     enum State {
-	  UNINITIALIZED,
-	  OPENED,
-	  RUNNING
-	};
+      UNINITIALIZED,
+      OPENED,
+      RUNNING
+    };
 
-    void queryFeature(FlyCapture2::PropertyType id, 
-		      std::vector<VideoCamera::CameraFeature> * features);
+    void queryFeature(FlyCapture2::PropertyType id,
+              std::vector<VideoCamera::CameraFeature> * features);
 
     FlyCapture2::Camera m_camera;
     VideoImage m_image;
 
+    Nimble::Recti m_format7Rect;
+    static bool   m_fakeFormat7;
+
     int m_captureTimeoutMs;
-	State m_state;
-	CameraInfo m_info;
+    State m_state;
+    CameraInfo m_info;
   };
 
   class CameraDriverPTGrey : public CameraDriver

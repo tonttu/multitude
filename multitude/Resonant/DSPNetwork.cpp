@@ -77,7 +77,7 @@ namespace Resonant {
   {
     for(size_t i = 0; i < m_outs.size(); i++)
       if(m_outs[i] == ptr)
-        return i;
+        return (int) i;
     return -1;
   }
 
@@ -148,6 +148,8 @@ namespace Resonant {
 
   bool DSPNetwork::start(const char * device)
   {
+    Radiant::Guard g(&m_startupMutex);
+
     debug("DSPNetwork::start # %p %p", this, m_instance);
 
     if(isRunning())
@@ -347,7 +349,7 @@ namespace Resonant {
 
         const char * id = itptr->m_module->id();
 
-        int mchans = itptr->m_outs.size();
+        int mchans = (int) itptr->m_outs.size();
         int tchan  = itptr->m_targetChannel;
         int outchans = m_collect->channels(); // hardware output channels
 
@@ -509,7 +511,7 @@ namespace Resonant {
     if(m == m_collect)
       return true;
 
-    int mchans = item.m_outs.size();
+    int mchans = (int) item.m_outs.size();
     // int outchans = 2; // hardware output channels
     const char * id = m->id();
 
@@ -552,7 +554,7 @@ namespace Resonant {
   bool DSPNetwork::compile(Item & item, int location)
   {
     int i = 0;
-    int ins = item.m_inputs.size();
+    int ins = (int) item.m_inputs.size();
     int outs = ins;
 
     std::list<NewConnection>::iterator conit;
@@ -622,7 +624,7 @@ namespace Resonant {
     size_t s = m_buffers.size();
 
     for(size_t i = 0; i < s; i++) {
-      if(bufIsFree(i, location)) {
+      if(bufIsFree((int) i, location)) {
         debug("DSPNetwork::findFreeBuf # Found %d -> %lu", location, i);
         return m_buffers[i];
       }
