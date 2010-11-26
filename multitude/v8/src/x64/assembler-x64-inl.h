@@ -201,14 +201,6 @@ void RelocInfo::apply(intptr_t delta) {
     Memory::Address_at(pc_) += static_cast<int32_t>(delta);
   } else if (IsCodeTarget(rmode_)) {
     Memory::int32_at(pc_) -= static_cast<int32_t>(delta);
-  } else if (rmode_ == JS_RETURN && IsPatchedReturnSequence()) {
-    // Special handling of js_return when a break point is set (call
-    // instruction has been inserted).
-    Memory::int32_at(pc_ + 1) -= static_cast<int32_t>(delta);  // relocate entry
-  } else if (rmode_ == DEBUG_BREAK_SLOT && IsPatchedDebugBreakSlotSequence()) {
-    // Special handling of debug break slot when a break point is set (call
-    // instruction has been inserted).
-    Memory::int32_at(pc_ + 1) -= static_cast<int32_t>(delta);  // relocate entry
   }
 }
 
@@ -303,33 +295,34 @@ bool RelocInfo::IsPatchedDebugBreakSlotSequence() {
 
 
 Address RelocInfo::call_address() {
-  ASSERT(IsPatchedReturnSequence());
+  ASSERT((IsJSReturn(rmode()) && IsPatchedReturnSequence()) ||
+         (IsDebugBreakSlot(rmode()) && IsPatchedDebugBreakSlotSequence()));
   return Memory::Address_at(
       pc_ + Assembler::kRealPatchReturnSequenceAddressOffset);
 }
 
 
 void RelocInfo::set_call_address(Address target) {
-  ASSERT(IsPatchedReturnSequence());
+  ASSERT((IsJSReturn(rmode()) && IsPatchedReturnSequence()) ||
+         (IsDebugBreakSlot(rmode()) && IsPatchedDebugBreakSlotSequence()));
   Memory::Address_at(pc_ + Assembler::kRealPatchReturnSequenceAddressOffset) =
       target;
 }
 
 
 Object* RelocInfo::call_object() {
-  ASSERT(IsPatchedReturnSequence());
   return *call_object_address();
 }
 
 
 void RelocInfo::set_call_object(Object* target) {
-  ASSERT(IsPatchedReturnSequence());
   *call_object_address() = target;
 }
 
 
 Object** RelocInfo::call_object_address() {
-  ASSERT(IsPatchedReturnSequence());
+  ASSERT((IsJSReturn(rmode()) && IsPatchedReturnSequence()) ||
+         (IsDebugBreakSlot(rmode()) && IsPatchedDebugBreakSlotSequence()));
   return reinterpret_cast<Object**>(
       pc_ + Assembler::kPatchReturnSequenceAddressOffset);
 }
@@ -353,6 +346,29 @@ void RelocInfo::Visit(ObjectVisitor* visitor) {
 #endif
   } else if (mode == RelocInfo::RUNTIME_ENTRY) {
     visitor->VisitRuntimeEntry(this);
+  }
+}
+
+
+template<typename StaticVisitor>
+void RelocInfo::Visit() {
+  RelocInfo::Mode mode = rmode();
+  if (mode == RelocInfo::EMBEDDED_OBJECT) {
+    StaticVisitor::VisitPointer(target_object_address());
+  } else if (RelocInfo::IsCodeTarget(mode)) {
+    StaticVisitor::VisitCodeTarget(this);
+  } else if (mode == RelocInfo::EXTERNAL_REFERENCE) {
+    StaticVisitor::VisitExternalReference(target_reference_address());
+#ifdef ENABLE_DEBUGGER_SUPPORT
+  } else if (Debug::has_break_points() &&
+             ((RelocInfo::IsJSReturn(mode) &&
+              IsPatchedReturnSequence()) ||
+             (RelocInfo::IsDebugBreakSlot(mode) &&
+              IsPatchedDebugBreakSlotSequence()))) {
+    StaticVisitor::VisitDebugTarget(this);
+#endif
+  } else if (mode == RelocInfo::RUNTIME_ENTRY) {
+    StaticVisitor::VisitRuntimeEntry(this);
   }
 }
 

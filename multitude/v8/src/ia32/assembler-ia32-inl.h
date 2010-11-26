@@ -121,32 +121,33 @@ Address* RelocInfo::target_reference_address() {
 
 
 Address RelocInfo::call_address() {
-  ASSERT(IsPatchedReturnSequence());
+  ASSERT((IsJSReturn(rmode()) && IsPatchedReturnSequence()) ||
+         (IsDebugBreakSlot(rmode()) && IsPatchedDebugBreakSlotSequence()));
   return Assembler::target_address_at(pc_ + 1);
 }
 
 
 void RelocInfo::set_call_address(Address target) {
-  ASSERT(IsPatchedReturnSequence());
+  ASSERT((IsJSReturn(rmode()) && IsPatchedReturnSequence()) ||
+         (IsDebugBreakSlot(rmode()) && IsPatchedDebugBreakSlotSequence()));
   Assembler::set_target_address_at(pc_ + 1, target);
 }
 
 
 Object* RelocInfo::call_object() {
-  ASSERT(IsPatchedReturnSequence());
   return *call_object_address();
 }
 
 
-Object** RelocInfo::call_object_address() {
-  ASSERT(IsPatchedReturnSequence());
-  return reinterpret_cast<Object**>(pc_ + 1);
+void RelocInfo::set_call_object(Object* target) {
+  *call_object_address() = target;
 }
 
 
-void RelocInfo::set_call_object(Object* target) {
-  ASSERT(IsPatchedReturnSequence());
-  *call_object_address() = target;
+Object** RelocInfo::call_object_address() {
+  ASSERT((IsJSReturn(rmode()) && IsPatchedReturnSequence()) ||
+         (IsDebugBreakSlot(rmode()) && IsPatchedDebugBreakSlotSequence()));
+  return reinterpret_cast<Object**>(pc_ + 1);
 }
 
 
@@ -180,6 +181,30 @@ void RelocInfo::Visit(ObjectVisitor* visitor) {
     visitor->VisitRuntimeEntry(this);
   }
 }
+
+
+template<typename StaticVisitor>
+void RelocInfo::Visit() {
+  RelocInfo::Mode mode = rmode();
+  if (mode == RelocInfo::EMBEDDED_OBJECT) {
+    StaticVisitor::VisitPointer(target_object_address());
+  } else if (RelocInfo::IsCodeTarget(mode)) {
+    StaticVisitor::VisitCodeTarget(this);
+  } else if (mode == RelocInfo::EXTERNAL_REFERENCE) {
+    StaticVisitor::VisitExternalReference(target_reference_address());
+#ifdef ENABLE_DEBUGGER_SUPPORT
+  } else if (Debug::has_break_points() &&
+             ((RelocInfo::IsJSReturn(mode) &&
+              IsPatchedReturnSequence()) ||
+             (RelocInfo::IsDebugBreakSlot(mode) &&
+              IsPatchedDebugBreakSlotSequence()))) {
+    StaticVisitor::VisitDebugTarget(this);
+#endif
+  } else if (mode == RelocInfo::RUNTIME_ENTRY) {
+    StaticVisitor::VisitRuntimeEntry(this);
+  }
+}
+
 
 
 Immediate::Immediate(int x)  {

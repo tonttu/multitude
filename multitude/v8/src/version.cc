@@ -1,4 +1,4 @@
-// Copyright 2008 the V8 project authors. All rights reserved.
+// Copyright 2010 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -33,8 +33,8 @@
 // NOTE these macros are used by the SCons build script so their names
 // cannot be changed without changing the SCons build script.
 #define MAJOR_VERSION     2
-#define MINOR_VERSION     3
-#define BUILD_NUMBER      0
+#define MINOR_VERSION     5
+#define BUILD_NUMBER      8
 #define PATCH_LEVEL       0
 #define CANDIDATE_VERSION false
 

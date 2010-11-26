@@ -112,6 +112,8 @@ class MacroAssembler: public Assembler {
   void Sbfx(Register dst, Register src, int lsb, int width,
             Condition cond = al);
   void Bfc(Register dst, int lsb, int width, Condition cond = al);
+  void Usat(Register dst, int satpos, const Operand& src,
+            Condition cond = al);
 
   void Call(Label* target);
   void Move(Register dst, Handle<Object> value);
@@ -248,14 +250,14 @@ class MacroAssembler: public Assembler {
   void EnterConstructFrame() { EnterFrame(StackFrame::CONSTRUCT); }
   void LeaveConstructFrame() { LeaveFrame(StackFrame::CONSTRUCT); }
 
-  // Enter specific kind of exit frame; either normal or debug mode.
+  // Enter exit frame.
   // Expects the number of arguments in register r0 and
   // the builtin function to call in register r1. Exits with argc in
   // r4, argv in r6, and and the builtin function to call in r5.
-  void EnterExitFrame(ExitFrame::Mode mode);
+  void EnterExitFrame();
 
   // Leave the current exit frame. Expects the return value in r0.
-  void LeaveExitFrame(ExitFrame::Mode mode);
+  void LeaveExitFrame();
 
   // Get the actual activation frame alignment for target environment.
   static int ActivationFrameAlignment();
@@ -292,12 +294,6 @@ class MacroAssembler: public Assembler {
   // ---------------------------------------------------------------------------
   // Debugger Support
 
-  void SaveRegistersToMemory(RegList regs);
-  void RestoreRegistersFromMemory(RegList regs);
-  void CopyRegistersFromMemoryToStack(Register base, RegList regs);
-  void CopyRegistersFromStackToMemory(Register base,
-                                      Register scratch,
-                                      RegList regs);
   void DebugBreak();
 #endif
 
@@ -391,6 +387,8 @@ class MacroAssembler: public Assembler {
                                    Register heap_number_map,
                                    Label* gc_required);
 
+  // Copies a fixed number of fields of heap objects from src to dst.
+  void CopyFields(Register dst, Register src, RegList temps, int field_count);
 
   // ---------------------------------------------------------------------------
   // Support functions.
@@ -471,6 +469,12 @@ class MacroAssembler: public Assembler {
   // occurred.
   void IllegalOperation(int num_arguments);
 
+  // Picks out an array index from the hash field.
+  // Register use:
+  //   hash - holds the index's hash. Clobbered.
+  //   index - holds the overwritten index on exit.
+  void IndexFromHash(Register hash, Register index);
+
   // Get the number of least significant bits from a register
   void GetLeastBitsFromSmi(Register dst, Register src, int num_least_bits);
 
@@ -500,6 +504,15 @@ class MacroAssembler: public Assembler {
                               Register scratch1,
                               SwVfpRegister scratch2);
 
+  // Convert the HeapNumber pointed to by source to a 32bits signed integer
+  // dest. If the HeapNumber does not fit into a 32bits signed integer branch
+  // to not_int32 label.
+  void ConvertToInt32(Register source,
+                      Register dest,
+                      Register scratch,
+                      Register scratch2,
+                      Label *not_int32);
+
   // Count leading zeros in a 32 bit word.  On ARM5 and later it uses the clz
   // instruction.  On pre-ARM5 hardware this routine gives the wrong answer
   // for 0 (31 instead of 32).  Source and scratch can be the same in which case
@@ -517,9 +530,6 @@ class MacroAssembler: public Assembler {
 
   // Call a code stub.
   void TailCallStub(CodeStub* stub, Condition cond = al);
-
-  // Return from a code stub after popping its arguments.
-  void StubReturn(int argc, Condition cond = al);
 
   // Call a runtime routine.
   void CallRuntime(Runtime::Function* f, int num_arguments);
@@ -572,6 +582,9 @@ class MacroAssembler: public Assembler {
   // setup the function in r1.
   void GetBuiltinEntry(Register target, Builtins::JavaScript id);
 
+  // Store the function for the given builtin in the target register.
+  void GetBuiltinFunction(Register target, Builtins::JavaScript id);
+
   Handle<Object> CodeObject() { return code_object_; }
 
 
@@ -593,6 +606,7 @@ class MacroAssembler: public Assembler {
   // Use --debug_code to enable.
   void Assert(Condition cc, const char* msg);
   void AssertRegisterIsRoot(Register reg, Heap::RootListIndex index);
+  void AssertFastElements(Register elements);
 
   // Like Assert(), but always enabled.
   void Check(Condition cc, const char* msg);
@@ -613,6 +627,9 @@ class MacroAssembler: public Assembler {
   void JumpIfNotBothSmi(Register reg1, Register reg2, Label* on_not_both_smi);
   // Jump if either of the registers contain a smi.
   void JumpIfEitherSmi(Register reg1, Register reg2, Label* on_either_smi);
+
+  // Abort execution if argument is a smi. Used in debug code.
+  void AbortIfSmi(Register object);
 
   // ---------------------------------------------------------------------------
   // String utilities
@@ -709,6 +726,16 @@ class CodePatcher {
 
 // -----------------------------------------------------------------------------
 // Static helper functions.
+
+static MemOperand ContextOperand(Register context, int index) {
+  return MemOperand(context, Context::SlotOffset(index));
+}
+
+
+static inline MemOperand GlobalObjectOperand()  {
+  return ContextOperand(cp, Context::GLOBAL_INDEX);
+}
+
 
 #ifdef GENERATED_CODE_COVERAGE
 #define CODE_COVERAGE_STRINGIFY(x) #x

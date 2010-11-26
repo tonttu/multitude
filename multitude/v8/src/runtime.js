@@ -80,7 +80,7 @@ function EQUALS(y) {
     } else {
       // x is not a number, boolean, null or undefined.
       if (y == null) return 1;  // not equal
-      if (IS_SPEC_OBJECT_OR_NULL(y)) {
+      if (IS_SPEC_OBJECT(y)) {
         return %_ObjectEquals(x, y) ? 0 : 1;
       }
 
@@ -175,7 +175,7 @@ function ADD(x) {
 // Left operand (this) is already a string.
 function STRING_ADD_LEFT(y) {
   if (!IS_STRING(y)) {
-    if (IS_STRING_WRAPPER(y)) {
+    if (IS_STRING_WRAPPER(y) && %_IsStringWrapperSafeForDefaultValueOf(y)) {
       y = %_ValueOf(y);
     } else {
       y = IS_NUMBER(y)
@@ -191,7 +191,7 @@ function STRING_ADD_LEFT(y) {
 function STRING_ADD_RIGHT(y) {
   var x = this;
   if (!IS_STRING(x)) {
-    if (IS_STRING_WRAPPER(x)) {
+    if (IS_STRING_WRAPPER(x) && %_IsStringWrapperSafeForDefaultValueOf(x)) {
       x = %_ValueOf(x);
     } else {
       x = IS_NUMBER(x)
@@ -345,7 +345,7 @@ function DELETE(key) {
 
 // ECMA-262, section 11.8.7, page 54.
 function IN(x) {
-  if (x == null || !IS_SPEC_OBJECT_OR_NULL(x)) {
+  if (!IS_SPEC_OBJECT(x)) {
     throw %MakeTypeError('invalid_in_operator_use', [this, x]);
   }
   return %_IsNonNegativeSmi(this) ? %HasElement(x, this) : %HasProperty(x, %ToString(this));
@@ -363,13 +363,13 @@ function INSTANCE_OF(F) {
   }
 
   // If V is not an object, return false.
-  if (IS_NULL(V) || !IS_SPEC_OBJECT_OR_NULL(V)) {
+  if (!IS_SPEC_OBJECT(V)) {
     return 1;
   }
 
   // Get the prototype of F; if it is not an object, throw an error.
   var O = F.prototype;
-  if (IS_NULL(O) || !IS_SPEC_OBJECT_OR_NULL(O)) {
+  if (!IS_SPEC_OBJECT(O)) {
     throw %MakeTypeError('instanceof_nonobject_proto', [O]);
   }
 
@@ -387,11 +387,11 @@ function GET_KEYS() {
 
 // Filter a given key against an object by checking if the object
 // has a property with the given key; return the key as a string if
-// it has. Otherwise returns null. Used in for-in statements.
+// it has. Otherwise returns 0 (smi). Used in for-in statements.
 function FILTER_KEY(key) {
   var string = %ToString(key);
   if (%HasProperty(this, string)) return string;
-  return null;
+  return 0;
 }
 
 
@@ -483,8 +483,7 @@ function ToPrimitive(x, hint) {
   // Fast case check.
   if (IS_STRING(x)) return x;
   // Normal behavior.
-  if (!IS_SPEC_OBJECT_OR_NULL(x)) return x;
-  if (x == null) return x;  // check for null, undefined
+  if (!IS_SPEC_OBJECT(x)) return x;
   if (hint == NO_HINT) hint = (IS_DATE(x)) ? STRING_HINT : NUMBER_HINT;
   return (hint == NUMBER_HINT) ? %DefaultNumber(x) : %DefaultString(x);
 }
@@ -503,7 +502,10 @@ function ToBoolean(x) {
 // ECMA-262, section 9.3, page 31.
 function ToNumber(x) {
   if (IS_NUMBER(x)) return x;
-  if (IS_STRING(x)) return %StringToNumber(x);
+  if (IS_STRING(x)) {
+    return %_HasCachedArrayIndex(x) ? %_GetCachedArrayIndex(x)
+                                    : %StringToNumber(x);
+  }
   if (IS_BOOLEAN(x)) return x ? 1 : 0;
   if (IS_UNDEFINED(x)) return $NaN;
   return (IS_NULL(x)) ? 0 : ToNumber(%DefaultNumber(x));
@@ -583,13 +585,10 @@ function SameValue(x, y) {
 // Returns if the given x is a primitive value - not an object or a
 // function.
 function IsPrimitive(x) {
-  if (!IS_SPEC_OBJECT_OR_NULL(x)) {
-    return true;
-  } else {
-    // Even though the type of null is "object", null is still
-    // considered a primitive value.
-    return IS_NULL(x);
-  }
+  // Even though the type of null is "object", null is still
+  // considered a primitive value. IS_SPEC_OBJECT handles this correctly
+  // (i.e., it will return false if x is null).
+  return !IS_SPEC_OBJECT(x);
 }
 
 

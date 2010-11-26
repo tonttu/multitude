@@ -115,11 +115,12 @@ macro FLOOR(arg)                = $floor(arg);
 # Macro for ECMAScript 5 queries of the type:
 # "Type(O) is object."
 # This is the same as being either a function or an object in V8 terminology.
-macro IS_SPEC_OBJECT_OR_NULL(arg) = (%_IsObject(arg) || %_IsFunction(arg));
+# In addition, an undetectable object is also included by this.
+macro IS_SPEC_OBJECT(arg) = (%_IsSpecObject(arg));
 
 # Inline macros. Use %IS_VAR to make sure arg is evaluated only once.
 macro NUMBER_IS_NAN(arg) = (!%_IsSmi(%IS_VAR(arg)) && !(arg == arg));
-macro TO_INTEGER(arg) = (%_IsSmi(%IS_VAR(arg)) ? arg : ToInteger(arg));
+macro TO_INTEGER(arg) = (%_IsSmi(%IS_VAR(arg)) ? arg : %NumberToInteger(ToNumber(arg)));
 macro TO_INTEGER_MAP_MINUS_ZERO(arg) = (%_IsSmi(%IS_VAR(arg)) ? arg : %NumberToIntegerMapMinusZero(ToNumber(arg)));
 macro TO_INT32(arg) = (%_IsSmi(%IS_VAR(arg)) ? arg : (arg >> 0));
 macro TO_UINT32(arg) = (arg >>> 0);

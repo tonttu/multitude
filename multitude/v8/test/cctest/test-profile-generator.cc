@@ -89,6 +89,26 @@ TEST(ProfileNodeFindOrAddChild) {
 }
 
 
+TEST(ProfileNodeFindOrAddChildForSameFunction) {
+  const char* empty = "";
+  const char* aaa = "aaa";
+  ProfileNode node(NULL, NULL);
+  CodeEntry entry1(i::Logger::FUNCTION_TAG, empty, aaa, empty, 0,
+                     TokenEnumerator::kNoSecurityToken);
+  ProfileNode* childNode1 = node.FindOrAddChild(&entry1);
+  CHECK_NE(NULL, childNode1);
+  CHECK_EQ(childNode1, node.FindOrAddChild(&entry1));
+  // The same function again.
+  CodeEntry entry2(i::Logger::FUNCTION_TAG, empty, aaa, empty, 0,
+                   TokenEnumerator::kNoSecurityToken);
+  CHECK_EQ(childNode1, node.FindOrAddChild(&entry2));
+  // Now with a different security token.
+  CodeEntry entry3(i::Logger::FUNCTION_TAG, empty, aaa, empty, 0,
+                   TokenEnumerator::kNoSecurityToken + 1);
+  CHECK_EQ(childNode1, node.FindOrAddChild(&entry3));
+}
+
+
 namespace {
 
 class ProfileTreeTestHelper {
@@ -773,6 +793,23 @@ TEST(RecordStackTraceAtStartProfiling) {
   current = PickChild(current, "c");
   CHECK_NE(NULL, const_cast<ProfileNode*>(current));
   CHECK_EQ(0, current->children()->length());
+}
+
+
+TEST(Issue51919) {
+  CpuProfilesCollection collection;
+  i::EmbeddedVector<char*,
+      CpuProfilesCollection::kMaxSimultaneousProfiles> titles;
+  for (int i = 0; i < CpuProfilesCollection::kMaxSimultaneousProfiles; ++i) {
+    i::Vector<char> title = i::Vector<char>::New(16);
+    i::OS::SNPrintF(title, "%d", i);
+    CHECK(collection.StartProfiling(title.start(), i + 1));  // UID must be > 0.
+    titles[i] = title.start();
+  }
+  CHECK(!collection.StartProfiling(
+      "maximum", CpuProfilesCollection::kMaxSimultaneousProfiles + 1));
+  for (int i = 0; i < CpuProfilesCollection::kMaxSimultaneousProfiles; ++i)
+    i::DeleteArray(titles[i]);
 }
 
 #endif  // ENABLE_LOGGING_AND_PROFILING

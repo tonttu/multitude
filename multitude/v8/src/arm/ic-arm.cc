@@ -30,7 +30,7 @@
 #if defined(V8_TARGET_ARCH_ARM)
 
 #include "assembler-arm.h"
-#include "codegen.h"
+#include "code-stubs.h"
 #include "codegen-inl.h"
 #include "disasm.h"
 #include "ic-inl.h"
@@ -414,17 +414,17 @@ void LoadIC::GenerateFunctionPrototype(MacroAssembler* masm) {
 // Falls through for regular JS object.
 static void GenerateKeyedLoadReceiverCheck(MacroAssembler* masm,
                                            Register receiver,
-                                           Register scratch1,
-                                           Register scratch2,
+                                           Register map,
+                                           Register scratch,
                                            int interceptor_bit,
                                            Label* slow) {
   // Check that the object isn't a smi.
   __ BranchOnSmi(receiver, slow);
   // Get the map of the receiver.
-  __ ldr(scratch1, FieldMemOperand(receiver, HeapObject::kMapOffset));
+  __ ldr(map, FieldMemOperand(receiver, HeapObject::kMapOffset));
   // Check bit field.
-  __ ldrb(scratch2, FieldMemOperand(scratch1, Map::kBitFieldOffset));
-  __ tst(scratch2,
+  __ ldrb(scratch, FieldMemOperand(map, Map::kBitFieldOffset));
+  __ tst(scratch,
          Operand((1 << Map::kIsAccessCheckNeeded) | (1 << interceptor_bit)));
   __ b(nz, slow);
   // Check that the object is some kind of JS object EXCEPT JS Value type.
@@ -432,13 +432,14 @@ static void GenerateKeyedLoadReceiverCheck(MacroAssembler* masm,
   // we enter the runtime system to make sure that indexing into string
   // objects work as intended.
   ASSERT(JS_OBJECT_TYPE > JS_VALUE_TYPE);
-  __ ldrb(scratch1, FieldMemOperand(scratch1, Map::kInstanceTypeOffset));
-  __ cmp(scratch1, Operand(JS_OBJECT_TYPE));
+  __ ldrb(scratch, FieldMemOperand(map, Map::kInstanceTypeOffset));
+  __ cmp(scratch, Operand(JS_OBJECT_TYPE));
   __ b(lt, slow);
 }
 
 
 // Loads an indexed element from a fast case array.
+// If not_fast_array is NULL, doesn't perform the elements map check.
 static void GenerateFastArrayLoad(MacroAssembler* masm,
                                   Register receiver,
                                   Register key,
@@ -471,11 +472,15 @@ static void GenerateFastArrayLoad(MacroAssembler* masm,
   // scratch2 - used to hold the loaded value.
 
   __ ldr(elements, FieldMemOperand(receiver, JSObject::kElementsOffset));
-  // Check that the object is in fast mode (not dictionary).
-  __ ldr(scratch1, FieldMemOperand(elements, HeapObject::kMapOffset));
-  __ LoadRoot(ip, Heap::kFixedArrayMapRootIndex);
-  __ cmp(scratch1, ip);
-  __ b(ne, not_fast_array);
+  if (not_fast_array != NULL) {
+    // Check that the object is in fast mode and writable.
+    __ ldr(scratch1, FieldMemOperand(elements, HeapObject::kMapOffset));
+    __ LoadRoot(ip, Heap::kFixedArrayMapRootIndex);
+    __ cmp(scratch1, ip);
+    __ b(ne, not_fast_array);
+  } else {
+    __ AssertFastElements(elements);
+  }
   // Check that the key (index) is within bounds.
   __ ldr(scratch1, FieldMemOperand(elements, FixedArray::kLengthOffset));
   __ cmp(key, Operand(scratch1));
@@ -522,32 +527,6 @@ static void GenerateKeyStringCheck(MacroAssembler* masm,
 }
 
 
-// Picks out an array index from the hash field.
-static void GenerateIndexFromHash(MacroAssembler* masm,
-                                  Register key,
-                                  Register hash) {
-  // Register use:
-  //   key - holds the overwritten key on exit.
-  //   hash - holds the key's hash. Clobbered.
-
-  // If the hash field contains an array index pick it out. The assert checks
-  // that the constants for the maximum number of digits for an array index
-  // cached in the hash field and the number of bits reserved for it does not
-  // conflict.
-  ASSERT(TenToThe(String::kMaxCachedArrayIndexLength) <
-         (1 << String::kArrayIndexValueBits));
-  // We want the smi-tagged index in key.  kArrayIndexValueMask has zeros in
-  // the low kHashShift bits.
-  ASSERT(String::kHashShift >= kSmiTagSize);
-  // Here we actually clobber the key which will be used if calling into
-  // runtime later. However as the new key is the numeric value of a string key
-  // there is no difference in using either key.
-  ASSERT(String::kHashShift >= kSmiTagSize);
-  __ Ubfx(hash, hash, String::kHashShift, String::kArrayIndexValueBits);
-  __ mov(key, Operand(hash, LSL, kSmiTagSize));
-}
-
-
 // Defined in ic.cc.
 Object* CallIC_Miss(Arguments args);
 
@@ -565,7 +544,7 @@ static void GenerateMonomorphicCacheProbe(MacroAssembler* masm,
   // Probe the stub cache.
   Code::Flags flags =
       Code::ComputeFlags(kind, NOT_IN_LOOP, MONOMORPHIC, NORMAL, argc);
-  StubCache::GenerateProbe(masm, flags, r1, r2, r3, no_reg);
+  StubCache::GenerateProbe(masm, flags, r1, r2, r3, r4, r5);
 
   // If the stub cache probing failed, the receiver might be a value.
   // For value objects, we use the map of the prototype objects for
@@ -604,7 +583,7 @@ static void GenerateMonomorphicCacheProbe(MacroAssembler* masm,
 
   // Probe the stub cache for the value object.
   __ bind(&probe);
-  StubCache::GenerateProbe(masm, flags, r1, r2, r3, no_reg);
+  StubCache::GenerateProbe(masm, flags, r1, r2, r3, r4, r5);
 
   __ bind(&miss);
 }
@@ -847,7 +826,7 @@ void KeyedCallIC::GenerateMegamorphic(MacroAssembler* masm, int argc) {
   GenerateMiss(masm, argc);
 
   __ bind(&index_string);
-  GenerateIndexFromHash(masm, r2, r3);
+  __ IndexFromHash(r3, r2);
   // Now jump to the place where smi keys are handled.
   __ jmp(&index_smi);
 }
@@ -879,7 +858,7 @@ void LoadIC::GenerateMegamorphic(MacroAssembler* masm) {
   Code::Flags flags = Code::ComputeFlags(Code::LOAD_IC,
                                          NOT_IN_LOOP,
                                          MONOMORPHIC);
-  StubCache::GenerateProbe(masm, flags, r0, r2, r3, no_reg);
+  StubCache::GenerateProbe(masm, flags, r0, r2, r3, r4, r5);
 
   // Cache miss: Jump to runtime.
   GenerateMiss(masm);
@@ -958,14 +937,6 @@ static inline bool IsInlinedICSite(Address address,
 }
 
 
-void LoadIC::ClearInlinedVersion(Address address) {
-  // Reset the map check of the inlined in-object property load (if present) to
-  // guarantee failure by holding an invalid map (the null value). The offset
-  // can be patched to anything.
-  PatchInlinedLoad(address, Heap::null_value(), 0);
-}
-
-
 bool LoadIC::PatchInlinedLoad(Address address, Object* map, int offset) {
   // Find the end of the inlined code for handling the load if this is an
   // inlined IC call site.
@@ -996,10 +967,59 @@ bool LoadIC::PatchInlinedLoad(Address address, Object* map, int offset) {
 }
 
 
-void KeyedLoadIC::ClearInlinedVersion(Address address) {
-  // Reset the map check of the inlined keyed load (if present) to
-  // guarantee failure by holding an invalid map (the null value).
-  PatchInlinedLoad(address, Heap::null_value());
+bool LoadIC::PatchInlinedContextualLoad(Address address,
+                                        Object* map,
+                                        Object* cell,
+                                        bool is_dont_delete) {
+  // TODO(<bug#>): implement this.
+  return false;
+}
+
+
+bool StoreIC::PatchInlinedStore(Address address, Object* map, int offset) {
+  // Find the end of the inlined code for the store if there is an
+  // inlined version of the store.
+  Address inline_end_address;
+  if (!IsInlinedICSite(address, &inline_end_address)) return false;
+
+  // Compute the address of the map load instruction.
+  Address ldr_map_instr_address =
+      inline_end_address -
+      (CodeGenerator::GetInlinedNamedStoreInstructionsAfterPatch() *
+       Assembler::kInstrSize);
+
+  // Update the offsets if initializing the inlined store. No reason
+  // to update the offsets when clearing the inlined version because
+  // it will bail out in the map check.
+  if (map != Heap::null_value()) {
+    // Patch the offset in the actual store instruction.
+    Address str_property_instr_address =
+        ldr_map_instr_address + 3 * Assembler::kInstrSize;
+    Instr str_property_instr = Assembler::instr_at(str_property_instr_address);
+    ASSERT(Assembler::IsStrRegisterImmediate(str_property_instr));
+    str_property_instr = Assembler::SetStrRegisterImmediateOffset(
+        str_property_instr, offset - kHeapObjectTag);
+    Assembler::instr_at_put(str_property_instr_address, str_property_instr);
+
+    // Patch the offset in the add instruction that is part of the
+    // write barrier.
+    Address add_offset_instr_address =
+        str_property_instr_address + Assembler::kInstrSize;
+    Instr add_offset_instr = Assembler::instr_at(add_offset_instr_address);
+    ASSERT(Assembler::IsAddRegisterImmediate(add_offset_instr));
+    add_offset_instr = Assembler::SetAddRegisterImmediateOffset(
+        add_offset_instr, offset - kHeapObjectTag);
+    Assembler::instr_at_put(add_offset_instr_address, add_offset_instr);
+
+    // Indicate that code has changed.
+    CPU::FlushICache(str_property_instr_address, 2 * Assembler::kInstrSize);
+  }
+
+  // Patch the map check.
+  Assembler::set_target_address_at(ldr_map_instr_address,
+                                   reinterpret_cast<Address>(map));
+
+  return true;
 }
 
 
@@ -1015,21 +1035,6 @@ bool KeyedLoadIC::PatchInlinedLoad(Address address, Object* map) {
   Assembler::set_target_address_at(ldr_map_instr_address,
                                    reinterpret_cast<Address>(map));
   return true;
-}
-
-
-void KeyedStoreIC::ClearInlinedVersion(Address address) {
-  // Insert null as the elements map to check for.  This will make
-  // sure that the elements fast-case map check fails so that control
-  // flows to the IC instead of the inlined version.
-  PatchInlinedStore(address, Heap::null_value());
-}
-
-
-void KeyedStoreIC::RestoreInlinedVersion(Address address) {
-  // Restore the fast-case elements map check so that the inlined
-  // version can be used again.
-  PatchInlinedStore(address, Heap::fixed_array_map());
 }
 
 
@@ -1088,7 +1093,7 @@ void KeyedLoadIC::GenerateGeneric(MacroAssembler* masm) {
   //  -- r0     : key
   //  -- r1     : receiver
   // -----------------------------------
-  Label slow, check_string, index_smi, index_string;
+  Label slow, check_string, index_smi, index_string, property_array_property;
   Label check_pixel_array, probe_dictionary, check_number_dictionary;
 
   Register key = r0;
@@ -1103,16 +1108,23 @@ void KeyedLoadIC::GenerateGeneric(MacroAssembler* masm) {
   GenerateKeyedLoadReceiverCheck(
       masm, receiver, r2, r3, Map::kHasIndexedInterceptor, &slow);
 
+  // Check the "has fast elements" bit in the receiver's map which is
+  // now in r2.
+  __ ldrb(r3, FieldMemOperand(r2, Map::kBitField2Offset));
+  __ tst(r3, Operand(1 << Map::kHasFastElements));
+  __ b(eq, &check_pixel_array);
+
   GenerateFastArrayLoad(
-      masm, receiver, key, r4, r3, r2, r0, &check_pixel_array, &slow);
+      masm, receiver, key, r4, r3, r2, r0, NULL, &slow);
   __ IncrementCounter(&Counters::keyed_load_generic_smi, 1, r2, r3);
   __ Ret();
 
   // Check whether the elements is a pixel array.
   // r0: key
-  // r3: elements map
-  // r4: elements
+  // r1: receiver
   __ bind(&check_pixel_array);
+  __ ldr(r4, FieldMemOperand(r1, JSObject::kElementsOffset));
+  __ ldr(r3, FieldMemOperand(r4, HeapObject::kMapOffset));
   __ LoadRoot(ip, Heap::kPixelArrayMapRootIndex);
   __ cmp(r3, ip);
   __ b(ne, &check_number_dictionary);
@@ -1176,7 +1188,7 @@ void KeyedLoadIC::GenerateGeneric(MacroAssembler* masm) {
   __ cmp(r0, r5);
   __ b(ne, &slow);
 
-  // Get field offset and check that it is an in-object property.
+  // Get field offset.
   // r0     : key
   // r1     : receiver
   // r2     : receiver's map
@@ -1186,15 +1198,22 @@ void KeyedLoadIC::GenerateGeneric(MacroAssembler* masm) {
   __ mov(r4, Operand(cache_field_offsets));
   __ ldr(r5, MemOperand(r4, r3, LSL, kPointerSizeLog2));
   __ ldrb(r6, FieldMemOperand(r2, Map::kInObjectPropertiesOffset));
-  __ cmp(r5, r6);
-  __ b(ge, &slow);
+  __ sub(r5, r5, r6, SetCC);
+  __ b(ge, &property_array_property);
 
   // Load in-object property.
-  __ sub(r5, r5, r6);  // Index from end of object.
   __ ldrb(r6, FieldMemOperand(r2, Map::kInstanceSizeOffset));
   __ add(r6, r6, r5);  // Index from start of object.
   __ sub(r1, r1, Operand(kHeapObjectTag));  // Remove the heap tag.
   __ ldr(r0, MemOperand(r1, r6, LSL, kPointerSizeLog2));
+  __ IncrementCounter(&Counters::keyed_load_generic_lookup_cache, 1, r2, r3);
+  __ Ret();
+
+  // Load property array property.
+  __ bind(&property_array_property);
+  __ ldr(r1, FieldMemOperand(r1, JSObject::kPropertiesOffset));
+  __ add(r1, r1, Operand(FixedArray::kHeaderSize - kHeapObjectTag));
+  __ ldr(r0, MemOperand(r1, r5, LSL, kPointerSizeLog2));
   __ IncrementCounter(&Counters::keyed_load_generic_lookup_cache, 1, r2, r3);
   __ Ret();
 
@@ -1213,7 +1232,7 @@ void KeyedLoadIC::GenerateGeneric(MacroAssembler* masm) {
   __ Ret();
 
   __ bind(&index_string);
-  GenerateIndexFromHash(masm, key, r3);
+  __ IndexFromHash(r3, key);
   // Now jump to the place where smi keys are handled.
   __ jmp(&index_smi);
 }
@@ -1226,7 +1245,6 @@ void KeyedLoadIC::GenerateString(MacroAssembler* masm) {
   //  -- r1     : receiver
   // -----------------------------------
   Label miss;
-  Label index_out_of_range;
 
   Register receiver = r1;
   Register index = r0;
@@ -1241,17 +1259,13 @@ void KeyedLoadIC::GenerateString(MacroAssembler* masm) {
                                           result,
                                           &miss,  // When not a string.
                                           &miss,  // When not a number.
-                                          &index_out_of_range,
+                                          &miss,  // When index out of range.
                                           STRING_INDEX_IS_ARRAY_INDEX);
   char_at_generator.GenerateFast(masm);
   __ Ret();
 
   ICRuntimeCallHelper call_helper;
   char_at_generator.GenerateSlow(masm, call_helper);
-
-  __ bind(&index_out_of_range);
-  __ LoadRoot(r0, Heap::kUndefinedValueRootIndex);
-  __ Ret();
 
   __ bind(&miss);
   GenerateMiss(masm);
@@ -1282,7 +1296,7 @@ static void GenerateUInt2Double(MacroAssembler* masm,
     __ mov(loword, Operand(hiword, LSL, mantissa_shift_for_lo_word));
     __ orr(hiword, scratch, Operand(hiword, LSR, mantissa_shift_for_hi_word));
   } else {
-    __ mov(loword, Operand(0));
+    __ mov(loword, Operand(0, RelocInfo::NONE));
     __ orr(hiword, scratch, Operand(hiword, LSL, mantissa_shift_for_hi_word));
   }
 
@@ -1396,9 +1410,12 @@ void KeyedLoadIC::GenerateExternalArray(MacroAssembler* masm,
 
     __ bind(&box_int);
     // Allocate a HeapNumber for the result and perform int-to-double
-    // conversion. Use r0 for result as key is not needed any more.
+    // conversion.  Don't touch r0 or r1 as they are needed if allocation
+    // fails.
     __ LoadRoot(r6, Heap::kHeapNumberMapRootIndex);
-    __ AllocateHeapNumber(r0, r3, r4, r6, &slow);
+    __ AllocateHeapNumber(r5, r3, r4, r6, &slow);
+    // Now we can use r0 for the result as key is not needed any more.
+    __ mov(r0, r5);
 
     if (CpuFeatures::IsSupported(VFP3)) {
       CpuFeatures::Scope scope(VFP3);
@@ -1571,8 +1588,9 @@ void KeyedLoadIC::GenerateIndexedInterceptor(MacroAssembler* masm) {
   // Check that the receiver isn't a smi.
   __ BranchOnSmi(r1, &slow);
 
-  // Check that the key is a smi.
-  __ BranchOnNotSmi(r0, &slow);
+  // Check that the key is an array index, that is Uint32.
+  __ tst(r0, Operand(kSmiTagMask | kSmiSignMask));
+  __ b(ne, &slow);
 
   // Get the map of the receiver.
   __ ldr(r2, FieldMemOperand(r1, HeapObject::kMapOffset));
@@ -1666,7 +1684,7 @@ void KeyedStoreIC::GenerateGeneric(MacroAssembler* masm) {
 
   // Object case: Check key against length in the elements array.
   __ ldr(elements, FieldMemOperand(receiver, JSObject::kElementsOffset));
-  // Check that the object is in fast mode (not dictionary).
+  // Check that the object is in fast mode and writable.
   __ ldr(r4, FieldMemOperand(elements, HeapObject::kMapOffset));
   __ LoadRoot(ip, Heap::kFixedArrayMapRootIndex);
   __ cmp(r4, ip);
@@ -1698,14 +1716,8 @@ void KeyedStoreIC::GenerateGeneric(MacroAssembler* masm) {
   __ cmp(r4, Operand(ip));
   __ b(hs, &slow);
   __ mov(r5, Operand(value, ASR, kSmiTagSize));  // Untag the value.
-  {  // Clamp the value to [0..255].
-    Label done;
-    __ tst(r5, Operand(0xFFFFFF00));
-    __ b(eq, &done);
-    __ mov(r5, Operand(0), LeaveCC, mi);  // 0 if negative.
-    __ mov(r5, Operand(255), LeaveCC, pl);  // 255 if positive.
-    __ bind(&done);
-  }
+  __ Usat(r5, 8, Operand(r5));  // Clamp the value to [0..255].
+
   // Get the pointer to the external array. This clobbers elements.
   __ ldr(elements,
          FieldMemOperand(elements, PixelArray::kExternalPointerOffset));
@@ -1730,8 +1742,8 @@ void KeyedStoreIC::GenerateGeneric(MacroAssembler* masm) {
   __ b(&fast);
 
   // Array case: Get the length and the elements array from the JS
-  // array. Check that the array is in fast mode; if it is the
-  // length is always a smi.
+  // array. Check that the array is in fast mode (and writable); if it
+  // is the length is always a smi.
   __ bind(&array);
   __ ldr(elements, FieldMemOperand(receiver, JSObject::kElementsOffset));
   __ ldr(r4, FieldMemOperand(elements, HeapObject::kMapOffset));
@@ -1761,19 +1773,22 @@ void KeyedStoreIC::GenerateGeneric(MacroAssembler* masm) {
 }
 
 
-// Convert int passed in register ival to IEE 754 single precision
-// floating point value and store it into register fval.
+// Convert and store int passed in register ival to IEEE 754 single precision
+// floating point value at memory location (dst + 4 * wordoffset)
 // If VFP3 is available use it for conversion.
-static void ConvertIntToFloat(MacroAssembler* masm,
-                              Register ival,
-                              Register fval,
-                              Register scratch1,
-                              Register scratch2) {
+static void StoreIntAsFloat(MacroAssembler* masm,
+                            Register dst,
+                            Register wordoffset,
+                            Register ival,
+                            Register fval,
+                            Register scratch1,
+                            Register scratch2) {
   if (CpuFeatures::IsSupported(VFP3)) {
     CpuFeatures::Scope scope(VFP3);
     __ vmov(s0, ival);
+    __ add(scratch1, dst, Operand(wordoffset, LSL, 2));
     __ vcvt_f32_s32(s0, s0);
-    __ vmov(fval, s0);
+    __ vstr(s0, scratch1, 0);
   } else {
     Label not_special, done;
     // Move sign bit from source to destination.  This works because the sign
@@ -1783,7 +1798,7 @@ static void ConvertIntToFloat(MacroAssembler* masm,
 
     __ and_(fval, ival, Operand(kBinary32SignMask), SetCC);
     // Negate value if it is negative.
-    __ rsb(ival, ival, Operand(0), LeaveCC, ne);
+    __ rsb(ival, ival, Operand(0, RelocInfo::NONE), LeaveCC, ne);
 
     // We have -1, 0 or 1, which we treat specially. Register ival contains
     // absolute value: it is either equal to 1 (special case of -1 and 1),
@@ -1823,6 +1838,7 @@ static void ConvertIntToFloat(MacroAssembler* masm,
            Operand(ival, LSR, kBitsPerInt - kBinary32MantissaBits));
 
     __ bind(&done);
+    __ str(fval, MemOperand(dst, wordoffset, LSL, 2));
   }
 }
 
@@ -1917,9 +1933,8 @@ void KeyedStoreIC::GenerateExternalArray(MacroAssembler* masm,
       __ str(r5, MemOperand(r3, r4, LSL, 2));
       break;
     case kExternalFloatArray:
-      // Need to perform int-to-float conversion.
-      ConvertIntToFloat(masm, r5, r6, r7, r9);
-      __ str(r6, MemOperand(r3, r4, LSL, 2));
+      // Perform int-to-float conversion and store to memory.
+      StoreIntAsFloat(masm, r3, r4, r5, r6, r7, r9);
       break;
     default:
       UNREACHABLE();
@@ -1953,9 +1968,9 @@ void KeyedStoreIC::GenerateExternalArray(MacroAssembler* masm,
       // include -kHeapObjectTag into it.
       __ sub(r5, r0, Operand(kHeapObjectTag));
       __ vldr(d0, r5, HeapNumber::kValueOffset);
+      __ add(r5, r3, Operand(r4, LSL, 2));
       __ vcvt_f32_f64(s0, d0);
-      __ vmov(r5, s0);
-      __ str(r5, MemOperand(r3, r4, LSL, 2));
+      __ vstr(s0, r5, 0);
     } else {
       // Need to perform float-to-int conversion.
       // Test for NaN or infinity (both give zero).
@@ -1973,9 +1988,9 @@ void KeyedStoreIC::GenerateExternalArray(MacroAssembler* masm,
 
       // Not infinity or NaN simply convert to int.
       if (IsElementTypeSigned(array_type)) {
-        __ vcvt_s32_f64(s0, d0, ne);
+        __ vcvt_s32_f64(s0, d0, Assembler::RoundToZero, ne);
       } else {
-        __ vcvt_u32_f64(s0, d0, ne);
+        __ vcvt_u32_f64(s0, d0, Assembler::RoundToZero, ne);
       }
       __ vmov(r5, s0, ne);
 
@@ -2068,18 +2083,18 @@ void KeyedStoreIC::GenerateExternalArray(MacroAssembler* masm,
       // and infinities. All these should be converted to 0.
       __ mov(r7, Operand(HeapNumber::kExponentMask));
       __ and_(r9, r5, Operand(r7), SetCC);
-      __ mov(r5, Operand(0), LeaveCC, eq);
+      __ mov(r5, Operand(0, RelocInfo::NONE), LeaveCC, eq);
       __ b(eq, &done);
 
       __ teq(r9, Operand(r7));
-      __ mov(r5, Operand(0), LeaveCC, eq);
+      __ mov(r5, Operand(0, RelocInfo::NONE), LeaveCC, eq);
       __ b(eq, &done);
 
       // Unbias exponent.
       __ mov(r9, Operand(r9, LSR, HeapNumber::kExponentShift));
       __ sub(r9, r9, Operand(HeapNumber::kExponentBias), SetCC);
       // If exponent is negative than result is 0.
-      __ mov(r5, Operand(0), LeaveCC, mi);
+      __ mov(r5, Operand(0, RelocInfo::NONE), LeaveCC, mi);
       __ b(mi, &done);
 
       // If exponent is too big than result is minimal value.
@@ -2095,14 +2110,14 @@ void KeyedStoreIC::GenerateExternalArray(MacroAssembler* masm,
       __ mov(r5, Operand(r5, LSR, r9), LeaveCC, pl);
       __ b(pl, &sign);
 
-      __ rsb(r9, r9, Operand(0));
+      __ rsb(r9, r9, Operand(0, RelocInfo::NONE));
       __ mov(r5, Operand(r5, LSL, r9));
       __ rsb(r9, r9, Operand(meaningfull_bits));
       __ orr(r5, r5, Operand(r6, LSR, r9));
 
       __ bind(&sign);
-      __ teq(r7, Operand(0));
-      __ rsb(r5, r5, Operand(0), LeaveCC, ne);
+      __ teq(r7, Operand(0, RelocInfo::NONE));
+      __ rsb(r5, r5, Operand(0, RelocInfo::NONE), LeaveCC, ne);
 
       __ bind(&done);
       switch (array_type) {
@@ -2148,7 +2163,7 @@ void StoreIC::GenerateMegamorphic(MacroAssembler* masm) {
   Code::Flags flags = Code::ComputeFlags(Code::STORE_IC,
                                          NOT_IN_LOOP,
                                          MONOMORPHIC);
-  StubCache::GenerateProbe(masm, flags, r1, r2, r3, no_reg);
+  StubCache::GenerateProbe(masm, flags, r1, r2, r3, r4, r5);
 
   // Cache miss: Jump to runtime.
   GenerateMiss(masm);
@@ -2199,6 +2214,8 @@ void StoreIC::GenerateArrayLength(MacroAssembler* masm) {
   __ b(ne, &miss);
 
   // Check that elements are FixedArray.
+  // We rely on StoreIC_ArrayLength below to deal with all types of
+  // fast elements (including COW).
   __ ldr(scratch, FieldMemOperand(receiver, JSArray::kElementsOffset));
   __ CompareObjectType(scratch, scratch, scratch, FIXED_ARRAY_TYPE);
   __ b(ne, &miss);

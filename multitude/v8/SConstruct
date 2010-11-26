@@ -43,7 +43,7 @@ if ANDROID_TOP is None:
   ANDROID_TOP=""
 
 # ARM_TARGET_LIB is the path to the dynamic library to use on the target
-# machine if cross-compiling to an arm machine. You will also need to set 
+# machine if cross-compiling to an arm machine. You will also need to set
 # the additional cross-compiling environment variables to the cross compiler.
 ARM_TARGET_LIB = os.environ.get('ARM_TARGET_LIB')
 if ARM_TARGET_LIB:
@@ -54,15 +54,8 @@ if ARM_TARGET_LIB:
 else:
   ARM_LINK_FLAGS = []
 
-# TODO: Sort these issues out properly but as a temporary solution for gcc 4.4
-# on linux we need these compiler flags to avoid crashes in the v8 test suite
-# and avoid dtoa.c strict aliasing issues
-if os.environ.get('GCC_VERSION') == '44':
-    GCC_EXTRA_CCFLAGS = ['-fno-tree-vrp', '-fno-strict-aliasing']
-    GCC_DTOA_EXTRA_CCFLAGS = []
-else:
-    GCC_EXTRA_CCFLAGS = []
-    GCC_DTOA_EXTRA_CCFLAGS = []
+GCC_EXTRA_CCFLAGS = []
+GCC_DTOA_EXTRA_CCFLAGS = []
 
 ANDROID_FLAGS = ['-march=armv7-a',
                  '-mtune=cortex-a8',
@@ -80,7 +73,6 @@ ANDROID_FLAGS = ['-march=armv7-a',
                  '-frerun-cse-after-loop',
                  '-frename-registers',
                  '-fomit-frame-pointer',
-                 '-fno-strict-aliasing',
                  '-finline-limit=64',
                  '-DCAN_USE_VFP_INSTRUCTIONS=1',
                  '-DCAN_USE_ARMV7_INSTRUCTIONS=1',
@@ -214,7 +206,7 @@ LIBRARY_FLAGS = {
     },
     'simulator:arm': {
       'CCFLAGS':      ['-m32'],
-      'LINKFLAGS':    ['-m32']
+      'LINKFLAGS':    ['-m32'],
     },
     'arch:mips': {
       'CPPDEFINES':   ['V8_TARGET_ARCH_MIPS'],
@@ -225,7 +217,7 @@ LIBRARY_FLAGS = {
     },
     'simulator:mips': {
       'CCFLAGS':      ['-m32'],
-      'LINKFLAGS':    ['-m32']
+      'LINKFLAGS':    ['-m32'],
     },
     'arch:x64': {
       'CPPDEFINES':   ['V8_TARGET_ARCH_X64'],
@@ -629,6 +621,9 @@ D8_FLAGS = {
     'os:win32': {
       'LIBS': ['winmm', 'ws2_32'],
     },
+    'arch:arm': {
+      'LINKFLAGS':   ARM_LINK_FLAGS
+    },
   },
   'msvc': {
     'all': {
@@ -668,17 +663,17 @@ SIMPLE_OPTIONS = {
   'toolchain': {
     'values': ['gcc', 'msvc'],
     'default': TOOLCHAIN_GUESS,
-    'help': 'the toolchain to use (' + TOOLCHAIN_GUESS + ')'
+    'help': 'the toolchain to use (%s)' % TOOLCHAIN_GUESS
   },
   'os': {
     'values': ['freebsd', 'linux', 'macos', 'win32', 'android', 'openbsd', 'solaris'],
     'default': OS_GUESS,
-    'help': 'the os to build for (' + OS_GUESS + ')'
+    'help': 'the os to build for (%s)' % OS_GUESS
   },
   'arch': {
     'values':['arm', 'ia32', 'x64', 'mips'],
     'default': ARCH_GUESS,
-    'help': 'the architecture to build for (' + ARCH_GUESS + ')'
+    'help': 'the architecture to build for (%s)' % ARCH_GUESS
   },
   'regexp': {
     'values': ['native', 'interpreted'],

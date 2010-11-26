@@ -165,6 +165,9 @@ class OS {
   // Returns the daylight savings offset for the given time.
   static double DaylightSavingsOffset(double time);
 
+  // Returns last OS error.
+  static int GetLastError();
+
   static FILE* FOpen(const char* path, const char* mode);
 
   // Log file open mode is platform-dependent due to line ends issues.
@@ -254,10 +257,15 @@ class OS {
   static char* StrChr(char* str, int c);
   static void StrNCpy(Vector<char> dest, const char* src, size_t n);
 
-  // Support for profiler.  Can do nothing, in which case ticks
-  // occuring in shared libraries will not be properly accounted
-  // for.
+  // Support for the profiler.  Can do nothing, in which case ticks
+  // occuring in shared libraries will not be properly accounted for.
   static void LogSharedLibraryAddresses();
+
+  // Support for the profiler.  Notifies the external profiling
+  // process that a code moving garbage collection starts.  Can do
+  // nothing, in which case the code objects must not move (e.g., by
+  // using --never-compact) if accurate profiling is desired.
+  static void SignalCodeMovingGC();
 
   // The return value indicates the CPU features we are sure of because of the
   // OS.  For example MacOSX doesn't run on any x86 CPUs that don't have SSE2
@@ -299,7 +307,7 @@ class VirtualMemory {
   void* address() {
     ASSERT(IsReserved());
     return address_;
-  };
+  }
 
   // Returns the size of the reserved memory.
   size_t size() { return size_; }
@@ -360,7 +368,13 @@ class ThreadHandle {
 class Thread: public ThreadHandle {
  public:
   // Opaque data type for thread-local storage keys.
-  enum LocalStorageKey {};
+  // LOCAL_STORAGE_KEY_MIN_VALUE and LOCAL_STORAGE_KEY_MAX_VALUE are specified
+  // to ensure that enumeration type has correct value range (see Issue 830 for
+  // more details).
+  enum LocalStorageKey {
+    LOCAL_STORAGE_KEY_MIN_VALUE = kMinInt,
+    LOCAL_STORAGE_KEY_MAX_VALUE = kMaxInt
+  };
 
   // Create new thread.
   Thread();
@@ -554,17 +568,24 @@ class Sampler {
   void Start();
   void Stop();
 
-  // Is the sampler used for profiling.
-  inline bool IsProfiling() { return profiling_; }
+  // Is the sampler used for profiling?
+  bool IsProfiling() const { return profiling_; }
+
+  // Is the sampler running in sync with the JS thread? On platforms
+  // where the sampler is implemented with a thread that wakes up
+  // every now and then, having a synchronous sampler implies
+  // suspending/resuming the JS thread.
+  bool IsSynchronous() const { return synchronous_; }
 
   // Whether the sampler is running (that is, consumes resources).
-  inline bool IsActive() { return active_; }
+  bool IsActive() const { return active_; }
 
   class PlatformData;
 
  private:
   const int interval_;
   const bool profiling_;
+  const bool synchronous_;
   bool active_;
   PlatformData* data_;  // Platform specific data.
   DISALLOW_IMPLICIT_CONSTRUCTORS(Sampler);

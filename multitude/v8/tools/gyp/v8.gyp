@@ -108,8 +108,6 @@
             'conditions': [
               [ 'gcc_version==44', {
                 'cflags': [
-                  # Avoid gcc 4.4 strict aliasing issues in dtoa.c
-                  '-fno-strict-aliasing',
                   # Avoid crashes with gcc 4.4 in the v8 test suite.
                   '-fno-tree-vrp',
                 ],
@@ -181,6 +179,11 @@
           'defines': [
             'BUILDING_V8_SHARED'
           ],
+          'direct_dependent_settings': {
+            'defines': [
+              'USING_V8_SHARED',
+            ],
+          },
         },
         {
           'type': 'none',
@@ -277,11 +280,16 @@
         '../../src/ast.cc',
         '../../src/ast-inl.h',
         '../../src/ast.h',
+        '../../src/bignum.cc',
+        '../../src/bignum.h',
+        '../../src/bignum-dtoa.cc',
+        '../../src/bignum-dtoa.h',
         '../../src/bootstrapper.cc',
         '../../src/bootstrapper.h',
         '../../src/builtins.cc',
         '../../src/builtins.h',
         '../../src/bytecodes-irregexp.h',
+        '../../src/cached-powers.cc',
         '../../src/cached-powers.h',
         '../../src/char-predicates-inl.h',
         '../../src/char-predicates.h',
@@ -325,7 +333,6 @@
         '../../src/disassembler.h',
         '../../src/dtoa.cc',
         '../../src/dtoa.h',
-        '../../src/dtoa-config.c',
         '../../src/diy-fp.cc',
         '../../src/diy-fp.h',
         '../../src/double.h',
@@ -333,7 +340,6 @@
         '../../src/execution.h',
         '../../src/factory.cc',
         '../../src/factory.h',
-        '../../src/fast-codegen.h',
         '../../src/fast-dtoa.cc',
         '../../src/fast-dtoa.h',
         '../../src/flag-definitions.h',
@@ -341,8 +347,6 @@
         '../../src/fixed-dtoa.h',
         '../../src/flags.cc',
         '../../src/flags.h',
-        '../../src/flow-graph.cc',
-        '../../src/flow-graph.h',
         '../../src/frame-element.cc',
         '../../src/frame-element.h',
         '../../src/frames-inl.h',
@@ -393,6 +397,8 @@
         '../../src/natives.h',
         '../../src/objects-debug.cc',
         '../../src/objects-inl.h',
+        '../../src/objects-visiting.cc',
+        '../../src/objects-visiting.h',
         '../../src/objects.cc',
         '../../src/objects.h',
         '../../src/oprofile-agent.h',
@@ -400,7 +406,6 @@
         '../../src/parser.cc',
         '../../src/parser.h',
         '../../src/platform.h',
-        '../../src/powers-ten.h',
         '../../src/prettyprinter.cc',
         '../../src/prettyprinter.h',
         '../../src/property.cc',
@@ -424,6 +429,8 @@
         '../../src/rewriter.h',
         '../../src/runtime.cc',
         '../../src/runtime.h',
+        '../../src/scanner-base.cc',
+        '../../src/scanner-base.h',
         '../../src/scanner.cc',
         '../../src/scanner.h',
         '../../src/scopeinfo.cc',
@@ -439,8 +446,12 @@
         '../../src/spaces-inl.h',
         '../../src/spaces.cc',
         '../../src/spaces.h',
+        '../../src/string-search.cc',
+        '../../src/string-search.h',
         '../../src/string-stream.cc',
         '../../src/string-stream.h',
+        '../../src/strtod.cc',
+        '../../src/strtod.h',
         '../../src/stub-cache.cc',
         '../../src/stub-cache.h',
         '../../src/token.cc',
@@ -470,11 +481,14 @@
         '../../src/virtual-frame.cc',
         '../../src/virtual-frame.h',
         '../../src/vm-state-inl.h',
-        '../../src/vm-state.cc',
         '../../src/vm-state.h',
         '../../src/zone-inl.h',
         '../../src/zone.cc',
         '../../src/zone.h',
+	'../../src/extensions/externalize-string-extension.cc',
+	'../../src/extensions/externalize-string-extension.h',
+	'../../src/extensions/gc-extension.cc',
+	'../../src/extensions/gc-extension.h',
       ],
       'conditions': [
         ['v8_target_arch=="arm"', {
@@ -482,7 +496,6 @@
             '../../src/arm',
           ],
           'sources': [
-            '../../src/fast-codegen.cc',
             '../../src/jump-target-light.h',
             '../../src/jump-target-light-inl.h',
             '../../src/jump-target-light.cc',
@@ -492,6 +505,8 @@
             '../../src/arm/assembler-arm.cc',
             '../../src/arm/assembler-arm.h',
             '../../src/arm/builtins-arm.cc',
+            '../../src/arm/code-stubs-arm.cc',
+            '../../src/arm/code-stubs-arm.h',
             '../../src/arm/codegen-arm.cc',
             '../../src/arm/codegen-arm.h',
             '../../src/arm/constants-arm.h',
@@ -499,7 +514,6 @@
             '../../src/arm/cpu-arm.cc',
             '../../src/arm/debug-arm.cc',
             '../../src/arm/disasm-arm.cc',
-            '../../src/arm/fast-codegen-arm.cc',
             '../../src/arm/frames-arm.cc',
             '../../src/arm/frames-arm.h',
             '../../src/arm/full-codegen-arm.cc',
@@ -539,13 +553,13 @@
             '../../src/ia32/assembler-ia32.cc',
             '../../src/ia32/assembler-ia32.h',
             '../../src/ia32/builtins-ia32.cc',
+            '../../src/ia32/code-stubs-ia32.cc',
+            '../../src/ia32/code-stubs-ia32.h',
             '../../src/ia32/codegen-ia32.cc',
             '../../src/ia32/codegen-ia32.h',
             '../../src/ia32/cpu-ia32.cc',
             '../../src/ia32/debug-ia32.cc',
             '../../src/ia32/disasm-ia32.cc',
-            '../../src/ia32/fast-codegen-ia32.cc',
-            '../../src/ia32/fast-codegen-ia32.h',
             '../../src/ia32/frames-ia32.cc',
             '../../src/ia32/frames-ia32.h',
             '../../src/ia32/full-codegen-ia32.cc',
@@ -566,7 +580,6 @@
             '../../src/x64',
           ],
           'sources': [
-            '../../src/fast-codegen.cc',
             '../../src/jump-target-heavy.h',
             '../../src/jump-target-heavy-inl.h',
             '../../src/jump-target-heavy.cc',
@@ -576,12 +589,13 @@
             '../../src/x64/assembler-x64.cc',
             '../../src/x64/assembler-x64.h',
             '../../src/x64/builtins-x64.cc',
+            '../../src/x64/code-stubs-x64.cc',
+            '../../src/x64/code-stubs-x64.h',
             '../../src/x64/codegen-x64.cc',
             '../../src/x64/codegen-x64.h',
             '../../src/x64/cpu-x64.cc',
             '../../src/x64/debug-x64.cc',
             '../../src/x64/disasm-x64.cc',
-            '../../src/x64/fast-codegen-x64.cc',
             '../../src/x64/frames-x64.cc',
             '../../src/x64/frames-x64.h',
             '../../src/x64/full-codegen-x64.cc',
@@ -642,11 +656,7 @@
             '../../src/platform-win32.cc',
           ],
           # 4355, 4800 came from common.vsprops
-          # 4018, 4244 were a per file config on dtoa-config.c
-          # TODO: It's probably possible and desirable to stop disabling the
-          # dtoa-specific warnings by modifying dtoa as was done in Chromium
-          # r9255.  Refer to that revision for details.
-          'msvs_disabled_warnings': [4355, 4800, 4018, 4244],
+          'msvs_disabled_warnings': [4355, 4800],
           'link_settings':  {
             'libraries': [ '-lwinmm.lib' ],
           },
@@ -737,11 +747,6 @@
         ['OS=="win"', {
           # This could be gotten by not setting chromium_code, if that's OK.
           'defines': ['_CRT_SECURE_NO_WARNINGS'],
-        }],
-        ['OS=="win" and component=="shared_library"', {
-          'defines': [
-            'USING_V8_SHARED',
-          ],
         }],
       ],
     },

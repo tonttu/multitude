@@ -30,8 +30,6 @@
 
 #include <string.h>
 
-#include "flags.h"
-
 extern "C" void V8_Fatal(const char* file, int line, const char* format, ...);
 void API_Fatal(const char* location, const char* format, ...);
 
@@ -279,31 +277,46 @@ template <int> class StaticAssertionHelper { };
     SEMI_STATIC_JOIN(__StaticAssertTypedef__, __LINE__)
 
 
+namespace v8 { namespace internal {
+
+bool EnableSlowAsserts();
+
+} }  // namespace v8::internal
+
 // The ASSERT macro is equivalent to CHECK except that it only
-// generates code in debug builds.  Ditto STATIC_ASSERT.
+// generates code in debug builds.
 #ifdef DEBUG
 #define ASSERT_RESULT(expr)  CHECK(expr)
 #define ASSERT(condition)    CHECK(condition)
 #define ASSERT_EQ(v1, v2)    CHECK_EQ(v1, v2)
 #define ASSERT_NE(v1, v2)    CHECK_NE(v1, v2)
 #define ASSERT_GE(v1, v2)    CHECK_GE(v1, v2)
-#define STATIC_ASSERT(test)  STATIC_CHECK(test)
-#define SLOW_ASSERT(condition) if (FLAG_enable_slow_asserts) CHECK(condition)
+#define SLOW_ASSERT(condition) if (EnableSlowAsserts()) CHECK(condition)
 #else
 #define ASSERT_RESULT(expr)     (expr)
 #define ASSERT(condition)      ((void) 0)
 #define ASSERT_EQ(v1, v2)      ((void) 0)
 #define ASSERT_NE(v1, v2)      ((void) 0)
 #define ASSERT_GE(v1, v2)      ((void) 0)
-#define STATIC_ASSERT(test)    ((void) 0)
 #define SLOW_ASSERT(condition) ((void) 0)
 #endif
+// Static asserts has no impact on runtime performance, so they can be
+// safely enabled in release mode. Moreover, the ((void) 0) expression
+// obeys different syntax rules than typedef's, e.g. it can't appear
+// inside class declaration, this leads to inconsistency between debug
+// and release compilation modes behaviour.
+#define STATIC_ASSERT(test)  STATIC_CHECK(test)
 
+namespace v8 { namespace internal {
+
+intptr_t HeapObjectTagMask();
+
+} }  // namespace v8::internal
 
 #define ASSERT_TAG_ALIGNED(address) \
-  ASSERT((reinterpret_cast<intptr_t>(address) & kHeapObjectTagMask) == 0)
+  ASSERT((reinterpret_cast<intptr_t>(address) & HeapObjectTagMask()) == 0)
 
-#define ASSERT_SIZE_TAG_ALIGNED(size) ASSERT((size & kHeapObjectTagMask) == 0)
+#define ASSERT_SIZE_TAG_ALIGNED(size) ASSERT((size & HeapObjectTagMask()) == 0)
 
 #define ASSERT_NOT_NULL(p)  ASSERT_NE(NULL, p)
 

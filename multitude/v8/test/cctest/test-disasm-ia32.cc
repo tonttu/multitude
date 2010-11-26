@@ -165,6 +165,8 @@ TEST(DisasmIa320) {
   __ mov(Operand(ebx, ecx, times_4, 10000), edx);
   __ nop();
   __ dec_b(edx);
+  __ dec_b(Operand(eax, 10));
+  __ dec_b(Operand(ebx, ecx, times_4, 10000));
   __ dec(edx);
   __ cdq();
 
@@ -194,6 +196,8 @@ TEST(DisasmIa320) {
 
   __ rcl(edx, 1);
   __ rcl(edx, 7);
+  __ rcr(edx, 1);
+  __ rcr(edx, 7);
   __ sar(edx, 1);
   __ sar(edx, 6);
   __ sar_cl(edx);
@@ -332,8 +336,10 @@ TEST(DisasmIa320) {
   // 0xD9 instructions
   __ nop();
 
+  __ fld(1);
   __ fld1();
   __ fldz();
+  __ fldpi();
   __ fabs();
   __ fchs();
   __ fprem();
@@ -410,13 +416,32 @@ TEST(DisasmIa320) {
     }
   }
 
+  // andpd, cmpltsd, movaps, psllq.
+  {
+    if (CpuFeatures::IsSupported(SSE2)) {
+      CpuFeatures::Scope fscope(SSE2);
+      __ andpd(xmm0, xmm1);
+      __ andpd(xmm1, xmm2);
+
+      __ cmpltsd(xmm0, xmm1);
+      __ cmpltsd(xmm1, xmm2);
+
+      __ movaps(xmm0, xmm1);
+      __ movaps(xmm1, xmm2);
+
+      __ psllq(xmm0, 17);
+      __ psllq(xmm1, 42);
+    }
+  }
+
   __ ret(0);
 
   CodeDesc desc;
   assm.GetCode(&desc);
-  Object* code = Heap::CreateCode(desc,
-                                  Code::ComputeFlags(Code::STUB),
-                                  Handle<Object>(Heap::undefined_value()));
+  Object* code = Heap::CreateCode(
+      desc,
+      Code::ComputeFlags(Code::STUB),
+      Handle<Object>(Heap::undefined_value()))->ToObjectChecked();
   CHECK(code->IsCode());
 #ifdef DEBUG
   Code::cast(code)->Print();
