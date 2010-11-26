@@ -2285,7 +2285,7 @@ class V8EXPORT Extension {  // NOLINT
             const char** deps = 0);
   virtual ~Extension() { }
   virtual v8::Handle<v8::FunctionTemplate>
-      GetNativeFunction(v8::Handle<v8::String> name) {
+      GetNativeFunction(v8::Handle<v8::String> /*name*/) {
     return v8::Handle<v8::FunctionTemplate>();
   }
 
