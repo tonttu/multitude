@@ -25,7 +25,7 @@ LIB_RADIANT = -lRadiant -lPatterns
 LIB_RESONANT = -lResonant
 LIB_SCREENPLAY = -lScreenplay
 LIB_VIDEODISPLAY = -lVideoDisplay
-LIB_VALUABLE = -lValuable
+LIB_VALUABLE = -lValuable -lv8
 LIB_PATTERNS = -lPatterns
 
 LIB_BOX2D = -lBox2D
