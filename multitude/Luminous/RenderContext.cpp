@@ -1297,6 +1297,8 @@ namespace Luminous
     prog.setUniformMatrix4("view_transform", m_data->m_viewTransform);
     prog.setUniformMatrix3("object_transform", transform());
 
+    m_data->m_vertices.clear();
+
     v.m_location = area.low();
     v.m_texCoord = style.texCoords().lowHigh();
     m_data->m_vertices.push_back(v);
