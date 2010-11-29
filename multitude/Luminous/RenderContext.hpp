@@ -38,6 +38,7 @@ namespace Luminous
 {
   class Texture2D;
   class GLContext;
+  class GLSLProgramObject;
 
   /// RenderContext contains the current rendering state.
   class LUMINOUS_API RenderContext : public Transformer, public GLResources
@@ -370,6 +371,11 @@ namespace Luminous
     /// @todo not really implemented on Windows
     static RenderContext * getThreadContext();
 
+    void bindTexture(GLenum textureType, GLenum textureUnit, GLuint textureId);
+    /// Bind GLSL program object
+    void bindProgram(GLSLProgramObject * program);
+
+    void flush();
   private:
     void drawCircleWithSegments(Nimble::Vector2f center, float radius, const float *rgba, int segments);
     void drawCircleImpl(Nimble::Vector2f center, float radius, const float *rgba);

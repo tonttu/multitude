@@ -52,6 +52,16 @@ namespace Luminous
     }
   }
 
+  template <GLenum TextureType>
+      void TextureT<TextureType>::bind(GLenum textureUnit)
+  {
+    allocate();
+    if(context() == 0)
+      fatal("TextureT::bind # NULL context");
+
+    context()->bindTexture(TextureType, textureUnit, m_textureId);
+  }
+
   template class TextureT<GL_TEXTURE_2D>;
   LUMINOUS_IN_FULL_OPENGL(template class TextureT<GL_TEXTURE_1D>;)
   LUMINOUS_IN_FULL_OPENGL(template class TextureT<GL_TEXTURE_3D>;)

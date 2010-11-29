@@ -54,18 +54,12 @@ namespace Luminous
 
     /** Activate textureUnit and bind this texture to that unit.
     @param textureUnit texture unit to bind to*/
-    void bind(GLenum textureUnit)
-    {
-      allocate();
-      glActiveTexture(textureUnit);
-      glBindTexture(TextureType, m_textureId);
-    }
+    void bind(GLenum textureUnit);
 
-    /** Bind this texture to the currently active tecture unit. */
+    /** Bind this texture to tecture unit GL_TEXTURE0. */
     void bind()
     {
-      allocate();
-      glBindTexture(TextureType, m_textureId);
+      bind(GL_TEXTURE0);
     }
 
     /// Returns the width of the texture (if known)

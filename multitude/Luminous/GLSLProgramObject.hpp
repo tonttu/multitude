@@ -154,7 +154,9 @@ namespace Luminous
     /// Returns true if the program has been linked successfully
     bool isLinked() const { return m_isLinked; }
 
-  protected:
+  private:
+
+    friend class RenderContext;
     /// The linker log
     std::vector<GLchar> m_linkerLog;
     /// True if the program has been linked

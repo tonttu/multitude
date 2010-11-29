@@ -13,7 +13,9 @@
  *
  */
 
-#include <Luminous/GLSLProgramObject.hpp>
+#include "GLSLProgramObject.hpp"
+
+#include "RenderContext.hpp"
 
 #include <Radiant/FileUtils.hpp>
 #include <Radiant/Trace.hpp>
@@ -153,13 +155,16 @@ namespace Luminous
       return;
     }
 
-    glUseProgram(m_handle);
+    if(!context()) {
+      fatal("GLSLProgramObject::bind # NULL context");
+    }
 
+    context()->bindProgram(this);
   }
 
   void GLSLProgramObject::unbind()
   {
-    glUseProgram(0);
+    context()->bindProgram(0);
   }
 
   int GLSLProgramObject::getUniformLoc(const std::string& name)

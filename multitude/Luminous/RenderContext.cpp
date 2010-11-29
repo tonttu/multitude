@@ -190,6 +190,7 @@ namespace Luminous
   class RenderContext::Internal
   {
   public:
+    enum { MAX_TEXTURES = 64 };
 
     Internal(const Luminous::MultiHead::Window * win)
         : m_recursionLimit(DEFAULT_RECURSION_LIMIT),
@@ -202,7 +203,8 @@ namespace Luminous
         m_glContext(new GLDummyContext),
         m_boundProgram(0),
         m_initialized(false),
-        m_blendFunc(BLEND_USUAL)
+        m_blendFunc(BLEND_USUAL),
+        m_program(0)
     {
       m_viewTransform.identity();
       m_viewTransformStack.push_back(m_viewTransform);
@@ -211,6 +213,8 @@ namespace Luminous
 
       m_verts.resize(10000);
       m_verts.clear();
+
+      bzero(m_textures, sizeof(m_textures));
     }
 
     ~Internal()
@@ -307,6 +311,9 @@ namespace Luminous
         m_viewFBO.reset(new Luminous::Framebuffer());
         info("RenderContext::Internal # init ok");
       }
+
+      bzero(m_textures, sizeof(m_textures));
+      m_program = 0;
 
       while(!m_drawBufferStack.empty())
         m_drawBufferStack.pop();
@@ -472,6 +479,9 @@ namespace Luminous
     bool m_initialized;
 
     BlendFunc m_blendFunc;
+
+    GLenum m_textures[MAX_TEXTURES];
+    GLSLProgramObject * m_program;
   };
 
   void RenderContext::Internal::drawPolyLine(RenderContext& r, const Nimble::Vector2f * vertices, int n,
@@ -718,18 +728,21 @@ namespace Luminous
 
   bool RenderContext::isVisible(const Nimble::Rectangle & area)
   {
-//      Radiant::info("RenderContext::isVisible # area (%f,%f) (%f,%f)", area.center().x, area.center().y, area.size().x, area.size().y);
+    // Radiant::info("RenderContext::isVisible # area (%f,%f) (%f,%f)",
+    // area.center().x, area.center().y, area.size().x, area.size().y);
 
       if(m_data->m_clipStack.empty()) {
         Radiant::debug("\tclip stack is empty");
         return true;
       } else {
 
-          // Since we have no proper clipping algorithm, we compare against every clip rectangle in the stack
+          /* Since we have no proper clipping algorithm, we compare against
+             every clip rectangle in the stack*/
           bool inside = true;
 
           // Why does const_reverse_iterator not work on OSX :(
-          for(std::vector<Nimble::Rectangle>::reverse_iterator it = m_data->m_clipStack.rbegin(); it != m_data->m_clipStack.rend(); it++) {
+          for(std::vector<Nimble::Rectangle>::reverse_iterator it =
+              m_data->m_clipStack.rbegin(); it != m_data->m_clipStack.rend(); it++) {
             inside &= (*it).intersects(area);
           }
 
@@ -738,7 +751,9 @@ namespace Luminous
 
           bool inside = m_data->m_clipStack.top().intersects(area);
 
-          Radiant::info("\tclip area (%f,%f) (%f,%f) : inside %d", clipArea.center().x, clipArea.center().y, clipArea.size().x, clipArea.size().y, inside);
+          Radiant::info("\tclip area (%f,%f) (%f,%f) : inside %d",
+          clipArea.center().x, clipArea.center().y, clipArea.size().x,
+          clipArea.size().y, inside);
           */
 
           return inside;
@@ -909,7 +924,10 @@ namespace Luminous
     }
   }
 
-  void RenderContext::drawArc(Nimble::Vector2f center, float radius, float fromRadians, float toRadians, float width, float blendWidth, const float * color, int linesegments)
+  void RenderContext::drawArc(Nimble::Vector2f center, float radius,
+                              float fromRadians, float toRadians,
+                              float width, float blendWidth, const float * color,
+                              int linesegments)
   {
     float delta = (toRadians - fromRadians) / linesegments;
 
@@ -967,7 +985,10 @@ namespace Luminous
     }
   }
 
-  void RenderContext::drawWedge(Nimble::Vector2f center, float radius1, float radius2, float fromRadians, float toRadians, float width, float blendWidth, const float *rgba, int segments)
+  void RenderContext::drawWedge(Nimble::Vector2f center, float radius1,
+                                float radius2, float fromRadians, float toRadians,
+                                float width, float blendWidth, const float *rgba,
+                                int segments)
   {
     // Draw two arcs
     drawArc(center, radius1, fromRadians, toRadians, width, blendWidth, rgba, segments);
@@ -975,11 +996,15 @@ namespace Luminous
 
     // Draw sector edges
     /// @todo these look a bit crappy as the blending doesn't match the arcs properly
-    Nimble::Vector2f p0 = center + radius1 * Nimble::Vector2f(cos(fromRadians), sin(fromRadians));
-    Nimble::Vector2f p1 = center + radius2 * Nimble::Vector2f(cos(fromRadians), sin(fromRadians));
+    Nimble::Vector2f p0 =
+        center + radius1 * Nimble::Vector2f(cos(fromRadians), sin(fromRadians));
+    Nimble::Vector2f p1 =
+        center + radius2 * Nimble::Vector2f(cos(fromRadians), sin(fromRadians));
 
-    Nimble::Vector2f p2 = center + radius1 * Nimble::Vector2f(cos(toRadians), sin(toRadians));
-    Nimble::Vector2f p3 = center + radius2 * Nimble::Vector2f(cos(toRadians), sin(toRadians));
+    Nimble::Vector2f p2 =
+        center + radius1 * Nimble::Vector2f(cos(toRadians), sin(toRadians));
+    Nimble::Vector2f p3 =
+        center + radius2 * Nimble::Vector2f(cos(toRadians), sin(toRadians));
 
     drawLine(p0, p1, width, rgba);
     drawLine(p2, p3, width, rgba);
@@ -1035,7 +1060,8 @@ namespace Luminous
         Vector2 p1234 = 0.5f*(p123 + p234);
 
         ///@todo could do collinearity detection
-        if (level != 0 && (level > 20 || fabs( (p1234 - 0.5f*(p1+p4)).lengthSqr() ) < 1e-1f)) {
+        if (level != 0 && (level > 20 ||
+                           fabs( (p1234 - 0.5f*(p1+p4)).lengthSqr() ) < 1e-1f)) {
           //points.push_back(p1);
           //points.push_back(p4);
           points.push_back(p23);
@@ -1055,7 +1081,8 @@ namespace Luminous
     drawPolyLine(&points[0], (int) points.size(), width, rgba);
   }
 
-  void RenderContext::drawSpline(Nimble::Interpolating & s, float width, const float * rgba, float step)
+  void RenderContext::drawSpline(Nimble::Interpolating & s,
+                                 float width, const float * rgba, float step)
   {
     const float len = s.size();
 
@@ -1259,7 +1286,7 @@ namespace Luminous
   {
     // info("RenderContext::drawRect");
 
-    m_data->m_vertices.clear();
+    // m_data->m_vertices.clear();
 
     Internal::Vertex v;
     v.m_color = style.color();
@@ -1267,20 +1294,8 @@ namespace Luminous
 
     GLSLProgramObject & prog = *m_data->m_basic_shader;
     prog.bind();
-    Nimble::Matrix4 tmp4;
-    tmp4.identity();
     prog.setUniformMatrix4("view_transform", m_data->m_viewTransform);
-    // prog.setUniformMatrix4("view_transform", tmp4);
-    // Radiant::info("View matrix = %s", Radiant::FixedStr256(m_data->m_viewTransform).str());
     prog.setUniformMatrix3("object_transform", transform());
-    // Radiant::info("Object matrix = %s", Radiant::FixedStr256(transform()).str());
-
-    /*Nimble::Matrix3 tmp;
-    tmp.identity();
-    if(!prog.setUniformMatrix3("object_transform", tmp))
-      fatal("RenderContext::drawRect # could not set object_transform");
-*/
-    // assert(prog.setUniformFloat("move", 0.0));
 
     v.m_location = area.low();
     v.m_texCoord = style.texCoords().lowHigh();
@@ -1340,7 +1355,8 @@ namespace Luminous
 
   void RenderContext::useCurrentBlendMode()
   {
-    //Radiant::info("RenderContext::useCurrentBlendMode # %s", blendFuncNames()[m_data->m_blendFunc]);
+    //Radiant::info("RenderContext::useCurrentBlendMode # %s",
+    // blendFuncNames()[m_data->m_blendFunc]);
 
     if(m_data->m_blendFunc == BLEND_NONE) {
       glDisable(GL_BLEND);
@@ -1455,6 +1471,43 @@ namespace Luminous
     }
 
     return (*it).second.m_context;
+  }
+
+  void RenderContext::bindTexture(GLenum textureType, GLenum textureUnit,
+                                    GLuint textureId)
+  {
+    unsigned textureIndex = textureUnit - GL_TEXTURE0;
+
+    assert(textureIndex < Internal::MAX_TEXTURES);
+
+    if(m_data->m_textures[textureIndex] == textureId) {
+      return;
+    }
+
+    if(m_data->m_textures[textureIndex]) {
+      flush();
+    }
+
+    m_data->m_textures[textureIndex] = textureId;
+
+    glActiveTexture(textureUnit);
+    glBindTexture(textureType, textureId);
+  }
+
+  void RenderContext::bindProgram(GLSLProgramObject * program)
+  {
+    if(m_data->m_program != program) {
+      if(program)
+        glUseProgram(program->m_handle);
+      else
+        glUseProgram(0);
+      m_data->m_program = program;
+    }
+  }
+
+  void RenderContext::flush()
+  {
+
   }
 
   Luminous::GLContext * RenderContext::glContext()
