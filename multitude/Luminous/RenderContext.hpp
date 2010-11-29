@@ -324,7 +324,10 @@ namespace Luminous
         @param area The rectangle to drawn **/
     void drawTexRect(const Nimble::Rect & area, const float * rgba);
 
-    void drawRect(const Nimble::Rect & area, const Style & fill);
+    void drawRect(const Nimble::Rect & area, const Luminous::Style & fill);
+    void drawRectWithHole(const Nimble::Rect & area,
+                          const Nimble::Rect & hole,
+                          const Luminous::Style & fill);
 
     /// Sets the current blend function, and enables blending
     /** If the function is BLEND_NONE, then blending is disabled.
@@ -376,6 +379,9 @@ namespace Luminous
     void bindProgram(GLSLProgramObject * program);
 
     void flush();
+
+  protected:
+    virtual void beforeTransformChange();
   private:
     void drawCircleWithSegments(Nimble::Vector2f center, float radius, const float *rgba, int segments);
     void drawCircleImpl(Nimble::Vector2f center, float radius, const float *rgba);

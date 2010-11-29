@@ -655,6 +655,10 @@ namespace Luminous
     m_data->initialize();
     m_data->m_recursionDepth = 0;
     m_data->m_frameCount++;
+    m_data->m_vertices.clear();
+    m_data->m_program = 0;
+    m_data->m_basic_shader->bind();
+
 
     // Make sure the clip stack is empty
     while(!m_data->m_clipStack.empty())
@@ -1284,23 +1288,17 @@ namespace Luminous
 
   void RenderContext::drawRect(const Nimble::Rect & area, const Style & style)
   {
-    // info("RenderContext::drawRect");
-
-    // m_data->m_vertices.clear();
-
     Internal::Vertex v;
     v.m_color = style.color();
     v.m_useTexture = style.texturing();
 
-    GLSLProgramObject & prog = *m_data->m_basic_shader;
-    prog.bind();
-    prog.setUniformMatrix4("view_transform", m_data->m_viewTransform);
-    prog.setUniformMatrix3("object_transform", transform());
-
-    m_data->m_vertices.clear();
+    // GLSLProgramObject & prog = *m_data->m_basic_shader;
+    // prog.bind();
 
     v.m_location = area.low();
     v.m_texCoord = style.texCoords().lowHigh();
+    if(!m_data->m_vertices.empty())
+      m_data->m_vertices.push_back(v);
     m_data->m_vertices.push_back(v);
 
     v.m_location = area.highLow();
@@ -1314,33 +1312,46 @@ namespace Luminous
     v.m_location = area.high();
     v.m_texCoord = style.texCoords().highLow();
     m_data->m_vertices.push_back(v);
+    m_data->m_vertices.push_back(v);
+  }
 
-    /* for(int i = 0; i < 4; i++) {
-      Nimble::Vector4 p = proj(m_data->m_viewTransform, transform(),
-                                   m_data->m_vertices[i].m_location);
-      info("V[%d] = [%f %f %f %f]", i, p.x, p.y, p.z, p.w);
-    }
-    */
+  void RenderContext::drawRectWithHole(const Nimble::Rect & area,
+                                       const Nimble::Rect & hole,
+                                       const Luminous::Style & style)
+  {
+    Internal::Vertex v;
+    v.m_color = style.color();
+    v.m_useTexture = false;
 
-    const int vsize = sizeof(Internal::Vertex);
+    v.m_location = area.low();
 
-    Internal::Vertex & vr = m_data->m_vertices[0];
+    if(!m_data->m_vertices.empty())
+      m_data->m_vertices.push_back(v);
+    m_data->m_vertices.push_back(v);
 
-    VertexAttribArrayStep ls(prog.getAttribLoc("location"), 2, GL_FLOAT,
-                             vsize, & vr.m_location);
-    VertexAttribArrayStep cs(prog.getAttribLoc("color"), 4, GL_FLOAT,
-                             vsize, & vr.m_color);
-    VertexAttribArrayStep ts(prog.getAttribLoc("tex_coord"), 4, GL_FLOAT,
-                             vsize, & vr.m_texCoord);
-    VertexAttribArrayStep ut(prog.getAttribLoc("use_tex"), 1, GL_FLOAT,
-                             vsize, & vr.m_useTexture);
+    v.m_location = hole.low();
+    m_data->m_vertices.push_back(v);
 
-    // info("RenderContext::drawRect # almost");
+    v.m_location = area.highLow();
+    m_data->m_vertices.push_back(v);
+    v.m_location = hole.highLow();
+    m_data->m_vertices.push_back(v);
 
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    v.m_location = area.high();
+    m_data->m_vertices.push_back(v);
+    v.m_location = hole.high();
+    m_data->m_vertices.push_back(v);
 
-    prog.unbind();
-    // info("RenderContext::drawRect # EXIT");
+    v.m_location = area.lowHigh();
+    m_data->m_vertices.push_back(v);
+    v.m_location = hole.lowHigh();
+    m_data->m_vertices.push_back(v);
+
+    v.m_location = area.low();
+    m_data->m_vertices.push_back(v);
+    v.m_location = hole.low();
+    m_data->m_vertices.push_back(v);
+    m_data->m_vertices.push_back(v);
   }
 
   Nimble::Vector2 RenderContext::contextSize() const
@@ -1509,8 +1520,38 @@ namespace Luminous
 
   void RenderContext::flush()
   {
+    if(!m_data->m_vertices.size())
+      return;
 
+    const int vsize = sizeof(Internal::Vertex);
+
+    Internal::Vertex & vr = m_data->m_vertices[0];
+
+    GLSLProgramObject & prog = * m_data->m_program;
+
+    prog.setUniformMatrix4("view_transform", m_data->m_viewTransform);
+    prog.setUniformMatrix3("object_transform", transform());
+
+    VertexAttribArrayStep ls(prog.getAttribLoc("location"), 2, GL_FLOAT,
+                             vsize, & vr.m_location);
+    VertexAttribArrayStep cs(prog.getAttribLoc("color"), 4, GL_FLOAT,
+                             vsize, & vr.m_color);
+    VertexAttribArrayStep ts(prog.getAttribLoc("tex_coord"), 4, GL_FLOAT,
+                             vsize, & vr.m_texCoord);
+    VertexAttribArrayStep ut(prog.getAttribLoc("use_tex"), 1, GL_FLOAT,
+                             vsize, & vr.m_useTexture);
+
+    // info("RenderContext::drawRect # almost");
+
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, m_data->m_vertices.size());
+    m_data->m_vertices.clear();
   }
+
+  void RenderContext::beforeTransformChange()
+  {
+    flush();
+  }
+
 
   Luminous::GLContext * RenderContext::glContext()
   {
