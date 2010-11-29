@@ -12,7 +12,7 @@ SUBDIRS += Resonant
 SUBDIRS += Screenplay
 SUBDIRS += VideoDisplay
 SUBDIRS += Box2D
-SUBDIRS += Posh
+#SUBDIRS += Posh
 
 exists(Examples/Examples.pro):SUBDIRS += Examples
 
