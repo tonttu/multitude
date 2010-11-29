@@ -681,6 +681,7 @@ namespace Luminous
   void RenderContext::popViewTransform()
   {
     if(!m_data->m_viewTransformStack.empty()) {
+      flush();
       m_data->m_viewTransformStack.pop_back();
       if(!m_data->m_viewTransformStack.empty()) {
         m_data->m_viewTransform = m_data->m_viewTransformStack.back();
@@ -694,6 +695,7 @@ namespace Luminous
   void RenderContext::setViewTransform(const Nimble::Matrix4 & m)
   {
     // Radiant::info("NEW View matrix = %s", Radiant::FixedStr256(m, 5).str());
+    flush();
 
     m_data->m_viewTransform = m;
   }
@@ -1541,10 +1543,10 @@ namespace Luminous
     VertexAttribArrayStep ut(prog.getAttribLoc("use_tex"), 1, GL_FLOAT,
                              vsize, & vr.m_useTexture);
 
-    // info("RenderContext::drawRect # almost");
-
+    // info("RenderContext::flush # %d vertices", (int) m_data->m_vertices.size());
     glDrawArrays(GL_TRIANGLE_STRIP, 0, m_data->m_vertices.size());
     m_data->m_vertices.clear();
+
   }
 
   void RenderContext::beforeTransformChange()
