@@ -25,9 +25,9 @@ LIB_RADIANT = -lRadiant -lPatterns
 LIB_RESONANT = -lResonant
 !iphone*:LIB_SCREENPLAY = -lScreenplay
 !iphoeneLIB_VIDEODISPLAY = -lVideoDisplay
-LIB_VALUABLE = -lValuable
+LIB_VALUABLE = -lValuable 
 LIB_PATTERNS = -lPatterns
-
+LIB_V8 = -lv8
 LIB_BOX2D = -lBox2D
 
 MULTI_LIB_FLAG = -L
