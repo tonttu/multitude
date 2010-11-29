@@ -53,8 +53,8 @@ namespace Radiant {
 ///////////////////////////////////////////////////////////////////////////////
 
   Thread::Thread()
-    : m_state(STOPPED),
-	m_d(new D(this))
+    : m_d(new D(this)),
+    m_state(STOPPED)
   {}
 
   Thread::~Thread()
@@ -66,7 +66,7 @@ namespace Radiant {
 
   Thread::id_t Thread::myThreadId()
   {
-	  return reinterpret_cast<size_t> (QThread::currentThreadId());
+    return reinterpret_cast<void*> (QThread::currentThread());
   }
 
   bool Thread::run(bool /*prefer_system*/)
