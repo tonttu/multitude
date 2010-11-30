@@ -24,6 +24,8 @@
 #include "GLSLProgramObject.hpp"
 
 #include <Radiant/FixedStr.hpp>
+#include <Radiant/Mutex.hpp>
+#include <Radiant/Thread.hpp>
 
 #include <strings.h>
 
@@ -188,6 +190,7 @@ namespace Luminous
   class RenderContext::Internal
   {
   public:
+    enum { MAX_TEXTURES = 64 };
 
     Internal(const Luminous::MultiHead::Window * win)
         : m_recursionLimit(DEFAULT_RECURSION_LIMIT),
@@ -200,7 +203,8 @@ namespace Luminous
         m_glContext(new GLDummyContext),
         m_boundProgram(0),
         m_initialized(false),
-        m_blendFunc(BLEND_USUAL)
+        m_blendFunc(BLEND_USUAL),
+        m_program(0)
     {
       m_viewTransform.identity();
       m_viewTransformStack.push_back(m_viewTransform);
@@ -209,6 +213,8 @@ namespace Luminous
 
       m_verts.resize(10000);
       m_verts.clear();
+
+      bzero(m_textures, sizeof(m_textures));
     }
 
     ~Internal()
@@ -305,6 +311,9 @@ namespace Luminous
         m_viewFBO.reset(new Luminous::Framebuffer());
         info("RenderContext::Internal # init ok");
       }
+
+      bzero(m_textures, sizeof(m_textures));
+      m_program = 0;
 
       while(!m_drawBufferStack.empty())
         m_drawBufferStack.pop();
@@ -470,6 +479,9 @@ namespace Luminous
     bool m_initialized;
 
     BlendFunc m_blendFunc;
+
+    GLenum m_textures[MAX_TEXTURES];
+    GLSLProgramObject * m_program;
   };
 
   void RenderContext::Internal::drawPolyLine(RenderContext& r, const Nimble::Vector2f * vertices, int n,
@@ -606,9 +618,21 @@ namespace Luminous
     delete m_data;
   }
 
-  void RenderContext::setWindow(const Luminous::MultiHead::Window * window)
+  void RenderContext::setWindow(const Luminous::MultiHead::Window * window,
+                                const Luminous::MultiHead::Area * area)
   {
     m_data->m_window = window;
+    m_data->m_area = area;
+  }
+
+  const Luminous::MultiHead::Window * RenderContext::window() const
+  {
+    return m_data->m_window;
+  }
+
+  const Luminous::MultiHead::Area * RenderContext::area() const
+  {
+    return m_data->m_area;
   }
 
   std::string RenderContext::locateStandardShader(const std::string & filename)
@@ -631,6 +655,10 @@ namespace Luminous
     m_data->initialize();
     m_data->m_recursionDepth = 0;
     m_data->m_frameCount++;
+    m_data->m_vertices.clear();
+    m_data->m_program = 0;
+    m_data->m_basic_shader->bind();
+
 
     // Make sure the clip stack is empty
     while(!m_data->m_clipStack.empty())
@@ -653,6 +681,7 @@ namespace Luminous
   void RenderContext::popViewTransform()
   {
     if(!m_data->m_viewTransformStack.empty()) {
+      flush();
       m_data->m_viewTransformStack.pop_back();
       if(!m_data->m_viewTransformStack.empty()) {
         m_data->m_viewTransform = m_data->m_viewTransformStack.back();
@@ -666,6 +695,7 @@ namespace Luminous
   void RenderContext::setViewTransform(const Nimble::Matrix4 & m)
   {
     // Radiant::info("NEW View matrix = %s", Radiant::FixedStr256(m, 5).str());
+    flush();
 
     m_data->m_viewTransform = m;
   }
@@ -709,18 +739,21 @@ namespace Luminous
 
   bool RenderContext::isVisible(const Nimble::Rectangle & area)
   {
-//      Radiant::info("RenderContext::isVisible # area (%f,%f) (%f,%f)", area.center().x, area.center().y, area.size().x, area.size().y);
+    // Radiant::info("RenderContext::isVisible # area (%f,%f) (%f,%f)",
+    // area.center().x, area.center().y, area.size().x, area.size().y);
 
       if(m_data->m_clipStack.empty()) {
         Radiant::debug("\tclip stack is empty");
         return true;
       } else {
 
-          // Since we have no proper clipping algorithm, we compare against every clip rectangle in the stack
+          /* Since we have no proper clipping algorithm, we compare against
+             every clip rectangle in the stack*/
           bool inside = true;
 
           // Why does const_reverse_iterator not work on OSX :(
-          for(std::vector<Nimble::Rectangle>::reverse_iterator it = m_data->m_clipStack.rbegin(); it != m_data->m_clipStack.rend(); it++) {
+          for(std::vector<Nimble::Rectangle>::reverse_iterator it =
+              m_data->m_clipStack.rbegin(); it != m_data->m_clipStack.rend(); it++) {
             inside &= (*it).intersects(area);
           }
 
@@ -729,7 +762,9 @@ namespace Luminous
 
           bool inside = m_data->m_clipStack.top().intersects(area);
 
-          Radiant::info("\tclip area (%f,%f) (%f,%f) : inside %d", clipArea.center().x, clipArea.center().y, clipArea.size().x, clipArea.size().y, inside);
+          Radiant::info("\tclip area (%f,%f) (%f,%f) : inside %d",
+          clipArea.center().x, clipArea.center().y, clipArea.size().x,
+          clipArea.size().y, inside);
           */
 
           return inside;
@@ -900,7 +935,10 @@ namespace Luminous
     }
   }
 
-  void RenderContext::drawArc(Nimble::Vector2f center, float radius, float fromRadians, float toRadians, float width, float blendWidth, const float * color, int linesegments)
+  void RenderContext::drawArc(Nimble::Vector2f center, float radius,
+                              float fromRadians, float toRadians,
+                              float width, float blendWidth, const float * color,
+                              int linesegments)
   {
     float delta = (toRadians - fromRadians) / linesegments;
 
@@ -958,7 +996,10 @@ namespace Luminous
     }
   }
 
-  void RenderContext::drawWedge(Nimble::Vector2f center, float radius1, float radius2, float fromRadians, float toRadians, float width, float blendWidth, const float *rgba, int segments)
+  void RenderContext::drawWedge(Nimble::Vector2f center, float radius1,
+                                float radius2, float fromRadians, float toRadians,
+                                float width, float blendWidth, const float *rgba,
+                                int segments)
   {
     // Draw two arcs
     drawArc(center, radius1, fromRadians, toRadians, width, blendWidth, rgba, segments);
@@ -966,11 +1007,15 @@ namespace Luminous
 
     // Draw sector edges
     /// @todo these look a bit crappy as the blending doesn't match the arcs properly
-    Nimble::Vector2f p0 = center + radius1 * Nimble::Vector2f(cos(fromRadians), sin(fromRadians));
-    Nimble::Vector2f p1 = center + radius2 * Nimble::Vector2f(cos(fromRadians), sin(fromRadians));
+    Nimble::Vector2f p0 =
+        center + radius1 * Nimble::Vector2f(cos(fromRadians), sin(fromRadians));
+    Nimble::Vector2f p1 =
+        center + radius2 * Nimble::Vector2f(cos(fromRadians), sin(fromRadians));
 
-    Nimble::Vector2f p2 = center + radius1 * Nimble::Vector2f(cos(toRadians), sin(toRadians));
-    Nimble::Vector2f p3 = center + radius2 * Nimble::Vector2f(cos(toRadians), sin(toRadians));
+    Nimble::Vector2f p2 =
+        center + radius1 * Nimble::Vector2f(cos(toRadians), sin(toRadians));
+    Nimble::Vector2f p3 =
+        center + radius2 * Nimble::Vector2f(cos(toRadians), sin(toRadians));
 
     drawLine(p0, p1, width, rgba);
     drawLine(p2, p3, width, rgba);
@@ -1026,7 +1071,8 @@ namespace Luminous
         Vector2 p1234 = 0.5f*(p123 + p234);
 
         ///@todo could do collinearity detection
-        if (level != 0 && (level > 20 || fabs( (p1234 - 0.5f*(p1+p4)).lengthSqr() ) < 1e-1f)) {
+        if (level != 0 && (level > 20 ||
+                           fabs( (p1234 - 0.5f*(p1+p4)).lengthSqr() ) < 1e-1f)) {
           //points.push_back(p1);
           //points.push_back(p4);
           points.push_back(p23);
@@ -1046,7 +1092,8 @@ namespace Luminous
     drawPolyLine(&points[0], (int) points.size(), width, rgba);
   }
 
-  void RenderContext::drawSpline(Nimble::Interpolating & s, float width, const float * rgba, float step)
+  void RenderContext::drawSpline(Nimble::Interpolating & s,
+                                 float width, const float * rgba, float step)
   {
     const float len = s.size();
 
@@ -1248,33 +1295,17 @@ namespace Luminous
 
   void RenderContext::drawRect(const Nimble::Rect & area, const Style & style)
   {
-    // info("RenderContext::drawRect");
-
-    m_data->m_vertices.clear();
-
     Internal::Vertex v;
     v.m_color = style.color();
     v.m_useTexture = style.texturing();
 
-    GLSLProgramObject & prog = *m_data->m_basic_shader;
-    prog.bind();
-    Nimble::Matrix4 tmp4;
-    tmp4.identity();
-    prog.setUniformMatrix4("view_transform", m_data->m_viewTransform);
-    // prog.setUniformMatrix4("view_transform", tmp4);
-    // Radiant::info("View matrix = %s", Radiant::FixedStr256(m_data->m_viewTransform).str());
-    prog.setUniformMatrix3("object_transform", transform());
-    // Radiant::info("Object matrix = %s", Radiant::FixedStr256(transform()).str());
-
-    /*Nimble::Matrix3 tmp;
-    tmp.identity();
-    if(!prog.setUniformMatrix3("object_transform", tmp))
-      fatal("RenderContext::drawRect # could not set object_transform");
-*/
-    // assert(prog.setUniformFloat("move", 0.0));
+    // GLSLProgramObject & prog = *m_data->m_basic_shader;
+    // prog.bind();
 
     v.m_location = area.low();
     v.m_texCoord = style.texCoords().lowHigh();
+    if(!m_data->m_vertices.empty())
+      m_data->m_vertices.push_back(v);
     m_data->m_vertices.push_back(v);
 
     v.m_location = area.highLow();
@@ -1288,33 +1319,46 @@ namespace Luminous
     v.m_location = area.high();
     v.m_texCoord = style.texCoords().highLow();
     m_data->m_vertices.push_back(v);
+    m_data->m_vertices.push_back(v);
+  }
 
-    /* for(int i = 0; i < 4; i++) {
-      Nimble::Vector4 p = proj(m_data->m_viewTransform, transform(),
-                                   m_data->m_vertices[i].m_location);
-      info("V[%d] = [%f %f %f %f]", i, p.x, p.y, p.z, p.w);
-    }
-    */
+  void RenderContext::drawRectWithHole(const Nimble::Rect & area,
+                                       const Nimble::Rect & hole,
+                                       const Luminous::Style & style)
+  {
+    Internal::Vertex v;
+    v.m_color = style.color();
+    v.m_useTexture = false;
 
-    const int vsize = sizeof(Internal::Vertex);
+    v.m_location = area.low();
 
-    Internal::Vertex & vr = m_data->m_vertices[0];
+    if(!m_data->m_vertices.empty())
+      m_data->m_vertices.push_back(v);
+    m_data->m_vertices.push_back(v);
 
-    VertexAttribArrayStep ls(prog.getAttribLoc("location"), 2, GL_FLOAT,
-                             vsize, & vr.m_location);
-    VertexAttribArrayStep cs(prog.getAttribLoc("color"), 4, GL_FLOAT,
-                             vsize, & vr.m_color);
-    VertexAttribArrayStep ts(prog.getAttribLoc("tex_coord"), 4, GL_FLOAT,
-                             vsize, & vr.m_texCoord);
-    VertexAttribArrayStep ut(prog.getAttribLoc("use_tex"), 1, GL_FLOAT,
-                             vsize, & vr.m_useTexture);
+    v.m_location = hole.low();
+    m_data->m_vertices.push_back(v);
 
-    // info("RenderContext::drawRect # almost");
+    v.m_location = area.highLow();
+    m_data->m_vertices.push_back(v);
+    v.m_location = hole.highLow();
+    m_data->m_vertices.push_back(v);
 
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    v.m_location = area.high();
+    m_data->m_vertices.push_back(v);
+    v.m_location = hole.high();
+    m_data->m_vertices.push_back(v);
 
-    prog.unbind();
-    // info("RenderContext::drawRect # EXIT");
+    v.m_location = area.lowHigh();
+    m_data->m_vertices.push_back(v);
+    v.m_location = hole.lowHigh();
+    m_data->m_vertices.push_back(v);
+
+    v.m_location = area.low();
+    m_data->m_vertices.push_back(v);
+    v.m_location = hole.low();
+    m_data->m_vertices.push_back(v);
+    m_data->m_vertices.push_back(v);
   }
 
   Nimble::Vector2 RenderContext::contextSize() const
@@ -1331,7 +1375,8 @@ namespace Luminous
 
   void RenderContext::useCurrentBlendMode()
   {
-    //Radiant::info("RenderContext::useCurrentBlendMode # %s", blendFuncNames()[m_data->m_blendFunc]);
+    //Radiant::info("RenderContext::useCurrentBlendMode # %s",
+    // blendFuncNames()[m_data->m_blendFunc]);
 
     if(m_data->m_blendFunc == BLEND_NONE) {
       glDisable(GL_BLEND);
@@ -1399,6 +1444,121 @@ namespace Luminous
     delete m_data->m_glContext;
     m_data->m_glContext = ctx;
   }
+
+  // Doesn't work under windows where pthread_t (id_t) is a struct
+  //typedef std::map<Thread::id_t, RenderContext *> ResourceMap;
+  class TGLRes
+  {
+  public:
+    TGLRes() : m_context(0) {}
+    RenderContext       * m_context;
+  };
+
+#ifndef WIN32
+  typedef std::map<Radiant::Thread::id_t, TGLRes> ResourceMap;
+#else
+  typedef std::map<unsigned int, TGLRes> ResourceMap;
+#endif
+
+  static ResourceMap __resources;
+  static MutexStatic __mutex;
+
+  void RenderContext::setThreadContext(RenderContext * rsc)
+  {
+    GuardStatic g(&__mutex);
+    TGLRes tmp;
+    tmp.m_context = rsc;
+#ifndef WIN32
+    __resources[Radiant::Thread::myThreadId()] = tmp;
+#else
+    __resources[0] = tmp;
+#endif
+  }
+
+  RenderContext * RenderContext::getThreadContext()
+  {
+    GuardStatic g(&__mutex);
+
+#ifndef WIN32
+    ResourceMap::iterator it = __resources.find(Radiant::Thread::myThreadId());
+#else
+    ResourceMap::iterator it = __resources.find(0);
+#endif
+
+    if(it == __resources.end()) {
+      debug("No OpenGL resources for current thread");
+      return 0;
+    }
+
+    return (*it).second.m_context;
+  }
+
+  void RenderContext::bindTexture(GLenum textureType, GLenum textureUnit,
+                                    GLuint textureId)
+  {
+    unsigned textureIndex = textureUnit - GL_TEXTURE0;
+
+    assert(textureIndex < Internal::MAX_TEXTURES);
+
+    if(m_data->m_textures[textureIndex] == textureId) {
+      return;
+    }
+
+    if(m_data->m_textures[textureIndex]) {
+      flush();
+    }
+
+    m_data->m_textures[textureIndex] = textureId;
+
+    glActiveTexture(textureUnit);
+    glBindTexture(textureType, textureId);
+  }
+
+  void RenderContext::bindProgram(GLSLProgramObject * program)
+  {
+    if(m_data->m_program != program) {
+      if(program)
+        glUseProgram(program->m_handle);
+      else
+        glUseProgram(0);
+      m_data->m_program = program;
+    }
+  }
+
+  void RenderContext::flush()
+  {
+    if(!m_data->m_vertices.size())
+      return;
+
+    const int vsize = sizeof(Internal::Vertex);
+
+    Internal::Vertex & vr = m_data->m_vertices[0];
+
+    GLSLProgramObject & prog = * m_data->m_program;
+
+    prog.setUniformMatrix4("view_transform", m_data->m_viewTransform);
+    prog.setUniformMatrix3("object_transform", transform());
+
+    VertexAttribArrayStep ls(prog.getAttribLoc("location"), 2, GL_FLOAT,
+                             vsize, & vr.m_location);
+    VertexAttribArrayStep cs(prog.getAttribLoc("color"), 4, GL_FLOAT,
+                             vsize, & vr.m_color);
+    VertexAttribArrayStep ts(prog.getAttribLoc("tex_coord"), 4, GL_FLOAT,
+                             vsize, & vr.m_texCoord);
+    VertexAttribArrayStep ut(prog.getAttribLoc("use_tex"), 1, GL_FLOAT,
+                             vsize, & vr.m_useTexture);
+
+    // info("RenderContext::flush # %d vertices", (int) m_data->m_vertices.size());
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, m_data->m_vertices.size());
+    m_data->m_vertices.clear();
+
+  }
+
+  void RenderContext::beforeTransformChange()
+  {
+    flush();
+  }
+
 
   Luminous::GLContext * RenderContext::glContext()
   {

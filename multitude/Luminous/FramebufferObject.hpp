@@ -56,7 +56,7 @@ namespace Luminous
   {
   public:
     /// Creates an empty Renderbuffer object
-    Renderbuffer(Luminous::GLResources * res = 0);
+    Renderbuffer(Luminous::RenderContext * res = 0);
     ~Renderbuffer();
 
     /// Binds the buffer and creates it if necessary.
@@ -83,7 +83,7 @@ namespace Luminous
   {
   public:
     /// Creates an empty FrameBuffer object
-    Framebuffer(Luminous::GLResources * res = 0);
+    Framebuffer(Luminous::RenderContext * res = 0);
     ~Framebuffer();
 
     /// Binds the framebuffer

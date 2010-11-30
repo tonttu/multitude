@@ -38,7 +38,7 @@ namespace Luminous
 
     if(m_textureId)  {
       glDeleteTextures(1, &m_textureId);
-      Radiant::debug("Deallocated texture %.5d %p", (int) m_textureId, resources());
+      Radiant::debug("Deallocated texture %.5d %p", (int) m_textureId, context());
     }
     changeByteConsumption(consumesBytes(), 0);
   }
@@ -48,8 +48,18 @@ namespace Luminous
   {
     if(!m_textureId) {
       glGenTextures(1, & m_textureId);
-      Radiant::debug("Allocated texture %.5d %p", (int) m_textureId, resources());
+      Radiant::debug("Allocated texture %.5d %p", (int) m_textureId, context());
     }
+  }
+
+  template <GLenum TextureType>
+      void TextureT<TextureType>::bind(GLenum textureUnit)
+  {
+    allocate();
+    if(context() == 0)
+      fatal("TextureT::bind # NULL context");
+
+    context()->bindTexture(TextureType, textureUnit, m_textureId);
   }
 
   template class TextureT<GL_TEXTURE_2D>;
@@ -60,19 +70,19 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////////////
 #ifndef LUMINOUS_OPENGLES
 
-  Texture1D * Texture1D::fromImage(Luminous::Image & image, bool buildMipmaps, GLResources * resources)
+  Texture1D * Texture1D::fromImage(Luminous::Image & image, bool buildMipmaps, RenderContext * context)
   {
     return fromBytes(GL_RGBA, image.height(), image.bytes(), image.pixelFormat(),
-                     buildMipmaps, resources);
+                     buildMipmaps, context);
   }
 
   Texture1D* Texture1D::fromBytes(GLenum internalFormat,
                                   int h,
                                   const void* data,
                                   const PixelFormat& srcFormat, bool buildMipmaps,
-                                  GLResources * resources)
+                                  RenderContext * context)
   {
-    Texture1D * tex = new Texture1D(resources);
+    Texture1D * tex = new Texture1D(context);
 
     if(!tex->loadBytes(internalFormat, h, data, srcFormat, buildMipmaps)) {
       delete tex;
@@ -242,7 +252,7 @@ namespace Luminous
       GLint width = w;
 #ifndef LUMINOUS_OPENGLES
 
-      if(resources() && !resources()->isBrokenProxyTexture2D()) {
+      if(context() && !context()->isBrokenProxyTexture2D()) {
         /* On ATI/Linux combination it seems that the GL_PROXY_TEXTURE_2D is
          broken, and cannot be trusted to give correct answers.
          It will at times fail with 1024x768 RGB textures. Sigh. */
@@ -392,13 +402,13 @@ namespace Luminous
 
 
   Texture2D* Texture2D::fromImage
-      (Luminous::Image & image, bool buildMipmaps, GLResources * resources)
+      (Luminous::Image & image, bool buildMipmaps, RenderContext * context)
   {
     return fromBytes(GL_RGBA, image.width(), image.height(), image.bytes(), image.pixelFormat(),
-                     buildMipmaps, resources);
+                     buildMipmaps, context);
   }
 
-  Texture2D * Texture2D::fromFile(const char * filename, bool buildMipmaps, GLResources * rs)
+  Texture2D * Texture2D::fromFile(const char * filename, bool buildMipmaps, RenderContext * rs)
   {
     Luminous::Image img;
     if(!img.read(filename)) return 0;
@@ -409,7 +419,7 @@ namespace Luminous
   Texture2D* Texture2D::fromBytes(GLenum internalFormat, int w, int h,
                                   const void* data,
                                   const PixelFormat& srcFormat,
-                                  bool buildMipmaps, GLResources * resources)
+                                  bool buildMipmaps, RenderContext * context)
   {
 #ifndef LUMINOUS_OPENGLES
 
@@ -426,7 +436,7 @@ namespace Luminous
 #endif // LUMINOUS_OPENGLES
 
 
-    Texture2D* tex = new Texture2D(resources);
+    Texture2D* tex = new Texture2D(context);
     if(!tex->loadBytes(internalFormat, w, h, data, srcFormat, buildMipmaps)) {
       delete tex;
       return 0;

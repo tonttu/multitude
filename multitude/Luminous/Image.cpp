@@ -733,7 +733,7 @@ dest = *this;
     }
   }
 
-  void ImageTex::bind(GLResources * resources, GLenum textureUnit, bool withmimaps)
+  void ImageTex::bind(RenderContext * resources, GLenum textureUnit, bool withmimaps)
   {
     // Luminous::Utils::glCheck("ImageTex::bind # 0");
 
@@ -750,13 +750,13 @@ dest = *this;
     }
   }
 
-  bool ImageTex::isFullyLoadedToGPU(GLResources * resources)
+  bool ImageTex::isFullyLoadedToGPU(RenderContext * resources)
   {
     if(!width() || !height())
       return false;
 
     if(!resources)
-      resources = GLResources::getThreadResources();
+      resources = RenderContext::getThreadContext();
 
     if(!resources->getResource(this))
       return false;
@@ -766,13 +766,13 @@ dest = *this;
     return tex.loadedLines() == (unsigned) height();
   }
 
-  unsigned ImageTex::uploadBytesToGPU(GLResources * resources, unsigned bytes)
+  unsigned ImageTex::uploadBytesToGPU(RenderContext * resources, unsigned bytes)
   {
 
     Utils::glCheck("ImageTex::uploadBytesToGPU # 0");
 
     if(!resources)
-      resources = GLResources::getThreadResources();
+      resources = RenderContext::getThreadContext();
 
     Texture2D & tex = ref(resources);
 
@@ -810,7 +810,7 @@ dest = *this;
     if(limit == 0 && width() == 0)
       return false;
 
-    GLResources * resources = GLResources::getThreadResources();
+    RenderContext * resources = RenderContext::getThreadContext();
     if(isFullyLoadedToGPU(resources)) {
       bind(resources);
       return true;

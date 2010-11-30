@@ -29,7 +29,7 @@
 
 namespace Luminous {
 
-  class GLResources;
+  class RenderContext;
   class GPUMipmaps;
 
   /** Collection of image mipmaps in the RAM/disk of the
@@ -127,9 +127,9 @@ namespace Luminous {
     LUMINOUS_API GPUMipmaps * getGPUMipmaps();
     /// @copydoc getGPUMipmaps
     /// @param rs A pointer to the OpenGL resource container
-    LUMINOUS_API GPUMipmaps * getGPUMipmaps(GLResources * rs);
+    LUMINOUS_API GPUMipmaps * getGPUMipmaps(RenderContext * rs);
     /// Binds a texture that matches the given size parameters.
-    LUMINOUS_API bool bind(GLResources *,
+    LUMINOUS_API bool bind(RenderContext *,
                            const Nimble::Matrix3 & transform,
                            Nimble::Vector2 pixelsize);
 
