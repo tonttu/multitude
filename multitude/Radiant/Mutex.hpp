@@ -85,9 +85,16 @@ namespace Radiant {
     };
 
 
-#ifdef __linux__
-
-    typedef MutexAuto MutexStatic;
+#if 0
+    class MutexStatic : public MutexAuto
+    {
+    public:
+      MutexStatic(bool shared = false,
+                  bool prio_inherit = true,
+                  bool recursive = false)
+                    : MutexAuto (shared, prio_inherit, recursive)
+      {}
+    };
 
 #else
 
