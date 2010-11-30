@@ -99,7 +99,7 @@ namespace Poetic
 
   bool CPUFontBase::load(const char * fontFilePath)
   {
-    Radiant::Guard g( & m_mutex);
+    Radiant::Guard g( m_mutex);
 
     delete m_face;
     m_face = new Face(fontFilePath);

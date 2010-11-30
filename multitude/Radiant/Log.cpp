@@ -38,7 +38,7 @@ namespace Radiant {
     {
       if(!m_file)
         return;
-      Guard g( & m_mutex);
+      Guard g( m_mutex);
       m_messages.push_back(msg);
     }
 
@@ -57,7 +57,7 @@ namespace Radiant {
       while(true) {
         m_ready = true;
         Sleep::sleepS(1);
-        Guard g( & m_mutex);
+        Guard g( m_mutex);
 
         for(container::iterator it = m_messages.begin();
         it != m_messages.end(); it++) {

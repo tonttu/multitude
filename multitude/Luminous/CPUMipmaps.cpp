@@ -58,14 +58,14 @@ namespace Luminous {
 
   void CPUMipmaps::update(float dt, float )
   {
-    Radiant::Guard g(&m_stackMutex);
+    Radiant::Guard g(m_stackMutex);
     for(int i = 0; i < m_maxLevel; i++) {
       m_stack[i].m_unUsed += dt;
     }
     if(!m_keepMaxLevel)
       m_stack[m_maxLevel].m_unUsed += dt;
 
-    Radiant::Guard g2(&m_stackChangeMutex);
+    Radiant::Guard g2(m_stackChangeMutex);
     for(StackMap::iterator it = m_stackChange.begin(); it != m_stackChange.end(); ++it)
       m_stack[it->first] = it->second;
     m_stackChange.clear();
@@ -88,7 +88,7 @@ namespace Luminous {
 
   int CPUMipmaps::getClosest(Nimble::Vector2f size)
   {
-    Radiant::Guard g(&m_stackMutex);
+    Radiant::Guard g(m_stackMutex);
 
     int bestlevel = m_maxLevel;
 
@@ -144,7 +144,7 @@ namespace Luminous {
 
   bool CPUMipmaps::isReady()
   {
-    Radiant::Guard g(&m_stackMutex);
+    Radiant::Guard g(m_stackMutex);
     for(int i = 0; i <= m_maxLevel; i++) {
       CPUItem & ci = m_stack[i];
 
@@ -233,7 +233,7 @@ namespace Luminous {
 
   bool CPUMipmaps::isActive()
   {
-    Radiant::Guard g(&m_stackMutex);
+    Radiant::Guard g(m_stackMutex);
     for(int i = 0; i <= m_maxLevel; i++) {
 
       if(m_stack[i].m_state == WAITING)
@@ -336,7 +336,7 @@ namespace Luminous {
     reschedule(delay+0.0001);
 
     if(!stack.empty()) {
-      Radiant::Guard g(&m_stackChangeMutex);
+      Radiant::Guard g(m_stackChangeMutex);
       for(StackMap::iterator it = stack.begin(); it != stack.end(); ++it)
         m_stackChange[it->first] = it->second;
     }
@@ -344,7 +344,7 @@ namespace Luminous {
 
   CPUMipmaps::CPUItem CPUMipmaps::getStack(int index)
   {
-    Radiant::Guard g(&m_stackMutex);
+    Radiant::Guard g(m_stackMutex);
     assert(index >= 0 && index < (int) m_stack.size());
     const CPUItem item = m_stack[index];
     return item;

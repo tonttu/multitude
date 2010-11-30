@@ -40,7 +40,7 @@ namespace Poetic
 
   Glyph * CPUBitmapFont::makeGlyph(unsigned int glyphIndex)
   {
-    Radiant::Guard g( & m_mutex);
+    Radiant::Guard g( m_mutex);
     
     assert(m_face != 0);
 

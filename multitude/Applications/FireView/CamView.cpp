@@ -181,7 +181,7 @@ namespace FireView {
 
       // qDebug("CamView::InputThread::childLoop # Captured");
 
-      Radiant::Guard g( & m_mutex);
+      Radiant::Guard g( m_mutex);
 
       m_frame.allocateMemory(*img);
 
@@ -450,7 +450,7 @@ namespace FireView {
                         triggerSource, triggerMode, format7);
 
     if(ok) {
-      Radiant::Guard g( & m_thread.m_mutex);
+      Radiant::Guard g( m_thread.m_mutex);
       Radiant::VideoImage frame = m_thread.m_frame;
       move(100, 100);
       resize(frame.width(), frame.height());
@@ -554,7 +554,7 @@ namespace FireView {
 
     if(m_thread.m_frameCount && m_texFrame != m_thread.m_frameCount) {
 
-      Radiant::Guard g( & m_thread.m_mutex);
+      Radiant::Guard g( m_thread.m_mutex);
       Radiant::VideoImage frame = m_thread.m_frame;
 
       if(!m_debayer) {

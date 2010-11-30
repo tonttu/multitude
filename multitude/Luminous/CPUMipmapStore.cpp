@@ -59,7 +59,7 @@ namespace Luminous {
   CPUMipmaps * CPUMipmapStore::acquire(const std::string & filename, bool immediate)
   {
 
-    Radiant::GuardStatic g( & __mutex);
+    Radiant::GuardStatic g( __mutex);
 
     MipMapItemContainer::iterator it = __mipmaps.find(filename);
 
@@ -92,7 +92,7 @@ namespace Luminous {
     if(!mipmaps)
       return;
 
-    Radiant::GuardStatic g( & __mutex);
+    Radiant::GuardStatic g( __mutex);
 
     for(MipMapItemContainer::iterator it = __mipmaps.begin();
     it != __mipmaps.end(); it++) {
@@ -110,7 +110,7 @@ namespace Luminous {
 
   unsigned CPUMipmapStore::count()
   {
-    Radiant::GuardStatic g( & __mutex);
+    Radiant::GuardStatic g( __mutex);
     return (unsigned) __mipmaps.size();
   }
 
