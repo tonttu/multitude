@@ -9,6 +9,9 @@ CONFIG += embed_manifest_exe
 INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
 
+# The Cornerstone version for libraries
+VERSION = 1.1.1
+
 withbundles = $$(MULTI_BUNDLES)
 
 MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat
