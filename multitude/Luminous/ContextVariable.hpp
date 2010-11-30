@@ -17,11 +17,11 @@
 #define LUMINOUS_CONTEXTVARIABLE_HPP
 
 #include "Collectable.hpp"
-#include "GLResources.hpp"
+#include "RenderContext.hpp"
 
 namespace Luminous {
 
-  class GLResources;
+  class RenderContext;
 
   /// Template class for accessing per-context graphics resources
   /** The purpose of this class is to simplify the management of OpenGL resources,
@@ -34,10 +34,10 @@ namespace Luminous {
     virtual ~ContextVariableT() {}
     /// Gets a reference to the OpenGL resource
     /** Before calling this function you should have a valid OpenGL context, with
-        the right GLResources main object set for this thread.
+        the right RenderContext main object set for this thread.
 
         Since this function
-        gets a direct pointer to the GLResources object, it is slightly faster than
+        gets a direct pointer to the RenderContext object, it is slightly faster than
         the function without this argument.
 
         @return Returns a reference to the OpenGL resource.
@@ -54,7 +54,7 @@ namespace Luminous {
         @param rs Pointer to the OpenGL resource container
 
         */
-    inline T & ref(GLResources * rs)
+    inline T & ref(RenderContext * rs)
     {
       if(!rs) {
         return ref();

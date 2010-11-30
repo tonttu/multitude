@@ -1,22 +1,10 @@
 /* COPYRIGHT
- *
- * This file is part of Applications/FireView.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Applications/FireView.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #ifndef FIREVIEW_CAMVIEW_HPP
 #define FIREVIEW_CAMVIEW_HPP
 
-#include <Luminous/GLResources.hpp>
+#include <Luminous/RenderContext.hpp>
 #include <Luminous/Texture.hpp>
 
 #include <Nimble/Rect.hpp>
@@ -44,7 +32,7 @@ namespace FireView {
 
     bool start(uint64_t euid64, Radiant::FrameRate fps, float customFps = 0.0f,
          Radiant::VideoCamera::TriggerSource triggerSource = Radiant::VideoCamera::TriggerSource(-1), Radiant::VideoCamera::TriggerMode triggerMode = Radiant::VideoCamera::TriggerMode(-1),
-	       bool format7 = false);
+           bool format7 = false);
 
     std::vector<Radiant::VideoCamera::CameraFeature> & features()
     { return m_thread.m_features; }
@@ -92,7 +80,7 @@ namespace FireView {
     { m_filtering = !m_filtering; }
 
   protected:
-    
+
     enum HalfToThird {
       AS_HALF,
       AS_VGA_THIRD,
@@ -111,7 +99,7 @@ namespace FireView {
     void grabImageLuminosity(int screenx, int screeny);
     Nimble::Vector2i screenToImage(int screenx, int screeny) const;
     Nimble::Vector2i imageToScreen(Nimble::Vector2i) const;
-    
+
     Rect getEffectiveArea();
     void doAnalysis();
     void checkFocus();
@@ -122,23 +110,23 @@ namespace FireView {
     public:
 
       enum State {
-	UNINITIALIZED,
-	STARTING,
-	FAILED,
-	RUNNING
+    UNINITIALIZED,
+    STARTING,
+    FAILED,
+    RUNNING
       };
-      
+
       friend class CamView;
       InputThread();
       virtual ~InputThread();
 
-      bool start(uint64_t euid64, Radiant::FrameRate fps, 
+      bool start(uint64_t euid64, Radiant::FrameRate fps,
      float customFps, Radiant::VideoCamera::TriggerSource triggerSource, Radiant::VideoCamera::TriggerMode triggerMode,
-		 bool format7);
+         bool format7);
       void stop();
 
       bool isRunning() const { return m_state == RUNNING; }
-      
+
     protected:
 
       virtual void childLoop();
@@ -157,7 +145,7 @@ namespace FireView {
       std::vector<Radiant::VideoCamera::CameraFeature> m_features;
       std::vector<bool> m_featureSend;
       std::vector<bool> m_autoSend;
-      
+
       volatile State m_state;
       volatile bool  m_continue;
       volatile int   m_frameCount;
@@ -211,7 +199,7 @@ namespace FireView {
 
     Analysis   m_averages[AREA_COUNT]; // Grid.
     QImage     m_foo;
-    Luminous::GLResources m_glrs;
+    Luminous::RenderContext m_context;
 
     static bool m_verbose;
     static Radiant::VideoCamera::TriggerPolarity m_triggerPolarity;

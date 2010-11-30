@@ -17,7 +17,7 @@
 
 #include "GPUMipmaps.hpp"
 
-#include <Luminous/GLResources.hpp>
+#include <Luminous/RenderContext.hpp>
 
 #include <Radiant/Directory.hpp>
 #include <Radiant/FileUtils.hpp>
@@ -200,7 +200,7 @@ namespace Luminous {
     return true;
   }
 
-  GPUMipmaps * CPUMipmaps::getGPUMipmaps(GLResources * resources)
+  GPUMipmaps * CPUMipmaps::getGPUMipmaps(RenderContext * resources)
   {
     GLResource * r = resources->getResource(this);
 
@@ -219,10 +219,10 @@ namespace Luminous {
 
   GPUMipmaps * CPUMipmaps::getGPUMipmaps()
   {
-    return getGPUMipmaps(GLResources::getThreadResources());
+    return getGPUMipmaps(RenderContext::getThreadContext());
   }
 
-  bool CPUMipmaps::bind(GLResources * r,
+  bool CPUMipmaps::bind(RenderContext * r,
                         const Nimble::Matrix3 & transform,
                         Nimble::Vector2 pixelsize)
   {

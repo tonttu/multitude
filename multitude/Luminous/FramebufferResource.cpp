@@ -4,7 +4,7 @@
 namespace Luminous
 {
 
-  FramebufferResource::FramebufferResource(Luminous::GLResources * r)
+  FramebufferResource::FramebufferResource(Luminous::RenderContext * r)
     : GLResource(r)
   {}
 

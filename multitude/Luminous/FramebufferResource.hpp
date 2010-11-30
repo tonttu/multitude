@@ -12,7 +12,7 @@ namespace Luminous
   {
   public:
     /// Constructs a new framebuffer resource
-    FramebufferResource(Luminous::GLResources * r = 0);
+    FramebufferResource(Luminous::RenderContext * r = 0);
     virtual ~FramebufferResource();
 
     /// Changes the size of this of the texture. A valid OpenGL context must be active.

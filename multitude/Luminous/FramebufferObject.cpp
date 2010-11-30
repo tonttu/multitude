@@ -24,7 +24,7 @@ using namespace std;
 namespace Luminous
 {
 
-  Renderbuffer::Renderbuffer(Luminous::GLResources * res)
+  Renderbuffer::Renderbuffer(Luminous::RenderContext * res)
     : GLResource(res),
     m_bufferId((GLuint) -1)
   {
@@ -62,7 +62,7 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  Framebuffer::Framebuffer(Luminous::GLResources * res)
+  Framebuffer::Framebuffer(Luminous::RenderContext * res)
     : GLResource(res),
     m_bufferId((GLuint) -1)
   {

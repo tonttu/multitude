@@ -55,8 +55,8 @@ int main(int, char**)
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
-  Luminous::GLResources rsc(Radiant::ResourceLocator::instance());
-  Luminous::GLResources::setThreadResources( & rsc, 0, 0);
+  Luminous::RenderContext rsc;
+  Luminous::RenderContext::setThreadContext( & rsc);
   Luminous::Utils::glUsualBlend();
 
   glColor3f(1.0f, 0.5f, 0.5f);

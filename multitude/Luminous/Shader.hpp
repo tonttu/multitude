@@ -93,7 +93,7 @@ namespace Luminous {
 
     /** Returns a non-compiled OpenGL shader program.
     @param res resource container to associate the shader program with */
-    LUMINOUS_API GLSLProgramObject * program(Luminous::GLResources * res = 0);
+    LUMINOUS_API GLSLProgramObject * program(Luminous::RenderContext * res = 0);
 
     // Adds a ValueObject as a shader attribute
     //LUMINOUS_API void addShaderAttribute(const Valuable::ValueObject *);

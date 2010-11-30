@@ -41,8 +41,6 @@ bool VideoWindow::m_fullScreen = false;
 
 VideoWindow::VideoWindow()
     : m_subCPUFont(0),
-    // m_subGPUFont(0),
-    m_glResources(m_resourceLocator),
     m_showProgress(true),
     m_showSteps(false)
 {
@@ -169,7 +167,7 @@ void VideoWindow::keyPressEvent(QKeyEvent * e)
     m_showSteps = !m_showSteps;
   else if(e->key() == Qt::Key_Escape || e->key() == Qt::Key_Q) {
     makeCurrent();
-    m_glResources.clearResources();
+    m_context.clearResources();
     m_movies.clear();
     QCoreApplication::exit();
   }
@@ -228,7 +226,7 @@ void VideoWindow::paintGL()
 {
   // puts("VideoWindow::paintGL");
 
-  m_glResources.eraseResources();
+  m_context.eraseResources();
   Luminous::GarbageCollector::clear();
 
   Poetic::GPUFont * gpufont = 0;
@@ -306,7 +304,7 @@ void VideoWindow::paintGL()
                  float((index / cols) * itemh), 0.0f);
     index++;
 
-    show.render(& m_glResources,
+    show.render(& m_context,
                 center - span, center + span, 0, gpufont, h);
 
     if(!m_showProgress)
