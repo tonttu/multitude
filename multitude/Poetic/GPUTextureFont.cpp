@@ -272,7 +272,6 @@ namespace Poetic
       used += use;
     }
 #endif
-    glUseProgram(0);
   }
 
   /// exactly the same code as below
@@ -360,7 +359,6 @@ namespace Poetic
 
 #endif
 
-    glUseProgram(0);
   }
 
   void GPUTextureFont::faceSizeChanged()

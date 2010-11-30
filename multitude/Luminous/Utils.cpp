@@ -52,7 +52,7 @@ namespace Luminous {
     glDisable(GL_LIGHTING);
     glDisable(GL_CULL_FACE);
     glDisable(GL_TEXTURE_2D);
-    glUseProgram(0);
+    // glUseProgram(0);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
     glShadeModel(GL_SMOOTH);
@@ -162,7 +162,7 @@ namespace Luminous {
     glDisable(GL_LIGHTING);
     glDisable(GL_CULL_FACE);
     glDisable(GL_TEXTURE_2D);
-    glUseProgram(0);
+    // glUseProgram(0);
     glUsualBlend();
     glEnable(GL_BLEND);
     glShadeModel(GL_SMOOTH);
@@ -1675,6 +1675,8 @@ namespace Luminous {
     while((e = glGetError()) != GL_NO_ERROR) {
 #ifndef LUMINOUS_OPENGLES
       Radiant::error("%s # GL ERROR %s", msg, gluErrorString(e));
+      int *bad = 0;
+      *bad = 123;
 #else
       Radiant::error("%s # GL ERROR %d", msg, (int) e);
 #endif

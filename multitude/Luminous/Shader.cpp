@@ -250,7 +250,9 @@ namespace Luminous {
 
   void Shader::unbind()
   {
-    glUseProgram(0);
+    GLSLProgramObject * p = program();
+    if(p)
+      p->unbind();
   }
 
   GLSLProgramObject * Shader::program(Luminous::RenderContext * res)
