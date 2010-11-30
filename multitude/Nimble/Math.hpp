@@ -103,10 +103,12 @@ namespace Nimble {
 
     /// Returns the square root
     inline float Sqrt(int v) { return sqrtf(float(v)); }
+#ifdef RADIANT_OSX
     /// Returns the square root
     inline double Sqrt(long v) { return sqrt(double(v)); }
     /// Returns the square root
     inline double Sqrt(unsigned long v) { return sqrt(double(v)); }
+#endif
     /// Returns the square root
     inline double Sqrt(int64_t v) { return sqrt(double(v)); }
     /// Returns the square root
