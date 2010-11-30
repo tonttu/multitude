@@ -69,6 +69,8 @@ iphone* {
 }
 
 macx {
+  # Dynamic lookup is the best so that circular references do not matter so much
+  LIBS += -undefined dynamic_lookup
   !iphone* {
     CONFIG += lib_bundle
 
