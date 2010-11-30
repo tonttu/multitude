@@ -1,6 +1,10 @@
 #ifndef LUMINOUS_DUMMYOPENGL_HPP
 #define LUMINOUS_DUMMYOPENGL_HPP
 
+#include <Radiant/Platform.hpp>
+
+#if 0
+
 /* Dummy implementations of various OpenGL functions/macros which are present in
    full OpenGL, but not in OpenGL ES 2.0.
 
@@ -106,4 +110,7 @@ inline void gluOrtho2D(float left, float right, float bot, float top)
   glOrthof(left, right, -1.5f, 1.5f, -1.0f, 1.0f);
 }
 */
+
+#endif // RADIANT_OSX
+
 #endif // DUMMYOPENGL_HPP
