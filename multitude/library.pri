@@ -69,6 +69,8 @@ iphone* {
 }
 
 macx {
+  # LIBS += -flat_namespace -undefined warning
+  LIBS += -undefined dynamic_lookup
   !iphone* {
     CONFIG += lib_bundle
 
