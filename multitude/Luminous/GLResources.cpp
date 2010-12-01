@@ -232,11 +232,8 @@ namespace Luminous
     const MultiHead::Area   * m_area;
   };
 
-#ifndef WIN32
+
   typedef std::map<Thread::id_t, TGLRes> ResourceMap;
-#else
-  typedef std::map<unsigned int, TGLRes> ResourceMap;
-#endif
 
   static ResourceMap __resources;
   static MutexStatic __mutex;
@@ -249,22 +246,15 @@ namespace Luminous
     tmp.m_glr = rsc;
     tmp.m_window = w;
     tmp.m_area = a;
-#ifndef WIN32
+
     __resources[Thread::myThreadId()] = tmp;
-#else
-    __resources[0] = tmp;
-#endif
   }
 
   GLResources * GLResources::getThreadResources()
   {
     GuardStatic g(__mutex);
 
-#ifndef WIN32
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
-#else
-    ResourceMap::iterator it = __resources.find(0);
-#endif
 
     if(it == __resources.end()) {
       debug("No OpenGL resources for current thread");
@@ -278,11 +268,7 @@ namespace Luminous
   {
     GuardStatic g(__mutex);
 
-#ifndef WIN32
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
-#else
-    ResourceMap::iterator it = __resources.find(0);
-#endif
 
     if(it == __resources.end()) {
       error("No OpenGL resources for current thread");
@@ -299,11 +285,7 @@ namespace Luminous
   {
     GuardStatic g(__mutex);
 
-#ifndef WIN32
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
-#else
-    ResourceMap::iterator it = __resources.find(0);
-#endif
 
     if(it == __resources.end()) {
       error("No OpenGL resources for current thread");
@@ -317,11 +299,7 @@ namespace Luminous
   {
     GuardStatic g(__mutex);
 
-#ifndef WIN32
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
-#else
-    ResourceMap::iterator it = __resources.find(0);
-#endif
 
     if(it == __resources.end()) {
       error("No OpenGL resources for current thread");
