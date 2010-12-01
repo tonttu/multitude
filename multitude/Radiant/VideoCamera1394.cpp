@@ -519,7 +519,7 @@ namespace Radiant {
                              FrameRate framerate)
   {
     // Only one thread at a time, just to make things sure.
-    GuardStatic guard(&g_mutex);
+    GuardStatic guard(g_mutex);
 
     /* On some systems, sleep is needed for proper multi-camera operation. Sigh.*/
     Radiant::Sleep::sleepMs(s_openDelay);
@@ -659,7 +659,7 @@ namespace Radiant {
                                     float fps,
                                     int mode)
   {
-    GuardStatic guard(&g_mutex);
+    GuardStatic guard(g_mutex);
 
     Radiant::Sleep::sleepMs(s_openDelay);
 
@@ -1267,7 +1267,7 @@ namespace Radiant {
   size_t CameraDriver1394::queryCameras(std::vector<VideoCamera::CameraInfo> & cameras)
   {
     static MutexStatic s_mutex;
-    GuardStatic guard(&s_mutex);
+    GuardStatic guard(s_mutex);
 
     const char * fname = "CameraDriver1394::queryCameras";
 
