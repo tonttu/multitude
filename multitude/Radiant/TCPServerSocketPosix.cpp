@@ -15,6 +15,7 @@
 
 #include "TCPServerSocket.hpp"
 #include "TCPSocket.hpp"
+#include "Trace.hpp"
 
 #include <arpa/inet.h>
 #include <errno.h>
@@ -25,6 +26,8 @@
 #include <sys/types.h>
 #include <strings.h>
 #include <string.h>
+#include <netdb.h>
+#include <stdio.h>
 
 namespace Radiant
 {
@@ -42,12 +45,13 @@ namespace Radiant
 ////////////////////////////////////////////////////////////////////////////////
 
   TCPServerSocket::TCPServerSocket()
+    : m_d(new D)
   {
-    m_d = new D();
   }
   
   TCPServerSocket::~TCPServerSocket()
   {
+    close();
     delete m_d;
   }
 
@@ -58,48 +62,66 @@ namespace Radiant
     m_d->m_host = host ? host : "";
     m_d->m_port = port;
 
-    m_d->m_fd = socket ( PF_INET, SOCK_STREAM, IPPROTO_TCP );
-    if(m_d->m_fd < 0){
-      return errno;
+    errno = 0;
+    int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if(fd < 0) {
+      int err = errno;
+      error("TCPServerSocket::open # Failed to open TCP socket: %s", strerror(err));
+      return err;
     }
 
-    struct sockaddr_in server_address;
+    struct addrinfo hints;
+    struct addrinfo * result;
 
-    bzero( & server_address, sizeof(server_address));
-    server_address.sin_family = AF_INET;
-    server_address.sin_port = htons((unsigned short)(port));
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
 
-    if(!host || strlen(host) == 0)
-      server_address.sin_addr.s_addr = htonl(INADDR_ANY);
-    else {
-      in_addr * addr = TCPSocket::atoaddr(host);
-      
-      if(!addr)
-        return EHOSTUNREACH;
-      
-      server_address.sin_addr.s_addr = addr->s_addr;
+    char service[32];
+    sprintf(service, "%d", port);
+
+    int s = getaddrinfo(host, service, &hints, &result);
+    if(s) {
+      error("TCPServerSocket::open # getaddrinfo: %s", gai_strerror(s));
+      ::close(fd);
+      return -1;
     }
 
-    if(bind(m_d->m_fd, ( struct sockaddr * ) & server_address,
-	    sizeof ( server_address ) ) < 0 ){
-      close();
-      return errno;
+    struct addrinfo * rp;
+    for(rp = result; rp; rp = rp->ai_next)
+      if(bind(fd, rp->ai_addr, rp->ai_addrlen) != -1)
+        break;
+
+    freeaddrinfo(result);
+
+    if(rp == NULL) {
+      error("TCPServerSocket::open # Failed to bind %s:%d", host ? host : "", port);
+      ::close(fd);
+      return -1;
     }
 
-    if(::listen(m_d->m_fd, maxconnections) != 0) {
-      close();
-      return errno;
+    errno = 0;
+    if(::listen(fd, maxconnections) != 0) {
+      int err = errno;
+      error("TCPServerSocket::open # Failed to listen TCP socket: %s", strerror(err));
+      ::close(fd);
+      return err;
     }
+
+    m_d->m_fd = fd;
 
     return 0;
   }
 
- bool TCPServerSocket::close()
+  bool TCPServerSocket::close()
   {
     if(m_d->m_fd < 0)
       return false;
 
-    ::close(m_d->m_fd);
+    if(::close(m_d->m_fd)) {
+      error("TCPServerSocket::close # Failed to close socket: %s", strerror(errno));
+    }
 
     m_d->m_fd = -1;
 
@@ -108,7 +130,7 @@ namespace Radiant
 
   bool TCPServerSocket::isOpen() const
   {
-    return (m_d->m_fd > 0);
+    return m_d->m_fd >= 0;
   }
 
   bool TCPServerSocket::isPendingConnection(unsigned int waitMicroSeconds)
@@ -127,20 +149,35 @@ namespace Radiant
 
   TCPSocket * TCPServerSocket::accept()
   {
+    if(m_d->m_fd < 0)
+      return 0;
+
     sockaddr newAddress;
     socklen_t addressLength(sizeof(newAddress));
 
     bzero( & newAddress, sizeof(newAddress));
 
-    int fd = ::accept(m_d->m_fd, (sockaddr *) & newAddress, & addressLength);
+    for(;;) {
+      errno = 0;
+      int fd = ::accept(m_d->m_fd, (sockaddr *) & newAddress, & addressLength);
 
-    if(fd < 0)
-      return 0;
+      if(fd >= 0)
+        return new TCPSocket(fd);
 
-    TCPSocket * sock = new TCPSocket(fd);
-    
-    return sock;
+      if(fd < 0) {
+        if(errno == EAGAIN || errno == EWOULDBLOCK) {
+          struct pollfd pfd;
+          pfd.fd = m_d->m_fd;
+          pfd.events = POLLIN;
+          poll(&pfd, 1, 5000);
+        } else {
+          error("TCPServerSocket::accept # %s", strerror(errno));
+          return 0;
+        }
+      }
+    }
+
+    return 0;
   }
-
 }
 

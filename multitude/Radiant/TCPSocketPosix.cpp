@@ -28,47 +28,61 @@
 #include <strings.h>
 #include <string.h>
 #include <iostream>
+#include <stdio.h>
+
 namespace Radiant
 {
 
   class TCPSocket::D {
     public:
-      D() : m_fd(-1), m_port(0) {}
+      D(int fd = -1)
+        : m_fd(fd),
+        m_port(0),
+        m_noDelay(0)
+      {}
+
+      bool setOpts()
+      {
+        if(m_fd < 0) return true;
+
+        bool ok = true;
+
+        if(setsockopt(m_fd, IPPROTO_TCP, TCP_NODELAY, &m_noDelay, sizeof(m_noDelay))) {
+          ok = false;
+          error("Failed to set TCP_NODELAY: %s", strerror(errno));
+        }
+
+        return ok;
+      }
 
       int m_fd;
       int m_port;
+      int m_noDelay;
       std::string m_host;
   };
 
  ////////////////////////////////////////////////////////////////////////////////
  ////////////////////////////////////////////////////////////////////////////////
 
-  TCPSocket::TCPSocket()
+  TCPSocket::TCPSocket() : m_d(new D)
   {
-    m_d = new D();
   }
 
-  TCPSocket::TCPSocket(int fd)
+  TCPSocket::TCPSocket(int fd) : m_d(new D(fd))
   {
-    m_d = new D();
-    m_d->m_fd = fd;
+    m_d->setOpts();
   }
 
   TCPSocket::~TCPSocket()
   {
+    close();
     delete m_d;
   }
 
   bool TCPSocket::setNoDelay(bool noDelay)
   {
-    int yes = noDelay;
-
-    if (setsockopt(m_d->m_fd, IPPROTO_TCP, TCP_NODELAY, (char *) & yes,
-           sizeof(int))) {
-      return false;
-    }
-
-    return true;
+    m_d->m_noDelay = noDelay;
+    return m_d->setOpts();
   }
 
   int TCPSocket::open(const char * host, int port)
@@ -78,25 +92,46 @@ namespace Radiant
     m_d->m_host = host;
     m_d->m_port = port;
 
-    m_d->m_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if(m_d->m_fd < 0)
-      return errno;
+    int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if(fd < 0) {
+      int err = errno;
+      error("TCPSocket::open # Failed to open TCP socket: %s", strerror(err));
+      return err;
+    }
 
-    struct sockaddr_in server_address;
+    struct addrinfo hints;
+    struct addrinfo * result;
 
-    bzero( & server_address, sizeof(server_address));
-    server_address.sin_family = AF_INET;
-    server_address.sin_port = htons((short) port);
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
 
-    in_addr * addr = TCPSocket::atoaddr(host);
+    char service[32];
+    sprintf(service, "%d", port);
 
-    if(!addr)
-      return EHOSTUNREACH;
+    int s = getaddrinfo(host, service, &hints, &result);
+    if(s) {
+      error("TCPSocket::open # getaddrinfo: %s", gai_strerror(s));
+      ::close(fd);
+      return -1;
+    }
 
-    server_address.sin_addr.s_addr = addr->s_addr;
+    struct addrinfo * rp;
+    for(rp = result; rp; rp = rp->ai_next)
+      if(connect(fd, rp->ai_addr, rp->ai_addrlen) != -1)
+        break;
 
-    if(connect(m_d->m_fd, (struct sockaddr *) &server_address, sizeof(server_address)) < 0)
-      return errno;
+    freeaddrinfo(result);
+
+    if(rp == NULL) {
+      error("TCPSocket::open # Failed to connect %s:%d", host, port);
+      ::close(fd);
+      return -1;
+    }
+
+    m_d->m_fd = fd;
+    m_d->setOpts();
 
     return 0;
   }
@@ -106,7 +141,9 @@ namespace Radiant
     if(m_d->m_fd < 0)
       return false;
 
-    ::close(m_d->m_fd);
+    if(::close(m_d->m_fd)) {
+      error("TCPSocket::close # Failed to close socket: %s", strerror(errno));
+    }
 
     m_d->m_fd = -1;
 
@@ -115,47 +152,76 @@ namespace Radiant
 
   bool TCPSocket::isOpen() const
   {
-    return (m_d->m_fd > 0);
+    return m_d->m_fd >= 0;
   }
 
   int TCPSocket::read(void * buffer, int bytes, bool waitfordata)
   {
-    if(m_d->m_fd < 0)
+    if(m_d->m_fd < 0 || bytes < 0)
       return -1;
 
-    int got = 0;
-    char * ptr = (char *) buffer;
+    int pos = 0;
+    char * data = reinterpret_cast<char*>(buffer);
 
-    while(got < bytes && (!waitfordata || isPendingInput(500000))) {
-      int n = ::read(m_d->m_fd, ptr + got, bytes - got);
-std::cout << "LL ";
-      if(n < 0) {
-    error("TCPSocket::read # n < 0");
-    break;
-      }
+    while(pos < bytes) {
+      errno = 0;
+      // int max = bytes - pos > SSIZE_MAX ? SSIZE_MAX : bytes - pos;
+      int max = bytes - pos > 32767 ? 32767 : bytes - pos;
+      int tmp = ::read(m_d->m_fd, data + pos, max);
 
-      got += n;
-
-      if(!waitfordata) {
-    return got;
+      if(tmp > 0) {
+        pos += tmp;
+      } else if(errno == EAGAIN || errno == EWOULDBLOCK) {
+        if(waitfordata) {
+          struct pollfd pfd;
+          pfd.fd = m_d->m_fd;
+          pfd.events = POLLIN;
+          poll(&pfd, 1, 5000);
+        } else {
+          return pos;
+        }
+      } else {
+        error("TCPSocket::readExact # Failed to read: %s", strerror(errno));
+        return pos;
       }
     }
 
-    return got;
+    return pos;
   }
 
   int TCPSocket::write(const void * buffer, int bytes)
   {
-    if(m_d->m_fd < 0)
+    if(m_d->m_fd < 0 || bytes < 0)
       return -1;
 
-    return ::write(m_d->m_fd, buffer, bytes);
+    int pos = 0;
+    const char * data = reinterpret_cast<const char*>(buffer);
+
+    while(pos < bytes) {
+      errno = 0;
+      // int max = bytes - pos > SSIZE_MAX ? SSIZE_MAX : bytes - pos;
+      int max = bytes - pos > 32767 ? 32767 : bytes - pos;
+      int tmp = ::write(m_d->m_fd, data + pos, max);
+      if(tmp > 0) {
+        pos += tmp;
+      } else if(errno == EAGAIN || errno == EWOULDBLOCK) {
+        struct pollfd pfd;
+        pfd.fd = m_d->m_fd;
+        pfd.events = POLLOUT;
+        poll(&pfd, 1, 5000);
+      } else {
+        error("TCPSocket::write # Failed to write: %s", strerror(errno));
+        return pos;
+      }
+    }
+
+    return pos;
   }
 
   bool TCPSocket::isHungUp() const
   {
     if(m_d->m_fd < 0)
-      return false;
+      return true;
 
     struct pollfd pfd;
     bzero( & pfd, sizeof(pfd));
@@ -182,26 +248,8 @@ std::cout << "LL ";
     return pfd.revents & POLLIN;
   }
 
-  /* Converts ascii text to in_addr struct.  NULL is returned if the address
-     can not be found. */
-  struct in_addr * TCPSocket::atoaddr(const char *address)
-
-  {
-    struct hostent *host;
-    static struct in_addr saddr;
-
-    /* First try it as aaa.bbb.ccc.ddd. */
-    saddr.s_addr = inet_addr(address);
-    if ((int) saddr.s_addr != -1) {
-      return &saddr;
-    }
-    host = gethostbyname(address);
-    if (host != NULL) {
-      return (struct in_addr *) *host->h_addr_list;
-    }
-    return NULL;
+  void TCPSocket::moveToThread(Thread *) {
   }
-
 
 }
 
