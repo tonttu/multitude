@@ -145,9 +145,12 @@ win32 {
     CONFIG += qt
     QT = core \
         network
-    PTGREY_PATH = "C:\Program Files\Point Grey Research\FlyCapture2"
-    PTGREY_PATHx64 = "C:\Program Files (x86)\Point Grey Research\FlyCapture2"
-    !(exists($$PTGREY_PATH/include || exists($$PTGREY_PATHx64/include):error(PTGrey driver must be installed on Windows)
+
+    #64bit has different path
+    win64:PTGREY_PATH = "C:\Program Files (x86)\Point Grey Research\FlyCapture2"
+    else:PTGREY_PATH = "C:\Program Files\Point Grey Research\FlyCapture2"
+    !exists($$PTGREY_PATH/include):error(PTGrey driver must be installed on Windows)
+
     DEFINES += CAMERA_DRIVER_PGR
     message(Using PTGrey camera drivers)
     HEADERS += VideoCameraPTGrey.hpp
