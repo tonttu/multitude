@@ -72,7 +72,7 @@ namespace Radiant
 	@param sortFlag flag indicating how the results should be sorted
     */
     Directory(const char * pathname,
-	      int filters = AllEntries, SortFlag sortFlag = Name);
+        int filters = AllEntries | NoDotAndDotDot, SortFlag sortFlag = Name);
     /// Construct a directory listing
     /** Creating a Directory object immediately scans the contents
   of the directory. Entries matching the given filters are
@@ -83,7 +83,7 @@ namespace Radiant
   @param sortFlag flag indicating how the results should be sorted
     */
     Directory(const std::string & pathname,
-	      int filters = AllEntries, SortFlag sortFlag = Name);
+        int filters = AllEntries | NoDotAndDotDot, SortFlag sortFlag = Name);
     /// Construct a directory listing
     /** Creating a Directory object immediately scans the contents
 	of the directory. Entries matching the given filters are
@@ -98,7 +98,7 @@ namespace Radiant
 	@param sortFlag flag indicating how the results should be sorted
     */
     Directory(const char * pathname, const char * suffixlist,
-	      int filters = AllEntries, SortFlag sortFlag = Name);
+        int filters = AllEntries | NoDotAndDotDot, SortFlag sortFlag = Name);
 
  
     /// Deallocates the list
