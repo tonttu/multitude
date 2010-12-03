@@ -135,3 +135,6 @@ contains(QT_MAJOR_VERSION,4) {
 unix:exists(/usr/bin/ccache):QMAKE_CXX=ccache g++
 unix:exists(/sw/bin/ccache):QMAKE_CXX=/sw/bin/ccache g++
 unix:exists(/opt/local/bin/ccache):QMAKE_CXX=/opt/local/bin/ccache g++
+
+unix:exists(/opt/multitouch):INCLUDEPATH+=/opt/multitouch/include
+unix:exists(/opt/multitouch):LIBS+=-L/opt/multitouch/lib

@@ -9,4 +9,6 @@ win32 {
     LIBPATH += $$LNK_MULTITUDE
     LIBS += ws2_32.lib
 }
+unix: PKGCONFIG += sndfile
+
 HEADERS += ../../../Tests/CameraWidget/VideoAnnotations.hpp
