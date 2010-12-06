@@ -264,6 +264,8 @@ DSPNetwork::instance().send(control);
     /**  */
     static DSPNetwork * instance();
 
+    void dumpInfo(FILE *f);
+
   private:
 
     virtual int callback(const void *in, void *out,
@@ -290,6 +292,7 @@ DSPNetwork::instance().send(control);
     Module * findModule(const char * id);
     float * findOutput(const char * id, int channel);
     long countBufferBytes();
+    void duDumpInfo(FILE *f);
 
     container m_items;
 
