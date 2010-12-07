@@ -1218,5 +1218,14 @@ namespace Luminous
     return m_data->m_glContext;
   }
 
+  void RenderContext::renderPath(const Luminous::Path &path)
+  {
+    // Triangulate
+
+    // Setup shaders
+
+    // Render
+  }
+
 }
 
