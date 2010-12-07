@@ -16,7 +16,7 @@
 #ifndef RESONANT_RESONANT_HPP
 #define RESONANT_RESONANT_HPP
 
-/// Resonant libary is a collection of C++ classes for sound processing.
+/// Resonant library is a collection of C++ classes for sound processing.
 
 /** It is heavily in work-in-progress.
     

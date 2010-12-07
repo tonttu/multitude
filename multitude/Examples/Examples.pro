@@ -3,6 +3,7 @@ TEMPLATE = subdirs
 SUBDIRS += AudioPanning
 SUBDIRS += AmbientSounds
 SUBDIRS += ConfigConversion
+SUBDIRS += CSVLoad
 SUBDIRS += GLBench
 SUBDIRS += GeometryShaderQuads
 SUBDIRS += ImageExample

@@ -7,10 +7,10 @@
  * See file "Resonant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "ModuleSamplePlayer.hpp"
@@ -42,11 +42,14 @@ namespace Resonant {
 
   ModuleSamplePlayer::Sample::Sample()
   {
+    info("ModuleSamplePlayer::Sample::Sample # %p", this);
     m_d = new Internal();
   }
 
   ModuleSamplePlayer::Sample::~Sample()
   {
+    info("ModuleSamplePlayer::Sample::~Sample # %p", this);
+
     delete m_d;
   }
 
@@ -96,7 +99,6 @@ namespace Resonant {
     return true;
   }
 
-
   unsigned ModuleSamplePlayer::Sample::available(unsigned pos) const
   {
     // pos /=m_d->m_info.channels;
@@ -116,7 +118,7 @@ namespace Resonant {
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  bool ModuleSamplePlayer::SampleVoice::synthesize(float ** out, int n)
+  bool ModuleSamplePlayer::SampleVoice::synthesize(float ** out, int n, ModuleSamplePlayer * host)
   {
     if(m_state != PLAYING) {
       //printf(":"); fflush(0);
@@ -127,6 +129,14 @@ namespace Resonant {
 
     if((int) avail > n)
       avail = n;
+
+    if(m_targetChannel >= host->channels()) {
+      error("ModuleSamplePlayer::SampleVoice::synthesize # channel count exceeded for %s "
+            "%u >= %u", m_sample->name().c_str(),
+            m_targetChannel, host->channels());
+      m_state = INACTIVE;
+      return false;
+    }
 
     float * b1 = out[m_targetChannel];
     float gain = m_gain;
@@ -253,7 +263,7 @@ namespace Resonant {
 
   void ModuleSamplePlayer::SampleVoice::setSample(std::shared_ptr<Sample> s)
   {
-    if(m_state == WAITING_FOR_SAMPLE) {
+    if(m_state != WAITING_FOR_SAMPLE) {
 
       error("ModuleSamplePlayer::SampleVoice::setSample # Wrong state %p %d",
             this, (int) m_state);
@@ -479,7 +489,7 @@ namespace Resonant {
 
     // Then fill the outputs with audio
     for(i = 0; i < m_active; ) {
-      if(!m_voiceptrs[i]->synthesize(out, n))
+      if(!m_voiceptrs[i]->synthesize(out, n, this))
         dropVoice(i);
       else
         i++;
@@ -512,12 +522,14 @@ namespace Resonant {
   }
 
   void ModuleSamplePlayer::createAmbientBackground
-      (const char * directory, float gain)
+      (const char * directory, float gain, int fillchannels)
   {
-    using Radiant::Directory;
-    Directory dir(directory, Directory::Files);
+    Radiant::Directory dir(directory, Directory::Files);
 
     int n = 0;
+
+    if((unsigned) fillchannels > channels())
+      fillchannels = channels();
 
     for(int i = 0; i < dir.count(); i++) {
 
@@ -536,8 +548,8 @@ namespace Resonant {
 
       sf_close(sndf);
 
-      for(int c = 0; c < info.channels; c++) {
-        playSample(file.c_str(), gain, 1.0f, c, c, true);
+      for(int c = 0; c < fillchannels; c++) {
+        playSample(file.c_str(), gain, 1.0f, (c+i) % channels(), c % info.channels, true);
       }
     }
 

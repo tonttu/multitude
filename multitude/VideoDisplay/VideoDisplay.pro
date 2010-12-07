@@ -24,6 +24,8 @@ LIBS += $$LIB_PATTERNS $$LIB_VALUABLE $$LIB_GLEW
 
 macx:LIBS += -framework,OpenGL
 
+unix: PKGCONFIG += libavcodec libavutil libavformat
+
 include(../library.pri)
 
 win32 {

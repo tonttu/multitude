@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "MultiHead.hpp"
@@ -90,8 +90,19 @@ namespace Luminous {
     glPopMatrix(); // From applyGlState
     glLoadIdentity();
 
-    float totalh = m_size[1] + m_seams[2] + m_seams[3];
-    float totalw = m_size[0] + m_seams[0] + m_seams[1];
+    float totalh, totalw;
+
+    float areaaspect = m_size[0] / m_size[1];
+    float gfxaspect = m_graphicsSize[0] / m_graphicsSize[1];
+
+    if((gfxaspect / areaaspect) > 0.75f) {
+      totalh = m_size[1] + m_seams[2] + m_seams[3];
+      totalw = m_size[0] + m_seams[0] + m_seams[1];
+    }
+    else {
+      totalh = m_size[0] + m_seams[2] + m_seams[3];
+      totalw = m_size[1] + m_seams[0] + m_seams[1];
+    }
 
     // float relh = totalh / m_size[1];
     // float relx = totalw / m_size[0];

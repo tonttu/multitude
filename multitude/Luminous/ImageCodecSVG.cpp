@@ -1,3 +1,18 @@
+/* COPYRIGHT
+ *
+ * This file is part of Luminous.
+ *
+ * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
+ *
+ * See file "Luminous.hpp" for authors and more details.
+ *
+ * This file is licensed under GNU Lesser General Public
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
+ * from the GNU organization (www.gnu.org).
+ * 
+ */
+
 #include "ImageCodecSVG.hpp"
 
 #include <Luminous/Image.hpp>
@@ -9,7 +24,7 @@
 #include <QXmlStreamReader>
 #include <QPainter>
 
-/* On Mac OSX, with Qt 4.7.0, it seems that QT_NO_SVGRENDERER gets defined by
+/* On Mac OS X, with Qt 4.7.0, it seems that QT_NO_SVGRENDERER gets defined by
    someone. Lets do our best to undefine it.   */
 #ifdef QT_NO_SVGRENDERER
 # undef QT_NO_SVGRENDERER

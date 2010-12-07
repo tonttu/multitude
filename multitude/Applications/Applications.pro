@@ -8,4 +8,4 @@ SUBDIRS += MoviePlayer
 stuff.path = /src/MultiTouch/multitude/Applications
 stuff.files = Applications.pro Applications.pri Applications_end.pri
 
-!macx:INSTALLS += stuff
+INSTALLS += stuff

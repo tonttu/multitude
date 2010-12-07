@@ -7,10 +7,10 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "Thread.hpp"
@@ -137,7 +137,7 @@ namespace Radiant {
 
 #ifdef RADIANT_OSX
     if(timeoutms) {
-      error("Thread::waitEnd # Timeout unimplemented on OSX");
+      error("Thread::waitEnd # Timeout unimplemented on OS X");
     }
     e = pthread_join(m_d->m_pthread, 0);
 #else

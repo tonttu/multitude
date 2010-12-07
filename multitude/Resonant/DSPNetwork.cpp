@@ -7,10 +7,10 @@
  * See file "Resonant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "DSPNetwork.hpp"
@@ -232,6 +232,17 @@ namespace Resonant {
     return m_instance;
   }
 
+  void DSPNetwork::dumpInfo(FILE *f)
+  {
+    info("DSPNetwork::dumpInfo # %p", f);
+    Radiant::BinaryData control;
+
+    control.writeString("/self/dump_info");
+    control.writeInt64((int64_t) f);
+
+    send(control);
+  }
+
   int DSPNetwork::callback(const void *in, void *out,
       unsigned long framesPerBuffer)
   {
@@ -292,6 +303,14 @@ namespace Resonant {
       if(!m_incopy.readString(buf, 512)) {
         error("DSPNetwork::checkNewControl # Could not read string");
         continue;
+      }
+
+      if(strncmp(buf, "/self/", 6) == 0) {
+        const char * name = buf + 6;
+        if(strcmp(name, "dump_info") == 0) {
+          FILE * f = (FILE *) m_incopy.readInt64();
+          duDumpInfo(f);
+        }
       }
 
       const char * slash = strchr(buf, '/');
@@ -736,6 +755,31 @@ namespace Resonant {
     }
 
     return bytes;
+  }
+
+  void DSPNetwork::duDumpInfo(FILE *f)
+  {
+    if(!f)
+      f = stdout;
+
+    fprintf(f, "DSPNetwork %p on frame %ld\n", this, m_frames);
+
+    int index = 0;
+    for(container::iterator it = m_items.begin(); it != m_items.end(); it++) {
+      Item & item = *it;
+
+      fprintf(f, "  DSP ITEM [%d] %s %s %p\n",
+              index, item.m_module->id(), typeid(*item.m_module).name(), item.m_module);
+
+      for(size_t i = 0; i < item.m_ins.size(); i++) {
+        fprintf(f, "    INPUT PTR [%d] %p\n", (int) i, item.m_ins[i]);
+      }
+      for(size_t i = 0; i < item.m_outs.size(); i++) {
+        fprintf(f, "    OUTPUT PTR [%d] %p\n", (int) i, item.m_outs[i]);
+      }
+
+      index++;
+    }
   }
 
 }
