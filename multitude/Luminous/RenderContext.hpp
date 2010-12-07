@@ -24,7 +24,6 @@
 #include <Luminous/Export.hpp>
 #include <Luminous/VertexBuffer.hpp>
 #include <Luminous/GLSLProgramObject.hpp>
-#include "Path.hpp"
 
 #include <Nimble/Rectangle.hpp>
 #include <Nimble/Vector2.hpp>
@@ -350,8 +349,6 @@ namespace Luminous
     MULTI_ATTR_DEPRECATED(Luminous::GLContext * glContext());
 
     /// @endcond
-
-    void renderPath(const Luminous::Path & path);
   private:
     void drawCircleWithSegments(Nimble::Vector2f center, float radius, const float *rgba, int segments);
     void drawCircleImpl(Nimble::Vector2f center, float radius, const float *rgba);
