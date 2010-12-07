@@ -26,100 +26,192 @@ namespace Luminous
     m_data.push_back(p);
   }
 
-  bool Path::computeContour(Contour & out)
+  void Path::drawStroke(Luminous::RenderContext &r)
   {
-    size_t coordCount = 0;
+    // Generate line segments
+    generateLineSegments();
 
-    Nimble::Vector2f pen(0.f, 0.f);
+    // Tessellate stroke
+    SillyVB vb;
+    tessellateStroke(vb);
 
-    out.push_back(pen);
 
-    for(size_t s = 0, d = 0; s < m_segments.size(); s++, d += coordCount) {
-        PathSegment cmd = m_segments[s];
 
-        //coordCount = coordsPerCommand(cmd);
+    // Transform
+    //    for(size_t i = 0; i < vb.size(); i++)
+    //      vb[i] = r.project(vb[i]);
 
-        // Output pen location
-        //out.push_back(pen);
+    // Draw
+    //    glEnableClientState(GL_VERTEX_ARRAY);
+    //    glVertexPointer(2, GL_FLOAT, 0, vb.data());
+    //    glDrawArrays(GL_TRIANGLES, 0, vb.size());
+    //    glDisableClientState(GL_VERTEX_ARRAY);
+  }
 
-        // Unpack coordinates from data
-        //for(size_t i = 0; i < coordCount; i++)
-          //out.push_back(m_data[d + i]);
+  void Path::generateLineSegments()
+  {
+    if(!m_vertices.empty())
+      return;
 
-        // Handle segment
-        switch(cmd) {
-        case LINE_TO:
-          out.push_back(m_data[d]);
+    m_vertices.clear();
+    size_t vertexDataIndex = 0;
+
+    // Start of current sub-path
+    Nimble::Vector2f s(0.f, 0.f);
+    // Last point of previous segment
+    Nimble::Vector2f o(0.f, 0.f);
+    // Last internal control point (for Bezier curves)
+    Nimble::Vector2f p(0.f, 0.f);
+
+    PathSegment prevSegment = MOVE_TO;
+    // Has the current sub-path generated any geometry
+    bool subpathHasGeometry = false;
+
+    for(size_t i = 0; i < m_segments.size(); i++) {
+
+      PathSegment segment = getPathSegment(m_segments[i]);
+
+      switch(segment) {
+      case CLOSE_PATH:
+        addEndPath(o, s, subpathHasGeometry, CLOSE_PATH);
+        p = s;
+        o = s;
+        subpathHasGeometry = false;
+        break;
+      case MOVE_TO:
+        {
+          Nimble::Vector2 c = m_data[vertexDataIndex++];
+
+          if(prevSegment != CLOSE_PATH && prevSegment != MOVE_TO)
+            addEndPath(o, s, subpathHasGeometry, IMPLICIT_CLOSE_PATH);
+
+          s = c;
+          p = c;
+          o = c;
+          subpathHasGeometry = false;
           break;
-        default:
-          assert(0);
         }
+      case LINE_TO:
+        {
+          Nimble::Vector2 c = m_data[vertexDataIndex++];
+
+          if(addLineTo(o, c, subpathHasGeometry))
+            subpathHasGeometry = true;
+
+          p = c;
+          o = c;
+          break;
+        }
+      default:
+        assert(0);
+        break;
+      }
+
+      prevSegment = segment;
     }
+  }
+
+  void Path::addVertex(Nimble::Vector2 p, Nimble::Vector2 t, uint32_t flags)
+  {
+    Vertex v = { p, t, flags };
+
+    m_vertices.push_back(v);
+  }
+
+  void Path::addEndPath(Nimble::Vector2 v0, Nimble::Vector2 v1, bool subpathHasGeometry, uint32_t flags)
+  {
+    // Subpath contains no geometry?
+    if(!subpathHasGeometry) {
+      // Nothing to do?
+
+    } else {
+      // Add segment from last vertex to start of subpath
+
+      assert(!m_vertices.empty());
+
+      // Flag last vertex
+      m_vertices.back().flags |= END_SUBPATH;
+
+      // Compute tangent
+      Nimble::Vector2 tangent = (v1 - v0).normalize();
+
+      // If tangent is zero, use tangent from the last segment end point
+      if(tangent.isZero())
+        tangent = m_vertices.back().tan;
+
+      addEdge(v0, v1, tangent, tangent, flags | START_SEGMENT, flags | END_SEGMENT);
+    }
+  }
+
+  void Path::addEdge(Nimble::Vector2 v0, Nimble::Vector2 v1, Nimble::Vector2 t0, Nimble::Vector2 t1, uint32_t begFlags, uint32_t endFlags)
+  {
+    addVertex(v0, t0, begFlags);
+    addVertex(v1, t1, endFlags);
+  }
+
+  bool Path::addLineTo(Nimble::Vector2 v0, Nimble::Vector2 v1, bool subpathHasGeometry)
+  {
+    // Ignore degenerate segments
+    if(v0 == v1)
+      return false;
+
+    // Compute tangent
+    Nimble::Vector2 tangent = (v1 - v0).normalize();
+
+    uint32_t begFlags = START_SEGMENT;
+
+    if(!subpathHasGeometry)
+      begFlags |= START_SUBPATH;
+
+    addEdge(v0, v1, tangent, tangent, begFlags, END_SEGMENT);
 
     return true;
   }
 
-
-  void Path::draw(Luminous::RenderContext &r)
+  void Path::tessellateStroke(SillyVB &out)
   {
-    // Compute contour
-    Contour c;
-    computeContour(c);
+    // Need polyline to continue
+    generateLineSegments();
 
-    // Tesselate stroke
-    SillyVB vb;
-    tesselateStroke(c, vb);
+    if(m_vertices.empty())
+      return;
 
-    // Transform
-    for(size_t i = 0; i < vb.size(); i++)
-      vb[i] = r.project(vb[i]);
+    Vertex vs;
 
-    // Draw
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(2, GL_FLOAT, 0, vb.data());
-    glDrawArrays(GL_TRIANGLES, 0, vb.size());
-    glDisableClientState(GL_VERTEX_ARRAY);
-  }
+    // Walk along the path
+    for(size_t i = 0; i < m_vertices.size(); i++) {
+      const Vertex & v = m_vertices[i];
 
-  void Path::tesselateStroke(const Contour & contour, SillyVB & vb) const
-  {
-    assert(contour.size() > 1);
+      if(v.flags & START_SEGMENT) {
 
-    Nimble::Vector2f dPrev(0.f, 0.f);
+        if(v.flags & START_SUBPATH) {
 
-    for(size_t i1 = 0; i1 < contour.size() - 1; i1++) {
+          // Save subpath start point
+          vs = v;
+        } else {
 
-      size_t i2 = i1 + 1;
+          if(v.flags & IMPLICIT_CLOSE_PATH) {
 
-      Nimble::Vector2f v1 = contour[i1];
-      Nimble::Vector2f v2 = contour[i2];
 
-      // Direction vector
-      Nimble::Vector2f d = v2 - v1;
+          } else {
 
-      float len = d.length();
-      if(len == 0.f)
-        d = dPrev;
-      else
-        d /= len;
+          }
+        }
+      } else {
+        // In middle of a segment
 
-      // Perpendicular vector
-      Nimble::Vector2f t(-d.y, d.x);
-      t *= m_strokeWidth / 2.f;
+        // Interpolate segment end points
+      }
 
-      Nimble::Vector2f l1 = v1 + t;
-      Nimble::Vector2f r1 = v1 - t;
+      if((v.flags & END_SEGMENT) && (v.flags & CLOSE_SUBPATH)) {
 
-      Nimble::Vector2f l2 = v2 + t;
-      Nimble::Vector2f r2 = v2 - t;
 
-      vb.push_back(l2);
-      vb.push_back(l1);
-      vb.push_back(r1);
 
-      vb.push_back(r1);
-      vb.push_back(r2);
-      vb.push_back(l2);
+      }
+
+      // v0 = v1
     }
+
   }
+
 }
