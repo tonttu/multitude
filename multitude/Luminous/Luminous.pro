@@ -1,7 +1,6 @@
 include(../multitude.pri)
-HEADERS += BGThread.hpp \
-    GLContext.hpp \
-    Path.hpp
+HEADERS += BGThread.hpp
+HEADERS += GLContext.hpp 
 HEADERS += FramebufferResource.hpp
 HEADERS += CodecRegistry.hpp
 HEADERS += Collectable.hpp
@@ -35,9 +34,9 @@ HEADERS += Transformer.hpp
 HEADERS += Utils.hpp
 HEADERS += VertexBuffer.hpp
 HEADERS += VertexBufferImpl.hpp
-SOURCES += BGThread.cpp \
-    GLContext.cpp \
-    Path.cpp
+
+SOURCES += BGThread.cpp
+SOURCES += GLContext.cpp
 SOURCES += FramebufferResource.cpp
 SOURCES += CodecRegistry.cpp
 SOURCES += Collectable.cpp
