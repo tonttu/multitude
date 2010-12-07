@@ -3,7 +3,8 @@
 namespace Luminous
 {
 
-  Path::Path()
+  Path::Path():
+      m_strokeWidth(1.f)
   {
   }
 
@@ -25,80 +26,100 @@ namespace Luminous
     m_data.push_back(p);
   }
 
-  void Path::tesselate(Triangles &out)
+  bool Path::computeContour(Contour & out)
   {
+    size_t coordCount = 0;
 
+    Nimble::Vector2f pen(0.f, 0.f);
+
+    out.push_back(pen);
+
+    for(size_t s = 0, d = 0; s < m_segments.size(); s++, d += coordCount) {
+        PathSegment cmd = m_segments[s];
+
+        //coordCount = coordsPerCommand(cmd);
+
+        // Output pen location
+        //out.push_back(pen);
+
+        // Unpack coordinates from data
+        //for(size_t i = 0; i < coordCount; i++)
+          //out.push_back(m_data[d + i]);
+
+        // Handle segment
+        switch(cmd) {
+        case LINE_TO:
+          out.push_back(m_data[d]);
+          break;
+        default:
+          assert(0);
+        }
+    }
+
+    return true;
   }
 
-  ////////// Tesselation //////////
 
-  float Path::area(const Countour &c)
+  void Path::draw(Luminous::RenderContext &r)
   {
-    size_t n = c.size();
-    float area = 0.f;
+    // Compute contour
+    Contour c;
+    computeContour(c);
 
-    for(size_t p = n - 1, q = 0; q < n; p = q++)
-      area += c[p].x * c[q].y - c[q].x * c[p].y;
+    // Tesselate stroke
+    SillyVB vb;
+    tesselateStroke(c, vb);
 
-    return area;
+    // Transform
+    for(size_t i = 0; i < vb.size(); i++)
+      vb[i] = r.project(vb[i]);
+
+    // Draw
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(2, GL_FLOAT, 0, vb.data());
+    glDrawArrays(GL_TRIANGLES, 0, vb.size());
+    glDisableClientState(GL_VERTEX_ARRAY);
   }
 
-  bool Path::insideTriangle(Nimble::Vector2 a, Nimble::Vector2 b, Nimble::Vector2 c, Nimble::Vector2 p)
+  void Path::tesselateStroke(const Contour & contour, SillyVB & vb) const
   {
-    Nimble::Vector2 ap = p - a;
-    Nimble::Vector2 bp = p - b;
-    Nimble::Vector2 cp = p - c;
+    assert(contour.size() > 1);
 
-    float aCP = a.x * bp.y - a.y * bp.x;
-    float bCP = b.x * cp.y - b.y * cp.x;
-    float cCP = c.x * ap.y - c.y * ap.x;
+    Nimble::Vector2f dPrev(0.f, 0.f);
 
-    return ((aCP >= 0.f) && (bCP >= 0.f) && (cCP >= 0.f));
-  }
+    for(size_t i1 = 0; i1 < contour.size() - 1; i1++) {
 
-  bool Path::snip(const Countour &c, int u, int v, int w, int n, std::vector<int> & V)
-  {
-     Nimble::Vector2 a = contour[v[u]];
-     Nimble::Vector2 b = contour[V[v]];
-     Nimble::Vector2 c = contour[V[w]];
+      size_t i2 = i1 + 1;
 
-     if ( Nimble::Math::TOLERANCE > (((b.x - a.x) * (c.y - a.y)) - ((b.y - a.y) * (c.x - a.x))) )
-       return false;
+      Nimble::Vector2f v1 = contour[i1];
+      Nimble::Vector2f v2 = contour[i2];
 
-     for (int p = 0; p < n; p++)
-     {
-       if( (p == u) || (p == v) || (p == w) )
-         continue;
+      // Direction vector
+      Nimble::Vector2f d = v2 - v1;
 
-       Nimble::Vector2 p = contour[V[p]];
+      float len = d.length();
+      if(len == 0.f)
+        d = dPrev;
+      else
+        d /= len;
 
-       if (insideTriangle(a, b, c, p))
-         return false;
-     }
+      // Perpendicular vector
+      Nimble::Vector2f t(-d.y, d.x);
+      t *= m_strokeWidth / 2.f;
 
-     return true;
-  }
+      Nimble::Vector2f l1 = v1 + t;
+      Nimble::Vector2f r1 = v1 - t;
 
-  void Path::generateContour(Contour &c) const
-  {
-    c.resize(m_segments.size());
+      Nimble::Vector2f l2 = v2 + t;
+      Nimble::Vector2f r2 = v2 - t;
 
-    for(size_t i = 0; i < m_segments.size(); i++) {
+      vb.push_back(l2);
+      vb.push_back(l1);
+      vb.push_back(r1);
 
+      vb.push_back(r1);
+      vb.push_back(r2);
+      vb.push_back(l2);
     }
   }
-
-  bool Path::tesselate(Countour &out) const
-  {
-      size_t n = m_segments.size() + 1;
-      if(n < 3)
-        return false;
-
-      std::vector<int> V(n);
-
-      // CCW polygons in V
-      if(0.f < area())
-
-  }
-
 }
