@@ -54,7 +54,7 @@ namespace Radiant {
     void stop();
 
     /** Gets the first watchdog instance. */
-    static WatchDog * instance() { return m_instance; }
+    static WatchDog * instance();
 
   private:
     

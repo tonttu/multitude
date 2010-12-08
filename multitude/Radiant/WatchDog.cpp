@@ -152,4 +152,12 @@ namespace Radiant {
       waitEnd();
   }
 
+  WatchDog * WatchDog::instance()
+  {
+    if(!m_instance)
+      fatal("WatchDog::instance # NULL instance");
+
+    return m_instance;
+  }
+
 }
