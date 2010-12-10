@@ -181,12 +181,44 @@ namespace Radiant
           return pos;
         }
       } else {
-        error("TCPSocket::readExact # Failed to read: %s", strerror(errno));
+        error("TCPSocket::read # Failed to read: %s", strerror(errno));
         return pos;
       }
     }
 
     return pos;
+  }
+
+  int TCPSocket::readSome(void * buffer, int bytes, bool waitfordata)
+  {
+    if(m_d->m_fd < 0 || bytes < 0)
+      return -1;
+
+    if(bytes > 32767)
+      bytes = 32767;
+
+    for(;;) {
+      errno = 0;
+      int tmp = ::read(m_d->m_fd, buffer, bytes);
+
+      if(tmp > 0) {
+        return tmp;
+      } else if(errno == EAGAIN || errno == EWOULDBLOCK) {
+        if(waitfordata) {
+          struct pollfd pfd;
+          pfd.fd = m_d->m_fd;
+          pfd.events = POLLIN;
+          poll(&pfd, 1, 5000);
+        } else {
+          return 0;
+        }
+      } else {
+        error("TCPSocket::readSome # Failed to read: %s", strerror(errno));
+        return 0;
+      }
+    }
+
+    return 0;
   }
 
   int TCPSocket::write(const void * buffer, int bytes)
