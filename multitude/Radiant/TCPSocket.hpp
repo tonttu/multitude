@@ -16,6 +16,8 @@
 #ifndef RADIANT_TCP_SOCKET_HPP
 #define RADIANT_TCP_SOCKET_HPP
 
+#include <Patterns/NotCopyable.hpp>
+
 #include <Radiant/BinaryStream.hpp>
 
 #include <string>
@@ -28,7 +30,7 @@ namespace Radiant {
 
   /// A client TCP socket for connecting to remote hosts
   /** @author Tommi Ilmonen*/
-  class RADIANT_API TCPSocket : public Radiant::BinaryStream
+  class RADIANT_API TCPSocket : public Radiant::BinaryStream, public Patterns::NotCopyable
   {
   public:
     TCPSocket();
@@ -74,9 +76,6 @@ namespace Radiant {
     /// Return 'true' if readable data is pending.
     bool isPendingInput(unsigned int waitMicroSeconds = 0);
 
-    /// Convert an IP address to in_addr structure
-    static struct in_addr *atoaddr(const char *address);
-
     //void debug();
 
     /** Moves the ownership of the socket to another thread. Sockets can not be
@@ -86,9 +85,6 @@ namespace Radiant {
 
   private:
     friend class TCPServerSocket;
-    
-    TCPSocket(const TCPSocket & ) : BinaryStream() {}
-    TCPSocket & operator = (const TCPSocket & )  { return * this; }
 
     class D;
     D * m_d;

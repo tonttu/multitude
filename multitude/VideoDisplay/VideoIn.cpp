@@ -545,7 +545,7 @@ namespace VideoDisplay {
     if(r.m_request != NO_REQUEST && r.m_request != FREE_MEMORY)
       debug("VideoIn::pushRequest # %d %lf", r.m_request, r.m_time.secondsD());
 
-    Radiant::Guard g( & m_requestMutex);
+    Radiant::Guard g( m_requestMutex);
 
     if(m_queuedRequests &&
        (m_queuedRequests > m_consumedRequests)) {

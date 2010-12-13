@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #ifndef LUMINOUS_GLCONTEXT_HPP
@@ -49,7 +37,16 @@ namespace Luminous
 
           @param m The mutex to lock. The mutex may be null, in which case nothing happens.
       */
-      Guard(Radiant::Mutex * m) : m_mutex(m) { if(m) m->lock(); }
+      Guard(GLContext * c)
+      {
+        if(c) {
+          m_mutex = c->mutex();
+          if(m_mutex) m_mutex->lock();
+        }
+        else
+          m_mutex = 0;
+      }
+
       /** Deletes this Guard object, and frees the mutex if it is non-null. */
       ~Guard() { if(m_mutex) m_mutex->unlock(); }
     private:

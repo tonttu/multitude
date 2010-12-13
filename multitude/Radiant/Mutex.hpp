@@ -22,14 +22,14 @@
 
 namespace Radiant {
 
-    /** Mutex class. The mutex must be initialized explicitly. */
-    class RADIANT_API Mutex : public Patterns::NotCopyable
-    {
-    public:
-        Mutex();
-        virtual ~Mutex();
+  /** Mutex class. The mutex must be initialized explicitly. */
+  class RADIANT_API Mutex : public Patterns::NotCopyable
+  {
+  public:
+    Mutex();
+    virtual ~Mutex();
 
-        /** Initialize the mutex.
+    /** Initialize the mutex.
 
         Setting all values to false gives usually the best performance.
 
@@ -40,60 +40,60 @@ namespace Radiant {
         Recursion should work on all platforms. */
 
     /// @todo useless parameters (except recursive), get rid of them
-        bool init(bool shared = false,
-            bool prio_inherit = true,
-            bool recursive = false);
+    bool init(bool shared = false,
+              bool prio_inherit = true,
+              bool recursive = false);
 
-        /// Close the mutex.
-        bool close();
+    /// Close the mutex.
+    bool close();
 
-        /** Locks the mutex. Blocks until mutex is available. */
-        bool lock();
+    /** Locks the mutex. Blocks until mutex is available. */
+    bool lock();
 
-        /// Lock the mutex, optionally blocking.
-        bool lock(bool block);
+    /// Lock the mutex, optionally blocking.
+    bool lock(bool block);
 
-        /** Tries to lock the mutex. Does not block. */
-        bool tryLock();
+    /** Tries to lock the mutex. Does not block. */
+    bool tryLock();
 
-        /// Unlocks the mutex.
-        bool unlock();
+    /// Unlocks the mutex.
+    bool unlock();
 
-    private:
-        friend class Condition;
+  private:
+    friend class Condition;
 
-        class D;
-        D * m_d;
+    class D;
+    D * m_d;
 
   protected:
 
     /// Flag used to initialize static mutexes on non-linux platforms
     /// @todo shouldn't this be moved to MutexStatic?
-        bool            m_active;
-    };
+    bool            m_active;
+  };
 
-    /// Mutex that initializes automatically.
-    class RADIANT_API MutexAuto : public Mutex
-    {
-    public:
-        /// Calls init.
-        MutexAuto(bool shared = false,
-            bool prio_inherit = true,
-            bool recursive = false)
-        { init(shared, prio_inherit, recursive); }
-        ~MutexAuto() {}
-    };
+  /// Mutex that initializes automatically.
+  class RADIANT_API MutexAuto : public Mutex
+  {
+  public:
+    /// Calls init.
+    MutexAuto(bool shared = false,
+              bool prio_inherit = true,
+              bool recursive = false)
+    { init(shared, prio_inherit, recursive); }
+    ~MutexAuto() {}
+  };
 
 
 #ifdef __linux__
 
-    typedef MutexAuto MutexStatic;
+  typedef MutexAuto MutexStatic;
 
 #else
 
-    /// Mutex class to be used as static or global variable
+  /// Mutex class to be used as static or global variable
 
-    /** Under Linux, this class is simply typedef to MutexAuto. On other
+  /** Under Linux, this class is simply typedef to MutexAuto. On other
     platforms (OSX, Windows) there is some trouble initializing
     mutexes as static variables as the application/library is
     loaded. For these cases there is an implementation that
@@ -103,29 +103,29 @@ namespace Radiant {
     threads at exactly the same time for the first time. How-over,
     the probability of getting errors in that phase are extremely
     small. */
-    class RADIANT_API MutexStatic : public Mutex
-    {
-    public:
-      /// Creates a mutex, without initializing it
-      /// @param shared Request a shared mutex
-      /// @param prio_inherit Request a mutex with priority inheritance
-      /// @param recursive Request a recursive mutex
-      MutexStatic(bool shared = false,
-                  bool prio_inherit = true,
-                  bool recursive = false)
-                    : m_shared(shared), m_prio_inherit(prio_inherit), m_recursive(recursive)
-      {}
+  class RADIANT_API MutexStatic : public Mutex
+  {
+  public:
+    /// Creates a mutex, without initializing it
+    /// @param shared Request a shared mutex
+    /// @param prio_inherit Request a mutex with priority inheritance
+    /// @param recursive Request a recursive mutex
+    MutexStatic(bool shared = false,
+                bool prio_inherit = true,
+                bool recursive = false)
+                  : m_shared(shared), m_prio_inherit(prio_inherit), m_recursive(recursive)
+    {}
 
-      bool lock() { if(!m_active) init(m_shared, m_prio_inherit, m_recursive); return Mutex::lock(); }
-      bool lock(bool b) { if(!m_active) init(m_shared, m_prio_inherit, m_recursive); return Mutex::lock(b); }
-      bool tryLock() { if(!m_active) init(m_shared, m_prio_inherit, m_recursive); return Mutex::tryLock(); }
+    bool lock() { if(!m_active) init(m_shared, m_prio_inherit, m_recursive); return Mutex::lock(); }
+    bool lock(bool b) { if(!m_active) init(m_shared, m_prio_inherit, m_recursive); return Mutex::lock(b); }
+    bool tryLock() { if(!m_active) init(m_shared, m_prio_inherit, m_recursive); return Mutex::tryLock(); }
 
-    private:
-      bool m_shared, m_prio_inherit, m_recursive;
-    };
+  private:
+    bool m_shared, m_prio_inherit, m_recursive;
+  };
 #endif
 
-    /** A guard class. This class is used to automatically lock and
+  /** A guard class. This class is used to automatically lock and
     unlock a mutex within some function. This is useful when trying
     to avoid situations where there are several "return"-statements
     in a function, and one easily forget to unlock the mutex that
@@ -151,56 +151,51 @@ namespace Radiant {
     @see ReleaseGuard
     */
 
-    class Guard : public Patterns::NotCopyable
-    {
-    public:
+  class Guard : public Patterns::NotCopyable
+  {
+  public:
     /// Constructs a new guard and locks the mutex
-        Guard(Mutex * mutex) : m_mutex(mutex) { m_mutex->lock(); }
+    explicit Guard(Mutex & mutex) : m_mutex(mutex) { m_mutex.lock(); }
+    explicit Guard(MutexAuto & mutex) : m_mutex(mutex) { m_mutex.lock(); }
+
+    /// Unlocks the mutex
+    ~Guard() { m_mutex.unlock(); }
+
+  private:
+    Mutex & m_mutex;
+  };
+
+  /** A guard class for static mutexes. */
+  class GuardStatic : public Patterns::NotCopyable
+  {
+  public:
     /// Constructs a new guard and locks the mutex
-    Guard(Mutex & mutex) : m_mutex(&mutex) { m_mutex->lock(); }
+    explicit GuardStatic(MutexStatic & mutex) : m_mutex(mutex) { m_mutex.lock(); }
 
-        /// Unlocks the mutex
-        ~Guard() { m_mutex->unlock(); }
+    /// Unlocks the mutex
+    ~GuardStatic() { m_mutex.unlock(); }
 
-    private:
-        Mutex * m_mutex;
-    };
+  private:
+    MutexStatic & m_mutex;
+  };
 
-    /** A guard class for static mutexes. */
-    class GuardStatic : public Patterns::NotCopyable
-    {
-    public:
-    /// Constructs a new guard and locks the mutex
-    GuardStatic(MutexStatic * mutex) : m_mutex(mutex) { m_mutex->MutexStatic::lock(); }
-    /// Constructs a new guard and locks the mutex
-    GuardStatic(MutexStatic & mutex) : m_mutex(&mutex) { m_mutex->MutexStatic::lock(); }
-
-        /// Unlocks the mutex
-    ~GuardStatic() { m_mutex->MutexStatic::unlock(); }
-
-    private:
-        MutexStatic * m_mutex;
-    };
-
-    /** A guard class that only releases a locked mutex. This class is
+  /** A guard class that only releases a locked mutex. This class is
     used to automatically unlock a mutex within some function.
 
     @see Guard
     */
-    class ReleaseGuard : public Patterns::NotCopyable
-    {
-    public:
+  class ReleaseGuard : public Patterns::NotCopyable
+  {
+  public:
     /// Constructs a new guard
-        ReleaseGuard(Mutex * mutex) : m_mutex(mutex) { }
-    /// Constructs a new guard
-    ReleaseGuard(Mutex & mutex) : m_mutex( & mutex) { }
+    explicit ReleaseGuard(Mutex & mutex) : m_mutex( mutex) { }
 
-        /// Unlocks the mutex
-        ~ReleaseGuard() { m_mutex->unlock(); }
+    /// Unlocks the mutex
+    ~ReleaseGuard() { m_mutex.unlock(); }
 
-    private:
-        Mutex * m_mutex;
-    };
+  private:
+    Mutex & m_mutex;
+  };
 
 }
 

@@ -383,6 +383,11 @@ namespace Nimble {
                         m_extra[2] / ksh, m_extra[3] / ksh);
 
     updateLimits(m_extraLimits, & scaledExtra);
+    /* m_extraLimits.resize(m_height);
+    for(unsigned i = 0; i < m_height; i++) {
+      m_extraLimits[i] = Nimble::Vector2(0, m_width);
+    }
+    */
   }
 
 

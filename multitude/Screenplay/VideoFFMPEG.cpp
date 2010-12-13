@@ -530,7 +530,7 @@ namespace Screenplay {
 
     bzero( & params, sizeof(params));
 
-    GuardStatic g( & __openmutex);
+    GuardStatic g( __openmutex);
 
     int err = av_open_input_file( & m_ic, filename, iformat, 0, ap);
 
@@ -643,7 +643,7 @@ namespace Screenplay {
     //    if(!m_ic)
     //      return false;
 
-    GuardStatic g( & __openmutex);
+    GuardStatic g( __openmutex);
 
     if(m_frame)
       av_free(m_frame);

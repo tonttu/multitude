@@ -148,7 +148,7 @@ namespace Resonant {
 
   bool DSPNetwork::start(const char * device)
   {
-    Radiant::Guard g(&m_startupMutex);
+    Radiant::Guard g(m_startupMutex);
 
     debug("DSPNetwork::start # %p %p", this, m_instance);
 
@@ -170,14 +170,14 @@ namespace Resonant {
   {
     debug("DSPNetwork::addModule # %p %p", this, m_instance);
 
-    Radiant::Guard g( & m_newMutex);
+    Radiant::Guard g( m_newMutex);
 
     m_newItems.push_back(i);
   }
 
   void DSPNetwork::markDone(Item & i)
   {
-    Radiant::Guard g( & m_newMutex);
+    Radiant::Guard g( m_newMutex);
     Item * it = findItem(i.m_module->id());
 
     if(it) {
@@ -192,7 +192,7 @@ namespace Resonant {
   {
     debug("DSPNetwork::send # %p %p", this, m_instance);
 
-    Radiant::Guard g( & m_inMutex);
+    Radiant::Guard g( m_inMutex);
     m_incoming.append(control);
   }
 
@@ -284,7 +284,7 @@ namespace Resonant {
   void DSPNetwork::checkNewControl()
   {
     {
-      Radiant::Guard g( & m_inMutex);
+      Radiant::Guard g( m_inMutex);
       m_incopy = m_incoming;
       m_incoming.rewind();
     }
@@ -346,7 +346,7 @@ namespace Resonant {
       if(!m_newMutex.tryLock())
         return;
 
-      Radiant::ReleaseGuard g( & m_newMutex);
+      Radiant::ReleaseGuard g( m_newMutex);
 
       Item item = m_newItems.front();
       checkValidId(item);
@@ -460,7 +460,7 @@ namespace Resonant {
     if(!m_newMutex.tryLock())
       return;
 
-    Radiant::ReleaseGuard g( & m_newMutex);
+    Radiant::ReleaseGuard g( m_newMutex);
 
     if(!m_doneCount)
       return;

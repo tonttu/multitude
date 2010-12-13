@@ -40,7 +40,7 @@ namespace Radiant {
 
     /// Thread id type.
     /** On most systems this is some kind of integer value. */
-    typedef size_t id_t;
+    typedef void* id_t;
 
     /// The id of the calling thread
     static id_t myThreadId();

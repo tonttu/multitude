@@ -24,10 +24,6 @@ LIBS += $$LIB_PATTERNS $$LIB_VALUABLE $$LIB_GLEW
 
 macx:LIBS += -framework,OpenGL
 
-unix: PKGCONFIG += libavcodec libavutil libavformat
+win32:DEFINES += VIDEODISPLAY_EXPORT
 
 include(../library.pri)
-
-win32 {
-    DEFINES += VIDEODISPLAY_EXPORT
-}

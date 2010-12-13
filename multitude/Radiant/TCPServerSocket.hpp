@@ -16,9 +16,9 @@
 #ifndef RADIANT_TCP_SERVER_SOCKET_HPP
 #define RADIANT_TCP_SERVER_SOCKET_HPP
 
-#include <Radiant/Export.hpp>
+#include <Patterns/NotCopyable.hpp>
 
-#include <string>
+#include <Radiant/Export.hpp>
 
 namespace Radiant {
 
@@ -27,7 +27,7 @@ namespace Radiant {
   /// A server TCP socket for accepting incoming connections
   /// @todo Example code
 
-  class RADIANT_API TCPServerSocket
+  class RADIANT_API TCPServerSocket : public Patterns::NotCopyable
   {
   public:
     TCPServerSocket();
@@ -54,9 +54,6 @@ namespace Radiant {
     TCPSocket * accept();
 
   private:
-    TCPServerSocket(const TCPServerSocket & ) {}
-    TCPServerSocket & operator = (const TCPServerSocket & ) { return * this; }
-
     class D;
     D * m_d;
   };
