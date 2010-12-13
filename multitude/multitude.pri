@@ -54,6 +54,8 @@ linux-*{
 }
 
 macx {
+  LIBS += -undefined dynamic_lookup
+
   # withbundles = $$(MULTI_BUNDLES)
   withbundles = YES
 
