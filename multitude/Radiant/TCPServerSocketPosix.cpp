@@ -81,7 +81,7 @@ namespace Radiant
     char service[32];
     sprintf(service, "%d", port);
 
-    int s = getaddrinfo(host, service, &hints, &result);
+    int s = getaddrinfo(host && *host ? host : 0, service, &hints, &result);
     if(s) {
       error("TCPServerSocket::open # getaddrinfo: %s", gai_strerror(s));
       ::close(fd);
