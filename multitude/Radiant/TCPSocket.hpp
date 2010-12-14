@@ -69,7 +69,9 @@ namespace Radiant {
     int read(void * buffer, int bytes, bool waitfordata = true);
     /// Write bytes to the socket
     int write(const void * buffer, int bytes);
-    
+
+    int readSome(void * buffer, int bytes, bool waitfordata = true);
+
     /// Returns true if the socket has been closed
     bool isHungUp() const;
 
