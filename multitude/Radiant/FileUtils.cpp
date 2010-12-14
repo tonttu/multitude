@@ -304,7 +304,7 @@ namespace Radiant
   {
     assert(f != 0);
     for(int i = 0; i < levels; i++) {
-      fprintf(f, "  ");
+      fprintf(f, ". ");
     }
   }
 
