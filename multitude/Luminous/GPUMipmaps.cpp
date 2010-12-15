@@ -61,6 +61,7 @@ namespace Luminous {
       return false;
     }
 
+    m_cpumaps->markImage(best);
 
     // We can upload the image at once:
 
