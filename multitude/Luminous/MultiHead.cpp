@@ -61,7 +61,8 @@ namespace Luminous {
     /* info("MultiHead::Area::applyGlState # %d %d %d %d",
        m_location[0], m_location[1], m_size[0], m_size[1]);
     */
-    glViewport(m_location[0], m_location[1], m_size[0], m_size[1]);
+    // Now set in RenderContext::pushViewport
+    //glViewport(m_location[0], m_location[1], m_size[0], m_size[1]);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
