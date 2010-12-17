@@ -119,11 +119,9 @@ namespace Radiant
     }
 
     struct addrinfo * rp;
-    Radiant::info("Connect... %d", m_d->m_fd);
     for(rp = result; rp; rp = rp->ai_next)
       if(connect(m_d->m_fd, rp->ai_addr, rp->ai_addrlen) != -1)
         break;
-    Radiant::info("Connect done");
 
     freeaddrinfo(result);
 
@@ -144,7 +142,9 @@ namespace Radiant
     if(m_d->m_fd < 0)
       return false;
 
-    Radiant::info("Close... %d", m_d->m_fd);
+    if(shutdown(m_d->m_fd, SHUT_RDWR)) {
+      error("TCPSocket::close # Failed to shut down the socket: %s", strerror(errno));
+    }
     if(::close(m_d->m_fd)) {
       error("TCPSocket::close # Failed to close socket: %s", strerror(errno));
     }
