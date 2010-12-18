@@ -42,6 +42,11 @@ namespace Radiant
     return m_d->isValid();
   }
 
+  bool UDPSocket::close()
+  {
+    return true;
+  }
+
   int UDPSocket::openServer(int port)
   {
     int ok = m_d->bind(port);
