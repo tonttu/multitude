@@ -43,11 +43,11 @@ HEADERS += Sleep.hpp
 !win32:HEADERS += SHMPipe.hpp
 !win32:HEADERS += SMRingBuffer.hpp
 HEADERS += StringUtils.hpp
+HEADERS += SocketUtilPosix.hpp
 HEADERS += TCPServerSocket.hpp
 HEADERS += TCPSocket.hpp
 HEADERS += ThreadData.hpp
 HEADERS += Thread.hpp
-HEADERS += Timer.hpp
 HEADERS += TimeStamp.hpp
 HEADERS += Trace.hpp
 HEADERS += Types.hpp
@@ -81,7 +81,6 @@ SOURCES += SemaphoreQt.cpp
 !win32:SOURCES += SHMPipe.cpp
 !win32:SOURCES += SMRingBuffer.cpp
 SOURCES += StringUtils.cpp
-SOURCES += Timer.cpp
 SOURCES += TimeStamp.cpp
 SOURCES += Trace.cpp
 SOURCES += VideoImage.cpp
@@ -89,24 +88,24 @@ SOURCES += VideoInput.cpp
 SOURCES += WatchDog.cpp
 LIBS += $$LIB_NIMBLE \
     $$LIB_PATTERNS
-linux-* { 
+linux-* {
     SOURCES += PlatformUtilsLinux.cpp
     SOURCES += XFaker.cpp
     HEADERS += XFaker.hpp
     LIBS += -lX11 \
         -lXtst
 }
-macx { 
+macx {
     SOURCES += PlatformUtilsOSX.cpp
     LIBS += -framework,CoreFoundation
 }
-unix { 
+unix {
     HEADERS += VideoCamera1394.hpp
     SOURCES += DirectoryPosix.cpp
     SOURCES += SerialPortPosix.cpp
     SOURCES += TCPServerSocketQt.cpp
     SOURCES += TCPSocketQt.cpp
-    SOURCES += UDPSocketQt.cpp
+    SOURCES += UDPSocketPosix.cpp
     SOURCES += VideoCamera1394.cpp
     SOURCES += ConditionPt.cpp
     SOURCES += MutexPt.cpp
@@ -120,10 +119,10 @@ unix {
     QT = core \
         network
 }
-win32 { 
+win32 {
     message(Radiant on Windows)
     DEFINES += RADIANT_EXPORT
-    !win64 { 
+    !win64 {
         DEFINES += CAMERA_DRIVER_CMU
         HEADERS += VideoCameraCMU.hpp
         SOURCES += VideoCameraCMU.cpp
@@ -157,7 +156,7 @@ win32 {
     HEADERS += VideoCameraPTGrey.hpp
     SOURCES += VideoCameraPTGrey.cpp
     INCLUDEPATH += $$PTGREY_PATH/include
-    
+
     # 64bit libs have different path
     win64:LIBPATH += $$PTGREY_PATH/lib64
     else:LIBPATH += $$PTGREY_PATH/lib

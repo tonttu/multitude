@@ -92,8 +92,8 @@ namespace Radiant
     m_d->m_host = host;
     m_d->m_port = port;
 
-    int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if(fd < 0) {
+    m_d->m_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if(m_d->m_fd < 0) {
       int err = errno;
       error("TCPSocket::open # Failed to open TCP socket: %s", strerror(err));
       return err;
@@ -113,24 +113,25 @@ namespace Radiant
     int s = getaddrinfo(host, service, &hints, &result);
     if(s) {
       error("TCPSocket::open # getaddrinfo: %s", gai_strerror(s));
-      ::close(fd);
+      ::close(m_d->m_fd);
+      m_d->m_fd = -1;
       return -1;
     }
 
     struct addrinfo * rp;
     for(rp = result; rp; rp = rp->ai_next)
-      if(connect(fd, rp->ai_addr, rp->ai_addrlen) != -1)
+      if(connect(m_d->m_fd, rp->ai_addr, rp->ai_addrlen) != -1)
         break;
 
     freeaddrinfo(result);
 
     if(rp == NULL) {
       error("TCPSocket::open # Failed to connect %s:%d", host, port);
-      ::close(fd);
+      ::close(m_d->m_fd);
+      m_d->m_fd = -1;
       return -1;
     }
 
-    m_d->m_fd = fd;
     m_d->setOpts();
 
     return 0;
@@ -141,6 +142,9 @@ namespace Radiant
     if(m_d->m_fd < 0)
       return false;
 
+    if(shutdown(m_d->m_fd, SHUT_RDWR)) {
+      error("TCPSocket::close # Failed to shut down the socket: %s", strerror(errno));
+    }
     if(::close(m_d->m_fd)) {
       error("TCPSocket::close # Failed to close socket: %s", strerror(errno));
     }
@@ -181,12 +185,44 @@ namespace Radiant
           return pos;
         }
       } else {
-        error("TCPSocket::readExact # Failed to read: %s", strerror(errno));
+        error("TCPSocket::read # Failed to read: %s", strerror(errno));
         return pos;
       }
     }
 
     return pos;
+  }
+
+  int TCPSocket::readSome(void * buffer, int bytes, bool waitfordata)
+  {
+    if(m_d->m_fd < 0 || bytes < 0)
+      return -1;
+
+    if(bytes > 32767)
+      bytes = 32767;
+
+    for(;;) {
+      errno = 0;
+      int tmp = ::read(m_d->m_fd, buffer, bytes);
+
+      if(tmp > 0) {
+        return tmp;
+      } else if(errno == EAGAIN || errno == EWOULDBLOCK) {
+        if(waitfordata) {
+          struct pollfd pfd;
+          pfd.fd = m_d->m_fd;
+          pfd.events = POLLIN;
+          poll(&pfd, 1, 5000);
+        } else {
+          return 0;
+        }
+      } else {
+        error("TCPSocket::readSome # Failed to read: %s", strerror(errno));
+        return 0;
+      }
+    }
+
+    return 0;
   }
 
   int TCPSocket::write(const void * buffer, int bytes)

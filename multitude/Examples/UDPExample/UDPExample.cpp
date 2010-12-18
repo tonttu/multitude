@@ -24,7 +24,7 @@
 
 using namespace Radiant;
 
-int g_iterations = 1;
+int g_iterations = 30;
 
 const char * appname = 0;
 
@@ -32,42 +32,51 @@ float g_duration = 10000000.0f;
 Radiant::TimeStamp g_began;
 
 
-void runRead(const char * host, int port)
+void runRead(int port)
 {
-    info("read mode");
+  info("read mode at port %d", port);
 
   char buf[1024];
 
   UDPSocket socket;
 
-  if(!socket.bind(host, port)) {
-      error("failed to bind to %s %d", host, port);
-      return;
+  int err = socket.openServer(port);
+  if(err) {
+    error("failed to bind to %d (%s)", port, strerror(err));
+    return;
   }
 
   for(int i = 0; i < g_iterations; i++) {
-      std::string fromAddr(host);
-      uint16_t fromPort(port);
+    // std::string fromAddr(host);
+    // uint16_t fromPort(port);
 
-      int gotBytes = socket.readDatagram(buf, 1024, &fromAddr, &fromPort);
+    buf[0] = 0;
+    int gotBytes = socket.read(buf, 1024, false);
 
-      info("Got %d bytes (%s) from %s:%d", gotBytes, buf, fromAddr.c_str(), (int) port);
+    info("Got %d bytes (%s)", gotBytes, buf);
 
-      if(gotBytes < 1)
-        Radiant::Sleep::sleepMs(500);
+    if(gotBytes < 1)
+      Radiant::Sleep::sleepMs(500);
   }
 }
 
 void runSend(const char * host, int port, const char * message)
 {
-    info("send mode");
+  info("send mode to %s:%d", host, port);
   UDPSocket socket;
+
+  int err = socket.openClient(host, port);
+  if(err) {
+    error("failed to connect to %s:%d (%s)",
+          host, port, strerror(err));
+    return;
+  }
 
   char buf[1024];
 
   // Write
   for(int i = 0; i < g_iterations; i++) {
-      memset(buf, 0, 1024);
+    memset(buf, 0, 1024);
 
     info("Sending message '%s'", message);
 
@@ -75,9 +84,13 @@ void runSend(const char * host, int port, const char * message)
 
     int32_t len = strlen(buf) + 1;
 
-    int written = socket.writeDatagram(buf, len, host, port);
+    int written = socket.write(buf, len);
 
     info("wrote %d bytes (%s) to %s:%d", written, buf, host, port);
+
+    if(written <= 0) {
+
+    }
 
     Radiant::Sleep::sleepMs(500);
   }
@@ -88,7 +101,7 @@ int main(int argc, char ** argv)
 {
   Radiant::TimeStamp startTime(Radiant::TimeStamp::getTime());
 
-  const char * host = "localhost";
+  const char * host = "127.0.0.1";
   const char * message = "Here we have a message";
   int port = 3456;
   bool isread = false;
@@ -115,7 +128,7 @@ int main(int argc, char ** argv)
   }
 
   if(isread)
-    runRead(host, port);
+    runRead(port);
   else
     runSend(host, port, message);
 
