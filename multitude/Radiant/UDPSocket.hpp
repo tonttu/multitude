@@ -35,13 +35,28 @@ namespace Radiant
     UDPSocket(int fd);
     ~UDPSocket();
 
-    // int open(const char * host, int port, bool client);
+    /** Opens a local server socket. This socket is generally good for listening to incoming
+       messages.
+
+       @param port The port number to listen to
+       @return Zero on success, otherwise an error code
+    */
     int openServer(int port);
+    /** Opens a client socket for sending packets to given address.
+
+        @param host The host address. On UNIX you can use both numeric (192.168.0.12),
+        and human-readable (www.multitouch.fi) network names, while on Windows you
+        can only use numeric names for the time being.
+
+        @param port The port number to listen to
+        @return Zero on success, otherwise an error code
+    */
     int openClient(const char * host, int port);
 
     /// Returns true if the socket is open. Does not make much sense in the case of UDPSockets.
     bool isOpen() const;
 
+    /// Closes the socket.
     bool close();
 
     /** Reads one datagram packet from the socket.
@@ -53,16 +68,11 @@ namespace Radiant
         this function multiple times, even if the buffer was large
         enough to contain multiple packets.
     */
-    // int readDatagram(char * data, size_t maxSize, std::string * fromAddr, uint16_t * fromPort = 0);
-
+    virtual int read(void *, int , bool );
     /** Writes one datagram packet to the socket.
 
         @return The number of bytes written is returned.
-
     */
-    // int writeDatagram(const char * data, size_t bytes, const std::string & host, uint16_t port);
-
-    virtual int read(void *, int , bool );
     virtual int write(const void *, int );
 
   private:
