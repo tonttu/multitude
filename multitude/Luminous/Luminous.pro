@@ -35,6 +35,7 @@ HEADERS += Utils.hpp
 HEADERS += VertexBuffer.hpp
 HEADERS += VertexBufferImpl.hpp
 HEADERS += Path.hpp
+HEADERS += RenderTarget.hpp
 
 SOURCES += Path.cpp
 SOURCES += BGThread.cpp
@@ -66,6 +67,8 @@ SOURCES += Texture.cpp
 SOURCES += Transformer.cpp
 SOURCES += Utils.cpp
 SOURCES += VertexBuffer.cpp
+SOURCES += RenderTarget.cpp
+
 LIBS += $$LIB_RADIANT \
     $$LIB_OPENGL \
     $$LIB_VALUABLE \

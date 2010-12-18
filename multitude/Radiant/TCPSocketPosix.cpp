@@ -92,8 +92,8 @@ namespace Radiant
     m_d->m_host = host;
     m_d->m_port = port;
 
-    int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if(fd < 0) {
+    m_d->m_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if(m_d->m_fd < 0) {
       int err = errno;
       error("TCPSocket::open # Failed to open TCP socket: %s", strerror(err));
       return err;
@@ -113,24 +113,25 @@ namespace Radiant
     int s = getaddrinfo(host, service, &hints, &result);
     if(s) {
       error("TCPSocket::open # getaddrinfo: %s", gai_strerror(s));
-      ::close(fd);
+      ::close(m_d->m_fd);
+      m_d->m_fd = -1;
       return -1;
     }
 
     struct addrinfo * rp;
     for(rp = result; rp; rp = rp->ai_next)
-      if(connect(fd, rp->ai_addr, rp->ai_addrlen) != -1)
+      if(connect(m_d->m_fd, rp->ai_addr, rp->ai_addrlen) != -1)
         break;
 
     freeaddrinfo(result);
 
     if(rp == NULL) {
       error("TCPSocket::open # Failed to connect %s:%d", host, port);
-      ::close(fd);
+      ::close(m_d->m_fd);
+      m_d->m_fd = -1;
       return -1;
     }
 
-    m_d->m_fd = fd;
     m_d->setOpts();
 
     return 0;
@@ -141,6 +142,9 @@ namespace Radiant
     if(m_d->m_fd < 0)
       return false;
 
+    if(shutdown(m_d->m_fd, SHUT_RDWR)) {
+      error("TCPSocket::close # Failed to shut down the socket: %s", strerror(errno));
+    }
     if(::close(m_d->m_fd)) {
       error("TCPSocket::close # Failed to close socket: %s", strerror(errno));
     }

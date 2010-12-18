@@ -1,6 +1,5 @@
 include(../multitude.pri)
-HEADERS += CameraDriver.hpp \
-    SocketUtilPosix.hpp
+HEADERS += CameraDriver.hpp
 HEADERS += Defines.hpp
 HEADERS += ThreadPool.hpp
 HEADERS += CSVDocument.hpp
@@ -44,11 +43,11 @@ HEADERS += Sleep.hpp
 !win32:HEADERS += SHMPipe.hpp
 !win32:HEADERS += SMRingBuffer.hpp
 HEADERS += StringUtils.hpp
+HEADERS += SocketUtilPosix.hpp
 HEADERS += TCPServerSocket.hpp
 HEADERS += TCPSocket.hpp
 HEADERS += ThreadData.hpp
 HEADERS += Thread.hpp
-HEADERS += Timer.hpp
 HEADERS += TimeStamp.hpp
 HEADERS += Trace.hpp
 HEADERS += Types.hpp
@@ -82,7 +81,6 @@ SOURCES += SemaphoreQt.cpp
 !win32:SOURCES += SHMPipe.cpp
 !win32:SOURCES += SMRingBuffer.cpp
 SOURCES += StringUtils.cpp
-SOURCES += Timer.cpp
 SOURCES += TimeStamp.cpp
 SOURCES += Trace.cpp
 SOURCES += VideoImage.cpp

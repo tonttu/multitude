@@ -24,6 +24,8 @@
 #include <Luminous/Export.hpp>
 #include <Luminous/VertexBuffer.hpp>
 #include <Luminous/GLSLProgramObject.hpp>
+#include "FramebufferResource.hpp"
+#include <Luminous/RenderTarget.hpp>
 
 #include <Nimble/Rectangle.hpp>
 #include <Nimble/Vector2.hpp>
@@ -349,6 +351,16 @@ namespace Luminous
     MULTI_ATTR_DEPRECATED(Luminous::GLContext * glContext());
 
     /// @endcond
+
+    /// Get a temporary texture render target
+    RenderTargetObject pushRenderTarget(Nimble::Vector2 size, float scale);
+    /// Pop a temporary texture render target
+    Luminous::Texture2D & popRenderTarget(RenderTargetObject & trt);
+
+    void pushViewport(const Nimble::Recti & viewport);
+    void popViewport();
+    const Nimble::Recti & currentViewport() const;
+
   private:
     void drawCircleWithSegments(Nimble::Vector2f center, float radius, const float *rgba, int segments);
     void drawCircleImpl(Nimble::Vector2f center, float radius, const float *rgba);
