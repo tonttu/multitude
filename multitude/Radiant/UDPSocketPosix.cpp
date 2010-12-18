@@ -1,20 +1,9 @@
 /* COPYRIGHT
- *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #include "UDPSocket.hpp"
-#include "TCPSocket.hpp"
+
+#include "SocketUtilPosix.hpp"
 #include "Trace.hpp"
 
 #include <arpa/inet.h>
@@ -36,7 +25,7 @@ namespace Radiant
     {
       bzero( & m_server, sizeof(m_server));
     }
-    
+
     int m_fd;
     int m_port;
     std::string m_host;
@@ -63,19 +52,20 @@ namespace Radiant
     delete m_d;
   }
 
+  /*
   int UDPSocket::open(const char * host, int port, bool client)
   {
     if(client)
       return openClient(host, port);
     else
-      return openServer(host, port);    
+      return openServer(host, port);
   }
-
-  int UDPSocket::openServer(const char * host, int port)
+*/
+  int UDPSocket::openServer(int port)
   {
     close();
-   
-    m_d->m_host = host;
+
+    m_d->m_host.clear();
     m_d->m_port = port;
 
     m_d->m_fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -90,16 +80,16 @@ namespace Radiant
     int err = bind(m_d->m_fd, (struct sockaddr *) & m_d->m_server,
                    sizeof(m_d->m_server));
 
-    if (err != 0) 
+    if (err != 0)
       return err;
-    
+
     return 0;
   }
 
   int UDPSocket::openClient(const char * host, int port)
-  {  
+  {
     close();
-   
+
     m_d->m_host = host;
     m_d->m_port = port;
 
@@ -112,7 +102,7 @@ namespace Radiant
     m_d->m_server.sin_family = AF_INET;
     m_d->m_server.sin_port = htons((short)port);
 
-    in_addr * addr = TCPSocket::atoaddr(host);
+    in_addr * addr = SocketUtilPosix::atoaddr(host);
 
     if(!addr)
       return EHOSTUNREACH;
@@ -141,22 +131,22 @@ namespace Radiant
 
   int UDPSocket::read(void * buffer, int bytes, bool waitfordata)
   {
-    if(m_d->m_fd < 0) 
+    if(m_d->m_fd < 0)
       return -1;
 
-    if(waitfordata) 
+    if(waitfordata)
       error("UDPSocket::read # waitfordata not yet supported for UDP sockets.");
     else {
-      
+
       struct pollfd pfd;
       bzero( & pfd, sizeof(pfd));
 
       pfd.fd = m_d->m_fd;
       pfd.events = POLLIN;
       poll(&pfd, 1, 0);
-      
+
       if(!pfd.revents & POLLIN)
-	return 0;
+    return 0;
     }
 
     struct sockaddr_in from;
@@ -172,7 +162,7 @@ namespace Radiant
       return -1;
 
     return sendto(m_d->m_fd, buffer,
-                  bytes, 0, (const sockaddr*) & m_d->m_server, 
+                  bytes, 0, (const sockaddr*) & m_d->m_server,
                   sizeof(m_d->m_server));
   }
 

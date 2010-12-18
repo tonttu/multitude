@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #include "UDPSocket.hpp"
@@ -18,11 +6,19 @@
 
 #include <QUdpSocket>
 
+#include "errno.h"
+
 namespace Radiant
 {
 
   class UDPSocket::D : public QUdpSocket
-  {};
+  {
+  public:
+    D() : m_port(-1) {}
+
+    QHostAddress m_addr;
+    int m_port;
+  };
 
   UDPSocket::UDPSocket()
   {
@@ -46,27 +42,43 @@ namespace Radiant
     return m_d->isValid();
   }
 
-  bool UDPSocket::bind(const std::string &address, uint16_t port)
+  int UDPSocket::openServer(int port)
   {
-      return m_d->bind(QHostAddress(address.c_str()), port);
+    int ok = m_d->bind(port);
+    if(!m_d->isValid())
+      ok = false;
+    return ok ? 0 : EADDRNOTAVAIL;
   }
 
-  int UDPSocket::readDatagram(char *data, size_t maxSize, std::string *fromAddr, uint16_t *fromPort)
+  int UDPSocket::openClient(const char * host, int port)
   {
-      QHostAddress from;
+    m_d->m_addr = QHostAddress(host);
+    m_d->m_port = port;
 
-      int result = m_d->readDatagram(data, maxSize, (fromAddr ? &from : 0), fromPort);
+    if(m_d->m_addr.isNull())
+      return EADDRNOTAVAIL;
 
-      if(fromAddr)
-          *fromAddr = from.toString().toStdString();
-
-      return result;
+    /*
+    if(!m_d->isValid())
+      return ENOTSOCK;
+*/
+    return 0;
   }
 
-  int UDPSocket::writeDatagram(const char *data, size_t bytes, const std::string & addr, uint16_t port)
+  int UDPSocket::read(void *data, int maxSize, bool block)
   {
-      return m_d->writeDatagram(data, bytes, QHostAddress(addr.c_str()), port);
+    if(block)
+      error("UDPSocket::read # Blocking mode not implemented");
+
+    int result = m_d->readDatagram((char *) data, maxSize);
+
+    return result;
   }
- 
+
+  int UDPSocket::write(const void *data, int bytes)
+  {
+    return m_d->writeDatagram((const char *) data, bytes, m_d->m_addr, m_d->m_port);
+  }
+
 }
 
