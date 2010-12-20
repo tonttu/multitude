@@ -92,16 +92,47 @@ namespace Luminous
   }
 
   template<GLenum type>
+  void BufferObject<type>::read(Nimble::Vector2i size, Nimble::Vector2i pos,
+                                Luminous::PixelFormat pix, Usage usage)
+  {
+    if(!m_bound)
+      glBindBuffer(type, m_bufferId);
+
+    size_t bytes = pix.bytesPerPixel()*size.x*size.y;
+    if(m_filled < bytes) {
+      m_filled = bytes;
+      glBufferData(type, bytes, 0, usage);
+    }
+
+    glReadPixels(pos.x, pos.y, size.x, size.y, pix.layout(), pix.type(), 0);
+
+    if(!m_bound)
+      glBindBuffer(type, 0);
+  }
+
+  template<GLenum type>
   void * BufferObject<type>::map(AccessMode mode)
   {
-    bind();
-    return glMapBuffer(type, mode);
+    if(!m_bound)
+      glBindBuffer(type, m_bufferId);
+
+    void * data = glMapBuffer(type, mode);
+
+    if(!m_bound)
+      glBindBuffer(type, 0);
+
+    return data;
   }
 
   template<GLenum type>
   void BufferObject<type>::unmap()
   {
-    glUnmapBuffer(type);
-  }
+    if(!m_bound)
+      glBindBuffer(type, m_bufferId);
 
+    glUnmapBuffer(type);
+
+    if(!m_bound)
+      glBindBuffer(type, 0);
+  }
 }
