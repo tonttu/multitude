@@ -36,6 +36,13 @@
   namespace std
   {
     using tr1::shared_ptr;
+    using tr1::weak_ptr;
+    using tr1::swap;
+    using tr1::get_deleter;
+    using tr1::static_pointer_cast;
+    using tr1::dynamic_pointer_cast;
+    using tr1::const_pointer_cast;
+    using tr1::enable_shared_from_this;
   }
 #endif
 
