@@ -103,8 +103,8 @@ unix {
     HEADERS += VideoCamera1394.hpp
     SOURCES += DirectoryPosix.cpp
     SOURCES += SerialPortPosix.cpp
-    SOURCES += TCPServerSocketQt.cpp
-    SOURCES += TCPSocketQt.cpp
+    SOURCES += TCPServerSocketPosix.cpp
+    SOURCES += TCPSocketPosix.cpp
     SOURCES += UDPSocketPosix.cpp
     SOURCES += VideoCamera1394.cpp
     SOURCES += ConditionPt.cpp
