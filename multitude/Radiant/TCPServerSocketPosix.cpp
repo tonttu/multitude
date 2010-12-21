@@ -116,14 +116,18 @@ namespace Radiant
 
   bool TCPServerSocket::close()
   {
-    if(m_d->m_fd < 0)
+    int fd = m_d->m_fd;
+    if(fd < 0)
       return false;
 
-    if(::close(m_d->m_fd)) {
+    m_d->m_fd = -1;
+
+    if(shutdown(fd, SHUT_RDWR)) {
+      error("TCPServerSocket::close # Failed to shut down the socket: %s", strerror(errno));
+    }
+    if(::close(fd)) {
       error("TCPServerSocket::close # Failed to close socket: %s", strerror(errno));
     }
-
-    m_d->m_fd = -1;
 
     return true;
   }
@@ -165,6 +169,8 @@ namespace Radiant
         return new TCPSocket(fd);
 
       if(fd < 0) {
+        if(m_d->m_fd == -1)
+          return 0;
         if(errno == EAGAIN || errno == EWOULDBLOCK) {
           struct pollfd pfd;
           pfd.fd = m_d->m_fd;

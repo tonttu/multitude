@@ -139,17 +139,18 @@ namespace Radiant
 
   bool TCPSocket::close()
   {
-    if(m_d->m_fd < 0)
+    int fd = m_d->m_fd;
+    if(fd < 0)
       return false;
 
-    if(shutdown(m_d->m_fd, SHUT_RDWR)) {
+    m_d->m_fd = -1;
+
+    if(shutdown(fd, SHUT_RDWR)) {
       error("TCPSocket::close # Failed to shut down the socket: %s", strerror(errno));
     }
-    if(::close(m_d->m_fd)) {
+    if(::close(fd)) {
       error("TCPSocket::close # Failed to close socket: %s", strerror(errno));
     }
-
-    m_d->m_fd = -1;
 
     return true;
   }
@@ -175,6 +176,8 @@ namespace Radiant
 
       if(tmp > 0) {
         pos += tmp;
+      } else if(tmp == 0 || m_d->m_fd == -1) {
+        return pos;
       } else if(errno == EAGAIN || errno == EWOULDBLOCK) {
         if(waitfordata) {
           struct pollfd pfd;
