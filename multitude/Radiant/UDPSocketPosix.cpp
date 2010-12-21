@@ -97,16 +97,16 @@ namespace Radiant
     if(m_d->m_fd < 0)
       return errno;
 
-
     bzero( & m_d->m_server, sizeof(m_d->m_server));
     m_d->m_server.sin_family = AF_INET;
     m_d->m_server.sin_port = htons((short)port);
 
     in_addr * addr = SocketUtilPosix::atoaddr(host);
 
-    if(!addr)
+    if(!addr) {
+      close();
       return EHOSTUNREACH;
-
+    }
     m_d->m_server.sin_addr.s_addr = addr->s_addr;
 
     return 0;
@@ -129,7 +129,7 @@ namespace Radiant
     return (m_d->m_fd > 0);
   }
 
-  int UDPSocket::read(void * buffer, int bytes, bool waitfordata)
+  int UDPSocket::read(void * buffer, int bytes, bool waitfordata = false)
   {
     if(m_d->m_fd < 0)
       return -1;
