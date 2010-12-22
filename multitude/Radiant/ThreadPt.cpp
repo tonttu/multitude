@@ -29,8 +29,10 @@
 namespace Radiant {
 
   class Thread::D {
-    public:
+  public:
+    D() : m_valid(false) {}
     pthread_t m_pthread;
+    bool m_valid;
   };
 
   enum {
@@ -95,6 +97,7 @@ namespace Radiant {
     }
 
     e = pthread_create(&m_d->m_pthread, &thread_attr, entry, this);
+    m_d->m_valid = true;
 
     if(e && (m_threadDebug || m_threadWarnings))
       std::cout << "failed - " << strerror(e) << std::endl;
@@ -120,6 +123,7 @@ namespace Radiant {
     }
 
     e = pthread_create(&m_d->m_pthread, &thread_attr, entry, this);
+    m_d->m_valid = true;
 
     if(e && (m_threadDebug || m_threadWarnings))
       std::cout << "failed - " << strerror(e) << std::endl;
@@ -132,6 +136,9 @@ namespace Radiant {
     if(m_threadDebug) {
       std::cout << "Thread::waitEnd " << this << std::endl;
     }
+
+    if(!m_d->m_valid)
+      return true;
 
     int e;
 
@@ -166,7 +173,8 @@ namespace Radiant {
 
   void Thread::kill()
   {
-    pthread_kill(m_d->m_pthread, SIGKILL);
+    if(m_d->m_valid)
+      pthread_kill(m_d->m_pthread, SIGKILL);
   }
 
   bool Thread::isRunning()
