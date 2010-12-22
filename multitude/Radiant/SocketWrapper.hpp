@@ -71,7 +71,7 @@ void wrap_startup();
 #define wrap_strerror(e) strerror(e)
 #define wrap_errno errno
 
-#define wrap_startup
+#define wrap_startup()
 
 #endif
 
