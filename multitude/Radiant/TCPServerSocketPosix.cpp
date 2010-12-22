@@ -15,18 +15,13 @@
 
 #include "TCPServerSocket.hpp"
 #include "TCPSocket.hpp"
+#include "SocketWrapper.hpp"
 #include "Trace.hpp"
 
-#include <arpa/inet.h>
 #include <errno.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <poll.h>
-#include <sys/socket.h>
 #include <sys/types.h>
 #include <strings.h>
 #include <string.h>
-#include <netdb.h>
 #include <stdio.h>
 
 namespace Radiant
@@ -47,6 +42,7 @@ namespace Radiant
   TCPServerSocket::TCPServerSocket()
     : m_d(new D)
   {
+    wrap_startup();
   }
   
   TCPServerSocket::~TCPServerSocket()
@@ -65,8 +61,8 @@ namespace Radiant
     errno = 0;
     int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if(fd < 0) {
-      int err = errno;
-      error("TCPServerSocket::open # Failed to open TCP socket: %s", strerror(err));
+      int err = wrap_errno;
+      error("TCPServerSocket::open # Failed to open TCP socket: %s", wrap_strerror(err));
       return err;
     }
 
@@ -84,7 +80,7 @@ namespace Radiant
     int s = getaddrinfo(host && *host ? host : 0, service, &hints, &result);
     if(s) {
       error("TCPServerSocket::open # getaddrinfo: %s", gai_strerror(s));
-      ::close(fd);
+      wrap_close(fd);
       return -1;
     }
 
@@ -97,15 +93,15 @@ namespace Radiant
 
     if(rp == NULL) {
       error("TCPServerSocket::open # Failed to bind %s:%d", host ? host : "", port);
-      ::close(fd);
+      wrap_close(fd);
       return -1;
     }
 
     errno = 0;
     if(::listen(fd, maxconnections) != 0) {
-      int err = errno;
-      error("TCPServerSocket::open # Failed to listen TCP socket: %s", strerror(err));
-      ::close(fd);
+      int err = wrap_errno;
+      error("TCPServerSocket::open # Failed to listen TCP socket: %s", wrap_strerror(err));
+      wrap_close(fd);
       return err;
     }
 
@@ -123,10 +119,10 @@ namespace Radiant
     m_d->m_fd = -1;
 
     if(shutdown(fd, SHUT_RDWR)) {
-      error("TCPServerSocket::close # Failed to shut down the socket: %s", strerror(errno));
+      error("TCPServerSocket::close # Failed to shut down the socket: %s", wrap_strerror(wrap_errno));
     }
-    if(::close(fd)) {
-      error("TCPServerSocket::close # Failed to close socket: %s", strerror(errno));
+    if(wrap_close(fd)) {
+      error("TCPServerSocket::close # Failed to close socket: %s", wrap_strerror(wrap_errno));
     }
 
     return true;
@@ -146,9 +142,9 @@ namespace Radiant
     bzero( & pfd, sizeof(pfd));
     pfd.fd = m_d->m_fd;
     pfd.events = POLLIN;
-    poll(&pfd, 1, waitMicroSeconds / 1000);
+    wrap_poll(&pfd, 1, waitMicroSeconds / 1000);
 
-    return pfd.revents & POLLIN;
+    return (pfd.revents & POLLIN) == POLLIN;
   }
 
   TCPSocket * TCPServerSocket::accept()
@@ -171,13 +167,14 @@ namespace Radiant
       if(fd < 0) {
         if(m_d->m_fd == -1)
           return 0;
-        if(errno == EAGAIN || errno == EWOULDBLOCK) {
+        int err = wrap_errno;
+        if(err == EAGAIN || err == EWOULDBLOCK) {
           struct pollfd pfd;
           pfd.fd = m_d->m_fd;
           pfd.events = POLLIN;
-          poll(&pfd, 1, 5000);
+          wrap_poll(&pfd, 1, 5000);
         } else {
-          error("TCPServerSocket::accept # %s", strerror(errno));
+          error("TCPServerSocket::accept # %s", wrap_strerror(wrap_errno));
           return 0;
         }
       }

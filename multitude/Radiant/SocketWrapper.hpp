@@ -3,7 +3,9 @@
 
 #include "Platform.hpp"
 #ifdef RADIANT_WIN32
-#include <winsock.h>
+#include <winsock2.h>
+#include <WS2tcpip.h>
+
 #define EWOULDBLOCK             WSAEWOULDBLOCK
 #define EINPROGRESS             WSAEINPROGRESS
 #define EALREADY                WSAEALREADY
@@ -41,6 +43,35 @@
 #define EDQUOT                  WSAEDQUOT
 #define ESTALE                  WSAESTALE
 #define EREMOTE                 WSAEREMOTE
+#define SHUT_RDWR SD_BOTH
+
+#define wrap_close(fd) closesocket(fd)
+
+#define wrap_poll(fdarray, nfds, timeout) \
+  WSAPoll((fdarray), (nfds), (timeout))
+
+const char * wrap_strerror(int err);
+#define wrap_errno WSAGetLastError()
+
+void wrap_startup();
+
+#else
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <poll.h>
+#include <sys/socket.h>
+
+#define wrap_close(fd) ::close(fd)
+
+#define wrap_poll(fdarray, nfds, timeout) \
+  poll((fdarray), (nfds), (timeout))
+
+#define wrap_strerror(e) strerror(e)
+#define wrap_errno errno
+
+#define wrap_startup
 
 #endif
 
