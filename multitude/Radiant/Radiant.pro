@@ -57,6 +57,7 @@ HEADERS += VideoInput.hpp
 HEADERS += WatchDog.hpp
 HEADERS += ClonablePtr.hpp
 HEADERS += VideoCamera.hpp
+HEADERS += SocketWrapper.hpp
 SOURCES += CameraDriver.cpp
 SOURCES += ThreadPoolQt.cpp
 SOURCES += CSVDocument.cpp

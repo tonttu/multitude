@@ -299,7 +299,7 @@ namespace Radiant {
 
   bool VideoCameraCMU::open(uint64_t euid, int, int, ImageFormat /*fmt*/, FrameRate framerate)
     {
-      Guard guard(&g_mutex);
+      Guard guard(g_mutex);
 
       m_camera = new C1394Camera();
       m_camera->RefreshCameraList();

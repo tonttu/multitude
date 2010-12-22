@@ -5,7 +5,7 @@
 #include "Trace.hpp"
 
 #include <QUdpSocket>
-
+#include "SocketWrapper.hpp"
 #include "errno.h"
 
 namespace Radiant
