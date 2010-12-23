@@ -157,6 +157,9 @@ namespace Luminous {
     /// Returns the size of the mipmap level
     LUMINOUS_API Nimble::Vector2i mipmapSize(int level);
 
+    /// Set the time to keep mipmaps in CPU memory
+    inline void setTimeOut(float timeout) { m_timeOut = timeout; }
+
   protected:
     LUMINOUS_API virtual void doTask();
 

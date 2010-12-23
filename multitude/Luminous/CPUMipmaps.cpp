@@ -47,7 +47,7 @@ namespace Luminous {
     m_firstLevelSize(0, 0),
     m_maxLevel(0),
     m_hasAlpha(false),
-    m_timeOut(3.0f),
+    m_timeOut(5.0f),
     m_keepMaxLevel(true)
   {
   }
@@ -126,11 +126,12 @@ namespace Luminous {
 
   std::shared_ptr<ImageTex> CPUMipmaps::getImage(int i)
   {
-    const CPUItem item = getStack(i);
+    CPUItem item = getStack(i);
 
     std::shared_ptr<ImageTex> image = item.m_image;
-    if(item.m_state != READY)
+    if(item.m_state != READY) {
       return std::shared_ptr<ImageTex>();
+    }
 
     return image;
   }
@@ -325,7 +326,7 @@ namespace Luminous {
             delay = time_to_expire;
         }
       } else if(item.m_state == READY) { // unused image
-        // info("CPUMipmaps::doTask # Dropping %s %d", m_filename.c_str(), i);
+        info("CPUMipmaps::doTask # Dropping %s %d", m_filename.c_str(), i);
         stack[i] = item;
         stack[i].m_state = WAITING;
         stack[i].m_image.reset();
