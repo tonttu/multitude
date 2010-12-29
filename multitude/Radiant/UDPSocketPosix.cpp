@@ -166,4 +166,16 @@ namespace Radiant
                   sizeof(m_d->m_server));
   }
 
+  bool UDPSocket::setReceiveBufferSize(size_t bytes)
+  {
+    if(m_d->m_fd < 0)
+      return false;
+
+    int n = bytes;
+
+    if (setsockopt(m_d->m_fd, SOL_SOCKET, SO_RCVBUF, &n, sizeof(n)) == -1) {
+      return false;
+    }
+    return true;
+  }
 }
