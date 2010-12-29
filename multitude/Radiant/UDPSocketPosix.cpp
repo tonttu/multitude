@@ -52,15 +52,6 @@ namespace Radiant
     delete m_d;
   }
 
-  /*
-  int UDPSocket::open(const char * host, int port, bool client)
-  {
-    if(client)
-      return openClient(host, port);
-    else
-      return openServer(host, port);
-  }
-*/
   int UDPSocket::openServer(int port)
   {
     close();
