@@ -26,6 +26,15 @@
 #include <iostream>
 #include <cassert>
 
+#ifdef RADIANT_LINUX
+#include <sys/syscall.h>
+namespace Radiant {
+  int gettid() { return syscall(SYS_gettid); }
+}
+#else
+int gettid() { return getpid(); }
+#endif
+
 namespace Radiant {
 
   class Thread::D {
