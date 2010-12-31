@@ -52,6 +52,8 @@ namespace Nimble
     void remove(size_t ii);
     /// Returns the number of control points
     size_t size() const { return m_points.size(); }
+    /// Returns the ith control point
+    Nimble::Vector2 getControlPoint(size_t i) const { return m_points[i]; }
 
     /// Clears the interpolation key-points
     void clear();
