@@ -23,9 +23,13 @@
 
 class QThread;
 
+
 namespace Radiant {
 
   class Mutex;
+
+
+  int gettid();
 
   /// Platform-independent threading
   /** This class is used by inheriting it and overriding the virtual

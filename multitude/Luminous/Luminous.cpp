@@ -1,4 +1,4 @@
-/* COPYRIGHT
+ /* COPYRIGHT
  *
  * This file is part of Luminous.
  *

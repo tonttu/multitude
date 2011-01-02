@@ -52,15 +52,6 @@ namespace Radiant
     delete m_d;
   }
 
-  /*
-  int UDPSocket::open(const char * host, int port, bool client)
-  {
-    if(client)
-      return openClient(host, port);
-    else
-      return openServer(host, port);
-  }
-*/
   int UDPSocket::openServer(int port)
   {
     close();
@@ -97,16 +88,16 @@ namespace Radiant
     if(m_d->m_fd < 0)
       return errno;
 
-
     bzero( & m_d->m_server, sizeof(m_d->m_server));
     m_d->m_server.sin_family = AF_INET;
     m_d->m_server.sin_port = htons((short)port);
 
     in_addr * addr = SocketUtilPosix::atoaddr(host);
 
-    if(!addr)
+    if(!addr) {
+      close();
       return EHOSTUNREACH;
-
+    }
     m_d->m_server.sin_addr.s_addr = addr->s_addr;
 
     return 0;
@@ -129,7 +120,7 @@ namespace Radiant
     return (m_d->m_fd > 0);
   }
 
-  int UDPSocket::read(void * buffer, int bytes, bool waitfordata)
+  int UDPSocket::read(void * buffer, int bytes, bool waitfordata = false)
   {
     if(m_d->m_fd < 0)
       return -1;
@@ -166,4 +157,16 @@ namespace Radiant
                   sizeof(m_d->m_server));
   }
 
+  bool UDPSocket::setReceiveBufferSize(size_t bytes)
+  {
+    if(m_d->m_fd < 0)
+      return false;
+
+    int n = bytes;
+
+    if (setsockopt(m_d->m_fd, SOL_SOCKET, SO_RCVBUF, &n, sizeof(n)) == -1) {
+      return false;
+    }
+    return true;
+  }
 }
