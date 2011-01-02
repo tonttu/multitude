@@ -8,10 +8,10 @@
  * See file "Nimble.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef NIMBLE_RECT_HPP
@@ -184,6 +184,15 @@ namespace Nimble {
     @param col The column of the quarter (0-1)
     */
     inline RectT quarter(int row, int col) const;
+
+    /** Fit calculate space for pictures or video to be place inside this rectangle.
+
+        @param aspectRatio The aspect ratio of the content.
+
+        @return Returns the largest possible rectangle that can fit inside this rectangle,
+        with the given aspect ratio. The content is centered both horizontally, and vertically.
+    */
+    inline RectT fitContent(float aspectRatio);
 
     /// Check if two rectangles are identical
     inline bool operator == (const RectT<T> & o) const {
@@ -389,6 +398,30 @@ namespace Nimble {
       res.m_low.x = m_low.x + size.x;
     res.m_high = res.m_low + size;
     return res;
+  }
+
+  template<class T>
+  inline RectT<T> RectT<T>::fitContent(float aspectRatio)
+  {
+    Nimble::Vector2 s = span();
+    float myAspect = s.x / s.y;
+
+    Nimble::Vector2 area;
+
+    if(myAspect > aspectRatio) {
+      area.y = s.y;
+      area.x = area.y * aspectRatio;
+    }
+    else {
+      area.x = s.x;
+      area.y = area.x / aspectRatio;
+    }
+
+    area *= 0.5f;
+
+    Nimble::Vector2 c = (low() + high()) * 0.5f;
+
+    return RectT(c - area, c + area);
   }
 
   /// Rectangle of floats
