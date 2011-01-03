@@ -418,7 +418,7 @@ namespace Nimble {
 
     area *= 0.5f;
 
-    Nimble::Vector2 c = (low() + high()) * 0.5f;
+    Nimble::Vector2 c = T(0.5) * (low() + high());
 
     return RectT(c - area, c + area);
   }
