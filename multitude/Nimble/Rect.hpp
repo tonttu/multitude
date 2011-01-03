@@ -1,4 +1,3 @@
-/* -*- C++ -*- */
 /* COPYRIGHT
  *
  * This file is part of Nimble.
@@ -8,10 +7,10 @@
  * See file "Nimble.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef NIMBLE_RECT_HPP
@@ -34,13 +33,13 @@ namespace Nimble {
       is using normal GUI coordinates (Y increases from top to
       bottom). */
 
-    /// @todo rename to AARect/RectAA
+  /// @todo rename to AARect/RectAA
   template <class T>
-  class NIMBLE_API RectT
+      class NIMBLE_API RectT
   {
   public:
     RectT()
-    : m_low(0, 0),
+      : m_low(0, 0),
       m_high(-1, -1)
     {}
 
@@ -185,6 +184,15 @@ namespace Nimble {
     */
     inline RectT quarter(int row, int col) const;
 
+    /** Fit calculate space for pictures or video to be place inside this rectangle.
+
+        @param aspectRatio The aspect ratio of the content.
+
+        @return Returns the largest possible rectangle that can fit inside this rectangle,
+        with the given aspect ratio. The content is centered both horizontally, and vertically.
+    */
+    inline RectT fitContent(float aspectRatio);
+
     /// Check if two rectangles are identical
     inline bool operator == (const RectT<T> & o) const {
       return m_low == o.m_low && m_high == o.m_high;
@@ -200,29 +208,29 @@ namespace Nimble {
   };
 
   template <class T>
-  inline void RectT<T>::expand(const Vector2T<T> &v)
+      inline void RectT<T>::expand(const Vector2T<T> &v)
   {
-      if(isEmpty()) {
-          *this = RectT<T>(v);
-      } else {
+    if(isEmpty()) {
+      *this = RectT<T>(v);
+    } else {
 
-          if(v[0] < m_low[0]) m_low[0] = v[0];
-          if(v[1] < m_low[1]) m_low[1] = v[1];
+      if(v[0] < m_low[0]) m_low[0] = v[0];
+      if(v[1] < m_low[1]) m_low[1] = v[1];
 
-          if(v[0] > m_high[0]) m_high[0] = v[0];
-          if(v[1] > m_high[1]) m_high[1] = v[1];
-      }
+      if(v[0] > m_high[0]) m_high[0] = v[0];
+      if(v[1] > m_high[1]) m_high[1] = v[1];
+    }
   }
 
   template <class T>
-  inline void RectT<T>::expand(const Vector2T<T> &v, T radius)
+      inline void RectT<T>::expand(const Vector2T<T> &v, T radius)
   {
     expand(v - Vector2T<T>(radius, radius));
     expand(v + Vector2T<T>(radius, radius));
   }
 
   template <class T>
-  inline void RectT<T>::expand(const RectT &b)
+      inline void RectT<T>::expand(const RectT &b)
   {
     if(isEmpty()) {
       *this = b;
@@ -240,7 +248,7 @@ namespace Nimble {
   }
 
   template <class T>
-  void RectT<T>::scale(const Vector2T<T> &v)
+      void RectT<T>::scale(const Vector2T<T> &v)
   {
     m_low[0] *= v[0];
     m_low[1] *= v[1];
@@ -250,13 +258,13 @@ namespace Nimble {
   }
 
   template <class T>
-  Vector2T<T> RectT<T>::topCenter() const
+      Vector2T<T> RectT<T>::topCenter() const
   {
     return Vector2T<T>((m_low.x + m_high.x) * T(0.5), m_high.y);
   }
 
   template <class T>
-  RectT<T> RectT<T>::intersection(const RectT & b) const
+      RectT<T> RectT<T>::intersection(const RectT & b) const
   {
     RectT<T> ret;
     for(int i = 0; i < 2; i++) {
@@ -267,39 +275,39 @@ namespace Nimble {
   }
 
   template <class T>
-  bool RectT<T>::intersects(const RectT &b) const
+      bool RectT<T>::intersects(const RectT &b) const
   {
     for(int i = 0; i < 2; i++) {
       if(b.m_high[i] < m_low[i] || b.m_low[i] > m_high[i])
-    return false;
+        return false;
     }
 
     return true;
   }
 
   template <class T>
-  inline bool RectT<T>::contains(T x, T y) const
+      inline bool RectT<T>::contains(T x, T y) const
   {
     return ((x >= m_low[0]) && (x <= m_high[0]) &&
-        (y >= m_low[1]) && (y <= m_high[1]));
+            (y >= m_low[1]) && (y <= m_high[1]));
   }
 
   template <class T>
-  inline bool RectT<T>::contains(Vector2T<T> v) const
+      inline bool RectT<T>::contains(Vector2T<T> v) const
   {
     return ((v[0] >= m_low[0]) && (v[0] <= m_high[0])
-      && (v[1] >= m_low[1]) && (v[1] <= m_high[1]));
+            && (v[1] >= m_low[1]) && (v[1] <= m_high[1]));
   }
 
   template <class T>
-  inline bool RectT<T>::contains(const RectT &b) const
+      inline bool RectT<T>::contains(const RectT &b) const
   {
     return ((b.m_low[0] >= m_low[0]) && (b.m_high[0] <= m_high[0]) &&
-        (b.m_low[1] >= m_low[1]) && (b.m_high[1] <= m_high[1]));
+            (b.m_low[1] >= m_low[1]) && (b.m_high[1] <= m_high[1]));
   }
 
   template <class T>
-  inline T RectT<T>::distance(const RectT &b) const
+      inline T RectT<T>::distance(const RectT &b) const
   {
     Vector2T<T> mind;
 
@@ -318,7 +326,7 @@ namespace Nimble {
   }
 
   template <class T>
-  inline Vector2T<T> RectT<T>::clamp(const Vector2T<T> &v) const
+      inline Vector2T<T> RectT<T>::clamp(const Vector2T<T> &v) const
   {
     int i;
     Vector2T<T> r(v);
@@ -334,7 +342,7 @@ namespace Nimble {
 
   /// @cond
   template <>
-  inline Vector2T<int> RectT<int>::center() const
+      inline Vector2T<int> RectT<int>::center() const
   {
     return (m_low + m_high) / 2;
   }
@@ -391,6 +399,30 @@ namespace Nimble {
     return res;
   }
 
+  template<class T>
+  inline RectT<T> RectT<T>::fitContent(float aspectRatio)
+  {
+    Nimble::Vector2 s = span();
+    float myAspect = s.x / s.y;
+
+    Nimble::Vector2 area;
+
+    if(myAspect > aspectRatio) {
+      area.y = s.y;
+      area.x = area.y * aspectRatio;
+    }
+    else {
+      area.x = s.x;
+      area.y = area.x / aspectRatio;
+    }
+
+    area *= 0.5f;
+
+    Nimble::Vector2 c = (low() + high()) * 0.5f;
+
+    return RectT(c - area, c + area);
+  }
+
   /// Rectangle of floats
   typedef RectT<float> Rect;
   /// Rectangle of floats
@@ -401,14 +433,32 @@ namespace Nimble {
   typedef RectT<double> Rectd;
 
   // These are needed under Windows
-  #ifdef WIN32
-  #   ifdef NIMBLE_EXPORT
-          template Nimble::RectT<float>;
-          template Nimble::RectT<int>;
-          template Nimble::RectT<double>;
-  #   endif
-  #endif
+#ifdef WIN32
+#   ifdef NIMBLE_EXPORT
+  template Nimble::RectT<float>;
+  template Nimble::RectT<int>;
+  template Nimble::RectT<double>;
+#   endif
+#endif
 
+  /// Write a vector into a stream
+  template <class T>
+      inline std::ostream &operator<<(std::ostream &os, const Nimble::RectT<T> &t)
+  {
+    os << t.low().x << ' ' << t.low().y << ' ' << t.high().x << ' ' << t.high().y;
+    return os;
+  }
+
+  /// Read a vector from a stream
+  template <class T>
+      inline std::istream &operator>>(std::istream &is, Nimble::RectT<T> &t)
+  {
+    is >> t.low().x;
+    is >> t.low().y;
+    is >> t.high().x;
+    is >> t.high().y;
+    return is;
+  }
 }
 
 #endif
