@@ -30,7 +30,7 @@ namespace Radiant {
 
   /** Returns the current thread id as an integer, that is expected to match the thread id
       that is shown by "top -H" and other similar tools. */
-  int gettid();
+  int RADIANT_API gettid();
 
   /// Platform-independent threading
   /** This class is used by inheriting it and overriding the virtual
