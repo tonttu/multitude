@@ -26,6 +26,8 @@
 
 #include <sys/stat.h>
 
+#include <QFileInfo>
+
 #ifdef WIN32
 #include <io.h>
 #include <stdlib.h>
@@ -197,10 +199,11 @@ namespace Radiant
   }
 
 
-  string FileUtils::suffix(const string & filepath)
+  std::string FileUtils::suffix(const string & filepath)
   {
-    size_t cut = filepath.rfind(".") + 1;
-    return filepath.substr(cut);
+    QFileInfo fi(filepath.c_str());
+
+    return fi.suffix().toStdString();
   }
 
   string FileUtils::suffixLowerCase(const string & filepath)
