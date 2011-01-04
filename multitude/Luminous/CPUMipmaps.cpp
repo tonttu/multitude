@@ -366,16 +366,21 @@ namespace Luminous {
     name += buf;
     name += Radiant::FileUtils::filename(m_filename);
 
-    // Put in the right suffix
-    size_t i = name.size() - 1;
+    std::string suffix = Radiant::FileUtils::suffix(name);
 
-    while(i && name[i] != '.' && name[i] != '/')
-      i--;
+    if(!suffix.empty()) {
 
-    name.erase(i + 1);
+      // Put in the right suffix
+      size_t i = name.size() - 1;
 
-    // always use png
-    name += "png";
+      while(i && name[i] != '.' && name[i] != '/')
+        i--;
+
+      name.erase(i + 1);
+
+      // always use png
+      name += "png";
+    }
   }
 
   void CPUMipmaps::recursiveLoad(StackMap & stack, int level)
