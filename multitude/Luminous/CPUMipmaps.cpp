@@ -326,7 +326,7 @@ namespace Luminous {
             delay = time_to_expire;
         }
       } else if(item.m_state == READY) { // unused image
-        info("CPUMipmaps::doTask # Dropping %s %d", m_filename.c_str(), i);
+        //info("CPUMipmaps::doTask # Dropping %s %d", m_filename.c_str(), i);
         stack[i] = item;
         stack[i].m_state = WAITING;
         stack[i].m_image.reset();
