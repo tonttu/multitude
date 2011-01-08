@@ -14,21 +14,46 @@
  */
 
 #include "TCPSocket.hpp"
-
+#include "SocketWrapper.hpp"
 #include "Trace.hpp"
 
-#include <arpa/inet.h>
 #include <errno.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <poll.h>
-#include <sys/socket.h>
 #include <sys/types.h>
 #include <strings.h>
 #include <string.h>
 #include <iostream>
 #include <stdio.h>
+
+#ifdef RADIANT_WIN32
+const char * wrap_strerror(int err)
+{
+  __declspec( thread ) static char msg[1024];
+  FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS |
+                FORMAT_MESSAGE_MAX_WIDTH_MASK, 0, err,
+                MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                (LPSTR)msg, 1024, 0);
+  return msg;
+}
+
+void wrap_startup()
+{
+  static bool s_ready = false;
+
+  if(s_ready) return;
+
+  WORD version = MAKEWORD(2, 0);
+  WSADATA data;
+
+  /// @todo should we care about WSACleanup()
+  int err = WSAStartup(version, &data);
+  if(err != 0) {
+    Radiant::error("WSAStartup failed with error: %d", err);
+    return;
+  }
+  s_ready = true;
+}
+
+#endif
 
 namespace Radiant
 {
@@ -47,9 +72,9 @@ namespace Radiant
 
         bool ok = true;
 
-        if(setsockopt(m_fd, IPPROTO_TCP, TCP_NODELAY, &m_noDelay, sizeof(m_noDelay))) {
+        if(setsockopt(m_fd, IPPROTO_TCP, TCP_NODELAY, (const char*)&m_noDelay, sizeof(m_noDelay))) {
           ok = false;
-          error("Failed to set TCP_NODELAY: %s", strerror(errno));
+          error("Failed to set TCP_NODELAY: %s", wrap_strerror(wrap_errno));
         }
 
         return ok;
@@ -66,10 +91,12 @@ namespace Radiant
 
   TCPSocket::TCPSocket() : m_d(new D)
   {
+    wrap_startup();
   }
 
   TCPSocket::TCPSocket(int fd) : m_d(new D(fd))
   {
+    wrap_startup();
     m_d->setOpts();
   }
 
@@ -94,8 +121,8 @@ namespace Radiant
 
     m_d->m_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if(m_d->m_fd < 0) {
-      int err = errno;
-      error("TCPSocket::open # Failed to open TCP socket: %s", strerror(err));
+      int err = wrap_errno;
+      error("TCPSocket::open # Failed to open TCP socket: %s", wrap_strerror(err));
       return err;
     }
 
@@ -113,7 +140,7 @@ namespace Radiant
     int s = getaddrinfo(host, service, &hints, &result);
     if(s) {
       error("TCPSocket::open # getaddrinfo: %s", gai_strerror(s));
-      ::close(m_d->m_fd);
+      wrap_close(m_d->m_fd);
       m_d->m_fd = -1;
       return -1;
     }
@@ -127,7 +154,7 @@ namespace Radiant
 
     if(rp == NULL) {
       error("TCPSocket::open # Failed to connect %s:%d", host, port);
-      ::close(m_d->m_fd);
+      wrap_close(m_d->m_fd);
       m_d->m_fd = -1;
       return -1;
     }
@@ -139,17 +166,18 @@ namespace Radiant
 
   bool TCPSocket::close()
   {
-    if(m_d->m_fd < 0)
+    int fd = m_d->m_fd;
+    if(fd < 0)
       return false;
 
-    if(shutdown(m_d->m_fd, SHUT_RDWR)) {
-      error("TCPSocket::close # Failed to shut down the socket: %s", strerror(errno));
-    }
-    if(::close(m_d->m_fd)) {
-      error("TCPSocket::close # Failed to close socket: %s", strerror(errno));
-    }
-
     m_d->m_fd = -1;
+
+    if(shutdown(fd, SHUT_RDWR)) {
+      error("TCPSocket::close # Failed to shut down the socket: %s", wrap_strerror(wrap_errno));
+    }
+    if(wrap_close(fd)) {
+      error("TCPSocket::close # Failed to close socket: %s", wrap_strerror(wrap_errno));
+    }
 
     return true;
   }
@@ -171,21 +199,23 @@ namespace Radiant
       errno = 0;
       // int max = bytes - pos > SSIZE_MAX ? SSIZE_MAX : bytes - pos;
       int max = bytes - pos > 32767 ? 32767 : bytes - pos;
-      int tmp = ::read(m_d->m_fd, data + pos, max);
+      int tmp = recv(m_d->m_fd, data + pos, max, 0);
 
       if(tmp > 0) {
         pos += tmp;
+      } else if(tmp == 0 || m_d->m_fd == -1) {
+        return pos;
       } else if(errno == EAGAIN || errno == EWOULDBLOCK) {
         if(waitfordata) {
           struct pollfd pfd;
           pfd.fd = m_d->m_fd;
           pfd.events = POLLIN;
-          poll(&pfd, 1, 5000);
+          wrap_poll(&pfd, 1, 5000);
         } else {
           return pos;
         }
       } else {
-        error("TCPSocket::read # Failed to read: %s", strerror(errno));
+        error("TCPSocket::read # Failed to read: %s", wrap_strerror(wrap_errno));
         return pos;
       }
     }
@@ -203,7 +233,7 @@ namespace Radiant
 
     for(;;) {
       errno = 0;
-      int tmp = ::read(m_d->m_fd, buffer, bytes);
+      int tmp = recv(m_d->m_fd, (char*)buffer, bytes, 0);
 
       if(tmp > 0) {
         return tmp;
@@ -212,12 +242,12 @@ namespace Radiant
           struct pollfd pfd;
           pfd.fd = m_d->m_fd;
           pfd.events = POLLIN;
-          poll(&pfd, 1, 5000);
+          wrap_poll(&pfd, 1, 5000);
         } else {
           return 0;
         }
       } else {
-        error("TCPSocket::readSome # Failed to read: %s", strerror(errno));
+        error("TCPSocket::readSome # Failed to read: %s", wrap_strerror(wrap_errno));
         return 0;
       }
     }
@@ -237,16 +267,16 @@ namespace Radiant
       errno = 0;
       // int max = bytes - pos > SSIZE_MAX ? SSIZE_MAX : bytes - pos;
       int max = bytes - pos > 32767 ? 32767 : bytes - pos;
-      int tmp = ::write(m_d->m_fd, data + pos, max);
+      int tmp = send(m_d->m_fd, data + pos, max, 0);
       if(tmp > 0) {
         pos += tmp;
       } else if(errno == EAGAIN || errno == EWOULDBLOCK) {
         struct pollfd pfd;
         pfd.fd = m_d->m_fd;
         pfd.events = POLLOUT;
-        poll(&pfd, 1, 5000);
+        wrap_poll(&pfd, 1, 5000);
       } else {
-        error("TCPSocket::write # Failed to write: %s", strerror(errno));
+        error("TCPSocket::write # Failed to write: %s", wrap_strerror(wrap_errno));
         return pos;
       }
     }
@@ -263,7 +293,7 @@ namespace Radiant
     bzero( & pfd, sizeof(pfd));
     pfd.fd = m_d->m_fd;
     pfd.events = ~0;
-    poll(&pfd, 1, 0);
+    wrap_poll(&pfd, 1, 0);
 
    return (pfd.revents & (POLLHUP)) != 0;
    // return (pfd.revents & (POLLERR | POLLHUP | POLLNVAL)) != 0;
@@ -279,9 +309,9 @@ namespace Radiant
 
     pfd.fd = m_d->m_fd;
     pfd.events = POLLIN;
-    poll(&pfd, 1, waitMicroSeconds / 1000);
+    wrap_poll(&pfd, 1, waitMicroSeconds / 1000);
 
-    return pfd.revents & POLLIN;
+    return (pfd.revents & POLLIN) == POLLIN;
   }
 
   void TCPSocket::moveToThread(Thread *) {

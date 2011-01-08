@@ -51,7 +51,8 @@ namespace Valuable
   HasValues::HasValues(HasValues * parent, const std::string & name, bool transit)
       : ValueObject(parent, name, transit),
       m_eventsEnabled(true),
-      m_id(this, "id", generateId())
+      m_id(this, "id", generateId()),
+      m_frame(0)
   {
   }
 

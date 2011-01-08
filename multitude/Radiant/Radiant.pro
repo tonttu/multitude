@@ -57,6 +57,7 @@ HEADERS += VideoInput.hpp
 HEADERS += WatchDog.hpp
 HEADERS += ClonablePtr.hpp
 HEADERS += VideoCamera.hpp
+HEADERS += SocketWrapper.hpp
 SOURCES += CameraDriver.cpp
 SOURCES += ThreadPoolQt.cpp
 SOURCES += CSVDocument.cpp
@@ -103,8 +104,8 @@ unix {
     HEADERS += VideoCamera1394.hpp
     SOURCES += DirectoryPosix.cpp
     SOURCES += SerialPortPosix.cpp
-    SOURCES += TCPServerSocketQt.cpp
-    SOURCES += TCPSocketQt.cpp
+    SOURCES += TCPServerSocketPosix.cpp
+    SOURCES += TCPSocketPosix.cpp
     SOURCES += UDPSocketPosix.cpp
     SOURCES += VideoCamera1394.cpp
     SOURCES += ConditionPt.cpp
@@ -131,13 +132,13 @@ win32 {
     SOURCES += PlatformUtilsWin32.cpp
     SOURCES += SerialPortWin32.cpp
     SOURCES += DirectoryQt.cpp
-    SOURCES += TCPServerSocketQt.cpp
-    SOURCES += TCPSocketQt.cpp
+    SOURCES += TCPServerSocketPosix.cpp
+    SOURCES += TCPSocketPosix.cpp
     SOURCES += UDPSocketQt.cpp
     SOURCES += ConditionQt.cpp
     SOURCES += MutexQt.cpp
     SOURCES += ThreadQt.cpp
-    LIBS += wsock32.lib \
+    LIBS += Ws2_32.lib \
         ShLwApi.lib \
         shell32.lib \
         psapi.lib
