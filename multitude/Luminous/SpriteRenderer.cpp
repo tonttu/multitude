@@ -281,6 +281,11 @@ namespace Luminous {
 #endif
   }
 
+  void SpriteRenderer::setTexture(const Luminous::Image & image)
+  {
+    m_data->m_texture = image;
+  }
+
   void SpriteRenderer::createFuzzyTexture(int dim, float centerDotSize,
                                           float haloweight, float halodescent)
   {

@@ -162,8 +162,10 @@ namespace Nimble {
     inline bool contains(Vector2T<T> v) const;
     /// Check if the rectangle contains the given rectangle
     inline bool contains(const RectT &b) const;
-    /// Compute the distance to the other rectangle
+    /// Compute the city-block distance to the other rectangle
     inline T    distance(const RectT &b) const;
+    /// Compute the city-block distance to the given point
+    inline T    distance(const Vector2T<T> & p) const;
 
     /// Clamps the argument vector to be inside this rectangle
     inline Vector2T<T> clamp(const Vector2T<T> &) const;
@@ -321,6 +323,24 @@ namespace Nimble {
       else
         mind[i] = 0;
 
+    }
+
+    return mind.maximum();
+  }
+
+  template <class T>
+  inline T RectT<T>::distance(const Vector2T<T> & p) const
+  {
+    Vector2T<T> mind;
+
+    for(int i = 0; i < 2; i++) {
+
+      if(p[i] < m_low[i])
+        mind[i] = m_low[i] - p[i];
+      else if(p[i] > m_high[i])
+        mind[i] = p[i] - m_high[i];
+      else
+        mind[i] = 0;
     }
 
     return mind.maximum();

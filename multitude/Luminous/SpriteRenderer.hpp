@@ -16,6 +16,7 @@
 #ifndef LUMINOUS_SPRITERENDERER_HPP
 #define LUMINOUS_SPRITERENDERER_HPP
 
+#include <Luminous/Image.hpp>
 #include <Luminous/RenderContext.hpp>
 
 namespace Luminous {
@@ -56,6 +57,7 @@ namespace Luminous {
     void uploadSpritesToGPU(Luminous::RenderContext & r);
     void renderSprites(Luminous::RenderContext & r);
 
+    void setTexture(const Luminous::Image &);
     void createFuzzyTexture(int dim, float centerDotSize = 0.25f,
                             float haloweight = 0.75f, float halodescent = 1.0f);
 
