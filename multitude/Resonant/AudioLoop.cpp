@@ -177,7 +177,7 @@ namespace Resonant {
     if(forcechans > 0) {
       channels = forcechans;
     }
-    if(channels < minchans) {
+    else if(channels < minchans) {
       Radiant::debug("AudioLoop::startReadWrite # Expanding to %d channels",
                     minchans);
       channels = minchans;
