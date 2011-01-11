@@ -423,10 +423,10 @@ namespace Nimble {
   template<class T>
   inline RectT<T> RectT<T>::fitContent(float aspectRatio)
   {
-    Nimble::Vector2 s = span();
+    Nimble::Vector2T<T> s = span();
     float myAspect = s.x / s.y;
 
-    Nimble::Vector2 area;
+    Nimble::Vector2T<T> area;
 
     if(myAspect > aspectRatio) {
       area.y = s.y;
@@ -437,9 +437,9 @@ namespace Nimble {
       area.y = area.x / aspectRatio;
     }
 
-    area *= 0.5f;
+    area *= T(0.5);
 
-    Nimble::Vector2 c = (low() + high()) * 0.5f;
+    Nimble::Vector2T<T> c = (low() + high()) * T(0.5);
 
     return RectT(c - area, c + area);
   }
