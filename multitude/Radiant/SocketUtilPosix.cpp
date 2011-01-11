@@ -1,0 +1,109 @@
+/* COPYRIGHT
+ *
+ * This file is part of Radiant.
+ *
+ * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
+ *
+ * See file "Radiant.hpp" for authors and more details.
+ *
+ * This file is licensed under GNU Lesser General Public
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
+ * from the GNU organization (www.gnu.org).
+ *
+ */
+
+#include "SocketUtilPosix.hpp"
+#include "SocketWrapper.hpp"
+
+#include <string.h>
+#include <stdio.h>
+#include <errno.h>
+
+#ifdef RADIANT_WIN32
+const char * wrap_strerror(int err)
+{
+  __declspec( thread ) static char msg[1024];
+  FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS |
+                FORMAT_MESSAGE_MAX_WIDTH_MASK, 0, err,
+                MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                (LPSTR)msg, 1024, 0);
+  return msg;
+}
+
+void wrap_startup()
+{
+  static bool s_ready = false;
+
+  if(s_ready) return;
+
+  WORD version = MAKEWORD(2, 0);
+  WSADATA data;
+
+  /// @todo should we care about WSACleanup()
+  int err = WSAStartup(version, &data);
+  if(err != 0) {
+    Radiant::error("WSAStartup failed with error: %d", err);
+    return;
+  }
+  s_ready = true;
+}
+#endif
+
+namespace Radiant {
+
+  int SocketUtilPosix::bindOrConnectSocket(int & fd, const char * host, int port,
+                                           std::string & errstr, bool doBind,
+                                           int family, int socktype,
+                                           int protocol, int flags)
+  {
+    struct addrinfo hints;
+    struct addrinfo * result;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = family;
+    hints.ai_socktype = socktype;
+    hints.ai_protocol = protocol;
+    hints.ai_flags = flags;
+
+    char service[32];
+    sprintf(service, "%d", port);
+
+    int s = getaddrinfo(host, service, &hints, &result);
+    if(s) {
+      errstr = std::string("getaddrinfo: ") + gai_strerror(s);
+      return -1;
+    }
+
+    int err = 0;
+    for(struct addrinfo * rp = result; rp; rp = rp->ai_next) {
+      fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+
+      if(fd < 0) {
+        int err = wrap_errno;
+        errstr = std::string("Failed to open socket: ") + wrap_strerror(err);
+        continue;
+      }
+
+      if(doBind && bind(fd, rp->ai_addr, rp->ai_addrlen) == -1) {
+        err = wrap_errno;
+        errstr = std::string("bind() failed: ") + wrap_strerror(err);
+        err = err ? err : -1;
+      } else if(!doBind && connect(fd, rp->ai_addr, rp->ai_addrlen) == -1) {
+        err = wrap_errno;
+        errstr = std::string("connect() failed: ") + wrap_strerror(err);
+        err = err ? err : -1;
+      } else {
+        err = 0;
+        break;
+      }
+
+      wrap_close(fd);
+      fd = -1;
+    }
+
+    freeaddrinfo(result);
+
+    return err;
+  }
+}

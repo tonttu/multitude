@@ -19,6 +19,7 @@
 #include <Radiant/Sleep.hpp>
 
 #include <stdlib.h>
+#include <cassert>
 #include <string.h>
 #include <strings.h>
 
@@ -46,18 +47,19 @@ void runRead(int port)
     return;
   }
 
+  int totalBytes = 0;
   for(int i = 0; i < g_iterations; i++) {
     // std::string fromAddr(host);
     // uint16_t fromPort(port);
 
     buf[0] = 0;
-    int gotBytes = socket.read(buf, 1024, false);
+    int gotBytes = socket.read(buf, 1024, true);
 
     info("Got %d bytes (%s)", gotBytes, buf);
-
-    if(gotBytes < 1)
-      Radiant::Sleep::sleepMs(500);
+    if(gotBytes > 0) totalBytes += gotBytes;
   }
+
+  info("done, received %d bytes", totalBytes);
 }
 
 void runSend(const char * host, int port, const char * message)
@@ -75,6 +77,7 @@ void runSend(const char * host, int port, const char * message)
   char buf[1024];
 
   // Write
+  int totalBytes = 0;
   for(int i = 0; i < g_iterations; i++) {
     memset(buf, 0, 1024);
 
@@ -85,16 +88,18 @@ void runSend(const char * host, int port, const char * message)
     int32_t len = strlen(buf) + 1;
 
     int written = socket.write(buf, len);
+    assert(written == len);
 
     info("wrote %d bytes (%s) to %s:%d", written, buf, host, port);
 
     if(written <= 0) {
 
-    }
+    } else totalBytes += written;
 
-    Radiant::Sleep::sleepMs(500);
+    //Radiant::Sleep::sleepMs(500);
   }
 
+  info("done, sent %d bytes", totalBytes);
 }
 
 int main(int argc, char ** argv)

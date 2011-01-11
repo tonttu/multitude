@@ -59,6 +59,7 @@ HEADERS += ClonablePtr.hpp
 HEADERS += VideoCamera.hpp
 HEADERS += SocketWrapper.hpp
 SOURCES += CameraDriver.cpp
+SOURCES += SocketUtilPosix.cpp
 SOURCES += ThreadPoolQt.cpp
 SOURCES += CSVDocument.cpp
 SOURCES += BinaryData.cpp
