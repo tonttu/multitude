@@ -34,6 +34,8 @@
 #include <stdio.h>
 #include <errno.h>
 #include <sys/types.h>
+// The POSIX name for this item is deprecated..
+#pragma warning(disable: 4996)
 #endif
 
 

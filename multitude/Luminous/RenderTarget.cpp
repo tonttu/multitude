@@ -110,7 +110,7 @@ namespace Luminous
     if(m_stack.empty()) {
       glDrawBuffer(GL_BACK);
     } else {
-      const RenderTargetState & state = *m_stack.top().get();
+      /*const RenderTargetState & state =*/ *m_stack.top().get();
 
       // Restore viewport and fb
       m_stack.top()->resource.framebuffer().bind();
