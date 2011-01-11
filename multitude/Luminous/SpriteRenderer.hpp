@@ -61,12 +61,12 @@ namespace Luminous {
 
       @endcode
   */
-  LUMINOUS_API class SpriteRenderer : public Patterns::NotCopyable
+  class LUMINOUS_API SpriteRenderer : public Patterns::NotCopyable
   {
   public:
 
     /// Individual sprite
-    class Sprite
+    class LUMINOUS_API Sprite
     {
     public:
       Sprite();
