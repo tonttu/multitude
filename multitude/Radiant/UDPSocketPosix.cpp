@@ -6,13 +6,7 @@
 #include "SocketUtilPosix.hpp"
 #include "Trace.hpp"
 
-#include <arpa/inet.h>
 #include <errno.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <poll.h>
-#include <sys/socket.h>
 #include <sys/types.h>
 #include <strings.h>
 #include <string.h>
@@ -107,6 +101,11 @@ namespace Radiant
     return m_d->m_fd >= 0;
   }
 
+  int UDPSocket::read(void * buffer, int bytes, bool waitfordata)
+  {
+    return read(buffer, bytes, waitfordata, false);
+  }
+
   int UDPSocket::read(void * buffer, int bytes, bool waitfordata, bool readAll)
   {
     if(m_d->m_fd < 0 || bytes < 0)
@@ -115,12 +114,26 @@ namespace Radiant
     int pos = 0;
     char * data = reinterpret_cast<char*>(buffer);
 
+#ifdef RADIANT_WIN32
+    // Windows doesn't implement MSG_DONTWAIT, so do an extra poll
+    if(!waitfordata && !readAll){
+      struct pollfd pfd;
+      pfd.fd = m_d->m_fd;
+      pfd.events = POLLIN;
+      if(wrap_poll(&pfd, 1, 0) <= 0 || (pfd.revents & POLLIN) == 0)
+        return 0;
+    }
+    int flags = 0;
+#else
+    int flags = (readAll || waitfordata) ? 0 : MSG_DONTWAIT;
+#endif
+
     while(pos < bytes) {
       errno = 0;
       // int max = bytes - pos > SSIZE_MAX ? SSIZE_MAX : bytes - pos;
       int max = bytes - pos > 32767 ? 32767 : bytes - pos;
       /// @todo should we care about the sender?
-      int tmp = recv(m_d->m_fd, data + pos, max, MSG_DONTWAIT);
+      int tmp = recv(m_d->m_fd, data + pos, max, flags);
 
       if(tmp > 0) {
         pos += tmp;

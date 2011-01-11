@@ -15,6 +15,7 @@
 
 #include "SocketUtilPosix.hpp"
 #include "SocketWrapper.hpp"
+#include "Trace.hpp"
 
 #include <string.h>
 #include <stdio.h>
@@ -71,7 +72,7 @@ namespace Radiant {
 
     int s = getaddrinfo(host, service, &hints, &result);
     if(s) {
-      errstr = std::string("getaddrinfo: ") + gai_strerror(s);
+      errstr = std::string("getaddrinfo: ") + wrap_gai_strerror(s);
       return -1;
     }
 

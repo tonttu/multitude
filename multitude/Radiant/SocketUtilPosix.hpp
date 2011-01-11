@@ -4,7 +4,7 @@
 ///@cond
 
 #include "Export.hpp"
-#include <sys/socket.h>
+#include "SocketWrapper.hpp"
 #include <string>
 
 namespace Radiant {

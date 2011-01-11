@@ -69,10 +69,7 @@ namespace Radiant
         nothing to read, then zero is returned.
     */
     virtual int read(void * buffer, int bytes, bool waitfordata, bool readAll);
-    virtual int read(void * buffer, int bytes, bool waitfordata)
-    {
-      return read(buffer, bytes, waitfordata, false);
-    }
+    virtual int read(void * buffer, int bytes, bool waitfordata);
 
     /** Writes one datagram packet to the socket.
 

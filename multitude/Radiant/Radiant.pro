@@ -135,7 +135,7 @@ win32 {
     SOURCES += DirectoryQt.cpp
     SOURCES += TCPServerSocketPosix.cpp
     SOURCES += TCPSocketPosix.cpp
-    SOURCES += UDPSocketQt.cpp
+    SOURCES += UDPSocketPosix.cpp
     SOURCES += ConditionQt.cpp
     SOURCES += MutexQt.cpp
     SOURCES += ThreadQt.cpp
