@@ -39,7 +39,7 @@ namespace VideoDisplay {
       "  vec4 color = texture2D(tex, gl_TexCoord[0].st);\n"
       "  gl_FragColor.rgb = vec3(0.5, 0.5, 0.5) + \n"
       "     contrast * (color.rgb - vec3(0.5, 0.5, 0.5));\n"
-      "  gl_FragColor.a = gl_Color.a;\n"
+      "  gl_FragColor.a = gl_Color.a * color.a;\n"
       "}\n";
 
 
@@ -196,11 +196,10 @@ namespace VideoDisplay {
     if(m_frame == frame)
       return;
 
-    if(img->m_format == Radiant::IMAGE_RGB_24) {
-      doTexturesRGB(img);
-    }
-    else {
+    if(img->m_format < Radiant::IMAGE_RGB_24) {
       doTexturesYUV(img);
+    } else {
+      doTexturesRGB(img);
     }
 
     m_frame = frame;
@@ -233,7 +232,11 @@ namespace VideoDisplay {
     glEnable(GL_TEXTURE_2D);
     Luminous::Texture2D * tex = & m_texIds[0];
     tex->bind();
-    tex->loadBytes(GL_RGB, img->width(), img->height(), img->m_planes[0].m_data,
+    ImageFormat f = img->m_format;
+    tex->loadBytes((f == IMAGE_RGBA || f ==  IMAGE_BGRA) ? GL_RGBA : GL_RGB,
+                   img->width(), img->height(), img->m_planes[0].m_data,
+                   f == IMAGE_RGBA ? Luminous::PixelFormat::rgbaUByte() :
+                   f == IMAGE_BGRA ? Luminous::PixelFormat::bgraUByte() :
                    Luminous::PixelFormat::rgbUByte());
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
