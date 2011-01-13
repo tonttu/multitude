@@ -362,6 +362,8 @@ namespace Screenplay {
     }
     else {
       Radiant::error("%s # unsupported FFMPEG pixel format %d", fname, (int) avcfmt);
+      av_free_packet(m_pkt);
+      return 0;
     }
 
     m_image.m_width = width();
