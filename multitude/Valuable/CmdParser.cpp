@@ -65,7 +65,7 @@ namespace Valuable
           }
         }
         list.push_back(arg);
-        Radiant::error("Unknown command line parameter %s", name.c_str());
+        //Radiant::error("Unknown command line parameter %s", name.c_str());
       }
     }
     return list;
