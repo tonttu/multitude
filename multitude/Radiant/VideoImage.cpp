@@ -62,7 +62,7 @@ namespace Radiant {
     else if(fmt == IMAGE_RGB) {
       area.x *= 3;
     }
-    else if(fmt == IMAGE_RGBA) {
+    else if(fmt == IMAGE_RGBA || fmt == IMAGE_BGRA) {
       area.x *= 4;
     }
 
@@ -82,6 +82,7 @@ namespace Radiant {
 
     if(fmt == IMAGE_RGB ||
        fmt == IMAGE_RGBA ||
+       fmt == IMAGE_BGRA ||
        fmt == IMAGE_GRAYSCALE) {
 
       m_format = fmt;
@@ -99,6 +100,10 @@ namespace Radiant {
       }
       else if(fmt == IMAGE_RGBA) {
         pt = PLANE_RGBA;
+        ls = w * 4;
+      }
+      else if(fmt == IMAGE_BGRA) {
+        pt = PLANE_BGRA;
         ls = w * 4;
       }
       else
@@ -182,7 +187,7 @@ namespace Radiant {
       rowbytes[1]  = rowbytes[2]  = 0;
       rowbytes[0]  = m_width * 3;
     }
-    else if(m_format == IMAGE_RGBA) {
+    else if(m_format == IMAGE_RGBA || m_format == IMAGE_BGRA) {
       linecount[1] = linecount[2] = 0;
       rowbytes[1]  = rowbytes[2]  = 0;
       rowbytes[0]  = m_width * 4;
@@ -241,6 +246,7 @@ namespace Radiant {
       case IMAGE_GRAYSCALE:
       case IMAGE_RGB:
       case IMAGE_RGBA:
+      case IMAGE_BGRA:
           memset(m_planes[0].m_data, 0, m_planes[0].m_linesize * m_height);
         break;
         case IMAGE_YUV_420P:
