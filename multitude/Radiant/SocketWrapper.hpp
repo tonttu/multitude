@@ -52,6 +52,7 @@
 
 const char * wrap_strerror(int err);
 #define wrap_errno WSAGetLastError()
+#define wrap_gai_strerror(e) gai_strerrorA(e)
 
 void wrap_startup();
 
@@ -70,6 +71,7 @@ void wrap_startup();
 
 #define wrap_strerror(e) strerror(e)
 #define wrap_errno errno
+#define wrap_gai_strerror(e) gai_strerror(e)
 
 #define wrap_startup()
 

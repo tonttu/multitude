@@ -70,6 +70,11 @@ namespace Radiant
     return 0;
   }
 
+  int UDPSocket::read(void *data, int maxSize, bool block, bool)
+  {
+    return read(data, maxSize, block);
+  }
+
   int UDPSocket::read(void *data, int maxSize, bool block)
   {
     if(block)

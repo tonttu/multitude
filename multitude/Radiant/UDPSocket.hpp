@@ -59,16 +59,18 @@ namespace Radiant
     /// Closes the socket.
     bool close();
 
-    /** Reads one datagram packet from the socket.
+    /** Reads datagram packets from the socket.
+
+        @param waitfordata blocks until there is something to read
+        @param readAll if true, blocks until the buffer is full, otherwise
+               return when we have some data
 
         @return The number of bytes read is returned. If there was
         nothing to read, then zero is returned.
-
-        If there are multiple datagrams to be read, you need to use
-        this function multiple times, even if the buffer was large
-        enough to contain multiple packets.
     */
-    virtual int read(void *, int , bool );
+    virtual int read(void * buffer, int bytes, bool waitfordata, bool readAll);
+    virtual int read(void * buffer, int bytes, bool waitfordata);
+
     /** Writes one datagram packet to the socket.
 
         @return The number of bytes written is returned.
