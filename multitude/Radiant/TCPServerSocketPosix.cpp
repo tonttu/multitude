@@ -15,6 +15,7 @@
 
 #include "TCPServerSocket.hpp"
 #include "TCPSocket.hpp"
+#include "SocketUtilPosix.hpp"
 #include "SocketWrapper.hpp"
 #include "Trace.hpp"
 
@@ -58,51 +59,20 @@ namespace Radiant
     m_d->m_host = host ? host : "";
     m_d->m_port = port;
 
-    errno = 0;
-    int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if(fd < 0) {
-      int err = wrap_errno;
-      error("TCPServerSocket::open # Failed to open TCP socket: %s", wrap_strerror(err));
+    std::string errstr;
+    int fd = -1;
+    int err = SocketUtilPosix::bindOrConnectSocket(fd, host, port, errstr,
+                  true, AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if(err) {
+      error("TCPServerSocket::open # %s", errstr.c_str());
       return err;
     }
 
-    struct addrinfo hints;
-    struct addrinfo * result;
-
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-
-    char service[32];
-    sprintf(service, "%d", port);
-
-    int s = getaddrinfo(host && *host ? host : 0, service, &hints, &result);
-    if(s) {
-      error("TCPServerSocket::open # getaddrinfo: %s", gai_strerror(s));
-      wrap_close(fd);
-      return -1;
-    }
-
-    struct addrinfo * rp;
-    for(rp = result; rp; rp = rp->ai_next)
-      if(bind(fd, rp->ai_addr, rp->ai_addrlen) != -1)
-        break;
-
-    freeaddrinfo(result);
-
-    if(rp == NULL) {
-      error("TCPServerSocket::open # Failed to bind %s:%d", host ? host : "", port);
-      wrap_close(fd);
-      return -1;
-    }
-
-    errno = 0;
     if(::listen(fd, maxconnections) != 0) {
       int err = wrap_errno;
       error("TCPServerSocket::open # Failed to listen TCP socket: %s", wrap_strerror(err));
       wrap_close(fd);
-      return err;
+      return err ? err : -1;
     }
 
     m_d->m_fd = fd;

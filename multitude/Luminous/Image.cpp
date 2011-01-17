@@ -558,9 +558,11 @@ namespace Luminous
     ImageCodec * codec = codecs()->getCodec(filename);
     if(codec) {
       ret = codec->write(*this, file);
-    }
-    else {
-      error("Image::write # No codec for file '%s'", filename);
+    } else {
+      debug("Image::write # Could not deduce image codec based on filename '%s', using png", filename);
+
+      codec = codecs()->getCodec(".png");
+      ret = codec->write(*this, file);
     }
 
     fclose(file);

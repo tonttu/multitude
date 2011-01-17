@@ -14,6 +14,7 @@
  */
 
 #include "TCPSocket.hpp"
+#include "SocketUtilPosix.hpp"
 #include "SocketWrapper.hpp"
 #include "Trace.hpp"
 
@@ -21,39 +22,6 @@
 #include <sys/types.h>
 #include <strings.h>
 #include <string.h>
-#include <iostream>
-#include <stdio.h>
-
-#ifdef RADIANT_WIN32
-const char * wrap_strerror(int err)
-{
-  __declspec( thread ) static char msg[1024];
-  FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS |
-                FORMAT_MESSAGE_MAX_WIDTH_MASK, 0, err,
-                MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                (LPSTR)msg, 1024, 0);
-  return msg;
-}
-
-void wrap_startup()
-{
-  static bool s_ready = false;
-
-  if(s_ready) return;
-
-  WORD version = MAKEWORD(2, 0);
-  WSADATA data;
-
-  /// @todo should we care about WSACleanup()
-  int err = WSAStartup(version, &data);
-  if(err != 0) {
-    Radiant::error("WSAStartup failed with error: %d", err);
-    return;
-  }
-  s_ready = true;
-}
-
-#endif
 
 namespace Radiant
 {
@@ -119,49 +87,15 @@ namespace Radiant
     m_d->m_host = host;
     m_d->m_port = port;
 
-    m_d->m_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if(m_d->m_fd < 0) {
-      int err = wrap_errno;
-      error("TCPSocket::open # Failed to open TCP socket: %s", wrap_strerror(err));
-      return err;
+    std::string errstr;
+    int err = SocketUtilPosix::bindOrConnectSocket(m_d->m_fd, host, port, errstr,
+                  false, AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if(err == 0) {
+      m_d->setOpts();
+    } else {
+      error("UDPSocket::open # %s", errstr.c_str());
     }
-
-    struct addrinfo hints;
-    struct addrinfo * result;
-
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-
-    char service[32];
-    sprintf(service, "%d", port);
-
-    int s = getaddrinfo(host, service, &hints, &result);
-    if(s) {
-      error("TCPSocket::open # getaddrinfo: %s", gai_strerror(s));
-      wrap_close(m_d->m_fd);
-      m_d->m_fd = -1;
-      return -1;
-    }
-
-    struct addrinfo * rp;
-    for(rp = result; rp; rp = rp->ai_next)
-      if(connect(m_d->m_fd, rp->ai_addr, rp->ai_addrlen) != -1)
-        break;
-
-    freeaddrinfo(result);
-
-    if(rp == NULL) {
-      error("TCPSocket::open # Failed to connect %s:%d", host, port);
-      wrap_close(m_d->m_fd);
-      m_d->m_fd = -1;
-      return -1;
-    }
-
-    m_d->setOpts();
-
-    return 0;
+    return err;
   }
 
   bool TCPSocket::close()

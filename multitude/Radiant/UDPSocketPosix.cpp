@@ -2,53 +2,45 @@
  */
 
 #include "UDPSocket.hpp"
-
+#include "SocketWrapper.hpp"
 #include "SocketUtilPosix.hpp"
 #include "Trace.hpp"
 
-#include <arpa/inet.h>
 #include <errno.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <poll.h>
-#include <sys/socket.h>
 #include <sys/types.h>
 #include <strings.h>
+#include <string.h>
 
 namespace Radiant
 {
 
   class UDPSocket::D {
   public:
-    D() : m_fd(-1), m_port(0)
+    D(int fd = -1) : m_fd(fd), m_port(0)
     {
-      bzero( & m_server, sizeof(m_server));
     }
 
     int m_fd;
     int m_port;
     std::string m_host;
-
-    struct sockaddr_in m_server;
   };
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-  UDPSocket::UDPSocket()
+  UDPSocket::UDPSocket() : m_d(new D)
   {
-    m_d = new D();
+    wrap_startup();
   }
 
-  UDPSocket::UDPSocket(int fd)
+  UDPSocket::UDPSocket(int fd) : m_d(new D(fd))
   {
-    m_d = new D();
-    m_d->m_fd = fd;
+    wrap_startup();
   }
 
   UDPSocket::~UDPSocket()
   {
+    close();
     delete m_d;
   }
 
@@ -59,22 +51,14 @@ namespace Radiant
     m_d->m_host.clear();
     m_d->m_port = port;
 
-    m_d->m_fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    std::string errstr;
+    int err = SocketUtilPosix::bindOrConnectSocket(m_d->m_fd, "0.0.0.0", port, errstr,
+                  true, AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if(err) {
+      error("UDPSocket::open # Failed to bind to port %d: %s", port, errstr.c_str());
+    }
 
-    if(m_d->m_fd < 0)
-      return errno;
-
-    bzero( & m_d->m_server, sizeof(m_d->m_server));
-    m_d->m_server.sin_family = AF_INET;
-    m_d->m_server.sin_port = htons((short)port);
-    m_d->m_server.sin_addr.s_addr = INADDR_ANY;
-    int err = bind(m_d->m_fd, (struct sockaddr *) & m_d->m_server,
-                   sizeof(m_d->m_server));
-
-    if (err != 0)
-      return err;
-
-    return 0;
+    return err;
   }
 
   int UDPSocket::openClient(const char * host, int port)
@@ -84,77 +68,129 @@ namespace Radiant
     m_d->m_host = host;
     m_d->m_port = port;
 
-    m_d->m_fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if(m_d->m_fd < 0)
-      return errno;
-
-    bzero( & m_d->m_server, sizeof(m_d->m_server));
-    m_d->m_server.sin_family = AF_INET;
-    m_d->m_server.sin_port = htons((short)port);
-
-    in_addr * addr = SocketUtilPosix::atoaddr(host);
-
-    if(!addr) {
-      close();
-      return EHOSTUNREACH;
+    std::string errstr;
+    int err = SocketUtilPosix::bindOrConnectSocket(m_d->m_fd, host, port, errstr,
+                  false, AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if(err) {
+      error("UDPSocket::openClient # Failed to connect %s:%d: %s", host, port, errstr.c_str());
     }
-    m_d->m_server.sin_addr.s_addr = addr->s_addr;
 
-    return 0;
+    return err;
   }
 
   bool UDPSocket::close()
   {
-    if(m_d->m_fd < 0)
+    int fd = m_d->m_fd;
+    if(fd < 0)
       return false;
 
-    ::close(m_d->m_fd);
-
     m_d->m_fd = -1;
+
+    if(!m_d->m_host.empty() && shutdown(fd, SHUT_RDWR)) {
+      error("UDPSocket::close # Failed to shut down the socket: %s", wrap_strerror(wrap_errno));
+    }
+    if(wrap_close(fd)) {
+      error("UDPSocket::close # Failed to close socket: %s", wrap_strerror(wrap_errno));
+    }
 
     return true;
   }
 
   bool UDPSocket::isOpen() const
   {
-    return (m_d->m_fd > 0);
+    return m_d->m_fd >= 0;
   }
 
   int UDPSocket::read(void * buffer, int bytes, bool waitfordata = false)
   {
-    if(m_d->m_fd < 0)
+    return read(buffer, bytes, waitfordata, false);
+  }
+
+  int UDPSocket::read(void * buffer, int bytes, bool waitfordata, bool readAll)
+  {
+    if(m_d->m_fd < 0 || bytes < 0)
       return -1;
 
-    if(waitfordata)
-      error("UDPSocket::read # waitfordata not yet supported for UDP sockets.");
-    else {
+    int pos = 0;
+    char * data = reinterpret_cast<char*>(buffer);
 
+#ifdef RADIANT_WIN32
+    // Windows doesn't implement MSG_DONTWAIT, so do an extra poll
+    if(!waitfordata && !readAll){
       struct pollfd pfd;
-      bzero( & pfd, sizeof(pfd));
-
       pfd.fd = m_d->m_fd;
       pfd.events = POLLIN;
-      poll(&pfd, 1, 0);
+      if(wrap_poll(&pfd, 1, 0) <= 0 || (pfd.revents & POLLIN) == 0)
+        return 0;
+    }
+    int flags = 0;
+#else
+    int flags = (readAll || waitfordata) ? 0 : MSG_DONTWAIT;
+#endif
 
-      if(!pfd.revents & POLLIN)
-    return 0;
+    while(pos < bytes) {
+      errno = 0;
+      // int max = bytes - pos > SSIZE_MAX ? SSIZE_MAX : bytes - pos;
+      int max = bytes - pos > 32767 ? 32767 : bytes - pos;
+      /// @todo should we care about the sender?
+      int tmp = recv(m_d->m_fd, data + pos, max, flags);
+
+      if(tmp > 0) {
+        pos += tmp;
+        if(!readAll) return pos;
+      } else if(tmp == 0 || m_d->m_fd == -1) {
+        return pos;
+      } else if(errno == EAGAIN || errno == EWOULDBLOCK) {
+        if(readAll || (waitfordata && pos == 0)) {
+          struct pollfd pfd;
+          pfd.fd = m_d->m_fd;
+          pfd.events = POLLIN;
+          wrap_poll(&pfd, 1, 5000);
+        } else {
+          return pos;
+        }
+      } else {
+        error("UDPSocket::read # Failed to read: %s", wrap_strerror(wrap_errno));
+        return pos;
+      }
     }
 
-    struct sockaddr_in from;
-    socklen_t l = sizeof(from);
-    return recvfrom(m_d->m_fd, buffer, bytes, 0,
-                    (struct sockaddr *) & from,
-                    & l);
+    return pos;
   }
 
   int UDPSocket::write(const void * buffer, int bytes)
   {
-    if(m_d->m_fd < 0)
+    if(m_d->m_fd < 0 || bytes < 0)
       return -1;
 
-    return sendto(m_d->m_fd, buffer,
-                  bytes, 0, (const sockaddr*) & m_d->m_server,
-                  sizeof(m_d->m_server));
+    if(m_d->m_host.empty()) {
+      /// @todo implement writeTo() or something similar
+      error("UDPSocket::write # This socket was created using openServer, "
+            "it's not connected. Use writeTo() instead.");
+      return -1;
+    }
+
+    int pos = 0;
+    const char * data = reinterpret_cast<const char*>(buffer);
+
+    while(pos < bytes) {
+      // int max = bytes - pos > SSIZE_MAX ? SSIZE_MAX : bytes - pos;
+      int max = bytes - pos > 32767 ? 32767 : bytes - pos;
+      int tmp = send(m_d->m_fd, data + pos, max, 0);
+      if(tmp > 0) {
+        pos += tmp;
+      } else if(errno == EAGAIN || errno == EWOULDBLOCK) {
+        struct pollfd pfd;
+        pfd.fd = m_d->m_fd;
+        pfd.events = POLLOUT;
+        wrap_poll(&pfd, 1, 5000);
+      } else {
+        error("UDPSocket::write # Failed to write: %s", wrap_strerror(wrap_errno));
+        return pos;
+      }
+    }
+
+    return pos;
   }
 
   bool UDPSocket::setReceiveBufferSize(size_t bytes)
