@@ -110,7 +110,8 @@ namespace Luminous {
     void setBlendFunc(Luminous::RenderContext::BlendFunc f);
     /// Sets the velocity scaling factor
     /** @param velscale The scaling factor to be used for stretching sprites along the
-        velocity vector during rendering. Value zero stops the velocity updates. */
+        velocity vector during rendering. Value zero inhibits the velocity stretching. Default value
+        is zero. */
     void setVelocityScale(float velscale);
   private:
 
