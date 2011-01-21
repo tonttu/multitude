@@ -20,7 +20,7 @@
 
 #include <Radiant/Export.hpp>
 
-/** @file 
+/*
     Empty declarations of the classes. Use this header to avoid loading the more
     complex stuff into all of your files.
 */

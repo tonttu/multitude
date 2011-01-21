@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "RenderContext.hpp"
@@ -19,6 +19,7 @@
 #include "GLContext.hpp"
 #include "Texture.hpp"
 #include "FramebufferObject.hpp"
+#include "RenderTarget.hpp"
 
 #include "Utils.hpp"
 #include "GLSLProgramObject.hpp"
@@ -174,7 +175,7 @@ namespace Luminous
   {
   public:
 
-    Internal(const Luminous::MultiHead::Window * win)
+    Internal(const Luminous::MultiHead::Window * win, Luminous::RenderContext & rc)
         : m_recursionLimit(DEFAULT_RECURSION_LIMIT),
         m_recursionDepth(0),
         m_renderCount(0),
@@ -183,7 +184,8 @@ namespace Luminous
         m_viewStackPos(-1),
         m_glContext(new GLDummyContext),
         m_initialized(false),
-        m_blendFunc(BLEND_USUAL)
+        m_blendFunc(BLEND_USUAL),
+        m_rtm(rc)
     {
 
       m_attribs.resize(10000);
@@ -419,6 +421,11 @@ namespace Luminous
     bool m_initialized;
 
     BlendFunc m_blendFunc;
+
+    /// Viewports defined as x1,y1,x2,y2
+    typedef std::stack<Nimble::Recti> ViewportStack;
+    ViewportStack m_viewportStack;
+    RenderTargetManager m_rtm;
   };
 
   void RenderContext::Internal::drawPolyLine(RenderContext& r, const Nimble::Vector2f * vertices, int n,
@@ -538,7 +545,7 @@ namespace Luminous
   RenderContext::RenderContext(Luminous::GLResources * resources, const Luminous::MultiHead::Window * win)
       : Transformer(),
       m_resources(resources),
-      m_data(new Internal(win))
+      m_data(new Internal(win, *this))
   {
     resetTransform();
     m_data->m_recursionDepth = 0;
@@ -1216,6 +1223,35 @@ namespace Luminous
   Luminous::GLContext * RenderContext::glContext()
   {
     return m_data->m_glContext;
+  }
+
+  RenderTargetObject RenderContext::pushRenderTarget(Nimble::Vector2 size, float scale) {
+    return m_data->m_rtm.pushRenderTarget(size, scale);
+  }
+
+  Luminous::Texture2D & RenderContext::popRenderTarget(RenderTargetObject & trt) {
+    return m_data->m_rtm.popRenderTarget(trt);
+  }
+
+  void RenderContext::pushViewport(const Nimble::Recti &viewport)
+  {
+    m_data->m_viewportStack.push(viewport);
+    glViewport(viewport.low().x, viewport.low().y, viewport.width(), viewport.height());
+  }
+
+  void RenderContext::popViewport()
+  {
+    m_data->m_viewportStack.pop();
+
+    if(!m_data->m_viewportStack.empty()) {
+      const Nimble::Recti & viewport = currentViewport();
+      glViewport(viewport.low().x, viewport.low().y, viewport.width(), viewport.height());
+    }
+  }
+
+  const Nimble::Recti & RenderContext::currentViewport() const
+  {
+    return m_data->m_viewportStack.top();
   }
 
 }

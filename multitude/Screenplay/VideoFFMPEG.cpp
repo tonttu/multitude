@@ -7,10 +7,10 @@
  * See file "Screenplay.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "VideoFFMPEG.hpp"
@@ -360,8 +360,20 @@ namespace Screenplay {
       if(m_debug && m_capturedVideo < 10)
         debug("%s # PIX_FMT_RGB24", fname);
     }
+    else if(avcfmt == PIX_FMT_RGBA) {
+      m_image.setFormatRGBA();
+      if(m_debug && m_capturedVideo < 10)
+        debug("%s # PIX_FMT_RGBA", fname);
+    }
+    else if(avcfmt == PIX_FMT_BGRA) {
+      m_image.setFormatBGRA();
+      if(m_debug && m_capturedVideo < 10)
+        debug("%s # PIX_FMT_BGRA", fname);
+    }
     else {
       Radiant::error("%s # unsupported FFMPEG pixel format %d", fname, (int) avcfmt);
+      av_free_packet(m_pkt);
+      return 0;
     }
 
     m_image.m_width = width();
@@ -530,7 +542,7 @@ namespace Screenplay {
 
     bzero( & params, sizeof(params));
 
-    GuardStatic g( & __openmutex);
+    GuardStatic g( __openmutex);
 
     int err = av_open_input_file( & m_ic, filename, iformat, 0, ap);
 
@@ -643,7 +655,7 @@ namespace Screenplay {
     //    if(!m_ic)
     //      return false;
 
-    GuardStatic g( & __openmutex);
+    GuardStatic g( __openmutex);
 
     if(m_frame)
       av_free(m_frame);

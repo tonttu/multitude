@@ -162,6 +162,11 @@ namespace Radiant
     return n;
   }
 
+  int TCPSocket::readSome(void * buffer, int bytes, bool waitfordata)
+  {
+    return read(buffer, bytes, waitfordata);
+  }
+
   bool TCPSocket::isHungUp() const
   {
     return (m_d->state() != QAbstractSocket::ConnectedState);

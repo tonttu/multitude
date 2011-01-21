@@ -162,8 +162,10 @@ namespace Nimble {
     inline bool contains(Vector2T<T> v) const;
     /// Check if the rectangle contains the given rectangle
     inline bool contains(const RectT &b) const;
-    /// Compute the distance to the other rectangle
+    /// Compute the city-block distance to the other rectangle
     inline T    distance(const RectT &b) const;
+    /// Compute the city-block distance to the given point
+    inline T    distance(const Vector2T<T> & p) const;
 
     /// Clamps the argument vector to be inside this rectangle
     inline Vector2T<T> clamp(const Vector2T<T> &) const;
@@ -184,6 +186,15 @@ namespace Nimble {
     @param col The column of the quarter (0-1)
     */
     inline RectT quarter(int row, int col) const;
+
+    /** Fit calculate space for pictures or video to be place inside this rectangle.
+
+        @param aspectRatio The aspect ratio of the content.
+
+        @return Returns the largest possible rectangle that can fit inside this rectangle,
+        with the given aspect ratio. The content is centered both horizontally, and vertically.
+    */
+    inline RectT fitContent(float aspectRatio);
 
     /// Check if two rectangles are identical
     inline bool operator == (const RectT<T> & o) const {
@@ -318,6 +329,24 @@ namespace Nimble {
   }
 
   template <class T>
+  inline T RectT<T>::distance(const Vector2T<T> & p) const
+  {
+    Vector2T<T> mind;
+
+    for(int i = 0; i < 2; i++) {
+
+      if(p[i] < m_low[i])
+        mind[i] = m_low[i] - p[i];
+      else if(p[i] > m_high[i])
+        mind[i] = p[i] - m_high[i];
+      else
+        mind[i] = 0;
+    }
+
+    return mind.maximum();
+  }
+
+  template <class T>
   inline Vector2T<T> RectT<T>::clamp(const Vector2T<T> &v) const
   {
     int i;
@@ -389,6 +418,30 @@ namespace Nimble {
       res.m_low.x = m_low.x + size.x;
     res.m_high = res.m_low + size;
     return res;
+  }
+
+  template<class T>
+  inline RectT<T> RectT<T>::fitContent(float aspectRatio)
+  {
+    Nimble::Vector2T<T> s = span();
+    float myAspect = s.x / s.y;
+
+    Nimble::Vector2T<T> area;
+
+    if(myAspect > aspectRatio) {
+      area.y = s.y;
+      area.x = area.y * aspectRatio;
+    }
+    else {
+      area.x = s.x;
+      area.y = area.x / aspectRatio;
+    }
+
+    area *= T(0.5);
+
+    Nimble::Vector2T<T> c = (low() + high()) * T(0.5);
+
+    return RectT(c - area, c + area);
   }
 
   /// Rectangle of floats

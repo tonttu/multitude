@@ -10,6 +10,9 @@ INCLUDEPATH += $$PWD
 INCLUDEPATH += $$PWD/v8/include
 DEPENDPATH += $$PWD
 
+# The Cornerstone version for libraries
+unix:VERSION = 1.1.1
+
 withbundles = $$(MULTI_BUNDLES)
 
 MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat
@@ -133,3 +136,6 @@ contains(QT_MAJOR_VERSION,4) {
 unix:exists(/usr/bin/ccache):QMAKE_CXX=ccache g++
 unix:exists(/sw/bin/ccache):QMAKE_CXX=/sw/bin/ccache g++
 unix:exists(/opt/local/bin/ccache):QMAKE_CXX=/opt/local/bin/ccache g++
+
+unix:exists(/opt/multitouch):INCLUDEPATH+=/opt/multitouch/include
+unix:exists(/opt/multitouch):LIBS+=-L/opt/multitouch/lib

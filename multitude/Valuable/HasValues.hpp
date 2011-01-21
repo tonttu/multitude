@@ -7,10 +7,10 @@
  * See file "Valuable.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef VALUABLE_HASVALUES_HPP
@@ -158,7 +158,26 @@ namespace Valuable
                           v8::Persistent<v8::Function> func,
                           const Radiant::BinaryData * defaultData = 0);
     /** Removes event listeners from this object.
-      @return number of listeners removed
+
+      @code
+      // Remove all event links between two widgets:
+      myWidget1->eventRemoveListener(myWidget2);
+
+      // Remove selected event links between two widgets:
+      myWidget1->eventRemoveListener(myWidget3, "interactionbegin");
+      myWidget1->eventRemoveListener(myWidget4, 0, "clear");
+      @endcode
+
+
+      @param obj The target object for which the events should be cleared
+
+      @param from The name of the originating event that should be cleared. If this parameter
+      is null, then all all originating events are matched.
+
+      @param to The name of of the destination event that should be cleared. If this parameter
+      is null, then all all destination events are matched.
+
+      @return number of event listener links removed
       */
     int eventRemoveListener(Valuable::HasValues * obj, const char * from = 0, const char * to = 0);
     /// Adds an event source

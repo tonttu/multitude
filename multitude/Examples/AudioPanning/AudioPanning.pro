@@ -8,3 +8,5 @@ win32 {
 	INCLUDEPATH += $$WINPORT_INCLUDE\libsndfile
 	LIBS += -llibsndfile-1
 }
+
+unix: PKGCONFIG += sndfile

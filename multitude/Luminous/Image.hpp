@@ -224,6 +224,13 @@ namespace Luminous
         @return True if the bind operation could be done, false otherwise.
     */
     bool tryBind(unsigned & limit);
+
+    ImageTex & operator = (const Luminous::Image & that)
+    {
+       * (Image * ) this = that;
+       // this->incrementGeneration();
+       return * this;
+     }
   };
 
 

@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef LUMINOUS_RENDERCONTEXT_HPP
@@ -24,6 +24,8 @@
 #include <Luminous/Export.hpp>
 #include <Luminous/VertexBuffer.hpp>
 #include <Luminous/GLSLProgramObject.hpp>
+#include "FramebufferResource.hpp"
+#include <Luminous/RenderTarget.hpp>
 
 #include <Nimble/Rectangle.hpp>
 #include <Nimble/Vector2.hpp>
@@ -255,7 +257,7 @@ namespace Luminous
     void drawLine(Nimble::Vector2f p1, Nimble::Vector2f p2,
                   float width, const float * rgba);
 
-    /** Draw a cubic bézier curve
+    /** Draw a cubic bzier curve
         @param controlPoints array of 4 control points
         @param width width of the curve
         @param rgba array of 4 color components
@@ -349,6 +351,16 @@ namespace Luminous
     MULTI_ATTR_DEPRECATED(Luminous::GLContext * glContext());
 
     /// @endcond
+
+    /// Get a temporary texture render target
+    RenderTargetObject pushRenderTarget(Nimble::Vector2 size, float scale);
+    /// Pop a temporary texture render target
+    Luminous::Texture2D & popRenderTarget(RenderTargetObject & trt);
+
+    void pushViewport(const Nimble::Recti & viewport);
+    void popViewport();
+    const Nimble::Recti & currentViewport() const;
+
   private:
     void drawCircleWithSegments(Nimble::Vector2f center, float radius, const float *rgba, int segments);
     void drawCircleImpl(Nimble::Vector2f center, float radius, const float *rgba);

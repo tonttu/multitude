@@ -7,10 +7,10 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef RADIANT_VIDEO_IMAGE_HPP
@@ -42,6 +42,8 @@ namespace Radiant {
       IMAGE_RGB = IMAGE_RGB_24,
       IMAGE_RGBA = IMAGE_RGBA_32,
 
+      IMAGE_BGRA,
+
       IMAGE_RAWBAYER = 256
     };
 
@@ -62,6 +64,7 @@ namespace Radiant {
       PLANE_BLUE,
       PLANE_RGB,
       PLANE_RGBA,
+      PLANE_BGRA,
 
       PLANE_RAWBAYER = 256
 
@@ -140,6 +143,14 @@ namespace Radiant {
     {
       m_format = IMAGE_RGBA;
       m_planes[0].m_type = PLANE_RGBA;
+    }
+
+    /// Sets the image format to interleaved BGRA.
+
+    void setFormatBGRA()
+    {
+      m_format = IMAGE_BGRA;
+      m_planes[0].m_type = PLANE_BGRA;
     }
 
     /// Sets the image format to interleaved YUV 420.

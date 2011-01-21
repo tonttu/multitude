@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef LUMINOUS_VERTEX_BUFFER_HPP
@@ -18,8 +18,10 @@
 
 #include <Luminous/Export.hpp>
 #include <Luminous/Luminous.hpp>
-
+#include <Luminous/PixelFormat.hpp>
 #include <Luminous/GLResource.hpp>
+
+#include <Nimble/Vector2.hpp>
 
 #include <stdlib.h> // size_t
 
@@ -106,6 +108,11 @@ namespace Luminous
         /// Fills a part of the vertex buffer with data
         void partialFill(size_t start, void * data, size_t count);
 
+        /// Starts reading data from GPU, allocating memory with given usage hint if necessary.
+        void read(Nimble::Vector2i size, Nimble::Vector2i pos = Nimble::Vector2i(0, 0),
+                  Luminous::PixelFormat pix = Luminous::PixelFormat::bgraUByte(),
+                  Usage usage = STATIC_READ);
+
         /// Maps the vertex buffer to CPU memory. The pointer is valid until unmap() is called.
         void * map(AccessMode mode);
         /// Unmaps the vertex buffer from CPU memory. The pointer to the buffer is invalidated.
@@ -149,6 +156,14 @@ namespace Luminous
       : BufferObject<GL_ELEMENT_ARRAY_BUFFER>(resources)
     {}
 
+  };
+
+  class ReadBuffer : public BufferObject<GL_PIXEL_PACK_BUFFER>
+  {
+  public:
+    ReadBuffer(Luminous::GLResources * resources = 0)
+      : BufferObject<GL_PIXEL_PACK_BUFFER>(resources)
+    {}
   };
 
 }

@@ -7,10 +7,10 @@
  * See file "VideoDisplay.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "VideoIn.hpp"
@@ -343,8 +343,9 @@ namespace VideoDisplay {
         bestdiff = diff;
         close = f->m_absolute.secondsD();
       }
-      else
-        break;
+      else // at least when looping, the nearest frame is somewhere else so don't break
+        ;
+        //break;
     }
 
     debug("VideoIn::selectFrame # %d (%d %lu) (%lu %lu) %lf %lf",
@@ -545,7 +546,7 @@ namespace VideoDisplay {
     if(r.m_request != NO_REQUEST && r.m_request != FREE_MEMORY)
       debug("VideoIn::pushRequest # %d %lf", r.m_request, r.m_time.secondsD());
 
-    Radiant::Guard g( & m_requestMutex);
+    Radiant::Guard g( m_requestMutex);
 
     if(m_queuedRequests &&
        (m_queuedRequests > m_consumedRequests)) {

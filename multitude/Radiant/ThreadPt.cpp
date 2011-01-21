@@ -7,10 +7,10 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "Thread.hpp"
@@ -29,8 +29,10 @@
 namespace Radiant {
 
   class Thread::D {
-    public:
+  public:
+    D() : m_valid(false) {}
     pthread_t m_pthread;
+    bool m_valid;
   };
 
   enum {
@@ -56,7 +58,7 @@ namespace Radiant {
   Thread::id_t Thread::myThreadId()
   {
     // Not sure how safe this is, but we just cast the pointer to size_t
-    return size_t(pthread_self());
+    return reinterpret_cast<void*> (pthread_self());
   }
 
   bool Thread::run(bool prefer_system)
@@ -95,6 +97,7 @@ namespace Radiant {
     }
 
     e = pthread_create(&m_d->m_pthread, &thread_attr, entry, this);
+    m_d->m_valid = true;
 
     if(e && (m_threadDebug || m_threadWarnings))
       std::cout << "failed - " << strerror(e) << std::endl;
@@ -120,6 +123,7 @@ namespace Radiant {
     }
 
     e = pthread_create(&m_d->m_pthread, &thread_attr, entry, this);
+    m_d->m_valid = true;
 
     if(e && (m_threadDebug || m_threadWarnings))
       std::cout << "failed - " << strerror(e) << std::endl;
@@ -133,11 +137,14 @@ namespace Radiant {
       std::cout << "Thread::waitEnd " << this << std::endl;
     }
 
+    if(!m_d->m_valid)
+      return true;
+
     int e;
 
 #ifdef RADIANT_OSX
     if(timeoutms) {
-      error("Thread::waitEnd # Timeout unimplemented on OSX");
+      error("Thread::waitEnd # Timeout unimplemented on OS X");
     }
     e = pthread_join(m_d->m_pthread, 0);
 #else
@@ -166,7 +173,8 @@ namespace Radiant {
 
   void Thread::kill()
   {
-    pthread_kill(m_d->m_pthread, SIGKILL);
+    if(m_d->m_valid)
+      pthread_kill(m_d->m_pthread, SIGKILL);
   }
 
   bool Thread::isRunning()

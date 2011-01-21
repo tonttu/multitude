@@ -7,10 +7,10 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "FileUtils.hpp"
@@ -26,12 +26,16 @@
 
 #include <sys/stat.h>
 
+#include <QFileInfo>
+
 #ifdef WIN32
 #include <io.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
 #include <sys/types.h>
+// The POSIX name for this item is deprecated..
+#pragma warning(disable: 4996)
 #endif
 
 
@@ -197,10 +201,11 @@ namespace Radiant
   }
 
 
-  string FileUtils::suffix(const string & filepath)
+  std::string FileUtils::suffix(const string & filepath)
   {
-    size_t cut = filepath.rfind(".") + 1;
-    return filepath.substr(cut);
+    QFileInfo fi(filepath.c_str());
+
+    return fi.suffix().toStdString();
   }
 
   string FileUtils::suffixLowerCase(const string & filepath)
@@ -304,7 +309,7 @@ namespace Radiant
   {
     assert(f != 0);
     for(int i = 0; i < levels; i++) {
-      fprintf(f, "  ");
+      fprintf(f, ". ");
     }
   }
 

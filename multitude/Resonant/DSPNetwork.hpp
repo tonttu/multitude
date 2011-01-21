@@ -7,10 +7,10 @@
  * See file "Resonant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef RESONANT_DSPNETWORK_HPP
@@ -264,6 +264,8 @@ DSPNetwork::instance().send(control);
     /**  */
     static DSPNetwork * instance();
 
+    void dumpInfo(FILE *f);
+
   private:
 
     virtual int callback(const void *in, void *out,
@@ -290,6 +292,7 @@ DSPNetwork::instance().send(control);
     Module * findModule(const char * id);
     float * findOutput(const char * id, int channel);
     long countBufferBytes();
+    void duDumpInfo(FILE *f);
 
     container m_items;
 

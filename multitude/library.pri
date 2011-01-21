@@ -35,7 +35,7 @@ src_code.files += $$PROJECT_FILE
 INSTALLS += target
 
 # Source code & headers go with the framework on OS X
-!macx:INSTALLS += includes src_code extra_inc
+INSTALLS += includes src_code extra_inc
 
 # On Windows, put DLLs into /bin with the exes
 win32 {

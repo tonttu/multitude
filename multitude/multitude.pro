@@ -13,6 +13,7 @@ SUBDIRS += Resonant
 SUBDIRS += Screenplay
 SUBDIRS += VideoDisplay
 SUBDIRS += Box2D
+#SUBDIRS += Posh
 
 exists(Examples/Examples.pro):SUBDIRS += Examples
 
@@ -24,7 +25,7 @@ CONFIG += ordered
 stuff.path = /src/MultiTouch/multitude
 stuff.files = LGPL.txt multitude.pro multitude.pri library.pri 
 
-!macx:INSTALLS += stuff
+INSTALLS += stuff
 
 win32 {
 	win64:include(Win64x/Win64x.pri)

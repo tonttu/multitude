@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "Image.hpp"
@@ -558,9 +558,11 @@ namespace Luminous
     ImageCodec * codec = codecs()->getCodec(filename);
     if(codec) {
       ret = codec->write(*this, file);
-    }
-    else {
-      error("Image::write # No codec for file '%s'", filename);
+    } else {
+      debug("Image::write # Could not deduce image codec based on filename '%s', using png", filename);
+
+      codec = codecs()->getCodec(".png");
+      ret = codec->write(*this, file);
     }
 
     fclose(file);

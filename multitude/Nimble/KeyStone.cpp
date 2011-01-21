@@ -7,10 +7,10 @@
  * See file "Nimble.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "KeyStone.hpp"
@@ -383,6 +383,11 @@ namespace Nimble {
                         m_extra[2] / ksh, m_extra[3] / ksh);
 
     updateLimits(m_extraLimits, & scaledExtra);
+    /* m_extraLimits.resize(m_height);
+    for(unsigned i = 0; i < m_height; i++) {
+      m_extraLimits[i] = Nimble::Vector2(0, m_width);
+    }
+    */
   }
 
 

@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef LUMINOUS_CPU_MIPMAPS_HPP
@@ -156,6 +156,9 @@ namespace Luminous {
 
     /// Returns the size of the mipmap level
     LUMINOUS_API Nimble::Vector2i mipmapSize(int level);
+
+    /// Set the time to keep mipmaps in CPU memory
+    inline void setTimeOut(float timeout) { m_timeOut = timeout; }
 
   protected:
     LUMINOUS_API virtual void doTask();

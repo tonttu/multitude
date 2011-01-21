@@ -7,10 +7,10 @@
  * See file "VideoDisplay.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "VideoInFFMPEG.hpp"
@@ -53,7 +53,7 @@ namespace VideoDisplay {
 
   const FFVideodebug * __cacheddebug(const std::string & filename)
   {
-    Radiant::GuardStatic g(&__mutex);
+    Radiant::GuardStatic g(__mutex);
 
     std::map<std::string, FFVideodebug>::iterator it = __ffcache.find(filename);
 
@@ -195,7 +195,7 @@ namespace VideoDisplay {
 
     {
       // Cache the first frame for later use.
-      Radiant::GuardStatic g(&__mutex);
+      Radiant::GuardStatic g(__mutex);
 
       video.getAudioParameters( & m_channels, & m_sampleRate, & m_auformat);
       // remove the item with the smallest timestamp

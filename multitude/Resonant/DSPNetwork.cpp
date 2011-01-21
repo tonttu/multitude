@@ -7,10 +7,10 @@
  * See file "Resonant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "DSPNetwork.hpp"
@@ -148,7 +148,7 @@ namespace Resonant {
 
   bool DSPNetwork::start(const char * device)
   {
-    Radiant::Guard g(&m_startupMutex);
+    Radiant::Guard g(m_startupMutex);
 
     debug("DSPNetwork::start # %p %p", this, m_instance);
 
@@ -162,7 +162,7 @@ namespace Resonant {
 
     // m_continue = true;
 
-    return startReadWrite(44100, 2);
+    return startReadWrite(44100, 8);
   }
 
 
@@ -170,14 +170,14 @@ namespace Resonant {
   {
     debug("DSPNetwork::addModule # %p %p", this, m_instance);
 
-    Radiant::Guard g( & m_newMutex);
+    Radiant::Guard g( m_newMutex);
 
     m_newItems.push_back(i);
   }
 
   void DSPNetwork::markDone(Item & i)
   {
-    Radiant::Guard g( & m_newMutex);
+    Radiant::Guard g( m_newMutex);
     Item * it = findItem(i.m_module->id());
 
     if(it) {
@@ -192,7 +192,7 @@ namespace Resonant {
   {
     debug("DSPNetwork::send # %p %p", this, m_instance);
 
-    Radiant::Guard g( & m_inMutex);
+    Radiant::Guard g( m_inMutex);
     m_incoming.append(control);
   }
 
@@ -230,6 +230,17 @@ namespace Resonant {
         Radiant::error("DSPNetwork::instance # failed to initialize sound device");
     }
     return m_instance;
+  }
+
+  void DSPNetwork::dumpInfo(FILE *f)
+  {
+    info("DSPNetwork::dumpInfo # %p", f);
+    Radiant::BinaryData control;
+
+    control.writeString("/self/dump_info");
+    control.writeInt64((int64_t) f);
+
+    send(control);
   }
 
   int DSPNetwork::callback(const void *in, void *out,
@@ -273,7 +284,7 @@ namespace Resonant {
   void DSPNetwork::checkNewControl()
   {
     {
-      Radiant::Guard g( & m_inMutex);
+      Radiant::Guard g( m_inMutex);
       m_incopy = m_incoming;
       m_incoming.rewind();
     }
@@ -292,6 +303,14 @@ namespace Resonant {
       if(!m_incopy.readString(buf, 512)) {
         error("DSPNetwork::checkNewControl # Could not read string");
         continue;
+      }
+
+      if(strncmp(buf, "/self/", 6) == 0) {
+        const char * name = buf + 6;
+        if(strcmp(name, "dump_info") == 0) {
+          FILE * f = (FILE *) m_incopy.readInt64();
+          duDumpInfo(f);
+        }
       }
 
       const char * slash = strchr(buf, '/');
@@ -327,7 +346,7 @@ namespace Resonant {
       if(!m_newMutex.tryLock())
         return;
 
-      Radiant::ReleaseGuard g( & m_newMutex);
+      Radiant::ReleaseGuard g( m_newMutex);
 
       Item item = m_newItems.front();
       checkValidId(item);
@@ -441,7 +460,7 @@ namespace Resonant {
     if(!m_newMutex.tryLock())
       return;
 
-    Radiant::ReleaseGuard g( & m_newMutex);
+    Radiant::ReleaseGuard g( m_newMutex);
 
     if(!m_doneCount)
       return;
@@ -736,6 +755,31 @@ namespace Resonant {
     }
 
     return bytes;
+  }
+
+  void DSPNetwork::duDumpInfo(FILE *f)
+  {
+    if(!f)
+      f = stdout;
+
+    fprintf(f, "DSPNetwork %p on frame %ld\n", this, m_frames);
+
+    int index = 0;
+    for(container::iterator it = m_items.begin(); it != m_items.end(); it++) {
+      Item & item = *it;
+
+      fprintf(f, "  DSP ITEM [%d] %s %s %p\n",
+              index, item.m_module->id(), typeid(*item.m_module).name(), item.m_module);
+
+      for(size_t i = 0; i < item.m_ins.size(); i++) {
+        fprintf(f, "    INPUT PTR [%d] %p\n", (int) i, item.m_ins[i]);
+      }
+      for(size_t i = 0; i < item.m_outs.size(); i++) {
+        fprintf(f, "    OUTPUT PTR [%d] %p\n", (int) i, item.m_outs[i]);
+      }
+
+      index++;
+    }
   }
 
 }

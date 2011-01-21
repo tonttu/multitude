@@ -7,10 +7,10 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef RADIANT_REF_PTR_HPP
@@ -74,6 +74,15 @@
   namespace std
   {
     using tr1::shared_ptr;
+  #if !defined(__GCCXML__)
+    using tr1::weak_ptr;
+    using tr1::swap;
+    using tr1::get_deleter;
+    using tr1::static_pointer_cast;
+    using tr1::dynamic_pointer_cast;
+    using tr1::const_pointer_cast;
+    using tr1::enable_shared_from_this;
+  #endif
   }
 #endif
 

@@ -2,7 +2,7 @@
  *
  * This file is part of Patterns.
  *
- * Copyright: Helsinki University of Technology, MultiTouch Oy and others.
+ * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
  *
  * See file "Patterns.hpp" for authors and more details.
  *

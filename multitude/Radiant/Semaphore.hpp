@@ -17,11 +17,12 @@
 #define RADIANT_SEMAPHORE_HPP
 
 #include <Patterns/NotCopyable.hpp>
+#include "Export.hpp"
 
 namespace Radiant {
 
   /** Provides a general counting semaphore. */
-  class Semaphore : public Patterns::NotCopyable
+  class RADIANT_API Semaphore : public Patterns::NotCopyable
   {
   public:
     /// Initialize the semaphore to guard n resources

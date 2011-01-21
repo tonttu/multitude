@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "CPUMipmaps.hpp"
@@ -47,7 +47,7 @@ namespace Luminous {
     m_firstLevelSize(0, 0),
     m_maxLevel(0),
     m_hasAlpha(false),
-    m_timeOut(3.0f),
+    m_timeOut(5.0f),
     m_keepMaxLevel(true)
   {
   }
@@ -58,14 +58,14 @@ namespace Luminous {
 
   void CPUMipmaps::update(float dt, float )
   {
-    Radiant::Guard g(&m_stackMutex);
+    Radiant::Guard g(m_stackMutex);
     for(int i = 0; i < m_maxLevel; i++) {
       m_stack[i].m_unUsed += dt;
     }
     if(!m_keepMaxLevel)
       m_stack[m_maxLevel].m_unUsed += dt;
 
-    Radiant::Guard g2(&m_stackChangeMutex);
+    Radiant::Guard g2(m_stackChangeMutex);
     for(StackMap::iterator it = m_stackChange.begin(); it != m_stackChange.end(); ++it)
       m_stack[it->first] = it->second;
     m_stackChange.clear();
@@ -88,7 +88,7 @@ namespace Luminous {
 
   int CPUMipmaps::getClosest(Nimble::Vector2f size)
   {
-    Radiant::Guard g(&m_stackMutex);
+    Radiant::Guard g(m_stackMutex);
 
     int bestlevel = m_maxLevel;
 
@@ -126,11 +126,12 @@ namespace Luminous {
 
   std::shared_ptr<ImageTex> CPUMipmaps::getImage(int i)
   {
-    const CPUItem item = getStack(i);
+    CPUItem item = getStack(i);
 
     std::shared_ptr<ImageTex> image = item.m_image;
-    if(item.m_state != READY)
+    if(item.m_state != READY) {
       return std::shared_ptr<ImageTex>();
+    }
 
     return image;
   }
@@ -144,7 +145,7 @@ namespace Luminous {
 
   bool CPUMipmaps::isReady()
   {
-    Radiant::Guard g(&m_stackMutex);
+    Radiant::Guard g(m_stackMutex);
     for(int i = 0; i <= m_maxLevel; i++) {
       CPUItem & ci = m_stack[i];
 
@@ -233,7 +234,7 @@ namespace Luminous {
 
   bool CPUMipmaps::isActive()
   {
-    Radiant::Guard g(&m_stackMutex);
+    Radiant::Guard g(m_stackMutex);
     for(int i = 0; i <= m_maxLevel; i++) {
 
       if(m_stack[i].m_state == WAITING)
@@ -325,7 +326,7 @@ namespace Luminous {
             delay = time_to_expire;
         }
       } else if(item.m_state == READY) { // unused image
-        // info("CPUMipmaps::doTask # Dropping %s %d", m_filename.c_str(), i);
+        //info("CPUMipmaps::doTask # Dropping %s %d", m_filename.c_str(), i);
         stack[i] = item;
         stack[i].m_state = WAITING;
         stack[i].m_image.reset();
@@ -336,7 +337,7 @@ namespace Luminous {
     reschedule(delay+0.0001);
 
     if(!stack.empty()) {
-      Radiant::Guard g(&m_stackChangeMutex);
+      Radiant::Guard g(m_stackChangeMutex);
       for(StackMap::iterator it = stack.begin(); it != stack.end(); ++it)
         m_stackChange[it->first] = it->second;
     }
@@ -344,7 +345,7 @@ namespace Luminous {
 
   CPUMipmaps::CPUItem CPUMipmaps::getStack(int index)
   {
-    Radiant::Guard g(&m_stackMutex);
+    Radiant::Guard g(m_stackMutex);
     assert(index >= 0 && index < (int) m_stack.size());
     const CPUItem item = m_stack[index];
     return item;
@@ -365,16 +366,21 @@ namespace Luminous {
     name += buf;
     name += Radiant::FileUtils::filename(m_filename);
 
-    // Put in the right suffix
-    size_t i = name.size() - 1;
+    std::string suffix = Radiant::FileUtils::suffix(name);
 
-    while(i && name[i] != '.' && name[i] != '/')
-      i--;
+    if(!suffix.empty()) {
 
-    name.erase(i + 1);
+      // Put in the right suffix
+      size_t i = name.size() - 1;
 
-    // always use png
-    name += "png";
+      while(i && name[i] != '.' && name[i] != '/')
+        i--;
+
+      name.erase(i + 1);
+
+      // always use png
+      name += "png";
+    }
   }
 
   void CPUMipmaps::recursiveLoad(StackMap & stack, int level)
