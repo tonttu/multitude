@@ -121,6 +121,16 @@ namespace Radiant
     return m_d->m_fd >= 0;
   }
 
+  const char * TCPSocket::host() const
+  {
+    return m_d->m_host;
+  }
+
+  const int TCPSocket::port() const
+  {
+    return m_d->m_port;
+  }
+
   int TCPSocket::read(void * buffer, int bytes, bool waitfordata)
   {
     if(m_d->m_fd < 0 || bytes < 0)
