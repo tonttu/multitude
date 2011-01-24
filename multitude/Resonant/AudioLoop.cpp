@@ -127,6 +127,7 @@ namespace Resonant {
         Radiant::error("AudioLoop::startReadWrite # No default output device available");
         return false;
       }
+      Radiant::debug("AudioLoop::startReadWrite # Selected default output device %d", m_d->m_outParams.device);
     }
     else {
 
@@ -177,7 +178,7 @@ namespace Resonant {
     if(forcechans > 0) {
       channels = forcechans;
     }
-    else if(channels < minchans) {
+    else if(channels != minchans) {
       Radiant::debug("AudioLoop::startReadWrite # Expanding to %d channels",
                     minchans);
       channels = minchans;
@@ -209,7 +210,7 @@ namespace Resonant {
                                 this );
 
     if( err != paNoError ) {
-      Radiant::error("AudioLoop::startReadWrite # Pa_OpenStream failed");
+      Radiant::error("AudioLoop::startReadWrite # Pa_OpenStream failed (device %d, channels %d, sample rate %d)", m_d->m_outParams.device, channels, samplerate);
       return false;
     }
 
