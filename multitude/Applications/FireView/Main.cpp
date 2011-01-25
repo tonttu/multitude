@@ -157,7 +157,7 @@ int main(int argc, char ** argv)
   }
 
   if(triggerMode >= 0 && triggerSource < 0) {
-    printf("%s If you set trigger mode, you also need to set trigger mode\n",
+    printf("%s If you set trigger mode, you also need to set trigger source\n",
        argv[0]);
     return -1;
   }
