@@ -161,8 +161,10 @@ namespace Nimble {
     inline bool contains(Vector2T<T> v) const;
     /// Check if the rectangle contains the given rectangle
     inline bool contains(const RectT &b) const;
-    /// Compute the distance to the other rectangle
+    /// Compute the city-block distance to the other rectangle
     inline T    distance(const RectT &b) const;
+    /// Compute the city-block distance to the given point
+    inline T    distance(const Vector2T<T> & p) const;
 
     /// Clamps the argument vector to be inside this rectangle
     inline Vector2T<T> clamp(const Vector2T<T> &) const;
@@ -326,7 +328,25 @@ namespace Nimble {
   }
 
   template <class T>
-      inline Vector2T<T> RectT<T>::clamp(const Vector2T<T> &v) const
+  inline T RectT<T>::distance(const Vector2T<T> & p) const
+  {
+    Vector2T<T> mind;
+
+    for(int i = 0; i < 2; i++) {
+
+      if(p[i] < m_low[i])
+        mind[i] = m_low[i] - p[i];
+      else if(p[i] > m_high[i])
+        mind[i] = p[i] - m_high[i];
+      else
+        mind[i] = 0;
+    }
+
+    return mind.maximum();
+  }
+
+  template <class T>
+  inline Vector2T<T> RectT<T>::clamp(const Vector2T<T> &v) const
   {
     int i;
     Vector2T<T> r(v);
@@ -402,10 +422,10 @@ namespace Nimble {
   template<class T>
   inline RectT<T> RectT<T>::fitContent(float aspectRatio)
   {
-    Nimble::Vector2 s = span();
+    Nimble::Vector2T<T> s = span();
     float myAspect = s.x / s.y;
 
-    Nimble::Vector2 area;
+    Nimble::Vector2T<T> area;
 
     if(myAspect > aspectRatio) {
       area.y = s.y;
@@ -416,9 +436,9 @@ namespace Nimble {
       area.y = area.x / aspectRatio;
     }
 
-    area *= 0.5f;
+    area *= T(0.5);
 
-    Nimble::Vector2 c = T(0.5) * (low() + high());
+    Nimble::Vector2T<T> c = (low() + high()) * T(0.5);
 
     return RectT(c - area, c + area);
   }

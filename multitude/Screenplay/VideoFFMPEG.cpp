@@ -360,8 +360,20 @@ namespace Screenplay {
       if(m_debug && m_capturedVideo < 10)
         debug("%s # PIX_FMT_RGB24", fname);
     }
+    else if(avcfmt == PIX_FMT_RGBA) {
+      m_image.setFormatRGBA();
+      if(m_debug && m_capturedVideo < 10)
+        debug("%s # PIX_FMT_RGBA", fname);
+    }
+    else if(avcfmt == PIX_FMT_BGRA) {
+      m_image.setFormatBGRA();
+      if(m_debug && m_capturedVideo < 10)
+        debug("%s # PIX_FMT_BGRA", fname);
+    }
     else {
       Radiant::error("%s # unsupported FFMPEG pixel format %d", fname, (int) avcfmt);
+      av_free_packet(m_pkt);
+      return 0;
     }
 
     m_image.m_width = width();

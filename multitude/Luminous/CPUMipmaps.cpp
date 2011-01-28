@@ -326,7 +326,7 @@ namespace Luminous {
             delay = time_to_expire;
         }
       } else if(item.m_state == READY) { // unused image
-        info("CPUMipmaps::doTask # Dropping %s %d", m_filename.c_str(), i);
+        //info("CPUMipmaps::doTask # Dropping %s %d", m_filename.c_str(), i);
         stack[i] = item;
         stack[i].m_state = WAITING;
         stack[i].m_image.reset();
@@ -366,16 +366,21 @@ namespace Luminous {
     name += buf;
     name += Radiant::FileUtils::filename(m_filename);
 
-    // Put in the right suffix
-    size_t i = name.size() - 1;
+    std::string suffix = Radiant::FileUtils::suffix(name);
 
-    while(i && name[i] != '.' && name[i] != '/')
-      i--;
+    if(!suffix.empty()) {
 
-    name.erase(i + 1);
+      // Put in the right suffix
+      size_t i = name.size() - 1;
 
-    // always use png
-    name += "png";
+      while(i && name[i] != '.' && name[i] != '/')
+        i--;
+
+      name.erase(i + 1);
+
+      // always use png
+      name += "png";
+    }
   }
 
   void CPUMipmaps::recursiveLoad(StackMap & stack, int level)

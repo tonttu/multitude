@@ -54,8 +54,8 @@ namespace Luminous
     Nimble::Recti viewport(0, 0, holder->resource.texture().width(), holder->resource.texture().height());
 
     // Store matrices (these should modify the stack in RenderContext)
-    glMatrixMode(GL_PROJECTION);    
-    glPushMatrix();    
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
     glLoadIdentity();
 
     glOrtho(viewport.low().x, viewport.width(), viewport.low().y, viewport.height(), -1, 1);
@@ -89,7 +89,7 @@ namespace Luminous
     //Radiant::info("RenderTargetManager::pop");
 
     if(m_stack.empty()) {
-      Radiant::error("RenderTargetManager::popRenderTarget # stack is empty!");      
+      Radiant::error("RenderTargetManager::popRenderTarget # stack is empty!");
     }
 
     // Get the active render target
@@ -110,11 +110,11 @@ namespace Luminous
     if(m_stack.empty()) {
       glDrawBuffer(GL_BACK);
     } else {
-      const RenderTargetState & state = *m_stack.top().get();
+      /*const RenderTargetState & state =*/ *m_stack.top().get();
 
       // Restore viewport and fb
       m_stack.top()->resource.framebuffer().bind();
-      glDrawBuffer(Luminous::COLOR0);      
+      glDrawBuffer(Luminous::COLOR0);
     }
 
     // Restore viewport
@@ -128,7 +128,8 @@ namespace Luminous
 
   std::shared_ptr<RenderTargetManager::RenderTargetState> RenderTargetManager::allocateNewTexture(size_t extent)
   {
-    Radiant::info("RenderTargetManager::allocateNewTexture # %ld next %ld", extent, 1 << nextHigherPowerOfTwo(extent));
+    Radiant::info("RenderTargetManager::allocateNewTexture # %ld next %ld",
+                  extent, (int) (1 << nextHigherPowerOfTwo(extent)));
 
     // Use power-of-two textures
     extent = 1 << nextHigherPowerOfTwo(extent);

@@ -39,9 +39,17 @@ namespace Poetic
       CPUBitmapFont * font = new CPUBitmapFont();
 
       ok = font->load(m_file.c_str());
-      if(!ok) return false;
+      if(!ok) {
+        delete font;
+        return false;
+      }
+
       ok = font->setFaceSize(g_faceSizes[i]);
-      if(!ok) return false;
+      if(!ok) {
+        delete font;
+        return false;
+      }
+
       m_fonts.push_back(font);
     }
 

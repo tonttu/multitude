@@ -114,6 +114,12 @@ namespace Resonant {
 
     const char * devkey = getenv("RESONANT_DEVICE");
 
+    const char * chankey = getenv("RESONANT_OUTCHANNELS");
+    int forcechans = -1;
+    if(chankey != 0) {
+      forcechans = atoi(chankey);
+    }
+
     if(!devkey) {
 
       m_d->m_outParams.device = Pa_GetDefaultOutputDevice();
@@ -121,6 +127,7 @@ namespace Resonant {
         Radiant::error("AudioLoop::startReadWrite # No default output device available");
         return false;
       }
+      Radiant::debug("AudioLoop::startReadWrite # Selected default output device %d", m_d->m_outParams.device);
     }
     else {
 
@@ -168,7 +175,10 @@ namespace Resonant {
     // int minchans = Nimble::Math::Min(info->maxInputChannels, info->maxOutputChannels);
     int minchans = info->maxOutputChannels;
 
-    if(channels < minchans) {
+    if(forcechans > 0) {
+      channels = forcechans;
+    }
+    else if(channels != minchans) {
       Radiant::debug("AudioLoop::startReadWrite # Expanding to %d channels",
                     minchans);
       channels = minchans;
@@ -200,7 +210,7 @@ namespace Resonant {
                                 this );
 
     if( err != paNoError ) {
-      Radiant::error("AudioLoop::startReadWrite # Pa_OpenStream failed");
+      Radiant::error("AudioLoop::startReadWrite # Pa_OpenStream failed (device %d, channels %d, sample rate %d)", m_d->m_outParams.device, channels, samplerate);
       return false;
     }
 

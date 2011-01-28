@@ -310,6 +310,7 @@ namespace Luminous
       if(!fs->compile()) {
         error("GLSLProgramObject::fromFiles # fragment shader "
               "compile error:%s", fs->compilerLog());
+        delete vs;
         delete fs;
         return 0;
       }
@@ -324,6 +325,8 @@ namespace Luminous
     if(!program->link()) {
       error("GLSLProgramObject::fromFiles # linking shader failed:\n%s",
             program->linkerLog());
+      delete vs;
+      delete fs;
       delete program;
       return 0;
     }
@@ -405,10 +408,12 @@ namespace Luminous
   {
     GLSLShaderObject * shader = new GLSLShaderObject(shaderType);
     if(!shader->loadSourceFile(filename)) {
+      delete shader;
       return false;
     }
 
     if(!shader->compile()) {
+      delete shader;
       return false;
     }
 
@@ -427,6 +432,7 @@ namespace Luminous
     if(!shader->compile()) {
       error("GLSLProgramObject::loadString # Compilation failed : %s\n%s",
             shader->compilerLog(), shaderCode);
+      delete shader;
       return false;
     }
 

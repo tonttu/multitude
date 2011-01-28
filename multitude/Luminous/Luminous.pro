@@ -1,6 +1,6 @@
 include(../multitude.pri)
 HEADERS += BGThread.hpp
-HEADERS += GLContext.hpp 
+HEADERS += GLContext.hpp
 HEADERS += FramebufferResource.hpp
 HEADERS += CodecRegistry.hpp
 HEADERS += Collectable.hpp
@@ -28,6 +28,7 @@ HEADERS += MultiHead.hpp
 HEADERS += PixelFormat.hpp
 HEADERS += RenderContext.hpp
 HEADERS += Shader.hpp
+HEADERS += SpriteRenderer.hpp
 HEADERS += Task.hpp
 HEADERS += Texture.hpp
 HEADERS += Transformer.hpp
@@ -62,6 +63,7 @@ SOURCES += MultiHead.cpp
 SOURCES += PixelFormat.cpp
 SOURCES += RenderContext.cpp
 SOURCES += Shader.cpp
+SOURCES += SpriteRenderer.cpp
 SOURCES += Task.cpp
 SOURCES += Texture.cpp
 SOURCES += Transformer.cpp
@@ -76,7 +78,7 @@ LIBS += $$LIB_RADIANT \
     $$LIB_NIMBLE \
     $$LIB_PATTERNS \
     $$LIB_GLEW
-unix:!contains(HAS_QT_45,YES) { 
+unix:!contains(HAS_QT_45,YES) {
     HEADERS += ImageCodecPNG.hpp
     HEADERS += ImageCodecTGA.hpp
     SOURCES += ImageCodecJPEG.cpp
@@ -85,7 +87,7 @@ unix:!contains(HAS_QT_45,YES) {
         -lpng
 }
 win32:DEFINES += LUMINOUS_EXPORT
-contains(HAS_QT_45,YES) { 
+contains(HAS_QT_45,YES) {
     message(Including QT Image codecs)
     HEADERS += ImageCodecQT.hpp
     SOURCES += ImageCodecQT.cpp

@@ -162,7 +162,7 @@ namespace Resonant {
 
     // m_continue = true;
 
-    return startReadWrite(44100, 2);
+    return startReadWrite(44100, 8);
   }
 
 
