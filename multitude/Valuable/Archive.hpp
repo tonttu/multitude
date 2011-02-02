@@ -13,8 +13,8 @@
  * 
  */
 
-#ifndef ARCHIVE_HPP
-#define ARCHIVE_HPP
+#ifndef VALUABLE_ARCHIVE_HPP
+#define VALUABLE_ARCHIVE_HPP
 
 #include "DOMDocument.hpp"
 #include "DOMElement.hpp"
