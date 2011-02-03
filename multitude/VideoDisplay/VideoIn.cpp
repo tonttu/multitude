@@ -244,13 +244,13 @@ namespace VideoDisplay {
 
   bool VideoIn::play(Radiant::TimeStamp pos)
   {
-    debug("VideoIn::play");
-
     if(pos < 0) {
       pos = m_displayFrameTime;
       if(m_atEnd)
         pos = 0;
     }
+
+    debug("VideoIn::play # %lf", pos.secondsD());
 
     pushRequest(Req(START, pos));
 
@@ -285,8 +285,8 @@ namespace VideoDisplay {
 
   bool VideoIn::seek(Radiant::TimeStamp pos)
   {
-    debug("VideoIn::seek");
-
+    debug("VideoIn::seek # %lf", pos.secondsD());
+    m_displayFrameTime = pos;
 
     pushRequest(Req(SEEK, pos));
 
