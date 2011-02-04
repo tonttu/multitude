@@ -151,6 +151,12 @@ namespace Resonant {
           for( i = 0; i < n; i++) {
             const PaDeviceInfo * info = Pa_GetDeviceInfo(i);
             if(strstr(info->name, devkey) != 0) {
+              if (channel_requests[dev] > info->maxOutputChannels) {
+                Radiant::info("Skipping device %d, not enough output channels (%d < %d)",
+                              info->maxOutputChannels, channel_requests[dev]);
+                continue;
+              }
+
               s.outParams.device = i;
 
               Radiant::info("AudioLoop::startReadWrite # Selected device %d %s",
@@ -303,8 +309,9 @@ namespace Resonant {
 
   void AudioLoop::AudioLoopInternal::paFinished(void * self)
   {
-    ((AudioLoop *) self)->finished();
-    Radiant::debug("AudioLoop::paFinished # %p", self);
+    std::pair<AudioLoop*, int> stream = *reinterpret_cast<std::pair<AudioLoop*, int>*>(self);
+    stream.first->finished();
+    Radiant::debug("AudioLoop::paFinished # %p", stream.first);
   }
 
 
