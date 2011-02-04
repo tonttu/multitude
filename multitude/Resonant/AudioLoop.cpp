@@ -153,7 +153,7 @@ namespace Resonant {
             if(strstr(info->name, devkey) != 0) {
               if (channel_requests[dev] > info->maxOutputChannels) {
                 Radiant::info("Skipping device %d, not enough output channels (%d < %d)",
-                              info->maxOutputChannels, channel_requests[dev]);
+                              (int)dev, info->maxOutputChannels, channel_requests[dev]);
                 continue;
               }
 
