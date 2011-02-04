@@ -1,6 +1,7 @@
 include(../multitude.pri)
 
 HEADERS += Application.hpp
+HEADERS += AudioLoopPriv.hpp
 HEADERS += AudioFileHandler.hpp
 HEADERS += AudioLoop.hpp
 HEADERS += DSPNetwork.hpp

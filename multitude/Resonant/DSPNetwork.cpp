@@ -14,6 +14,7 @@
  */
 
 #include "DSPNetwork.hpp"
+#include "AudioLoopPriv.hpp"
 
 #include "ModulePanner.hpp"
 #include "ModuleOutCollect.hpp"
@@ -248,16 +249,44 @@ namespace Resonant {
   {
     (void) in;
 
-    doCycle(framesPerBuffer);
+    int streamnum = m_d->s_currentStream;
+    int streams = m_d->m_streams.size();
+
+    if (streamnum == 0) {
+      m_d->m_sem.acquire(streams);
+      doCycle(framesPerBuffer);
+      for (int i = 1; i < streams; ++i)
+        m_d->m_streams[i].m_barrier->release();
+    } else m_d->m_streams[streamnum].m_barrier->acquire();
+
+    int outChannels = m_d->m_streams[streamnum].outParams.channelCount;
+
     const float * res = m_collect->interleaved();
     if(res != 0) {
-      memcpy(out, res, 4 * framesPerBuffer * outChannels());
+      for (Channels::iterator it = m_d->m_channels.begin(); it != m_d->m_channels.end(); ++it) {
+        if (streamnum != it->second.device) continue;
+        int from = it->first;
+        int to = it->second.channel;
+
+        const float * data = res + from;
+        float* target = (float*)out;
+        target += to;
+
+        int chans_from = m_collect->channels();
+
+        for (size_t i = 0; i < framesPerBuffer; ++i) {
+          *target = *data;
+          target += outChannels;
+          data += chans_from;
+        }
+      }
+      //memcpy(out, res, 4 * framesPerBuffer * outChannels);
     }
     else {
       error("DSPNetwork::callback # No data to play");
-      bzero(out, 4 * framesPerBuffer * outChannels());
+      bzero(out, 4 * framesPerBuffer * outChannels);
     }
-
+    m_d->m_sem.release();
     return paContinue;
   }
 

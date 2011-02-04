@@ -14,12 +14,14 @@
  */
 
 #include "AudioLoop.hpp"
+#include "AudioLoopPriv.hpp"
 
 #include <Nimble/Math.hpp>
 
 #include <Radiant/Trace.hpp>
+#include <Radiant/StringUtils.hpp>
 
-#include <portaudio.h>
+#include <string>
 
 #include <assert.h>
 #include <stdio.h>
@@ -31,31 +33,11 @@
 #define FRAMES_PER_BUFFER 128
 
 namespace Resonant {
-
-  class AudioLoop::AudioLoopInternal
-  {
-    public:
-      AudioLoopInternal()
-      : m_stream(0),
-        m_streamInfo(0),
-        m_startTime(0)
-      {}
-
-      static int paCallback(const void *in, void *out,
-          unsigned long framesPerBuffer,
-          const PaStreamCallbackTimeInfo* time,
-          PaStreamCallbackFlags status,
-          void * self);
-
-      static void paFinished(void * self);
-
-      PaStreamParameters m_inParams;
-      PaStreamParameters m_outParams;
-
-      PaStream * m_stream;
-      const PaStreamInfo * m_streamInfo;
-      PaTime     m_startTime;
-  };
+#ifdef RADIANT_WIN32
+  __declspec(thread) int AudioLoop::AudioLoopInternal::s_currentStream = 0;
+#else
+  __thread int AudioLoop::AudioLoopInternal::s_currentStream = 0;
+#endif
 
   using Radiant::FAILURE;
 
@@ -72,9 +54,6 @@ namespace Resonant {
     } else {
       Radiant::error("AudioLoop::init # %s", Pa_GetErrorText(e));
     }
-
-    bzero( &m_d->m_inParams,  sizeof(PaStreamParameters));
-    bzero( &m_d->m_outParams, sizeof(PaStreamParameters));
   }
 
   AudioLoop::~AudioLoop()
@@ -99,20 +78,12 @@ namespace Resonant {
 
   int AudioLoop::outChannels() const
   {
-    return m_d->m_outParams.channelCount;
+    return m_d->m_channels.size();
   }
 
   bool AudioLoop::startReadWrite(int samplerate, int channels)
   {
     assert(!isRunning());
-
-    m_d->m_stream = 0;
-    m_d->m_streamInfo = 0;
-
-    bzero( &m_d->m_inParams,  sizeof(m_d->m_inParams));
-    bzero( &m_d->m_outParams, sizeof(m_d->m_outParams));
-
-    const char * devkey = getenv("RESONANT_DEVICE");
 
     const char * chankey = getenv("RESONANT_OUTCHANNELS");
     int forcechans = -1;
@@ -120,118 +91,177 @@ namespace Resonant {
       forcechans = atoi(chankey);
     }
 
-    if(!devkey) {
+    std::vector<std::string> devicenames;
+    std::vector<int> channel_requests;
 
-      m_d->m_outParams.device = Pa_GetDefaultOutputDevice();
-      if(m_d->m_outParams.device == paNoDevice) {
+    const char * devs = getenv("RESONANT_DEVICES");
+    const char * devname = getenv("RESONANT_DEVICE");
+    if (devs) {
+      using namespace Radiant::StringUtils;
+      forcechans = -1;
+      StringList list;
+      split(devs, ";", list);
+
+      for (StringList::iterator it = list.begin(); it != list.end(); ++it) {
+        const char * dev = it->c_str();
+        char * end = 0;
+        int c = strtol(dev, &end, 10);
+        if (*end++ != ':') {
+          Radiant::error("Invalid RESONANT_DEVICES, should be:  CHANNELS:DEVICE;CHANNELS:DEVICE...");
+          return false;
+        }
+        Radiant::info("Requesting device %s with %d channels", end, c);
+        devicenames.push_back(end);
+        channel_requests.push_back(c);
+      }
+    } else if (devname) {
+      devicenames.push_back(devname);
+      channel_requests.push_back(channels);
+    }
+
+    if(devicenames.empty()) {
+      m_d->m_streams.push_back(Stream());
+      Stream & s = m_d->m_streams.back();
+      channel_requests.push_back(channels);
+
+      s.outParams.device = Pa_GetDefaultOutputDevice();
+      if(s.outParams.device == paNoDevice) {
         Radiant::error("AudioLoop::startReadWrite # No default output device available");
         return false;
       }
-      Radiant::debug("AudioLoop::startReadWrite # Selected default output device %d", m_d->m_outParams.device);
+      Radiant::debug("AudioLoop::startReadWrite # Selected default output device %d", s.outParams.device);
     }
     else {
+      for (size_t dev = 0; dev < devicenames.size(); ++dev) {
+        m_d->m_streams.push_back(Stream());
+        Stream & s = m_d->m_streams.back();
 
-      char * end = 0;
-      int i = strtol(devkey, & end, 10);
+        const char * devkey = devicenames[dev].c_str();
+        char * end = 0;
+        int i = strtol(devkey, & end, 10);
 
-      long decoded = end - devkey;
-      if(decoded == (long) strlen(devkey)) {
-        m_d->m_outParams.device = i;
-        Radiant::debug("AudioLoop::startReadWrite # Selected device %d (%s)", (int) m_d->m_outParams.device, devkey);
+        long decoded = end - devkey;
+        if(decoded == (long) strlen(devkey)) {
+          s.outParams.device = i;
+          Radiant::info("AudioLoop::startReadWrite # Selected device %d (%s)", (int) s.outParams.device, devkey);
+        }
+        else {
+          int n = Pa_GetDeviceCount();
 
-      }
-      else {
-        int n = Pa_GetDeviceCount();
+          for( i = 0; i < n; i++) {
+            const PaDeviceInfo * info = Pa_GetDeviceInfo(i);
+            if(strstr(info->name, devkey) != 0) {
+              s.outParams.device = i;
 
-        for( i = 0; i < n; i++) {
-          const PaDeviceInfo * info = Pa_GetDeviceInfo(i);
-          if(strstr(info->name, devkey) != 0) {
-            m_d->m_outParams.device = i;
-
-            Radiant::debug("AudioLoop::startReadWrite # Selected device %d %s",
-                           (int) m_d->m_outParams.device, info->name);
-            break;
+              Radiant::info("AudioLoop::startReadWrite # Selected device %d %s",
+                            (int) s.outParams.device, info->name);
+              break;
+            }
+          }
+          if (i == n) {
+            Radiant::error("Couldn't find device %s", devkey);
           }
         }
       }
     }
 
-    const PaDeviceInfo * info = Pa_GetDeviceInfo(m_d->m_outParams.device);
+    for (size_t streamnum = 0; streamnum < m_d->m_streams.size(); ++streamnum) {
+      Stream & s = m_d->m_streams[streamnum];
+      /// @todo m_barrier isn't released ever
+      s.m_barrier = new Radiant::Semaphore(0);
+      channels = channel_requests[streamnum];
+      Radiant::info("channels: %d", channels);
 
-    Radiant::debug("AudioLoop::startReadWrite # Got audio device %d = %s",
-          (int) m_d->m_outParams.device, info->name);
+      const PaDeviceInfo * info = Pa_GetDeviceInfo(s.outParams.device);
 
-    if(Radiant::enabledVerboseOutput()) {
-      int n = Pa_GetDeviceCount();
+      Radiant::info("AudioLoop::startReadWrite # Got audio device %d = %s",
+                    (int) s.outParams.device, info->name);
 
-      for(int i = 0; i < n; i++) {
-         const PaDeviceInfo * info2 = Pa_GetDeviceInfo(i);
-         const PaHostApiInfo * apiinfo = Pa_GetHostApiInfo(info2->hostApi);
-         Radiant::debug("AudioLoop::startReadWrite # Available %d: %s (API = %s)",
+      if(Radiant::enabledVerboseOutput()) {
+        int n = Pa_GetDeviceCount();
+
+        for(int i = 0; i < n; i++) {
+           const PaDeviceInfo * info2 = Pa_GetDeviceInfo(i);
+           const PaHostApiInfo * apiinfo = Pa_GetHostApiInfo(info2->hostApi);
+          Radiant::info("AudioLoop::startReadWrite # Available %d: %s (API = %s)",
                         i, info2->name, apiinfo->name);
+        }
       }
+
+      // int minchans = Nimble::Math::Min(info->maxInputChannels, info->maxOutputChannels);
+      int minchans = info->maxOutputChannels;
+
+      if(forcechans > 0) {
+        channels = forcechans;
+      }
+      else if(minchans < channels || (!devs && channels != minchans)) {
+        Radiant::info("AudioLoop::startReadWrite # Expanding to %d channels",
+                       minchans);
+        channels = minchans;
+      }
+
+      Radiant::info("AudioLoop::startReadWrite # channels = %d limits = %d %d",
+                     channels, info->maxInputChannels, info->maxOutputChannels);
+
+      // channels = 26;
+
+      s.outParams.channelCount = channels;
+      s.outParams.sampleFormat = paFloat32;
+      s.outParams.suggestedLatency =
+        Pa_GetDeviceInfo( s.outParams.device )->defaultLowOutputLatency;
+      s.outParams.hostApiSpecificStreamInfo = 0;
+
+      s.inParams = s.outParams;
+      s.inParams.device = Pa_GetDefaultInputDevice();
+
+      m_continue = true;
+
+      m_d->cb.push_back(std::make_pair(this, streamnum));
+
+      PaError err = Pa_OpenStream(& s.stream,
+                                  0, // & m_inParams,
+                                  & s.outParams,
+                                  samplerate,
+                                  FRAMES_PER_BUFFER,
+                                  paClipOff,
+                                  m_d->paCallback,
+                                  &m_d->cb.back() );
+
+      if( err != paNoError ) {
+        Radiant::error("AudioLoop::startReadWrite # Pa_OpenStream failed (device %d, channels %d, sample rate %d)",
+                       s.outParams.device, channels, samplerate);
+        return false;
+      }
+
+      err = Pa_SetStreamFinishedCallback(s.stream, & m_d->paFinished );
+
+      s.streamInfo = Pa_GetStreamInfo(s.stream);
+
+      for (int i = 0; i < s.outParams.channelCount; ++i)
+        m_d->m_channels[m_d->m_channels.size()] = Channel(streamnum, i);
+
+      Radiant::info("AudioLoop::startReadWrite # %d channels lt = %lf, EXIT OK",
+         (int) s.outParams.channelCount,
+         (double) s.streamInfo->outputLatency);
     }
 
-    // int minchans = Nimble::Math::Min(info->maxInputChannels, info->maxOutputChannels);
-    int minchans = info->maxOutputChannels;
+    m_d->m_streamBuffers.resize(m_d->m_streams.size());
+    m_d->m_sem.release(m_d->m_streams.size());
 
-    if(forcechans > 0) {
-      channels = forcechans;
+    for (size_t streamnum = 0; streamnum < m_d->m_streams.size(); ++streamnum) {
+      Stream & s = m_d->m_streams[streamnum];
+
+      PaError err = Pa_StartStream(s.stream);
+
+      if( err != paNoError ) {
+        Radiant::error("AudioLoop::startReadWrite # Pa_StartStream failed");
+        return false;
+      }
+
+      s.startTime = Pa_GetStreamTime(s.stream);
     }
-    else if(channels != minchans) {
-      Radiant::debug("AudioLoop::startReadWrite # Expanding to %d channels",
-                    minchans);
-      channels = minchans;
-    }
-
-    Radiant::debug("AudioLoop::startReadWrite # channels = %d limits = %d %d",
-                  channels, info->maxInputChannels, info->maxOutputChannels);
-
-    // channels = 26;
-
-    m_d->m_outParams.channelCount = channels;
-    m_d->m_outParams.sampleFormat = paFloat32;
-    m_d->m_outParams.suggestedLatency =
-      Pa_GetDeviceInfo( m_d->m_outParams.device )->defaultLowOutputLatency;
-    m_d->m_outParams.hostApiSpecificStreamInfo = 0;
-
-    m_d->m_inParams = m_d->m_outParams;
-    m_d->m_inParams.device = Pa_GetDefaultInputDevice();
-
-    m_continue = true;
-
-    PaError err = Pa_OpenStream(& m_d->m_stream,
-                                0, // & m_inParams,
-                                & m_d->m_outParams,
-                                samplerate,
-                                FRAMES_PER_BUFFER,
-                                paClipOff,
-                                m_d->paCallback,
-                                this );
-
-    if( err != paNoError ) {
-      Radiant::error("AudioLoop::startReadWrite # Pa_OpenStream failed (device %d, channels %d, sample rate %d)", m_d->m_outParams.device, channels, samplerate);
-      return false;
-    }
-
-    err = Pa_SetStreamFinishedCallback(m_d->m_stream, & m_d->paFinished );
-
-    m_d->m_streamInfo = Pa_GetStreamInfo(m_d->m_stream);
-
-    err = Pa_StartStream(m_d->m_stream);
-
-    if( err != paNoError ) {
-      Radiant::error("AudioLoop::startReadWrite # Pa_StartStream failed");
-      return false;
-    }
-
-    m_d->m_startTime = Pa_GetStreamTime(m_d->m_stream);
 
     m_isRunning = true;
-
-    Radiant::debug("AudioLoop::startReadWrite # %d channels lt = %lf, EXIT OK",
-		   (int) m_d->m_outParams.channelCount, 
-		   (double) m_d->m_streamInfo->outputLatency);
 
     return true;
   }
@@ -243,13 +273,16 @@ namespace Resonant {
 
     m_isRunning = false;
 
-    int err = Pa_CloseStream(m_d->m_stream);
-    if(err != paNoError) {
-      Radiant::error("AudioLoop::stop # Could not close stream");
+    for (size_t num = 0; num < m_d->m_streams.size(); ++num) {
+      Stream & s = m_d->m_streams[num];
+      int err = Pa_CloseStream(s.stream);
+      if(err != paNoError) {
+        Radiant::error("AudioLoop::stop # Could not close stream");
+      }
+      s.stream = 0;
+      s.streamInfo = 0;
+      m_d->m_channels.erase(num);
     }
-
-    m_d->m_stream = 0;
-    m_d->m_streamInfo = 0;
 
     return true;
   }
@@ -260,11 +293,12 @@ namespace Resonant {
                 PaStreamCallbackFlags /*status*/,
                 void * self)
   {
-    AudioLoop * au = (AudioLoop *) self;
+    std::pair<AudioLoop*, int> stream = *reinterpret_cast<std::pair<AudioLoop*, int>*>(self);
+    stream.first->m_d->s_currentStream = stream.second;
 
-    int r = au->callback(in, out, framesPerBuffer/*, time, status*/);
+    int r = stream.first->callback(in, out, framesPerBuffer/*, time, status*/);
 
-    return au->m_continue ? r : paComplete;
+    return stream.first->m_continue ? r : paComplete;
   }
 
   void AudioLoop::AudioLoopInternal::paFinished(void * self)

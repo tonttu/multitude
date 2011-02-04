@@ -56,7 +56,7 @@ namespace Resonant {
     */
     int outChannels() const;
 
-  private:
+  protected:
     virtual void finished();
 
     virtual int callback(const void *in, void *out,
