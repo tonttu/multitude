@@ -123,10 +123,10 @@ namespace Radiant
 
   const char * TCPSocket::host() const
   {
-    return m_d->m_host;
+    return m_d->m_host.c_str();
   }
 
-  const int TCPSocket::port() const
+  int TCPSocket::port() const
   {
     return m_d->m_port;
   }
