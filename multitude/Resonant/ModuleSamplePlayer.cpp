@@ -522,10 +522,6 @@ namespace Resonant {
     if((unsigned) fillchannels > channels())
       fillchannels = channels();
 
-    // Start everything in 7 seconds
-    Radiant::TimeStamp startTime = Radiant::TimeStamp::getTime() +
-                                   Radiant::TimeStamp::createSecondsD(delay);
-
     for(int i = 0; i < dir.count(); i++) {
 
       std::string file = dir.fileNameWithPath(i);
@@ -543,8 +539,13 @@ namespace Resonant {
 
       sf_close(sndf);
 
+
+      // Start everything in 7 seconds
+      Radiant::TimeStamp startTime = Radiant::TimeStamp::getTime() +
+                                     Radiant::TimeStamp::createSecondsD(delay);
+
       for(int c = 0; c < fillchannels; c++) {
-        playSample(file.c_str(), gain, 1.0f, (c+i) % channels(), c % info.channels, true);
+        playSample(file.c_str(), gain, 1.0f, (c+i) % channels(), c % info.channels, true, startTime);
       }
     }
 
