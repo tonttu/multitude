@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Resonant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Resonant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #ifndef RESONANT_MODULE_SAMPLE_PLAYER_HPP
@@ -19,6 +7,7 @@
 #include <Radiant/FixedStr.hpp>
 #include <Radiant/RefPtr.hpp>
 #include <Radiant/Thread.hpp>
+#include <Radiant/TimeStamp.hpp>
 #include <Radiant/Condition.hpp>
 
 #include <Resonant/Module.hpp>
@@ -77,9 +66,13 @@ namespace Resonant {
 
         @param fillchannels The number of output channels to fill. This number is limited
         by the active channel number.
+
+        @param delay Delay time to wait before starting the playback. Short delay times
+        may lead to poor synchronization between different channels.
     */
 
-    void createAmbientBackground(const char * directory, float gain, int fillchannels = 1000);
+    void createAmbientBackground(const char * directory, float gain, int fillchannels = 1000,
+                                 float delay = 7.0f);
 
     /// Plays an audio sample
     /** This function starts the playback of an audio sample.
@@ -109,12 +102,16 @@ namespace Resonant {
                     float relpitch,
                     int targetChannel,
                     int sampleChannel,
-                    bool loop = false);
+                    bool loop = false,
+                    Radiant::TimeStamp time = 0);
 
     /** Sets the master gain */
     void setMasterGain(float gain) { m_masterGain = gain; }
 
     inline unsigned channels() const { return m_channels; }
+
+    const Radiant::TimeStamp & time() { return m_time; }
+
   private:
 
     bool addSample(const char * filename, const char * name);
@@ -200,6 +197,7 @@ namespace Resonant {
       bool     m_loop;
       std::shared_ptr<Sample> m_sample;
       unsigned m_position;
+      Radiant::TimeStamp m_startTime;
     };
 
     /* Loads samples from the disk, as necessary. */
@@ -277,6 +275,7 @@ namespace Resonant {
     unsigned m_active;
 
     float    m_masterGain;
+    Radiant::TimeStamp m_time;
 
     BGLoader * m_loader;
   };
