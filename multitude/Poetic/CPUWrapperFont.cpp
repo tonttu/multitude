@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Poetic.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Poetic.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #include "Poetic.hpp"
@@ -47,7 +35,7 @@ namespace Poetic
       glr->addResource(m_managedFont, gmf);
     }
 
-    // Create the resource                
+    // Create the resource
     GPUWrapperFont * font = new GPUWrapperFont(gmf, this);
     glr->addResource(this, font);
 
@@ -70,8 +58,26 @@ namespace Poetic
 
     return f->advance(str, n) * s;
   }
-  
-  float CPUWrapperFont::ascender() const 
+
+  void CPUWrapperFont::advanceList(const wchar_t * str, float * advances, int n)
+  {
+    CPUFont * f = m_managedFont->getMetricFont();
+    float s = static_cast<float> (m_pointSize) / static_cast<float> (f->faceSize());
+
+    f->advanceList(str, advances, n);
+
+    for(int i = 0; i < n || n < 0; i++) {
+      if((*str) == 0)
+        break;
+      else
+        *advances *= s;
+
+      str++;
+      advances++;
+    }
+  }
+
+  float CPUWrapperFont::ascender() const
   {
     CPUFont * f = m_managedFont->getMetricFont();
     float s = static_cast<float> (m_pointSize) / static_cast<float> (f->faceSize());
@@ -79,7 +85,7 @@ namespace Poetic
     return f->ascender() * s;
   }
 
-  float CPUWrapperFont::descender() const 
+  float CPUWrapperFont::descender() const
   {
     CPUFont * f = m_managedFont->getMetricFont();
     float s = static_cast<float> (m_pointSize) / static_cast<float> (f->faceSize());
@@ -87,7 +93,7 @@ namespace Poetic
     return f->descender() * s;
   }
 
-  float CPUWrapperFont::lineHeight() const 
+  float CPUWrapperFont::lineHeight() const
   {
     CPUFont * f = m_managedFont->getMetricFont();
     float s = static_cast<float> (m_pointSize) / static_cast<float> (f->faceSize());
