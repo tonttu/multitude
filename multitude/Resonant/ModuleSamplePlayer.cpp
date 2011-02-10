@@ -545,8 +545,11 @@ namespace Resonant {
 
         char command[128];
 
-        sprintf(command, "mpg321 %s --wav %s", file.c_str(), wavname.c_str());
-
+#ifdef WIN32
+        sprintf(command, "madplay.exe %s -o wave:%s", file.c_str(), wavname.c_str());
+#else
+        sprintf(command, "mpg123 %s --wav %s", file.c_str(), wavname.c_str());
+#endif
         info("Performing mp3 -> wav conversion with [%s]", command);
         system(command);
         file = wavname;
