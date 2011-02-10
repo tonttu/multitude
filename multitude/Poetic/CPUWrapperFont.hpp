@@ -7,10 +7,10 @@
  * See file "Poetic.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef POETIC_CPU_WRAPPER_FONT_HPP
@@ -41,7 +41,8 @@ namespace Poetic
     /// @copydoc advance
     float advance(const std::wstring & str)
     { return advance(str.c_str(), (int) str.size()); }
-    
+    virtual void advanceList(const wchar_t * str, float * advances, int n);
+
     /// Returns the face size
     int faceSize() const        { return m_pointSize; }
     /// Sets the face size for the wrapper
