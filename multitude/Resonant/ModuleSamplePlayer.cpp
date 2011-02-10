@@ -535,6 +535,24 @@ namespace Resonant {
 
       std::string file = dir.fileNameWithPath(i);
 
+      std::string suf = Radiant::FileUtils::suffixLowerCase(file);
+
+      if(suf == "mp3") {
+        std::string wavname(file);
+        strcpy( & wavname[wavname.size() - 3], "wav");
+        if(Radiant::FileUtils::fileReadable(wavname))
+          continue;
+
+        char command[128];
+
+        sprintf(command, "mpg321 %s --wav %s", file.c_str(), wavname.c_str());
+
+        info("Performing mp3 -> wav conversion with [%s]", command);
+        system(command);
+        file = wavname;
+      }
+
+
       n++;
 
       SF_INFO info;
