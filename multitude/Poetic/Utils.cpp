@@ -150,10 +150,13 @@ namespace Poetic
   {
     lines.clear();
 
-    std::vector<float> advances;
-    advances.resize(ws.size(), 0);
+    if(ws.empty())
+      return;
 
-    int n = ws.length();
+    int n = ws.size();
+
+    std::vector<float> advances;
+    advances.resize(n, 0);
 
     fnt.advanceList(ws.c_str(), & advances[0], n);
 
@@ -170,6 +173,8 @@ namespace Poetic
       float a = advances[i];
 
       sum += a;
+
+      info("brea to lines: %d:%c %f vs %f", i, (char) c, sum, width);
 
       if(sum > width) {
 

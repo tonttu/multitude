@@ -526,8 +526,6 @@ namespace Resonant {
 
       std::string file = dir.fileNameWithPath(i);
 
-      std::string file = dir.fileNameWithPath(i);
-
       std::string suf = Radiant::FileUtils::suffixLowerCase(file);
 
       if(suf == "mp3") {
