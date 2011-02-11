@@ -526,6 +526,31 @@ namespace Resonant {
 
       std::string file = dir.fileNameWithPath(i);
 
+      std::string file = dir.fileNameWithPath(i);
+
+      std::string suf = Radiant::FileUtils::suffixLowerCase(file);
+
+      if(suf == "mp3") {
+        std::string wavname(file);
+        strcpy( & wavname[wavname.size() - 3], "wav");
+
+        // If the wav file already exists, then ignore the mp3 entry.
+        /* To make this better, we could compare the timestamps...*/
+        if(Radiant::FileUtils::fileReadable(wavname))
+          continue;
+
+        char command[128];
+
+#ifdef WIN32
+        sprintf(command, "madplay.exe %s -o wave:%s", file.c_str(), wavname.c_str());
+#else
+        sprintf(command, "mpg123 %s --wav %s", file.c_str(), wavname.c_str());
+#endif
+        info("Performing mp3 -> wav conversion with [%s]", command);
+        system(command);
+        file = wavname;
+      }
+
       n++;
 
       SF_INFO info;
