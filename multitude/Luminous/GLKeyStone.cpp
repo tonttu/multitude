@@ -140,7 +140,7 @@ namespace Luminous {
                   g, h, 0, 1);
   }
 
-  Vector4 GLKeyStone::project(Vector2 v)
+  Vector4 GLKeyStone::project(Vector2 v) const
   {
     Vector4 tmp(v.x, v.y, 0.5, 1.0);
     Vector4 p = m_matrix * tmp;

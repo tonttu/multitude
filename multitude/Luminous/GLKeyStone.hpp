@@ -96,7 +96,7 @@ namespace Luminous {
     /** Projects the vector v using internal matrix, WITHOUT applying
     perspective correction.
     @param v vector to project*/
-    Nimble::Vector4 project(Nimble::Vector2 v);
+    Nimble::Vector4 project(Nimble::Vector2 v) const;
     /** Projects the vector v using matrix m, applying perspective
     correction.
     @param m projection matrix
