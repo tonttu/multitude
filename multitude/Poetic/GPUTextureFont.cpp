@@ -25,7 +25,7 @@
 
 #define VERTEX_ARRAY_SIZE 1024
 
-#include <Luminous/Shader.hpp>
+
 
 namespace Poetic
 {
@@ -58,8 +58,6 @@ namespace Poetic
       "gl_FragColor.a *= texture2D(fontTexture, uv.st).a;\n"
       "}\n";
 
-  Luminous::Shader g_fontShader;
-
   /* Creates a number that is a multiple of four. Four is used as the
      buggy OS X (NVidia) drivers cannot handle arbitratry textures,
      even OpenGL 2.0 spec-compliant multiples-of-two -textures do not
@@ -89,9 +87,9 @@ namespace Poetic
     m_reset(false)
   {
 
-    if(!g_fontShader.isDefined()) {
-      g_fontShader.setVertexShader(g_fontVShaderSource);
-      g_fontShader.setFragmentShader(g_fontFShaderSource);
+    if(!m_fontShader.isDefined()) {
+      m_fontShader.setVertexShader(g_fontVShaderSource);
+      m_fontShader.setFragmentShader(g_fontFShaderSource);
     }
 
     m_remGlyphs = m_numGlyphs = m_cpuFont->face()->numGlyphs();
@@ -204,7 +202,7 @@ namespace Poetic
     // GPUTextureGlyph::resetActiveTexture();
 
     // info("GPUTextureFont::internalRender # in");
-    Luminous::GLSLProgramObject * shader = g_fontShader.bind();
+    Luminous::GLSLProgramObject * shader = m_fontShader.bind();
     // info("GPUTextureFont::internalRender # out");
 
     shader->setUniformInt("fontTexture", 0);
@@ -288,7 +286,7 @@ namespace Poetic
     // GPUTextureGlyph::resetActiveTexture();
 
     // info("GPUTextureFont::internalRender # in");
-    Luminous::GLSLProgramObject * shader = g_fontShader.bind();
+    Luminous::GLSLProgramObject * shader = m_fontShader.bind();
     // info("GPUTextureFont::internalRender # out");
 
     shader->setUniformInt("fontTexture", 0);
