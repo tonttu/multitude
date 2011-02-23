@@ -16,7 +16,10 @@
 #include <Luminous/Luminous.hpp>
 
 #include "CPUBitmapGlyph.hpp"
+#include "Poetic.hpp"
+
 #include <Radiant/Trace.hpp>
+#include <Radiant/Mutex.hpp>
 
 #include <ft2build.h>
 #include FT_GLYPH_H
@@ -29,6 +32,8 @@ namespace Poetic
   : Glyph(glyph),
     m_bitmap(0)
   {
+    Radiant::GuardStatic g(freetypeMutex());
+
     int error = FT_Render_Glyph(glyph, FT_RENDER_MODE_NORMAL);
     if(error || glyph->format != ft_glyph_format_bitmap) {
       Radiant::error("CPUBitmapGlyph::CPUBitmapGlyph # failed to render glyph");
