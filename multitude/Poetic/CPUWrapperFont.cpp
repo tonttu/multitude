@@ -62,6 +62,9 @@ namespace Poetic
   void CPUWrapperFont::advanceList(const wchar_t * str, float * advances, int n)
   {
     CPUFont * f = m_managedFont->getMetricFont();
+    if (!f)
+      return;
+
     float s = static_cast<float> (m_pointSize) / static_cast<float> (f->faceSize());
 
     f->advanceList(str, advances, n);
