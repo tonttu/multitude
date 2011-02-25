@@ -23,7 +23,8 @@ namespace Poetic
 
   static FT_Library * g_library = 0;
   static FT_Error g_error = 0;
-  static Radiant::MutexStatic g_freetypeMutex;
+  /* need a recursive mutex */
+  static Radiant::MutexStatic g_freetypeMutex(false, true, true);
 
   bool initialize()
   {
