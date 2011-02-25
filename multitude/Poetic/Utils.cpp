@@ -150,10 +150,13 @@ namespace Poetic
   {
     lines.clear();
 
-    std::vector<float> advances;
-    advances.resize(ws.size(), 0);
+    if(ws.empty())
+      return;
 
-    int n = ws.length();
+    int n = ws.size();
+
+    std::vector<float> advances;
+    advances.resize(n, 0);
 
     fnt.advanceList(ws.c_str(), & advances[0], n);
 

@@ -8,6 +8,7 @@
 
 namespace Poetic
 {
+  using namespace Radiant;
 
   CPUFontBase::CPUFontBase()
     : m_face(0),
@@ -246,10 +247,10 @@ namespace Poetic
   {
     Radiant::Guard g(m_mutex);
 
-    int i;
+    int i = 0;
 
     while(*str) {
-      if(n >= 0 && i >= n)
+      if((n >= 0) && (i >= n))
         break;
 
       if(checkGlyph(*str)) {
