@@ -64,6 +64,16 @@ namespace Nimble {
       *this = m;
     }
 
+    QuaternionT & normalize()
+    {
+      float m = Nimble::Math::InvSqrt(lensq());
+      x *= m;
+      y *= m;
+      z *= m;
+      w *= m;
+      return *this;
+    }
+
     /// Transforms the argument vector this quaternion transformation
     template <typename Y>
     Vector3T<Y> operator*(const Vector3T<Y> & v) const

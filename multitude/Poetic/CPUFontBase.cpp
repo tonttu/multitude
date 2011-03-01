@@ -255,7 +255,6 @@ namespace Poetic
 
       if(checkGlyph(*str)) {
         *advances = m_glyphList->advance(str[0], str[1]);
-        //info("adv = %f", *advances);
       }
 
       i++;
