@@ -68,7 +68,7 @@ namespace Poetic
 
     bool m_reset;
 
-    Luminous::Shader m_fontShader;
+    Luminous::Shader* m_fontShader;
   };
 
 }

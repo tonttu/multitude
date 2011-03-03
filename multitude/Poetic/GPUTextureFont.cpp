@@ -84,12 +84,13 @@ namespace Poetic
     m_padding(DEFAULT_PADDING),
     m_xOffset(0),
     m_yOffset(0),
-    m_reset(false)
+    m_reset(false),
+    m_fontShader(new Luminous::Shader())
   {
 
-    if(!m_fontShader.isDefined()) {
-      m_fontShader.setVertexShader(g_fontVShaderSource);
-      m_fontShader.setFragmentShader(g_fontFShaderSource);
+    if(!m_fontShader->isDefined()) {
+      m_fontShader->setVertexShader(g_fontVShaderSource);
+      m_fontShader->setFragmentShader(g_fontFShaderSource);
     }
 
     m_remGlyphs = m_numGlyphs = m_cpuFont->face()->numGlyphs();
@@ -97,6 +98,8 @@ namespace Poetic
 
   GPUTextureFont::~GPUTextureFont()
   {
+    delete m_fontShader;
+
     // Accessing [0] on empty vectors crashes on Windows
     if(!m_textures.empty())
         glDeleteTextures((GLsizei) m_textures.size(), (const GLuint *)&m_textures[0]);
@@ -202,7 +205,7 @@ namespace Poetic
     // GPUTextureGlyph::resetActiveTexture();
 
     // info("GPUTextureFont::internalRender # in");
-    Luminous::GLSLProgramObject * shader = m_fontShader.bind();
+    Luminous::GLSLProgramObject * shader = m_fontShader->bind();
     // info("GPUTextureFont::internalRender # out");
 
     shader->setUniformInt("fontTexture", 0);
@@ -286,7 +289,7 @@ namespace Poetic
     // GPUTextureGlyph::resetActiveTexture();
 
     // info("GPUTextureFont::internalRender # in");
-    Luminous::GLSLProgramObject * shader = m_fontShader.bind();
+    Luminous::GLSLProgramObject * shader = m_fontShader->bind();
     // info("GPUTextureFont::internalRender # out");
 
     shader->setUniformInt("fontTexture", 0);
