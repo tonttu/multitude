@@ -327,8 +327,10 @@ namespace FireView {
       debug("Disabled trigger.");
     }
 
-    m_camera->setTriggerPolarity(CamView::triggerPolarity());
-    debug("Set trigger polarity to %d", CamView::triggerPolarity());
+    if(CamView::triggerPolarity() != VideoCamera::TRIGGER_ACTIVE_UNDEFINED) {
+      m_camera->setTriggerPolarity(CamView::triggerPolarity());
+      debug("Set trigger polarity to %d", CamView::triggerPolarity());
+    }
 
     debug("Getting features");
 
@@ -373,7 +375,8 @@ namespace FireView {
   /////////////////////////////////////////////////////////////////////////////
 
   bool CamView::m_verbose = false;
-  Radiant::VideoCamera::TriggerPolarity CamView::m_triggerPolarity = Radiant::VideoCamera::TriggerPolarity(-1);
+  Radiant::VideoCamera::TriggerPolarity CamView::m_triggerPolarity =
+      Radiant::VideoCamera::TRIGGER_ACTIVE_UNDEFINED;
   int CamView::m_format7mode = 1;
 
   int CamView::m_debayer = 0;
