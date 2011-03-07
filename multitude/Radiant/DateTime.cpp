@@ -30,6 +30,17 @@
 
 namespace Radiant {
 
+  static bool isNumberString(const std::string & str)
+  {
+    for(size_t i = 0; i < str.size(); i++) {
+      if(!isdigit(str[i]))
+        return false;
+    }
+
+    return true;
+  }
+
+
   DateTime::DateTime()
       : m_year(0),
       m_month(0),
@@ -116,6 +127,10 @@ namespace Radiant {
       m_month = atoi(monthstr.c_str()) - 1;
       m_monthDay = atoi(daystr.c_str()) - 1;
 
+      if(!isNumberString(yearstr) || !isNumberString(monthstr) || !isNumberString(daystr) ||
+         m_month >= 12 || m_monthDay >= 31)
+        return false;
+
       m_hour = 0;
       m_minute = 0;
       m_second = 0;
@@ -136,6 +151,11 @@ namespace Radiant {
       m_year  = atoi(yearstr.c_str());
       m_month = atoi(monthstr.c_str()) - 1;
       m_monthDay = atoi(daystr.c_str()) - 1;
+
+      if(!isNumberString(yearstr) || !isNumberString(monthstr) || !isNumberString(daystr) ||
+         !isNumberString(hourstr) || !isNumberString(minstr) || !isNumberString(secstr) ||
+         m_month >= 12 || m_monthDay >= 31)
+        return false;
 
       m_hour = atoi(hourstr.c_str());
       m_minute = atoi(minstr.c_str());
