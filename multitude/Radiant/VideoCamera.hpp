@@ -115,7 +115,8 @@ namespace Radiant {
     /// Camera external trigger polarity
     enum TriggerPolarity {
       TRIGGER_ACTIVE_LOW = 0,
-      TRIGGER_ACTIVE_HIGH
+      TRIGGER_ACTIVE_HIGH,
+      TRIGGER_ACTIVE_UNDEFINED
     };
 
     /// A container of basic camera feature information.
