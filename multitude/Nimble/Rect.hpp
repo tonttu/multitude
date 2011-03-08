@@ -426,6 +426,7 @@ namespace Nimble {
     float myAspect = s.x / s.y;
 
     Nimble::Vector2T<T> area;
+
     if(myAspect > aspectRatio) {
       area.y = s.y;
       area.x = area.y * aspectRatio;
