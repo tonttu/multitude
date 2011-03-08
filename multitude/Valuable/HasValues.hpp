@@ -134,6 +134,8 @@ namespace Valuable
     /// Returns an iterator to the end of the values
     iterator valuesEnd() { return m_children.end(); }
 
+    const container & valueChildren() { return m_children; }
+
     /** Add an event listener to this object.
 
         This function is part of the experimental event passing
