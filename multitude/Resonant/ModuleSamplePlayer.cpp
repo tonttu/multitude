@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Resonant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Resonant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #include "ModuleSamplePlayer.hpp"
@@ -120,7 +108,7 @@ namespace Resonant {
 
   bool ModuleSamplePlayer::SampleVoice::synthesize(float ** out, int n, ModuleSamplePlayer * host)
   {
-    if(m_state != PLAYING) {
+    if(m_state != PLAYING || m_startTime > host->time()) {
       //printf(":"); fflush(0);
       return m_state == WAITING_FOR_SAMPLE;
     }
@@ -231,6 +219,8 @@ namespace Resonant {
         m_targetChannel = data->readInt32( & ok);
       else if(strcmp(name, "loop") == 0)
         m_loop = (data->readInt32( & ok) != 0);
+      else if(strcmp(name, "time") == 0)
+        m_startTime = data->readTimeStamp( & ok);
       else {
         error("ModuleSamplePlayer::SampleVoice::init # Invalid parameter \"%s\"",
               name);
@@ -482,6 +472,7 @@ namespace Resonant {
   void ModuleSamplePlayer::process(float ** , float ** out, int n)
   {
     size_t i;
+    m_time = Radiant::TimeStamp::getTime();
 
     // First zero the outputs
     for(i = 0; i < m_channels; i++)
@@ -522,7 +513,7 @@ namespace Resonant {
   }
 
   void ModuleSamplePlayer::createAmbientBackground
-      (const char * directory, float gain, int fillchannels)
+      (const char * directory, float gain, int fillchannels, float delay)
   {
     Radiant::Directory dir(directory, Directory::Files);
 
@@ -534,6 +525,29 @@ namespace Resonant {
     for(int i = 0; i < dir.count(); i++) {
 
       std::string file = dir.fileNameWithPath(i);
+
+      std::string suf = Radiant::FileUtils::suffixLowerCase(file);
+
+      if(suf == "mp3") {
+        std::string wavname(file);
+        strcpy( & wavname[wavname.size() - 3], "wav");
+
+        // If the wav file already exists, then ignore the mp3 entry.
+        /* To make this better, we could compare the timestamps...*/
+        if(Radiant::FileUtils::fileReadable(wavname))
+          continue;
+
+        char command[128];
+
+#ifdef WIN32
+        sprintf(command, "madplay.exe %s -o wave:%s", file.c_str(), wavname.c_str());
+#else
+        sprintf(command, "mpg123 %s --wav %s", file.c_str(), wavname.c_str());
+#endif
+        info("Performing mp3 -> wav conversion with [%s]", command);
+        system(command);
+        file = wavname;
+      }
 
       n++;
 
@@ -548,8 +562,13 @@ namespace Resonant {
 
       sf_close(sndf);
 
+
+      // Start everything in 7 seconds
+      Radiant::TimeStamp startTime = Radiant::TimeStamp::getTime() +
+                                     Radiant::TimeStamp::createSecondsD(delay);
+
       for(int c = 0; c < fillchannels; c++) {
-        playSample(file.c_str(), gain, 1.0f, (c+i) % channels(), c % info.channels, true);
+        playSample(file.c_str(), gain, 1.0f, (c+i) % channels(), c % info.channels, true, startTime);
       }
     }
 
@@ -562,7 +581,8 @@ namespace Resonant {
                                       float relpitch,
                                       int targetChannel,
                                       int samplechannel,
-                                      bool loop)
+                                      bool loop,
+                                      Radiant::TimeStamp time)
   {
 
     SF_INFO info;
@@ -599,6 +619,10 @@ namespace Resonant {
     // Select the target channel for the sample
     control.writeString("targetchannel");
     control.writeInt32(targetChannel);
+
+    // Select the target channel for the sample
+    control.writeString("time");
+    control.writeTimeStamp(time);
 
     // Finish parameters
     control.writeString("end");

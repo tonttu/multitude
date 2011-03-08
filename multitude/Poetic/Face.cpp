@@ -51,10 +51,22 @@ namespace Poetic
 
   Nimble::Vector2 Face::kernAdvance(unsigned int index1, unsigned int index2)
   {
+    if(!m_hasKerningTable)
+      return Nimble::Vector2(0, 0);
+
+    uint64_t index = index1;
+    index <<= 32;
+    index |= index2;
+
+    KernMap::iterator it = m_kernings.find(index);
+
+    if(it != m_kernings.end())
+      return it->second;
+
     float x = 0.f;
     float y = 0.f;
 
-    if(m_hasKerningTable && index1 && index2) {
+    if(index1 && index2) {
       FT_Vector kernAdvance;
       kernAdvance.x = kernAdvance.y = 0;
 
@@ -65,7 +77,11 @@ namespace Poetic
       }
     }
 
-    return Nimble::Vector2(x, y);
+    Nimble::Vector2 k(x, y);
+
+    m_kernings[index] = k;
+
+    return k;
   }
 
   const Size & Face::size(int size, int res)

@@ -15,6 +15,7 @@ SUBDIRS += UDPExample
 SUBDIRS += VertexBuffers
 SUBDIRS += SDLVideoPlayer
 SUBDIRS += ShaderExample
+SUBDIRS += TimeCalculations
 SUBDIRS += ValueTest
 SUBDIRS += ValidatingXML
 SUBDIRS += XMLDump

@@ -82,7 +82,7 @@ namespace Luminous
     static void objectDeleted(Collectable * obj);
 
     /// Returns the number of collectables in the garbage collector
-    static int size() { return (int) m_current->size(); }
+    static int size();
 
     /// Returns the list of objects that have been previously deleted.
     static const container & previousObjects();
@@ -90,11 +90,6 @@ namespace Luminous
     GarbageCollector();
     ~GarbageCollector();
 
-
-    // items are double-buffered to ensure free access to previous container
-    static container * m_current;
-    static container m_items1;
-    static container m_items2;
 
   };
 }

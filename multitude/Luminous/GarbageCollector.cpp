@@ -18,11 +18,38 @@
 namespace Luminous
 {
 
-  GarbageCollector::container GarbageCollector::m_items1;
-  GarbageCollector::container GarbageCollector::m_items2;
-  GarbageCollector::container * GarbageCollector::m_current = &GarbageCollector::m_items1;
 
-  static Radiant::MutexStatic __garbmutex;
+  class GarbageData
+  {
+  public:
+    GarbageData();
+    ~GarbageData();
+
+
+    // items are double-buffered to ensure free access to previous container
+    GarbageCollector::container m_items1;
+    GarbageCollector::container m_items2;
+    GarbageCollector::container * m_current;
+
+    Radiant::MutexStatic m_mutex;
+  };
+
+  static GarbageData * s_check = 0;
+  static GarbageData s_gbData;
+
+  GarbageData::GarbageData()
+    : m_current( & m_items1)
+  {
+    if(!s_check)
+      s_check = this;
+  }
+
+  GarbageData::~GarbageData()
+  {
+    if(s_check == this)
+      s_check = 0;
+  }
+
 
   GarbageCollector::GarbageCollector()
   {}
@@ -32,20 +59,34 @@ namespace Luminous
 
   void GarbageCollector::clear()
   {
-    Radiant::GuardStatic g(__garbmutex);
+    Radiant::GuardStatic g(s_gbData.m_mutex);
     // swap and clear current
-    m_current = m_current == &m_items1 ? &m_items2 : &m_items1;
-    m_current->clear();
+    s_gbData.m_current = s_gbData.m_current == & s_gbData.m_items1 ?
+                         &s_gbData.m_items2 : &s_gbData.m_items1;
+    s_gbData.m_current->clear();
   }
 
   void GarbageCollector::objectDeleted(Collectable * obj)
   {
-    Radiant::GuardStatic g(__garbmutex);
-    m_current->insert(obj);
+    /* This function might be called by static Collectable objects after the
+       static GarbageData has been destroyed. This s_check object is used to detect
+       these cases and avoid crashing the application. */
+
+    if(!s_check)
+      return;
+
+    Radiant::GuardStatic g(s_gbData.m_mutex);
+    s_gbData.m_current->insert(obj);
+  }
+
+  int GarbageCollector::size()
+  {
+    return (int) s_gbData.m_current->size();
   }
 
   const GarbageCollector::container & GarbageCollector::previousObjects()
   {
-    return m_current == &m_items1 ? m_items2 : m_items1;
+    return s_gbData.m_current == &s_gbData.m_items1 ?
+        s_gbData.m_items2 : s_gbData.m_items1;
   }
 }

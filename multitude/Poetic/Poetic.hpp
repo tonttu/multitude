@@ -15,6 +15,8 @@
 #ifndef POETIC_FREETYPE_HPP
 #define POETIC_FREETYPE_HPP
 
+#include <Radiant/Mutex.hpp>
+
 struct FT_LibraryRec_;
 
 /// Poetic is an OpenGL font rendering library.
@@ -39,6 +41,9 @@ namespace Poetic
 
   /// Returns the last freetype error
   int error();
+
+  // Hack around thread-safety
+  Radiant::MutexStatic & freetypeMutex();
 }
 
 #endif

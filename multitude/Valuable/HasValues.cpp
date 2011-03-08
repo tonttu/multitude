@@ -370,7 +370,14 @@ namespace Valuable
 
   void HasValues::childRenamed(const std::string & was, const std::string & now)
   {
-    iterator it = m_children.find(was);
+    // Check that the value does not exist already
+    iterator it = m_children.find(now);
+    if(it != m_children.end()) {
+      error("HasValues::childRenamed # Child '%s' already exist", now.c_str());
+      return;
+    }
+
+    it = m_children.find(was);
     if(it == m_children.end()) {
       error("HasValues::childRenamed # No such child: %s", was.c_str());
       return;
@@ -379,7 +386,6 @@ namespace Valuable
     m_children.erase(it);
     m_children[now] = vo;
   }
-
 
   bool HasValues::readElement(DOMElement )
   {

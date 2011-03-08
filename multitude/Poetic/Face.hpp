@@ -19,6 +19,8 @@
 
 #include <Nimble/Vector2.hpp>
 
+#include <map>
+
 struct FT_GlyphSlotRec_;
 
 namespace Poetic
@@ -54,6 +56,11 @@ namespace Poetic
       std::string fontFilePath() const { return m_fontFilePath; }
 
     private:
+
+      typedef std::map<uint64_t, Nimble::Vector2> KernMap;
+
+      KernMap m_kernings;
+
       FT_FaceRec_ ** m_ftFace;
       Size m_size;
       int m_numGlyphs;

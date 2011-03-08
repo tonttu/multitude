@@ -17,6 +17,7 @@
 
 #include <Nimble/Math.hpp>
 
+#include <Radiant/Sleep.hpp>
 #include <Radiant/Trace.hpp>
 
 #include <portaudio.h>
@@ -242,6 +243,12 @@ namespace Resonant {
       return true;
 
     m_isRunning = false;
+
+    {
+      /* Hack to get the audio closed in all cases (mostly for Linux). */
+      m_continue = false;
+      Radiant::Sleep::sleepMs(200);
+    }
 
     int err = Pa_CloseStream(m_d->m_stream);
     if(err != paNoError) {

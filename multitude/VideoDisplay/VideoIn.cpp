@@ -244,13 +244,13 @@ namespace VideoDisplay {
 
   bool VideoIn::play(Radiant::TimeStamp pos)
   {
-    debug("VideoIn::play");
-
     if(pos < 0) {
       pos = m_displayFrameTime;
       if(m_atEnd)
         pos = 0;
     }
+
+    debug("VideoIn::play # %lf", pos.secondsD());
 
     pushRequest(Req(START, pos));
 
@@ -285,8 +285,8 @@ namespace VideoDisplay {
 
   bool VideoIn::seek(Radiant::TimeStamp pos)
   {
-    debug("VideoIn::seek");
-
+    debug("VideoIn::seek # %lf", pos.secondsD());
+    m_displayFrameTime = pos;
 
     pushRequest(Req(SEEK, pos));
 
@@ -343,9 +343,10 @@ namespace VideoDisplay {
         bestdiff = diff;
         close = f->m_absolute.secondsD();
       }
-      else // at least when looping, the nearest frame is somewhere else so don't break
+      else { // at least when looping, the nearest frame is somewhere else so don't break
         ;
         //break;
+      }
     }
 
     debug("VideoIn::selectFrame # %d (%d %lu) (%lu %lu) %lf %lf",
