@@ -357,30 +357,16 @@ namespace Luminous {
 
     name = Radiant::FileUtils::path(m_filename);
 
-    if(!name.empty())
+    if(!name.isEmpty())
       name += "/";
     name += ".imagecache/";
 
     snprintf(buf, sizeof(buf), "level%02d_", level);
 
     name += buf;
-    name += Radiant::FileUtils::filename(m_filename);
-
-    QString suffix = Radiant::FileUtils::suffix(name);
-
-    if(!suffix.empty()) {
-
-      // Put in the right suffix
-      size_t i = name.size() - 1;
-
-      while(i && name[i] != '.' && name[i] != '/')
-        i--;
-
-      name.erase(i + 1);
-
-      // always use png
-      name += "png";
-    }
+    name += Radiant::FileUtils::baseFilename(m_filename);
+    // always use png
+    name += ".png";
   }
 
   void CPUMipmaps::recursiveLoad(StackMap & stack, int level)
@@ -403,13 +389,13 @@ namespace Luminous {
 
         Luminous::ImageTex * im = new ImageTex();
 
-        if(!im->read(filename.c_str())) {
-          error("CPUMipmaps::recursiveLoad # Could not read %s", filename.c_str());
+        if(!im->read(filename.toUtf8().data())) {
+          error("CPUMipmaps::recursiveLoad # Could not read %s", filename.toUtf8().data());
           delete im;
         } else if(mipmapSize(level) != im->size()) {
           // unexpected size (corrupted or just old image)
           error("CPUMipmaps::recursiveLoad # Cache image '%s'' size was (%d, %d), expected (%d, %d)",
-                filename.c_str(), im->width(), im->height(), mipmapSize(level).x, mipmapSize(level).y);
+                filename.toUtf8().data(), im->width(), im->height(), mipmapSize(level).x, mipmapSize(level).y);
           delete im;
         } else {
           if(im->hasAlpha())
@@ -426,8 +412,8 @@ namespace Luminous {
       // Load original
       std::shared_ptr<Luminous::ImageTex> im(new ImageTex);
 
-      if(!im->read(m_filename.c_str())) {
-        error("CPUMipmaps::recursiveLoad # Could not read %s", m_filename.c_str());
+      if(!im->read(m_filename.toUtf8().data())) {
+        error("CPUMipmaps::recursiveLoad # Could not read %s", m_filename.toUtf8().data());
         item.m_state = FAILED;
       }
       else {
@@ -478,7 +464,7 @@ namespace Luminous {
       QString filename;
       cacheFileName(filename, level);
       Directory::mkdir(FileUtils::path(filename));
-      imdest->write(filename.c_str());
+      imdest->write(filename.toUtf8().data());
       // info("wrote cache %s (%d)", filename.c_str(), level);
     }
   }

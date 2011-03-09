@@ -71,7 +71,7 @@ namespace Luminous {
 
     CPUMipmaps * mipmaps = new CPUMipmaps();
 
-    if(!mipmaps->startLoading(filename.c_str(), immediate)) {
+    if(!mipmaps->startLoading(filename.toUtf8().data(), immediate)) {
       delete mipmaps;
       return 0;
     }
@@ -82,7 +82,7 @@ namespace Luminous {
     __mipmaps[filename].incrCount();
 
     debug("CPUMipmapStore::acquire # Created new for %s (%d links)",
-          filename.c_str(), __mipmaps[filename].m_linkCount);
+          filename.toUtf8().data(), __mipmaps[filename].m_linkCount);
 
     return mipmaps;
   }

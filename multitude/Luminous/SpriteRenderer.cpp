@@ -145,7 +145,7 @@ namespace Luminous {
   {
     QString shaderPath = Radiant::ResourceLocator::instance().locate("SpriteRenderer/Shaders");
 
-    if(shaderPath.empty()) {
+    if(shaderPath.isEmpty()) {
       error("SpriteRenderer::SpriteRenderer # Could not locate shaders");
     }
     else {

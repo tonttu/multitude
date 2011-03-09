@@ -237,7 +237,7 @@ namespace Luminous
       return false;
     }
 
-    return qi.save(&f, m_suffix.c_str());
+    return qi.save(&f, m_suffix.toUtf8().data());
   }
 
 }

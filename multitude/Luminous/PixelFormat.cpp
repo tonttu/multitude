@@ -162,9 +162,7 @@ namespace Luminous
 
   QString PixelFormat::toString() const
   {
-    std::ostringstream ss;
-    ss << "PixelFormat(" << layoutToString(m_layout) << ", " << typeToString(m_type) << ")";
-    return ss.str();
+    return "PixelFormat(" + layoutToString(m_layout) + ", " + typeToString(m_type) + ")";
   }
 
 }

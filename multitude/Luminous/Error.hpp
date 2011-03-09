@@ -21,6 +21,8 @@
 
 #include <iostream>
 
+#include <QString>
+
 #define CHECK_GL_ERROR Luminous::glErrorToString()
 
 namespace Luminous

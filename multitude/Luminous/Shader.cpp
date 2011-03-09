@@ -276,15 +276,15 @@ namespace Luminous {
 
       bool ok = true;
 
-      if(!m_self->m_vertexShader.empty())
-        ok = ok && prog.loadString(GL_VERTEX_SHADER, m_self->m_vertexShader.c_str());
+      if(!m_self->m_vertexShader.isEmpty())
+        ok = ok && prog.loadString(GL_VERTEX_SHADER, m_self->m_vertexShader.toUtf8().data());
 
-      if(!m_self->m_fragmentShader.empty())
-        ok = ok && prog.loadString(GL_FRAGMENT_SHADER, m_self->m_fragmentShader.c_str());
+      if(!m_self->m_fragmentShader.isEmpty())
+        ok = ok && prog.loadString(GL_FRAGMENT_SHADER, m_self->m_fragmentShader.toUtf8().data());
 
-      if(!m_self->m_geometryShader.empty())
+      if(!m_self->m_geometryShader.isEmpty())
         ok = ok && prog.loadString(GL_GEOMETRY_SHADER_EXT,
-                                   m_self->m_geometryShader.c_str());
+                                   m_self->m_geometryShader.toUtf8().data());
 
       /* Set the generation even if something has failed. */
       prog.setGeneration(m_self->m_generation);
@@ -300,7 +300,7 @@ namespace Luminous {
 
   bool Shader::isDefined() const
   {
-    return !m_self->m_fragmentShader.empty() ||
-        !m_self->m_vertexShader.empty();
+    return !m_self->m_fragmentShader.isEmpty() ||
+        !m_self->m_vertexShader.isEmpty();
   }
 }

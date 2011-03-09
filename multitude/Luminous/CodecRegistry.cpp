@@ -18,8 +18,12 @@
 #include "Luminous.hpp"
 
 #include <Radiant/StringUtils.hpp>
+#include <Radiant/FileUtils.hpp>
+#include <Radiant/Trace.hpp>
 
 #include <typeinfo>
+
+#include <QStringList>
 
 namespace Luminous
 {
@@ -37,7 +41,7 @@ namespace Luminous
     ImageCodec * codec = 0;
 
     // Try a codec that matches the extension first
-    const QString ext = filename.substr(filename.rfind(".") + 1);
+    const QString ext = Radiant::FileUtils::suffix(filename);
     Aliases::iterator alias = m_aliases.find(ext);
 
     if(alias != m_aliases.end())
@@ -50,7 +54,7 @@ namespace Luminous
         return codec;
 
       Radiant::debug("CodecRegistry::getCodec # Default codec failed for %s (%s, %p)",
-		     filename.c_str(), ext.c_str(), codec);
+         filename.toUtf8().data(), ext.toUtf8().data(), codec);
       
       // No codec matched the extension, go through all registered codecs and
       // see if they match
@@ -73,17 +77,12 @@ namespace Luminous
     Radiant::debug("CodecRegistry::registerCodec # %s",
 		   typeid(*codec).name());
 
-    namespace su = Radiant::StringUtils;
-
     m_codecs.push_back(codec);
 
     // Associate extensions with this codec
-    su::StringList exts;
-    su::split(codec->extensions(), " ", exts);
-
-    for(su::StringList::iterator it = exts.begin(); it != exts.end(); it++) {
-      m_aliases.insert(std::make_pair(*it, codec));
-      Radiant::debug("Adding codec %p for file type %s", codec, (*it).toUtf8().data());
+    foreach(QString ext, codec->extensions().split(" ")) {
+      m_aliases.insert(std::make_pair(ext, codec));
+      Radiant::debug("Adding codec %p for file type %s", codec, ext.toUtf8().data());
     }    
   }
 
