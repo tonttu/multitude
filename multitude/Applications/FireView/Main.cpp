@@ -173,7 +173,7 @@ int main(int argc, char ** argv)
       const Radiant::VideoCamera::CameraInfo & cam = cameras[i];
       printf("Camera %d: ID = %llx VENDOR = %s, MODEL = %s, DRIVER = %s\n",
          i + 1, (long long) cam.m_euid64,
-       cam.m_vendor.c_str(), cam.m_model.c_str(), cam.m_driver.c_str());
+       cam.m_vendor.toUtf8().data(), cam.m_model.toUtf8().data(), cam.m_driver.toUtf8().data());
       fflush(0);
 
       if(listmodes)

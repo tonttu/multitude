@@ -116,7 +116,7 @@ namespace Resonant
     if(getenv("MODULE_PULSEAUDIO_BUFFERSIZE"))
       attr.maxlength = pa_usec_to_bytes(atof(getenv("MODULE_PULSEAUDIO_BUFFERSIZE")) * 1000, &ss);
 
-    if(pa_stream_connect_record(m_stream, m_monitorName.c_str(), &attr,
+    if(pa_stream_connect_record(m_stream, m_monitorName.toUtf8().data(), &attr,
                                 (pa_stream_flags_t)
                                 (PA_STREAM_INTERPOLATE_TIMING |
                                  PA_STREAM_ADJUST_LATENCY |

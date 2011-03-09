@@ -13,6 +13,8 @@
 
 #include <Valuable/CmdParser.hpp>
 
+#include <QStringList>
+
 using namespace Radiant;
 
 int main(int argc, char ** argv)

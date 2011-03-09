@@ -128,7 +128,7 @@ namespace Screenplay {
           return 0;
         }
         else {
-          debug("VideoInputFFMPEG::captureImage # Looping %s", m_fileName.c_str());
+          debug("VideoInputFFMPEG::captureImage # Looping %s", m_fileName.toUtf8().data());
           m_offsetTS = m_lastTS;
           av_seek_frame(m_ic, -1, (int64_t) 0, 0);
 
@@ -708,7 +708,7 @@ namespace Screenplay {
     if(timeSeconds <= 1e-10) {
       close();
       QString tmp = m_fileName;
-      open(tmp.c_str(), m_flags);
+      open(tmp.toUtf8().data(), m_flags);
       timeSeconds = 0;
     }
     else {

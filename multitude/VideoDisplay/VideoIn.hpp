@@ -146,7 +146,7 @@ namespace VideoDisplay {
 
     size_t finalFrames()   const { return m_finalFrames; }
 
-    const char * name() { return m_name.c_str(); }
+    QString name() { return m_name; }
 
     VIDEODISPLAY_API static void setDebug(int level);
     VIDEODISPLAY_API static void toggleDebug();

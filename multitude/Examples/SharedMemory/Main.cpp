@@ -119,7 +119,7 @@ void listenTest()
       bd.rewind();
 
       bd.readString(str);
-      printf("str = %s\n", str.c_str());
+      printf("str = %s\n", str.toUtf8().data());
       fflush(0);
     }
   }

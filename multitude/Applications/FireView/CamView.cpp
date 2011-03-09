@@ -40,6 +40,8 @@
 
 namespace FireView {
 
+  const char * yesNo(bool v) { return v ? "yes" : "no"; }
+
   using namespace Radiant;
 
   MutexStatic __cvmutex;
@@ -119,7 +121,6 @@ namespace FireView {
     return "unknown";
   }
 */
-  using Radiant::StringUtils::yesNo;
 
   void CamView::InputThread::childLoop()
   {
@@ -438,7 +439,7 @@ namespace FireView {
     QString title;
 
     title.sprintf("%s: %s (%llx)",
-                  info.m_vendor.c_str(), info.m_model.c_str(),
+                  info.m_vendor.toUtf8().data(), info.m_model.toUtf8().data(),
                   (long long) euid64);
 
     ((QWidget *) parent())->setWindowTitle(title);

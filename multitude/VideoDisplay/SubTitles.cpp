@@ -22,6 +22,8 @@
 
 #include <string.h>
 
+#include <QStringList>
+
 namespace VideoDisplay {
 
   using namespace Radiant;
@@ -142,9 +144,7 @@ namespace VideoDisplay {
       if(!nextLine(in, buf, LEN))
         break;
 
-      QStringList list;
-
-      Radiant::StringUtils::split(buf, " ", list);
+      QStringList list = QString(buf).split(" ");
 
       if(list.size() != 3) {
         Radiant::error(
@@ -159,10 +159,10 @@ namespace VideoDisplay {
 
       Text tmp;
 
-      if(!readTime(t1.c_str(), tmp.m_begin))
+      if(!readTime(t1.toUtf8().data(), tmp.m_begin))
         errors++;
 
-      if(!readTime(t2.c_str(), tmp.m_end))
+      if(!readTime(t2.toUtf8().data(), tmp.m_end))
         errors++;
 
       int foo = 0;
@@ -229,7 +229,7 @@ namespace VideoDisplay {
       full += '\n' + m_texts[index].m_lines[j];
     }
 
-    Radiant::debug("LONGEST SUB %s", full.c_str());
+    Radiant::debug("LONGEST SUB %s", full.toUtf8().data());
     return full;
   }
 

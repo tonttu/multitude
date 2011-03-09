@@ -226,7 +226,7 @@ namespace VideoDisplay {
 
     Screenplay::VideoInputFFMPEG video;
 
-    if(!video.open(m_name.c_str(), m_flags)) {
+    if(!video.open(m_name.toUtf8().data(), m_flags)) {
       endOfFile();
       return;
     }
@@ -252,10 +252,10 @@ namespace VideoDisplay {
   {
     //info("VideoInFFMPEG::videoPlay # %lf", pos.secondsD());
 
-    if(!m_video.open(m_name.c_str(), m_flags)) {
+    if(!m_video.open(m_name.toUtf8().data(), m_flags)) {
       endOfFile();
       debug("VideoInFFMPEG::videoPlay # Open failed for \"%s\"",
-            m_name.c_str());
+            m_name.toUtf8().data());
       return;
     }
 
@@ -286,7 +286,7 @@ namespace VideoDisplay {
 
     if(!img) {
       debug("VideoInFFMPEG::videoPlay # Image capture failed \"%s\"",
-            m_name.c_str());
+            m_name.toUtf8().data());
       endOfFile();
       return;
     }
@@ -310,7 +310,7 @@ namespace VideoDisplay {
 
       if(!img) {
         debug("VideoInFFMPEG::videoPlay # Image capture failed in scan \"%s\"",
-              m_name.c_str());
+              m_name.toUtf8().data());
         endOfFile();
         return;
       }

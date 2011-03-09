@@ -344,7 +344,7 @@ namespace VideoDisplay {
         close = f->m_absolute.secondsD();
       }
       else // at least when looping, the nearest frame is somewhere else so don't break
-        ;
+      {}
         //break;
     }
 

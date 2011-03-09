@@ -106,7 +106,7 @@ namespace Resonant {
       }
       else {
         error("ModulePanner::control # %s # Could not read source location",
-              id.c_str());
+              id.toUtf8().data());
       }
     }
     else {
@@ -201,7 +201,7 @@ namespace Resonant {
   void ModulePanner::setSourceLocation(const QString & id,
                                        Nimble::Vector2 location)
   {
-    debug("ModulePanner::setSourceLocation # %s [%f %f]", id.c_str(),
+    debug("ModulePanner::setSourceLocation # %s [%f %f]", id.toUtf8().data(),
           location.x, location.y);
 
     Source * s = 0;
@@ -215,7 +215,7 @@ namespace Resonant {
 
     if(!s) {
       error("ModulePanner::setSourceLocation # id \"%s\" is not known",
-            id.c_str());
+            id.toUtf8().data());
       return;
     }
 
@@ -299,12 +299,12 @@ namespace Resonant {
       if(s.m_id == id) {
         m_sources.erase(it);
         debug("ModulePanner::removeSource # Removed source %s, now %lu",
-              id.c_str(), m_sources.size());
+              id.toUtf8().data(), m_sources.size());
         return;
       }
     }
 
-    error("ModulePanner::removeSource # No such source: \"%s\"", id.c_str());
+    error("ModulePanner::removeSource # No such source: \"%s\"", id.toUtf8().data());
   }
 
   float ModulePanner::computeGain(const LoudSpeaker * ls, Nimble::Vector2 srcLocation) const

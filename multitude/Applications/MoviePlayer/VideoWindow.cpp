@@ -72,7 +72,7 @@ bool VideoWindow::open(const char * filename, const char * audiodev)
   item->m_show.setContrast(m_contrast);
   QString srtfile = Radiant::FileUtils::baseFilename(filename) + ".srt";
 
-  item->m_show.loadSubTitles(srtfile.c_str());
+  item->m_show.loadSubTitles(srtfile.toUtf8().data());
 
   if(!item->m_show.init(filename, & m_dsp, 0, 0,
                         Radiant::WITH_VIDEO | Radiant::WITH_AUDIO
@@ -139,11 +139,11 @@ void VideoWindow::randomOperation()
 
     std::shared_ptr<Item> item(new Item());
 
-    if(!item->m_show.init(filename.c_str(), & m_dsp, 0, 0)) {
-      Radiant::error("Could not recreate video player for \"%s\"", filename.c_str());
+    if(!item->m_show.init(filename.toUtf8().data(), & m_dsp, 0, 0)) {
+      Radiant::error("Could not recreate video player for \"%s\"", filename.toUtf8().data());
     }
     else
-      Radiant::info("Recreated video player for \"%s\"", filename.c_str());
+      Radiant::info("Recreated video player for \"%s\"", filename.toUtf8().data());
 
     (*it) = item;
   }

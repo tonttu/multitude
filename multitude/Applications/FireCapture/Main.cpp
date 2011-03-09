@@ -273,14 +273,14 @@ int main(int argc, char ** argv)
     }
   }
 
-  if(useConfig && !Radiant::FileUtils::fileReadable(configFile.c_str())) {
-    Radiant::error("FireCapture: Configuration file %s is not readable", configFile.c_str());
+  if(useConfig && !Radiant::FileUtils::fileReadable(configFile.toUtf8().data())) {
+    Radiant::error("FireCapture: Configuration file %s is not readable", configFile.toUtf8().data());
     return -1;
   }
 
   if (useConfig) {
-    if(!readConfig( & conf, configFile.c_str())) {
-      Radiant::error("Failed to read MultiTouch configuration file: %s", configFile.c_str());
+    if(!readConfig( & conf, configFile.toUtf8().data())) {
+      Radiant::error("Failed to read MultiTouch configuration file: %s", configFile.toUtf8().data());
       return -1;
     } else {
       // Overwrite globals if specified
@@ -311,7 +311,7 @@ int main(int argc, char ** argv)
     const Radiant::VideoCamera::CameraInfo & cam = cameras[i];
     printf("Camera %d: ID = %llx, VENDOR = %s, MODEL = %s\n",
            i + 1, (long long) cam.m_euid64,
-           cam.m_vendor.c_str(), cam.m_model.c_str());
+           cam.m_vendor.toUtf8().data(), cam.m_model.toUtf8().data());
     fflush(0);
 
     sprintf(buf, "/raw-frames-%llx/", (long long) cam.m_euid64);
@@ -344,7 +344,7 @@ int main(int argc, char ** argv)
           QString cameraType(buf);
 
           camChunk.setClearFlag(true);
-          camChunk.set("device",Radiant::Variant(cameraType.substr(1,25), ""));
+          camChunk.set("device",Radiant::Variant(cameraType.mid(1,25), ""));
           camChunk.setClearFlag(false);
         }
       }
@@ -358,10 +358,10 @@ int main(int argc, char ** argv)
   QString outConfigFile = (baseDir + QString("config.txt"));
   // Cheat Radiant::writeConfig
   std::ofstream out;
-  out.open(outConfigFile.c_str());
+  out.open(outConfigFile.toUtf8().data());
   out.close();
 
-  Radiant::writeConfig( & conf, outConfigFile.c_str());
+  Radiant::writeConfig( & conf, outConfigFile.toUtf8().data());
 
   Radiant::Sleep::sleepS(secs);
 
