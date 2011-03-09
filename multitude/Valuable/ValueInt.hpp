@@ -19,6 +19,8 @@
 #include <Valuable/Export.hpp>
 #include <Valuable/ValueNumeric.hpp>
 
+#include <Radiant/TimeStamp.hpp>
+
 #define VALUEMIT_STD_OP this->emitChange(); return *this;
 
 #define VO_TYPE_INT "int"

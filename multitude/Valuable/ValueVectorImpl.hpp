@@ -88,7 +88,7 @@ namespace Valuable
 
   template<class VectorType, typename ElementType, int N>
   bool ValueVector<VectorType, ElementType, N>::deserialize(ArchiveElement & element) {
-    std::stringstream in(element.get());
+    std::stringstream in(element.get().toUtf8().data());
 
     for(int i = 0; i < N; i++)
       in >> Base::m_value[i];

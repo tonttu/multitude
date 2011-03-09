@@ -89,7 +89,7 @@ namespace Valuable
       Radiant::error(
           "HasValues::addValue # can not add child '%s' as '%s' "
           "already has a child with the same name.",
-          cname.c_str(), m_name.c_str());
+          cname.toUtf8().data(), m_name.toUtf8().data());
       return false;
     }
 
@@ -99,7 +99,7 @@ namespace Valuable
       Radiant::error(
           "HasValues::addValue # '%s' already has a parent '%s'. "
           "Unlinking it to set new parent.",
-          cname.c_str(), parent->name().toUtf8().data());
+          cname.toUtf8().data(), parent->name().toUtf8().data());
       value->removeParent();
     }
 
@@ -120,7 +120,7 @@ namespace Valuable
     if(it == m_children.end()) {
       Radiant::error(
           "HasValues::removeValue # '%s' is not a child of '%s'.",
-          cname.c_str(), m_name.c_str());
+          cname.toUtf8().data(), m_name.toUtf8().data());
       return;
     }
 
@@ -157,13 +157,13 @@ namespace Valuable
 
   ArchiveElement & HasValues::serialize(Archive & archive)
   {
-    if(m_name.empty()) {
+    if(m_name.isEmpty()) {
       Radiant::error(
           "HasValues::serialize # attempt to serialize object with no name");
       return archive.emptyElement();
     }
 
-    ArchiveElement & elem = archive.createElement(m_name.c_str());
+    ArchiveElement & elem = archive.createElement(m_name.toUtf8().data());
     if(elem.isNull()) {
       Radiant::error(
           "HasValues::serialize # failed to create element");
@@ -204,7 +204,7 @@ namespace Valuable
         vo->deserialize(elem);
       else if(!elem.xml() || !readElement(*elem.xml())) {
         Radiant::error(
-            "HasValues::deserialize # (%s) don't know how to handle element '%s'", type(), name.c_str());
+            "HasValues::deserialize # (%s) don't know how to handle element '%s'", type(), name.toUtf8().data());
         return false;
       }
     }
@@ -213,7 +213,7 @@ namespace Valuable
   }
 
   void HasValues::debugDump() {
-    Radiant::trace(Radiant::DEBUG, "%s {", m_name.c_str());
+    Radiant::trace(Radiant::DEBUG, "%s {", m_name.toUtf8().data());
 
     for(container::iterator it = m_children.begin(); it != m_children.end(); it++) {
       ValueObject * vo = it->second;
@@ -222,7 +222,7 @@ namespace Valuable
       if(hv) hv->debugDump();
       else {
         QString s = vo->asString();
-        Radiant::trace(Radiant::DEBUG, "\t%s = %s", vo->name().toUtf8().data(), s.c_str());
+        Radiant::trace(Radiant::DEBUG, "\t%s = %s", vo->name().toUtf8().data(), s.toUtf8().data());
       }
     }
 
@@ -316,7 +316,7 @@ namespace Valuable
 
     const char * delim = strchr(id, '/');
 
-    QString key(id);
+    std::string key(id);
     int skip;
 
     if(delim) {
@@ -329,7 +329,7 @@ namespace Valuable
 
     // info("HasValues::processMessage # Child id = %s", key.c_str());
 
-    ValueObject * vo = getValue(key);
+    ValueObject * vo = getValue(QString::fromUtf8(key.c_str()));
 
     if(vo) {
       // info("HasValues::processMessage # Sending message \"%s\" to %s",
@@ -353,7 +353,7 @@ namespace Valuable
 
   void HasValues::eventSend(const QString & id, Radiant::BinaryData & bd)
   {
-    eventSend(id.c_str(), bd);
+    eventSend(id.toUtf8().data(), bd);
   }
 
   void HasValues::eventSend(const char * id, Radiant::BinaryData & bd)
@@ -380,11 +380,11 @@ namespace Valuable
         bdsend.rewind();
 
         if(vp.m_listener) {
-          vp.m_listener->processMessage(vp.m_to.c_str(), bdsend);
+          vp.m_listener->processMessage(vp.m_to.toUtf8().data(), bdsend);
         } else {
           /// @todo wrap bdsend
           /// @todo what is the correct receiver?
-          v8::Local<v8::Value> argv[] = {v8::String::New(vp.m_to.c_str())};
+          v8::Local<v8::Value> argv[] = {v8::String::New(vp.m_to.toUtf8().data())};
           vp.m_func->Call(v8::Context::GetCurrent()->Global(), 1, argv);
         }
       }
@@ -401,7 +401,7 @@ namespace Valuable
   {
     iterator it = m_children.find(was);
     if(it == m_children.end()) {
-      error("HasValues::childRenamed # No such child: %s", was.c_str());
+      error("HasValues::childRenamed # No such child: %s", was.toUtf8().data());
       return;
     }
     ValueObject * vo = (*it).second;

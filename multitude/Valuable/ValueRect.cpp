@@ -26,7 +26,7 @@ namespace Valuable
   {}
 
   bool ValueRect::deserialize(ArchiveElement & element) {
-    std::stringstream in(element.get());
+    std::stringstream in(element.get().toUtf8().data());
 
     Nimble::Vector2f lo, hi;
 

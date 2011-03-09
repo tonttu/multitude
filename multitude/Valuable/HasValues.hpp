@@ -23,6 +23,7 @@
 #include <Patterns/NotCopyable.hpp>
 
 #include <Radiant/Color.hpp>
+#include <Radiant/Trace.hpp>
 
 #include <v8.h>
 
@@ -72,34 +73,37 @@ namespace Valuable
     template<class T>
     bool setValue(const QString & name, const T & v)
     {
-      size_t cut = name.find("/");
-      QString next = name.substr(0, cut);
-      QString rest = name.substr(cut + 1);
+      int cut = name.indexOf("/");
+      QString next, rest;
+      if(cut >= 0) {
+        next = name.left(cut);
+        rest = name.mid(cut + 1);
 
-      if(next == QString("..")) {
-        if(!m_parent) {
-          Radiant::error(
-              "HasValues::setValue # node '%s' has no parent", m_name.c_str());
-          return false;
+        if(next == QString("..")) {
+          if(!m_parent) {
+            Radiant::error(
+                "HasValues::setValue # node '%s' has no parent", m_name.toUtf8().data());
+            return false;
+          }
+
+          return m_parent->setValue(rest, v);
         }
-
-        return m_parent->setValue(rest, v);
       }
 
       container::iterator it = m_children.find(next);
       if(it == m_children.end()) {
         Radiant::error(
-            "HasValues::setValue # property '%s' not found", next.c_str());
+            "HasValues::setValue # property '%s' not found", next.toUtf8().data());
         return false;
       }
 
-      HasValues * hv = dynamic_cast<HasValues *> (it->second);
-      if(hv)
-        return hv->setValue(rest, v);
-      else {
-        ValueObject * vo = it->second;
-        return vo->set(v);
+      if(cut >= 0) {
+        HasValues * hv = dynamic_cast<HasValues *> (it->second);
+        if(hv) return hv->setValue(rest, v);
       }
+
+      ValueObject * vo = it->second;
+      return vo->set(v);
     }
 
     /// Saves this object (and its children) to an XML file

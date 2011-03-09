@@ -42,7 +42,7 @@ namespace Valuable
     const char * name;
 
     for(int i = 0; (name = m_enumnames[i]) != 0; i++) {
-      if(strcmp(str.c_str(), name) == 0) {
+      if(str == QString::fromUtf8(name)) {
         (* (ValueInt32 *) this) = i;
       }
     }

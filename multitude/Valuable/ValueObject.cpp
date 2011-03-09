@@ -139,7 +139,7 @@ namespace Valuable
   {
     if(ok) *ok = false;
     Radiant::error(
-"ValueObject::asFloat # %s : conversion not available", m_name.c_str());
+"ValueObject::asFloat # %s : conversion not available", m_name.toUtf8().data());
     return 0.0f;
   }
 
@@ -147,7 +147,7 @@ namespace Valuable
   {
     if(ok) *ok = false;
     Radiant::error(
-"ValueObject::asInt # %s : conversion not available", m_name.c_str());
+"ValueObject::asInt # %s : conversion not available", m_name.toUtf8().data());
     return 0;
   }
 
@@ -155,19 +155,19 @@ namespace Valuable
   {
     if(ok) *ok = false;
     Radiant::error(
-"ValueObject::asString # %s : conversion not available", m_name.c_str());
+"ValueObject::asString # %s : conversion not available", m_name.toUtf8().data());
     return "";
   }
 
   ArchiveElement & ValueObject::serialize(Archive &archive)
   {
-    if(m_name.empty()) {
+    if(m_name.isEmpty()) {
       Radiant::error(
 "ValueObject::serialize # attempt to serialize object with no name");
       return archive.emptyElement();
     }
 
-    ArchiveElement & elem = archive.createElement(m_name.c_str());
+    ArchiveElement & elem = archive.createElement(m_name.toUtf8().data());
     elem.add("type", type());
     elem.set(asString());
 
@@ -176,7 +176,7 @@ namespace Valuable
 
   void ValueObject::emitChange()
   {
-//    Radiant::trace("ValueObject::emitChange # '%s'", m_name.c_str());
+//    Radiant::trace("ValueObject::emitChange # '%s'", m_name.toUtf8().data());
     m_changed = true;
     m_listeners.emitChange(this);
     ChangeMap::addChange(this);

@@ -20,10 +20,12 @@
 #include "Valuable/HasValues.hpp"
 #include "Valuable/ValueBool.hpp"
 
+#include <QStringList>
+
 namespace Valuable
 {
   QStringList CmdParser::parse(int argc, char * argv[],
-                                                    Valuable::HasValues & opts)
+                               Valuable::HasValues & opts)
   {
     QStringList list;
 
@@ -35,8 +37,8 @@ namespace Valuable
 
       if(arg.length() == 2 && arg[0] == '-') {
         name = arg[1];
-      } else if(arg.length() > 2 && arg.substr(0, 2) == "--") {
-        name = arg.substr(2);
+      } else if(arg.length() > 2 && arg.startsWith("--")) {
+        name = arg.mid(2);
       } else {
         list.push_back(arg);
         continue;
@@ -53,12 +55,12 @@ namespace Valuable
           obj->deserializeXML(e);
         } else {
           list.push_back(arg);
-          Radiant::error("Command line parameter %s is missing an argument", name.c_str());
+          Radiant::error("Command line parameter %s is missing an argument", name.toUtf8().data());
         }
       } else {
-        if(name.length() > 3 && name.substr(0, 3) == "no-") {
+        if(name.length() > 3 && name.startsWith("no-")) {
           Valuable::ValueBool * b = dynamic_cast<Valuable::ValueBool*>(
-              opts.getValue(name.substr(3)));
+              opts.getValue(name.mid(3)));
           if(b) {
             *b = false;
             continue;

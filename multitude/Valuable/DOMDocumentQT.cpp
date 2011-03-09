@@ -85,7 +85,7 @@ namespace Valuable
 
   DOMElement DOMDocument::createElement(const QString & name)
   {
-    return createElement(name.c_str());
+    return createElement(name.toUtf8().data());
   }
 
 
@@ -98,11 +98,12 @@ namespace Valuable
   bool DOMDocument::writeToMem(std::vector<char> & buffer)
   {
     QDomDocument & qdoc = m_wrapped->x;
-    QString xml = qdoc.toString().toStdString();
+    QString xml = qdoc.toString();
 
     buffer.resize(xml.size());
 
-    memcpy( & buffer[0], xml.c_str(), xml.size());
+    QByteArray ba = xml.toUtf8();
+    memcpy( & buffer[0], ba.data(), ba.size());
     return true;
   }
 

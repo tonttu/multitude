@@ -68,7 +68,7 @@ namespace Valuable
     if(!m_wrapped)
       return QString();
     
-    return m_wrapped->x.tagName().toStdString();
+    return m_wrapped->x.tagName();
   }
 
   void DOMElement::appendChild(DOMElement element)
@@ -167,11 +167,11 @@ namespace Valuable
 
     QString str = getTextContent();
     if(str.size() > 0 && str.size() < 100) {
-      fprintf(f, " TEXT = \"%s\"", str.c_str());
+      fprintf(f, " TEXT = \"%s\"", str.toUtf8().data());
     }
     else {
-      QString tmp = str.substr(0, 100) + "...";
-      fprintf(f, " TEXT = \"%s\"", tmp.c_str());
+      QString tmp = str.left(100) + "...";
+      fprintf(f, " TEXT = \"%s\"", tmp.toUtf8().data());
     }
 
     fprintf(f, "\n");
@@ -196,20 +196,7 @@ namespace Valuable
       }
     
     QDomElement & qde = m_wrapped->x;
-    qde.appendChild(qde.ownerDocument().createTextNode(s.c_str()));
-  }
-
-  void DOMElement::setTextContent(const QString & ws)
-  {
-      if(isNull()) {
-          Radiant::error("DOMElement::setTextContent # can not set content of a null element");
-          return;
-      }
-    
-    QString qs(QString::fromStdWString(ws));
-    QDomElement & qde = m_wrapped->x;
-    // info("WIDE Text content : %s : %d", qs.toStdString().toUtf8().data(), (int) ws.size());
-    qde.appendChild(qde.ownerDocument().createTextNode(qs));
+    qde.appendChild(qde.ownerDocument().createTextNode(s.toUtf8().data()));
   }
 
   QString DOMElement::getTextContent() const
@@ -221,16 +208,6 @@ namespace Valuable
 
       QString tmp(m_wrapped->x.text().toUtf8().data());
       return tmp;
-  }
-
-  QString DOMElement::getTextContentW() const
-  {
-      if(isNull()) {
-          Radiant::error("DOMElement::setTextContent # can not get content of a null element");
-          return QString();
-      }
-
-    return m_wrapped->x.text().toStdWString();
   }
 
   bool DOMElement::hasAttribute(const char * name) const
@@ -248,7 +225,7 @@ namespace Valuable
           return QString();
       }
 
-    return m_wrapped->x.attribute(name).toStdString();
+    return m_wrapped->x.attribute(name);
   }
 
 }
