@@ -42,7 +42,7 @@ namespace Valuable
       classes, HasValues simply maintains a list of children.
   */
   /// @todo Examples
-  class VALUABLE_API HasValues : public ValueObject
+  class VALUABLE_API HasValues : public ValueObject, public ValueListener
   {
   public:
     /// Universally unique identifier type

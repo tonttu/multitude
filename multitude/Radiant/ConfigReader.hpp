@@ -24,6 +24,8 @@
 
 #include <iostream>
 
+#include <QString>
+
 /// @todo add chunk free config file support
 
 namespace Radiant {

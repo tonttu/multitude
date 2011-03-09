@@ -183,7 +183,7 @@ namespace Radiant
         }
         else
         {
-          Radiant::error("%s # Failed to remove existing shared memory area with same key (%s).", fnName, shmError().c_str());
+          Radiant::error("%s # Failed to remove existing shared memory area with same key (%s).", fnName, shmError().toUtf8().data());
           assert(0);
         }
       }

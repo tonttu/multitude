@@ -69,7 +69,7 @@ namespace Radiant {
                     dt.monthDay() + 1, dt.month() + 1, dt.year(),
                     dt.hour(), dt.minute(), dt.second(), dt.milliSecond());
 
-            fprintf((FILE *) m_file, "%s,%s\n", m_buf, (*it).m_str.c_str());
+            fprintf((FILE *) m_file, "%s,%s\n", m_buf, (*it).m_str.toUtf8().data());
 
             // info("LOG: %s", m_buf);
           }

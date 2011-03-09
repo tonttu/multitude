@@ -102,12 +102,12 @@ namespace Radiant
 
     std::vector<VideoCamera::CameraInfo> cameras;
 
-    for(StringUtils::StringList::iterator it = m_preferredDrivers.begin(); it != m_preferredDrivers.end(); it++) {
+    foreach(QString str, m_preferredDrivers) {
 
-      CameraDriver * cd = getCameraDriver((*it));
+      CameraDriver * cd = getCameraDriver(str);
 
       debug("CameraDriverFactory::getPreferredCameraDriver # Checking driver %s = %p",
-			(*it).c_str(), cd);
+          str.toUtf8().data(), cd);
       if(cd) {
         // Make sure there is at least one camera available using this driver
 		  size_t cameraCount = cd->queryCameras(cameras);
@@ -127,8 +127,7 @@ namespace Radiant
 
   void CameraDriverFactory::setDriverPreference(const QString & pref)
   {
-    m_preferredDrivers.clear();
-    StringUtils::split(pref, ",", m_preferredDrivers, true);
+    m_preferredDrivers = pref.split(",");
   }
 
 }

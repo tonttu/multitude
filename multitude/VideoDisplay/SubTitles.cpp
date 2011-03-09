@@ -142,7 +142,7 @@ namespace VideoDisplay {
       if(!nextLine(in, buf, LEN))
         break;
 
-      Radiant::StringUtils::StringList list;
+      QStringList list;
 
       Radiant::StringUtils::split(buf, " ", list);
 

@@ -29,13 +29,13 @@ int main(int argc, char ** argv)
 
   Radiant::CSVDocument doc;
 
-  if(!doc.load(filename.str().c_str(), ",")) {
-    Radiant::error("Could not load CSV file \"%s\"", filename.str().c_str());
+  if(!doc.load(filename->toUtf8().data(), ",")) {
+    Radiant::error("Could not load CSV file \"%s\"", filename->toUtf8().data());
     return -1;
   }
 
   Radiant::info("Loaded %s with %d rows, printing first 10 rows:",
-                filename.str().c_str(), doc.rowCount());
+                filename->toUtf8().data(), doc.rowCount());
 
   int i = 0;
   for(Radiant::CSVDocument::Rows::iterator it = doc.begin();

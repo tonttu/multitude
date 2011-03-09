@@ -52,7 +52,7 @@ namespace Valuable
      *
      * @return List of arguments that didn't match any ValueObject in opts.
      */
-    static Radiant::StringUtils::StringList parse(int argc, char * argv[],
+    static QStringList parse(int argc, char * argv[],
                                                   Valuable::HasValues & opts);
   };
 }

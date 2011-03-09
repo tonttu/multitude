@@ -23,6 +23,8 @@
 
 #include <stdint.h>
 
+#include <QString>
+
 namespace Radiant {
   class CameraDriverFactory;
   class CameraDriver;

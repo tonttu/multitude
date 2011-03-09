@@ -24,6 +24,8 @@
 #include <QString>
 #include <vector>
 
+#include <QStringList>
+
 #ifdef WIN32
 #pragma warning(disable : 4290)
 #endif
@@ -144,8 +146,8 @@ namespace Radiant
     void populate();
 		
     QString m_path;
-    std::vector<QString> m_entries;      
-    std::vector<QString> m_suffixes;
+    QStringList m_entries;
+    QStringList m_suffixes;
     int m_filterFlags;
     SortFlag m_sortFlags;
   };

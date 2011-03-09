@@ -29,6 +29,9 @@ namespace Valuable
       (*it)->remove(this);
   }
 
+  void ValueListener::valueChanged(ValueObject *)
+  {}
+
   void ValueListener::valueDeleted(ValueObject *)
   {}
 

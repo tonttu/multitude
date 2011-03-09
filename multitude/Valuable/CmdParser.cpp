@@ -22,10 +22,10 @@
 
 namespace Valuable
 {
-  Radiant::StringUtils::StringList CmdParser::parse(int argc, char * argv[],
+  QStringList CmdParser::parse(int argc, char * argv[],
                                                     Valuable::HasValues & opts)
   {
-    Radiant::StringUtils::StringList list;
+    QStringList list;
 
     std::shared_ptr<Valuable::DOMDocument> tmpDoc(Valuable::DOMDocument::createDocument());
 

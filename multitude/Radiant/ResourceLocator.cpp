@@ -22,6 +22,8 @@
 
 #include <sstream>
 
+#include <QStringList>
+
 namespace Radiant
 {
 
@@ -37,22 +39,18 @@ namespace Radiant
 
   void ResourceLocator::addPath(const QString & path, bool front)
   {
-	  if(path.empty()) {
+    if(path.isEmpty()) {
 		  error("ResourceLocator::addPath # attempt to add an empty path");
 		  return;
 	  }
 
-	if(m_paths.empty())
+  if(m_paths.isEmpty())
       m_paths = path;
     else {
-      std::ostringstream os;
-
       if(front)
-		os << path << separator << m_paths;
+        m_paths = path + separator + m_paths;
       else
-		os << m_paths << separator << path;
-      
-      m_paths = os.str();
+        m_paths += separator + path;
     }
   }
 
@@ -60,16 +58,16 @@ namespace Radiant
 					  bool front)
   {
     QString p1 = 
-      PlatformUtils::getModuleUserDataPath(module.c_str(), false);
+      PlatformUtils::getModuleUserDataPath(module.toUtf8().data(), false);
     QString p2 =
-      PlatformUtils::getModuleGlobalDataPath(module.c_str(), false);
+      PlatformUtils::getModuleGlobalDataPath(module.toUtf8().data(), false);
 
     addPath(p1 + separator + p2, front);
   }
 
   QString ResourceLocator::locate(const QString & file) const
   {
-    if(file.empty()) return file;
+    if(file.isEmpty()) return file;
 
     QString r = FileUtils::findFile(file, m_paths);
 
@@ -82,13 +80,10 @@ namespace Radiant
 
   QString ResourceLocator::locateWriteable(const QString & file) const
   {
-    StringUtils::StringList list;
-    StringUtils::split(m_paths, ";", list, true);
+    foreach(QString str, m_paths.split(";")) {
+      const QString path = str + "/" + file;
 
-    for(StringUtils::StringList::iterator it = list.begin(); it != list.end(); it++) {
-      const QString path = (*it) + "/" + file;
-
-      FILE * file = fopen(path.c_str(), "w");
+      FILE * file = fopen(path.toUtf8().data(), "w");
       if(file) {
         fclose(file);
         return path;

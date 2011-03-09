@@ -22,6 +22,8 @@
 #include <stdio.h>
 #include <QString>
 
+#include <QString>
+
 namespace Radiant {
 
   /** A high-resolution time-stamp object. A time-stamp has 40 bits

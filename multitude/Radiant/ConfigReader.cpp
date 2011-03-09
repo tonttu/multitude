@@ -98,7 +98,8 @@ namespace Radiant {
 
   double Variant::getDouble(double def) const
   { 
-    const char * str = m_var.c_str();
+    QByteArray ba = m_var.toUtf8();
+    const char * str = ba.data();
     char * strEnd = (char *) str;
 
     double v = strtod(str, &strEnd);
@@ -116,7 +117,8 @@ namespace Radiant {
 
   int Variant::getInt(int def) const
   {
-    const char * str = m_var.c_str();
+    QByteArray ba = m_var.toUtf8();
+    const char * str = ba.data();
     char * strEnd = (char *) str;
 
     int v = strtol(str, &strEnd, 0);
@@ -128,14 +130,14 @@ namespace Radiant {
   }
   uint64_t Variant::getFromHex64(uint64_t def) const
   {
-    if (m_var.empty())
+    if (m_var.isEmpty())
       return def;
 
     long long lltmp = 0;
 #ifdef WIN32
     sscanf(m_var.c_str(), "%llx", &lltmp);
 #else
-    lltmp = strtoll(m_var.c_str(), 0, 16);
+    lltmp = m_var.toLongLong(0, 16);
 #endif
     return lltmp;
   }
@@ -159,10 +161,11 @@ namespace Radiant {
 
   int Variant::getInts(int *p, int n)
   {
-    char *str = (char *) m_var.c_str();
+    QByteArray ba = m_var.toUtf8();
+    char *str = (char *) ba.data();
     int i = 0;
 
-    while(str < m_var.c_str() + m_var.size() && i < n) {
+    while(str < ba.data() + ba.size() && i < n) {
       char * endStr = str;
 
       long tmp = strtol(str, &endStr, 10);
@@ -186,10 +189,12 @@ namespace Radiant {
 
   int Variant::getFloats(float *p, int n)
   {
-    char *str = (char *) m_var.c_str();
+    QByteArray ba = m_var.toUtf8();
+    char *str = (char *) ba.data();
+
     int i = 0;
 
-    while(str < m_var.c_str() + m_var.size() && i < n) {
+    while(str < ba.data() + ba.size() && i < n) {
       char * endStr = str;
 
       double tmp = strtod(str, &endStr);
@@ -213,10 +218,12 @@ namespace Radiant {
 
   int Variant::getDoubles(double *p, int n)
   {
-    char *str = (char *) m_var.c_str();
+    QByteArray ba = m_var.toUtf8();
+    char *str = (char *) ba.data();
+
     int i=0;
 
-    while(str < m_var.c_str() + m_var.size() && i < n) {
+    while(str < ba.data() + ba.size() && i < n) {
       char * endStr = str;
 
       double tmp = strtod(str, &endStr);
@@ -587,7 +594,7 @@ namespace Radiant {
     QString tmpfile = QString(filename) + ".tmp";
 
     std::ofstream out;
-    out.open(tmpfile.c_str());
+    out.open(tmpfile.toUtf8().data());
 
     if(!out.good())
       return false;
@@ -598,7 +605,7 @@ namespace Radiant {
     // remove original and replace with temporary
     // there doesn't seem to be a portable way to do this atomically
     if (FileUtils::removeFile(filename)) {
-      return FileUtils::renameFile(tmpfile.c_str(), filename);
+      return FileUtils::renameFile(tmpfile.toUtf8().data(), filename);
     }
     return false;
   }

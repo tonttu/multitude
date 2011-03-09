@@ -28,7 +28,6 @@ HEADERS += ValueNumeric.hpp
 HEADERS += ValueObject.hpp
 HEADERS += ValueRect.hpp
 HEADERS += ValueString.hpp
-HEADERS += ValueStringImpl.hpp
 HEADERS += ValueVector.hpp
 HEADERS += ValueVectorImpl.hpp
 

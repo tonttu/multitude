@@ -24,6 +24,8 @@
 #include <map>
 #include <vector>
 
+#include <QStringList>
+
 namespace Radiant
 {
 
@@ -76,7 +78,7 @@ namespace Radiant
     typedef std::map<QString, CameraDriver *> DriverMap;
     DriverMap m_drivers;
 
-    Radiant::StringUtils::StringList m_preferredDrivers;
+    QStringList m_preferredDrivers;
   };
 
 }
