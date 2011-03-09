@@ -165,7 +165,8 @@ namespace Valuable
 
       inline static typename remove_const<T>::Type deserialize(ArchiveElement & element)
       {
-        std::istringstream is(element.get());
+        /// @todo should use something else than stringstream
+        std::istringstream is(element.get().toUtf8().data());
         typename remove_const<T>::Type t;
         is >> t;
         return t;
