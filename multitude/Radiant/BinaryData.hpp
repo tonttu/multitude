@@ -24,6 +24,8 @@
 #include <stdint.h>
 #include <vector>
 
+#include <QString>
+
 namespace Radiant {
   class BinaryStream;
 }
@@ -95,11 +97,11 @@ namespace Radiant {
     /// Write a null-terminated string to the buffer
     void writeString(const char *);
     /// Write a string to the buffer
-    void writeString(const QString & str) { writeString(str.c_str()); }
+    void writeString(const QString & str) { writeString(str.toUtf8().data()); }
     /** Writes a wide-string to the buffer. The string is internally
     stored as 32-bit integers, since that is the typical
     wchar_t.*/
-    void writeWString(const QString & str);
+    void writeWString(const std::wstring & str);
 
     /// Writes binary blob to the buffer.
     void writeBlob(const void * ptr, int n);
@@ -145,7 +147,7 @@ namespace Radiant {
     /// Read a string from the buffer
     bool readString(QString & str);
     /// Reads a wide string from the buffer
-    bool readWString(QString & str);
+    bool readWString(std::wstring & str);
     /// Reads a blob of expected size
     bool readBlob(void * ptr, int n);
 
@@ -259,15 +261,14 @@ namespace Radiant {
     return tmp;
   }
 
-  template <> inline QString BinaryData::read(bool * ok)
+  template <> inline std::wstring BinaryData::read(bool * ok)
   {
-      QString tmp;
+      std::wstring tmp;
       bool good = readWString(tmp);
       if(ok)
             *ok = good;
     return tmp;
   }
-
 }
 
 #endif

@@ -20,6 +20,8 @@
 
 #include <Radiant/Export.hpp>
 
+#include <QString>
+
 namespace Radiant
 {
 
@@ -56,7 +58,7 @@ namespace Radiant
     /// and want to check beforehand that it is possible.
     /// @return true if the file exists and can be written.
     /// to. Otherwise false.
-    RADIANT_API static bool fileAppendable(const char* filename);
+    RADIANT_API static bool fileAppendable(const QString & filename);
 
     /// Rename a file.
     RADIANT_API static bool renameFile(const char * from, const char * to);
@@ -72,8 +74,6 @@ namespace Radiant
     RADIANT_API static QString baseFilename(const QString & filepath);
     /// Extract filename without suffix, but with the full path
     RADIANT_API static QString baseFilenameWithPath(const QString & filepath);
-    /// Extract full path (including filename) without suffix.
-    RADIANT_API static QString withoutSuffix(const QString & filepath);
     /// Extract suffix.
     RADIANT_API static QString suffix(const QString & filepath);
     /// Extract suffix, and return it in lower-case

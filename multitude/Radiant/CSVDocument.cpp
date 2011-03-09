@@ -19,6 +19,8 @@
 #include "StringUtils.hpp"
 #include "Trace.hpp"
 
+#include <QStringList>
+
 namespace Radiant {
 
   CSVDocument::CSVDocument()
@@ -35,53 +37,17 @@ namespace Radiant {
 
     QString contents = Radiant::FileUtils::readTextFile(filename);
 
-    if(contents.empty()) {
+    if(contents.isEmpty()) {
       error("CSVParser::load # Empty file %s", filename);
       return -1;
     }
 
-    /*
-    for(int i = 0; i < 200; i++) {
-      info("Got %d %x %c", (int) contents[i], (int) contents[i], (char) contents[i]);
-    }
-    */
-    QString delim1; //(Radiant::StringUtils::utf8AsStdWstring("\n"));
-    delim1 += (wchar_t) 8203;
-    QString delim2(Radiant::StringUtils::utf8AsStdWstring(delimiter));
+    QString delim2 = QString::fromUtf8(delimiter);
 
-    Radiant::StringUtils::WStringList strs;
-    Radiant::StringUtils::split(contents, delim1, strs);
-
-    info("Got %d lines", (int) strs.size());
-
-    for(Radiant::StringUtils::WStringList::iterator it = strs.begin();
-    it != strs.end(); it++) {
-
-      Radiant::StringUtils::WStringList cells;
-      Radiant::StringUtils::split((*it), delim2, cells);
-
+    foreach(QString line, contents.split("\n")) {
       Row r;
-
-      for(Radiant::StringUtils::WStringList::iterator it2 = cells.begin();
-      it2 != cells.end(); it2++) {
-        QString & str = (*it2);
-        // Strip leading white-space
-
-
-        while(str.size() && (str[0] == ' ' || str[0] == '\"'))
-          str.erase(0, 1);
-
-        while(str.size() && ((str[str.size() - 1] == delimiter[0]) ||
-                             str[str.size() - 1] == 34 ||
-                             str[str.size() - 1] == 8203))
-          str.erase(str.size() - 1, 1);
-
-        /*debug("CELL %d,%d = %s", (int) r.size(), (int) m_rows.size(),
-                Radiant::StringUtils::stdWstringAsUtf8(str).c_str());
-          */
-        r.push_back(str);
-      }
-
+      foreach(QString str, line.split(delim2))
+        r.push_back(str.trimmed());
       m_rows.push_back(r);
     }
 
@@ -102,13 +68,6 @@ namespace Radiant {
 
     return 0;
   }
-
-  CSVDocument::Row * CSVDocument::findRow(const QString & key, unsigned col)
-  {
-
-    return findRow(StringUtils::utf8AsStdWstring(key), col);
-  }
-
 
   CSVDocument::Row * CSVDocument::row(unsigned index)
   {

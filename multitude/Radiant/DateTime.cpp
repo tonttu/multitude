@@ -27,6 +27,7 @@
 #include <time.h>
 #include <stdlib.h>
 
+#include <QRegExp>
 
 namespace Radiant {
 
@@ -108,40 +109,29 @@ namespace Radiant {
       if(s.length() < 8)
         return false;
 
-      QString yearstr(s, 0, 4);
-      QString monthstr(s, 5, 2);
-      QString daystr(s, 8, 4);
-
-      m_year  = atoi(yearstr.c_str());
-      m_month = atoi(monthstr.c_str()) - 1;
-      m_monthDay = atoi(daystr.c_str()) - 1;
-
-      m_hour = 0;
-      m_minute = 0;
-      m_second = 0;
-      m_microsecond = 0;
-      m_summerTime = false;
+      QRegExp r("^(\\d{4}).(\\d{2}).(\\d{4})");
+      if(r.indexIn(s) >= 0) {
+        *this = DateTime();
+        m_year = r.cap(1).toInt();
+        m_month = r.cap(2).toInt() - 1;
+        m_monthDay = r.cap(3).toInt() - 1;
+      } else return false;
     } else {
       if(s.length() < 19)
         return false;
 
-      QString daystr(s, 0, 2);
-      QString monthstr(s, 3, 2);
-      QString yearstr(s, 6, 4);
+      QRegExp r("^(\\d{2}).(\\d{2}).(\\d{4}).(\\d{4}).(\\d{4}).(\\d{4})");
+      if(r.indexIn(s) >= 0) {
+        m_year  = r.cap(3).toInt();
+        m_month = r.cap(2).toInt() - 1;
+        m_monthDay = r.cap(1).toInt() - 1;
 
-      QString hourstr(s, 11, 2);
-      QString minstr(s, 14, 2);
-      QString secstr(s, 17, 2);
-
-      m_year  = atoi(yearstr.c_str());
-      m_month = atoi(monthstr.c_str()) - 1;
-      m_monthDay = atoi(daystr.c_str()) - 1;
-
-      m_hour = atoi(hourstr.c_str());
-      m_minute = atoi(minstr.c_str());
-      m_second = atoi(secstr.c_str());
-      m_microsecond = 0;
-      m_summerTime = false;
+        m_hour = r.cap(4).toInt();
+        m_minute = r.cap(5).toInt();
+        m_second = r.cap(6).toInt();
+        m_microsecond = 0;
+        m_summerTime = false;
+      } else return false;
     }
 
     return true;

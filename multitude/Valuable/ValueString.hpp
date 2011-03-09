@@ -16,12 +16,10 @@
 #ifndef VALUABLE_VALUE_STRING_HPP
 #define VALUABLE_VALUE_STRING_HPP
 
-#include <Radiant/StringUtils.hpp>
-
 #include <Valuable/Export.hpp>
-#include <Valuable/ValueNumeric.hpp>
+#include <Valuable/ValueObject.hpp>
 
-#define VALUEMIT_STD_OP this->emitChange(); return *this;
+#include <QString>
 
 #define VO_TYPE_STRING "string"
 
@@ -29,64 +27,47 @@ namespace Valuable
 {
 
   /// String value
-  /** This template class is used to implement both normal 7/8-bit
-      strings and wide strings*/
-  template<typename T>
-      class VALUABLE_API ValueStringT : public ValueObjectT<T>
+  class VALUABLE_API ValueString : public ValueObjectT<QString>
   {
-    typedef ValueObjectT<T> Base;
+    typedef ValueObjectT<QString> Base;
 
   public:
 
     /// The character type of this string class
-    /** This type depends on the template class. */
-    typedef typename T::value_type char_type;
+    typedef QChar char_type;
 
-    ValueStringT() : Base() {}
+    ValueString();
     /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
     /// @param v The string to store in this object
-    ValueStringT(HasValues * parent, const QString & name,
-                 const T & v, bool transit = false);
+    ValueString(HasValues * parent, const QString & name,
+                const QString & v, bool transit = false);
     /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
     /// @param v The string to store in this object
-    ValueStringT(HasValues * parent, const QString & name,
+    ValueString(HasValues * parent, const QString & name,
                  const char * v, bool transit = false);
     /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
-    ValueStringT(HasValues * parent, const QString & name,
+    ValueString(HasValues * parent, const QString & name,
                  bool transit = false);
 
     virtual void processMessage(const char * id, Radiant::BinaryData & data);
 
     /// Copies a string
-    ValueStringT<T> & operator = (const ValueStringT<T> & i)
-                                 { Base::m_value = i.m_value; VALUEMIT_STD_OP }
+    ValueString & operator = (const ValueString & i);
     /// Copies a string
-    ValueStringT<T> & operator = (const T & i) { Base::m_value = i; VALUEMIT_STD_OP }
+    ValueString & operator = (const QString & i);
 
     /// Concatenates two strings
     /// @param i The string to be appended to this string
     /// @return A new string that contains both this string, and the argument string.
-    T operator + (const ValueStringT<T> & i) const
-    { return Base::m_value + i.m_value; }
-
+    QString operator + (const ValueString & i) const;
 
     /// Concatenates two strings
-    T operator + (const T & i) const
-    { return Base::m_value + i; }
-
-    /// Concatenates two strings
-    T operator + (const char_type * i) const
-    { return Base::m_value + T(i); }
-
-        /*
-    T operator + (const char * i) const
-    { return Base::m_value + i; }
-*/
+    QString operator + (const QString & i) const;
 
     /// Compares if two strings are equal
-    bool operator == (const T & that) { return that == Base::m_value; }
+    bool operator == (const QString & that) const;
     /// Compares if two strings are not equal
-    bool operator != (const T & that) { return that != Base::m_value; }
+    bool operator != (const QString & that) const;
 
     /// Returns the value as float
     float asFloat(bool * const ok = 0) const;
@@ -94,41 +75,22 @@ namespace Valuable
     int asInt(bool * const ok = 0) const;
     /// Returns the value as string
     QString asString(bool * const ok = 0) const;
-    /// Returns the value as wide-byte string
-    QString asWString(bool * const ok = 0) const;
-
-    /// Returns the string
-    const T & str() const { return Base::m_value; }
 
     virtual bool set(const QString & v);
 
     const char * type() const { return VO_TYPE_STRING; }
 
-    ArchiveElement & serialize(Archive & archive);
     bool deserialize(ArchiveElement & element);
 
     /// Makes the string empty
-    void clear() { Base::m_value.clear(); }
+    void clear();
 
     /// Returns the length of the string
-    unsigned size() const { return (unsigned) Base::m_value.size(); }
+    unsigned size() const;
   };
-
-  /// A byte string value object
-  typedef ValueStringT<QString> ValueString;
-  /// A wide-byte string value object
-  typedef ValueStringT<QString> ValueWString;
-
-  // Instantiation of template classes
-  // See ValueStringImpl.hpp for QString member specializations
-
 }
 
-template <class T>
-    T operator + (const T & a, const Valuable::ValueStringT<T> & b)
-{
-  return a + b.str();
-}
+QString operator + (const QString & a, const Valuable::ValueString & b);
 
 #undef VALUEMIT_STD_OP
 

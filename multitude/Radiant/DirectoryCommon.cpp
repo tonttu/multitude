@@ -23,6 +23,8 @@
 
 #include <algorithm>
 
+#include <QDir>
+
 namespace Radiant
 {
   Directory::Directory(const char * pathname,
@@ -50,14 +52,7 @@ namespace Radiant
     m_filterFlags(filters),
     m_sortFlags(sortFlag)
   {
-    StringUtils::StringList suflist;
-    StringUtils::split(suffixlist, ",", suflist);
-
-    for(StringUtils::StringList::iterator it = suflist.begin();
-	it != suflist.end(); it++) {
-      m_suffixes.push_back(*it);
-    }
-
+    m_suffixes = QString::fromUtf8(suffixlist).split(",");
     populate();
   }
 
@@ -87,40 +82,11 @@ namespace Radiant
     m_path = pathname ;
     m_filterFlags = filters ;
     m_sortFlags = sortFlag ;
-    
-    StringUtils::StringList suflist;
-    StringUtils::split(suffixlist, ",", suflist);
-    
-    for(StringUtils::StringList::iterator it = suflist.begin();
-	it != suflist.end(); it++) {
-      m_suffixes.push_back(*it);
-    }
+    m_suffixes = QString::fromUtf8(suffixlist).split(",");
   }
 
   bool Directory::mkdirRecursive(const QString & dirname)
   {
-    if(dirname.empty())
-      return false;
-
-    StringUtils::StringList sections;
-    StringUtils::split(dirname, "/", sections);
-
-    QString dir;
-
-    if(dirname[0] == '/') {
-      dir += '/';
-    }
-
-    for(StringUtils::StringList::iterator it = sections.begin();
-	it != sections.end(); it++) {
-      dir += (*it) + "/";
-
-      if(!exists(dir)) {
-	if(!mkdir(dir))
-	  return false;
-      }
-    }
-    
-    return true;
+    return QDir().mkpath(dirname);
   }
 }

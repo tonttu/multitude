@@ -142,7 +142,7 @@ namespace Radiant {
       getRef<int32_t>() = 0;
   }
 
-  void BinaryData::writeWString(const QString & str)
+  void BinaryData::writeWString(const std::wstring & str)
   {
     ensure(8 + str.size() * 4);
 
@@ -457,23 +457,25 @@ namespace Radiant {
   {
     int32_t marker = getRef<int32_t>();
 
-    if(marker != STRING_MARKER) {
+    if(marker == STRING_MARKER) {
+      str = QString::fromUtf8(m_buf + m_current);
+      skipParameter(marker);
+    } else if(marker == WSTRING_MARKER) {
+      int len = getRef<int32_t>();
+      str.resize(len);
+      QChar* data = str.data();
+
+      for(int i = 0; i < len; i++) {
+        data[i] = getRef<int32_t>();
+      }
+    } else {
       skipParameter(marker);
       return false;
     }
-    const char * source = & m_buf[m_current];
-    size_t len = strlen(source);
-
-    skipParameter(marker);
-
-    str.resize(len);
-
-    memcpy( & str[0], source, len);
-
     return true;
   }
 
-  bool BinaryData::readWString(QString & str)
+  bool BinaryData::readWString(std::wstring & str)
   {
     int32_t marker = getRef<int32_t>();
 
@@ -491,13 +493,12 @@ namespace Radiant {
     }
     else if(marker == STRING_MARKER) {
 
-      QString tmp;
-
       const char * source = & m_buf[m_current];
 
       skipParameter(marker);
 
-      StringUtils::utf8ToStdWstring(str, source);
+      QString tmp = QString::fromUtf8(source);
+      str = tmp.toStdWString();
 
       return true;
     }
