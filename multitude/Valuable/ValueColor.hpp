@@ -30,9 +30,9 @@ namespace Valuable
   class VALUABLE_API ValueColor : public ValueVector<Nimble::Vector4f,float,4>
   {
   public:
-    /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
+    /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
     /// @param c The color value
-    ValueColor(HasValues * parent, const std::string & name, const Radiant::Color & c, bool transit = false);
+    ValueColor(HasValues * parent, const QString & name, const Radiant::Color & c, bool transit = false);
     
     virtual ~ValueColor();
 

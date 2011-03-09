@@ -83,7 +83,7 @@ namespace Radiant {
     /// Advance time to next day of the month
     void toNextMonthDay();
     /// Read time and date from a string
-    bool fromString(const std::string & s, DateFormat format = DATE_ISO);
+    bool fromString(const QString & s, DateFormat format = DATE_ISO);
 
     /** Returns the number of days in the month. This function does
     take the leap years into account, so the length of Febuary changes

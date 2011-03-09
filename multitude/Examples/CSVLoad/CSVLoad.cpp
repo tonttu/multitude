@@ -46,7 +46,7 @@ int main(int argc, char ** argv)
     printf("Row %d/%d: ", i+1, (int) doc.rowCount());
 
     for(Radiant::CSVDocument::Row::iterator it2 = r.begin(); it2 != r.end(); it2++) {
-      std::string printable = Radiant::StringUtils::stdWstringAsUtf8(*it2);
+      QString printable = Radiant::StringUtils::stdWstringAsUtf8(*it2);
       printf("[%s] ", printable.c_str());
     }
 

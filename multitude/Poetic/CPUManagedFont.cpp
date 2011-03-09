@@ -30,7 +30,7 @@ namespace Poetic
 
   bool CPUManagedFont::load(const char * fontFilePath)
   {
-    m_file = std::string(fontFilePath);
+    m_file = QString(fontFilePath);
 
     bool ok = true;
 

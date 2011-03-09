@@ -94,7 +94,7 @@ namespace Luminous
     }
   }
 
-  static std::string typeToString(PixelFormat::ChannelType type) 
+  static QString typeToString(PixelFormat::ChannelType type) 
   {
     switch(type)
     {
@@ -122,7 +122,7 @@ namespace Luminous
 
   }
 
-  static std::string layoutToString(PixelFormat::ChannelLayout layout)
+  static QString layoutToString(PixelFormat::ChannelLayout layout)
   {
     switch(layout)
     {
@@ -160,7 +160,7 @@ namespace Luminous
     }
   }
 
-  std::string PixelFormat::toString() const
+  QString PixelFormat::toString() const
   {
     std::ostringstream ss;
     ss << "PixelFormat(" << layoutToString(m_layout) << ", " << typeToString(m_type) << ")";

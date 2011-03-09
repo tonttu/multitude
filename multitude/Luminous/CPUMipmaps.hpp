@@ -204,12 +204,12 @@ namespace Luminous {
     CPUItem getStack(int index);
 
     /// writes cache filename for level to given string
-    void cacheFileName(std::string & str, int level);
+    void cacheFileName(QString & str, int level);
 
     void recursiveLoad(StackMap & stack, int level);
     void reschedule(double delay = 0.0, bool allowLater = false);
 
-    std::string m_filename;
+    QString m_filename;
     unsigned long int m_fileModified;
 
     StackMap         m_stackChange;

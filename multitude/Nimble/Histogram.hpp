@@ -18,7 +18,7 @@
 
 #include <Nimble/Export.hpp>
 
-#include <string>
+#include <QString>
 
 namespace Nimble {
 

@@ -35,7 +35,7 @@ namespace Radiant {
   Variant::Variant()
   {}
 
-  Variant::Variant(const std::string& a, const char * doc)
+  Variant::Variant(const QString& a, const char * doc)
     : m_var(a)
   {
     if(doc) m_doc = doc;
@@ -141,7 +141,7 @@ namespace Radiant {
   }
 
 
-  const std::string & Variant::getString(const std::string & def) const
+  const QString & Variant::getString(const QString & def) const
   {
     if(m_var.size())
       return m_var;
@@ -149,7 +149,7 @@ namespace Radiant {
     return def;
   }
 
-  const std::string & Variant::getString() const
+  const QString & Variant::getString() const
   {
     return m_var;
   }
@@ -235,7 +235,7 @@ namespace Radiant {
     return i;
   }
 
-  void Variant::set(const std::string &s)
+  void Variant::set(const QString &s)
   {
     m_var = s;
   }
@@ -250,7 +250,7 @@ namespace Radiant {
     return getDouble(0.0);
   }
 
-  Variant::operator const std::string & () const
+  Variant::operator const QString & () const
   {
     return m_var;
   }
@@ -270,7 +270,7 @@ namespace Radiant {
     return m_doc.size() ? m_doc[0] != '\0' : false;
   }
     
-  const std::string & Variant::documentation() const
+  const QString & Variant::documentation() const
   {
     return m_doc;
   }
@@ -278,7 +278,7 @@ namespace Radiant {
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  static std::set<std::string> __writtenDocs;
+  static std::set<QString> __writtenDocs;
 
   static Radiant::MutexStatic __mutex;
 
@@ -296,7 +296,7 @@ namespace Radiant {
 
     Radiant::GuardStatic g( __mutex);
 
-    std::set<std::string>::iterator it = 
+    std::set<QString>::iterator it = 
       __writtenDocs.find(var.documentation());
 
     if(it != __writtenDocs.end())
@@ -311,7 +311,7 @@ namespace Radiant {
   template <>
   void ChunkT<Variant>::dump(std::ostream& os, int indent)
   {
-    std::string ws(indent, ' ');
+    QString ws(indent, ' ');
 
     for(chunk_iterator it = chunkBegin(); it != chunkEnd(); ++it) {
       os << ws << it->first << " {\n";
@@ -376,13 +376,13 @@ namespace Radiant {
     int state = SCAN_CHUNK_NAME;
     int stackState = 0;
 
-    typedef std::pair<std::string, Chunk> StackItem;
+    typedef std::pair<QString, Chunk> StackItem;
     std::stack<StackItem> stack;
     stack.push(std::make_pair("global", Chunk()));
 
-    std::string chunkName;
-    std::string variantName;
-    std::string variantVal;
+    QString chunkName;
+    QString variantName;
+    QString variantVal;
 
     Chunk chunk;
 
@@ -584,7 +584,7 @@ namespace Radiant {
   {
     cleardocs();
 
-    std::string tmpfile = std::string(filename) + ".tmp";
+    QString tmpfile = QString(filename) + ".tmp";
 
     std::ofstream out;
     out.open(tmpfile.c_str());

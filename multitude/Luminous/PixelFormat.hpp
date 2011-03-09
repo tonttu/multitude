@@ -19,7 +19,7 @@
 #include <Luminous/Export.hpp>
 #include <Luminous/Luminous.hpp>
 
-#include <string>
+#include <QString>
 
 namespace Luminous
 {
@@ -125,7 +125,7 @@ namespace Luminous
     }
 
     /// Converts the pixel format into a human-readable string
-    std::string toString() const;
+    QString toString() const;
 
   private:
     ChannelLayout m_layout;

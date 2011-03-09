@@ -24,18 +24,18 @@
 #include <sys/stat.h>
 #include <algorithm>
 
-#define DOT     std::string(".")
-#define DOTDOT  std::string("..")
+#define DOT     QString(".")
+#define DOTDOT  QString("..")
 
 namespace Radiant
 {
 
   ///  @todo DT_DIR seems to incorrectly match also to symbolic links under linux
   bool applyFilters(const struct dirent * dent, int filterFlags,
-                    const std::vector<std::string> & suffixes) {
+                    const std::vector<QString> & suffixes) {
     bool ok = true;
 
-    const std::string name(dent->d_name);
+    const QString name(dent->d_name);
 
     if(dent->d_type == DT_DIR && !(filterFlags & Directory::Dirs)) ok = false;
     else if(dent->d_type == DT_REG && !(filterFlags & Directory::Files)) ok = false;
@@ -46,7 +46,7 @@ namespace Radiant
       ok = false;
 
     if(!suffixes.empty()) {
-      std::string suffix = StringUtils::lowerCase(FileUtils::suffix(name));
+      QString suffix = StringUtils::lowerCase(FileUtils::suffix(name));
 
       ok = false;
 
@@ -72,12 +72,12 @@ namespace Radiant
 #endif
   }
 
-  bool Directory::mkdir(const std::string & dirname)
+  bool Directory::mkdir(const QString & dirname)
   {
     return mkdir(dirname.c_str());
   }
 
-  bool Directory::exists(const std::string & dir)
+  bool Directory::exists(const QString & dir)
   {
     DIR * d = opendir(dir.c_str());
     if(!d)
@@ -101,7 +101,7 @@ namespace Radiant
     while( (dent = readdir(dir)) != NULL) {
       // Apply filters
       if(applyFilters(dent, m_filterFlags, m_suffixes)) {
-        m_entries.push_back(std::string(dent->d_name));
+        m_entries.push_back(QString(dent->d_name));
       }
     }
 

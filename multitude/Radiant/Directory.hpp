@@ -21,7 +21,7 @@
 #include <Radiant/Export.hpp>
 
 #include <stdexcept>
-#include <string>
+#include <QString>
 #include <vector>
 
 #ifdef WIN32
@@ -82,7 +82,7 @@ namespace Radiant
   @param filters one or more filter flags OR'ed together
   @param sortFlag flag indicating how the results should be sorted
     */
-    Directory(const std::string & pathname,
+    Directory(const QString & pathname,
         int filters = AllEntries | NoDotAndDotDot, SortFlag sortFlag = Name);
     /// Construct a directory listing
     /** Creating a Directory object immediately scans the contents
@@ -111,31 +111,31 @@ namespace Radiant
 	@param n integer index of file   
 	@return filename
     */
-    std::string fileName(int n) const;
+    QString fileName(int n) const;
 
     /** Return the full path name of the nth file.
 
 	This method is equal to calling "dir.path() + dir.filename(n)".
     */
-    std::string fileNameWithPath(int n) const;
+    QString fileNameWithPath(int n) const;
 
     /// Returns the directory path
-    const std::string & path() const { return m_path; } 
+    const QString & path() const { return m_path; } 
 
     /// Creates a new directory.
     static bool mkdir(const char * dirname);
     /// Creates a new directory.
-    static bool mkdir(const std::string & dirname);
+    static bool mkdir(const QString & dirname);
     /// Creates a new directory recursively
-    static bool mkdirRecursive(const std::string & dirname);
+    static bool mkdirRecursive(const QString & dirname);
     /// Checks if the given directory exists
-    static bool exists(const std::string & dir);
+    static bool exists(const QString & dir);
 
   private:
     // Calling a constructor from another is evil but we
     // can put all dupplicated code in the same private
     // method
-    void init(const std::string & pathname, const char * suffixlist,
+    void init(const QString & pathname, const char * suffixlist,
 	      const int filters, const SortFlag sortFlag) ;
 
     // This function takes care of the low-level platform
@@ -143,9 +143,9 @@ namespace Radiant
     // with the directory contents matching the flags.
     void populate();
 		
-    std::string m_path;
-    std::vector<std::string> m_entries;      
-    std::vector<std::string> m_suffixes;
+    QString m_path;
+    std::vector<QString> m_entries;      
+    std::vector<QString> m_suffixes;
     int m_filterFlags;
     SortFlag m_sortFlags;
   };

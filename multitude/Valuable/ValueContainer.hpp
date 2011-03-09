@@ -55,7 +55,7 @@ namespace Valuable
     /// Constructs a new container
     /// @param parent parent object
     /// @param name name of the value
-    ValueContainer(HasValues * parent, const std::string & name)
+    ValueContainer(HasValues * parent, const QString & name)
       : ValueObject(parent, name, false)
     {}
 

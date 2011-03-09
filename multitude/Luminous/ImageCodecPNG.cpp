@@ -38,14 +38,14 @@ namespace Luminous
     return png_sig_cmp((png_bytep)header, 0, 8) == 0;  
   }
 
-  std::string ImageCodecPNG::extensions() const
+  QString ImageCodecPNG::extensions() const
   {
-    return std::string("png");
+    return QString("png");
   }
 
-  std::string ImageCodecPNG::name() const
+  QString ImageCodecPNG::name() const
   {
-    return std::string("png");
+    return QString("png");
   }
 
   bool ImageCodecPNG::ping(ImageInfo & info, FILE * file)

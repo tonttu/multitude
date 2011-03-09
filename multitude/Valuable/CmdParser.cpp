@@ -30,8 +30,8 @@ namespace Valuable
     std::shared_ptr<Valuable::DOMDocument> tmpDoc(Valuable::DOMDocument::createDocument());
 
     for(int i = 1; i < argc; i++) {
-      std::string arg = argv[i];
-      std::string name;
+      QString arg = argv[i];
+      QString name;
 
       if(arg.length() == 2 && arg[0] == '-') {
         name = arg[1];

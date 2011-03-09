@@ -707,7 +707,7 @@ namespace Screenplay {
 
     if(timeSeconds <= 1e-10) {
       close();
-      std::string tmp = m_fileName;
+      QString tmp = m_fileName;
       open(tmp.c_str(), m_flags);
       timeSeconds = 0;
     }

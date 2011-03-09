@@ -27,7 +27,7 @@ namespace Resonant {
   class RESONANT_API ModulePulseAudio : public Module, public PulseAudioCore
   {
   public:
-    ModulePulseAudio(const std::string & monitorName, uint32_t sinkInput);
+    ModulePulseAudio(const QString & monitorName, uint32_t sinkInput);
     virtual ~ModulePulseAudio();
 
     void contextChange(pa_context_state_t state);
@@ -42,7 +42,7 @@ namespace Resonant {
   protected:
     bool m_ready;
     pa_stream * m_stream;
-    std::string m_monitorName;
+    QString m_monitorName;
     uint32_t m_sinkInput;
     float * m_buffer; // pointer to m_buffer
     std::vector<float> m_bufferData; // actual storage

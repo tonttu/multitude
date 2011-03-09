@@ -92,12 +92,12 @@ namespace Resonant {
       m_sources.push_back(s);
     }
     else if(strcmp(id, "removesource") == 0) {
-      std::string id;
+      QString id;
       data->readString(id);
       removeSource(id);
     }
     else if(strcmp(id, "setsourcelocation") == 0) {
-      std::string id;
+      QString id;
       data->readString(id);
       Nimble::Vector2 loc = data->readVector2Float32( & ok);
 
@@ -198,7 +198,7 @@ namespace Resonant {
     setSpeaker(i, Nimble::Vector2(x, y));
   }
 
-  void ModulePanner::setSourceLocation(const std::string & id,
+  void ModulePanner::setSourceLocation(const QString & id,
                                        Nimble::Vector2 location)
   {
     debug("ModulePanner::setSourceLocation # %s [%f %f]", id.c_str(),
@@ -290,7 +290,7 @@ namespace Resonant {
     }
   }
 
-  void ModulePanner::removeSource(const std::string & id)
+  void ModulePanner::removeSource(const QString & id)
   {
 
     for(Sources::iterator it = m_sources.begin();

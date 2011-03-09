@@ -40,9 +40,9 @@ namespace Valuable
 
     public:
       ValueFloatT() : Base() {}
-      /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
+      /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
       /// @param v The numeric value of this object
-      ValueFloatT(HasValues * parent, const std::string & name, T v = T(0), bool transit = false)
+      ValueFloatT(HasValues * parent, const QString & name, T v = T(0), bool transit = false)
       : ValueNumeric<T>(parent, name, v, transit)
       {}
 

@@ -30,8 +30,8 @@ namespace Luminous
       virtual ~ImageCodecTGA();
       virtual bool canRead(FILE * file);
 
-      virtual std::string extensions() const;
-      virtual std::string name() const;
+      virtual QString extensions() const;
+      virtual QString name() const;
       virtual bool ping(ImageInfo & info, FILE * file);
       virtual bool read(Image & image, FILE * file);
       virtual bool write(const Image & image, FILE * file);

@@ -41,7 +41,7 @@ namespace Valuable
     m_transit(false)
   {}
 
-  ValueObject::ValueObject(HasValues * parent, const std::string & name, bool transit)
+  ValueObject::ValueObject(HasValues * parent, const QString & name, bool transit)
     : m_parent(0),
       m_changed(false),
       m_name(name),
@@ -65,7 +65,7 @@ namespace Valuable
     emitDelete();
   }
 
-  void ValueObject::setName(const std::string & s)
+  void ValueObject::setName(const QString & s)
   {
     if(parent())
       parent()->childRenamed(m_name, s);
@@ -73,7 +73,7 @@ namespace Valuable
     m_name = s;
   }
 
-  std::string ValueObject::path() const
+  QString ValueObject::path() const
   {
     if(m_parent)
       return m_parent->path() + "/" + m_name;
@@ -151,7 +151,7 @@ namespace Valuable
     return 0;
   }
 
-  std::string ValueObject::asString(bool * ok) const
+  QString ValueObject::asString(bool * ok) const
   {
     if(ok) *ok = false;
     Radiant::error(
@@ -216,7 +216,7 @@ namespace Valuable
     return false;
   }
 
-  bool ValueObject::set(const std::string & )
+  bool ValueObject::set(const QString & )
   {
     Radiant::error(
 "ValueObject::set(string) # conversion not available");

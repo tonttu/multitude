@@ -41,9 +41,9 @@ namespace Poetic
     virtual float advance(const wchar_t * str, int n = -1) = 0;
 
     /// @copydoc advance
-    float advance(const std::string & str) { return advance(str.c_str()); }
+    float advance(const QString & str) { return advance(str.c_str()); }
     /// @copydoc advance
-    float advance(const std::wstring & str) { return advance(str.c_str()); }
+    float advance(const QString & str) { return advance(str.c_str()); }
 
     /// Returns the face size of the font
     virtual int faceSize() const = 0;

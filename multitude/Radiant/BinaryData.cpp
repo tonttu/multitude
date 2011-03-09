@@ -142,7 +142,7 @@ namespace Radiant {
       getRef<int32_t>() = 0;
   }
 
-  void BinaryData::writeWString(const std::wstring & str)
+  void BinaryData::writeWString(const QString & str)
   {
     ensure(8 + str.size() * 4);
 
@@ -453,7 +453,7 @@ namespace Radiant {
     return true;
   }
 
-  bool BinaryData::readString(std::string & str)
+  bool BinaryData::readString(QString & str)
   {
     int32_t marker = getRef<int32_t>();
 
@@ -473,7 +473,7 @@ namespace Radiant {
     return true;
   }
 
-  bool BinaryData::readWString(std::wstring & str)
+  bool BinaryData::readWString(QString & str)
   {
     int32_t marker = getRef<int32_t>();
 
@@ -491,7 +491,7 @@ namespace Radiant {
     }
     else if(marker == STRING_MARKER) {
 
-      std::string tmp;
+      QString tmp;
 
       const char * source = & m_buf[m_current];
 

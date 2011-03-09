@@ -31,16 +31,16 @@ namespace Valuable
   {
     typedef ValueObjectT<Nimble::Rect> Base;
   public:
-    /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
+    /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
     /// @param r The rectangle to be stored in the ValueRect
-    ValueRect(HasValues * parent, const std::string & name, const Nimble::Rect & r, bool transit = false);
+    ValueRect(HasValues * parent, const QString & name, const Nimble::Rect & r, bool transit = false);
 
     /// Copies a rectangle
     ValueRect & operator = (const Nimble::Rect & r) { Base::m_value = r; VALUEMIT_STD_OP }
 
     const char * type() const { return "rect"; }
 
-    std::string asString(bool * const ok = 0) const;
+    QString asString(bool * const ok = 0) const;
 
     bool deserialize(ArchiveElement & element);
 

@@ -30,7 +30,7 @@
 #include <iostream>
 #include <stdint.h>
 #include <stdlib.h>
-#include <string>
+#include <QString>
 #include <string.h>
 #include <typeinfo>
 
@@ -498,7 +498,7 @@ namespace Luminous
   }
   /*
   // Guess the filetype from the extension
-  static Image::ImageType typeFromFileExt(const std::string & filename)
+  static Image::ImageType typeFromFileExt(const QString & filename)
   {
     Image::ImageType type = Image::IMAGE_TYPE_UNKNOWN;
     string ext = filename.substr(filename.rfind(".") + 1);

@@ -107,19 +107,19 @@ namespace Valuable
     /// Writes a new named attribute, name should be unique along this object
     virtual void add(const char * name, const char * value) = 0;
     /// Reads a named attribute
-    virtual std::string get(const char * name) const = 0;
+    virtual QString get(const char * name) const = 0;
 
     /// Writes the element contents
-    virtual void set(const std::string & s) = 0;
+    virtual void set(const QString & s) = 0;
     /// Writes the element contents as a wide character string
-    virtual void set(const std::wstring & s) = 0;
+    virtual void set(const QString & s) = 0;
     /// Reads the element contents
-    virtual std::string get() const = 0;
+    virtual QString get() const = 0;
     /// Reads the element contents as a wide character string
-    virtual std::wstring getW() const = 0;
+    virtual QString getW() const = 0;
 
     /// Reads the element name
-    virtual std::string name() const = 0;
+    virtual QString name() const = 0;
     /// Is this a NULL element, created by Archive::emptyElement()
     virtual bool isNull() const = 0;
 
@@ -170,7 +170,7 @@ namespace Valuable
     /// Writes the archive to file
     virtual bool writeToFile(const char * file) = 0;
     /// Write the archive to memory buffer
-    /// @todo why not std::string - basically the same thing as vector<char>
+    /// @todo why not QString - basically the same thing as vector<char>
     /// @todo why not some binary buffer object from Qt
     virtual bool writeToMem(std::vector<char> & buffer) = 0;
     /// Reads the archive from a file

@@ -238,7 +238,7 @@ namespace VideoDisplay {
     bool           m_decoding;
     bool           m_atEnd;
 
-    std::string    m_name;
+    QString    m_name;
 
     static int     m_debug;
 

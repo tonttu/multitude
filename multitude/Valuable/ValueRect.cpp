@@ -21,7 +21,7 @@
 namespace Valuable
 {
 
-  ValueRect::ValueRect(HasValues * parent, const std::string & name, const Nimble::Rect & r, bool transit)
+  ValueRect::ValueRect(HasValues * parent, const QString & name, const Nimble::Rect & r, bool transit)
     : Base(parent, name, r, transit)
   {}
 
@@ -42,16 +42,16 @@ namespace Valuable
     return true;
   }
 
-  std::string ValueRect::asString(bool * const ok) const {
+  QString ValueRect::asString(bool * const ok) const {
     if(ok) *ok = true;
 
     const Nimble::Vector2f & lo = m_value.low();
     const Nimble::Vector2f & hi = m_value.high();
 
-    std::string r = Radiant::StringUtils::stringify(lo[0]);
-    r += std::string(" ") + Radiant::StringUtils::stringify(lo[1]);
-    r += std::string(" ") + Radiant::StringUtils::stringify(hi[0]);
-    r += std::string(" ") + Radiant::StringUtils::stringify(hi[1]);
+    QString r = Radiant::StringUtils::stringify(lo[0]);
+    r += QString(" ") + Radiant::StringUtils::stringify(lo[1]);
+    r += QString(" ") + Radiant::StringUtils::stringify(hi[0]);
+    r += QString(" ") + Radiant::StringUtils::stringify(hi[1]);
 
     return r;
   }

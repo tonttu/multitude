@@ -83,7 +83,7 @@ namespace Valuable
     return r;
   }
 
-  DOMElement DOMDocument::createElement(const std::string & name)
+  DOMElement DOMDocument::createElement(const QString & name)
   {
     return createElement(name.c_str());
   }
@@ -98,7 +98,7 @@ namespace Valuable
   bool DOMDocument::writeToMem(std::vector<char> & buffer)
   {
     QDomDocument & qdoc = m_wrapped->x;
-    std::string xml = qdoc.toString().toStdString();
+    QString xml = qdoc.toString().toStdString();
 
     buffer.resize(xml.size());
 

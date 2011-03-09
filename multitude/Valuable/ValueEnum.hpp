@@ -28,7 +28,7 @@ namespace Valuable
   class VALUABLE_API ValueEnum : public ValueIntT<int32_t>
   {
   public:
-    /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
+    /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
     ValueEnum(Valuable::HasValues * host, const char * name,
               const char ** enumnames, int current);
     virtual ~ValueEnum();

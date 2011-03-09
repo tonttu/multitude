@@ -20,7 +20,7 @@
 
 #include <Radiant/BinaryStream.hpp>
 
-#include <string>
+#include <QString>
 
 struct in_addr;
 

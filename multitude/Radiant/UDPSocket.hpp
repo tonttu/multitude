@@ -6,7 +6,7 @@
 
 #include <Radiant/BinaryStream.hpp>
 
-#include <string>
+#include <QString>
 #include <stdint.h>
 
 

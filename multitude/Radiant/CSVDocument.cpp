@@ -33,7 +33,7 @@ namespace Radiant {
   {
     m_rows.clear();
 
-    std::wstring contents = Radiant::FileUtils::readTextFile(filename);
+    QString contents = Radiant::FileUtils::readTextFile(filename);
 
     if(contents.empty()) {
       error("CSVParser::load # Empty file %s", filename);
@@ -45,9 +45,9 @@ namespace Radiant {
       info("Got %d %x %c", (int) contents[i], (int) contents[i], (char) contents[i]);
     }
     */
-    std::wstring delim1; //(Radiant::StringUtils::utf8AsStdWstring("\n"));
+    QString delim1; //(Radiant::StringUtils::utf8AsStdWstring("\n"));
     delim1 += (wchar_t) 8203;
-    std::wstring delim2(Radiant::StringUtils::utf8AsStdWstring(delimiter));
+    QString delim2(Radiant::StringUtils::utf8AsStdWstring(delimiter));
 
     Radiant::StringUtils::WStringList strs;
     Radiant::StringUtils::split(contents, delim1, strs);
@@ -64,7 +64,7 @@ namespace Radiant {
 
       for(Radiant::StringUtils::WStringList::iterator it2 = cells.begin();
       it2 != cells.end(); it2++) {
-        std::wstring & str = (*it2);
+        QString & str = (*it2);
         // Strip leading white-space
 
 
@@ -89,7 +89,7 @@ namespace Radiant {
   }
 
 
-  CSVDocument::Row * CSVDocument::findRow(const std::wstring & key, unsigned col)
+  CSVDocument::Row * CSVDocument::findRow(const QString & key, unsigned col)
   {
     for(Rows::iterator it = m_rows.begin(); it != m_rows.end(); it++) {
       Row & r = (*it);
@@ -103,7 +103,7 @@ namespace Radiant {
     return 0;
   }
 
-  CSVDocument::Row * CSVDocument::findRow(const std::string & key, unsigned col)
+  CSVDocument::Row * CSVDocument::findRow(const QString & key, unsigned col)
   {
 
     return findRow(StringUtils::utf8AsStdWstring(key), col);

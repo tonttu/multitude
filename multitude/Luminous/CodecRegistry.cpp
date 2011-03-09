@@ -30,14 +30,14 @@ namespace Luminous
   CodecRegistry::~CodecRegistry()
   {}
 
-  ImageCodec * CodecRegistry::getCodec(const std::string & filename, FILE * file)
+  ImageCodec * CodecRegistry::getCodec(const QString & filename, FILE * file)
   {
     Luminous::initDefaultImageCodecs();
 
     ImageCodec * codec = 0;
 
     // Try a codec that matches the extension first
-    const std::string ext = filename.substr(filename.rfind(".") + 1);
+    const QString ext = filename.substr(filename.rfind(".") + 1);
     Aliases::iterator alias = m_aliases.find(ext);
 
     if(alias != m_aliases.end())

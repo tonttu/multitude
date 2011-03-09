@@ -41,9 +41,9 @@ namespace Valuable
     typedef ValueObjectT<VectorType> Base;
     public:
       ValueVector() : Base() {}
-      /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
+      /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
       /// @param v The value of this object
-      ValueVector(HasValues * parent, const std::string & name, const VectorType & v = VectorType(), bool transit = false)
+      ValueVector(HasValues * parent, const QString & name, const VectorType & v = VectorType(), bool transit = false)
         : Base(parent, name, v, transit) {}
 
       virtual ~ValueVector();
@@ -88,7 +88,7 @@ namespace Valuable
       /** Returns the internal vector object as a constant reference. */
       const VectorType & operator * () const { return Base::m_value; }
 
-      std::string asString(bool * const ok = 0) const;
+      QString asString(bool * const ok = 0) const;
 
       /// Returns the ith element
       inline const ElementType & get(int i) const { return Base::m_value[i]; }

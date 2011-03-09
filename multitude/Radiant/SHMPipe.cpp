@@ -243,7 +243,7 @@ namespace Radiant
 
 #ifdef WIN32
   /*
-  SHMPipe::SHMPipe(const std::string smName, const uint32_t size)
+  SHMPipe::SHMPipe(const QString smName, const uint32_t size)
     : m_isCreator(false),
       m_smName(smName),
       m_hMapFile(0),

@@ -49,7 +49,7 @@ namespace Poetic
     private:
       typedef std::vector<CPUFont *> container;
   
-      std::string m_file;
+      QString m_file;
       container m_fonts;
 
       CPUFont * m_metricFont;      

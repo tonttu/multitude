@@ -34,7 +34,7 @@ namespace Radiant
     populate();
   }
 
-  Directory::Directory(const std::string & pathname,
+  Directory::Directory(const QString & pathname,
                        int filters, SortFlag sortFlag)
     : m_path(pathname),
       m_filterFlags(filters),
@@ -70,18 +70,18 @@ namespace Radiant
     return (int)m_entries.size();
   }
 
-  std::string Directory::fileName(int i) const
+  QString Directory::fileName(int i) const
   {
     assert(i >= 0 && i < count());
     return m_entries[i];
   }
 
-  std::string Directory::fileNameWithPath(int n) const
+  QString Directory::fileNameWithPath(int n) const
   {
     return path() + "/" + fileName(n);
   }
 
-  void Directory::init(const std::string & pathname, const char * suffixlist,
+  void Directory::init(const QString & pathname, const char * suffixlist,
                        const int filters, const SortFlag sortFlag) 
   {
     m_path = pathname ;
@@ -97,7 +97,7 @@ namespace Radiant
     }
   }
 
-  bool Directory::mkdirRecursive(const std::string & dirname)
+  bool Directory::mkdirRecursive(const QString & dirname)
   {
     if(dirname.empty())
       return false;
@@ -105,7 +105,7 @@ namespace Radiant
     StringUtils::StringList sections;
     StringUtils::split(dirname, "/", sections);
 
-    std::string dir;
+    QString dir;
 
     if(dirname[0] == '/') {
       dir += '/';

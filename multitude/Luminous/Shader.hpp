@@ -62,7 +62,7 @@ namespace Luminous {
     */
     LUMINOUS_API bool loadFragmentShader(const char * filename);
     /// @copydoc loadFragmentShader(const char * filename);
-    bool loadFragmentShader(const std::string & filename)
+    bool loadFragmentShader(const QString & filename)
     { return loadFragmentShader(filename.c_str()); }
 
     /** Sets the source code for the vertex shader.
@@ -72,7 +72,7 @@ namespace Luminous {
     @param filename name of the file to load */
     LUMINOUS_API bool loadVertexShader(const char * filename);
     /// @copydoc loadVertexShader(const char * filename);
-    bool loadVertexShader(const std::string & filename)
+    bool loadVertexShader(const QString & filename)
     { return loadVertexShader(filename.c_str()); }
 
     /** Sets the source code for the geometry shader.
@@ -82,7 +82,7 @@ namespace Luminous {
     /// @param filename name of the source code filename
     LUMINOUS_API bool loadGeometryShader(const char * filename);
     /// @copydoc loadGeometryShader(const char * filename);
-    bool loadGeometryShader(const std::string & filename)
+    bool loadGeometryShader(const QString & filename)
     { return loadGeometryShader(filename.c_str()); }
 
     /** Returns a compiled and bound OpenGL shader program. */

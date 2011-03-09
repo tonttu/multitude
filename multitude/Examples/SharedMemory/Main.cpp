@@ -98,7 +98,7 @@ void listenTest()
 
   int i, fails = 0;
 
-  std::string str;
+  QString str;
 
   for(i = 0; true; i++) {
     

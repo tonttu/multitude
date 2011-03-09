@@ -1,6 +1,8 @@
 # Use this to setup global build options & variables.
 # This file is to be included by all project files of qmake.
-CONFIG -= qt
+CONFIG += qt
+QT += core
+
 CONFIG += link_pkgconfig
 CONFIG += thread
 

@@ -533,7 +533,7 @@ namespace Resonant {
 
     for(int i = 0; i < dir.count(); i++) {
 
-      std::string file = dir.fileNameWithPath(i);
+      QString file = dir.fileNameWithPath(i);
 
       n++;
 
@@ -577,7 +577,7 @@ namespace Resonant {
     sf_close(sndf);
 
     Radiant::BinaryData control;
-    control.writeString(std::string(id()) + "/playsample");
+    control.writeString(QString(id()) + "/playsample");
 
     control.writeString(filename);
 

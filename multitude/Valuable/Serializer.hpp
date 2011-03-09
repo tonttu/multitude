@@ -289,7 +289,7 @@ namespace Valuable
     /// Serialize object to a XML file. Example usage:
     /// Serializer::serializeXML("widget.xml", widget, SerializationOptions::ONLY_CHANGED);
     template <typename T>
-    inline bool serializeXML(const std::string & filename, T t,
+    inline bool serializeXML(const QString & filename, T t,
                             SerializationOptions::Options opts = SerializationOptions::DEFAULTS)
     {
       XMLArchive archive(opts);
@@ -304,7 +304,7 @@ namespace Valuable
     /// Deserialize object from a XML file. Example usage:
     /// Widget * widget = Serializer::deserializeXML<Widget*>("widget.xml");
     template <typename T>
-    inline T deserializeXML(const std::string & filename)
+    inline T deserializeXML(const QString & filename)
     {
       XMLArchive archive;
 

@@ -52,7 +52,7 @@ namespace Resonant {
       m_inputs.erase(it);
   }
 
-  void DSPNetwork::Item::eraseInputs(const std::string & moduleId)
+  void DSPNetwork::Item::eraseInputs(const QString & moduleId)
   {
     for(unsigned i = 0; i < m_inputs.size(); ) {
 

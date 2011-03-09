@@ -267,7 +267,7 @@ namespace VideoDisplay {
     bool hasSubTitles() { return m_subTitles.size() != 0; }
 
     /// Returns the currently used filename
-    const std::string & filename() const { return m_filename; }
+    const QString & filename() const { return m_filename; }
 
     /// Adjusts the contrast
     /** Contrast of 1.0f means that the video image is unmodified,
@@ -285,7 +285,7 @@ namespace VideoDisplay {
 
     void clearHistogram();
 
-    std::string             m_filename;
+    QString             m_filename;
     VideoIn               * m_video;
     VideoIn::Frame        * m_frame;
     VideoIn::Frame          m_preview;

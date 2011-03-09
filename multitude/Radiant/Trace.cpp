@@ -23,7 +23,7 @@
 #include <cstring>
 #include <cstdlib>
 
-#include <string>
+#include <QString>
 
 namespace Radiant {
 
@@ -31,7 +31,7 @@ namespace Radiant {
 
   static bool g_enableVerboseOutput = false;
 
-  std::string g_appname;
+  QString g_appname;
 
   static FILE * __outfile = 0;
 

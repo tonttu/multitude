@@ -32,20 +32,20 @@ namespace Valuable
 
 
   template<class T>
-  ValueStringT<T>::ValueStringT(HasValues * parent, const std::string & name,
+  ValueStringT<T>::ValueStringT(HasValues * parent, const QString & name,
                 const T & v, bool transit)
     : Base(parent, name, v, transit)
   {}
 
   template<class T>
-  ValueStringT<T>::ValueStringT(HasValues * parent, const std::string & name,
+  ValueStringT<T>::ValueStringT(HasValues * parent, const QString & name,
                 const char * v, bool transit)
     : Base(parent, name, v, transit)
   {}
 
 
   template<class T>
-  ValueStringT<T>::ValueStringT(HasValues * parent, const std::string & name,
+  ValueStringT<T>::ValueStringT(HasValues * parent, const QString & name,
                 bool transit)
     : Base(parent, name, T(), transit)
   {}
@@ -90,23 +90,23 @@ namespace Valuable
   }
 
   template<class T>
-  std::string ValueStringT<T>::asString(bool * const ok) const
+  QString ValueStringT<T>::asString(bool * const ok) const
   {
     if(ok) *ok = true;
     return Base::m_value;
   }
 
   template<class T>
-  std::wstring ValueStringT<T>::asWString(bool * const ok) const
+  QString ValueStringT<T>::asWString(bool * const ok) const
   {
     if(ok) *ok = true;
-    std::wstring tmp;
+    QString tmp;
     Radiant::StringUtils::utf8ToStdWstring(tmp, Base::m_value);
     return tmp;
   }
 
   template<class T>
-  bool ValueStringT<T>::set(const std::string & v)
+  bool ValueStringT<T>::set(const QString & v)
   {
     Base::m_value = T(v);
     STD_EM;
@@ -120,81 +120,81 @@ namespace Valuable
 
   /*
   template <>
-  ValueStringT<std::wstring>::ValueStringT()
+  ValueStringT<QString>::ValueStringT()
   : ValueObject()
   {}
 
   template <>
-  ValueStringT<std::wstring>::ValueStringT(HasValues * parent, const std::string & name, const std::wstring & v, bool transit)
+  ValueStringT<QString>::ValueStringT(HasValues * parent, const QString & name, const QString & v, bool transit)
   : ValueObject(parent, name, transit),
   m_value(v)
   {}
   */
 
-  // copybrief ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
+  // copybrief ValueObject::ValueObject(HasValues *, const QString &, bool transit)
   template<>
-  ValueStringT<std::wstring>::ValueStringT(HasValues * parent, const std::string & name,
+  ValueStringT<QString>::ValueStringT(HasValues * parent, const QString & name,
                        const char * v, bool transit)
-    : Base(parent, name, std::wstring(), transit)
+    : Base(parent, name, QString(), transit)
   {
-    std::string tmp(v);
+    QString tmp(v);
     Radiant::StringUtils::utf8ToStdWstring(m_value, tmp);
     m_orig = m_value;
   }
 
 
-  template <> ValueStringT<std::wstring> & ValueStringT<std::wstring>::operator = (const ValueStringT<std::wstring> & i)
+  template <> ValueStringT<QString> & ValueStringT<QString>::operator = (const ValueStringT<QString> & i)
   {
     m_value = i.m_value;
     VALUEMIT_STD_OP
   }
 
   template <>
-      ValueStringT<std::wstring> & ValueStringT<std::wstring>::operator=(const std::wstring & i)
+      ValueStringT<QString> & ValueStringT<QString>::operator=(const QString & i)
                                                                         {
     m_value = i;
     VALUEMIT_STD_OP
   }
 
   template <>
-  float ValueStringT<std::wstring>::asFloat(bool * const ok) const
+  float ValueStringT<QString>::asFloat(bool * const ok) const
   {
     if(ok) *ok = true;
-    std::string tmp;
+    QString tmp;
     Radiant::StringUtils::stdWstringToUtf8(tmp, m_value);
     return float(atof(tmp.c_str()));
   }
 
   /// Converts the string to integer
   template <>
-  int ValueStringT<std::wstring>::asInt(bool * const ok) const
+  int ValueStringT<QString>::asInt(bool * const ok) const
   {
     if(ok) *ok = true;
-    std::string tmp;
+    QString tmp;
     Radiant::StringUtils::stdWstringToUtf8(tmp, m_value);
     return atoi(tmp.c_str());
   }
 
   /// Converts the wide-byte string to ascii string
   template<>
-  std::string ValueStringT<std::wstring>::asString(bool * const ok) const
+  QString ValueStringT<QString>::asString(bool * const ok) const
   {
     if(ok) *ok = true;
-    std::string tmp;
+    QString tmp;
     Radiant::StringUtils::stdWstringToUtf8(tmp, m_value);
     return tmp;
   }
 
   /// Converts the wide-byte string to ascii string
   template<>
-  std::wstring ValueStringT<std::wstring>::asWString(bool * const ok) const
+  QString ValueStringT<QString>::asWString(bool * const ok) const
   {
     if(ok) *ok = true;
     return m_value;
   }
 
   template<>
-  bool ValueStringT<std::wstring>::set(const std::string & v)
+  bool ValueStringT<QString>::set(const QString & v)
   {
     Radiant::StringUtils::utf8ToStdWstring(m_value, v);
     STD_EM;
@@ -202,13 +202,13 @@ namespace Valuable
   }
 
   template<>
-  ArchiveElement & ValueStringT<std::string>::serialize(Archive & archive)
+  ArchiveElement & ValueStringT<QString>::serialize(Archive & archive)
   {
     return ValueObject::serialize(archive);
   }
 
   template<>
-  ArchiveElement & ValueStringT<std::wstring>::serialize(Archive & archive)
+  ArchiveElement & ValueStringT<QString>::serialize(Archive & archive)
   {
     if(name().empty()) {
       Radiant::error("ValueWString::serialize # attempt to serialize object with no name");
@@ -218,14 +218,14 @@ namespace Valuable
     ArchiveElement & elem = archive.createElement(name().c_str());
     elem.add("type", type());
 
-    std::wstring ws = asWString();
+    QString ws = asWString();
     elem.set(ws);
 
     return elem;
   }
 
   template<>
-  bool ValueStringT<std::wstring>::deserialize(ArchiveElement & element)
+  bool ValueStringT<QString>::deserialize(ArchiveElement & element)
   {
     m_value = element.getW();
     STD_EM;

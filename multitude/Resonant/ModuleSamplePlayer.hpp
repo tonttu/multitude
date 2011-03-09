@@ -24,7 +24,7 @@
 #include <Resonant/Module.hpp>
 
 #include <list>
-#include <string>
+#include <QString>
 #include <vector>
 
 #include <strings.h>
@@ -127,8 +127,8 @@ namespace Resonant {
     class SampleInfo
     {
     public:
-      std::string m_name;
-      std::string m_filename;
+      QString m_name;
+      QString m_filename;
     };
 
     /* This class holds audio sample data in RAM. */
@@ -143,7 +143,7 @@ namespace Resonant {
       inline const std::vector<float> & data() const { return m_data; }
       const float * buf(unsigned i) const;
 
-      const std::string & name() const { return m_name; }
+      const QString & name() const { return m_name; }
       /** Number of samples available */
       unsigned available(unsigned pos) const;
       unsigned channels() const;
@@ -156,7 +156,7 @@ namespace Resonant {
 
       std::vector<float> m_data;
 
-      std::string m_name;
+      QString m_name;
     };
 
     /* This class controls the playback of a sample. */

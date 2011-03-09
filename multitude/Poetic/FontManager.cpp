@@ -19,7 +19,7 @@
 #include <Radiant/Trace.hpp>
 
 #include <map>
-#include <string>
+#include <QString>
 
 namespace Poetic
 {
@@ -49,7 +49,7 @@ namespace Poetic
       delete it->second;
   }
 
-  CPUWrapperFont * FontManager::getFont(const std::string & name)
+  CPUWrapperFont * FontManager::getFont(const QString & name)
   {
     if(name.empty()) {
       Radiant::error("FontManager::getFont # empty fontname");
@@ -60,12 +60,12 @@ namespace Poetic
 
     CPUManagedFont * mfont = 0;
 
-    std::string dirredname("Configs/");
+    QString dirredname("Configs/");
     dirredname += name;
 
     if(it == m_managedFonts.end()) {
 
-      const std::string path = m_locator.locate(name);
+      const QString path = m_locator.locate(name);
       if(path.empty()) {
         Radiant::error("FontManager::getFont # failed to locate font \"%s\"",
 		       name.c_str());
@@ -89,7 +89,7 @@ namespace Poetic
     return new CPUWrapperFont(mfont);
   }
 
-  std::string FontManager::locate(const std::string & name)
+  QString FontManager::locate(const QString & name)
   {
     return m_locator.locate(name);
   }

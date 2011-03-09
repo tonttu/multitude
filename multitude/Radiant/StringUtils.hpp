@@ -17,7 +17,7 @@
 
 #include <list>
 #include <sstream>
-#include <string>
+#include <QString>
 
 #include <strings.h> // atoll on windows
 
@@ -37,45 +37,45 @@ namespace Radiant
   {
 
     /// A list of strings
-    typedef std::list<std::string>    StringList;
+    typedef std::list<QString>    StringList;
     /// A list of wide-byte strings
-    typedef std::list<std::wstring>   WStringList;
+    typedef std::list<QString>   WStringList;
 
     /// Check if wstring a begins with b
-    RADIANT_API bool beginsWith(const std::wstring & a,
-                                const std::wstring & b);
+    RADIANT_API bool beginsWith(const QString & a,
+                                const QString & b);
 
     /// @copydoc beginsWith
-    RADIANT_API bool beginsWith(const std::string & a,
-                                const std::string & b);
+    RADIANT_API bool beginsWith(const QString & a,
+                                const QString & b);
 
-    /// Remove non-visible characters from std::string.
-    RADIANT_API void eraseNonVisibles(std::string & s);
+    /// Remove non-visible characters from QString.
+    RADIANT_API void eraseNonVisibles(QString & s);
     /// @copydoc eraseNonVisibles
-    RADIANT_API void eraseNonVisibles(std::wstring & s);
+    RADIANT_API void eraseNonVisibles(QString & s);
 
-    /// Convert std::string to double.
+    /// Convert QString to double.
     /// @todo Is duplicate to the stuff at the bottom?
-    RADIANT_API double stdStringToDouble(const std::string & str, const int precision = 12);
+    RADIANT_API double stdStringToDouble(const QString & str, const int precision = 12);
 
-    /// Convert double to std::string.
+    /// Convert double to QString.
     /// @todo Is duplicate to the stuff at the bottom?
-    RADIANT_API std::string doubleToStdString(const double value, const int precision = 12);
+    RADIANT_API QString doubleToStdString(const double value, const int precision = 12);
 
-    /// Convert std::string to std::wstring.
-    RADIANT_API std::wstring stdStringToStdWstring(const std::string & str);
+    /// Convert QString to QString.
+    RADIANT_API QString stdStringToStdWstring(const QString & str);
 
-    /// Convert std::wstring to std::string
+    /// Convert QString to QString
     /// @warning: non-ASCII characters may be lost in conversion.
-    RADIANT_API std::string stdWstringToStdString(const std::wstring & wstr);
+    RADIANT_API QString stdWstringToStdString(const QString & wstr);
 
-    /// Split std::string into sub-strings.
-    RADIANT_API void split(const std::string & s, const std::string & delim, StringList & out, bool skipEmpty = true);
-    /// Split std::wstring into sub-strings.
-    RADIANT_API void split(const std::wstring & ws, const std::wstring & delim, WStringList & out);
+    /// Split QString into sub-strings.
+    RADIANT_API void split(const QString & s, const QString & delim, StringList & out, bool skipEmpty = true);
+    /// Split QString into sub-strings.
+    RADIANT_API void split(const QString & ws, const QString & delim, WStringList & out);
 
     /// Merges a list of strings into a single string
-    RADIANT_API void merge(std::wstring & dest, const WStringList & src);
+    RADIANT_API void merge(QString & dest, const WStringList & src);
 
     /// Locate char in string
     RADIANT_API const char * strchrnul(const char * str, int c);
@@ -84,32 +84,32 @@ namespace Radiant
     RADIANT_API int lineCount(const char * s);
 
     /// Convert utf8 string to wide string.
-    RADIANT_API void utf8ToStdWstring(std::wstring & dest, const std::string & src);
+    RADIANT_API void utf8ToStdWstring(QString & dest, const QString & src);
     /// Convert utf8 string to wide string
     /** This function is effectively the same as #utf8ToStdWstring,
         but the this function is usually slightly easier to use, and
         it is slightly slower.
 
     */
-    RADIANT_API std::wstring utf8AsStdWstring(const std::string & src);
+    RADIANT_API QString utf8AsStdWstring(const QString & src);
 
     /// Convert wide string to utf8 string.
-    RADIANT_API void stdWstringToUtf8(std::string & dest, const std::wstring & src);
+    RADIANT_API void stdWstringToUtf8(QString & dest, const QString & src);
     /// Convert wide string to utf8 string.
-    RADIANT_API std::string stdWstringAsUtf8(const std::wstring & src);
+    RADIANT_API QString stdWstringAsUtf8(const QString & src);
 
     /// Count the number of decoded unicode characters in a utf8 string.
-    RADIANT_API int utf8DecodedLength(const std::string & src);
+    RADIANT_API int utf8DecodedLength(const QString & src);
     /// Count the number of encoded utf8 bytes characters in a wide string.
-    RADIANT_API int utf8EncodedLength(const std::wstring & src);
+    RADIANT_API int utf8EncodedLength(const QString & src);
     /// Returns the lower-case version of the ascii string
-    RADIANT_API std::string lowerCase(const std::string & src);
+    RADIANT_API QString lowerCase(const QString & src);
 
     /// Converts ASCII string to uppercase
     RADIANT_API char upperCaseASCII(char c);
 
     /// Replaces given characters of the string with other characters
-    RADIANT_API void replace(std::string & str, char from, char to);
+    RADIANT_API void replace(QString & str, char from, char to);
 
 
     /** Finds the str in strings and return the index. The
@@ -119,12 +119,12 @@ namespace Radiant
 
     /** Finds the str in strings and return the index. If the str is
     not found in the strings, then -1 is returned. */
-    RADIANT_API int which(const StringList & strings, const std::string & str);
+    RADIANT_API int which(const StringList & strings, const QString & str);
 
     /// Converts to string
     /// @todo Rename to toString
     template<class T>
-    inline std::string stringify(T x) {
+    inline QString stringify(T x) {
         std::ostringstream os;
         os << x;
         return os.str();
@@ -153,7 +153,7 @@ namespace Radiant
     RADIANT_API const char * yesNo(bool yes);
 
 #ifdef WIN32
-    RADIANT_API std::string getLastErrorMessage();
+    RADIANT_API QString getLastErrorMessage();
 #endif
 
   }

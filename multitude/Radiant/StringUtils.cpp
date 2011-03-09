@@ -35,8 +35,8 @@ namespace Radiant
 
     using namespace std;
 
-    bool beginsWith(const std::wstring & a,
-                    const std::wstring & b)
+    bool beginsWith(const QString & a,
+                    const QString & b)
     {
       if(a.size() < b.size())
         return false;
@@ -48,8 +48,8 @@ namespace Radiant
       return true;
     }
 
-    bool beginsWith(const std::string & a,
-                    const std::string & b)
+    bool beginsWith(const QString & a,
+                    const QString & b)
     {
       if(a.size() < b.size())
         return false;
@@ -82,7 +82,7 @@ namespace Radiant
       }
     }
 
-    double stdStringToDouble(const std::string & str, const int precision)
+    double stdStringToDouble(const QString & str, const int precision)
     {
       std::stringstream   ss;
       ss.precision(precision);
@@ -94,13 +94,13 @@ namespace Radiant
       return value;
     }
 
-    std::string doubleToStdString(const double value, const int precision)
+    QString doubleToStdString(const double value, const int precision)
     {
       std::stringstream   ss;
       ss.precision(precision);
 
       ss << value;
-      std::string   str;
+      QString   str;
       ss >> str;
 
       return str;
@@ -185,7 +185,7 @@ namespace Radiant
       }
     }
 
-    void merge(std::wstring & dest, const WStringList & src)
+    void merge(QString & dest, const WStringList & src)
     {
       dest.clear();
 
@@ -287,9 +287,9 @@ namespace Radiant
       }
     }
 
-    std::wstring utf8AsStdWstring(const std::string & src)
+    QString utf8AsStdWstring(const QString & src)
     {
-      std::wstring res;
+      QString res;
       utf8ToStdWstring(res, src);
       return res;
     }
@@ -332,9 +332,9 @@ namespace Radiant
       dest.resize(got);*/
     }
 
-    std::string stdWstringAsUtf8(const std::wstring & src)
+    QString stdWstringAsUtf8(const QString & src)
     {
-      std::string res;
+      QString res;
       stdWstringToUtf8(res, src);
       return res;
     }
@@ -409,9 +409,9 @@ namespace Radiant
       return bytes;
     }
 
-    std::string lowerCase(const std::string & src)
+    QString lowerCase(const QString & src)
     {
-        std::string res(src);
+        QString res(src);
 
         for(unsigned i = 0; i < res.size(); i++) {
             int c = res[i];
@@ -431,7 +431,7 @@ namespace Radiant
       return c + ('A' - 'a');
     }
 
-    void replace(std::string & str, char from, char to)
+    void replace(QString & str, char from, char to)
     {
       for(unsigned i = 0; i < str.size(); i++) {
         if(str[i] == from)
@@ -450,7 +450,7 @@ namespace Radiant
       return -1;
     }
 
-    int which(const StringList & strings, const std::string & str)
+    int which(const StringList & strings, const QString & str)
     {
       int index = 0;
 

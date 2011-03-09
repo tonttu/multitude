@@ -58,7 +58,7 @@ namespace Radiant
   // Construction / destruction.
 
 #ifdef WIN32
-  SMRingBuffer::SMRingBuffer(const std::string smName, const uint32_t size)
+  SMRingBuffer::SMRingBuffer(const QString smName, const uint32_t size)
     : m_isCreator(false),
       m_smName(smName),
       m_hMapFile(0),
@@ -707,7 +707,7 @@ namespace Radiant
     return n +  4;
   }
 
-  bool SMRingBuffer::readString(std::string & str)
+  bool SMRingBuffer::readString(QString & str)
   {
     int32_t tmp = 0;
     int n = read( & tmp, 4);
@@ -768,9 +768,9 @@ namespace Radiant
   // Diagnostics.
 
 #ifndef WIN32
-  std::string SMRingBuffer::shmError()
+  QString SMRingBuffer::shmError()
   {
-    std::string   errMsg;
+    QString   errMsg;
 
     switch(errno)
     {
@@ -798,7 +798,7 @@ namespace Radiant
       {
         std::stringstream  ss;
         ss << errno;
-        errMsg = std::string("errno = ") + ss.str();
+        errMsg = QString("errno = ") + ss.str();
       }
     }
 

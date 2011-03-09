@@ -33,7 +33,7 @@
 
 #include <Radiant/Trace.hpp>
 
-#include <string>
+#include <QString>
 #include <sstream>
 
 namespace Luminous
@@ -71,14 +71,14 @@ namespace Luminous
         warn = false;
         versionMsg << "OpenGL 2.0 supported";
       }
-      else if(GLEW_VERSION_1_5) versionMsg << std::string("OpenGL 1.5 supported");
-      else if(GLEW_VERSION_1_4) versionMsg << std::string("OpenGL 1.4 supported");
-      else if(GLEW_VERSION_1_3) versionMsg << std::string("OpenGL 1.3 supported");
-      else if(GLEW_VERSION_1_2) versionMsg << std::string("OpenGL 1.2 supported");
-      else if(GLEW_VERSION_1_1) versionMsg << std::string("OpenGL 1.1 supported");
+      else if(GLEW_VERSION_1_5) versionMsg << QString("OpenGL 1.5 supported");
+      else if(GLEW_VERSION_1_4) versionMsg << QString("OpenGL 1.4 supported");
+      else if(GLEW_VERSION_1_3) versionMsg << QString("OpenGL 1.3 supported");
+      else if(GLEW_VERSION_1_2) versionMsg << QString("OpenGL 1.2 supported");
+      else if(GLEW_VERSION_1_1) versionMsg << QString("OpenGL 1.1 supported");
 
       char * glsl = (char *)glGetString(GL_SHADING_LANGUAGE_VERSION);
-      std::string glslMsg = (glsl ? glsl : "GLSL not supported");
+      QString glslMsg = (glsl ? glsl : "GLSL not supported");
 
       Radiant::info("%s (%s)", versionMsg.str().c_str(), glslMsg.c_str());
       Radiant::info("%s (%s)", glvendor, glver);

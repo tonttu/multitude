@@ -102,15 +102,15 @@ namespace Radiant {
     }
   }
 
-  bool DateTime::fromString(const std::string & s, DateFormat df)
+  bool DateTime::fromString(const QString & s, DateFormat df)
   { 
     if (df == DATE_ISO) {
       if(s.length() < 8)
         return false;
 
-      std::string yearstr(s, 0, 4);
-      std::string monthstr(s, 5, 2);
-      std::string daystr(s, 8, 4);
+      QString yearstr(s, 0, 4);
+      QString monthstr(s, 5, 2);
+      QString daystr(s, 8, 4);
 
       m_year  = atoi(yearstr.c_str());
       m_month = atoi(monthstr.c_str()) - 1;
@@ -125,13 +125,13 @@ namespace Radiant {
       if(s.length() < 19)
         return false;
 
-      std::string daystr(s, 0, 2);
-      std::string monthstr(s, 3, 2);
-      std::string yearstr(s, 6, 4);
+      QString daystr(s, 0, 2);
+      QString monthstr(s, 3, 2);
+      QString yearstr(s, 6, 4);
 
-      std::string hourstr(s, 11, 2);
-      std::string minstr(s, 14, 2);
-      std::string secstr(s, 17, 2);
+      QString hourstr(s, 11, 2);
+      QString minstr(s, 14, 2);
+      QString secstr(s, 17, 2);
 
       m_year  = atoi(yearstr.c_str());
       m_month = atoi(monthstr.c_str()) - 1;

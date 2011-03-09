@@ -524,7 +524,7 @@ namespace Radiant {
     /* On some systems, sleep is needed for proper multi-camera operation. Sigh.*/
     Radiant::Sleep::sleepMs(s_openDelay);
 
-    std::string videodevice("/dev/video1394");
+    QString videodevice("/dev/video1394");
 
     uint32_t i;
 
@@ -1346,7 +1346,7 @@ namespace Radiant {
       ci.m_euid64 = c->guid;
       ci.m_vendor = c->vendor;
       ci.m_model  = c->model;
-      ci.m_driver = std::string("libdc1394");
+      ci.m_driver = QString("libdc1394");
 
       cameras.push_back(ci);
     }

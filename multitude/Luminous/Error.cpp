@@ -20,7 +20,7 @@
 namespace Luminous
 {
 
-  void glErrorToString(const std::string & msg, int line)
+  void glErrorToString(const QString & msg, int line)
   {
     GLenum err;
 

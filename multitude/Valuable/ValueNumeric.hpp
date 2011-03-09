@@ -35,9 +35,9 @@ namespace Valuable
 
   public:
       ValueNumeric() : ValueObjectT<T>() {}
-      /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
+      /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
       /// @param v The numeric value of this object.
-      ValueNumeric(HasValues * parent, const std::string & name, T v, bool transit = false)
+      ValueNumeric(HasValues * parent, const QString & name, T v, bool transit = false)
       : Base(parent, name, v, transit)
       {}
 
@@ -60,7 +60,7 @@ namespace Valuable
       /// Converts the numeric value to integer
       int asInt(bool * const ok = 0) const { if(ok) *ok = true; return static_cast<int> (Base::m_value); }
       /// Converts the numeric value to string
-      std::string asString(bool * const ok = 0) const { if(ok) *ok = true; return Radiant::StringUtils::stringify(Base::m_value); }
+      QString asString(bool * const ok = 0) const { if(ok) *ok = true; return Radiant::StringUtils::stringify(Base::m_value); }
 
       /// Sets the numberic value
       inline virtual bool set(int v) { Base::m_value = static_cast<T> (v); this->emitChange(); return true; }

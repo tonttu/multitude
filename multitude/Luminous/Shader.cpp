@@ -135,9 +135,9 @@ namespace Luminous {
     Params m_uniforms;
     Params m_varyings;
 
-    std::string m_fragmentShader;
-    std::string m_vertexShader;
-    std::string m_geometryShader;
+    QString m_fragmentShader;
+    QString m_vertexShader;
+    QString m_geometryShader;
 
     int m_generation;
   };

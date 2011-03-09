@@ -35,14 +35,14 @@ namespace Luminous
     ImageCodecQT(const char * suffix);
     virtual ~ImageCodecQT();
     virtual bool canRead(FILE * file);
-    virtual std::string extensions() const;
-    virtual std::string name() const;
+    virtual QString extensions() const;
+    virtual QString name() const;
     virtual bool ping(ImageInfo & image, FILE * file);
     virtual bool read(Image & image, FILE * file);
     virtual bool write(const Image & image, FILE * file);
 
   private:
-    std::string m_suffix;
+    QString m_suffix;
   };
 
 }

@@ -40,22 +40,22 @@ namespace VideoDisplay {
     /// @see FFVideodebug
     const unsigned int s_MaxCached = 100;
 
-    bool comp_ffvideodebug_timestamp(const std::pair<std::string, FFVideodebug> & a, const std::pair<std::string, FFVideodebug> & b)
+    bool comp_ffvideodebug_timestamp(const std::pair<QString, FFVideodebug> & a, const std::pair<QString, FFVideodebug> & b)
     {
       return a.second.m_used < b.second.m_used;
     }
   }
 
   /* Here we cache the first frames off all viedos. */
-  static std::map<std::string, FFVideodebug> __ffcache;
+  static std::map<QString, FFVideodebug> __ffcache;
 
   static Radiant::MutexStatic __mutex;
 
-  const FFVideodebug * __cacheddebug(const std::string & filename)
+  const FFVideodebug * __cacheddebug(const QString & filename)
   {
     Radiant::GuardStatic g(__mutex);
 
-    std::map<std::string, FFVideodebug>::iterator it = __ffcache.find(filename);
+    std::map<QString, FFVideodebug>::iterator it = __ffcache.find(filename);
 
     if(it == __ffcache.end())
       return 0;

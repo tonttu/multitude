@@ -58,24 +58,24 @@ namespace Poetic
     internalRender(str, n, transform);
   }
 
-  void GPUFont::render(const std::string & str, const Nimble::Matrix3 & transform)
+  void GPUFont::render(const QString & str, const Nimble::Matrix3 & transform)
   {
     internalRender(str.c_str(), (int) str.size(), transform);
   }
 
-  void GPUFont::render(const std::string & str, const Nimble::Vector2 & location)
+  void GPUFont::render(const QString & str, const Nimble::Vector2 & location)
   {
     internalRender(str.c_str(), (int) str.size(),
 		   Nimble::Matrix3::translate2D(location));
   }
 
-  void GPUFont::render(const std::wstring & str, const Nimble::Vector2 & location)
+  void GPUFont::render(const QString & str, const Nimble::Vector2 & location)
   {
     internalRender(str.c_str(), (int) str.size(),
 		   Nimble::Matrix3::translate2D(location));
   }
 
-  void GPUFont::render(const std::string & str)
+  void GPUFont::render(const QString & str)
   {
     Nimble::Matrix3 transform;
     transform.identity();
@@ -96,7 +96,7 @@ namespace Poetic
     internalRender(str, (int) wcslen(str), transform);
   }
 
-  void GPUFont::render(const std::wstring & str)
+  void GPUFont::render(const QString & str)
   {
     Nimble::Matrix3 transform;
     transform.identity();
@@ -129,7 +129,7 @@ namespace Poetic
     internalRender(str, n, transform);
   }
 
-  void GPUFont::render(const std::wstring & str, const Nimble::Matrix3 & transform)
+  void GPUFont::render(const QString & str, const Nimble::Matrix3 & transform)
   {
     internalRender(str.c_str(), (int) str.length(), transform);
   }

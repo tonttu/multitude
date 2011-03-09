@@ -34,7 +34,7 @@ namespace Valuable
 
   bool ConfigDocument::readConfigFile(const char *fileName)
   {
-    std::string str;
+    QString str;
 
     std::ifstream input(fileName, std::ios_base::in);
 
@@ -56,7 +56,7 @@ namespace Valuable
 	continue;
 
       if(parseLine(str)==ELEMENT_START) {
-	std::string s;
+	QString s;
 	depth++;
 	ConfigElement elm,e;
 	size_t ps=str.find(",");
@@ -185,7 +185,7 @@ namespace Valuable
   
   void ConfigDocument::writeConfig(std::ostream & output)
   {
-    std::string aa = getConfigText(m_doc);
+    QString aa = getConfigText(m_doc);
 
     //	for(int i=ss.size()-1;i>=0;i--)
     //		output<<ss[i];
@@ -193,20 +193,20 @@ namespace Valuable
     output << aa;
   }
 
-  void ConfigDocument::trimSpaces( std::string& str)  
+  void ConfigDocument::trimSpaces( QString& str)  
   {  
     using namespace std;
     size_t startpos = str.find_first_not_of(" \t"); 
     size_t endpos = str.find_last_not_of(" \t"); 
 
-    if(( std::string::npos == startpos ) || ( std::string::npos == endpos)) {  
+    if(( QString::npos == startpos ) || ( QString::npos == endpos)) {  
       str = "";  
     }  
     else  
       str = str.substr( startpos, endpos-startpos+1 );  
  
   }
-  ConfigElement *ConfigDocument::getConfigElement(std::string elementName)
+  ConfigElement *ConfigDocument::getConfigElement(QString elementName)
   {
     bool found=false;
 		
@@ -217,8 +217,8 @@ namespace Valuable
       return 0;
 
   }
-  ConfigElement *ConfigDocument::getConfigElement(std::string key,
-						  std::string value)
+  ConfigElement *ConfigDocument::getConfigElement(QString key,
+						  QString value)
   {
     bool found=false;
 		
@@ -231,7 +231,7 @@ namespace Valuable
   }
 
   ConfigElement *ConfigDocument::findConfigElement
-  (ConfigElement &e,bool &found,std::string key,std::string value)
+  (ConfigElement &e,bool &found,QString key,QString value)
   {
     for(int i=0;i < (int)e.m_nodes.size() ;i++) {
       ConfigElement *w;
@@ -241,9 +241,9 @@ namespace Valuable
     }
 
     for(int j=0;j<(int)e.m_values.size();j++) {
-      std::string ke=e.m_values[j].m_key;
+      QString ke=e.m_values[j].m_key;
       trimSpaces(ke);
-      std::string val=e.m_values[j].m_value;
+      QString val=e.m_values[j].m_value;
       trimSpaces(val);
       
       if(key==ke && value==val) {
@@ -258,7 +258,7 @@ namespace Valuable
   }
 
   ConfigElement *ConfigDocument::findConfigElement
-  (ConfigElement &e,std::string elementName,bool &found)
+  (ConfigElement &e,QString elementName,bool &found)
   {
     for(int i=0;i < (int)e.m_nodes.size() ;i++) {
       ConfigElement *w;
@@ -268,7 +268,7 @@ namespace Valuable
       
     }
 
-    std::string s=e.m_elementName;
+    QString s=e.m_elementName;
     trimSpaces(s);
 
     if(s==elementName) {
@@ -281,9 +281,9 @@ namespace Valuable
     return 0;
   }
 
-  static std::string __indent(int recursion)
+  static QString __indent(int recursion)
   {
-    std::string res;
+    QString res;
 
     for(int i = 0; i < recursion; i++)
       res += "  ";
@@ -291,11 +291,11 @@ namespace Valuable
     return res;
   }
 
-  std::string ConfigDocument::getConfigText(ConfigElement e, int recursion)
+  QString ConfigDocument::getConfigText(ConfigElement e, int recursion)
   {
-    std::string str;
-    std::string ind(__indent(recursion));
-    std::string ind2(ind + "  ");
+    QString str;
+    QString ind(__indent(recursion));
+    QString ind2(ind + "  ");
 
    /* printf("Element name \"%s\" (%d)\n", e.m_elementName.c_str(),
      recursion);*/
@@ -328,7 +328,7 @@ namespace Valuable
     return str;
   }
 
-  ConfigDocument::ParseFlags ConfigDocument::parseLine(std::string line)
+  ConfigDocument::ParseFlags ConfigDocument::parseLine(QString line)
   {
     if(line[line.length()-1]=='{')
       return ELEMENT_START;
@@ -343,7 +343,7 @@ namespace Valuable
     }
   }
 
-  bool ConfigDocument::getline(FILE * input, std::string & str)
+  bool ConfigDocument::getline(FILE * input, QString & str)
   {
     str.clear();
     bool ok = true;

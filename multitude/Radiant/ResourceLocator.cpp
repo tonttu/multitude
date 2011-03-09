@@ -27,7 +27,7 @@ namespace Radiant
 
   ResourceLocator ResourceLocator::s_instance;
 
-  std::string   ResourceLocator::separator = ";";
+  QString   ResourceLocator::separator = ";";
 
   ResourceLocator::ResourceLocator()
   {}
@@ -35,7 +35,7 @@ namespace Radiant
   ResourceLocator::~ResourceLocator()
   {}
 
-  void ResourceLocator::addPath(const std::string & path, bool front)
+  void ResourceLocator::addPath(const QString & path, bool front)
   {
 	  if(path.empty()) {
 		  error("ResourceLocator::addPath # attempt to add an empty path");
@@ -56,22 +56,22 @@ namespace Radiant
     }
   }
 
-  void ResourceLocator::addModuleDataPath(const std::string & module,
+  void ResourceLocator::addModuleDataPath(const QString & module,
 					  bool front)
   {
-    std::string p1 = 
+    QString p1 = 
       PlatformUtils::getModuleUserDataPath(module.c_str(), false);
-    std::string p2 =
+    QString p2 =
       PlatformUtils::getModuleGlobalDataPath(module.c_str(), false);
 
     addPath(p1 + separator + p2, front);
   }
 
-  std::string ResourceLocator::locate(const std::string & file) const
+  QString ResourceLocator::locate(const QString & file) const
   {
     if(file.empty()) return file;
 
-    std::string r = FileUtils::findFile(file, m_paths);
+    QString r = FileUtils::findFile(file, m_paths);
 
     /*if(r.empty()) {
       Radiant::trace(WARNING, "ResourceLocator::locate # couldn't locate %s", file.c_str());
@@ -80,13 +80,13 @@ namespace Radiant
     return r;
   }
 
-  std::string ResourceLocator::locateWriteable(const std::string & file) const
+  QString ResourceLocator::locateWriteable(const QString & file) const
   {
     StringUtils::StringList list;
     StringUtils::split(m_paths, ";", list, true);
 
     for(StringUtils::StringList::iterator it = list.begin(); it != list.end(); it++) {
-      const std::string path = (*it) + "/" + file;
+      const QString path = (*it) + "/" + file;
 
       FILE * file = fopen(path.c_str(), "w");
       if(file) {
@@ -95,10 +95,10 @@ namespace Radiant
       }      
     }
 
-    return std::string();
+    return QString();
   }
 
-  std::string ResourceLocator::locateOverWriteable(const std::string & file)
+  QString ResourceLocator::locateOverWriteable(const QString & file)
     const
   {
     return FileUtils::findOverWritable(file, m_paths);

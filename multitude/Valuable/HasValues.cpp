@@ -48,7 +48,7 @@ namespace Valuable
       m_frame(0)
   {}
 
-  HasValues::HasValues(HasValues * parent, const std::string & name, bool transit)
+  HasValues::HasValues(HasValues * parent, const QString & name, bool transit)
       : ValueObject(parent, name, transit),
       m_eventsEnabled(true),
       m_id(this, "id", generateId()),
@@ -73,14 +73,14 @@ namespace Valuable
     }
   }
 
-  ValueObject * HasValues::getValue(const std::string & name)
+  ValueObject * HasValues::getValue(const QString & name)
   {
     container::iterator it = m_children.find(name);
 
     return it == m_children.end() ? 0 : it->second;
   }
 
-  bool HasValues::addValue(const std::string & cname, ValueObject * const value)
+  bool HasValues::addValue(const QString & cname, ValueObject * const value)
   {
     //    Radiant::trace("HasValues::addValue # adding %s", cname.c_str());
 
@@ -114,7 +114,7 @@ namespace Valuable
 
   void HasValues::removeValue(ValueObject * const value)
   {
-    const std::string & cname = value->name();
+    const QString & cname = value->name();
 
     container::iterator it = m_children.find(cname);
     if(it == m_children.end()) {
@@ -194,7 +194,7 @@ namespace Valuable
     for(ArchiveElement::Iterator & it = element.children(); it; ++it) {
       ArchiveElement & elem = *it;
 
-      std::string name = elem.name();
+      QString name = elem.name();
 
       ValueObject * vo = getValue(name);
 
@@ -221,7 +221,7 @@ namespace Valuable
       HasValues * hv = dynamic_cast<HasValues *> (vo);
       if(hv) hv->debugDump();
       else {
-        std::string s = vo->asString();
+        QString s = vo->asString();
         Radiant::trace(Radiant::DEBUG, "\t%s = %s", vo->name().c_str(), s.c_str());
       }
     }
@@ -316,7 +316,7 @@ namespace Valuable
 
     const char * delim = strchr(id, '/');
 
-    std::string key(id);
+    QString key(id);
     int skip;
 
     if(delim) {
@@ -351,7 +351,7 @@ namespace Valuable
     return m_id;
   }
 
-  void HasValues::eventSend(const std::string & id, Radiant::BinaryData & bd)
+  void HasValues::eventSend(const QString & id, Radiant::BinaryData & bd)
   {
     eventSend(id.c_str(), bd);
   }
@@ -397,7 +397,7 @@ namespace Valuable
     eventSend(id, tmp);
   }
 
-  void HasValues::childRenamed(const std::string & was, const std::string & now)
+  void HasValues::childRenamed(const QString & was, const QString & now)
   {
     iterator it = m_children.find(was);
     if(it == m_children.end()) {
@@ -416,9 +416,9 @@ namespace Valuable
   }
 
   // Template functions must be instantiated to be exported
-  template VALUABLE_API bool HasValues::setValue<float>(const std::string & name, const float &);
-  template VALUABLE_API bool HasValues::setValue<Nimble::Vector2T<float> >(const std::string & name, const Nimble::Vector2T<float> &);
-  template VALUABLE_API bool HasValues::setValue<Nimble::Vector4T<float> >(const std::string & name, const Nimble::Vector4T<float> &);
+  template VALUABLE_API bool HasValues::setValue<float>(const QString & name, const float &);
+  template VALUABLE_API bool HasValues::setValue<Nimble::Vector2T<float> >(const QString & name, const Nimble::Vector2T<float> &);
+  template VALUABLE_API bool HasValues::setValue<Nimble::Vector4T<float> >(const QString & name, const Nimble::Vector4T<float> &);
 
 
 }

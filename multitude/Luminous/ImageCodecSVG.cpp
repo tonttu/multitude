@@ -66,14 +66,14 @@ namespace Luminous {
     return seems_valid;
   }
 
-  std::string ImageCodecSVG::extensions() const
+  QString ImageCodecSVG::extensions() const
   {
-    return std::string("svg");
+    return QString("svg");
   }
 
-  std::string ImageCodecSVG::name() const
+  QString ImageCodecSVG::name() const
   {
-    return std::string("svg");
+    return QString("svg");
   }
 
   bool ImageCodecSVG::ping(ImageInfo & info, FILE * file)

@@ -351,7 +351,7 @@ namespace Luminous {
     return item;
   }
 
-  void CPUMipmaps::cacheFileName(std::string & name, int level)
+  void CPUMipmaps::cacheFileName(QString & name, int level)
   {
     char buf[32];
 
@@ -366,7 +366,7 @@ namespace Luminous {
     name += buf;
     name += Radiant::FileUtils::filename(m_filename);
 
-    std::string suffix = Radiant::FileUtils::suffix(name);
+    QString suffix = Radiant::FileUtils::suffix(name);
 
     if(!suffix.empty()) {
 
@@ -395,7 +395,7 @@ namespace Luminous {
     if(m_shouldSave.find(level) != m_shouldSave.end()) {
       // Try loading a pre-generated smaller-scale mipmap
 
-      std::string filename;
+      QString filename;
       cacheFileName(filename, level);
 
       if(Radiant::FileUtils::fileReadable(filename) &&
@@ -475,7 +475,7 @@ namespace Luminous {
     // info("Loaded image %s %d", m_filename.c_str(), is.x);
 
     if(m_shouldSave.find(level) != m_shouldSave.end()) {
-      std::string filename;
+      QString filename;
       cacheFileName(filename, level);
       Directory::mkdir(FileUtils::path(filename));
       imdest->write(filename.c_str());

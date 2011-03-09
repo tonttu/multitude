@@ -35,18 +35,18 @@ namespace Radiant
   namespace PlatformUtils
   {
 
-    std::string getExecutablePath()
+    QString getExecutablePath()
     {
       // Get the full exe path / fileneme
 
-      std::string   path;
+      QString   path;
 
       char  buffer[_MAX_PATH] = "";
       if(GetModuleFileNameA(0, buffer, _MAX_PATH) != 0)
       {
          // remove the filename part
          PathRemoveFileSpecA(buffer);
-         path = std::string(buffer);
+         path = QString(buffer);
       }
       else
       {
@@ -56,16 +56,16 @@ namespace Radiant
       return path;
     }
 
-    std::string getUserHomePath()
+    QString getUserHomePath()
     {
       // Typically this retrieves "C:\Documents and Settings\(username)"
 
-      std::string   path;
+      QString   path;
 
       char  buffer[_MAX_PATH] = "";
       if(SHGetFolderPathA(0, CSIDL_PROFILE | CSIDL_FLAG_CREATE, 0, 0, buffer) == S_OK)
       {
-        path = std::string(buffer);
+        path = QString(buffer);
       }
       else
       {
@@ -75,7 +75,7 @@ namespace Radiant
       return path;
     }
 
-    std::string getModuleGlobalDataPath(const char * module, bool isapplication)
+    QString getModuleGlobalDataPath(const char * module, bool isapplication)
     {
       (void) isapplication;
 
@@ -84,12 +84,12 @@ namespace Radiant
       // Typically this retrieves "C:\Documents and Settings\All Users\Application Data"
       // which by most accounts is the safest place to store application data
 
-      std::string   path;
+      QString   path;
 
       char  buffer[_MAX_PATH] = "";
       if(SHGetFolderPathA(0, CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE, 0, 0, buffer) == S_OK)
       {
-        path = std::string(buffer) + std::string("\\") + std::string(module);
+        path = QString(buffer) + QString("\\") + QString(module);
       }
       else
       {
@@ -99,7 +99,7 @@ namespace Radiant
       return path;
     }
 
-    std::string getModuleUserDataPath(const char * module, bool isapplication)
+    QString getModuleUserDataPath(const char * module, bool isapplication)
     {
       (void) isapplication;
 
@@ -107,12 +107,12 @@ namespace Radiant
 
       // Typically this retrieves "C:\Documents and Settings\(username)\Application Data"
 
-      std::string   path;
+      QString   path;
 
       char  buffer[_MAX_PATH] = "";
       if(SHGetFolderPathA(0, CSIDL_APPDATA | CSIDL_FLAG_CREATE, 0, 0, buffer) == S_OK)
       {
-        path = std::string(buffer) + std::string("\\") + std::string(module);
+        path = QString(buffer) + QString("\\") + QString(module);
       }
       else
       {
@@ -132,7 +132,7 @@ namespace Radiant
 
     void * openPlugin(const char * path)
     {
-      const std::wstring  wp = StringUtils::stdStringToStdWstring(std::string(path));
+      const QString  wp = StringUtils::stdStringToStdWstring(QString(path));
 
       return (void *)(LoadLibrary(wp.data()));
     }

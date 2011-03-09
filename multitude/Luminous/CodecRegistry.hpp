@@ -18,7 +18,7 @@
 
 #include <vector>
 #include <map>
-#include <string>
+#include <QString>
 
 namespace Luminous
 {
@@ -37,14 +37,14 @@ namespace Luminous
     /// @param file the file to query
     /// @return returns a pointer to a codec that reports it can load the given
     /// file or NULL if no codec is found.
-    ImageCodec * getCodec(const std::string & filename, FILE * file = 0);
+    ImageCodec * getCodec(const QString & filename, FILE * file = 0);
     /// Register a new codec that can be used to load images
     /// @param codec the new codec
     void registerCodec(ImageCodec * codec);
 
   private:
     typedef std::vector<ImageCodec *> Codecs;
-    typedef std::multimap<std::string, ImageCodec *> Aliases;
+    typedef std::multimap<QString, ImageCodec *> Aliases;
 
     Codecs m_codecs;
     Aliases m_aliases;

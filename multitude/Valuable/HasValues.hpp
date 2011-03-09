@@ -27,7 +27,7 @@
 #include <v8.h>
 
 #include <map>
-#include <string>
+#include <QString>
 
 #define VO_TYPE_HASVALUES "HasValues"
 
@@ -54,29 +54,29 @@ namespace Valuable
       @param name name of the object
       @param transit should the object changes be transmitted
     */
-    HasValues(HasValues * parent, const std::string & name, bool transit = false);
+    HasValues(HasValues * parent, const QString & name, bool transit = false);
     virtual ~HasValues();
 
     /// Adds new ValueObject to the list of values
-    bool addValue(const std::string & name, ValueObject * const value);
+    bool addValue(const QString & name, ValueObject * const value);
     /// Gets a ValueObject with the given name
     /** If no object can be found, then this method return zero. */
-    ValueObject * getValue(const std::string & name);
+    ValueObject * getValue(const QString & name);
     /// Removes a ValueObject from the list of value.
     void removeValue(ValueObject * const value);
 
     /// @todo add 'shortcut' API
-    // float getValueFloat(const std::string & name, bool * ok = 0, float default = 0.f)
+    // float getValueFloat(const QString & name, bool * ok = 0, float default = 0.f)
     // ...
 
     template<class T>
-    bool setValue(const std::string & name, const T & v)
+    bool setValue(const QString & name, const T & v)
     {
       size_t cut = name.find("/");
-      std::string next = name.substr(0, cut);
-      std::string rest = name.substr(cut + 1);
+      QString next = name.substr(0, cut);
+      QString rest = name.substr(cut + 1);
 
-      if(next == std::string("..")) {
+      if(next == QString("..")) {
         if(!m_parent) {
           Radiant::error(
               "HasValues::setValue # node '%s' has no parent", m_name.c_str());
@@ -125,7 +125,7 @@ namespace Valuable
     void debugDump();
 
     /// Container for key-value object pairs
-    typedef std::map<std::string, ValueObject *> container;
+    typedef std::map<QString, ValueObject *> container;
     /// Iterator for the container
     typedef container::iterator iterator;
 
@@ -208,7 +208,7 @@ namespace Valuable
   protected:
 
     /// Sends an event to all listeners on this object
-    void eventSend(const std::string & id, Radiant::BinaryData &);
+    void eventSend(const QString & id, Radiant::BinaryData &);
     /// @copydoc eventSend
     void eventSend(const char *, Radiant::BinaryData &);
     /// @copydoc eventSend
@@ -217,7 +217,7 @@ namespace Valuable
   private:
     friend class ValueObject; // So that ValueObject can call the function below.
 
-    void childRenamed(const std::string & was, const std::string & now);
+    void childRenamed(const QString & was, const QString & now);
     void addNews();
 
     container m_children;
@@ -231,8 +231,8 @@ namespace Valuable
       Valuable::HasValues * m_listener;
       v8::Persistent<v8::Function> m_func;
       Radiant::BinaryData   m_defaultData;
-      std::string m_from;
-      std::string m_to;
+      QString m_from;
+      QString m_to;
       bool        m_valid;
       int         m_frame;
     };

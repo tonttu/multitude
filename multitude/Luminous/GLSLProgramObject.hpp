@@ -25,7 +25,7 @@
 #include <Patterns/NotCopyable.hpp>
 
 #include <list>
-#include <string>
+#include <QString>
 #include <vector>
 
 namespace Luminous
@@ -59,12 +59,12 @@ namespace Luminous
     virtual void unbind();
 
     /// Gets the location of the given uniform variable
-    int getUniformLoc(const std::string & name);
+    int getUniformLoc(const QString & name);
     /// Gets the location of the given uniform variable
     int getUniformLoc(const char * name);
 
     /// Gets the location of the given attribute variable
-    int getAttribLoc(const std::string & name);
+    int getAttribLoc(const QString & name);
     /// Gets the location of the given attribute variable
     int getAttribLoc(const char * name);
 

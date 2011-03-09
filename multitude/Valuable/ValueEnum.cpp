@@ -36,7 +36,7 @@ namespace Valuable
 
   void ValueEnum::processMessage(const char * , Radiant::BinaryData & data)
   {
-    std::string str;
+    QString str;
     data.readString(str);
 
     const char * name;

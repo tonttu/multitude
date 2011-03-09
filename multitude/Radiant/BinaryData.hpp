@@ -95,11 +95,11 @@ namespace Radiant {
     /// Write a null-terminated string to the buffer
     void writeString(const char *);
     /// Write a string to the buffer
-    void writeString(const std::string & str) { writeString(str.c_str()); }
+    void writeString(const QString & str) { writeString(str.c_str()); }
     /** Writes a wide-string to the buffer. The string is internally
     stored as 32-bit integers, since that is the typical
     wchar_t.*/
-    void writeWString(const std::wstring & str);
+    void writeWString(const QString & str);
 
     /// Writes binary blob to the buffer.
     void writeBlob(const void * ptr, int n);
@@ -143,9 +143,9 @@ namespace Radiant {
     /// Read a null-terminated string from the buffer
     bool readString(char * str, size_t maxbytes);
     /// Read a string from the buffer
-    bool readString(std::string & str);
+    bool readString(QString & str);
     /// Reads a wide string from the buffer
-    bool readWString(std::wstring & str);
+    bool readWString(QString & str);
     /// Reads a blob of expected size
     bool readBlob(void * ptr, int n);
 
@@ -250,18 +250,18 @@ namespace Radiant {
   template <> inline Nimble::Vector4i BinaryData::read(bool * ok)
   { return readVector4Int32(ok); }
 
-  template <> inline std::string BinaryData::read(bool * ok)
+  template <> inline QString BinaryData::read(bool * ok)
   {
-      std::string tmp;
+      QString tmp;
       bool good = readString(tmp);
       if(ok)
             *ok = good;
     return tmp;
   }
 
-  template <> inline std::wstring BinaryData::read(bool * ok)
+  template <> inline QString BinaryData::read(bool * ok)
   {
-      std::wstring tmp;
+      QString tmp;
       bool good = readWString(tmp);
       if(ok)
             *ok = good;

@@ -74,8 +74,8 @@ namespace Resonant {
 
     friend class ModuleRectPanner;
 
-    void setSourceLocation(const std::string &, Nimble::Vector2 location);
-    void removeSource(const std::string &);
+    void setSourceLocation(const QString &, Nimble::Vector2 location);
+    void removeSource(const QString &);
 
     /// @cond
     class LoudSpeaker : public Valuable::HasValues
@@ -113,7 +113,7 @@ namespace Resonant {
 
       Nimble::Vector2 m_location;
       bool  m_updates;
-      std::string  m_id;
+      QString  m_id;
       long m_generation; /// @see ModulePanner::m_generation
 
       std::vector<Pipe> m_pipes;

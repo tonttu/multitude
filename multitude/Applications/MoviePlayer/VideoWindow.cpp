@@ -70,7 +70,7 @@ bool VideoWindow::open(const char * filename, const char * audiodev)
   std::shared_ptr<Item> item(new Item());
 
   item->m_show.setContrast(m_contrast);
-  std::string srtfile = Radiant::FileUtils::baseFilename(filename) + ".srt";
+  QString srtfile = Radiant::FileUtils::baseFilename(filename) + ".srt";
 
   item->m_show.loadSubTitles(srtfile.c_str());
 
@@ -134,7 +134,7 @@ void VideoWindow::randomOperation()
   }
   else if(operation == RECREATE) {
 
-    std::string filename = show.filename();
+    QString filename = show.filename();
     it->reset(); // delete old
 
     std::shared_ptr<Item> item(new Item());
@@ -209,7 +209,7 @@ void VideoWindow::initializeGL()
   const char * ttf = "DejaVuSans.ttf";
   /// @todo Font fixing
   const char * path = ".:/Users/tommi/screenapps/Fonts/";
-  std::string filename = Radiant::FileUtils::findFile(ttf, path);
+  QString filename = Radiant::FileUtils::findFile(ttf, path);
 
   if(filename.size()) {
     m_subCPUFont = Poetic::FontManager::instance().getFont(ttf);

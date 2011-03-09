@@ -21,7 +21,7 @@
 
 #include <Nimble/Rect.hpp>
 
-#include <string>
+#include <QString>
 #include <stdint.h>
 #include <dc1394/control.h>
 
@@ -104,7 +104,7 @@ namespace Radiant {
 
   private:
     bool enableCameraFeature(unsigned int feature,
-                             const std::string & description,
+                             const QString & description,
                              bool automatic_mode,
                              unsigned int * feature_min_value,
                              unsigned int * feature_max_value);
@@ -112,7 +112,7 @@ namespace Radiant {
     bool findCamera(uint64_t euid);
     void captureSetup(int buffers);
 
-    std::string    m_videodevice;
+    QString    m_videodevice;
 
     /** camera capture information. */
     dc1394camera_t * m_camera;
@@ -151,7 +151,7 @@ namespace Radiant {
 
     virtual size_t queryCameras(std::vector<VideoCamera::CameraInfo> & cameras);
     virtual VideoCamera * createCamera();
-    virtual std::string driverName() const { return "libdc"; }
+    virtual QString driverName() const { return "libdc"; }
   };
 
 }

@@ -103,7 +103,7 @@ namespace Radiant
 
     virtual size_t queryCameras(std::vector<VideoCamera::CameraInfo> & cameras);
     virtual VideoCamera * createCamera();
-    virtual std::string driverName() const { return "ptgrey"; }
+    virtual QString driverName() const { return "ptgrey"; }
   };
 
 }

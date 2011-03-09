@@ -21,7 +21,7 @@ namespace Poetic
     using namespace Radiant;
     using namespace StringUtils;
 
-    void Utils::breakToLines(const std::wstring & ws, const float width,
+    void Utils::breakToLines(const QString & ws, const float width,
       CPUFont & fnt, WStringList & lines, const bool afterSpace)
     {
       // Ensure line list empty
@@ -41,7 +41,7 @@ namespace Poetic
 
       // First break the wstring at newlines
 
-      std::wstring  delim;
+      QString  delim;
       delim = W_NEWLINE;
       WStringList   wSub;
 
@@ -51,7 +51,7 @@ namespace Poetic
 
       /*for(WStringList::iterator itSub = wSub.begin(); itSub != wSub.end(); ) {
 	
-	std::wstring & str = *itSub;
+	QString & str = *itSub;
 	
 	itSub++;
 
@@ -66,7 +66,7 @@ namespace Poetic
       */
       // Break the resulting sub-wstrings to fit width
 
-      delim = std::wstring(L" ");
+      delim = QString(L" ");
 
       for(WStringList::iterator itSub = wSub.begin(); itSub != wSub.end(); itSub++)
       {
@@ -91,7 +91,7 @@ namespace Poetic
           BBox  bBox;
           for(int i = numWords; i >= 1 && !got; i--)
           {
-            std::wstring  ln;
+            QString  ln;
             WStringList::iterator   itWord = words.begin();
             for(int j = 0; j < i; j++, itWord++)
             {
@@ -116,11 +116,11 @@ namespace Poetic
 
           // Truncate the overlong word to fit width
 
-          const std::wstring  word = words.front();
+          const QString  word = words.front();
           const int   numChars = word.length();
           for(int i = numChars - 1; i >= 1 && !got; i--)
           {
-            const std::wstring  ln = word.substr(0, i + 1);
+            const QString  ln = word.substr(0, i + 1);
             fnt.bbox((wchar_t *)(ln.data()), bBox);
             if(bBox.width() <= width)
             {
@@ -136,7 +136,7 @@ namespace Poetic
       // If last character is newline append empty line
 
       if(ws[ws.length() - 1] == W_NEWLINE) {
-        lines.push_back(std::wstring(L""));
+        lines.push_back(QString(L""));
       }
       /*
       for(WStringList::iterator itSub = lines.begin(); itSub != lines.end(); itSub++) {
@@ -153,7 +153,7 @@ namespace Poetic
       */
     }
 
-    void Utils::split(const std::wstring & ws, const std::wstring & delim,
+    void Utils::split(const QString & ws, const QString & delim,
       WStringList & out, const bool afterDelim)
     {
       out.clear();
@@ -165,7 +165,7 @@ namespace Poetic
 
       // Find first a delimiter
 
-      std::wstring  wsCopy(ws);
+      QString  wsCopy(ws);
       size_t  pos = wsCopy.find_first_of(delim);
 
       // Loop until no delimiters left

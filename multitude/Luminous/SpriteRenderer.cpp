@@ -143,7 +143,7 @@ namespace Luminous {
   SpriteRenderer::SpriteRenderer()
     : m_data(new Internal())
   {
-    std::string shaderPath = Radiant::ResourceLocator::instance().locate("SpriteRenderer/Shaders");
+    QString shaderPath = Radiant::ResourceLocator::instance().locate("SpriteRenderer/Shaders");
 
     if(shaderPath.empty()) {
       error("SpriteRenderer::SpriteRenderer # Could not locate shaders");

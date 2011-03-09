@@ -99,13 +99,13 @@ namespace Valuable
   }
 
   template<class VectorType, typename ElementType, int N>
-  std::string ValueVector<VectorType, ElementType, N>::asString(bool * const ok) const {
+  QString ValueVector<VectorType, ElementType, N>::asString(bool * const ok) const {
     if(ok) *ok = true;
 
-    std::string r = Radiant::StringUtils::stringify(Base::m_value[0]);
+    QString r = Radiant::StringUtils::stringify(Base::m_value[0]);
 
     for(int i = 1; i < N; i++)
-      r += std::string(" ") + Radiant::StringUtils::stringify(Base::m_value[i]);
+      r += QString(" ") + Radiant::StringUtils::stringify(Base::m_value[i]);
 
     return r;
   }

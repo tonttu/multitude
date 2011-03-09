@@ -319,7 +319,7 @@ namespace Luminous {
 
   bool MultiHead::Window::readElement(Valuable::DOMElement ce)
   {
-    const std::string & name = ce.getTagName();
+    const QString & name = ce.getTagName();
 
     // Get the 'type' attribute
     if(!ce.hasAttribute("type")) {
@@ -328,9 +328,9 @@ namespace Luminous {
       return false;
     }
 
-    const std::string & type = ce.getAttribute("type");
+    const QString & type = ce.getAttribute("type");
 
-    if(type == std::string("area")) {
+    if(type == QString("area")) {
       Area * area = new Area(this);
       // Add as child & recurse
       addValue(name, area);
@@ -513,7 +513,7 @@ namespace Luminous {
 
   bool MultiHead::readElement(Valuable::DOMElement ce)
   {
-    const std::string & name = ce.getTagName();
+    const QString & name = ce.getTagName();
 
     // Get the 'type' attribute
     if(!ce.hasAttribute("type")) {
@@ -521,9 +521,9 @@ namespace Luminous {
       return false;
     }
 
-    const std::string & type = ce.getAttribute("type");
+    const QString & type = ce.getAttribute("type");
 
-    if(type == std::string("window")) {
+    if(type == QString("window")) {
       Window * win = new Window(this);
 
       // Add as child & recurse

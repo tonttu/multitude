@@ -58,7 +58,7 @@ namespace Radiant
     return len;
   }
 
-  unsigned long FileUtils::getFileLen(const std::string & filename)
+  unsigned long FileUtils::getFileLen(const QString & filename)
   {
     std::ifstream file(filename.c_str());
 
@@ -70,7 +70,7 @@ namespace Radiant
     return PlatformUtils::fileReadable(filename);
   }
 
-  bool FileUtils::fileReadable(const std::string & filename)
+  bool FileUtils::fileReadable(const QString & filename)
   {
     return PlatformUtils::fileReadable(filename.c_str());
   }
@@ -125,9 +125,9 @@ namespace Radiant
     return contents;
   }
 
-  std::wstring FileUtils::readTextFile(const std::string & filename)
+  QString FileUtils::readTextFile(const QString & filename)
   {
-    std::wstring res;
+    QString res;
 
     ifstream file(filename.c_str());
 
@@ -185,13 +185,13 @@ namespace Radiant
         filepath.substr(cut1, cut2 - cut1) : filepath.substr(0, cut2);
   }
 
-  std::string FileUtils::baseFilenameWithPath(const std::string & filepath)
+  QString FileUtils::baseFilenameWithPath(const QString & filepath)
   {
     size_t cut2 = filepath.rfind(".");
     return filepath.substr(0, cut2);
   }
 
-  std::string FileUtils::withoutSuffix(const std::string & filepath)
+  QString FileUtils::withoutSuffix(const QString & filepath)
   {
     size_t cut = filepath.rfind(".");
     if(cut > 0)
@@ -201,7 +201,7 @@ namespace Radiant
   }
 
 
-  std::string FileUtils::suffix(const string & filepath)
+  QString FileUtils::suffix(const string & filepath)
   {
     QFileInfo fi(filepath.c_str());
 
@@ -214,8 +214,8 @@ namespace Radiant
     return StringUtils::lowerCase(filepath.substr(cut));
   }
 
-  bool FileUtils::suffixMatch(const std::string & filename,
-                              const std::string & suf)
+  bool FileUtils::suffixMatch(const QString & filename,
+                              const QString & suf)
   {
     string s = suffix(filename);
     return StringUtils::lowerCase(s) == StringUtils::lowerCase(suf);
@@ -238,7 +238,7 @@ namespace Radiant
       }
     }
 
-    return std::string();
+    return QString();
   }
 
   string FileUtils::findOverWritable(const string & filename, const string & paths)
@@ -257,7 +257,7 @@ namespace Radiant
     return filename;
   }
 
-  FILE * FileUtils::createFilePath(const std::string & filePath)
+  FILE * FileUtils::createFilePath(const QString & filePath)
   {
     if(filePath.empty()) return 0;
 
@@ -282,21 +282,21 @@ namespace Radiant
     return fopen(soFar.c_str(), "w");
   }
 
-  bool FileUtils::looksLikeImage(const std::string & filePath)
+  bool FileUtils::looksLikeImage(const QString & filePath)
   {
     return suffixMatch(filePath, "png") ||
         suffixMatch(filePath, "jpg") ||
         suffixMatch(filePath, "jpeg");
   }
 
-  bool FileUtils::looksLikeVideo(const std::string & filePath)
+  bool FileUtils::looksLikeVideo(const QString & filePath)
   {
     return suffixMatch(filePath, "avi") ||
         suffixMatch(filePath, "qt") ||
         suffixMatch(filePath, "mov");
   }
 
-  unsigned long int FileUtils::lastModified(const std::string & filePath)
+  unsigned long int FileUtils::lastModified(const QString & filePath)
   {
     struct stat file;
     if(stat(filePath.c_str(), &file) == -1) {

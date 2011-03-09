@@ -30,7 +30,7 @@ namespace Radiant
   namespace PlatformUtils
   {
 
-    std::string getExecutablePath()
+    QString getExecutablePath()
     {
       char buf[512];
       int len;
@@ -39,18 +39,18 @@ namespace Radiant
 
       if(len == -1) {
         Radiant::error("PlatformUtils::getExecutablePath # readlink() failed");
-        return std::string("");
+        return QString("");
       }
 
-      return std::string(buf, len);
+      return QString(buf, len);
     }
 
-    std::string getUserHomePath()
+    QString getUserHomePath()
     {
-      return std::string(getenv("HOME"));
+      return QString(getenv("HOME"));
     }
 
-    std::string getModuleGlobalDataPath(const char * module, bool isapplication)
+    QString getModuleGlobalDataPath(const char * module, bool isapplication)
     {
       (void) isapplication;
 
@@ -61,7 +61,7 @@ namespace Radiant
       return buf;
     }
 
-    std::string getModuleUserDataPath(const char * module, bool isapplication)
+    QString getModuleUserDataPath(const char * module, bool isapplication)
     {
       (void) isapplication;
 

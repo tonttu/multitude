@@ -43,16 +43,16 @@ namespace Valuable
     typedef typename T::value_type char_type;
 
     ValueStringT() : Base() {}
-    /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
+    /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
     /// @param v The string to store in this object
-    ValueStringT(HasValues * parent, const std::string & name,
+    ValueStringT(HasValues * parent, const QString & name,
                  const T & v, bool transit = false);
-    /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
+    /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
     /// @param v The string to store in this object
-    ValueStringT(HasValues * parent, const std::string & name,
+    ValueStringT(HasValues * parent, const QString & name,
                  const char * v, bool transit = false);
-    /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
-    ValueStringT(HasValues * parent, const std::string & name,
+    /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
+    ValueStringT(HasValues * parent, const QString & name,
                  bool transit = false);
 
     virtual void processMessage(const char * id, Radiant::BinaryData & data);
@@ -93,14 +93,14 @@ namespace Valuable
     /// Returns the value as integer
     int asInt(bool * const ok = 0) const;
     /// Returns the value as string
-    std::string asString(bool * const ok = 0) const;
+    QString asString(bool * const ok = 0) const;
     /// Returns the value as wide-byte string
-    std::wstring asWString(bool * const ok = 0) const;
+    QString asWString(bool * const ok = 0) const;
 
     /// Returns the string
     const T & str() const { return Base::m_value; }
 
-    virtual bool set(const std::string & v);
+    virtual bool set(const QString & v);
 
     const char * type() const { return VO_TYPE_STRING; }
 
@@ -115,12 +115,12 @@ namespace Valuable
   };
 
   /// A byte string value object
-  typedef ValueStringT<std::string> ValueString;
+  typedef ValueStringT<QString> ValueString;
   /// A wide-byte string value object
-  typedef ValueStringT<std::wstring> ValueWString;
+  typedef ValueStringT<QString> ValueWString;
 
   // Instantiation of template classes
-  // See ValueStringImpl.hpp for std::wstring member specializations
+  // See ValueStringImpl.hpp for QString member specializations
 
 }
 

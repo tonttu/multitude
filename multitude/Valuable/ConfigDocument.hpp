@@ -46,21 +46,21 @@ namespace Valuable
     /// Gets the configuration element with the given name
     /// @param key name of the element
     /// @return pointer to the element or 0 if element is not found
-    ConfigElement *getConfigElement(std::string key);
+    ConfigElement *getConfigElement(QString key);
     /// @copybrief getConfigElement
-    ConfigElement *getConfigElement(std::string key,std::string value);
+    ConfigElement *getConfigElement(QString key,QString value);
     /// Returns the configuration as string
-    static std::string getConfigText(ConfigElement e, int recursion = 0);
+    static QString getConfigText(ConfigElement e, int recursion = 0);
 
   private:
 
-    void loadConfigElement(std::string str);
-    static void trimSpaces( std::string & str);
-    void loadConfigValue(std::string key,std::string val);
-    ConfigElement *findConfigElement(ConfigElement &e,std::string elementName,bool &found);
-    ConfigElement *findConfigElement(ConfigElement &e,bool &found,std::string key,std::string value);
+    void loadConfigElement(QString str);
+    static void trimSpaces( QString & str);
+    void loadConfigValue(QString key,QString val);
+    ConfigElement *findConfigElement(ConfigElement &e,QString elementName,bool &found);
+    ConfigElement *findConfigElement(ConfigElement &e,bool &found,QString key,QString value);
 
-    bool getline(FILE * source, std::string & str);
+    bool getline(FILE * source, QString & str);
 
     enum ParseFlags
     {
@@ -70,7 +70,7 @@ namespace Valuable
       NOT_VALID
     };
 
-    ParseFlags parseLine(std::string line);
+    ParseFlags parseLine(QString line);
 
     ConfigElement m_doc;
   };

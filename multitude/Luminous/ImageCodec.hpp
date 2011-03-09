@@ -18,7 +18,7 @@
 
 #include <cstdio>
 
-#include <string>
+#include <QString>
 
 namespace Luminous
 {
@@ -41,11 +41,11 @@ namespace Luminous
       /// Get the extensions associated with this codec in a string separated by
       /// spaces
       ///  @return extensions separated by spaces (eg. "jpeg jpg")
-      virtual std::string extensions() const = 0;
+      virtual QString extensions() const = 0;
 
       /// Return name of the codec
       /// @return name of the codec
-      virtual std::string name() const = 0;
+      virtual QString name() const = 0;
 
       /// Pinging an image just reads the width, height, and pixel format from a file.
       /// @param info ImageInfo struct to store the read info to

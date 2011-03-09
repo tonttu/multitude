@@ -39,9 +39,9 @@ namespace Valuable
 
   public:
     ValueIntT() : Base() {}
-    /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
+    /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
     /// @param v The numeric value of this object
-    ValueIntT(HasValues * parent, const std::string & name, T v, bool transit = false)
+    ValueIntT(HasValues * parent, const QString & name, T v, bool transit = false)
         : ValueNumeric<T>(parent, name, v, transit)
     {}
 

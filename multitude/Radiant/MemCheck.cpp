@@ -90,10 +90,10 @@ namespace Radiant {
         info("All %d MemCheck objects were released", s_total);
       } else {
         info("%d of %d MemCheck objects were not released", s_map.size(), s_total);
-        std::map<std::string, int> map;
+        std::map<QString, int> map;
         for(MemSet::iterator it = s_set.begin(); it != s_set.end(); ++it)
           ++map[typeid(**it).name()];
-        for(std::map<std::string, int>::iterator it = map.begin(); it != map.end(); ++it) {
+        for(std::map<QString, int>::iterator it = map.begin(); it != map.end(); ++it) {
           error("%d %s objects were not released", it->second, it->first);
         }
       }

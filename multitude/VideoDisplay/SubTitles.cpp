@@ -154,8 +154,8 @@ namespace VideoDisplay {
         continue;
       }
 
-      std::string t1 = list.front();
-      std::string t2 = list.back();
+      QString t1 = list.front();
+      QString t2 = list.back();
 
       Text tmp;
 
@@ -203,11 +203,11 @@ namespace VideoDisplay {
     return m_current;
   }
 
-  std::string SubTitles::getLongestSubtitle() const
+  QString SubTitles::getLongestSubtitle() const
   {
     size_t longest = 0;
     size_t index = 0;
-    std::string full;
+    QString full;
 
     for(size_t i = 0; i < m_texts.size(); i++) { 
       const Text & text = m_texts[i];

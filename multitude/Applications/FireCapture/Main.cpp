@@ -39,7 +39,7 @@ class CameraThread : public Radiant::Thread
 {
 public:
 
-  CameraThread(uint64_t cameraId, const std::string & dir)
+  CameraThread(uint64_t cameraId, const QString & dir)
     : m_continue(true),
       m_cameraId(cameraId),
       m_format7Area(0, 0, 640, 480),
@@ -149,7 +149,7 @@ private:
   Nimble::Recti m_format7Area;
   int           m_format7Mode;
 
-  std::string   m_dir;
+  QString   m_dir;
 
   Radiant::VideoCamera * m_camera;
 };
@@ -183,9 +183,9 @@ int main(int argc, char ** argv)
 
   int i, res = 0;
 
-  std::string baseDir("capture/");
+  QString baseDir("capture/");
 
-  std::string configFile;
+  QString configFile;
   bool defaultconfig = false;
   bool useConfig = false;
 
@@ -341,7 +341,7 @@ int main(int argc, char ** argv)
           if(camChunk.get("format7area").getInts( f7a.low().data(), 4) == 4)
             thread->setFormat7Area(f7a);
 
-          std::string cameraType(buf);
+          QString cameraType(buf);
 
           camChunk.setClearFlag(true);
           camChunk.set("device",Radiant::Variant(cameraType.substr(1,25), ""));
@@ -355,7 +355,7 @@ int main(int argc, char ** argv)
     thread->run();
   }
 
-  std::string outConfigFile = (baseDir + std::string("config.txt"));
+  QString outConfigFile = (baseDir + QString("config.txt"));
   // Cheat Radiant::writeConfig
   std::ofstream out;
   out.open(outConfigFile.c_str());

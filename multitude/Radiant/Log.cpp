@@ -23,7 +23,7 @@
 #include "Trace.hpp"
 
 #include <list>
-#include <string>
+#include <QString>
 #include <cassert>
 #include <stdarg.h>
 
@@ -85,7 +85,7 @@ namespace Radiant {
     {
     public:
       Item(const char * str) : m_str(str), m_time(TimeStamp::getTime()) {}
-      std::string m_str;
+      QString m_str;
       TimeStamp   m_time;
     };
     typedef std::list<Item> container;

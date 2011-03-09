@@ -18,7 +18,7 @@
 
 #include <Radiant/Export.hpp>
 
-#include <string>
+#include <QString>
 #include <list>
 #include <vector>
 
@@ -37,7 +37,7 @@ namespace Radiant {
   public:
 
     /// A single row of data
-    typedef std::vector<std::wstring> Row;
+    typedef std::vector<QString> Row;
     /// A list of rows
     typedef std::list<Row> Rows;
 
@@ -59,9 +59,9 @@ namespace Radiant {
         @return If the key could not matched, return 0, otherwise returns a
         pointer to the row.
     */
-    Row * findRow(const std::wstring & key, unsigned col);
+    Row * findRow(const QString & key, unsigned col);
     /// A version of findRow, with UTF-8 encoded key.
-    Row * findRow(const std::string & key, unsigned col);
+    Row * findRow(const QString & key, unsigned col);
 
     /// Returns an iterator to the first row in the document
     Rows::iterator begin() { return m_rows.begin(); }

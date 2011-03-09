@@ -33,7 +33,7 @@ int main(int argc, char ** argv)
 
     Valuable::DOMDocument * xdoc = Valuable::DOMDocument::createDocument();
 
-    std::string suffix(Radiant::FileUtils::suffixLowerCase(file));
+    QString suffix(Radiant::FileUtils::suffixLowerCase(file));
       
     if(suffix == "xml" || suffix == "xhtml") {
 

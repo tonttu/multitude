@@ -18,5 +18,5 @@
 
 #include "ValueStringImpl.hpp"
 
-template class Valuable::ValueStringT<std::string>;
-template class Valuable::ValueStringT<std::wstring>;
+template class Valuable::ValueStringT<QString>;
+template class Valuable::ValueStringT<QString>;

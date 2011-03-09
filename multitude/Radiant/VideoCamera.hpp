@@ -47,11 +47,11 @@ namespace Radiant {
       /// The 64-bit unique FireWire identifier
       int64_t m_euid64;
       /// Vendor name, in a human-readable format
-      std::string m_vendor;
+      QString m_vendor;
       /// Camera model, in a human-readable format
-      std::string m_model;
+      QString m_model;
       /// Driver that was used for this camera
-      std::string m_driver;
+      QString m_driver;
     };
 
     /// Camera feature modes

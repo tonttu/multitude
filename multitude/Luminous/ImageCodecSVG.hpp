@@ -31,8 +31,8 @@ public:
   virtual ~ImageCodecSVG();
   virtual bool canRead(FILE * file);
 
-  virtual std::string extensions() const;
-  virtual std::string name() const;
+  virtual QString extensions() const;
+  virtual QString name() const;
   virtual bool ping(ImageInfo & info, FILE * file);
   virtual bool read(Image & image, FILE * file);
   /// not supported

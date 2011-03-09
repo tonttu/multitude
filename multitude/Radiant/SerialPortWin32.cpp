@@ -18,7 +18,7 @@
 #include <Radiant/SerialPort.hpp>
 
 #include <cassert>
-#include <string>
+#include <QString>
 
 namespace Radiant
 {
@@ -50,7 +50,7 @@ namespace Radiant
     
     if(m_hPort == INVALID_HANDLE_VALUE)
     {
-      const std::string   strErr = StringUtils::getLastErrorMessage();
+      const QString   strErr = StringUtils::getLastErrorMessage();
       error("%s # Failed to open serial port (%s): %s", fName, device, strErr.c_str());
 
       m_hPort = 0;

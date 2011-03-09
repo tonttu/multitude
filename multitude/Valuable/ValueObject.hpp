@@ -27,7 +27,7 @@
 #include <Valuable/ValueListener.hpp>
 
 #include <set>
-#include <string>
+#include <QString>
 
 #include <Valuable/DOMElement.hpp>
 #include <Radiant/MemCheck.hpp>
@@ -65,7 +65,7 @@ namespace Valuable
 
       Typical child classes include some POD (plain old data) elements
       (floats, ints, vector2) etc, that can be accessed through the
-      API. The ValueObjects have names (std::string), that can be used to access
+      API. The ValueObjects have names (QString), that can be used to access
       ValueObjects that are stored inside HasValues objects.
 
       It is also possible to add listeners to values, so that if a
@@ -99,15 +99,15 @@ namespace Valuable
     is related to future uses, and can be largely ignored at the
     moment.
     */
-    ValueObject(HasValues * parent, const std::string & name, bool transit = false);
+    ValueObject(HasValues * parent, const QString & name, bool transit = false);
     virtual ~ValueObject();
 
     /// Returns the name of the object.
-    const std::string & name() const { return m_name; }
+    const QString & name() const { return m_name; }
     /// Sets the name of the object
-    void setName(const std::string & s);
+    void setName(const QString & s);
     /// Returns the path (separated by '/'s) from the root
-    std::string path() const;
+    QString path() const;
 
     /// Process a message
     /** This method is a key element in the event-passing system.
@@ -169,14 +169,14 @@ namespace Valuable
     /// Converts the value object to a string
     /** The default implementation returns an empty string, and sets the
         ok pointer to false (if it is non-null). */
-    virtual std::string asString(bool * const ok = 0) const;
+    virtual QString asString(bool * const ok = 0) const;
 
     /// Sets the value of the object
     virtual bool set(float v);
     /// Sets the value of the object
     virtual bool set(int v);
     /// Sets the value of the object
-    virtual bool set(const std::string & v);
+    virtual bool set(const QString & v);
     /// Sets the value of the object
     virtual bool set(const Nimble::Vector2f & v);
     /// Sets the value of the object
@@ -212,7 +212,7 @@ namespace Valuable
     // The object that holds this object
     HasValues * m_parent;
     bool m_changed;
-    std::string m_name;
+    QString m_name;
     bool m_transit;
 
     ValueListeners m_listeners;
@@ -230,7 +230,7 @@ namespace Valuable
     /// @param name name of the value
     /// @param v the default/original value of the object
     /// @param transit ignored
-    ValueObjectT(HasValues * parent, const std::string & name, const T & v = T(), bool transit = false)
+    ValueObjectT(HasValues * parent, const QString & name, const T & v = T(), bool transit = false)
       : ValueObject(parent, name, transit),
       m_value(v),
       m_orig(v) {}

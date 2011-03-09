@@ -19,7 +19,7 @@
 
 #include <stdint.h>
 
-#include <string>
+#include <QString>
 
 namespace Radiant
 {
@@ -31,16 +31,16 @@ namespace Radiant
   {
 
     /// Return absolute path to the executable that was used to launch the process.
-    RADIANT_API std::string getExecutablePath();
+    RADIANT_API QString getExecutablePath();
 
     /// Return absolute path to the user's home directory.
-    RADIANT_API std::string getUserHomePath();
+    RADIANT_API QString getUserHomePath();
 
     /// Return path to the global data directory of the given module.
-    RADIANT_API std::string getModuleGlobalDataPath(const char * module, bool isapplication);
+    RADIANT_API QString getModuleGlobalDataPath(const char * module, bool isapplication);
 
     /// Return path to the user data directory of the given module.
-    RADIANT_API std::string getModuleUserDataPath(const char * module, bool isapplication);
+    RADIANT_API QString getModuleUserDataPath(const char * module, bool isapplication);
 
     /// Determine whether file or directory is readable.
     /// @todo shouldn't this be in FileUtils?

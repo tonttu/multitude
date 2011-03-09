@@ -182,7 +182,7 @@ namespace Radiant {
 	  return tmp;
   }
 
-  std::string TimeStamp::asString() const {
+  QString TimeStamp::asString() const {
 	  time_t t = (m_val >> 24);
 
 #ifdef WIN32
@@ -190,13 +190,13 @@ namespace Radiant {
 	  char  buf[bufSize];
 	  ctime_s(buf, bufSize, & t);
 	  buf[strlen(buf) - 1] = '\0';
-	  return std::string(buf);
+	  return QString(buf);
 #else
 	// Convert to char* and remove \n
 	char * str = ctime(&t);
 	str[strlen(str) - 1] = '\0';
 
-	return std::string(str);
+	return QString(str);
 #endif
 
   }

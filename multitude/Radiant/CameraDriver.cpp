@@ -46,7 +46,7 @@ namespace Radiant
       delete it->second;
   }
 
-  VideoCamera * CameraDriverFactory::createCamera(const std::string & driverName)
+  VideoCamera * CameraDriverFactory::createCamera(const QString & driverName)
   {
     CameraDriver * driver = getCameraDriver(driverName);
     if(driver)
@@ -63,7 +63,7 @@ namespace Radiant
     return 0;
   }
 
-  CameraDriver * CameraDriverFactory::getCameraDriver(const std::string & driverName)
+  CameraDriver * CameraDriverFactory::getCameraDriver(const QString & driverName)
   {
     // If the user has not registered any drivers, we register the defaults here once
     static bool once = true;
@@ -125,7 +125,7 @@ namespace Radiant
     m_drivers.insert(std::make_pair(driver->driverName(), driver));
   }
 
-  void CameraDriverFactory::setDriverPreference(const std::string & pref)
+  void CameraDriverFactory::setDriverPreference(const QString & pref)
   {
     m_preferredDrivers.clear();
     StringUtils::split(pref, ",", m_preferredDrivers, true);

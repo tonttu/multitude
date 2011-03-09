@@ -53,10 +53,10 @@ namespace Luminous {
     CPUMipmaps * m_mipmaps;
   };
 
-  static std::map<std::string, MipmapItem> __mipmaps;
-  typedef std::map<std::string, MipmapItem> MipMapItemContainer;
+  static std::map<QString, MipmapItem> __mipmaps;
+  typedef std::map<QString, MipmapItem> MipMapItemContainer;
 
-  CPUMipmaps * CPUMipmapStore::acquire(const std::string & filename, bool immediate)
+  CPUMipmaps * CPUMipmapStore::acquire(const QString & filename, bool immediate)
   {
 
     Radiant::GuardStatic g( __mutex);
