@@ -43,7 +43,7 @@ namespace Valuable
 
   bool ValueString::deserialize(ArchiveElement & element)
   {
-    *this = QString::fromUtf8(element.get().c_str());
+    *this = element.get();
     return true;
   }
 

@@ -89,7 +89,7 @@ namespace Radiant
         }
         else
         {
-          error("%s # Failed to remove existing shared memory area with same name (%s).", fnName, StringUtils::getLastErrorMessage().c_str());
+          error("%s # Failed to remove existing shared memory area with same name (%s).", fnName, StringUtils::getLastErrorMessage().toUtf8().data());
           assert(0);
         }
       }
@@ -104,7 +104,7 @@ namespace Radiant
       }
       else
       {
-        error("%s # Failed to create new shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().c_str());
+        error("%s # Failed to create new shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().toUtf8().data());
         assert(0);
       }
     }
@@ -118,7 +118,7 @@ namespace Radiant
       }
       else
       {
-        error("%s # Failed to access existing shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().c_str());
+        error("%s # Failed to access existing shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().toUtf8().data());
         assert(0);
       } 
     }
@@ -132,7 +132,7 @@ namespace Radiant
     }
     else
     {
-      error("%s # Failed to obtain pointer to shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().c_str());
+      error("%s # Failed to obtain pointer to shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().toUtf8().data());
       assert(0);
     }
 
@@ -201,7 +201,7 @@ namespace Radiant
       }
       else
       {
-        Radiant::error("%s # Failed to create new shared memory area (%s).", fnName, shmError().c_str());
+        Radiant::error("%s # Failed to create new shared memory area (%s).", fnName, shmError().toUtf8().data());
         assert(0);
       }
     }
@@ -215,7 +215,7 @@ namespace Radiant
       }
       else
       {
-        Radiant::error("%s # Failed to access existing shared memory area (%s).", fnName, shmError().c_str());
+        Radiant::error("%s # Failed to access existing shared memory area (%s).", fnName, shmError().toUtf8().data());
         assert(0);
       }
     }
@@ -229,7 +229,7 @@ namespace Radiant
     }
     else
     {
-      Radiant::error("%s # Failed to obtain pointer to shared memory area (%s)", fnName, shmError().c_str());
+      Radiant::error("%s # Failed to obtain pointer to shared memory area (%s)", fnName, shmError().toUtf8().data());
       assert(0);
     }
 
@@ -266,7 +266,7 @@ namespace Radiant
     }
     else
     {
-      Radiant::error("%s # Failed to detach shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().c_str());
+      Radiant::error("%s # Failed to detach shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().toUtf8().data());
     }
 
     // Only the creating object can destroy the SMA, after the last detach, i.e. when no more
@@ -280,7 +280,7 @@ namespace Radiant
       }
       else
       {
-        Radiant::error("%s # Failed to destroy shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().c_str());
+        Radiant::error("%s # Failed to destroy shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().toUtf8().data());
       }
     }
   }
@@ -300,7 +300,7 @@ namespace Radiant
     }
     else
     {
-      Radiant::error("%s # Failed to detach shared memory area (%s).", fnName, shmError().c_str());
+      Radiant::error("%s # Failed to detach shared memory area (%s).", fnName, shmError().toUtf8().data());
     }
 
     // Only the creating object can destroy the SMA, after the last detach, i.e. when no more
@@ -314,7 +314,7 @@ namespace Radiant
       }
       else
       {
-        Radiant::error("%s # Failed to destroy shared memory area (%s).", fnName, shmError().c_str());
+        Radiant::error("%s # Failed to destroy shared memory area (%s).", fnName, shmError().toUtf8().data());
       }
     }
   }
@@ -715,13 +715,17 @@ namespace Radiant
     if(n != 4)
       return false;
 
-    str.resize(tmp);
+    QByteArray ba(tmp, '\0');
 
     if(tmp) {
-      n = read( & str[0], tmp);
+      n = read(ba.data(), tmp);
     }
 
-    return tmp == n;
+    if(tmp == n) {
+      str = QString::fromUtf8(ba);
+      return true;
+    }
+    return false;
   }
   
 
@@ -796,9 +800,7 @@ namespace Radiant
 
       default:
       {
-        std::stringstream  ss;
-        ss << errno;
-        errMsg = QString("errno = ") + ss.str();
+        errMsg = QString("errno = %1").arg(errno);
       }
     }
 

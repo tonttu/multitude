@@ -83,7 +83,7 @@ namespace Luminous
 
     for(su::StringList::iterator it = exts.begin(); it != exts.end(); it++) {
       m_aliases.insert(std::make_pair(*it, codec));
-      Radiant::debug("Adding codec %p for file type %s", codec, (*it).c_str());
+      Radiant::debug("Adding codec %p for file type %s", codec, (*it).toUtf8().data());
     }    
   }
 

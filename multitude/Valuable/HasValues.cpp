@@ -99,7 +99,7 @@ namespace Valuable
       Radiant::error(
           "HasValues::addValue # '%s' already has a parent '%s'. "
           "Unlinking it to set new parent.",
-          cname.c_str(), parent->name().c_str());
+          cname.c_str(), parent->name().toUtf8().data());
       value->removeParent();
     }
 
@@ -222,7 +222,7 @@ namespace Valuable
       if(hv) hv->debugDump();
       else {
         QString s = vo->asString();
-        Radiant::trace(Radiant::DEBUG, "\t%s = %s", vo->name().c_str(), s.c_str());
+        Radiant::trace(Radiant::DEBUG, "\t%s = %s", vo->name().toUtf8().data(), s.c_str());
       }
     }
 

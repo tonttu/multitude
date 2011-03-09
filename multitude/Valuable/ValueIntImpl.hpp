@@ -27,7 +27,7 @@ namespace Valuable
   template<class T>
   bool ValueIntT<T>::deserialize(ArchiveElement & e)
   {
-    Base::m_value = Radiant::StringUtils::fromString<T>(e.get().c_str());
+    Base::m_value = Radiant::StringUtils::fromString<T>(e.get().toUtf8().data());
     this->emitChange();
     
     return true;

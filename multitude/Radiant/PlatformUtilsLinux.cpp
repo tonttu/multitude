@@ -42,12 +42,12 @@ namespace Radiant
         return QString("");
       }
 
-      return QString(buf, len);
+      return QString::fromUtf8(buf, len);
     }
 
     QString getUserHomePath()
     {
-      return QString(getenv("HOME"));
+      return QString::fromUtf8(getenv("HOME"));
     }
 
     QString getModuleGlobalDataPath(const char * module, bool isapplication)
@@ -68,7 +68,7 @@ namespace Radiant
       assert(strlen(module) < 128);
       char buf[312];
 
-      sprintf(buf, "%s/.%s", getUserHomePath().c_str(), module);
+      sprintf(buf, "%s/.%s", getUserHomePath().toUtf8().data(), module);
 
       return buf;
     }

@@ -131,7 +131,7 @@ private:
       
         sprintf(buf, "frame-%.5d.tga", count);
         
-        saver.write((m_dir + buf).c_str());
+        saver.write((m_dir + buf).toUtf8().data());
       }
     }
     
@@ -328,10 +328,10 @@ int main(int argc, char ** argv)
 
         #ifdef WIN32
             long long lltmp = 0;
-            sscanf(camChunk.get("devuid").getString().c_str(), "%llx", &lltmp);
+            sscanf(camChunk.get("devuid").getString().toUtf8().data(), "%llx", &lltmp);
             camUID = lltmp;
         #else
-            camUID = strtoll(camChunk.get("devuid").getString().c_str(), 0, 16);
+            camUID = strtoll(camChunk.get("devuid").getString().toUtf8().data(), 0, 16);
         #endif
 
         if(camUID == cam.m_euid64 || cameras.size() == 1) {

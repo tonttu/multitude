@@ -69,7 +69,7 @@ namespace Radiant
       assert(strlen(module) < 128);
       char buf[312];
 
-      sprintf(buf, "%s/Library/%s", getUserHomePath().c_str(), module);
+      sprintf(buf, "%s/Library/%s", getUserHomePath().toUtf8().data(), module);
 
       return buf;
     }

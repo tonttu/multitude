@@ -63,8 +63,6 @@ namespace Valuable
 
     /// Sets the text content of this element
     void setTextContent(const QString & content);
-    /// Sets the text content of this element
-    void setTextContent(const QString & content);
 
     /// Gets a list of child elements
     NodeList getChildNodes() const;

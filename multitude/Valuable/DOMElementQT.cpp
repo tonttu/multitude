@@ -163,7 +163,7 @@ namespace Valuable
 
     addSpace(f, recursion);
     fprintf(f, "NODE <%s> (%d children, %d deep)",
-            getTagName().c_str(), (int) nodes.size(), recursion);
+            getTagName().toUtf8().data(), (int) nodes.size(), recursion);
 
     QString str = getTextContent();
     if(str.size() > 0 && str.size() < 100) {
@@ -208,7 +208,7 @@ namespace Valuable
     
     QString qs(QString::fromStdWString(ws));
     QDomElement & qde = m_wrapped->x;
-    // info("WIDE Text content : %s : %d", qs.toStdString().c_str(), (int) ws.size());
+    // info("WIDE Text content : %s : %d", qs.toStdString().toUtf8().data(), (int) ws.size());
     qde.appendChild(qde.ownerDocument().createTextNode(qs));
   }
 

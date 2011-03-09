@@ -93,7 +93,7 @@ namespace Radiant
     if(err == 0) {
       m_d->setOpts();
     } else {
-      error("UDPSocket::open # %s", errstr.c_str());
+      error("UDPSocket::open # %s", errstr.toUtf8().data());
     }
     return err;
   }
@@ -121,9 +121,9 @@ namespace Radiant
     return m_d->m_fd >= 0;
   }
 
-  const char * TCPSocket::host() const
+  QString TCPSocket::host() const
   {
-    return m_d->m_host.c_str();
+    return m_d->m_host;
   }
 
   int TCPSocket::port() const

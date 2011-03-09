@@ -67,9 +67,7 @@ namespace Valuable
     QString get(const char * name) const;
 
     void set(const QString & s);
-    void set(const QString & s);
     QString get() const;
-    QString getW() const;
 
     QString name() const;
     bool isNull() const;

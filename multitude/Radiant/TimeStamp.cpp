@@ -30,6 +30,8 @@
 #include <winsock2.h>
 #endif
 
+#include <QStringList>
+
 namespace Radiant {
 
 #ifdef WIN32
@@ -90,8 +92,7 @@ namespace Radiant {
     if(!date)
       return 0;
 
-    StringUtils::StringList segments;
-    StringUtils::split(date, delim, segments);
+    QStringList segments = QString::fromUtf8(date).split(delim);
 
     if(segments.size() != 3) {
       return TimeStamp(0);
@@ -99,11 +100,8 @@ namespace Radiant {
 
     int vals[3];
 
-    StringUtils::StringList::iterator it = segments.begin();
-
     for(int i = 0; i < 3; i++) {
-      vals[i] = atoi((*it).c_str());
-      it++;
+      vals[i] = segments[i].toInt();
     }
 
     int year, month, day;
@@ -140,8 +138,7 @@ namespace Radiant {
     if(!time)
       return 0;
 
-    StringUtils::StringList segments;
-    StringUtils::split(time, delim, segments);
+    QStringList segments = QString::fromUtf8(time).split(delim);
     
     if(segments.size() != 3) {
       return TimeStamp(0);
@@ -149,11 +146,8 @@ namespace Radiant {
 
     int vals[3];
 
-    StringUtils::StringList::iterator it = segments.begin();
-
     for(int i = 0; i < 3; i++) {
-      vals[i] = atoi((*it).c_str());
-      it++;
+      vals[i] = segments[i].toInt();
     }
 
     int hour = vals[0];

@@ -123,19 +123,9 @@ namespace Valuable
     m_element.setTextContent(s);
   }
 
-  void XMLArchiveElement::set(const QString & s)
-  {
-    m_element.setTextContent(s);
-  }
-
   QString XMLArchiveElement::get() const
   {
     return m_element.getTextContent();
-  }
-
-  QString XMLArchiveElement::getW() const
-  {
-    return m_element.getTextContentW();
   }
 
   QString XMLArchiveElement::name() const

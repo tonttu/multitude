@@ -63,10 +63,10 @@ namespace Radiant {
     Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
 
     g_mutex.lock();
-    if(g_appname.empty())
-      fprintf(out, "[%s] %s%s\n", now.asString().c_str(), prefixes[s], msg);
+    if(g_appname.isEmpty())
+      fprintf(out, "[%s] %s%s\n", now.asString().toUtf8().data(), prefixes[s], msg);
     else
-      fprintf(out, "[%s] %s: %s%s\n", now.asString().c_str(), g_appname.c_str(), prefixes[s], msg);
+      fprintf(out, "[%s] %s: %s%s\n", now.asString().toUtf8().data(), g_appname.toUtf8().data(), prefixes[s], msg);
     fflush(out);
     g_mutex.unlock();
   }

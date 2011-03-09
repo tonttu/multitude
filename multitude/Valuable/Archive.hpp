@@ -111,12 +111,8 @@ namespace Valuable
 
     /// Writes the element contents
     virtual void set(const QString & s) = 0;
-    /// Writes the element contents as a wide character string
-    virtual void set(const QString & s) = 0;
     /// Reads the element contents
     virtual QString get() const = 0;
-    /// Reads the element contents as a wide character string
-    virtual QString getW() const = 0;
 
     /// Reads the element name
     virtual QString name() const = 0;

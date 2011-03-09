@@ -132,7 +132,7 @@ namespace Resonant {
 
     if(m_targetChannel >= host->channels()) {
       error("ModuleSamplePlayer::SampleVoice::synthesize # channel count exceeded for %s "
-            "%u >= %u", m_sample->name().c_str(),
+            "%u >= %u", m_sample->name().toUtf8().data(),
             m_targetChannel, host->channels());
       m_state = INACTIVE;
       return false;

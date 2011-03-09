@@ -32,7 +32,7 @@ namespace Radiant
 
   ///  @todo DT_DIR seems to incorrectly match also to symbolic links under linux
   bool applyFilters(const struct dirent * dent, int filterFlags,
-                    const std::vector<QString> & suffixes) {
+                    const QStringList & suffixes) {
     bool ok = true;
 
     const QString name(dent->d_name);
@@ -45,17 +45,10 @@ namespace Radiant
         && !(filterFlags & Directory::Hidden) )
       ok = false;
 
-    if(!suffixes.empty()) {
-      QString suffix = StringUtils::lowerCase(FileUtils::suffix(name));
+    if(!suffixes.isEmpty()) {
+      QString suffix = FileUtils::suffixLowerCase(name);
 
-      ok = false;
-
-      for(unsigned i = 0; i < suffixes.size(); i++) {
-        if(suffix == suffixes[i]) {
-          ok = true;
-          break;
-        }
-      }
+      ok = suffixes.contains(suffix);
     }
 
 //    trace("Directory::applyFilters # DIR: %s FILE: %s MATCH: %d", m_path.c_str(), dent->d_name, ok);
@@ -74,12 +67,12 @@ namespace Radiant
 
   bool Directory::mkdir(const QString & dirname)
   {
-    return mkdir(dirname.c_str());
+    return mkdir(dirname.toUtf8().data());
   }
 
   bool Directory::exists(const QString & dir)
   {
-    DIR * d = opendir(dir.c_str());
+    DIR * d = opendir(dir.toUtf8().data());
     if(!d)
       return false;
 
@@ -90,9 +83,9 @@ namespace Radiant
   void Directory::populate()
   {
     // Try to open the directory
-    DIR * dir = opendir(m_path.c_str());
+    DIR * dir = opendir(m_path.toUtf8().data());
     if(!dir) {
-      error("Directory::openDir # failed to open '%s'", m_path.c_str());
+      error("Directory::openDir # failed to open '%s'", m_path.toUtf8().data());
       return;
     }
 

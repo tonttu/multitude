@@ -286,7 +286,7 @@ namespace Radiant
         }
         else
         {
-          error("%s # Failed to remove existing shared memory area with same name (%s).", fnName, StringUtils::getLastErrorMessage().c_str());
+          error("%s # Failed to remove existing shared memory area with same name (%s).", fnName, StringUtils::getLastErrorMessage().toUtf8().data());
           assert(0);
         }
       }
@@ -300,7 +300,7 @@ namespace Radiant
       }
       else
       {
-        error("%s # Failed to create new shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().c_str());
+        error("%s # Failed to create new shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().toUtf8().data());
         assert(0);
       }
     }
@@ -315,7 +315,7 @@ namespace Radiant
       }
       else
       {
-        error("%s # Failed to access existing shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().c_str());
+        error("%s # Failed to access existing shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().toUtf8().data());
         assert(0);
       } 
 
@@ -331,7 +331,7 @@ namespace Radiant
     }
     else
     {
-      error("%s # Failed to obtain pointer to shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().c_str());
+      error("%s # Failed to obtain pointer to shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().toUtf8().data());
       assert(0);
     }
 
@@ -397,7 +397,7 @@ namespace Radiant
     else
     {
       error("%s # Failed to detach shared memory area (%s).",
-	    fnName, StringUtils::getLastErrorMessage().c_str());
+	    fnName, StringUtils::getLastErrorMessage().toUtf8().data());
     }
 
     // Only the creating object can destroy the SMA, after the last detach, i.e. when no more
@@ -408,7 +408,7 @@ namespace Radiant
 	debug("%s # Successfully destroyed shared memory area.", fnName);
       }
       else {
-        error("%s # Failed to destroy shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().c_str());
+        error("%s # Failed to destroy shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().toUtf8().data());
       }
     }
   }

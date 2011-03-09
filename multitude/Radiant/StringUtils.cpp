@@ -32,7 +32,7 @@ namespace Radiant
       QChar* data = s.data();
       int len = s.size();
       unsigned int out = 0;
-      for(unsigned in = 0; in < len; ++in) {
+      for(int in = 0; in < len; ++in) {
         if(data[in] < 32) {
           --len;
         } else {

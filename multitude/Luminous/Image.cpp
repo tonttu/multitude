@@ -479,7 +479,7 @@ namespace Luminous
       assert(pf.numChannels() > 0);
 
     /*
-    Radiant::debug("Image::allocate # PARAMS(%d, %d, %s) CURRENT(%d, %d, %s)", width, height, pf.toString().c_str(), m_width, m_height, m_pixelFormat.toString().c_str());
+    Radiant::debug("Image::allocate # PARAMS(%d, %d, %s) CURRENT(%d, %d, %s)", width, height, pf.toString().toUtf8().data(), m_width, m_height, m_pixelFormat.toString().toUtf8().data());
     Radiant::debug("\tbytes = %u, mybytes = %u", bytes, mybytes);
     */
     m_width = width;

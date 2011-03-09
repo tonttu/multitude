@@ -63,7 +63,7 @@ namespace Valuable
 
     virtual ArchiveElement & serialize(Archive & archive)
     {
-      ArchiveElement & elem = archive.createElement((name().empty() ? type() : name()).c_str());
+      ArchiveElement & elem = archive.createElement((name().empty() ? type() : name()).toUtf8().data());
       for(iterator it = m_container.begin(); it != m_container.end(); it++) {
         elem.add(Serializer::serialize(archive, *it));
       }
