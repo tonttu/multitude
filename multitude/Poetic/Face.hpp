@@ -19,6 +19,8 @@
 
 #include <Nimble/Vector2.hpp>
 
+#include <QString>
+
 struct FT_GlyphSlotRec_;
 
 namespace Poetic

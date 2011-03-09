@@ -40,7 +40,8 @@ namespace Poetic
     float advance(const wchar_t * str, int n = -1);
     /// @copydoc advance
     float advance(const QString & str)
-    { return advance(str.c_str(), (int) str.size()); }
+    { std::wstring wstr = str.toStdWString();
+      return advance(wstr.c_str(), (int) wstr.size()); }
     
     /// Returns the face size
     int faceSize() const        { return m_pointSize; }

@@ -51,7 +51,7 @@ namespace Poetic
 
   CPUWrapperFont * FontManager::getFont(const QString & name)
   {
-    if(name.empty()) {
+    if(name.isEmpty()) {
       Radiant::error("FontManager::getFont # empty fontname");
       return 0;
     }
@@ -66,9 +66,9 @@ namespace Poetic
     if(it == m_managedFonts.end()) {
 
       const QString path = m_locator.locate(name);
-      if(path.empty()) {
+      if(path.isEmpty()) {
         Radiant::error("FontManager::getFont # failed to locate font \"%s\"",
-		       name.c_str());
+           name.toUtf8().data());
         return 0;
       }
   
@@ -76,10 +76,10 @@ namespace Poetic
       mfont = new CPUManagedFont();
       m_managedFonts[name] = mfont;
 
-      if(!mfont->load(path.c_str())) {
+      if(!mfont->load(path.toUtf8().data())) {
         Radiant::error(
 		       "FontManager::getFont # failed to load '%s'",
-		       path.c_str());
+           path.toUtf8().data());
         return 0;
       }
     }

@@ -45,21 +45,8 @@ namespace Poetic
       */
     /// @todo move inside CPUFont
     static void POETIC_API breakToLines(const QString & ws, const float width,
-                                        CPUFont & bitmapFont, Radiant::StringUtils::WStringList & lines,
+                                        CPUFont & bitmapFont, QStringList & lines,
                                         const bool afterSpace = true);
-
-    /**
-      * @brief Tokenize wstring.
-      * @param ws The string to be tokenized.
-      * @param delim One or more delimiter characters.
-      * @param out Reference to list to receive the tokens.
-      * @param afterDelim true to split string after delimiter.
-      */
-    /// @todo Remove, the same is in Radiant::StringUtils
-    static void POETIC_API split(const QString & ws, const QString & delim,
-                                 Radiant::StringUtils::WStringList & out, const bool afterDelim = true);
-
-
   };
 
 }

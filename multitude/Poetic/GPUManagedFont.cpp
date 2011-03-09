@@ -60,19 +60,6 @@ namespace Poetic
                m * Nimble::Matrix3::scale2D(Nimble::Vector2(sfix,sfix)));
   }
 
-  void GPUManagedFont::render(const QString & text,
-			      int pointSize, const Nimble::Matrix3 & m,
-                              float minimumSize)
-  {
-    GPUFont * gf;
-    float sfix;
-    
-    if(!computeRenderParams(m, pointSize, &gf, &sfix, minimumSize))
-      return;
-
-    gf->render(text, m * Nimble::Matrix3::scale2D(Nimble::Vector2(sfix,sfix)));
-  }
-
   void GPUManagedFont::render(const wchar_t * str, int n, int pointSize,
                               const Nimble::Matrix3 & m, float minimumSize)
   {

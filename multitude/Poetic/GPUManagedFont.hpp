@@ -21,6 +21,8 @@
 
 #include <vector>
 
+#include <QString>
+
 namespace Poetic
 {
   class GPUFontBase;
@@ -40,9 +42,6 @@ namespace Poetic
                   const Nimble::Matrix3 & m, float minimumSize = 0.0f);
       /// @copydoc render
       void render(const char * str, int n, int pointSize,
-                  const Nimble::Matrix3 & m, float minimumSize = 0.0f);
-      /// @copydoc render
-      void render(const QString & text, int pointSize,
                   const Nimble::Matrix3 & m, float minimumSize = 0.0f);
       /// @copydoc render
       void render(const wchar_t * str, int n, int pointSize,

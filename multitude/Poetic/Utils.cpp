@@ -15,14 +15,15 @@
 
 #include "Utils.hpp"
 
+#include <QStringList>
+
 namespace Poetic
 {
 
     using namespace Radiant;
-    using namespace StringUtils;
 
     void Utils::breakToLines(const QString & ws, const float width,
-      CPUFont & fnt, WStringList & lines, const bool afterSpace)
+      CPUFont & fnt, QStringList & lines, const bool afterSpace)
     {
       // Ensure line list empty
       /*
@@ -35,17 +36,13 @@ namespace Poetic
       */
       lines.clear();
 
-      if(ws.empty() || width <= 0.0f) {
+      if(ws.isEmpty() || width <= 0.0f) {
         return;
       }
 
       // First break the wstring at newlines
 
-      QString  delim;
-      delim = W_NEWLINE;
-      WStringList   wSub;
-
-      split(ws, delim, wSub);
+      QStringList wSub = ws.split(" ");
 
       // Now add the newlines we just removed:
 
@@ -66,15 +63,11 @@ namespace Poetic
       */
       // Break the resulting sub-wstrings to fit width
 
-      delim = QString(L" ");
-
-      for(WStringList::iterator itSub = wSub.begin(); itSub != wSub.end(); itSub++)
-      {
+      foreach(QString itSub, wSub) {
         // Split the sub-string into words
 
-        WStringList words;
-        split(* itSub, delim, words, afterSpace);
-
+        QStringList words = itSub.split(" ", afterSpace ? QString::SkipEmptyParts
+                                                        : QString::KeepEmptyParts);
         // Make the lines
         int tries = 0;
         // 10 tries per character ought to be enough
@@ -92,15 +85,15 @@ namespace Poetic
           for(int i = numWords; i >= 1 && !got; i--)
           {
             QString  ln;
-            WStringList::iterator   itWord = words.begin();
-            for(int j = 0; j < i; j++, itWord++)
+            for(int j = 0; j < i; j++)
             {
-              ln += * itWord;
+              ln += words[j];
             }
-            fnt.bbox((wchar_t *)(ln.data()), bBox);
+            std::wstring tmp = ln.toStdWString();
+            fnt.bbox(tmp.data(), bBox);
             if(bBox.width() <= width)
             {
-              lines.push_back(ln);
+              lines << ln;
               for(int j = 0; j < i; j++)
               {
                 words.pop_front();
@@ -120,13 +113,14 @@ namespace Poetic
           const int   numChars = word.length();
           for(int i = numChars - 1; i >= 1 && !got; i--)
           {
-            const QString  ln = word.substr(0, i + 1);
-            fnt.bbox((wchar_t *)(ln.data()), bBox);
+            const QString  ln = word.left(i+1);
+            std::wstring tmp = ln.toStdWString();
+            fnt.bbox(tmp.data(), bBox);
             if(bBox.width() <= width)
             {
               lines.push_back(ln);
               words.pop_front();
-              words.push_front(word.substr(i + 1));
+              words.push_front(word.mid(i + 1));
               got = true;
             }
           }
@@ -136,7 +130,7 @@ namespace Poetic
       // If last character is newline append empty line
 
       if(ws[ws.length() - 1] == W_NEWLINE) {
-        lines.push_back(QString(L""));
+        lines.push_back("");
       }
       /*
       for(WStringList::iterator itSub = lines.begin(); itSub != lines.end(); itSub++) {
@@ -152,52 +146,4 @@ namespace Poetic
       }
       */
     }
-
-    void Utils::split(const QString & ws, const QString & delim,
-      WStringList & out, const bool afterDelim)
-    {
-      out.clear();
-
-      if(ws.empty())
-      {
-        return;
-      }
-
-      // Find first a delimiter
-
-      QString  wsCopy(ws);
-      size_t  pos = wsCopy.find_first_of(delim);
-
-      // Loop until no delimiters left
-
-      if(afterDelim)
-      // split string after delimiter
-      {
-        while(pos != wsCopy.npos)
-        {
-          out.push_back(wsCopy.substr(0, pos + 1));
-          wsCopy.erase(0, pos + 1);
-          pos = wsCopy.find_first_of(delim);
-        }
-      }
-      else
-      // split string before delimiter
-      {
-        while(pos != wsCopy.npos)
-        {
-          out.push_back(wsCopy.substr(0, pos));
-          wsCopy.erase(0, pos);
-          pos = wsCopy.find_first_of(delim, 1);
-        }
-      }
-
-      // Push remainder of wstring onto list
-
-      if(!wsCopy.empty())
-      {
-        out.push_back(wsCopy);
-      }
-    }
-
-
 }

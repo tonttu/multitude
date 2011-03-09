@@ -60,18 +60,14 @@ namespace Poetic
 
   void GPUFont::render(const QString & str, const Nimble::Matrix3 & transform)
   {
-    internalRender(str.c_str(), (int) str.size(), transform);
+    std::wstring wstr = str.toStdWString();
+    internalRender(wstr.c_str(), (int) wstr.size(), transform);
   }
 
   void GPUFont::render(const QString & str, const Nimble::Vector2 & location)
   {
-    internalRender(str.c_str(), (int) str.size(),
-		   Nimble::Matrix3::translate2D(location));
-  }
-
-  void GPUFont::render(const QString & str, const Nimble::Vector2 & location)
-  {
-    internalRender(str.c_str(), (int) str.size(),
+    std::wstring wstr = str.toStdWString();
+    internalRender(wstr.c_str(), (int) wstr.size(),
 		   Nimble::Matrix3::translate2D(location));
   }
 
@@ -79,7 +75,8 @@ namespace Poetic
   {
     Nimble::Matrix3 transform;
     transform.identity();
-    internalRender(str.c_str(), (int) str.size(), transform);
+    std::wstring wstr = str.toStdWString();
+    internalRender(wstr.c_str(), (int) wstr.size(), transform);
   }
 
   void GPUFont::render(const char * str)
@@ -94,13 +91,6 @@ namespace Poetic
     Nimble::Matrix3 transform;
     transform.identity();
     internalRender(str, (int) wcslen(str), transform);
-  }
-
-  void GPUFont::render(const QString & str)
-  {
-    Nimble::Matrix3 transform;
-    transform.identity();
-    internalRender(str.c_str(), (int) str.length(), transform);
   }
 
   void GPUFont::render(const char * str, Nimble::Vector2 loc)
@@ -127,11 +117,6 @@ namespace Poetic
                        const Nimble::Matrix3 & transform)
   {
     internalRender(str, n, transform);
-  }
-
-  void GPUFont::render(const QString & str, const Nimble::Matrix3 & transform)
-  {
-    internalRender(str.c_str(), (int) str.length(), transform);
   }
 
 
@@ -173,7 +158,7 @@ namespace Poetic
     float lh = cpuFont()->lineHeight();
 
     int left = (int) strlen(str);
-    int linelen = Radiant::StringUtils::strchrnul(str, '\n') - str;
+    int linelen = strchrnul(str, '\n') - str;
 
     while(left) {
           
@@ -189,7 +174,7 @@ namespace Poetic
         left = 0;
       else {
         left = (int) strlen(str);
-        linelen = Radiant::StringUtils::strchrnul(str, '\n') - str;
+        linelen = strchrnul(str, '\n') - str;
       }
     }
     
