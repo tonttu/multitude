@@ -21,10 +21,10 @@ namespace Resonant
 {
 
   ModuleRectPanner::ModuleRectPanner(Resonant::Application * app)
-    : ModulePanner(app)
+    : ModulePanner(app, RECTANGLES)
   {
   }
-
+#if 0
   void ModuleRectPanner::addSoundRectangle(const SoundRectangle &r)
   {
     //  Radiant::info("ModuleRectPanner::addSoundRectangle # new rect %d,%d %d,%d", r.location().x, r.location().y, r.size().x, r.size().y);
@@ -121,5 +121,6 @@ namespace Resonant
 
     return 0;
   }
+#endif
 
 }
