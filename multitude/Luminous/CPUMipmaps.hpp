@@ -45,28 +45,17 @@ namespace Luminous {
       environments.
 
       Mipmap level 0 is the original image, level 1 is the
-      original image * 0.5 etc.
+      quarter size image, etc.
   */
   /// @todo examples
   class CPUMipmaps : public Luminous::Collectable, public Luminous::Task
   {
-  private:
   public:
 
     friend class GPUMipmaps;
 
     LUMINOUS_API CPUMipmaps();
     LUMINOUS_API virtual ~CPUMipmaps();
-
-    /** Drop old CPU mipmaps from memory.
-
-    @param dt delta-time
-
-    @param purgeTime The time-limit for keeping CPUMipmaps in
-    memory. If purgeTime is less than zero, the mipmap idle times
-    are updated, but they are <B>not</B> deleted from memory.
-     */
-    LUMINOUS_API void update(float dt, float purgeTime);
 
     /** Calculates the best-looking mipmap-level for rendering the image with given size.
 
@@ -181,25 +170,18 @@ namespace Luminous {
       {
         m_state = WAITING;
         m_image.reset();
-        m_unUsed = std::numeric_limits<float>::max();
+        m_lastUsed = Radiant::TimeStamp::getTime();
       }
+
+      float sinceLastUse() const { return m_lastUsed.sinceSecondsD(); }
 
     private:
       ItemState m_state;
       std::shared_ptr<ImageTex> m_image;
-      float     m_unUsed;
+      Radiant::TimeStamp m_lastUsed;
     };
 
     typedef std::map<int, CPUItem> StackMap;
-
-    /*Luminous::Priority levelPriority(int level)
-    {
-      if(level <= DEFAULT_MAP1)
-        return Luminous::Task::PRIORITY_NORMAL +
-            Luminous::Task::PRIORITY_OFFSET_BIT_HIGHER;
-
-      return Luminous::Task::PRIORITY_NORMAL;
-    }*/
 
     CPUItem getStack(int index);
 
@@ -209,13 +191,13 @@ namespace Luminous {
     void recursiveLoad(StackMap & stack, int level);
     void reschedule(double delay = 0.0, bool allowLater = false);
 
+    void applyStackChanges();
+
     std::string m_filename;
     unsigned long int m_fileModified;
 
-    StackMap         m_stackChange;
+    StackMap           m_stackChange;
     Radiant::MutexAuto m_stackMutex;
-    Radiant::MutexAuto m_stackChangeMutex;
-    Radiant::MutexAuto m_rescheduleMutex;
 
     std::vector<CPUItem> m_stack;
     Nimble::Vector2i m_nativeSize;
@@ -239,7 +221,6 @@ namespace Luminous {
 
     Luminous::ImageInfo m_info;
   };
-
 
 }
 
