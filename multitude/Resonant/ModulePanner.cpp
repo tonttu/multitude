@@ -200,6 +200,15 @@ namespace Resonant {
     //  Radiant::info("ModuleRectPanner::addSoundRectangle # new speaker %d at %d,%d", r.rightChannel(), x2, y);
   }
 
+  void ModulePanner::setMode(Mode mode)
+  {
+    m_operatingMode = mode;
+  }
+
+  ModulePanner::Mode ModulePanner::getMode() const
+  {
+    return m_operatingMode;
+  }
 
   void ModulePanner::setSpeaker(unsigned i, Nimble::Vector2 location)
   {
