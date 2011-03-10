@@ -53,7 +53,7 @@ namespace Radiant {
     return g_enableVerboseOutput;
   }
 
-  static void g_output(Severity s, const char * msg)
+  static void g_output(Severity s, const char * msg, va_list& args)
   {
     FILE * out = (s > WARNING) ? stderr : stdout;
 
@@ -64,9 +64,12 @@ namespace Radiant {
 
     g_mutex.lock();
     if(g_appname.empty())
-      fprintf(out, "[%s] %s%s\n", now.asString().c_str(), prefixes[s], msg);
+      fprintf(out, "[%s] %s", now.asString().c_str(), prefixes[s]);
     else
-      fprintf(out, "[%s] %s: %s%s\n", now.asString().c_str(), g_appname.c_str(), prefixes[s], msg);
+      fprintf(out, "[%s] %s: %s", now.asString().c_str(), g_appname.c_str(), prefixes[s]);
+
+    vfprintf(out, msg, args);
+    fprintf(out,"\n");
     fflush(out);
     g_mutex.unlock();
   }
@@ -75,15 +78,10 @@ namespace Radiant {
   {
     if(g_enableVerboseOutput || s > DEBUG) {
 
-
-      char buf[4096];
       va_list args;
-
       va_start(args, msg);
-      vsnprintf(buf, 4096, msg, args);
+      g_output(s, msg, args);
       va_end(args);
-
-      g_output(s, buf);
 
       if(s >= FATAL) {
         exit(0);
@@ -99,50 +97,34 @@ namespace Radiant {
     if(!g_enableVerboseOutput)
       return;
 
-    char buf[4096];
     va_list args;
-
     va_start(args, msg);
-    vsnprintf(buf, 4096, msg, args);
+    g_output(DEBUG, msg, args);
     va_end(args);
-
-    g_output(DEBUG, buf);
   }
 
   void info(const char * msg, ...)
   {
-    char buf[4096];
     va_list args;
-
     va_start(args, msg);
-    vsnprintf(buf, 4096, msg, args);
+    g_output(INFO, msg, args);
     va_end(args);
-
-    g_output(INFO, buf);
   }
 
   void error(const char * msg, ...)
   {
-    char buf[4096];
     va_list args;
-
     va_start(args, msg);
-    vsnprintf(buf, 4096, msg, args);
+    g_output(FAILURE, msg, args);
     va_end(args);
-
-    g_output(FAILURE, buf);
   }
 
   void fatal(const char * msg, ...)
   {
-    char buf[4096];
     va_list args;
-
     va_start(args, msg);
-    vsnprintf(buf, 4096, msg, args);
+    g_output(FATAL, msg, args);
     va_end(args);
-
-    g_output(FATAL, buf);
 
     exit(EXIT_FAILURE);
   }

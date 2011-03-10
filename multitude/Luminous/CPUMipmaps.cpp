@@ -56,18 +56,13 @@ namespace Luminous {
   {
   }
 
-  void CPUMipmaps::update(float dt, float )
+  void CPUMipmaps::applyStackChanges()
   {
     Radiant::Guard g(m_stackMutex);
-    for(int i = 0; i < m_maxLevel; i++) {
-      m_stack[i].m_unUsed += dt;
-    }
-    if(!m_keepMaxLevel)
-      m_stack[m_maxLevel].m_unUsed += dt;
 
-    Radiant::Guard g2(m_stackChangeMutex);
     for(StackMap::iterator it = m_stackChange.begin(); it != m_stackChange.end(); ++it)
       m_stack[it->first] = it->second;
+
     m_stackChange.clear();
   }
 
@@ -140,7 +135,7 @@ namespace Luminous {
   {
     assert(i < m_stack.size());
     /// assert(is locked)
-    m_stack[i].m_unUsed = 0.0f;
+    m_stack[i].m_lastUsed = Radiant::TimeStamp::getTime();
   }
 
   bool CPUMipmaps::isReady()
@@ -149,7 +144,7 @@ namespace Luminous {
     for(int i = 0; i <= m_maxLevel; i++) {
       CPUItem & ci = m_stack[i];
 
-      if(ci.m_state == WAITING && ci.m_unUsed < m_timeOut)
+      if(ci.m_state == WAITING && ci.sinceLastUse() < m_timeOut)
         return false;
     }
 
@@ -316,7 +311,7 @@ namespace Luminous {
 
     for(int i = 0; i <= m_maxLevel; i++) {
       const CPUItem item = getStack(i);
-      double time_to_expire = m_timeOut - item.m_unUsed;
+      double time_to_expire = m_timeOut - item.sinceLastUse();
 
       if(time_to_expire > 0) {
         if(item.m_state == WAITING) {
@@ -337,16 +332,22 @@ namespace Luminous {
     reschedule(delay+0.0001);
 
     if(!stack.empty()) {
-      Radiant::Guard g(m_stackChangeMutex);
+
       for(StackMap::iterator it = stack.begin(); it != stack.end(); ++it)
         m_stackChange[it->first] = it->second;
+
     }
+
+    // Apply the changes from m_stackChange to m_stack
+    applyStackChanges();
   }
 
   CPUMipmaps::CPUItem CPUMipmaps::getStack(int index)
   {
     Radiant::Guard g(m_stackMutex);
+
     assert(index >= 0 && index < (int) m_stack.size());
+
     const CPUItem item = m_stack[index];
     return item;
   }
@@ -429,10 +430,10 @@ namespace Luminous {
       if(!im->read(m_filename.c_str())) {
         error("CPUMipmaps::recursiveLoad # Could not read %s", m_filename.c_str());
         item.m_state = FAILED;
-      }
-      else {
+      } else {
         if(im->hasAlpha())
           m_hasAlpha = true;
+
         item.m_image = im;
         item.m_state = READY;
       }
@@ -485,7 +486,6 @@ namespace Luminous {
 
   void CPUMipmaps::reschedule(double delay, bool allowLater)
   {
-    Radiant::Guard g(m_rescheduleMutex);
     Radiant::TimeStamp next = Radiant::TimeStamp::getTime() +
                               Radiant::TimeStamp::createSecondsD(delay);
     if(allowLater || next < scheduled())
