@@ -125,6 +125,8 @@ namespace Radiant {
     va_start(args, msg);
     g_output(FATAL, msg, args);
     va_end(args);
+
+    exit(EXIT_FAILURE);
   }
 
   void setApplicationName(const char * appname)
