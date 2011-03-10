@@ -340,6 +340,8 @@ namespace FireView {
       m_featureSend.resize(m_features.size());
 
       for(unsigned i = 0; i < m_features.size(); i++) {
+        m_featureSend[i] = false;
+
         Radiant::VideoCamera::CameraFeature & info = m_features[i];
         if(info.id == Radiant::VideoCamera::GAMMA &&
            info.value > ((info.max * 3 + info.min) / 4)) {
@@ -352,8 +354,11 @@ namespace FireView {
           info.value = (info.max + info.min) / 2;
           m_featureSend[i] = true;
         }
-        else
-          m_featureSend[i] = false;
+        uint32_t val;
+        if (CamView::getDefaultParameter(info.id, &val)) {
+          info.value = val;
+          m_featureSend[i] = true;
+        }
       }
 
       m_autoSend = m_featureSend;
@@ -383,6 +388,7 @@ namespace FireView {
   bool CamView::m_colorCheck = false;
 
   Nimble::Recti CamView::m_format7rect(0, 0, 2000, 1500);
+  std::map<Radiant::VideoCamera::FeatureType, uint32_t> CamView::s_defaults;
 
   static int __interval = 50;
 

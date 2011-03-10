@@ -149,6 +149,20 @@ int main(int argc, char ** argv)
       FireView::CamView::setVerbose(true);
       Radiant::enableVerboseOutput(true);
     }
+    else if (strcmp(arg, "--celltest") == 0) {
+      triggerMode = Radiant::VideoCamera::TRIGGER_MODE_0;
+      triggerSource = Radiant::VideoCamera::TRIGGER_SOURCE_0;
+      format7 = true;
+      // full format7 area
+      Nimble::Vector4f vals(0, 0, 376, 240);
+      fps = 60;
+
+      FireView::CamView::setFormat7area(vals[0], vals[1], vals[2], vals[3]);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::SHUTTER, 30);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::BRIGHTNESS, 200);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::SHUTTER, 30);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::GAIN, 20);
+    }
     else {
       printf("%s Could not handle argument %s\n", argv[0], arg);
       helper(argv[0]);
