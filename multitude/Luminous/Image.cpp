@@ -730,8 +730,10 @@ dest = *this;
     if(tex.width() != width() ||
        tex.height() != height() ||
        tex.generation() != generation()) {
+
       tex.loadImage(*this, withmimaps);
       tex.setGeneration(generation());
+
     }
   }
 

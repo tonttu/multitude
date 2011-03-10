@@ -107,20 +107,23 @@ namespace Luminous {
     /** @return Returns the native size of the image, in pixels. */
     const Nimble::Vector2i & nativeSize() const { return m_nativeSize;}
 
-    /** Fetch corresponding GPU mipmaps from a resource set. If the
-        GPUMipmaps object does not exist yet, it is created and
-        returned.
+    /// Binds a texture to the given texture unit. Automatically selects appropriate mipmap from given parameters.
+    /// @param pixelSize size of the texture on screen in pixel
+    /// @param textureUnit OpenGL texture unit
+    /// @return true if a mipmap was succesfully bound, false if no texture was bound
+    LUMINOUS_API bool bind(Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
 
-        @return The GPUMipmaps that correspond to these CPUMipmaps
-    */
-    LUMINOUS_API GPUMipmaps * getGPUMipmaps();
-    /// @copydoc getGPUMipmaps
-    /// @param rs A pointer to the OpenGL resource container
-    LUMINOUS_API GPUMipmaps * getGPUMipmaps(GLResources * rs);
-    /// Binds a texture that matches the given size parameters.
-    LUMINOUS_API bool bind(GLResources *,
-                           const Nimble::Matrix3 & transform,
-                           Nimble::Vector2 pixelsize);
+    /// @copydoc bind(Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0)
+    /// @param transform transformation matrix to multiply the pixelSize with to get final screen size
+    LUMINOUS_API bool bind(const Nimble::Matrix3 & transform, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
+
+    /// @copydoc bind(Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0)
+    /// @param resources OpenGL resource container for this thread
+    LUMINOUS_API bool bind(GLResources * resources, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
+
+    /// @copydoc bind(const Nimble::Matrix3 & transform, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
+    /// @param resources OpenGL resource container for this thread
+    LUMINOUS_API bool bind(GLResources * resources, const Nimble::Matrix3 & transform, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
 
     /** Check if the mipmaps are still being loaded.
 

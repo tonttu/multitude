@@ -15,9 +15,8 @@
 
 #include "CPUMipmaps.hpp"
 
-#include "GPUMipmaps.hpp"
-
 #include <Luminous/GLResources.hpp>
+#include <Luminous/Utils.hpp>
 
 #include <Radiant/Directory.hpp>
 #include <Radiant/FileUtils.hpp>
@@ -196,35 +195,94 @@ namespace Luminous {
     return true;
   }
 
-  GPUMipmaps * CPUMipmaps::getGPUMipmaps(GLResources * resources)
+  bool CPUMipmaps::bind(Nimble::Vector2 pixelSize, GLenum textureUnit)
   {
-    GLResource * r = resources->getResource(this);
+    return bind(GLResources::getThreadResources(), pixelSize, textureUnit);
+  }
 
-    if(!r) {
-      GPUMipmaps * gm = new GPUMipmaps(this, resources);
-      resources->addResource(this, gm);
-      return gm;
+  bool CPUMipmaps::bind(const Nimble::Matrix3 &transform, Nimble::Vector2 pixelSize, GLenum textureUnit)
+  {
+    return bind(GLResources::getThreadResources(), transform, pixelSize, textureUnit);
+  }
+
+  bool CPUMipmaps::bind(GLResources * resources, const Nimble::Matrix3 &transform, Nimble::Vector2 pixelSize, GLenum textureUnit)
+  {
+    // Transform the corners and compute the lengths of the sides of the transformed rectangle.
+    // We use the maximum of the edge lengths to get sheared textures appear correctly.
+    Nimble::Vector2 lb = transform.project(0, 0);
+    Nimble::Vector2 rb = transform.project(pixelSize.x, 0);
+    Nimble::Vector2 lt = transform.project(0, pixelSize.y);
+    Nimble::Vector2 rt = transform.project(pixelSize.x, pixelSize.y);
+
+    float x1 = (rb - lb).length();
+    float x2 = (rt - lt).length();
+
+    float y1 = (lt - lb).length();
+    float y2 = (rt - rb).length();
+
+    return bind(resources, Nimble::Vector2(std::max(x1, x2), std::max(y1, y2)), textureUnit);
+  }
+
+  bool CPUMipmaps::bind(GLResources * resources, Nimble::Vector2 pixelSize, GLenum textureUnit)
+  {
+    // Find the best available mipmap
+    int bestAvailable = getClosest(pixelSize);
+    if(bestAvailable < 0)
+      return false;
+
+    // Mark the mipmap that it has been used
+    markImage(bestAvailable);
+
+    std::shared_ptr<ImageTex> img = getImage(bestAvailable);
+
+    if(img->isFullyLoadedToGPU()) {
+      img->bind(resources, textureUnit, false);
+      Luminous::Utils::glCheck("GPUMipmaps::bind # 1");
+      return true;
     }
 
-    GPUMipmaps * gm = dynamic_cast<GPUMipmaps *> (r);
+    // Limit how many pixels we can upload immediately
+    /// @todo this should be a global per frame limit in bytes
+    const size_t instantUploadPixelLimit = 1.5e6;
 
-    assert(gm);
+    // Upload the whole texture at once if possible
+    if(img->width() * img->height() < instantUploadPixelLimit) {
 
-    return gm;
-  }
+      img->bind(resources, textureUnit, false);
 
-  GPUMipmaps * CPUMipmaps::getGPUMipmaps()
-  {
-    return getGPUMipmaps(GLResources::getThreadResources());
-  }
+      return true;
 
-  bool CPUMipmaps::bind(GLResources * r,
-                        const Nimble::Matrix3 & transform,
-                        Nimble::Vector2 pixelsize)
-  {
-    GPUMipmaps * gpumaps = getGPUMipmaps(r);
+    } else {
+      // Texture is too big, do partial upload
+      img->uploadBytesToGPU(resources, instantUploadPixelLimit);
 
-    return gpumaps->bind(transform, pixelsize);
+      if(img->isFullyLoadedToGPU()) {
+        img->bind(resources, textureUnit, false);
+
+        return true;
+      }
+
+      // If the requested texture is not fully uploaded, test if there is
+      // anything we can use already
+      for(size_t i = 0; i < stackSize(); i++) {
+
+        std::shared_ptr<ImageTex> test = getImage(i);
+        if(!test)
+          continue;
+
+        size_t area = test->width() * test->height();
+
+        // If the texture is fully uploaded or its small enough, we bypass the
+        // pixel budget and upload it anyway (ImageTex::bind() uploads the
+        // texture as a side-effect).
+
+        if(test->isFullyLoadedToGPU() || (area < (instantUploadPixelLimit / 3))) {
+          test->bind(resources, textureUnit, false);
+
+          return true;
+        }
+      }
+    }
   }
 
   bool CPUMipmaps::isActive()
