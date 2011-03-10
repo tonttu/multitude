@@ -64,6 +64,9 @@ namespace Valuable
     /// Concatenates two strings
     QString operator + (const QString & i) const;
 
+    /// Concatenates strings with UTF-8 encoded string
+    QString operator + (const char * utf8) const;
+
     /// Compares if two strings are equal
     bool operator == (const QString & that) const;
     /// Compares if two strings are not equal

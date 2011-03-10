@@ -19,6 +19,8 @@
 #include "Export.hpp"
 #include <Radiant/StringUtils.hpp>
 
+#include <QStringList>
+
 namespace Valuable
 {
   class HasValues;

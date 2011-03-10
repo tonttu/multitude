@@ -93,6 +93,11 @@ namespace Valuable
     return m_value + i;
   }
 
+  QString ValueString::operator+(const char * utf8) const
+  {
+    return m_value + QString::fromUtf8(utf8);
+  }
+
   bool ValueString::operator == (const QString & that) const
   {
     return m_value == that;

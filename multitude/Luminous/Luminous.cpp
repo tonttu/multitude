@@ -117,7 +117,7 @@ namespace Luminous
       QList<QByteArray> formats = QImageReader::supportedImageFormats ();
       for(QList<QByteArray>::iterator it = formats.begin(); it != formats.end(); it++) {
         QString format(*it);
-        Radiant::debug("%s", format.toStdString().c_str());
+        Radiant::debug("%s", format.toUtf8().data());
       }
     }
 
@@ -126,7 +126,7 @@ namespace Luminous
       QList<QByteArray> formats = QImageWriter::supportedImageFormats ();
       for(QList<QByteArray>::iterator it = formats.begin(); it != formats.end(); it++) {
         QString format(*it);
-        Radiant::debug("%s", format.toStdString().c_str());
+        Radiant::debug("%s", format.toUtf8().data());
       }
     }
 

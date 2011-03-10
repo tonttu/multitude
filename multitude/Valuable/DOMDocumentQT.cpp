@@ -120,7 +120,7 @@ namespace Valuable
     if(!m_wrapped->x.setContent( & file, & errstr, & errline)) {
       file.close();
       error("DOMDocument::readFromFile # Cannot read file %s, line %d: %s",
-            filename, errline, errstr.toStdString().c_str());
+            filename, errline, errstr.toUtf8().data());
       return false;
     }
 
