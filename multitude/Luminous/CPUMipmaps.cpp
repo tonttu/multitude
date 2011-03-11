@@ -283,6 +283,7 @@ namespace Luminous {
         }
       }
     }
+    return false;
   }
 
   bool CPUMipmaps::isActive()
