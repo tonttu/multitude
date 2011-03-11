@@ -85,8 +85,8 @@ namespace Resonant {
         so that at radius/2 the volume is at 100% (aka unity gain). */
     void setCaptureRadius(float r) { m_maxRadius = r; ++m_generation; }
 
-    /// Add a SoundRectangle
-    RESONANT_API void addSoundRectangle(const SoundRectangle & r);
+    /// Add a SoundRectangle. The ownership is transferred to this object.
+    RESONANT_API void addSoundRectangle(SoundRectangle * r);
 
     RESONANT_API void setMode(Mode mode);
     RESONANT_API Mode getMode() const;
@@ -150,7 +150,7 @@ namespace Resonant {
     typedef std::vector<std::shared_ptr<LoudSpeaker> > LoudSpeakers;
 
 
-    typedef std::vector<SoundRectangle> Rectangles;
+    typedef std::vector<SoundRectangle*> Rectangles;
 
 
     Sources      m_sources;

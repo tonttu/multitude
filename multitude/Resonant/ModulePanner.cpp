@@ -44,7 +44,10 @@ namespace Resonant {
   }
 
   ModulePanner::~ModulePanner()
-  {}
+  {
+    for (int i=0; i < m_rectangles.size(); ++i)
+      delete m_rectangles[i];
+  }
 
   Valuable::ArchiveElement & ModulePanner::serialize(Valuable::Archive &doc)
   {
@@ -182,19 +185,19 @@ namespace Resonant {
     ++m_generation;
   }
 
-  void ModulePanner::addSoundRectangle(const SoundRectangle &r)
+  void ModulePanner::addSoundRectangle(SoundRectangle * r)
   {
     //  Radiant::info("ModuleRectPanner::addSoundRectangle # new rect %d,%d %d,%d", r.location().x, r.location().y, r.size().x, r.size().y);
 
     m_rectangles.push_back(r);
 
     // Add the two speakers
-    int x1 = r.location().x;
-    int x2 = r.location().x + r.size().x;
-    int y = r.location().y + r.size().y / 2;
+    int x1 = r->location().x;
+    int x2 = r->location().x + r->size().x;
+    int y = r->location().y + r->size().y / 2;
 
-    setSpeaker(r.leftChannel(), x1, y);
-    setSpeaker(r.rightChannel(), x2, y);
+    setSpeaker(r->leftChannel(), x1, y);
+    setSpeaker(r->rightChannel(), x2, y);
 
     //  Radiant::info("ModuleRectPanner::addSoundRectangle # new speaker %d at %d,%d", r.leftChannel(), x1, y);
     //  Radiant::info("ModuleRectPanner::addSoundRectangle # new speaker %d at %d,%d", r.rightChannel(), x2, y);
@@ -426,7 +429,7 @@ namespace Resonant {
       return 0;
 
     for(Rectangles::const_iterator it = m_rectangles.begin(); it != m_rectangles.end(); it++) {
-      const SoundRectangle * r = &(*it);
+      const SoundRectangle * r = *it;
 
       if(channel == r->leftChannel() || channel == r->rightChannel())
         return r;
