@@ -193,7 +193,7 @@ namespace Nimble {
         @return Returns the largest possible rectangle that can fit inside this rectangle,
         with the given aspect ratio. The content is centered both horizontally, and vertically.
     */
-    inline RectT fitContent(float aspectRatio);
+    inline RectT fitContent(float aspectRatio) const;
 
     /// Check if two rectangles are identical
     inline bool operator == (const RectT<T> & o) const {
@@ -420,7 +420,7 @@ namespace Nimble {
   }
 
   template<class T>
-  inline RectT<T> RectT<T>::fitContent(float aspectRatio)
+  inline RectT<T> RectT<T>::fitContent(float aspectRatio) const
   {
     Nimble::Vector2T<T> s = span();
     float myAspect = s.x / s.y;
