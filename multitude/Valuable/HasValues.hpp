@@ -112,7 +112,7 @@ namespace Valuable
     virtual const char * type() const { return VO_TYPE_HASVALUES; }
 
     /// Serializes this object (and its children) to a DOM node
-    virtual ArchiveElement & serialize(Archive &doc);
+    virtual ArchiveElement & serialize(Archive &doc) const;
     /// De-serializes this object (and its children) from a DOM node
     virtual bool deserialize(ArchiveElement & element);
 

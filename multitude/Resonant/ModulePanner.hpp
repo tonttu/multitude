@@ -60,7 +60,7 @@ namespace Resonant {
     RESONANT_API ModulePanner(Application *, Mode mode=RADIAL);
     RESONANT_API virtual ~ModulePanner();
 
-    RESONANT_API virtual Valuable::ArchiveElement & serialize(Valuable::Archive &doc);
+    RESONANT_API virtual Valuable::ArchiveElement & serialize(Valuable::Archive &doc) const;
     RESONANT_API virtual bool readElement(Valuable::DOMElement element);
 
     RESONANT_API virtual bool prepare(int & channelsIn, int & channelsOut);

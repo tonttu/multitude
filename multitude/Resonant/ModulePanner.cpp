@@ -49,7 +49,7 @@ namespace Resonant {
       delete m_rectangles[i];
   }
 
-  Valuable::ArchiveElement & ModulePanner::serialize(Valuable::Archive &doc)
+  Valuable::ArchiveElement & ModulePanner::serialize(Valuable::Archive &doc) const
   {
     Valuable::ArchiveElement & e = Module::serialize(doc);
 
