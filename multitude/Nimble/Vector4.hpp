@@ -149,6 +149,15 @@ namespace Nimble {
   /// Vector of four doubles
   typedef Vector4T<double> Vector4d;
 
+
+  namespace Math {
+    /// Specialize Abs
+    template <class T>
+    inline float Abs(const Vector4T<T>& t)
+    {
+      return t.length();
+    }
+  }
 } // namespace
 
 template <class T>

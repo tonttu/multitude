@@ -174,13 +174,15 @@ namespace Nimble {
   }
   /// @endcond
 
-/*
-  template <class T>
-  inline float abs(Vector2T<T> t)
-  {
-    return t.length();
+  namespace Math {
+    /// Specialize Abs
+    template <class T>
+    inline float Abs(const Vector2T<T>& t)
+    {
+      return t.length();
+    }
   }
-*/
+
   /// Compute the dot product of two vectors
   /// @param t1 first dot product vector
   /// @param t2 second dot product vector
