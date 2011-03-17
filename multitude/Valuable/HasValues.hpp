@@ -7,10 +7,10 @@
  * See file "Valuable.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef VALUABLE_HASVALUES_HPP
@@ -40,7 +40,7 @@ namespace Valuable
       classes, HasValues simply maintains a list of children.
   */
   /// @todo Examples
-  class VALUABLE_API HasValues : public ValueObject
+  class VALUABLE_API HasValues : public ValueObject, public Patterns::NotCopyable
   {
   public:
     /// Universally unique identifier type
