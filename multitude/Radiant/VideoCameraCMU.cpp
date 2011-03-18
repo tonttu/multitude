@@ -326,7 +326,7 @@ namespace Radiant {
 
       m_image.allocateMemory(IMAGE_GRAYSCALE, 640, 480);
 
-      Radiant::debug("VideoCameraCMU::open # Camera max speed %d", m_camera->GetMaxSpeed());
+      debugRadiant("VideoCameraCMU::open # Camera max speed %d", m_camera->GetMaxSpeed());
 
     int mbps = m_camera->GetMaxSpeed();
     trace(Radiant::DEBUG, "CAMERA MAX SPEED %d", mbps);

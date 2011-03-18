@@ -557,7 +557,7 @@ namespace Luminous
 
   RenderContext::~RenderContext()
   {
-    debug("Closing OpenGL context. Rendered %lu things in %lu frames, %lu things per frame",
+    debugLuminous("Closing OpenGL context. Rendered %lu things in %lu frames, %lu things per frame",
          m_data->m_renderCount, m_data->m_frameCount,
          m_data->m_renderCount / Nimble::Math::Max(m_data->m_frameCount, (unsigned long) 1));
     delete m_data;
@@ -628,7 +628,7 @@ namespace Luminous
 //      Radiant::info("RenderContext::isVisible # area (%f,%f) (%f,%f)", area.center().x, area.center().y, area.size().x, area.size().y);
 
       if(m_data->m_clipStack.empty()) {
-        Radiant::debug("\tclip stack is empty");
+        debugLuminous("\tclip stack is empty");
         return true;
       } else {
 

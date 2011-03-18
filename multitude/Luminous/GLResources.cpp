@@ -257,7 +257,7 @@ namespace Luminous
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
 
     if(it == __resources.end()) {
-      debug("No OpenGL resources for current thread");
+      debugLuminous("No OpenGL resources for current thread");
       return 0;
     }
 

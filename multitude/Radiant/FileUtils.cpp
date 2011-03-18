@@ -17,6 +17,7 @@
 #include "PlatformUtils.hpp"
 #include "StringUtils.hpp"
 #include "Directory.hpp"
+#include "Radiant.hpp"
 
 #include <assert.h>
 #include <fcntl.h>
@@ -230,10 +231,10 @@ namespace Radiant
     it != pathList.end(); it++) {
       string fullPath = (*it) + string("/") + filename;
 
-      debug("Radiant::findFile # Testing %s for %s", (*it).c_str(), filename.c_str());
+      debugRadiant("Radiant::findFile # Testing %s for %s", (*it).c_str(), filename.c_str());
 
       if(fileReadable(fullPath.c_str())) {
-        debug("Radiant::findFile # FOUND %s", fullPath.c_str());
+        debugRadiant("Radiant::findFile # FOUND %s", fullPath.c_str());
         return fullPath;
       }
     }

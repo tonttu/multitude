@@ -16,7 +16,7 @@
 #include <Valuable/HasValuesImpl.hpp>
 #include <Valuable/DOMDocument.hpp>
 #include <Valuable/DOMElement.hpp>
-
+#include <Valuable/Valuable.hpp>
 #include <Valuable/HasValues.hpp>
 #include <Valuable/Serializer.hpp>
 
@@ -242,7 +242,7 @@ namespace Valuable
 
     if(std::find(m_elisteners.begin(), m_elisteners.end(), vp) !=
        m_elisteners.end())
-      debug("Widget::eventAddListener # Already got item %s -> %s (%p)",
+      debugValuable("Widget::eventAddListener # Already got item %s -> %s (%p)",
             from, to, obj);
     else {
       // m_elisteners.push_back(vp);

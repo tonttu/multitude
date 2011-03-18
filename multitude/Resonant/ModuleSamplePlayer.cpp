@@ -2,6 +2,7 @@
  */
 
 #include "ModuleSamplePlayer.hpp"
+#include "Resonant.hpp"
 
 #include "DSPNetwork.hpp"
 
@@ -168,13 +169,13 @@ namespace Resonant {
 
     if(!more) {
       if(m_loop) {
-        // debug("ModuleSamplePlayer::SampleVoice::synthesize # rewind");
+        // debugResonant("ModuleSamplePlayer::SampleVoice::synthesize # rewind");
         m_position = 0;
         m_dpos = 0.0f;
         more = 1;
       }
       else {
-        // debug("ModuleSamplePlayer::SampleVoice::synthesize # done");
+        // debugResonant("ModuleSamplePlayer::SampleVoice::synthesize # done");
         m_sample.reset();
         m_state = INACTIVE;
       }
@@ -232,7 +233,7 @@ namespace Resonant {
               name);
       }
       else {
-        debug("ModuleSamplePlayer::SampleVoice::init # got %s", name);
+        debugResonant("ModuleSamplePlayer::SampleVoice::init # got %s", name);
       }
 
       name[0] = '\0';
@@ -246,7 +247,7 @@ namespace Resonant {
 
     m_state = sample ? PLAYING : WAITING_FOR_SAMPLE;
 
-    debug("ModuleSamplePlayer::SampleVoice::init # %p Playing gain = %.3f "
+    debugResonant("ModuleSamplePlayer::SampleVoice::init # %p Playing gain = %.3f "
           "rp = %.3f, ss = %d, ts = %d", this, m_gain, m_relPitch,
           m_sampleChannel, m_targetChannel);
   }
@@ -293,7 +294,7 @@ namespace Resonant {
   bool ModuleSamplePlayer::BGLoader::addLoadable(const char * filename,
                                                  SampleVoice * waiting)
   {
-    debug("ModuleSamplePlayer::BGLoader::addLoadable # %s %p",
+    debugResonant("ModuleSamplePlayer::BGLoader::addLoadable # %s %p",
           filename, waiting);
 
     for(int i = 0; i < BINS; i++) {
@@ -318,14 +319,14 @@ namespace Resonant {
   {
     while(m_continue) {
 
-      debug("ModuleSamplePlayer::BGLoader::childLoop # once");
+      debugResonant("ModuleSamplePlayer::BGLoader::childLoop # once");
 
       for(int i = 0; i < BINS; i++) {
         LoadItem & it = m_loads[i];
 
         if(!it.m_free) {
 
-          debug("ModuleSamplePlayer::BGLoader::childLoop # Something");
+          debugResonant("ModuleSamplePlayer::BGLoader::childLoop # Something");
 
           std::shared_ptr<Sample> s(new Sample);
 
@@ -351,7 +352,7 @@ namespace Resonant {
             }
           }
           else {
-            debug("ModuleSamplePlayer::BGLoader::childLoop # Loaded "
+            debugResonant("ModuleSamplePlayer::BGLoader::childLoop # Loaded "
                   "\"%s\"", it.m_name.str());
 
             for(int j = 0; j < LoadItem::WAITING_COUNT; j++) {
@@ -359,7 +360,7 @@ namespace Resonant {
               if(!voice)
                 break;
 
-              debug("ModuleSamplePlayer::BGLoader::childLoop # Delivering "
+              debugResonant("ModuleSamplePlayer::BGLoader::childLoop # Delivering "
                     "\"%s\" to %p", it.m_name.str(), voice);
 
               voice->setSample(s);
@@ -442,7 +443,7 @@ namespace Resonant {
       int sampleind = findSample(buf);
 
       if(sampleind < 0) {
-        debug("ModuleSamplePlayer::control # No sample \"%s\"", buf);
+        debugResonant("ModuleSamplePlayer::control # No sample \"%s\"", buf);
 
         m_loader->addLoadable(buf, & voice);
 
@@ -453,7 +454,7 @@ namespace Resonant {
                  m_samples[sampleind] : std::shared_ptr<Sample>(), data);
       m_active++;
 
-      debug("ModuleSamplePlayer::control # Started sample %s (%d/%d)",
+      debugResonant("ModuleSamplePlayer::control # Started sample %s (%d/%d)",
             buf, voiceind, m_active);
       // assert(voiceind < (int) m_active);
 
@@ -555,7 +556,7 @@ namespace Resonant {
       SNDFILE * sndf = sf_open(file.c_str(), SFM_READ, & info);
 
       if(!sndf) {
-        Radiant::debug("ModuleSamplePlayer::playSample # failed to load '%s'",
+        debugResonant("ModuleSamplePlayer::playSample # failed to load '%s'",
                        file.c_str());
         continue;
       }
@@ -572,7 +573,7 @@ namespace Resonant {
       }
     }
 
-    debug("ModuleSamplePlayer::createAmbientBackground # %d samples", n);
+    debugResonant("ModuleSamplePlayer::createAmbientBackground # %d samples", n);
   }
 
 
@@ -673,7 +674,7 @@ namespace Resonant {
         m_samples[i] = s;
         return true;
       }
-      debug("ModuleSamplePlayer::addSample # m_samples[%u] = %p",
+      debugResonant("ModuleSamplePlayer::addSample # m_samples[%u] = %p",
             i, m_samples[i].get());
     }
 

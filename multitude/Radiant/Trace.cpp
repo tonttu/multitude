@@ -131,17 +131,6 @@ namespace Radiant {
   }
 
 
-  void debug_module(const char * module, const char * msg, ...)
-  {
-    if (!g_enableVerboseOutput && g_verboseModules.count(module) == 0)
-      return;
-
-    va_list args;
-    va_start(args, msg);
-    g_output(DEBUG, msg, module, args);
-    va_end(args);
-  }
-
   void debug(const char * msg, ...)
   {
     if(!g_enableVerboseOutput)

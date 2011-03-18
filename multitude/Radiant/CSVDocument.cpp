@@ -76,7 +76,7 @@ namespace Radiant {
                              str[str.size() - 1] == 8203))
           str.erase(str.size() - 1, 1);
 
-        /*debug("CELL %d,%d = %s", (int) r.size(), (int) m_rows.size(),
+        /*debugRadiant("CELL %d,%d = %s", (int) r.size(), (int) m_rows.size(),
                 Radiant::StringUtils::stdWstringAsUtf8(str).c_str());
           */
         r.push_back(str);

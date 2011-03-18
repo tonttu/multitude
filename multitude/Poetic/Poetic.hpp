@@ -17,6 +17,8 @@
 
 #include <Radiant/Mutex.hpp>
 
+#define debugPoetic(...) (Radiant::trace("Poetic", Radiant::DEBUG, __VA_ARGS__))
+
 struct FT_LibraryRec_;
 
 /// Poetic is an OpenGL font rendering library.

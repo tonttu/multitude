@@ -18,6 +18,7 @@
 
 #include <Luminous/Export.hpp>
 #include <Radiant/Platform.hpp>
+#include <Radiant/Trace.hpp>
 
 #ifdef RADIANT_OSX
 // We do not use GLEW on OSX
@@ -41,6 +42,7 @@
 #include <GL/glew.h>
 #endif
 
+#define debugLuminous(...) (Radiant::trace("Luminous", Radiant::DEBUG, __VA_ARGS__))
 /// Luminous is a library of C++ classes for computer graphics, using OpenGL.
 /** Copyright: The Luminous library has been developed in Helsinki
     Institute for Information Technology (HIIT, 2006-2008) and

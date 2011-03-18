@@ -36,7 +36,7 @@ namespace Radiant
     int baud, int bits, int /*waitBytes*/, int /*waitTimeUS*/)
   {
     // First make sure serial port is closed
-    debug("SerialPort::open(%s)", device);
+    debugRadiant("SerialPort::open(%s)", device);
     close();
       
     m_device = device;
