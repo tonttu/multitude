@@ -202,13 +202,13 @@ namespace Valuable
   }
 
   template<>
-  ArchiveElement & ValueStringT<std::string>::serialize(Archive & archive)
+  ArchiveElement & ValueStringT<std::string>::serialize(Archive & archive) const
   {
     return ValueObject::serialize(archive);
   }
 
   template<>
-  ArchiveElement & ValueStringT<std::wstring>::serialize(Archive & archive)
+  ArchiveElement & ValueStringT<std::wstring>::serialize(Archive & archive) const
   {
     if(name().empty()) {
       Radiant::error("ValueWString::serialize # attempt to serialize object with no name");

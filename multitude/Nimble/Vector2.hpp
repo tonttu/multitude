@@ -7,10 +7,10 @@
  * See file "Nimble.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef NIMBLE_VECTOR2T_HPP
@@ -42,6 +42,7 @@ namespace Nimble {
 
     /** Default constructor, does \b not initialize the values. */
     Vector2T () {}
+    inline explicit Vector2T(T xy) { x = y = xy; }
     /// Constructs a vector initializing it to given values
     Vector2T (T cx, T cy) { x = (T)cx;	y = (T)cy; }
     /// Constructs a vector initializing from memory
@@ -173,13 +174,15 @@ namespace Nimble {
   }
   /// @endcond
 
-/*
-  template <class T>
-  inline float abs(Vector2T<T> t)
-  {
-    return t.length();
+  namespace Math {
+    /// Specialize Abs
+    template <class T>
+    inline float Abs(const Vector2T<T>& t)
+    {
+      return t.length();
+    }
   }
-*/
+
   /// Compute the dot product of two vectors
   /// @param t1 first dot product vector
   /// @param t2 second dot product vector

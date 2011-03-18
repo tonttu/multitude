@@ -1283,30 +1283,62 @@ namespace Radiant {
       return false;
     }
 
-    if((err = dc1394_camera_enumerate(g_dc, & camlist))
-      != DC1394_SUCCESS) {
+    err = dc1394_camera_enumerate(g_dc, & camlist);
 
+    if(err != DC1394_SUCCESS || camlist->num == 0) {
 #ifdef __linux__
       const char * username = getenv("USERNAME");
 
+      // try to check that files are existing, readable and writeable
+      bool rawOk = access("/dev/raw1394", F_OK | R_OK | W_OK) == 0;
+      bool videoOk = access("/dev/video1394/0", F_OK | R_OK | W_OK) == 0;
       if(!username)
         username = "username";
 
-      error("%s # dc1394_find_cameras failed (%s)\n"
-            "*************************************************************\n"
-            "Please check that FireWire device files exist:\n"
-            "/dev/raw1394\n"
-            "/dev/video1394 (or /dev/video1394/0 etc)\n"
-            "And that you have permissions to use them.\n"
-            "\n"
-            "To gain permissions, try the following commands:\n\n"
-            "> sudo addgroup %s video\n"
-            "> sudo addgroup %s disk\n\n"
-            "> sudo chmod -R 777 /dev/*1394*\n\n"
-            "You may need to log in again for the changes to be effective.\n\n"
-            "See also: http://www.multitouch.fi/cornerstone/cornerstone-documentation/firewire-permissions\n"
-            "*************************************************************\n\n",
-            fname, dc1394_error_get_string(err), username, username);
+      // this happens with permission problems in older libdc1394 versions?
+      if (err != DC1394_SUCCESS) {
+        error("%s # dc1394_camera_enumerate failed (%s)\n"
+              "*************************************************************\n"
+              "Please check that FireWire device files exist:\n"
+              "/dev/raw1394\n"
+              "/dev/video1394 (or /dev/video1394/0 etc)\n"
+              "And that you have permissions to use them.\n"
+              "\n"
+              "To gain permissions, try the following commands:\n\n"
+              "> sudo addgroup %s video\n"
+              "> sudo addgroup %s disk\n\n"
+              "> sudo chmod -R 777 /dev/*1394*\n\n"
+              "You may need to log in again for the changes to be effective.\n\n"
+              "See also: http://www.multitouch.fi/cornerstone/cornerstone-documentation/firewire-permissions\n"
+              "*************************************************************\n\n",
+              fname, dc1394_error_get_string(err), username, username);
+      } else {
+        // no cameras found
+        std::string missing;
+        if (!rawOk || !videoOk) {
+          missing = "Permission problems:\n";
+          if (!rawOk)
+            missing += "/dev/raw1394 read or write permission missing\n";
+          if (!videoOk)
+            missing += "/dev/video1394/0 read or write permissiong missing\n";
+        }
+
+        error("%s # Could not find any cameras\n"
+              "*************************************************************\n"
+              "%s"
+              "\n"
+              "To gain permissions, try the following commands:\n\n"
+              "> sudo addgroup %s video\n"
+              "> sudo addgroup %s disk\n\n"
+              "> sudo chmod -R 777 /dev/*1394*\n\n"
+              "You may need to log in again for the changes to be effective.\n\n"
+              "See also: http://www.multitouch.fi/cornerstone/cornerstone-documentation/firewire-permissions\n"
+              "*************************************************************\n\n",
+              fname,
+              missing.c_str(),
+              username, username);
+      }
+
 #else
       Radiant::error("%s # dc1394_find_cameras failed (%s)\n",
                      fname, dc1394_error_get_string(err));

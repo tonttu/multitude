@@ -152,7 +152,7 @@ namespace Valuable
     return deserialize(archive.root());
   }
 
-  ArchiveElement & HasValues::serialize(Archive & archive)
+  ArchiveElement & HasValues::serialize(Archive & archive) const
   {
     if(m_name.empty()) {
       Radiant::error(
@@ -169,7 +169,7 @@ namespace Valuable
 
     elem.add("type", type());
 
-    for(container::iterator it = m_children.begin(); it != m_children.end(); it++) {
+    for(container::const_iterator it = m_children.begin(); it != m_children.end(); it++) {
       ValueObject * vo = it->second;
 
       if (!archive.checkFlag(Archive::ONLY_CHANGED) || vo->isChanged()) {

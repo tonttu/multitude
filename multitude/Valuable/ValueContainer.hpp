@@ -61,10 +61,10 @@ namespace Valuable
 
     virtual const char* type() const { return "container"; }
 
-    virtual ArchiveElement & serialize(Archive & archive)
+    virtual ArchiveElement & serialize(Archive & archive) const
     {
       ArchiveElement & elem = archive.createElement((name().empty() ? type() : name()).c_str());
-      for(iterator it = m_container.begin(); it != m_container.end(); it++) {
+      for(const_iterator it = m_container.begin(); it != m_container.end(); it++) {
         elem.add(Serializer::serialize(archive, *it));
       }
       return elem;

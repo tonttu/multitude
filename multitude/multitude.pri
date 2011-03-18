@@ -10,7 +10,7 @@ INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
 
 # The Cornerstone version for libraries
-unix:VERSION = 1.1.2
+unix:VERSION = 1.2.0
 
 withbundles = $$(MULTI_BUNDLES)
 

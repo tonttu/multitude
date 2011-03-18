@@ -111,7 +111,7 @@ namespace Valuable
 
     const char * type() const { return VO_TYPE_STRING; }
 
-    ArchiveElement & serialize(Archive & archive);
+    ArchiveElement & serialize(Archive & archive) const;
     bool deserialize(ArchiveElement & element);
 
     /// Makes the string empty
