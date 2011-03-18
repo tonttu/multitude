@@ -42,7 +42,7 @@ namespace Poetic
 
       // First break the wstring at newlines
 
-      QStringList wSub = ws.split(" ");
+      QStringList wSub = ws.split(" ", QString::SkipEmptyParts);
 
       // Now add the newlines we just removed:
 
@@ -66,6 +66,7 @@ namespace Poetic
       foreach(QString itSub, wSub) {
         // Split the sub-string into words
 
+        /// @todo this afterSpace Skip/Keep thingy might be totally wrong
         QStringList words = itSub.split(" ", afterSpace ? QString::SkipEmptyParts
                                                         : QString::KeepEmptyParts);
         // Make the lines

@@ -127,6 +127,8 @@ namespace Radiant {
         // Stop the app:
         abort();
 
+        _exit(1);
+
         // Stop it again:
         Sleep::sleepS(1);
         Sleep::sleepS(1);

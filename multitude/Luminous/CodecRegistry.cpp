@@ -80,7 +80,7 @@ namespace Luminous
     m_codecs.push_back(codec);
 
     // Associate extensions with this codec
-    foreach(QString ext, codec->extensions().split(" ")) {
+    foreach(QString ext, codec->extensions().split(" ", QString::SkipEmptyParts)) {
       m_aliases.insert(std::make_pair(ext, codec));
       Radiant::debug("Adding codec %p for file type %s", codec, ext.toUtf8().data());
     }    

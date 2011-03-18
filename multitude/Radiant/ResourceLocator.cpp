@@ -80,7 +80,7 @@ namespace Radiant
 
   QString ResourceLocator::locateWriteable(const QString & file) const
   {
-    foreach(QString str, m_paths.split(";")) {
+    foreach(QString str, m_paths.split(";", QString::SkipEmptyParts)) {
       const QString path = str + "/" + file;
 
       FILE * file = fopen(path.toUtf8().data(), "w");

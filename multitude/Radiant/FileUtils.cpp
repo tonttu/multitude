@@ -196,7 +196,7 @@ namespace Radiant
 
   QString FileUtils::findFile(const QString & filename, const QString & paths)
   {
-    foreach(QString str, paths.split(";")) {
+    foreach(QString str, paths.split(";", QString::SkipEmptyParts)) {
       QString fullPath = str + "/" + filename;
 
       if(fileReadable(fullPath))
@@ -208,7 +208,7 @@ namespace Radiant
 
   QString FileUtils::findOverWritable(const QString & filename, const QString & paths)
   {
-    foreach(QString str, paths.split(";")) {
+    foreach(QString str, paths.split(";", QString::SkipEmptyParts)) {
       QString fullPath = str + "/" + filename;
 
       if(fileAppendable(fullPath))

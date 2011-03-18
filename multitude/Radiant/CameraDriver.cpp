@@ -127,7 +127,7 @@ namespace Radiant
 
   void CameraDriverFactory::setDriverPreference(const QString & pref)
   {
-    m_preferredDrivers = pref.split(",");
+    m_preferredDrivers = pref.split(",", QString::SkipEmptyParts);
   }
 
 }

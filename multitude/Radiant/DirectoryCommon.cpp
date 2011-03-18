@@ -52,7 +52,7 @@ namespace Radiant
     m_filterFlags(filters),
     m_sortFlags(sortFlag)
   {
-    m_suffixes = QString::fromUtf8(suffixlist).split(",");
+    m_suffixes = QString::fromUtf8(suffixlist).split(",", QString::SkipEmptyParts);
     populate();
   }
 
@@ -82,7 +82,7 @@ namespace Radiant
     m_path = pathname ;
     m_filterFlags = filters ;
     m_sortFlags = sortFlag ;
-    m_suffixes = QString::fromUtf8(suffixlist).split(",");
+    m_suffixes = QString::fromUtf8(suffixlist).split(",", QString::SkipEmptyParts);
   }
 
   bool Directory::mkdirRecursive(const QString & dirname)
