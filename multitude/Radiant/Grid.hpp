@@ -355,7 +355,7 @@ namespace Radiant {
   void GridT<T, Base>::fill(const T & val,
                 int xlow, int ylow, int width, int height)
   {
-    for(int y = ylow; y <= ylow + height; y++) {
+    for(int y = ylow; y < (ylow + height); y++) {
       T * dest = & get(xlow, y);
       for(T * sentinel = dest + width; dest < sentinel; dest++) {
     *dest = val;
