@@ -75,7 +75,7 @@ namespace Valuable
     {
       int cut = name.indexOf("/");
       QString next, rest;
-      if(cut >= 0) {
+      if(cut > 0) {
         next = name.left(cut);
         rest = name.mid(cut + 1);
 
@@ -88,6 +88,8 @@ namespace Valuable
 
           return m_parent->setValue(rest, v);
         }
+      } else {
+        next = name;
       }
 
       container::iterator it = m_children.find(next);
@@ -97,7 +99,7 @@ namespace Valuable
         return false;
       }
 
-      if(cut >= 0) {
+      if(cut > 0) {
         HasValues * hv = dynamic_cast<HasValues *> (it->second);
         if(hv) return hv->setValue(rest, v);
       }
