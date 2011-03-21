@@ -246,7 +246,8 @@ namespace Luminous {
     const size_t instantUploadPixelLimit = 1.5e6;
 
     // Upload the whole texture at once if possible
-    if(img->width() * img->height() < instantUploadPixelLimit) {
+    const size_t imagePixels = img->width() * img->height();
+    if(imagePixels < instantUploadPixelLimit) {
 
       img->bind(resources, textureUnit, false);
 
