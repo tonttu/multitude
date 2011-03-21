@@ -18,12 +18,16 @@
 #include <Luminous/GLResources.hpp>
 #include <Luminous/Utils.hpp>
 
+#include <Radiant/PlatformUtils.hpp>
 #include <Radiant/Directory.hpp>
 #include <Radiant/FileUtils.hpp>
 #include <Radiant/Trace.hpp>
 
 #include <cassert>
 #include <fstream>
+
+#include <QFileInfo>
+#include <QCryptographicHash>
 
 #ifdef WIN32
 #define snprintf _snprintf
@@ -414,34 +418,24 @@ namespace Luminous {
 
   void CPUMipmaps::cacheFileName(std::string & name, int level)
   {
-    char buf[32];
+    QFileInfo fi(QString::fromUtf8(m_filename.c_str()));
 
-    name = Radiant::FileUtils::path(m_filename);
+    QString basePath = QString::fromUtf8(Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false).c_str());
 
-    if(!name.empty())
-      name += "/";
-    name += ".imagecache/";
+    // Compute MD5 from the absolute path
+    QCryptographicHash hash(QCryptographicHash::Md5);
+    hash.addData(fi.absoluteFilePath().toUtf8());
 
-    snprintf(buf, sizeof(buf), "level%02d_", level);
+    QString md5 = hash.result().toHex();
 
-    name += buf;
-    name += Radiant::FileUtils::filename(m_filename);
+    // Avoid putting all mipmaps into the same folder (because of OS performance)
+    QString prefix = md5.left(2);
+    QString postfix = QString("level%1.png").arg(level, 2, 10, QLatin1Char('0'));
+    QString fullPath = basePath + QString("/imagecache/%1/%2_%3").arg(prefix).arg(md5).arg(postfix);
 
-    std::string suffix = Radiant::FileUtils::suffix(name);
+    name = fullPath.toUtf8().data();
 
-    if(!suffix.empty()) {
-
-      // Put in the right suffix
-      size_t i = name.size() - 1;
-
-      while(i && name[i] != '.' && name[i] != '/')
-        i--;
-
-      name.erase(i + 1);
-
-      // always use png
-      name += "png";
-    }
+    //Radiant::info("CPUMipmaps::cacheFileName # %s -> %s", m_filename.c_str(), name.c_str());
   }
 
   void CPUMipmaps::recursiveLoad(StackMap & stack, int level)
@@ -538,7 +532,7 @@ namespace Luminous {
     if(m_shouldSave.find(level) != m_shouldSave.end()) {
       std::string filename;
       cacheFileName(filename, level);
-      Directory::mkdir(FileUtils::path(filename));
+      Directory::mkdirRecursive(FileUtils::path(filename));
       imdest->write(filename.c_str());
       // info("wrote cache %s (%d)", filename.c_str(), level);
     }
