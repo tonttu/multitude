@@ -131,6 +131,11 @@ contains(QT_MAJOR_VERSION,4) {
 
 }
 
+# Disable asserts in release mode
+CONFIG(release, debug|release) {
+  DEFINES += NDEBUG
+}
+
 # Use ccache if available
 unix:exists(/usr/bin/ccache):QMAKE_CXX=ccache g++
 unix:exists(/sw/bin/ccache):QMAKE_CXX=/sw/bin/ccache g++
