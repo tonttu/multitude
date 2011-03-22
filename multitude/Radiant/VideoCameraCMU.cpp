@@ -16,8 +16,8 @@
 // Some original source code by Juha Laitinen still may be around.
 
 #include "VideoCameraCMU.hpp"
+#include "Radiant.hpp"
 
-#include <Radiant/Trace.hpp>
 #include <Radiant/Mutex.hpp>
 #include <Radiant/Sleep.hpp>
 #include <Radiant/Types.hpp>
