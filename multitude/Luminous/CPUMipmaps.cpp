@@ -71,12 +71,15 @@ namespace Luminous {
 
   int CPUMipmaps::getOptimal(Nimble::Vector2f size)
   {
-    float ask = size.maximum(), first = m_firstLevelSize.maximum();
+    float ask = size.maximum();
+    // Dimension of the first mipmap level (quarter-size from original)
+    float first = m_firstLevelSize.maximum();
 
+    // Use the original image (level 0) if asked for bigger than first level mipmap
     if(ask >= first)
       return 0;
 
-    int bestlevel = Nimble::Math::Floor(log(ask/first) / log(0.5)) + 1;
+    int bestlevel = Nimble::Math::Floor(log(ask / first) / log(0.5)) + 1;
 
     if(bestlevel > m_maxLevel)
       bestlevel = m_maxLevel;
@@ -161,8 +164,7 @@ namespace Luminous {
     m_info = Luminous::ImageInfo();
 
     if(!Luminous::Image::ping(filename, m_info)) {
-      error("CPUMipmaps::startLoading # failed to query image size for %s",
-            filename);
+      error("CPUMipmaps::startLoading # failed to query image size for %s", filename);
       return false;
     }
 
@@ -188,6 +190,7 @@ namespace Luminous {
     m_shouldSave.insert(getOptimal(Nimble::Vector2f(SMALLEST_IMAGE, SMALLEST_IMAGE)));
     m_shouldSave.insert(getOptimal(Nimble::Vector2f(DEFAULT_SAVE_SIZE1, DEFAULT_SAVE_SIZE1)));
     m_shouldSave.insert(getOptimal(Nimble::Vector2f(DEFAULT_SAVE_SIZE2, DEFAULT_SAVE_SIZE2)));
+    // Don't save the original image as mipmap
     m_shouldSave.erase(0);
 
     m_stack.resize(m_maxLevel+1);
@@ -384,7 +387,9 @@ namespace Luminous {
           if(time_to_expire < delay)
             delay = time_to_expire;
         }
-      } else if(item.m_state == READY) { // unused image
+      } else if(item.m_state == READY) {
+        // (time_to_expire <= 0) -> free the image
+
         //info("CPUMipmaps::doTask # Dropping %s %d", m_filename.c_str(), i);
         stack[i] = item;
         stack[i].m_state = WAITING;
@@ -447,9 +452,10 @@ namespace Luminous {
     if(item.m_state == READY)
       return;
 
+    // Could the mipmap be already saved on disk?
     if(m_shouldSave.find(level) != m_shouldSave.end()) {
-      // Try loading a pre-generated smaller-scale mipmap
 
+      // Try loading a pre-generated smaller-scale mipmap
       std::string filename;
       cacheFileName(filename, level);
 
