@@ -1321,7 +1321,7 @@ namespace Radiant {
           if (!rawOk)
             missing += "/dev/raw1394 read or write permission missing\n";
           if (!videoOk)
-            missing += "/dev/video1394/0 read or write permissiong missing\n";
+            missing += "/dev/video1394/0 read or write permission missing\n";
         }
 
         error("%s # Could not find any cameras\n"
