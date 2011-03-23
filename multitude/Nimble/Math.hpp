@@ -275,6 +275,23 @@ namespace Nimble {
         return rel * v3 + (1.0f - rel) * v2;
       }
     }
+
+    /// Perform linear interpolation between two samples
+    template<class T>
+    T lerp(const T & a, const T & b, float t)
+    {
+      return (1.f - t) * a + t * b;
+    }
+
+    /// Perform bi-linear interpolation between four samples
+    template<class T>
+    T bilerp(const T & s00, const T & s10, const T & s01, const T & s11, float u, float v)
+    {
+      return lerp<T>(lerp<T>(s00, s10, u),
+                     lerp<T>(s01, s11, u),
+                     v);
+    }
+
   }
 
   
