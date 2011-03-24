@@ -292,6 +292,17 @@ namespace Nimble {
                      v);
     }
 
+    /// Interpolate smoothly between two values based on third (Texturing and
+    /// Modeling, Third Edition: A Procedural Approach, by Ken Perlin)
+
+    template<class T>
+    T smoothstep(const T & a, const T & b, float t)
+    {
+      t = Clamp((t - a) / (b - a), 0.f, 1.f);
+
+      return t * t * t * (t * (t * T(6) - T(15)) + T(10));
+    }
+
   }
 
   
