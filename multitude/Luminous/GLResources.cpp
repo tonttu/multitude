@@ -69,10 +69,12 @@ namespace Luminous
   {
 
     const char * glvendor = (const char *) glGetString(GL_VENDOR);
-    if(strstr(glvendor, "ATI")) {
+
+    if(!glvendor) {
       m_brokenProxyTexture2D = true;
-    }
-    else
+    } else if(strstr(glvendor, "ATI")) {
+      m_brokenProxyTexture2D = true;
+    } else
       m_brokenProxyTexture2D = false;
 
     return true;
@@ -257,7 +259,7 @@ namespace Luminous
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
 
     if(it == __resources.end()) {
-      debug("No OpenGL resources for current thread");
+      debugLuminous("No OpenGL resources for current thread");
       return 0;
     }
 

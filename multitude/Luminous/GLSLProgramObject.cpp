@@ -49,13 +49,13 @@ namespace Luminous
     }
 
     if(!obj->m_isCompiled) {
-      debug("GLSLProgramObject::addObject # attempt to add "
+      debugLuminous("GLSLProgramObject::addObject # attempt to add "
             "non-compiled object: trying to compile it...");
       if(!obj->compile()) {
         error("GLSLProgramObject::addObject # compilation failed");
         return;
       } else {
-        debug("Shader compilation ok");
+        debugLuminous("Shader compilation ok");
       }
     }
 
@@ -87,7 +87,7 @@ namespace Luminous
       m_isLinked = true;
       const char * log = linkerLog();
       if(log)
-        debug("GLSLProgramObject::link # log:\n%s", log);
+        debugLuminous("GLSLProgramObject::link # log:\n%s", log);
     } else  {
       const char * log = linkerLog();
       error("GLSLProgramObject::link # linking failed, log: %s",

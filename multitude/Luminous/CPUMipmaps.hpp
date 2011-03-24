@@ -80,7 +80,7 @@ namespace Luminous {
     LUMINOUS_API std::shared_ptr<ImageTex> getImage(int i);
     /** Mark an image used. This method resets the idle-counter of the
         level, preventing it from being dropped from the memory in the
-        near future.
+        near future. Also determines which mipmap level will loaded next.
 
         @param i The index of the mipmap-level to be marked
     */

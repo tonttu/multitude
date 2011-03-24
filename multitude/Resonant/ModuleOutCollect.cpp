@@ -14,6 +14,7 @@
  */
 
 #include "ModuleOutCollect.hpp"
+#include "Resonant.hpp"
 
 #include "DSPNetwork.hpp"
 
@@ -69,7 +70,7 @@ namespace Resonant {
 
     m_interleaved.resize(m_channels * MAX_CYCLE);
 
-    Radiant::debug("ModuleOutCollect::prepare # %d", (int) m_channels);
+    debugResonant("ModuleOutCollect::prepare # %d", (int) m_channels);
 
     return true;
   }
@@ -93,7 +94,7 @@ namespace Resonant {
 
       for(iterator it = m_map.begin(); it != m_map.end(); ) {
         if(strcmp(tmp.sourceId, (*it).sourceId) == 0) {
-          debug("ModuleOutCollect::control # dropping connection to %s:%d",
+          debugResonant("ModuleOutCollect::control # dropping connection to %s:%d",
                 tmp.sourceId, (*it).from);
           it = m_map.erase(it);
         }
@@ -105,7 +106,7 @@ namespace Resonant {
       tmp.from = control->readInt32( & ok);
       tmp.to   = control->readInt32( & ok);
 
-      Radiant::debug("ModuleOutCollect::control # %s", address);
+      debugResonant("ModuleOutCollect::control # %s", address);
 
       if(!ok) {
         error("ModuleOutCollect::control # Could not parse control # %s",
@@ -114,7 +115,7 @@ namespace Resonant {
       }
       else if(strcmp(address, "newmapping") == 0) {
         m_map.push_back(tmp);
-        debug("ModuleOutCollect::control # newmapping %s %d -> %d",
+        debugResonant("ModuleOutCollect::control # newmapping %s %d -> %d",
               tmp.sourceId, tmp.from, tmp.to);
       }
       else if(strcmp(address, "removemapping") == 0) {

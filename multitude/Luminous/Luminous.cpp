@@ -113,20 +113,20 @@ namespace Luminous
 #ifdef USE_QT45
     // Debug output supported image formats
     {
-      Radiant::debug("Qt image support (read):");
+      debugLuminous("Qt image support (read):");
       QList<QByteArray> formats = QImageReader::supportedImageFormats ();
       for(QList<QByteArray>::iterator it = formats.begin(); it != formats.end(); it++) {
         QString format(*it);
-        Radiant::debug("%s", format.toStdString().c_str());
+        debugLuminous("%s", format.toStdString().c_str());
       }
     }
 
     {
-      Radiant::debug("Qt image support (write):");
+      debugLuminous("Qt image support (write):");
       QList<QByteArray> formats = QImageWriter::supportedImageFormats ();
       for(QList<QByteArray>::iterator it = formats.begin(); it != formats.end(); it++) {
         QString format(*it);
-        Radiant::debug("%s", format.toStdString().c_str());
+        debugLuminous("%s", format.toStdString().c_str());
       }
     }
 

@@ -14,6 +14,7 @@
  */
 
 #include "AudioLoop.hpp"
+#include "Resonant.hpp"
 
 #include <Nimble/Math.hpp>
 
@@ -128,7 +129,7 @@ namespace Resonant {
         Radiant::error("AudioLoop::startReadWrite # No default output device available");
         return false;
       }
-      Radiant::debug("AudioLoop::startReadWrite # Selected default output device %d", m_d->m_outParams.device);
+      debugResonant("AudioLoop::startReadWrite # Selected default output device %d", m_d->m_outParams.device);
     }
     else {
 
@@ -138,7 +139,7 @@ namespace Resonant {
       long decoded = end - devkey;
       if(decoded == (long) strlen(devkey)) {
         m_d->m_outParams.device = i;
-        Radiant::debug("AudioLoop::startReadWrite # Selected device %d (%s)", (int) m_d->m_outParams.device, devkey);
+        debugResonant("AudioLoop::startReadWrite # Selected device %d (%s)", (int) m_d->m_outParams.device, devkey);
 
       }
       else {
@@ -149,7 +150,7 @@ namespace Resonant {
           if(strstr(info->name, devkey) != 0) {
             m_d->m_outParams.device = i;
 
-            Radiant::debug("AudioLoop::startReadWrite # Selected device %d %s",
+            debugResonant("AudioLoop::startReadWrite # Selected device %d %s",
                            (int) m_d->m_outParams.device, info->name);
             break;
           }
@@ -159,7 +160,7 @@ namespace Resonant {
 
     const PaDeviceInfo * info = Pa_GetDeviceInfo(m_d->m_outParams.device);
 
-    Radiant::debug("AudioLoop::startReadWrite # Got audio device %d = %s",
+    debugResonant("AudioLoop::startReadWrite # Got audio device %d = %s",
           (int) m_d->m_outParams.device, info->name);
 
     if(Radiant::enabledVerboseOutput()) {
@@ -168,7 +169,7 @@ namespace Resonant {
       for(int i = 0; i < n; i++) {
          const PaDeviceInfo * info2 = Pa_GetDeviceInfo(i);
          const PaHostApiInfo * apiinfo = Pa_GetHostApiInfo(info2->hostApi);
-         Radiant::debug("AudioLoop::startReadWrite # Available %d: %s (API = %s)",
+         debugResonant("AudioLoop::startReadWrite # Available %d: %s (API = %s)",
                         i, info2->name, apiinfo->name);
       }
     }
@@ -180,12 +181,12 @@ namespace Resonant {
       channels = forcechans;
     }
     else if(channels != minchans) {
-      Radiant::debug("AudioLoop::startReadWrite # Expanding to %d channels",
+      debugResonant("AudioLoop::startReadWrite # Expanding to %d channels",
                     minchans);
       channels = minchans;
     }
 
-    Radiant::debug("AudioLoop::startReadWrite # channels = %d limits = %d %d",
+    debugResonant("AudioLoop::startReadWrite # channels = %d limits = %d %d",
                   channels, info->maxInputChannels, info->maxOutputChannels);
 
     // channels = 26;
@@ -230,7 +231,7 @@ namespace Resonant {
 
     m_isRunning = true;
 
-    Radiant::debug("AudioLoop::startReadWrite # %d channels lt = %lf, EXIT OK",
+    debugResonant("AudioLoop::startReadWrite # %d channels lt = %lf, EXIT OK",
 		   (int) m_d->m_outParams.channelCount, 
 		   (double) m_d->m_streamInfo->outputLatency);
 
@@ -277,7 +278,7 @@ namespace Resonant {
   void AudioLoop::AudioLoopInternal::paFinished(void * self)
   {
     ((AudioLoop *) self)->finished();
-    Radiant::debug("AudioLoop::paFinished # %p", self);
+    debugResonant("AudioLoop::paFinished # %p", self);
   }
 
 

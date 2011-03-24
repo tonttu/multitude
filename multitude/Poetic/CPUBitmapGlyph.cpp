@@ -27,7 +27,6 @@
 namespace Poetic
 {
   using namespace Nimble;
-  static Radiant::MutexStatic s_ftmutex;
 
   CPUBitmapGlyph::CPUBitmapGlyph(FT_GlyphSlotRec_ * glyph)
   : Glyph(glyph),
@@ -36,7 +35,7 @@ namespace Poetic
     Radiant::GuardStatic g(freetypeMutex());
 
     int error = FT_Render_Glyph(glyph, FT_RENDER_MODE_NORMAL);
-    s_ftmutex.unlock();
+
     if(error || glyph->format != ft_glyph_format_bitmap) {
       Radiant::error("CPUBitmapGlyph::CPUBitmapGlyph # failed to render glyph");
       return;

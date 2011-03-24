@@ -38,7 +38,7 @@ namespace Luminous
 
     if(m_textureId)  {
       glDeleteTextures(1, &m_textureId);
-      Radiant::debug("Deallocated texture %.5d %p", (int) m_textureId, resources());
+      debugLuminous("Deallocated texture %.5d %p", (int) m_textureId, resources());
     }
     changeByteConsumption(consumesBytes(), 0);
   }
@@ -48,7 +48,7 @@ namespace Luminous
   {
     if(!m_textureId) {
       glGenTextures(1, & m_textureId);
-      Radiant::debug("Allocated texture %.5d %p", (int) m_textureId, resources());
+      debugLuminous("Allocated texture %.5d %p", (int) m_textureId, resources());
     }
   }
 
@@ -220,7 +220,7 @@ namespace Luminous
       gluBuild2DMipmaps(GL_TEXTURE_2D, srcFormat.numChannels(),
                         w, h, srcFormat.layout(), srcFormat.type(), data);
     } else {
-      /* Radiant::debug("TEXTURE UPLOAD :: INTERNAL %s FORMAT %s [%d %d]",
+      /* debugLuminous("TEXTURE UPLOAD :: INTERNAL %s FORMAT %s [%d %d]",
              glInternalFormatToString(internalFormat),
              glFormatToString(srcFormat.layout()), w, h);
       */

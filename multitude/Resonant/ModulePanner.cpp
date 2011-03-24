@@ -14,6 +14,7 @@
  */
 
 #include "ModulePanner.hpp"
+#include "Resonant.hpp"
 
 #include <Nimble/Interpolation.hpp>
 
@@ -85,7 +86,7 @@ namespace Resonant {
   void ModulePanner::processMessage(const char * id,
                                     Radiant::BinaryData * data)
   {
-    debug("ModulePanner::control # %s", id);
+    debugResonant("ModulePanner::control # %s", id);
 
     bool ok = true;
 
@@ -159,7 +160,7 @@ namespace Resonant {
           }
         }
 
-        debug("ModulePanner::process # source %d, pipe %d -> %d, gain = %f "
+        debugResonant("ModulePanner::process # source %d, pipe %d -> %d, gain = %f "
               "in = %p %f out = %f",
               i, j, p.m_to, p.m_ramp.value(), in[i], *in[i], out[p.m_to][0]);
 
@@ -235,7 +236,7 @@ namespace Resonant {
   void ModulePanner::setSourceLocation(const std::string & id,
                                        Nimble::Vector2 location)
   {
-    debug("ModulePanner::setSourceLocation # %s [%f %f]", id.c_str(),
+    debugResonant("ModulePanner::setSourceLocation # %s [%f %f]", id.c_str(),
           location.x, location.y);
 
     Source * s = 0;
@@ -276,7 +277,7 @@ namespace Resonant {
           Pipe & p = s->m_pipes[j];
           if(p.m_to == i && p.m_ramp.target() >= 0.0001f) {
             p.m_ramp.setTarget(0.0f, interpSamples);
-            debug("ModulePanner::setSourceLocation # Silencing %u", i);
+            debugResonant("ModulePanner::setSourceLocation # Silencing %u", i);
 
           }
         }
@@ -288,11 +289,11 @@ namespace Resonant {
         for(unsigned j = 0; j < s->m_pipes.size() && !found; j++) {
           Pipe & p = s->m_pipes[j];
 
-          debug("Checking %u: %u %f -> %f", j, p.m_to,
+          debugResonant("Checking %u: %u %f -> %f", j, p.m_to,
                 p.m_ramp.value(), p.m_ramp.target());
 
           if(p.m_to == i) {
-            debug("ModulePanner::setSourceLocation # Adjusting %u", j);
+            debugResonant("ModulePanner::setSourceLocation # Adjusting %u", j);
             p.m_ramp.setTarget(gain, interpSamples);
             found = true;
           }
@@ -304,11 +305,11 @@ namespace Resonant {
           for(unsigned j = 0; j <= s->m_pipes.size() && !found; j++) {
             if(j == s->m_pipes.size()) {
               s->m_pipes.resize(j+1);
-              debug("ModulePanner::setSourceLocation # pipes resize to %d", j+1);
+              debugResonant("ModulePanner::setSourceLocation # pipes resize to %d", j+1);
             }
             Pipe & p = s->m_pipes[j];
             if(p.done()) {
-              debug("ModulePanner::setSourceLocation # "
+              debugResonant("ModulePanner::setSourceLocation # "
                     "Starting %u towards %u", j, i);
               p.m_to = i;
               p.m_ramp.setTarget(gain, interpSamples);
@@ -332,7 +333,7 @@ namespace Resonant {
       Source & s = * (*it);
       if(s.m_id == id) {
         m_sources.erase(it);
-        debug("ModulePanner::removeSource # Removed source %s, now %lu",
+        debugResonant("ModulePanner::removeSource # Removed source %s, now %lu",
               id.c_str(), m_sources.size());
         return;
       }

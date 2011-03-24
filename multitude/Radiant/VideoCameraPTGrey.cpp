@@ -17,7 +17,7 @@
 
 #include "Mutex.hpp"
 #include "Sleep.hpp"
-#include "Trace.hpp"
+#include "Radiant.hpp"
 
 #include <map>
 #ifndef WIN32
@@ -158,7 +158,7 @@ namespace Radiant
 
     m_fakeFormat7 = false;
 
-    debug("VideoCameraPTGrey::open # %llx", (long long) euid);
+    debugRadiant("VideoCameraPTGrey::open # %llx", (long long) euid);
 
     FlyCapture2::PGRGuid guid;
 
@@ -270,7 +270,7 @@ namespace Radiant
       roi.set(0, 0, 100000, 100000);
     }
 
-    debug("VideoCameraPTGrey::openFormat7 # %llx", (long long) euid);
+    debugRadiant("VideoCameraPTGrey::openFormat7 # %llx", (long long) euid);
 
     // Look up PGRGuid from our map (updated in queryCameras())
     GuidMap::iterator it = g_guidMap.find(euid);
@@ -446,7 +446,7 @@ namespace Radiant
     GuardStatic g(__cmutex);
 
     if(m_state != RUNNING) {
-      debug("VideoCameraPTGrey::stop # State != RUNNING");
+      debugRadiant("VideoCameraPTGrey::stop # State != RUNNING");
       /* If the device is already stopped, then return true. */
       return m_state == OPENED;
     }
@@ -564,7 +564,7 @@ namespace Radiant
   {
     GuardStatic g(__cmutex);
 
-    // Radiant::debug("VideoCameraPTGrey::setFeature # %d %f", id, value);
+    // debugRadiant("VideoCameraPTGrey::setFeature # %d %f", id, value);
 
     // If less than zero, use automatic mode
     if(value < 0.f) {
@@ -577,7 +577,7 @@ namespace Radiant
 
     FlyCapture2::Error err = m_camera.GetPropertyInfo(&pinfo);
     if(err != FlyCapture2::PGRERROR_OK) {
-      Radiant::debug("VideoCameraPTGrey::setFeature # Failed: \"%s\"",
+      debugRadiant("VideoCameraPTGrey::setFeature # Failed: \"%s\"",
                      err.GetDescription());
       return;
     }
@@ -589,7 +589,7 @@ namespace Radiant
 
   void VideoCameraPTGrey::setFeatureRaw(FeatureType id, int32_t value)
   {
-    // Radiant::debug("VideoCameraPTGrey::setFeatureRaw # %d %d", id, value);
+    // debugRadiant("VideoCameraPTGrey::setFeatureRaw # %d %d", id, value);
 
     FlyCapture2::Property prop;
     prop.type = propertyToFC2(id);
@@ -616,7 +616,7 @@ namespace Radiant
 
     FlyCapture2::Error err = m_camera.SetProperty(&prop);
     if(err != FlyCapture2::PGRERROR_OK) {
-      Radiant::debug("VideoCameraPTGrey::setFeatureRaw # Failed: \"%s\"",
+      debugRadiant("VideoCameraPTGrey::setFeatureRaw # Failed: \"%s\"",
                      err.GetDescription());
       err.PrintErrorTrace();
     }
@@ -756,7 +756,7 @@ namespace Radiant
       return;
     }
 
-    if(!pinfo.present) { Radiant::debug("Skipping feature %d, not present", id); return; }
+    if(!pinfo.present) { debugRadiant("Skipping feature %d, not present", id); return; }
 
     VideoCamera::CameraFeature feat;
     feat.id = propertyToRadiant(id);
