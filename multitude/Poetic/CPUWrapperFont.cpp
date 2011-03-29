@@ -106,7 +106,7 @@ namespace Poetic
 
   void CPUWrapperFont::bbox(const char * str, BBox & bbox)
   {
-    Radiant::Guard g(Poetic::freetypeMutex());
+    //Radiant::GuardStatic g(Poetic::freetypeMutex());
     CPUFont * f = m_managedFont->getMetricFont();
     float s = static_cast<float> (m_pointSize) / static_cast<float> (f->faceSize());
 
@@ -116,7 +116,7 @@ namespace Poetic
 
   void CPUWrapperFont::bbox(const wchar_t * str, BBox & bbox)
   {
-    Radiant::GuardStatic g(Poetic::freetypeMutex());
+    //    Radiant::GuardStatic g(Poetic::freetypeMutex());
     CPUFont * f = m_managedFont->getMetricFont();
     float s = static_cast<float> (m_pointSize) / static_cast<float> (f->faceSize());
 
