@@ -28,18 +28,15 @@
 namespace Luminous
 {
 
-  BGThread * BGThread::m_instance = 0;
+  std::weak_ptr<BGThread> BGThread::m_instance;
 
-  BGThread::BGThread() : m_idle(0)
+  BGThread::BGThread()
+    : m_idle(0)
   {
-    if(m_instance == 0)
-      m_instance = this;
   }
 
   BGThread::~BGThread()
   {
-    if(m_instance == this)
-      m_instance = 0;
     stop();
   }
 
@@ -98,16 +95,17 @@ namespace Luminous
     }
   }
 
-   BGThread * BGThread::instance()
+   std::shared_ptr<BGThread> BGThread::instance()
    {
-     if(!m_instance) {
-       m_instance = new BGThread();
-       m_instance->run();
-     }
-     else if(!m_instance->isRunning())
-       m_instance->run();
+     std::shared_ptr<BGThread> p = m_instance.lock();
+     if(!p) {
+       p.reset(new BGThread());
+       p->run();
 
-     return m_instance;
+       m_instance = p;
+     }
+
+     return p;
    }
 
   unsigned BGThread::taskCount()
