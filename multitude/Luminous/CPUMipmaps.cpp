@@ -44,7 +44,8 @@ namespace Luminous {
   using namespace Radiant;
 
   CPUMipmaps::CPUMipmaps()
-    : m_fileModified(0),
+    : Task(),
+    m_fileModified(0),
     m_stack(1),
     m_nativeSize(0, 0),
     m_firstLevelSize(0, 0),
