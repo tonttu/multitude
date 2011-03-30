@@ -67,7 +67,6 @@ namespace Luminous
 
       /// Constructs a task with the given priority
       Task(Priority p = PRIORITY_NORMAL);
-      virtual ~Task();
 
       /// State of the task
       enum State
@@ -120,6 +119,8 @@ namespace Luminous
 
       /// The background thread where this task is executed
       BGThread * m_host;
+
+      virtual ~Task();
 
       friend class BGThread;
   };
