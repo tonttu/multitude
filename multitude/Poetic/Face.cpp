@@ -30,6 +30,8 @@ namespace Poetic
     FT_Long DEFAULT_FACE_INDEX = 0;
     m_ftFace = new FT_Face;
 
+    Radiant::Guard g(freetypeMutex());
+
     m_error = FT_New_Face(*Poetic::freetype(), fontFilePath, DEFAULT_FACE_INDEX, m_ftFace);
     if(m_error) {
       delete m_ftFace;
@@ -42,6 +44,8 @@ namespace Poetic
 
   Face::~Face()
   {
+    Radiant::Guard g(freetypeMutex());
+
     if(m_ftFace) {
       FT_Done_Face(*m_ftFace);
       delete m_ftFace;
@@ -67,10 +71,13 @@ namespace Poetic
     float y = 0.f;
 
     if(index1 && index2) {
+      Radiant::Guard g(freetypeMutex());
+
       FT_Vector kernAdvance;
       kernAdvance.x = kernAdvance.y = 0;
 
       m_error = FT_Get_Kerning(*m_ftFace, index1, index2, ft_kerning_unfitted, &kernAdvance);
+
       if(!m_error) {
         x = static_cast <float> (kernAdvance.x) / 64.0f;
         y = static_cast <float> (kernAdvance.y) / 64.0f;
@@ -94,6 +101,8 @@ namespace Poetic
 
   FT_GlyphSlot Face::glyph(unsigned int index, signed int flags)
   {
+    Radiant::Guard g(freetypeMutex());
+
     m_error = FT_Load_Glyph(*m_ftFace, index, flags);
     if(m_error)
         return 0;
