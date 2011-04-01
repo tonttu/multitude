@@ -25,7 +25,6 @@
 
 #include <Valuable/Archive.hpp>
 #include <Valuable/Export.hpp>
-#include <Valuable/ValueListener.hpp>
 
 #include <QString>
 #include <QList>
