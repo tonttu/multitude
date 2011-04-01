@@ -110,7 +110,7 @@ namespace Valuable
 
   void ValueString::clear()
   {
-    m_value.clear();
+    *this = "";
   }
 
   unsigned ValueString::size() const

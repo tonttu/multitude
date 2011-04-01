@@ -45,6 +45,15 @@ namespace Valuable
     return Radiant::StringUtils::stringify((int32_t)m_value);
   }
 
+  ValueBool & ValueBool::operator = (bool v)
+  {
+    if(m_value != v) {
+      m_value = v;
+      emitChange();
+    }
+    return *this;
+  }
+
   bool ValueBool::set(int value)
   {
     *this = !!value;

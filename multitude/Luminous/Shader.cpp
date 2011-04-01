@@ -56,7 +56,7 @@ namespace Luminous {
           v.m_param = tmp; \
         }\
       }\
-      func(v.m_param, ((const type *) v.m_obj)->data()); \
+      func(v.m_param, *((const type *) v.m_obj)); \
     } \
   }
 

@@ -21,13 +21,11 @@
 #include <Valuable/Export.hpp>
 #include <Valuable/ValueVector.hpp>
 
-#define VALUEMIT_STD_OP this->emitChange(); return *this;
-
 namespace Valuable
 {
 
   /** A value object holding a #Radiant::Color value. */
-  class VALUABLE_API ValueColor : public ValueVector<Nimble::Vector4f,float,4>
+  class VALUABLE_API ValueColor : public ValueVector<Nimble::Vector4f>
   {
   public:
     /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
@@ -38,7 +36,7 @@ namespace Valuable
 
     /// Copies a color
     ValueColor & operator = (const Radiant::Color & c)
-      { (* (ValueVector<Nimble::Vector4f,float,4> *) this) = c; return *this; }
+      { (* (ValueVector<Nimble::Vector4f> *) this) = c; return *this; }
     
     const char * type() const { return "color"; }
     
@@ -56,7 +54,5 @@ namespace Valuable
   };
 
 }
-
-#undef VALUEMIT_STD_OP
 
 #endif

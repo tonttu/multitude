@@ -21,8 +21,6 @@
 
 #include <Nimble/Rect.hpp>
 
-#define VALUEMIT_STD_OP this->emitChange(); return *this;
-
 namespace Valuable
 {
 
@@ -36,7 +34,7 @@ namespace Valuable
     ValueRect(HasValues * parent, const QString & name, const Nimble::Rect & r, bool transit = false);
 
     /// Copies a rectangle
-    ValueRect & operator = (const Nimble::Rect & r) { Base::m_value = r; VALUEMIT_STD_OP }
+    ValueRect & operator = (const Nimble::Rect & r);
 
     const char * type() const { return "rect"; }
 
@@ -49,7 +47,5 @@ namespace Valuable
   };
 
 }
-
-#undef VALUEMIT_STD_OP
 
 #endif

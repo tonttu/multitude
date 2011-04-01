@@ -264,8 +264,6 @@ namespace Valuable
     /// Access the wrapped object with the dereference operator
     inline const T & operator * () const { return m_value; }
     /// Typecast operator for the wrapped value
-    inline operator T & () { return m_value; }
-    /// Typecast operator for the wrapped value
     inline operator const T & () const { return m_value; }
     /// Use the arrow operator to access fields inside the wrapped object.
     inline const T * operator->() const { return &m_value; }

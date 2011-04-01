@@ -95,6 +95,4 @@ namespace Valuable
 
 QString operator + (const QString & a, const Valuable::ValueString & b);
 
-#undef VALUEMIT_STD_OP
-
 #endif

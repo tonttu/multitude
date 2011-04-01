@@ -25,20 +25,21 @@
 
 #include <sstream>
 
-#define VALUEMIT_STD_OP emitChange(); return *this;
-
 namespace Valuable
 {
 
-  /** A template class for vevctor values.
+  /** A template class for vector values.
 
       This class is used to implement all the normal vector value
       objects.
    */
-  template<class VectorType, typename ElementType, int N>
+  template<class VectorType>
   class VALUABLE_API ValueVector : public ValueObjectT<VectorType>
   {
     typedef ValueObjectT<VectorType> Base;
+    typedef typename VectorType::type ElementType;
+    enum { N = VectorType::Elements };
+
     public:
       ValueVector() : Base() {}
       /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
@@ -49,51 +50,50 @@ namespace Valuable
       virtual ~ValueVector();
 
       /// Assigns a vector
-      ValueVector<VectorType, ElementType, N> & operator =
-      (const VectorType & v) { Base::m_value = v; this->emitChange(); return *this; }
+      ValueVector<VectorType> & operator = (const VectorType & v) {
+        if(Base::m_value != v) {
+          Base::m_value = v;
+          this->emitChange();
+        }
+        return *this;
+      }
 
       /// Assigns by addition
-      ValueVector<VectorType, ElementType, N> & operator +=
-      (const VectorType & v) { Base::m_value += v; this->emitChange(); return *this; }
+      ValueVector<VectorType> & operator += (const VectorType & v) { return (*this = Base::m_value + v); }
       /// Assigns by subtraction
-      ValueVector<VectorType, ElementType, N> & operator -=
-      (const VectorType & v) { Base::m_value -= v; this->emitChange(); return *this; }
+      ValueVector<VectorType> & operator -= (const VectorType & v) { return (*this = Base::m_value - v); }
 
-    /// Subtraction operator
+      /// Subtraction operator
       VectorType operator -
       (const VectorType & v) const { return Base::m_value - v; }
       /// Addition operator
-    VectorType operator +
+      VectorType operator +
       (const VectorType & v) const { return Base::m_value + v; }
 
-    /** Access vector elements by their index.
+      /** Access vector elements by their index.
 
         @return Returns the ith element. */
-    ElementType operator [] (int i) const { return Base::m_value[i]; }
+      ElementType operator [] (int i) const { return Base::m_value[i]; }
 
-    /// Returns the data in its native format
-     const ElementType * native() const
-    { return Base::m_value.data(); }
+      /// Returns the data in its native format
+      const ElementType * data() const
+      { return Base::m_value.data(); }
 
-    virtual void processMessage(const char * id, Radiant::BinaryData & data);
-    virtual bool deserialize(ArchiveElement & element);
+      virtual void processMessage(const char * id, Radiant::BinaryData & data);
+      virtual bool deserialize(ArchiveElement & element);
 
-    const char * type() const;
+      const char * type() const;
 
-    /// Sets the value
+      /// Sets the value
       virtual bool set(const VectorType & v);
 
       /** Returns the internal vector object as a constant reference. */
       const VectorType & asVector() const { return Base::m_value; }
-      /** Returns the internal vector object as a constant reference. */
-      const VectorType & operator * () const { return Base::m_value; }
 
       QString asString(bool * const ok = 0) const;
 
       /// Returns the ith element
       inline const ElementType & get(int i) const { return Base::m_value[i]; }
-      /// Returns a pointer to the first element
-      inline const ElementType * data() const { return Base::m_value.data(); }
 
       /// Returns the first component
       inline const ElementType & x() const { return Base::m_value[0]; }
@@ -103,27 +103,26 @@ namespace Valuable
       /// Normalizes the vector
       inline void normalize(ElementType len = 1.0)
       {
-        Base::m_value.normalize(len);
-        this->emitChange();
+        VectorType vector = Base::m_value;
+        vector.normalize(len);
+        *this = vector;
       }
   };
 
   /// An integer vector2 value object
-  typedef ValueVector<Nimble::Vector2i, int, 2> ValueVector2i;
+  typedef ValueVector<Nimble::Vector2i> ValueVector2i;
   /// An integer vector3 value object
-  typedef ValueVector<Nimble::Vector3i, int, 3> ValueVector3i;
+  typedef ValueVector<Nimble::Vector3i> ValueVector3i;
   /// An integer vector4 value object
-  typedef ValueVector<Nimble::Vector4i, int, 4> ValueVector4i;
+  typedef ValueVector<Nimble::Vector4i> ValueVector4i;
 
   /// A float vector2 value object
-  typedef ValueVector<Nimble::Vector2f, float, 2> ValueVector2f;
+  typedef ValueVector<Nimble::Vector2f> ValueVector2f;
   /// A float vector3 value object
-  typedef ValueVector<Nimble::Vector3f, float, 3> ValueVector3f;
+  typedef ValueVector<Nimble::Vector3f> ValueVector3f;
   /// A float vector4 value object
-  typedef ValueVector<Nimble::Vector4f, float, 4> ValueVector4f;
+  typedef ValueVector<Nimble::Vector4f> ValueVector4f;
 
 }
-
-#undef VALUEMIT_STD_OP
 
 #endif

@@ -21,8 +21,6 @@
 
 #include <Radiant/TimeStamp.hpp>
 
-#define VALUEMIT_STD_OP this->emitChange(); return *this;
-
 #define VO_TYPE_INT "int"
 
 namespace Valuable
@@ -48,30 +46,47 @@ namespace Valuable
     {}
 
     /// Copy an integer
-    ValueIntT<T> & operator = (T i) { Base::m_value = i; VALUEMIT_STD_OP }
+    ValueIntT<T> & operator = (T i)
+    {
+      if(Base::m_value != i) {
+        Base::m_value = i;
+        this->emitChange();
+      }
+      return *this;
+    }
 
-    /// Returns the data in its native format
-    const T & data() const { return Base::m_value; }
+    /// Assignment by subtraction
+    ValueIntT<T> & operator -= (T i) { return (*this = Base::m_value - i); }
+    /// Assignment by addition
+    ValueIntT<T> & operator += (T i) { return (*this = Base::m_value + i); }
+    /// Assignment by multiplication
+    ValueIntT<T> & operator *= (T i) { return (*this = Base::m_value * i); }
+    /// Assignment by division
+    ValueIntT<T> & operator /= (T i) { return (*this = Base::m_value / i); }
 
     /// Does a logical OR for the integer
-    ValueIntT<T> & operator |= (T i) { Base::m_value |= i; VALUEMIT_STD_OP }
+    ValueIntT<T> & operator |= (T i) { return (*this = Base::m_value | i); }
     /// Does a logical AND for the integer
-    ValueIntT<T> & operator &= (T i) { Base::m_value &= i; VALUEMIT_STD_OP }
-
-    /// Postfix increment
-    ValueIntT<T> & operator ++ (int) { Base::m_value++; VALUEMIT_STD_OP }
-    /// Postfix decrement
-    ValueIntT<T> & operator -- (int) { Base::m_value--; VALUEMIT_STD_OP }
+    ValueIntT<T> & operator &= (T i) { return (*this = Base::m_value & i); }
+    /// Modulo operator
+    ValueIntT<T> & operator %= (T i) { return (*this = Base::m_value % i); }
+    /// Does a bitwise exclusive OR
+    ValueIntT<T> & operator ^= (T i) { return (*this = Base::m_value ^ i); }
 
     /// Prefix increment
-    ValueIntT<T> & operator ++ () { ++Base::m_value; VALUEMIT_STD_OP }
+    ValueIntT<T> & operator ++ () { ++Base::m_value; this->emitChange(); return *this; }
     /// Prefix decrement
-    ValueIntT<T> & operator -- () { --Base::m_value; VALUEMIT_STD_OP }
+    ValueIntT<T> & operator -- () { --Base::m_value; this->emitChange(); return *this; }
 
     /// Shift left
-    ValueIntT<T> & operator <<= (int i) { Base::m_value <<= i; VALUEMIT_STD_OP }
+    ValueIntT<T> & operator <<= (int i) { return (*this = Base::m_value << i); }
     /// Shift right
-    ValueIntT<T> & operator >>= (int i) { Base::m_value >>= i; VALUEMIT_STD_OP }
+    ValueIntT<T> & operator >>= (int i) { return (*this = Base::m_value >> i); }
+
+    /// Sets the numeric value
+    inline virtual bool set(int v) { *this = v; return true; }
+    /// @copydoc set
+    inline virtual bool set(float v) { *this = v; return true; }
 
     /// Compares less than
     bool operator < (const T & i) const { return Base::m_value < i; }
@@ -104,7 +119,5 @@ namespace Valuable
   typedef ValueIntT<Radiant::TimeStamp> ValueTimeStamp;
 
 }
-
-#undef VALUEMIT_STD_OP
 
 #endif

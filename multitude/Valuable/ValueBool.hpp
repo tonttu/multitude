@@ -18,8 +18,6 @@
 
 #include "ValueObject.hpp"
 
-#define VALUEMIT_STD_OP emitChange(); return *this;
-
 namespace Valuable
 {
 
@@ -40,7 +38,7 @@ namespace Valuable
     /// @endcond
 
     /// Copies a value
-    ValueBool & operator = (bool v) { m_value = v; VALUEMIT_STD_OP }
+    ValueBool & operator = (bool v);
 
     /// Boolean values can be set as integers in CSS files
     bool set(int v);
@@ -49,7 +47,5 @@ namespace Valuable
   };
 
 }
-
-#undef VALUEMIT_STD_OP
 
 #endif // VALUABLE_VALUE_BOOL_HPP

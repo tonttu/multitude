@@ -25,20 +25,26 @@ namespace Valuable
     : Base(parent, name, r, transit)
   {}
 
+  ValueRect & ValueRect::operator = (const Nimble::Rect & r)
+  {
+    if(m_value != r) {
+      Base::m_value = r;
+      emitChange();
+    }
+    return *this;
+  }
+
   bool ValueRect::deserialize(ArchiveElement & element) {
     std::stringstream in(element.get().toUtf8().data());
 
     Nimble::Vector2f lo, hi;
 
-    in >> lo[0]; 
-    in >> lo[1]; 
-    in >> hi[0]; 
-    in >> hi[1]; 
+    in >> lo[0];
+    in >> lo[1];
+    in >> hi[0];
+    in >> hi[1];
 
-    m_value.setLow(lo);
-    m_value.setHigh(hi);
-
-    emitChange();
+    *this = Nimble::Rect(lo, hi);
     return true;
   }
 

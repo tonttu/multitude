@@ -98,7 +98,7 @@ namespace Luminous {
     m_vertices[2] = m_vertices[3].asVector();
     m_vertices[3] = v;
 
-    m_rotations++;
+    ++m_rotations;
 
     calculateMatrix();
   }

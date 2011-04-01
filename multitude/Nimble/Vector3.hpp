@@ -34,6 +34,8 @@ namespace Nimble {
     /// Data type of the vector
     typedef T type;
 
+    enum { Elements = 3 };
+
     T		x;										///< x-component of the vector
     T		y;										///< y-component of the vector
     T		z;										///< z-component of the vector

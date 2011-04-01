@@ -201,6 +201,10 @@ namespace Nimble {
       return m_low == o.m_low && m_high == o.m_high;
     }
 
+    inline bool operator != (const RectT<T> & o) const {
+      return m_low != o.m_low || m_high != o.m_high;
+    }
+
     /// Returns a const pointer to the rectangle corner data
     const T * data() const { return m_low.data(); }
     /// Returns a pointer to the rectangle corner data
