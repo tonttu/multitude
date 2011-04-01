@@ -27,7 +27,7 @@ namespace Poetic
   : m_ftFace(*face->freetype()),
     m_error(0)
   {
-    Radiant::GuardStatic g(freetypeMutex());
+    Radiant::Guard g(freetypeMutex());
 
     if(!m_ftFace->charmap)  
       m_error = FT_Set_Charmap(m_ftFace, m_ftFace->charmaps[0]);
@@ -45,7 +45,7 @@ namespace Poetic
     if(m_ftEncoding == encoding) 
       return true;
 
-    Radiant::GuardStatic g(freetypeMutex());
+    Radiant::Guard g(freetypeMutex());
     m_error = FT_Select_Charmap(m_ftFace, (FT_Encoding)encoding);
 
     if(!m_error) 
@@ -67,7 +67,7 @@ namespace Poetic
 
   unsigned int Charmap::fontIndex(unsigned int charCode)
   {
-    Radiant::GuardStatic g(freetypeMutex());
+    Radiant::Guard g(freetypeMutex());
     return FT_Get_Char_Index(m_ftFace, charCode);
   }
 

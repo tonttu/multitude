@@ -38,7 +38,7 @@ namespace Poetic
   bool Size::charSize(FT_FaceRec_ ** face, int pointSize, int xRes, int yRes)
   {
     if(m_size != pointSize || xRes != m_xRes || yRes != m_yRes) {
-      Radiant::GuardStatic g(freetypeMutex());
+      Radiant::Guard g(freetypeMutex());
 
       m_error = FT_Set_Char_Size(*face, 0L, pointSize * 64, xRes, yRes);
 
