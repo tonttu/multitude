@@ -63,7 +63,7 @@ namespace Poetic
 
       friend class Patterns::Singleton<FontManager>;
 
-      Radiant::MutexAuto m_mutex;
+      Radiant::Mutex m_mutex;
   };
 
 }

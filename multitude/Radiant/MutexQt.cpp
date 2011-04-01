@@ -16,6 +16,7 @@
 #include "Mutex.hpp"
 
 #include <QMutex>
+#include <cassert>
 
 namespace Radiant {
 
@@ -27,53 +28,37 @@ namespace Radiant {
 	  D(RecursionMode mode) : QMutex(mode) {}
   };
 
-  Mutex::Mutex()
-    : m_d(0),
-	m_active(false)
+  Mutex::Mutex(bool recursive)
+    : m_initialized(false),
+      m_recursive(recursive),
+      m_d(0)
   {}
 
   Mutex::~Mutex()
   {
-    if(!m_active) return;
-	delete m_d;
+    delete m_d;
   }
 
-  bool Mutex::init(bool /*shared*/, bool /*prio_inherit*/, bool recursive)
+  bool Mutex::initialize(bool recursive)
   {
+    assert(!m_d);
 	  m_d = new D(recursive ? QMutex::Recursive : QMutex::NonRecursive);
 
-	  m_active = true;
-
-	  return true;
+    return true;
   }
 
-  bool Mutex::close()
+  bool Mutex::internalLock(bool block)
   {
-    if(m_active) {
-      m_active = false;
-      delete m_d;
-	  m_d = 0;
+    assert(m_d);
 
-	  return true;
-    }
-
-    return false;
+    if(block) {
+      m_d->lock();
+      return true;
+    } else
+      return internalTryLock();
   }
 
-  bool Mutex::lock()
-  {
-	m_d->lock();
-
-	return true;
-  }
-
-  bool Mutex::lock(bool block)
-  {
-    if(!block) return tryLock();
-    else return lock();
-  }
-
-  bool Mutex::tryLock() 
+  bool Mutex::internalTryLock()
   { 
 	  return m_d->tryLock();
   }

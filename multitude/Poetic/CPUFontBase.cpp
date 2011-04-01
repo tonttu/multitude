@@ -12,7 +12,7 @@ namespace Poetic
 
   CPUFontBase::CPUFontBase()
     : m_face(0),
-      m_mutex(false, false, true),
+      m_mutex(true),
       m_glyphList(0)
   {
   }

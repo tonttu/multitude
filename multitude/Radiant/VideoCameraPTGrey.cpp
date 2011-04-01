@@ -32,7 +32,7 @@ namespace Radiant
 {
   /* It seems that ptgrey drivers are not 100% thread-safe. To overcome this we
      use a mutex to lock captureImage calls to one-thread at a time. */
-  static MutexStatic __cmutex;
+  static Mutex __cmutex;
 
   typedef std::map<uint64_t, FlyCapture2::PGRGuid> GuidMap;
   GuidMap g_guidMap;
@@ -154,7 +154,7 @@ namespace Radiant
   bool VideoCameraPTGrey::open(uint64_t euid, int , int , ImageFormat , FrameRate framerate)
   {
 
-    GuardStatic g(__cmutex);
+    Guard g(__cmutex);
 
     m_fakeFormat7 = false;
 
@@ -261,7 +261,7 @@ namespace Radiant
 
   bool VideoCameraPTGrey::openFormat7(uint64_t euid, Nimble::Recti roi, float fps, int mode)
   {
-    GuardStatic g(__cmutex);
+    Guard g(__cmutex);
     fps = 180.0f;
 
     m_format7Rect = roi;
@@ -417,7 +417,7 @@ namespace Radiant
 
   bool VideoCameraPTGrey::start()
   {
-    GuardStatic g(__cmutex);
+    Guard g(__cmutex);
 
     if(m_state != OPENED) {
       /* If the device is already running, then return true. */
@@ -443,7 +443,7 @@ namespace Radiant
 
   bool VideoCameraPTGrey::stop()
   {
-    GuardStatic g(__cmutex);
+    Guard g(__cmutex);
 
     if(m_state != RUNNING) {
       debugRadiant("VideoCameraPTGrey::stop # State != RUNNING");
@@ -468,7 +468,7 @@ namespace Radiant
     if(m_state == UNINITIALIZED)
       return true;
 
-    GuardStatic g(__cmutex);
+    Guard g(__cmutex);
 
     Radiant::info("VideoCameraPTGrey::close");
     m_camera.Disconnect();
@@ -485,7 +485,7 @@ namespace Radiant
 
   const Radiant::VideoImage * VideoCameraPTGrey::captureImage()
   {
-    GuardStatic g(__cmutex);
+    Guard g(__cmutex);
 
     Sleep::sleepMs(2);
 
@@ -530,7 +530,7 @@ namespace Radiant
 
   VideoCamera::CameraInfo VideoCameraPTGrey::cameraInfo()
   {
-    // GuardStatic g(__cmutex);
+    // Guard g(__cmutex);
     return m_info;
 
   }
@@ -562,7 +562,7 @@ namespace Radiant
 
   void VideoCameraPTGrey::setFeature(FeatureType id, float value)
   {
-    GuardStatic g(__cmutex);
+    Guard g(__cmutex);
 
     // debugRadiant("VideoCameraPTGrey::setFeature # %d %f", id, value);
 

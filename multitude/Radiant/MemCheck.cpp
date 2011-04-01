@@ -38,7 +38,7 @@
 
 
 namespace Radiant {
-  static MutexStatic s_mutex;
+  static Mutex s_mutex;
   static long s_total = 0;
 
 #ifndef __GNUC__
@@ -85,7 +85,7 @@ namespace Radiant {
   public:
     virtual ~Checker()
     {
-      GuardStatic g(s_mutex);
+      Guard g(s_mutex);
       if(s_set.empty()) {
         info("All %d MemCheck objects were released", s_total);
       } else {
@@ -184,7 +184,7 @@ namespace Radiant {
   public:
     virtual ~Checker()
     {
-      GuardStatic g(s_mutex);
+      Guard g(s_mutex);
       if(s_map.empty()) {
         info("All %ld MemCheck objects were released", s_total);
       } else {

@@ -28,7 +28,7 @@
 
 namespace Radiant {
 
-  static Radiant::MutexStatic g_mutex;
+  static Radiant::Mutex g_mutex;
 
   static bool g_enableVerboseOutput = false;
   static std::set<std::string> g_verboseModules;

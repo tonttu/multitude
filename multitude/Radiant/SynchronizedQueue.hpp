@@ -107,7 +107,7 @@ namespace Radiant
     }
 
   private:
-    mutable MutexAuto m_mutex;
+    mutable Mutex m_mutex;
     mutable Condition m_cond;
 
     QQueue<T> m_data;

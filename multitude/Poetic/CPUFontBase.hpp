@@ -76,7 +76,7 @@ namespace Poetic
       int m_error;
 
       /// Mutex to control access to CPU resources
-      Radiant::MutexAuto m_mutex;
+      Radiant::Mutex m_mutex;
 
     private:
       inline bool checkGlyph(unsigned int g);

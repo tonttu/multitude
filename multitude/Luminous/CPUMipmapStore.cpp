@@ -21,7 +21,7 @@ namespace Luminous {
 
   using namespace Radiant;
 
-  static Radiant::MutexStatic s_mutex;
+  static Radiant::Mutex s_mutex;
 
   /* Note that the mipmaps are not deleted upon application exit. This
      is done on purpose: As we are dealing with static data one easily
@@ -58,7 +58,7 @@ namespace Luminous {
 
   CPUMipmaps * CPUMipmapStore::acquire(const std::string & filename, bool immediate)
   {
-    Radiant::GuardStatic g( s_mutex);
+    Radiant::Guard g( s_mutex);
 
     MipMapItemContainer::iterator it = s_mipmaps.find(filename);
 
@@ -91,7 +91,7 @@ namespace Luminous {
     if(!mipmaps)
       return;
 
-    Radiant::GuardStatic g( s_mutex);
+    Radiant::Guard g( s_mutex);
 
     for(MipMapItemContainer::iterator it = s_mipmaps.begin();
     it != s_mipmaps.end(); it++) {
@@ -109,7 +109,7 @@ namespace Luminous {
 
   unsigned CPUMipmapStore::count()
   {
-    Radiant::GuardStatic g( s_mutex);
+    Radiant::Guard g( s_mutex);
     return (unsigned) s_mipmaps.size();
   }
 

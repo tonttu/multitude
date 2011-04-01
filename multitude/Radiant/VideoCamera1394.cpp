@@ -507,7 +507,7 @@ namespace Radiant {
     dc1394_software_trigger_set_power(m_camera, DC1394_ON);
   }
 
-  static MutexStatic g_mutex;
+  static Mutex g_mutex;
 
   /**
    * Initialize this instance and open connnection to the device to be
@@ -520,7 +520,7 @@ namespace Radiant {
                              FrameRate framerate)
   {
     // Only one thread at a time, just to make things sure.
-    GuardStatic guard(g_mutex);
+    Guard guard(g_mutex);
 
     /* On some systems, sleep is needed for proper multi-camera operation. Sigh.*/
     Radiant::Sleep::sleepMs(s_openDelay);
@@ -660,7 +660,7 @@ namespace Radiant {
                                     float fps,
                                     int mode)
   {
-    GuardStatic guard(g_mutex);
+    Guard guard(g_mutex);
 
     Radiant::Sleep::sleepMs(s_openDelay);
 
@@ -1267,8 +1267,8 @@ namespace Radiant {
 
   size_t CameraDriver1394::queryCameras(std::vector<VideoCamera::CameraInfo> & cameras)
   {
-    static MutexStatic s_mutex;
-    GuardStatic guard(s_mutex);
+    static Mutex s_mutex;
+    Guard guard(s_mutex);
 
     const char * fname = "CameraDriver1394::queryCameras";
 

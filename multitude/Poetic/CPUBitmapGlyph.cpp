@@ -32,7 +32,7 @@ namespace Poetic
   : Glyph(glyph),
     m_bitmap(0)
   {
-    Radiant::GuardStatic g(freetypeMutex());
+    Radiant::Guard g(freetypeMutex());
 
     int error = FT_Render_Glyph(glyph, FT_RENDER_MODE_NORMAL);
 

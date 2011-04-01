@@ -200,7 +200,7 @@ namespace Luminous {
     unsigned long int m_fileModified;
 
     StackMap           m_stackChange;
-    Radiant::MutexAuto m_stackMutex;
+    Radiant::Mutex m_stackMutex;
 
     std::vector<CPUItem> m_stack;
     Nimble::Vector2i m_nativeSize;

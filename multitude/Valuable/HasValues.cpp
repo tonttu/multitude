@@ -332,7 +332,7 @@ namespace Valuable
 
   HasValues::Uuid HasValues::generateId()
   {
-    static Radiant::MutexAuto s_mutex;
+    static Radiant::Mutex s_mutex;
     Radiant::Guard g(s_mutex);
     static Uuid s_id = static_cast<Uuid>(Radiant::TimeStamp::getTime());
     return s_id++;
