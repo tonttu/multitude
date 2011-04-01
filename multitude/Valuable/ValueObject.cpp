@@ -178,14 +178,19 @@ namespace Valuable
   {
 //    Radiant::trace("ValueObject::emitChange # '%s'", m_name.toUtf8().data());
     m_changed = true;
-    m_listeners.emitChange(this);
+    foreach(const ValueListener & l, m_listeners)
+      if(l.role & CHANGE) l.func();
     ChangeMap::addChange(this);
   }
 
   void ValueObject::emitDelete()
   {
     //Radiant::trace("ValueObject::emitDelete");
-    m_listeners.emitDelete(this);
+    foreach(const ValueListener & l, m_listeners) {
+      if(l.role & DELETE) l.func();
+      if(l.listener) l.listener->m_valueListening.remove(this);
+    }
+    m_listeners.clear();
     ChangeMap::addDelete(this);
   }
 
@@ -194,6 +199,41 @@ namespace Valuable
     if(m_parent) {
       m_parent->removeValue(this);
       m_parent = 0;
+    }
+  }
+
+  void ValueObject::addListener(ListenerFunc func, int role)
+  {
+    addListener(0, func, role);
+  }
+
+  void ValueObject::addListener(HasValues * listener, ListenerFunc func, int role)
+  {
+    m_listeners << ValueListener(func, role, listener);
+    if(listener) listener->m_valueListening << listener;
+  }
+
+  void ValueObject::removeListeners(int role)
+  {
+    removeListener(0, role);
+  }
+
+  void ValueObject::removeListener(HasValues * listener, int role)
+  {
+    QList<HasValues*> listeners;
+    for(QList<ValueListener>::iterator it = m_listeners.begin(); it != m_listeners.end(); ) {
+      if(it->role & role && (!listener || listener == it->listener)) {
+        if(it->listener) listeners << it->listener;
+        it = m_listeners.erase(it);
+      } else ++it;
+    }
+
+    foreach(HasValues * listener, listeners) {
+      bool found = false;
+      foreach(const ValueListener & l, m_listeners)
+        if(l.listener == listener) { found = true; break; }
+      if(!found)
+        listener->m_valueListening.remove(this);
     }
   }
 
@@ -236,5 +276,4 @@ namespace Valuable
 "ValueObject::set(Vector4f) # conversion not available");
     return false;
   }
-
 }

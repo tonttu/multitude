@@ -1,5 +1,6 @@
 include(../multitude.pri)
-HEADERS += CameraDriver.hpp
+HEADERS += CameraDriver.hpp \
+    Functional.hpp
 HEADERS += Defines.hpp
 HEADERS += ThreadPool.hpp
 HEADERS += CSVDocument.hpp

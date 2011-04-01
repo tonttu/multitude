@@ -21,13 +21,14 @@
 #include <Patterns/NotCopyable.hpp>
 
 #include <Radiant/BinaryData.hpp>
+#include <Radiant/Functional.hpp>
 
 #include <Valuable/Archive.hpp>
 #include <Valuable/Export.hpp>
 #include <Valuable/ValueListener.hpp>
 
-#include <set>
 #include <QString>
+#include <QList>
 
 #include <Valuable/DOMElement.hpp>
 #include <Radiant/MemCheck.hpp>
@@ -82,6 +83,13 @@ namespace Valuable
   class VALUABLE_API ValueObject : public Serializable
   {
   public:
+    typedef std::function<void ()> ListenerFunc;
+    enum ListenerRole {
+      DELETE = 1 << 0,
+      CHANGE = 1 << 1,
+      ALL = (CHANGE << 1) -1
+    };
+
     ValueObject();
     /// The copy constructor creates a copy of the ValueObject WITHOUT the
     /// link to parent
@@ -194,9 +202,14 @@ namespace Valuable
     void removeParent();
 
     /// Adds a listener that is invoked whenever the value is changed
-    void addListener(ValueListener * l) { m_listeners.push_back(l); }
+    void addListener(ListenerFunc func, int role = CHANGE);
+    /// Adds a listener that is invoked whenever the value is changed
+    /// The listener is removed when the listener object is deleted
+    void addListener(HasValues * listener, ListenerFunc func, int role = CHANGE);
+    /// Removes listeners from the listener list
+    void removeListeners(int role = ALL);
     /// Removes a listener from the listener list
-    void removeListener(ValueListener * l) { m_listeners.remove(l); }
+    void removeListener(HasValues * listener, int role = ALL);
 
     /// Returns true if the current value of the object is different from the original value.
     virtual bool isChanged() const;
@@ -215,7 +228,16 @@ namespace Valuable
     QString m_name;
     bool m_transit;
 
-    ValueListeners m_listeners;
+    struct ValueListener
+    {
+      ValueListener(ListenerFunc func_, int role_, HasValues * listener_ = 0)
+        : func(func_), role(role_), listener(listener_) {}
+
+      ListenerFunc func;
+      int role;
+      HasValues * listener;
+    };
+    QList<ValueListener> m_listeners;
 
     friend class HasValues;
   };

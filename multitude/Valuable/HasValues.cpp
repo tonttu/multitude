@@ -71,6 +71,14 @@ namespace Valuable
           it->m_func.Dispose();
       }
     }
+
+    foreach(ValueObject* vo, m_valueListening) {
+      for(QList<ValueListener>::iterator it = vo->m_listeners.begin(); it != vo->m_listeners.end(); ) {
+        if(it->listener == this) {
+          it = vo->m_listeners.erase(it);
+        } else ++it;
+      }
+    }
   }
 
   ValueObject * HasValues::getValue(const QString & name)

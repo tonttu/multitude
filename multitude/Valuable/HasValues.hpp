@@ -28,7 +28,10 @@
 #include <v8.h>
 
 #include <map>
+#include <set>
+
 #include <QString>
+#include <QSet>
 
 #define VO_TYPE_HASVALUES "HasValues"
 
@@ -43,7 +46,7 @@ namespace Valuable
       classes, HasValues simply maintains a list of children.
   */
   /// @todo Examples
-  class VALUABLE_API HasValues : public ValueObject, public ValueListener
+  class VALUABLE_API HasValues : public ValueObject
   {
   public:
     /// Universally unique identifier type
@@ -249,6 +252,9 @@ namespace Valuable
     typedef std::set<Valuable::HasValues *> Sources;
     Sources m_eventSources;
     bool m_eventsEnabled;
+
+    // set of all valueobjects that this HasValues is listening to
+    QSet<ValueObject*> m_valueListening;
 
     Valuable::ValueIntT<Uuid> m_id;
     // For invalidating the too new ValuePass objects
