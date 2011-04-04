@@ -60,9 +60,6 @@ namespace Poetic
 
     CPUManagedFont * mfont = 0;
 
-    QString dirredname("Configs/");
-    dirredname += name;
-
     if(it == m_managedFonts.end()) {
 
       const QString path = m_locator.locate(name);
