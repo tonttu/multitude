@@ -189,7 +189,7 @@ namespace Valuable
     virtual ArchiveElement & serialize(Archive &archive) const;
 
     /** The parent object of the value object (is any). */
-    HasValues * parent() { return m_parent; }
+    HasValues * parent() const { return m_parent; }
     /** Sets the parent pointer to zero and removes this object from the parent. */
     void removeParent();
 

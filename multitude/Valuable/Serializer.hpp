@@ -136,7 +136,7 @@ namespace Valuable
 
     /// Serializes object t to new element that is added to the archive.
     template <typename T>
-    ArchiveElement & serialize(Archive & archive, T t);
+    ArchiveElement & serialize(Archive & archive, const T & t);
 
     /// Deserializes an element. If deserialization fails or the template type
     /// is not compatible with the data in the element, an object of T created
@@ -155,7 +155,7 @@ namespace Valuable
     template <typename T, int type_id = Trait<T>::type>
     struct Impl
     {
-      inline static ArchiveElement & serialize(Archive &archive, T & t)
+      inline static ArchiveElement & serialize(Archive &archive, const T & t)
       {
         ArchiveElement & elem = archive.createElement(typeid(t).name());
         elem.set(Radiant::StringUtils::stringify(t));
@@ -174,7 +174,7 @@ namespace Valuable
     template <typename T>
     struct Impl<T*, Type::other>
     {
-      inline static ArchiveElement & serialize(Archive & archive, T * t)
+      inline static ArchiveElement & serialize(Archive & archive, const T * t)
       {
         ArchiveElement & elem = archive.createElement(typeid(*t).name());
         elem.set(Radiant::StringUtils::stringify(*t));
@@ -194,7 +194,7 @@ namespace Valuable
     template <typename T>
     struct Impl<T, Type::smart_ptr>
     {
-      inline static ArchiveElement & serialize(Archive & archive, T & t)
+      inline static ArchiveElement & serialize(Archive & archive, const T & t)
       {
         return Serializer::serialize(archive, t.get());
       }
@@ -208,7 +208,7 @@ namespace Valuable
     template <typename T>
     struct Impl<T, Type::serializable>
     {
-      inline static ArchiveElement & serialize(Archive & doc, T & t)
+      inline static ArchiveElement & serialize(Archive & doc, const T & t)
       {
         return t.serialize(doc);
       }
@@ -224,7 +224,7 @@ namespace Valuable
     template <typename T>
     struct Impl<T*, Type::serializable>
     {
-      inline static ArchiveElement & serialize(Archive & archive, T * t)
+      inline static ArchiveElement & serialize(Archive & archive, const T * t)
       {
         return t->serialize(archive);
       }
@@ -238,7 +238,7 @@ namespace Valuable
     template <typename T>
     struct Impl<T, Type::pair>
     {
-      inline static ArchiveElement & serialize(Archive & archive, T & pair)
+      inline static ArchiveElement & serialize(Archive & archive, const T & pair)
       {
         ArchiveElement & elem = archive.createElement("pair");
         elem.add(Serializer::serialize(archive, pair.first));
@@ -268,9 +268,15 @@ namespace Valuable
     /// @endcond
 
     template <typename T>
-    inline ArchiveElement & serialize(Archive & archive, T t)
+    inline ArchiveElement & serialize(Archive & archive, const T & t)
     {
       return Impl<T>::serialize(archive, t);
+    }
+
+    template <typename T>
+    inline ArchiveElement & serialize(Archive & archive, const T * t)
+    {
+      return Impl<T*>::serialize(archive, t);
     }
 
     template <typename T>
@@ -289,11 +295,11 @@ namespace Valuable
     /// Serialize object to a XML file. Example usage:
     /// Serializer::serializeXML("widget.xml", widget, SerializationOptions::ONLY_CHANGED);
     template <typename T>
-    inline bool serializeXML(const std::string & filename, T t,
+    inline bool serializeXML(const std::string & filename, const T & t,
                             SerializationOptions::Options opts = SerializationOptions::DEFAULTS)
     {
       XMLArchive archive(opts);
-      ArchiveElement & e = serialize(archive, t);
+      ArchiveElement & e = serialize<T>(archive, t);
       if(e.isNull()) {
         return false;
       }
