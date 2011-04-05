@@ -1,6 +1,6 @@
 include(../multitude.pri)
 
-FBX_SDK=/home/esa/fbx
+FBX_SDK=/home/aki/fbx
 
 INCLUDEPATH += $$FBX_SDK/include
 LIBPATH += $$FBX_SDK/lib/gcc4

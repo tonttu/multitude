@@ -2,21 +2,261 @@
 #include "DrawUtils.hpp"
 
 #include <Luminous/Luminous.hpp>
+#include <Luminous/Texture.hpp>
+#include <Luminous/Image.hpp>
 
 #include <fbxsdk.h>
 
 #include <cmath>
+#include <vector>
 
 namespace Vivid
 {
 
 static double g_orthoCameraScale = 178.0;
 
+namespace {
+
+
+#define DRAW_MODE_WIREFRAME 0
+#define DRAW_MODE_LIGHTED   1
+#define DRAW_MODE_TEXTURED  2
+
+#include <fbxfilesdk/kfbxplugins/kfbxtexture.h>
+
+class VSTexture
+{
+        public:
+                inline VSTexture()
+                {
+                        mW = mH     = 0;
+                        mImageData  = NULL;
+                        mRefTexture = NULL;
+                }
+
+                ~VSTexture()
+                {
+                        delete mImageData;
+                }
+
+                unsigned int   mW;
+                unsigned int   mH;
+                unsigned char* mImageData;
+                KFbxTexture*   mRefTexture;
+};
+
+KArrayTemplate<VSTexture*> gTextureArray;
+
+void LoadTexture(KFbxTexture* pTexture, KArrayTemplate<VSTexture*>& pTextureArray)
+{
+    // First find if the texture is already loaded
+    int i, lCount = pTextureArray.GetCount();
+
+    for (i = 0; i < lCount; i++)
+    {
+        if (pTextureArray[i]->mRefTexture == pTexture) return;
+    }
+
+    KString lFileName = pTexture->GetFileName();
+
+    Luminous::Image img;
+    img.read(lFileName.Buffer());
+
+    VSTexture* tex= new VSTexture;
+    tex->mW = img.width();
+    tex->mH = img.height();
+    tex->mRefTexture = pTexture;
+    size_t bytes = tex->mW*tex->mH*img.pixelFormat().bytesPerPixel();
+    tex->mImageData = new unsigned char[bytes];
+    memcpy(tex->mImageData, img.data(), bytes);
+
+    pTextureArray.Add(tex);
+}
+
+
+void LoadSupportedTexturesRecursive(KFbxNode* pNode, KArrayTemplate<VSTexture*>& pTextureArray)
+{
+  if (pNode)
+  {
+    int i, lCount;
+    KFbxNodeAttribute* lNodeAttribute = pNode->GetNodeAttribute();
+
+    if (lNodeAttribute)
+    {
+      KFbxLayerContainer* lLayerContainer = NULL;
+      KFbxNodeAttribute::EAttributeType type = lNodeAttribute->GetAttributeType();
+
+      switch (type)
+      {
+      case KFbxNodeAttribute::eNURB:
+        lLayerContainer = pNode->GetNurb();
+        break;
+
+      case KFbxNodeAttribute::ePATCH:
+        lLayerContainer = pNode->GetPatch();
+        break;
+
+      case KFbxNodeAttribute::eMESH:
+        lLayerContainer = pNode->GetMesh();
+        break;
+      }
+
+      if (lLayerContainer){
+        int lMaterialIndex;
+        int lTextureIndex;
+        KFbxProperty lProperty;
+        int lNbTex;
+        KFbxTexture* lTexture = NULL;
+        KFbxSurfaceMaterial *lMaterial = NULL;
+        int lNbMat = pNode->GetSrcObjectCount(KFbxSurfaceMaterial::ClassId);
+        for (lMaterialIndex = 0; lMaterialIndex < lNbMat; lMaterialIndex++){
+          lMaterial = KFbxCast <KFbxSurfaceMaterial>(pNode->GetSrcObject(KFbxSurfaceMaterial::ClassId, lMaterialIndex));
+          if(lMaterial){
+            lProperty = lMaterial->FindProperty(KFbxSurfaceMaterial::sDiffuse);
+            if(lProperty.IsValid()){
+              lNbTex = lProperty.GetSrcObjectCount(KFbxTexture::ClassId);
+              for (lTextureIndex = 0; lTextureIndex < lNbTex; lTextureIndex++){
+                lTexture = KFbxCast <KFbxTexture> (lProperty.GetSrcObject(KFbxTexture::ClassId, lTextureIndex));
+                if(lTexture)
+                  LoadTexture(lTexture, pTextureArray);
+              }
+            }
+          }
+        }
+      }
+
+    }
+
+    lCount = pNode->GetChildCount();
+
+    for (i = 0; i < lCount; i++)
+    {
+      LoadSupportedTexturesRecursive(pNode->GetChild(i), pTextureArray);
+    }
+  }
+}
+
+
+
+void LoadSupportedTextures(KFbxScene* pScene, KArrayTemplate<VSTexture*>& pTextureArray)
+{
+  pTextureArray.Clear();
+  LoadSupportedTexturesRecursive(pScene->GetRootNode(), pTextureArray);
+}
+
+/* temporary function to draw mesh */
+void GlDrawMesh(KFbxXMatrix& pGlobalPosition, KFbxMesh* pMesh, KFbxVector4* pVertexArray, int pDrawMode)
+{
+    int                            lDrawMode    = (pDrawMode == DRAW_MODE_TEXTURED && pMesh->GetTextureUVCount() == 0 && pMesh->GetLayer(0)) ? DRAW_MODE_WIREFRAME : pDrawMode;
+
+    KFbxLayerElementArrayTemplate<KFbxVector2>* lUVArray = NULL;
+    pMesh->GetTextureUV(&lUVArray, KFbxLayerElement::eDIFFUSE_TEXTURES);
+
+    KFbxLayerElement::EMappingMode lMappingMode = KFbxLayerElement::eNONE;
+    VSTexture*                     lTexture     = NULL;
+
+    if(pMesh->GetLayer(0) && pMesh->GetLayer(0)->GetUVs())
+        lMappingMode = pMesh->GetLayer(0)->GetUVs()->GetMappingMode();
+
+
+    // Find the texture data
+    if (lDrawMode == DRAW_MODE_TEXTURED)
+    {
+        KFbxTexture* lCurrentTexture           = NULL;
+        KFbxLayerElementTexture* lTextureLayer = NULL;
+        KFbxSurfaceMaterial* lSurfaceMaterial= KFbxCast <KFbxSurfaceMaterial>(pMesh->GetNode()->GetSrcObject(KFbxSurfaceMaterial::ClassId, 0));
+
+        if(lSurfaceMaterial)
+        {
+            KFbxProperty lProperty;
+            lProperty = lSurfaceMaterial->FindProperty(KFbxSurfaceMaterial::sDiffuse);
+            if(lProperty.IsValid())
+            {
+                lCurrentTexture = KFbxCast <KFbxTexture>(lProperty.GetSrcObject(KFbxTexture::ClassId, 0));
+
+                int i, lCount = gTextureArray.GetCount();
+                for (i=0; i<lCount; i++)
+                {
+                    if (gTextureArray[i]->mRefTexture == lCurrentTexture)
+                    {
+                        lTexture = gTextureArray[i];
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    lDrawMode = (lDrawMode == DRAW_MODE_TEXTURED && lTexture) ? lDrawMode : DRAW_MODE_WIREFRAME;
+
+    int lGLPrimitive = lDrawMode == DRAW_MODE_WIREFRAME ? GL_LINE_LOOP : GL_POLYGON;
+
+    glColor3f(0.5, 0.5, 0.5);
+    glLineWidth(1.0);
+
+    glPushMatrix();
+    glMultMatrixd((double*) pGlobalPosition);
+
+    int lPolygonIndex;
+    int lPolygonCount = pMesh->GetPolygonCount();
+
+    if (lDrawMode == DRAW_MODE_TEXTURED)
+    {
+        glEnable(GL_TEXTURE_2D);
+        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+        glTexParameteri( GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP );
+        glTexParameteri( GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP );
+        glTexEnvi( GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+        glTexImage2D(GL_TEXTURE_2D, 0,  3, lTexture->mW, lTexture->mH, 0,  GL_BGR_EXT,  GL_UNSIGNED_BYTE,  lTexture->mImageData);
+    }
+
+    for (lPolygonIndex = 0; lPolygonIndex < lPolygonCount; lPolygonIndex++)
+    {
+        int lVerticeIndex;
+        int lVerticeCount = pMesh->GetPolygonSize(lPolygonIndex);
+
+        glBegin(lGLPrimitive);
+
+        for (lVerticeIndex = 0; lVerticeIndex < lVerticeCount; lVerticeIndex++)
+        {
+            if (lDrawMode == DRAW_MODE_TEXTURED)
+            {
+                int lCurrentUVIndex;
+
+                if (lMappingMode == KFbxLayerElement::eBY_POLYGON_VERTEX)
+                {
+                    lCurrentUVIndex = pMesh->GetTextureUVIndex(lPolygonIndex, lVerticeIndex);
+                }
+                else // KFbxLayerElement::eBY_CONTROL_POINT
+                {
+                    lCurrentUVIndex = pMesh->GetPolygonVertex(lPolygonIndex, lVerticeIndex);
+                }
+                if(lUVArray)
+                    glTexCoord2dv(lUVArray->GetAt(lCurrentUVIndex).mData);
+            }
+
+            glVertex3dv((GLdouble *)pVertexArray[pMesh->GetPolygonVertex(lPolygonIndex, lVerticeIndex)]);
+        }
+
+        glEnd();
+    }
+
+    if (lDrawMode == DRAW_MODE_TEXTURED)
+    {
+        glDisable(GL_TEXTURE_2D);
+    }
+
+    glPopMatrix();
+}
+
+}
 //////////
 //////////
 
 Scene::Scene(KFbxSdkManager * sdk)
-  : m_time(0)
+  : m_time(0), m_currentLayer(0)
 {
   m_scene = KFbxScene::Create(sdk, "");
 }
@@ -38,6 +278,10 @@ bool Scene::import(KFbxSdkManager * sdk, const std::string &filename)
   }
 
   status = importer->Import(m_scene);
+
+  LoadSupportedTextures(m_scene, gTextureArray);
+  Radiant::info("loaded %d textures", gTextureArray.GetCount());
+
   if(!status) {
     Radiant::error("Vivid::import # failed to import scene '%s' : %s", filename.c_str(), importer->GetLastErrorString());
     importer->Destroy();
@@ -75,9 +319,72 @@ KFbxCamera * Scene::getCurrentCamera()
   return ret;
 }
 
-KFbxXMatrix Scene::getGlobalPosition(KFbxNode *node)
+KFbxXMatrix Scene::getGlobalPosition(KFbxNode *node, KFbxXMatrix* pParentGlobalPosition)
 {
   return node->GetScene()->GetEvaluator()->GetNodeGlobalTransform(node, m_time);
+}
+
+KFbxXMatrix Scene::getGlobalPosition(KFbxNode * pNode, KFbxPose * pPose, KFbxXMatrix* pParentGlobalPosition)
+{
+  KFbxXMatrix lGlobalPosition;
+  bool        lPositionFound = false;
+
+  if (pPose)
+  {
+      int lNodeIndex = pPose->Find(pNode);
+
+      if (lNodeIndex > -1)
+      {
+          // The bind pose is always a global matrix.
+          // If we have a rest pose, we need to check if it is
+          // stored in global or local space.
+          if (pPose->IsBindPose() || !pPose->IsLocalMatrix(lNodeIndex))
+          {
+              lGlobalPosition = getPoseMatrix(pPose, lNodeIndex);
+          }
+          else
+          {
+              // We have a local matrix, we need to convert it to
+              // a global space matrix.
+              KFbxXMatrix lParentGlobalPosition;
+
+              if (pParentGlobalPosition)
+              {
+                  lParentGlobalPosition = *pParentGlobalPosition;
+              }
+              else
+              {
+                  if (pNode->GetParent())
+                  {
+                      lParentGlobalPosition = getGlobalPosition(pNode->GetParent(), pPose);
+                  }
+              }
+
+              KFbxXMatrix lLocalPosition = getPoseMatrix(pPose, lNodeIndex);
+              lGlobalPosition = lParentGlobalPosition * lLocalPosition;
+          }
+
+          lPositionFound = true;
+      }
+  }
+
+  if (!lPositionFound)
+  {
+      // There is no pose entry for that node, get the current global position instead
+      lGlobalPosition = getGlobalPosition(pNode, pParentGlobalPosition);
+  }
+
+  return lGlobalPosition;
+}
+
+KFbxXMatrix Scene::getPoseMatrix(KFbxPose * pPose, int pNodeIndex)
+{
+  KFbxXMatrix lPoseMatrix;
+  KFbxMatrix lMatrix = pPose->GetMatrix(pNodeIndex);
+
+  memcpy((double*)lPoseMatrix, (double*)lMatrix, sizeof(lMatrix.mData));
+
+  return lPoseMatrix;
 }
 
 void Scene::setCameraTransform(KFbxCamera *camera)
@@ -266,7 +573,7 @@ void Scene::drawRecursive(KFbxNode *node, KFbxXMatrix &parentGlobalPosition)
   KFbxXMatrix geometryOffset = getGeometryDeformation(node);
   KFbxXMatrix globalOffsetPosition = globalPosition * geometryOffset;
 
-  //drawNode(node, parentGlobalPosition, globalOffsetPosition);
+  drawNode(node, parentGlobalPosition, globalOffsetPosition);
 
   for(int i = 0; i < node->GetChildCount(); i++)
     drawRecursive(node->GetChild(i), globalPosition);
@@ -286,19 +593,44 @@ KFbxXMatrix Scene::getGeometryDeformation(KFbxNode *node)
   return result;
 }
 
-void Scene::drawNode(KFbxNode *node, KFbxXMatrix &parentGlobalPosition)
+void Scene::drawNode(KFbxNode *node, KFbxXMatrix &parentGlobalPosition, KFbxXMatrix &globalOffsetPosition, KFbxPose * pose)
 {
   KFbxNodeAttribute * attr = node->GetNodeAttribute();
 
-  if(attr) {
 
-    if(attr->GetAttributeType() == KFbxNodeAttribute::eMESH)
-      drawMesh(node, parentGlobalPosition);
+  if(!attr)
+    return;
 
+  KFbxNodeAttribute::EAttributeType type = attr->GetAttributeType();
+
+  if (type == KFbxNodeAttribute::eMARKER) {
+
+    // DrawMarker(pGlobalPosition);
+  } else if (type == KFbxNodeAttribute::eSKELETON) {
+    drawSkeleton(node, parentGlobalPosition, globalOffsetPosition);
+  } else if(type == KFbxNodeAttribute::eMESH) {
+    drawMesh(node, parentGlobalPosition, pose);
+  } else if (type == KFbxNodeAttribute::eNURB) {
+    Radiant::info("nurb");
+    // Not supported yet.
+    // Should have been converted into a mesh in function ConvertNurbsAndPatch().
+  } else if (type == KFbxNodeAttribute::ePATCH) {
+    Radiant::info("patch");
+    // Not supported yet.
+    // Should have been converted into a mesh in function ConvertNurbsAndPatch().
+  } else if (type == KFbxNodeAttribute::eCAMERA) {
+    Radiant::info("cam");
+    // DrawCamera(pNode, pTime, pGlobalPosition);
+  } else if (type == KFbxNodeAttribute::eLIGHT) {
+    Radiant::info("light");
+    // DrawLight(pNode, pTime, pGlobalPosition);
+  } else if (type == KFbxNodeAttribute::eNULL) {
+    Radiant::info("null");
+    // DrawNull(pGlobalPosition);
   }
 }
 
-void Scene::drawMesh(KFbxNode *node, KFbxXMatrix &parentGlobalPosition)
+void Scene::drawMesh(KFbxNode * node, KFbxXMatrix & globalPosition, KFbxPose * pose)
 {
   KFbxMesh * mesh = (KFbxMesh*)node->GetNodeAttribute();
   int vertexCount = mesh->GetControlPointsCount();
@@ -311,10 +643,252 @@ void Scene::drawMesh(KFbxNode *node, KFbxXMatrix &parentGlobalPosition)
   memcpy(vertexArray, mesh->GetControlPoints(), vertexCount * sizeof(KFbxVector4));
 
   // Active vertex deformer?
-  if(mesh->GetDeformerCount(KFbxDeformer::eVERTEX_CACHE) && )
 
+  if (mesh->GetDeformerCount(KFbxDeformer::eVERTEX_CACHE) &&
+      (dynamic_cast<KFbxVertexCacheDeformer*>(mesh->GetDeformer(0, KFbxDeformer::eVERTEX_CACHE)))->IsActive()) {
+
+    abort();
+      //ReadVertexCacheData(lMesh, pTime, lVertexArray);
+  } else {
+    if (mesh->GetShapeCount()) {
+      ComputeShapeDeformation(node, mesh, vertexArray);
+    }
+    int skinCount = mesh->GetDeformerCount(KFbxDeformer::eSKIN);
+    int clusterCount = 0;
+    for (int i=0; i < skinCount; ++i) {
+      clusterCount += static_cast<KFbxSkin*>(mesh->GetDeformer(i, KFbxDeformer::eSKIN))->GetClusterCount();
+    }
+    if (clusterCount) {
+      ComputeClusterDeformation(globalPosition, mesh, vertexArray, pose);
+    }
+  }
+
+  GlDrawMesh(globalPosition,
+      mesh,
+      vertexArray,
+      DRAW_MODE_TEXTURED);
 
   delete[] vertexArray;
+}
+
+void Scene::drawSkeleton(KFbxNode * pNode, KFbxXMatrix & pParentGlobalPosition, KFbxXMatrix & pGlobalPosition) {
+  KFbxSkeleton* lSkeleton = (KFbxSkeleton*) pNode->GetNodeAttribute();
+
+  // Only draw the skeleton if it's a limb node and if
+  // the parent also has an attribute of type skeleton.
+  if (lSkeleton->GetSkeletonType() == KFbxSkeleton::eLIMB_NODE &&
+      pNode->GetParent() &&
+      pNode->GetParent()->GetNodeAttribute() &&
+      pNode->GetParent()->GetNodeAttribute()->GetAttributeType() == KFbxNodeAttribute::eSKELETON)
+  {
+
+    glColor3f(1.0, 0.0, 0.0);
+    glLineWidth(2.0);
+
+    glBegin(GL_LINES);
+
+    glVertex3dv((GLdouble *)pParentGlobalPosition.GetT());
+    glVertex3dv((GLdouble *)pGlobalPosition.GetT());
+
+    glEnd();
+  }
+}
+
+void Scene::ComputeShapeDeformation(KFbxNode* node,
+                             KFbxMesh* mesh,
+                             KFbxVector4* vertexArray)
+{
+  int i, j;
+  int shapeCount = mesh->GetShapeCount();
+  int vertexCount = mesh->GetControlPointsCount();
+
+  KFbxVector4* srcVertexArray = vertexArray;
+  KFbxVector4* dstVertexArray = new KFbxVector4[vertexCount];
+
+  memcpy(dstVertexArray, vertexArray, vertexCount * sizeof(KFbxVector4));
+
+  for (i = 0; i < shapeCount; i++)
+  {
+    KFbxShape* shape = mesh->GetShape(i);
+
+    // Get the percentage of influence of the shape.
+    KFbxAnimCurve* curve = mesh->GetShapeChannel(i, m_currentLayer);
+    if (!curve) continue;
+    double weight = curve->Evaluate(m_time) / 100.0;
+
+    for (j = 0; j < vertexCount; j++)
+    {
+      // Add the influence of the shape vertex to the mesh vertex.
+      KFbxVector4 influence = (shape->GetControlPoints()[j] - srcVertexArray[j]) * weight;
+      dstVertexArray[j] += influence;
+    }
+  }
+
+  memcpy(vertexArray, dstVertexArray, vertexCount * sizeof(KFbxVector4));
+  delete [] dstVertexArray;
+}
+
+void Scene::ComputeClusterDeformation(KFbxXMatrix& pGlobalPosition,
+                               KFbxMesh* pMesh,
+                               KFbxVector4* pVertexArray,
+                               KFbxPose* pPose)
+{
+// All the links must have the same link mode.
+   KFbxCluster::ELinkMode lClusterMode = ((KFbxSkin*)pMesh->GetDeformer(0, KFbxDeformer::eSKIN))->GetCluster(0)->GetLinkMode();
+
+   int i, j;
+   int lClusterCount=0;
+
+   int lVertexCount = pMesh->GetControlPointsCount();
+   int lSkinCount = pMesh->GetDeformerCount(KFbxDeformer::eSKIN);
+
+   KFbxXMatrix* lClusterDeformation = new KFbxXMatrix[lVertexCount];
+   memset(lClusterDeformation, 0, lVertexCount * sizeof(KFbxXMatrix));
+   double* lClusterWeight = new double[lVertexCount];
+   memset(lClusterWeight, 0, lVertexCount * sizeof(double));
+
+   if (lClusterMode == KFbxCluster::eADDITIVE)
+   {
+       for (i = 0; i < lVertexCount; i++)
+       {
+           lClusterDeformation[i].SetIdentity();
+       }
+   }
+
+   for ( i=0; i<lSkinCount; ++i)
+   {
+       lClusterCount =( (KFbxSkin *)pMesh->GetDeformer(i, KFbxDeformer::eSKIN))->GetClusterCount();
+       for (j=0; j<lClusterCount; ++j)
+       {
+           KFbxCluster* lCluster =((KFbxSkin *) pMesh->GetDeformer(i, KFbxDeformer::eSKIN))->GetCluster(j);
+           if (!lCluster->GetLink())
+               continue;
+           KFbxXMatrix lReferenceGlobalInitPosition;
+           KFbxXMatrix lReferenceGlobalCurrentPosition;
+           KFbxXMatrix lClusterGlobalInitPosition;
+           KFbxXMatrix lClusterGlobalCurrentPosition;
+           KFbxXMatrix lReferenceGeometry;
+           KFbxXMatrix lClusterGeometry;
+
+           KFbxXMatrix lClusterRelativeInitPosition;
+           KFbxXMatrix lClusterRelativeCurrentPositionInverse;
+           KFbxXMatrix lVertexTransformMatrix;
+
+           if (lClusterMode == KFbxLink::eADDITIVE && lCluster->GetAssociateModel())
+           {
+               lCluster->GetTransformAssociateModelMatrix(lReferenceGlobalInitPosition);
+               //lReferenceGlobalCurrentPosition = GetGlobalPosition(lCluster->GetAssociateModel(), m_time, pPose);
+               lReferenceGlobalCurrentPosition = getGlobalPosition(lCluster->GetAssociateModel());
+                   getGlobalPosition(lCluster->GetAssociateModel(), pPose);
+
+               // Geometric transform of the model
+               lReferenceGeometry = getGeometryDeformation(lCluster->GetAssociateModel());
+               lReferenceGlobalCurrentPosition *= lReferenceGeometry;
+           }
+           else
+           {
+               lCluster->GetTransformMatrix(lReferenceGlobalInitPosition);
+               lReferenceGlobalCurrentPosition = pGlobalPosition;
+               // Multiply lReferenceGlobalInitPosition by Geometric Transformation
+               lReferenceGeometry = getGeometryDeformation(pMesh->GetNode());
+               lReferenceGlobalInitPosition *= lReferenceGeometry;
+           }
+           // Get the link initial global position and the link current global position.
+           lCluster->GetTransformLinkMatrix(lClusterGlobalInitPosition);
+           lClusterGlobalCurrentPosition = getGlobalPosition(lCluster->GetLink(), pPose);
+
+           // Compute the initial position of the link relative to the reference.
+           lClusterRelativeInitPosition = lClusterGlobalInitPosition.Inverse() * lReferenceGlobalInitPosition;
+
+           // Compute the current position of the link relative to the reference.
+           lClusterRelativeCurrentPositionInverse = lReferenceGlobalCurrentPosition.Inverse() * lClusterGlobalCurrentPosition;
+
+           // Compute the shift of the link relative to the reference.
+           lVertexTransformMatrix = lClusterRelativeCurrentPositionInverse * lClusterRelativeInitPosition;
+
+           int k;
+           int lVertexIndexCount = lCluster->GetControlPointIndicesCount();
+
+           for (k = 0; k < lVertexIndexCount; ++k)
+           {
+               int lIndex = lCluster->GetControlPointIndices()[k];
+
+               // Sometimes, the mesh can have less points than at the time of the skinning
+               // because a smooth operator was active when skinning but has been deactivated during export.
+               if (lIndex >= lVertexCount)
+                   continue;
+
+               double lWeight = lCluster->GetControlPointWeights()[k];
+
+               if (lWeight == 0.0)
+               {
+                   continue;
+               }
+
+               // Compute the influence of the link on the vertex.
+               KFbxXMatrix lInfluence = lVertexTransformMatrix;
+
+               //MatrixScale(lInfluence, lWeight);
+               lInfluence *= lWeight;
+
+               if (lClusterMode == KFbxCluster::eADDITIVE)
+               {
+                   // Multiply with to the product of the deformations on the vertex.
+                 for (int i=0; i < 4; ++i) {
+                   lInfluence[i][i] = 1.0 - lWeight;
+                 }
+                   //MatrixAddToDiagonal(lInfluence, 1.0 - lWeight);
+                   lClusterDeformation[lIndex] = lInfluence * lClusterDeformation[lIndex];
+
+                   // Set the link to 1.0 just to know this vertex is influenced by a link.
+                   lClusterWeight[lIndex] = 1.0;
+               }
+               else // lLinkMode == KFbxLink::eNORMALIZE || lLinkMode == KFbxLink::eTOTAL1
+               {
+                   // Add to the sum of the deformations on the vertex.
+                   for (int i=0; i < 4; ++i) {
+                     for (int j=0; j < 4; ++j) {
+                       lClusterDeformation[lIndex][i][j] += lInfluence[i][j];
+                     }
+                   }
+
+                  //MatrixAdd(lClusterDeformation[lIndex], lInfluence);
+
+                   // Add to the sum of weights to either normalize or complete the vertex.
+                   lClusterWeight[lIndex] += lWeight;
+               }
+
+           }
+       }
+   }
+
+   for (i = 0; i < lVertexCount; i++)
+   {
+       KFbxVector4 lSrcVertex = pVertexArray[i];
+       KFbxVector4& lDstVertex = pVertexArray[i];
+       double lWeight = lClusterWeight[i];
+
+       // Deform the vertex if there was at least a link with an influence on the vertex,
+       if (lWeight != 0.0)
+       {
+           lDstVertex = lClusterDeformation[i].MultT(lSrcVertex);
+
+           if (lClusterMode == KFbxCluster::eNORMALIZE)
+           {
+               // In the normalized link mode, a vertex is always totally influenced by the links.
+               lDstVertex /= lWeight;
+           }
+           else if (lClusterMode == KFbxCluster::eTOTAL1)
+           {
+               // In the total 1 link mode, a vertex can be partially influenced by the links.
+               lSrcVertex *= (1.0 - lWeight);
+               lDstVertex += lSrcVertex;
+           }
+       }
+   }
+
+   delete [] lClusterDeformation;
+   delete [] lClusterWeight;
 }
 
 }

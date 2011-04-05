@@ -27,7 +27,9 @@ public:
 
 private:
     /// Get the global transformation matrix of a node
-    KFbxXMatrix getGlobalPosition(KFbxNode * node);
+    KFbxXMatrix getGlobalPosition(KFbxNode * node, KFbxXMatrix* pParentGlobalPosition=0);
+    KFbxXMatrix getGlobalPosition(KFbxNode * node, KFbxPose * pose, KFbxXMatrix* pParentGlobalPosition=0);
+    KFbxXMatrix getPoseMatrix(KFbxPose * pPose, int pNodeIndex);
     KFbxXMatrix getGeometryDeformation(KFbxNode * node);
 
     /// Is the given camera a built-in camera (e.g. front,side,top,perspective)
@@ -36,15 +38,25 @@ private:
     /// Draw the given node and its children recursively
     void drawRecursive(KFbxNode * node, KFbxXMatrix & parentGlobalPosition);
 
-    void drawNode(KFbxNode * node, KFbxXMatrix & parentGlobalPosition);
-    void drawMesh(KFbxNode * node, KFbxXMatrix & parentGlobalPosition);
+    void drawNode(KFbxNode * node, KFbxXMatrix & parentGlobalPosition, KFbxXMatrix & globalOffsetPosition, KFbxPose * pose=0);
+    void drawMesh(KFbxNode * node, KFbxXMatrix & globalPosition, KFbxPose * pos);
+    void drawSkeleton(KFbxNode * pNode, KFbxXMatrix & pParentGlobalPosition, KFbxXMatrix & pGlobalPosition);
 
     void readVertexCacheData(KFbxMesh * mesh, KFbxVector4 * vertexArray);
 
+    void ComputeShapeDeformation(KFbxNode* node,
+                                 KFbxMesh* mesh,
+                                 KFbxVector4* vertexArray);
+
+    void ComputeClusterDeformation(KFbxXMatrix& globalPosition,
+                                   KFbxMesh* mesh,
+                                   KFbxVector4* vertexArray,
+                                   KFbxPose* pose);
     /// Scene that is wrapped
     KFbxScene * m_scene;
     /// Current time the scene is evaluated at (for animations, etc)
     KTime m_time;
+    KFbxAnimLayer* m_currentLayer;
 };
 
 }
