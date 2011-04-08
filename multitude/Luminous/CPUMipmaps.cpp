@@ -60,16 +60,6 @@ namespace Luminous {
   {
   }
 
-  void CPUMipmaps::applyStackChanges()
-  {
-    Radiant::Guard g(m_stackMutex);
-
-    for(StackMap::iterator it = m_stackChange.begin(); it != m_stackChange.end(); ++it)
-      m_stack[it->first] = it->second;
-
-    m_stackChange.clear();
-  }
-
   int CPUMipmaps::getOptimal(Nimble::Vector2f size)
   {
     float ask = size.maximum();
@@ -233,6 +223,10 @@ namespace Luminous {
 
   bool CPUMipmaps::bind(GLResources * resources, Nimble::Vector2 pixelSize, GLenum textureUnit)
   {
+    StateInfo & si = m_stateInfo.ref(resources);
+    si.binded = -1;
+    si.optimal = getOptimal(pixelSize);
+
     // Find the best available mipmap
     int bestAvailable = getClosest(pixelSize);
     if(bestAvailable < 0)
@@ -244,6 +238,7 @@ namespace Luminous {
     std::shared_ptr<ImageTex> img = getImage(bestAvailable);
 
     if(img->isFullyLoadedToGPU()) {
+      si.binded = bestAvailable;
       img->bind(resources, textureUnit, false);
       Luminous::Utils::glCheck("GPUMipmaps::bind # 1");
       return true;
@@ -257,6 +252,7 @@ namespace Luminous {
     const size_t imagePixels = img->width() * img->height();
     if(imagePixels < instantUploadPixelLimit) {
 
+      si.binded = bestAvailable;
       img->bind(resources, textureUnit, false);
 
       return true;
@@ -266,6 +262,7 @@ namespace Luminous {
       img->uploadBytesToGPU(resources, instantUploadPixelLimit);
 
       if(img->isFullyLoadedToGPU()) {
+        si.binded = bestAvailable;
         img->bind(resources, textureUnit, false);
 
         return true;
@@ -286,6 +283,7 @@ namespace Luminous {
         // texture as a side-effect).
 
         if(test->isFullyLoadedToGPU() || (area < (instantUploadPixelLimit / 3))) {
+          si.binded = i;
           test->bind(resources, textureUnit, false);
 
           return true;
@@ -293,6 +291,11 @@ namespace Luminous {
       }
     }
     return false;
+  }
+
+  CPUMipmaps::StateInfo CPUMipmaps::stateInfo(GLResources * resources)
+  {
+    return m_stateInfo.ref(resources);
   }
 
   bool CPUMipmaps::isActive()
@@ -402,14 +405,13 @@ namespace Luminous {
     reschedule(delay+0.0001);
 
     if(!stack.empty()) {
-
+      Radiant::Guard g(m_stackMutex);
       for(StackMap::iterator it = stack.begin(); it != stack.end(); ++it)
-        m_stackChange[it->first] = it->second;
-
+        m_stack[it->first] = it->second;
     }
 
-    // Apply the changes from m_stackChange to m_stack
-    applyStackChanges();
+    /// @todo what if the task has been already re-scheduled from another thread?
+    reschedule(delay);
   }
 
   CPUMipmaps::CPUItem CPUMipmaps::getStack(int index)
@@ -452,6 +454,25 @@ namespace Luminous {
     CPUItem & item = stack[level];
     if(item.m_state == READY)
       return;
+    item.m_lastUsed = Radiant::TimeStamp::getTime();
+
+    if(level == 0) {
+      // Load original
+      std::shared_ptr<Luminous::ImageTex> im(new ImageTex);
+
+      if(!im->read(m_filename.c_str())) {
+        error("CPUMipmaps::recursiveLoad # Could not read %s", m_filename.c_str());
+        item.m_state = FAILED;
+      } else {
+        if(im->hasAlpha())
+          m_hasAlpha = true;
+        //info("Loaded original %s %d from file", m_filename.c_str(), level);
+
+        item.m_image = im;
+        item.m_state = READY;
+      }
+      return;
+    }
 
     // Could the mipmap be already saved on disk?
     if(m_shouldSave.find(level) != m_shouldSave.end()) {
@@ -477,28 +498,15 @@ namespace Luminous {
           if(im->hasAlpha())
             m_hasAlpha = true;
 
+          info("Loaded cache %s %d from file", m_filename.c_str(), level);
+
           item.m_image.reset(im);
           item.m_state = READY;
           return;
         }
-      }
-    }
-
-    if(level == 0) {
-      // Load original
-      std::shared_ptr<Luminous::ImageTex> im(new ImageTex);
-
-      if(!im->read(m_filename.c_str())) {
-        error("CPUMipmaps::recursiveLoad # Could not read %s", m_filename.c_str());
-        item.m_state = FAILED;
       } else {
-        if(im->hasAlpha())
-          m_hasAlpha = true;
-
-        item.m_image = im;
-        item.m_state = READY;
+        info("Failed to load cache file %s", filename.c_str());
       }
-      return;
     }
 
     // Load the bigger image from lower level, and scale down from that:
