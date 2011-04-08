@@ -378,7 +378,7 @@ namespace Luminous {
     m_priority = Luminous::Task::PRIORITY_NORMAL;
     reschedule(delay, true);
 
-    StackMap stack;
+    StackMap removed_stack;
 
     for(int i = 0; i <= m_maxLevel; i++) {
       const CPUItem item = getStack(i);
@@ -386,32 +386,36 @@ namespace Luminous {
 
       if(time_to_expire > 0) {
         if(item.m_state == WAITING) {
+          StackMap stack;
           recursiveLoad(stack, i);
+          if(!stack.empty()) {
+            Radiant::Guard g(m_stackMutex);
+            for(StackMap::iterator it = stack.begin(); it != stack.end(); ++it)
+              m_stack[it->first] = it->second;
+          }
         } else {
           if(time_to_expire < delay)
             delay = time_to_expire;
         }
-      } else if(item.m_state == READY) {
+      } else if((!m_keepMaxLevel || i != m_maxLevel) && item.m_state == READY) {
         // (time_to_expire <= 0) -> free the image
 
         //info("CPUMipmaps::doTask # Dropping %s %d", m_filename.c_str(), i);
-        stack[i] = item;
-        stack[i].m_state = WAITING;
-        stack[i].m_image.reset();
+        removed_stack[i] = item;
+        removed_stack[i].m_state = WAITING;
+        removed_stack[i].m_image.reset();
       }
     }
 
-    /// @todo what if the task has been already re-scheduled from another thread?
-    reschedule(delay+0.0001);
-
-    if(!stack.empty()) {
+    if(!removed_stack.empty()) {
       Radiant::Guard g(m_stackMutex);
-      for(StackMap::iterator it = stack.begin(); it != stack.end(); ++it)
+      for(StackMap::iterator it = removed_stack.begin(); it != removed_stack.end(); ++it)
         m_stack[it->first] = it->second;
     }
 
     /// @todo what if the task has been already re-scheduled from another thread?
-    reschedule(delay);
+    /// The little threshold is just for making sure that the image is surely expired by then
+    reschedule(delay+0.001);
   }
 
   CPUMipmaps::CPUItem CPUMipmaps::getStack(int index)

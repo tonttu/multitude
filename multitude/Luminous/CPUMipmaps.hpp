@@ -164,6 +164,9 @@ namespace Luminous {
 
     inline std::string filename() const { return m_filename; }
 
+    inline bool keepMaxLevel() const { return m_keepMaxLevel; }
+    inline void setKeepMaxLevel(bool v) { m_keepMaxLevel = v; }
+
   protected:
     LUMINOUS_API virtual void doTask();
 
