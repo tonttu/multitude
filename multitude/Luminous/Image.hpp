@@ -205,7 +205,8 @@ namespace Luminous
         makes difference the first time this function executed for the context
         (and the texture is created), after that the the same texture is used.
     */
-    void bind(GLResources * resources, GLenum textureUnit = GL_TEXTURE0, bool withmipmaps = true);
+    void bind(GLResources * resources, GLenum textureUnit = GL_TEXTURE0,
+              bool withmipmaps = true, int internalFormat = 0);
 
     /// Checks if the image data is fully loaded to the GPU, inside a texture
     bool isFullyLoadedToGPU(GLResources * resources = 0);
@@ -239,8 +240,12 @@ namespace Luminous
     CompressedImage();
     virtual ~CompressedImage();
 
-    bool loadImage(const std::string & file, Nimble::Vector2i size, int compression);
-    void * data();
+    void clear();
+
+    bool read(const std::string & filename);
+    bool loadImage(FILE * file, const ImageInfo & info, int offset, int size);
+    void * data() const;
+    int datasize() const;
 
     int width() const { return m_size.x; }
     int height() const { return m_size.y; }

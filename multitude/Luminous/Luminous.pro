@@ -1,5 +1,6 @@
 include(../multitude.pri)
-HEADERS += BGThread.hpp
+HEADERS += BGThread.hpp \
+    ImageCodecDDS.hpp
 HEADERS += GLContext.hpp
 HEADERS += FramebufferResource.hpp
 HEADERS += CodecRegistry.hpp
@@ -37,7 +38,8 @@ HEADERS += VertexBufferImpl.hpp
 HEADERS += Path.hpp
 HEADERS += RenderTarget.hpp
 
-SOURCES += Path.cpp
+SOURCES += Path.cpp \
+    ImageCodecDDS.cpp
 SOURCES += BGThread.cpp
 SOURCES += GLContext.cpp
 SOURCES += FramebufferResource.cpp

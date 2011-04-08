@@ -29,11 +29,19 @@ namespace Luminous
   {
     m_layout = pf.m_layout;
     m_type = pf.m_type;
+    m_compression = pf.m_compression;
   }
 
   PixelFormat::PixelFormat(ChannelLayout layout, ChannelType type):
     m_layout(layout), 
-    m_type(type)
+    m_type(type),
+    m_compression(COMPRESSION_NONE)
+  {}
+
+  PixelFormat::PixelFormat(Compression compression)
+    : m_layout(LAYOUT_UNKNOWN),
+      m_type(TYPE_UNKNOWN),
+      m_compression(compression)
   {}
 
   PixelFormat::~PixelFormat()
@@ -41,6 +49,17 @@ namespace Luminous
 
   int PixelFormat::numChannels() const 
   {
+    switch(m_compression) {
+      case COMPRESSED_RGB_DXT1:
+        return 3;
+      case COMPRESSED_RGBA_DXT1:
+      case COMPRESSED_RGBA_DXT3:
+      case COMPRESSED_RGBA_DXT5:
+        return 4;
+      case COMPRESSION_NONE:
+        break;
+    }
+
     switch(m_layout) {
       case LAYOUT_COLOR_INDEX:
       case LAYOUT_STENCIL_INDEX:
@@ -162,6 +181,7 @@ namespace Luminous
 
   std::string PixelFormat::toString() const
   {
+    /// @todo add support to compressed formats
     std::ostringstream ss;
     ss << "PixelFormat(" << layoutToString(m_layout) << ", " << typeToString(m_type) << ")";
     return ss.str();

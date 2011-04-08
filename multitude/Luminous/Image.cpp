@@ -747,7 +747,7 @@ dest = *this;
     }
   }
 
-  void ImageTex::bind(GLResources * resources, GLenum textureUnit, bool withmimaps)
+  void ImageTex::bind(GLResources * resources, GLenum textureUnit, bool withmipmaps, int internalFormat)
   {
     // Luminous::Utils::glCheck("ImageTex::bind # 0");
 
@@ -759,7 +759,7 @@ dest = *this;
     if(tex.width() != width() ||
        tex.height() != height() ||
        tex.generation() != generation()) {
-      tex.loadImage(*this, withmimaps);
+      tex.loadImage(*this, withmipmaps, internalFormat);
       tex.setGeneration(generation());
     }
   }
@@ -858,8 +858,9 @@ dest = *this;
     {}
 
 #ifdef RADIANT_LINUX
-    void * ptr;
+    char * ptr;
     int size;
+    int offset;
     int fd;
 #endif
 
@@ -873,44 +874,81 @@ dest = *this;
 
   CompressedImage::~CompressedImage()
   {
+    clear();
+  }
+
+  void CompressedImage::clear()
+  {
 #ifdef RADIANT_LINUX
     if(m_d->ptr) munmap(m_d->ptr, m_d->size);
     if(m_d->fd) close(m_d->fd);
+    m_d->ptr = 0;
+    m_d->size = 0;
+    m_d->offset = 0;
+    m_d->fd = 0;
 #endif
   }
 
-  bool CompressedImage::loadImage(const std::string & file, Nimble::Vector2i imgsize, int compression)
+  bool CompressedImage::read(const std::string & filename)
   {
-    assert(compression != 0);
-#ifdef RADIANT_LINUX
-    int fd = open(file.c_str(), O_RDONLY);
-    if(fd == -1) return false;
-    off_t size = lseek(fd, 0, SEEK_END);
-    if(size == (off_t)-1) {
-      close(fd);
+    initDefaultImageCodecs();
+    clear();
+
+    bool result = false;
+
+    FILE * file = fopen(filename.c_str(), "rb");
+    if(!file) {
+      error("CompressedImage::read # failed to open file '%s'", filename.c_str());
       return false;
     }
+
+    ImageCodec * codec = Image::codecs()->getCodec(filename, file);
+    if(codec) {
+      result = codec->read(*this, file);
+    } else {
+      error("CompressedImage::read # no suitable codec found for '%s'", filename.c_str());
+    }
+    fclose(file);
+
+    return result;
+  }
+
+  bool CompressedImage::loadImage(FILE * file, const ImageInfo & info, int offset, int size)
+  {
+#ifdef RADIANT_LINUX
+    int fd = dup(fileno(file));
+    if(fd == -1) return false;
     lseek(fd, 0, SEEK_SET);
     void * ptr = mmap(NULL, size, PROT_READ, MAP_SHARED, fd, 0);
     if(ptr == (void*)-1) {
       close(fd);
       return false;
     }
-    m_d->ptr = ptr;
+    m_d->ptr = reinterpret_cast<char*>(ptr);
     m_d->size = size;
     m_d->fd = fd;
-    m_size = imgsize;
-    m_compression = compression;
+    m_d->offset = offset;
+    m_size.make(info.width, info.height);
+    m_compression = info.pf.compression();
     return true;
 #else
     return false;
 #endif
   }
 
-  void * CompressedImage::data()
+  void * CompressedImage::data() const
   {
 #ifdef RADIANT_LINUX
-    return m_d->ptr;
+    return m_d->ptr + m_d->offset;
+#else
+    return 0;
+#endif
+  }
+
+  int CompressedImage::datasize() const
+  {
+#ifdef RADIANT_LINUX
+    return m_d->size;
 #else
     return 0;
 #endif

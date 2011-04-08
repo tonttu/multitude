@@ -86,6 +86,7 @@ namespace Luminous {
         @return Pointer to the image, which may be null.
     */
     LUMINOUS_API std::shared_ptr<ImageTex> getImage(int i);
+    LUMINOUS_API std::shared_ptr<CompressedImageTex> getCompressedImage(int i);
     /** Mark an image used. This method resets the idle-counter of the
         level, preventing it from being dropped from the memory in the
         near future. Also determines which mipmap level will loaded next.
@@ -110,7 +111,7 @@ namespace Luminous {
         opposed to loading them later, as needed).
         @return True if the image file could be opened successfully.
     */
-    LUMINOUS_API bool startLoading(const char * filename, bool immediate, int compression);
+    LUMINOUS_API bool startLoading(const char * filename, bool immediate);
 
     /** @return Returns the native size of the image, in pixels. */
     const Nimble::Vector2i & nativeSize() const { return m_nativeSize;}
@@ -172,19 +173,9 @@ namespace Luminous {
 
   private:
     enum ItemState {
-      IDLE              = 0,
-
-      NEED_IMAGE        = 1 << 0,
-      IMAGE_READY       = 1 << 1,
-      IMAGE_FAILED      = 1 << 2,
-
-      NEED_COMPRESSED   = 1 << 3,
-      COMPRESSED_READY  = 1 << 4,
-      COMPRESSED_FAILED = 1 << 5,
-
-      WAITING           = NEED_IMAGE | NEED_COMPRESSED,
-      READY             = IMAGE_READY | COMPRESSED_READY,
-      FAILED            = IMAGE_FAILED | COMPRESSED_FAILED
+      WAITING,
+      READY,
+      FAILED
     };
 
     class CPUItem
@@ -196,17 +187,18 @@ namespace Luminous {
 
       void clear()
       {
-        m_state = IDLE;
+        m_state = WAITING;
         m_image.reset();
+        m_compressedImage.reset();
         m_lastUsed = 0;
       }
 
       float sinceLastUse() const { return m_lastUsed.sinceSecondsD(); }
 
     private:
-      int m_state;
-      std::shared_ptr<CompressedImage> m_compressed;
+      ItemState m_state;
       std::shared_ptr<ImageTex> m_image;
+      std::shared_ptr<CompressedImageTex> m_compressedImage;
       Radiant::TimeStamp m_lastUsed;
     };
 
@@ -215,9 +207,8 @@ namespace Luminous {
     CPUItem getStack(int index);
 
     /// writes cache filename for level to given string
-    void cacheFileName(std::string & str, int level, int compression = 0);
+    void cacheFileName(std::string & str, int level);
 
-    bool loadCompressed(CPUItem & item, int level);
     void recursiveLoad(StackMap & stack, int level);
     void reschedule(double delay = 0.0, bool allowLater = false);
 
@@ -248,8 +239,6 @@ namespace Luminous {
 
     // updated on every bind()
     ContextVariableT<StateInfo> m_stateInfo;
-
-    int m_compression;
 
     Luminous::ImageInfo m_info;
   };
