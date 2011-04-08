@@ -51,6 +51,14 @@ namespace Luminous {
   class CPUMipmaps : public Luminous::Collectable, public Luminous::Task
   {
   public:
+    struct StateInfo : public GLResource
+    {
+    public:
+      StateInfo(Luminous::GLResources * host) : GLResource(host), optimal(-1), binded(-1) {}
+      bool ready() const { return binded >= 0 && optimal == binded; }
+      int optimal;
+      int binded;
+    };
 
     friend class GPUMipmaps;
 
@@ -125,6 +133,8 @@ namespace Luminous {
     /// @param resources OpenGL resource container for this thread
     LUMINOUS_API bool bind(GLResources * resources, const Nimble::Matrix3 & transform, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
 
+    LUMINOUS_API StateInfo stateInfo(GLResources * resources);
+
     /** Check if the mipmaps are still being loaded.
 
         @return Returns true if the mipmaps are still being loaded.
@@ -152,6 +162,8 @@ namespace Luminous {
     /// Set the time to keep mipmaps in CPU memory
     inline void setTimeOut(float timeout) { m_timeOut = timeout; }
 
+    inline std::string filename() const { return m_filename; }
+
   protected:
     LUMINOUS_API virtual void doTask();
 
@@ -173,7 +185,7 @@ namespace Luminous {
       {
         m_state = WAITING;
         m_image.reset();
-        m_lastUsed = Radiant::TimeStamp::getTime();
+        m_lastUsed = 0;
       }
 
       float sinceLastUse() const { return m_lastUsed.sinceSecondsD(); }
@@ -193,8 +205,6 @@ namespace Luminous {
 
     void recursiveLoad(StackMap & stack, int level);
     void reschedule(double delay = 0.0, bool allowLater = false);
-
-    void applyStackChanges();
 
     std::string m_filename;
     unsigned long int m_fileModified;
@@ -221,6 +231,9 @@ namespace Luminous {
       DEFAULT_SAVE_SIZE2 = 512,
       SMALLEST_IMAGE = 32
     };
+
+    // updated on every bind()
+    ContextVariableT<StateInfo> m_stateInfo;
 
     Luminous::ImageInfo m_info;
   };
