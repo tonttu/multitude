@@ -52,7 +52,8 @@ namespace Luminous {
     m_maxLevel(0),
     m_hasAlpha(false),
     m_timeOut(5.0f),
-    m_keepMaxLevel(true)
+    m_keepMaxLevel(true),
+    m_compression(0)
   {
   }
 
@@ -91,7 +92,7 @@ namespace Luminous {
     const CPUItem & item = m_stack[bestlevel];
     markImage(bestlevel);
 
-    if(item.m_state == READY)
+    if(item.m_state & READY)
       return bestlevel;
 
     reschedule();
@@ -100,14 +101,14 @@ namespace Luminous {
     // Scan for the best available mip-map.
 
     for(int i = bestlevel-1; i >= 0; --i) {
-      if(m_stack[i].m_state == READY) {
+      if(m_stack[i].m_state & READY) {
         markImage(i);
         return i;
       }
     }
 
     for(int i = bestlevel+1; i <= m_maxLevel; ++i) {
-      if(m_stack[i].m_state == READY) {
+      if(m_stack[i].m_state & READY) {
         markImage(i);
         return i;
       }
@@ -121,11 +122,8 @@ namespace Luminous {
     CPUItem item = getStack(i);
 
     std::shared_ptr<ImageTex> image = item.m_image;
-    if(item.m_state != READY) {
-      return std::shared_ptr<ImageTex>();
-    }
-
-    return image;
+    if(item.m_state & IMAGE_READY) return image;
+    return std::shared_ptr<ImageTex>();
   }
 
   void CPUMipmaps::markImage(size_t i)
@@ -133,6 +131,9 @@ namespace Luminous {
     assert(i < m_stack.size());
     /// assert(is locked)
     m_stack[i].m_lastUsed = Radiant::TimeStamp::getTime();
+    int & s = m_stack[i].m_state;
+    if(!(s & READY) && ((s & FAILED) != FAILED))
+      s |= m_compression ? NEED_COMPRESSED : NEED_IMAGE;
   }
 
   bool CPUMipmaps::isReady()
@@ -141,18 +142,19 @@ namespace Luminous {
     for(int i = 0; i <= m_maxLevel; i++) {
       CPUItem & ci = m_stack[i];
 
-      if(ci.m_state == WAITING && ci.sinceLastUse() < m_timeOut)
+      if((ci.m_state & WAITING) && ci.sinceLastUse() < m_timeOut)
         return false;
     }
 
     return true;
   }
 
-  bool CPUMipmaps::startLoading(const char * filename, bool)
+  bool CPUMipmaps::startLoading(const char * filename, bool, int compression)
   {
     m_filename = filename;
     m_fileModified = FileUtils::lastModified(m_filename);
     m_info = Luminous::ImageInfo();
+    m_compression = compression;
 
     if(!Luminous::Image::ping(filename, m_info)) {
       error("CPUMipmaps::startLoading # failed to query image size for %s", filename);
@@ -303,7 +305,7 @@ namespace Luminous {
     Radiant::Guard g(m_stackMutex);
     for(int i = 0; i <= m_maxLevel; i++) {
 
-      if(m_stack[i].m_state == WAITING)
+      if(m_stack[i].m_state & WAITING)
         return true;
     }
 
@@ -381,13 +383,19 @@ namespace Luminous {
     StackMap removed_stack;
 
     for(int i = 0; i <= m_maxLevel; i++) {
-      const CPUItem item = getStack(i);
+      CPUItem item = getStack(i);
       double time_to_expire = m_timeOut - item.sinceLastUse();
 
       if(time_to_expire > 0) {
-        if(item.m_state == WAITING) {
+        if(item.m_state & WAITING) {
           StackMap stack;
-          recursiveLoad(stack, i);
+          if(item.m_state & NEED_COMPRESSED) {
+            assert(m_compression);
+            loadCompressed(item, i);
+            stack[i] = item;
+          }
+          if(item.m_state & NEED_IMAGE)
+            recursiveLoad(stack, i);
           if(!stack.empty()) {
             Radiant::Guard g(m_stackMutex);
             for(StackMap::iterator it = stack.begin(); it != stack.end(); ++it)
@@ -397,13 +405,14 @@ namespace Luminous {
           if(time_to_expire < delay)
             delay = time_to_expire;
         }
-      } else if((!m_keepMaxLevel || i != m_maxLevel) && item.m_state == READY) {
+      } else if((!m_keepMaxLevel || i != m_maxLevel) && (item.m_state & READY)) {
         // (time_to_expire <= 0) -> free the image
 
         //info("CPUMipmaps::doTask # Dropping %s %d", m_filename.c_str(), i);
         removed_stack[i] = item;
-        removed_stack[i].m_state = WAITING;
+        removed_stack[i].m_state = IDLE;
         removed_stack[i].m_image.reset();
+        removed_stack[i].m_compressed.reset();
       }
     }
 
@@ -428,7 +437,7 @@ namespace Luminous {
     return item;
   }
 
-  void CPUMipmaps::cacheFileName(std::string & name, int level)
+  void CPUMipmaps::cacheFileName(std::string & name, int level, int compression)
   {
     QFileInfo fi(QString::fromUtf8(m_filename.c_str()));
 
@@ -442,7 +451,9 @@ namespace Luminous {
 
     // Avoid putting all mipmaps into the same folder (because of OS performance)
     QString prefix = md5.left(2);
-    QString postfix = QString("level%1.png").arg(level, 2, 10, QLatin1Char('0'));
+    QString postfix = compression == 0
+          ? QString("level%1.png").arg(level, 2, 10, QLatin1Char('0'))
+          : QString("level%1.%2").arg(level, 2, 10, QLatin1Char('0')).arg(compression);
     QString fullPath = basePath + QString("/imagecache/%1/%2_%3").arg(prefix).arg(md5).arg(postfix);
 
     name = fullPath.toUtf8().data();
@@ -450,14 +461,41 @@ namespace Luminous {
     //Radiant::info("CPUMipmaps::cacheFileName # %s -> %s", m_filename.c_str(), name.c_str());
   }
 
+  bool CPUMipmaps::loadCompressed(CPUItem & item, int level)
+  {
+    std::string filename;
+    cacheFileName(filename, level, m_compression);
+
+    if(Radiant::FileUtils::fileReadable(filename) &&
+        FileUtils::lastModified(filename) > m_fileModified) {
+
+      Nimble::Vector2i is = mipmapSize(level);
+      std::shared_ptr<CompressedImage> img(new CompressedImage);
+      if(img->loadImage(filename, is, m_compression)) {
+        item.m_compressed = img;
+        item.m_state &= ~(NEED_COMPRESSED | COMPRESSED_FAILED);
+        item.m_state |= COMPRESSED_READY;
+      }
+    } else {
+      // error("Failed to load compressed image %s", filename.c_str());
+    }
+    if(!(item.m_state & IMAGE_READY))
+      item.m_state |= NEED_IMAGE;
+    item.m_state &= ~NEED_COMPRESSED;
+    item.m_state |= COMPRESSED_FAILED;
+
+    return false;
+  }
+
   void CPUMipmaps::recursiveLoad(StackMap & stack, int level)
   {
-    if(getStack(level).m_state == READY)
+    if(getStack(level).m_state & IMAGE_READY)
       return;
 
     CPUItem & item = stack[level];
-    if(item.m_state == READY)
+    if(item.m_state & IMAGE_READY)
       return;
+
     item.m_lastUsed = Radiant::TimeStamp::getTime();
 
     if(level == 0) {
@@ -466,14 +504,16 @@ namespace Luminous {
 
       if(!im->read(m_filename.c_str())) {
         error("CPUMipmaps::recursiveLoad # Could not read %s", m_filename.c_str());
-        item.m_state = FAILED;
+        item.m_state &= ~NEED_IMAGE;
+        item.m_state |= IMAGE_FAILED;
       } else {
         if(im->hasAlpha())
           m_hasAlpha = true;
-        //info("Loaded original %s %d from file", m_filename.c_str(), level);
+        info("Loaded original %s %d from file", m_filename.c_str(), level);
 
         item.m_image = im;
-        item.m_state = READY;
+        item.m_state &= ~(NEED_IMAGE | IMAGE_FAILED);
+        item.m_state |= IMAGE_READY;
       }
       return;
     }
@@ -505,11 +545,12 @@ namespace Luminous {
           info("Loaded cache %s %d from file", m_filename.c_str(), level);
 
           item.m_image.reset(im);
-          item.m_state = READY;
+          item.m_state &= ~(NEED_IMAGE | IMAGE_FAILED);
+          item.m_state |= IMAGE_READY;
           return;
         }
       } else {
-        info("Failed to load cache file %s", filename.c_str());
+        // error("Failed to load cache file %s", filename.c_str());
       }
     }
 
@@ -518,12 +559,13 @@ namespace Luminous {
 
     std::shared_ptr<Luminous::ImageTex> imsrc;
     const CPUItem level1 = getStack(level-1);
-    if(level1.m_state == READY) {
+    if(level1.m_state & IMAGE_READY) {
       imsrc = level1.m_image;
     } else {
-      if(stack[level-1].m_state != READY) {
+      if(!(stack[level-1].m_state & IMAGE_READY)) {
         error("Failed to get mipmap %d", level - 1);
-        item.m_state = FAILED;
+        item.m_state &= ~NEED_IMAGE;
+        item.m_state |= IMAGE_FAILED;
         return;
       }
       imsrc = stack[level-1].m_image;
@@ -537,14 +579,17 @@ namespace Luminous {
     Nimble::Vector2i is = mipmapSize(level);
 
     if(is * 2 == ss) {
+      info("QuarterSize %s %d", m_filename.c_str(), level);
       imdest->quarterSize(*imsrc);
     }
     else {
+      info("CopyResample %s %d", m_filename.c_str(), level);
       imdest->copyResample(*imsrc, is.x, is.y);
     }
 
     item.m_image = imdest;
-    item.m_state = READY;
+    item.m_state &= ~(NEED_IMAGE | IMAGE_FAILED);
+    item.m_state |= IMAGE_READY;
 
     // info("Loaded image %s %d", m_filename.c_str(), is.x);
 
@@ -553,7 +598,7 @@ namespace Luminous {
       cacheFileName(filename, level);
       Directory::mkdirRecursive(FileUtils::path(filename));
       imdest->write(filename.c_str());
-      // info("wrote cache %s (%d)", filename.c_str(), level);
+      info("wrote cache %s (%d)", filename.c_str(), level);
     }
   }
 

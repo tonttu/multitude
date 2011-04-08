@@ -28,6 +28,7 @@ namespace Luminous
 {
   class PixelFormat;
   class Image;
+  class CompressedImage;
 
   /// Base class for different textures
   /** Texture objects can be create without a valid OpenGL context, but their actual
@@ -165,6 +166,7 @@ namespace Luminous
     bool loadImage(const char * filename, bool buildMipmaps = true);
     /// Load the texture from an image
     bool loadImage(const Luminous::Image & image, bool buildMipmaps = true);
+    bool loadImage(const Luminous::CompressedImage & image);
 
     /// Load the texture from from raw data, provided by the user
     bool loadBytes(GLenum internalFormat, int w, int h,

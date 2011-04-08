@@ -233,7 +233,34 @@ namespace Luminous
      }
   };
 
+  class LUMINOUS_API CompressedImage
+  {
+  public:
+    CompressedImage();
+    virtual ~CompressedImage();
 
+    bool loadImage(const std::string & file, Nimble::Vector2i size, int compression);
+    void * data();
+
+    int width() const { return m_size.x; }
+    int height() const { return m_size.y; }
+
+    int compression() const { return m_compression; }
+
+  protected:
+    Nimble::Vector2i m_size;
+    int m_compression;
+
+    class Private;
+    std::auto_ptr<Private> m_d;
+  };
+
+  class LUMINOUS_API CompressedImageTex : public CompressedImage, public Luminous::ContextVariableT<Luminous::Texture2D>
+  {
+  public:
+    virtual ~CompressedImageTex();
+    void bind(GLResources * resources, GLenum textureUnit = GL_TEXTURE0);
+  };
 }
 
 #endif

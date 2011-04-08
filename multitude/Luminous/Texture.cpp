@@ -174,6 +174,11 @@ namespace Luminous
                      image.pixelFormat(), buildMipmaps);
   }
 
+  bool Texture2D::loadImage(const CompressedImage & image)
+  {
+    return false;
+  }
+
   bool Texture2D::loadBytes(GLenum internalFormat, int w, int h,
                             const void * data,
                             const PixelFormat& srcFormat,

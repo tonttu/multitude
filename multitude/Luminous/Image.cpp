@@ -34,6 +34,13 @@
 #include <string.h>
 #include <typeinfo>
 
+
+#ifdef RADIANT_LINUX
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#endif
+
 #ifdef WIN32
 #include <strings.h>	// strcasecmp()
 #endif
@@ -50,6 +57,9 @@ namespace Luminous
 
     return &cr;
   }
+
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
 
   Image::Image()
       : m_width(0),
@@ -832,4 +842,94 @@ dest = *this;
     }
     return false;
   }
+
+
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+
+  class CompressedImage::Private
+  {
+  public:
+    Private(CompressedImage & img) :
+#ifdef RADIANT_LINUX
+      ptr(0), size(0), fd(0),
+#endif
+      m_img(img)
+    {}
+
+#ifdef RADIANT_LINUX
+    void * ptr;
+    int size;
+    int fd;
+#endif
+
+  private:
+    CompressedImage & m_img;
+  };
+
+  CompressedImage::CompressedImage() : m_compression(0), m_d(new Private(*this))
+  {
+  }
+
+  CompressedImage::~CompressedImage()
+  {
+#ifdef RADIANT_LINUX
+    if(m_d->ptr) munmap(m_d->ptr, m_d->size);
+    if(m_d->fd) close(m_d->fd);
+#endif
+  }
+
+  bool CompressedImage::loadImage(const std::string & file, Nimble::Vector2i imgsize, int compression)
+  {
+    assert(compression != 0);
+#ifdef RADIANT_LINUX
+    int fd = open(file.c_str(), O_RDONLY);
+    if(fd == -1) return false;
+    off_t size = lseek(fd, 0, SEEK_END);
+    if(size == (off_t)-1) {
+      close(fd);
+      return false;
+    }
+    lseek(fd, 0, SEEK_SET);
+    void * ptr = mmap(NULL, size, PROT_READ, MAP_SHARED, fd, 0);
+    if(ptr == (void*)-1) {
+      close(fd);
+      return false;
+    }
+    m_d->ptr = ptr;
+    m_d->size = size;
+    m_d->fd = fd;
+    m_size = imgsize;
+    m_compression = compression;
+    return true;
+#else
+    return false;
+#endif
+  }
+
+  void * CompressedImage::data()
+  {
+#ifdef RADIANT_LINUX
+    return m_d->ptr;
+#else
+    return 0;
+#endif
+  }
+
+  CompressedImageTex::~CompressedImageTex()
+  {
+  }
+
+  void CompressedImageTex::bind(GLResources * resources, GLenum textureUnit)
+  {
+    Texture2D & tex = ref(resources);
+    tex.bind(textureUnit);
+
+    // Luminous::Utils::glCheck("ImageTex::bind # 1");
+
+    if(tex.width() != width() || tex.height() != height()) {
+      tex.loadImage(*this);
+    }
+  }
+
 }

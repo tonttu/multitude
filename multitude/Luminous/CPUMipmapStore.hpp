@@ -35,7 +35,7 @@ namespace Luminous {
         returned. Otherwise CPUMipmapStore will create a new
         #Luminous::CPUMipmaps object, and return that (if opened successfully).
      */
-    static CPUMipmaps * acquire(const std::string & filename, bool immediate = true);
+    static CPUMipmaps * acquire(const std::string & filename, bool immediate = true, int compression = 0);
 
     /** Release a #Luminous::CPUMipmaps object. If there are no references to
     the object, then its memory is freed. */

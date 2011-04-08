@@ -56,7 +56,7 @@ namespace Luminous {
   static std::map<std::string, MipmapItem> s_mipmaps;
   typedef std::map<std::string, MipmapItem> MipMapItemContainer;
 
-  CPUMipmaps * CPUMipmapStore::acquire(const std::string & filename, bool immediate)
+  CPUMipmaps * CPUMipmapStore::acquire(const std::string & filename, bool immediate, int compression)
   {
     Radiant::Guard g( s_mutex);
 
@@ -70,7 +70,7 @@ namespace Luminous {
 
     CPUMipmaps * mipmaps = new CPUMipmaps();
 
-    if(!mipmaps->startLoading(filename.c_str(), immediate)) {
+    if(!mipmaps->startLoading(filename.c_str(), immediate, compression)) {
       delete mipmaps;
       return 0;
     }
