@@ -1,9 +1,15 @@
 #ifndef SCENE_HPP
 #define SCENE_HPP
 
+#include "Mesh.hpp"
+
+#include <Nimble/Vector3.hpp>
+
 #include <fbxsdk.h>
 
 #include <string>
+#include <vector>
+#include <map>
 
 namespace Vivid
 {
@@ -25,6 +31,8 @@ public:
 
     void draw();
 
+    Mesh* findMesh(const std::string& name);
+
 private:
     /// Get the global transformation matrix of a node
     KFbxXMatrix getGlobalPosition(KFbxNode * node, KFbxXMatrix* pParentGlobalPosition=0);
@@ -39,7 +47,7 @@ private:
     void drawRecursive(KFbxNode * node, KFbxXMatrix & parentGlobalPosition);
 
     void drawNode(KFbxNode * node, KFbxXMatrix & parentGlobalPosition, KFbxXMatrix & globalOffsetPosition, KFbxPose * pose=0);
-    void drawMesh(KFbxNode * node, KFbxXMatrix & globalPosition, KFbxPose * pos);
+    Mesh* buildMesh(KFbxNode * node, KFbxXMatrix & globalPosition, KFbxPose * pose);
     void drawSkeleton(KFbxNode * pNode, KFbxXMatrix & pParentGlobalPosition, KFbxXMatrix & pGlobalPosition);
 
     void readVertexCacheData(KFbxMesh * mesh, KFbxVector4 * vertexArray);
@@ -57,6 +65,7 @@ private:
     /// Current time the scene is evaluated at (for animations, etc)
     KTime m_time;
     KFbxAnimLayer* m_currentLayer;
+    KFbxSdkManager * m_manager;
 };
 
 }

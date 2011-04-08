@@ -17,7 +17,6 @@ static double g_orthoCameraScale = 178.0;
 
 namespace {
 
-
 #define DRAW_MODE_WIREFRAME 0
 #define DRAW_MODE_LIGHTED   1
 #define DRAW_MODE_TEXTURED  2
@@ -26,23 +25,10 @@ namespace {
 
 class VSTexture
 {
-        public:
-                inline VSTexture()
-                {
-                        mW = mH     = 0;
-                        mImageData  = NULL;
-                        mRefTexture = NULL;
-                }
-
-                ~VSTexture()
-                {
-                        delete mImageData;
-                }
-
-                unsigned int   mW;
-                unsigned int   mH;
-                unsigned char* mImageData;
-                KFbxTexture*   mRefTexture;
+public:
+  std::string name;
+  Luminous::ContextVariableT<Luminous::Texture2D> m_tex;
+  KFbxTexture*   mRefTexture;
 };
 
 KArrayTemplate<VSTexture*> gTextureArray;
@@ -57,18 +43,16 @@ void LoadTexture(KFbxTexture* pTexture, KArrayTemplate<VSTexture*>& pTextureArra
         if (pTextureArray[i]->mRefTexture == pTexture) return;
     }
 
-    KString lFileName = pTexture->GetFileName();
+    KString lFileName = pTexture->GetRelativeFileName();
+
 
     Luminous::Image img;
     img.read(lFileName.Buffer());
 
     VSTexture* tex= new VSTexture;
-    tex->mW = img.width();
-    tex->mH = img.height();
+
     tex->mRefTexture = pTexture;
-    size_t bytes = tex->mW*tex->mH*img.pixelFormat().bytesPerPixel();
-    tex->mImageData = new unsigned char[bytes];
-    memcpy(tex->mImageData, img.data(), bytes);
+    tex->name = lFileName.Buffer();
 
     pTextureArray.Add(tex);
 }
@@ -112,6 +96,7 @@ void LoadSupportedTexturesRecursive(KFbxNode* pNode, KArrayTemplate<VSTexture*>&
         for (lMaterialIndex = 0; lMaterialIndex < lNbMat; lMaterialIndex++){
           lMaterial = KFbxCast <KFbxSurfaceMaterial>(pNode->GetSrcObject(KFbxSurfaceMaterial::ClassId, lMaterialIndex));
           if(lMaterial){
+
             lProperty = lMaterial->FindProperty(KFbxSurfaceMaterial::sDiffuse);
             if(lProperty.IsValid()){
               lNbTex = lProperty.GetSrcObjectCount(KFbxTexture::ClassId);
@@ -124,7 +109,6 @@ void LoadSupportedTexturesRecursive(KFbxNode* pNode, KArrayTemplate<VSTexture*>&
           }
         }
       }
-
     }
 
     lCount = pNode->GetChildCount();
@@ -144,10 +128,16 @@ void LoadSupportedTextures(KFbxScene* pScene, KArrayTemplate<VSTexture*>& pTextu
   LoadSupportedTexturesRecursive(pScene->GetRootNode(), pTextureArray);
 }
 
+
 /* temporary function to draw mesh */
 void GlDrawMesh(KFbxXMatrix& pGlobalPosition, KFbxMesh* pMesh, KFbxVector4* pVertexArray, int pDrawMode)
 {
-    int                            lDrawMode    = (pDrawMode == DRAW_MODE_TEXTURED && pMesh->GetTextureUVCount() == 0 && pMesh->GetLayer(0)) ? DRAW_MODE_WIREFRAME : pDrawMode;
+
+  const KFbxLayer* layer = pMesh->GetLayer(0);
+  const KFbxLayerElementMaterial* material = layer->GetMaterials();
+
+
+    int lDrawMode    = (pDrawMode == DRAW_MODE_TEXTURED && pMesh->GetTextureUVCount() == 0 && pMesh->GetLayer(0)) ? DRAW_MODE_WIREFRAME : pDrawMode;
 
     KFbxLayerElementArrayTemplate<KFbxVector2>* lUVArray = NULL;
     pMesh->GetTextureUV(&lUVArray, KFbxLayerElement::eDIFFUSE_TEXTURES);
@@ -186,10 +176,9 @@ void GlDrawMesh(KFbxXMatrix& pGlobalPosition, KFbxMesh* pMesh, KFbxVector4* pVer
             }
         }
     }
-
     lDrawMode = (lDrawMode == DRAW_MODE_TEXTURED && lTexture) ? lDrawMode : DRAW_MODE_WIREFRAME;
 
-    int lGLPrimitive = lDrawMode == DRAW_MODE_WIREFRAME ? GL_LINE_LOOP : GL_POLYGON;
+    int lGLPrimitive = lDrawMode == DRAW_MODE_WIREFRAME ? GL_LINE_LOOP : GL_TRIANGLES;
 
     glColor3f(0.5, 0.5, 0.5);
     glLineWidth(1.0);
@@ -209,7 +198,14 @@ void GlDrawMesh(KFbxXMatrix& pGlobalPosition, KFbxMesh* pMesh, KFbxVector4* pVer
         glTexParameteri( GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP );
         glTexEnvi( GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
-        glTexImage2D(GL_TEXTURE_2D, 0,  3, lTexture->mW, lTexture->mH, 0,  GL_BGR_EXT,  GL_UNSIGNED_BYTE,  lTexture->mImageData);
+        Luminous::Texture2D& tex = lTexture->m_tex.ref();
+        if (tex.generation() < 0) {
+          tex.loadImage(lTexture->name.c_str(), false);
+          tex.setGeneration(1);
+        }
+        tex.bind();
+        //glTexImage2D(GL_TEXTURE_2D, 0,  3, lTexture->mW, lTexture->mH, 0,  GL_BGR_EXT,  GL_UNSIGNED_BYTE,  lTexture->mImageData);
+        //glTexImage2D(GL_TEXTURE_2D, 0,  4, lTexture->mW, lTexture->mH, 0,  GL_RGBA,  GL_UNSIGNED_BYTE,  lTexture->mImageData);
     }
 
     for (lPolygonIndex = 0; lPolygonIndex < lPolygonCount; lPolygonIndex++)
@@ -233,8 +229,9 @@ void GlDrawMesh(KFbxXMatrix& pGlobalPosition, KFbxMesh* pMesh, KFbxVector4* pVer
                 {
                     lCurrentUVIndex = pMesh->GetPolygonVertex(lPolygonIndex, lVerticeIndex);
                 }
-                if(lUVArray)
+                if(lUVArray) {
                     glTexCoord2dv(lUVArray->GetAt(lCurrentUVIndex).mData);
+                }
             }
 
             glVertex3dv((GLdouble *)pVertexArray[pMesh->GetPolygonVertex(lPolygonIndex, lVerticeIndex)]);
@@ -258,6 +255,7 @@ void GlDrawMesh(KFbxXMatrix& pGlobalPosition, KFbxMesh* pMesh, KFbxVector4* pVer
 Scene::Scene(KFbxSdkManager * sdk)
   : m_time(0), m_currentLayer(0)
 {
+  m_manager = sdk;
   m_scene = KFbxScene::Create(sdk, "");
 }
 
@@ -552,8 +550,11 @@ void Scene::draw()
   KFbxCamera * camera = getCurrentCamera();
   setCameraTransform(camera);
 
+  static float z = 0.0f;
+  z += 0.01;
   // Draw scene
   KFbxXMatrix dummy;
+  dummy.SetR(KFbxVector4(0, z, 0, 0));
 
   for(int i = 0; i < m_scene->GetRootNode()->GetChildCount(); i++)
     drawRecursive(m_scene->GetRootNode()->GetChild(i), dummy);
@@ -609,7 +610,7 @@ void Scene::drawNode(KFbxNode *node, KFbxXMatrix &parentGlobalPosition, KFbxXMat
   } else if (type == KFbxNodeAttribute::eSKELETON) {
     drawSkeleton(node, parentGlobalPosition, globalOffsetPosition);
   } else if(type == KFbxNodeAttribute::eMESH) {
-    drawMesh(node, parentGlobalPosition, pose);
+    //drawMesh(node, parentGlobalPosition, pose);
   } else if (type == KFbxNodeAttribute::eNURB) {
     Radiant::info("nurb");
     // Not supported yet.
@@ -630,25 +631,42 @@ void Scene::drawNode(KFbxNode *node, KFbxXMatrix &parentGlobalPosition, KFbxXMat
   }
 }
 
-void Scene::drawMesh(KFbxNode * node, KFbxXMatrix & globalPosition, KFbxPose * pose)
+Mesh* Scene::findMesh(const std::string& name)
 {
+  KFbxNode * node = m_scene->FindNodeByName(name.c_str());
+  if (!node)
+    return 0;
+
+  KFbxXMatrix dummy;
+  Mesh* mesh = buildMesh(node, dummy, 0);
+  return mesh;
+}
+
+Mesh* Scene::buildMesh(KFbxNode * node, KFbxXMatrix & globalPosition, KFbxPose * pose)
+{
+  Mesh* myMesh = new Mesh;
+
   KFbxMesh * mesh = (KFbxMesh*)node->GetNodeAttribute();
+
+  if (!mesh->IsTriangleMesh()) {
+    KFbxGeometryConverter converter(m_manager);
+    converter.TriangulateInPlace(node);
+    mesh = (KFbxMesh*)node->GetNodeAttribute();
+  }
+
   int vertexCount = mesh->GetControlPointsCount();
 
   if(!vertexCount)
-    return;
+    return 0;
 
   // Copy deformed vertices
-  KFbxVector4 * vertexArray = new KFbxVector4 [vertexCount];
+  KFbxVector4 * vertexArray = new KFbxVector4[vertexCount];
   memcpy(vertexArray, mesh->GetControlPoints(), vertexCount * sizeof(KFbxVector4));
 
   // Active vertex deformer?
-
   if (mesh->GetDeformerCount(KFbxDeformer::eVERTEX_CACHE) &&
       (dynamic_cast<KFbxVertexCacheDeformer*>(mesh->GetDeformer(0, KFbxDeformer::eVERTEX_CACHE)))->IsActive()) {
-
     abort();
-      //ReadVertexCacheData(lMesh, pTime, lVertexArray);
   } else {
     if (mesh->GetShapeCount()) {
       ComputeShapeDeformation(node, mesh, vertexArray);
@@ -663,12 +681,190 @@ void Scene::drawMesh(KFbxNode * node, KFbxXMatrix & globalPosition, KFbxPose * p
     }
   }
 
+
+
+  /*
   GlDrawMesh(globalPosition,
       mesh,
       vertexArray,
       DRAW_MODE_TEXTURED);
+*/
+  myMesh->m_name = node->GetName();
+  myMesh->m_vertices.resize(vertexCount);
+  myMesh->m_indices.resize(mesh->GetPolygonVertexCount());
+
+  KFbxLayer* layer = mesh->GetLayer(0);
+  if (layer) {
+    KFbxLayerElementNormal* normals = layer->GetNormals();
+    if (normals) {
+      if (normals->GetMappingMode() == KFbxLayerElementNormal::eBY_CONTROL_POINT) {
+        myMesh->m_normals.resize(vertexCount);
+        for (int i=0; i < vertexCount; ++i) {
+          int idx=0;
+          if (normals->GetReferenceMode() == KFbxLayerElement::eDIRECT) {
+            idx = i;
+          } else if (normals->GetReferenceMode() == KFbxLayerElement::eINDEX_TO_DIRECT) {
+            idx = normals->GetIndexArray().GetAt(i);
+          }
+          KFbxVector4 normal = normals->GetDirectArray().GetAt(idx);
+          myMesh->m_normals[i] = Nimble::Vector3(normal[0], normal[1], normal[2]);
+        }
+      } else if (normals->GetMappingMode() == KFbxLayerElement::eBY_POLYGON_VERTEX) {
+        abort();
+#if 0
+        int idxByVertex = 0;
+        for (int pIdx=0; pIdx < mesh->GetPolygonCount(); ++pIdx) {
+          int polySize = mesh->GetPolygonSize(pIdx);
+          for (int i=0; i < polySize; ++i) {
+            int idx = 0;
+            if (normals->GetReferenceMode() == KFbxLayerElement::eDIRECT) {
+              idx = idxByVertex;
+            } else if (normals->GetReferenceMode() == KFbxLayerElement::eINDEX_TO_DIRECT) {
+              idx = normals->GetIndexArray().GetAt(idxByVertex);
+            }
+
+            KFbxVector4 normal = normals->GetDirectArray().GetAt(idx);
+            myMesh->m_normals.push_back(Nimble::Vector3(normal[0], normal[1], normal[2]));
+            ++idxByVertex;
+          }
+        }
+#endif
+      } else {
+        abort();
+      }
+    }
+
+    int idx;
+    FOR_EACH_TEXTURE(idx) {
+      KFbxLayerElement::ELayerElementType lTextureType = TEXTURE_TYPE(idx);
+        KFbxLayerElementUV const* uvs = layer->GetUVs(lTextureType);
+        if(!uvs)
+            continue;
+
+        // only support mapping mode eBY_POLYGON_VERTEX and eBY_CONTROL_POINT
+        if( uvs->GetMappingMode() != KFbxLayerElement::eBY_CONTROL_POINT)
+            abort();
+
+        //direct array, where holds the actual uv data
+        const int lDataCount = uvs->GetDirectArray().GetCount();
+
+        //index array, where holds the index referenced to the uv data
+        const bool lUseIndex = uvs->GetReferenceMode() != KFbxLayerElement::eDIRECT;
+        const int lIndexCount= (lUseIndex) ? uvs->GetIndexArray().GetCount() : 0;
+
+        //iterating through the data by polygon
+        const int lPolyCount = mesh->GetPolygonCount();
+
+        if (uvs->GetMappingMode() == KFbxLayerElementNormal::eBY_CONTROL_POINT) {
+          myMesh->m_textureCoordinates.resize(vertexCount);
+          for (int i=0; i < vertexCount; ++i) {
+            int idx=0;
+            if (uvs->GetReferenceMode() == KFbxLayerElement::eDIRECT) {
+              idx = i;
+            } else if (uvs->GetReferenceMode() == KFbxLayerElement::eINDEX_TO_DIRECT) {
+              idx = uvs->GetIndexArray().GetAt(i);
+            }
+            KFbxVector2 uv = uvs->GetDirectArray().GetAt(idx);
+            Radiant::info("uv %d: %f %f %f %f",
+                          i, uv[0], uv[1], uv[2], uv[3]
+                          );
+            myMesh->m_textureCoordinates[i] = Nimble::Vector2(uv[0], uv[1]);
+          }
+        } else {
+          abort();
+        }
+    }
+
+    int materials = node->GetSrcObjectCount(KFbxSurfaceMaterial::ClassId);
+    KFbxSurfaceMaterial* material = KFbxCast<KFbxSurfaceMaterial>(node->GetSrcObject(KFbxSurfaceMaterial::ClassId, 0));
+
+    /*
+ static char const* sShadingModel;
+ static char const* sMultiLayer;
+
+ static char const* sEmissive;
+ static char const* sEmissiveFactor;
+
+ static char const* sAmbient;
+ static char const* sAmbientFactor;
+
+ static char const* sDiffuse;
+ static char const* sDiffuseFactor;
+
+ static char const* sSpecular;
+ static char const* sSpecularFactor;
+ static char const* sShininess;
+
+ static char const* sBump;
+ static char const* sNormalMap;
+static char const* sBumpFactor;
+
+ static char const* sTransparentColor;
+ static char const* sTransparencyFactor;
+
+ static char const* sReflection;
+ static char const* sReflectionFactor;
+
+static char const* sDisplacementColor;
+static char const* sDisplacementFactor;
+
+      */
+    const char* properties[] = {
+      KFbxSurfaceMaterial::sDiffuse,
+      KFbxSurfaceMaterial::sEmissive,
+      KFbxSurfaceMaterial::sAmbient,
+      KFbxSurfaceMaterial::sSpecular,
+      KFbxSurfaceMaterial::sBump,
+      KFbxSurfaceMaterial::sNormalMap,
+      NULL
+    };
+
+    myMesh->m_material.m_shadingModel = material->GetShadingModel().Get().Buffer();
+    for (int i=0; properties[i]; ++i) {
+      KFbxProperty prop = material->FindProperty(properties[i]);
+
+      if (!prop.IsValid())
+        continue;
+
+      KFbxTexture* texture = KFbxCast<KFbxTexture>(prop.GetSrcObject(KFbxTexture::ClassId, 0));
+      if (!texture)
+        continue;
+
+      myMesh->m_material.m_textures[properties[i]] = texture->GetRelativeFileName();
+      Radiant::info("material %s = %s", properties[i], texture->GetRelativeFileName());
+    }
+  }
+
+  for (int i=0; i < vertexCount; ++i) {
+    myMesh->m_vertices[i] = Nimble::Vector3(vertexArray[i][0], vertexArray[i][1], vertexArray[i][2]);
+  }
+  /*
+        eDIFFUSE_TEXTURES,
+        eDIFFUSE_FACTOR_TEXTURES,
+                eEMISSIVE_TEXTURES,
+                eEMISSIVE_FACTOR_TEXTURES,
+                eAMBIENT_TEXTURES,
+                eAMBIENT_FACTOR_TEXTURES,
+                eSPECULAR_TEXTURES,
+        eSPECULAR_FACTOR_TEXTURES,
+        eSHININESS_TEXTURES,
+                eNORMALMAP_TEXTURES,
+                eBUMP_TEXTURES,
+                eTRANSPARENT_TEXTURES,
+                eTRANSPARENCY_FACTOR_TEXTURES,
+                eREFLECTION_TEXTURES,
+                eREFLECTION_FACTOR_TEXTURES,
+        eDISPLACEMENT_TEXTURES,
+        */
+
+  for (int i=0; i < myMesh->m_indices.size(); ++i) {
+    myMesh->m_indices[i] = mesh->GetPolygonVertices()[i];
+  }
+
 
   delete[] vertexArray;
+
+  return myMesh;
 }
 
 void Scene::drawSkeleton(KFbxNode * pNode, KFbxXMatrix & pParentGlobalPosition, KFbxXMatrix & pGlobalPosition) {
