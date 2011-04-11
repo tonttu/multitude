@@ -880,7 +880,7 @@ dest = *this;
   void CompressedImage::clear()
   {
 #ifdef RADIANT_LINUX
-    if(m_d->ptr) munmap(m_d->ptr, m_d->size);
+    if(m_d->ptr) munmap(m_d->ptr, m_d->size + m_d->offset);
     if(m_d->fd) close(m_d->fd);
     m_d->ptr = 0;
     m_d->size = 0;
@@ -889,7 +889,7 @@ dest = *this;
 #endif
   }
 
-  bool CompressedImage::read(const std::string & filename)
+  bool CompressedImage::read(const std::string & filename, int level)
   {
     initDefaultImageCodecs();
     clear();
@@ -904,7 +904,7 @@ dest = *this;
 
     ImageCodec * codec = Image::codecs()->getCodec(filename, file);
     if(codec) {
-      result = codec->read(*this, file);
+      result = codec->read(*this, file, level);
     } else {
       error("CompressedImage::read # no suitable codec found for '%s'", filename.c_str());
     }
@@ -916,10 +916,15 @@ dest = *this;
   bool CompressedImage::loadImage(FILE * file, const ImageInfo & info, int offset, int size)
   {
 #ifdef RADIANT_LINUX
+    static int pagesize = sysconf(_SC_PAGE_SIZE);
     int fd = dup(fileno(file));
     if(fd == -1) return false;
     lseek(fd, 0, SEEK_SET);
-    void * ptr = mmap(NULL, size, PROT_READ, MAP_SHARED, fd, 0);
+
+    int aligned_offset = offset / pagesize * pagesize;
+    offset = offset - aligned_offset;
+    void * ptr = mmap(NULL, size + offset, PROT_READ, MAP_SHARED, fd, aligned_offset);
+
     if(ptr == (void*)-1) {
       close(fd);
       return false;

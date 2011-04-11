@@ -189,6 +189,9 @@ namespace Luminous {
     // m_maxLevel, m_firstLevelSize and m_nativeSize have to be set before running getOptimal
     m_maxLevel = std::numeric_limits<int>::max();
     m_maxLevel = getOptimal(Nimble::Vector2f(SMALLEST_IMAGE, SMALLEST_IMAGE));
+    if(m_info.pf.compression()) {
+      m_maxLevel = Nimble::Math::Min(m_maxLevel, m_info.mipmaps - 1);
+    }
 
     m_shouldSave.insert(getOptimal(Nimble::Vector2f(SMALLEST_IMAGE, SMALLEST_IMAGE)));
     m_shouldSave.insert(getOptimal(Nimble::Vector2f(DEFAULT_SAVE_SIZE1, DEFAULT_SAVE_SIZE1)));
@@ -481,17 +484,8 @@ namespace Luminous {
 
     if(m_info.pf.compression()) {
       std::shared_ptr<Luminous::CompressedImageTex> im(new Luminous::CompressedImageTex);
-      std::string filename;
-      if(level == 0) {
-        filename = m_filename;
-      } else {
-        std::stringstream ss;
-        ss << Radiant::FileUtils::path(m_filename)
-           << "/" << level << "/" << Radiant::FileUtils::filename(m_filename);
-        filename = ss.str();
-      }
-      if(!im->read(filename)) {
-        error("CPUMipmaps::recursiveLoad # Could not read %s", filename.c_str());
+      if(!im->read(m_filename, level)) {
+        error("CPUMipmaps::recursiveLoad # Could not read %s level %d", m_filename.c_str(), level);
         item.m_state = FAILED;
       } else {
         m_hasAlpha = true;

@@ -33,11 +33,13 @@ namespace Luminous
   /// Simple struct containing basic image information that can be quickly
   /// queried (with Image::ping) without loading the full image.
   struct ImageInfo {
-    ImageInfo() : width(0), height(0) {}
+    ImageInfo() : width(0), height(0), mipmaps(1) {}
     /// Width of the image
     int width;
     /// Height of the image
     int height;
+    /// Number of embedded mipmaps, including the base image (1 if no mipmaps included)
+    int mipmaps;
     /// Pixel format of the image
     PixelFormat pf;
   };
@@ -242,7 +244,7 @@ namespace Luminous
 
     void clear();
 
-    bool read(const std::string & filename);
+    bool read(const std::string & filename, int level = 0);
     bool loadImage(FILE * file, const ImageInfo & info, int offset, int size);
     void * data() const;
     int datasize() const;

@@ -60,7 +60,7 @@ namespace Luminous
       /// @return true if the file was decoded successfully, false otherwise
       virtual bool read(Image & image, FILE * file) = 0;
 
-      virtual bool read(CompressedImage & /*image*/, FILE * /*file*/) { return false; }
+      virtual bool read(CompressedImage & /*image*/, FILE * /*file*/, int level = 0) { (void)level; return false; }
 
       /// Store the given Image into a file
       /// @param image Image to store

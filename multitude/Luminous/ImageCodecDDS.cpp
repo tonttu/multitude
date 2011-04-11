@@ -96,36 +96,36 @@ namespace Luminous {
 
 union DDS_header {
   struct {
-    unsigned int    dwMagic;
-    unsigned int    dwSize;
-    unsigned int    dwFlags;
-    unsigned int    dwHeight;
-    unsigned int    dwWidth;
-    unsigned int    dwPitchOrLinearSize;
-    unsigned int    dwDepth;
-    unsigned int    dwMipMapCount;
-    unsigned int    dwReserved1[ 11 ];
+    uint32_t      dwMagic;
+    uint32_t      dwSize;
+    uint32_t      dwFlags;
+    uint32_t      dwHeight;
+    uint32_t      dwWidth;
+    uint32_t      dwPitchOrLinearSize;
+    uint32_t      dwDepth;
+    uint32_t      dwMipMapCount;
+    uint32_t      dwReserved1[ 11 ];
 
     //  DDPIXELFORMAT
     struct {
-      unsigned int    dwSize;
-      unsigned int    dwFlags;
-      unsigned int    dwFourCC;
-      unsigned int    dwRGBBitCount;
-      unsigned int    dwRBitMask;
-      unsigned int    dwGBitMask;
-      unsigned int    dwBBitMask;
-      unsigned int    dwAlphaBitMask;
-    }               sPixelFormat;
+      uint32_t    dwSize;
+      uint32_t    dwFlags;
+      uint32_t    dwFourCC;
+      uint32_t    dwRGBBitCount;
+      uint32_t    dwRBitMask;
+      uint32_t    dwGBitMask;
+      uint32_t    dwBBitMask;
+      uint32_t    dwAlphaBitMask;
+    }             sPixelFormat;
 
     //  DDCAPS2
     struct {
-      unsigned int    dwCaps1;
-      unsigned int    dwCaps2;
-      unsigned int    dwDDSX;
-      unsigned int    dwReserved;
-    }               sCaps;
-    unsigned int    dwReserved2;
+      uint32_t    dwCaps1;
+      uint32_t    dwCaps2;
+      uint32_t    dwDDSX;
+      uint32_t    dwReserved;
+    }             sCaps;
+    uint32_t      dwReserved2;
   };
   char data[ 128 ];
 };
@@ -150,6 +150,10 @@ bool parse(FILE * file, DDS_header & header, ImageInfo & info)
     if(dxt1) info.pf = PixelFormat(PixelFormat::COMPRESSED_RGBA_DXT1);
     if(dxt3) info.pf = PixelFormat(PixelFormat::COMPRESSED_RGBA_DXT3);
     if(dxt5) info.pf = PixelFormat(PixelFormat::COMPRESSED_RGBA_DXT5);
+
+    if(header.dwFlags & DDSD_MIPMAPCOUNT)
+      info.mipmaps = header.dwMipMapCount;
+
     return true;
   }
   return false;
@@ -187,13 +191,48 @@ bool ImageCodecDDS::read(Image &, FILE *)
   return false;
 }
 
-bool ImageCodecDDS::read(CompressedImage & image, FILE * file)
+bool ImageCodecDDS::read(CompressedImage & image, FILE * file, int level)
 {
   DDS_header header;
   ImageInfo info;
   if(!parse(file, header, info)) return false;
 
-  return image.loadImage(file, info, sizeof(header), header.dwPitchOrLinearSize);
+  if(level >= info.mipmaps) {
+    Radiant::error("ImageCodecDDS::read # DDS file have %d mipmaps, tried to read mipmap level #%d", info.mipmaps, level);
+    return false;
+  }
+
+  if(level == 0)
+    return image.loadImage(file, info, sizeof(header), header.dwPitchOrLinearSize);
+
+  bool dxt1 = PF_IS_DXT1(header.sPixelFormat);
+  int channels = dxt1 ? 3 : 4;
+  int factor = dxt1 ? 6 : 4;
+  int offset = sizeof(header);
+  int size = 0;
+
+  for(int l = 0; l <= level; ++l) {
+    // DXT size is always in 4x4 blocks
+    int w = (info.width + 3) / 4 * 4;
+    int h = (info.height + 3) / 4 * 4;
+
+    size = w*h*channels/factor;
+    if(l == 0) {
+      if(size != int(header.dwPitchOrLinearSize)) {
+        Radiant::error("Invalid DDS file, level 0 calculated size %d doesn't match reported size %d",
+                       size, header.dwPitchOrLinearSize);
+        return false;
+      }
+    }
+
+    if(l == level) break;
+
+    offset += size;
+    info.width = Nimble::Math::Max(1, info.width >> 1);
+    info.height = Nimble::Math::Max(1, info.height >> 1);
+  }
+
+  return image.loadImage(file, info, offset, size);
 }
 
 

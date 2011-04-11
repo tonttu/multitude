@@ -15,7 +15,7 @@ public:
   bool ping(ImageInfo & info, FILE * file);
   bool read(Image & image, FILE * file);
   bool write(const Image & image, FILE * file);
-  bool read(CompressedImage & image, FILE * file);
+  bool read(CompressedImage & image, FILE * file, int level = 0);
 };
 
 }
