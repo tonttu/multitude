@@ -33,7 +33,7 @@
 #include <string>
 #include <string.h>
 #include <typeinfo>
-
+#include <errno.h>
 
 #ifdef RADIANT_LINUX
 #include <sys/stat.h>
@@ -850,19 +850,10 @@ dest = *this;
   class CompressedImage::Private
   {
   public:
-    Private(CompressedImage & img) :
-#ifdef RADIANT_LINUX
-      ptr(0), size(0), fd(0),
-#endif
-      m_img(img)
-    {}
+    Private(CompressedImage & img) : ptr(0), size(0), m_img(img) {}
 
-#ifdef RADIANT_LINUX
     char * ptr;
     int size;
-    int offset;
-    int fd;
-#endif
 
   private:
     CompressedImage & m_img;
@@ -879,14 +870,20 @@ dest = *this;
 
   void CompressedImage::clear()
   {
-#ifdef RADIANT_LINUX
+#if 0
     if(m_d->ptr) munmap(m_d->ptr, m_d->size + m_d->offset);
-    if(m_d->fd) close(m_d->fd);
+    if(m_d->fd) {
+      counter(-1);
+      close(m_d->fd);
+    }
     m_d->ptr = 0;
     m_d->size = 0;
     m_d->offset = 0;
     m_d->fd = 0;
 #endif
+    if(m_d->ptr) delete[] m_d->ptr;
+    m_d->ptr = 0;
+    m_d->size = 0;
   }
 
   bool CompressedImage::read(const std::string & filename, int level)
@@ -898,7 +895,7 @@ dest = *this;
 
     FILE * file = fopen(filename.c_str(), "rb");
     if(!file) {
-      error("CompressedImage::read # failed to open file '%s'", filename.c_str());
+      error("CompressedImage::read # failed to open file '%s': %s", filename.c_str(), strerror(errno));
       return false;
     }
 
@@ -915,7 +912,9 @@ dest = *this;
 
   bool CompressedImage::loadImage(FILE * file, const ImageInfo & info, int offset, int size)
   {
-#ifdef RADIANT_LINUX
+    clear();
+#if 0
+    /// Ubuntu has ulimit -Hn == 1024, that is way too low for this kind of optimization
     static int pagesize = sysconf(_SC_PAGE_SIZE);
     int fd = dup(fileno(file));
     if(fd == -1) return false;
@@ -933,30 +932,32 @@ dest = *this;
     m_d->size = size;
     m_d->fd = fd;
     m_d->offset = offset;
+#endif
+    m_d->ptr = new char[size];
+    fseek(file, offset, SEEK_SET);
+    if (fread(m_d->ptr, size, 1, file) != 1) {
+      Radiant::error("CompressedImage::loadImage # Failed to read image");
+      delete m_d->ptr;
+      m_d->ptr = 0;
+    }
+    m_d->size = size;
+
     m_size.make(info.width, info.height);
     m_compression = info.pf.compression();
     return true;
-#else
-    return false;
-#endif
   }
 
   void * CompressedImage::data() const
   {
-#ifdef RADIANT_LINUX
+#if 0
     return m_d->ptr + m_d->offset;
-#else
-    return 0;
 #endif
+    return m_d->ptr;
   }
 
   int CompressedImage::datasize() const
   {
-#ifdef RADIANT_LINUX
     return m_d->size;
-#else
-    return 0;
-#endif
   }
 
   CompressedImageTex::~CompressedImageTex()

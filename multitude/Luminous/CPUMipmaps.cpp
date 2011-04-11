@@ -239,7 +239,7 @@ namespace Luminous {
   bool CPUMipmaps::bind(GLResources * resources, Nimble::Vector2 pixelSize, GLenum textureUnit)
   {
     StateInfo & si = m_stateInfo.ref(resources);
-    si.binded = -1;
+    si.bound = -1;
     si.optimal = getOptimal(pixelSize);
 
     // Find the best available mipmap
@@ -251,7 +251,7 @@ namespace Luminous {
     markImage(bestAvailable);
 
     if(m_info.pf.compression()) {
-      si.binded = bestAvailable;
+      si.bound = bestAvailable;
       std::shared_ptr<CompressedImageTex> img = getCompressedImage(bestAvailable);
       img->bind(resources, textureUnit);
       return true;
@@ -260,7 +260,7 @@ namespace Luminous {
     std::shared_ptr<ImageTex> img = getImage(bestAvailable);
 
     if(img->isFullyLoadedToGPU()) {
-      si.binded = bestAvailable;
+      si.bound = bestAvailable;
       img->bind(resources, textureUnit, false);
       Luminous::Utils::glCheck("GPUMipmaps::bind # 1");
       return true;
@@ -274,7 +274,7 @@ namespace Luminous {
     const size_t imagePixels = img->width() * img->height();
     if(imagePixels < instantUploadPixelLimit) {
 
-      si.binded = bestAvailable;
+      si.bound = bestAvailable;
       img->bind(resources, textureUnit, false);
 
       return true;
@@ -284,7 +284,7 @@ namespace Luminous {
       img->uploadBytesToGPU(resources, instantUploadPixelLimit);
 
       if(img->isFullyLoadedToGPU()) {
-        si.binded = bestAvailable;
+        si.bound = bestAvailable;
         img->bind(resources, textureUnit, false);
 
         return true;
@@ -305,7 +305,7 @@ namespace Luminous {
         // texture as a side-effect).
 
         if(test->isFullyLoadedToGPU() || (area < (instantUploadPixelLimit / 3))) {
-          si.binded = i;
+          si.bound = i;
           test->bind(resources, textureUnit, false);
 
           return true;
@@ -422,10 +422,8 @@ namespace Luminous {
       } else if((!m_keepMaxLevel || i != m_maxLevel) && item.m_state == READY) {
         // (time_to_expire <= 0) -> free the image
 
-        //info("CPUMipmaps::doTask # Dropping %s %d", m_filename.c_str(), i);
-        removed_stack[i] = item;
-        removed_stack[i].m_state = WAITING;
-        removed_stack[i].m_image.reset();
+        info("CPUMipmaps::doTask # Dropping %s %d", m_filename.c_str(), i);
+        removed_stack[i].clear();
       }
     }
 

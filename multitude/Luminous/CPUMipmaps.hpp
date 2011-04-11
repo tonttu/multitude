@@ -54,10 +54,10 @@ namespace Luminous {
     struct StateInfo : public GLResource
     {
     public:
-      StateInfo(Luminous::GLResources * host) : GLResource(host), optimal(-1), binded(-1) {}
-      bool ready() const { return binded >= 0 && optimal == binded; }
+      StateInfo(Luminous::GLResources * host) : GLResource(host), optimal(-1), bound(-1) {}
+      bool ready() const { return bound >= 0 && optimal == bound; }
       int optimal;
-      int binded;
+      int bound;
     };
 
     friend class GPUMipmaps;
