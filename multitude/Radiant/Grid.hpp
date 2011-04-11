@@ -378,6 +378,11 @@ namespace Radiant {
   /// A grid of floats with memory management
   typedef GridT<float, GridMemT<float> >   MemGrid32f;
 
+  /// A grid of Vector2s without memory management
+  typedef GridT<Vector2, GridNoMemT<Vector2> > PtrGridVector2;
+  /// A grid of Vector2s with memory management
+  typedef GridT<Vector2, GridMemT<Vector2> >   MemGridVector2;
+
   /// A grid of color values without memory management
   typedef GridT<RGBAu8, GridNoMemT<RGBAu8> > PtrGridRGBAu8;
   /// A grid of color values with memory management
