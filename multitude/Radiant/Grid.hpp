@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #ifndef RADIANT_GRID_HPP
@@ -379,9 +367,9 @@ namespace Radiant {
   typedef GridT<float, GridMemT<float> >   MemGrid32f;
 
   /// A grid of Vector2s without memory management
-  typedef GridT<Vector2, GridNoMemT<Vector2> > PtrGridVector2;
+  typedef GridT<Nimble::Vector2, GridNoMemT<Nimble::Vector2> > PtrGridVector2;
   /// A grid of Vector2s with memory management
-  typedef GridT<Vector2, GridMemT<Vector2> >   MemGridVector2;
+  typedef GridT<Nimble::Vector2, GridMemT<Nimble::Vector2> >   MemGridVector2;
 
   /// A grid of color values without memory management
   typedef GridT<RGBAu8, GridNoMemT<RGBAu8> > PtrGridRGBAu8;
@@ -398,6 +386,9 @@ namespace Radiant {
 
         template class GridT<float, GridNoMemT<float>>;
         template class GridT<float, GridMemT<float>>;
+
+        template class GridT<Nimble::Vector2, GridNoMemT<Nimble::Vector2>>;
+        template class GridT<Nimble::Vector2, GridMemT<Nimble::Vector2>>;
 
         template class GridT<RGBAu8, GridNoMemT<RGBAu8>>;
         template class GridT<RGBAu8, GridMemT<RGBAu8>>;
