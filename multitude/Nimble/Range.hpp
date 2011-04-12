@@ -21,6 +21,13 @@ namespace Nimble {
     inline T low()  const { return m_low; }
     inline T high() const { return m_high; }
 
+    inline T clamp(const T & v) const
+    {
+      if(v <= m_low) return m_low;
+      if(v >= m_high) return m_high;
+      return v;
+    }
+
     inline bool operator == (const RangeT & that) const
     {
       return m_low == that.m_low && m_high == that.m_high;
