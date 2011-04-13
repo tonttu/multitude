@@ -35,11 +35,9 @@ HEADERS += Transformer.hpp
 HEADERS += Utils.hpp
 HEADERS += VertexBuffer.hpp
 HEADERS += VertexBufferImpl.hpp
-HEADERS += Path.hpp
 HEADERS += RenderTarget.hpp
 
-SOURCES += Path.cpp \
-    ImageCodecDDS.cpp
+SOURCES += ImageCodecDDS.cpp
 SOURCES += BGThread.cpp
 SOURCES += GLContext.cpp
 SOURCES += FramebufferResource.cpp
