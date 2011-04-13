@@ -42,9 +42,12 @@ namespace Luminous
 #ifdef RADIANT_WIN32
     static __declspec(thread) int t_frame = 0;
     static __declspec(thread) long t_available = 0;
-#else
+#elif defined RADIANT_LINUX
     static __thread int t_frame = 0;
     static __thread long t_available = 0;
+#else
+    static int t_frame = 0;
+    static long t_available = 0;
 #endif
 
     UploadLimiter & i = instance();
