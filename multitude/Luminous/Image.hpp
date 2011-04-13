@@ -168,7 +168,7 @@ namespace Luminous
         update the corresponding OpenGL texture wo match the same generation. */
     int generation() const { return m_generation; }
 
-  private:
+  protected:
 
     int m_width;
     int m_height;
@@ -234,6 +234,10 @@ namespace Luminous
        // this->incrementGeneration();
        return * this;
      }
+
+    /// Creates a new ImageTex from this, all the cpu data from Luminous::Image
+    /// is moved to the new object.
+    ImageTex * move();
   };
 
   class LUMINOUS_API CompressedImage
@@ -267,6 +271,10 @@ namespace Luminous
   public:
     virtual ~CompressedImageTex();
     void bind(GLResources * resources, GLenum textureUnit = GL_TEXTURE0);
+
+    /// Creates a new CompressedImageTex from this, all the cpu data from
+    /// Luminous::CompressedImage is moved to the new object.
+    CompressedImageTex * move();
   };
 }
 

@@ -160,8 +160,13 @@ namespace Luminous {
     /// Returns the size of the mipmap level
     LUMINOUS_API Nimble::Vector2i mipmapSize(int level);
 
-    /// Set the time to keep mipmaps in CPU memory
-    inline void setTimeOut(float timeout) { m_timeOut = timeout; }
+    /// Set the time to keep mipmaps in CPU and GPU memory
+    /// The GPU timeout can be a more like a recommendation than a true limit
+    /// @todo Currently m_timeOutCPU can't be smaller than m_timeOutGPU, fix this
+    inline void setTimeOut(float timeoutCPU, float timeoutGPU) {
+      m_timeOutCPU = timeoutCPU;
+      m_timeOutGPU = timeoutGPU;
+    }
 
     inline std::string filename() const { return m_filename; }
 
@@ -191,6 +196,12 @@ namespace Luminous {
         m_image.reset();
         m_compressedImage.reset();
         m_lastUsed = 0;
+      }
+
+      void dropFromGPU()
+      {
+        if(m_image) m_image.reset(m_image->move());
+        if(m_compressedImage) m_compressedImage.reset(m_compressedImage->move());
       }
 
       float sinceLastUse() const { return m_lastUsed.sinceSecondsD(); }
@@ -223,7 +234,8 @@ namespace Luminous {
     int              m_maxLevel;
 
     bool             m_hasAlpha;
-    float            m_timeOut;
+    float            m_timeOutCPU;
+    float            m_timeOutGPU;
 
     // keep the smallest mipmap image (biggest mipmap level m_maxLevel) always ready
     bool             m_keepMaxLevel;

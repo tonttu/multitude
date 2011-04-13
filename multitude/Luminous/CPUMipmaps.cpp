@@ -51,7 +51,8 @@ namespace Luminous {
     m_firstLevelSize(0, 0),
     m_maxLevel(0),
     m_hasAlpha(false),
-    m_timeOut(5.0f),
+    m_timeOutCPU(5.0f),
+    m_timeOutGPU(5.0f),
     m_keepMaxLevel(true)
   {
   }
@@ -153,7 +154,7 @@ namespace Luminous {
     for(int i = 0; i <= m_maxLevel; i++) {
       CPUItem & ci = m_stack[i];
 
-      if(ci.m_state == WAITING && ci.sinceLastUse() < m_timeOut)
+      if(ci.m_state == WAITING && ci.sinceLastUse() < m_timeOutCPU)
         return false;
     }
 
@@ -398,31 +399,39 @@ namespace Luminous {
 
     double delay = 60.0;
     m_priority = Luminous::Task::PRIORITY_NORMAL;
-    reschedule(delay, true);
+    //reschedule(delay, true);
 
     StackMap removed_stack;
 
     for(int i = 0; i <= m_maxLevel; i++) {
-      const CPUItem item = getStack(i);
-      double time_to_expire = m_timeOut - item.sinceLastUse();
+      CPUItem item = getStack(i);
+      double time_to_expire_cpu = m_timeOutCPU - item.sinceLastUse();
+      double time_to_expire_gpu = m_timeOutGPU - item.sinceLastUse();
 
-      if(time_to_expire > 0) {
+      if(time_to_expire_cpu > 0) {
         if(item.m_state == WAITING) {
           StackMap stack;
           recursiveLoad(stack, i);
           if(!stack.empty()) {
+            item = stack[i];
             Radiant::Guard g(m_stackMutex);
             for(StackMap::iterator it = stack.begin(); it != stack.end(); ++it)
               m_stack[it->first] = it->second;
           }
-        } else {
-          if(time_to_expire < delay)
-            delay = time_to_expire;
         }
+        if(time_to_expire_cpu < delay)
+          delay = time_to_expire_cpu;
+
+        if(time_to_expire_gpu < 0) {
+          removed_stack[i] = item;
+          removed_stack[i].dropFromGPU();
+        } else if(time_to_expire_gpu < delay)
+          delay = time_to_expire_gpu;
       } else if((!m_keepMaxLevel || i != m_maxLevel) && item.m_state == READY) {
         // (time_to_expire <= 0) -> free the image
 
-        info("CPUMipmaps::doTask # Dropping %s %d", m_filename.c_str(), i);
+        //info("CPUMipmaps::doTask # Dropping %s %d", m_filename.c_str(), i);
+        /// @todo should only drop the cpu part, but keep gpu untouched (unless time_to_expire_gpu > 0)
         removed_stack[i].clear();
       }
     }
@@ -433,7 +442,6 @@ namespace Luminous {
         m_stack[it->first] = it->second;
     }
 
-    /// @todo what if the task has been already re-scheduled from another thread?
     /// The little threshold is just for making sure that the image is surely expired by then
     reschedule(delay+0.001);
   }

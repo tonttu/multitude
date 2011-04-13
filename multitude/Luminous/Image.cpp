@@ -843,6 +843,17 @@ dest = *this;
     return false;
   }
 
+  ImageTex * ImageTex::move()
+  {
+    ImageTex * t = new ImageTex;
+    std::swap(t->m_width, m_width);
+    std::swap(t->m_height, m_height);
+    std::swap(t->m_pixelFormat, m_pixelFormat);
+    std::swap(t->m_data, m_data);
+    t->m_generation = ++m_generation;
+
+    return t;
+  }
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
@@ -975,5 +986,18 @@ dest = *this;
       tex.loadImage(*this);
     }
   }
+
+  /// Creates a new CompressedImageTex from this, all the cpu data from
+  /// Luminous::CompressedImage is moved to the new object.
+  CompressedImageTex * CompressedImageTex::move()
+  {
+    CompressedImageTex * t = new CompressedImageTex;
+    std::swap(t->m_size, m_size);
+    std::swap(t->m_compression, m_compression);
+    std::swap(t->m_d->ptr, m_d->ptr);
+    std::swap(t->m_d->size, m_d->size);
+    return t;
+  }
+
 
 }
