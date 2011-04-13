@@ -21,9 +21,12 @@
 
 #include <cassert>
 #include <iostream>
+#include <cstring>
+
 #include "Error.hpp"
 
 #include <Radiant/Trace.hpp>
+#include <Radiant/Platform.hpp>
 
 
 namespace Luminous
@@ -31,6 +34,50 @@ namespace Luminous
 
   using namespace std;
   using namespace Radiant;
+
+  UploadLimiter::UploadLimiter() : m_frame(0), m_frameLimit(1.5e6*60*4) {}
+
+  long & UploadLimiter::available()
+  {
+#ifdef RADIANT_WIN32
+    static __declspec(thread) int t_frame = 0;
+    static __declspec(thread) long t_available = 0;
+#else
+    static __thread int t_frame = 0;
+    static __thread long t_available = 0;
+#endif
+
+    UploadLimiter & i = instance();
+    if(t_frame != i.m_frame) {
+      t_frame = i.m_frame;
+      t_available = i.m_frameLimit;
+    }
+    return t_available;
+  }
+
+  long UploadLimiter::limit()
+  {
+    return instance().m_frameLimit;
+  }
+
+  void UploadLimiter::setLimit(long limit)
+  {
+    instance().m_frameLimit = limit;
+  }
+
+  void UploadLimiter::processMessage(const char * type, Radiant::BinaryData &)
+  {
+    if(strcmp(type, "frame") == 0) ++m_frame;
+  }
+
+  UploadLimiter & UploadLimiter::instance()
+  {
+    static UploadLimiter s_limiter;
+    return s_limiter;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
 
   template <GLenum TextureType>
       TextureT<TextureType>::~TextureT()
@@ -176,6 +223,11 @@ namespace Luminous
 
   bool Texture2D::loadImage(const CompressedImage & image)
   {
+    long & available = UploadLimiter::available();
+    // Radiant::info("available: %.1f, need: %.1f", available/1024.0f, image.datasize()/1024.0f);
+
+    if(available < image.datasize()) return false;
+
     long used = consumesBytes();
 
     m_internalFormat = image.compression();
@@ -211,6 +263,7 @@ namespace Luminous
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     long uses = consumesBytes();
+    available -= uses;
 
     changeByteConsumption(used, uses);
 

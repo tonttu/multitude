@@ -24,11 +24,30 @@
 
 #include <Patterns/NotCopyable.hpp>
 
+#include <Valuable/HasValues.hpp>
+
 namespace Luminous
 {
   class PixelFormat;
   class Image;
   class CompressedImage;
+
+  class UploadLimiter : public Valuable::HasValues
+  {
+  public:
+    void processMessage(const char * type, Radiant::BinaryData & data);
+
+    static UploadLimiter & instance();
+
+    static long & available();
+    static long limit();
+    static void setLimit(long limit);
+
+  private:
+    UploadLimiter();
+    int m_frame;
+    long m_frameLimit;
+  };
 
   /// Base class for different textures
   /** Texture objects can be create without a valid OpenGL context, but their actual
