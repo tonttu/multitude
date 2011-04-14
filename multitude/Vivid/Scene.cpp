@@ -399,6 +399,54 @@ void Scene::drawNode(KFbxNode *node, KFbxXMatrix &parentGlobalPosition, KFbxXMat
   }
 }
 
+template<typename T>
+void insertStuff(KFbxMesh* mesh, T* normals, std::vector<Nimble::Vector3>& output, int vertexCount)
+{
+  if (!normals)
+    return;
+
+  if (normals->GetMappingMode() == KFbxLayerElementNormal::eBY_CONTROL_POINT) {
+    for (int i=0; i < vertexCount; ++i) {
+      int idx=0;
+      if (normals->GetReferenceMode() == KFbxLayerElement::eDIRECT) {
+        idx = i;
+      } else if (normals->GetReferenceMode() == KFbxLayerElement::eINDEX_TO_DIRECT) {
+        idx = normals->GetIndexArray().GetAt(i);
+      }
+      KFbxVector4 normal = normals->GetDirectArray().GetAt(idx);
+      output.push_back(Nimble::Vector3(normal[0], normal[1], normal[2]));
+    }
+  } else if(normals->GetMappingMode() == KFbxLayerElement::eBY_POLYGON_VERTEX) {
+    int lIndexByPolygonVertex = 0;
+    //Let's get normals of each polygon, since the mapping mode of normal element is by polygon-vertex.
+    for(int lPolygonIndex = 0; lPolygonIndex < mesh->GetPolygonCount(); lPolygonIndex++)
+    {
+      //get polygon size, you know how many vertices in current polygon.
+      int lPolygonSize = mesh->GetPolygonSize(lPolygonIndex);
+      //retrieve each vertex of current polygon.
+      for(int i = 0; i < lPolygonSize; i++)
+      {
+        int lNormalIndex = 0;
+        //reference mode is direct, the normal index is same as lIndexByPolygonVertex.
+        if( normals->GetReferenceMode() == KFbxLayerElement::eDIRECT )
+          lNormalIndex = lIndexByPolygonVertex;
+
+        //reference mode is index-to-direct, get normals by the index-to-direct
+        if(normals->GetReferenceMode() == KFbxLayerElement::eINDEX_TO_DIRECT)
+          lNormalIndex = normals->GetIndexArray().GetAt(lIndexByPolygonVertex);
+
+        //Got normals of each polygon-vertex.
+        KFbxVector4 lNormal = normals->GetDirectArray().GetAt(lNormalIndex);
+
+        output.push_back(Nimble::Vector3(lNormal[0], lNormal[1], lNormal[2]));
+
+        lIndexByPolygonVertex++;
+      }//end for i //lPolygonSize
+    }//end for lPolygonIndex //PolygonCount
+
+  }//end eBY_POLYGON_VERTEX
+}
+
 Mesh* Scene::findMesh(const std::string& name)
 {
   KFbxNode * node = m_scene->FindNodeByName(name.c_str());
@@ -449,8 +497,6 @@ Mesh* Scene::buildMesh(KFbxNode * node, KFbxXMatrix & globalPosition, KFbxPose *
     }
   }
 
-
-
   /*
   GlDrawMesh(globalPosition,
       mesh,
@@ -463,48 +509,21 @@ Mesh* Scene::buildMesh(KFbxNode * node, KFbxXMatrix & globalPosition, KFbxPose *
 
   KFbxLayer* layer = mesh->GetLayer(0);
   if (layer) {
-    KFbxLayerElement* tangents = layer->GetTangents();
-    std::cout << tangents << std::endl;
 
     KFbxLayerElementNormal* normals = layer->GetNormals();
-    if (normals) {
-      if (normals->GetMappingMode() == KFbxLayerElementNormal::eBY_CONTROL_POINT) {
-        myMesh->m_normals.resize(vertexCount);
-        for (int i=0; i < vertexCount; ++i) {
-          int idx=0;
-          if (normals->GetReferenceMode() == KFbxLayerElement::eDIRECT) {
-            idx = i;
-          } else if (normals->GetReferenceMode() == KFbxLayerElement::eINDEX_TO_DIRECT) {
-            idx = normals->GetIndexArray().GetAt(i);
-          }
-          KFbxVector4 normal = normals->GetDirectArray().GetAt(idx);
-          myMesh->m_normals[i] = Nimble::Vector3(normal[0], normal[1], normal[2]);
-        }
-      } else if (normals->GetMappingMode() == KFbxLayerElement::eBY_POLYGON_VERTEX) {
-        abort();
-#if 0
-        int idxByVertex = 0;
-        for (int pIdx=0; pIdx < mesh->GetPolygonCount(); ++pIdx) {
-          int polySize = mesh->GetPolygonSize(pIdx);
-          for (int i=0; i < polySize; ++i) {
-            int idx = 0;
-            if (normals->GetReferenceMode() == KFbxLayerElement::eDIRECT) {
-              idx = idxByVertex;
-            } else if (normals->GetReferenceMode() == KFbxLayerElement::eINDEX_TO_DIRECT) {
-              idx = normals->GetIndexArray().GetAt(idxByVertex);
-            }
+    KFbxLayerElementTangent* tangents = layer->GetTangents();
+    KFbxLayerElementBinormal* binormals = layer->GetBinormals();
 
-            KFbxVector4 normal = normals->GetDirectArray().GetAt(idx);
-            myMesh->m_normals.push_back(Nimble::Vector3(normal[0], normal[1], normal[2]));
-            ++idxByVertex;
-          }
-        }
-#endif
-      } else {
-        abort();
-      }
-    }
+    insertStuff(mesh, normals, myMesh->m_normals, vertexCount);
+    insertStuff(mesh, tangents, myMesh->m_tangents, vertexCount);
+    insertStuff(mesh, binormals, myMesh->m_bitangents, vertexCount);
+    Radiant::info("normals %d tangs %d bitangs %d", myMesh->m_normals.size(),
+                  myMesh->m_tangents.size(), myMesh->m_bitangents.size());
+  }
 
+  int layers = mesh->GetLayerCount();
+  for (int i=0; i < layers; ++i) {
+    KFbxLayer* layer = mesh->GetLayer(i);
     int idx;
     FOR_EACH_TEXTURE(idx) {
       KFbxLayerElement::ELayerElementType lTextureType = TEXTURE_TYPE(idx);
@@ -546,42 +565,12 @@ Mesh* Scene::buildMesh(KFbxNode * node, KFbxXMatrix & globalPosition, KFbxPose *
     int materials = node->GetSrcObjectCount(KFbxSurfaceMaterial::ClassId);
     KFbxSurfaceMaterial* material = KFbxCast<KFbxSurfaceMaterial>(node->GetSrcObject(KFbxSurfaceMaterial::ClassId, 0));
 
-    /*
- static char const* sShadingModel;
- static char const* sMultiLayer;
-
- static char const* sEmissive;
- static char const* sEmissiveFactor;
-
- static char const* sAmbient;
- static char const* sAmbientFactor;
-
- static char const* sDiffuse;
- static char const* sDiffuseFactor;
-
- static char const* sSpecular;
- static char const* sSpecularFactor;
- static char const* sShininess;
-
- static char const* sBump;
- static char const* sNormalMap;
-static char const* sBumpFactor;
-
- static char const* sTransparentColor;
- static char const* sTransparencyFactor;
-
- static char const* sReflection;
- static char const* sReflectionFactor;
-
-static char const* sDisplacementColor;
-static char const* sDisplacementFactor;
-
-      */
     const char* properties[] = {
       KFbxSurfaceMaterial::sDiffuse,
       KFbxSurfaceMaterial::sEmissive,
       KFbxSurfaceMaterial::sAmbient,
       KFbxSurfaceMaterial::sSpecular,
+      KFbxSurfaceMaterial::sSpecularFactor,
       KFbxSurfaceMaterial::sBump,
       KFbxSurfaceMaterial::sNormalMap,
       NULL

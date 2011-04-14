@@ -20,6 +20,8 @@ public:
   std::vector<Nimble::Vector3> m_vertices;
   std::vector<Nimble::Vector3> m_normals;
   std::vector<Nimble::Vector3> m_tangents;
+  std::vector<Nimble::Vector3> m_bitangents;
+
   std::vector<int> m_indices;
   std::vector<Triangle> m_faces;
   std::vector<Nimble::Vector2> m_textureCoordinates;
