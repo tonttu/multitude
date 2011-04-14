@@ -129,7 +129,7 @@ namespace Luminous
   std::shared_ptr<RenderTargetManager::RenderTargetState> RenderTargetManager::allocateNewTexture(size_t extent)
   {
     Radiant::info("RenderTargetManager::allocateNewTexture # %d next %d",
-                  extent, (int) (1 << nextHigherPowerOfTwo(extent)));
+                  (int) extent, (int) (1 << nextHigherPowerOfTwo(extent)));
 
     // Use power-of-two textures
     extent = 1 << nextHigherPowerOfTwo(extent);
