@@ -165,6 +165,14 @@ template <typename T>
 
     }
 
+    /** Calculates the distance between this (infinite) line and a point. */
+    inline float distanceInfinite(const Vector2T<T> & point)
+    {
+      Nimble::Vector2T<T> perp = directionNormalized().perpendicular();
+
+      return sqrt(dot(perp, point - m_points[0]));
+    }
+
     /// Returns true if the line segment intersects with the given bezier curve
     bool intersectsBezier(Vector2f cp[4]);
 
