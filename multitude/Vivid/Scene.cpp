@@ -1,5 +1,6 @@
 #include "Scene.hpp"
 #include "DrawUtils.hpp"
+#include "TextureManager.hpp"
 
 #include <Luminous/Luminous.hpp>
 #include <Luminous/Texture.hpp>
@@ -15,240 +16,10 @@ namespace Vivid
 
 static double g_orthoCameraScale = 178.0;
 
-namespace {
-
-#define DRAW_MODE_WIREFRAME 0
-#define DRAW_MODE_LIGHTED   1
-#define DRAW_MODE_TEXTURED  2
 
 #include <fbxfilesdk/kfbxplugins/kfbxtexture.h>
 
-class VSTexture
-{
-public:
-  std::string name;
-  Luminous::ContextVariableT<Luminous::Texture2D> m_tex;
-  KFbxTexture*   mRefTexture;
-};
 
-KArrayTemplate<VSTexture*> gTextureArray;
-
-void LoadTexture(KFbxTexture* pTexture, KArrayTemplate<VSTexture*>& pTextureArray)
-{
-    // First find if the texture is already loaded
-    int i, lCount = pTextureArray.GetCount();
-
-    for (i = 0; i < lCount; i++)
-    {
-        if (pTextureArray[i]->mRefTexture == pTexture) return;
-    }
-
-    KString lFileName = pTexture->GetRelativeFileName();
-
-
-    Luminous::Image img;
-    img.read(lFileName.Buffer());
-
-    VSTexture* tex= new VSTexture;
-
-    tex->mRefTexture = pTexture;
-    tex->name = lFileName.Buffer();
-
-    pTextureArray.Add(tex);
-}
-
-
-void LoadSupportedTexturesRecursive(KFbxNode* pNode, KArrayTemplate<VSTexture*>& pTextureArray)
-{
-  if (pNode)
-  {
-    int i, lCount;
-    KFbxNodeAttribute* lNodeAttribute = pNode->GetNodeAttribute();
-
-    if (lNodeAttribute)
-    {
-      KFbxLayerContainer* lLayerContainer = NULL;
-      KFbxNodeAttribute::EAttributeType type = lNodeAttribute->GetAttributeType();
-
-      switch (type)
-      {
-      case KFbxNodeAttribute::eNURB:
-        lLayerContainer = pNode->GetNurb();
-        break;
-
-      case KFbxNodeAttribute::ePATCH:
-        lLayerContainer = pNode->GetPatch();
-        break;
-
-      case KFbxNodeAttribute::eMESH:
-        lLayerContainer = pNode->GetMesh();
-        break;
-      }
-
-      if (lLayerContainer){
-        int lMaterialIndex;
-        int lTextureIndex;
-        KFbxProperty lProperty;
-        int lNbTex;
-        KFbxTexture* lTexture = NULL;
-        KFbxSurfaceMaterial *lMaterial = NULL;
-        int lNbMat = pNode->GetSrcObjectCount(KFbxSurfaceMaterial::ClassId);
-        for (lMaterialIndex = 0; lMaterialIndex < lNbMat; lMaterialIndex++){
-          lMaterial = KFbxCast <KFbxSurfaceMaterial>(pNode->GetSrcObject(KFbxSurfaceMaterial::ClassId, lMaterialIndex));
-          if(lMaterial){
-
-            lProperty = lMaterial->FindProperty(KFbxSurfaceMaterial::sDiffuse);
-            if(lProperty.IsValid()){
-              lNbTex = lProperty.GetSrcObjectCount(KFbxTexture::ClassId);
-              for (lTextureIndex = 0; lTextureIndex < lNbTex; lTextureIndex++){
-                lTexture = KFbxCast <KFbxTexture> (lProperty.GetSrcObject(KFbxTexture::ClassId, lTextureIndex));
-                if(lTexture)
-                  LoadTexture(lTexture, pTextureArray);
-              }
-            }
-          }
-        }
-      }
-    }
-
-    lCount = pNode->GetChildCount();
-
-    for (i = 0; i < lCount; i++)
-    {
-      LoadSupportedTexturesRecursive(pNode->GetChild(i), pTextureArray);
-    }
-  }
-}
-
-
-
-void LoadSupportedTextures(KFbxScene* pScene, KArrayTemplate<VSTexture*>& pTextureArray)
-{
-  pTextureArray.Clear();
-  LoadSupportedTexturesRecursive(pScene->GetRootNode(), pTextureArray);
-}
-
-
-/* temporary function to draw mesh */
-void GlDrawMesh(KFbxXMatrix& pGlobalPosition, KFbxMesh* pMesh, KFbxVector4* pVertexArray, int pDrawMode)
-{
-
-  const KFbxLayer* layer = pMesh->GetLayer(0);
-  const KFbxLayerElementMaterial* material = layer->GetMaterials();
-
-
-    int lDrawMode    = (pDrawMode == DRAW_MODE_TEXTURED && pMesh->GetTextureUVCount() == 0 && pMesh->GetLayer(0)) ? DRAW_MODE_WIREFRAME : pDrawMode;
-
-    KFbxLayerElementArrayTemplate<KFbxVector2>* lUVArray = NULL;
-    pMesh->GetTextureUV(&lUVArray, KFbxLayerElement::eDIFFUSE_TEXTURES);
-
-    KFbxLayerElement::EMappingMode lMappingMode = KFbxLayerElement::eNONE;
-    VSTexture*                     lTexture     = NULL;
-
-    if(pMesh->GetLayer(0) && pMesh->GetLayer(0)->GetUVs())
-        lMappingMode = pMesh->GetLayer(0)->GetUVs()->GetMappingMode();
-
-
-    // Find the texture data
-    if (lDrawMode == DRAW_MODE_TEXTURED)
-    {
-        KFbxTexture* lCurrentTexture           = NULL;
-        KFbxLayerElementTexture* lTextureLayer = NULL;
-        KFbxSurfaceMaterial* lSurfaceMaterial= KFbxCast <KFbxSurfaceMaterial>(pMesh->GetNode()->GetSrcObject(KFbxSurfaceMaterial::ClassId, 0));
-
-        if(lSurfaceMaterial)
-        {
-            KFbxProperty lProperty;
-            lProperty = lSurfaceMaterial->FindProperty(KFbxSurfaceMaterial::sDiffuse);
-            if(lProperty.IsValid())
-            {
-                lCurrentTexture = KFbxCast <KFbxTexture>(lProperty.GetSrcObject(KFbxTexture::ClassId, 0));
-
-                int i, lCount = gTextureArray.GetCount();
-                for (i=0; i<lCount; i++)
-                {
-                    if (gTextureArray[i]->mRefTexture == lCurrentTexture)
-                    {
-                        lTexture = gTextureArray[i];
-                        break;
-                    }
-                }
-            }
-        }
-    }
-    lDrawMode = (lDrawMode == DRAW_MODE_TEXTURED && lTexture) ? lDrawMode : DRAW_MODE_WIREFRAME;
-
-    int lGLPrimitive = lDrawMode == DRAW_MODE_WIREFRAME ? GL_LINE_LOOP : GL_TRIANGLES;
-
-    glColor3f(0.5, 0.5, 0.5);
-    glLineWidth(1.0);
-
-    glPushMatrix();
-    glMultMatrixd((double*) pGlobalPosition);
-
-    int lPolygonIndex;
-    int lPolygonCount = pMesh->GetPolygonCount();
-
-    if (lDrawMode == DRAW_MODE_TEXTURED)
-    {
-        glEnable(GL_TEXTURE_2D);
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-        glTexParameteri( GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP );
-        glTexParameteri( GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP );
-        glTexEnvi( GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-        Luminous::Texture2D& tex = lTexture->m_tex.ref();
-        if (tex.generation() < 0) {
-          tex.loadImage(lTexture->name.c_str(), false);
-          tex.setGeneration(1);
-        }
-        tex.bind();
-        //glTexImage2D(GL_TEXTURE_2D, 0,  3, lTexture->mW, lTexture->mH, 0,  GL_BGR_EXT,  GL_UNSIGNED_BYTE,  lTexture->mImageData);
-        //glTexImage2D(GL_TEXTURE_2D, 0,  4, lTexture->mW, lTexture->mH, 0,  GL_RGBA,  GL_UNSIGNED_BYTE,  lTexture->mImageData);
-    }
-
-    for (lPolygonIndex = 0; lPolygonIndex < lPolygonCount; lPolygonIndex++)
-    {
-        int lVerticeIndex;
-        int lVerticeCount = pMesh->GetPolygonSize(lPolygonIndex);
-
-        glBegin(lGLPrimitive);
-
-        for (lVerticeIndex = 0; lVerticeIndex < lVerticeCount; lVerticeIndex++)
-        {
-            if (lDrawMode == DRAW_MODE_TEXTURED)
-            {
-                int lCurrentUVIndex;
-
-                if (lMappingMode == KFbxLayerElement::eBY_POLYGON_VERTEX)
-                {
-                    lCurrentUVIndex = pMesh->GetTextureUVIndex(lPolygonIndex, lVerticeIndex);
-                }
-                else // KFbxLayerElement::eBY_CONTROL_POINT
-                {
-                    lCurrentUVIndex = pMesh->GetPolygonVertex(lPolygonIndex, lVerticeIndex);
-                }
-                if(lUVArray) {
-                    glTexCoord2dv(lUVArray->GetAt(lCurrentUVIndex).mData);
-                }
-            }
-
-            glVertex3dv((GLdouble *)pVertexArray[pMesh->GetPolygonVertex(lPolygonIndex, lVerticeIndex)]);
-        }
-
-        glEnd();
-    }
-
-    if (lDrawMode == DRAW_MODE_TEXTURED)
-    {
-        glDisable(GL_TEXTURE_2D);
-    }
-
-    glPopMatrix();
-}
-
-}
 //////////
 //////////
 
@@ -264,11 +35,11 @@ Scene::~Scene()
   m_scene->Destroy();
 }
 
-bool Scene::import(KFbxSdkManager * sdk, const std::string &filename)
+bool Scene::import(const std::string &filename)
 {
-  KFbxImporter * importer = KFbxImporter::Create(sdk, "");
+  KFbxImporter * importer = KFbxImporter::Create(m_manager, "");
 
-  bool status = importer->Initialize(filename.c_str(), -1, sdk->GetIOSettings());
+  bool status = importer->Initialize(filename.c_str(), -1, m_manager->GetIOSettings());
   if(!status) {
     Radiant::error("Scene::import # failed to initialize import for '%s' : %s", filename.c_str(), importer->GetLastErrorString());
     importer->Destroy();
@@ -276,9 +47,6 @@ bool Scene::import(KFbxSdkManager * sdk, const std::string &filename)
   }
 
   status = importer->Import(m_scene);
-
-  LoadSupportedTextures(m_scene, gTextureArray);
-  Radiant::info("loaded %d textures", gTextureArray.GetCount());
 
   if(!status) {
     Radiant::error("Vivid::import # failed to import scene '%s' : %s", filename.c_str(), importer->GetLastErrorString());
@@ -695,6 +463,9 @@ Mesh* Scene::buildMesh(KFbxNode * node, KFbxXMatrix & globalPosition, KFbxPose *
 
   KFbxLayer* layer = mesh->GetLayer(0);
   if (layer) {
+    KFbxLayerElement* tangents = layer->GetTangents();
+    std::cout << tangents << std::endl;
+
     KFbxLayerElementNormal* normals = layer->GetNormals();
     if (normals) {
       if (normals->GetMappingMode() == KFbxLayerElementNormal::eBY_CONTROL_POINT) {
@@ -765,9 +536,6 @@ Mesh* Scene::buildMesh(KFbxNode * node, KFbxXMatrix & globalPosition, KFbxPose *
               idx = uvs->GetIndexArray().GetAt(i);
             }
             KFbxVector2 uv = uvs->GetDirectArray().GetAt(idx);
-            Radiant::info("uv %d: %f %f %f %f",
-                          i, uv[0], uv[1], uv[2], uv[3]
-                          );
             myMesh->m_textureCoordinates[i] = Nimble::Vector2(uv[0], uv[1]);
           }
         } else {
@@ -830,8 +598,7 @@ static char const* sDisplacementFactor;
       if (!texture)
         continue;
 
-      myMesh->m_material.m_textures[properties[i]] = texture->GetRelativeFileName();
-      Radiant::info("material %s = %s", properties[i], texture->GetRelativeFileName());
+      myMesh->m_material.m_textures[properties[i]] = TextureManager::instance().load(texture->GetRelativeFileName());
     }
   }
 

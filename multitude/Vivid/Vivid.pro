@@ -7,9 +7,18 @@ LIBPATH += $$FBX_SDK/lib/gcc4
 LIBS += -lfbxsdk_20113_1_x64
 
 HEADERS += Scene.hpp \
-    DrawUtils.hpp
+    DrawUtils.hpp \
+    Mesh.hpp \
+    Material.hpp \
+    TextureManager.hpp \
+    MeshManager.hpp \
+    Renderable.hpp
 
 SOURCES += Scene.cpp \
-    DrawUtils.cpp
+    DrawUtils.cpp \
+    Mesh.cpp \
+    TextureManager.cpp \
+    MeshManager.cpp \
+    Renderable.cpp
 
 include(../library.pri)

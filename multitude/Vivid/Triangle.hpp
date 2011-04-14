@@ -4,7 +4,8 @@
 namespace Vivid
 {
 
-class Triangle {
+class Triangle
+{
 public:
   int m_indices[3];
 };

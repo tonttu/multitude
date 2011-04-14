@@ -1,5 +1,5 @@
-#ifndef SCENE_HPP
-#define SCENE_HPP
+#ifndef VIVID_SCENE_HPP
+#define VIVID_SCENE_HPP
 
 #include "Mesh.hpp"
 
@@ -20,7 +20,7 @@ public:
     Scene(KFbxSdkManager * sdk);
     ~Scene();
 
-    bool import(KFbxSdkManager * sdk, const std::string & filename);
+    bool import(const std::string & filename);
 
     void setTime(KTime & time) { m_time = time; }
 
