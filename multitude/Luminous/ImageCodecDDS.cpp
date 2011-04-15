@@ -133,7 +133,7 @@ union DDS_header {
 bool parse(FILE * file, DDS_header & header, ImageInfo & info)
 {
   long pos = ftell(file);
-  int ok = fread(&header, sizeof(DDS_header), 1, file);
+  int ok = (int) fread(&header, sizeof(DDS_header), 1, file);
   fseek(file, pos, SEEK_SET);
   if(!ok) return false;
 

@@ -295,7 +295,7 @@ namespace Luminous {
       // anything we can use already
       for(size_t i = 0; i < stackSize(); i++) {
 
-        std::shared_ptr<ImageTex> test = getImage(i);
+        std::shared_ptr<ImageTex> test = getImage((int) i);
         if(!test)
           continue;
 
@@ -306,7 +306,7 @@ namespace Luminous {
         // texture as a side-effect).
 
         if(test->isFullyLoadedToGPU() || (area < (instantUploadPixelLimit / 3))) {
-          si.bound = i;
+          si.bound = (int) i;
           test->bind(resources, textureUnit, false);
 
           return true;
