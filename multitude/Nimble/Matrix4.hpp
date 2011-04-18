@@ -142,6 +142,9 @@ namespace Nimble {
     NIMBLE_API static Matrix4T<T> translate3D(const Vector3T<T> & v);
     /// Create a scaling matrix
     NIMBLE_API static Matrix4T<T> scale3D(const Vector3T<T> & v);
+    /// Create a uniform scaling matrix
+    inline static Matrix4T<T> scaleUniform3D(const T & s)
+    { return scale3D(Vector3T<T>(s, s, s)); }
 
     /** Identity matrix. */
     NIMBLE_API static const Matrix4T<T> IDENTITY;
