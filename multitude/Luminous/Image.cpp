@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #include "Image.hpp"
@@ -93,7 +93,8 @@ namespace Luminous
 
   void Image::flipVertical()
   {
-    int linesize = m_width * m_pixelFormat.numChannels();
+    int bpp = m_pixelFormat.bytesPerPixel();
+    int linesize = m_width * m_pixelFormat.numChannels() * bpp;
 
     int n = m_height / 2;
 
@@ -482,8 +483,8 @@ namespace Luminous
 
   void Image::allocate(int width, int height, const PixelFormat & pf)
   {
-    unsigned int bytes = width * height * pf.numChannels();
-    unsigned int mybytes = m_width * m_height * m_pixelFormat.numChannels();
+    unsigned int bytes = width * height * pf.numChannels() * pf.bytesPerPixel();
+    unsigned int mybytes = m_width * m_height * m_pixelFormat.numChannels() * m_pixelFormat.bytesPerPixel();
 
     if(width && height)
       assert(pf.numChannels() > 0);
@@ -586,7 +587,8 @@ namespace Luminous
 
     allocate(width, height, format);
     unsigned pixels = width * height;
-    unsigned nbytes = pixels * format.numChannels();
+    unsigned nbytes = pixels * format.numChannels() * format.bytesPerPixel();
+
 
     if(bytes)
       memcpy( & m_data[0], bytes, nbytes);
