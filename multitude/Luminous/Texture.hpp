@@ -32,7 +32,7 @@ namespace Luminous
   class Image;
   class CompressedImage;
 
-  class UploadLimiter : public Valuable::HasValues
+  class LUMINOUS_API UploadLimiter : public Valuable::HasValues
   {
   public:
     void processMessage(const char * type, Radiant::BinaryData & data);

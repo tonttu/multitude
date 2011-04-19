@@ -1,24 +1,19 @@
 /* COPYRIGHT
- *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
+#include "Condition.hpp"
 #include "Mutex.hpp"
 
+#include <iostream>
+
+#include <QAtomicPointer>
+
+#include <cassert>
 #include <errno.h>
 #include <string.h>
-#include <iostream>
-#include <cassert>
+
+#include <sys/time.h>
+
 
 // Trick for Linux
 #ifndef WIN32
@@ -37,92 +32,177 @@ namespace Radiant {
   static bool mutexDebug = false;
 
   class Mutex::D {
-    public:
-    pthread_mutex_t m_ptmutex;
-  };
-
-  Mutex::Mutex(bool recursive)
-    : m_initialized(false),
-      m_recursive(recursive),
-      m_d(new D)
-  {}
-
-  Mutex::~Mutex()
-  {
-    if(m_initialized) {
-      int err = pthread_mutex_destroy(&m_d->m_ptmutex);
-      if(err && mutexDebug)
-        std::cerr << "Error:Mutex::~Mutex " << strerror(err) << std::endl;
+  public:
+    D(bool recursive) : m_recursive(recursive), m_ptmutex(0) {}
+    ~D()
+    {
+      if(m_ptmutex) {
+        pthread_mutex_destroy(m_ptmutex);
+        delete m_ptmutex;
+      }
     }
 
-    delete m_d;
-  }
+    void init();
 
-  bool Mutex::initialize(bool recursive)
+    bool m_recursive;
+    QAtomicPointer<pthread_mutex_t> m_ptmutex;
+  };
+
+  void Mutex::D::init()
   {
-    assert(!m_initialized);
+    pthread_mutex_t * ptm = m_ptmutex;
+    if(ptm)
+      return;
 
-    int err = 0;
-    const char ename[] = "Error:Mutex::init"; // Error and name.
+    /* No mutex, create it now: */
+
+    ptm = new pthread_mutex_t;
 
     pthread_mutexattr_t mutex_attr;
     pthread_mutexattr_init(&mutex_attr);
 
-    if(recursive) {
+    int err;
+
+    if(m_recursive) {
       err = pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_RECURSIVE);
 
       if(err) {
-        if(mutexDebug) std::cerr << ename << strerror(err) << std::endl;
+        if(mutexDebug) std::cerr << "Could not create recursive mutex "
+            << strerror(err) << std::endl;
 
-        return false;
+        return;
       }
     }
 
-    err = pthread_mutex_init(&m_d->m_ptmutex, &mutex_attr);
+    err = pthread_mutex_init( ptm, &mutex_attr);
+
     if(err && mutexDebug) {
-      std::cerr << ename << strerror(err) << std::endl;
+      std::cerr << "Could not create mutex " << strerror(err) << std::endl;
     }
 
-    return ! err;
+    /* Replace null pointer by valid mutex pointer, which is ready for use: */
+    if(!m_ptmutex.testAndSetRelaxed(0, ptm)) {
+      /* If the pointer was not NULL, then we do nothing.*/
+      pthread_mutex_destroy(ptm);
+      delete ptm;
+      return;
+    }
   }
 
-  bool Mutex::internalLock(bool block)
+  Mutex::Mutex(bool recursive)
+    : m_d(new D(recursive))
+  {}
+
+  Mutex::~Mutex()
   {
-    const char *fname = "Mutex::lock ";
+    delete m_d;
+  }
 
-    if(!block)
-      return internalTryLock();
-    else {
-      int e = pthread_mutex_lock(&m_d->m_ptmutex);
+  bool Mutex::lock(bool block)
+  {
+    m_d->init();
 
+    if(block) {
+      int e = pthread_mutex_lock(m_d->m_ptmutex);
       if(e)
-        std::cerr << fname << strerror(e) << " " << this << std::endl;
-
-      return !e;
+        std::cerr << "Mutex::lock # FAILED " << strerror(e) << std::endl;
+      return e == 0;
     }
-  }
 
-  bool Mutex::internalTryLock()
-  {
-    const char *fname = "Mutex::trylock ";
-
-    int e = pthread_mutex_trylock(&m_d->m_ptmutex);
-    if(e && e != EBUSY)
-      std::cerr << fname << strerror(e) << " " << this << std::endl;
-
-    return !e;
+    int e = pthread_mutex_trylock(m_d->m_ptmutex);
+    return e == 0;
   }
 
   bool Mutex::unlock()
   {
     const char *fname = "Mutex::unlock ";
 
-    int e = pthread_mutex_unlock(&m_d->m_ptmutex);
+    int e = pthread_mutex_unlock(m_d->m_ptmutex);
 
     if(e)
       std::cerr << fname << strerror(e) << " " << this << std::endl;
 
     return !e;
+  }
+
+  ///////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////
+
+  class Condition::D
+  {
+    public:
+    pthread_cond_t m_ptcond;
+  };
+
+  Condition::Condition()
+  : m_d(new D())
+  {
+    pthread_cond_init(&m_d->m_ptcond, 0);
+  }
+
+  Condition::~Condition()
+  {
+    pthread_cond_destroy(&m_d->m_ptcond);
+    delete m_d;
+  }
+
+  int Condition::wait(Mutex &mutex)
+  {
+    mutex.m_d->init();
+
+    pthread_mutex_t * ptmutex = mutex.m_d->m_ptmutex;
+
+    return pthread_cond_wait(& m_d->m_ptcond, ptmutex);
+  }
+
+  int Condition::wait(Mutex &mutex, int millsecs)
+  {
+    mutex.m_d->init();
+
+    struct timespec abstime;
+    struct timeval tv;
+
+    gettimeofday(&tv, 0);
+    tv.tv_sec += millsecs / 1000;
+    tv.tv_usec += 1000 * (millsecs % 1000);
+    if(tv.tv_usec >= 1000000)
+    {
+        tv.tv_sec++;
+        tv.tv_usec -= 1000000;
+    }
+    abstime.tv_sec = tv.tv_sec;
+    abstime.tv_nsec = 1000 * tv.tv_usec;
+
+    pthread_mutex_t * ptmutex = mutex.m_d->m_ptmutex;
+
+    return pthread_cond_timedwait(& m_d->m_ptcond, ptmutex, & abstime);
+  }
+
+  int Condition::wakeAll()
+  {
+    return pthread_cond_broadcast(& m_d->m_ptcond);
+  }
+
+  int Condition::wakeAll(Mutex &mutex)
+  {
+    mutex.lock();
+    int r = pthread_cond_broadcast(& m_d->m_ptcond);
+    mutex.unlock();
+    return r;
+  }
+
+  int Condition::wakeOne()
+  {
+    return pthread_cond_signal(& m_d->m_ptcond);
+  }
+
+  int Condition::wakeOne(Mutex &mutex)
+  {
+    mutex.lock();
+    int r = wakeOne();
+    mutex.unlock();
+    return r;
   }
 
 }

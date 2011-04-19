@@ -129,14 +129,14 @@ namespace Luminous
   std::shared_ptr<RenderTargetManager::RenderTargetState> RenderTargetManager::allocateNewTexture(size_t extent)
   {
     Radiant::info("RenderTargetManager::allocateNewTexture # %d next %d",
-                  extent, (int) (1 << nextHigherPowerOfTwo(extent)));
+                  (int) extent, (int) (1 << nextHigherPowerOfTwo(extent)));
 
     // Use power-of-two textures
     extent = 1 << nextHigherPowerOfTwo(extent);
 
     std::shared_ptr<RenderTargetState> holder(new RenderTargetState());
 
-    holder->resource.setSize(Nimble::Vector2i(extent, extent));
+    holder->resource.setSize(Nimble::Vector2i((int) extent, (int) extent));
     holder->inUse = false;
 
     holder->resource.framebuffer().attachTexture2D(& holder->resource.texture(), Luminous::COLOR0, 0);
