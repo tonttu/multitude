@@ -170,7 +170,7 @@ template <typename T>
     {
       Nimble::Vector2T<T> perp = directionNormalized().perpendicular();
 
-      return sqrt(dot(perp, point - m_points[0]));
+      return Nimble::Math::Abs(dot(perp, point - m_points[0]));
     }
 
     /// Returns true if the line segment intersects with the given bezier curve
