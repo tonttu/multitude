@@ -167,6 +167,8 @@ namespace Radiant {
   class GridT : public Base
   {
   public:
+    typedef T value_type;
+
     /// Iterator for the grid
     typedef T * iterator;
     /// Const iterator for the grid
