@@ -275,9 +275,29 @@ namespace Nimble {
         return rel * v3 + (1.0f - rel) * v2;
       }
     }
-  }
 
-  
+
+    /// Calculates the mean and variance of a buffer of values
+
+    template <class T>
+        inline void calculateMeanVariance(const T * values, int n, T * mean, T * variance)
+    {
+      T ave = 0;
+      for(int i = 0; i < n; i++)
+        ave += values[i];
+
+      ave /= (double) n;
+      *mean = ave;
+
+      T vari = 0;
+      for(int i = 0; i < n; i++) {
+        T tmp = values[i] - ave;
+        vari += tmp * tmp;
+      }
+      *variance = vari / (double) n;
+    }
+
+  }
 }
 
 #endif
