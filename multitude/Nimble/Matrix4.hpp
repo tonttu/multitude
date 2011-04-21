@@ -138,6 +138,13 @@ namespace Nimble {
       return project(Vector4T<T>(v.x, v.y, v.z, T(1.0)));
     }
 
+    /// Creates a new WPCV-matrix (window-projection-camera-view -matrix)
+    /// Camera is positioned so that 0,0,0 is mapped to 0,0,0 and
+    /// w,h,0 is mapped to w,h,0. The projection matrix doesn't have the third
+    /// row, no depth information, so no near/far values needed.
+    /// (0,0,0) is lower left bottom, (w,h,0) is in right top, z increases towards the camera
+    static Matrix4T<T> simpleProjection(T width, T height, T fovy = Math::PI*0.5);
+
     /// @todo duplicates (makeTranslation vs. translate3D)
     /// Create a rotation matrix
     /// @param radians angle in radians
@@ -434,6 +441,37 @@ Nimble::Vector3T<T> Nimble::Matrix4T<T>::project(const Nimble::Vector4T<T> & v) 
   Nimble::Vector4T<T> p = *this * v;
   return Nimble::Vector3T<T>(p.x / p.w, p.y / p.w, p.z / p.w);
 }
+
+template <typename T>
+Nimble::Matrix4T<T> Nimble::Matrix4T<T>::simpleProjection(T width, T height, T fovy)
+{
+  using ::operator*;
+
+  // Camera distance to the center widget center point (assuming it's resting).
+  T dist = height * T(.5) / Nimble::Math::Tan(fovy * T(.5));
+  T aspect = width/height;
+
+  // we won't be needing depth, so the third column is just zero unlike normally
+  T f = T(1.0) / Nimble::Math::Tan(fovy*T(.5));
+  Nimble::Matrix4T<T> projection(f/aspect, 0, 0, 0,
+                             0, f, 0, 0,
+                             0, 0, 0, 0,
+                             0, 0, -1, 0);
+
+  // could just change the projection plane in projection matrix,
+  // but maybe this is a bit more clear
+  Matrix4T<T> camera = makeTranslation(Vector3f(0, 0, -dist));
+
+  Matrix4T<T> window(width*0.5, 0, 0, 0.0 + width*0.5,
+                  0, height * 0.5, 0, 0.0+height*0.5,
+                  0, 0, 1, 0,
+                  0, 0, 0, 1);
+
+  Matrix4T<T> view = makeTranslation(Vector3f(-width*.5f, -height*.5f, 0));
+
+  return window * projection * camera * view;
+}
+
 
 #endif
 
