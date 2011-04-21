@@ -14,8 +14,14 @@ namespace Nimble {
   class NIMBLE_API RangeT
   {
   public:
-    RangeT(const T & low = 0, const T & high = 0)
+    RangeT(const T & low, const T & high)
       : m_low(low), m_high(high) {}
+
+    RangeT()
+      : m_low(0), m_high(0) {}
+
+    /// Sets the low-, and high values to given value
+    inline void reset(const T & v) { m_low = v; m_high = v; }
 
     /// Check ifthe range is empty
     /** @return This function returns true if the low value is equal to,
@@ -24,6 +30,8 @@ namespace Nimble {
 
     /// The difference between the upper and lower limit
     inline T span() const { return m_high - m_low; }
+    /// Absolute value of the #span
+    inline T spanAbs() const { T r = m_high - m_low; return (r >= 0) ? r : -r; }
 
     /// The lower limit of the range
     inline T low()  const { return m_low; }
@@ -38,11 +46,31 @@ namespace Nimble {
       return v;
     }
 
+    /// Checks if the argument value fits into this range
+    inline bool contains(const T & v) const
+    {
+      return (v >= m_low) && (v <= m_high);
+    }
+
     /// Compares two RangeT objects.
     /** @return This function returns true if the two ranges are absolutely identical. */
     inline bool operator == (const RangeT & that) const
     {
       return m_low == that.m_low && m_high == that.m_high;
+    }
+
+    /// Expands the range to include the given value
+    inline void expand(const T & v)
+    {
+      if(m_low > v) m_low = v;
+      if(m_high < v) m_high = v;
+    }
+
+    /// Expands the range to include the given range
+    inline void expand(const RangeT & that)
+    {
+      if(m_low > that.m_low) m_low = that.m_low;
+      if(m_high < that.m_high) m_high = that.m_high;
     }
 
   private:
