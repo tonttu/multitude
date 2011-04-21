@@ -131,6 +131,13 @@ namespace Nimble {
     template <class S>
     void copyTranspose (const S * x) { for(int i = 0; i < 4; i++) for(int j = 0; j < 4; j++) m[j][i] = (T) x[i*4+j]; }
 
+    inline Vector3T<T> project(const Vector4T<T> & v) const;
+
+    inline Vector3T<T> project(const Vector3T<T> & v) const
+    {
+      return project(Vector4T<T>(v.x, v.y, v.z, T(1.0)));
+    }
+
     /// @todo duplicates (makeTranslation vs. translate3D)
     /// Create a rotation matrix
     /// @param radians angle in radians
@@ -417,6 +424,15 @@ Nimble::Matrix4T<T> Nimble::Matrix4T<T>::makeTranslation(const Nimble::Vector3T<
 
   mm.setTranslation(v);
   return mm;
+}
+
+template<class T>
+Nimble::Vector3T<T> Nimble::Matrix4T<T>::project(const Nimble::Vector4T<T> & v) const
+{
+  /// This is needed because there is an another operator* in Nimble-namespace in Vector3.hpp
+  using ::operator*;
+  Nimble::Vector4T<T> p = *this * v;
+  return Nimble::Vector3T<T>(p.x / p.w, p.y / p.w, p.z / p.w);
 }
 
 #endif
