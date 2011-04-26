@@ -72,7 +72,7 @@ namespace Luminous
     Nimble::Vector2i size() const
     { return Nimble::Vector2i(m_width, m_height); }
     /// The number of bytes a single line in the image takes
-    int lineSize() { return m_width * m_pixelFormat.numChannels() * m_pixelFormat.bytesPerPixel(); }
+    int lineSize() { return m_width * m_pixelFormat.bytesPerPixel(); }
     /// Returns a pointer to a specific line
     unsigned char* line(unsigned y) { return &m_data[y * lineSize()]; }
     /// Returns a pointer to the image data

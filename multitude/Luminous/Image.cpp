@@ -94,7 +94,7 @@ namespace Luminous
   void Image::flipVertical()
   {
     int bpp = m_pixelFormat.bytesPerPixel();
-    int linesize = m_width * m_pixelFormat.numChannels() * bpp;
+    int linesize = m_width * bpp;
 
     int n = m_height / 2;
 
@@ -483,8 +483,8 @@ namespace Luminous
 
   void Image::allocate(int width, int height, const PixelFormat & pf)
   {
-    unsigned int bytes = width * height * pf.numChannels() * pf.bytesPerPixel();
-    unsigned int mybytes = m_width * m_height * m_pixelFormat.numChannels() * m_pixelFormat.bytesPerPixel();
+    unsigned int bytes = width * height * pf.bytesPerPixel();
+    unsigned int mybytes = m_width * m_height * m_pixelFormat.bytesPerPixel();
 
     if(width && height)
       assert(pf.numChannels() > 0);
@@ -587,7 +587,7 @@ namespace Luminous
 
     allocate(width, height, format);
     unsigned pixels = width * height;
-    unsigned nbytes = pixels * format.numChannels() * format.bytesPerPixel();
+    unsigned nbytes = pixels * format.bytesPerPixel();
 
 
     if(bytes)
