@@ -293,7 +293,7 @@ namespace Nimble {
       for(int i = 0; i < n; i++)
         sum += Abs(values[i]);
 
-      return sum /= (double) n;
+      return sum;
     }
 
   }
