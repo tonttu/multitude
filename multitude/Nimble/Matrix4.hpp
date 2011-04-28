@@ -395,7 +395,7 @@ inline Nimble::Vector3T<T> operator*(const Nimble::Vector3T<T>& m2, const Nimble
 template <class T>
 inline std::ostream& operator<<(std::ostream& os, const Nimble::Matrix4T<T>& m)
 {
-  os << m[0] << ", " << m[1] << ", " << m[2] << ", " << m[3];
+  os << m[0] << std::endl << m[1] << std::endl << m[2] << std::endl << m[3] << std::endl;
   return os;
 }
 
