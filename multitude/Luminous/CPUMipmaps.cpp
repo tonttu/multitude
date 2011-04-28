@@ -549,14 +549,12 @@ namespace Luminous {
           if(im->hasAlpha())
             m_hasAlpha = true;
 
-          info("Loaded cache %s %d from file", m_filename.c_str(), level);
+          // info("Loaded cache %s %d from file", m_filename.c_str(), level);
 
           item.m_image.reset(im);
           item.m_state = READY;
           return;
         }
-      } else {
-        info("Failed to load cache file %s", filename.c_str());
       }
     }
 
