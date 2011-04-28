@@ -343,6 +343,13 @@ namespace Luminous {
     // info("CPUMipmaps::pixelAlpha # %f %f", relLoc.x, relLoc.y);
 
     for(int i = 0; i <= m_maxLevel; ++i) {
+      if(m_info.pf.compression()) {
+        std::shared_ptr<CompressedImage> c = getCompressedImage(i);
+        if(!c) continue;
+
+        return 255 * c->readAlpha(Nimble::Vector2f(relLoc.x * c->width(), relLoc.y * c->height()));
+      }
+
       std::shared_ptr<ImageTex> im = getImage(i);
 
       if(!im) continue;
@@ -499,6 +506,7 @@ namespace Luminous {
         error("CPUMipmaps::recursiveLoad # Could not read %s level %d", m_filename.c_str(), level);
         item.m_state = FAILED;
       } else {
+        /// @todo this is wrong, compressed images doesn't always have alpha channel
         m_hasAlpha = true;
         item.m_image.reset();
         item.m_compressedImage = im;
