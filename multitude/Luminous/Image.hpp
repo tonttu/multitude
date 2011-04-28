@@ -258,6 +258,8 @@ namespace Luminous
 
     int compression() const { return m_compression; }
 
+    float readAlpha(Nimble::Vector2i pos) const;
+
   protected:
     Nimble::Vector2i m_size;
     int m_compression;

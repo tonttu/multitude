@@ -973,6 +973,55 @@ dest = *this;
     return m_d->size;
   }
 
+  float CompressedImage::readAlpha(Nimble::Vector2i pos) const
+  {
+    if(pos.x < 0 || pos.y < 0 || pos.x >= width() || pos.y >= height()) return 1.0f;
+
+    if(m_compression == PixelFormat::COMPRESSED_RGBA_DXT1) {
+      /// @todo implement this for COMPRESSED_RGBA_DXT1
+    } else if(m_compression == PixelFormat::COMPRESSED_RGBA_DXT3) {
+      /* {
+        Image img;
+        img.allocate(width(), height(), PixelFormat(PixelFormat::LAYOUT_LUMINANCE, PixelFormat::TYPE_UBYTE));
+        unsigned char* out = img.bytes();
+        const unsigned char* d = reinterpret_cast<const unsigned char*>(data());
+        int blocksize = 16;
+        int blocks_on_x_direction = (width() + 3) / 4;
+
+        for(int x = 0; x < width(); ++x) {
+          for(int y = 0; y < height(); ++y) {
+
+            Vector2i blockid(x / 4, y / 4);
+
+            const unsigned char* block = d + blocksize * (blockid.x + blockid.y * blocks_on_x_direction);
+
+            int nibble_index = x % 4 + (y % 4) * 4;
+            unsigned char byte = block[nibble_index/2];
+
+            out[x+y*width()] = (nibble_index % 2) ? (byte >> 4) << 4 : (byte & 0xF) << 4;
+          }
+        }
+        img.write("out.png");
+      }*/
+      const unsigned char* d = reinterpret_cast<const unsigned char*>(data());
+
+      Vector2i blockid(pos.x / 4, pos.y / 4);
+
+      int blocksize = 16;
+      int blocks_on_x_direction = (width() + 3) / 4;
+      const unsigned char* block = d + blocksize * (blockid.x + blockid.y * blocks_on_x_direction);
+
+      int nibble_index = pos.x % 4 + (pos.y % 4) * 4;
+      unsigned char byte = block[nibble_index/2];
+
+      byte = (nibble_index % 2) ? (byte >> 4) : (byte & 0xF);
+      return byte / 16.0f;
+    }
+    /// @todo implement this for COMPRESSED_RGBA_DXT5
+
+    return 1.0f;
+  }
+
   CompressedImageTex::~CompressedImageTex()
   {
   }

@@ -4,6 +4,10 @@
 #include "Triangle.hpp"
 #include "Material.hpp"
 
+#include <Luminous/ContextVariable.hpp>
+#include <Luminous/VertexBuffer.hpp>
+#include <Luminous/Shader.hpp>
+
 #include <Nimble/Vector3.hpp>
 
 #include <string>
@@ -26,6 +30,13 @@ public:
   std::vector<Triangle> m_faces;
   std::vector<Nimble::Vector2> m_textureCoordinates;
   Material m_material;
+
+  Luminous::ContextVariableT<Luminous::VertexBuffer> m_vb;
+  Luminous::Shader m_shader;
+
+  void fillVB(Luminous::VertexBuffer & vb);
+
+  size_t vertexSizeInBytes() const;
 };
 
 }

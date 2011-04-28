@@ -64,12 +64,17 @@ namespace Luminous {
   int CPUMipmaps::getOptimal(Nimble::Vector2f size)
   {
     float ask = size.maximum();
+
     // Dimension of the first mipmap level (quarter-size from original)
     float first = m_firstLevelSize.maximum();
 
     // Use the original image (level 0) if asked for bigger than first level mipmap
     if(ask >= first)
       return 0;
+
+    // if the size is really small, the calculation later does funny things
+    if(ask <= (int(first) >> m_maxLevel))
+      return m_maxLevel;
 
     int bestlevel = Nimble::Math::Floor(log(ask / first) / log(0.5)) + 1;
 
@@ -338,6 +343,13 @@ namespace Luminous {
     // info("CPUMipmaps::pixelAlpha # %f %f", relLoc.x, relLoc.y);
 
     for(int i = 0; i <= m_maxLevel; ++i) {
+      if(m_info.pf.compression()) {
+        std::shared_ptr<CompressedImage> c = getCompressedImage(i);
+        if(!c) continue;
+
+        return 255 * c->readAlpha(Nimble::Vector2f(relLoc.x * c->width(), relLoc.y * c->height()));
+      }
+
       std::shared_ptr<ImageTex> im = getImage(i);
 
       if(!im) continue;
@@ -494,6 +506,7 @@ namespace Luminous {
         error("CPUMipmaps::recursiveLoad # Could not read %s level %d", m_filename.c_str(), level);
         item.m_state = FAILED;
       } else {
+        /// @todo this is wrong, compressed images doesn't always have alpha channel
         m_hasAlpha = true;
         item.m_image.reset();
         item.m_compressedImage = im;
@@ -544,14 +557,12 @@ namespace Luminous {
           if(im->hasAlpha())
             m_hasAlpha = true;
 
-          info("Loaded cache %s %d from file", m_filename.c_str(), level);
+          // info("Loaded cache %s %d from file", m_filename.c_str(), level);
 
           item.m_image.reset(im);
           item.m_state = READY;
           return;
         }
-      } else {
-        info("Failed to load cache file %s", filename.c_str());
       }
     }
 
