@@ -83,6 +83,8 @@ namespace Nimble {
 
     /// Transposes the matrix
     inline Matrix4T<T>&       transpose();
+    /// Returns a transposed matrix
+    inline Matrix4T<T> transposed() const { Matrix4T<T> m(*this); m.transpose(); return m; }
     /// Fills the matrix with zeroes
     void                      clear()         { m[0].clear(); m[1].clear(); m[2].clear(); m[3].clear(); }
     /// Sets the matrix to identity
