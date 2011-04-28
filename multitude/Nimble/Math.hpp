@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Nimble.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Nimble.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #ifndef NIMBLE_MATH_HPP
@@ -86,7 +74,7 @@ namespace Nimble {
     /// Returns the cosine
     inline double Cos(double v)  { return cos(v); }
     /// Returns the sine
-    inline double Sin(double v)  { return sin(v); } 
+    inline double Sin(double v)  { return sin(v); }
     /// Returns the tangent
     inline double Tan(double v)  { return tan(v); }
     /// Returns the square root
@@ -124,24 +112,24 @@ namespace Nimble {
     inline double radToDeg(const double radians) { return (radians * 180.0 / PI); }
 
     /// Checks if the given value if finite
-    inline bool isFinite(float v) 
-	{
+    inline bool isFinite(float v)
+    {
 #ifdef WIN32
       return _finite(v) != 0;
 #else
     return finite(v);
-#endif      
+#endif
     }
   /// Checks if the given number is not one
   /// @param v number to check
-	inline bool isNAN(float v)
-	{
+    inline bool isNAN(float v)
+    {
 #ifdef WIN32
-	return _isnan(v) != 0;
+    return _isnan(v) != 0;
 #else
-		return isnan(v);
+        return isnan(v);
 #endif
-	}
+    }
 
     /// Return sign.
     template <class T>
@@ -153,7 +141,7 @@ namespace Nimble {
     template <class T>
     inline T Max(T x, T y) { return x > y ? x : y; }
     /// Returns the maximum of the values
-    template <class T>        
+    template <class T>
     inline T Max(T a, T b, T c) { return Max(a, Max(b,c)); }
     /// Returns the maximum of the values
     template <class T>
@@ -182,8 +170,8 @@ namespace Nimble {
       floating-point numbers are close to each other - the numbers do
       not need to be exactly the same.
 
-      @param a The first value to compare. 
-      @param b The second value to compare. 
+      @param a The first value to compare.
+      @param b The second value to compare.
       @param limit The maximum difference between the values.
       */
     template <class T>
@@ -210,7 +198,7 @@ namespace Nimble {
     {
       return deg * ((T) PI / (T) 180);
     }
-    
+
     /// Convert radians to degrees
     template <class T>
     inline T radToDeg(T rad)
@@ -219,13 +207,13 @@ namespace Nimble {
     }
 
     /// Clamp a value between minimum and maximum values
-    /** @param x The input value to limit. 
-	@param low The minimum value for comparison
-	@param high The maximum value for comparison
+    /** @param x The input value to limit.
+    @param low The minimum value for comparison
+    @param high The maximum value for comparison
      */
     template <class T>
-    inline T Clamp(T x, T low, T high) 
-    { 
+    inline T Clamp(T x, T low, T high)
+    {
       if(x < low) return low;
       if(x > high) return high;
       return x;
@@ -238,8 +226,8 @@ namespace Nimble {
     @param c lower-left of the matrix
     @param d lower-right of the matrix */
     template <class T>
-    inline T Det(T a, T b, T c, T d) 
-    { 
+    inline T Det(T a, T b, T c, T d)
+    {
       return a * d - b * c;
     }
 
@@ -303,9 +291,40 @@ namespace Nimble {
       return t * t * t * (t * (t * T(6) - T(15)) + T(10));
     }
 
-  }
 
-  
+
+    /// Calculates the mean and variance of a buffer of values
+
+    template <class T>
+        inline void calculateMeanVariance(const T * values, int n, T * mean, T * variance)
+    {
+      T ave = 0;
+      for(int i = 0; i < n; i++)
+        ave += values[i];
+
+      ave /= (double) n;
+      *mean = ave;
+
+      T vari = 0;
+      for(int i = 0; i < n; i++) {
+        T tmp = values[i] - ave;
+        vari += tmp * tmp;
+      }
+      *variance = vari / (double) n;
+    }
+
+    /** Calculates the sum of the absolute values in the argument array. */
+    template <class T>
+        inline T calculateAbsSum(const T * values, int n)
+    {
+      T sum = 0;
+      for(int i = 0; i < n; i++)
+        sum += Abs(values[i]);
+
+      return sum;
+    }
+
+  }
 }
 
 #endif
