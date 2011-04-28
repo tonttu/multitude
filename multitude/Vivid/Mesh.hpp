@@ -6,6 +6,7 @@
 
 #include <Luminous/ContextVariable.hpp>
 #include <Luminous/VertexBuffer.hpp>
+#include <Luminous/Shader.hpp>
 
 #include <Nimble/Vector3.hpp>
 
@@ -31,6 +32,7 @@ public:
   Material m_material;
 
   Luminous::ContextVariableT<Luminous::VertexBuffer> m_vb;
+  Luminous::Shader m_shader;
 
   void fillVB(Luminous::VertexBuffer & vb);
 
