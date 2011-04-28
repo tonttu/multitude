@@ -33,7 +33,7 @@ namespace VideoDisplay {
 
   using namespace Radiant;
 
-  static Radiant::MutexStatic __countermutex;
+  static Radiant::Mutex __countermutex;
   int    __framecount = 0;
 
   VideoIn::Frame::Frame()
@@ -44,7 +44,7 @@ namespace VideoDisplay {
   {
     int tmp = 0;
     {
-      Radiant::GuardStatic g(__countermutex);
+      Radiant::Guard g(__countermutex);
       __framecount++;
       tmp = __framecount;
     }
@@ -55,7 +55,7 @@ namespace VideoDisplay {
   {
     int tmp = 0;
     {
-      Radiant::GuardStatic g(__countermutex);
+      Radiant::Guard g(__countermutex);
       __framecount--;
       tmp = __framecount;
     }
@@ -140,8 +140,8 @@ namespace VideoDisplay {
     m_auBufferSize(0),
     m_auFrameBytes(0),
     m_continue(true),
-    m_vmutex(false, false, false),
-    m_amutex(false, false, false),
+    m_vmutex(false),
+    m_amutex(false),
     m_fps(30.0),
     m_done(false),
     m_ending(false),
@@ -150,7 +150,7 @@ namespace VideoDisplay {
     m_consumedRequests(0),
     m_queuedRequests(0),
     m_listener(0),
-    m_mutex(false, false, false)
+    m_mutex(false)
   {
     debugVideoDisplay("VideoIn::VideoIn # %p", this);
   }

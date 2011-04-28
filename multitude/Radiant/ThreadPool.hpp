@@ -81,7 +81,7 @@ namespace Radiant {
     /// will signaled.
     Radiant::Condition m_wait;
     /// Mutex to be used with m_wait.
-    Radiant::MutexAuto m_mutexWait;
+    Radiant::Mutex m_mutexWait;
 
   private:
     class Private;

@@ -154,13 +154,16 @@ namespace Valuable
 
   ArchiveElement & HasValues::serialize(Archive & archive) const
   {
+    const char * name;
     if(m_name.empty()) {
-      Radiant::error(
+      if(parent()) {
+        Radiant::error(
           "HasValues::serialize # attempt to serialize object with no name");
-      return archive.emptyElement();
-    }
+        return archive.emptyElement();
+      } else name = "ValueObject";
+    } else name = m_name.c_str();
 
-    ArchiveElement & elem = archive.createElement(m_name.c_str());
+    ArchiveElement & elem = archive.createElement(name);
     if(elem.isNull()) {
       Radiant::error(
           "HasValues::serialize # failed to create element");
@@ -254,7 +257,9 @@ namespace Valuable
   int HasValues::eventRemoveListener(Valuable::HasValues * obj, const char * from, const char * to)
   {
     int removed = 0;
-    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); it++){
+
+    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); it++) {
+
       if(it->m_listener == obj && it->m_valid) {
         // match from & to if specified
         if ( (!from || it->m_from == from) &&
@@ -266,6 +271,21 @@ namespace Valuable
         }
       }
     }
+
+    if(removed) {
+
+      // Count number of references left to the object
+      size_t count = 0;
+      for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); it++) {
+        if(it->m_listener == obj && it->m_valid)
+          count++;
+      }
+
+      // If nothing references the object, remove the source
+      if(count == 0)
+        obj->eventRemoveSource(this);
+    }
+
     return removed;
   }
 
@@ -315,7 +335,7 @@ namespace Valuable
 
   HasValues::Uuid HasValues::generateId()
   {
-    static Radiant::MutexAuto s_mutex;
+    static Radiant::Mutex s_mutex;
     Radiant::Guard g(s_mutex);
     static Uuid s_id = static_cast<Uuid>(Radiant::TimeStamp::getTime());
     return s_id++;

@@ -31,7 +31,7 @@ namespace Luminous
     GarbageCollector::container m_items2;
     GarbageCollector::container * m_current;
 
-    Radiant::MutexStatic m_mutex;
+    Radiant::Mutex m_mutex;
   };
 
   static GarbageData * s_check = 0;
@@ -59,7 +59,7 @@ namespace Luminous
 
   void GarbageCollector::clear()
   {
-    Radiant::GuardStatic g(s_gbData.m_mutex);
+    Radiant::Guard g(s_gbData.m_mutex);
     // swap and clear current
     s_gbData.m_current = s_gbData.m_current == & s_gbData.m_items1 ?
                          &s_gbData.m_items2 : &s_gbData.m_items1;
@@ -75,7 +75,7 @@ namespace Luminous
     if(!s_check)
       return;
 
-    Radiant::GuardStatic g(s_gbData.m_mutex);
+    Radiant::Guard g(s_gbData.m_mutex);
     s_gbData.m_current->insert(obj);
   }
 

@@ -28,7 +28,7 @@ namespace VideoDisplay {
 
   using namespace Radiant;
 
-  static Radiant::MutexStatic __countermutex;
+  static Radiant::Mutex __countermutex;
   int    __instancecount = 0;
 
   AudioTransfer::AudioTransfer(Resonant::Application * a, VideoIn * video)
@@ -45,7 +45,7 @@ namespace VideoDisplay {
       m_end(false),
       m_audioLatency(0.0f),
       m_gain(1.0f),
-      m_mutex(false, false, true)
+      m_mutex(true)
   {
     const char * lat = getenv("RESONANT_LATENCY");
     if(lat) {
@@ -61,7 +61,7 @@ namespace VideoDisplay {
 
     int tmp = 0;
     {
-      Radiant::GuardStatic g(__countermutex);
+      Radiant::Guard g(__countermutex);
       __instancecount++;
       tmp = __instancecount;
     }
@@ -72,7 +72,7 @@ namespace VideoDisplay {
   {
     int tmp = 0;
     {
-      Radiant::GuardStatic g(__countermutex);
+      Radiant::Guard g(__countermutex);
       __instancecount--;
       tmp = __instancecount;
     }

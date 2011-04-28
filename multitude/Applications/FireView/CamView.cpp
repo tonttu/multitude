@@ -42,7 +42,7 @@ namespace FireView {
 
   using namespace Radiant;
 
-  MutexStatic __cvmutex;
+  Mutex __cvmutex;
 
   CamView::InputThread::InputThread()
       : m_camera(0),
@@ -238,7 +238,7 @@ namespace FireView {
 
   bool CamView::InputThread::openCamera()
   {
-    Radiant::GuardStatic g(__cvmutex);
+    Radiant::Guard g(__cvmutex);
 
     Radiant::Sleep::sleepMs(200);
 

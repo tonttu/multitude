@@ -36,7 +36,7 @@
 #define NUM_BUFFERS 10
 
 namespace Radiant {
-    static MutexAuto g_mutex;
+    static Mutex g_mutex;
 
     static std::map<VideoCamera::FeatureType, CAMERA_FEATURE> g_featureToCMU;
 

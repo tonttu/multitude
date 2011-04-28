@@ -282,39 +282,45 @@ namespace Luminous
     // Load & compile vertex shader
     GLSLShaderObject* vs = 0;
     if(vsFile) {
-      vs = new GLSLShaderObject(GL_VERTEX_SHADER);
 
       char* code = Radiant::FileUtils::loadTextFile(vsFile);
-      vs->setSource(code);
+      if (code) {
+        vs = new GLSLShaderObject(GL_VERTEX_SHADER);
+        vs->setSource(code);
 
-      delete [] code;
+        delete [] code;
 
-      if(!vs->compile()) {
-        error("GLSLProgramObject::fromFiles # vertex shader compile error: %s",
-              vs->compilerLog());
-        delete vs;
-        return 0;
+        if(!vs->compile()) {
+          error("GLSLProgramObject::fromFiles # vertex shader compile error: %s",
+                vs->compilerLog());
+          delete vs;
+          return 0;
+        }
       }
     }
 
     // Load & compile fragment shader
     GLSLShaderObject* fs = 0;
     if(fsFile) {
-      fs = new GLSLShaderObject(GL_FRAGMENT_SHADER);
-
       char* code = Radiant::FileUtils::loadTextFile(fsFile);
-      fs->setSource(code);
+      if (code) {
+        fs = new GLSLShaderObject(GL_FRAGMENT_SHADER);
+        fs->setSource(code);
 
-      delete [] code;
+        delete [] code;
 
-      if(!fs->compile()) {
-        error("GLSLProgramObject::fromFiles # fragment shader "
-              "compile error:%s", fs->compilerLog());
-        delete vs;
-        delete fs;
-        return 0;
+        if(!fs->compile()) {
+          error("GLSLProgramObject::fromFiles # fragment shader "
+                "compile error:%s", fs->compilerLog());
+          delete vs;
+          delete fs;
+          return 0;
+        }
       }
     }
+
+    if (!vs && !fs)
+      return 0;
 
     // Create a program object and link it
     GLSLProgramObject* program = new GLSLProgramObject();

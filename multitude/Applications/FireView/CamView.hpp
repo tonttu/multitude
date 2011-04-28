@@ -161,7 +161,7 @@ namespace FireView {
       bool openCamera();
 
       Radiant::VideoCamera * m_camera;
-      Radiant::MutexAuto m_mutex;
+      Radiant::Mutex m_mutex;
       Radiant::VideoImage m_frame;
       Radiant::FrameRate m_fps;
       float           m_customFps;

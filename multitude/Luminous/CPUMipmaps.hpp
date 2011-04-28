@@ -51,6 +51,14 @@ namespace Luminous {
   class CPUMipmaps : public Luminous::Collectable, public Luminous::Task
   {
   public:
+    struct StateInfo : public GLResource
+    {
+    public:
+      StateInfo(Luminous::GLResources * host) : GLResource(host), optimal(-1), bound(-1) {}
+      bool ready() const { return bound >= 0 && optimal == bound; }
+      int optimal;
+      int bound;
+    };
 
     friend class GPUMipmaps;
 
@@ -78,6 +86,7 @@ namespace Luminous {
         @return Pointer to the image, which may be null.
     */
     LUMINOUS_API std::shared_ptr<ImageTex> getImage(int i);
+    LUMINOUS_API std::shared_ptr<CompressedImageTex> getCompressedImage(int i);
     /** Mark an image used. This method resets the idle-counter of the
         level, preventing it from being dropped from the memory in the
         near future. Also determines which mipmap level will loaded next.
@@ -125,6 +134,8 @@ namespace Luminous {
     /// @param resources OpenGL resource container for this thread
     LUMINOUS_API bool bind(GLResources * resources, const Nimble::Matrix3 & transform, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
 
+    LUMINOUS_API StateInfo stateInfo(GLResources * resources);
+
     /** Check if the mipmaps are still being loaded.
 
         @return Returns true if the mipmaps are still being loaded.
@@ -149,8 +160,18 @@ namespace Luminous {
     /// Returns the size of the mipmap level
     LUMINOUS_API Nimble::Vector2i mipmapSize(int level);
 
-    /// Set the time to keep mipmaps in CPU memory
-    inline void setTimeOut(float timeout) { m_timeOut = timeout; }
+    /// Set the time to keep mipmaps in CPU and GPU memory
+    /// The GPU timeout can be a more like a recommendation than a true limit
+    /// @todo Currently m_timeOutCPU can't be smaller than m_timeOutGPU, fix this
+    inline void setTimeOut(float timeoutCPU, float timeoutGPU) {
+      m_timeOutCPU = timeoutCPU;
+      m_timeOutGPU = timeoutGPU;
+    }
+
+    inline std::string filename() const { return m_filename; }
+
+    inline bool keepMaxLevel() const { return m_keepMaxLevel; }
+    inline void setKeepMaxLevel(bool v) { m_keepMaxLevel = v; }
 
   protected:
     LUMINOUS_API virtual void doTask();
@@ -173,7 +194,14 @@ namespace Luminous {
       {
         m_state = WAITING;
         m_image.reset();
-        m_lastUsed = Radiant::TimeStamp::getTime();
+        m_compressedImage.reset();
+        m_lastUsed = 0;
+      }
+
+      void dropFromGPU()
+      {
+        if(m_image) m_image.reset(m_image->move());
+        if(m_compressedImage) m_compressedImage.reset(m_compressedImage->move());
       }
 
       float sinceLastUse() const { return m_lastUsed.sinceSecondsD(); }
@@ -181,6 +209,7 @@ namespace Luminous {
     private:
       ItemState m_state;
       std::shared_ptr<ImageTex> m_image;
+      std::shared_ptr<CompressedImageTex> m_compressedImage;
       Radiant::TimeStamp m_lastUsed;
     };
 
@@ -194,13 +223,10 @@ namespace Luminous {
     void recursiveLoad(StackMap & stack, int level);
     void reschedule(double delay = 0.0, bool allowLater = false);
 
-    void applyStackChanges();
-
     std::string m_filename;
     unsigned long int m_fileModified;
 
-    StackMap           m_stackChange;
-    Radiant::MutexAuto m_stackMutex;
+    Radiant::Mutex m_stackMutex;
 
     std::vector<CPUItem> m_stack;
     Nimble::Vector2i m_nativeSize;
@@ -208,7 +234,8 @@ namespace Luminous {
     int              m_maxLevel;
 
     bool             m_hasAlpha;
-    float            m_timeOut;
+    float            m_timeOutCPU;
+    float            m_timeOutGPU;
 
     // keep the smallest mipmap image (biggest mipmap level m_maxLevel) always ready
     bool             m_keepMaxLevel;
@@ -221,6 +248,9 @@ namespace Luminous {
       DEFAULT_SAVE_SIZE2 = 512,
       SMALLEST_IMAGE = 32
     };
+
+    // updated on every bind()
+    ContextVariableT<StateInfo> m_stateInfo;
 
     Luminous::ImageInfo m_info;
   };

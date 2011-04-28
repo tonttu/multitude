@@ -50,11 +50,11 @@ namespace VideoDisplay {
   /* Here we cache the first frames off all viedos. */
   static std::map<std::string, FFVideodebug> __ffcache;
 
-  static Radiant::MutexStatic __mutex;
+  static Radiant::Mutex __mutex;
 
   const FFVideodebug * __cacheddebugVideoDisplay(const std::string & filename)
   {
-    Radiant::GuardStatic g(__mutex);
+    Radiant::Guard g(__mutex);
 
     std::map<std::string, FFVideodebug>::iterator it = __ffcache.find(filename);
 
@@ -196,7 +196,7 @@ namespace VideoDisplay {
 
     {
       // Cache the first frame for later use.
-      Radiant::GuardStatic g(__mutex);
+      Radiant::Guard g(__mutex);
 
       video.getAudioParameters( & m_channels, & m_sampleRate, & m_auformat);
       // remove the item with the smallest timestamp

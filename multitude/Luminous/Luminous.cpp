@@ -17,6 +17,7 @@
 #include <Luminous/Image.hpp>
 #include <Luminous/CodecRegistry.hpp>
 #include <Luminous/ImageCodecTGA.hpp>
+#include <Luminous/ImageCodecDDS.hpp>
 
 
 #ifdef USE_QT45
@@ -142,11 +143,11 @@ namespace Luminous
     Image::codecs()->registerCodec(new ImageCodecPNG());
 #endif
 
+    Image::codecs()->registerCodec(new ImageCodecDDS());
     Image::codecs()->registerCodec(new ImageCodecSVG());
     /* TGA has to be last, because its ping may return true even if
        the file has other type. */
     Image::codecs()->registerCodec(new ImageCodecTGA());
-
   }
 
 }

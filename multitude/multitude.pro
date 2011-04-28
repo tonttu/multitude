@@ -14,6 +14,11 @@ SUBDIRS += VideoDisplay
 SUBDIRS += Box2D
 #SUBDIRS += Posh
 
+
+vivid {
+  SUBDIRS += Vivid
+}
+
 exists(Examples/Examples.pro):SUBDIRS += Examples
 
 SUBDIRS += Applications

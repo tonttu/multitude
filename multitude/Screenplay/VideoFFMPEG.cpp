@@ -39,8 +39,8 @@ namespace Screenplay {
 
   using namespace Radiant;
 
-  static Radiant::MutexStatic __openmutex;
-  static Radiant::MutexStatic __countermutex;
+  static Radiant::Mutex __openmutex;
+  static Radiant::Mutex __countermutex;
   int    __instancecount = 0;
 
   int VideoInputFFMPEG::m_debug = 1;
@@ -80,7 +80,7 @@ namespace Screenplay {
 
     int tmp = 0;
     {
-      Radiant::GuardStatic g(__countermutex);
+      Radiant::Guard g(__countermutex);
       __instancecount++;
       tmp = __instancecount;
     }
@@ -93,7 +93,7 @@ namespace Screenplay {
 
     int tmp = 0;
     {
-      Radiant::GuardStatic g(__countermutex);
+      Radiant::Guard g(__countermutex);
       __instancecount--;
       tmp = __instancecount;
     }
@@ -577,7 +577,7 @@ namespace Screenplay {
 
     bzero( & params, sizeof(params));
 
-    GuardStatic g( __openmutex);
+    Guard g( __openmutex);
 
     int err = av_open_input_file( & m_ic, filename, iformat, 0, ap);
 
@@ -690,7 +690,7 @@ namespace Screenplay {
     //    if(!m_ic)
     //      return false;
 
-    GuardStatic g( __openmutex);
+    Guard g( __openmutex);
 
     if(m_frame)
       av_free(m_frame);

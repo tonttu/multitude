@@ -71,7 +71,7 @@ namespace Radiant {
 
     container  m_items;
 
-    Radiant::MutexAuto m_mutex;
+    Radiant::Mutex m_mutex;
     volatile bool m_continue;
     float m_intervalSeconds;
 

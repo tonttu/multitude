@@ -21,9 +21,12 @@
 
 #include <cassert>
 #include <iostream>
+#include <cstring>
+
 #include "Error.hpp"
 
 #include <Radiant/Trace.hpp>
+#include <Radiant/Platform.hpp>
 
 
 namespace Luminous
@@ -31,6 +34,53 @@ namespace Luminous
 
   using namespace std;
   using namespace Radiant;
+
+  UploadLimiter::UploadLimiter() : m_frame(0), m_frameLimit(1.5e6*60*4) {}
+
+  long & UploadLimiter::available()
+  {
+#ifdef RADIANT_WIN32
+    static __declspec(thread) int t_frame = 0;
+    static __declspec(thread) long t_available = 0;
+#elif defined RADIANT_LINUX
+    static __thread int t_frame = 0;
+    static __thread long t_available = 0;
+#else
+    static int t_frame = 0;
+    static long t_available = 0;
+#endif
+
+    UploadLimiter & i = instance();
+    if(t_frame != i.m_frame) {
+      t_frame = i.m_frame;
+      t_available = i.m_frameLimit;
+    }
+    return t_available;
+  }
+
+  long UploadLimiter::limit()
+  {
+    return instance().m_frameLimit;
+  }
+
+  void UploadLimiter::setLimit(long limit)
+  {
+    instance().m_frameLimit = limit;
+  }
+
+  void UploadLimiter::processMessage(const char * type, Radiant::BinaryData &)
+  {
+    if(strcmp(type, "frame") == 0) ++m_frame;
+  }
+
+  UploadLimiter & UploadLimiter::instance()
+  {
+    static UploadLimiter s_limiter;
+    return s_limiter;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
 
   template <GLenum TextureType>
       TextureT<TextureType>::~TextureT()
@@ -102,7 +152,7 @@ namespace Luminous
     m_width = 1;
     m_height = h;
     /// @todo this is actually wrong, should convert from internalFormat really
-    m_pf = srcFormat;
+    m_srcFormat = srcFormat;
 
     bind();
 
@@ -165,12 +215,62 @@ namespace Luminous
   }
 */
 
-  bool Texture2D::loadImage(const Luminous::Image & image, bool buildMipmaps)
+  bool Texture2D::loadImage(const Luminous::Image & image, bool buildMipmaps, int internalFormat)
   {
-    return loadBytes(image.pixelFormat().layout(),
+    return loadBytes(internalFormat ? internalFormat : image.pixelFormat().layout(),
                      image.width(), image.height(),
                      image.bytes(),
                      image.pixelFormat(), buildMipmaps);
+  }
+
+  bool Texture2D::loadImage(const CompressedImage & image)
+  {
+    long & available = UploadLimiter::available();
+    // Radiant::info("available: %.1f, need: %.1f", available/1024.0f, image.datasize()/1024.0f);
+
+    if(available < image.datasize()) return false;
+
+    long used = consumesBytes();
+
+    m_internalFormat = image.compression();
+    m_consumed = image.datasize();
+    m_width = image.width();
+    m_height = image.height();
+    m_srcFormat = PixelFormat();
+    m_haveMipmaps = false;
+
+    bind();
+
+    if(resources() && !resources()->isBrokenProxyTexture2D()) {
+      glCompressedTexImage2D(GL_PROXY_TEXTURE_2D, 0, m_internalFormat,
+                             m_width, m_height, 0, image.datasize(), 0);
+      GLint width = m_width;
+      glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+
+      if(width == 0) {
+        Radiant::error("Texture2D::loadImage: Cannot load compressed texture, too big? "
+                         "(%d x %d, id = %.5d, %d bytes)", m_width, m_height, (int) id(), image.datasize());
+        m_consumed = 0;
+        return false;
+      }
+    }
+
+    glCompressedTexImage2D(GL_TEXTURE_2D, 0, m_internalFormat,
+                           m_width, m_height, 0, image.datasize(), image.data());
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    long uses = consumesBytes();
+    available -= uses;
+
+    changeByteConsumption(used, uses);
+
+    m_loadedLines = m_height;
+    return true;
   }
 
   bool Texture2D::loadBytes(GLenum internalFormat, int w, int h,
@@ -191,9 +291,10 @@ namespace Luminous
 
     long used = consumesBytes();
 
+    m_internalFormat = internalFormat;
     m_width = w;
     m_height = h;
-    m_pf = srcFormat;
+    m_srcFormat = srcFormat;
     m_haveMipmaps = buildMipmaps;
 
     bind();
@@ -205,7 +306,7 @@ namespace Luminous
     // set byte alignment to maximum possible: 1,2,4 or 8
     int alignment = 1;
     while (alignment < 8) {
-      if ((m_width * m_pf.bytesPerPixel()) % (alignment*2)) {
+      if ((m_width * m_srcFormat.bytesPerPixel()) % (alignment*2)) {
         break;
       }
       alignment *= 2;
@@ -217,7 +318,7 @@ namespace Luminous
 
     if(buildMipmaps) {
       glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
-      gluBuild2DMipmaps(GL_TEXTURE_2D, srcFormat.numChannels(),
+      gluBuild2DMipmaps(GL_TEXTURE_2D, internalFormat,
                         w, h, srcFormat.layout(), srcFormat.type(), data);
     } else {
       /* debugLuminous("TEXTURE UPLOAD :: INTERNAL %s FORMAT %s [%d %d]",
@@ -309,13 +410,13 @@ namespace Luminous
     {
       int alignment = 1;
       while (alignment < 8) {
-        if ((w * m_pf.bytesPerPixel()) % (alignment*2)) {
+        if ((w * m_srcFormat.bytesPerPixel()) % (alignment*2)) {
           break;
         }
         alignment *= 2;
       }
       glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
-      glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, w, h, m_pf.layout(), m_pf.type(), data);
+      glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, w, h, m_srcFormat.layout(), m_srcFormat.type(), data);
       if (alignment > 4) glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
     }
   }

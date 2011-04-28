@@ -45,7 +45,7 @@ namespace Poetic
   int error();
 
   // Hack around thread-safety
-  Radiant::MutexStatic & freetypeMutex();
+  Radiant::Mutex & freetypeMutex();
 }
 
 #endif

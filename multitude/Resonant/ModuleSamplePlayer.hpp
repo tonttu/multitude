@@ -251,7 +251,7 @@ namespace Resonant {
       enum { BINS = 256};
 
       Radiant::Condition m_cond;
-      Radiant::MutexAuto m_mutex;
+      Radiant::Mutex m_mutex;
 
       LoadItem m_loads[BINS];
 

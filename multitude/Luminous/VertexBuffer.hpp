@@ -80,7 +80,7 @@ namespace Luminous
           STATIC_COPY = GL_STATIC_COPY,
 
           /// The buffer contents will be specified repeatedly, and used many
-          // /times as the source for GL drawing and image specification commands.
+          /// times as the source for GL drawing and image specification commands.
           DYNAMIC_DRAW = GL_DYNAMIC_DRAW,
           /// The buffer contents will be specified repeatedly by reading data
           /// from the GL, and used many times by the application.

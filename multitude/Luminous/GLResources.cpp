@@ -238,12 +238,12 @@ namespace Luminous
   typedef std::map<Thread::id_t, TGLRes> ResourceMap;
 
   static ResourceMap __resources;
-  static MutexStatic __mutex;
+  static Mutex __mutex;
 
   void GLResources::setThreadResources(GLResources * rsc,
                        const MultiHead::Window *w, const MultiHead::Area *a)
   {
-    GuardStatic g(__mutex);
+    Guard g(__mutex);
     TGLRes tmp;
     tmp.m_glr = rsc;
     tmp.m_window = w;
@@ -254,7 +254,7 @@ namespace Luminous
 
   GLResources * GLResources::getThreadResources()
   {
-    GuardStatic g(__mutex);
+    Guard g(__mutex);
 
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
 
@@ -268,7 +268,7 @@ namespace Luminous
 
   void GLResources::getThreadMultiHead(const MultiHead::Window ** w, const MultiHead::Area ** a)
   {
-    GuardStatic g(__mutex);
+    Guard g(__mutex);
 
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
 
@@ -285,7 +285,7 @@ namespace Luminous
 
   const MultiHead::Area * GLResources::getThreadMultiHeadArea()
   {
-    GuardStatic g(__mutex);
+    Guard g(__mutex);
 
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
 
@@ -299,7 +299,7 @@ namespace Luminous
 
   const MultiHead::Window * GLResources::getThreadMultiHeadWindow()
   {
-    GuardStatic g(__mutex);
+    Guard g(__mutex);
 
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
 
