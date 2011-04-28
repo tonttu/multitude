@@ -2,12 +2,12 @@
 #define VIVID_RENDERABLE_HPP
 
 #include <Radiant/RefPtr.hpp>
-#include <Nimble/Matrix4.hpp>
 
+#include <Nimble/Matrix4.hpp>
 
 namespace Luminous
 {
-class RenderContext;
+  class RenderContext;
 }
 
 namespace Vivid
@@ -18,6 +18,9 @@ class Mesh;
 class Renderable
 {
 public:
+  Renderable();
+  virtual ~Renderable();
+
   void setTransform(const Nimble::Matrix4f& transform);
   Nimble::Matrix4f& getTransform();
 
@@ -25,9 +28,10 @@ public:
 
   void setMesh(const std::shared_ptr<Mesh>& mesh);
   const std::shared_ptr<Mesh>& getMesh() const;
+
 private:
-  std::shared_ptr<Mesh> m_mesh;
-  Nimble::Matrix4f m_transform;
+  class D;
+  D * m_data;
 };
 
 }

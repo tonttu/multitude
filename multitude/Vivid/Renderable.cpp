@@ -3,26 +3,41 @@
 namespace Vivid
 {
 
+class Renderable::D
+{
+public:
+  std::shared_ptr<Mesh> m_mesh;
+  Nimble::Matrix4f m_transform;
+};
+
+Renderable::Renderable()
+  : m_data(new D())
+{}
+
+Renderable::~Renderable()
+{
+  delete m_data;
+}
 
 void Renderable::setTransform(const Nimble::Matrix4f& transform)
 {
-  m_transform = transform;
+  m_data->m_transform = transform;
 }
 
 Nimble::Matrix4f& Renderable::getTransform()
 {
-  return m_transform;
+  return m_data->m_transform;
 }
 
 
 void Renderable::setMesh(const std::shared_ptr<Mesh>& mesh)
 {
-  m_mesh = mesh;
+  m_data->m_mesh = mesh;
 }
 
 const std::shared_ptr<Mesh>& Renderable::getMesh() const
 {
-  return m_mesh;
+  return m_data->m_mesh;
 }
 
 }

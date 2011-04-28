@@ -106,7 +106,7 @@ namespace Luminous
         /// Fills the vertex buffer with data
         void fill(void * data, size_t bytes, Usage usage);
         /// Fills a part of the vertex buffer with data
-        void partialFill(size_t start, void * data, size_t count);
+        void partialFill(size_t offsetInBytes, void * data, size_t bytes);
 
         /// Starts reading data from GPU, allocating memory with given usage hint if necessary.
         void read(Nimble::Vector2i size, Nimble::Vector2i pos = Nimble::Vector2i(0, 0),
@@ -126,7 +126,7 @@ namespace Luminous
          */
         GLuint handle() const { return m_bufferId; }
 
-        /** @return Returns the current number of filled bytes in the boffer. */
+        /** @return Returns the current number of filled bytes in the buffer. */
         size_t filled() const { return m_filled; }
       private:
         /// OpenGL handle for the vertex buffer
