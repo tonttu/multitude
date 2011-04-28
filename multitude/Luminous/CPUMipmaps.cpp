@@ -64,12 +64,17 @@ namespace Luminous {
   int CPUMipmaps::getOptimal(Nimble::Vector2f size)
   {
     float ask = size.maximum();
+
     // Dimension of the first mipmap level (quarter-size from original)
     float first = m_firstLevelSize.maximum();
 
     // Use the original image (level 0) if asked for bigger than first level mipmap
     if(ask >= first)
       return 0;
+
+    // if the size is really small, the calculation later does funny things
+    if(ask <= (int(first) >> m_maxLevel))
+      return m_maxLevel;
 
     int bestlevel = Nimble::Math::Floor(log(ask / first) / log(0.5)) + 1;
 
