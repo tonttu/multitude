@@ -72,6 +72,9 @@ namespace Radiant {
 
   bool VideoImage::allocateMemory(ImageFormat fmt, int w, int h)
   {
+    if(w == m_width && h == m_height && fmt == m_format)
+      return true;
+
     freeMemory();
     reset();
 
