@@ -1,5 +1,7 @@
 #include "Camera.hpp"
 
+#include <Luminous/Utils.hpp>
+
 #include <Radiant/Trace.hpp>
 
 namespace Vivid
@@ -9,7 +11,7 @@ Camera::Camera()
   : Transform(),
     m_nearPlane(0.1f),
     m_farPlane(1000.f),
-    m_fovY(90.f),
+    m_fovY(45.f),
     m_projectionMatrixDirty(true)
 {
   m_viewport[0] = 0;
@@ -37,7 +39,12 @@ Nimble::Matrix4 & Camera::projectionMatrix()
 
 Nimble::Vector3 Camera::unproject(const Nimble::Vector3 &viewportCoord)
 {
-  Nimble::Matrix4 m = projectionMatrix() * transform();
+  Nimble::Matrix4 tm = transform();
+  Nimble::Matrix4 pm = projectionMatrix();
+#if 0
+  /// @todo fixme, doesn't work
+
+  Nimble::Matrix4 m = tm * pm;
 
   bool ok;
   m.inverse(&ok);
@@ -54,20 +61,39 @@ Nimble::Vector3 Camera::unproject(const Nimble::Vector3 &viewportCoord)
 
   p = m * p;
 
-  return p.vector3();
-}
+  assert(p.w != 0.f);
 
+  Nimble::Vector3 result = Nimble::Vector3(p.x / p.w, p.y / p.w, p.z / p.w);
+
+#else
+
+  // Since my own code doesn't work, use this
+  Nimble::Matrix4d tmd, pmd;
+  for(int i = 0; i < 16; i++) {
+    tmd.data()[i] = tm.data()[i];
+    pmd.data()[i] = pm.data()[i];
+  }
+
+  double dx,dy,dz;
+  gluUnProject(viewportCoord.x, m_viewport[3] - viewportCoord.y, viewportCoord.z, tmd.transposed().data(), pmd.transposed().data(), m_viewport, &dx,&dy,&dz);
+
+  Nimble::Vector3 result = Nimble::Vector3((float)dx, (float)dy, (float)dz);
+#endif
+
+  return result;
+}
 
 void Camera::generateRay(float x, float y, Nimble::Vector3 &rayOrigin, Nimble::Vector3 &rayDir)
 {
   Nimble::Vector3 nearPoint = unproject(Nimble::Vector3(x, y, 0.f));
   Nimble::Vector3 farPoint = unproject(Nimble::Vector3(x, y, 1.f));
 
+  Radiant::info("Camera::generateRay # near (%f,%f,%f) far (%f,%f,%f)", nearPoint.x, nearPoint.y, nearPoint.z, farPoint.x, farPoint.y, farPoint.z);
+
   rayDir = farPoint - nearPoint;
   rayDir.normalize();
 
   rayOrigin = transform().getTranslation();
 }
-
 
 }

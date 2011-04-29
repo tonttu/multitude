@@ -487,6 +487,8 @@ Nimble::Matrix4T<T> Nimble::Matrix4T<T>::perspectiveProjection(T fovY, T aspect,
   assert(nearPlane > T(0));
   assert(farPlane > T(0));
 
+  fovY = Nimble::Math::degToRad(fovY);
+
   const T f = T(1) / T(tan(fovY / T(2)));
 
   Nimble::Matrix4T<T> result;
