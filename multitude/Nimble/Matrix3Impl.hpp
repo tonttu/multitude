@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Nimble.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Nimble.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 
@@ -33,6 +21,13 @@ namespace Nimble {
                                                      T s)
   {
     return translate2D(p) * scaleUniform2D(s) * translate2D(-p);
+  }
+
+  template <class T>
+  Matrix3T<T> Matrix3T<T>::scaleAroundPoint2D(Vector2T<T> p,
+                                              const T & xscale, const T & yscale)
+  {
+    return translate2D(p) * scale2D(xscale, yscale) * translate2D(-p);
   }
 
   template <class T>
