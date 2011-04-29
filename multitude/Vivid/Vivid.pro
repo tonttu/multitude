@@ -12,13 +12,17 @@ HEADERS += Scene.hpp \
     Material.hpp \
     TextureManager.hpp \
     MeshManager.hpp \
-    Renderable.hpp
+    Renderable.hpp \
+    Camera.hpp \
+    Transform.hpp
 
 SOURCES += Scene.cpp \
     DrawUtils.cpp \
     Mesh.cpp \
     TextureManager.cpp \
     MeshManager.cpp \
-    Renderable.cpp
+    Renderable.cpp \
+    Camera.cpp \
+    Transform.cpp
 
 include(../library.pri)
