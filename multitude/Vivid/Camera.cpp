@@ -88,7 +88,7 @@ void Camera::generateRay(float x, float y, Nimble::Vector3 &rayOrigin, Nimble::V
   Nimble::Vector3 nearPoint = unproject(Nimble::Vector3(x, y, 0.f));
   Nimble::Vector3 farPoint = unproject(Nimble::Vector3(x, y, 1.f));
 
-  Radiant::info("Camera::generateRay # near (%f,%f,%f) far (%f,%f,%f)", nearPoint.x, nearPoint.y, nearPoint.z, farPoint.x, farPoint.y, farPoint.z);
+  //Radiant::info("Camera::generateRay # near (%f,%f,%f) far (%f,%f,%f)", nearPoint.x, nearPoint.y, nearPoint.z, farPoint.x, farPoint.y, farPoint.z);
 
   rayDir = farPoint - nearPoint;
   rayDir.normalize();
