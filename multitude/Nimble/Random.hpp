@@ -76,7 +76,7 @@ namespace Nimble {
     }
 
     /// Random numbers between 0 and x-1
-    inline size_t rand0X(size_t x)
+    inline uint64_t rand0X(uint64_t x)
     {
       size_t tmp = m_val * m_randMul + 1;
       m_val = tmp;
