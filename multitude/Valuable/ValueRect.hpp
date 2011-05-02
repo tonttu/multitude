@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Valuable.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Valuable.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #ifndef VALUABLE_VALUE_RECT_HPP
@@ -27,27 +15,33 @@ namespace Valuable
 {
 
   /// A valuable object holding a Nimble::Rect object
-  class VALUABLE_API ValueRect : public ValueObjectT<Nimble::Rect>
+  template <class T>
+  class VALUABLE_API ValueRectT : public ValueObjectT<Nimble::RectT<T> >
   {
-    typedef ValueObjectT<Nimble::Rect> Base;
+    typedef ValueObjectT<Nimble::RectT<T> > Base;
   public:
     /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
     /// @param r The rectangle to be stored in the ValueRect
-    ValueRect(HasValues * parent, const std::string & name, const Nimble::Rect & r, bool transit = false);
+    ValueRectT(HasValues * parent, const std::string & name, const Nimble::RectT<T> & r, bool transit = false);
 
     /// Copies a rectangle
-    ValueRect & operator = (const Nimble::Rect & r) { Base::m_value = r; VALUEMIT_STD_OP }
+    ValueRectT & operator = (const Nimble::RectT<T> & r) { this->m_value = r; VALUEMIT_STD_OP }
 
-    const char * type() const { return "rect"; }
+    const char * type() const;
 
     std::string asString(bool * const ok = 0) const;
 
     bool deserialize(ArchiveElement & element);
 
     /// Converts the object to rectangle
-    Nimble::Rect asRect() const { return Base::m_value; }
+    Nimble::RectT<T> asRect() const { return this->m_value; }
   };
 
+
+  typedef ValueRectT<float> ValueRect;
+  typedef ValueRectT<float> ValueRectf;
+  typedef ValueRectT<double> ValueRectd;
+  typedef ValueRectT<int> ValueRecti;
 }
 
 #undef VALUEMIT_STD_OP
