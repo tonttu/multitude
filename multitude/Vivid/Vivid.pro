@@ -14,7 +14,8 @@ HEADERS += Scene.hpp \
     MeshManager.hpp \
     Renderable.hpp \
     Camera.hpp \
-    Transform.hpp
+    Transform.hpp \
+    Light.hpp
 
 SOURCES += Scene.cpp \
     DrawUtils.cpp \
@@ -23,6 +24,7 @@ SOURCES += Scene.cpp \
     MeshManager.cpp \
     Renderable.cpp \
     Camera.cpp \
-    Transform.cpp
+    Transform.cpp \
+    Light.cpp
 
 include(../library.pri)

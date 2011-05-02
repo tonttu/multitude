@@ -27,7 +27,7 @@
 
 #include <Radiant/Trace.hpp>
 #include <Radiant/Platform.hpp>
-
+#include <Radiant/Thread.hpp>
 
 namespace Luminous
 {
@@ -39,16 +39,8 @@ namespace Luminous
 
   long & UploadLimiter::available()
   {
-#ifdef RADIANT_WIN32
-    static __declspec(thread) int t_frame = 0;
-    static __declspec(thread) long t_available = 0;
-#elif defined RADIANT_LINUX
-    static __thread int t_frame = 0;
-    static __thread long t_available = 0;
-#else
-    static int t_frame = 0;
-    static long t_available = 0;
-#endif
+    static RADIANT_TLS(int) t_frame = 0;
+    static RADIANT_TLS(long) t_available = 0;
 
     UploadLimiter & i = instance();
     if(t_frame != i.m_frame) {
