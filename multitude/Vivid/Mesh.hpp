@@ -27,7 +27,6 @@ public:
   std::vector<Nimble::Vector3> m_bitangents;
 
   std::vector<int> m_indices;
-  std::vector<Triangle> m_faces;
   std::vector<Nimble::Vector2> m_textureCoordinates;
   Material m_material;
 
