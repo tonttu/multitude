@@ -8,7 +8,9 @@ namespace Vivid
 
 std::shared_ptr<Mesh> MeshManager::load(const std::string& file, const std::string& name)
 {
-  MeshMap::iterator it = m_meshes.find(name);
+  std::pair<std::string,std::string> key = std::make_pair(file, name);
+
+  MeshMap::iterator it = m_meshes.find(key);
   if (it != m_meshes.end()) {
     if (!it->second.expired()) {
       return it->second.lock();
@@ -27,7 +29,7 @@ std::shared_ptr<Mesh> MeshManager::load(const std::string& file, const std::stri
   mesh.reset(scene.findMesh(name));
 
   if (mesh) {
-    m_meshes[name] = mesh;
+    m_meshes[key] = mesh;
   }
 
   return mesh;
