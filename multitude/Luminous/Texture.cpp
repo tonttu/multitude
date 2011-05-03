@@ -50,6 +50,11 @@ namespace Luminous
     return t_available;
   }
 
+  long UploadLimiter::frame()
+  {
+    return instance().m_frame;
+  }
+
   long UploadLimiter::limit()
   {
     return instance().m_frameLimit;
