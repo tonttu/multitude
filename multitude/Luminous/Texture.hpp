@@ -40,6 +40,7 @@ namespace Luminous
     static UploadLimiter & instance();
 
     static long & available();
+    static long frame();
     static long limit();
     static void setLimit(long limit);
 
