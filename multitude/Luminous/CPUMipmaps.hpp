@@ -27,6 +27,12 @@
 
 #include <limits>
 
+// #define CPUMIPMAPS_PROFILING
+
+#ifdef CPUMIPMAPS_PROFILING
+  struct ProfileData;
+#endif
+
 namespace Luminous {
 
   class GLResources;
@@ -136,6 +142,8 @@ namespace Luminous {
 
     LUMINOUS_API StateInfo stateInfo(GLResources * resources);
 
+    void setLoadingPriority(Priority priority) { m_loadingPriority = priority; }
+
     /** Check if the mipmaps are still being loaded.
 
         @return Returns true if the mipmaps are still being loaded.
@@ -242,6 +250,9 @@ namespace Luminous {
     // what levels should be saved to file
     std::set<int>    m_shouldSave;
 
+    // Priority using when loading mipmaps
+    Priority         m_loadingPriority;
+
     // default save sizes
     enum {
       DEFAULT_SAVE_SIZE1 = 64,
@@ -253,6 +264,10 @@ namespace Luminous {
     ContextVariableT<StateInfo> m_stateInfo;
 
     Luminous::ImageInfo m_info;
+
+#ifdef CPUMIPMAPS_PROFILING
+    ProfileData & m_profile;
+#endif
   };
 
 }

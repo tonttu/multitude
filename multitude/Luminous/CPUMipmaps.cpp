@@ -39,6 +39,43 @@ namespace {
   const int resizes = 5;
 }
 
+#ifdef CPUMIPMAPS_PROFILING
+struct ProfileData
+{
+  ProfileData() : totalTime(0.0), timesLoaded(0) {}
+  double totalTime;
+  int timesLoaded;
+  std::string filename;
+};
+class Profiler
+{
+public:
+  ProfileData & next()
+  {
+    Radiant::Guard g(m_mutex);
+    m_lst.push_back(ProfileData());
+    return m_lst.back();
+  }
+
+  ~Profiler()
+  {
+    std::multimap<double, ProfileData*> sorted;
+    for(std::list<ProfileData>::iterator it = m_lst.begin(); it != m_lst.end(); ++it) {
+      sorted.insert(std::make_pair(-it->totalTime, &*it));
+    }
+    for(std::multimap<double, ProfileData*>::iterator it = sorted.begin(); it != sorted.end(); ++it) {
+      const ProfileData & d = *it->second;
+      std::cout << d.filename.c_str() << " : " << d.totalTime << " (" << d.timesLoaded << ")" << std::endl;
+    }
+  }
+
+private:
+  Radiant::Mutex m_mutex;
+  std::list<ProfileData> m_lst;
+};
+static Profiler s_profiler;
+#endif
+
 namespace Luminous {
 
   using namespace Radiant;
@@ -53,7 +90,11 @@ namespace Luminous {
     m_hasAlpha(false),
     m_timeOutCPU(5.0f),
     m_timeOutGPU(5.0f),
-    m_keepMaxLevel(true)
+    m_keepMaxLevel(true),
+    m_loadingPriority(PRIORITY_NORMAL)
+  #ifdef CPUMIPMAPS_PROFILING
+    , m_profile(s_profiler.next())
+  #endif
   {
   }
 
@@ -100,6 +141,7 @@ namespace Luminous {
     if(item.m_state == READY)
       return bestlevel;
 
+    m_priority = m_loadingPriority;
     reschedule();
     BGThread::instance()->reschedule(this);
 
@@ -168,6 +210,9 @@ namespace Luminous {
 
   bool CPUMipmaps::startLoading(const char * filename, bool)
   {
+#ifdef CPUMIPMAPS_PROFILING
+    m_profile.filename = filename;
+#endif
     m_filename = filename;
     m_fileModified = FileUtils::lastModified(m_filename);
     m_info = Luminous::ImageInfo();
@@ -207,7 +252,7 @@ namespace Luminous {
 
     m_stack.resize(m_maxLevel+1);
 
-    m_priority = Luminous::Task::PRIORITY_HIGH;
+    m_priority = PRIORITY_HIGH;
     markImage(m_maxLevel);
     reschedule();
 
@@ -382,6 +427,7 @@ namespace Luminous {
   void CPUMipmaps::finish()
   {
     setState(Task::DONE);
+    m_priority = PRIORITY_LOW;
     reschedule(0, 0);
   }
 
@@ -409,9 +455,10 @@ namespace Luminous {
     if(state() == Task::DONE)
       return;
 
-    double delay = 60.0;
-    m_priority = Luminous::Task::PRIORITY_NORMAL;
-    //reschedule(delay, true);
+    double delay = 3600.0;
+    m_priority = PRIORITY_LOW;
+    // sets the m_scheduled time to somewhere future, it can be decreased later
+    reschedule(delay, true);
 
     StackMap removed_stack;
 
@@ -423,7 +470,14 @@ namespace Luminous {
       if(time_to_expire_cpu > 0) {
         if(item.m_state == WAITING) {
           StackMap stack;
+#ifdef CPUMIPMAPS_PROFILING
+          Radiant::TimeStamp ts(Radiant::TimeStamp::getTime());
+#endif
           recursiveLoad(stack, i);
+#ifdef CPUMIPMAPS_PROFILING
+          m_profile.totalTime += ts.sinceSecondsD()*1000.0;
+          m_profile.timesLoaded++;
+#endif
           if(!stack.empty()) {
             item = stack[i];
             Radiant::Guard g(m_stackMutex);
