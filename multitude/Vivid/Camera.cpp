@@ -39,17 +39,21 @@ Nimble::Matrix4 & Camera::projectionMatrix()
 
 Nimble::Vector3 Camera::unproject(const Nimble::Vector3 &viewportCoord)
 {
-  Nimble::Matrix4 tm = transform();
-  Nimble::Matrix4 pm = projectionMatrix();
+  bool ok = true;
+  Nimble::Matrix4 tm = transform().inverse(&ok);
 
+  if (!ok) {
+    Radiant::error("Camera::unproject # failed to invert transform");
+    return Nimble::Vector3(0.f, 0.f, 0.f);
+  }
 
-  Nimble::Matrix4 m = pm * tm;
+  Nimble::Matrix4 m = projectionMatrix() * tm;
 
-  bool ok;
+  ok = true;
   m = m.inverse(&ok);
 
   if(!ok) {
-    Radiant::error("Camera::unproject # failed to invert P * M");
+    Radiant::error("Camera::unproject # failed to invert projection * view");
     return Nimble::Vector3(0.f, 0.f, 0.f);
   }
 
