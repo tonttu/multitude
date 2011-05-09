@@ -41,46 +41,29 @@ Nimble::Vector3 Camera::unproject(const Nimble::Vector3 &viewportCoord)
 {
   Nimble::Matrix4 tm = transform();
   Nimble::Matrix4 pm = projectionMatrix();
-#if 0
-  /// @todo fixme, doesn't work
 
-  Nimble::Matrix4 m = tm * pm;
+
+  Nimble::Matrix4 m = pm * tm;
 
   bool ok;
-  m.inverse(&ok);
+  m = m.inverse(&ok);
 
   if(!ok) {
     Radiant::error("Camera::unproject # failed to invert P * M");
     return Nimble::Vector3(0.f, 0.f, 0.f);
   }
 
-  Nimble::Vector4 p(2 * (viewportCoord.x - m_viewport[0]) / m_viewport[2] - 1,
-                    2 * (viewportCoord.y - m_viewport[1]) / m_viewport[3] - 1,
+  Nimble::Vector4 p(2 * ((viewportCoord.x - m_viewport[0]) / m_viewport[2]) - 1,
+                    2 * ((m_viewport[3] - viewportCoord.y - m_viewport[1]) / m_viewport[3]) - 1,
                     2 * viewportCoord.z - 1,
                     1.f);
 
   p = m * p;
 
+
   assert(p.w != 0.f);
 
-  Nimble::Vector3 result = Nimble::Vector3(p.x / p.w, p.y / p.w, p.z / p.w);
-
-#else
-
-  // Since my own code doesn't work, use this
-  Nimble::Matrix4d tmd, pmd;
-  for(int i = 0; i < 16; i++) {
-    tmd.data()[i] = tm.data()[i];
-    pmd.data()[i] = pm.data()[i];
-  }
-
-  double dx,dy,dz;
-  gluUnProject(viewportCoord.x, m_viewport[3] - viewportCoord.y, viewportCoord.z, tmd.transposed().data(), pmd.transposed().data(), m_viewport, &dx,&dy,&dz);
-
-  Nimble::Vector3 result = Nimble::Vector3((float)dx, (float)dy, (float)dz);
-#endif
-
-  return result;
+  return (1.0f/p.w) * Nimble::Vector3(p.x, p.y, p.z);
 }
 
 void Camera::generateRay(float x, float y, Nimble::Vector3 &rayOrigin, Nimble::Vector3 &rayDir)
