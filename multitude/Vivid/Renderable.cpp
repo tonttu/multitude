@@ -6,6 +6,11 @@ namespace Vivid
 class Renderable::D
 {
 public:
+  D()
+    : m_transform(Nimble::Matrix4::IDENTITY)
+  {
+  }
+
   std::shared_ptr<Mesh> m_mesh;
   Nimble::Matrix4f m_transform;
 };

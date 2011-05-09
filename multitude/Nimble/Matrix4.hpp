@@ -162,6 +162,13 @@ namespace Nimble {
     inline static Matrix4T<T> scaleUniform3D(const T & s)
     { return scale3D(Vector3T<T>(s, s, s)); }
 
+    /// Creates a perspective projection matrix
+    /// @param fovY field of view in degress in the Y direction
+    /// @param aspect aspect ratio (width / height)
+    /// @param nearPlane distance to the near clipping plane, always positive
+    /// @param farPlane distance to the far clipping plane, always positive
+    static Matrix4T<T> perspectiveProjection(T fovY, T aspect, T nearPlane, T farPlane);
+
     /** Identity matrix. */
     NIMBLE_API static const Matrix4T<T> IDENTITY;
 
@@ -472,6 +479,28 @@ Nimble::Matrix4T<T> Nimble::Matrix4T<T>::simpleProjection(T width, T height, T f
   Matrix4T<T> view = makeTranslation(Vector3f(-width*.5f, -height*.5f, 0));
 
   return window * projection * camera * view;
+}
+
+template<typename T>
+Nimble::Matrix4T<T> Nimble::Matrix4T<T>::perspectiveProjection(T fovY, T aspect, T nearPlane, T farPlane)
+{
+  assert(nearPlane > T(0));
+  assert(farPlane > T(0));
+
+  fovY = Nimble::Math::degToRad(fovY);
+
+  const T f = T(1) / T(tan(fovY / T(2)));
+
+  Nimble::Matrix4T<T> result;
+  result.clear();
+
+  result[0][0] = f / aspect;
+  result[1][1] = f;
+  result[2][2] = (farPlane + nearPlane) / (nearPlane - farPlane);
+  result[2][3] = T(2) * (farPlane * nearPlane) / (nearPlane - farPlane);
+  result[3][2] = T(-1);
+
+  return result;
 }
 
 

@@ -111,6 +111,7 @@ namespace Nimble {
     /// Cast to Vector2T
     const Vector2T<T> & xy() const { return * (Vector2T<T> *) this; }
     /// Cast to Vector2T
+    /// @todo duplicate with xy(), we should pick one convention and stick to it (xy(), xyz(), etc)
     const Vector2T<T> & vector2() const { return * (Vector2T<T> *) this; }
     /// Cast to Vector3T
     Vector3T<T> & vector3() { return * (Vector3T<T> *) this; }

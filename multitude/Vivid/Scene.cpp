@@ -576,18 +576,24 @@ Mesh* Scene::buildMesh(KFbxNode * node, KFbxXMatrix & globalPosition, KFbxPose *
       NULL
     };
 
-    myMesh->m_material.m_shadingModel = material->GetShadingModel().Get().Buffer();
-    for (int i=0; properties[i]; ++i) {
-      KFbxProperty prop = material->FindProperty(properties[i]);
+    if (material) {
+      KFbxPropertyString shadingModel = material->GetShadingModel();
+      if (shadingModel.IsValid())
+        myMesh->m_material.m_shadingModel = shadingModel.Get().Buffer();
 
-      if (!prop.IsValid())
-        continue;
 
-      KFbxTexture* texture = KFbxCast<KFbxTexture>(prop.GetSrcObject(KFbxTexture::ClassId, 0));
-      if (!texture)
-        continue;
+      for (int i=0; properties[i]; ++i) {
+        KFbxProperty prop = material->FindProperty(properties[i]);
 
-      myMesh->m_material.m_textures[properties[i]] = TextureManager::instance().load(texture->GetRelativeFileName());
+        if (!prop.IsValid())
+          continue;
+
+        KFbxTexture* texture = KFbxCast<KFbxTexture>(prop.GetSrcObject(KFbxTexture::ClassId, 0));
+        if (!texture)
+          continue;
+
+        myMesh->m_material.m_textures[properties[i]] = TextureManager::instance().load(texture->GetRelativeFileName());
+      }
     }
   }
 

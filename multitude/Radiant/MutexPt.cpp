@@ -6,8 +6,6 @@
 
 #include <iostream>
 
-#include <QAtomicPointer>
-
 #include <cassert>
 #include <errno.h>
 #include <string.h>
@@ -33,7 +31,7 @@ namespace Radiant {
 
   class Mutex::D {
   public:
-    D(bool recursive) : m_recursive(recursive), m_ptmutex(0) {}
+    D(bool recursive);
     ~D()
     {
       if(m_ptmutex) {
@@ -42,22 +40,14 @@ namespace Radiant {
       }
     }
 
-    void init();
-
     bool m_recursive;
-    QAtomicPointer<pthread_mutex_t> m_ptmutex;
+    pthread_mutex_t* m_ptmutex;
   };
 
-  void Mutex::D::init()
+
+  Mutex::D::D(bool recursive)
+    : m_recursive(recursive), m_ptmutex(new pthread_mutex_t)
   {
-    pthread_mutex_t * ptm = m_ptmutex;
-    if(ptm)
-      return;
-
-    /* No mutex, create it now: */
-
-    ptm = new pthread_mutex_t;
-
     pthread_mutexattr_t mutex_attr;
     pthread_mutexattr_init(&mutex_attr);
 
@@ -74,18 +64,10 @@ namespace Radiant {
       }
     }
 
-    err = pthread_mutex_init( ptm, &mutex_attr);
+    err = pthread_mutex_init( m_ptmutex, &mutex_attr);
 
     if(err && mutexDebug) {
       std::cerr << "Could not create mutex " << strerror(err) << std::endl;
-    }
-
-    /* Replace null pointer by valid mutex pointer, which is ready for use: */
-    if(!m_ptmutex.testAndSetRelaxed(0, ptm)) {
-      /* If the pointer was not NULL, then we do nothing.*/
-      pthread_mutex_destroy(ptm);
-      delete ptm;
-      return;
     }
   }
 
@@ -100,8 +82,6 @@ namespace Radiant {
 
   bool Mutex::lock(bool block)
   {
-    m_d->init();
-
     if(block) {
       int e = pthread_mutex_lock(m_d->m_ptmutex);
       if(e)
@@ -149,8 +129,6 @@ namespace Radiant {
 
   int Condition::wait(Mutex &mutex)
   {
-    mutex.m_d->init();
-
     pthread_mutex_t * ptmutex = mutex.m_d->m_ptmutex;
 
     return pthread_cond_wait(& m_d->m_ptcond, ptmutex);
@@ -158,8 +136,6 @@ namespace Radiant {
 
   int Condition::wait(Mutex &mutex, int millsecs)
   {
-    mutex.m_d->init();
-
     struct timespec abstime;
     struct timeval tv;
 

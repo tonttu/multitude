@@ -24,6 +24,7 @@ public:
   void setTransform(const Nimble::Matrix4f& transform);
   Nimble::Matrix4f& getTransform();
 
+
   virtual void customRender(Luminous::RenderContext&) {}
 
   void setMesh(const std::shared_ptr<Mesh>& mesh);
