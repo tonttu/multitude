@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef LUMINOUS_TEXTURE_HPP
@@ -234,7 +234,15 @@ namespace Luminous
   {
   public:
     /// Constructs a 3D texture and adds it to the given resource collection
-    Texture3D(GLResources * resources = 0) : TextureT<GL_TEXTURE_3D> (resources) {}
+    Texture3D(GLResources * resources = 0)
+      : TextureT<GL_TEXTURE_3D> (resources),
+      m_depth(0)
+    {}
+
+    void setDepth(int d) { m_depth = d; }
+    int depth() const { return m_depth; }
+  private:
+    int m_depth;
   };
 
   /// A cubemap texture
