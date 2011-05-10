@@ -54,7 +54,7 @@ namespace Resonant {
   {
     channelsOut = 0;
 
-    channelsIn = m_map.size();
+    channelsIn = (int) m_map.size();
     m_channels = m_host->outChannels();
 
     /* For debugging purposes you can override (=expand) the number of
