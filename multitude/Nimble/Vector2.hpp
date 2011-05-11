@@ -192,6 +192,14 @@ namespace Nimble {
     return t1.x * t2.x + t1.y * t2.y;
   }
 
+  /// Compute the cross product of two 2d vectors by assuming the z components are zero
+  /// Returns the magnitude (z component) of the resulting vector
+  template<class T>
+  inline float cross(const Vector2T<T> & a, const Vector2T<T> & b)
+  {
+    return (a.x * b.y) - (a.y * b.x);
+  }
+
   /* Note that these overloads are NOT redundant, integer math is
      different from floating point math. */
   /// Divide a vector by scalar
