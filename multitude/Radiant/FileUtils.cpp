@@ -17,6 +17,7 @@
 #include "PlatformUtils.hpp"
 #include "StringUtils.hpp"
 #include "Directory.hpp"
+#include "Radiant.hpp"
 
 #include <assert.h>
 #include <fcntl.h>
@@ -230,10 +231,10 @@ namespace Radiant
     it != pathList.end(); it++) {
       string fullPath = (*it) + string("/") + filename;
 
-      debug("Radiant::findFile # Testing %s for %s", (*it).c_str(), filename.c_str());
+      debugRadiant("Radiant::findFile # Testing %s for %s", (*it).c_str(), filename.c_str());
 
       if(fileReadable(fullPath.c_str())) {
-        debug("Radiant::findFile # FOUND %s", fullPath.c_str());
+        debugRadiant("Radiant::findFile # FOUND %s", fullPath.c_str());
         return fullPath;
       }
     }
@@ -286,14 +287,16 @@ namespace Radiant
   {
     return suffixMatch(filePath, "png") ||
         suffixMatch(filePath, "jpg") ||
-        suffixMatch(filePath, "jpeg");
+        suffixMatch(filePath, "jpeg") ||
+        suffixMatch(filePath, "dds");
   }
 
   bool FileUtils::looksLikeVideo(const std::string & filePath)
   {
     return suffixMatch(filePath, "avi") ||
         suffixMatch(filePath, "qt") ||
-        suffixMatch(filePath, "mov");
+        suffixMatch(filePath, "mov") ||
+        suffixMatch(filePath, "mp4");
   }
 
   unsigned long int FileUtils::lastModified(const std::string & filePath)

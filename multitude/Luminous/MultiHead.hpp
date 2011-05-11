@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 
@@ -186,6 +174,9 @@ namespace Luminous {
         updateBBox();
       }
 
+      /// Returns a pointer to the window that holds this area
+      const Window * window() const { return m_window; }
+
     private:
 
       enum {
@@ -261,6 +252,11 @@ namespace Luminous {
       /// Size of the window on the computer display
       const Vector2i & size() const { return m_size.asVector(); }
 
+      /// Returns the width of this window in pixels
+      int width() const { return m_size.x(); }
+      /// Returns the height of this window in pixels
+      int height() const { return m_size.y(); }
+
       /** Convert a coordinate from screen to graphics coordinates.
           This class traverses through all the areas to find an area
           that would include given location. It is entirely possible
@@ -294,6 +290,9 @@ namespace Luminous {
 
       /// Sets the width of a pixel in centimeters to each area inside this window
       LUMINOUS_API void setPixelSizeCm(float sizeCm);
+
+      /// Return the screen configuration that this Window belongs to
+      const MultiHead * screen() const { return m_screen; }
 
     private:
       LUMINOUS_API virtual bool readElement(Valuable::DOMElement ce);

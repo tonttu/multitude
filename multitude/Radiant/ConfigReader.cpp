@@ -280,11 +280,11 @@ namespace Radiant {
 
   static std::set<std::string> __writtenDocs;
 
-  static Radiant::MutexStatic __mutex;
+  static Radiant::Mutex __mutex;
 
   static void cleardocs()
   {
-    Radiant::GuardStatic g( __mutex);
+    Radiant::Guard g( __mutex);
 
     __writtenDocs.clear();
   }
@@ -294,7 +294,7 @@ namespace Radiant {
     if(!var.hasDocumentation())
       return false;
 
-    Radiant::GuardStatic g( __mutex);
+    Radiant::Guard g( __mutex);
 
     std::set<std::string>::iterator it = 
       __writtenDocs.find(var.documentation());

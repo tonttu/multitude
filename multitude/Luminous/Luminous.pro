@@ -1,5 +1,6 @@
 include(../multitude.pri)
-HEADERS += BGThread.hpp
+HEADERS += BGThread.hpp \
+    ImageCodecDDS.hpp
 HEADERS += GLContext.hpp
 HEADERS += FramebufferResource.hpp
 HEADERS += CodecRegistry.hpp
@@ -17,7 +18,6 @@ HEADERS += GLResource.hpp
 HEADERS += GLResources.hpp
 HEADERS += GLSLProgramObject.hpp
 HEADERS += GLSLShaderObject.hpp
-HEADERS += GPUMipmaps.hpp
 HEADERS += ImageCodec.hpp
 HEADERS += ImageCodecSVG.hpp
 HEADERS += ImageCodecTGA.hpp
@@ -35,10 +35,9 @@ HEADERS += Transformer.hpp
 HEADERS += Utils.hpp
 HEADERS += VertexBuffer.hpp
 HEADERS += VertexBufferImpl.hpp
-HEADERS += Path.hpp
 HEADERS += RenderTarget.hpp
 
-SOURCES += Path.cpp
+SOURCES += ImageCodecDDS.cpp
 SOURCES += BGThread.cpp
 SOURCES += GLContext.cpp
 SOURCES += FramebufferResource.cpp
@@ -54,7 +53,6 @@ SOURCES += GLResource.cpp
 SOURCES += GLResources.cpp
 SOURCES += GLSLProgramObject.cpp
 SOURCES += GLSLShaderObject.cpp
-SOURCES += GPUMipmaps.cpp
 SOURCES += ImageCodecSVG.cpp
 SOURCES += ImageCodecTGA.cpp
 SOURCES += Image.cpp

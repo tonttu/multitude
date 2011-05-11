@@ -1,6 +1,7 @@
 include(../multitude.pri)
 
-HEADERS += Export.hpp
+HEADERS += Export.hpp \
+    Range.hpp
 HEADERS += Histogram.hpp 
 HEADERS += Interpolation.hpp
 HEADERS += KeyStone.hpp 
@@ -27,7 +28,8 @@ HEADERS += Vector2.hpp
 HEADERS += Vector3.hpp 
 HEADERS += Vector4.hpp 
 
-SOURCES += Histogram.cpp
+SOURCES += Histogram.cpp \
+    Range.cpp
 SOURCES += KeyStone.cpp
 SOURCES += LensCorrection.cpp
 SOURCES += LineSegment2.cpp 

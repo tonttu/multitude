@@ -14,7 +14,7 @@
  */
 
 #include "VideoIn.hpp"
-
+#include "VideoDisplay.hpp"
 #include "AudioTransfer.hpp"
 
 // #include <Radiant/PlatformUtils.hpp>
@@ -33,7 +33,7 @@ namespace VideoDisplay {
 
   using namespace Radiant;
 
-  static Radiant::MutexStatic __countermutex;
+  static Radiant::Mutex __countermutex;
   int    __framecount = 0;
 
   VideoIn::Frame::Frame()
@@ -44,22 +44,22 @@ namespace VideoDisplay {
   {
     int tmp = 0;
     {
-      Radiant::GuardStatic g(__countermutex);
+      Radiant::Guard g(__countermutex);
       __framecount++;
       tmp = __framecount;
     }
-    debug("VideoIn::Frame::Frame # %p Instance count at %d", this, tmp);
+    debugVideoDisplay("VideoIn::Frame::Frame # %p Instance count at %d", this, tmp);
   }
 
   VideoIn::Frame::~Frame()
   {
     int tmp = 0;
     {
-      Radiant::GuardStatic g(__countermutex);
+      Radiant::Guard g(__countermutex);
       __framecount--;
       tmp = __framecount;
     }
-    debug("VideoIn::Frame::~Frame # %p Instance count at %d", this, tmp);
+    debugVideoDisplay("VideoIn::Frame::~Frame # %p Instance count at %d", this, tmp);
     m_image.freeMemory();
     if(m_audio)
       free(m_audio);
@@ -75,7 +75,7 @@ namespace VideoDisplay {
        (n < 10000 && m_allocatedAudio > 20000)) {
       /* If there is not enough space we need to allocate memory.
          If there is too much space we can free some memory. */
-      debug("VideoIn::Frame::copyAudio # %d -> %d", m_allocatedAudio, n);
+      debugVideoDisplay("VideoIn::Frame::copyAudio # %d -> %d", m_allocatedAudio, n);
 
       free(m_audio);
       m_audio = (float *) malloc(n * sizeof(float));
@@ -96,7 +96,7 @@ namespace VideoDisplay {
   void VideoIn::Frame::skipAudio(Radiant::TimeStamp amount,
                                  int channels, int samplerate)
   {
-    debug("VideoIn::Frame::skipAudio # %lf %d %d", amount.secondsD(), channels,
+    debugVideoDisplay("VideoIn::Frame::skipAudio # %lf %d %d", amount.secondsD(), channels,
           samplerate);
 
     if(amount <= 0)
@@ -140,8 +140,8 @@ namespace VideoDisplay {
     m_auBufferSize(0),
     m_auFrameBytes(0),
     m_continue(true),
-    m_vmutex(false, false, false),
-    m_amutex(false, false, false),
+    m_vmutex(false),
+    m_amutex(false),
     m_fps(30.0),
     m_done(false),
     m_ending(false),
@@ -150,14 +150,14 @@ namespace VideoDisplay {
     m_consumedRequests(0),
     m_queuedRequests(0),
     m_listener(0),
-    m_mutex(false, false, false)
+    m_mutex(false)
   {
-    debug("VideoIn::VideoIn # %p", this);
+    debugVideoDisplay("VideoIn::VideoIn # %p", this);
   }
 
   VideoIn::~VideoIn()
   {
-    debug("VideoIn::~VideoIn # %p", this);
+    debugVideoDisplay("VideoIn::~VideoIn # %p", this);
 
     Guard g(mutex());
 
@@ -185,7 +185,7 @@ namespace VideoDisplay {
     if(index < 0)
       return 0;
 
-    /* Radiant::debug("VideoIn::nextFrame # dec = %u cons = %u",
+    /* debugVideoDisplay("VideoIn::nextFrame # dec = %u cons = %u",
           m_decodedFrames, m_consumedFrames);
     */
     if((int) m_decodedFrames <= index)
@@ -250,7 +250,7 @@ namespace VideoDisplay {
         pos = 0;
     }
 
-    debug("VideoIn::play # %lf", pos.secondsD());
+    debugVideoDisplay("VideoIn::play # %lf", pos.secondsD());
 
     pushRequest(Req(START, pos));
 
@@ -259,7 +259,7 @@ namespace VideoDisplay {
 
   void VideoIn::stop()
   {
-    debug("VideoIn::stop");
+    debugVideoDisplay("VideoIn::stop");
 
     if(!m_continue && !isRunning())
       return;
@@ -285,7 +285,7 @@ namespace VideoDisplay {
 
   bool VideoIn::seek(Radiant::TimeStamp pos)
   {
-    debug("VideoIn::seek # %lf", pos.secondsD());
+    debugVideoDisplay("VideoIn::seek # %lf", pos.secondsD());
     m_displayFrameTime = pos;
 
     pushRequest(Req(SEEK, pos));
@@ -349,7 +349,7 @@ namespace VideoDisplay {
       }
     }
 
-    debug("VideoIn::selectFrame # %d (%d %lu) (%lu %lu) %lf %lf",
+    debugVideoDisplay("VideoIn::selectFrame # %d (%d %lu) (%lu %lu) %lf %lf",
           best, low, latest, m_consumedFrames, m_consumedAuFrames,
           close, time.secondsD());
 
@@ -373,7 +373,7 @@ namespace VideoDisplay {
     if(listener)
       assert(m_listener == 0);
 
-    debug("VideoIn::setAudioListener # from %p to %p", m_listener, listener);
+    debugVideoDisplay("VideoIn::setAudioListener # from %p to %p", m_listener, listener);
     m_listener = listener;
   }
 
@@ -382,7 +382,7 @@ namespace VideoDisplay {
 
   void VideoIn::childLoop()
   {
-    debug("VideoIn::childLoop # ENTRY");
+    debugVideoDisplay("VideoIn::childLoop # ENTRY");
 
     while(m_continue) {
 
@@ -399,7 +399,7 @@ namespace VideoDisplay {
       m_requestMutex.unlock();
 
       if(req.m_request != NO_REQUEST && req.m_request != FREE_MEMORY)
-        debug("VideoIn::childLoop # REQ = %d p = %d",
+        debugVideoDisplay("VideoIn::childLoop # REQ = %d p = %d",
               (int) req.m_request, (int) playing());
 
       if(req.m_request == START) {
@@ -429,7 +429,7 @@ namespace VideoDisplay {
 
     m_frames.clear();
 
-    debug("VideoIn::childLoop # EXIT");
+    debugVideoDisplay("VideoIn::childLoop # EXIT");
   }
 
 
@@ -496,10 +496,10 @@ namespace VideoDisplay {
     m_vcond.wakeAll();
 
     if(m_debug)
-      debug("VideoIn::putFrame # %p %lu %lu %lf",
+      debugVideoDisplay("VideoIn::putFrame # %p %lu %lu %lf",
             & f, m_decodedFrames, m_consumedFrames, absolute.secondsD());
 
-    debug("VideoIn::putFrame # %lu", m_decodedFrames);
+    debugVideoDisplay("VideoIn::putFrame # %lu", m_decodedFrames);
 
     f.m_lastUse = Radiant::TimeStamp::getTime();
 
@@ -508,7 +508,7 @@ namespace VideoDisplay {
 
   void VideoIn::ignorePreviousFrames()
   {
-    debug("VideoIn::ignorePreviousFrames # %lu", m_decodedFrames);
+    debugVideoDisplay("VideoIn::ignorePreviousFrames # %lu", m_decodedFrames);
     for(size_t i = m_consumedFrames; (i + 1) < m_decodedFrames; i++) {
       Frame * f = m_frames[i % m_frames.size()].get();
       if(f)
@@ -545,7 +545,7 @@ namespace VideoDisplay {
   void VideoIn::pushRequest(const Req & r)
   {
     if(r.m_request != NO_REQUEST && r.m_request != FREE_MEMORY)
-      debug("VideoIn::pushRequest # %d %lf", r.m_request, r.m_time.secondsD());
+      debugVideoDisplay("VideoIn::pushRequest # %d %lf", r.m_request, r.m_time.secondsD());
 
     Radiant::Guard g( m_requestMutex);
 

@@ -430,6 +430,10 @@ namespace Radiant {
 
   bool BinaryData::readString(char * str, size_t maxbytes)
   {
+    if(!available(sizeof(int32_t))) {
+      *str = '\0';
+      return false;
+    }
 
     int32_t marker = getRef<int32_t>();
 
@@ -455,6 +459,11 @@ namespace Radiant {
 
   bool BinaryData::readString(std::string & str)
   {
+    if(!available(sizeof(int32_t))) {
+      str.clear();
+      return false;
+    }
+
     int32_t marker = getRef<int32_t>();
 
     if(marker != STRING_MARKER) {
@@ -475,6 +484,11 @@ namespace Radiant {
 
   bool BinaryData::readWString(std::wstring & str)
   {
+    if(!available(sizeof(int32_t))) {
+      str.clear();
+      return false;
+    }
+
     int32_t marker = getRef<int32_t>();
 
     if(marker == WSTRING_MARKER) {
@@ -509,6 +523,9 @@ namespace Radiant {
 
   bool BinaryData::readBlob(void * ptr, int n)
   {
+    if(!available(sizeof(int32_t)))
+      return false;
+
     int32_t marker = getRef<int32_t>();
 
     if(marker != BLOB_MARKER) {

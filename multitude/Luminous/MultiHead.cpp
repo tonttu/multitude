@@ -260,7 +260,7 @@ namespace Luminous {
     m_size = size;
 
     if(m_areas.size() == 1) {
-      Radiant::debug("MultiHead::Window::resizeEvent");
+      debugLuminous("MultiHead::Window::resizeEvent");
       m_areas[0]->setSize(size);
     }
   }
@@ -454,7 +454,7 @@ namespace Luminous {
 
     size_t n = areaCount();
 
-    Radiant::debug("MultiHead::width # %lu", n);
+    debugLuminous("MultiHead::width # %lu", n);
 
     for(size_t i = 0; i < n; i++) {
       Area & a = area(i);
@@ -468,7 +468,7 @@ namespace Luminous {
       left  = Nimble::Math::Min(left,  wleft);
       right = Nimble::Math::Max(right, wright);
 
-      Radiant::debug("lr = %f %f", left, right);
+      debugLuminous("lr = %f %f", left, right);
     }
 
     return (int) (right - left);

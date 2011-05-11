@@ -84,9 +84,9 @@ namespace Valuable
 */
 
     /// Compares if two strings are equal
-    bool operator == (const T & that) { return that == Base::m_value; }
+    bool operator == (const T & that) const { return that == Base::m_value; }
     /// Compares if two strings are not equal
-    bool operator != (const T & that) { return that != Base::m_value; }
+    bool operator != (const T & that) const { return that != Base::m_value; }
 
     /// Returns the value as float
     float asFloat(bool * const ok = 0) const;
@@ -104,7 +104,7 @@ namespace Valuable
 
     const char * type() const { return VO_TYPE_STRING; }
 
-    ArchiveElement & serialize(Archive & archive);
+    ArchiveElement & serialize(Archive & archive) const;
     bool deserialize(ArchiveElement & element);
 
     /// Makes the string empty

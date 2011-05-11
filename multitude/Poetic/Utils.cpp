@@ -174,8 +174,6 @@ namespace Poetic
 
       sum += a;
 
-      // info("brea to lines: %d:%c %f vs %f", i, (char) c, sum, width);
-
       if(sum > width) {
 
         if(okEnd > 0) {

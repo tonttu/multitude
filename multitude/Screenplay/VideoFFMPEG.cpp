@@ -14,6 +14,7 @@
  */
 
 #include "VideoFFMPEG.hpp"
+#include "Screenplay.hpp"
 
 #include <Radiant/Mutex.hpp>
 #include <Radiant/Trace.hpp>
@@ -38,8 +39,8 @@ namespace Screenplay {
 
   using namespace Radiant;
 
-  static Radiant::MutexStatic __openmutex;
-  static Radiant::MutexStatic __countermutex;
+  static Radiant::Mutex __openmutex;
+  static Radiant::Mutex __countermutex;
   int    __instancecount = 0;
 
   int VideoInputFFMPEG::m_debug = 1;
@@ -64,13 +65,13 @@ namespace Screenplay {
     static bool once = false;
 
     if(!once) {
-      debug("Initializing AVCODEC 1");
+      debugScreenplay("Initializing AVCODEC 1");
       avcodec_init();
-      debug("Initializing AVCODEC 2");
+      debugScreenplay("Initializing AVCODEC 2");
       avcodec_register_all();
-      debug("Initializing AVCODEC 3");
+      debugScreenplay("Initializing AVCODEC 3");
       av_register_all();
-      debug("Initializing AVCODEC 4");
+      debugScreenplay("Initializing AVCODEC 4");
       once = true;
     }
 
@@ -79,11 +80,11 @@ namespace Screenplay {
 
     int tmp = 0;
     {
-      Radiant::GuardStatic g(__countermutex);
+      Radiant::Guard g(__countermutex);
       __instancecount++;
       tmp = __instancecount;
     }
-    debug("VideoInputFFMPEG::VideoInputFFMPEG # Instance count at %d", tmp);
+    debugScreenplay("VideoInputFFMPEG::VideoInputFFMPEG # Instance count at %d", tmp);
   }
 
   VideoInputFFMPEG::~VideoInputFFMPEG()
@@ -92,11 +93,11 @@ namespace Screenplay {
 
     int tmp = 0;
     {
-      Radiant::GuardStatic g(__countermutex);
+      Radiant::Guard g(__countermutex);
       __instancecount--;
       tmp = __instancecount;
     }
-    debug("VideoInputFFMPEG::~VideoInputFFMPEG # Instance count at %d", tmp);
+    debugScreenplay("VideoInputFFMPEG::~VideoInputFFMPEG # Instance count at %d", tmp);
   }
 
   const Radiant::VideoImage * VideoInputFFMPEG::captureImage()
@@ -121,14 +122,14 @@ namespace Screenplay {
 
         /* In the following we do not free the packet, since the read failed. Hope
            this is the correct behavior. */
-        debug("VideoInputFFMPEG::captureImage ret < 0 %x", m_flags);
+        debugScreenplay("VideoInputFFMPEG::captureImage ret < 0 %x", m_flags);
 
         if(! (m_flags & DO_LOOP)) {
           // av_free_packet(m_pkt);
           return 0;
         }
         else {
-          debug("VideoInputFFMPEG::captureImage # Looping %s", m_fileName.c_str());
+          debugScreenplay("VideoInputFFMPEG::captureImage # Looping %s", m_fileName.c_str());
           m_offsetTS = m_lastTS;
           av_seek_frame(m_ic, -1, (int64_t) 0, 0);
 
@@ -197,7 +198,7 @@ namespace Screenplay {
           else
             m_lastTS = Radiant::TimeStamp::createSecondsD(secs);
 
-          debug("VideoInputFFMPEG::captureImage # pts = %d %d %d lts = %lf\n",
+          debugScreenplay("VideoInputFFMPEG::captureImage # pts = %d %d %d lts = %lf\n",
                 (int) m_frame->pts, (int) m_pkt->pts, (int) m_pkt->dts,
                 m_lastTS.secondsD());
 
@@ -224,29 +225,63 @@ namespace Screenplay {
       if (m_pkt->stream_index == m_aindex && (m_flags & Radiant::WITH_AUDIO)
         && m_acodec) {
 
+        // decode into a temp audio buffer, later will be resampled
+        std::vector<int16_t> audioInBuffer;
+        int srcSz, dstSz;  // in samples
+
+        int aframesIn = AVCODEC_MAX_AUDIO_FRAME_SIZE * m_audioChannels;   // in bytes
+        audioInBuffer.resize(aframesIn);
+
+        avcodec_decode_audio3(m_acontext,
+                              & audioInBuffer[0],
+                              & aframesIn, m_pkt);
+
+        srcSz = aframesIn / 2;
+        dstSz = srcSz * 44100 / m_audioSampleRate;
+
         int index = m_audioFrames * actualChannels();
-
-        int aframes = ((int) m_audioBuffer.size() - index) * 2;
-
-        if(aframes < AVCODEC_MAX_AUDIO_FRAME_SIZE) {
-          m_audioBuffer.resize(m_audioBuffer.size() + AVCODEC_MAX_AUDIO_FRAME_SIZE * m_audioChannels);
-          aframes = ((int) m_audioBuffer.size() - index) * 2;
+        int aframesOut = ((int) m_audioBuffer.size() - index) * 2;
+        if(aframesOut < dstSz * 2) {
+          m_audioBuffer.resize(m_audioBuffer.size() + dstSz * 2);
+          aframesOut = ((int) m_audioBuffer.size() - index) * 2;
           if(m_audioBuffer.size() > 1000000) {
             info("VideoInputFFMPEG::captureImage # %p Audio buffer is very large now: %d (%ld)",
                  this, (int) m_audioBuffer.size(), m_capturedVideo);
           }
         }
 
-        avcodec_decode_audio3(m_acontext,
-                              & m_audioBuffer[index],
-                              & aframes, m_pkt);
+        // resample to 44100HZ
+        AVResampleContext* audio_ctx = av_resample_init( 44100,             // out rate
+                                                         m_audioSampleRate, // in rate
+                                                         16,                // filter length
+                                                         10,                // phase count
+                                                         0,                 // linear FIR filter
+                                                         1.0);              // cutoff frequency
 
-        aframes /= (2 * m_audioChannels);
+        if(!audio_ctx)
+          error("%s: Failed to create resampling context", fname);
+
+        int consumed = 0;
+        int resampled = av_resample(audio_ctx,
+                                   &m_audioBuffer[index],               // out buffer
+                                   &audioInBuffer[0],                   // in buffer
+                                   &consumed,
+                                   srcSz,                               // in samples
+                                   aframesOut/2,                        // in samples
+                                   0);
+        if(!resampled > 0)
+          error("%s: Failed to resample", fname);
+
+        debugScreenplay("consumed: %d; resampled: %d; inrate: %d; outrate: %d", consumed, resampled, m_audioSampleRate, 44100);
+
+        av_resample_close(audio_ctx);
+
+        aframesOut = resampled / m_audioChannels;
         int64_t pts = m_pkt->pts;
 
         if(m_flags & Radiant::MONOPHONIZE_AUDIO) {
           // Force to mono sound.
-          for(int a = 0; a < aframes; a++) {
+          for(int a = 0; a < aframesOut; a++) {
             int sum = 0;
             int base = index + a * m_audioChannels;
             for(int chan = 0; chan < m_audioChannels; chan++) {
@@ -273,12 +308,12 @@ namespace Screenplay {
         double secs = pts * rate;
 
 
-        debug("VideoInputFFMPEG::captureImage # af = %d ab = %d ppts = %d, pdts = %d afr = %d secs = %lf tb = %ld/%ld",
-              aframes, m_audioFrames, (int) m_pkt->pts, (int) m_pkt->dts,
+        debugScreenplay("VideoInputFFMPEG::captureImage # af = %d ab = %d ppts = %d, pdts = %d afr = %d secs = %lf tb = %ld/%ld",
+              aframesOut, m_audioFrames, (int) m_pkt->pts, (int) m_pkt->dts,
               (int) m_acontext->frame_number, secs,
               (long) time_base.num, (long) time_base.den);
 
-        if(aframes > 10000)
+        if(aframesOut > 10000)
           pts = m_capturedAudio;
 
         if(m_audioFrames == 0) {
@@ -292,14 +327,14 @@ namespace Screenplay {
           m_audioTS += m_offsetTS;
         }
 
-        debug("Decoding audio # %d %lf", aframes, m_audioTS.secondsD());
+        debugScreenplay("Decoding audio # %d %lf", aframesOut, m_audioTS.secondsD());
 
-        m_audioFrames   += aframes;
-        m_capturedAudio += aframes;
+        m_audioFrames   += aframesOut;
+        m_capturedAudio += aframesOut;
 
         if((uint)(m_audioFrames * m_audioChannels) >= m_audioBuffer.size()) {
           Radiant::error("VideoInputFFMPEG::captureImage # %p Audio trouble %d %d (%ld)",
-                         this, aframes, m_audioFrames, m_capturedVideo);
+                         this, aframesOut, m_audioFrames, m_capturedVideo);
         }
         // printf("_"); fflush(0);
       }
@@ -314,11 +349,11 @@ namespace Screenplay {
       int perFrame = (int) (frames - m_capturedAudio);
 
       if(perFrame > 20000) {
-        debug("VideoInputFFMPEG::captureImage # Large audio generated");
+        debugScreenplay("VideoInputFFMPEG::captureImage # Large audio generated");
         perFrame = 20000;
       }
 
-      debug("VideoInputFFMPEG::captureImage # %lf %d %d %d aufr in total %d vidfr",
+      debugScreenplay("VideoInputFFMPEG::captureImage # %lf %d %d %d aufr in total %d vidfr",
             secs, perFrame, (int) m_audioFrames, (int) m_capturedAudio, (int) m_capturedVideo);
 
       m_audioTS = m_lastTS;
@@ -343,32 +378,32 @@ namespace Screenplay {
     if(avcfmt == PIX_FMT_YUV420P) {
       m_image.setFormatYUV420P();
       if(m_debug && m_capturedVideo < 10)
-        debug("%s # PIX_FMT_YUV420P", fname);
+        debugScreenplay("%s # PIX_FMT_YUV420P", fname);
     }
     else if(avcfmt == PIX_FMT_YUVJ420P) {
       m_image.setFormatYUV420P();
       if(m_debug && m_capturedVideo < 10)
-        debug("%s # PIX_FMT_YUV420P", fname);
+        debugScreenplay("%s # PIX_FMT_YUV420P", fname);
     }
     else if(avcfmt == PIX_FMT_YUVJ422P) {
       m_image.setFormatYUV422P();
       if(m_debug && m_capturedVideo < 10)
-        debug("%s # PIX_FMT_YUV422P", fname);
+        debugScreenplay("%s # PIX_FMT_YUV422P", fname);
     }
     else if(avcfmt == PIX_FMT_RGB24) {
       m_image.setFormatRGB();
       if(m_debug && m_capturedVideo < 10)
-        debug("%s # PIX_FMT_RGB24", fname);
+        debugScreenplay("%s # PIX_FMT_RGB24", fname);
     }
     else if(avcfmt == PIX_FMT_RGBA) {
       m_image.setFormatRGBA();
       if(m_debug && m_capturedVideo < 10)
-        debug("%s # PIX_FMT_RGBA", fname);
+        debugScreenplay("%s # PIX_FMT_RGBA", fname);
     }
     else if(avcfmt == PIX_FMT_BGRA) {
       m_image.setFormatBGRA();
       if(m_debug && m_capturedVideo < 10)
-        debug("%s # PIX_FMT_BGRA", fname);
+        debugScreenplay("%s # PIX_FMT_BGRA", fname);
     }
     else {
       Radiant::error("%s # unsupported FFMPEG pixel format %d", fname, (int) avcfmt);
@@ -487,7 +522,7 @@ namespace Screenplay {
       r *= (double) (m_capturedVideo - 1) / (double) m_lastPts;
     }
 
-    Radiant::debug("VideoInputFFMPEG::fps # %d %d -> %.2lf",
+    debugScreenplay("VideoInputFFMPEG::fps # %d %d -> %.2lf",
                    time_base.den, time_base.num, r);
 
     return float(r);
@@ -542,7 +577,7 @@ namespace Screenplay {
 
     bzero( & params, sizeof(params));
 
-    GuardStatic g( __openmutex);
+    Guard g( __openmutex);
 
     int err = av_open_input_file( & m_ic, filename, iformat, 0, ap);
 
@@ -570,7 +605,7 @@ namespace Screenplay {
 
         AVRational fr = m_ic->streams[i]->r_frame_rate;
 
-        debug("%s # Got frame rate of %d %d", fname, fr.num, fr.den);
+        debugScreenplay("%s # Got frame rate of %d %d", fname, fr.num, fr.den);
 
         /* if(m_vcodec->supported_framerates) {
            for(int k = 0; m_vcodec->supported_framerates[k].num != 0; k++) {
@@ -638,11 +673,11 @@ namespace Screenplay {
     }
 
     if(!acname) {
-      debug("%s # File %s has unsupported audio codec.", fname, filename);
+      debugScreenplay("%s # File %s has unsupported audio codec.", fname, filename);
       // return false;
     }
 
-    debug("%s # Opened file %s,  (%d x %d %s, %s %d chans @ %d Hz) %d (%d, %f)",
+    debugScreenplay("%s # Opened file %s,  (%d x %d %s, %s %d chans @ %d Hz) %d (%d, %f)",
           fname, filename, width(), height(), vcname, acname, m_audioChannels,
           m_audioSampleRate,
           (int) m_image.m_format, (int) m_vcontext->pix_fmt, ratio);
@@ -655,7 +690,7 @@ namespace Screenplay {
     //    if(!m_ic)
     //      return false;
 
-    GuardStatic g( __openmutex);
+    Guard g( __openmutex);
 
     if(m_frame)
       av_free(m_frame);
@@ -697,7 +732,7 @@ namespace Screenplay {
 
   bool VideoInputFFMPEG::seekPosition(double timeSeconds)
   {
-    debug("VideoInputFFMPEG::seekPosition # %lf", timeSeconds);
+    debugScreenplay("VideoInputFFMPEG::seekPosition # %lf", timeSeconds);
 
     if(m_vcontext)
       avcodec_flush_buffers(m_vcontext);

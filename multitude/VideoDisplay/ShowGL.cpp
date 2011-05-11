@@ -14,6 +14,7 @@
  */
 
 #include "ShowGL.hpp"
+#include "VideoDisplay.hpp"
 
 #include "AudioTransfer.hpp"
 #include "VideoInFFMPEG.hpp"
@@ -149,7 +150,7 @@ namespace VideoDisplay {
       int tmp = getUniformLoc(params[i]);
       m_uniforms[i] = tmp;
       ok = ok && (tmp >= 0);
-      debug("ShowGL::YUVProgram::link # %s -> %d", params[i], i);
+      debugVideoDisplay("ShowGL::YUVProgram::link # %s -> %d", params[i], i);
     }
 
     return ok;
@@ -271,7 +272,7 @@ namespace VideoDisplay {
 
       if(m_frame < 0 || area != tex->size()) {
 
-        debug("ShowGL::YUVProgram::doTextures # area = [%d %d] ptr = %p",
+        debugVideoDisplay("ShowGL::YUVProgram::doTextures # area = [%d %d] ptr = %p",
               area.x, area.y, img->m_planes[i].m_data);
 
         tex->setWidth(area.x);
@@ -332,13 +333,13 @@ namespace VideoDisplay {
       m_seeking(false),
       m_contrast(this, "contrast", 1.0f)
   {
-    debug("ShowGL::ShowGL # %p", this);
+    debugVideoDisplay("ShowGL::ShowGL # %p", this);
     clearHistogram();
   }
 
   ShowGL::~ShowGL()
   {
-    debug("ShowGL::~ShowGL # %p", this);
+    debugVideoDisplay("ShowGL::~ShowGL # %p", this);
     stop();
     delete m_video;
   }
@@ -353,7 +354,7 @@ namespace VideoDisplay {
                     int targetChannel,
                     int flags)
   {
-    debug("ShowGL::init # %s", filename);
+    debugVideoDisplay("ShowGL::init # %s", filename);
 
     assert(filename != 0);
 
@@ -390,7 +391,7 @@ namespace VideoDisplay {
       m_preview.m_image.copyData(m_frame->m_image);
       m_preview.m_time = m_frame->m_time;
       m_frame = & m_preview;
-      debug("Captured preview frame %p", m_frame);
+      debugVideoDisplay("Captured preview frame %p", m_frame);
     }
 
     delete m_video;
@@ -400,7 +401,7 @@ namespace VideoDisplay {
     m_duration = Radiant::TimeStamp::createSecondsD(m_video->durationSeconds());
     m_seeking = true;
 
-    debug("ShowGL::init # Opened %s (%lf secs)",
+    debugVideoDisplay("ShowGL::init # Opened %s (%lf secs)",
           filename, m_duration.secondsD());
 
     return true;
@@ -418,7 +419,7 @@ namespace VideoDisplay {
   {
     static int __count = 1;
 
-    debug("ShowGL::start # %p", this);
+    debugVideoDisplay("ShowGL::start # %p", this);
 
     if(m_state == PLAY || !m_video) {
       return false;
@@ -453,7 +454,7 @@ namespace VideoDisplay {
 
   bool ShowGL::stop()
   {
-    debug("ShowGL::stop # %p", this);
+    debugVideoDisplay("ShowGL::stop # %p", this);
 
     if(m_state != PLAY)
       return false;
@@ -535,7 +536,7 @@ namespace VideoDisplay {
     if(m_audio) {
       videoFrame = m_audio->videoFrame();
       if(m_audio->atEnd()) {
-        debug("ShowGL::update # At end");
+        debugVideoDisplay("ShowGL::update # At end");
         stop();
 
         Radiant::BinaryData bd;
@@ -562,7 +563,7 @@ namespace VideoDisplay {
     VideoIn::Frame * f = m_video->getFrame(videoFrame, true);
 
     if(!f) {
-      debug("ShowGL::update # NO FRAME %d", videoFrame);
+      debugVideoDisplay("ShowGL::update # NO FRAME %d", videoFrame);
       return;
     }
 
@@ -575,14 +576,14 @@ namespace VideoDisplay {
     m_frame = f;
 
     if(m_videoFrame != videoFrame) {
-      debug("ShowGL::update # Move %d -> %d (%lf, %d x %d)",
+      debugVideoDisplay("ShowGL::update # Move %d -> %d (%lf, %d x %d)",
             m_videoFrame, videoFrame, m_position.secondsD(),
             m_frame->m_image.m_width, m_frame->m_image.m_height);
       m_count++;
       m_videoFrame = videoFrame;
     }
 
-    debug("ShowGL::update # %p f = %p index = %d", this, m_frame, videoFrame);
+    debugVideoDisplay("ShowGL::update # %p f = %p index = %d", this, m_frame, videoFrame);
 
     // m_subTitles.update(m_position);
   }
@@ -599,7 +600,7 @@ namespace VideoDisplay {
                       float alpha)
   {
 
-    debug("ShowGL::render");
+    debugVideoDisplay("ShowGL::render");
     GLRESOURCE_ENSURE(MyTextures, textures, this, resources);
 
     Luminous::GLSLProgramObject * shader = 0;
@@ -611,13 +612,13 @@ namespace VideoDisplay {
       bottomright.y = topleft.y + s.y;
     }
 
-    debug("ShowGL::render # %p f = %p", this, m_frame);
+    debugVideoDisplay("ShowGL::render # %p f = %p", this, m_frame);
 
     Luminous::Utils::glCheck("ShowGL::render # entry");
 
     if(m_frame) {
 
-      // debug("ShowGL::render # %p %p", this, m_frame);
+      // debugVideoDisplay("ShowGL::render # %p %p", this, m_frame);
 
       textures->doTextures(m_count, & m_frame->m_image);
       textures->bind();
@@ -631,7 +632,7 @@ namespace VideoDisplay {
         GLRESOURCE_ENSURE(Luminous::GLSLProgramObject, rgb2rgb, & rgbkey, resources);
         if(rgb2rgb->shaderObjectCount() == 0) {
           assert(rgb2rgb->loadStrings(0, rgbshader));
-          debug("Loaded rgb2rgb shader");
+          debugVideoDisplay("Loaded rgb2rgb shader");
         }
 
         rgb2rgb->bind();
@@ -711,7 +712,7 @@ namespace VideoDisplay {
     // info("The video frame is %d", m_videoFrame);
 
     Luminous::Utils::glCheck("ShowGL::render");
-    debug("ShowGL::render # EXIT");
+    debugVideoDisplay("ShowGL::render # EXIT");
   }
 
   Nimble::Vector2i ShowGL::size() const
@@ -736,7 +737,7 @@ namespace VideoDisplay {
 
     m_position = time;
 
-    debug("ShowGL::seekTo # %lf", time.secondsD());
+    debugVideoDisplay("ShowGL::seekTo # %lf", time.secondsD());
 
     m_video->seek(time);
     m_seeking = true;
@@ -759,7 +760,7 @@ namespace VideoDisplay {
     if(!m_audio)
       return;
 
-    debug("ShowGL::panAudioTo # %p %p %p [%.2f %.2f]", this, m_video, m_audio,
+    debugVideoDisplay("ShowGL::panAudioTo # %p %p %p [%.2f %.2f]", this, m_video, m_audio,
           location.x, location.y);
 
     char buf[128];

@@ -64,14 +64,24 @@ namespace Nimble {
       *this = m;
     }
 
+    QuaternionT & normalize()
+    {
+      float m = Nimble::Math::InvSqrt(lensq());
+      x *= m;
+      y *= m;
+      z *= m;
+      w *= m;
+      return *this;
+    }
+
     /// Transforms the argument vector this quaternion transformation
     template <typename Y>
     Vector3T<Y> operator*(const Vector3T<Y> & v) const
     {
       // nVidia SDK implementation
       Vector3T<Y> qvec(x, y, z);
-      Vector3T<Y> uv = cross(qvec, v);
-      Vector3T<Y> uuv = cross(qvec, uv);
+      Vector3T<Y> uv = ::cross(qvec, v);
+      Vector3T<Y> uuv = ::cross(qvec, uv);
       uv *= (2.0f * w);
       uuv *= 2.0f;
       return v + uv + uuv;

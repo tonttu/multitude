@@ -91,7 +91,7 @@ namespace Radiant {
     typedef std::list<Item> container;
     container m_messages;
 
-    MutexAuto m_mutex;
+    Mutex m_mutex;
 
     volatile FILE * m_file;
     volatile bool   m_ready;

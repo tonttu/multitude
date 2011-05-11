@@ -1,5 +1,7 @@
 /* COPYRIGHT
  */
+
+#include "Poetic.hpp"
 #include "CPUWrapperFont.hpp"
 #include "GPUWrapperFont.hpp"
 #include "CPUManagedFont.hpp"
@@ -60,6 +62,9 @@ namespace Poetic
   void CPUWrapperFont::advanceList(const wchar_t * str, float * advances, int n)
   {
     CPUFont * f = m_managedFont->getMetricFont();
+    if (!f)
+      return;
+
     float s = static_cast<float> (m_pointSize) / static_cast<float> (f->faceSize());
 
     f->advanceList(str, advances, n);
@@ -101,6 +106,7 @@ namespace Poetic
 
   void CPUWrapperFont::bbox(const char * str, BBox & bbox)
   {
+    //Radiant::Guard g(Poetic::freetypeMutex());
     CPUFont * f = m_managedFont->getMetricFont();
     float s = static_cast<float> (m_pointSize) / static_cast<float> (f->faceSize());
 
@@ -110,6 +116,7 @@ namespace Poetic
 
   void CPUWrapperFont::bbox(const wchar_t * str, BBox & bbox)
   {
+    //    Radiant::Guard g(Poetic::freetypeMutex());
     CPUFont * f = m_managedFont->getMetricFont();
     float s = static_cast<float> (m_pointSize) / static_cast<float> (f->faceSize());
 

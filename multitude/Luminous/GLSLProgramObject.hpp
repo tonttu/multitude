@@ -55,7 +55,7 @@ namespace Luminous
 
     /// Binds the program to make it active
     virtual void bind();
-    /// Clears any binded programs
+    /// Clears any bound programs
     virtual void unbind();
 
     /// Gets the location of the given uniform variable

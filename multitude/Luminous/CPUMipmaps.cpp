@@ -15,16 +15,19 @@
 
 #include "CPUMipmaps.hpp"
 
-#include "GPUMipmaps.hpp"
-
 #include <Luminous/GLResources.hpp>
+#include <Luminous/Utils.hpp>
 
+#include <Radiant/PlatformUtils.hpp>
 #include <Radiant/Directory.hpp>
 #include <Radiant/FileUtils.hpp>
 #include <Radiant/Trace.hpp>
 
 #include <cassert>
 #include <fstream>
+
+#include <QFileInfo>
+#include <QCryptographicHash>
 
 #ifdef WIN32
 #define snprintf _snprintf
@@ -36,19 +39,62 @@ namespace {
   const int resizes = 5;
 }
 
+#ifdef CPUMIPMAPS_PROFILING
+struct ProfileData
+{
+  ProfileData() : totalTime(0.0), timesLoaded(0) {}
+  double totalTime;
+  int timesLoaded;
+  std::string filename;
+};
+class Profiler
+{
+public:
+  ProfileData & next()
+  {
+    Radiant::Guard g(m_mutex);
+    m_lst.push_back(ProfileData());
+    return m_lst.back();
+  }
+
+  ~Profiler()
+  {
+    std::multimap<double, ProfileData*> sorted;
+    for(std::list<ProfileData>::iterator it = m_lst.begin(); it != m_lst.end(); ++it) {
+      sorted.insert(std::make_pair(-it->totalTime, &*it));
+    }
+    for(std::multimap<double, ProfileData*>::iterator it = sorted.begin(); it != sorted.end(); ++it) {
+      const ProfileData & d = *it->second;
+      std::cout << d.filename.c_str() << " : " << d.totalTime << " (" << d.timesLoaded << ")" << std::endl;
+    }
+  }
+
+private:
+  Radiant::Mutex m_mutex;
+  std::list<ProfileData> m_lst;
+};
+static Profiler s_profiler;
+#endif
+
 namespace Luminous {
 
   using namespace Radiant;
 
   CPUMipmaps::CPUMipmaps()
-    : m_fileModified(0),
+    : Task(),
+    m_fileModified(0),
     m_stack(1),
     m_nativeSize(0, 0),
     m_firstLevelSize(0, 0),
     m_maxLevel(0),
     m_hasAlpha(false),
-    m_timeOut(5.0f),
-    m_keepMaxLevel(true)
+    m_timeOutCPU(5.0f),
+    m_timeOutGPU(5.0f),
+    m_keepMaxLevel(true),
+    m_loadingPriority(PRIORITY_NORMAL)
+  #ifdef CPUMIPMAPS_PROFILING
+    , m_profile(s_profiler.next())
+  #endif
   {
   }
 
@@ -56,29 +102,22 @@ namespace Luminous {
   {
   }
 
-  void CPUMipmaps::update(float dt, float )
-  {
-    Radiant::Guard g(m_stackMutex);
-    for(int i = 0; i < m_maxLevel; i++) {
-      m_stack[i].m_unUsed += dt;
-    }
-    if(!m_keepMaxLevel)
-      m_stack[m_maxLevel].m_unUsed += dt;
-
-    Radiant::Guard g2(m_stackChangeMutex);
-    for(StackMap::iterator it = m_stackChange.begin(); it != m_stackChange.end(); ++it)
-      m_stack[it->first] = it->second;
-    m_stackChange.clear();
-  }
-
   int CPUMipmaps::getOptimal(Nimble::Vector2f size)
   {
-    float ask = size.maximum(), first = m_firstLevelSize.maximum();
+    float ask = size.maximum();
 
+    // Dimension of the first mipmap level (quarter-size from original)
+    float first = m_firstLevelSize.maximum();
+
+    // Use the original image (level 0) if asked for bigger than first level mipmap
     if(ask >= first)
       return 0;
 
-    int bestlevel = Nimble::Math::Floor(log(ask/first) / log(0.5)) + 1;
+    // if the size is really small, the calculation later does funny things
+    if(ask <= (int(first) >> m_maxLevel))
+      return m_maxLevel;
+
+    int bestlevel = Nimble::Math::Floor(log(ask / first) / log(0.5)) + 1;
 
     if(bestlevel > m_maxLevel)
       bestlevel = m_maxLevel;
@@ -102,6 +141,7 @@ namespace Luminous {
     if(item.m_state == READY)
       return bestlevel;
 
+    m_priority = m_loadingPriority;
     reschedule();
     BGThread::instance()->reschedule(this);
 
@@ -136,11 +176,23 @@ namespace Luminous {
     return image;
   }
 
+  std::shared_ptr<CompressedImageTex> CPUMipmaps::getCompressedImage(int i)
+  {
+    CPUItem item = getStack(i);
+
+    std::shared_ptr<CompressedImageTex> image = item.m_compressedImage;
+    if(item.m_state != READY) {
+      return std::shared_ptr<CompressedImageTex>();
+    }
+
+    return image;
+  }
+
   void CPUMipmaps::markImage(size_t i)
   {
     assert(i < m_stack.size());
     /// assert(is locked)
-    m_stack[i].m_unUsed = 0.0f;
+    m_stack[i].m_lastUsed = Radiant::TimeStamp::getTime();
   }
 
   bool CPUMipmaps::isReady()
@@ -149,7 +201,7 @@ namespace Luminous {
     for(int i = 0; i <= m_maxLevel; i++) {
       CPUItem & ci = m_stack[i];
 
-      if(ci.m_state == WAITING && ci.m_unUsed < m_timeOut)
+      if(ci.m_state == WAITING && ci.sinceLastUse() < m_timeOutCPU)
         return false;
     }
 
@@ -158,13 +210,15 @@ namespace Luminous {
 
   bool CPUMipmaps::startLoading(const char * filename, bool)
   {
+#ifdef CPUMIPMAPS_PROFILING
+    m_profile.filename = filename;
+#endif
     m_filename = filename;
     m_fileModified = FileUtils::lastModified(m_filename);
     m_info = Luminous::ImageInfo();
 
     if(!Luminous::Image::ping(filename, m_info)) {
-      error("CPUMipmaps::startLoading # failed to query image size for %s",
-            filename);
+      error("CPUMipmaps::startLoading # failed to query image size for %s", filename);
       return false;
     }
 
@@ -186,50 +240,135 @@ namespace Luminous {
     // m_maxLevel, m_firstLevelSize and m_nativeSize have to be set before running getOptimal
     m_maxLevel = std::numeric_limits<int>::max();
     m_maxLevel = getOptimal(Nimble::Vector2f(SMALLEST_IMAGE, SMALLEST_IMAGE));
+    if(m_info.pf.compression()) {
+      m_maxLevel = Nimble::Math::Min(m_maxLevel, m_info.mipmaps - 1);
+    }
 
     m_shouldSave.insert(getOptimal(Nimble::Vector2f(SMALLEST_IMAGE, SMALLEST_IMAGE)));
     m_shouldSave.insert(getOptimal(Nimble::Vector2f(DEFAULT_SAVE_SIZE1, DEFAULT_SAVE_SIZE1)));
     m_shouldSave.insert(getOptimal(Nimble::Vector2f(DEFAULT_SAVE_SIZE2, DEFAULT_SAVE_SIZE2)));
+    // Don't save the original image as mipmap
     m_shouldSave.erase(0);
 
     m_stack.resize(m_maxLevel+1);
 
-    m_priority = Luminous::Task::PRIORITY_HIGH;
+    m_priority = PRIORITY_HIGH;
     markImage(m_maxLevel);
     reschedule();
 
     return true;
   }
 
-  GPUMipmaps * CPUMipmaps::getGPUMipmaps(GLResources * resources)
+  bool CPUMipmaps::bind(Nimble::Vector2 pixelSize, GLenum textureUnit)
   {
-    GLResource * r = resources->getResource(this);
+    return bind(GLResources::getThreadResources(), pixelSize, textureUnit);
+  }
 
-    if(!r) {
-      GPUMipmaps * gm = new GPUMipmaps(this, resources);
-      resources->addResource(this, gm);
-      return gm;
+  bool CPUMipmaps::bind(const Nimble::Matrix3 &transform, Nimble::Vector2 pixelSize, GLenum textureUnit)
+  {
+    return bind(GLResources::getThreadResources(), transform, pixelSize, textureUnit);
+  }
+
+  bool CPUMipmaps::bind(GLResources * resources, const Nimble::Matrix3 &transform, Nimble::Vector2 pixelSize, GLenum textureUnit)
+  {
+    // Transform the corners and compute the lengths of the sides of the transformed rectangle.
+    // We use the maximum of the edge lengths to get sheared textures appear correctly.
+    Nimble::Vector2 lb = transform.project(0, 0);
+    Nimble::Vector2 rb = transform.project(pixelSize.x, 0);
+    Nimble::Vector2 lt = transform.project(0, pixelSize.y);
+    Nimble::Vector2 rt = transform.project(pixelSize.x, pixelSize.y);
+
+    float x1 = (rb - lb).length();
+    float x2 = (rt - lt).length();
+
+    float y1 = (lt - lb).length();
+    float y2 = (rt - rb).length();
+
+    return bind(resources, Nimble::Vector2(std::max(x1, x2), std::max(y1, y2)), textureUnit);
+  }
+
+  bool CPUMipmaps::bind(GLResources * resources, Nimble::Vector2 pixelSize, GLenum textureUnit)
+  {
+    StateInfo & si = m_stateInfo.ref(resources);
+    si.bound = -1;
+    si.optimal = getOptimal(pixelSize);
+
+    // Find the best available mipmap
+    int bestAvailable = getClosest(pixelSize);
+    if(bestAvailable < 0)
+      return false;
+
+    // Mark the mipmap that it has been used
+    markImage(bestAvailable);
+
+    if(m_info.pf.compression()) {
+      si.bound = bestAvailable;
+      std::shared_ptr<CompressedImageTex> img = getCompressedImage(bestAvailable);
+      img->bind(resources, textureUnit);
+      return true;
     }
 
-    GPUMipmaps * gm = dynamic_cast<GPUMipmaps *> (r);
+    std::shared_ptr<ImageTex> img = getImage(bestAvailable);
 
-    assert(gm);
+    if(img->isFullyLoadedToGPU()) {
+      si.bound = bestAvailable;
+      img->bind(resources, textureUnit, false);
+      Luminous::Utils::glCheck("GPUMipmaps::bind # 1");
+      return true;
+    }
 
-    return gm;
+    // Limit how many pixels we can upload immediately
+    /// @todo this should be a global per frame limit in bytes - see UploadLimiter::available
+    const size_t instantUploadPixelLimit = 1.5e6;
+
+    // Upload the whole texture at once if possible
+    const size_t imagePixels = img->width() * img->height();
+    if(imagePixels < instantUploadPixelLimit) {
+
+      si.bound = bestAvailable;
+      img->bind(resources, textureUnit, false);
+
+      return true;
+
+    } else {
+      // Texture is too big, do partial upload
+      img->uploadBytesToGPU(resources, instantUploadPixelLimit);
+
+      if(img->isFullyLoadedToGPU()) {
+        si.bound = bestAvailable;
+        img->bind(resources, textureUnit, false);
+
+        return true;
+      }
+
+      // If the requested texture is not fully uploaded, test if there is
+      // anything we can use already
+      for(size_t i = 0; i < stackSize(); i++) {
+
+        std::shared_ptr<ImageTex> test = getImage((int) i);
+        if(!test)
+          continue;
+
+        size_t area = test->width() * test->height();
+
+        // If the texture is fully uploaded or its small enough, we bypass the
+        // pixel budget and upload it anyway (ImageTex::bind() uploads the
+        // texture as a side-effect).
+
+        if(test->isFullyLoadedToGPU() || (area < (instantUploadPixelLimit / 3))) {
+          si.bound = (int) i;
+          test->bind(resources, textureUnit, false);
+
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
-  GPUMipmaps * CPUMipmaps::getGPUMipmaps()
+  CPUMipmaps::StateInfo CPUMipmaps::stateInfo(GLResources * resources)
   {
-    return getGPUMipmaps(GLResources::getThreadResources());
-  }
-
-  bool CPUMipmaps::bind(GLResources * r,
-                        const Nimble::Matrix3 & transform,
-                        Nimble::Vector2 pixelsize)
-  {
-    GPUMipmaps * gpumaps = getGPUMipmaps(r);
-
-    return gpumaps->bind(transform, pixelsize);
+    return m_stateInfo.ref(resources);
   }
 
   bool CPUMipmaps::isActive()
@@ -249,6 +388,13 @@ namespace Luminous {
     // info("CPUMipmaps::pixelAlpha # %f %f", relLoc.x, relLoc.y);
 
     for(int i = 0; i <= m_maxLevel; ++i) {
+      if(m_info.pf.compression()) {
+        std::shared_ptr<CompressedImage> c = getCompressedImage(i);
+        if(!c) continue;
+
+        return 255 * c->readAlpha(Nimble::Vector2f(relLoc.x * c->width(), relLoc.y * c->height()));
+      }
+
       std::shared_ptr<ImageTex> im = getImage(i);
 
       if(!im) continue;
@@ -281,6 +427,7 @@ namespace Luminous {
   void CPUMipmaps::finish()
   {
     setState(Task::DONE);
+    m_priority = PRIORITY_LOW;
     reschedule(0, 0);
   }
 
@@ -308,79 +455,93 @@ namespace Luminous {
     if(state() == Task::DONE)
       return;
 
-    double delay = 60.0;
-    m_priority = Luminous::Task::PRIORITY_NORMAL;
+    double delay = 3600.0;
+    m_priority = PRIORITY_LOW;
+    // sets the m_scheduled time to somewhere future, it can be decreased later
     reschedule(delay, true);
 
-    StackMap stack;
+    StackMap removed_stack;
 
     for(int i = 0; i <= m_maxLevel; i++) {
-      const CPUItem item = getStack(i);
-      double time_to_expire = m_timeOut - item.m_unUsed;
+      CPUItem item = getStack(i);
+      double time_to_expire_cpu = m_timeOutCPU - item.sinceLastUse();
+      double time_to_expire_gpu = m_timeOutGPU - item.sinceLastUse();
 
-      if(time_to_expire > 0) {
+      if(time_to_expire_cpu > 0) {
         if(item.m_state == WAITING) {
+          StackMap stack;
+#ifdef CPUMIPMAPS_PROFILING
+          Radiant::TimeStamp ts(Radiant::TimeStamp::getTime());
+#endif
           recursiveLoad(stack, i);
-        } else {
-          if(time_to_expire < delay)
-            delay = time_to_expire;
+#ifdef CPUMIPMAPS_PROFILING
+          m_profile.totalTime += ts.sinceSecondsD()*1000.0;
+          m_profile.timesLoaded++;
+#endif
+          if(!stack.empty()) {
+            item = stack[i];
+            Radiant::Guard g(m_stackMutex);
+            for(StackMap::iterator it = stack.begin(); it != stack.end(); ++it)
+              m_stack[it->first] = it->second;
+          }
         }
-      } else if(item.m_state == READY) { // unused image
+        if(time_to_expire_cpu < delay)
+          delay = time_to_expire_cpu;
+
+        if(time_to_expire_gpu < 0) {
+          removed_stack[i] = item;
+          removed_stack[i].dropFromGPU();
+        } else if(time_to_expire_gpu < delay)
+          delay = time_to_expire_gpu;
+      } else if((!m_keepMaxLevel || i != m_maxLevel) && item.m_state == READY) {
+        // (time_to_expire <= 0) -> free the image
+
         //info("CPUMipmaps::doTask # Dropping %s %d", m_filename.c_str(), i);
-        stack[i] = item;
-        stack[i].m_state = WAITING;
-        stack[i].m_image.reset();
+        /// @todo should only drop the cpu part, but keep gpu untouched (unless time_to_expire_gpu > 0)
+        removed_stack[i].clear();
       }
     }
 
-    /// @todo what if the task has been already re-scheduled from another thread?
-    reschedule(delay+0.0001);
-
-    if(!stack.empty()) {
-      Radiant::Guard g(m_stackChangeMutex);
-      for(StackMap::iterator it = stack.begin(); it != stack.end(); ++it)
-        m_stackChange[it->first] = it->second;
+    if(!removed_stack.empty()) {
+      Radiant::Guard g(m_stackMutex);
+      for(StackMap::iterator it = removed_stack.begin(); it != removed_stack.end(); ++it)
+        m_stack[it->first] = it->second;
     }
+
+    /// The little threshold is just for making sure that the image is surely expired by then
+    reschedule(delay+0.001);
   }
 
   CPUMipmaps::CPUItem CPUMipmaps::getStack(int index)
   {
     Radiant::Guard g(m_stackMutex);
+
     assert(index >= 0 && index < (int) m_stack.size());
+
     const CPUItem item = m_stack[index];
     return item;
   }
 
   void CPUMipmaps::cacheFileName(std::string & name, int level)
   {
-    char buf[32];
+    QFileInfo fi(QString::fromUtf8(m_filename.c_str()));
 
-    name = Radiant::FileUtils::path(m_filename);
+    QString basePath = QString::fromUtf8(Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false).c_str());
 
-    if(!name.empty())
-      name += "/";
-    name += ".imagecache/";
+    // Compute MD5 from the absolute path
+    QCryptographicHash hash(QCryptographicHash::Md5);
+    hash.addData(fi.absoluteFilePath().toUtf8());
 
-    snprintf(buf, sizeof(buf), "level%02d_", level);
+    QString md5 = hash.result().toHex();
 
-    name += buf;
-    name += Radiant::FileUtils::filename(m_filename);
+    // Avoid putting all mipmaps into the same folder (because of OS performance)
+    QString prefix = md5.left(2);
+    QString postfix = QString("level%1.png").arg(level, 2, 10, QLatin1Char('0'));
+    QString fullPath = basePath + QString("/imagecache/%1/%2_%3").arg(prefix).arg(md5).arg(postfix);
 
-    std::string suffix = Radiant::FileUtils::suffix(name);
+    name = fullPath.toUtf8().data();
 
-    if(!suffix.empty()) {
-
-      // Put in the right suffix
-      size_t i = name.size() - 1;
-
-      while(i && name[i] != '.' && name[i] != '/')
-        i--;
-
-      name.erase(i + 1);
-
-      // always use png
-      name += "png";
-    }
+    //Radiant::info("CPUMipmaps::cacheFileName # %s -> %s", m_filename.c_str(), name.c_str());
   }
 
   void CPUMipmaps::recursiveLoad(StackMap & stack, int level)
@@ -391,10 +552,45 @@ namespace Luminous {
     CPUItem & item = stack[level];
     if(item.m_state == READY)
       return;
+    item.m_lastUsed = Radiant::TimeStamp::getTime();
 
+    if(m_info.pf.compression()) {
+      std::shared_ptr<Luminous::CompressedImageTex> im(new Luminous::CompressedImageTex);
+      if(!im->read(m_filename, level)) {
+        error("CPUMipmaps::recursiveLoad # Could not read %s level %d", m_filename.c_str(), level);
+        item.m_state = FAILED;
+      } else {
+        /// @todo this is wrong, compressed images doesn't always have alpha channel
+        m_hasAlpha = true;
+        item.m_image.reset();
+        item.m_compressedImage = im;
+        item.m_state = READY;
+      }
+      return;
+    }
+
+    if(level == 0) {
+      // Load original
+      std::shared_ptr<Luminous::ImageTex> im(new ImageTex);
+
+      if(!im->read(m_filename.c_str())) {
+        error("CPUMipmaps::recursiveLoad # Could not read %s", m_filename.c_str());
+        item.m_state = FAILED;
+      } else {
+        if(im->hasAlpha())
+          m_hasAlpha = true;
+        //info("Loaded original %s %d from file", m_filename.c_str(), level);
+
+        item.m_image = im;
+        item.m_state = READY;
+      }
+      return;
+    }
+
+    // Could the mipmap be already saved on disk?
     if(m_shouldSave.find(level) != m_shouldSave.end()) {
-      // Try loading a pre-generated smaller-scale mipmap
 
+      // Try loading a pre-generated smaller-scale mipmap
       std::string filename;
       cacheFileName(filename, level);
 
@@ -415,28 +611,13 @@ namespace Luminous {
           if(im->hasAlpha())
             m_hasAlpha = true;
 
+          // info("Loaded cache %s %d from file", m_filename.c_str(), level);
+
           item.m_image.reset(im);
           item.m_state = READY;
           return;
         }
       }
-    }
-
-    if(level == 0) {
-      // Load original
-      std::shared_ptr<Luminous::ImageTex> im(new ImageTex);
-
-      if(!im->read(m_filename.c_str())) {
-        error("CPUMipmaps::recursiveLoad # Could not read %s", m_filename.c_str());
-        item.m_state = FAILED;
-      }
-      else {
-        if(im->hasAlpha())
-          m_hasAlpha = true;
-        item.m_image = im;
-        item.m_state = READY;
-      }
-      return;
     }
 
     // Load the bigger image from lower level, and scale down from that:
@@ -477,7 +658,7 @@ namespace Luminous {
     if(m_shouldSave.find(level) != m_shouldSave.end()) {
       std::string filename;
       cacheFileName(filename, level);
-      Directory::mkdir(FileUtils::path(filename));
+      Directory::mkdirRecursive(FileUtils::path(filename));
       imdest->write(filename.c_str());
       // info("wrote cache %s (%d)", filename.c_str(), level);
     }
@@ -485,7 +666,6 @@ namespace Luminous {
 
   void CPUMipmaps::reschedule(double delay, bool allowLater)
   {
-    Radiant::Guard g(m_rescheduleMutex);
     Radiant::TimeStamp next = Radiant::TimeStamp::getTime() +
                               Radiant::TimeStamp::createSecondsD(delay);
     if(allowLater || next < scheduled())
