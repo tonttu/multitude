@@ -31,13 +31,13 @@ namespace Resonant {
 
   ModuleSamplePlayer::Sample::Sample()
   {
-    info("ModuleSamplePlayer::Sample::Sample # %p", this);
+    //info("ModuleSamplePlayer::Sample::Sample # %p", this);
     m_d = new Internal();
   }
 
   ModuleSamplePlayer::Sample::~Sample()
   {
-    info("ModuleSamplePlayer::Sample::~Sample # %p", this);
+    //info("ModuleSamplePlayer::Sample::~Sample # %p", this);
 
     delete m_d;
   }
