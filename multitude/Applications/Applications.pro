@@ -1,5 +1,8 @@
 TEMPLATE = subdirs
 
+CONFIG += Qt
+QT += core
+
 SUBDIRS += FireCapture
 SUBDIRS += FireView
 SUBDIRS += ListPortAudioDevices

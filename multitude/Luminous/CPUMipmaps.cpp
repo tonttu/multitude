@@ -524,7 +524,7 @@ namespace Luminous {
 
   void CPUMipmaps::cacheFileName(QString & name, int level)
   {
-    QFileInfo fi(QString::fromUtf8(m_filename.c_str()));
+    QFileInfo fi(name);
 
     QString basePath = Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false);
 
@@ -557,7 +557,7 @@ namespace Luminous {
     if(m_info.pf.compression()) {
       std::shared_ptr<Luminous::CompressedImageTex> im(new Luminous::CompressedImageTex);
       if(!im->read(m_filename, level)) {
-        error("CPUMipmaps::recursiveLoad # Could not read %s level %d", m_filename.c_str(), level);
+        error("CPUMipmaps::recursiveLoad # Could not read %s level %d", m_filename.toUtf8().data(), level);
         item.m_state = FAILED;
       } else {
         /// @todo this is wrong, compressed images doesn't always have alpha channel
@@ -573,7 +573,7 @@ namespace Luminous {
       // Load original
       std::shared_ptr<Luminous::ImageTex> im(new ImageTex);
 
-      if(!im->read(m_filename.c_str())) {
+      if(!im->read(m_filename.toUtf8().data())) {
         error("CPUMipmaps::recursiveLoad # Could not read %s", m_filename.toUtf8().data());
         item.m_state = FAILED;
       } else {

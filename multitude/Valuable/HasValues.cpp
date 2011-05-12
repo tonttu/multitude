@@ -431,7 +431,7 @@ namespace Valuable
     // Check that the value does not exist already
     iterator it = m_children.find(now);
     if(it != m_children.end()) {
-      error("HasValues::childRenamed # Child '%s' already exist", now.c_str());
+      error("HasValues::childRenamed # Child '%s' already exist", now.toUtf8().data());
       return;
     }
 

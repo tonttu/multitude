@@ -176,7 +176,7 @@ namespace Luminous {
       m_timeOutGPU = timeoutGPU;
     }
 
-    inline std::string filename() const { return m_filename; }
+    inline QString filename() const { return m_filename; }
 
     inline bool keepMaxLevel() const { return m_keepMaxLevel; }
     inline void setKeepMaxLevel(bool v) { m_keepMaxLevel = v; }

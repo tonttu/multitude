@@ -14,6 +14,7 @@
  */
 
 #include <Radiant/StringUtils.hpp>
+#include <Radiant/Trace.hpp>
 #include "Radiant.hpp"
 
 #include "SMRingBuffer.hpp"

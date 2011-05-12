@@ -3,11 +3,12 @@
 
 #include "Utils.hpp"
 
+#include <QStringList>
+
 namespace Poetic
 {
 
   using namespace Radiant;
-  using namespace StringUtils;
 
 #if 0
 
@@ -145,10 +146,12 @@ namespace Poetic
 
 #else
 
-  void Utils::breakToLines(const std::wstring & ws, float width,
-                           CPUFont & fnt, WStringList & lines, bool afterSpace)
+  void Utils::breakToLines(const QString & qws, float width,
+                           CPUFont & fnt, QStringList & lines, bool afterSpace)
   {
     lines.clear();
+
+    std::wstring ws = qws.toStdWString();
 
     if(ws.empty())
       return;
@@ -177,19 +180,19 @@ namespace Poetic
       if(sum > width) {
 
         if(okEnd > 0) {
-          lines.push_back(std::wstring( & ws[lineStart], okEnd - lineStart));
+          lines.push_back(QString::fromWCharArray( & ws[lineStart], okEnd - lineStart));
           sum = sum - okEndSum;
           lineStart = okEnd;
         }
         else if(i > (lineStart + 1)) {
           // The word does not fit line, split the word
-          lines.push_back(std::wstring( & ws[lineStart], i - lineStart - 1));
+          lines.push_back(QString::fromWCharArray( & ws[lineStart], i - lineStart - 1));
           sum = a;
           lineStart = i - 1;
         }
         else {
           // The first letter does not fit the line, take just the first letter
-          lines.push_back(std::wstring( & ws[lineStart], 1));
+          lines.push_back(QString::fromWCharArray( & ws[lineStart], 1));
           sum = 0;
           lineStart++;
         }
@@ -202,7 +205,7 @@ namespace Poetic
           onspace = true;
         }
         else if(c == W_NEWLINE) {
-          lines.push_back(std::wstring( & ws[lineStart], i - lineStart));
+          lines.push_back(QString::fromWCharArray( & ws[lineStart], i - lineStart));
           sum = 0.0f;
           okEnd = 0;
           lineStart = i+1;
@@ -218,59 +221,11 @@ namespace Poetic
     }
 
     if(n != lineStart) {
-      lines.push_back(std::wstring( & ws[lineStart], n - lineStart));
+      lines.push_back(QString::fromWCharArray( & ws[lineStart], n - lineStart));
     }
   }
 
 
 #endif
-
-
-void Utils::split(const std::wstring & ws, const std::wstring & delim,
-                  WStringList & out, const bool afterDelim)
-{
-  out.clear();
-
-  if(ws.empty())
-  {
-    return;
-  }
-
-  // Find first a delimiter
-
-  std::wstring  wsCopy(ws);
-  size_t  pos = wsCopy.find_first_of(delim);
-
-  // Loop until no delimiters left
-
-  if(afterDelim)
-    // split string after delimiter
-  {
-    while(pos != wsCopy.npos)
-    {
-      out.push_back(wsCopy.substr(0, pos + 1));
-      wsCopy.erase(0, pos + 1);
-      pos = wsCopy.find_first_of(delim);
-    }
-  }
-  else
-    // split string before delimiter
-  {
-    while(pos != wsCopy.npos)
-    {
-      out.push_back(wsCopy.substr(0, pos));
-      wsCopy.erase(0, pos);
-      pos = wsCopy.find_first_of(delim, 1);
-    }
-  }
-
-  // Push remainder of wstring onto list
-
-  if(!wsCopy.empty())
-  {
-    out.push_back(wsCopy);
-  }
-}
-
 
 }

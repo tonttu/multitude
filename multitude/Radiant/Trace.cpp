@@ -82,9 +82,9 @@ namespace Radiant {
       }
     } else {
       if (module) {
-        fprintf(out, "[%s] %s: %s> %s", now.asString().toUtf8().data(), g_appname.c_str(), module, prefixes[s]);
+        fprintf(out, "[%s] %s: %s> %s", now.asString().toUtf8().data(), g_appname.toUtf8().data(), module, prefixes[s]);
       } else {
-        fprintf(out, "[%s] %s: %s", now.asString().toUtf8().data(), g_appname.c_str(), prefixes[s]);
+        fprintf(out, "[%s] %s: %s", now.asString().toUtf8().data(), g_appname.toUtf8().data(), prefixes[s]);
       }
     }
 

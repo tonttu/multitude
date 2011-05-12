@@ -899,16 +899,16 @@ dest = *this;
     m_d->size = 0;
   }
 
-  bool CompressedImage::read(const std::string & filename, int level)
+  bool CompressedImage::read(const QString & filename, int level)
   {
     initDefaultImageCodecs();
     clear();
 
     bool result = false;
 
-    FILE * file = fopen(filename.c_str(), "rb");
+    FILE * file = fopen(filename.toUtf8().data(), "rb");
     if(!file) {
-      error("CompressedImage::read # failed to open file '%s': %s", filename.c_str(), strerror(errno));
+      error("CompressedImage::read # failed to open file '%s': %s", filename.toUtf8().data(), strerror(errno));
       return false;
     }
 
@@ -916,7 +916,7 @@ dest = *this;
     if(codec) {
       result = codec->read(*this, file, level);
     } else {
-      error("CompressedImage::read # no suitable codec found for '%s'", filename.c_str());
+      error("CompressedImage::read # no suitable codec found for '%s'", filename.toUtf8().data());
     }
     fclose(file);
 

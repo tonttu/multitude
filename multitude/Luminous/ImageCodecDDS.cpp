@@ -170,12 +170,12 @@ bool ImageCodecDDS::canRead(FILE * file)
   return parse(file, header, info);
 }
 
-std::string ImageCodecDDS::extensions() const
+QString ImageCodecDDS::extensions() const
 {
   return "dds";
 }
 
-std::string ImageCodecDDS::name() const
+QString ImageCodecDDS::name() const
 {
   return "dds";
 }

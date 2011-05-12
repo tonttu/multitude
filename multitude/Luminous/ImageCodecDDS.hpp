@@ -10,8 +10,8 @@ class ImageCodecDDS : public ImageCodec
 public:
   ImageCodecDDS();
   bool canRead(FILE * file);
-  std::string extensions() const;
-  std::string name() const;
+  QString extensions() const;
+  QString name() const;
   bool ping(ImageInfo & info, FILE * file);
   bool read(Image & image, FILE * file);
   bool write(const Image & image, FILE * file);

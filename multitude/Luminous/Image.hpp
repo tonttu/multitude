@@ -248,7 +248,7 @@ namespace Luminous
 
     void clear();
 
-    bool read(const std::string & filename, int level = 0);
+    bool read(const QString & filename, int level = 0);
     bool loadImage(FILE * file, const ImageInfo & info, int offset, int size);
     void * data() const;
     int datasize() const;

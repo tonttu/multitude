@@ -31,17 +31,6 @@
 
 namespace Radiant {
 
-  static bool isNumberString(const std::string & str)
-  {
-    for(size_t i = 0; i < str.size(); i++) {
-      if(!isdigit(str[i]))
-        return false;
-    }
-
-    return true;
-  }
-
-
   DateTime::DateTime()
       : m_year(0),
       m_month(0),

@@ -28,6 +28,8 @@
 #	include <Radiant/VideoCamera1394.hpp>
 #endif
 
+#include <Radiant/Trace.hpp>
+
 namespace Radiant
 {
 

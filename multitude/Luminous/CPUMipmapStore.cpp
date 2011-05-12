@@ -81,7 +81,7 @@ namespace Luminous {
     s_mipmaps[filename].incrCount();
 
     debugLuminous("CPUMipmapStore::acquire # Created new for %s (%d links)",
-          filename.toUtf8().data(), __mipmaps[filename].m_linkCount);
+          filename.toUtf8().data(), s_mipmaps[filename].m_linkCount);
 
     return mipmaps;
   }
