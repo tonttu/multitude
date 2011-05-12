@@ -58,8 +58,9 @@ namespace Valuable
 
   HasValues::~HasValues()
   {
-    for(Sources::iterator it = m_eventSources.begin(); it != m_eventSources.end(); it++) {
-      (*it)->eventRemoveListener(this);
+    while(!m_eventSources.empty()) {
+      /* The eventRemoveListener call will also clear the relevant part from m_eventSources. */
+      (*m_eventSources.begin())->eventRemoveListener(this);
     }
 
     for(Listeners::iterator it = m_elisteners.begin();
