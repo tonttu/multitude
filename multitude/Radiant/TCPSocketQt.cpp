@@ -192,7 +192,7 @@ namespace Radiant
 #endif
   }
 /*
-  void TCPSocket::debug()
+  void TCPSocket::debugRadiant()
   {
     Radiant::info("TCPSocket::debug #");
     Radiant::info("\tSTATE %d", m_d->state());

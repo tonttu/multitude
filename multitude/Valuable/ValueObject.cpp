@@ -159,7 +159,7 @@ namespace Valuable
     return "";
   }
 
-  ArchiveElement & ValueObject::serialize(Archive &archive)
+  ArchiveElement & ValueObject::serialize(Archive &archive) const
   {
     if(m_name.isEmpty()) {
       Radiant::error(

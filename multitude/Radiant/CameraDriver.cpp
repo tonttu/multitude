@@ -14,7 +14,7 @@
  */
 
 #include "CameraDriver.hpp"
-#include "Trace.hpp"
+#include "Radiant.hpp"
 
 #ifdef CAMERA_DRIVER_CMU
 #	include <Radiant/VideoCameraCMU.hpp>
@@ -106,7 +106,7 @@ namespace Radiant
 
       CameraDriver * cd = getCameraDriver(str);
 
-      debug("CameraDriverFactory::getPreferredCameraDriver # Checking driver %s = %p",
+      debugRadiant("CameraDriverFactory::getPreferredCameraDriver # Checking driver %s = %p",
           str.toUtf8().data(), cd);
       if(cd) {
         // Make sure there is at least one camera available using this driver

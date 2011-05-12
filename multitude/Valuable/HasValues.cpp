@@ -16,7 +16,7 @@
 #include <Valuable/HasValuesImpl.hpp>
 #include <Valuable/DOMDocument.hpp>
 #include <Valuable/DOMElement.hpp>
-
+#include <Valuable/Valuable.hpp>
 #include <Valuable/HasValues.hpp>
 #include <Valuable/Serializer.hpp>
 
@@ -58,8 +58,9 @@ namespace Valuable
 
   HasValues::~HasValues()
   {
-    for(Sources::iterator it = m_eventSources.begin(); it != m_eventSources.end(); it++) {
-      (*it)->eventRemoveListener(this);
+    while(!m_eventSources.empty()) {
+      /* The eventRemoveListener call will also clear the relevant part from m_eventSources. */
+      (*m_eventSources.begin())->eventRemoveListener(this);
     }
 
     for(Listeners::iterator it = m_elisteners.begin();
@@ -163,15 +164,18 @@ namespace Valuable
     return deserialize(archive.root());
   }
 
-  ArchiveElement & HasValues::serialize(Archive & archive)
+  ArchiveElement & HasValues::serialize(Archive & archive) const
   {
+    QString name;
     if(m_name.isEmpty()) {
-      Radiant::error(
+      if(parent()) {
+        Radiant::error(
           "HasValues::serialize # attempt to serialize object with no name");
-      return archive.emptyElement();
-    }
+        return archive.emptyElement();
+      } else name = "ValueObject";
+    } else name = m_name;
 
-    ArchiveElement & elem = archive.createElement(m_name.toUtf8().data());
+    ArchiveElement & elem = archive.createElement(name.toUtf8().data());
     if(elem.isNull()) {
       Radiant::error(
           "HasValues::serialize # failed to create element");
@@ -180,7 +184,7 @@ namespace Valuable
 
     elem.add("type", type());
 
-    for(container::iterator it = m_children.begin(); it != m_children.end(); it++) {
+    for(container::const_iterator it = m_children.begin(); it != m_children.end(); it++) {
       ValueObject * vo = it->second;
 
       if (!archive.checkFlag(Archive::ONLY_CHANGED) || vo->isChanged()) {
@@ -253,7 +257,7 @@ namespace Valuable
 
     if(std::find(m_elisteners.begin(), m_elisteners.end(), vp) !=
        m_elisteners.end())
-      debug("Widget::eventAddListener # Already got item %s -> %s (%p)",
+      debugValuable("Widget::eventAddListener # Already got item %s -> %s (%p)",
             from, to, obj);
     else {
       // m_elisteners.push_back(vp);
@@ -287,7 +291,9 @@ namespace Valuable
   int HasValues::eventRemoveListener(Valuable::HasValues * obj, const char * from, const char * to)
   {
     int removed = 0;
-    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); it++){
+
+    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); it++) {
+
       if(it->m_listener == obj && it->m_valid) {
         // match from & to if specified
         if ( (!from || it->m_from == from) &&
@@ -299,6 +305,21 @@ namespace Valuable
         }
       }
     }
+
+    if(removed) {
+
+      // Count number of references left to the object
+      size_t count = 0;
+      for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); it++) {
+        if(it->m_listener == obj && it->m_valid)
+          count++;
+      }
+
+      // If nothing references the object, remove the source
+      if(count == 0)
+        obj->eventRemoveSource(this);
+    }
+
     return removed;
   }
 
@@ -348,7 +369,7 @@ namespace Valuable
 
   HasValues::Uuid HasValues::generateId()
   {
-    static Radiant::MutexAuto s_mutex;
+    static Radiant::Mutex s_mutex;
     Radiant::Guard g(s_mutex);
     static Uuid s_id = static_cast<Uuid>(Radiant::TimeStamp::getTime());
     return s_id++;
@@ -407,7 +428,14 @@ namespace Valuable
 
   void HasValues::childRenamed(const QString & was, const QString & now)
   {
-    iterator it = m_children.find(was);
+    // Check that the value does not exist already
+    iterator it = m_children.find(now);
+    if(it != m_children.end()) {
+      error("HasValues::childRenamed # Child '%s' already exist", now.c_str());
+      return;
+    }
+
+    it = m_children.find(was);
     if(it == m_children.end()) {
       error("HasValues::childRenamed # No such child: %s", was.toUtf8().data());
       return;
@@ -416,7 +444,6 @@ namespace Valuable
     m_children.erase(it);
     m_children[now] = vo;
   }
-
 
   bool HasValues::readElement(DOMElement )
   {

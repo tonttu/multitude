@@ -83,6 +83,8 @@ namespace Nimble {
 
     /// Transposes the matrix
     inline Matrix4T<T>&       transpose();
+    /// Returns a transposed matrix
+    inline Matrix4T<T> transposed() const { Matrix4T<T> m(*this); m.transpose(); return m; }
     /// Fills the matrix with zeroes
     void                      clear()         { m[0].clear(); m[1].clear(); m[2].clear(); m[3].clear(); }
     /// Sets the matrix to identity
@@ -131,6 +133,20 @@ namespace Nimble {
     template <class S>
     void copyTranspose (const S * x) { for(int i = 0; i < 4; i++) for(int j = 0; j < 4; j++) m[j][i] = (T) x[i*4+j]; }
 
+    inline Vector3T<T> project(const Vector4T<T> & v) const;
+
+    inline Vector3T<T> project(const Vector3T<T> & v) const
+    {
+      return project(Vector4T<T>(v.x, v.y, v.z, T(1.0)));
+    }
+
+    /// Creates a new WPCV-matrix (window-projection-camera-view -matrix)
+    /// Camera is positioned so that 0,0,0 is mapped to 0,0,0 and
+    /// w,h,0 is mapped to w,h,0. The projection matrix doesn't have the third
+    /// row, no depth information, so no near/far values needed.
+    /// (0,0,0) is lower left bottom, (w,h,0) is in right top, z increases towards the camera
+    static Matrix4T<T> simpleProjection(T width, T height, T fovy = Math::PI*0.5);
+
     /// @todo duplicates (makeTranslation vs. translate3D)
     /// Create a rotation matrix
     /// @param radians angle in radians
@@ -142,6 +158,16 @@ namespace Nimble {
     NIMBLE_API static Matrix4T<T> translate3D(const Vector3T<T> & v);
     /// Create a scaling matrix
     NIMBLE_API static Matrix4T<T> scale3D(const Vector3T<T> & v);
+    /// Create a uniform scaling matrix
+    inline static Matrix4T<T> scaleUniform3D(const T & s)
+    { return scale3D(Vector3T<T>(s, s, s)); }
+
+    /// Creates a perspective projection matrix
+    /// @param fovY field of view in degress in the Y direction
+    /// @param aspect aspect ratio (width / height)
+    /// @param nearPlane distance to the near clipping plane, always positive
+    /// @param farPlane distance to the far clipping plane, always positive
+    static Matrix4T<T> perspectiveProjection(T fovY, T aspect, T nearPlane, T farPlane);
 
     /** Identity matrix. */
     NIMBLE_API static const Matrix4T<T> IDENTITY;
@@ -378,7 +404,7 @@ inline Nimble::Vector3T<T> operator*(const Nimble::Vector3T<T>& m2, const Nimble
 template <class T>
 inline std::ostream& operator<<(std::ostream& os, const Nimble::Matrix4T<T>& m)
 {
-  os << m[0] << ", " << m[1] << ", " << m[2] << ", " << m[3];
+  os << m[0] << std::endl << m[1] << std::endl << m[2] << std::endl << m[3] << std::endl;
   return os;
 }
 
@@ -415,6 +441,68 @@ Nimble::Matrix4T<T> Nimble::Matrix4T<T>::makeTranslation(const Nimble::Vector3T<
   mm.setTranslation(v);
   return mm;
 }
+
+template<class T>
+Nimble::Vector3T<T> Nimble::Matrix4T<T>::project(const Nimble::Vector4T<T> & v) const
+{
+  /// This is needed because there is an another operator* in Nimble-namespace in Vector3.hpp
+  using ::operator*;
+  Nimble::Vector4T<T> p = *this * v;
+  return Nimble::Vector3T<T>(p.x / p.w, p.y / p.w, p.z / p.w);
+}
+
+template <typename T>
+Nimble::Matrix4T<T> Nimble::Matrix4T<T>::simpleProjection(T width, T height, T fovy)
+{
+  using ::operator*;
+
+  // Camera distance to the center widget center point (assuming it's resting).
+  T dist = height * T(.5) / Nimble::Math::Tan(fovy * T(.5));
+  T aspect = width/height;
+
+  // we won't be needing depth, so the third column is just zero unlike normally
+  T f = T(1.0) / Nimble::Math::Tan(fovy*T(.5));
+  Nimble::Matrix4T<T> projection(f/aspect, 0, 0, 0,
+                             0, f, 0, 0,
+                             0, 0, 0, 0,
+                             0, 0, -1, 0);
+
+  // could just change the projection plane in projection matrix,
+  // but maybe this is a bit more clear
+  Matrix4T<T> camera = makeTranslation(Vector3f(0, 0, -dist));
+
+  Matrix4T<T> window(width*0.5, 0, 0, 0.0 + width*0.5,
+                  0, height * 0.5, 0, 0.0+height*0.5,
+                  0, 0, 1, 0,
+                  0, 0, 0, 1);
+
+  Matrix4T<T> view = makeTranslation(Vector3f(-width*.5f, -height*.5f, 0));
+
+  return window * projection * camera * view;
+}
+
+template<typename T>
+Nimble::Matrix4T<T> Nimble::Matrix4T<T>::perspectiveProjection(T fovY, T aspect, T nearPlane, T farPlane)
+{
+  assert(nearPlane > T(0));
+  assert(farPlane > T(0));
+
+  fovY = Nimble::Math::degToRad(fovY);
+
+  const T f = T(1) / T(tan(fovY / T(2)));
+
+  Nimble::Matrix4T<T> result;
+  result.clear();
+
+  result[0][0] = f / aspect;
+  result[1][1] = f;
+  result[2][2] = (farPlane + nearPlane) / (nearPlane - farPlane);
+  result[2][3] = T(2) * (farPlane * nearPlane) / (nearPlane - farPlane);
+  result[3][2] = T(-1);
+
+  return result;
+}
+
 
 #endif
 

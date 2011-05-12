@@ -69,10 +69,12 @@ namespace Luminous
   {
 
     const char * glvendor = (const char *) glGetString(GL_VENDOR);
-    if(strstr(glvendor, "ATI")) {
+
+    if(!glvendor) {
       m_brokenProxyTexture2D = true;
-    }
-    else
+    } else if(strstr(glvendor, "ATI")) {
+      m_brokenProxyTexture2D = true;
+    } else
       m_brokenProxyTexture2D = false;
 
     return true;
@@ -236,12 +238,12 @@ namespace Luminous
   typedef std::map<Thread::id_t, TGLRes> ResourceMap;
 
   static ResourceMap __resources;
-  static MutexStatic __mutex;
+  static Mutex __mutex;
 
   void GLResources::setThreadResources(GLResources * rsc,
                        const MultiHead::Window *w, const MultiHead::Area *a)
   {
-    GuardStatic g(__mutex);
+    Guard g(__mutex);
     TGLRes tmp;
     tmp.m_glr = rsc;
     tmp.m_window = w;
@@ -252,12 +254,12 @@ namespace Luminous
 
   GLResources * GLResources::getThreadResources()
   {
-    GuardStatic g(__mutex);
+    Guard g(__mutex);
 
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
 
     if(it == __resources.end()) {
-      debug("No OpenGL resources for current thread");
+      debugLuminous("No OpenGL resources for current thread");
       return 0;
     }
 
@@ -266,7 +268,7 @@ namespace Luminous
 
   void GLResources::getThreadMultiHead(const MultiHead::Window ** w, const MultiHead::Area ** a)
   {
-    GuardStatic g(__mutex);
+    Guard g(__mutex);
 
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
 
@@ -283,7 +285,7 @@ namespace Luminous
 
   const MultiHead::Area * GLResources::getThreadMultiHeadArea()
   {
-    GuardStatic g(__mutex);
+    Guard g(__mutex);
 
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
 
@@ -297,7 +299,7 @@ namespace Luminous
 
   const MultiHead::Window * GLResources::getThreadMultiHeadWindow()
   {
-    GuardStatic g(__mutex);
+    Guard g(__mutex);
 
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
 

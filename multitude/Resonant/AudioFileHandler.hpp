@@ -203,7 +203,7 @@ namespace Resonant {
 
     container m_files;
 
-    Radiant::MutexAuto m_mutex, m_mutex2;
+    Radiant::Mutex m_mutex, m_mutex2;
     Radiant::Condition m_cond;
 
     volatile bool m_done;

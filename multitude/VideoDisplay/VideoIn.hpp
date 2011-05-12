@@ -227,10 +227,10 @@ namespace VideoDisplay {
     volatile bool m_continue;
 
     Radiant::Condition m_vcond;
-    Radiant::MutexAuto m_vmutex;
+    Radiant::Mutex m_vmutex;
 
     Radiant::Condition m_acond;
-    Radiant::MutexAuto m_amutex;
+    Radiant::Mutex m_amutex;
 
     float          m_fps;
     bool           m_done;
@@ -245,14 +245,14 @@ namespace VideoDisplay {
     volatile unsigned m_consumedRequests;
     volatile unsigned m_queuedRequests;
     Req               m_requests[REQUEST_QUEUE_SIZE];
-    Radiant::MutexAuto m_requestMutex;
+    Radiant::Mutex m_requestMutex;
 
     Radiant::TimeStamp m_frameTime;
     Radiant::TimeStamp m_displayFrameTime;
 
     AudioTransfer     *m_listener;
 
-    Radiant::MutexAuto m_mutex;
+    Radiant::Mutex m_mutex;
 
     /// @endcond
   private:

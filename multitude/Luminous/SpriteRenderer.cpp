@@ -117,7 +117,7 @@ namespace Luminous {
     {
       glEnableVertexAttribArray(pos);
       glVertexAttribPointer(pos, elems, type, GL_FALSE,
-                            stride, ((GLubyte *) 0) + offset);
+                            (GLsizei) stride, ((GLubyte *) 0) + offset);
     }
 
     ~VertexAttribArrayStep ()
@@ -269,7 +269,7 @@ namespace Luminous {
 
       size_t n = gld.m_vbo.filled() / sizeof(Sprite);
 
-      glDrawArrays(GL_POINTS, 0, n);
+      glDrawArrays(GL_POINTS, 0, (GLsizei) n);
 
       // info("%d sprites rendered", (int) n);
     }

@@ -49,8 +49,6 @@ int main(int argc, char ** argv)
 
   dsp.start();
 
-  Radiant::BinaryData control;
-
   Resonant::ModuleSamplePlayer * player = dsp.samplePlayer();
 
   player->createAmbientBackground(directory, gain);

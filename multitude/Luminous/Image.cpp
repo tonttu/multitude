@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #include "Image.hpp"
@@ -33,6 +33,13 @@
 #include <QString>
 #include <string.h>
 #include <typeinfo>
+#include <errno.h>
+
+#ifdef RADIANT_LINUX
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#endif
 
 #ifdef WIN32
 #include <strings.h>	// strcasecmp()
@@ -50,6 +57,9 @@ namespace Luminous
 
     return &cr;
   }
+
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
 
   Image::Image()
       : m_width(0),
@@ -83,7 +93,8 @@ namespace Luminous
 
   void Image::flipVertical()
   {
-    int linesize = m_width * m_pixelFormat.numChannels();
+    int bpp = m_pixelFormat.bytesPerPixel();
+    int linesize = m_width * bpp;
 
     int n = m_height / 2;
 
@@ -472,15 +483,15 @@ namespace Luminous
 
   void Image::allocate(int width, int height, const PixelFormat & pf)
   {
-    unsigned int bytes = width * height * pf.numChannels();
-    unsigned int mybytes = m_width * m_height * m_pixelFormat.numChannels();
+    unsigned int bytes = width * height * pf.bytesPerPixel();
+    unsigned int mybytes = m_width * m_height * m_pixelFormat.bytesPerPixel();
 
     if(width && height)
       assert(pf.numChannels() > 0);
 
     /*
-    Radiant::debug("Image::allocate # PARAMS(%d, %d, %s) CURRENT(%d, %d, %s)", width, height, pf.toString().toUtf8().data(), m_width, m_height, m_pixelFormat.toString().toUtf8().data());
-    Radiant::debug("\tbytes = %u, mybytes = %u", bytes, mybytes);
+    debugLuminous("Image::allocate # PARAMS(%d, %d, %s) CURRENT(%d, %d, %s)", width, height, pf.toString().toUtf8().data(), m_width, m_height, m_pixelFormat.toString().toUtf8().data());
+    debugLuminous("\tbytes = %u, mybytes = %u", bytes, mybytes);
     */
     m_width = width;
     m_height = height;
@@ -559,7 +570,7 @@ namespace Luminous
     if(codec) {
       ret = codec->write(*this, file);
     } else {
-      debug("Image::write # Could not deduce image codec based on filename '%s', using png", filename);
+      debugLuminous("Image::write # Could not deduce image codec based on filename '%s', using png", filename);
 
       codec = codecs()->getCodec(".png");
       ret = codec->write(*this, file);
@@ -576,7 +587,8 @@ namespace Luminous
 
     allocate(width, height, format);
     unsigned pixels = width * height;
-    unsigned nbytes = pixels * format.numChannels();
+    unsigned nbytes = pixels * format.bytesPerPixel();
+
 
     if(bytes)
       memcpy( & m_data[0], bytes, nbytes);
@@ -730,12 +742,14 @@ dest = *this;
     if(tex.width() != width() ||
        tex.height() != height() ||
        tex.generation() != generation()) {
+
       tex.loadImage(*this, withmimaps);
       tex.setGeneration(generation());
+
     }
   }
 
-  void ImageTex::bind(GLResources * resources, GLenum textureUnit, bool withmimaps)
+  void ImageTex::bind(GLResources * resources, GLenum textureUnit, bool withmipmaps, int internalFormat)
   {
     // Luminous::Utils::glCheck("ImageTex::bind # 0");
 
@@ -747,7 +761,7 @@ dest = *this;
     if(tex.width() != width() ||
        tex.height() != height() ||
        tex.generation() != generation()) {
-      tex.loadImage(*this, withmimaps);
+      tex.loadImage(*this, withmipmaps, internalFormat);
       tex.setGeneration(generation());
     }
   }
@@ -830,4 +844,211 @@ dest = *this;
     }
     return false;
   }
+
+  ImageTex * ImageTex::move()
+  {
+    ImageTex * t = new ImageTex;
+    std::swap(t->m_width, m_width);
+    std::swap(t->m_height, m_height);
+    std::swap(t->m_pixelFormat, m_pixelFormat);
+    std::swap(t->m_data, m_data);
+    t->m_generation = ++m_generation;
+
+    return t;
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+
+  class CompressedImage::Private
+  {
+  public:
+    Private(CompressedImage & img) : ptr(0), size(0), m_img(img) {}
+
+    char * ptr;
+    int size;
+
+  private:
+    CompressedImage & m_img;
+  };
+
+  CompressedImage::CompressedImage() : m_compression(0), m_d(new Private(*this))
+  {
+  }
+
+  CompressedImage::~CompressedImage()
+  {
+    clear();
+  }
+
+  void CompressedImage::clear()
+  {
+#if 0
+    if(m_d->ptr) munmap(m_d->ptr, m_d->size + m_d->offset);
+    if(m_d->fd) {
+      counter(-1);
+      close(m_d->fd);
+    }
+    m_d->ptr = 0;
+    m_d->size = 0;
+    m_d->offset = 0;
+    m_d->fd = 0;
+#endif
+    if(m_d->ptr) delete[] m_d->ptr;
+    m_d->ptr = 0;
+    m_d->size = 0;
+  }
+
+  bool CompressedImage::read(const std::string & filename, int level)
+  {
+    initDefaultImageCodecs();
+    clear();
+
+    bool result = false;
+
+    FILE * file = fopen(filename.c_str(), "rb");
+    if(!file) {
+      error("CompressedImage::read # failed to open file '%s': %s", filename.c_str(), strerror(errno));
+      return false;
+    }
+
+    ImageCodec * codec = Image::codecs()->getCodec(filename, file);
+    if(codec) {
+      result = codec->read(*this, file, level);
+    } else {
+      error("CompressedImage::read # no suitable codec found for '%s'", filename.c_str());
+    }
+    fclose(file);
+
+    return result;
+  }
+
+  bool CompressedImage::loadImage(FILE * file, const ImageInfo & info, int offset, int size)
+  {
+    clear();
+#if 0
+    /// Ubuntu has ulimit -Hn == 1024, that is way too low for this kind of optimization
+    static int pagesize = sysconf(_SC_PAGE_SIZE);
+    int fd = dup(fileno(file));
+    if(fd == -1) return false;
+    lseek(fd, 0, SEEK_SET);
+
+    int aligned_offset = offset / pagesize * pagesize;
+    offset = offset - aligned_offset;
+    void * ptr = mmap(NULL, size + offset, PROT_READ, MAP_SHARED, fd, aligned_offset);
+
+    if(ptr == (void*)-1) {
+      close(fd);
+      return false;
+    }
+    m_d->ptr = reinterpret_cast<char*>(ptr);
+    m_d->size = size;
+    m_d->fd = fd;
+    m_d->offset = offset;
+#endif
+    m_d->ptr = new char[size];
+    fseek(file, offset, SEEK_SET);
+    if (fread(m_d->ptr, size, 1, file) != 1) {
+      Radiant::error("CompressedImage::loadImage # Failed to read image");
+      delete m_d->ptr;
+      m_d->ptr = 0;
+    }
+    m_d->size = size;
+
+    m_size.make(info.width, info.height);
+    m_compression = info.pf.compression();
+    return true;
+  }
+
+  void * CompressedImage::data() const
+  {
+#if 0
+    return m_d->ptr + m_d->offset;
+#endif
+    return m_d->ptr;
+  }
+
+  int CompressedImage::datasize() const
+  {
+    return m_d->size;
+  }
+
+  float CompressedImage::readAlpha(Nimble::Vector2i pos) const
+  {
+    if(pos.x < 0 || pos.y < 0 || pos.x >= width() || pos.y >= height()) return 1.0f;
+
+    if(m_compression == PixelFormat::COMPRESSED_RGBA_DXT1) {
+      /// @todo implement this for COMPRESSED_RGBA_DXT1
+    } else if(m_compression == PixelFormat::COMPRESSED_RGBA_DXT3) {
+      /* {
+        Image img;
+        img.allocate(width(), height(), PixelFormat(PixelFormat::LAYOUT_LUMINANCE, PixelFormat::TYPE_UBYTE));
+        unsigned char* out = img.bytes();
+        const unsigned char* d = reinterpret_cast<const unsigned char*>(data());
+        int blocksize = 16;
+        int blocks_on_x_direction = (width() + 3) / 4;
+
+        for(int x = 0; x < width(); ++x) {
+          for(int y = 0; y < height(); ++y) {
+
+            Vector2i blockid(x / 4, y / 4);
+
+            const unsigned char* block = d + blocksize * (blockid.x + blockid.y * blocks_on_x_direction);
+
+            int nibble_index = x % 4 + (y % 4) * 4;
+            unsigned char byte = block[nibble_index/2];
+
+            out[x+y*width()] = (nibble_index % 2) ? (byte >> 4) << 4 : (byte & 0xF) << 4;
+          }
+        }
+        img.write("out.png");
+      }*/
+      const unsigned char* d = reinterpret_cast<const unsigned char*>(data());
+
+      Vector2i blockid(pos.x / 4, pos.y / 4);
+
+      int blocksize = 16;
+      int blocks_on_x_direction = (width() + 3) / 4;
+      const unsigned char* block = d + blocksize * (blockid.x + blockid.y * blocks_on_x_direction);
+
+      int nibble_index = pos.x % 4 + (pos.y % 4) * 4;
+      unsigned char byte = block[nibble_index/2];
+
+      byte = (nibble_index % 2) ? (byte >> 4) : (byte & 0xF);
+      return byte / 16.0f;
+    }
+    /// @todo implement this for COMPRESSED_RGBA_DXT5
+
+    return 1.0f;
+  }
+
+  CompressedImageTex::~CompressedImageTex()
+  {
+  }
+
+  void CompressedImageTex::bind(GLResources * resources, GLenum textureUnit)
+  {
+    Texture2D & tex = ref(resources);
+    tex.bind(textureUnit);
+
+    // Luminous::Utils::glCheck("ImageTex::bind # 1");
+
+    if(tex.width() != width() || tex.height() != height()) {
+      tex.loadImage(*this);
+    }
+  }
+
+  /// Creates a new CompressedImageTex from this, all the cpu data from
+  /// Luminous::CompressedImage is moved to the new object.
+  CompressedImageTex * CompressedImageTex::move()
+  {
+    CompressedImageTex * t = new CompressedImageTex;
+    std::swap(t->m_size, m_size);
+    std::swap(t->m_compression, m_compression);
+    std::swap(t->m_d->ptr, m_d->ptr);
+    std::swap(t->m_d->size, m_d->size);
+    return t;
+  }
+
+
 }

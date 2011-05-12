@@ -31,6 +31,17 @@
 
 namespace Radiant {
 
+  static bool isNumberString(const std::string & str)
+  {
+    for(size_t i = 0; i < str.size(); i++) {
+      if(!isdigit(str[i]))
+        return false;
+    }
+
+    return true;
+  }
+
+
   DateTime::DateTime()
       : m_year(0),
       m_month(0),
@@ -111,10 +122,13 @@ namespace Radiant {
 
       QRegExp r("^(\\d{4}).(\\d{2}).(\\d{4})");
       if(r.indexIn(s) >= 0) {
+        int m = r.cap(2).toInt() - 1;
+        int d = r.cap(3).toInt() - 1;
+        if(m >= 12 || d >= 31 || m < 0 || d < 0) return false;
         *this = DateTime();
         m_year = r.cap(1).toInt();
-        m_month = r.cap(2).toInt() - 1;
-        m_monthDay = r.cap(3).toInt() - 1;
+        m_month = m;
+        m_monthDay = d;
       } else return false;
     } else {
       if(s.length() < 19)
@@ -122,9 +136,13 @@ namespace Radiant {
 
       QRegExp r("^(\\d{2}).(\\d{2}).(\\d{4}).(\\d{4}).(\\d{4}).(\\d{4})");
       if(r.indexIn(s) >= 0) {
+        int m = r.cap(2).toInt() - 1;
+        int d = r.cap(1).toInt() - 1;
+        if(m >= 12 || d >= 31 || m < 0 || d < 0) return false;
+
         m_year  = r.cap(3).toInt();
-        m_month = r.cap(2).toInt() - 1;
-        m_monthDay = r.cap(1).toInt() - 1;
+        m_month = m;
+        m_monthDay = d;
 
         m_hour = r.cap(4).toInt();
         m_minute = r.cap(5).toInt();

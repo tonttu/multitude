@@ -44,7 +44,7 @@ namespace FireView {
 
   using namespace Radiant;
 
-  MutexStatic __cvmutex;
+  Mutex __cvmutex;
 
   CamView::InputThread::InputThread()
       : m_camera(0),
@@ -239,7 +239,7 @@ namespace FireView {
 
   bool CamView::InputThread::openCamera()
   {
-    Radiant::GuardStatic g(__cvmutex);
+    Radiant::Guard g(__cvmutex);
 
     Radiant::Sleep::sleepMs(200);
 
@@ -328,8 +328,10 @@ namespace FireView {
       debug("Disabled trigger.");
     }
 
-    m_camera->setTriggerPolarity(CamView::triggerPolarity());
-    debug("Set trigger polarity to %d", CamView::triggerPolarity());
+    if(CamView::triggerPolarity() != VideoCamera::TRIGGER_ACTIVE_UNDEFINED) {
+      m_camera->setTriggerPolarity(CamView::triggerPolarity());
+      debug("Set trigger polarity to %d", CamView::triggerPolarity());
+    }
 
     debug("Getting features");
 
@@ -339,6 +341,8 @@ namespace FireView {
       m_featureSend.resize(m_features.size());
 
       for(unsigned i = 0; i < m_features.size(); i++) {
+        m_featureSend[i] = false;
+
         Radiant::VideoCamera::CameraFeature & info = m_features[i];
         if(info.id == Radiant::VideoCamera::GAMMA &&
            info.value > ((info.max * 3 + info.min) / 4)) {
@@ -351,8 +355,11 @@ namespace FireView {
           info.value = (info.max + info.min) / 2;
           m_featureSend[i] = true;
         }
-        else
-          m_featureSend[i] = false;
+        uint32_t val;
+        if (CamView::getDefaultParameter(info.id, &val)) {
+          info.value = val;
+          m_featureSend[i] = true;
+        }
       }
 
       m_autoSend = m_featureSend;
@@ -374,13 +381,15 @@ namespace FireView {
   /////////////////////////////////////////////////////////////////////////////
 
   bool CamView::m_verbose = false;
-  Radiant::VideoCamera::TriggerPolarity CamView::m_triggerPolarity = Radiant::VideoCamera::TriggerPolarity(-1);
+  Radiant::VideoCamera::TriggerPolarity CamView::m_triggerPolarity =
+      Radiant::VideoCamera::TRIGGER_ACTIVE_UNDEFINED;
   int CamView::m_format7mode = 1;
 
   int CamView::m_debayer = 0;
   bool CamView::m_colorCheck = false;
 
   Nimble::Recti CamView::m_format7rect(0, 0, 2000, 1500);
+  std::map<Radiant::VideoCamera::FeatureType, uint32_t> CamView::s_defaults;
 
   static int __interval = 50;
 

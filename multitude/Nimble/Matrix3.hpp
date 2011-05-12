@@ -75,6 +75,8 @@ namespace Nimble {
 
     /// Transposes the matrix
     inline void               transpose();
+    /// Returns a transposed matrix
+    inline Matrix3T transposed() const { Matrix3T m(*this); m.transpose(); return m; }
     /// Fills the matrix with zeroes
     void                      clear() { m[0].clear(); m[1].clear(); m[2].clear(); }
     /// Makes the matrix an identity matrix

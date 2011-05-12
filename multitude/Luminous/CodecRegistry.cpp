@@ -53,7 +53,7 @@ namespace Luminous
       if(codec && codec->canRead(file))
         return codec;
 
-      Radiant::debug("CodecRegistry::getCodec # Default codec failed for %s (%s, %p)",
+      debugLuminous("CodecRegistry::getCodec # Default codec failed for %s (%s, %p)",
          filename.toUtf8().data(), ext.toUtf8().data(), codec);
       
       // No codec matched the extension, go through all registered codecs and
@@ -74,7 +74,7 @@ namespace Luminous
 
   void CodecRegistry::registerCodec(ImageCodec * codec)
   {
-    Radiant::debug("CodecRegistry::registerCodec # %s",
+    debugLuminous("CodecRegistry::registerCodec # %s",
 		   typeid(*codec).name());
 
     m_codecs.push_back(codec);
@@ -82,7 +82,7 @@ namespace Luminous
     // Associate extensions with this codec
     foreach(QString ext, codec->extensions().split(" ", QString::SkipEmptyParts)) {
       m_aliases.insert(std::make_pair(ext, codec));
-      Radiant::debug("Adding codec %p for file type %s", codec, ext.toUtf8().data());
+      debugLuminous("Adding codec %p for file type %s", codec, ext.toUtf8().data());
     }    
   }
 

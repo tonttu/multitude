@@ -17,6 +17,7 @@
 #include <Luminous/Image.hpp>
 #include <Luminous/CodecRegistry.hpp>
 #include <Luminous/ImageCodecTGA.hpp>
+#include <Luminous/ImageCodecDDS.hpp>
 
 
 #ifdef USE_QT45
@@ -113,20 +114,20 @@ namespace Luminous
 #ifdef USE_QT45
     // Debug output supported image formats
     {
-      Radiant::debug("Qt image support (read):");
+      debugLuminous("Qt image support (read):");
       QList<QByteArray> formats = QImageReader::supportedImageFormats ();
       for(QList<QByteArray>::iterator it = formats.begin(); it != formats.end(); it++) {
         QString format(*it);
-        Radiant::debug("%s", format.toUtf8().data());
+        debugLuminous("%s", format.toUtf8().data());
       }
     }
 
     {
-      Radiant::debug("Qt image support (write):");
+      debugLuminous("Qt image support (write):");
       QList<QByteArray> formats = QImageWriter::supportedImageFormats ();
       for(QList<QByteArray>::iterator it = formats.begin(); it != formats.end(); it++) {
         QString format(*it);
-        Radiant::debug("%s", format.toUtf8().data());
+        debugLuminous("%s", format.toUtf8().data());
       }
     }
 
@@ -142,11 +143,11 @@ namespace Luminous
     Image::codecs()->registerCodec(new ImageCodecPNG());
 #endif
 
+    Image::codecs()->registerCodec(new ImageCodecDDS());
     Image::codecs()->registerCodec(new ImageCodecSVG());
     /* TGA has to be last, because its ping may return true even if
        the file has other type. */
     Image::codecs()->registerCodec(new ImageCodecTGA());
-
   }
 
 }

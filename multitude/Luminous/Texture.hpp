@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef LUMINOUS_TEXTURE_HPP
@@ -24,10 +24,31 @@
 
 #include <Patterns/NotCopyable.hpp>
 
+#include <Valuable/HasValues.hpp>
+
 namespace Luminous
 {
   class PixelFormat;
   class Image;
+  class CompressedImage;
+
+  class LUMINOUS_API UploadLimiter : public Valuable::HasValues
+  {
+  public:
+    void processMessage(const char * type, Radiant::BinaryData & data);
+
+    static UploadLimiter & instance();
+
+    static long & available();
+    static long frame();
+    static long limit();
+    static void setLimit(long limit);
+
+  private:
+    UploadLimiter();
+    int m_frame;
+    long m_frameLimit;
+  };
 
   /// Base class for different textures
   /** Texture objects can be create without a valid OpenGL context, but their actual
@@ -44,8 +65,10 @@ namespace Luminous
       m_textureId(0),
       m_width(0),
       m_height(0),
-      m_pf(PixelFormat::LAYOUT_UNKNOWN, PixelFormat::TYPE_UNKNOWN),
-      m_haveMipmaps(false)
+      m_srcFormat(PixelFormat::LAYOUT_UNKNOWN, PixelFormat::TYPE_UNKNOWN),
+      m_internalFormat(0),
+      m_haveMipmaps(false),
+      m_consumed(0)
     {}
     virtual ~TextureT();
 
@@ -95,26 +118,32 @@ namespace Luminous
     int pixelCount() const { return m_width * m_height; }
 
     /** Returns the aspect ratio of this texture. This operation makes
-      sense mostly for 2D tetures.  */
+      sense mostly for 2D textures.  */
     float aspectRatio()
     { return m_height ? m_width / (float) m_height : 1.0f; }
 
     /// Returns estimation of much GPU RAM the texture uses.
     virtual long consumesBytes()
     {
-      float used = float(m_width) * m_height * m_pf.bytesPerPixel();
+      /// @todo how about compressed formats with mipmaps, does the 4/3 rule apply here as well?
+      if(m_consumed > 0) return m_consumed;
+      /// @todo this is wrong, should use m_internalFormat to calculate the size
+      float used = float(m_width) * m_height * m_srcFormat.bytesPerPixel();
       // Mipmaps used 33% more memory
       used *= (m_haveMipmaps ? (4.f / 3.f) : 1.f);
       return (long)used;
     }
 
     /** Returns the OpenGL texture id. */
-    GLuint id() const { return m_textureId; };
+    GLuint id() const { return m_textureId; }
     /// Returns true if the texture is defined
     bool isDefined() const { return id() != 0; }
 
-    /// Returns the pixel format used by the texture
-    const PixelFormat & pixelFormat() const { return m_pf; }
+    /// Returns the pixel format of the source data, not the internal pixel format
+    /// @see internalFormat()
+    const PixelFormat & srcFormat() const { return m_srcFormat; }
+    /// The internal format of the texture
+    GLenum internalFormat() const { return m_internalFormat; }
 
   protected:
     /// OpenGL texture handle
@@ -123,10 +152,15 @@ namespace Luminous
     int m_width;
     /// Height of the texture
     int m_height;
-    /// Pixel format of the texture
-    PixelFormat m_pf;
+    /// Pixel format of the source data, not the internal pixel format
+    PixelFormat m_srcFormat;
+    /// The internal texture format
+    GLenum m_internalFormat;
     /// Does the texture have mipmaps
     bool m_haveMipmaps;
+    /// The actual consumed size on GPU, if good enough estimate is known
+    /// If this is zero, the size is guessed from internalFormat and size
+    int m_consumed;
   };
 
   /// A 1D texture
@@ -164,7 +198,9 @@ namespace Luminous
     /// Load the texture from an image file
     bool loadImage(const char * filename, bool buildMipmaps = true);
     /// Load the texture from an image
-    bool loadImage(const Luminous::Image & image, bool buildMipmaps = true);
+    /// @param internalFormat set the format automatically
+    bool loadImage(const Luminous::Image & image, bool buildMipmaps = true, int internalFormat = 0);
+    bool loadImage(const Luminous::CompressedImage & image);
 
     /// Load the texture from from raw data, provided by the user
     bool loadBytes(GLenum internalFormat, int w, int h,
@@ -198,7 +234,15 @@ namespace Luminous
   {
   public:
     /// Constructs a 3D texture and adds it to the given resource collection
-    Texture3D(GLResources * resources = 0) : TextureT<GL_TEXTURE_3D> (resources) {}
+    Texture3D(GLResources * resources = 0)
+      : TextureT<GL_TEXTURE_3D> (resources),
+      m_depth(0)
+    {}
+
+    void setDepth(int d) { m_depth = d; }
+    int depth() const { return m_depth; }
+  private:
+    int m_depth;
   };
 
   /// A cubemap texture

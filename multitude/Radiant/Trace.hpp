@@ -19,6 +19,7 @@
 
 #include <Radiant/Export.hpp>
 
+
 #define FNAME static const char * fname = __FUNCTION__
 
 namespace Radiant {
@@ -67,9 +68,13 @@ namespace Radiant {
 
       */
   RADIANT_API void trace(Severity s, const char * msg, ...) RADIANT_PRINTF_CHECK(2, 3);
+
+  RADIANT_API void trace
+  (const char * module, Severity s, const char * msg, ...) RADIANT_PRINTF_CHECK(3, 4);
+
   /// Display debug output
   /** This function calls trace to do the final work and it is
-      effectively the same as calling debug(...).
+      effectively the same as calling trace(DEBUG, ...).
 
       @see trace
   */
@@ -101,8 +106,10 @@ namespace Radiant {
 
       If enabled, messages sent with the #debug function are displayed
       to the user. Otherwise they are silently ignored
+
+      @param module if given, enables or disables verbose output only for given module.
   */
-  RADIANT_API void enableVerboseOutput(bool enable);
+  RADIANT_API void enableVerboseOutput(bool enable, const char * module = 0);
   /// Returns true if the #debug function output is displayed
   RADIANT_API bool enabledVerboseOutput();
 

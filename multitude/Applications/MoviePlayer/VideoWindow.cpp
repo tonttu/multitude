@@ -105,7 +105,7 @@ void VideoWindow::randomOperation()
   };
 
   // Select movie object to stress:
-  int index = m_rand.randN24(m_movies.size());
+  int index = m_rand.randN24((uint32_t) m_movies.size());
 
   iterator it = m_movies.begin();
 
@@ -253,7 +253,7 @@ void VideoWindow::paintGL()
 
   ALL_MOVIES(update());
 
-  int n = m_movies.size();
+  int n = (int) m_movies.size();
 
   int rows = (int) ceilf(sqrtf(n));
   int cols = 1;

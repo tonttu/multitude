@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Poetic.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Poetic.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 #ifndef POETIC_CPU_FONT_HPP
 #define POETIC_CPU_FONT_HPP
@@ -39,6 +27,8 @@ namespace Poetic
     virtual float advance(const char * str, int n = -1) = 0;
     /// @copydoc advance
     virtual float advance(const wchar_t * str, int n = -1) = 0;
+
+    virtual void advanceList(const wchar_t * str, float * advances, int n = -1) = 0;
 
     /// @copydoc advance
     float advance(const QString & str) {

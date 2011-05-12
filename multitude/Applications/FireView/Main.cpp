@@ -149,6 +149,20 @@ int main(int argc, char ** argv)
       FireView::CamView::setVerbose(true);
       Radiant::enableVerboseOutput(true);
     }
+    else if (strcmp(arg, "--celltest") == 0) {
+      triggerMode = Radiant::VideoCamera::TRIGGER_MODE_0;
+      triggerSource = Radiant::VideoCamera::TRIGGER_SOURCE_0;
+      format7 = true;
+      // full format7 area
+      Nimble::Vector4f vals(0, 0, 376, 240);
+      fps = 60;
+
+      FireView::CamView::setFormat7area(vals[0], vals[1], vals[2], vals[3]);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::SHUTTER, 30);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::BRIGHTNESS, 200);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::SHUTTER, 30);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::GAIN, 20);
+    }
     else {
       printf("%s Could not handle argument %s\n", argv[0], arg);
       helper(argv[0]);
@@ -157,7 +171,7 @@ int main(int argc, char ** argv)
   }
 
   if(triggerMode >= 0 && triggerSource < 0) {
-    printf("%s If you set trigger mode, you also need to set trigger mode\n",
+    printf("%s If you set trigger mode, you also need to set trigger source\n",
        argv[0]);
     return -1;
   }

@@ -16,6 +16,9 @@
 #ifndef VIDEODISPLAY_VIDEODISPLAY_HPP
 #define VIDEODISPLAY_VIDEODISPLAY_HPP
 
+#include <Radiant/Trace.hpp>
+
+#define debugVideoDisplay(...) (Radiant::trace("VideoDisplay", Radiant::DEBUG, __VA_ARGS__))
 /// VideoDisplay a C++ library for playing movie files using OpenGL hardware.
 
 /** It is heavily in work-in-progress.

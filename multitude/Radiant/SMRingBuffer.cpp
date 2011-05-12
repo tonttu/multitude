@@ -14,7 +14,7 @@
  */
 
 #include <Radiant/StringUtils.hpp>
-#include <Radiant/Trace.hpp>
+#include "Radiant.hpp"
 
 #include "SMRingBuffer.hpp"
 
@@ -85,7 +85,7 @@ namespace Radiant
       {
         if(::CloseHandle(hMapFile))
         {
-          debug("%s # Successfully removed existing shared memory area with same name.", fnName);
+          debugRadiant("%s # Successfully removed existing shared memory area with same name.", fnName);
         }
         else
         {
@@ -100,7 +100,7 @@ namespace Radiant
       if(m_hMapFile)
       {
         m_isCreator = true;
-        debug("%s # Successfully created new shared memory area (%s).", fnName);
+        debugRadiant("%s # Successfully created new shared memory area (%s).", fnName);
       }
       else
       {
@@ -114,7 +114,7 @@ namespace Radiant
       m_hMapFile = ::OpenFileMappingA(FILE_MAP_ALL_ACCESS, false, m_smName.c_str());
       if(m_hMapFile)
       {
-        debug("%s # Successfully accessed existing shared memory area (%s).", fnName);
+        debugRadiant("%s # Successfully accessed existing shared memory area (%s).", fnName);
       }
       else
       {
@@ -128,7 +128,7 @@ namespace Radiant
     char * const  smPtr = (char *)(::MapViewOfFile(m_hMapFile, FILE_MAP_ALL_ACCESS, 0, 0, size));
     if(smPtr)
     {
-      debug("%s # Successfully obtained pointer to shared memory area.", fnName);
+      debugRadiant("%s # Successfully obtained pointer to shared memory area.", fnName);
     }
     else
     {
@@ -821,26 +821,26 @@ namespace Radiant
 
   void SMRingBuffer::dump() const
   {
-    debug("m_isCreator = %s", m_isCreator ? "true" : "false");
+    debugRadiant("m_isCreator = %s", m_isCreator ? "true" : "false");
 #ifdef WIN32
-    debug("m_smName = %s", m_smName.c_str());
-    debug("m_hMapFile = %p", m_hMapFile);
+    debugRadiant("m_smName = %s", m_smName.c_str());
+    debugRadiant("m_hMapFile = %p", m_hMapFile);
 #else
-    debug("m_smKey = %lu", (unsigned long)(m_smKey));
-    debug("m_id = %d", m_id);
+    debugRadiant("m_smKey = %lu", (unsigned long)(m_smKey));
+    debugRadiant("m_id = %d", m_id);
 #endif
-    debug("size() = %lu", (unsigned long)(size()));
-    debug("m_startPtr = %p", m_startPtr);
+    debugRadiant("size() = %lu", (unsigned long)(size()));
+    debugRadiant("m_startPtr = %p", m_startPtr);
 
-    debug("writePos() = %lu", (unsigned long)(writePos()));
-    debug("readPos() = %lu", (unsigned long)(readPos()));
-    debug("readWriteState() = %lu", (unsigned long)(readWriteState()));
+    debugRadiant("writePos() = %lu", (unsigned long)(writePos()));
+    debugRadiant("readPos() = %lu", (unsigned long)(readPos()));
+    debugRadiant("readWriteState() = %lu", (unsigned long)(readWriteState()));
 
-    debug("used = %lu", (unsigned long)(used()));
-    debug("available() = %lu", (unsigned long)(available()));
+    debugRadiant("used = %lu", (unsigned long)(used()));
+    debugRadiant("available() = %lu", (unsigned long)(available()));
 
-    debug("isEmpty() = %s", isEmpty() ? "true" : "false");
-    debug("isFull() = %s", isFull() ? "true" : "false");
+    debugRadiant("isEmpty() = %s", isEmpty() ? "true" : "false");
+    debugRadiant("isFull() = %s", isFull() ? "true" : "false");
   }
 
 }

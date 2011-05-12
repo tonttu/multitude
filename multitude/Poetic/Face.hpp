@@ -20,6 +20,7 @@
 #include <Nimble/Vector2.hpp>
 
 #include <QString>
+#include <map>
 
 struct FT_GlyphSlotRec_;
 
@@ -56,6 +57,11 @@ namespace Poetic
       QString fontFilePath() const { return m_fontFilePath; }
 
     private:
+
+      typedef std::map<uint64_t, Nimble::Vector2> KernMap;
+
+      KernMap m_kernings;
+
       FT_FaceRec_ ** m_ftFace;
       Size m_size;
       int m_numGlyphs;

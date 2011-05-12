@@ -306,16 +306,16 @@ DSPNetwork::instance().send(control);
     Radiant::BinaryData m_controlData;
     Radiant::BinaryData m_incoming;
     Radiant::BinaryData m_incopy;
-    Radiant::MutexAuto m_inMutex;
+    Radiant::Mutex m_inMutex;
 
     char        m_devName[128];
     // bool        m_continue;
     long        m_frames;
     int         m_doneCount;
 
-    Radiant::MutexAuto m_newMutex;
+    Radiant::Mutex m_newMutex;
 
-    Radiant::MutexAuto m_startupMutex;
+    Radiant::Mutex m_startupMutex;
 
     static DSPNetwork * m_instance;
   };

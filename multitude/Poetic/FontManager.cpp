@@ -25,7 +25,9 @@ namespace Poetic
 {
 
   FontManager::FontManager()
-  {    
+  {
+    Radiant::Guard g(m_mutex);
+
     m_locator.addPath("../../share/MultiTouch/Fonts");
 
     // Add platform specific paths 
@@ -45,12 +47,16 @@ namespace Poetic
 
   FontManager::~FontManager()
   {
+    Radiant::Guard g(m_mutex);
+
     for(TextureVBOMap::iterator it = m_vbos.begin(); it != m_vbos.end(); it++)
       delete it->second;
   }
 
   CPUWrapperFont * FontManager::getFont(const QString & name)
   {
+    Radiant::Guard g(m_mutex);
+
     if(name.isEmpty()) {
       Radiant::error("FontManager::getFont # empty fontname");
       return 0;
@@ -88,16 +94,22 @@ namespace Poetic
 
   QString FontManager::locate(const QString & name)
   {
+    Radiant::Guard g(m_mutex);
+
     return m_locator.locate(name);
   }
 
   Radiant::ResourceLocator & FontManager::locator()
   {
+    Radiant::Guard g(m_mutex);
+
     return m_locator;
   }
 
   Luminous::VertexBuffer * FontManager::fontVBO(GLuint textureId)
   {
+    Radiant::Guard g(m_mutex);
+
     TextureVBOMap::iterator it = m_vbos.find(textureId);
 
     // No vbo found, create new

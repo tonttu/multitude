@@ -14,6 +14,7 @@
  */
 
 #include "WatchDog.hpp"
+#include "Radiant.hpp"
 
 #include "Platform.hpp"
 #include "Sleep.hpp"
@@ -139,7 +140,7 @@ namespace Radiant {
         exit(0);
       }
 
-      debug("WATCHDOG CHECK");
+      debugRadiant("WATCHDOG CHECK");
 
     }
   }

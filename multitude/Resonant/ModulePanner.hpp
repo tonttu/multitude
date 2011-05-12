@@ -23,6 +23,7 @@
 #include <Radiant/RefPtr.hpp>
 
 #include <Resonant/Module.hpp>
+#include <Resonant/SoundRectangle.hpp>
 
 #include <Valuable/ValueFloat.hpp>
 #include <Valuable/ValueVector.hpp>
@@ -38,15 +39,28 @@ namespace Resonant {
       situations, where the sound should move with videos or other
       visual content.
 
+      Currently, there are two panning modes, see #Mode
   */
   class ModulePanner : public Module
   {
   public:
+    enum Mode {
+      /// Radial mode, where the panning is based on the distance of loudspeaker and
+      /// sound source.
+      /// @sa ModulePanner::setCaptureRadius
+      RADIAL = 0,
+      /// Rectangles, where the panning is based on rectangular regions
+      /// @sa ModulePanner::addSoundRectangle
+      /// @sa SoundRectangle
+      RECTANGLES = 1
+    };
+
+
     /// Constructs the panner module
-    RESONANT_API ModulePanner(Application *);
+    RESONANT_API ModulePanner(Application *, Mode mode=RADIAL);
     RESONANT_API virtual ~ModulePanner();
 
-    RESONANT_API virtual Valuable::ArchiveElement & serialize(Valuable::Archive &doc);
+    RESONANT_API virtual Valuable::ArchiveElement & serialize(Valuable::Archive &doc) const;
     RESONANT_API virtual bool readElement(Valuable::DOMElement element);
 
     RESONANT_API virtual bool prepare(int & channelsIn, int & channelsOut);
@@ -65,11 +79,17 @@ namespace Resonant {
     /// @copydoc setSpeaker(unsigned i, Nimble::Vector2 location)
     RESONANT_API void setSpeaker(unsigned i, float x, float y);
 
-    /// Sets the radius for the distance for collecting the audio to a single loudspeaker
+    /// Sets the radius for the distance for collecting the audio to a single loudspeaker.
+    /// Only has an effect if using the radial #Mode.
     /** When a given sound source gets closer than he maximum radius its volume is faded in
         so that at radius/2 the volume is at 100% (aka unity gain). */
     void setCaptureRadius(float r) { m_maxRadius = r; ++m_generation; }
 
+    /// Add a SoundRectangle. The ownership is transferred to this object.
+    RESONANT_API void addSoundRectangle(SoundRectangle * r);
+
+    RESONANT_API void setMode(Mode mode);
+    RESONANT_API Mode getMode() const;
   private:
 
     friend class ModuleRectPanner;
@@ -119,18 +139,29 @@ namespace Resonant {
       std::vector<Pipe> m_pipes;
     };
 
+    const SoundRectangle * getContainingRectangle(const LoudSpeaker * ls) const;
     /// Computes the gain for the given speaker based on sound source location
     virtual float computeGain(const LoudSpeaker * ls, Nimble::Vector2 srcLocation) const;
+
+    float computeGainRadial(const LoudSpeaker * ls, Nimble::Vector2 srcLocation) const;
+    float computeGainRectangle(const LoudSpeaker * ls, Nimble::Vector2 srcLocation) const;
 
     typedef std::vector<Radiant::RefObj<Source> > Sources;
     typedef std::vector<std::shared_ptr<LoudSpeaker> > LoudSpeakers;
 
+
+    typedef std::vector<SoundRectangle*> Rectangles;
+
+
     Sources      m_sources;
     LoudSpeakers m_speakers;
+
     /// generation is increased every time speaker setup is changed
     long m_generation;
 
     Valuable::ValueFloat m_maxRadius;
+    Rectangles m_rectangles;
+    Mode m_operatingMode;
     /// @endcond
   };
 

@@ -16,6 +16,9 @@
 #ifndef RESONANT_RESONANT_HPP
 #define RESONANT_RESONANT_HPP
 
+#include <Radiant/Trace.hpp>
+
+#define debugResonant(...) (Radiant::trace("Resonant", Radiant::DEBUG, __VA_ARGS__))
 /// Resonant library is a collection of C++ classes for sound processing.
 
 /** It is heavily in work-in-progress.

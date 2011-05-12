@@ -17,6 +17,7 @@
 #include "PlatformUtils.hpp"
 #include "StringUtils.hpp"
 #include "Directory.hpp"
+#include "Radiant.hpp"
 
 #include <assert.h>
 #include <fcntl.h>
@@ -232,14 +233,16 @@ namespace Radiant
   {
     return suffixMatch(filePath, "png") ||
         suffixMatch(filePath, "jpg") ||
-        suffixMatch(filePath, "jpeg");
+        suffixMatch(filePath, "jpeg") ||
+        suffixMatch(filePath, "dds");
   }
 
   bool FileUtils::looksLikeVideo(const QString & filePath)
   {
     return suffixMatch(filePath, "avi") ||
         suffixMatch(filePath, "qt") ||
-        suffixMatch(filePath, "mov");
+        suffixMatch(filePath, "mov") ||
+        suffixMatch(filePath, "mp4");
   }
 
   unsigned long int FileUtils::lastModified(const QString & filePath)

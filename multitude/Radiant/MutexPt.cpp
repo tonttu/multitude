@@ -1,24 +1,17 @@
 /* COPYRIGHT
- *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
+#include "Condition.hpp"
 #include "Mutex.hpp"
 
+#include <iostream>
+
+#include <cassert>
 #include <errno.h>
 #include <string.h>
 
-#include <iostream>
+#include <sys/time.h>
+
 
 // Trick for Linux
 #ifndef WIN32
@@ -37,125 +30,155 @@ namespace Radiant {
   static bool mutexDebug = false;
 
   class Mutex::D {
-    public:
-    pthread_mutex_t m_ptmutex;
+  public:
+    D(bool recursive);
+    ~D()
+    {
+      if(m_ptmutex) {
+        pthread_mutex_destroy(m_ptmutex);
+        delete m_ptmutex;
+      }
+    }
+
+    bool m_recursive;
+    pthread_mutex_t* m_ptmutex;
   };
 
-  Mutex::Mutex()
-    : m_d(new D),
-    m_active(false)
+
+  Mutex::D::D(bool recursive)
+    : m_recursive(recursive), m_ptmutex(new pthread_mutex_t)
+  {
+    pthread_mutexattr_t mutex_attr;
+    pthread_mutexattr_init(&mutex_attr);
+
+    int err;
+
+    if(m_recursive) {
+      err = pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_RECURSIVE);
+
+      if(err) {
+        if(mutexDebug) std::cerr << "Could not create recursive mutex "
+            << strerror(err) << std::endl;
+
+        return;
+      }
+    }
+
+    err = pthread_mutex_init( m_ptmutex, &mutex_attr);
+
+    if(err && mutexDebug) {
+      std::cerr << "Could not create mutex " << strerror(err) << std::endl;
+    }
+  }
+
+  Mutex::Mutex(bool recursive)
+    : m_d(new D(recursive))
   {}
 
   Mutex::~Mutex()
   {
-    if(!m_active) return;
-
-    int err = pthread_mutex_destroy(&m_d->m_ptmutex);
-    if(err && mutexDebug)
-      std::cerr << "Error:Mutex::~Mutex " << strerror(err) << std::endl;
-
     delete m_d;
-    /* A small service to the people who may need to debug deleted mutexes: */
-    m_active = false;
-  }
-
-  bool Mutex::init(bool shared, bool prio_inherit, bool recursive)
-  {
-    int ishared, iprio_inherit, err;
-    const char ename[] = "Error:Mutex::init"; // Error and name.
-
-    if(shared && prio_inherit) {
-      if(mutexDebug) std::cerr << ename << " - bad argument" << std::endl;
-      return false;
-    }
-
-    pthread_mutexattr_t mutex_attr;
-    pthread_mutexattr_init(&mutex_attr);
-
-    if(recursive) {
-      err = pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_RECURSIVE);
-      if(err) {
-    if(mutexDebug) std::cerr << ename << strerror(err) << std::endl;
-    return false;
-      }
-    }
-
-#if defined(_SGI_MP_SOURCE) || _POSIX_THREAD_PROCESS_SHARED
-    if(shared) ishared = PTHREAD_PROCESS_SHARED;
-    else ishared = PTHREAD_PROCESS_PRIVATE;
-
-    err = pthread_mutexattr_setpshared(&mutex_attr, ishared);
-    if(err) {
-      if(mutexDebug) std::cerr << ename << strerror(err) << std::endl;
-      return false;
-    }
-#else
-    // Not supported (Linux).
-    (void) ishared;
-#endif
-
-#if defined(PTHREAD_PRIO_INHERIT) && defined(PTHREAD_PRIO_NONE)
-    if(prio_inherit) iprio_inherit = PTHREAD_PRIO_INHERIT;
-    else iprio_inherit = PTHREAD_PRIO_NONE;
-    err = pthread_mutexattr_setprotocol(&mutex_attr, iprio_inherit);
-    if(err) {
-      std::cerr << ename << strerror(err) << std::endl;
-      return false;
-    }
-#else
-    (void) iprio_inherit;
-#endif
-
-    err = pthread_mutex_init(&m_d->m_ptmutex, &mutex_attr);
-    if(err && mutexDebug) {
-      std::cerr << ename << strerror(err) << std::endl;
-    }
-    else
-      m_active = true;
-
-    return ! err;
-  }
-
-  bool Mutex::close()
-  {
-    if(m_active) {
-      m_active = false;
-      return ! pthread_mutex_destroy(&m_d->m_ptmutex);
-    }
-    return false; // Nothing to close
-  }
-
-  bool Mutex::lock()
-  {
-    const char *fname = "Mutex::lock ";
-
-    int e = pthread_mutex_lock(&m_d->m_ptmutex);
-    if(e) std::cerr << fname << strerror(e) << " " << this << std::endl;
-    return !e;
   }
 
   bool Mutex::lock(bool block)
   {
-    if(!block) return tryLock();
-    else return lock();
-  }
+    if(block) {
+      int e = pthread_mutex_lock(m_d->m_ptmutex);
+      if(e)
+        std::cerr << "Mutex::lock # FAILED " << strerror(e) << std::endl;
+      return e == 0;
+    }
 
-  bool Mutex::tryLock()
-  {
-    const char *fname = "Mutex::trylock ";
-
-    int e = pthread_mutex_trylock(&m_d->m_ptmutex);
-    if(e && e != EBUSY) std::cerr << fname << strerror(e) << " " << this << std::endl;
-    return !e;
+    int e = pthread_mutex_trylock(m_d->m_ptmutex);
+    return e == 0;
   }
 
   bool Mutex::unlock()
   {
     const char *fname = "Mutex::unlock ";
 
-    int e = pthread_mutex_unlock(&m_d->m_ptmutex);
-    if(e) std::cerr << fname << strerror(e) << " " << this << std::endl;
+    int e = pthread_mutex_unlock(m_d->m_ptmutex);
+
+    if(e)
+      std::cerr << fname << strerror(e) << " " << this << std::endl;
+
     return !e;
+  }
+
+  ///////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////
+
+  class Condition::D
+  {
+    public:
+    pthread_cond_t m_ptcond;
+  };
+
+  Condition::Condition()
+  : m_d(new D())
+  {
+    pthread_cond_init(&m_d->m_ptcond, 0);
+  }
+
+  Condition::~Condition()
+  {
+    pthread_cond_destroy(&m_d->m_ptcond);
+    delete m_d;
+  }
+
+  int Condition::wait(Mutex &mutex)
+  {
+    pthread_mutex_t * ptmutex = mutex.m_d->m_ptmutex;
+
+    return pthread_cond_wait(& m_d->m_ptcond, ptmutex);
+  }
+
+  int Condition::wait(Mutex &mutex, int millsecs)
+  {
+    struct timespec abstime;
+    struct timeval tv;
+
+    gettimeofday(&tv, 0);
+    tv.tv_sec += millsecs / 1000;
+    tv.tv_usec += 1000 * (millsecs % 1000);
+    if(tv.tv_usec >= 1000000)
+    {
+        tv.tv_sec++;
+        tv.tv_usec -= 1000000;
+    }
+    abstime.tv_sec = tv.tv_sec;
+    abstime.tv_nsec = 1000 * tv.tv_usec;
+
+    pthread_mutex_t * ptmutex = mutex.m_d->m_ptmutex;
+
+    return pthread_cond_timedwait(& m_d->m_ptcond, ptmutex, & abstime);
+  }
+
+  int Condition::wakeAll()
+  {
+    return pthread_cond_broadcast(& m_d->m_ptcond);
+  }
+
+  int Condition::wakeAll(Mutex &mutex)
+  {
+    mutex.lock();
+    int r = pthread_cond_broadcast(& m_d->m_ptcond);
+    mutex.unlock();
+    return r;
+  }
+
+  int Condition::wakeOne()
+  {
+    return pthread_cond_signal(& m_d->m_ptcond);
+  }
+
+  int Condition::wakeOne(Mutex &mutex)
+  {
+    mutex.lock();
+    int r = wakeOne();
+    mutex.unlock();
+    return r;
   }
 
 }

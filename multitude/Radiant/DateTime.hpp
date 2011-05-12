@@ -54,9 +54,9 @@ namespace Radiant {
     int minute() const { return m_minute; }
     /// Seconds since last full minute (0-59)
     int second() const { return m_second; }
-    /// Milliseconds since last full minute (0-59)
+    /// Milliseconds since last full second (0-999)
     int milliSecond() const { return m_microsecond / 1000; }
-    /// Microseconds since last full minute (0-59)
+    /// Microseconds since last full second (0-999999)
     int microSecond() const { return m_microsecond; }
     /// Reset the hour, minute and second values to zero
     void clearTime();

@@ -16,6 +16,7 @@
 #ifndef VALUABLE_VALUABLE_HPP
 #define VALUABLE_VALUABLE_HPP
 
+#define debugValuable(...) (Radiant::trace("Valuable", Radiant::DEBUG, __VA_ARGS__))
 /** A library for automatically saving and loading class member values.
 
     The purpose of this framework is to handle:

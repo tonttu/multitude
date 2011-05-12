@@ -14,6 +14,7 @@
  */
 
 #include "ModulePulseAudio.hpp"
+#include "Resonant.hpp"
 
 #include <Radiant/Sleep.hpp>
 
@@ -67,7 +68,7 @@ namespace Resonant
       break;
 
     case PA_STREAM_READY:
-      Radiant::debug("Audio recording started");
+      debugResonant("Audio recording started");
       m_ready = true;
       break;
 
@@ -90,23 +91,23 @@ namespace Resonant
 
     static const pa_sample_spec ss = {PA_SAMPLE_FLOAT32, 44100, 1};
 
-    Radiant::debug("Starting capture %d", pa_sample_spec_valid(&ss));
+    debugResonant("Starting capture %d", pa_sample_spec_valid(&ss));
     if(!(m_stream = pa_stream_new(m_context, "Cornerstone capture", &ss, NULL))) {
       restart();
       return;
     }
 
-    Radiant::debug("setting callbacks");
+    debugResonant("setting callbacks");
     pa_stream_set_state_callback(m_stream, s_streamStateCb, this);
     pa_stream_set_read_callback(m_stream, s_streamRequestCb, this);
 
-    Radiant::debug("monitoring %d", m_sinkInput);
+    debugResonant("monitoring %d", m_sinkInput);
     if(pa_stream_set_monitor_stream(m_stream, m_sinkInput) != 0) {
       restart();
       return;
     }
 
-    Radiant::debug("starting record");
+    debugResonant("starting record");
     pa_buffer_attr attr;
     attr.maxlength = attr.tlength = attr.prebuf = attr.minreq = (uint32_t)-1;
     double latency = getenv("MODULE_PULSEAUDIO_FRAGSIZE")
@@ -124,7 +125,7 @@ namespace Resonant
       restart();
       return;
     }
-    Radiant::debug("record request done");
+    debugResonant("record request done");
   }
 
   bool ModulePulseAudio::prepare(int & channelsIn, int & channelsOut)

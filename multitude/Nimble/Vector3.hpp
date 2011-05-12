@@ -190,6 +190,14 @@ namespace Nimble {
   Nimble::Vector3T<T> operator* (T s, const Nimble::Vector3T<T>& v)
   { return v * s; }
 
+  namespace Math {
+    /// Specialize Abs
+    template <class T>
+    inline float Abs(const Vector3T<T>& t)
+    {
+      return t.length();
+    }
+  }
 } // namespace
 
 template <class T>

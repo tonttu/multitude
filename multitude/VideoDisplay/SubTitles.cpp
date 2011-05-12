@@ -14,6 +14,7 @@
  */
 
 #include "SubTitles.hpp"
+#include "VideoDisplay.hpp"
 
 #include <Radiant/Trace.hpp>
 #include <Radiant/StringUtils.hpp>
@@ -173,7 +174,7 @@ namespace VideoDisplay {
         in.getline(buf, LEN);
 
         bool r = (buf[0] && buf[0] != '\n');
-        //Radiant::debug("SUB READ %s (buf[0] = %d, r = %d)", buf, buf[0], r);
+        //debugVideoDisplay("SUB READ %s (buf[0] = %d, r = %d)", buf, buf[0], r);
         if(r) tmp.m_lines.push_back(buf);
         else break;
       } 
@@ -182,7 +183,7 @@ namespace VideoDisplay {
       //Radiant::StringUtils::eraseNonVisibles(tmp.m_lines[0]);
       //Radiant::StringUtils::eraseNonVisibles(tmp.m_lines[1]);
 
-      Radiant::debug("Subtitle chunk %lf -> %lf %lu lines",
+      debugVideoDisplay("Subtitle chunk %lf -> %lf %lu lines",
         tmp.m_begin.secondsD(), tmp.m_end.secondsD(),
         tmp.m_lines.size());
         
@@ -229,7 +230,7 @@ namespace VideoDisplay {
       full += '\n' + m_texts[index].m_lines[j];
     }
 
-    Radiant::debug("LONGEST SUB %s", full.toUtf8().data());
+    debugVideoDisplay("LONGEST SUB %s", full.toUtf8().data());
     return full;
   }
 

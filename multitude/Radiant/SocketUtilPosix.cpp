@@ -86,6 +86,11 @@ namespace Radiant {
         continue;
       }
 
+      int t = 1;
+      if (doBind && setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&t, sizeof(t)) < 0) {
+        error("TCPServerSocket::open # Failed to set SO_REUSEADDR: %s", wrap_strerror(wrap_errno));
+      }
+
       if(doBind && bind(fd, rp->ai_addr, rp->ai_addrlen) == -1) {
         err = wrap_errno;
         errstr = QString("bind() failed: ") + wrap_strerror(err);

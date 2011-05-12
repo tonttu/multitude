@@ -55,12 +55,15 @@ namespace Poetic
       typedef std::map<QString, CPUManagedFont *> container;
       container m_managedFonts;
 
+      /// @todo remove this and use the global locator
       Radiant::ResourceLocator m_locator;
 
       typedef std::map<GLuint, Luminous::VertexBuffer *> TextureVBOMap;
       TextureVBOMap m_vbos;
 
       friend class Patterns::Singleton<FontManager>;
+
+      Radiant::Mutex m_mutex;
   };
 
 }
