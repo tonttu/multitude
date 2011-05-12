@@ -80,8 +80,8 @@ namespace Nimble {
     {
       // nVidia SDK implementation
       Vector3T<Y> qvec(x, y, z);
-      Vector3T<Y> uv = cross(qvec, v);
-      Vector3T<Y> uuv = cross(qvec, uv);
+      Vector3T<Y> uv = ::cross(qvec, v);
+      Vector3T<Y> uuv = ::cross(qvec, uv);
       uv *= (2.0f * w);
       uuv *= 2.0f;
       return v + uv + uuv;

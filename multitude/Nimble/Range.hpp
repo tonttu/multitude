@@ -84,4 +84,14 @@ namespace Nimble {
 
 }
 
+// These are needed under Windows
+#ifdef WIN32
+#   ifdef NIMBLE_EXPORT
+        template Nimble::RangeT<double>;
+        template Nimble::RangeT<float>;
+        template Nimble::RangeT<long>;
+        template Nimble::RangeT<int>;
+#   endif
+#endif
+
 #endif // RANGE_HPP
