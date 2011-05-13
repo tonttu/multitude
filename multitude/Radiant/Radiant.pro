@@ -22,7 +22,6 @@ HEADERS += Export.hpp
 HEADERS += FileUtils.hpp
 HEADERS += FixedStr.hpp
 HEADERS += FixedStrImpl.hpp
-HEADERS += Functional.hpp
 HEADERS += Grid.hpp
 HEADERS += ImageConversion.hpp
 HEADERS += IODefs.hpp

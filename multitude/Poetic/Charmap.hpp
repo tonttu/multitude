@@ -19,33 +19,16 @@
 #include <Radiant/Platform.hpp>
 
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-
-// try to detect c++0x
-#if defined(RADIANT_CPP0X)
-  #include <unordered_map>
-#else
-  #if defined(__GCCXML__)
+#if defined(__GCCXML__)
 #include <map>
-    namespace tr1 {
-      template <typename A, typename B>
-      class unordered_map : public std::map<A, B>
-      {};
-    }
-  #elif defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
-    #include <tr1/unordered_map>
-  #elif defined(RADIANT_WIN32) && defined(_HAS_TR1)
-    #include <unordered_map>
-  #else
-    #include <boost/tr1/unordered_map.hpp>
-  #endif
-  namespace std
-  {
-    using tr1::unordered_map;
+  namespace std {
+    template <typename A, typename B>
+    class unordered_map : public std::map<A, B>
+    {};
   }
+#else
+#include <unordered_map>
 #endif
-
-#endif // DOXYGEN_SHOULD_SKIP_THIS
 
 struct FT_FaceRec_;
 
