@@ -150,7 +150,7 @@ win32 {
     # Looks like there is no more path difference between 64 and 32-bit?
     #win64:PTGREY_PATH = "C:\Program Files (x86)\Point Grey Research\FlyCapture2"
     #else:PTGREY_PATH = "C:\Program Files\Point Grey Research\FlyCapture2"
-    PTGREY_PATH = "C:\Program Files\Point Grey Research\FlyCapture2"
+    PTGREY_PATH = "C:\\Program Files\\Point Grey Research\\FlyCapture2"
     !exists($$PTGREY_PATH/include):error(PTGrey driver must be installed on Windows)
 
     DEFINES += CAMERA_DRIVER_PGR
