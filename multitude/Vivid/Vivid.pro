@@ -3,7 +3,7 @@ include(../multitude.pri)
 FBX_SDK=$$(FBX_SDK)
 
 INCLUDEPATH += $$FBX_SDK/include
-LIBPATH += $$FBX_SDK/lib/gcc4
+QMAKE_LIBDIR += $$FBX_SDK/lib/gcc4
 LIBS += -lfbxsdk_20113_1_x64
 
 HEADERS += Scene.hpp \
