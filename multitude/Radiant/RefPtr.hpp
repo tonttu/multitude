@@ -53,11 +53,52 @@ public:
   T * operator->() const; // never throws
   T * get() const; // never throws
 
+  operator bool() const;
+
   bool unique() const; // never throws
   long use_count() const; // never throws
 
   void swap(shared_ptr & b); // never throws
 };
+template<class T> class weak_ptr {
+
+public:
+  typedef T element_type;
+
+  weak_ptr();
+
+  template<class Y> weak_ptr(shared_ptr<Y> const & r);
+  weak_ptr(weak_ptr const & r);
+  template<class Y> weak_ptr(weak_ptr<Y> const & r);
+
+  ~weak_ptr();
+
+  weak_ptr & operator=(weak_ptr const & r);
+  template<class Y> weak_ptr & operator=(weak_ptr<Y> const & r);
+  template<class Y> weak_ptr & operator=(shared_ptr<Y> const & r);
+
+  long use_count() const;
+  bool expired() const;
+  shared_ptr<T> lock() const;
+
+  void reset();
+  void swap(weak_ptr<T> & b);
+};
+
+template<typename Signature  // Function type R (T1, T2, ..., TN)
+         >
+class function {
+public:
+  // construct/copy/destruct
+  function();
+  function(const function&);
+  ~function();
+
+  // invocation
+  //result_type operator()(arg1_type, arg2_type, ..., argN_type) const;
+};
+
+
 }
 #endif
 
