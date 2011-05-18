@@ -287,6 +287,34 @@ namespace Radiant {
           get(left, bot) * wxl * wyb + get(right, bot) * wxr * wyb;
     }
 
+    /** Interpolates an element from the grid values.
+        This function requires that the grid template type can be multiplied from the right
+        with a floating point number. */
+    inline T getInterpolatedSafe(const Nimble::Vector2f & v)
+    {
+      int left = v.x;
+      int top = v.y;
+      int right = left+1;
+      int bot = top + 1;
+
+      float wxr = v.x - left;
+      float wyb = v.y - top;
+
+      float wxl = 1.0f - wxr;
+      float wyt = 1.0f - wyb;
+
+      int wmax = width() - 1;
+      left = Nimble::Math::Clamp(left, 0, wmax);
+      right = Nimble::Math::Clamp(right, 0, wmax);
+
+      int hmax = height() - 1;
+      top = Nimble::Math::Clamp(top, 0, hmax);
+      bot = Nimble::Math::Clamp(bot, 0, hmax);
+
+      return get(left, top) * wxl * wyt + get(right, top) * wxr * wyt +
+          get(left, bot) * wxl * wyb + get(right, bot) * wxr * wyb;
+    }
+
     /// Return a pointer to one line (aka row)
     inline T * line(int y)
     { return & this->m_data[this->m_width * y]; }
