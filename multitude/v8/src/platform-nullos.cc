@@ -35,6 +35,7 @@
 #include "v8.h"
 
 #include "platform.h"
+#include "vm-state-inl.h"
 
 
 namespace v8 {
@@ -127,6 +128,19 @@ void OS::VPrint(const char* format, va_list args) {
 }
 
 
+void OS::FPrint(FILE* out, const char* format, ...) {
+  va_list args;
+  va_start(args, format);
+  VFPrint(out, format, args);
+  va_end(args);
+}
+
+
+void OS::VFPrint(FILE* out, const char* format, va_list args) {
+  vfprintf(out, format, args);
+}
+
+
 // Print error message to console.
 void OS::PrintError(const char* format, ...) {
   // Minimalistic implementation for bootstrapping.
@@ -168,6 +182,11 @@ double OS::nan_value() {
 
 
 bool OS::ArmCpuHasFeature(CpuFeature feature) {
+  UNIMPLEMENTED();
+}
+
+
+bool OS::ArmUsingHardFloat() {
   UNIMPLEMENTED();
 }
 
@@ -228,6 +247,12 @@ void OS::DebugBreak() {
 }
 
 
+OS::MemoryMappedFile* OS::MemoryMappedFile::open(const char* name) {
+  UNIMPLEMENTED();
+  return NULL;
+}
+
+
 OS::MemoryMappedFile* OS::MemoryMappedFile::create(const char* name, int size,
     void* initial) {
   UNIMPLEMENTED();
@@ -279,9 +304,9 @@ bool VirtualMemory::Uncommit(void* address, size_t size) {
 }
 
 
-class ThreadHandle::PlatformData : public Malloced {
+class Thread::PlatformData : public Malloced {
  public:
-  explicit PlatformData(ThreadHandle::Kind kind) {
+  PlatformData() {
     UNIMPLEMENTED();
   }
 
@@ -289,44 +314,33 @@ class ThreadHandle::PlatformData : public Malloced {
 };
 
 
-ThreadHandle::ThreadHandle(Kind kind) {
-  UNIMPLEMENTED();
-  // Shared setup follows.
-  data_ = new PlatformData(kind);
-}
-
-
-void ThreadHandle::Initialize(ThreadHandle::Kind kind) {
+Thread::Thread(Isolate* isolate, const Options& options)
+    : data_(new PlatformData()),
+      isolate_(isolate),
+      stack_size_(options.stack_size) {
+  set_name(options.name);
   UNIMPLEMENTED();
 }
 
 
-ThreadHandle::~ThreadHandle() {
-  UNIMPLEMENTED();
-  // Shared tear down follows.
-  delete data_;
-}
-
-
-bool ThreadHandle::IsSelf() const {
-  UNIMPLEMENTED();
-  return false;
-}
-
-
-bool ThreadHandle::IsValid() const {
-  UNIMPLEMENTED();
-  return false;
-}
-
-
-Thread::Thread() : ThreadHandle(ThreadHandle::INVALID) {
+Thread::Thread(Isolate* isolate, const char* name)
+    : data_(new PlatformData()),
+      isolate_(isolate),
+      stack_size_(0) {
+  set_name(name);
   UNIMPLEMENTED();
 }
 
 
 Thread::~Thread() {
+  delete data_;
   UNIMPLEMENTED();
+}
+
+
+void Thread::set_name(const char* name) {
+  strncpy(name_, name, sizeof(name_));
+  name_[sizeof(name_) - 1] = '\0';
 }
 
 

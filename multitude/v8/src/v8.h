@@ -54,7 +54,7 @@
 // Basic includes
 #include "../include/v8.h"
 #include "v8globals.h"
-#include "checks.h"
+#include "v8checks.h"
 #include "allocation.h"
 #include "v8utils.h"
 #include "flags.h"
@@ -66,7 +66,7 @@
 #include "log-inl.h"
 #include "cpu-profiler-inl.h"
 #include "handles-inl.h"
-#include "vm-state-inl.h"
+#include "isolate-inl.h"
 
 namespace v8 {
 namespace internal {
@@ -84,7 +84,9 @@ class V8 : public AllStatic {
   static bool Initialize(Deserializer* des);
   static void TearDown();
   static bool IsRunning() { return is_running_; }
+  static bool UseCrankshaft() { return use_crankshaft_; }
   // To be dead you have to have lived
+  // TODO(isolates): move IsDead to Isolate.
   static bool IsDead() { return has_fatal_error_ || has_been_disposed_; }
   static void SetFatalError();
 
@@ -93,18 +95,21 @@ class V8 : public AllStatic {
                                       bool take_snapshot = false);
 
   // Random number generation support. Not cryptographically safe.
-  static uint32_t Random();
+  static uint32_t Random(Isolate* isolate);
   // We use random numbers internally in memory allocation and in the
   // compilers for security. In order to prevent information leaks we
   // use a separate random state for internal random number
   // generation.
-  static uint32_t RandomPrivate();
-  static Object* FillHeapNumberWithRandom(Object* heap_number);
+  static uint32_t RandomPrivate(Isolate* isolate);
+  static Object* FillHeapNumberWithRandom(Object* heap_number,
+                                          Isolate* isolate);
 
   // Idle notification directly from the API.
   static bool IdleNotification();
 
  private:
+  static void InitializeOncePerProcess();
+
   // True if engine is currently running
   static bool is_running_;
   // True if V8 has ever been run
@@ -115,6 +120,8 @@ class V8 : public AllStatic {
   // True if engine has been shut down
   // (reset if engine is restarted)
   static bool has_been_disposed_;
+  // True if we are using the crankshaft optimizing compiler.
+  static bool use_crankshaft_;
 };
 
 } }  // namespace v8::internal

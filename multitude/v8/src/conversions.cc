@@ -1,4 +1,4 @@
-// Copyright 2006-2008 the V8 project authors. All rights reserved.
+// Copyright 2011 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -109,9 +109,11 @@ static const double JUNK_STRING_VALUE = OS::nan_value();
 
 // Returns true if a nonspace found and false if the end has reached.
 template <class Iterator, class EndMark>
-static inline bool AdvanceToNonspace(Iterator* current, EndMark end) {
+static inline bool AdvanceToNonspace(UnicodeCache* unicode_cache,
+                                     Iterator* current,
+                                     EndMark end) {
   while (*current != end) {
-    if (!ScannerConstants::kIsWhiteSpace.get(**current)) return true;
+    if (!unicode_cache->IsWhiteSpace(**current)) return true;
     ++*current;
   }
   return false;
@@ -125,23 +127,24 @@ static bool isDigit(int x, int radix) {
 }
 
 
-static double SignedZero(bool sign) {
-  return sign ? -0.0 : 0.0;
+static double SignedZero(bool negative) {
+  return negative ? -0.0 : 0.0;
 }
 
 
 // Parsing integers with radix 2, 4, 8, 16, 32. Assumes current != end.
 template <int radix_log_2, class Iterator, class EndMark>
-static double InternalStringToIntDouble(Iterator current,
+static double InternalStringToIntDouble(UnicodeCache* unicode_cache,
+                                        Iterator current,
                                         EndMark end,
-                                        bool sign,
+                                        bool negative,
                                         bool allow_trailing_junk) {
   ASSERT(current != end);
 
   // Skip leading 0s.
   while (*current == '0') {
     ++current;
-    if (current == end) return SignedZero(sign);
+    if (current == end) return SignedZero(negative);
   }
 
   int64_t number = 0;
@@ -157,7 +160,8 @@ static double InternalStringToIntDouble(Iterator current,
     } else if (radix > 10 && *current >= 'A' && *current < 'A' + radix - 10) {
       digit = static_cast<char>(*current) - 'A' + 10;
     } else {
-      if (allow_trailing_junk || !AdvanceToNonspace(&current, end)) {
+      if (allow_trailing_junk ||
+          !AdvanceToNonspace(unicode_cache, &current, end)) {
         break;
       } else {
         return JUNK_STRING_VALUE;
@@ -188,7 +192,8 @@ static double InternalStringToIntDouble(Iterator current,
         exponent += radix_log_2;
       }
 
-      if (!allow_trailing_junk && AdvanceToNonspace(&current, end)) {
+      if (!allow_trailing_junk &&
+          AdvanceToNonspace(unicode_cache, &current, end)) {
         return JUNK_STRING_VALUE;
       }
 
@@ -217,7 +222,7 @@ static double InternalStringToIntDouble(Iterator current,
   ASSERT(static_cast<int64_t>(static_cast<double>(number)) == number);
 
   if (exponent == 0) {
-    if (sign) {
+    if (negative) {
       if (number == 0) return -0.0;
       number = -number;
     }
@@ -227,35 +232,44 @@ static double InternalStringToIntDouble(Iterator current,
   ASSERT(number != 0);
   // The double could be constructed faster from number (mantissa), exponent
   // and sign. Assuming it's a rare case more simple code is used.
-  return static_cast<double>(sign ? -number : number) * pow(2.0, exponent);
+  return static_cast<double>(negative ? -number : number) * pow(2.0, exponent);
 }
 
 
 template <class Iterator, class EndMark>
-static double InternalStringToInt(Iterator current, EndMark end, int radix) {
+static double InternalStringToInt(UnicodeCache* unicode_cache,
+                                  Iterator current,
+                                  EndMark end,
+                                  int radix) {
   const bool allow_trailing_junk = true;
   const double empty_string_val = JUNK_STRING_VALUE;
 
-  if (!AdvanceToNonspace(&current, end)) return empty_string_val;
+  if (!AdvanceToNonspace(unicode_cache, &current, end)) {
+    return empty_string_val;
+  }
 
-  bool sign = false;
+  bool negative = false;
   bool leading_zero = false;
 
   if (*current == '+') {
     // Ignore leading sign; skip following spaces.
     ++current;
-    if (!AdvanceToNonspace(&current, end)) return JUNK_STRING_VALUE;
+    if (current == end) {
+      return JUNK_STRING_VALUE;
+    }
   } else if (*current == '-') {
     ++current;
-    if (!AdvanceToNonspace(&current, end)) return JUNK_STRING_VALUE;
-    sign = true;
+    if (current == end) {
+      return JUNK_STRING_VALUE;
+    }
+    negative = true;
   }
 
   if (radix == 0) {
     // Radix detection.
     if (*current == '0') {
       ++current;
-      if (current == end) return SignedZero(sign);
+      if (current == end) return SignedZero(negative);
       if (*current == 'x' || *current == 'X') {
         radix = 16;
         ++current;
@@ -271,7 +285,7 @@ static double InternalStringToInt(Iterator current, EndMark end, int radix) {
     if (*current == '0') {
       // Allow "0x" prefix.
       ++current;
-      if (current == end) return SignedZero(sign);
+      if (current == end) return SignedZero(negative);
       if (*current == 'x' || *current == 'X') {
         ++current;
         if (current == end) return JUNK_STRING_VALUE;
@@ -287,7 +301,7 @@ static double InternalStringToInt(Iterator current, EndMark end, int radix) {
   while (*current == '0') {
     leading_zero = true;
     ++current;
-    if (current == end) return SignedZero(sign);
+    if (current == end) return SignedZero(negative);
   }
 
   if (!leading_zero && !isDigit(*current, radix)) {
@@ -298,21 +312,21 @@ static double InternalStringToInt(Iterator current, EndMark end, int radix) {
     switch (radix) {
       case 2:
         return InternalStringToIntDouble<1>(
-                   current, end, sign, allow_trailing_junk);
+            unicode_cache, current, end, negative, allow_trailing_junk);
       case 4:
         return InternalStringToIntDouble<2>(
-                   current, end, sign, allow_trailing_junk);
+            unicode_cache, current, end, negative, allow_trailing_junk);
       case 8:
         return InternalStringToIntDouble<3>(
-                   current, end, sign, allow_trailing_junk);
+            unicode_cache, current, end, negative, allow_trailing_junk);
 
       case 16:
         return InternalStringToIntDouble<4>(
-                   current, end, sign, allow_trailing_junk);
+            unicode_cache, current, end, negative, allow_trailing_junk);
 
       case 32:
         return InternalStringToIntDouble<5>(
-                   current, end, sign, allow_trailing_junk);
+            unicode_cache, current, end, negative, allow_trailing_junk);
       default:
         UNREACHABLE();
     }
@@ -337,14 +351,15 @@ static double InternalStringToInt(Iterator current, EndMark end, int radix) {
       if (current == end) break;
     }
 
-    if (!allow_trailing_junk && AdvanceToNonspace(&current, end)) {
+    if (!allow_trailing_junk &&
+        AdvanceToNonspace(unicode_cache, &current, end)) {
       return JUNK_STRING_VALUE;
     }
 
     ASSERT(buffer_pos < kBufferSize);
     buffer[buffer_pos] = '\0';
     Vector<const char> buffer_vector(buffer, buffer_pos);
-    return sign ? -Strtod(buffer_vector, 0) : Strtod(buffer_vector, 0);
+    return negative ? -Strtod(buffer_vector, 0) : Strtod(buffer_vector, 0);
   }
 
   // The following code causes accumulating rounding error for numbers greater
@@ -402,11 +417,12 @@ static double InternalStringToInt(Iterator current, EndMark end, int radix) {
     v = v * multiplier + part;
   } while (!done);
 
-  if (!allow_trailing_junk && AdvanceToNonspace(&current, end)) {
+  if (!allow_trailing_junk &&
+      AdvanceToNonspace(unicode_cache, &current, end)) {
     return JUNK_STRING_VALUE;
   }
 
-  return sign ? -v : v;
+  return negative ? -v : v;
 }
 
 
@@ -416,7 +432,8 @@ static double InternalStringToInt(Iterator current, EndMark end, int radix) {
 // 2. *current - gets the current character in the sequence.
 // 3. ++current (advances the position).
 template <class Iterator, class EndMark>
-static double InternalStringToDouble(Iterator current,
+static double InternalStringToDouble(UnicodeCache* unicode_cache,
+                                     Iterator current,
                                      EndMark end,
                                      int flags,
                                      double empty_string_val) {
@@ -428,7 +445,9 @@ static double InternalStringToDouble(Iterator current,
   // 'parsing_done'.
   // 4. 'current' is not dereferenced after the 'parsing_done' label.
   // 5. Code before 'parsing_done' may rely on 'current != end'.
-  if (!AdvanceToNonspace(&current, end)) return empty_string_val;
+  if (!AdvanceToNonspace(unicode_cache, &current, end)) {
+    return empty_string_val;
+  }
 
   const bool allow_trailing_junk = (flags & ALLOW_TRAILING_JUNK) != 0;
 
@@ -445,16 +464,16 @@ static double InternalStringToDouble(Iterator current,
   bool nonzero_digit_dropped = false;
   bool fractional_part = false;
 
-  bool sign = false;
+  bool negative = false;
 
   if (*current == '+') {
-    // Ignore leading sign; skip following spaces.
+    // Ignore leading sign.
     ++current;
-    if (!AdvanceToNonspace(&current, end)) return JUNK_STRING_VALUE;
+    if (current == end) return JUNK_STRING_VALUE;
   } else if (*current == '-') {
     ++current;
-    if (!AdvanceToNonspace(&current, end)) return JUNK_STRING_VALUE;
-    sign = true;
+    if (current == end) return JUNK_STRING_VALUE;
+    negative = true;
   }
 
   static const char kInfinitySymbol[] = "Infinity";
@@ -463,18 +482,19 @@ static double InternalStringToDouble(Iterator current,
       return JUNK_STRING_VALUE;
     }
 
-    if (!allow_trailing_junk && AdvanceToNonspace(&current, end)) {
+    if (!allow_trailing_junk &&
+        AdvanceToNonspace(unicode_cache, &current, end)) {
       return JUNK_STRING_VALUE;
     }
 
     ASSERT(buffer_pos == 0);
-    return sign ? -V8_INFINITY : V8_INFINITY;
+    return negative ? -V8_INFINITY : V8_INFINITY;
   }
 
   bool leading_zero = false;
   if (*current == '0') {
     ++current;
-    if (current == end) return SignedZero(sign);
+    if (current == end) return SignedZero(negative);
 
     leading_zero = true;
 
@@ -485,16 +505,17 @@ static double InternalStringToDouble(Iterator current,
         return JUNK_STRING_VALUE;  // "0x".
       }
 
-      return InternalStringToIntDouble<4>(current,
+      return InternalStringToIntDouble<4>(unicode_cache,
+                                          current,
                                           end,
-                                          sign,
+                                          negative,
                                           allow_trailing_junk);
     }
 
     // Ignore leading zeros in the integer part.
     while (*current == '0') {
       ++current;
-      if (current == end) return SignedZero(sign);
+      if (current == end) return SignedZero(negative);
     }
   }
 
@@ -539,7 +560,7 @@ static double InternalStringToDouble(Iterator current,
       // leading zeros (if any).
       while (*current == '0') {
         ++current;
-        if (current == end) return SignedZero(sign);
+        if (current == end) return SignedZero(negative);
         exponent--;  // Move this 0 into the exponent.
       }
     }
@@ -621,7 +642,8 @@ static double InternalStringToDouble(Iterator current,
     exponent += (sign == '-' ? -num : num);
   }
 
-  if (!allow_trailing_junk && AdvanceToNonspace(&current, end)) {
+  if (!allow_trailing_junk &&
+      AdvanceToNonspace(unicode_cache, &current, end)) {
     return JUNK_STRING_VALUE;
   }
 
@@ -629,9 +651,10 @@ static double InternalStringToDouble(Iterator current,
   exponent += insignificant_digits;
 
   if (octal) {
-    return InternalStringToIntDouble<3>(buffer,
+    return InternalStringToIntDouble<3>(unicode_cache,
+                                        buffer,
                                         buffer + buffer_pos,
-                                        sign,
+                                        negative,
                                         allow_trailing_junk);
   }
 
@@ -644,23 +667,27 @@ static double InternalStringToDouble(Iterator current,
   buffer[buffer_pos] = '\0';
 
   double converted = Strtod(Vector<const char>(buffer, buffer_pos), exponent);
-  return sign ? -converted : converted;
+  return negative ? -converted : converted;
 }
 
 
-double StringToDouble(String* str, int flags, double empty_string_val) {
+double StringToDouble(UnicodeCache* unicode_cache,
+                      String* str, int flags, double empty_string_val) {
   StringShape shape(str);
   if (shape.IsSequentialAscii()) {
     const char* begin = SeqAsciiString::cast(str)->GetChars();
     const char* end = begin + str->length();
-    return InternalStringToDouble(begin, end, flags, empty_string_val);
+    return InternalStringToDouble(unicode_cache, begin, end, flags,
+                                  empty_string_val);
   } else if (shape.IsSequentialTwoByte()) {
     const uc16* begin = SeqTwoByteString::cast(str)->GetChars();
     const uc16* end = begin + str->length();
-    return InternalStringToDouble(begin, end, flags, empty_string_val);
+    return InternalStringToDouble(unicode_cache, begin, end, flags,
+                                  empty_string_val);
   } else {
     StringInputBuffer buffer(str);
-    return InternalStringToDouble(StringInputBufferIterator(&buffer),
+    return InternalStringToDouble(unicode_cache,
+                                  StringInputBufferIterator(&buffer),
                                   StringInputBufferIterator::EndMarker(),
                                   flags,
                                   empty_string_val);
@@ -668,60 +695,53 @@ double StringToDouble(String* str, int flags, double empty_string_val) {
 }
 
 
-double StringToInt(String* str, int radix) {
+double StringToInt(UnicodeCache* unicode_cache,
+                   String* str,
+                   int radix) {
   StringShape shape(str);
   if (shape.IsSequentialAscii()) {
     const char* begin = SeqAsciiString::cast(str)->GetChars();
     const char* end = begin + str->length();
-    return InternalStringToInt(begin, end, radix);
+    return InternalStringToInt(unicode_cache, begin, end, radix);
   } else if (shape.IsSequentialTwoByte()) {
     const uc16* begin = SeqTwoByteString::cast(str)->GetChars();
     const uc16* end = begin + str->length();
-    return InternalStringToInt(begin, end, radix);
+    return InternalStringToInt(unicode_cache, begin, end, radix);
   } else {
     StringInputBuffer buffer(str);
-    return InternalStringToInt(StringInputBufferIterator(&buffer),
+    return InternalStringToInt(unicode_cache,
+                               StringInputBufferIterator(&buffer),
                                StringInputBufferIterator::EndMarker(),
                                radix);
   }
 }
 
 
-double StringToDouble(const char* str, int flags, double empty_string_val) {
+double StringToDouble(UnicodeCache* unicode_cache,
+                      const char* str, int flags, double empty_string_val) {
   const char* end = str + StrLength(str);
-  return InternalStringToDouble(str, end, flags, empty_string_val);
+  return InternalStringToDouble(unicode_cache, str, end, flags,
+                                empty_string_val);
 }
 
 
-double StringToDouble(Vector<const char> str,
+double StringToDouble(UnicodeCache* unicode_cache,
+                      Vector<const char> str,
                       int flags,
                       double empty_string_val) {
   const char* end = str.start() + str.length();
-  return InternalStringToDouble(str.start(), end, flags, empty_string_val);
+  return InternalStringToDouble(unicode_cache, str.start(), end, flags,
+                                empty_string_val);
 }
 
 
 const char* DoubleToCString(double v, Vector<char> buffer) {
-  StringBuilder builder(buffer.start(), buffer.length());
-
   switch (fpclassify(v)) {
-    case FP_NAN:
-      builder.AddString("NaN");
-      break;
-
-    case FP_INFINITE:
-      if (v < 0.0) {
-        builder.AddString("-Infinity");
-      } else {
-        builder.AddString("Infinity");
-      }
-      break;
-
-    case FP_ZERO:
-      builder.AddCharacter('0');
-      break;
-
+    case FP_NAN: return "NaN";
+    case FP_INFINITE: return (v < 0.0 ? "-Infinity" : "Infinity");
+    case FP_ZERO: return "0";
     default: {
+      StringBuilder builder(buffer.start(), buffer.length());
       int decimal_point;
       int sign;
       const int kV8DtoaBufferCapacity = kBase10MaximalLength + 1;
@@ -764,9 +784,9 @@ const char* DoubleToCString(double v, Vector<char> buffer) {
         if (exponent < 0) exponent = -exponent;
         builder.AddFormatted("%d", exponent);
       }
+    return builder.Finalize();
     }
   }
-  return builder.Finalize();
 }
 
 
@@ -1080,4 +1100,23 @@ char* DoubleToRadixCString(double value, int radix) {
 }
 
 
+static Mutex* dtoa_lock_one = OS::CreateMutex();
+static Mutex* dtoa_lock_zero = OS::CreateMutex();
+
+
 } }  // namespace v8::internal
+
+
+extern "C" {
+void ACQUIRE_DTOA_LOCK(int n) {
+  ASSERT(n == 0 || n == 1);
+  (n == 0 ? v8::internal::dtoa_lock_zero : v8::internal::dtoa_lock_one)->Lock();
+}
+
+
+void FREE_DTOA_LOCK(int n) {
+  ASSERT(n == 0 || n == 1);
+  (n == 0 ? v8::internal::dtoa_lock_zero : v8::internal::dtoa_lock_one)->
+      Unlock();
+}
+}

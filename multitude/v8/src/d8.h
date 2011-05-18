@@ -28,9 +28,13 @@
 #ifndef V8_D8_H_
 #define V8_D8_H_
 
+#include "allocation.h"
 #include "v8.h"
 #include "hashmap.h"
 
+#ifdef COMPRESS_STARTUP_DATA_BZ2
+#error Using compressed startup data is not supported for D8
+#endif
 
 namespace v8 {
 
@@ -136,6 +140,10 @@ class Shell: public i::AllStatic {
 #ifdef ENABLE_DEBUGGER_SUPPORT
   static Handle<Object> DebugMessageDetails(Handle<String> message);
   static Handle<Value> DebugCommandToJSONRequest(Handle<String> command);
+#endif
+
+#ifdef WIN32
+#undef Yield
 #endif
 
   static Handle<Value> Print(const Arguments& args);

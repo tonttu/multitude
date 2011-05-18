@@ -28,10 +28,14 @@
 #ifndef V8_LOG_UTILS_H_
 #define V8_LOG_UTILS_H_
 
+#include "allocation.h"
+
 namespace v8 {
 namespace internal {
 
 #ifdef ENABLE_LOGGING_AND_PROFILING
+
+class Logger;
 
 // A memory buffer that increments its size as you write in it.  Size
 // is incremented with 'block_size' steps, never exceeding 'max_size'.
@@ -89,28 +93,23 @@ class LogDynamicBuffer {
 
 
 // Functions and data for performing output of log messages.
-class Log : public AllStatic {
+class Log {
  public:
-  // Opens stdout for logging.
-  static void OpenStdout();
 
-  // Opens file for logging.
-  static void OpenFile(const char* name);
-
-  // Opens memory buffer for logging.
-  static void OpenMemoryBuffer();
+  // Performs process-wide initialization.
+  void Initialize();
 
   // Disables logging, but preserves acquired resources.
-  static void stop() { is_stopped_ = true; }
+  void stop() { is_stopped_ = true; }
 
-  // Frees all resources acquired in Open... functions.
-  static void Close();
+  // Frees all resources acquired in Initialize and Open... functions.
+  void Close();
 
   // See description in include/v8.h.
-  static int GetLogLines(int from_pos, char* dest_buf, int max_size);
+  int GetLogLines(int from_pos, char* dest_buf, int max_size);
 
   // Returns whether logging is enabled.
-  static bool IsEnabled() {
+  bool IsEnabled() {
     return !is_stopped_ && (output_handle_ != NULL || output_buffer_ != NULL);
   }
 
@@ -118,16 +117,19 @@ class Log : public AllStatic {
   static const int kMessageBufferSize = v8::V8::kMinimumSizeForLogLinesBuffer;
 
  private:
-  typedef int (*WritePtr)(const char* msg, int length);
+  explicit Log(Logger* logger);
 
-  // Initialization function called from Open... functions.
-  static void Init();
+  // Opens stdout for logging.
+  void OpenStdout();
 
-  // Write functions assume that mutex_ is acquired by the caller.
-  static WritePtr Write;
+  // Opens file for logging.
+  void OpenFile(const char* name);
+
+  // Opens memory buffer for logging.
+  void OpenMemoryBuffer();
 
   // Implementation of writing to a log file.
-  static int WriteToFile(const char* msg, int length) {
+  int WriteToFile(const char* msg, int length) {
     ASSERT(output_handle_ != NULL);
     size_t rv = fwrite(msg, 1, length, output_handle_);
     ASSERT(static_cast<size_t>(length) == rv);
@@ -137,25 +139,27 @@ class Log : public AllStatic {
   }
 
   // Implementation of writing to a memory buffer.
-  static int WriteToMemory(const char* msg, int length) {
+  int WriteToMemory(const char* msg, int length) {
     ASSERT(output_buffer_ != NULL);
     return output_buffer_->Write(msg, length);
   }
 
+  bool write_to_file_;
+
   // Whether logging is stopped (e.g. due to insufficient resources).
-  static bool is_stopped_;
+  bool is_stopped_;
 
   // When logging is active, either output_handle_ or output_buffer_ is used
   // to store a pointer to log destination. If logging was opened via OpenStdout
   // or OpenFile, then output_handle_ is used. If logging was opened
   // via OpenMemoryBuffer, then output_buffer_ is used.
   // mutex_ should be acquired before using output_handle_ or output_buffer_.
-  static FILE* output_handle_;
+  FILE* output_handle_;
 
-  // Used when low-level profiling is active to save code object contents.
-  static FILE* output_code_handle_;
+  // Used when low-level profiling is active.
+  FILE* ll_output_handle_;
 
-  static LogDynamicBuffer* output_buffer_;
+  LogDynamicBuffer* output_buffer_;
 
   // Size of dynamic buffer block (and dynamic buffer initial size).
   static const int kDynamicBufferBlockSize = 65536;
@@ -164,62 +168,20 @@ class Log : public AllStatic {
   static const int kMaxDynamicBufferSize = 50 * 1024 * 1024;
 
   // Message to "seal" dynamic buffer with.
-  static const char* kDynamicBufferSeal;
+  static const char* const kDynamicBufferSeal;
 
   // mutex_ is a Mutex used for enforcing exclusive
   // access to the formatting buffer and the log file or log memory buffer.
-  static Mutex* mutex_;
+  Mutex* mutex_;
 
   // Buffer used for formatting log messages. This is a singleton buffer and
   // mutex_ should be acquired before using it.
-  static char* message_buffer_;
+  char* message_buffer_;
+
+  Logger* logger_;
 
   friend class Logger;
   friend class LogMessageBuilder;
-  friend class LogRecordCompressor;
-};
-
-
-// An utility class for performing backward reference compression
-// of string ends. It operates using a window of previous strings.
-class LogRecordCompressor {
- public:
-  // 'window_size' is the size of backward lookup window.
-  explicit LogRecordCompressor(int window_size)
-      : buffer_(window_size + kNoCompressionWindowSize),
-        kMaxBackwardReferenceSize(
-            GetBackwardReferenceSize(window_size, Log::kMessageBufferSize)),
-        curr_(-1), prev_(-1) {
-  }
-
-  ~LogRecordCompressor();
-
-  // Fills vector with a compressed version of the previous record.
-  // Returns false if there is no previous record.
-  bool RetrievePreviousCompressed(Vector<char>* prev_record);
-
-  // Stores a record if it differs from a previous one (or there's no previous).
-  // Returns true, if the record has been stored.
-  bool Store(const Vector<const char>& record);
-
- private:
-  // The minimum size of a buffer: a place needed for the current and
-  // the previous record. Since there is no place for precedessors of a previous
-  // record, it can't be compressed at all.
-  static const int kNoCompressionWindowSize = 2;
-
-  // Formatting strings for back references.
-  static const char* kLineBackwardReferenceFormat;
-  static const char* kBackwardReferenceFormat;
-
-  static int GetBackwardReferenceSize(int distance, int pos);
-
-  static void PrintBackwardReference(Vector<char> dest, int distance, int pos);
-
-  ScopedVector< Vector<const char> > buffer_;
-  const int kMaxBackwardReferenceSize;
-  int curr_;
-  int prev_;
 };
 
 
@@ -229,7 +191,7 @@ class LogMessageBuilder BASE_EMBEDDED {
  public:
   // Create a message builder starting from position 0. This acquires the mutex
   // in the log as well.
-  explicit LogMessageBuilder();
+  explicit LogMessageBuilder(Logger* logger);
   ~LogMessageBuilder() { }
 
   // Append string data to the log message.
@@ -244,45 +206,20 @@ class LogMessageBuilder BASE_EMBEDDED {
   // Append a heap string.
   void Append(String* str);
 
-  // Appends an address, compressing it if needed by offsetting
-  // from Logger::last_address_.
+  // Appends an address.
   void AppendAddress(Address addr);
-
-  // Appends an address, compressing it if needed.
-  void AppendAddress(Address addr, Address bias);
 
   void AppendDetailed(String* str, bool show_impl_info);
 
   // Append a portion of a string.
   void AppendStringPart(const char* str, int len);
 
-  // Stores log message into compressor, returns true if the message
-  // was stored (i.e. doesn't repeat the previous one).
-  bool StoreInCompressor(LogRecordCompressor* compressor);
-
-  // Sets log message to a previous version of compressed message.
-  // Returns false, if there is no previous message.
-  bool RetrieveCompressedPrevious(LogRecordCompressor* compressor) {
-    return RetrieveCompressedPrevious(compressor, "");
-  }
-
-  // Does the same at the version without arguments, and sets a prefix.
-  bool RetrieveCompressedPrevious(LogRecordCompressor* compressor,
-                                  const char* prefix);
-
   // Write the log message to the log file currently opened.
   void WriteToLogFile();
 
-  // A handler that is called when Log::Write fails.
-  typedef void (*WriteFailureHandler)();
-
-  static void set_write_failure_handler(WriteFailureHandler handler) {
-    write_failure_handler = handler;
-  }
-
  private:
-  static WriteFailureHandler write_failure_handler;
 
+  Log* log_;
   ScopedLock sl;
   int pos_;
 };

@@ -95,6 +95,11 @@ class Scope: public ZoneObject {
     GLOBAL_SCOPE    // the top-level scope for a program or a top-level eval
   };
 
+  enum LocalType {
+    PARAMETER,
+    VAR_OR_CONST
+  };
+
   Scope(Scope* outer_scope, Type type);
 
   virtual ~Scope() { }
@@ -104,8 +109,11 @@ class Scope: public ZoneObject {
   // doesn't re-allocate variables repeatedly.
   static bool Analyze(CompilationInfo* info);
 
+  static Scope* DeserializeScopeChain(CompilationInfo* info,
+                                      Scope* innermost_scope);
+
   // The scope name is only used for printing/debugging.
-  void SetScopeName(Handle<String> scope_name)  { scope_name_ = scope_name; }
+  void SetScopeName(Handle<String> scope_name) { scope_name_ = scope_name; }
 
   virtual void Initialize(bool inside_with);
 
@@ -131,7 +139,9 @@ class Scope: public ZoneObject {
 
   // Declare a local variable in this scope. If the variable has been
   // declared before, the previously declared variable is returned.
-  virtual Variable* DeclareLocal(Handle<String> name, Variable::Mode mode);
+  virtual Variable* DeclareLocal(Handle<String> name,
+                                 Variable::Mode mode,
+                                 LocalType type);
 
   // Declare an implicit global variable in this scope which must be a
   // global scope.  The variable was introduced (possibly from an inner
@@ -146,7 +156,9 @@ class Scope: public ZoneObject {
   void AddParameter(Variable* var);
 
   // Create a new unresolved variable.
-  virtual VariableProxy* NewUnresolved(Handle<String> name, bool inside_with);
+  virtual VariableProxy* NewUnresolved(Handle<String> name,
+                                       bool inside_with,
+                                       int position = RelocInfo::kNoPosition);
 
   // Remove a unresolved variable. During parsing, an unresolved variable
   // may have been added optimistically, but then only the variable name
@@ -156,11 +168,11 @@ class Scope: public ZoneObject {
   // such a variable again if it was added; otherwise this is a no-op.
   void RemoveUnresolved(VariableProxy* var);
 
-  // Creates a new temporary variable in this scope and binds a proxy to it.
-  // The name is only used for printing and cannot be used to find the variable.
-  // In particular, the only way to get hold of the temporary is by keeping the
-  // VariableProxy* around.
-  virtual VariableProxy* NewTemporary(Handle<String> name);
+  // Creates a new temporary variable in this scope.  The name is only used
+  // for printing and cannot be used to find the variable.  In particular,
+  // the only way to get hold of the temporary is by keeping the Variable*
+  // around.
+  virtual Variable* NewTemporary(Handle<String> name);
 
   // Adds the specific declaration node to the list of declarations in
   // this scope. The declarations are processed as part of entering
@@ -188,11 +200,15 @@ class Scope: public ZoneObject {
   // Scope-specific info.
 
   // Inform the scope that the corresponding code contains a with statement.
-  void RecordWithStatement()  { scope_contains_with_ = true; }
+  void RecordWithStatement() { scope_contains_with_ = true; }
 
   // Inform the scope that the corresponding code contains an eval call.
-  void RecordEvalCall()  { scope_calls_eval_ = true; }
+  void RecordEvalCall() { scope_calls_eval_ = true; }
 
+  // Enable strict mode for the scope (unless disabled by a global flag).
+  void EnableStrictMode() {
+    strict_mode_ = FLAG_strict_mode;
+  }
 
   // ---------------------------------------------------------------------------
   // Predicates.
@@ -201,10 +217,17 @@ class Scope: public ZoneObject {
   bool is_eval_scope() const { return type_ == EVAL_SCOPE; }
   bool is_function_scope() const { return type_ == FUNCTION_SCOPE; }
   bool is_global_scope() const { return type_ == GLOBAL_SCOPE; }
+  bool is_strict_mode() const { return strict_mode_; }
+  bool is_strict_mode_eval_scope() const {
+    return is_eval_scope() && is_strict_mode();
+  }
 
   // Information about which scopes calls eval.
   bool calls_eval() const { return scope_calls_eval_; }
   bool outer_scope_calls_eval() const { return outer_scope_calls_eval_; }
+  bool outer_scope_calls_non_strict_eval() const {
+    return outer_scope_calls_non_strict_eval_;
+  }
 
   // Is this scope inside a with statement.
   bool inside_with() const { return scope_inside_with_; }
@@ -220,7 +243,7 @@ class Scope: public ZoneObject {
   // A new variable proxy corresponding to the (function) receiver.
   VariableProxy* receiver() const {
     VariableProxy* proxy =
-        new VariableProxy(Factory::this_symbol(), true, false);
+        new VariableProxy(FACTORY->this_symbol(), true, false);
     proxy->BindTo(receiver_);
     return proxy;
   }
@@ -272,6 +295,9 @@ class Scope: public ZoneObject {
   // cases the context parameter is an empty handle.
   void AllocateVariables(Handle<Context> context);
 
+  // Current number of var or const locals.
+  int num_var_or_const() { return num_var_or_const_; }
+
   // Result of variable allocation.
   int num_stack_slots() const { return num_stack_slots_; }
   int num_heap_slots() const { return num_heap_slots_; }
@@ -287,6 +313,17 @@ class Scope: public ZoneObject {
 
   // The number of contexts between this and scope; zero if this == scope.
   int ContextChainLength(Scope* scope);
+
+  // ---------------------------------------------------------------------------
+  // Strict mode support.
+  bool IsDeclared(Handle<String> name) {
+    // During formal parameter list parsing the scope only contains
+    // two variables inserted at initialization: "this" and "arguments".
+    // "this" is an invalid parameter name and "arguments" is invalid parameter
+    // name in strict mode. Therefore looking up with the map which includes
+    // "this" and "arguments" in addition to all formal parameters is safe.
+    return variables_.Lookup(name) != NULL;
+  }
 
   // ---------------------------------------------------------------------------
   // Debugging.
@@ -344,16 +381,25 @@ class Scope: public ZoneObject {
   bool scope_inside_with_;  // this scope is inside a 'with' of some outer scope
   bool scope_contains_with_;  // this scope contains a 'with' statement
   bool scope_calls_eval_;  // this scope contains an 'eval' call
+  bool strict_mode_;  // this scope is a strict mode scope
 
   // Computed via PropagateScopeInfo.
   bool outer_scope_calls_eval_;
+  bool outer_scope_calls_non_strict_eval_;
   bool inner_scope_calls_eval_;
   bool outer_scope_is_eval_scope_;
   bool force_eager_compilation_;
 
+  // Computed as variables are declared.
+  int num_var_or_const_;
+
   // Computed via AllocateVariables; function scopes only.
   int num_stack_slots_;
   int num_heap_slots_;
+
+  // Serialized scopes support.
+  Handle<SerializedScopeInfo> scope_info_;
+  bool resolved() { return !scope_info_.is_null(); }
 
   // Create a non-local variable with a given name.
   // These variables are looked up dynamically at runtime.
@@ -371,6 +417,7 @@ class Scope: public ZoneObject {
 
   // Scope analysis.
   bool PropagateScopeInfo(bool outer_scope_calls_eval,
+                          bool outer_scope_calls_non_strict_eval,
                           bool outer_scope_is_eval_scope);
   bool HasTrivialContext() const;
 
@@ -386,6 +433,20 @@ class Scope: public ZoneObject {
   void AllocateNonParameterLocal(Variable* var);
   void AllocateNonParameterLocals();
   void AllocateVariablesRecursively();
+
+ private:
+  Scope(Scope* inner_scope, Handle<SerializedScopeInfo> scope_info);
+
+  void AddInnerScope(Scope* inner_scope) {
+    if (inner_scope != NULL) {
+      inner_scopes_.Add(inner_scope);
+      inner_scope->outer_scope_ = this;
+    }
+  }
+
+  void SetDefaults(Type type,
+                   Scope* outer_scope,
+                   Handle<SerializedScopeInfo> scope_info);
 };
 
 
@@ -419,11 +480,13 @@ class DummyScope : public Scope {
 
   virtual Variable* Lookup(Handle<String> name)  { return NULL; }
 
-  virtual VariableProxy* NewUnresolved(Handle<String> name, bool inside_with) {
+  virtual VariableProxy* NewUnresolved(Handle<String> name,
+                                       bool inside_with,
+                                       int position = RelocInfo::kNoPosition) {
     return NULL;
   }
 
-  virtual VariableProxy* NewTemporary(Handle<String> name)  { return NULL; }
+  virtual Variable* NewTemporary(Handle<String> name)  { return NULL; }
 
   virtual bool HasTrivialOuterContext() const {
     return (nesting_level_ == 0 || inside_with_level_ <= 0);

@@ -34,9 +34,18 @@
 
 namespace v8 {
 
-void PrintPrompt() {
-  printf("dbg> ");
+static bool was_running = true;
+
+void PrintPrompt(bool is_running) {
+  const char* prompt = is_running? "> " : "dbg> ";
+  was_running = is_running;
+  printf("%s", prompt);
   fflush(stdout);
+}
+
+
+void PrintPrompt() {
+  PrintPrompt(was_running);
 }
 
 
@@ -91,7 +100,7 @@ void HandleDebugEvent(DebugEvent event,
   bool running = false;
   while (!running) {
     char command[kBufferSize];
-    PrintPrompt();
+    PrintPrompt(running);
     char* str = fgets(command, kBufferSize, stdin);
     if (str == NULL) break;
 
@@ -150,7 +159,7 @@ void HandleDebugEvent(DebugEvent event,
 
 
 void RunRemoteDebugger(int port) {
-  RemoteDebugger debugger(port);
+  RemoteDebugger debugger(i::Isolate::Current(), port);
   debugger.Run();
 }
 
@@ -177,11 +186,11 @@ void RemoteDebugger::Run() {
   }
 
   // Start the receiver thread.
-  ReceiverThread receiver(this);
+  ReceiverThread receiver(isolate_, this);
   receiver.Start();
 
   // Start the keyboard thread.
-  KeyboardThread keyboard(this);
+  KeyboardThread keyboard(isolate_, this);
   keyboard.Start();
   PrintPrompt();
 
@@ -284,7 +293,9 @@ void RemoteDebugger::HandleMessageReceived(char* message) {
   } else {
     printf("???\n");
   }
-  PrintPrompt();
+
+  bool is_running = details->Get(String::New("running"))->ToBoolean()->Value();
+  PrintPrompt(is_running);
 }
 
 

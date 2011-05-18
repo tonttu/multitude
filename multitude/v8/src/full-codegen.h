@@ -1,4 +1,4 @@
-// Copyright 2010 the V8 project authors. All rights reserved.
+// Copyright 2011 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -30,11 +30,17 @@
 
 #include "v8.h"
 
+#include "allocation.h"
 #include "ast.h"
+#include "code-stubs.h"
+#include "codegen.h"
 #include "compiler.h"
 
 namespace v8 {
 namespace internal {
+
+// Forward declarations.
+class JumpPatchSite;
 
 // AST node visitor which can tell whether a given statement will be breakable
 // when the code is compiled by the full compiler in the debugger. This means
@@ -66,17 +72,39 @@ class BreakableStatementChecker: public AstVisitor {
 
 class FullCodeGenerator: public AstVisitor {
  public:
+  enum State {
+    NO_REGISTERS,
+    TOS_REG
+  };
+
   explicit FullCodeGenerator(MacroAssembler* masm)
       : masm_(masm),
         info_(NULL),
         nesting_stack_(NULL),
         loop_depth_(0),
-        context_(NULL) {
+        context_(NULL),
+        bailout_entries_(0),
+        stack_checks_(2),  // There's always at least one.
+        forward_bailout_stack_(NULL),
+        forward_bailout_pending_(NULL) {
   }
 
   static bool MakeCode(CompilationInfo* info);
 
   void Generate(CompilationInfo* info);
+  void PopulateDeoptimizationData(Handle<Code> code);
+
+  class StateField : public BitField<State, 0, 8> { };
+  class PcField    : public BitField<unsigned, 8, 32-8> { };
+
+  static const char* State2String(State state) {
+    switch (state) {
+      case NO_REGISTERS: return "NO_REGISTERS";
+      case TOS_REG: return "TOS_REG";
+    }
+    UNREACHABLE();
+    return NULL;
+  }
 
  private:
   class Breakable;
@@ -229,10 +257,22 @@ class FullCodeGenerator: public AstVisitor {
     DISALLOW_COPY_AND_ASSIGN(ForIn);
   };
 
-  enum ConstantOperand {
-    kNoConstants,
-    kLeftConstant,
-    kRightConstant
+  // The forward bailout stack keeps track of the expressions that can
+  // bail out to just before the control flow is split in a child
+  // node. The stack elements are linked together through the parent
+  // link when visiting expressions in test contexts after requesting
+  // bailout in child forwarding.
+  class ForwardBailoutStack BASE_EMBEDDED {
+   public:
+    ForwardBailoutStack(Expression* expr, ForwardBailoutStack* parent)
+        : expr_(expr), parent_(parent) { }
+
+    Expression* expr() const { return expr_; }
+    ForwardBailoutStack* parent() const { return parent_; }
+
+   private:
+    Expression* const expr_;
+    ForwardBailoutStack* const parent_;
   };
 
   // Type of a member function that generates inline code for a native function.
@@ -240,6 +280,10 @@ class FullCodeGenerator: public AstVisitor {
       (ZoneList<Expression*>*);
 
   static const InlineFunctionGenerator kInlineFunctionGenerators[];
+
+  // A platform-specific utility to overwrite the accumulator register
+  // with a GC-safe value.
+  void ClearAccumulator();
 
   // Compute the frame pointer relative offset for a given local or
   // parameter slot.
@@ -249,11 +293,6 @@ class FullCodeGenerator: public AstVisitor {
   // operation.
   bool ShouldInlineSmiCase(Token::Value op);
 
-  // Compute which (if any) of the operands is a compile-time constant.
-  ConstantOperand GetConstantOperand(Token::Value op,
-                                     Expression* left,
-                                     Expression* right);
-
   // Helper function to convert a pure value into a test context.  The value
   // is expected on the stack or the accumulator, depending on the platform.
   // See the platform-specific implementation for details.
@@ -261,10 +300,19 @@ class FullCodeGenerator: public AstVisitor {
 
   // Helper function to split control flow and avoid a branch to the
   // fall-through label if it is set up.
+#ifdef V8_TARGET_ARCH_MIPS
+  void Split(Condition cc,
+             Register lhs,
+             const Operand&  rhs,
+             Label* if_true,
+             Label* if_false,
+             Label* fall_through);
+#else  // All non-mips arch.
   void Split(Condition cc,
              Label* if_true,
              Label* if_false,
              Label* fall_through);
+#endif  // V8_TARGET_ARCH_MIPS
 
   void Move(Slot* dst, Register source, Register scratch1, Register scratch2);
   void Move(Register dst, Slot* source);
@@ -274,19 +322,23 @@ class FullCodeGenerator: public AstVisitor {
   // register.
   MemOperand EmitSlotSearch(Slot* slot, Register scratch);
 
+  // Forward the bailout responsibility for the given expression to
+  // the next child visited (which must be in a test context).
+  void ForwardBailoutToChild(Expression* expr);
+
   void VisitForEffect(Expression* expr) {
     EffectContext context(this);
-    Visit(expr);
+    HandleInNonTestContext(expr, NO_REGISTERS);
   }
 
   void VisitForAccumulatorValue(Expression* expr) {
     AccumulatorValueContext context(this);
-    Visit(expr);
+    HandleInNonTestContext(expr, TOS_REG);
   }
 
   void VisitForStackValue(Expression* expr) {
     StackValueContext context(this);
-    Visit(expr);
+    HandleInNonTestContext(expr, NO_REGISTERS);
   }
 
   void VisitForControl(Expression* expr,
@@ -294,8 +346,14 @@ class FullCodeGenerator: public AstVisitor {
                        Label* if_false,
                        Label* fall_through) {
     TestContext context(this, if_true, if_false, fall_through);
-    Visit(expr);
+    VisitInTestContext(expr);
+    // Forwarding bailouts to children is a one shot operation. It
+    // should have been processed at this point.
+    ASSERT(forward_bailout_pending_ == NULL);
   }
+
+  void HandleInNonTestContext(Expression* expr, State state);
+  void VisitInTestContext(Expression* expr);
 
   void VisitDeclarations(ZoneList<Declaration*>* declarations);
   void DeclareGlobals(Handle<FixedArray> pairs);
@@ -310,17 +368,44 @@ class FullCodeGenerator: public AstVisitor {
                          Label* if_false,
                          Label* fall_through);
 
+  // Bailout support.
+  void PrepareForBailout(AstNode* node, State state);
+  void PrepareForBailoutForId(int id, State state);
+
+  // Record a call's return site offset, used to rebuild the frame if the
+  // called function was inlined at the site.
+  void RecordJSReturnSite(Call* call);
+
+  // Prepare for bailout before a test (or compare) and branch.  If
+  // should_normalize, then the following comparison will not handle the
+  // canonical JS true value so we will insert a (dead) test against true at
+  // the actual bailout target from the optimized code. If not
+  // should_normalize, the true and false labels are ignored.
+  void PrepareForBailoutBeforeSplit(State state,
+                                    bool should_normalize,
+                                    Label* if_true,
+                                    Label* if_false);
+
   // Platform-specific code for a variable, constant, or function
   // declaration.  Functions have an initial value.
   void EmitDeclaration(Variable* variable,
                        Variable::Mode mode,
                        FunctionLiteral* function);
 
+  // Platform-specific code for checking the stack limit at the back edge of
+  // a loop.
+  void EmitStackCheck(IterationStatement* stmt);
+  // Record the OSR AST id corresponding to a stack check in the code.
+  void RecordStackCheck(int osr_ast_id);
+  // Emit a table of stack check ids and pcs into the code stream.  Return
+  // the offset of the start of the table.
+  unsigned EmitStackCheckTable();
+
   // Platform-specific return sequence
   void EmitReturnSequence();
 
   // Platform-specific code sequences for calls
-  void EmitCallWithStub(Call* expr);
+  void EmitCallWithStub(Call* expr, CallFunctionFlags flags);
   void EmitCallWithIC(Call* expr, Handle<Object> name, RelocInfo::Mode mode);
   void EmitKeyedCallWithIC(Call* expr, Expression* key, RelocInfo::Mode mode);
 
@@ -346,6 +431,14 @@ class FullCodeGenerator: public AstVisitor {
                                        Label* done);
   void EmitVariableLoad(Variable* expr);
 
+  enum ResolveEvalFlag {
+    SKIP_CONTEXT_LOOKUP,
+    PERFORM_CONTEXT_LOOKUP
+  };
+
+  // Expects the arguments and the function already pushed.
+  void EmitResolvePossiblyDirectEval(ResolveEvalFlag flag, int arg_count);
+
   // Platform-specific support for allocating a new closure based on
   // the given function info.
   void EmitNewClosure(Handle<SharedFunctionInfo> info, bool pretenure);
@@ -362,47 +455,21 @@ class FullCodeGenerator: public AstVisitor {
 
   // Apply the compound assignment operator. Expects the left operand on top
   // of the stack and the right one in the accumulator.
-  void EmitBinaryOp(Token::Value op,
+  void EmitBinaryOp(BinaryOperation* expr,
+                    Token::Value op,
                     OverwriteMode mode);
 
   // Helper functions for generating inlined smi code for certain
   // binary operations.
-  void EmitInlineSmiBinaryOp(Expression* expr,
+  void EmitInlineSmiBinaryOp(BinaryOperation* expr,
                              Token::Value op,
                              OverwriteMode mode,
                              Expression* left,
-                             Expression* right,
-                             ConstantOperand constant);
-
-  void EmitConstantSmiBinaryOp(Expression* expr,
-                               Token::Value op,
-                               OverwriteMode mode,
-                               bool left_is_constant_smi,
-                               Smi* value);
-
-  void EmitConstantSmiBitOp(Expression* expr,
-                            Token::Value op,
-                            OverwriteMode mode,
-                            Smi* value);
-
-  void EmitConstantSmiShiftOp(Expression* expr,
-                              Token::Value op,
-                              OverwriteMode mode,
-                              Smi* value);
-
-  void EmitConstantSmiAdd(Expression* expr,
-                          OverwriteMode mode,
-                          bool left_is_constant_smi,
-                          Smi* value);
-
-  void EmitConstantSmiSub(Expression* expr,
-                          OverwriteMode mode,
-                          bool left_is_constant_smi,
-                          Smi* value);
+                             Expression* right);
 
   // Assign to the given expression as if via '='. The right-hand-side value
   // is expected in the accumulator.
-  void EmitAssignment(Expression* expr);
+  void EmitAssignment(Expression* expr, int bailout_ast_id);
 
   // Complete a variable assignment.  The right-hand-side value is expected
   // in the accumulator.
@@ -423,9 +490,7 @@ class FullCodeGenerator: public AstVisitor {
   void SetStatementPosition(Statement* stmt);
   void SetExpressionPosition(Expression* expr, int pos);
   void SetStatementPosition(int pos);
-  void SetSourcePosition(
-      int pos,
-      PositionRecordingType recording_type = NORMAL_POSITION);
+  void SetSourcePosition(int pos);
 
   // Non-local control flow support.
   void EnterFinallyBlock();
@@ -447,6 +512,10 @@ class FullCodeGenerator: public AstVisitor {
 
   Handle<Script> script() { return info_->script(); }
   bool is_eval() { return info_->is_eval(); }
+  bool is_strict_mode() { return function()->strict_mode(); }
+  StrictModeFlag strict_mode_flag() {
+    return is_strict_mode() ? kStrictMode : kNonStrictMode;
+  }
   FunctionLiteral* function() { return info_->function(); }
   Scope* scope() { return info_->scope(); }
 
@@ -454,7 +523,16 @@ class FullCodeGenerator: public AstVisitor {
   static Register context_register();
 
   // Helper for calling an IC stub.
-  void EmitCallIC(Handle<Code> ic, RelocInfo::Mode mode);
+  void EmitCallIC(Handle<Code> ic,
+                  RelocInfo::Mode mode,
+                  unsigned ast_id);
+
+  // Calling an IC stub with a patch site. Passing NULL for patch_site
+  // or non NULL patch_site which is not activated indicates no inlined smi code
+  // and emits a nop after the IC call.
+  void EmitCallIC(Handle<Code> ic,
+                  JumpPatchSite* patch_site,
+                  unsigned ast_id);
 
   // Set fields in the stack frame. Offsets are the frame pointer relative
   // offsets defined in, e.g., StandardFrameConstants.
@@ -468,19 +546,21 @@ class FullCodeGenerator: public AstVisitor {
 #define DECLARE_VISIT(type) virtual void Visit##type(type* node);
   AST_NODE_LIST(DECLARE_VISIT)
 #undef DECLARE_VISIT
+
+  void EmitUnaryOperation(UnaryOperation* expr, const char* comment);
+
   // Handles the shortcutted logical binary operations in VisitBinaryOperation.
   void EmitLogicalOperation(BinaryOperation* expr);
 
   void VisitForTypeofValue(Expression* expr);
 
-  MacroAssembler* masm_;
-  CompilationInfo* info_;
+  struct BailoutEntry {
+    unsigned id;
+    unsigned pc_and_state;
+  };
 
-  Label return_label_;
-  NestedStatement* nesting_stack_;
-  int loop_depth_;
 
-  class ExpressionContext {
+  class ExpressionContext BASE_EMBEDDED {
    public:
     explicit ExpressionContext(FullCodeGenerator* codegen)
         : masm_(codegen->masm()), old_(codegen->context()), codegen_(codegen) {
@@ -490,6 +570,8 @@ class FullCodeGenerator: public AstVisitor {
     virtual ~ExpressionContext() {
       codegen_->set_new_context(old_);
     }
+
+    Isolate* isolate() const { return codegen_->isolate(); }
 
     // Convert constant control flow (true or false) to the result expected for
     // this expression context.
@@ -506,7 +588,8 @@ class FullCodeGenerator: public AstVisitor {
 
     // Emit code to convert pure control flow to a pair of unbound labels into
     // the result expected according to this expression context.  The
-    // implementation may decide to bind either of the labels.
+    // implementation will bind both labels unless it's a TestContext, which
+    // won't bind them at this point.
     virtual void Plug(Label* materialize_true,
                       Label* materialize_false) const = 0;
 
@@ -528,12 +611,14 @@ class FullCodeGenerator: public AstVisitor {
                              Label** if_false,
                              Label** fall_through) const = 0;
 
+    virtual void HandleExpression(Expression* expr) const = 0;
+
     // Returns true if we are evaluating only for side effects (ie if the result
-    // will be discarded.
+    // will be discarded).
     virtual bool IsEffect() const { return false; }
 
     // Returns true if we are branching on the value rather than materializing
-    // it.
+    // it.  Only used for asserts.
     virtual bool IsTest() const { return false; }
 
    protected:
@@ -567,6 +652,7 @@ class FullCodeGenerator: public AstVisitor {
                              Label** if_true,
                              Label** if_false,
                              Label** fall_through) const;
+    virtual void HandleExpression(Expression* expr) const;
   };
 
   class StackValueContext : public ExpressionContext {
@@ -590,6 +676,7 @@ class FullCodeGenerator: public AstVisitor {
                              Label** if_true,
                              Label** if_false,
                              Label** fall_through) const;
+    virtual void HandleExpression(Expression* expr) const;
   };
 
   class TestContext : public ExpressionContext {
@@ -628,6 +715,7 @@ class FullCodeGenerator: public AstVisitor {
                              Label** if_true,
                              Label** if_false,
                              Label** fall_through) const;
+    virtual void HandleExpression(Expression* expr) const;
     virtual bool IsTest() const { return true; }
 
    private:
@@ -657,10 +745,20 @@ class FullCodeGenerator: public AstVisitor {
                              Label** if_true,
                              Label** if_false,
                              Label** fall_through) const;
+    virtual void HandleExpression(Expression* expr) const;
     virtual bool IsEffect() const { return true; }
   };
 
+  MacroAssembler* masm_;
+  CompilationInfo* info_;
+  Label return_label_;
+  NestedStatement* nesting_stack_;
+  int loop_depth_;
   const ExpressionContext* context_;
+  ZoneList<BailoutEntry> bailout_entries_;
+  ZoneList<BailoutEntry> stack_checks_;
+  ForwardBailoutStack* forward_bailout_stack_;
+  ForwardBailoutStack* forward_bailout_pending_;
 
   friend class NestedStatement;
 

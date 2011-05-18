@@ -1,4 +1,4 @@
-// Copyright 2006-2008 the V8 project authors. All rights reserved.
+// Copyright 2011 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -35,25 +35,7 @@ namespace v8 {
 namespace internal {
 
 // ----------------------------------------------------------------------------
-// Implementation StaticType.
-
-
-const char* StaticType::Type2String(StaticType* type) {
-  switch (type->kind_) {
-    case UNKNOWN:
-      return "UNKNOWN";
-    case LIKELY_SMI:
-      return "LIKELY_SMI";
-    default:
-      UNREACHABLE();
-  }
-  return "UNREACHABLE";
-}
-
-
-// ----------------------------------------------------------------------------
 // Implementation Variable.
-
 
 const char* Variable::Mode2String(Mode mode) {
   switch (mode) {
@@ -86,6 +68,24 @@ bool Variable::IsStackAllocated() const {
 }
 
 
+bool Variable::IsParameter() const {
+  Slot* s = AsSlot();
+  return s != NULL && s->type() == Slot::PARAMETER;
+}
+
+
+bool Variable::IsStackLocal() const {
+  Slot* s = AsSlot();
+  return s != NULL && s->type() == Slot::LOCAL;
+}
+
+
+bool Variable::IsContextSlot() const {
+  Slot* s = AsSlot();
+  return s != NULL && s->type() == Slot::CONTEXT;
+}
+
+
 Variable::Variable(Scope* scope,
                    Handle<String> name,
                    Mode mode,
@@ -94,12 +94,12 @@ Variable::Variable(Scope* scope,
   : scope_(scope),
     name_(name),
     mode_(mode),
-    is_valid_LHS_(is_valid_LHS),
     kind_(kind),
     local_if_not_shadowed_(NULL),
+    rewrite_(NULL),
+    is_valid_LHS_(is_valid_LHS),
     is_accessed_from_inner_scope_(false),
-    is_used_(false),
-    rewrite_(NULL) {
+    is_used_(false) {
   // names must be canonicalized for fast equality checks
   ASSERT(name->IsSymbol());
 }

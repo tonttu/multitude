@@ -1,4 +1,4 @@
-// Copyright 2008 the V8 project authors. All rights reserved.
+// Copyright 2011 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -34,9 +34,11 @@ namespace v8 {
 namespace internal {
 
 template <typename Char>
-bool DateParser::Parse(Vector<Char> str, FixedArray* out) {
+bool DateParser::Parse(Vector<Char> str,
+                       FixedArray* out,
+                       UnicodeCache* unicode_cache) {
   ASSERT(out->length() >= OUTPUT_SIZE);
-  InputReader<Char> in(str);
+  InputReader<Char> in(unicode_cache, str);
   TimeZoneComposer tz;
   TimeComposer time;
   DayComposer day;
@@ -59,7 +61,7 @@ bool DateParser::Parse(Vector<Char> str, FixedArray* out) {
       } else if (in.Skip('.') && time.IsExpecting(n)) {
         time.Add(n);
         if (!in.IsAsciiDigit()) return false;
-        int n = in.ReadUnsignedNumber();
+        int n = in.ReadMilliseconds();
         time.AddFinal(n);
       } else if (tz.IsExpecting(n)) {
         tz.SetAbsoluteMinute(n);
