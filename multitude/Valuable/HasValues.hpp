@@ -111,6 +111,11 @@ namespace Valuable
       return vo->set(v);
     }
 
+    bool setValue(const QString & name, const v8::Handle<v8::Value> & v);
+    bool setValue(const QString & name, const v8::Local<v8::Value> & v) {
+      return setValue(name, static_cast<const v8::Handle<v8::Value> &>(v));
+    }
+
     /// Saves this object (and its children) to an XML file
     bool saveToFileXML(const char * filename);
     /// Saves this object (and its children) to binary data buffer
@@ -130,7 +135,7 @@ namespace Valuable
     /** Handles a DOM element that lacks automatic handlers. */
     virtual bool readElement(DOMElement element);
 
-    /// Prints the contents of this ValueObject to the terinal
+    /// Prints the contents of this ValueObject to the terminal
     void debugDump();
 
     /// Container for key-value object pairs

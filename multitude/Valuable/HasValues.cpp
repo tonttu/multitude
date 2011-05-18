@@ -137,6 +137,68 @@ namespace Valuable
     value->m_parent = 0;
   }
 
+  bool HasValues::setValue(const QString & name, const v8::Handle<v8::Value> & v)
+  {
+    using namespace v8;
+    HandleScope handle_scope;
+    if (v.IsEmpty()) {
+      Radiant::error("HasValues::setValue # v8::Handle is empty");
+      return false;
+    }
+
+    if (v->IsTrue()) return setValue(name, 1);
+    if (v->IsFalse()) return setValue(name, 0);
+    if (v->IsBoolean()) return setValue(name, v->ToBoolean()->Value() ? 1 : 0);
+    if (v->IsInt32()) return setValue(name, int(v->ToInt32()->Value()));
+    if (v->IsUint32()) return setValue(name, int(v->ToUint32()->Value()));
+    if (v->IsString()) return setValue(name, QString::fromUtf16(*String::Value(v->ToString())));
+    if (v->IsNumber()) return setValue(name, float(v->ToNumber()->NumberValue()));
+
+    if (v->IsArray()) {
+      Handle<Array> arr = v.As<Array>();
+      assert(!arr.IsEmpty());
+      if(arr->Length() == 2) {
+        Local<Number> x = arr->Get(0)->ToNumber();
+        Local<Number> y = arr->Get(1)->ToNumber();
+        if (x.IsEmpty() || y.IsEmpty()) {
+          Radiant::error("HasValues::setValue # v8::Value should be array of two numbers");
+          return false;
+        }
+        return setValue(name, Nimble::Vector2f(x->Value(), y->Value()));
+      } else if(arr->Length() == 4) {
+        Local<Number> r = arr->Get(0)->ToNumber();
+        Local<Number> g = arr->Get(1)->ToNumber();
+        Local<Number> b = arr->Get(2)->ToNumber();
+        Local<Number> a = arr->Get(3)->ToNumber();
+        if (r.IsEmpty() || g.IsEmpty() || b.IsEmpty() || a.IsEmpty()) {
+          Radiant::error("HasValues::setValue # v8::Value should be array of four numbers");
+          return false;
+        }
+        return setValue(name, Nimble::Vector4f(r->Value(), g->Value(), b->Value(), a->Value()));
+      }
+      Radiant::error("HasValues::setValue # v8::Array with %d elements is not supported", arr->Length());
+    } else if (v->IsRegExp()) {
+      Radiant::error("HasValues::setValue # v8::Value type RegExp is not supported");
+    } else if (v->IsDate()) {
+      Radiant::error("HasValues::setValue # v8::Value type Date is not supported");
+    } else if (v->IsExternal()) {
+      Radiant::error("HasValues::setValue # v8::Value type External is not supported");
+    } else if (v->IsObject()) {
+      Radiant::error("HasValues::setValue # v8::Value type Object is not supported");
+    } else if (v->IsArray()) {
+      Radiant::error("HasValues::setValue # v8::Value type Array is not supported");
+    } else if (v->IsFunction()) {
+      Radiant::error("HasValues::setValue # v8::Value type Function is not supported");
+    } else if (v->IsNull()) {
+      Radiant::error("HasValues::setValue # v8::Value type Null is not supported");
+    } else if (v->IsUndefined()) {
+      Radiant::error("HasValues::setValue # v8::Value type Undefined is not supported");
+    } else {
+      Radiant::error("HasValues::setValue # v8::Value type is unknown");
+    }
+    return false;
+  }
+
   bool HasValues::saveToFileXML(const char * filename)
   {
     bool ok = Serializer::serializeXML(filename, this);
