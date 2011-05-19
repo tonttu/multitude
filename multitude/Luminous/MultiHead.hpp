@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 
@@ -38,6 +38,9 @@ namespace Luminous {
   using Nimble::Vector2i;
   using Nimble::Vector4f;
 
+  class Shader;
+  class Texture1D;
+
   /// Class for managing information on multiple OpenGL vindows/viewports.
   /** This class stores information about the layout of multiple
       OpenGL windows and viewports. This information is used in
@@ -59,6 +62,40 @@ namespace Luminous {
     class Area : public Valuable::HasValues,
     public Collectable
     {
+
+      class ColorCorrection : public Valuable::ValueObject
+      {
+public:
+        ColorCorrection()
+        {
+          for (int i=0; i < 256; ++i) {
+            m_lut[i].make(i);
+          }
+        }
+        virtual bool deserialize(Valuable::ArchiveElement&)
+        {
+           return true;
+        }
+
+        virtual const char* type() const { return "ColorCorrection"; }
+
+        Nimble::Vector3T<uint8_t>& getValue(int idx)
+        {
+          return m_lut[idx];
+        }
+
+        const Nimble::Vector3T<uint8_t>& getValue(int idx) const
+        {
+          return m_lut[idx];
+        }
+
+        const Nimble::Vector3T<uint8_t>* getLUT() const { return m_lut; }
+
+      public:
+        // ValueContainer<std::vector<.. ?
+        Nimble::Vector3T<uint8_t> m_lut[256];
+      };
+
     public:
       /// Constructs a new area for the given window
       LUMINOUS_API Area(Window * window = 0);
@@ -186,6 +223,16 @@ namespace Luminous {
         updateBBox();
       }
 
+      ColorCorrection & getColorCorrection()
+      {
+        return m_colorCorrection;
+      }
+
+      const ColorCorrection & getColorCorrection() const
+      {
+        return m_colorCorrection;
+      }
+
     private:
 
       enum {
@@ -211,6 +258,9 @@ namespace Luminous {
       Valuable::ValueString m_comment;
       Rect m_graphicsBounds;
       float      m_pixelSizeCm;
+      Shader * m_colorCorrectionShader;
+      Texture1D * m_colorCorrectionTexture;
+      ColorCorrection m_colorCorrection;
     };
 
     /** One OpenGL window.
