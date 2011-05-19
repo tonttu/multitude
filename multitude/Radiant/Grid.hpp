@@ -343,6 +343,8 @@ namespace Radiant {
 
     /// Number of elements
     inline unsigned size()   const { return this->m_width * this->m_height; }
+    /// Number of bytes
+    inline unsigned sizeBytes() const { return this->size() * sizeof(T); }
     /// Returns the dimensions of the grid
     inline Nimble::Vector2i geometry() const
     { return Nimble::Vector2i(this->m_width, this->m_height); }
@@ -391,6 +393,11 @@ namespace Radiant {
   /// A grid of 16-bit values with memory management
   typedef GridT<uint16_t, GridMemT<uint16_t> >   MemGrid16u;
 
+  /// A grid of 32-bit values without memory management
+  typedef GridT<uint32_t, GridNoMemT<uint32_t> > PtrGrid32u;
+  /// A grid of 32-bit values with memory management
+  typedef GridT<uint32_t, GridMemT<uint32_t> >   MemGrid32u;
+
   /// A grid of floats without memory management
   typedef GridT<float, GridNoMemT<float> > PtrGrid32f;
   /// A grid of floats with memory management
@@ -413,6 +420,9 @@ namespace Radiant {
 
         template class GridT<uint16_t, GridNoMemT<uint16_t>>;
         template class GridT<uint16_t, GridMemT<uint16_t>>;
+
+        template class GridT<uint32_t, GridNoMemT<uint32_t>>;
+        template class GridT<uint32_t, GridMemT<uint32_t>>;
 
         template class GridT<float, GridNoMemT<float>>;
         template class GridT<float, GridMemT<float>>;

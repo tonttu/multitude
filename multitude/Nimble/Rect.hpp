@@ -161,9 +161,9 @@ namespace Nimble {
     inline bool contains(Vector2T<T> v) const;
     /// Check if the rectangle contains the given rectangle
     inline bool contains(const RectT &b) const;
-    /// Compute the city-block distance to the other rectangle
+    /// Compute the X or Y distance to the other rectangle
     inline T    distance(const RectT &b) const;
-    /// Compute the city-block distance to the given point
+    /// Compute the X or Y distance to the given point
     inline T    distance(const Vector2T<T> & p) const;
 
     /// Clamps the argument vector to be inside this rectangle
