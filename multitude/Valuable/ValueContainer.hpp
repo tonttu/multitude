@@ -72,6 +72,7 @@ namespace Valuable
 
     virtual bool deserialize(ArchiveElement & element)
     {
+      m_container.clear();
       std::insert_iterator<T> inserter(m_container, m_container.end());
       for(ArchiveElement::Iterator & it = element.children(); it; ++it) {
         *inserter = Serializer::deserialize<typename T::value_type>(*it);
