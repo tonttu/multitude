@@ -137,7 +137,7 @@ namespace Valuable
     value->m_parent = 0;
   }
 
-  bool HasValues::setValue(const QString & name, const v8::Handle<v8::Value> & v)
+  bool HasValues::setValue(const QString & name, v8::Handle<v8::Value> v)
   {
     using namespace v8;
     HandleScope handle_scope;

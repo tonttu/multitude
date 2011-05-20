@@ -58,8 +58,6 @@ namespace Valuable
 
     /// Gets the text content of this element
     QString getTextContent() const;
-    /// @copydoc getTextContent
-    QString getTextContentW() const;
 
     /// Sets the text content of this element
     void setTextContent(const QString & content);

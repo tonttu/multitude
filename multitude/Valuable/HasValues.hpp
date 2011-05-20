@@ -111,9 +111,9 @@ namespace Valuable
       return vo->set(v);
     }
 
-    bool setValue(const QString & name, const v8::Handle<v8::Value> & v);
-    bool setValue(const QString & name, const v8::Local<v8::Value> & v) {
-      return setValue(name, static_cast<const v8::Handle<v8::Value> &>(v));
+    bool setValue(const QString & name, v8::Handle<v8::Value> v);
+    bool setValue(const QString & name, v8::Local<v8::Value> v) {
+      return setValue(name, static_cast<v8::Handle<v8::Value> >(v));
     }
 
     /// Saves this object (and its children) to an XML file
