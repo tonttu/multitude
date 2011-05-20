@@ -31,7 +31,7 @@ static const char* fs_shader =
 "#version 120\n"
 "uniform sampler2D tex;\n"
 "uniform sampler1D lut;\n"
-"const float off = 0.5*(1.0/256.0);"
+"const float off = 0*0.5*(1.0/256.0);"
 "void main() {\n"
 "vec2 uv = gl_TexCoord[0].st;\n"
 "vec3 color = texture2D(tex, uv).rgb;\n"
@@ -59,7 +59,8 @@ namespace Luminous {
       m_method(this, "method", METHOD_MATRIX_TRICK),
       m_comment(this, "comment"),
       m_graphicsBounds(0, 0, 100, 100),
-      m_pixelSizeCm(0.1f)
+      m_pixelSizeCm(0.1f),
+      m_colorCorrection(this, "colorcorrection")
   {
     m_colorCorrectionShader = new Luminous::Shader();
     m_colorCorrectionShader->setFragmentShader(fs_shader);
@@ -146,6 +147,9 @@ namespace Luminous {
                        false);
       }
 
+      m_colorCorrectionTexture->loadBytes(GL_RGB, 256,
+                                          m_colorCorrection.getLUT(), PixelFormat::rgbUByte(), false);
+
       tex->bind(GL_TEXTURE0);
 
       glReadBuffer(GL_BACK);
@@ -170,10 +174,13 @@ namespace Luminous {
       glColor3f(1, 1, 1);
 
 
-      m_colorCorrectionTexture->loadBytes(GL_RGB, 256,
-                                          m_colorCorrection.getLUT(), PixelFormat::rgbUByte(), false);
-
       m_colorCorrectionTexture->bind(GL_TEXTURE1);
+
+
+
+      glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
       GLSLProgramObject * program = m_colorCorrectionShader->bind();
 
@@ -182,6 +189,13 @@ namespace Luminous {
       Utils::glTexRect(0, 1, 1, 0);
 
       program->unbind();
+
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, 0);
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, 0);
+
+      glDisable(GL_TEXTURE_2D);
     }
     else {
       glLoadIdentity();

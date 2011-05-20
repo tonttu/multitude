@@ -20,6 +20,7 @@
 #include <Luminous/Collectable.hpp>
 #include <Luminous/Export.hpp>
 #include <Luminous/GLKeyStone.hpp>
+#include <Luminous/ColorCorrection.hpp>
 
 #include <Nimble/Rect.hpp>
 #include <Nimble/Vector4.hpp>
@@ -30,6 +31,7 @@
 #include <Valuable/ValueFloat.hpp>
 
 #include <vector>
+
 
 namespace Luminous {
 
@@ -63,40 +65,8 @@ namespace Luminous {
     public Collectable
     {
 
-      class ColorCorrection : public Valuable::ValueObject
-      {
-public:
-        ColorCorrection()
-        {
-          for (int i=0; i < 256; ++i) {
-            m_lut[i].make(i);
-          }
-        }
-        virtual bool deserialize(Valuable::ArchiveElement&)
-        {
-           return true;
-        }
-
-        virtual const char* type() const { return "ColorCorrection"; }
-
-        Nimble::Vector3T<uint8_t>& getValue(int idx)
-        {
-          return m_lut[idx];
-        }
-
-        const Nimble::Vector3T<uint8_t>& getValue(int idx) const
-        {
-          return m_lut[idx];
-        }
-
-        const Nimble::Vector3T<uint8_t>* getLUT() const { return m_lut; }
-
-      public:
-        // ValueContainer<std::vector<.. ?
-        Nimble::Vector3T<uint8_t> m_lut[256];
-      };
-
     public:
+
       /// Constructs a new area for the given window
       LUMINOUS_API Area(Window * window = 0);
       LUMINOUS_API virtual ~Area();

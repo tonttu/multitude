@@ -34,6 +34,8 @@ HEADERS += Transformer.hpp
 HEADERS += Utils.hpp
 HEADERS += VertexBuffer.hpp
 HEADERS += VertexBufferImpl.hpp
+HEADERS += ColorCorrection.hpp
+
 SOURCES += BGThread.cpp \
     GLContext.cpp
 SOURCES += FramebufferResource.cpp
@@ -63,6 +65,8 @@ SOURCES += Texture.cpp
 SOURCES += Transformer.cpp
 SOURCES += Utils.cpp
 SOURCES += VertexBuffer.cpp
+SOURCES += ColorCorrection.cpp
+
 LIBS += $$LIB_RADIANT \
     $$LIB_OPENGL \
     $$LIB_VALUABLE \
