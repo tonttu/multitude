@@ -1,6 +1,7 @@
 include(../multitude.pri)
 
-HEADERS += Archive.hpp
+HEADERS += Archive.hpp \
+    ValueFlags.hpp
 HEADERS += XMLArchive.hpp
 HEADERS += ChangeMap.hpp
 HEADERS += CmdParser.hpp
@@ -30,7 +31,8 @@ HEADERS += ValueString.hpp
 HEADERS += ValueVector.hpp
 HEADERS += ValueVectorImpl.hpp
 
-SOURCES += Archive.cpp
+SOURCES += Archive.cpp \
+    ValueFlags.cpp
 SOURCES += XMLArchive.cpp
 SOURCES += ChangeMap.cpp
 SOURCES += CmdParser.cpp
