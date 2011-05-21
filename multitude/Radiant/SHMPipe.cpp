@@ -14,6 +14,7 @@
  */
 
 #include "SHMPipe.hpp"
+#include "Radiant.hpp"
 
 #include <Radiant/StringUtils.hpp>
 #include <Radiant/Sleep.hpp>
@@ -95,7 +96,7 @@ namespace Radiant
     m_id = shmget(key, 0, 0660);
     if(m_id > 0) {
       if(shmctl(m_id, IPC_RMID, 0) != -1) {
-        debug("%s # Successfully removed existing shared memory area with same key..", fnName);
+        debugRadiant("%s # Successfully removed existing shared memory area with same key..", fnName);
       } else {
         error("%s # Failed to remove existing shared memory area with same key (%s).", fnName, shmError());
       }
@@ -108,7 +109,7 @@ namespace Radiant
        unused */
     m_id = shmget(key, sizeof(Data) + size, 0660 | IPC_EXCL | IPC_CREAT);
     if(m_id != -1) {
-      debug("%s # Successfully created new shared memory area.", fnName);
+      debugRadiant("%s # Successfully created new shared memory area.", fnName);
     } else {
       error("%s # Failed to create new shared memory area (%s).",
             fnName, shmError());
@@ -118,7 +119,7 @@ namespace Radiant
 
     m_sem = semget(IPC_PRIVATE, 2, 0660 | IPC_CREAT | IPC_EXCL);
     if(m_sem != -1) {
-      debug("%s # Successfully created new semaphore for shared memory area.", fnName);
+      debugRadiant("%s # Successfully created new semaphore for shared memory area.", fnName);
     } else {
       error("%s # Failed to create new semaphore for shared memory area, using polling (%s).",
             fnName, shmError());
@@ -147,7 +148,7 @@ namespace Radiant
     // Mark the segment to be destroyed. It will be destroyed when
     // last user detached it
     if(shmctl(m_id, IPC_RMID, 0) != -1) {
-      debug("%s # Successfully destroyed shared memory area.", fnName);
+      debugRadiant("%s # Successfully destroyed shared memory area.", fnName);
     } else {
       error("%s # Failed to destroy shared memory area (%s).",
             fnName, shmError());
@@ -185,7 +186,7 @@ namespace Radiant
     }
 
     if(shmdt(m_data) != -1) {
-      debug("%s # Successfully detached shared memory area.", fnName);
+      debugRadiant("%s # Successfully detached shared memory area.", fnName);
     } else {
       error("%s # Failed to detach shared memory area (%s).",
             fnName, shmError());
@@ -195,9 +196,9 @@ namespace Radiant
       // Mark the segment to be destroyed. It will be destroyed when
       // last user detached it
       if(shmctl(m_id, IPC_RMID, 0) != -1) {
-        debug("%s # Successfully destroyed shared memory area.", fnName);
+        debugRadiant("%s # Successfully destroyed shared memory area.", fnName);
       } else {
-        debug("%s # Failed to destroy shared memory area (%s).",
+        debugRadiant("%s # Failed to destroy shared memory area (%s).",
               fnName, shmError());
       }
     }
@@ -210,7 +211,7 @@ namespace Radiant
     // Get pointer to SMA
     m_data = shmat(m_id, 0, 0);
     if(m_data != (void *)(-1)) {
-      debug("%s # Successfully obtained pointer %p to shared memory area.",
+      debugRadiant("%s # Successfully obtained pointer %p to shared memory area.",
             fnName, m_data);
     } else {
       error("%s # Failed to obtain pointer to shared memory area (%s)",
@@ -243,7 +244,7 @@ namespace Radiant
 
 #ifdef WIN32
   /*
-  SHMPipe::SHMPipe(const std::string smName, const uint32_t size)
+  SHMPipe::SHMPipe(const QString smName, const uint32_t size)
     : m_isCreator(false),
       m_smName(smName),
       m_hMapFile(0),
@@ -282,11 +283,11 @@ namespace Radiant
       if(hMapFile)
       {
         if(::CloseHandle(hMapFile)) {
-          debug("%s # Successfully removed existing shared memory area with same name.", fnName);
+          debugRadiant("%s # Successfully removed existing shared memory area with same name.", fnName);
         }
         else
         {
-          error("%s # Failed to remove existing shared memory area with same name (%s).", fnName, StringUtils::getLastErrorMessage().c_str());
+          error("%s # Failed to remove existing shared memory area with same name (%s).", fnName, StringUtils::getLastErrorMessage().toUtf8().data());
           assert(0);
         }
       }
@@ -296,11 +297,11 @@ namespace Radiant
       m_hMapFile = ::CreateFileMappingA(INVALID_HANDLE_VALUE, 0, smDefaultPermissions, 0, size, m_smName.c_str());
       if(m_hMapFile) {
         m_isCreator = true;
-        debug("%s # Successfully created new shared memory area (%s).", fnName);
+        debugRadiant("%s # Successfully created new shared memory area (%s).", fnName);
       }
       else
       {
-        error("%s # Failed to create new shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().c_str());
+        error("%s # Failed to create new shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().toUtf8().data());
         assert(0);
       }
     }
@@ -310,12 +311,12 @@ namespace Radiant
       m_hMapFile = ::OpenFileMappingA(FILE_MAP_ALL_ACCESS, false, m_smName.c_str());
       if(m_hMapFile)
       {
-        debug("%s # Successfully accessed existing shared memory area (%s).",
+        debugRadiant("%s # Successfully accessed existing shared memory area (%s).",
 	      fnName);
       }
       else
       {
-        error("%s # Failed to access existing shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().c_str());
+        error("%s # Failed to access existing shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().toUtf8().data());
         assert(0);
       } 
 
@@ -327,11 +328,11 @@ namespace Radiant
     char * const  smPtr = (char *)(::MapViewOfFile(m_hMapFile, FILE_MAP_ALL_ACCESS, 0, 0, size));
     if(smPtr)
     {
-      debug("%s # Successfully obtained pointer to shared memory area.", fnName);
+      debugRadiant("%s # Successfully obtained pointer to shared memory area.", fnName);
     }
     else
     {
-      error("%s # Failed to obtain pointer to shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().c_str());
+      error("%s # Failed to obtain pointer to shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().toUtf8().data());
       assert(0);
     }
 
@@ -392,12 +393,12 @@ namespace Radiant
     char * const  smPtr = (char *)(m_shm - SHM_HEADER_SIZE);
     if(::UnmapViewOfFile(smPtr))
     {
-     debug("%s # Successfully detached shared memory area.", fnName);
+     debugRadiant("%s # Successfully detached shared memory area.", fnName);
     }
     else
     {
       error("%s # Failed to detach shared memory area (%s).",
-	    fnName, StringUtils::getLastErrorMessage().c_str());
+	    fnName, StringUtils::getLastErrorMessage().toUtf8().data());
     }
 
     // Only the creating object can destroy the SMA, after the last detach, i.e. when no more
@@ -405,10 +406,10 @@ namespace Radiant
 
     if(m_isCreator) {
       if(::CloseHandle(m_hMapFile)) {
-	debug("%s # Successfully destroyed shared memory area.", fnName);
+	debugRadiant("%s # Successfully destroyed shared memory area.", fnName);
       }
       else {
-        error("%s # Failed to destroy shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().c_str());
+        error("%s # Failed to destroy shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().toUtf8().data());
       }
     }
   }
@@ -429,7 +430,7 @@ namespace Radiant
       uint32_t avail = readAvailable();
 
       if(static_cast<int>(avail) < n) {
-        //debug("SHMPipe::read # Only %d available, %d needed (%u %u)",
+        //debugRadiant("SHMPipe::read # Only %d available, %d needed (%u %u)",
         // (int) avail, n, (unsigned) readPos(), (unsigned) writePos());
         return 0;
       }
@@ -465,7 +466,7 @@ namespace Radiant
     uint32_t n = read( & bytes, 4);
 
     if(n != 4) {
-      // debug("SHMPipe::read # could not read 4 bytes");
+      // debugRadiant("SHMPipe::read # could not read 4 bytes");
       return n;
     }
 
@@ -628,22 +629,22 @@ namespace Radiant
   void SHMPipe::dump() const
   {
 #ifdef WIN32
-    debug("m_smName = %s", m_smName.c_str());
-    debug("m_hMapFile = %p", m_hMapFile);
+    debugRadiant("m_smName = %s", m_smName.c_str());
+    debugRadiant("m_hMapFile = %p", m_hMapFile);
 #else
 #endif
-    debug("size() = %lu", (unsigned long)(size()));
+    debugRadiant("size() = %lu", (unsigned long)(size()));
 
-    debug("writePos() = %lu", (unsigned long)(writePos()));
-    debug("readPos() = %lu", (unsigned long)(readPos()));
+    debugRadiant("writePos() = %lu", (unsigned long)(writePos()));
+    debugRadiant("readPos() = %lu", (unsigned long)(readPos()));
     /*
-    debug("readWriteState() = %lu", (unsigned long)(readWriteState()));
+    debugRadiant("readWriteState() = %lu", (unsigned long)(readWriteState()));
 
-    debug("used = %lu", (unsigned long)(used()));
-    debug("available() = %lu", (unsigned long)(available()));
+    debugRadiant("used = %lu", (unsigned long)(used()));
+    debugRadiant("available() = %lu", (unsigned long)(available()));
 
-    debug("isEmpty() = %s", isEmpty() ? "true" : "false");
-    debug("isFull() = %s", isFull() ? "true" : "false");
+    debugRadiant("isEmpty() = %s", isEmpty() ? "true" : "false");
+    debugRadiant("isFull() = %s", isFull() ? "true" : "false");
     */
   }
 

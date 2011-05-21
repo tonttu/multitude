@@ -50,7 +50,7 @@ namespace Valuable
     /// @copybrief getConfigElement
     ConfigElement *getConfigElement(std::string key,std::string value);
     /// Returns the configuration as string
-    static std::string getConfigText(ConfigElement e, int recursion = 0);
+    static QString getConfigText(ConfigElement e, int recursion = 0);
 
   private:
 

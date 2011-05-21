@@ -1,4 +1,4 @@
-// Copyright 2010 the V8 project authors. All rights reserved.
+// Copyright 2011 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -29,7 +29,7 @@
 
 #if defined(V8_TARGET_ARCH_X64)
 
-#include "codegen-inl.h"
+#include "codegen.h"
 #include "ic-inl.h"
 #include "runtime.h"
 #include "stub-cache.h"
@@ -97,55 +97,6 @@ static void GenerateStringDictionaryReceiverCheck(MacroAssembler* masm,
 }
 
 
-// Probe the string dictionary in the |elements| register. Jump to the
-// |done| label if a property with the given name is found leaving the
-// index into the dictionary in |r1|. Jump to the |miss| label
-// otherwise.
-static void GenerateStringDictionaryProbes(MacroAssembler* masm,
-                                           Label* miss,
-                                           Label* done,
-                                           Register elements,
-                                           Register name,
-                                           Register r0,
-                                           Register r1) {
-  // Compute the capacity mask.
-  const int kCapacityOffset =
-      StringDictionary::kHeaderSize +
-      StringDictionary::kCapacityIndex * kPointerSize;
-  __ SmiToInteger32(r0, FieldOperand(elements, kCapacityOffset));
-  __ decl(r0);
-
-  // Generate an unrolled loop that performs a few probes before
-  // giving up. Measurements done on Gmail indicate that 2 probes
-  // cover ~93% of loads from dictionaries.
-  static const int kProbes = 4;
-  const int kElementsStartOffset =
-      StringDictionary::kHeaderSize +
-      StringDictionary::kElementsStartIndex * kPointerSize;
-  for (int i = 0; i < kProbes; i++) {
-    // Compute the masked index: (hash + i + i * i) & mask.
-    __ movl(r1, FieldOperand(name, String::kHashFieldOffset));
-    __ shrl(r1, Immediate(String::kHashShift));
-    if (i > 0) {
-      __ addl(r1, Immediate(StringDictionary::GetProbeOffset(i)));
-    }
-    __ and_(r1, r0);
-
-    // Scale the index by multiplying by the entry size.
-    ASSERT(StringDictionary::kEntrySize == 3);
-    __ lea(r1, Operand(r1, r1, times_2, 0));  // r1 = r1 * 3
-
-    // Check if the key is identical to the name.
-    __ cmpq(name, Operand(elements, r1, times_pointer_size,
-                          kElementsStartOffset - kHeapObjectTag));
-    if (i != kProbes - 1) {
-      __ j(equal, done);
-    } else {
-      __ j(not_equal, miss);
-    }
-  }
-}
-
 
 // Helper function used to load a property from a dictionary backing storage.
 // This function may return false negatives, so miss_label
@@ -176,13 +127,13 @@ static void GenerateDictionaryLoad(MacroAssembler* masm,
   Label done;
 
   // Probe the dictionary.
-  GenerateStringDictionaryProbes(masm,
-                                 miss_label,
-                                 &done,
-                                 elements,
-                                 name,
-                                 r0,
-                                 r1);
+  StringDictionaryLookupStub::GeneratePositiveLookup(masm,
+                                                     miss_label,
+                                                     &done,
+                                                     elements,
+                                                     name,
+                                                     r0,
+                                                     r1);
 
   // If probing finds an entry in the dictionary, r0 contains the
   // index into the dictionary. Check that the value is a normal
@@ -234,13 +185,13 @@ static void GenerateDictionaryStore(MacroAssembler* masm,
   Label done;
 
   // Probe the dictionary.
-  GenerateStringDictionaryProbes(masm,
-                                 miss_label,
-                                 &done,
-                                 elements,
-                                 name,
-                                 scratch0,
-                                 scratch1);
+  StringDictionaryLookupStub::GeneratePositiveLookup(masm,
+                                                     miss_label,
+                                                     &done,
+                                                     elements,
+                                                     name,
+                                                     scratch0,
+                                                     scratch1);
 
   // If probing finds an entry in the dictionary, scratch0 contains the
   // index into the dictionary. Check that the value is a normal
@@ -378,79 +329,46 @@ static void GenerateNumberDictionaryLoad(MacroAssembler* masm,
 }
 
 
-// One byte opcode for test rax,0xXXXXXXXX.
-static const byte kTestEaxByte = 0xA9;
-
-
-static bool PatchInlinedMapCheck(Address address, Object* map) {
-  // Arguments are address of start of call sequence that called
-  // the IC,
-  Address test_instruction_address =
-      address + Assembler::kCallTargetAddressOffset;
-  // The keyed load has a fast inlined case if the IC call instruction
-  // is immediately followed by a test instruction.
-  if (*test_instruction_address != kTestEaxByte) return false;
-
-  // Fetch the offset from the test instruction to the map compare
-  // instructions (starting with the 64-bit immediate mov of the map
-  // address). This offset is stored in the last 4 bytes of the 5
-  // byte test instruction.
-  Address delta_address = test_instruction_address + 1;
-  int delta = *reinterpret_cast<int*>(delta_address);
-  // Compute the map address.  The map address is in the last 8 bytes
-  // of the 10-byte immediate mov instruction (incl. REX prefix), so we add 2
-  // to the offset to get the map address.
-  Address map_address = test_instruction_address + delta + 2;
-  // Patch the map check.
-  *(reinterpret_cast<Object**>(map_address)) = map;
-  return true;
-}
-
-
-bool KeyedLoadIC::PatchInlinedLoad(Address address, Object* map) {
-  return PatchInlinedMapCheck(address, map);
-}
-
-
-bool KeyedStoreIC::PatchInlinedStore(Address address, Object* map) {
-  return PatchInlinedMapCheck(address, map);
-}
-
-
-void KeyedLoadIC::GenerateMiss(MacroAssembler* masm) {
+void LoadIC::GenerateArrayLength(MacroAssembler* masm) {
   // ----------- S t a t e -------------
-  //  -- rax    : key
-  //  -- rdx    : receiver
-  //  -- rsp[0]  : return address
+  //  -- rax    : receiver
+  //  -- rcx    : name
+  //  -- rsp[0] : return address
   // -----------------------------------
+  Label miss;
 
-  __ IncrementCounter(&Counters::keyed_load_miss, 1);
-
-  __ pop(rbx);
-  __ push(rdx);  // receiver
-  __ push(rax);  // name
-  __ push(rbx);  // return address
-
-  // Perform tail call to the entry.
-  ExternalReference ref = ExternalReference(IC_Utility(kKeyedLoadIC_Miss));
-  __ TailCallExternalReference(ref, 2, 1);
+  StubCompiler::GenerateLoadArrayLength(masm, rax, rdx, &miss);
+  __ bind(&miss);
+  StubCompiler::GenerateLoadMiss(masm, Code::LOAD_IC);
 }
 
 
-void KeyedLoadIC::GenerateRuntimeGetProperty(MacroAssembler* masm) {
+void LoadIC::GenerateStringLength(MacroAssembler* masm, bool support_wrappers) {
   // ----------- S t a t e -------------
-  //  -- rax    : key
-  //  -- rdx    : receiver
-  //  -- rsp[0]  : return address
+  //  -- rax    : receiver
+  //  -- rcx    : name
+  //  -- rsp[0] : return address
   // -----------------------------------
+  Label miss;
 
-  __ pop(rbx);
-  __ push(rdx);  // receiver
-  __ push(rax);  // name
-  __ push(rbx);  // return address
+  StubCompiler::GenerateLoadStringLength(masm, rax, rdx, rbx, &miss,
+                                         support_wrappers);
+  __ bind(&miss);
+  StubCompiler::GenerateLoadMiss(masm, Code::LOAD_IC);
+}
 
-  // Perform tail call to the entry.
-  __ TailCallRuntime(Runtime::kKeyedGetProperty, 2, 1);
+
+void LoadIC::GenerateFunctionPrototype(MacroAssembler* masm) {
+  // ----------- S t a t e -------------
+  //  -- rax    : receiver
+  //  -- rcx    : name
+  //  -- rsp[0] : return address
+  // -----------------------------------
+  Label miss;
+
+  StubCompiler::GenerateLoadFunctionPrototype(masm, rax, rdx, rbx, &miss);
+  __ bind(&miss);
+  StubCompiler::GenerateLoadMiss(masm, Code::LOAD_IC);
 }
 
 
@@ -579,7 +497,7 @@ void KeyedLoadIC::GenerateGeneric(MacroAssembler* masm) {
   //  -- rsp[0] : return address
   // -----------------------------------
   Label slow, check_string, index_smi, index_string, property_array_property;
-  Label check_pixel_array, probe_dictionary, check_number_dictionary;
+  Label probe_dictionary, check_number_dictionary;
 
   // Check that the key is a smi.
   __ JumpIfNotSmi(rax, &check_string);
@@ -594,7 +512,7 @@ void KeyedLoadIC::GenerateGeneric(MacroAssembler* masm) {
   // now in rcx.
   __ testb(FieldOperand(rcx, Map::kBitField2Offset),
            Immediate(1 << Map::kHasFastElements));
-  __ j(zero, &check_pixel_array);
+  __ j(zero, &check_number_dictionary);
 
   GenerateFastArrayLoad(masm,
                         rdx,
@@ -604,26 +522,14 @@ void KeyedLoadIC::GenerateGeneric(MacroAssembler* masm) {
                         rax,
                         NULL,
                         &slow);
-  __ IncrementCounter(&Counters::keyed_load_generic_smi, 1);
-  __ ret(0);
-
-  __ bind(&check_pixel_array);
-  // Check whether the elements object is a pixel array.
-  // rdx: receiver
-  // rax: key
-  __ movq(rcx, FieldOperand(rdx, JSObject::kElementsOffset));
-  __ SmiToInteger32(rbx, rax);  // Used on both directions of next branch.
-  __ CompareRoot(FieldOperand(rcx, HeapObject::kMapOffset),
-                 Heap::kPixelArrayMapRootIndex);
-  __ j(not_equal, &check_number_dictionary);
-  __ cmpl(rbx, FieldOperand(rcx, PixelArray::kLengthOffset));
-  __ j(above_equal, &slow);
-  __ movq(rax, FieldOperand(rcx, PixelArray::kExternalPointerOffset));
-  __ movzxbq(rax, Operand(rax, rbx, times_1, 0));
-  __ Integer32ToSmi(rax, rax);
+  Counters* counters = masm->isolate()->counters();
+  __ IncrementCounter(counters->keyed_load_generic_smi(), 1);
   __ ret(0);
 
   __ bind(&check_number_dictionary);
+  __ SmiToInteger32(rbx, rax);
+  __ movq(rcx, FieldOperand(rdx, JSObject::kElementsOffset));
+
   // Check whether the elements is a number dictionary.
   // rdx: receiver
   // rax: key
@@ -639,7 +545,7 @@ void KeyedLoadIC::GenerateGeneric(MacroAssembler* masm) {
   // Slow case: Jump to runtime.
   // rdx: receiver
   // rax: key
-  __ IncrementCounter(&Counters::keyed_load_generic_slow, 1);
+  __ IncrementCounter(counters->keyed_load_generic_slow(), 1);
   GenerateRuntimeGetProperty(masm);
 
   __ bind(&check_string);
@@ -668,10 +574,10 @@ void KeyedLoadIC::GenerateGeneric(MacroAssembler* masm) {
   // Load the key (consisting of map and symbol) from the cache and
   // check for match.
   ExternalReference cache_keys
-      = ExternalReference::keyed_lookup_cache_keys();
+      = ExternalReference::keyed_lookup_cache_keys(masm->isolate());
   __ movq(rdi, rcx);
   __ shl(rdi, Immediate(kPointerSizeLog2 + 1));
-  __ movq(kScratchRegister, cache_keys);
+  __ LoadAddress(kScratchRegister, cache_keys);
   __ cmpq(rbx, Operand(kScratchRegister, rdi, times_1, 0));
   __ j(not_equal, &slow);
   __ cmpq(rax, Operand(kScratchRegister, rdi, times_1, kPointerSize));
@@ -679,8 +585,8 @@ void KeyedLoadIC::GenerateGeneric(MacroAssembler* masm) {
 
   // Get field offset, which is a 32-bit integer.
   ExternalReference cache_field_offsets
-      = ExternalReference::keyed_lookup_cache_field_offsets();
-  __ movq(kScratchRegister, cache_field_offsets);
+      = ExternalReference::keyed_lookup_cache_field_offsets(masm->isolate());
+  __ LoadAddress(kScratchRegister, cache_field_offsets);
   __ movl(rdi, Operand(kScratchRegister, rcx, times_4, 0));
   __ movzxbq(rcx, FieldOperand(rbx, Map::kInObjectPropertiesOffset));
   __ subq(rdi, rcx);
@@ -690,7 +596,7 @@ void KeyedLoadIC::GenerateGeneric(MacroAssembler* masm) {
   __ movzxbq(rcx, FieldOperand(rbx, Map::kInstanceSizeOffset));
   __ addq(rcx, rdi);
   __ movq(rax, FieldOperand(rdx, rcx, times_pointer_size, 0));
-  __ IncrementCounter(&Counters::keyed_load_generic_lookup_cache, 1);
+  __ IncrementCounter(counters->keyed_load_generic_lookup_cache(), 1);
   __ ret(0);
 
   // Load property array property.
@@ -698,7 +604,7 @@ void KeyedLoadIC::GenerateGeneric(MacroAssembler* masm) {
   __ movq(rax, FieldOperand(rdx, JSObject::kPropertiesOffset));
   __ movq(rax, FieldOperand(rax, rdi, times_pointer_size,
                             FixedArray::kHeaderSize));
-  __ IncrementCounter(&Counters::keyed_load_generic_lookup_cache, 1);
+  __ IncrementCounter(counters->keyed_load_generic_lookup_cache(), 1);
   __ ret(0);
 
   // Do a quick inline probe of the receiver's dictionary, if it
@@ -713,7 +619,7 @@ void KeyedLoadIC::GenerateGeneric(MacroAssembler* masm) {
   GenerateGlobalInstanceTypeCheck(masm, rcx, &slow);
 
   GenerateDictionaryLoad(masm, &slow, rbx, rax, rcx, rdi, rax);
-  __ IncrementCounter(&Counters::keyed_load_generic_symbol, 1);
+  __ IncrementCounter(counters->keyed_load_generic_symbol(), 1);
   __ ret(0);
 
   __ bind(&index_string);
@@ -748,136 +654,11 @@ void KeyedLoadIC::GenerateString(MacroAssembler* masm) {
   char_at_generator.GenerateFast(masm);
   __ ret(0);
 
-  ICRuntimeCallHelper call_helper;
+  StubRuntimeCallHelper call_helper;
   char_at_generator.GenerateSlow(masm, call_helper);
 
   __ bind(&miss);
   GenerateMiss(masm);
-}
-
-
-void KeyedLoadIC::GenerateExternalArray(MacroAssembler* masm,
-                                        ExternalArrayType array_type) {
-  // ----------- S t a t e -------------
-  //  -- rax    : key
-  //  -- rdx    : receiver
-  //  -- rsp[0] : return address
-  // -----------------------------------
-  Label slow;
-
-  // Check that the object isn't a smi.
-  __ JumpIfSmi(rdx, &slow);
-
-  // Check that the key is a smi.
-  __ JumpIfNotSmi(rax, &slow);
-
-  // Check that the object is a JS object.
-  __ CmpObjectType(rdx, JS_OBJECT_TYPE, rcx);
-  __ j(not_equal, &slow);
-  // Check that the receiver does not require access checks.  We need
-  // to check this explicitly since this generic stub does not perform
-  // map checks.  The map is already in rdx.
-  __ testb(FieldOperand(rcx, Map::kBitFieldOffset),
-           Immediate(1 << Map::kIsAccessCheckNeeded));
-  __ j(not_zero, &slow);
-
-  // Check that the elements array is the appropriate type of
-  // ExternalArray.
-  // rax: index (as a smi)
-  // rdx: JSObject
-  __ movq(rbx, FieldOperand(rdx, JSObject::kElementsOffset));
-  __ CompareRoot(FieldOperand(rbx, HeapObject::kMapOffset),
-                 Heap::RootIndexForExternalArrayType(array_type));
-  __ j(not_equal, &slow);
-
-  // Check that the index is in range.
-  __ SmiToInteger32(rcx, rax);
-  __ cmpl(rcx, FieldOperand(rbx, ExternalArray::kLengthOffset));
-  // Unsigned comparison catches both negative and too-large values.
-  __ j(above_equal, &slow);
-
-  // rax: index (as a smi)
-  // rdx: receiver (JSObject)
-  // rcx: untagged index
-  // rbx: elements array
-  __ movq(rbx, FieldOperand(rbx, ExternalArray::kExternalPointerOffset));
-  // rbx: base pointer of external storage
-  switch (array_type) {
-    case kExternalByteArray:
-      __ movsxbq(rcx, Operand(rbx, rcx, times_1, 0));
-      break;
-    case kExternalUnsignedByteArray:
-      __ movzxbq(rcx, Operand(rbx, rcx, times_1, 0));
-      break;
-    case kExternalShortArray:
-      __ movsxwq(rcx, Operand(rbx, rcx, times_2, 0));
-      break;
-    case kExternalUnsignedShortArray:
-      __ movzxwq(rcx, Operand(rbx, rcx, times_2, 0));
-      break;
-    case kExternalIntArray:
-      __ movsxlq(rcx, Operand(rbx, rcx, times_4, 0));
-      break;
-    case kExternalUnsignedIntArray:
-      __ movl(rcx, Operand(rbx, rcx, times_4, 0));
-      break;
-    case kExternalFloatArray:
-      __ cvtss2sd(xmm0, Operand(rbx, rcx, times_4, 0));
-      break;
-    default:
-      UNREACHABLE();
-      break;
-  }
-
-  // rax: index
-  // rdx: receiver
-  // For integer array types:
-  // rcx: value
-  // For floating-point array type:
-  // xmm0: value as double.
-
-  ASSERT(kSmiValueSize == 32);
-  if (array_type == kExternalUnsignedIntArray) {
-    // For the UnsignedInt array type, we need to see whether
-    // the value can be represented in a Smi. If not, we need to convert
-    // it to a HeapNumber.
-    NearLabel box_int;
-
-    __ JumpIfUIntNotValidSmiValue(rcx, &box_int);
-
-    __ Integer32ToSmi(rax, rcx);
-    __ ret(0);
-
-    __ bind(&box_int);
-
-    // Allocate a HeapNumber for the int and perform int-to-double
-    // conversion.
-    // The value is zero-extended since we loaded the value from memory
-    // with movl.
-    __ cvtqsi2sd(xmm0, rcx);
-
-    __ AllocateHeapNumber(rcx, rbx, &slow);
-    // Set the value.
-    __ movsd(FieldOperand(rcx, HeapNumber::kValueOffset), xmm0);
-    __ movq(rax, rcx);
-    __ ret(0);
-  } else if (array_type == kExternalFloatArray) {
-    // For the floating-point array type, we need to always allocate a
-    // HeapNumber.
-    __ AllocateHeapNumber(rcx, rbx, &slow);
-    // Set the value.
-    __ movsd(FieldOperand(rcx, HeapNumber::kValueOffset), xmm0);
-    __ movq(rax, rcx);
-    __ ret(0);
-  } else {
-    __ Integer32ToSmi(rax, rcx);
-    __ ret(0);
-  }
-
-  // Slow case: Jump to runtime.
-  __ bind(&slow);
-  __ IncrementCounter(&Counters::keyed_load_external_array_slow, 1);
-  GenerateRuntimeGetProperty(masm);
 }
 
 
@@ -913,61 +694,26 @@ void KeyedLoadIC::GenerateIndexedInterceptor(MacroAssembler* masm) {
   __ push(rcx);  // return address
 
   // Perform tail call to the entry.
-  __ TailCallExternalReference(ExternalReference(
-        IC_Utility(kKeyedLoadPropertyWithInterceptor)), 2, 1);
+  __ TailCallExternalReference(
+      ExternalReference(IC_Utility(kKeyedLoadPropertyWithInterceptor),
+                        masm->isolate()),
+      2,
+      1);
 
   __ bind(&slow);
   GenerateMiss(masm);
 }
 
 
-void KeyedStoreIC::GenerateMiss(MacroAssembler* masm) {
+void KeyedStoreIC::GenerateGeneric(MacroAssembler* masm,
+                                   StrictModeFlag strict_mode) {
   // ----------- S t a t e -------------
   //  -- rax     : value
   //  -- rcx     : key
   //  -- rdx     : receiver
   //  -- rsp[0]  : return address
   // -----------------------------------
-
-  __ pop(rbx);
-  __ push(rdx);  // receiver
-  __ push(rcx);  // key
-  __ push(rax);  // value
-  __ push(rbx);  // return address
-
-  // Do tail-call to runtime routine.
-  ExternalReference ref = ExternalReference(IC_Utility(kKeyedStoreIC_Miss));
-  __ TailCallExternalReference(ref, 3, 1);
-}
-
-
-void KeyedStoreIC::GenerateRuntimeSetProperty(MacroAssembler* masm) {
-  // ----------- S t a t e -------------
-  //  -- rax     : value
-  //  -- rcx     : key
-  //  -- rdx     : receiver
-  //  -- rsp[0]  : return address
-  // -----------------------------------
-
-  __ pop(rbx);
-  __ push(rdx);  // receiver
-  __ push(rcx);  // key
-  __ push(rax);  // value
-  __ push(rbx);  // return address
-
-  // Do tail-call to runtime routine.
-  __ TailCallRuntime(Runtime::kSetProperty, 3, 1);
-}
-
-
-void KeyedStoreIC::GenerateGeneric(MacroAssembler* masm) {
-  // ----------- S t a t e -------------
-  //  -- rax     : value
-  //  -- rcx     : key
-  //  -- rdx     : receiver
-  //  -- rsp[0]  : return address
-  // -----------------------------------
-  Label slow, slow_with_tagged_index, fast, array, extra, check_pixel_array;
+  Label slow, slow_with_tagged_index, fast, array, extra;
 
   // Check that the object isn't a smi.
   __ JumpIfSmi(rdx, &slow_with_tagged_index);
@@ -996,7 +742,7 @@ void KeyedStoreIC::GenerateGeneric(MacroAssembler* masm) {
   // Check that the object is in fast mode and writable.
   __ CompareRoot(FieldOperand(rbx, HeapObject::kMapOffset),
                  Heap::kFixedArrayMapRootIndex);
-  __ j(not_equal, &check_pixel_array);
+  __ j(not_equal, &slow);
   __ SmiCompareInteger32(FieldOperand(rbx, FixedArray::kLengthOffset), rcx);
   // rax: value
   // rbx: FixedArray
@@ -1007,36 +753,8 @@ void KeyedStoreIC::GenerateGeneric(MacroAssembler* masm) {
   __ bind(&slow);
   __ Integer32ToSmi(rcx, rcx);
   __ bind(&slow_with_tagged_index);
-  GenerateRuntimeSetProperty(masm);
+  GenerateRuntimeSetProperty(masm, strict_mode);
   // Never returns to here.
-
-  // Check whether the elements is a pixel array.
-  // rax: value
-  // rdx: receiver
-  // rbx: receiver's elements array
-  // rcx: index, zero-extended.
-  __ bind(&check_pixel_array);
-  __ CompareRoot(FieldOperand(rbx, HeapObject::kMapOffset),
-                 Heap::kPixelArrayMapRootIndex);
-  __ j(not_equal, &slow);
-  // Check that the value is a smi. If a conversion is needed call into the
-  // runtime to convert and clamp.
-  __ JumpIfNotSmi(rax, &slow);
-  __ cmpl(rcx, FieldOperand(rbx, PixelArray::kLengthOffset));
-  __ j(above_equal, &slow);
-  // No more bailouts to slow case on this path, so key not needed.
-  __ SmiToInteger32(rdi, rax);
-  {  // Clamp the value to [0..255].
-    NearLabel done;
-    __ testl(rdi, Immediate(0xFFFFFF00));
-    __ j(zero, &done);
-    __ setcc(negative, rdi);  // 1 if negative, 0 if positive.
-    __ decb(rdi);  // 0 if negative, 255 if positive.
-    __ bind(&done);
-  }
-  __ movq(rbx, FieldOperand(rbx, PixelArray::kExternalPointerOffset));
-  __ movb(Operand(rbx, rcx, times_1, 0), rdi);
-  __ ret(0);
 
   // Extra capacity case: Check if there is extra capacity to
   // perform the store and update the length. Used for adding one
@@ -1077,10 +795,10 @@ void KeyedStoreIC::GenerateGeneric(MacroAssembler* masm) {
   // rax: value
   // rbx: receiver's elements array (a FixedArray)
   // rcx: index
-  NearLabel non_smi_value;
+  Label non_smi_value;
   __ movq(FieldOperand(rbx, rcx, times_pointer_size, FixedArray::kHeaderSize),
           rax);
-  __ JumpIfNotSmi(rax, &non_smi_value);
+  __ JumpIfNotSmi(rax, &non_smi_value, Label::kNear);
   __ ret(0);
   __ bind(&non_smi_value);
   // Slow case that needs to retain rcx for use by RecordWrite.
@@ -1088,214 +806,6 @@ void KeyedStoreIC::GenerateGeneric(MacroAssembler* masm) {
   __ movq(rdx, rax);
   __ RecordWriteNonSmi(rbx, 0, rdx, rcx);
   __ ret(0);
-}
-
-
-void KeyedStoreIC::GenerateExternalArray(MacroAssembler* masm,
-                                         ExternalArrayType array_type) {
-  // ----------- S t a t e -------------
-  //  -- rax     : value
-  //  -- rcx     : key
-  //  -- rdx     : receiver
-  //  -- rsp[0]  : return address
-  // -----------------------------------
-  Label slow;
-
-  // Check that the object isn't a smi.
-  __ JumpIfSmi(rdx, &slow);
-  // Get the map from the receiver.
-  __ movq(rbx, FieldOperand(rdx, HeapObject::kMapOffset));
-  // Check that the receiver does not require access checks.  We need
-  // to do this because this generic stub does not perform map checks.
-  __ testb(FieldOperand(rbx, Map::kBitFieldOffset),
-           Immediate(1 << Map::kIsAccessCheckNeeded));
-  __ j(not_zero, &slow);
-  // Check that the key is a smi.
-  __ JumpIfNotSmi(rcx, &slow);
-
-  // Check that the object is a JS object.
-  __ CmpInstanceType(rbx, JS_OBJECT_TYPE);
-  __ j(not_equal, &slow);
-
-  // Check that the elements array is the appropriate type of
-  // ExternalArray.
-  // rax: value
-  // rcx: key (a smi)
-  // rdx: receiver (a JSObject)
-  __ movq(rbx, FieldOperand(rdx, JSObject::kElementsOffset));
-  __ CompareRoot(FieldOperand(rbx, HeapObject::kMapOffset),
-                 Heap::RootIndexForExternalArrayType(array_type));
-  __ j(not_equal, &slow);
-
-  // Check that the index is in range.
-  __ SmiToInteger32(rdi, rcx);  // Untag the index.
-  __ cmpl(rdi, FieldOperand(rbx, ExternalArray::kLengthOffset));
-  // Unsigned comparison catches both negative and too-large values.
-  __ j(above_equal, &slow);
-
-  // Handle both smis and HeapNumbers in the fast path. Go to the
-  // runtime for all other kinds of values.
-  // rax: value
-  // rcx: key (a smi)
-  // rdx: receiver (a JSObject)
-  // rbx: elements array
-  // rdi: untagged key
-  NearLabel check_heap_number;
-  __ JumpIfNotSmi(rax, &check_heap_number);
-  // No more branches to slow case on this path.  Key and receiver not needed.
-  __ SmiToInteger32(rdx, rax);
-  __ movq(rbx, FieldOperand(rbx, ExternalArray::kExternalPointerOffset));
-  // rbx: base pointer of external storage
-  switch (array_type) {
-    case kExternalByteArray:
-    case kExternalUnsignedByteArray:
-      __ movb(Operand(rbx, rdi, times_1, 0), rdx);
-      break;
-    case kExternalShortArray:
-    case kExternalUnsignedShortArray:
-      __ movw(Operand(rbx, rdi, times_2, 0), rdx);
-      break;
-    case kExternalIntArray:
-    case kExternalUnsignedIntArray:
-      __ movl(Operand(rbx, rdi, times_4, 0), rdx);
-      break;
-    case kExternalFloatArray:
-      // Need to perform int-to-float conversion.
-      __ cvtlsi2ss(xmm0, rdx);
-      __ movss(Operand(rbx, rdi, times_4, 0), xmm0);
-      break;
-    default:
-      UNREACHABLE();
-      break;
-  }
-  __ ret(0);
-
-  __ bind(&check_heap_number);
-  // rax: value
-  // rcx: key (a smi)
-  // rdx: receiver (a JSObject)
-  // rbx: elements array
-  // rdi: untagged key
-  __ CmpObjectType(rax, HEAP_NUMBER_TYPE, kScratchRegister);
-  __ j(not_equal, &slow);
-  // No more branches to slow case on this path.
-
-  // The WebGL specification leaves the behavior of storing NaN and
-  // +/-Infinity into integer arrays basically undefined. For more
-  // reproducible behavior, convert these to zero.
-  __ movsd(xmm0, FieldOperand(rax, HeapNumber::kValueOffset));
-  __ movq(rbx, FieldOperand(rbx, ExternalArray::kExternalPointerOffset));
-  // rdi: untagged index
-  // rbx: base pointer of external storage
-  // top of FPU stack: value
-  if (array_type == kExternalFloatArray) {
-    __ cvtsd2ss(xmm0, xmm0);
-    __ movss(Operand(rbx, rdi, times_4, 0), xmm0);
-    __ ret(0);
-  } else {
-    // Need to perform float-to-int conversion.
-    // Test the value for NaN.
-
-    // Convert to int32 and store the low byte/word.
-    // If the value is NaN or +/-infinity, the result is 0x80000000,
-    // which is automatically zero when taken mod 2^n, n < 32.
-    // rdx: value (converted to an untagged integer)
-    // rdi: untagged index
-    // rbx: base pointer of external storage
-    switch (array_type) {
-      case kExternalByteArray:
-      case kExternalUnsignedByteArray:
-        __ cvtsd2si(rdx, xmm0);
-        __ movb(Operand(rbx, rdi, times_1, 0), rdx);
-        break;
-      case kExternalShortArray:
-      case kExternalUnsignedShortArray:
-        __ cvtsd2si(rdx, xmm0);
-        __ movw(Operand(rbx, rdi, times_2, 0), rdx);
-        break;
-      case kExternalIntArray:
-      case kExternalUnsignedIntArray: {
-        // Convert to int64, so that NaN and infinities become
-        // 0x8000000000000000, which is zero mod 2^32.
-        __ cvtsd2siq(rdx, xmm0);
-        __ movl(Operand(rbx, rdi, times_4, 0), rdx);
-        break;
-      }
-      default:
-        UNREACHABLE();
-        break;
-    }
-    __ ret(0);
-  }
-
-  // Slow case: call runtime.
-  __ bind(&slow);
-  GenerateRuntimeSetProperty(masm);
-}
-
-
-// Defined in ic.cc.
-Object* CallIC_Miss(Arguments args);
-
-
-static void GenerateCallMiss(MacroAssembler* masm, int argc, IC::UtilityId id) {
-  // ----------- S t a t e -------------
-  // rcx                      : function name
-  // rsp[0]                   : return address
-  // rsp[8]                   : argument argc
-  // rsp[16]                  : argument argc - 1
-  // ...
-  // rsp[argc * 8]            : argument 1
-  // rsp[(argc + 1) * 8]      : argument 0 = receiver
-  // -----------------------------------
-
-  if (id == IC::kCallIC_Miss) {
-    __ IncrementCounter(&Counters::call_miss, 1);
-  } else {
-    __ IncrementCounter(&Counters::keyed_call_miss, 1);
-  }
-
-  // Get the receiver of the function from the stack; 1 ~ return address.
-  __ movq(rdx, Operand(rsp, (argc + 1) * kPointerSize));
-
-  // Enter an internal frame.
-  __ EnterInternalFrame();
-
-  // Push the receiver and the name of the function.
-  __ push(rdx);
-  __ push(rcx);
-
-  // Call the entry.
-  CEntryStub stub(1);
-  __ movq(rax, Immediate(2));
-  __ movq(rbx, ExternalReference(IC_Utility(id)));
-  __ CallStub(&stub);
-
-  // Move result to rdi and exit the internal frame.
-  __ movq(rdi, rax);
-  __ LeaveInternalFrame();
-
-  // Check if the receiver is a global object of some sort.
-  // This can happen only for regular CallIC but not KeyedCallIC.
-  if (id == IC::kCallIC_Miss) {
-    Label invoke, global;
-    __ movq(rdx, Operand(rsp, (argc + 1) * kPointerSize));  // receiver
-    __ JumpIfSmi(rdx, &invoke);
-    __ CmpObjectType(rdx, JS_GLOBAL_OBJECT_TYPE, rcx);
-    __ j(equal, &global);
-    __ CmpInstanceType(rcx, JS_BUILTINS_OBJECT_TYPE);
-    __ j(not_equal, &invoke);
-
-    // Patch the receiver on the stack.
-    __ bind(&global);
-    __ movq(rdx, FieldOperand(rdx, GlobalObject::kGlobalReceiverOffset));
-    __ movq(Operand(rsp, (argc + 1) * kPointerSize), rdx);
-    __ bind(&invoke);
-  }
-
-  // Invoke the function.
-  ParameterCount actual(argc);
-  __ InvokeFunction(rdi, actual, JUMP_FUNCTION);
 }
 
 
@@ -1311,9 +821,14 @@ static void GenerateMonomorphicCacheProbe(MacroAssembler* masm,
   Label number, non_number, non_string, boolean, probe, miss;
 
   // Probe the stub cache.
-  Code::Flags flags =
-      Code::ComputeFlags(kind, NOT_IN_LOOP, MONOMORPHIC, NORMAL, argc);
-  StubCache::GenerateProbe(masm, flags, rdx, rcx, rbx, rax);
+  Code::Flags flags = Code::ComputeFlags(kind,
+                                         NOT_IN_LOOP,
+                                         MONOMORPHIC,
+                                         Code::kNoExtraICState,
+                                         NORMAL,
+                                         argc);
+  Isolate::Current()->stub_cache()->GenerateProbe(masm, flags, rdx, rcx, rbx,
+                                                  rax);
 
   // If the stub cache probing failed, the receiver might be a value.
   // For value objects, we use the map of the prototype objects for
@@ -1349,7 +864,8 @@ static void GenerateMonomorphicCacheProbe(MacroAssembler* masm,
 
   // Probe the stub cache for the value object.
   __ bind(&probe);
-  StubCache::GenerateProbe(masm, flags, rdx, rcx, rbx, no_reg);
+  Isolate::Current()->stub_cache()->GenerateProbe(masm, flags, rdx, rcx, rbx,
+                                                  no_reg);
 
   __ bind(&miss);
 }
@@ -1407,7 +923,7 @@ static void GenerateCallNormal(MacroAssembler* masm, int argc) {
 }
 
 
-void CallIC::GenerateMiss(MacroAssembler* masm, int argc) {
+static void GenerateCallMiss(MacroAssembler* masm, int argc, IC::UtilityId id) {
   // ----------- S t a t e -------------
   // rcx                      : function name
   // rsp[0]                   : return address
@@ -1417,7 +933,55 @@ void CallIC::GenerateMiss(MacroAssembler* masm, int argc) {
   // rsp[argc * 8]            : argument 1
   // rsp[(argc + 1) * 8]      : argument 0 = receiver
   // -----------------------------------
-  GenerateCallMiss(masm, argc, IC::kCallIC_Miss);
+
+  Counters* counters = masm->isolate()->counters();
+  if (id == IC::kCallIC_Miss) {
+    __ IncrementCounter(counters->call_miss(), 1);
+  } else {
+    __ IncrementCounter(counters->keyed_call_miss(), 1);
+  }
+
+  // Get the receiver of the function from the stack; 1 ~ return address.
+  __ movq(rdx, Operand(rsp, (argc + 1) * kPointerSize));
+
+  // Enter an internal frame.
+  __ EnterInternalFrame();
+
+  // Push the receiver and the name of the function.
+  __ push(rdx);
+  __ push(rcx);
+
+  // Call the entry.
+  CEntryStub stub(1);
+  __ Set(rax, 2);
+  __ LoadAddress(rbx, ExternalReference(IC_Utility(id), masm->isolate()));
+  __ CallStub(&stub);
+
+  // Move result to rdi and exit the internal frame.
+  __ movq(rdi, rax);
+  __ LeaveInternalFrame();
+
+  // Check if the receiver is a global object of some sort.
+  // This can happen only for regular CallIC but not KeyedCallIC.
+  if (id == IC::kCallIC_Miss) {
+    Label invoke, global;
+    __ movq(rdx, Operand(rsp, (argc + 1) * kPointerSize));  // receiver
+    __ JumpIfSmi(rdx, &invoke);
+    __ CmpObjectType(rdx, JS_GLOBAL_OBJECT_TYPE, rcx);
+    __ j(equal, &global);
+    __ CmpInstanceType(rcx, JS_BUILTINS_OBJECT_TYPE);
+    __ j(not_equal, &invoke);
+
+    // Patch the receiver on the stack.
+    __ bind(&global);
+    __ movq(rdx, FieldOperand(rdx, GlobalObject::kGlobalReceiverOffset));
+    __ movq(Operand(rsp, (argc + 1) * kPointerSize), rdx);
+    __ bind(&invoke);
+  }
+
+  // Invoke the function.
+  ParameterCount actual(argc);
+  __ InvokeFunction(rdi, actual, JUMP_FUNCTION);
 }
 
 
@@ -1455,7 +1019,7 @@ void CallIC::GenerateNormal(MacroAssembler* masm, int argc) {
 }
 
 
-void KeyedCallIC::GenerateMiss(MacroAssembler* masm, int argc) {
+void CallIC::GenerateMiss(MacroAssembler* masm, int argc) {
   // ----------- S t a t e -------------
   // rcx                      : function name
   // rsp[0]                   : return address
@@ -1466,7 +1030,7 @@ void KeyedCallIC::GenerateMiss(MacroAssembler* masm, int argc) {
   // rsp[(argc + 1) * 8]      : argument 0 = receiver
   // -----------------------------------
 
-  GenerateCallMiss(masm, argc, IC::kKeyedCallIC_Miss);
+  GenerateCallMiss(masm, argc, IC::kCallIC_Miss);
 }
 
 
@@ -1500,7 +1064,8 @@ void KeyedCallIC::GenerateMegamorphic(MacroAssembler* masm, int argc) {
 
   GenerateFastArrayLoad(
       masm, rdx, rcx, rax, rbx, rdi, &check_number_dictionary, &slow_load);
-  __ IncrementCounter(&Counters::keyed_call_generic_smi_fast, 1);
+  Counters* counters = masm->isolate()->counters();
+  __ IncrementCounter(counters->keyed_call_generic_smi_fast(), 1);
 
   __ bind(&do_call);
   // receiver in rdx is not used after this point.
@@ -1518,13 +1083,13 @@ void KeyedCallIC::GenerateMegamorphic(MacroAssembler* masm, int argc) {
   __ SmiToInteger32(rbx, rcx);
   // ebx: untagged index
   GenerateNumberDictionaryLoad(masm, &slow_load, rax, rcx, rbx, r9, rdi, rdi);
-  __ IncrementCounter(&Counters::keyed_call_generic_smi_dict, 1);
+  __ IncrementCounter(counters->keyed_call_generic_smi_dict(), 1);
   __ jmp(&do_call);
 
   __ bind(&slow_load);
   // This branch is taken when calling KeyedCallIC_Miss is neither required
   // nor beneficial.
-  __ IncrementCounter(&Counters::keyed_call_generic_slow_load, 1);
+  __ IncrementCounter(counters->keyed_call_generic_slow_load(), 1);
   __ EnterInternalFrame();
   __ push(rcx);  // save the key
   __ push(rdx);  // pass the receiver
@@ -1551,11 +1116,11 @@ void KeyedCallIC::GenerateMegamorphic(MacroAssembler* masm, int argc) {
   __ j(not_equal, &lookup_monomorphic_cache);
 
   GenerateDictionaryLoad(masm, &slow_load, rbx, rcx, rax, rdi, rdi);
-  __ IncrementCounter(&Counters::keyed_call_generic_lookup_dict, 1);
+  __ IncrementCounter(counters->keyed_call_generic_lookup_dict(), 1);
   __ jmp(&do_call);
 
   __ bind(&lookup_monomorphic_cache);
-  __ IncrementCounter(&Counters::keyed_call_generic_lookup_cache, 1);
+  __ IncrementCounter(counters->keyed_call_generic_lookup_cache(), 1);
   GenerateMonomorphicCacheProbe(masm, argc, Code::KEYED_CALL_IC);
   // Fall through on miss.
 
@@ -1566,7 +1131,7 @@ void KeyedCallIC::GenerateMegamorphic(MacroAssembler* masm, int argc) {
   // - the value loaded is not a function,
   // - there is hope that the runtime will create a monomorphic call stub
   //   that will get fetched next time.
-  __ IncrementCounter(&Counters::keyed_call_generic_slow, 1);
+  __ IncrementCounter(counters->keyed_call_generic_slow(), 1);
   GenerateMiss(masm, argc);
 
   __ bind(&index_string);
@@ -1587,61 +1152,29 @@ void KeyedCallIC::GenerateNormal(MacroAssembler* masm, int argc) {
   // rsp[(argc + 1) * 8]      : argument 0 = receiver
   // -----------------------------------
 
+  // Check if the name is a string.
+  Label miss;
+  __ JumpIfSmi(rcx, &miss);
+  Condition cond = masm->IsObjectStringType(rcx, rax, rax);
+  __ j(NegateCondition(cond), &miss);
   GenerateCallNormal(masm, argc);
+  __ bind(&miss);
   GenerateMiss(masm, argc);
 }
 
 
-// The offset from the inlined patch site to the start of the inlined
-// load instruction.
-const int LoadIC::kOffsetToLoadInstruction = 20;
-
-
-void LoadIC::GenerateMiss(MacroAssembler* masm) {
+void KeyedCallIC::GenerateMiss(MacroAssembler* masm, int argc) {
   // ----------- S t a t e -------------
-  //  -- rax    : receiver
-  //  -- rcx    : name
-  //  -- rsp[0] : return address
+  // rcx                      : function name
+  // rsp[0]                   : return address
+  // rsp[8]                   : argument argc
+  // rsp[16]                  : argument argc - 1
+  // ...
+  // rsp[argc * 8]            : argument 1
+  // rsp[(argc + 1) * 8]      : argument 0 = receiver
   // -----------------------------------
 
-  __ IncrementCounter(&Counters::load_miss, 1);
-
-  __ pop(rbx);
-  __ push(rax);  // receiver
-  __ push(rcx);  // name
-  __ push(rbx);  // return address
-
-  // Perform tail call to the entry.
-  ExternalReference ref = ExternalReference(IC_Utility(kLoadIC_Miss));
-  __ TailCallExternalReference(ref, 2, 1);
-}
-
-
-void LoadIC::GenerateArrayLength(MacroAssembler* masm) {
-  // ----------- S t a t e -------------
-  //  -- rax    : receiver
-  //  -- rcx    : name
-  //  -- rsp[0] : return address
-  // -----------------------------------
-  Label miss;
-
-  StubCompiler::GenerateLoadArrayLength(masm, rax, rdx, &miss);
-  __ bind(&miss);
-  StubCompiler::GenerateLoadMiss(masm, Code::LOAD_IC);
-}
-
-
-void LoadIC::GenerateFunctionPrototype(MacroAssembler* masm) {
-  // ----------- S t a t e -------------
-  //  -- rax    : receiver
-  //  -- rcx    : name
-  //  -- rsp[0] : return address
-  // -----------------------------------
-  Label miss;
-
-  StubCompiler::GenerateLoadFunctionPrototype(masm, rax, rdx, rbx, &miss);
-  __ bind(&miss);
-  StubCompiler::GenerateLoadMiss(masm, Code::LOAD_IC);
+  GenerateCallMiss(masm, argc, IC::kKeyedCallIC_Miss);
 }
 
 
@@ -1656,7 +1189,8 @@ void LoadIC::GenerateMegamorphic(MacroAssembler* masm) {
   Code::Flags flags = Code::ComputeFlags(Code::LOAD_IC,
                                          NOT_IN_LOOP,
                                          MONOMORPHIC);
-  StubCache::GenerateProbe(masm, flags, rax, rcx, rbx, rdx);
+  Isolate::Current()->stub_cache()->GenerateProbe(masm, flags, rax, rcx, rbx,
+                                                  rdx);
 
   // Cache miss: Jump to runtime.
   StubCompiler::GenerateLoadMiss(masm, Code::LOAD_IC);
@@ -1684,105 +1218,86 @@ void LoadIC::GenerateNormal(MacroAssembler* masm) {
 }
 
 
-void LoadIC::GenerateStringLength(MacroAssembler* masm) {
+void LoadIC::GenerateMiss(MacroAssembler* masm) {
   // ----------- S t a t e -------------
   //  -- rax    : receiver
   //  -- rcx    : name
   //  -- rsp[0] : return address
   // -----------------------------------
-  Label miss;
 
-  StubCompiler::GenerateLoadStringLength(masm, rax, rdx, rbx, &miss);
-  __ bind(&miss);
-  StubCompiler::GenerateLoadMiss(masm, Code::LOAD_IC);
+  Counters* counters = masm->isolate()->counters();
+  __ IncrementCounter(counters->load_miss(), 1);
+
+  __ pop(rbx);
+  __ push(rax);  // receiver
+  __ push(rcx);  // name
+  __ push(rbx);  // return address
+
+  // Perform tail call to the entry.
+  ExternalReference ref =
+      ExternalReference(IC_Utility(kLoadIC_Miss), masm->isolate());
+  __ TailCallExternalReference(ref, 2, 1);
 }
 
 
-bool LoadIC::PatchInlinedLoad(Address address, Object* map, int offset) {
-  // The address of the instruction following the call.
-  Address test_instruction_address =
-      address + Assembler::kCallTargetAddressOffset;
-  // If the instruction following the call is not a test rax, nothing
-  // was inlined.
-  if (*test_instruction_address != kTestEaxByte) return false;
+void KeyedLoadIC::GenerateMiss(MacroAssembler* masm) {
+  // ----------- S t a t e -------------
+  //  -- rax    : key
+  //  -- rdx    : receiver
+  //  -- rsp[0]  : return address
+  // -----------------------------------
 
-  Address delta_address = test_instruction_address + 1;
-  // The delta to the start of the map check instruction.
-  int delta = *reinterpret_cast<int*>(delta_address);
+  Counters* counters = masm->isolate()->counters();
+  __ IncrementCounter(counters->keyed_load_miss(), 1);
 
-  // The map address is the last 8 bytes of the 10-byte
-  // immediate move instruction, so we add 2 to get the
-  // offset to the last 8 bytes.
-  Address map_address = test_instruction_address + delta + 2;
-  *(reinterpret_cast<Object**>(map_address)) = map;
+  __ pop(rbx);
+  __ push(rdx);  // receiver
+  __ push(rax);  // name
+  __ push(rbx);  // return address
 
-  // The offset is in the 32-bit displacement of a seven byte
-  // memory-to-register move instruction (REX.W 0x88 ModR/M disp32),
-  // so we add 3 to get the offset of the displacement.
-  Address offset_address =
-      test_instruction_address + delta + kOffsetToLoadInstruction + 3;
-  *reinterpret_cast<int*>(offset_address) = offset - kHeapObjectTag;
-  return true;
+  // Perform tail call to the entry.
+  ExternalReference ref
+      = ExternalReference(IC_Utility(kKeyedLoadIC_Miss), masm->isolate());
+  __ TailCallExternalReference(ref, 2, 1);
 }
 
 
-bool LoadIC::PatchInlinedContextualLoad(Address address,
-                                        Object* map,
-                                        Object* cell,
-                                        bool is_dont_delete) {
-  // TODO(<bug#>): implement this.
-  return false;
+void KeyedLoadIC::GenerateRuntimeGetProperty(MacroAssembler* masm) {
+  // ----------- S t a t e -------------
+  //  -- rax    : key
+  //  -- rdx    : receiver
+  //  -- rsp[0]  : return address
+  // -----------------------------------
+
+  __ pop(rbx);
+  __ push(rdx);  // receiver
+  __ push(rax);  // name
+  __ push(rbx);  // return address
+
+  // Perform tail call to the entry.
+  __ TailCallRuntime(Runtime::kKeyedGetProperty, 2, 1);
 }
 
 
-// The offset from the inlined patch site to the start of the inlined
-// store instruction.
-const int StoreIC::kOffsetToStoreInstruction = 20;
+void StoreIC::GenerateMegamorphic(MacroAssembler* masm,
+                                  StrictModeFlag strict_mode) {
+  // ----------- S t a t e -------------
+  //  -- rax    : value
+  //  -- rcx    : name
+  //  -- rdx    : receiver
+  //  -- rsp[0] : return address
+  // -----------------------------------
 
+  // Get the receiver from the stack and probe the stub cache.
+  Code::Flags flags = Code::ComputeFlags(Code::STORE_IC,
+                                         NOT_IN_LOOP,
+                                         MONOMORPHIC,
+                                         strict_mode);
+  Isolate::Current()->stub_cache()->GenerateProbe(masm, flags, rdx, rcx, rbx,
+                                                  no_reg);
 
-bool StoreIC::PatchInlinedStore(Address address, Object* map, int offset) {
-  // The address of the instruction following the call.
-  Address test_instruction_address =
-      address + Assembler::kCallTargetAddressOffset;
-
-  // If the instruction following the call is not a test rax, nothing
-  // was inlined.
-  if (*test_instruction_address != kTestEaxByte) return false;
-
-  // Extract the encoded deltas from the test rax instruction.
-  Address encoded_offsets_address = test_instruction_address + 1;
-  int encoded_offsets = *reinterpret_cast<int*>(encoded_offsets_address);
-  int delta_to_map_check = -(encoded_offsets & 0xFFFF);
-  int delta_to_record_write = encoded_offsets >> 16;
-
-  // Patch the map to check. The map address is the last 8 bytes of
-  // the 10-byte immediate move instruction.
-  Address map_check_address = test_instruction_address + delta_to_map_check;
-  Address map_address = map_check_address + 2;
-  *(reinterpret_cast<Object**>(map_address)) = map;
-
-  // Patch the offset in the store instruction. The offset is in the
-  // last 4 bytes of a 7 byte register-to-memory move instruction.
-  Address offset_address =
-      map_check_address + StoreIC::kOffsetToStoreInstruction + 3;
-  // The offset should have initial value (kMaxInt - 1), cleared value
-  // (-1) or we should be clearing the inlined version.
-  ASSERT(*reinterpret_cast<int*>(offset_address) == kMaxInt - 1 ||
-         *reinterpret_cast<int*>(offset_address) == -1 ||
-         (offset == 0 && map == Heap::null_value()));
-  *reinterpret_cast<int*>(offset_address) = offset - kHeapObjectTag;
-
-  // Patch the offset in the write-barrier code. The offset is the
-  // last 4 bytes of a 7 byte lea instruction.
-  offset_address = map_check_address + delta_to_record_write + 3;
-  // The offset should have initial value (kMaxInt), cleared value
-  // (-1) or we should be clearing the inlined version.
-  ASSERT(*reinterpret_cast<int*>(offset_address) == kMaxInt ||
-         *reinterpret_cast<int*>(offset_address) == -1 ||
-         (offset == 0 && map == Heap::null_value()));
-  *reinterpret_cast<int*>(offset_address) = offset - kHeapObjectTag;
-
-  return true;
+  // Cache miss: Jump to runtime.
+  GenerateMiss(masm);
 }
 
 
@@ -1801,27 +1316,9 @@ void StoreIC::GenerateMiss(MacroAssembler* masm) {
   __ push(rbx);  // return address
 
   // Perform tail call to the entry.
-  ExternalReference ref = ExternalReference(IC_Utility(kStoreIC_Miss));
+  ExternalReference ref =
+      ExternalReference(IC_Utility(kStoreIC_Miss), masm->isolate());
   __ TailCallExternalReference(ref, 3, 1);
-}
-
-
-void StoreIC::GenerateMegamorphic(MacroAssembler* masm) {
-  // ----------- S t a t e -------------
-  //  -- rax    : value
-  //  -- rcx    : name
-  //  -- rdx    : receiver
-  //  -- rsp[0] : return address
-  // -----------------------------------
-
-  // Get the receiver from the stack and probe the stub cache.
-  Code::Flags flags = Code::ComputeFlags(Code::STORE_IC,
-                                         NOT_IN_LOOP,
-                                         MONOMORPHIC);
-  StubCache::GenerateProbe(masm, flags, rdx, rcx, rbx, no_reg);
-
-  // Cache miss: Jump to runtime.
-  GenerateMiss(masm);
 }
 
 
@@ -1868,7 +1365,8 @@ void StoreIC::GenerateArrayLength(MacroAssembler* masm) {
   __ push(value);
   __ push(scratch);  // return address
 
-  ExternalReference ref = ExternalReference(IC_Utility(kStoreIC_ArrayLength));
+  ExternalReference ref =
+      ExternalReference(IC_Utility(kStoreIC_ArrayLength), masm->isolate());
   __ TailCallExternalReference(ref, 2, 1);
 
   __ bind(&miss);
@@ -1890,16 +1388,177 @@ void StoreIC::GenerateNormal(MacroAssembler* masm) {
   GenerateStringDictionaryReceiverCheck(masm, rdx, rbx, rdi, &miss);
 
   GenerateDictionaryStore(masm, &miss, rbx, rcx, rax, r8, r9);
-  __ IncrementCounter(&Counters::store_normal_hit, 1);
+  Counters* counters = masm->isolate()->counters();
+  __ IncrementCounter(counters->store_normal_hit(), 1);
   __ ret(0);
 
   __ bind(&miss);
-  __ IncrementCounter(&Counters::store_normal_miss, 1);
+  __ IncrementCounter(counters->store_normal_miss(), 1);
   GenerateMiss(masm);
 }
 
 
+void StoreIC::GenerateGlobalProxy(MacroAssembler* masm,
+                                  StrictModeFlag strict_mode) {
+  // ----------- S t a t e -------------
+  //  -- rax    : value
+  //  -- rcx    : name
+  //  -- rdx    : receiver
+  //  -- rsp[0] : return address
+  // -----------------------------------
+  __ pop(rbx);
+  __ push(rdx);
+  __ push(rcx);
+  __ push(rax);
+  __ Push(Smi::FromInt(NONE));  // PropertyAttributes
+  __ Push(Smi::FromInt(strict_mode));
+  __ push(rbx);  // return address
+
+  // Do tail-call to runtime routine.
+  __ TailCallRuntime(Runtime::kSetProperty, 5, 1);
+}
+
+
+void KeyedStoreIC::GenerateRuntimeSetProperty(MacroAssembler* masm,
+                                              StrictModeFlag strict_mode) {
+  // ----------- S t a t e -------------
+  //  -- rax     : value
+  //  -- rcx     : key
+  //  -- rdx     : receiver
+  //  -- rsp[0]  : return address
+  // -----------------------------------
+
+  __ pop(rbx);
+  __ push(rdx);  // receiver
+  __ push(rcx);  // key
+  __ push(rax);  // value
+  __ Push(Smi::FromInt(NONE));          // PropertyAttributes
+  __ Push(Smi::FromInt(strict_mode));   // Strict mode.
+  __ push(rbx);  // return address
+
+  // Do tail-call to runtime routine.
+  __ TailCallRuntime(Runtime::kSetProperty, 5, 1);
+}
+
+
+void KeyedStoreIC::GenerateMiss(MacroAssembler* masm) {
+  // ----------- S t a t e -------------
+  //  -- rax     : value
+  //  -- rcx     : key
+  //  -- rdx     : receiver
+  //  -- rsp[0]  : return address
+  // -----------------------------------
+
+  __ pop(rbx);
+  __ push(rdx);  // receiver
+  __ push(rcx);  // key
+  __ push(rax);  // value
+  __ push(rbx);  // return address
+
+  // Do tail-call to runtime routine.
+  ExternalReference ref =
+      ExternalReference(IC_Utility(kKeyedStoreIC_Miss), masm->isolate());
+  __ TailCallExternalReference(ref, 3, 1);
+}
+
+
 #undef __
+
+
+Condition CompareIC::ComputeCondition(Token::Value op) {
+  switch (op) {
+    case Token::EQ_STRICT:
+    case Token::EQ:
+      return equal;
+    case Token::LT:
+      return less;
+    case Token::GT:
+      // Reverse left and right operands to obtain ECMA-262 conversion order.
+      return less;
+    case Token::LTE:
+      // Reverse left and right operands to obtain ECMA-262 conversion order.
+      return greater_equal;
+    case Token::GTE:
+      return greater_equal;
+    default:
+      UNREACHABLE();
+      return no_condition;
+  }
+}
+
+
+static bool HasInlinedSmiCode(Address address) {
+  // The address of the instruction following the call.
+  Address test_instruction_address =
+      address + Assembler::kCallTargetAddressOffset;
+
+  // If the instruction following the call is not a test al, nothing
+  // was inlined.
+  return *test_instruction_address == Assembler::kTestAlByte;
+}
+
+
+void CompareIC::UpdateCaches(Handle<Object> x, Handle<Object> y) {
+  HandleScope scope;
+  Handle<Code> rewritten;
+  State previous_state = GetState();
+
+  State state = TargetState(previous_state, HasInlinedSmiCode(address()), x, y);
+  if (state == GENERIC) {
+    CompareStub stub(GetCondition(), strict(), NO_COMPARE_FLAGS);
+    rewritten = stub.GetCode();
+  } else {
+    ICCompareStub stub(op_, state);
+    rewritten = stub.GetCode();
+  }
+  set_target(*rewritten);
+
+#ifdef DEBUG
+  if (FLAG_trace_ic) {
+    PrintF("[CompareIC (%s->%s)#%s]\n",
+           GetStateName(previous_state),
+           GetStateName(state),
+           Token::Name(op_));
+  }
+#endif
+
+  // Activate inlined smi code.
+  if (previous_state == UNINITIALIZED) {
+    PatchInlinedSmiCode(address());
+  }
+}
+
+void PatchInlinedSmiCode(Address address) {
+  // The address of the instruction following the call.
+  Address test_instruction_address =
+      address + Assembler::kCallTargetAddressOffset;
+
+  // If the instruction following the call is not a test al, nothing
+  // was inlined.
+  if (*test_instruction_address != Assembler::kTestAlByte) {
+    ASSERT(*test_instruction_address == Assembler::kNopByte);
+    return;
+  }
+
+  Address delta_address = test_instruction_address + 1;
+  // The delta to the start of the map check instruction and the
+  // condition code uses at the patched jump.
+  int8_t delta = *reinterpret_cast<int8_t*>(delta_address);
+  if (FLAG_trace_ic) {
+    PrintF("[  patching ic at %p, test=%p, delta=%d\n",
+           address, test_instruction_address, delta);
+  }
+
+  // Patch with a short conditional jump. There must be a
+  // short jump-if-carry/not-carry at this position.
+  Address jmp_address = test_instruction_address - delta;
+  ASSERT(*jmp_address == Assembler::kJncShortOpcode ||
+         *jmp_address == Assembler::kJcShortOpcode);
+  Condition cc = *jmp_address == Assembler::kJncShortOpcode
+      ? not_zero
+      : zero;
+  *jmp_address = static_cast<byte>(Assembler::kJccShortPrefix | cc);
+}
 
 
 } }  // namespace v8::internal

@@ -16,8 +16,8 @@
 // Some original source code by Juha Laitinen still may be around.
 
 #include "VideoCameraCMU.hpp"
+#include "Radiant.hpp"
 
-#include <Radiant/Trace.hpp>
 #include <Radiant/Mutex.hpp>
 #include <Radiant/Sleep.hpp>
 #include <Radiant/Types.hpp>
@@ -36,7 +36,7 @@
 #define NUM_BUFFERS 10
 
 namespace Radiant {
-    static MutexAuto g_mutex;
+    static Mutex g_mutex;
 
     static std::map<VideoCamera::FeatureType, CAMERA_FEATURE> g_featureToCMU;
 
@@ -326,7 +326,7 @@ namespace Radiant {
 
       m_image.allocateMemory(IMAGE_GRAYSCALE, 640, 480);
 
-      Radiant::debug("VideoCameraCMU::open # Camera max speed %d", m_camera->GetMaxSpeed());
+      debugRadiant("VideoCameraCMU::open # Camera max speed %d", m_camera->GetMaxSpeed());
 
     int mbps = m_camera->GetMaxSpeed();
     trace(Radiant::DEBUG, "CAMERA MAX SPEED %d", mbps);

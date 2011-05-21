@@ -7,10 +7,10 @@
  * See file "Nimble.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef NIMBLE_VECTOR2T_HPP
@@ -35,6 +35,8 @@ namespace Nimble {
     /// Data type of the vector
     typedef T type;
 
+    enum { Elements = 2 };
+
     /// X-component of the vector
     T		x;
     /// Y-component of the vector
@@ -42,6 +44,7 @@ namespace Nimble {
 
     /** Default constructor, does \b not initialize the values. */
     Vector2T () {}
+    inline explicit Vector2T(T xy) { x = y = xy; }
     /// Constructs a vector initializing it to given values
     Vector2T (T cx, T cy) { x = (T)cx;	y = (T)cy; }
     /// Constructs a vector initializing from memory
@@ -173,13 +176,15 @@ namespace Nimble {
   }
   /// @endcond
 
-/*
-  template <class T>
-  inline float abs(Vector2T<T> t)
-  {
-    return t.length();
+  namespace Math {
+    /// Specialize Abs
+    template <class T>
+    inline float Abs(const Vector2T<T>& t)
+    {
+      return t.length();
+    }
   }
-*/
+
   /// Compute the dot product of two vectors
   /// @param t1 first dot product vector
   /// @param t2 second dot product vector
@@ -187,6 +192,14 @@ namespace Nimble {
   inline float dot(const Vector2T<T> &t1, const Vector2T<T> &t2)
   {
     return t1.x * t2.x + t1.y * t2.y;
+  }
+
+  /// Compute the cross product of two 2d vectors by assuming the z components are zero
+  /// Returns the magnitude (z component) of the resulting vector
+  template<class T>
+  inline float cross(const Vector2T<T> & a, const Vector2T<T> & b)
+  {
+    return (a.x * b.y) - (a.y * b.x);
   }
 
   /* Note that these overloads are NOT redundant, integer math is

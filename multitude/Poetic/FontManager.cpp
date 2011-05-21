@@ -19,13 +19,15 @@
 #include <Radiant/Trace.hpp>
 
 #include <map>
-#include <string>
+#include <QString>
 
 namespace Poetic
 {
 
   FontManager::FontManager()
-  {    
+  {
+    Radiant::Guard g(m_mutex);
+
     m_locator.addPath("../../share/MultiTouch/Fonts");
 
     // Add platform specific paths 
@@ -45,13 +47,17 @@ namespace Poetic
 
   FontManager::~FontManager()
   {
+    Radiant::Guard g(m_mutex);
+
     for(TextureVBOMap::iterator it = m_vbos.begin(); it != m_vbos.end(); it++)
       delete it->second;
   }
 
-  CPUWrapperFont * FontManager::getFont(const std::string & name)
+  CPUWrapperFont * FontManager::getFont(const QString & name)
   {
-    if(name.empty()) {
+    Radiant::Guard g(m_mutex);
+
+    if(name.isEmpty()) {
       Radiant::error("FontManager::getFont # empty fontname");
       return 0;
     }
@@ -60,15 +66,12 @@ namespace Poetic
 
     CPUManagedFont * mfont = 0;
 
-    std::string dirredname("Configs/");
-    dirredname += name;
-
     if(it == m_managedFonts.end()) {
 
-      const std::string path = m_locator.locate(name);
-      if(path.empty()) {
+      const QString path = m_locator.locate(name);
+      if(path.isEmpty()) {
         Radiant::error("FontManager::getFont # failed to locate font \"%s\"",
-		       name.c_str());
+           name.toUtf8().data());
         return 0;
       }
   
@@ -76,10 +79,10 @@ namespace Poetic
       mfont = new CPUManagedFont();
       m_managedFonts[name] = mfont;
 
-      if(!mfont->load(path.c_str())) {
+      if(!mfont->load(path.toUtf8().data())) {
         Radiant::error(
 		       "FontManager::getFont # failed to load '%s'",
-		       path.c_str());
+           path.toUtf8().data());
         return 0;
       }
     }
@@ -89,18 +92,24 @@ namespace Poetic
     return new CPUWrapperFont(mfont);
   }
 
-  std::string FontManager::locate(const std::string & name)
+  QString FontManager::locate(const QString & name)
   {
+    Radiant::Guard g(m_mutex);
+
     return m_locator.locate(name);
   }
 
   Radiant::ResourceLocator & FontManager::locator()
   {
+    Radiant::Guard g(m_mutex);
+
     return m_locator;
   }
 
   Luminous::VertexBuffer * FontManager::fontVBO(GLuint textureId)
   {
+    Radiant::Guard g(m_mutex);
+
     TextureVBOMap::iterator it = m_vbos.find(textureId);
 
     // No vbo found, create new

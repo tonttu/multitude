@@ -20,70 +20,86 @@
 
 #include "Radiant/Platform.hpp"
 
-#include <cstddef>
+#include <memory>
 
-// try to detect c++0x
-#if defined(RADIANT_CPP0X)
-  #include <memory>
-#else
-  #if defined(__GCCXML__)
-    #include <memory>
-    namespace tr1 {
-      template<class T> class shared_ptr {
-      public:
-        typedef T element_type;
+#if defined(__GCCXML__)
+namespace std {
+template<class T> class shared_ptr {
+public:
+  typedef T element_type;
 
-        shared_ptr(); // never throws
-        template<class Y> explicit shared_ptr(Y * p);
-        template<class Y, class D> shared_ptr(Y * p, D d);
-        template<class Y, class D, class A> shared_ptr(Y * p, D d, A a);
-        ~shared_ptr(); // never throws
+  shared_ptr(); // never throws
+  template<class Y> explicit shared_ptr(Y * p);
+  template<class Y, class D> shared_ptr(Y * p, D d);
+  template<class Y, class D, class A> shared_ptr(Y * p, D d, A a);
+  ~shared_ptr(); // never throws
 
-        shared_ptr(shared_ptr const & r); // never throws
-        template<class Y> shared_ptr(shared_ptr<Y> const & r); // never throws
-        template<class Y> shared_ptr(shared_ptr<Y> const & r, T * p); // never throws
-        template<class Y> explicit shared_ptr(std::auto_ptr<Y> & r);
+  shared_ptr(shared_ptr const & r); // never throws
+  template<class Y> shared_ptr(shared_ptr<Y> const & r); // never throws
+  template<class Y> shared_ptr(shared_ptr<Y> const & r, T * p); // never throws
+  template<class Y> explicit shared_ptr(std::auto_ptr<Y> & r);
 
-        shared_ptr & operator=(shared_ptr const & r); // never throws
-        template<class Y> shared_ptr & operator=(shared_ptr<Y> const & r); // never throws
-        template<class Y> shared_ptr & operator=(std::auto_ptr<Y> & r);
+  shared_ptr & operator=(shared_ptr const & r); // never throws
+  template<class Y> shared_ptr & operator=(shared_ptr<Y> const & r); // never throws
+  template<class Y> shared_ptr & operator=(std::auto_ptr<Y> & r);
 
-        void reset(); // never throws
-        template<class Y> void reset(Y * p);
-        template<class Y, class D> void reset(Y * p, D d);
-        template<class Y, class D, class A> void reset(Y * p, D d, A a);
-        template<class Y> void reset(shared_ptr<Y> const & r, T * p); // never throws
+  void reset(); // never throws
+  template<class Y> void reset(Y * p);
+  template<class Y, class D> void reset(Y * p, D d);
+  template<class Y, class D, class A> void reset(Y * p, D d, A a);
+  template<class Y> void reset(shared_ptr<Y> const & r, T * p); // never throws
 
-        T & operator*() const; // never throws
-        T * operator->() const; // never throws
-        T * get() const; // never throws
+  T & operator*() const; // never throws
+  T * operator->() const; // never throws
+  T * get() const; // never throws
 
-        bool unique() const; // never throws
-        long use_count() const; // never throws
+  operator bool() const;
 
-        void swap(shared_ptr & b); // never throws
-      };
-    }
-  #elif defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
-    #include <tr1/memory>
-  #elif defined(RADIANT_WIN32) && defined(_HAS_TR1)
-    #include <memory>
-  #else
-    #include <boost/tr1/memory.hpp>
-  #endif
-  namespace std
-  {
-    using tr1::shared_ptr;
-  #if !defined(__GCCXML__)
-    using tr1::weak_ptr;
-    using tr1::swap;
-    using tr1::get_deleter;
-    using tr1::static_pointer_cast;
-    using tr1::dynamic_pointer_cast;
-    using tr1::const_pointer_cast;
-    using tr1::enable_shared_from_this;
-  #endif
-  }
+  bool unique() const; // never throws
+  long use_count() const; // never throws
+
+  void swap(shared_ptr & b); // never throws
+};
+template<class T> class weak_ptr {
+
+public:
+  typedef T element_type;
+
+  weak_ptr();
+
+  template<class Y> weak_ptr(shared_ptr<Y> const & r);
+  weak_ptr(weak_ptr const & r);
+  template<class Y> weak_ptr(weak_ptr<Y> const & r);
+
+  ~weak_ptr();
+
+  weak_ptr & operator=(weak_ptr const & r);
+  template<class Y> weak_ptr & operator=(weak_ptr<Y> const & r);
+  template<class Y> weak_ptr & operator=(shared_ptr<Y> const & r);
+
+  long use_count() const;
+  bool expired() const;
+  shared_ptr<T> lock() const;
+
+  void reset();
+  void swap(weak_ptr<T> & b);
+};
+
+template<typename Signature  // Function type R (T1, T2, ..., TN)
+         >
+class function {
+public:
+  // construct/copy/destruct
+  function();
+  function(const function&);
+  ~function();
+
+  // invocation
+  //result_type operator()(arg1_type, arg2_type, ..., argN_type) const;
+};
+
+
+}
 #endif
 
 namespace Radiant

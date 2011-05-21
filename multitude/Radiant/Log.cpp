@@ -23,7 +23,7 @@
 #include "Trace.hpp"
 
 #include <list>
-#include <string>
+#include <QString>
 #include <cassert>
 #include <stdarg.h>
 
@@ -69,7 +69,7 @@ namespace Radiant {
                     dt.monthDay() + 1, dt.month() + 1, dt.year(),
                     dt.hour(), dt.minute(), dt.second(), dt.milliSecond());
 
-            fprintf((FILE *) m_file, "%s,%s\n", m_buf, (*it).m_str.c_str());
+            fprintf((FILE *) m_file, "%s,%s\n", m_buf, (*it).m_str.toUtf8().data());
 
             // info("LOG: %s", m_buf);
           }
@@ -85,13 +85,13 @@ namespace Radiant {
     {
     public:
       Item(const char * str) : m_str(str), m_time(TimeStamp::getTime()) {}
-      std::string m_str;
+      QString m_str;
       TimeStamp   m_time;
     };
     typedef std::list<Item> container;
     container m_messages;
 
-    MutexAuto m_mutex;
+    Mutex m_mutex;
 
     volatile FILE * m_file;
     volatile bool   m_ready;

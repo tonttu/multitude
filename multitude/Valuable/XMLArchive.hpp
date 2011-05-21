@@ -64,14 +64,12 @@ namespace Valuable
     Iterator & children();
 
     void add(const char * name, const char * value);
-    std::string get(const char * name) const;
+    QString get(const char * name) const;
 
-    void set(const std::string & s);
-    void set(const std::wstring & s);
-    std::string get() const;
-    std::wstring getW() const;
+    void set(const QString & s);
+    QString get() const;
 
-    std::string name() const;
+    QString name() const;
     bool isNull() const;
 
     /// Returns a pointer to m_element

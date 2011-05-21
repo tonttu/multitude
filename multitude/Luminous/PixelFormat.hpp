@@ -19,13 +19,13 @@
 #include <Luminous/Export.hpp>
 #include <Luminous/Luminous.hpp>
 
-#include <string>
+#include <QString>
 
 namespace Luminous
 {
   /// Describes the pixel format of an image
-  /** This class tells what typy values there are in the pixels, and
-      how they are aligned. It is implemented in away that makes it
+  /** This class tells what type values there are in the pixels, and
+      how they are aligned. It is implemented in a way that makes it
       easy to convert the pixel formats*/
   /// @todo Doc
   class LUMINOUS_API PixelFormat
@@ -45,6 +45,15 @@ namespace Luminous
       TYPE_FLOAT        = GL_FLOAT,
       TYPE_DOUBLE       = GL_DOUBLE
                         };
+
+    enum Compression
+    {
+      COMPRESSION_NONE,
+      COMPRESSED_RGB_DXT1         = GL_COMPRESSED_RGB_S3TC_DXT1_EXT,
+      COMPRESSED_RGBA_DXT1        = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
+      COMPRESSED_RGBA_DXT3        = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,
+      COMPRESSED_RGBA_DXT5        = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
+    };
 
     /// Layout of channels
     enum ChannelLayout
@@ -69,6 +78,7 @@ namespace Luminous
     PixelFormat(const PixelFormat& pf);
     /// Constructs a pixel format with the given info
     PixelFormat(ChannelLayout layout = LAYOUT_UNKNOWN, ChannelType type = TYPE_UNKNOWN);
+    PixelFormat(Compression compression);
     ~PixelFormat();
 
     /// Returns the number of channels
@@ -77,6 +87,8 @@ namespace Luminous
     ChannelLayout layout() const { return m_layout; }
     /// Returns the data type of the channels
     ChannelType type() const { return m_type; }
+    /// Returns the compression method
+    Compression compression() const { return m_compression; }
     /// Returns the number of bytes in a single pixel
     int bytesPerPixel() const;
 
@@ -125,11 +137,12 @@ namespace Luminous
     }
 
     /// Converts the pixel format into a human-readable string
-    std::string toString() const;
+    QString toString() const;
 
   private:
     ChannelLayout m_layout;
     ChannelType m_type;
+    Compression m_compression;
   };
 
 }

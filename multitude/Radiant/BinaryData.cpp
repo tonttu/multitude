@@ -430,6 +430,10 @@ namespace Radiant {
 
   bool BinaryData::readString(char * str, size_t maxbytes)
   {
+    if(!available(sizeof(int32_t))) {
+      *str = '\0';
+      return false;
+    }
 
     int32_t marker = getRef<int32_t>();
 
@@ -453,28 +457,40 @@ namespace Radiant {
     return true;
   }
 
-  bool BinaryData::readString(std::string & str)
+  bool BinaryData::readString(QString & str)
   {
+    if(!available(sizeof(int32_t))) {
+      str.clear();
+      return false;
+    }
+
     int32_t marker = getRef<int32_t>();
 
-    if(marker != STRING_MARKER) {
+    if(marker == STRING_MARKER) {
+      str = QString::fromUtf8(m_buf + m_current);
+      skipParameter(marker);
+    } else if(marker == WSTRING_MARKER) {
+      int len = getRef<int32_t>();
+      str.resize(len);
+      QChar* data = str.data();
+
+      for(int i = 0; i < len; i++) {
+        data[i] = getRef<int32_t>();
+      }
+    } else {
       skipParameter(marker);
       return false;
     }
-    const char * source = & m_buf[m_current];
-    size_t len = strlen(source);
-
-    skipParameter(marker);
-
-    str.resize(len);
-
-    memcpy( & str[0], source, len);
-
     return true;
   }
 
   bool BinaryData::readWString(std::wstring & str)
   {
+    if(!available(sizeof(int32_t))) {
+      str.clear();
+      return false;
+    }
+
     int32_t marker = getRef<int32_t>();
 
     if(marker == WSTRING_MARKER) {
@@ -491,13 +507,12 @@ namespace Radiant {
     }
     else if(marker == STRING_MARKER) {
 
-      std::string tmp;
-
       const char * source = & m_buf[m_current];
 
       skipParameter(marker);
 
-      StringUtils::utf8ToStdWstring(str, source);
+      QString tmp = QString::fromUtf8(source);
+      str = tmp.toStdWString();
 
       return true;
     }
@@ -509,6 +524,9 @@ namespace Radiant {
 
   bool BinaryData::readBlob(void * ptr, int n)
   {
+    if(!available(sizeof(int32_t)))
+      return false;
+
     int32_t marker = getRef<int32_t>();
 
     if(marker != BLOB_MARKER) {

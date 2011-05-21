@@ -18,7 +18,7 @@
 
 #include <Valuable/Export.hpp>
 
-#include <string>
+#include <QString>
 #include <list>
 
 namespace Valuable
@@ -44,7 +44,7 @@ namespace Valuable
     bool isNull() const;
 
     /// Gets the tag name of the element
-    std::string getTagName() const;
+    QString getTagName() const;
 
     /// Appends another element as a child
     void appendChild(DOMElement element);
@@ -54,17 +54,13 @@ namespace Valuable
     /// Checks if this element has an attribute of the given name
     bool hasAttribute(const char * name) const;
     /// Returns the value of an attribute
-    std::string getAttribute(const char * name) const;
+    QString getAttribute(const char * name) const;
 
     /// Gets the text content of this element
-    std::string getTextContent() const;
-    /// @copydoc getTextContent
-    std::wstring getTextContentW() const;
+    QString getTextContent() const;
 
     /// Sets the text content of this element
-    void setTextContent(const std::string & content);
-    /// Sets the text content of this element
-    void setTextContent(const std::wstring & content);
+    void setTextContent(const QString & content);
 
     /// Gets a list of child elements
     NodeList getChildNodes() const;

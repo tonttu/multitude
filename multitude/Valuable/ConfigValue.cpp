@@ -20,7 +20,7 @@ ConfigValue::ConfigValue(void)
 {
   m_depth=0;
 }
-ConfigValue::ConfigValue(std::string k, std::string v)
+ConfigValue::ConfigValue(QString k, QString v)
 {
 
   m_depth=0;

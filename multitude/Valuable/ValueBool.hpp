@@ -18,8 +18,6 @@
 
 #include "ValueObject.hpp"
 
-#define VALUEMIT_STD_OP emitChange(); return *this;
-
 namespace Valuable
 {
 
@@ -27,9 +25,9 @@ namespace Valuable
   class VALUABLE_API ValueBool : public ValueObjectT<bool>
   {
   public:    
-    /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
+    /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
     /// @param value The value of this object
-    ValueBool(HasValues * parent, const std::string & name, bool value, bool transit = false);
+    ValueBool(HasValues * parent, const QString & name, bool value, bool transit = false);
     virtual ~ValueBool();
 
     const char * type() const { return "bool"; }
@@ -40,16 +38,14 @@ namespace Valuable
     /// @endcond
 
     /// Copies a value
-    ValueBool & operator = (bool v) { m_value = v; VALUEMIT_STD_OP }
+    ValueBool & operator = (bool v);
 
     /// Boolean values can be set as integers in CSS files
     bool set(int v);
 
-    std::string asString(bool * const ok = 0) const;
+    QString asString(bool * const ok = 0) const;
   };
 
 }
-
-#undef VALUEMIT_STD_OP
 
 #endif // VALUABLE_VALUE_BOOL_HPP

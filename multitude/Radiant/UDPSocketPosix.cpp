@@ -22,7 +22,7 @@ namespace Radiant
 
     int m_fd;
     int m_port;
-    std::string m_host;
+    QString m_host;
   };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -51,11 +51,11 @@ namespace Radiant
     m_d->m_host.clear();
     m_d->m_port = port;
 
-    std::string errstr;
+    QString errstr;
     int err = SocketUtilPosix::bindOrConnectSocket(m_d->m_fd, "0.0.0.0", port, errstr,
                   true, AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if(err) {
-      error("UDPSocket::open # Failed to bind to port %d: %s", port, errstr.c_str());
+      error("UDPSocket::open # Failed to bind to port %d: %s", port, errstr.toUtf8().data());
     }
 
     return err;
@@ -68,11 +68,11 @@ namespace Radiant
     m_d->m_host = host;
     m_d->m_port = port;
 
-    std::string errstr;
+    QString errstr;
     int err = SocketUtilPosix::bindOrConnectSocket(m_d->m_fd, host, port, errstr,
                   false, AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if(err) {
-      error("UDPSocket::openClient # Failed to connect %s:%d: %s", host, port, errstr.c_str());
+      error("UDPSocket::openClient # Failed to connect %s:%d: %s", host, port, errstr.toUtf8().data());
     }
 
     return err;
@@ -86,7 +86,7 @@ namespace Radiant
 
     m_d->m_fd = -1;
 
-    if(!m_d->m_host.empty() && shutdown(fd, SHUT_RDWR)) {
+    if(!m_d->m_host.isEmpty() && shutdown(fd, SHUT_RDWR)) {
       error("UDPSocket::close # Failed to shut down the socket: %s", wrap_strerror(wrap_errno));
     }
     if(wrap_close(fd)) {
@@ -163,7 +163,7 @@ namespace Radiant
     if(m_d->m_fd < 0 || bytes < 0)
       return -1;
 
-    if(m_d->m_host.empty()) {
+    if(m_d->m_host.isEmpty()) {
       /// @todo implement writeTo() or something similar
       error("UDPSocket::write # This socket was created using openServer, "
             "it's not connected. Use writeTo() instead.");

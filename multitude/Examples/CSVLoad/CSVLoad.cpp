@@ -20,6 +20,8 @@
 #include <Valuable/HasValues.hpp>
 #include <Valuable/ValueString.hpp>
 
+#include <QStringList>
+
 int main(int argc, char ** argv)
 {
   Valuable::HasValues opts;
@@ -29,13 +31,13 @@ int main(int argc, char ** argv)
 
   Radiant::CSVDocument doc;
 
-  if(!doc.load(filename.str().c_str(), ",")) {
-    Radiant::error("Could not load CSV file \"%s\"", filename.str().c_str());
+  if(!doc.load(filename->toUtf8().data(), ",")) {
+    Radiant::error("Could not load CSV file \"%s\"", filename->toUtf8().data());
     return -1;
   }
 
   Radiant::info("Loaded %s with %d rows, printing first 10 rows:",
-                filename.str().c_str(), doc.rowCount());
+                filename->toUtf8().data(), doc.rowCount());
 
   int i = 0;
   for(Radiant::CSVDocument::Rows::iterator it = doc.begin();
@@ -46,8 +48,7 @@ int main(int argc, char ** argv)
     printf("Row %d/%d: ", i+1, (int) doc.rowCount());
 
     for(Radiant::CSVDocument::Row::iterator it2 = r.begin(); it2 != r.end(); it2++) {
-      std::string printable = Radiant::StringUtils::stdWstringAsUtf8(*it2);
-      printf("[%s] ", printable.c_str());
+      printf("[%s] ", it2->toUtf8().data());
     }
 
     printf("\n");

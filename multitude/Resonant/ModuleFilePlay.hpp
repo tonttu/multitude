@@ -38,7 +38,7 @@ namespace Resonant {
 
     Resonant::AudioFileHandler::Handle * m_file;
 
-    std::string m_filename;
+    QString m_filename;
     std::vector<float> m_interleaved;
   };
 

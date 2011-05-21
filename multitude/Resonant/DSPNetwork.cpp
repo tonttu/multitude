@@ -14,6 +14,7 @@
  */
 
 #include "DSPNetwork.hpp"
+#include "Resonant.hpp"
 
 #include "ModulePanner.hpp"
 #include "ModuleOutCollect.hpp"
@@ -52,7 +53,7 @@ namespace Resonant {
       m_inputs.erase(it);
   }
 
-  void DSPNetwork::Item::eraseInputs(const std::string & moduleId)
+  void DSPNetwork::Item::eraseInputs(const QString & moduleId)
   {
     for(unsigned i = 0; i < m_inputs.size(); ) {
 
@@ -123,7 +124,7 @@ namespace Resonant {
 
     m_newItems.push_back(tmp);
 
-    debug("DSPNetwork::DSPNetwork # %p %p", this, m_instance);
+    debugResonant("DSPNetwork::DSPNetwork # %p %p", this, m_instance);
 
     if(!m_instance)
       m_instance = this;
@@ -134,7 +135,7 @@ namespace Resonant {
 
   DSPNetwork::~DSPNetwork()
   {
-    debug("DSPNetwork::~DSPNetwork # %p %p", this, m_instance);
+    debugResonant("DSPNetwork::~DSPNetwork # %p %p", this, m_instance);
 
     if(m_instance == this)
       m_instance = 0;
@@ -150,7 +151,7 @@ namespace Resonant {
   {
     Radiant::Guard g(m_startupMutex);
 
-    debug("DSPNetwork::start # %p %p", this, m_instance);
+    debugResonant("DSPNetwork::start # %p %p", this, m_instance);
 
     if(isRunning())
       return false;
@@ -168,7 +169,7 @@ namespace Resonant {
 
   void DSPNetwork::addModule(Item & i)
   {
-    debug("DSPNetwork::addModule # %p %p", this, m_instance);
+    debugResonant("DSPNetwork::addModule # %p %p", this, m_instance);
 
     Radiant::Guard g( m_newMutex);
 
@@ -190,7 +191,7 @@ namespace Resonant {
 
   void DSPNetwork::send(Radiant::BinaryData & control)
   {
-    debug("DSPNetwork::send # %p %p", this, m_instance);
+    debugResonant("DSPNetwork::send # %p %p", this, m_instance);
 
     Radiant::Guard g( m_inMutex);
     m_incoming.append(control);
@@ -225,7 +226,7 @@ namespace Resonant {
       return 0;
 
     if(!m_instance->isRunning()) {
-      debug("DSPNetwork::instance # Initializing DSP...");
+      debugResonant("DSPNetwork::instance # Initializing DSP...");
       if(!m_instance->start())
         Radiant::error("DSPNetwork::instance # failed to initialize sound device");
     }
@@ -332,7 +333,7 @@ namespace Resonant {
   void DSPNetwork::checkNewItems()
   {
     if(m_newItems.size()) {
-      debug("DSPNetwork::checkNewItems # Now %d items, adding %d, buffer memory %ld byes",
+      debugResonant("DSPNetwork::checkNewItems # Now %d items, adding %d, buffer memory %ld byes",
            (int) m_items.size(), (int) m_newItems.size(),
            countBufferBytes());
     }
@@ -341,7 +342,7 @@ namespace Resonant {
 
     while(m_newItems.size()) {
 
-      debug("DSPNetwork::checkNewItems # Next ");
+      debugResonant("DSPNetwork::checkNewItems # Next ");
 
       if(!m_newMutex.tryLock())
         return;
@@ -361,7 +362,7 @@ namespace Resonant {
         m_items.pop_front();
       }
       else {
-        debug("DSPNetwork::checkNewItems # Added a new module %s", type);
+        debugResonant("DSPNetwork::checkNewItems # Added a new module %s", type);
 
         if(itptr->m_module == m_collect)
           continue;
@@ -424,7 +425,7 @@ namespace Resonant {
             m_collect->processMessage("newmapping", & m_controlData);
           }
           compile( * oi);
-          debug("DSPNetwork::checkNewItems # Compiled out collector");
+          debugResonant("DSPNetwork::checkNewItems # Compiled out collector");
         }
         else if(mchans) {
 
@@ -448,7 +449,7 @@ namespace Resonant {
             m_collect->processMessage("newmapping", & m_controlData);
           }
           compile( * oi);
-          debug("DSPNetwork::checkNewItems # Compiled out collector");
+          debugResonant("DSPNetwork::checkNewItems # Compiled out collector");
         }
       }
     }
@@ -488,7 +489,7 @@ namespace Resonant {
 
         uncompile(item);
 
-        debug("DSPNetwork::checkDoneItems # Stopped %p (%ld bufferbytes)",
+        debugResonant("DSPNetwork::checkDoneItems # Stopped %p (%ld bufferbytes)",
              item.m_module, countBufferBytes());
 
         item.m_module->stop();
@@ -509,7 +510,7 @@ namespace Resonant {
       const char * commandid,
       Radiant::BinaryData & data)
   {
-    debug("DSPNetwork::deliverControl # %p %s %s %d", this, moduleid, commandid,
+    debugResonant("DSPNetwork::deliverControl # %p %s %s %d", this, moduleid, commandid,
           data.total());
 
     for(iterator it = m_items.begin(); it != m_items.end(); it++) {
@@ -549,7 +550,7 @@ namespace Resonant {
       oi->removeInputsFrom(id);
 
       compile( * oi);
-      debug("DSPNetwork::uncompile # uncompiled \"%s\"", id);
+      debugResonant("DSPNetwork::uncompile # uncompiled \"%s\"", id);
     }
 
     return true;
@@ -586,7 +587,7 @@ namespace Resonant {
       if(strcmp(nc.m_targetId, item.m_module->id()) == 0) {
         item.m_inputs.push_back(Connection(nc.m_sourceId,
                        nc.m_sourceChannel));
-        debug("Item[%d].m_inputs[%d] = [%s,%d]", location, i,
+        debugResonant("Item[%d].m_inputs[%d] = [%s,%d]", location, i,
             nc.m_sourceId, nc.m_sourceChannel);
       }
       i++;
@@ -617,7 +618,7 @@ namespace Resonant {
       Connection & conn = item.m_inputs[i];
       float * ptr = findOutput(conn.m_moduleId, conn.m_channel);
       item.m_ins[i] = ptr;
-      debug("Item[%d].m_ins[%d] = %p from %s:%d", location, i, ptr,
+      debugResonant("Item[%d].m_ins[%d] = %p from %s:%d", location, i, ptr,
             conn.m_moduleId, conn.m_channel);
     }
 
@@ -625,7 +626,7 @@ namespace Resonant {
       if(item.m_outs[i] == 0) {
         Buf & b = findFreeBuf(location);
         item.m_outs[i] = b.m_data;
-        debug("Item[%d].m_outs[%d] = %p", location, i, b.m_data);
+        debugResonant("Item[%d].m_outs[%d] = %p", location, i, b.m_data);
       }
     }
 
@@ -633,7 +634,7 @@ namespace Resonant {
 
     Module * m = item.m_module;
 
-    debug("DSPNetwork::compile # compiled %p %s", m, typeid(*m).name());
+    debugResonant("DSPNetwork::compile # compiled %p %s", m, typeid(*m).name());
 
     return true;
   }
@@ -644,7 +645,7 @@ namespace Resonant {
 
     for(size_t i = 0; i < s; i++) {
       if(bufIsFree((int) i, location)) {
-        debug("DSPNetwork::findFreeBuf # Found %d -> %lu", location, i);
+        debugResonant("DSPNetwork::findFreeBuf # Found %d -> %lu", location, i);
         return m_buffers[i];
       }
     }
@@ -653,7 +654,7 @@ namespace Resonant {
 
     m_buffers[s].init();
 
-    debug("DSPNetwork::findFreeBuf # Created %d -> %lu", location, s);
+    debugResonant("DSPNetwork::findFreeBuf # Created %d -> %lu", location, s);
 
     return m_buffers[s];
   }

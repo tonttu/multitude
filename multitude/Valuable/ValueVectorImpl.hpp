@@ -24,12 +24,12 @@
 namespace Valuable
 {
 
-  template <class T, typename S, int N>
-  ValueVector<T,S,N>::~ValueVector()
+  template <class T>
+  ValueVector<T>::~ValueVector()
   {}
 
-  template <class T, typename S, int N>
-  void ValueVector<T,S,N>::processMessage(const char * id,
+  template <class T>
+  void ValueVector<T>::processMessage(const char * id,
                       Radiant::BinaryData & data)
   {
     if(id && strlen(id)) {
@@ -40,12 +40,12 @@ namespace Valuable
 
       bool ok = true;
 
-      S v = data.read<S>(&ok);
+      ElementType v = data.read<ElementType>(&ok);
 
       if(ok) {
         T tmp = Base::m_value;
         tmp[index] = v;
-        (*this) = tmp;
+        *this = tmp;
       }
     }
     else {
@@ -59,8 +59,8 @@ namespace Valuable
     }
   }
 
-  template<class VectorType, typename ElementType, int N>
-  const char *  ValueVector<VectorType, ElementType, N>::type() const { return "vector"; }
+  template<class VectorType>
+  const char *  ValueVector<VectorType>::type() const { return "vector"; }
 
 
   /// @todo Under WIN32 these specializations conflict with the class instantiation
@@ -86,35 +86,34 @@ namespace Valuable
   const char * const ValueVector<Nimble::Vector4i, int, 4>::type() const { return "vec4i"; }
 */
 
-  template<class VectorType, typename ElementType, int N>
-  bool ValueVector<VectorType, ElementType, N>::deserialize(ArchiveElement & element) {
-    std::stringstream in(element.get());
+  template<class VectorType>
+  bool ValueVector<VectorType>::deserialize(ArchiveElement & element) {
+    std::stringstream in(element.get().toUtf8().data());
 
+    VectorType vector;
     for(int i = 0; i < N; i++)
-      in >> Base::m_value[i];
+      in >> vector[i];
 
-    this->emitChange();
-
+    *this = vector;
     return true;
   }
 
-  template<class VectorType, typename ElementType, int N>
-  std::string ValueVector<VectorType, ElementType, N>::asString(bool * const ok) const {
+  template<class VectorType>
+  QString ValueVector<VectorType>::asString(bool * const ok) const {
     if(ok) *ok = true;
 
-    std::string r = Radiant::StringUtils::stringify(Base::m_value[0]);
+    QString r = Radiant::StringUtils::stringify(Base::m_value[0]);
 
     for(int i = 1; i < N; i++)
-      r += std::string(" ") + Radiant::StringUtils::stringify(Base::m_value[i]);
+      r += QString(" ") + Radiant::StringUtils::stringify(Base::m_value[i]);
 
     return r;
   }
 
-  template<class VectorType, typename ElementType, int N>
-  bool ValueVector<VectorType, ElementType, N>::set(const VectorType & v)
+  template<class VectorType>
+  bool ValueVector<VectorType>::set(const VectorType & v)
   {
-    Base::m_value = v;
-    this->emitChange();
+    *this = v;
     return true;
   }
 

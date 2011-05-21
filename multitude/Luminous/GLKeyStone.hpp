@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 
@@ -43,8 +31,16 @@ namespace Luminous {
   class LUMINOUS_API GLKeyStone : public Valuable::HasValues
   {
   public:
+
+    enum Rotation {
+      ROTATION_NONE,
+      ROTATION_90,
+      ROTATION_180,
+      ROTATION_270,
+    };
+
     /// Creates a new GLKeyStone object.
-    GLKeyStone(Valuable::HasValues * parent, const std::string & name);
+    GLKeyStone(Valuable::HasValues * parent, const QString & name);
     virtual ~GLKeyStone();
 
     /// Returns the object type name = "glkeystone"
@@ -55,6 +51,7 @@ namespace Luminous {
 
     /// Returns the index to the closest keystone vertex
     int closestVertex(Nimble::Vector2 loc);
+    int closestVertex(Nimble::Vector2 loc) const;
     /// Sets the location of the given keystone vertex
     void setVertex(int index, float x, float y)
     { m_vertices[index] = Nimble::Vector2f(x, y); }
@@ -96,7 +93,7 @@ namespace Luminous {
     /** Projects the vector v using internal matrix, WITHOUT applying
     perspective correction.
     @param v vector to project*/
-    Nimble::Vector4 project(Nimble::Vector2 v);
+    Nimble::Vector4 project(Nimble::Vector2 v) const;
     /** Projects the vector v using matrix m, applying perspective
     correction.
     @param m projection matrix
@@ -108,10 +105,14 @@ namespace Luminous {
     before drawing anything on the screen. */
     void applyGlState() const;
 
-    /// Cleans up the exterior after the
+    /// Cleans up the exterior after the keystone operations have been carried out.
     void cleanExterior() const;
     /// Returns the location of the vertex that is closest to the argument v.
     Nimble::Vector2 closest(Nimble::Vector2 v) const;
+
+    /// Calculate the rough rotation estimation.
+    Rotation estimateRotation() const;
+
 
   private:
     Valuable::ValueVector2f m_vertices[4];

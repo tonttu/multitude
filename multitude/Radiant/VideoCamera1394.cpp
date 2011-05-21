@@ -19,6 +19,7 @@
 
 #include "VideoCamera1394.hpp"
 
+#include <Radiant/Radiant.hpp>
 #include <Radiant/Trace.hpp>
 #include <Radiant/Mutex.hpp>
 #include <Radiant/Sleep.hpp>
@@ -311,7 +312,7 @@ namespace Radiant {
                                 DC1394_FEATURE_WHITE_BALANCE,
                                 DC1394_FEATURE_MODE_AUTO);
       else
-        Radiant::debug("%s # no auto mode for white balance", fname);
+        debugRadiant("%s # no auto mode for white balance", fname);
     }
     else {
 
@@ -324,7 +325,7 @@ namespace Radiant {
                                 DC1394_FEATURE_WHITE_BALANCE,
                                 DC1394_FEATURE_MODE_MANUAL);
       else {
-        Radiant::debug("%s # no manual mode for white balance", fname);
+        debugRadiant("%s # no manual mode for white balance", fname);
         return;
       }
 
@@ -383,7 +384,7 @@ namespace Radiant {
       if(b)
         dc1394_feature_set_mode(m_camera, feature, DC1394_FEATURE_MODE_AUTO);
       else
-        Radiant::debug("%s # no auto mode for %s", fname, name);
+        debugRadiant("%s # no auto mode for %s", fname, name);
     }
     else {
       has_manual_mode(m_camera, feature, & b);
@@ -391,7 +392,7 @@ namespace Radiant {
       if(b)
         dc1394_feature_set_mode(m_camera, feature, DC1394_FEATURE_MODE_MANUAL);
       else {
-        Radiant::debug("%s # no manual mode for %s", fname, name);
+        debugRadiant("%s # no manual mode for %s", fname, name);
         return;
       }
 
@@ -475,7 +476,7 @@ namespace Radiant {
 
   bool VideoCamera1394::setTriggerPolarity(TriggerPolarity tp)
   {
-    debug("VideoCamera1394::setTriggerPolarity # %d", (int) tp);
+    debugRadiant("VideoCamera1394::setTriggerPolarity # %d", (int) tp);
 
     dc1394trigger_polarity_t polarity =
         (tp == TRIGGER_ACTIVE_HIGH) ? DC1394_TRIGGER_ACTIVE_HIGH :
@@ -506,7 +507,7 @@ namespace Radiant {
     dc1394_software_trigger_set_power(m_camera, DC1394_ON);
   }
 
-  static MutexStatic g_mutex;
+  static Mutex g_mutex;
 
   /**
    * Initialize this instance and open connnection to the device to be
@@ -519,12 +520,12 @@ namespace Radiant {
                              FrameRate framerate)
   {
     // Only one thread at a time, just to make things sure.
-    GuardStatic guard(g_mutex);
+    Guard guard(g_mutex);
 
     /* On some systems, sleep is needed for proper multi-camera operation. Sigh.*/
     Radiant::Sleep::sleepMs(s_openDelay);
 
-    std::string videodevice("/dev/video1394");
+    QString videodevice("/dev/video1394");
 
     uint32_t i;
 
@@ -577,8 +578,8 @@ namespace Radiant {
         break;
     }
 
-    debug("%s # The video mode id = %d", fname, (int) video_mode);
-    debug("%s # The frame rate id = %d (target = %d)",
+    debugRadiant("%s # The video mode id = %d", fname, (int) video_mode);
+    debugRadiant("%s # The frame rate id = %d (target = %d)",
           fname, (int) fps, targetfps);
 
     if(dc1394_video_set_mode(m_camera, video_mode)
@@ -600,7 +601,7 @@ namespace Radiant {
       Radiant::error("%s # dc1394_video_get_transmission failed", fname);
 
     if(isoWasOn == DC1394_ON) {
-      debug("%s # Camera is already running, stopping it", fname);
+      debugRadiant("%s # Camera is already running, stopping it", fname);
 
       if(dc1394_video_set_transmission(m_camera, DC1394_OFF) !=DC1394_SUCCESS)
         Radiant::error("%s # dc1394_video_set_transmission failed", fname);
@@ -649,7 +650,7 @@ namespace Radiant {
       Radiant::error("%s # unsupported image format", fname);
     }
 
-    debug("%s # EXIT OK with difmt = %d", fname, (int) m_image.m_format);
+    debugRadiant("%s # EXIT OK with difmt = %d", fname, (int) m_image.m_format);
 
     return true;
   }
@@ -659,7 +660,7 @@ namespace Radiant {
                                     float fps,
                                     int mode)
   {
-    GuardStatic guard(g_mutex);
+    Guard guard(g_mutex);
 
     Radiant::Sleep::sleepMs(s_openDelay);
 
@@ -692,8 +693,8 @@ namespace Radiant {
     err = dc1394_format7_get_max_image_size
           (m_camera, vmode, & maxw, & maxh);
 
-    debug("%s # fps = %f", fname, fps);
-    debug("%s # Maximum image size = %d x %d", fname, (int) maxw, (int) maxh);
+    debugRadiant("%s # fps = %f", fname, fps);
+    debugRadiant("%s # Maximum image size = %d x %d", fname, (int) maxw, (int) maxh);
 
     if(roi.high().x > (int) maxw)
       roi.high().x = maxw;
@@ -739,7 +740,7 @@ namespace Radiant {
 
     if(packetSize > (int) maxbytes) {
 
-      debug("%s # Limiting packet size to %u", fname, maxbytes);
+      debugRadiant("%s # Limiting packet size to %u", fname, maxbytes);
       packetSize = maxbytes;
     }
 
@@ -768,7 +769,7 @@ namespace Radiant {
     m_image.m_width  = roi.width();
     m_image.m_height = roi.height();
 
-    debug("%s # initialized format-7 mode with resolution %d x %d",
+    debugRadiant("%s # initialized format-7 mode with resolution %d x %d",
           fname, m_image.m_width, m_image.m_height);
 
     m_initialized = true;
@@ -871,7 +872,7 @@ namespace Radiant {
     else {
       dc1394switch_t trans;
       dc1394_video_get_transmission(m_camera, & trans);
-      debug("VideoCamera1394::start # %d", (int) trans);
+      debugRadiant("VideoCamera1394::start # %d", (int) trans);
     }
 
     m_started = true;
@@ -1073,7 +1074,7 @@ namespace Radiant {
     m_euid = euid ? euid : m_euid;
 
     // if(euid != 0)
-    debug("VideoCamera1394::findCamera # m_euid = %.8x%.8x", (int) (m_euid >> 32), (int) m_euid);
+    debugRadiant("VideoCamera1394::findCamera # m_euid = %.8x%.8x", (int) (m_euid >> 32), (int) m_euid);
 
     if (m_initialized)
       close();
@@ -1094,7 +1095,7 @@ namespace Radiant {
     struct utsname sn;
     uname(& sn);
 
-    debug("%s # System: %s # %s # %s", fname, sn.sysname, sn.release, sn.version);
+    debugRadiant("%s # System: %s # %s # %s", fname, sn.sysname, sn.release, sn.version);
     isleopard = strcmp(sn.sysname, "Darwin") == 0 &&
                 ((strncmp(sn.release, "9.", 2) == 0) ||
                  (strncmp(sn.release, "10.", 3) == 0));
@@ -1105,7 +1106,7 @@ namespace Radiant {
     if(!initcount) {
 
       if(isleopard)
-        debug("%s # Running Leopard, no FireWire bus reset", fname);
+        debugRadiant("%s # Running Leopard, no FireWire bus reset", fname);
       else {
         for(int c = 0; c < (int) g_infos.size(); c++) {
           dc1394_reset_bus(g_infos[c]);
@@ -1123,13 +1124,13 @@ namespace Radiant {
       if(g_infos[i]->guid == m_euid) {
         m_cameraNum = (int) i;
         foundCorrect = true;
-        debug("%s # Got camera %d based on euid", fname, (int) i);
+        debugRadiant("%s # Got camera %d based on euid", fname, (int) i);
         break;
       }
     }
 
     if(m_euid != 0 && !foundCorrect) {
-      debug("%s # Could not find the camera with euid = %llx",
+      debugRadiant("%s # Could not find the camera with euid = %llx",
             fname, (long long) m_euid);
       return false;
     }
@@ -1144,7 +1145,7 @@ namespace Radiant {
 
     m_camera = g_infos[m_cameraNum];
 
-    debug("%s # Initializing camera %s \"%s\"",
+    debugRadiant("%s # Initializing camera %s \"%s\"",
           fname, m_camera->vendor, m_camera->model);
 
     /* int isochan = m_cameraNum + 2;
@@ -1156,7 +1157,7 @@ namespace Radiant {
 
     if(dc1394_feature_get_all(m_camera, & m_features)
       != DC1394_SUCCESS) {
-      debug("%s # unable to get feature set %d",
+      debugRadiant("%s # unable to get feature set %d",
             fname, m_cameraNum);
     }
 
@@ -1173,11 +1174,11 @@ namespace Radiant {
       /* PTGrey Firefly is a popular camera, but it apparently reports
    itself as FW800 camera... */
 
-      debug("PTGrey Firefly camera detected, going for FW400");
+      debugRadiant("PTGrey Firefly camera detected, going for FW400");
       try1394b = false;
     }
 
-    debug("%s # Try %s FW800", fname, try1394b ? "with" : "without");
+    debugRadiant("%s # Try %s FW800", fname, try1394b ? "with" : "without");
 
     if(try1394b) {
       bool is1394b = false;
@@ -1185,7 +1186,7 @@ namespace Radiant {
       if(dc1394_video_set_operation_mode(m_camera, DC1394_OPERATION_MODE_1394B)
         != DC1394_SUCCESS) {
         dc1394_video_set_operation_mode(m_camera, DC1394_OPERATION_MODE_LEGACY);
-        debug("%s # Could not set operation mode to 1394B", fname);
+        debugRadiant("%s # Could not set operation mode to 1394B", fname);
       }
       else
         is1394b = true;
@@ -1196,7 +1197,7 @@ namespace Radiant {
         if(dc1394_video_set_iso_speed(m_camera, DC1394_ISO_SPEED_800)
           != DC1394_SUCCESS) {
 
-          debug("%s # Could not set ISO speed to 800", fname);
+          debugRadiant("%s # Could not set ISO speed to 800", fname);
 
           if(dc1394_video_set_iso_speed(m_camera, DC1394_ISO_SPEED_400)
             != DC1394_SUCCESS) {
@@ -1225,7 +1226,7 @@ namespace Radiant {
         speedbits = 400;
       else if(m_speed == DC1394_ISO_SPEED_800)
         speedbits = 800;
-      debug("%s # ISO speed = %d Mbits per second", fname, speedbits);
+      debugRadiant("%s # ISO speed = %d Mbits per second", fname, speedbits);
     }
     return true;
   }
@@ -1237,7 +1238,7 @@ namespace Radiant {
 #ifdef __linux__
     if(getenv("WITHOUT_1394_BANDWIDTH_ALLOC")) {
       flags = DC1394_CAPTURE_FLAGS_CHANNEL_ALLOC;
-      debug("VideoCamera1394::captureSetup # Ignoring bandwidth allocation");
+      debugRadiant("VideoCamera1394::captureSetup # Ignoring bandwidth allocation");
     }
 #endif
     dc1394error_t res = dc1394_capture_setup(m_camera, buffers, flags);
@@ -1266,8 +1267,8 @@ namespace Radiant {
 
   size_t CameraDriver1394::queryCameras(std::vector<VideoCamera::CameraInfo> & cameras)
   {
-    static MutexStatic s_mutex;
-    GuardStatic guard(s_mutex);
+    static Mutex s_mutex;
+    Guard guard(s_mutex);
 
     const char * fname = "CameraDriver1394::queryCameras";
 
@@ -1283,30 +1284,62 @@ namespace Radiant {
       return false;
     }
 
-    if((err = dc1394_camera_enumerate(g_dc, & camlist))
-      != DC1394_SUCCESS) {
+    err = dc1394_camera_enumerate(g_dc, & camlist);
 
+    if(err != DC1394_SUCCESS || camlist->num == 0) {
 #ifdef __linux__
       const char * username = getenv("USERNAME");
 
+      // try to check that files are existing, readable and writeable
+      bool rawOk = access("/dev/raw1394", F_OK | R_OK | W_OK) == 0;
+      bool videoOk = access("/dev/video1394/0", F_OK | R_OK | W_OK) == 0;
       if(!username)
         username = "username";
 
-      error("%s # dc1394_find_cameras failed (%s)\n"
-            "*************************************************************\n"
-            "Please check that FireWire device files exist:\n"
-            "/dev/raw1394\n"
-            "/dev/video1394 (or /dev/video1394/0 etc)\n"
-            "And that you have permissions to use them.\n"
-            "\n"
-            "To gain permissions, try the following commands:\n\n"
-            "> sudo addgroup %s video\n"
-            "> sudo addgroup %s disk\n\n"
-            "> sudo chmod -R 777 /dev/*1394*\n\n"
-            "You may need to log in again for the changes to be effective.\n\n"
-            "See also: http://www.multitouch.fi/cornerstone/cornerstone-documentation/firewire-permissions\n"
-            "*************************************************************\n\n",
-            fname, dc1394_error_get_string(err), username, username);
+      // this happens with permission problems in older libdc1394 versions?
+      if (err != DC1394_SUCCESS) {
+        error("%s # dc1394_camera_enumerate failed (%s)\n"
+              "*************************************************************\n"
+              "Please check that FireWire device files exist:\n"
+              "/dev/raw1394\n"
+              "/dev/video1394 (or /dev/video1394/0 etc)\n"
+              "And that you have permissions to use them.\n"
+              "\n"
+              "To gain permissions, try the following commands:\n\n"
+              "> sudo addgroup %s video\n"
+              "> sudo addgroup %s disk\n\n"
+              "> sudo chmod -R 777 /dev/*1394*\n\n"
+              "You may need to log in again for the changes to be effective.\n\n"
+              "See also: http://www.multitouch.fi/cornerstone/cornerstone-documentation/firewire-permissions\n"
+              "*************************************************************\n\n",
+              fname, dc1394_error_get_string(err), username, username);
+      } else {
+        // no cameras found
+        std::string missing;
+        if (!rawOk || !videoOk) {
+          missing = "Permission problems:\n";
+          if (!rawOk)
+            missing += "/dev/raw1394 read or write permission missing\n";
+          if (!videoOk)
+            missing += "/dev/video1394/0 read or write permission missing\n";
+        }
+
+        error("%s # Could not find any cameras\n"
+              "*************************************************************\n"
+              "%s"
+              "\n"
+              "To gain permissions, try the following commands:\n\n"
+              "> sudo addgroup %s video\n"
+              "> sudo addgroup %s disk\n\n"
+              "> sudo chmod -R 777 /dev/*1394*\n\n"
+              "You may need to log in again for the changes to be effective.\n\n"
+              "See also: http://www.multitouch.fi/cornerstone/cornerstone-documentation/firewire-permissions\n"
+              "*************************************************************\n\n",
+              fname,
+              missing.c_str(),
+              username, username);
+      }
+
 #else
       Radiant::error("%s # dc1394_find_cameras failed (%s)\n",
                      fname, dc1394_error_get_string(err));
@@ -1314,7 +1347,7 @@ namespace Radiant {
       return false;
     }
 
-    debug("%s::Getting %d FireWire cameras", fname, (int) camlist->num);
+    debugRadiant("%s::Getting %d FireWire cameras", fname, (int) camlist->num);
 
     for(i = 0; i < camlist->num; i++) {
       bool already = false;
@@ -1327,7 +1360,7 @@ namespace Radiant {
         g_infos.push_back(dc1394_camera_new(g_dc, camlist->ids[i].guid));
     }
 
-    debug("Copying FireWire camera #%d information to user", (int) camlist->num);
+    debugRadiant("Copying FireWire camera #%d information to user", (int) camlist->num);
 
     for(i = 0; i < g_infos.size(); i++) {
       dc1394camera_t * c = g_infos[i];
@@ -1341,17 +1374,17 @@ namespace Radiant {
       if(!c->guid || !c->vendor || !c->model)
         continue;
 
-      debug("Got camera %p: %s %s (%"PRIx64")", c, c->vendor, c->model, c->guid);
+      debugRadiant("Got camera %p: %s %s (%"PRIx64")", c, c->vendor, c->model, c->guid);
 
       ci.m_euid64 = c->guid;
       ci.m_vendor = c->vendor;
       ci.m_model  = c->model;
-      ci.m_driver = std::string("libdc1394");
+      ci.m_driver = QString("libdc1394");
 
       cameras.push_back(ci);
     }
 
-    debug("Clearing camera list");
+    debugRadiant("Clearing camera list");
 
     dc1394_camera_free_list(camlist);
 

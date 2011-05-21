@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #include <Luminous/Luminous.hpp>
@@ -24,7 +12,7 @@ namespace Luminous {
   using Nimble::Vector2;
   using Nimble::Vector4;
 
-  GLKeyStone::GLKeyStone(HasValues * parent, const std::string & name)
+  GLKeyStone::GLKeyStone(HasValues * parent, const QString & name)
   : HasValues(parent, name, false),
   m_selected(0),
   m_rotations(this, "rotations", false, 0)
@@ -70,6 +58,21 @@ namespace Luminous {
     return index;
   }
 
+  int GLKeyStone::closestVertex(Nimble::Vector2 loc) const
+  {
+    int index = 0;
+    float best = (m_vertices[0].asVector() - loc).length();
+
+    for(int i = 1; i < 4; i++) {
+      float d = (m_vertices[i].asVector() - loc).length();
+      if(best > d) {
+        best = d;
+        index = i;
+      }
+    }
+    return index;
+  }
+
   bool GLKeyStone::moveVertex(Vector2 loc)
   {
     selectVertex(loc);
@@ -98,7 +101,7 @@ namespace Luminous {
     m_vertices[2] = m_vertices[3].asVector();
     m_vertices[3] = v;
 
-    m_rotations++;
+    ++m_rotations;
 
     calculateMatrix();
   }
@@ -140,7 +143,7 @@ namespace Luminous {
                   g, h, 0, 1);
   }
 
-  Vector4 GLKeyStone::project(Vector2 v)
+  Vector4 GLKeyStone::project(Vector2 v) const
   {
     Vector4 tmp(v.x, v.y, 0.5, 1.0);
     Vector4 p = m_matrix * tmp;
@@ -236,4 +239,23 @@ namespace Luminous {
 
     return m_vertices[index].asVector();
   }
+
+  GLKeyStone::Rotation GLKeyStone::estimateRotation() const
+  {
+    int index = closestVertex(Nimble::Vector2(0,0));
+
+    Rotation r;
+
+    if(index == 0)
+      r = ROTATION_NONE;
+    else if(index == 1)
+      r = ROTATION_90;
+    else if(index == 2)
+      r = ROTATION_180;
+    else
+      r = ROTATION_270;
+
+    return r;
+  }
+
 }

@@ -67,14 +67,14 @@ namespace Luminous
     return (w > 0) && (h > 0) && ((bpp == 8) || (bpp == 24) || (bpp == 32));    
   }
 
-  std::string ImageCodecTGA::extensions() const
+  QString ImageCodecTGA::extensions() const
   {
-    return std::string("tga");
+    return QString("tga");
   }
 
-  std::string ImageCodecTGA::name() const
+  QString ImageCodecTGA::name() const
   {
-    return std::string("targa");
+    return QString("targa");
   }
   
   bool ImageCodecTGA::ping(ImageInfo & info, FILE * file)

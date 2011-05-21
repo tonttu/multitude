@@ -54,9 +54,9 @@ namespace Radiant {
     int minute() const { return m_minute; }
     /// Seconds since last full minute (0-59)
     int second() const { return m_second; }
-    /// Milliseconds since last full minute (0-59)
+    /// Milliseconds since last full second (0-999)
     int milliSecond() const { return m_microsecond / 1000; }
-    /// Microseconds since last full minute (0-59)
+    /// Microseconds since last full second (0-999999)
     int microSecond() const { return m_microsecond; }
     /// Reset the hour, minute and second values to zero
     void clearTime();
@@ -83,7 +83,7 @@ namespace Radiant {
     /// Advance time to next day of the month
     void toNextMonthDay();
     /// Read time and date from a string
-    bool fromString(const std::string & s, DateFormat format = DATE_ISO);
+    bool fromString(const QString & s, DateFormat format = DATE_ISO);
 
     /** Returns the number of days in the month. This function does
     take the leap years into account, so the length of Febuary changes

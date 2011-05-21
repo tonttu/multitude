@@ -14,6 +14,7 @@
  */
 
 #include "WatchDog.hpp"
+#include "Radiant.hpp"
 
 #include "Platform.hpp"
 #include "Sleep.hpp"
@@ -127,6 +128,8 @@ namespace Radiant {
         // Stop the app:
         abort();
 
+        _exit(1);
+
         // Stop it again:
         Sleep::sleepS(1);
         Sleep::sleepS(1);
@@ -137,7 +140,7 @@ namespace Radiant {
         exit(0);
       }
 
-      debug("WATCHDOG CHECK");
+      debugRadiant("WATCHDOG CHECK");
 
     }
   }

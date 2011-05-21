@@ -22,7 +22,7 @@
 #include <Radiant/VideoCamera.hpp>
 #include <Radiant/CameraDriver.hpp>
 
-#include <string>
+#include <QString>
 
 class C1394Camera;
 #define _WINSOCKAPI_		// timeval redefinition
@@ -92,7 +92,7 @@ namespace Radiant {
 
         virtual size_t queryCameras(std::vector<VideoCamera::CameraInfo> & cameras);
         virtual VideoCamera * createCamera();
-        virtual std::string driverName() const { return "cmu"; }
+        virtual QString driverName() const { return "cmu"; }
     };
 
 }

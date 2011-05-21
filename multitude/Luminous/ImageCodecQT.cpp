@@ -44,14 +44,14 @@ namespace Luminous
     return r.canRead();
   }
 
-  std::string ImageCodecQT::extensions() const
+  QString ImageCodecQT::extensions() const
   {
     return m_suffix;
   }
 
-  std::string ImageCodecQT::name() const
+  QString ImageCodecQT::name() const
   {
-    return std::string("ImageCodecQT");
+    return QString("ImageCodecQT");
   }
 
   bool ImageCodecQT::ping(ImageInfo & info, FILE * file)
@@ -237,7 +237,7 @@ namespace Luminous
       return false;
     }
 
-    return qi.save(&f, m_suffix.c_str());
+    return qi.save(&f, m_suffix.toUtf8().data());
   }
 
 }

@@ -25,7 +25,7 @@ namespace Radiant
 
   template<class T> class NotInList : public std::unary_function<T, bool>
   {
-    typedef std::vector<std::string> Arg;
+    typedef std::vector<QString> Arg;
     const Arg & m_arg;
 
     public:
@@ -49,12 +49,12 @@ namespace Radiant
     return dir.mkdir(dirname);
   }
 
-  bool Directory::mkdir(const std::string & dirname)
+  bool Directory::mkdir(const QString & dirname)
   {
     return mkdir(dirname.c_str());
   }
 
-  bool Directory::exists(const std::string & path)
+  bool Directory::exists(const QString & path)
   {
     QDir dir(path.c_str());
     return dir.exists();
@@ -83,7 +83,7 @@ namespace Radiant
 
     // Apply suffix filtering    
     if(!m_suffixes.empty()) {
-      std::vector<std::string>::iterator from = std::remove_if(m_entries.begin(), m_entries.end(), NotInList<std::string> (m_suffixes));
+      std::vector<QString>::iterator from = std::remove_if(m_entries.begin(), m_entries.end(), NotInList<QString> (m_suffixes));
       m_entries.erase(from, m_entries.end());
     }
   }

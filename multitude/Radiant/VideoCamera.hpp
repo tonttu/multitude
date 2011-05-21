@@ -23,6 +23,8 @@
 
 #include <stdint.h>
 
+#include <QString>
+
 namespace Radiant {
   class CameraDriverFactory;
   class CameraDriver;
@@ -47,11 +49,11 @@ namespace Radiant {
       /// The 64-bit unique FireWire identifier
       int64_t m_euid64;
       /// Vendor name, in a human-readable format
-      std::string m_vendor;
+      QString m_vendor;
       /// Camera model, in a human-readable format
-      std::string m_model;
+      QString m_model;
       /// Driver that was used for this camera
-      std::string m_driver;
+      QString m_driver;
     };
 
     /// Camera feature modes
@@ -115,7 +117,8 @@ namespace Radiant {
     /// Camera external trigger polarity
     enum TriggerPolarity {
       TRIGGER_ACTIVE_LOW = 0,
-      TRIGGER_ACTIVE_HIGH
+      TRIGGER_ACTIVE_HIGH,
+      TRIGGER_ACTIVE_UNDEFINED
     };
 
     /// A container of basic camera feature information.

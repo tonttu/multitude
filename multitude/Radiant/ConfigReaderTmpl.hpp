@@ -21,7 +21,7 @@
 namespace Radiant {
 
   template <class T>
-  int ChunkT<T>::numberOf(const std::string & id) const
+  int ChunkT<T>::numberOf(const QString & id) const
   {
     const_iterator it = m_variants.find(id);
     if(it == m_variants.end())
@@ -35,7 +35,7 @@ namespace Radiant {
   }
 
   template <class T>
-  T ChunkT<T>::get(const std::string &id) const
+  T ChunkT<T>::get(const QString &id) const
   {
     const_iterator it = m_variants.find(id);
     if(it != m_variants.end())
@@ -45,8 +45,8 @@ namespace Radiant {
   }
 
   template <class T>
-  T ChunkT<T>::get(const std::string &id,
-                   const std::string &alternateId) const
+  T ChunkT<T>::get(const QString &id,
+                   const QString &alternateId) const
   {
     const_iterator it = m_variants.find(id);
     if(it != m_variants.end())
@@ -61,28 +61,28 @@ namespace Radiant {
   }
   
   template <class T>
-  bool ChunkT<T>::contains(const std::string &id) const
+  bool ChunkT<T>::contains(const QString &id) const
   {
     return m_variants.find(id) != m_variants.end();
   }
 
   template <class T>
-  void ChunkT<T>::set(const std::string & name, const T &v)
+  void ChunkT<T>::set(const QString & name, const T &v)
   {
 		if(clearFirst)
 	  m_variants.erase(name);
-    m_variants.insert(std::pair<std::string, T>(name, v));
+    m_variants.insert(std::pair<QString, T>(name, v));
 	
   }
 
   template <class T>
-  void ChunkT<T>::addChunk(const std::string & name, const ChunkT<T> &v)
+  void ChunkT<T>::addChunk(const QString & name, const ChunkT<T> &v)
   {
     m_chunks.insert(std::make_pair(name, v));
   }
 
   template <class T>
-  const ChunkT<T> & ChunkT<T>::getChunk(const std::string &id) const
+  const ChunkT<T> & ChunkT<T>::getChunk(const QString &id) const
   {
     static ChunkT<T> empty;
     const_chunk_iterator it = m_chunks.find(id);
@@ -100,18 +100,18 @@ namespace Radiant {
   }
 
   template <class T>
-  void ChunkT<T>::override(const std::string & name, const T &v)
+  void ChunkT<T>::override(const QString & name, const T &v)
   { 
     iterator it;
     while((it = m_variants.find(name)) != m_variants.end())
       m_variants.erase(it);
-    m_variants.insert(std::pair<std::string, T>(name, v));
+    m_variants.insert(std::pair<QString, T>(name, v));
   }
 
   template <class T>
   void ChunkT<T>::dump(std::ostream& os, int indent)
   {
-    std::string ws(indent, ' ');
+    QString ws(indent, ' ');
     for(chunk_iterator it = chunkBegin(); it != chunkEnd(); ++it) {
       os << ws << it->first << " {\n";
       it->second.dump(os, indent+2);

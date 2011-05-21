@@ -21,7 +21,7 @@ namespace Luminous {
 
   using namespace Radiant;
 
-  static Radiant::MutexStatic __mutex;
+  static Radiant::Mutex s_mutex;
 
   /* Note that the mipmaps are not deleted upon application exit. This
      is done on purpose: As we are dealing with static data one easily
@@ -53,17 +53,16 @@ namespace Luminous {
     CPUMipmaps * m_mipmaps;
   };
 
-  static std::map<std::string, MipmapItem> __mipmaps;
-  typedef std::map<std::string, MipmapItem> MipMapItemContainer;
+  static std::map<QString, MipmapItem> s_mipmaps;
+  typedef std::map<QString, MipmapItem> MipMapItemContainer;
 
-  CPUMipmaps * CPUMipmapStore::acquire(const std::string & filename, bool immediate)
+  CPUMipmaps * CPUMipmapStore::acquire(const QString & filename, bool immediate)
   {
+    Radiant::Guard g( s_mutex);
 
-    Radiant::GuardStatic g( __mutex);
+    MipMapItemContainer::iterator it = s_mipmaps.find(filename);
 
-    MipMapItemContainer::iterator it = __mipmaps.find(filename);
-
-    if(it !=  __mipmaps.end()) {
+    if(it !=  s_mipmaps.end()) {
       MipmapItem & mmi = (*it).second;
       mmi.incrCount();
       return mmi.m_mipmaps;
@@ -71,18 +70,18 @@ namespace Luminous {
 
     CPUMipmaps * mipmaps = new CPUMipmaps();
 
-    if(!mipmaps->startLoading(filename.c_str(), immediate)) {
+    if(!mipmaps->startLoading(filename.toUtf8().data(), immediate)) {
       delete mipmaps;
       return 0;
     }
 
     Luminous::BGThread::instance()->addTask(mipmaps);
 
-    __mipmaps[filename].m_mipmaps = mipmaps;
-    __mipmaps[filename].incrCount();
+    s_mipmaps[filename].m_mipmaps = mipmaps;
+    s_mipmaps[filename].incrCount();
 
-    debug("CPUMipmapStore::acquire # Created new for %s (%d links)",
-          filename.c_str(), __mipmaps[filename].m_linkCount);
+    debugLuminous("CPUMipmapStore::acquire # Created new for %s (%d links)",
+          filename.toUtf8().data(), s_mipmaps[filename].m_linkCount);
 
     return mipmaps;
   }
@@ -92,16 +91,16 @@ namespace Luminous {
     if(!mipmaps)
       return;
 
-    Radiant::GuardStatic g( __mutex);
+    Radiant::Guard g( s_mutex);
 
-    for(MipMapItemContainer::iterator it = __mipmaps.begin();
-    it != __mipmaps.end(); it++) {
+    for(MipMapItemContainer::iterator it = s_mipmaps.begin();
+    it != s_mipmaps.end(); it++) {
       MipmapItem & mmi = (*it).second;
       if(mmi.m_mipmaps == mipmaps) {
         mmi.decrCount();
         if(!mmi.m_linkCount) {
           // info("Erased mipmaps %p", mipmaps);
-          __mipmaps.erase(it);
+          s_mipmaps.erase(it);
         }
         return;
       }
@@ -110,8 +109,8 @@ namespace Luminous {
 
   unsigned CPUMipmapStore::count()
   {
-    Radiant::GuardStatic g( __mutex);
-    return (unsigned) __mipmaps.size();
+    Radiant::Guard g( s_mutex);
+    return (unsigned) s_mipmaps.size();
   }
 
 }

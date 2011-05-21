@@ -7,10 +7,10 @@
  * See file "Valuable.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef VALUABLE_HASVALUES_HPP
@@ -23,11 +23,15 @@
 #include <Patterns/NotCopyable.hpp>
 
 #include <Radiant/Color.hpp>
+#include <Radiant/Trace.hpp>
 
 #include <v8.h>
 
 #include <map>
-#include <string>
+#include <set>
+
+#include <QString>
+#include <QSet>
 
 #define VO_TYPE_HASVALUES "HasValues"
 
@@ -42,7 +46,7 @@ namespace Valuable
       classes, HasValues simply maintains a list of children.
   */
   /// @todo Examples
-  class VALUABLE_API HasValues : public ValueObject
+  class VALUABLE_API HasValues : public ValueObject, public Patterns::NotCopyable
   {
   public:
     /// Universally unique identifier type
@@ -54,52 +58,62 @@ namespace Valuable
       @param name name of the object
       @param transit should the object changes be transmitted
     */
-    HasValues(HasValues * parent, const std::string & name, bool transit = false);
+    HasValues(HasValues * parent, const QString & name, bool transit = false);
     virtual ~HasValues();
 
     /// Adds new ValueObject to the list of values
-    bool addValue(const std::string & name, ValueObject * const value);
+    bool addValue(const QString & name, ValueObject * const value);
     /// Gets a ValueObject with the given name
     /** If no object can be found, then this method return zero. */
-    ValueObject * getValue(const std::string & name);
+    ValueObject * getValue(const QString & name);
     /// Removes a ValueObject from the list of value.
     void removeValue(ValueObject * const value);
 
     /// @todo add 'shortcut' API
-    // float getValueFloat(const std::string & name, bool * ok = 0, float default = 0.f)
+    // float getValueFloat(const QString & name, bool * ok = 0, float default = 0.f)
     // ...
 
     template<class T>
-    bool setValue(const std::string & name, const T & v)
+    bool setValue(const QString & name, const T & v)
     {
-      size_t cut = name.find("/");
-      std::string next = name.substr(0, cut);
-      std::string rest = name.substr(cut + 1);
+      int cut = name.indexOf("/");
+      QString next, rest;
+      if(cut > 0) {
+        next = name.left(cut);
+        rest = name.mid(cut + 1);
 
-      if(next == std::string("..")) {
-        if(!m_parent) {
-          Radiant::error(
-              "HasValues::setValue # node '%s' has no parent", m_name.c_str());
-          return false;
+        if(next == QString("..")) {
+          if(!m_parent) {
+            Radiant::error(
+                "HasValues::setValue # node '%s' has no parent", m_name.toUtf8().data());
+            return false;
+          }
+
+          return m_parent->setValue(rest, v);
         }
-
-        return m_parent->setValue(rest, v);
+      } else {
+        next = name;
       }
 
       container::iterator it = m_children.find(next);
       if(it == m_children.end()) {
         Radiant::error(
-            "HasValues::setValue # property '%s' not found", next.c_str());
+            "HasValues::setValue # property '%s' not found", next.toUtf8().data());
         return false;
       }
 
-      HasValues * hv = dynamic_cast<HasValues *> (it->second);
-      if(hv)
-        return hv->setValue(rest, v);
-      else {
-        ValueObject * vo = it->second;
-        return vo->set(v);
+      if(cut > 0) {
+        HasValues * hv = dynamic_cast<HasValues *> (it->second);
+        if(hv) return hv->setValue(rest, v);
       }
+
+      ValueObject * vo = it->second;
+      return vo->set(v);
+    }
+
+    bool setValue(const QString & name, v8::Handle<v8::Value> v);
+    bool setValue(const QString & name, v8::Local<v8::Value> v) {
+      return setValue(name, static_cast<v8::Handle<v8::Value> >(v));
     }
 
     /// Saves this object (and its children) to an XML file
@@ -114,18 +128,18 @@ namespace Valuable
     virtual const char * type() const { return VO_TYPE_HASVALUES; }
 
     /// Serializes this object (and its children) to a DOM node
-    virtual ArchiveElement & serialize(Archive &doc);
+    virtual ArchiveElement & serialize(Archive &doc) const;
     /// De-serializes this object (and its children) from a DOM node
     virtual bool deserialize(ArchiveElement & element);
 
     /** Handles a DOM element that lacks automatic handlers. */
     virtual bool readElement(DOMElement element);
 
-    /// Prints the contents of this ValueObject to the terinal
+    /// Prints the contents of this ValueObject to the terminal
     void debugDump();
 
     /// Container for key-value object pairs
-    typedef std::map<std::string, ValueObject *> container;
+    typedef std::map<QString, ValueObject *> container;
     /// Iterator for the container
     typedef container::iterator iterator;
 
@@ -133,6 +147,8 @@ namespace Valuable
     iterator valuesBegin() { return m_children.begin(); }
     /// Returns an iterator to the end of the values
     iterator valuesEnd() { return m_children.end(); }
+
+    const container & valueChildren() { return m_children; }
 
     /** Add an event listener to this object.
 
@@ -206,7 +222,7 @@ namespace Valuable
   protected:
 
     /// Sends an event to all listeners on this object
-    void eventSend(const std::string & id, Radiant::BinaryData &);
+    void eventSend(const QString & id, Radiant::BinaryData &);
     /// @copydoc eventSend
     void eventSend(const char *, Radiant::BinaryData &);
     /// @copydoc eventSend
@@ -215,7 +231,7 @@ namespace Valuable
   private:
     friend class ValueObject; // So that ValueObject can call the function below.
 
-    void childRenamed(const std::string & was, const std::string & now);
+    void childRenamed(const QString & was, const QString & now);
     void addNews();
 
     container m_children;
@@ -229,8 +245,8 @@ namespace Valuable
       Valuable::HasValues * m_listener;
       v8::Persistent<v8::Function> m_func;
       Radiant::BinaryData   m_defaultData;
-      std::string m_from;
-      std::string m_to;
+      QString m_from;
+      QString m_to;
       bool        m_valid;
       int         m_frame;
     };
@@ -241,6 +257,9 @@ namespace Valuable
     typedef std::set<Valuable::HasValues *> Sources;
     Sources m_eventSources;
     bool m_eventsEnabled;
+
+    // set of all valueobjects that this HasValues is listening to
+    QSet<ValueObject*> m_valueListening;
 
     Valuable::ValueIntT<Uuid> m_id;
     // For invalidating the too new ValuePass objects

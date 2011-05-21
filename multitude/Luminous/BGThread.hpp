@@ -22,6 +22,7 @@
 #include <Radiant/Condition.hpp>
 #include <Radiant/Mutex.hpp>
 #include <Radiant/ThreadPool.hpp>
+#include <Radiant/RefPtr.hpp>
 
 #include <list>
 #include <map>
@@ -65,7 +66,7 @@ namespace Luminous
     /** @return Returns the global BGThread instance. If no BGThread has been created
         yet, one will be created now.
         */
-    static BGThread * instance();
+    static std::shared_ptr<BGThread> instance();
 
     /// Container for the tasks
     typedef std::multimap<Priority, Task *, std::greater<Priority> > container;
@@ -96,7 +97,7 @@ namespace Luminous
     int m_idle;
     Radiant::Condition m_idleWait;
 
-    static BGThread * m_instance;
+    static std::weak_ptr<BGThread> m_instance;
   };
 
 }

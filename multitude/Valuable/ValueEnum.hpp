@@ -23,12 +23,18 @@
 namespace Valuable
 {
 
-  ///@todo document, use properly, finish implementation
+  /// @todo document, use properly, finish implementation
 
+  /**
+   * Valuable enum. Similar to ValueFlags, but only one value can be enabled
+   * at a time.
+   *
+   * @see ValueFlags for more information and example
+   */
   class VALUABLE_API ValueEnum : public ValueIntT<int32_t>
   {
   public:
-    /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
+    /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
     ValueEnum(Valuable::HasValues * host, const char * name,
               const char ** enumnames, int current);
     virtual ~ValueEnum();

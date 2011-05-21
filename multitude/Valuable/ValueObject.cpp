@@ -41,7 +41,7 @@ namespace Valuable
     m_transit(false)
   {}
 
-  ValueObject::ValueObject(HasValues * parent, const std::string & name, bool transit)
+  ValueObject::ValueObject(HasValues * parent, const QString & name, bool transit)
     : m_parent(0),
       m_changed(false),
       m_name(name),
@@ -65,7 +65,7 @@ namespace Valuable
     emitDelete();
   }
 
-  void ValueObject::setName(const std::string & s)
+  void ValueObject::setName(const QString & s)
   {
     if(parent())
       parent()->childRenamed(m_name, s);
@@ -73,7 +73,7 @@ namespace Valuable
     m_name = s;
   }
 
-  std::string ValueObject::path() const
+  QString ValueObject::path() const
   {
     if(m_parent)
       return m_parent->path() + "/" + m_name;
@@ -139,7 +139,7 @@ namespace Valuable
   {
     if(ok) *ok = false;
     Radiant::error(
-"ValueObject::asFloat # %s : conversion not available", m_name.c_str());
+"ValueObject::asFloat # %s : conversion not available", m_name.toUtf8().data());
     return 0.0f;
   }
 
@@ -147,27 +147,27 @@ namespace Valuable
   {
     if(ok) *ok = false;
     Radiant::error(
-"ValueObject::asInt # %s : conversion not available", m_name.c_str());
+"ValueObject::asInt # %s : conversion not available", m_name.toUtf8().data());
     return 0;
   }
 
-  std::string ValueObject::asString(bool * ok) const
+  QString ValueObject::asString(bool * ok) const
   {
     if(ok) *ok = false;
     Radiant::error(
-"ValueObject::asString # %s : conversion not available", m_name.c_str());
+"ValueObject::asString # %s : conversion not available", m_name.toUtf8().data());
     return "";
   }
 
-  ArchiveElement & ValueObject::serialize(Archive &archive)
+  ArchiveElement & ValueObject::serialize(Archive &archive) const
   {
-    if(m_name.empty()) {
+    if(m_name.isEmpty()) {
       Radiant::error(
 "ValueObject::serialize # attempt to serialize object with no name");
       return archive.emptyElement();
     }
 
-    ArchiveElement & elem = archive.createElement(m_name.c_str());
+    ArchiveElement & elem = archive.createElement(m_name.toUtf8().data());
     elem.add("type", type());
     elem.set(asString());
 
@@ -176,16 +176,21 @@ namespace Valuable
 
   void ValueObject::emitChange()
   {
-//    Radiant::trace("ValueObject::emitChange # '%s'", m_name.c_str());
+//    Radiant::trace("ValueObject::emitChange # '%s'", m_name.toUtf8().data());
     m_changed = true;
-    m_listeners.emitChange(this);
+    foreach(const ValueListener & l, m_listeners)
+      if(l.role & CHANGE) l.func();
     ChangeMap::addChange(this);
   }
 
   void ValueObject::emitDelete()
   {
     //Radiant::trace("ValueObject::emitDelete");
-    m_listeners.emitDelete(this);
+    foreach(const ValueListener & l, m_listeners) {
+      if(l.role & DELETE) l.func();
+      if(l.listener) l.listener->m_valueListening.remove(this);
+    }
+    m_listeners.clear();
     ChangeMap::addDelete(this);
   }
 
@@ -194,6 +199,41 @@ namespace Valuable
     if(m_parent) {
       m_parent->removeValue(this);
       m_parent = 0;
+    }
+  }
+
+  void ValueObject::addListener(ListenerFunc func, int role)
+  {
+    addListener(0, func, role);
+  }
+
+  void ValueObject::addListener(HasValues * listener, ListenerFunc func, int role)
+  {
+    m_listeners << ValueListener(func, role, listener);
+    if(listener) listener->m_valueListening << listener;
+  }
+
+  void ValueObject::removeListeners(int role)
+  {
+    removeListener(0, role);
+  }
+
+  void ValueObject::removeListener(HasValues * listener, int role)
+  {
+    QList<HasValues*> listeners;
+    for(QList<ValueListener>::iterator it = m_listeners.begin(); it != m_listeners.end(); ) {
+      if(it->role & role && (!listener || listener == it->listener)) {
+        if(it->listener) listeners << it->listener;
+        it = m_listeners.erase(it);
+      } else ++it;
+    }
+
+    foreach(HasValues * listener, listeners) {
+      bool found = false;
+      foreach(const ValueListener & l, m_listeners)
+        if(l.listener == listener) { found = true; break; }
+      if(!found)
+        listener->m_valueListening.remove(this);
     }
   }
 
@@ -216,7 +256,7 @@ namespace Valuable
     return false;
   }
 
-  bool ValueObject::set(const std::string & )
+  bool ValueObject::set(const QString & )
   {
     Radiant::error(
 "ValueObject::set(string) # conversion not available");
@@ -236,5 +276,4 @@ namespace Valuable
 "ValueObject::set(Vector4f) # conversion not available");
     return false;
   }
-
 }

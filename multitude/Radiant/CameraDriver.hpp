@@ -20,9 +20,11 @@
 #include <Radiant/StringUtils.hpp>
 #include <Radiant/VideoCamera.hpp>
 
-#include <string>
+#include <QString>
 #include <map>
 #include <vector>
+
+#include <QStringList>
 
 namespace Radiant
 {
@@ -41,7 +43,7 @@ namespace Radiant
     virtual VideoCamera * createCamera() = 0;
     /// Get the name of this driver
     /// @return name of the driver, e.g. "libdc"
-    virtual std::string driverName() const = 0;
+    virtual QString driverName() const = 0;
   };
 
   /// CameraDriverFactory provides high-level access to different drivers
@@ -53,13 +55,13 @@ namespace Radiant
 
     /// Create a camera instance using the specified driver
     /// @param driver name of the driver to use
-    VideoCamera * createCamera(const std::string & driver);
+    VideoCamera * createCamera(const QString & driver);
     /// Create a camera instance using the first matching driver. The registered drivers are iterated in the order they appear on the preferred drivers list.
     /// @return camera instance from the first matching driver
     VideoCamera * createPreferredCamera();
 
     /// Get the specified camera driver
-    CameraDriver * getCameraDriver(const std::string & driverName);
+    CameraDriver * getCameraDriver(const QString & driverName);
     /// Get the preferred camera driver
     CameraDriver * getPreferredCameraDriver();
 
@@ -70,13 +72,13 @@ namespace Radiant
 
     /// Specify the preferred order of using drivers
     /// @param pref driver names separated by comma, e.g. "libdc,ptgrey,cmu"
-    void setDriverPreference(const std::string & pref);
+    void setDriverPreference(const QString & pref);
 
   private:
-    typedef std::map<std::string, CameraDriver *> DriverMap;
+    typedef std::map<QString, CameraDriver *> DriverMap;
     DriverMap m_drivers;
 
-    Radiant::StringUtils::StringList m_preferredDrivers;
+    QStringList m_preferredDrivers;
   };
 
 }

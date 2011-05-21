@@ -21,7 +21,7 @@
 
 #include <VideoDisplay/Export.hpp>
 
-#include <string>
+#include <QString>
 #include <vector>
 
 namespace VideoDisplay {
@@ -51,7 +51,7 @@ namespace VideoDisplay {
       }
 
       /// The subtitle lines
-      std::vector<std::string> m_lines;
+      std::vector<QString> m_lines;
       /// The earliest time-stamp when one should display this subtitle item
       Radiant::TimeStamp m_begin;
       /// The latest time-stamp when one should display this subtitle item
@@ -75,7 +75,7 @@ namespace VideoDisplay {
     size_t size() const { return m_texts.size(); }
 
     /// Returns the longest subtitle string
-    std::string getLongestSubtitle() const;
+    QString getLongestSubtitle() const;
 
   private:
     typedef std::vector<Text> Texts;

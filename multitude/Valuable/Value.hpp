@@ -48,7 +48,7 @@ namespace Valuable
   /*template <typename T> class Value : public Type<T>::klass
   {
   public:
-    Value(HasValues * parent, const std::string & name, const T & v = T(), bool transit = false)
+    Value(HasValues * parent, const QString & name, const T & v = T(), bool transit = false)
       : Type<T>::klass(parent, name, v, transit) {}
   };*/
 

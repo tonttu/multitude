@@ -49,7 +49,7 @@ void runRead(int port)
 
   int totalBytes = 0;
   for(int i = 0; i < g_iterations; i++) {
-    // std::string fromAddr(host);
+    // QString fromAddr(host);
     // uint16_t fromPort(port);
 
     buf[0] = 0;

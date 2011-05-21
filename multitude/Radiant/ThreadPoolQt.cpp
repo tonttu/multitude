@@ -137,7 +137,7 @@ namespace Radiant {
       return num;
     }
 
-    Radiant::MutexAuto m_mutex;
+    Radiant::Mutex m_mutex;
     ThreadPool & m_threadPool;
     Threads m_threads;
   };

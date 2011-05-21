@@ -18,7 +18,7 @@
 
 #include <Nimble/Export.hpp>
 
-#include <string>
+#include <QString>
 
 namespace Nimble {
 
@@ -189,14 +189,16 @@ namespace Nimble {
   };
 
   /// Histogram of unsigned integers
-  typedef Histogram<unsigned int,256> Histogramu256;
+typedef Histogram<unsigned int,256> Histogramu256;
+typedef Histogram<unsigned int,1024> Histogramu1024;
   /// Histogram of signed integers
   typedef Histogram<int,256> Histogrami256;
 
   // This is needed on Windows
 #ifdef WIN32
 #ifdef NIMBLE_EXPORT
-  template Histogram<unsigned int, 256>;
+template Histogram<unsigned int, 256>;
+template Histogram<unsigned int, 1024>;
   template Histogram<int, 256>;
 #endif
 #endif

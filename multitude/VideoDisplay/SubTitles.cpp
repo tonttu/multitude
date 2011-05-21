@@ -14,6 +14,7 @@
  */
 
 #include "SubTitles.hpp"
+#include "VideoDisplay.hpp"
 
 #include <Radiant/Trace.hpp>
 #include <Radiant/StringUtils.hpp>
@@ -21,6 +22,8 @@
 #include <fstream>
 
 #include <string.h>
+
+#include <QStringList>
 
 namespace VideoDisplay {
 
@@ -142,9 +145,7 @@ namespace VideoDisplay {
       if(!nextLine(in, buf, LEN))
         break;
 
-      Radiant::StringUtils::StringList list;
-
-      Radiant::StringUtils::split(buf, " ", list);
+      QStringList list = QString(buf).split(" ");
 
       if(list.size() != 3) {
         Radiant::error(
@@ -154,15 +155,15 @@ namespace VideoDisplay {
         continue;
       }
 
-      std::string t1 = list.front();
-      std::string t2 = list.back();
+      QString t1 = list.front();
+      QString t2 = list.back();
 
       Text tmp;
 
-      if(!readTime(t1.c_str(), tmp.m_begin))
+      if(!readTime(t1.toUtf8().data(), tmp.m_begin))
         errors++;
 
-      if(!readTime(t2.c_str(), tmp.m_end))
+      if(!readTime(t2.toUtf8().data(), tmp.m_end))
         errors++;
 
       int foo = 0;
@@ -173,7 +174,7 @@ namespace VideoDisplay {
         in.getline(buf, LEN);
 
         bool r = (buf[0] && buf[0] != '\n');
-        //Radiant::debug("SUB READ %s (buf[0] = %d, r = %d)", buf, buf[0], r);
+        //debugVideoDisplay("SUB READ %s (buf[0] = %d, r = %d)", buf, buf[0], r);
         if(r) tmp.m_lines.push_back(buf);
         else break;
       } 
@@ -182,7 +183,7 @@ namespace VideoDisplay {
       //Radiant::StringUtils::eraseNonVisibles(tmp.m_lines[0]);
       //Radiant::StringUtils::eraseNonVisibles(tmp.m_lines[1]);
 
-      Radiant::debug("Subtitle chunk %lf -> %lf %lu lines",
+      debugVideoDisplay("Subtitle chunk %lf -> %lf %lu lines",
         tmp.m_begin.secondsD(), tmp.m_end.secondsD(),
         tmp.m_lines.size());
         
@@ -203,11 +204,11 @@ namespace VideoDisplay {
     return m_current;
   }
 
-  std::string SubTitles::getLongestSubtitle() const
+  QString SubTitles::getLongestSubtitle() const
   {
     size_t longest = 0;
     size_t index = 0;
-    std::string full;
+    QString full;
 
     for(size_t i = 0; i < m_texts.size(); i++) { 
       const Text & text = m_texts[i];
@@ -229,7 +230,7 @@ namespace VideoDisplay {
       full += '\n' + m_texts[index].m_lines[j];
     }
 
-    Radiant::debug("LONGEST SUB %s", full.c_str());
+    debugVideoDisplay("LONGEST SUB %s", full.toUtf8().data());
     return full;
   }
 

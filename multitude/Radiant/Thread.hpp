@@ -17,9 +17,11 @@
 #define RADIANT_THREAD_HPP
 
 #include <Radiant/Export.hpp>
+#include <Radiant/Platform.hpp>
 #include <Patterns/NotCopyable.hpp>
 
 #include <cstring>
+#include <map>
 
 class QThread;
 
@@ -122,6 +124,42 @@ namespace Radiant {
     static bool m_threadDebug;
     static bool m_threadWarnings;
   };
+
+  /// Thread Local Storage implementation.
+  /// Do something like Radiant::TLS<int> foo = 5; and after that you can just
+  /// use the foo as int
+  template <typename T>
+  class TLS
+  {
+    typedef std::map<Thread::id_t, T> Map;
+
+  public:
+    TLS() : m_default() {}
+    TLS(const T& t) : m_default(t) {}
+
+    operator T&()
+    {
+      Thread::id_t id = Thread::myThreadId();
+      typename Map::iterator it = m_values.find(id);
+      if(it == m_values.end()) {
+        m_values[id] = m_default;
+        return m_values[id];
+      }
+      return it->second;
+    }
+
+  private:
+    T m_default;
+    Map m_values;
+  };
+
+#if defined(RADIANT_LINUX)
+  #define RADIANT_TLS(type) __thread type
+#elif defined(RADIANT_WIN32)
+  #define RADIANT_TLS(type) __declspec(thread) type
+#else
+  #define RADIANT_TLS(type) TLS<type>
+#endif
 
 }
 

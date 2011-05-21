@@ -15,6 +15,7 @@
 
 #include <Radiant/StringUtils.hpp>
 #include <Radiant/Trace.hpp>
+#include "Radiant.hpp"
 
 #include "SMRingBuffer.hpp"
 
@@ -58,7 +59,7 @@ namespace Radiant
   // Construction / destruction.
 
 #ifdef WIN32
-  SMRingBuffer::SMRingBuffer(const std::string smName, const uint32_t size)
+  SMRingBuffer::SMRingBuffer(const QString smName, const uint32_t size)
     : m_isCreator(false),
       m_smName(smName),
       m_hMapFile(0),
@@ -85,11 +86,11 @@ namespace Radiant
       {
         if(::CloseHandle(hMapFile))
         {
-          debug("%s # Successfully removed existing shared memory area with same name.", fnName);
+          debugRadiant("%s # Successfully removed existing shared memory area with same name.", fnName);
         }
         else
         {
-          error("%s # Failed to remove existing shared memory area with same name (%s).", fnName, StringUtils::getLastErrorMessage().c_str());
+          error("%s # Failed to remove existing shared memory area with same name (%s).", fnName, StringUtils::getLastErrorMessage().toUtf8().data());
           assert(0);
         }
       }
@@ -100,11 +101,11 @@ namespace Radiant
       if(m_hMapFile)
       {
         m_isCreator = true;
-        debug("%s # Successfully created new shared memory area (%s).", fnName);
+        debugRadiant("%s # Successfully created new shared memory area (%s).", fnName);
       }
       else
       {
-        error("%s # Failed to create new shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().c_str());
+        error("%s # Failed to create new shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().toUtf8().data());
         assert(0);
       }
     }
@@ -114,11 +115,11 @@ namespace Radiant
       m_hMapFile = ::OpenFileMappingA(FILE_MAP_ALL_ACCESS, false, m_smName.c_str());
       if(m_hMapFile)
       {
-        debug("%s # Successfully accessed existing shared memory area (%s).", fnName);
+        debugRadiant("%s # Successfully accessed existing shared memory area (%s).", fnName);
       }
       else
       {
-        error("%s # Failed to access existing shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().c_str());
+        error("%s # Failed to access existing shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().toUtf8().data());
         assert(0);
       } 
     }
@@ -128,11 +129,11 @@ namespace Radiant
     char * const  smPtr = (char *)(::MapViewOfFile(m_hMapFile, FILE_MAP_ALL_ACCESS, 0, 0, size));
     if(smPtr)
     {
-      debug("%s # Successfully obtained pointer to shared memory area.", fnName);
+      debugRadiant("%s # Successfully obtained pointer to shared memory area.", fnName);
     }
     else
     {
-      error("%s # Failed to obtain pointer to shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().c_str());
+      error("%s # Failed to obtain pointer to shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().toUtf8().data());
       assert(0);
     }
 
@@ -183,7 +184,7 @@ namespace Radiant
         }
         else
         {
-          Radiant::error("%s # Failed to remove existing shared memory area with same key (%s).", fnName, shmError().c_str());
+          Radiant::error("%s # Failed to remove existing shared memory area with same key (%s).", fnName, shmError().toUtf8().data());
           assert(0);
         }
       }
@@ -201,7 +202,7 @@ namespace Radiant
       }
       else
       {
-        Radiant::error("%s # Failed to create new shared memory area (%s).", fnName, shmError().c_str());
+        Radiant::error("%s # Failed to create new shared memory area (%s).", fnName, shmError().toUtf8().data());
         assert(0);
       }
     }
@@ -215,7 +216,7 @@ namespace Radiant
       }
       else
       {
-        Radiant::error("%s # Failed to access existing shared memory area (%s).", fnName, shmError().c_str());
+        Radiant::error("%s # Failed to access existing shared memory area (%s).", fnName, shmError().toUtf8().data());
         assert(0);
       }
     }
@@ -229,7 +230,7 @@ namespace Radiant
     }
     else
     {
-      Radiant::error("%s # Failed to obtain pointer to shared memory area (%s)", fnName, shmError().c_str());
+      Radiant::error("%s # Failed to obtain pointer to shared memory area (%s)", fnName, shmError().toUtf8().data());
       assert(0);
     }
 
@@ -266,7 +267,7 @@ namespace Radiant
     }
     else
     {
-      Radiant::error("%s # Failed to detach shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().c_str());
+      Radiant::error("%s # Failed to detach shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().toUtf8().data());
     }
 
     // Only the creating object can destroy the SMA, after the last detach, i.e. when no more
@@ -280,7 +281,7 @@ namespace Radiant
       }
       else
       {
-        Radiant::error("%s # Failed to destroy shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().c_str());
+        Radiant::error("%s # Failed to destroy shared memory area (%s).", fnName, StringUtils::getLastErrorMessage().toUtf8().data());
       }
     }
   }
@@ -300,7 +301,7 @@ namespace Radiant
     }
     else
     {
-      Radiant::error("%s # Failed to detach shared memory area (%s).", fnName, shmError().c_str());
+      Radiant::error("%s # Failed to detach shared memory area (%s).", fnName, shmError().toUtf8().data());
     }
 
     // Only the creating object can destroy the SMA, after the last detach, i.e. when no more
@@ -314,7 +315,7 @@ namespace Radiant
       }
       else
       {
-        Radiant::error("%s # Failed to destroy shared memory area (%s).", fnName, shmError().c_str());
+        Radiant::error("%s # Failed to destroy shared memory area (%s).", fnName, shmError().toUtf8().data());
       }
     }
   }
@@ -707,7 +708,7 @@ namespace Radiant
     return n +  4;
   }
 
-  bool SMRingBuffer::readString(std::string & str)
+  bool SMRingBuffer::readString(QString & str)
   {
     int32_t tmp = 0;
     int n = read( & tmp, 4);
@@ -715,13 +716,17 @@ namespace Radiant
     if(n != 4)
       return false;
 
-    str.resize(tmp);
+    QByteArray ba(tmp, '\0');
 
     if(tmp) {
-      n = read( & str[0], tmp);
+      n = read(ba.data(), tmp);
     }
 
-    return tmp == n;
+    if(tmp == n) {
+      str = QString::fromUtf8(ba);
+      return true;
+    }
+    return false;
   }
   
 
@@ -768,9 +773,9 @@ namespace Radiant
   // Diagnostics.
 
 #ifndef WIN32
-  std::string SMRingBuffer::shmError()
+  QString SMRingBuffer::shmError()
   {
-    std::string   errMsg;
+    QString   errMsg;
 
     switch(errno)
     {
@@ -796,9 +801,7 @@ namespace Radiant
 
       default:
       {
-        std::stringstream  ss;
-        ss << errno;
-        errMsg = std::string("errno = ") + ss.str();
+        errMsg = QString("errno = %1").arg(errno);
       }
     }
 
@@ -819,26 +822,26 @@ namespace Radiant
 
   void SMRingBuffer::dump() const
   {
-    debug("m_isCreator = %s", m_isCreator ? "true" : "false");
+    debugRadiant("m_isCreator = %s", m_isCreator ? "true" : "false");
 #ifdef WIN32
-    debug("m_smName = %s", m_smName.c_str());
-    debug("m_hMapFile = %p", m_hMapFile);
+    debugRadiant("m_smName = %s", m_smName.c_str());
+    debugRadiant("m_hMapFile = %p", m_hMapFile);
 #else
-    debug("m_smKey = %lu", (unsigned long)(m_smKey));
-    debug("m_id = %d", m_id);
+    debugRadiant("m_smKey = %lu", (unsigned long)(m_smKey));
+    debugRadiant("m_id = %d", m_id);
 #endif
-    debug("size() = %lu", (unsigned long)(size()));
-    debug("m_startPtr = %p", m_startPtr);
+    debugRadiant("size() = %lu", (unsigned long)(size()));
+    debugRadiant("m_startPtr = %p", m_startPtr);
 
-    debug("writePos() = %lu", (unsigned long)(writePos()));
-    debug("readPos() = %lu", (unsigned long)(readPos()));
-    debug("readWriteState() = %lu", (unsigned long)(readWriteState()));
+    debugRadiant("writePos() = %lu", (unsigned long)(writePos()));
+    debugRadiant("readPos() = %lu", (unsigned long)(readPos()));
+    debugRadiant("readWriteState() = %lu", (unsigned long)(readWriteState()));
 
-    debug("used = %lu", (unsigned long)(used()));
-    debug("available() = %lu", (unsigned long)(available()));
+    debugRadiant("used = %lu", (unsigned long)(used()));
+    debugRadiant("available() = %lu", (unsigned long)(available()));
 
-    debug("isEmpty() = %s", isEmpty() ? "true" : "false");
-    debug("isFull() = %s", isFull() ? "true" : "false");
+    debugRadiant("isEmpty() = %s", isEmpty() ? "true" : "false");
+    debugRadiant("isFull() = %s", isFull() ? "true" : "false");
   }
 
 }

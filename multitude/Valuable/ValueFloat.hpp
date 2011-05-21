@@ -21,13 +21,10 @@
 #include <Valuable/Export.hpp>
 #include <Valuable/ValueNumeric.hpp>
 
-#define VALUEMIT_STD_OP this->emitChange(); return *this;
-
 #define VO_TYPE_FLOAT "float"
 
 namespace Valuable
 {
-
   /// Template class for floating-point values.
   /** The actual value objects are created by using ValueFloatT<float>
       etc.
@@ -40,17 +37,35 @@ namespace Valuable
 
     public:
       ValueFloatT() : Base() {}
-      /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
+      /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
       /// @param v The numeric value of this object
-      ValueFloatT(HasValues * parent, const std::string & name, T v = T(0), bool transit = false)
+      ValueFloatT(HasValues * parent, const QString & name, T v = T(0), bool transit = false)
       : ValueNumeric<T>(parent, name, v, transit)
       {}
 
       /// Copies a float
-      inline ValueFloatT<T> & operator = (T i) { Base::m_value = i; VALUEMIT_STD_OP }
+      inline ValueFloatT<T> & operator = (T i)
+      {
+        if(Nimble::Math::Abs(Base::m_value - i) > T(Nimble::Math::EPSILON)) {
+          Base::m_value = i;
+          this->emitChange();
+        }
+        return *this;
+      }
 
-      /// Returns the data in its native format
-      const T & data() const { return Base::m_value; }
+      /// Assignment by subtraction
+      ValueFloatT<T> & operator -= (T i) { return (*this = Base::m_value - i); }
+      /// Assignment by addition
+      ValueFloatT<T> & operator += (T i) { return (*this = Base::m_value + i); }
+      /// Assignment by multiplication
+      ValueFloatT<T> & operator *= (T i) { return (*this = Base::m_value * i); }
+      /// Assignment by division
+      ValueFloatT<T> & operator /= (T i) { return (*this = Base::m_value / i); }
+
+      /// Sets the numeric value
+      inline virtual bool set(int v) { *this = v; return true; }
+      /// @copydoc set
+      inline virtual bool set(float v) { *this = v; return true; }
 
       const char * type() const { return VO_TYPE_FLOAT; }
 
@@ -73,7 +88,5 @@ namespace Valuable
 #endif
 
 }
-
-#undef VALUEMIT_STD_OP
 
 #endif

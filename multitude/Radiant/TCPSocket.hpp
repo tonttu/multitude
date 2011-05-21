@@ -20,7 +20,7 @@
 
 #include <Radiant/BinaryStream.hpp>
 
-#include <string>
+#include <QString>
 
 struct in_addr;
 
@@ -56,7 +56,7 @@ namespace Radiant {
     bool isOpen() const;
 
     /// Returns the hostname
-    const char * host() const;
+    QString host() const;
     /// Returns the port number
     int port() const;
 

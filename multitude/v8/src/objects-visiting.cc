@@ -88,6 +88,11 @@ StaticVisitorBase::VisitorId StaticVisitorBase::GetVisitorId(
     case SHARED_FUNCTION_INFO_TYPE:
       return kVisitSharedFunctionInfo;
 
+    case JS_PROXY_TYPE:
+      return GetVisitorIdForSize(kVisitDataObject,
+                                 kVisitDataObjectGeneric,
+                                 JSProxy::kSize);
+
     case PROXY_TYPE:
       return GetVisitorIdForSize(kVisitDataObject,
                                  kVisitDataObjectGeneric,
@@ -104,6 +109,7 @@ StaticVisitorBase::VisitorId StaticVisitorBase::GetVisitorId(
     case JS_GLOBAL_PROXY_TYPE:
     case JS_GLOBAL_OBJECT_TYPE:
     case JS_BUILTINS_OBJECT_TYPE:
+    case JS_MESSAGE_OBJECT_TYPE:
       return GetVisitorIdForSize(kVisitJSObject,
                                  kVisitJSObjectGeneric,
                                  instance_size);
@@ -112,7 +118,7 @@ StaticVisitorBase::VisitorId StaticVisitorBase::GetVisitorId(
       return kVisitJSFunction;
 
     case HEAP_NUMBER_TYPE:
-    case PIXEL_ARRAY_TYPE:
+    case EXTERNAL_PIXEL_ARRAY_TYPE:
     case EXTERNAL_BYTE_ARRAY_TYPE:
     case EXTERNAL_UNSIGNED_BYTE_ARRAY_TYPE:
     case EXTERNAL_SHORT_ARRAY_TYPE:
@@ -120,6 +126,7 @@ StaticVisitorBase::VisitorId StaticVisitorBase::GetVisitorId(
     case EXTERNAL_INT_ARRAY_TYPE:
     case EXTERNAL_UNSIGNED_INT_ARRAY_TYPE:
     case EXTERNAL_FLOAT_ARRAY_TYPE:
+    case EXTERNAL_DOUBLE_ARRAY_TYPE:
       return GetVisitorIdForSize(kVisitDataObject,
                                  kVisitDataObjectGeneric,
                                  instance_size);

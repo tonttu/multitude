@@ -24,13 +24,14 @@
 
 #include <Valuable/Archive.hpp>
 #include <Valuable/Export.hpp>
-#include <Valuable/ValueListener.hpp>
 
-#include <set>
-#include <string>
+#include <QString>
+#include <QList>
 
 #include <Valuable/DOMElement.hpp>
 #include <Radiant/MemCheck.hpp>
+
+#include <functional>
 
 namespace Valuable
 {
@@ -49,7 +50,7 @@ namespace Valuable
     virtual ~Serializable() {}
 
     /// Serializes (writes) this object to an XML element, and returns the new element.
-    virtual ArchiveElement & serialize(Archive & archive) = 0;
+    virtual ArchiveElement & serialize(Archive & archive) const = 0;
 
     /// Deserializes (reads) this object from an XML element.
     /** @return Returns true if the read process worked correctly, and false otherwise. */
@@ -65,7 +66,7 @@ namespace Valuable
 
       Typical child classes include some POD (plain old data) elements
       (floats, ints, vector2) etc, that can be accessed through the
-      API. The ValueObjects have names (std::string), that can be used to access
+      API. The ValueObjects have names (QString), that can be used to access
       ValueObjects that are stored inside HasValues objects.
 
       It is also possible to add listeners to values, so that if a
@@ -82,6 +83,13 @@ namespace Valuable
   class VALUABLE_API ValueObject : public Serializable
   {
   public:
+    typedef std::function<void ()> ListenerFunc;
+    enum ListenerRole {
+      DELETE = 1 << 0,
+      CHANGE = 1 << 1,
+      ALL = (CHANGE << 1) -1
+    };
+
     ValueObject();
     /// The copy constructor creates a copy of the ValueObject WITHOUT the
     /// link to parent
@@ -99,15 +107,15 @@ namespace Valuable
     is related to future uses, and can be largely ignored at the
     moment.
     */
-    ValueObject(HasValues * parent, const std::string & name, bool transit = false);
+    ValueObject(HasValues * parent, const QString & name, bool transit = false);
     virtual ~ValueObject();
 
     /// Returns the name of the object.
-    const std::string & name() const { return m_name; }
+    const QString & name() const { return m_name; }
     /// Sets the name of the object
-    void setName(const std::string & s);
+    void setName(const QString & s);
     /// Returns the path (separated by '/'s) from the root
-    std::string path() const;
+    QString path() const;
 
     /// Process a message
     /** This method is a key element in the event-passing system.
@@ -169,14 +177,14 @@ namespace Valuable
     /// Converts the value object to a string
     /** The default implementation returns an empty string, and sets the
         ok pointer to false (if it is non-null). */
-    virtual std::string asString(bool * const ok = 0) const;
+    virtual QString asString(bool * const ok = 0) const;
 
     /// Sets the value of the object
     virtual bool set(float v);
     /// Sets the value of the object
     virtual bool set(int v);
     /// Sets the value of the object
-    virtual bool set(const std::string & v);
+    virtual bool set(const QString & v);
     /// Sets the value of the object
     virtual bool set(const Nimble::Vector2f & v);
     /// Sets the value of the object
@@ -186,17 +194,22 @@ namespace Valuable
     virtual const char * type() const = 0;
 
     /** The object is serialized using its name as a tag name. */
-    virtual ArchiveElement & serialize(Archive &archive);
+    virtual ArchiveElement & serialize(Archive &archive) const;
 
     /** The parent object of the value object (is any). */
-    HasValues * parent() { return m_parent; }
+    HasValues * parent() const { return m_parent; }
     /** Sets the parent pointer to zero and removes this object from the parent. */
     void removeParent();
 
     /// Adds a listener that is invoked whenever the value is changed
-    void addListener(ValueListener * l) { m_listeners.push_back(l); }
+    void addListener(ListenerFunc func, int role = CHANGE);
+    /// Adds a listener that is invoked whenever the value is changed
+    /// The listener is removed when the listener object is deleted
+    void addListener(HasValues * listener, ListenerFunc func, int role = CHANGE);
+    /// Removes listeners from the listener list
+    void removeListeners(int role = ALL);
     /// Removes a listener from the listener list
-    void removeListener(ValueListener * l) { m_listeners.remove(l); }
+    void removeListener(HasValues * listener, int role = ALL);
 
     /// Returns true if the current value of the object is different from the original value.
     virtual bool isChanged() const;
@@ -212,10 +225,19 @@ namespace Valuable
     // The object that holds this object
     HasValues * m_parent;
     bool m_changed;
-    std::string m_name;
+    QString m_name;
     bool m_transit;
 
-    ValueListeners m_listeners;
+    struct ValueListener
+    {
+      ValueListener(ListenerFunc func_, int role_, HasValues * listener_ = 0)
+        : func(func_), role(role_), listener(listener_) {}
+
+      ListenerFunc func;
+      int role;
+      HasValues * listener;
+    };
+    QList<ValueListener> m_listeners;
 
     friend class HasValues;
   };
@@ -230,7 +252,7 @@ namespace Valuable
     /// @param name name of the value
     /// @param v the default/original value of the object
     /// @param transit ignored
-    ValueObjectT(HasValues * parent, const std::string & name, const T & v = T(), bool transit = false)
+    ValueObjectT(HasValues * parent, const QString & name, const T & v = T(), bool transit = false)
       : ValueObject(parent, name, transit),
       m_value(v),
       m_orig(v) {}
@@ -242,8 +264,6 @@ namespace Valuable
 
     /// Access the wrapped object with the dereference operator
     inline const T & operator * () const { return m_value; }
-    /// Typecast operator for the wrapped value
-    inline operator T & () { return m_value; }
     /// Typecast operator for the wrapped value
     inline operator const T & () const { return m_value; }
     /// Use the arrow operator to access fields inside the wrapped object.

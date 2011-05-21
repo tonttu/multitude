@@ -146,7 +146,7 @@ namespace VideoDisplay {
 
     size_t finalFrames()   const { return m_finalFrames; }
 
-    const char * name() { return m_name.c_str(); }
+    QString name() { return m_name; }
 
     VIDEODISPLAY_API static void setDebug(int level);
     VIDEODISPLAY_API static void toggleDebug();
@@ -227,10 +227,10 @@ namespace VideoDisplay {
     volatile bool m_continue;
 
     Radiant::Condition m_vcond;
-    Radiant::MutexAuto m_vmutex;
+    Radiant::Mutex m_vmutex;
 
     Radiant::Condition m_acond;
-    Radiant::MutexAuto m_amutex;
+    Radiant::Mutex m_amutex;
 
     float          m_fps;
     bool           m_done;
@@ -238,21 +238,21 @@ namespace VideoDisplay {
     bool           m_decoding;
     bool           m_atEnd;
 
-    std::string    m_name;
+    QString    m_name;
 
     static int     m_debug;
 
     volatile unsigned m_consumedRequests;
     volatile unsigned m_queuedRequests;
     Req               m_requests[REQUEST_QUEUE_SIZE];
-    Radiant::MutexAuto m_requestMutex;
+    Radiant::Mutex m_requestMutex;
 
     Radiant::TimeStamp m_frameTime;
     Radiant::TimeStamp m_displayFrameTime;
 
     AudioTransfer     *m_listener;
 
-    Radiant::MutexAuto m_mutex;
+    Radiant::Mutex m_mutex;
 
     /// @endcond
   private:

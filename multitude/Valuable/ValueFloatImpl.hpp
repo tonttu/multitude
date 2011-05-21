@@ -25,8 +25,7 @@ namespace Valuable
   template<class T>
   bool ValueFloatT<T>::deserialize(ArchiveElement & e)
   {
-    Base::m_value = atof(e.get().c_str());
-    this->emitChange();
+    *this = e.get().toFloat();
     return true;
   }
 

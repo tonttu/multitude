@@ -32,7 +32,7 @@ namespace Radiant
   namespace PlatformUtils
   {
 
-    std::string getExecutablePath()
+    QString getExecutablePath()
     {
       CFURLRef url = CFBundleCopyBundleURL(CFBundleGetMainBundle());
 
@@ -43,12 +43,12 @@ namespace Radiant
       return buf.str();
     }
 
-    std::string getUserHomePath()
+    QString getUserHomePath()
     {
-      return std::string(getenv("HOME"));
+      return QString(getenv("HOME"));
     }
 
-    std::string getModuleGlobalDataPath(const char * module, bool isapplication)
+    QString getModuleGlobalDataPath(const char * module, bool isapplication)
     {
       assert(strlen(module) < 128);
       char buf[312];
@@ -62,14 +62,14 @@ namespace Radiant
       return buf;
     }
 
-    std::string getModuleUserDataPath(const char * module, bool isapplication)
+    QString getModuleUserDataPath(const char * module, bool isapplication)
     {
       (void) isapplication;
 
       assert(strlen(module) < 128);
       char buf[312];
 
-      sprintf(buf, "%s/Library/%s", getUserHomePath().c_str(), module);
+      sprintf(buf, "%s/Library/%s", getUserHomePath().toUtf8().data(), module);
 
       return buf;
     }

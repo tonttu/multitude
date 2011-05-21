@@ -1,4 +1,4 @@
-// Copyright 2010 the V8 project authors. All rights reserved.
+// Copyright 2011 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -28,10 +28,10 @@
 #ifndef V8_AST_H_
 #define V8_AST_H_
 
+#include "allocation.h"
 #include "execution.h"
 #include "factory.h"
 #include "jsregexp.h"
-#include "jump-target.h"
 #include "runtime.h"
 #include "token.h"
 #include "variables.h"
@@ -75,7 +75,6 @@ namespace internal {
   V(FunctionLiteral)                            \
   V(SharedFunctionInfoLiteral)                  \
   V(Conditional)                                \
-  V(Slot)                                       \
   V(VariableProxy)                              \
   V(Literal)                                    \
   V(RegExpLiteral)                              \
@@ -89,7 +88,6 @@ namespace internal {
   V(CallNew)                                    \
   V(CallRuntime)                                \
   V(UnaryOperation)                             \
-  V(IncrementOperation)                         \
   V(CountOperation)                             \
   V(BinaryOperation)                            \
   V(CompareOperation)                           \
@@ -102,10 +100,11 @@ namespace internal {
   EXPRESSION_NODE_LIST(V)
 
 // Forward declarations
-class TargetCollector;
-class MaterializedLiteral;
-class DefinitionInfo;
 class BitVector;
+class DefinitionInfo;
+class MaterializedLiteral;
+class TargetCollector;
+class TypeFeedbackOracle;
 
 #define DEF_FORWARD_DECLARATION(type) class type;
 AST_NODE_LIST(DEF_FORWARD_DECLARATION)
@@ -133,6 +132,14 @@ class AstNode: public ZoneObject {
   };
 #undef DECLARE_TYPE_ENUM
 
+  static const int kNoNumber = -1;
+  static const int kFunctionEntryId = 2;  // Using 0 could disguise errors.
+
+  AstNode() : id_(GetNextId()) {
+    Isolate* isolate = Isolate::Current();
+    isolate->set_ast_node_count(isolate->ast_node_count() + 1);
+  }
+
   virtual ~AstNode() { }
 
   virtual void Accept(AstVisitor* v) = 0;
@@ -150,6 +157,33 @@ class AstNode: public ZoneObject {
   virtual BreakableStatement* AsBreakableStatement() { return NULL; }
   virtual IterationStatement* AsIterationStatement() { return NULL; }
   virtual MaterializedLiteral* AsMaterializedLiteral() { return NULL; }
+  virtual Slot* AsSlot() { return NULL; }
+
+  // True if the node is simple enough for us to inline calls containing it.
+  virtual bool IsInlineable() const = 0;
+
+  static int Count() { return Isolate::Current()->ast_node_count(); }
+  static void ResetIds() { Isolate::Current()->set_ast_node_id(0); }
+  unsigned id() const { return id_; }
+
+ protected:
+  static unsigned GetNextId() {
+    Isolate* isolate = Isolate::Current();
+    unsigned tmp = isolate->ast_node_id();
+    isolate->set_ast_node_id(tmp + 1);
+    return tmp;
+  }
+  static unsigned ReserveIdRange(int n) {
+    Isolate* isolate = Isolate::Current();
+    unsigned tmp = isolate->ast_node_id();
+    isolate->set_ast_node_id(tmp + n);
+    return tmp;
+  }
+
+ private:
+  unsigned id_;
+
+  friend class CaseClause;  // Generates AST IDs.
 };
 
 
@@ -174,12 +208,33 @@ class Statement: public AstNode {
 
 class Expression: public AstNode {
  public:
-  Expression() : bitfields_(0) {}
+  enum Context {
+    // Not assigned a context yet, or else will not be visited during
+    // code generation.
+    kUninitialized,
+    // Evaluated for its side effects.
+    kEffect,
+    // Evaluated for its value (and side effects).
+    kValue,
+    // Evaluated for control flow (and side effects).
+    kTest
+  };
+
+  Expression() {}
+
+  virtual int position() const {
+    UNREACHABLE();
+    return 0;
+  }
 
   virtual Expression* AsExpression()  { return this; }
 
   virtual bool IsTrivial() { return false; }
   virtual bool IsValidLeftHandSide() { return false; }
+
+  // Helpers for ToBoolean conversion.
+  virtual bool ToBooleanIsTrue() { return false; }
+  virtual bool ToBooleanIsFalse() { return false; }
 
   // Symbols that cannot be parsed as array indices are considered property
   // names.  We do not treat symbols that can be array indexes as property
@@ -198,70 +253,33 @@ class Expression: public AstNode {
   // True iff the expression is a literal represented as a smi.
   virtual bool IsSmiLiteral() { return false; }
 
-  // Static type information for this expression.
-  StaticType* type() { return &type_; }
-
-  // True if the expression is a loop condition.
-  bool is_loop_condition() const {
-    return LoopConditionField::decode(bitfields_);
+  // Type feedback information for assignments and properties.
+  virtual bool IsMonomorphic() {
+    UNREACHABLE();
+    return false;
   }
-  void set_is_loop_condition(bool flag) {
-    bitfields_ = (bitfields_ & ~LoopConditionField::mask()) |
-        LoopConditionField::encode(flag);
+  virtual bool IsArrayLength() {
+    UNREACHABLE();
+    return false;
   }
-
-  // The value of the expression is guaranteed to be a smi, because the
-  // top operation is a bit operation with a mask, or a shift.
-  bool GuaranteedSmiResult();
-
-  // AST analysis results.
-  void CopyAnalysisResultsFrom(Expression* other);
-
-  // True if the expression rooted at this node can be compiled by the
-  // side-effect free compiler.
-  bool side_effect_free() { return SideEffectFreeField::decode(bitfields_); }
-  void set_side_effect_free(bool is_side_effect_free) {
-    bitfields_ &= ~SideEffectFreeField::mask();
-    bitfields_ |= SideEffectFreeField::encode(is_side_effect_free);
+  virtual ZoneMapList* GetReceiverTypes() {
+    UNREACHABLE();
+    return NULL;
+  }
+  virtual Handle<Map> GetMonomorphicReceiverType() {
+    UNREACHABLE();
+    return Handle<Map>();
   }
 
-  // Will the use of this expression treat -0 the same as 0 in all cases?
-  // If so, we can return 0 instead of -0 if we want to, to optimize code.
-  bool no_negative_zero() { return NoNegativeZeroField::decode(bitfields_); }
-  void set_no_negative_zero(bool no_negative_zero) {
-    bitfields_ &= ~NoNegativeZeroField::mask();
-    bitfields_ |= NoNegativeZeroField::encode(no_negative_zero);
+  ExternalArrayType external_array_type() const {
+    return external_array_type_;
   }
-
-  // Will ToInt32 (ECMA 262-3 9.5) or ToUint32 (ECMA 262-3 9.6)
-  // be applied to the value of this expression?
-  // If so, we may be able to optimize the calculation of the value.
-  bool to_int32() { return ToInt32Field::decode(bitfields_); }
-  void set_to_int32(bool to_int32) {
-    bitfields_ &= ~ToInt32Field::mask();
-    bitfields_ |= ToInt32Field::encode(to_int32);
-  }
-
-  // How many bitwise logical or shift operators are used in this expression?
-  int num_bit_ops() { return NumBitOpsField::decode(bitfields_); }
-  void set_num_bit_ops(int num_bit_ops) {
-    bitfields_ &= ~NumBitOpsField::mask();
-    num_bit_ops = Min(num_bit_ops, kMaxNumBitOps);
-    bitfields_ |= NumBitOpsField::encode(num_bit_ops);
+  void set_external_array_type(ExternalArrayType array_type) {
+    external_array_type_ = array_type;
   }
 
  private:
-  static const int kMaxNumBitOps = (1 << 5) - 1;
-
-  uint32_t bitfields_;
-  StaticType type_;
-
-  // Using template BitField<type, start, size>.
-  class SideEffectFreeField : public BitField<bool, 0, 1> {};
-  class NoNegativeZeroField : public BitField<bool, 1, 1> {};
-  class ToInt32Field : public BitField<bool, 2, 1> {};
-  class NumBitOpsField : public BitField<int, 3, 5> {};
-  class LoopConditionField: public BitField<bool, 8, 1> {};
+  ExternalArrayType external_array_type_;
 };
 
 
@@ -274,10 +292,7 @@ class ValidLeftHandSideSentinel: public Expression {
  public:
   virtual bool IsValidLeftHandSide() { return true; }
   virtual void Accept(AstVisitor* v) { UNREACHABLE(); }
-  static ValidLeftHandSideSentinel* instance() { return &instance_; }
-
- private:
-  static ValidLeftHandSideSentinel instance_;
+  virtual bool IsInlineable() const;
 };
 
 
@@ -296,10 +311,14 @@ class BreakableStatement: public Statement {
   virtual BreakableStatement* AsBreakableStatement() { return this; }
 
   // Code generation
-  BreakTarget* break_target() { return &break_target_; }
+  Label* break_target() { return &break_target_; }
 
   // Testers.
   bool is_target_for_anonymous() const { return type_ == TARGET_FOR_ANONYMOUS; }
+
+  // Bailout support.
+  int EntryId() const { return entry_id_; }
+  int ExitId() const { return exit_id_; }
 
  protected:
   inline BreakableStatement(ZoneStringList* labels, Type type);
@@ -307,7 +326,9 @@ class BreakableStatement: public Statement {
  private:
   ZoneStringList* labels_;
   Type type_;
-  BreakTarget break_target_;
+  Label break_target_;
+  int entry_id_;
+  int exit_id_;
 };
 
 
@@ -326,6 +347,8 @@ class Block: public BreakableStatement {
     if (statements_.length() != 1) return NULL;
     return statements_[0]->StatementAsCountOperation();
   }
+
+  virtual bool IsInlineable() const;
 
   void AddStatement(Statement* statement) { statements_.Add(statement); }
 
@@ -354,6 +377,7 @@ class Declaration: public AstNode {
   VariableProxy* proxy() const { return proxy_; }
   Variable::Mode mode() const { return mode_; }
   FunctionLiteral* fun() const { return fun_; }  // may be NULL
+  virtual bool IsInlineable() const;
 
  private:
   VariableProxy* proxy_;
@@ -368,10 +392,13 @@ class IterationStatement: public BreakableStatement {
   virtual IterationStatement* AsIterationStatement() { return this; }
 
   Statement* body() const { return body_; }
-  void set_body(Statement* stmt) { body_ = stmt; }
+
+  // Bailout support.
+  int OsrEntryId() const { return osr_entry_id_; }
+  virtual int ContinueId() const = 0;
 
   // Code generation
-  BreakTarget* continue_target()  { return &continue_target_; }
+  Label* continue_target()  { return &continue_target_; }
 
  protected:
   explicit inline IterationStatement(ZoneStringList* labels);
@@ -382,7 +409,8 @@ class IterationStatement: public BreakableStatement {
 
  private:
   Statement* body_;
-  BreakTarget continue_target_;
+  Label continue_target_;
+  int osr_entry_id_;
 };
 
 
@@ -404,15 +432,23 @@ class DoWhileStatement: public IterationStatement {
   int condition_position() { return condition_position_; }
   void set_condition_position(int pos) { condition_position_ = pos; }
 
+  // Bailout support.
+  virtual int ContinueId() const { return continue_id_; }
+  int BackEdgeId() const { return back_edge_id_; }
+
+  virtual bool IsInlineable() const;
+
  private:
   Expression* cond_;
   int condition_position_;
+  int continue_id_;
+  int back_edge_id_;
 };
 
 
 class WhileStatement: public IterationStatement {
  public:
-  explicit WhileStatement(ZoneStringList* labels);
+  explicit inline WhileStatement(ZoneStringList* labels);
 
   DECLARE_NODE_TYPE(WhileStatement)
 
@@ -428,11 +464,17 @@ class WhileStatement: public IterationStatement {
   void set_may_have_function_literal(bool value) {
     may_have_function_literal_ = value;
   }
+  virtual bool IsInlineable() const;
+
+  // Bailout support.
+  virtual int ContinueId() const { return EntryId(); }
+  int BodyId() const { return body_id_; }
 
  private:
   Expression* cond_;
   // True if there is a function literal subexpression in the condition.
   bool may_have_function_literal_;
+  int body_id_;
 };
 
 
@@ -453,11 +495,8 @@ class ForStatement: public IterationStatement {
   }
 
   Statement* init() const { return init_; }
-  void set_init(Statement* stmt) { init_ = stmt; }
   Expression* cond() const { return cond_; }
-  void set_cond(Expression* expr) { cond_ = expr; }
   Statement* next() const { return next_; }
-  void set_next(Statement* stmt) { next_ = stmt; }
 
   bool may_have_function_literal() const {
     return may_have_function_literal_;
@@ -466,9 +505,14 @@ class ForStatement: public IterationStatement {
     may_have_function_literal_ = value;
   }
 
+  // Bailout support.
+  virtual int ContinueId() const { return continue_id_; }
+  int BodyId() const { return body_id_; }
+
   bool is_fast_smi_loop() { return loop_variable_ != NULL; }
   Variable* loop_variable() { return loop_variable_; }
   void set_loop_variable(Variable* var) { loop_variable_ = var; }
+  virtual bool IsInlineable() const;
 
  private:
   Statement* init_;
@@ -477,6 +521,8 @@ class ForStatement: public IterationStatement {
   // True if there is a function literal subexpression in the condition.
   bool may_have_function_literal_;
   Variable* loop_variable_;
+  int continue_id_;
+  int body_id_;
 };
 
 
@@ -494,10 +540,16 @@ class ForInStatement: public IterationStatement {
 
   Expression* each() const { return each_; }
   Expression* enumerable() const { return enumerable_; }
+  virtual bool IsInlineable() const;
+
+  // Bailout support.
+  int AssignmentId() const { return assignment_id_; }
+  virtual int ContinueId() const { return EntryId(); }
 
  private:
   Expression* each_;
   Expression* enumerable_;
+  int assignment_id_;
 };
 
 
@@ -508,11 +560,13 @@ class ExpressionStatement: public Statement {
 
   DECLARE_NODE_TYPE(ExpressionStatement)
 
+  virtual bool IsInlineable() const;
+
   virtual Assignment* StatementAsSimpleAssignment();
   virtual CountOperation* StatementAsCountOperation();
 
   void set_expression(Expression* e) { expression_ = e; }
-  Expression* expression() { return expression_; }
+  Expression* expression() const { return expression_; }
 
  private:
   Expression* expression_;
@@ -527,6 +581,7 @@ class ContinueStatement: public Statement {
   DECLARE_NODE_TYPE(ContinueStatement)
 
   IterationStatement* target() const { return target_; }
+  virtual bool IsInlineable() const;
 
  private:
   IterationStatement* target_;
@@ -541,6 +596,7 @@ class BreakStatement: public Statement {
   DECLARE_NODE_TYPE(BreakStatement)
 
   BreakableStatement* target() const { return target_; }
+  virtual bool IsInlineable() const;
 
  private:
   BreakableStatement* target_;
@@ -554,7 +610,8 @@ class ReturnStatement: public Statement {
 
   DECLARE_NODE_TYPE(ReturnStatement)
 
-  Expression* expression() { return expression_; }
+  Expression* expression() const { return expression_; }
+  virtual bool IsInlineable() const;
 
  private:
   Expression* expression_;
@@ -571,6 +628,7 @@ class WithEnterStatement: public Statement {
   Expression* expression() const { return expression_; }
 
   bool is_catch_block() const { return is_catch_block_; }
+  virtual bool IsInlineable() const;
 
  private:
   Expression* expression_;
@@ -582,26 +640,44 @@ class WithExitStatement: public Statement {
  public:
   WithExitStatement() { }
 
+  virtual bool IsInlineable() const;
+
   DECLARE_NODE_TYPE(WithExitStatement)
 };
 
 
 class CaseClause: public ZoneObject {
  public:
-  CaseClause(Expression* label, ZoneList<Statement*>* statements);
+  CaseClause(Expression* label, ZoneList<Statement*>* statements, int pos);
 
   bool is_default() const { return label_ == NULL; }
   Expression* label() const {
     CHECK(!is_default());
     return label_;
   }
-  JumpTarget* body_target() { return &body_target_; }
+  Label* body_target() { return &body_target_; }
   ZoneList<Statement*>* statements() const { return statements_; }
+
+  int position() const { return position_; }
+  void set_position(int pos) { position_ = pos; }
+
+  int EntryId() { return entry_id_; }
+  int CompareId() { return compare_id_; }
+
+  // Type feedback information.
+  void RecordTypeFeedback(TypeFeedbackOracle* oracle);
+  bool IsSmiCompare() { return compare_type_ == SMI_ONLY; }
+  bool IsObjectCompare() { return compare_type_ == OBJECT_ONLY; }
 
  private:
   Expression* label_;
-  JumpTarget body_target_;
+  Label body_target_;
   ZoneList<Statement*>* statements_;
+  int position_;
+  enum CompareTypeFeedback { NONE, SMI_ONLY, OBJECT_ONLY };
+  CompareTypeFeedback compare_type_;
+  int compare_id_;
+  int entry_id_;
 };
 
 
@@ -618,6 +694,7 @@ class SwitchStatement: public BreakableStatement {
 
   Expression* tag() const { return tag_; }
   ZoneList<CaseClause*>* cases() const { return cases_; }
+  virtual bool IsInlineable() const;
 
  private:
   Expression* tag_;
@@ -637,23 +714,31 @@ class IfStatement: public Statement {
               Statement* else_statement)
       : condition_(condition),
         then_statement_(then_statement),
-        else_statement_(else_statement) { }
+        else_statement_(else_statement),
+        then_id_(GetNextId()),
+        else_id_(GetNextId()) {
+  }
 
   DECLARE_NODE_TYPE(IfStatement)
+
+  virtual bool IsInlineable() const;
 
   bool HasThenStatement() const { return !then_statement()->IsEmpty(); }
   bool HasElseStatement() const { return !else_statement()->IsEmpty(); }
 
   Expression* condition() const { return condition_; }
   Statement* then_statement() const { return then_statement_; }
-  void set_then_statement(Statement* stmt) { then_statement_ = stmt; }
   Statement* else_statement() const { return else_statement_; }
-  void set_else_statement(Statement* stmt) { else_statement_ = stmt; }
+
+  int ThenId() const { return then_id_; }
+  int ElseId() const { return else_id_; }
 
  private:
   Expression* condition_;
   Statement* then_statement_;
   Statement* else_statement_;
+  int then_id_;
+  int else_id_;
 };
 
 
@@ -661,23 +746,24 @@ class IfStatement: public Statement {
 // stack in the compiler; this should probably be reworked.
 class TargetCollector: public AstNode {
  public:
-  explicit TargetCollector(ZoneList<BreakTarget*>* targets)
+  explicit TargetCollector(ZoneList<Label*>* targets)
       : targets_(targets) {
   }
 
   // Adds a jump target to the collector. The collector stores a pointer not
   // a copy of the target to make binding work, so make sure not to pass in
   // references to something on the stack.
-  void AddTarget(BreakTarget* target);
+  void AddTarget(Label* target);
 
   // Virtual behaviour. TargetCollectors are never part of the AST.
   virtual void Accept(AstVisitor* v) { UNREACHABLE(); }
   virtual TargetCollector* AsTargetCollector() { return this; }
 
-  ZoneList<BreakTarget*>* targets() { return targets_; }
+  ZoneList<Label*>* targets() { return targets_; }
+  virtual bool IsInlineable() const;
 
  private:
-  ZoneList<BreakTarget*>* targets_;
+  ZoneList<Label*>* targets_;
 };
 
 
@@ -686,16 +772,17 @@ class TryStatement: public Statement {
   explicit TryStatement(Block* try_block)
       : try_block_(try_block), escaping_targets_(NULL) { }
 
-  void set_escaping_targets(ZoneList<BreakTarget*>* targets) {
+  void set_escaping_targets(ZoneList<Label*>* targets) {
     escaping_targets_ = targets;
   }
 
   Block* try_block() const { return try_block_; }
-  ZoneList<BreakTarget*>* escaping_targets() const { return escaping_targets_; }
+  ZoneList<Label*>* escaping_targets() const { return escaping_targets_; }
+  virtual bool IsInlineable() const;
 
  private:
   Block* try_block_;
-  ZoneList<BreakTarget*>* escaping_targets_;
+  ZoneList<Label*>* escaping_targets_;
 };
 
 
@@ -713,6 +800,7 @@ class TryCatchStatement: public TryStatement {
 
   VariableProxy* catch_var() const { return catch_var_; }
   Block* catch_block() const { return catch_block_; }
+  virtual bool IsInlineable() const;
 
  private:
   VariableProxy* catch_var_;
@@ -729,6 +817,7 @@ class TryFinallyStatement: public TryStatement {
   DECLARE_NODE_TYPE(TryFinallyStatement)
 
   Block* finally_block() const { return finally_block_; }
+  virtual bool IsInlineable() const;
 
  private:
   Block* finally_block_;
@@ -738,12 +827,15 @@ class TryFinallyStatement: public TryStatement {
 class DebuggerStatement: public Statement {
  public:
   DECLARE_NODE_TYPE(DebuggerStatement)
+  virtual bool IsInlineable() const;
 };
 
 
 class EmptyStatement: public Statement {
  public:
   DECLARE_NODE_TYPE(EmptyStatement)
+
+  virtual bool IsInlineable() const;
 };
 
 
@@ -769,14 +861,30 @@ class Literal: public Expression {
     return false;
   }
 
+  Handle<String> AsPropertyName() {
+    ASSERT(IsPropertyName());
+    return Handle<String>::cast(handle_);
+  }
+
+  virtual bool ToBooleanIsTrue() { return handle_->ToBoolean()->IsTrue(); }
+  virtual bool ToBooleanIsFalse() { return handle_->ToBoolean()->IsFalse(); }
+
   // Identity testers.
-  bool IsNull() const { return handle_.is_identical_to(Factory::null_value()); }
-  bool IsTrue() const { return handle_.is_identical_to(Factory::true_value()); }
+  bool IsNull() const {
+    ASSERT(!handle_.is_null());
+    return handle_->IsNull();
+  }
+  bool IsTrue() const {
+    ASSERT(!handle_.is_null());
+    return handle_->IsTrue();
+  }
   bool IsFalse() const {
-    return handle_.is_identical_to(Factory::false_value());
+    ASSERT(!handle_.is_null());
+    return handle_->IsFalse();
   }
 
   Handle<Object> handle() const { return handle_; }
+  virtual bool IsInlineable() const;
 
  private:
   Handle<Object> handle_;
@@ -798,6 +906,7 @@ class MaterializedLiteral: public Expression {
   bool is_simple() const { return is_simple_; }
 
   int depth() const { return depth_; }
+  virtual bool IsInlineable() const;
 
  private:
   int literal_index_;
@@ -847,11 +956,13 @@ class ObjectLiteral: public MaterializedLiteral {
                 int literal_index,
                 bool is_simple,
                 bool fast_elements,
-                int depth)
+                int depth,
+                bool has_function)
       : MaterializedLiteral(literal_index, is_simple, depth),
         constant_properties_(constant_properties),
         properties_(properties),
-        fast_elements_(fast_elements) {}
+        fast_elements_(fast_elements),
+        has_function_(has_function) {}
 
   DECLARE_NODE_TYPE(ObjectLiteral)
 
@@ -862,16 +973,24 @@ class ObjectLiteral: public MaterializedLiteral {
 
   bool fast_elements() const { return fast_elements_; }
 
+  bool has_function() { return has_function_; }
 
   // Mark all computed expressions that are bound to a key that
   // is shadowed by a later occurrence of the same key. For the
   // marked expressions, no store code is emitted.
   void CalculateEmitStore();
 
+  enum Flags {
+    kNoFlags = 0,
+    kFastElements = 1,
+    kHasFunction = 1 << 1
+  };
+
  private:
   Handle<FixedArray> constant_properties_;
   ZoneList<Property*>* properties_;
   bool fast_elements_;
+  bool has_function_;
 };
 
 
@@ -906,16 +1025,21 @@ class ArrayLiteral: public MaterializedLiteral {
                int depth)
       : MaterializedLiteral(literal_index, is_simple, depth),
         constant_elements_(constant_elements),
-        values_(values) {}
+        values_(values),
+        first_element_id_(ReserveIdRange(values->length())) {}
 
   DECLARE_NODE_TYPE(ArrayLiteral)
 
   Handle<FixedArray> constant_elements() const { return constant_elements_; }
   ZoneList<Expression*>* values() const { return values_; }
 
+  // Return an AST id for an element that is used in simulate instructions.
+  int GetIdForElement(int i) { return first_element_id_ + i; }
+
  private:
   Handle<FixedArray> constant_elements_;
   ZoneList<Expression*>* values_;
+  int first_element_id_;
 };
 
 
@@ -932,6 +1056,7 @@ class CatchExtensionObject: public Expression {
 
   Literal* key() const { return key_; }
   VariableProxy* value() const { return value_; }
+  virtual bool IsInlineable() const;
 
  private:
   Literal* key_;
@@ -967,6 +1092,8 @@ class VariableProxy: public Expression {
     return is_this_ || is_trivial_;
   }
 
+  virtual bool IsInlineable() const;
+
   bool IsVariable(Handle<String> n) {
     return !is_this() && name().is_identical_to(n);
   }
@@ -980,6 +1107,7 @@ class VariableProxy: public Expression {
   Variable* var() const { return var_; }
   bool is_this() const { return is_this_; }
   bool inside_with() const { return inside_with_; }
+  int position() const { return position_; }
 
   void MarkAsTrivial() { is_trivial_ = true; }
 
@@ -992,8 +1120,12 @@ class VariableProxy: public Expression {
   bool is_this_;
   bool inside_with_;
   bool is_trivial_;
+  int position_;
 
-  VariableProxy(Handle<String> name, bool is_this, bool inside_with);
+  VariableProxy(Handle<String> name,
+                bool is_this,
+                bool inside_with,
+                int position = RelocInfo::kNoPosition);
   explicit VariableProxy(bool is_this);
 
   friend class Scope;
@@ -1003,15 +1135,11 @@ class VariableProxy: public Expression {
 class VariableProxySentinel: public VariableProxy {
  public:
   virtual bool IsValidLeftHandSide() { return !is_this(); }
-  static VariableProxySentinel* this_proxy() { return &this_proxy_; }
-  static VariableProxySentinel* identifier_proxy() {
-    return &identifier_proxy_;
-  }
 
  private:
   explicit VariableProxySentinel(bool is_this) : VariableProxy(is_this) { }
-  static VariableProxySentinel this_proxy_;
-  static VariableProxySentinel identifier_proxy_;
+
+  friend class AstSentinels;
 };
 
 
@@ -1044,7 +1172,9 @@ class Slot: public Expression {
     ASSERT(var != NULL);
   }
 
-  DECLARE_NODE_TYPE(Slot)
+  virtual void Accept(AstVisitor* v);
+
+  virtual Slot* AsSlot() { return this; }
 
   bool IsStackAllocated() { return type_ == PARAMETER || type_ == LOCAL; }
 
@@ -1053,6 +1183,7 @@ class Slot: public Expression {
   Type type() const { return type_; }
   int index() const { return index_; }
   bool is_arguments() const { return var_->is_arguments(); }
+  virtual bool IsInlineable() const;
 
  private:
   Variable* var_;
@@ -1069,20 +1200,47 @@ class Property: public Expression {
   // of the resolved Reference.
   enum Type { NORMAL, SYNTHETIC };
   Property(Expression* obj, Expression* key, int pos, Type type = NORMAL)
-      : obj_(obj), key_(key), pos_(pos), type_(type) { }
+      : obj_(obj),
+        key_(key),
+        pos_(pos),
+        type_(type),
+        receiver_types_(NULL),
+        is_monomorphic_(false),
+        is_array_length_(false),
+        is_string_length_(false),
+        is_string_access_(false),
+        is_function_prototype_(false),
+        is_arguments_access_(false) { }
 
   DECLARE_NODE_TYPE(Property)
 
   virtual bool IsValidLeftHandSide() { return true; }
+  virtual bool IsInlineable() const;
 
   Expression* obj() const { return obj_; }
   Expression* key() const { return key_; }
-  int position() const { return pos_; }
+  virtual int position() const { return pos_; }
   bool is_synthetic() const { return type_ == SYNTHETIC; }
 
-  // Returns a property singleton property access on 'this'.  Used
-  // during preparsing.
-  static Property* this_property() { return &this_property_; }
+  bool IsStringLength() const { return is_string_length_; }
+  bool IsStringAccess() const { return is_string_access_; }
+  bool IsFunctionPrototype() const { return is_function_prototype_; }
+
+  // Marks that this is actually an argument rewritten to a keyed property
+  // accessing the argument through the arguments shadow object.
+  void set_is_arguments_access(bool is_arguments_access) {
+    is_arguments_access_ = is_arguments_access;
+  }
+  bool is_arguments_access() const { return is_arguments_access_; }
+
+  // Type feedback information.
+  void RecordTypeFeedback(TypeFeedbackOracle* oracle);
+  virtual bool IsMonomorphic() { return is_monomorphic_; }
+  virtual ZoneMapList* GetReceiverTypes() { return receiver_types_; }
+  virtual bool IsArrayLength() { return is_array_length_; }
+  virtual Handle<Map> GetMonomorphicReceiverType() {
+    return monomorphic_receiver_type_;
+  }
 
  private:
   Expression* obj_;
@@ -1090,30 +1248,99 @@ class Property: public Expression {
   int pos_;
   Type type_;
 
-  // Dummy property used during preparsing.
-  static Property this_property_;
+  ZoneMapList* receiver_types_;
+  bool is_monomorphic_ : 1;
+  bool is_array_length_ : 1;
+  bool is_string_length_ : 1;
+  bool is_string_access_ : 1;
+  bool is_function_prototype_ : 1;
+  bool is_arguments_access_ : 1;
+  Handle<Map> monomorphic_receiver_type_;
 };
 
 
 class Call: public Expression {
  public:
   Call(Expression* expression, ZoneList<Expression*>* arguments, int pos)
-      : expression_(expression), arguments_(arguments), pos_(pos) { }
+      : expression_(expression),
+        arguments_(arguments),
+        pos_(pos),
+        is_monomorphic_(false),
+        check_type_(RECEIVER_MAP_CHECK),
+        receiver_types_(NULL),
+        return_id_(GetNextId()) {
+  }
 
   DECLARE_NODE_TYPE(Call)
 
+  virtual bool IsInlineable() const;
+
   Expression* expression() const { return expression_; }
   ZoneList<Expression*>* arguments() const { return arguments_; }
-  int position() { return pos_; }
+  virtual int position() const { return pos_; }
 
-  static Call* sentinel() { return &sentinel_; }
+  void RecordTypeFeedback(TypeFeedbackOracle* oracle);
+  virtual ZoneMapList* GetReceiverTypes() { return receiver_types_; }
+  virtual bool IsMonomorphic() { return is_monomorphic_; }
+  CheckType check_type() const { return check_type_; }
+  Handle<JSFunction> target() { return target_; }
+  Handle<JSObject> holder() { return holder_; }
+  Handle<JSGlobalPropertyCell> cell() { return cell_; }
+
+  bool ComputeTarget(Handle<Map> type, Handle<String> name);
+  bool ComputeGlobalTarget(Handle<GlobalObject> global, LookupResult* lookup);
+
+  // Bailout support.
+  int ReturnId() const { return return_id_; }
+
+#ifdef DEBUG
+  // Used to assert that the FullCodeGenerator records the return site.
+  bool return_is_recorded_;
+#endif
 
  private:
   Expression* expression_;
   ZoneList<Expression*>* arguments_;
   int pos_;
 
-  static Call sentinel_;
+  bool is_monomorphic_;
+  CheckType check_type_;
+  ZoneMapList* receiver_types_;
+  Handle<JSFunction> target_;
+  Handle<JSObject> holder_;
+  Handle<JSGlobalPropertyCell> cell_;
+
+  int return_id_;
+};
+
+
+class AstSentinels {
+ public:
+  ~AstSentinels() { }
+
+  // Returns a property singleton property access on 'this'.  Used
+  // during preparsing.
+  Property* this_property() { return &this_property_; }
+  VariableProxySentinel* this_proxy() { return &this_proxy_; }
+  VariableProxySentinel* identifier_proxy() { return &identifier_proxy_; }
+  ValidLeftHandSideSentinel* valid_left_hand_side_sentinel() {
+    return &valid_left_hand_side_sentinel_;
+  }
+  Call* call_sentinel() { return &call_sentinel_; }
+  EmptyStatement* empty_statement() { return &empty_statement_; }
+
+ private:
+  AstSentinels();
+  VariableProxySentinel this_proxy_;
+  VariableProxySentinel identifier_proxy_;
+  ValidLeftHandSideSentinel valid_left_hand_side_sentinel_;
+  Property this_property_;
+  Call call_sentinel_;
+  EmptyStatement empty_statement_;
+
+  friend class Isolate;
+
+  DISALLOW_COPY_AND_ASSIGN(AstSentinels);
 };
 
 
@@ -1124,9 +1351,11 @@ class CallNew: public Expression {
 
   DECLARE_NODE_TYPE(CallNew)
 
+  virtual bool IsInlineable() const;
+
   Expression* expression() const { return expression_; }
   ZoneList<Expression*>* arguments() const { return arguments_; }
-  int position() { return pos_; }
+  virtual int position() const { return pos_; }
 
  private:
   Expression* expression_;
@@ -1142,41 +1371,47 @@ class CallNew: public Expression {
 class CallRuntime: public Expression {
  public:
   CallRuntime(Handle<String> name,
-              Runtime::Function* function,
+              const Runtime::Function* function,
               ZoneList<Expression*>* arguments)
       : name_(name), function_(function), arguments_(arguments) { }
 
   DECLARE_NODE_TYPE(CallRuntime)
 
+  virtual bool IsInlineable() const;
+
   Handle<String> name() const { return name_; }
-  Runtime::Function* function() const { return function_; }
+  const Runtime::Function* function() const { return function_; }
   ZoneList<Expression*>* arguments() const { return arguments_; }
   bool is_jsruntime() const { return function_ == NULL; }
 
  private:
   Handle<String> name_;
-  Runtime::Function* function_;
+  const Runtime::Function* function_;
   ZoneList<Expression*>* arguments_;
 };
 
 
 class UnaryOperation: public Expression {
  public:
-  UnaryOperation(Token::Value op, Expression* expression)
-      : op_(op), expression_(expression) {
+  UnaryOperation(Token::Value op, Expression* expression, int pos)
+      : op_(op), expression_(expression), pos_(pos) {
     ASSERT(Token::IsUnaryOp(op));
   }
 
   DECLARE_NODE_TYPE(UnaryOperation)
 
+  virtual bool IsInlineable() const;
+
   virtual bool ResultOverwriteAllowed();
 
   Token::Value op() const { return op_; }
   Expression* expression() const { return expression_; }
+  virtual int position() const { return pos_; }
 
  private:
   Token::Value op_;
   Expression* expression_;
+  int pos_;
 };
 
 
@@ -1188,73 +1423,82 @@ class BinaryOperation: public Expression {
                   int pos)
       : op_(op), left_(left), right_(right), pos_(pos) {
     ASSERT(Token::IsBinaryOp(op));
+    right_id_ = (op == Token::AND || op == Token::OR)
+        ? static_cast<int>(GetNextId())
+        : AstNode::kNoNumber;
   }
 
-  // Create the binary operation corresponding to a compound assignment.
-  explicit BinaryOperation(Assignment* assignment);
-
   DECLARE_NODE_TYPE(BinaryOperation)
+
+  virtual bool IsInlineable() const;
 
   virtual bool ResultOverwriteAllowed();
 
   Token::Value op() const { return op_; }
   Expression* left() const { return left_; }
   Expression* right() const { return right_; }
-  int position() const { return pos_; }
+  virtual int position() const { return pos_; }
+
+  // Bailout support.
+  int RightId() const { return right_id_; }
 
  private:
   Token::Value op_;
   Expression* left_;
   Expression* right_;
   int pos_;
-};
-
-
-class IncrementOperation: public Expression {
- public:
-  IncrementOperation(Token::Value op, Expression* expr)
-      : op_(op), expression_(expr) {
-    ASSERT(Token::IsCountOp(op));
-  }
-
-  DECLARE_NODE_TYPE(IncrementOperation)
-
-  Token::Value op() const { return op_; }
-  bool is_increment() { return op_ == Token::INC; }
-  Expression* expression() const { return expression_; }
-
- private:
-  Token::Value op_;
-  Expression* expression_;
-  int pos_;
+  // The short-circuit logical operations have an AST ID for their
+  // right-hand subexpression.
+  int right_id_;
 };
 
 
 class CountOperation: public Expression {
  public:
-  CountOperation(bool is_prefix, IncrementOperation* increment, int pos)
-      : is_prefix_(is_prefix), increment_(increment), pos_(pos) { }
+  CountOperation(Token::Value op, bool is_prefix, Expression* expr, int pos)
+      : op_(op),
+        is_prefix_(is_prefix),
+        expression_(expr),
+        pos_(pos),
+        assignment_id_(GetNextId()),
+        count_id_(GetNextId()) { }
 
   DECLARE_NODE_TYPE(CountOperation)
 
   bool is_prefix() const { return is_prefix_; }
   bool is_postfix() const { return !is_prefix_; }
 
-  Token::Value op() const { return increment_->op(); }
+  Token::Value op() const { return op_; }
   Token::Value binary_op() {
     return (op() == Token::INC) ? Token::ADD : Token::SUB;
   }
 
-  Expression* expression() const { return increment_->expression(); }
-  IncrementOperation* increment() const { return increment_; }
-  int position() const { return pos_; }
+  Expression* expression() const { return expression_; }
+  virtual int position() const { return pos_; }
 
   virtual void MarkAsStatement() { is_prefix_ = true; }
 
+  virtual bool IsInlineable() const;
+
+  void RecordTypeFeedback(TypeFeedbackOracle* oracle);
+  virtual bool IsMonomorphic() { return is_monomorphic_; }
+  virtual Handle<Map> GetMonomorphicReceiverType() {
+    return monomorphic_receiver_type_;
+  }
+
+  // Bailout support.
+  int AssignmentId() const { return assignment_id_; }
+  int CountId() const { return count_id_; }
+
  private:
+  Token::Value op_;
   bool is_prefix_;
-  IncrementOperation* increment_;
+  bool is_monomorphic_;
+  Expression* expression_;
   int pos_;
+  int assignment_id_;
+  int count_id_;
+  Handle<Map> monomorphic_receiver_type_;
 };
 
 
@@ -1264,7 +1508,7 @@ class CompareOperation: public Expression {
                    Expression* left,
                    Expression* right,
                    int pos)
-      : op_(op), left_(left), right_(right), pos_(pos) {
+      : op_(op), left_(left), right_(right), pos_(pos), compare_type_(NONE) {
     ASSERT(Token::IsCompareOp(op));
   }
 
@@ -1273,13 +1517,23 @@ class CompareOperation: public Expression {
   Token::Value op() const { return op_; }
   Expression* left() const { return left_; }
   Expression* right() const { return right_; }
-  int position() const { return pos_; }
+  virtual int position() const { return pos_; }
+
+  virtual bool IsInlineable() const;
+
+  // Type feedback information.
+  void RecordTypeFeedback(TypeFeedbackOracle* oracle);
+  bool IsSmiCompare() { return compare_type_ == SMI_ONLY; }
+  bool IsObjectCompare() { return compare_type_ == OBJECT_ONLY; }
 
  private:
   Token::Value op_;
   Expression* left_;
   Expression* right_;
   int pos_;
+
+  enum CompareTypeFeedback { NONE, SMI_ONLY, OBJECT_ONLY };
+  CompareTypeFeedback compare_type_;
 };
 
 
@@ -1289,6 +1543,8 @@ class CompareToNull: public Expression {
       : is_strict_(is_strict), expression_(expression) { }
 
   DECLARE_NODE_TYPE(CompareToNull)
+
+  virtual bool IsInlineable() const;
 
   bool is_strict() const { return is_strict_; }
   Token::Value op() const { return is_strict_ ? Token::EQ_STRICT : Token::EQ; }
@@ -1311,16 +1567,24 @@ class Conditional: public Expression {
         then_expression_(then_expression),
         else_expression_(else_expression),
         then_expression_position_(then_expression_position),
-        else_expression_position_(else_expression_position) { }
+        else_expression_position_(else_expression_position),
+        then_id_(GetNextId()),
+        else_id_(GetNextId()) {
+  }
 
   DECLARE_NODE_TYPE(Conditional)
+
+  virtual bool IsInlineable() const;
 
   Expression* condition() const { return condition_; }
   Expression* then_expression() const { return then_expression_; }
   Expression* else_expression() const { return else_expression_; }
 
-  int then_expression_position() { return then_expression_position_; }
-  int else_expression_position() { return else_expression_position_; }
+  int then_expression_position() const { return then_expression_position_; }
+  int else_expression_position() const { return else_expression_position_; }
+
+  int ThenId() const { return then_id_; }
+  int ElseId() const { return else_id_; }
 
  private:
   Expression* condition_;
@@ -1328,18 +1592,18 @@ class Conditional: public Expression {
   Expression* else_expression_;
   int then_expression_position_;
   int else_expression_position_;
+  int then_id_;
+  int else_id_;
 };
 
 
 class Assignment: public Expression {
  public:
-  Assignment(Token::Value op, Expression* target, Expression* value, int pos)
-      : op_(op), target_(target), value_(value), pos_(pos),
-        block_start_(false), block_end_(false) {
-    ASSERT(Token::IsAssignmentOp(op));
-  }
+  Assignment(Token::Value op, Expression* target, Expression* value, int pos);
 
   DECLARE_NODE_TYPE(Assignment)
+
+  virtual bool IsInlineable() const;
 
   Assignment* AsSimpleAssignment() { return !is_compound() ? this : NULL; }
 
@@ -1348,7 +1612,9 @@ class Assignment: public Expression {
   Token::Value op() const { return op_; }
   Expression* target() const { return target_; }
   Expression* value() const { return value_; }
-  int position() { return pos_; }
+  virtual int position() const { return pos_; }
+  BinaryOperation* binary_operation() const { return binary_operation_; }
+
   // This check relies on the definition order of token in token.h.
   bool is_compound() const { return op() > Token::ASSIGN; }
 
@@ -1361,13 +1627,33 @@ class Assignment: public Expression {
   void mark_block_start() { block_start_ = true; }
   void mark_block_end() { block_end_ = true; }
 
+  // Type feedback information.
+  void RecordTypeFeedback(TypeFeedbackOracle* oracle);
+  virtual bool IsMonomorphic() { return is_monomorphic_; }
+  virtual ZoneMapList* GetReceiverTypes() { return receiver_types_; }
+  virtual Handle<Map> GetMonomorphicReceiverType() {
+    return monomorphic_receiver_type_;
+  }
+
+  // Bailout support.
+  int CompoundLoadId() const { return compound_load_id_; }
+  int AssignmentId() const { return assignment_id_; }
+
  private:
   Token::Value op_;
   Expression* target_;
   Expression* value_;
   int pos_;
+  BinaryOperation* binary_operation_;
+  int compound_load_id_;
+  int assignment_id_;
+
   bool block_start_;
   bool block_end_;
+
+  bool is_monomorphic_;
+  ZoneMapList* receiver_types_;
+  Handle<Map> monomorphic_receiver_type_;
 };
 
 
@@ -1379,7 +1665,8 @@ class Throw: public Expression {
   DECLARE_NODE_TYPE(Throw)
 
   Expression* exception() const { return exception_; }
-  int position() const { return pos_; }
+  virtual int position() const { return pos_; }
+  virtual bool IsInlineable() const;
 
  private:
   Expression* exception_;
@@ -1399,8 +1686,7 @@ class FunctionLiteral: public Expression {
                   int num_parameters,
                   int start_position,
                   int end_position,
-                  bool is_expression,
-                  bool contains_loops)
+                  bool is_expression)
       : name_(name),
         scope_(scope),
         body_(body),
@@ -1413,15 +1699,9 @@ class FunctionLiteral: public Expression {
         start_position_(start_position),
         end_position_(end_position),
         is_expression_(is_expression),
-        contains_loops_(contains_loops),
         function_token_position_(RelocInfo::kNoPosition),
-        inferred_name_(Heap::empty_string()),
-        try_full_codegen_(false),
-        pretenure_(false) {
-#ifdef DEBUG
-    already_compiled_ = false;
-#endif
-  }
+        inferred_name_(HEAP->empty_string()),
+        pretenure_(false) { }
 
   DECLARE_NODE_TYPE(FunctionLiteral)
 
@@ -1433,7 +1713,7 @@ class FunctionLiteral: public Expression {
   int start_position() const { return start_position_; }
   int end_position() const { return end_position_; }
   bool is_expression() const { return is_expression_; }
-  bool contains_loops() const { return contains_loops_; }
+  bool strict_mode() const;
 
   int materialized_literal_count() { return materialized_literal_count_; }
   int expected_property_count() { return expected_property_count_; }
@@ -1457,18 +1737,9 @@ class FunctionLiteral: public Expression {
     inferred_name_ = inferred_name;
   }
 
-  bool try_full_codegen() { return try_full_codegen_; }
-  void set_try_full_codegen(bool flag) { try_full_codegen_ = flag; }
-
   bool pretenure() { return pretenure_; }
   void set_pretenure(bool value) { pretenure_ = value; }
-
-#ifdef DEBUG
-  void mark_as_compiled() {
-    ASSERT(!already_compiled_);
-    already_compiled_ = true;
-  }
-#endif
+  virtual bool IsInlineable() const;
 
  private:
   Handle<String> name_;
@@ -1482,14 +1753,9 @@ class FunctionLiteral: public Expression {
   int start_position_;
   int end_position_;
   bool is_expression_;
-  bool contains_loops_;
   int function_token_position_;
   Handle<String> inferred_name_;
-  bool try_full_codegen_;
   bool pretenure_;
-#ifdef DEBUG
-  bool already_compiled_;
-#endif
 };
 
 
@@ -1504,6 +1770,7 @@ class SharedFunctionInfoLiteral: public Expression {
   Handle<SharedFunctionInfo> shared_function_info() const {
     return shared_function_info_;
   }
+  virtual bool IsInlineable() const;
 
  private:
   Handle<SharedFunctionInfo> shared_function_info_;
@@ -1513,6 +1780,7 @@ class SharedFunctionInfoLiteral: public Expression {
 class ThisFunction: public Expression {
  public:
   DECLARE_NODE_TYPE(ThisFunction)
+  virtual bool IsInlineable() const;
 };
 
 
@@ -1875,7 +2143,7 @@ class RegExpEmpty: public RegExpTree {
 
 class AstVisitor BASE_EMBEDDED {
  public:
-  AstVisitor() : stack_overflow_(false) { }
+  AstVisitor() : isolate_(Isolate::Current()), stack_overflow_(false) { }
   virtual ~AstVisitor() { }
 
   // Stack overflow check and dynamic dispatch.
@@ -1894,16 +2162,25 @@ class AstVisitor BASE_EMBEDDED {
   // node, calling SetStackOverflow will make sure that the visitor
   // bails out without visiting more nodes.
   void SetStackOverflow() { stack_overflow_ = true; }
+  void ClearStackOverflow() { stack_overflow_ = false; }
 
-  // Individual nodes
+  // Nodes not appearing in the AST, including slots.
+  virtual void VisitSlot(Slot* node) { UNREACHABLE(); }
+
+  // Individual AST nodes.
 #define DEF_VISIT(type)                         \
   virtual void Visit##type(type* node) = 0;
   AST_NODE_LIST(DEF_VISIT)
 #undef DEF_VISIT
 
+ protected:
+  Isolate* isolate() { return isolate_; }
+
  private:
+  Isolate* isolate_;
   bool stack_overflow_;
 };
+
 
 } }  // namespace v8::internal
 

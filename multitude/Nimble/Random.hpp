@@ -75,6 +75,15 @@ namespace Nimble {
       return tmp % x;
     }
 
+    /// Random numbers between 0 and x-1
+    inline uint64_t rand0X64(uint64_t x)
+    {
+      uint64_t tmp1 = rand();
+      uint64_t tmp2 = rand();
+
+      return (tmp1 | (tmp2 << 32)) % x;
+    }
+
     /// Random numbers between -1 and 1
     inline float rand11()
     {

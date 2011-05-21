@@ -31,7 +31,7 @@
 #	include <sys/ipc.h> // key_t on OSX
 #endif
 
-#include <string>
+#include <QString>
 
 namespace Radiant
 {
@@ -63,7 +63,7 @@ namespace Radiant
     /// @param size Size in bytes of the ring buffer: if size > 0,
     /// creates a new ring buffer of that size; if size == 0,
     /// references the existing buffer identified by smKey.
-    RADIANT_API SHMPipe::SHMPipe(const std::string smName, uint32_t size);
+    RADIANT_API SHMPipe::SHMPipe(const QString smName, uint32_t size);
 #else
     /// @param smKey User-defined key to shared memory.
     /// @param size Size in bytes of the ring buffer: if size > 0, creates a new ring buffer
@@ -123,7 +123,7 @@ namespace Radiant
 
 #ifdef WIN32
     /// User-defined name for the shared memory area.
-    std::string   m_smName;
+    QString   m_smName;
 
     /// Handle to shared memory area.
     HANDLE  m_hMapFile;

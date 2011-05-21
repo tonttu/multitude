@@ -52,6 +52,7 @@
 #include "v8.h"
 
 #include "platform.h"
+#include "vm-state-inl.h"
 
 
 namespace v8 {
@@ -153,7 +154,7 @@ void* OS::Allocate(const size_t requested,
   void* mbase = mmap(NULL, msize, prot, MAP_PRIVATE | MAP_ANON, -1, 0);
 
   if (mbase == MAP_FAILED) {
-    LOG(StringEvent("OS::Allocate", "mmap failed"));
+    LOG(ISOLATE, StringEvent("OS::Allocate", "mmap failed"));
     return NULL;
   }
   *allocated = msize;
@@ -212,11 +213,25 @@ class PosixMemoryMappedFile : public OS::MemoryMappedFile {
     : file_(file), memory_(memory), size_(size) { }
   virtual ~PosixMemoryMappedFile();
   virtual void* memory() { return memory_; }
+  virtual int size() { return size_; }
  private:
   FILE* file_;
   void* memory_;
   int size_;
 };
+
+
+OS::MemoryMappedFile* OS::MemoryMappedFile::open(const char* name) {
+  FILE* file = fopen(name, "r+");
+  if (file == NULL) return NULL;
+
+  fseek(file, 0, SEEK_END);
+  int size = ftell(file);
+
+  void* memory =
+      mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(file), 0);
+  return new PosixMemoryMappedFile(file, memory, size);
+}
 
 
 OS::MemoryMappedFile* OS::MemoryMappedFile::create(const char* name, int size,
@@ -344,52 +359,32 @@ bool VirtualMemory::Uncommit(void* address, size_t size) {
 }
 
 
-class ThreadHandle::PlatformData : public Malloced {
+class Thread::PlatformData : public Malloced {
  public:
-  explicit PlatformData(ThreadHandle::Kind kind) {
-    Initialize(kind);
-  }
+  PlatformData() : thread_(kNoThread) {}
 
-  void Initialize(ThreadHandle::Kind kind) {
-    switch (kind) {
-      case ThreadHandle::SELF: thread_ = pthread_self(); break;
-      case ThreadHandle::INVALID: thread_ = kNoThread; break;
-    }
-  }
   pthread_t thread_;  // Thread handle for pthread.
 };
 
 
-ThreadHandle::ThreadHandle(Kind kind) {
-  data_ = new PlatformData(kind);
+Thread::Thread(Isolate* isolate, const Options& options)
+    : data_(new PlatformData()),
+      isolate_(isolate),
+      stack_size_(options.stack_size) {
+  set_name(options.name);
 }
 
 
-void ThreadHandle::Initialize(ThreadHandle::Kind kind) {
-  data_->Initialize(kind);
-}
-
-
-ThreadHandle::~ThreadHandle() {
-  delete data_;
-}
-
-
-bool ThreadHandle::IsSelf() const {
-  return pthread_equal(data_->thread_, pthread_self());
-}
-
-
-bool ThreadHandle::IsValid() const {
-  return data_->thread_ != kNoThread;
-}
-
-
-Thread::Thread() : ThreadHandle(ThreadHandle::INVALID) {
+Thread::Thread(Isolate* isolate, const char* name)
+    : data_(new PlatfromData()),
+      isolate_(isolate),
+      stack_size_(0) {
+  set_name(name);
 }
 
 
 Thread::~Thread() {
+  delete data_;
 }
 
 
@@ -398,21 +393,35 @@ static void* ThreadEntry(void* arg) {
   // This is also initialized by the first argument to pthread_create() but we
   // don't know which thread will run first (the original thread or the new
   // one) so we initialize it here too.
-  thread->thread_handle_data()->thread_ = pthread_self();
-  ASSERT(thread->IsValid());
+  thread->data()->thread_ = pthread_self();
+  ASSERT(thread->data()->thread_ != kNoThread);
+  Thread::SetThreadLocal(Isolate::isolate_key(), thread->isolate());
   thread->Run();
   return NULL;
 }
 
 
+void Thread::set_name(const char* name) {
+  strncpy(name_, name, sizeof(name_));
+  name_[sizeof(name_) - 1] = '\0';
+}
+
+
 void Thread::Start() {
-  pthread_create(&thread_handle_data()->thread_, NULL, ThreadEntry, this);
+  pthread_attr_t* attr_ptr = NULL;
+  pthread_attr_t attr;
+  if (stack_size_ > 0) {
+    pthread_attr_init(&attr);
+    pthread_attr_setstacksize(&attr, static_cast<size_t>(stack_size_));
+    attr_ptr = &attr;
+  }
+  pthread_create(&data_->thread_, attr_ptr, ThreadEntry, this);
   ASSERT(IsValid());
 }
 
 
 void Thread::Join() {
-  pthread_join(thread_handle_data()->thread_, NULL);
+  pthread_join(data_->thread_, NULL);
 }
 
 
@@ -571,8 +580,12 @@ class Sampler::PlatformData : public Malloced {
 };
 
 
-Sampler::Sampler(int interval, bool profiling)
-    : interval_(interval), profiling_(profiling), active_(false) {
+Sampler::Sampler(Isolate* isolate, int interval)
+    : isolate_(isolate),
+      interval_(interval),
+      profiling_(false),
+      active_(false),
+      samples_taken_(0) {
   data_ = new PlatformData();
 }
 

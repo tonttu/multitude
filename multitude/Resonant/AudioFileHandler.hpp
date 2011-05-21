@@ -21,7 +21,7 @@
 #include <Radiant/Thread.hpp>
 
 #include <list>
-#include <string>
+#include <QString>
 #include <vector>
 
 struct SNDFILE_tag;
@@ -115,7 +115,7 @@ namespace Resonant {
 
       AudioFileHandler * m_host;
 
-      std::string m_fileName;
+      QString m_fileName;
       Radiant::IoMode   m_ioMode;
 
       long        m_blocks;
@@ -203,7 +203,7 @@ namespace Resonant {
 
     container m_files;
 
-    Radiant::MutexAuto m_mutex, m_mutex2;
+    Radiant::Mutex m_mutex, m_mutex2;
     Radiant::Condition m_cond;
 
     volatile bool m_done;

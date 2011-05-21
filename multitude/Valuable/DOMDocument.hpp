@@ -20,7 +20,7 @@
 
 #include <Valuable/Export.hpp>
 
-#include <string>
+#include <QString>
 #include <vector>
 
 namespace Valuable
@@ -39,7 +39,7 @@ namespace Valuable
     /// Creates a new DOM element with the given name
     DOMElement createElement(const char * name);
     /// @copydoc createElement
-    DOMElement createElement(const std::string & name);
+    DOMElement createElement(const QString & name);
 
     /// Appends an element to the document
     void appendChild(DOMElement element);

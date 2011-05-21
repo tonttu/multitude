@@ -1,4 +1,6 @@
 include(../multitude.pri)
+
+HEADERS += SynchronizedQueue.hpp
 HEADERS += CameraDriver.hpp
 HEADERS += Defines.hpp
 HEADERS += ThreadPool.hpp
@@ -58,6 +60,7 @@ HEADERS += WatchDog.hpp
 HEADERS += ClonablePtr.hpp
 HEADERS += VideoCamera.hpp
 HEADERS += SocketWrapper.hpp
+
 SOURCES += CameraDriver.cpp
 SOURCES += SocketUtilPosix.cpp
 SOURCES += ThreadPoolQt.cpp

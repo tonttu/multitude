@@ -21,7 +21,7 @@
 
 #include <Screenplay/Export.hpp>
 
-#include <string>
+#include <QString>
 
 extern "C" {
 
@@ -122,8 +122,8 @@ namespace Screenplay {
           1 : m_audioChannels;
     }
 
-    std::string      m_fileName;
-    std::string      m_codecName;
+    QString      m_fileName;
+    QString      m_codecName;
 
     AVCodec        * m_acodec;
     int              m_aindex; // Audio index

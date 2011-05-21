@@ -23,6 +23,8 @@
 
 #include <algorithm>
 
+#include <QDir>
+
 namespace Radiant
 {
   Directory::Directory(const char * pathname,
@@ -34,7 +36,7 @@ namespace Radiant
     populate();
   }
 
-  Directory::Directory(const std::string & pathname,
+  Directory::Directory(const QString & pathname,
                        int filters, SortFlag sortFlag)
     : m_path(pathname),
       m_filterFlags(filters),
@@ -50,14 +52,7 @@ namespace Radiant
     m_filterFlags(filters),
     m_sortFlags(sortFlag)
   {
-    StringUtils::StringList suflist;
-    StringUtils::split(suffixlist, ",", suflist);
-
-    for(StringUtils::StringList::iterator it = suflist.begin();
-	it != suflist.end(); it++) {
-      m_suffixes.push_back(*it);
-    }
-
+    m_suffixes = QString::fromUtf8(suffixlist).split(",", QString::SkipEmptyParts);
     populate();
   }
 
@@ -70,57 +65,28 @@ namespace Radiant
     return (int)m_entries.size();
   }
 
-  std::string Directory::fileName(int i) const
+  QString Directory::fileName(int i) const
   {
     assert(i >= 0 && i < count());
     return m_entries[i];
   }
 
-  std::string Directory::fileNameWithPath(int n) const
+  QString Directory::fileNameWithPath(int n) const
   {
     return path() + "/" + fileName(n);
   }
 
-  void Directory::init(const std::string & pathname, const char * suffixlist,
+  void Directory::init(const QString & pathname, const char * suffixlist,
                        const int filters, const SortFlag sortFlag) 
   {
     m_path = pathname ;
     m_filterFlags = filters ;
     m_sortFlags = sortFlag ;
-    
-    StringUtils::StringList suflist;
-    StringUtils::split(suffixlist, ",", suflist);
-    
-    for(StringUtils::StringList::iterator it = suflist.begin();
-	it != suflist.end(); it++) {
-      m_suffixes.push_back(*it);
-    }
+    m_suffixes = QString::fromUtf8(suffixlist).split(",", QString::SkipEmptyParts);
   }
 
-  bool Directory::mkdirRecursive(const std::string & dirname)
+  bool Directory::mkdirRecursive(const QString & dirname)
   {
-    if(dirname.empty())
-      return false;
-
-    StringUtils::StringList sections;
-    StringUtils::split(dirname, "/", sections);
-
-    std::string dir;
-
-    if(dirname[0] == '/') {
-      dir += '/';
-    }
-
-    for(StringUtils::StringList::iterator it = sections.begin();
-	it != sections.end(); it++) {
-      dir += (*it) + "/";
-
-      if(!exists(dir)) {
-	if(!mkdir(dir))
-	  return false;
-      }
-    }
-    
-    return true;
+    return QDir().mkpath(dirname);
   }
 }

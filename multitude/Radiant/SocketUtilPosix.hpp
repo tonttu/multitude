@@ -5,7 +5,7 @@
 
 #include "Export.hpp"
 #include "SocketWrapper.hpp"
-#include <string>
+#include <QString>
 
 namespace Radiant {
 
@@ -13,7 +13,7 @@ namespace Radiant {
   {
   public:
     static int bindOrConnectSocket(int & fd, const char * host, int port,
-                                   std::string & errstr, bool doBind,
+                                   QString & errstr, bool doBind,
                                    int family = AF_UNSPEC, int socktype = 0,
                                    int protocol = 0, int flags = 0);
   };

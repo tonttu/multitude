@@ -21,6 +21,8 @@
 
 #include <Nimble/Matrix3.hpp>
 
+#include <QString>
+
 namespace Poetic
 {
   class CPUFont;
@@ -49,18 +51,11 @@ namespace Poetic
       void render(const char * str, int n, const Nimble::Matrix3 & transform);
 
       /// @copydoc render
-      void render(const std::string & str);
+      void render(const QString & str);
       /// @copydoc render
-      void render(const std::string & str, const Nimble::Matrix3 & transform);
+      void render(const QString & str, const Nimble::Matrix3 & transform);
       /// @copydoc render
-      void render(const std::string & str, const Nimble::Vector2 & location);
-
-      /// @copydoc render
-      void render(const std::wstring & str);
-      /// @copydoc render
-      void render(const std::wstring & str, const Nimble::Matrix3 & transform);
-      /// @copydoc render
-      void render(const std::wstring & str, const Nimble::Vector2 & location);
+      void render(const QString & str, const Nimble::Vector2 & location);
 
       /// @copydoc render
       void render(const wchar_t * str);

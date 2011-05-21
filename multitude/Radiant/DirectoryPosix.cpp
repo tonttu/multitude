@@ -24,18 +24,18 @@
 #include <sys/stat.h>
 #include <algorithm>
 
-#define DOT     std::string(".")
-#define DOTDOT  std::string("..")
+#define DOT     QString(".")
+#define DOTDOT  QString("..")
 
 namespace Radiant
 {
 
   ///  @todo DT_DIR seems to incorrectly match also to symbolic links under linux
   bool applyFilters(const struct dirent * dent, int filterFlags,
-                    const std::vector<std::string> & suffixes) {
+                    const QStringList & suffixes) {
     bool ok = true;
 
-    const std::string name(dent->d_name);
+    const QString name(dent->d_name);
 
     if(dent->d_type == DT_DIR && !(filterFlags & Directory::Dirs)) ok = false;
     else if(dent->d_type == DT_REG && !(filterFlags & Directory::Files)) ok = false;
@@ -45,17 +45,10 @@ namespace Radiant
         && !(filterFlags & Directory::Hidden) )
       ok = false;
 
-    if(!suffixes.empty()) {
-      std::string suffix = StringUtils::lowerCase(FileUtils::suffix(name));
+    if(!suffixes.isEmpty()) {
+      QString suffix = FileUtils::suffixLowerCase(name);
 
-      ok = false;
-
-      for(unsigned i = 0; i < suffixes.size(); i++) {
-        if(suffix == suffixes[i]) {
-          ok = true;
-          break;
-        }
-      }
+      ok = suffixes.contains(suffix);
     }
 
 //    trace("Directory::applyFilters # DIR: %s FILE: %s MATCH: %d", m_path.c_str(), dent->d_name, ok);
@@ -72,14 +65,14 @@ namespace Radiant
 #endif
   }
 
-  bool Directory::mkdir(const std::string & dirname)
+  bool Directory::mkdir(const QString & dirname)
   {
-    return mkdir(dirname.c_str());
+    return mkdir(dirname.toUtf8().data());
   }
 
-  bool Directory::exists(const std::string & dir)
+  bool Directory::exists(const QString & dir)
   {
-    DIR * d = opendir(dir.c_str());
+    DIR * d = opendir(dir.toUtf8().data());
     if(!d)
       return false;
 
@@ -90,9 +83,9 @@ namespace Radiant
   void Directory::populate()
   {
     // Try to open the directory
-    DIR * dir = opendir(m_path.c_str());
+    DIR * dir = opendir(m_path.toUtf8().data());
     if(!dir) {
-      error("Directory::openDir # failed to open '%s'", m_path.c_str());
+      error("Directory::openDir # failed to open '%s'", m_path.toUtf8().data());
       return;
     }
 
@@ -101,7 +94,7 @@ namespace Radiant
     while( (dent = readdir(dir)) != NULL) {
       // Apply filters
       if(applyFilters(dent, m_filterFlags, m_suffixes)) {
-        m_entries.push_back(std::string(dent->d_name));
+        m_entries.push_back(QString(dent->d_name));
       }
     }
 

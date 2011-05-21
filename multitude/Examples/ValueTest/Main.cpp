@@ -26,7 +26,7 @@ public:
 
   ValueFloat   m_v;
   ValueRect    m_r;
-  ValueWString m_ws;
+  ValueString  m_ws;
   ValueString  m_s;
 };
 

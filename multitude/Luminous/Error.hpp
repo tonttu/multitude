@@ -21,6 +21,8 @@
 
 #include <iostream>
 
+#include <QString>
+
 #define CHECK_GL_ERROR Luminous::glErrorToString()
 
 namespace Luminous
@@ -31,7 +33,7 @@ namespace Luminous
   LUMINOUS_API const char * glFormatToString(GLenum format);
 
   /// Converts OpenGL error into a human-readalbe string
-  LUMINOUS_API void glErrorToString(const std::string & msg = __FILE__, int line = __LINE__);
+  LUMINOUS_API void glErrorToString(const QString & msg = __FILE__, int line = __LINE__);
 
 
 }

@@ -33,11 +33,13 @@ namespace Luminous
   /// Simple struct containing basic image information that can be quickly
   /// queried (with Image::ping) without loading the full image.
   struct ImageInfo {
-    ImageInfo() : width(0), height(0) {}
+    ImageInfo() : width(0), height(0), mipmaps(1) {}
     /// Width of the image
     int width;
     /// Height of the image
     int height;
+    /// Number of embedded mipmaps, including the base image (1 if no mipmaps included)
+    int mipmaps;
     /// Pixel format of the image
     PixelFormat pf;
   };
@@ -70,7 +72,7 @@ namespace Luminous
     Nimble::Vector2i size() const
     { return Nimble::Vector2i(m_width, m_height); }
     /// The number of bytes a single line in the image takes
-    int lineSize() { return m_width * m_pixelFormat.numChannels(); }
+    int lineSize() { return m_width * m_pixelFormat.bytesPerPixel(); }
     /// Returns a pointer to a specific line
     unsigned char* line(unsigned y) { return &m_data[y * lineSize()]; }
     /// Returns a pointer to the image data
@@ -166,7 +168,7 @@ namespace Luminous
         update the corresponding OpenGL texture wo match the same generation. */
     int generation() const { return m_generation; }
 
-  private:
+  protected:
 
     int m_width;
     int m_height;
@@ -205,7 +207,8 @@ namespace Luminous
         makes difference the first time this function executed for the context
         (and the texture is created), after that the the same texture is used.
     */
-    void bind(GLResources * resources, GLenum textureUnit = GL_TEXTURE0, bool withmipmaps = true);
+    void bind(GLResources * resources, GLenum textureUnit = GL_TEXTURE0,
+              bool withmipmaps = true, int internalFormat = 0);
 
     /// Checks if the image data is fully loaded to the GPU, inside a texture
     bool isFullyLoadedToGPU(GLResources * resources = 0);
@@ -231,9 +234,50 @@ namespace Luminous
        // this->incrementGeneration();
        return * this;
      }
+
+    /// Creates a new ImageTex from this, all the cpu data from Luminous::Image
+    /// is moved to the new object.
+    ImageTex * move();
   };
 
+  class LUMINOUS_API CompressedImage
+  {
+  public:
+    CompressedImage();
+    virtual ~CompressedImage();
 
+    void clear();
+
+    bool read(const QString & filename, int level = 0);
+    bool loadImage(FILE * file, const ImageInfo & info, int offset, int size);
+    void * data() const;
+    int datasize() const;
+
+    int width() const { return m_size.x; }
+    int height() const { return m_size.y; }
+
+    int compression() const { return m_compression; }
+
+    float readAlpha(Nimble::Vector2i pos) const;
+
+  protected:
+    Nimble::Vector2i m_size;
+    int m_compression;
+
+    class Private;
+    std::auto_ptr<Private> m_d;
+  };
+
+  class LUMINOUS_API CompressedImageTex : public CompressedImage, public Luminous::ContextVariableT<Luminous::Texture2D>
+  {
+  public:
+    virtual ~CompressedImageTex();
+    void bind(GLResources * resources, GLenum textureUnit = GL_TEXTURE0);
+
+    /// Creates a new CompressedImageTex from this, all the cpu data from
+    /// Luminous::CompressedImage is moved to the new object.
+    CompressedImageTex * move();
+  };
 }
 
 #endif

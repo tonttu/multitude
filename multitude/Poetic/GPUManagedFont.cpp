@@ -33,7 +33,7 @@ namespace Poetic
     m_fonts.resize(m_cmf->fontCount());
   }
 
-  void GPUManagedFont::render(const std::string & text,
+  void GPUManagedFont::render(const QString & text,
 			      int pointSize, const Nimble::Matrix3 & m,
                               float minimumSize)
   {
@@ -58,19 +58,6 @@ namespace Poetic
 
     gf->render(str, n,
                m * Nimble::Matrix3::scale2D(Nimble::Vector2(sfix,sfix)));
-  }
-
-  void GPUManagedFont::render(const std::wstring & text,
-			      int pointSize, const Nimble::Matrix3 & m,
-                              float minimumSize)
-  {
-    GPUFont * gf;
-    float sfix;
-    
-    if(!computeRenderParams(m, pointSize, &gf, &sfix, minimumSize))
-      return;
-
-    gf->render(text, m * Nimble::Matrix3::scale2D(Nimble::Vector2(sfix,sfix)));
   }
 
   void GPUManagedFont::render(const wchar_t * str, int n, int pointSize,

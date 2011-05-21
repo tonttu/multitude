@@ -21,37 +21,43 @@
 namespace Valuable
 {
 
-  ValueRect::ValueRect(HasValues * parent, const std::string & name, const Nimble::Rect & r, bool transit)
+  ValueRect::ValueRect(HasValues * parent, const QString & name, const Nimble::Rect & r, bool transit)
     : Base(parent, name, r, transit)
   {}
 
+  ValueRect & ValueRect::operator = (const Nimble::Rect & r)
+  {
+    if(m_value != r) {
+      Base::m_value = r;
+      emitChange();
+    }
+    return *this;
+  }
+
   bool ValueRect::deserialize(ArchiveElement & element) {
-    std::stringstream in(element.get());
+    std::stringstream in(element.get().toUtf8().data());
 
     Nimble::Vector2f lo, hi;
 
-    in >> lo[0]; 
-    in >> lo[1]; 
-    in >> hi[0]; 
-    in >> hi[1]; 
+    in >> lo[0];
+    in >> lo[1];
+    in >> hi[0];
+    in >> hi[1];
 
-    m_value.setLow(lo);
-    m_value.setHigh(hi);
-
-    emitChange();
+    *this = Nimble::Rect(lo, hi);
     return true;
   }
 
-  std::string ValueRect::asString(bool * const ok) const {
+  QString ValueRect::asString(bool * const ok) const {
     if(ok) *ok = true;
 
     const Nimble::Vector2f & lo = m_value.low();
     const Nimble::Vector2f & hi = m_value.high();
 
-    std::string r = Radiant::StringUtils::stringify(lo[0]);
-    r += std::string(" ") + Radiant::StringUtils::stringify(lo[1]);
-    r += std::string(" ") + Radiant::StringUtils::stringify(hi[0]);
-    r += std::string(" ") + Radiant::StringUtils::stringify(hi[1]);
+    QString r = Radiant::StringUtils::stringify(lo[0]);
+    r += QString(" ") + Radiant::StringUtils::stringify(lo[1]);
+    r += QString(" ") + Radiant::StringUtils::stringify(hi[0]);
+    r += QString(" ") + Radiant::StringUtils::stringify(hi[1]);
 
     return r;
   }

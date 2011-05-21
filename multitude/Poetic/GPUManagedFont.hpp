@@ -21,6 +21,8 @@
 
 #include <vector>
 
+#include <QString>
+
 namespace Poetic
 {
   class GPUFontBase;
@@ -36,13 +38,10 @@ namespace Poetic
       GPUManagedFont(CPUManagedFont * font, Luminous::GLResources * glrc);
 
       /// Render a string
-      void render(const std::string & text, int pointSize,
+      void render(const QString & text, int pointSize,
                   const Nimble::Matrix3 & m, float minimumSize = 0.0f);
       /// @copydoc render
       void render(const char * str, int n, int pointSize,
-                  const Nimble::Matrix3 & m, float minimumSize = 0.0f);
-      /// @copydoc render
-      void render(const std::wstring & text, int pointSize,
                   const Nimble::Matrix3 & m, float minimumSize = 0.0f);
       /// @copydoc render
       void render(const wchar_t * str, int n, int pointSize,

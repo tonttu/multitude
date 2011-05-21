@@ -30,6 +30,8 @@
 
 #ifdef ENABLE_LOGGING_AND_PROFILING
 
+#include "allocation.h"
+#include "atomicops.h"
 #include "circular-queue.h"
 #include "unbound-queue.h"
 
@@ -45,11 +47,11 @@ class HashMap;
 class ProfileGenerator;
 class TokenEnumerator;
 
-#define CODE_EVENTS_TYPE_LIST(V)                \
-  V(CODE_CREATION, CodeCreateEventRecord)       \
-  V(CODE_MOVE,     CodeMoveEventRecord)         \
-  V(CODE_DELETE,   CodeDeleteEventRecord)       \
-  V(CODE_ALIAS,    CodeAliasEventRecord)
+#define CODE_EVENTS_TYPE_LIST(V)                                   \
+  V(CODE_CREATION,    CodeCreateEventRecord)                       \
+  V(CODE_MOVE,        CodeMoveEventRecord)                         \
+  V(CODE_DELETE,      CodeDeleteEventRecord)                       \
+  V(SHARED_FUNC_MOVE, SharedFunctionInfoMoveEventRecord)
 
 
 class CodeEventRecord {
@@ -72,6 +74,7 @@ class CodeCreateEventRecord : public CodeEventRecord {
   Address start;
   CodeEntry* entry;
   unsigned size;
+  Address shared;
 
   INLINE(void UpdateCodeMap(CodeMap* code_map));
 };
@@ -94,11 +97,10 @@ class CodeDeleteEventRecord : public CodeEventRecord {
 };
 
 
-class CodeAliasEventRecord : public CodeEventRecord {
+class SharedFunctionInfoMoveEventRecord : public CodeEventRecord {
  public:
-  Address start;
-  CodeEntry* entry;
-  Address code_start;
+  Address from;
+  Address to;
 
   INLINE(void UpdateCodeMap(CodeMap* code_map));
 };
@@ -132,8 +134,9 @@ class TickSampleEventRecord BASE_EMBEDDED {
 // methods called by event producers: VM and stack sampler threads.
 class ProfilerEventsProcessor : public Thread {
  public:
-  explicit ProfilerEventsProcessor(ProfileGenerator* generator);
-  virtual ~ProfilerEventsProcessor();
+  explicit ProfilerEventsProcessor(Isolate* isolate,
+                                   ProfileGenerator* generator);
+  virtual ~ProfilerEventsProcessor() {}
 
   // Thread control.
   virtual void Run();
@@ -147,7 +150,8 @@ class ProfilerEventsProcessor : public Thread {
   void CodeCreateEvent(Logger::LogEventsAndTags tag,
                        String* name,
                        String* resource_name, int line_number,
-                       Address start, unsigned size);
+                       Address start, unsigned size,
+                       Address shared);
   void CodeCreateEvent(Logger::LogEventsAndTags tag,
                        const char* name,
                        Address start, unsigned size);
@@ -156,17 +160,12 @@ class ProfilerEventsProcessor : public Thread {
                        Address start, unsigned size);
   void CodeMoveEvent(Address from, Address to);
   void CodeDeleteEvent(Address from);
-  void FunctionCreateEvent(Address alias, Address start, int security_token_id);
-  void FunctionMoveEvent(Address from, Address to);
-  void FunctionDeleteEvent(Address from);
+  void SharedFunctionInfoMoveEvent(Address from, Address to);
   void RegExpCodeCreateEvent(Logger::LogEventsAndTags tag,
                              const char* prefix, String* name,
                              Address start, unsigned size);
   // Puts current stack into tick sample events buffer.
   void AddCurrentStack();
-  bool IsKnownFunction(Address start);
-  void ProcessMovedFunctions();
-  void RememberMovedFunction(JSFunction* function);
 
   // Tick sample events are filled directly in the buffer of the circular
   // queue (because the structure is of fixed width, but usually not all
@@ -187,13 +186,6 @@ class ProfilerEventsProcessor : public Thread {
   bool ProcessTicks(unsigned dequeue_order);
 
   INLINE(static bool FilterOutCodeCreateEvent(Logger::LogEventsAndTags tag));
-  INLINE(static bool AddressesMatch(void* key1, void* key2)) {
-    return key1 == key2;
-  }
-  INLINE(static uint32_t AddressHash(Address addr)) {
-    return ComputeIntegerHash(
-        static_cast<uint32_t>(reinterpret_cast<uintptr_t>(addr)));
-  }
 
   ProfileGenerator* generator_;
   bool running_;
@@ -201,30 +193,28 @@ class ProfilerEventsProcessor : public Thread {
   SamplingCircularQueue ticks_buffer_;
   UnboundQueue<TickSampleEventRecord> ticks_from_vm_buffer_;
   unsigned enqueue_order_;
-
-  // Used from the VM thread.
-  HashMap* known_functions_;
-  List<JSFunction*> moved_functions_;
 };
 
 } }  // namespace v8::internal
 
 
-#define PROFILE(Call)                                  \
-  LOG(Call);                                           \
-  do {                                                 \
-    if (v8::internal::CpuProfiler::is_profiling()) {   \
-      v8::internal::CpuProfiler::Call;                 \
-    }                                                  \
+#define PROFILE(isolate, Call)                                \
+  LOG(isolate, Call);                                         \
+  do {                                                        \
+    if (v8::internal::CpuProfiler::is_profiling(isolate)) {   \
+      v8::internal::CpuProfiler::Call;                        \
+    }                                                         \
   } while (false)
 #else
-#define PROFILE(Call) LOG(Call)
+#define PROFILE(isolate, Call) LOG(isolate, Call)
 #endif  // ENABLE_LOGGING_AND_PROFILING
 
 
 namespace v8 {
 namespace internal {
 
+
+// TODO(isolates): isolatify this class.
 class CpuProfiler {
  public:
   static void Setup();
@@ -238,9 +228,12 @@ class CpuProfiler {
   static int GetProfilesCount();
   static CpuProfile* GetProfile(Object* security_token, int index);
   static CpuProfile* FindProfile(Object* security_token, unsigned uid);
+  static void DeleteAllProfiles();
+  static void DeleteProfile(CpuProfile* profile);
+  static bool HasDetachedProfiles();
 
   // Invoked from stack sampler (thread or signal handler.)
-  static TickSample* TickSampleEvent();
+  static TickSample* TickSampleEvent(Isolate* isolate);
 
   // Must be called via PROFILE macro, otherwise will crash when
   // profiling is not enabled.
@@ -250,26 +243,28 @@ class CpuProfiler {
   static void CodeCreateEvent(Logger::LogEventsAndTags tag,
                               Code* code, String* name);
   static void CodeCreateEvent(Logger::LogEventsAndTags tag,
-                              Code* code, String* name,
+                              Code* code,
+                              SharedFunctionInfo *shared,
+                              String* name);
+  static void CodeCreateEvent(Logger::LogEventsAndTags tag,
+                              Code* code,
+                              SharedFunctionInfo *shared,
                               String* source, int line);
   static void CodeCreateEvent(Logger::LogEventsAndTags tag,
                               Code* code, int args_count);
   static void CodeMovingGCEvent() {}
   static void CodeMoveEvent(Address from, Address to);
   static void CodeDeleteEvent(Address from);
-  static void FunctionCreateEvent(JSFunction* function);
-  // Reports function creation in case we had missed it (e.g.
-  // if it was created from compiled code).
-  static void FunctionCreateEventFromMove(JSFunction* function);
-  static void FunctionMoveEvent(Address from, Address to);
-  static void FunctionDeleteEvent(Address from);
   static void GetterCallbackEvent(String* name, Address entry_point);
   static void RegExpCodeCreateEvent(Code* code, String* source);
-  static void ProcessMovedFunctions();
   static void SetterCallbackEvent(String* name, Address entry_point);
+  static void SharedFunctionInfoMoveEvent(Address from, Address to);
 
-  static INLINE(bool is_profiling()) {
-    return singleton_ != NULL && singleton_->processor_ != NULL;
+  // TODO(isolates): this doesn't have to use atomics anymore.
+
+  static INLINE(bool is_profiling(Isolate* isolate)) {
+    CpuProfiler* profiler = isolate->cpu_profiler();
+    return profiler != NULL && NoBarrier_Load(&profiler->is_profiling_);
   }
 
  private:
@@ -281,6 +276,8 @@ class CpuProfiler {
   CpuProfile* StopCollectingProfile(const char* title);
   CpuProfile* StopCollectingProfile(Object* security_token, String* title);
   void StopProcessorIfLastProfile(const char* title);
+  void StopProcessor();
+  void ResetProfiles();
 
   CpuProfilesCollection* profiles_;
   unsigned next_profile_uid_;
@@ -288,11 +285,11 @@ class CpuProfiler {
   ProfileGenerator* generator_;
   ProfilerEventsProcessor* processor_;
   int saved_logging_nesting_;
-
-  static CpuProfiler* singleton_;
+  bool need_to_stop_sampler_;
+  Atomic32 is_profiling_;
 
 #else
-  static INLINE(bool is_profiling()) { return false; }
+  static INLINE(bool is_profiling(Isolate* isolate)) { return false; }
 #endif  // ENABLE_LOGGING_AND_PROFILING
 
  private:

@@ -14,6 +14,7 @@
  */
 
 #include "VideoInFFMPEG.hpp"
+#include "VideoDisplay.hpp"
 
 #include <Radiant/Trace.hpp>
 
@@ -40,22 +41,22 @@ namespace VideoDisplay {
     /// @see FFVideodebug
     const unsigned int s_MaxCached = 100;
 
-    bool comp_ffvideodebug_timestamp(const std::pair<std::string, FFVideodebug> & a, const std::pair<std::string, FFVideodebug> & b)
+    bool comp_ffvideodebug_timestamp(const std::pair<QString, FFVideodebug> & a, const std::pair<QString, FFVideodebug> & b)
     {
       return a.second.m_used < b.second.m_used;
     }
   }
 
   /* Here we cache the first frames off all viedos. */
-  static std::map<std::string, FFVideodebug> __ffcache;
+  static std::map<QString, FFVideodebug> __ffcache;
 
-  static Radiant::MutexStatic __mutex;
+  static Radiant::Mutex __mutex;
 
-  const FFVideodebug * __cacheddebug(const std::string & filename)
+  const FFVideodebug * __cacheddebugVideoDisplay(const QString & filename)
   {
-    Radiant::GuardStatic g(__mutex);
+    Radiant::Guard g(__mutex);
 
-    std::map<std::string, FFVideodebug>::iterator it = __ffcache.find(filename);
+    std::map<QString, FFVideodebug>::iterator it = __ffcache.find(filename);
 
     if(it == __ffcache.end())
       return 0;
@@ -79,13 +80,13 @@ namespace VideoDisplay {
 
   VideoInFFMPEG::~VideoInFFMPEG()
   {
-    debug("VideoInFFMPEG::~VideoInFFMPEG");
+    debugVideoDisplay("VideoInFFMPEG::~VideoInFFMPEG");
     if(isRunning()) {
       m_continue = false;
       m_vcond.wakeAll(m_vmutex);
       waitEnd();
     }
-    debug("VideoInFFMPEG::~VideoInFFMPEG # EXIT");
+    debugVideoDisplay("VideoInFFMPEG::~VideoInFFMPEG # EXIT");
   }
 
   void VideoInFFMPEG::getAudioParameters(int * channels,
@@ -122,11 +123,11 @@ namespace VideoDisplay {
 
     float latency = 1.7f;
 
-    const FFVideodebug * vi = __cacheddebug(filename);
+    const FFVideodebug * vi = __cacheddebugVideoDisplay(filename);
 
     if(vi) {
 
-      Radiant::debug("%s # %s using cached preview", fname, filename);
+      debugVideoDisplay("%s # %s using cached preview", fname, filename);
 
       m_duration = vi->m_duration;
       const VideoImage * img = & vi->m_firstFrame;
@@ -142,7 +143,7 @@ namespace VideoDisplay {
       return true;
     }
 
-    Radiant::debug("%s # %s opening new file", fname, filename);
+    debugVideoDisplay("%s # %s opening new file", fname, filename);
 
     Screenplay::VideoInputFFMPEG video;
 
@@ -156,14 +157,14 @@ namespace VideoDisplay {
     }
 
     if(!video.hasAudioCodec()) {
-      Radiant::debug("%s # No audio codec", fname);
+      debugVideoDisplay("%s # No audio codec", fname);
       /* video.close();
      return false; */
     }
     pos = TimeStamp::createSecondsD(0.0);
 
     if(pos != 0) {
-      debug("%s # Doing a seek", fname);
+      debugVideoDisplay("%s # Doing a seek", fname);
       if(!video.seekPosition(pos.secondsD()))
         video.seekPosition(0);
     }
@@ -182,7 +183,7 @@ namespace VideoDisplay {
 
     m_duration = TimeStamp::createSecondsD(video.durationSeconds());
 
-    debug("%s # %f fps", fname, fp);
+    debugVideoDisplay("%s # %f fps", fname, fp);
 
     m_frames.resize(latency * fp);
 
@@ -195,7 +196,7 @@ namespace VideoDisplay {
 
     {
       // Cache the first frame for later use.
-      Radiant::GuardStatic g(__mutex);
+      Radiant::Guard g(__mutex);
 
       video.getAudioParameters( & m_channels, & m_sampleRate, & m_auformat);
       // remove the item with the smallest timestamp
@@ -214,7 +215,7 @@ namespace VideoDisplay {
 
     video.close();
 
-    debug("%s # EXIT OK", fname);
+    debugVideoDisplay("%s # EXIT OK", fname);
 
     return true;
   }
@@ -222,11 +223,11 @@ namespace VideoDisplay {
 
   void VideoInFFMPEG::videoGetSnapshot(Radiant::TimeStamp pos)
   {
-    debug("VideoInFFMPEG::videoGetSnapshot # %lf", pos.secondsD());
+    debugVideoDisplay("VideoInFFMPEG::videoGetSnapshot # %lf", pos.secondsD());
 
     Screenplay::VideoInputFFMPEG video;
 
-    if(!video.open(m_name.c_str(), m_flags)) {
+    if(!video.open(m_name.toUtf8().data(), m_flags)) {
       endOfFile();
       return;
     }
@@ -252,10 +253,10 @@ namespace VideoDisplay {
   {
     //info("VideoInFFMPEG::videoPlay # %lf", pos.secondsD());
 
-    if(!m_video.open(m_name.c_str(), m_flags)) {
+    if(!m_video.open(m_name.toUtf8().data(), m_flags)) {
       endOfFile();
-      debug("VideoInFFMPEG::videoPlay # Open failed for \"%s\"",
-            m_name.c_str());
+      debugVideoDisplay("VideoInFFMPEG::videoPlay # Open failed for \"%s\"",
+            m_name.toUtf8().data());
       return;
     }
 
@@ -285,8 +286,8 @@ namespace VideoDisplay {
     Radiant::TimeStamp audioTS = m_video.audioTime();
 
     if(!img) {
-      debug("VideoInFFMPEG::videoPlay # Image capture failed \"%s\"",
-            m_name.c_str());
+      debugVideoDisplay("VideoInFFMPEG::videoPlay # Image capture failed \"%s\"",
+            m_name.toUtf8().data());
       endOfFile();
       return;
     }
@@ -309,8 +310,8 @@ namespace VideoDisplay {
       m_frameTime = m_video.frameTime();
 
       if(!img) {
-        debug("VideoInFFMPEG::videoPlay # Image capture failed in scan \"%s\"",
-              m_name.c_str());
+        debugVideoDisplay("VideoInFFMPEG::videoPlay # Image capture failed in scan \"%s\"",
+              m_name.toUtf8().data());
         endOfFile();
         return;
       }
@@ -326,7 +327,7 @@ namespace VideoDisplay {
         audioTS = audioTS2;
       }
 
-      debug("ideoInFFMPEG::videoPlay # Forward one frame");
+      debugVideoDisplay("ideoInFFMPEG::videoPlay # Forward one frame");
 
       if(m_frameTime >= pos) {
 
@@ -339,7 +340,7 @@ namespace VideoDisplay {
           m_audioCount = 1;
           ignorePreviousFrames();
 
-          debug("VideoInFFMPEG::videoPlay # EXIT OK %d %p", aframes, f);
+          debugVideoDisplay("VideoInFFMPEG::videoPlay # EXIT OK %d %p", aframes, f);
         }
 
         return;
@@ -351,7 +352,7 @@ namespace VideoDisplay {
 
   void VideoInFFMPEG::videoGetNextFrame()
   {
-    debug("VideoInFFMPEG::videoGetNextFrame");
+    debugVideoDisplay("VideoInFFMPEG::videoGetNextFrame");
 
     const VideoImage * img = m_video.captureImage();
 
@@ -387,7 +388,7 @@ namespace VideoDisplay {
 
   void VideoInFFMPEG::videoStop()
   {
-    debug("VideoInFFMPEG::videoStop");
+    debugVideoDisplay("VideoInFFMPEG::videoStop");
     m_video.close();
 
   }
@@ -400,7 +401,7 @@ namespace VideoDisplay {
   /*
   void VideoInFFMPEG::enableLooping(bool enable)
   {
-    debug("VideoInFFMPEG::enableLooping # %d", (int) enable);
+    debugVideoDisplay("VideoInFFMPEG::enableLooping # %d", (int) enable);
     m_video.enableLooping(enable);
     m_duration = TimeStamp::createSecondsD(m_video.durationSeconds());
   }

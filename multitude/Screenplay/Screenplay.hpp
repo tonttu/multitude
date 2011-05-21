@@ -16,6 +16,9 @@
 #ifndef SCREENPLAY_HPP
 #define SCREENPLAY_HPP
 
+#include <Radiant/Trace.hpp>
+
+#define debugScreenplay(...) (Radiant::trace("Screenplay", Radiant::DEBUG, __VA_ARGS__))
 /// Screenplay is a video-decoding library, that uses FFMPEG
 /** 
 

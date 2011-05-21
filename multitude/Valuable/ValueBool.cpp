@@ -19,7 +19,7 @@
 
 namespace Valuable
 {
-  ValueBool::ValueBool(HasValues * parent, const std::string & name,
+  ValueBool::ValueBool(HasValues * parent, const QString & name,
                        bool value, bool transit)
     : ValueObjectT<bool>(parent, name, value, transit)
   {}
@@ -28,7 +28,7 @@ namespace Valuable
 
   bool ValueBool::deserialize(ArchiveElement & e)
   {
-    *this = Radiant::StringUtils::fromString<int32_t>(e.get().c_str()) != 0;
+    *this = Radiant::StringUtils::fromString<int32_t>(e.get().toUtf8().data()) != 0;
     return true;
   }
 
@@ -39,10 +39,19 @@ namespace Valuable
     if(ok) *this = (v != 0);
   }
 
-  std::string ValueBool::asString(bool * const ok) const
+  QString ValueBool::asString(bool * const ok) const
   {
     if(ok) *ok = true;
     return Radiant::StringUtils::stringify((int32_t)m_value);
+  }
+
+  ValueBool & ValueBool::operator = (bool v)
+  {
+    if(m_value != v) {
+      m_value = v;
+      emitChange();
+    }
+    return *this;
   }
 
   bool ValueBool::set(int value)

@@ -34,7 +34,7 @@ namespace Radiant
 
       int m_fd;
       int m_port;
-      std::string m_host;
+      QString m_host;
   };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -59,12 +59,12 @@ namespace Radiant
     m_d->m_host = host ? host : "";
     m_d->m_port = port;
 
-    std::string errstr;
+    QString errstr;
     int fd = -1;
     int err = SocketUtilPosix::bindOrConnectSocket(fd, host, port, errstr,
                   true, AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if(err) {
-      error("TCPServerSocket::open # %s", errstr.c_str());
+      error("TCPServerSocket::open # %s", errstr.toUtf8().data());
       return err;
     }
 

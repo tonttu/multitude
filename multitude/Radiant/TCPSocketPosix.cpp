@@ -51,7 +51,7 @@ namespace Radiant
       int m_fd;
       int m_port;
       int m_noDelay;
-      std::string m_host;
+      QString m_host;
   };
 
  ////////////////////////////////////////////////////////////////////////////////
@@ -87,13 +87,13 @@ namespace Radiant
     m_d->m_host = host;
     m_d->m_port = port;
 
-    std::string errstr;
+    QString errstr;
     int err = SocketUtilPosix::bindOrConnectSocket(m_d->m_fd, host, port, errstr,
                   false, AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if(err == 0) {
       m_d->setOpts();
     } else {
-      error("UDPSocket::open # %s", errstr.c_str());
+      error("UDPSocket::open # %s", errstr.toUtf8().data());
     }
     return err;
   }
@@ -121,9 +121,9 @@ namespace Radiant
     return m_d->m_fd >= 0;
   }
 
-  const char * TCPSocket::host() const
+  QString TCPSocket::host() const
   {
-    return m_d->m_host.c_str();
+    return m_d->m_host;
   }
 
   int TCPSocket::port() const

@@ -1,6 +1,10 @@
 # Use this to setup global build options & variables.
 # This file is to be included by all project files of qmake.
-CONFIG -= qt
+CONFIG += qt
+QT += core
+
+QMAKE_CXXFLAGS += -std=c++0x
+
 CONFIG += link_pkgconfig
 CONFIG += thread
 
@@ -11,7 +15,7 @@ INCLUDEPATH += $$PWD/v8/include
 DEPENDPATH += $$PWD
 
 # The Cornerstone version for libraries
-unix:VERSION = 1.1.1
+unix:VERSION = 1.2.0
 
 withbundles = $$(MULTI_BUNDLES)
 
@@ -30,6 +34,11 @@ LIB_SCREENPLAY = -lScreenplay
 LIB_VIDEODISPLAY = -lVideoDisplay
 LIB_VALUABLE = -lValuable -lv8
 LIB_PATTERNS = -lPatterns
+
+linux-*:vivid {
+  LIBPATH += $$(FBX_SDK)/lib/gcc4
+  LIB_VIVID = -lVivid -lfbxsdk_20113_1_x64
+}
 
 LIB_BOX2D = -lBox2D
 
@@ -130,6 +139,11 @@ contains(QT_MAJOR_VERSION,4) {
     DEFINES += USE_QT45
   }
 
+}
+
+# Disable asserts in release mode
+CONFIG(release, debug|release) {
+  DEFINES += NDEBUG
 }
 
 # Use ccache if available

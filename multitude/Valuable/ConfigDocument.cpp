@@ -39,8 +39,8 @@ namespace Valuable
     std::ifstream input(fileName, std::ios_base::in);
 
     if(!input) {
-        Radiant::error("ConfigDocument::readConfigFile # failed to open '%s' for reading", fileName);
-        return false;
+      Radiant::error("ConfigDocument::readConfigFile # failed to open '%s' for reading", fileName);
+      return false;
     }
 
 
@@ -53,122 +53,128 @@ namespace Valuable
     while(std::getline(input,str)) {
       trimSpaces(str);
       if(str == "")
-	continue;
+        continue;
 
       if(parseLine(str)==ELEMENT_START) {
-	std::string s;
-	depth++;
-	ConfigElement elm,e;
-	size_t ps=str.find(",");
-	if(ps<10000) {
+        std::string s;
+        depth++;
+        ConfigElement elm,e;
+        size_t ps=str.find(",");
+        std::string elementName;
+        if(ps<10000) {
 
-	  e.m_elementName=str.substr(0,ps);
-	  size_t ps2=str.find("{");
-	  e.m_type=str.substr(ps+1,ps2-ps-1);
+          elementName=str.substr(0,ps);
+          size_t ps2=str.find("{");
+          e.m_type=QString::fromUtf8(str.substr(ps+1,ps2-ps-1).c_str());
 
-	}
-	else {
+        }
+        else {
 
-	  e.m_elementName=str.substr(0,str.find("{")-1);
-	}
-	
-	trimSpaces(e.m_elementName);
-	
-	// Radiant::info("E1 : %s", e.m_elementName.c_str());
-	
-	e.m_depth=depth;
-	elm.m_nodes.push_back(e);
-	k++;
+          elementName=str.substr(0,str.find("{")-1);
+        }
 
-  while(std::getline(input,s)) {
-    trimSpaces(s);
-	  if(s!="") {
-	    if(parseLine(s)==ELEMENT_START) {
+        trimSpaces(elementName);
+        e.m_elementName = QString::fromUtf8(elementName.c_str());
 
-	      depth++;
-	      ConfigElement child=ConfigElement();
-	      size_t ps=s.find(",");
-	      if(ps<10000) {
+        // Radiant::info("E1 : %s", e.m_elementName.c_str());
 
-		child.m_elementName=s.substr(0,ps);
-		child.m_type=s.substr(ps+1,s.find("{")-ps-1);
+        e.m_depth=depth;
+        elm.m_nodes.push_back(e);
+        k++;
 
-	      }
-	      else {
+        while(std::getline(input,s)) {
+          trimSpaces(s);
+          if(s!="") {
+            if(parseLine(s)==ELEMENT_START) {
 
-		child.m_elementName=s.substr(0,s.find("{")-1);
-	      }
+              depth++;
+              ConfigElement child=ConfigElement();
+              size_t ps=s.find(",");
+              std::string elementName;
+              if(ps<10000) {
 
-	      trimSpaces(child.m_elementName);
+                elementName=s.substr(0,ps);
+                child.m_type=QString::fromUtf8(s.substr(ps+1,s.find("{")-ps-1).c_str());
 
-	      // Radiant::info("E2: %s", child.m_elementName.c_str());
+              }
+              else {
 
-	      child.m_depth=depth;
-	      elm.m_nodes.push_back(child);
-	      k++;
+                elementName=s.substr(0,s.find("{")-1);
+              }
 
-	    }
-	    else if(parseLine(s)==ATTRIBUTE) {
-	      ConfigValue att=ConfigValue();
-	      for(int i = 0; i < (int) s.length();i++)
-		if(s[i]=='\"')
-		  s[i]=' ';
-	      size_t pos=s.find("=");
+              trimSpaces(elementName);
+              child.m_elementName = QString::fromUtf8(elementName.c_str());
 
-	      att.m_key=s.substr(0,pos);
-	      trimSpaces(att.m_key);
-	      att.m_value=s.substr(pos+1,s.length());
-	      trimSpaces(att.m_value);
+              // Radiant::info("E2: %s", child.m_elementName.c_str());
 
-	      att.m_depth=depth;
-	      elm.m_nodes[k-1].m_values.push_back(att);
+              child.m_depth=depth;
+              elm.m_nodes.push_back(child);
+              k++;
 
-	    }
-	    else if(parseLine(s)==ELEMENT_END) {
-	      depth--;
+            }
+            else if(parseLine(s)==ATTRIBUTE) {
+              ConfigValue att=ConfigValue();
+              for(int i = 0; i < (int) s.length();i++)
+                if(s[i]=='\"')
+                  s[i]=' ';
+              size_t pos=s.find("=");
 
-	      if(depth==0) {
-		k=0;
+              std::string tmp = s.substr(0,pos);
+              trimSpaces(tmp);
+              att.m_key = QString::fromUtf8(tmp.c_str());
+              tmp = s.substr(pos+1,s.length());
+              trimSpaces(tmp);
+              att.m_value = QString::fromUtf8(tmp.c_str());
+
+              att.m_depth=depth;
+              elm.m_nodes[k-1].m_values.push_back(att);
+
+            }
+            else if(parseLine(s)==ELEMENT_END) {
+              depth--;
+
+              if(depth==0) {
+                k=0;
 
                 for(int i= (int) elm.m_nodes.size()-1;i>0;i--) {
-		  if(elm.m_nodes[i].m_depth>elm.m_nodes[i-1].m_depth) {
-		    elm.m_nodes[i-1].m_nodes.push_back(elm.m_nodes[i]);
-		    // Radiant::info("E3 : %s", elm.m_nodes[i].m_elementName.c_str());
-		  }
-		  else {
+                  if(elm.m_nodes[i].m_depth>elm.m_nodes[i-1].m_depth) {
+                    elm.m_nodes[i-1].m_nodes.push_back(elm.m_nodes[i]);
+                    // Radiant::info("E3 : %s", elm.m_nodes[i].m_elementName.c_str());
+                  }
+                  else {
 
-		    for(int j=i-2;j>=0;j--) {
-		      if(elm.m_nodes[j].m_depth<elm.m_nodes[i].m_depth && 
-			 (elm.m_nodes[i].m_depth-elm.m_nodes[j].m_depth)==1 ) {
-			elm.m_nodes[j].m_nodes.push_back(elm.m_nodes[i]);
-			// Radiant::info("E4 : %s", elm.m_nodes[i].m_elementName.c_str());
-			break;
-		      }
-		    }
-		  }
-		}
+                    for(int j=i-2;j>=0;j--) {
+                      if(elm.m_nodes[j].m_depth<elm.m_nodes[i].m_depth &&
+                          (elm.m_nodes[i].m_depth-elm.m_nodes[j].m_depth)==1 ) {
+                        elm.m_nodes[j].m_nodes.push_back(elm.m_nodes[i]);
+                        // Radiant::info("E4 : %s", elm.m_nodes[i].m_elementName.c_str());
+                        break;
+                      }
+                    }
+                  }
+                }
 
-		ConfigElement el = ConfigElement();
-		el.m_nodes.push_back(elm.m_nodes[0]);
-		
-		// Radiant::info("E5 : %s", elm.m_nodes[0].m_elementName.c_str());
-		m_doc.m_nodes.push_back(el);
-		elm.m_nodes.clear();
-		elm.m_values.clear();
-		flag=false;
-		atFlag=false;
-	      }
-	    }
+                ConfigElement el = ConfigElement();
+                el.m_nodes.push_back(elm.m_nodes[0]);
+
+                // Radiant::info("E5 : %s", elm.m_nodes[0].m_elementName.c_str());
+                m_doc.m_nodes.push_back(el);
+                elm.m_nodes.clear();
+                elm.m_values.clear();
+                flag=false;
+                atFlag=false;
+              }
+            }
           }
-	}
+        }
       }
     }
     input.close();
 
     for(unsigned i = 0; i < m_doc.childCount(); i++) {
       ConfigElement & c1 = m_doc.child(i);
-      if(c1.childCount() == 1 && c1.elementName().empty()) {
-	c1 = ConfigElement(c1.child(0));
+      if(c1.childCount() == 1 && c1.elementName().isEmpty()) {
+        c1 = ConfigElement(c1.child(0));
       }
     }
     return true;
@@ -182,34 +188,34 @@ namespace Valuable
     writeConfig(output);
     output.close();
   }
-  
+
   void ConfigDocument::writeConfig(std::ostream & output)
   {
-    std::string aa = getConfigText(m_doc);
+    QString aa = getConfigText(m_doc);
 
-    //	for(int i=ss.size()-1;i>=0;i--)
-    //		output<<ss[i];
+    //        for(int i=ss.size()-1;i>=0;i--)
+    //                output<<ss[i];
 
-    output << aa;
+    output << aa.toUtf8().data();
   }
 
-  void ConfigDocument::trimSpaces( std::string& str)  
-  {  
+  void ConfigDocument::trimSpaces( std::string& str)
+  {
     using namespace std;
-    size_t startpos = str.find_first_not_of(" \t"); 
-    size_t endpos = str.find_last_not_of(" \t"); 
+    size_t startpos = str.find_first_not_of(" \t");
+    size_t endpos = str.find_last_not_of(" \t");
 
-    if(( std::string::npos == startpos ) || ( std::string::npos == endpos)) {  
-      str = "";  
-    }  
-    else  
-      str = str.substr( startpos, endpos-startpos+1 );  
- 
+    if(( std::string::npos == startpos ) || ( std::string::npos == endpos)) {
+      str = "";
+    }
+    else
+      str = str.substr( startpos, endpos-startpos+1 );
+
   }
   ConfigElement *ConfigDocument::getConfigElement(std::string elementName)
   {
     bool found=false;
-		
+
     ConfigElement *f=findConfigElement(m_doc,elementName,found);
     if(f)
       return f;
@@ -218,10 +224,10 @@ namespace Valuable
 
   }
   ConfigElement *ConfigDocument::getConfigElement(std::string key,
-						  std::string value)
+                                                  std::string value)
   {
     bool found=false;
-		
+
     ConfigElement *f=findConfigElement(m_doc,found,key,value);
     if(f)
       return f;
@@ -237,23 +243,23 @@ namespace Valuable
       ConfigElement *w;
       w=findConfigElement(e.m_nodes[i],found,key,value);
       if(found)
-	return w;
+        return w;
     }
 
     for(int j=0;j<(int)e.m_values.size();j++) {
-      std::string ke=e.m_values[j].m_key;
+      std::string ke=e.m_values[j].m_key.toUtf8().data();
       trimSpaces(ke);
-      std::string val=e.m_values[j].m_value;
+      std::string val=e.m_values[j].m_value.toUtf8().data();
       trimSpaces(val);
-      
+
       if(key==ke && value==val) {
-	found=true;
-	
-	return &e;
-	
+        found=true;
+
+        return &e;
+
       }
     }
-    
+
     return 0;
   }
 
@@ -264,26 +270,26 @@ namespace Valuable
       ConfigElement *w;
       w=findConfigElement(e.m_nodes[i],elementName,found);
       if(found)
-	return w;
-      
+        return w;
+
     }
 
-    std::string s=e.m_elementName;
+    std::string s=e.m_elementName.toUtf8().data();
     trimSpaces(s);
 
     if(s==elementName) {
       found=true;
-      
+
       return &e;
-      
+
     }
 
     return 0;
   }
 
-  static std::string __indent(int recursion)
+  static QString __indent(int recursion)
   {
-    std::string res;
+    QString res;
 
     for(int i = 0; i < recursion; i++)
       res += "  ";
@@ -291,38 +297,40 @@ namespace Valuable
     return res;
   }
 
-  std::string ConfigDocument::getConfigText(ConfigElement e, int recursion)
+  QString ConfigDocument::getConfigText(ConfigElement e, int recursion)
   {
-    std::string str;
-    std::string ind(__indent(recursion));
-    std::string ind2(ind + "  ");
+    QString str;
+    QString ind(__indent(recursion));
+    QString ind2(ind + "  ");
 
-   /* printf("Element name \"%s\" (%d)\n", e.m_elementName.c_str(),
+    /* printf("Element name \"%s\" (%d)\n", e.m_elementName.c_str(),
      recursion);*/
 
     {
       if(e.m_elementName != "") {
 
-	str += ind;
+        str += ind;
 
-	if(e.m_type=="")
-	  str+=e.m_elementName+" {\n";
-	else
-	  str+=e.m_elementName+","+e.m_type+" {\n";
+        if(e.m_type=="")
+          str+=e.m_elementName+" {\n";
+        else
+          str+=e.m_elementName+","+e.m_type+" {\n";
       }
       else {
       }
 
       for(int j=0;j < (int) e.m_values.size();j++) {
-	trimSpaces(e.m_values[j].m_value);
-	str += ind2 + e.m_values[j].m_key+"="+"\""+e.m_values[j].m_value+"\""+"\n";
+        std::string tmp = e.m_values[j].m_value.toUtf8().data();
+        trimSpaces(tmp);
+        e.m_values[j].m_value = QString::fromUtf8(tmp.c_str());
+        str += ind2 + e.m_values[j].m_key+"="+"\""+e.m_values[j].m_value+"\""+"\n";
 
       }
       for(int i = 0; i < (int) e.m_nodes.size(); i++)
-	str += getConfigText(e.m_nodes[i], recursion + 1);
+        str += getConfigText(e.m_nodes[i], recursion + 1);
 
       if(e.m_elementName != "") {
-	str += ind + "}\n";
+        str += ind + "}\n";
       }
     }
     return str;
@@ -337,9 +345,9 @@ namespace Valuable
     else {
       size_t pos=line.find("=");
       if(pos>=10000)
-	return NOT_VALID;
+        return NOT_VALID;
       else
-	return ATTRIBUTE;
+        return ATTRIBUTE;
     }
   }
 
@@ -358,7 +366,7 @@ namespace Valuable
           return true;
         n++;
       }
-      else 
+      else
         ok = false;
     }
 
@@ -367,7 +375,7 @@ namespace Valuable
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
-  
+
   void convert(DOMDocument & doc, DOMElement & to, const ConfigElement & from)
   {
     for(unsigned i = 0; i < from.childCount(); i++) {
@@ -394,24 +402,24 @@ namespace Valuable
     to.setElementName(from.getTagName());
 
     DOMElement::NodeList nodes = from.getChildNodes();
-    
+
     for(DOMElement::NodeList::iterator it = nodes.begin();
-	it != nodes.end(); it++) {
+        it != nodes.end(); it++) {
 
       DOMElement de = (*it);
-      
+
       DOMElement::NodeList nodes2 = de.getChildNodes();
 
       if(nodes2.size()) {
-	ConfigElement tmp;
-	convert(tmp, de);	
-	to.addElement(tmp);
+        ConfigElement tmp;
+        convert(tmp, de);
+        to.addElement(tmp);
       }
       else {
-	ConfigValue tmp(de.getTagName(), de.getTextContent());
-	to.addValue(tmp);
+        ConfigValue tmp(de.getTagName(), de.getTextContent());
+        to.addValue(tmp);
       }
     }
-    
+
   }
 }

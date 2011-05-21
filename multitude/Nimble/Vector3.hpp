@@ -34,6 +34,8 @@ namespace Nimble {
     /// Data type of the vector
     typedef T type;
 
+    enum { Elements = 3 };
+
     T		x;										///< x-component of the vector
     T		y;										///< y-component of the vector
     T		z;										///< z-component of the vector
@@ -188,6 +190,14 @@ namespace Nimble {
   Nimble::Vector3T<T> operator* (T s, const Nimble::Vector3T<T>& v)
   { return v * s; }
 
+  namespace Math {
+    /// Specialize Abs
+    template <class T>
+    inline float Abs(const Vector3T<T>& t)
+    {
+      return t.length();
+    }
+  }
 } // namespace
 
 template <class T>

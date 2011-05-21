@@ -25,7 +25,7 @@
 # include <windows.h>
 #endif
 
-#include <string>
+#include <QString>
 
 namespace Radiant
 {
@@ -75,11 +75,11 @@ namespace Radiant
     /// Checks if the port is open
     bool isOpen() const;
     /// Returns the name of the device
-    const std::string & deviceName() { return m_device; }
+    const QString & deviceName() { return m_device; }
 
   private:
   
-    std::string m_device;
+    QString m_device;
 
 #ifdef WIN32
     HANDLE  m_hPort;

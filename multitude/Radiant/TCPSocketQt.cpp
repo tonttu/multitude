@@ -89,7 +89,7 @@ namespace Radiant
 
     if(!ok) {
       QString errstr = m_d->errorString() ;
-      error("TCPSocket::open # %s", errstr.toStdString().c_str());
+      error("TCPSocket::open # %s", errstr.toUtf8().data());
       return EINVAL;
     }
 
@@ -192,7 +192,7 @@ namespace Radiant
 #endif
   }
 /*
-  void TCPSocket::debug()
+  void TCPSocket::debugRadiant()
   {
     Radiant::info("TCPSocket::debug #");
     Radiant::info("\tSTATE %d", m_d->state());

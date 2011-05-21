@@ -14,7 +14,7 @@
  */
 
 #include "CameraDriver.hpp"
-#include "Trace.hpp"
+#include "Radiant.hpp"
 
 #ifdef CAMERA_DRIVER_CMU
 #	include <Radiant/VideoCameraCMU.hpp>
@@ -27,6 +27,8 @@
 #ifdef CAMERA_DRIVER_1394
 #	include <Radiant/VideoCamera1394.hpp>
 #endif
+
+#include <Radiant/Trace.hpp>
 
 namespace Radiant
 {
@@ -46,7 +48,7 @@ namespace Radiant
       delete it->second;
   }
 
-  VideoCamera * CameraDriverFactory::createCamera(const std::string & driverName)
+  VideoCamera * CameraDriverFactory::createCamera(const QString & driverName)
   {
     CameraDriver * driver = getCameraDriver(driverName);
     if(driver)
@@ -63,7 +65,7 @@ namespace Radiant
     return 0;
   }
 
-  CameraDriver * CameraDriverFactory::getCameraDriver(const std::string & driverName)
+  CameraDriver * CameraDriverFactory::getCameraDriver(const QString & driverName)
   {
     // If the user has not registered any drivers, we register the defaults here once
     static bool once = true;
@@ -102,12 +104,12 @@ namespace Radiant
 
     std::vector<VideoCamera::CameraInfo> cameras;
 
-    for(StringUtils::StringList::iterator it = m_preferredDrivers.begin(); it != m_preferredDrivers.end(); it++) {
+    foreach(QString str, m_preferredDrivers) {
 
-      CameraDriver * cd = getCameraDriver((*it));
+      CameraDriver * cd = getCameraDriver(str);
 
-      debug("CameraDriverFactory::getPreferredCameraDriver # Checking driver %s = %p",
-			(*it).c_str(), cd);
+      debugRadiant("CameraDriverFactory::getPreferredCameraDriver # Checking driver %s = %p",
+          str.toUtf8().data(), cd);
       if(cd) {
         // Make sure there is at least one camera available using this driver
 		  size_t cameraCount = cd->queryCameras(cameras);
@@ -125,10 +127,9 @@ namespace Radiant
     m_drivers.insert(std::make_pair(driver->driverName(), driver));
   }
 
-  void CameraDriverFactory::setDriverPreference(const std::string & pref)
+  void CameraDriverFactory::setDriverPreference(const QString & pref)
   {
-    m_preferredDrivers.clear();
-    StringUtils::split(pref, ",", m_preferredDrivers, true);
+    m_preferredDrivers = pref.split(",", QString::SkipEmptyParts);
   }
 
 }

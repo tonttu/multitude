@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Poetic.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Poetic.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #include "CPUFontBase.hpp"
@@ -20,16 +8,17 @@
 
 namespace Poetic
 {
+  using namespace Radiant;
 
   CPUFontBase::CPUFontBase()
     : m_face(0),
-	  m_mutex(false, false, true),
+      m_mutex(true),
       m_glyphList(0)
   {
   }
 
   CPUFontBase::~CPUFontBase()
-  {  
+  {
     delete m_glyphList;
     delete m_face;
   }
@@ -58,13 +47,13 @@ namespace Poetic
     gpuFont->m_cpuFont = 0;
 
     for(container::iterator it = m_gpuFonts.begin();
-	it != m_gpuFonts.end(); it++) {
-      if(*it == gpuFont) { 
+    it != m_gpuFonts.end(); it++) {
+      if(*it == gpuFont) {
         m_gpuFonts.erase(it);
         return;
       }
     }
-  
+
     assert(0);
   }
 
@@ -144,7 +133,7 @@ namespace Poetic
         const unsigned char * c = (unsigned char *)str;
         float advance = 0.f;
         if(checkGlyph(*c)) {
-            bbox = m_glyphList->bbox(*c); 
+            bbox = m_glyphList->bbox(*c);
             advance = m_glyphList->advance(*c, *(c + 1));
         }
 
@@ -173,7 +162,7 @@ namespace Poetic
       float   advance = 0.f;
       if(checkGlyph(*wc))
       {
-        bbox = m_glyphList->bbox(*wc); 
+        bbox = m_glyphList->bbox(*wc);
         advance = m_glyphList->advance(*wc, *(wc + 1));
       }
 
@@ -202,7 +191,7 @@ namespace Poetic
 
             return false;
         }
-        
+
         m_glyphList->add(tempGlyph, characterCode);
     }
 
@@ -217,9 +206,9 @@ namespace Poetic
 
     int i = 0;
     while(*c) {
-      
+
       if(n >= 0 && i >= n)
-	break;
+    break;
 
       if(checkGlyph(*c)) {
         width += m_glyphList->advance(*c, *(c + 1));
@@ -242,7 +231,7 @@ namespace Poetic
     while(*c) {
 
       if(n >= 0 && i >= n)
-	break;
+        break;
 
       if(checkGlyph(*c)) {
         width += m_glyphList->advance(*c, *(c + 1));
@@ -254,12 +243,33 @@ namespace Poetic
     return width;
   }
 
+  void CPUFontBase::advanceList(const wchar_t * str, float * advances, int n)
+  {
+    Radiant::Guard g(m_mutex);
+
+    int i = 0;
+
+    while(*str) {
+      if((n >= 0) && (i >= n))
+        break;
+
+      if(checkGlyph(*str)) {
+        *advances = m_glyphList->advance(str[0], str[1]);
+      }
+
+      i++;
+      str++;
+      advances++;
+    }
+
+  }
+
   const Glyph * CPUFontBase::getGlyph(unsigned int charCode)
   {
     Radiant::Guard g(m_mutex);
     if(checkGlyph(charCode))
       return m_glyphList->glyph(charCode);
-    
+
     return 0;
   }
 

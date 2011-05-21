@@ -18,11 +18,12 @@
 
 #include <cstdio>
 
-#include <string>
+#include <QString>
 
 namespace Luminous
 {
   class Image;
+  class CompressedImage;
   struct ImageInfo;
   
   /// The base class for different image codecs. Derive your own codec from this
@@ -41,11 +42,11 @@ namespace Luminous
       /// Get the extensions associated with this codec in a string separated by
       /// spaces
       ///  @return extensions separated by spaces (eg. "jpeg jpg")
-      virtual std::string extensions() const = 0;
+      virtual QString extensions() const = 0;
 
       /// Return name of the codec
       /// @return name of the codec
-      virtual std::string name() const = 0;
+      virtual QString name() const = 0;
 
       /// Pinging an image just reads the width, height, and pixel format from a file.
       /// @param info ImageInfo struct to store the read info to
@@ -58,6 +59,8 @@ namespace Luminous
       /// @param file file to read the data from
       /// @return true if the file was decoded successfully, false otherwise
       virtual bool read(Image & image, FILE * file) = 0;
+
+      virtual bool read(CompressedImage & /*image*/, FILE * /*file*/, int level = 0) { (void)level; return false; }
 
       /// Store the given Image into a file
       /// @param image Image to store

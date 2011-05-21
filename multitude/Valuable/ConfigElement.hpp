@@ -21,7 +21,7 @@
 
 #include <iostream>
 #include <vector>
-#include <string>
+#include <QString>
 
 namespace Valuable
 {  
@@ -36,23 +36,23 @@ namespace Valuable
     /// Gets the value with the given name
     /// @param key name of the value
     /// @return pointer to the value or 0 if the value is not found
-    ConfigValue *getConfigValue(const std::string & key);
+    ConfigValue *getConfigValue(const QString & key);
     /// Gets the value with the given name
     /// @param key name of the value
     /// @return copy of the value or an empty value if the given key is not found
-    ConfigValue getConfigValueSafe(const std::string & key);
+    ConfigValue getConfigValueSafe(const QString & key);
 
     /// Removes all values from the element
     void clear();
 
     /// Sets the type of the element
-    void setType(const std::string & type)
+    void setType(const QString & type)
     { m_type = type; }
 
     /// Returns the name of the element
-    const std::string & elementName() const { return m_elementName; }
+    const QString & elementName() const { return m_elementName; }
     /// Sets the name of the element
-    void setElementName(const std::string & name)
+    void setElementName(const QString & name)
     { m_elementName = name; }
 
     /// Adds a sub-element to the element
@@ -86,9 +86,9 @@ namespace Valuable
 
     std::vector<ConfigValue>   m_values;
     std::vector<ConfigElement> m_nodes;
-    std::string                m_type;
+    QString                m_type;
     int                        m_depth;
-    std::string                m_elementName;
+    QString                m_elementName;
   };
 }
 

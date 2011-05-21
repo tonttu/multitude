@@ -48,7 +48,7 @@ namespace Luminous {
       if(v.m_param == -1) {\
         int tmp = glslprog->glslfunc(((type*)v.m_obj)->name()); \
         if(tmp < 0) { \
-          error("Could not find location for %s", ((type*)v.m_obj)->name().c_str()); \
+          error("Could not find location for %s", ((type*)v.m_obj)->name().toUtf8().data()); \
           v.m_param = -2; \
           continue; \
         } \
@@ -56,7 +56,7 @@ namespace Luminous {
           v.m_param = tmp; \
         }\
       }\
-      func(v.m_param, ((const type *) v.m_obj)->data()); \
+      func(v.m_param, *((const type *) v.m_obj)); \
     } \
   }
 
@@ -69,7 +69,7 @@ namespace Luminous {
       if(v.m_param == -1) {\
         int tmp = glslprog->glslfunc(((type*)v.m_obj)->name()); \
         if(tmp < 0) { \
-          error("Could not find location for %s", ((type*)v.m_obj)->name().c_str()); \
+          error("Could not find location for %s", ((type*)v.m_obj)->name().toUtf8().data()); \
           v.m_param = -2; \
           continue; \
         } \
@@ -105,7 +105,7 @@ namespace Luminous {
       SHADER_PARAM_CHECK(obj, ValueVector4f, m_vec4f);
 
       error("When adding shader parameter %s, type %s not supported",
-            obj->name().c_str(), typeid(*obj).name());
+            obj->name().toUtf8().data(), typeid(*obj).name());
     }
 
 
@@ -135,9 +135,9 @@ namespace Luminous {
     Params m_uniforms;
     Params m_varyings;
 
-    std::string m_fragmentShader;
-    std::string m_vertexShader;
-    std::string m_geometryShader;
+    QString m_fragmentShader;
+    QString m_vertexShader;
+    QString m_geometryShader;
 
     int m_generation;
   };
@@ -276,15 +276,15 @@ namespace Luminous {
 
       bool ok = true;
 
-      if(!m_self->m_vertexShader.empty())
-        ok = ok && prog.loadString(GL_VERTEX_SHADER, m_self->m_vertexShader.c_str());
+      if(!m_self->m_vertexShader.isEmpty())
+        ok = ok && prog.loadString(GL_VERTEX_SHADER, m_self->m_vertexShader.toUtf8().data());
 
-      if(!m_self->m_fragmentShader.empty())
-        ok = ok && prog.loadString(GL_FRAGMENT_SHADER, m_self->m_fragmentShader.c_str());
+      if(!m_self->m_fragmentShader.isEmpty())
+        ok = ok && prog.loadString(GL_FRAGMENT_SHADER, m_self->m_fragmentShader.toUtf8().data());
 
-      if(!m_self->m_geometryShader.empty())
+      if(!m_self->m_geometryShader.isEmpty())
         ok = ok && prog.loadString(GL_GEOMETRY_SHADER_EXT,
-                                   m_self->m_geometryShader.c_str());
+                                   m_self->m_geometryShader.toUtf8().data());
 
       /* Set the generation even if something has failed. */
       prog.setGeneration(m_self->m_generation);
@@ -300,7 +300,7 @@ namespace Luminous {
 
   bool Shader::isDefined() const
   {
-    return !m_self->m_fragmentShader.empty() ||
-        !m_self->m_vertexShader.empty();
+    return !m_self->m_fragmentShader.isEmpty() ||
+        !m_self->m_vertexShader.isEmpty();
   }
 }

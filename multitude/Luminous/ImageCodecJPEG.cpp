@@ -63,14 +63,14 @@ namespace Luminous
     return header[0] == 0xFF && header[1] == 0xD8;
   }
 
-  std::string ImageCodecJPEG::extensions() const
+  QString ImageCodecJPEG::extensions() const
   {
-    return std::string("jpg jpeg");
+    return QString("jpg jpeg");
   }
 
-  std::string ImageCodecJPEG::name() const
+  QString ImageCodecJPEG::name() const
   {
-    return std::string("jpeg");
+    return QString("jpeg");
   }
 
   bool ImageCodecJPEG::ping(ImageInfo & info, FILE * file)

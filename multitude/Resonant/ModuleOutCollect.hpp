@@ -16,7 +16,7 @@
 #ifndef RESONANT_MODULE_OUT_COLLECT_HPP
 #define RESONANT_MODULE_OUT_COLLECT_HPP
 
-#include <string>
+#include <QString>
 #include <string.h>
 
 #include <Resonant/Module.hpp>

@@ -16,7 +16,7 @@
 #include <Valuable/HasValuesImpl.hpp>
 #include <Valuable/DOMDocument.hpp>
 #include <Valuable/DOMElement.hpp>
-
+#include <Valuable/Valuable.hpp>
 #include <Valuable/HasValues.hpp>
 #include <Valuable/Serializer.hpp>
 
@@ -48,7 +48,7 @@ namespace Valuable
       m_frame(0)
   {}
 
-  HasValues::HasValues(HasValues * parent, const std::string & name, bool transit)
+  HasValues::HasValues(HasValues * parent, const QString & name, bool transit)
       : ValueObject(parent, name, transit),
       m_eventsEnabled(true),
       m_id(this, "id", generateId()),
@@ -58,8 +58,9 @@ namespace Valuable
 
   HasValues::~HasValues()
   {
-    for(Sources::iterator it = m_eventSources.begin(); it != m_eventSources.end(); it++) {
-      (*it)->eventRemoveListener(this);
+    while(!m_eventSources.empty()) {
+      /* The eventRemoveListener call will also clear the relevant part from m_eventSources. */
+      (*m_eventSources.begin())->eventRemoveListener(this);
     }
 
     for(Listeners::iterator it = m_elisteners.begin();
@@ -71,16 +72,24 @@ namespace Valuable
           it->m_func.Dispose();
       }
     }
+
+    foreach(ValueObject* vo, m_valueListening) {
+      for(QList<ValueListener>::iterator it = vo->m_listeners.begin(); it != vo->m_listeners.end(); ) {
+        if(it->listener == this) {
+          it = vo->m_listeners.erase(it);
+        } else ++it;
+      }
+    }
   }
 
-  ValueObject * HasValues::getValue(const std::string & name)
+  ValueObject * HasValues::getValue(const QString & name)
   {
     container::iterator it = m_children.find(name);
 
     return it == m_children.end() ? 0 : it->second;
   }
 
-  bool HasValues::addValue(const std::string & cname, ValueObject * const value)
+  bool HasValues::addValue(const QString & cname, ValueObject * const value)
   {
     //    Radiant::trace("HasValues::addValue # adding %s", cname.c_str());
 
@@ -89,7 +98,7 @@ namespace Valuable
       Radiant::error(
           "HasValues::addValue # can not add child '%s' as '%s' "
           "already has a child with the same name.",
-          cname.c_str(), m_name.c_str());
+          cname.toUtf8().data(), m_name.toUtf8().data());
       return false;
     }
 
@@ -99,7 +108,7 @@ namespace Valuable
       Radiant::error(
           "HasValues::addValue # '%s' already has a parent '%s'. "
           "Unlinking it to set new parent.",
-          cname.c_str(), parent->name().c_str());
+          cname.toUtf8().data(), parent->name().toUtf8().data());
       value->removeParent();
     }
 
@@ -114,18 +123,80 @@ namespace Valuable
 
   void HasValues::removeValue(ValueObject * const value)
   {
-    const std::string & cname = value->name();
+    const QString & cname = value->name();
 
     container::iterator it = m_children.find(cname);
     if(it == m_children.end()) {
       Radiant::error(
           "HasValues::removeValue # '%s' is not a child of '%s'.",
-          cname.c_str(), m_name.c_str());
+          cname.toUtf8().data(), m_name.toUtf8().data());
       return;
     }
 
     m_children.erase(it);
     value->m_parent = 0;
+  }
+
+  bool HasValues::setValue(const QString & name, v8::Handle<v8::Value> v)
+  {
+    using namespace v8;
+    HandleScope handle_scope;
+    if (v.IsEmpty()) {
+      Radiant::error("HasValues::setValue # v8::Handle is empty");
+      return false;
+    }
+
+    if (v->IsTrue()) return setValue(name, 1);
+    if (v->IsFalse()) return setValue(name, 0);
+    if (v->IsBoolean()) return setValue(name, v->ToBoolean()->Value() ? 1 : 0);
+    if (v->IsInt32()) return setValue(name, int(v->ToInt32()->Value()));
+    if (v->IsUint32()) return setValue(name, int(v->ToUint32()->Value()));
+    if (v->IsString()) return setValue(name, QString::fromUtf16(*String::Value(v->ToString())));
+    if (v->IsNumber()) return setValue(name, float(v->ToNumber()->NumberValue()));
+
+    if (v->IsArray()) {
+      Handle<Array> arr = v.As<Array>();
+      assert(!arr.IsEmpty());
+      if(arr->Length() == 2) {
+        Local<Number> x = arr->Get(0)->ToNumber();
+        Local<Number> y = arr->Get(1)->ToNumber();
+        if (x.IsEmpty() || y.IsEmpty()) {
+          Radiant::error("HasValues::setValue # v8::Value should be array of two numbers");
+          return false;
+        }
+        return setValue(name, Nimble::Vector2f(x->Value(), y->Value()));
+      } else if(arr->Length() == 4) {
+        Local<Number> r = arr->Get(0)->ToNumber();
+        Local<Number> g = arr->Get(1)->ToNumber();
+        Local<Number> b = arr->Get(2)->ToNumber();
+        Local<Number> a = arr->Get(3)->ToNumber();
+        if (r.IsEmpty() || g.IsEmpty() || b.IsEmpty() || a.IsEmpty()) {
+          Radiant::error("HasValues::setValue # v8::Value should be array of four numbers");
+          return false;
+        }
+        return setValue(name, Nimble::Vector4f(r->Value(), g->Value(), b->Value(), a->Value()));
+      }
+      Radiant::error("HasValues::setValue # v8::Array with %d elements is not supported", arr->Length());
+    } else if (v->IsRegExp()) {
+      Radiant::error("HasValues::setValue # v8::Value type RegExp is not supported");
+    } else if (v->IsDate()) {
+      Radiant::error("HasValues::setValue # v8::Value type Date is not supported");
+    } else if (v->IsExternal()) {
+      Radiant::error("HasValues::setValue # v8::Value type External is not supported");
+    } else if (v->IsObject()) {
+      Radiant::error("HasValues::setValue # v8::Value type Object is not supported");
+    } else if (v->IsArray()) {
+      Radiant::error("HasValues::setValue # v8::Value type Array is not supported");
+    } else if (v->IsFunction()) {
+      Radiant::error("HasValues::setValue # v8::Value type Function is not supported");
+    } else if (v->IsNull()) {
+      Radiant::error("HasValues::setValue # v8::Value type Null is not supported");
+    } else if (v->IsUndefined()) {
+      Radiant::error("HasValues::setValue # v8::Value type Undefined is not supported");
+    } else {
+      Radiant::error("HasValues::setValue # v8::Value type is unknown");
+    }
+    return false;
   }
 
   bool HasValues::saveToFileXML(const char * filename)
@@ -155,15 +226,18 @@ namespace Valuable
     return deserialize(archive.root());
   }
 
-  ArchiveElement & HasValues::serialize(Archive & archive)
+  ArchiveElement & HasValues::serialize(Archive & archive) const
   {
-    if(m_name.empty()) {
-      Radiant::error(
+    QString name;
+    if(m_name.isEmpty()) {
+      if(parent()) {
+        Radiant::error(
           "HasValues::serialize # attempt to serialize object with no name");
-      return archive.emptyElement();
-    }
+        return archive.emptyElement();
+      } else name = "ValueObject";
+    } else name = m_name;
 
-    ArchiveElement & elem = archive.createElement(m_name.c_str());
+    ArchiveElement & elem = archive.createElement(name.toUtf8().data());
     if(elem.isNull()) {
       Radiant::error(
           "HasValues::serialize # failed to create element");
@@ -172,7 +246,7 @@ namespace Valuable
 
     elem.add("type", type());
 
-    for(container::iterator it = m_children.begin(); it != m_children.end(); it++) {
+    for(container::const_iterator it = m_children.begin(); it != m_children.end(); it++) {
       ValueObject * vo = it->second;
 
       if (!archive.checkFlag(Archive::ONLY_CHANGED) || vo->isChanged()) {
@@ -194,7 +268,7 @@ namespace Valuable
     for(ArchiveElement::Iterator & it = element.children(); it; ++it) {
       ArchiveElement & elem = *it;
 
-      std::string name = elem.name();
+      QString name = elem.name();
 
       ValueObject * vo = getValue(name);
 
@@ -204,7 +278,7 @@ namespace Valuable
         vo->deserialize(elem);
       else if(!elem.xml() || !readElement(*elem.xml())) {
         Radiant::error(
-            "HasValues::deserialize # (%s) don't know how to handle element '%s'", type(), name.c_str());
+            "HasValues::deserialize # (%s) don't know how to handle element '%s'", type(), name.toUtf8().data());
         return false;
       }
     }
@@ -213,7 +287,7 @@ namespace Valuable
   }
 
   void HasValues::debugDump() {
-    Radiant::trace(Radiant::DEBUG, "%s {", m_name.c_str());
+    Radiant::trace(Radiant::DEBUG, "%s {", m_name.toUtf8().data());
 
     for(container::iterator it = m_children.begin(); it != m_children.end(); it++) {
       ValueObject * vo = it->second;
@@ -221,8 +295,8 @@ namespace Valuable
       HasValues * hv = dynamic_cast<HasValues *> (vo);
       if(hv) hv->debugDump();
       else {
-        std::string s = vo->asString();
-        Radiant::trace(Radiant::DEBUG, "\t%s = %s", vo->name().c_str(), s.c_str());
+        QString s = vo->asString();
+        Radiant::trace(Radiant::DEBUG, "\t%s = %s", vo->name().toUtf8().data(), s.toUtf8().data());
       }
     }
 
@@ -245,7 +319,7 @@ namespace Valuable
 
     if(std::find(m_elisteners.begin(), m_elisteners.end(), vp) !=
        m_elisteners.end())
-      debug("Widget::eventAddListener # Already got item %s -> %s (%p)",
+      debugValuable("Widget::eventAddListener # Already got item %s -> %s (%p)",
             from, to, obj);
     else {
       // m_elisteners.push_back(vp);
@@ -279,7 +353,9 @@ namespace Valuable
   int HasValues::eventRemoveListener(Valuable::HasValues * obj, const char * from, const char * to)
   {
     int removed = 0;
-    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); it++){
+
+    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); it++) {
+
       if(it->m_listener == obj && it->m_valid) {
         // match from & to if specified
         if ( (!from || it->m_from == from) &&
@@ -291,6 +367,21 @@ namespace Valuable
         }
       }
     }
+
+    if(removed) {
+
+      // Count number of references left to the object
+      size_t count = 0;
+      for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); it++) {
+        if(it->m_listener == obj && it->m_valid)
+          count++;
+      }
+
+      // If nothing references the object, remove the source
+      if(count == 0)
+        obj->eventRemoveSource(this);
+    }
+
     return removed;
   }
 
@@ -329,7 +420,7 @@ namespace Valuable
 
     // info("HasValues::processMessage # Child id = %s", key.c_str());
 
-    ValueObject * vo = getValue(key);
+    ValueObject * vo = getValue(QString::fromUtf8(key.c_str()));
 
     if(vo) {
       // info("HasValues::processMessage # Sending message \"%s\" to %s",
@@ -340,7 +431,7 @@ namespace Valuable
 
   HasValues::Uuid HasValues::generateId()
   {
-    static Radiant::MutexAuto s_mutex;
+    static Radiant::Mutex s_mutex;
     Radiant::Guard g(s_mutex);
     static Uuid s_id = static_cast<Uuid>(Radiant::TimeStamp::getTime());
     return s_id++;
@@ -351,9 +442,9 @@ namespace Valuable
     return m_id;
   }
 
-  void HasValues::eventSend(const std::string & id, Radiant::BinaryData & bd)
+  void HasValues::eventSend(const QString & id, Radiant::BinaryData & bd)
   {
-    eventSend(id.c_str(), bd);
+    eventSend(id.toUtf8().data(), bd);
   }
 
   void HasValues::eventSend(const char * id, Radiant::BinaryData & bd)
@@ -380,11 +471,11 @@ namespace Valuable
         bdsend.rewind();
 
         if(vp.m_listener) {
-          vp.m_listener->processMessage(vp.m_to.c_str(), bdsend);
+          vp.m_listener->processMessage(vp.m_to.toUtf8().data(), bdsend);
         } else {
           /// @todo wrap bdsend
           /// @todo what is the correct receiver?
-          v8::Local<v8::Value> argv[] = {v8::String::New(vp.m_to.c_str())};
+          v8::Local<v8::Value> argv[] = {v8::String::New(vp.m_to.toUtf8().data())};
           vp.m_func->Call(v8::Context::GetCurrent()->Global(), 1, argv);
         }
       }
@@ -397,11 +488,18 @@ namespace Valuable
     eventSend(id, tmp);
   }
 
-  void HasValues::childRenamed(const std::string & was, const std::string & now)
+  void HasValues::childRenamed(const QString & was, const QString & now)
   {
-    iterator it = m_children.find(was);
+    // Check that the value does not exist already
+    iterator it = m_children.find(now);
+    if(it != m_children.end()) {
+      error("HasValues::childRenamed # Child '%s' already exist", now.toUtf8().data());
+      return;
+    }
+
+    it = m_children.find(was);
     if(it == m_children.end()) {
-      error("HasValues::childRenamed # No such child: %s", was.c_str());
+      error("HasValues::childRenamed # No such child: %s", was.toUtf8().data());
       return;
     }
     ValueObject * vo = (*it).second;
@@ -409,16 +507,15 @@ namespace Valuable
     m_children[now] = vo;
   }
 
-
   bool HasValues::readElement(DOMElement )
   {
     return false;
   }
 
   // Template functions must be instantiated to be exported
-  template VALUABLE_API bool HasValues::setValue<float>(const std::string & name, const float &);
-  template VALUABLE_API bool HasValues::setValue<Nimble::Vector2T<float> >(const std::string & name, const Nimble::Vector2T<float> &);
-  template VALUABLE_API bool HasValues::setValue<Nimble::Vector4T<float> >(const std::string & name, const Nimble::Vector4T<float> &);
+  template VALUABLE_API bool HasValues::setValue<float>(const QString & name, const float &);
+  template VALUABLE_API bool HasValues::setValue<Nimble::Vector2T<float> >(const QString & name, const Nimble::Vector2T<float> &);
+  template VALUABLE_API bool HasValues::setValue<Nimble::Vector4T<float> >(const QString & name, const Nimble::Vector4T<float> &);
 
 
 }

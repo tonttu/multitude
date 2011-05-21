@@ -1,4 +1,4 @@
-// Copyright 2006-2008 the V8 project authors. All rights reserved.
+// Copyright 2011 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -226,6 +226,11 @@ class BitField {
   static T decode(uint32_t value) {
     return static_cast<T>((value & mask()) >> shift);
   }
+
+  // Value for the field with all bits set.
+  static T max() {
+    return decode(mask());
+  }
 };
 
 
@@ -243,6 +248,12 @@ static inline uint32_t ComputeIntegerHash(uint32_t key) {
   hash = hash * 2057;  // hash = (hash + (hash << 3)) + (hash << 11);
   hash = hash ^ (hash >> 16);
   return hash;
+}
+
+
+static inline uint32_t ComputePointerHash(void* ptr) {
+  return ComputeIntegerHash(
+      static_cast<uint32_t>(reinterpret_cast<intptr_t>(ptr)));
 }
 
 
@@ -326,7 +337,7 @@ class Vector {
     return start_[index];
   }
 
-  T& at(int i) const { return operator[](i); }
+  const T& at(int index) const { return operator[](index); }
 
   T& first() { return start_[0]; }
 
@@ -387,10 +398,39 @@ class Vector {
 };
 
 
+// A pointer that can only be set once and doesn't allow NULL values.
+template<typename T>
+class SetOncePointer {
+ public:
+  SetOncePointer() : pointer_(NULL) { }
+
+  bool is_set() const { return pointer_ != NULL; }
+
+  T* get() const {
+    ASSERT(pointer_ != NULL);
+    return pointer_;
+  }
+
+  void set(T* value) {
+    ASSERT(pointer_ == NULL && value != NULL);
+    pointer_ = value;
+  }
+
+ private:
+  T* pointer_;
+};
+
+
 template <typename T, int kSize>
 class EmbeddedVector : public Vector<T> {
  public:
   EmbeddedVector() : Vector<T>(buffer_, kSize) { }
+
+  explicit EmbeddedVector(T initial_value) : Vector<T>(buffer_, kSize) {
+    for (int i = 0; i < kSize; ++i) {
+      buffer_[i] = initial_value;
+    }
+  }
 
   // When copying, make underlying Vector to reference our buffer.
   EmbeddedVector(const EmbeddedVector& rhs)
@@ -496,6 +536,24 @@ class Collector {
   }
 
 
+  // Add a contiguous block of elements and return a vector backed
+  // by the added block.
+  // A basic Collector will keep this vector valid as long as the Collector
+  // is alive.
+  inline Vector<T> AddBlock(Vector<const T> source) {
+    if (source.length() > current_chunk_.length() - index_) {
+      Grow(source.length());
+    }
+    T* position = current_chunk_.start() + index_;
+    index_ += source.length();
+    size_ += source.length();
+    for (int i = 0; i < source.length(); i++) {
+      position[i] = source[i];
+    }
+    return Vector<T>(position, source.length());
+  }
+
+
   // Write the contents of the collector into the provided vector.
   void WriteTo(Vector<T> destination) {
     ASSERT(size_ <= destination.length());
@@ -524,14 +582,7 @@ class Collector {
   }
 
   // Resets the collector to be empty.
-  virtual void Reset() {
-    for (int i = chunks_.length() - 1; i >= 0; i--) {
-      chunks_.at(i).Dispose();
-    }
-    chunks_.Rewind(0);
-    index_ = 0;
-    size_ = 0;
-  }
+  virtual void Reset();
 
   // Total number of elements added to collector so far.
   inline int size() { return size_; }
@@ -708,20 +759,35 @@ static inline int TenToThe(int exponent) {
 // you can use BitCast to cast one pointer type to another.  This confuses gcc
 // enough that it can no longer see that you have cast one pointer type to
 // another thus avoiding the warning.
+
+// We need different implementations of BitCast for pointer and non-pointer
+// values. We use partial specialization of auxiliary struct to work around
+// issues with template functions overloading.
+template <class Dest, class Source>
+struct BitCastHelper {
+  STATIC_ASSERT(sizeof(Dest) == sizeof(Source));
+
+  INLINE(static Dest cast(const Source& source)) {
+    Dest dest;
+    memcpy(&dest, &source, sizeof(dest));
+    return dest;
+  }
+};
+
+template <class Dest, class Source>
+struct BitCastHelper<Dest, Source*> {
+  INLINE(static Dest cast(Source* source)) {
+    return BitCastHelper<Dest, uintptr_t>::
+        cast(reinterpret_cast<uintptr_t>(source));
+  }
+};
+
+template <class Dest, class Source>
+INLINE(Dest BitCast(const Source& source));
+
 template <class Dest, class Source>
 inline Dest BitCast(const Source& source) {
-  // Compile time assertion: sizeof(Dest) == sizeof(Source)
-  // A compile error here means your Dest and Source have different sizes.
-  typedef char VerifySizesAreEqual[sizeof(Dest) == sizeof(Source) ? 1 : -1];
-
-  Dest dest;
-  memcpy(&dest, &source, sizeof(dest));
-  return dest;
-}
-
-template <class Dest, class Source>
-inline Dest BitCast(Source* source) {
-  return BitCast<Dest>(reinterpret_cast<uintptr_t>(source));
+  return BitCastHelper<Dest, Source>::cast(source);
 }
 
 } }  // namespace v8::internal

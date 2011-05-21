@@ -27,6 +27,12 @@
 
 #include <limits>
 
+// #define CPUMIPMAPS_PROFILING
+
+#ifdef CPUMIPMAPS_PROFILING
+  struct ProfileData;
+#endif
+
 namespace Luminous {
 
   class GLResources;
@@ -45,28 +51,25 @@ namespace Luminous {
       environments.
 
       Mipmap level 0 is the original image, level 1 is the
-      original image * 0.5 etc.
+      quarter size image, etc.
   */
   /// @todo examples
   class CPUMipmaps : public Luminous::Collectable, public Luminous::Task
   {
-  private:
   public:
+    struct StateInfo : public GLResource
+    {
+    public:
+      StateInfo(Luminous::GLResources * host) : GLResource(host), optimal(-1), bound(-1) {}
+      bool ready() const { return bound >= 0 && optimal == bound; }
+      int optimal;
+      int bound;
+    };
 
     friend class GPUMipmaps;
 
     LUMINOUS_API CPUMipmaps();
     LUMINOUS_API virtual ~CPUMipmaps();
-
-    /** Drop old CPU mipmaps from memory.
-
-    @param dt delta-time
-
-    @param purgeTime The time-limit for keeping CPUMipmaps in
-    memory. If purgeTime is less than zero, the mipmap idle times
-    are updated, but they are <B>not</B> deleted from memory.
-     */
-    LUMINOUS_API void update(float dt, float purgeTime);
 
     /** Calculates the best-looking mipmap-level for rendering the image with given size.
 
@@ -89,9 +92,10 @@ namespace Luminous {
         @return Pointer to the image, which may be null.
     */
     LUMINOUS_API std::shared_ptr<ImageTex> getImage(int i);
+    LUMINOUS_API std::shared_ptr<CompressedImageTex> getCompressedImage(int i);
     /** Mark an image used. This method resets the idle-counter of the
         level, preventing it from being dropped from the memory in the
-        near future.
+        near future. Also determines which mipmap level will loaded next.
 
         @param i The index of the mipmap-level to be marked
     */
@@ -118,20 +122,27 @@ namespace Luminous {
     /** @return Returns the native size of the image, in pixels. */
     const Nimble::Vector2i & nativeSize() const { return m_nativeSize;}
 
-    /** Fetch corresponding GPU mipmaps from a resource set. If the
-        GPUMipmaps object does not exist yet, it is created and
-        returned.
+    /// Binds a texture to the given texture unit. Automatically selects appropriate mipmap from given parameters.
+    /// @param pixelSize size of the texture on screen in pixel
+    /// @param textureUnit OpenGL texture unit
+    /// @return true if a mipmap was succesfully bound, false if no texture was bound
+    LUMINOUS_API bool bind(Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
 
-        @return The GPUMipmaps that correspond to these CPUMipmaps
-    */
-    LUMINOUS_API GPUMipmaps * getGPUMipmaps();
-    /// @copydoc getGPUMipmaps
-    /// @param rs A pointer to the OpenGL resource container
-    LUMINOUS_API GPUMipmaps * getGPUMipmaps(GLResources * rs);
-    /// Binds a texture that matches the given size parameters.
-    LUMINOUS_API bool bind(GLResources *,
-                           const Nimble::Matrix3 & transform,
-                           Nimble::Vector2 pixelsize);
+    /// @copydoc bind(Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0)
+    /// @param transform transformation matrix to multiply the pixelSize with to get final screen size
+    LUMINOUS_API bool bind(const Nimble::Matrix3 & transform, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
+
+    /// @copydoc bind(Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0)
+    /// @param resources OpenGL resource container for this thread
+    LUMINOUS_API bool bind(GLResources * resources, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
+
+    /// @copydoc bind(const Nimble::Matrix3 & transform, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
+    /// @param resources OpenGL resource container for this thread
+    LUMINOUS_API bool bind(GLResources * resources, const Nimble::Matrix3 & transform, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
+
+    LUMINOUS_API StateInfo stateInfo(GLResources * resources);
+
+    void setLoadingPriority(Priority priority) { m_loadingPriority = priority; }
 
     /** Check if the mipmaps are still being loaded.
 
@@ -157,8 +168,18 @@ namespace Luminous {
     /// Returns the size of the mipmap level
     LUMINOUS_API Nimble::Vector2i mipmapSize(int level);
 
-    /// Set the time to keep mipmaps in CPU memory
-    inline void setTimeOut(float timeout) { m_timeOut = timeout; }
+    /// Set the time to keep mipmaps in CPU and GPU memory
+    /// The GPU timeout can be a more like a recommendation than a true limit
+    /// @todo Currently m_timeOutCPU can't be smaller than m_timeOutGPU, fix this
+    inline void setTimeOut(float timeoutCPU, float timeoutGPU) {
+      m_timeOutCPU = timeoutCPU;
+      m_timeOutGPU = timeoutGPU;
+    }
+
+    inline QString filename() const { return m_filename; }
+
+    inline bool keepMaxLevel() const { return m_keepMaxLevel; }
+    inline void setKeepMaxLevel(bool v) { m_keepMaxLevel = v; }
 
   protected:
     LUMINOUS_API virtual void doTask();
@@ -181,41 +202,39 @@ namespace Luminous {
       {
         m_state = WAITING;
         m_image.reset();
-        m_unUsed = std::numeric_limits<float>::max();
+        m_compressedImage.reset();
+        m_lastUsed = 0;
       }
+
+      void dropFromGPU()
+      {
+        if(m_image) m_image.reset(m_image->move());
+        if(m_compressedImage) m_compressedImage.reset(m_compressedImage->move());
+      }
+
+      float sinceLastUse() const { return m_lastUsed.sinceSecondsD(); }
 
     private:
       ItemState m_state;
       std::shared_ptr<ImageTex> m_image;
-      float     m_unUsed;
+      std::shared_ptr<CompressedImageTex> m_compressedImage;
+      Radiant::TimeStamp m_lastUsed;
     };
 
     typedef std::map<int, CPUItem> StackMap;
 
-    /*Luminous::Priority levelPriority(int level)
-    {
-      if(level <= DEFAULT_MAP1)
-        return Luminous::Task::PRIORITY_NORMAL +
-            Luminous::Task::PRIORITY_OFFSET_BIT_HIGHER;
-
-      return Luminous::Task::PRIORITY_NORMAL;
-    }*/
-
     CPUItem getStack(int index);
 
     /// writes cache filename for level to given string
-    void cacheFileName(std::string & str, int level);
+    void cacheFileName(QString & str, int level);
 
     void recursiveLoad(StackMap & stack, int level);
     void reschedule(double delay = 0.0, bool allowLater = false);
 
-    std::string m_filename;
+    QString m_filename;
     unsigned long int m_fileModified;
 
-    StackMap         m_stackChange;
-    Radiant::MutexAuto m_stackMutex;
-    Radiant::MutexAuto m_stackChangeMutex;
-    Radiant::MutexAuto m_rescheduleMutex;
+    Radiant::Mutex m_stackMutex;
 
     std::vector<CPUItem> m_stack;
     Nimble::Vector2i m_nativeSize;
@@ -223,12 +242,16 @@ namespace Luminous {
     int              m_maxLevel;
 
     bool             m_hasAlpha;
-    float            m_timeOut;
+    float            m_timeOutCPU;
+    float            m_timeOutGPU;
 
     // keep the smallest mipmap image (biggest mipmap level m_maxLevel) always ready
     bool             m_keepMaxLevel;
     // what levels should be saved to file
     std::set<int>    m_shouldSave;
+
+    // Priority using when loading mipmaps
+    Priority         m_loadingPriority;
 
     // default save sizes
     enum {
@@ -237,9 +260,15 @@ namespace Luminous {
       SMALLEST_IMAGE = 32
     };
 
-    Luminous::ImageInfo m_info;
-  };
+    // updated on every bind()
+    ContextVariableT<StateInfo> m_stateInfo;
 
+    Luminous::ImageInfo m_info;
+
+#ifdef CPUMIPMAPS_PROFILING
+    ProfileData & m_profile;
+#endif
+  };
 
 }
 

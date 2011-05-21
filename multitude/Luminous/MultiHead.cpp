@@ -260,7 +260,7 @@ namespace Luminous {
     m_size = size;
 
     if(m_areas.size() == 1) {
-      Radiant::debug("MultiHead::Window::resizeEvent");
+      debugLuminous("MultiHead::Window::resizeEvent");
       m_areas[0]->setSize(size);
     }
   }
@@ -319,18 +319,18 @@ namespace Luminous {
 
   bool MultiHead::Window::readElement(Valuable::DOMElement ce)
   {
-    const std::string & name = ce.getTagName();
+    const QString & name = ce.getTagName();
 
     // Get the 'type' attribute
     if(!ce.hasAttribute("type")) {
       Radiant::error("MultiHead::Window::readElement # "
-                     "no type attribute on element '%s'", name.c_str());
+                     "no type attribute on element '%s'", name.toUtf8().data());
       return false;
     }
 
-    const std::string & type = ce.getAttribute("type");
+    const QString & type = ce.getAttribute("type");
 
-    if(type == std::string("area")) {
+    if(type == QString("area")) {
       Area * area = new Area(this);
       // Add as child & recurse
       addValue(name, area);
@@ -454,7 +454,7 @@ namespace Luminous {
 
     size_t n = areaCount();
 
-    Radiant::debug("MultiHead::width # %lu", n);
+    debugLuminous("MultiHead::width # %lu", n);
 
     for(size_t i = 0; i < n; i++) {
       Area & a = area(i);
@@ -468,7 +468,7 @@ namespace Luminous {
       left  = Nimble::Math::Min(left,  wleft);
       right = Nimble::Math::Max(right, wright);
 
-      Radiant::debug("lr = %f %f", left, right);
+      debugLuminous("lr = %f %f", left, right);
     }
 
     return (int) (right - left);
@@ -513,17 +513,17 @@ namespace Luminous {
 
   bool MultiHead::readElement(Valuable::DOMElement ce)
   {
-    const std::string & name = ce.getTagName();
+    const QString & name = ce.getTagName();
 
     // Get the 'type' attribute
     if(!ce.hasAttribute("type")) {
-      Radiant::error("MultiHead::readElement # no type attribute on element '%s'", name.c_str());
+      Radiant::error("MultiHead::readElement # no type attribute on element '%s'", name.toUtf8().data());
       return false;
     }
 
-    const std::string & type = ce.getAttribute("type");
+    const QString & type = ce.getAttribute("type");
 
-    if(type == std::string("window")) {
+    if(type == QString("window")) {
       Window * win = new Window(this);
 
       // Add as child & recurse

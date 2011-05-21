@@ -54,7 +54,7 @@ void wrap_startup()
 namespace Radiant {
 
   int SocketUtilPosix::bindOrConnectSocket(int & fd, const char * host, int port,
-                                           std::string & errstr, bool doBind,
+                                           QString & errstr, bool doBind,
                                            int family, int socktype,
                                            int protocol, int flags)
   {
@@ -72,7 +72,7 @@ namespace Radiant {
 
     int s = getaddrinfo(host, service, &hints, &result);
     if(s) {
-      errstr = std::string("getaddrinfo: ") + wrap_gai_strerror(s);
+      errstr = QString("getaddrinfo: ") + wrap_gai_strerror(s);
       return -1;
     }
 
@@ -82,17 +82,22 @@ namespace Radiant {
 
       if(fd < 0) {
         int err = wrap_errno;
-        errstr = std::string("Failed to open socket: ") + wrap_strerror(err);
+        errstr = QString("Failed to open socket: ") + wrap_strerror(err);
         continue;
+      }
+
+      int t = 1;
+      if (doBind && setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&t, sizeof(t)) < 0) {
+        error("TCPServerSocket::open # Failed to set SO_REUSEADDR: %s", wrap_strerror(wrap_errno));
       }
 
       if(doBind && bind(fd, rp->ai_addr, rp->ai_addrlen) == -1) {
         err = wrap_errno;
-        errstr = std::string("bind() failed: ") + wrap_strerror(err);
+        errstr = QString("bind() failed: ") + wrap_strerror(err);
         err = err ? err : -1;
       } else if(!doBind && connect(fd, rp->ai_addr, rp->ai_addrlen) == -1) {
         err = wrap_errno;
-        errstr = std::string("connect() failed: ") + wrap_strerror(err);
+        errstr = QString("connect() failed: ") + wrap_strerror(err);
         err = err ? err : -1;
       } else {
         err = 0;

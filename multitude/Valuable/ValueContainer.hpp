@@ -55,16 +55,16 @@ namespace Valuable
     /// Constructs a new container
     /// @param parent parent object
     /// @param name name of the value
-    ValueContainer(HasValues * parent, const std::string & name)
+    ValueContainer(HasValues * parent, const QString & name)
       : ValueObject(parent, name, false)
     {}
 
     virtual const char* type() const { return "container"; }
 
-    virtual ArchiveElement & serialize(Archive & archive)
+    virtual ArchiveElement & serialize(Archive & archive) const
     {
-      ArchiveElement & elem = archive.createElement((name().empty() ? type() : name()).c_str());
-      for(iterator it = m_container.begin(); it != m_container.end(); it++) {
+      ArchiveElement & elem = archive.createElement((name().isEmpty() ? type() : name()).toUtf8().data());
+      for(const_iterator it = m_container.begin(); it != m_container.end(); it++) {
         elem.add(Serializer::serialize(archive, *it));
       }
       return elem;

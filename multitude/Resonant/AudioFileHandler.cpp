@@ -14,6 +14,7 @@
  */
 
 #include "AudioFileHandler.hpp"
+#include "Resonant.hpp"
 
 #include <Radiant/Trace.hpp>
 #include <Radiant/Sleep.hpp>
@@ -228,7 +229,7 @@ namespace Resonant {
 
     int mode = (m_ioMode == IO_INPUT) ? SFM_READ : SFM_WRITE;
 
-    m_file = sf_open(m_fileName.c_str(), mode, m_info);
+    m_file = sf_open(m_fileName.toUtf8().data(), mode, m_info);
 
     if(!m_file)
       return false;
@@ -343,8 +344,8 @@ namespace Resonant {
 
   bool AudioFileHandler::Handle::moveReadHead(long frame, bool clear)
   {
-    debug("AudioFileHandler::Handle::moveReadHead # %s %ld ", 
-	  m_fileName.c_str(), frame);
+    debugResonant("AudioFileHandler::Handle::moveReadHead # %s %ld ", 
+    m_fileName.toUtf8().data(), frame);
 
     if(!m_data.empty() && clear)
       bzero( & m_data[0], m_data.size() * sizeof(float));

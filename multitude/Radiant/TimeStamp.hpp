@@ -20,7 +20,9 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <string>
+#include <QString>
+
+#include <QString>
 
 namespace Radiant {
 
@@ -170,7 +172,7 @@ namespace Radiant {
     static type getTime();
 
     /** Converts the time-stamp to a string. */
-    std::string asString() const;
+    QString asString() const;
 
   private:
     type m_val;

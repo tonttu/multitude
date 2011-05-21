@@ -99,7 +99,7 @@ namespace VideoDisplay {
     bool      m_first;
     double    m_audioLatency;
     float     m_gain;
-    Radiant::MutexAuto m_mutex;
+    Radiant::Mutex m_mutex;
   };
 
 }

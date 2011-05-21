@@ -28,6 +28,7 @@
 #ifndef V8_HANDLES_H_
 #define V8_HANDLES_H_
 
+#include "allocation.h"
 #include "apiutils.h"
 
 namespace v8 {
@@ -39,11 +40,12 @@ namespace internal {
 // Handles are only valid within a HandleScope.
 // When a handle is created for an object a cell is allocated in the heap.
 
-template<class T>
+template<typename T>
 class Handle {
  public:
   INLINE(explicit Handle(T** location)) { location_ = location; }
   INLINE(explicit Handle(T* obj));
+  INLINE(Handle(T* obj, Isolate* isolate));
 
   INLINE(Handle()) : location_(NULL) {}
 
@@ -82,7 +84,7 @@ class Handle {
   }
 
   static Handle<T> null() { return Handle<T>(); }
-  bool is_null() { return location_ == NULL; }
+  bool is_null() const { return location_ == NULL; }
 
   // Closes the given scope, but lets this handle escape. See
   // implementation in api.h.
@@ -107,46 +109,33 @@ class Handle {
 // for which the handle scope has been deleted is undefined.
 class HandleScope {
  public:
-  HandleScope() : prev_next_(current_.next), prev_limit_(current_.limit) {
-    current_.level++;
-  }
+  inline HandleScope();
+  explicit inline HandleScope(Isolate* isolate);
 
-  ~HandleScope() {
-    current_.next = prev_next_;
-    current_.level--;
-    if (current_.limit != prev_limit_) {
-      current_.limit = prev_limit_;
-      DeleteExtensions();
-    }
-#ifdef DEBUG
-    ZapRange(prev_next_, prev_limit_);
-#endif
-  }
+  inline ~HandleScope();
 
   // Counts the number of allocated handles.
   static int NumberOfHandles();
 
   // Creates a new handle with the given value.
   template <typename T>
-  static inline T** CreateHandle(T* value) {
-    internal::Object** cur = current_.next;
-    if (cur == current_.limit) cur = Extend();
-    // Update the current next field, set the value in the created
-    // handle, and return the result.
-    ASSERT(cur < current_.limit);
-    current_.next = cur + 1;
-
-    T** result = reinterpret_cast<T**>(cur);
-    *result = value;
-    return result;
-  }
+  static inline T** CreateHandle(T* value, Isolate* isolate);
 
   // Deallocates any extensions used by the current scope.
-  static void DeleteExtensions();
+  static void DeleteExtensions(Isolate* isolate);
 
   static Address current_next_address();
   static Address current_limit_address();
   static Address current_level_address();
+
+  // Closes the HandleScope (invalidating all handles
+  // created in the scope of the HandleScope) and returns
+  // a Handle backed by the parent scope holding the
+  // value of the argument handle.
+  template <typename T>
+  Handle<T> CloseAndEscape(Handle<T> handle_value);
+
+  Isolate* isolate() { return isolate_; }
 
  private:
   // Prevent heap allocation or illegal handle scopes.
@@ -155,9 +144,11 @@ class HandleScope {
   void* operator new(size_t size);
   void operator delete(void* size_t);
 
-  static v8::ImplementationUtilities::HandleScopeData current_;
-  Object** const prev_next_;
-  Object** const prev_limit_;
+  inline void CloseScope();
+
+  Isolate* isolate_;
+  Object** prev_next_;
+  Object** prev_limit_;
 
   // Extend the handle scope making room for more handles.
   static internal::Object** Extend();
@@ -197,12 +188,14 @@ Handle<String> FlattenGetString(Handle<String> str);
 Handle<Object> SetProperty(Handle<JSObject> object,
                            Handle<String> key,
                            Handle<Object> value,
-                           PropertyAttributes attributes);
+                           PropertyAttributes attributes,
+                           StrictModeFlag strict_mode);
 
 Handle<Object> SetProperty(Handle<Object> object,
                            Handle<Object> key,
                            Handle<Object> value,
-                           PropertyAttributes attributes);
+                           PropertyAttributes attributes,
+                           StrictModeFlag strict_mode);
 
 Handle<Object> ForceSetProperty(Handle<JSObject> object,
                                 Handle<Object> key,
@@ -217,25 +210,49 @@ Handle<Object> SetNormalizedProperty(Handle<JSObject> object,
 Handle<Object> ForceDeleteProperty(Handle<JSObject> object,
                                    Handle<Object> key);
 
-Handle<Object> IgnoreAttributesAndSetLocalProperty(Handle<JSObject> object,
-                                                   Handle<String> key,
-                                                   Handle<Object> value,
+Handle<Object> SetLocalPropertyIgnoreAttributes(
+    Handle<JSObject> object,
+    Handle<String> key,
+    Handle<Object> value,
     PropertyAttributes attributes);
+
+// Used to set local properties on the object we totally control
+// and which therefore has no accessors and alikes.
+void SetLocalPropertyNoThrow(Handle<JSObject> object,
+                             Handle<String> key,
+                             Handle<Object> value,
+                             PropertyAttributes attributes = NONE);
 
 Handle<Object> SetPropertyWithInterceptor(Handle<JSObject> object,
                                           Handle<String> key,
                                           Handle<Object> value,
-                                          PropertyAttributes attributes);
+                                          PropertyAttributes attributes,
+                                          StrictModeFlag strict_mode);
 
-Handle<Object> SetElement(Handle<JSObject> object,
-                          uint32_t index,
-                          Handle<Object> value);
+MUST_USE_RESULT Handle<Object> SetElement(Handle<JSObject> object,
+                                          uint32_t index,
+                                          Handle<Object> value,
+                                          StrictModeFlag strict_mode);
+
+Handle<Object> SetOwnElement(Handle<JSObject> object,
+                             uint32_t index,
+                             Handle<Object> value,
+                             StrictModeFlag strict_mode);
 
 Handle<Object> GetProperty(Handle<JSObject> obj,
                            const char* name);
 
 Handle<Object> GetProperty(Handle<Object> obj,
+                           const char* name,
+                           LookupResult* result);
+
+Handle<Object> GetProperty(Handle<Object> obj,
                            Handle<Object> key);
+
+Handle<Object> GetProperty(Handle<JSObject> obj,
+                           Handle<String> name,
+                           LookupResult* result);
+
 
 Handle<Object> GetElement(Handle<Object> obj,
                           uint32_t index);
@@ -327,6 +344,7 @@ Handle<JSGlobalProxy> ReinitializeJSGlobalProxy(
 Handle<Object> SetPrototype(Handle<JSFunction> function,
                             Handle<Object> prototype);
 
+Handle<Object> PreventExtensions(Handle<JSObject> object);
 
 // Does lazy compilation of the given function. Returns true on success and
 // false if the compilation resulted in a stack overflow.
@@ -342,6 +360,10 @@ bool CompileLazy(Handle<JSFunction> function, ClearExceptionFlag flag);
 
 bool CompileLazyInLoop(Handle<JSFunction> function, ClearExceptionFlag flag);
 
+bool CompileOptimized(Handle<JSFunction> function,
+                      int osr_ast_id,
+                      ClearExceptionFlag flag);
+
 class NoHandleAllocation BASE_EMBEDDED {
  public:
 #ifndef DEBUG
@@ -354,25 +376,6 @@ class NoHandleAllocation BASE_EMBEDDED {
   int level_;
 #endif
 };
-
-
-// ----------------------------------------------------------------------------
-
-
-// Stack allocated wrapper call for optimizing adding multiple
-// properties to an object.
-class OptimizedObjectForAddingMultipleProperties BASE_EMBEDDED {
- public:
-  OptimizedObjectForAddingMultipleProperties(Handle<JSObject> object,
-                                             int expected_property_count,
-                                             bool condition = true);
-  ~OptimizedObjectForAddingMultipleProperties();
- private:
-  bool has_been_transformed_;  // Tells whether the object has been transformed.
-  int unused_property_fields_;  // Captures the unused number of field.
-  Handle<JSObject> object_;    // The object being optimized.
-};
-
 
 } }  // namespace v8::internal
 

@@ -28,7 +28,7 @@ namespace Resonant {
   {
     AudioFileHandler * afh = AudioFileHandler::instance();
 
-    m_file = afh->readFile(m_filename.c_str(), 0, Radiant::ASF_FLOAT32);
+    m_file = afh->readFile(m_filename.toUtf8().data(), 0, Radiant::ASF_FLOAT32);
 
     bool ok = m_file->waitOpen();
 

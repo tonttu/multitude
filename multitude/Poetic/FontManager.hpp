@@ -36,10 +36,10 @@ namespace Poetic
   {
     public:
       /// Returns a font that matches the given name
-      CPUWrapperFont * getFont(const std::string & name);
+      CPUWrapperFont * getFont(const QString & name);
 
       /// Locates a file by searching through the FontManager's resource paths
-      std::string locate(const std::string & name);
+      QString locate(const QString & name);
       /// Returns the ResourceLocator of the FontManager
       Radiant::ResourceLocator & locator();
 
@@ -52,15 +52,18 @@ namespace Poetic
       ~FontManager();
 
       // filename -> cpu font
-      typedef std::map<std::string, CPUManagedFont *> container;
+      typedef std::map<QString, CPUManagedFont *> container;
       container m_managedFonts;
 
+      /// @todo remove this and use the global locator
       Radiant::ResourceLocator m_locator;
 
       typedef std::map<GLuint, Luminous::VertexBuffer *> TextureVBOMap;
       TextureVBOMap m_vbos;
 
       friend class Patterns::Singleton<FontManager>;
+
+      Radiant::Mutex m_mutex;
   };
 
 }

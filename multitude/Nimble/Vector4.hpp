@@ -7,10 +7,10 @@
  * See file "Nimble.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef NIMBLE_VECTOR4T_HPP
@@ -34,6 +34,9 @@ namespace Nimble {
   public:
     /// Data type of the vector
     typedef T type;
+
+    enum { Elements = 4 };
+
     /// The x-component
     T		x;
     /// The y-component
@@ -43,6 +46,7 @@ namespace Nimble {
     /// The w-component
     T   w;
     Vector4T	()					       {}
+    inline explicit Vector4T(T xyzw) { x = y = z = w = xyzw; }
     /// Constructs a vector and initializes it with the given values
     Vector4T	(T cx, T cy, T cz, T cw)                       { x = cx;       y = cy;	     z = cz;      w =  cw; }
     /// Copy constructor
@@ -110,6 +114,7 @@ namespace Nimble {
     /// Cast to Vector2T
     const Vector2T<T> & xy() const { return * (Vector2T<T> *) this; }
     /// Cast to Vector2T
+    /// @todo duplicate with xy(), we should pick one convention and stick to it (xy(), xyz(), etc)
     const Vector2T<T> & vector2() const { return * (Vector2T<T> *) this; }
     /// Cast to Vector3T
     Vector3T<T> & vector3() { return * (Vector3T<T> *) this; }
@@ -136,7 +141,7 @@ namespace Nimble {
   /// Divide a vector by scalar
   template <class T> inline	Vector4T<T>	operator/	(const Vector4T<T>& v, const double s)		{ double r = 1.0/s; return v*r; }
   /// Returns the negation of a vector
-  template <class T> inline	Vector4T<T>	operator-	(const Vector4T<T>& v)						{ return Vector4T<T>(-v.x, -v.y, -v.z, -v.w); }   
+  template <class T> inline	Vector4T<T>	operator-	(const Vector4T<T>& v)						{ return Vector4T<T>(-v.x, -v.y, -v.z, -v.w); }
   /// Vector of four floats
   typedef Vector4T<float> Vector4;
   /// Vector of four floats
@@ -148,6 +153,15 @@ namespace Nimble {
   /// Vector of four doubles
   typedef Vector4T<double> Vector4d;
 
+
+  namespace Math {
+    /// Specialize Abs
+    template <class T>
+    inline float Abs(const Vector4T<T>& t)
+    {
+      return t.length();
+    }
+  }
 } // namespace
 
 template <class T>
