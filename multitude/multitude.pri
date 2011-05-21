@@ -31,7 +31,7 @@ LIB_VALUABLE = -lValuable
 LIB_PATTERNS = -lPatterns
 
 linux-*:vivid {
-  LIBPATH += $$(FBX_SDK)/lib/gcc4
+  QMAKE_LIBDIR += $$(FBX_SDK)/lib/gcc4
   LIB_VIVID = -lVivid -lfbxsdk_20113_1_x64
 }
 

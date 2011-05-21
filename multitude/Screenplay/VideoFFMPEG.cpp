@@ -269,7 +269,7 @@ namespace Screenplay {
                                    srcSz,                               // in samples
                                    aframesOut/2,                        // in samples
                                    0);
-        if(!resampled > 0)
+        if(!(resampled > 0))
           error("%s: Failed to resample", fname);
 
         debugScreenplay("consumed: %d; resampled: %d; inrate: %d; outrate: %d", consumed, resampled, m_audioSampleRate, 44100);
