@@ -169,6 +169,9 @@ namespace Nimble {
     /// @param farPlane distance to the far clipping plane, always positive
     static Matrix4T<T> perspectiveProjection(T fovY, T aspect, T nearPlane, T farPlane);
 
+    // Creates an orthogonal projection matrix
+    static Matrix4T<T> orthogonalProjection(T left, T right, T bottom, T top, T near, T far);
+
     /** Identity matrix. */
     NIMBLE_API static const Matrix4T<T> IDENTITY;
 
@@ -500,6 +503,21 @@ Nimble::Matrix4T<T> Nimble::Matrix4T<T>::perspectiveProjection(T fovY, T aspect,
   result[2][3] = T(2) * (farPlane * nearPlane) / (nearPlane - farPlane);
   result[3][2] = T(-1);
 
+  return result;
+}
+
+template<typename T>
+Nimble::Matrix4T<T> Nimble::Matrix4T<T>::orthogonalProjection(T left, T right, T bottom, T top, T near, T far)
+{
+  Nimble::Matrix4T<T> result;
+  result.clear();
+  result[0][0] = T(2)/(right-left);
+  result[1][1] = T(2)/(top-bottom);
+  result[2][2] = -T(2)/(far-near);
+  result[3][3] = T(1);
+  result[0][3] = -(right+left)/(right-left);
+  result[1][3] = -(top+bottom)/(top-bottom);
+  result[2][3] = -(far+near)/(far-near);
   return result;
 }
 

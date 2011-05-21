@@ -29,6 +29,11 @@ void Camera::recomputeProjectionMatrix()
   m_projectionMatrixDirty = false;
 }
 
+float Camera::aspect() const
+{
+  return static_cast<float> (m_viewport[2]) / static_cast<float> (m_viewport[3]);
+}
+
 Nimble::Matrix4 & Camera::projectionMatrix()
 {
   if(m_projectionMatrixDirty)
