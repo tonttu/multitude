@@ -31,7 +31,7 @@ LIB_VALUABLE = -lValuable
 LIB_PATTERNS = -lPatterns
 
 linux-*:vivid {
-  LIBPATH += $$(FBX_SDK)/lib/gcc4
+  QMAKE_LIBDIR += $$(FBX_SDK)/lib/gcc4
   LIB_VIVID = -lVivid -lfbxsdk_20113_1_x64
 }
 
@@ -102,14 +102,14 @@ win32 {
     COMPILER_OUTPUT=$$system(cl 2>&1)
     contains(COMPILER_OUTPUT,x64):CONFIG+=win64
 
-    win64:WINPORT_INCLUDE = $$PWD\Win64x\include
-    else:WINPORT_INCLUDE = $$PWD\Win32x\include
+    win64:WINPORT_INCLUDE = $$PWD\\Win64x\\include
+    else:WINPORT_INCLUDE = $$PWD\\Win32x\\include
 
-    win64:INCLUDEPATH += $$PWD\Win64x\include
-    else:INCLUDEPATH += $$PWD\Win32x\include
+    win64:INCLUDEPATH += $$PWD\\Win64x\\include
+    else:INCLUDEPATH += $$PWD\\Win32x\\include
 
-    win64:LIBPATH += $$PWD\Win64x\lib64
-    else:LIBPATH += $$PWD\Win32x\lib32
+    win64:QMAKE_LIBDIR += $$PWD\\Win64x\lib64
+    else:QMAKE_LIBDIR += $$PWD\\Win32x\lib32
 
     win64:LIB_GLEW = -lglew64
     else:LIB_GLEW = -lglew32
