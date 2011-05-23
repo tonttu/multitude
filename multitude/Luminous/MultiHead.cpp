@@ -147,8 +147,12 @@ namespace Luminous {
                        false);
       }
 
+      Nimble::Vector3T<uint8_t> tmp[256];
+      m_colorCorrection.fillAsBytes(&tmp[0]);
+
       m_colorCorrectionTexture->loadBytes(GL_RGB, 256,
-                                          m_colorCorrection.getLUT(), PixelFormat::rgbUByte(), false);
+                                          &tmp[0],
+                                          PixelFormat::rgbUByte(), false);
 
       tex->bind(GL_TEXTURE0);
 

@@ -16,6 +16,7 @@
 #ifndef LUMINOUS_COLOR_CORRECTION_HPP
 #define LUMINOUS_COLOR_CORRECTION_HPP
 
+#include <Valuable/ValueVector.hpp>
 #include <Valuable/HasValues.hpp>
 #include <Valuable/ValueContainer.hpp>
 
@@ -29,17 +30,34 @@ namespace Luminous
   public:
     ColorCorrection(HasValues * parent, const std::string & name, bool transit = false);
 
-    Nimble::Vector3T<uint8_t>& getValue(int idx);
 
-    const Nimble::Vector3T<uint8_t>& getValue(int idx) const;
+    void setOffset(int idx, const Nimble::Vector3 & offset);
+    void setOffset(int idx, int channel, float value);
+    const Nimble::Vector3 & getOffset(int idx) const;
 
-    const Nimble::Vector3T<uint8_t>* getLUT() const;
+    Nimble::Vector3 getValue(int idx) const;
+
+    //const Nimble::Vector3T<float>* getLUT() const;
 
     void setIdentity();
-    void changeUniform(int channel, int v);
+    void changeUniform(int channel, float v);
+
+    void fillAsBytes(Nimble::Vector3T<uint8_t> * to) const;
+
+    Nimble::Vector3 gamma() { return m_gamma; }
+    void setGamma(const Nimble::Vector3 & gamma) { m_gamma = gamma; }
+
+    Nimble::Vector3 contrast() { return m_contrast; }
+    void setContrast(const Nimble::Vector3 & contrast) { m_contrast = contrast; }
+
+    Nimble::Vector3 brightness() { return m_brightness; }
+    void setBrightness(const Nimble::Vector3 & brightness) { m_brightness = brightness; }
 
   private:
-    Valuable::ValueContainer< std::vector<Nimble::Vector3T<uint8_t> > > m_lut;
+    Valuable::ValueContainer< std::vector<Nimble::Vector3> > m_offsets;
+    Valuable::ValueVector3f m_gamma;
+    Valuable::ValueVector3f m_contrast;
+    Valuable::ValueVector3f m_brightness;
   };
 }
 
