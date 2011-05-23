@@ -300,7 +300,7 @@ namespace Screenplay {
           if(!(resampled > 0))
             error("%s: Failed to resample", fname);
 
-          info("consumed: %d; resampled: %d; inrate: %d; outrate: %d", consumed, resampled, m_audioSampleRate, 44100);
+          debugScreenplay("consumed: %d; resampled: %d; inrate: %d; outrate: %d", consumed, resampled, m_audioSampleRate, 44100);
 
           av_resample_close(audio_ctx);
 
