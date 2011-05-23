@@ -49,6 +49,7 @@ namespace Screenplay {
     : m_acodec(0),
     m_aindex(-1),
     m_acontext(0),
+    m_resample_ctx(0),
     m_audioFrames(0),
     m_audioChannels(0),
     m_capturedAudio(0),
@@ -230,7 +231,7 @@ namespace Screenplay {
         int aframesOut = 0;
 
         // decode to audiobuffer if sample rate is 44.1khz
-        if(m_audioSampleRate == 44100) {
+        if(m_audioSampleRate == 44100 || !m_resample_ctx) {
 
 
           int aframes = ((int)m_audioBuffer.size() - index) * 2;
@@ -266,7 +267,7 @@ namespace Screenplay {
                                 & aframesIn, m_pkt);
 
           srcSz = aframesIn / 2;
-          dstSz = srcSz * 44100 / m_audioSampleRate;
+          dstSz = Nimble::Math::Ceil(srcSz * 44100 / m_audioSampleRate);
 
           aframesOut = ((int) m_audioBuffer.size() - index) * 2;
           if(aframesOut < dstSz * 2) {
@@ -278,31 +279,18 @@ namespace Screenplay {
             }
           }
 
-          // resample to 44100HZ
-          AVResampleContext* audio_ctx = av_resample_init( 44100,             // out rate
-                                                           m_audioSampleRate, // in rate
-                                                           16,                // filter length
-                                                           10,                // phase count
-                                                           0,                 // linear FIR filter
-                                                           1.0);              // cutoff frequency
-
-          if(!audio_ctx)
-            error("%s: Failed to create resampling context", fname);
-
           int consumed = 0;
-          int resampled = av_resample(audio_ctx,
+          int resampled = av_resample(m_resample_ctx,
                                       &m_audioBuffer[index],               // out buffer
                                       &audioInBuffer[0],                   // in buffer
                                       &consumed,
                                       srcSz,                               // in samples
-                                      aframesOut/2,                        // in samples
+                                      dstSz,                               // in samples
                                       0);
           if(!(resampled > 0))
             error("%s: Failed to resample", fname);
 
           debugScreenplay("consumed: %d; resampled: %d; inrate: %d; outrate: %d", consumed, resampled, m_audioSampleRate, 44100);
-
-          av_resample_close(audio_ctx);
 
           aframesOut = resampled / m_audioChannels;
         }
@@ -686,6 +674,19 @@ namespace Screenplay {
 
     m_frame = avcodec_alloc_frame();
 
+    if(m_audioSampleRate != 44100) {
+      // resample to 44100HZ
+      m_resample_ctx = av_resample_init( 44100,             // out rate
+                                         m_audioSampleRate, // in rate
+                                         16,                // filter length
+                                         10,                // phase count
+                                         1,                 // linear FIR filter
+                                         0.8);              // cutoff frequency
+
+      if(!m_resample_ctx)
+        error("%s: Failed to create resampling context", fname);
+    }
+
     m_image.m_width = width();
     m_image.m_height = height();
 
@@ -740,6 +741,11 @@ namespace Screenplay {
       m_pkt = 0;
     }
     
+    if(m_resample_ctx) {
+      av_resample_close(m_resample_ctx);
+      m_resample_ctx = 0;
+    }
+
     std::vector<int16_t> tmp;
     m_audioBuffer.swap(tmp);
 
