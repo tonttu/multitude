@@ -225,58 +225,88 @@ namespace Screenplay {
       if (m_pkt->stream_index == m_aindex && (m_flags & Radiant::WITH_AUDIO)
         && m_acodec) {
 
-        // decode into a temp audio buffer, later will be resampled
-        std::vector<int16_t> audioInBuffer;
-        int srcSz, dstSz;  // in samples
-
-        int aframesIn = AVCODEC_MAX_AUDIO_FRAME_SIZE * m_audioChannels;   // in bytes
-        audioInBuffer.resize(aframesIn);
-
-        avcodec_decode_audio3(m_acontext,
-                              & audioInBuffer[0],
-                              & aframesIn, m_pkt);
-
-        srcSz = aframesIn / 2;
-        dstSz = srcSz * 44100 / m_audioSampleRate;
-
         int index = m_audioFrames * actualChannels();
-        int aframesOut = ((int) m_audioBuffer.size() - index) * 2;
-        if(aframesOut < dstSz * 2) {
-          m_audioBuffer.resize(m_audioBuffer.size() + dstSz * 2);
-          aframesOut = ((int) m_audioBuffer.size() - index) * 2;
-          if(m_audioBuffer.size() > 1000000) {
-            info("VideoInputFFMPEG::captureImage # %p Audio buffer is very large now: %d (%ld)",
-                 this, (int) m_audioBuffer.size(), m_capturedVideo);
+
+        int aframesOut = 0;
+
+        // decode to audiobuffer if sample rate is 44.1khz
+        if(m_audioSampleRate == 44100) {
+
+
+          int aframes = ((int)m_audioBuffer.size() - index) * 2;
+
+          if(aframes < AVCODEC_MAX_AUDIO_FRAME_SIZE) {
+
+            m_audioBuffer.resize(m_audioBuffer.size() + AVCODEC_MAX_AUDIO_FRAME_SIZE * m_audioChannels);
+            aframes = ((int) m_audioBuffer.size() - index) * 2;
+            if(m_audioBuffer.size() > 1000000) {
+              info("VideoInputFFMPEG::captureImage # %p Audio buffer is very large now: %d (%ld)",
+                   this, (int) m_audioBuffer.size(), m_capturedVideo);
+            }
           }
+
+          avcodec_decode_audio3(m_acontext,
+                                & m_audioBuffer[index],
+                                & aframes, m_pkt);
+
+          aframes /= (2 * m_audioChannels);
+          aframesOut = aframes;
+
+        } else {
+
+          // decode into a temporay audio buffer, later will be resampled
+          std::vector<int16_t> audioInBuffer;
+          int srcSz, dstSz;  // in samples
+
+          int aframesIn = AVCODEC_MAX_AUDIO_FRAME_SIZE * m_audioChannels;   // in bytes
+          audioInBuffer.resize(aframesIn);
+
+          avcodec_decode_audio3(m_acontext,
+                                & audioInBuffer[0],
+                                & aframesIn, m_pkt);
+
+          srcSz = aframesIn / 2;
+          dstSz = srcSz * 44100 / m_audioSampleRate;
+
+          aframesOut = ((int) m_audioBuffer.size() - index) * 2;
+          if(aframesOut < dstSz * 2) {
+            m_audioBuffer.resize(m_audioBuffer.size() + dstSz * m_audioChannels);
+            aframesOut = ((int) m_audioBuffer.size() - index) * 2;
+            if(m_audioBuffer.size() > 1000000) {
+              info("VideoInputFFMPEG::captureImage # %p Audio buffer is very large now: %d (%ld)",
+                   this, (int) m_audioBuffer.size(), m_capturedVideo);
+            }
+          }
+
+          // resample to 44100HZ
+          AVResampleContext* audio_ctx = av_resample_init( 44100,             // out rate
+                                                           m_audioSampleRate, // in rate
+                                                           16,                // filter length
+                                                           10,                // phase count
+                                                           0,                 // linear FIR filter
+                                                           1.0);              // cutoff frequency
+
+          if(!audio_ctx)
+            error("%s: Failed to create resampling context", fname);
+
+          int consumed = 0;
+          int resampled = av_resample(audio_ctx,
+                                      &m_audioBuffer[index],               // out buffer
+                                      &audioInBuffer[0],                   // in buffer
+                                      &consumed,
+                                      srcSz,                               // in samples
+                                      aframesOut/2,                        // in samples
+                                      0);
+          if(!(resampled > 0))
+            error("%s: Failed to resample", fname);
+
+          info("consumed: %d; resampled: %d; inrate: %d; outrate: %d", consumed, resampled, m_audioSampleRate, 44100);
+
+          av_resample_close(audio_ctx);
+
+          aframesOut = resampled / m_audioChannels;
         }
 
-        // resample to 44100HZ
-        AVResampleContext* audio_ctx = av_resample_init( 44100,             // out rate
-                                                         m_audioSampleRate, // in rate
-                                                         16,                // filter length
-                                                         10,                // phase count
-                                                         0,                 // linear FIR filter
-                                                         1.0);              // cutoff frequency
-
-        if(!audio_ctx)
-          error("%s: Failed to create resampling context", fname);
-
-        int consumed = 0;
-        int resampled = av_resample(audio_ctx,
-                                   &m_audioBuffer[index],               // out buffer
-                                   &audioInBuffer[0],                   // in buffer
-                                   &consumed,
-                                   srcSz,                               // in samples
-                                   aframesOut/2,                        // in samples
-                                   0);
-        if(!(resampled > 0))
-          error("%s: Failed to resample", fname);
-
-        debugScreenplay("consumed: %d; resampled: %d; inrate: %d; outrate: %d", consumed, resampled, m_audioSampleRate, 44100);
-
-        av_resample_close(audio_ctx);
-
-        aframesOut = resampled / m_audioChannels;
         int64_t pts = m_pkt->pts;
 
         if(m_flags & Radiant::MONOPHONIZE_AUDIO) {
