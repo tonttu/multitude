@@ -15,7 +15,8 @@ HEADERS += Scene.hpp \
     Renderable.hpp \
     Camera.hpp \
     Transform.hpp \
-    Light.hpp
+    Light.hpp \
+    Triangle.hpp
 
 SOURCES += Scene.cpp \
     DrawUtils.cpp \
