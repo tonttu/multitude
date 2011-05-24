@@ -52,7 +52,7 @@ namespace Luminous
       launching a separate thread for them. For this purpose,
       see #Radiant::Thread.
     */
-  class LUMINOUS_API Task : Patterns::NotCopyable, Radiant::MemCheck
+  class LUMINOUS_API Task : Patterns::NotCopyable
   {
   public:
     /// Standard priorities for tasks
