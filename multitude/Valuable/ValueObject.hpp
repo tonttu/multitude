@@ -21,6 +21,7 @@
 #include <Patterns/NotCopyable.hpp>
 
 #include <Radiant/BinaryData.hpp>
+#include <Radiant/Functional.hpp>
 
 #include <Valuable/Archive.hpp>
 #include <Valuable/Export.hpp>
@@ -30,8 +31,6 @@
 
 #include <Valuable/DOMElement.hpp>
 #include <Radiant/MemCheck.hpp>
-
-#include <functional>
 
 namespace Valuable
 {

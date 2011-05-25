@@ -3,8 +3,6 @@
 CONFIG += qt
 QT += core
 
-QMAKE_CXXFLAGS += -std=c++0x
-
 CONFIG += link_pkgconfig
 CONFIG += thread
 
