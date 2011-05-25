@@ -333,6 +333,7 @@ namespace VideoDisplay {
       m_seeking(false),
       m_contrast(this, "contrast", 1.0f)
   {
+    eventAdd("videoatend");
     debugVideoDisplay("ShowGL::ShowGL # %p", this);
     clearHistogram();
   }
