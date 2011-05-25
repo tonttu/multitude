@@ -200,6 +200,9 @@ namespace Valuable
     /// Registers a new event this class can send with eventSend
     void eventAdd(const std::string & id);
 
+    /// Returns set of all registered events
+    const std::set<std::string> & eventNames() const { return m_eventNames; }
+
   protected:
 
     /// Sends an event to all listeners on this object
