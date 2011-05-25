@@ -58,6 +58,11 @@ namespace Radiant
     RADIANT_API QString getLastErrorMessage();
 #endif
 
+    /// Demangle names used by the compiler
+    /// for example "N12MultiWidgets11ImageWidgetE" -> "MultiWidgets::ImageWidget"
+    /// If the name can't be parsed, the original string is returned
+    RADIANT_API QString demangle(const char * name);
+
   }
 }
 

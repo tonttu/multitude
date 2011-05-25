@@ -164,8 +164,8 @@ win32 {
     INCLUDEPATH += $$PTGREY_PATH/include
 
     # 64bit libs have different path
-    win64:LIBPATH += $$PTGREY_PATH/lib64
-    else:LIBPATH += $$PTGREY_PATH/lib
+    win64:QMAKE_LIBDIR += $$PTGREY_PATH/lib64
+    else:QMAKE_LIBDIR += $$PTGREY_PATH/lib
     LIBS += FlyCapture2.lib
 }
 include(../library.pri)

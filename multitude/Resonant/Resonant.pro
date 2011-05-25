@@ -44,11 +44,11 @@ include(../library.pri)
 win32 {
   DEFINES += RESONANT_EXPORT
   win64 {
-    INCLUDEPATH += ..\Win64x\include\portaudio
+    INCLUDEPATH += ..\\Win64x\\include\\portaudio
     LIBS += -llibsndfile-1 -lportaudio -lOle32 -lUser32
   }
   else {
-    INCLUDEPATH += ..\Win32x\include\portaudio ..\Win32x\include\libsndfile
+    INCLUDEPATH += ..\\Win32x\\include\\portaudio ..\\Win32x\\include\\libsndfile
     LIBS += -llibsndfile-1 -lportaudio_x86
   }
 }

@@ -21,6 +21,10 @@
 // #include <WinPort.h>
 #endif
 
+#ifdef __GNUC__
+#include <cxxabi.h>
+#endif
+
 namespace Radiant
 {
 
@@ -40,6 +44,20 @@ namespace Radiant
         }
       }
       s.resize(out);
+    }
+
+    QString demangle(const char * name)
+    {
+#ifdef __GNUC__
+      int status = 0;
+      char * tmp = abi::__cxa_demangle(name, 0, 0, &status);
+      if(status == 0 && tmp) {
+        QString ret(tmp);
+        free(tmp);
+        return ret;
+      }
+#endif
+      return name;
     }
 
 #ifdef WIN32

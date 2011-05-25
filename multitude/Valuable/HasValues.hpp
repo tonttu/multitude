@@ -219,6 +219,12 @@ namespace Valuable
     /// Returns the unique id
     Uuid id() const;
 
+    /// Registers a new event this class can send with eventSend
+    void eventAdd(const std::string & id);
+
+    /// Returns set of all registered events
+    const std::set<std::string> & eventNames() const { return m_eventNames; }
+
   protected:
 
     /// Sends an event to all listeners on this object
@@ -264,6 +270,8 @@ namespace Valuable
     Valuable::ValueIntT<Uuid> m_id;
     // For invalidating the too new ValuePass objects
     int m_frame;
+
+    std::set<std::string> m_eventNames;
   };
 
 }
