@@ -256,20 +256,20 @@ namespace Screenplay {
 
           // decode into a temporay audio buffer, later will be resampled
           std::vector<int16_t> audioInBuffer;
-          int srcSz, dstSz;  // in samples
+          int srcSz, dstSz;  // in samples per channel
 
           int aframesIn = AVCODEC_MAX_AUDIO_FRAME_SIZE * m_audioChannels;   // in bytes
-          audioInBuffer.resize(aframesIn);
+          audioInBuffer.resize(aframesIn * 0.5f);
 
           avcodec_decode_audio3(m_acontext,
                                 & audioInBuffer[0],
                                 & aframesIn, m_pkt);
 
-          srcSz = aframesIn / 2;
-          dstSz = Nimble::Math::Ceil(srcSz * 44100 / m_audioSampleRate);
+          srcSz = aframesIn * 0.5f / m_audioChannels;
+          dstSz = Nimble::Math::Ceil((float)srcSz * 44100 / m_audioSampleRate);
 
-          aframesOut = ((int) m_audioBuffer.size() - index) * 2;
-          if(aframesOut < dstSz * 2) {
+          aframesOut = ((int) m_audioBuffer.size() - index) * 2; // in bytes
+          if(aframesOut < dstSz * 2 * m_audioChannels) {
             m_audioBuffer.resize(m_audioBuffer.size() + dstSz * m_audioChannels);
             aframesOut = ((int) m_audioBuffer.size() - index) * 2;
             if(m_audioBuffer.size() > 1000000) {
@@ -278,20 +278,17 @@ namespace Screenplay {
             }
           }
 
-          int consumed = 0;
-          int resampled = av_resample(m_resample_ctx,
-                                      &m_audioBuffer[index],               // out buffer
-                                      &audioInBuffer[0],                   // in buffer
-                                      &consumed,
-                                      srcSz,                               // in samples
-                                      dstSz,                               // in samples
-                                      0);
+          int resampled = audio_resample(m_resample_ctx,
+                                         & m_audioBuffer[index], // out buf
+                                         & audioInBuffer[0], // in buf
+                                         srcSz);  // nb samples per channel
+
           if(!(resampled > 0))
             error("%s: Failed to resample", fname);
 
-          info("consumed: %d; resampled: %d; inrate: %d; outrate: %d", consumed, resampled, m_audioSampleRate, 44100);
+          debug("resampled: %d; inrate: %d; outrate: %d; srcSz: %d; dstSz: %d", resampled, m_audioSampleRate, 44100, srcSz, dstSz);
 
-          aframesOut = resampled / m_audioChannels;
+          aframesOut = resampled;
         }
 
         int64_t pts = m_pkt->pts;
@@ -675,12 +672,17 @@ namespace Screenplay {
 
     if(m_audioSampleRate != 44100) {
       // resample to 44100HZ
-      m_resample_ctx = av_resample_init( 44100,             // out rate
-                                         m_audioSampleRate, // in rate
-                                         16,                // filter length
-                                         10,                // phase count
-                                         1,                 // linear FIR filter
-                                         0.8);              // cutoff frequency
+      m_resample_ctx = av_audio_resample_init(m_audioChannels,  // nb output channels
+                                              m_audioChannels,  // nb input channels
+                                              44100,             // out rate
+                                              m_audioSampleRate, // in rate
+                                              SAMPLE_FMT_S16,
+                                              SAMPLE_FMT_S16,
+                                              16,                // filter length
+                                              10,                // phase count
+                                              0,                 // linear FIR filter
+                                              0.8);              // cutoff frequency
+
 
       if(!m_resample_ctx)
         error("%s: Failed to create resampling context", fname);
@@ -741,7 +743,7 @@ namespace Screenplay {
     }
     
     if(m_resample_ctx) {
-      av_resample_close(m_resample_ctx);
+      audio_resample_close(m_resample_ctx);
       m_resample_ctx = 0;
     }
 
