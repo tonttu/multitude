@@ -360,6 +360,11 @@ namespace Luminous {
     /// Returns the gamma value used for edge blending with projector setups.
     float gamma() const { return m_gamma; }
 
+    /// @todo This should be in configuration file, and the accessor probably
+    ///       shouldn't be static. Maybe this class could be singletonish?
+    /// 96 is the static value used in CSS 2.1
+    static float dpi() { return 96.0f; }
+
   private:
     LUMINOUS_API virtual bool readElement(Valuable::DOMElement ce);
 
