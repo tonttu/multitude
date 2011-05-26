@@ -490,10 +490,12 @@ namespace Valuable
         if(vp.m_listener) {
           vp.m_listener->processMessage(vp.m_to.toUtf8().data(), bdsend);
         } else {
-          /// @todo wrap bdsend
           /// @todo what is the correct receiver?
-          v8::Local<v8::Value> argv[] = {v8::String::New(vp.m_to.toUtf8().data())};
-          vp.m_func->Call(v8::Context::GetCurrent()->Global(), 1, argv);
+          v8::Local<v8::Value> argv[10];
+          argv[0] = v8::String::New(vp.m_to.utf16());
+          int argc = 9;
+          bdsend.readTo(argc, argv + 1);
+          vp.m_func->Call(v8::Context::GetCurrent()->Global(), argc+1, argv);
         }
       }
     }

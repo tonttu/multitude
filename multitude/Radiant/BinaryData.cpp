@@ -54,20 +54,20 @@ namespace Radiant {
     return a | (b << 8) | (c << 16) | (d << 24);
   }
 
-  const int FLOAT_MARKER  = makeMarker(',', 'f', '\0', '\0');
-  const int DOUBLE_MARKER  = makeMarker(',', 'd', '\0', '\0');
-  const int VECTOR2F_MARKER  = makeMarker(',', 'f', '2', '\0');
-  const int VECTOR2I_MARKER  = makeMarker(',', 'i', '2', '\0');
-  const int VECTOR3F_MARKER  = makeMarker(',', 'f', '3', '\0');
-  const int VECTOR3I_MARKER  = makeMarker(',', 'i', '3', '\0');
-  const int VECTOR4F_MARKER  = makeMarker(',', 'f', '4', '\0');
-  const int VECTOR4I_MARKER  = makeMarker(',', 'i', '4', '\0');
-  const int INT32_MARKER  = makeMarker(',', 'i', '\0', '\0');
-  const int INT64_MARKER  = makeMarker(',', 'l', '\0', '\0');
-  const int TS_MARKER     = makeMarker(',', 't', '\0', '\0');
-  const int STRING_MARKER = makeMarker(',', 's', '\0', '\0');
-  const int WSTRING_MARKER = makeMarker(',', 'S', '\0', '\0');
-  const int BLOB_MARKER   = makeMarker(',', 'b', '\0', '\0');
+  const int32_t FLOAT_MARKER  = makeMarker(',', 'f', '\0', '\0');
+  const int32_t DOUBLE_MARKER  = makeMarker(',', 'd', '\0', '\0');
+  const int32_t VECTOR2F_MARKER  = makeMarker(',', 'f', '2', '\0');
+  const int32_t VECTOR2I_MARKER  = makeMarker(',', 'i', '2', '\0');
+  const int32_t VECTOR3F_MARKER  = makeMarker(',', 'f', '3', '\0');
+  const int32_t VECTOR3I_MARKER  = makeMarker(',', 'i', '3', '\0');
+  const int32_t VECTOR4F_MARKER  = makeMarker(',', 'f', '4', '\0');
+  const int32_t VECTOR4I_MARKER  = makeMarker(',', 'i', '4', '\0');
+  const int32_t INT32_MARKER  = makeMarker(',', 'i', '\0', '\0');
+  const int32_t INT64_MARKER  = makeMarker(',', 'l', '\0', '\0');
+  const int32_t TS_MARKER     = makeMarker(',', 't', '\0', '\0');
+  const int32_t STRING_MARKER = makeMarker(',', 's', '\0', '\0');
+  const int32_t WSTRING_MARKER = makeMarker(',', 'S', '\0', '\0');
+  const int32_t BLOB_MARKER   = makeMarker(',', 'b', '\0', '\0');
 
   BinaryData::BinaryData()
     : m_current(0),
@@ -839,6 +839,32 @@ namespace Radiant {
     rewind();
 
     bzero(data(), m_size);
+  }
+
+  bool BinaryData::readTo(int & argc, v8::Handle<v8::Value> argv[])
+  {
+    int i = 0;
+    while(i < argc) {
+      bool ok = false;
+      if(!available(4)) break;
+      // peek marker
+      int32_t marker = *getPtr<int32_t>(0);
+      if(marker == FLOAT_MARKER || marker == DOUBLE_MARKER) {
+        double v = readFloat64(&ok);
+        if(ok) argv[i++] = v8::Number::New(v);
+      } else if(marker == INT32_MARKER || marker == INT64_MARKER) {
+        int v = readInt32(&ok);
+        if(ok) argv[i++] = v8::Integer::New(v);
+      } else if(marker == STRING_MARKER || marker == WSTRING_MARKER) {
+        QString v;
+        if(readString(v)) argv[i++] = v8::String::New(v.utf16());
+      }
+      /// @todo VECTOR2F_MARKER VECTOR2I_MARKER VECTOR3F_MARKER VECTOR3I_MARKER
+      ///       VECTOR4F_MARKER VECTOR4I_MARKER TS_MARKER BLOB_MARKER
+    }
+
+    argc = i;
+    return m_current == m_total;
   }
 
   void BinaryData::skipParameter(int marker)
