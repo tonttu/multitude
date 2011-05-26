@@ -9,11 +9,13 @@
 #include <cassert>
 #include <errno.h>
 #include <string.h>
+#include <pthread.h>
 
 #include <sys/time.h>
 
 
 // Trick for Linux
+/*
 #ifndef WIN32
 #ifndef PTHREAD_MUTEX_RECURSIVE
 extern "C" {
@@ -24,10 +26,9 @@ extern "C" {
 #define pthread_mutexattr_settype(x,y) pthread_mutexattr_setkind_np(x,y)
 #endif
 #endif
+*/
 
 namespace Radiant {
-
-  static bool mutexDebug = false;
 
   class Mutex::D {
   public:
@@ -40,7 +41,7 @@ namespace Radiant {
       }
     }
 
-    bool m_recursive;
+    const bool m_recursive;
     pthread_mutex_t* m_ptmutex;
   };
 
@@ -49,7 +50,7 @@ namespace Radiant {
     : m_recursive(recursive), m_ptmutex(new pthread_mutex_t)
   {
     pthread_mutexattr_t mutex_attr;
-    pthread_mutexattr_init(&mutex_attr);
+    assert(pthread_mutexattr_init(&mutex_attr) == 0);
 
     int err;
 
@@ -57,16 +58,15 @@ namespace Radiant {
       err = pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_RECURSIVE);
 
       if(err) {
-        if(mutexDebug) std::cerr << "Could not create recursive mutex "
+        std::cerr << "Could not create recursive mutex "
             << strerror(err) << std::endl;
-
-        return;
       }
+      assert(err == 0);
     }
 
     err = pthread_mutex_init( m_ptmutex, &mutex_attr);
 
-    if(err && mutexDebug) {
+    if(err) {
       std::cerr << "Could not create mutex " << strerror(err) << std::endl;
     }
   }
