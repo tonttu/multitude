@@ -69,6 +69,8 @@ namespace Radiant
   {
     if(file.isEmpty()) return file;
 
+    if(FileUtils::fileReadable(file)) return file;
+
     QString r = FileUtils::findFile(file, m_paths);
 
     /*if(r.empty()) {

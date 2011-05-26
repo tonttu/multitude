@@ -433,10 +433,12 @@ namespace Valuable
     }
   }
 
+  // Must be outside function definition to be thread-safe
+  static Radiant::Mutex s_generateIdMutex;
+
   HasValues::Uuid HasValues::generateId()
   {
-    static Radiant::Mutex s_mutex;
-    Radiant::Guard g(s_mutex);
+    Radiant::Guard g(s_generateIdMutex);
     static Uuid s_id = static_cast<Uuid>(Radiant::TimeStamp::getTime());
     return s_id++;
   }

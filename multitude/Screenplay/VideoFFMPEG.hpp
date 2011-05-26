@@ -30,7 +30,7 @@ extern "C" {
   struct AVFormatContext;
   struct AVFrame;
   struct AVPacket;
-  struct AVResampleContext;
+  struct ReSampleContext;
 }
 
 namespace Screenplay {
@@ -129,7 +129,7 @@ namespace Screenplay {
     AVCodec        * m_acodec;
     int              m_aindex; // Audio index
     AVCodecContext * m_acontext;
-    AVResampleContext* m_resample_ctx;
+    ReSampleContext* m_resample_ctx;
     std::vector<int16_t> m_audioBuffer;
     int                  m_audioFrames;
     int                  m_audioChannels;
