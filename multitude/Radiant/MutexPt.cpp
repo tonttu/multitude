@@ -50,9 +50,8 @@ namespace Radiant {
     : m_recursive(recursive), m_ptmutex(new pthread_mutex_t)
   {
     pthread_mutexattr_t mutex_attr;
-    assert(pthread_mutexattr_init(&mutex_attr) == 0);
-
-    int err;
+    int err = pthread_mutexattr_init(&mutex_attr);
+    assert(err == 0);
 
     if(m_recursive) {
       err = pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_RECURSIVE);
