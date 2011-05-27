@@ -184,17 +184,22 @@ namespace VideoDisplay {
                                Radiant::TimeStamp pos = 0);
     */
     /// Starts file playback, from the last playback position.
+    /// @return true if there is a video and it was not already playing
     VIDEODISPLAY_API bool start(bool fromOldPos = true);
     /// Stops file playback
+    /// @return true if the video was not already stopped
     VIDEODISPLAY_API bool stop();
 
     /// Toggles play/pause state
+    /// @return true if the video was playing
     VIDEODISPLAY_API bool togglePause();
 
     /// Pauses the video
+    /// @return true if the video was not already paused
     VIDEODISPLAY_API bool pause();
 
     /// Starts video playback from current position
+    /// @return true if there is a video and it was not already playing
     VIDEODISPLAY_API bool unpause();
 
     // VIDEODISPLAY_API void enableLooping(bool enable);
