@@ -71,6 +71,8 @@ namespace Radiant
   {
     if(file.empty()) return file;
 
+    if(FileUtils::fileReadable(file)) return file;
+
     std::string r = FileUtils::findFile(file, m_paths);
 
     /*if(r.empty()) {
