@@ -7,13 +7,13 @@
 
 #include <cstddef>
 
+#ifndef __GCCXML__
+
 // try to detect c++0x
 #if defined(RADIANT_CPP0X)
   #include <functional>
 #else
-  #if defined(__GCCXML__)
-    /// @todo
-  #elif defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
+  #if defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
     #include <tr1/functional>
   #elif defined(RADIANT_WIN32) && defined(_HAS_TR1)
     #include <functional>
@@ -29,6 +29,8 @@
     using tr1::ref;
   }
 #endif
+
+#endif // __GCCXML__
 
 #endif // DOXYGEN_SHOULD_SKIP_THIS
 
