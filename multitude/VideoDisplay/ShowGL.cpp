@@ -333,6 +333,7 @@ namespace VideoDisplay {
       m_seeking(false),
       m_contrast(this, "contrast", 1.0f)
   {
+    eventAdd("videoatend");
     debugVideoDisplay("ShowGL::ShowGL # %p", this);
     clearHistogram();
   }
@@ -484,40 +485,22 @@ namespace VideoDisplay {
 
   bool ShowGL::togglePause()
   {
-    if(m_state == PLAY) {
-      return stop();
-    }
-    else {
-
-      Radiant::TimeStamp pos = m_position;
-      if(Radiant::TimeStamp(m_duration - m_position).secondsD() < 2.5)
-        pos = 0;
-
+    Radiant::info("togglePause();");
+    if (!stop()) {
       start();
-
       return false;
-    }
-  }
-
-  bool ShowGL::pause()
-  {
-    if(m_state == PLAY) {
-      return stop();
     }
     return true;
   }
 
+  bool ShowGL::pause()
+  {
+    return stop();
+  }
+
   bool ShowGL::unpause()
   {
-    if(m_state == PLAY)
-      return true;
-
-    Radiant::TimeStamp pos = m_position;
-
-    if(Radiant::TimeStamp(m_duration - m_position).secondsD() < 2.5)
-      pos = 0;
-
-    return false; // play(pos);
+    return start();
   }
 
   /*

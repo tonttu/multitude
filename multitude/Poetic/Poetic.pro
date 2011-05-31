@@ -60,10 +60,10 @@ win32 {
 	DEFINES += POETIC_EXPORT
 
 	win64 {
-		INCLUDEPATH += ..\Win64x\include\freetype2
+		INCLUDEPATH += ..\\Win64x\\include\\freetype2
 		LIBS += -lfreetype2
 	} else {
-		INCLUDEPATH += ..\Win32x\include\freetype2
+		INCLUDEPATH += ..\\Win32x\\include\\freetype2
 		LIBS += -lfreetype
 	}
 }

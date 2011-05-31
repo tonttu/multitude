@@ -46,7 +46,7 @@ namespace Resonant {
 
   ModulePanner::~ModulePanner()
   {
-    for (int i=0; i < m_rectangles.size(); ++i)
+    for (size_t i=0; i < m_rectangles.size(); ++i)
       delete m_rectangles[i];
   }
 

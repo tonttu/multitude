@@ -241,6 +241,10 @@ namespace Valuable
     vp.m_to = to;
     vp.m_frame = m_frame;
 
+    if (m_eventNames.find(from) == m_eventNames.end()) {
+      error("HasValues::eventAddListener # Adding listener to unexistent event '%s'", from);
+    }
+
     if(defaultData)
       vp.m_defaultData = *defaultData;
 
@@ -334,10 +338,12 @@ namespace Valuable
     }
   }
 
+  // Must be outside function definition to be thread-safe
+  static Radiant::Mutex s_generateIdMutex;
+
   HasValues::Uuid HasValues::generateId()
   {
-    static Radiant::Mutex s_mutex;
-    Radiant::Guard g(s_mutex);
+    Radiant::Guard g(s_generateIdMutex);
     static Uuid s_id = static_cast<Uuid>(Radiant::TimeStamp::getTime());
     return s_id++;
   }
@@ -345,6 +351,13 @@ namespace Valuable
   HasValues::Uuid HasValues::id() const
   {
     return m_id;
+  }
+
+  void HasValues::eventAdd(const std::string & id)
+  {
+    if (m_eventNames.find(id) != m_eventNames.end()) {
+      error("HasValues::eventAdd # Trying to register event '%s' that is already registered", id.c_str());
+    } else m_eventNames.insert(id);
   }
 
   void HasValues::eventSend(const std::string & id, Radiant::BinaryData & bd)
@@ -356,6 +369,10 @@ namespace Valuable
   {
     if(!id || !m_eventsEnabled)
       return;
+
+    if (m_eventNames.find(id) == m_eventNames.end()) {
+      error("HasValues::eventSend # Sending unknown event '%s'", id);
+    }
 
     m_frame++;
 

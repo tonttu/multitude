@@ -99,6 +99,9 @@ namespace Luminous
       { m_scheduled = Radiant::TimeStamp::getTime() +
           Radiant::TimeStamp::createSecondsD(seconds); }
 
+      /// Marks the task as finished, so it will be removed.
+      void setFinished() { setState(DONE); }
+
     protected:
        /// Initialize the task. Called by BGThread before the task is processed
       virtual void initialize();

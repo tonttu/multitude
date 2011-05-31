@@ -18,6 +18,7 @@
 
 #include "Serializer.hpp"
 #include "ValueObject.hpp"
+#include <iterator>
 
 namespace Valuable
 {

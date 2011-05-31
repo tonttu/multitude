@@ -24,6 +24,9 @@
 #include <Radiant/Trace.hpp>
 #include <Radiant/Mutex.hpp>
 
+#ifdef MULTI_DOCUMENTER
+std::list<Valuable::ValueObject::Doc> Valuable::ValueObject::doc;
+#endif
 
 namespace Valuable
 {
@@ -47,8 +50,16 @@ namespace Valuable
       m_name(name),
       m_transit(transit)
   {
-    if(parent)
+    if(parent) {
       parent->addValue(name, this);
+#ifdef MULTI_DOCUMENTER
+      doc.push_back(Doc());
+      Doc & d = doc.back();
+      d.class_name = Radiant::StringUtils::demangle(typeid(*parent).name());
+      d.vo = this;
+      d.obj = parent;
+#endif
+    }
   }
 
   ValueObject::ValueObject(const ValueObject & o)
@@ -63,6 +74,12 @@ namespace Valuable
   ValueObject::~ValueObject()
   {
     emitDelete();
+#ifdef MULTI_DOCUMENTER
+    for(std::list<Doc>::iterator it = doc.begin(); it != doc.end();) {
+      if(it->vo == this) it = doc.erase(it);
+      else ++it;
+    }
+#endif
   }
 
   void ValueObject::setName(const std::string & s)

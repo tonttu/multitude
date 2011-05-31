@@ -23,6 +23,7 @@ public:
     float farPlane() const { return m_farPlane; }
     /// Returns the field-of-view in Y direction in degrees
     float fov() const { return m_fovY; }
+    float aspect() const;
 
     /// Generate a ray from camera location towards the direction the camera
     /// looking at through the point (x,y) on the near plane
