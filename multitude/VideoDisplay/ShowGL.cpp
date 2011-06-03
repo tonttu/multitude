@@ -485,7 +485,6 @@ namespace VideoDisplay {
 
   bool ShowGL::togglePause()
   {
-    Radiant::info("togglePause();");
     if (!stop()) {
       start();
       return false;
