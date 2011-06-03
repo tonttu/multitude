@@ -141,6 +141,8 @@ namespace VideoDisplay {
     /// Load a subtitle file
     VIDEODISPLAY_API bool loadSubTitles(const char * filename, const char * type = 0);
 
+    VIDEODISPLAY_API Radiant::TimeStamp firstFrameTime() const;
+
     /// Initialize the file, but does not play it.
     /** Does not actually start playback, just loads in information
         about the video.

@@ -765,4 +765,11 @@ namespace VideoDisplay {
     bzero(m_histogram, sizeof(m_histogram));
   }
 
+  Radiant::TimeStamp ShowGL::firstFrameTime() const
+  {
+    if(m_video)
+      return m_video->firstFrameTime();
+
+    return 0;
+  }
 }
