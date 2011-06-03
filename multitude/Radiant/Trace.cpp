@@ -16,6 +16,7 @@
 #include "Trace.hpp"
 #include "Mutex.hpp"
 #include "TimeStamp.hpp"
+#include "Platform.hpp"
 
 #include <cassert>
 #include <cstdio>
@@ -26,11 +27,16 @@
 #include <QString>
 #include <set>
 
+#ifndef RADIANT_WIN32
+#include <unistd.h> // for istty
+#endif
+
 namespace Radiant {
 
   static Radiant::Mutex g_mutex;
 
   static bool g_enableVerboseOutput = false;
+  static bool g_forceColors = false;
   static std::set<std::string> g_verboseModules;
 
   QString g_appname;
@@ -64,32 +70,81 @@ namespace Radiant {
     return g_enableVerboseOutput;
   }
 
+  void forceColors(bool enable)
+  {
+    g_forceColors = enable;
+  }
+
   static void g_output(Severity s, const char * module, const char * msg, va_list& args)
   {
+    static bool stderr_is_tty = false, stdout_is_tty = false;
+
+#ifndef RADIANT_WIN32
+    // this doesn't need mutex, it doesn't matter if this is ran
+    // in two different threads at the same time
+    static bool once = false;
+    if (!once) {
+      const char* term = getenv("TERM");
+      if(term && term != std::string("dumb")) {
+        stderr_is_tty = isatty(2);
+        stdout_is_tty = isatty(1);
+      }
+      once = true;
+    }
+#endif
+
     FILE * out = (s > WARNING) ? stderr : stdout;
 
     if(__outfile)
       out = __outfile;
 
+    bool use_colors = g_forceColors || (out == stderr && stderr_is_tty) ||
+        (out == stdout && stdout_is_tty);
+
+    const char* timestamp_color = "";
+    const char* color = "";
+    const char* colors_end = "";
+
+    if(use_colors) {
+      if(s == WARNING) {
+        color = "\033[1;33m";
+      } else if(s > WARNING) {
+        color = "\033[1;31m";
+      } else if(s == DEBUG) {
+        color = "\033[35m";
+      }
+      timestamp_color = "\033[1;30m";
+      colors_end = "\033[0m";
+    }
+
     Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
 
     g_mutex.lock();
+
+    time_t t = now.value() >> 24;
+    /// localtime is not thread-safe
+    struct tm * ts = localtime(&t);
+    fprintf(out, "%s[%04d-%02d-%02d %02d:%02d:%02d.%03d]%s ", timestamp_color,
+            ts->tm_year+1900, ts->tm_mon+1, ts->tm_mday,
+            ts->tm_hour, ts->tm_min, ts->tm_sec, int(now.subSecondsUS()) / 1000,
+            colors_end);
+
     if(g_appname.isEmpty()) {
       if (module) {
-        fprintf(out, "[%s] %s> %s", now.asString().toUtf8().data(), module, prefixes[s]);
+        fprintf(out, "%s> %s%s", module, color, prefixes[s]);
       } else {
-        fprintf(out, "[%s] %s", now.asString().toUtf8().data(), prefixes[s]);
+        fprintf(out, "%s%s", color, prefixes[s]);
       }
     } else {
       if (module) {
-        fprintf(out, "[%s] %s: %s> %s", now.asString().toUtf8().data(), g_appname.toUtf8().data(), module, prefixes[s]);
+        fprintf(out, "%s: %s> %s%s", g_appname.toUtf8().data(), module, color, prefixes[s]);
       } else {
-        fprintf(out, "[%s] %s: %s", now.asString().toUtf8().data(), g_appname.toUtf8().data(), prefixes[s]);
+        fprintf(out, "%s: %s%s", g_appname.toUtf8().data(), color, prefixes[s]);
       }
     }
 
     vfprintf(out, msg, args);
-    fprintf(out,"\n");
+    fprintf(out,"%s\n", colors_end);
     fflush(out);
     g_mutex.unlock();
   }
@@ -105,6 +160,7 @@ namespace Radiant {
 
       if(s >= FATAL) {
         exit(0);
+        _exit(0);
         // Sometimes "exit" is not enough, this is guaranteed to work
         int * bad = 0;
         *bad = 123456;
@@ -123,6 +179,7 @@ namespace Radiant {
 
       if(s >= FATAL) {
         exit(0);
+        _exit(0);
         // Sometimes "exit" is not enough, this is guaranteed to work
         int * bad = 0;
         *bad = 123456;

@@ -35,6 +35,7 @@ namespace VideoDisplay {
       float m_duration;
       /* Can be used later on to drop frames out of memory selectively. */
       Radiant::TimeStamp m_used;
+      Radiant::TimeStamp m_firstFrameTime;
     };
 
     /// how many videos to cache
@@ -121,8 +122,9 @@ namespace VideoDisplay {
     m_buffered = 0;
     m_audioCount = 0;
 
-    float latency = 1.7f;
+    const float bufferLengthInSeconds = 1.7f;
 
+    // Try to find the video info from cache
     const FFVideodebug * vi = __cacheddebugVideoDisplay(filename);
 
     if(vi) {
@@ -134,11 +136,13 @@ namespace VideoDisplay {
 
       m_info.m_videoFrameSize.make(img->m_width, img->m_height);
 
-      m_frames.resize(latency * fps());
+      m_frames.resize(bufferLengthInSeconds * fps());
 
       putFrame(img, FRAME_SNAPSHOT, 0, 0, false);
 
       m_channels = vi->m_channels;
+
+      m_firstFrameTime = vi->m_firstFrameTime;
 
       return true;
     }
@@ -185,7 +189,7 @@ namespace VideoDisplay {
 
     debugVideoDisplay("%s # %f fps", fname, fp);
 
-    m_frames.resize(latency * fp);
+    m_frames.resize(bufferLengthInSeconds * fp);
 
     int channels, sample_rate;
     AudioSampleFormat fmt;
@@ -211,6 +215,9 @@ namespace VideoDisplay {
       vi2.m_firstFrame.copyData(*img);
       vi2.m_channels = m_channels;
       vi2.m_used = Radiant::TimeStamp::getTime();
+      vi2.m_firstFrameTime = video.frameTime();
+
+      m_firstFrameTime = video.frameTime();
     }
 
     video.close();

@@ -57,7 +57,12 @@ linux-*{
   }
 
   contains(MEMCHECK,yes) {
+    message(Using Radiant::MemCheck)
     DEFINES += MULTI_MEMCHECK=1
+  }
+  contains(DOCUMENTER,yes) {
+    message(Enabling document generator)
+    DEFINES += MULTI_DOCUMENTER=1
   }
 }
 

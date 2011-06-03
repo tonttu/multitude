@@ -157,6 +157,8 @@ namespace VideoDisplay {
 
     Radiant::Mutex & mutex() { return m_mutex; }
 
+    Radiant::TimeStamp firstFrameTime() const { return m_firstFrameTime; }
+
     // todo: static void setDefaultLatency(float seconds) { m_defaultLatency = seconds; }
 
   protected:
@@ -254,7 +256,10 @@ namespace VideoDisplay {
 
     Radiant::Mutex m_mutex;
 
+    Radiant::TimeStamp m_firstFrameTime;
+
     /// @endcond
+
   private:
     /// Disabled
     VideoIn(const VideoIn & ) : Radiant::Thread() {}
