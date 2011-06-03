@@ -112,6 +112,9 @@ namespace Radiant {
   RADIANT_API void enableVerboseOutput(bool enable, const char * module = 0);
   /// Returns true if the #debug function output is displayed
   RADIANT_API bool enabledVerboseOutput();
+  /// Forces ANSI colors to the output even if the output isn't ANSI-capable terminal
+  RADIANT_API void forceColors(bool enable = true);
+
 
   /** Sets the application name to be used in debug output.
 
