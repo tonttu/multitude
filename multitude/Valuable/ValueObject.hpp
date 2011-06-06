@@ -224,7 +224,7 @@ namespace Valuable
 #ifdef MULTI_DOCUMENTER
     struct Doc
     {
-      std::string class_name;
+      QString class_name;
       HasValues * obj;
       ValueObject * vo;
     };
