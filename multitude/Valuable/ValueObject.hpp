@@ -201,6 +201,17 @@ namespace Valuable
     /// Returns true if the current value of the object is different from the original value.
     virtual bool isChanged() const;
 
+#ifdef MULTI_DOCUMENTER
+    struct Doc
+    {
+      std::string class_name;
+      HasValues * obj;
+      ValueObject * vo;
+    };
+
+    static std::list<Doc> doc;
+#endif
+
   protected:
 
     /// Invokes the change valueChanged function of all listeners
