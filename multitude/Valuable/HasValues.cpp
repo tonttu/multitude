@@ -314,7 +314,7 @@ namespace Valuable
     vp.m_to = to;
     vp.m_frame = m_frame;
 
-    if (m_eventNames.find(from) == m_eventNames.end()) {
+    if(!m_eventNames.contains(from)) {
       error("HasValues::eventAddListener # Adding listener to unexistent event '%s'", from);
     }
 
@@ -448,10 +448,10 @@ namespace Valuable
     return m_id;
   }
 
-  void HasValues::eventAdd(const std::string & id)
+  void HasValues::eventAdd(const QString & id)
   {
-    if (m_eventNames.find(id) != m_eventNames.end()) {
-      error("HasValues::eventAdd # Trying to register event '%s' that is already registered", id.c_str());
+    if(m_eventNames.contains(id)) {
+      error("HasValues::eventAdd # Trying to register event '%s' that is already registered", id.toUtf8().data());
     } else m_eventNames.insert(id);
   }
 
@@ -465,7 +465,7 @@ namespace Valuable
     if(!id || !m_eventsEnabled)
       return;
 
-    if (m_eventNames.find(id) == m_eventNames.end()) {
+    if(!m_eventNames.contains(id)) {
       error("HasValues::eventSend # Sending unknown event '%s'", id);
     }
 
