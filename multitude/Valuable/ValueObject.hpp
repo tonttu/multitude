@@ -82,6 +82,12 @@ namespace Valuable
   class VALUABLE_API ValueObject : public Serializable
   {
   public:
+    enum Layer {
+      ORIGINAL = 0,
+      STYLE,
+      OVERRIDE
+    };
+
     typedef std::function<void ()> ListenerFunc;
     enum ListenerRole {
       DELETE = 1 << 0,
@@ -179,15 +185,15 @@ namespace Valuable
     virtual QString asString(bool * const ok = 0) const;
 
     /// Sets the value of the object
-    virtual bool set(float v);
+    virtual bool set(float v, Layer layer = OVERRIDE);
     /// Sets the value of the object
-    virtual bool set(int v);
+    virtual bool set(int v, Layer layer = OVERRIDE);
     /// Sets the value of the object
-    virtual bool set(const QString & v);
+    virtual bool set(const QString & v, Layer layer = OVERRIDE);
     /// Sets the value of the object
-    virtual bool set(const Nimble::Vector2f & v);
+    virtual bool set(const Nimble::Vector2f & v, Layer layer = OVERRIDE);
     /// Sets the value of the object
-    virtual bool set(const Nimble::Vector4f & v);
+    virtual bool set(const Nimble::Vector4f & v, Layer layer = OVERRIDE);
 
     /// Get the type id of the type
     virtual const char * type() const = 0;
@@ -212,6 +218,8 @@ namespace Valuable
 
     /// Returns true if the current value of the object is different from the original value.
     virtual bool isChanged() const;
+
+    virtual void clearValue(Layer layout);
 
 #ifdef MULTI_DOCUMENTER
     struct Doc
@@ -264,33 +272,77 @@ namespace Valuable
     /// @param transit ignored
     ValueObjectT(HasValues * parent, const QString & name, const T & v = T(), bool transit = false)
       : ValueObject(parent, name, transit),
-      m_value(v),
-      m_orig(v) {}
+      m_current(ORIGINAL),
+      m_valueSet()
+    {
+      m_values[ORIGINAL] = v;
+      m_valueSet[ORIGINAL] = true;
+    }
 
     ValueObjectT()
-      : ValueObject() {}
+      : ValueObject(),
+      m_current(ORIGINAL),
+      m_values(),
+      m_valueSet()
+    {
+      m_valueSet[ORIGINAL] = true;
+    }
 
     virtual ~ValueObjectT() {}
 
     /// Access the wrapped object with the dereference operator
-    inline const T & operator * () const { return m_value; }
+    inline const T & operator * () const { return value(); }
     /// Typecast operator for the wrapped value
-    inline operator const T & () const { return m_value; }
+    inline operator const T & () const { return value(); }
     /// Use the arrow operator to access fields inside the wrapped object.
-    inline const T * operator->() const { return &m_value; }
+    inline const T * operator->() const { return &value(); }
 
     /// The original value (the value given in constructor) of the ValueObject.
-    inline const T & orig() const { return m_orig; }
+    inline const T & orig() const { return m_values[ORIGINAL]; }
+
+    inline const T & value(Layer layer) const { return m_values[layer]; }
+
+    inline const T & value() const { return m_values[m_current]; }
+
+    inline void setValue(const T & t, Layer layer)
+    {
+      bool top = layer >= m_current;
+      bool sendSignal = top && value() != t;
+      if(top) m_current = layer;
+      m_values[layer] = t;
+      m_valueSet[layer] = true;
+      if (sendSignal) this->emitChange();
+    }
+
+    /// @todo should return the derived type, not ValueObjectT
+    inline ValueObjectT<T> & operator = (const T & t)
+    {
+      setValue(t, OVERRIDE);
+      return *this;
+    }
 
     /// Is the value different from the original value
     // use !( == ) instead of != because != isn't always implemented
-    virtual bool isChanged() const { return !(m_value == m_orig); }
+    virtual bool isChanged() const { return !(m_values[m_current] == m_values[ORIGINAL]); }
+
+
+    void clearValue(Layer layout)
+    {
+      assert(layout > ORIGINAL);
+      m_valueSet[layout] = false;
+      if(m_current == layout) {
+        assert(m_valueSet[ORIGINAL]);
+        int l = int(layout) - 1;
+        while(!m_valueSet[l]) --l;
+        m_current = l;
+      }
+    }
+
 
   protected:
-    /// The actual value of this object
-    T m_value;
-    /// The original value given in constructor
-    T m_orig;
+    int m_current;
+    T m_values[3];
+    bool m_valueSet[3];
   };
 
 

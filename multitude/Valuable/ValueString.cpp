@@ -49,63 +49,55 @@ namespace Valuable
 
   float ValueString::asFloat(bool * const ok) const
   {
-    return m_value.toFloat(ok);
+    return value().toFloat(ok);
   }
 
   int ValueString::asInt(bool * const ok) const
   {
-    return m_value.toInt(ok, 0);
+    return value().toInt(ok, 0);
   }
 
   QString ValueString::asString(bool * const ok) const
   {
     if(ok) *ok = true;
-    return m_value.toUtf8().data();
+    return value().toUtf8().data();
   }
 
-  bool ValueString::set(const QString & v)
+  bool ValueString::set(const QString & v, Layer layer)
   {
-    *this = v;
+    setValue(v, layer);
     return true;
   }
 
   ValueString & ValueString::operator=(const ValueString & i)
   {
-    return (*this = i.m_value);
-  }
-
-  ValueString & ValueString::operator=(const QString & i)
-  {
-    if(m_value != i) {
-      m_value = i;
-      emitChange();
-    }
+    *this = i.value();
     return *this;
   }
 
   QString ValueString::operator+(const ValueString & i) const
   {
-    return m_value + i.m_value;
+    return value() + i.value();
   }
 
   QString ValueString::operator+(const QString & i) const
   {
-    return m_value + i;
+    return value() + i;
   }
 
   QString ValueString::operator+(const char * utf8) const
   {
-    return m_value + QString::fromUtf8(utf8);
+    return value() + QString::fromUtf8(utf8);
   }
 
   bool ValueString::operator == (const QString & that) const
   {
-    return m_value == that;
+    return value() == that;
   }
 
   bool ValueString::operator != (const QString & that) const
   {
-    return m_value != that;
+    return value() != that;
   }
 
   void ValueString::clear()
@@ -115,7 +107,7 @@ namespace Valuable
 
   unsigned ValueString::size() const
   {
-    return (unsigned) m_value.size();
+    return (unsigned) value().size();
   }
 }
 

@@ -24,7 +24,9 @@ namespace Valuable
   /// A value object for boolean.
   class VALUABLE_API ValueBool : public ValueObjectT<bool>
   {
-  public:    
+  public:
+    using ValueObjectT<bool>::operator =;
+
     /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
     /// @param value The value of this object
     ValueBool(HasValues * parent, const QString & name, bool value, bool transit = false);
@@ -37,11 +39,8 @@ namespace Valuable
     virtual void processMessage(const char *, Radiant::BinaryData & data);
     /// @endcond
 
-    /// Copies a value
-    ValueBool & operator = (bool v);
-
     /// Boolean values can be set as integers in CSS files
-    bool set(int v);
+    bool set(int v, Layer layer = OVERRIDE);
 
     QString asString(bool * const ok = 0) const;
   };

@@ -41,6 +41,9 @@ namespace Valuable
     enum { N = VectorType::Elements };
 
     public:
+      using Base::operator =;
+      using Base::value;
+
       ValueVector() : Base() {}
       /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
       /// @param v The value of this object
@@ -49,35 +52,26 @@ namespace Valuable
 
       virtual ~ValueVector();
 
-      /// Assigns a vector
-      ValueVector<VectorType> & operator = (const VectorType & v) {
-        if(Base::m_value != v) {
-          Base::m_value = v;
-          this->emitChange();
-        }
-        return *this;
-      }
-
       /// Assigns by addition
-      ValueVector<VectorType> & operator += (const VectorType & v) { return (*this = Base::m_value + v); }
+      ValueVector<VectorType> & operator += (const VectorType & v) { *this = value() + v; return *this; }
       /// Assigns by subtraction
-      ValueVector<VectorType> & operator -= (const VectorType & v) { return (*this = Base::m_value - v); }
+      ValueVector<VectorType> & operator -= (const VectorType & v) { *this = value() - v; return *this; }
 
       /// Subtraction operator
       VectorType operator -
-      (const VectorType & v) const { return Base::m_value - v; }
+      (const VectorType & v) const { return value() - v; }
       /// Addition operator
       VectorType operator +
-      (const VectorType & v) const { return Base::m_value + v; }
+      (const VectorType & v) const { return value() + v; }
 
       /** Access vector elements by their index.
 
         @return Returns the ith element. */
-      ElementType operator [] (int i) const { return Base::m_value[i]; }
+      ElementType operator [] (int i) const { return value()[i]; }
 
       /// Returns the data in its native format
       const ElementType * data() const
-      { return Base::m_value.data(); }
+      { return value().data(); }
 
       virtual void processMessage(const char * id, Radiant::BinaryData & data);
       virtual bool deserialize(ArchiveElement & element);
@@ -85,25 +79,25 @@ namespace Valuable
       const char * type() const;
 
       /// Sets the value
-      virtual bool set(const VectorType & v);
+      virtual bool set(const VectorType & v, ValueObject::Layer layer = ValueObject::OVERRIDE);
 
       /** Returns the internal vector object as a constant reference. */
-      const VectorType & asVector() const { return Base::m_value; }
+      const VectorType & asVector() const { return value(); }
 
       QString asString(bool * const ok = 0) const;
 
       /// Returns the ith element
-      inline const ElementType & get(int i) const { return Base::m_value[i]; }
+      inline const ElementType & get(int i) const { return value()[i]; }
 
       /// Returns the first component
-      inline const ElementType & x() const { return Base::m_value[0]; }
+      inline const ElementType & x() const { return value()[0]; }
       /// Returns the second component
-      inline const ElementType & y() const { return Base::m_value[1]; }
+      inline const ElementType & y() const { return value()[1]; }
 
       /// Normalizes the vector
       inline void normalize(ElementType len = 1.0)
       {
-        VectorType vector = Base::m_value;
+        VectorType vector = value();
         vector.normalize(len);
         *this = vector;
       }

@@ -32,6 +32,8 @@ namespace Valuable
     typedef ValueObjectT<T> Base;
 
   public:
+      using Base::value;
+
       ValueNumeric() : ValueObjectT<T>() {}
       /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
       /// @param v The numeric value of this object.
@@ -40,11 +42,11 @@ namespace Valuable
       {}
 
       /// Converts the numeric value to float
-      float asFloat(bool * const ok = 0) const { if(ok) *ok = true; return static_cast<float> (Base::m_value); }
+      float asFloat(bool * const ok = 0) const { if(ok) *ok = true; return static_cast<float> (value()); }
       /// Converts the numeric value to integer
-      int asInt(bool * const ok = 0) const { if(ok) *ok = true; return static_cast<int> (Base::m_value); }
+      int asInt(bool * const ok = 0) const { if(ok) *ok = true; return static_cast<int> (value()); }
       /// Converts the numeric value to string
-      QString asString(bool * const ok = 0) const { if(ok) *ok = true; return Radiant::StringUtils::stringify(Base::m_value); }
+      QString asString(bool * const ok = 0) const { if(ok) *ok = true; return Radiant::StringUtils::stringify(value()); }
   };
 
 }

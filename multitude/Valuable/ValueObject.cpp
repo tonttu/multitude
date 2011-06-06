@@ -259,35 +259,39 @@ namespace Valuable
     return m_changed;
   }
 
-  bool ValueObject::set(float )
+  void ValueObject::clearValue(Layer)
+  {
+  }
+
+  bool ValueObject::set(float, Layer)
   {
     Radiant::error(
 "ValueObject::set(float) # conversion not available");
     return false;
   }
 
-  bool ValueObject::set(int )
+  bool ValueObject::set(int, Layer)
   {
     Radiant::error(
 "ValueObject::set(int) # conversion not available");
     return false;
   }
 
-  bool ValueObject::set(const QString & )
+  bool ValueObject::set(const QString &, Layer)
   {
     Radiant::error(
 "ValueObject::set(string) # conversion not available");
     return false;
   }
 
-  bool ValueObject::set(const Nimble::Vector2f & )
+  bool ValueObject::set(const Nimble::Vector2f &, Layer)
   {
     Radiant::error(
 "ValueObject::set(Vector2f) # conversion not available");
     return false;
   }
 
-  bool ValueObject::set(const Nimble::Vector4f & )
+  bool ValueObject::set(const Nimble::Vector4f &, Layer)
   {
     Radiant::error(
 "ValueObject::set(Vector4f) # conversion not available");

@@ -43,7 +43,7 @@ namespace Valuable
 
     for(int i = 0; (name = m_enumnames[i]) != 0; i++) {
       if(str == QString::fromUtf8(name)) {
-        (* (ValueInt32 *) this) = i;
+        set(i);
       }
     }
   }

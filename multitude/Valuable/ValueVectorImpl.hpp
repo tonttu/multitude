@@ -32,6 +32,7 @@ namespace Valuable
   void ValueVector<T>::processMessage(const char * id,
                       Radiant::BinaryData & data)
   {
+    /// @todo this isn't how processMessage should be used
     if(id && strlen(id)) {
       int index = strtol(id, 0, 10);
       if(index >= N) {
@@ -43,7 +44,7 @@ namespace Valuable
       ElementType v = data.read<ElementType>(&ok);
 
       if(ok) {
-        T tmp = Base::m_value;
+        T tmp = value();
         tmp[index] = v;
         *this = tmp;
       }
@@ -102,18 +103,18 @@ namespace Valuable
   QString ValueVector<VectorType>::asString(bool * const ok) const {
     if(ok) *ok = true;
 
-    QString r = Radiant::StringUtils::stringify(Base::m_value[0]);
+    QString r = Radiant::StringUtils::stringify(value()[0]);
 
     for(int i = 1; i < N; i++)
-      r += QString(" ") + Radiant::StringUtils::stringify(Base::m_value[i]);
+      r += QString(" ") + Radiant::StringUtils::stringify(value()[i]);
 
     return r;
   }
 
   template<class VectorType>
-  bool ValueVector<VectorType>::set(const VectorType & v)
+  bool ValueVector<VectorType>::set(const VectorType & v, ValueObject::Layer layer)
   {
-    *this = v;
+    setValue(v, layer);
     return true;
   }
 

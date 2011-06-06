@@ -42,21 +42,12 @@ namespace Valuable
   QString ValueBool::asString(bool * const ok) const
   {
     if(ok) *ok = true;
-    return Radiant::StringUtils::stringify((int32_t)m_value);
+    return Radiant::StringUtils::stringify((int32_t)value());
   }
 
-  ValueBool & ValueBool::operator = (bool v)
+  bool ValueBool::set(int value, Layer layer)
   {
-    if(m_value != v) {
-      m_value = v;
-      emitChange();
-    }
-    return *this;
-  }
-
-  bool ValueBool::set(int value)
-  {
-    *this = !!value;
+    setValue(!!value, layer);
     return true;
   }
 }

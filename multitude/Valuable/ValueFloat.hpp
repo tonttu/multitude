@@ -36,6 +36,9 @@ namespace Valuable
     typedef ValueNumeric<T> Base;
 
     public:
+      using Base::value;
+      using ValueObjectT<T>::operator =;
+
       ValueFloatT() : Base() {}
       /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
       /// @param v The numeric value of this object
@@ -43,29 +46,27 @@ namespace Valuable
       : ValueNumeric<T>(parent, name, v, transit)
       {}
 
-      /// Copies a float
-      inline ValueFloatT<T> & operator = (T i)
-      {
-        if(Nimble::Math::Abs(Base::m_value - i) > T(Nimble::Math::EPSILON)) {
-          Base::m_value = i;
-          this->emitChange();
-        }
-        return *this;
-      }
-
       /// Assignment by subtraction
-      ValueFloatT<T> & operator -= (T i) { return (*this = Base::m_value - i); }
+      ValueFloatT<T> & operator -= (T i) { *this = value() - i; return *this; }
       /// Assignment by addition
-      ValueFloatT<T> & operator += (T i) { return (*this = Base::m_value + i); }
+      ValueFloatT<T> & operator += (T i) { *this = value() + i; return *this; }
       /// Assignment by multiplication
-      ValueFloatT<T> & operator *= (T i) { return (*this = Base::m_value * i); }
+      ValueFloatT<T> & operator *= (T i) { *this = value() * i; return *this; }
       /// Assignment by division
-      ValueFloatT<T> & operator /= (T i) { return (*this = Base::m_value / i); }
+      ValueFloatT<T> & operator /= (T i) { *this = value() / i; return *this; }
 
       /// Sets the numeric value
-      inline virtual bool set(int v) { *this = v; return true; }
+      inline virtual bool set(int v, ValueObject::Layer layer = ValueObject::OVERRIDE)
+      {
+        this->setValue(v, layer);
+        return true;
+      }
       /// @copydoc set
-      inline virtual bool set(float v) { *this = v; return true; }
+      inline virtual bool set(float v, ValueObject::Layer layer = ValueObject::OVERRIDE)
+      {
+        this->setValue(v, layer);
+        return true;
+      }
 
       const char * type() const { return VO_TYPE_FLOAT; }
 

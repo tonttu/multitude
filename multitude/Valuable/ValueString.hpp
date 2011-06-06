@@ -32,6 +32,7 @@ namespace Valuable
     typedef ValueObjectT<QString> Base;
 
   public:
+    using Base::operator =;
 
     /// The character type of this string class
     typedef QChar char_type;
@@ -53,8 +54,6 @@ namespace Valuable
 
     /// Copies a string
     ValueString & operator = (const ValueString & i);
-    /// Copies a string
-    ValueString & operator = (const QString & i);
 
     /// Concatenates two strings
     /// @param i The string to be appended to this string
@@ -79,7 +78,7 @@ namespace Valuable
     /// Returns the value as string
     QString asString(bool * const ok = 0) const;
 
-    virtual bool set(const QString & v);
+    virtual bool set(const QString & v, Layer layer = OVERRIDE);
 
     const char * type() const { return VO_TYPE_STRING; }
 

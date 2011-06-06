@@ -36,8 +36,13 @@ namespace Valuable
       class VALUABLE_API ValueIntT : public ValueNumeric<T>
   {
     typedef ValueNumeric<T> Base;
-
   public:
+    using Base::value;
+    using Base::m_current;
+    using Base::m_values;
+    using Base::m_valueSet;
+    using ValueObjectT<T>::operator =;
+
     ValueIntT() : Base() {}
     /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
     /// @param v The numeric value of this object
@@ -45,57 +50,76 @@ namespace Valuable
         : ValueNumeric<T>(parent, name, v, transit)
     {}
 
-    /// Copy an integer
-    ValueIntT<T> & operator = (T i)
+    /// Assignment by subtraction
+    ValueIntT<T> & operator -= (T i) { *this = value() - i; return *this; }
+    /// Assignment by addition
+    ValueIntT<T> & operator += (T i) { *this = value() + i; return *this; }
+    /// Assignment by multiplication
+    ValueIntT<T> & operator *= (T i) { *this = value() * i; return *this; }
+    /// Assignment by division
+    ValueIntT<T> & operator /= (T i) { *this = value() / i; return *this; }
+
+    /// Does a logical OR for the integer
+    ValueIntT<T> & operator |= (T i) { *this = value() | i; return *this; }
+    /// Does a logical AND for the integer
+    ValueIntT<T> & operator &= (T i) { *this = value() & i; return *this; }
+    /// Modulo operator
+    ValueIntT<T> & operator %= (T i) { *this = value() % i; return *this; }
+    /// Does a bitwise exclusive OR
+    ValueIntT<T> & operator ^= (T i) { *this = value() ^ i; return *this; }
+
+    /// Prefix increment
+    ValueIntT<T> & operator ++ ()
     {
-      if(Base::m_value != i) {
-        Base::m_value = i;
-        this->emitChange();
+      if(m_current != Base::OVERRIDE) {
+        m_values[Base::OVERRIDE] = m_values[m_current];
+        m_valueSet[Base::OVERRIDE] = true;
+        m_current = Base::OVERRIDE;
       }
+      ++m_values[m_current];
+      this->emitChange();
       return *this;
     }
 
-    /// Assignment by subtraction
-    ValueIntT<T> & operator -= (T i) { return (*this = Base::m_value - i); }
-    /// Assignment by addition
-    ValueIntT<T> & operator += (T i) { return (*this = Base::m_value + i); }
-    /// Assignment by multiplication
-    ValueIntT<T> & operator *= (T i) { return (*this = Base::m_value * i); }
-    /// Assignment by division
-    ValueIntT<T> & operator /= (T i) { return (*this = Base::m_value / i); }
-
-    /// Does a logical OR for the integer
-    ValueIntT<T> & operator |= (T i) { return (*this = Base::m_value | i); }
-    /// Does a logical AND for the integer
-    ValueIntT<T> & operator &= (T i) { return (*this = Base::m_value & i); }
-    /// Modulo operator
-    ValueIntT<T> & operator %= (T i) { return (*this = Base::m_value % i); }
-    /// Does a bitwise exclusive OR
-    ValueIntT<T> & operator ^= (T i) { return (*this = Base::m_value ^ i); }
-
-    /// Prefix increment
-    ValueIntT<T> & operator ++ () { ++Base::m_value; this->emitChange(); return *this; }
     /// Prefix decrement
-    ValueIntT<T> & operator -- () { --Base::m_value; this->emitChange(); return *this; }
+    ValueIntT<T> & operator -- ()
+    {
+      if(m_current != Base::OVERRIDE) {
+        m_values[Base::OVERRIDE] = m_values[m_current];
+        m_valueSet[Base::OVERRIDE] = true;
+        m_current = Base::OVERRIDE;
+      }
+      --m_values[m_current];
+      this->emitChange();
+      return *this;
+    }
 
     /// Shift left
-    ValueIntT<T> & operator <<= (int i) { return (*this = Base::m_value << i); }
+    ValueIntT<T> & operator <<= (int i) { *this = value() << i; return *this; }
     /// Shift right
-    ValueIntT<T> & operator >>= (int i) { return (*this = Base::m_value >> i); }
+    ValueIntT<T> & operator >>= (int i) { *this = value() >> i; return *this; }
 
     /// Sets the numeric value
-    inline virtual bool set(int v) { *this = v; return true; }
+    inline virtual bool set(int v, ValueObject::Layer layer = ValueObject::OVERRIDE)
+    {
+      this->setValue(v, layer);
+      return true;
+    }
     /// @copydoc set
-    inline virtual bool set(float v) { *this = v; return true; }
+    inline virtual bool set(float v, ValueObject::Layer layer = ValueObject::OVERRIDE)
+    {
+      this->setValue(v, layer);
+      return true;
+    }
 
     /// Compares less than
-    bool operator < (const T & i) const { return Base::m_value < i; }
+    bool operator < (const T & i) const { return value() < i; }
     /// Compares less or equal than
-    bool operator <= (const T & i) const { return Base::m_value <= i; }
+    bool operator <= (const T & i) const { return value() <= i; }
     /// Compares greater than
-    bool operator > (const T & i) const { return Base::m_value > i; }
+    bool operator > (const T & i) const { return value() > i; }
     /// Compares greater or equal than
-    bool operator >= (const T & i) const { return Base::m_value >= i; }
+    bool operator >= (const T & i) const { return value() >= i; }
 
     const char * type() const { return VO_TYPE_INT; }
 

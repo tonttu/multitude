@@ -25,15 +25,6 @@ namespace Valuable
     : Base(parent, name, r, transit)
   {}
 
-  ValueRect & ValueRect::operator = (const Nimble::Rect & r)
-  {
-    if(m_value != r) {
-      Base::m_value = r;
-      emitChange();
-    }
-    return *this;
-  }
-
   bool ValueRect::deserialize(ArchiveElement & element) {
     std::stringstream in(element.get().toUtf8().data());
 
@@ -51,8 +42,9 @@ namespace Valuable
   QString ValueRect::asString(bool * const ok) const {
     if(ok) *ok = true;
 
-    const Nimble::Vector2f & lo = m_value.low();
-    const Nimble::Vector2f & hi = m_value.high();
+    const Nimble::Rect & rect = value();
+    const Nimble::Vector2f & lo = rect.low();
+    const Nimble::Vector2f & hi = rect.high();
 
     QString r = Radiant::StringUtils::stringify(lo[0]);
     r += QString(" ") + Radiant::StringUtils::stringify(lo[1]);
