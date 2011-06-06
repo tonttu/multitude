@@ -26,6 +26,7 @@
 
 #include <QString>
 #include <set>
+#include <ctime>
 
 #ifndef RADIANT_WIN32
 #include <unistd.h> // for istty
