@@ -85,7 +85,10 @@ namespace Valuable
     enum Layer {
       ORIGINAL = 0,
       STYLE,
-      OVERRIDE
+      OVERRIDE,
+      STYLE_IMPORTANT,
+
+      LAYER_COUNT
     };
 
     typedef std::function<void ()> ListenerFunc;
@@ -341,8 +344,8 @@ namespace Valuable
 
   protected:
     int m_current;
-    T m_values[3];
-    bool m_valueSet[3];
+    T m_values[LAYER_COUNT];
+    bool m_valueSet[LAYER_COUNT];
   };
 
 
