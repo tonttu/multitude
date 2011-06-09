@@ -219,6 +219,18 @@ namespace Nimble {
       return x;
     }
 
+    /// Wraps the input value between minimum and maximum values
+    /// For example you can normalize radians by Wrap(angle, 0, 2*PI)
+    /// @param x The input value to wrap.
+    /// @param low The minimum value
+    /// @param high The maximum value
+    template <class T>
+    inline T Wrap(T x, T low, T high)
+    {
+      T diff = high - low;
+      return x - Floor((x - low) / diff) * diff;
+    }
+
     /** Calculates the determinant of a 2x2 matrix, which is given in
   the argument values.
     @param a upper-left of the matrix
