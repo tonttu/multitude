@@ -208,6 +208,14 @@ namespace Radiant {
     va_end(args);
   }
 
+  void warning(const char * msg, ...)
+  {
+    va_list args;
+    va_start(args, msg);
+    g_output(WARNING, 0, msg, args);
+    va_end(args);
+  }
+
   void error(const char * msg, ...)
   {
     va_list args;

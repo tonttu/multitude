@@ -113,7 +113,7 @@ int main(int argc, char ** argv)
     glClear(GL_COLOR_BUFFER_BIT);
 
     show.update();
-    show.render( & rsc, Nimble::Vector2(0,0), Nimble::Vector2(width, height));
+    show.render( & rsc, Nimble::Vector2(0,0), Nimble::Vector2(width, height), Radiant::Color());
 
     Luminous::Utils::glCheck("Main.cpp");
 

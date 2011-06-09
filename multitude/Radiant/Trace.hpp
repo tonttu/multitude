@@ -102,6 +102,14 @@ namespace Radiant {
   */
   RADIANT_API void fatal(const char * msg, ...) RADIANT_PRINTF_CHECK(1, 2);
 
+  /// Display error output, with a warning message
+  /** This function calls trace to do the final work and it is
+      effectively the same as calling trace(WARNING, ...).
+
+      @see trace
+  */
+  RADIANT_API void warning(const char * msg, ...) RADIANT_PRINTF_CHECK(1, 2);
+
   /** Toggle verbose output.
 
       If enabled, messages sent with the #debug function are displayed

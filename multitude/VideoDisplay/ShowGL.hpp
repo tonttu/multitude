@@ -24,6 +24,7 @@
 #include <Nimble/Vector2.hpp>
 #include <Nimble/Matrix3.hpp>
 
+#include <Radiant/Color.hpp>
 #include <Radiant/RefPtr.hpp>
 #include <Radiant/TimeStamp.hpp>
 #include <Radiant/VideoImage.hpp>
@@ -236,10 +237,10 @@ namespace VideoDisplay {
     VIDEODISPLAY_API void render(Luminous::GLResources * resources,
                                  Vector2 topleft,
                                  Vector2 bottomright,
+                                 Radiant::Color baseColor,
                                  const Nimble::Matrix3f * transform = 0,
                                  Poetic::GPUFont * subtitleFont = 0,
-                                 float subTitleSpace = 0,
-                                 float alpha = 1.0f);
+                                 float subTitleSpace = 0);
 
     /// Pixel size of the video image.
     VIDEODISPLAY_API Nimble::Vector2i size() const;
