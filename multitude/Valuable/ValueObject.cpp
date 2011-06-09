@@ -291,10 +291,22 @@ namespace Valuable
     return false;
   }
 
+  bool ValueObject::set(const Nimble::Vector3f & v, Layer layer)
+  {
+    Radiant::error("ValueObject::set(Vector3f) # conversion not available");
+    return false;
+  }
+
   bool ValueObject::set(const Nimble::Vector4f &, Layer)
   {
     Radiant::error(
 "ValueObject::set(Vector4f) # conversion not available");
+    return false;
+  }
+
+  bool ValueObject::set(const QVariantList & v, ValueUnit unit, Layer layer)
+  {
+    Radiant::error("ValueObject::set(QVariantList) # conversion not available");
     return false;
   }
 }

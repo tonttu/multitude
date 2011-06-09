@@ -28,6 +28,7 @@
 
 #include <QString>
 #include <QList>
+#include <QVariantList>
 
 #include <Valuable/DOMElement.hpp>
 #include <Radiant/MemCheck.hpp>
@@ -89,6 +90,16 @@ namespace Valuable
       STYLE_IMPORTANT,
 
       LAYER_COUNT
+    };
+
+    /// Units of a value
+    enum ValueUnit
+    {
+      VU_UNKNOWN,
+      VU_PXS,         ///< Value defined in pixels
+      VU_PERCENTAGE,  ///< Value defined in percentage (100% == 1.0f)
+      VU_EMS,         ///< Length value defined by font-size
+      VU_EXS          ///< Length value defined by x-height of the current font
     };
 
     typedef std::function<void ()> ListenerFunc;
@@ -196,7 +207,11 @@ namespace Valuable
     /// Sets the value of the object
     virtual bool set(const Nimble::Vector2f & v, Layer layer = OVERRIDE);
     /// Sets the value of the object
+    virtual bool set(const Nimble::Vector3f & v, Layer layer = OVERRIDE);
+    /// Sets the value of the object
     virtual bool set(const Nimble::Vector4f & v, Layer layer = OVERRIDE);
+    /// Sets the value of the object
+    virtual bool set(const QVariantList & v, ValueUnit unit, Layer layer = OVERRIDE);
 
     /// Get the type id of the type
     virtual const char * type() const = 0;
