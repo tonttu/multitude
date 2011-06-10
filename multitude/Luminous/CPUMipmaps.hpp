@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef LUMINOUS_CPU_MIPMAPS_HPP
@@ -36,15 +36,12 @@
 namespace Luminous {
 
   class GLResources;
-  class GPUMipmaps;
 
   /** Collection of image mipmaps in the RAM/disk of the
       computer. This class is used to load and scale images from the
       disk in the background.
 
-      It is usually used in conjunction with Luminous::GPUMipmaps.
-
-      CPU/GPUMipmaps are typically used to handle the loading of
+      CPUMipmaps are typically used to handle the loading of
       images in the background. They ease the handling of large
       amounts of images, so that neither the CPU or the GPU memory is
       exceeded. The classes work in both single- and multi-threaded
