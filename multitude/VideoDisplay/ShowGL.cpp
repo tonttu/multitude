@@ -38,9 +38,9 @@ namespace VideoDisplay {
       "uniform float contrast;\n"
       "void main (void) {\n"
       "  vec4 color = texture2D(tex, gl_TexCoord[0].st);\n"
-      "  gl_FragColor.rgb = vec3(0.5, 0.5, 0.5) + \n"
+      "  color.rgb = vec3(0.5, 0.5, 0.5) + \n"
       "     contrast * (color.rgb - vec3(0.5, 0.5, 0.5));\n"
-      "  gl_FragColor.a = gl_Color.a * color.a;\n"
+      "  gl_FragColor = mix(gl_Color, color, gl_Color.a);\n"
       "}\n";
 
 
@@ -69,8 +69,8 @@ namespace VideoDisplay {
         "  vec4 ucolor = texture2D(utex, gl_TexCoord[0].st);\n"
         "  vec4 vcolor = texture2D(vtex, gl_TexCoord[0].st);\n"
         "  vec4 yuv = vec4(ycolor.r, ucolor.r - 0.5, vcolor.r - 0.5, 1.0);\n"
-        "  gl_FragColor.rgb = (zm * yuv).rgb;\n"
-        "  gl_FragColor.a = gl_Color.a;\n"
+        "  yuv.rgb = (zm * yuv).rgb;\n"
+        "  gl_FragColor = mix(gl_Color, yuv, gl_Color.a);\n"
         "}\n";
     /*
     static const char * shadersource =
@@ -485,7 +485,6 @@ namespace VideoDisplay {
 
   bool ShowGL::togglePause()
   {
-    Radiant::info("togglePause();");
     if (!stop()) {
       start();
       return false;
@@ -577,10 +576,10 @@ namespace VideoDisplay {
 
   void ShowGL::render(Luminous::GLResources * resources,
                       Vector2 topleft, Vector2 bottomright,
+                      Radiant::Color baseColor,
                       const Nimble::Matrix3f * transform,
                       Poetic::GPUFont * subtitleFont,
-                      float subTitleSpace,
-                      float alpha)
+                      float subTitleSpace)
   {
 
     debugVideoDisplay("ShowGL::render");
@@ -630,15 +629,13 @@ namespace VideoDisplay {
 
     glEnable(GL_BLEND);
 
-    Nimble::Vector4 white(1, 1, 1, alpha);
-
     if(transform) {
       Luminous::Utils::glTexRectAA(bottomright - topleft, *transform,
-                                   white.data());
+                                   baseColor.data());
     }
     else {
       Nimble::Rect r(topleft, bottomright);
-      Luminous::Utils::glTexRectAA(r, white.data());
+      Luminous::Utils::glTexRectAA(r, baseColor.data());
     }
 
     // Then a thin strip around to anti-alias:
@@ -765,4 +762,11 @@ namespace VideoDisplay {
     bzero(m_histogram, sizeof(m_histogram));
   }
 
+  Radiant::TimeStamp ShowGL::firstFrameTime() const
+  {
+    if(m_video)
+      return m_video->firstFrameTime();
+
+    return 0;
+  }
 }
