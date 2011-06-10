@@ -715,8 +715,6 @@ namespace VideoDisplay {
     else if(time >= m_duration)
       time = m_duration - Radiant::TimeStamp::createSecondsD(2);
 
-    m_position = time;
-
     debugVideoDisplay("ShowGL::seekTo # %lf", time.secondsD());
 
     m_video->seek(time);
