@@ -132,6 +132,9 @@ namespace Screenplay {
         else {
           debugScreenplay("VideoInputFFMPEG::captureImage # Looping %s", m_fileName.c_str());
           m_offsetTS = m_lastTS;
+          // Reset counters
+          m_capturedAudio = 0;
+          m_capturedVideo = 0;
           av_seek_frame(m_ic, -1, (int64_t) 0, 0);
 
           // av_free_packet(m_pkt);
@@ -368,8 +371,8 @@ namespace Screenplay {
         perFrame = 20000;
       }
 
-      debugScreenplay("VideoInputFFMPEG::captureImage # %lf %d %d %d aufr in total %d vidfr",
-            secs, perFrame, (int) m_audioFrames, (int) m_capturedAudio, (int) m_capturedVideo);
+      debugScreenplay("VideoInputFFMPEG::captureImage # firstTS %lf lastTS %lf; %lf %d %d %d aufr in total %d vidfr",
+            m_firstTS.secondsD(), m_lastTS.secondsD(), secs, perFrame, (int) m_audioFrames, (int) m_capturedAudio, (int) m_capturedVideo);
 
       m_audioTS = m_lastTS;
 
