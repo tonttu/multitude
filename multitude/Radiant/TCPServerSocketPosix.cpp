@@ -48,6 +48,7 @@ namespace Radiant
   
   TCPServerSocket::~TCPServerSocket()
   {
+    debug("TCPServerSocket::~TCPServerSocket");
     close();
     delete m_d;
   }
@@ -88,9 +89,6 @@ namespace Radiant
 
     m_d->m_fd = -1;
 
-    if(shutdown(fd, SHUT_RDWR)) {
-      error("TCPServerSocket::close # Failed to shut down the socket: %s", wrap_strerror(wrap_errno));
-    }
     if(wrap_close(fd)) {
       error("TCPServerSocket::close # Failed to close socket: %s", wrap_strerror(wrap_errno));
     }
