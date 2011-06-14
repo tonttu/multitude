@@ -200,7 +200,7 @@ namespace Radiant
 
     int n = bytes;
 
-    if (setsockopt(m_d->m_fd, SOL_SOCKET, SO_RCVBUF, &n, sizeof(n)) == -1) {
+    if (setsockopt(m_d->m_fd, SOL_SOCKET, SO_RCVBUF, (const char*)&n, sizeof(n)) == -1) {
       return false;
     }
     return true;
