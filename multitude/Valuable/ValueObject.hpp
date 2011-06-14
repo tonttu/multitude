@@ -239,6 +239,8 @@ namespace Valuable
 
     virtual void clearValue(Layer layout);
 
+    virtual bool shortcut() const;
+
 #ifdef MULTI_DOCUMENTER
     struct Doc
     {
@@ -340,8 +342,7 @@ namespace Valuable
     }
 
     /// Is the value different from the original value
-    // use !( == ) instead of != because != isn't always implemented
-    virtual bool isChanged() const { return !(m_values[m_current] == m_values[ORIGINAL]); }
+    virtual bool isChanged() const { return m_values[m_current] != m_values[ORIGINAL]; }
 
 
     void clearValue(Layer layout)

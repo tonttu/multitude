@@ -33,6 +33,16 @@ namespace Valuable
 {
   using namespace Radiant;
 
+  class Shortcut : public ValueObject
+  {
+  public:
+    Shortcut(HasValues * parent, const QString & name)
+      : ValueObject(parent, name)
+    {}
+    bool deserialize(ArchiveElement & element) { return false; }
+    virtual bool shortcut() const { return true; }
+    virtual const char * type() const { return "shortcut"; }
+  };
 
   inline bool HasValues::ValuePass::operator == (const ValuePass & that) const
   {
@@ -505,6 +515,11 @@ namespace Valuable
   {
     Radiant::BinaryData tmp;
     eventSend(id, tmp);
+  }
+
+  void HasValues::defineShortcut(const QString & name)
+  {
+    new Shortcut(this, name);
   }
 
   void HasValues::childRenamed(const QString & was, const QString & now)

@@ -263,50 +263,57 @@ namespace Valuable
   {
   }
 
+  bool ValueObject::shortcut() const
+  {
+    return false;
+  }
+
   bool ValueObject::set(float, Layer)
   {
-    Radiant::error(
-"ValueObject::set(float) # conversion not available");
+    Radiant::error("ValueObject::set(float) # %s: conversion not available",
+                   m_name.toUtf8().data());
     return false;
   }
 
   bool ValueObject::set(int, Layer)
   {
-    Radiant::error(
-"ValueObject::set(int) # conversion not available");
+    Radiant::error("ValueObject::set(int) # %s: conversion not available",
+                   m_name.toUtf8().data());
     return false;
   }
 
   bool ValueObject::set(const QString &, Layer)
   {
-    Radiant::error(
-"ValueObject::set(string) # conversion not available");
+    Radiant::error("ValueObject::set(string) # %s: conversion not available",
+                   m_name.toUtf8().data());
     return false;
   }
 
   bool ValueObject::set(const Nimble::Vector2f &, Layer)
   {
-    Radiant::error(
-"ValueObject::set(Vector2f) # conversion not available");
+    Radiant::error("ValueObject::set(Vector2f) # %s: conversion not available",
+                   m_name.toUtf8().data());
     return false;
   }
 
   bool ValueObject::set(const Nimble::Vector3f & v, Layer layer)
   {
-    Radiant::error("ValueObject::set(Vector3f) # conversion not available");
+    Radiant::error("ValueObject::set(Vector3f) # %s: conversion not available",
+                   m_name.toUtf8().data());
     return false;
   }
 
   bool ValueObject::set(const Nimble::Vector4f &, Layer)
   {
-    Radiant::error(
-"ValueObject::set(Vector4f) # conversion not available");
+    Radiant::error("ValueObject::set(Vector4f) # %s: conversion not available",
+                   m_name.toUtf8().data());
     return false;
   }
 
   bool ValueObject::set(const QVariantList & v, ValueUnit unit, Layer layer)
   {
-    Radiant::error("ValueObject::set(QVariantList) # conversion not available");
+    Radiant::error("ValueObject::set(QVariantList) # %s: conversion not available",
+                   m_name.toUtf8().data());
     return false;
   }
 }

@@ -234,6 +234,8 @@ namespace Valuable
     /// @copydoc eventSend
     void eventSend(const char *);
 
+    void defineShortcut(const QString & name);
+
   private:
     friend class ValueObject; // So that ValueObject can call the function below.
 
