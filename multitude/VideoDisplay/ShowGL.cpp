@@ -318,6 +318,23 @@ namespace VideoDisplay {
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
+  struct ShowGLPrivate
+  {
+    ShowGLPrivate() : fps(-1), syncToTime(true) {}
+    Radiant::TimeStamp started;
+    float fps;
+    bool syncToTime;
+  };
+
+  static std::map<ShowGL*, ShowGLPrivate*> s_private;
+  static Radiant::MutexStatic s_privateMutex;
+
+  ShowGLPrivate& getPrivate(ShowGL * ptr)
+  {
+    Radiant::GuardStatic s(s_privateMutex);
+    return *s_private[ptr];
+  }
+
   ShowGL::ShowGL()
       : m_video(0),
       m_frame(0),
@@ -332,6 +349,8 @@ namespace VideoDisplay {
       m_seeking(false),
       m_contrast(this, "contrast", 1.0f)
   {
+    Radiant::GuardStatic s(s_privateMutex);
+    s_private[this] = new ShowGLPrivate;
     debug("ShowGL::ShowGL # %p", this);
     clearHistogram();
   }
@@ -341,6 +360,9 @@ namespace VideoDisplay {
     debug("ShowGL::~ShowGL # %p", this);
     stop();
     delete m_video;
+    Radiant::GuardStatic s(s_privateMutex);
+    delete s_private[this];
+    s_private.erase(this);
   }
 
   bool ShowGL::loadSubTitles(const char * filename, const char * )
@@ -360,6 +382,8 @@ namespace VideoDisplay {
     if(m_filename == filename) {
       return true;
     }
+    ShowGLPrivate& priv = getPrivate(this);
+    priv.fps = -1;
 
     if(m_state == PLAY) {
       stop();
@@ -424,6 +448,8 @@ namespace VideoDisplay {
       return false;
     }
 
+    ShowGLPrivate& priv = getPrivate(this);
+
     AudioTransfer * au = new AudioTransfer(0, m_video);
 
     char buf[128];
@@ -441,10 +467,14 @@ namespace VideoDisplay {
     m_audio = au;
     m_audio->setGain(m_gain);
 
-    if(fromOldPos)
+    priv.started = Radiant::TimeStamp::getTime();
+    if(fromOldPos) {
+      if(!m_video->atEnd())
+        priv.started -= m_video->displayFrameTime();
       m_video->play();
-    else
+    } else {
       m_video->play(0);
+    }
 
     m_state = PLAY;
 
@@ -530,10 +560,29 @@ namespace VideoDisplay {
     if(!m_video)
       return;
 
+    ShowGLPrivate& priv = getPrivate(this);
+
     int videoFrame;
 
     if(m_audio) {
-      videoFrame = m_audio->videoFrame();
+      if(priv.syncToTime) {
+        if(m_videoFrame > 1 && priv.fps < 0) {
+          VideoIn::Frame * f = m_video->getFrame(m_videoFrame-1, false);
+          VideoIn::Frame * f2 = m_video->getFrame(m_videoFrame, false);
+          if(f && f2) priv.fps = 1.0f / (f2->m_absolute.secondsD() - f->m_absolute.secondsD());
+        }
+        float fps = priv.fps > 0 ? priv.fps : m_video->fps();
+        int videoFrameFromTime = priv.started.sinceSecondsD() * fps;
+        int videoFrameFromAudio = m_audio->videoFrame();
+
+        if(Nimble::Math::Abs(videoFrameFromTime - videoFrameFromAudio) > 3) {
+          Radiant::error("ShowGL::update # Video out of sync, resyncing. %d %d (fps %f)", videoFrameFromTime, videoFrameFromAudio, fps);
+          priv.started = Radiant::TimeStamp::getTime() - Radiant::TimeStamp::createSecondsD(videoFrameFromAudio / fps);
+          videoFrameFromTime = Nimble::Math::Max(videoFrameFromAudio, m_videoFrame);
+        }
+
+        videoFrame = videoFrameFromTime;
+      } else videoFrame = m_audio->videoFrame();
       if(m_audio->atEnd()) {
         debug("ShowGL::update # At end");
         stop();
@@ -729,12 +778,15 @@ namespace VideoDisplay {
     if(!m_video)
       return;
 
+    ShowGLPrivate& priv = getPrivate(this);
+
     if(time < 0)
       time = 0;
     else if(time >= m_duration)
       time = m_duration - Radiant::TimeStamp::createSecondsD(2);
 
     m_position = time;
+    priv.started = Radiant::TimeStamp::getTime() - time;
 
     debug("ShowGL::seekTo # %lf", time.secondsD());
 
@@ -774,6 +826,12 @@ namespace VideoDisplay {
     control.writeVector2Float32(location); // sound source location
 
     m_dsp->send(control);
+  }
+
+  void ShowGL::setSyncToTime(bool flag)
+  {
+    ShowGLPrivate& priv = getPrivate(this);
+    priv.syncToTime = flag;
   }
 
   void ShowGL::clearHistogram()

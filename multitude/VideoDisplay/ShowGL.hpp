@@ -281,6 +281,8 @@ namespace VideoDisplay {
           */
     void setContrast(float contrast) { m_contrast = contrast; }
 
+    VIDEODISPLAY_API void setSyncToTime(bool flag);
+
   private:
 
     void clearHistogram();

@@ -159,6 +159,9 @@ namespace VideoDisplay {
 
     // todo: static void setDefaultLatency(float seconds) { m_defaultLatency = seconds; }
 
+    inline bool atEnd() const { return m_atEnd; }
+    inline Radiant::TimeStamp displayFrameTime() const { return m_displayFrameTime; }
+
   protected:
 
     VIDEODISPLAY_API virtual void childLoop () ;
