@@ -15,11 +15,11 @@
 #ifndef POETIC_FONT_MANAGER_HPP
 #define POETIC_FONT_MANAGER_HPP
 
-#include <Poetic/Export.hpp>
-#include <Poetic/CPUFont.hpp>
-#include <Poetic/GPUFont.hpp>
-#include <Poetic/CPUBitmapFont.hpp>
-#include <Poetic/CPUWrapperFont.hpp>
+#include "Export.hpp"
+#include "CPUFont.hpp"
+#include "GPUFont.hpp"
+#include "CPUBitmapFont.hpp"
+#include "CPUWrapperFont.hpp"
 
 #include <Patterns/Singleton.hpp>
 

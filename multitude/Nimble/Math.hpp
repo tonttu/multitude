@@ -4,7 +4,7 @@
 #ifndef NIMBLE_MATH_HPP
 #define NIMBLE_MATH_HPP
 
-#include <Nimble/Export.hpp>
+#include "Export.hpp"
 
 #include <math.h>
 #ifdef WIN32

@@ -16,6 +16,8 @@
 #ifndef RADIANT_CLONABLE_PTR_HPP
 #define RADIANT_CLONABLE_PTR_HPP
 
+#include "Export.hpp"
+
 namespace Radiant {
 
   /** Template class for managing clonable objects.

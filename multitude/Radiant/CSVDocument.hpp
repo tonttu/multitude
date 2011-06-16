@@ -16,7 +16,7 @@
 #ifndef RADIANT_CSVDOCUMENT_HPP
 #define RADIANT_CSVDOCUMENT_HPP
 
-#include <Radiant/Export.hpp>
+#include "Export.hpp"
 
 #include <string>
 #include <list>

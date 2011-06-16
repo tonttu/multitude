@@ -16,9 +16,9 @@
 #ifndef RADIANT_MUTEX_HPP
 #define RADIANT_MUTEX_HPP
 
-#include <Patterns/NotCopyable.hpp>
+#include "Export.hpp"
 
-#include <Radiant/Export.hpp>
+#include <Patterns/NotCopyable.hpp>
 
 namespace Radiant {
 
@@ -151,7 +151,7 @@ namespace Radiant {
     @see ReleaseGuard
     */
 
-    class Guard : public Patterns::NotCopyable
+    class RADIANT_API Guard : public Patterns::NotCopyable
     {
     public:
     /// Constructs a new guard and locks the mutex
@@ -167,7 +167,7 @@ namespace Radiant {
     };
 
     /** A guard class for static mutexes. */
-    class GuardStatic : public Patterns::NotCopyable
+    class RADIANT_API GuardStatic : public Patterns::NotCopyable
     {
     public:
     /// Constructs a new guard and locks the mutex
@@ -187,7 +187,7 @@ namespace Radiant {
 
     @see Guard
     */
-    class ReleaseGuard : public Patterns::NotCopyable
+    class RADIANT_API ReleaseGuard : public Patterns::NotCopyable
     {
     public:
     /// Constructs a new guard

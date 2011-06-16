@@ -16,9 +16,9 @@
 #ifndef VALUABLE_HASVALUES_HPP
 #define VALUABLE_HASVALUES_HPP
 
-#include <Valuable/Export.hpp>
-#include <Valuable/ValueInt.hpp>
-#include <Valuable/ValueObject.hpp>
+#include "Export.hpp"
+#include "ValueInt.hpp"
+#include "ValueObject.hpp"
 
 #include <Patterns/NotCopyable.hpp>
 

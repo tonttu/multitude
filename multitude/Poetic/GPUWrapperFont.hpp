@@ -15,9 +15,10 @@
 #ifndef POETIC_GPU_WRAPPER_FONT_HPP
 #define POETIC_GPU_WRAPPER_FONT_HPP
 
-#include <Poetic/GPUFont.hpp>
-#include <Poetic/CPUWrapperFont.hpp>
-#include <Poetic/GPUManagedFont.hpp>
+#include "Export.hpp"
+#include "GPUFont.hpp"
+#include "CPUWrapperFont.hpp"
+#include "GPUManagedFont.hpp"
 
 #include <Luminous/GLResource.hpp>
 
@@ -25,7 +26,7 @@ namespace Poetic
 {
 
   /// A wrapper class for convenience
-  class GPUWrapperFont : public GPUFont
+  class POETIC_API GPUWrapperFont : public GPUFont
   {
   public:
     /// Constructs a new GPU wrapper font

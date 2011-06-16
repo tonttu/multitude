@@ -341,14 +341,14 @@ namespace Resonant {
 
           bool good = true;
 
-          if(!s->load(it.m_name.str(), it.m_name.str())) {
+          if(!s->load(it.m_name.c_str(), it.m_name.c_str())) {
             error("ModuleSamplePlayer::BGLoader::childLoop # Could not load "
-                  "\"%s\"", it.m_name.str());
+                  "\"%s\"", it.m_name.c_str());
             good = false;
           }
           else if(!m_host->addSample(s)) {
             error("ModuleSamplePlayer::BGLoader::childLoop # Could not add "
-                  "\"%s\"", it.m_name.str());
+                  "\"%s\"", it.m_name.c_str());
             good = false;
           }
 
@@ -362,7 +362,7 @@ namespace Resonant {
           }
           else {
             debug("ModuleSamplePlayer::BGLoader::childLoop # Loaded "
-                  "\"%s\"", it.m_name.str());
+                  "\"%s\"", it.m_name.c_str());
 
             for(int j = 0; j < LoadItem::WAITING_COUNT; j++) {
               SampleVoice * voice = it.m_waiting[j];
@@ -370,7 +370,7 @@ namespace Resonant {
                 break;
 
               debug("ModuleSamplePlayer::BGLoader::childLoop # Delivering "
-                    "\"%s\" to %p", it.m_name.str(), voice);
+                    "\"%s\" to %p", it.m_name.c_str(), voice);
 
               voice->setSample(s);
             }

@@ -16,7 +16,8 @@
 #ifndef NIMBLE_RANDOM_HPP
 #define NIMBLE_RANDOM_HPP
 
-#include <Nimble/Rect.hpp>
+#include "Export.hpp"
+#include "Rect.hpp"
 
 #include <stdint.h>
 

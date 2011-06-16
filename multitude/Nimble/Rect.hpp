@@ -17,9 +17,9 @@
 #ifndef NIMBLE_RECT_HPP
 #define NIMBLE_RECT_HPP
 
-#include <Nimble/Export.hpp>
-#include <Nimble/Matrix3.hpp>
-#include <Nimble/Vector2.hpp>
+#include "Export.hpp"
+#include "Matrix3.hpp"
+#include "Vector2.hpp"
 
 namespace Nimble {
 

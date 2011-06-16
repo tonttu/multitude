@@ -16,8 +16,9 @@
 #ifndef IMAGE_CODEC_HPP
 #define IMAGE_CODEC_HPP
 
-#include <cstdio>
+#include "Export.hpp"
 
+#include <cstdio>
 #include <string>
 
 namespace Luminous
@@ -27,7 +28,7 @@ namespace Luminous
   
   /// The base class for different image codecs. Derive your own codec from this
   /// and override the three methods.
-  class ImageCodec 
+  class LUMINOUS_API ImageCodec 
   {
     public:
       virtual ~ImageCodec() {}

@@ -15,6 +15,7 @@
 #ifndef POETIC_FACE_HPP
 #define POETIC_FACE_HPP
 
+#include "Export.hpp"
 #include "Size.hpp"
 
 #include <Nimble/Vector2.hpp>
@@ -27,7 +28,7 @@ namespace Poetic
 {
 
   /// Face contains information stored in a .tff file.
-  class Face
+  class POETIC_API Face
   {
     public:
       /// Constructs a new face from the given .ttf file

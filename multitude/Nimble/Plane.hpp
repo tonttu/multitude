@@ -16,7 +16,8 @@
 #ifndef NIMBLE_PLANE_HPP
 #define NIMBLE_PLANE_HPP
 
-#include <Nimble/Vector3.hpp>
+#include "Export.hpp"
+#include "Vector3.hpp"
 
 namespace Nimble
 {

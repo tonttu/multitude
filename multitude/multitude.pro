@@ -13,9 +13,9 @@ SUBDIRS += Screenplay
 SUBDIRS += VideoDisplay
 SUBDIRS += Box2D
 
-exists(Examples/Examples.pro):SUBDIRS += Examples
+#exists(Examples/Examples.pro):SUBDIRS += Examples
 
-SUBDIRS += Applications
+#SUBDIRS += Applications
 
 CONFIG += ordered
 

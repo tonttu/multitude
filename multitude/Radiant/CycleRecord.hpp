@@ -16,8 +16,9 @@
 #ifndef RADIANT_CYCLE_RECORD_HPP
 #define RADIANT_CYCLE_RECORD_HPP
 
-#include <Radiant/cycle.h>
-#include <Radiant/Trace.hpp>
+#include "Export.hpp"
+#include "cycle.h"
+#include "Trace.hpp"
 
 #include <stdio.h>
 #include <vector>

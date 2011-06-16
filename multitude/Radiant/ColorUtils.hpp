@@ -16,32 +16,31 @@
 #ifndef RADIANT_COLOR_UTILS_HPP
 #define RADIANT_COLOR_UTILS_HPP
 
+#include "Export.hpp"
+#include "Trace.hpp"
+
 #include <Nimble/Math.hpp>
 #include <Nimble/Vector3.hpp>
 
-#include <Radiant/Export.hpp>
-#include <Radiant/Trace.hpp>
-
-#include <assert.h>
+#include <cassert>
 
 namespace Radiant
 {
 
   /// ColorUtils contains color conversion utilities
   /// @todo move to Color class
-  class ColorUtils
+  class RADIANT_API ColorUtils
   {
   public:
     /// Conversion between RGB and HSV using code published in Hearn, D. and Baker, M.
     /// (1997) "Computer Graphics", New Jersey: Prentice Hall Inc. (pp. 578-579.).
-    RADIANT_API static void rgbTohsv(float r, float g, float b, float & h, float & s, float & v);
+    static void rgbTohsv(float r, float g, float b, float & h, float & s, float & v);
     /// @copydoc rgbTohsv
-    RADIANT_API static void rgbTohsv(Nimble::Vector3f & rgb, Nimble::Vector3f & hsv);
+    static void rgbTohsv(Nimble::Vector3f & rgb, Nimble::Vector3f & hsv);
     /// @copydoc rgbTohsv
-    RADIANT_API static void hsvTorgb(float h, float s, float v, float & r, float & g, float & b);
+    static void hsvTorgb(float h, float s, float v, float & r, float & g, float & b);
     /// @copydoc rgbTohsv
-    RADIANT_API static void hsvTorgb(Nimble::Vector3f & hsv, Nimble::Vector3f & rgb);
-
+    static void hsvTorgb(Nimble::Vector3f & hsv, Nimble::Vector3f & rgb);
   };
 
 }

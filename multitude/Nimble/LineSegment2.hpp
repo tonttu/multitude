@@ -16,7 +16,8 @@
 #ifndef NIMBLE_LINESEGMENT2T_HPP
 #define NIMBLE_LINESEGMENT2T_HPP
 
-#include <Nimble/Vector2.hpp>
+#include "Export.hpp"
+#include "Vector2.hpp"
 
 namespace Nimble {
 

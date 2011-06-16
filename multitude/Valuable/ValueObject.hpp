@@ -16,21 +16,20 @@
 #ifndef VALUABLE_VALUE_OBJECT_HPP
 #define VALUABLE_VALUE_OBJECT_HPP
 
+#include "Export.hpp"
+#include "Archive.hpp"
+#include "ValueListener.hpp"
+#include "DOMElement.hpp"
+
 #include <Nimble/Vector4.hpp>
 
 #include <Patterns/NotCopyable.hpp>
 
 #include <Radiant/BinaryData.hpp>
-
-#include <Valuable/Archive.hpp>
-#include <Valuable/Export.hpp>
-#include <Valuable/ValueListener.hpp>
+#include <Radiant/MemCheck.hpp>
 
 #include <set>
 #include <string>
-
-#include <Valuable/DOMElement.hpp>
-#include <Radiant/MemCheck.hpp>
 
 namespace Valuable
 {

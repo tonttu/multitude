@@ -16,10 +16,10 @@
 #ifndef RADIANT_CONDITION_HPP
 #define RADIANT_CONDITION_HPP
 
-#include <Patterns/NotCopyable.hpp>
+#include "Export.hpp"
+#include "Mutex.hpp"
 
-#include <Radiant/Export.hpp>
-#include <Radiant/Mutex.hpp>
+#include <Patterns/NotCopyable.hpp>
 
 namespace Radiant {
 

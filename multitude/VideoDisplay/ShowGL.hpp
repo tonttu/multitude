@@ -17,6 +17,10 @@
 #ifndef VIDEODISPLAY_SHOW_GL_HPP
 #define VIDEODISPLAY_SHOW_GL_HPP
 
+#include "Export.hpp"
+#include "SubTitles.hpp"
+#include "VideoIn.hpp"
+
 #include <Luminous/Collectable.hpp>
 #include <Luminous/GLSLProgramObject.hpp>
 #include <Luminous/Texture.hpp>
@@ -33,10 +37,6 @@
 
 #include <Valuable/HasValues.hpp>
 #include <Valuable/ValueFloat.hpp>
-
-#include <VideoDisplay/Export.hpp>
-#include <VideoDisplay/SubTitles.hpp>
-#include <VideoDisplay/VideoIn.hpp>
 
 namespace Resonant {
   class DSPNetwork;
@@ -66,7 +66,7 @@ namespace VideoDisplay {
 
       From application-programmers perspective, this is the main class
       of the VideoDisplay framework. */
-  class ShowGL : public Luminous::Collectable,
+  class VIDEODISPLAY_API ShowGL : public Luminous::Collectable,
   public Valuable::HasValues
   {
   private:
@@ -135,11 +135,11 @@ namespace VideoDisplay {
     /// @endcond
 
     /// Constructs an empty ShowGL object
-    VIDEODISPLAY_API ShowGL();
-    VIDEODISPLAY_API ~ShowGL();
+    ShowGL();
+    ~ShowGL();
 
     /// Load a subtitle file
-    VIDEODISPLAY_API bool loadSubTitles(const char * filename, const char * type = 0);
+    bool loadSubTitles(const char * filename, const char * type = 0);
 
     /// Initialize the file, but does not play it.
     /** Does not actually start playback, just loads in information
@@ -167,7 +167,7 @@ namespace VideoDisplay {
         should include Radiant::WITH_VIDEO and Radiant::WITH_AUDIO.
 
     */
-    VIDEODISPLAY_API bool init(const char * filename,
+    bool init(const char * filename,
                                Resonant::DSPNetwork  * dsp,
                                float previewpos = 0.05f,
                                int targetChannel = -1,
@@ -177,25 +177,25 @@ namespace VideoDisplay {
     /// Sets the gain factor for the video sounds
     /** The gain coefficient is a linear multiplier for the video sound-track.
         Default value for the gain is 1.0, which equals unity gain. */
-    VIDEODISPLAY_API void setGain(float gain);
+    void setGain(float gain);
 
     /// Opens the file for playing.
     /* VIDEODISPLAY_API bool open(const char * filename, Resonant::DSPNetwork  * dsp,
                                Radiant::TimeStamp pos = 0);
     */
     /// Starts file playback, from the last playback position.
-    VIDEODISPLAY_API bool start(bool fromOldPos = true);
+    bool start(bool fromOldPos = true);
     /// Stops file playback
-    VIDEODISPLAY_API bool stop();
+    bool stop();
 
     /// Toggles play/pause state
-    VIDEODISPLAY_API bool togglePause();
+    bool togglePause();
 
     /// Pauses the video
-    VIDEODISPLAY_API bool pause();
+    bool pause();
 
     /// Starts video playback from current position
-    VIDEODISPLAY_API bool unpause();
+    bool unpause();
 
     // VIDEODISPLAY_API void enableLooping(bool enable);
 
@@ -203,7 +203,7 @@ namespace VideoDisplay {
     State state() const { return m_state; }
 
     /// Update the video image from reader-thread
-    VIDEODISPLAY_API void update();
+    void update();
     /// Render the video to the specified rectangle
     /** @param resources The container of the OpenGL resources
 
@@ -226,7 +226,7 @@ namespace VideoDisplay {
 
         @param alpha The alpha value of the video
     */
-    VIDEODISPLAY_API void render(Luminous::GLResources * resources,
+    void render(Luminous::GLResources * resources,
                                  Vector2 topleft,
                                  Vector2 bottomright,
                                  const Nimble::Matrix3f * transform = 0,
@@ -235,7 +235,7 @@ namespace VideoDisplay {
                                  float alpha = 1.0f);
 
     /// Pixel size of the video image.
-    VIDEODISPLAY_API Nimble::Vector2i size() const;
+    Nimble::Vector2i size() const;
 
     /// Returns the duration (lenght) of the video
     Radiant::TimeStamp duration() { return m_duration; }
@@ -246,16 +246,16 @@ namespace VideoDisplay {
 
     /** Seek to given position. Due to limitations of underlying seek
     algorithms, this method is usually not exact. */
-    VIDEODISPLAY_API void seekTo(Radiant::TimeStamp time);
+    void seekTo(Radiant::TimeStamp time);
     /// Seeks to a relative position within the video
     /** @param relative The relative position, in range [0,1]. */
-    VIDEODISPLAY_API void seekToRelative(double relative);
+    void seekToRelative(double relative);
 
     /// Seek forward, or backward by a given amount
     void seekBy(const Radiant::TimeStamp & ts) { seekTo(position() + ts); }
 
     /// Pans the video sounds to a given location
-    VIDEODISPLAY_API void panAudioTo(Nimble::Vector2 location);
+    void panAudioTo(Nimble::Vector2 location);
 
     /** Information on how the frames have been displayed. The
     histogram information is useful mostly for debug purposes. */
@@ -281,7 +281,7 @@ namespace VideoDisplay {
           */
     void setContrast(float contrast) { m_contrast = contrast; }
 
-    VIDEODISPLAY_API void setSyncToTime(bool flag);
+    void setSyncToTime(bool flag);
 
   private:
 

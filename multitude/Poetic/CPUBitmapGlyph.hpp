@@ -15,13 +15,14 @@
 #ifndef POETIC_CPU_BITMAP_GLYPH_HPP
 #define POETIC_CPU_BITMAP_GLYPH_HPP
 
-#include <Poetic/Glyph.hpp>
+#include "Export.hpp"
+#include "Glyph.hpp"
 
 namespace Poetic
 {
 
   /// A glyph that is stored as a bitmap on the CPU
-  class CPUBitmapGlyph : public Glyph
+  class POETIC_API CPUBitmapGlyph : public Glyph
   {
     public:
       /// Constructs a new bitmap for the given glyph

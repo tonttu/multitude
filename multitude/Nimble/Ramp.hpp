@@ -16,15 +16,13 @@
 #ifndef NIMBLE_RAMPT_HPP
 #define NIMBLE_RAMPT_HPP
 
-#include <Nimble/Export.hpp>
-
 namespace Nimble {
   
   /// Linear interpolation.
   /** This class is used to interpolate between key-point values, with
       fixed-length intervals. */
   template <class T>
-  class /*NIMBLE_API*/ RampT
+  class RampT
   {
   public:
     RampT() {}
@@ -88,13 +86,13 @@ namespace Nimble {
   typedef RampT<double> Rampd;
 
   /// @todo not needed anymore?
-#ifdef WIN32
-#ifdef NIMBLE_EXPORT
-  // In WIN32 template classes must be instantiated to be exported
-  template class RampT<float>;
-  template class RampT<double>;
-#endif
-#endif
+//#ifdef WIN32
+//#ifdef NIMBLE_EXPORT
+//  // In WIN32 template classes must be instantiated to be exported
+//  template class RampT<float>;
+//  template class RampT<double>;
+//#endif
+//#endif
 
 }
 

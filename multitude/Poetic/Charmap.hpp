@@ -15,9 +15,10 @@
 #ifndef POETIC_CHARMAP_HPP
 #define POETIC_CHARMAP_HPP
 
+#include "Export.hpp"
 #include "Face.hpp"
-#include <Radiant/Platform.hpp>
 
+#include <Radiant/Platform.hpp>
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
@@ -47,7 +48,7 @@ namespace Poetic
 
   /// A character map contains the translation from character codes to glyphs
   /// indices.
-  class Charmap
+  class POETIC_API Charmap
   {
     public:
       /// Constructs a charmap for the given font face

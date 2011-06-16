@@ -16,10 +16,10 @@
 #ifndef SCREENPLAY_VIDEO_FFMPEG_HPP
 #define SCREENPLAY_VIDEO_FFMPEG_HPP
 
+#include "Export.hpp"
+
 #include <Radiant/TimeStamp.hpp>
 #include <Radiant/VideoInput.hpp>
-
-#include <Screenplay/Export.hpp>
 
 #include <string>
 

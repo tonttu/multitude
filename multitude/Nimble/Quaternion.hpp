@@ -16,10 +16,12 @@
 #ifndef NIMBLE_QUATERNION_H
 #define NIMBLE_QUATERNION_H
 
-#include <math.h>
+#include "Export.hpp"
 #include "Vector3.hpp"
 #include "Matrix3.hpp"
 #include "Matrix4.hpp"
+
+#include <cmath>
 
 namespace Nimble {
 
@@ -29,7 +31,7 @@ namespace Nimble {
       the "pitch/roll/yaw" definition.
   */
   template <typename T>
-  class QuaternionT
+  class NIMBLE_API QuaternionT
   {
   public:
     /// The quaternion type

@@ -48,15 +48,13 @@ namespace Luminous {
       original image * 0.5 etc.
   */
   /// @todo examples
-  class CPUMipmaps : public Luminous::Collectable, public Luminous::Task
+  class LUMINOUS_API CPUMipmaps : public Luminous::Collectable, public Luminous::Task
   {
-  private:
   public:
-
     friend class GPUMipmaps;
 
-    LUMINOUS_API CPUMipmaps();
-    LUMINOUS_API virtual ~CPUMipmaps();
+    CPUMipmaps();
+    virtual ~CPUMipmaps();
 
     /** Drop old CPU mipmaps from memory.
 
@@ -66,7 +64,7 @@ namespace Luminous {
     memory. If purgeTime is less than zero, the mipmap idle times
     are updated, but they are <B>not</B> deleted from memory.
      */
-    LUMINOUS_API void update(float dt, float purgeTime);
+    void update(float dt, float purgeTime);
 
     /** Calculates the best-looking mipmap-level for rendering the image with given size.
 
@@ -75,31 +73,31 @@ namespace Luminous {
         @return Returns the index of the mipmap level that would best match
         the actual output pixel resolution.
     */
-    LUMINOUS_API int getOptimal(Nimble::Vector2f size);
+    int getOptimal(Nimble::Vector2f size);
     /** Get the index of the closest available mipmap-level.
 
         @param size The on-screen pixel size of the image
         @return Returns the index of the closest available mipmap-level.
     */
-    LUMINOUS_API int getClosest(Nimble::Vector2f size);
+    int getClosest(Nimble::Vector2f size);
     /** Gets the mipmap image on level i. If the level does not
         contain a valid mipmap, then 0 is returned.
 
         @param i The index of the mipmap
         @return Pointer to the image, which may be null.
     */
-    LUMINOUS_API std::shared_ptr<ImageTex> getImage(int i);
+    std::shared_ptr<ImageTex> getImage(int i);
     /** Mark an image used. This method resets the idle-counter of the
         level, preventing it from being dropped from the memory in the
         near future.
 
         @param i The index of the mipmap-level to be marked
     */
-    LUMINOUS_API void markImage(size_t i);
+    void markImage(size_t i);
     /** Check ifthe mipmaps are ready for rendering.
         @return Returns true if the object has loaded enough mipmaps. */
     /// @todo what does "enought" mean?
-    LUMINOUS_API bool isReady();
+    bool isReady();
 
     /** Starts to load given file, and build the mipmaps.
 
@@ -113,7 +111,7 @@ namespace Luminous {
         opposed to loading them later, as needed).
         @return True if the image file could be opened successfully.
     */
-    LUMINOUS_API bool startLoading(const char * filename, bool immediate);
+    bool startLoading(const char * filename, bool immediate);
 
     /** @return Returns the native size of the image, in pixels. */
     const Nimble::Vector2i & nativeSize() const { return m_nativeSize;}
@@ -124,12 +122,12 @@ namespace Luminous {
 
         @return The GPUMipmaps that correspond to these CPUMipmaps
     */
-    LUMINOUS_API GPUMipmaps * getGPUMipmaps();
+    GPUMipmaps * getGPUMipmaps();
     /// @copydoc getGPUMipmaps
     /// @param rs A pointer to the OpenGL resource container
-    LUMINOUS_API GPUMipmaps * getGPUMipmaps(GLResources * rs);
+    GPUMipmaps * getGPUMipmaps(GLResources * rs);
     /// Binds a texture that matches the given size parameters.
-    LUMINOUS_API bool bind(GLResources *,
+    bool bind(GLResources *,
                            const Nimble::Matrix3 & transform,
                            Nimble::Vector2 pixelsize);
 
@@ -137,7 +135,7 @@ namespace Luminous {
 
         @return Returns true if the mipmaps are still being loaded.
     */
-    LUMINOUS_API bool isActive();
+    bool isActive();
     /** @return Returns the aspect ratio of the image. */
     inline float aspect() const
     { return (float) m_nativeSize.x / (float)m_nativeSize.y; }
@@ -146,22 +144,22 @@ namespace Luminous {
     inline bool hasAlpha() const { return m_hasAlpha; }
 
     /// Not finished
-    LUMINOUS_API int pixelAlpha(Nimble::Vector2 relLoc);
+    int pixelAlpha(Nimble::Vector2 relLoc);
 
     /// Mark this object as done
-    LUMINOUS_API void finish();
+    void finish();
 
     /// Returns the number of images in the stack
     inline unsigned stackSize() const { return (unsigned) m_stack.size(); }
 
     /// Returns the size of the mipmap level
-    LUMINOUS_API Nimble::Vector2i mipmapSize(int level);
+    Nimble::Vector2i mipmapSize(int level);
 
     /// Set the time to keep mipmaps in CPU memory
     inline void setTimeOut(float timeout) { m_timeOut = timeout; }
 
   protected:
-    LUMINOUS_API virtual void doTask();
+    virtual void doTask();
 
   private:
     enum ItemState {

@@ -17,14 +17,14 @@
 #ifndef VIDEODISPLAY_VIDEO_IN_FFMPEG_HPP
 #define VIDEODISPLAY_VIDEO_IN_FFMPEG_HPP
 
-#include <VideoDisplay/VideoIn.hpp>
+#include "VideoIn.hpp"
 
 #include <Screenplay/VideoFFMPEG.hpp>
 
 namespace VideoDisplay {
 
   /// Movie file decoder, that uses the Screenplay::VideoInputFFMPEG
-  class VideoInFFMPEG : public VideoIn
+  class VIDEODISPLAY_API VideoInFFMPEG : public VideoIn
   {
   public:
     VideoInFFMPEG();

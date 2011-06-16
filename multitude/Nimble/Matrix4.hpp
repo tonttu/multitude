@@ -16,9 +16,9 @@
 #ifndef NIMBLE_MATRIX4T_HPP
 #define NIMBLE_MATRIX4T_HPP
 
-#include <Nimble/Export.hpp>
-#include <Nimble/Matrix3.hpp>
-#include <Nimble/Vector4.hpp>
+#include "Export.hpp"
+#include "Matrix3.hpp"
+#include "Vector4.hpp"
 
 namespace Nimble {
 
@@ -77,9 +77,18 @@ namespace Nimble {
     /// Returns the upper-left 3x3 matrix
     inline Matrix3T<T>        getRotation() const;
     /// Sets the translation part of a 4x4 transformation matrix
-    void                      setTranslation(const Vector3T<T> & v);
+	void                      setTranslation(const Vector3T<T> & v)
+	{
+		m[0][3] = v.x;
+		m[1][3] = v.y;
+		m[2][3] = v.z;
+	}
+
     /// Returns the translation part of a 4x4 matrix
-    Vector3T<T>               getTranslation() const;
+    Vector3T<T>               getTranslation() const
+	{
+		return Nimble::Vector3T<T>(m[0][3], m[1][3], m[2][3]);
+	}
 
     /// Transposes the matrix
     inline Matrix4T<T>&       transpose();
@@ -122,7 +131,24 @@ namespace Nimble {
     /// Returns a pointer to the first element
     const T * data() const { return m[0].data(); }
 
-    Matrix4T<T> orthoNormalize();
+	/// @todo could improve numerical stability easily etc.
+	Matrix4T<T> orthoNormalize()
+	{
+		transpose();
+		Matrix4T<T> res(*this);
+		for (int i=0; i < 4; ++i) {
+			Vector4T<T> & v = res.row(i);
+			for (int j=0; j < i; ++j) {
+				v -= projection(res.row(j), row(i));
+			}
+		}
+
+		for (int i=0; i < 4; ++i)
+			res.row(i).normalize();
+
+		res.transpose();
+		return res;
+	}
 
     /// Fills the matrix by copying values from memory
     template <class S>
@@ -135,21 +161,43 @@ namespace Nimble {
     /// Create a rotation matrix
     /// @param radians angle in radians
     /// @param axis axis to rotate around
-    static Matrix4T<T> makeRotation(T radians, const Vector3T<T> & axis);
+	static Matrix4T<T> makeRotation(T radians, const Vector3T<T> & axis)
+	{
+		Nimble::Matrix4T<T> mm;
+		mm.identity();
+
+		mm.setRotation(Nimble::Matrix3T<T>::makeRotation(radians, axis));
+		return mm;
+	}
+
     /// Create a translation matrix
-    static Matrix4T<T> makeTranslation(const Vector3T<T> & v);
+    static Matrix4T<T> makeTranslation(const Vector3T<T> & v)
+	{
+		Nimble::Matrix4T<T> mm;
+		mm.identity();
+
+		mm.setTranslation(v);
+		return mm;
+	}
     /// Create a translation matrix
-    NIMBLE_API static Matrix4T<T> translate3D(const Vector3T<T> & v);
+    static Matrix4T<T> translate3D(const Vector3T<T> & v)
+	{
+		return Matrix4T(1, 0, 0, v[0],
+						0, 1, 0, v[1],
+						0, 0, 1, v[2],
+						0, 0, 0, 1);
+	}
     /// Create a scaling matrix
-    NIMBLE_API static Matrix4T<T> scale3D(const Vector3T<T> & v);
+    static Matrix4T<T> scale3D(const Vector3T<T> & v)
+	{
+		return Matrix4T(v[0], 0, 0, 0,
+						0, v[1], 0, 0,
+						0, 0, v[2], 0,
+						0, 0, 0, 1);
+	}
 
     /** Identity matrix. */
     NIMBLE_API static const Matrix4T<T> IDENTITY;
-
-    /// @cond
-    // Run internal test function
-    NIMBLE_API static void    test();
-    /// @endcond
 
   private:
     inline static void swap(T &a, T& b);
@@ -194,26 +242,6 @@ namespace Nimble {
     swap(m[1][3],m[3][1]);
     swap(m[2][3],m[3][2]);
     return *this;
-  }
-
-  /// @todo could improve numerical stability easily etc.
-  template <class T>
-  inline Matrix4T<T> Matrix4T<T>::orthoNormalize()
-  {
-    transpose();
-    Matrix4T<T> res(*this);
-    for (int i=0; i < 4; ++i) {
-      Vector4T<T> & v = res.row(i);
-      for (int j=0; j < i; ++j) {
-        v -= projection(res.row(j), row(i));
-      }
-    }
-
-    for (int i=0; i < 4; ++i)
-      res.row(i).normalize();
-
-    res.transpose();
-    return res;
   }
 
   template <class T>
@@ -380,40 +408,6 @@ inline std::ostream& operator<<(std::ostream& os, const Nimble::Matrix4T<T>& m)
 {
   os << m[0] << ", " << m[1] << ", " << m[2] << ", " << m[3];
   return os;
-}
-
-template<class T>
-void Nimble::Matrix4T<T>::setTranslation(const Nimble::Vector3T<T> & v)
-{
-  m[0][3] = v.x;
-  m[1][3] = v.y;
-  m[2][3] = v.z;
-}
-
-template<class T>
-Nimble::Vector3T<T> Nimble::Matrix4T<T>::getTranslation() const
-{
-  return Nimble::Vector3T<T>(m[0][3], m[1][3], m[2][3]);
-}
-
-template<class T>
-Nimble::Matrix4T<T> Nimble::Matrix4T<T>::makeRotation(T radians, const Nimble::Vector3T<T> & axis)
-{
-  Nimble::Matrix4T<T> mm;
-  mm.identity();
-
-  mm.setRotation(Nimble::Matrix3T<T>::makeRotation(radians, axis));
-  return mm;
-}
-
-template<class T>
-Nimble::Matrix4T<T> Nimble::Matrix4T<T>::makeTranslation(const Nimble::Vector3T<T> & v)
-{
-  Nimble::Matrix4T<T> mm;
-  mm.identity();
-
-  mm.setTranslation(v);
-  return mm;
 }
 
 #endif
