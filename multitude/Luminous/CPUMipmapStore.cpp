@@ -13,6 +13,7 @@
  * 
  */
 
+#include "Export.hpp"
 #include "CPUMipmapStore.hpp"
 
 #include <Radiant/Trace.hpp>
@@ -30,7 +31,7 @@ namespace Luminous {
      system should be able to clear the resources as the application
      shuts down. */
 
-  class MipmapItem
+  class LUMINOUS_API MipmapItem
   {
   public:
     MipmapItem() : m_linkCount(0), m_mipmaps(0) {}

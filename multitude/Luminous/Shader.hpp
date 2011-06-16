@@ -33,15 +33,15 @@ namespace Luminous {
 
       @see ShaderExample demo application
 */
-  class Shader : public ContextVariableT<GLSLProgramObject>,
+  class LUMINOUS_API Shader : public ContextVariableT<GLSLProgramObject>,
   public Valuable::HasValues
   {
   public:
-    LUMINOUS_API Shader();
+    Shader();
     /// Constructs a shader
-    LUMINOUS_API Shader(Valuable::HasValues * parent, const char * name);
+    Shader(Valuable::HasValues * parent, const char * name);
     /// Deletes the shader
-    LUMINOUS_API virtual ~Shader();
+    virtual ~Shader();
 
     /** Sets the source code for the fragment (aka pixel) shader.
 
@@ -52,7 +52,7 @@ namespace Luminous {
 
         @param shadercode Shader source code
     */
-    LUMINOUS_API void setFragmentShader(const char * shadercode);
+    void setFragmentShader(const char * shadercode);
     /** Loads a fragment shader from a file.
 
         @param filename name of the file to load
@@ -60,40 +60,40 @@ namespace Luminous {
         this does not necessarily mean that the shader works, as the shader is not
         compiled in this stage.
     */
-    LUMINOUS_API bool loadFragmentShader(const char * filename);
+    bool loadFragmentShader(const char * filename);
     /// @copydoc loadFragmentShader(const char * filename);
     bool loadFragmentShader(const std::string & filename)
     { return loadFragmentShader(filename.c_str()); }
 
     /** Sets the source code for the vertex shader.
     @param shadercode Shader source code */
-    LUMINOUS_API void setVertexShader(const char * shadercode);
+    void setVertexShader(const char * shadercode);
     /** Loads a vertex shader source code from a file.
     @param filename name of the file to load */
-    LUMINOUS_API bool loadVertexShader(const char * filename);
+    bool loadVertexShader(const char * filename);
     /// @copydoc loadVertexShader(const char * filename);
     bool loadVertexShader(const std::string & filename)
     { return loadVertexShader(filename.c_str()); }
 
     /** Sets the source code for the geometry shader.
     @param shadercode Shader source code */
-    LUMINOUS_API void setGeometryShader(const char * shadercode);
+    void setGeometryShader(const char * shadercode);
     /// Loads a geometry shader source code from a file.
     /// @param filename name of the source code filename
-    LUMINOUS_API bool loadGeometryShader(const char * filename);
+    bool loadGeometryShader(const char * filename);
     /// @copydoc loadGeometryShader(const char * filename);
     bool loadGeometryShader(const std::string & filename)
     { return loadGeometryShader(filename.c_str()); }
 
     /** Returns a compiled and bound OpenGL shader program. */
-    LUMINOUS_API GLSLProgramObject * bind();
+    GLSLProgramObject * bind();
 
     /** Unbinds the shader. */
-    LUMINOUS_API void unbind();
+    void unbind();
 
     /** Returns a non-compiled OpenGL shader program.
     @param res resource container to associate the shader program with */
-    LUMINOUS_API GLSLProgramObject * program(Luminous::GLResources * res = 0);
+    GLSLProgramObject * program(Luminous::GLResources * res = 0);
 
     // Adds a ValueObject as a shader attribute
     //LUMINOUS_API void addShaderAttribute(const Valuable::ValueObject *);
@@ -107,13 +107,13 @@ namespace Luminous {
 
         @param vo The object to be used
     */
-    LUMINOUS_API void addShaderUniform(const Valuable::ValueObject * vo);
+    void addShaderUniform(const Valuable::ValueObject * vo);
 
     /** Returns true if the shader code is defined.
         Note that the shader might not be compiled, as this function only
         tests for the presence of shader strings.
     */
-    LUMINOUS_API bool isDefined() const;
+    bool isDefined() const;
 
   private:
     class Params;

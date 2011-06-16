@@ -16,11 +16,10 @@
 #ifndef LUMINOUS_COLLECTABLE_HPP
 #define LUMINOUS_COLLECTABLE_HPP
 
-#include <Luminous/Export.hpp>
+#include "Export.hpp"
+#include "GarbageCollector.hpp"
 
 #include <Radiant/MemCheck.hpp>
-
-#include "GarbageCollector.hpp"
 
 namespace Luminous
 {

@@ -15,6 +15,8 @@
 #ifndef POETIC_GPU_MANAGED_FONT_HPP
 #define POETIC_GPU_MANAGED_FONT_HPP
 
+#include "Export.hpp"
+
 #include <Luminous/GLResource.hpp>
 
 #include <Nimble/Matrix3.hpp>
@@ -29,7 +31,7 @@ namespace Poetic
 
   /// A managed font that contains multiple sizes of a single font residing on
   /// the GPU
-  class GPUManagedFont : public Luminous::GLResource
+  class POETIC_API GPUManagedFont : public Luminous::GLResource
   {
     public:
       /// Contructs a new managed GPU font

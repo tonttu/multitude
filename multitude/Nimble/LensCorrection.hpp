@@ -16,8 +16,8 @@
 #ifndef NIMBLE_LENS_CORRECTION_HPP
 #define NIMBLE_LENS_CORRECTION_HPP
 
-#include <Nimble/Export.hpp>
-#include <Nimble/Vector4.hpp>
+#include "Export.hpp"
+#include "Vector4.hpp"
 
 namespace Nimble {
 

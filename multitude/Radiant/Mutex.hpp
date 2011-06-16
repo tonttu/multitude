@@ -1,12 +1,24 @@
 /* COPYRIGHT
+ *
+ * This file is part of Radiant.
+ *
+ * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
+ *
+ * See file "Radiant.hpp" for authors and more details.
+ *
+ * This file is licensed under GNU Lesser General Public
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
+ * from the GNU organization (www.gnu.org).
+ * 
  */
 
 #ifndef RADIANT_MUTEX_HPP
 #define RADIANT_MUTEX_HPP
 
-#include <Patterns/NotCopyable.hpp>
+#include "Export.hpp"
 
-#include <Radiant/Export.hpp>
+#include <Patterns/NotCopyable.hpp>
 
 namespace Radiant {
 
@@ -59,7 +71,7 @@ namespace Radiant {
 
     @see ReleaseGuard
     */
-  class Guard : public Patterns::NotCopyable
+  class RADIANT_API Guard : public Patterns::NotCopyable
   {
   public:
     Guard(Mutex & mutex) : m_mutex(mutex) { m_mutex.lock(); }

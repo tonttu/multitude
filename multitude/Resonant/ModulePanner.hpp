@@ -16,14 +16,15 @@
 #ifndef RESONANT_MODULE_SPLITTER_HPP
 #define RESONANT_MODULE_SPLITTER_HPP
 
+#include "Export.hpp"
+#include "Module.hpp"
+#include "SoundRectangle.hpp"
+
 #include <Nimble/Ramp.hpp>
 #include <Nimble/Vector2.hpp>
 
 #include <Radiant/RefObj.hpp>
 #include <Radiant/RefPtr.hpp>
-
-#include <Resonant/Module.hpp>
-#include <Resonant/SoundRectangle.hpp>
 
 #include <Valuable/ValueFloat.hpp>
 #include <Valuable/ValueVector.hpp>
@@ -31,8 +32,7 @@
 #include <vector>
 
 namespace Resonant {
-
-
+	
   /** Pans/splits audio signals to multiple outputs.
 
       ModulePanner is used to handle multi-loudspeaker (or head-phone)
@@ -41,7 +41,7 @@ namespace Resonant {
 
       Currently, there are two panning modes, see #Mode
   */
-  class ModulePanner : public Module
+  class RESONANT_API ModulePanner : public Module
   {
   public:
     enum Mode {
@@ -57,27 +57,27 @@ namespace Resonant {
 
 
     /// Constructs the panner module
-    RESONANT_API ModulePanner(Application *, Mode mode=RADIAL);
-    RESONANT_API virtual ~ModulePanner();
+	ModulePanner(Application *, Mode mode=RADIAL);
+    virtual ~ModulePanner();
 
-    RESONANT_API virtual Valuable::ArchiveElement & serialize(Valuable::Archive &doc) const;
-    RESONANT_API virtual bool readElement(Valuable::DOMElement element);
+    virtual Valuable::ArchiveElement & serialize(Valuable::Archive &doc) const;
+    virtual bool readElement(Valuable::DOMElement element);
 
-    RESONANT_API virtual bool prepare(int & channelsIn, int & channelsOut);
-    RESONANT_API virtual void processMessage(const char *, Radiant::BinaryData *);
-    RESONANT_API virtual void process(float ** in, float ** out, int n);
+    virtual bool prepare(int & channelsIn, int & channelsOut);
+    virtual void processMessage(const char *, Radiant::BinaryData *);
+    virtual void process(float ** in, float ** out, int n);
 
     /** Creates a loudspeaker/headphone setup for full-HD displays.
 
         One source on the left at [0, 540], one source at right, at
         [1920, 540]. */
 
-    RESONANT_API void makeFullHDStereo();
+    void makeFullHDStereo();
 
     /// Sets the location of a given loudspeaker in screen coordinates
-    RESONANT_API void setSpeaker(unsigned i, Nimble::Vector2 location);
+    void setSpeaker(unsigned i, Nimble::Vector2 location);
     /// @copydoc setSpeaker(unsigned i, Nimble::Vector2 location)
-    RESONANT_API void setSpeaker(unsigned i, float x, float y);
+    void setSpeaker(unsigned i, float x, float y);
 
     /// Sets the radius for the distance for collecting the audio to a single loudspeaker.
     /// Only has an effect if using the radial #Mode.
@@ -86,10 +86,10 @@ namespace Resonant {
     void setCaptureRadius(float r) { m_maxRadius = r; ++m_generation; }
 
     /// Add a SoundRectangle. The ownership is transferred to this object.
-    RESONANT_API void addSoundRectangle(SoundRectangle * r);
+    void addSoundRectangle(SoundRectangle * r);
 
-    RESONANT_API void setMode(Mode mode);
-    RESONANT_API Mode getMode() const;
+    void setMode(Mode mode);
+    Mode getMode() const;
   private:
 
     friend class ModuleRectPanner;

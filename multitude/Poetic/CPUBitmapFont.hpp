@@ -15,10 +15,9 @@
 #ifndef POETIC_CPU_BITMAP_FONT_HPP
 #define POETIC_CPU_BITMAP_FONT_HPP
 
+#include "Export.hpp"
 #include "CPUFont.hpp"
 #include "GPUTextureFont.hpp"
-
-#include <Poetic/Export.hpp>
 
 namespace Poetic
 {

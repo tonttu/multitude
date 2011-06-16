@@ -19,7 +19,7 @@
 
 #include <Radiant/TimeStamp.hpp>
 
-#include <VideoDisplay/Export.hpp>
+#include "Export.hpp"
 
 #include <string>
 #include <vector>

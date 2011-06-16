@@ -16,7 +16,7 @@
 #ifndef RADIANT_RGBA_HPP
 #define RADIANT_RGBA_HPP
 
-#include <Radiant/Export.hpp>
+#include "Export.hpp"
 
 #include <stdint.h>
 

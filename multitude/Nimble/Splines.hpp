@@ -16,11 +16,11 @@
 #ifndef NIMBLE_SPLINES_HPP
 #define NIMBLE_SPLINES_HPP
 
-#include <Nimble/Export.hpp>
+#include "Export.hpp"
+#include "Vector2.hpp"
 
 #include <vector>
 
-#include <Nimble/Vector2.hpp>
 namespace Luminous {
   class RenderContext;
 }

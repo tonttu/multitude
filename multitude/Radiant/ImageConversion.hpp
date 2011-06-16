@@ -16,7 +16,7 @@
 #ifndef RADIANT_IMAGE_CONVERSION_HPP
 #define RADIANT_IMAGE_CONVERSION_HPP
 
-#include <Radiant/Export.hpp>
+#include "Export.hpp"
 
 namespace Radiant {
 
