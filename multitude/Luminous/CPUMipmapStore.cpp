@@ -107,6 +107,24 @@ namespace Luminous {
     }
   }
 
+  CPUMipmaps * CPUMipmapStore::copy(CPUMipmaps * mipmaps)
+  {
+    if(!mipmaps)
+      return 0;
+
+    Radiant::Guard g( s_mutex);
+
+    for(MipMapItemContainer::iterator it = s_mipmaps.begin();
+    it != s_mipmaps.end(); it++) {
+      MipmapItem & mmi = (*it).second;
+      if(mmi.m_mipmaps == mipmaps) {
+        mmi.incrCount();
+        return mipmaps;
+      }
+    }
+    return 0;
+  }
+
   unsigned CPUMipmapStore::count()
   {
     Radiant::Guard g( s_mutex);
