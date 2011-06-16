@@ -332,11 +332,11 @@ namespace VideoDisplay {
       m_updates(0),
       m_seeking(false),
       m_contrast(this, "contrast", 1.0f),
-      fps(-1),
-      syncToTime(true),
-      outOfSync(0),
-      outOfSyncTotal(0),
-      syncing(false)
+      m_fps(-1),
+      m_syncToTime(true),
+      m_outOfSync(0),
+      m_outOfSyncTotal(0),
+      m_syncing(false)
   {
     eventAdd("videoatend");
     debugVideoDisplay("ShowGL::ShowGL # %p", this);
@@ -369,7 +369,7 @@ namespace VideoDisplay {
       return true;
     }
 
-    fps = -1;
+    m_fps = -1;
 
     if(m_state == PLAY) {
       stop();
@@ -528,13 +528,21 @@ namespace VideoDisplay {
     int videoFrame;
 
     if(m_audio) {
-      if(syncToTime) {
-        if(m_videoFrame > 1 && fps < 0) {
+      if(m_syncToTime) {
+        if(m_videoFrame > 1 && m_fps < 0) {
           VideoIn::Frame * f = m_video->getFrame(m_videoFrame-1, false);
           VideoIn::Frame * f2 = m_video->getFrame(m_videoFrame, false);
-          if(f && f2) fps = 1.0f / (f2->m_absolute.secondsD() - f->m_absolute.secondsD());
+
+          if(f && f2) {
+            // Timestamps can be equal for first frames!
+            float tmp = 1.0f / (f2->m_absolute.secondsD() - f->m_absolute.secondsD());
+
+            // Check if our estimated fps is even remotely feasible
+            if(tmp > 1.f && tmp < 100.f)
+              m_fps = 1.0f / (f2->m_absolute.secondsD() - f->m_absolute.secondsD());
+          }
         }
-        float fps = fps > 0 ? fps : m_video->fps();
+        float fps = m_fps > 0 ? m_fps : m_video->fps();
         int videoFrameFromTime = started.sinceSecondsD() * fps;
         int videoFrameFromAudio = m_audio->videoFrame();
         int diff = videoFrameFromTime - videoFrameFromAudio;
@@ -542,8 +550,8 @@ namespace VideoDisplay {
 
         // Radiant::error("ShowGL::update # diff %d %d (fps %f)", syncing, diff, fps);
 
-        if(adiff > (syncing ? 0 : 2) && ++outOfSync > (syncing ? 10 : 60)) {
-          if(outOfSyncTotal > 120 || adiff > 10) {
+        if(adiff > (m_syncing ? 0 : 2) && ++m_outOfSync > (m_syncing ? 10 : 60)) {
+          if(m_outOfSyncTotal > 120 || adiff > 10) {
             Radiant::error("ShowGL::update # Video out of sync, resyncing. %d (fps %f)", diff, fps);
             started = Radiant::TimeStamp::getTime() - Radiant::TimeStamp::createSecondsD(videoFrameFromAudio / fps);
           } else {
@@ -551,16 +559,16 @@ namespace VideoDisplay {
             started += Radiant::TimeStamp::createSecondsD((diff > 0 ? 1.0f : -1.0f) / fps);
 
           }
-          syncing = true;
-          outOfSync = 0;
+          m_syncing = true;
+          m_outOfSync = 0;
           videoFrameFromTime = videoFrameFromAudio;
         } else if(adiff == 0) {
           //if(outOfSync > 0) Radiant::info("Aborting sync correction %d", outOfSync);
-          syncing = false;
-          outOfSync = 0;
-          outOfSyncTotal = 0;
+          m_syncing = false;
+          m_outOfSync = 0;
+          m_outOfSyncTotal = 0;
         }
-        if(syncing) ++ outOfSyncTotal;
+        if(m_syncing) ++ m_outOfSyncTotal;
 
         videoFrame = m_videoFrame > videoFrameFromTime + 20 ?
               videoFrameFromTime : Nimble::Math::Max(videoFrameFromTime, m_videoFrame);
@@ -807,7 +815,7 @@ namespace VideoDisplay {
 
   void ShowGL::setSyncToTime(bool flag)
   {    
-    syncToTime = flag;
+    m_syncToTime = flag;
   }
 
   void ShowGL::clearHistogram()
