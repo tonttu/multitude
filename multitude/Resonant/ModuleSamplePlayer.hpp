@@ -16,7 +16,6 @@
 #ifndef RESONANT_MODULE_SAMPLE_PLAYER_HPP
 #define RESONANT_MODULE_SAMPLE_PLAYER_HPP
 
-#include <Radiant/FixedStr.hpp>
 #include <Radiant/RefPtr.hpp>
 #include <Radiant/Thread.hpp>
 #include <Radiant/Condition.hpp>
@@ -231,7 +230,7 @@ namespace Resonant {
       }
 
       bool m_free;
-      Radiant::FixedStrT<256> m_name;
+      std::string m_name;
 
       SampleVoice * m_waiting[WAITING_COUNT];
     };

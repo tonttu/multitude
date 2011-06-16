@@ -19,7 +19,6 @@
 #include "ModuleOutCollect.hpp"
 #include "ModuleSamplePlayer.hpp"
 
-#include <Radiant/FixedStr.hpp>
 #include <Radiant/Trace.hpp>
 
 #include <strings.h>
@@ -295,7 +294,8 @@ namespace Resonant {
 
     char buf[512];
 
-    FixedStrT<512> id;
+    std::string id;
+	id.reserve(512);
 
     while(m_incopy.pos() < sentinel) {
       buf[0] = 0;
@@ -321,11 +321,11 @@ namespace Resonant {
         command = 0;
       }
       else {
-        id.copyn(buf, slash - buf);
+        id.assign(buf, slash - buf);
         command = slash + 1;
       }
 
-      deliverControl(id, command, m_incopy);
+	  deliverControl(id.c_str(), command, m_incopy);
     }
   }
 

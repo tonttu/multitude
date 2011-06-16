@@ -307,7 +307,7 @@ namespace Resonant {
           filename, waiting);
 
     for(int i = 0; i < BINS; i++) {
-      if(m_loads[i].m_name == filename) {
+      if(m_loads[i].m_name == std::string(filename)) {
         return m_loads[i].addWaiting(waiting);
       }
     }
