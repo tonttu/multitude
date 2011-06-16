@@ -18,7 +18,7 @@
 
 #include "Export.hpp"
 
-#include <Patterns\NotCopyable.hpp>
+#include <Patterns/NotCopyable.hpp>
 
 #include <stdexcept>
 #include <string>
