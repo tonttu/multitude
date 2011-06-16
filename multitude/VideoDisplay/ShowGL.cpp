@@ -320,10 +320,13 @@ namespace VideoDisplay {
 
   struct ShowGLPrivate
   {
-    ShowGLPrivate() : fps(-1), syncToTime(true) {}
+    ShowGLPrivate() : fps(-1), syncToTime(true), outOfSync(0), outOfSyncTotal(0), syncing(false) {}
     Radiant::TimeStamp started;
     float fps;
     bool syncToTime;
+    int outOfSync;
+    int outOfSyncTotal;
+    int syncing;
   };
 
   static std::map<ShowGL*, ShowGLPrivate*> s_private;
@@ -574,14 +577,33 @@ namespace VideoDisplay {
         float fps = priv.fps > 0 ? priv.fps : m_video->fps();
         int videoFrameFromTime = priv.started.sinceSecondsD() * fps;
         int videoFrameFromAudio = m_audio->videoFrame();
+        int diff = videoFrameFromTime - videoFrameFromAudio;
+        int adiff = Nimble::Math::Abs(diff);
 
-        if(Nimble::Math::Abs(videoFrameFromTime - videoFrameFromAudio) > 3) {
-          Radiant::error("ShowGL::update # Video out of sync, resyncing. %d %d (fps %f)", videoFrameFromTime, videoFrameFromAudio, fps);
-          priv.started = Radiant::TimeStamp::getTime() - Radiant::TimeStamp::createSecondsD(videoFrameFromAudio / fps);
-          videoFrameFromTime = Nimble::Math::Max(videoFrameFromAudio, m_videoFrame);
+        // Radiant::error("ShowGL::update # diff %d %d (fps %f)", priv.syncing, diff, fps);
+
+        if(adiff > (priv.syncing ? 0 : 2) && ++priv.outOfSync > (priv.syncing ? 10 : 60)) {
+          if(priv.outOfSyncTotal > 120 || adiff > 10) {
+            Radiant::error("ShowGL::update # Video out of sync, resyncing. %d (fps %f)", diff, fps);
+            priv.started = Radiant::TimeStamp::getTime() - Radiant::TimeStamp::createSecondsD(videoFrameFromAudio / fps);
+          } else {
+            //Radiant::error("ShowGL::update # Video out of sync, adjusting. %d (fps %f)", diff, fps);
+            priv.started += Radiant::TimeStamp::createSecondsD((diff > 0 ? 1.0f : -1.0f) / fps);
+
+          }
+          priv.syncing = true;
+          priv.outOfSync = 0;
+          videoFrameFromTime = videoFrameFromAudio;
+        } else if(adiff == 0) {
+          //if(priv.outOfSync > 0) Radiant::info("Aborting sync correction %d", priv.outOfSync);
+          priv.syncing = false;
+          priv.outOfSync = 0;
+          priv.outOfSyncTotal = 0;
         }
+        if(priv.syncing) ++ priv.outOfSyncTotal;
 
-        videoFrame = videoFrameFromTime;
+        videoFrame = m_videoFrame > videoFrameFromTime + 20 ?
+              videoFrameFromTime : Nimble::Math::Max(videoFrameFromTime, m_videoFrame);
       } else videoFrame = m_audio->videoFrame();
       if(m_audio->atEnd()) {
         debug("ShowGL::update # At end");
