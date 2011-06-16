@@ -21,31 +21,31 @@
 namespace Nimble
 {
 
-	const Matrix2T<float> Matrix2T<float>::IDENTITY(
+  template<> const Matrix2T<float> Matrix2T<float>::IDENTITY(
 		1, 0, 
 		0, 1);
 
-	const Matrix2T<double> Matrix2T<double>::IDENTITY(
+  template<> const Matrix2T<double> Matrix2T<double>::IDENTITY(
 		1, 0, 
 		0, 1);
 
-	const Matrix3T<float> Matrix3T<float>::IDENTITY(
+  template<> const Matrix3T<float> Matrix3T<float>::IDENTITY(
 		1, 0, 0,
 		0, 1, 0,
 		0, 0, 1);
 
-	const Matrix3T<double> Matrix3T<double>::IDENTITY(
+  template<> const Matrix3T<double> Matrix3T<double>::IDENTITY(
 		1, 0, 0,
 		0, 1, 0,
 		0, 0, 1);
 
-	const Matrix4T<float> Matrix4T<float>::IDENTITY(
+  template<> const Matrix4T<float> Matrix4T<float>::IDENTITY(
 		1, 0, 0, 0,
 		0, 1, 0, 0,
 		0, 0, 1, 0,
 		0, 0, 0, 1);
 
-	const Matrix4T<double> Matrix4T<double>::IDENTITY(
+  template<> const Matrix4T<double> Matrix4T<double>::IDENTITY(
 		1, 0, 0, 0,
 		0, 1, 0, 0,
 		0, 0, 1, 0,
