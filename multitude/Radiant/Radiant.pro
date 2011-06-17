@@ -1,6 +1,7 @@
 include(../multitude.pri)
 
-HEADERS += SynchronizedQueue.hpp
+HEADERS += SynchronizedQueue.hpp \
+    Flags.hpp
 HEADERS += CameraDriver.hpp
 HEADERS += Defines.hpp
 HEADERS += ThreadPool.hpp

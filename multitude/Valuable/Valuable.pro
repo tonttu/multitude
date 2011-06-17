@@ -33,7 +33,6 @@ HEADERS += ValueVector.hpp
 HEADERS += ValueVectorImpl.hpp
 
 SOURCES += Archive.cpp \
-    ValueFlags.cpp \
     FileWatcher.cpp
 SOURCES += XMLArchive.cpp
 SOURCES += ChangeMap.cpp
