@@ -310,7 +310,7 @@ namespace Valuable
     return false;
   }
 
-  bool ValueObject::set(const QVariantList & v, ValueUnit unit, Layer layer)
+  bool ValueObject::set(const QVariantList & v, QList<ValueUnit> units, Layer layer)
   {
     Radiant::error("ValueObject::set(QVariantList) # %s: conversion not available",
                    m_name.toUtf8().data());

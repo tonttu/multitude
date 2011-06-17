@@ -26,7 +26,48 @@ namespace Valuable {
   struct FlagNames
   {
     const char * name;
-    int value;
+    long value;
+  };
+
+  template <typename T> class ValueFlagsT;
+
+  template <typename T>
+  class FlagAliasT : public ValueObject
+  {
+  public:
+    FlagAliasT(HasValues * parent, ValueFlagsT<T> & master,
+               const QString & name, Radiant::FlagsT<T> flags)
+      : ValueObject(parent, name, false),
+        m_master(master),
+        m_flags(flags)
+    {
+    }
+
+    bool set(int v, Layer layer)
+    {
+      m_master.setFlags(m_flags, v, layer);
+      return true;
+    }
+
+    bool set(const QVariantList & v, QList<ValueUnit> unit, Layer layer)
+    {
+      if(v.size() != 1 || unit[0] != VU_UNKNOWN) return false;
+      QString p = v[0].toString();
+      bool on = p == "true";
+      if(on || p == "false") {
+        m_master.setFlags(m_flags, on, layer);
+        return true;
+      }
+      return false;
+    }
+
+    const char * type() const { return "FlagAlias"; }
+    ArchiveElement & serialize(Archive & archive) const { return archive.emptyElement(); }
+    bool deserialize(ArchiveElement & element) { return false; }
+
+  private:
+    ValueFlagsT<T> & m_master;
+    const Radiant::FlagsT<T> m_flags;
   };
 
   /**
@@ -89,7 +130,7 @@ namespace Valuable {
    * @endcode
    */
   template <typename T>
-  class ValueFlagsT : ValueObject
+  class ValueFlagsT : public ValueObject
   {
   public:
     typedef Radiant::FlagsT<T> Flags;
@@ -100,6 +141,12 @@ namespace Valuable {
       m_masks[ORIGINAL] = ~Flags();
       m_values[ORIGINAL] = v;
       m_cache = v;
+
+      if(parent && names) {
+        for(FlagNames * it = names; it->name; ++it) {
+          m_aliases << new FlagAliasT<T>(parent, *this, it->name, Flags::fromInt(it->value));
+        }
+      }
     }
 
     ValueFlagsT & operator=(const Flags & b) { setValue(b, OVERRIDE); return *this; }
@@ -204,6 +251,7 @@ namespace Valuable {
     Flags m_cache;
     Flags m_values[LAYER_COUNT];
     Flags m_masks[LAYER_COUNT];
+    QList<FlagAliasT<T>*> m_aliases;
   };
 }
 

@@ -211,7 +211,7 @@ namespace Valuable
     /// Sets the value of the object
     virtual bool set(const Nimble::Vector4f & v, Layer layer = OVERRIDE);
     /// Sets the value of the object
-    virtual bool set(const QVariantList & v, ValueUnit unit, Layer layer = OVERRIDE);
+    virtual bool set(const QVariantList & v, QList<ValueUnit> unit, Layer layer = OVERRIDE);
 
     /// Get the type id of the type
     virtual const char * type() const = 0;
