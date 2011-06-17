@@ -1,6 +1,8 @@
 #ifndef RADIANT_FLAGS_HPP
 #define RADIANT_FLAGS_HPP
 
+#include <stdint.h>
+
 namespace Radiant
 {
   template <int T> struct IntOfSize { typedef uint32_t Type; };

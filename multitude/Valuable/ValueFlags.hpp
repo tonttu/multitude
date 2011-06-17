@@ -19,6 +19,7 @@
 #include "ValueObject.hpp"
 
 #include <Radiant/Flags.hpp>
+#include <Radiant/StringUtils.hpp>
 
 namespace Valuable {
 
@@ -96,6 +97,9 @@ namespace Valuable {
                Flags v = Flags(), bool transit = false)
       : ValueObject(parent, name, transit)
     {
+      m_masks[ORIGINAL] = ~Flags();
+      m_values[ORIGINAL] = v;
+      m_cache = v;
     }
 
     ValueFlagsT & operator=(const Flags & b) { setValue(b, OVERRIDE); return *this; }
@@ -125,7 +129,7 @@ namespace Valuable {
       return m_cache;
     }
 
-    void setFlag(const Flags & f, bool state, Layer layer)
+    void setFlags(const Flags & f, bool state = true, Layer layer = OVERRIDE)
     {
       if(state) m_values[layer] |= f;
       else m_values[layer] &= ~f;
@@ -171,6 +175,13 @@ namespace Valuable {
       uint32_t v = uint32_t(data.readInt32(&ok));
 
       if(ok) setValue(Flags::fromInt(v), OVERRIDE);
+    }
+
+    bool set(int v, Layer layer)
+    {
+      Radiant::warning("ValueFlagsT::set # using deprecated functionality, do not set flags with numbers");
+      setValue(Flags::fromInt(v), layer);
+      return true;
     }
 
   private:
