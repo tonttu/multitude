@@ -20,6 +20,7 @@
 
 #include <Radiant/Flags.hpp>
 #include <Radiant/StringUtils.hpp>
+#include <Radiant/Trace.hpp>
 
 namespace Valuable {
 
@@ -52,13 +53,18 @@ namespace Valuable {
     bool set(const QVariantList & v, QList<ValueUnit> unit, Layer layer)
     {
       if(v.size() != 1 || unit[0] != VU_UNKNOWN) return false;
-      QString p = v[0].toString();
-      bool on = p == "true";
-      if(on || p == "false") {
+      QString p = v[0].toString().toLower();
+      bool on = p == "true" || p == "on" || p == "yes";
+      if(on || p == "false" || p == "off" || p == "no") {
         m_master.setFlags(m_flags, on, layer);
         return true;
       }
       return false;
+    }
+
+    void clearValue(Layer layout)
+    {
+      m_master.clearFlags(m_flags, layout);
     }
 
     const char * type() const { return "FlagAlias"; }
@@ -181,11 +187,13 @@ namespace Valuable {
       if(state) m_values[layer] |= f;
       else m_values[layer] &= ~f;
       m_masks[layer] |= f;
+      updateCache();
     }
 
-    void clearFlag(const Flags & f, Layer layer)
+    void clearFlags(const Flags & f, Layer layer)
     {
       m_masks[layer] &= ~f;
+      updateCache();
     }
 
     void setValue(Flags flags, Layer layer)

@@ -19,7 +19,7 @@ debug {
   V8 += mode=release
 }
 
-first.commands = test ! -f $$TARGET && scons $$V8 library -j4 && cp $$TARGET $$DESTDIR/libv8.so || true
+first.commands = if test ! -f $$TARGET; then scons $$V8 library -j4; fi && cp $$TARGET $$DESTDIR/libv8.so
 
 MAKE_EXTRA_TARGETS += clean
 clean.commands = scons -c
