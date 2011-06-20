@@ -108,7 +108,9 @@ namespace Luminous
 
 #ifdef WIN32
     // Make sure Qt plugins are found
-    QCoreApplication::addLibraryPath("C:\\Cornerstone\\bin\\plugins");
+    char* dir = getenv("CORNERSTONE_ROOT");
+    dir = strcat(dir, "\\bin\\plugins");
+    QCoreApplication::addLibraryPath(dir);
 #endif
 
 #ifdef USE_QT45
