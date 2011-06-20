@@ -215,7 +215,7 @@ namespace Luminous
 
   bool Texture2D::loadImage(const Luminous::Image & image, bool buildMipmaps, int internalFormat)
   {
-    return loadBytes(internalFormat ? internalFormat : image.pixelFormat().layout(),
+    return loadBytes(internalFormat ? internalFormat : image.pixelFormat().numChannels(),
                      image.width(), image.height(),
                      image.bytes(),
                      image.pixelFormat(), buildMipmaps);
