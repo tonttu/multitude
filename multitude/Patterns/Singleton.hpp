@@ -16,6 +16,8 @@
 #ifndef PATTERNS_SINGLETON_HPP
 #define PATTERNS_SINGLETON_HPP
 
+#include <Radiant/Mutex.hpp>
+
 namespace {
   static Radiant::Mutex s_singletonMutex;
 }
@@ -39,7 +41,7 @@ namespace Patterns {
       /// This function implements "double-checked locking" to minimize the
       /// mutex usage. In almost all cases the mutex doesn't need to be locked,
       /// so using only one static mutex won't slow things down.
-      static volatile T * obj = 0;
+      static T * volatile obj = 0;
       if(obj) return *obj;
 
       Radiant::Guard g(s_singletonMutex);
