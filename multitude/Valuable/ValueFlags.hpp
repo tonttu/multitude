@@ -22,6 +22,9 @@
 #include <Radiant/StringUtils.hpp>
 #include <Radiant/Trace.hpp>
 
+#include <QMap>
+#include <QByteArray>
+
 namespace Valuable {
 
   struct FlagNames
@@ -66,6 +69,8 @@ namespace Valuable {
     {
       m_master.clearFlags(m_flags, layout);
     }
+
+    Radiant::FlagsT<T> flags() const { return m_flags; }
 
     const char * type() const { return "FlagAlias"; }
     ArchiveElement & serialize(Archive & archive) const { return archive.emptyElement(); }
@@ -140,7 +145,7 @@ namespace Valuable {
   {
   public:
     typedef Radiant::FlagsT<T> Flags;
-    ValueFlagsT(HasValues * parent, const QString & name, FlagNames * names,
+    ValueFlagsT(HasValues * parent, const QString & name, const FlagNames * names,
                Flags v = Flags(), bool transit = false)
       : ValueObject(parent, name, transit)
     {
@@ -149,7 +154,7 @@ namespace Valuable {
       m_cache = v;
 
       if(parent && names) {
-        for(FlagNames * it = names; it->name; ++it) {
+        for(const FlagNames * it = names; it->name; ++it) {
           m_aliases << new FlagAliasT<T>(parent, *this, it->name, Flags::fromInt(it->value));
         }
       }
@@ -236,6 +241,26 @@ namespace Valuable {
     {
       Radiant::warning("ValueFlagsT::set # using deprecated functionality, do not set flags with numbers");
       setValue(Flags::fromInt(v), layer);
+      return true;
+    }
+
+    bool set(const QVariantList & v, QList<ValueUnit> units, Layer layer = OVERRIDE)
+    {
+      foreach(const ValueUnit & vu, units)
+        if(vu != VU_UNKNOWN) return false;
+
+      QMap<QByteArray, Flags> all;
+      foreach(const FlagAliasT<T>* alias, m_aliases)
+        all[alias->name().toUtf8()] = alias->flags();
+
+      Flags newValue;
+      foreach(const QVariant & var, v) {
+        if(var.type() != QVariant::ByteArray) return false;
+        typename QMap<QByteArray, Flags>::iterator it = all.find(var.toByteArray());
+        if(it == all.end()) return false;
+        newValue |= *it;
+      }
+      setValue(newValue, layer);
       return true;
     }
 
