@@ -16,6 +16,10 @@
 #ifndef PATTERNS_SINGLETON_HPP
 #define PATTERNS_SINGLETON_HPP
 
+namespace {
+  static Radiant::Mutex s_singletonMutex;
+}
+
 namespace Patterns {
 
   /// Implements singleton of object type T
@@ -31,12 +35,17 @@ namespace Patterns {
   class Singleton
   {
  public:
-    /// @todo this is not thread-safe
     static T & instance() {
-      static T * obj = 0;
+      /// This function implements "double-checked locking" to minimize the
+      /// mutex usage. In almost all cases the mutex doesn't need to be locked,
+      /// so using only one static mutex won't slow things down.
+      static volatile T * obj = 0;
+      if(obj) return *obj;
 
-      if(!obj)
-        obj = new T();
+      Radiant::Guard g(s_singletonMutex);
+
+      if(obj) return *obj;
+      obj = new T();
 
       return *obj;
     }
