@@ -25,10 +25,10 @@
 namespace VideoDisplay {
   namespace
   {
-    class FFVideodebug
+    class VideoFirstFrame
     {
     public:
-      FFVideodebug() : m_channels(0), m_duration(0.0f) {}
+      VideoFirstFrame() : m_channels(0), m_duration(0.0f) {}
 
       Radiant::VideoImage m_firstFrame;
       int   m_channels;
@@ -39,27 +39,27 @@ namespace VideoDisplay {
     };
 
     /// how many videos to cache
-    /// @see FFVideodebug
+    /// @see VideoFirstFrame
     const unsigned int s_MaxCached = 100;
 
-    bool comp_ffvideodebug_timestamp(const std::pair<std::string, FFVideodebug> & a, const std::pair<std::string, FFVideodebug> & b)
+    bool comp_ffvideodebug_timestamp(const std::pair<std::string, VideoFirstFrame> & a, const std::pair<std::string, VideoFirstFrame> & b)
     {
       return a.second.m_used < b.second.m_used;
     }
   }
 
-  /* Here we cache the first frames off all viedos. */
-  static std::map<std::string, FFVideodebug> __ffcache;
+  // Cache of the first frames of all loaded videos
+  static std::map<std::string, VideoFirstFrame> s_firstFrameCache;
+  // Mutex to guard access to s_firstFrameCache
+  static Radiant::Mutex s_firstFrameCacheMutex;
 
-  static Radiant::Mutex __mutex;
-
-  const FFVideodebug * __cacheddebugVideoDisplay(const std::string & filename)
+  const VideoFirstFrame * __cacheddebugVideoDisplay(const std::string & filename)
   {
-    Radiant::Guard g(__mutex);
+    Radiant::Guard g(s_firstFrameCacheMutex);
 
-    std::map<std::string, FFVideodebug>::iterator it = __ffcache.find(filename);
+    std::map<std::string, VideoFirstFrame>::iterator it = s_firstFrameCache.find(filename);
 
-    if(it == __ffcache.end())
+    if(it == s_firstFrameCache.end())
       return 0;
 
     (*it).second.m_used = Radiant::TimeStamp::getTime();
@@ -125,7 +125,7 @@ namespace VideoDisplay {
     const float bufferLengthInSeconds = 1.7f;
 
     // Try to find the video info from cache
-    const FFVideodebug * vi = __cacheddebugVideoDisplay(filename);
+    const VideoFirstFrame * vi = __cacheddebugVideoDisplay(filename);
 
     if(vi) {
 
@@ -200,15 +200,15 @@ namespace VideoDisplay {
 
     {
       // Cache the first frame for later use.
-      Radiant::Guard g(__mutex);
+      Radiant::Guard g(s_firstFrameCacheMutex);
 
       video.getAudioParameters( & m_channels, & m_sampleRate, & m_auformat);
       // remove the item with the smallest timestamp
-      if (__ffcache.size() >= s_MaxCached) {
-        __ffcache.erase(std::min_element(__ffcache.begin(), __ffcache.end(), comp_ffvideodebug_timestamp));
+      if (s_firstFrameCache.size() >= s_MaxCached) {
+        s_firstFrameCache.erase(std::min_element(s_firstFrameCache.begin(), s_firstFrameCache.end(), comp_ffvideodebug_timestamp));
       }
 
-      FFVideodebug & vi2 = __ffcache[filename];
+      VideoFirstFrame & vi2 = s_firstFrameCache[filename];
 
       vi2.m_duration = m_duration;
       vi2.m_firstFrame.allocateMemory(*img);

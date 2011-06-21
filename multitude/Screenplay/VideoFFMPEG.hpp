@@ -94,7 +94,7 @@ namespace Screenplay {
         of the file may prevent proper seeking. */
     bool seekPosition(double timeSeconds);
     /// The duration of the video in seconds
-    double durationSeconds();
+    double durationSeconds() const;
 
     /// Returns true if there is an audio codec for this video
     bool hasAudioCodec() const { return m_acodec != 0; }
