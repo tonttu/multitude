@@ -194,7 +194,7 @@ namespace Resonant {
     for (size_t streamnum = 0, streams = m_d->m_streams.size(); streamnum < streams; ++streamnum) {
       Stream & s = m_d->m_streams[streamnum];
       /// @todo m_barrier isn't released ever
-      s.m_barrier = new Radiant::Semaphore(0);
+      s.m_barrier = streams == 1 ? 0 : new Radiant::Semaphore(0);
       channels = devices[streamnum].second;
 
       const PaDeviceInfo * info = Pa_GetDeviceInfo(s.outParams.device);

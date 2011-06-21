@@ -251,9 +251,6 @@ namespace Resonant {
 
     int streams = m_d->m_streams.size();
 
-    /// @todo this could be optimized and the whole semaphore thing could be
-    ///       removed if we only used one output stream (like we do almost always)
-
     /// Here we assume that every stream (== audio device) is running in its
     /// own separate thread, that is, this callback is called from multiple
     /// different threads at the same time, one for each audio device.
@@ -264,12 +261,16 @@ namespace Resonant {
     /// running from the barrier.
     /// We also assume, that framesPerBuffer is somewhat constant in different
     /// threads at the same time.
-    if (streamnum == 0) {
+    if(streams == 1) {
+      doCycle(framesPerBuffer);
+    } else if(streamnum == 0) {
       m_d->m_sem.acquire(streams);
       doCycle(framesPerBuffer);
       for (int i = 1; i < streams; ++i)
         m_d->m_streams[i].m_barrier->release();
-    } else m_d->m_streams[streamnum].m_barrier->acquire();
+    } else {
+      m_d->m_streams[streamnum].m_barrier->acquire();
+    }
 
     int outChannels = m_d->m_streams[streamnum].outParams.channelCount;
 
@@ -298,7 +299,7 @@ namespace Resonant {
       error("DSPNetwork::callback # No data to play");
       bzero(out, 4 * framesPerBuffer * outChannels);
     }
-    m_d->m_sem.release();
+    if(streams > 1) m_d->m_sem.release();
     return paContinue;
   }
 
