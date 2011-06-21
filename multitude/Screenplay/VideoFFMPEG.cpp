@@ -40,10 +40,8 @@ namespace Screenplay {
   using namespace Radiant;
 
   static Radiant::Mutex __openmutex;
-  static Radiant::Mutex __countermutex;
-  int    __instancecount = 0;
 
-  int VideoInputFFMPEG::m_debug = 1;
+  int VideoInputFFMPEG::m_debug = 0;
 
   VideoInputFFMPEG::VideoInputFFMPEG()
     : m_acodec(0),
@@ -77,28 +75,11 @@ namespace Screenplay {
     }
 
     m_lastSeek = 0;
-
-
-    int tmp = 0;
-    {
-      Radiant::Guard g(__countermutex);
-      __instancecount++;
-      tmp = __instancecount;
-    }
-    debugScreenplay("VideoInputFFMPEG::VideoInputFFMPEG # Instance count at %d", tmp);
   }
 
   VideoInputFFMPEG::~VideoInputFFMPEG()
   {
     close();
-
-    int tmp = 0;
-    {
-      Radiant::Guard g(__countermutex);
-      __instancecount--;
-      tmp = __instancecount;
-    }
-    debugScreenplay("VideoInputFFMPEG::~VideoInputFFMPEG # Instance count at %d", tmp);
   }
 
   const Radiant::VideoImage * VideoInputFFMPEG::captureImage()
