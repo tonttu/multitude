@@ -16,10 +16,11 @@
 #ifndef RADIANT_SINGLETON_HPP
 #define RADIANT_SINGLETON_HPP
 
+#include "Export.hpp"
 #include "Mutex.hpp"
 
 namespace Radiant {
-  extern Radiant::Mutex s_singletonMutex;
+  extern RADIANT_API Radiant::Mutex s_singletonMutex;
 }
 
 /// Implements singleton of object type T
