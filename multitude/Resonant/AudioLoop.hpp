@@ -59,8 +59,9 @@ namespace Resonant {
   protected:
     virtual void finished();
 
-    virtual int callback(const void *in, void *out,
-        unsigned long framesPerBuffer
+    virtual int callback(const void * in, void * out,
+                         unsigned long framesPerBuffer, int streamid
+
 //        , const PaStreamCallbackTimeInfo* time,
 //        PaStreamCallbackFlags status
         ) = 0;

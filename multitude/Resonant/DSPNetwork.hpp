@@ -269,7 +269,8 @@ DSPNetwork::instance().send(control);
   private:
 
     virtual int callback(const void *in, void *out,
-                         unsigned long framesPerBuffer
+                         unsigned long framesPerBuffer,
+                         int streamid
                          //       , const PaStreamCallbackTimeInfo* time,
                          //			 PaStreamCallbackFlags status
                          );

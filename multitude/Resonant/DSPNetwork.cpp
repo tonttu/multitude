@@ -245,13 +245,25 @@ namespace Resonant {
   }
 
   int DSPNetwork::callback(const void *in, void *out,
-      unsigned long framesPerBuffer)
+      unsigned long framesPerBuffer, int streamnum)
   {
     (void) in;
 
-    int streamnum = m_d->s_currentStream;
     int streams = m_d->m_streams.size();
 
+    /// @todo this could be optimized and the whole semaphore thing could be
+    ///       removed if we only used one output stream (like we do almost always)
+
+    /// Here we assume that every stream (== audio device) is running in its
+    /// own separate thread, that is, this callback is called from multiple
+    /// different threads at the same time, one for each audio device.
+    /// The first thread is responsible for filling the buffer
+    /// (m_collect->interleaved()) by calling doCycle. This thread first waits
+    /// until all other threads have finished processing the previous data,
+    /// then runs the next cycle and informs everyone else that they can continue
+    /// running from the barrier.
+    /// We also assume, that framesPerBuffer is somewhat constant in different
+    /// threads at the same time.
     if (streamnum == 0) {
       m_d->m_sem.acquire(streams);
       doCycle(framesPerBuffer);

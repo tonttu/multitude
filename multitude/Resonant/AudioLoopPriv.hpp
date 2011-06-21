@@ -51,17 +51,13 @@ namespace Resonant {
       static void paFinished(void * self);
       void collect(int stream, const void *in, void *out, unsigned long framesPerBuffer);
 
+      /// Maps [input channel] -> [device, channel]
       Channels m_channels;
       std::vector<Stream> m_streams;
       std::list<std::pair<AudioLoop*, int> > cb;
       std::set<int> m_written;
       std::vector<void*> m_streamBuffers;
 
-#ifdef RADIANT_WIN32
-      static __declspec(thread) int s_currentStream;
-#else
-      static __thread int s_currentStream;
-#endif
       Radiant::Semaphore m_sem;
   };
 }
