@@ -13,26 +13,22 @@
  * 
  */
 
-#ifndef PATTERNS_NOTCOPYABLE_HPP
-#define PATTERNS_NOTCOPYABLE_HPP
-
-#include <Patterns/Export.hpp>
+#include "NotCopyable.hpp"
 
 namespace Patterns
 {
-  /// Base class for classes that cannot be copied. By inheriting this
-  /// class you can disable copying of your classes.
-  class PATTERNS_API NotCopyable
+
+  NotCopyable::NotCopyable()
+  {}
+
+  NotCopyable::~NotCopyable()
+  {}
+
+  NotCopyable::NotCopyable(const NotCopyable &)
+  {}
+
+  const NotCopyable & NotCopyable::operator = (const NotCopyable &)
   {
-    protected:
-      NotCopyable();
-      ~NotCopyable();
-
-    private:
-      NotCopyable(const NotCopyable &);
-      const NotCopyable & operator = (const NotCopyable &);
-  };
-
+    return * this; 
+  }
 }
-
-#endif

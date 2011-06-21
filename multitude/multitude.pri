@@ -23,12 +23,12 @@ LIB_NIMBLE = -lNimble
 LIB_OPENCL = -lOpenCL
 LIB_OPENGL = -lGL -lGLU
 LIB_GLU = -lGLU
-LIB_RADIANT = -lRadiant
+LIB_RADIANT = -lRadiant -lPatterns
 LIB_RESONANT = -lResonant
 LIB_SCREENPLAY = -lScreenplay
 LIB_VIDEODISPLAY = -lVideoDisplay
 LIB_VALUABLE = -lValuable
-LIB_PATTERNS =
+LIB_PATTERNS = -lPatterns
 
 linux-*:vivid {
   QMAKE_LIBDIR += $$(FBX_SDK)/lib/gcc4
