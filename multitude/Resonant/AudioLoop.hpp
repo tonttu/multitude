@@ -20,6 +20,8 @@
 
 #include <Resonant/Export.hpp>
 
+#include <string>
+
 namespace Resonant {
 
   /** A simple audio IO class.
@@ -55,6 +57,8 @@ namespace Resonant {
 
     */
     int outChannels() const;
+
+    static void setDevicesFile(const std::string & xmlFilename);
 
   protected:
     virtual void finished();

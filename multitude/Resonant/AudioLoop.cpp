@@ -23,6 +23,9 @@
 #include <Radiant/Trace.hpp>
 #include <Radiant/StringUtils.hpp>
 
+#include <Valuable/Serializer.hpp>
+#include <Valuable/ValueContainer.hpp>
+
 #include <string>
 
 #include <assert.h>
@@ -34,6 +37,9 @@
 
 #define FRAMES_PER_BUFFER 128
 
+namespace {
+  std::string s_xmlFilename;
+}
 
 namespace Resonant {
   using Radiant::FAILURE;
@@ -76,6 +82,11 @@ namespace Resonant {
   int AudioLoop::outChannels() const
   {
     return m_d->m_channels.size();
+  }
+
+  void AudioLoop::setDevicesFile(const std::string & xmlFilename)
+  {
+    s_xmlFilename = xmlFilename;
   }
 
   bool AudioLoop::startReadWrite(int samplerate, int channels)
@@ -121,6 +132,8 @@ namespace Resonant {
       }
     } else if(devname) {
       devices.push_back(Device(devname, channels));
+    } else if(!s_xmlFilename.empty()) {
+      devices = *Valuable::Serializer::deserializeXML<Valuable::ValueContainer<Devices> >(s_xmlFilename);
     }
 
     if(devices.empty()) {
