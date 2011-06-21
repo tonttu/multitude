@@ -11,8 +11,9 @@ namespace Vivid
 
 class Mesh;
 
-class MeshManager : public Patterns::Singleton<MeshManager>
+class MeshManager
 {
+  DECLARE_SINGLETON(MeshManager);
 public:
 
   std::shared_ptr<Mesh> load(const std::string& file, const std::string& name);

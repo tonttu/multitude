@@ -59,6 +59,7 @@ HEADERS += WatchDog.hpp
 HEADERS += ClonablePtr.hpp
 HEADERS += VideoCamera.hpp
 HEADERS += SocketWrapper.hpp
+HEADERS += Singleton.hpp
 
 SOURCES += CameraDriver.cpp
 SOURCES += SocketUtilPosix.cpp
@@ -89,6 +90,8 @@ SOURCES += Trace.cpp
 SOURCES += VideoImage.cpp
 SOURCES += VideoInput.cpp
 SOURCES += WatchDog.cpp
+SOURCES += Singleton.cpp
+
 LIBS += $$LIB_NIMBLE \
     $$LIB_PATTERNS
 linux-* {

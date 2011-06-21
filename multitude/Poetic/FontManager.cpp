@@ -132,3 +132,4 @@ namespace Poetic
 
 }
 
+DEFINE_SINGLETON(Poetic::FontManager);

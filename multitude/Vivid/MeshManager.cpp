@@ -36,3 +36,5 @@ std::shared_ptr<Mesh> MeshManager::load(const std::string& file, const std::stri
 }
 
 }
+
+DEFINE_SINGLETON(Vivid::MeshManager);

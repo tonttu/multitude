@@ -21,7 +21,7 @@
 #include "CPUBitmapFont.hpp"
 #include "CPUWrapperFont.hpp"
 
-#include <Patterns/Singleton.hpp>
+#include <Radiant/Singleton.hpp>
 
 #include <Luminous/VertexBuffer.hpp>
 
@@ -32,8 +32,9 @@ namespace Poetic
   during runtime. It provides access to managed fonts that internally use
   glyphs rendered at different point sizes to improve rendered text quality.
 */
-  class POETIC_API FontManager : public Patterns::Singleton<FontManager>
+  class POETIC_API FontManager
   {
+    DECLARE_SINGLETON(FontManager);
     public:
       /// Returns a font that matches the given name
       CPUWrapperFont * getFont(const std::string & name);
@@ -60,8 +61,6 @@ namespace Poetic
 
       typedef std::map<GLuint, Luminous::VertexBuffer *> TextureVBOMap;
       TextureVBOMap m_vbos;
-
-      friend class Patterns::Singleton<FontManager>;
 
       Radiant::Mutex m_mutex;
   };

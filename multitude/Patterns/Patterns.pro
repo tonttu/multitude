@@ -2,7 +2,6 @@ include(../multitude.pri)
 
 HEADERS += Export.hpp
 HEADERS += NotCopyable.hpp
-HEADERS += Singleton.hpp
 
 SOURCES += Dummy.cpp
 SOURCES += NotCopyable.cpp
