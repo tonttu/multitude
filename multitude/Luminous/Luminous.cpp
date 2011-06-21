@@ -108,9 +108,12 @@ namespace Luminous
 
 #ifdef WIN32
     // Make sure Qt plugins are found
+    /// @todo does this work when the SDK is not installed? Where does find the plugins?
     char* dir = getenv("CORNERSTONE_ROOT");
-    dir = strcat(dir, "\\bin\\plugins");
-    QCoreApplication::addLibraryPath(dir);
+    if(dir) {
+      dir = strcat(dir, "\\bin\\plugins");
+      QCoreApplication::addLibraryPath(dir);
+    }
 #endif
 
 #ifdef USE_QT45
