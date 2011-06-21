@@ -39,8 +39,8 @@ namespace Luminous
 
   long & UploadLimiter::available()
   {
-    static RADIANT_TLS(int) t_frame = 0;
-    static RADIANT_TLS(long) t_available = 0;
+    static RADIANT_TLS(int) t_frame(0);
+    static RADIANT_TLS(long) t_available(0);
 
     UploadLimiter & i = instance();
     if(t_frame != i.m_frame) {
