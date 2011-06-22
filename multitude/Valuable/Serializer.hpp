@@ -171,6 +171,25 @@ namespace Valuable
       }
     };
 
+    /// Template specialization for std::string.
+    template < >
+    struct Impl<std::string>
+    {
+      inline static ArchiveElement & serialize(Archive &archive, const std::string & t)
+      {
+        ArchiveElement & elem = archive.createElement(typeid(t).name());
+        elem.set(t);
+        return elem;
+      }
+
+      inline static typename remove_const<std::string>::Type deserialize(ArchiveElement & element)
+      {
+        typename remove_const<std::string>::Type t;
+        t = element.get();
+        return t;
+      }
+    };
+
     template <typename T>
     struct Impl<T*, Type::other>
     {
