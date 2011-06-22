@@ -94,7 +94,7 @@ namespace Nimble {
     void setVertex(int index, float x, float y)
     { m_vertices[index].make(x, y); }
 
-    /// Updates the proection matrix
+    /// Updates the projection matrix
     void calculateMatrix();
 
     /// Project a vector from camera coordinates to the display coordinates
@@ -153,6 +153,9 @@ namespace Nimble {
 
     /// Rotates the keystone corners
     void rotate(int turns = 1);
+
+    // Writes the order of the corners to the given parameter
+    void getCornerOrdering(int * indices);
 
     /// Information on which pixels are inside the camera area
     /** Each item (2D vector) contains values for the first pixel
