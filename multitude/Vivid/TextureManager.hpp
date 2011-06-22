@@ -2,7 +2,7 @@
 #define VIVID_TEXTUREMANAGER_HPP
 
 #include <Radiant/RefPtr.hpp>
-#include <Patterns/Singleton.hpp>
+#include <Radiant/Singleton.hpp>
 
 #include <map>
 
