@@ -93,7 +93,7 @@ namespace Radiant
     if(err == 0) {
       m_d->setOpts();
     } else {
-      error("UDPSocket::open # %s", errstr.c_str());
+      error("TCPSocket::open # %s", errstr.c_str());
     }
     return err;
   }
