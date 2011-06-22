@@ -182,9 +182,9 @@ namespace Valuable
         return elem;
       }
 
-      inline static typename remove_const<std::string>::Type deserialize(ArchiveElement & element)
+      inline static remove_const<std::string>::Type deserialize(ArchiveElement & element)
       {
-        typename remove_const<std::string>::Type t;
+        remove_const<std::string>::Type t;
         t = element.get();
         return t;
       }
