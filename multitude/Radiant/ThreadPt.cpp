@@ -31,6 +31,7 @@ namespace Radiant {
   class Thread::D {
   public:
     D() : m_valid(false) {}
+    Radiant::Mutex m_mutex;
     pthread_t m_pthread;
     bool m_valid;
   };
@@ -63,6 +64,7 @@ namespace Radiant {
 
   bool Thread::run(bool prefer_system)
   {
+    Radiant::Guard g(m_d->m_mutex);
     if(m_state == RUNNING)
       return true;
 
@@ -137,8 +139,11 @@ namespace Radiant {
       std::cout << "Thread::waitEnd " << this << std::endl;
     }
 
-    if(!m_d->m_valid)
-      return true;
+    {
+      Radiant::Guard g(m_d->m_mutex);
+      if(!m_d->m_valid)
+        return true;
+    }
 
     int e;
 
@@ -173,6 +178,7 @@ namespace Radiant {
 
   void Thread::kill()
   {
+    Radiant::Guard g(m_d->m_mutex);
     if(m_d->m_valid)
       pthread_kill(m_d->m_pthread, SIGKILL);
   }
