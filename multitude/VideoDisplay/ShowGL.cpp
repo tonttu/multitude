@@ -33,15 +33,16 @@ namespace VideoDisplay {
 
   using namespace Nimble;
 
-  static const char * rgbshader =
-      "uniform sampler2D tex;\n"
-      "uniform float contrast;\n"
-      "void main (void) {\n"
-      "  vec4 color = texture2D(tex, gl_TexCoord[0].st);\n"
-      "  color.rgb = vec3(0.5, 0.5, 0.5) + \n"
-      "     contrast * (color.rgb - vec3(0.5, 0.5, 0.5));\n"
-      "  gl_FragColor = mix(gl_Color, color, gl_Color.a);\n"
-      "}\n";
+#define SHADER(str) #str
+  static const char * rgbshader = SHADER(
+      uniform sampler2D tex;
+      uniform float contrast;
+      void main (void) {
+        vec4 color = texture2D(tex, gl_TexCoord[0].st);
+        color.rgb = vec3(0.5, 0.5, 0.5) +
+           contrast * (color.rgb - vec3(0.5, 0.5, 0.5));
+        gl_FragColor = mix(gl_Color, color, gl_Color.a);
+      });
 
 
   ShowGL::YUVProgram::YUVProgram(Luminous::GLResources * resources)

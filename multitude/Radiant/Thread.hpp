@@ -122,7 +122,7 @@ namespace Radiant {
     class D;
     D * m_d;
 
-    int             m_state;
+    volatile int m_state;
 
     static bool m_threadDebug;
     static bool m_threadWarnings;

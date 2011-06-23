@@ -31,32 +31,35 @@ namespace Poetic
 {
   using namespace Radiant;
 
-  static const char * g_fontVShaderSource =
-      "uniform mat3   transform;\n"
-      "varying vec4   color;\n"
-      "varying vec4   uv;\n"
-      "void main (void) {\n"
-      "  mat4 trans4 = mat4(transform[0].x, transform[0].y, 0, transform[0].z,\n"
-      "    transform[1].x, transform[1].y, 0, transform[1].z,\n"
-      "    0, 0, 1, 0,\n"
-      "    transform[2].x, transform[2].y, 0, transform[2].z);\n"
-      "  vec3 pos = transform * vec3(gl_Vertex.x, gl_Vertex.y, 1);\n"
-      "  pos.xy = pos.xy / pos.z;\n"
-      "  pos.z = 1.0;\n"
-      "  uv = gl_MultiTexCoord0;\n"
-      "  gl_ClipVertex = gl_ModelViewMatrix * trans4 * gl_Vertex;\n"
-      "  color = gl_Color\n;"
-      "  gl_Position = gl_ModelViewProjectionMatrix * vec4(pos.x, pos.y, pos.z, 1);\n"
-      "}\n";
+#define SHADER(str) #str
+  static const char * g_fontVShaderSource = SHADER(
+    uniform mat3   transform;
+    varying vec4   color;
+    varying vec4   uv;
+    void main (void) {
+      mat4 trans4 = mat4(transform[0].x, transform[0].y, 0, transform[0].z,
+        transform[1].x, transform[1].y, 0, transform[1].z,
+        0, 0, 1, 0,
+        transform[2].x, transform[2].y, 0, transform[2].z);
+      vec3 pos = transform * vec3(gl_Vertex.x, gl_Vertex.y, 1);
+      pos.xy = pos.xy / pos.z;
+      pos.z = 1.0;
+      uv = gl_MultiTexCoord0;
+      gl_ClipVertex = gl_ModelViewMatrix * trans4 * gl_Vertex;
+      color = gl_Color;
+      gl_Position = gl_ModelViewProjectionMatrix * vec4(pos.x, pos.y, pos.z, 1);
+    }
+  );
 
-  static const char * g_fontFShaderSource =
-      "uniform sampler2D fontTexture;\n"
-      "varying vec4 color;\n"
-      "varying vec4 uv;\n"
-      "void main (void) {\n"
-      "gl_FragColor = color;\n"
-      "gl_FragColor.a *= texture2D(fontTexture, uv.st).a;\n"
-      "}\n";
+  static const char * g_fontFShaderSource = SHADER(
+    uniform sampler2D fontTexture;
+    varying vec4 color;
+    varying vec4 uv;
+    void main (void) {
+      gl_FragColor = color;
+      gl_FragColor.a *= texture2D(fontTexture, uv.st).a;
+    }
+  );
 
   /* Creates a number that is a multiple of four. Four is used as the
      buggy OS X (NVidia) drivers cannot handle arbitratry textures,

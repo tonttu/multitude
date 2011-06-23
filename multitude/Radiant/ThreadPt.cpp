@@ -31,8 +31,9 @@ namespace Radiant {
   class Thread::D {
   public:
     D() : m_valid(false) {}
+    Radiant::Mutex m_mutex;
     pthread_t m_pthread;
-    bool m_valid;
+    volatile bool m_valid;
   };
 
   enum {
@@ -82,6 +83,7 @@ namespace Radiant {
 
   bool Thread::runSystem()
   {
+    Radiant::Guard g(m_d->m_mutex);
     if(m_threadDebug)
       std::cout << "Thread::runSystem " << this << std::endl;
 
@@ -107,6 +109,7 @@ namespace Radiant {
 
   bool Thread::runProcess()
   {
+    Radiant::Guard g(m_d->m_mutex);
     if(m_threadDebug)
       std::cout << "Thread::runProcess " << this << std::endl;
 
@@ -137,6 +140,8 @@ namespace Radiant {
       std::cout << "Thread::waitEnd " << this << std::endl;
     }
 
+    /// Thread could be just starting, also calling pthread_join in multiple threads is UB
+    Radiant::Guard g(m_d->m_mutex);
     if(!m_d->m_valid)
       return true;
 
@@ -173,6 +178,7 @@ namespace Radiant {
 
   void Thread::kill()
   {
+    Radiant::Guard g(m_d->m_mutex);
     if(m_d->m_valid)
       pthread_kill(m_d->m_pthread, SIGKILL);
   }
