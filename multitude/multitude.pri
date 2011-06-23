@@ -119,6 +119,8 @@ win32 {
     win64:LIB_GLEW = -lglew64
     else:LIB_GLEW = -lglew32
 
+    DDK_PATH="C:\\WinDDK\\7600.16385.1"
+
     LIB_OPENGL = -lopengl32
     LIB_GLU = -lglu32
     QMAKE_CXXFLAGS += -D_CRT_SECURE_NO_WARNINGS -wd4244 -wd4251 -wd4355
