@@ -35,10 +35,7 @@ linux-*:SOURCES += ModulePulseAudio.cpp PulseAudioCore.cpp
 
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_VALUABLE
 
-linux-*:LIBS += -lpulse
-
-
-unix: PKGCONFIG += portaudio-2.0 sndfile
+linux-*:LIBS += -lpulse -lportaudio -lsndfile
 
 include(../library.pri)
 
