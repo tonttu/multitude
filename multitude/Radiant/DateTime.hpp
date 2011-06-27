@@ -16,8 +16,8 @@
 #ifndef RADIANT_DATETIME_HPP
 #define RADIANT_DATETIME_HPP
 
-#include <Radiant/Export.hpp>
-#include <Radiant/TimeStamp.hpp>
+#include "Export.hpp"
+#include "TimeStamp.hpp"
 
 namespace Radiant {
 

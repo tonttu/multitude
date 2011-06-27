@@ -20,6 +20,8 @@
 
 #include <Resonant/Export.hpp>
 
+#include <string>
+
 namespace Resonant {
 
   /** A simple audio IO class.
@@ -56,11 +58,14 @@ namespace Resonant {
     */
     int outChannels() const;
 
-  private:
+    static void setDevicesFile(const std::string & xmlFilename);
+
+  protected:
     virtual void finished();
 
-    virtual int callback(const void *in, void *out,
-        unsigned long framesPerBuffer
+    virtual int callback(const void * in, void * out,
+                         unsigned long framesPerBuffer, int streamid
+
 //        , const PaStreamCallbackTimeInfo* time,
 //        PaStreamCallbackFlags status
         ) = 0;

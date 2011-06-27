@@ -72,8 +72,6 @@ void helper(const char * app)
 
 int main(int argc, char ** argv)
 {
-  QApplication qa(argc, argv);
-
   float fps = -1.0f;
 
   Radiant::VideoCamera::TriggerSource triggerSource = Radiant::VideoCamera::TRIGGER_SOURCE_MAX;
@@ -194,6 +192,7 @@ int main(int argc, char ** argv)
           Radiant::error("listmodes not implemented");
     }
   } else {
+    QApplication qa(argc, argv);
 
     FireView::MainWindow * mw =
       new FireView::MainWindow(rate, fps, triggerSource, triggerMode, format7);

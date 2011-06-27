@@ -16,10 +16,11 @@
 #ifndef NIMBLE_QUATERNION_H
 #define NIMBLE_QUATERNION_H
 
-#include <math.h>
 #include "Vector3.hpp"
 #include "Matrix3.hpp"
 #include "Matrix4.hpp"
+
+#include <cmath>
 
 namespace Nimble {
 

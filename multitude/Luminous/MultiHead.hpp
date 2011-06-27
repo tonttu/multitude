@@ -5,9 +5,9 @@
 #ifndef LUMINOUS_MULTIHEAD_HPP
 #define LUMINOUS_MULTIHEAD_HPP
 
-#include <Luminous/Collectable.hpp>
-#include <Luminous/Export.hpp>
-#include <Luminous/GLKeyStone.hpp>
+#include "Export.hpp"
+#include "Collectable.hpp"
+#include "GLKeyStone.hpp"
 
 #include <Nimble/Rect.hpp>
 #include <Nimble/Vector4.hpp>
@@ -33,7 +33,7 @@ namespace Luminous {
       once. MultiHead also includes keystone information, so that
       keystoning can be done by using skewed OpenGL transformation
       matrices. */
-  class MultiHead : public Valuable::HasValues
+  class LUMINOUS_API MultiHead : public Valuable::HasValues
   {
   public:
 
@@ -44,15 +44,15 @@ namespace Luminous {
     areas can share the same OpenGL context, as one window can
     have may areas inside it.*/
     /// @todo rename to ViewPort?
-    class Area : public Valuable::HasValues,
+    class LUMINOUS_API Area : public Valuable::HasValues,
     public Collectable
     {
     public:
       /// Constructs a new area for the given window
-      LUMINOUS_API Area(Window * window = 0);
-      LUMINOUS_API virtual ~Area();
+      Area(Window * window = 0);
+      virtual ~Area();
       /// Deserializes this area from an archive element
-      LUMINOUS_API bool deserialize(Valuable::ArchiveElement & element);
+      bool deserialize(Valuable::ArchiveElement & element);
 
       /// Sets the geometry (size & offset) of the area
       /// @param x x offset
@@ -94,9 +94,9 @@ namespace Luminous {
       float maxSeam() { return m_seams.asVector().maximum(); }
 
       /// Applies an orthogonal projection to OpenGL defined by the graphics geometry of the area
-      LUMINOUS_API void applyGlState() const;
+      void applyGlState() const;
       /// Blends the edges defined by seams
-      LUMINOUS_API void cleanEdges() const;
+      void cleanEdges() const;
 
       /// Returns the type name for areas (="area").
       virtual const char * type() const { return "area"; }
@@ -152,7 +152,7 @@ namespace Luminous {
           false.
           @return The vector in graphics coordinates.
       */
-      LUMINOUS_API Nimble::Vector2f windowToGraphics(Nimble::Vector2f loc, int windowheight, bool & insideArea) const;
+      Nimble::Vector2f windowToGraphics(Nimble::Vector2f loc, int windowheight, bool & insideArea) const;
 
       /// Returns true if the area is active (graphics will be drawn to it)
       int active() const { return m_active.asInt(); }
@@ -188,7 +188,7 @@ namespace Luminous {
         METHOD_MATRIX_TRICK
       };
 
-      LUMINOUS_API void updateBBox();
+      void updateBBox();
 
       Window * m_window;
       GLKeyStone m_keyStone;
@@ -314,43 +314,43 @@ namespace Luminous {
       std::vector<std::shared_ptr<Area> > m_areas;
     };
 
-    LUMINOUS_API MultiHead();
-    LUMINOUS_API virtual ~MultiHead();
+    MultiHead();
+    virtual ~MultiHead();
 
     /// The number of areas
-    LUMINOUS_API size_t areaCount();
+    size_t areaCount();
     /// Access the areas
     /** This method traverses all the windows to find the area with
     given index.
     @param index window index to look for
     @param winptr pointer to a window if the area is found
     @return area with the given index or the first area if no match is found */
-    LUMINOUS_API Area & area(size_t index, Window ** winptr = 0);
+    Area & area(size_t index, Window ** winptr = 0);
 
     /// Returns the number of windows
     size_t windowCount() const { return m_windows.size(); }
     /// Access the ith window
     /// @param i window index
-    LUMINOUS_API Window & window(size_t i);
+    Window & window(size_t i);
     /// @copydoc window
-    LUMINOUS_API const Window & window(size_t i) const;
+    const Window & window(size_t i) const;
 
     /// Total size of all the windows
-    LUMINOUS_API Nimble::Vector2i totalSize();
+    Nimble::Vector2i totalSize();
 
     /// Returns the total graphics size
-    LUMINOUS_API Rect graphicsBounds() const;
+    Rect graphicsBounds() const;
 
     /// Returns the size of the total display in graphics pixels
     Nimble::Vector2i size()
     { return Nimble::Vector2i(width(), height()); }
 
     /// Total width of the display area, in graphics pixels.
-    LUMINOUS_API int width();
+    int width();
     /// Total height of the display area, in graphics pixels.
-    LUMINOUS_API int height();
+    int height();
 
-    LUMINOUS_API bool deserialize(Valuable::ArchiveElement & element);
+    bool deserialize(Valuable::ArchiveElement & element);
 
     /// Adds a window to the collection
     void addWindow(Window * w) { m_windows.push_back(std::shared_ptr<Window>(w)); }
@@ -364,7 +364,7 @@ namespace Luminous {
     float gamma() const { return m_gamma; }
 
   private:
-    LUMINOUS_API virtual bool readElement(Valuable::DOMElement ce);
+    virtual bool readElement(Valuable::DOMElement ce);
 
     std::vector<std::shared_ptr<Window> > m_windows;
     Valuable::ValueFloat m_widthcm;

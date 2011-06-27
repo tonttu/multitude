@@ -19,7 +19,7 @@
 #include <Nimble/Vector2.hpp>
 #include <Nimble/Vector4.hpp>
 
-#include <Radiant/Export.hpp>
+#include "Export.hpp"
 
 #include <stdint.h>
 #include <vector>

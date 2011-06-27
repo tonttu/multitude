@@ -16,7 +16,7 @@
 #ifndef NIMBLE_HISTOGRAM_HPP
 #define NIMBLE_HISTOGRAM_HPP
 
-#include <Nimble/Export.hpp>
+#include "Export.hpp"
 
 #include <string>
 

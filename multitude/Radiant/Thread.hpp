@@ -18,10 +18,13 @@
 
 #include <Radiant/Export.hpp>
 #include <Radiant/Platform.hpp>
+#include <Radiant/Mutex.hpp>
+
 #include <Patterns/NotCopyable.hpp>
 
 #include <cstring>
 #include <map>
+#include <list>
 
 class QThread;
 
@@ -124,7 +127,7 @@ namespace Radiant {
     class D;
     D * m_d;
 
-    int             m_state;
+    volatile int m_state;
 
     static bool m_threadDebug;
     static bool m_threadWarnings;
@@ -142,9 +145,10 @@ namespace Radiant {
     TLS() : m_default() {}
     TLS(const T& t) : m_default(t) {}
 
-    operator T&()
+    T& get()
     {
       Thread::id_t id = Thread::myThreadId();
+      Radiant::Guard g(m_mutex);
       typename Map::iterator it = m_values.find(id);
       if(it == m_values.end()) {
         m_values[id] = m_default;
@@ -153,9 +157,30 @@ namespace Radiant {
       return it->second;
     }
 
+    operator T&() { return get(); }
+
+    std::list<T> all() const
+    {
+      std::list<T> lst;
+      Radiant::Guard g(m_mutex);
+      typename Map::const_iterator it = m_values.begin(), it2 = m_values.end();
+      while(it != it2) {
+        lst.push_back(it->second);
+        ++it;
+      }
+      return lst;
+    }
+
+    TLS<T> & operator=(const T& t)
+    {
+      get() = t;
+      return *this;
+    }
+
   private:
     T m_default;
     Map m_values;
+    mutable Radiant::Mutex m_mutex;
   };
 
 #if defined(RADIANT_LINUX)

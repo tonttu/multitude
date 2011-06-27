@@ -298,7 +298,7 @@ namespace Resonant {
           filename, waiting);
 
     for(int i = 0; i < BINS; i++) {
-      if(m_loads[i].m_name == filename) {
+      if(m_loads[i].m_name == std::string(filename)) {
         return m_loads[i].addWaiting(waiting);
       }
     }
@@ -332,14 +332,14 @@ namespace Resonant {
 
           bool good = true;
 
-          if(!s->load(it.m_name.str(), it.m_name.str())) {
+          if(!s->load(it.m_name.c_str(), it.m_name.c_str())) {
             error("ModuleSamplePlayer::BGLoader::childLoop # Could not load "
-                  "\"%s\"", it.m_name.str());
+                  "\"%s\"", it.m_name.c_str());
             good = false;
           }
           else if(!m_host->addSample(s)) {
             error("ModuleSamplePlayer::BGLoader::childLoop # Could not add "
-                  "\"%s\"", it.m_name.str());
+                  "\"%s\"", it.m_name.c_str());
             good = false;
           }
 
@@ -353,7 +353,7 @@ namespace Resonant {
           }
           else {
             debugResonant("ModuleSamplePlayer::BGLoader::childLoop # Loaded "
-                  "\"%s\"", it.m_name.str());
+                  "\"%s\"", it.m_name.c_str());
 
             for(int j = 0; j < LoadItem::WAITING_COUNT; j++) {
               SampleVoice * voice = it.m_waiting[j];
@@ -361,7 +361,7 @@ namespace Resonant {
                 break;
 
               debugResonant("ModuleSamplePlayer::BGLoader::childLoop # Delivering "
-                    "\"%s\" to %p", it.m_name.str(), voice);
+                    "\"%s\" to %p", it.m_name.c_str(), voice);
 
               voice->setSample(s);
             }
@@ -540,6 +540,7 @@ namespace Resonant {
 
         char command[128];
 
+		/// @todo These should probably be documented somewhere
 #ifdef WIN32
         sprintf(command, "madplay.exe %s -o wave:%s", file.c_str(), wavname.c_str());
 #else

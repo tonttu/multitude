@@ -51,7 +51,7 @@ namespace Luminous {
       quarter size image, etc.
   */
   /// @todo examples
-  class CPUMipmaps : public Luminous::Collectable, public Luminous::Task
+  class LUMINOUS_API CPUMipmaps : public Luminous::Collectable, public Luminous::Task
   {
   public:
     struct StateInfo : public GLResource
@@ -65,8 +65,8 @@ namespace Luminous {
 
     friend class GPUMipmaps;
 
-    LUMINOUS_API CPUMipmaps();
-    LUMINOUS_API virtual ~CPUMipmaps();
+    CPUMipmaps();
+    virtual ~CPUMipmaps();
 
     /** Calculates the best-looking mipmap-level for rendering the image with given size.
 
@@ -75,32 +75,32 @@ namespace Luminous {
         @return Returns the index of the mipmap level that would best match
         the actual output pixel resolution.
     */
-    LUMINOUS_API int getOptimal(Nimble::Vector2f size);
+    int getOptimal(Nimble::Vector2f size);
     /** Get the index of the closest available mipmap-level.
 
         @param size The on-screen pixel size of the image
         @return Returns the index of the closest available mipmap-level.
     */
-    LUMINOUS_API int getClosest(Nimble::Vector2f size);
+    int getClosest(Nimble::Vector2f size);
     /** Gets the mipmap image on level i. If the level does not
         contain a valid mipmap, then 0 is returned.
 
         @param i The index of the mipmap
         @return Pointer to the image, which may be null.
     */
-    LUMINOUS_API std::shared_ptr<ImageTex> getImage(int i);
-    LUMINOUS_API std::shared_ptr<CompressedImageTex> getCompressedImage(int i);
+	std::shared_ptr<ImageTex> getImage(int i);
+    std::shared_ptr<CompressedImageTex> getCompressedImage(int i);
     /** Mark an image used. This method resets the idle-counter of the
         level, preventing it from being dropped from the memory in the
         near future. Also determines which mipmap level will loaded next.
 
         @param i The index of the mipmap-level to be marked
     */
-    LUMINOUS_API void markImage(size_t i);
+    void markImage(size_t i);
     /** Check ifthe mipmaps are ready for rendering.
         @return Returns true if the object has loaded enough mipmaps. */
     /// @todo what does "enought" mean?
-    LUMINOUS_API bool isReady();
+    bool isReady();
 
     /** Starts to load given file, and build the mipmaps.
 
@@ -114,7 +114,7 @@ namespace Luminous {
         opposed to loading them later, as needed).
         @return True if the image file could be opened successfully.
     */
-    LUMINOUS_API bool startLoading(const char * filename, bool immediate);
+    bool startLoading(const char * filename, bool immediate);
 
     /** @return Returns the native size of the image, in pixels. */
     const Nimble::Vector2i & nativeSize() const { return m_nativeSize;}
@@ -123,21 +123,21 @@ namespace Luminous {
     /// @param pixelSize size of the texture on screen in pixel
     /// @param textureUnit OpenGL texture unit
     /// @return true if a mipmap was succesfully bound, false if no texture was bound
-    LUMINOUS_API bool bind(Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
+	bool bind(Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
 
     /// @copydoc bind(Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0)
     /// @param transform transformation matrix to multiply the pixelSize with to get final screen size
-    LUMINOUS_API bool bind(const Nimble::Matrix3 & transform, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
+	bool bind(const Nimble::Matrix3 & transform, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
 
     /// @copydoc bind(Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0)
     /// @param resources OpenGL resource container for this thread
-    LUMINOUS_API bool bind(GLResources * resources, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
+	bool bind(GLResources * resources, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
 
     /// @copydoc bind(const Nimble::Matrix3 & transform, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
     /// @param resources OpenGL resource container for this thread
-    LUMINOUS_API bool bind(GLResources * resources, const Nimble::Matrix3 & transform, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
+	bool bind(GLResources * resources, const Nimble::Matrix3 & transform, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
 
-    LUMINOUS_API StateInfo stateInfo(GLResources * resources);
+	StateInfo stateInfo(GLResources * resources);
 
     void setLoadingPriority(Priority priority) { m_loadingPriority = priority; }
 
@@ -145,7 +145,7 @@ namespace Luminous {
 
         @return Returns true if the mipmaps are still being loaded.
     */
-    LUMINOUS_API bool isActive();
+    bool isActive();
     /** @return Returns the aspect ratio of the image. */
     inline float aspect() const
     { return (float) m_nativeSize.x / (float)m_nativeSize.y; }
@@ -154,16 +154,16 @@ namespace Luminous {
     inline bool hasAlpha() const { return m_hasAlpha; }
 
     /// Not finished
-    LUMINOUS_API int pixelAlpha(Nimble::Vector2 relLoc);
+    int pixelAlpha(Nimble::Vector2 relLoc);
 
     /// Mark this object as done
-    LUMINOUS_API void finish();
+    void finish();
 
     /// Returns the number of images in the stack
     inline unsigned stackSize() const { return (unsigned) m_stack.size(); }
 
     /// Returns the size of the mipmap level
-    LUMINOUS_API Nimble::Vector2i mipmapSize(int level);
+    Nimble::Vector2i mipmapSize(int level);
 
     /// Set the time to keep mipmaps in CPU and GPU memory
     /// The GPU timeout can be a more like a recommendation than a true limit
@@ -179,7 +179,7 @@ namespace Luminous {
     inline void setKeepMaxLevel(bool v) { m_keepMaxLevel = v; }
 
   protected:
-    LUMINOUS_API virtual void doTask();
+    virtual void doTask();
 
   private:
     enum ItemState {

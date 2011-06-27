@@ -18,13 +18,14 @@
 
 /// @cond
 
-#include <Luminous/ImageCodec.hpp>
+#include "Export.hpp"
+#include "ImageCodec.hpp"
 
 namespace Luminous
 {
 
   /// Image codec to handle TGA files
-  class ImageCodecTGA : public ImageCodec
+  class LUMINOUS_API ImageCodecTGA : public ImageCodec
   {
     public:
       virtual ~ImageCodecTGA();

@@ -4,8 +4,8 @@
 #ifndef RADIANT_GRID_HPP
 #define RADIANT_GRID_HPP
 
-#include <Radiant/Export.hpp>
-#include <Radiant/RGBA.hpp>
+#include "Export.hpp"
+#include "RGBA.hpp"
 
 #include <Nimble/Vector4.hpp>
 

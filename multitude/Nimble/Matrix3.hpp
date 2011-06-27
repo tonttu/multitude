@@ -4,11 +4,11 @@
 #ifndef NIMBLE_MATRIX3T_HPP
 #define NIMBLE_MATRIX3T_HPP
 
-#include <Nimble/Export.hpp>
-#include <Nimble/Matrix2.hpp>
-#include <Nimble/Vector3.hpp>
+#include "Export.hpp"
+#include "Matrix2.hpp"
+#include "Vector3.hpp"
 
-#include <assert.h>
+#include <cassert>
 
 namespace Nimble {
 
@@ -129,12 +129,18 @@ namespace Nimble {
     inline static Matrix3T<T> scaleUniform2D(const T & s)
     { return scale2D(Vector2T<T>(s, s)); }
     /// Create a matrix that performs uniform scaling around the given point
-    NIMBLE_API static Matrix3T<T> scaleUniformAroundPoint2D(Vector2T<T> p,
-                                                     T s);
+    static Matrix3T<T> scaleUniformAroundPoint2D(Vector2T<T> p,
+                                                     T s)
+	{
+		return translate2D(p) * scaleUniform2D(s) * translate2D(-p);
+	}
 
     /// Create a matrix that performs uniform scaling around the given point
     NIMBLE_API static Matrix3T<T> scaleAroundPoint2D(Vector2T<T> p,
-                                                     const T & xscale, const T & yscale);
+                                                     const T & xscale, const T & yscale)
+    {
+      return translate2D(p) * scale2D(xscale, yscale) * translate2D(-p);
+    }
 
     /// Create a matrix that performs 2D rotation
     inline static Matrix3T<T> rotate2D(T radians);
@@ -143,8 +149,12 @@ namespace Nimble {
     /** @param p The center point of rotation
         @param radians The amount of roration, in radians
     */
-    NIMBLE_API static Matrix3T<T> rotateAroundPoint2D(Vector2T<T> p,
-                                           T radians);
+    static Matrix3T<T> rotateAroundPoint2D(Vector2T<T> p,
+                                           T radians)
+	{
+		return translate2D(p) * rotate2D(radians) * translate2D(-p);
+	}
+
     /// Create a rotation matrix
     inline static Matrix3T<T> makeRotation(T radians, const Vector3T<T> & axis);
 

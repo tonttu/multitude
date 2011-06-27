@@ -16,8 +16,8 @@
 #ifndef POETIC_CPU_WRAPPER_FONT_HPP
 #define POETIC_CPU_WRAPPER_FONT_HPP
 
-#include <Poetic/CPUFont.hpp>
-#include <Poetic/Export.hpp>
+#include "Export.hpp"
+#include "CPUFont.hpp"
 
 #include <Luminous/GLResources.hpp>
 

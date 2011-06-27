@@ -41,6 +41,9 @@ namespace Luminous {
     the object, then its memory is freed. */
     static void release(Luminous::CPUMipmaps *);
 
+    /// @todo this whole class should use shared/weak_ptrs
+    static CPUMipmaps * copy(CPUMipmaps *);
+
     /** @return Returns the number of mipmaps currently within the store. */
     static unsigned count();
   };

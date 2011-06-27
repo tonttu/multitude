@@ -17,12 +17,13 @@
 #ifndef LUMINOUS_MATRIX_STEP_HPP
 #define LUMINOUS_MATRIX_STEP_HPP
 
-#include <Luminous/Luminous.hpp>
+#include "Export.hpp"
+#include "Luminous.hpp"
 
 namespace Luminous {
 
   /// Helper class for handling the OpenGL matrix stack
-  class MatrixStep
+  class LUMINOUS_API MatrixStep
   {
   public:
     MatrixStep()  { glPushMatrix(); }

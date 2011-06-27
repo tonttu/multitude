@@ -20,8 +20,6 @@ HEADERS += DateTime.hpp
 HEADERS += Directory.hpp
 HEADERS += Export.hpp
 HEADERS += FileUtils.hpp
-HEADERS += FixedStr.hpp
-HEADERS += FixedStrImpl.hpp
 HEADERS += Functional.hpp
 HEADERS += Grid.hpp
 HEADERS += ImageConversion.hpp
@@ -61,6 +59,7 @@ HEADERS += WatchDog.hpp
 HEADERS += ClonablePtr.hpp
 HEADERS += VideoCamera.hpp
 HEADERS += SocketWrapper.hpp
+HEADERS += Singleton.hpp
 
 SOURCES += CameraDriver.cpp
 SOURCES += SocketUtilPosix.cpp
@@ -74,7 +73,6 @@ SOURCES += ConfigReader.cpp
 SOURCES += DateTime.cpp
 SOURCES += DirectoryCommon.cpp
 SOURCES += FileUtils.cpp
-SOURCES += FixedStr.cpp
 SOURCES += ImageConversion.cpp
 SOURCES += Log.cpp
 SOURCES += MemCheck.cpp
@@ -92,6 +90,8 @@ SOURCES += Trace.cpp
 SOURCES += VideoImage.cpp
 SOURCES += VideoInput.cpp
 SOURCES += WatchDog.cpp
+SOURCES += Singleton.cpp
+
 LIBS += $$LIB_NIMBLE \
     $$LIB_PATTERNS
 linux-* {

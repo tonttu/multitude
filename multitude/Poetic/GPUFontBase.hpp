@@ -15,11 +15,11 @@
 #ifndef POETIC_GPU_FONT_BASE_HPP
 #define POETIC_GPU_FONT_BASE_HPP
 
-#include <Nimble/Matrix3.hpp>
+#include "Export.hpp"
+#include "GPUFont.hpp"
+#include "CPUFontBase.hpp"
 
-#include <Poetic/Export.hpp>
-#include <Poetic/GPUFont.hpp>
-#include <Poetic/CPUFontBase.hpp>
+#include <Nimble/Matrix3.hpp>
 
 namespace Poetic
 {

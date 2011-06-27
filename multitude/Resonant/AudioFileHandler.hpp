@@ -16,6 +16,8 @@
 #ifndef RESONANT_AUDIO_FILE_HANDLER_HPP
 #define RESONANT_AUDIO_FILE_HANDLER_HPP
 
+#include "Export.hpp"
+
 #include <Radiant/Condition.hpp>
 #include <Radiant/IODefs.hpp>
 #include <Radiant/Thread.hpp>
@@ -32,7 +34,7 @@ namespace Resonant {
   /** Read/write multiple audio files at the same time in one
       background-thread. */
 
-  class AudioFileHandler : public Radiant::Thread
+  class RESONANT_API AudioFileHandler : public Radiant::Thread
   {
     friend class Handle;
 

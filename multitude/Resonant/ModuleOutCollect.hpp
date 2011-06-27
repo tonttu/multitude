@@ -16,12 +16,11 @@
 #ifndef RESONANT_MODULE_OUT_COLLECT_HPP
 #define RESONANT_MODULE_OUT_COLLECT_HPP
 
-#include <string>
-#include <string.h>
-
-#include <Resonant/Module.hpp>
+#include "Module.hpp"
 
 #include <vector>
+#include <string>
+#include <string.h>
 
 namespace Resonant {
 
@@ -30,7 +29,7 @@ namespace Resonant {
   /** Collect input from various sources and interleave it for audio
       playback. */
 
-  class ModuleOutCollect : public Module
+  class RESONANT_API ModuleOutCollect : public Module
   {
   public:
 

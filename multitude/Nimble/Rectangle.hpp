@@ -16,9 +16,9 @@
 #ifndef NIMBLE_RECTANGLE_HPP
 #define NIMBLE_RECTANGLE_HPP
 
-#include <Nimble/Export.hpp>
-#include <Nimble/Vector2.hpp>
-#include <Nimble/Matrix3.hpp>
+#include "Export.hpp"
+#include "Vector2.hpp"
+#include "Matrix3.hpp"
 
 #include <vector>
 

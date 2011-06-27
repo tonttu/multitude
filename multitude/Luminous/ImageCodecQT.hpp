@@ -22,14 +22,14 @@
 #error "This code is only to be used with Qt version 4.5."
 #endif
 
-#include <Luminous/ImageCodec.hpp>
-
+#include "Export.hpp"
+#include "ImageCodec.hpp"
 
 namespace Luminous
 {
 
   /// Image codec to handle QT files
-  class ImageCodecQT : public ImageCodec
+  class LUMINOUS_API ImageCodecQT : public ImageCodec
   {
   public:
     ImageCodecQT(const char * suffix);

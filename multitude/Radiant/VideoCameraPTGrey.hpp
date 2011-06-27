@@ -18,9 +18,9 @@
 
 /// @cond
 
-#include <Radiant/Export.hpp>
-#include <Radiant/VideoCamera.hpp>
-#include <Radiant/CameraDriver.hpp>
+#include "Export.hpp"
+#include "VideoCamera.hpp"
+#include "CameraDriver.hpp"
 
 #ifndef WIN32
 #include <flycapture/FlyCapture2.h>
@@ -96,7 +96,7 @@ namespace Radiant
     CameraInfo m_info;
   };
 
-  class CameraDriverPTGrey : public CameraDriver
+  class RADIANT_API CameraDriverPTGrey : public CameraDriver
   {
   public:
     CameraDriverPTGrey();
