@@ -16,9 +16,9 @@
 #ifndef RADIANT_CAMERA_DRIVER_HPP
 #define RADIANT_CAMERA_DRIVER_HPP
 
-#include <Radiant/Export.hpp>
-#include <Radiant/StringUtils.hpp>
-#include <Radiant/VideoCamera.hpp>
+#include "Export.hpp"
+#include "StringUtils.hpp"
+#include "VideoCamera.hpp"
 
 #include <string>
 #include <map>

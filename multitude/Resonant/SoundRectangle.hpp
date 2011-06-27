@@ -34,11 +34,11 @@ The amount of loss in gain on the right channel when the sound source is in the
 left of the rectangle can be adjusted. The rectangle also has an extra border
 where the gain falls to zero if the sound source moves outside the rectangle.
   */
-  class SoundRectangle : public Valuable::HasValues
+  class RESONANT_API SoundRectangle : public Valuable::HasValues
   {
   public:
     /// Constructs a sound rectangle
-    RESONANT_API SoundRectangle();
+    SoundRectangle();
     /** Constructs a sound rectangle with given parameters
      @param loc location of the upper-left corner of the rectangle
      @param size size of the rectangle
@@ -51,7 +51,7 @@ where the gain falls to zero if the sound source moves outside the rectangle.
     @param leftChannel id of the channel on the left side of the rectangle
     @param rightChannel id of the channel on the right side of the rectangle
     */
-    RESONANT_API SoundRectangle(Nimble::Vector2i loc, Nimble::Vector2i size, float stereoPan, int fadeWidth, int leftChannel, int rightChannel);
+    SoundRectangle(Nimble::Vector2i loc, Nimble::Vector2i size, float stereoPan, int fadeWidth, int leftChannel, int rightChannel);
 
     /// Sets the location of the rectangle
     void setLocation(Nimble::Vector2i loc) { m_location = loc; }

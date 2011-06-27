@@ -16,8 +16,8 @@
 #ifndef NIMBLE_VECTOR2T_HPP
 #define NIMBLE_VECTOR2T_HPP
 
-#include <Nimble/Export.hpp>
-#include <Nimble/Math.hpp>
+#include "Export.hpp"
+#include "Math.hpp"
 
 #include <iostream>
 

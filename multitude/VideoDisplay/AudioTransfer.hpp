@@ -16,12 +16,13 @@
 #ifndef VIDEODISPLAY_AUDIO_TRANSFER_HPP
 #define VIDEODISPLAY_AUDIO_TRANSFER_HPP
 
+#include "Export.hpp"
+#include "VideoIn.hpp"
+
 #include <Radiant/IODefs.hpp>
 #include <Radiant/TimeStamp.hpp>
 
 #include <Resonant/Module.hpp>
-
-#include <VideoDisplay/VideoIn.hpp>
 
 namespace VideoDisplay {
 
@@ -35,7 +36,7 @@ namespace VideoDisplay {
 
       @see VideoIn
    */
-  class AudioTransfer : public Resonant::Module
+  class VIDEODISPLAY_API AudioTransfer : public Resonant::Module
   {
   public:
     /// Constructs an audio transfer object

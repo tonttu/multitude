@@ -16,11 +16,11 @@
 #ifndef NIMBLE_MATRIX2T_HPP
 #define NIMBLE_MATRIX2T_HPP
 
-#include <Nimble/Export.hpp>
-#include <Nimble/Math.hpp>
-#include <Nimble/Vector2.hpp>
+#include "Export.hpp"
+#include "Math.hpp"
+#include "Vector2.hpp"
 
-#include <assert.h>
+#include <cassert>
 
 namespace Nimble {
 
@@ -101,7 +101,14 @@ namespace Nimble {
     static Matrix2T scaling(T s)  { Matrix2T m; m.identity(); m.set(0, 0, s); m.set(1, 1, s); return m; }
     
     /** Identity matrix. */
-    NIMBLE_API static const Matrix2T<T> IDENTITY;
+	//static Matrix2T IDENTITY(1, 0, 0, 1);
+	//static Matrix2T identity() 
+	//{
+	//	static Matrix2T i(1, 0, 0, 1);
+	//	return i;
+	//}
+
+	NIMBLE_API static const Matrix2T<T> IDENTITY;
 
   private:
     inline static void swap(T &a, T& b);

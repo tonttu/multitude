@@ -3,8 +3,8 @@
 #ifndef POETIC_CPU_FONT_BASE_HPP
 #define POETIC_CPU_FONT_BASE_HPP
 
-#include <Poetic/CPUFont.hpp>
-#include <Poetic/Export.hpp>
+#include "Export.hpp"
+#include "CPUFont.hpp"
 
 #include <Luminous/Collectable.hpp>
 

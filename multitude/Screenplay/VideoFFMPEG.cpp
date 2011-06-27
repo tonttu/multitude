@@ -39,11 +39,10 @@ namespace Screenplay {
 
   using namespace Radiant;
 
-  static Radiant::Mutex __openmutex;
-  static Radiant::Mutex __countermutex;
-  int    __instancecount = 0;
+  // FFMPEG is not thread-safe
+  static Radiant::Mutex s_ffmpegMutex(true);
 
-  int VideoInputFFMPEG::m_debug = 1;
+  int VideoInputFFMPEG::m_debug = 0;
 
   VideoInputFFMPEG::VideoInputFFMPEG()
     : m_acodec(0),
@@ -63,9 +62,16 @@ namespace Screenplay {
     m_flags(0),
     m_lastPts(0)
   {
-    static bool once = false;
+    static volatile bool ffmpegInitialized = false;
 
-    if(!once) {
+    // while used instead of if to break out early
+    while(!ffmpegInitialized) {
+
+      Radiant::Guard g(s_ffmpegMutex);
+
+      if(ffmpegInitialized)
+        break;
+
       debugScreenplay("Initializing AVCODEC 1");
       avcodec_init();
       debugScreenplay("Initializing AVCODEC 2");
@@ -73,36 +79,23 @@ namespace Screenplay {
       debugScreenplay("Initializing AVCODEC 3");
       av_register_all();
       debugScreenplay("Initializing AVCODEC 4");
-      once = true;
+      ffmpegInitialized = true;
     }
 
     m_lastSeek = 0;
-
-
-    int tmp = 0;
-    {
-      Radiant::Guard g(__countermutex);
-      __instancecount++;
-      tmp = __instancecount;
-    }
-    debugScreenplay("VideoInputFFMPEG::VideoInputFFMPEG # Instance count at %d", tmp);
   }
 
   VideoInputFFMPEG::~VideoInputFFMPEG()
   {
     close();
-
-    int tmp = 0;
-    {
-      Radiant::Guard g(__countermutex);
-      __instancecount--;
-      tmp = __instancecount;
-    }
-    debugScreenplay("VideoInputFFMPEG::~VideoInputFFMPEG # Instance count at %d", tmp);
   }
 
   const Radiant::VideoImage * VideoInputFFMPEG::captureImage()
   {
+    /// @todo this effectively prevents multi-threaded video decoding. Someone
+    /// can figure out a fix if this becomes a problem.
+    Radiant::Guard g(s_ffmpegMutex);
+
     assert(this != 0);
 
     static const char * fname = "VideoInputFFMPEG::captureImage";
@@ -132,6 +125,9 @@ namespace Screenplay {
         else {
           debugScreenplay("VideoInputFFMPEG::captureImage # Looping %s", m_fileName.c_str());
           m_offsetTS = m_lastTS;
+          // Reset counters
+          m_capturedAudio = 0;
+          m_capturedVideo = 0;
           av_seek_frame(m_ic, -1, (int64_t) 0, 0);
 
           // av_free_packet(m_pkt);
@@ -368,8 +364,8 @@ namespace Screenplay {
         perFrame = 20000;
       }
 
-      debugScreenplay("VideoInputFFMPEG::captureImage # %lf %d %d %d aufr in total %d vidfr",
-            secs, perFrame, (int) m_audioFrames, (int) m_capturedAudio, (int) m_capturedVideo);
+      debugScreenplay("VideoInputFFMPEG::captureImage # firstTS %lf lastTS %lf; %lf %d %d %d aufr in total %d vidfr",
+            m_firstTS.secondsD(), m_lastTS.secondsD(), secs, perFrame, (int) m_audioFrames, (int) m_capturedAudio, (int) m_capturedVideo);
 
       m_audioTS = m_lastTS;
 
@@ -557,9 +553,10 @@ namespace Screenplay {
   bool VideoInputFFMPEG::open(const char * filename,
                               int flags)
   {
-
     if(m_vcodec)
       close();
+
+    Radiant::Guard g(s_ffmpegMutex);
 
     if(!m_pkt) {
       m_pkt = new AVPacket();
@@ -591,8 +588,6 @@ namespace Screenplay {
     m_sinceSeek = 0;
 
     bzero( & params, sizeof(params));
-
-    Guard g( __openmutex);
 
     int err = av_open_input_file( & m_ic, filename, iformat, 0, ap);
 
@@ -723,7 +718,7 @@ namespace Screenplay {
     //    if(!m_ic)
     //      return false;
 
-    Guard g( __openmutex);
+    Guard g( s_ffmpegMutex);
 
     if(m_frame)
       av_free(m_frame);
@@ -770,6 +765,8 @@ namespace Screenplay {
 
   bool VideoInputFFMPEG::seekPosition(double timeSeconds)
   {
+    Radiant::Guard g(s_ffmpegMutex);
+
     debugScreenplay("VideoInputFFMPEG::seekPosition # %lf", timeSeconds);
 
     if(m_vcontext)
@@ -804,7 +801,7 @@ namespace Screenplay {
     return true;
   }
 
-  double VideoInputFFMPEG::durationSeconds()
+  double VideoInputFFMPEG::durationSeconds() const
   {
     if(m_flags & Radiant::DO_LOOP)
       return 1.0e+9f;

@@ -15,12 +15,12 @@
 
 #include "DSPNetwork.hpp"
 #include "Resonant.hpp"
+#include "AudioLoopPriv.hpp"
 
 #include "ModulePanner.hpp"
 #include "ModuleOutCollect.hpp"
 #include "ModuleSamplePlayer.hpp"
 
-#include <Radiant/FixedStr.hpp>
 #include <Radiant/Trace.hpp>
 
 #include <strings.h>
@@ -245,20 +245,61 @@ namespace Resonant {
   }
 
   int DSPNetwork::callback(const void *in, void *out,
-      unsigned long framesPerBuffer)
+      unsigned long framesPerBuffer, int streamnum)
   {
     (void) in;
 
-    doCycle(framesPerBuffer);
+    int streams = m_d->m_streams.size();
+
+    /// Here we assume that every stream (== audio device) is running in its
+    /// own separate thread, that is, this callback is called from multiple
+    /// different threads at the same time, one for each audio device.
+    /// The first thread is responsible for filling the buffer
+    /// (m_collect->interleaved()) by calling doCycle. This thread first waits
+    /// until all other threads have finished processing the previous data,
+    /// then runs the next cycle and informs everyone else that they can continue
+    /// running from the barrier.
+    /// We also assume, that framesPerBuffer is somewhat constant in different
+    /// threads at the same time.
+    if(streams == 1) {
+      doCycle(framesPerBuffer);
+    } else if(streamnum == 0) {
+      m_d->m_sem.acquire(streams);
+      doCycle(framesPerBuffer);
+      for (int i = 1; i < streams; ++i)
+        m_d->m_streams[i].m_barrier->release();
+    } else {
+      m_d->m_streams[streamnum].m_barrier->acquire();
+    }
+
+    int outChannels = m_d->m_streams[streamnum].outParams.channelCount;
+
     const float * res = m_collect->interleaved();
     if(res != 0) {
-      memcpy(out, res, 4 * framesPerBuffer * outChannels());
+      for (Channels::iterator it = m_d->m_channels.begin(); it != m_d->m_channels.end(); ++it) {
+        if (streamnum != it->second.device) continue;
+        int from = it->first;
+        int to = it->second.channel;
+
+        const float * data = res + from;
+        float* target = (float*)out;
+        target += to;
+
+        int chans_from = m_collect->channels();
+
+        for (size_t i = 0; i < framesPerBuffer; ++i) {
+          *target = *data;
+          target += outChannels;
+          data += chans_from;
+        }
+      }
+      //memcpy(out, res, 4 * framesPerBuffer * outChannels);
     }
     else {
       error("DSPNetwork::callback # No data to play");
-      bzero(out, 4 * framesPerBuffer * outChannels());
+      bzero(out, 4 * framesPerBuffer * outChannels);
     }
-
+    if(streams > 1) m_d->m_sem.release();
     return paContinue;
   }
 
@@ -296,7 +337,8 @@ namespace Resonant {
 
     char buf[512];
 
-    FixedStrT<512> id;
+    std::string id;
+	id.reserve(512);
 
     while(m_incopy.pos() < sentinel) {
       buf[0] = 0;
@@ -322,11 +364,11 @@ namespace Resonant {
         command = 0;
       }
       else {
-        id.copyn(buf, slash - buf);
+        id.assign(buf, slash - buf);
         command = slash + 1;
       }
 
-      deliverControl(id, command, m_incopy);
+	  deliverControl(id.c_str(), command, m_incopy);
     }
   }
 

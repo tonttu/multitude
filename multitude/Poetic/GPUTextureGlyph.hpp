@@ -16,7 +16,8 @@
 #ifndef POETIC_GPU_TEXTURE_GLYPH_HPP
 #define POETIC_GPU_TEXTURE_GLYPH_HPP
 
-#include <Poetic/Glyph.hpp>
+#include "Export.hpp"
+#include "Glyph.hpp"
 
 #include <Luminous/Luminous.hpp>
 
@@ -25,7 +26,7 @@ namespace Poetic
   class CPUBitmapGlyph;
 
   /// A glyph stored in a texture on the GPU
-  class GPUTextureGlyph : public Glyph
+  class POETIC_API GPUTextureGlyph : public Glyph
   {
     public:
       /// Constructs a new texture glyph
@@ -42,10 +43,6 @@ namespace Poetic
       Nimble::Vector2 m_uv[2];
 
       GLuint m_textureId;
-
-      // Attempt to minimize texture changes
-      /// @todo this is not thread-safe
-      // static GLuint s_activeTexture;
   };
 
 }

@@ -16,23 +16,23 @@
 #ifndef RESONANT_MODULE_FILE_PLAY_HPP
 #define RESONANT_MODULE_FILE_PLAY_HPP
 
-#include <Resonant/AudioFileHandler.hpp>
-
-#include <Resonant/Module.hpp>
+#include "Export.hpp"
+#include "AudioFileHandler.hpp"
+#include "Module.hpp"
 
 namespace Resonant {
 
   /** Audio file player module. */
-  class ModuleFilePlay : public Resonant::Module
+  class RESONANT_API ModuleFilePlay : public Resonant::Module
   {
   public:
     /// Constructs a new audio file player
-    RESONANT_API ModuleFilePlay(Application *);
-    RESONANT_API virtual ~ModuleFilePlay();
+    ModuleFilePlay(Application *);
+    virtual ~ModuleFilePlay();
 
-    RESONANT_API virtual bool prepare(int & channelsIn, int & channelsOut);
-    RESONANT_API virtual void process(float ** in, float ** out, int n);
-    RESONANT_API virtual bool stop();
+    virtual bool prepare(int & channelsIn, int & channelsOut);
+    virtual void process(float ** in, float ** out, int n);
+    virtual bool stop();
 
   private:
 

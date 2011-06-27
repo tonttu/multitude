@@ -16,11 +16,11 @@
 #ifndef NIMBLE_KEYSTONE_HPP
 #define NIMBLE_KEYSTONE_HPP
 
-#include <Nimble/Export.hpp>
-#include <Nimble/LensCorrection.hpp>
-#include <Nimble/Matrix3.hpp>
-#include <Nimble/Rect.hpp>
-#include <Nimble/Vector4.hpp>
+#include "Export.hpp"
+#include "LensCorrection.hpp"
+#include "Matrix3.hpp"
+#include "Rect.hpp"
+#include "Vector4.hpp"
 
 #include <vector>
 

@@ -16,9 +16,9 @@
 #ifndef RADIANT_COLOR_HPP
 #define RADIANT_COLOR_HPP
 
-#include <Nimble/Vector4.hpp>
+#include "Export.hpp"
 
-#include <Radiant/Export.hpp>
+#include <Nimble/Vector4.hpp>
 
 namespace Radiant
 {

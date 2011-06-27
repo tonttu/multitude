@@ -15,8 +15,8 @@
 #ifndef POETIC_GPU_TEXTURE_FONT_HPP
 #define POETIC_GPU_TEXTURE_FONT_HPP
 
-#include <Poetic/Export.hpp>
-#include <Poetic/GPUFontBase.hpp>
+#include "Export.hpp"
+#include "GPUFontBase.hpp"
 
 #include <Luminous/Luminous.hpp>
 #include <Luminous/Shader.hpp>

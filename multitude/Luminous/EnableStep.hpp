@@ -17,9 +17,10 @@
 #ifndef LUMINOUS_ENABLE_STEP_HPP
 #define LUMINOUS_ENABLE_STEP_HPP
 
-#include <Patterns/NotCopyable.hpp>
+#include "Export.hpp"
+#include "Luminous.hpp"
 
-#include <Luminous/Luminous.hpp>
+#include <Patterns/NotCopyable.hpp>
 
 namespace Luminous {
 

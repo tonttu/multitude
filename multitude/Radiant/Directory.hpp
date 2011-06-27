@@ -16,9 +16,9 @@
 #ifndef RADIANT_DIRECTORY_HPP
 #define RADIANT_DIRECTORY_HPP
 
-#include <Patterns/NotCopyable.hpp>
+#include "Export.hpp"
 
-#include <Radiant/Export.hpp>
+#include <Patterns/NotCopyable.hpp>
 
 #include <stdexcept>
 #include <string>

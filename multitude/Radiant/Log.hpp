@@ -16,7 +16,7 @@
 #ifndef RADIANT_LOG_HPP
 #define RADIANT_LOG_HPP
 
-#include <Radiant/Export.hpp>
+#include "Export.hpp"
 
 namespace Radiant {
 

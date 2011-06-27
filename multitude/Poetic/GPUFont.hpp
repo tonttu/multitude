@@ -15,9 +15,9 @@
 #ifndef POETIC_GPU_FONT_HPP
 #define POETIC_GPU_FONT_HPP
 
-#include <Luminous/GLResource.hpp>
+#include "Export.hpp"
 
-#include <Poetic/Export.hpp>
+#include <Luminous/GLResource.hpp>
 
 #include <Nimble/Matrix3.hpp>
 

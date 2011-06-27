@@ -39,8 +39,8 @@ namespace Luminous
 
   long & UploadLimiter::available()
   {
-    static RADIANT_TLS(int) t_frame = 0;
-    static RADIANT_TLS(long) t_available = 0;
+    static RADIANT_TLS(int) t_frame(0);
+    static RADIANT_TLS(long) t_available(0);
 
     UploadLimiter & i = instance();
     if(t_frame != i.m_frame) {
@@ -214,7 +214,7 @@ namespace Luminous
 
   bool Texture2D::loadImage(const Luminous::Image & image, bool buildMipmaps, int internalFormat)
   {
-    return loadBytes(internalFormat ? internalFormat : image.pixelFormat().layout(),
+    return loadBytes(internalFormat ? internalFormat : image.pixelFormat().numChannels(),
                      image.width(), image.height(),
                      image.bytes(),
                      image.pixelFormat(), buildMipmaps);

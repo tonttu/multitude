@@ -16,12 +16,14 @@
 #ifndef RESONANT_APPLICATION_HPP
 #define RESONANT_APPLICATION_HPP
 
+#include "Export.hpp"
+
 namespace Resonant {
   /** Abstract application base class for Resonant. The Application
       object is at the moment mostly unused, but it is included as it
       will be needed to deliver core information to the audio plugins
       (application time etc.). */
-  class Application
+  class RESONANT_API Application
   {
   public:
     Application();

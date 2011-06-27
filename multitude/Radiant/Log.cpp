@@ -13,6 +13,7 @@
  * 
  */
 
+#include "Export.hpp"
 #include "Log.hpp"
 
 #include "DateTime.hpp"
@@ -29,7 +30,7 @@
 
 namespace Radiant {
 
-  class LogThread : public Thread
+  class RADIANT_API LogThread : public Thread
   {
   public:
     LogThread() : m_file(0), m_ready(false) {}

@@ -138,7 +138,7 @@ namespace Luminous
 
   /// An OpenGL vertex buffer
 
-  class VertexBuffer : public BufferObject<GL_ARRAY_BUFFER>
+  class LUMINOUS_API VertexBuffer : public BufferObject<GL_ARRAY_BUFFER>
   {
   public:
     /// Constructs an empty vertex buffer.
@@ -148,7 +148,7 @@ namespace Luminous
   };
 
   /// An OpenGL index buffer
-  class IndexBuffer : public BufferObject<GL_ELEMENT_ARRAY_BUFFER>
+  class LUMINOUS_API IndexBuffer : public BufferObject<GL_ELEMENT_ARRAY_BUFFER>
   {
   public:
     /// Constructs an empty index buffer.

@@ -3,8 +3,9 @@
 #ifndef POETIC_CPU_FONT_HPP
 #define POETIC_CPU_FONT_HPP
 
-#include <Poetic/GlyphContainer.hpp>
-#include <Poetic/BBox.hpp>
+#include "Export.hpp"
+#include "GlyphContainer.hpp"
+#include "BBox.hpp"
 
 #include <Luminous/Collectable.hpp>
 #include <Luminous/GLResources.hpp>

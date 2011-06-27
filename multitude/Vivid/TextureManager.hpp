@@ -2,7 +2,7 @@
 #define VIVID_TEXTUREMANAGER_HPP
 
 #include <Radiant/RefPtr.hpp>
-#include <Patterns/Singleton.hpp>
+#include <Radiant/Singleton.hpp>
 
 #include <map>
 
@@ -14,8 +14,9 @@ class ImageTex;
 namespace Vivid
 {
 
-class TextureManager : public Patterns::Singleton<TextureManager>
+class TextureManager
 {
+  DECLARE_SINGLETON(TextureManager);
 public:
 
   std::shared_ptr<Luminous::ImageTex> load(const std::string& name);
