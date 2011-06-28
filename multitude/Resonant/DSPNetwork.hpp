@@ -188,6 +188,19 @@ namespace Resonant {
         m_module = 0;
       }
 
+      /// Sets if the item should use panner
+      void setUsePanner(bool usePanner)
+      {
+        m_usePanner = usePanner;
+      }
+
+      /// Returns if the item use panner
+      bool usePanner()
+      {
+        return m_usePanner;
+      }
+
+
     private:
 
       // Process n samples
@@ -215,6 +228,7 @@ namespace Resonant {
 
       bool m_compiled;
       bool m_done;
+      bool m_usePanner;
 
       int  m_targetChannel;
     };
