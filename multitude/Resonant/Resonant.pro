@@ -35,7 +35,8 @@ linux-*:SOURCES += ModulePulseAudio.cpp PulseAudioCore.cpp
 
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_VALUABLE
 
-linux-*:LIBS += -lpulse -lportaudio -lsndfile
+linux-*:LIBS += -lpulse
+unix:LIBS += -lportaudio -lsndfile
 
 include(../library.pri)
 
