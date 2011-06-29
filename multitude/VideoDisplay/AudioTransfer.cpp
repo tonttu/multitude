@@ -66,6 +66,8 @@ namespace VideoDisplay {
       tmp = __instancecount;
     }
     debugVideoDisplay("AudioTransfer::AudioTransfer # %p Instance count at %d", this, tmp);
+
+    m_timingBase = Radiant::TimeStamp::getTime();
   }
 
   AudioTransfer::~AudioTransfer()
@@ -124,6 +126,7 @@ namespace VideoDisplay {
     m_first = true;
 
     m_startTime = TimeStamp::getTime();
+    m_timingBase = m_startTime;
 
     return true;
   }
