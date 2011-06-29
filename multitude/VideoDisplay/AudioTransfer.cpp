@@ -7,10 +7,10 @@
  * See file "VideoDisplay.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #include "AudioTransfer.hpp"
@@ -238,10 +238,12 @@ namespace VideoDisplay {
 
     zero(out, m_channels, n, taken);
 
-    TimeStamp time =
+    m_showTime =
         m_baseTS + TimeStamp::createSecondsD(m_sinceBase / 44100.0 - m_audioLatency);
 
-    m_showFrame = m_video->selectFrame(m_showFrame, time);
+    m_showFrame = m_video->selectFrame(m_showFrame, m_showTime);
+
+    m_timingBase = Radiant::TimeStamp::getTime();
     // if(m_videoFrame < m_showFrame)
     // m_videoFrame = m_showFrame;
     /*
@@ -251,8 +253,8 @@ namespace VideoDisplay {
       }
     }
     */
-    debugVideoDisplay("AudioTransfer::process # EXIT %d %d (%lf, %lf)",
-          m_showFrame, m_total, time.secondsD(), m_baseTS.secondsD());
+    debug("AudioTransfer::process # EXIT %d %d (%lf, %lf)",
+          m_showFrame, m_total, m_showTime.secondsD(), m_baseTS.secondsD());
   }
 
   bool AudioTransfer::stop()
@@ -263,6 +265,18 @@ namespace VideoDisplay {
 
   unsigned AudioTransfer::videoFrame()
   {
+    Radiant::Guard g2(m_mutex);
+
+
+    float dt = m_timingBase.sinceSecondsD();
+    // info("AudioTransfer::videoFrame # adju", dt);
+
+    if(dt > 0.03f) {
+      // info("AudioTransfer::videoFrame # adjusting for %f", dt);
+      m_showFrame = m_video->selectFrame(m_showFrame,
+                                         m_showTime + Radiant::TimeStamp::createSecondsD(dt));
+    }
+
     debugVideoDisplay("AudioTransfer::videoFrame # %d", m_showFrame);
     return m_showFrame;
   }

@@ -94,6 +94,8 @@ namespace VideoDisplay {
 
     // Time stamp at the beginning of the current audio package.
     Radiant::TimeStamp m_baseTS;
+    Radiant::TimeStamp m_timingBase;
+    Radiant::TimeStamp m_showTime;
     int                m_sinceBase;
     bool      m_ending;
     bool      m_end;

@@ -7,10 +7,10 @@
  * See file "Resonant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #include "DSPNetwork.hpp"
@@ -114,6 +114,7 @@ namespace Resonant {
   DSPNetwork::DSPNetwork()
     : // m_continue(false),
     m_panner(0),
+    m_frames(0),
     m_doneCount(0)
   {
     m_devName[0] = 0;
@@ -302,6 +303,13 @@ namespace Resonant {
       bzero(out, 4 * framesPerBuffer * outChannels);
     }
     if(streams > 1) m_d->m_sem.release();
+
+    m_frames += framesPerBuffer;
+
+    if(m_frames < 40000) {
+      info("DSPNetwork::callback # %lu", framesPerBuffer);
+    }
+
     return paContinue;
   }
 
@@ -340,7 +348,7 @@ namespace Resonant {
     char buf[512];
 
     std::string id;
-	id.reserve(512);
+    id.reserve(512);
 
     while(m_incopy.pos() < sentinel) {
       buf[0] = 0;
@@ -370,7 +378,7 @@ namespace Resonant {
         command = slash + 1;
       }
 
-	  deliverControl(id.c_str(), command, m_incopy);
+      deliverControl(id.c_str(), command, m_incopy);
     }
   }
 
