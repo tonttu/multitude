@@ -38,6 +38,7 @@ namespace Resonant {
     : m_module(0),
       m_compiled(false),
       m_done(false),
+      m_usePanner(true),
       m_targetChannel(-1)
   {}
 
@@ -208,6 +209,7 @@ namespace Resonant {
     Resonant::ModuleSamplePlayer * player = new Resonant::ModuleSamplePlayer(0);
     item.setModule(player);
     player->setId("sampleplayer");
+    item.setUsePanner(false);
 
     Radiant::BinaryData control;
     control.writeInt32(outChannels());
@@ -415,7 +417,7 @@ namespace Resonant {
         int tchan  = itptr->m_targetChannel;
         int outchans = m_collect->channels(); // hardware output channels
 
-        if(m_panner) {
+        if(m_panner && itptr->usePanner()) {
           //info("Adding %d inputs to the panner", mchans);
 
           Item * oi = findItem(m_panner->id());
