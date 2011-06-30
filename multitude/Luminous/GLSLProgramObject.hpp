@@ -148,11 +148,15 @@ namespace Luminous
     /// Returns true if the program has been linked successfully
     bool isLinked() const { return m_isLinked; }
 
+    void setErrors(bool errors) { m_errors = errors; }
+    bool hasErrors() const { return m_errors; }
+
   protected:
     /// The linker log
     std::vector<GLchar> m_linkerLog;
     /// True if the program has been linked
     bool m_isLinked;
+    bool m_errors;
     /// Lis of shader objects making up this program
     std::list<GLSLShaderObject*> m_shaderObjects;
     /// The OpenGL handle for the program
