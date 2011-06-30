@@ -272,7 +272,6 @@ namespace VideoDisplay {
 
 
     float dt = m_timingBase.sinceSecondsD();
-    // info("AudioTransfer::videoFrame # adju", dt);
 
     if(dt > 0.03f) {
       // info("AudioTransfer::videoFrame # adjusting for %f", dt);
