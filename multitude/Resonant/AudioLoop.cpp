@@ -238,8 +238,6 @@ namespace Resonant {
       s.inParams = s.outParams;
       s.inParams.device = Pa_GetDefaultInputDevice();
 
-      m_continue = true;
-
       m_d->cb.push_back(std::make_pair(this, streamnum));
 
       PaError err = Pa_OpenStream(& s.stream,
@@ -272,6 +270,8 @@ namespace Resonant {
     m_d->m_streamBuffers.resize(m_d->m_streams.size());
     m_d->m_sem.release(m_d->m_streams.size());
 
+    m_isRunning = true;
+
     for (size_t streamnum = 0; streamnum < m_d->m_streams.size(); ++streamnum) {
       Stream & s = m_d->m_streams[streamnum];
 
@@ -284,8 +284,6 @@ namespace Resonant {
 
       s.startTime = Pa_GetStreamTime(s.stream);
     }
-
-    m_isRunning = true;
 
     return true;
   }
@@ -326,7 +324,7 @@ namespace Resonant {
 
     int r = stream.first->callback(in, out, framesPerBuffer, stream.second /*, time, status*/);
 
-    return stream.first->m_continue ? r : paComplete;
+    return stream.first->m_isRunning ? r : paComplete;
   }
 
   void AudioLoop::AudioLoopInternal::paFinished(void * self)

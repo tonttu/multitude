@@ -138,6 +138,40 @@ namespace Radiant {
     Mutex * m_mutex;
   };
 
+  extern RADIANT_API Mutex s_onceMutex;
 }
+
+#ifdef __GLIBC__
+#define MULTI_ONCE(code)                                          \
+  static bool s_multi_once = false;                               \
+  /* hardware memory barrier */                                   \
+  __sync_synchronize();                                           \
+  /* compiler memory barrier */                                   \
+  /** @todo is this implicit when using __sync_synchronize()? */  \
+  __asm __volatile ("":::"memory");                               \
+  if(!s_multi_once) {                                             \
+    Radiant::Guard g(Radiant::s_onceMutex);                       \
+    if(!s_multi_once) {                                           \
+      { code }                                                    \
+      __sync_synchronize();                                       \
+      __asm __volatile ("":::"memory");                           \
+      s_multi_once = true;                                        \
+    }                                                             \
+  }
+#elif defined(_MSC_VER)
+#define MULTI_ONCE(code)                                          \
+  /* s_multi_once is volatile, so msvc won't reorder stuff */     \
+  static bool volatile s_multi_once = false;                      \
+  /* hardware memory barrier */                                   \
+  _ReadBarrier();                                                 \
+  if(!s_multi_once) {                                             \
+    Radiant::Guard g(Radiant::s_onceMutex);                       \
+    if(!s_multi_once) {                                           \
+      { code }                                                    \
+      _WriteBarrier();                                            \
+      s_multi_once = true;                                        \
+    }                                                             \
+  }
+#endif
 
 #endif

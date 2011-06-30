@@ -27,7 +27,8 @@ namespace Luminous
 
   GLSLProgramObject::GLSLProgramObject(GLResources * resources)
       : GLResource(resources),
-      m_isLinked(false)
+      m_isLinked(false),
+      m_errors(false)
   {
     m_handle = glCreateProgram();
     setPersistent(true);

@@ -72,7 +72,6 @@ namespace Resonant {
 
     bool       m_isRunning;
     bool       m_initialized;
-    bool       m_continue;
 
     class AudioLoopInternal;
 

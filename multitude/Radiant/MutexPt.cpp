@@ -30,6 +30,8 @@ extern "C" {
 
 namespace Radiant {
 
+  Mutex s_onceMutex;
+
   class Mutex::D {
   public:
     D(bool recursive);
