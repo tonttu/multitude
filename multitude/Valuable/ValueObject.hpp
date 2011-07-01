@@ -83,12 +83,12 @@ namespace Valuable
   public:
     ValueObject();
     /// The copy constructor creates a copy of the ValueObject WITHOUT the
-    /// link to parent
+    /// link to host
     ValueObject(const ValueObject & o);
-    /** Constructs a new value object and attaches it to its parent.
+    /** Constructs a new value object and attaches it to its host.
 
-    @param parent The parent object. This object is automatically
-    added to the parent.
+    @param host The host object. This object is automatically
+    added to the host.
 
     @param name The name (or id) of this value. Names are typically
     human-readable. The names should not contain white-spaces
@@ -98,7 +98,7 @@ namespace Valuable
     is related to future uses, and can be largely ignored at the
     moment.
     */
-    ValueObject(HasValues * parent, const std::string & name, bool transit = false);
+    ValueObject(HasValues * host, const std::string & name, bool transit = false);
     virtual ~ValueObject();
 
     /// Returns the name of the object.
@@ -187,10 +187,10 @@ namespace Valuable
     /** The object is serialized using its name as a tag name. */
     virtual ArchiveElement & serialize(Archive &archive) const;
 
-    /** The parent object of the value object (is any). */
-    HasValues * parent() const { return m_parent; }
-    /** Sets the parent pointer to zero and removes this object from the parent. */
-    void removeParent();
+    /** The host object of the value object (is any). */
+    HasValues * host() const { return m_host; }
+    /** Sets the host pointer to zero and removes this object from the host. */
+    void removeHost();
 
     /// Adds a listener that is invoked whenever the value is changed
     void addListener(ValueListener * l) { m_listeners.push_back(l); }
@@ -220,7 +220,7 @@ namespace Valuable
 
   private:
     // The object that holds this object
-    HasValues * m_parent;
+    HasValues * m_host;
     bool m_changed;
     std::string m_name;
     bool m_transit;
@@ -236,12 +236,12 @@ namespace Valuable
   {
   public:
     /// Creates a new ValueObjectT and stores the original and current value as a separate variables.
-    /// @param parent parent object
+    /// @param host host object
     /// @param name name of the value
     /// @param v the default/original value of the object
     /// @param transit ignored
-    ValueObjectT(HasValues * parent, const std::string & name, const T & v = T(), bool transit = false)
-      : ValueObject(parent, name, transit),
+    ValueObjectT(HasValues * host, const std::string & name, const T & v = T(), bool transit = false)
+      : ValueObject(host, name, transit),
       m_value(v),
       m_orig(v) {}
 

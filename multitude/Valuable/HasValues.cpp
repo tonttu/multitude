@@ -48,8 +48,8 @@ namespace Valuable
       m_frame(0)
   {}
 
-  HasValues::HasValues(HasValues * parent, const std::string & name, bool transit)
-      : ValueObject(parent, name, transit),
+  HasValues::HasValues(HasValues * host, const std::string & name, bool transit)
+      : ValueObject(host, name, transit),
       m_eventsEnabled(true),
       m_id(this, "id", generateId()),
       m_frame(0)
@@ -73,39 +73,39 @@ namespace Valuable
 
   ValueObject * HasValues::getValue(const std::string & name)
   {
-    container::iterator it = m_children.find(name);
+    container::iterator it = m_values.find(name);
 
-    return it == m_children.end() ? 0 : it->second;
+    return it == m_values.end() ? 0 : it->second;
   }
 
   bool HasValues::addValue(const std::string & cname, ValueObject * const value)
   {
     //    Radiant::trace("HasValues::addValue # adding %s", cname.c_str());
 
-    // Check children
-    if(m_children.find(cname) != m_children.end()) {
+    // Check values
+    if(m_values.find(cname) != m_values.end()) {
       Radiant::error(
-          "HasValues::addValue # can not add child '%s' as '%s' "
-          "already has a child with the same name.",
+          "HasValues::addValue # can not add value '%s' as '%s' "
+          "already has a value with the same name.",
           cname.c_str(), m_name.c_str());
       return false;
     }
 
-    // Unlink parent if necessary
-    HasValues * parent = value->parent();
-    if(parent) {
+    // Unlink host if necessary
+    HasValues * host = value->host();
+    if(host) {
       Radiant::error(
-          "HasValues::addValue # '%s' already has a parent '%s'. "
-          "Unlinking it to set new parent.",
-          cname.c_str(), parent->name().c_str());
-      value->removeParent();
+          "HasValues::addValue # '%s' already has a host '%s'. "
+          "Unlinking it to set new host.",
+          cname.c_str(), host->name().c_str());
+      value->removeHost();
     }
 
     // Change the value name
     value->setName(cname);
 
-    m_children[value->name()] = value;
-    value->m_parent  = this;
+    m_values[value->name()] = value;
+    value->m_host  = this;
 
     return true;
   }
@@ -114,16 +114,16 @@ namespace Valuable
   {
     const std::string & cname = value->name();
 
-    container::iterator it = m_children.find(cname);
-    if(it == m_children.end()) {
+    container::iterator it = m_values.find(cname);
+    if(it == m_values.end()) {
       Radiant::error(
-          "HasValues::removeValue # '%s' is not a child of '%s'.",
+          "HasValues::removeValue # '%s' is not a child value of '%s'.",
           cname.c_str(), m_name.c_str());
       return;
     }
 
-    m_children.erase(it);
-    value->m_parent = 0;
+    m_values.erase(it);
+    value->m_host = 0;
   }
 
   bool HasValues::saveToFileXML(const char * filename)
@@ -157,7 +157,7 @@ namespace Valuable
   {
     const char * name;
     if(m_name.empty()) {
-      if(parent()) {
+      if(host()) {
         Radiant::error(
           "HasValues::serialize # attempt to serialize object with no name");
         return archive.emptyElement();
@@ -173,7 +173,7 @@ namespace Valuable
 
     elem.add("type", type());
 
-    for(container::const_iterator it = m_children.begin(); it != m_children.end(); it++) {
+    for(container::const_iterator it = m_values.begin(); it != m_values.end(); it++) {
       ValueObject * vo = it->second;
 
       if (!archive.checkFlag(Archive::ONLY_CHANGED) || vo->isChanged()) {
@@ -216,7 +216,7 @@ namespace Valuable
   void HasValues::debugDump() {
     Radiant::trace(Radiant::DEBUG, "%s {", m_name.c_str());
 
-    for(container::iterator it = m_children.begin(); it != m_children.end(); it++) {
+    for(container::iterator it = m_values.begin(); it != m_values.end(); it++) {
       ValueObject * vo = it->second;
 
       HasValues * hv = dynamic_cast<HasValues *> (vo);
@@ -406,23 +406,23 @@ namespace Valuable
     eventSend(id, tmp);
   }
 
-  void HasValues::childRenamed(const std::string & was, const std::string & now)
+  void HasValues::valueRenamed(const std::string & was, const std::string & now)
   {
     // Check that the value does not exist already
-    iterator it = m_children.find(now);
-    if(it != m_children.end()) {
-      error("HasValues::childRenamed # Child '%s' already exist", now.c_str());
+    iterator it = m_values.find(now);
+    if(it != m_values.end()) {
+      error("HasValues::valueRenamed # Value '%s' already exist", now.c_str());
       return;
     }
 
-    it = m_children.find(was);
-    if(it == m_children.end()) {
-      error("HasValues::childRenamed # No such child: %s", was.c_str());
+    it = m_values.find(was);
+    if(it == m_values.end()) {
+      error("HasValues::valueRenamed # No such value: %s", was.c_str());
       return;
     }
     ValueObject * vo = (*it).second;
-    m_children.erase(it);
-    m_children[now] = vo;
+    m_values.erase(it);
+    m_values[now] = vo;
   }
 
   bool HasValues::readElement(DOMElement )

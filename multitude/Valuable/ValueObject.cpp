@@ -39,32 +39,32 @@ namespace Valuable
   }
 
   ValueObject::ValueObject()
-  : m_parent(0),
+  : m_host(0),
     m_changed(false),
     m_transit(false)
   {}
 
-  ValueObject::ValueObject(HasValues * parent, const std::string & name, bool transit)
-    : m_parent(0),
+  ValueObject::ValueObject(HasValues * host, const std::string & name, bool transit)
+    : m_host(0),
       m_changed(false),
       m_name(name),
       m_transit(transit)
   {
-    if(parent) {
-      parent->addValue(name, this);
+    if(host) {
+      host->addValue(name, this);
 #ifdef MULTI_DOCUMENTER
       doc.push_back(Doc());
       Doc & d = doc.back();
-      d.class_name = Radiant::StringUtils::demangle(typeid(*parent).name());
+      d.class_name = Radiant::StringUtils::demangle(typeid(*host).name());
       d.vo = this;
-      d.obj = parent;
+      d.obj = host;
 #endif
     }
   }
 
   ValueObject::ValueObject(const ValueObject & o)
     : Serializable(), // GCC wants this
-    m_parent(0),
+    m_host(0),
     m_changed(false)
   {
     m_name = o.m_name;
@@ -84,16 +84,16 @@ namespace Valuable
 
   void ValueObject::setName(const std::string & s)
   {
-    if(parent())
-      parent()->childRenamed(m_name, s);
+    if(host())
+      host()->valueRenamed(m_name, s);
 
     m_name = s;
   }
 
   std::string ValueObject::path() const
   {
-    if(m_parent)
-      return m_parent->path() + "/" + m_name;
+    if(m_host)
+      return m_host->path() + "/" + m_name;
 
     return "/" + m_name;
   }
@@ -206,11 +206,11 @@ namespace Valuable
     ChangeMap::addDelete(this);
   }
 
-  void ValueObject::removeParent()
+  void ValueObject::removeHost()
   {
-    if(m_parent) {
-      m_parent->removeValue(this);
-      m_parent = 0;
+    if(m_host) {
+      m_host->removeValue(this);
+      m_host = 0;
     }
   }
 

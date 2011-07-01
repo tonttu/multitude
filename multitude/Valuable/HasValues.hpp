@@ -47,12 +47,12 @@ namespace Valuable
     typedef int64_t Uuid;
 
     HasValues();
-    /** Constructs a new HasValues and adds it under the given parent
-      @param parent parent
+    /** Constructs a new HasValues and adds it under the given host
+      @param host host
       @param name name of the object
       @param transit should the object changes be transmitted
     */
-    HasValues(HasValues * parent, const std::string & name, bool transit = false);
+    HasValues(HasValues * host, const std::string & name, bool transit = false);
     virtual ~HasValues();
 
     /// Adds new ValueObject to the list of values
@@ -75,17 +75,17 @@ namespace Valuable
       std::string rest = name.substr(cut + 1);
 
       if(next == std::string("..")) {
-        if(!m_parent) {
+        if(!m_host) {
           Radiant::error(
-              "HasValues::setValue # node '%s' has no parent", m_name.c_str());
+              "HasValues::setValue # node '%s' has no host", m_name.c_str());
           return false;
         }
 
-        return m_parent->setValue(rest, v);
+        return m_host->setValue(rest, v);
       }
 
-      container::iterator it = m_children.find(next);
-      if(it == m_children.end()) {
+      container::iterator it = m_values.find(next);
+      if(it == m_values.end()) {
         Radiant::error(
             "HasValues::setValue # property '%s' not found", next.c_str());
         return false;
@@ -128,9 +128,9 @@ namespace Valuable
     typedef container::iterator iterator;
 
     /// Returns an iterator to the beginning of the values
-    iterator valuesBegin() { return m_children.begin(); }
+    iterator valuesBegin() { return m_values.begin(); }
     /// Returns an iterator to the end of the values
-    iterator valuesEnd() { return m_children.end(); }
+    iterator valuesEnd() { return m_values.end(); }
 
     /** Add an event listener to this object.
 
@@ -215,10 +215,10 @@ namespace Valuable
   private:
     friend class ValueObject; // So that ValueObject can call the function below.
 
-    void childRenamed(const std::string & was, const std::string & now);
+    void valueRenamed(const std::string & was, const std::string & now);
     void addNews();
 
-    container m_children;
+    container m_values;
 
     class ValuePass {
     public:
