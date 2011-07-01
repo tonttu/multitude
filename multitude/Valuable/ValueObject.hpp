@@ -264,7 +264,7 @@ namespace Valuable
 
     /// Is the value different from the original value
     // use !( == ) instead of != because != isn't always implemented
-    virtual bool isChanged() const { return !(m_value == m_orig); }
+    // virtual bool isChanged() const { return !(m_value == m_orig); }
 
   protected:
     /// The actual value of this object

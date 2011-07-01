@@ -26,6 +26,22 @@
 
 #include <QThread>
 
+#ifdef RADIANT_LINUX
+#include <sys/syscall.h>
+namespace Radiant {
+  int gettid() { return syscall(SYS_gettid); }
+}
+#elif defined(WIN32)
+#include <Windows.h>
+namespace Radiant {
+  int gettid() { return GetCurrentThreadId(); }
+}
+#else
+namespace Radiant {
+  int gettid() { return getpid(); }
+}
+#endif
+
 namespace Radiant {
 
   enum {

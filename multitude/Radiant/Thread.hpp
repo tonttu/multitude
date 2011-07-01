@@ -7,10 +7,10 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef RADIANT_THREAD_HPP
@@ -28,9 +28,14 @@
 
 class QThread;
 
+
 namespace Radiant {
 
   class Mutex;
+
+  /** Returns the current thread id as an integer, that is expected to match the thread id
+      that is shown by "top -H" and other similar tools. */
+  int RADIANT_API gettid();
 
   /// Platform-independent threading
   /** This class is used by inheriting it and overriding the virtual

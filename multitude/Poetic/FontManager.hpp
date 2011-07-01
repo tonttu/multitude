@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Poetic.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Poetic.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 #ifndef POETIC_FONT_MANAGER_HPP
 #define POETIC_FONT_MANAGER_HPP
@@ -36,8 +24,11 @@ namespace Poetic
   {
     DECLARE_SINGLETON(FontManager);
     public:
-      /// Returns a font that matches the given name
-      CPUWrapperFont * getFont(const std::string & name);
+    /// Returns a font that matches the given name
+    CPUWrapperFont * getFont(const std::string & name);
+    /// Returns a default font
+    /** Currently this method tries to return the basic DejaVuSans font. */
+    CPUWrapperFont * getDefaultFont();
 
       /// Locates a file by searching through the FontManager's resource paths
       std::string locate(const std::string & name);

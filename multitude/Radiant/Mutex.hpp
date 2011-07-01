@@ -98,6 +98,46 @@ namespace Radiant {
     Mutex & m_mutex;
   };
 
+  /** A guard class, that does not get disturbed by lack of a mutex.
+
+      If the mutex is NULL, then nothing happens.
+
+   */
+
+  class OptionalMutex : public Patterns::NotCopyable
+  {
+  public:
+    OptionalMutex() : m_mutex(0) {}
+    OptionalMutex(Mutex & mutex) : m_mutex( & mutex)
+    {
+      if(m_mutex)
+        m_mutex->lock();
+    }
+
+    void init(Mutex & mutex)
+    {
+      if(&mutex == m_mutex)
+        return;
+
+      if(m_mutex) {
+        m_mutex->unlock();
+      }
+
+      m_mutex = & mutex;
+
+      if(m_mutex)
+        m_mutex->lock();
+    }
+
+    ~OptionalMutex()
+    {
+      if(m_mutex)
+        m_mutex->unlock();
+    }
+  private:
+    Mutex * m_mutex;
+  };
+
   extern RADIANT_API Mutex s_onceMutex;
 }
 

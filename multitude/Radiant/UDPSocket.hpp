@@ -77,6 +77,8 @@ namespace Radiant
     */
     virtual int write(const void *, int );
 
+    bool setReceiveBufferSize(size_t bytes);
+
   private:
     class D;
     D * m_d;

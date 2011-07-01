@@ -36,7 +36,7 @@ namespace Valuable
       This base class has a list of #Valuable::ValueObject child objects (aka
       member variables) that are named with unique string.
 
-      Deleting the child objects is the responsibility of the child
+      Deleting the child objects is the responsibility of the inherited
       classes, HasValues simply maintains a list of children.
   */
   /// @todo Examples

@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #include "Thread.hpp"
@@ -25,6 +13,22 @@
 #include <unistd.h>
 #include <iostream>
 #include <cassert>
+
+#ifdef RADIANT_LINUX
+#include <sys/syscall.h>
+namespace Radiant {
+  int gettid() { return syscall(SYS_gettid); }
+}
+#elif defined(WIN32)
+#include <Windows.h>
+namespace Radiant {
+  int gettid() { return GetCurrentThreadId(); }
+}
+#else
+namespace Radiant {
+  int gettid() { return getpid(); }
+}
+#endif
 
 namespace Radiant {
 

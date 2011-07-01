@@ -16,7 +16,7 @@
 namespace Luminous {
 
   /** Class for doing key-stone correction when rendering 2D OpenGL
-      graphics. The key-stone matrix is a 4x4 trnasformation matrix
+      graphics. The key-stone matrix is a 4x4 transformation matrix
       that is setup up to transform the corner points of all
       polygons/lines/sprites so that they match some skewed coordinate
       system.

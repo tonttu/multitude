@@ -7,7 +7,7 @@
 #include "Export.hpp"
 #include "RGBA.hpp"
 
-#include <Nimble/Vector2.hpp>
+#include <Nimble/Vector4.hpp>
 
 #include <cassert>
 
@@ -287,6 +287,34 @@ namespace Radiant {
           get(left, bot) * wxl * wyb + get(right, bot) * wxr * wyb;
     }
 
+    /** Interpolates an element from the grid values.
+        This function requires that the grid template type can be multiplied from the right
+        with a floating point number. */
+    inline T getInterpolatedSafe(const Nimble::Vector2f & v)
+    {
+      int left = v.x;
+      int top = v.y;
+      int right = left+1;
+      int bot = top + 1;
+
+      float wxr = v.x - left;
+      float wyb = v.y - top;
+
+      float wxl = 1.0f - wxr;
+      float wyt = 1.0f - wyb;
+
+      int wmax = width() - 1;
+      left = Nimble::Math::Clamp(left, 0, wmax);
+      right = Nimble::Math::Clamp(right, 0, wmax);
+
+      int hmax = height() - 1;
+      top = Nimble::Math::Clamp(top, 0, hmax);
+      bot = Nimble::Math::Clamp(bot, 0, hmax);
+
+      return get(left, top) * wxl * wyt + get(right, top) * wxr * wyt +
+          get(left, bot) * wxl * wyb + get(right, bot) * wxr * wyb;
+    }
+
     /// Return a pointer to one line (aka row)
     inline T * line(int y)
     { return & this->m_data[this->m_width * y]; }
@@ -315,6 +343,8 @@ namespace Radiant {
 
     /// Number of elements
     inline unsigned size()   const { return this->m_width * this->m_height; }
+    /// Number of bytes
+    inline unsigned sizeBytes() const { return this->size() * sizeof(T); }
     /// Returns the dimensions of the grid
     inline Nimble::Vector2i geometry() const
     { return Nimble::Vector2i(this->m_width, this->m_height); }
@@ -345,7 +375,7 @@ namespace Radiant {
   void GridT<T, Base>::fill(const T & val,
                 int xlow, int ylow, int width, int height)
   {
-    for(int y = ylow; y <= ylow + height; y++) {
+    for(int y = ylow; y < (ylow + height); y++) {
       T * dest = & get(xlow, y);
       for(T * sentinel = dest + width; dest < sentinel; dest++) {
     *dest = val;
@@ -363,6 +393,11 @@ namespace Radiant {
   /// A grid of 16-bit values with memory management
   typedef GridT<uint16_t, GridMemT<uint16_t> >   MemGrid16u;
 
+  /// A grid of 32-bit values without memory management
+  typedef GridT<uint32_t, GridNoMemT<uint32_t> > PtrGrid32u;
+  /// A grid of 32-bit values with memory management
+  typedef GridT<uint32_t, GridMemT<uint32_t> >   MemGrid32u;
+
   /// A grid of floats without memory management
   typedef GridT<float, GridNoMemT<float> > PtrGrid32f;
   /// A grid of floats with memory management
@@ -372,6 +407,16 @@ namespace Radiant {
   typedef GridT<Nimble::Vector2, GridNoMemT<Nimble::Vector2> > PtrGridVector2;
   /// A grid of Vector2s with memory management
   typedef GridT<Nimble::Vector2, GridMemT<Nimble::Vector2> >   MemGridVector2;
+
+  /// A grid of Vector3s without memory management
+  typedef GridT<Nimble::Vector3, GridNoMemT<Nimble::Vector3> > PtrGridVector3;
+  /// A grid of Vector3s with memory management
+  typedef GridT<Nimble::Vector3, GridMemT<Nimble::Vector3> >   MemGridVector3;
+
+  /// A grid of Vector4s without memory management
+  typedef GridT<Nimble::Vector4, GridNoMemT<Nimble::Vector4> > PtrGridVector4;
+  /// A grid of Vector4s with memory management
+  typedef GridT<Nimble::Vector4, GridMemT<Nimble::Vector4> >   MemGridVector4;
 
   /// A grid of color values without memory management
   typedef GridT<RGBAu8, GridNoMemT<RGBAu8> > PtrGridRGBAu8;
@@ -386,11 +431,20 @@ namespace Radiant {
         template class GridT<uint16_t, GridNoMemT<uint16_t>>;
         template class GridT<uint16_t, GridMemT<uint16_t>>;
 
+        template class GridT<uint32_t, GridNoMemT<uint32_t>>;
+        template class GridT<uint32_t, GridMemT<uint32_t>>;
+
         template class GridT<float, GridNoMemT<float>>;
         template class GridT<float, GridMemT<float>>;
 
         template class GridT<Nimble::Vector2, GridNoMemT<Nimble::Vector2>>;
         template class GridT<Nimble::Vector2, GridMemT<Nimble::Vector2>>;
+
+        template class GridT<Nimble::Vector3, GridNoMemT<Nimble::Vector3>>;
+        template class GridT<Nimble::Vector3, GridMemT<Nimble::Vector3>>;
+
+        template class GridT<Nimble::Vector4, GridNoMemT<Nimble::Vector4>>;
+        template class GridT<Nimble::Vector4, GridMemT<Nimble::Vector4>>;
 
         template class GridT<RGBAu8, GridNoMemT<RGBAu8>>;
         template class GridT<RGBAu8, GridMemT<RGBAu8>>;

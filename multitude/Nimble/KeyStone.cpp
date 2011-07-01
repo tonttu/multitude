@@ -261,6 +261,14 @@ namespace Nimble {
     }
   }
 
+  void KeyStone::getCornerOrdering(int * indices)
+  {
+    indices[0] = closestCorner(Nimble::Vector2(0, 0));
+    indices[1] = closestCorner(Nimble::Vector2(m_width, 0));
+    indices[2] = closestCorner(Nimble::Vector2(m_width, m_height));
+    indices[3] = closestCorner(Nimble::Vector2(0, m_height));
+  }
+
   void KeyStone::addExtra(int index, float v)
   {
     m_extra[index] += v;

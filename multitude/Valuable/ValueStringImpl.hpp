@@ -157,7 +157,6 @@ namespace Valuable
   }
 
   template <>
-      /// Converts the string to float
   float ValueStringT<std::wstring>::asFloat(bool * const ok) const
   {
     if(ok) *ok = true;
@@ -176,8 +175,8 @@ namespace Valuable
     return atoi(tmp.c_str());
   }
 
-  template<>
   /// Converts the wide-byte string to ascii string
+  template<>
   std::string ValueStringT<std::wstring>::asString(bool * const ok) const
   {
     if(ok) *ok = true;
@@ -186,8 +185,8 @@ namespace Valuable
     return tmp;
   }
 
-  template<>
   /// Converts the wide-byte string to ascii string
+  template<>
   std::wstring ValueStringT<std::wstring>::asWString(bool * const ok) const
   {
     if(ok) *ok = true;

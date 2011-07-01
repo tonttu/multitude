@@ -537,7 +537,7 @@ namespace Radiant {
 
     const char * source = & m_buf[m_current];
 
-    skipParameter(marker);
+    m_current += recv;
 
     memcpy( ptr, source, Nimble::Math::Min(n, recv));
 

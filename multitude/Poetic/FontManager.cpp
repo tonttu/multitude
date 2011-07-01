@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Poetic.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Poetic.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #include "FontManager.hpp"
@@ -30,7 +18,7 @@ namespace Poetic
 
     m_locator.addPath("../../share/MultiTouch/Fonts");
 
-    // Add platform specific paths 
+    // Add platform specific paths
     m_locator.addPath(
 #ifdef WIN32
     /// @todo Windows might not be installed on drive C...
@@ -74,18 +62,18 @@ namespace Poetic
       const std::string path = m_locator.locate(name);
       if(path.empty()) {
         Radiant::error("FontManager::getFont # failed to locate font \"%s\"",
-		       name.c_str());
+               name.c_str());
         return 0;
       }
-  
+
       // Need to create a new managed font
       mfont = new CPUManagedFont();
       m_managedFonts[name] = mfont;
 
       if(!mfont->load(path.c_str())) {
         Radiant::error(
-		       "FontManager::getFont # failed to load '%s'",
-		       path.c_str());
+               "FontManager::getFont # failed to load '%s'",
+               path.c_str());
         return 0;
       }
     }
@@ -93,6 +81,11 @@ namespace Poetic
       mfont = it->second;
 
     return new CPUWrapperFont(mfont);
+  }
+
+  CPUWrapperFont * FontManager::getDefaultFont()
+  {
+    return getFont("DejaVuSans.ttf");
   }
 
   std::string FontManager::locate(const std::string & name)
