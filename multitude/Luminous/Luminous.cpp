@@ -110,10 +110,13 @@ namespace Luminous
     // Make sure Qt plugins are found
     /// @todo does this work when the SDK is not installed? Where does find the plugins?
     char* dir = getenv("CORNERSTONE_ROOT");
+    std::string pluginPath;
     if(dir) {
-      std::string pluginPath = std::string(dir) + std::string("\\bin\\plugins");
-      QCoreApplication::addLibraryPath(pluginPath.c_str());
+      pluginPath = std::string(dir) + std::string("\\bin\\plugins");
+    } else {
+      pluginPath = std::string("..\\lib\\Plugins");
     }
+    QCoreApplication::addLibraryPath(pluginPath.c_str());
 #endif
 
 #ifdef USE_QT45
