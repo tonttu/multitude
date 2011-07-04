@@ -138,12 +138,16 @@ namespace Luminous
       bool isPowerOfTwo = !((h - 1) & h);
 
       if(!isPowerOfTwo) {
-        cerr << "ERROR: non-power-of-two textures are not supported" << endl;
+        error("ERROR: non-power-of-two textures are not supported");
         return false;
       }
     }
 
     long used = consumesBytes();
+
+    long & available = UploadLimiter::available();
+
+    if(available < used) return false;
 
     m_haveMipmaps = buildMipmaps;
     m_width = 1;
@@ -175,6 +179,7 @@ namespace Luminous
                    srcFormat.layout(), srcFormat.type(), data);
 
     long uses = consumesBytes();
+    available -= uses;
 
     changeByteConsumption(used, uses);
 
@@ -281,12 +286,16 @@ namespace Luminous
       bool isPowerOfTwo2 = !((h - 1) & h);
 
       if(!(isPowerOfTwo1 && isPowerOfTwo2)) {
-        cerr << "ERROR: non-power-of-two textures are not supported" << endl;
+        error("ERROR: non-power-of-two textures are not supported");
         return false;
       }
     }
 
     long used = consumesBytes();
+
+    long & available = UploadLimiter::available();
+
+    if(available < used) return false;
 
     m_internalFormat = internalFormat;
     m_width = w;
@@ -379,6 +388,7 @@ namespace Luminous
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, whitef);
 
     long uses = consumesBytes();
+    available -= uses;
 
 
     if(data)
@@ -496,7 +506,7 @@ namespace Luminous
       bool isPowerOfTwo2 = !((h - 1) & h);
 
       if(!(isPowerOfTwo1 && isPowerOfTwo2)) {
-        cerr << "ERROR: non-power-of-two textures are not supported" << endl;
+        error("ERROR: non-power-of-two textures are not supported");
         return 0;
       }
     }
