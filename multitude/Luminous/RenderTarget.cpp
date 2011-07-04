@@ -132,7 +132,7 @@ namespace Luminous
                   (int) extent, (int) (1 << nextHigherPowerOfTwo(extent)));
 
     // Use power-of-two textures
-    extent = 1 << nextHigherPowerOfTwo(extent);
+    extent = 1UL << nextHigherPowerOfTwo(extent);
 
     std::shared_ptr<RenderTargetState> holder(new RenderTargetState());
 
