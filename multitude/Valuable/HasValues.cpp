@@ -155,16 +155,9 @@ namespace Valuable
 
   ArchiveElement & HasValues::serialize(Archive & archive) const
   {
-    const char * name;
-    if(m_name.empty()) {
-      if(host()) {
-        Radiant::error(
-          "HasValues::serialize # attempt to serialize object with no name");
-        return archive.emptyElement();
-      } else name = "ValueObject";
-    } else name = m_name.c_str();
+    const char * n = m_name.empty() ? "HasValues" : m_name.c_str();
 
-    ArchiveElement & elem = archive.createElement(name);
+    ArchiveElement & elem = archive.createElement(n);
     if(elem.isNull()) {
       Radiant::error(
           "HasValues::serialize # failed to create element");
