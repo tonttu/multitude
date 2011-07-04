@@ -52,7 +52,7 @@ namespace Valuable
       @param name name of the object
       @param transit should the object changes be transmitted
     */
-    HasValues(HasValues * host, const std::string & name, bool transit = false);
+    HasValues(HasValues * host, const std::string & name = "", bool transit = false);
     virtual ~HasValues();
 
     /// Adds new ValueObject to the list of values
