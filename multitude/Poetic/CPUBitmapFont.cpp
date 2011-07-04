@@ -35,6 +35,7 @@ namespace Poetic
   
   GPUTextureFont * CPUBitmapFont::createGPUFont()
   {
+    if(!m_face->freetype()) return 0;
     return new GPUTextureFont(this);
   }
 
