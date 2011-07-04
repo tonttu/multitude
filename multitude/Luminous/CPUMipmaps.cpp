@@ -319,7 +319,7 @@ namespace Luminous {
 
     // Limit how many pixels we can upload immediately
     /// @todo this should be a global per frame limit in bytes - see UploadLimiter::available
-    const size_t instantUploadPixelLimit = 1.5e6;
+    const size_t instantUploadPixelLimit = Luminous::UploadLimiter::instance().available();
 
     // Upload the whole texture at once if possible
     const size_t imagePixels = img->width() * img->height();
