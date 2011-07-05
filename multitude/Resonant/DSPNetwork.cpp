@@ -307,7 +307,7 @@ namespace Resonant {
     m_frames += framesPerBuffer;
 
     if(m_frames < 40000) {
-      info("DSPNetwork::callback # %lu", framesPerBuffer);
+      debugResonant("DSPNetwork::callback # %lu", framesPerBuffer);
     }
 
     return paContinue;
