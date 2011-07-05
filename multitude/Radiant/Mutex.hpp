@@ -24,6 +24,10 @@
 #include <intrin.h> // For _ReadBarrier/_WriteBarrier
 #endif
 
+#if defined(__APPLE__)
+#include <libkern/OSAtomic.h>
+#endif
+
 namespace Radiant {
 
   /** Mutex class. The mutex must be initialized explicitly. */
@@ -196,6 +200,23 @@ namespace Radiant {
     if(!s_multi_once) {
 #define MULTI_ONCE_END                                            \
       _WriteBarrier();                                            \
+      s_multi_once = true;                                        \
+    }                                                             \
+  }
+#elif defined(__APPLE__)
+#define MULTI_ONCE_BEGIN                                          \
+  static bool s_multi_once = false;                               \
+  /* hardware memory barrier */                                   \
+  OSMemoryBarrier();                                              \
+  /* compiler memory barrier */                                   \
+  /** @todo is this implicit when using __sync_synchronize()? */  \
+  __asm __volatile ("":::"memory");                               \
+  if(!s_multi_once) {                                             \
+    Radiant::Guard g(Radiant::s_onceMutex);                       \
+    if(!s_multi_once) {
+#define MULTI_ONCE_END                                            \
+      OSMemoryBarrier();                                          \
+      __asm __volatile ("":::"memory");                           \
       s_multi_once = true;                                        \
     }                                                             \
   }
