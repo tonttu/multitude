@@ -69,15 +69,13 @@ namespace Radiant
     if(m_filterFlags & Files) ff |= QDir::Files;
     if(m_filterFlags & NoDotAndDotDot) ff |= QDir::NoDotAndDotDot;
     if(m_filterFlags & Hidden) ff |= QDir::Hidden;
-    if(m_filterFlags & AllEntries) ff |= QDir::AllEntries;
-
+ 
     QDir dir(m_path.c_str(), "", sf, ff);
 
     // Add entries
     QStringList list = dir.entryList();
     for(int i = 0; i < list.size(); i++) {
       QString entry = list.at(i);
-
       m_entries.push_back(entry.toAscii().data());
     }
 

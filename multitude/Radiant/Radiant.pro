@@ -72,6 +72,7 @@ SOURCES += ColorUtils.cpp
 SOURCES += ConfigReader.cpp
 SOURCES += DateTime.cpp
 SOURCES += DirectoryCommon.cpp
+SOURCES += DirectoryQt.cpp
 SOURCES += FileUtils.cpp
 SOURCES += ImageConversion.cpp
 SOURCES += Log.cpp
@@ -107,7 +108,6 @@ macx {
 }
 unix {
     HEADERS += VideoCamera1394.hpp
-    SOURCES += DirectoryPosix.cpp
     SOURCES += SerialPortPosix.cpp
     SOURCES += TCPServerSocketPosix.cpp
     SOURCES += TCPSocketPosix.cpp
@@ -136,7 +136,6 @@ win32 {
     }
     SOURCES += PlatformUtilsWin32.cpp
     SOURCES += SerialPortWin32.cpp
-    SOURCES += DirectoryQt.cpp
     SOURCES += TCPServerSocketPosix.cpp
     SOURCES += TCPSocketPosix.cpp
     SOURCES += UDPSocketPosix.cpp
