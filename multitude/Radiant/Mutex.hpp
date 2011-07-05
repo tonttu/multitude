@@ -141,8 +141,31 @@ namespace Radiant {
   extern RADIANT_API Mutex s_onceMutex;
 }
 
+/**
+ * Implementation of Double-Checked Locking pattern.
+ *
+ * Example usage:
+ * @code
+ *   void doStuff() {
+ *     MULTI_ONCE(initializeStuff();)
+ *     useStuff();
+ *   }
+ * @endcode
+ *
+ * Another example:
+ * @code
+ *   void doStuff() {
+ *     MULTI_ONCE_BEGIN
+ *       initializeStuff();
+ *       initializeSomeMoreStuff();
+ *       sentSend("initialized");
+ *     MULTI_ONCE_END
+ *     useStuff();
+ *   }
+ * @endcode
+ */
 #ifdef __GLIBC__
-#define MULTI_ONCE(code)                                          \
+#define MULTI_ONCE_BEGIN                                          \
   static bool s_multi_once = false;                               \
   /* hardware memory barrier */                                   \
   __sync_synchronize();                                           \
@@ -151,27 +174,32 @@ namespace Radiant {
   __asm __volatile ("":::"memory");                               \
   if(!s_multi_once) {                                             \
     Radiant::Guard g(Radiant::s_onceMutex);                       \
-    if(!s_multi_once) {                                           \
-      { code }                                                    \
+    if(!s_multi_once) {
+#define MULTI_ONCE_END                                            \
       __sync_synchronize();                                       \
       __asm __volatile ("":::"memory");                           \
       s_multi_once = true;                                        \
     }                                                             \
   }
 #elif defined(_MSC_VER)
-#define MULTI_ONCE(code)                                          \
+#define MULTI_ONCE_BEGIN                                          \
   /* s_multi_once is volatile, so msvc won't reorder stuff */     \
   static bool volatile s_multi_once = false;                      \
   /* hardware memory barrier */                                   \
   _ReadBarrier();                                                 \
   if(!s_multi_once) {                                             \
     Radiant::Guard g(Radiant::s_onceMutex);                       \
-    if(!s_multi_once) {                                           \
-      { code }                                                    \
+    if(!s_multi_once) {
+#define MULTI_ONCE_END                                            \
       _WriteBarrier();                                            \
       s_multi_once = true;                                        \
     }                                                             \
   }
 #endif
+
+#define MULTI_ONCE(code)                                          \
+  MULTI_ONCE_BEGIN                                                \
+    code                                                          \
+  MULTI_ONCE_END
 
 #endif
