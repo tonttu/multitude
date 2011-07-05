@@ -43,7 +43,9 @@ namespace Luminous
   using namespace std;
   using namespace Radiant;
 
-  UploadLimiter::UploadLimiter() : m_frame(0), m_frameLimit(1.5e6*60*4),
+  // tests show that 1.5GB/s is a pretty good guess for a lower limit of
+  // upload rate with 500x500 RGBA images
+  UploadLimiter::UploadLimiter() : m_frame(0), m_frameLimit(1.5*(1<<30)/60.0),
     m_inited(false)
   {
     eventAddListen("frame");
