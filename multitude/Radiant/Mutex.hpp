@@ -20,6 +20,10 @@
 
 #include <Patterns/NotCopyable.hpp>
 
+#if defined(_MSC_VER)
+#include <intrin.h> // For _ReadBarrier/_WriteBarrier
+#endif
+
 namespace Radiant {
 
   /** Mutex class. The mutex must be initialized explicitly. */
