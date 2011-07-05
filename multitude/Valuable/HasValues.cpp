@@ -234,8 +234,14 @@ namespace Valuable
     vp.m_to = to;
     vp.m_frame = m_frame;
 
-    if (m_eventNames.find(from) == m_eventNames.end()) {
-      error("HasValues::eventAddListener # Adding listener to unexistent event '%s'", from);
+    if(m_eventSendNames.find(from) == m_eventSendNames.end()) {
+      warning("HasValues::eventAddListener # Adding listener to unexistent event '%s'", from);
+    }
+
+    if(obj->m_eventListenNames.find(to) == obj->m_eventListenNames.end()) {
+      std::string klass = Radiant::StringUtils::demangle(typeid(*obj).name());
+      warning("HasValues::eventAddListener # %s (%s %p) doesn't accept event '%s'",
+              klass.c_str(), obj->name().c_str(), obj, to);
     }
 
     if(defaultData)
@@ -328,6 +334,15 @@ namespace Valuable
       // info("HasValues::processMessage # Sending message \"%s\" to %s",
       // id + skip, typeid(*vo).name());
       vo->processMessage(id + skip, data);
+    } else {
+      if(m_eventListenNames.find(id) == m_eventListenNames.end()) {
+        /*warning("HasValues::processMessage # %s (%s %p) doesn't accept event '%s'",
+                  klass.c_str(), name().c_str(), this, id);*/
+      } else {
+        std::string klass = Radiant::StringUtils::demangle(typeid(*this).name());
+        warning("HasValues::processMessage # %s (%s %p): unhandled event '%s'",
+                  klass.c_str(), name().c_str(), this, id);
+      }
     }
   }
 
@@ -346,11 +361,23 @@ namespace Valuable
     return m_id;
   }
 
-  void HasValues::eventAdd(const std::string & id)
+  void HasValues::eventAddSend(const std::string & id)
   {
-    if (m_eventNames.find(id) != m_eventNames.end()) {
-      error("HasValues::eventAdd # Trying to register event '%s' that is already registered", id.c_str());
-    } else m_eventNames.insert(id);
+    if (m_eventSendNames.find(id) != m_eventSendNames.end()) {
+      warning("HasValues::eventAddSend # Trying to register event '%s' that is already registered", id.c_str());
+    } else m_eventSendNames.insert(id);
+  }
+
+  void HasValues::eventAddListen(const std::string & id)
+  {
+    if (m_eventListenNames.find(id) != m_eventListenNames.end()) {
+      warning("HasValues::eventAddListen # Trying to register duplicate event handler for event '%s'", id.c_str());
+    } else m_eventListenNames.insert(id);
+  }
+
+  bool HasValues::acceptsEvent(const std::string & id) const
+  {
+    return m_eventListenNames.find(id) != m_eventListenNames.end();
   }
 
   void HasValues::eventSend(const std::string & id, Radiant::BinaryData & bd)
@@ -363,7 +390,7 @@ namespace Valuable
     if(!id || !m_eventsEnabled)
       return;
 
-    if (m_eventNames.find(id) == m_eventNames.end()) {
+    if (m_eventSendNames.find(id) == m_eventSendNames.end()) {
       error("HasValues::eventSend # Sending unknown event '%s'", id);
     }
 

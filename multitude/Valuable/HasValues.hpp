@@ -198,10 +198,18 @@ namespace Valuable
     Uuid id() const;
 
     /// Registers a new event this class can send with eventSend
-    void eventAdd(const std::string & id);
+    void eventAddSend(const std::string & id);
+
+    /// Registers a new event that this class handles in processMessage
+    void eventAddListen(const std::string & id);
+
+    /// Returns true if this object accepts event 'id' in processMessage
+    bool acceptsEvent(const std::string & id) const;
 
     /// Returns set of all registered events
-    const std::set<std::string> & eventNames() const { return m_eventNames; }
+    const std::set<std::string> & eventSendNames() const { return m_eventSendNames; }
+
+    const std::set<std::string> & eventListenNames() const { return m_eventListenNames; }
 
   protected:
 
@@ -245,7 +253,8 @@ namespace Valuable
     // For invalidating the too new ValuePass objects
     int m_frame;
 
-    std::set<std::string> m_eventNames;
+    std::set<std::string> m_eventSendNames;
+    std::set<std::string> m_eventListenNames;
   };
 
 }
