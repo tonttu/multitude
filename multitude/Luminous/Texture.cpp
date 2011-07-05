@@ -35,7 +35,10 @@ namespace Luminous
   using namespace std;
   using namespace Radiant;
 
-  UploadLimiter::UploadLimiter() : m_frame(0), m_frameLimit(1.5e6*60*4) {}
+  UploadLimiter::UploadLimiter() : m_frame(0), m_frameLimit(1.5e6*60*4)
+  {
+    eventAddListen("frame");
+  }
 
   long & UploadLimiter::available()
   {
