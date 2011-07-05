@@ -29,27 +29,34 @@
 #include <Radiant/Platform.hpp>
 #include <Radiant/Thread.hpp>
 
+#include <limits>
+
+namespace
+{
+  static RADIANT_TLS(int) t_frame(0);
+  static RADIANT_TLS(long) t_available(0);
+  static RADIANT_TLS(bool) t_enabled(false);
+}
+
 namespace Luminous
 {
-
   using namespace std;
   using namespace Radiant;
 
-  UploadLimiter::UploadLimiter() : m_frame(0), m_frameLimit(1.5e6*60*4)
+  UploadLimiter::UploadLimiter() : m_frame(0), m_frameLimit(1.5e6*60*4),
+    m_inited(false)
   {
     eventAddListen("frame");
   }
 
   long & UploadLimiter::available()
   {
-    static RADIANT_TLS(int) t_frame(0);
-    static RADIANT_TLS(long) t_available(0);
-
     UploadLimiter & i = instance();
     if(t_frame != i.m_frame) {
       t_frame = i.m_frame;
       t_available = i.m_frameLimit;
     }
+    if(!i.m_inited || !t_enabled) t_available = std::numeric_limits<long>::max();
     return t_available;
   }
 
@@ -68,14 +75,28 @@ namespace Luminous
     instance().m_frameLimit = limit;
   }
 
+  void UploadLimiter::setEnabledForCurrentThread(bool v)
+  {
+    t_enabled = v;
+  }
+
+  bool UploadLimiter::enabledForCurrentThread()
+  {
+    return t_enabled;
+  }
+
+
   void UploadLimiter::processMessage(const char * type, Radiant::BinaryData &)
   {
-    if(strcmp(type, "frame") == 0) ++m_frame;
+    if(strcmp(type, "frame") == 0) {
+      m_inited = true;
+      ++m_frame;
+    }
   }
 
   UploadLimiter & UploadLimiter::instance()
   {
-    static UploadLimiter s_limiter;
+    static Luminous::UploadLimiter s_limiter;
     return s_limiter;
   }
 
