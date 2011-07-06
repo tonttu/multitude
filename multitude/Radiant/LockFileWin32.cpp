@@ -11,12 +11,12 @@ namespace Radiant
   public:
     LockFile_Impl(const char * filename)
     {
-      m_fd = CreateFile(filename, GENERIC_READ, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+      m_fd = CreateFileA(filename, GENERIC_READ, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     }
 
     ~LockFile_Impl()
     {
-      CloseFile(m_fd);
+      CloseHandle(m_fd);
     }
 
     bool isLocked() const
