@@ -31,11 +31,12 @@ namespace Radiant
     NamedSemaphore_Impl(const char * name, int locks)
       : m_name(name)
       , m_sem(NULL)
+      , m_locked(false)
     {
       assert(locks > 0);
 
       // acquire a semaphore
-      m_sem = sem_open(name, O_CREAT);
+      m_sem = sem_open(name, O_CREAT, 00777, locks);
       assert(m_sem != SEM_FAILED);
 
       // Lock automatically
@@ -53,13 +54,14 @@ namespace Radiant
       ts.tv_sec = 0;
       ts.tv_nsec = 0;
 
-      m_locked = (sem_timedwait(m_sem, &ts) == 0);
+      if (m_sem != NULL)
+        m_locked = (sem_timedwait(m_sem, &ts) == 0);
       return m_locked;
     }
 
     void unlock()
     {
-      if (sem_post(m_sem) != 0)
+      if (m_sem && sem_post(m_sem) != 0)
         Radiant::error("Failed to release named semaphore %s", m_name.c_str());
     }
 
