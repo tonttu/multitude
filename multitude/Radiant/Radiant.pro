@@ -21,6 +21,7 @@ HEADERS += Directory.hpp
 HEADERS += Export.hpp
 HEADERS += FileUtils.hpp
 HEADERS += Functional.hpp
+HEADERS += NamedSemaphore.hpp
 HEADERS += Grid.hpp
 HEADERS += ImageConversion.hpp
 HEADERS += IODefs.hpp
@@ -107,6 +108,7 @@ macx {
     LIBS += -framework,CoreFoundation
 }
 unix {
+    SOURCES += NamedSemaphorePosix.cpp
     HEADERS += VideoCamera1394.hpp
     SOURCES += SerialPortPosix.cpp
     SOURCES += TCPServerSocketPosix.cpp
@@ -134,6 +136,7 @@ win32 {
         SOURCES += VideoCameraCMU.cpp
         LIBS += 1394camera.lib
     }
+    SOURCES += NamedSemaphoreWin32.cpp
     SOURCES += PlatformUtilsWin32.cpp
     SOURCES += SerialPortWin32.cpp
     SOURCES += TCPServerSocketPosix.cpp
