@@ -21,12 +21,13 @@ HEADERS += Directory.hpp
 HEADERS += Export.hpp
 HEADERS += FileUtils.hpp
 HEADERS += Functional.hpp
-HEADERS += NamedSemaphore.hpp
 HEADERS += Grid.hpp
 HEADERS += ImageConversion.hpp
 HEADERS += IODefs.hpp
+HEADERS += LockFile.hpp
 HEADERS += Log.hpp
 HEADERS += MemCheck.hpp
+HEADERS += NamedSemaphore.hpp
 HEADERS += Mutex.hpp
 HEADERS += Platform.hpp
 HEADERS += PlatformUtils.hpp
@@ -118,6 +119,7 @@ unix {
     SOURCES += ConditionPt.cpp
     SOURCES += MutexPt.cpp
     SOURCES += ThreadPt.cpp
+    SOURCES += LockFilePosix.cpp
     LIBS += -lpthread \
         $$LIB_RT \
         -ldl
@@ -145,6 +147,7 @@ win32 {
     SOURCES += ConditionQt.cpp
     SOURCES += MutexQt.cpp
     SOURCES += ThreadQt.cpp
+    SOURCES += LockFileWin32.cpp
     LIBS += Ws2_32.lib \
         ShLwApi.lib \
         shell32.lib \

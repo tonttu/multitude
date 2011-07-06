@@ -36,7 +36,7 @@ namespace Radiant
       assert(locks > 0);
 
       // acquire a semaphore
-      m_sem = sem_open(name, O_CREAT, 00777, locks);
+      m_sem = sem_open(name, O_CREAT, 00644, locks);
       assert(m_sem != SEM_FAILED);
 
       // Lock automatically
@@ -45,18 +45,17 @@ namespace Radiant
 
     ~NamedSemaphore_Impl()
     {
-      unlock();
+      if (m_sem)
+      {
+        unlock();
+        sem_close(m_sem);
+        sem_unlink(m_name.c_str());
+      }
     }
 
     bool lock()
     {
-      timespec ts;
-      ts.tv_sec = 0;
-      ts.tv_nsec = 0;
-
-      if (m_sem != NULL)
-        m_locked = (sem_timedwait(m_sem, &ts) == 0);
-      return m_locked;
+      return (m_sem && sem_trywait(m_sem) == 0);
     }
 
     void unlock()
@@ -67,7 +66,10 @@ namespace Radiant
 
     bool isLocked() const
     {
-      return m_locked;
+      int value;
+      return
+        sem_getvalue(m_sem, &value) == 0 &&
+        value == 0;
     }
 
   private:
