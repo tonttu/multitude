@@ -30,6 +30,7 @@ namespace Radiant
   public:
     NamedSemaphore_Impl(const char * name, int locks)
       : m_name(name)
+      , m_sem(NULL)
     {
       assert(locks > 0);
 
@@ -50,7 +51,7 @@ namespace Radiant
     {
       timespec ts;
       ts.tv_sec = 0;
-      ts.tv_usec = 0;
+      ts.tv_nsec = 0;
 
       m_locked = (sem_timedwait(m_sem, &ts) == 0);
       return m_locked;
@@ -68,7 +69,7 @@ namespace Radiant
     }
 
   private:
-    sem_t m_sem;
+    sem_t *m_sem;
     bool m_locked;
     std::string m_name;
   };
