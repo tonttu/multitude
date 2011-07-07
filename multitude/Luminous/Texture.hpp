@@ -84,7 +84,7 @@ namespace Luminous
       glBindTexture(TextureType, m_textureId);
     }
 
-    /** Bind this texture to the currently active tecture unit. */
+    /** Bind this texture to the currently active texture unit. */
     void bind()
     {
       allocate();
@@ -202,7 +202,7 @@ namespace Luminous
     bool loadImage(const Luminous::Image & image, bool buildMipmaps = true, int internalFormat = 0);
     bool loadImage(const Luminous::CompressedImage & image);
 
-    /// Load the texture from from raw data, provided by the user
+    /// Load the texture from raw data, provided by the user
     bool loadBytes(GLenum internalFormat, int w, int h,
                    const void* data,
                    const PixelFormat& srcFormat,
