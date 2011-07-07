@@ -45,6 +45,9 @@ namespace Luminous
     if(size == m_tex.size())
       return;
 
+    GLint textureId = 0;
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureId);
+
     m_tex.bind();
     m_tex.setWidth(size.x);
     m_tex.setHeight(size.y);
@@ -55,6 +58,8 @@ namespace Luminous
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // <- essential on Nvidia
+
+    glBindTexture(GL_TEXTURE_2D, textureId);
   }
 
   void RenderContext::FBOPackage::attach()
