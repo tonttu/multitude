@@ -1,3 +1,6 @@
+/* COPYRIGHT
+ */
+
 #include "LockFile.hpp"
 #include <sys/file.h>
 #include <unistd.h>

@@ -1,3 +1,6 @@
+/* COPYRIGHT
+ */
+
 #include "LockFile.hpp"
 
 #define NOMINMAX

@@ -1,18 +1,5 @@
 /* COPYRIGHT
- *
- * This file is part of MultiWidgets.
- *
- * Copyright: MultiTouch Oy, Finland, http://multitouch.fi
- *
- * All rights reserved, 2007-2010
- *
- * You may use this file only for purposes for which you have a
- * specific, written permission from MultiTouch Oy.
- *
- * See file "MultiWidgets.hpp" for authors and more details.
- *
  */
-
 #include "NamedSemaphore.hpp"
 #include "Trace.hpp"
 
