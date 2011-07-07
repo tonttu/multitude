@@ -24,8 +24,10 @@ HEADERS += Functional.hpp
 HEADERS += Grid.hpp
 HEADERS += ImageConversion.hpp
 HEADERS += IODefs.hpp
+HEADERS += LockFile.hpp
 HEADERS += Log.hpp
 HEADERS += MemCheck.hpp
+HEADERS += NamedSemaphore.hpp
 HEADERS += Mutex.hpp
 HEADERS += Platform.hpp
 HEADERS += PlatformUtils.hpp
@@ -72,6 +74,7 @@ SOURCES += ColorUtils.cpp
 SOURCES += ConfigReader.cpp
 SOURCES += DateTime.cpp
 SOURCES += DirectoryCommon.cpp
+SOURCES += DirectoryQt.cpp
 SOURCES += FileUtils.cpp
 SOURCES += ImageConversion.cpp
 SOURCES += Log.cpp
@@ -106,8 +109,8 @@ macx {
     LIBS += -framework,CoreFoundation
 }
 unix {
+    SOURCES += NamedSemaphorePosix.cpp
     HEADERS += VideoCamera1394.hpp
-    SOURCES += DirectoryPosix.cpp
     SOURCES += SerialPortPosix.cpp
     SOURCES += TCPServerSocketPosix.cpp
     SOURCES += TCPSocketPosix.cpp
@@ -116,6 +119,7 @@ unix {
     SOURCES += ConditionPt.cpp
     SOURCES += MutexPt.cpp
     SOURCES += ThreadPt.cpp
+    SOURCES += LockFilePosix.cpp
     LIBS += -lpthread \
         $$LIB_RT \
         -ldl
@@ -134,15 +138,16 @@ win32 {
         SOURCES += VideoCameraCMU.cpp
         LIBS += 1394camera.lib
     }
+    SOURCES += NamedSemaphoreWin32.cpp
     SOURCES += PlatformUtilsWin32.cpp
     SOURCES += SerialPortWin32.cpp
-    SOURCES += DirectoryQt.cpp
     SOURCES += TCPServerSocketPosix.cpp
     SOURCES += TCPSocketPosix.cpp
     SOURCES += UDPSocketPosix.cpp
     SOURCES += ConditionQt.cpp
     SOURCES += MutexQt.cpp
     SOURCES += ThreadQt.cpp
+    SOURCES += LockFileWin32.cpp
     LIBS += Ws2_32.lib \
         ShLwApi.lib \
         shell32.lib \

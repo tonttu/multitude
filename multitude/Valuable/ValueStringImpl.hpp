@@ -210,12 +210,9 @@ namespace Valuable
   template<>
   ArchiveElement & ValueStringT<std::wstring>::serialize(Archive & archive) const
   {
-    if(name().empty()) {
-      Radiant::error("ValueWString::serialize # attempt to serialize object with no name");
-      return archive.emptyElement();
-    }
+    const char * n = name().empty() ? "WString" : name().c_str();
 
-    ArchiveElement & elem = archive.createElement(name().c_str());
+    ArchiveElement & elem = archive.createElement(n);
     elem.add("type", type());
 
     std::wstring ws = asWString();

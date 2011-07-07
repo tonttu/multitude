@@ -43,11 +43,14 @@ namespace Luminous
     static long frame();
     static long limit();
     static void setLimit(long limit);
+    static void setEnabledForCurrentThread(bool v);
+    static bool enabledForCurrentThread();
 
   private:
     UploadLimiter();
     int m_frame;
     long m_frameLimit;
+    bool m_inited;
   };
 
   /// Base class for different textures

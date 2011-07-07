@@ -39,15 +39,16 @@ namespace Radiant
     // First make sure serial port is closed
     debugRadiant("SerialPort::open(%s)", device);
     close();
-      
-    m_device = device;
+    
+    // Make the devicename compliant to new addressing (needed for >COM9) 	
+	m_device = std::string("\\\\.\\") + device;
 
     // Open serial port
 
     const char * fName = "SerialPort::open";
 
-    m_hPort = CreateFileA(device, GENERIC_READ | GENERIC_WRITE,
-      0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    m_hPort = CreateFileA(m_device.c_str(), GENERIC_READ | GENERIC_WRITE,
+      0, 0, OPEN_EXISTING, 0, 0);
     
     if(m_hPort == INVALID_HANDLE_VALUE)
     {

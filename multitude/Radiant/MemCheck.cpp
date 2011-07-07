@@ -27,12 +27,19 @@
 
 #else // __GNUC__
 
+#include "StringUtils.hpp"
+
+#include <dlfcn.h>
 #include <execinfo.h>
 #include <cxxabi.h>
 #include <map>
 #include <strings.h>
 #include <iostream>
 #include <stdlib.h>
+#include <stdio.h>
+#include <cassert>
+
+#include <QRegExp>
 
 #endif
 
@@ -104,31 +111,65 @@ namespace Radiant {
   typedef std::map<MemCheck*, std::pair<void **, size_t> > MemMap;
   static MemMap s_map;
 
+  inline std::string file_and_line(const QString & file, long ptr)
+  {
+    assert(sizeof(long) == sizeof(void*));
+    char buffer[512];
+
+    // Using QProcess might be a little dangerous, since we might be outside main() already
+    FILE * f = popen(QString("addr2line -pie \"%1\" %2").arg(file).arg(ptr, 0, 16).toUtf8().data(), "r");
+    if(f && fgets(buffer, sizeof(buffer), f)) {
+      fclose(f);
+      f = 0;
+      int l = strlen(buffer);
+      if(l > 1) {
+        // remove newline
+        if(buffer[l-1] == '\n') buffer[l-1] = '\0';
+        if(std::string("??:0") != buffer)
+          return buffer;
+      }
+    }
+
+    if(f) fclose(f);
+    return "";
+  }
+
   inline void print_bt(void ** data, size_t size)
   {
     char ** strings = backtrace_symbols(data, size);
 
+    /// strings[i] can be something like:
+    /// /home/riku/cornerstone/multitude/lib/libRadiant.so.1(_ZN7Radiant8MemCheckC2Ev+0x40) [0x7fe3fd420c64]
+    /// ./LaunchStack() [0x420669]
+    //        binary     (    function(opt)           +offset(opt)      )
+    QRegExp r("(.*)"  "\\("       "([^+]*)"  "(?:\\+0x[0-9a-f]+)?"   "\\).*");
+
     int status;
     for(size_t i = 0; i < size; i++) {
-      char * a = index(strings[i], '(');
-      char * b = index(strings[i], '+');
-      char * c = index(strings[i], ')');
+      if(r.exactMatch(QString::fromUtf8(strings[i]))) {
+        std::string func = Radiant::StringUtils::demangle(r.cap(2).toUtf8().data());
+        std::string file;
 
-      if(a && b && c && b > a + 1) {
-        *b = '\0';
-        char * tmp = abi::__cxa_demangle(a + 1, 0, 0, &status);
-        if(tmp) {
-          *a = '\0';
-          std::cerr << tmp << ' ' << strings[i] << std::endl;
-          free(tmp);
-        } else {
-          std::cerr << strings[i] << '+' << (b+1) << std::endl;
+        Dl_info info;
+        info.dli_fbase = 0;
+        dladdr(data[i], &info);
+        if(info.dli_fbase) {
+          file = file_and_line(r.cap(1), (long)data[i] - (long)info.dli_fbase);
         }
+
+        if(file.empty())
+          file = file_and_line(r.cap(1), (long)data[i]);
+        if(file.empty())
+          file = r.cap(1).toUtf8().data();
+
+        if(func.empty())
+          fprintf(stderr, "#%-2d %p at %s\n", int(i), data[i], file.c_str());
+        else
+          fprintf(stderr, "#%-2d %s at %s\n", int(i), func.c_str(), file.c_str());
       } else {
-        std::cerr << strings[i] << std::endl;
+        fprintf(stderr, "#%-2d %s\n", int(i), strings[i]);
       }
     }
-    std::cerr << std::endl;
     free (strings);
   }
 
@@ -206,8 +247,8 @@ namespace Radiant {
           free(tmp);
 
           print_bt(data, size);
-          if(count == 500) {
-            error(".. limiting error printing to 500 errors (there are %ld errors)",
+          if(count == 50) {
+            error(".. limiting error printing to 50 errors (there are %ld errors)",
                   (long) s_map.size());
             break;
           }

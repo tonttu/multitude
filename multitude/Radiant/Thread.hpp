@@ -188,7 +188,7 @@ namespace Radiant {
 #elif defined(RADIANT_WIN32)
   #define RADIANT_TLS(type) __declspec(thread) type
 #else
-  #define RADIANT_TLS(type) TLS<type>
+  #define RADIANT_TLS(type) Radiant::TLS<type>
 #endif
 
 }

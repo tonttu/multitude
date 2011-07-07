@@ -176,15 +176,11 @@ namespace Valuable
     return "";
   }
 
-  ArchiveElement & ValueObject::serialize(Archive &archive) const
+  ArchiveElement & ValueObject::serialize(Archive & archive) const
   {
-    if(m_name.empty()) {
-      Radiant::error(
-"ValueObject::serialize # attempt to serialize object with no name");
-      return archive.emptyElement();
-    }
+    const char * n = m_name.empty() ? "ValueObject" : m_name.c_str();
 
-    ArchiveElement & elem = archive.createElement(m_name.c_str());
+    ArchiveElement & elem = archive.createElement(n);
     elem.add("type", type());
     elem.set(asString());
 

@@ -231,7 +231,7 @@ namespace Luminous {
 
     GLSLProgramObject * prog = program();
 
-    Radiant::info("prog %p", prog);
+//    Radiant::info("prog %p", prog);
     if(!prog) {
       return 0;
     }

@@ -292,9 +292,10 @@ namespace Luminous {
   {
     //      Radiant::trace("MultiHead::Window::windowToGraphics # loc(%f,%f), m_size[1] = %d", loc.x, loc.y, m_size[1]);
 
+    Nimble::Vector2f res(0, 0);
     for(size_t i = 0; i < m_areas.size(); i++) {
       bool ok = false;
-      Nimble::Vector2f res = m_areas[i]->windowToGraphics(loc, m_size[1], ok);
+      res = m_areas[i]->windowToGraphics(loc, m_size[1], ok);
 
       if(ok) {
         convOk = true;
@@ -304,7 +305,7 @@ namespace Luminous {
 
     convOk = false;
 
-    return Nimble::Vector2f(0, 0);
+    return res;
   }
 
   void MultiHead::Window::setPixelSizeCm(float sizeCm)

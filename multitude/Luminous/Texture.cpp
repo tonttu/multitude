@@ -29,24 +29,36 @@
 #include <Radiant/Platform.hpp>
 #include <Radiant/Thread.hpp>
 
+#include <limits>
+
+namespace
+{
+  static RADIANT_TLS(int) t_frame(0);
+  static RADIANT_TLS(long) t_available(0);
+  static RADIANT_TLS(bool) t_enabled(true);
+}
+
 namespace Luminous
 {
-
   using namespace std;
   using namespace Radiant;
 
-  UploadLimiter::UploadLimiter() : m_frame(0), m_frameLimit(1.5e6*60*4) {}
+  // tests show that 1.5GB/s is a pretty good guess for a lower limit of
+  // upload rate with 500x500 RGBA images
+  UploadLimiter::UploadLimiter() : m_frame(0), m_frameLimit(1.5*(1<<30)/60.0),
+    m_inited(false)
+  {
+    eventAddListen("frame");
+  }
 
   long & UploadLimiter::available()
   {
-    static RADIANT_TLS(int) t_frame(0);
-    static RADIANT_TLS(long) t_available(0);
-
     UploadLimiter & i = instance();
     if(t_frame != i.m_frame) {
       t_frame = i.m_frame;
       t_available = i.m_frameLimit;
     }
+    if(!i.m_inited || !t_enabled) t_available = std::numeric_limits<long>::max();
     return t_available;
   }
 
@@ -65,14 +77,28 @@ namespace Luminous
     instance().m_frameLimit = limit;
   }
 
+  void UploadLimiter::setEnabledForCurrentThread(bool v)
+  {
+    t_enabled = v;
+  }
+
+  bool UploadLimiter::enabledForCurrentThread()
+  {
+    return t_enabled;
+  }
+
+
   void UploadLimiter::processMessage(const char * type, Radiant::BinaryData &)
   {
-    if(strcmp(type, "frame") == 0) ++m_frame;
+    if(strcmp(type, "frame") == 0) {
+      m_inited = true;
+      ++m_frame;
+    }
   }
 
   UploadLimiter & UploadLimiter::instance()
   {
-    static UploadLimiter s_limiter;
+    static Luminous::UploadLimiter s_limiter;
     return s_limiter;
   }
 
@@ -142,12 +168,16 @@ namespace Luminous
       bool isPowerOfTwo = !((h - 1) & h);
 
       if(!isPowerOfTwo) {
-        cerr << "ERROR: non-power-of-two textures are not supported" << endl;
+        error("ERROR: non-power-of-two textures are not supported");
         return false;
       }
     }
 
     long used = consumesBytes();
+
+    long & available = UploadLimiter::available();
+
+    if(available < used) return false;
 
     m_haveMipmaps = buildMipmaps;
     m_width = 1;
@@ -179,6 +209,7 @@ namespace Luminous
                    srcFormat.layout(), srcFormat.type(), data);
 
     long uses = consumesBytes();
+    available -= uses;
 
     changeByteConsumption(used, uses);
 
@@ -285,12 +316,16 @@ namespace Luminous
       bool isPowerOfTwo2 = !((h - 1) & h);
 
       if(!(isPowerOfTwo1 && isPowerOfTwo2)) {
-        cerr << "ERROR: non-power-of-two textures are not supported" << endl;
+        error("ERROR: non-power-of-two textures are not supported");
         return false;
       }
     }
 
     long used = consumesBytes();
+
+    long & available = UploadLimiter::available();
+
+    if(available < used) return false;
 
     m_internalFormat = internalFormat;
     m_width = w;
@@ -383,6 +418,7 @@ namespace Luminous
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, whitef);
 
     long uses = consumesBytes();
+    available -= uses;
 
 
     if(data)
@@ -500,7 +536,7 @@ namespace Luminous
       bool isPowerOfTwo2 = !((h - 1) & h);
 
       if(!(isPowerOfTwo1 && isPowerOfTwo2)) {
-        cerr << "ERROR: non-power-of-two textures are not supported" << endl;
+        error("ERROR: non-power-of-two textures are not supported");
         return 0;
       }
     }
