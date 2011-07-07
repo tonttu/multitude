@@ -119,12 +119,8 @@ namespace Luminous
   template <GLenum TextureType>
       void TextureT<TextureType>::allocate()
   {
-    static Radiant::Mutex mutex;
-    static GLuint texid = 1;
     if(!m_textureId) {
-      Radiant::Guard g(mutex);
-      //glGenTextures(1, & m_textureId);
-      m_textureId = ++texid;
+      glGenTextures(1, & m_textureId);
       debugLuminous("Allocated texture %.5d %p", (int) m_textureId, resources());
     }
   }
