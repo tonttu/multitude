@@ -116,8 +116,18 @@ namespace Radiant {
     assert(sizeof(long) == sizeof(void*));
     char buffer[512];
 
+    // doesn't need to be thread safe
+    static const char * opts = 0;
+    if(!opts) {
+      // check for --pretty-print
+      if(system("addr2line -e /bin/false 0 &>/dev/null") == 0)
+        opts = "-pie";
+      else
+        opts = "-ie";
+    }
+
     // Using QProcess might be a little dangerous, since we might be outside main() already
-    FILE * f = popen(QString("addr2line -pie \"%1\" %2").arg(file).arg(ptr, 0, 16).toUtf8().data(), "r");
+    FILE * f = popen(QString("addr2line %1 \"%2\" %3").arg(opts).arg(file).arg(ptr, 0, 16).toUtf8().data(), "r");
     if(f && fgets(buffer, sizeof(buffer), f)) {
       fclose(f);
       f = 0;
