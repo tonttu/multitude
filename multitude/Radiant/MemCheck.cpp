@@ -120,7 +120,7 @@ namespace Radiant {
     static const char * opts = 0;
     if(!opts) {
       // check for --pretty-print
-      if(system("addr2line -e /bin/false 0 &>/dev/null") == 0)
+      if(system("addr2line -pe /bin/false 0 >/dev/null 2>&1") == 0)
         opts = "-pie";
       else
         opts = "-ie";
