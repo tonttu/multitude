@@ -36,6 +36,8 @@ namespace Radiant {
   static Radiant::Mutex g_mutex;
 
   static bool g_enableVerboseOutput = false;
+  static bool g_enableDuplicateFilter = false;
+  static std::string g_lastLogLine = "";
   static bool g_forceColors = false;
   static std::set<std::string> g_verboseModules;
 
@@ -50,6 +52,16 @@ namespace Radiant {
     "[ERROR] ",
     "[FATAL] "
   };
+
+  void enableDuplicateFilter(bool enable)
+  {
+    g_enableDuplicateFilter = enable;
+  }
+
+  bool enabledDuplicateFilter()
+  {
+    return g_enableDuplicateFilter;
+  }
 
   void enableVerboseOutput(bool enable, const char * module)
   {
@@ -119,7 +131,13 @@ namespace Radiant {
 
     Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
 
-    g_mutex.lock();
+    Guard lock(g_mutex);
+
+    // Skip duplicates
+    if (enabledDuplicateFilter() && g_lastLogLine == msg)
+      return;
+
+    g_lastLogLine = msg;
 
     time_t t = now.value() >> 24;
     /// localtime is not thread-safe
@@ -146,7 +164,6 @@ namespace Radiant {
     vfprintf(out, msg, args);
     fprintf(out,"%s\n", colors_end);
     fflush(out);
-    g_mutex.unlock();
   }
 
   void trace(Severity s, const char * msg, ...)

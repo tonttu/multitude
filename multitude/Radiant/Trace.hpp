@@ -124,6 +124,15 @@ namespace Radiant {
   RADIANT_API void forceColors(bool enable = true);
 
 
+  /** Toggle duplicate filter
+
+      If enabled, duplicate messages will be ignored
+  */
+  RADIANT_API void enableDuplicateFilter(bool enable);
+
+  /// Returns true if the duplicate filter is enabled
+  RADIANT_API bool enabledDuplicateFilter();
+
   /** Sets the application name to be used in debug output.
 
       By default the info/debug/error functions will print out the
