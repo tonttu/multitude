@@ -30,6 +30,7 @@
 #include <Radiant/Thread.hpp>
 
 #include <limits>
+#include <algorithm>
 
 namespace
 {
@@ -45,8 +46,10 @@ namespace Luminous
 
   // tests show that 1.5GB/s is a pretty good guess for a lower limit of
   // upload rate with 500x500 RGBA images
-  UploadLimiter::UploadLimiter() : m_frame(0), m_frameLimit(1.5*(1<<30)/60.0),
-    m_inited(false)
+  UploadLimiter::UploadLimiter()
+    : m_frame(0)
+    , m_frameLimit(1.5*(1<<30)/60.0)
+    , m_inited(false)
   {
     eventAddListen("frame");
   }
@@ -256,7 +259,20 @@ namespace Luminous
     long & available = UploadLimiter::available();
     // Radiant::info("available: %.1f, need: %.1f", available/1024.0f, image.datasize()/1024.0f);
 
-    if(available < image.datasize()) return false;
+    if(available < image.datasize()) 
+    {
+      // Can't upload the entire texture: do a partial upload
+      unsigned int datasize = image.datasize();           // Total amount of data
+      unsigned int linesize = datasize / image.height();  // Data for 1 line
+      unsigned int lines = available / linesize;          // Number of lines we can upload
+
+      lines = std::min(lines, image.height() - m_loadedLines);
+
+      loadLines(m_loadedLines, lines, image.data(), PixelFormat());
+
+      available -= lines * linesize;                // Decrease available bandwidth
+      return true;
+    }
 
     long used = consumesBytes();
 
@@ -321,7 +337,19 @@ namespace Luminous
 
     long & available = UploadLimiter::available();
 
-    if(available < used) return false;
+    if(available < used)
+    {
+      // Can't upload the entire texture: do a partial upload
+      unsigned int linesize = w * srcFormat.bytesPerPixel();  // width (in bytes) of 1 line
+      unsigned int lines = available / linesize;              // Number of lines we can upload
+
+      lines -= std::min(lines, h - m_loadedLines);
+
+      loadLines(m_loadedLines, lines, data, srcFormat);
+
+      available -= lines * linesize;                // Decrease available bandwidth
+      return true;
+    }
 
     m_internalFormat = internalFormat;
     m_width = w;
