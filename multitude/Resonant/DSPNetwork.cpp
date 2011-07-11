@@ -139,6 +139,8 @@ namespace Resonant {
   {
     debugResonant("DSPNetwork::~DSPNetwork # %p %p", this, m_instance);
 
+	stop();
+
     if(m_instance == this)
       m_instance = 0;
 

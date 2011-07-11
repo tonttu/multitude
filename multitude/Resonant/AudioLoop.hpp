@@ -43,7 +43,7 @@ namespace Resonant {
         the operating system audio engine). */
     bool startReadWrite(int samplerate, int channels);
     /// Check if the audio IO is operational
-    bool isRunning() { return m_isRunning; }
+    inline bool isRunning() { return m_isRunning; }
 
     /// Stop the audio processing
     bool stop();

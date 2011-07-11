@@ -246,7 +246,7 @@ namespace Resonant {
                                   samplerate,
                                   FRAMES_PER_BUFFER,
                                   paClipOff,
-                                  m_d->paCallback,
+								  &AudioLoopInternal::paCallback,
                                   &m_d->cb.back() );
 
       if( err != paNoError ) {
@@ -323,7 +323,6 @@ namespace Resonant {
     std::pair<AudioLoop*, int> stream = *reinterpret_cast<std::pair<AudioLoop*, int>*>(self);
 
     int r = stream.first->callback(in, out, framesPerBuffer, stream.second /*, time, status*/);
-
     return stream.first->m_isRunning ? r : paComplete;
   }
 
