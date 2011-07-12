@@ -61,42 +61,11 @@ namespace Luminous {
 
   void CPUMipmapStore::release(std::shared_ptr<CPUMipmaps>)
   {
-    /*if(!mipmaps)
-      return;
-
-    Radiant::Guard g( s_mutex);
-
-    for(MipMapItemContainer::iterator it = s_mipmaps.begin();
-    it != s_mipmaps.end(); it++) {
-      MipmapItem & mmi = (*it).second;
-      if(mmi.m_mipmaps == mipmaps) {
-        mmi.decrCount();
-        if(!mmi.m_linkCount) {
-          // info("Erased mipmaps %p", mipmaps);
-          s_mipmaps.erase(it);
-        }
-        return;
-      }
-    }*/
   }
 
   std::shared_ptr<CPUMipmaps> CPUMipmapStore::copy(std::shared_ptr<CPUMipmaps> mipmaps)
   {
     return std::shared_ptr<CPUMipmaps>(mipmaps);
-    /*if(!mipmaps)
-      return 0;
-
-    Radiant::Guard g( s_mutex);
-
-    for(MipMapItemContainer::iterator it = s_mipmaps.begin();
-    it != s_mipmaps.end(); it++) {
-      MipmapItem & mmi = (*it).second;
-      if(mmi.m_mipmaps == mipmaps) {
-        mmi.incrCount();
-        return mipmaps;
-      }
-    }
-    return 0;*/
   }
 
   unsigned CPUMipmapStore::count()

@@ -17,6 +17,7 @@
 #define LUMINOUS_CPU_MIPMAP_STORE_HPP
 
 #include <Luminous/CPUMipmaps.hpp>
+#include <Radiant/Defines.hpp>
 
 namespace Luminous {
 
@@ -38,11 +39,14 @@ namespace Luminous {
     static std::shared_ptr<CPUMipmaps> acquire(const std::string & filename, bool immediate = true);
 
     /** Release a #Luminous::CPUMipmaps object. If there are no references to
-    the object, then its memory is freed. */
-    static void release(std::shared_ptr<CPUMipmaps>);
+        the object, then its memory is freed.
 
-    /// @todo this whole class should use shared/weak_ptrs
-    static std::shared_ptr<CPUMipmaps> copy(std::shared_ptr<CPUMipmaps>);
+        @deprecated no longer need to call release
+     */
+    MULTI_ATTR_DEPRECATED(static void release(std::shared_ptr<CPUMipmaps>));
+
+    /** @deprecated copy shared pointer instead. */
+    MULTI_ATTR_DEPRECATED(static std::shared_ptr<CPUMipmaps> copy(std::shared_ptr<CPUMipmaps>));
 
     /** @return Returns the number of mipmaps currently within the store. */
     static unsigned count();
