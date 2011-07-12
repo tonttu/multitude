@@ -5,6 +5,9 @@
 #ifdef RADIANT_WIN32
 #include <winsock2.h>
 #include <WS2tcpip.h>
+#include <cerrno>
+
+#ifndef EADDRINUSE
 
 #define EWOULDBLOCK             WSAEWOULDBLOCK
 #define EINPROGRESS             WSAEINPROGRESS
@@ -43,6 +46,9 @@
 #define EDQUOT                  WSAEDQUOT
 #define ESTALE                  WSAESTALE
 #define EREMOTE                 WSAEREMOTE
+
+#endif
+
 #define SHUT_RDWR SD_BOTH
 
 #define wrap_close(fd) closesocket(fd)

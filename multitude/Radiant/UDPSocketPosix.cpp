@@ -198,7 +198,7 @@ namespace Radiant
     if(m_d->m_fd < 0)
       return false;
 
-    int n = bytes;
+    int n = static_cast<int> (bytes);
 
     if (setsockopt(m_d->m_fd, SOL_SOCKET, SO_RCVBUF, (const char*)&n, sizeof(n)) == -1) {
       return false;

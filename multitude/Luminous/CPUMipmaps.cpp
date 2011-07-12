@@ -332,7 +332,7 @@ namespace Luminous {
 
     } else {
       // Texture is too big, do partial upload
-      img->uploadBytesToGPU(resources, instantUploadPixelLimit);
+      img->uploadBytesToGPU(resources, static_cast<unsigned int> (instantUploadPixelLimit));
 
       if(img->isFullyLoadedToGPU()) {
         si.bound = bestAvailable;
