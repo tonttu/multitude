@@ -78,7 +78,7 @@ namespace Resonant {
   {
     (void) channelsIn;
 
-    channelsOut = m_speakers.size();
+    channelsOut = static_cast<int> (m_speakers.size());
 
     return true;
   }
@@ -419,7 +419,7 @@ namespace Resonant {
     int channel = -1;
     bool found = false;
     for(size_t i = 0; i < m_speakers.size(); i++) {
-      channel = i;
+      channel = static_cast<int> (i);
       if(m_speakers[i].get() == ls) {
         found = true;
         break;

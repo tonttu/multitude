@@ -56,7 +56,7 @@ namespace Resonant {
         DACs, while the other might have only 4 (case with M-Audio delta 44 vs 1010).
 
     */
-    int outChannels() const;
+    size_t outChannels() const;
 
     static void setDevicesFile(const std::string & xmlFilename);
 

@@ -136,7 +136,7 @@ namespace Resonant {
 
   void ModuleOutCollect::process(float ** in, float **, int n)
   {
-    int chans = m_channels;
+    size_t chans = m_channels;
 
     assert((int) m_interleaved.size() >= (n * chans));
 
