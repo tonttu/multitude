@@ -146,7 +146,7 @@ namespace Poetic
 #else
 
   void Utils::breakToLines(const std::wstring & ws, float width,
-                           CPUFont & fnt, WStringList & lines, bool afterSpace)
+                           CPUFont & fnt, WStringList & lines)
   {
     lines.clear();
 

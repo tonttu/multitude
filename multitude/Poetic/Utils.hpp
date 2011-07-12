@@ -41,12 +41,10 @@ namespace Poetic
       * @param bitmapFont Font used for rendering.
       * @param lines Reference to list to receive the lines.
       * @note Newline characters are retained in the output.
-      * @param afterSpace ignored
       */
     /// @todo move inside CPUFont
     static void breakToLines(const std::wstring & ws, float width,
-                                        CPUFont & bitmapFont, Radiant::StringUtils::WStringList & lines,
-                                        bool afterSpace = true);
+                             CPUFont & bitmapFont, Radiant::StringUtils::WStringList & lines);
 
     /**
       * @brief Tokenize wstring.
