@@ -879,6 +879,7 @@ dest = *this;
   CompressedImage::~CompressedImage()
   {
     clear();
+    delete m_d;
   }
 
   void CompressedImage::clear()

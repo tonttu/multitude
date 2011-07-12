@@ -265,7 +265,7 @@ namespace Luminous
     int m_compression;
 
     class Private;
-    std::auto_ptr<Private> m_d;
+    Private* m_d;
   };
 
   class LUMINOUS_API CompressedImageTex : public CompressedImage, public Luminous::ContextVariableT<Luminous::Texture2D>
