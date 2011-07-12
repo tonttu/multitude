@@ -28,6 +28,13 @@ namespace Poetic
   : m_metricFont(0)
   {}
 
+  CPUManagedFont::~CPUManagedFont()
+  {
+    for(container::iterator it = m_fonts.begin(); it != m_fonts.end(); it++)
+      delete *it;
+    delete m_metricFont;
+  }
+
   bool CPUManagedFont::load(const char * fontFilePath)
   {
     m_file = std::string(fontFilePath);

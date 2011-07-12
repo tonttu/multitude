@@ -39,6 +39,8 @@ namespace Poetic
 
     for(TextureVBOMap::iterator it = m_vbos.begin(); it != m_vbos.end(); it++)
       delete it->second;
+    for(container::iterator it = m_managedFonts.begin(); it != m_managedFonts.end(); it++)
+      delete it->second;
   }
 
   CPUWrapperFont * FontManager::getFont(const std::string & name)
@@ -68,14 +70,16 @@ namespace Poetic
 
       // Need to create a new managed font
       mfont = new CPUManagedFont();
-      m_managedFonts[name] = mfont;
 
       if(!mfont->load(path.c_str())) {
         Radiant::error(
                "FontManager::getFont # failed to load '%s'",
                path.c_str());
+        delete mfont;
         return 0;
       }
+
+      m_managedFonts[name] = mfont;
     }
     else
       mfont = it->second;

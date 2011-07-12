@@ -26,23 +26,23 @@ namespace Luminous {
   class LUMINOUS_API CPUMipmapStore
   {
   public:
-    /** Gets a pointer to an image file CPU-side mipmap.
+    /** Gets a shared pointer to an image file CPU-side mipmap.
 
         @param filename The name of the image file
         @param immediate Indicate if the file should be loaded immediately (as opposed to on-demand).
 
-        @return If the file already open, then an old pointer is
+        @return If the file is already open, then a shared pointer is
         returned. Otherwise CPUMipmapStore will create a new
-        #Luminous::CPUMipmaps object, and return that (if opened successfully).
+        #Luminous::CPUMipmaps object, and return a shared pointer to that (if opened successfully).
      */
-    static CPUMipmaps * acquire(const std::string & filename, bool immediate = true);
+    static std::shared_ptr<CPUMipmaps> acquire(const std::string & filename, bool immediate = true);
 
     /** Release a #Luminous::CPUMipmaps object. If there are no references to
     the object, then its memory is freed. */
-    static void release(Luminous::CPUMipmaps *);
+    static void release(std::shared_ptr<CPUMipmaps>);
 
     /// @todo this whole class should use shared/weak_ptrs
-    static CPUMipmaps * copy(CPUMipmaps *);
+    static std::shared_ptr<CPUMipmaps> copy(std::shared_ptr<CPUMipmaps>);
 
     /** @return Returns the number of mipmaps currently within the store. */
     static unsigned count();

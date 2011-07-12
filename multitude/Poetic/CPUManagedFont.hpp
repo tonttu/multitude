@@ -31,7 +31,7 @@ namespace Poetic
   {
     public:
       CPUManagedFont();
-      virtual ~CPUManagedFont() { Radiant::info("~CPUManagedFont %p", this); assert(false); }
+      virtual ~CPUManagedFont();
 
       /// Loads the font from the given .ttf file
       bool load(const char * fontFilePath);
