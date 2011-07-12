@@ -18,6 +18,10 @@
 #include <Radiant/Platform.hpp>
 #include <memory>
 
+#if defined (RADIANT_UNIX)
+#include <stdlib.h>
+#endif
+
 namespace Radiant
 {
 // Some memory utility functions
@@ -46,8 +50,9 @@ namespace Radiant
    }
    inline void alignedFree(void * ptr) { ::free(ptr); }
 
+   // TODO: Use std::addressof
    template<typename T>
-   inline T * addressOf(T & rhs) { return std::__addressof(rhs); }
+   inline T * addressOf(T & rhs) { return &rhs; }
 #endif
 }
 
