@@ -31,11 +31,11 @@ namespace Radiant
 
     ~aligned_allocator() throw() { }
 
-    pointer address(reference ref) const { return AddressOf(ref); }
-    const_pointer address(const_reference ref) const { return AddressOf(ref); }
+    pointer address(reference ref) const { return Radiant::addressOf(ref); }
+    const_pointer address(const_reference ref) const { return Radiant::addressOf(ref); }
 
-    pointer allocate(size_type n, const void* = 0) { return reinterpret_cast<pointer>(AlignedMalloc(n * sizeof(T), alignment)); }
-    void deallocate(pointer ptr, size_type) { AlignedFree(ptr); }
+    pointer allocate(size_type n, const void* = 0) { return reinterpret_cast<pointer>(Radiant::alignedMalloc(n * sizeof(T), alignment)); }
+    void deallocate(pointer ptr, size_type) { Radiant::alignedFree(ptr); }
 
     void construct(pointer ptr, const T & val) { ::new((void *)ptr) T(val); }
     void destroy(pointer ptr) { ptr->~T(); }

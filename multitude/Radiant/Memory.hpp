@@ -22,7 +22,7 @@ namespace Radiant
 {
 // Some memory utility functions
 #if defined (RADIANT_WINDOWS)
-   inline void * AlignedMalloc(size_t size, unsigned int alignment)
+   inline void * alignedMalloc(size_t size, unsigned int alignment)
    {
      void * ptr = _aligned_malloc(size, alignment);
      if (ptr == 0)
@@ -30,13 +30,13 @@ namespace Radiant
      return ptr;
    }
 
-   inline void AlignedFree(void * ptr) { _aligned_free(ptr); }
+   inline void alignedFree(void * ptr) { _aligned_free(ptr); }
 
    template<typename T>
-   inline T * AddressOf(T & rhs) { return std::addressof(rhs); }
+   inline T * addressOf(T & rhs) { return std::addressof(rhs); }
 
 #elif defined (RADIANT_UNIX)
-   inline void * AlignedMalloc(size_t size, unsigned int alignment)
+   inline void * alignedMalloc(size_t size, unsigned int alignment)
    {
       void *ptr = 0;
       int r = posix_memalign(&ptr, alignment, size);
@@ -44,10 +44,10 @@ namespace Radiant
             throw std::bad_alloc();
       return ptr;
    }
-   inline void AlignedFree(void * ptr) { ::free(ptr); }
+   inline void alignedFree(void * ptr) { ::free(ptr); }
 
    template<typename T>
-   inline T * AddressOf(T & rhs) { return std::__addressof(rhs); }
+   inline T * addressOf(T & rhs) { return std::__addressof(rhs); }
 #endif
 }
 
