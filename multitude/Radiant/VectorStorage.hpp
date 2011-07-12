@@ -77,7 +77,7 @@ namespace Radiant {
     bool empty() const { return m_points.empty(); }
 
     /// Resets the internal object counter to n.
-    void truncate(unsigned n) { m_count = n; }
+    void truncate(size_t n) { m_count = n; }
 
     /// The number of objecs in the array
     size_t size() const { return m_count; }
@@ -91,18 +91,18 @@ namespace Radiant {
     void expand(size_t size)
     { if(size > m_points.size()) m_points.resize(size); }
     /// Resizes the vector
-    void resize(unsigned size)
+    void resize(size_t size)
     { expand(size); m_count = size; }
 
     /// Gets an object, and check that the index is valid
     /** If the index is not valid, then assertion is raised, and the software stops. */
-    const T & getSafe(unsigned index) const
+    const T & getSafe(size_t index) const
     { assert(index < m_count); return m_points[index]; }
     /// @copydoc getSafe
-    T & getSafe(unsigned index)
+    T & getSafe(size_t index)
     { assert(index < m_count); return m_points[index]; }
     /// Gets a value from the vector and expand the vector if necessary
-    T & getExpand(unsigned index)
+    T & getExpand(size_t index)
     {
       if(index >= m_count) {
         expand(index + 10);
@@ -122,9 +122,9 @@ namespace Radiant {
     /// @copydoc getLast
     const T & getLast() const { return m_points[m_count - 1]; }
     /// Gets the element at size() - n - 1
-    const T & getLast(int n) const { return m_points[m_count - 1 - n]; }
+    const T & getLast(size_t n) const { return m_points[m_count - 1 - n]; }
     /// Gets the element at size() - n - 1
-    const T & last(int n) const { return m_points[m_count - 1 - n]; }
+    const T & last(size_t n) const { return m_points[m_count - 1 - n]; }
 
     /// Appends an object to the vector
     /** The storage area is automatically incremented if necessary. */
@@ -168,12 +168,12 @@ namespace Radiant {
     }
 
     /** Remove n elements from the end of the storage. */
-    void putBack(unsigned n) { m_count -= n; }
+    void putBack(size_t n) { m_count -= n; }
 
     /** Erase an element. The size of the storage is shrunk by one. */
-    void erase(unsigned index)
+    void erase(size_t index)
     {
-      for(unsigned i = index + 1; i < m_count; i++)
+      for(size_t i = index + 1; i < m_count; i++)
     m_points[i - 1] = m_points[i];
 
       m_count--;
@@ -187,14 +187,14 @@ namespace Radiant {
       if((size() + that.size()) > m_points.size())
     m_points.resize(size() + that.size() + 100);
 
-      for(unsigned i = 0; i < that.size(); i++)
+      for(size_t i = 0; i < that.size(); i++)
     m_points[m_count++] = that.get(i);
     }
 
     /// Fills the vector with the given value
     void setAll(const T & value)
     {
-      for(unsigned i = 0; i < size(); i++)
+      for(size_t i = 0; i < size(); i++)
     m_points[i] = value;
 
     }
@@ -211,9 +211,9 @@ namespace Radiant {
     { iterator tmp = m_points.begin(); tmp += m_count; return tmp;}
 
     /// Returns the element at the given index
-    inline T & operator [] (unsigned i) { return m_points[i]; }
+    inline T & operator [] (size_t i) { return m_points[i]; }
     /// Returns the element at the given index
-    inline const T & operator [] (unsigned i) const { return m_points[i]; }
+    inline const T & operator [] (size_t i) const { return m_points[i]; }
 
     /// Swaps two VectorStorages
     inline void swap(VectorStorage & that)
