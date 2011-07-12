@@ -2,7 +2,7 @@
 #define SOCKETWRAPPER_HPP
 
 #include "Platform.hpp"
-#ifdef RADIANT_WIN32
+#ifdef RADIANT_WINDOWS
 #include <winsock2.h>
 #include <WS2tcpip.h>
 #include <cerrno>

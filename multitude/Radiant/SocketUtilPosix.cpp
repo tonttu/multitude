@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-#ifdef RADIANT_WIN32
+#ifdef RADIANT_WINDOWS
 const char * wrap_strerror(int err)
 {
   __declspec( thread ) static char msg[1024];

@@ -28,7 +28,7 @@
 #else
   #if defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
     #include <tr1/unordered_map>
-  #elif defined(RADIANT_WIN32) && defined(_HAS_TR1)
+  #elif defined(RADIANT_WINDOWS) && defined(_HAS_TR1)
     #include <unordered_map>
   #else
     #include <boost/tr1/unordered_map.hpp>

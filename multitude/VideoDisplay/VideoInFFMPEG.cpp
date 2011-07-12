@@ -5,9 +5,10 @@
 #include "VideoDisplay.hpp"
 
 #include <Radiant/Trace.hpp>
+#include <Radiant/Mutex.hpp>
 
 #include <map>
-#include <vector>
+#include <string>
 #include <algorithm>
 
 namespace VideoDisplay {
@@ -336,7 +337,7 @@ namespace VideoDisplay {
         audioTS = audioTS2;
       }
 
-      debugVideoDisplay("ideoInFFMPEG::videoPlay # Forward one frame");
+      debugVideoDisplay("VideoInFFMPEG::videoPlay # Forward one frame");
 
       if(m_frameTime >= pos) {
 

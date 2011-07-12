@@ -20,6 +20,7 @@
 
 #include <Radiant/TimeStamp.hpp>
 #include <Radiant/VideoInput.hpp>
+#include <Radiant/Allocators.hpp>
 
 #include <string>
 
@@ -130,10 +131,14 @@ namespace Screenplay {
     int              m_aindex; // Audio index
     AVCodecContext * m_acontext;
     ReSampleContext* m_resample_ctx;
-    std::vector<int16_t> m_audioBuffer;
-    int                  m_audioFrames;
-    int                  m_audioChannels;
-    int                  m_audioSampleRate;
+    
+    // Audiobuffers should be 128-bit aligned because of SSE
+    typedef std::vector<int16_t, Radiant::aligned_allocator<int16_t, 16> > AudioBuffer;
+    AudioBuffer      m_audioBuffer;
+    AudioBuffer      m_resampleBuffer;
+    int              m_audioFrames;
+    int              m_audioChannels;
+    int              m_audioSampleRate;
 
     long m_capturedAudio;
     long m_capturedVideo;

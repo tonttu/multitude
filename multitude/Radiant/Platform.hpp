@@ -22,12 +22,20 @@
 #endif
 
 // Is this OS X?
-#ifdef __APPLE_CC__
+#if defined (__APPLE__) && defined (__MACH__)
 #   define RADIANT_OSX 1
+#   define RADIANT_UNIX 1
 // Is this Windows?
-#elif WIN32
+#elif defined(_WIN32)
 #	include <yvals.h>
+#   define RADIANT_WINDOWS 1
+
+#ifdef _WIN64
+#   define RADIANT_WIN64 1
+#else
 #   define RADIANT_WIN32 1
+#endif
+
 // Check for TR1
 #	ifndef _HAS_TR1
 #		error "Compiler TR1 support was not found. Please install Visual Studio 2008 Service Pack 1 or use a newer compiler."
@@ -35,6 +43,7 @@
 // Is this Linux?
 #elif __linux__
 #   define RADIANT_LINUX 1
+#   define RADIANT_UNIX 1
 #else
 #   error "Unsupported platform!"
 #endif

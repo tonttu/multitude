@@ -14,7 +14,7 @@ unix:VERSION = 1.2.0
 
 withbundles = $$(MULTI_BUNDLES)
 
-MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat
+MULTI_FFMPEG_LIBS = -lavcodec -lavformat -lavutil
 
 LIB_POETIC = -lPoetic
 LIB_FLUFFY = -lFluffy

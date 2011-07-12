@@ -252,23 +252,25 @@ namespace Screenplay {
         } else {
 
           // decode into a temporay audio buffer, later will be resampled
-          std::vector<int16_t> audioInBuffer;
-          int srcSz, dstSz;  // in samples per channel
+          int aBytesIn = AVCODEC_MAX_AUDIO_FRAME_SIZE * m_audioChannels + FF_INPUT_BUFFER_PADDING_SIZE;   // in bytes
+          int aFramesIn = aBytesIn / sizeof(AudioBuffer::value_type);
 
-          int aframesIn = AVCODEC_MAX_AUDIO_FRAME_SIZE * m_audioChannels;   // in bytes
-          audioInBuffer.resize(aframesIn * 0.5f);
-
+          m_resampleBuffer.resize(aFramesIn);
           avcodec_decode_audio3(m_acontext,
-                                & audioInBuffer[0],
-                                & aframesIn, m_pkt);
+                                & m_resampleBuffer[0],
+                                & aBytesIn, m_pkt);
 
-          srcSz = aframesIn * 0.5f / m_audioChannels;
-          dstSz = Nimble::Math::Ceil((float)srcSz * 44100 / m_audioSampleRate);
+          // Resample
+          int srcChannelBytes = aBytesIn / m_audioChannels;
+          int srcChannelSamples = srcChannelBytes / sizeof(AudioBuffer::value_type);
+          int destChannelBytes = Nimble::Math::Ceil((float)srcChannelBytes * 44100 / m_audioSampleRate);
+          int destSamples = (destChannelBytes * m_audioChannels) / sizeof(AudioBuffer::value_type);
 
-          aframesOut = ((int) m_audioBuffer.size() - index) * 2; // in bytes
-          if(aframesOut < dstSz * 2 * m_audioChannels) {
-            m_audioBuffer.resize(m_audioBuffer.size() + dstSz * m_audioChannels);
-            aframesOut = ((int) m_audioBuffer.size() - index) * 2;
+          // Check if we have enough space left in the audio buffer
+          int freeSamples = ((int) m_audioBuffer.size() - index);                                       // Free space left in audiobuffer
+          if(freeSamples < destSamples) {
+            m_audioBuffer.resize(index + destSamples);
+
             if(m_audioBuffer.size() > 1000000) {
               info("VideoInputFFMPEG::captureImage # %p Audio buffer is very large now: %d (%ld)",
                    this, (int) m_audioBuffer.size(), m_capturedVideo);
@@ -277,13 +279,13 @@ namespace Screenplay {
 
           int resampled = audio_resample(m_resample_ctx,
                                          & m_audioBuffer[index], // out buf
-                                         & audioInBuffer[0], // in buf
-                                         srcSz);  // nb samples per channel
+                                         & m_resampleBuffer[0],  // in buf
+                                         srcChannelSamples);     // nb samples per channel
 
           if(!(resampled > 0))
             error("%s: Failed to resample", fname);
 
-          debugScreenplay("resampled: %d; inrate: %d; outrate: %d; srcSz: %d; dstSz: %d", resampled, m_audioSampleRate, 44100, srcSz, dstSz);
+          debugScreenplay("resampled: %d; inrate: %d; outrate: %d", resampled, m_audioSampleRate, 44100);
 
           aframesOut = resampled;
         }
@@ -455,7 +457,7 @@ namespace Screenplay {
     /* trace2("VideoInputFFMPEG::captureAudio # %d %d",
      * frameCount, m_audioFrames); */
 
-    if(!m_audioBuffer.size()) {
+    if(m_audioBuffer.empty()) {
       * frameCount = 0;
       return 0;
     }
@@ -607,7 +609,7 @@ namespace Screenplay {
 
       AVCodecContext *enc = m_ic->streams[i]->codec;
 
-      if(enc->codec_type == CODEC_TYPE_VIDEO) {
+      if(enc->codec_type == AVMEDIA_TYPE_VIDEO) {
 
         m_vindex = i;
         m_vcodec = avcodec_find_decoder(enc->codec_id);
@@ -630,7 +632,7 @@ namespace Screenplay {
         else if(flags & WITH_VIDEO)
           m_flags = m_flags | WITH_VIDEO;
       }
-      else if(enc->codec_type == CODEC_TYPE_AUDIO) {
+      else if(enc->codec_type == AVMEDIA_TYPE_AUDIO) {
 
         m_aindex = i;
         m_acodec = avcodec_find_decoder(enc->codec_id);
@@ -743,7 +745,7 @@ namespace Screenplay {
       m_resample_ctx = 0;
     }
 
-    std::vector<int16_t> tmp;
+    AudioBuffer tmp;
     m_audioBuffer.swap(tmp);
 
     m_audioFrames = 0;
