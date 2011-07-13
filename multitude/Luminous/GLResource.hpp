@@ -137,9 +137,9 @@ namespace Luminous
     virtual long consumesBytes();
 
     /// Sets the generation for the resource. Used to determine if a resource is up-to-date for a rendering context.
-    void setGeneration(int g) { m_generation = g; }
+    void setGeneration(size_t g) { m_generation = g; }
     /// Returns the generation of the resource.
-    int generation() const { return m_generation; }
+    size_t generation() const { return m_generation; }
 
     /// Tells if this object is persistent
     /** Persistent GPU resources should not be deleted, unless the Collectable is deleted.
@@ -163,7 +163,7 @@ namespace Luminous
     GLResources * m_resources;
 
     long m_deleteOnFrame;
-    int  m_generation;
+    size_t m_generation;
   };
 }
 
