@@ -16,6 +16,7 @@
 
 #include <Valuable/ValueString.hpp>
 #include <Valuable/ValueFloat.hpp>
+#include <Valuable/ValueBool.hpp>
 
 #include <vector>
 
