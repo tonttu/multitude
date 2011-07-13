@@ -19,6 +19,8 @@
 #include <Luminous/Export.hpp>
 #include <Radiant/MemCheck.hpp>
 
+#include <cstddef>
+
 namespace Luminous
 {
   class GLResources;
