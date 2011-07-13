@@ -23,6 +23,8 @@
 #include <strings.h>
 #include <string.h>
 
+#include "signal.h"
+
 namespace Radiant
 {
 
@@ -59,6 +61,12 @@ namespace Radiant
 
   TCPSocket::TCPSocket() : m_d(new D)
   {
+    /// @todo this should probably moved elsewhere. No reason to run this multiple times.
+    // ignore SIGPIPE (ie. when client closes the socket)
+  #ifndef _MSC_VER
+    signal(SIGPIPE, SIG_IGN);
+  #endif
+
     wrap_startup();
   }
 
