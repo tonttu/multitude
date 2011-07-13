@@ -745,9 +745,10 @@ namespace Screenplay {
       m_resample_ctx = 0;
     }
 
-	// Cleanup audio buffers
-    m_audioBuffer.resize(0);
-    m_resampleBuffer.resize(0);
+    // Cleanup audio buffers
+    AudioBuffer tmp, tmp2;
+    m_audioBuffer.swap(tmp);
+    m_resampleBuffer.swap(tmp2);
 
     m_audioFrames = 0;
 
