@@ -19,11 +19,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef WIN32
-#include <WinPort.h>
-#endif
-
-
 int main(int argc, char ** argv)
 {
   /* Test that settings colors works properly. */
