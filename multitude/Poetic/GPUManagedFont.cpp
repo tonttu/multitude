@@ -33,6 +33,12 @@ namespace Poetic
     m_fonts.resize(m_cmf->fontCount());
   }
 
+  GPUManagedFont::~GPUManagedFont()
+  {
+    for(size_t i = 0; i < m_fonts.size(); i++)
+      delete m_fonts.at(i);
+  }
+
   void GPUManagedFont::render(const std::string & text,
 			      int pointSize, const Nimble::Matrix3 & m,
                               float minimumSize)
