@@ -166,7 +166,7 @@ namespace Luminous
     /// The generation count of the image object
     /** The generation count can be used to indicate that the image has changed, and one should
         update the corresponding OpenGL texture wo match the same generation. */
-    int generation() const { return m_generation; }
+    size_t generation() const { return m_generation; }
 
   protected:
 
@@ -174,7 +174,7 @@ namespace Luminous
     int m_height;
     PixelFormat m_pixelFormat;
     unsigned char* m_data;
-    int m_generation;
+    size_t m_generation;
 
     /*
   private:
@@ -265,7 +265,7 @@ namespace Luminous
     int m_compression;
 
     class Private;
-    std::auto_ptr<Private> m_d;
+    Private* m_d;
   };
 
   class LUMINOUS_API CompressedImageTex : public CompressedImage, public Luminous::ContextVariableT<Luminous::Texture2D>

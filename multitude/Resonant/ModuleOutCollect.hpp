@@ -55,12 +55,12 @@ namespace Resonant {
     const float * interleaved() const { return & m_interleaved[0]; }
 
     /// Returns the number of channels that are collected by this module
-    int channels() const { return m_channels; }
+    size_t channels() const { return m_channels; }
 
   private:
 
-    int  m_channels;
-    int  m_subwooferChannel;
+    size_t m_channels;
+    int m_subwooferChannel;
     DSPNetwork * m_host;
     std::vector<float> m_interleaved;
 

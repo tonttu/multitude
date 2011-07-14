@@ -71,7 +71,7 @@ namespace Resonant {
   {
     for(size_t i = 0; i < m_ins.size(); i++)
       if(m_ins[i] == ptr)
-        return i;
+        return static_cast<int> (i);
     return -1;
   }
 
@@ -138,6 +138,8 @@ namespace Resonant {
   DSPNetwork::~DSPNetwork()
   {
     debugResonant("DSPNetwork::~DSPNetwork # %p %p", this, m_instance);
+
+	stop();
 
     if(m_instance == this)
       m_instance = 0;
@@ -213,7 +215,7 @@ namespace Resonant {
     item.setUsePanner(false);
 
     Radiant::BinaryData control;
-    control.writeInt32(outChannels());
+    control.writeInt32(static_cast<int32_t> (outChannels()));
     control.rewind();
 
     player->processMessage("channels", & control);
@@ -252,7 +254,7 @@ namespace Resonant {
   {
     (void) in;
 
-    int streams = m_d->m_streams.size();
+    size_t streams = m_d->m_streams.size();
 
     /// Here we assume that every stream (== audio device) is running in its
     /// own separate thread, that is, this callback is called from multiple
@@ -267,7 +269,7 @@ namespace Resonant {
     if(streams == 1) {
       doCycle(framesPerBuffer);
     } else if(streamnum == 0) {
-      m_d->m_sem.acquire(streams);
+      m_d->m_sem.acquire(static_cast<int> (streams));
       doCycle(framesPerBuffer);
       for (int i = 1; i < streams; ++i)
         m_d->m_streams[i].m_barrier->release();
@@ -288,7 +290,7 @@ namespace Resonant {
         float* target = (float*)out;
         target += to;
 
-        int chans_from = m_collect->channels();
+        size_t chans_from = m_collect->channels();
 
         for (size_t i = 0; i < framesPerBuffer; ++i) {
           *target = *data;
@@ -423,7 +425,7 @@ namespace Resonant {
 
         int mchans = (int) itptr->m_outs.size();
         int tchan  = itptr->m_targetChannel;
-        int outchans = m_collect->channels(); // hardware output channels
+        size_t outchans = m_collect->channels(); // hardware output channels
 
         if(m_panner && itptr->usePanner()) {
           //info("Adding %d inputs to the panner", mchans);

@@ -50,7 +50,7 @@ namespace Resonant {
     if(!id)
       m_id[0] = 0;
     else {
-      int len = strlen(id);
+      size_t len = strlen(id);
 
       if(len >= MAX_ID_LENGTH) {
        error("Module::setId # Too long id, %d bytes", len);

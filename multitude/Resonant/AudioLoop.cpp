@@ -79,7 +79,7 @@ namespace Resonant {
     }
   }
 
-  int AudioLoop::outChannels() const
+  size_t AudioLoop::outChannels() const
   {
     return m_d->m_channels.size();
   }
@@ -238,7 +238,7 @@ namespace Resonant {
       s.inParams = s.outParams;
       s.inParams.device = Pa_GetDefaultInputDevice();
 
-      m_d->cb.push_back(std::make_pair(this, streamnum));
+      m_d->cb.push_back(std::make_pair(this, static_cast<int> (streamnum)));
 
       PaError err = Pa_OpenStream(& s.stream,
                                   0, // & m_inParams,
@@ -246,7 +246,7 @@ namespace Resonant {
                                   samplerate,
                                   FRAMES_PER_BUFFER,
                                   paClipOff,
-                                  m_d->paCallback,
+								  &AudioLoopInternal::paCallback,
                                   &m_d->cb.back() );
 
       if( err != paNoError ) {
@@ -260,7 +260,7 @@ namespace Resonant {
       s.streamInfo = Pa_GetStreamInfo(s.stream);
 
       for (int i = 0; i < s.outParams.channelCount; ++i)
-        m_d->m_channels[m_d->m_channels.size()] = Channel(streamnum, i);
+        m_d->m_channels[static_cast<int> (m_d->m_channels.size())] = Channel(static_cast<int> (streamnum), i);
 
       debugResonant("AudioLoop::startReadWrite # %d channels lt = %lf, EXIT OK",
          (int) s.outParams.channelCount,
@@ -268,7 +268,7 @@ namespace Resonant {
     }
 
     m_d->m_streamBuffers.resize(m_d->m_streams.size());
-    m_d->m_sem.release(m_d->m_streams.size());
+    m_d->m_sem.release(static_cast<int> (m_d->m_streams.size()));
 
     m_isRunning = true;
 
@@ -308,7 +308,7 @@ namespace Resonant {
       }
       s.stream = 0;
       s.streamInfo = 0;
-      m_d->m_channels.erase(num);
+      m_d->m_channels.erase(static_cast<int> (num));
     }
 
     return true;
@@ -323,7 +323,6 @@ namespace Resonant {
     std::pair<AudioLoop*, int> stream = *reinterpret_cast<std::pair<AudioLoop*, int>*>(self);
 
     int r = stream.first->callback(in, out, framesPerBuffer, stream.second /*, time, status*/);
-
     return stream.first->m_isRunning ? r : paComplete;
   }
 

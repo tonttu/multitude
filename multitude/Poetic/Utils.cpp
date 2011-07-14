@@ -146,19 +146,19 @@ namespace Poetic
 #else
 
   void Utils::breakToLines(const std::wstring & ws, float width,
-                           CPUFont & fnt, WStringList & lines, bool afterSpace)
+                           CPUFont & fnt, WStringList & lines)
   {
     lines.clear();
 
     if(ws.empty())
       return;
 
-    int n = ws.size();
+    size_t n = ws.size();
 
     std::vector<float> advances;
     advances.resize(n, 0);
 
-    fnt.advanceList(ws.c_str(), & advances[0], n);
+    fnt.advanceList(ws.c_str(), & advances[0], static_cast<int> (n));
 
     int lineStart = 0;
     int okEnd = 0;

@@ -16,6 +16,7 @@
 
 #include <Valuable/ValueString.hpp>
 #include <Valuable/ValueFloat.hpp>
+#include <Valuable/ValueBool.hpp>
 
 #include <vector>
 
@@ -155,7 +156,7 @@ namespace Luminous {
       Nimble::Vector2f windowToGraphics(Nimble::Vector2f loc, int windowheight, bool & insideArea) const;
 
       /// Returns true if the area is active (graphics will be drawn to it)
-      int active() const { return m_active.asInt(); }
+      bool active() const { return m_active; }
 
       /// Sets the width of a single pixel in centimeters
       void setPixelSizeCm(float sizeCm) { m_pixelSizeCm = sizeCm; }
@@ -197,7 +198,7 @@ namespace Luminous {
       Valuable::ValueVector2f   m_graphicsLocation;
       Valuable::ValueVector2f   m_graphicsSize;
       Valuable::ValueVector4f   m_seams;
-      Valuable::ValueInt        m_active;
+      Valuable::ValueBool        m_active;
       Valuable::ValueInt        m_method;
       Valuable::ValueString m_comment;
       Rect m_graphicsBounds;
@@ -274,13 +275,13 @@ namespace Luminous {
       LUMINOUS_API Nimble::Vector2f windowToGraphics(Nimble::Vector2f loc, bool & convOk) const;
 
       /// Should the window be frameless
-      bool frameless() const { return ((m_frameless.asInt() == 0) ? false : true); }
+      bool frameless() const { return m_frameless; }
       /// Should the window be full-screen
-      bool fullscreen() const { return ((m_fullscreen.asInt() == 0) ? false : true); }
+      bool fullscreen() const { return m_fullscreen; }
       /// Sets the fullscreen flag
       void setFullscreen(bool f) { m_fullscreen = f; }
       /// Should the window be resizeable
-      bool resizeable() const { return ((m_resizeable.asInt() == 0) ? false : true); }
+      bool resizeable() const { return m_resizeable; }
 
       /// X11 display number for threaded rendering, -1 if not specified
       int displaynumber() const { return m_displaynumber.asInt(); }
@@ -303,9 +304,9 @@ namespace Luminous {
       MultiHead                *m_screen;
       Valuable::ValueVector2i   m_location;
       Valuable::ValueVector2i   m_size;
-      Valuable::ValueInt        m_frameless;
-      Valuable::ValueInt        m_fullscreen;
-      Valuable::ValueInt        m_resizeable;
+      Valuable::ValueBool       m_frameless;
+      Valuable::ValueBool       m_fullscreen;
+      Valuable::ValueBool       m_resizeable;
       Valuable::ValueInt        m_displaynumber; // for X11
       Valuable::ValueInt        m_screennumber; // for X11
       /// Pixel size in centimeters

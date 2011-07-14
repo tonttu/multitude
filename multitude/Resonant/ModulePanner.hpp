@@ -129,7 +129,7 @@ namespace Resonant {
     class Source
     {
     public:
-      Source() : m_location(0, 0), m_updates(0), m_generation(-1), m_pipes(6) {}
+      Source() : m_location(0, 0), m_updates(0), m_generation(0), m_pipes(6) {}
 
       Nimble::Vector2 m_location;
       bool  m_updates;

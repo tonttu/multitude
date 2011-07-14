@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-#ifdef RADIANT_WIN32
+#ifdef RADIANT_WINDOWS
 const char * wrap_strerror(int err)
 {
   __declspec( thread ) static char msg[1024];
@@ -91,11 +91,11 @@ namespace Radiant {
         error("TCPServerSocket::open # Failed to set SO_REUSEADDR: %s", wrap_strerror(wrap_errno));
       }
 
-      if(doBind && bind(fd, rp->ai_addr, rp->ai_addrlen) == -1) {
+      if(doBind && bind(fd, rp->ai_addr, static_cast<int> (rp->ai_addrlen)) == -1) {
         err = wrap_errno;
         errstr = std::string("bind() failed: ") + wrap_strerror(err);
         err = err ? err : -1;
-      } else if(!doBind && connect(fd, rp->ai_addr, rp->ai_addrlen) == -1) {
+      } else if(!doBind && connect(fd, rp->ai_addr, static_cast<int> (rp->ai_addrlen)) == -1) {
         err = wrap_errno;
         errstr = std::string("connect() failed: ") + wrap_strerror(err);
         err = err ? err : -1;

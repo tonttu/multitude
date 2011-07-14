@@ -107,7 +107,7 @@ namespace Resonant {
     /** Sets the master gain */
     void setMasterGain(float gain) { m_masterGain = gain; }
 
-    inline unsigned channels() const { return m_channels; }
+    size_t channels() const { return m_channels; }
 
     const Radiant::TimeStamp & time() { return m_time; }
 
@@ -261,7 +261,7 @@ namespace Resonant {
 
     bool addSample(std::shared_ptr<Sample> s);
 
-    void dropVoice(unsigned index);
+    void dropVoice(size_t index);
 
     std::list<SampleInfo> m_sampleList;
 
@@ -270,8 +270,8 @@ namespace Resonant {
     std::vector<SampleVoice> m_voices;
     std::vector<SampleVoice *> m_voiceptrs;
 
-    unsigned m_channels;
-    unsigned m_active;
+    size_t m_channels;
+    size_t m_active;
 
     float    m_masterGain;
     Radiant::TimeStamp m_time;

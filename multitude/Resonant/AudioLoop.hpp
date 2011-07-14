@@ -43,7 +43,7 @@ namespace Resonant {
         the operating system audio engine). */
     bool startReadWrite(int samplerate, int channels);
     /// Check if the audio IO is operational
-    bool isRunning() { return m_isRunning; }
+    inline bool isRunning() { return m_isRunning; }
 
     /// Stop the audio processing
     bool stop();
@@ -56,7 +56,7 @@ namespace Resonant {
         DACs, while the other might have only 4 (case with M-Audio delta 44 vs 1010).
 
     */
-    int outChannels() const;
+    size_t outChannels() const;
 
     static void setDevicesFile(const std::string & xmlFilename);
 

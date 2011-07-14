@@ -19,6 +19,7 @@
 #include "Export.hpp"
 #include "Math.hpp"
 
+#include <limits>
 #include <iostream>
 
 namespace Nimble {
@@ -41,14 +42,14 @@ namespace Nimble {
     T		y;
 
     /** Default constructor, does \b not initialize the values. */
-    Vector2T () {}
-    inline explicit Vector2T(T xy) { x = y = xy; }
+    inline Vector2T () {}
+    inline explicit Vector2T(T xy) : x(xy), y(xy) { }
     /// Constructs a vector initializing it to given values
-    Vector2T (T cx, T cy) { x = (T)cx;	y = (T)cy; }
+    inline Vector2T (T cx, T cy) : x(cx), y(cy) {}
     /// Constructs a vector initializing from memory
-    template <class S> Vector2T(const S * v) { x = v[0]; y = v[1]; }
+    template <class S> inline Vector2T(const S * v) { x = v[0]; y = v[1]; }
     /// Copy constructor
-    template <class S> Vector2T	(const Vector2T<S>& v) { x = (T)v.x; y = (T)v.y; }
+    template <class S> inline Vector2T	(const Vector2T<S>& v) { x = (T)v.x; y = (T)v.y; }
 
     //template <class S> Vector2T& operator=  (const Vector2T<S>& v)	{ x = (T)v.x; y = (T)v.y; return *this; }
 
@@ -63,69 +64,75 @@ namespace Nimble {
     /// Returns a pointer to the first element
     const T *   data() const { return &x; }
     /// Compares if two vectors are equal
-    bool	operator==  (const Vector2T& src) const		                { return (x == src.x && y == src.y); }
+   	inline bool operator==  (const Vector2T& src) const
+	{
+      static const float eps = std::numeric_limits<T>::epsilon();
+      return
+        x >= src.x - eps && x<= src.x + eps && y >= src.y - eps && y<= src.y + eps;
+	}
+
     /// Compares if two vectors differ
-    bool	operator!=  (const Vector2T& src) const		                { return !(x == src.x && y == src.y); }
+    inline bool	operator!=  (const Vector2T& src) const { return !operator==(src); }
     /// Adds two vectors
-    Vector2T&	operator+=	(const Vector2T& v)				{ x += v.x, y += v.y; return *this; }
+    inline Vector2T&	operator+=	(const Vector2T& v)				{ x += v.x, y += v.y; return *this; }
     /// Subtracts two vectors
-    Vector2T&	operator-=	(const Vector2T& v)				{ x -= v.x, y -= v.y; return *this; }
+    inline Vector2T&	operator-=	(const Vector2T& v)				{ x -= v.x, y -= v.y; return *this; }
     /// Multiplies a vector with a scalar
-    Vector2T&	operator*=	(T s)					        { x = (x*s), y = (T)(y*s); return *this; }
+    inline Vector2T&	operator*=	(T s)					        { x = (x*s), y = (T)(y*s); return *this; }
     /// Divides a vector with a scalar
-    Vector2T&	operator/=	(T s)					        { s = T(1)/s; x = (x*s), y = (y*s); return *this; }
+    inline Vector2T&	operator/=	(T s)					        { s = T(1)/s; x = (x*s), y = (y*s); return *this; }
     /// Checks if both components are one
-    bool	isOne		(void) const					        { return (x == (T) 1 && y == (T) 1); }
+    inline bool	isOne		(void) const					        { return (x == (T) 1 && y == (T) 1); }
     /// Checks if both components are zero
-    bool	isZero		(void) const					      { return (x == (T) 0 && y == (T) 0); }
+    inline bool	isZero		(void) const					      { return (x == (T) 0 && y == (T) 0); }
     /// Returns the length of the vector
-    T    	length		(void) const				        { return (T)Math::Sqrt(x*x+y*y); }
+    inline T    	length		(void) const				        { return (T)Math::Sqrt(x*x+y*y); }
     /// Returns the squared length of the vector
-    T      	lengthSqr	(void) const				      { return x*x+y*y; }
+    inline T      	lengthSqr	(void) const				      { return x*x+y*y; }
     /// Negates the vector
-    Vector2T&	negate		(void)						      { x=-x; y=-y; return *this; }
+    inline Vector2T&	negate		(void)						      { x=-x; y=-y; return *this; }
     /// Normalizes the vector to the given length
-    Vector2T&	normalize	(T len = T(1))			{ T l = length(); if (l!= T(0)) *this *= (len/l); return *this; }
+    inline Vector2T&	normalize	(T len = T(1))			{ T l = length(); if (l!= T(0)) *this *= (len/l); return *this; }
     /// Normalizes the vector to the given length if it is longer
-    Vector2T&	limitLength	(T len)	 { T l = length(); if (l > len) *this *= (len/l); return *this; }
+    inline Vector2T&	limitLength	(T len)	 { T l = length(); if (l > len) *this *= (len/l); return *this; }
     /// Scales the vector
-    Vector2T&	scale		(const Vector2T& v)				{ x *= v.x; y *= v.y; return *this; }
+    inline Vector2T&	scale		(const Vector2T& v)				{ x *= v.x; y *= v.y; return *this; }
     /// Scales the vector
-    Vector2T&	scale		(const T & xs, const T & ys)				{ x *= xs; y *= ys; return *this; }
+    inline Vector2T&	scale		(const T & xs, const T & ys)				{ x *= xs; y *= ys; return *this; }
 
     /// Scales the vector with inverse of v
-    Vector2T&	descale		(const Vector2T& v)			{ x /= v.x; y /= v.y; return *this; }
+    inline Vector2T&	descale		(const Vector2T& v)			{ x /= v.x; y /= v.y; return *this; }
     /// Rotates the vector given the sine and cosine of the rotation angle
-    Vector2T&	rotate		(double s, double c)		{ T t = x; x = (T)(x*c+y*-s); y = (T)(t*s+y*c); return *this; }
+    inline Vector2T&	rotate		(double s, double c)		{ T t = x; x = (T)(x*c+y*-s); y = (T)(t*s+y*c); return *this; }
     /// Rotate the vector by given radians
-    Vector2T&	rotate		(double angle)					{ return rotate(sin(angle), cos(angle)); }
+    inline Vector2T&	rotate		(double angle)					{ return rotate(sin(angle), cos(angle)); }
     /// Returns atan2(y/x)
-    double	angle		(void) const				        { return atan2(double(y), double(x)); }
+    inline double	angle		(void) const				        { return atan2(double(y), double(x)); }
     /// Clamps both components to the range [0,1]
-    Vector2T&	clampUnit	(void)						{ if(x <= (T)0.0) x = (T)0.0; else if(x >= (T)1.0) x = (T)1.0; if(y <= (T)0.0) y = (T)0.0; else if(y >= (T)1.0) y = (T)1.0; return *this; }
+    inline Vector2T&	clampUnit	(void)						{ return clamp(T(0.0), T(1.0)); }
     /// Clamps both components to the range [low, high]
-    Vector2T&	clamp (T low, T high)       { x = Math::Clamp(x, low, high); y = Math::Clamp(y, low, high); return * this; }
+    inline Vector2T&	clamp (T low, T high)       { x = Math::Clamp(x, low, high); y = Math::Clamp(y, low, high); return * this; }
 
     /// Returns the smaller component
-    T           minimum         (void) const { return x < y ? x : y; }
+    inline T           minimum         (void) const { return x < y ? x : y; }
     /// Returns the larger component
-    T           maximum         (void) const { return x > y ? x : y; }
+    inline T           maximum         (void) const { return x > y ? x : y; }
     /// Returns the sum of components
-    T           sum             (void) const { return x + y; }
+    inline T           sum             (void) const { return x + y; }
     /// Returns a vector with components reordered.
-    Vector2T    shuffle         (int i1 = 1, int i2 = 0) const { return Vector2T(get(i1), get(i2)); }
+    inline Vector2T    shuffle         (int i1 = 1, int i2 = 0) const { return Vector2T(get(i1), get(i2)); }
     /// Returns a perpendicular vector
-    Vector2T    perpendicular   () const { return Vector2T(-y, x); }
+    inline Vector2T    perpendicular   () const { return Vector2T(-y, x); }
 
     /// Returns the ith component
-    T&            get(int i)        { return ((T*)this)[i]; }
+    inline T&            get(int i)        { return ((T*)this)[i]; }
     /// Returns the ith component
-    const T&      get(int i) const  { return ((T*)this)[i]; }
+    inline const T&      get(int i) const  { return ((T*)this)[i]; }
 
     /// Returns the ith component
-    const	T&			operator[]	(int i) const		{ return ((T*)this)[i]; }
+    inline const	T&			operator[]	(int i) const		{ return ((T*)this)[i]; }
     /// Returns the ith component
-    T&			        operator[]	(int i)				{ return ((T*)this)[i]; }
+    inline T&			        operator[]	(int i)				{ return ((T*)this)[i]; }
 
     /// Check that vector elements are finite
     /** This function can be useful if you suspect that contents of the
@@ -134,11 +141,11 @@ namespace Nimble {
         @return True if the vector elements are finite, false if are non-finite
         (i.e. infinite or nan).
     */
-    bool isFinite() const { return Math::isFinite(x) && Math::isFinite(y); }
+    inline bool isFinite() const { return Math::isFinite(x) && Math::isFinite(y); }
 
     /** Less-than operator, with arbitrary internal logic. This method is used
         if you want to sort vectors. */
-    bool operator< (const Vector2T<T>& v2) const
+    inline bool operator< (const Vector2T<T>& v2) const
     {
       return x == v2.x ? y < v2.y : x < v2.x;
     }

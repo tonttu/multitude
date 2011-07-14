@@ -68,9 +68,9 @@ namespace Resonant {
 
     size_t block = 1000;
 
-    unsigned pos = 0;
+    size_t pos = 0;
 
-    while(pos < m_d->m_info.frames) {
+    while(pos < static_cast<size_t> (m_d->m_info.frames)) {
       size_t get = Nimble::Math::Min((size_t) (m_d->m_info.frames - pos), block);
       size_t n = get * m_d->m_info.channels;
 
@@ -407,9 +407,9 @@ namespace Resonant {
       channelsIn = 0;
     }
 
-    if(channelsOut != (int) m_channels) {
+    if(channelsOut != static_cast<int> (m_channels)) {
       edit = true;
-      channelsOut = m_channels;
+      channelsOut = static_cast<int> (m_channels);
     }
 
     return true;
@@ -520,8 +520,8 @@ namespace Resonant {
 
     int n = 0;
 
-    if((unsigned) fillchannels > channels())
-      fillchannels = channels();
+    if(static_cast<size_t> (fillchannels) > channels())
+      fillchannels = static_cast<int> (channels());
 
     for(int i = 0; i < dir.count(); i++) {
 
@@ -682,10 +682,10 @@ namespace Resonant {
     return false;
   }
 
-  void ModuleSamplePlayer::dropVoice(unsigned i)
+  void ModuleSamplePlayer::dropVoice(size_t i)
   {
     // trace("ModuleSamplePlayer::dropVoice # %d", i);
-    assert((size_t) i < m_active);
+    assert( i < m_active);
     m_active--;
     m_voiceptrs[i]->clear();
     for( ; i < m_active; i++) {

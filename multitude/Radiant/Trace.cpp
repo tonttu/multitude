@@ -27,9 +27,14 @@
 #include <string>
 #include <set>
 
-#ifndef RADIANT_WIN32
+#ifndef RADIANT_WINDOWS
 #include <unistd.h> // for istty
+#else
+#define WIN32_MEAN_AND_LEAN
+#define NOMINMAX
+#include <windows.h>
 #endif
+
 
 namespace Radiant {
 
@@ -91,7 +96,7 @@ namespace Radiant {
   {
     static bool stderr_is_tty = false, stdout_is_tty = false;
 
-#ifndef RADIANT_WIN32
+#ifndef RADIANT_WINDOWS
     // this doesn't need mutex, it doesn't matter if this is ran
     // in two different threads at the same time
     static bool once = false;
@@ -162,6 +167,20 @@ namespace Radiant {
     }
 
     vfprintf(out, msg, args);
+
+#ifdef _WIN32
+	// Log to the Windows debug-console as well
+	char logmsg[256];
+	vsnprintf(logmsg, 256, msg, args);
+
+  char threadId[16];
+  _snprintf(threadId, 16, "[thr:%d] ", GetCurrentThreadId());
+  
+  OutputDebugStringA(threadId);
+	OutputDebugStringA(logmsg);
+	OutputDebugStringA("\n");
+#endif
+
     fprintf(out,"%s\n", colors_end);
     fflush(out);
   }

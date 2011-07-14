@@ -114,7 +114,7 @@ namespace Radiant
     int pos = 0;
     char * data = reinterpret_cast<char*>(buffer);
 
-#ifdef RADIANT_WIN32
+#ifdef RADIANT_WINDOWS
     // Windows doesn't implement MSG_DONTWAIT, so do an extra poll
     if(!waitfordata && !readAll){
       struct pollfd pfd;
@@ -198,7 +198,7 @@ namespace Radiant
     if(m_d->m_fd < 0)
       return false;
 
-    int n = bytes;
+    int n = static_cast<int> (bytes);
 
     if (setsockopt(m_d->m_fd, SOL_SOCKET, SO_RCVBUF, (const char*)&n, sizeof(n)) == -1) {
       return false;

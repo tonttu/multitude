@@ -54,7 +54,11 @@ namespace Resonant {
       /// Maps [input channel] -> [device, channel]
       Channels m_channels;
       std::vector<Stream> m_streams;
-      std::list<std::pair<AudioLoop*, int> > cb;
+
+      typedef std::pair<AudioLoop*, int> Callback;
+      typedef std::list<Callback> CallbackList;
+      CallbackList cb;
+
       std::set<int> m_written;
       std::vector<void*> m_streamBuffers;
 
