@@ -18,40 +18,66 @@
 
 #include "Export.hpp"
 #include "Mutex.hpp"
+#include "RefPtr.hpp"
 
 namespace Radiant {
   extern RADIANT_API Radiant::Mutex s_singletonMutex;
 }
 
-/// Implements singleton of object type T
-/** Singleton is used when there is only one object of type T. The
-    one object can be accessed with the function instance(). The
-    object is created as you for the first time access it. The lazy
-    creation is done because it might not be possible to create
-    objects during application startup.
+/** Implements singleton of object type T
 
-    Once created, there is no way to delete the single object.
+    Singleton is used when there is only one object of type T. The one object
+    can be accessed with the function instance(). The object is created as you
+    for the first time access it. The lazy creation is done because it might
+    not be possible to create objects during application startup.
+
+    The singleton instance is destroyed when its reference count reaches zero.
+    So if you want to guarantee the life-time of the singleton instance, you
+    should store the returned shared_ptr.
 
     @todo document the usage of these macros
 */
 
-/// This macro implements "double-checked locking" to minimize the
-/// mutex usage. In almost all cases the mutex doesn't need to be locked,
-/// so using only one static mutex won't slow things down.
+/// This macro implements "double-checked locking pattern" to minimize the
+/// mutex usage. In almost all cases the mutex doesn't need to be locked, so
+/// using only one static mutex won't slow things down.
 #define DEFINE_SINGLETON(T)                                        \
-  T & T :: instance() {                                            \
-    if(s_multiSingletonInstance) return *s_multiSingletonInstance; \
-    Radiant::Guard g(Radiant::s_singletonMutex);                  \
-    if(s_multiSingletonInstance) return *s_multiSingletonInstance; \
-    s_multiSingletonInstance = new T;                              \
-    return *s_multiSingletonInstance;                              \
+  std::shared_ptr<T> T :: instance() {                             \
+    std::shared_ptr<T> p = s_multiSingletonInstance.lock();        \
+    if(!p) {                                                       \
+      Radiant::Guard g(Radiant::s_singletonMutex);                 \
+      p = s_multiSingletonInstance.lock();                         \
+      if(p) return p;                                              \
+      p.reset(new T());                                            \
+      s_multiSingletonInstance = p;                                \
+    }                                                              \
+    return p;                                                      \
   }                                                                \
-  T * volatile T::s_multiSingletonInstance = 0
+  std::weak_ptr<T> T::s_multiSingletonInstance;
 
 #define DECLARE_SINGLETON(T)                                       \
-  public: static T & instance();                                   \
-  private: static T * volatile s_multiSingletonInstance
+  public: static std::shared_ptr<T> instance();                    \
+  private: static std::weak_ptr<T> s_multiSingletonInstance
 
+/*
+template<class T>
+class Singleton2
+{
+public:
+  static std::shared_ptr<T> instance()
+  {
+    std::shared_ptr<T> p = s_instance.lock();
+    if(!p) {
+      p.reset(new T());
+      s_instance = p;
+    }
 
+    return p;
+  }
+
+private:
+  static std::weak_ptr<T> s_instance;
+};
+*/
 #endif
 

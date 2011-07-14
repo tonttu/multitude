@@ -24,6 +24,8 @@ namespace Poetic
   {
     DECLARE_SINGLETON(FontManager);
     public:
+    ~FontManager();
+
     /// Returns a font that matches the given name
     CPUWrapperFont * getFont(const std::string & name);
     /// Returns a default font
@@ -41,7 +43,6 @@ namespace Poetic
 
     private:
       FontManager();
-      ~FontManager();
 
       // filename -> cpu font
       typedef std::map<std::string, CPUManagedFont *> container;

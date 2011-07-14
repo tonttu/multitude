@@ -212,7 +212,7 @@ void VideoWindow::initializeGL()
   std::string filename = Radiant::FileUtils::findFile(ttf, path);
 
   if(filename.size()) {
-    m_subCPUFont = Poetic::FontManager::instance().getFont(ttf);
+    m_subCPUFont = Poetic::FontManager::instance()->getFont(ttf);
     /*
     new Poetic::CPUBitmapFont();
     if(m_subCPUFont->load(filename.c_str())) {
