@@ -278,6 +278,9 @@ DSPNetwork::instance().send(control);
     /**  */
     static DSPNetwork * instance();
 
+    Item * findItem(const char * id);
+    Module * findModule(const char * id);
+
     void dumpInfo(FILE *f);
 
   private:
@@ -303,8 +306,6 @@ DSPNetwork::instance().send(control);
     Buf & findFreeBuf(int);
     bool bufIsFree(int, int);
     void checkValidId(Item &);
-    Item * findItem(const char * id);
-    Module * findModule(const char * id);
     float * findOutput(const char * id, int channel);
     long countBufferBytes();
     void duDumpInfo(FILE *f);

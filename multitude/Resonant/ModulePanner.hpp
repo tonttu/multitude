@@ -28,6 +28,7 @@
 
 #include <Valuable/ValueFloat.hpp>
 #include <Valuable/ValueVector.hpp>
+#include <Valuable/ValueContainer.hpp>
 
 #include <vector>
 
@@ -57,11 +58,10 @@ namespace Resonant {
 
 
     /// Constructs the panner module
-	ModulePanner(Application *, Mode mode=RADIAL);
+    ModulePanner(Application * = 0, Mode mode=RADIAL);
     virtual ~ModulePanner();
 
-    virtual Valuable::ArchiveElement & serialize(Valuable::Archive &doc) const;
-    virtual bool readElement(Valuable::DOMElement element);
+    virtual bool deserialize(Valuable::ArchiveElement & element);
 
     virtual bool prepare(int & channelsIn, int & channelsOut);
     virtual void processMessage(const char *, Radiant::BinaryData *);
@@ -154,14 +154,14 @@ namespace Resonant {
 
 
     Sources      m_sources;
-    LoudSpeakers m_speakers;
+    Valuable::ValueContainer<LoudSpeakers> m_speakers;
 
     /// generation is increased every time speaker setup is changed
     long m_generation;
 
     Valuable::ValueFloat m_maxRadius;
-    Rectangles m_rectangles;
-    Mode m_operatingMode;
+    Valuable::ValueContainer<Rectangles> m_rectangles;
+    Valuable::ValueInt m_operatingMode;
     /// @endcond
   };
 
