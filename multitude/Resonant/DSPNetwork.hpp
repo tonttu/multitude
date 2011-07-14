@@ -162,7 +162,7 @@ namespace Resonant {
       int         m_targetChannel;
     };
 
-    /** Stores a sinple audio processing #Resonant::Module.*/
+    /** Stores a simple audio processing #Resonant::Module.*/
     class RESONANT_API Item
     {
       friend class DSPNetwork;
@@ -315,6 +315,7 @@ DSPNetwork::instance().send(control);
 
     std::vector<Buf> m_buffers;
 
+    /// @todo remove these special hacks
     ModuleOutCollect *m_collect;
     ModulePanner   *m_panner;
 

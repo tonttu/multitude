@@ -139,7 +139,7 @@ namespace Resonant {
   {
     debugResonant("DSPNetwork::~DSPNetwork # %p %p", this, m_instance);
 
-	stop();
+    stop();
 
     if(m_instance == this)
       m_instance = 0;
@@ -147,8 +147,8 @@ namespace Resonant {
     for(size_t i = 0; i < m_buffers.size(); i++)
       m_buffers[i].clear();
 
-    delete m_collect;
-    m_collect = 0;
+    for(container::iterator i = m_items.begin(); i != m_items.end(); i++)
+      i->deleteModule();
   }
 
   bool DSPNetwork::start(const char * device)
