@@ -143,7 +143,7 @@ namespace Luminous {
 
     m_priority = m_loadingPriority;
     reschedule();
-    BGThread::instance()->reschedule(this);
+    BGThread::instance()->reschedule(shared_from_this());
 
     // Scan for the best available mip-map.
 

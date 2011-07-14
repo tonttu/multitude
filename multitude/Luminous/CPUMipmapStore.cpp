@@ -43,12 +43,7 @@ namespace Luminous {
       return std::shared_ptr<CPUMipmaps>();
     }
 
-    /// @todo fix
-    static std::vector<std::shared_ptr<CPUMipmaps> > sharedptrs;
-    std::shared_ptr<CPUMipmaps> s(mipmap_shared);
-    sharedptrs.push_back(s);
-
-    Luminous::BGThread::instance()->addTask(mipmap_shared.get());
+    Luminous::BGThread::instance()->addTask(mipmap_shared);
 
     // store new weak pointer
     mipmap_weak = mipmap_shared;

@@ -51,7 +51,8 @@ namespace Luminous {
       quarter size image, etc.
   */
   /// @todo examples
-  class LUMINOUS_API CPUMipmaps : public Luminous::Collectable, public Luminous::Task
+  class LUMINOUS_API CPUMipmaps : public Luminous::Collectable, public Luminous::Task,
+                                  public std::enable_shared_from_this<CPUMipmaps>
   {
   public:
     struct StateInfo : public GLResource

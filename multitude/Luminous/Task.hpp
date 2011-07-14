@@ -29,6 +29,7 @@ namespace Radiant {
 namespace Luminous
 {
   class BGThread;
+  class TaskDeleter;
 
   /// Priority for the tasks
   typedef float Priority;
@@ -126,8 +127,17 @@ namespace Luminous
       virtual ~Task();
 
       friend class BGThread;
+      friend class TaskDeleter;
   };
 
+  class TaskDeleter
+  {
+  public:
+    void operator()(Task* p)
+    {
+      delete p;
+    }
+  };
 }
 
 #endif

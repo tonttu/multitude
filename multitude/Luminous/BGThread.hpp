@@ -42,7 +42,15 @@ namespace Luminous
 
     /// Add a task to be executed
     /** The task is the property of the BGThread, which will delete the object when its
-        operation is finished.
+        operation is finished and the shared pointer's reference count goes to zero.
+
+        @param task The task that needs to be added.
+    */
+    virtual void addTask(std::shared_ptr<Task> task);
+
+    /// Add a task to be executed
+    /** The task is the property of the BGThread, which will delete the object when its
+        operation is finished and the pointer's reference count goes to zero.
 
         @param task The task that needs to be added.
     */
@@ -55,13 +63,13 @@ namespace Luminous
         @param task The task to be removed
         @return True if the task was successfully removes, false otherwise.
     */
-    virtual bool removeTask(Task * task);
+    virtual bool removeTask(std::shared_ptr<Task> task);
 
     /// Update the changed task timestamp to queue
-    virtual void reschedule(Task * task);
+    virtual void reschedule(std::shared_ptr<Task> task);
 
     /// Change the priority of a task
-    virtual void setPriority(Task * task, Priority p);
+    virtual void setPriority(std::shared_ptr<Task> task, Priority p);
 
     /** @return Returns the global BGThread instance. If no BGThread has been created
         yet, one will be created now.
@@ -69,9 +77,9 @@ namespace Luminous
     static std::shared_ptr<BGThread> instance();
 
     /// Container for the tasks
-    typedef std::multimap<Priority, Task *, std::greater<Priority> > container;
+    typedef std::multimap<Priority, std::shared_ptr<Task>, std::greater<Priority> > container;
     /// Objects stored in the task container
-    typedef std::pair<Priority, Task * > contained;
+    typedef std::pair<Priority, std::shared_ptr<Task> > contained;
 
     /// Returns the number of tasks in the BGThread.
     unsigned taskCount();
@@ -80,9 +88,9 @@ namespace Luminous
   private:
     virtual void childLoop();
 
-    Task * pickNextTask();
+    std::shared_ptr<Task> pickNextTask();
 
-    container::iterator findTask(Task * task);
+    container::iterator findTask(std::shared_ptr<Task> task);
 
     void wakeThread();
     void wakeAll();
@@ -91,7 +99,7 @@ namespace Luminous
     container m_taskQueue;
 
     // a thread is already waiting for these tasks
-    std::set<Task*> m_reserved;
+    std::set<std::shared_ptr<Task> > m_reserved;
 
     // number of idle threads, excluding ones that are reserving a task
     int m_idle;
