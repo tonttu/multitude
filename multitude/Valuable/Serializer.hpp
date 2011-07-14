@@ -27,6 +27,8 @@
 
 namespace Valuable
 {
+  class Serializable;
+
   /// XML Serializer namespace that has handles the (de)serialize dispatching
   /** Correct way to save/load object state to/from XML is to use static
       serialize/deserialize methods.
