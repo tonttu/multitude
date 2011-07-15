@@ -5,7 +5,7 @@
 #include "CPUManagedFont.hpp"
 
 #include <Radiant/Trace.hpp>
-#include <Poetic.hpp>
+#include <Poetic/Poetic.hpp>
 
 #include <map>
 #include <string>
