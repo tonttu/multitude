@@ -59,25 +59,4 @@ namespace Radiant {
   public: static std::shared_ptr<T> instance();                    \
   private: static std::weak_ptr<T> s_multiSingletonInstance
 
-/*
-template<class T>
-class Singleton2
-{
-public:
-  static std::shared_ptr<T> instance()
-  {
-    std::shared_ptr<T> p = s_instance.lock();
-    if(!p) {
-      p.reset(new T());
-      s_instance = p;
-    }
-
-    return p;
-  }
-
-private:
-  static std::weak_ptr<T> s_instance;
-};
-*/
 #endif
-
