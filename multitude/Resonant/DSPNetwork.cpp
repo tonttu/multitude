@@ -108,9 +108,6 @@ namespace Resonant {
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-
-  DSPNetwork * DSPNetwork::m_instance = 0;
-
   DSPNetwork::DSPNetwork()
     : // m_continue(false),
     m_panner(0),
@@ -125,24 +122,11 @@ namespace Resonant {
     tmp.m_module = m_collect;
 
     m_newItems.push_back(tmp);
-
-    debugResonant("DSPNetwork::DSPNetwork # %p %p", this, m_instance);
-
-    if(!m_instance)
-      m_instance = this;
-    else {
-      info("DSPNetwork::DSPNetwork # Multiple DSPNetworks in use(!)");
-    }
   }
 
   DSPNetwork::~DSPNetwork()
   {
-    debugResonant("DSPNetwork::~DSPNetwork # %p %p", this, m_instance);
-
     stop();
-
-    if(m_instance == this)
-      m_instance = 0;
 
     for(size_t i = 0; i < m_buffers.size(); i++)
       m_buffers[i].clear();
@@ -155,7 +139,7 @@ namespace Resonant {
   {
     Radiant::Guard g(m_startupMutex);
 
-    debugResonant("DSPNetwork::start # %p %p", this, m_instance);
+    debugResonant("DSPNetwork::start # %p", this);
 
     if(isRunning())
       return false;
@@ -173,7 +157,7 @@ namespace Resonant {
 
   void DSPNetwork::addModule(Item & i)
   {
-    debugResonant("DSPNetwork::addModule # %p %p", this, m_instance);
+    debugResonant("DSPNetwork::addModule # %p", this);
 
     Radiant::Guard g( m_newMutex);
 
@@ -195,7 +179,7 @@ namespace Resonant {
 
   void DSPNetwork::send(Radiant::BinaryData & control)
   {
-    debugResonant("DSPNetwork::send # %p %p", this, m_instance);
+    debugResonant("DSPNetwork::send # %p", this);
 
     Radiant::Guard g( m_inMutex);
     m_incoming.append(control);
@@ -223,19 +207,6 @@ namespace Resonant {
     addModule(item);
 
     return player;
-  }
-
-  DSPNetwork * DSPNetwork::instance()
-  {
-    if(!m_instance)
-      return 0;
-
-    if(!m_instance->isRunning()) {
-      debugResonant("DSPNetwork::instance # Initializing DSP...");
-      if(!m_instance->start())
-        Radiant::error("DSPNetwork::instance # failed to initialize sound device");
-    }
-    return m_instance;
   }
 
   void DSPNetwork::dumpInfo(FILE *f)
@@ -838,3 +809,5 @@ namespace Resonant {
   }
 
 }
+
+DEFINE_SINGLETON(Resonant::DSPNetwork);

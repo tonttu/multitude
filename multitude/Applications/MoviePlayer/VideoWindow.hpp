@@ -86,7 +86,7 @@ protected:
 
   container m_movies;
 
-  Resonant::DSPNetwork    m_dsp;
+  std::shared_ptr<Resonant::DSPNetwork> m_dsp;
 
   QTimer m_timer;
   Radiant::TimeStamp m_lastActivity;
