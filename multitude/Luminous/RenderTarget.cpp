@@ -86,6 +86,7 @@ namespace Luminous
 
   Texture2D & RenderTargetManager::popRenderTarget(Luminous::RenderTargetObject & target)
   {
+    (void)target;
     //Radiant::info("RenderTargetManager::pop");
 
     if(m_stack.empty()) {

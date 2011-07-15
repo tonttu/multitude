@@ -48,7 +48,7 @@ int main(int argc, char ** argv)
 
   if (directory == 0)
   {
-    printf("Usage: %0 --dir <directoryname> --gain [gainvalue] --verbose", argv[0]);
+    printf("Usage: %s --dir <directoryname> --gain [gainvalue] --verbose", argv[0]);
     return 1;
   }
 

@@ -191,11 +191,11 @@ namespace Resonant {
       float m_relPitch;
       double m_dpos;
 
-      unsigned m_sampleChannel;
-      unsigned m_targetChannel;
+      size_t m_sampleChannel;
+      size_t m_targetChannel;
       bool     m_loop;
       std::shared_ptr<Sample> m_sample;
-      unsigned m_position;
+      size_t m_position;
       Radiant::TimeStamp m_startTime;
     };
 

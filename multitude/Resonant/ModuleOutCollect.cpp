@@ -62,7 +62,7 @@ namespace Resonant {
     const char * forcechans = getenv("RESONANT_FORCE_CHANNELS");
     if(forcechans) {
       m_channels =  atoi(forcechans);
-      Radiant::info("ModuleOutCollect::prepare # forcing channel count to %d",
+      Radiant::info("ModuleOutCollect::prepare # forcing channel count to %ld",
                     m_channels);
     }
 
@@ -138,7 +138,7 @@ namespace Resonant {
   {
     size_t chans = m_channels;
 
-    assert((int) m_interleaved.size() >= (n * chans));
+    assert(m_interleaved.size() >= (n * chans));
 
     // Set to zero
     if(!m_interleaved.empty())
@@ -167,7 +167,7 @@ namespace Resonant {
         dest += chans;
       }
 
-      if(m_subwooferChannel >= 0 && m_subwooferChannel < chans) {
+      if(m_subwooferChannel >= 0 && m_subwooferChannel < static_cast<int> (chans)) {
         src = in[i];
         dest = & m_interleaved[m_subwooferChannel];
 

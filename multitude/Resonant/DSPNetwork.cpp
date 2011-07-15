@@ -242,7 +242,7 @@ namespace Resonant {
     } else if(streamnum == 0) {
       m_d->m_sem.acquire(static_cast<int> (streams));
       doCycle(framesPerBuffer);
-      for (int i = 1; i < streams; ++i)
+      for (size_t i = 1; i < streams; ++i)
         m_d->m_streams[i].m_barrier->release();
     } else {
       m_d->m_streams[streamnum].m_barrier->acquire();
@@ -460,7 +460,7 @@ namespace Resonant {
              networks.
              */
 
-          for(int i = 0; i < outchans; i++) {
+          for(size_t i = 0; i < outchans; i++) {
             Connection conn;
             conn.setModuleId(id);
             conn.m_channel = i % mchans;

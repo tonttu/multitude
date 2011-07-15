@@ -53,10 +53,10 @@ namespace Resonant {
       size_t len = strlen(id);
 
       if(len >= MAX_ID_LENGTH) {
-       error("Module::setId # Too long id, %d bytes", len);
+       error("Module::setId # Too long id, %ld bytes", len);
       }
       else
-	memcpy(m_id, id, len + 1);
+        memcpy(m_id, id, len + 1);
     }
   }
 

@@ -16,9 +16,9 @@ namespace Radiant
   {
   public:
     NamedSemaphore_Impl(const char * name, int locks)
-      : m_name(name)
-      , m_sem(NULL)
+      : m_sem(NULL)
       , m_locked(false)
+      , m_name(name)
     {
       assert(locks > 0);
 
