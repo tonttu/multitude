@@ -220,6 +220,9 @@ namespace Valuable
     /// @copydoc eventSend
     void eventSend(const char *);
 
+    /// The sender of the event, can be read in processMessage()
+    HasValues * m_sender;
+
   private:
     friend class ValueObject; // So that ValueObject can call the function below.
 
