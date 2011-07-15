@@ -342,6 +342,8 @@ namespace VideoDisplay {
     debugVideoDisplay("ShowGL::ShowGL # %p", this);
 
     clearHistogram();
+
+    m_dsp = Resonant::DSPNetwork::instance();
   }
 
   ShowGL::~ShowGL()
