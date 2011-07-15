@@ -171,11 +171,10 @@ namespace VideoDisplay {
 
     */
     bool init(const char * filename,
-                               Resonant::DSPNetwork  * dsp,
-                               float previewpos = 0.05f,
-                               int targetChannel = -1,
-                               int flags =
-                               Radiant::WITH_VIDEO | Radiant::WITH_AUDIO);
+              float previewpos = 0.05f,
+              int targetChannel = -1,
+              int flags =
+              Radiant::WITH_VIDEO | Radiant::WITH_AUDIO);
 
     /// Sets the gain factor for the video sounds
     /** The gain coefficient is a linear multiplier for the video sound-track.
@@ -294,7 +293,7 @@ namespace VideoDisplay {
     VideoIn               * m_video;
     VideoIn::Frame        * m_frame;
     VideoIn::Frame          m_preview;
-    Resonant::DSPNetwork  * m_dsp;
+    std::shared_ptr<Resonant::DSPNetwork> m_dsp;
     Resonant::DSPNetwork::Item m_dspItem;
     AudioTransfer         * m_audio;
     int                     m_targetChannel;

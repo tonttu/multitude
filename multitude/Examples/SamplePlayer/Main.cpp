@@ -70,9 +70,9 @@ int main(int argc, char ** argv)
   
   sf_close(sndf);
 
-  Resonant::DSPNetwork dsp;
+  std::shared_ptr<Resonant::DSPNetwork> dsp = Resonant::DSPNetwork::instance();
 
-  dsp.start();
+  dsp->start();
 
   Radiant::BinaryData control, control2;
 
@@ -84,7 +84,7 @@ int main(int argc, char ** argv)
 
   item.module()->processMessage("channels", & control);
   
-  dsp.addModule(item);
+  dsp->addModule(item);
 
 
   control.rewind();
@@ -131,17 +131,17 @@ int main(int argc, char ** argv)
 
   for(int i = 0; i < repeats; i++) {
     Radiant::info("Playing sample %s (%d of %d)", file, i + 1, repeats);
-    dsp.send(control);
+    dsp->send(control);
 
     if(info.channels >= 2)
-      dsp.send(control2);
+      dsp->send(control2);
 
     Radiant::Sleep::sleepS(fileduration + 1);
   }
   
   Radiant::Sleep::sleepS(loop ? fileduration * 1000 : 1);
 
-  dsp.stop();
+  dsp->stop();
 
   return 0;
 }

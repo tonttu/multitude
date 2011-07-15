@@ -31,6 +31,23 @@
 #include <set>
 #include <string>
 
+#ifdef MULTI_DOCUMENTER
+#include "Serializer.hpp"
+#include "XMLArchive.hpp"
+
+// some forward declarations to work around cyclic include problems
+namespace Valuable
+{
+  class Serializable;
+  namespace Serializer
+  {
+    template <typename T>
+    ArchiveElement & serialize(Archive & archive, const T & t);
+  }
+}
+
+#endif
+
 namespace Valuable
 {
   class HasValues;
@@ -204,6 +221,7 @@ namespace Valuable
     struct Doc
     {
       std::string class_name;
+      std::string orig_str;
       HasValues * obj;
       ValueObject * vo;
     };
@@ -243,7 +261,16 @@ namespace Valuable
     ValueObjectT(HasValues * host, const std::string & name, const T & v = T(), bool transit = false)
       : ValueObject(host, name, transit),
       m_value(v),
-      m_orig(v) {}
+      m_orig(v) {
+#ifdef MULTI_DOCUMENTER
+      Doc & d = doc.back();
+      XMLArchive archive;
+      ArchiveElement & e = Serializer::serialize<T>(archive, m_orig);
+      if(!e.isNull()) {
+        d.orig_str = e.get();
+      }
+#endif
+    }
 
     ValueObjectT()
       : ValueObject() {}

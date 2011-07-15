@@ -36,6 +36,7 @@ namespace Poetic
     public:
       /// Contructs a new managed GPU font
       GPUManagedFont(CPUManagedFont * font, Luminous::GLResources * glrc);
+      ~GPUManagedFont();
 
       /// Render a string
       void render(const std::string & text, int pointSize,

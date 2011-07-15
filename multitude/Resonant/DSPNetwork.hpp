@@ -20,9 +20,7 @@
 #include <Resonant/Module.hpp>
 
 #include <Radiant/BinaryData.hpp>
-#include <Radiant/Mutex.hpp>
-
-#include <Radiant/RefPtr.hpp>
+#include <Radiant/Singleton.hpp>
 
 #include <list>
 #include <vector>
@@ -63,6 +61,7 @@ namespace Resonant {
    */
   class RESONANT_API DSPNetwork : public AudioLoop
   {
+    DECLARE_SINGLETON(DSPNetwork);
   public:
 
     /** Holds audio sample buffers for inter-module transfer.
@@ -162,7 +161,7 @@ namespace Resonant {
       int         m_targetChannel;
     };
 
-    /** Stores a sinple audio processing #Resonant::Module.*/
+    /** Stores a simple audio processing #Resonant::Module.*/
     class RESONANT_API Item
     {
       friend class DSPNetwork;
@@ -238,8 +237,6 @@ namespace Resonant {
     typedef container::iterator iterator;
     /// @endcond
 
-    /// Creates an empty DSPNetwork object.
-    DSPNetwork();
     virtual ~DSPNetwork();
 
     /** Starts the DSPNetwork, using given audio device.
@@ -274,13 +271,15 @@ DSPNetwork::instance().send(control);
     /// Returns the default sample player object.
     /** If the object does not exis yet, it is created on the fly. */
     ModuleSamplePlayer * samplePlayer();
-    /// Returns the DSPNetwork instance.
-    /**  */
-    static DSPNetwork * instance();
+
+    Item * findItem(const char * id);
+    Module * findModule(const char * id);
 
     void dumpInfo(FILE *f);
 
   private:
+    /// Creates an empty DSPNetwork object.
+    DSPNetwork();
 
     virtual int callback(const void *in, void *out,
                          unsigned long framesPerBuffer,
@@ -303,8 +302,6 @@ DSPNetwork::instance().send(control);
     Buf & findFreeBuf(int);
     bool bufIsFree(int, int);
     void checkValidId(Item &);
-    Item * findItem(const char * id);
-    Module * findModule(const char * id);
     float * findOutput(const char * id, int channel);
     long countBufferBytes();
     void duDumpInfo(FILE *f);
@@ -315,6 +312,7 @@ DSPNetwork::instance().send(control);
 
     std::vector<Buf> m_buffers;
 
+    /// @todo remove these special hacks
     ModuleOutCollect *m_collect;
     ModulePanner   *m_panner;
 
@@ -331,8 +329,6 @@ DSPNetwork::instance().send(control);
     Radiant::Mutex m_newMutex;
 
     Radiant::Mutex m_startupMutex;
-
-    static DSPNetwork * m_instance;
   };
 
 }

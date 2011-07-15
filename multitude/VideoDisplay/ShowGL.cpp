@@ -323,7 +323,6 @@ namespace VideoDisplay {
   ShowGL::ShowGL()
       : m_video(0),
       m_frame(0),
-      m_dsp(0),
       m_audio(0),
       m_targetChannel(-1),
       m_gain(1.0f),
@@ -343,6 +342,8 @@ namespace VideoDisplay {
     debugVideoDisplay("ShowGL::ShowGL # %p", this);
 
     clearHistogram();
+
+    m_dsp = Resonant::DSPNetwork::instance();
   }
 
   ShowGL::~ShowGL()
@@ -357,7 +358,7 @@ namespace VideoDisplay {
     return m_subTitles.readSrt(filename);
   }
 
-  bool ShowGL::init(const char * filename, Resonant::DSPNetwork  * dsp,
+  bool ShowGL::init(const char * filename,
                     float /*previewpos*/,
                     int targetChannel,
                     int flags)
@@ -377,10 +378,6 @@ namespace VideoDisplay {
     }
 
     m_filename = filename;
-    if(dsp)
-      m_dsp = dsp;
-    else
-      m_dsp = Resonant::DSPNetwork::instance();
 
     m_targetChannel = targetChannel;
 

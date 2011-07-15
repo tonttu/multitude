@@ -5,6 +5,7 @@
 #include "CPUManagedFont.hpp"
 
 #include <Radiant/Trace.hpp>
+#include <Poetic/Poetic.hpp>
 
 #include <map>
 #include <string>
@@ -31,6 +32,9 @@ namespace Poetic
 #endif
   );
     m_locator.addPath(".");
+
+    if (!Poetic::initialize())
+      Radiant::error("Failed to initialize Poetic (%d)", Poetic::error());
   }
 
   FontManager::~FontManager()
@@ -41,6 +45,9 @@ namespace Poetic
       delete it->second;
     for(container::iterator it = m_managedFonts.begin(); it != m_managedFonts.end(); it++)
       delete it->second;
+
+    if (!Poetic::finalize())
+      Radiant::error("Failed to finalize Poetic (%d)", Poetic::error());
   }
 
   CPUWrapperFont * FontManager::getFont(const std::string & name)

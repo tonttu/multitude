@@ -124,10 +124,17 @@ namespace Radiant
     /// Converts to string
     /// @todo Rename to toString
     template<class T>
-    inline std::string stringify(T x) {
+    inline std::string stringify(const T & x) {
         std::ostringstream os;
         os << x;
         return os.str();
+    }
+
+    template<>
+    inline std::string stringify(const std::wstring & x) {
+      std::string out;
+      stdWstringToUtf8(out, x);
+      return out;
     }
 
     /// Converts from string

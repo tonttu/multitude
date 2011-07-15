@@ -154,7 +154,6 @@ namespace Radiant {
     //        binary     (    function(opt)           +offset(opt)      )
     QRegExp r("(.*)"  "\\("       "([^+]*)"  "(?:\\+0x[0-9a-f]+)?"   "\\).*");
 
-    int status;
     for(size_t i = 0; i < size; i++) {
       if(r.exactMatch(QString::fromUtf8(strings[i]))) {
         std::string func = Radiant::StringUtils::demangle(r.cap(2).toUtf8().data());

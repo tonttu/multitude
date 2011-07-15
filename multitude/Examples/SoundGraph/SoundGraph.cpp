@@ -46,9 +46,15 @@ int main(int argc, char ** argv)
     }
   }
 
-  Resonant::DSPNetwork dsp;
+  if (directory == 0)
+  {
+    printf("Usage: %s --dir <directoryname> --gain [gainvalue] --verbose", argv[0]);
+    return 1;
+  }
 
-  dsp.start();
+  std::shared_ptr<Resonant::DSPNetwork> dsp = Resonant::DSPNetwork::instance();
+
+  dsp->start();
 
   {
     Resonant::ModuleSamplePlayer * player = new Resonant::ModuleSamplePlayer(0);
@@ -59,7 +65,7 @@ int main(int argc, char ** argv)
 
     Resonant::DSPNetwork::Item playerItem;
     playerItem.setModule(player);
-    dsp.addModule(playerItem);
+    dsp->addModule(playerItem);
   }
 
   {
@@ -69,12 +75,12 @@ int main(int argc, char ** argv)
 
     Resonant::DSPNetwork::Item gainItem;
     gainItem.setModule(gain);
-    dsp.addModule(gainItem);
+    dsp->addModule(gainItem);
   }
 
   Radiant::Sleep::sleepS(1000);
 
-  dsp.stop();
+  dsp->stop();
 
   return 0;
 }

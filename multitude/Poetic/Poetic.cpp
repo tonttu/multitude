@@ -59,6 +59,21 @@ namespace Poetic
     return g_library;
   }
 
+  bool finalize()
+  {
+    Radiant::Guard g(freetypeMutex());
+
+    if (!g_library)
+      return true;
+
+    g_error = FT_Done_FreeType(*g_library);
+
+    delete g_library;
+    g_library = 0;
+
+    return (g_error == 0);
+  }
+
   Radiant::Mutex & freetypeMutex()
   {
     return g_freetypeMutex;

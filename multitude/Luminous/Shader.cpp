@@ -139,7 +139,7 @@ namespace Luminous {
     std::string m_vertexShader;
     std::string m_geometryShader;
 
-    int m_generation;
+    size_t m_generation;
   };
 
 

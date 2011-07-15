@@ -121,7 +121,7 @@ namespace Resonant {
 
     if(m_targetChannel >= host->channels()) {
       error("ModuleSamplePlayer::SampleVoice::synthesize # channel count exceeded for %s "
-            "%u >= %u", m_sample->name().c_str(),
+            "%ld >= %ld", m_sample->name().c_str(),
             m_targetChannel, host->channels());
       m_state = INACTIVE;
       return false;
@@ -248,7 +248,7 @@ namespace Resonant {
     m_state = sample ? PLAYING : WAITING_FOR_SAMPLE;
 
     debugResonant("ModuleSamplePlayer::SampleVoice::init # %p Playing gain = %.3f "
-          "rp = %.3f, ss = %d, ts = %d", this, m_gain, m_relPitch,
+          "rp = %.3f, ss = %ld, ts = %ld", this, m_gain, m_relPitch,
           m_sampleChannel, m_targetChannel);
   }
 
@@ -454,7 +454,7 @@ namespace Resonant {
                  m_samples[sampleind] : std::shared_ptr<Sample>(), data);
       m_active++;
 
-      debugResonant("ModuleSamplePlayer::control # Started sample %s (%d/%d)",
+      debugResonant("ModuleSamplePlayer::control # Started sample %s (%d/%ld)",
             buf, voiceind, m_active);
       // assert(voiceind < (int) m_active);
 

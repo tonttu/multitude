@@ -36,9 +36,11 @@ namespace Resonant {
 
   ModulePanner::ModulePanner(Application * a, Mode mode)
       : Module(a),
+      m_speakers(this, "speakers"),
       m_generation(0),
       m_maxRadius(this, "max-radius", 1500),
-      m_operatingMode(mode)
+      m_rectangles(this, "rectangles"),
+      m_operatingMode(this, "mode", mode)
   {
     setName("pan2d");
 
@@ -46,39 +48,22 @@ namespace Resonant {
 
   ModulePanner::~ModulePanner()
   {
-    for (size_t i=0; i < m_rectangles.size(); ++i)
-      delete m_rectangles[i];
+    for (size_t i=0; i < m_rectangles->size(); ++i)
+      delete (*m_rectangles)[i];
   }
 
-  Valuable::ArchiveElement & ModulePanner::serialize(Valuable::Archive &doc) const
+  bool ModulePanner::deserialize(Valuable::ArchiveElement & element)
   {
-    Valuable::ArchiveElement & e = Module::serialize(doc);
-
-    return e;
-  }
-
-
-  bool ModulePanner::readElement(Valuable::DOMElement element)
-  {
-    if(element.getTagName() == "speaker") {
-      std::shared_ptr<LoudSpeaker> ls(new LoudSpeaker);
-      bool ok = ls->deserializeXML(element);
-
-      if(ok) {
-        m_speakers.push_back(ls);
-        ++m_generation;
-        return true;
-      }
-    }
-
-    return false;
+    bool ok = Module::deserialize(element);
+    ++m_generation;
+    return ok;
   }
 
   bool ModulePanner::prepare(int & channelsIn, int & channelsOut)
   {
     (void) channelsIn;
 
-    channelsOut = static_cast<int> (m_speakers.size());
+    channelsOut = static_cast<int> (m_speakers->size());
 
     return true;
   }
@@ -126,7 +111,7 @@ namespace Resonant {
     int bufferbytes = n * sizeof(float);
 
     // Zero the output channels
-    for(unsigned i = 0; i < m_speakers.size(); i++) {
+    for(unsigned i = 0; i < m_speakers->size(); i++) {
       bzero(out[i], bufferbytes);
     }
 
@@ -170,17 +155,17 @@ namespace Resonant {
 
   void ModulePanner::makeFullHDStereo()
   {
-    m_speakers.clear();
+    m_speakers->clear();
 
     LoudSpeaker * ls = new LoudSpeaker;
 
     ls->m_location = Vector2(0, 540);
-    m_speakers.push_back(std::shared_ptr<LoudSpeaker>(ls));
+    m_speakers->push_back(std::shared_ptr<LoudSpeaker>(ls));
 
     ls = new LoudSpeaker;
 
     ls->m_location = Vector2(1920, 540);
-    m_speakers.push_back(std::shared_ptr<LoudSpeaker>(ls));
+    m_speakers->push_back(std::shared_ptr<LoudSpeaker>(ls));
 
     m_maxRadius = 1200;
     ++m_generation;
@@ -190,7 +175,7 @@ namespace Resonant {
   {
     //  Radiant::info("ModuleRectPanner::addSoundRectangle # new rect %d,%d %d,%d", r.location().x, r.location().y, r.size().x, r.size().y);
 
-    m_rectangles.push_back(r);
+    m_rectangles->push_back(r);
 
     // Add the two speakers
     int x1 = r->location().x;
@@ -211,20 +196,20 @@ namespace Resonant {
 
   ModulePanner::Mode ModulePanner::getMode() const
   {
-    return m_operatingMode;
+    return (ModulePanner::Mode)*m_operatingMode;
   }
 
   void ModulePanner::setSpeaker(unsigned i, Nimble::Vector2 location)
   {
     assert(i < 100000);
 
-    if(m_speakers.size() <= i)
-      m_speakers.resize(i + 1);
+    if(m_speakers->size() <= i)
+      m_speakers->resize(i + 1);
 
     LoudSpeaker * ls = new LoudSpeaker;
 
     ls->m_location = location;
-    m_speakers[i].reset(ls);
+    (*m_speakers)[i].reset(ls);
     ++m_generation;
   }
 
@@ -262,8 +247,8 @@ namespace Resonant {
 
     int interpSamples = 2000;
 
-    for(unsigned i = 0; i < m_speakers.size(); i++) {
-      LoudSpeaker * ls = m_speakers[i].get();
+    for(unsigned i = 0; i < m_speakers->size(); i++) {
+      LoudSpeaker * ls = (*m_speakers)[i].get();
 
       if(!ls)
         continue;
@@ -343,7 +328,7 @@ namespace Resonant {
   }
   float ModulePanner::computeGain(const LoudSpeaker * ls, Nimble::Vector2 srcLocation) const
   {
-    switch(m_operatingMode) {
+    switch(*m_operatingMode) {
     case RADIAL:
       return computeGainRadial(ls, srcLocation);
     case RECTANGLES:
@@ -418,9 +403,9 @@ namespace Resonant {
     // Find the channel for the speaker
     int channel = -1;
     bool found = false;
-    for(size_t i = 0; i < m_speakers.size(); i++) {
+    for(size_t i = 0; i < m_speakers->size(); i++) {
       channel = static_cast<int> (i);
-      if(m_speakers[i].get() == ls) {
+      if((*m_speakers)[i].get() == ls) {
         found = true;
         break;
       }
@@ -429,7 +414,7 @@ namespace Resonant {
     if(!found)
       return 0;
 
-    for(Rectangles::const_iterator it = m_rectangles.begin(); it != m_rectangles.end(); it++) {
+    for(Rectangles::const_iterator it = m_rectangles->begin(); it != m_rectangles->end(); it++) {
       const SoundRectangle * r = *it;
 
       if(channel == r->leftChannel() || channel == r->rightChannel())

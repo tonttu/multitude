@@ -56,13 +56,13 @@ VideoWindow::VideoWindow()
 VideoWindow::~VideoWindow()
 {
   m_movies.clear();
-  m_dsp.stop();
+  m_dsp->stop();
 }
 
 bool VideoWindow::open(const char * filename, const char * audiodev)
 {
-  if(!m_dsp.isRunning()) {
-    bool ok = m_dsp.start(audiodev);
+  if(!m_dsp->isRunning()) {
+    bool ok = m_dsp->start(audiodev);
     if(!ok)
       return false;
   }
@@ -74,7 +74,7 @@ bool VideoWindow::open(const char * filename, const char * audiodev)
 
   item->m_show.loadSubTitles(srtfile.c_str());
 
-  if(!item->m_show.init(filename, & m_dsp, 0, 0,
+  if(!item->m_show.init(filename, 0, 0,
                         Radiant::WITH_VIDEO | Radiant::WITH_AUDIO
                         /*|
                         Radiant::MONOPHONIZE_AUDIO*/))
@@ -139,7 +139,7 @@ void VideoWindow::randomOperation()
 
     std::shared_ptr<Item> item(new Item());
 
-    if(!item->m_show.init(filename.c_str(), & m_dsp, 0, 0)) {
+    if(!item->m_show.init(filename.c_str(), 0, 0)) {
       Radiant::error("Could not recreate video player for \"%s\"", filename.c_str());
     }
     else
@@ -212,7 +212,7 @@ void VideoWindow::initializeGL()
   std::string filename = Radiant::FileUtils::findFile(ttf, path);
 
   if(filename.size()) {
-    m_subCPUFont = Poetic::FontManager::instance().getFont(ttf);
+    m_subCPUFont = Poetic::FontManager::instance()->getFont(ttf);
     /*
     new Poetic::CPUBitmapFont();
     if(m_subCPUFont->load(filename.c_str())) {

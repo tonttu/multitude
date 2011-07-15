@@ -20,6 +20,9 @@
 
 #include <Patterns/NotCopyable.hpp>
 
+// Required for __GLIBC__
+#include <cstdlib>
+
 #if defined(_MSC_VER)
 #include <intrin.h> // For _ReadBarrier/_WriteBarrier
 #endif
@@ -173,6 +176,7 @@ namespace Radiant {
  * @endcode
  */
 #ifdef __GLIBC__
+
 #define MULTI_ONCE_BEGIN                                          \
   static bool s_multi_once = false;                               \
   /* hardware memory barrier */                                   \
