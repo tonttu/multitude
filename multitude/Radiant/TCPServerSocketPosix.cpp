@@ -115,7 +115,7 @@ namespace Radiant
     pfd.fd = m_d->m_fd;
     pfd.events = POLLRDNORM;
     int status = wrap_poll(&pfd, 1, waitMicroSeconds / 1000);
-    if(status == SOCKET_ERROR) {
+    if(status <= 0) {
       Radiant::error("TCPServerSocket::isPendingConnection %s", wrap_strerror(wrap_errno));
     }
 

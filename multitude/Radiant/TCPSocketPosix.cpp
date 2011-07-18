@@ -236,7 +236,7 @@ namespace Radiant
     pfd.fd = m_d->m_fd;
     pfd.events = POLLWRNORM;
     int status = wrap_poll(&pfd, 1, 0);
-    if(status == SOCKET_ERROR) {
+    if(status <= 0) {
       Radiant::error("TCPSocket::isHungUp %s", wrap_strerror(wrap_errno));
     }
 
@@ -254,7 +254,7 @@ namespace Radiant
     pfd.fd = m_d->m_fd;
     pfd.events = POLLIN;
     int status = wrap_poll(&pfd, 1, waitMicroSeconds / 1000);
-    if(status == SOCKET_ERROR) {
+    if(status <= 0) {
       Radiant::error("TCPSocket::isPendingInput %s", wrap_strerror(wrap_errno));
     }
 
