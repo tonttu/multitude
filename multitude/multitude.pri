@@ -22,13 +22,14 @@ withbundles = $$(MULTI_BUNDLES)
 
 MULTI_FFMPEG_LIBS = -lavcodec -lavformat -lavutil
 
+LIB_BOX2D = -lBox2D
+LIB_OPENCL = -lOpenCL
+LIB_OPENGL = -lGL -lGLU
+
 LIB_POETIC = -lPoetic
 LIB_FLUFFY = -lFluffy
 LIB_LUMINOUS = -lLuminous
 LIB_NIMBLE = -lNimble
-LIB_OPENCL = -lOpenCL
-LIB_OPENGL = -lGL -lGLU
-LIB_GLU = -lGLU
 LIB_RADIANT = -lRadiant -lPatterns
 LIB_RESONANT = -lResonant
 LIB_SCREENPLAY = -lScreenplay
@@ -41,7 +42,6 @@ linux-*:vivid {
   LIB_VIVID = -lVivid -lfbxsdk_20113_1_x64
 }
 
-LIB_BOX2D = -lBox2D
 
 MULTI_LIB_FLAG = -L
 
@@ -78,7 +78,6 @@ macx {
 
   LIB_OPENCL = -framework,OpenCL
   LIB_OPENGL = -framework,OpenGL
-  LIB_GLU =
   # LIB_GLEW = -lGLEW
   LIBS += -L$$PWD/lib
 
@@ -130,8 +129,7 @@ win32 {
 
     DDK_PATH="C:\\WinDDK\\7600.16385.1"
 
-    LIB_OPENGL = -lopengl32
-    LIB_GLU = -lglu32
+    LIB_OPENGL = -lopengl32 -lglu32
     QMAKE_CXXFLAGS += -D_CRT_SECURE_NO_WARNINGS -wd4244 -wd4251 -wd4355
     DEFINES += WIN32
 

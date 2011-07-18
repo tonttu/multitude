@@ -72,7 +72,6 @@ SOURCES += RenderTarget.cpp
 LIBS += $$LIB_RADIANT \
     $$LIB_OPENGL \
     $$LIB_VALUABLE \
-    $$LIB_GLU \
     $$LIB_NIMBLE \
     $$LIB_PATTERNS \
     $$LIB_GLEW
