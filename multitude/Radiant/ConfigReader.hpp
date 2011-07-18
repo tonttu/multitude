@@ -194,7 +194,7 @@ namespace Radiant {
 
     /// Dumps this chunk into the stream
     /** May be specialized at each level. */
-    void               dump(std::ostream& os, int indent=0);
+    void               dump(std::ostream& os, int indent=0) const;
 
     /// Empties this chunk
     void               clear() { m_variants.clear(); m_chunks.clear(); }
@@ -220,9 +220,13 @@ namespace Radiant {
     const_iterator end()   const { return m_variants.end(); }
 
     /// Iterator to the first child chunk
-    chunk_iterator chunkBegin() { return m_chunks.begin(); }
+    //chunk_iterator chunkBegin() { return m_chunks.begin(); }
+    /// Const Iterator to the first child chunk
+    const_chunk_iterator chunkBegin() const { return m_chunks.begin(); }
     /// Iterator to the after-the-end chunk
-    chunk_iterator chunkEnd() { return m_chunks.end(); }
+    //chunk_iterator chunkEnd() { return m_chunks.end(); }
+    /// Const Iterator to the after-the-end chunk
+    const_chunk_iterator chunkEnd() const { return m_chunks.end(); }
 
     /// Gets the data element from an iterator
     static T & getType(iterator & it) { return (*it).second; }

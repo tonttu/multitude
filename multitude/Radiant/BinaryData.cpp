@@ -762,7 +762,7 @@ namespace Radiant {
   }
 
 
-  bool BinaryData::write(Radiant::BinaryStream * stream)
+  bool BinaryData::write(Radiant::BinaryStream * stream) const
   {
     int32_t s = pos();
     if(stream->write(&s, 4) != 4)

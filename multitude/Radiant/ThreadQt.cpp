@@ -104,7 +104,7 @@ namespace Radiant {
     // Does nothing
   }
 
-  bool Thread::isRunning()
+  bool Thread::isRunning() const
   {
     return m_d->isRunning();
   }

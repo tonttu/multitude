@@ -43,6 +43,7 @@ namespace Valuable
 
   HasValues::HasValues()
       : ValueObject(),
+      m_sender(0),
       m_eventsEnabled(true),
       m_id(this, "id", generateId()),
       m_frame(0)
@@ -50,6 +51,7 @@ namespace Valuable
 
   HasValues::HasValues(HasValues * host, const std::string & name, bool transit)
       : ValueObject(host, name, transit),
+      m_sender(0),
       m_eventsEnabled(true),
       m_id(this, "id", generateId()),
       m_frame(0)
@@ -412,7 +414,10 @@ namespace Valuable
 
         bdsend.rewind();
 
+        // m_sender is valid only at the beginning of processMessage call
+        vp.m_listener->m_sender = this;
         vp.m_listener->processMessage(vp.m_to.c_str(), bdsend);
+        vp.m_listener->m_sender = 0;
         it++;
       }
       else
