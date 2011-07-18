@@ -667,7 +667,7 @@ namespace VideoDisplay {
       else {
         GLRESOURCE_ENSURE(Luminous::GLSLProgramObject, rgb2rgb, & rgbkey, resources);
         if(rgb2rgb->shaderObjectCount() == 0) {
-          assert(rgb2rgb->loadStrings(0, rgbshader));
+          rgb2rgb->loadStrings(0, rgbshader);
           debugVideoDisplay("Loaded rgb2rgb shader");
         }
 
