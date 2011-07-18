@@ -99,7 +99,7 @@ namespace Radiant {
     void kill();
 
     /// Returns true if the thread is running.
-    bool isRunning();
+    bool isRunning() const;
 
     /// Sets the real-time priority for the calling thread
     static bool setThreadRealTimePriority(int priority);

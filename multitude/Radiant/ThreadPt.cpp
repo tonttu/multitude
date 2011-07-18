@@ -187,7 +187,7 @@ namespace Radiant {
       pthread_kill(m_d->m_pthread, SIGKILL);
   }
 
-  bool Thread::isRunning()
+  bool Thread::isRunning() const
   {
     return m_state == RUNNING;
   }

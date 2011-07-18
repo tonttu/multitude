@@ -177,7 +177,7 @@ namespace Radiant {
     inline void setTotal(int bytes) { m_total = bytes; }
 
     /// Writes the buffer into a stream
-    bool write(Radiant::BinaryStream *);
+    bool write(Radiant::BinaryStream *) const;
     /// Reads the buffer from a stream
     bool read(Radiant::BinaryStream *);
 

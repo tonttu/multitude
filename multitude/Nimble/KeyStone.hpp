@@ -206,6 +206,8 @@ namespace Nimble {
 
     /// Reference to the lens correction
     LensCorrection & lensCorrection() { return m_lensCorrection; }
+    /// Const reference to the lens correction
+    const LensCorrection & lensCorrection() const { return m_lensCorrection; }
 
     /// Adjusts the lens correction
     void setLensParam(int i, float v);
@@ -235,7 +237,7 @@ namespace Nimble {
 
     /// Returns information about the center shift
     /** Center shift means that coordinates at the center of the image get this offset. */
-    Nimble::Vector3 centerShift()
+    Nimble::Vector3 centerShift() const
     { return Vector3(m_centerShift.x, m_centerShift.y, m_centerShiftSpan); }
     /// Sets the parameters for the center shifting
     void setCenterShift(Nimble::Vector3 params)
