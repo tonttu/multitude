@@ -234,11 +234,13 @@ namespace Radiant
     struct pollfd pfd;
     bzero( & pfd, sizeof(pfd));
     pfd.fd = m_d->m_fd;
-    pfd.events = ~0;
-    wrap_poll(&pfd, 1, 0);
+    pfd.events = POLLWRNORM;
+    int status = wrap_poll(&pfd, 1, 0);
+    if(status == SOCKET_ERROR) {
+      Radiant::error("TCPSocket::isHungUp %s", wrap_strerror(wrap_errno));
+    }
 
-   return (pfd.revents & (POLLHUP)) != 0;
-   // return (pfd.revents & (POLLERR | POLLHUP | POLLNVAL)) != 0;
+    return (pfd.revents & (POLLERR | POLLHUP | POLLNVAL)) != 0;
   }
 
   bool TCPSocket::isPendingInput(unsigned int waitMicroSeconds)
@@ -251,7 +253,10 @@ namespace Radiant
 
     pfd.fd = m_d->m_fd;
     pfd.events = POLLIN;
-    wrap_poll(&pfd, 1, waitMicroSeconds / 1000);
+    int status = wrap_poll(&pfd, 1, waitMicroSeconds / 1000);
+    if(status == SOCKET_ERROR) {
+      Radiant::error("TCPSocket::isPendingInput %s", wrap_strerror(wrap_errno));
+    }
 
     return (pfd.revents & POLLIN) == POLLIN;
   }
