@@ -622,7 +622,6 @@ namespace Resonant {
     control.writeString("targetchannel");
     control.writeInt32(targetChannel);
 
-    // Select the target channel for the sample
     control.writeString("time");
     control.writeTimeStamp(time);
 

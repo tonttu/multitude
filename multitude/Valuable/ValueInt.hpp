@@ -41,8 +41,8 @@ namespace Valuable
     ValueIntT() : Base() {}
     /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
     /// @param v The numeric value of this object
-    ValueIntT(HasValues * parent, const std::string & name, T v, bool transit = false)
-        : ValueNumeric<T>(parent, name, v, transit)
+    ValueIntT(HasValues * host, const std::string & name, T v, bool transit = false)
+        : ValueNumeric<T>(host, name, v, transit)
     {}
 
     /// Copy an integer

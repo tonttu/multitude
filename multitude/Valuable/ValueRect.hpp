@@ -22,7 +22,7 @@ namespace Valuable
   public:
     /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
     /// @param r The rectangle to be stored in the ValueRect
-    ValueRectT(HasValues * parent, const std::string & name, const Nimble::RectT<T> & r, bool transit = false);
+    ValueRectT(HasValues * host, const std::string & name, const Nimble::RectT<T> & r, bool transit = false);
 
     /// Copies a rectangle
     ValueRectT & operator = (const Nimble::RectT<T> & r) { this->m_value = r; VALUEMIT_STD_OP }

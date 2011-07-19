@@ -45,14 +45,14 @@ namespace Valuable
     ValueStringT() : Base() {}
     /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
     /// @param v The string to store in this object
-    ValueStringT(HasValues * parent, const std::string & name,
+    ValueStringT(HasValues * host, const std::string & name,
                  const T & v, bool transit = false);
     /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
     /// @param v The string to store in this object
-    ValueStringT(HasValues * parent, const std::string & name,
+    ValueStringT(HasValues * host, const std::string & name,
                  const char * v, bool transit = false);
     /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
-    ValueStringT(HasValues * parent, const std::string & name,
+    ValueStringT(HasValues * host, const std::string & name,
                  bool transit = false);
 
     virtual void processMessage(const char * id, Radiant::BinaryData & data);

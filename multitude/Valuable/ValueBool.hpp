@@ -29,7 +29,7 @@ namespace Valuable
   public:    
     /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
     /// @param value The value of this object
-    ValueBool(HasValues * parent, const std::string & name, bool value, bool transit = false);
+    ValueBool(HasValues * host, const std::string & name, bool value, bool transit = false);
     virtual ~ValueBool();
 
     const char * type() const { return "bool"; }

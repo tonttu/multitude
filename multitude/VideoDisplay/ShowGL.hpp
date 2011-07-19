@@ -150,9 +150,6 @@ namespace VideoDisplay {
 
         @param filename The name ofthe video file to play.
 
-        @param dsp The DSP graph that is used for audio playback. If null, then
-        this method will pick up the default network.
-
         @param previewpos The position for taking the preview frame from the video.
         Currently ignored.
 
@@ -215,6 +212,8 @@ namespace VideoDisplay {
         bottomright = topleft, then the player will use the size of
         the video.
 
+        @param baseColor color used to modulate the video with
+
         @param transform The coordinates can be optionally transformed
         with the "transform" matrix.
 
@@ -224,10 +223,7 @@ namespace VideoDisplay {
         The caller can indicate the amount of space it has allocated beneath the
         video widget for the subtitles. The player will place the subtitles beneath
         the player if there is enough spaec for two lines of text. Otherwise the
-        the subtitles will be placed inside the video area.
-
-        @param alpha The alpha value of the video
-    */
+        the subtitles will be placed inside the video area.*/
     void render(Luminous::GLResources * resources,
                                  Vector2 topleft,
                                  Vector2 bottomright,

@@ -43,8 +43,8 @@ namespace Valuable
       ValueVector() : Base() {}
       /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
       /// @param v The value of this object
-      ValueVector(HasValues * parent, const std::string & name, const VectorType & v = VectorType(), bool transit = false)
-        : Base(parent, name, v, transit) {}
+      ValueVector(HasValues * host, const std::string & name, const VectorType & v = VectorType(), bool transit = false)
+        : Base(host, name, v, transit) {}
 
       virtual ~ValueVector();
 

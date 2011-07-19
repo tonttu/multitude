@@ -60,16 +60,16 @@ namespace Radiant
     bool close();
 
     /** Reads datagram packets from the socket.
-
+        @param buffer buffer to write to
+        @param bytes maximum bytes to read
         @param waitfordata blocks until there is something to read
-        @param readAll if true, blocks until the buffer is full, otherwise
-               return when we have some data
-
         @return The number of bytes read is returned. If there was
-        nothing to read, then zero is returned.
-    */
-    virtual int read(void * buffer, int bytes, bool waitfordata, bool readAll);
+        nothing to read, then zero is returned.*/
     virtual int read(void * buffer, int bytes, bool waitfordata);
+    /** @copydoc read
+        @param readAll if true, blocks until the buffer is full, otherwise
+               return when we have some data*/
+    virtual int read(void * buffer, int bytes, bool waitfordata, bool readAll);    
 
     /** Writes one datagram packet to the socket.
 

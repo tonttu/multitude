@@ -201,7 +201,10 @@ namespace Luminous
     /// Load the texture from an image file
     bool loadImage(const char * filename, bool buildMipmaps = true);
     /// Load the texture from an image
-    /// @param internalFormat set the format automatically
+    /// @param image image to generate the texture from
+    /// @param buildMipmaps if true, generate mipmaps automatically
+    /// @param internalFormat specify the internal OpenGL texture format. If
+    /// zero, set the format automatically
     bool loadImage(const Luminous::Image & image, bool buildMipmaps = true, int internalFormat = 0);
     bool loadImage(const Luminous::CompressedImage & image);
 
