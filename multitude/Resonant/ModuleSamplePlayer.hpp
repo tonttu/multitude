@@ -95,6 +95,8 @@ namespace Resonant {
 
         @param loop Turns on looping if necessary. With looping the sample will play
         back for-ever.
+
+        @param time optional timestamp when to play the sample
     */
     void playSample(const char * filename,
                     float gain,

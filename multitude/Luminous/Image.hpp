@@ -206,6 +206,8 @@ namespace Luminous
         @param withmipmaps Should we use mimaps, or not. This argument only
         makes difference the first time this function executed for the context
         (and the texture is created), after that the the same texture is used.
+        @param internalFormat internal OpenGL texture format. May be zero to
+        let the GPU automatically choose one.
     */
     void bind(GLResources * resources, GLenum textureUnit = GL_TEXTURE0,
               bool withmipmaps = true, int internalFormat = 0);

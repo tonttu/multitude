@@ -115,6 +115,7 @@ namespace Radiant {
       If enabled, messages sent with the #debug function are displayed
       to the user. Otherwise they are silently ignored
 
+      @param enable enable or disable messages
       @param module if given, enables or disables verbose output only for given module.
   */
   RADIANT_API void enableVerboseOutput(bool enable, const char * module = 0);

@@ -136,6 +136,7 @@ namespace Luminous {
 
     /// @copydoc bind(const Nimble::Matrix3 & transform, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
     /// @param resources OpenGL resource container for this thread
+    /// @param transform transformation matrix to multiply the pixelSize with to get final screen size
 	bool bind(GLResources * resources, const Nimble::Matrix3 & transform, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
 
 	StateInfo stateInfo(GLResources * resources);

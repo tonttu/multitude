@@ -37,8 +37,8 @@ namespace Valuable
       ValueNumeric() : ValueObjectT<T>() {}
       /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
       /// @param v The numeric value of this object.
-      ValueNumeric(HasValues * parent, const std::string & name, T v, bool transit = false)
-      : Base(parent, name, v, transit)
+      ValueNumeric(HasValues * host, const std::string & name, T v, bool transit = false)
+      : Base(host, name, v, transit)
       {}
 
       /// Copies a numeric value

@@ -45,6 +45,7 @@ namespace Resonant {
   class RESONANT_API ModulePanner : public Module
   {
   public:
+    /// Panning mode
     enum Mode {
       /// Radial mode, where the panning is based on the distance of loudspeaker and
       /// sound source.

@@ -46,19 +46,14 @@ namespace Resonant {
 
   /** An audio signal processing engine.
 
-      DSPNetwork implements a simple signal processing graph
-      driver. The graph has hot-plug -feature so new modules can be
-      added in run-time, and the engine will re-wire the connetions as
-      necessary.
+      DSPNetwork implements a simple signal processing graph driver. The graph
+      has hot-plug -feature so new modules can be added in run-time, and the
+      engine will re-wire the connetions as necessary.
 
-      DSPNetwork follows a semi-singleton approach: It is possible to create multiple
-      DSPNetwork objects, that use different audio devices. In reality this is seldom practical
-      and thus there is usually exactly one DSPNetwork per application. When the first
-      DSPNetwork is created it becomes the default network, and calls to #instance() will
-      return pointer to the network. It is strongly recommended that you do not delete the
-      defualt DSPNetwork before application is ready exit, as doing so may invalidate
-      pointers that are held to it.
-   */
+      DSPNetwork is a singleton. The instance is kept alive as long as there is
+      a reference to the shared pointer returned by the DSPNetwork::instance()
+      function. It is strongly recommended that you keep a reference to it
+      during the lifetime of your application.*/
   class RESONANT_API DSPNetwork : public AudioLoop
   {
     DECLARE_SINGLETON(DSPNetwork);

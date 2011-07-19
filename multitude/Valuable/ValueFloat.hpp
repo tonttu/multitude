@@ -42,8 +42,8 @@ namespace Valuable
       ValueFloatT() : Base() {}
       /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
       /// @param v The numeric value of this object
-      ValueFloatT(HasValues * parent, const std::string & name, T v = T(0), bool transit = false)
-      : ValueNumeric<T>(parent, name, v, transit)
+      ValueFloatT(HasValues * host, const std::string & name, T v = T(0), bool transit = false)
+      : ValueNumeric<T>(host, name, v, transit)
       {}
 
       /// Copies a float

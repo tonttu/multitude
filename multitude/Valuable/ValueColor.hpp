@@ -32,7 +32,7 @@ namespace Valuable
   public:
     /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
     /// @param c The color value
-    ValueColor(HasValues * parent, const std::string & name, const Radiant::Color & c, bool transit = false);
+    ValueColor(HasValues * host, const std::string & name, const Radiant::Color & c, bool transit = false);
     
     virtual ~ValueColor();
 

@@ -37,7 +37,7 @@ namespace Luminous
     public:
       /** Constructs a Guard object, and locks the argument mutex.
 
-          @param m The mutex to lock. The mutex may be null, in which case nothing happens.
+          @param c The OpenGL context to lock. It may be null, in which case nothing happens.
       */
       Guard(GLContext * c)
       {
