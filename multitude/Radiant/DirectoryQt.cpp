@@ -32,7 +32,7 @@ namespace Radiant
     NotInList(const Arg & arg) : m_arg(arg) {}
 
     bool operator() (const T & x) const {
-      const T & suffix = FileUtils::suffix(x);
+      const T & suffix = FileUtils::suffixLowerCase(x);
 
       for(Arg::const_iterator it = m_arg.begin(); it != m_arg.end(); it++) 
         if(*it == suffix) 
