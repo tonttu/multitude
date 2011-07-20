@@ -26,6 +26,8 @@
 #include "alpha.h"
 #include <algorithm>
 
+#include <limits>
+
 namespace squish {
 
 static int FloatToInt( float a, int limit )
@@ -114,7 +116,7 @@ static int FitCodes( u8 const* rgba, int mask, u8 const* codes, u8* indices )
 		
 		// find the least error and corresponding index
 		int value = rgba[4*i + 3];
-		int least = INT_MAX;
+		int least = std::numeric_limits<int>::max();
 		int index = 0;
 		for( int j = 0; j < 8; ++j )
 		{

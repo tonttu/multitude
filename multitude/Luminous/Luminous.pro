@@ -98,4 +98,5 @@ contains(HAS_QT_45,YES) {
       INSTALLS += qt_plugin_install
     }
 }
+include(Squish/Squish.pri)
 include(../library.pri)
