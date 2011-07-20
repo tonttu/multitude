@@ -71,7 +71,7 @@ namespace VideoDisplay {
         "  vec4 vcolor = texture2D(vtex, gl_TexCoord[0].st);\n"
         "  vec4 yuv = vec4(ycolor.r, ucolor.r - 0.5, vcolor.r - 0.5, 1.0);\n"
         "  yuv.rgb = (zm * yuv).rgb;\n"
-        "  gl_FragColor = mix(gl_Color, yuv, gl_Color.a);\n"
+        "  gl_FragColor = yuv * gl_Color;\n"
         "}\n";
     /*
     static const char * shadersource =
