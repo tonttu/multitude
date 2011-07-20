@@ -309,7 +309,7 @@ void VideoWindow::paintGL()
     index++;
 
     show.render(& m_glResources,
-                center - span, center + span, Radiant::Color(), 0, gpufont, h);
+                center - span, center + span, Radiant::Color(1.f, 1.f, 1.f, 1.f), 0, gpufont, h);
 
     if(!m_showProgress)
       continue;
