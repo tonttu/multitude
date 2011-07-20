@@ -51,6 +51,8 @@ VideoWindow::VideoWindow()
 
   if(m_fullScreen)
     toggleFullScreen();
+
+  m_dsp = Resonant::DSPNetwork::instance();
 }
 
 VideoWindow::~VideoWindow()
