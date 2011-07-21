@@ -58,6 +58,33 @@ namespace Luminous
     return &cr;
   }
 
+  template <PixelFormat::ChannelType type> struct PixelType;
+  template <> struct PixelType<PixelFormat::TYPE_UBYTE> { typedef unsigned char Type; };
+
+  template <PixelFormat::ChannelLayout layout> int get_index(int i);
+  template <> int get_index<PixelFormat::LAYOUT_RGBA>(int i) { return i; }
+
+  template <typename From, typename To> To convert_value(From from);
+  template <> unsigned char convert_value(unsigned char x) { return x; }
+
+  template <typename Type, PixelFormat::ChannelLayout layout> struct get_data {};
+  template <typename Type> struct get_data<Type, PixelFormat::LAYOUT_RGB> {
+    static Type get(const Type * t, int i) { return i < 3 ? t[i] : convert_value<unsigned char, Type>(255); }
+  };
+
+  template <PixelFormat::ChannelType TypeFrom, PixelFormat::ChannelType TypeTo,
+            PixelFormat::ChannelLayout LayoutFrom, PixelFormat::ChannelLayout LayoutTo>
+  void convert(int channels, uint8_t * l, uint8_t * dest) {
+    typedef typename PixelType<TypeFrom>::Type FromT;
+    typedef typename PixelType<TypeTo>::Type ToT;
+    FromT * from = reinterpret_cast<FromT*>(l);
+    ToT * to = reinterpret_cast<ToT*>(dest);
+
+    for (int i = 0; i < channels; ++i)
+      to[get_index<LayoutTo>(i)] = convert_value<FromT, ToT>(
+            get_data<FromT, LayoutFrom>::get(from, i));
+}
+
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
@@ -596,6 +623,43 @@ namespace Luminous
     changed();
   }
 
+  bool Image::setPixelFormat(const PixelFormat & format)
+  {
+    if(m_pixelFormat == format) return true;
+
+    /// @todo finish this
+    if(format.compression() != PixelFormat::COMPRESSION_NONE ||
+       m_pixelFormat.compression() != PixelFormat::COMPRESSION_NONE ||
+       format.type() != PixelFormat::TYPE_UBYTE ||
+       m_pixelFormat.type() != PixelFormat::TYPE_UBYTE ||
+       m_pixelFormat.layout() != PixelFormat::LAYOUT_RGB ||
+       format.layout() != PixelFormat::LAYOUT_RGBA) {
+      Radiant::error("Image::setPixelFormat # unsupported conversion");
+      return false;
+    }
+
+    PixelFormat srcFormat = m_pixelFormat;
+    uint8_t * src = m_data;
+    m_data = 0;
+
+    allocate(m_width, m_height, format);
+
+    int src_bpp = srcFormat.bytesPerPixel();
+    int dest_bpp = format.bytesPerPixel();
+    for(int y = 0; y < m_height; ++y) {
+      uint8_t * l = src + y * m_width * src_bpp;
+      uint8_t * dest = bytes() + y * m_width * dest_bpp;
+
+      for(int x = 0; x < m_width; ++x) {
+        convert<PixelFormat::TYPE_UBYTE, PixelFormat::TYPE_UBYTE,
+            PixelFormat::LAYOUT_RGB, PixelFormat::LAYOUT_RGBA>(
+              format.numChannels(), l + x*src_bpp, dest + x*dest_bpp);
+      }
+    }
+
+    if(src != m_data) delete [] src;
+    return true;
+  }
 
   void Image::clear()
   {

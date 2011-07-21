@@ -106,6 +106,10 @@ namespace Luminous
     /// Returns the pixel format of the image
     const PixelFormat& pixelFormat() const { return m_pixelFormat; }
 
+    /// Sets the new format and converts the image data to new format if necessary
+    /// @returns Returns true if the conversion was successful
+    bool setPixelFormat(const PixelFormat & format);
+
     /// Clears the image, freeing the data.
     void clear();
 
