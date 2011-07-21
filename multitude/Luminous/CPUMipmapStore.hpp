@@ -30,13 +30,12 @@ namespace Luminous {
     /** Gets a shared pointer to an image file CPU-side mipmap.
 
         @param filename The name of the image file
-        @param immediate Indicate if the file should be loaded immediately (as opposed to on-demand).
 
         @return If the file is already open, then a shared pointer is
         returned. Otherwise CPUMipmapStore will create a new
         #Luminous::CPUMipmaps object, and return a shared pointer to that (if opened successfully).
      */
-    static std::shared_ptr<CPUMipmaps> acquire(const std::string & filename, bool immediate = true);
+    static std::shared_ptr<CPUMipmaps> acquire(const std::string & filename);
 
     /** Release a #Luminous::CPUMipmaps object. If there are no references to
         the object, then its memory is freed.
