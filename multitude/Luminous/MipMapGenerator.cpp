@@ -24,7 +24,8 @@
 namespace Luminous {
 
   MipMapGenerator::MipMapGenerator(const std::string & src)
-    : m_src(src),
+    : Task((PRIORITY_NORMAL + PRIORITY_LOW) / 2),
+      m_src(src),
       m_out(0),
       m_flags(0)
   {
@@ -32,7 +33,8 @@ namespace Luminous {
 
   MipMapGenerator::MipMapGenerator(const std::string & src,
                                    const PixelFormat & mipmapFormat)
-    : m_src(src),
+    : Task((PRIORITY_NORMAL + PRIORITY_LOW) / 2),
+      m_src(src),
       m_mipmapFormat(mipmapFormat),
       m_out(0),
       m_flags(0)
@@ -83,11 +85,12 @@ namespace Luminous {
     int mipmaps = 0;
 
     Nimble::Vector2i size = img.size();
-    do {
+    for(;;) {
       requiredSize += ImageCodecDDS::linearSize(size, m_mipmapFormat.compression());
       ++mipmaps;
+      if(size.x <= 4 && size.y <= 4) break;
       size /= 2;
-    } while (size.x > 4 || size.y > 4);
+    }
 
     m_outBuffer.resize(requiredSize);
     m_out = &m_outBuffer[0];
@@ -98,6 +101,14 @@ namespace Luminous {
     ImageCodecDDS dds;
     dds.writeMipmaps(filename, m_mipmapFormat.compression(),
                      img.size(), mipmaps, m_outBuffer);
+    if(m_listener) {
+      ImageInfo info;
+      info.height = img.width();
+      info.width = img.height();
+      info.mipmaps = mipmaps;
+      info.pf = m_mipmapFormat;
+      m_listener->mipmapsReady(info);
+    }
   }
 
   void MipMapGenerator::resize(const Image & img, const int level)

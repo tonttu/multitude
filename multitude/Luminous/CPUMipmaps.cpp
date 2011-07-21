@@ -14,6 +14,7 @@
  */
 
 #include "CPUMipmaps.hpp"
+#include "MipMapGenerator.hpp"
 
 #include <Luminous/GLResources.hpp>
 #include <Luminous/Utils.hpp>
@@ -208,22 +209,38 @@ namespace Luminous {
     return true;
   }
 
-  bool CPUMipmaps::startLoading(const char * filename)
+  bool CPUMipmaps::startLoading(const char * filename, bool compressed_mipmaps)
   {
 #ifdef CPUMIPMAPS_PROFILING
     m_profile.filename = filename;
 #endif
     m_filename = filename;
+    m_compFilename.clear();
     m_fileModified = FileUtils::lastModified(m_filename);
     m_info = Luminous::ImageInfo();
+    m_shouldSave.clear();
+    m_stack.clear();
 
-    if(!Luminous::Image::ping(filename, m_info)) {
+    if(m_fileModified == 0) {
+      error("CPUMipmaps::startLoading # failed to stat file %s", filename);
+      return false;
+    }
+
+    MipMapGenerator * gen = 0;
+    if(compressed_mipmaps) {
+      m_compFilename = cacheFileName(filename, -1, "dds");
+      if(FileUtils::lastModified(m_compFilename) < m_fileModified ||
+         !Luminous::Image::ping(m_compFilename.c_str(), m_info)) {
+        gen = new MipMapGenerator(filename);
+        gen->setListener(shared_from_this());
+      }
+    }
+
+    if(m_info.width == 0 && !Luminous::Image::ping(filename, m_info)) {
       error("CPUMipmaps::startLoading # failed to query image size for %s", filename);
       return false;
     }
 
-    m_shouldSave.clear();
-    m_stack.clear();
     m_nativeSize.make(m_info.width, m_info.height);
 
     if(!m_nativeSize.minimum())
@@ -256,6 +273,11 @@ namespace Luminous {
     markImage(m_maxLevel);
     reschedule();
 
+    if(gen) {
+      Luminous::BGThread::instance()->addTask(gen);
+    } else if(compressed_mipmaps) {
+      Luminous::BGThread::instance()->addTask(this);
+    }
     return true;
   }
 
@@ -450,6 +472,13 @@ namespace Luminous {
     }
   }
 
+  void CPUMipmaps::mipmapsReady(const ImageInfo & info)
+  {
+    m_info = info;
+    BGThread::instance()->addTask(shared_from_this());
+    reschedule();
+  }
+
   void CPUMipmaps::doTask()
   {
     if(state() == Task::DONE)
@@ -557,8 +586,8 @@ namespace Luminous {
 
     if(m_info.pf.compression()) {
       std::shared_ptr<Luminous::CompressedImageTex> im(new Luminous::CompressedImageTex);
-      if(!im->read(m_filename, level)) {
-        error("CPUMipmaps::recursiveLoad # Could not read %s level %d", m_filename.c_str(), level);
+      if(!im->read(m_compFilename, level)) {
+        error("CPUMipmaps::recursiveLoad # Could not read %s level %d", m_compFilename.c_str(), level);
         item.m_state = FAILED;
       } else {
         /// @todo this is wrong, compressed images doesn't always have alpha channel

@@ -19,10 +19,13 @@
 #include "Task.hpp"
 #include "PixelFormat.hpp"
 
+#include <Radiant/RefPtr.hpp>
+
 #include <vector>
 
 namespace Luminous {
   class Image;
+  class CPUMipmaps;
 
   class MipMapGenerator : public Task
   {
@@ -31,6 +34,8 @@ namespace Luminous {
     MipMapGenerator(const std::string & src, const PixelFormat & mipmapFormat);
 
     virtual void doTask();
+
+    void setListener(std::shared_ptr<CPUMipmaps> mipmaps) { m_listener = mipmaps; }
 
     static PixelFormat chooseMipmapFormat(const Image & img);
 
@@ -42,6 +47,8 @@ namespace Luminous {
 
     std::vector<unsigned char> m_outBuffer;
     unsigned char * m_out;
+
+    std::shared_ptr<CPUMipmaps> m_listener;
 
     int m_flags;
   };

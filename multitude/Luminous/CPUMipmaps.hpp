@@ -113,7 +113,7 @@ namespace Luminous {
         @param filename The name of the image file
         @return True if the image file could be opened successfully.
     */
-    bool startLoading(const char * filename);
+    bool startLoading(const char * filename, bool compressed_mipmaps);
 
     /** @return Returns the native size of the image, in pixels. */
     const Nimble::Vector2i & nativeSize() const { return m_nativeSize;}
@@ -178,6 +178,8 @@ namespace Luminous {
     inline bool keepMaxLevel() const { return m_keepMaxLevel; }
     inline void setKeepMaxLevel(bool v) { m_keepMaxLevel = v; }
 
+    void mipmapsReady(const ImageInfo & info);
+
     /// Returns cache filename for given source file name.
     /// @param src The original image filename
     /// @param level Mipmap level, ignored if negative
@@ -233,6 +235,7 @@ namespace Luminous {
     void reschedule(double delay = 0.0, bool allowLater = false);
 
     std::string m_filename;
+    std::string m_compFilename;
     unsigned long int m_fileModified;
 
     Radiant::Mutex m_stackMutex;
