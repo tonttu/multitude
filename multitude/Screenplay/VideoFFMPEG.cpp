@@ -256,9 +256,21 @@ namespace Screenplay {
           int aFramesIn = aBytesIn / sizeof(AudioBuffer::value_type);
 
           m_resampleBuffer.resize(aFramesIn);
-          avcodec_decode_audio3(m_acontext,
+          int usedBytes = avcodec_decode_audio3(m_acontext,
                                 & m_resampleBuffer[0],
                                 & aBytesIn, m_pkt);
+
+          if (m_acodec->id == CODEC_ID_VORBIS)
+          {
+            // From Vorbis documentation:
+            // Data is not returned from the first frame; it must be used to
+            // ’prime’ the decode engine. The encoder accounts for this priming
+            // when calculating PCM offsets; after the first frame, the proper
+            // PCM output offset is ’0’ (as no data has been returned yet).
+
+            if (usedBytes > 0 && aBytesIn == 0)
+              continue;
+          }
 
           // Resample
           int srcChannelBytes = aBytesIn / m_audioChannels;
