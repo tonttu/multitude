@@ -30,6 +30,7 @@ namespace Radiant {
       IMAGE_RGB = IMAGE_RGB_24,
       IMAGE_RGBA = IMAGE_RGBA_32,
 
+      IMAGE_BGR,
       IMAGE_BGRA,
 
       IMAGE_RAWBAYER = 256
@@ -51,6 +52,7 @@ namespace Radiant {
       PLANE_GREEN,
       PLANE_BLUE,
       PLANE_RGB,
+      PLANE_BGR,
       PLANE_RGBA,
       PLANE_BGRA,
 
@@ -123,6 +125,14 @@ namespace Radiant {
     {
       m_format = IMAGE_RGB;
       m_planes[0].m_type = PLANE_RGB;
+    }
+
+    /// Sets the image format to interleaved BGR.
+
+    void setFormatBGR()
+    {
+      m_format = IMAGE_BGR;
+      m_planes[0].m_type = PLANE_BGR;
     }
 
     /// Sets the image format to interleaved RGB.

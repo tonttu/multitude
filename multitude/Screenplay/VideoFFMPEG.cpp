@@ -408,6 +408,11 @@ namespace Screenplay {
       if(m_debug && m_capturedVideo < 10)
         debugScreenplay("%s # PIX_FMT_RGB24", fname);
     }
+    else if(avcfmt == PIX_FMT_BGR24) {
+      m_image.setFormatBGR();
+      if(m_debug && m_capturedVideo < 10)
+        debugScreenplay("%s # PIX_FMT_BGR24", fname);
+    }
     else if(avcfmt == PIX_FMT_RGBA) {
       m_image.setFormatRGBA();
       if(m_debug && m_capturedVideo < 10)
@@ -447,7 +452,9 @@ namespace Screenplay {
        printf("ls[%u] = %d  ", p, (int) m_image.m_planes[p].m_linesize);
        }*/
 
-    av_free_packet(m_pkt);
+    // can't free here, still need m_data later. m_pkt is freed on each
+    // new frame and when video closes
+    //av_free_packet(m_pkt);
 
     return & m_image;
   }
