@@ -208,7 +208,7 @@ namespace Luminous {
     return true;
   }
 
-  bool CPUMipmaps::startLoading(const char * filename, bool)
+  bool CPUMipmaps::startLoading(const char * filename)
   {
 #ifdef CPUMIPMAPS_PROFILING
     m_profile.filename = filename;
@@ -318,10 +318,10 @@ namespace Luminous {
     }
 
     // Limit how many pixels we can upload immediately
-    /// @todo this should be a global per frame limit in bytes - see UploadLimiter::available
     const size_t instantUploadPixelLimit = Luminous::UploadLimiter::instance().available();
 
     // Upload the whole texture at once if possible
+    /// @todo isn't this whole thing already done in Texture2D::loadBytes
     const size_t imagePixels = img->width() * img->height();
     if(imagePixels < instantUploadPixelLimit) {
 

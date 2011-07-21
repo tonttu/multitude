@@ -89,7 +89,7 @@ namespace Luminous {
         @param i The index of the mipmap
         @return Pointer to the image, which may be null.
     */
-	std::shared_ptr<ImageTex> getImage(int i);
+    std::shared_ptr<ImageTex> getImage(int i);
     std::shared_ptr<CompressedImageTex> getCompressedImage(int i);
     /** Mark an image used. This method resets the idle-counter of the
         level, preventing it from being dropped from the memory in the
@@ -111,11 +111,9 @@ namespace Luminous {
         background tasking framework.
 
         @param filename The name of the image file
-        @param immediate True if the files should be loaded immediately (as
-        opposed to loading them later, as needed).
         @return True if the image file could be opened successfully.
     */
-    bool startLoading(const char * filename, bool immediate);
+    bool startLoading(const char * filename);
 
     /** @return Returns the native size of the image, in pixels. */
     const Nimble::Vector2i & nativeSize() const { return m_nativeSize;}
@@ -124,22 +122,22 @@ namespace Luminous {
     /// @param pixelSize size of the texture on screen in pixel
     /// @param textureUnit OpenGL texture unit
     /// @return true if a mipmap was succesfully bound, false if no texture was bound
-	bool bind(Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
+    bool bind(Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
 
     /// @copydoc bind(Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0)
     /// @param transform transformation matrix to multiply the pixelSize with to get final screen size
-	bool bind(const Nimble::Matrix3 & transform, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
+    bool bind(const Nimble::Matrix3 & transform, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
 
     /// @copydoc bind(Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0)
     /// @param resources OpenGL resource container for this thread
-	bool bind(GLResources * resources, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
+    bool bind(GLResources * resources, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
 
     /// @copydoc bind(const Nimble::Matrix3 & transform, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
     /// @param resources OpenGL resource container for this thread
     /// @param transform transformation matrix to multiply the pixelSize with to get final screen size
-	bool bind(GLResources * resources, const Nimble::Matrix3 & transform, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
+    bool bind(GLResources * resources, const Nimble::Matrix3 & transform, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
 
-	StateInfo stateInfo(GLResources * resources);
+    StateInfo stateInfo(GLResources * resources);
 
     void setLoadingPriority(Priority priority) { m_loadingPriority = priority; }
 
