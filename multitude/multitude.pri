@@ -42,9 +42,6 @@ linux-*:vivid {
   LIB_VIVID = -lVivid -lfbxsdk_20113_1_x64
 }
 
-
-MULTI_LIB_FLAG = -L
-
 linux-*{
   contains(USEGLEW,no) {
     DEFINES += MULTI_WITHOUT_GLEW=1
@@ -73,21 +70,21 @@ linux-*{
 macx {
   LIBS += -undefined dynamic_lookup
 
+  # Frameworks on OS X don't respect QMAKE_LIBDIR
+  QMAKE_LFLAGS += -F$$PWD/lib
+
   # withbundles = $$(MULTI_BUNDLES)
   withbundles = YES
 
   LIB_OPENCL = -framework,OpenCL
   LIB_OPENGL = -framework,OpenGL
   # LIB_GLEW = -lGLEW
-  LIBS += -L$$PWD/lib
 
-DEFINES += QT_MAC_USE_COCOA Q_OS_MAC64
+  DEFINES += QT_MAC_USE_COCOA Q_OS_MAC64
 
   # DEFINES += __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__=1050
 
   contains(withbundles,YES) {
-
-    MULTI_LIB_FLAG = -F
 
     LIB_POETIC = -framework,Poetic
     LIB_FLUFFY = -framework,Fluffy
@@ -137,7 +134,7 @@ win32 {
 
 MULTI_VIDEO_LIBS = $$LIB_SCREENPLAY $$LIB_RESONANT $$LIB_VIDEODISPLAY
 
-LIBS += $${MULTI_LIB_FLAG}$$PWD/lib
+QMAKE_LIBDIR += $$PWD/lib
 
 # message(QT version is $${QT_MAJOR_VERSION}.$${QT_MINOR_VERSION}.$${QT_PATCH_VERSION})
 
