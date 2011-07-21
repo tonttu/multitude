@@ -455,7 +455,7 @@ namespace Luminous {
 
     size_t n = areaCount();
 
-    debugLuminous("MultiHead::width # %lu", n);
+//    debugLuminous("MultiHead::width # %lu", n);
 
     for(size_t i = 0; i < n; i++) {
       Area & a = area(i);
@@ -469,7 +469,7 @@ namespace Luminous {
       left  = Nimble::Math::Min(left,  wleft);
       right = Nimble::Math::Max(right, wright);
 
-      debugLuminous("lr = %f %f", left, right);
+//      debugLuminous("lr = %f %f", left, right);
     }
 
     return (int) (right - left);
