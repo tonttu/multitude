@@ -178,6 +178,13 @@ namespace Luminous {
     inline bool keepMaxLevel() const { return m_keepMaxLevel; }
     inline void setKeepMaxLevel(bool v) { m_keepMaxLevel = v; }
 
+    /// Returns cache filename for given source file name.
+    /// @param src The original image filename
+    /// @param level Mipmap level, ignored if negative
+    /// @param suffix File format of the cache file name, usually png or dds.
+    static std::string cacheFileName(const std::string & src, int level = -1,
+                                     const std::string & suffix = "png");
+
   protected:
     virtual void doTask();
 
@@ -221,9 +228,6 @@ namespace Luminous {
     typedef std::map<int, CPUItem> StackMap;
 
     CPUItem getStack(int index);
-
-    /// writes cache filename for level to given string
-    void cacheFileName(std::string & str, int level);
 
     void recursiveLoad(StackMap & stack, int level);
     void reschedule(double delay = 0.0, bool allowLater = false);

@@ -522,11 +522,13 @@ namespace Luminous {
     return item;
   }
 
-  void CPUMipmaps::cacheFileName(std::string & name, int level)
+  std::string CPUMipmaps::cacheFileName(const std::string & src, int level,
+                                        const std::string & suffix)
   {
-    QFileInfo fi(QString::fromUtf8(m_filename.c_str()));
+    QFileInfo fi(QString::fromUtf8(src.c_str()));
 
-    QString basePath = QString::fromUtf8(Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false).c_str());
+    QString basePath = QString::fromUtf8(
+          Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false).c_str());
 
     // Compute MD5 from the absolute path
     QCryptographicHash hash(QCryptographicHash::Md5);
@@ -536,12 +538,11 @@ namespace Luminous {
 
     // Avoid putting all mipmaps into the same folder (because of OS performance)
     QString prefix = md5.left(2);
-    QString postfix = QString("level%1.png").arg(level, 2, 10, QLatin1Char('0'));
-    QString fullPath = basePath + QString("/imagecache/%1/%2_%3").arg(prefix).arg(md5).arg(postfix);
+    QString postfix = level < 0 ? QString(".%1").arg(suffix.c_str()) :
+        QString("_level%1.%2").arg(level, 2, 10, QLatin1Char('0')).arg(suffix.c_str());
+    QString fullPath = basePath + QString("/imagecache/%1/%2%3").arg(prefix).arg(md5).arg(postfix);
 
-    name = fullPath.toUtf8().data();
-
-    //Radiant::info("CPUMipmaps::cacheFileName # %s -> %s", m_filename.c_str(), name.c_str());
+    return fullPath.toUtf8().data();
   }
 
   void CPUMipmaps::recursiveLoad(StackMap & stack, int level)
@@ -591,8 +592,7 @@ namespace Luminous {
     if(m_shouldSave.find(level) != m_shouldSave.end()) {
 
       // Try loading a pre-generated smaller-scale mipmap
-      std::string filename;
-      cacheFileName(filename, level);
+      std::string filename = cacheFileName(m_filename, level);
 
       if(Radiant::FileUtils::fileReadable(filename) &&
          FileUtils::lastModified(filename) > m_fileModified) {
@@ -656,8 +656,7 @@ namespace Luminous {
     // info("Loaded image %s %d", m_filename.c_str(), is.x);
 
     if(m_shouldSave.find(level) != m_shouldSave.end()) {
-      std::string filename;
-      cacheFileName(filename, level);
+      std::string filename = cacheFileName(m_filename, level);
       Directory::mkdirRecursive(FileUtils::path(filename));
       imdest->write(filename.c_str());
       // info("wrote cache %s (%d)", filename.c_str(), level);
