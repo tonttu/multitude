@@ -69,6 +69,10 @@ SOURCES += Utils.cpp
 SOURCES += VertexBuffer.cpp
 SOURCES += RenderTarget.cpp
 
+# Link in Squish statically
+LIBS += -lSquish
+QMAKE_LIBDIR += ../Squish
+
 LIBS += $$LIB_RADIANT \
     $$LIB_OPENGL \
     $$LIB_VALUABLE \
@@ -98,5 +102,4 @@ contains(HAS_QT_45,YES) {
       INSTALLS += qt_plugin_install
     }
 }
-include(Squish/Squish.pri)
 include(../library.pri)
