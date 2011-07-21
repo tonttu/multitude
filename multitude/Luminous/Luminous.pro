@@ -1,6 +1,7 @@
 include(../multitude.pri)
 HEADERS += BGThread.hpp \
-    ImageCodecDDS.hpp
+    ImageCodecDDS.hpp \
+    MipMapGenerator.hpp
 HEADERS += GLContext.hpp
 HEADERS += FramebufferResource.hpp
 HEADERS += CodecRegistry.hpp
@@ -37,7 +38,8 @@ HEADERS += VertexBuffer.hpp
 HEADERS += VertexBufferImpl.hpp
 HEADERS += RenderTarget.hpp
 
-SOURCES += ImageCodecDDS.cpp
+SOURCES += ImageCodecDDS.cpp \
+    MipMapGenerator.cpp
 SOURCES += BGThread.cpp
 SOURCES += GLContext.cpp
 SOURCES += FramebufferResource.cpp
