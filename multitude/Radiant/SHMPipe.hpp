@@ -53,8 +53,9 @@ namespace Radiant
 
       @see SHMDuplexPipe
   */
-  class SHMPipe : public Radiant::MemCheck
+  class SHMPipe
   {
+    MEMCHECKED
   public:
 
     /// Constructor.

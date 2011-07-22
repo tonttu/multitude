@@ -44,7 +44,6 @@ SOURCES += BGThread.cpp
 SOURCES += GLContext.cpp
 SOURCES += FramebufferResource.cpp
 SOURCES += CodecRegistry.cpp
-SOURCES += Collectable.cpp
 SOURCES += CPUMipmaps.cpp
 SOURCES += CPUMipmapStore.cpp
 SOURCES += Error.cpp

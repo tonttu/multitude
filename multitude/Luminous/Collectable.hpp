@@ -24,8 +24,9 @@
 namespace Luminous
 {
   /// A utility class to make the work of GarbageCollector easier.
-  class Collectable : public Radiant::MemCheck
+  class Collectable
   {
+    MEMCHECKED
   public:
       Collectable() {}
     virtual ~Collectable() {GarbageCollector::objectDeleted(this);}

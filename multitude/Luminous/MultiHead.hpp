@@ -48,6 +48,7 @@ namespace Luminous {
     class LUMINOUS_API Area : public Valuable::HasValues,
     public Collectable
     {
+      MEMCHECKED_USING(Collectable)
     public:
       /// Constructs a new area for the given window
       Area(Window * window = 0);

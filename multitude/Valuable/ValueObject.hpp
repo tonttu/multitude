@@ -57,10 +57,8 @@ namespace Valuable
 
   /// The base class for all serializable objects.
   class VALUABLE_API Serializable
-#ifdef MULTI_MEMCHECK
-    : public Radiant::MemCheck
-#endif
   {
+    MEMCHECKED
   public:
     virtual ~Serializable() {}
 

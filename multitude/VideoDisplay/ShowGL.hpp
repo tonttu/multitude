@@ -70,6 +70,7 @@ namespace VideoDisplay {
   class VIDEODISPLAY_API ShowGL : public Luminous::Collectable,
   public Valuable::HasValues
   {
+    MEMCHECKED_USING(Valuable::HasValues)
   private:
 
     class YUVProgram : public Luminous::GLSLProgramObject

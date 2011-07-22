@@ -113,11 +113,9 @@ namespace Luminous
      </PRE>
   */
   class LUMINOUS_API GLResource
-#ifdef MULTI_MEMCHECK
-    : public Radiant::MemCheck
-#endif
   {
     enum { PERSISTENT = -2 };
+    MEMCHECKED
 
   public:
     friend class GLResources;

@@ -36,6 +36,7 @@ namespace Luminous {
   class LUMINOUS_API Shader : public ContextVariableT<GLSLProgramObject>,
   public Valuable::HasValues
   {
+    MEMCHECKED_USING(Valuable::HasValues)
   public:
     Shader();
     /// Constructs a shader
