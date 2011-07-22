@@ -276,7 +276,7 @@ namespace Luminous {
     if(gen) {
       Luminous::BGThread::instance()->addTask(gen);
     } else if(compressed_mipmaps) {
-      Luminous::BGThread::instance()->addTask(this);
+      Luminous::BGThread::instance()->addTask(shared_from_this());
     }
     return true;
   }
