@@ -114,9 +114,9 @@ namespace Radiant
 
     m_d->m_fd = -1;
 
-    if(shutdown(fd, SHUT_RDWR)) {
-      error("TCPSocket::close # Failed to shut down the socket: %s", wrap_strerror(wrap_errno));
-    }
+    // ignore error if the connection closed in abortive way
+    shutdown(fd, SHUT_RDWR);
+
     if(wrap_close(fd)) {
       error("TCPSocket::close # Failed to close socket: %s", wrap_strerror(wrap_errno));
     }
