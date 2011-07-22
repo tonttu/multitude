@@ -92,7 +92,8 @@ namespace Luminous {
     m_timeOutCPU(5.0f),
     m_timeOutGPU(5.0f),
     m_keepMaxLevel(true),
-    m_loadingPriority(PRIORITY_NORMAL)
+    m_loadingPriority(PRIORITY_NORMAL),
+    m_compressedMipmaps(false)
   #ifdef CPUMIPMAPS_PROFILING
     , m_profile(s_profiler.next())
   #endif
@@ -209,7 +210,7 @@ namespace Luminous {
     return true;
   }
 
-  bool CPUMipmaps::startLoading(const char * filename, bool compressed_mipmaps)
+  bool CPUMipmaps::startLoading(const char * filename, bool compressedMipmaps)
   {
 #ifdef CPUMIPMAPS_PROFILING
     m_profile.filename = filename;
@@ -220,6 +221,7 @@ namespace Luminous {
     m_info = Luminous::ImageInfo();
     m_shouldSave.clear();
     m_stack.clear();
+    m_compressedMipmaps = compressedMipmaps;
 
     if(m_fileModified == 0) {
       error("CPUMipmaps::startLoading # failed to stat file %s", filename);
@@ -227,7 +229,7 @@ namespace Luminous {
     }
 
     MipMapGenerator * gen = 0;
-    if(compressed_mipmaps) {
+    if(compressedMipmaps) {
       m_compFilename = cacheFileName(filename, -1, "dds");
       if(FileUtils::lastModified(m_compFilename) < m_fileModified ||
          !Luminous::Image::ping(m_compFilename.c_str(), m_info)) {
@@ -275,7 +277,7 @@ namespace Luminous {
 
     if(gen) {
       Luminous::BGThread::instance()->addTask(gen);
-    } else if(compressed_mipmaps) {
+    } else if(compressedMipmaps) {
       Luminous::BGThread::instance()->addTask(shared_from_this());
     }
     return true;

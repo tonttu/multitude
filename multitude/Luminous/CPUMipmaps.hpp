@@ -180,6 +180,8 @@ namespace Luminous {
 
     void mipmapsReady(const ImageInfo & info);
 
+    inline bool compressedMipmaps() const { return m_compressedMipmaps; }
+
     /// Returns cache filename for given source file name.
     /// @param src The original image filename
     /// @param level Mipmap level, ignored if negative
@@ -268,6 +270,8 @@ namespace Luminous {
     ContextVariableT<StateInfo> m_stateInfo;
 
     Luminous::ImageInfo m_info;
+
+    bool m_compressedMipmaps;
 
 #ifdef CPUMIPMAPS_PROFILING
     ProfileData & m_profile;
