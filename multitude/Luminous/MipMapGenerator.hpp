@@ -16,6 +16,7 @@
 #ifndef LUMINOUS_MIPMAPGENERATOR_HPP
 #define LUMINOUS_MIPMAPGENERATOR_HPP
 
+#include "Export.hpp"
 #include "Task.hpp"
 #include "PixelFormat.hpp"
 
@@ -27,7 +28,7 @@ namespace Luminous {
   class Image;
   class CPUMipmaps;
 
-  class MipMapGenerator : public Task
+  class LUMINOUS_API MipMapGenerator : public Task
   {
   public:
     MipMapGenerator(const std::string & src);
