@@ -127,13 +127,14 @@ namespace Luminous
     /// Compare if two pixel formats are the same
     inline bool operator == (const PixelFormat & that) const
     {
-      return m_layout == that.m_layout && m_type == that.m_type;
+      return m_layout == that.m_layout && m_type == that.m_type &&
+          m_compression == that.m_compression;
     }
 
     /// Compare if two pixel formats are not the same
     inline bool operator != (const PixelFormat & that) const
     {
-      return m_layout != that.m_layout || m_type == that.m_type;
+      return !(*this == that);
     }
 
     /// Converts the pixel format into a human-readable string

@@ -26,7 +26,8 @@ namespace Luminous {
 
   static std::map<std::string, std::weak_ptr<CPUMipmaps> > s_mipmaps;
 
-  std::shared_ptr<CPUMipmaps> CPUMipmapStore::acquire(const std::string & filename)
+  std::shared_ptr<CPUMipmaps> CPUMipmapStore::acquire(const std::string & filename,
+                                                      bool compressed_mipmaps)
   {
     Radiant::Guard g( s_mutex);
 
@@ -39,11 +40,12 @@ namespace Luminous {
 
     mipmap_shared.reset(new CPUMipmaps);
 
-    if(!mipmap_shared->startLoading(filename.c_str())) {
+    if(!mipmap_shared->startLoading(filename.c_str(), compressed_mipmaps)) {
       return std::shared_ptr<CPUMipmaps>();
     }
 
-    Luminous::BGThread::instance()->addTask(mipmap_shared);
+    if(!compressed_mipmaps)
+      Luminous::BGThread::instance()->addTask(mipmap_shared);
 
     // store new weak pointer
     mipmap_weak = mipmap_shared;

@@ -14,6 +14,7 @@
  */
 
 #include "CPUMipmaps.hpp"
+#include "MipMapGenerator.hpp"
 
 #include <Luminous/GLResources.hpp>
 #include <Luminous/Utils.hpp>
@@ -208,22 +209,38 @@ namespace Luminous {
     return true;
   }
 
-  bool CPUMipmaps::startLoading(const char * filename)
+  bool CPUMipmaps::startLoading(const char * filename, bool compressed_mipmaps)
   {
 #ifdef CPUMIPMAPS_PROFILING
     m_profile.filename = filename;
 #endif
     m_filename = filename;
+    m_compFilename.clear();
     m_fileModified = FileUtils::lastModified(m_filename);
     m_info = Luminous::ImageInfo();
+    m_shouldSave.clear();
+    m_stack.clear();
 
-    if(!Luminous::Image::ping(filename, m_info)) {
+    if(m_fileModified == 0) {
+      error("CPUMipmaps::startLoading # failed to stat file %s", filename);
+      return false;
+    }
+
+    MipMapGenerator * gen = 0;
+    if(compressed_mipmaps) {
+      m_compFilename = cacheFileName(filename, -1, "dds");
+      if(FileUtils::lastModified(m_compFilename) < m_fileModified ||
+         !Luminous::Image::ping(m_compFilename.c_str(), m_info)) {
+        gen = new MipMapGenerator(filename);
+        gen->setListener(shared_from_this());
+      }
+    }
+
+    if(m_info.width == 0 && !Luminous::Image::ping(filename, m_info)) {
       error("CPUMipmaps::startLoading # failed to query image size for %s", filename);
       return false;
     }
 
-    m_shouldSave.clear();
-    m_stack.clear();
     m_nativeSize.make(m_info.width, m_info.height);
 
     if(!m_nativeSize.minimum())
@@ -256,6 +273,11 @@ namespace Luminous {
     markImage(m_maxLevel);
     reschedule();
 
+    if(gen) {
+      Luminous::BGThread::instance()->addTask(gen);
+    } else if(compressed_mipmaps) {
+      Luminous::BGThread::instance()->addTask(shared_from_this());
+    }
     return true;
   }
 
@@ -450,6 +472,13 @@ namespace Luminous {
     }
   }
 
+  void CPUMipmaps::mipmapsReady(const ImageInfo & info)
+  {
+    m_info = info;
+    BGThread::instance()->addTask(shared_from_this());
+    reschedule();
+  }
+
   void CPUMipmaps::doTask()
   {
     if(state() == Task::DONE)
@@ -522,11 +551,13 @@ namespace Luminous {
     return item;
   }
 
-  void CPUMipmaps::cacheFileName(std::string & name, int level)
+  std::string CPUMipmaps::cacheFileName(const std::string & src, int level,
+                                        const std::string & suffix)
   {
-    QFileInfo fi(QString::fromUtf8(m_filename.c_str()));
+    QFileInfo fi(QString::fromUtf8(src.c_str()));
 
-    QString basePath = QString::fromUtf8(Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false).c_str());
+    QString basePath = QString::fromUtf8(
+          Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false).c_str());
 
     // Compute MD5 from the absolute path
     QCryptographicHash hash(QCryptographicHash::Md5);
@@ -536,12 +567,11 @@ namespace Luminous {
 
     // Avoid putting all mipmaps into the same folder (because of OS performance)
     QString prefix = md5.left(2);
-    QString postfix = QString("level%1.png").arg(level, 2, 10, QLatin1Char('0'));
-    QString fullPath = basePath + QString("/imagecache/%1/%2_%3").arg(prefix).arg(md5).arg(postfix);
+    QString postfix = level < 0 ? QString(".%1").arg(suffix.c_str()) :
+        QString("_level%1.%2").arg(level, 2, 10, QLatin1Char('0')).arg(suffix.c_str());
+    QString fullPath = basePath + QString("/imagecache/%1/%2%3").arg(prefix).arg(md5).arg(postfix);
 
-    name = fullPath.toUtf8().data();
-
-    //Radiant::info("CPUMipmaps::cacheFileName # %s -> %s", m_filename.c_str(), name.c_str());
+    return fullPath.toUtf8().data();
   }
 
   void CPUMipmaps::recursiveLoad(StackMap & stack, int level)
@@ -556,8 +586,8 @@ namespace Luminous {
 
     if(m_info.pf.compression()) {
       std::shared_ptr<Luminous::CompressedImageTex> im(new Luminous::CompressedImageTex);
-      if(!im->read(m_filename, level)) {
-        error("CPUMipmaps::recursiveLoad # Could not read %s level %d", m_filename.c_str(), level);
+      if(!im->read(m_compFilename, level)) {
+        error("CPUMipmaps::recursiveLoad # Could not read %s level %d", m_compFilename.c_str(), level);
         item.m_state = FAILED;
       } else {
         /// @todo this is wrong, compressed images doesn't always have alpha channel
@@ -591,8 +621,7 @@ namespace Luminous {
     if(m_shouldSave.find(level) != m_shouldSave.end()) {
 
       // Try loading a pre-generated smaller-scale mipmap
-      std::string filename;
-      cacheFileName(filename, level);
+      std::string filename = cacheFileName(m_filename, level);
 
       if(Radiant::FileUtils::fileReadable(filename) &&
          FileUtils::lastModified(filename) > m_fileModified) {
@@ -656,8 +685,7 @@ namespace Luminous {
     // info("Loaded image %s %d", m_filename.c_str(), is.x);
 
     if(m_shouldSave.find(level) != m_shouldSave.end()) {
-      std::string filename;
-      cacheFileName(filename, level);
+      std::string filename = cacheFileName(m_filename, level);
       Directory::mkdirRecursive(FileUtils::path(filename));
       imdest->write(filename.c_str());
       // info("wrote cache %s (%d)", filename.c_str(), level);

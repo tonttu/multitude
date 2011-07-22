@@ -50,6 +50,7 @@ namespace Luminous
   void BGThread::addTask(std::shared_ptr<Task> task)
   {
     assert(task);
+    if(task->m_host == this) return;
     task->m_host = this;
 
     Radiant::Guard g(m_mutexWait);
@@ -69,6 +70,7 @@ namespace Luminous
 
     container::iterator it = findTask(task);
     if(it != m_taskQueue.end()) {
+      task->m_host = 0;
       m_taskQueue.erase(it);
       return true;
     }
@@ -162,6 +164,7 @@ namespace Luminous
       // Did the task complete?
       if(task->state() == Task::DONE) {
         task->finished();
+        task->m_host = 0;
       } else {
         // If we are still running, push the task to the back of the given
         // priority range so that other tasks with the same priority will be

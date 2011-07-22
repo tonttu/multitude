@@ -256,9 +256,21 @@ namespace Screenplay {
           int aFramesIn = aBytesIn / sizeof(AudioBuffer::value_type);
 
           m_resampleBuffer.resize(aFramesIn);
-          avcodec_decode_audio3(m_acontext,
+          int usedBytes = avcodec_decode_audio3(m_acontext,
                                 & m_resampleBuffer[0],
                                 & aBytesIn, m_pkt);
+
+          if (m_acodec->id == CODEC_ID_VORBIS)
+          {
+            // From Vorbis documentation:
+            // Data is not returned from the first frame; it must be used to
+            // ’prime’ the decode engine. The encoder accounts for this priming
+            // when calculating PCM offsets; after the first frame, the proper
+            // PCM output offset is ’0’ (as no data has been returned yet).
+
+            if (usedBytes > 0 && aBytesIn == 0)
+              continue;
+          }
 
           // Resample
           int srcChannelBytes = aBytesIn / m_audioChannels;
@@ -408,6 +420,11 @@ namespace Screenplay {
       if(m_debug && m_capturedVideo < 10)
         debugScreenplay("%s # PIX_FMT_RGB24", fname);
     }
+    else if(avcfmt == PIX_FMT_BGR24) {
+      m_image.setFormatBGR();
+      if(m_debug && m_capturedVideo < 10)
+        debugScreenplay("%s # PIX_FMT_BGR24", fname);
+    }
     else if(avcfmt == PIX_FMT_RGBA) {
       m_image.setFormatRGBA();
       if(m_debug && m_capturedVideo < 10)
@@ -447,7 +464,9 @@ namespace Screenplay {
        printf("ls[%u] = %d  ", p, (int) m_image.m_planes[p].m_linesize);
        }*/
 
-    av_free_packet(m_pkt);
+    // can't free here, still need m_data later. m_pkt is freed on each
+    // new frame and when video closes
+    //av_free_packet(m_pkt);
 
     return & m_image;
   }

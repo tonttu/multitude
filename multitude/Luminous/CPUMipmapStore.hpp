@@ -35,7 +35,7 @@ namespace Luminous {
         returned. Otherwise CPUMipmapStore will create a new
         #Luminous::CPUMipmaps object, and return a shared pointer to that (if opened successfully).
      */
-    static std::shared_ptr<CPUMipmaps> acquire(const std::string & filename);
+    static std::shared_ptr<CPUMipmaps> acquire(const std::string & filename, bool compressed_mipmaps);
 
     /** Release a #Luminous::CPUMipmaps object. If there are no references to
         the object, then its memory is freed.

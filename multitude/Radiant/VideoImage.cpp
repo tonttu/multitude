@@ -59,7 +59,7 @@ namespace Radiant {
       else
         area.clear();
     }
-    else if(fmt == IMAGE_RGB) {
+    else if(fmt == IMAGE_RGB || fmt == IMAGE_BGR) {
       area.x *= 3;
     }
     else if(fmt == IMAGE_RGBA || fmt == IMAGE_BGRA) {
@@ -84,6 +84,7 @@ namespace Radiant {
     unsigned pixels = w * h;
 
     if(fmt == IMAGE_RGB ||
+       fmt == IMAGE_BGR ||
        fmt == IMAGE_RGBA ||
        fmt == IMAGE_BGRA ||
        fmt == IMAGE_GRAYSCALE) {
@@ -99,6 +100,10 @@ namespace Radiant {
       }
       else if(fmt == IMAGE_RGB) {
         pt = PLANE_RGB;
+        ls = w * 3;
+      }
+      else if(fmt == IMAGE_BGR) {
+        pt = PLANE_BGR;
         ls = w * 3;
       }
       else if(fmt == IMAGE_RGBA) {
@@ -185,7 +190,7 @@ namespace Radiant {
       linecount[1] = linecount[2] = m_height;
       rowbytes[1]  = rowbytes[2]  = m_width / 2;
     }
-    else if(m_format == IMAGE_RGB) {
+    else if(m_format == IMAGE_RGB || m_format == IMAGE_BGR) {
       linecount[1] = linecount[2] = 0;
       rowbytes[1]  = rowbytes[2]  = 0;
       rowbytes[0]  = m_width * 3;
@@ -248,6 +253,7 @@ namespace Radiant {
     switch(m_format) {
       case IMAGE_GRAYSCALE:
       case IMAGE_RGB:
+      case IMAGE_BGR:
       case IMAGE_RGBA:
       case IMAGE_BGRA:
           memset(m_planes[0].m_data, 0, m_planes[0].m_linesize * m_height);

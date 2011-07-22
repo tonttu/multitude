@@ -41,9 +41,22 @@ namespace VideoDisplay {
         vec4 color = texture2D(tex, gl_TexCoord[0].st);
         color.rgb = vec3(0.5, 0.5, 0.5) +
            contrast * (color.rgb - vec3(0.5, 0.5, 0.5));
-        gl_FragColor = mix(gl_Color, color, gl_Color.a);
+        gl_FragColor = color * gl_Color;
       });
 
+  static const char * shadersource = SHADER(
+      uniform sampler2D ytex;
+      uniform sampler2D utex;
+      uniform sampler2D vtex;
+      uniform mat4 zm;
+      void main (void) {
+        vec4 ycolor = texture2D(ytex, gl_TexCoord[0].st);
+        vec4 ucolor = texture2D(utex, gl_TexCoord[0].st);
+        vec4 vcolor = texture2D(vtex, gl_TexCoord[0].st);
+        vec4 yuv = vec4(ycolor.r, ucolor.r - 0.5, vcolor.r - 0.5, 1.0);
+        yuv.rgb = (zm * yuv).rgb;
+        gl_FragColor = yuv * gl_Color;
+      });
 
   ShowGL::YUVProgram::YUVProgram(Luminous::GLResources * resources)
       : Luminous::GLSLProgramObject(resources)
@@ -60,36 +73,6 @@ namespace VideoDisplay {
 
   bool ShowGL::YUVProgram::init()
   {
-    static const char * shadersource =
-        "uniform sampler2D ytex;\n"
-        "uniform sampler2D utex;\n"
-        "uniform sampler2D vtex;\n"
-        "uniform mat4 zm;\n"
-        "void main (void) {\n"
-        "  vec4 ycolor = texture2D(ytex, gl_TexCoord[0].st);\n"
-        "  vec4 ucolor = texture2D(utex, gl_TexCoord[0].st);\n"
-        "  vec4 vcolor = texture2D(vtex, gl_TexCoord[0].st);\n"
-        "  vec4 yuv = vec4(ycolor.r, ucolor.r - 0.5, vcolor.r - 0.5, 1.0);\n"
-        "  yuv.rgb = (zm * yuv).rgb;\n"
-        "  gl_FragColor = yuv * gl_Color;\n"
-        "}\n";
-    /*
-    static const char * shadersource =
-      "uniform sampler2D ytex;\n"
-      "uniform sampler2D utex;\n"
-      "uniform sampler2D vtex;\n"
-      "uniform vec2 offset;\n"
-      "uniform mat3 zm;\n"
-      "void main (void) {\n"
-      "  vec4 ycolor = texture2D(ytex, gl_TexCoord[0].st + offset);\n"
-      "  ycolor = texture2D(ytex, gl_TexCoord[0].st - offset);\n"
-      "  vec4 ucolor = texture2D(utex, gl_TexCoord[0].st);\n"
-      "  vec4 vcolor = texture2D(vtex, gl_TexCoord[0].st);\n"
-      "  vec3 yuv = vec3(ycolor.r * 0.25, ucolor.r - 0.5, vcolor.r - 0.5);\n"
-      "  gl_FragColor.rgb = zm * yuv;\n"
-      "  gl_FragColor.a = gl_Color.a;\n"
-      "}\n";
-    */
     clear();
 
     Luminous::GLSLShaderObject * fragShader =
@@ -235,11 +218,17 @@ namespace VideoDisplay {
     Luminous::Texture2D * tex = & m_texIds[0];
     tex->bind();
     ImageFormat f = img->m_format;
-    tex->loadBytes((f == IMAGE_RGBA || f ==  IMAGE_BGRA) ? GL_RGBA : GL_RGB,
-                   img->width(), img->height(), img->m_planes[0].m_data,
-                   f == IMAGE_RGBA ? Luminous::PixelFormat::rgbaUByte() :
-                   f == IMAGE_BGRA ? Luminous::PixelFormat::bgraUByte() :
-                   Luminous::PixelFormat::rgbUByte());
+    GLenum internalFormat = (f == IMAGE_RGBA || f == IMAGE_BGRA) ? GL_RGBA : GL_RGB;
+    // use RGB as default
+    Luminous::PixelFormat pf = Luminous::PixelFormat::rgbUByte();
+    if (f == IMAGE_RGBA)
+      pf = Luminous::PixelFormat::rgbaUByte();
+    else if (f == IMAGE_BGRA)
+      pf = Luminous::PixelFormat::bgraUByte();
+    else if (f == IMAGE_BGR)
+      pf = Luminous::PixelFormat::bgrUByte();
+
+    tex->loadBytes(internalFormat, img->width(), img->height(), img->m_planes[0].m_data, pf);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

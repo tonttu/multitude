@@ -1,6 +1,7 @@
 include(../multitude.pri)
 HEADERS += BGThread.hpp \
-    ImageCodecDDS.hpp
+    ImageCodecDDS.hpp \
+    MipMapGenerator.hpp
 HEADERS += GLContext.hpp
 HEADERS += FramebufferResource.hpp
 HEADERS += CodecRegistry.hpp
@@ -37,7 +38,8 @@ HEADERS += VertexBuffer.hpp
 HEADERS += VertexBufferImpl.hpp
 HEADERS += RenderTarget.hpp
 
-SOURCES += ImageCodecDDS.cpp
+SOURCES += ImageCodecDDS.cpp \
+    MipMapGenerator.cpp
 SOURCES += BGThread.cpp
 SOURCES += GLContext.cpp
 SOURCES += FramebufferResource.cpp
@@ -69,6 +71,10 @@ SOURCES += Utils.cpp
 SOURCES += VertexBuffer.cpp
 SOURCES += RenderTarget.cpp
 
+# Link in Squish statically
+LIBS += -lSquish
+QMAKE_LIBDIR += ../Squish
+
 LIBS += $$LIB_RADIANT \
     $$LIB_OPENGL \
     $$LIB_VALUABLE \
@@ -98,5 +104,4 @@ contains(HAS_QT_45,YES) {
       INSTALLS += qt_plugin_install
     }
 }
-include(Squish/Squish.pri)
 include(../library.pri)
