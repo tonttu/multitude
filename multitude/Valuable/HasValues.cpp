@@ -33,6 +33,10 @@ namespace Valuable
 {
   using namespace Radiant;
 
+#ifdef MULTI_DOCUMENTER
+  std::map<std::string, std::set<std::string> > s_eventSendNames;
+  std::map<std::string, std::set<std::string> > s_eventListenNames;
+#endif
 
   inline bool HasValues::ValuePass::operator == (const ValuePass & that) const
   {
@@ -367,14 +371,24 @@ namespace Valuable
   {
     if (m_eventSendNames.find(id) != m_eventSendNames.end()) {
       warning("HasValues::eventAddSend # Trying to register event '%s' that is already registered", id.c_str());
-    } else m_eventSendNames.insert(id);
+    } else {
+      m_eventSendNames.insert(id);
+#ifdef MULTI_DOCUMENTER
+      s_eventSendNames[Radiant::StringUtils::demangle(typeid(*this).name())].insert(id);
+#endif
+    }
   }
 
   void HasValues::eventAddListen(const std::string & id)
   {
     if (m_eventListenNames.find(id) != m_eventListenNames.end()) {
       warning("HasValues::eventAddListen # Trying to register duplicate event handler for event '%s'", id.c_str());
-    } else m_eventListenNames.insert(id);
+    } else {
+      m_eventListenNames.insert(id);
+#ifdef MULTI_DOCUMENTER
+      s_eventListenNames[Radiant::StringUtils::demangle(typeid(*this).name())].insert(id);
+#endif
+    }
   }
 
   bool HasValues::acceptsEvent(const std::string & id) const
