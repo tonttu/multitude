@@ -51,7 +51,7 @@ namespace Luminous
       BLEND_SUBTRACTIVE
     };
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+/// @cond
 
     class FBOPackage;
 
@@ -82,7 +82,7 @@ namespace Luminous
       int m_users;
     };
 
-#endif // DOXYGEN_SHOULD_SKIP_THIS
+/// @endcond
 
 /// @cond
     /** Experimental support for getting temporary FBOs for this context.

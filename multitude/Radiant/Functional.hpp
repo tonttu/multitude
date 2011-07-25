@@ -1,7 +1,7 @@
 #ifndef RADIANT_FUNCTIONAL_HPP
 #define RADIANT_FUNCTIONAL_HPP
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+/// @cond
 
 #include "Platform.hpp"
 
@@ -30,6 +30,6 @@
   }
 #endif
 
-#endif // DOXYGEN_SHOULD_SKIP_THIS
+/// @endcond
 
 #endif // RADIANT_FUNCTIONAL_HPP

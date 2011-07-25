@@ -36,24 +36,24 @@ namespace Valuable
   namespace Serializer
   {
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+    /// @cond
+
     /// helper structs and enum for template specializations
-    /** Boost & TR1 have is_base_of & similar template hacks that basically do this */
+    /// Boost & TR1 have is_base_of & similar template hacks that basically do this
     namespace Type
     {
       /// Every object is one of these types, see Serializer::Trait
       enum { pair = 1, container = 2, serializable = 3, smart_ptr = 4, other = 5 };
       // All structs have same _ element with different size, so we can use
       // sizeof operator to make decisions in templates
-      /// @cond
       struct pair_trait { char _[1]; };
       struct container_trait { char _[2]; };
       struct serializable_trait { char _[3]; };
       struct smart_ptr_trait { char _[4]; };
       struct default_trait { char _[5]; };
-      /// @endcond
     }
-#endif
+
+    /// @endcond
 
     /// Removes const from type: remove_const<const Foo>::Type == Foo
     /// Works also with non-const types, remove_const<Foo>::Type == Foo

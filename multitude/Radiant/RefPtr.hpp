@@ -16,7 +16,7 @@
 #ifndef RADIANT_REF_PTR_HPP
 #define RADIANT_REF_PTR_HPP
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+/// @cond
 
 #include "Radiant/Platform.hpp"
 
@@ -46,7 +46,6 @@
   }
 #endif
 
-
-#endif // DOXYGEN_SHOULD_SKIP_THIS
+/// @endcond
 
 #endif

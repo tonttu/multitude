@@ -20,7 +20,7 @@
 
 #include <Radiant/Platform.hpp>
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+/// @cond
 
 // try to detect c++0x
 #if defined(RADIANT_CPP0X)
@@ -39,7 +39,7 @@
   }
 #endif
 
-#endif // DOXYGEN_SHOULD_SKIP_THIS
+/// @endcond
 
 struct FT_FaceRec_;
 

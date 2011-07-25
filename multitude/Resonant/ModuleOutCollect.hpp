@@ -33,7 +33,7 @@ namespace Resonant {
   {
   public:
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+/// @cond
     class Move
     {
     public:
@@ -41,7 +41,7 @@ namespace Resonant {
       char sourceId[Module::MAX_ID_LENGTH];
       int from, to;
     };
-#endif
+/// @endcond
 
     /// Creates a new ModuleOutCollect
     ModuleOutCollect(Application *, DSPNetwork *);
