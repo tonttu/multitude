@@ -54,7 +54,7 @@ namespace Luminous {
   class LUMINOUS_API CPUMipmaps : public Luminous::Collectable, public Luminous::Task,
                                   public std::enable_shared_from_this<CPUMipmaps>
   {
-    MEMCHECKED_USING(Luminous::Collectable)
+    MEMCHECKED_USING(Luminous::Collectable);
   public:
     struct StateInfo : public GLResource
     {
