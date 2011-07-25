@@ -131,14 +131,6 @@ namespace Luminous
       friend class TaskDeleter;
   };
 
-  class TaskDeleter
-  {
-  public:
-    void operator()(Task* p)
-    {
-      delete p;
-    }
-  };
 }
 
 #endif

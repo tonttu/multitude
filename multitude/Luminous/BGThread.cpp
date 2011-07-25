@@ -28,6 +28,16 @@
 namespace Luminous
 {
 
+  // Helper to get around the fact that Task destructor is protected.
+  class TaskDeleter
+  {
+  public:
+    void operator()(Task* p)
+    {
+      delete p;
+    }
+  };
+
   std::weak_ptr<BGThread> BGThread::m_instance;
 
   BGThread::BGThread()
