@@ -10,6 +10,9 @@
 #include <map>
 #include <stack>
 
+// Not used yet
+/// @cond
+
 namespace Luminous
 {
   class RenderTargetObject;
@@ -60,5 +63,7 @@ namespace Luminous
   };
 
 }
+
+/// @endcond
 
 #endif

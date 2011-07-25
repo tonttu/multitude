@@ -56,12 +56,17 @@ namespace Luminous {
   {
     MEMCHECKED_USING(Luminous::Collectable);
   public:
+    /// A structure providing information about the current state of a mipmap.
     struct StateInfo : public GLResource
     {
     public:
       StateInfo(Luminous::GLResources * host) : GLResource(host), optimal(-1), bound(-1) {}
+
+      /// Returns true if the currently requested level has been loaded and bound
       bool ready() const { return bound >= 0 && optimal == bound; }
+      /// Currently requested mipmap level
       int optimal;
+      /// Currently bound mipmap level
       int bound;
     };
 

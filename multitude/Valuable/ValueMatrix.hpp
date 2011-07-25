@@ -24,6 +24,7 @@
 namespace Valuable
 {
 
+  /// A matrix value object
   template<class MatrixType, typename ElementType, int N>
   class ValueMatrix : public ValueObjectT<MatrixType>
   {
