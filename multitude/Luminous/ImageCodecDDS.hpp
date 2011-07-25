@@ -10,6 +10,7 @@
 
 namespace Luminous {
 
+/// Image codec to handle DDS files
 class ImageCodecDDS : public ImageCodec
 {
 public:
