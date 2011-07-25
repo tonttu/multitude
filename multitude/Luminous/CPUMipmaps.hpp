@@ -60,6 +60,8 @@ namespace Luminous {
     struct StateInfo : public GLResource
     {
     public:
+      /// Constructs a new state info for the given OpenGL resource collection
+      /// @param host OpenGL resource collection in which to track the state
       StateInfo(Luminous::GLResources * host) : GLResource(host), optimal(-1), bound(-1) {}
 
       /// Returns true if the currently requested level has been loaded and bound
@@ -96,6 +98,9 @@ namespace Luminous {
         @return Pointer to the image, which may be null.
     */
     std::shared_ptr<ImageTex> getImage(int i);
+    /** Gets the compressed image on given level.
+        @param i the mipmap level
+        @return shared pointer to the mipmap */
     std::shared_ptr<CompressedImageTex> getCompressedImage(int i);
     /** Mark an image used. This method resets the idle-counter of the
         level, preventing it from being dropped from the memory in the
@@ -111,12 +116,21 @@ namespace Luminous {
 
     /** Starts to load given file, and build the mipmaps.
 
-        This function call may take some time, since it will check that the image file exists,
-        and obtain its resolution. If the most fluent interaction is required, then
-        you should call this function in another thread, for example using the #Luminous::BGThread
-        background tasking framework.
+        This function call may take some time, since it will check that the
+        image file exists, and obtain its resolution. If the most fluent
+        interaction is required, then you should call this function in another
+        thread, for example using the #Luminous::BGThread background tasking
+        framework.
+
+        Optionally compressed mipmaps can be created. This will cause the
+        CPUMipmaps to generate DXT compressed mipmaps that are stored in DDS
+        format. Compressed mipmaps will take longer to generate, but once they
+        have been generated they are much faster to load and use. The image
+        quality is somewhat decreased when compressed mipmaps are used. This is
+        mainly noticable with gradient images.
 
         @param filename The name of the image file
+        @param compressed_mipmaps control if compressed mipmaps should be used
         @return True if the image file could be opened successfully.
     */
     bool startLoading(const char * filename, bool compressed_mipmaps);
@@ -143,8 +157,15 @@ namespace Luminous {
     /// @param transform transformation matrix to multiply the pixelSize with to get final screen size
     bool bind(GLResources * resources, const Nimble::Matrix3 & transform, Nimble::Vector2 pixelSize, GLenum textureUnit = GL_TEXTURE0);
 
+    /// Query the mipmap state in the given OpenGL resource collection. This
+    /// function can be used to query the state of the mipmaps in a specific
+    /// rendering thread.
+    /// @param resources resource collection in which to query the state
+    /// @return state of the mipmap collection in the given resource collection
     StateInfo stateInfo(GLResources * resources);
 
+    /// Sets the loading priority for this set of mipmaps
+    /// @param priority new priority
     void setLoadingPriority(Priority priority) { m_loadingPriority = priority; }
 
     /** Check if the mipmaps are still being loaded.
@@ -174,24 +195,33 @@ namespace Luminous {
     /// Set the time to keep mipmaps in CPU and GPU memory
     /// The GPU timeout can be a more like a recommendation than a true limit
     /// @todo Currently m_timeOutCPU can't be smaller than m_timeOutGPU, fix this
+    /// @param timeoutCPU timeout to keep mipmaps in CPU memory after last use
+    /// @param timeoutGPU timeout to keep mipmaps in GPU memory after last use
     inline void setTimeOut(float timeoutCPU, float timeoutGPU) {
       m_timeOutCPU = timeoutCPU;
       m_timeOutGPU = timeoutGPU;
     }
 
+    /// Returns the original filename of the image.
+    /// @return filename from which the mipmaps have been created
     inline std::string filename() const { return m_filename; }
 
+    /// Check if the maximum mipmap level, i.e. the smallest mipmap, is kept in memory
+    /// @return true if the smallest mipmap is kept in memory
     inline bool keepMaxLevel() const { return m_keepMaxLevel; }
+    /// Sets whether the smallest mipmap is kept in memory regardless of use
+    /// @param v true to always keep the smallest mipmap in memory
     inline void setKeepMaxLevel(bool v) { m_keepMaxLevel = v; }
 
-    void mipmapsReady(const ImageInfo & info);
-
+    /// Returns true if compressed mipmaps are in use
+    /// @return true if compressed mipmaps are used
     inline bool compressedMipmaps() const { return m_compressedMipmaps; }
 
     /// Returns cache filename for given source file name.
     /// @param src The original image filename
     /// @param level Mipmap level, ignored if negative
     /// @param suffix File format of the cache file name, usually png or dds.
+    /// @return cache filename
     static std::string cacheFileName(const std::string & src, int level = -1,
                                      const std::string & suffix = "png");
 
@@ -199,6 +229,10 @@ namespace Luminous {
     virtual void doTask();
 
   private:
+    friend class MipMapGenerator;
+
+    void mipmapsReady(const ImageInfo & info);
+
     enum ItemState {
       WAITING,
       READY,

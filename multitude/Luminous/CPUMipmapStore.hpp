@@ -27,9 +27,11 @@ namespace Luminous {
   class LUMINOUS_API CPUMipmapStore
   {
   public:
-    /** Gets a shared pointer to an image file CPU-side mipmap.
+    /** Gets a shared pointer to an image file CPU-side mipmap. @sa Luminous::CPUMipmaps::startLoading
 
         @param filename The name of the image file
+
+        @param compressed_mipmaps control whether compressed mipmaps should be used
 
         @return If the file is already open, then a shared pointer is
         returned. Otherwise CPUMipmapStore will create a new
