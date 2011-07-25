@@ -19,7 +19,7 @@
 #include "GLContext.hpp"
 #include "Texture.hpp"
 #include "FramebufferObject.hpp"
-#include "RenderTarget.hpp"
+//#include "RenderTarget.hpp"
 
 #include "Utils.hpp"
 #include "GLSLProgramObject.hpp"
@@ -190,8 +190,8 @@ namespace Luminous
         m_viewStackPos(-1),
         m_glContext(new GLDummyContext),
         m_initialized(false),
-        m_blendFunc(BLEND_USUAL),
-        m_rtm(rc)
+        m_blendFunc(BLEND_USUAL)
+        //m_rtm(rc)
     {
 
       m_attribs.resize(10000);
@@ -435,7 +435,7 @@ namespace Luminous
     /// Viewports defined as x1,y1,x2,y2
     typedef std::stack<Nimble::Recti> ViewportStack;
     ViewportStack m_viewportStack;
-    RenderTargetManager m_rtm;
+    //RenderTargetManager m_rtm;
   };
 
   void RenderContext::Internal::drawPolyLine(RenderContext& r, const Nimble::Vector2f * vertices, int n,
@@ -1234,7 +1234,7 @@ namespace Luminous
   {
     return m_data->m_glContext;
   }
-
+/*
   RenderTargetObject RenderContext::pushRenderTarget(Nimble::Vector2 size, float scale) {
     return m_data->m_rtm.pushRenderTarget(size, scale);
   }
@@ -1242,7 +1242,7 @@ namespace Luminous
   Luminous::Texture2D & RenderContext::popRenderTarget(RenderTargetObject & trt) {
     return m_data->m_rtm.popRenderTarget(trt);
   }
-
+*/
   void RenderContext::pushViewport(const Nimble::Recti &viewport)
   {
     m_data->m_viewportStack.push(viewport);

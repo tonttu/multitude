@@ -36,7 +36,7 @@ HEADERS += Transformer.hpp
 HEADERS += Utils.hpp
 HEADERS += VertexBuffer.hpp
 HEADERS += VertexBufferImpl.hpp
-HEADERS += RenderTarget.hpp
+#HEADERS += RenderTarget.hpp
 
 SOURCES += ImageCodecDDS.cpp \
     MipMapGenerator.cpp
@@ -68,7 +68,7 @@ SOURCES += Texture.cpp
 SOURCES += Transformer.cpp
 SOURCES += Utils.cpp
 SOURCES += VertexBuffer.cpp
-SOURCES += RenderTarget.cpp
+#SOURCES += RenderTarget.cpp
 
 # Link in Squish statically
 LIBS += -lSquish
