@@ -22,7 +22,19 @@
 
 namespace Valuable
 {
-  Radiant::StringUtils::StringList CmdParser::parse(int argc, char * argv[],
+  Radiant::StringUtils::StringList CmdParser::parse(int argc, char *argv[],
+                                                    Valuable::HasValues &opts)
+  {
+    CmdParser parser;
+    return parser.parse_and_store(argc, argv, opts);
+  }
+
+  bool CmdParser::is_parsed(std::string name)
+  {
+    return m_parsedArgs.find(name) != m_parsedArgs.end();
+  }
+
+  Radiant::StringUtils::StringList CmdParser::parse_and_store(int argc, char * argv[],
                                                     Valuable::HasValues & opts)
   {
     Radiant::StringUtils::StringList list;
@@ -47,10 +59,12 @@ namespace Valuable
         Valuable::ValueBool * b = dynamic_cast<Valuable::ValueBool*>(obj);
         if(b) {
           *b = true;
+          m_parsedArgs.insert(name);
         } else if (i < argc - 1) {
           Valuable::DOMElement e = tmpDoc->createElement("tmp");
           e.setTextContent(argv[++i]);
           obj->deserializeXML(e);
+          m_parsedArgs.insert(name);
         } else {
           list.push_back(arg);
           Radiant::error("Command line parameter %s is missing an argument", name.c_str());
@@ -61,6 +75,7 @@ namespace Valuable
               opts.getValue(name.substr(3)));
           if(b) {
             *b = false;
+            m_parsedArgs.insert(name);
             continue;
           }
         }

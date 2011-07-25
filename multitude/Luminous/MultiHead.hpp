@@ -362,6 +362,11 @@ namespace Luminous {
     /// Returns true if the edited flag has been set
     bool isEdited() const { return m_edited; }
 
+    /// Sets the iconify flag
+    void setIconify(bool iconify) { m_iconify = iconify; }
+    /// Returns true if the iconify flag has been set
+    bool iconify() const { return m_iconify; }
+
     /// Returns the gamma value used for edge blending with projector setups.
     float gamma() const { return m_gamma; }
 
@@ -371,6 +376,7 @@ namespace Luminous {
     std::vector<std::shared_ptr<Window> > m_windows;
     Valuable::ValueFloat m_widthcm;
     Valuable::ValueFloat m_gamma;
+    Valuable::ValueBool m_iconify;
     bool m_edited;
   };
 

@@ -19,6 +19,9 @@
 #include "Export.hpp"
 #include <Radiant/StringUtils.hpp>
 
+#include <set>
+#include <string>
+
 namespace Valuable
 {
   class HasValues;
@@ -54,6 +57,32 @@ namespace Valuable
      */
     static Radiant::StringUtils::StringList parse(int argc, char * argv[],
                                                   Valuable::HasValues & opts);
+
+    /// Parses command line arguments to given HasValues object.
+    /**
+      * This is the non-static version of the parse function. This version
+      * stores all parsed command line arguments in an internal set, which
+      * can be queried by the \c is_parsed function.
+      *
+      * @return List of arguments that didn't match any ValueObject in opts.
+      */
+    Radiant::StringUtils::StringList parse_and_store(int argc, char * argv[],
+                                            Valuable::HasValues & opts);
+
+    /**
+      * Query the CmdParser if a certain command line parameter has been parsed.
+      *
+      * Example:
+      * \code
+      * CmdParser parser;
+      * parser.parse_args(argc, argv, opts);
+      * if(parser.is_parsed("foo") printf("--foo was parsed\n");
+      * \endcode
+      */
+    bool is_parsed(std::string name);
+
+  private:
+    std::set<std::string> m_parsedArgs;
   };
 }
 

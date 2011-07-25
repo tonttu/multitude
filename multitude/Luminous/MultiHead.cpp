@@ -351,6 +351,7 @@ namespace Luminous {
       : HasValues(0, "MultiHead", false),
       m_widthcm(this, "widthcm", 100, true),
       m_gamma(this, "gamma", 1.1f, true),
+      m_iconify(this, "iconify", false),
       m_edited(false)
   {
   }
