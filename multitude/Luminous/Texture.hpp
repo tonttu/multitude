@@ -32,18 +32,54 @@ namespace Luminous
   class Image;
   class CompressedImage;
 
+  /// UploadLimiter manages GPU upload limits for each RenderThread per frame.
+  /// These limits should be obeyed when loading data to GPU with glTexImage2D
+  /// or similar command. All classes in Luminous follow this limit automatically.
+  ///
+  /// Simple example:
+  /// @code
+  /// long & limit = UploadLimiter::available();
+  /// if(limit >= bytesToUpload) {
+  ///   glTexImage2D(...);
+  ///   limit -= bytesToUpload;
+  /// } /* else wait for the next frame */
+  /// @endcode
   class LUMINOUS_API UploadLimiter : public Valuable::HasValues
   {
   public:
+    /// Accepts "frame" event, resets all limits for a new frame.
     void processMessage(const char * type, Radiant::BinaryData & data);
 
+    /// Get the singleton instance. Usually not used, since all the important
+    /// functions are already static.
     static UploadLimiter & instance();
 
+    /// Returns a reference to the thread-specific remaining upload capacity in
+    /// bytes. Use this to check if some GPU transfer operation should be
+    /// performed right away, delayed to the next frame or splitted to smaller
+    /// pieces.
+    /// After doing any upload operation, decrease this value accordingly.
+    /// @returns How many bytes there are available for uploading in this frame.
     static long & available();
+
+    /// Returns the current frame number.
     static long frame();
+
+    /// Ask the frame upload limit.
+    /// @return The frame upload limit in bytes.
     static long limit();
+
+    /// Sets the upload limit
+    /// @param limit New upload limit in bytes.
     static void setLimit(long limit);
+
+    /// Enable or disable the upload limiter. available() will always return
+    /// numeric_limits<long>::max() if limiter is disabled.
+    /// @param v True if limiter should be enabled
     static void setEnabledForCurrentThread(bool v);
+
+    /// Ask the limiter status
+    /// @returns True if limiter is active for this thread.
     static bool enabledForCurrentThread();
 
   private:

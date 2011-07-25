@@ -28,16 +28,32 @@ namespace Luminous {
   class Image;
   class CPUMipmaps;
 
+  /// Task that generates mipmaps to global imagecache for source image.
+  /// Will only create DDS/DXT mipmaps. CPUMipmaps uses this class if compressed
+  /// mipmaps are requested, there is usually no need to use this class directly.
   class LUMINOUS_API MipMapGenerator : public Task
   {
   public:
+    /// Generates a new task for new image. Mipmaps will be saved with one of
+    /// the DXT image formats, depending on the source image format.
+    /// @param src The filename of the original image, for example a PNG file
     MipMapGenerator(const std::string & src);
+
+    /// Generates a new task for new image with explicit mipmap pixelformat.
+    /// @param src The filename of the original image, for example a PNG file
+    /// @param mipmapFormat The mipmap output format. Only DXT compressed formats are supported.
     MipMapGenerator(const std::string & src, const PixelFormat & mipmapFormat);
 
+    /// Run the task. Generate the mipmap file and inform the listener when the
+    /// task is ready.
     virtual void doTask();
 
+    /// Set a listener to this task. Listener is informed by mipmapsReady()-call
+    /// when the mipmaps are ready.
     void setListener(std::shared_ptr<CPUMipmaps> mipmaps) { m_listener = mipmaps; }
 
+    /// Chooses automatically the best pixelformat for source image
+    /// @param img The image whose ideal mipmap format we are deducing.
     static PixelFormat chooseMipmapFormat(const Image & img);
 
   private:

@@ -137,7 +137,6 @@ namespace Luminous
     };
 
   /// An OpenGL vertex buffer
-
   class LUMINOUS_API VertexBuffer : public BufferObject<GL_ARRAY_BUFFER>
   {
   public:
@@ -158,6 +157,7 @@ namespace Luminous
 
   };
 
+  /// An OpenGL pixel read buffer for reading pixels from framebuffer.
   class ReadBuffer : public BufferObject<GL_PIXEL_PACK_BUFFER>
   {
   public:

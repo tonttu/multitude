@@ -16,6 +16,7 @@
 
 #include <strings.h>
 
+/// @cond
 namespace Resonant {
 
   struct Stream {
@@ -30,6 +31,7 @@ namespace Resonant {
     PaTime startTime;
     Radiant::Semaphore * m_barrier;
   };
+  // Channel c from device d
   struct Channel {
     Channel(int d = -1, int c = -1) : device(d), channel(c) {}
     int device;
@@ -65,5 +67,6 @@ namespace Resonant {
       Radiant::Semaphore m_sem;
   };
 }
+/// @endcond
 
 #endif // AUDIOLOOPPRIV_HPP
