@@ -216,10 +216,12 @@ bool ImageCodecDDS::read(CompressedImage & image, FILE * file, int level)
     return false;
   }
 
-  if(level == 0)
-    return image.loadImage(file, info, sizeof(header), size);
-
   int offset = sizeof(header);
+
+  if(level == 0) {
+    fseek(file, offset, SEEK_SET);
+    return image.loadImage(file, info, size);
+  }
 
   for(int l = 0; l <= level; ++l) {
     size = linearSize(Nimble::Vector2i(info.width, info.height),
@@ -231,7 +233,8 @@ bool ImageCodecDDS::read(CompressedImage & image, FILE * file, int level)
     info.height = Nimble::Math::Max(1, info.height >> 1);
   }
 
-  return image.loadImage(file, info, offset, size);
+  fseek(file, offset, SEEK_SET);
+  return image.loadImage(file, info, size);
 }
 
 bool ImageCodecDDS::writeMipmaps(const std::string & filename, PixelFormat::Compression format,

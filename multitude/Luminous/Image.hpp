@@ -246,42 +246,72 @@ namespace Luminous
     ImageTex * move();
   };
 
+  /// A compressed image. Currently supports DXT format.
   class LUMINOUS_API CompressedImage
   {
   public:
     CompressedImage();
     virtual ~CompressedImage();
 
+    /// Clears the image data and release any allocated memory
     void clear();
 
+    /// Reads an image from a file
+    /// @param filename filename to load
+    /// @param level mipmap level to load
+    /// @return true if succeed, false on error
     bool read(const std::string & filename, int level = 0);
-    bool loadImage(FILE * file, const ImageInfo & info, int offset, int size);
+    /// Loads image data from the given file handle
+    /// @param file file to read from
+    /// @param info image info
+    /// @param size bytes to read
+    /// @return true if the reading succeeded, false otherwise
+    bool loadImage(FILE * file, const ImageInfo & info, int size);
+    /// Returns a pointer to the raw image data
     void * data() const;
+    /// Returns the size of the image data in bytes
+    /// @return image data size in bytes
     int datasize() const;
 
+    /// Returns the widget of the image
     int width() const { return m_size.x; }
+    /// Returns the height of the image
     int height() const { return m_size.y; }
 
-    int compression() const { return m_compression; }
+    /// Returns the compression used
+    PixelFormat::Compression compression() const { return m_compression; }
 
+    /// Returns the alpha in the given pixel position
     float readAlpha(Nimble::Vector2i pos) const;
 
   protected:
+    /// Size of the image in pixels
     Nimble::Vector2i m_size;
-    int m_compression;
+    /// Used compression
+    PixelFormat::Compression m_compression;
 
+/// @cond
     class Private;
     Private* m_d;
+/// @endcond
   };
 
+  /// CompressedImageTex provides an easy way to access textures generated from
+  /// compressed images. @sa Luminous::ImageTex
   class LUMINOUS_API CompressedImageTex : public CompressedImage, public Luminous::ContextVariableT<Luminous::Texture2D>
   {
   public:
     virtual ~CompressedImageTex();
+
+    /** Binds a texture representing this compressed image to the current
+    OpenGL context.
+    @param resources The OpenGL resource handler
+    @param textureUnit The OpenGL texture unit to bind to*/
     void bind(GLResources * resources, GLenum textureUnit = GL_TEXTURE0);
 
-    /// Creates a new CompressedImageTex from this, all the cpu data from
+    /// Creates a new CompressedImageTex from this object. All the cpu data from
     /// Luminous::CompressedImage is moved to the new object.
+    /// @return new CompressedImageTex object
     CompressedImageTex * move();
   };
 }

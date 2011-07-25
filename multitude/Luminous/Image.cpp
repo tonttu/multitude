@@ -936,7 +936,7 @@ dest = *this;
     CompressedImage & m_img;
   };
 
-  CompressedImage::CompressedImage() : m_compression(0), m_d(new Private(*this))
+  CompressedImage::CompressedImage() : m_compression(PixelFormat::COMPRESSION_NONE), m_d(new Private(*this))
   {
   }
 
@@ -988,7 +988,7 @@ dest = *this;
     return result;
   }
 
-  bool CompressedImage::loadImage(FILE * file, const ImageInfo & info, int offset, int size)
+  bool CompressedImage::loadImage(FILE * file, const ImageInfo & info, int size)
   {
     clear();
 #if 0
@@ -1012,7 +1012,7 @@ dest = *this;
     m_d->offset = offset;
 #endif
     m_d->ptr = new char[size];
-    fseek(file, offset, SEEK_SET);
+
     if (fread(m_d->ptr, size, 1, file) != 1) {
       Radiant::error("CompressedImage::loadImage # Failed to read image");
       delete m_d->ptr;
