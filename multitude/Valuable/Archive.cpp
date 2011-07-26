@@ -18,7 +18,7 @@
 namespace Valuable
 {
 
-  SerializationOptions::SerializationOptions(Options options)
+  SerializationOptions::SerializationOptions(unsigned int options)
     : m_options(options)
   {}
 
@@ -39,7 +39,7 @@ namespace Valuable
 
   //////////////////////////////////////////////////////////////////////////
 
-  Archive::Archive(Options options)
+  Archive::Archive(unsigned int options)
     : SerializationOptions(options)
   {}
 

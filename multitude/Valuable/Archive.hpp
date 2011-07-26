@@ -38,13 +38,13 @@ namespace Valuable
                  };
 
     /// Construct an options object with given flags.
-    SerializationOptions(Options options = DEFAULTS);
+    SerializationOptions(unsigned int options = DEFAULTS);
 
     /// Returns true if given flag is enabled with in the options.
     inline bool checkFlag(unsigned int flag) { return (m_options & flag) == flag; }
   protected:
     /// Actual bitmask of flags
-    Options m_options;
+    unsigned int m_options;
   };
 
   /**
@@ -150,8 +150,8 @@ namespace Valuable
   {
   public:
     /// Creates a new Archive and initializes the SerializationOptions with given options.
-    /// @todo Options should be uint32?
-    Archive(Options options = DEFAULTS);
+    /// @param options Bitmask of SerializationOptions::Options
+    Archive(unsigned int options = DEFAULTS);
     /// Destructor should also delete all ArchiveElements this Archive owns
     virtual ~Archive();
 
