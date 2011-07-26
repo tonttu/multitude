@@ -69,7 +69,7 @@ namespace Valuable
 
 
   template<class MatrixType, typename ElementType, int N>
-  bool ValueMatrix<MatrixType, ElementType, N>::deserialize(ArchiveElement & element) {
+  bool ValueMatrix<MatrixType, ElementType, N>::deserialize(const ArchiveElement & element) {
     std::stringstream in(element.get());
 
     for(int i = 0; i < N; i++)

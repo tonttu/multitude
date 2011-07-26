@@ -26,7 +26,7 @@ namespace Valuable
 
   ValueBool::~ValueBool() {}
 
-  bool ValueBool::deserialize(ArchiveElement & e)
+  bool ValueBool::deserialize(const ArchiveElement & e)
   {
     *this = Radiant::StringUtils::fromString<int32_t>(e.get().c_str()) != 0;
     return true;

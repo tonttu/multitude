@@ -48,7 +48,7 @@ namespace Luminous {
     virtual const char * type() const { return "glkeystone"; }
 
     /// Reads in variables from the DOMElement and calculates the matrix
-    virtual bool deserialize(Valuable::ArchiveElement & e);
+    virtual bool deserialize(const Valuable::ArchiveElement & e);
 
     /// Returns the index to the closest keystone vertex
     /// @param loc location to query

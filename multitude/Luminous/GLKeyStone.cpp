@@ -33,7 +33,7 @@ namespace Luminous {
   GLKeyStone::~GLKeyStone()
   {}
 
-  bool GLKeyStone::deserialize(Valuable::ArchiveElement & e)
+  bool GLKeyStone::deserialize(const Valuable::ArchiveElement & e)
   {
     if(!Valuable::HasValues::deserialize(e))
       return false;

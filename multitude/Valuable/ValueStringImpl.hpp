@@ -66,7 +66,7 @@ namespace Valuable
   }
 
   template<class T>
-  bool ValueStringT<T>::deserialize(ArchiveElement & element)
+  bool ValueStringT<T>::deserialize(const ArchiveElement & element)
   {
     Base::m_value = T(element.get());
 
@@ -202,17 +202,17 @@ namespace Valuable
   }
 
   template<>
-  ArchiveElement & ValueStringT<std::string>::serialize(Archive & archive) const
+  ArchiveElement ValueStringT<std::string>::serialize(Archive & archive) const
   {
     return ValueObject::serialize(archive);
   }
 
   template<>
-  ArchiveElement & ValueStringT<std::wstring>::serialize(Archive & archive) const
+  ArchiveElement ValueStringT<std::wstring>::serialize(Archive & archive) const
   {
     const char * n = name().empty() ? "WString" : name().c_str();
 
-    ArchiveElement & elem = archive.createElement(n);
+    ArchiveElement elem = archive.createElement(n);
     elem.add("type", type());
 
     std::wstring ws = asWString();
@@ -222,7 +222,7 @@ namespace Valuable
   }
 
   template<>
-  bool ValueStringT<std::wstring>::deserialize(ArchiveElement & element)
+  bool ValueStringT<std::wstring>::deserialize(const ArchiveElement & element)
   {
     m_value = element.getW();
     STD_EM;

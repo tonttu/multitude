@@ -52,7 +52,7 @@ namespace Resonant {
       delete (*m_rectangles)[i];
   }
 
-  bool ModulePanner::deserialize(Valuable::ArchiveElement & element)
+  bool ModulePanner::deserialize(const Valuable::ArchiveElement & element)
   {
     bool ok = Module::deserialize(element);
     ++m_generation;

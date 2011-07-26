@@ -42,7 +42,7 @@ namespace Valuable
   namespace Serializer
   {
     template <typename T>
-    ArchiveElement & serialize(Archive & archive, const T & t);
+    ArchiveElement serialize(Archive & archive, const T & t);
   }
 }
 
@@ -66,18 +66,18 @@ namespace Valuable
     /// @param archive The serializer archive that is used to create the new
     ///                element and maintains the serialization state and options.
     /// @return The new serialized element.
-    virtual ArchiveElement & serialize(Archive & archive) const = 0;
+    virtual ArchiveElement serialize(Archive & archive) const = 0;
 
     /// Deserializes (reads) this object from serializer element.
     /// @param element Serialized element that holds the data that should be deserialized.
     /// @return Returns true if the read process worked correctly, and false otherwise.
-    virtual bool deserialize(ArchiveElement & element) = 0;
+    virtual bool deserialize(const ArchiveElement & element) = 0;
 
     /// Deserializes (reads) this object from an XML element.
     /// This function is only for keeping backwards compatibility.
     /// @param element XML element that is deserialized
     /** @return Returns true if the read process worked correctly, and false otherwise. */
-    virtual bool deserializeXML(DOMElement & element);
+    virtual bool deserializeXML(const DOMElement & element);
   };
 
 
@@ -206,7 +206,7 @@ namespace Valuable
     virtual const char * type() const = 0;
 
     /** The object is serialized using its name as a tag name. */
-    virtual ArchiveElement & serialize(Archive &archive) const;
+    virtual ArchiveElement serialize(Archive &archive) const;
 
     /** The host object of the value object (is any). */
     HasValues * host() const { return m_host; }
@@ -269,7 +269,7 @@ namespace Valuable
 #ifdef MULTI_DOCUMENTER
       Doc & d = doc.back();
       XMLArchive archive;
-      ArchiveElement & e = Serializer::serialize<T>(archive, m_orig);
+      ArchiveElement e = Serializer::serialize<T>(archive, m_orig);
       if(!e.isNull()) {
         d.orig_str = e.get();
       }

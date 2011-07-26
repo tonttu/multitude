@@ -54,7 +54,7 @@ namespace Luminous {
       Area(Window * window = 0);
       virtual ~Area();
       /// Deserializes this area from an archive element
-      bool deserialize(Valuable::ArchiveElement & element);
+      bool deserialize(const Valuable::ArchiveElement & element);
 
       /// Sets the geometry (size & offset) of the area
       /// @param x x offset
@@ -359,7 +359,7 @@ namespace Luminous {
     /// Total height of the display area, in graphics pixels.
     int height();
 
-    bool deserialize(Valuable::ArchiveElement & element);
+    bool deserialize(const Valuable::ArchiveElement & element);
 
     /// Adds a window to the collection
     void addWindow(Window * w) { m_windows.push_back(std::shared_ptr<Window>(w)); }

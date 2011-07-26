@@ -62,19 +62,19 @@ namespace Valuable
 
     virtual const char* type() const { return "container"; }
 
-    virtual ArchiveElement & serialize(Archive & archive) const
+    virtual ArchiveElement serialize(Archive & archive) const
     {
-      ArchiveElement & elem = archive.createElement((name().empty() ? type() : name()).c_str());
+      ArchiveElement elem = archive.createElement((name().empty() ? type() : name()).c_str());
       for(const_iterator it = m_container.begin(); it != m_container.end(); it++) {
         elem.add(Serializer::serialize(archive, *it));
       }
       return elem;
     }
 
-    virtual bool deserialize(ArchiveElement & element)
+    virtual bool deserialize(const ArchiveElement & element)
     {
       std::insert_iterator<T> inserter(m_container, m_container.end());
-      for(ArchiveElement::Iterator & it = element.children(); it; ++it) {
+      for(ArchiveElement::Iterator it = element.children(); it; ++it) {
         *inserter = Serializer::deserialize<typename T::value_type>(*it);
       }
       return true;

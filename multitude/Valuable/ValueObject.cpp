@@ -32,9 +32,9 @@ namespace Valuable
 {
   using namespace Radiant;
 
-  bool Serializable::deserializeXML(DOMElement &element)
+  bool Serializable::deserializeXML(const DOMElement &element)
   {
-    XMLArchiveElement ae(element);
+    ArchiveElement ae = XMLArchiveElement::create(element);
     return deserialize(ae);
   }
 
@@ -176,11 +176,11 @@ namespace Valuable
     return "";
   }
 
-  ArchiveElement & ValueObject::serialize(Archive & archive) const
+  ArchiveElement ValueObject::serialize(Archive & archive) const
   {
     const char * n = m_name.empty() ? "ValueObject" : m_name.c_str();
 
-    ArchiveElement & elem = archive.createElement(n);
+    ArchiveElement elem = archive.createElement(n);
     elem.add("type", type());
     elem.set(asString());
 

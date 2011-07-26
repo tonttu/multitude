@@ -31,7 +31,7 @@ namespace Valuable
 
     std::string asString(bool * const ok = 0) const;
 
-    bool deserialize(ArchiveElement & element);
+    bool deserialize(const ArchiveElement & element);
 
     /// Converts the object to rectangle
     Nimble::RectT<T> asRect() const { return this->m_value; }

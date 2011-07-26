@@ -87,7 +87,7 @@ namespace Valuable
 */
 
   template<class VectorType, typename ElementType, int N>
-  bool ValueVector<VectorType, ElementType, N>::deserialize(ArchiveElement & element) {
+  bool ValueVector<VectorType, ElementType, N>::deserialize(const ArchiveElement & element) {
     std::stringstream in(element.get());
 
     for(int i = 0; i < N; i++)

@@ -47,7 +47,7 @@ namespace Luminous {
   MultiHead::Area::~Area()
   {}
 
-  bool MultiHead::Area::deserialize(Valuable::ArchiveElement & element)
+  bool MultiHead::Area::deserialize(const Valuable::ArchiveElement & element)
   {
     bool ok = HasValues::deserialize(element);
 
@@ -496,7 +496,7 @@ namespace Luminous {
     return (int) (bottom - top);
   }
 
-  bool MultiHead::deserialize(Valuable::ArchiveElement & element)
+  bool MultiHead::deserialize(const Valuable::ArchiveElement & element)
   {
     m_windows.clear();
 

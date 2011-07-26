@@ -112,7 +112,7 @@ namespace Valuable
     /// Saves this object (and its children) to an XML file
     bool saveToFileXML(const char * filename);
     /// Saves this object (and its children) to binary data buffer
-    bool saveToMemoryXML(std::vector<char> & buffer);
+    bool saveToMemoryXML(std::string & buffer);
 
     /// Reads this object (and its children) from an XML file
     bool loadFromFileXML(const char * filename);
@@ -121,9 +121,9 @@ namespace Valuable
     virtual const char * type() const { return VO_TYPE_HASVALUES; }
 
     /// Serializes this object (and its children) to a DOM node
-    virtual ArchiveElement & serialize(Archive &doc) const;
+    virtual ArchiveElement serialize(Archive &doc) const;
     /// De-serializes this object (and its children) from a DOM node
-    virtual bool deserialize(ArchiveElement & element);
+    virtual bool deserialize(const ArchiveElement & element);
 
     /// Handles a DOM element that lacks automatic handlers.
     /// This function is only for keeping backwards compatibility.

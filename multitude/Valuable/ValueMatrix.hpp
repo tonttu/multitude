@@ -41,7 +41,7 @@ namespace Valuable
     { return Base::m_value.data(); }
 
     // virtual void processMessage(const char * id, Radiant::BinaryData & data);
-    virtual bool deserialize(ArchiveElement & element);
+    virtual bool deserialize(const ArchiveElement & element);
     const char * type() const;
     virtual bool set(const MatrixType & v);
     std::string asString(bool * const ok = 0) const;

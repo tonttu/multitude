@@ -141,7 +141,7 @@ namespace Valuable
     return ok;
   }
 
-  bool HasValues::saveToMemoryXML(std::vector<char> & buffer)
+  bool HasValues::saveToMemoryXML(std::string & buffer)
   {
     XMLArchive archive;
     archive.setRoot(serialize(archive));
@@ -159,15 +159,15 @@ namespace Valuable
     return deserialize(archive.root());
   }
 
-  ArchiveElement & HasValues::serialize(Archive & archive) const
+  ArchiveElement HasValues::serialize(Archive & archive) const
   {
     const char * n = m_name.empty() ? "HasValues" : m_name.c_str();
 
-    ArchiveElement & elem = archive.createElement(n);
+    ArchiveElement elem = archive.createElement(n);
     if(elem.isNull()) {
       Radiant::error(
           "HasValues::serialize # failed to create element");
-      return archive.emptyElement();
+      return ArchiveElement();
     }
 
     elem.add("type", type());
@@ -176,7 +176,7 @@ namespace Valuable
       ValueObject * vo = it->second;
 
       if (!archive.checkFlag(Archive::ONLY_CHANGED) || vo->isChanged()) {
-        ArchiveElement & child = vo->serialize(archive);
+        ArchiveElement child = vo->serialize(archive);
         if(!child.isNull())
           elem.add(child);
       }
@@ -185,14 +185,14 @@ namespace Valuable
     return elem;
   }
 
-  bool HasValues::deserialize(ArchiveElement & element)
+  bool HasValues::deserialize(const ArchiveElement & element)
   {
     // Name
     m_name = element.name();
 
     // Children
-    for(ArchiveElement::Iterator & it = element.children(); it; ++it) {
-      ArchiveElement & elem = *it;
+    for(ArchiveElement::Iterator it = element.children(); it; ++it) {
+      ArchiveElement elem = *it;
 
       std::string name = elem.name();
 

@@ -62,7 +62,7 @@ namespace Resonant {
     ModulePanner(Application * = 0, Mode mode=RADIAL);
     virtual ~ModulePanner();
 
-    virtual bool deserialize(Valuable::ArchiveElement & element);
+    virtual bool deserialize(const Valuable::ArchiveElement & element);
 
     virtual bool prepare(int & channelsIn, int & channelsOut);
     virtual void processMessage(const char *, Radiant::BinaryData *);

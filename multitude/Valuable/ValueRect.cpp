@@ -15,7 +15,7 @@ namespace Valuable
   {}
 
   template <class T>
-  bool ValueRectT<T>::deserialize(ArchiveElement & element)
+  bool ValueRectT<T>::deserialize(const ArchiveElement & element)
   {
     std::stringstream in(element.get());
 

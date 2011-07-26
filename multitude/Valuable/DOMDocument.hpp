@@ -49,7 +49,7 @@ namespace Valuable
     /// Writes the document to a file
     bool writeToFile(const char * filename);
     /// Writes the document to memory
-    bool writeToMem(std::vector<char> & buf);
+    bool writeToMem(std::string & buf);
 
     /// Parse a document from a file.
     /// @param filename name of the file to read from
