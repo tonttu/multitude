@@ -237,12 +237,6 @@ namespace Luminous
     /// @return true if the texture data has been fully uploaded to the GPU
     bool isFullyLoadedToGPU(GLResources * resources = 0);
 
-    /** Loads part of the image to the GPU.
-
-        @return The number of bytes uploaded.
-    */
-    unsigned uploadBytesToGPU(GLResources * resources, unsigned bytes);
-
     ImageTex & operator = (const Luminous::Image & that)
     {
        * (Image * ) this = that;

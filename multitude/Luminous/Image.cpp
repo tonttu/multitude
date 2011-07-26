@@ -850,45 +850,6 @@ dest = *this;
     return (tex.loadedLines() == (unsigned) height());
   }
 
-  unsigned ImageTex::uploadBytesToGPU(GLResources * resources, unsigned bytes)
-  {
-
-    Utils::glCheck("ImageTex::uploadBytesToGPU # 0");
-
-    if(!resources)
-      resources = GLResources::getThreadResources();
-
-    Texture2D & tex = ref(resources);
-
-    if(tex.width() != width() || tex.height() != height()) {
-      // Allocate texture memory, this is always fast.
-      tex.loadBytes(pixelFormat().layout(),
-                    width(), height(), 0,
-                    pixelFormat(), false);
-
-      tex.setGeneration(generation());
-      Utils::glCheck("ImageTex::uploadBytesToGPU # 1");
-    }
-
-
-    if(tex.loadedLines() >= (unsigned) height()) {
-      // We are ready
-      return 0;
-    }
-
-    int lines = bytes / (pixelFormat().bytesPerPixel() * width()) + 1;
-
-    int avail = height() - tex.loadedLines();
-
-    lines = Nimble::Math::Min(lines, avail);
-
-    tex.loadLines(tex.loadedLines(), lines, line(tex.loadedLines()), pixelFormat());
-
-    Utils::glCheck("ImageTex::uploadBytesToGPU # 3");
-
-    return lines * (pixelFormat().bytesPerPixel() * width());
-  }
-
   ImageTex * ImageTex::move()
   {
     ImageTex * t = new ImageTex;
