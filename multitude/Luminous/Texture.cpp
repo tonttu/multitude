@@ -456,7 +456,7 @@ namespace Luminous
     else
       m_loadedLines = 0;
 
-    return true;
+    return (m_loadedLines == h);
   }
 
   void Texture2D::loadSubBytes(int x, int y, int w, int h, const void * data)

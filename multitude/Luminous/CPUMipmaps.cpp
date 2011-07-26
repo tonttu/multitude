@@ -341,52 +341,25 @@ namespace Luminous {
       return true;
     }
 
-    // Limit how many pixels we can upload immediately
-    const size_t instantUploadPixelLimit = Luminous::UploadLimiter::instance().available();
-
-    // Upload the whole texture at once if possible
-    /// @todo isn't this whole thing already done in Texture2D::loadBytes
-    const size_t imagePixels = img->width() * img->height();
-    if(imagePixels < instantUploadPixelLimit) {
-
+    if(img->bind(resources, textureUnit, false)) {
       si.bound = bestAvailable;
-      img->bind(resources, textureUnit, false);
-
       return true;
+    }
 
-    } else {
-      // Texture is too big, do partial upload
-      img->uploadBytesToGPU(resources, static_cast<unsigned int> (instantUploadPixelLimit));
+    // If the requested texture is not fully uploaded, test if there is
+    // anything we can use already
+    for(size_t i = 0; i < stackSize(); i++) {
 
-      if(img->isFullyLoadedToGPU()) {
-        si.bound = bestAvailable;
-        img->bind(resources, textureUnit, false);
+      std::shared_ptr<ImageTex> test = getImage((int) i);
+      if(!test)
+        continue;
 
+      if(test->isFullyLoadedToGPU(resources) && test->bind(resources, textureUnit, false)) {
+        si.bound = (int)i;
         return true;
       }
-
-      // If the requested texture is not fully uploaded, test if there is
-      // anything we can use already
-      for(size_t i = 0; i < stackSize(); i++) {
-
-        std::shared_ptr<ImageTex> test = getImage((int) i);
-        if(!test)
-          continue;
-
-        size_t area = test->width() * test->height();
-
-        // If the texture is fully uploaded or its small enough, we bypass the
-        // pixel budget and upload it anyway (ImageTex::bind() uploads the
-        // texture as a side-effect).
-
-        if(test->isFullyLoadedToGPU() || (area < (instantUploadPixelLimit / 3))) {
-          si.bound = (int) i;
-          test->bind(resources, textureUnit, false);
-
-          return true;
-        }
-      }
     }
+
     return false;
   }
 

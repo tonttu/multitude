@@ -798,36 +798,40 @@ dest = *this;
   }
 
 
-  void ImageTex::bind(GLenum textureUnit, bool withmimaps)
+  bool ImageTex::bind(GLenum textureUnit, bool withmimaps)
   {
+    bool ret = true;
+
     Texture2D & tex = ref();
     tex.bind(textureUnit);
 
-    if(tex.width() != width() ||
-       tex.height() != height() ||
-       tex.generation() != generation()) {
+    /// @todo checking generation should be enough unless stuff bugs
+    if(tex.width() != width() || tex.height() != height() || tex.generation() != generation()) {
 
-      tex.loadImage(*this, withmimaps);
+      ret = tex.loadImage(*this, withmimaps);
       tex.setGeneration(generation());
-
     }
+
+    return ret;
   }
 
-  void ImageTex::bind(GLResources * resources, GLenum textureUnit, bool withmipmaps, int internalFormat)
+  bool ImageTex::bind(GLResources * resources, GLenum textureUnit, bool withmipmaps, int internalFormat)
   {
     // Luminous::Utils::glCheck("ImageTex::bind # 0");
+    bool ret = true;
 
     Texture2D & tex = ref(resources);
     tex.bind(textureUnit);
 
     // Luminous::Utils::glCheck("ImageTex::bind # 1");
 
-    if(tex.width() != width() ||
-       tex.height() != height() ||
-       tex.generation() != generation()) {
-      tex.loadImage(*this, withmipmaps, internalFormat);
+    /// @todo checking generation should be enough unless stuff bugs
+    if(tex.width() != width() || tex.height() != height() || tex.generation() != generation()) {
+      ret = tex.loadImage(*this, withmipmaps, internalFormat);
       tex.setGeneration(generation());
     }
+
+    return ret;
   }
 
   bool ImageTex::isFullyLoadedToGPU(GLResources * resources)
@@ -843,7 +847,7 @@ dest = *this;
 
     Texture2D & tex = ref(resources);
 
-    return tex.loadedLines() == (unsigned) height();
+    return (tex.loadedLines() == (unsigned) height());
   }
 
   unsigned ImageTex::uploadBytesToGPU(GLResources * resources, unsigned bytes)
@@ -883,30 +887,6 @@ dest = *this;
     Utils::glCheck("ImageTex::uploadBytesToGPU # 3");
 
     return lines * (pixelFormat().bytesPerPixel() * width());
-  }
-
-  bool ImageTex::tryBind(unsigned & limit)
-  {
-    if(limit == 0 && width() == 0)
-      return false;
-
-    GLResources * resources = GLResources::getThreadResources();
-    if(isFullyLoadedToGPU(resources)) {
-      bind(resources);
-      return true;
-    }
-
-    if(limit == 0)
-      return false;
-
-    unsigned tmp = uploadBytesToGPU(resources, limit);
-    limit = tmp > limit ? 0 : limit - tmp;
-
-    if(isFullyLoadedToGPU(resources)) {
-      bind(resources);
-      return true;
-    }
-    return false;
   }
 
   ImageTex * ImageTex::move()

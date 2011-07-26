@@ -214,8 +214,9 @@ namespace Luminous
         @param withmipmaps Should we use mimaps, or not. This argument only
         makes difference the first time this function executed for the context
         (and the texture is created), after that the the same texture is used.
+        @return true if the bind succeeded
     */
-    void bind(GLenum textureUnit = GL_TEXTURE0, bool withmipmaps = true);
+    bool bind(GLenum textureUnit = GL_TEXTURE0, bool withmipmaps = true);
 
     /** Binds a texture representing this image to the current OpenGL context.
 
@@ -226,11 +227,14 @@ namespace Luminous
         (and the texture is created), after that the the same texture is used.
         @param internalFormat internal OpenGL texture format. May be zero to
         let the GPU automatically choose one.
+        @return true if the bind succeeded
     */
-    void bind(GLResources * resources, GLenum textureUnit = GL_TEXTURE0,
+    bool bind(GLResources * resources, GLenum textureUnit = GL_TEXTURE0,
               bool withmipmaps = true, int internalFormat = 0);
 
     /// Checks if the image data is fully loaded to the GPU, inside a texture
+    /// @param resources OpenGL resource collection to use
+    /// @return true if the texture data has been fully uploaded to the GPU
     bool isFullyLoadedToGPU(GLResources * resources = 0);
 
     /** Loads part of the image to the GPU.
@@ -238,15 +242,6 @@ namespace Luminous
         @return The number of bytes uploaded.
     */
     unsigned uploadBytesToGPU(GLResources * resources, unsigned bytes);
-
-    /// Try binding this texture
-    /** The condition for binding this texture is that either it has been fully uploaded to the GPU,
-        or it can be uploaded within given limits.
-
-        @param limit The maximum number of bytes to upload.
-        @return True if the bind operation could be done, false otherwise.
-    */
-    bool tryBind(unsigned & limit);
 
     ImageTex & operator = (const Luminous::Image & that)
     {
