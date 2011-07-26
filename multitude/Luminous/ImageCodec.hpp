@@ -17,16 +17,13 @@
 #define IMAGE_CODEC_HPP
 
 #include "Export.hpp"
+#include "Image.hpp"
 
 #include <cstdio>
 #include <string>
 
 namespace Luminous
 {
-  class Image;
-  class CompressedImage;
-  struct ImageInfo;
-  
   /// The base class for different image codecs. Derive your own codec from this
   /// and override the three methods.
   class LUMINOUS_API ImageCodec 
