@@ -37,10 +37,13 @@ namespace Valuable
     Nimble::RectT<T> asRect() const { return this->m_value; }
   };
 
-
+  /// Default floating point ValueRectT typedef
   typedef ValueRectT<float> ValueRect;
+  /// ValueRectT of floats
   typedef ValueRectT<float> ValueRectf;
+  /// ValueRectT of doubles
   typedef ValueRectT<double> ValueRectd;
+  /// ValueRectT of ints
   typedef ValueRectT<int> ValueRecti;
 }
 

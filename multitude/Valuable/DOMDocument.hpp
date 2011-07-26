@@ -37,6 +37,8 @@ namespace Valuable
     static DOMDocument * createDocument();
 
     /// Creates a new DOM element with the given name
+    /// @param name Tag name of the DOM element
+    /// @return The created element
     DOMElement createElement(const char * name);
     /// @copydoc createElement
     DOMElement createElement(const std::string & name);

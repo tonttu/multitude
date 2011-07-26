@@ -32,6 +32,10 @@ namespace Valuable
   public:
     /// Parses command line arguments to given HasValues object.
     /**
+     * @param argc Number of arguments in argv
+     * @param argv Array of arguments
+     * @param opts The target object where the ValueObjects are stored
+     *
      * If there is a ValueObject named "foo" in opts, it can be set in command
      * line like this: <tt>--foo param</tt>
      * where param will be parsed with deserialize().

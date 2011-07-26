@@ -80,6 +80,8 @@ namespace Valuable
 
       /// Returns NULL if the iterator is not valid anymore. Can be used like
       /// for(it = foo.children(); it; ++it) {}
+      /// @todo should be replaced with safe bool
+      /// @return true if the iterator is still valid
       virtual operator const void * () = 0;
 
       /// Returns the current child, or empty element in case of invalid iterator
@@ -88,9 +90,11 @@ namespace Valuable
       virtual ArchiveElement * operator -> () = 0;
 
       /// Prefix increment operator
+      /// @return Iterator to the next element
       virtual Iterator & operator ++ () = 0;
       /// Postfix increment operator, slower than prefix version, since the new
       /// iterator will have to be copied and stored to the old one.
+      /// @return The old iterator
       virtual Iterator & operator ++ (int) = 0;
 
       /// Compares if the iterators point to the same element
@@ -159,6 +163,7 @@ namespace Valuable
     virtual ArchiveElement & createElement(const char * name) = 0;
 
     /// Create an empty ArchiveElement
+    /// @return Returns a reference to null / empty element
     /// @see ArchiveElement::isNull
     virtual ArchiveElement & emptyElement() = 0;
     /// Returns the root element
@@ -172,6 +177,8 @@ namespace Valuable
     /// Write the archive to memory buffer
     /// @todo why not std::string - basically the same thing as vector<char>
     /// @todo why not some binary buffer object from Qt
+    /// @param buffer The buffer where the archive is written
+    /// @return true if writing succeeds
     virtual bool writeToMem(std::vector<char> & buffer) = 0;
     /// Reads the archive from a file
     virtual bool readFromFile(const char * filename) = 0;

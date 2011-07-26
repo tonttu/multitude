@@ -58,7 +58,8 @@ namespace Valuable
     /// Adds new ValueObject to the list of values
     bool addValue(const std::string & name, ValueObject * const value);
     /// Gets a ValueObject with the given name
-    /** If no object can be found, then this method return zero. */
+    /// @param name Value object name to search for
+    /// @return Null if no object can be found
     ValueObject * getValue(const std::string & name);
     /// Removes a ValueObject from the list of value.
     void removeValue(ValueObject * const value);
@@ -67,12 +68,20 @@ namespace Valuable
     // float getValueFloat(const std::string & name, bool * ok = 0, float default = 0.f)
     // ...
 
+    /// Uses a query string to find a ValueObject, and sets a new value to that if found.
+    /// @param query The path to the ValueObject. This is a '/'-separated list
+    ///        of ValueObject names, forming a path inside a ValueObject tree.
+    ///        ".." can be used to refer to host element. For example
+    ///        setValue("../foo/bar", 4.0f) sets 4.0f to ValueObject named "bar"
+    ///        under ValueObject "foo" that is sibling of this object.
+    /// @param value The new value
+    /// @return True if object was found and the value was set successfully.
     template<class T>
-    bool setValue(const std::string & name, const T & v)
+    bool setValue(const std::string & query, const T & value)
     {
-      size_t cut = name.find("/");
-      std::string next = name.substr(0, cut);
-      std::string rest = name.substr(cut + 1);
+      size_t cut = query.find("/");
+      std::string next = query.substr(0, cut);
+      std::string rest = query.substr(cut + 1);
 
       if(next == std::string("..")) {
         if(!m_host) {
@@ -81,7 +90,7 @@ namespace Valuable
           return false;
         }
 
-        return m_host->setValue(rest, v);
+        return m_host->setValue(rest, value);
       }
 
       container::iterator it = m_values.find(next);
@@ -93,10 +102,10 @@ namespace Valuable
 
       HasValues * hv = dynamic_cast<HasValues *> (it->second);
       if(hv)
-        return hv->setValue(rest, v);
+        return hv->setValue(rest, value);
       else {
         ValueObject * vo = it->second;
-        return vo->set(v);
+        return vo->set(value);
       }
     }
 
@@ -116,7 +125,10 @@ namespace Valuable
     /// De-serializes this object (and its children) from a DOM node
     virtual bool deserialize(ArchiveElement & element);
 
-    /** Handles a DOM element that lacks automatic handlers. */
+    /// Handles a DOM element that lacks automatic handlers.
+    /// This function is only for keeping backwards compatibility.
+    /// @param element The element to be deserialized
+    /// @return true on success
     virtual bool readElement(DOMElement element);
 
     /// Prints the contents of this ValueObject to the terinal
@@ -193,6 +205,7 @@ namespace Valuable
     /// @endcond
 
     /// Generates a unique identifier
+    /// @return New unique id
     static Uuid generateId();
     /// Returns the unique id
     Uuid id() const;
@@ -206,9 +219,10 @@ namespace Valuable
     /// Returns true if this object accepts event 'id' in processMessage
     bool acceptsEvent(const std::string & id) const;
 
-    /// Returns set of all registered events
+    /// Returns set of all registered OUT events
     const std::set<std::string> & eventSendNames() const { return m_eventSendNames; }
 
+    /// Returns set of all registered IN events
     const std::set<std::string> & eventListenNames() const { return m_eventListenNames; }
 
   protected:

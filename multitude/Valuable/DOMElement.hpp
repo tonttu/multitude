@@ -57,6 +57,7 @@ namespace Valuable
     std::string getAttribute(const char * name) const;
 
     /// Gets the text content of this element
+    /// @return The text content of this element
     std::string getTextContent() const;
     /// @copydoc getTextContent
     std::wstring getTextContentW() const;
