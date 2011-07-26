@@ -89,10 +89,12 @@ namespace Luminous
     static bool ping(const char * filename, ImageInfo & info);
 
     /** Read a file to this Image object.
-    @param filename name of the file to read from */
+    @param filename name of the file to read from
+    @return true if the image was successfully read */
     bool read(const char * filename);
     /** Write this Image to a file.
-    @param filename name of the file to write to */
+    @param filename name of the file to write to
+    @return true if the image was successfully written*/
     bool write(const char * filename);
 
     /** Create an image object from data provided by the user.
@@ -107,6 +109,7 @@ namespace Luminous
     const PixelFormat& pixelFormat() const { return m_pixelFormat; }
 
     /// Sets the new format and converts the image data to new format if necessary
+    /// @param format new pixel format for the image
     /// @returns Returns true if the conversion was successful
     bool setPixelFormat(const PixelFormat & format);
 
@@ -123,14 +126,18 @@ namespace Luminous
     interpolation.
     @param source image to resample
     @param w new width
-    @param h new height */
+    @param h new height
+    @return true if the resamping succeed
+    */
     bool copyResample(const Image & source, int w, int h);
 
     /** Down-sample the given image to quarter size.
-    @param source image to resample */
+    @param source image to resample
+    @return true if resampling succeeded */
     bool quarterSize(const Image & source);
-    /** Remove pixels from the right edge of the image.
-    @param n number of pixels to remove */
+    /** Remove pixels from the right edge of the image. Works for RGB images.
+    @param n number of pixels to remove
+    @return false if the image is of unsupported pixel format*/
     bool forgetLastPixels(int n);
     /** Remove lines from the bottom of the image.
     @param n number of lines to remove */
@@ -142,13 +149,17 @@ namespace Luminous
         width and height mutiples of two.
     */
     void makeValidTexture();
-    /** Returns true if the image has an alpha channel. */
+    /** Returns true if the image has an alpha channel.
+        @return true if the image has alpha channel */
     bool hasAlpha() const;
-    /** Copies the argument image to this image.
-    @param img image to compare to */
+
+    /** Makes a deep copy of the given image.
+    @param img image to copy
+    @return reference to this image */
     Image & operator = (const Image& img);
 
-    /** Returns a pointer to the file-format codecs. */
+    /// Returns a pointer to the file-format codecs.
+    /// @return pointer to the codec registry
     static CodecRegistry * codecs();
 
     /// Returns the alpha value [0,255] for the given relative coordinates in the image.
@@ -162,29 +173,32 @@ namespace Luminous
     /// Gets the color of a given pixel.
     /** The color is normalized, with each component in range 0-1.
     @param x pixel x coordinate
-    @param y pixel y coordinate */
+    @param y pixel y coordinate
+    @return color at the given pixel */
     Nimble::Vector4 pixel(unsigned x, unsigned y);
 
+    /// Increments the generation count.
     /// This function should be called when the image has been modified.
     void changed() { m_generation++; }
-    /// The generation count of the image object
-    /** The generation count can be used to indicate that the image has changed, and one should
-        update the corresponding OpenGL texture wo match the same generation. */
+    /** The generation count of the image object The generation count can be
+    used to indicate that the image has changed, and one should update the
+    corresponding OpenGL texture wo match the same generation. @return current
+    generation count*/
     size_t generation() const { return m_generation; }
 
   protected:
 
+    /// Width of the image in pixels
     int m_width;
+    /// Height of the image in pixels
     int m_height;
+    /// Pixel format of the image data
     PixelFormat m_pixelFormat;
+    /// Pointer to the raw image data
     unsigned char* m_data;
+    /// Generation count of the image used to indicate changes in the image
+    /// data to determine when associated textures should be updated.
     size_t m_generation;
-
-    /*
-  private:
-    bool m_dataReady;
-    bool m_ready;
-    */
   };
 
   /** ImageTex provides an easy way to create OpenGL textures from images in a
@@ -241,8 +255,9 @@ namespace Luminous
        return * this;
      }
 
-    /// Creates a new ImageTex from this, all the cpu data from Luminous::Image
+    /// Creates a new ImageTex from this. All the cpu data from Luminous::Image
     /// is moved to the new object.
+    /// @return cloned ImageTex
     ImageTex * move();
   };
 
