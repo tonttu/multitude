@@ -15,7 +15,7 @@
 
 #include "AudioLoop.hpp"
 #include "Resonant.hpp"
-#include "AudioLoopPriv.hpp"
+#include "AudioLoop_private.hpp"
 
 #include <Nimble/Math.hpp>
 

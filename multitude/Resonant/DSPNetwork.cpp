@@ -15,7 +15,7 @@
 
 #include "DSPNetwork.hpp"
 #include "Resonant.hpp"
-#include "AudioLoopPriv.hpp"
+#include "AudioLoop_private.hpp"
 
 #include "ModulePanner.hpp"
 #include "ModuleOutCollect.hpp"
