@@ -26,15 +26,15 @@ namespace Valuable
                                                     Valuable::HasValues &opts)
   {
     CmdParser parser;
-    return parser.parse_and_store(argc, argv, opts);
+    return parser.parseAndStore(argc, argv, opts);
   }
 
-  bool CmdParser::is_parsed(std::string name)
+  bool CmdParser::isParsed(std::string name)
   {
     return m_parsedArgs.find(name) != m_parsedArgs.end();
   }
 
-  Radiant::StringUtils::StringList CmdParser::parse_and_store(int argc, char * argv[],
+  Radiant::StringUtils::StringList CmdParser::parseAndStore(int argc, char * argv[],
                                                     Valuable::HasValues & opts)
   {
     Radiant::StringUtils::StringList list;

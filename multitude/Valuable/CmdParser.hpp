@@ -60,26 +60,34 @@ namespace Valuable
 
     /// Parses command line arguments to given HasValues object.
     /**
+      * @param argc Number of arguments in argv
+      * @param argv Array of arguments
+      * @param opts The target object where the ValueObjects are stored
+      *
       * This is the non-static version of the parse function. This version
       * stores all parsed command line arguments in an internal set, which
       * can be queried by the \c is_parsed function.
       *
       * @return List of arguments that didn't match any ValueObject in opts.
       */
-    Radiant::StringUtils::StringList parse_and_store(int argc, char * argv[],
+    Radiant::StringUtils::StringList parseAndStore(int argc, char * argv[],
                                             Valuable::HasValues & opts);
 
     /**
       * Query the CmdParser if a certain command line parameter has been parsed.
       *
+      * @param name The name of the parameter to query
+      *
       * Example:
       * \code
       * CmdParser parser;
-      * parser.parse_args(argc, argv, opts);
-      * if(parser.is_parsed("foo") printf("--foo was parsed\n");
+      * parser.parseAndStore(argc, argv, opts);
+      * if(parser.isParsed("foo") printf("--foo was parsed\n");
       * \endcode
+      *
+      * @return True if the parameter was parsed.
       */
-    bool is_parsed(std::string name);
+    bool isParsed(std::string name);
 
   private:
     std::set<std::string> m_parsedArgs;
