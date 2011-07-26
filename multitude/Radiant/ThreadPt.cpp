@@ -62,7 +62,6 @@ namespace Radiant {
 
   Thread::id_t Thread::myThreadId()
   {
-    // Not sure how safe this is, but we just cast the pointer to size_t
     return reinterpret_cast<void*> (pthread_self());
   }
 

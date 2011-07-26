@@ -65,9 +65,8 @@ namespace Luminous
                      m_consumingBytes);
   }
 
-  bool GLResources::init()
+  void GLResources::init()
   {
-
     const char * glvendor = (const char *) glGetString(GL_VENDOR);
 
     if(!glvendor) {
@@ -76,8 +75,6 @@ namespace Luminous
       m_brokenProxyTexture2D = true;
     } else
       m_brokenProxyTexture2D = false;
-
-    return true;
   }
 
   GLResource * GLResources::getResource(const Collectable * key, int deleteAfterFrames)

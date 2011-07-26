@@ -143,7 +143,8 @@ namespace Luminous
 
     /// Tells if this object is persistent
     /** Persistent GPU resources should not be deleted, unless the Collectable is deleted.
-        Default implementation returns false. */
+        Default implementation returns false.
+    @return true if the resource is persistent*/
     bool persistent() { return m_deleteOnFrame == PERSISTENT; }
 
     /// Makes this resource persistent
