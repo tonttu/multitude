@@ -353,12 +353,19 @@ namespace Luminous
     /// @endcond
 
     /// Get a temporary texture render target
-    RenderTargetObject pushRenderTarget(Nimble::Vector2 size, float scale);
+    // RenderTargetObject pushRenderTarget(Nimble::Vector2 size, float scale);
     /// Pop a temporary texture render target
-    Luminous::Texture2D & popRenderTarget(RenderTargetObject & trt);
+    // Luminous::Texture2D & popRenderTarget(RenderTargetObject & trt);
 
+    /// Push a viewport to the viewport stack
+    /// Pushes a viewport to the top of the viewport stack.
+    /// @param viewport viewport to push
     void pushViewport(const Nimble::Recti & viewport);
+    /// Pop a viewport from the viewport stack
+    /// Pops the viewport from the top of the viewport stack
     void popViewport();
+    /// Get the current viewport
+    /// @return the viewport from the top of the viewport stack
     const Nimble::Recti & currentViewport() const;
 
   private:

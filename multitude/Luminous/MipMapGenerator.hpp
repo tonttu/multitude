@@ -50,10 +50,12 @@ namespace Luminous {
 
     /// Set a listener to this task. Listener is informed by mipmapsReady()-call
     /// when the mipmaps are ready.
+    /// @param mipmaps mipmaps listening for the event
     void setListener(std::shared_ptr<CPUMipmaps> mipmaps) { m_listener = mipmaps; }
 
-    /// Chooses automatically the best pixelformat for source image
+    /// Chooses automatically the best pixel format for source image
     /// @param img The image whose ideal mipmap format we are deducing.
+    /// @return ideal pixel format
     static PixelFormat chooseMipmapFormat(const Image & img);
 
   private:

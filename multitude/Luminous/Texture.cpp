@@ -101,6 +101,7 @@ namespace Luminous
 
   UploadLimiter & UploadLimiter::instance()
   {
+    /// @todo this is not thread-safe! use the singleton pattern with RenderContext storing one shared_ptr each to UploadLimiter
     static Luminous::UploadLimiter s_limiter;
     return s_limiter;
   }

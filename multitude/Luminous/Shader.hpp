@@ -69,8 +69,9 @@ namespace Luminous {
     /** Sets the source code for the vertex shader.
     @param shadercode Shader source code */
     void setVertexShader(const char * shadercode);
-    /** Loads a vertex shader source code from a file.
-    @param filename name of the file to load */
+    /// Loads a vertex shader source code from a file.
+    /// @param filename name of the file to load
+    /// @return true of success
     bool loadVertexShader(const char * filename);
     /// @copydoc loadVertexShader(const char * filename);
     bool loadVertexShader(const std::string & filename)
@@ -81,19 +82,26 @@ namespace Luminous {
     void setGeometryShader(const char * shadercode);
     /// Loads a geometry shader source code from a file.
     /// @param filename name of the source code filename
+    /// @return true on success
     bool loadGeometryShader(const char * filename);
     /// @copydoc loadGeometryShader(const char * filename);
     bool loadGeometryShader(const std::string & filename)
     { return loadGeometryShader(filename.c_str()); }
 
-    /** Returns a compiled and bound OpenGL shader program. */
+    /// Bind the shader
+    /// Bind the shader Binds the shader to be active and compiles, links, and
+    /// applies all defined uniforms if necessary. A valid OpenGL context is
+    /// required. This function is thread-safe.
+    /// @return the program object or null if it failed to link
     GLSLProgramObject * bind();
 
     /** Unbinds the shader. */
     void unbind();
 
-    /** Returns a non-compiled OpenGL shader program.
-    @param res resource container to associate the shader program with */
+    /// Get the OpenGL program object
+    /// Returns a compiled program object that has not been linked.
+    /// @param res resource container to associate the shader program with
+    /// @return OpenGL program object
     GLSLProgramObject * program(Luminous::GLResources * res = 0);
 
     // Adds a ValueObject as a shader attribute
@@ -110,10 +118,10 @@ namespace Luminous {
     */
     void addShaderUniform(const Valuable::ValueObject * vo);
 
-    /** Returns true if the shader code is defined.
-        Note that the shader might not be compiled, as this function only
-        tests for the presence of shader strings.
-    */
+    /// Check if the shader is defined Check if the shader source code has been
+    /// defined. Note that the shader might not be compiled, as this function
+    /// only tests for the presence of shader strings.
+    /// @return Returns true if the shader code is defined.
     bool isDefined() const;
 
   private:

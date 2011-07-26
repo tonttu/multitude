@@ -104,6 +104,7 @@ namespace Luminous {
       virtual const char * type() const { return "area"; }
 
       /// Returns the keystone correction
+      /// @return keystone correction
       GLKeyStone & keyStone() { return m_keyStone; }
       /// @copydoc keyStone
       const GLKeyStone & keyStone() const { return m_keyStone; }
@@ -137,12 +138,13 @@ namespace Luminous {
             m_graphicsSize.asVector();
       }
 
-      /// The bounds of the graphics
-      /** In principle this method only combines the information you
-          get with graphicsLocation() and graphicsSize(). In practice
-          how-ever that information is not exactly correct as the
-          bounds also need to include the small extra areas, if one is
-          using edge-blending. */
+      /** The bounds of the graphics.
+
+          In principle this method only combines the information you get with
+          graphicsLocation() and graphicsSize(). In practice however that
+          information is not exactly correct as the bounds also need to include
+          the small extra areas, if edge-blending is used.
+          @return graphics bounds rectangle*/
       const Rect & graphicsBounds() const
       { return m_graphicsBounds; }
 
@@ -258,8 +260,10 @@ namespace Luminous {
       const Vector2i & size() const { return m_size.asVector(); }
 
       /// Returns the width of this window in pixels
+      /// @return width of the window
       int width() const { return m_size.x(); }
       /// Returns the height of this window in pixels
+      /// @return height of the window
       int height() const { return m_size.y(); }
 
       /** Convert a coordinate from screen to graphics coordinates.
@@ -272,6 +276,8 @@ namespace Luminous {
 
           @param convOk set to true or false depending on whether the
           conversion could be carried out.
+
+          @return the point in graphics coordinates
       */
       LUMINOUS_API Nimble::Vector2f windowToGraphics(Nimble::Vector2f loc, bool & convOk) const;
 
@@ -333,6 +339,7 @@ namespace Luminous {
     size_t windowCount() const { return m_windows.size(); }
     /// Access the ith window
     /// @param i window index
+    /// @return the window
     Window & window(size_t i);
     /// @copydoc window
     const Window & window(size_t i) const;

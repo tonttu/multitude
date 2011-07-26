@@ -141,6 +141,7 @@ namespace Luminous
   {
   public:
     /// Constructs an empty vertex buffer.
+    /// @param resources resource collection to own the buffer
     VertexBuffer(Luminous::GLResources * resources = 0)
       : BufferObject<GL_ARRAY_BUFFER>(resources)
     {}
@@ -151,6 +152,7 @@ namespace Luminous
   {
   public:
     /// Constructs an empty index buffer.
+    /// @param resources resource collection to own the buffer
     IndexBuffer(Luminous::GLResources * resources = 0)
       : BufferObject<GL_ELEMENT_ARRAY_BUFFER>(resources)
     {}
@@ -161,6 +163,8 @@ namespace Luminous
   class ReadBuffer : public BufferObject<GL_PIXEL_PACK_BUFFER>
   {
   public:
+    /// Constructs an empty read buffer
+    /// @param resources resource collection to own the buffer
     ReadBuffer(Luminous::GLResources * resources = 0)
       : BufferObject<GL_PIXEL_PACK_BUFFER>(resources)
     {}

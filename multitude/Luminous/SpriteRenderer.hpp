@@ -103,6 +103,12 @@ namespace Luminous {
     void renderSprites(Luminous::RenderContext & r);
     /// Sets the texture that is used in the rendering process
     void setTexture(const Luminous::Image &);
+    /// Create a blurry texture
+    /// Creates a basic square texture with radial gradient pattern
+    /// @param dim texture dimensions
+    /// @param centerDotSize size of the opaque center dot
+    /// @param haloweight weighting factor for the radial gradient
+    /// @param halodescent factor for how fast the gradient drops to zero
     void createFuzzyTexture(int dim, float centerDotSize = 0.25f,
                             float haloweight = 0.75f, float halodescent = 1.0f);
 
