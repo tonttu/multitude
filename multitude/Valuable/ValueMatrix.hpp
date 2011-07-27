@@ -36,7 +36,7 @@ namespace Valuable
     /// @param v the default/original value of the object
     /// @param transit ignored
     ValueMatrix(HasValues * host, const std::string & name, const MatrixType & v = MatrixType(), bool transit = false)
-      : Base(parent, name, v, transit) {}
+      : Base(host, name, v, transit) {}
 
     ValueMatrix() : Base() {}
     virtual ~ValueMatrix();

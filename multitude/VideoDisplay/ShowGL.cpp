@@ -757,7 +757,7 @@ namespace VideoDisplay {
     if(!m_video)
       return;
 
-    time = Nimble::Math::Clamp(time, 0, m_duration);
+    time = Nimble::Math::Clamp<Radiant::TimeStamp>(time, 0, m_duration);
     debugVideoDisplay("ShowGL::seekTo # %lf", time.secondsD());
     m_position = time;
     started = Radiant::TimeStamp::getTime() - time;
