@@ -66,9 +66,9 @@ namespace Nimble {
     }
 
     /// Access the correction parameters
-    /** The fourth element of the vector is the multiplier that
-	normalizes the calibration, based on the three lens correction
-	parameters. */
+    /// The fourth element of the vector is the multiplier that normalizes the
+    /// calibration, based on the three lens correction parameters.
+    /// @return Correction parameters
     const Vector4 & params() const { return m_params; }
 
   private:

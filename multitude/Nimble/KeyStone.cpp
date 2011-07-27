@@ -369,6 +369,8 @@ namespace Nimble {
     calculateMatrix();
   }
 
+  /// @todo KeyStone class shouldn't have anything to do with image processing
+  ///       Split this to two classes?
   void KeyStone::updateLimits()
   {
     updateLimits(m_limits);

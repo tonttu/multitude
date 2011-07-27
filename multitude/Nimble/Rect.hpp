@@ -100,9 +100,11 @@ namespace Nimble {
     /// Returns the high X/Y vector
     const Vector2T<T> & high() const { return m_high; }
 
-    /** Returns the low x value combined with high y value. */
+    /// Returns the low x value combined with high y value.
+    /// @return (low.x, high.y)
     Vector2T<T> lowHigh() const { return Vector2T<T>(m_low.x, m_high.y); }
-    /** Returns the high x value combined with low y value. */
+    /// Returns the high x value combined with low y value.
+    /// @return (high.x, low.y)
     Vector2T<T> highLow() const { return Vector2T<T>(m_high.x, m_low.y); }
 
     /// Sets the corner to given values
@@ -139,6 +141,7 @@ namespace Nimble {
     assume that we are dealing with normal GUI-coordinates where x
     increases from left to right, and y increases from top to
     bottom. */
+    /// @return Location of top-center point
     inline Vector2T<T> topCenter() const;
 
     /// Returns the width of the rectangle
@@ -179,11 +182,10 @@ namespace Nimble {
     inline void increaseSize(T add)
     { m_low.x -= add; m_low.y -= add; m_high.x += add; m_high.y += add; }
 
-    /** Returns one quarter of the rectangle.
-
-    @param row The row of the quarter (0-1)
-    @param col The column of the quarter (0-1)
-    */
+    /// Returns one quarter of the rectangle.
+    /// @param row The row of the quarter (0-1)
+    /// @param col The column of the quarter (0-1)
+    /// @return One quarter
     inline RectT quarter(int row, int col) const;
 
     /** Fit calculate space for pictures or video to be place inside this rectangle.

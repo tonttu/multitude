@@ -45,6 +45,8 @@ namespace Nimble {
     T   w;
 
     inline Vector4T	() {}
+    /// Constructs a vector copying the given value to all vector values
+    /// @param xyzw Value to use to initialize all vector values
     inline explicit Vector4T(T xyzw) : x(xyzw), y(xyzw), z(xyzw), w(xyzw) { }
     /// Constructs a vector and initializes it with the given values
     inline Vector4T (T cx, T cy, T cz, T cw) : x(cx), y(cy), z(cz), w(cw) {}

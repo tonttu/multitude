@@ -65,6 +65,8 @@ namespace Nimble {
       *this = m;
     }
 
+    /// Normalizes the quaternion to length 1
+    /// @return Reference to self
     QuaternionT & normalize()
     {
       float m = Nimble::Math::InvSqrt(lensq());
@@ -110,11 +112,12 @@ namespace Nimble {
     }
     /// Multiply the quaternion components
     /// @param v The multiplier
+    /// @return Reference to self
     QuaternionT & operator*=(T v)
     {
       x *= v; y *= v; z *= v; w *= v; return *this;
     }
-    /// Multiply this quaterion with another, and store the result into this quaternion
+    /// Multiply this quaternion with another, and store the result into this quaternion
     QuaternionT & operator*=(const QuaternionT & v)
     {
       T nx = y*v.z-z*v.y+w*v.x+x*v.w;
@@ -170,11 +173,12 @@ namespace Nimble {
     }
 
     /// The squared length of this quaterion
-    /** This function returns x*x+y*y+z*z+w*w. */
-    T lensq(void) const
+    /// @return x*x+y*y+z*z+w*w
+    T lensq() const
     {
       return(x*x+y*y+z*z+w*w);
     }
+
     /// Returns dot product between this quatertion and the argument quaternion
     T dotp(const QuaternionT & v) const
     {
@@ -340,6 +344,7 @@ namespace Nimble {
     /// Create a new quaternion based on rotation around an axis
     /// @param angle The rotation angle, in radians
     /// @param axis The axis, around which the rotation is performed
+    /// @return New quaternion
     static QuaternionT rotation(T angle, Vector3T<T> axis)
     {
       angle *= 0.5;

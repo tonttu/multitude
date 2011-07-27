@@ -39,9 +39,10 @@ namespace Nimble {
     /// Returns a constant reference to one row in the matrix
     const Vector3T<T>& row(int i) const       { return m[i]; }
     /// Returns one column of the matrix
-    /** As the matrix is is of row-major type, this method returns a
-    copy of the values of the column.
-    @param i column number */
+    /// As the matrix is is of row-major type, this method returns a
+    /// copy of the values of the column.
+    /// @param i column number
+    /// @return Copy of column i as a vector
     Vector3T<T>        column(int i) const    { return Vector3T<T>(m[0][i],m[1][i],m[2][i]); }
     /// Returns the ith row
     Vector3T<T>&       operator[](int i)      { return row(i); }
@@ -91,13 +92,13 @@ namespace Nimble {
     /// Run internal test function.*/
     inline static void        test();
 
-    /// Returns the number of rows in the matrix (=3)
-    /** This function can be used when you build template-based
-    functions. */
+    /// Returns the number of rows in the matrix
+    /// This function can be used when you build template-based functions.
+    /// @return 3
     static int                rows() { return 3; }
-    /// Returns the number of columns in the matrix (=3)
-    /** This function can be used when you build template-based
-    functions. */
+    /// Returns the number of columns in the matrix
+    /// This function can be used when you build template-based functions.
+    /// @return 3
     static int                columns() { return 3; }
     /// Inserts the argument matrix into the top-left corner of this matrix
     inline void               insert(const Matrix2T<T>& m);
@@ -148,6 +149,7 @@ namespace Nimble {
     /// Rotate around a given point
     /** @param p The center point of rotation
         @param radians The amount of roration, in radians
+        @return New rotation matrix
     */
     static Matrix3T<T> rotateAroundPoint2D(Vector2T<T> p,
                                            T radians)
@@ -175,6 +177,7 @@ namespace Nimble {
     /// @param sy y scale
     /// @param tx x translate
     /// @param ty y translate
+    /// @return New transformation matrix
     inline static Matrix3T<T> transformation(float rad, float sx, float sy, float tx, float ty)
     {
       const T st = rad == 0.0f ? 0.0f : Nimble::Math::Sin(rad);
@@ -478,8 +481,9 @@ namespace Nimble {
 
   }
 
-  /** Assign multiplication
-  @param that matrix to multiply with */
+  /// Assign multiplication
+  /// @param that matrix to multiply with
+  /// @return Reference to self
   template <class T>
   inline Matrix3T<T>& Matrix3T<T>::operator*= (const Matrix3T<T>& that)
   {

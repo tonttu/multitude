@@ -79,6 +79,7 @@ namespace Nimble {
       /// input rectangles.
       /// @param a rectangle to merge
       /// @param b rectangle to merge
+      /// @return Bouding rectangle of the two input rectangles
       static Nimble::Rectangle merge(const Nimble::Rectangle & a, const Nimble::Rectangle & b);
 
       /// Transforms the rectangle with the given matrix. If the matrix is not

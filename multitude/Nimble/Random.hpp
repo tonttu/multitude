@@ -107,24 +107,27 @@ namespace Nimble {
       return rand0X(max - min) + min;
     }
 
-    /** A random number in range 0-2^32. The lower bits of the random
-        number are not totally random. */
+    /// A random number in range 0-2^32. The lower bits of the random
+    /// number are not totally random.
+    /// @return Generated random number
     inline uint32_t rand()
     {
       m_val = m_val * m_randMul + 1;
       return m_val;
     }
 
-    /** A random number in range 0-2^24. All bits of the value should
-        be fairly random. */
+    /// A random number in range 0-2^24. All bits of the value should
+    /// be fairly random.
+    /// @return Generated random number
     inline uint32_t rand24()
     {
       m_val = m_val * m_randMul + 1;
       return m_val >> 8;
     }
 
-    /** A random number in range 0-2^32. All bits of the value should
-        be fairly random. */
+    /// A random number in range 0-2^32. All bits of the value should
+    /// be fairly random.
+    /// @return Generated random number
     inline uint32_t rand32()
     {
       /* Generate two random numbers are take the 16 higher bits from
@@ -135,10 +138,9 @@ namespace Nimble {
       return (v1 & 0xFFFF0000) | (v2 >> 16);
     }
 
-    /** Get random numbers between 0 and range-1.
-
-        @param range The maximum output value. This value must not exceed 2^24-1.
-    */
+    /// Get random numbers between 0 and range-1.
+    /// @param range The maximum output value. This value must not exceed 2^24-1.
+    /// @return Generated random number
     inline uint32_t randN24(uint32_t range)
     {
       m_val = m_val * m_randMul + 1;
@@ -174,13 +176,13 @@ namespace Nimble {
 
     /// Random boolean
     /// @todo does this work with 32-bit computers too?
+    /// @return True or false.
     inline bool randBool()
     {
       // count bits in 13 bit random value
       return (rand0X(uint32_t(1 << 13)) * 0x200040008001ULL
               & 0x111111111111111ULL) % 0xf < 7;
     }
-
 
     /// Returns a reference to an instance
     static RandomUniform & instance() { return m_instance; }

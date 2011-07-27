@@ -98,12 +98,16 @@ namespace Nimble {
     void calculateMatrix();
 
     /// Project a vector from camera coordinates to the display coordinates
-    /** This function applies the lens correction and projection
-  matrix on the coordinates. */
-    Nimble::Vector2 project(const Nimble::Vector2 &) const;
-    /** Project the point from camera coordinates to normalized
-  coordinates in range [0,1].*/
-    Nimble::Vector2 project01(const Nimble::Vector2 &) const;
+    /// This function applies the lens correction and projection
+    /// matrix on the coordinates.
+    /// @param p Point in camera coordinates
+    /// @return Point in display coordinates
+    Nimble::Vector2 project(const Nimble::Vector2 & p) const;
+    /// Project the point from camera coordinates to normalized
+    /// coordinates in range [0,1].
+    /// @param p Point in camera coordinates
+    /// @return Point in normalized display coordinates
+    Nimble::Vector2 project01(const Nimble::Vector2 & p) const;
     /// Applies a 3x3 correction marix on a 2D vector.
     static Nimble::Vector2 project(const Nimble::Matrix3 & m,
                                    const Nimble::Vector2 & v)
@@ -112,10 +116,12 @@ namespace Nimble {
       return Nimble::Vector2(p.x / p.z, p.y / p.z);
     }
 
-    /** Do inverse projection (from screen to camera coordinates),
-  ignoring the camera barrel distortion. Useful as a rough
-  estimation of the point location on the camera image. x*/
-    Nimble::Vector2 projectInverse(const Nimble::Vector2 &) const;
+    /// Do inverse projection (from screen to camera coordinates),
+    /// ignoring the camera barrel distortion. Useful as a rough
+    /// estimation of the point location on the camera image.
+    /// @param p Point in screen coordinates
+    /// @return Point in camera coordinates
+    Nimble::Vector2 projectInverse(const Nimble::Vector2 & p) const;
 
     /// Returns a corner point in camera coordinates
     const Nimble::Vector2 & original(int i) const { return m_originals[i]; }
@@ -158,13 +164,13 @@ namespace Nimble {
     /// @param[out] indices Array of four corner indices
     void getCornerOrdering(int indices[4]);
 
-    /// Information on which pixels are inside the camera area
-    /** Each item (2D vector) contains values for the first pixel
-  inside the camera area and width of the camera area, per
-  scanline. */
+    /// Information on which pixels are inside the camera area.
+    /// Each item (2D vector) contains values for the first pixel inside the
+    /// camera area and width of the camera area, per scanline.
+    /// @return List of scanline line segments
     const std::vector<Nimble::Vector2i> & limits() const { return m_limits; }
     /// Information on which pixels are part of the image processing area
-    /** The returned values work like the values returned from #limits. */
+    /// @return values work like the values returned from #limits.
     const std::vector<Nimble::Vector2i> & extraLimits() const
     { return m_extraLimits; }
 
@@ -195,14 +201,14 @@ namespace Nimble {
     { return Nimble::Vector2i(m_dpyX, m_dpyY); }
 
     /// The output area of the screen
-    /** This function basically returns the information you would
-  get from dpyWidth, dpyheight, dpyX and dpyY. */
+    /// @return Rectangle at [dpyX, dpyY] with size [dpyWidth, dpyHeight]
     Nimble::Rect outputBounds();
     /// Test the keystone correction routines
     static void testCorrection();
 
-    /// The rectangle which contains the ROI of this keystone
-    /** This is the ROI in camera images. */
+    /// The rectangle which contains the Region Of Interest of this keystone
+    /// This is the ROI in camera images.
+    /// @return Bounding rectangle of the ROI
     Nimble::Rect boundsROI() const { return m_boundsROI; }
 
     /// Reference to the lens correction
@@ -237,7 +243,8 @@ namespace Nimble {
     { m_extra = borders; updateLimits(); }
 
     /// Returns information about the center shift
-    /** Center shift means that coordinates at the center of the image get this offset. */
+    /// Center shift means that coordinates at the center of the image get this offset.
+    /// @return First two elements mean the shift XY, last element is the center shift span
     Nimble::Vector3 centerShift() const
     { return Vector3(m_centerShift.x, m_centerShift.y, m_centerShiftSpan); }
     /// Sets the parameters for the center shifting

@@ -43,6 +43,8 @@ namespace Nimble {
 
     /** Default constructor, does \b not initialize the values. */
     inline Vector2T () {}
+    /// Constructs a vector copying the given value to both vector values
+    /// @param xy Value to use to initialize both x and y values
     inline explicit Vector2T(T xy) : x(xy), y(xy) { }
     /// Constructs a vector initializing it to given values
     inline Vector2T (T cx, T cy) : x(cx), y(cy) {}
@@ -143,8 +145,10 @@ namespace Nimble {
     */
     inline bool isFinite() const { return Math::isFinite(x) && Math::isFinite(y); }
 
-    /** Less-than operator, with arbitrary internal logic. This method is used
-        if you want to sort vectors. */
+    /// Less-than operator, with arbitrary internal logic. This method is used
+    /// if you want to sort vectors.
+    /// @param v2 Other vector to compare to
+    /// @return True if this vector should be sorted before v2
     inline bool operator< (const Vector2T<T>& v2) const
     {
       return x == v2.x ? y < v2.y : x < v2.x;
@@ -193,6 +197,7 @@ namespace Nimble {
   /// Compute the dot product of two vectors
   /// @param t1 first dot product vector
   /// @param t2 second dot product vector
+  /// @return Dot product
   template <class T>
   inline float dot(const Vector2T<T> &t1, const Vector2T<T> &t2)
   {

@@ -82,7 +82,8 @@ template <typename T>
 
     /// Returns true if the two line segments intersect
     /// @param that line segment to compare
-    /// @param point optional intersection point
+    /// @param[out] point optional intersection point
+    /// @return True if lines intersect
     inline bool intersects(const LineSegment2T & that,
                            Vector2T<T> * point = 0) const
     {
@@ -97,9 +98,10 @@ template <typename T>
       return r;
     }
 
-    /** Tests for intersection with a given line.
-    @param that line to test against
-    @param point (optional) intersection point if found */
+    /// Tests for intersection with a given line.
+    /// @param that line to test against
+    /// @param[out] point (optional) intersection point if found
+    /// @return True if lines intersect
     inline bool intersectsInfinite(const LineSegment2T & that,
                                    Vector2T<T> * point) const
     {
@@ -166,7 +168,9 @@ template <typename T>
 
     }
 
-    /** Calculates the distance between this (infinite) line and a point. */
+    /// Calculates the distance between this (infinite) line and a point.
+    /// @param point 2D point
+    /// @return Distance between a line and point
     inline float distanceInfinite(const Vector2T<T> & point)
     {
       Nimble::Vector2T<T> perp = directionNormalized().perpendicular();
