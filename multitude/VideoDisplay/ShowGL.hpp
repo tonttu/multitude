@@ -175,15 +175,21 @@ namespace VideoDisplay {
               Radiant::WITH_VIDEO | Radiant::WITH_AUDIO);
 
     /// Sets the gain factor for the video sounds
-    /** The gain coefficient is a linear multiplier for the video sound-track.
-        Default value for the gain is 1.0, which equals unity gain. */
+    /// The gain coefficient is a linear multiplier for the video sound-track.
+    /// Default value for the gain is 1.0, which equals unity gain.
+    /// @param gain The new gain factor
     void setGain(float gain);
 
-    /// Opens the file for playing.
+    // /// Opens the file for playing.
     /* VIDEODISPLAY_API bool open(const char * filename, Resonant::DSPNetwork  * dsp,
                                Radiant::TimeStamp pos = 0);
     */
-    /// Starts file playback, from the last playback position.
+    /// Starts file playback. If the video is already playing and fromOldPos is
+    /// false, we just seek to beginning.
+    /// @param fromOldPos True if the playing should continue from the last
+    ///                   playback position
+    /// @return True if video is now playing or was already at play-state. False
+    ///         on error.
     bool start(bool fromOldPos = true);
     /// Stops file playback
     bool stop();
@@ -243,8 +249,10 @@ namespace VideoDisplay {
     /// The relative playback position of the current video
     double relativePosition() { return position() / (double) duration(); }
 
-    /** Seek to given position. Due to limitations of underlying seek
-    algorithms, this method is usually not exact. */
+    /// Seek to given position. Due to limitations of underlying seek
+    /// algorithms, this method is usually not exact.
+    /// @param time New position timestamp so that 0 is the beginning of the video
+    ///             This is clamped between 0 and duration().
     void seekTo(Radiant::TimeStamp time);
     /// Seeks to a relative position within the video
     /** @param relative The relative position, in range [0,1]. */

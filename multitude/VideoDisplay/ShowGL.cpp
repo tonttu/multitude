@@ -417,7 +417,11 @@ namespace VideoDisplay {
 
     debugVideoDisplay("ShowGL::start # %p", this);
 
-    if(m_state == PLAY || !m_video) {
+    if(m_state == PLAY) {
+      if(!fromOldPos)
+        seekTo(0);
+      return true;
+    } else if(!m_video) {
       return false;
     }
 
@@ -753,11 +757,7 @@ namespace VideoDisplay {
     if(!m_video)
       return;
 
-    if(time < 0)
-      time = 0;
-    else if(time >= m_duration)
-      time = m_duration - Radiant::TimeStamp::createSecondsD(2);
-
+    time = Nimble::Math::Clamp(time, 0, m_duration);
     debugVideoDisplay("ShowGL::seekTo # %lf", time.secondsD());
     m_position = time;
     started = Radiant::TimeStamp::getTime() - time;
