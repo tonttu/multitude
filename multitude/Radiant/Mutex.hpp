@@ -33,7 +33,7 @@
 
 namespace Radiant {
 
-  /** Mutex class. The mutex must be initialized explicitly. */
+  /** A mutex.*/
   class RADIANT_API Mutex : public Patterns::NotCopyable
   {
   public:
