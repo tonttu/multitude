@@ -143,6 +143,7 @@ namespace VideoDisplay {
     /// Load a subtitle file
     bool loadSubTitles(const char * filename, const char * type = 0);
 
+    /// The time-stamp of the first video frame
     Radiant::TimeStamp firstFrameTime() const;
 
     /// Initialize the file, but does not play it.
@@ -167,6 +168,8 @@ namespace VideoDisplay {
         @param flags Flags for the video playback. For the playback to work, the flags
         should include Radiant::WITH_VIDEO and Radiant::WITH_AUDIO.
 
+        @return True if initialization succeeds or this file was already playing.
+                False on error.
     */
     bool init(const char * filename,
               float previewpos = 0.05f,
@@ -264,13 +267,16 @@ namespace VideoDisplay {
     /// Pans the video sounds to a given location
     void panAudioTo(Nimble::Vector2 location);
 
-    /** Information on how the frames have been displayed. The
-    histogram information is useful mostly for debug purposes. */
+    /// Information on how the frames have been displayed. The
+    /// histogram information is useful mostly for debug purposes.
+    /// @param index Index to histogram data, 0 <= index < HISTOGRAM_POINTS
+    /// @return Frame display count
     int histogramPoint(int index) const { return m_histogram[index]; }
     /// Returns the number of histogram updates.
     size_t histogramIndex() const { return m_updates; }
 
-    /** Returns true if this video has been loaded with subtitles. */
+    /// Query if the video has subtitles.
+    /// @return true if this video has been loaded with subtitles.
     bool hasSubTitles() { return m_subTitles.size() != 0; }
 
     /// Returns the currently used filename
@@ -285,9 +291,19 @@ namespace VideoDisplay {
 
         The contrast parameter may not be honored by all rendering back-ends.
 
+        @param contrast The new contrast value
           */
     void setContrast(float contrast) { m_contrast = contrast; }
 
+    /// Sets different synchronizing mode. If SyncToTime is enabled, current
+    /// visible frame is calculated using wall clock time. That usually means
+    /// smoother playback, but can cause some audio/video synchronization issues.
+    /// Those issues are fixed by doing automatic av-resync if the difference
+    /// becomes too large.
+    /// If this is disabled, current frame is taken directly from
+    /// AudioTransfer::videoFrame(). This option minimizes audio sync problems,
+    /// but on some setups causes significant jerkiness / frame skipping.
+    /// @param flag True to enable sync to time feature
     void setSyncToTime(bool flag);
 
   private:
