@@ -145,14 +145,6 @@ namespace Nimble {
       return (m_val >> 8) % range;
     }
 
-    /// Random 2d unit vector
-    /** This function is deprecated, as it is a duplicate for #randVecOnCircle(). */
-    /// @todo remove
-    inline Nimble::Vector2f randVec2()
-    {
-      return randVecOnCircle();
-    }
-
     /// Random 2d vector inside a rectangle
     inline Nimble::Vector2f randVec2InRect(const Nimble::Rectf & r)
     {
