@@ -37,7 +37,7 @@ namespace Nimble {
       m_dpyY(0),
       m_extra(0, 0, 0, 0),
       m_containedPixelCount(m_width * m_height),
-      m_version(0)
+      m_generation(0)
   {
     m_matrix.identity();
     m_matrixOut.identity();
@@ -261,7 +261,7 @@ namespace Nimble {
     }
   }
 
-  void KeyStone::getCornerOrdering(int * indices)
+  void KeyStone::getCornerOrdering(int indices[4])
   {
     indices[0] = closestCorner(Nimble::Vector2(0, 0));
     indices[1] = closestCorner(Nimble::Vector2(m_width, 0));
@@ -402,7 +402,7 @@ namespace Nimble {
   /** Calculates the projection matrix. See Paul Heckbert's master's
    * thesis, pages 19-21. */
 
-  Matrix3 KeyStone::projectionMatrix(const Vector2 * vertices)
+  Matrix3 KeyStone::projectionMatrix(const Vector2 vertices[4])
   {
     float dx1 = vertices[1].x - vertices[2].x;
     float dx2 = vertices[3].x - vertices[2].x;

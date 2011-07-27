@@ -154,8 +154,9 @@ namespace Nimble {
     /// Rotates the keystone corners
     void rotate(int turns = 1);
 
-    // Writes the order of the corners to the given parameter
-    void getCornerOrdering(int * indices);
+    /// Writes the order of the corners to the given parameter
+    /// @param[out] indices Array of four corner indices
+    void getCornerOrdering(int indices[4]);
 
     /// Information on which pixels are inside the camera area
     /** Each item (2D vector) contains values for the first pixel
@@ -246,24 +247,26 @@ namespace Nimble {
     /// Recalculates the limits of which pixels are inside the tracking area, and which are not.
     void updateLimits();
 
-    /** Returns the version number of the object. Whenever the
-  keystone information is modified, the version number is
-  incremented. This information can be used by other objects to
-  check is they need to update some of their data structures.*/
-    int version() const { return m_version; }
+    /** Returns the generation number of the object. Whenever the
+        keystone information is modified, the generation number is
+        incremented. This information can be used by other objects to
+        check is they need to update some of their data structures.*/
+    /// @return Generation number
+    int generation() const { return m_generation; }
 
     /// Controls if this keystone object uses the center shift features.
     void setUseCenterShift(bool use) { m_useCenterShift = use; }
 
     /// Calculates the projection matrix.
-    /** See Paul Heckbert's master's thesis, pages 19-21. Often you
-        need to invert this.
-    @param vertices an array of four corner vertices */
-    static Nimble::Matrix3 projectionMatrix(const Nimble::Vector2 * vertices);
+    /// See Paul Heckbert's master's thesis, pages 19-21. Often you
+    /// need to invert this.
+    /// @param vertices an array of four corner vertices
+    /// @return Generated projection matrix
+    static Nimble::Matrix3 projectionMatrix(const Nimble::Vector2 vertices[4]);
 
   private:
 
-    void updated() { m_version++; }
+    void updated() { m_generation++; }
 
     void updateLimits(std::vector<Nimble::Vector2i> & limits,
                       const Vector4 * offsets = 0);
@@ -309,7 +312,7 @@ namespace Nimble {
     std::vector<Nimble::Vector2i> m_extraLimits;
     // Total number of pixels to traverse.
     int            m_containedPixelCount;
-    int            m_version;
+    int            m_generation;
 
     Nimble::Rect m_boundsROI;
   };
