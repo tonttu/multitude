@@ -578,6 +578,11 @@ namespace Luminous
     m_data->m_window = window;
   }
 
+  const MultiHead::Window * RenderContext::window() const
+  {
+    return m_data->m_window;
+  }
+
   void RenderContext::prepare()
   {
 

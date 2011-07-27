@@ -134,8 +134,12 @@ namespace Luminous
     /// Sets the associated window for this context
     /// @param window window to associate
     void setWindow(const Luminous::MultiHead::Window * window);
+    /// Get the window associated with this context
+    /// @return window for this context
+    const Luminous::MultiHead::Window * window() const;
 
-    /// Returns the resources of this context
+    /// Returns the resource collection associated with this context
+    /// @return resource collection for this context
     Luminous::GLResources * resources() { return m_resources; }
 
     /// Prepares the context for rendering a frame. This is called once for
