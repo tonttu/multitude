@@ -101,7 +101,8 @@ namespace Valuable
     const T & str() const { return Base::m_value; }
 
     /// Gets C-style pointer to the string contents.
-    /** Replicates std::string::c_str for ease of use. */
+    /// Replicates std::string::c_str for ease of use.
+    /// @return Null terminated string
     const char_type * c_str() const { return Base::m_value.c_str(); }
     /// Check if the string is empty
     bool empty() const { return Base::m_value.empty(); }

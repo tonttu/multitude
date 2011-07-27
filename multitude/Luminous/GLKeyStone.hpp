@@ -41,7 +41,7 @@ namespace Luminous {
     };
 
     /// Creates a new GLKeyStone object.
-    GLKeyStone(Valuable::HasValues * parent, const std::string & name);
+    GLKeyStone(Valuable::HasValues * host, const std::string & name);
     virtual ~GLKeyStone();
 
     /// Returns the object type name = "glkeystone"

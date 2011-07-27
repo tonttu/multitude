@@ -54,10 +54,10 @@ namespace Valuable
     ValueContainer() {}
 
     /// Constructs a new container
-    /// @param parent parent object
+    /// @param host host object
     /// @param name name of the value
-    ValueContainer(HasValues * parent, const std::string & name)
-      : ValueObject(parent, name, false)
+    ValueContainer(HasValues * host, const std::string & name)
+      : ValueObject(host, name, false)
     {}
 
     virtual const char* type() const { return "container"; }
@@ -94,8 +94,9 @@ namespace Valuable
 
     /// Use the arrow operator for accessing fields inside the wrapper container.
     /// Example: container->end();
+    /// @return Pointer to the wrapped container
     T * operator -> () { return &m_container; }
-    /// @see operator->
+    /// @copydoc operator->()
     const T * operator -> () const { return &m_container; }
 
   protected:

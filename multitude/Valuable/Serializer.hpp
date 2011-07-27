@@ -137,16 +137,25 @@ namespace Valuable
     /// @endcond
 
     /// Serializes object t to new element that is added to the archive.
+    /// @param archive The serializer archive that is used to create the new
+    ///                element and maintains the serialization state and options.
+    /// @param t Object to be serialized
+    /// @return The new serialized element.
     template <typename T>
     ArchiveElement serialize(Archive & archive, const T & t);
 
     /// Deserializes an element. If deserialization fails or the template type
     /// is not compatible with the data in the element, an object of T created
     /// by its default constructor or NULL is returned.
+    /// @param element Serialized element that holds the data that should be deserialized.
+    /// @return Deserialized type
     template <typename T>
     typename remove_const<T>::Type deserialize(const ArchiveElement & element);
 
-    /// Compatibility function that deserializes DOMElement. Use deserialize(const ArchiveElement&) instead.
+    /// Compatibility function that deserializes DOMElement.
+    /// Use deserialize(const ArchiveElement&) instead.
+    /// @param element XML element that is deserialized
+    /// @return Deserialized type
     template <typename T>
     typename remove_const<T>::Type deserializeXML(const DOMElement & element);
 
@@ -286,8 +295,6 @@ namespace Valuable
       }
     };
 
-    /// @endcond
-
     template <typename T>
     inline ArchiveElement serialize(Archive & archive, const T & t)
     {
@@ -312,12 +319,19 @@ namespace Valuable
       XMLArchiveElement e(element);
       return deserialize<T>(e);
     }
+    /// @endcond
 
     /// Serialize object to a XML file. Example usage:
+    /// @code
     /// Serializer::serializeXML("widget.xml", widget, SerializationOptions::ONLY_CHANGED);
+    /// @endcode
+    /// @param filename output xml filename
+    /// @param t Object to be serialized
+    /// @param opts Bitmask of SerializationOptions::Options
+    /// @return True on success
     template <typename T>
     inline bool serializeXML(const std::string & filename, const T & t,
-                            SerializationOptions::Options opts = SerializationOptions::DEFAULTS)
+                             unsigned int opts = SerializationOptions::DEFAULTS)
     {
       XMLArchive archive(opts);
       ArchiveElement e = serialize<T>(archive, t);
@@ -329,7 +343,11 @@ namespace Valuable
     }
 
     /// Deserialize object from a XML file. Example usage:
+    /// @code
     /// Widget * widget = Serializer::deserializeXML<Widget*>("widget.xml");
+    /// @endcode
+    /// @param filename Name of the XML file
+    /// @return Serialized object
     template <typename T>
     inline T deserializeXML(const std::string & filename)
     {

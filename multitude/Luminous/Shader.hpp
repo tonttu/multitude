@@ -40,7 +40,7 @@ namespace Luminous {
   public:
     Shader();
     /// Constructs a shader
-    Shader(Valuable::HasValues * parent, const char * name);
+    Shader(Valuable::HasValues * host, const char * name);
     /// Deletes the shader
     virtual ~Shader();
 

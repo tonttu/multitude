@@ -10,8 +10,8 @@ namespace Valuable
 {
 
   template <class T>
-  ValueRectT<T>::ValueRectT(HasValues * parent, const std::string & name, const Nimble::RectT<T> & r, bool transit)
-    : Base(parent, name, r, transit)
+  ValueRectT<T>::ValueRectT(HasValues * host, const std::string & name, const Nimble::RectT<T> & r, bool transit)
+    : Base(host, name, r, transit)
   {}
 
   template <class T>

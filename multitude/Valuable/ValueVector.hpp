@@ -66,9 +66,9 @@ namespace Valuable
     VectorType operator +
       (const VectorType & v) const { return Base::m_value + v; }
 
-    /** Access vector elements by their index.
-
-        @return Returns the ith element. */
+    /// Access vector elements by their index.
+    /// @param i Index, starting from zero
+    /// @return Returns the ith element.
     ElementType operator [] (int i) const { return Base::m_value[i]; }
 
     /// Returns the data in its native format
@@ -83,9 +83,10 @@ namespace Valuable
     /// Sets the value
       virtual bool set(const VectorType & v);
 
-      /** Returns the internal vector object as a constant reference. */
+      /// Returns the internal vector object as a constant reference.
+      /// @return The wrapped vector value
       const VectorType & asVector() const { return Base::m_value; }
-      /** Returns the internal vector object as a constant reference. */
+      /// @copydoc asVector()
       const VectorType & operator * () const { return Base::m_value; }
 
       std::string asString(bool * const ok = 0) const;

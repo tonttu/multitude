@@ -91,7 +91,7 @@ namespace Valuable
   public:
     /// Creates a new DOMDocument
     /// @param options Bitmask of SerializationOptions::Options
-    XMLArchive(Options options = DEFAULTS);
+    XMLArchive(unsigned int options = DEFAULTS);
     /// Deletes the DOMDocument
     virtual ~XMLArchive();
 

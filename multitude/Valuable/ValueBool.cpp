@@ -19,9 +19,9 @@
 
 namespace Valuable
 {
-  ValueBool::ValueBool(HasValues * parent, const std::string & name,
+  ValueBool::ValueBool(HasValues * host, const std::string & name,
                        bool value, bool transit)
-    : ValueObjectT<bool>(parent, name, value, transit)
+    : ValueObjectT<bool>(host, name, value, transit)
   {}
 
   ValueBool::~ValueBool() {}

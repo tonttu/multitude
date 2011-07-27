@@ -263,13 +263,15 @@ namespace Valuable
     virtual void setRoot(const ArchiveElement & element) = 0;
 
     /// Writes the archive to file
+    /// @param filename Absolute or relative filepath
     /// @return True on success
-    virtual bool writeToFile(const std::string & file) const = 0;
+    virtual bool writeToFile(const std::string & filename) const = 0;
     /// Write the archive to memory buffer
     /// @param buffer The output buffer where the archive is written
     /// @return True if writing succeeds
     virtual bool writeToMem(std::string & buffer) const = 0;
     /// Reads the archive from a file
+    /// @param filename Absolute or relative filepath
     /// @return True on success
     virtual bool readFromFile(const std::string & filename) = 0;
 

@@ -54,12 +54,12 @@ namespace Resonant {
     will need to override this method to perform some preparation
     work.
 
-    @param channelsIn The number of desired input channels.  If
+    @param[out] channelsIn The number of desired input channels.  If
     necessary, the number of input and output channels is changed
     (for example if the module is stereo-only, but the host
     requested mono operation).
 
-    @param channelsOut The number of desired output channels.
+    @param[out] channelsOut The number of desired output channels.
 
 
     @return Returns true if the module prepared successfully.

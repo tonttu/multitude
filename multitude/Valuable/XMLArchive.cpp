@@ -123,7 +123,7 @@ namespace Valuable
 
   ///////////////////////////////////////////////////////////////////////////
 
-  XMLArchive::XMLArchive(Options options)
+  XMLArchive::XMLArchive(unsigned int options)
     : Archive(options),
     m_document(DOMDocument::createDocument())
   {}

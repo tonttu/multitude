@@ -179,16 +179,16 @@ namespace Valuable
     void processMessageVector4(const char * id, Nimble::Vector4);
 
     /// Converts the value object in a floating point number
-    /** The default implementation returns zero, and sets the
-        ok pointer to false (if it is non-null). */
+    /// @param ok If non-null, *ok is set to true/false on success/error
+    /// @return Object as a float, the default implementation returns 0.0f
     virtual float       asFloat(bool * const ok = 0) const;
     /// Converts the value object in an integer
-    /** The default implementation returns zero, and sets the
-        ok pointer to false (if it is non-null). */
+    /// @param ok If non-null, *ok is set to true/false on success/error
+    /// @return Object as a int, the default implementation returns zero
     virtual int         asInt(bool * const ok = 0) const;
     /// Converts the value object to a string
-    /** The default implementation returns an empty string, and sets the
-        ok pointer to false (if it is non-null). */
+    /// @param ok If non-null, *ok is set to true/false on success/error
+    /// @return Object as a string, the default implementation returns an empty string
     virtual std::string asString(bool * const ok = 0) const;
 
     /// Sets the value of the object
@@ -205,10 +205,13 @@ namespace Valuable
     /// Get the type id of the type
     virtual const char * type() const = 0;
 
-    /** The object is serialized using its name as a tag name. */
-    virtual ArchiveElement serialize(Archive &archive) const;
+    /// The object is serialized using its name as a tag name.
+    /// @param archive Serialization archive that is used to create new elements.
+    /// @return Serialized object as an ArchiveElement
+    virtual ArchiveElement serialize(Archive & archive) const;
 
-    /** The host object of the value object (is any). */
+    /// The host object of the value object (is any).
+    /// @return Pointer to the host
     HasValues * host() const { return m_host; }
     /** Sets the host pointer to zero and removes this object from the host. */
     void removeHost();

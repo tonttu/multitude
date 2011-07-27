@@ -147,8 +147,8 @@ namespace Luminous {
       : m_self(new Self)
   {}
 
-  Shader::Shader(Valuable::HasValues * parent, const char * name)
-      : Valuable::HasValues(parent, name, true),
+  Shader::Shader(Valuable::HasValues * host, const char * name)
+      : Valuable::HasValues(host, name, true),
       m_self(new Self)
   {}
 

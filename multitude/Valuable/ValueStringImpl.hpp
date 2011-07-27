@@ -32,22 +32,22 @@ namespace Valuable
 
 
   template<class T>
-  ValueStringT<T>::ValueStringT(HasValues * parent, const std::string & name,
+  ValueStringT<T>::ValueStringT(HasValues * host, const std::string & name,
                 const T & v, bool transit)
-    : Base(parent, name, v, transit)
+    : Base(host, name, v, transit)
   {}
 
   template<class T>
-  ValueStringT<T>::ValueStringT(HasValues * parent, const std::string & name,
+  ValueStringT<T>::ValueStringT(HasValues * host, const std::string & name,
                 const char * v, bool transit)
-    : Base(parent, name, v, transit)
+    : Base(host, name, v, transit)
   {}
 
 
   template<class T>
-  ValueStringT<T>::ValueStringT(HasValues * parent, const std::string & name,
+  ValueStringT<T>::ValueStringT(HasValues * host, const std::string & name,
                 bool transit)
-    : Base(parent, name, T(), transit)
+    : Base(host, name, T(), transit)
   {}
 
 
@@ -125,17 +125,17 @@ namespace Valuable
   {}
 
   template <>
-  ValueStringT<std::wstring>::ValueStringT(HasValues * parent, const std::string & name, const std::wstring & v, bool transit)
-  : ValueObject(parent, name, transit),
+  ValueStringT<std::wstring>::ValueStringT(HasValues * host, const std::string & name, const std::wstring & v, bool transit)
+  : ValueObject(host, name, transit),
   m_value(v)
   {}
   */
 
   // copybrief ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
   template<>
-  ValueStringT<std::wstring>::ValueStringT(HasValues * parent, const std::string & name,
+  ValueStringT<std::wstring>::ValueStringT(HasValues * host, const std::string & name,
                        const char * v, bool transit)
-    : Base(parent, name, std::wstring(), transit)
+    : Base(host, name, std::wstring(), transit)
   {
     std::string tmp(v);
     Radiant::StringUtils::utf8ToStdWstring(m_value, tmp);

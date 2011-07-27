@@ -40,9 +40,13 @@ namespace Valuable
     /// @endcond
 
     /// Copies a value
+    /// @param v New value
+    /// @return Reference to self
     ValueBool & operator = (bool v) { m_value = v; VALUEMIT_STD_OP }
 
     /// Boolean values can be set as integers in CSS files
+    /// @param v Integer that is converted to boolean, 0 == false, true otherwise
+    /// @return True, conversion can't fail
     bool set(int v);
 
     std::string asString(bool * const ok = 0) const;
