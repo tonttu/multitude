@@ -36,9 +36,11 @@ namespace Valuable
     virtual ~ValueListener();
 
     /// This method is called when some of the listened values changes
-    virtual void valueChanged(ValueObject *) = 0;
+    /// @param o the changed value
+    virtual void valueChanged(ValueObject * o) = 0;
     /// This method is called when some of the listened values is deleted
-    virtual void valueDeleted(ValueObject *);
+    /// @param o the changed value
+    virtual void valueDeleted(ValueObject * o);
 
   private:
 
