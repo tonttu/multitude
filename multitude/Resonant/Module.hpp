@@ -85,14 +85,16 @@ namespace Resonant {
     /// @return True if stopping succeeded (or was already stopped). False on error.
     virtual bool stop();
 
-    /** Sets the id of the module. */
-    void setId(const char *);
-    /** Returns the id of the module. */
-    const char * id() { return m_id; }
+    /// Sets the id of the module.
+    /// @param id The new id
+    void setId(const std::string & id);
+    /// ID of the module
+    /// @return the id of the module.
+    const std::string & id() const { return m_id; }
 
   private:
     Application * m_application;
-    char m_id[MAX_ID_LENGTH];
+    std::string m_id;
   };
 
 }

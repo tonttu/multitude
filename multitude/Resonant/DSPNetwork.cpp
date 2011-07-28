@@ -135,7 +135,7 @@ namespace Resonant {
       i->deleteModule();
   }
 
-  bool DSPNetwork::start(const char * device)
+  bool DSPNetwork::start(const std::string & device)
   {
     Radiant::Guard g(m_startupMutex);
 
@@ -144,10 +144,7 @@ namespace Resonant {
     if(isRunning())
       return false;
 
-    if(device)
-      strcpy(m_devName, device);
-    else
-      m_devName[0] = '\0';
+    m_devName = device;
 
     // m_continue = true;
 

@@ -64,7 +64,7 @@ VideoWindow::~VideoWindow()
 bool VideoWindow::open(const char * filename, const char * audiodev)
 {
   if(!m_dsp->isRunning()) {
-    bool ok = m_dsp->start(audiodev);
+    bool ok = m_dsp->start(audiodev ? audiodev : "");
     if(!ok)
       return false;
   }

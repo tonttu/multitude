@@ -238,8 +238,10 @@ namespace Resonant {
 
         To get a list of possible sound device names we recommend you use utility application
         ListPortAudioDevices.
+        @param device Device name or empty string for default device
+        @return False on error
     */
-    bool start(const char * device = 0);
+    bool start(const std::string device = "");
 
     /// Adds a DSP #Resonant::Module to the signal processing graph
     /** This function does not perform the actual addition, but puts the module into a FIFO,
@@ -316,7 +318,7 @@ DSPNetwork::instance().send(control);
     Radiant::BinaryData m_incopy;
     Radiant::Mutex m_inMutex;
 
-    char        m_devName[128];
+    std::string m_devName;
     // bool        m_continue;
     long        m_frames;
     int         m_doneCount;
