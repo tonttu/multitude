@@ -231,8 +231,23 @@ namespace Luminous {
     MipMapGenerator * gen = 0;
     if(compressedMipmaps) {
       m_compFilename = cacheFileName(filename, -1, "dds");
-      if(FileUtils::lastModified(m_compFilename) < m_fileModified ||
-         !Luminous::Image::ping(m_compFilename.c_str(), m_info)) {
+      unsigned long int ts = FileUtils::lastModified(m_compFilename);
+      if(ts == 0) {
+        // Cache file does not exist. Check if we want to generate mipmaps for
+        // this file, or does it have those already
+        if(!Luminous::Image::ping(filename, m_info)) {
+          error("CPUMipmaps::startLoading # failed to query image size for %s", filename);
+          return false;
+        }
+        if(m_info.pf.compression() && (m_info.mipmaps > 1 ||
+                                       (m_info.width < 5 && m_info.height < 5))) {
+          // We already have compressed image with mipmaps, no need to generate more
+          m_compFilename.clear();
+          m_compressedMipmaps = false;
+        }
+      }
+      if(m_compressedMipmaps && (ts < m_fileModified ||
+                                 !Luminous::Image::ping(m_compFilename.c_str(), m_info))) {
         gen = new MipMapGenerator(filename);
         gen->setListener(shared_from_this());
       }
@@ -561,8 +576,9 @@ namespace Luminous {
 
     if(m_info.pf.compression()) {
       std::shared_ptr<Luminous::CompressedImageTex> im(new Luminous::CompressedImageTex);
-      if(!im->read(m_compFilename, level)) {
-        error("CPUMipmaps::recursiveLoad # Could not read %s level %d", m_compFilename.c_str(), level);
+      std::string filename = m_compFilename.empty() ? m_filename : m_compFilename;
+      if(!im->read(filename, level)) {
+        error("CPUMipmaps::recursiveLoad # Could not read %s level %d", filename.c_str(), level);
         item.m_state = FAILED;
       } else {
         /// @todo this is wrong, compressed images doesn't always have alpha channel
