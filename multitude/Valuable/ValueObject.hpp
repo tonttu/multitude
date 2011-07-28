@@ -164,7 +164,7 @@ namespace Valuable
         @param data Binary blob that contains the argument data in easily parseable format.
 
     */
-    virtual void processMessage(const char * id, Radiant::BinaryData & data);
+    virtual void processMessage(const char *id, Radiant::BinaryData &data);
     /// Utility function for sending string message to the object
     void processMessageString(const char * id, const char * str);
     /// Utility function for sending a float message to the object
