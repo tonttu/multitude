@@ -17,6 +17,7 @@
 
 namespace Radiant
 {
+  /// Captures the current callstack
   class CallStack
   {
   public:
@@ -24,10 +25,16 @@ namespace Radiant
     CallStack();
     ~CallStack();
 
+    /// Returns the raw callstack
     const stackptr_t * stack() const { return m_frames; }
+
+    /// Returns the index-th element in the callstack
     stackptr_t operator[](size_t index) const { assert(index < m_frameCount); return m_frames[index]; }
+
+    /// Returns the number of frames in the callstack
     size_t size() const { return m_frameCount; }
 
+    /// Prints a human-readable version of the stack to the log
     void print() const;
 
   private:

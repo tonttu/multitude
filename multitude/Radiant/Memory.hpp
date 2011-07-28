@@ -26,6 +26,9 @@ namespace Radiant
 {
 // Some memory utility functions
 #if defined (RADIANT_WINDOWS)
+   /// Returns a memory aligned block of memory
+   /// @param size Amount of bytes to allocate
+   /// @param alignment Alignment boundary size (Must be power of 2)
    inline void * alignedMalloc(size_t size, unsigned int alignment)
    {
      void * ptr = _aligned_malloc(size, alignment);

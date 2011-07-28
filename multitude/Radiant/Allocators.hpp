@@ -5,9 +5,9 @@
 
 namespace Radiant
 {
-  // Aligned memory allocator
-  // alignment should be a power of 2
-  // TODO: static assert(!(alignment & (alignment-1)), "Alignment must be a power of 2")
+  /// Aligned memory allocator that can be used for STL containers
+  /// @note Alignment should be a power of 2
+  /// @todo static assert(!(alignment & (alignment-1)), "Alignment must be a power of 2")
   template<typename T, unsigned int alignment>
   class aligned_allocator
   {

@@ -40,9 +40,6 @@ namespace Radiant {
   /// Platform-independent threading
   /** This class is used by inheriting it and overriding the virtual
       method childLoop().
-
-      At the moment there is only POSIX-threads -based implementation,
-      that works on various UNIX-like systems.
       */
   class RADIANT_API Thread : public Patterns::NotCopyable
   {
