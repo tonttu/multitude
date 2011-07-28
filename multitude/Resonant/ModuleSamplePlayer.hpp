@@ -109,8 +109,12 @@ namespace Resonant {
     /** Sets the master gain */
     void setMasterGain(float gain) { m_masterGain = gain; }
 
+    /// Number of output channels
+    /// @return Number of output channels
     size_t channels() const { return m_channels; }
 
+    /// Current playback time
+    /// @return Current playback time
     const Radiant::TimeStamp & time() { return m_time; }
 
   private:

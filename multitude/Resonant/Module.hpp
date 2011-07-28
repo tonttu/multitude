@@ -67,10 +67,12 @@ namespace Resonant {
     virtual bool prepare(int & channelsIn, int & channelsOut);
     /** Sends a control message to the module.
 
-    The default implementation does nothing. Child classes with
-    dynamic variable will need to override this method.
+        The default implementation does nothing. Child classes with
+        dynamic variable will need to override this method.
+        @param id Command name
+        @param data Command parameters
      */
-    virtual void processMessage(const char * address, Radiant::BinaryData *);
+    virtual void processMessage(const char * id, Radiant::BinaryData * data);
     /** Processes one cycle of audio data.
 
     @param in Input audio data.

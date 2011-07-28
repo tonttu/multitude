@@ -61,12 +61,19 @@ namespace Resonant {
       /// Blocks until the file has been opened
       /** @return True if the file was opened successfully. */
       bool waitOpen();
-      /** Checks if the file is now open. */
+      /// Checks if the file is now open.
+      /// @return True is file is open
       bool isOpen() const { return m_file != 0; }
 
-      /** Write frames into the file (asynchronously). */
+      /// Write frames into the file (asynchronously).
+      /// @param data Buffer to write, (channels() * frames) floats
+      /// @param frames number of frames in the buffer
+      /// @return Number of frames written, or negative value on error
       int writeFrames(float * data, int frames);
-      /** Read frames from the file. */
+      /// Read frames from the file.
+      /// @param data Buffer that should hold at least (channels() * frames) floats
+      /// @param frames Maximum number of frames to read
+      /// @return Number of frames read to data, or negative value on error
       int readFrames(float * data, int frames);
 
       /// @copydoc writeFrames(float * data, int frames)
@@ -149,7 +156,7 @@ namespace Resonant {
         @param startFrame The initial frame for reading.
         This value is usually zero, for reading from the beginning of the file.
         @param userFormat The sample format the user of the handle is going to use.
-
+        @return Read-only handle to the new audio file
         */
     Handle * readFile(const char * filename, long startFrame,
               Radiant::AudioSampleFormat userFormat = Radiant::ASF_FLOAT32);
@@ -161,6 +168,7 @@ namespace Resonant {
         sample type with lbsndfile file type. For example SF_FORMAT_WAV | SF_FORMAT_PCM_24
         will give file in wav format, with 24-bits per sample.
         @param userFormat The sample format the user of the handle is going to use.
+        @return Write-only handle to the new audio file
 
         @see http://www.mega-nerd.com/libsndfile/api.html#open
 

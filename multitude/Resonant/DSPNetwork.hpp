@@ -262,17 +262,28 @@ control.writeString("moviegain/gain");
 control.writeFloat32(0.3);
 DSPNetwork::instance().send(control);
         \endcode
+        @param control Identifier string and correct commands for corresponding Module
     */
     void send(Radiant::BinaryData & control);
 
     /// Returns the default sample player object.
-    /** If the object does not exis yet, it is created on the fly. */
+    /// If the object does not exis yet, it is created on the fly.
+    /// This is not thread-safe
+    /// @return Default sampley player object
     ModuleSamplePlayer * samplePlayer();
 
+    /// Finds an item that holds a module with given id
+    /// @param id Module id, @see Module::id()
+    /// @return Pointer to the item inside DSPNetwork or NULL
     Item * findItem(const char * id);
+    /// Finds a module with name id inside one of the items in DSPNetwork
+    /// @param id Module id, @see Module::id()
+    /// @return Pointer to the module or NULL
     Module * findModule(const char * id);
 
+    /// @cond
     void dumpInfo(FILE *f);
+    /// @endcond
 
   private:
     /// Creates an empty DSPNetwork object.

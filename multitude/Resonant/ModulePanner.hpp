@@ -76,20 +76,29 @@ namespace Resonant {
     void makeFullHDStereo();
 
     /// Sets the location of a given loudspeaker in screen coordinates
+    /// @param i Speaker index, starting from 0
+    /// @param location Location in screen coordinates
     void setSpeaker(unsigned i, Nimble::Vector2 location);
-    /// @copydoc setSpeaker(unsigned i, Nimble::Vector2 location)
+    /// @param i Speaker index, starting from 0
+    /// @param x x coordinate of the speaker in screen coordinates
+    /// @param y y coordinate of the speaker in screen coordinates
     void setSpeaker(unsigned i, float x, float y);
 
     /// Sets the radius for the distance for collecting the audio to a single loudspeaker.
     /// Only has an effect if using the radial #Mode.
-    /** When a given sound source gets closer than he maximum radius its volume is faded in
-        so that at radius/2 the volume is at 100% (aka unity gain). */
+    /// When a given sound source gets closer than he maximum radius its volume is faded in
+    /// so that at radius/2 the volume is at 100% (aka unity gain).
+    /// @param r Radial mode radius
     void setCaptureRadius(float r) { m_maxRadius = r; ++m_generation; }
 
     /// Add a SoundRectangle. The ownership is transferred to this object.
     void addSoundRectangle(SoundRectangle * r);
 
+    /// Sets the panner mode
+    /// @param mode New panner mode
     void setMode(Mode mode);
+    /// Query the current panner mode
+    /// @return Current panner mode
     Mode getMode() const;
   private:
 
