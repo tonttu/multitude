@@ -40,14 +40,14 @@ namespace Radiant {
     Mutex(bool recursive = false);
     ~Mutex();
 
-    /// Lock the mutex, optionally blocking.
-    bool lock(bool block = true);
+    /// Lock the mutex
+    void lock();
 
     /** Tries to lock the mutex. Does not block. */
-    bool tryLock() { return lock(false); }
+    bool tryLock();
 
     /// Unlocks the mutex.
-    bool unlock();
+    void unlock();
 
   private:
 

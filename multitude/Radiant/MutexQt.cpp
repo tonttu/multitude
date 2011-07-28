@@ -33,20 +33,19 @@ namespace Radiant {
     delete m_d;
   }
 
-  bool Mutex::lock(bool block)
+  void Mutex::lock()
   {
-    if(block) {
-      m_d->lock();
-      return true;
-    } else
-      return m_d->tryLock();
+    m_d->lock();
   }
 
-  bool Mutex::unlock()
+  bool Mutex::tryLock()
+  {
+    return m_d->tryLock();
+  }
+
+  void Mutex::unlock()
   {
     m_d->unlock();
-
-    return true;
   }
 
   class Condition::D : public QWaitCondition {};
