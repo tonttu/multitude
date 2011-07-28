@@ -329,12 +329,12 @@ namespace Resonant {
   void AudioLoop::AudioLoopInternal::paFinished(void * self)
   {
     std::pair<AudioLoop*, int> stream = *reinterpret_cast<std::pair<AudioLoop*, int>*>(self);
-    stream.first->finished();
-    debugResonant("AudioLoop::paFinished # %p", stream.first);
+    stream.first->finished(stream.second);
+    debugResonant("AudioLoop::paFinished # %p %d", stream.first, stream.second);
   }
 
 
-  void AudioLoop::finished()
+  void AudioLoop::finished(int /*streamid*/)
   {
     m_isRunning = false;
   }

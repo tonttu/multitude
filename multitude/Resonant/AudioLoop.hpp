@@ -61,7 +61,9 @@ namespace Resonant {
     static void setDevicesFile(const std::string & xmlFilename);
 
   protected:
-    virtual void finished();
+    /// This is called from PortAudio thread when the stream becomes inactive
+    /// @param streamid Device / Stream number, @see setDevicesFile()
+    virtual void finished(int streamid);
 
     virtual int callback(const void * in, void * out,
                          unsigned long framesPerBuffer, int streamid
