@@ -73,6 +73,9 @@ SOURCES += BinaryData.cpp
 SOURCES += VideoCamera.cpp
 SOURCES += Color.cpp
 SOURCES += ColorUtils.cpp
+SOURCES += ConditionQt.cpp
+SOURCES += MutexQt.cpp
+SOURCES += ThreadQt.cpp
 SOURCES += ConfigReader.cpp
 SOURCES += DateTime.cpp
 SOURCES += DirectoryCommon.cpp
@@ -119,9 +122,6 @@ unix {
     SOURCES += TCPSocketPosix.cpp
     SOURCES += UDPSocketPosix.cpp
     SOURCES += VideoCamera1394.cpp
-    SOURCES += ConditionPt.cpp
-    SOURCES += MutexPt.cpp
-    SOURCES += ThreadPt.cpp
     SOURCES += LockFilePosix.cpp
     LIBS += -lpthread \
         $$LIB_RT \
@@ -146,9 +146,6 @@ win32 {
     SOURCES += TCPServerSocketPosix.cpp
     SOURCES += TCPSocketPosix.cpp
     SOURCES += UDPSocketPosix.cpp
-    SOURCES += ConditionQt.cpp
-    SOURCES += MutexQt.cpp
-    SOURCES += ThreadQt.cpp
     SOURCES += LockFileWin32.cpp
     LIBS += Ws2_32.lib \
         ShLwApi.lib \
