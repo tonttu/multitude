@@ -137,19 +137,20 @@ namespace Nimble {
     /// Sum of all components
     inline T             sum() const { return x + y + z; }
 
-    //template <class S>
-    //void copy(const S * data) { x = data[0]; y = data[1]; z = data[2]; }
+    // non-const reference version of vector2() was removed because it enabled
+    // really arcane code
 
-    //static Vector3T & cast(T * ptr) { return * (Vector3T *) ptr; }
-    //static const Vector3T & cast(const T * ptr) { return * (Vector3T *) ptr; }
-
-    /// @todo duplicates (vector2(), xy())
-    /// Returns a vector containing the two first components
-    inline Vector2T<T> & vector2() { return * (Vector2T<T> *) this; }
-    /// Returns a vector containing the two first components
+    /// Casts the first two components to Vector2
+    /// @return Const reference to the XY -components
     inline const Vector2T<T> & vector2() const { return * (Vector2T<T> *) this; }
-    /// Returns a vector containing the two first components
-    inline Vector2T<T> xy() const { return Vector2T<T>(x, y); }
+    /// Makes a new vector2 of two freely selected components of vector3
+    /// @param i0 Index of the first component,  vec2.x = vec3[i0], 0..2
+    /// @param i1 Index of the second component, vec2.y = vec3[i1], 0..2
+    /// @return New vector2
+    inline Vector2T<T> vector2(int i0, int i1) const
+    {
+      return Vector2T<T>(get(i0), get(i1));
+    }
   };
 
 #ifdef WIN32

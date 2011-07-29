@@ -125,23 +125,29 @@ namespace Nimble {
     /// Returns the largest component
     inline T             maximum() const { T q = x>y?x:y; T a = z>w?z:w; return q>a?q:a; }
 
-    /// Cast to Vector2T
-    inline const Vector2T<T> & xy() const { return * (Vector2T<T> *) this; }
-    /// Cast to Vector2T
-    /// @todo duplicate with xy(), we should pick one convention and stick to it (xy(), xyz(), etc)
+    /// Casts the first two components to Vector2
+    /// @return Const reference to the XY -components
     inline const Vector2T<T> & vector2() const { return * (Vector2T<T> *) this; }
-    /// Cast to Vector3T
-    inline Vector3T<T> & vector3() { return * (Vector3T<T> *) this; }
-    /// Returns a vector containing the first three components
+    /// Makes a new vector2 of two freely selected components of vector4
+    /// @param i0 Index of the first component,  vec2.x = vec4[i0], 0..3
+    /// @param i1 Index of the second component, vec2.y = vec4[i1], 0..3
+    /// @return New vector2
+    inline Vector2T<T> vector2(int i0, int i1) const
+    {
+      return Vector2T<T>(get(i0), get(i1));
+    }
+    /// Casts the first three components to Vector3
+    /// @return Const reference to the XYZ -components
     inline const Vector3T<T> & vector3() const { return * (Vector3T<T> *) this; }
-
-    /// Copy some data
-    template <class S>
-    inline void copy(const S * data) { x = data[0]; y = data[1]; z = data[2]; w = data[3]; }
-    /** Copies three elements without affecting the fourth element.
-    @param data array of three decimals */
-    template <class S>
-    inline void copy3(const S * data) { x = data[0]; y = data[1]; z = data[2]; }
+    /// Makes a new vector3 of two freely selected components of vector4
+    /// @param i0 Index of the first component,  vec3.x = vec4[i0], 0..3
+    /// @param i1 Index of the second component, vec3.y = vec4[i1], 0..3
+    /// @param i2 Index of the third component,  vec3.z = vec4[i2], 0..3
+    /// @return New vector2
+    inline Vector3T<T> vector3(int i0, int i1, int i2) const
+    {
+      return Vector3T<T>(get(i0), get(i1), get(i2));
+    }
   };
 
   /// Add two vectors

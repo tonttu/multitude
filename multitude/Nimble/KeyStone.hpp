@@ -249,7 +249,7 @@ namespace Nimble {
     { return Vector3(m_centerShift.x, m_centerShift.y, m_centerShiftSpan); }
     /// Sets the parameters for the center shifting
     void setCenterShift(Nimble::Vector3 params)
-    { m_centerShift = params.xy(); m_centerShiftSpan = params[2]; }
+    { m_centerShift = params.vector2(); m_centerShiftSpan = params[2]; }
 
     /// Recalculates the limits of which pixels are inside the tracking area, and which are not.
     void updateLimits();
