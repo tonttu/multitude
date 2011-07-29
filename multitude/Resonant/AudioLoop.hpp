@@ -84,13 +84,14 @@ namespace Resonant {
     virtual int callback(const void * in, void * out,
                          unsigned long framesPerBuffer, int streamid) = 0;
 
-  private:
+    /// @cond
     bool       m_isRunning;
     bool       m_initialized;
 
     class AudioLoopInternal;
 
     AudioLoopInternal * m_d;
+    /// @nocond
  };
 
 }

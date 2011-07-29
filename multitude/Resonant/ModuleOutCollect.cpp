@@ -82,7 +82,7 @@ namespace Resonant {
     bool ok = true;
     Move tmp;
 
-    ok = control->readString(tmp.sourceId, Module::MAX_ID_LENGTH);
+    ok = control->readString(tmp.sourceId);
 
     // info("ModuleOutCollect::control # Now %d sources in the map", (int) m_map.size());
 
@@ -93,9 +93,9 @@ namespace Resonant {
       // Remove all the mappings that match the given input.
 
       for(iterator it = m_map.begin(); it != m_map.end(); ) {
-        if(strcmp(tmp.sourceId, (*it).sourceId) == 0) {
+        if(tmp.sourceId == it->sourceId) {
           debugResonant("ModuleOutCollect::control # dropping connection to %s:%d",
-                tmp.sourceId, (*it).from);
+                        tmp.sourceId.c_str(), (*it).from);
           it = m_map.erase(it);
         }
         else
@@ -110,13 +110,13 @@ namespace Resonant {
 
       if(!ok) {
         error("ModuleOutCollect::control # Could not parse control # %s",
-              tmp.sourceId);
+              tmp.sourceId.c_str());
         return;
       }
       else if(strcmp(address, "newmapping") == 0) {
         m_map.push_back(tmp);
         debugResonant("ModuleOutCollect::control # newmapping %s %d -> %d",
-              tmp.sourceId, tmp.from, tmp.to);
+                      tmp.sourceId.c_str(), tmp.from, tmp.to);
       }
       else if(strcmp(address, "removemapping") == 0) {
         iterator it = std::find(m_map.begin(), m_map.end(), tmp);
@@ -126,7 +126,7 @@ namespace Resonant {
         }
         else
           error("ModuleOutCollect::control # Could not erase mapping # %s:%d -> %d",
-                tmp.sourceId, tmp.from, tmp.to);
+                tmp.sourceId.c_str(), tmp.from, tmp.to);
       }
       else {
         error("ModuleOutCollect::control # No param \"%s\"", address);

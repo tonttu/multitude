@@ -37,8 +37,8 @@ namespace Resonant {
     class Move
     {
     public:
-      Move() : from(0), to(0) { sourceId[0] = 0; }
-      char sourceId[Module::MAX_ID_LENGTH];
+      Move() : from(0), to(0) {}
+      std::string sourceId;
       int from, to;
     };
 /// @endcond
@@ -74,7 +74,7 @@ namespace Resonant {
                            const ModuleOutCollect::Move & b)
   {
     return (a.from == b.from)  && (a.to == b.to) &&
-      (strcmp(a.sourceId, b.sourceId) == 0);
+      (a.sourceId == b.sourceId);
   }
 
   /// @endcond

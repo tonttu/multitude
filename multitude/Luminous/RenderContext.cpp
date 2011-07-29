@@ -181,7 +181,7 @@ namespace Luminous
   {
   public:
 
-    Internal(const Luminous::MultiHead::Window * win, Luminous::RenderContext & rc)
+    Internal(const Luminous::MultiHead::Window * win, Luminous::RenderContext & /*rc*/)
         : m_recursionLimit(DEFAULT_RECURSION_LIMIT),
         m_recursionDepth(0),
         m_renderCount(0),

@@ -45,19 +45,9 @@ namespace Resonant {
     return true;
   }
 
-  void Module::setId(const char * id)
+  void Module::setId(const std::string & id)
   {
-    if(!id)
-      m_id[0] = 0;
-    else {
-      size_t len = strlen(id);
-
-      if(len >= MAX_ID_LENGTH) {
-       error("Module::setId # Too long id, %ld bytes", len);
-      }
-      else
-        memcpy(m_id, id, len + 1);
-    }
+    m_id = id;
   }
 
 }

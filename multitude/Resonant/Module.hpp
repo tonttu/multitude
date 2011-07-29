@@ -38,8 +38,6 @@ namespace Resonant {
   public:
 
     enum {
-      /// Maximum length of the #id string (bytes)
-      MAX_ID_LENGTH = 256,
       /// Maximum length of a processing cycle (samples)
       MAX_CYCLE = 1024
     };
