@@ -23,7 +23,7 @@
 
 #include <Radiant/Trace.hpp>
 
-#include <trings.h>
+#include <strings.h>
 
 #include <algorithm>
 #include <typeinfo>
