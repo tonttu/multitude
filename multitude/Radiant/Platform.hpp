@@ -59,6 +59,10 @@
 #   ifndef _HAS_TR1
 #     error "Compiler TR1 support was not found. Please install Visual Studio 2008 Service Pack 1 or use a newer compiler."
 #   endif
+
+// Grmblrgrmbl, weird windows CRT stuffs
+#define snprintf _snprintf
+
 //
 // Detect linux
 // 

@@ -30,10 +30,6 @@
 #include <QFileInfo>
 #include <QCryptographicHash>
 
-#ifdef WIN32
-#define snprintf _snprintf
-#endif
-
 namespace {
   // after first resize modify the dimensions so that we can resize
   // 5 times with quarterSize
