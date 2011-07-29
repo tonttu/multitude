@@ -24,7 +24,7 @@ static double g_orthoCameraScale = 178.0;
 //////////
 
 Scene::Scene(KFbxSdkManager * sdk)
-  : m_time(0), m_currentLayer(0)
+  : m_time(0), m_currentLayer(0), m_textureManager(TextureManager::instance())
 {
   m_manager = sdk;
   m_scene = KFbxScene::Create(sdk, "");
@@ -592,7 +592,7 @@ Mesh* Scene::buildMesh(KFbxNode * node, KFbxXMatrix & globalPosition, KFbxPose *
         if (!texture)
           continue;
 
-        myMesh->m_material.m_textures[properties[i]] = TextureManager::instance().load(texture->GetRelativeFileName());
+        myMesh->m_material.m_textures[properties[i]] = m_textureManager->load(texture->GetRelativeFileName());
       }
     }
   }

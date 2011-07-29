@@ -66,6 +66,7 @@ private:
     KTime m_time;
     KFbxAnimLayer* m_currentLayer;
     KFbxSdkManager * m_manager;
+    std::shared_ptr<TextureManager> m_textureManager;
 };
 
 }
