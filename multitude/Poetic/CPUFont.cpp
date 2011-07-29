@@ -28,7 +28,7 @@ namespace Poetic
     Luminous::GLResource * gf = glr->getResource(this);
 
     if(gf) {
-      GPUFont * font = dynamic_cast<GPUFont *> (gf);
+      GPUFont * font = static_cast<GPUFont *> (gf);
       assert(font);
       return font;
     }

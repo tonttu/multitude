@@ -98,7 +98,7 @@ namespace Poetic
     GPUFontBase * font = m_fonts[fontNo];
     if(!font) {
       // Create new
-      CPUFontBase * cFont = dynamic_cast<CPUFontBase *> (m_cmf->getFont(fontNo));
+      CPUFontBase * cFont = static_cast<CPUFontBase *> (m_cmf->getFont(fontNo));
       assert(cFont);
       font = new GPUTextureFont(cFont);
 

@@ -35,7 +35,7 @@ namespace Poetic
       virtual ~GPUFontBase();
 
       /// Returns the CPU font
-      CPUFont * cpuFont() { return dynamic_cast<CPUFont *> (m_cpuFont); }
+      CPUFont * cpuFont() { return static_cast<CPUFont *> (m_cpuFont); }
 
     protected:
       /// CPU font that this GPU font uses
