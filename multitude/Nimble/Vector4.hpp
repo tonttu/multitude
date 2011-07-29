@@ -89,8 +89,6 @@ namespace Nimble {
     inline double	lengthSqr   (void) const		       { return x*x+y*y+z*z+w*w; }
     /// Normalizes the vector to given length
     inline Vector4T&	normalize   (double len = 1.0)		       { double l = length(); if (l!=0.0) *this *= T(len/l); return *this; }
-    /// Normalizes the first three components to given length
-    inline Vector4T&	normalize3   (double len = 1.0)		       { vector3().normalize(len); return *this; }
     /// Multiplies the vector component-wise
     inline Vector4T&	scale		(const Vector4T& v)	       { x *= v.x; y *= v.y; z *= v.z; w *= v.w; return *this; }
     /// Divides the vector component-wise

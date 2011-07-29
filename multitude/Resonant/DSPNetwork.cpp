@@ -23,10 +23,11 @@
 
 #include <Radiant/Trace.hpp>
 
-#include <strings.h>
+#include <trings.h>
 
 #include <algorithm>
 #include <typeinfo>
+#include <cstdio>
 
 #include <portaudio.h>
 
