@@ -91,7 +91,7 @@ namespace Resonant {
     class AudioLoopInternal;
 
     AudioLoopInternal * m_d;
-    /// @nocond
+    /// @endcond
  };
 
 }
