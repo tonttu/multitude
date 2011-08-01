@@ -85,6 +85,8 @@ namespace Radiant {
   class RADIANT_API Guard : public Patterns::NotCopyable
   {
   public:
+    /// Construct guard
+    /// @param mutex mutex to guard
     Guard(Mutex & mutex) : m_mutex(mutex) { m_mutex.lock(); }
     ~Guard() { m_mutex.unlock(); }
 

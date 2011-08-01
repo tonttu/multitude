@@ -130,6 +130,7 @@ namespace Radiant
         return os.str();
     }
 
+    /// Convert std::wstring to std::string
     template<>
     inline std::string stringify(const std::wstring & x) {
       std::string out;

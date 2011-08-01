@@ -11,6 +11,7 @@ namespace Radiant
   template<typename T, unsigned int alignment>
   class aligned_allocator
   {
+    /// @cond
   public:
     typedef size_t    size_type;
     typedef ptrdiff_t difference_type;
@@ -41,7 +42,11 @@ namespace Radiant
     void destroy(pointer ptr) { ptr->~T(); }
 
     size_t max_size() const { return (size_t)(-1) / sizeof(T); }
+
+    /// @endcond
   };
+
+  /// @cond
 
   // Allocators are always equal
   template<typename T, unsigned int alignment>
@@ -49,6 +54,8 @@ namespace Radiant
 
   template<typename T, unsigned int alignment>
   inline bool operator!=(const aligned_allocator<T,alignment> &, const aligned_allocator<T,alignment> &) { return false; }
+
+  /// @endcond
 }
 
 #endif // RADIANT_ALLOCATORS_HPP
