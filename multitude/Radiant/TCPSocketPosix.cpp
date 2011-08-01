@@ -252,13 +252,13 @@ namespace Radiant
     bzero( & pfd, sizeof(pfd));
 
     pfd.fd = m_d->m_fd;
-    pfd.events = POLLIN;
+    pfd.events = POLLRDNORM;
     int status = wrap_poll(&pfd, 1, waitMicroSeconds / 1000);
     if(status == -1) {
       Radiant::error("TCPSocket::isPendingInput %s", wrap_strerror(wrap_errno));
     }
 
-    return (pfd.revents & POLLIN) == POLLIN;
+    return (pfd.revents & POLLRDNORM) == POLLRDNORM;
   }
 
   void TCPSocket::moveToThread(Thread *) {
