@@ -29,12 +29,13 @@ namespace Radiant
         No other operations should be done on this file
         If the file doesn't exist it is created.
     */
+    /// @param filename Filename of lockfile
     LockFile(const char * filename);
 
     /// Releases the lock
     ~LockFile();
 
-    /// Returns true if the file was succesfully locked for exclusive use
+    /// @returns true if the file was succesfully locked for exclusive use
     bool isLocked() const;
 
   private:

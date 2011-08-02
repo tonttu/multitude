@@ -124,9 +124,9 @@ namespace Radiant
       return wstr;
     }
 
-    string stdWstringToStdString(const wstring & wstr)
+    std::string stdWstringToStdString(const std::wstring & wstr)
     {
-      string   str;
+      std::string   str;
 
       const size_t l = wstr.length();
       str.resize(l);
@@ -138,55 +138,52 @@ namespace Radiant
       return str;
     }
 
-    void split(const string & s, const string & delim, StringList & out, bool skipEmpty)
+    void split(const std::string & s, const std::string & delims, StringList & out, bool skipEmpty)
     {
-      string::size_type offset = 0;
-      string::size_type index = 0;
+      out.clear();
 
-      index = s.find(delim, offset);
+      if(s.empty())
+        return;
 
-      while(index != string::npos) {
-        string piece = s.substr(offset, index - offset);
+      // Find first a delimiter
+      std::string   scopy(s);
+      size_t    pos = scopy.find_first_of(delims);
 
-        if(skipEmpty && piece != string(""))
-          out.push_back(piece);
-
-        offset += index - offset + delim.length();
-        index = s.find(delim, offset);
+      // Loop until no delimiters left
+      while(pos != scopy.npos) {
+        if (!skipEmpty || pos > 0)
+          out.push_back(scopy.substr(0, pos));
+        scopy.erase(0, pos + 1);
+        pos = scopy.find_first_of(delims);
       }
 
-      string piece = s.substr(offset);
-
-      if(skipEmpty && piece != string(""))
-        out.push_back(piece);
+      // Push remainder of wstring onto list
+      if(!scopy.empty())
+        out.push_back(scopy);
     }
 
-    void split(const wstring & ws, const wstring & delim, WStringList & out)
+    void split(const std::wstring & ws, const std::wstring & delims, WStringList & out, bool skipEmpty)
     {
       out.clear();
 
       if(ws.empty())
-      {
         return;
-      }
 
       // Find first a delimiter
-      wstring   wscopy(ws);
-      size_t    pos = wscopy.find_first_of(delim);
+      std::wstring   wscopy(ws);
+      size_t    pos = wscopy.find_first_of(delims);
 
       // Loop until no delimiters left
-      while(pos != wscopy.npos)
-      {
-        out.push_back(wscopy.substr(0, pos));
+      while(pos != wscopy.npos) {
+        if (!skipEmpty || pos > 0)
+          out.push_back(wscopy.substr(0, pos));
         wscopy.erase(0, pos + 1);
-        pos = wscopy.find_first_of(delim);
+        pos = wscopy.find_first_of(delims);
       }
 
       // Push remainder of wstring onto list
       if(!wscopy.empty())
-      {
         out.push_back(wscopy);
-      }
     }
 
     void merge(std::wstring & dest, const WStringList & src)
@@ -194,8 +191,8 @@ namespace Radiant
       dest.clear();
 
       for(WStringList::const_iterator it = src.begin();
-      it != src.end(); it++) {
-    dest += (*it);
+          it != src.end(); it++) {
+        dest += (*it);
       }
     }
 
@@ -298,7 +295,7 @@ namespace Radiant
       return res;
     }
 
-    void stdWstringToUtf8(string & dest, const wstring & src)
+    void stdWstringToUtf8(std::string & dest, const std::wstring & src)
     {
       int bytes = utf8EncodedLength(src);
       dest.resize(bytes);
@@ -343,7 +340,7 @@ namespace Radiant
       return res;
     }
 
-    int utf8DecodedLength(const string & src)
+    int utf8DecodedLength(const std::string & src)
     {
       int characters = 0;
 
@@ -388,7 +385,7 @@ namespace Radiant
       return characters;
     }
 
-    int utf8EncodedLength(const wstring & src)
+    int utf8EncodedLength(const std::wstring & src)
     {
       int bytes = 0;
 
@@ -489,7 +486,7 @@ namespace Radiant
     }
 
 #ifdef WIN32
-    string getLastErrorMessage()
+    std::string getLastErrorMessage()
     {
       const int   errStrSize = 1024;
       char  szErrStr[errStrSize] = "";
