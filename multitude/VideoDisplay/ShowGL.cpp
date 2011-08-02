@@ -327,7 +327,7 @@ namespace VideoDisplay {
       m_outOfSyncTotal(0),
       m_syncing(false)
   {
-    eventAddSend("videoatend");
+    eventAddOut("videoatend");
     debugVideoDisplay("ShowGL::ShowGL # %p", this);
 
     clearHistogram();

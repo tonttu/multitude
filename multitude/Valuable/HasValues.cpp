@@ -367,7 +367,7 @@ namespace Valuable
     return m_id;
   }
 
-  void HasValues::eventAddSend(const std::string & id)
+  void HasValues::eventAddOut(const std::string & id)
   {
     if (m_eventSendNames.find(id) != m_eventSendNames.end()) {
       warning("HasValues::eventAddSend # Trying to register event '%s' that is already registered", id.c_str());
@@ -379,7 +379,7 @@ namespace Valuable
     }
   }
 
-  void HasValues::eventAddListen(const std::string & id)
+  void HasValues::eventAddIn(const std::string & id)
   {
     if (m_eventListenNames.find(id) != m_eventListenNames.end()) {
       warning("HasValues::eventAddListen # Trying to register duplicate event handler for event '%s'", id.c_str());

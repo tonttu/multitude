@@ -211,19 +211,19 @@ namespace Valuable
     Uuid id() const;
 
     /// Registers a new event this class can send with eventSend
-    void eventAddSend(const std::string & id);
+    void eventAddOut(const std::string & id);
 
     /// Registers a new event that this class handles in processMessage
-    void eventAddListen(const std::string & id);
+    void eventAddIn(const std::string & id);
 
     /// Returns true if this object accepts event 'id' in processMessage
     bool acceptsEvent(const std::string & id) const;
 
     /// Returns set of all registered OUT events
-    const std::set<std::string> & eventSendNames() const { return m_eventSendNames; }
+    const std::set<std::string> & eventOutNames() const { return m_eventSendNames; }
 
     /// Returns set of all registered IN events
-    const std::set<std::string> & eventListenNames() const { return m_eventListenNames; }
+    const std::set<std::string> & eventInNames() const { return m_eventListenNames; }
 
   protected:
 

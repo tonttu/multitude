@@ -51,7 +51,7 @@ namespace Luminous
     , m_frameLimit(1.5*(1<<30)/60.0)
     , m_inited(false)
   {
-    eventAddListen("frame");
+    eventAddIn("frame");
   }
 
   long & UploadLimiter::available()
