@@ -14,6 +14,7 @@
  */
 
 #include "FileUtils.hpp"
+#include "Platform.hpp"
 #include "PlatformUtils.hpp"
 #include "StringUtils.hpp"
 #include "Directory.hpp"
@@ -29,7 +30,7 @@
 
 #include <QFileInfo>
 
-#ifdef WIN32
+#ifdef RADIANT_WINDOWS
 #include <io.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -37,24 +38,21 @@
 #include <sys/types.h>
 // The POSIX name for this item is deprecated..
 #pragma warning(disable: 4996)
-#endif
-
-
-using namespace std;
+#endif // PLATFORM_WINDOWS
 
 namespace Radiant
 {
 
   using namespace StringUtils;
 
-  unsigned long FileUtils::getFileLen(ifstream& file)
+  unsigned long FileUtils::getFileLen(std::ifstream& file)
   {
     if(!file.good()) return 0;
 
     unsigned long pos = file.tellg();
-    file.seekg(0, ios::end);
+    file.seekg(0, std::ios::end);
     unsigned long len = file.tellg();
-    file.seekg(pos, ios::beg);
+    file.seekg(pos, std::ios::beg);
 
     return len;
   }
@@ -101,19 +99,18 @@ namespace Radiant
 
   char* FileUtils::loadTextFile(const char* filename)
   {
-    ifstream file;
+    std::ifstream file;
 
-    file.open(filename, ios::in | ios::binary);
+    file.open(filename, std::ios::in | std::ios::binary);
     if(!file.good()) {
-      cerr << "loadTextFile # could not open '" << filename <<
-          "' for reading" << endl;
+      error("loadTextFile # could not open '%s' for reading", filename);
       return 0;
     }
 
     unsigned long len = getFileLen(file);
 
     if(len == 0) {
-      cerr << "loadTextFile # file '" << filename << "' is empty" << endl;
+      error("loadTextFile # file '%s' is empty", filename);
       return 0;
     }
 
@@ -130,11 +127,11 @@ namespace Radiant
   {
     std::wstring res;
 
-    ifstream file(filename.c_str());
+    std::ifstream file(filename.c_str());
 
     if(file.is_open()) {
 
-      string line;
+      std::string line;
 
       while(getline(file, line))
         res += StringUtils::utf8AsStdWstring(line) + wchar_t(0x200B); // W_NEWLINE
@@ -147,7 +144,7 @@ namespace Radiant
 
   bool FileUtils::writeTextFile(const char * filename, const char * contents)
   {
-#ifdef WIN32
+#ifdef RADIANT_WINDOWS
     int fd = _creat(filename, _S_IWRITE);
 #else
     int fd = creat(filename, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
@@ -164,19 +161,19 @@ namespace Radiant
     return ok;
   }
 
-  string FileUtils::path(const string & filepath)
+  std::string FileUtils::path(const std::string & filepath)
   {
     size_t cut = filepath.rfind("/") + 1;
     return filepath.substr(0, cut);
   }
 
-  string FileUtils::filename(const string & filepath)
+  std::string FileUtils::filename(const std::string & filepath)
   {
     size_t cut = filepath.rfind("/") + 1;
     return filepath.substr(cut);
   }
 
-  string FileUtils::baseFilename(const string & filepath)
+  std::string FileUtils::baseFilename(const std::string & filepath)
   {
     size_t cut1 = filepath.rfind("/") + 1;
     size_t cut2 = filepath.rfind(".");
@@ -202,14 +199,14 @@ namespace Radiant
   }
 
 
-  std::string FileUtils::suffix(const string & filepath)
+  std::string FileUtils::suffix(const std::string & filepath)
   {
     QFileInfo fi(filepath.c_str());
 
     return fi.suffix().toStdString();
   }
 
-  string FileUtils::suffixLowerCase(const string & filepath)
+  std::string FileUtils::suffixLowerCase(const std::string & filepath)
   {
     size_t cut = filepath.rfind(".") + 1;
     return StringUtils::lowerCase(filepath.substr(cut));
@@ -218,18 +215,18 @@ namespace Radiant
   bool FileUtils::suffixMatch(const std::string & filename,
                               const std::string & suf)
   {
-    string s = suffix(filename);
+    std::string s = suffix(filename);
     return StringUtils::lowerCase(s) == StringUtils::lowerCase(suf);
   }
 
-  string FileUtils::findFile(const string & filename, const string & paths)
+  std::string FileUtils::findFile(const std::string & filename, const std::string & paths)
   {
     StringList pathList;
-    split(paths, ";", pathList, true);
+    split(paths, ":;", pathList, true);
 
     for(StringList::iterator it = pathList.begin();
     it != pathList.end(); it++) {
-      string fullPath = (*it) + string("/") + filename;
+      std::string fullPath = (*it) + std::string("/") + filename;
 
       debugRadiant("Radiant::findFile # Testing %s for %s", (*it).c_str(), filename.c_str());
 
@@ -242,14 +239,14 @@ namespace Radiant
     return std::string();
   }
 
-  string FileUtils::findOverWritable(const string & filename, const string & paths)
+  std::string FileUtils::findOverWritable(const std::string & filename, const std::string & paths)
   {
     StringList pathList;
-    split(paths, ";", pathList, true);
+    split(paths, ":;", pathList, true);
 
     for(StringList::iterator it = pathList.begin();
     it != pathList.end(); it++) {
-      string fullPath = (*it) + string("/") + filename;
+      std::string fullPath = (*it) + std::string("/") + filename;
 
       if(fileAppendable(fullPath.c_str()))
         return fullPath;
@@ -265,20 +262,20 @@ namespace Radiant
     StringList pieces;
     split(filePath, "/", pieces, true);
 
-    const string file(pieces.back());
+    const std::string file(pieces.back());
     pieces.pop_back();
 
-    string soFar("");
+    std::string soFar("");
 
     for(StringList::iterator it = pieces.begin(); it != pieces.end(); it++) {
-      soFar += string("/") + *it;
+      soFar += std::string("/") + *it;
 
       if(!Directory::exists(soFar)) {
         Directory::mkdir(soFar);
       }
     }
 
-    soFar += string("/") + file;
+    soFar += std::string("/") + file;
 
     return fopen(soFar.c_str(), "w");
   }
@@ -315,6 +312,4 @@ namespace Radiant
       fprintf(f, ". ");
     }
   }
-
-
 }
