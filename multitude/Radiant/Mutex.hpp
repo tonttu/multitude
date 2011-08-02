@@ -23,6 +23,8 @@
 // Required for __GLIBC__
 #include <cstdlib>
 
+#include <vector>
+
 #if defined(_MSC_VER)
 #include <intrin.h> // For _ReadBarrier/_WriteBarrier
 #endif
@@ -94,6 +96,38 @@ namespace Radiant {
     Mutex & m_mutex;
   };
 
+  /// A guard class that can handle locking and unlocking of multiple mutexes.
+  class GuardArray : public Patterns::NotCopyable
+  {
+  public:
+    /// Construct guard array
+    /// @param reserve pre-allocates memory for at least \b reserve mutexes
+    GuardArray(int reserve = 4)
+    {
+      m_mutexArray.reserve(reserve);
+    }
+
+    /// Unlocks all locked mutexes
+    ~GuardArray()
+    {
+      for(size_t i = 0, N = m_mutexArray.size(); i < N; ++i)
+        if(m_mutexArray[i])
+          m_mutexArray[i]->unlock();
+    }
+
+    /// Locks and adds one new mutex to the array
+    /// @param mutex mutex to guard
+    void lock(Mutex * mutex)
+    {
+      if(!mutex) return;
+      m_mutexArray.push_back(mutex);
+      mutex->lock();
+    }
+
+  private:
+    std::vector<Mutex *> m_mutexArray;
+  };
+
   /** A guard class that only releases a locked mutex. This class is
     used to automatically unlock a mutex within some function.
 
@@ -109,46 +143,6 @@ namespace Radiant {
 
   private:
     Mutex & m_mutex;
-  };
-
-  /** A guard class, that does not get disturbed by lack of a mutex.
-
-      If the mutex is NULL, then nothing happens.
-
-   */
-
-  class OptionalMutex : public Patterns::NotCopyable
-  {
-  public:
-    OptionalMutex() : m_mutex(0) {}
-    OptionalMutex(Mutex & mutex) : m_mutex( & mutex)
-    {
-      if(m_mutex)
-        m_mutex->lock();
-    }
-
-    void init(Mutex & mutex)
-    {
-      if(&mutex == m_mutex)
-        return;
-
-      if(m_mutex) {
-        m_mutex->unlock();
-      }
-
-      m_mutex = & mutex;
-
-      if(m_mutex)
-        m_mutex->lock();
-    }
-
-    ~OptionalMutex()
-    {
-      if(m_mutex)
-        m_mutex->unlock();
-    }
-  private:
-    Mutex * m_mutex;
   };
 
   /// Shared mutex for all the MULTI_ONCE macros
