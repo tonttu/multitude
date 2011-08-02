@@ -31,31 +31,27 @@ extern "C" {
 
 namespace Radiant {
 
-  bool Sleep::sleepS(uint32_t secs)
+  void Sleep::sleepS(uint32_t secs)
   {
+    // Apparently this weird construct is necessary because signal handlers and such will interrupt sleeps
     for(uint32_t i = 0; i < secs; i++) {
       sleepMs(500);
       sleepMs(500);
     }
-
-    return true;
   }
 
-  bool Sleep::sleepMs(uint32_t msecs)
+  void Sleep::sleepMs(uint32_t msecs)
   {
     sleepUs(msecs * 1000);
-    return true;
   }
 
-  bool Sleep::sleepUs(uint32_t usecs)
+  void Sleep::sleepUs(uint32_t usecs)
   {
 #ifdef WIN32
     ::Sleep(usecs / 1000);
 #else
     usleep(usecs);
 #endif
-
-    return true;
   }
 
   /** Sleep in synchronous mode. The argument value is added to

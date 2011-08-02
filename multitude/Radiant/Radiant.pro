@@ -51,7 +51,6 @@ HEADERS += StringUtils.hpp
 HEADERS += SocketUtilPosix.hpp
 HEADERS += TCPServerSocket.hpp
 HEADERS += TCPSocket.hpp
-HEADERS += ThreadData.hpp
 HEADERS += Thread.hpp
 HEADERS += TimeStamp.hpp
 HEADERS += Trace.hpp

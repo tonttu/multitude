@@ -47,19 +47,21 @@ namespace Radiant {
     ~Sleep() {}
 
     /// Sleep for n seconds.
-    static bool sleepS(uint32_t secs);
+    /// @param secs Number of seconds to sleep
+    static void sleepS(uint32_t secs);
 
     /** Sleep for n milliseconds. You cannot sleep more than one second
     with this function. */
-    static bool sleepMs(uint32_t msecs);
+    /// @param msecs Number of milliseconds to sleep
+    static void sleepMs(uint32_t msecs);
 
     /** Sleep for n microseconds. You cannot sleep more than one
         second with this function. The resolution of this function is
         unlikely to be better than one millisecond on any platform,
         even if the underlying APIs might imply this.
-
     */
-    static bool sleepUs(uint32_t usecs);
+    /// @param usecs Number of microseconds to sleep
+    static void sleepUs(uint32_t usecs);
   };
 
   /////////////////////////////////////////////////////////////////////////////
