@@ -16,5 +16,5 @@
 #include "Singleton.hpp"
 
 namespace Radiant {
-  Radiant::Mutex s_singletonMutex;
+  Radiant::Mutex s_singletonMutex(true);
 }
