@@ -151,6 +151,7 @@ namespace Radiant {
     Mutex * m_mutex;
   };
 
+  /// Shared mutex for all the MULTI_ONCE macros
   extern RADIANT_API Mutex s_onceMutex;
 }
 

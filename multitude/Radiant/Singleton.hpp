@@ -21,6 +21,7 @@
 #include "RefPtr.hpp"
 
 namespace Radiant {
+  /// Shared mutex for all the DEFINE_SINGLETON macros
   extern RADIANT_API Radiant::Mutex s_singletonMutex;
 }
 

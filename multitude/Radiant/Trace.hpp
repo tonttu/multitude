@@ -66,9 +66,12 @@ namespace Radiant {
       cannot organize a mutex lock around the text output, which easily
       results in corrupted (and rather useless) output.
 
-      */
+      @param s severity of the message
+      @param msg message format string */
   RADIANT_API void trace(Severity s, const char * msg, ...) RADIANT_PRINTF_CHECK(2, 3);
 
+  /// @copydoc trace
+  /// @param module outputting module from which this message originates
   RADIANT_API void trace
   (const char * module, Severity s, const char * msg, ...) RADIANT_PRINTF_CHECK(3, 4);
 
