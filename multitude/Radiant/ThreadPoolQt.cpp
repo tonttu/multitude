@@ -154,11 +154,10 @@ namespace Radiant {
     delete m_p;
   }
 
-  bool ThreadPool::run(int number)
+  void ThreadPool::run(int number)
   {
     if(m_p->setThreads(number))
       wakeAll();
-    return true;
   }
 
   bool ThreadPool::stop()

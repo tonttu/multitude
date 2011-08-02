@@ -77,7 +77,7 @@ namespace Radiant {
   {
     assert(isRunning() == false);
 
-	delete m_d;
+	  delete m_d;
   }
 
   Thread::id_t Thread::myThreadId()
@@ -85,10 +85,9 @@ namespace Radiant {
     return reinterpret_cast<void*> (QThread::currentThread());
   }
 
-  bool Thread::run(bool /*prefer_system*/)
+  void Thread::run()
   {
 	  m_d->start();
-	  return true;
   }
 
   bool Thread::waitEnd(int timeoutms)
@@ -108,16 +107,4 @@ namespace Radiant {
   {
     return m_d->isRunning();
   }
-
-  bool Thread::setThreadRealTimePriority(int )
-  {
-	// Does nothing
-	  return false;
-  }
-
-  QThread * Thread::qtThread()
-  {
-      return m_d;
-  }
-
 }

@@ -60,34 +60,18 @@ namespace Radiant {
     /** The thread must be stopped before this method is
     called. Thread cannot be terminated within the destructor, as
     the inheriting class that implements the virtual childLoop
-    function does not exist any more (its desctructor is called
+    function does not exist any more (its destructor is called
     before this function). */
     virtual ~Thread();
 
-    /** Starts the thread in either system-level or process-level
-    scope. If the OS fails to deliver the desired thread type the
-    other kind is silently used instead. This method uses the other
-    two "run" methods */
-    bool run(bool prefer_system = true);
-
-    /// Runs a system-level thread.
-    /** System-level threads usually have separate process ids for
-    each thread. On some platforms (such as Linux), this is the
-    only kind of thread. On some platforms (such as IRIX) you need
-    special privileges to run system-level threads.*/
-    ///@todo remove
-    bool runSystem();
-    /// Runs a process-level thread.
-    /** Process-level threads work inside one process id and
-    usually. This thread type is supposed to offer very good
-    performance. Some people (such as Linus Torvalds) do not share
-    this view. */
-    ///@todo remove
-    bool runProcess();
+    /** Starts the thread */
+    void run();
 
     /** Waits until thread is finished. This method does nothing to
     kill the thread, it simply waits until the thread has run its
     course. */
+    /// @param timeoutms Time to wait, in milliseconds
+    /// @returns true if the thread has terminated within the timeout period
     bool waitEnd(int timeoutms = 0);
 
     /** Kills the thread. A violent way to shut down a thread. You
@@ -95,17 +79,12 @@ namespace Radiant {
     in application crash and other minor problems.*/
     void kill();
 
-    /// Returns true if the thread is running.
+    /// Check if the thread is running
+    /// @returns true if the thread is running.
     bool isRunning() const;
-
-    /// Sets the real-time priority for the calling thread
-    static bool setThreadRealTimePriority(int priority);
 
     /** Drive some self tests. */
     static void test();
-
-    /// Access the internal QThread
-    QThread * qtThread();
 
   protected:
     /// Exits the the calling thread.
@@ -131,8 +110,7 @@ namespace Radiant {
   };
 
   /// Thread Local Storage implementation.
-  /// Do something like Radiant::TLS<int> foo = 5; and after that you can just
-  /// use the foo as int
+  /// Do something like Radiant::TLS<int> foo = 5; and after that you can just use the foo as int
   template <typename T>
   class TLS
   {

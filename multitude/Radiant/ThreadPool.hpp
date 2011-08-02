@@ -43,25 +43,28 @@ namespace Radiant {
     /// This can be freely called many times.
     /// This function is thread-safe.
     /// @param number the target number of threads
-    bool run(int number = 1);
+    void run(int number = 1);
 
     /// Asks threads to stop. Doesn't work as expected if the childLoop()
     /// implementation doesn't use and obey running().
+    /// @return true if the stop was successful
     bool stop();
 
     /// Waits until all threads are finished.
     /// @see Thread::waitEnd()
+    /// @returns true if all threads have successfully finished
     bool waitEnd();
 
     /// Returns true if any of the threads are running.
-    /// Also counts threads that have been asked to quit.
     /// Not to be confused with running()
     /// This function is thread-safe.
+    /// @returns true if any of the threads are running
     bool isRunning() const;
 
     /// Returns the number of running or starting threads.
     /// Doesn't count threads that have been asked to quit.
     /// This function is thread-safe.
+    /// @returns the number of running or starting threads
     int threads() const;
 
   protected:
@@ -72,6 +75,7 @@ namespace Radiant {
 
     /// This should only be called from childLoop(),
     /// This function is thread-safe.
+    /// @returns true if we should continue running this thread
     bool running() const;
 
     /// Wakes all threads to perform their duties
