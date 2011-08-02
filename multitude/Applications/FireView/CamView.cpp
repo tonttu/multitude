@@ -88,8 +88,7 @@ namespace FireView {
     m_lastCheckFrame = 0;
     m_lastCheckFps = 0;
 
-    if(!run())
-      return false;
+    run();
 
     while(m_state == STARTING) {
       Radiant::Sleep::sleepMs(20);
