@@ -42,15 +42,12 @@ namespace Luminous {
     /** Release a #Luminous::CPUMipmaps object. If there are no references to
         the object, then its memory is freed.
 
-        @deprecated no longer need to call release
+        @deprecated no longer need to call release. Will be removed in 2.0.
      */
     MULTI_ATTR_DEPRECATED(static void release(std::shared_ptr<CPUMipmaps>));
 
-    /** @deprecated copy shared pointer instead. */
+    /** @deprecated copy shared pointer instead. Will be removed in 2.0. */
     MULTI_ATTR_DEPRECATED(static std::shared_ptr<CPUMipmaps> copy(std::shared_ptr<CPUMipmaps>));
-
-    /** @return Returns the number of mipmaps currently within the store. */
-    static unsigned count();
   };
 }
 

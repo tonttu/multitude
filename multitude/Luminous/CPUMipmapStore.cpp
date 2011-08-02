@@ -65,10 +65,4 @@ namespace Luminous {
     return std::shared_ptr<CPUMipmaps>(mipmaps);
   }
 
-  unsigned CPUMipmapStore::count()
-  {
-    Radiant::Guard g( s_mutex);
-    return (unsigned) s_mipmaps.size();
-  }
-
 }
