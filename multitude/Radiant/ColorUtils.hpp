@@ -34,12 +34,18 @@ namespace Radiant
   public:
     /// Conversion between RGB and HSV using code published in Hearn, D. and Baker, M.
     /// (1997) "Computer Graphics", New Jersey: Prentice Hall Inc. (pp. 578-579.).
+    /// @param r red
+    /// @param g green
+    /// @param b blue
+    /// @param[out] h hue
+    /// @param[out] s saturation
+    /// @param[out] v value
     static void rgbTohsv(float r, float g, float b, float & h, float & s, float & v);
-    /// @copydoc rgbTohsv
+    /// @copybrief rgbTohsv
     static void rgbTohsv(Nimble::Vector3f & rgb, Nimble::Vector3f & hsv);
-    /// @copydoc rgbTohsv
+    /// @copybrief rgbTohsv
     static void hsvTorgb(float h, float s, float v, float & r, float & g, float & b);
-    /// @copydoc rgbTohsv
+    /// @copybrief rgbTohsv
     static void hsvTorgb(Nimble::Vector3f & hsv, Nimble::Vector3f & rgb);
   };
 
