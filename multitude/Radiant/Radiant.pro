@@ -100,6 +100,9 @@ SOURCES += VideoImage.cpp
 SOURCES += VideoInput.cpp
 SOURCES += WatchDog.cpp
 SOURCES += Singleton.cpp
+SOURCES += TCPServerSocketPosix.cpp
+SOURCES += TCPSocketPosix.cpp
+SOURCES += UDPSocketPosix.cpp
 
 LIBS += $$LIB_NIMBLE \
     $$LIB_PATTERNS
@@ -117,10 +120,7 @@ macx {
 unix {
     HEADERS += VideoCamera1394.hpp
     SOURCES += SerialPortPosix.cpp
-    SOURCES += TCPServerSocketPosix.cpp
-    SOURCES += TCPSocketPosix.cpp
-    SOURCES += UDPSocketPosix.cpp
-    SOURCES += VideoCamera1394.cpp
+   SOURCES += VideoCamera1394.cpp
     SOURCES += LockFilePosix.cpp
     LIBS += -lpthread \
         $$LIB_RT \
@@ -142,9 +142,6 @@ win32 {
     }
     SOURCES += PlatformUtilsWin32.cpp
     SOURCES += SerialPortWin32.cpp
-    SOURCES += TCPServerSocketPosix.cpp
-    SOURCES += TCPSocketPosix.cpp
-    SOURCES += UDPSocketPosix.cpp
     SOURCES += LockFileWin32.cpp
     LIBS += Ws2_32.lib \
         ShLwApi.lib \
