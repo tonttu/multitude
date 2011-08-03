@@ -41,13 +41,13 @@ namespace Poetic
       /// Render a string
       void render(const std::string & text, int pointSize,
                   const Nimble::Matrix3 & m, float minimumSize = 0.0f);
-      /// @copydoc render
+      /// @copybrief render
       void render(const char * str, int n, int pointSize,
                   const Nimble::Matrix3 & m, float minimumSize = 0.0f);
-      /// @copydoc render
+      /// @copybrief render
       void render(const std::wstring & text, int pointSize,
                   const Nimble::Matrix3 & m, float minimumSize = 0.0f);
-      /// @copydoc render
+      /// @copybrief render
       void render(const wchar_t * str, int n, int pointSize,
                   const Nimble::Matrix3 & m, float minimumSize = 0.0f);
 

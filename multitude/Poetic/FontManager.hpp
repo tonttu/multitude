@@ -28,8 +28,8 @@ namespace Poetic
 
     /// Returns a font that matches the given name
     CPUWrapperFont * getFont(const std::string & name);
-    /// Returns a default font
-    /** Currently this method tries to return the basic DejaVuSans font. */
+    /// Returns a default font.
+    /// @returns Currently this method tries to return the basic DejaVuSans font
     CPUWrapperFont * getDefaultFont();
 
       /// Locates a file by searching through the FontManager's resource paths

@@ -49,7 +49,7 @@ namespace Poetic
 
       /// Performs the actual rendering
       virtual void internalRender(const char * str, int n, const Nimble::Matrix3 & transform, Nimble::Vector2f ** ptr);
-      /// @copydoc internalRender
+      /// @copybrief internalRender
       virtual void internalRender(const wchar_t * str, int n, const Nimble::Matrix3 & transform, Nimble::Vector2f ** ptr);
       /// Get the location where the pen finished.
       float getLastAdvance() { return m_pen.x; }

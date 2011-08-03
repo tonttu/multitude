@@ -30,11 +30,11 @@ namespace Poetic
       /// Returns the last error
       int error() const;
 
-      /// Returns the advance for the given string
+      /// @copydoc CPUFont::advance
       float advance(const char * str, int n = -1);
-      /// @copydoc advance
+      /// @copydoc CPUFont::advance
       float advance(const wchar_t * str, int n = -1);
-
+      /// @copydoc CPUFont::advanceList
       virtual void advanceList(const wchar_t * str, float * advances, int n = -1);
 
       /// Returns the face size in points
@@ -49,10 +49,10 @@ namespace Poetic
       /// Returns the line height
       float lineHeight() const;
 
-      /// Returns the bounding box for the given string
+      /// @copydoc CPUFont::bbox
       void bbox(const char * str, BBox & bbox);
-      /// @copydoc bbox
-      void bbox(const wchar_t * wstr, BBox & bbox);
+      /// @copydoc CPUFont::bbox
+      void bbox(const wchar_t * str, BBox & bbox);
 
       /// Detaches the given GPU font
       void detach(GPUFontBase * gpuFont);

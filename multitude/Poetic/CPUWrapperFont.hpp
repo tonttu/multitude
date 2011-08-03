@@ -34,13 +34,14 @@ namespace Poetic
     CPUWrapperFont(CPUManagedFont * mfont);
     ~CPUWrapperFont();
 
-    /// Returns the advance for the given string
+    /// @copydoc CPUFont::advance
     float advance(const char * str, int n = -1);
-    /// @copydoc advance
+    /// @copydoc CPUFont::advance
     float advance(const wchar_t * str, int n = -1);
-    /// @copydoc advance
+    /// @copybrief CPUFont::advance
     float advance(const std::wstring & str)
     { return advance(str.c_str(), (int) str.size()); }
+    /// @copydoc CPUFont::advanceList
     virtual void advanceList(const wchar_t * str, float * advances, int n);
 
     /// Returns the face size
@@ -61,9 +62,9 @@ namespace Poetic
     /// Returns the line height
     float lineHeight() const;
 
-    /// Returns the bounding box for the given string
+    /// @copydoc CPUFont::bbox
     void bbox(const char * str, BBox & bbox);
-    /// @copydoc bbox
+    /// @copydoc CPUFont::bbox
     void bbox(const wchar_t * str, BBox & bbox);
 
     /// Loads a font from the given .ttf file
