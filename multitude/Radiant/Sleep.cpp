@@ -22,6 +22,8 @@
 
 #ifdef WIN32
 extern "C" {
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winbase.h>
 }

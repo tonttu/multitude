@@ -26,6 +26,8 @@
 
 class C1394Camera;
 #define _WINSOCKAPI_		// timeval redefinition
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <1394camapi.h>
 
