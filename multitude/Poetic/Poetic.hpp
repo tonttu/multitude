@@ -47,7 +47,7 @@ namespace Poetic
   /// Returns the last freetype error
   int error();
 
-  // Returns the global FreeType mutex
+  /// Returns the global FreeType mutex
   Radiant::Mutex & freetypeMutex();
 }
 
