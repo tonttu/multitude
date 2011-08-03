@@ -50,7 +50,8 @@ namespace Radiant
       Files = 0x002,
       NoDotAndDotDot = 0x1000,
       Hidden = 0x100,
-      AllEntries = Dirs | Files      
+      System = 0x004,
+      AllEntries = Dirs | Files | System
     };
 
     /// Flags to sort files

@@ -69,6 +69,7 @@ namespace Radiant
     if(m_filterFlags & Files) ff |= QDir::Files;
     if(m_filterFlags & NoDotAndDotDot) ff |= QDir::NoDotAndDotDot;
     if(m_filterFlags & Hidden) ff |= QDir::Hidden;
+    if(m_filterFlags & System) ff |= QDir::System;
  
     QDir dir(m_path.c_str(), "", sf, ff);
 
