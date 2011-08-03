@@ -158,7 +158,7 @@ namespace Radiant {
     /** Returns the amount of time passed since this timestamp. */
     TimeStamp since() const { return getTime() - *this; }
 
-    /** Returns the number of seconds passed since this timestamp. */
+    /// Returns the number of seconds passed since this timestamp.
     double sinceSecondsD() const { return since().secondsD(); }
 
     /// Automatic cast operator that converts the time-stamp object to int64_t

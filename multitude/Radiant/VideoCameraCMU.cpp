@@ -103,10 +103,6 @@ namespace Radiant {
     return m_image.size();
   }
 
-  void VideoCameraCMU::setWhiteBalance(float /*u_to_blue*/, float /*v_to_red*/)
-  {
-  }
-
   void VideoCameraCMU::setFeature(VideoCamera::FeatureType feat, float value)
   {
       CAMERA_FEATURE feature = featureToCMU(feat);

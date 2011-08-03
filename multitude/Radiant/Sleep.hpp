@@ -86,8 +86,10 @@ namespace Radiant {
 
     /// Sleep for n microseconds
     /** This function calculates how much time has passed since the
-    last sleep and sleeps to fulfill the required time period. */
-    long sleepSynchroUs(long us);
+    last sleep and sleeps to fulfill the required time period.
+    @param us microseconds to sleep
+    */
+    void sleepSynchroUs(long us);
 
   private:
 

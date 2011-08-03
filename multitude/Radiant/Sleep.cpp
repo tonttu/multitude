@@ -54,12 +54,8 @@ namespace Radiant {
 #endif
   }
 
-  /** Sleep in synchronous mode. The argument value is added to
-      current time value. The return value tells how many microseconds
-      early or late the function call returns. Zero is optimal,
-      negative values indicate the call returned early and positive
-      values indicate the call returned too late. */
-  long SleepSync::sleepSynchroUs(long us)
+  /** Sleep in synchronous mode. The argument value is added to current time value.*/
+  void SleepSync::sleepSynchroUs(long us)
   {
     TimeStamp target = m_initial + TimeStamp::createSecondsD(us * 0.000001);
     TimeStamp now = TimeStamp::getTime();
@@ -70,8 +66,6 @@ namespace Radiant {
     }
 
     m_initial = target;
-
-    return 0;
   }
 
 }

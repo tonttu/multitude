@@ -121,14 +121,14 @@ namespace Radiant {
     return file != 0;
   }
 
-  bool Log::setTimedLogFile(const char * appname)
+  bool Log::setTimedLogFile(const char * prefix)
   {
     makeThread();
 
     DateTime dt(TimeStamp::getTime());
     char buf[128], buf2[128];
     dt.print(buf2);
-    sprintf(buf, "%s-%s-log.txt", appname, buf2);
+    sprintf(buf, "%s-%s-log.txt", prefix, buf2);
     return setLogFile(buf);
   }
 

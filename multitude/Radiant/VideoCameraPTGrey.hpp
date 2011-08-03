@@ -61,7 +61,6 @@ namespace Radiant
     virtual void setFeatureRaw(FeatureType id, int32_t value);
     virtual void getFeatures(std::vector<CameraFeature> * features);
 
-    virtual void setWhiteBalance(float u_to_blue, float v_to_red);
     virtual bool setCaptureTimeout(int ms);
 
     virtual bool enableTrigger(TriggerSource src);

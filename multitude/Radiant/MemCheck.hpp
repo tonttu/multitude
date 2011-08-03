@@ -45,6 +45,8 @@ namespace Radiant {
   {
     DECLARE_SINGLETON(MemChecker);
 
+/// @cond
+
   public:
 
     MemChecker();
@@ -68,6 +70,7 @@ namespace Radiant {
     AllocationMap m_allocations;
     Radiant::Mutex m_mutex;
     size_t m_allocated;
+
   };
 
 #if MULTI_MEMCHECK
@@ -97,6 +100,8 @@ namespace Radiant {
 #define MEMCHECKED_USING(parent)
 
 #endif
+
+/// @endcond
 
 }
 

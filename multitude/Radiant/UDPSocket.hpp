@@ -72,11 +72,11 @@ namespace Radiant
     virtual int read(void * buffer, int bytes, bool waitfordata, bool readAll);    
 
     /** Writes one datagram packet to the socket.
-
         @return The number of bytes written is returned.
     */
     virtual int write(const void *, int );
 
+    /// Sets size of receive buffer
     bool setReceiveBufferSize(size_t bytes);
 
   private:
