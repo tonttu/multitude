@@ -73,7 +73,7 @@ namespace Radiant {
     }
 
     /// Normalize the accumulation buffers, so that one can print the report
-    /** This method returns the total CPU cycle count. */
+    /// @return total CPU cycle count.
     double normalize()
     {
       unsigned i;

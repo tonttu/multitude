@@ -33,6 +33,7 @@ namespace Radiant {
 
     /** Sets the log file.
 
+    @param logfile log filename
     @return This function true if the the new log file was opened
     successfully, and false if opening failed.
      */
@@ -42,14 +43,15 @@ namespace Radiant {
         Calling setTimedLogFile("foo") will open log file
         foo-2010-01-04T12-45-12-log.txt, where the numbers present the time
         in the ISO format.
+        @param prefix log file prefix
+        @return true on success
     */
-    static bool setTimedLogFile(const char * appname);
+    static bool setTimedLogFile(const char * prefix);
 
     /** Saves a log message to the file. When forming the log messages, it makes
         sense to have them formatted so that it is easier to parse them automatically
         later on.
-
-    */
+        @param str message */
     static void log(const char * str, ...);
 
   private:

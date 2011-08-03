@@ -113,10 +113,10 @@ namespace Radiant
     */
     std::string fileName(int n) const;
 
-    /** Return the full path name of the nth file.
-
-	This method is equal to calling "dir.path() + dir.filename(n)".
-    */
+    /// Get the full path name of the nth file.
+    /// This method is equal to calling "dir.path() + dir.filename(n)".
+    /// @param n index of the file
+    /// @return full path to the requested file
     std::string fileNameWithPath(int n) const;
 
     /// Returns the directory path

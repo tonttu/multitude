@@ -88,6 +88,9 @@ namespace Radiant {
     /** Returns the number of days in the month. This function does
     take the leap years into account, so the length of Febuary changes
     between 28 and 29 days, depending on the year.
+    @param month month [0-11]
+    @param year year number
+    @return number of days in the month
 
     @todo Make the leap-year calculations take the longer cycles
     into account.
@@ -95,13 +98,17 @@ namespace Radiant {
     static int daysInMonth(int month, int year);
 
     /** Returns the number of days in the current month. This method
-    takes the leap-years into account. */
+    takes the leap-years into account.
+    @return number of days in the month*/
     int daysInMonth();
 
     /// Return the date and time as a TimeStamp
+    /// @return the date as time-stamp
     TimeStamp asTimeStamp() const;
 
-    /** Prints the date-time information to a string. */
+    /// Print the date-time information to a string.
+    /// @param[out] buf buffer to write to
+    /// @param isotime use ISO time format
     void print(char * buf, bool isotime = false);
 
   private:
