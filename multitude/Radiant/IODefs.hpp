@@ -52,7 +52,9 @@ namespace Radiant {
       /// 64 bit floating point audio samples in the range [-1.0,1.0].
       ASF_FLOAT64
     };
-  /** Returns the number of bytes a particular sample type uses. */
+  /// Returns the number of bytes a particular sample type uses.
+  /// @param format audio format to query
+  /// @return number of bytes per sample
   inline int sampleWidth(AudioSampleFormat format)
   {
     switch(format) {

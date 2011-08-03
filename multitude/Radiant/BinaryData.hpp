@@ -87,18 +87,21 @@ namespace Radiant {
     void writeInt64(int64_t v);
     /// Writes a 64-bit integer to the data buffer
     void writePointer(void * ptr) { writeInt64((int64_t) ptr); }
-    /// Writes a 64-bit time-stamp to the data buffer
-    /** The timestamp uses Radiant::TimeStamp internal structure (40+24
-    bit fixed-point value).*/
+    /// Write a 64-bit time-stamp to the data buffer
+    /// The timestamp uses Radiant::TimeStamp internal structure (40+24
+    /// bit fixed-point value).
+    /// @param v time-stamp to write
     void writeTimeStamp(int64_t v);
 
     /// Write a null-terminated string to the buffer
     void writeString(const char *);
     /// Write a string to the buffer
+    /// @param str string to write
     void writeString(const std::string & str) { writeString(str.c_str()); }
     /** Writes a wide-string to the buffer. The string is internally
     stored as 32-bit integers, since that is the typical
-    wchar_t.*/
+    wchar_t.
+    @param str string to write*/
     void writeWString(const std::wstring & str);
 
     /// Writes binary blob to the buffer.
@@ -126,27 +129,43 @@ namespace Radiant {
     /// Read a value from the data
     template <class T> inline T read(bool * ok = 0);
 
-    /// Reads a 32-bit floating point number from the data buffer
+    /// Read a value from the buffer
+    /// Tries to read the matching value type from the buffer. If successful
+    /// the value is returned and the buffer read position is incremented. If the
+    /// read fails, zero is returned and the optional ok flag is set to false.
+    /// @param[out] ok check if the read was successful
+    /// @return requested value or zero on failure
     float readFloat32(bool * ok = 0);
-    /// Reads a 32-bit floating point number from the data buffer
-    /** If the value cannot be read, then the default is returned. */
+    /// @copydoc readFloat32
+    /// @param defval default value to return in case of failure
+    /// @todo why only this has default value and not the others?
     float readFloat32(float defval, bool * ok = 0);
-    /// Reads a 64-bit floating point number from the data buffer
+    /// @copydoc readFloat32
     double readFloat64(bool * ok = 0);
-    /// Reads a 32-bit integer from the data buffer
+    /// @copydoc readFloat32
     int32_t readInt32(bool * ok = 0);
-
-    /// Reads a 64-bit integer from the data buffer
+    /// @copydoc readFloat32
     int64_t readInt64(bool * ok = 0);
-    /// Reads a 64-bit time-stamp from the data buffer
+    /// @copydoc readFloat32
     int64_t readTimeStamp(bool * ok = 0);
+
     /// Read a null-terminated string from the buffer
+    /// @param[out] str string buffer to write to
+    /// @param maxbytes maximum number of bytes to read
+    /// @return true on success
     bool readString(char * str, size_t maxbytes);
     /// Read a string from the buffer
+    /// @param[out] str string to write to
+    /// @return true on success
     bool readString(std::string & str);
     /// Reads a wide string from the buffer
+    /// @param[out] str string to write to
+    /// @return true on success
     bool readWString(std::wstring & str);
     /// Reads a blob of expected size
+    /// @param[out] ptr buffer to write to
+    /// @param n bytes to read
+    /// @return true on success
     bool readBlob(void * ptr, int n);
 
     /// Reads a 2D 32-bit floating point vector from the buffer

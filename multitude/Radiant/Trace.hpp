@@ -79,6 +79,7 @@ namespace Radiant {
   /** This function calls trace to do the final work and it is
       effectively the same as calling trace(DEBUG, ...).
 
+      @param msg message
       @see trace
   */
   RADIANT_API void debug(const char * msg, ...) RADIANT_PRINTF_CHECK(1, 2);
@@ -86,6 +87,7 @@ namespace Radiant {
   /** This function calls trace to do the final work and it is
       effectively the same as calling trace(INFO, ...).
 
+      @param msg message
       @see trace
   */
   RADIANT_API void info(const char * msg, ...) RADIANT_PRINTF_CHECK(1, 2);
@@ -93,6 +95,7 @@ namespace Radiant {
   /** This function calls trace to do the final work and it is
       effectively the same as calling trace(FAILURE, ...).
 
+      @param msg message
       @see trace
   */
   RADIANT_API void error(const char * msg, ...) RADIANT_PRINTF_CHECK(1, 2);
@@ -100,7 +103,7 @@ namespace Radiant {
   /// Display error output, with a fatal message
   /** This function calls trace to do the final work and it is
       effectively the same as calling trace(FATAL, ...).
-
+      @param msg message
       @see trace
   */
   RADIANT_API void fatal(const char * msg, ...) RADIANT_PRINTF_CHECK(1, 2);
@@ -108,7 +111,7 @@ namespace Radiant {
   /// Display error output, with a warning message
   /** This function calls trace to do the final work and it is
       effectively the same as calling trace(WARNING, ...).
-
+      @param msg message
       @see trace
   */
   RADIANT_API void warning(const char * msg, ...) RADIANT_PRINTF_CHECK(1, 2);
@@ -128,13 +131,13 @@ namespace Radiant {
   RADIANT_API void forceColors(bool enable = true);
 
 
-  /** Toggle duplicate filter
-
-      If enabled, duplicate messages will be ignored
-  */
+  /// Toggle duplicate filter
+  /// If enabled, duplicate messages will be ignored
+  /// @param enable toggle filtering
   RADIANT_API void enableDuplicateFilter(bool enable);
 
   /// Returns true if the duplicate filter is enabled
+  /// @return true if filtering is enabled
   RADIANT_API bool enabledDuplicateFilter();
 
   /** Sets the application name to be used in debug output.
@@ -146,11 +149,12 @@ namespace Radiant {
       if there are several applications throwing output to the same
       terminal window, and you want to know which application is
       responsible for which output.
+      @param appname application name
    */
-
   RADIANT_API void setApplicationName(const char * appname);
 
-  /** Uses the given file as the output target for all debug/error output. */
+  /// Uses the given file as the output target for all debug/error output.
+  /// @param filename output filename
   RADIANT_API void setTraceFile(const char * filename);
 
 }

@@ -33,6 +33,7 @@ namespace Radiant
   /// aspect ratio that still fits within the constraint
   /// @param aspect aspect ratio that must be maintained
   /// @param constraint size to fit to
+  /// @return constrained size
   RADIANT_API Nimble::Vector2i fitToSize(float aspect, Nimble::Vector2i constraint);
 
 }

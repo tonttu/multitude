@@ -34,7 +34,9 @@ namespace Radiant {
   class Mutex;
 
   /** Returns the current thread id as an integer, that is expected to match the thread id
-      that is shown by "top -H" and other similar tools. */
+      that is shown by "top -H" and other similar tools.
+      @return calling thread id */
+  /// @todo isn't this duplicate functionality with Thread::myThreadId() ?
   int RADIANT_API gettid();
 
   /// Platform-independent threading

@@ -162,13 +162,15 @@ namespace Radiant {
     int numberOf(const std::string & id) const;
 
     /// Gets an element from the chunk
-    /** @return The first element of type T. If there is no element
-    with the given id, then an element will be created withthe
-    default constructor. */
+    /// @param id element id
+    /// @return The first element of type T. If there is no element
+    /// with the given id, then an element will be created with the
+    /// default constructor.
     T                  get(const std::string &id) const;
     /** Gets an element from the chunk.
       @param id the primary id to search for
       @param alternateId if the primary id does not match, alternate is used
+      @return matching element
       */
     T                  get(const std::string &id,
                            const std::string &alternateId) const;
@@ -178,7 +180,9 @@ namespace Radiant {
 
     /// Adds an element to the chunk
     /** If there are other elements with the same id before, then
-    this element is added among those. */
+    this element is added among those.
+    @param id element id
+    @param v chunk to add */
     void               set(const std::string & id, const T &v);
     /// Adds a new child node to this chunk
     void               addChunk(const std::string & id, const ChunkT<T> &v);
@@ -188,12 +192,16 @@ namespace Radiant {
   /// Sets the flag to inform whether an old value should be removed before defining a new
     void setClearFlag(bool clearF);
     /// Adds an element to the chunk, erasing any elements with identical id
-    /** After calling this method, the chunk will contain only one
-    element this this id. */
+    /// After calling this method, the chunk will contain only one
+    /// element this this id.
+    /// @param id id to override
+    /// @param v chunk to override with
     void               override(const std::string & id, const T &v);
 
-    /// Dumps this chunk into the stream
-    /** May be specialized at each level. */
+    /// Dump chunk into stream
+    /// May be specialized at each level.
+    /// @param[out] os output stream
+    /// @param indent text indent for formatting
     void               dump(std::ostream& os, int indent=0) const;
 
     /// Empties this chunk
@@ -222,10 +230,12 @@ namespace Radiant {
     /// Iterator to the first child chunk
     //chunk_iterator chunkBegin() { return m_chunks.begin(); }
     /// Const Iterator to the first child chunk
+    /// @return iterator to the first child
     const_chunk_iterator chunkBegin() const { return m_chunks.begin(); }
     /// Iterator to the after-the-end chunk
     //chunk_iterator chunkEnd() { return m_chunks.end(); }
     /// Const Iterator to the after-the-end chunk
+    /// @return iterator to one past the last child
     const_chunk_iterator chunkEnd() const { return m_chunks.end(); }
 
     /// Gets the data element from an iterator
@@ -255,6 +265,7 @@ namespace Radiant {
   /** @param c The configuration object to fill.
       @param buf The configuration string.
       @param n The length of the configuration string
+      @return false if nothing was read, otherwise true
   */
   bool  RADIANT_API readConfig(Config *c, const char * buf, int n);
   /// Write the given configuration into a file

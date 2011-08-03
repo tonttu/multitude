@@ -93,7 +93,8 @@ namespace Radiant {
 
     /// Create a deep copy of the object
     /** Instead of sharing a link to an object, this method creates a
-    real copy of the object. */
+    real copy of the object.
+    @param that object to copy */
     void deepCopy(const RefObj &that)
     {
       if(!m_holder)

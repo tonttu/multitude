@@ -53,6 +53,7 @@ namespace Radiant
 
     /// Create a camera instance using the specified driver
     /// @param driver name of the driver to use
+    /// @return the camera driver instance
     VideoCamera * createCamera(const std::string & driver);
     /// Create a camera instance using the first matching driver. The registered drivers are iterated in the order they appear on the preferred drivers list.
     /// @return camera instance from the first matching driver

@@ -28,7 +28,7 @@ namespace Radiant
     /// @returns the raw callstack
     const stackptr_t * stack() const { return m_frames; }
 
-    /// @params index The requested element in the callstack
+    /// @param index The requested element in the callstack
     /// @returns the requested element in the callstack
     stackptr_t operator[](size_t index) const { assert(index < m_frameCount); return m_frames[index]; }
 

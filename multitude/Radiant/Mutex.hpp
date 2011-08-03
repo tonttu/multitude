@@ -35,20 +35,30 @@
 
 namespace Radiant {
 
-  /** A mutex.*/
+  /// Mutual exclusion (or mutex for short) is used to avoid simultaneous use
+  /// of a shared resource.
+  /// A mutex can be recursive. This means the same calling thread can lock the
+  /// mutex more than once and won't deadlock.
   class RADIANT_API Mutex : public Patterns::NotCopyable
   {
   public:
+    /// Construct a mutex
+    /// @param recursive if true, create a recursive mutex
     Mutex(bool recursive = false);
     ~Mutex();
 
-    /// Lock the mutex
+    /// Lock the mutex    
+    /// If another thread has already locked the mutex the calling thread will
+    /// block until the other thread unlocks the mutex.
     void lock();
 
-    /** Tries to lock the mutex. Does not block. */
+    /// Try to lock the mutex
+    /// Tries to lock the mutex but does not block if the mutex has already been locked.
+    /// @return true if the lock was attained, false otherwise
     bool tryLock();
 
-    /// Unlocks the mutex.
+    /// Unlock the mutex
+    /// Must be called from the same thread as the mutex was locked from.
     void unlock();
 
   private:
