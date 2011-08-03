@@ -74,6 +74,7 @@ namespace Radiant
 
     /// Return a reference to the head item in the queue. If the queue is
     /// empty, this function will block until something is pushed into it.
+    /// @return current head
     T & head()
     {
       Guard g(m_mutex);

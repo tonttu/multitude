@@ -100,7 +100,12 @@ namespace Radiant {
     static TimeStamp createDaysI(type days)
     { return (type) (days * ticksPerDay()); }
 
-    /** Creates a time-stamp consisting of days, hours, minutes, and seconds. */
+    /// Creates a time-stamp consisting of days, hours, minutes, and seconds.
+    /// @param days number of days
+    /// @param hours number of hours
+    /// @param minutes number of minutes
+    /// @param seconds number of seconds
+    /// @return new time-stamp
     static TimeStamp createDHMS(int days, int hours, int minutes, int seconds)
     {
       type tmp = ((type) seconds) << 24;
@@ -155,10 +160,13 @@ namespace Radiant {
     double usecsTo(const TimeStamp & that) const
     { return (that.m_val - m_val) * 1000000.0/(double) FRACTIONS_PER_SECOND; }
 
-    /** Returns the amount of time passed since this timestamp. */
+    /// Returns the amount of time passed since this timestamp.
+    /// Computes the difference between getTime and this time-stamp
+    /// @return amount of time passed since this time-stamp
     TimeStamp since() const { return getTime() - *this; }
 
     /// Returns the number of seconds passed since this timestamp.
+    /// @return seconds passed since this time-stamp
     double sinceSecondsD() const { return since().secondsD(); }
 
     /// Automatic cast operator that converts the time-stamp object to int64_t
@@ -166,10 +174,12 @@ namespace Radiant {
     /// Automatic const-cast operator that converts the time-stamp object to int64_t
     inline operator const type & () const { return m_val; }
 
-    /** Returns the current time value, by looking at the wall clock. */
+    /// Returns the current time value, by looking at the wall clock
+    /// @return current time
     static type getTime();
 
-    /** Converts the time-stamp to a string. */
+    /// Converts the time-stamp to a string
+    /// @return time-stamp as string
     std::string asString() const;
 
   private:

@@ -120,8 +120,11 @@ namespace Radiant {
 
   public:
     TLS() : m_default() {}
+    /// Copy constructor
     TLS(const T& t) : m_default(t) {}
 
+    /// Get the calling thread instance of the TLS variable
+    /// @return variable instance in calling thread
     T& get()
     {
       Thread::id_t id = Thread::myThreadId();
@@ -134,8 +137,12 @@ namespace Radiant {
       return it->second;
     }
 
+    /// @copydoc get
     operator T&() { return get(); }
 
+    /// Get all instances of the variable
+    /// Returns a list of all instances of the TLS variable from different threads.
+    /// @return list of all instances in different threads
     std::list<T> all() const
     {
       std::list<T> lst;
@@ -148,6 +155,7 @@ namespace Radiant {
       return lst;
     }
 
+    /// Compare if two TLS variables are equal
     TLS<T> & operator=(const T& t)
     {
       get() = t;
