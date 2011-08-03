@@ -43,17 +43,18 @@ namespace Radiant {
         which provides a handy way of generating unique keys in C/C++.
     */
     void hostIsAlive(void * key);
-    /** Instructs the Watchdog to forger some hosting object. */
+    /** Instructs the Watchdog to forger some hosting object.
+        @param key The identifier of the calling object.
+    */
     void forgetHost(void * key);
 
-    /** Sets the interval for checking if the host is alive. */
-    void setInterval(float seconds)
-    { m_intervalSeconds = seconds; }
+    /// Sets the interval for checking if the host is alive.
+    void setInterval(float seconds) { m_intervalSeconds = seconds; }
     
     /** Stops the watchdog. */
     void stop();
 
-    /** Gets the first watchdog instance. */
+    /// Gets the first watchdog instance.
     static WatchDog * instance();
 
   private:

@@ -627,15 +627,8 @@ namespace Radiant
 */
   }
 
-  void VideoCameraPTGrey::setWhiteBalance(float /*u_to_blue*/, float /*v_to_red*/)
-  {
-    Radiant::error("VideoCameraPTGrey::setWhiteBalance # not implemented");
-    assert(0);
-  }
-
   bool VideoCameraPTGrey::enableTrigger(TriggerSource src)
   {
-
     FlyCapture2::TriggerMode tm;
 
     FlyCapture2::Error err = m_camera.GetTriggerMode(&tm);
