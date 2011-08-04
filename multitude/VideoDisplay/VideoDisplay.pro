@@ -6,6 +6,7 @@ HEADERS += ShowGL.hpp
 HEADERS += SubTitles.hpp
 HEADERS += VideoIn.hpp
 HEADERS += VideoInFFMPEG.hpp
+HEADERS += VideoDisplay.hpp
 
 SOURCES += VideoIn.cpp
 SOURCES += VideoInFFMPEG.cpp
