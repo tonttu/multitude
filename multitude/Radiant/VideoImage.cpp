@@ -15,6 +15,7 @@
 
 
 #include "VideoImage.hpp"
+#include "MemCheck.hpp"
 
 #include "Trace.hpp"
 #include "Types.hpp"
@@ -26,7 +27,7 @@ namespace Radiant {
 
   void VideoImage::Plane::freeMemory()
   {
-    free(m_data);
+    mtfree(m_data);
     m_data = 0;
   }
 
@@ -59,7 +60,7 @@ namespace Radiant {
       else
         area.clear();
     }
-    else if(fmt == IMAGE_RGB) {
+    else if(fmt == IMAGE_RGB || fmt == IMAGE_BGR) {
       area.x *= 3;
     }
     else if(fmt == IMAGE_RGBA || fmt == IMAGE_BGRA) {
@@ -72,6 +73,9 @@ namespace Radiant {
 
   bool VideoImage::allocateMemory(ImageFormat fmt, int w, int h)
   {
+    if(w == m_width && h == m_height && fmt == m_format)
+      return true;
+
     freeMemory();
     reset();
 
@@ -81,6 +85,7 @@ namespace Radiant {
     unsigned pixels = w * h;
 
     if(fmt == IMAGE_RGB ||
+       fmt == IMAGE_BGR ||
        fmt == IMAGE_RGBA ||
        fmt == IMAGE_BGRA ||
        fmt == IMAGE_GRAYSCALE) {
@@ -98,6 +103,10 @@ namespace Radiant {
         pt = PLANE_RGB;
         ls = w * 3;
       }
+      else if(fmt == IMAGE_BGR) {
+        pt = PLANE_BGR;
+        ls = w * 3;
+      }
       else if(fmt == IMAGE_RGBA) {
         pt = PLANE_RGBA;
         ls = w * 4;
@@ -109,7 +118,7 @@ namespace Radiant {
       else
         trace(FATAL, "VideoImage::allocateMemory");
 
-      unsigned char * buf = (unsigned char*) malloc(ls * h);
+      unsigned char * buf = (unsigned char*) mtmalloc(ls * h);
 
       m_planes[0].set(buf, ls, pt);
     }
@@ -119,9 +128,9 @@ namespace Radiant {
 
       int pixels4 = pixels >> 2;
 
-      m_planes[0].set((unsigned char *) malloc(pixels),  w, PLANE_Y);
-      m_planes[1].set((unsigned char *) malloc(pixels4), w / 2, PLANE_U);
-      m_planes[2].set((unsigned char *) malloc(pixels4), w / 2, PLANE_V);
+      m_planes[0].set((unsigned char *) mtmalloc(pixels),  w, PLANE_Y);
+      m_planes[1].set((unsigned char *) mtmalloc(pixels4), w / 2, PLANE_U);
+      m_planes[2].set((unsigned char *) mtmalloc(pixels4), w / 2, PLANE_V);
     }
     else if(fmt == IMAGE_YUV_422P) {
 
@@ -129,9 +138,9 @@ namespace Radiant {
 
       int pixels2 = pixels >> 1;
 
-      m_planes[0].set((unsigned char *) malloc(pixels), w, PLANE_Y);
-      m_planes[1].set((unsigned char *) malloc(pixels2), w / 2, PLANE_U);
-      m_planes[2].set((unsigned char *) malloc(pixels2), w / 2, PLANE_V);
+      m_planes[0].set((unsigned char *) mtmalloc(pixels), w, PLANE_Y);
+      m_planes[1].set((unsigned char *) mtmalloc(pixels2), w / 2, PLANE_U);
+      m_planes[2].set((unsigned char *) mtmalloc(pixels2), w / 2, PLANE_V);
     }
     else
       return false;
@@ -182,7 +191,7 @@ namespace Radiant {
       linecount[1] = linecount[2] = m_height;
       rowbytes[1]  = rowbytes[2]  = m_width / 2;
     }
-    else if(m_format == IMAGE_RGB) {
+    else if(m_format == IMAGE_RGB || m_format == IMAGE_BGR) {
       linecount[1] = linecount[2] = 0;
       rowbytes[1]  = rowbytes[2]  = 0;
       rowbytes[0]  = m_width * 3;
@@ -245,6 +254,7 @@ namespace Radiant {
     switch(m_format) {
       case IMAGE_GRAYSCALE:
       case IMAGE_RGB:
+      case IMAGE_BGR:
       case IMAGE_RGBA:
       case IMAGE_BGRA:
           memset(m_planes[0].m_data, 0, m_planes[0].m_linesize * m_height);

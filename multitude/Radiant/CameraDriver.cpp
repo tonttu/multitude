@@ -14,6 +14,7 @@
  */
 
 #include "CameraDriver.hpp"
+#include "Mutex.hpp"
 #include "Radiant.hpp"
 
 #ifdef CAMERA_DRIVER_CMU
@@ -68,10 +69,10 @@ namespace Radiant
   CameraDriver * CameraDriverFactory::getCameraDriver(const QString & driverName)
   {
     // If the user has not registered any drivers, we register the defaults here once
-    static bool once = true;
-    if(once && m_drivers.empty()) {
+    MULTI_ONCE_BEGIN
+    assert(m_drivers.empty());
 #ifdef CAMERA_DRIVER_CMU
-      registerDriver(new CameraDriverCMU());
+    registerDriver(new CameraDriverCMU());
 #endif
 
 #ifdef CAMERA_DRIVER_PGR
@@ -79,10 +80,9 @@ namespace Radiant
 #endif
 
 #ifdef CAMERA_DRIVER_1394
-      registerDriver(new CameraDriver1394());
+    registerDriver(new CameraDriver1394());
 #endif
-      once = false;
-    }
+    MULTI_ONCE_END
 
     DriverMap::iterator it = m_drivers.find(driverName);
     if(it != m_drivers.end())

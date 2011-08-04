@@ -55,23 +55,18 @@ namespace Radiant {
     RingBuffer(const RingBuffer &xrBuffer)
       : m_line(0), m_size(0) { *this = xrBuffer; }
 
-    //@}
-
     /// Deletes ring buffer and frees all memory
     virtual ~RingBuffer() { if(m_line) delete []m_line; }
 
-    /**@name Access */
+    /** Resize the buffer. Old buffer elements are lost when the buffer is
+    resized. If new size equals the old size the buffer is not reallocated. The
+    new buffer will be able to hold at least nBufSize elements.
 
-    //@{
+    The new buffer elements are by default initialized to zero.
 
-    /** Resize the buffer. Old buffer elements are lost when the buffer
-	is resized. If new size equals the old size the buffer is not
-	reallocated. The new buffer will be able to hold at least
-	nBufSize elements.
-
-	The new buffer elements are by default initialized to zero.  
-
-	@author Tommi Ilmonen*/
+    @param nBufSize new buffer size
+    @return true on success
+    @author Tommi Ilmonen*/
     bool resize(unsigned nBufSize);
 
     /// Get a sample from the buffer.
@@ -116,43 +111,21 @@ namespace Radiant {
     /// Return "sizeof(TElem)"
     inline int elemSize() const { return sizeof(TElem); } 
 
-    /// Reset the buffer.
-    // inline void reset() { setAll(0); }
-
-    /** Copy operator. 
-	Elements are copied with memcpy for maximum speed. */
+    /// Deep copy operator
+    /// @param xrBuffer buffer to copy
+    /// @return reference to this
     RingBuffer<TElem> &operator = (const RingBuffer &xrBuffer);
 
-    /** Drop pointers without deleting. This method is provided so you
-	can easily create memory leaks :-)*/
-    inline void dropData()
-    { m_line = 0; m_mask = 0; m_size = 0; }
-
-    /** Adopt new pointers. The old pointers are deleted first. The
-	argument parameters are not checked for validity. Bad things may
-	happen should they be corrupted. 
-      
-	This method is provided so you can create nasty and
-	difficult-to-debug segmentation faults. */
-    inline void adoptData(TElem *data, unsigned size)
-    { 
-      if(m_line) delete [] m_line; 
-      m_line = data; 
-      if(size) m_mask = size-1; 
-      else m_mask = 0; 
-      m_size = size; 
-    }
-
-    /** Calculate the real size of the buffer if the required number of
-	samples is nBufSize. Outsiders should not need this method too often. */
+    /** Calculate the real size of the buffer if the required number of samples
+    is nBufSize. Outsiders should not need this method too often.
+    @param nBufSize target buffer size
+    @return required buffer size*/
     static unsigned targetSize(unsigned nBufSize) 
     {
       unsigned j = 1;
       while (j < nBufSize) j = j << 1;
       return j;
     }
-
-    //@}
 
   protected:
 
@@ -196,6 +169,8 @@ namespace Radiant {
     inline void advanceN(unsigned nSteps) { m_position += nSteps; }
 
     /// Get a sample from the buffer.
+    /// @param nDelay delay in samples
+    /// @return delayed sample
     inline TElem &getNewest(unsigned nDelay)
     { return this->m_line[(m_position - nDelay) & this->m_mask]; }
 

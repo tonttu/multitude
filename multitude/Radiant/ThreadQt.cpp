@@ -26,6 +26,24 @@
 
 #include <QThread>
 
+#ifdef RADIANT_LINUX
+#include <sys/syscall.h>
+namespace Radiant {
+  int gettid() { return syscall(SYS_gettid); }
+}
+#elif defined(RADIANT_WINDOWS)
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+namespace Radiant {
+  int gettid() { return GetCurrentThreadId(); }
+}
+#else
+namespace Radiant {
+  int gettid() { return getpid(); }
+}
+#endif
+
 namespace Radiant {
 
   enum {
@@ -61,7 +79,7 @@ namespace Radiant {
   {
     assert(isRunning() == false);
 
-	delete m_d;
+	  delete m_d;
   }
 
   Thread::id_t Thread::myThreadId()
@@ -69,10 +87,9 @@ namespace Radiant {
     return reinterpret_cast<void*> (QThread::currentThread());
   }
 
-  bool Thread::run(bool /*prefer_system*/)
+  void Thread::run()
   {
 	  m_d->start();
-	  return true;
   }
 
   bool Thread::waitEnd(int timeoutms)
@@ -88,20 +105,8 @@ namespace Radiant {
     // Does nothing
   }
 
-  bool Thread::isRunning()
+  bool Thread::isRunning() const
   {
     return m_d->isRunning();
   }
-
-  bool Thread::setThreadRealTimePriority(int )
-  {
-	// Does nothing
-	  return false;
-  }
-
-  QThread * Thread::qtThread()
-  {
-      return m_d;
-  }
-
 }

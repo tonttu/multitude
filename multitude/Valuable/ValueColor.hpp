@@ -30,7 +30,7 @@ namespace Valuable
   public:
     /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
     /// @param c The color value
-    ValueColor(HasValues * parent, const QString & name, const Radiant::Color & c, bool transit = false);
+    ValueColor(HasValues * host, const QString & name, const Radiant::Color & c, bool transit = false);
     
     virtual ~ValueColor();
 

@@ -18,9 +18,7 @@
 #ifndef RADIANT_BINARY_STREAM_HPP
 #define RADIANT_BINARY_STREAM_HPP
 
-
-#include <Radiant/Export.hpp>
-
+#include "Export.hpp"
 
 namespace Radiant {
 

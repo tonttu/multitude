@@ -36,7 +36,7 @@ namespace Luminous {
       m_graphicsLocation(this, "graphicslocation", Nimble::Vector2i(0, 0)),
       m_graphicsSize(this, "graphicssize", Nimble::Vector2i(100, 100)),
       m_seams(this, "seams", Nimble::Vector4f(0, 0, 0, 0)),
-      m_active(this, "active", 1),
+      m_active(this, "active", true),
       m_method(this, "method", METHOD_MATRIX_TRICK),
       m_comment(this, "comment"),
       m_graphicsBounds(0, 0, 100, 100),
@@ -47,7 +47,7 @@ namespace Luminous {
   MultiHead::Area::~Area()
   {}
 
-  bool MultiHead::Area::deserialize(Valuable::ArchiveElement & element)
+  bool MultiHead::Area::deserialize(const Valuable::ArchiveElement & element)
   {
     bool ok = HasValues::deserialize(element);
 
@@ -243,9 +243,9 @@ namespace Luminous {
       m_screen(screen),
       m_location(this, "location", Nimble::Vector2i(0, 0)),
       m_size(this, "size", Nimble::Vector2i(100, 100)),
-      m_frameless(this, "frameless", 1),
-      m_fullscreen(this, "fullscreen", 0),
-      m_resizeable(this, "resizeable", 0),
+      m_frameless(this, "frameless", true),
+      m_fullscreen(this, "fullscreen", false),
+      m_resizeable(this, "resizeable", false),
       m_displaynumber(this, "displaynumber", -1),
       m_screennumber(this, "screennumber", -1),
       m_pixelSizeCm(0.1f)
@@ -292,9 +292,10 @@ namespace Luminous {
   {
     //      Radiant::trace("MultiHead::Window::windowToGraphics # loc(%f,%f), m_size[1] = %d", loc.x, loc.y, m_size[1]);
 
+    Nimble::Vector2f res(0, 0);
     for(size_t i = 0; i < m_areas.size(); i++) {
       bool ok = false;
-      Nimble::Vector2f res = m_areas[i]->windowToGraphics(loc, m_size[1], ok);
+      res = m_areas[i]->windowToGraphics(loc, m_size[1], ok);
 
       if(ok) {
         convOk = true;
@@ -304,7 +305,7 @@ namespace Luminous {
 
     convOk = false;
 
-    return Nimble::Vector2f(0, 0);
+    return res;
   }
 
   void MultiHead::Window::setPixelSizeCm(float sizeCm)
@@ -350,6 +351,7 @@ namespace Luminous {
       : HasValues(0, "MultiHead", false),
       m_widthcm(this, "widthcm", 100, true),
       m_gamma(this, "gamma", 1.1f, true),
+      m_iconify(this, "iconify", false),
       m_edited(false)
   {
   }
@@ -454,7 +456,7 @@ namespace Luminous {
 
     size_t n = areaCount();
 
-    debugLuminous("MultiHead::width # %lu", n);
+//    debugLuminous("MultiHead::width # %lu", n);
 
     for(size_t i = 0; i < n; i++) {
       Area & a = area(i);
@@ -468,7 +470,7 @@ namespace Luminous {
       left  = Nimble::Math::Min(left,  wleft);
       right = Nimble::Math::Max(right, wright);
 
-      debugLuminous("lr = %f %f", left, right);
+//      debugLuminous("lr = %f %f", left, right);
     }
 
     return (int) (right - left);
@@ -494,7 +496,7 @@ namespace Luminous {
     return (int) (bottom - top);
   }
 
-  bool MultiHead::deserialize(Valuable::ArchiveElement & element)
+  bool MultiHead::deserialize(const Valuable::ArchiveElement & element)
   {
     m_windows.clear();
 

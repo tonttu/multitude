@@ -32,39 +32,39 @@ namespace Valuable
 {
   using namespace Radiant;
 
-  bool Serializable::deserializeXML(DOMElement &element)
+  bool Serializable::deserializeXML(const DOMElement &element)
   {
-    XMLArchiveElement ae(element);
+    ArchiveElement ae = XMLArchiveElement::create(element);
     return deserialize(ae);
   }
 
   ValueObject::ValueObject()
-  : m_parent(0),
+  : m_host(0),
     m_changed(false),
     m_transit(false)
   {}
 
-  ValueObject::ValueObject(HasValues * parent, const QString & name, bool transit)
-    : m_parent(0),
+  ValueObject::ValueObject(HasValues * host, const QString & name, bool transit)
+    : m_host(0),
       m_changed(false),
       m_name(name),
       m_transit(transit)
   {
-    if(parent) {
-      parent->addValue(name, this);
+    if(host) {
+      host->addValue(name, this);
 #ifdef MULTI_DOCUMENTER
       doc.push_back(Doc());
       Doc & d = doc.back();
-      d.class_name = Radiant::StringUtils::demangle(typeid(*parent).name());
+      d.class_name = Radiant::StringUtils::demangle(typeid(*host).name());
       d.vo = this;
-      d.obj = parent;
+      d.obj = host;
 #endif
     }
   }
 
   ValueObject::ValueObject(const ValueObject & o)
     : Serializable(), // GCC wants this
-    m_parent(0),
+    m_host(0),
     m_changed(false)
   {
     m_name = o.m_name;
@@ -84,16 +84,16 @@ namespace Valuable
 
   void ValueObject::setName(const QString & s)
   {
-    if(parent())
-      parent()->childRenamed(m_name, s);
+    if(host())
+      host()->valueRenamed(m_name, s);
 
     m_name = s;
   }
 
   QString ValueObject::path() const
   {
-    if(m_parent)
-      return m_parent->path() + "/" + m_name;
+    if(m_host)
+      return m_host->path() + "/" + m_name;
 
     return "/" + m_name;
   }
@@ -176,15 +176,9 @@ namespace Valuable
     return "";
   }
 
-  ArchiveElement & ValueObject::serialize(Archive &archive) const
+  ArchiveElement ValueObject::serialize(Archive & archive) const
   {
-    if(m_name.isEmpty()) {
-      Radiant::error(
-"ValueObject::serialize # attempt to serialize object with no name");
-      return archive.emptyElement();
-    }
-
-    ArchiveElement & elem = archive.createElement(m_name.toUtf8().data());
+    ArchiveElement elem = archive.createElement(m_name.empty() ? "ValueObject" : m_name.c_toUtf8().data());
     elem.add("type", type());
     elem.set(asString());
 
@@ -211,11 +205,11 @@ namespace Valuable
     ChangeMap::addDelete(this);
   }
 
-  void ValueObject::removeParent()
+  void ValueObject::removeHost()
   {
-    if(m_parent) {
-      m_parent->removeValue(this);
-      m_parent = 0;
+    if(m_host) {
+      m_host->removeValue(this);
+      m_host = 0;
     }
   }
 

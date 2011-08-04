@@ -58,9 +58,8 @@ namespace Luminous
     virtual ~GLResources();
 
     /// Initialize the GLResources object.
-    /** This function performs checks on the underlying OpenGL implementation.
-        */
-    bool init();
+    /// This function performs checks on the underlying OpenGL implementation.
+    void init();
 
     /// Get a handle to a resource
     GLResource * getResource(const Collectable * key, int deleteAfterFrames=110);
@@ -127,8 +126,8 @@ namespace Luminous
            const MultiHead::Window * window,
            const MultiHead::Area * area);
 
-    /// Returns the resource collection for the calling thread
-    /// @todo not implemented on Windows
+    /// Returns the resource collection associated with the calling thread
+    /// @return resource collection for the calling thread
     static GLResources * getThreadResources();
 
     /** Get rendering data associated with the calling thread.

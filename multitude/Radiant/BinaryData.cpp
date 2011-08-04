@@ -538,7 +538,7 @@ namespace Radiant {
 
     const char * source = & m_buf[m_current];
 
-    skipParameter(marker);
+    m_current += recv;
 
     memcpy( ptr, source, Nimble::Math::Min(n, recv));
 
@@ -763,7 +763,7 @@ namespace Radiant {
   }
 
 
-  bool BinaryData::write(Radiant::BinaryStream * stream)
+  bool BinaryData::write(Radiant::BinaryStream * stream) const
   {
     int32_t s = pos();
     if(stream->write(&s, 4) != 4)

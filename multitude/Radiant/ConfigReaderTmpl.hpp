@@ -109,16 +109,16 @@ namespace Radiant {
   }
 
   template <class T>
-  void ChunkT<T>::dump(std::ostream& os, int indent)
+  void ChunkT<T>::dump(std::ostream& os, int indent) const
   {
     QString ws(indent, ' ');
-    for(chunk_iterator it = chunkBegin(); it != chunkEnd(); ++it) {
+    for(const_chunk_iterator it = chunkBegin(); it != chunkEnd(); ++it) {
       os << ws << it->first << " {\n";
       it->second.dump(os, indent+2);
       os << ws << "}\n";
     }
 
-    for(iterator it = m_variants.begin();it != m_variants.end(); it++) {
+    for(const_iterator it = m_variants.begin();it != m_variants.end(); it++) {
       os << ws << (*it).first << " {\n";
       (*it).second.dump(os, indent+2);
       os << ws << "}\n\n";

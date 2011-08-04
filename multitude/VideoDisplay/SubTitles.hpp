@@ -19,7 +19,7 @@
 
 #include <Radiant/TimeStamp.hpp>
 
-#include <VideoDisplay/Export.hpp>
+#include "Export.hpp"
 
 #include <QString>
 #include <vector>
@@ -67,8 +67,9 @@ namespace VideoDisplay {
     const Text * current();
 
     /// Read subtitles from an SRT file
-    /** @return Returns true if the SRT file was successfully laoded, false on
-        failure. */
+    /// @param filename SRT file name
+    /// @return Returns true if the SRT file was successfully laoded, false on
+    ///         failure.
     bool readSrt(const char * filename);
 
     /// Returns the number of subtitle items

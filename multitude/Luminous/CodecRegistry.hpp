@@ -16,6 +16,8 @@
 #ifndef CODEC_REGISTERY_HPP
 #define CODEC_REGISTERY_HPP
 
+#include "Export.hpp"
+
 #include <vector>
 #include <map>
 #include <QString>
@@ -26,7 +28,7 @@ namespace Luminous
 
   /** CodecRegistry keeps track of different registered ImageCodecs that can be
    * used to load images. **/
-  class CodecRegistry
+  class LUMINOUS_API CodecRegistry
   {
   public:
     CodecRegistry();

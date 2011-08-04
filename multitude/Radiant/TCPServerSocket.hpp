@@ -34,8 +34,12 @@ namespace Radiant {
     ~TCPServerSocket();
 
     /// Opens a server TCP socket to desired host:port
-    /** @return On successful execution, returns zero, otherwise an
-        error code (as in errno.h). */
+    /// @param host hostname
+    /// @param port port
+    /// @param maxconnections maximum number of pending connections
+    /// @return On successful execution, returns zero, otherwise an
+    /// error code (as in errno.h).
+    /// @todo why maxconnections 2?
     int open(const char * host, int port, int maxconnections = 2);
     /// Closes the socket
     bool close();

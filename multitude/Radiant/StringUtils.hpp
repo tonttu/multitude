@@ -28,7 +28,6 @@ namespace Radiant
 
   /// StringUtils is a collection of string manipulation functions.
 
-  /// @todo Documentation
   namespace StringUtils
   {
 
@@ -37,15 +36,25 @@ namespace Radiant
 
     /// Converts to string
     /// @todo Rename to toString
+    /// @param x Value to convert
+    /// @returns Value as a string
     template<class T>
-    inline QString stringify(T x) {
+    inline QString stringify(const T & x) {
         /// @todo fix to use qt string utils
         std::ostringstream os;
         os << x;
         return QString::fromUtf8(os.str().c_str());
     }
 
-    /// Converts from string
+    /// Convert std::wstring to std::string
+    template<>
+    inline std::string stringify(const std::wstring & x) {
+      std::string out;
+      stdWstringToUtf8(out, x);
+      return out;
+    }
+
+    /// Convert string to integer
     template <class T>
     inline T fromString(const char * str)
     { return T(atoll(str)); }
@@ -61,6 +70,8 @@ namespace Radiant
     /// Demangle names used by the compiler
     /// for example "N12MultiWidgets11ImageWidgetE" -> "MultiWidgets::ImageWidget"
     /// If the name can't be parsed, the original string is returned
+    /// @param name Mangled symbol name
+    /// @returns Demangled symbol name
     RADIANT_API QString demangle(const char * name);
 
   }

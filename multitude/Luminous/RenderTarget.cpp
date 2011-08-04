@@ -86,6 +86,7 @@ namespace Luminous
 
   Texture2D & RenderTargetManager::popRenderTarget(Luminous::RenderTargetObject & target)
   {
+    (void)target;
     //Radiant::info("RenderTargetManager::pop");
 
     if(m_stack.empty()) {
@@ -132,7 +133,7 @@ namespace Luminous
                   (int) extent, (int) (1 << nextHigherPowerOfTwo(extent)));
 
     // Use power-of-two textures
-    extent = 1 << nextHigherPowerOfTwo(extent);
+    extent = (size_t(1) << nextHigherPowerOfTwo(extent));
 
     std::shared_ptr<RenderTargetState> holder(new RenderTargetState());
 

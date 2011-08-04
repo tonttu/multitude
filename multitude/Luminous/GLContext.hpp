@@ -4,6 +4,8 @@
 #ifndef LUMINOUS_GLCONTEXT_HPP
 #define LUMINOUS_GLCONTEXT_HPP
 
+#include "Export.hpp"
+
 #include <Radiant/Mutex.hpp>
 
 namespace Luminous
@@ -13,7 +15,7 @@ namespace Luminous
 
       This class is still experimental, and its API and operation may yet change.
  */
-  class GLContext
+  class LUMINOUS_API GLContext
   {
   public:
     GLContext();
@@ -35,7 +37,7 @@ namespace Luminous
     public:
       /** Constructs a Guard object, and locks the argument mutex.
 
-          @param m The mutex to lock. The mutex may be null, in which case nothing happens.
+          @param c The OpenGL context to lock. It may be null, in which case nothing happens.
       */
       Guard(GLContext * c)
       {
@@ -58,7 +60,7 @@ namespace Luminous
   ////////////////////////////////////////////////////////////////////////
 
   /** A dummy OpenGL context. This class can be used in place of a real OpenGL context. */
-  class GLDummyContext : public GLContext
+  class LUMINOUS_API GLDummyContext : public GLContext
   {
   public:
     GLDummyContext();

@@ -30,6 +30,7 @@ namespace Radiant {
       IMAGE_RGB = IMAGE_RGB_24,
       IMAGE_RGBA = IMAGE_RGBA_32,
 
+      IMAGE_BGR,
       IMAGE_BGRA,
 
       IMAGE_RAWBAYER = 256
@@ -51,6 +52,7 @@ namespace Radiant {
       PLANE_GREEN,
       PLANE_BLUE,
       PLANE_RGB,
+      PLANE_BGR,
       PLANE_RGBA,
       PLANE_BGRA,
 
@@ -65,7 +67,7 @@ namespace Radiant {
       video codec and the application.
 
       <B>Note:</B>By default this class does not do any memory management, which
-      is left to the application. There are memory management funcions
+      is left to the application. There are memory management functions
       that can be used if you want.
 
       An image is composed of planes that contain the actual image
@@ -110,7 +112,6 @@ namespace Radiant {
     };
 
     /// Resets the image
-
     void reset()
     {
       VideoImage tmp;
@@ -118,15 +119,20 @@ namespace Radiant {
     }
 
     /// Sets the image format to interleaved RGB.
-
     void setFormatRGB()
     {
       m_format = IMAGE_RGB;
       m_planes[0].m_type = PLANE_RGB;
     }
 
-    /// Sets the image format to interleaved RGB.
+    /// Sets the image format to interleaved BGR.
+    void setFormatBGR()
+    {
+      m_format = IMAGE_BGR;
+      m_planes[0].m_type = PLANE_BGR;
+    }
 
+    /// Sets the image format to interleaved RGB.
     void setFormatRGBA()
     {
       m_format = IMAGE_RGBA;
@@ -134,7 +140,6 @@ namespace Radiant {
     }
 
     /// Sets the image format to interleaved BGRA.
-
     void setFormatBGRA()
     {
       m_format = IMAGE_BGRA;
@@ -142,7 +147,6 @@ namespace Radiant {
     }
 
     /// Sets the image format to interleaved YUV 420.
-
     void setFormatYUV420()
     {
       m_format = IMAGE_YUV_420;
@@ -150,7 +154,6 @@ namespace Radiant {
     }
 
     /// Sets the image format to planar YUV 420.
-
     void setFormatYUV420P()
     {
       m_format = IMAGE_YUV_420P;
@@ -184,37 +187,47 @@ namespace Radiant {
     static Nimble::Vector2i planeSize(ImageFormat fmt, int w, int h, int plane);
 
     /// Allocates memory and sets the image format.
+    /// @param fmt Image format
+    /// @param w image width
+    /// @param h image height
+    /// @returns true if allocation was successful
     bool allocateMemory(ImageFormat fmt, int w, int h);
     /// Allocates memory and sets the image format, based on another image
     /** This function can be used when preparing to copy contents from
-    from anoher image. */
+    from another image.
+    @param that VideoImage used as template for the new width, height and format settings
+    @returns true if allocation was successful */
     bool allocateMemory(const VideoImage & that)
     { return allocateMemory(that.m_format, that.width(), that.height()); }
 
-    /** Copies the image data. The image format, image size and data
+    /// Copies the image data.
+    /** The image format, image size and data
     buffers should be set correctly before calling this method. */
+    /// @param that VideoImage to copy data from
+    /// @returns true if copy was successful
     bool copyData(const VideoImage & that);
 
     /// Free memory on all the planes
     void freeMemory();
 
-    /** Partially unimplemented function that returns the size of the
-     * image data in bytes.*/
-
+    /// Returns the size of the image data in bytes
     unsigned size() const
     {
-      unsigned s;
+      const unsigned pixels = m_width * m_height;
 
-      unsigned pixels = m_width * m_height;
-
-      if(m_format == IMAGE_GRAYSCALE)
-    s = pixels;
-      else if(m_format == IMAGE_RGB)
-    s = pixels * 3;
-      else
-    s = 0;
-
-      return s;
+      switch (m_format)
+      {
+      case IMAGE_GRAYSCALE:
+        return pixels;
+      case IMAGE_BGR:
+      case IMAGE_RGB:
+        return pixels * 3;
+      case IMAGE_BGRA:
+      case IMAGE_RGBA:
+        return pixels * 3;
+      default:
+        return 0;
+      }
     }
 
     /// Returns the pixel dimensions of the image

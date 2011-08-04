@@ -16,12 +16,18 @@
 #ifndef VALUABLE_VALUE_OBJECT_HPP
 #define VALUABLE_VALUE_OBJECT_HPP
 
+#include "Export.hpp"
+#include "Archive.hpp"
+#include "ValueListener.hpp"
+#include "DOMElement.hpp"
+
 #include <Nimble/Vector4.hpp>
 
 #include <Patterns/NotCopyable.hpp>
 
 #include <Radiant/BinaryData.hpp>
 #include <Radiant/Functional.hpp>
+#include <Radiant/MemCheck.hpp>
 
 #include <Valuable/Archive.hpp>
 #include <Valuable/Export.hpp>
@@ -30,8 +36,22 @@
 #include <QList>
 #include <QVariantList>
 
-#include <Valuable/DOMElement.hpp>
-#include <Radiant/MemCheck.hpp>
+#ifdef MULTI_DOCUMENTER
+#include "Serializer.hpp"
+#include "XMLArchive.hpp"
+
+// some forward declarations to work around cyclic include problems
+namespace Valuable
+{
+  class Serializable;
+  namespace Serializer
+  {
+    template <typename T>
+    ArchiveElement serialize(Archive & archive, const T & t);
+  }
+}
+
+#endif
 
 namespace Valuable
 {
@@ -42,23 +62,27 @@ namespace Valuable
 
   /// The base class for all serializable objects.
   class VALUABLE_API Serializable
-#ifdef MULTI_MEMCHECK
-    : public Radiant::MemCheck
-#endif
   {
+    MEMCHECKED
   public:
     virtual ~Serializable() {}
 
-    /// Serializes (writes) this object to an XML element, and returns the new element.
-    virtual ArchiveElement & serialize(Archive & archive) const = 0;
+    /// Serializes (writes) this object to an element.
+    /// @param archive The serializer archive that is used to create the new
+    ///                element and maintains the serialization state and options.
+    /// @return The new serialized element.
+    virtual ArchiveElement serialize(Archive & archive) const = 0;
+
+    /// Deserializes (reads) this object from serializer element.
+    /// @param element Serialized element that holds the data that should be deserialized.
+    /// @return Returns true if the read process worked correctly, and false otherwise.
+    virtual bool deserialize(const ArchiveElement & element) = 0;
 
     /// Deserializes (reads) this object from an XML element.
+    /// This function is only for keeping backwards compatibility.
+    /// @param element XML element that is deserialized
     /** @return Returns true if the read process worked correctly, and false otherwise. */
-    virtual bool deserialize(ArchiveElement & element) = 0;
-
-    /// Deserializes (reads) this object from an XML element.
-    /** @return Returns true if the read process worked correctly, and false otherwise. */
-    virtual bool deserializeXML(DOMElement & element);
+    virtual bool deserializeXML(const DOMElement & element);
   };
 
 
@@ -111,12 +135,12 @@ namespace Valuable
 
     ValueObject();
     /// The copy constructor creates a copy of the ValueObject WITHOUT the
-    /// link to parent
+    /// link to host
     ValueObject(const ValueObject & o);
-    /** Constructs a new value object and attaches it to its parent.
+    /** Constructs a new value object and attaches it to its host.
 
-    @param parent The parent object. This object is automatically
-    added to the parent.
+    @param host The host object. This object is automatically
+    added to the host.
 
     @param name The name (or id) of this value. Names are typically
     human-readable. The names should not contain white-spaces
@@ -126,7 +150,7 @@ namespace Valuable
     is related to future uses, and can be largely ignored at the
     moment.
     */
-    ValueObject(HasValues * parent, const QString & name, bool transit = false);
+    ValueObject(HasValues * host, const QString & name, bool transit = false);
     virtual ~ValueObject();
 
     /// Returns the name of the object.
@@ -171,7 +195,7 @@ namespace Valuable
         @param data Binary blob that contains the argument data in easily parseable format.
 
     */
-    virtual void processMessage(const char * id, Radiant::BinaryData & data);
+    virtual void processMessage(const char *id, Radiant::BinaryData &data);
     /// Utility function for sending string message to the object
     void processMessageString(const char * id, const char * str);
     /// Utility function for sending a float message to the object
@@ -186,16 +210,16 @@ namespace Valuable
     void processMessageVector4(const char * id, Nimble::Vector4);
 
     /// Converts the value object in a floating point number
-    /** The default implementation returns zero, and sets the
-        ok pointer to false (if it is non-null). */
+    /// @param ok If non-null, *ok is set to true/false on success/error
+    /// @return Object as a float, the default implementation returns 0.0f
     virtual float       asFloat(bool * const ok = 0) const;
     /// Converts the value object in an integer
-    /** The default implementation returns zero, and sets the
-        ok pointer to false (if it is non-null). */
+    /// @param ok If non-null, *ok is set to true/false on success/error
+    /// @return Object as a int, the default implementation returns zero
     virtual int         asInt(bool * const ok = 0) const;
     /// Converts the value object to a string
-    /** The default implementation returns an empty string, and sets the
-        ok pointer to false (if it is non-null). */
+    /// @param ok If non-null, *ok is set to true/false on success/error
+    /// @return Object as a string, the default implementation returns an empty string
     virtual QString asString(bool * const ok = 0) const;
 
     /// Sets the value of the object
@@ -216,13 +240,16 @@ namespace Valuable
     /// Get the type id of the type
     virtual const char * type() const = 0;
 
-    /** The object is serialized using its name as a tag name. */
-    virtual ArchiveElement & serialize(Archive &archive) const;
+    /// The object is serialized using its name as a tag name.
+    /// @param archive Serialization archive that is used to create new elements.
+    /// @return Serialized object as an ArchiveElement
+    virtual ArchiveElement serialize(Archive & archive) const;
 
-    /** The parent object of the value object (is any). */
-    HasValues * parent() const { return m_parent; }
-    /** Sets the parent pointer to zero and removes this object from the parent. */
-    void removeParent();
+    /// The host object of the value object (is any).
+    /// @return Pointer to the host
+    HasValues * host() const { return m_host; }
+    /** Sets the host pointer to zero and removes this object from the host. */
+    void removeHost();
 
     /// Adds a listener that is invoked whenever the value is changed
     void addListener(ListenerFunc func, int role = CHANGE);
@@ -245,6 +272,7 @@ namespace Valuable
     struct Doc
     {
       QString class_name;
+      QString orig_str;
       HasValues * obj;
       ValueObject * vo;
     };
@@ -261,7 +289,7 @@ namespace Valuable
 
   private:
     // The object that holds this object
-    HasValues * m_parent;
+    HasValues * m_host;
     bool m_changed;
     QString m_name;
     bool m_transit;
@@ -286,17 +314,25 @@ namespace Valuable
   {
   public:
     /// Creates a new ValueObjectT and stores the original and current value as a separate variables.
-    /// @param parent parent object
+    /// @param host host object
     /// @param name name of the value
     /// @param v the default/original value of the object
     /// @param transit ignored
-    ValueObjectT(HasValues * parent, const QString & name, const T & v = T(), bool transit = false)
-      : ValueObject(parent, name, transit),
+    ValueObjectT(HasValues * host, const QString & name, const T & v = T(), bool transit = false)
+      : ValueObject(host, name, transit),
       m_current(ORIGINAL),
       m_valueSet()
     {
       m_values[ORIGINAL] = v;
       m_valueSet[ORIGINAL] = true;
+#ifdef MULTI_DOCUMENTER
+      Doc & d = doc.back();
+      XMLArchive archive;
+      ArchiveElement e = Serializer::serialize<T>(archive, m_orig);
+      if(!e.isNull()) {
+        d.orig_str = e.get();
+      }
+#endif
     }
 
     ValueObjectT()
@@ -341,10 +377,6 @@ namespace Valuable
       return *this;
     }
 
-    /// Is the value different from the original value
-    virtual bool isChanged() const { return m_values[m_current] != m_values[ORIGINAL]; }
-
-
     void clearValue(Layer layout)
     {
       assert(layout > ORIGINAL);
@@ -356,7 +388,6 @@ namespace Valuable
         m_current = l;
       }
     }
-
 
   protected:
     int m_current;

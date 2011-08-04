@@ -1,7 +1,7 @@
 #ifndef NIBMLE_RANGE_HPP
 #define NIBMLE_RANGE_HPP
 
-#include <Nimble/Export.hpp>
+#include "Export.hpp"
 
 namespace Nimble {
 
@@ -14,6 +14,9 @@ namespace Nimble {
   class NIMBLE_API RangeT
   {
   public:
+    /// Create a new range with low and high values
+    /// @param low Initial low value
+    /// @param high Initial high value
     RangeT(const T & low, const T & high)
       : m_low(low), m_high(high) {}
 
@@ -38,7 +41,9 @@ namespace Nimble {
     /// The upper limit of the range
     inline T high() const { return m_high; }
 
-    /** Clamps the argument value to be between the low and high limits. */
+    /// Clamps the argument value to be between the low and high limits.
+    /// @param v Value to clamp
+    /// @return Clamped value
     inline T clamp(const T & v) const
     {
       if(v <= m_low) return m_low;
@@ -47,13 +52,16 @@ namespace Nimble {
     }
 
     /// Checks if the argument value fits into this range
+    /// @param v Value to check
+    /// @return True if range contains this value
     inline bool contains(const T & v) const
     {
       return (v >= m_low) && (v <= m_high);
     }
 
     /// Compares two RangeT objects.
-    /** @return This function returns true if the two ranges are absolutely identical. */
+    /// @param that Other range to compare to
+    /// @return This function returns true if the two ranges are absolutely identical.
     inline bool operator == (const RangeT & that) const
     {
       return m_low == that.m_low && m_high == that.m_high;
@@ -77,9 +85,13 @@ namespace Nimble {
     T m_low, m_high;
   };
 
+  /// RangeT for doubles
   typedef RangeT<double> Ranged;
+  /// RangeT for float
   typedef RangeT<float> Rangef;
+  /// RangeT for long ints
   typedef RangeT<long> Rangel;
+  /// RangeT for ints
   typedef RangeT<int> Rangei;
 
 }

@@ -137,30 +137,34 @@ namespace Luminous
     };
 
   /// An OpenGL vertex buffer
-
-  class VertexBuffer : public BufferObject<GL_ARRAY_BUFFER>
+  class LUMINOUS_API VertexBuffer : public BufferObject<GL_ARRAY_BUFFER>
   {
   public:
     /// Constructs an empty vertex buffer.
+    /// @param resources resource collection to own the buffer
     VertexBuffer(Luminous::GLResources * resources = 0)
       : BufferObject<GL_ARRAY_BUFFER>(resources)
     {}
   };
 
   /// An OpenGL index buffer
-  class IndexBuffer : public BufferObject<GL_ELEMENT_ARRAY_BUFFER>
+  class LUMINOUS_API IndexBuffer : public BufferObject<GL_ELEMENT_ARRAY_BUFFER>
   {
   public:
     /// Constructs an empty index buffer.
+    /// @param resources resource collection to own the buffer
     IndexBuffer(Luminous::GLResources * resources = 0)
       : BufferObject<GL_ELEMENT_ARRAY_BUFFER>(resources)
     {}
 
   };
 
+  /// An OpenGL pixel read buffer for reading pixels from framebuffer.
   class ReadBuffer : public BufferObject<GL_PIXEL_PACK_BUFFER>
   {
   public:
+    /// Constructs an empty read buffer
+    /// @param resources resource collection to own the buffer
     ReadBuffer(Luminous::GLResources * resources = 0)
       : BufferObject<GL_PIXEL_PACK_BUFFER>(resources)
     {}

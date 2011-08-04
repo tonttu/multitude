@@ -18,9 +18,9 @@
 
 /// @cond
 
-#include <Radiant/Export.hpp>
-#include <Radiant/VideoCamera.hpp>
-#include <Radiant/CameraDriver.hpp>
+#include "Export.hpp"
+#include "VideoCamera.hpp"
+#include "CameraDriver.hpp"
 
 #ifndef WIN32
 #include <flycapture/FlyCapture2.h>
@@ -61,7 +61,6 @@ namespace Radiant
     virtual void setFeatureRaw(FeatureType id, int32_t value);
     virtual void getFeatures(std::vector<CameraFeature> * features);
 
-    virtual void setWhiteBalance(float u_to_blue, float v_to_red);
     virtual bool setCaptureTimeout(int ms);
 
     virtual bool enableTrigger(TriggerSource src);
@@ -96,7 +95,7 @@ namespace Radiant
     CameraInfo m_info;
   };
 
-  class CameraDriverPTGrey : public CameraDriver
+  class RADIANT_API CameraDriverPTGrey : public CameraDriver
   {
   public:
     CameraDriverPTGrey();

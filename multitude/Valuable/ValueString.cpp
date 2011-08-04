@@ -23,16 +23,6 @@ namespace Valuable
     : Base(parent, name, v, transit)
   {}
 
-  ValueString::ValueString(HasValues * parent, const QString & name,
-                           const char * v, bool transit)
-    : Base(parent, name, v, transit)
-  {}
-
-  ValueString::ValueString(HasValues * parent, const QString & name,
-                           bool transit)
-    : Base(parent, name, QString(), transit)
-  {}
-
   void ValueString::processMessage(const char * /*id*/, Radiant::BinaryData & data)
   {
     bool ok = true;

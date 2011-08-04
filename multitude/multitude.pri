@@ -13,19 +13,26 @@ INCLUDEPATH += $$PWD/v8/include
 DEPENDPATH += $$PWD
 
 # The Cornerstone version for libraries
-unix:VERSION = 1.2.0
+unix {
+  MULTITUDE_VERSION_MAJOR=$$system(cat ../VERSION | cut -d . -f 1)
+  MULTITUDE_VERSION_MINOR=$$system(cat ../VERSION | cut -d . -f 2)
+  MULTITUDE_VERSION_PATCH=$$system(cat ../VERSION | cut -d . -f 3 | cut -d - -f 1)
+
+  VERSION = $${MULTITUDE_VERSION_MAJOR}.$${MULTITUDE_VERSION_MINOR}.$${MULTITUDE_VERSION_PATCH}
+}
 
 withbundles = $$(MULTI_BUNDLES)
 
-MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat
+MULTI_FFMPEG_LIBS = -lavcodec -lavformat -lavutil
+
+LIB_BOX2D = -lBox2D
+LIB_OPENCL = -lOpenCL
+LIB_OPENGL = -lGL -lGLU
 
 LIB_POETIC = -lPoetic
 LIB_FLUFFY = -lFluffy
 LIB_LUMINOUS = -lLuminous
 LIB_NIMBLE = -lNimble
-LIB_OPENCL = -lOpenCL
-LIB_OPENGL = -lGL -lGLU
-LIB_GLU = -lGLU
 LIB_RADIANT = -lRadiant -lPatterns -lv8
 LIB_RESONANT = -lResonant
 LIB_SCREENPLAY = -lScreenplay
@@ -37,10 +44,6 @@ linux-*:vivid {
   QMAKE_LIBDIR += $$(FBX_SDK)/lib/gcc4
   LIB_VIVID = -lVivid -lfbxsdk_20113_1_x64
 }
-
-LIB_BOX2D = -lBox2D
-
-MULTI_LIB_FLAG = -L
 
 linux-*{
   contains(USEGLEW,no) {
@@ -56,33 +59,36 @@ linux-*{
     INCLUDEPATH += /opt/multitouch-ffmpeg/include
   }
 
-  contains(MEMCHECK,yes) {
-    message(Using Radiant::MemCheck)
-    DEFINES += MULTI_MEMCHECK=1
-  }
   contains(DOCUMENTER,yes) {
     message(Enabling document generator)
     DEFINES += MULTI_DOCUMENTER=1
   }
 }
 
+contains(MEMCHECK,yes) {
+  message(Using Radiant::MemCheck)
+  DEFINES += MULTI_MEMCHECK=1
+  linux:LIBS += -rdynamic
+}
+
 macx {
+  LIBS += -undefined dynamic_lookup
+
+  # Frameworks on OS X don't respect QMAKE_LIBDIR
+  QMAKE_LFLAGS += -F$$PWD/lib
+
   # withbundles = $$(MULTI_BUNDLES)
   withbundles = YES
 
   LIB_OPENCL = -framework,OpenCL
   LIB_OPENGL = -framework,OpenGL
-  LIB_GLU =
   # LIB_GLEW = -lGLEW
-  LIBS += -L$$PWD/lib
 
-DEFINES += QT_MAC_USE_COCOA Q_OS_MAC64
+  DEFINES += QT_MAC_USE_COCOA Q_OS_MAC64
 
   # DEFINES += __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__=1050
 
   contains(withbundles,YES) {
-
-    MULTI_LIB_FLAG = -F
 
     LIB_POETIC = -framework,Poetic
     LIB_FLUFFY = -framework,Fluffy
@@ -122,8 +128,9 @@ win32 {
     win64:LIB_GLEW = -lglew64
     else:LIB_GLEW = -lglew32
 
-    LIB_OPENGL = -lopengl32
-    LIB_GLU = -lglu32
+    DDK_PATH="C:\\WinDDK\\7600.16385.1"
+
+    LIB_OPENGL = -lopengl32 -lglu32
     QMAKE_CXXFLAGS += -D_CRT_SECURE_NO_WARNINGS -wd4244 -wd4251 -wd4355
     DEFINES += WIN32
 
@@ -131,7 +138,7 @@ win32 {
 
 MULTI_VIDEO_LIBS = $$LIB_SCREENPLAY $$LIB_RESONANT $$LIB_VIDEODISPLAY
 
-LIBS += $${MULTI_LIB_FLAG}$$PWD/lib
+QMAKE_LIBDIR += $$PWD/lib
 
 # message(QT version is $${QT_MAJOR_VERSION}.$${QT_MINOR_VERSION}.$${QT_PATCH_VERSION})
 

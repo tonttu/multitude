@@ -19,14 +19,14 @@
 
 namespace Valuable
 {
-  ValueBool::ValueBool(HasValues * parent, const QString & name,
+  ValueBool::ValueBool(HasValues * host, const QString & name,
                        bool value, bool transit)
-    : ValueObjectT<bool>(parent, name, value, transit)
+    : ValueObjectT<bool>(host, name, value, transit)
   {}
 
   ValueBool::~ValueBool() {}
 
-  bool ValueBool::deserialize(ArchiveElement & e)
+  bool ValueBool::deserialize(const ArchiveElement & e)
   {
     *this = Radiant::StringUtils::fromString<int32_t>(e.get().toUtf8().data()) != 0;
     return true;

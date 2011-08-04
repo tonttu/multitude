@@ -51,8 +51,9 @@ namespace Radiant
     return str;
   }
 
-  class SHMPipe::SHMHolder : public Radiant::MemCheck
+  class SHMPipe::SHMHolder
   {
+    MEMCHECKED
   public:
     SHMHolder(key_t key, uint32_t size);
     SHMHolder(int id);

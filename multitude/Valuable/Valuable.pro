@@ -2,7 +2,9 @@ include(../multitude.pri)
 
 HEADERS += Archive.hpp \
     ValueFlags.hpp \
-    FileWatcher.hpp
+    FileWatcher.hpp \
+    ValueMatrix.hpp \
+    ValueMatrixImpl.hpp
 HEADERS += XMLArchive.hpp
 HEADERS += ChangeMap.hpp
 HEADERS += CmdParser.hpp
@@ -33,7 +35,8 @@ HEADERS += ValueVector.hpp
 HEADERS += ValueVectorImpl.hpp
 
 SOURCES += Archive.cpp \
-    FileWatcher.cpp
+    FileWatcher.cpp \
+    ValueMatrix.cpp
 SOURCES += XMLArchive.cpp
 SOURCES += ChangeMap.cpp
 SOURCES += CmdParser.cpp

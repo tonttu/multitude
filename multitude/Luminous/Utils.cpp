@@ -1668,11 +1668,18 @@ namespace Luminous {
   bool Utils::glCheck(const char * msg)
   {
     bool result = true;
-    GLenum e;
+    GLenum e, e2 = GL_NO_ERROR;
 
     while((e = glGetError()) != GL_NO_ERROR) {
+      // If glGetError ever returns the same error twice, it's broken somehow.
+      // This happens when called without GL context etc.
+      if(e == e2) {
+        Radiant::error("%s # glGetError called with broken GL context (%s)", msg, gluErrorString(e));
+        return false;
+      }
       Radiant::error("%s # GL ERROR %s", msg, gluErrorString(e));
       result = false;
+      e2 = e;
     }
 
     return result;

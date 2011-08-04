@@ -29,6 +29,7 @@ namespace Radiant {
 namespace Luminous
 {
   class BGThread;
+  class TaskDeleter;
 
   /// Priority for the tasks
   typedef float Priority;
@@ -54,6 +55,7 @@ namespace Luminous
     */
   class LUMINOUS_API Task : Patterns::NotCopyable
   {
+    MEMCHECKED
   public:
     /// Standard priorities for tasks
     enum {
@@ -126,6 +128,7 @@ namespace Luminous
       virtual ~Task();
 
       friend class BGThread;
+      friend class TaskDeleter;
   };
 
 }

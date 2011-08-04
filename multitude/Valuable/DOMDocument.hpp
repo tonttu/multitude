@@ -37,8 +37,8 @@ namespace Valuable
     static DOMDocument * createDocument();
 
     /// Creates a new DOM element with the given name
-    DOMElement createElement(const char * name);
-    /// @copydoc createElement
+    /// @param name Tag name of the DOM element
+    /// @return The created element
     DOMElement createElement(const QString & name);
 
     /// Appends an element to the document
@@ -47,7 +47,7 @@ namespace Valuable
     /// Writes the document to a file
     bool writeToFile(const char * filename);
     /// Writes the document to memory
-    bool writeToMem(std::vector<char> & buf);
+    bool writeToMem(QByteArray & buf);
 
     /// Parse a document from a file.
     /// @param filename name of the file to read from

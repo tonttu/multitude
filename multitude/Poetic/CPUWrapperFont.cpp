@@ -18,7 +18,10 @@ namespace Poetic
   {}
 
   CPUWrapperFont::~CPUWrapperFont()
-  {}
+  {
+    // Managed fonts are deleted in FontManager destructor
+    // delete m_managedFont;
+  }
 
   GPUWrapperFont * CPUWrapperFont::getGPUFont()
   {

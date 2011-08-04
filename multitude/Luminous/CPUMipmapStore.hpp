@@ -17,6 +17,7 @@
 #define LUMINOUS_CPU_MIPMAP_STORE_HPP
 
 #include <Luminous/CPUMipmaps.hpp>
+#include <Radiant/Defines.hpp>
 
 namespace Luminous {
 
@@ -26,23 +27,27 @@ namespace Luminous {
   class LUMINOUS_API CPUMipmapStore
   {
   public:
-    /** Gets a pointer to an image file CPU-side mipmap.
+    /** Gets a shared pointer to an image file CPU-side mipmap. @sa Luminous::CPUMipmaps::startLoading
 
         @param filename The name of the image file
-        @param immediate Indicate if the file should be loaded immediately (as opposed to on-demand).
 
-        @return If the file already open, then an old pointer is
+        @param compressed_mipmaps control whether compressed mipmaps should be used
+
+        @return If the file is already open, then a shared pointer is
         returned. Otherwise CPUMipmapStore will create a new
-        #Luminous::CPUMipmaps object, and return that (if opened successfully).
+        #Luminous::CPUMipmaps object, and return a shared pointer to that (if opened successfully).
      */
-    static CPUMipmaps * acquire(const QString & filename, bool immediate = true);
+    static std::shared_ptr<CPUMipmaps> acquire(const QString & filename, bool compressed_mipmaps);
 
     /** Release a #Luminous::CPUMipmaps object. If there are no references to
-    the object, then its memory is freed. */
-    static void release(Luminous::CPUMipmaps *);
+        the object, then its memory is freed.
 
-    /** @return Returns the number of mipmaps currently within the store. */
-    static unsigned count();
+        @deprecated no longer need to call release. Will be removed in 2.0.
+     */
+    MULTI_ATTR_DEPRECATED(static void release(std::shared_ptr<CPUMipmaps>));
+
+    /** @deprecated copy shared pointer instead. Will be removed in 2.0. */
+    MULTI_ATTR_DEPRECATED(static std::shared_ptr<CPUMipmaps> copy(std::shared_ptr<CPUMipmaps>));
   };
 }
 

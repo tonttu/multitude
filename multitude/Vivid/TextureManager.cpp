@@ -24,3 +24,5 @@ std::shared_ptr<Luminous::ImageTex> TextureManager::load(const std::string& name
 }
 
 }
+
+DEFINE_SINGLETON(Vivid::TextureManager);

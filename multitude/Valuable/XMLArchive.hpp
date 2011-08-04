@@ -13,8 +13,8 @@
  * 
  */
 
-#ifndef XMLARCHIVE_HPP
-#define XMLARCHIVE_HPP
+#ifndef VALUABLE_XMLARCHIVE_HPP
+#define VALUABLE_XMLARCHIVE_HPP
 
 #include "Archive.hpp"
 #include "Export.hpp"
@@ -24,100 +24,92 @@ namespace Valuable
   class XMLArchive;
 
   /**
-   * Wrapper for DOMElement that implements the ArchiveElement interface.
+   * Wrapper for DOMElement that implements the ArchiveElementImpl interface.
+   * This and XMLArchive implement XML serialization.
    */
-  class VALUABLE_API XMLArchiveElement : public ArchiveElement
+  class VALUABLE_API XMLArchiveElement : public ArchiveElementImpl
   {
   public:
     /// Iterator for XMLArchiveElement children
-    class XMLIterator : public Iterator
+    class XMLIterator : public ArchiveIteratorImpl
     {
     public:
       /// Constructs a new iterator
-      XMLIterator(XMLArchiveElement & parent);
+      XMLIterator(const XMLArchiveElement & parent);
       /// Constructs a copy of an iterator
       XMLIterator(const XMLIterator & it);
-/// @cond
-      operator const void * ();
-      ArchiveElement & operator * ();
-      ArchiveElement * operator -> ();
-      Iterator & operator ++ ();
-      Iterator & operator ++ (int);
-      bool operator == (const Iterator & other);
-      bool operator != (const Iterator & other);
-/// @endcond
+
+      virtual std::shared_ptr<ArchiveElementImpl> get() const;
+      virtual void next();
+      virtual bool isValid() const;
+      virtual bool operator == (const ArchiveIteratorImpl & other) const;
     private:
-      XMLArchiveElement & m_parent;
+      const XMLArchiveElement & m_parent;
       DOMElement::NodeList m_nodes;
       DOMElement::NodeList::iterator m_it;
-      std::list<XMLIterator> m_iterators;
-      std::list<XMLArchiveElement> m_elements;
       bool m_valid;
     };
 
     /// Creates a new wrapper object for given DOMElement object
+    /// @param element DOMElement to wrap
     XMLArchiveElement(DOMElement element);
-    virtual ~XMLArchiveElement();
 
-    /// @cond
-    void add(ArchiveElement & element);
-    Iterator & children();
+    void add(ArchiveElementImpl & element);
+    ArchiveIterator children() const;
 
-    void add(const char * name, const char * value);
-    QString get(const char * name) const;
+    void add(const QString & name, const QString & value);
+    QString get(const QString & name) const;
 
     void set(const QString & s);
     QString get() const;
 
     QString name() const;
-    bool isNull() const;
 
-    /// Returns a pointer to m_element
-    DOMElement * xml();
+    /// Returns a pointer to the wrapped DOMElement
+    /// @return The wrapped DOMElement
+    const DOMElement * xml() const;
 
-    static XMLArchiveElement s_emptyElement;
-    /// @endcond
+    /// Wraps the given DOMElement to XMLArchiveElement
+    /// @param element DOMElement to wrap
+    /// @return New Element with XMLArchiveElement implementation
+    static ArchiveElement create(const DOMElement & element);
 
   private:
-    std::list<XMLIterator> m_iterators;
     DOMElement m_element;
   };
 
   /**
    * Wrapper for DOMDocument that implements the Archive interface.
    *
-   * All ArchiveElements are instances of XMLArchiveElement, constructed in
-   * createElement and owned by XMLArchive. They will be freed only when the
-   * XMLArhive object is destroyed.
+   * All ArchiveElements use XMLArchiveElement implementation and are constructed
+   * in createElement.
    */
   class VALUABLE_API XMLArchive : public Archive
   {
   public:
     /// Creates a new DOMDocument
-    XMLArchive(Options options = DEFAULTS);
-    /// Frees every ArchiveElement this Archive have ever created
+    /// @param options Bitmask of SerializationOptions::Options
+    XMLArchive(unsigned int options = DEFAULTS);
+    /// Deletes the DOMDocument
     virtual ~XMLArchive();
 
-    ArchiveElement & createElement(const char * name);
-    /// Wraps the given DOMElement to XMLArchiveElement
-    XMLArchiveElement & createElement(const DOMElement & element);
+    virtual ArchiveElement createElement(const QString & name);
 
-    ArchiveElement & emptyElement();
-    ArchiveElement & root();
+    ArchiveElement root() const;
 
-    void setRoot(ArchiveElement & element);
+    void setRoot(const ArchiveElement & element);
 
-    bool writeToFile(const char * file);
-    bool writeToMem(std::vector<char> & buffer);
-    bool readFromFile(const char * filename);
+    bool writeToFile(const QString & file) const;
+    bool writeToMem(QByteArray & buffer) const;
+    bool readFromFile(const QString & filename);
 
-    /// Returns m_document.ptr()
+    /// Returns a pointer to wrapped DOMDocument
+    /// @return The wrapped DOMDocument
     DOMDocument * xml();
 
   private:
-    std::list<XMLArchiveElement> m_elements;
     std::shared_ptr<DOMDocument> m_document;
   };
 }
 
-#endif // XMLARCHIVE_HPP
+#endif // VALUABLE_XMLARCHIVE_HPP

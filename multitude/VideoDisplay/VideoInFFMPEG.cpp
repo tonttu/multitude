@@ -1,34 +1,23 @@
 /* COPYRIGHT
- *
- * This file is part of VideoDisplay.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "VideoDisplay.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #include "VideoInFFMPEG.hpp"
 #include "VideoDisplay.hpp"
 
 #include <Radiant/Trace.hpp>
+#include <Radiant/Mutex.hpp>
 
 #include <map>
-#include <vector>
+#include <string>
 #include <algorithm>
 
 namespace VideoDisplay {
   namespace
   {
-    class FFVideodebug
+    class VideoFirstFrame
     {
     public:
-      FFVideodebug() : m_channels(0), m_duration(0.0f) {}
+      VideoFirstFrame() : m_channels(0), m_duration(0.0f) {}
 
       Radiant::VideoImage m_firstFrame;
       int   m_channels;
@@ -39,27 +28,27 @@ namespace VideoDisplay {
     };
 
     /// how many videos to cache
-    /// @see FFVideodebug
+    /// @see VideoFirstFrame
     const unsigned int s_MaxCached = 100;
 
-    bool comp_ffvideodebug_timestamp(const std::pair<QString, FFVideodebug> & a, const std::pair<QString, FFVideodebug> & b)
+    bool comp_ffvideodebug_timestamp(const std::pair<QString, VideoFirstFrame> & a, const std::pair<QString, VideoFirstFrame> & b)
     {
       return a.second.m_used < b.second.m_used;
     }
   }
 
-  /* Here we cache the first frames off all viedos. */
-  static std::map<QString, FFVideodebug> __ffcache;
+  // Cache of the first frames of all loaded videos
+  static std::map<QString, VideoFirstFrame> s_firstFrameCache;
+  // Mutex to guard access to s_firstFrameCache
+  static Radiant::Mutex s_firstFrameCacheMutex;
 
-  static Radiant::Mutex __mutex;
-
-  const FFVideodebug * __cacheddebugVideoDisplay(const QString & filename)
+  const VideoFirstFrame * __cacheddebugVideoDisplay(const QString & filename)
   {
-    Radiant::Guard g(__mutex);
+    Radiant::Guard g(s_firstFrameCacheMutex);
 
-    std::map<QString, FFVideodebug>::iterator it = __ffcache.find(filename);
+    std::map<QString, VideoFirstFrame>::iterator it = s_firstFrameCache.find(filename);
 
-    if(it == __ffcache.end())
+    if(it == s_firstFrameCache.end())
       return 0;
 
     (*it).second.m_used = Radiant::TimeStamp::getTime();
@@ -122,10 +111,24 @@ namespace VideoDisplay {
     m_buffered = 0;
     m_audioCount = 0;
 
-    const float bufferLengthInSeconds = 1.7f;
+
+    static float extralatency = 0.0f;
+    static bool checked = false;
+
+    if(!checked) {
+
+      const char * lat = getenv("RESONANT_LATENCY");
+      if(lat) {
+        extralatency = atof(lat) * 0.001;
+      }
+      checked = true;
+      debug("VideoInFFMPEG::open # Extra latenty set to %.3f", extralatency);
+    }
+
+    const float bufferLengthInSeconds = 1.7f + Nimble::Math::Clamp(extralatency * 1.5f, 0.0f, 5.0f);
 
     // Try to find the video info from cache
-    const FFVideodebug * vi = __cacheddebugVideoDisplay(filename);
+    const VideoFirstFrame * vi = __cacheddebugVideoDisplay(filename);
 
     if(vi) {
 
@@ -200,15 +203,15 @@ namespace VideoDisplay {
 
     {
       // Cache the first frame for later use.
-      Radiant::Guard g(__mutex);
+      Radiant::Guard g(s_firstFrameCacheMutex);
 
       video.getAudioParameters( & m_channels, & m_sampleRate, & m_auformat);
       // remove the item with the smallest timestamp
-      if (__ffcache.size() >= s_MaxCached) {
-        __ffcache.erase(std::min_element(__ffcache.begin(), __ffcache.end(), comp_ffvideodebug_timestamp));
+      if (s_firstFrameCache.size() >= s_MaxCached) {
+        s_firstFrameCache.erase(std::min_element(s_firstFrameCache.begin(), s_firstFrameCache.end(), comp_ffvideodebug_timestamp));
       }
 
-      FFVideodebug & vi2 = __ffcache[filename];
+      VideoFirstFrame & vi2 = s_firstFrameCache[filename];
 
       vi2.m_duration = m_duration;
       vi2.m_firstFrame.allocateMemory(*img);
@@ -334,7 +337,7 @@ namespace VideoDisplay {
         audioTS = audioTS2;
       }
 
-      debugVideoDisplay("ideoInFFMPEG::videoPlay # Forward one frame");
+      debugVideoDisplay("VideoInFFMPEG::videoPlay # Forward one frame");
 
       if(m_frameTime >= pos) {
 

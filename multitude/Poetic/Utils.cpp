@@ -147,7 +147,7 @@ namespace Poetic
 #else
 
   void Utils::breakToLines(const QString & qws, float width,
-                           CPUFont & fnt, QStringList & lines, bool afterSpace)
+                           CPUFont & fnt, QStringList & lines)
   {
     lines.clear();
 
@@ -156,21 +156,21 @@ namespace Poetic
     if(ws.empty())
       return;
 
-    int n = ws.size();
+    size_t n = ws.size();
 
     std::vector<float> advances;
     advances.resize(n, 0);
 
-    fnt.advanceList(ws.c_str(), & advances[0], n);
+    fnt.advanceList(ws.c_str(), & advances[0], static_cast<int> (n));
 
-    int lineStart = 0;
+    size_t lineStart = 0;
     int okEnd = 0;
     float sum = 0.0f;
     float okEndSum = 0.0f;
 
     bool onspace = false;
 
-    for(int i = 0; i < n; i++) {
+    for(size_t i = 0; i < n; i++) {
 
       int c = ws[i];
       float a = advances[i];

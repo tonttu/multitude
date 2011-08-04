@@ -23,7 +23,7 @@ namespace Luminous
   GLResource::GLResource(GLResources * resources)
     : m_resources(resources),
       m_deleteOnFrame(0),
-      m_generation(-1)
+      m_generation(0)
   {
     if(!resources)
       m_resources = GLResources::getThreadResources();

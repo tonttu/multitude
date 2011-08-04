@@ -16,8 +16,9 @@
 #ifndef RADIANT_CYCLE_RECORD_HPP
 #define RADIANT_CYCLE_RECORD_HPP
 
-#include <Radiant/cycle.h>
-#include <Radiant/Trace.hpp>
+#include "Export.hpp"
+#include "cycle.h"
+#include "Trace.hpp"
 
 #include <stdio.h>
 #include <vector>
@@ -74,7 +75,7 @@ namespace Radiant {
     }
 
     /// Normalize the accumulation buffers, so that one can print the report
-    /** This method returns the total CPU cycle count. */
+    /// @return total CPU cycle count.
     double normalize()
     {
       unsigned i;

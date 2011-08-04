@@ -19,7 +19,7 @@
 #include "GLContext.hpp"
 #include "Texture.hpp"
 #include "FramebufferObject.hpp"
-#include "RenderTarget.hpp"
+//#include "RenderTarget.hpp"
 
 #include "Utils.hpp"
 #include "GLSLProgramObject.hpp"
@@ -27,6 +27,7 @@
 #include <strings.h>
 
 #define DEFAULT_RECURSION_LIMIT 8
+#define SHADER(str) #str
 
 namespace Luminous
 {
@@ -44,6 +45,9 @@ namespace Luminous
     if(size == m_tex.size())
       return;
 
+    GLint textureId = 0;
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureId);
+
     m_tex.bind();
     m_tex.setWidth(size.x);
     m_tex.setHeight(size.y);
@@ -54,6 +58,8 @@ namespace Luminous
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // <- essential on Nvidia
+
+    glBindTexture(GL_TEXTURE_2D, textureId);
   }
 
   void RenderContext::FBOPackage::attach()
@@ -175,7 +181,7 @@ namespace Luminous
   {
   public:
 
-    Internal(const Luminous::MultiHead::Window * win, Luminous::RenderContext & rc)
+    Internal(const Luminous::MultiHead::Window * win, Luminous::RenderContext & /*rc*/)
         : m_recursionLimit(DEFAULT_RECURSION_LIMIT),
         m_recursionDepth(0),
         m_renderCount(0),
@@ -184,8 +190,8 @@ namespace Luminous
         m_viewStackPos(-1),
         m_glContext(new GLDummyContext),
         m_initialized(false),
-        m_blendFunc(BLEND_USUAL),
-        m_rtm(rc)
+        m_blendFunc(BLEND_USUAL)
+        //m_rtm(rc)
     {
 
       m_attribs.resize(10000);
@@ -219,59 +225,63 @@ namespace Luminous
 
       if(!m_initialized) {
         m_initialized = true;
-        const char * circ_vert_shader = ""\
-            "uniform mat4 matrix;"\
-            "varying vec2 pos;"\
-            "void main(void) {"\
-            "  pos = gl_Vertex.xy; "\
-            "  mat4 transform = gl_ProjectionMatrix * matrix;"\
-            "  gl_Position = transform * gl_Vertex;"\
-            "  gl_ClipVertex = gl_ModelViewMatrix * matrix * gl_Vertex;"
-            "  gl_FrontColor = gl_Color;"\
-            "}";
-        const char * circ_frag_shader = ""\
-            "varying vec2 pos;"\
-            "uniform float border_start;"\
-            "void main(void) {"\
-            "  float r = length(pos);"\
-            "  gl_FragColor = gl_Color;"\
-            "  gl_FragColor.w *= smoothstep(1.00, border_start, r);"\
-            "}";
+        const char * circ_vert_shader = SHADER(
+            uniform mat4 matrix;
+            varying vec2 pos;
+            void main(void) {
+              pos = gl_Vertex.xy;
+              mat4 transform = gl_ProjectionMatrix * matrix;
+              gl_Position = transform * gl_Vertex;
+              gl_ClipVertex = gl_ModelViewMatrix * matrix * gl_Vertex;
+              gl_FrontColor = gl_Color;
+            }
+          );
+        const char * circ_frag_shader = SHADER(
+            varying vec2 pos;
+            uniform float border_start;
+            void main(void) {
+              float r = length(pos);
+              gl_FragColor = gl_Color;
+              gl_FragColor.w *= smoothstep(1.00, border_start, r);
+            }
+          );
 
         m_circle_shader.reset(new GLSLProgramObject());
         m_circle_shader->loadStrings(circ_vert_shader, circ_frag_shader);
 
         m_polyline_shader.reset(new GLSLProgramObject());
-        const char * polyline_frag = ""
-                            " varying vec2 p1;\n"\
-                            " varying vec2 p2;\n"\
-                            "varying vec2 vertexcoord;\n"\
-                            "uniform float width;\n"\
-                            "void main() {\n"\
-                            "gl_FragColor = gl_Color;\n"\
-                            "vec2 pp = p2-p1;\n"\
-                            "float t = ((vertexcoord.x-p1.x)*(p2.x-p1.x)+(vertexcoord.y-p1.y)*(p2.y-p1.y))/dot(pp,pp);\n"\
-                            "t = clamp(t, 0.0, 1.0);\n"\
-                            "vec2 point_on_line = p1+t*(p2-p1);\n"\
-                            "float dist = length(vertexcoord-point_on_line);\n"\
-                            "gl_FragColor.w *= clamp(width-dist, 0.0, 1.0);\n"\
-                            "}";
+        const char * polyline_frag = SHADER(
+            varying vec2 p1;
+            varying vec2 p2;
+            varying vec2 vertexcoord;
+            uniform float width;
+            void main() {
+              gl_FragColor = gl_Color;
+              vec2 pp = p2-p1;
+              float t = ((vertexcoord.x-p1.x)*(p2.x-p1.x)+(vertexcoord.y-p1.y)*(p2.y-p1.y))/dot(pp,pp);
+              t = clamp(t, 0.0, 1.0);
+              vec2 point_on_line = p1+t*(p2-p1);
+              float dist = length(vertexcoord-point_on_line);
+              gl_FragColor.w *= clamp(width-dist, 0.0, 1.0);
+            }
+          );
 
-        const char * polyline_vert = "\n"
-                            "attribute vec2 coord;\n"\
-                            "attribute vec2 coord2;\n"\
-                            "uniform float width;\n"\
-                            " varying vec2 p1;\n"\
-                            " varying vec2 p2;\n"\
-                            "varying vec2 vertexcoord;\n"\
-                            "void main() {\n"\
-                            "p1 = coord;\n"\
-                            "p2 = coord2;\n"\
-                            "vertexcoord = gl_Vertex.xy;\n"\
-                            "gl_Position = gl_ProjectionMatrix * gl_Vertex;\n"\
-                            "gl_ClipVertex = gl_ModelViewMatrix * gl_Vertex;\n"\
-                            "gl_FrontColor = gl_Color;\n"\
-                            "}\n";
+          const char * polyline_vert = SHADER(
+              attribute vec2 coord;
+              attribute vec2 coord2;
+              uniform float width;
+              varying vec2 p1;
+              varying vec2 p2;
+              varying vec2 vertexcoord;
+              void main() {
+                p1 = coord;
+                p2 = coord2;
+                vertexcoord = gl_Vertex.xy;
+                gl_Position = gl_ProjectionMatrix * gl_Vertex;
+                gl_ClipVertex = gl_ModelViewMatrix * gl_Vertex;
+                gl_FrontColor = gl_Color;
+              }
+            );
         m_polyline_shader->loadStrings(polyline_vert, polyline_frag);
 
         m_viewFBO.reset(new Luminous::Framebuffer());
@@ -425,7 +435,7 @@ namespace Luminous
     /// Viewports defined as x1,y1,x2,y2
     typedef std::stack<Nimble::Recti> ViewportStack;
     ViewportStack m_viewportStack;
-    RenderTargetManager m_rtm;
+    //RenderTargetManager m_rtm;
   };
 
   void RenderContext::Internal::drawPolyLine(RenderContext& r, const Nimble::Vector2f * vertices, int n,
@@ -566,6 +576,11 @@ namespace Luminous
   void RenderContext::setWindow(const Luminous::MultiHead::Window * window)
   {
     m_data->m_window = window;
+  }
+
+  const MultiHead::Window * RenderContext::window() const
+  {
+    return m_data->m_window;
   }
 
   void RenderContext::prepare()
@@ -1224,7 +1239,7 @@ namespace Luminous
   {
     return m_data->m_glContext;
   }
-
+/*
   RenderTargetObject RenderContext::pushRenderTarget(Nimble::Vector2 size, float scale) {
     return m_data->m_rtm.pushRenderTarget(size, scale);
   }
@@ -1232,7 +1247,7 @@ namespace Luminous
   Luminous::Texture2D & RenderContext::popRenderTarget(RenderTargetObject & trt) {
     return m_data->m_rtm.popRenderTarget(trt);
   }
-
+*/
   void RenderContext::pushViewport(const Nimble::Recti &viewport)
   {
     m_data->m_viewportStack.push(viewport);

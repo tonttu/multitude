@@ -20,6 +20,8 @@
 
 #include <Resonant/Export.hpp>
 
+#include <string>
+
 namespace Resonant {
 
   /** A simple audio IO class.
@@ -37,11 +39,14 @@ namespace Resonant {
     virtual ~AudioLoop();
 
     /// Start the AudioLoop.
-    /** In pratice this spans a new thread that is managed by the PortAudio (or rather,
-        the operating system audio engine). */
+    /// In practice this spans a new thread that is managed by the PortAudio (or rather,
+    /// the operating system audio engine).
+    /// @param samplerate Desired samplerate, 44100 is safe choice
+    /// @param channels Number of channels to open
+    /// @return False on error
     bool startReadWrite(int samplerate, int channels);
     /// Check if the audio IO is operational
-    bool isRunning() { return m_isRunning; }
+    inline bool isRunning() { return m_isRunning; }
 
     /// Stop the audio processing
     bool stop();
@@ -52,26 +57,41 @@ namespace Resonant {
         they actually have. This may be caused by a sound-card manufacturer
         using the same chips in two sounds cards, with a one card having 10
         DACs, while the other might have only 4 (case with M-Audio delta 44 vs 1010).
-
+        @return Number of channels
     */
-    int outChannels() const;
+    size_t outChannels() const;
 
-  private:
-    virtual void finished();
+    /// Set the global resonand devices configuration XML file, look for example
+    /// resonant-devices.xml for more information
+    /// @param xmlFilename Filename to the configuration that will be used with
+    ///                    all new AudioLoops
+    static void setDevicesFile(const std::string & xmlFilename);
 
-    virtual int callback(const void *in, void *out,
-        unsigned long framesPerBuffer
-//        , const PaStreamCallbackTimeInfo* time,
-//        PaStreamCallbackFlags status
-        ) = 0;
+  protected:
+    /// This is called from PortAudio thread when the stream becomes inactive
+    /// @param streamid Device / Stream number, @see setDevicesFile()
+    virtual void finished(int streamid);
 
+    /// Callback function that is called from the PortAudio thread
+    /// @param in Array of interleaved input samples for each channel
+    /// @param[out] out Array of interleaved input samples for each channel,
+    ///                 this should be filled by the callback function.
+    /// @param framesPerBuffer The number of sample frames to be processed
+    /// @param streamid Device / Stream number, @see setDevicesFile()
+    /// @return paContinue, paComplete or paAbort. See PaStreamCallbackResult
+    ///         for more information
+    /// @see PaStreamCallback in PortAudio documentation
+    virtual int callback(const void * in, void * out,
+                         unsigned long framesPerBuffer, int streamid) = 0;
+
+    /// @cond
     bool       m_isRunning;
     bool       m_initialized;
-    bool       m_continue;
 
     class AudioLoopInternal;
 
     AudioLoopInternal * m_d;
+    /// @endcond
  };
 
 }

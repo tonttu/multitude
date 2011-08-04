@@ -16,7 +16,7 @@
 namespace Luminous {
 
   /** Class for doing key-stone correction when rendering 2D OpenGL
-      graphics. The key-stone matrix is a 4x4 trnasformation matrix
+      graphics. The key-stone matrix is a 4x4 transformation matrix
       that is setup up to transform the corner points of all
       polygons/lines/sprites so that they match some skewed coordinate
       system.
@@ -32,25 +32,29 @@ namespace Luminous {
   {
   public:
 
+    /// Rotation of the key-stone correction
     enum Rotation {
-      ROTATION_NONE,
-      ROTATION_90,
-      ROTATION_180,
-      ROTATION_270,
+      ROTATION_NONE,  ///< No rotation
+      ROTATION_90,    ///< 90 degree rotation
+      ROTATION_180,   ///< 180 degree rotation
+      ROTATION_270   ///< 270 degree rotation
     };
 
     /// Creates a new GLKeyStone object.
-    GLKeyStone(Valuable::HasValues * parent, const QString & name);
+    GLKeyStone(Valuable::HasValues * host, const QString & name);
     virtual ~GLKeyStone();
 
     /// Returns the object type name = "glkeystone"
     virtual const char * type() const { return "glkeystone"; }
 
     /// Reads in variables from the DOMElement and calculates the matrix
-    virtual bool deserialize(Valuable::ArchiveElement & e);
+    virtual bool deserialize(const Valuable::ArchiveElement & e);
 
     /// Returns the index to the closest keystone vertex
+    /// @param loc location to query
+    /// @return index of the closest key-stone vertex
     int closestVertex(Nimble::Vector2 loc);
+    /// @copydoc closestVertex
     int closestVertex(Nimble::Vector2 loc) const;
     /// Sets the location of the given keystone vertex
     void setVertex(int index, float x, float y)
@@ -82,22 +86,26 @@ namespace Luminous {
     void rotateVertices();
     /** Reports the number of times this keystone has been
     rotated. This function is typically used by some GUI code to
-    determine in what orientation the whole key-stone thing is. */
+    determine in what orientation the whole key-stone thing is.
+    @return number of rotations applied*/
     int rotations() const { return m_rotations.asInt(); }
 
     /** Calculates the OpenGL keystone matrix. */
     void calculateMatrix();
 
-    /** Returns the OpenGL keystone matrix. */
+    /// Returns the OpenGL keystone matrix.
+    /// @return the OpenGL keystone matrix
     const Nimble::Matrix4 & matrix() const { return m_matrix; }
     /** Projects the vector v using internal matrix, WITHOUT applying
     perspective correction.
-    @param v vector to project*/
+    @param v vector to project
+    @return projected vector*/
     Nimble::Vector4 project(Nimble::Vector2 v) const;
     /** Projects the vector v using matrix m, applying perspective
     correction.
     @param m projection matrix
-    @param v vector to project*/
+    @param v vector to project
+    @return projected vector*/
     static Nimble::Vector4 projectCorrected(const Nimble::Matrix4 & m,
                         Nimble::Vector2 v);
     /// Applies the keystone matrix to the current OpenGL context

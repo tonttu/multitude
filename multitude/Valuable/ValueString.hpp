@@ -40,15 +40,8 @@ namespace Valuable
     ValueString();
     /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
     /// @param v The string to store in this object
-    ValueString(HasValues * parent, const QString & name,
+    ValueString(HasValues * host, const QString & name,
                 const QString & v, bool transit = false);
-    /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
-    /// @param v The string to store in this object
-    ValueString(HasValues * parent, const QString & name,
-                 const char * v, bool transit = false);
-    /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
-    ValueString(HasValues * parent, const QString & name,
-                 bool transit = false);
 
     virtual void processMessage(const char * id, Radiant::BinaryData & data);
 
@@ -82,7 +75,7 @@ namespace Valuable
 
     const char * type() const { return VO_TYPE_STRING; }
 
-    bool deserialize(ArchiveElement & element);
+    bool deserialize(const ArchiveElement & element);
 
     /// Makes the string empty
     void clear();

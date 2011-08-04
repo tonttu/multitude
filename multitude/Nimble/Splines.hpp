@@ -16,11 +16,11 @@
 #ifndef NIMBLE_SPLINES_HPP
 #define NIMBLE_SPLINES_HPP
 
-#include <Nimble/Export.hpp>
+#include "Export.hpp"
+#include "Vector2.hpp"
 
 #include <vector>
 
-#include <Nimble/Vector2.hpp>
 namespace Luminous {
   class RenderContext;
 }
@@ -45,6 +45,7 @@ namespace Nimble
     Nimble::Vector2 getDerivative(size_t ii, float t) const;
     /// Evaluates the spline at given t
     /// @param t position where to evaluate the spline. 0 <= t <= size() - 1
+    /// @return Interpolated point on spline
     Nimble::Vector2 get(float t) const;
     /// Adds a control point
     void add(Nimble::Vector2 point);

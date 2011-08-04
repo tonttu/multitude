@@ -51,7 +51,7 @@ namespace Luminous
       BLEND_SUBTRACTIVE
     };
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+/// @cond
 
     class FBOPackage;
 
@@ -82,7 +82,7 @@ namespace Luminous
       int m_users;
     };
 
-#endif // DOXYGEN_SHOULD_SKIP_THIS
+/// @endcond
 
 /// @cond
     /** Experimental support for getting temporary FBOs for this context.
@@ -134,8 +134,12 @@ namespace Luminous
     /// Sets the associated window for this context
     /// @param window window to associate
     void setWindow(const Luminous::MultiHead::Window * window);
+    /// Get the window associated with this context
+    /// @return window for this context
+    const Luminous::MultiHead::Window * window() const;
 
-    /// Returns the resources of this context
+    /// Returns the resource collection associated with this context
+    /// @return resource collection for this context
     Luminous::GLResources * resources() { return m_resources; }
 
     /// Prepares the context for rendering a frame. This is called once for
@@ -353,12 +357,19 @@ namespace Luminous
     /// @endcond
 
     /// Get a temporary texture render target
-    RenderTargetObject pushRenderTarget(Nimble::Vector2 size, float scale);
+    // RenderTargetObject pushRenderTarget(Nimble::Vector2 size, float scale);
     /// Pop a temporary texture render target
-    Luminous::Texture2D & popRenderTarget(RenderTargetObject & trt);
+    // Luminous::Texture2D & popRenderTarget(RenderTargetObject & trt);
 
+    /// Push a viewport to the viewport stack
+    /// Pushes a viewport to the top of the viewport stack.
+    /// @param viewport viewport to push
     void pushViewport(const Nimble::Recti & viewport);
+    /// Pop a viewport from the viewport stack
+    /// Pops the viewport from the top of the viewport stack
     void popViewport();
+    /// Get the current viewport
+    /// @return the viewport from the top of the viewport stack
     const Nimble::Recti & currentViewport() const;
 
   private:

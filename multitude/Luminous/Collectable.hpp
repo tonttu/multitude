@@ -16,17 +16,17 @@
 #ifndef LUMINOUS_COLLECTABLE_HPP
 #define LUMINOUS_COLLECTABLE_HPP
 
-#include <Luminous/Export.hpp>
+#include "Export.hpp"
+#include "GarbageCollector.hpp"
 
 #include <Radiant/MemCheck.hpp>
-
-#include "GarbageCollector.hpp"
 
 namespace Luminous
 {
   /// A utility class to make the work of GarbageCollector easier.
-  class Collectable : public Radiant::MemCheck
+  class Collectable
   {
+    MEMCHECKED
   public:
       Collectable() {}
     virtual ~Collectable() {GarbageCollector::objectDeleted(this);}

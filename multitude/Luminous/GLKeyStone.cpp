@@ -12,7 +12,7 @@ namespace Luminous {
   using Nimble::Vector2;
   using Nimble::Vector4;
 
-  GLKeyStone::GLKeyStone(HasValues * parent, const QString & name)
+  GLKeyStone::GLKeyStone(HasValues * host, const QString & name)
   : HasValues(parent, name, false),
   m_selected(0),
   m_rotations(this, "rotations", false, 0)
@@ -33,7 +33,7 @@ namespace Luminous {
   GLKeyStone::~GLKeyStone()
   {}
 
-  bool GLKeyStone::deserialize(Valuable::ArchiveElement & e)
+  bool GLKeyStone::deserialize(const Valuable::ArchiveElement & e)
   {
     if(!Valuable::HasValues::deserialize(e))
       return false;

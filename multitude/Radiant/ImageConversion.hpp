@@ -16,7 +16,7 @@
 #ifndef RADIANT_IMAGE_CONVERSION_HPP
 #define RADIANT_IMAGE_CONVERSION_HPP
 
-#include <Radiant/Export.hpp>
+#include "Export.hpp"
 
 namespace Radiant {
 
@@ -31,42 +31,50 @@ namespace Radiant {
   class RADIANT_API ImageConversion
   {
   public:
-    /// Convert from a random format to another random format
+    /// Convert between image formats
+    /// @param source source
+    /// @param[out] target dest
+    /// @return true on success
     static bool convert(const VideoImage * source, VideoImage * target);
 
+    /// @copydoc YUV411PToRGB
     /// @deprecated not implemented
     static void YUV411ToRGB(const VideoImage * source, VideoImage * target);
-    /// Converts YUV411P to RGB
+
+    /// Convert image format
+    /// @param source source image
+    /// @param[out] target target image
     static void YUV411PToRGB(const VideoImage * source, VideoImage * target);
-    /// Converts YUV411P to RGBA
+    /// @copydoc YUV411PToRGB
     static void YUV411PToRGBA(const VideoImage * source, VideoImage * target);
-    /// Converts YUV411 to grayscale
+    /// @copydoc YUV411PToRGB
     static void YUV411ToGrayscale(const VideoImage * source, VideoImage * target);
 
-    /// Converts YUV420P to grayscale
+    /// @copydoc YUV411PToRGB
     static void YUV420PToGrayscale(const VideoImage * source, VideoImage * target);
-    /// Converts YUV420 to grayscale
+    /// @copydoc YUV411PToRGB
     static void YUV420ToGrayscale(const VideoImage * source, VideoImage * target);
+    /// @copydoc YUV411PToRGB
     /// @deprecated not implemented
     static void YUV420ToRGBA(const VideoImage * source, VideoImage * target);
-    /// Converts YUV420P to RGBA
+    /// @copydoc YUV411PToRGB
     static void YUV420PToRGBA(const VideoImage * source, VideoImage * target);
-    /// Converts YUV420P to RGB
+    /// @copydoc YUV411PToRGB
     static void YUV420PToRGB(const VideoImage * source, VideoImage * target);
 
-    /// Converts YUV422P to RGBA
+    /// @copydoc YUV411PToRGB
     static void YUV422PToRGBA(const VideoImage * source, VideoImage * target);
-    /// Converts YUV422P to grayscale
+    /// @copydoc YUV411PToRGB
     static void YUV422PToGrayscale(const VideoImage * source, VideoImage * target);
 
-    /// Converts grayscale to RGB
+    /// @copydoc YUV411PToRGB
     static void grayscaleToRGB(const VideoImage * source, VideoImage * target);
-    /// Converts RGB to grayscale
+    /// @copydoc YUV411PToRGB
     static void RGBToGrayscale(const VideoImage * source, VideoImage * target);
 
-    /// Converts bayer to RGB
+    /// @copydoc YUV411PToRGB
     static void bayerToRGB(const VideoImage * source, VideoImage * target);
-    /// Converts bayer to grayscale
+    /// @copydoc YUV411PToRGB
     static void bayerToGrayscale(const VideoImage * source, VideoImage * target);
   };
 

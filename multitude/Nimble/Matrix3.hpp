@@ -1,26 +1,14 @@
 /* COPYRIGHT
- *
- * This file is part of Nimble.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Nimble.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #ifndef NIMBLE_MATRIX3T_HPP
 #define NIMBLE_MATRIX3T_HPP
 
-#include <Nimble/Export.hpp>
-#include <Nimble/Matrix2.hpp>
-#include <Nimble/Vector3.hpp>
+#include "Export.hpp"
+#include "Matrix2.hpp"
+#include "Vector3.hpp"
 
-#include <assert.h>
+#include <cassert>
 
 namespace Nimble {
 
@@ -51,9 +39,10 @@ namespace Nimble {
     /// Returns a constant reference to one row in the matrix
     const Vector3T<T>& row(int i) const       { return m[i]; }
     /// Returns one column of the matrix
-    /** As the matrix is is of row-major type, this method returns a
-    copy of the values of the column.
-    @param i column number */
+    /// As the matrix is is of row-major type, this method returns a
+    /// copy of the values of the column.
+    /// @param i column number
+    /// @return Copy of column i as a vector
     Vector3T<T>        column(int i) const    { return Vector3T<T>(m[0][i],m[1][i],m[2][i]); }
     /// Returns the ith row
     Vector3T<T>&       operator[](int i)      { return row(i); }
@@ -103,13 +92,13 @@ namespace Nimble {
     /// Run internal test function.*/
     inline static void        test();
 
-    /// Returns the number of rows in the matrix (=3)
-    /** This function can be used when you build template-based
-    functions. */
+    /// Returns the number of rows in the matrix
+    /// This function can be used when you build template-based functions.
+    /// @return 3
     static int                rows() { return 3; }
-    /// Returns the number of columns in the matrix (=3)
-    /** This function can be used when you build template-based
-    functions. */
+    /// Returns the number of columns in the matrix
+    /// This function can be used when you build template-based functions.
+    /// @return 3
     static int                columns() { return 3; }
     /// Inserts the argument matrix into the top-left corner of this matrix
     inline void               insert(const Matrix2T<T>& m);
@@ -125,7 +114,7 @@ namespace Nimble {
     inline Matrix3T<T>        inverse(bool * ok = 0, T tolerance = 1.0e-8) const;
 
     /// Create a matrix that performs 2D translation
-    static Matrix3T<T> translation(const Vector2T<T> & t) { Matrix3T<T> m; m.identity(); m.set(0, 2, t.x); m.set(1, 2, t.y); return m; }    
+    static Matrix3T<T> translation(const Vector2T<T> & t) { Matrix3T<T> m; m.identity(); m.set(0, 2, t.x); m.set(1, 2, t.y); return m; }
     /// Create a matrix that performs 2D translation
     static Matrix3T<T> translation(const T & x, const T & y) { Matrix3T<T> m; m.identity(); m.set(0, 2, x); m.set(1, 2, y); return m; }
     /// Create a matrix that performs 2D translation
@@ -141,8 +130,18 @@ namespace Nimble {
     inline static Matrix3T<T> scaleUniform2D(const T & s)
     { return scale2D(Vector2T<T>(s, s)); }
     /// Create a matrix that performs uniform scaling around the given point
-    NIMBLE_API static Matrix3T<T> scaleUniformAroundPoint2D(Vector2T<T> p,
-                                                     T s);
+    static Matrix3T<T> scaleUniformAroundPoint2D(Vector2T<T> p,
+                                                     T s)
+	{
+		return translate2D(p) * scaleUniform2D(s) * translate2D(-p);
+	}
+
+    /// Create a matrix that performs uniform scaling around the given point
+    NIMBLE_API static Matrix3T<T> scaleAroundPoint2D(Vector2T<T> p,
+                                                     const T & xscale, const T & yscale)
+    {
+      return translate2D(p) * scale2D(xscale, yscale) * translate2D(-p);
+    }
 
     /// Create a matrix that performs 2D rotation
     inline static Matrix3T<T> rotate2D(T radians);
@@ -150,9 +149,14 @@ namespace Nimble {
     /// Rotate around a given point
     /** @param p The center point of rotation
         @param radians The amount of roration, in radians
+        @return New rotation matrix
     */
-    NIMBLE_API static Matrix3T<T> rotateAroundPoint2D(Vector2T<T> p,
-                                           T radians);
+    static Matrix3T<T> rotateAroundPoint2D(Vector2T<T> p,
+                                           T radians)
+	{
+		return translate2D(p) * rotate2D(radians) * translate2D(-p);
+	}
+
     /// Create a rotation matrix
     inline static Matrix3T<T> makeRotation(T radians, const Vector3T<T> & axis);
 
@@ -173,6 +177,7 @@ namespace Nimble {
     /// @param sy y scale
     /// @param tx x translate
     /// @param ty y translate
+    /// @return New transformation matrix
     inline static Matrix3T<T> transformation(float rad, float sx, float sy, float tx, float ty)
     {
       const T st = rad == 0.0f ? 0.0f : Nimble::Math::Sin(rad);
@@ -476,8 +481,9 @@ namespace Nimble {
 
   }
 
-  /** Assign multiplication
-  @param that matrix to multiply with */
+  /// Assign multiplication
+  /// @param that matrix to multiply with
+  /// @return Reference to self
   template <class T>
   inline Matrix3T<T>& Matrix3T<T>::operator*= (const Matrix3T<T>& that)
   {

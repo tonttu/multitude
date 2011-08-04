@@ -89,10 +89,12 @@ namespace Luminous
     static bool ping(const char * filename, ImageInfo & info);
 
     /** Read a file to this Image object.
-    @param filename name of the file to read from */
+    @param filename name of the file to read from
+    @return true if the image was successfully read */
     bool read(const char * filename);
     /** Write this Image to a file.
-    @param filename name of the file to write to */
+    @param filename name of the file to write to
+    @return true if the image was successfully written*/
     bool write(const char * filename);
 
     /** Create an image object from data provided by the user.
@@ -105,6 +107,11 @@ namespace Luminous
 
     /// Returns the pixel format of the image
     const PixelFormat& pixelFormat() const { return m_pixelFormat; }
+
+    /// Sets the new format and converts the image data to new format if necessary
+    /// @param format new pixel format for the image
+    /// @returns Returns true if the conversion was successful
+    bool setPixelFormat(const PixelFormat & format);
 
     /// Clears the image, freeing the data.
     void clear();
@@ -119,14 +126,18 @@ namespace Luminous
     interpolation.
     @param source image to resample
     @param w new width
-    @param h new height */
+    @param h new height
+    @return true if the resamping succeed
+    */
     bool copyResample(const Image & source, int w, int h);
 
     /** Down-sample the given image to quarter size.
-    @param source image to resample */
+    @param source image to resample
+    @return true if resampling succeeded */
     bool quarterSize(const Image & source);
-    /** Remove pixels from the right edge of the image.
-    @param n number of pixels to remove */
+    /** Remove pixels from the right edge of the image. Works for RGB images.
+    @param n number of pixels to remove
+    @return false if the image is of unsupported pixel format*/
     bool forgetLastPixels(int n);
     /** Remove lines from the bottom of the image.
     @param n number of lines to remove */
@@ -138,13 +149,17 @@ namespace Luminous
         width and height mutiples of two.
     */
     void makeValidTexture();
-    /** Returns true if the image has an alpha channel. */
+    /** Returns true if the image has an alpha channel.
+        @return true if the image has alpha channel */
     bool hasAlpha() const;
-    /** Copies the argument image to this image.
-    @param img image to compare to */
+
+    /** Makes a deep copy of the given image.
+    @param img image to copy
+    @return reference to this image */
     Image & operator = (const Image& img);
 
-    /** Returns a pointer to the file-format codecs. */
+    /// Returns a pointer to the file-format codecs.
+    /// @return pointer to the codec registry
     static CodecRegistry * codecs();
 
     /// Returns the alpha value [0,255] for the given relative coordinates in the image.
@@ -158,29 +173,32 @@ namespace Luminous
     /// Gets the color of a given pixel.
     /** The color is normalized, with each component in range 0-1.
     @param x pixel x coordinate
-    @param y pixel y coordinate */
+    @param y pixel y coordinate
+    @return color at the given pixel */
     Nimble::Vector4 pixel(unsigned x, unsigned y);
 
+    /// Increments the generation count.
     /// This function should be called when the image has been modified.
     void changed() { m_generation++; }
-    /// The generation count of the image object
-    /** The generation count can be used to indicate that the image has changed, and one should
-        update the corresponding OpenGL texture wo match the same generation. */
-    int generation() const { return m_generation; }
+    /** The generation count of the image object The generation count can be
+    used to indicate that the image has changed, and one should update the
+    corresponding OpenGL texture wo match the same generation. @return current
+    generation count*/
+    size_t generation() const { return m_generation; }
 
   protected:
 
+    /// Width of the image in pixels
     int m_width;
+    /// Height of the image in pixels
     int m_height;
+    /// Pixel format of the image data
     PixelFormat m_pixelFormat;
+    /// Pointer to the raw image data
     unsigned char* m_data;
-    int m_generation;
-
-    /*
-  private:
-    bool m_dataReady;
-    bool m_ready;
-    */
+    /// Generation count of the image used to indicate changes in the image
+    /// data to determine when associated textures should be updated.
+    size_t m_generation;
   };
 
   /** ImageTex provides an easy way to create OpenGL textures from images in a
@@ -196,8 +214,9 @@ namespace Luminous
         @param withmipmaps Should we use mimaps, or not. This argument only
         makes difference the first time this function executed for the context
         (and the texture is created), after that the the same texture is used.
+        @return true if the bind succeeded
     */
-    void bind(GLenum textureUnit = GL_TEXTURE0, bool withmipmaps = true);
+    bool bind(GLenum textureUnit = GL_TEXTURE0, bool withmipmaps = true);
 
     /** Binds a texture representing this image to the current OpenGL context.
 
@@ -206,27 +225,17 @@ namespace Luminous
         @param withmipmaps Should we use mimaps, or not. This argument only
         makes difference the first time this function executed for the context
         (and the texture is created), after that the the same texture is used.
+        @param internalFormat internal OpenGL texture format. May be zero to
+        let the GPU automatically choose one.
+        @return true if the bind succeeded
     */
-    void bind(GLResources * resources, GLenum textureUnit = GL_TEXTURE0,
+    bool bind(GLResources * resources, GLenum textureUnit = GL_TEXTURE0,
               bool withmipmaps = true, int internalFormat = 0);
 
     /// Checks if the image data is fully loaded to the GPU, inside a texture
+    /// @param resources OpenGL resource collection to use
+    /// @return true if the texture data has been fully uploaded to the GPU
     bool isFullyLoadedToGPU(GLResources * resources = 0);
-
-    /** Loads part of the image to the GPU.
-
-        @return The number of bytes uploaded.
-    */
-    unsigned uploadBytesToGPU(GLResources * resources, unsigned bytes);
-
-    /// Try binding this texture
-    /** The condition for binding this texture is that either it has been fully uploaded to the GPU,
-        or it can be uploaded within given limits.
-
-        @param limit The maximum number of bytes to upload.
-        @return True if the bind operation could be done, false otherwise.
-    */
-    bool tryBind(unsigned & limit);
 
     ImageTex & operator = (const Luminous::Image & that)
     {
@@ -235,47 +244,78 @@ namespace Luminous
        return * this;
      }
 
-    /// Creates a new ImageTex from this, all the cpu data from Luminous::Image
+    /// Creates a new ImageTex from this. All the cpu data from Luminous::Image
     /// is moved to the new object.
+    /// @return cloned ImageTex
     ImageTex * move();
   };
 
+  /// A compressed image. Currently supports DXT format.
   class LUMINOUS_API CompressedImage
   {
   public:
     CompressedImage();
     virtual ~CompressedImage();
 
+    /// Clears the image data and release any allocated memory
     void clear();
 
+    /// Reads an image from a file
+    /// @param filename filename to load
+    /// @param level mipmap level to load
+    /// @return true if succeed, false on error
     bool read(const QString & filename, int level = 0);
-    bool loadImage(FILE * file, const ImageInfo & info, int offset, int size);
+    /// Loads image data from the given file handle
+    /// @param file file to read from
+    /// @param info image info
+    /// @param size bytes to read
+    /// @return true if the reading succeeded, false otherwise
+    bool loadImage(FILE * file, const ImageInfo & info, int size);
+    /// Returns a pointer to the raw image data
     void * data() const;
+    /// Returns the size of the image data in bytes
+    /// @return image data size in bytes
     int datasize() const;
 
+    /// Returns the widget of the image
     int width() const { return m_size.x; }
+    /// Returns the height of the image
     int height() const { return m_size.y; }
 
-    int compression() const { return m_compression; }
+    /// Returns the compression used
+    PixelFormat::Compression compression() const { return m_compression; }
 
+    /// Returns the alpha in the given pixel position
     float readAlpha(Nimble::Vector2i pos) const;
 
   protected:
+    /// Size of the image in pixels
     Nimble::Vector2i m_size;
-    int m_compression;
+    /// Used compression
+    PixelFormat::Compression m_compression;
 
+/// @cond
     class Private;
-    std::auto_ptr<Private> m_d;
+    Private* m_d;
+/// @endcond
   };
 
+  /// CompressedImageTex provides an easy way to access textures generated from
+  /// compressed images. @sa Luminous::ImageTex
   class LUMINOUS_API CompressedImageTex : public CompressedImage, public Luminous::ContextVariableT<Luminous::Texture2D>
   {
   public:
     virtual ~CompressedImageTex();
+
+    /** Binds a texture representing this compressed image to the current
+    OpenGL context.
+    @param resources The OpenGL resource handler
+    @param textureUnit The OpenGL texture unit to bind to*/
     void bind(GLResources * resources, GLenum textureUnit = GL_TEXTURE0);
 
-    /// Creates a new CompressedImageTex from this, all the cpu data from
+    /// Creates a new CompressedImageTex from this object. All the cpu data from
     /// Luminous::CompressedImage is moved to the new object.
+    /// @return new CompressedImageTex object
     CompressedImageTex * move();
   };
 }

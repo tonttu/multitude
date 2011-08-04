@@ -48,6 +48,7 @@ namespace Radiant
   
   TCPServerSocket::~TCPServerSocket()
   {
+    debug("TCPServerSocket::~TCPServerSocket");
     close();
     delete m_d;
   }
@@ -88,9 +89,10 @@ namespace Radiant
 
     m_d->m_fd = -1;
 
-    if(shutdown(fd, SHUT_RDWR)) {
-      error("TCPServerSocket::close # Failed to shut down the socket: %s", wrap_strerror(wrap_errno));
+    if(::shutdown(fd, SHUT_RDWR)) {
+      debug("TCPServerSocket::close # Failed to shut down the socket: %s", wrap_strerror(wrap_errno));
     }
+
     if(wrap_close(fd)) {
       error("TCPServerSocket::close # Failed to close socket: %s", wrap_strerror(wrap_errno));
     }
@@ -111,10 +113,13 @@ namespace Radiant
     struct pollfd pfd;
     bzero( & pfd, sizeof(pfd));
     pfd.fd = m_d->m_fd;
-    pfd.events = POLLIN;
-    wrap_poll(&pfd, 1, waitMicroSeconds / 1000);
+    pfd.events = POLLRDNORM;
+    int status = wrap_poll(&pfd, 1, waitMicroSeconds / 1000);
+    if(status == -1) {
+      Radiant::error("TCPServerSocket::isPendingConnection %s", wrap_strerror(wrap_errno));
+    }
 
-    return (pfd.revents & POLLIN) == POLLIN;
+    return (pfd.revents & POLLRDNORM) == POLLRDNORM;
   }
 
   TCPSocket * TCPServerSocket::accept()

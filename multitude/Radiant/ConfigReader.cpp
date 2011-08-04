@@ -316,17 +316,17 @@ namespace Radiant {
 
   /** Specialized version that mimics the file format. */
   template <>
-  void ChunkT<Variant>::dump(std::ostream& os, int indent)
+  void ChunkT<Variant>::dump(std::ostream& os, int indent) const
   {
     QString ws(indent, ' ');
 
-    for(chunk_iterator it = chunkBegin(); it != chunkEnd(); ++it) {
+    for(const_chunk_iterator it = chunkBegin(); it != chunkEnd(); ++it) {
       os << ws << it->first << " {\n";
       it->second.dump(os, indent+2);
       os << ws << "}\n";
     }
 
-    for(iterator it = m_variants.begin();it != m_variants.end(); it++) {
+    for(const_iterator it = m_variants.begin();it != m_variants.end(); it++) {
       if((*it).second.hasDocumentation() && writedocs((*it).second))
         os << ws << "/* " << (*it).second.documentation() << " */\n";
       os << ws << (*it).first << " = \"" << (*it).second << "\"\n";
@@ -553,7 +553,7 @@ namespace Radiant {
 
     // @todo collect global variables from stack.top()
     Chunk & ch = chunk;
-    for (Chunk::chunk_iterator it = ch.chunkBegin(); it != ch.chunkEnd(); ++it) {
+    for (Chunk::const_chunk_iterator it = ch.chunkBegin(); it != ch.chunkEnd(); ++it) {
       c->set(it->first, it->second);
     }
 

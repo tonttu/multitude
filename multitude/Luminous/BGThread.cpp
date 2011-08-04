@@ -28,6 +28,16 @@
 namespace Luminous
 {
 
+  // Helper to get around the fact that Task destructor is protected.
+  class TaskDeleter
+  {
+  public:
+    void operator()(Task* p)
+    {
+      delete p;
+    }
+  };
+
   std::weak_ptr<BGThread> BGThread::m_instance;
 
   BGThread::BGThread()
@@ -40,9 +50,17 @@ namespace Luminous
     stop();
   }
 
+  /// @todo should this be deprecated?
   void BGThread::addTask(Task * task)
   {
+    // Have to use custom deleter because Task destructor is protected
+    addTask(std::shared_ptr<Task>(task, TaskDeleter()));
+  }
+
+  void BGThread::addTask(std::shared_ptr<Task> task)
+  {
     assert(task);
+    if(task->m_host == this) return;
     task->m_host = this;
 
     Radiant::Guard g(m_mutexWait);
@@ -50,7 +68,7 @@ namespace Luminous
     wakeThread();
   }
 
-  bool BGThread::removeTask(Task * task)
+  bool BGThread::removeTask(std::shared_ptr<Task> task)
   {
     if(task->m_host != this)
       return false;
@@ -62,6 +80,7 @@ namespace Luminous
 
     container::iterator it = findTask(task);
     if(it != m_taskQueue.end()) {
+      task->m_host = 0;
       m_taskQueue.erase(it);
       return true;
     }
@@ -70,7 +89,7 @@ namespace Luminous
     return false;
   }
 
-  void BGThread::reschedule(Task * task)
+  void BGThread::reschedule(std::shared_ptr<Task> task)
   {
     Radiant::Guard g(m_mutexWait);
     if(m_reserved.find(task) != m_reserved.end()) {
@@ -78,7 +97,7 @@ namespace Luminous
     } else wakeThread();
   }
 
-  void BGThread::setPriority(Task * task, Priority p)
+  void BGThread::setPriority(std::shared_ptr<Task> task, Priority p)
   {
     Radiant::Guard g(m_mutexWait);
 
@@ -123,8 +142,8 @@ namespace Luminous
 
     for(container::iterator it = m_taskQueue.begin(); it != m_taskQueue.end(); it++) {
       Radiant::FileUtils::indent(f, indent);
-      Task * t = it->second;
-      fprintf(f, "TASK %s %p\n", typeid(*t).name(), t);
+      std::shared_ptr<Task> t = it->second;
+      fprintf(f, "TASK %s %p\n", typeid(*t).name(), t.get());
       Radiant::FileUtils::indent(f, indent + 1);
       fprintf(f, "PRIORITY = %d UNTIL = %.3f\n", (int) t->priority(),
               (float) -t->scheduled().sinceSecondsD());
@@ -136,7 +155,7 @@ namespace Luminous
   {
     while(running()) {
       // Pick a task to run
-      Task * task = pickNextTask();
+      std::shared_ptr<Task> task = pickNextTask();
 
       if(!task)
         break;
@@ -155,7 +174,7 @@ namespace Luminous
       // Did the task complete?
       if(task->state() == Task::DONE) {
         task->finished();
-        delete task;
+        task->m_host = 0;
       } else {
         // If we are still running, push the task to the back of the given
         // priority range so that other tasks with the same priority will be
@@ -166,7 +185,7 @@ namespace Luminous
     }
   }
 
-  Task * BGThread::pickNextTask()
+  std::shared_ptr<Task> BGThread::pickNextTask()
   {
     while(running()) {
       Radiant::TimeStamp wait = std::numeric_limits<Radiant::TimeStamp::type>::max();
@@ -177,7 +196,7 @@ namespace Luminous
       const Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
 
       for(container::iterator it = m_taskQueue.begin(); it != m_taskQueue.end(); it++) {
-        Task * task = it->second;
+        std::shared_ptr<Task> task = it->second;
         Radiant::TimeStamp next = task->scheduled() - now;
 
         // Should the task be run now?
@@ -195,16 +214,16 @@ namespace Luminous
         m_idleWait.wait(m_mutexWait);
         --m_idle;
       } else {
-        Task * task = nextTask->second;
+        std::shared_ptr<Task> task = nextTask->second;
         m_reserved.insert(task);
         m_wait.wait(m_mutexWait, int(wait.secondsD() * 1000.0));
         m_reserved.erase(task);
       }
     }
-    return 0;
+    return std::shared_ptr<Task>();
   }
 
-  BGThread::container::iterator BGThread::findTask(Task * task)
+  BGThread::container::iterator BGThread::findTask(std::shared_ptr<Task> task)
   {
     // Try optimized search first, assume that the priority hasn't changed
     std::pair<container::iterator, container::iterator> range = m_taskQueue.equal_range(task->priority());

@@ -33,11 +33,16 @@ namespace Valuable
 {
   using namespace Radiant;
 
+#ifdef MULTI_DOCUMENTER
+  std::map<QString, std::set<QString> > s_eventSendNames;
+  std::map<QString, std::set<QString> > s_eventListenNames;
+#endif
+
   class Shortcut : public ValueObject
   {
   public:
-    Shortcut(HasValues * parent, const QString & name)
-      : ValueObject(parent, name)
+    Shortcut(HasValues * host, const QString & name)
+      : ValueObject(host, name)
     {}
     bool deserialize(ArchiveElement & element) { return false; }
     virtual bool shortcut() const { return true; }
@@ -53,13 +58,14 @@ namespace Valuable
 
   HasValues::HasValues()
       : ValueObject(),
+      m_sender(0),
       m_eventsEnabled(true),
       m_id(this, "id", generateId()),
       m_frame(0)
   {}
 
-  HasValues::HasValues(HasValues * parent, const QString & name, bool transit)
-      : ValueObject(parent, name, transit),
+  HasValues::HasValues(HasValues * host, const QString & name, bool transit)
+      : ValueObject(host, name, transit),
       m_eventsEnabled(true),
       m_id(this, "id", generateId()),
       m_frame(0)
@@ -94,39 +100,39 @@ namespace Valuable
 
   ValueObject * HasValues::getValue(const QString & name)
   {
-    container::iterator it = m_children.find(name);
+    container::iterator it = m_values.find(name);
 
-    return it == m_children.end() ? 0 : it->second;
+    return it == m_values.end() ? 0 : it->second;
   }
 
   bool HasValues::addValue(const QString & cname, ValueObject * const value)
   {
     //    Radiant::trace("HasValues::addValue # adding %s", cname.c_str());
 
-    // Check children
-    if(m_children.find(cname) != m_children.end()) {
+    // Check values
+    if(m_values.find(cname) != m_values.end()) {
       Radiant::error(
-          "HasValues::addValue # can not add child '%s' as '%s' "
-          "already has a child with the same name.",
+          "HasValues::addValue # can not add value '%s' as '%s' "
+          "already has a value with the same name.",
           cname.toUtf8().data(), m_name.toUtf8().data());
       return false;
     }
 
-    // Unlink parent if necessary
-    HasValues * parent = value->parent();
-    if(parent) {
+    // Unlink host if necessary
+    HasValues * host = value->host();
+    if(host) {
       Radiant::error(
-          "HasValues::addValue # '%s' already has a parent '%s'. "
-          "Unlinking it to set new parent.",
-          cname.toUtf8().data(), parent->name().toUtf8().data());
-      value->removeParent();
+          "HasValues::addValue # '%s' already has a host '%s'. "
+          "Unlinking it to set new host.",
+          cname.toUtf8().data(), host->name().toUtf8().data());
+      value->removeHost();
     }
 
     // Change the value name
     value->setName(cname);
 
-    m_children[value->name()] = value;
-    value->m_parent  = this;
+    m_values[value->name()] = value;
+    value->m_host  = this;
 
     return true;
   }
@@ -135,16 +141,16 @@ namespace Valuable
   {
     const QString & cname = value->name();
 
-    container::iterator it = m_children.find(cname);
-    if(it == m_children.end()) {
+    container::iterator it = m_values.find(cname);
+    if(it == m_values.end()) {
       Radiant::error(
-          "HasValues::removeValue # '%s' is not a child of '%s'.",
+          "HasValues::removeValue # '%s' is not a child value of '%s'.",
           cname.toUtf8().data(), m_name.toUtf8().data());
       return;
     }
 
-    m_children.erase(it);
-    value->m_parent = 0;
+    m_values.erase(it);
+    value->m_host = 0;
   }
 
   bool HasValues::setValue(const QString & name, v8::Handle<v8::Value> v)
@@ -218,7 +224,7 @@ namespace Valuable
     return ok;
   }
 
-  bool HasValues::saveToMemoryXML(std::vector<char> & buffer)
+  bool HasValues::saveToMemoryXML(std::string & buffer)
   {
     XMLArchive archive;
     archive.setRoot(serialize(archive));
@@ -236,31 +242,24 @@ namespace Valuable
     return deserialize(archive.root());
   }
 
-  ArchiveElement & HasValues::serialize(Archive & archive) const
+  ArchiveElement HasValues::serialize(Archive & archive) const
   {
-    QString name;
-    if(m_name.isEmpty()) {
-      if(parent()) {
-        Radiant::error(
-          "HasValues::serialize # attempt to serialize object with no name");
-        return archive.emptyElement();
-      } else name = "ValueObject";
-    } else name = m_name;
+    QString name = m_name.isEmpty() ? "HasValues" : m_name;
 
     ArchiveElement & elem = archive.createElement(name.toUtf8().data());
     if(elem.isNull()) {
       Radiant::error(
           "HasValues::serialize # failed to create element");
-      return archive.emptyElement();
+      return ArchiveElement();
     }
 
     elem.add("type", type());
 
-    for(container::const_iterator it = m_children.begin(); it != m_children.end(); it++) {
+    for(container::const_iterator it = m_values.begin(); it != m_values.end(); it++) {
       ValueObject * vo = it->second;
 
       if (!archive.checkFlag(Archive::ONLY_CHANGED) || vo->isChanged()) {
-        ArchiveElement & child = vo->serialize(archive);
+        ArchiveElement child = vo->serialize(archive);
         if(!child.isNull())
           elem.add(child);
       }
@@ -269,14 +268,14 @@ namespace Valuable
     return elem;
   }
 
-  bool HasValues::deserialize(ArchiveElement & element)
+  bool HasValues::deserialize(const ArchiveElement & element)
   {
     // Name
     m_name = element.name();
 
     // Children
-    for(ArchiveElement::Iterator & it = element.children(); it; ++it) {
-      ArchiveElement & elem = *it;
+    for(ArchiveElement::Iterator it = element.children(); it; ++it) {
+      ArchiveElement elem = *it;
 
       QString name = elem.name();
 
@@ -299,7 +298,7 @@ namespace Valuable
   void HasValues::debugDump() {
     Radiant::trace(Radiant::DEBUG, "%s {", m_name.toUtf8().data());
 
-    for(container::iterator it = m_children.begin(); it != m_children.end(); it++) {
+    for(container::iterator it = m_values.begin(); it != m_values.end(); it++) {
       ValueObject * vo = it->second;
 
       HasValues * hv = dynamic_cast<HasValues *> (vo);
@@ -325,7 +324,13 @@ namespace Valuable
     vp.m_frame = m_frame;
 
     if(!m_eventNames.contains(from)) {
-      error("HasValues::eventAddListener # Adding listener to unexistent event '%s'", from);
+      warning("HasValues::eventAddListener # Adding listener to unexistent event '%s'", from);
+    }
+
+    if(!obj->m_eventListenNames.contains(to)) {
+      QString klass = Radiant::StringUtils::demangle(typeid(*obj).name());
+      warning("HasValues::eventAddListener # %s (%s %p) doesn't accept event '%s'",
+              klass.toUtf8().data(), obj->name().c_str(), obj, to);
     }
 
     if(defaultData)
@@ -351,6 +356,10 @@ namespace Valuable
     vp.m_func = func;
     vp.m_from = from;
     vp.m_to = to;
+
+    if(!m_eventNames.contains(from)) {
+      warning("HasValues::eventAddListener # Adding listener to unexistent event '%s'", from);
+    }
 
     if(defaultData)
       vp.m_defaultData = *defaultData;
@@ -440,6 +449,15 @@ namespace Valuable
       // info("HasValues::processMessage # Sending message \"%s\" to %s",
       // id + skip, typeid(*vo).name());
       vo->processMessage(id + skip, data);
+    } else {
+      if(!m_eventListenNames.contains(id)) {
+        /*warning("HasValues::processMessage # %s (%s %p) doesn't accept event '%s'",
+                  klass.c_str(), name().c_str(), this, id);*/
+      } else {
+        const QString klass = Radiant::StringUtils::demangle(typeid(*this).name());
+        warning("HasValues::processMessage # %s (%s %p): unhandled event '%s'",
+                klass.toUtf8().data(), name().toUtf8().data(), this, id);
+      }
     }
   }
 
@@ -458,11 +476,33 @@ namespace Valuable
     return m_id;
   }
 
-  void HasValues::eventAdd(const QString & id)
+  void HasValues::eventAddOut(const QString & id)
   {
-    if(m_eventNames.contains(id)) {
-      error("HasValues::eventAdd # Trying to register event '%s' that is already registered", id.toUtf8().data());
-    } else m_eventNames.insert(id);
+    if (m_eventSendNames.contains(id)) {
+      warning("HasValues::eventAddSend # Trying to register event '%s' that is already registered", id.toUtf8().data());
+    } else {
+      m_eventSendNames.insert(id);
+#ifdef MULTI_DOCUMENTER
+      s_eventSendNames[Radiant::StringUtils::demangle(typeid(*this).name())].insert(id);
+#endif
+    }
+  }
+
+  void HasValues::eventAddIn(const QString & id)
+  {
+    if (m_eventListenNames.contains(id)) {
+      warning("HasValues::eventAddListen # Trying to register duplicate event handler for event '%s'", id.toUtf8().data());
+    } else {
+      m_eventListenNames.insert(id);
+#ifdef MULTI_DOCUMENTER
+      s_eventListenNames[Radiant::StringUtils::demangle(typeid(*this).name())].insert(id);
+#endif
+    }
+  }
+
+  bool HasValues::acceptsEvent(const QString & id) const
+  {
+    return m_eventListenNames.contains(id);
   }
 
   void HasValues::eventSend(const QString & id, Radiant::BinaryData & bd)
@@ -475,7 +515,7 @@ namespace Valuable
     if(!id || !m_eventsEnabled)
       return;
 
-    if(!m_eventNames.contains(id)) {
+    if(!m_eventSendNames.contains(id)) {
       error("HasValues::eventSend # Sending unknown event '%s'", id);
     }
 
@@ -498,9 +538,13 @@ namespace Valuable
         bdsend.rewind();
 
         if(vp.m_listener) {
+          // m_sender is valid only at the beginning of processMessage call
+          vp.m_listener->m_sender = this;
           vp.m_listener->processMessage(vp.m_to.toUtf8().data(), bdsend);
+          vp.m_listener->m_sender = 0;
         } else {
           /// @todo what is the correct receiver?
+          /// @todo should we set m_sender or something similar?
           v8::Local<v8::Value> argv[10];
           argv[0] = v8::String::New(vp.m_to.utf16());
           int argc = 9;
@@ -522,23 +566,24 @@ namespace Valuable
     new Shortcut(this, name);
   }
 
-  void HasValues::childRenamed(const QString & was, const QString & now)
+  void HasValues::valueRenamed(const QString & was, const QString & now)
   {
     // Check that the value does not exist already
-    iterator it = m_children.find(now);
-    if(it != m_children.end()) {
-      error("HasValues::childRenamed # Child '%s' already exist", now.toUtf8().data());
+    iterator it = m_values.find(now);
+    if(it != m_values.end()) {
+      error("HasValues::valueRenamed # Value '%s' already exist", now.toUtf8().data());
       return;
     }
 
-    it = m_children.find(was);
-    if(it == m_children.end()) {
-      error("HasValues::childRenamed # No such child: %s", was.toUtf8().data());
+    it = m_values.find(was);
+    if(it == m_values.end()) {
+      error("HasValues::valueRenamed # No such value: %s", was.toUtf8().data());
       return;
     }
+
     ValueObject * vo = (*it).second;
-    m_children.erase(it);
-    m_children[now] = vo;
+    m_values.erase(it);
+    m_values[now] = vo;
   }
 
   bool HasValues::readElement(DOMElement )

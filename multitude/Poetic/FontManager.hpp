@@ -1,27 +1,15 @@
 /* COPYRIGHT
- *
- * This file is part of Poetic.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Poetic.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 #ifndef POETIC_FONT_MANAGER_HPP
 #define POETIC_FONT_MANAGER_HPP
 
-#include <Poetic/Export.hpp>
-#include <Poetic/CPUFont.hpp>
-#include <Poetic/GPUFont.hpp>
-#include <Poetic/CPUBitmapFont.hpp>
-#include <Poetic/CPUWrapperFont.hpp>
+#include "Export.hpp"
+#include "CPUFont.hpp"
+#include "GPUFont.hpp"
+#include "CPUBitmapFont.hpp"
+#include "CPUWrapperFont.hpp"
 
-#include <Patterns/Singleton.hpp>
+#include <Radiant/Singleton.hpp>
 
 #include <Luminous/VertexBuffer.hpp>
 
@@ -32,11 +20,17 @@ namespace Poetic
   during runtime. It provides access to managed fonts that internally use
   glyphs rendered at different point sizes to improve rendered text quality.
 */
-  class POETIC_API FontManager : public Patterns::Singleton<FontManager>
+  class POETIC_API FontManager
   {
+    DECLARE_SINGLETON(FontManager);
     public:
-      /// Returns a font that matches the given name
-      CPUWrapperFont * getFont(const QString & name);
+    ~FontManager();
+
+    /// Returns a font that matches the given name
+    CPUWrapperFont * getFont(const QString & name);
+    /// Returns a default font.
+    /// @returns Currently this method tries to return the basic DejaVuSans font
+    CPUWrapperFont * getDefaultFont();
 
       /// Locates a file by searching through the FontManager's resource paths
       QString locate(const QString & name);
@@ -49,7 +43,6 @@ namespace Poetic
 
     private:
       FontManager();
-      ~FontManager();
 
       // filename -> cpu font
       typedef std::map<QString, CPUManagedFont *> container;
@@ -60,8 +53,6 @@ namespace Poetic
 
       typedef std::map<GLuint, Luminous::VertexBuffer *> TextureVBOMap;
       TextureVBOMap m_vbos;
-
-      friend class Patterns::Singleton<FontManager>;
 
       Radiant::Mutex m_mutex;
   };

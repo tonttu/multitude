@@ -173,7 +173,7 @@ namespace Nimble {
     for(size_t i = 0; i < m_points.size(); i++) {
       Nimble::Vector3f p(m_points[i].x, m_points[i].y, 1);
 
-      m_points[i] = (m * p).xy();
+      m_points[i] = (m * p).vector2();
     }
   }
 
@@ -223,8 +223,8 @@ namespace Nimble {
       Nimble::Vector2f v0 = *i1;
       Nimble::Vector2f v1 = *(i1 + 1);
 
-      v0 = (m1 * v0).xy();
-      v1 = (m1 * v1).xy();
+      v0 = (m1 * v0).vector2();
+      v1 = (m1 * v1).vector2();
 
       Segment s1 = { v0, v1 };
 
@@ -233,8 +233,8 @@ namespace Nimble {
         Nimble::Vector2f w0 = *i2;
         Nimble::Vector2f w1 = *(i2 + 1);
 
-        w0 = (m2 * w0).xy();
-        w1 = (m2 * w1).xy();
+        w0 = (m2 * w0).vector2();
+        w1 = (m2 * w1).vector2();
 
         Segment s2 = { w0, w1 };
 

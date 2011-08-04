@@ -38,8 +38,6 @@ namespace Resonant {
   public:
 
     enum {
-      /// Maximum length of the #id string (bytes)
-      MAX_ID_LENGTH = 256,
       /// Maximum length of a processing cycle (samples)
       MAX_CYCLE = 1024
     };
@@ -54,12 +52,12 @@ namespace Resonant {
     will need to override this method to perform some preparation
     work.
 
-    @param channelsIn The number of desired input channels.  If
+    @param[out] channelsIn The number of desired input channels.  If
     necessary, the number of input and output channels is changed
     (for example if the module is stereo-only, but the host
     requested mono operation).
 
-    @param channelsOut The number of desired output channels.
+    @param[out] channelsOut The number of desired output channels.
 
 
     @return Returns true if the module prepared successfully.
@@ -67,10 +65,12 @@ namespace Resonant {
     virtual bool prepare(int & channelsIn, int & channelsOut);
     /** Sends a control message to the module.
 
-    The default implementation does nothing. Child classes with
-    dynamic variable will need to override this method.
+        The default implementation does nothing. Child classes with
+        dynamic variable will need to override this method.
+        @param id Command name
+        @param data Command parameters
      */
-    virtual void processMessage(const char * address, Radiant::BinaryData *);
+    virtual void processMessage(const char * id, Radiant::BinaryData * data);
     /** Processes one cycle of audio data.
 
     @param in Input audio data.
@@ -81,17 +81,20 @@ namespace Resonant {
     1 and #MAX_CYCLE.
      */
     virtual void process(float ** in, float ** out, int n) = 0;
-    /** Stops the signal processing, freeing any resources necessary. */
+    /// Stops the signal processing, freeing any resources necessary.
+    /// @return True if stopping succeeded (or was already stopped). False on error.
     virtual bool stop();
 
-    /** Sets the id of the module. */
-    void setId(const char *);
-    /** Returns the id of the module. */
-    const char * id() { return m_id; }
+    /// Sets the id of the module.
+    /// @param id The new id
+    void setId(const std::string & id);
+    /// ID of the module
+    /// @return the id of the module.
+    const std::string & id() const { return m_id; }
 
   private:
     Application * m_application;
-    char m_id[MAX_ID_LENGTH];
+    std::string m_id;
   };
 
 }

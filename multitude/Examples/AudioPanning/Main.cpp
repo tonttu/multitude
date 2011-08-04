@@ -66,9 +66,9 @@ int main(int argc, char ** argv)
   
   sf_close(sndf);
 
-  Resonant::DSPNetwork dsp;
+  std::shared_ptr<Resonant::DSPNetwork> dsp = Resonant::DSPNetwork::instance();
 
-  dsp.start();
+  dsp->start();
 
   Radiant::BinaryData control;
 
@@ -87,8 +87,7 @@ int main(int argc, char ** argv)
     control.rewind();
     item.module()->processMessage("fullhdstereo", & control);
     
-    dsp.addModule(item);
-
+    dsp->addModule(item);
   }
 
   item.setModule(new Resonant::ModuleSamplePlayer(0));
@@ -100,7 +99,7 @@ int main(int argc, char ** argv)
 
   item.module()->processMessage("channels", & control);
   
-  dsp.addModule(item);
+  dsp->addModule(item);
 
 
   control.rewind();
@@ -124,7 +123,7 @@ int main(int argc, char ** argv)
 
   control.writeString("end");
 
-  dsp.send(control);
+  dsp->send(control);
 
   Radiant::Sleep::sleepMs(500);
 
@@ -145,10 +144,10 @@ int main(int argc, char ** argv)
     control.writeString("panner/setsourcelocation");
     control.writeString("sampleplayer-0"); // index
     control.writeVector2Float32(Nimble::Vector2f(locx, 540)); // index    
-    dsp.send(control);
+    dsp->send(control);
   }
   
-  dsp.stop();
+  dsp->stop();
 
   return 0;
 }

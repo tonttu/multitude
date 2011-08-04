@@ -37,8 +37,8 @@ namespace Valuable
       ValueNumeric() : ValueObjectT<T>() {}
       /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
       /// @param v The numeric value of this object.
-      ValueNumeric(HasValues * parent, const QString & name, T v, bool transit = false)
-      : Base(parent, name, v, transit)
+      ValueNumeric(HasValues * host, const QString & name, T v, bool transit = false)
+      : Base(host, name, v, transit)
       {}
 
       /// Converts the numeric value to float

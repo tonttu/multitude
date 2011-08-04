@@ -20,6 +20,8 @@
 
 #include <Radiant/PlatformUtils.hpp>
 #include <Radiant/Trace.hpp>
+#include <Radiant/MemCheck.hpp>
+
 #include <Screenplay/VideoFFMPEG.hpp>
 
 #include <QtGui/QApplication>
@@ -62,6 +64,8 @@ void opentest(const char * filename)
 
 int main(int argc, char ** argv)
 {
+  std::shared_ptr<Radiant::MemChecker> ptr = Radiant::MemChecker::instance();
+
   QApplication qa(argc, argv);
 
   if(argc < 2) {

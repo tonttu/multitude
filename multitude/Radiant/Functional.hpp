@@ -1,7 +1,7 @@
 #ifndef RADIANT_FUNCTIONAL_HPP
 #define RADIANT_FUNCTIONAL_HPP
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+/// @cond
 
 #include "Platform.hpp"
 
@@ -15,7 +15,7 @@
 #else
   #if defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
     #include <tr1/functional>
-  #elif defined(RADIANT_WIN32) && defined(_HAS_TR1)
+  #elif defined(RADIANT_WINDOWS) && defined(_HAS_TR1)
     #include <functional>
   #else
     #include <boost/tr1/functional.hpp>
@@ -32,6 +32,6 @@
 
 #endif // __GCCXML__
 
-#endif // DOXYGEN_SHOULD_SKIP_THIS
+/// @endcond
 
 #endif // RADIANT_FUNCTIONAL_HPP

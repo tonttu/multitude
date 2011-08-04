@@ -23,6 +23,8 @@
 #include <strings.h>
 #include <string.h>
 
+#include "signal.h"
+
 namespace Radiant
 {
 
@@ -59,6 +61,12 @@ namespace Radiant
 
   TCPSocket::TCPSocket() : m_d(new D)
   {
+    /// @todo this should probably moved elsewhere. No reason to run this multiple times.
+    // ignore SIGPIPE (ie. when client closes the socket)
+  #ifndef _MSC_VER
+    signal(SIGPIPE, SIG_IGN);
+  #endif
+
     wrap_startup();
   }
 
@@ -93,7 +101,7 @@ namespace Radiant
     if(err == 0) {
       m_d->setOpts();
     } else {
-      error("UDPSocket::open # %s", errstr.toUtf8().data());
+      error("TCPSocket::open # %s", errstr.toUtf8().data());
     }
     return err;
   }
@@ -106,9 +114,9 @@ namespace Radiant
 
     m_d->m_fd = -1;
 
-    if(shutdown(fd, SHUT_RDWR)) {
-      error("TCPSocket::close # Failed to shut down the socket: %s", wrap_strerror(wrap_errno));
-    }
+    // ignore error if the connection closed in abortive way
+    shutdown(fd, SHUT_RDWR);
+
     if(wrap_close(fd)) {
       error("TCPSocket::close # Failed to close socket: %s", wrap_strerror(wrap_errno));
     }
@@ -236,11 +244,13 @@ namespace Radiant
     struct pollfd pfd;
     bzero( & pfd, sizeof(pfd));
     pfd.fd = m_d->m_fd;
-    pfd.events = ~0;
-    wrap_poll(&pfd, 1, 0);
+    pfd.events = POLLWRNORM;
+    int status = wrap_poll(&pfd, 1, 0);
+    if(status == -1) {
+      Radiant::error("TCPSocket::isHungUp %s", wrap_strerror(wrap_errno));
+    }
 
-   return (pfd.revents & (POLLHUP)) != 0;
-   // return (pfd.revents & (POLLERR | POLLHUP | POLLNVAL)) != 0;
+    return (pfd.revents & (POLLERR | POLLHUP | POLLNVAL)) != 0;
   }
 
   bool TCPSocket::isPendingInput(unsigned int waitMicroSeconds)
@@ -252,10 +262,13 @@ namespace Radiant
     bzero( & pfd, sizeof(pfd));
 
     pfd.fd = m_d->m_fd;
-    pfd.events = POLLIN;
-    wrap_poll(&pfd, 1, waitMicroSeconds / 1000);
+    pfd.events = POLLRDNORM;
+    int status = wrap_poll(&pfd, 1, waitMicroSeconds / 1000);
+    if(status == -1) {
+      Radiant::error("TCPSocket::isPendingInput %s", wrap_strerror(wrap_errno));
+    }
 
-    return (pfd.revents & POLLIN) == POLLIN;
+    return (pfd.revents & POLLRDNORM) == POLLRDNORM;
   }
 
   void TCPSocket::moveToThread(Thread *) {

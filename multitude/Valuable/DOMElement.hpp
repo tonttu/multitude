@@ -57,6 +57,7 @@ namespace Valuable
     QString getAttribute(const char * name) const;
 
     /// Gets the text content of this element
+    /// @return The text content of this element
     QString getTextContent() const;
 
     /// Sets the text content of this element

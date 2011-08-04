@@ -18,8 +18,6 @@
 #include FT_OUTLINE_H
 //#include FT_BBOX_H
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-
 namespace Poetic
 {
 
@@ -44,5 +42,3 @@ namespace Poetic
   }
 
 }
-
-#endif

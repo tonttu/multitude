@@ -150,7 +150,7 @@ namespace Radiant
       if (!GetProcessMemoryInfo( hProcess, &pmc, sizeof(pmc)) )
       {
         error("PlatformUtils::processMemoryUsage # GetProcessMemoryInfo failed");
-	return 0;
+	      return 0;
       }
 
       CloseHandle( hProcess );

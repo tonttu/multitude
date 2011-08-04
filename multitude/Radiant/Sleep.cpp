@@ -22,6 +22,8 @@
 
 #ifdef WIN32
 extern "C" {
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winbase.h>
 }
@@ -31,39 +33,31 @@ extern "C" {
 
 namespace Radiant {
 
-  bool Sleep::sleepS(uint32_t secs)
+  void Sleep::sleepS(uint32_t secs)
   {
+    // Apparently this weird construct is necessary because signal handlers and such will interrupt sleeps
     for(uint32_t i = 0; i < secs; i++) {
       sleepMs(500);
       sleepMs(500);
     }
-
-    return true;
   }
 
-  bool Sleep::sleepMs(uint32_t msecs)
+  void Sleep::sleepMs(uint32_t msecs)
   {
     sleepUs(msecs * 1000);
-    return true;
   }
 
-  bool Sleep::sleepUs(uint32_t usecs)
+  void Sleep::sleepUs(uint32_t usecs)
   {
 #ifdef WIN32
     ::Sleep(usecs / 1000);
 #else
     usleep(usecs);
 #endif
-
-    return true;
   }
 
-  /** Sleep in synchronous mode. The argument value is added to
-      current time value. The return value tells how many microseconds
-      early or late the function call returns. Zero is optimal,
-      negative values indicate the call returned early and positive
-      values indicate the call returned too late. */
-  long SleepSync::sleepSynchroUs(long us)
+  /** Sleep in synchronous mode. The argument value is added to current time value.*/
+  void SleepSync::sleepSynchroUs(long us)
   {
     TimeStamp target = m_initial + TimeStamp::createSecondsD(us * 0.000001);
     TimeStamp now = TimeStamp::getTime();
@@ -74,8 +68,6 @@ namespace Radiant {
     }
 
     m_initial = target;
-
-    return 0;
   }
 
 }

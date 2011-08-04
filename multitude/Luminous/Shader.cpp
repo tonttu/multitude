@@ -139,7 +139,7 @@ namespace Luminous {
     QString m_vertexShader;
     QString m_geometryShader;
 
-    int m_generation;
+    size_t m_generation;
   };
 
 
@@ -147,8 +147,8 @@ namespace Luminous {
       : m_self(new Self)
   {}
 
-  Shader::Shader(Valuable::HasValues * parent, const char * name)
-      : Valuable::HasValues(parent, name, true),
+  Shader::Shader(Valuable::HasValues * host, const char * name)
+      : Valuable::HasValues(host, name, true),
       m_self(new Self)
   {}
 
@@ -229,18 +229,19 @@ namespace Luminous {
   {
     Luminous::Utils::glCheck("Shader::bind # Before entry");
 
-    GLSLProgramObject & prog = *program();
+    GLSLProgramObject * prog = program();
 
-    if(&prog == 0) {
+//    Radiant::info("prog %p", prog);
+    if(!prog) {
       return 0;
     }
 
-    if(!prog.isLinked()) {
+    if(!prog->isLinked()) {
 
-      bool ok = prog.link();
+      bool ok = prog->link();
 
       if(!ok) {
-        error("Shader::program # Shader compilation failed: %s", prog.linkerLog());
+        error("Shader::program # Shader compilation failed: %s", prog->linkerLog());
         return 0;
       }
       else {
@@ -251,16 +252,16 @@ namespace Luminous {
 
     Luminous::Utils::glCheck("Shader::bind # Before bind");
 
-    prog.bind();
+    prog->bind();
 
     /*
     info("Prog = %p handle = %d isLinked = %d valid = %d objs = %d",
          &prog, (int) prog.handle(), (int) prog.isLinked(),
          (int) prog.validate(), prog.shaderObjectCount());
          */
-    m_self->m_uniforms.applyUniforms( & prog);
+    m_self->m_uniforms.applyUniforms(prog);
 
-    return & prog;
+    return prog;
   }
 
   void Shader::unbind()
@@ -290,9 +291,12 @@ namespace Luminous {
       prog.setGeneration(m_self->m_generation);
 
       if(!ok || !prog.shaderObjectCount()) {
+        prog.setErrors(true);
         return 0;
-      }
+      } else prog.setErrors(false);
 
+    } else if(prog.hasErrors()) {
+      return 0;
     }
 
     return & prog;

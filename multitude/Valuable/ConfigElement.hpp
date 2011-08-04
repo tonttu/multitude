@@ -74,6 +74,8 @@ namespace Valuable
     size_t childCount() const { return m_nodes.size(); }
 
     /// Returns the ith sub-element
+    /// @param n Index of child, starting from 0
+    /// @return Child config element
     const ConfigElement & child(size_t n) const
     { return m_nodes[n]; }
     /// @copydoc child

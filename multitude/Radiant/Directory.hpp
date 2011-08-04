@@ -16,9 +16,9 @@
 #ifndef RADIANT_DIRECTORY_HPP
 #define RADIANT_DIRECTORY_HPP
 
-#include <Patterns/NotCopyable.hpp>
+#include "Export.hpp"
 
-#include <Radiant/Export.hpp>
+#include <Patterns/NotCopyable.hpp>
 
 #include <stdexcept>
 #include <QString>
@@ -52,7 +52,8 @@ namespace Radiant
       Files = 0x002,
       NoDotAndDotDot = 0x1000,
       Hidden = 0x100,
-      AllEntries = Dirs | Files      
+      System = 0x004,
+      AllEntries = Dirs | Files | System
     };
 
     /// Flags to sort files
@@ -115,10 +116,10 @@ namespace Radiant
     */
     QString fileName(int n) const;
 
-    /** Return the full path name of the nth file.
-
-	This method is equal to calling "dir.path() + dir.filename(n)".
-    */
+    /// Get the full path name of the nth file.
+    /// This method is equal to calling "dir.path() + dir.filename(n)".
+    /// @param n index of the file
+    /// @return full path to the requested file
     QString fileNameWithPath(int n) const;
 
     /// Returns the directory path

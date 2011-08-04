@@ -46,8 +46,8 @@ namespace Valuable
     ValueIntT() : Base() {}
     /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
     /// @param v The numeric value of this object
-    ValueIntT(HasValues * parent, const QString & name, T v, bool transit = false)
-        : ValueNumeric<T>(parent, name, v, transit)
+    ValueIntT(HasValues * host, const QString & name, T v, bool transit = false)
+        : ValueNumeric<T>(host, name, v, transit)
     {}
 
     /// Assignment by subtraction
@@ -125,7 +125,7 @@ namespace Valuable
 
     virtual void processMessage(const char * id, Radiant::BinaryData & data);
 
-    bool deserialize(ArchiveElement & element);
+    bool deserialize(const ArchiveElement & element);
   };
 
   /// 32-bit integer value object.

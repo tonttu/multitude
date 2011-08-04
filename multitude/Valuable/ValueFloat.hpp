@@ -42,8 +42,8 @@ namespace Valuable
       ValueFloatT() : Base() {}
       /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
       /// @param v The numeric value of this object
-      ValueFloatT(HasValues * parent, const QString & name, T v = T(0), bool transit = false)
-      : ValueNumeric<T>(parent, name, v, transit)
+      ValueFloatT(HasValues * host, const QString & name, T v = T(0), bool transit = false)
+      : ValueNumeric<T>(host, name, v, transit)
       {}
 
       /// Assignment by subtraction
@@ -70,7 +70,7 @@ namespace Valuable
 
       const char * type() const { return VO_TYPE_FLOAT; }
 
-      bool deserialize(ArchiveElement & element);
+      bool deserialize(const ArchiveElement & element);
 
       /// @cond
       virtual void processMessage(const char * id, Radiant::BinaryData & data);

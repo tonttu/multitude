@@ -95,15 +95,10 @@ namespace Valuable
       (filename, m_wrapped->x.toByteArray().data());
   }
 
-  bool DOMDocument::writeToMem(std::vector<char> & buffer)
+  bool DOMDocument::writeToMem(QByteArray & buffer)
   {
     QDomDocument & qdoc = m_wrapped->x;
-    QString xml = qdoc.toString();
-
-    buffer.resize(xml.size());
-
-    QByteArray ba = xml.toUtf8();
-    memcpy( & buffer[0], ba.data(), ba.size());
+    buffer = qdoc.toByteArray();
     return true;
   }
 

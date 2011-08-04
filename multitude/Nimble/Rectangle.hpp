@@ -16,9 +16,9 @@
 #ifndef NIMBLE_RECTANGLE_HPP
 #define NIMBLE_RECTANGLE_HPP
 
-#include <Nimble/Export.hpp>
-#include <Nimble/Vector2.hpp>
-#include <Nimble/Matrix3.hpp>
+#include "Export.hpp"
+#include "Vector2.hpp"
+#include "Matrix3.hpp"
 
 #include <vector>
 
@@ -79,6 +79,7 @@ namespace Nimble {
       /// input rectangles.
       /// @param a rectangle to merge
       /// @param b rectangle to merge
+      /// @return Bouding rectangle of the two input rectangles
       static Nimble::Rectangle merge(const Nimble::Rectangle & a, const Nimble::Rectangle & b);
 
       /// Transforms the rectangle with the given matrix. If the matrix is not

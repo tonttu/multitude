@@ -26,6 +26,8 @@
 
 class C1394Camera;
 #define _WINSOCKAPI_		// timeval redefinition
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <1394camapi.h>
 
@@ -60,7 +62,6 @@ namespace Radiant {
         virtual void setFeatureRaw(FeatureType id, int32_t value);
         virtual void getFeatures(std::vector<CameraFeature> * features);
 
-        virtual void setWhiteBalance(float u_to_blue, float v_to_red);
         virtual bool setCaptureTimeout(int ms);
 
         virtual bool enableTrigger(TriggerSource src);

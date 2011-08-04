@@ -32,22 +32,62 @@ namespace Luminous
   class Image;
   class CompressedImage;
 
+  /// UploadLimiter manages GPU upload limits for each RenderThread per frame.
+  /// These limits should be obeyed when loading data to GPU with glTexImage2D
+  /// or similar command. All classes in Luminous follow this limit automatically.
+  ///
+  /// Simple example:
+  /// @code
+  /// long & limit = UploadLimiter::available();
+  /// if(limit >= bytesToUpload) {
+  ///   glTexImage2D(...);
+  ///   limit -= bytesToUpload;
+  /// } /* else wait for the next frame */
+  /// @endcode
   class LUMINOUS_API UploadLimiter : public Valuable::HasValues
   {
   public:
+    /// Accepts "frame" event, resets all limits for a new frame.
     void processMessage(const char * type, Radiant::BinaryData & data);
 
+    /// Get the singleton instance. Usually not used, since all the important
+    /// functions are already static.
+    /// @return an instance of UploadLimiter
     static UploadLimiter & instance();
 
+    /// Returns a reference to the thread-specific remaining upload capacity in
+    /// bytes. Use this to check if some GPU transfer operation should be
+    /// performed right away, delayed to the next frame or splitted to smaller
+    /// pieces.
+    /// After doing any upload operation, decrease this value accordingly.
+    /// @returns How many bytes there are available for uploading in this frame.
     static long & available();
+
+    /// Returns the current frame number.
     static long frame();
+
+    /// Ask the frame upload limit.
+    /// @return The frame upload limit in bytes.
     static long limit();
+
+    /// Sets the upload limit
+    /// @param limit New upload limit in bytes.
     static void setLimit(long limit);
+
+    /// Enable or disable the upload limiter. available() will always return
+    /// numeric_limits<long>::max() if limiter is disabled.
+    /// @param v True if limiter should be enabled
+    static void setEnabledForCurrentThread(bool v);
+
+    /// Ask the limiter status
+    /// @returns True if limiter is active for this thread.
+    static bool enabledForCurrentThread();
 
   private:
     UploadLimiter();
     int m_frame;
     long m_frameLimit;
+    bool m_inited;
   };
 
   /// Base class for different textures
@@ -84,7 +124,7 @@ namespace Luminous
       glBindTexture(TextureType, m_textureId);
     }
 
-    /** Bind this texture to the currently active tecture unit. */
+    /** Bind this texture to the currently active texture unit. */
     void bind()
     {
       allocate();
@@ -111,18 +151,13 @@ namespace Luminous
     @param h texture height */
     void setHeight(int h) { m_height = h; }
 
-    /// Returns the number of pixels in this texture.
-    /** Note that the one might have initialized the texture without setting
-        width and height, so this information may be unreliable. As a programmer
-        you would know if the values have been set properly. */
+    /// Get the number of pixels in the texture.
+    /// Computes the area of the texture in pixels
+    /// @return the number of pixels in the texture
     int pixelCount() const { return m_width * m_height; }
 
-    /** Returns the aspect ratio of this texture. This operation makes
-      sense mostly for 2D textures.  */
-    float aspectRatio()
-    { return m_height ? m_width / (float) m_height : 1.0f; }
-
     /// Returns estimation of much GPU RAM the texture uses.
+    /// @return estimated number of bytes
     virtual long consumesBytes()
     {
       /// @todo how about compressed formats with mipmaps, does the 4/3 rule apply here as well?
@@ -134,15 +169,20 @@ namespace Luminous
       return (long)used;
     }
 
-    /** Returns the OpenGL texture id. */
+    /// Get the OpenGL texture id
+    /// @return the OpenGL texture id
     GLuint id() const { return m_textureId; }
     /// Returns true if the texture is defined
+    /// @return true if the texture object has been defined
     bool isDefined() const { return id() != 0; }
 
-    /// Returns the pixel format of the source data, not the internal pixel format
+    /// Get the pixel format of the source data.
+    /// Returns the pixel format of the source data, not the internal pixel format.
     /// @see internalFormat()
+    /// @return pixel format of the source data
     const PixelFormat & srcFormat() const { return m_srcFormat; }
-    /// The internal format of the texture
+    /// Get the internal format of the texture
+    /// @return internal OpenGL texture format
     GLenum internalFormat() const { return m_internalFormat; }
 
   protected:
@@ -195,14 +235,26 @@ namespace Luminous
     Texture2D(GLResources * resources = 0) :
         TextureT<GL_TEXTURE_2D>(resources), m_loadedLines(0) {}
 
+    /// Get the aspect ratio of the texture
+    /// Returns the aspect ratio of this texture, ie. the ratio of width to height
+    /// @return the aspect ratio
+    float aspectRatio() const { return m_width / (float) m_height; }
+
     /// Load the texture from an image file
     bool loadImage(const char * filename, bool buildMipmaps = true);
     /// Load the texture from an image
-    /// @param internalFormat set the format automatically
+    /// @param image image to generate the texture from
+    /// @param buildMipmaps if true, generate mipmaps automatically
+    /// @param internalFormat specify the internal OpenGL texture format. If
+    /// zero, set the format automatically
+    /// @return true on success
     bool loadImage(const Luminous::Image & image, bool buildMipmaps = true, int internalFormat = 0);
+    /// Load the texture from a compressed image
+    /// @param image compressed image to load from
+    /// @return true on success
     bool loadImage(const Luminous::CompressedImage & image);
 
-    /// Load the texture from from raw data, provided by the user
+    /// Load the texture from raw data, provided by the user
     bool loadBytes(GLenum internalFormat, int w, int h,
                    const void* data,
                    const PixelFormat& srcFormat,
@@ -222,8 +274,9 @@ namespace Luminous
                 const void * data,
                 const PixelFormat& srcFormat,
                 bool buildMipmaps = true, GLResources * resources = 0);
-    /// Returns the number of scan-lines that have been loaded into the GPU
-    /** This function is mostly useful if one is using progressive image loading. */
+    /// Get the number of scan-lines that have been uploaded to the GPU
+    /// This is used for example while doing progressive loading of images.
+    /// @return number of uploaded lines
     inline unsigned loadedLines() const { return m_loadedLines; }
   private:
     unsigned m_loadedLines;
@@ -234,12 +287,17 @@ namespace Luminous
   {
   public:
     /// Constructs a 3D texture and adds it to the given resource collection
+    /// @param resources resource collection to own this texture
     Texture3D(GLResources * resources = 0)
       : TextureT<GL_TEXTURE_3D> (resources),
       m_depth(0)
     {}
 
+    /// Set the depth of the 3D texture (ie. the z dimension)
+    /// @param d new depth
     void setDepth(int d) { m_depth = d; }
+    /// Get the depth of the 3D texture
+    /// @return depth of the texture
     int depth() const { return m_depth; }
   private:
     int m_depth;

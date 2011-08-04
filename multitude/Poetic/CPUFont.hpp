@@ -3,8 +3,9 @@
 #ifndef POETIC_CPU_FONT_HPP
 #define POETIC_CPU_FONT_HPP
 
-#include <Poetic/GlyphContainer.hpp>
-#include <Poetic/BBox.hpp>
+#include "Export.hpp"
+#include "GlyphContainer.hpp"
+#include "BBox.hpp"
 
 #include <Luminous/Collectable.hpp>
 #include <Luminous/GLResources.hpp>
@@ -24,13 +25,19 @@ namespace Poetic
   public:
     virtual ~CPUFont() {}
     /// Returns the cursor advance for the given string, i.e. how long the rendered string is
+    /// @param str string to process
+    /// @param n maximum number of characters to process. When using -1 here it will process until it reaches a \0 character
+    /// @return the cursor advance (length) of the rendered string
     virtual float advance(const char * str, int n = -1) = 0;
     /// @copydoc advance
     virtual float advance(const wchar_t * str, int n = -1) = 0;
-
+    /// Calculates the cursor advance for every separate character
+    /// @param str input string
+    /// @param advances list of floats for calculated results
+    /// @param n maximum number of characters to process. When using -1 here it will process until it reaches a \0 character
     virtual void advanceList(const wchar_t * str, float * advances, int n = -1) = 0;
 
-    /// @copydoc advance
+    /// @copybrief advance
     float advance(const QString & str) {
       std::wstring wstr = str.toStdWString();
       return advance(wstr.c_str(), wstr.length());
@@ -49,9 +56,11 @@ namespace Poetic
     virtual float lineHeight() const = 0;
 
     /// Computes the bounding box for the given string
+    /// @param str the string to calculate the box for
+    /// @param bbox the computed bounding box
     virtual void bbox(const char * str, BBox & bbox) = 0;
     /// @copydoc bbox
-    virtual void bbox(const wchar_t * wstr, BBox & bbox) = 0;
+    virtual void bbox(const wchar_t * str, BBox & bbox) = 0;
 
     /// Loads a font from the given .ttf file
     virtual bool load(const char * fontFilePath) = 0;

@@ -19,13 +19,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef WIN32
-#include <WinPort.h>
-#endif
-
-
 int main(int argc, char ** argv)
 {
+  (void)argc; (void)argv;
   /* Test that settings colors works properly. */
 
   const int ncolors = 5;

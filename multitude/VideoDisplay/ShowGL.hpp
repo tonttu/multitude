@@ -17,6 +17,10 @@
 #ifndef VIDEODISPLAY_SHOW_GL_HPP
 #define VIDEODISPLAY_SHOW_GL_HPP
 
+#include "Export.hpp"
+#include "SubTitles.hpp"
+#include "VideoIn.hpp"
+
 #include <Luminous/Collectable.hpp>
 #include <Luminous/GLSLProgramObject.hpp>
 #include <Luminous/Texture.hpp>
@@ -34,10 +38,6 @@
 
 #include <Valuable/HasValues.hpp>
 #include <Valuable/ValueFloat.hpp>
-
-#include <VideoDisplay/Export.hpp>
-#include <VideoDisplay/SubTitles.hpp>
-#include <VideoDisplay/VideoIn.hpp>
 
 namespace Resonant {
   class DSPNetwork;
@@ -67,9 +67,10 @@ namespace VideoDisplay {
 
       From application-programmers perspective, this is the main class
       of the VideoDisplay framework. */
-  class ShowGL : public Luminous::Collectable,
+  class VIDEODISPLAY_API ShowGL : public Luminous::Collectable,
   public Valuable::HasValues
   {
+    MEMCHECKED_USING(Valuable::HasValues);
   private:
 
     class YUVProgram : public Luminous::GLSLProgramObject
@@ -136,22 +137,20 @@ namespace VideoDisplay {
     /// @endcond
 
     /// Constructs an empty ShowGL object
-    VIDEODISPLAY_API ShowGL();
-    VIDEODISPLAY_API ~ShowGL();
+    ShowGL();
+    ~ShowGL();
 
     /// Load a subtitle file
-    VIDEODISPLAY_API bool loadSubTitles(const char * filename, const char * type = 0);
+    bool loadSubTitles(const char * filename, const char * type = 0);
 
-    VIDEODISPLAY_API Radiant::TimeStamp firstFrameTime() const;
+    /// The time-stamp of the first video frame
+    Radiant::TimeStamp firstFrameTime() const;
 
     /// Initialize the file, but does not play it.
     /** Does not actually start playback, just loads in information
         about the video.
 
         @param filename The name ofthe video file to play.
-
-        @param dsp The DSP graph that is used for audio playback. If null, then
-        this method will pick up the default network.
 
         @param previewpos The position for taking the preview frame from the video.
         Currently ignored.
@@ -169,41 +168,43 @@ namespace VideoDisplay {
         @param flags Flags for the video playback. For the playback to work, the flags
         should include Radiant::WITH_VIDEO and Radiant::WITH_AUDIO.
 
+        @return True if initialization succeeds or this file was already playing.
+                False on error.
     */
-    VIDEODISPLAY_API bool init(const char * filename,
-                               Resonant::DSPNetwork  * dsp,
-                               float previewpos = 0.05f,
-                               int targetChannel = -1,
-                               int flags =
-                               Radiant::WITH_VIDEO | Radiant::WITH_AUDIO);
+    bool init(const char * filename,
+              float previewpos = 0.05f,
+              int targetChannel = -1,
+              int flags =
+              Radiant::WITH_VIDEO | Radiant::WITH_AUDIO);
 
     /// Sets the gain factor for the video sounds
-    /** The gain coefficient is a linear multiplier for the video sound-track.
-        Default value for the gain is 1.0, which equals unity gain. */
-    VIDEODISPLAY_API void setGain(float gain);
+    /// The gain coefficient is a linear multiplier for the video sound-track.
+    /// Default value for the gain is 1.0, which equals unity gain.
+    /// @param gain The new gain factor
+    void setGain(float gain);
 
-    /// Opens the file for playing.
+    // /// Opens the file for playing.
     /* VIDEODISPLAY_API bool open(const char * filename, Resonant::DSPNetwork  * dsp,
                                Radiant::TimeStamp pos = 0);
     */
-    /// Starts file playback, from the last playback position.
-    /// @return true if there is a video and it was not already playing
-    VIDEODISPLAY_API bool start(bool fromOldPos = true);
+    /// Starts file playback. If the video is already playing and fromOldPos is
+    /// false, we just seek to beginning.
+    /// @param fromOldPos True if the playing should continue from the last
+    ///                   playback position
+    /// @return True if video is now playing or was already at play-state. False
+    ///         on error.
+    bool start(bool fromOldPos = true);
     /// Stops file playback
-    /// @return true if the video was not already stopped
-    VIDEODISPLAY_API bool stop();
+    bool stop();
 
     /// Toggles play/pause state
-    /// @return true if the video was playing
-    VIDEODISPLAY_API bool togglePause();
+    bool togglePause();
 
     /// Pauses the video
-    /// @return true if the video was not already paused
-    VIDEODISPLAY_API bool pause();
+    bool pause();
 
     /// Starts video playback from current position
-    /// @return true if there is a video and it was not already playing
-    VIDEODISPLAY_API bool unpause();
+    bool unpause();
 
     // VIDEODISPLAY_API void enableLooping(bool enable);
 
@@ -211,7 +212,7 @@ namespace VideoDisplay {
     State state() const { return m_state; }
 
     /// Update the video image from reader-thread
-    VIDEODISPLAY_API void update();
+    void update();
     /// Render the video to the specified rectangle
     /** @param resources The container of the OpenGL resources
 
@@ -220,6 +221,8 @@ namespace VideoDisplay {
         @param bottomright Bottom-right corner of the video image. If
         bottomright = topleft, then the player will use the size of
         the video.
+
+        @param baseColor color used to modulate the video with
 
         @param transform The coordinates can be optionally transformed
         with the "transform" matrix.
@@ -230,11 +233,8 @@ namespace VideoDisplay {
         The caller can indicate the amount of space it has allocated beneath the
         video widget for the subtitles. The player will place the subtitles beneath
         the player if there is enough spaec for two lines of text. Otherwise the
-        the subtitles will be placed inside the video area.
-
-        @param alpha The alpha value of the video
-    */
-    VIDEODISPLAY_API void render(Luminous::GLResources * resources,
+        the subtitles will be placed inside the video area.*/
+    void render(Luminous::GLResources * resources,
                                  Vector2 topleft,
                                  Vector2 bottomright,
                                  Radiant::Color baseColor,
@@ -243,7 +243,7 @@ namespace VideoDisplay {
                                  float subTitleSpace = 0);
 
     /// Pixel size of the video image.
-    VIDEODISPLAY_API Nimble::Vector2i size() const;
+    Nimble::Vector2i size() const;
 
     /// Returns the duration (lenght) of the video
     Radiant::TimeStamp duration() { return m_duration; }
@@ -252,26 +252,31 @@ namespace VideoDisplay {
     /// The relative playback position of the current video
     double relativePosition() { return position() / (double) duration(); }
 
-    /** Seek to given position. Due to limitations of underlying seek
-    algorithms, this method is usually not exact. */
-    VIDEODISPLAY_API void seekTo(Radiant::TimeStamp time);
+    /// Seek to given position. Due to limitations of underlying seek
+    /// algorithms, this method is usually not exact.
+    /// @param time New position timestamp so that 0 is the beginning of the video
+    ///             This is clamped between 0 and duration().
+    void seekTo(Radiant::TimeStamp time);
     /// Seeks to a relative position within the video
     /** @param relative The relative position, in range [0,1]. */
-    VIDEODISPLAY_API void seekToRelative(double relative);
+    void seekToRelative(double relative);
 
     /// Seek forward, or backward by a given amount
     void seekBy(const Radiant::TimeStamp & ts) { seekTo(position() + ts); }
 
     /// Pans the video sounds to a given location
-    VIDEODISPLAY_API void panAudioTo(Nimble::Vector2 location);
+    void panAudioTo(Nimble::Vector2 location);
 
-    /** Information on how the frames have been displayed. The
-    histogram information is useful mostly for debug purposes. */
+    /// Information on how the frames have been displayed. The
+    /// histogram information is useful mostly for debug purposes.
+    /// @param index Index to histogram data, 0 <= index < HISTOGRAM_POINTS
+    /// @return Frame display count
     int histogramPoint(int index) const { return m_histogram[index]; }
     /// Returns the number of histogram updates.
     size_t histogramIndex() const { return m_updates; }
 
-    /** Returns true if this video has been loaded with subtitles. */
+    /// Query if the video has subtitles.
+    /// @return true if this video has been loaded with subtitles.
     bool hasSubTitles() { return m_subTitles.size() != 0; }
 
     /// Returns the currently used filename
@@ -286,8 +291,20 @@ namespace VideoDisplay {
 
         The contrast parameter may not be honored by all rendering back-ends.
 
+        @param contrast The new contrast value
           */
     void setContrast(float contrast) { m_contrast = contrast; }
+
+    /// Sets different synchronizing mode. If SyncToTime is enabled, current
+    /// visible frame is calculated using wall clock time. That usually means
+    /// smoother playback, but can cause some audio/video synchronization issues.
+    /// Those issues are fixed by doing automatic av-resync if the difference
+    /// becomes too large.
+    /// If this is disabled, current frame is taken directly from
+    /// AudioTransfer::videoFrame(). This option minimizes audio sync problems,
+    /// but on some setups causes significant jerkiness / frame skipping.
+    /// @param flag True to enable sync to time feature
+    void setSyncToTime(bool flag);
 
   private:
 
@@ -297,7 +314,7 @@ namespace VideoDisplay {
     VideoIn               * m_video;
     VideoIn::Frame        * m_frame;
     VideoIn::Frame          m_preview;
-    Resonant::DSPNetwork  * m_dsp;
+    std::shared_ptr<Resonant::DSPNetwork> m_dsp;
     Resonant::DSPNetwork::Item m_dspItem;
     AudioTransfer         * m_audio;
     int                     m_targetChannel;
@@ -315,6 +332,13 @@ namespace VideoDisplay {
     SubTitles               m_subTitles;
 
     Valuable::ValueFloat    m_contrast;
+
+    Radiant::TimeStamp started;
+    float m_fps;
+    bool m_syncToTime;
+    int m_outOfSync;
+    int m_outOfSyncTotal;
+    int m_syncing;
   };
 
 }

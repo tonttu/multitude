@@ -4,7 +4,6 @@
 #ifndef RESONANT_MODULE_SAMPLE_PLAYER_HPP
 #define RESONANT_MODULE_SAMPLE_PLAYER_HPP
 
-#include <Radiant/FixedStr.hpp>
 #include <Radiant/RefPtr.hpp>
 #include <Radiant/Thread.hpp>
 #include <Radiant/TimeStamp.hpp>
@@ -96,6 +95,8 @@ namespace Resonant {
 
         @param loop Turns on looping if necessary. With looping the sample will play
         back for-ever.
+
+        @param time optional timestamp when to play the sample
     */
     void playSample(const char * filename,
                     float gain,
@@ -108,8 +109,12 @@ namespace Resonant {
     /** Sets the master gain */
     void setMasterGain(float gain) { m_masterGain = gain; }
 
-    inline unsigned channels() const { return m_channels; }
+    /// Number of output channels
+    /// @return Number of output channels
+    size_t channels() const { return m_channels; }
 
+    /// Current playback time
+    /// @return Current playback time
     const Radiant::TimeStamp & time() { return m_time; }
 
   private:
@@ -192,11 +197,11 @@ namespace Resonant {
       float m_relPitch;
       double m_dpos;
 
-      unsigned m_sampleChannel;
-      unsigned m_targetChannel;
+      size_t m_sampleChannel;
+      size_t m_targetChannel;
       bool     m_loop;
       std::shared_ptr<Sample> m_sample;
-      unsigned m_position;
+      size_t m_position;
       Radiant::TimeStamp m_startTime;
     };
 
@@ -229,7 +234,7 @@ namespace Resonant {
       }
 
       bool m_free;
-      Radiant::FixedStrT<256> m_name;
+      std::string m_name;
 
       SampleVoice * m_waiting[WAITING_COUNT];
     };
@@ -262,7 +267,7 @@ namespace Resonant {
 
     bool addSample(std::shared_ptr<Sample> s);
 
-    void dropVoice(unsigned index);
+    void dropVoice(size_t index);
 
     std::list<SampleInfo> m_sampleList;
 
@@ -271,8 +276,8 @@ namespace Resonant {
     std::vector<SampleVoice> m_voices;
     std::vector<SampleVoice *> m_voiceptrs;
 
-    unsigned m_channels;
-    unsigned m_active;
+    size_t m_channels;
+    size_t m_active;
 
     float    m_masterGain;
     Radiant::TimeStamp m_time;

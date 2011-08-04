@@ -27,7 +27,6 @@ namespace Luminous
   /** This class tells what type values there are in the pixels, and
       how they are aligned. It is implemented in a way that makes it
       easy to convert the pixel formats*/
-  /// @todo Doc
   class LUMINOUS_API PixelFormat
   {
   public:
@@ -45,14 +44,14 @@ namespace Luminous
       TYPE_FLOAT        = GL_FLOAT,
       TYPE_DOUBLE       = GL_DOUBLE
                         };
-
+    /// Compression used
     enum Compression
     {
-      COMPRESSION_NONE,
-      COMPRESSED_RGB_DXT1         = GL_COMPRESSED_RGB_S3TC_DXT1_EXT,
-      COMPRESSED_RGBA_DXT1        = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
-      COMPRESSED_RGBA_DXT3        = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,
-      COMPRESSED_RGBA_DXT5        = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
+      COMPRESSION_NONE,                                                 ///< No compression
+      COMPRESSED_RGB_DXT1         = GL_COMPRESSED_RGB_S3TC_DXT1_EXT,    ///< DXT1 RGB compression
+      COMPRESSED_RGBA_DXT1        = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,   ///< DXT1 RGBA compression
+      COMPRESSED_RGBA_DXT3        = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,   ///< DXT3 RGBA compression
+      COMPRESSED_RGBA_DXT5        = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT    ///< DXT5 RGBA compression
     };
 
     /// Layout of channels
@@ -75,9 +74,14 @@ namespace Luminous
                                   };
 
     /// Constructs a copy
+    /// @param pf pixel format to copy
     PixelFormat(const PixelFormat& pf);
     /// Constructs a pixel format with the given info
+    /// @param layout layout of the channels
+    /// @param type channel data type
     PixelFormat(ChannelLayout layout = LAYOUT_UNKNOWN, ChannelType type = TYPE_UNKNOWN);
+    /// Constructs a pixel format using compression
+    /// @param compression compression to use
     PixelFormat(Compression compression);
     ~PixelFormat();
 
@@ -93,47 +97,55 @@ namespace Luminous
     int bytesPerPixel() const;
 
     /// Constructs an 8-bit RGB pixel format
+    /// @return new pixel format
     static PixelFormat rgbUByte()
     { return PixelFormat(LAYOUT_RGB, TYPE_UBYTE); }
     /// Constructs an 8-bit RGBA pixel format
+    /// @return new pixel format
     static PixelFormat rgbaUByte()
     { return PixelFormat(LAYOUT_RGBA, TYPE_UBYTE); }
 
-        /// Constructs an 8-bit BGR pixel format
-    /** Some platforms do not support this format. */
-        static PixelFormat bgrUByte()
+    /// Constructs an 8-bit BGR pixel format
+    /// @return new pixel format
+    static PixelFormat bgrUByte()
     { return PixelFormat(LAYOUT_BGR, TYPE_UBYTE); }
-    /// Constructs an 8-bit BGRA pixel format
-        /** Some platforms do not support this format. */
+    /// Constructs an 8-bit BGRA pixel format    
+    /// @return new pixel format
     static PixelFormat bgraUByte()
     { return PixelFormat(LAYOUT_BGRA, TYPE_UBYTE); }
 
     /// Constructs an 8-bit alpha-only pixel format
+    /// @return new pixel format
     static PixelFormat alphaUByte()
     { return PixelFormat(LAYOUT_ALPHA, TYPE_UBYTE); }
     /// Constructs an 8-bit luminance (grayscale) pixel format
+    /// @return new pixel format
     static PixelFormat luminanceUByte()
     { return PixelFormat(LAYOUT_LUMINANCE, TYPE_UBYTE); }
     /// Constructs a floating-point luminance pixel format
+    /// @return new pixel format
     static PixelFormat luminanceFloat()
     { return PixelFormat(LAYOUT_LUMINANCE, TYPE_FLOAT); }
     /// Constructs a floating-point luminance-alpha pixel format
+    /// @return new pixel format
     static PixelFormat luminanceAlphaFloat()
     { return PixelFormat(LAYOUT_LUMINANCE_ALPHA, TYPE_FLOAT); }
     /// Constructs an 8-bit luminance-alpha pixel format
+    /// @return new pixel format
     static PixelFormat luminanceAlphaUByte()
     { return PixelFormat(LAYOUT_LUMINANCE_ALPHA, TYPE_UBYTE); }
 
     /// Compare if two pixel formats are the same
     inline bool operator == (const PixelFormat & that) const
     {
-      return m_layout == that.m_layout && m_type == that.m_type;
+      return m_layout == that.m_layout && m_type == that.m_type &&
+          m_compression == that.m_compression;
     }
 
     /// Compare if two pixel formats are not the same
     inline bool operator != (const PixelFormat & that) const
     {
-      return m_layout != that.m_layout || m_type == that.m_type;
+      return !(*this == that);
     }
 
     /// Converts the pixel format into a human-readable string

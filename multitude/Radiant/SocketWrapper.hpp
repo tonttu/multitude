@@ -2,9 +2,12 @@
 #define SOCKETWRAPPER_HPP
 
 #include "Platform.hpp"
-#ifdef RADIANT_WIN32
+#ifdef RADIANT_WINDOWS
 #include <winsock2.h>
 #include <WS2tcpip.h>
+#include <cerrno>
+
+#ifndef EADDRINUSE
 
 #define EWOULDBLOCK             WSAEWOULDBLOCK
 #define EINPROGRESS             WSAEINPROGRESS
@@ -43,6 +46,9 @@
 #define EDQUOT                  WSAEDQUOT
 #define ESTALE                  WSAESTALE
 #define EREMOTE                 WSAEREMOTE
+
+#endif
+
 #define SHUT_RDWR SD_BOTH
 
 #define wrap_close(fd) closesocket(fd)

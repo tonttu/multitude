@@ -16,7 +16,7 @@
 #ifndef RADIANT_CSVDOCUMENT_HPP
 #define RADIANT_CSVDOCUMENT_HPP
 
-#include <Radiant/Export.hpp>
+#include "Export.hpp"
 
 #include <QString>
 #include <list>
@@ -46,7 +46,9 @@ namespace Radiant {
 
     /** Load a file, and return the number of lines read. The file is assumed to be in the
         UTF-8 format.
-    */
+        @param filename filename to read
+        @param delimiter column delimiter
+        @return number of rows read */
     int load(const char * filename, const char * delimiter = ",");
     /** Finds a row in the document. For each row in the document,
         this function checks if the text in the cell at that column
@@ -71,14 +73,17 @@ namespace Radiant {
     Rows::const_iterator end() const { return m_rows.end(); }
 
     /// Returns the number of rows in the document
+    /// @return number of rows
     unsigned rowCount() const { return (unsigned) m_rows.size(); }
 
     /** Returns a given row. If the index is out of range, zero pointer is returned.
 
       This method is quite slow, since it must iterate through each row to find the
       correct one. If performance is an issue you should use the iterator-functions instead.
+      @param i index of the row
+      @return the ith row
     */
-    Row * row(unsigned index);
+    Row * row(unsigned i);
 
   private:
 

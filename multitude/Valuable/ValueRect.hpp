@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Valuable.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Valuable.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #ifndef VALUABLE_VALUE_RECT_HPP
@@ -25,26 +13,38 @@ namespace Valuable
 {
 
   /// A valuable object holding a Nimble::Rect object
-  class VALUABLE_API ValueRect : public ValueObjectT<Nimble::Rect>
+  template <class T>
+  class VALUABLE_API ValueRectT : public ValueObjectT<Nimble::RectT<T> >
   {
-    typedef ValueObjectT<Nimble::Rect> Base;
+    typedef ValueObjectT<Nimble::RectT<T> > Base;
   public:
     using Base::operator =;
 
-    /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
+    /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
     /// @param r The rectangle to be stored in the ValueRect
-    ValueRect(HasValues * parent, const QString & name, const Nimble::Rect & r, bool transit = false);
+    ValueRectT(HasValues * host, const QString & name, const Nimble::RectT<T> & r, bool transit = false);
 
-    const char * type() const { return "rect"; }
+    /// Copies a rectangle
+    ValueRectT & operator = (const Nimble::RectT<T> & r) { this->m_value = r; VALUEMIT_STD_OP }
+
+    const char * type() const;
 
     QString asString(bool * const ok = 0) const;
 
-    bool deserialize(ArchiveElement & element);
+    bool deserialize(const ArchiveElement & element);
 
     /// Converts the object to rectangle
-    Nimble::Rect asRect() const { return this->value(); }
+    Nimble::RectT<T> asRect() const { return this->value(); }
   };
 
+  /// Default floating point ValueRectT typedef
+  typedef ValueRectT<float> ValueRect;
+  /// ValueRectT of floats
+  typedef ValueRectT<float> ValueRectf;
+  /// ValueRectT of doubles
+  typedef ValueRectT<double> ValueRectd;
+  /// ValueRectT of ints
+  typedef ValueRectT<int> ValueRecti;
 }
 
 #endif

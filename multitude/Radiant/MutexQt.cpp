@@ -13,6 +13,8 @@
 
 namespace Radiant {
 
+  Mutex s_onceMutex;
+
   // static bool mutexDebug = false;
 
   class Mutex::D : public QMutex
@@ -31,20 +33,19 @@ namespace Radiant {
     delete m_d;
   }
 
-  bool Mutex::lock(bool block)
+  void Mutex::lock()
   {
-    if(block) {
-      m_d->lock();
-      return true;
-    } else
-      return m_d->tryLock();
+    m_d->lock();
   }
 
-  bool Mutex::unlock()
+  bool Mutex::tryLock()
+  {
+    return m_d->tryLock();
+  }
+
+  void Mutex::unlock()
   {
     m_d->unlock();
-
-    return true;
   }
 
   class Condition::D : public QWaitCondition {};
@@ -59,13 +60,7 @@ namespace Radiant {
     delete m_d;
   }
 
-  int Condition::wait(Mutex &mutex)
-  {
-    QMutex * qmutex = mutex.m_d;
-    return m_d->wait(qmutex);
-  }
-
-  int Condition::wait(Mutex &mutex, int millsecs)
+  bool Condition::wait(Mutex &mutex, unsigned long millsecs)
   {
     QMutex * qmutex = mutex.m_d;
     return m_d->wait(qmutex, millsecs);

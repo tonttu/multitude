@@ -57,7 +57,7 @@ namespace Radiant {
 
   */
 
-  /// @todo Check if the std::vector actually is almost the same
+  /// @todo Remove since std::vector actually is almost the same
   template <typename T> class VectorStorage
   {
   public:
@@ -77,7 +77,8 @@ namespace Radiant {
     bool empty() const { return m_points.empty(); }
 
     /// Resets the internal object counter to n.
-    void truncate(unsigned n) { m_count = n; }
+    /// @param n New value of object counter
+    void truncate(size_t n) { m_count = n; }
 
     /// The number of objecs in the array
     size_t size() const { return m_count; }
@@ -88,21 +89,28 @@ namespace Radiant {
     /// Expand the size of the storage buffer to desired size
     /** This function can be run in software initialization phase, to
     avoid the need to resize the buffer later on. */
+    /// @param size new size of buffer
     void expand(size_t size)
     { if(size > m_points.size()) m_points.resize(size); }
     /// Resizes the vector
-    void resize(unsigned size)
+    /// @param size new size of buffer
+    void resize(size_t size)
     { expand(size); m_count = size; }
 
     /// Gets an object, and check that the index is valid
     /** If the index is not valid, then assertion is raised, and the software stops. */
-    const T & getSafe(unsigned index) const
+    /// @param index Index of element to retrieve
+    /// @returns element from index-th position
+    const T & getSafe(size_t index) const
     { assert(index < m_count); return m_points[index]; }
     /// @copydoc getSafe
-    T & getSafe(unsigned index)
+    /// @param index Index of element to retrieve
+    T & getSafe(size_t index)
     { assert(index < m_count); return m_points[index]; }
     /// Gets a value from the vector and expand the vector if necessary
-    T & getExpand(unsigned index)
+    /// @param index Index of element to retrieve
+    /// @returns A reference to the index-th element
+    T & getExpand(size_t index)
     {
       if(index >= m_count) {
         expand(index + 10);
@@ -112,22 +120,31 @@ namespace Radiant {
     }
 
     /// Gets an object, without safety checks
+    /// @param index Index of element to retrieve
+    /// @returns Reference to the index-th element
     const T & get(size_t index) const { return m_points[index]; }
     /// @copydoc get
+    /// @param index Index of element to retrieve
+    /// @returns Reference to the index-th element
     T & get(size_t index) { return m_points[index]; }
-    /// Returns the element at size() - 1
+    /// @returns Reference to the last element
     T & getLast() { return m_points[m_count - 1]; }
     /// @copydoc getLast
     T & last() { return m_points[m_count - 1]; }
     /// @copydoc getLast
     const T & getLast() const { return m_points[m_count - 1]; }
     /// Gets the element at size() - n - 1
-    const T & getLast(int n) const { return m_points[m_count - 1 - n]; }
+    /// @param n Element-index, counted from the back
+    /// @returns Reference to the n-th last element
+    const T & getLast(size_t n) const { return m_points[m_count - 1 - n]; }
     /// Gets the element at size() - n - 1
-    const T & last(int n) const { return m_points[m_count - 1 - n]; }
+    /// @param n Element-index, counted from the back
+    /// @returns Reference to the n-th last element
+    const T & last(size_t n) const { return m_points[m_count - 1 - n]; }
 
     /// Appends an object to the vector
     /** The storage area is automatically incremented if necessary. */
+    /// @param x Element to append
     void append(const T & x)
     {
       if(m_count >= m_points.size())
@@ -139,10 +156,12 @@ namespace Radiant {
     /** Appends an object to the vector, equals append(x). This method
     has been implemented so that this class looks and feels more
     like a typical STL container. */
+    /// @param x Element to append
     void push_back(const T & x) { append(x); }
 
     /// Increase the size of the storage by one, and return the last object
     /** The storage area is automatically incremented if necessary. */
+    /// @returns Reference to the last object in the vector
     T & append()
     {
       if(m_count >= m_points.size())
@@ -154,6 +173,7 @@ namespace Radiant {
     /// Push an objec to the beginning of the array
     /** This function call takes some time on larger arrays, so it
     should be used with care. */
+    /// @param x Element to prepend
     void prepend(const T & x)
     {
       if(m_count >= m_points.size())
@@ -168,54 +188,64 @@ namespace Radiant {
     }
 
     /** Remove n elements from the end of the storage. */
-    void putBack(unsigned n) { m_count -= n; }
+    /// @param n Number of elements to remove
+    void putBack(size_t n) { m_count -= n; }
 
     /** Erase an element. The size of the storage is shrunk by one. */
-    void erase(unsigned index)
+    /// @param index Index of element to remove
+    void erase(size_t index)
     {
-      for(unsigned i = index + 1; i < m_count; i++)
-    m_points[i - 1] = m_points[i];
+      for(size_t i = index + 1; i < m_count; i++)
+        m_points[i - 1] = m_points[i];
 
       m_count--;
     }
 
     /** Merge elements to this from that. */
+    /// @param that Vector to merge with
     void merge(VectorStorage & that)
     {
       if(!that.size()) return;
 
       if((size() + that.size()) > m_points.size())
-    m_points.resize(size() + that.size() + 100);
+        m_points.resize(size() + that.size() + 100);
 
-      for(unsigned i = 0; i < that.size(); i++)
-    m_points[m_count++] = that.get(i);
+      for(size_t i = 0; i < that.size(); i++)
+        m_points[m_count++] = that.get(i);
     }
 
     /// Fills the vector with the given value
+    /// @param value to fill with
     void setAll(const T & value)
     {
-      for(unsigned i = 0; i < size(); i++)
-    m_points[i] = value;
-
+      for(size_t i = 0; i < size(); i++)
+        m_points[i] = value;
     }
 
-    /// Returns a pointer to the first element
+    /// @returns pointer to the first element
     T * data() { return & m_points[0]; }
     /// @copydoc data
     const T * data() const { return & m_points[0]; }
 
-    /// Returns an iterator to the beginning of the vector
+    /// Returns iterator to the beginning of the vector
+    /// @returns iterator to the beginning of the vector
     iterator begin() { return m_points.begin(); }
-    /// Returns an iterator to the end of the vector
-    iterator end()
-    { iterator tmp = m_points.begin(); tmp += m_count; return tmp;}
+    /// Returns iterator to the end of the vector
+    /// @returns Iterator to the end of the vector
+    iterator end() { return m_points.end(); }
 
-    /// Returns the element at the given index
-    inline T & operator [] (unsigned i) { return m_points[i]; }
-    /// Returns the element at the given index
-    inline const T & operator [] (unsigned i) const { return m_points[i]; }
+    /// Returns the element at the given index 
+    /// @returns the element at the given index 
+    /// @param i Index of element to retrieve
+    inline T & operator [] (size_t i) { return m_points[i]; }
+
+    /// Returns the element at the given index 
+    /// @returns the element at the given index 
+    /// @param i Index of element to retrieve
+    inline const T & operator [] (size_t i) const { return m_points[i]; }
 
     /// Swaps two VectorStorages
+    /// @param that Vector to swap with
     inline void swap(VectorStorage & that)
     {
       m_points.swap(that.m_points);
@@ -225,6 +255,8 @@ namespace Radiant {
     }
 
     /// Copies a vector
+    /// @param that Vector to copy from
+    /// @returns Reference to self
     VectorStorage & operator = (const VectorStorage & that)
     {
         if(that.empty()) {

@@ -41,10 +41,13 @@ namespace Poetic
   /// Returns a handle to the freetype library
   FT_LibraryRec_ ** freetype();
 
+  /// Finalizes Poetic and cleans up resources. This function should be called after the library is no longer needed.
+  bool finalize();
+
   /// Returns the last freetype error
   int error();
 
-  // Hack around thread-safety
+  /// Returns the global FreeType mutex
   Radiant::Mutex & freetypeMutex();
 }
 

@@ -16,8 +16,8 @@
 #ifndef POETIC_CPU_WRAPPER_FONT_HPP
 #define POETIC_CPU_WRAPPER_FONT_HPP
 
-#include <Poetic/CPUFont.hpp>
-#include <Poetic/Export.hpp>
+#include "Export.hpp"
+#include "CPUFont.hpp"
 
 #include <Luminous/GLResources.hpp>
 
@@ -34,11 +34,11 @@ namespace Poetic
     CPUWrapperFont(CPUManagedFont * mfont);
     ~CPUWrapperFont();
 
-    /// Returns the advance for the given string
+    /// @copydoc CPUFont::advance
     float advance(const char * str, int n = -1);
-    /// @copydoc advance
+    /// @copydoc CPUFont::advance
     float advance(const wchar_t * str, int n = -1);
-    /// @copydoc advance
+    /// @copybrief CPUFont::advance
     float advance(const QString & str)
     { std::wstring wstr = str.toStdWString();
       return advance(wstr.c_str(), (int) wstr.size()); }
@@ -62,9 +62,9 @@ namespace Poetic
     /// Returns the line height
     float lineHeight() const;
 
-    /// Returns the bounding box for the given string
+    /// @copydoc CPUFont::bbox
     void bbox(const char * str, BBox & bbox);
-    /// @copydoc bbox
+    /// @copydoc CPUFont::bbox
     void bbox(const wchar_t * str, BBox & bbox);
 
     /// Loads a font from the given .ttf file

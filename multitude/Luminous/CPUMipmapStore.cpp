@@ -13,6 +13,7 @@
  * 
  */
 
+#include "Export.hpp"
 #include "CPUMipmapStore.hpp"
 
 #include <Radiant/Trace.hpp>
@@ -23,94 +24,46 @@ namespace Luminous {
 
   static Radiant::Mutex s_mutex;
 
-  /* Note that the mipmaps are not deleted upon application exit. This
-     is done on purpose: As we are dealing with static data one easily
-     gets conflicts with the order of deleting resources. As a result
-     it is safest to not delete the resources. Anyhow, the operating
-     system should be able to clear the resources as the application
-     shuts down. */
+  static std::map<std::string, std::weak_ptr<CPUMipmaps> > s_mipmaps;
 
-  class MipmapItem
-  {
-  public:
-    MipmapItem() : m_linkCount(0), m_mipmaps(0) {}
-    /* Do NOT delete m_mipmaps here, we might at the shutdown sequence
-       of the application, and deleting the mipmap here may make it
-       reference some resources that are not available any more. */
-    ~MipmapItem() { /* delete m_mipmaps; */ }
 
-    void incrCount() { m_linkCount++; }
-    void decrCount()
-    {
-      m_linkCount--;
-      if(m_linkCount == 0) {
-        m_mipmaps->finish();
-        m_mipmaps = 0;
-      }
-    }
-
-    int m_linkCount;
-    CPUMipmaps * m_mipmaps;
-  };
-
-  static std::map<QString, MipmapItem> s_mipmaps;
-  typedef std::map<QString, MipmapItem> MipMapItemContainer;
-
-  CPUMipmaps * CPUMipmapStore::acquire(const QString & filename, bool immediate)
+  std::shared_ptr<CPUMipmaps> CPUMipmapStore::acquire(const QString & filename,
+                                                      bool compressed_mipmaps)
   {
     Radiant::Guard g( s_mutex);
 
-    MipMapItemContainer::iterator it = s_mipmaps.find(filename);
+    std::weak_ptr<CPUMipmaps> & mipmap_weak = s_mipmaps[filename];
 
-    if(it !=  s_mipmaps.end()) {
-      MipmapItem & mmi = (*it).second;
-      mmi.incrCount();
-      return mmi.m_mipmaps;
+    // Check if ptr still points to something valid
+    std::shared_ptr<CPUMipmaps> mipmap_shared = mipmap_weak.lock();
+    if (mipmap_shared)
+      return mipmap_shared;
+
+    mipmap_shared.reset(new CPUMipmaps);
+
+    if(!mipmap_shared->startLoading(filename, compressed_mipmaps)) {
+      return std::shared_ptr<CPUMipmaps>();
     }
 
-    CPUMipmaps * mipmaps = new CPUMipmaps();
+    if(!compressed_mipmaps)
+      Luminous::BGThread::instance()->addTask(mipmap_shared);
 
-    if(!mipmaps->startLoading(filename.toUtf8().data(), immediate)) {
-      delete mipmaps;
-      return 0;
-    }
+    // store new weak pointer
+    mipmap_weak = mipmap_shared;
 
-    Luminous::BGThread::instance()->addTask(mipmaps);
+    debugLuminous("CPUMipmapStore::acquire # Created new for %s (%ld links)",
+          filename.toUtf8().data(), s_mipmaps[filename].use_count());
 
-    s_mipmaps[filename].m_mipmaps = mipmaps;
-    s_mipmaps[filename].incrCount();
-
-    debugLuminous("CPUMipmapStore::acquire # Created new for %s (%d links)",
-          filename.toUtf8().data(), s_mipmaps[filename].m_linkCount);
-
-    return mipmaps;
+    return mipmap_shared;
   }
 
-  void CPUMipmapStore::release(CPUMipmaps * mipmaps)
+  void CPUMipmapStore::release(std::shared_ptr<CPUMipmaps>)
   {
-    if(!mipmaps)
-      return;
-
-    Radiant::Guard g( s_mutex);
-
-    for(MipMapItemContainer::iterator it = s_mipmaps.begin();
-    it != s_mipmaps.end(); it++) {
-      MipmapItem & mmi = (*it).second;
-      if(mmi.m_mipmaps == mipmaps) {
-        mmi.decrCount();
-        if(!mmi.m_linkCount) {
-          // info("Erased mipmaps %p", mipmaps);
-          s_mipmaps.erase(it);
-        }
-        return;
-      }
-    }
   }
 
-  unsigned CPUMipmapStore::count()
+  std::shared_ptr<CPUMipmaps> CPUMipmapStore::copy(std::shared_ptr<CPUMipmaps> mipmaps)
   {
-    Radiant::Guard g( s_mutex);
-    return (unsigned) s_mipmaps.size();
+    return std::shared_ptr<CPUMipmaps>(mipmaps);
   }
 
 }

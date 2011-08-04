@@ -54,27 +54,27 @@ namespace Valuable
     ValueContainer() {}
 
     /// Constructs a new container
-    /// @param parent parent object
+    /// @param host host object
     /// @param name name of the value
-    ValueContainer(HasValues * parent, const QString & name)
+    ValueContainer(HasValues * host, const QString & name)
       : ValueObject(parent, name, false)
     {}
 
     virtual const char* type() const { return "container"; }
 
-    virtual ArchiveElement & serialize(Archive & archive) const
+    virtual ArchiveElement serialize(Archive & archive) const
     {
-      ArchiveElement & elem = archive.createElement((name().isEmpty() ? type() : name()).toUtf8().data());
+      ArchiveElement elem = archive.createElement((name().isEmpty() ? type() : name()).toUtf8().data());
       for(const_iterator it = m_container.begin(); it != m_container.end(); it++) {
         elem.add(Serializer::serialize(archive, *it));
       }
       return elem;
     }
 
-    virtual bool deserialize(ArchiveElement & element)
+    virtual bool deserialize(const ArchiveElement & element)
     {
       std::insert_iterator<T> inserter(m_container, m_container.end());
-      for(ArchiveElement::Iterator & it = element.children(); it; ++it) {
+      for(ArchiveElement::Iterator it = element.children(); it; ++it) {
         *inserter = Serializer::deserialize<typename T::value_type>(*it);
       }
       return true;
@@ -94,8 +94,9 @@ namespace Valuable
 
     /// Use the arrow operator for accessing fields inside the wrapper container.
     /// Example: container->end();
+    /// @return Pointer to the wrapped container
     T * operator -> () { return &m_container; }
-    /// @see operator->
+    /// @copydoc operator->()
     const T * operator -> () const { return &m_container; }
 
   protected:

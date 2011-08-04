@@ -28,15 +28,22 @@
 #include <set>
 #include <ctime>
 
-#ifndef RADIANT_WIN32
+#ifndef RADIANT_WINDOWS
 #include <unistd.h> // for istty
+#else
+#define WIN32_MEAN_AND_LEAN
+#define NOMINMAX
+#include <windows.h>
 #endif
+
 
 namespace Radiant {
 
   static Radiant::Mutex g_mutex;
 
   static bool g_enableVerboseOutput = false;
+  static bool g_enableDuplicateFilter = false;
+  static std::string g_lastLogLine = "";
   static bool g_forceColors = false;
   static std::set<std::string> g_verboseModules;
 
@@ -51,6 +58,16 @@ namespace Radiant {
     "[ERROR] ",
     "[FATAL] "
   };
+
+  void enableDuplicateFilter(bool enable)
+  {
+    g_enableDuplicateFilter = enable;
+  }
+
+  bool enabledDuplicateFilter()
+  {
+    return g_enableDuplicateFilter;
+  }
 
   void enableVerboseOutput(bool enable, const char * module)
   {
@@ -80,7 +97,7 @@ namespace Radiant {
   {
     static bool stderr_is_tty = false, stdout_is_tty = false;
 
-#ifndef RADIANT_WIN32
+#ifndef RADIANT_WINDOWS
     // this doesn't need mutex, it doesn't matter if this is ran
     // in two different threads at the same time
     static bool once = false;
@@ -120,7 +137,13 @@ namespace Radiant {
 
     Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
 
-    g_mutex.lock();
+    Guard lock(g_mutex);
+
+    // Skip duplicates
+    if (enabledDuplicateFilter() && g_lastLogLine == msg)
+      return;
+
+    g_lastLogLine = msg;
 
     time_t t = now.value() >> 24;
     /// localtime is not thread-safe
@@ -145,9 +168,22 @@ namespace Radiant {
     }
 
     vfprintf(out, msg, args);
+
+#ifdef _WIN32
+	// Log to the Windows debug-console as well
+	char logmsg[256];
+	vsnprintf(logmsg, 256, msg, args);
+
+  char threadId[16];
+  _snprintf(threadId, 16, "[thr:%d] ", GetCurrentThreadId());
+  
+  OutputDebugStringA(threadId);
+	OutputDebugStringA(logmsg);
+	OutputDebugStringA("\n");
+#endif
+
     fprintf(out,"%s\n", colors_end);
     fflush(out);
-    g_mutex.unlock();
   }
 
   void trace(Severity s, const char * msg, ...)

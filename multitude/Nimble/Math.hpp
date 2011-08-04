@@ -4,7 +4,7 @@
 #ifndef NIMBLE_MATH_HPP
 #define NIMBLE_MATH_HPP
 
-#include <Nimble/Export.hpp>
+#include "Export.hpp"
 
 #include <cmath>
 #ifdef WIN32
@@ -120,8 +120,9 @@ namespace Nimble {
     return finite(v);
 #endif
     }
-  /// Checks if the given number is not one
-  /// @param v number to check
+    /// Checks if the given number is a NaN
+    /// @param v number to check
+    /// @return Check result
     inline bool isNAN(float v)
     {
 #ifdef WIN32
@@ -173,6 +174,7 @@ namespace Nimble {
       @param a The first value to compare.
       @param b The second value to compare.
       @param limit The maximum difference between the values.
+      @return True if the difference between the numbers is small enough
       */
     template <class T>
     bool IsClose(const T & a, const T & b, const T & limit)
@@ -207,10 +209,10 @@ namespace Nimble {
     }
 
     /// Clamp a value between minimum and maximum values
-    /** @param x The input value to limit.
-    @param low The minimum value for comparison
-    @param high The maximum value for comparison
-     */
+    /// @param x The input value to limit.
+    /// @param low The minimum value for comparison
+    /// @param high The maximum value for comparison
+    /// @return Clamped value
     template <class T>
     inline T Clamp(T x, T low, T high)
     {
@@ -224,6 +226,7 @@ namespace Nimble {
     /// @param x The input value to wrap.
     /// @param low The minimum value
     /// @param high The maximum value
+    /// @return Wrapped values
     template <class T>
     inline T Wrap(T x, T low, T high)
     {
@@ -231,23 +234,23 @@ namespace Nimble {
       return x - Floor((x - low) / diff) * diff;
     }
 
-    /** Calculates the determinant of a 2x2 matrix, which is given in
-  the argument values.
-    @param a upper-left of the matrix
-    @param b upper-right of the matrix
-    @param c lower-left of the matrix
-    @param d lower-right of the matrix */
+    /// Calculates the determinant of a 2x2 matrix, which is given in
+    /// the argument values.
+    /// @param a upper-left of the matrix
+    /// @param b upper-right of the matrix
+    /// @param c lower-left of the matrix
+    /// @param d lower-right of the matrix
+    /// @return Determinant
     template <class T>
     inline T Det(T a, T b, T c, T d)
     {
       return a * d - b * c;
     }
 
-    /** Calculates the average of arguments a and b.
-    @param a first argument
-    @param b second argument
-    @return (a + b) * 0.5f;
-     */
+    /// Calculates the average of arguments a and b.
+    /// @param a first argument
+    /// @param b second argument
+    /// @return (a + b) * 0.5f;
     template <class T>
     inline T Average(const T & a, const T & b)
     {
@@ -325,9 +328,12 @@ namespace Nimble {
       *variance = vari / (double) n;
     }
 
-    /** Calculates the sum of the absolute values in the argument array. */
+    /// Calculates the sum of the absolute values in the argument array.
+    /// @param values Array of values
+    /// @param n Number of elements in the array
+    /// @return Sum of absolute values
     template <class T>
-        inline T calculateAbsSum(const T * values, int n)
+    inline T calculateAbsSum(const T * values, int n)
     {
       T sum = 0;
       for(int i = 0; i < n; i++)

@@ -1,6 +1,7 @@
 include(../multitude.pri)
 HEADERS += BGThread.hpp \
-    ImageCodecDDS.hpp
+    ImageCodecDDS.hpp \
+    MipMapGenerator.hpp
 HEADERS += GLContext.hpp
 HEADERS += FramebufferResource.hpp
 HEADERS += CodecRegistry.hpp
@@ -35,14 +36,14 @@ HEADERS += Transformer.hpp
 HEADERS += Utils.hpp
 HEADERS += VertexBuffer.hpp
 HEADERS += VertexBufferImpl.hpp
-HEADERS += RenderTarget.hpp
+#HEADERS += RenderTarget.hpp
 
-SOURCES += ImageCodecDDS.cpp
+SOURCES += ImageCodecDDS.cpp \
+    MipMapGenerator.cpp
 SOURCES += BGThread.cpp
 SOURCES += GLContext.cpp
 SOURCES += FramebufferResource.cpp
 SOURCES += CodecRegistry.cpp
-SOURCES += Collectable.cpp
 SOURCES += CPUMipmaps.cpp
 SOURCES += CPUMipmapStore.cpp
 SOURCES += Error.cpp
@@ -67,12 +68,15 @@ SOURCES += Texture.cpp
 SOURCES += Transformer.cpp
 SOURCES += Utils.cpp
 SOURCES += VertexBuffer.cpp
-SOURCES += RenderTarget.cpp
+#SOURCES += RenderTarget.cpp
+
+# Link in Squish statically
+LIBS += -lSquish
+QMAKE_LIBDIR += ../Squish
 
 LIBS += $$LIB_RADIANT \
     $$LIB_OPENGL \
     $$LIB_VALUABLE \
-    $$LIB_GLU \
     $$LIB_NIMBLE \
     $$LIB_PATTERNS \
     $$LIB_GLEW

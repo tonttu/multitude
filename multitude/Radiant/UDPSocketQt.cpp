@@ -90,5 +90,10 @@ namespace Radiant
     return m_d->writeDatagram((const char *) data, bytes, m_d->m_addr, m_d->m_port);
   }
 
+  bool UDPSocket::setReceiveBufferSize(size_t /*bytes*/)
+  {
+    return false;
+  }
+
 }
 

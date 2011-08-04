@@ -16,23 +16,24 @@
 #ifndef RESONANT_MODULE_SPLITTER_HPP
 #define RESONANT_MODULE_SPLITTER_HPP
 
+#include "Export.hpp"
+#include "Module.hpp"
+#include "SoundRectangle.hpp"
+
 #include <Nimble/Ramp.hpp>
 #include <Nimble/Vector2.hpp>
 
 #include <Radiant/RefObj.hpp>
 #include <Radiant/RefPtr.hpp>
 
-#include <Resonant/Module.hpp>
-#include <Resonant/SoundRectangle.hpp>
-
 #include <Valuable/ValueFloat.hpp>
 #include <Valuable/ValueVector.hpp>
+#include <Valuable/ValueContainer.hpp>
 
 #include <vector>
 
 namespace Resonant {
-
-
+	
   /** Pans/splits audio signals to multiple outputs.
 
       ModulePanner is used to handle multi-loudspeaker (or head-phone)
@@ -41,9 +42,10 @@ namespace Resonant {
 
       Currently, there are two panning modes, see #Mode
   */
-  class ModulePanner : public Module
+  class RESONANT_API ModulePanner : public Module
   {
   public:
+    /// Panning mode
     enum Mode {
       /// Radial mode, where the panning is based on the distance of loudspeaker and
       /// sound source.
@@ -57,39 +59,47 @@ namespace Resonant {
 
 
     /// Constructs the panner module
-    RESONANT_API ModulePanner(Application *, Mode mode=RADIAL);
-    RESONANT_API virtual ~ModulePanner();
+    ModulePanner(Application * = 0, Mode mode=RADIAL);
+    virtual ~ModulePanner();
 
-    RESONANT_API virtual Valuable::ArchiveElement & serialize(Valuable::Archive &doc) const;
-    RESONANT_API virtual bool readElement(Valuable::DOMElement element);
+    virtual bool deserialize(const Valuable::ArchiveElement & element);
 
-    RESONANT_API virtual bool prepare(int & channelsIn, int & channelsOut);
-    RESONANT_API virtual void processMessage(const char *, Radiant::BinaryData *);
-    RESONANT_API virtual void process(float ** in, float ** out, int n);
+    virtual bool prepare(int & channelsIn, int & channelsOut);
+    virtual void processMessage(const char *, Radiant::BinaryData *);
+    virtual void process(float ** in, float ** out, int n);
 
     /** Creates a loudspeaker/headphone setup for full-HD displays.
 
         One source on the left at [0, 540], one source at right, at
         [1920, 540]. */
 
-    RESONANT_API void makeFullHDStereo();
+    void makeFullHDStereo();
 
     /// Sets the location of a given loudspeaker in screen coordinates
-    RESONANT_API void setSpeaker(unsigned i, Nimble::Vector2 location);
-    /// @copydoc setSpeaker(unsigned i, Nimble::Vector2 location)
-    RESONANT_API void setSpeaker(unsigned i, float x, float y);
+    /// @param i Speaker index, starting from 0
+    /// @param location Location in screen coordinates
+    void setSpeaker(unsigned i, Nimble::Vector2 location);
+    /// @param i Speaker index, starting from 0
+    /// @param x x coordinate of the speaker in screen coordinates
+    /// @param y y coordinate of the speaker in screen coordinates
+    void setSpeaker(unsigned i, float x, float y);
 
     /// Sets the radius for the distance for collecting the audio to a single loudspeaker.
     /// Only has an effect if using the radial #Mode.
-    /** When a given sound source gets closer than he maximum radius its volume is faded in
-        so that at radius/2 the volume is at 100% (aka unity gain). */
+    /// When a given sound source gets closer than he maximum radius its volume is faded in
+    /// so that at radius/2 the volume is at 100% (aka unity gain).
+    /// @param r Radial mode radius
     void setCaptureRadius(float r) { m_maxRadius = r; ++m_generation; }
 
     /// Add a SoundRectangle. The ownership is transferred to this object.
-    RESONANT_API void addSoundRectangle(SoundRectangle * r);
+    void addSoundRectangle(SoundRectangle * r);
 
-    RESONANT_API void setMode(Mode mode);
-    RESONANT_API Mode getMode() const;
+    /// Sets the panner mode
+    /// @param mode New panner mode
+    void setMode(Mode mode);
+    /// Query the current panner mode
+    /// @return Current panner mode
+    Mode getMode() const;
   private:
 
     friend class ModuleRectPanner;
@@ -129,7 +139,7 @@ namespace Resonant {
     class Source
     {
     public:
-      Source() : m_location(0, 0), m_updates(0), m_generation(-1), m_pipes(6) {}
+      Source() : m_location(0, 0), m_updates(0), m_generation(0), m_pipes(6) {}
 
       Nimble::Vector2 m_location;
       bool  m_updates;
@@ -154,14 +164,14 @@ namespace Resonant {
 
 
     Sources      m_sources;
-    LoudSpeakers m_speakers;
+    Valuable::ValueContainer<LoudSpeakers> m_speakers;
 
     /// generation is increased every time speaker setup is changed
     long m_generation;
 
     Valuable::ValueFloat m_maxRadius;
-    Rectangles m_rectangles;
-    Mode m_operatingMode;
+    Valuable::ValueContainer<Rectangles> m_rectangles;
+    Valuable::ValueInt m_operatingMode;
     /// @endcond
   };
 

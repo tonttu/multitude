@@ -15,7 +15,7 @@
 #ifndef POETIC_SIZE_HPP
 #define POETIC_SIZE_HPP
 
-#include <Poetic/Export.hpp>
+#include "Export.hpp"
 
 struct FT_SizeRec_;
 struct FT_FaceRec_;

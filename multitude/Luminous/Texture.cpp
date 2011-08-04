@@ -29,24 +29,39 @@
 #include <Radiant/Platform.hpp>
 #include <Radiant/Thread.hpp>
 
+#include <limits>
+#include <algorithm>
+
+namespace
+{
+  static RADIANT_TLS(int) t_frame(0);
+  static RADIANT_TLS(long) t_available(0);
+  static RADIANT_TLS(bool) t_enabled(true);
+}
+
 namespace Luminous
 {
-
   using namespace std;
   using namespace Radiant;
 
-  UploadLimiter::UploadLimiter() : m_frame(0), m_frameLimit(1.5e6*60*4) {}
+  // tests show that 1.5GB/s is a pretty good guess for a lower limit of
+  // upload rate with 500x500 RGBA images
+  UploadLimiter::UploadLimiter()
+    : m_frame(0)
+    , m_frameLimit(1.5*(1<<30)/60.0)
+    , m_inited(false)
+  {
+    eventAddIn("frame");
+  }
 
   long & UploadLimiter::available()
   {
-    static RADIANT_TLS(int) t_frame = 0;
-    static RADIANT_TLS(long) t_available = 0;
-
     UploadLimiter & i = instance();
     if(t_frame != i.m_frame) {
       t_frame = i.m_frame;
       t_available = i.m_frameLimit;
     }
+    if(!i.m_inited || !t_enabled) t_available = std::numeric_limits<long>::max();
     return t_available;
   }
 
@@ -65,14 +80,29 @@ namespace Luminous
     instance().m_frameLimit = limit;
   }
 
+  void UploadLimiter::setEnabledForCurrentThread(bool v)
+  {
+    t_enabled = v;
+  }
+
+  bool UploadLimiter::enabledForCurrentThread()
+  {
+    return t_enabled;
+  }
+
+
   void UploadLimiter::processMessage(const char * type, Radiant::BinaryData &)
   {
-    if(strcmp(type, "frame") == 0) ++m_frame;
+    if(strcmp(type, "frame") == 0) {
+      m_inited = true;
+      ++m_frame;
+    }
   }
 
   UploadLimiter & UploadLimiter::instance()
   {
-    static UploadLimiter s_limiter;
+    /// @todo this is not thread-safe! use the singleton pattern with RenderContext storing one shared_ptr each to UploadLimiter
+    static Luminous::UploadLimiter s_limiter;
     return s_limiter;
   }
 
@@ -139,12 +169,16 @@ namespace Luminous
       bool isPowerOfTwo = !((h - 1) & h);
 
       if(!isPowerOfTwo) {
-        cerr << "ERROR: non-power-of-two textures are not supported" << endl;
+        error("ERROR: non-power-of-two textures are not supported");
         return false;
       }
     }
 
     long used = consumesBytes();
+
+    long & available = UploadLimiter::available();
+
+    if(available < used) return false;
 
     m_haveMipmaps = buildMipmaps;
     m_width = 1;
@@ -166,7 +200,6 @@ namespace Luminous
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, minFilter);
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, magFilter);
 
-
     if(buildMipmaps) {
       gluBuild1DMipmaps(GL_TEXTURE_1D,
                         srcFormat.numChannels(), h,
@@ -177,6 +210,7 @@ namespace Luminous
                    srcFormat.layout(), srcFormat.type(), data);
 
     long uses = consumesBytes();
+    available -= uses;
 
     changeByteConsumption(used, uses);
 
@@ -216,7 +250,7 @@ namespace Luminous
 
   bool Texture2D::loadImage(const Luminous::Image & image, bool buildMipmaps, int internalFormat)
   {
-    return loadBytes(internalFormat ? internalFormat : image.pixelFormat().layout(),
+    return loadBytes(internalFormat ? internalFormat : image.pixelFormat().numChannels(),
                      image.width(), image.height(),
                      image.bytes(),
                      image.pixelFormat(), buildMipmaps);
@@ -227,7 +261,20 @@ namespace Luminous
     long & available = UploadLimiter::available();
     // Radiant::info("available: %.1f, need: %.1f", available/1024.0f, image.datasize()/1024.0f);
 
-    if(available < image.datasize()) return false;
+    if(available < image.datasize()) 
+    {
+      // Can't upload the entire texture: do a partial upload
+      unsigned int datasize = image.datasize();           // Total amount of data
+      unsigned int linesize = datasize / image.height();  // Data for 1 line
+      unsigned int lines = available / linesize;          // Number of lines we can upload
+
+      lines = std::min(lines, image.height() - m_loadedLines);
+
+      loadLines(m_loadedLines, lines, image.data(), PixelFormat());
+
+      available -= lines * linesize;                // Decrease available bandwidth
+      return true;
+    }
 
     long used = consumesBytes();
 
@@ -283,12 +330,28 @@ namespace Luminous
       bool isPowerOfTwo2 = !((h - 1) & h);
 
       if(!(isPowerOfTwo1 && isPowerOfTwo2)) {
-        cerr << "ERROR: non-power-of-two textures are not supported" << endl;
+        error("ERROR: non-power-of-two textures are not supported");
         return false;
       }
     }
 
     long used = consumesBytes();
+
+    long & available = UploadLimiter::available();
+
+    if(available < used)
+    {
+      // Can't upload the entire texture: do a partial upload
+      unsigned int linesize = w * srcFormat.bytesPerPixel();  // width (in bytes) of 1 line
+      unsigned int lines = available / linesize;              // Number of lines we can upload
+
+      lines -= std::min(lines, h - m_loadedLines);
+
+      loadLines(m_loadedLines, lines, data, srcFormat);
+
+      available -= lines * linesize;                // Decrease available bandwidth
+      return true;
+    }
 
     m_internalFormat = internalFormat;
     m_width = w;
@@ -381,6 +444,7 @@ namespace Luminous
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, whitef);
 
     long uses = consumesBytes();
+    available -= uses;
 
 
     if(data)
@@ -394,7 +458,7 @@ namespace Luminous
     else
       m_loadedLines = 0;
 
-    return true;
+    return (int(m_loadedLines) == h);
   }
 
   void Texture2D::loadSubBytes(int x, int y, int w, int h, const void * data)
@@ -498,7 +562,7 @@ namespace Luminous
       bool isPowerOfTwo2 = !((h - 1) & h);
 
       if(!(isPowerOfTwo1 && isPowerOfTwo2)) {
-        cerr << "ERROR: non-power-of-two textures are not supported" << endl;
+        error("ERROR: non-power-of-two textures are not supported");
         return 0;
       }
     }

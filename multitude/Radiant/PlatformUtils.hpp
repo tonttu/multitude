@@ -44,13 +44,18 @@ namespace Radiant
 
     /// Determine whether file or directory is readable.
     /// @todo shouldn't this be in FileUtils?
+    /// @param filename Filename to test for readability
+    /// @returns true if the given file is found and readable
     RADIANT_API bool fileReadable(const char * filename);
 
-    /// Open a dynamic library, return 0 if failed.
+    /// Open a dynamic library
+    /// @param path Full path to plugin
+    /// @returns Handle to plugin or NULL if failed
     RADIANT_API void * openPlugin(const char * path);
 
     /// Returns the memory usage of the process, in bytes
     /** This function is not implemented for all platforms. */
+    /// @returns Size of memory usage (in bytes)
     RADIANT_API uint64_t processMemoryUsage();
 
     /// Setup an environment variable

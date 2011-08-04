@@ -17,6 +17,8 @@
 #ifndef VIDEODISPLAY_VIDEO_IN_HPP
 #define VIDEODISPLAY_VIDEO_IN_HPP
 
+#include "Export.hpp"
+
 #include <Nimble/Vector2.hpp>
 
 #include <Radiant/Condition.hpp>
@@ -26,8 +28,6 @@
 #include <Radiant/RefPtr.hpp>
 #include <Radiant/Thread.hpp>
 #include <Radiant/TimeStamp.hpp>
-
-#include <VideoDisplay/Export.hpp>
 
 #include <sys/types.h>
 
@@ -42,7 +42,7 @@ namespace VideoDisplay {
   class AudioTransfer;
 
   /// Base class for video file inputs, for the VideoDisplay framework
-  class VideoIn : public Radiant::Thread
+  class VIDEODISPLAY_API VideoIn : public Radiant::Thread
   {
   public:
 
@@ -111,29 +111,29 @@ namespace VideoDisplay {
       double           m_fps;
     };
 
-    VIDEODISPLAY_API VideoIn();
-    VIDEODISPLAY_API virtual ~VideoIn();
+    VideoIn();
+    virtual ~VideoIn();
 
 
-    VIDEODISPLAY_API Frame * getFrame(int i, bool updateCounter);
+    Frame * getFrame(int i, bool updateCounter);
 
-    VIDEODISPLAY_API virtual bool init(const char * filename,
+    virtual bool init(const char * filename,
                        Radiant::TimeStamp pos,
                        int flags);
-    VIDEODISPLAY_API virtual bool play(Radiant::TimeStamp pos = -1);
-    VIDEODISPLAY_API virtual void stop();
-    VIDEODISPLAY_API virtual bool seek(Radiant::TimeStamp pos);
-    VIDEODISPLAY_API virtual void freeUnusedMemory();
+    virtual bool play(Radiant::TimeStamp pos = -1);
+    virtual void stop();
+    virtual bool seek(Radiant::TimeStamp pos);
+    virtual void freeUnusedMemory();
     // VIDEODISPLAY_API virtual void enableLooping(bool enable) = 0;
 
-    VIDEODISPLAY_API virtual void getAudioParameters(int * channels,
+    virtual void getAudioParameters(int * channels,
                     int * sample_rate,
                     Radiant::AudioSampleFormat * format) = 0;
 
-    VIDEODISPLAY_API virtual float fps() = 0;
+    virtual float fps() = 0;
 
     size_t latestFrame() const { return m_decodedFrames - 1; }
-    VIDEODISPLAY_API bool atEnd();
+    bool atEnd();
     bool isFrameAvailable(int frame) const
     { return(int) m_decodedFrames > frame && frame >= 0;}
 
@@ -148,8 +148,8 @@ namespace VideoDisplay {
 
     QString name() { return m_name; }
 
-    VIDEODISPLAY_API static void setDebug(int level);
-    VIDEODISPLAY_API static void toggleDebug();
+    static void setDebug(int level);
+    static void toggleDebug();
 
     const VideoInfo & vdebug() const { return m_info; }
 
@@ -161,36 +161,39 @@ namespace VideoDisplay {
 
     // todo: static void setDefaultLatency(float seconds) { m_defaultLatency = seconds; }
 
+    inline bool atEnd() const { return m_atEnd; }
+    inline Radiant::TimeStamp displayFrameTime() const { return m_displayFrameTime; }
+
   protected:
 
-    VIDEODISPLAY_API virtual void childLoop () ;
+    virtual void childLoop () ;
 
-    VIDEODISPLAY_API virtual bool open(const char * filename, Radiant::TimeStamp pos) = 0;
+    virtual bool open(const char * filename, Radiant::TimeStamp pos) = 0;
 
-    VIDEODISPLAY_API bool playing() { return m_playing; }
+    bool playing() { return m_playing; }
     // Get snapshot of the video in the given position
-    VIDEODISPLAY_API virtual void videoGetSnapshot(Radiant::TimeStamp pos) = 0;
+    virtual void videoGetSnapshot(Radiant::TimeStamp pos) = 0;
     // Start playing the video in the given position
-    VIDEODISPLAY_API virtual void videoPlay(Radiant::TimeStamp pos) = 0;
+    virtual void videoPlay(Radiant::TimeStamp pos) = 0;
     // Get the next next frame
-    VIDEODISPLAY_API virtual void videoGetNextFrame() = 0;
+    virtual void videoGetNextFrame() = 0;
     // Stop the video
-    VIDEODISPLAY_API virtual void videoStop() = 0;
+    virtual void videoStop() = 0;
 
     /** An implmentation should use the methods below: */
-    VIDEODISPLAY_API void allocateFrames(size_t frameCount, size_t width, size_t height,
+    void allocateFrames(size_t frameCount, size_t width, size_t height,
                                          Radiant::ImageFormat fmt);
 
-    VIDEODISPLAY_API void deallocateFrames();
+    void deallocateFrames();
 
-    VIDEODISPLAY_API Frame * putFrame(const Radiant::VideoImage *,
+    Frame * putFrame(const Radiant::VideoImage *,
              FrameType type,
              Radiant::TimeStamp show,
              Radiant::TimeStamp absolute,
              bool immediate);
 
-    VIDEODISPLAY_API void ignorePreviousFrames();
-    VIDEODISPLAY_API void freeFreeableMemory();
+    void ignorePreviousFrames();
+    void freeFreeableMemory();
 
     /// @cond
     class Req

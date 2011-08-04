@@ -62,7 +62,7 @@ namespace VideoDisplay {
     debugVideoDisplay("VideoIn::Frame::~Frame # %p Instance count at %d", this, tmp);
     m_image.freeMemory();
     if(m_audio)
-      free(m_audio);
+      Radiant::mtfree(m_audio);
   }
 
   void VideoIn::Frame::copyAudio(const void * audio, int channels, int frames,
@@ -77,8 +77,8 @@ namespace VideoDisplay {
          If there is too much space we can free some memory. */
       debugVideoDisplay("VideoIn::Frame::copyAudio # %d -> %d", m_allocatedAudio, n);
 
-      free(m_audio);
-      m_audio = (float *) malloc(n * sizeof(float));
+      Radiant::mtfree(m_audio);
+      m_audio = (float *) Radiant::mtmalloc(n * sizeof(float));
       m_allocatedAudio = n;
     }
 

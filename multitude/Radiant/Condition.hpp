@@ -16,10 +16,12 @@
 #ifndef RADIANT_CONDITION_HPP
 #define RADIANT_CONDITION_HPP
 
-#include <Patterns/NotCopyable.hpp>
+#include "Export.hpp"
+#include "Mutex.hpp"
 
-#include <Radiant/Export.hpp>
-#include <Radiant/Mutex.hpp>
+#include <limits>
+
+#include <Patterns/NotCopyable.hpp>
 
 namespace Radiant {
 
@@ -56,10 +58,13 @@ namespace Radiant {
 		Condition();
 		~Condition();
 
-    /** Waits on the wait condition. The mutex must be locked by the calling thread and is released. If the mutex is not locked the function will return immediately. */
-		int wait(Mutex &mutex);
-    /** Waits on the wait condition for at most the given time. The mutex must be locked by the calling thread and is released. If the mutex is not locked the function will return immediately. */
-		int wait(Mutex &mutex, int millsecs);
+    /// Waits on the wait condition for at most the given time. The mutex must
+    /// be locked by the calling thread and is released. If the mutex is not locked
+    /// the function will return immediately.
+    /// @param mutex locked mutex
+    /// @param millisecs timeout in milliseconds
+    /// @return false if the wait timed out
+    bool wait(Mutex &mutex, unsigned long millisecs = std::numeric_limits<unsigned long>::max());
 
     /// Wakes all threads waiting on the condition
 		int wakeAll();

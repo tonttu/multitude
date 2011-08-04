@@ -39,11 +39,10 @@ namespace Screenplay {
 
   using namespace Radiant;
 
-  static Radiant::Mutex __openmutex;
-  static Radiant::Mutex __countermutex;
-  int    __instancecount = 0;
+  // FFMPEG is not thread-safe
+  static Radiant::Mutex s_ffmpegMutex(true);
 
-  int VideoInputFFMPEG::m_debug = 1;
+  int VideoInputFFMPEG::m_debug = 0;
 
   VideoInputFFMPEG::VideoInputFFMPEG()
     : m_acodec(0),
@@ -63,9 +62,16 @@ namespace Screenplay {
     m_flags(0),
     m_lastPts(0)
   {
-    static bool once = false;
+    static volatile bool ffmpegInitialized = false;
 
-    if(!once) {
+    // while used instead of if to break out early
+    while(!ffmpegInitialized) {
+
+      Radiant::Guard g(s_ffmpegMutex);
+
+      if(ffmpegInitialized)
+        break;
+
       debugScreenplay("Initializing AVCODEC 1");
       avcodec_init();
       debugScreenplay("Initializing AVCODEC 2");
@@ -73,36 +79,23 @@ namespace Screenplay {
       debugScreenplay("Initializing AVCODEC 3");
       av_register_all();
       debugScreenplay("Initializing AVCODEC 4");
-      once = true;
+      ffmpegInitialized = true;
     }
 
     m_lastSeek = 0;
-
-
-    int tmp = 0;
-    {
-      Radiant::Guard g(__countermutex);
-      __instancecount++;
-      tmp = __instancecount;
-    }
-    debugScreenplay("VideoInputFFMPEG::VideoInputFFMPEG # Instance count at %d", tmp);
   }
 
   VideoInputFFMPEG::~VideoInputFFMPEG()
   {
     close();
-
-    int tmp = 0;
-    {
-      Radiant::Guard g(__countermutex);
-      __instancecount--;
-      tmp = __instancecount;
-    }
-    debugScreenplay("VideoInputFFMPEG::~VideoInputFFMPEG # Instance count at %d", tmp);
   }
 
   const Radiant::VideoImage * VideoInputFFMPEG::captureImage()
   {
+    /// @todo this effectively prevents multi-threaded video decoding. Someone
+    /// can figure out a fix if this becomes a problem.
+    Radiant::Guard g(s_ffmpegMutex);
+
     assert(this != 0);
 
     static const char * fname = "VideoInputFFMPEG::captureImage";
@@ -132,6 +125,9 @@ namespace Screenplay {
         else {
           debugScreenplay("VideoInputFFMPEG::captureImage # Looping %s", m_fileName.toUtf8().data());
           m_offsetTS = m_lastTS;
+          // Reset counters
+          m_capturedAudio = 0;
+          m_capturedVideo = 0;
           av_seek_frame(m_ic, -1, (int64_t) 0, 0);
 
           // av_free_packet(m_pkt);
@@ -256,23 +252,37 @@ namespace Screenplay {
         } else {
 
           // decode into a temporay audio buffer, later will be resampled
-          std::vector<int16_t> audioInBuffer;
-          int srcSz, dstSz;  // in samples per channel
+          int aBytesIn = AVCODEC_MAX_AUDIO_FRAME_SIZE * m_audioChannels + FF_INPUT_BUFFER_PADDING_SIZE;   // in bytes
+          int aFramesIn = aBytesIn / sizeof(AudioBuffer::value_type);
 
-          int aframesIn = AVCODEC_MAX_AUDIO_FRAME_SIZE * m_audioChannels;   // in bytes
-          audioInBuffer.resize(aframesIn * 0.5f);
+          m_resampleBuffer.resize(aFramesIn);
+          int usedBytes = avcodec_decode_audio3(m_acontext,
+                                & m_resampleBuffer[0],
+                                & aBytesIn, m_pkt);
 
-          avcodec_decode_audio3(m_acontext,
-                                & audioInBuffer[0],
-                                & aframesIn, m_pkt);
+          if (m_acodec->id == CODEC_ID_VORBIS)
+          {
+            // From Vorbis documentation:
+            // Data is not returned from the first frame; it must be used to
+            // ’prime’ the decode engine. The encoder accounts for this priming
+            // when calculating PCM offsets; after the first frame, the proper
+            // PCM output offset is ’0’ (as no data has been returned yet).
 
-          srcSz = aframesIn * 0.5f / m_audioChannels;
-          dstSz = Nimble::Math::Ceil((float)srcSz * 44100 / m_audioSampleRate);
+            if (usedBytes > 0 && aBytesIn == 0)
+              continue;
+          }
 
-          aframesOut = ((int) m_audioBuffer.size() - index) * 2; // in bytes
-          if(aframesOut < dstSz * 2 * m_audioChannels) {
-            m_audioBuffer.resize(m_audioBuffer.size() + dstSz * m_audioChannels);
-            aframesOut = ((int) m_audioBuffer.size() - index) * 2;
+          // Resample
+          int srcChannelBytes = aBytesIn / m_audioChannels;
+          int srcChannelSamples = srcChannelBytes / sizeof(AudioBuffer::value_type);
+          int destChannelBytes = Nimble::Math::Ceil((float)srcChannelBytes * 44100 / m_audioSampleRate);
+          int destSamples = (destChannelBytes * m_audioChannels) / sizeof(AudioBuffer::value_type);
+
+          // Check if we have enough space left in the audio buffer
+          int freeSamples = ((int) m_audioBuffer.size() - index);                                       // Free space left in audiobuffer
+          if(freeSamples < destSamples) {
+            m_audioBuffer.resize(index + destSamples);
+
             if(m_audioBuffer.size() > 1000000) {
               info("VideoInputFFMPEG::captureImage # %p Audio buffer is very large now: %d (%ld)",
                    this, (int) m_audioBuffer.size(), m_capturedVideo);
@@ -281,13 +291,13 @@ namespace Screenplay {
 
           int resampled = audio_resample(m_resample_ctx,
                                          & m_audioBuffer[index], // out buf
-                                         & audioInBuffer[0], // in buf
-                                         srcSz);  // nb samples per channel
+                                         & m_resampleBuffer[0],  // in buf
+                                         srcChannelSamples);     // nb samples per channel
 
           if(!(resampled > 0))
             error("%s: Failed to resample", fname);
 
-          debugScreenplay("resampled: %d; inrate: %d; outrate: %d; srcSz: %d; dstSz: %d", resampled, m_audioSampleRate, 44100, srcSz, dstSz);
+          debugScreenplay("resampled: %d; inrate: %d; outrate: %d", resampled, m_audioSampleRate, 44100);
 
           aframesOut = resampled;
         }
@@ -368,8 +378,8 @@ namespace Screenplay {
         perFrame = 20000;
       }
 
-      debugScreenplay("VideoInputFFMPEG::captureImage # %lf %d %d %d aufr in total %d vidfr",
-            secs, perFrame, (int) m_audioFrames, (int) m_capturedAudio, (int) m_capturedVideo);
+      debugScreenplay("VideoInputFFMPEG::captureImage # firstTS %lf lastTS %lf; %lf %d %d %d aufr in total %d vidfr",
+            m_firstTS.secondsD(), m_lastTS.secondsD(), secs, perFrame, (int) m_audioFrames, (int) m_capturedAudio, (int) m_capturedVideo);
 
       m_audioTS = m_lastTS;
 
@@ -410,6 +420,11 @@ namespace Screenplay {
       if(m_debug && m_capturedVideo < 10)
         debugScreenplay("%s # PIX_FMT_RGB24", fname);
     }
+    else if(avcfmt == PIX_FMT_BGR24) {
+      m_image.setFormatBGR();
+      if(m_debug && m_capturedVideo < 10)
+        debugScreenplay("%s # PIX_FMT_BGR24", fname);
+    }
     else if(avcfmt == PIX_FMT_RGBA) {
       m_image.setFormatRGBA();
       if(m_debug && m_capturedVideo < 10)
@@ -449,7 +464,9 @@ namespace Screenplay {
        printf("ls[%u] = %d  ", p, (int) m_image.m_planes[p].m_linesize);
        }*/
 
-    av_free_packet(m_pkt);
+    // can't free here, still need m_data later. m_pkt is freed on each
+    // new frame and when video closes
+    //av_free_packet(m_pkt);
 
     return & m_image;
   }
@@ -459,7 +476,7 @@ namespace Screenplay {
     /* trace2("VideoInputFFMPEG::captureAudio # %d %d",
      * frameCount, m_audioFrames); */
 
-    if(!m_audioBuffer.size()) {
+    if(m_audioBuffer.empty()) {
       * frameCount = 0;
       return 0;
     }
@@ -557,9 +574,10 @@ namespace Screenplay {
   bool VideoInputFFMPEG::open(const char * filename,
                               int flags)
   {
-
     if(m_vcodec)
       close();
+
+    Radiant::Guard g(s_ffmpegMutex);
 
     if(!m_pkt) {
       m_pkt = new AVPacket();
@@ -592,8 +610,6 @@ namespace Screenplay {
 
     bzero( & params, sizeof(params));
 
-    Guard g( __openmutex);
-
     int err = av_open_input_file( & m_ic, filename, iformat, 0, ap);
 
     if(err < 0) {
@@ -612,7 +628,7 @@ namespace Screenplay {
 
       AVCodecContext *enc = m_ic->streams[i]->codec;
 
-      if(enc->codec_type == CODEC_TYPE_VIDEO) {
+      if(enc->codec_type == AVMEDIA_TYPE_VIDEO) {
 
         m_vindex = i;
         m_vcodec = avcodec_find_decoder(enc->codec_id);
@@ -635,7 +651,7 @@ namespace Screenplay {
         else if(flags & WITH_VIDEO)
           m_flags = m_flags | WITH_VIDEO;
       }
-      else if(enc->codec_type == CODEC_TYPE_AUDIO) {
+      else if(enc->codec_type == AVMEDIA_TYPE_AUDIO) {
 
         m_aindex = i;
         m_acodec = avcodec_find_decoder(enc->codec_id);
@@ -723,7 +739,7 @@ namespace Screenplay {
     //    if(!m_ic)
     //      return false;
 
-    Guard g( __openmutex);
+    Guard g( s_ffmpegMutex);
 
     if(m_frame)
       av_free(m_frame);
@@ -748,8 +764,10 @@ namespace Screenplay {
       m_resample_ctx = 0;
     }
 
-    std::vector<int16_t> tmp;
+    // Cleanup audio buffers
+    AudioBuffer tmp, tmp2;
     m_audioBuffer.swap(tmp);
+    m_resampleBuffer.swap(tmp2);
 
     m_audioFrames = 0;
 
@@ -770,6 +788,8 @@ namespace Screenplay {
 
   bool VideoInputFFMPEG::seekPosition(double timeSeconds)
   {
+    Radiant::Guard g(s_ffmpegMutex);
+
     debugScreenplay("VideoInputFFMPEG::seekPosition # %lf", timeSeconds);
 
     if(m_vcontext)
@@ -804,7 +824,7 @@ namespace Screenplay {
     return true;
   }
 
-  double VideoInputFFMPEG::durationSeconds()
+  double VideoInputFFMPEG::durationSeconds() const
   {
     if(m_flags & Radiant::DO_LOOP)
       return 1.0e+9f;

@@ -16,6 +16,7 @@
 #include "StringUtils.hpp"
 
 #ifdef WIN32
+#define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 // #include <WinPort.h>
@@ -61,7 +62,7 @@ namespace Radiant
     }
 
 #ifdef WIN32
-    string getLastErrorMessage()
+    std::string getLastErrorMessage()
     {
       const int   errStrSize = 1024;
       char  szErrStr[errStrSize] = "";

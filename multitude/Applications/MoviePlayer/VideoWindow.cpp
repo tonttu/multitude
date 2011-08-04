@@ -51,18 +51,20 @@ VideoWindow::VideoWindow()
 
   if(m_fullScreen)
     toggleFullScreen();
+
+  m_dsp = Resonant::DSPNetwork::instance();
 }
 
 VideoWindow::~VideoWindow()
 {
   m_movies.clear();
-  m_dsp.stop();
+  m_dsp->stop();
 }
 
 bool VideoWindow::open(const char * filename, const char * audiodev)
 {
-  if(!m_dsp.isRunning()) {
-    bool ok = m_dsp.start(audiodev);
+  if(!m_dsp->isRunning()) {
+    bool ok = m_dsp->start(audiodev ? audiodev : "");
     if(!ok)
       return false;
   }
@@ -74,7 +76,7 @@ bool VideoWindow::open(const char * filename, const char * audiodev)
 
   item->m_show.loadSubTitles(srtfile.toUtf8().data());
 
-  if(!item->m_show.init(filename, & m_dsp, 0, 0,
+  if(!item->m_show.init(filename, 0, 0,
                         Radiant::WITH_VIDEO | Radiant::WITH_AUDIO
                         /*|
                         Radiant::MONOPHONIZE_AUDIO*/))
@@ -139,8 +141,8 @@ void VideoWindow::randomOperation()
 
     std::shared_ptr<Item> item(new Item());
 
-    if(!item->m_show.init(filename.toUtf8().data(), & m_dsp, 0, 0)) {
-      Radiant::error("Could not recreate video player for \"%s\"", filename.toUtf8().data());
+    if(!item->m_show.init(filename.toUtf8().data(), 0, 0)) {
+      Radiant::error("Could not recreate video player for \"%s\"", filename.c_str());
     }
     else
       Radiant::info("Recreated video player for \"%s\"", filename.toUtf8().data());
@@ -212,7 +214,7 @@ void VideoWindow::initializeGL()
   QString filename = Radiant::FileUtils::findFile(ttf, path);
 
   if(filename.size()) {
-    m_subCPUFont = Poetic::FontManager::instance().getFont(ttf);
+    m_subCPUFont = Poetic::FontManager::instance()->getFont(ttf);
     /*
     new Poetic::CPUBitmapFont();
     if(m_subCPUFont->load(filename.c_str())) {
@@ -307,7 +309,7 @@ void VideoWindow::paintGL()
     index++;
 
     show.render(& m_glResources,
-                center - span, center + span, Radiant::Color(), 0, gpufont, h);
+                center - span, center + span, Radiant::Color(1.f, 1.f, 1.f, 1.f), 0, gpufont, h);
 
     if(!m_showProgress)
       continue;

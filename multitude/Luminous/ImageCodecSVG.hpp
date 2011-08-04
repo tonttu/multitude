@@ -18,13 +18,14 @@
 
 /// @cond
 
-#include <Luminous/ImageCodec.hpp>
+#include "Export.hpp"
+#include "ImageCodec.hpp"
 
 class QSvgRenderer;
 
 namespace Luminous {
 
-class ImageCodecSVG : public Luminous::ImageCodec
+class LUMINOUS_API ImageCodecSVG : public Luminous::ImageCodec
 {
 public:
   ImageCodecSVG();

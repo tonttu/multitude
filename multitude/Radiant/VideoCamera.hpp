@@ -165,6 +165,7 @@ namespace Radiant {
   @param height height of the camera image
   @param fmt image format
   @param framerate framerate of the camera
+  @returns true if the device was successfully opened
   */
     virtual bool open(uint64_t euid, int width, int height, ImageFormat fmt = IMAGE_UNKNOWN, FrameRate framerate = FPS_IGNORE) = 0;
     /** Opens a connection to the camera and sets up format7 image capture.
@@ -172,6 +173,7 @@ namespace Radiant {
       @param roi region of interest
       @param fps desired frames per second
       @param mode desired format7 mode
+      @returns true if the device was successfully opened
       */
     virtual bool openFormat7(uint64_t cameraeuid, Nimble::Recti roi, float fps, int mode) = 0;
 
@@ -219,8 +221,6 @@ namespace Radiant {
     virtual void setFocus(float value);
     /** Sets the timeout for waiting for a new frame from the camera */
     virtual bool setCaptureTimeout(int ms) = 0;
-    /** @deprecated not implemented */
-    virtual void setWhiteBalance(float u_to_blue, float v_to_red) = 0;
 
     /// Enables external triggering of the camera
     virtual bool enableTrigger(TriggerSource src) = 0;
@@ -236,9 +236,7 @@ namespace Radiant {
     /// Returns information about this particular camera object
     virtual CameraInfo cameraInfo() = 0;
 
-    /** Returns the number of frames that would be immediately readable.
-      Currently, this function is only implemented for the libdc1394 driver.
-     */
+    /// Returns the number of frames that would be immediately readable.
     virtual int framesBehind() const = 0;
 
     /// Returns an instance of the camera driver factory

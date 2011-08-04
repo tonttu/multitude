@@ -16,9 +16,9 @@
 #ifndef VALUABLE_HASVALUES_HPP
 #define VALUABLE_HASVALUES_HPP
 
-#include <Valuable/Export.hpp>
-#include <Valuable/ValueInt.hpp>
-#include <Valuable/ValueObject.hpp>
+#include "Export.hpp"
+#include "ValueInt.hpp"
+#include "ValueObject.hpp"
 
 #include <Patterns/NotCopyable.hpp>
 
@@ -42,7 +42,7 @@ namespace Valuable
       This base class has a list of #Valuable::ValueObject child objects (aka
       member variables) that are named with unique string.
 
-      Deleting the child objects is the responsibility of the child
+      Deleting the child objects is the responsibility of the inherited
       classes, HasValues simply maintains a list of children.
   */
   /// @todo Examples
@@ -53,18 +53,19 @@ namespace Valuable
     typedef int64_t Uuid;
 
     HasValues();
-    /** Constructs a new HasValues and adds it under the given parent
-      @param parent parent
+    /** Constructs a new HasValues and adds it under the given host
+      @param host host
       @param name name of the object
       @param transit should the object changes be transmitted
     */
-    HasValues(HasValues * parent, const QString & name, bool transit = false);
+    HasValues(HasValues * host, const QString & name = "", bool transit = false);
     virtual ~HasValues();
 
     /// Adds new ValueObject to the list of values
     bool addValue(const QString & name, ValueObject * const value);
     /// Gets a ValueObject with the given name
-    /** If no object can be found, then this method return zero. */
+    /// @param name Value object name to search for
+    /// @return Null if no object can be found
     ValueObject * getValue(const QString & name);
     /// Removes a ValueObject from the list of value.
     void removeValue(ValueObject * const value);
@@ -73,6 +74,14 @@ namespace Valuable
     // float getValueFloat(const QString & name, bool * ok = 0, float default = 0.f)
     // ...
 
+    /// Uses a query string to find a ValueObject, and sets a new value to that if found.
+    /// @param query The path to the ValueObject. This is a '/'-separated list
+    ///        of ValueObject names, forming a path inside a ValueObject tree.
+    ///        ".." can be used to refer to host element. For example
+    ///        setValue("../foo/bar", 4.0f) sets 4.0f to ValueObject named "bar"
+    ///        under ValueObject "foo" that is sibling of this object.
+    /// @param value The new value
+    /// @return True if object was found and the value was set successfully.
     template<class T>
     bool setValue(const QString & name, const T & v)
     {
@@ -85,18 +94,18 @@ namespace Valuable
         if(next == QString("..")) {
           if(!m_parent) {
             Radiant::error(
-                "HasValues::setValue # node '%s' has no parent", m_name.toUtf8().data());
+                "HasValues::setValue # node '%s' has no host", m_name.toUtf8().data());
             return false;
           }
 
-          return m_parent->setValue(rest, v);
+          return m_host->setValue(rest, v);
         }
       } else {
         next = name;
       }
 
-      container::iterator it = m_children.find(next);
-      if(it == m_children.end()) {
+      container::iterator it = m_values.find(next);
+      if(it == m_values.end()) {
         Radiant::error(
             "HasValues::setValue # property '%s' not found", next.toUtf8().data());
         return false;
@@ -119,7 +128,7 @@ namespace Valuable
     /// Saves this object (and its children) to an XML file
     bool saveToFileXML(const char * filename);
     /// Saves this object (and its children) to binary data buffer
-    bool saveToMemoryXML(std::vector<char> & buffer);
+    bool saveToMemoryXML(std::string & buffer);
 
     /// Reads this object (and its children) from an XML file
     bool loadFromFileXML(const char * filename);
@@ -128,11 +137,14 @@ namespace Valuable
     virtual const char * type() const { return VO_TYPE_HASVALUES; }
 
     /// Serializes this object (and its children) to a DOM node
-    virtual ArchiveElement & serialize(Archive &doc) const;
+    virtual ArchiveElement serialize(Archive &doc) const;
     /// De-serializes this object (and its children) from a DOM node
-    virtual bool deserialize(ArchiveElement & element);
+    virtual bool deserialize(const ArchiveElement & element);
 
-    /** Handles a DOM element that lacks automatic handlers. */
+    /// Handles a DOM element that lacks automatic handlers.
+    /// This function is only for keeping backwards compatibility.
+    /// @param element The element to be deserialized
+    /// @return true on success
     virtual bool readElement(DOMElement element);
 
     /// Prints the contents of this ValueObject to the terminal
@@ -144,9 +156,9 @@ namespace Valuable
     typedef container::iterator iterator;
 
     /// Returns an iterator to the beginning of the values
-    iterator valuesBegin() { return m_children.begin(); }
+    iterator valuesBegin() { return m_values.begin(); }
     /// Returns an iterator to the end of the values
-    iterator valuesEnd() { return m_children.end(); }
+    iterator valuesEnd() { return m_values.end(); }
 
     const container & valueChildren() { return m_children; }
 
@@ -215,15 +227,25 @@ namespace Valuable
     /// @endcond
 
     /// Generates a unique identifier
+    /// @return New unique id
     static Uuid generateId();
     /// Returns the unique id
     Uuid id() const;
 
     /// Registers a new event this class can send with eventSend
-    void eventAdd(const QString & id);
+    void eventAddOut(const QString & id);
 
-    /// Returns set of all registered events
-    const QSet<QString> & eventNames() const { return m_eventNames; }
+    /// Registers a new event that this class handles in processMessage
+    void eventAddIn(const QString & id);
+
+    /// Returns true if this object accepts event 'id' in processMessage
+    bool acceptsEvent(const QString & id) const;
+
+    /// Returns set of all registered OUT events
+    const std::set<QString> & eventOutNames() const { return m_eventSendNames; }
+
+    /// Returns set of all registered IN events
+    const std::set<QString> & eventInNames() const { return m_eventListenNames; }
 
   protected:
 
@@ -236,13 +258,16 @@ namespace Valuable
 
     void defineShortcut(const QString & name);
 
+    /// The sender of the event, can be read in processMessage()
+    HasValues * m_sender;
+
   private:
     friend class ValueObject; // So that ValueObject can call the function below.
 
-    void childRenamed(const QString & was, const QString & now);
+    void valueRenamed(const QString & was, const QString & now);
     void addNews();
 
-    container m_children;
+    container m_values;
 
     class ValuePass {
     public:
@@ -273,7 +298,8 @@ namespace Valuable
     // For invalidating the too new ValuePass objects
     int m_frame;
 
-    QSet<QString> m_eventNames;
+    QSet<QString> m_eventSendNames;
+    QSet<QString> m_eventListenNames;
   };
 
 }

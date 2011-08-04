@@ -16,6 +16,7 @@
 #ifndef RESONANT_MODULERECTPANNER_HPP
 #define RESONANT_MODULERECTPANNER_HPP
 
+#include "Export.hpp"
 #include "ModulePanner.hpp"
 #include "SoundRectangle.hpp"
 
@@ -25,11 +26,11 @@ namespace Resonant
     Rectangle panning logic has been moved to Resonant::ModulePanner, so
     this class only exists for backwards compatibility
     */
-  class ModuleRectPanner : public Resonant::ModulePanner
+  class RESONANT_API ModuleRectPanner : public Resonant::ModulePanner
   {
   public:
     /// Constructs a new module
-    RESONANT_API ModuleRectPanner(Resonant::Application * app = 0);
+    ModuleRectPanner(Resonant::Application * app = 0);
   };
 
 }

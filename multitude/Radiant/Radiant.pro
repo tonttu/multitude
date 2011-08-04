@@ -21,14 +21,16 @@ HEADERS += DateTime.hpp
 HEADERS += Directory.hpp
 HEADERS += Export.hpp
 HEADERS += FileUtils.hpp
-HEADERS += FixedStr.hpp
-HEADERS += FixedStrImpl.hpp
 HEADERS += Functional.hpp
 HEADERS += Grid.hpp
 HEADERS += ImageConversion.hpp
 HEADERS += IODefs.hpp
+HEADERS += LockFile.hpp
 HEADERS += Log.hpp
 HEADERS += MemCheck.hpp
+HEADERS += CallStack.hpp
+HEADERS += Memory.hpp
+HEADERS += Allocators.hpp
 HEADERS += Mutex.hpp
 HEADERS += Platform.hpp
 HEADERS += PlatformUtils.hpp
@@ -50,7 +52,6 @@ HEADERS += StringUtils.hpp
 HEADERS += SocketUtilPosix.hpp
 HEADERS += TCPServerSocket.hpp
 HEADERS += TCPSocket.hpp
-HEADERS += ThreadData.hpp
 HEADERS += Thread.hpp
 HEADERS += TimeStamp.hpp
 HEADERS += Trace.hpp
@@ -62,6 +63,7 @@ HEADERS += WatchDog.hpp
 HEADERS += ClonablePtr.hpp
 HEADERS += VideoCamera.hpp
 HEADERS += SocketWrapper.hpp
+HEADERS += Singleton.hpp
 
 SOURCES += CameraDriver.cpp
 SOURCES += SocketUtilPosix.cpp
@@ -71,14 +73,19 @@ SOURCES += BinaryData.cpp
 SOURCES += VideoCamera.cpp
 SOURCES += Color.cpp
 SOURCES += ColorUtils.cpp
+SOURCES += ConditionQt.cpp
+SOURCES += MutexQt.cpp
+SOURCES += ThreadQt.cpp
 SOURCES += ConfigReader.cpp
 SOURCES += DateTime.cpp
 SOURCES += DirectoryCommon.cpp
+SOURCES += DirectoryQt.cpp
 SOURCES += FileUtils.cpp
-SOURCES += FixedStr.cpp
 SOURCES += ImageConversion.cpp
 SOURCES += Log.cpp
 SOURCES += MemCheck.cpp
+!win32:SOURCES += CallStackLinux.cpp
+win32:SOURCES += CallStackW32.cpp
 SOURCES += ResourceLocator.cpp
 SOURCES += RingBuffer.cpp
 SOURCES += Size2D.cpp
@@ -93,6 +100,11 @@ SOURCES += Trace.cpp
 SOURCES += VideoImage.cpp
 SOURCES += VideoInput.cpp
 SOURCES += WatchDog.cpp
+SOURCES += Singleton.cpp
+SOURCES += TCPServerSocketPosix.cpp
+SOURCES += TCPSocketPosix.cpp
+SOURCES += UDPSocketPosix.cpp
+
 LIBS += $$LIB_NIMBLE \
     $$LIB_PATTERNS
 linux-* {
@@ -108,15 +120,9 @@ macx {
 }
 unix {
     HEADERS += VideoCamera1394.hpp
-    SOURCES += DirectoryPosix.cpp
     SOURCES += SerialPortPosix.cpp
-    SOURCES += TCPServerSocketPosix.cpp
-    SOURCES += TCPSocketPosix.cpp
-    SOURCES += UDPSocketPosix.cpp
-    SOURCES += VideoCamera1394.cpp
-    SOURCES += ConditionPt.cpp
-    SOURCES += MutexPt.cpp
-    SOURCES += ThreadPt.cpp
+   SOURCES += VideoCamera1394.cpp
+    SOURCES += LockFilePosix.cpp
     LIBS += -lpthread \
         $$LIB_RT \
         -ldl
@@ -137,13 +143,7 @@ win32 {
     }
     SOURCES += PlatformUtilsWin32.cpp
     SOURCES += SerialPortWin32.cpp
-    SOURCES += DirectoryQt.cpp
-    SOURCES += TCPServerSocketPosix.cpp
-    SOURCES += TCPSocketPosix.cpp
-    SOURCES += UDPSocketPosix.cpp
-    SOURCES += ConditionQt.cpp
-    SOURCES += MutexQt.cpp
-    SOURCES += ThreadQt.cpp
+    SOURCES += LockFileWin32.cpp
     LIBS += Ws2_32.lib \
         ShLwApi.lib \
         shell32.lib \

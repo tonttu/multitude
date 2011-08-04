@@ -16,10 +16,10 @@
 #ifndef NIMBLE_PATH_HPP
 #define NIMBLE_PATH_HPP
 
-#include <Nimble/Export.hpp>
+#include "Export.hpp"
 
-#include <Nimble/Matrix3.hpp>
-#include <Nimble/Vector2.hpp>
+#include "Matrix3.hpp"
+#include "Vector2.hpp"
 
 #include <vector>
 

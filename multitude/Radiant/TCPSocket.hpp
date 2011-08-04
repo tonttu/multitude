@@ -35,19 +35,23 @@ namespace Radiant {
   public:
     TCPSocket();
     /// Construct a socket based on a file descriptor
-    /** This method is potentially non-portable as not all platforms
-        use file descriptors to handle sockets. */
+    /// This method is potentially non-portable as not all platforms use file
+    /// descriptors to handle sockets.
+    /// @param fd socket file descriptor
     TCPSocket(int fd);
     ~TCPSocket();
 
-    /** Turn the Nagle algorithm on or off. This controls the queuing of messages to fill packets.
-      @param noDelay if true, the queing is not used and packets are sent immediately
-    */
+    /// Turn the Nagle algorithm on or off. This controls the queuing of
+    /// messages to fill packets.
+    /// @param noDelay if true, the queing is not used and packets are sent immediately
+    /// @return true on success
     bool setNoDelay(bool noDelay);
 
     /// Opens a TCP socket to desired host:port
-    /** @return On successful execution, returns zero, otherwise an
-        error code (as in errno.h). */
+    /// @param host hostname
+    /// @param port port
+    /// @return On successful execution, returns zero, otherwise an
+    /// error code (as in errno.h).
     int open(const char * host, int port);
     /// Closes the socket
     bool close();
@@ -61,7 +65,7 @@ namespace Radiant {
     int port() const;
 
     /// Read bytes from the socket
-    /** @param buffer pointer to a buffer to store the read data to
+    /** @param[out] buffer pointer to a buffer to store the read data to
         @param bytes how many bytes the buffer has room for
         @param waitfordata Conditionally wait for all the data to arrive.
         @return the number of bytes actually read
@@ -70,6 +74,11 @@ namespace Radiant {
     /// Write bytes to the socket
     int write(const void * buffer, int bytes);
 
+    /// Read some bytes from the socket
+    /// @param[out] buffer to write to
+    /// @param bytes bytes to read
+    /// @param waitfordata conditionally wait for some data to arrive
+    /// @return number of bytes read
     int readSome(void * buffer, int bytes, bool waitfordata = true);
 
     /// Returns true if the socket has been closed
@@ -78,12 +87,13 @@ namespace Radiant {
     /// Return 'true' if readable data is pending.
     bool isPendingInput(unsigned int waitMicroSeconds = 0);
 
-    //void debug();
+/// @cond
 
-    /** Moves the ownership of the socket to another thread. Sockets can not be
-    created and used in different threads unless the ownership is moved with
-    this function. */
+    /// Currently not used.
+    /// @param t destination thread
     void moveToThread(Thread * t);
+
+/// @endcond
 
   private:
     friend class TCPServerSocket;

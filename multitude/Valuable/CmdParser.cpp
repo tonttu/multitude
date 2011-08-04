@@ -27,6 +27,18 @@ namespace Valuable
   QStringList CmdParser::parse(int argc, char * argv[],
                                Valuable::HasValues & opts)
   {
+    CmdParser parser;
+    return parser.parseAndStore(argc, argv, opts);
+  }
+
+  bool CmdParser::isParsed(std::string name)
+  {
+    return m_parsedArgs.find(name) != m_parsedArgs.end();
+  }
+
+  QStringList CmdParser::parseAndStore(int argc, char * argv[],
+                                       Valuable::HasValues & opts)
+  {
     QStringList list;
 
     std::shared_ptr<Valuable::DOMDocument> tmpDoc(Valuable::DOMDocument::createDocument());
@@ -49,10 +61,12 @@ namespace Valuable
         Valuable::ValueBool * b = dynamic_cast<Valuable::ValueBool*>(obj);
         if(b) {
           *b = true;
+          m_parsedArgs.insert(name);
         } else if (i < argc - 1) {
           Valuable::DOMElement e = tmpDoc->createElement("tmp");
           e.setTextContent(argv[++i]);
           obj->deserializeXML(e);
+          m_parsedArgs.insert(name);
         } else {
           list.push_back(arg);
           Radiant::error("Command line parameter %s is missing an argument", name.toUtf8().data());
@@ -63,6 +77,7 @@ namespace Valuable
               opts.getValue(name.mid(3)));
           if(b) {
             *b = false;
+            m_parsedArgs.insert(name);
             continue;
           }
         }

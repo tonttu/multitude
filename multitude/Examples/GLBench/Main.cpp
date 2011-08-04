@@ -44,7 +44,7 @@ int main(int argc, char ** argv)
 
   Valuable::HasValues opts;
   Valuable::ValueInt uselevels(&opts, "levels", 12);
-  Valuable::ValueInt drawrects(&opts, "drawrects", 0);
+  Valuable::ValueBool drawrects(&opts, "drawrects", false);
 
   Valuable::CmdParser::parse(argc, argv, opts);
 

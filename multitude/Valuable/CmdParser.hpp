@@ -20,6 +20,7 @@
 #include <Radiant/StringUtils.hpp>
 
 #include <QStringList>
+#include <set>
 
 namespace Valuable
 {
@@ -31,6 +32,10 @@ namespace Valuable
   public:
     /// Parses command line arguments to given HasValues object.
     /**
+     * @param argc Number of arguments in argv
+     * @param argv Array of arguments
+     * @param opts The target object where the ValueObjects are stored
+     *
      * If there is a ValueObject named "foo" in opts, it can be set in command
      * line like this: <tt>--foo param</tt>
      * where param will be parsed with deserialize().
@@ -56,6 +61,40 @@ namespace Valuable
      */
     static QStringList parse(int argc, char * argv[],
                                                   Valuable::HasValues & opts);
+
+    /// Parses command line arguments to given HasValues object.
+    /**
+      * @param argc Number of arguments in argv
+      * @param argv Array of arguments
+      * @param opts The target object where the ValueObjects are stored
+      *
+      * This is the non-static version of the parse function. This version
+      * stores all parsed command line arguments in an internal set, which
+      * can be queried by the \c is_parsed function.
+      *
+      * @return List of arguments that didn't match any ValueObject in opts.
+      */
+    QStringList parseAndStore(int argc, char * argv[],
+                              Valuable::HasValues & opts);
+
+    /**
+      * Query the CmdParser if a certain command line parameter has been parsed.
+      *
+      * @param name The name of the parameter to query
+      *
+      * Example:
+      * \code
+      * CmdParser parser;
+      * parser.parseAndStore(argc, argv, opts);
+      * if(parser.isParsed("foo") printf("--foo was parsed\n");
+      * \endcode
+      *
+      * @return True if the parameter was parsed.
+      */
+    bool isParsed(const QString & name);
+
+  private:
+    std::set<QString> m_parsedArgs;
   };
 }
 

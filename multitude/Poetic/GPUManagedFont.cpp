@@ -33,6 +33,12 @@ namespace Poetic
     m_fonts.resize(m_cmf->fontCount());
   }
 
+  GPUManagedFont::~GPUManagedFont()
+  {
+    for(size_t i = 0; i < m_fonts.size(); i++)
+      delete m_fonts.at(i);
+  }
+
   void GPUManagedFont::render(const QString & text,
 			      int pointSize, const Nimble::Matrix3 & m,
                               float minimumSize)
@@ -79,7 +85,7 @@ namespace Poetic
     GPUFontBase * font = m_fonts[fontNo];
     if(!font) {
       // Create new
-      CPUFontBase * cFont = dynamic_cast<CPUFontBase *> (m_cmf->getFont(fontNo));
+      CPUFontBase * cFont = static_cast<CPUFontBase *> (m_cmf->getFont(fontNo));
       assert(cFont);
       font = new GPUTextureFont(cFont);
 

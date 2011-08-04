@@ -1,4 +1,4 @@
-/* COPYRIGHT
+ /* COPYRIGHT
  *
  * This file is part of Luminous.
  *
@@ -108,7 +108,15 @@ namespace Luminous
 
 #ifdef WIN32
     // Make sure Qt plugins are found
-    QCoreApplication::addLibraryPath("C:\\Cornerstone\\bin\\plugins");
+    /// @todo does this work when the SDK is not installed? Where does find the plugins?
+    char* dir = getenv("CORNERSTONE_ROOT");
+    std::string pluginPath;
+    if(dir) {
+      pluginPath = std::string(dir) + std::string("\\bin\\plugins");
+    } else {
+      pluginPath = std::string("..\\lib\\Plugins");
+    }
+    QCoreApplication::addLibraryPath(pluginPath.c_str());
 #endif
 
 #ifdef USE_QT45

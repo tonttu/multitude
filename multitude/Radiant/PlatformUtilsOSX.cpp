@@ -15,7 +15,6 @@
 
 #include "PlatformUtils.hpp"
 
-#include "FixedStr.hpp"
 #include "Trace.hpp"
 
 #include <dlfcn.h>
@@ -36,11 +35,12 @@ namespace Radiant
     {
       CFURLRef url = CFBundleCopyBundleURL(CFBundleGetMainBundle());
 
-      FixedStrT<512> buf;
+      char buf[512];
+      buf[0] = '\0';
 
-      CFURLGetFileSystemRepresentation(url, true,
-                       (UInt8*) buf.str(), buf.capacity());
-      return buf.str();
+      CFURLGetFileSystemRepresentation(url, true, (UInt8*) buf, 512);
+
+      return buf;
     }
 
     QString getUserHomePath()

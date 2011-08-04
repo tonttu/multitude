@@ -14,6 +14,7 @@
  */
 
 #include "CPUMipmaps.hpp"
+#include "MipMapGenerator.hpp"
 
 #include <Luminous/GLResources.hpp>
 #include <Luminous/Utils.hpp>
@@ -28,10 +29,6 @@
 
 #include <QFileInfo>
 #include <QCryptographicHash>
-
-#ifdef WIN32
-#define snprintf _snprintf
-#endif
 
 namespace {
   // after first resize modify the dimensions so that we can resize
@@ -91,7 +88,8 @@ namespace Luminous {
     m_timeOutCPU(5.0f),
     m_timeOutGPU(5.0f),
     m_keepMaxLevel(true),
-    m_loadingPriority(PRIORITY_NORMAL)
+    m_loadingPriority(PRIORITY_NORMAL),
+    m_compressedMipmaps(false)
   #ifdef CPUMIPMAPS_PROFILING
     , m_profile(s_profiler.next())
   #endif
@@ -143,7 +141,7 @@ namespace Luminous {
 
     m_priority = m_loadingPriority;
     reschedule();
-    BGThread::instance()->reschedule(this);
+    BGThread::instance()->reschedule(shared_from_this());
 
     // Scan for the best available mip-map.
 
@@ -208,22 +206,54 @@ namespace Luminous {
     return true;
   }
 
-  bool CPUMipmaps::startLoading(const char * filename, bool)
+  bool CPUMipmaps::startLoading(const char * filename, bool compressedMipmaps)
   {
 #ifdef CPUMIPMAPS_PROFILING
     m_profile.filename = filename;
 #endif
     m_filename = filename;
+    m_compFilename.clear();
     m_fileModified = FileUtils::lastModified(m_filename);
     m_info = Luminous::ImageInfo();
+    m_shouldSave.clear();
+    m_stack.clear();
+    m_compressedMipmaps = compressedMipmaps;
 
-    if(!Luminous::Image::ping(filename, m_info)) {
+    if(m_fileModified == 0) {
+      error("CPUMipmaps::startLoading # failed to stat file %s", filename);
+      return false;
+    }
+
+    MipMapGenerator * gen = 0;
+    if(compressedMipmaps) {
+      m_compFilename = cacheFileName(filename, -1, "dds");
+      unsigned long int ts = FileUtils::lastModified(m_compFilename);
+      if(ts == 0) {
+        // Cache file does not exist. Check if we want to generate mipmaps for
+        // this file, or does it have those already
+        if(!Luminous::Image::ping(filename, m_info)) {
+          error("CPUMipmaps::startLoading # failed to query image size for %s", filename);
+          return false;
+        }
+        if(m_info.pf.compression() && (m_info.mipmaps > 1 ||
+                                       (m_info.width < 5 && m_info.height < 5))) {
+          // We already have compressed image with mipmaps, no need to generate more
+          m_compFilename.clear();
+          m_compressedMipmaps = false;
+        }
+      }
+      if(m_compressedMipmaps && (ts < m_fileModified ||
+                                 !Luminous::Image::ping(m_compFilename.c_str(), m_info))) {
+        gen = new MipMapGenerator(filename);
+        gen->setListener(shared_from_this());
+      }
+    }
+
+    if(m_info.width == 0 && !Luminous::Image::ping(filename, m_info)) {
       error("CPUMipmaps::startLoading # failed to query image size for %s", filename);
       return false;
     }
 
-    m_shouldSave.clear();
-    m_stack.clear();
     m_nativeSize.make(m_info.width, m_info.height);
 
     if(!m_nativeSize.minimum())
@@ -256,6 +286,11 @@ namespace Luminous {
     markImage(m_maxLevel);
     reschedule();
 
+    if(gen) {
+      Luminous::BGThread::instance()->addTask(gen);
+    } else if(compressedMipmaps) {
+      Luminous::BGThread::instance()->addTask(shared_from_this());
+    }
     return true;
   }
 
@@ -317,52 +352,25 @@ namespace Luminous {
       return true;
     }
 
-    // Limit how many pixels we can upload immediately
-    /// @todo this should be a global per frame limit in bytes - see UploadLimiter::available
-    const size_t instantUploadPixelLimit = 1.5e6;
-
-    // Upload the whole texture at once if possible
-    const size_t imagePixels = img->width() * img->height();
-    if(imagePixels < instantUploadPixelLimit) {
-
+    if(img->bind(resources, textureUnit, false)) {
       si.bound = bestAvailable;
-      img->bind(resources, textureUnit, false);
-
       return true;
+    }
 
-    } else {
-      // Texture is too big, do partial upload
-      img->uploadBytesToGPU(resources, instantUploadPixelLimit);
+    // If the requested texture is not fully uploaded, test if there is
+    // anything we can use already
+    for(size_t i = 0; i < stackSize(); i++) {
 
-      if(img->isFullyLoadedToGPU()) {
-        si.bound = bestAvailable;
-        img->bind(resources, textureUnit, false);
+      std::shared_ptr<ImageTex> test = getImage((int) i);
+      if(!test)
+        continue;
 
+      if(test->isFullyLoadedToGPU(resources) && test->bind(resources, textureUnit, false)) {
+        si.bound = (int)i;
         return true;
       }
-
-      // If the requested texture is not fully uploaded, test if there is
-      // anything we can use already
-      for(size_t i = 0; i < stackSize(); i++) {
-
-        std::shared_ptr<ImageTex> test = getImage((int) i);
-        if(!test)
-          continue;
-
-        size_t area = test->width() * test->height();
-
-        // If the texture is fully uploaded or its small enough, we bypass the
-        // pixel budget and upload it anyway (ImageTex::bind() uploads the
-        // texture as a side-effect).
-
-        if(test->isFullyLoadedToGPU() || (area < (instantUploadPixelLimit / 3))) {
-          si.bound = (int) i;
-          test->bind(resources, textureUnit, false);
-
-          return true;
-        }
-      }
     }
+
     return false;
   }
 
@@ -450,6 +458,13 @@ namespace Luminous {
     }
   }
 
+  void CPUMipmaps::mipmapsReady(const ImageInfo & info)
+  {
+    m_info = info;
+    BGThread::instance()->addTask(shared_from_this());
+    reschedule();
+  }
+
   void CPUMipmaps::doTask()
   {
     if(state() == Task::DONE)
@@ -522,9 +537,10 @@ namespace Luminous {
     return item;
   }
 
-  void CPUMipmaps::cacheFileName(QString & name, int level)
+  QString CPUMipmaps::cacheFileName(const QString & src, int level,
+                                    const QString & suffix)
   {
-    QFileInfo fi(name);
+    QFileInfo fi(QString::fromUtf8(src.c_str()));
 
     QString basePath = Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false);
 
@@ -536,12 +552,11 @@ namespace Luminous {
 
     // Avoid putting all mipmaps into the same folder (because of OS performance)
     QString prefix = md5.left(2);
-    QString postfix = QString("level%1.png").arg(level, 2, 10, QLatin1Char('0'));
-    QString fullPath = basePath + QString("/imagecache/%1/%2_%3").arg(prefix).arg(md5).arg(postfix);
+    QString postfix = level < 0 ? QString(".%1").arg(suffix.c_str()) :
+        QString("_level%1.%2").arg(level, 2, 10, QLatin1Char('0')).arg(suffix.c_str());
+    QString fullPath = basePath + QString("/imagecache/%1/%2%3").arg(prefix).arg(md5).arg(postfix);
 
-    name = fullPath;
-
-    //Radiant::info("CPUMipmaps::cacheFileName # %s -> %s", m_filename.c_str(), name.c_str());
+    return fullPath;
   }
 
   void CPUMipmaps::recursiveLoad(StackMap & stack, int level)
@@ -556,8 +571,9 @@ namespace Luminous {
 
     if(m_info.pf.compression()) {
       std::shared_ptr<Luminous::CompressedImageTex> im(new Luminous::CompressedImageTex);
-      if(!im->read(m_filename, level)) {
-        error("CPUMipmaps::recursiveLoad # Could not read %s level %d", m_filename.toUtf8().data(), level);
+      QString filename = m_compFilename.isEmpty() ? m_filename : m_compFilename;
+      if(!im->read(filename, level)) {
+        error("CPUMipmaps::recursiveLoad # Could not read %s level %d", filename.toUtf8().data(), level);
         item.m_state = FAILED;
       } else {
         /// @todo this is wrong, compressed images doesn't always have alpha channel
@@ -591,8 +607,7 @@ namespace Luminous {
     if(m_shouldSave.find(level) != m_shouldSave.end()) {
 
       // Try loading a pre-generated smaller-scale mipmap
-      QString filename;
-      cacheFileName(filename, level);
+      QString filename = cacheFileName(m_filename, level);
 
       if(Radiant::FileUtils::fileReadable(filename) &&
          FileUtils::lastModified(filename) > m_fileModified) {
@@ -656,8 +671,7 @@ namespace Luminous {
     // info("Loaded image %s %d", m_filename.c_str(), is.x);
 
     if(m_shouldSave.find(level) != m_shouldSave.end()) {
-      QString filename;
-      cacheFileName(filename, level);
+      QString filename = cacheFileName(m_filename, level);
       Directory::mkdirRecursive(FileUtils::path(filename));
       imdest->write(filename.toUtf8().data());
       // info("wrote cache %s (%d)", filename.c_str(), level);

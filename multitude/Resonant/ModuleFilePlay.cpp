@@ -76,7 +76,7 @@ namespace Resonant {
   bool ModuleFilePlay::stop()
   {
     if(!m_file)
-      return false;
+      return true;
 
     AudioFileHandler * afh = AudioFileHandler::instance();
 

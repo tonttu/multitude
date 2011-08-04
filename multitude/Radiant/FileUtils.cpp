@@ -14,6 +14,7 @@
  */
 
 #include "FileUtils.hpp"
+#include "Platform.hpp"
 #include "PlatformUtils.hpp"
 #include "StringUtils.hpp"
 #include "Directory.hpp"
@@ -30,7 +31,7 @@
 #include <QFileInfo>
 #include <QDir>
 
-#ifdef WIN32
+#ifdef RADIANT_WINDOWS
 #include <io.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -38,24 +39,21 @@
 #include <sys/types.h>
 // The POSIX name for this item is deprecated..
 #pragma warning(disable: 4996)
-#endif
-
-
-using namespace std;
+#endif // PLATFORM_WINDOWS
 
 namespace Radiant
 {
 
   using namespace StringUtils;
 
-  unsigned long FileUtils::getFileLen(ifstream& file)
+  unsigned long FileUtils::getFileLen(std::ifstream& file)
   {
     if(!file.good()) return 0;
 
     unsigned long pos = file.tellg();
-    file.seekg(0, ios::end);
+    file.seekg(0, std::ios::end);
     unsigned long len = file.tellg();
-    file.seekg(pos, ios::beg);
+    file.seekg(pos, std::ios::beg);
 
     return len;
   }
@@ -102,19 +100,18 @@ namespace Radiant
 
   char* FileUtils::loadTextFile(const char* filename)
   {
-    ifstream file;
+    std::ifstream file;
 
-    file.open(filename, ios::in | ios::binary);
+    file.open(filename, std::ios::in | std::ios::binary);
     if(!file.good()) {
-      cerr << "loadTextFile # could not open '" << filename <<
-          "' for reading" << endl;
+      error("loadTextFile # could not open '%s' for reading", filename);
       return 0;
     }
 
     unsigned long len = getFileLen(file);
 
     if(len == 0) {
-      cerr << "loadTextFile # file '" << filename << "' is empty" << endl;
+      error("loadTextFile # file '%s' is empty", filename);
       return 0;
     }
 
@@ -137,7 +134,7 @@ namespace Radiant
 
   bool FileUtils::writeTextFile(const char * filename, const char * contents)
   {
-#ifdef WIN32
+#ifdef RADIANT_WINDOWS
     int fd = _creat(filename, _S_IWRITE);
 #else
     int fd = creat(filename, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
@@ -172,11 +169,20 @@ namespace Radiant
     return fi.baseName();
   }
 
+
   QString FileUtils::baseFilenameWithPath(const QString & filepath)
   {
     return path(filepath) + '/' + baseFilename(filepath);
   }
 
+  std::string FileUtils::withoutSuffix(const std::string & filepath)
+  {
+    size_t cut = filepath.rfind(".");
+    if(cut > 0)
+      return filepath.substr(0, cut);
+
+    return filepath;
+  }
 
   QString FileUtils::suffix(const QString & filepath)
   {
@@ -204,12 +210,12 @@ namespace Radiant
         return fullPath;
     }
 
-    return QString();
+    return "";
   }
 
   QString FileUtils::findOverWritable(const QString & filename, const QString & paths)
   {
-    foreach(QString str, paths.split(";", QString::SkipEmptyParts)) {
+    foreach(QString str, paths.split(QRegExp("[:;]"), QString::SkipEmptyParts)) {
       QString fullPath = str + "/" + filename;
 
       if(fileAppendable(fullPath))
@@ -261,6 +267,4 @@ namespace Radiant
       fprintf(f, ". ");
     }
   }
-
-
 }

@@ -47,8 +47,8 @@ namespace Valuable
       ValueVector() : Base() {}
       /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
       /// @param v The value of this object
-      ValueVector(HasValues * parent, const QString & name, const VectorType & v = VectorType(), bool transit = false)
-        : Base(parent, name, v, transit) {}
+      ValueVector(HasValues * host, const QString & name, const VectorType & v = VectorType(), bool transit = false)
+        : Base(host, name, v, transit) {}
 
       virtual ~ValueVector();
 
@@ -64,9 +64,9 @@ namespace Valuable
       VectorType operator +
       (const VectorType & v) const { return value() + v; }
 
-      /** Access vector elements by their index.
-
-        @return Returns the ith element. */
+      /// Access vector elements by their index.
+      /// @param i Index, starting from zero
+      /// @return Returns the ith element.
       ElementType operator [] (int i) const { return value()[i]; }
 
       /// Returns the data in its native format
@@ -74,14 +74,15 @@ namespace Valuable
       { return value().data(); }
 
       virtual void processMessage(const char * id, Radiant::BinaryData & data);
-      virtual bool deserialize(ArchiveElement & element);
+      virtual bool deserialize(const ArchiveElement & element);
 
       const char * type() const;
 
       /// Sets the value
       virtual bool set(const VectorType & v, ValueObject::Layer layer = ValueObject::OVERRIDE);
 
-      /** Returns the internal vector object as a constant reference. */
+      /// Returns the internal vector object as a constant reference.
+      /// @return The wrapped vector value
       const VectorType & asVector() const { return value(); }
 
       QString asString(bool * const ok = 0) const;

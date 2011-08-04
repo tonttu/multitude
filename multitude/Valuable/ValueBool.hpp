@@ -29,11 +29,11 @@ namespace Valuable
 
     /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
     /// @param value The value of this object
-    ValueBool(HasValues * parent, const QString & name, bool value, bool transit = false);
+    ValueBool(HasValues * host, const QString & name, bool value, bool transit = false);
     virtual ~ValueBool();
 
     const char * type() const { return "bool"; }
-    bool deserialize(ArchiveElement & element);
+    bool deserialize(const ArchiveElement & element);
 
     /// @cond
     virtual void processMessage(const char *, Radiant::BinaryData & data);

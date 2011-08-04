@@ -7,6 +7,7 @@ SUBDIRS += Patterns
 SUBDIRS += Nimble
 SUBDIRS += Radiant
 SUBDIRS += Valuable
+SUBDIRS += Squish
 SUBDIRS += Luminous
 SUBDIRS += Poetic
 SUBDIRS += Resonant

@@ -15,7 +15,8 @@
 #ifndef POETIC_CPU_MANAGED_FONT_HPP
 #define POETIC_CPU_MANAGED_FONT_HPP
 
-#include <Poetic/CPUBitmapFont.hpp>
+#include "Export.hpp"
+#include "CPUBitmapFont.hpp"
 
 #include <Luminous/Collectable.hpp>
 
@@ -26,11 +27,11 @@ namespace Poetic
   
   /// A managed font on the CPU that uses multiple fonts internally to provide
   /// better matches at various different scales.
-  class CPUManagedFont : public Luminous::Collectable
+  class POETIC_API CPUManagedFont : public Luminous::Collectable
   {
     public:
       CPUManagedFont();
-      virtual ~CPUManagedFont() { Radiant::info("~CPUManagedFont %p", this); assert(false); }
+      virtual ~CPUManagedFont();
 
       /// Loads the font from the given .ttf file
       bool load(const char * fontFilePath);
