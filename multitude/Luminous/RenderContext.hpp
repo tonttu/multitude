@@ -24,7 +24,7 @@
 #include <Luminous/Export.hpp>
 #include <Luminous/VertexBuffer.hpp>
 #include <Luminous/GLSLProgramObject.hpp>
-#include <FramebufferResource.hpp>
+#include <Luminous/FramebufferResource.hpp>
 
 #include <Nimble/Rectangle.hpp>
 #include <Nimble/Vector2.hpp>
