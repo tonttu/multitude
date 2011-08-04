@@ -28,9 +28,6 @@
 #  include <sys/time.h>
 #endif
 
-#define RADIANT_BILLION 1000000000
-#define RADIANT_MILLION 1000000
-
 namespace Radiant {
 
   class TimeStamp;
