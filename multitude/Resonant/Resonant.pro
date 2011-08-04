@@ -14,6 +14,7 @@ HEADERS += ModulePanner.hpp
 HEADERS += ModuleRectPanner.hpp
 HEADERS += ModuleSamplePlayer.hpp
 HEADERS += SoundRectangle.hpp
+HEADERS += Resonant.hpp
 
 linux-*:HEADERS += ModulePulseAudio.hpp PulseAudioCore.hpp
 
