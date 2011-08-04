@@ -115,7 +115,6 @@ namespace Resonant {
     m_frames(0),
     m_doneCount(0)
   {
-    m_devName[0] = 0;
     m_collect = new ModuleOutCollect(0, this);
     m_collect->setId("outcollect");
 
