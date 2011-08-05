@@ -196,14 +196,14 @@ namespace Luminous {
 
       Window * m_window;
       GLKeyStone m_keyStone;
-      Valuable::ValueVector2i   m_location;
-      Valuable::ValueVector2i   m_size;
-      Valuable::ValueVector2f   m_graphicsLocation;
-      Valuable::ValueVector2f   m_graphicsSize;
-      Valuable::ValueVector4f   m_seams;
-      Valuable::ValueBool        m_active;
-      Valuable::ValueInt        m_method;
-      Valuable::ValueString m_comment;
+      Valuable::AttributeVector2i   m_location;
+      Valuable::AttributeVector2i   m_size;
+      Valuable::AttributeVector2f   m_graphicsLocation;
+      Valuable::AttributeVector2f   m_graphicsSize;
+      Valuable::AttributeVector4f   m_seams;
+      Valuable::AttributeBool        m_active;
+      Valuable::AttributeInt        m_method;
+      Valuable::AttributeString m_comment;
       Rect m_graphicsBounds;
       float      m_pixelSizeCm;
     };
@@ -309,13 +309,13 @@ namespace Luminous {
       LUMINOUS_API virtual bool readElement(Valuable::DOMElement ce);
 
       MultiHead                *m_screen;
-      Valuable::ValueVector2i   m_location;
-      Valuable::ValueVector2i   m_size;
-      Valuable::ValueBool       m_frameless;
-      Valuable::ValueBool       m_fullscreen;
-      Valuable::ValueBool       m_resizeable;
-      Valuable::ValueInt        m_displaynumber; // for X11
-      Valuable::ValueInt        m_screennumber; // for X11
+      Valuable::AttributeVector2i   m_location;
+      Valuable::AttributeVector2i   m_size;
+      Valuable::AttributeBool       m_frameless;
+      Valuable::AttributeBool       m_fullscreen;
+      Valuable::AttributeBool       m_resizeable;
+      Valuable::AttributeInt        m_displaynumber; // for X11
+      Valuable::AttributeInt        m_screennumber; // for X11
       /// Pixel size in centimeters
       float      m_pixelSizeCm;
 
@@ -386,9 +386,9 @@ namespace Luminous {
     virtual bool readElement(Valuable::DOMElement ce);
 
     std::vector<std::shared_ptr<Window> > m_windows;
-    Valuable::ValueFloat m_widthcm;
-    Valuable::ValueFloat m_gamma;
-    Valuable::ValueBool m_iconify;
+    Valuable::AttributeFloat m_widthcm;
+    Valuable::AttributeFloat m_gamma;
+    Valuable::AttributeBool m_iconify;
     bool m_edited;
   };
 

@@ -25,7 +25,7 @@
 #include <Radiant/Mutex.hpp>
 
 #ifdef MULTI_DOCUMENTER
-std::list<Valuable::ValueObject::Doc> Valuable::ValueObject::doc;
+std::list<Valuable::Attribute::Doc> Valuable::Attribute::doc;
 #endif
 
 namespace Valuable
@@ -38,13 +38,13 @@ namespace Valuable
     return deserialize(ae);
   }
 
-  ValueObject::ValueObject()
+  Attribute::Attribute()
   : m_host(0),
     m_changed(false),
     m_transit(false)
   {}
 
-  ValueObject::ValueObject(HasValues * host, const QString & name, bool transit)
+  Attribute::Attribute(HasValues * host, const QString & name, bool transit)
     : m_host(0),
       m_changed(false),
       m_name(name),
@@ -62,7 +62,7 @@ namespace Valuable
     }
   }
 
-  ValueObject::ValueObject(const ValueObject & o)
+  Attribute::Attribute(const Attribute & o)
     : Serializable(), // GCC wants this
     m_host(0),
     m_changed(false)
@@ -71,7 +71,7 @@ namespace Valuable
     m_transit = o.m_transit;
   }
 
-  ValueObject::~ValueObject()
+  Attribute::~Attribute()
   {
     emitDelete();
 #ifdef MULTI_DOCUMENTER
@@ -82,7 +82,7 @@ namespace Valuable
 #endif
   }
 
-  void ValueObject::setName(const QString & s)
+  void Attribute::setName(const QString & s)
   {
     if(host())
       host()->valueRenamed(m_name, s);
@@ -90,7 +90,7 @@ namespace Valuable
     m_name = s;
   }
 
-  QString ValueObject::path() const
+  QString Attribute::path() const
   {
     if(m_host)
       return m_host->path() + "/" + m_name;
@@ -98,13 +98,13 @@ namespace Valuable
     return "/" + m_name;
   }
 
-  void ValueObject::processMessage(const char *, Radiant::BinaryData & )
+  void Attribute::processMessage(const char *, Radiant::BinaryData & )
   {
-    Radiant::error("ValueObject::processMessage # Unimplemented for %s",
+    Radiant::error("Attribute::processMessage # Unimplemented for %s",
                    typeid(*this).name());
   }
 
-  void ValueObject::processMessageString(const char * id, const char * str)
+  void Attribute::processMessageString(const char * id, const char * str)
   {
     Radiant::BinaryData bd;
     bd.writeString(str);
@@ -112,7 +112,7 @@ namespace Valuable
     processMessage(id, bd);
   }
 
-  void ValueObject::processMessageFloat(const char * id, float v)
+  void Attribute::processMessageFloat(const char * id, float v)
   {
     Radiant::BinaryData bd;
     bd.writeFloat32(v);
@@ -120,7 +120,7 @@ namespace Valuable
     processMessage(id, bd);
   }
 
-  void ValueObject::processMessageInt(const char * id, int v)
+  void Attribute::processMessageInt(const char * id, int v)
   {
     Radiant::BinaryData bd;
     bd.writeInt32(v);
@@ -128,7 +128,7 @@ namespace Valuable
     processMessage(id, bd);
   }
 
-  void ValueObject::processMessageVector2(const char * id, Nimble::Vector2 v)
+  void Attribute::processMessageVector2(const char * id, Nimble::Vector2 v)
   {
     Radiant::BinaryData bd;
     bd.writeVector2Float32(v);
@@ -136,7 +136,7 @@ namespace Valuable
     processMessage(id, bd);
   }
 
-  void ValueObject::processMessageVector3(const char * id, Nimble::Vector3 v)
+  void Attribute::processMessageVector3(const char * id, Nimble::Vector3 v)
   {
     Radiant::BinaryData bd;
     bd.writeVector3Float32(v);
@@ -144,7 +144,7 @@ namespace Valuable
     processMessage(id, bd);
   }
 
-  void ValueObject::processMessageVector4(const char * id, Nimble::Vector4 v)
+  void Attribute::processMessageVector4(const char * id, Nimble::Vector4 v)
   {
     Radiant::BinaryData bd;
     bd.writeVector4Float32(v);
@@ -152,52 +152,52 @@ namespace Valuable
     processMessage(id, bd);
   }
 
-  float ValueObject::asFloat(bool * ok) const
+  float Attribute::asFloat(bool * ok) const
   {
     if(ok) *ok = false;
     Radiant::error(
-"ValueObject::asFloat # %s : conversion not available", m_name.toUtf8().data());
+"Attribute::asFloat # %s : conversion not available", m_name.toUtf8().data());
     return 0.0f;
   }
 
-  int ValueObject::asInt(bool * ok) const
+  int Attribute::asInt(bool * ok) const
   {
     if(ok) *ok = false;
     Radiant::error(
-"ValueObject::asInt # %s : conversion not available", m_name.toUtf8().data());
+"Attribute::asInt # %s : conversion not available", m_name.toUtf8().data());
     return 0;
   }
 
-  QString ValueObject::asString(bool * ok) const
+  QString Attribute::asString(bool * ok) const
   {
     if(ok) *ok = false;
     Radiant::error(
-"ValueObject::asString # %s : conversion not available", m_name.toUtf8().data());
+"Attribute::asString # %s : conversion not available", m_name.toUtf8().data());
     return "";
   }
 
-  ArchiveElement ValueObject::serialize(Archive & archive) const
+  ArchiveElement Attribute::serialize(Archive & archive) const
   {
-    ArchiveElement elem = archive.createElement(m_name.isEmpty() ? "ValueObject" : m_name.toUtf8().data());
+    ArchiveElement elem = archive.createElement(m_name.isEmpty() ? "Attribute" : m_name.toUtf8().data());
     elem.add("type", type());
     elem.set(asString());
 
     return elem;
   }
 
-  void ValueObject::emitChange()
+  void Attribute::emitChange()
   {
-//    Radiant::trace("ValueObject::emitChange # '%s'", m_name.toUtf8().data());
+//    Radiant::trace("Attribute::emitChange # '%s'", m_name.toUtf8().data());
     m_changed = true;
-    foreach(const ValueListener & l, m_listeners)
+    foreach(const AttributeListener & l, m_listeners)
       if(l.role & CHANGE) l.func();
     ChangeMap::addChange(this);
   }
 
-  void ValueObject::emitDelete()
+  void Attribute::emitDelete()
   {
-    //Radiant::trace("ValueObject::emitDelete");
-    foreach(const ValueListener & l, m_listeners) {
+    //Radiant::trace("Attribute::emitDelete");
+    foreach(const AttributeListener & l, m_listeners) {
       if(l.role & DELETE) l.func();
       if(l.listener) l.listener->m_valueListening.remove(this);
     }
@@ -205,7 +205,7 @@ namespace Valuable
     ChangeMap::addDelete(this);
   }
 
-  void ValueObject::removeHost()
+  void Attribute::removeHost()
   {
     if(m_host) {
       m_host->removeValue(this);
@@ -213,26 +213,26 @@ namespace Valuable
     }
   }
 
-  void ValueObject::addListener(ListenerFunc func, int role)
+  void Attribute::addListener(ListenerFunc func, int role)
   {
     addListener(0, func, role);
   }
 
-  void ValueObject::addListener(HasValues * listener, ListenerFunc func, int role)
+  void Attribute::addListener(HasValues * listener, ListenerFunc func, int role)
   {
-    m_listeners << ValueListener(func, role, listener);
+    m_listeners << AttributeListener(func, role, listener);
     if(listener) listener->m_valueListening << listener;
   }
 
-  void ValueObject::removeListeners(int role)
+  void Attribute::removeListeners(int role)
   {
     removeListener(0, role);
   }
 
-  void ValueObject::removeListener(HasValues * listener, int role)
+  void Attribute::removeListener(HasValues * listener, int role)
   {
     QList<HasValues*> listeners;
-    for(QList<ValueListener>::iterator it = m_listeners.begin(); it != m_listeners.end(); ) {
+    for(QList<AttributeListener>::iterator it = m_listeners.begin(); it != m_listeners.end(); ) {
       if(it->role & role && (!listener || listener == it->listener)) {
         if(it->listener) listeners << it->listener;
         it = m_listeners.erase(it);
@@ -241,72 +241,72 @@ namespace Valuable
 
     foreach(HasValues * listener, listeners) {
       bool found = false;
-      foreach(const ValueListener & l, m_listeners)
+      foreach(const AttributeListener & l, m_listeners)
         if(l.listener == listener) { found = true; break; }
       if(!found)
         listener->m_valueListening.remove(this);
     }
   }
 
-  bool ValueObject::isChanged() const
+  bool Attribute::isChanged() const
   {
     return m_changed;
   }
 
-  void ValueObject::clearValue(Layer)
+  void Attribute::clearValue(Layer)
   {
   }
 
-  bool ValueObject::shortcut() const
+  bool Attribute::shortcut() const
   {
     return false;
   }
 
-  bool ValueObject::set(float, Layer)
+  bool Attribute::set(float, Layer)
   {
-    Radiant::error("ValueObject::set(float) # %s: conversion not available",
+    Radiant::error("Attribute::set(float) # %s: conversion not available",
                    m_name.toUtf8().data());
     return false;
   }
 
-  bool ValueObject::set(int, Layer)
+  bool Attribute::set(int, Layer)
   {
-    Radiant::error("ValueObject::set(int) # %s: conversion not available",
+    Radiant::error("Attribute::set(int) # %s: conversion not available",
                    m_name.toUtf8().data());
     return false;
   }
 
-  bool ValueObject::set(const QString &, Layer)
+  bool Attribute::set(const QString &, Layer)
   {
-    Radiant::error("ValueObject::set(string) # %s: conversion not available",
+    Radiant::error("Attribute::set(string) # %s: conversion not available",
                    m_name.toUtf8().data());
     return false;
   }
 
-  bool ValueObject::set(const Nimble::Vector2f &, Layer)
+  bool Attribute::set(const Nimble::Vector2f &, Layer)
   {
-    Radiant::error("ValueObject::set(Vector2f) # %s: conversion not available",
+    Radiant::error("Attribute::set(Vector2f) # %s: conversion not available",
                    m_name.toUtf8().data());
     return false;
   }
 
-  bool ValueObject::set(const Nimble::Vector3f & v, Layer layer)
+  bool Attribute::set(const Nimble::Vector3f & v, Layer layer)
   {
-    Radiant::error("ValueObject::set(Vector3f) # %s: conversion not available",
+    Radiant::error("Attribute::set(Vector3f) # %s: conversion not available",
                    m_name.toUtf8().data());
     return false;
   }
 
-  bool ValueObject::set(const Nimble::Vector4f &, Layer)
+  bool Attribute::set(const Nimble::Vector4f &, Layer)
   {
-    Radiant::error("ValueObject::set(Vector4f) # %s: conversion not available",
+    Radiant::error("Attribute::set(Vector4f) # %s: conversion not available",
                    m_name.toUtf8().data());
     return false;
   }
 
-  bool ValueObject::set(const QVariantList & v, QList<ValueUnit> units, Layer layer)
+  bool Attribute::set(const QVariantList & v, QList<ValueUnit> units, Layer layer)
   {
-    Radiant::error("ValueObject::set(QVariantList) # %s: conversion not available",
+    Radiant::error("Attribute::set(QVariantList) # %s: conversion not available",
                    m_name.toUtf8().data());
     return false;
   }

@@ -28,12 +28,12 @@ namespace Valuable
 {
 
   template <class T, typename S, int N>
-  ValueMatrix<T,S,N>::~ValueMatrix()
+  AttributeMatrix<T,S,N>::~AttributeMatrix()
   {}
 
   /*
   template <class T, typename S, int N>
-  void ValueMatrix<T,S,N>::processMessage(const char * id,
+  void AttributeMatrix<T,S,N>::processMessage(const char * id,
                       Radiant::BinaryData & data)
   {
     if(id && strlen(id)) {
@@ -65,11 +65,11 @@ namespace Valuable
   */
 
   template<class MatrixType, typename ElementType, int N>
-  const char *  ValueMatrix<MatrixType, ElementType, N>::type() const { return "Matrix"; }
+  const char *  AttributeMatrix<MatrixType, ElementType, N>::type() const { return "Matrix"; }
 
 
   template<class MatrixType, typename ElementType, int N>
-  bool ValueMatrix<MatrixType, ElementType, N>::deserialize(const ArchiveElement & element) {
+  bool AttributeMatrix<MatrixType, ElementType, N>::deserialize(const ArchiveElement & element) {
     std::stringstream in(element.get().toStdString());
 
     MatrixType m;
@@ -81,7 +81,7 @@ namespace Valuable
   }
 
   template<class MatrixType, typename ElementType, int N>
-  QString ValueMatrix<MatrixType, ElementType, N>::asString(bool * const ok) const {
+  QString AttributeMatrix<MatrixType, ElementType, N>::asString(bool * const ok) const {
     if(ok) *ok = true;
 
     const ElementType * data = native();

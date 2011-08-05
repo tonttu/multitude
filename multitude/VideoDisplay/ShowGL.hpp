@@ -331,7 +331,7 @@ namespace VideoDisplay {
 
     SubTitles               m_subTitles;
 
-    Valuable::ValueFloat    m_contrast;
+    Valuable::AttributeFloat    m_contrast;
 
     Radiant::TimeStamp started;
     float m_fps;

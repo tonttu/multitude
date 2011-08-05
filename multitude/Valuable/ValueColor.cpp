@@ -21,11 +21,11 @@
 namespace Valuable
 {
 
-  ValueColor::ValueColor(HasValues * host, const QString & name, const Radiant::Color & c, bool transit)
-    : ValueVector<Nimble::Vector4f>(host, name, c, transit)
+  AttributeColor::AttributeColor(HasValues * host, const QString & name, const Radiant::Color & c, bool transit)
+    : AttributeVector<Nimble::Vector4f>(host, name, c, transit)
   {}
 
-  ValueColor::~ValueColor()
+  AttributeColor::~AttributeColor()
   {}
 }
 

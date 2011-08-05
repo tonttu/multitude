@@ -19,33 +19,33 @@
 
 namespace Valuable
 {
-  ValueBool::ValueBool(HasValues * host, const QString & name,
+  AttributeBool::AttributeBool(HasValues * host, const QString & name,
                        bool value, bool transit)
-    : ValueObjectT<bool>(host, name, value, transit)
+    : AttributeT<bool>(host, name, value, transit)
   {}
 
-  ValueBool::~ValueBool() {}
+  AttributeBool::~AttributeBool() {}
 
-  bool ValueBool::deserialize(const ArchiveElement & e)
+  bool AttributeBool::deserialize(const ArchiveElement & e)
   {
     *this = Radiant::StringUtils::fromString<int32_t>(e.get().toUtf8().data()) != 0;
     return true;
   }
 
-  void ValueBool::processMessage(const char *, Radiant::BinaryData & data)
+  void AttributeBool::processMessage(const char *, Radiant::BinaryData & data)
   {
     bool ok = true;
     int32_t v = data.readInt32(&ok);
     if(ok) *this = (v != 0);
   }
 
-  QString ValueBool::asString(bool * const ok) const
+  QString AttributeBool::asString(bool * const ok) const
   {
     if(ok) *ok = true;
     return Radiant::StringUtils::stringify((int32_t)value());
   }
 
-  bool ValueBool::set(int value, Layer layer)
+  bool AttributeBool::set(int value, Layer layer)
   {
     setValue(!!value, layer);
     return true;

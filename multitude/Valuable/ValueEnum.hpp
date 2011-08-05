@@ -26,18 +26,18 @@ namespace Valuable
   /// @todo document, use properly, finish implementation
 
   /**
-   * Valuable enum. Similar to ValueFlags, but only one value can be enabled
+   * Valuable enum. Similar to AttributeFlags, but only one value can be enabled
    * at a time.
    *
-   * @see ValueFlags for more information and example
+   * @see AttributeFlags for more information and example
    */
-  class VALUABLE_API ValueEnum : public ValueIntT<int32_t>
+  class VALUABLE_API AttributeEnum : public AttributeIntT<int32_t>
   {
   public:
-    /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
-    ValueEnum(Valuable::HasValues * host, const char * name,
+    /// @copydoc Attribute::Attribute(HasValues *, const QString &, bool transit)
+    AttributeEnum(Valuable::HasValues * host, const char * name,
               const char ** enumnames, int current);
-    virtual ~ValueEnum();
+    virtual ~AttributeEnum();
 
     virtual void processMessage(const char * id, Radiant::BinaryData & data);
 

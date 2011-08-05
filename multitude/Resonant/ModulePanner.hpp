@@ -117,7 +117,7 @@ namespace Resonant {
         setName("speaker");
       }
 
-      Valuable::ValueVector2f m_location; // PixelLocation.
+      Valuable::AttributeVector2f m_location; // PixelLocation.
     };
 
     class Pipe
@@ -164,14 +164,14 @@ namespace Resonant {
 
 
     Sources      m_sources;
-    Valuable::ValueContainer<LoudSpeakers> m_speakers;
+    Valuable::AttributeContainer<LoudSpeakers> m_speakers;
 
     /// generation is increased every time speaker setup is changed
     long m_generation;
 
-    Valuable::ValueFloat m_maxRadius;
-    Valuable::ValueContainer<Rectangles> m_rectangles;
-    Valuable::ValueInt m_operatingMode;
+    Valuable::AttributeFloat m_maxRadius;
+    Valuable::AttributeContainer<Rectangles> m_rectangles;
+    Valuable::AttributeInt m_operatingMode;
     /// @endcond
   };
 

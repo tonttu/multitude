@@ -33,15 +33,15 @@ namespace Valuable {
     long value;
   };
 
-  template <typename T> class ValueFlagsT;
+  template <typename T> class AttributeFlagsT;
 
   template <typename T>
-  class FlagAliasT : public ValueObject
+  class FlagAliasT : public Attribute
   {
   public:
-    FlagAliasT(HasValues * parent, ValueFlagsT<T> & master,
+    FlagAliasT(HasValues * parent, AttributeFlagsT<T> & master,
                const QString & name, Radiant::FlagsT<T> flags)
-      : ValueObject(parent, name, false),
+      : Attribute(parent, name, false),
         m_master(master),
         m_flags(flags)
     {
@@ -77,7 +77,7 @@ namespace Valuable {
     bool deserialize(const ArchiveElement & element) { return false; }
 
   private:
-    ValueFlagsT<T> & m_master;
+    AttributeFlagsT<T> & m_master;
     const Radiant::FlagsT<T> m_flags;
   };
 
@@ -103,9 +103,9 @@ namespace Valuable {
    *   };
    *
    *   /// m_mode is either ON or OFF
-   *   ValueEnum<Mode> m_mode;
+   *   AttributeEnum<Mode> m_mode;
    *   /// m_flags is bitwise or of InputFlags values
-   *   ValueFlags<InputFlags> m_flags;
+   *   AttributeFlags<InputFlags> m_flags;
    * };
    *
    * //////////////////////////////////////////////////////////////////////////
@@ -141,13 +141,13 @@ namespace Valuable {
    * @endcode
    */
   template <typename T>
-  class ValueFlagsT : public ValueObject
+  class AttributeFlagsT : public Attribute
   {
   public:
     typedef Radiant::FlagsT<T> Flags;
-    ValueFlagsT(HasValues * parent, const QString & name, const FlagNames * names,
+    AttributeFlagsT(HasValues * parent, const QString & name, const FlagNames * names,
                Flags v = Flags(), bool transit = false)
-      : ValueObject(parent, name, transit)
+      : Attribute(parent, name, transit)
     {
       m_masks[ORIGINAL] = ~Flags();
       m_values[ORIGINAL] = v;
@@ -160,7 +160,7 @@ namespace Valuable {
       }
     }
 
-    ValueFlagsT & operator=(const Flags & b) { setValue(b, OVERRIDE); return *this; }
+    AttributeFlagsT & operator=(const Flags & b) { setValue(b, OVERRIDE); return *this; }
 
     bool operator==(const Flags & b) const { return value() == b; }
     bool operator!=(const Flags & b) const { return value() != b; }
@@ -172,15 +172,15 @@ namespace Valuable {
     Flags operator|(const Flags & b) const { return value() | b; }
     Flags operator^(const Flags & b) const { return value() ^ b; }
 
-    ValueFlagsT & operator&=(const Flags & b) { setValue(value() & b, OVERRIDE); return *this; }
-    ValueFlagsT & operator|=(const Flags & b) { setValue(value() & b, OVERRIDE); return *this; }
-    ValueFlagsT & operator^=(const Flags & b) { setValue(value() & b, OVERRIDE); return *this; }
+    AttributeFlagsT & operator&=(const Flags & b) { setValue(value() & b, OVERRIDE); return *this; }
+    AttributeFlagsT & operator|=(const Flags & b) { setValue(value() & b, OVERRIDE); return *this; }
+    AttributeFlagsT & operator^=(const Flags & b) { setValue(value() & b, OVERRIDE); return *this; }
 
     operator Flags() const { return m_cache; }
 
     /// best you can do to emulate c++0x explicit boolean conversion operator
-    typedef void (ValueFlagsT<T>::*bool_type)();
-    operator bool_type() const { return value() ? &ValueFlagsT<T>::updateCache : 0; }
+    typedef void (AttributeFlagsT<T>::*bool_type)();
+    operator bool_type() const { return value() ? &AttributeFlagsT<T>::updateCache : 0; }
 
     Flags value() const
     {
@@ -221,7 +221,7 @@ namespace Valuable {
       return true;
     }
 
-    virtual const char * type() const { return "ValueFlags"; }
+    virtual const char * type() const { return "AttributeFlags"; }
 
     int asInt(bool * const ok = 0) const
     {
@@ -239,7 +239,7 @@ namespace Valuable {
 
     bool set(int v, Layer layer)
     {
-      Radiant::warning("ValueFlagsT::set # using deprecated functionality, do not set flags with numbers");
+      Radiant::warning("AttributeFlagsT::set # using deprecated functionality, do not set flags with numbers");
       setValue(Flags::fromInt(v), layer);
       return true;
     }

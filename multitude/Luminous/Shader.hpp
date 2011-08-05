@@ -104,10 +104,10 @@ namespace Luminous {
     /// @return OpenGL program object
     GLSLProgramObject * program(Luminous::GLResources * res = 0);
 
-    // Adds a ValueObject as a shader attribute
-    //LUMINOUS_API void addShaderAttribute(const Valuable::ValueObject *);
-    /// Adds a ValueObject as a shader uniform
-    /** Once the ValueObject has been added to this shader its value
+    // Adds a Attribute as a shader attribute
+    //LUMINOUS_API void addShaderAttribute(const Valuable::Attribute *);
+    /// Adds a Attribute as a shader uniform
+    /** Once the Attribute has been added to this shader its value
         is automatically used with the shader, as the shader is bound.
         This feature can be used to automatically set the uniforms of the shader
         so that one does not need to set them via some parameter.
@@ -116,7 +116,7 @@ namespace Luminous {
 
         @param vo The object to be used
     */
-    void addShaderUniform(const Valuable::ValueObject * vo);
+    void addShaderUniform(const Valuable::Attribute * vo);
 
     /// Check if the shader is defined Check if the shader source code has been
     /// defined. Note that the shader might not be compiled, as this function

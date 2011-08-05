@@ -18,12 +18,12 @@ public:
   Light();
 
 private:
-  Valuable::ValueInt m_lightType;
-  Valuable::ValueVector3f m_position;
-  Valuable::ValueColor m_color;
-  Valuable::ValueFloat m_constantAttenuation;
-  Valuable::ValueFloat m_linearAttenuation;
-  Valuable::ValueFloat m_quadraticAttenuation;
+  Valuable::AttributeInt m_lightType;
+  Valuable::AttributeVector3f m_position;
+  Valuable::AttributeColor m_color;
+  Valuable::AttributeFloat m_constantAttenuation;
+  Valuable::AttributeFloat m_linearAttenuation;
+  Valuable::AttributeFloat m_quadraticAttenuation;
 };
 
 } // namespace Vivid

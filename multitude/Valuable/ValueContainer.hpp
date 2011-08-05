@@ -37,7 +37,7 @@ namespace Valuable
     List::iterator it = list->begin();
     \endcode
   */
-  template<typename T> class ValueContainer : public ValueObject
+  template<typename T> class AttributeContainer : public Attribute
   {
   public:
     /// STL-compatible iterator
@@ -51,13 +51,13 @@ namespace Valuable
     /// STL-like typedef for value type inside of T
     typedef typename T::value_type value_type;
 
-    ValueContainer() {}
+    AttributeContainer() {}
 
     /// Constructs a new container
     /// @param host host object
     /// @param name name of the value
-    ValueContainer(HasValues * host, const QString & name)
-      : ValueObject(host, name, false)
+    AttributeContainer(HasValues * host, const QString & name)
+      : Attribute(host, name, false)
     {}
 
     virtual const char* type() const { return "container"; }

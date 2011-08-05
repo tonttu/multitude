@@ -39,14 +39,14 @@ namespace Valuable
 {
   /** Base class for objects that include member variables with automatic IO.
 
-      This base class has a list of #Valuable::ValueObject child objects (aka
+      This base class has a list of #Valuable::Attribute child objects (aka
       member variables) that are named with unique string.
 
       Deleting the child objects is the responsibility of the inherited
       classes, HasValues simply maintains a list of children.
   */
   /// @todo Examples
-  class VALUABLE_API HasValues : public ValueObject, public Patterns::NotCopyable
+  class VALUABLE_API HasValues : public Attribute, public Patterns::NotCopyable
   {
   public:
     /// Universally unique identifier type
@@ -61,25 +61,25 @@ namespace Valuable
     HasValues(HasValues * host, const QString & name = "", bool transit = false);
     virtual ~HasValues();
 
-    /// Adds new ValueObject to the list of values
-    bool addValue(const QString & name, ValueObject * const value);
-    /// Gets a ValueObject with the given name
+    /// Adds new Attribute to the list of values
+    bool addValue(const QString & name, Attribute * const value);
+    /// Gets a Attribute with the given name
     /// @param name Value object name to search for
     /// @return Null if no object can be found
-    ValueObject * getValue(const QString & name);
-    /// Removes a ValueObject from the list of value.
-    void removeValue(ValueObject * const value);
+    Attribute * getValue(const QString & name);
+    /// Removes a Attribute from the list of value.
+    void removeValue(Attribute * const value);
 
     /// @todo add 'shortcut' API
-    // float getValueFloat(const QString & name, bool * ok = 0, float default = 0.f)
+    // float getAttributeFloat(const QString & name, bool * ok = 0, float default = 0.f)
     // ...
 
-    /// Uses a query string to find a ValueObject, and sets a new value to that if found.
-    /// @param query The path to the ValueObject. This is a '/'-separated list
-    ///        of ValueObject names, forming a path inside a ValueObject tree.
+    /// Uses a query string to find a Attribute, and sets a new value to that if found.
+    /// @param query The path to the Attribute. This is a '/'-separated list
+    ///        of Attribute names, forming a path inside a Attribute tree.
     ///        ".." can be used to refer to host element. For example
-    ///        setValue("../foo/bar", 4.0f) sets 4.0f to ValueObject named "bar"
-    ///        under ValueObject "foo" that is sibling of this object.
+    ///        setValue("../foo/bar", 4.0f) sets 4.0f to Attribute named "bar"
+    ///        under Attribute "foo" that is sibling of this object.
     /// @param value The new value
     /// @return True if object was found and the value was set successfully.
     template<class T>
@@ -116,7 +116,7 @@ namespace Valuable
         if(hv) return hv->setValue(rest, v);
       }
 
-      ValueObject * vo = it->second;
+      Attribute * vo = it->second;
       return vo->set(v);
     }
 
@@ -147,11 +147,11 @@ namespace Valuable
     /// @return true on success
     virtual bool readElement(DOMElement element);
 
-    /// Prints the contents of this ValueObject to the terminal
+    /// Prints the contents of this Attribute to the terminal
     void debugDump();
 
     /// Container for key-value object pairs
-    typedef std::map<QString, ValueObject *> container;
+    typedef std::map<QString, Attribute *> container;
     /// Iterator for the container
     typedef container::iterator iterator;
 
@@ -262,7 +262,7 @@ namespace Valuable
     HasValues * m_sender;
 
   private:
-    friend class ValueObject; // So that ValueObject can call the function below.
+    friend class Attribute; // So that Attribute can call the function below.
 
     void valueRenamed(const QString & was, const QString & now);
     void addNews();
@@ -292,9 +292,9 @@ namespace Valuable
     bool m_eventsEnabled;
 
     // set of all valueobjects that this HasValues is listening to
-    QSet<ValueObject*> m_valueListening;
+    QSet<Attribute*> m_valueListening;
 
-    Valuable::ValueIntT<Uuid> m_id;
+    Valuable::AttributeIntT<Uuid> m_id;
     // For invalidating the too new ValuePass objects
     int m_frame;
 

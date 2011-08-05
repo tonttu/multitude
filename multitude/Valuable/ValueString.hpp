@@ -27,9 +27,9 @@ namespace Valuable
 {
 
   /// String value
-  class VALUABLE_API ValueString : public ValueObjectT<QString>
+  class VALUABLE_API AttributeString : public AttributeT<QString>
   {
-    typedef ValueObjectT<QString> Base;
+    typedef AttributeT<QString> Base;
 
   public:
     using Base::operator =;
@@ -37,21 +37,21 @@ namespace Valuable
     /// The character type of this string class
     typedef QChar char_type;
 
-    ValueString();
-    /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
+    AttributeString();
+    /// @copydoc Attribute::Attribute(HasValues *, const QString &, bool transit)
     /// @param v The string to store in this object
-    ValueString(HasValues * host, const QString & name,
+    AttributeString(HasValues * host, const QString & name,
                 const QString & v = "", bool transit = false);
 
     virtual void processMessage(const char * id, Radiant::BinaryData & data);
 
     /// Copies a string
-    ValueString & operator = (const ValueString & i);
+    AttributeString & operator = (const AttributeString & i);
 
     /// Concatenates two strings
     /// @param i The string to be appended to this string
     /// @return A new string that contains both this string, and the argument string.
-    QString operator + (const ValueString & i) const;
+    QString operator + (const AttributeString & i) const;
 
     /// Concatenates two strings
     QString operator + (const QString & i) const;
@@ -85,6 +85,6 @@ namespace Valuable
   };
 }
 
-QString operator + (const QString & a, const Valuable::ValueString & b);
+QString operator + (const QString & a, const Valuable::AttributeString & b);
 
 #endif

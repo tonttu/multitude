@@ -114,7 +114,7 @@ namespace Resonant {
     if(devname) {
       devices.push_back(Device(devname, channels));
     } else if(!s_xmlFilename.isEmpty()) {
-      devices = *Valuable::Serializer::deserializeXML<Valuable::ValueContainer<Devices> >(s_xmlFilename);
+      devices = *Valuable::Serializer::deserializeXML<Valuable::AttributeContainer<Devices> >(s_xmlFilename);
     }
 
     if(devices.empty()) {

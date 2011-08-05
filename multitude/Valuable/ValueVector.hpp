@@ -34,9 +34,9 @@ namespace Valuable
       objects.
    */
   template<class VectorType>
-  class VALUABLE_API ValueVector : public ValueObjectT<VectorType>
+  class VALUABLE_API AttributeVector : public AttributeT<VectorType>
   {
-    typedef ValueObjectT<VectorType> Base;
+    typedef AttributeT<VectorType> Base;
     typedef typename VectorType::type ElementType;
     enum { N = VectorType::Elements };
 
@@ -44,18 +44,18 @@ namespace Valuable
       using Base::operator =;
       using Base::value;
 
-      ValueVector() : Base() {}
-      /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
+      AttributeVector() : Base() {}
+      /// @copydoc Attribute::Attribute(HasValues *, const QString &, bool transit)
       /// @param v The value of this object
-      ValueVector(HasValues * host, const QString & name, const VectorType & v = VectorType(), bool transit = false)
+      AttributeVector(HasValues * host, const QString & name, const VectorType & v = VectorType(), bool transit = false)
         : Base(host, name, v, transit) {}
 
-      virtual ~ValueVector();
+      virtual ~AttributeVector();
 
       /// Assigns by addition
-      ValueVector<VectorType> & operator += (const VectorType & v) { *this = value() + v; return *this; }
+      AttributeVector<VectorType> & operator += (const VectorType & v) { *this = value() + v; return *this; }
       /// Assigns by subtraction
-      ValueVector<VectorType> & operator -= (const VectorType & v) { *this = value() - v; return *this; }
+      AttributeVector<VectorType> & operator -= (const VectorType & v) { *this = value() - v; return *this; }
 
       /// Subtraction operator
       VectorType operator -
@@ -79,7 +79,7 @@ namespace Valuable
       const char * type() const;
 
       /// Sets the value
-      virtual bool set(const VectorType & v, ValueObject::Layer layer = ValueObject::OVERRIDE);
+      virtual bool set(const VectorType & v, Attribute::Layer layer = Attribute::OVERRIDE);
 
       /// Returns the internal vector object as a constant reference.
       /// @return The wrapped vector value
@@ -105,18 +105,18 @@ namespace Valuable
   };
 
   /// An integer vector2 value object
-  typedef ValueVector<Nimble::Vector2i> ValueVector2i;
+  typedef AttributeVector<Nimble::Vector2i> AttributeVector2i;
   /// An integer vector3 value object
-  typedef ValueVector<Nimble::Vector3i> ValueVector3i;
+  typedef AttributeVector<Nimble::Vector3i> AttributeVector3i;
   /// An integer vector4 value object
-  typedef ValueVector<Nimble::Vector4i> ValueVector4i;
+  typedef AttributeVector<Nimble::Vector4i> AttributeVector4i;
 
   /// A float vector2 value object
-  typedef ValueVector<Nimble::Vector2f> ValueVector2f;
+  typedef AttributeVector<Nimble::Vector2f> AttributeVector2f;
   /// A float vector3 value object
-  typedef ValueVector<Nimble::Vector3f> ValueVector3f;
+  typedef AttributeVector<Nimble::Vector3f> AttributeVector3f;
   /// A float vector4 value object
-  typedef ValueVector<Nimble::Vector4f> ValueVector4f;
+  typedef AttributeVector<Nimble::Vector4f> AttributeVector4f;
 
 }
 

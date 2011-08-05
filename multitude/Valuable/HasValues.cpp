@@ -38,11 +38,11 @@ namespace Valuable
   std::map<QString, std::set<QString> > s_eventListenNames;
 #endif
 
-  class Shortcut : public ValueObject
+  class Shortcut : public Attribute
   {
   public:
     Shortcut(HasValues * host, const QString & name)
-      : ValueObject(host, name)
+      : Attribute(host, name)
     {}
     bool deserialize(const ArchiveElement &) { return false; }
     virtual bool shortcut() const { return true; }
@@ -57,7 +57,7 @@ namespace Valuable
   }
 
   HasValues::HasValues()
-      : ValueObject(),
+      : Attribute(),
       m_sender(0),
       m_eventsEnabled(true),
       m_id(this, "id", generateId()),
@@ -65,7 +65,7 @@ namespace Valuable
   {}
 
   HasValues::HasValues(HasValues * host, const QString & name, bool transit)
-      : ValueObject(host, name, transit),
+      : Attribute(host, name, transit),
       m_eventsEnabled(true),
       m_id(this, "id", generateId()),
       m_frame(0)
@@ -89,8 +89,8 @@ namespace Valuable
       }
     }
 
-    foreach(ValueObject* vo, m_valueListening) {
-      for(QList<ValueListener>::iterator it = vo->m_listeners.begin(); it != vo->m_listeners.end(); ) {
+    foreach(Attribute* vo, m_valueListening) {
+      for(QList<AttributeListener>::iterator it = vo->m_listeners.begin(); it != vo->m_listeners.end(); ) {
         if(it->listener == this) {
           it = vo->m_listeners.erase(it);
         } else ++it;
@@ -98,14 +98,14 @@ namespace Valuable
     }
   }
 
-  ValueObject * HasValues::getValue(const QString & name)
+  Attribute * HasValues::getValue(const QString & name)
   {
     container::iterator it = m_values.find(name);
 
     return it == m_values.end() ? 0 : it->second;
   }
 
-  bool HasValues::addValue(const QString & cname, ValueObject * const value)
+  bool HasValues::addValue(const QString & cname, Attribute * const value)
   {
     //    Radiant::trace("HasValues::addValue # adding %s", cname.c_str());
 
@@ -137,7 +137,7 @@ namespace Valuable
     return true;
   }
 
-  void HasValues::removeValue(ValueObject * const value)
+  void HasValues::removeValue(Attribute * const value)
   {
     const QString & cname = value->name();
 
@@ -256,7 +256,7 @@ namespace Valuable
     elem.add("type", type());
 
     for(container::const_iterator it = m_values.begin(); it != m_values.end(); it++) {
-      ValueObject * vo = it->second;
+      Attribute * vo = it->second;
 
       if (!archive.checkFlag(Archive::ONLY_CHANGED) || vo->isChanged()) {
         ArchiveElement child = vo->serialize(archive);
@@ -279,7 +279,7 @@ namespace Valuable
 
       QString name = elem.name();
 
-      ValueObject * vo = getValue(name);
+      Attribute * vo = getValue(name);
 
       // If the value exists, just deserialize it. Otherwise, pass the element
       // to readElement()
@@ -299,7 +299,7 @@ namespace Valuable
     Radiant::trace(Radiant::DEBUG, "%s {", m_name.toUtf8().data());
 
     for(container::iterator it = m_values.begin(); it != m_values.end(); it++) {
-      ValueObject * vo = it->second;
+      Attribute * vo = it->second;
 
       HasValues * hv = dynamic_cast<HasValues *> (vo);
       if(hv) hv->debugDump();
@@ -443,7 +443,7 @@ namespace Valuable
 
     // info("HasValues::processMessage # Child id = %s", key.c_str());
 
-    ValueObject * vo = getValue(QString::fromUtf8(key.c_str()));
+    Attribute * vo = getValue(QString::fromUtf8(key.c_str()));
 
     if(vo) {
       // info("HasValues::processMessage # Sending message \"%s\" to %s",
@@ -581,7 +581,7 @@ namespace Valuable
       return;
     }
 
-    ValueObject * vo = (*it).second;
+    Attribute * vo = (*it).second;
     m_values.erase(it);
     m_values[now] = vo;
   }

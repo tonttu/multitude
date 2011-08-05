@@ -123,10 +123,10 @@ namespace Luminous {
 
 
   private:
-    Valuable::ValueVector2f m_vertices[4];
+    Valuable::AttributeVector2f m_vertices[4];
     Nimble::Matrix4 m_matrix;
     int     m_selected;
-    Valuable::ValueInt m_rotations;
+    Valuable::AttributeInt m_rotations;
   };
 
 }

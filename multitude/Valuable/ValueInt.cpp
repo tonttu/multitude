@@ -21,7 +21,7 @@ namespace Valuable
 
 
   template <>
-  void ValueIntT<int32_t>::processMessage(const char *, Radiant::BinaryData & data)
+  void AttributeIntT<int32_t>::processMessage(const char *, Radiant::BinaryData & data)
   {
     bool ok = true;
     int32_t v = data.readInt32( & ok);
@@ -31,7 +31,7 @@ namespace Valuable
   }
   
   template <>
-  void ValueIntT<uint32_t>::processMessage(const char *, Radiant::BinaryData & data)
+  void AttributeIntT<uint32_t>::processMessage(const char *, Radiant::BinaryData & data)
   {
     bool ok = true;
     uint32_t v = uint32_t(data.readInt32( & ok));
@@ -41,7 +41,7 @@ namespace Valuable
   }
 
   template <>
-  void ValueIntT<int64_t>::processMessage(const char *, Radiant::BinaryData & data)
+  void AttributeIntT<int64_t>::processMessage(const char *, Radiant::BinaryData & data)
   {
     bool ok = true;
     int64_t v = data.readInt64( & ok);
@@ -51,7 +51,7 @@ namespace Valuable
   }
   
   template <>
-  void ValueIntT<uint64_t>::processMessage(const char *, Radiant::BinaryData & data)
+  void AttributeIntT<uint64_t>::processMessage(const char *, Radiant::BinaryData & data)
   {
     bool ok = true;
     uint64_t v = uint64_t(data.readInt64( & ok));
@@ -61,7 +61,7 @@ namespace Valuable
   }
 
   template <>
-  void ValueIntT<Radiant::TimeStamp>::processMessage(const char *, Radiant::BinaryData & data)
+  void AttributeIntT<Radiant::TimeStamp>::processMessage(const char *, Radiant::BinaryData & data)
   {
     bool ok = true;
     Radiant::TimeStamp v = data.readTimeStamp( & ok);
@@ -70,11 +70,11 @@ namespace Valuable
       *this = v;
   }
 
-  template class ValueIntT<int32_t>;
-  template class ValueIntT<uint32_t>;
-  template class ValueIntT<int64_t>;
-  template class ValueIntT<uint64_t>;
+  template class AttributeIntT<int32_t>;
+  template class AttributeIntT<uint32_t>;
+  template class AttributeIntT<int64_t>;
+  template class AttributeIntT<uint64_t>;
   
-  template class ValueIntT<Radiant::TimeStamp>;
+  template class AttributeIntT<Radiant::TimeStamp>;
 
 }

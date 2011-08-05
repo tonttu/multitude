@@ -23,7 +23,7 @@ namespace Valuable
 {
 
   template<class T>
-  bool ValueFloatT<T>::deserialize(const ArchiveElement & e)
+  bool AttributeFloatT<T>::deserialize(const ArchiveElement & e)
   {
     *this = e.get().toFloat();
     return true;

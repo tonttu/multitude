@@ -25,7 +25,7 @@ namespace Valuable
 {
 
   template<class T>
-  bool ValueIntT<T>::deserialize(const ArchiveElement & e)
+  bool AttributeIntT<T>::deserialize(const ArchiveElement & e)
   {
     *this = Radiant::StringUtils::fromString<T>(e.get().toUtf8().data());
     
@@ -33,9 +33,9 @@ namespace Valuable
   }
   /*
 template<>
-  bool ValueIntT<Radiant::TimeStamp>::deserialize(const ArchiveElement & )
+  bool AttributeIntT<Radiant::TimeStamp>::deserialize(const ArchiveElement & )
   {
-    Radiant::error("ValueIntT<Radiant::TimeStamp>::deserialize # not implemented!");
+    Radiant::error("AttributeIntT<Radiant::TimeStamp>::deserialize # not implemented!");
     return false;
   }
 

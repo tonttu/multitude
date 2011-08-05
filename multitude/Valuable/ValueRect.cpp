@@ -10,12 +10,12 @@ namespace Valuable
 {
 
   template <class T>
-  ValueRectT<T>::ValueRectT(HasValues * host, const QString & name, const Nimble::RectT<T> & r, bool transit)
+  AttributeRectT<T>::AttributeRectT(HasValues * host, const QString & name, const Nimble::RectT<T> & r, bool transit)
     : Base(host, name, r, transit)
   {}
 
   template <class T>
-  bool ValueRectT<T>::deserialize(const ArchiveElement & element) {
+  bool AttributeRectT<T>::deserialize(const ArchiveElement & element) {
     std::stringstream in(element.get().toUtf8().data());
 
     Nimble::Vector2T<T> lo, hi;
@@ -30,7 +30,7 @@ namespace Valuable
   }
 
   template <class T>
-  QString ValueRectT<T>::asString(bool * const ok) const {
+  QString AttributeRectT<T>::asString(bool * const ok) const {
     if(ok) *ok = true;
 
     const Nimble::RectT<T> & rect = this->value();
@@ -46,20 +46,20 @@ namespace Valuable
   }
 
   template <>
-  const char * ValueRectT<float>::type() const
+  const char * AttributeRectT<float>::type() const
   { return "rect"; }
 
   template <>
-  const char * ValueRectT<double>::type() const
+  const char * AttributeRectT<double>::type() const
   { return "rectd"; }
 
   template <>
-  const char * ValueRectT<int>::type() const
+  const char * AttributeRectT<int>::type() const
   { return "recti"; }
 
 
-  template class ValueRectT<float>;
-  template class ValueRectT<double>;
-  template class ValueRectT<int>;
+  template class AttributeRectT<float>;
+  template class AttributeRectT<double>;
+  template class AttributeRectT<int>;
 }
 

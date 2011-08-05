@@ -17,13 +17,13 @@
 
 namespace Valuable
 {
-  ValueString::ValueString() {}
-  ValueString::ValueString(HasValues * parent, const QString & name,
+  AttributeString::AttributeString() {}
+  AttributeString::AttributeString(HasValues * parent, const QString & name,
                            const QString & v, bool transit)
     : Base(parent, name, v, transit)
   {}
 
-  void ValueString::processMessage(const char * /*id*/, Radiant::BinaryData & data)
+  void AttributeString::processMessage(const char * /*id*/, Radiant::BinaryData & data)
   {
     bool ok = true;
     QString tmp = data.read<QString>(&ok);
@@ -31,77 +31,77 @@ namespace Valuable
       *this = tmp;
   }
 
-  bool ValueString::deserialize(const ArchiveElement & element)
+  bool AttributeString::deserialize(const ArchiveElement & element)
   {
     *this = element.get();
     return true;
   }
 
-  float ValueString::asFloat(bool * const ok) const
+  float AttributeString::asFloat(bool * const ok) const
   {
     return value().toFloat(ok);
   }
 
-  int ValueString::asInt(bool * const ok) const
+  int AttributeString::asInt(bool * const ok) const
   {
     return value().toInt(ok, 0);
   }
 
-  QString ValueString::asString(bool * const ok) const
+  QString AttributeString::asString(bool * const ok) const
   {
     if(ok) *ok = true;
     return value().toUtf8().data();
   }
 
-  bool ValueString::set(const QString & v, Layer layer)
+  bool AttributeString::set(const QString & v, Layer layer)
   {
     setValue(v, layer);
     return true;
   }
 
-  ValueString & ValueString::operator=(const ValueString & i)
+  AttributeString & AttributeString::operator=(const AttributeString & i)
   {
     *this = i.value();
     return *this;
   }
 
-  QString ValueString::operator+(const ValueString & i) const
+  QString AttributeString::operator+(const AttributeString & i) const
   {
     return value() + i.value();
   }
 
-  QString ValueString::operator+(const QString & i) const
+  QString AttributeString::operator+(const QString & i) const
   {
     return value() + i;
   }
 
-  QString ValueString::operator+(const char * utf8) const
+  QString AttributeString::operator+(const char * utf8) const
   {
     return value() + QString::fromUtf8(utf8);
   }
 
-  bool ValueString::operator == (const QString & that) const
+  bool AttributeString::operator == (const QString & that) const
   {
     return value() == that;
   }
 
-  bool ValueString::operator != (const QString & that) const
+  bool AttributeString::operator != (const QString & that) const
   {
     return value() != that;
   }
 
-  void ValueString::clear()
+  void AttributeString::clear()
   {
     *this = "";
   }
 
-  unsigned ValueString::size() const
+  unsigned AttributeString::size() const
   {
     return (unsigned) value().size();
   }
 }
 
-QString operator + (const QString & a, const Valuable::ValueString & b)
+QString operator + (const QString & a, const Valuable::AttributeString & b)
 {
   return a + *b;
 }

@@ -37,7 +37,7 @@ int main(int, char**)
       }
     ));
 
-  Valuable::ValueFloat scale(0, "scale", 10.0f);
+  Valuable::AttributeFloat scale(0, "scale", 10.0f);
   rings.addShaderUniform( & scale);
 
   SDL_Init(SDL_INIT_VIDEO);

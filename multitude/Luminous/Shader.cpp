@@ -96,13 +96,13 @@ namespace Luminous {
 
     Params() {}
 
-    void add(const Valuable::ValueObject * obj)
+    void add(const Valuable::Attribute * obj)
     {
-      SHADER_PARAM_CHECK(obj, ValueInt,   m_i1);
-      SHADER_PARAM_CHECK(obj, ValueFloat, m_f1);
-      SHADER_PARAM_CHECK(obj, ValueVector2f, m_vec2f);
-      SHADER_PARAM_CHECK(obj, ValueVector3f, m_vec3f);
-      SHADER_PARAM_CHECK(obj, ValueVector4f, m_vec4f);
+      SHADER_PARAM_CHECK(obj, AttributeInt,   m_i1);
+      SHADER_PARAM_CHECK(obj, AttributeFloat, m_f1);
+      SHADER_PARAM_CHECK(obj, AttributeVector2f, m_vec2f);
+      SHADER_PARAM_CHECK(obj, AttributeVector3f, m_vec3f);
+      SHADER_PARAM_CHECK(obj, AttributeVector4f, m_vec4f);
 
       error("When adding shader parameter %s, type %s not supported",
             obj->name().toUtf8().data(), typeid(*obj).name());
@@ -111,11 +111,11 @@ namespace Luminous {
 
     void applyUniforms(GLSLProgramObject * glslprog)
     {
-      SHADER_PARAM_APPLY1(m_i1, ValueInt, glUniform1i, glslprog, getUniformLoc);
-      SHADER_PARAM_APPLY1(m_f1, ValueFloat, glUniform1f, glslprog, getUniformLoc);
-      SHADER_PARAM_APPLYN(m_vec2f, ValueVector2f, glUniform2fv, glslprog, getUniformLoc);
-      SHADER_PARAM_APPLYN(m_vec3f, ValueVector3f, glUniform3fv, glslprog, getUniformLoc);
-      SHADER_PARAM_APPLYN(m_vec4f, ValueVector4f, glUniform4fv, glslprog, getUniformLoc);
+      SHADER_PARAM_APPLY1(m_i1, AttributeInt, glUniform1i, glslprog, getUniformLoc);
+      SHADER_PARAM_APPLY1(m_f1, AttributeFloat, glUniform1f, glslprog, getUniformLoc);
+      SHADER_PARAM_APPLYN(m_vec2f, AttributeVector2f, glUniform2fv, glslprog, getUniformLoc);
+      SHADER_PARAM_APPLYN(m_vec3f, AttributeVector3f, glUniform3fv, glslprog, getUniformLoc);
+      SHADER_PARAM_APPLYN(m_vec4f, AttributeVector4f, glUniform4fv, glslprog, getUniformLoc);
     }
 
   private:
@@ -215,12 +215,12 @@ namespace Luminous {
   }
 
   /*
-  void Shader::addShaderAttribute(const Valuable::ValueObject * obj)
+  void Shader::addShaderAttribute(const Valuable::Attribute * obj)
   {
     m_self->m_varyings.add(obj);
   }*/
 
-  void Shader::addShaderUniform(const Valuable::ValueObject * obj)
+  void Shader::addShaderUniform(const Valuable::Attribute * obj)
   {
     m_self->m_uniforms.add(obj);
   }

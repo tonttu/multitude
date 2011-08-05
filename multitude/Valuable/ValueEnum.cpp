@@ -22,19 +22,19 @@
 namespace Valuable
 {
 
-  ValueEnum::ValueEnum(Valuable::HasValues * host, const char * name,
+  AttributeEnum::AttributeEnum(Valuable::HasValues * host, const char * name,
                        const char ** enumnames, int current)
-  : ValueIntT<int32_t>(host, name, current),
+  : AttributeIntT<int32_t>(host, name, current),
     m_enumnames(enumnames)
   {
     assert(enumnames != 0);
   }
 
-  ValueEnum::~ValueEnum()
+  AttributeEnum::~AttributeEnum()
   {}
 
 
-  void ValueEnum::processMessage(const char * , Radiant::BinaryData & data)
+  void AttributeEnum::processMessage(const char * , Radiant::BinaryData & data)
   {
     QString str;
     data.readString(str);

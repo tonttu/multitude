@@ -89,8 +89,8 @@ namespace Valuable
 
       Typical child classes include some POD (plain old data) elements
       (floats, ints, vector2) etc, that can be accessed through the
-      API. The ValueObjects have names (QString), that can be used to access
-      ValueObjects that are stored inside HasValues objects.
+      API. The Attributes have names (QString), that can be used to access
+      Attributes that are stored inside HasValues objects.
 
       It is also possible to add listeners to values, so that if a
       value is changed, then a call-back to soem other object is
@@ -103,7 +103,7 @@ namespace Valuable
   /// @todo the "set" functions are duplicating the processMessage functionality
   /// @todo processMessage should be renamed to eventProcess (can be tricky to do)
   /// @todo Doc
-  class VALUABLE_API ValueObject : public Serializable
+  class VALUABLE_API Attribute : public Serializable
   {
   public:
     enum Layer {
@@ -132,10 +132,10 @@ namespace Valuable
       ALL = (CHANGE << 1) -1
     };
 
-    ValueObject();
-    /// The copy constructor creates a copy of the ValueObject WITHOUT the
+    Attribute();
+    /// The copy constructor creates a copy of the Attribute WITHOUT the
     /// link to host
-    ValueObject(const ValueObject & o);
+    Attribute(const Attribute & o);
     /** Constructs a new value object and attaches it to its host.
 
     @param host The host object. This object is automatically
@@ -149,8 +149,8 @@ namespace Valuable
     is related to future uses, and can be largely ignored at the
     moment.
     */
-    ValueObject(HasValues * host, const QString & name, bool transit = false);
-    virtual ~ValueObject();
+    Attribute(HasValues * host, const QString & name, bool transit = false);
+    virtual ~Attribute();
 
     /// Returns the name of the object.
     const QString & name() const { return m_name; }
@@ -273,7 +273,7 @@ namespace Valuable
       QString class_name;
       QString orig_str;
       HasValues * obj;
-      ValueObject * vo;
+      Attribute * vo;
     };
 
     static std::list<Doc> doc;
@@ -293,32 +293,32 @@ namespace Valuable
     QString m_name;
     bool m_transit;
 
-    struct ValueListener
+    struct AttributeListener
     {
-      ValueListener(ListenerFunc func_, int role_, HasValues * listener_ = 0)
+      AttributeListener(ListenerFunc func_, int role_, HasValues * listener_ = 0)
         : func(func_), role(role_), listener(listener_) {}
 
       ListenerFunc func;
       int role;
       HasValues * listener;
     };
-    QList<ValueListener> m_listeners;
+    QList<AttributeListener> m_listeners;
 
     friend class HasValues;
   };
 
-  /// Every ValueObject is some kind of ValueObjectT<T> object.
-  /// Common functionality should be in either here or in ValueObject
-  template <typename T> class ValueObjectT : public ValueObject
+  /// Every Attribute is some kind of AttributeT<T> object.
+  /// Common functionality should be in either here or in Attribute
+  template <typename T> class AttributeT : public Attribute
   {
   public:
-    /// Creates a new ValueObjectT and stores the original and current value as a separate variables.
+    /// Creates a new AttributeT and stores the original and current value as a separate variables.
     /// @param host host object
     /// @param name name of the value
     /// @param v the default/original value of the object
     /// @param transit ignored
-    ValueObjectT(HasValues * host, const QString & name, const T & v = T(), bool transit = false)
-      : ValueObject(host, name, transit),
+    AttributeT(HasValues * host, const QString & name, const T & v = T(), bool transit = false)
+      : Attribute(host, name, transit),
       m_current(ORIGINAL),
       m_valueSet()
     {
@@ -334,8 +334,8 @@ namespace Valuable
 #endif
     }
 
-    ValueObjectT()
-      : ValueObject(),
+    AttributeT()
+      : Attribute(),
       m_current(ORIGINAL),
       m_values(),
       m_valueSet()
@@ -343,7 +343,7 @@ namespace Valuable
       m_valueSet[ORIGINAL] = true;
     }
 
-    virtual ~ValueObjectT() {}
+    virtual ~AttributeT() {}
 
     /// Access the wrapped object with the dereference operator
     inline const T & operator * () const { return value(); }
@@ -352,7 +352,7 @@ namespace Valuable
     /// Use the arrow operator to access fields inside the wrapped object.
     inline const T * operator->() const { return &value(); }
 
-    /// The original value (the value given in constructor) of the ValueObject.
+    /// The original value (the value given in constructor) of the Attribute.
     inline const T & orig() const { return m_values[ORIGINAL]; }
 
     inline const T & value(Layer layer) const { return m_values[layer]; }
@@ -369,8 +369,8 @@ namespace Valuable
       if (sendSignal) this->emitChange();
     }
 
-    /// @todo should return the derived type, not ValueObjectT
-    inline ValueObjectT<T> & operator = (const T & t)
+    /// @todo should return the derived type, not AttributeT
+    inline AttributeT<T> & operator = (const T & t)
     {
       setValue(t, OVERRIDE);
       return *this;

@@ -25,11 +25,11 @@ namespace Valuable
 {
 
   template <class T>
-  ValueVector<T>::~ValueVector()
+  AttributeVector<T>::~AttributeVector()
   {}
 
   template <class T>
-  void ValueVector<T>::processMessage(const char * id,
+  void AttributeVector<T>::processMessage(const char * id,
                       Radiant::BinaryData & data)
   {
     /// @todo this isn't how processMessage should be used
@@ -61,34 +61,34 @@ namespace Valuable
   }
 
   template<class VectorType>
-  const char *  ValueVector<VectorType>::type() const { return "vector"; }
+  const char *  AttributeVector<VectorType>::type() const { return "vector"; }
 
 
   /// @todo Under WIN32 these specializations conflict with the class instantiation
-  /// in ValueVector.hpp. Remove them and if possible modify the template function
+  /// in AttributeVector.hpp. Remove them and if possible modify the template function
   /// above to handle all types.
 /*
   template<>
-  const char * const ValueVector<Nimble::Vector2f, float, 2>::type() const { return "vec2f"; }
+  const char * const AttributeVector<Nimble::Vector2f, float, 2>::type() const { return "vec2f"; }
 
   template<>
-  const char * const ValueVector<Nimble::Vector3f, float, 3>::type() const { return "vec3f"; }
+  const char * const AttributeVector<Nimble::Vector3f, float, 3>::type() const { return "vec3f"; }
 
   template<>
-  const char * const ValueVector<Nimble::Vector4f, float, 4>::type() const { return "vec4f"; }
+  const char * const AttributeVector<Nimble::Vector4f, float, 4>::type() const { return "vec4f"; }
 
   template<>
-  const char * const ValueVector<Nimble::Vector2i, int, 2>::type() const { return "vec2i"; }
+  const char * const AttributeVector<Nimble::Vector2i, int, 2>::type() const { return "vec2i"; }
 
   template<>
-  const char * const ValueVector<Nimble::Vector3i, int, 3>::type() const { return "vec3i"; }
+  const char * const AttributeVector<Nimble::Vector3i, int, 3>::type() const { return "vec3i"; }
 
   template<>
-  const char * const ValueVector<Nimble::Vector4i, int, 4>::type() const { return "vec4i"; }
+  const char * const AttributeVector<Nimble::Vector4i, int, 4>::type() const { return "vec4i"; }
 */
 
   template<class VectorType>
-  bool ValueVector<VectorType>::deserialize(const ArchiveElement & element) {
+  bool AttributeVector<VectorType>::deserialize(const ArchiveElement & element) {
     std::stringstream in(element.get().toUtf8().data());
 
     VectorType vector;
@@ -100,7 +100,7 @@ namespace Valuable
   }
 
   template<class VectorType>
-  QString ValueVector<VectorType>::asString(bool * const ok) const {
+  QString AttributeVector<VectorType>::asString(bool * const ok) const {
     if(ok) *ok = true;
 
     QString r = Radiant::StringUtils::stringify(value()[0]);
@@ -112,7 +112,7 @@ namespace Valuable
   }
 
   template<class VectorType>
-  bool ValueVector<VectorType>::set(const VectorType & v, ValueObject::Layer layer)
+  bool AttributeVector<VectorType>::set(const VectorType & v, Attribute::Layer layer)
   {
     setValue(v, layer);
     return true;

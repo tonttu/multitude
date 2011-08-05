@@ -24,10 +24,10 @@ public:
 
   virtual const char * type() const { return "MyValues"; }
 
-  ValueFloat   m_v;
-  ValueRect    m_r;
-  ValueString  m_ws;
-  ValueString  m_s;
+  AttributeFloat   m_v;
+  AttributeRect    m_r;
+  AttributeString  m_ws;
+  AttributeString  m_s;
 };
 
 int main(int, char **)

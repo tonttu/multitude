@@ -22,15 +22,15 @@ namespace Valuable
 {
 
   /// A value object for boolean.
-  class VALUABLE_API ValueBool : public ValueObjectT<bool>
+  class VALUABLE_API AttributeBool : public AttributeT<bool>
   {
   public:
-    using ValueObjectT<bool>::operator =;
+    using AttributeT<bool>::operator =;
 
-    /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
+    /// @copydoc Attribute::Attribute(HasValues *, const QString &, bool transit)
     /// @param value The value of this object
-    ValueBool(HasValues * host, const QString & name, bool value, bool transit = false);
-    virtual ~ValueBool();
+    AttributeBool(HasValues * host, const QString & name, bool value, bool transit = false);
+    virtual ~AttributeBool();
 
     const char * type() const { return "bool"; }
     bool deserialize(const ArchiveElement & element);

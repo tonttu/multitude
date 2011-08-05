@@ -34,13 +34,13 @@ namespace Valuable
     /**
      * @param argc Number of arguments in argv
      * @param argv Array of arguments
-     * @param opts The target object where the ValueObjects are stored
+     * @param opts The target object where the Attributes are stored
      *
-     * If there is a ValueObject named "foo" in opts, it can be set in command
+     * If there is a Attribute named "foo" in opts, it can be set in command
      * line like this: <tt>--foo param</tt>
      * where param will be parsed with deserialize().
      *
-     * If the ValueObject name is only one letter, then the parser also recognizes
+     * If the Attribute name is only one letter, then the parser also recognizes
      * the command like argument that begins with one dash, like <tt>-o dir</tt>
      *
      * Boolean arguments (ValueBool objects) don't use distinct parameter, but
@@ -49,7 +49,7 @@ namespace Valuable
      * Example:
      * \code
      * HasValues opts;
-     * ValueInt limit(&opts, "limit", 5);
+     * AttributeInt limit(&opts, "limit", 5);
      * ValueString target(&opts, "target", "/tmp/target");
      * ValueBool verbose(&opts, "v", false);
      * ValueBool recursive(&opts, "recursive", true);
@@ -57,7 +57,7 @@ namespace Valuable
      * \endcode
      * Example input: -v --limit 12 --no-recursive --target out file1.txt file2.txt
      *
-     * @return List of arguments that didn't match any ValueObject in opts.
+     * @return List of arguments that didn't match any Attribute in opts.
      */
     static QStringList parse(int argc, char * argv[],
                                                   Valuable::HasValues & opts);
@@ -66,13 +66,13 @@ namespace Valuable
     /**
       * @param argc Number of arguments in argv
       * @param argv Array of arguments
-      * @param opts The target object where the ValueObjects are stored
+      * @param opts The target object where the Attributes are stored
       *
       * This is the non-static version of the parse function. This version
       * stores all parsed command line arguments in an internal set, which
       * can be queried by the \c is_parsed function.
       *
-      * @return List of arguments that didn't match any ValueObject in opts.
+      * @return List of arguments that didn't match any Attribute in opts.
       */
     QStringList parseAndStore(int argc, char * argv[],
                               Valuable::HasValues & opts);

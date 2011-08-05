@@ -14,15 +14,15 @@ namespace Valuable
 
   /// A valuable object holding a Nimble::Rect object
   template <class T>
-  class VALUABLE_API ValueRectT : public ValueObjectT<Nimble::RectT<T> >
+  class VALUABLE_API AttributeRectT : public AttributeT<Nimble::RectT<T> >
   {
-    typedef ValueObjectT<Nimble::RectT<T> > Base;
+    typedef AttributeT<Nimble::RectT<T> > Base;
   public:
     using Base::operator =;
 
-    /// @copydoc ValueObject::ValueObject(HasValues *, const std::string &, bool transit)
-    /// @param r The rectangle to be stored in the ValueRect
-    ValueRectT(HasValues * host, const QString & name, const Nimble::RectT<T> & r, bool transit = false);
+    /// @copydoc Attribute::Attribute(HasValues *, const std::string &, bool transit)
+    /// @param r The rectangle to be stored in the AttributeRect
+    AttributeRectT(HasValues * host, const QString & name, const Nimble::RectT<T> & r, bool transit = false);
 
     const char * type() const;
 
@@ -34,14 +34,14 @@ namespace Valuable
     Nimble::RectT<T> asRect() const { return this->value(); }
   };
 
-  /// Default floating point ValueRectT typedef
-  typedef ValueRectT<float> ValueRect;
-  /// ValueRectT of floats
-  typedef ValueRectT<float> ValueRectf;
-  /// ValueRectT of doubles
-  typedef ValueRectT<double> ValueRectd;
-  /// ValueRectT of ints
-  typedef ValueRectT<int> ValueRecti;
+  /// Default floating point AttributeRectT typedef
+  typedef AttributeRectT<float> AttributeRect;
+  /// AttributeRectT of floats
+  typedef AttributeRectT<float> AttributeRectf;
+  /// AttributeRectT of doubles
+  typedef AttributeRectT<double> AttributeRectd;
+  /// AttributeRectT of ints
+  typedef AttributeRectT<int> AttributeRecti;
 }
 
 #endif

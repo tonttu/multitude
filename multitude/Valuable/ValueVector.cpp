@@ -21,12 +21,12 @@
 
 namespace Valuable {
 
-  template class ValueVector<Nimble::Vector2f>;
-  template class ValueVector<Nimble::Vector3f>;
-  template class ValueVector<Nimble::Vector4f>;
+  template class AttributeVector<Nimble::Vector2f>;
+  template class AttributeVector<Nimble::Vector3f>;
+  template class AttributeVector<Nimble::Vector4f>;
   
-  template class ValueVector<Nimble::Vector2i>;
-  template class ValueVector<Nimble::Vector3i>;
-  template class ValueVector<Nimble::Vector4i>;
+  template class AttributeVector<Nimble::Vector2i>;
+  template class AttributeVector<Nimble::Vector3i>;
+  template class AttributeVector<Nimble::Vector4i>;
 }
 

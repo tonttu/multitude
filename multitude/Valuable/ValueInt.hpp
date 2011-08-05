@@ -27,49 +27,49 @@ namespace Valuable
 {
 
   /// Template class for integer values.
-  /** The actual value objects are created by using ValueIntT<int>
+  /** The actual value objects are created by using AttributeIntT<int>
       etc.
 
-      @see ValueInt, ValueTimeStamp */
+      @see AttributeInt, AttributeTimeStamp */
 
   template<class T>
-      class VALUABLE_API ValueIntT : public ValueNumeric<T>
+      class VALUABLE_API AttributeIntT : public AttributeNumeric<T>
   {
-    typedef ValueNumeric<T> Base;
+    typedef AttributeNumeric<T> Base;
   public:
     using Base::value;
     using Base::m_current;
     using Base::m_values;
     using Base::m_valueSet;
-    using ValueObjectT<T>::operator =;
+    using AttributeT<T>::operator =;
 
-    ValueIntT() : Base() {}
-    /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
+    AttributeIntT() : Base() {}
+    /// @copydoc Attribute::Attribute(HasValues *, const QString &, bool transit)
     /// @param v The numeric value of this object
-    ValueIntT(HasValues * host, const QString & name, T v, bool transit = false)
-        : ValueNumeric<T>(host, name, v, transit)
+    AttributeIntT(HasValues * host, const QString & name, T v, bool transit = false)
+        : AttributeNumeric<T>(host, name, v, transit)
     {}
 
     /// Assignment by subtraction
-    ValueIntT<T> & operator -= (T i) { *this = value() - i; return *this; }
+    AttributeIntT<T> & operator -= (T i) { *this = value() - i; return *this; }
     /// Assignment by addition
-    ValueIntT<T> & operator += (T i) { *this = value() + i; return *this; }
+    AttributeIntT<T> & operator += (T i) { *this = value() + i; return *this; }
     /// Assignment by multiplication
-    ValueIntT<T> & operator *= (T i) { *this = value() * i; return *this; }
+    AttributeIntT<T> & operator *= (T i) { *this = value() * i; return *this; }
     /// Assignment by division
-    ValueIntT<T> & operator /= (T i) { *this = value() / i; return *this; }
+    AttributeIntT<T> & operator /= (T i) { *this = value() / i; return *this; }
 
     /// Does a logical OR for the integer
-    ValueIntT<T> & operator |= (T i) { *this = value() | i; return *this; }
+    AttributeIntT<T> & operator |= (T i) { *this = value() | i; return *this; }
     /// Does a logical AND for the integer
-    ValueIntT<T> & operator &= (T i) { *this = value() & i; return *this; }
+    AttributeIntT<T> & operator &= (T i) { *this = value() & i; return *this; }
     /// Modulo operator
-    ValueIntT<T> & operator %= (T i) { *this = value() % i; return *this; }
+    AttributeIntT<T> & operator %= (T i) { *this = value() % i; return *this; }
     /// Does a bitwise exclusive OR
-    ValueIntT<T> & operator ^= (T i) { *this = value() ^ i; return *this; }
+    AttributeIntT<T> & operator ^= (T i) { *this = value() ^ i; return *this; }
 
     /// Prefix increment
-    ValueIntT<T> & operator ++ ()
+    AttributeIntT<T> & operator ++ ()
     {
       if(m_current != Base::OVERRIDE) {
         m_values[Base::OVERRIDE] = m_values[m_current];
@@ -82,7 +82,7 @@ namespace Valuable
     }
 
     /// Prefix decrement
-    ValueIntT<T> & operator -- ()
+    AttributeIntT<T> & operator -- ()
     {
       if(m_current != Base::OVERRIDE) {
         m_values[Base::OVERRIDE] = m_values[m_current];
@@ -95,18 +95,18 @@ namespace Valuable
     }
 
     /// Shift left
-    ValueIntT<T> & operator <<= (int i) { *this = value() << i; return *this; }
+    AttributeIntT<T> & operator <<= (int i) { *this = value() << i; return *this; }
     /// Shift right
-    ValueIntT<T> & operator >>= (int i) { *this = value() >> i; return *this; }
+    AttributeIntT<T> & operator >>= (int i) { *this = value() >> i; return *this; }
 
     /// Sets the numeric value
-    inline virtual bool set(int v, ValueObject::Layer layer = ValueObject::OVERRIDE)
+    inline virtual bool set(int v, Attribute::Layer layer = Attribute::OVERRIDE)
     {
       this->setValue(v, layer);
       return true;
     }
     /// @copydoc set
-    inline virtual bool set(float v, ValueObject::Layer layer = ValueObject::OVERRIDE)
+    inline virtual bool set(float v, Attribute::Layer layer = Attribute::OVERRIDE)
     {
       this->setValue(v, layer);
       return true;
@@ -129,18 +129,18 @@ namespace Valuable
   };
 
   /// 32-bit integer value object.
-  typedef ValueIntT<int32_t> ValueInt;
+  typedef AttributeIntT<int32_t> AttributeInt;
   /// 32-bit integer value object.
-  typedef ValueIntT<int32_t> ValueInt32;
+  typedef AttributeIntT<int32_t> AttributeInt32;
   /// 32-bit unsigned integer value object.
-  typedef ValueIntT<uint32_t> ValueUInt32;
+  typedef AttributeIntT<uint32_t> AttributeUInt32;
   /// 64-bit integer value object.
-  typedef ValueIntT<int64_t> ValueInt64;
+  typedef AttributeIntT<int64_t> AttributeInt64;
   /// 64-bit unsigned integer value object.
-  typedef ValueIntT<uint64_t> ValueUInt64;
+  typedef AttributeIntT<uint64_t> AttributeUInt64;
 
   /// Time-stamp value object.
-  typedef ValueIntT<Radiant::TimeStamp> ValueTimeStamp;
+  typedef AttributeIntT<Radiant::TimeStamp> AttributeTimeStamp;
 
 }
 

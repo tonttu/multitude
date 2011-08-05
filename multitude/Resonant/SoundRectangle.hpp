@@ -79,17 +79,17 @@ where the gain falls to zero if the sound source moves outside the rectangle.
 
   private:
     // Corner location of the rectangle in screen coordinates
-    Valuable::ValueVector2i m_location;
+    Valuable::AttributeVector2i m_location;
     // Rectangle size in screen coordinates
-    Valuable::ValueVector2i m_size;
+    Valuable::AttributeVector2i m_size;
     // Percentage value [0,1] of stereo panning inside the rectangle
-    Valuable::ValueFloat m_stereoPan;
+    Valuable::AttributeFloat m_stereoPan;
     // Width in screen coordinates outside the rectangle where volume fades linearly to zero
-    Valuable::ValueInt m_fadeWidth;
+    Valuable::AttributeInt m_fadeWidth;
     // Left audio channel
-    Valuable::ValueInt m_leftChannel;
+    Valuable::AttributeInt m_leftChannel;
     // Right audio channel
-    Valuable::ValueInt m_rightChannel;
+    Valuable::AttributeInt m_rightChannel;
   };
 
 }

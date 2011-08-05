@@ -26,22 +26,22 @@ namespace Valuable
 
   /// A matrix value object
   template<class MatrixType, typename ElementType, int N>
-  class ValueMatrix : public ValueObjectT<MatrixType>
+  class AttributeMatrix : public AttributeT<MatrixType>
   {
-    typedef ValueObjectT<MatrixType> Base;
+    typedef AttributeT<MatrixType> Base;
   public:
     using Base::operator =;
 
-    /// Create a new ValueMatrix
+    /// Create a new AttributeMatrix
     /// @param host host object
     /// @param name name of the value
     /// @param v the default/original value of the object
     /// @param transit ignored
-    ValueMatrix(HasValues * host, const QString & name, const MatrixType & v = MatrixType(), bool transit = false)
+    AttributeMatrix(HasValues * host, const QString & name, const MatrixType & v = MatrixType(), bool transit = false)
       : Base(host, name, v, transit) {}
 
-    ValueMatrix() : Base() {}
-    virtual ~ValueMatrix();
+    AttributeMatrix() : Base() {}
+    virtual ~AttributeMatrix();
 
     /// Returns the data in its native format
     const ElementType * native() const
@@ -54,11 +54,11 @@ namespace Valuable
   };
 
   /// A float Matrix2 value object
-  typedef ValueMatrix<Nimble::Matrix2f, float, 4> ValueMatrix2f;
+  typedef AttributeMatrix<Nimble::Matrix2f, float, 4> AttributeMatrix2f;
   /// A float Matrix3 value object
-  typedef ValueMatrix<Nimble::Matrix3f, float, 9> ValueMatrix3f;
+  typedef AttributeMatrix<Nimble::Matrix3f, float, 9> AttributeMatrix3f;
   /// A float Matrix4 value object
-  typedef ValueMatrix<Nimble::Matrix4f, float, 16> ValueMatrix4f;
+  typedef AttributeMatrix<Nimble::Matrix4f, float, 16> AttributeMatrix4f;
 }
 
 #endif // VALUEMATRIX_HPP

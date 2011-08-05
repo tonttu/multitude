@@ -36,18 +36,18 @@ namespace Valuable
     if(instance == this) instance = 0;
   }
 
-  void ChangeMap::addDelete(ValueObject * )
+  void ChangeMap::addDelete(Attribute * )
   {
     
   }
 
-  void ChangeMap::addChange(ValueObject * vo) 
+  void ChangeMap::addChange(Attribute * vo) 
   {
     if(instance) 
       instance->queueChange(vo);
   }
 
-  void ChangeMap::queueChange(ValueObject * vo) 
+  void ChangeMap::queueChange(Attribute * vo) 
   { 
     m_changes.insert(vo); 
   }

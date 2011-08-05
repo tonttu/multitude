@@ -27,17 +27,17 @@ namespace Valuable
   /** The actual value classes are inherited from this template
       class. */
   template<class T>
-  class ValueNumeric : public ValueObjectT<T>
+  class AttributeNumeric : public AttributeT<T>
   {
-    typedef ValueObjectT<T> Base;
+    typedef AttributeT<T> Base;
 
   public:
       using Base::value;
 
-      ValueNumeric() : ValueObjectT<T>() {}
-      /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
+      AttributeNumeric() : AttributeT<T>() {}
+      /// @copydoc Attribute::Attribute(HasValues *, const QString &, bool transit)
       /// @param v The numeric value of this object.
-      ValueNumeric(HasValues * host, const QString & name, T v, bool transit = false)
+      AttributeNumeric(HasValues * host, const QString & name, T v, bool transit = false)
       : Base(host, name, v, transit)
       {}
 

@@ -56,9 +56,9 @@ namespace Valuable
         continue;
       }
 
-      Valuable::ValueObject * obj = opts.getValue(name);
+      Valuable::Attribute * obj = opts.getValue(name);
       if(obj) {
-        Valuable::ValueBool * b = dynamic_cast<Valuable::ValueBool*>(obj);
+        Valuable::AttributeBool * b = dynamic_cast<Valuable::AttributeBool*>(obj);
         if(b) {
           *b = true;
           m_parsedArgs.insert(name);
@@ -73,7 +73,7 @@ namespace Valuable
         }
       } else {
         if(name.length() > 3 && name.startsWith("no-")) {
-          Valuable::ValueBool * b = dynamic_cast<Valuable::ValueBool*>(
+          Valuable::AttributeBool * b = dynamic_cast<Valuable::AttributeBool*>(
               opts.getValue(name.mid(3)));
           if(b) {
             *b = false;

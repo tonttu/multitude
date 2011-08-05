@@ -26,43 +26,43 @@
 namespace Valuable
 {
   /// Template class for floating-point values.
-  /** The actual value objects are created by using ValueFloatT<float>
+  /** The actual value objects are created by using AttributeFloatT<float>
       etc.
 
-      @see ValueFloat. */
+      @see AttributeFloat. */
   template<class T>
-  class VALUABLE_API ValueFloatT : public ValueNumeric<T>
+  class VALUABLE_API AttributeFloatT : public AttributeNumeric<T>
   {
-    typedef ValueNumeric<T> Base;
+    typedef AttributeNumeric<T> Base;
 
     public:
       using Base::value;
-      using ValueObjectT<T>::operator =;
+      using AttributeT<T>::operator =;
 
-      ValueFloatT() : Base() {}
-      /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
+      AttributeFloatT() : Base() {}
+      /// @copydoc Attribute::Attribute(HasValues *, const QString &, bool transit)
       /// @param v The numeric value of this object
-      ValueFloatT(HasValues * host, const QString & name, T v = T(0), bool transit = false)
-      : ValueNumeric<T>(host, name, v, transit)
+      AttributeFloatT(HasValues * host, const QString & name, T v = T(0), bool transit = false)
+      : AttributeNumeric<T>(host, name, v, transit)
       {}
 
       /// Assignment by subtraction
-      ValueFloatT<T> & operator -= (T i) { *this = value() - i; return *this; }
+      AttributeFloatT<T> & operator -= (T i) { *this = value() - i; return *this; }
       /// Assignment by addition
-      ValueFloatT<T> & operator += (T i) { *this = value() + i; return *this; }
+      AttributeFloatT<T> & operator += (T i) { *this = value() + i; return *this; }
       /// Assignment by multiplication
-      ValueFloatT<T> & operator *= (T i) { *this = value() * i; return *this; }
+      AttributeFloatT<T> & operator *= (T i) { *this = value() * i; return *this; }
       /// Assignment by division
-      ValueFloatT<T> & operator /= (T i) { *this = value() / i; return *this; }
+      AttributeFloatT<T> & operator /= (T i) { *this = value() / i; return *this; }
 
       /// Sets the numeric value
-      inline virtual bool set(int v, ValueObject::Layer layer = ValueObject::OVERRIDE)
+      inline virtual bool set(int v, Attribute::Layer layer = Attribute::OVERRIDE)
       {
         this->setValue(v, layer);
         return true;
       }
       /// @copydoc set
-      inline virtual bool set(float v, ValueObject::Layer layer = ValueObject::OVERRIDE)
+      inline virtual bool set(float v, Attribute::Layer layer = Attribute::OVERRIDE)
       {
         this->setValue(v, layer);
         return true;
@@ -79,12 +79,12 @@ namespace Valuable
   };
 
   /// Float value object
-  typedef ValueFloatT<float> ValueFloat;
+  typedef AttributeFloatT<float> AttributeFloat;
 
 #ifdef WIN32
 #ifdef VALUABLE_EXPORT
   // In WIN32 template classes must be instantiated to be exported
-  template class ValueFloatT<float>;
+  template class AttributeFloatT<float>;
 #endif
 #endif
 
