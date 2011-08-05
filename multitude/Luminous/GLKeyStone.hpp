@@ -9,9 +9,9 @@
 
 #include <Nimble/Matrix4.hpp>
 
-#include <Valuable/HasValues.hpp>
-#include <Valuable/ValueInt.hpp>
-#include <Valuable/ValueVector.hpp>
+#include <Valuable/Node.hpp>
+#include <Valuable/AttributeInt.hpp>
+#include <Valuable/AttributeVector.hpp>
 
 namespace Luminous {
 

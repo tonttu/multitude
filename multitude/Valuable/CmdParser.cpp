@@ -17,8 +17,8 @@
 
 #include "Valuable/DOMDocument.hpp"
 #include "Valuable/DOMElement.hpp"
-#include "Valuable/HasValues.hpp"
-#include "Valuable/ValueBool.hpp"
+#include "Valuable/Node.hpp"
+#include "Valuable/AttributeBool.hpp"
 
 #include <QStringList>
 

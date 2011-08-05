@@ -14,9 +14,9 @@
 
 #include <Radiant/RefPtr.hpp>
 
-#include <Valuable/ValueString.hpp>
-#include <Valuable/ValueFloat.hpp>
-#include <Valuable/ValueBool.hpp>
+#include <Valuable/AttributeString.hpp>
+#include <Valuable/AttributeFloat.hpp>
+#include <Valuable/AttributeBool.hpp>
 
 #include <vector>
 

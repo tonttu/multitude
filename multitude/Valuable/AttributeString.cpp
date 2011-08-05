@@ -13,7 +13,7 @@
  *
  */
 
-#include "ValueString.hpp"
+#include "AttributeString.hpp"
 
 namespace Valuable
 {

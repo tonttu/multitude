@@ -17,7 +17,7 @@
 #define VALUABLE_VALUE_VECTOR_HPP
 
 #include <Valuable/Export.hpp>
-#include <Valuable/ValueObject.hpp>
+#include <Valuable/AttributeObject.hpp>
 
 #include <Nimble/Vector4.hpp>
 

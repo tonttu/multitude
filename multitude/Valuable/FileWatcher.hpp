@@ -16,7 +16,7 @@
 #ifndef VALUABLE_FILEWATCHER_HPP
 #define VALUABLE_FILEWATCHER_HPP
 
-#include "HasValues.hpp"
+#include "Node.hpp"
 
 #include <Radiant/TimeStamp.hpp>
 

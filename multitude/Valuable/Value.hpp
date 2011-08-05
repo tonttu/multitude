@@ -16,9 +16,9 @@
 #ifndef VALUABLE_VALUE_HPP
 #define VALUABLE_VALUE_HPP
 
-#include "ValueInt.hpp"
-#include "ValueFloat.hpp"
-#include "ValueVector.hpp"
+#include "AttributeInt.hpp"
+#include "AttributeFloat.hpp"
+#include "AttributeVector.hpp"
 
 #define DefineType(_Type, _Klass) template <> struct AttributeFor< _Type > { typedef _Klass Type; }
 #define DefineTypeT(_Type, _Klass) DefineType(_Type, _Klass< _Type >)

@@ -13,8 +13,8 @@
  * 
  */
 
-#include "ValueObject.hpp"
-#include "HasValues.hpp"
+#include "AttributeObject.hpp"
+#include "Node.hpp"
 #include "ChangeMap.hpp"
 
 #include "DOMElement.hpp"

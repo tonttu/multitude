@@ -17,7 +17,7 @@
 #define VALUABLE_VALUE_INT_HPP
 
 #include <Valuable/Export.hpp>
-#include <Valuable/ValueNumeric.hpp>
+#include <Valuable/AttributeNumeric.hpp>
 
 #include <Radiant/TimeStamp.hpp>
 

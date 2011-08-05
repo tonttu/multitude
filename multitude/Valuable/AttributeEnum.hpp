@@ -18,7 +18,7 @@
 
 /// @cond
 
-#include <Valuable/ValueInt.hpp>
+#include <Valuable/AttributeInt.hpp>
 
 namespace Valuable
 {

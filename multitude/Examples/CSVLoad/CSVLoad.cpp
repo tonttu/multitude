@@ -17,8 +17,8 @@
 #include <Radiant/Trace.hpp>
 
 #include <Valuable/CmdParser.hpp>
-#include <Valuable/HasValues.hpp>
-#include <Valuable/ValueString.hpp>
+#include <Valuable/Node.hpp>
+#include <Valuable/AttributeString.hpp>
 
 #include <QStringList>
 

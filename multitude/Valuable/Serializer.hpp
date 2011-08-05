@@ -18,7 +18,7 @@
 
 #include "DOMElement.hpp"
 #include "DOMDocument.hpp"
-#include "ValueObject.hpp"
+#include "AttributeObject.hpp"
 #include "XMLArchive.hpp"
 
 #include <Radiant/StringUtils.hpp>

@@ -1,7 +1,7 @@
 /* COPYRIGHT
  */
 
-#include "ValueRect.hpp"
+#include "AttributeRect.hpp"
 #include "DOMElement.hpp"
 
 #include <Radiant/StringUtils.hpp>

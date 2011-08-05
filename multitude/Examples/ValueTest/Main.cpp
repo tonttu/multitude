@@ -1,8 +1,8 @@
-#include <Valuable/HasValues.hpp>
+#include <Valuable/Node.hpp>
 #include <Valuable/Valuable.hpp>
-#include <Valuable/ValueFloat.hpp>
-#include <Valuable/ValueRect.hpp>
-#include <Valuable/ValueString.hpp>
+#include <Valuable/AttributeFloat.hpp>
+#include <Valuable/AttributeRect.hpp>
+#include <Valuable/AttributeString.hpp>
 
 #include <string.h>
 

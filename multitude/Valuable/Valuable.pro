@@ -1,60 +1,59 @@
 include(../multitude.pri)
 
 HEADERS += Archive.hpp \
-    ValueFlags.hpp \
+    AttributeFlags.hpp \
     FileWatcher.hpp \
-    ValueMatrix.hpp \
-    ValueMatrixImpl.hpp
+    AttributeMatrix.hpp \
+    AttributeMatrixImpl.hpp
 HEADERS += XMLArchive.hpp
 HEADERS += ChangeMap.hpp
 HEADERS += CmdParser.hpp
-HEADERS += ValueEnum.hpp
+HEADERS += AttributeEnum.hpp
 HEADERS += ConfigDocument.hpp
 HEADERS += ConfigElement.hpp
 HEADERS += ConfigValue.hpp
 HEADERS += DOMDocument.hpp
 HEADERS += DOMElement.hpp
 HEADERS += Export.hpp
-HEADERS += HasValues.hpp
-HEADERS += HasValuesImpl.hpp
+HEADERS += Node.hpp
 HEADERS += Serializer.hpp
 HEADERS += Valuable.hpp
 HEADERS += Value.hpp
-HEADERS += ValueBool.hpp
-HEADERS += ValueColor.hpp
-HEADERS += ValueContainer.hpp
-HEADERS += ValueFloat.hpp
-HEADERS += ValueFloatImpl.hpp
-HEADERS += ValueInt.hpp
-HEADERS += ValueIntImpl.hpp
-HEADERS += ValueNumeric.hpp
-HEADERS += ValueObject.hpp
-HEADERS += ValueRect.hpp
-HEADERS += ValueString.hpp
-HEADERS += ValueVector.hpp
-HEADERS += ValueVectorImpl.hpp
+HEADERS += AttributeBool.hpp
+HEADERS += AttributeColor.hpp
+HEADERS += AttributeContainer.hpp
+HEADERS += AttributeFloat.hpp
+HEADERS += AttributeFloatImpl.hpp
+HEADERS += AttributeInt.hpp
+HEADERS += AttributeIntImpl.hpp
+HEADERS += AttributeNumeric.hpp
+HEADERS += AttributeObject.hpp
+HEADERS += AttributeRect.hpp
+HEADERS += AttributeString.hpp
+HEADERS += AttributeVector.hpp
+HEADERS += AttributeVectorImpl.hpp
 
 SOURCES += Archive.cpp \
     FileWatcher.cpp \
-    ValueMatrix.cpp
+    AttributeMatrix.cpp
 SOURCES += XMLArchive.cpp
 SOURCES += ChangeMap.cpp
 SOURCES += CmdParser.cpp
-SOURCES += ValueEnum.cpp
+SOURCES += AttributeEnum.cpp
 SOURCES += ConfigDocument.cpp
 SOURCES += ConfigElement.cpp
 SOURCES += ConfigValue.cpp
-SOURCES += HasValues.cpp
+SOURCES += Node.cpp
 SOURCES += Serializer.cpp
 SOURCES += Valuable.cpp
-SOURCES += ValueBool.cpp
-SOURCES += ValueColor.cpp
-SOURCES += ValueFloat.cpp
-SOURCES += ValueInt.cpp
-SOURCES += ValueObject.cpp
-SOURCES += ValueRect.cpp
-SOURCES += ValueString.cpp
-SOURCES += ValueVector.cpp
+SOURCES += AttributeBool.cpp
+SOURCES += AttributeColor.cpp
+SOURCES += AttributeFloat.cpp
+SOURCES += AttributeInt.cpp
+SOURCES += AttributeObject.cpp
+SOURCES += AttributeRect.cpp
+SOURCES += AttributeString.cpp
+SOURCES += AttributeVector.cpp
 
 LIBS += $$LIB_RADIANT \
     $$LIB_NIMBLE $$LIB_PATTERNS -lv8

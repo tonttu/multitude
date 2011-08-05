@@ -17,8 +17,8 @@
 #define VALUABLE_HASVALUES_HPP
 
 #include "Export.hpp"
-#include "ValueInt.hpp"
-#include "ValueObject.hpp"
+#include "AttributeInt.hpp"
+#include "AttributeObject.hpp"
 
 #include <Patterns/NotCopyable.hpp>
 

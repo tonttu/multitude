@@ -24,7 +24,7 @@
 #include <Radiant/StringUtils.hpp>
 
 #include <Valuable/Serializer.hpp>
-#include <Valuable/ValueContainer.hpp>
+#include <Valuable/AttributeContainer.hpp>
 
 #include <string>
 

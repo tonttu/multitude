@@ -21,7 +21,7 @@
 #include <Luminous/Collectable.hpp>
 #include <Luminous/ContextVariable.hpp>
 #include <Luminous/GLSLProgramObject.hpp>
-#include <Valuable/HasValues.hpp>
+#include <Valuable/Node.hpp>
 
 
 namespace Luminous {

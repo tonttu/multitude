@@ -13,7 +13,7 @@
  * 
  */
 
-#include "ValueBool.hpp"
+#include "AttributeBool.hpp"
 #include "DOMElement.hpp"
 #include "Radiant/StringUtils.hpp"
 

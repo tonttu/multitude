@@ -18,9 +18,9 @@
 
 #include "Export.hpp"
 
-#include <Valuable/HasValues.hpp>
-#include <Valuable/ValueVector.hpp>
-#include <Valuable/ValueFloat.hpp>
+#include <Valuable/Node.hpp>
+#include <Valuable/AttributeVector.hpp>
+#include <Valuable/AttributeFloat.hpp>
 
 namespace Resonant
 {

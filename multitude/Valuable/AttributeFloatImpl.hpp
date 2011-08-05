@@ -16,7 +16,7 @@
 #ifndef VALUABLE_VALUE_FLOAT_IMPL_HPP
 #define VALUABLE_VALUE_FLOAT_IMPL_HPP
 
-#include <Valuable/ValueFloat.hpp>
+#include <Valuable/AttributeFloat.hpp>
 #include <Valuable/DOMElement.hpp>
 
 namespace Valuable

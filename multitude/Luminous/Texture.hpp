@@ -24,7 +24,7 @@
 
 #include <Patterns/NotCopyable.hpp>
 
-#include <Valuable/HasValues.hpp>
+#include <Valuable/Node.hpp>
 
 namespace Luminous
 {

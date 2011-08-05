@@ -18,9 +18,9 @@
 
 #include <Radiant/FileUtils.hpp>
 
-#include <Valuable/ValueInt.hpp>
-#include <Valuable/ValueFloat.hpp>
-#include <Valuable/ValueVector.hpp>
+#include <Valuable/AttributeInt.hpp>
+#include <Valuable/AttributeFloat.hpp>
+#include <Valuable/AttributeVector.hpp>
 
 #include <typeinfo>
 #include <vector>

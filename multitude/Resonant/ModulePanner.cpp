@@ -23,7 +23,7 @@
 
 #include <Valuable/DOMElement.hpp>
 #include <Valuable/DOMDocument.hpp>
-#include <Valuable/ValueObject.hpp>
+#include <Valuable/AttributeObject.hpp>
 
 #include <assert.h>
 #include <string.h>

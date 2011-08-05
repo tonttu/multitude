@@ -17,7 +17,7 @@
 #define VALUABLE_VALUE_STRING_HPP
 
 #include <Valuable/Export.hpp>
-#include <Valuable/ValueObject.hpp>
+#include <Valuable/AttributeObject.hpp>
 
 #include <QString>
 

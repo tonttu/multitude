@@ -36,8 +36,8 @@
 
 #include <Resonant/DSPNetwork.hpp>
 
-#include <Valuable/HasValues.hpp>
-#include <Valuable/ValueFloat.hpp>
+#include <Valuable/Node.hpp>
+#include <Valuable/AttributeFloat.hpp>
 
 namespace Resonant {
   class DSPNetwork;

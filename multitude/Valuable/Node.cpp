@@ -13,11 +13,10 @@
  * 
  */
 
-#include <Valuable/HasValuesImpl.hpp>
 #include <Valuable/DOMDocument.hpp>
 #include <Valuable/DOMElement.hpp>
 #include <Valuable/Valuable.hpp>
-#include <Valuable/HasValues.hpp>
+#include <Valuable/Node.hpp>
 #include <Valuable/Serializer.hpp>
 
 #include <Radiant/Mutex.hpp>

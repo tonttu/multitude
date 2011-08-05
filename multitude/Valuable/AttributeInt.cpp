@@ -13,8 +13,8 @@
  * 
  */
 
-#include "ValueInt.hpp"
-#include "ValueIntImpl.hpp"
+#include "AttributeInt.hpp"
+#include "AttributeIntImpl.hpp"
 
 namespace Valuable
 {

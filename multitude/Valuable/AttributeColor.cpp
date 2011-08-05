@@ -13,15 +13,19 @@
  * 
  */
 
-#ifndef HASVALUES_HASVALUES_IMPL_HPP
-#define HASVALUES_HASVALUES_IMPL_HPP
+#include "AttributeColor.hpp"
+#include "DOMElement.hpp"
 
-#include <Valuable/HasValues.hpp>
-
-#include <Radiant/Trace.hpp>
+#include <Radiant/StringUtils.hpp>
 
 namespace Valuable
 {
+
+  AttributeColor::AttributeColor(Node * host, const QString & name, const Radiant::Color & c, bool transit)
+    : AttributeVector<Nimble::Vector4f>(host, name, c, transit)
+  {}
+
+  AttributeColor::~AttributeColor()
+  {}
 }
 
-#endif

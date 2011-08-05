@@ -17,7 +17,7 @@
 #define VALUEMATRIX_HPP
 
 #include <Valuable/Export.hpp>
-#include <Valuable/ValueObject.hpp>
+#include <Valuable/AttributeObject.hpp>
 
 #include <Nimble/Matrix4.hpp>
 

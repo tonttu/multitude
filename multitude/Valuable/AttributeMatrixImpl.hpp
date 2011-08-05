@@ -16,7 +16,7 @@
 #ifndef VALUABLE_Matrix_SPECIALIZATION_HPP
 #define VALUABLE_Matrix_SPECIALIZATION_HPP
 
-#include "ValueMatrix.hpp"
+#include "AttributeMatrix.hpp"
 #include "DOMElement.hpp"
 
 #include <Radiant/StringUtils.hpp>

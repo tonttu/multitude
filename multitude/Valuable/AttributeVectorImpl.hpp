@@ -16,7 +16,7 @@
 #ifndef VALUABLE_VECTOR_SPECIALIZATION_HPP
 #define VALUABLE_VECTOR_SPECIALIZATION_HPP
 
-#include "ValueVector.hpp"
+#include "AttributeVector.hpp"
 #include "DOMElement.hpp"
 
 #include <string.h>

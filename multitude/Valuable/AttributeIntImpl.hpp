@@ -16,7 +16,7 @@
 #ifndef VALUABLE_VALUE_INT_IMPL_HPP
 #define VALUABLE_VALUE_INT_IMPL_HPP
 
-#include <Valuable/ValueInt.hpp>
+#include <Valuable/AttributeInt.hpp>
 #include <Valuable/DOMElement.hpp>
 
 #include <Radiant/StringUtils.hpp>

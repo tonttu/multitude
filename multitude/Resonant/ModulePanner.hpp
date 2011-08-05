@@ -26,9 +26,9 @@
 #include <Radiant/RefObj.hpp>
 #include <Radiant/RefPtr.hpp>
 
-#include <Valuable/ValueFloat.hpp>
-#include <Valuable/ValueVector.hpp>
-#include <Valuable/ValueContainer.hpp>
+#include <Valuable/AttributeFloat.hpp>
+#include <Valuable/AttributeVector.hpp>
+#include <Valuable/AttributeContainer.hpp>
 
 #include <vector>
 

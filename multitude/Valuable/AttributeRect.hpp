@@ -5,7 +5,7 @@
 #define VALUABLE_VALUE_RECT_HPP
 
 #include <Valuable/Export.hpp>
-#include <Valuable/ValueObject.hpp>
+#include <Valuable/AttributeObject.hpp>
 
 #include <Nimble/Rect.hpp>
 

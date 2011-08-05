@@ -13,7 +13,7 @@
  * 
  */
 
-#include "ValueFloatImpl.hpp"
+#include "AttributeFloatImpl.hpp"
 
 namespace Valuable
 {

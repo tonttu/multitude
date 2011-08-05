@@ -18,7 +18,7 @@
 
 #include <Resonant/Export.hpp>
 
-#include <Valuable/HasValues.hpp>
+#include <Valuable/Node.hpp>
 
 namespace  Radiant {
 

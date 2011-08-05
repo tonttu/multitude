@@ -13,19 +13,7 @@
  * 
  */
 
-#include "ValueColor.hpp"
-#include "DOMElement.hpp"
+// The purpose of this file is to include ValueNumeric.hpp in the Valuable build
+// thereby including any template instantiations defined in that file
 
-#include <Radiant/StringUtils.hpp>
-
-namespace Valuable
-{
-
-  AttributeColor::AttributeColor(Node * host, const QString & name, const Radiant::Color & c, bool transit)
-    : AttributeVector<Nimble::Vector4f>(host, name, c, transit)
-  {}
-
-  AttributeColor::~AttributeColor()
-  {}
-}
-
+#include "AttributeNumeric.hpp"

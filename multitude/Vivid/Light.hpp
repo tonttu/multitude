@@ -1,10 +1,10 @@
 #ifndef VIVID_LIGHT_HPP
 #define VIVID_LIGHT_HPP
 
-#include <Valuable/HasValues.hpp>
-#include <Valuable/ValueVector.hpp>
-#include <Valuable/ValueFloat.hpp>
-#include <Valuable/ValueColor.hpp>
+#include <Valuable/Node.hpp>
+#include <Valuable/AttributeVector.hpp>
+#include <Valuable/AttributeFloat.hpp>
+#include <Valuable/AttributeColor.hpp>
 
 namespace Vivid {
 

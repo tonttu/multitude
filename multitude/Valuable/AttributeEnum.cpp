@@ -13,7 +13,7 @@
  * 
  */
 
-#include <Valuable/ValueEnum.hpp>
+#include <Valuable/AttributeEnum.hpp>
 
 #include <assert.h>
 

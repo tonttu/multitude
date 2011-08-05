@@ -19,7 +19,7 @@
 #include <Radiant/StringUtils.hpp>
 
 #include <Valuable/Export.hpp>
-#include <Valuable/ValueObject.hpp>
+#include <Valuable/AttributeObject.hpp>
 
 namespace Valuable
 {

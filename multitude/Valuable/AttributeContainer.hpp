@@ -17,7 +17,7 @@
 #define VALUABLE_VALUE_CONTAINER_HPP
 
 #include "Serializer.hpp"
-#include "ValueObject.hpp"
+#include "AttributeObject.hpp"
 #include <iterator>
 
 namespace Valuable

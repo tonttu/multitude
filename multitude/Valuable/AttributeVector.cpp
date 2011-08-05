@@ -16,8 +16,8 @@
 // The purpose of this file is to include ValueVector.hpp and ValueVectorImpl.hpp in the
 // Valuable build, thereby including any template instantiations defined in those files
 
-#include "ValueVector.hpp"
-#include "ValueVectorImpl.hpp"
+#include "AttributeVector.hpp"
+#include "AttributeVectorImpl.hpp"
 
 namespace Valuable {
 

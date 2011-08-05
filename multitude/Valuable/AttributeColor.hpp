@@ -19,7 +19,7 @@
 #include <Radiant/Color.hpp>
 
 #include <Valuable/Export.hpp>
-#include <Valuable/ValueVector.hpp>
+#include <Valuable/AttributeVector.hpp>
 
 namespace Valuable
 {

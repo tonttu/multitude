@@ -19,7 +19,7 @@
 #include <Radiant/StringUtils.hpp>
 
 #include <Valuable/Export.hpp>
-#include <Valuable/ValueNumeric.hpp>
+#include <Valuable/AttributeNumeric.hpp>
 
 #define VO_TYPE_FLOAT "float"
 
