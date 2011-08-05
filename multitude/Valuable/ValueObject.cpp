@@ -178,7 +178,7 @@ namespace Valuable
 
   ArchiveElement ValueObject::serialize(Archive & archive) const
   {
-    ArchiveElement elem = archive.createElement(m_name.empty() ? "ValueObject" : m_name.c_toUtf8().data());
+    ArchiveElement elem = archive.createElement(m_name.isEmpty() ? "ValueObject" : m_name.toUtf8().data());
     elem.add("type", type());
     elem.set(asString());
 

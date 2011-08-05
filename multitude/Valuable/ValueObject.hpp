@@ -18,7 +18,6 @@
 
 #include "Export.hpp"
 #include "Archive.hpp"
-#include "ValueListener.hpp"
 #include "DOMElement.hpp"
 
 #include <Nimble/Vector4.hpp>

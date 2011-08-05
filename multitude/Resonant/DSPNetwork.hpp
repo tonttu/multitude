@@ -102,13 +102,13 @@ namespace Resonant {
       /** @param moduleId The id of the module that we are connecting to.
           @param channel The channel to connect to.
       */
-      Connection(const std::string & moduleId, int channel)
+      Connection(const QString & moduleId, int channel)
         : m_moduleId(moduleId), m_channel(channel),m_buf(0)
       {
       }
 
       /// Sets the id of the connected module
-      void setModuleId(const std::string & id)
+      void setModuleId(const QString & id)
       {
         m_moduleId = id;
       }
@@ -124,7 +124,7 @@ namespace Resonant {
       friend class DSPNetwork;
 
       /// @cond
-      std::string m_moduleId;
+      QString m_moduleId;
       int         m_channel;
       Buf        *m_buf;
       /// @endcond
@@ -139,9 +139,9 @@ namespace Resonant {
     public:
       NewConnection() : m_sourceChannel(0), m_targetChannel(0) {}
       /** The id of the audio source module. */
-      std::string m_sourceId;
+      QString m_sourceId;
       /** The id of the audio destination module. */
-      std::string m_targetId;
+      QString m_targetId;
       /** The channel index in the source module (where the signal is coming from). */
       int         m_sourceChannel;
       /** The channel index in the target module (where the signal is going to). */
@@ -202,7 +202,7 @@ namespace Resonant {
       void eraseInputs(const QString & moduleId);
       int findInInput(float * ptr) const;
       int findInOutput(float * ptr) const;
-      void removeInputsFrom(const std::string & id);
+      void removeInputsFrom(const QString & id);
 
       Module * m_module;
 
@@ -233,7 +233,7 @@ namespace Resonant {
         @param device Device name or empty string for default device
         @return False on error
     */
-    bool start(const std::string & device = "");
+    bool start(const QString & device = "");
 
     /// Adds a DSP #Resonant::Module to the signal processing graph
     /** This function does not perform the actual addition, but puts the module into a FIFO,
@@ -267,11 +267,11 @@ DSPNetwork::instance().send(control);
     /// Finds an item that holds a module with given id
     /// @param id Module id, @see Module::id()
     /// @return Pointer to the item inside DSPNetwork or NULL
-    Item * findItem(const std::string & id);
+    Item * findItem(const QString & id);
     /// Finds a module with name id inside one of the items in DSPNetwork
     /// @param id Module id, @see Module::id()
     /// @return Pointer to the module or NULL
-    Module * findModule(const std::string & id);
+    Module * findModule(const QString & id);
 
     /// @cond
     void dumpInfo(FILE *f);
@@ -293,7 +293,7 @@ DSPNetwork::instance().send(control);
     void checkNewControl();
     void checkNewItems();
     void checkDoneItems();
-    void deliverControl(const std::string & moduleid, const char * commandid,
+    void deliverControl(const QString & moduleid, const char * commandid,
                         Radiant::BinaryData &);
 
     bool uncompile(Item &);
@@ -302,7 +302,7 @@ DSPNetwork::instance().send(control);
     Buf & findFreeBuf(int);
     bool bufIsFree(int, int);
     void checkValidId(Item &);
-    float * findOutput(const std::string & id, int channel);
+    float * findOutput(const QString & id, int channel);
     long countBufferBytes();
     void duDumpInfo(FILE *f);
 
@@ -321,7 +321,7 @@ DSPNetwork::instance().send(control);
     Radiant::BinaryData m_incopy;
     Radiant::Mutex m_inMutex;
 
-    std::string m_devName;
+    QString m_devName;
     // bool        m_continue;
     long        m_frames;
     int         m_doneCount;

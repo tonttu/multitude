@@ -20,7 +20,7 @@
 #include <Radiant/StringUtils.hpp>
 
 #include <QStringList>
-#include <set>
+#include <QSet>
 
 namespace Valuable
 {
@@ -94,7 +94,7 @@ namespace Valuable
     bool isParsed(const QString & name);
 
   private:
-    std::set<QString> m_parsedArgs;
+    QSet<QString> m_parsedArgs;
   };
 }
 

@@ -75,17 +75,12 @@ namespace Valuable
     return new DOMDocument();
   }
 
-  DOMElement DOMDocument::createElement(const char * name)
+  DOMElement DOMDocument::createElement(const QString & name)
   {
     QDomElement de = m_wrapped->x.createElement(name);
     DOMElement r;
     r.m_wrapped->x = de;
     return r;
-  }
-
-  DOMElement DOMDocument::createElement(const QString & name)
-  {
-    return createElement(name.toUtf8().data());
   }
 
 

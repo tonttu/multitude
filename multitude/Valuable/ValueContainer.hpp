@@ -57,7 +57,7 @@ namespace Valuable
     /// @param host host object
     /// @param name name of the value
     ValueContainer(HasValues * host, const QString & name)
-      : ValueObject(parent, name, false)
+      : ValueObject(host, name, false)
     {}
 
     virtual const char* type() const { return "container"; }

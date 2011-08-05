@@ -17,7 +17,7 @@
 #include "StringUtils.hpp"
 
 // Utility function
-std::string file_and_line(const QString & file, long ptr)
+QString file_and_line(const QString & file, long ptr)
 {
   assert(sizeof(long) == sizeof(void*));
   char buffer[512];
@@ -73,8 +73,8 @@ namespace Radiant
 
     for(size_t i = 0; i < size(); i++) {
       if(r.exactMatch(QString::fromUtf8(strings[i]))) {
-        std::string func = Radiant::StringUtils::demangle(r.cap(2).toUtf8().data());
-        std::string file;
+        QString func = Radiant::StringUtils::demangle(r.cap(2).toUtf8().data());
+        QString file;
 
         Dl_info info;
         info.dli_fbase = 0;
@@ -83,15 +83,15 @@ namespace Radiant
           file = file_and_line(r.cap(1), (long)m_frames[i] - (long)info.dli_fbase);
         }
 
-        if(file.empty())
+        if(file.isEmpty())
           file = file_and_line(r.cap(1), (long)m_frames[i]);
-        if(file.empty())
-          file = r.cap(1).toUtf8().data();
+        if(file.isEmpty())
+          file = r.cap(1);
 
-        if(func.empty())
-          Radiant::error("#%-2d %p at %s", int(i), m_frames[i], file.c_str());
+        if(func.isEmpty())
+          Radiant::error("#%-2d %p at %s", int(i), m_frames[i], file.toUtf8().data());
         else
-          Radiant::error("#%-2d %s at %s", int(i), func.c_str(), file.c_str());
+          Radiant::error("#%-2d %s at %s", int(i), func.toUtf8().data(), file.toUtf8().data());
       } else {
         Radiant::error("#%-2d %s", int(i), strings[i]);
       }

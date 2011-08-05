@@ -41,7 +41,7 @@ namespace Resonant {
     {
     public:
       Move() : from(0), to(0) {}
-      std::string sourceId;
+      QString sourceId;
       int from, to;
     };
 /// @endcond

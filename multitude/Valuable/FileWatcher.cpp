@@ -24,7 +24,7 @@ namespace Valuable
 
 FileWatcher::FileWatcher()
 {
-  eventAdd("changed");
+  eventAddOut("changed");
 }
 
 FileWatcher & FileWatcher::instance()

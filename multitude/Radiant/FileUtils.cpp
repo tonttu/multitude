@@ -19,6 +19,7 @@
 #include "StringUtils.hpp"
 #include "Directory.hpp"
 #include "Radiant.hpp"
+#include "Trace.hpp"
 
 #include <assert.h>
 #include <fcntl.h>
@@ -173,15 +174,6 @@ namespace Radiant
   QString FileUtils::baseFilenameWithPath(const QString & filepath)
   {
     return path(filepath) + '/' + baseFilename(filepath);
-  }
-
-  std::string FileUtils::withoutSuffix(const std::string & filepath)
-  {
-    size_t cut = filepath.rfind(".");
-    if(cut > 0)
-      return filepath.substr(0, cut);
-
-    return filepath;
   }
 
   QString FileUtils::suffix(const QString & filepath)

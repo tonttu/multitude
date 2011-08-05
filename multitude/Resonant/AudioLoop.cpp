@@ -38,7 +38,7 @@
 #define FRAMES_PER_BUFFER 128
 
 namespace {
-  std::string s_xmlFilename;
+  QString s_xmlFilename;
 }
 
 namespace Resonant {
@@ -84,7 +84,7 @@ namespace Resonant {
     return m_d->m_channels.size();
   }
 
-  void AudioLoop::setDevicesFile(const std::string & xmlFilename)
+  void AudioLoop::setDevicesFile(const QString & xmlFilename)
   {
     s_xmlFilename = xmlFilename;
   }
@@ -106,33 +106,14 @@ namespace Resonant {
     /// to sound device number 7 channel 0.
     /// It seems that portaudio doesn't allow opening any random channels devices,
     /// just n first channels.
-    typedef std::pair<std::string, int> Device;
+    typedef std::pair<QString, int> Device;
     typedef std::vector<Device> Devices;
     Devices devices;
 
-    const char * devs = getenv("RESONANT_DEVICES");
     const char * devname = getenv("RESONANT_DEVICE");
-    if (devs) {
-      Radiant::warning("AudioLoop::startReadWrite # Using RESONANT_DEVICES is deprecated feature, use --resonant-devices");
-      using namespace Radiant::StringUtils;
-      forcechans = -1;
-      StringList list;
-      split(devs, ";", list);
-
-      for (StringList::iterator it = list.begin(); it != list.end(); ++it) {
-        const char * dev = it->c_str();
-        char * end = 0;
-        int c = strtol(dev, &end, 10);
-        if (*end++ != ':') {
-          Radiant::error("Invalid RESONANT_DEVICES, should be:  CHANNELS:DEVICE;CHANNELS:DEVICE...");
-          return false;
-        }
-        debugResonant("Requesting device %s with %d channels", end, c);
-        devices.push_back(Device(end, c));
-      }
-    } else if(devname) {
+    if(devname) {
       devices.push_back(Device(devname, channels));
-    } else if(!s_xmlFilename.empty()) {
+    } else if(!s_xmlFilename.isEmpty()) {
       devices = *Valuable::Serializer::deserializeXML<Valuable::ValueContainer<Devices> >(s_xmlFilename);
     }
 
@@ -155,7 +136,8 @@ namespace Resonant {
         m_d->m_streams.push_back(Stream());
         Stream & s = m_d->m_streams.back();
 
-        const char * devkey = devices[dev].first.c_str();
+        QByteArray tmp = devices[dev].first.toUtf8();
+        const char * devkey = tmp.data();
         int channel_requests = devices[dev].second;
         char * end = 0;
         int i = strtol(devkey, & end, 10);
@@ -219,7 +201,7 @@ namespace Resonant {
       if(forcechans > 0) {
         channels = forcechans;
       }
-      else if(minchans < channels || (!devs && channels != minchans)) {
+      else if(minchans < channels || (channels != minchans)) {
         debugResonant("AudioLoop::startReadWrite # Expanding to %d channels",
                        minchans);
         channels = minchans;

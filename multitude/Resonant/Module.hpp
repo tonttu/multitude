@@ -87,14 +87,14 @@ namespace Resonant {
 
     /// Sets the id of the module.
     /// @param id The new id
-    void setId(const std::string & id);
+    void setId(const QString & id);
     /// ID of the module
     /// @return the id of the module.
-    const std::string & id() const { return m_id; }
+    const QString & id() const { return m_id; }
 
   private:
     Application * m_application;
-    std::string m_id;
+    QString m_id;
   };
 
 }

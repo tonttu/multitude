@@ -73,8 +73,8 @@ namespace Valuable {
     Radiant::FlagsT<T> flags() const { return m_flags; }
 
     const char * type() const { return "FlagAlias"; }
-    ArchiveElement & serialize(Archive & archive) const { return archive.emptyElement(); }
-    bool deserialize(ArchiveElement & element) { return false; }
+    ArchiveElement serialize(Archive &) const { return ArchiveElement(); }
+    bool deserialize(const ArchiveElement & element) { return false; }
 
   private:
     ValueFlagsT<T> & m_master;
@@ -214,7 +214,7 @@ namespace Valuable {
       updateCache();
     }
 
-    virtual bool deserialize(ArchiveElement & element)
+    virtual bool deserialize(const ArchiveElement & element)
     {
       /// @todo Should we serialize all layers?
       *this = Radiant::StringUtils::fromString<T>(element.get().toUtf8().data());

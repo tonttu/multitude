@@ -31,7 +31,7 @@ namespace Valuable
       *this = tmp;
   }
 
-  bool ValueString::deserialize(ArchiveElement & element)
+  bool ValueString::deserialize(const ArchiveElement & element)
   {
     *this = element.get();
     return true;

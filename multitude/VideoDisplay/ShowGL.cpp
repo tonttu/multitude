@@ -792,7 +792,7 @@ namespace VideoDisplay {
 
     control.writeString("panner/setsourcelocation");
 
-    snprintf(buf, sizeof(buf), "%s-%d", m_audio->id().c_str(), (int) 0);
+    snprintf(buf, sizeof(buf), "%s-%d", m_audio->id().toUtf8().data(), (int) 0);
 
     control.writeString(buf);
     control.writeVector2Float32(location); // sound source location

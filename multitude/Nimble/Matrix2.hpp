@@ -90,6 +90,9 @@ namespace Nimble {
     /// Multiplies the matrix by a scalar
     Matrix2T operator *= (T s)         { m[0] *= s; m[1] *= s; return * this; }
 
+    bool operator==(const Matrix2T & other) const { return m[0] == other.m[0] && m[1] == other.m[1]; }
+    bool operator!=(const Matrix2T & other) const { return !(*this == other); }
+
     /// Returns the number of rows in this matrix type
     static int         rows() { return 2; }
     /// Returns the number of columns in this matrix type

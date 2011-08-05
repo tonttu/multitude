@@ -62,7 +62,7 @@ public:
     }
     for(std::multimap<double, ProfileData*>::iterator it = sorted.begin(); it != sorted.end(); ++it) {
       const ProfileData & d = *it->second;
-      std::cout << d.filename.c_str() << " : " << d.totalTime << " (" << d.timesLoaded << ")" << std::endl;
+      std::cout << d.filename.toUtf8().data() << " : " << d.totalTime << " (" << d.timesLoaded << ")" << std::endl;
     }
   }
 
@@ -243,7 +243,7 @@ namespace Luminous {
         }
       }
       if(m_compressedMipmaps && (ts < m_fileModified ||
-                                 !Luminous::Image::ping(m_compFilename.c_str(), m_info))) {
+                                 !Luminous::Image::ping(m_compFilename.toUtf8().data(), m_info))) {
         gen = new MipMapGenerator(filename);
         gen->setListener(shared_from_this());
       }
@@ -540,7 +540,7 @@ namespace Luminous {
   QString CPUMipmaps::cacheFileName(const QString & src, int level,
                                     const QString & suffix)
   {
-    QFileInfo fi(QString::fromUtf8(src.c_str()));
+    QFileInfo fi(src);
 
     QString basePath = Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false);
 
@@ -552,8 +552,8 @@ namespace Luminous {
 
     // Avoid putting all mipmaps into the same folder (because of OS performance)
     QString prefix = md5.left(2);
-    QString postfix = level < 0 ? QString(".%1").arg(suffix.c_str()) :
-        QString("_level%1.%2").arg(level, 2, 10, QLatin1Char('0')).arg(suffix.c_str());
+    QString postfix = level < 0 ? QString(".%1").arg(suffix) :
+        QString("_level%1.%2").arg(level, 2, 10, QLatin1Char('0')).arg(suffix);
     QString fullPath = basePath + QString("/imagecache/%1/%2%3").arg(prefix).arg(md5).arg(postfix);
 
     return fullPath;

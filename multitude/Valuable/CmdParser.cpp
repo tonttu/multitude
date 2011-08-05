@@ -31,9 +31,9 @@ namespace Valuable
     return parser.parseAndStore(argc, argv, opts);
   }
 
-  bool CmdParser::isParsed(std::string name)
+  bool CmdParser::isParsed(const QString & name)
   {
-    return m_parsedArgs.find(name) != m_parsedArgs.end();
+    return m_parsedArgs.contains(name);
   }
 
   QStringList CmdParser::parseAndStore(int argc, char * argv[],

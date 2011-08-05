@@ -30,7 +30,7 @@ public:
   /// @param mipmaps number of mipmap levels in the data
   /// @param dxt compressed image data
   /// @return true if the writing succeeded
-  bool writeMipmaps(const std::string & filename, PixelFormat::Compression format,
+  bool writeMipmaps(const QString & filename, PixelFormat::Compression format,
                     Nimble::Vector2i size, int mipmaps,
                     const std::vector<unsigned char> & dxt);
 

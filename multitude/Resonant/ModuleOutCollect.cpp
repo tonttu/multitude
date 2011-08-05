@@ -95,7 +95,7 @@ namespace Resonant {
       for(iterator it = m_map.begin(); it != m_map.end(); ) {
         if(tmp.sourceId == it->sourceId) {
           debugResonant("ModuleOutCollect::control # dropping connection to %s:%d",
-                        tmp.sourceId.c_str(), (*it).from);
+                        tmp.sourceId.toUtf8().data(), (*it).from);
           it = m_map.erase(it);
         }
         else
@@ -110,13 +110,13 @@ namespace Resonant {
 
       if(!ok) {
         error("ModuleOutCollect::control # Could not parse control # %s",
-              tmp.sourceId.c_str());
+              tmp.sourceId.toUtf8().data());
         return;
       }
       else if(strcmp(address, "newmapping") == 0) {
         m_map.push_back(tmp);
         debugResonant("ModuleOutCollect::control # newmapping %s %d -> %d",
-                      tmp.sourceId.c_str(), tmp.from, tmp.to);
+                      tmp.sourceId.toUtf8().data(), tmp.from, tmp.to);
       }
       else if(strcmp(address, "removemapping") == 0) {
         iterator it = std::find(m_map.begin(), m_map.end(), tmp);
@@ -126,7 +126,7 @@ namespace Resonant {
         }
         else
           error("ModuleOutCollect::control # Could not erase mapping # %s:%d -> %d",
-                tmp.sourceId.c_str(), tmp.from, tmp.to);
+                tmp.sourceId.toUtf8().data(), tmp.from, tmp.to);
       }
       else {
         error("ModuleOutCollect::control # No param \"%s\"", address);

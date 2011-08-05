@@ -27,15 +27,6 @@
 
 namespace Radiant
 {
-  Directory::Directory(const char * pathname,
-                       int filters, SortFlag sortFlag)
-    : m_path(pathname),
-      m_filterFlags(filters),
-      m_sortFlags(sortFlag)
-  {
-    populate();
-  }
-
   Directory::Directory(const QString & pathname,
                        int filters, SortFlag sortFlag)
     : m_path(pathname),
@@ -46,13 +37,13 @@ namespace Radiant
   }
 
 
-  Directory::Directory(const char * pathname, const char * suffixlist,
+  Directory::Directory(const QString & pathname, const QString & suffixlist,
                        int filters, SortFlag sortFlag)
   : m_path(pathname),
     m_filterFlags(filters),
     m_sortFlags(sortFlag)
   {
-    m_suffixes = QString::fromUtf8(suffixlist).split(",", QString::SkipEmptyParts);
+    m_suffixes = suffixlist.toLower().split(",", QString::SkipEmptyParts);
     populate();
   }
 
@@ -74,15 +65,6 @@ namespace Radiant
   QString Directory::fileNameWithPath(int n) const
   {
     return path() + "/" + fileName(n);
-  }
-
-  void Directory::init(const QString & pathname, const char * suffixlist,
-                       const int filters, const SortFlag sortFlag) 
-  {
-    m_path = pathname ;
-    m_filterFlags = filters ;
-    m_sortFlags = sortFlag ;
-    m_suffixes = QString::fromUtf8(suffixlist).split(",", QString::SkipEmptyParts);
   }
 
   bool Directory::mkdirRecursive(const QString & dirname)

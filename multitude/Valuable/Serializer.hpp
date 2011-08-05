@@ -184,22 +184,20 @@ namespace Valuable
       }
     };
 
-    /// Template specialization for std::string.
+    /// Template specialization for QString.
     template < >
-    struct Impl<std::string>
+    struct Impl<QString>
     {
-      inline static ArchiveElement serialize(Archive &archive, const std::string & t)
+      inline static ArchiveElement serialize(Archive &archive, const QString & t)
       {
         ArchiveElement elem = archive.createElement(typeid(t).name());
         elem.set(t);
         return elem;
       }
 
-      inline static remove_const<std::string>::Type deserialize(const ArchiveElement & element)
+      inline static QString deserialize(const ArchiveElement & element)
       {
-        remove_const<std::string>::Type t;
-        t = element.get();
-        return t;
+        return element.get();
       }
     };
 

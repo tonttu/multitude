@@ -70,34 +70,27 @@ namespace Valuable
 
   template<class MatrixType, typename ElementType, int N>
   bool ValueMatrix<MatrixType, ElementType, N>::deserialize(const ArchiveElement & element) {
-    std::stringstream in(element.get());
+    std::stringstream in(element.get().toStdString());
 
+    MatrixType m;
     for(int i = 0; i < N; i++)
-      in >> Base::m_value.data()[i];
+      in >> m.data()[i];
 
-    this->emitChange();
-
+    *this = m;
     return true;
   }
 
   template<class MatrixType, typename ElementType, int N>
-  std::string ValueMatrix<MatrixType, ElementType, N>::asString(bool * const ok) const {
+  QString ValueMatrix<MatrixType, ElementType, N>::asString(bool * const ok) const {
     if(ok) *ok = true;
 
-    std::string r = Radiant::StringUtils::stringify(Base::m_value.data()[0]);
+    const ElementType * data = native();
+    QString r = Radiant::StringUtils::stringify(data[0]);
 
     for(int i = 1; i < N; i++)
-      r += std::string(" ") + Radiant::StringUtils::stringify(Base::m_value.data()[i]);
+      r += " " + Radiant::StringUtils::stringify(data[i]);
 
     return r;
-  }
-
-  template<class MatrixType, typename ElementType, int N>
-  bool ValueMatrix<MatrixType, ElementType, N>::set(const MatrixType & v)
-  {
-    Base::m_value = v;
-    this->emitChange();
-    return true;
   }
 
 }

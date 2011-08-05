@@ -68,6 +68,7 @@ namespace Radiant
     {
       if(m_ptr) m_ptr->ref();
     }
+
     template <typename Y>
     IntrusivePtr(const IntrusivePtr<Y> & iptr) : m_ptr(iptr.get())
     {

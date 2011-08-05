@@ -44,7 +44,7 @@ namespace Valuable
     Shortcut(HasValues * host, const QString & name)
       : ValueObject(host, name)
     {}
-    bool deserialize(ArchiveElement & element) { return false; }
+    bool deserialize(const ArchiveElement &) { return false; }
     virtual bool shortcut() const { return true; }
     virtual const char * type() const { return "shortcut"; }
   };
@@ -224,7 +224,7 @@ namespace Valuable
     return ok;
   }
 
-  bool HasValues::saveToMemoryXML(std::string & buffer)
+  bool HasValues::saveToMemoryXML(QByteArray & buffer)
   {
     XMLArchive archive;
     archive.setRoot(serialize(archive));
@@ -246,7 +246,7 @@ namespace Valuable
   {
     QString name = m_name.isEmpty() ? "HasValues" : m_name;
 
-    ArchiveElement & elem = archive.createElement(name.toUtf8().data());
+    ArchiveElement elem = archive.createElement(name.toUtf8().data());
     if(elem.isNull()) {
       Radiant::error(
           "HasValues::serialize # failed to create element");
@@ -323,14 +323,14 @@ namespace Valuable
     vp.m_to = to;
     vp.m_frame = m_frame;
 
-    if(!m_eventNames.contains(from)) {
+    if(!m_eventSendNames.contains(from)) {
       warning("HasValues::eventAddListener # Adding listener to unexistent event '%s'", from);
     }
 
     if(!obj->m_eventListenNames.contains(to)) {
-      QString klass = Radiant::StringUtils::demangle(typeid(*obj).name());
+      const QString & klass = Radiant::StringUtils::demangle(typeid(*obj).name());
       warning("HasValues::eventAddListener # %s (%s %p) doesn't accept event '%s'",
-              klass.toUtf8().data(), obj->name().c_str(), obj, to);
+              klass.toUtf8().data(), obj->name().toUtf8().data(), obj, to);
     }
 
     if(defaultData)
@@ -357,7 +357,7 @@ namespace Valuable
     vp.m_from = from;
     vp.m_to = to;
 
-    if(!m_eventNames.contains(from)) {
+    if(!m_eventSendNames.contains(from)) {
       warning("HasValues::eventAddListener # Adding listener to unexistent event '%s'", from);
     }
 

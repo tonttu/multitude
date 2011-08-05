@@ -20,7 +20,9 @@
 
 #include <Resonant/Export.hpp>
 
-#include <string>
+#include <cstdlib>
+
+class QString;
 
 namespace Resonant {
 
@@ -65,7 +67,7 @@ namespace Resonant {
     /// resonant-devices.xml for more information
     /// @param xmlFilename Filename to the configuration that will be used with
     ///                    all new AudioLoops
-    static void setDevicesFile(const std::string & xmlFilename);
+    static void setDevicesFile(const QString & xmlFilename);
 
   protected:
     /// This is called from PortAudio thread when the stream becomes inactive

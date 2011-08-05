@@ -37,12 +37,12 @@ namespace Luminous {
     /// Generates a new task for new image. Mipmaps will be saved with one of
     /// the DXT image formats, depending on the source image format.
     /// @param src The filename of the original image, for example a PNG file
-    MipMapGenerator(const std::string & src);
+    MipMapGenerator(const QString & src);
 
     /// Generates a new task for new image with explicit mipmap pixelformat.
     /// @param src The filename of the original image, for example a PNG file
     /// @param mipmapFormat The mipmap output format. Only DXT compressed formats are supported.
-    MipMapGenerator(const std::string & src, const PixelFormat & mipmapFormat);
+    MipMapGenerator(const QString & src, const PixelFormat & mipmapFormat);
 
     /// Run the task. Generate the mipmap file and inform the listener when the
     /// task is ready.
@@ -61,7 +61,7 @@ namespace Luminous {
   private:
     void resize(const Image & img, const int level);
 
-    const std::string m_src;
+    const QString m_src;
     PixelFormat m_mipmapFormat;
 
     std::vector<unsigned char> m_outBuffer;

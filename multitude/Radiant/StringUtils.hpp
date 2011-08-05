@@ -46,14 +46,6 @@ namespace Radiant
         return QString::fromUtf8(os.str().c_str());
     }
 
-    /// Convert std::wstring to std::string
-    template<>
-    inline std::string stringify(const std::wstring & x) {
-      std::string out;
-      stdWstringToUtf8(out, x);
-      return out;
-    }
-
     /// Convert string to integer
     template <class T>
     inline T fromString(const char * str)

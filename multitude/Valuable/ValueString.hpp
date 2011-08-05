@@ -41,7 +41,7 @@ namespace Valuable
     /// @copydoc ValueObject::ValueObject(HasValues *, const QString &, bool transit)
     /// @param v The string to store in this object
     ValueString(HasValues * host, const QString & name,
-                const QString & v, bool transit = false);
+                const QString & v = "", bool transit = false);
 
     virtual void processMessage(const char * id, Radiant::BinaryData & data);
 

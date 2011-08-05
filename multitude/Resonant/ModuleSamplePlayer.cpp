@@ -599,7 +599,7 @@ namespace Resonant {
     sf_close(sndf);
 
     Radiant::BinaryData control;
-    control.writeString(QString(id()) + "/playsample");
+    control.writeString(id() + "/playsample");
 
     control.writeString(filename);
 

@@ -45,7 +45,7 @@ namespace Resonant {
     return true;
   }
 
-  void Module::setId(const std::string & id)
+  void Module::setId(const QString & id)
   {
     m_id = id;
   }

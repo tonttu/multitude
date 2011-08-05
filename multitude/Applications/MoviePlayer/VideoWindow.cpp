@@ -142,7 +142,7 @@ void VideoWindow::randomOperation()
     std::shared_ptr<Item> item(new Item());
 
     if(!item->m_show.init(filename.toUtf8().data(), 0, 0)) {
-      Radiant::error("Could not recreate video player for \"%s\"", filename.c_str());
+      Radiant::error("Could not recreate video player for \"%s\"", filename.toUtf8().data());
     }
     else
       Radiant::info("Recreated video player for \"%s\"", filename.toUtf8().data());

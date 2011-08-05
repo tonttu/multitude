@@ -22,7 +22,7 @@ namespace Valuable
 {
 
   ValueColor::ValueColor(HasValues * host, const QString & name, const Radiant::Color & c, bool transit)
-    : ValueVector<Nimble::Vector4f>(parent, name, c, transit)
+    : ValueVector<Nimble::Vector4f>(host, name, c, transit)
   {}
 
   ValueColor::~ValueColor()

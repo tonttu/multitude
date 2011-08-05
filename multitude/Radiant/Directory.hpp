@@ -67,17 +67,6 @@ namespace Radiant
 
     /// Construct a directory listing
     /** Creating a Directory object immediately scans the contents
-	of the directory. Entries matching the given filters are
-	included.
-
-	@param pathname directory path
-	@param filters one or more filter flags OR'ed together
-	@param sortFlag flag indicating how the results should be sorted
-    */
-    Directory(const char * pathname,
-        int filters = AllEntries | NoDotAndDotDot, SortFlag sortFlag = Name);
-    /// Construct a directory listing
-    /** Creating a Directory object immediately scans the contents
   of the directory. Entries matching the given filters are
   included.
 
@@ -100,7 +89,7 @@ namespace Radiant
 	@param filters one or more filter flags OR'ed together
 	@param sortFlag flag indicating how the results should be sorted
     */
-    Directory(const char * pathname, const char * suffixlist,
+    Directory(const QString & pathname, const QString & suffixlist,
         int filters = AllEntries | NoDotAndDotDot, SortFlag sortFlag = Name);
 
  
@@ -126,8 +115,6 @@ namespace Radiant
     const QString & path() const { return m_path; } 
 
     /// Creates a new directory.
-    static bool mkdir(const char * dirname);
-    /// Creates a new directory.
     static bool mkdir(const QString & dirname);
     /// Creates a new directory recursively
     static bool mkdirRecursive(const QString & dirname);
@@ -135,12 +122,6 @@ namespace Radiant
     static bool exists(const QString & dir);
 
   private:
-    // Calling a constructor from another is evil but we
-    // can put all dupplicated code in the same private
-    // method
-    void init(const QString & pathname, const char * suffixlist,
-	      const int filters, const SortFlag sortFlag) ;
-
     // This function takes care of the low-level platform
     // specific stuff.  All it does is fill up m_entries
     // with the directory contents matching the flags.

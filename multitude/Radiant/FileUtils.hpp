@@ -99,10 +99,6 @@ namespace Radiant
     /// @param filepath Full filename with path
     /// @returns The extracted base filename without suffix but with the full path
     static QString baseFilenameWithPath(const QString & filepath);
-    /// Extract full path (including filename) without suffix.
-    /// @param filepath Full filename with path
-    /// @returns The full path without the suffix
-    static QString withoutSuffix(const QString & filepath);
     /// Extract suffix.
     /// @param filepath Full filename with path
     /// @returns The extracted suffix

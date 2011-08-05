@@ -24,7 +24,7 @@ namespace Luminous {
 
   static Radiant::Mutex s_mutex;
 
-  static std::map<std::string, std::weak_ptr<CPUMipmaps> > s_mipmaps;
+  static std::map<QString, std::weak_ptr<CPUMipmaps> > s_mipmaps;
 
 
   std::shared_ptr<CPUMipmaps> CPUMipmapStore::acquire(const QString & filename,
@@ -41,7 +41,7 @@ namespace Luminous {
 
     mipmap_shared.reset(new CPUMipmaps);
 
-    if(!mipmap_shared->startLoading(filename, compressed_mipmaps)) {
+    if(!mipmap_shared->startLoading(filename.toUtf8().data(), compressed_mipmaps)) {
       return std::shared_ptr<CPUMipmaps>();
     }
 

@@ -13,7 +13,7 @@ namespace Luminous {
   using Nimble::Vector4;
 
   GLKeyStone::GLKeyStone(HasValues * host, const QString & name)
-  : HasValues(parent, name, false),
+  : HasValues(host, name, false),
   m_selected(0),
   m_rotations(this, "rotations", false, 0)
   {

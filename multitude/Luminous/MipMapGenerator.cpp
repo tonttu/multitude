@@ -23,7 +23,7 @@
 
 namespace Luminous {
 
-  MipMapGenerator::MipMapGenerator(const std::string & src)
+  MipMapGenerator::MipMapGenerator(const QString & src)
     : Task((PRIORITY_NORMAL + PRIORITY_LOW) / 2),
       m_src(src),
       m_out(0),
@@ -31,7 +31,7 @@ namespace Luminous {
   {
   }
 
-  MipMapGenerator::MipMapGenerator(const std::string & src,
+  MipMapGenerator::MipMapGenerator(const QString & src,
                                    const PixelFormat & mipmapFormat)
     : Task((PRIORITY_NORMAL + PRIORITY_LOW) / 2),
       m_src(src),
@@ -52,8 +52,8 @@ namespace Luminous {
     }
 
     Image img;
-    if(!img.read(m_src.c_str())) {
-      Radiant::error("MipMapGenerator::doTask # Failed to open %s", m_src.c_str());
+    if(!img.read(m_src.toUtf8().data())) {
+      Radiant::error("MipMapGenerator::doTask # Failed to open %s", m_src.toUtf8().data());
       return;
     }
 
@@ -97,7 +97,7 @@ namespace Luminous {
 
     resize(img, 0);
 
-    std::string filename = CPUMipmaps::cacheFileName(m_src, -1, "dds");
+    const QString filename = CPUMipmaps::cacheFileName(m_src, -1, "dds");
     ImageCodecDDS dds;
     dds.writeMipmaps(filename, m_mipmapFormat.compression(),
                      img.size(), mipmaps, m_outBuffer);

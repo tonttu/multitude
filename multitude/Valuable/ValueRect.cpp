@@ -10,12 +10,12 @@ namespace Valuable
 {
 
   template <class T>
-  ValueRectT<T>::ValueRectT(HasValues * host, const QString & name, const Nimble::Rect & r, bool transit)
+  ValueRectT<T>::ValueRectT(HasValues * host, const QString & name, const Nimble::RectT<T> & r, bool transit)
     : Base(host, name, r, transit)
   {}
 
   template <class T>
-  bool ValueRectT<T>::deserialize(ArchiveElement & element) {
+  bool ValueRectT<T>::deserialize(const ArchiveElement & element) {
     std::stringstream in(element.get().toUtf8().data());
 
     Nimble::Vector2T<T> lo, hi;
@@ -33,7 +33,7 @@ namespace Valuable
   QString ValueRectT<T>::asString(bool * const ok) const {
     if(ok) *ok = true;
 
-    const Nimble::Rect & rect = value();
+    const Nimble::RectT<T> & rect = this->value();
     const Nimble::Vector2f & lo = rect.low();
     const Nimble::Vector2f & hi = rect.high();
 

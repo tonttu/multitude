@@ -237,7 +237,7 @@ bool ImageCodecDDS::read(CompressedImage & image, FILE * file, int level)
   return image.loadImage(file, info, size);
 }
 
-bool ImageCodecDDS::writeMipmaps(const std::string & filename, PixelFormat::Compression format,
+bool ImageCodecDDS::writeMipmaps(const QString & filename, PixelFormat::Compression format,
                                  Nimble::Vector2i size, int mipmaps,
                                  const std::vector<unsigned char> & dxt)
 {
@@ -270,13 +270,13 @@ bool ImageCodecDDS::writeMipmaps(const std::string & filename, PixelFormat::Comp
   }
 
   Radiant::Directory::mkdirRecursive(Radiant::FileUtils::path(filename));
-  QFile file(QString::fromUtf8(filename.c_str()));
+  QFile file(filename);
   if(file.open(QFile::WriteOnly)) {
     file.write(reinterpret_cast<const char*>(&header), sizeof(header));
     file.write(reinterpret_cast<const char*>(&dxt[0]), dxt.size());
     return true;
   } else {
-    Radiant::error("ImageCodecDDS::writeMipmaps # Failed to open target file %s", filename.c_str());
+    Radiant::error("ImageCodecDDS::writeMipmaps # Failed to open target file %s", filename.toUtf8().data());
     return false;
   }
 }

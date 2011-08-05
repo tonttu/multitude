@@ -86,43 +86,31 @@ namespace Valuable
     return m_impl->children();
   }
 
-  void ArchiveElement::add(const std::string & name, const std::string & value)
+  void ArchiveElement::add(const QString & name, const QString & value)
   {
     assert(m_impl);
     m_impl->add(name, value);
   }
 
-  std::string ArchiveElement::get(const std::string & name) const
+  QString ArchiveElement::get(const QString & name) const
   {
     assert(m_impl);
     return m_impl->get(name);
   }
 
-  void ArchiveElement::set(const std::string & s)
+  void ArchiveElement::set(const QString & s)
   {
     assert(m_impl);
     m_impl->set(s);
   }
 
-  void ArchiveElement::set(const std::wstring & s)
-  {
-    assert(m_impl);
-    m_impl->set(s);
-  }
-
-  std::string ArchiveElement::get() const
+  QString ArchiveElement::get() const
   {
     assert(m_impl);
     return m_impl->get();
   }
 
-  std::wstring ArchiveElement::getW() const
-  {
-    assert(m_impl);
-    return m_impl->getW();
-  }
-
-  std::string ArchiveElement::name() const
+  QString ArchiveElement::name() const
   {
     assert(m_impl);
     return m_impl->name();

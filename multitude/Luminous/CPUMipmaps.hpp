@@ -222,8 +222,8 @@ namespace Luminous {
     /// @param level Mipmap level, ignored if negative
     /// @param suffix File format of the cache file name, usually png or dds.
     /// @return cache filename
-    static std::string cacheFileName(const std::string & src, int level = -1,
-                                     const std::string & suffix = "png");
+    static QString cacheFileName(const QString & src, int level = -1,
+                                 const QString & suffix = "png");
 
   protected:
     virtual void doTask();

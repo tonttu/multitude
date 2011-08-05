@@ -92,7 +92,7 @@ namespace Valuable
         rest = name.mid(cut + 1);
 
         if(next == QString("..")) {
-          if(!m_parent) {
+          if(!m_host) {
             Radiant::error(
                 "HasValues::setValue # node '%s' has no host", m_name.toUtf8().data());
             return false;
@@ -128,7 +128,7 @@ namespace Valuable
     /// Saves this object (and its children) to an XML file
     bool saveToFileXML(const char * filename);
     /// Saves this object (and its children) to binary data buffer
-    bool saveToMemoryXML(std::string & buffer);
+    bool saveToMemoryXML(QByteArray & buffer);
 
     /// Reads this object (and its children) from an XML file
     bool loadFromFileXML(const char * filename);
@@ -160,7 +160,7 @@ namespace Valuable
     /// Returns an iterator to the end of the values
     iterator valuesEnd() { return m_values.end(); }
 
-    const container & valueChildren() { return m_children; }
+    const container & values() { return m_values; }
 
     /** Add an event listener to this object.
 
@@ -242,10 +242,10 @@ namespace Valuable
     bool acceptsEvent(const QString & id) const;
 
     /// Returns set of all registered OUT events
-    const std::set<QString> & eventOutNames() const { return m_eventSendNames; }
+    const QSet<QString> & eventOutNames() const { return m_eventSendNames; }
 
     /// Returns set of all registered IN events
-    const std::set<QString> & eventInNames() const { return m_eventListenNames; }
+    const QSet<QString> & eventInNames() const { return m_eventListenNames; }
 
   protected:
 

@@ -78,12 +78,12 @@ namespace Valuable
 
   void XMLArchiveElement::add(const QString & name, const QString & value)
   {
-    m_element.setAttribute(name.c_str(), value.c_str());
+    m_element.setAttribute(name.toUtf8().data(), value.toUtf8().data());
   }
 
   QString XMLArchiveElement::get(const QString & name) const
   {
-    return m_element.getAttribute(name.c_str());
+    return m_element.getAttribute(name.toUtf8().data());
   }
 
   void XMLArchiveElement::set(const QString & s)
@@ -91,19 +91,9 @@ namespace Valuable
     m_element.setTextContent(s);
   }
 
-  void XMLArchiveElement::set(const std::wstring & s)
-  {
-    m_element.setTextContent(s);
-  }
-
   QString XMLArchiveElement::get() const
   {
     return m_element.getTextContent();
-  }
-
-  std::wstring XMLArchiveElement::getW() const
-  {
-    return m_element.getTextContentW();
   }
 
   QString XMLArchiveElement::name() const
@@ -150,17 +140,17 @@ namespace Valuable
 
   bool XMLArchive::writeToFile(const QString & file) const
   {
-    return m_document->writeToFile(file.c_str());
+    return m_document->writeToFile(file.toUtf8().data());
   }
 
-  bool XMLArchive::writeToMem(QString & buffer) const
+  bool XMLArchive::writeToMem(QByteArray & buffer) const
   {
     return m_document->writeToMem(buffer);
   }
 
   bool XMLArchive::readFromFile(const QString & filename)
   {
-    return m_document->readFromFile(filename.c_str());
+    return m_document->readFromFile(filename.toUtf8().data());
   }
 
   DOMDocument * XMLArchive::xml()

@@ -30,12 +30,14 @@ namespace Valuable
   {
     typedef ValueObjectT<MatrixType> Base;
   public:
+    using Base::operator =;
+
     /// Create a new ValueMatrix
     /// @param host host object
     /// @param name name of the value
     /// @param v the default/original value of the object
     /// @param transit ignored
-    ValueMatrix(HasValues * host, const std::string & name, const MatrixType & v = MatrixType(), bool transit = false)
+    ValueMatrix(HasValues * host, const QString & name, const MatrixType & v = MatrixType(), bool transit = false)
       : Base(host, name, v, transit) {}
 
     ValueMatrix() : Base() {}
@@ -43,25 +45,12 @@ namespace Valuable
 
     /// Returns the data in its native format
     const ElementType * native() const
-    { return Base::m_value.data(); }
+    { return this->value().data(); }
 
     // virtual void processMessage(const char * id, Radiant::BinaryData & data);
     virtual bool deserialize(const ArchiveElement & element);
     const char * type() const;
-    /// Sets the ValueMatrix value
-    /// @param v The new matrix that is copied to the ValueMatrix
-    /// @return True
-    virtual bool set(const MatrixType & v);
-    std::string asString(bool * const ok = 0) const;
-
-    const MatrixType & operator * () const { return Base::m_value; }
-
-    /// Sets the ValueMatrix value
-    /// @param v The new matrix that is copied to the ValueMatrix
-    /// @return Reference to this
-    ValueMatrix<MatrixType, ElementType, N> & operator =
-        (const MatrixType & v) { Base::m_value = v; this->emitChange(); return *this; }
-
+    QString asString(bool * const ok = 0) const;
   };
 
   /// A float Matrix2 value object

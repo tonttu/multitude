@@ -21,6 +21,9 @@
 #include <fstream>
 #include <istream>
 
+/// @todo Change everything in here to use QString
+/// @todo make everything const-correct
+
 namespace Valuable
 {  
 
@@ -60,13 +63,13 @@ bool ConfigDocument::readConfigFile(const char *fileName)
       size_t ps=str.find(",");
       if(ps<10000) {
 
-        e.m_elementName=str.substr(0,ps);
+        e.m_elementName=str.substr(0,ps).c_str();
         size_t ps2=str.find("{");
-        e.m_type=str.substr(ps+1,ps2-ps-1);
+        e.m_type=str.substr(ps+1,ps2-ps-1).c_str();
 
       }
       else {
-        e.m_elementName=str.substr(0,str.find("{")-1);
+        e.m_elementName=str.substr(0,str.find("{")-1).c_str();
       }
 
       trimSpaces(e.m_elementName);
@@ -87,12 +90,12 @@ bool ConfigDocument::readConfigFile(const char *fileName)
             size_t ps=s.find(",");
             if(ps<10000) {
 
-              child.m_elementName=s.substr(0,ps);
-              child.m_type=s.substr(ps+1,s.find("{")-ps-1);
+              child.m_elementName=s.substr(0,ps).c_str();
+              child.m_type=s.substr(ps+1,s.find("{")-ps-1).c_str();
 
             }
             else {
-              child.m_elementName=s.substr(0,s.find("{")-1);
+              child.m_elementName=s.substr(0,s.find("{")-1).c_str();
             }
 
             trimSpaces(child.m_elementName);
@@ -111,9 +114,9 @@ bool ConfigDocument::readConfigFile(const char *fileName)
                 s[i]=' ';
             size_t pos=s.find("=");
 
-            att.m_key=s.substr(0,pos);
+            att.m_key=s.substr(0,pos).c_str();
             trimSpaces(att.m_key);
-            att.m_value=s.substr(pos+1,s.length());
+            att.m_value=s.substr(pos+1,s.length()).c_str();
             trimSpaces(att.m_value);
 
             att.m_depth=depth;
@@ -163,7 +166,7 @@ bool ConfigDocument::readConfigFile(const char *fileName)
 
   for(unsigned i = 0; i < m_doc.childCount(); i++) {
     ConfigElement & c1 = m_doc.child(i);
-    if(c1.childCount() == 1 && c1.elementName().empty()) {
+    if(c1.childCount() == 1 && c1.elementName().isEmpty()) {
       c1 = ConfigElement(c1.child(0));
     }
   }
@@ -181,7 +184,7 @@ void ConfigDocument::writeConfigFile(const char *fileName)
 
 void ConfigDocument::writeConfig(std::ostream & output)
 {
-  std::string aa = getConfigText(m_doc);
+  std::string aa = getConfigText(m_doc).toStdString();
 
   //	for(int i=ss.size()-1;i>=0;i--)
   //		output<<ss[i];
@@ -189,7 +192,7 @@ void ConfigDocument::writeConfig(std::ostream & output)
   output << aa;
 }
 
-void ConfigDocument::trimSpaces( QString& str)
+void ConfigDocument::trimSpaces( std::string & str)
 {
   using namespace std;
   size_t startpos = str.find_first_not_of(" \t\r");
@@ -202,7 +205,13 @@ void ConfigDocument::trimSpaces( QString& str)
     str = str.substr( startpos, endpos-startpos+1 );
 
 }
-ConfigElement *ConfigDocument::getConfigElement(QString elementName)
+void ConfigDocument::trimSpaces( QString & str)
+{
+  std::string tmp = str.toStdString();
+  trimSpaces(tmp);
+  str = tmp.c_str();
+}
+ConfigElement *ConfigDocument::getConfigElement(const QString & elementName)
 {
   bool found=false;
 
@@ -213,8 +222,8 @@ ConfigElement *ConfigDocument::getConfigElement(QString elementName)
     return 0;
 
 }
-ConfigElement *ConfigDocument::getConfigElement(QString key,
-                                                QString value)
+ConfigElement *ConfigDocument::getConfigElement(const QString & key,
+                                                const QString & value)
 {
   bool found=false;
 
@@ -227,7 +236,7 @@ ConfigElement *ConfigDocument::getConfigElement(QString key,
 }
 
 ConfigElement *ConfigDocument::findConfigElement
-(ConfigElement &e,bool &found,QString key,QString value)
+(ConfigElement &e,bool &found,const QString & key,const QString & value)
 {
   for(int i=0;i < (int)e.m_nodes.size() ;i++) {
     ConfigElement *w;
@@ -237,12 +246,12 @@ ConfigElement *ConfigDocument::findConfigElement
   }
 
   for(int j=0;j<(int)e.m_values.size();j++) {
-    std::string ke=e.m_values[j].m_key;
+    std::string ke=e.m_values[j].m_key.toStdString();
     trimSpaces(ke);
-    std::string val=e.m_values[j].m_value;
+    std::string val=e.m_values[j].m_value.toStdString();
     trimSpaces(val);
 
-    if(key==ke && value==val) {
+    if(key==ke.c_str() && value==val.c_str()) {
       found=true;
 
       return &e;
@@ -254,7 +263,7 @@ ConfigElement *ConfigDocument::findConfigElement
 }
 
 ConfigElement *ConfigDocument::findConfigElement
-(ConfigElement &e,QString elementName,bool &found)
+(ConfigElement &e,const QString & elementName,bool &found)
 {
   for(int i=0;i < (int)e.m_nodes.size() ;i++) {
     ConfigElement *w;
@@ -264,10 +273,10 @@ ConfigElement *ConfigDocument::findConfigElement
 
   }
 
-  std::string s=e.m_elementName;
+  std::string s=e.m_elementName.toStdString();
   trimSpaces(s);
 
-  if(s==elementName) {
+  if(s.c_str()==elementName) {
     found=true;
 
     return &e;
@@ -277,8 +286,9 @@ ConfigElement *ConfigDocument::findConfigElement
   return 0;
 }
 
-static QString __indent(int recursion)
+static std::string __indent(int recursion)
 {
+  //return QString(recursion*2, QChar::fromLatin1(' '));
   std::string res;
 
   for(int i = 0; i < recursion; i++)
@@ -302,29 +312,29 @@ QString ConfigDocument::getConfigText(ConfigElement e, int recursion)
       str += ind;
 
       if(e.m_type=="")
-        str+=e.m_elementName+" {\n";
+        str+=e.m_elementName.toStdString()+" {\n";
       else
-        str+=e.m_elementName+","+e.m_type+" {\n";
+        str+=(e.m_elementName+","+e.m_type+" {\n").toStdString();
     }
     else {
     }
 
     for(int j=0;j < (int) e.m_values.size();j++) {
       trimSpaces(e.m_values[j].m_value);
-      str += ind2 + e.m_values[j].m_key+"="+"\""+e.m_values[j].m_value+"\""+"\n";
+      str += (ind2.c_str() + e.m_values[j].m_key+"="+"\""+e.m_values[j].m_value+"\""+"\n").toStdString();
 
     }
     for(int i = 0; i < (int) e.m_nodes.size(); i++)
-      str += getConfigText(e.m_nodes[i], recursion + 1);
+      str += getConfigText(e.m_nodes[i], recursion + 1).toStdString();
 
     if(e.m_elementName != "") {
       str += ind + "}\n";
     }
   }
-  return str;
+  return str.c_str();
 }
 
-ConfigDocument::ParseFlags ConfigDocument::parseLine(QString line)
+ConfigDocument::ParseFlags ConfigDocument::parseLine(std::string line)
 {
   if(line[line.length()-1]=='{')
     return ELEMENT_START;
@@ -339,7 +349,7 @@ ConfigDocument::ParseFlags ConfigDocument::parseLine(QString line)
   }
 }
 
-bool ConfigDocument::getline(FILE * input, QString & str)
+bool ConfigDocument::getline(FILE * input, std::string & str)
 {
   str.clear();
   bool ok = true;
