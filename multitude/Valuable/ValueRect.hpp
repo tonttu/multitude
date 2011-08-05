@@ -20,9 +20,9 @@ namespace Valuable
   public:
     using Base::operator =;
 
-    /// @copydoc Attribute::Attribute(HasValues *, const std::string &, bool transit)
+    /// @copydoc Attribute::Attribute(Node *, const std::string &, bool transit)
     /// @param r The rectangle to be stored in the AttributeRect
-    AttributeRectT(HasValues * host, const QString & name, const Nimble::RectT<T> & r, bool transit = false);
+    AttributeRectT(Node * host, const QString & name, const Nimble::RectT<T> & r, bool transit = false);
 
     const char * type() const;
 

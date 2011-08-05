@@ -8,7 +8,7 @@
 
 namespace Vivid {
 
-class Light : public Valuable::HasValues
+class Light : public Valuable::Node
 {
 public:
   enum Type

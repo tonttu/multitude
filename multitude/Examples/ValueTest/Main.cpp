@@ -9,7 +9,7 @@
 
 using namespace Valuable;
 
-class MyValues : public Valuable::HasValues
+class MyValues : public Valuable::Node
 {
 public:
   MyValues()

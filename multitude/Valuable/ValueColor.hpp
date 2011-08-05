@@ -28,9 +28,9 @@ namespace Valuable
   class VALUABLE_API AttributeColor : public AttributeVector<Nimble::Vector4f>
   {
   public:
-    /// @copydoc Attribute::Attribute(HasValues *, const QString &, bool transit)
+    /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param c The color value
-    AttributeColor(HasValues * host, const QString & name, const Radiant::Color & c, bool transit = false);
+    AttributeColor(Node * host, const QString & name, const Radiant::Color & c, bool transit = false);
     
     virtual ~AttributeColor();
 

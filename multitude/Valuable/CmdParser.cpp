@@ -25,7 +25,7 @@
 namespace Valuable
 {
   QStringList CmdParser::parse(int argc, char * argv[],
-                               Valuable::HasValues & opts)
+                               Valuable::Node & opts)
   {
     CmdParser parser;
     return parser.parseAndStore(argc, argv, opts);
@@ -37,7 +37,7 @@ namespace Valuable
   }
 
   QStringList CmdParser::parseAndStore(int argc, char * argv[],
-                                       Valuable::HasValues & opts)
+                                       Valuable::Node & opts)
   {
     QStringList list;
 

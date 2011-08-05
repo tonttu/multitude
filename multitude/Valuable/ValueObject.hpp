@@ -54,7 +54,7 @@ namespace Valuable
 
 namespace Valuable
 {
-  class HasValues;
+  class Node;
   //class DOMElement;
   class DOMDocument;
 
@@ -90,14 +90,14 @@ namespace Valuable
       Typical child classes include some POD (plain old data) elements
       (floats, ints, vector2) etc, that can be accessed through the
       API. The Attributes have names (QString), that can be used to access
-      Attributes that are stored inside HasValues objects.
+      Attributes that are stored inside Node objects.
 
       It is also possible to add listeners to values, so that if a
       value is changed, then a call-back to soem other object is
       followed. The listener-API is a bit hard-core, but it has plenty
       of power when you need to track the state of other objects.
 
-      @see HasValues
+      @see Node
   */
 
   /// @todo the "set" functions are duplicating the processMessage functionality
@@ -149,7 +149,7 @@ namespace Valuable
     is related to future uses, and can be largely ignored at the
     moment.
     */
-    Attribute(HasValues * host, const QString & name, bool transit = false);
+    Attribute(Node * host, const QString & name, bool transit = false);
     virtual ~Attribute();
 
     /// Returns the name of the object.
@@ -246,7 +246,7 @@ namespace Valuable
 
     /// The host object of the value object (is any).
     /// @return Pointer to the host
-    HasValues * host() const { return m_host; }
+    Node * host() const { return m_host; }
     /** Sets the host pointer to zero and removes this object from the host. */
     void removeHost();
 
@@ -254,11 +254,11 @@ namespace Valuable
     void addListener(ListenerFunc func, int role = CHANGE);
     /// Adds a listener that is invoked whenever the value is changed
     /// The listener is removed when the listener object is deleted
-    void addListener(HasValues * listener, ListenerFunc func, int role = CHANGE);
+    void addListener(Node * listener, ListenerFunc func, int role = CHANGE);
     /// Removes listeners from the listener list
     void removeListeners(int role = ALL);
     /// Removes a listener from the listener list
-    void removeListener(HasValues * listener, int role = ALL);
+    void removeListener(Node * listener, int role = ALL);
 
     /// Returns true if the current value of the object is different from the original value.
     virtual bool isChanged() const;
@@ -272,7 +272,7 @@ namespace Valuable
     {
       QString class_name;
       QString orig_str;
-      HasValues * obj;
+      Node * obj;
       Attribute * vo;
     };
 
@@ -288,23 +288,23 @@ namespace Valuable
 
   private:
     // The object that holds this object
-    HasValues * m_host;
+    Node * m_host;
     bool m_changed;
     QString m_name;
     bool m_transit;
 
     struct AttributeListener
     {
-      AttributeListener(ListenerFunc func_, int role_, HasValues * listener_ = 0)
+      AttributeListener(ListenerFunc func_, int role_, Node * listener_ = 0)
         : func(func_), role(role_), listener(listener_) {}
 
       ListenerFunc func;
       int role;
-      HasValues * listener;
+      Node * listener;
     };
     QList<AttributeListener> m_listeners;
 
-    friend class HasValues;
+    friend class Node;
   };
 
   /// Every Attribute is some kind of AttributeT<T> object.
@@ -317,7 +317,7 @@ namespace Valuable
     /// @param name name of the value
     /// @param v the default/original value of the object
     /// @param transit ignored
-    AttributeT(HasValues * host, const QString & name, const T & v = T(), bool transit = false)
+    AttributeT(Node * host, const QString & name, const T & v = T(), bool transit = false)
       : Attribute(host, name, transit),
       m_current(ORIGINAL),
       m_valueSet()

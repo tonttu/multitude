@@ -21,7 +21,7 @@
 namespace Valuable
 {
 
-  AttributeColor::AttributeColor(HasValues * host, const QString & name, const Radiant::Color & c, bool transit)
+  AttributeColor::AttributeColor(Node * host, const QString & name, const Radiant::Color & c, bool transit)
     : AttributeVector<Nimble::Vector4f>(host, name, c, transit)
   {}
 

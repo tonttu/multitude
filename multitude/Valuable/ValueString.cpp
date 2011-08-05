@@ -18,7 +18,7 @@
 namespace Valuable
 {
   AttributeString::AttributeString() {}
-  AttributeString::AttributeString(HasValues * parent, const QString & name,
+  AttributeString::AttributeString(Node * parent, const QString & name,
                            const QString & v, bool transit)
     : Base(parent, name, v, transit)
   {}

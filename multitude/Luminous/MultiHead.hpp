@@ -34,7 +34,7 @@ namespace Luminous {
       once. MultiHead also includes keystone information, so that
       keystoning can be done by using skewed OpenGL transformation
       matrices. */
-  class LUMINOUS_API MultiHead : public Valuable::HasValues
+  class LUMINOUS_API MultiHead : public Valuable::Node
   {
   public:
 
@@ -45,7 +45,7 @@ namespace Luminous {
     areas can share the same OpenGL context, as one window can
     have may areas inside it.*/
     /// @todo rename to ViewPort?
-    class LUMINOUS_API Area : public Valuable::HasValues,
+    class LUMINOUS_API Area : public Valuable::Node,
     public Collectable
     {
       MEMCHECKED_USING(Collectable);
@@ -210,7 +210,7 @@ namespace Luminous {
 
     /** One OpenGL window.
     A window is responsible for one OpenGL context.*/
-    class Window : public Valuable::HasValues
+    class Window : public Valuable::Node
     {
     public:
       friend class Area;

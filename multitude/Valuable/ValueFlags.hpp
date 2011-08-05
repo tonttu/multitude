@@ -39,7 +39,7 @@ namespace Valuable {
   class FlagAliasT : public Attribute
   {
   public:
-    FlagAliasT(HasValues * parent, AttributeFlagsT<T> & master,
+    FlagAliasT(Node * parent, AttributeFlagsT<T> & master,
                const QString & name, Radiant::FlagsT<T> flags)
       : Attribute(parent, name, false),
         m_master(master),
@@ -145,7 +145,7 @@ namespace Valuable {
   {
   public:
     typedef Radiant::FlagsT<T> Flags;
-    AttributeFlagsT(HasValues * parent, const QString & name, const FlagNames * names,
+    AttributeFlagsT(Node * parent, const QString & name, const FlagNames * names,
                Flags v = Flags(), bool transit = false)
       : Attribute(parent, name, transit)
     {

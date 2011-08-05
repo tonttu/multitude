@@ -12,8 +12,8 @@ namespace Luminous {
   using Nimble::Vector2;
   using Nimble::Vector4;
 
-  GLKeyStone::GLKeyStone(HasValues * host, const QString & name)
-  : HasValues(host, name, false),
+  GLKeyStone::GLKeyStone(Node * host, const QString & name)
+  : Node(host, name, false),
   m_selected(0),
   m_rotations(this, "rotations", false, 0)
   {
@@ -35,7 +35,7 @@ namespace Luminous {
 
   bool GLKeyStone::deserialize(const Valuable::ArchiveElement & e)
   {
-    if(!Valuable::HasValues::deserialize(e))
+    if(!Valuable::Node::deserialize(e))
       return false;
 
     calculateMatrix();

@@ -44,7 +44,7 @@ namespace Luminous
   ///   limit -= bytesToUpload;
   /// } /* else wait for the next frame */
   /// @endcode
-  class LUMINOUS_API UploadLimiter : public Valuable::HasValues
+  class LUMINOUS_API UploadLimiter : public Valuable::Node
   {
   public:
     /// Accepts "frame" event, resets all limits for a new frame.

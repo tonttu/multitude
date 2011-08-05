@@ -26,7 +26,7 @@ namespace Resonant
 {
 
   SoundRectangle::SoundRectangle()
-    :HasValues(0, "SoundRectangle"),
+    :Node(0, "SoundRectangle"),
     m_location(this, "location", DEFAULT_LOC),
     m_size(this, "size", DEFAULT_SIZE),
     m_stereoPan(this, "stereo-pan", DEFAULT_PAN),
@@ -37,7 +37,7 @@ namespace Resonant
   }
 
   SoundRectangle::SoundRectangle(Nimble::Vector2i loc, Nimble::Vector2i size, float stereoPan, int fadeWidth, int leftChannel, int rightChannel)
-    :HasValues(0, "SoundRectangle"),
+    :Node(0, "SoundRectangle"),
     m_location(this, "location", loc),
     m_size(this, "size", size),
     m_stereoPan(this, "stereo-pan", stereoPan),

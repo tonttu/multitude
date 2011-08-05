@@ -34,8 +34,8 @@ namespace Valuable
   class VALUABLE_API AttributeEnum : public AttributeIntT<int32_t>
   {
   public:
-    /// @copydoc Attribute::Attribute(HasValues *, const QString &, bool transit)
-    AttributeEnum(Valuable::HasValues * host, const char * name,
+    /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
+    AttributeEnum(Valuable::Node * host, const char * name,
               const char ** enumnames, int current);
     virtual ~AttributeEnum();
 

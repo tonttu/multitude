@@ -28,7 +28,7 @@ namespace Luminous {
   using namespace Radiant;
 
   MultiHead::Area::Area(Window * window)
-      : HasValues(0, "Area"),
+      : Node(0, "Area"),
       m_window(window),
       m_keyStone(this, "keystone"),
       m_location(this, "location", Nimble::Vector2i(0, 0)),
@@ -49,7 +49,7 @@ namespace Luminous {
 
   bool MultiHead::Area::deserialize(const Valuable::ArchiveElement & element)
   {
-    bool ok = HasValues::deserialize(element);
+    bool ok = Node::deserialize(element);
 
     updateBBox();
 
@@ -239,7 +239,7 @@ namespace Luminous {
   /////////////////////////////////////////////////////////////////////////////
 
   MultiHead::Window::Window(MultiHead * screen)
-      : HasValues(0, "Window"),
+      : Node(0, "Window"),
       m_screen(screen),
       m_location(this, "location", Nimble::Vector2i(0, 0)),
       m_size(this, "size", Nimble::Vector2i(100, 100)),
@@ -348,7 +348,7 @@ namespace Luminous {
   /////////////////////////////////////////////////////////////////////////////
 
   MultiHead::MultiHead()
-      : HasValues(0, "MultiHead", false),
+      : Node(0, "MultiHead", false),
       m_widthcm(this, "widthcm", 100, true),
       m_gamma(this, "gamma", 1.1f, true),
       m_iconify(this, "iconify", false),
@@ -500,7 +500,7 @@ namespace Luminous {
   {
     m_windows.clear();
 
-    bool ok = HasValues::deserialize(element);
+    bool ok = Node::deserialize(element);
 
     const float pixelSizeCm = m_widthcm.asFloat() / width();
 

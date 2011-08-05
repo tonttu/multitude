@@ -33,7 +33,7 @@
 #include <QString>
 #include <QSet>
 
-#define VO_TYPE_HASVALUES "HasValues"
+#define VO_TYPE_HASVALUES "Node"
 
 namespace Valuable
 {
@@ -43,23 +43,23 @@ namespace Valuable
       member variables) that are named with unique string.
 
       Deleting the child objects is the responsibility of the inherited
-      classes, HasValues simply maintains a list of children.
+      classes, Node simply maintains a list of children.
   */
   /// @todo Examples
-  class VALUABLE_API HasValues : public Attribute, public Patterns::NotCopyable
+  class VALUABLE_API Node : public Attribute, public Patterns::NotCopyable
   {
   public:
     /// Universally unique identifier type
     typedef int64_t Uuid;
 
-    HasValues();
-    /** Constructs a new HasValues and adds it under the given host
+    Node();
+    /** Constructs a new Node and adds it under the given host
       @param host host
       @param name name of the object
       @param transit should the object changes be transmitted
     */
-    HasValues(HasValues * host, const QString & name = "", bool transit = false);
-    virtual ~HasValues();
+    Node(Node * host, const QString & name = "", bool transit = false);
+    virtual ~Node();
 
     /// Adds new Attribute to the list of values
     bool addValue(const QString & name, Attribute * const value);
@@ -94,7 +94,7 @@ namespace Valuable
         if(next == QString("..")) {
           if(!m_host) {
             Radiant::error(
-                "HasValues::setValue # node '%s' has no host", m_name.toUtf8().data());
+                "Node::setValue # node '%s' has no host", m_name.toUtf8().data());
             return false;
           }
 
@@ -107,12 +107,12 @@ namespace Valuable
       container::iterator it = m_values.find(next);
       if(it == m_values.end()) {
         Radiant::error(
-            "HasValues::setValue # property '%s' not found", next.toUtf8().data());
+            "Node::setValue # property '%s' not found", next.toUtf8().data());
         return false;
       }
 
       if(cut > 0) {
-        HasValues * hv = dynamic_cast<HasValues *> (it->second);
+        Node * hv = dynamic_cast<Node *> (it->second);
         if(hv) return hv->setValue(rest, v);
       }
 
@@ -179,7 +179,7 @@ namespace Valuable
     */
     void eventAddListener(const char * from,
                           const char * to,
-                          Valuable::HasValues * obj,
+                          Valuable::Node * obj,
                           const Radiant::BinaryData * defaultData = 0);
     void eventAddListener(const char * from,
                           const char * to,
@@ -207,11 +207,11 @@ namespace Valuable
 
       @return number of event listener links removed
       */
-    int eventRemoveListener(Valuable::HasValues * obj, const char * from = 0, const char * to = 0);
+    int eventRemoveListener(Valuable::Node * obj, const char * from = 0, const char * to = 0);
     /// Adds an event source
-    void eventAddSource(Valuable::HasValues * source);
+    void eventAddSource(Valuable::Node * source);
     /// Removes an event source
-    void eventRemoveSource(Valuable::HasValues * source);
+    void eventRemoveSource(Valuable::Node * source);
 
     /// Returns the number of event sources
     unsigned eventSourceCount() const {  return (unsigned) m_eventSources.size(); }
@@ -259,7 +259,7 @@ namespace Valuable
     void defineShortcut(const QString & name);
 
     /// The sender of the event, can be read in processMessage()
-    HasValues * m_sender;
+    Node * m_sender;
 
   private:
     friend class Attribute; // So that Attribute can call the function below.
@@ -275,7 +275,7 @@ namespace Valuable
 
       inline bool operator == (const ValuePass & that) const;
 
-      Valuable::HasValues * m_listener;
+      Valuable::Node * m_listener;
       v8::Persistent<v8::Function> m_func;
       Radiant::BinaryData   m_defaultData;
       QString m_from;
@@ -287,11 +287,11 @@ namespace Valuable
     typedef std::list<ValuePass> Listeners;
     Listeners m_elisteners; // Event listeners
 
-    typedef std::set<Valuable::HasValues *> Sources;
+    typedef std::set<Valuable::Node *> Sources;
     Sources m_eventSources;
     bool m_eventsEnabled;
 
-    // set of all valueobjects that this HasValues is listening to
+    // set of all valueobjects that this Node is listening to
     QSet<Attribute*> m_valueListening;
 
     Valuable::AttributeIntT<Uuid> m_id;

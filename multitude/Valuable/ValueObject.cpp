@@ -44,7 +44,7 @@ namespace Valuable
     m_transit(false)
   {}
 
-  Attribute::Attribute(HasValues * host, const QString & name, bool transit)
+  Attribute::Attribute(Node * host, const QString & name, bool transit)
     : m_host(0),
       m_changed(false),
       m_name(name),
@@ -218,7 +218,7 @@ namespace Valuable
     addListener(0, func, role);
   }
 
-  void Attribute::addListener(HasValues * listener, ListenerFunc func, int role)
+  void Attribute::addListener(Node * listener, ListenerFunc func, int role)
   {
     m_listeners << AttributeListener(func, role, listener);
     if(listener) listener->m_valueListening << listener;
@@ -229,9 +229,9 @@ namespace Valuable
     removeListener(0, role);
   }
 
-  void Attribute::removeListener(HasValues * listener, int role)
+  void Attribute::removeListener(Node * listener, int role)
   {
-    QList<HasValues*> listeners;
+    QList<Node*> listeners;
     for(QList<AttributeListener>::iterator it = m_listeners.begin(); it != m_listeners.end(); ) {
       if(it->role & role && (!listener || listener == it->listener)) {
         if(it->listener) listeners << it->listener;
@@ -239,7 +239,7 @@ namespace Valuable
       } else ++it;
     }
 
-    foreach(HasValues * listener, listeners) {
+    foreach(Node * listener, listeners) {
       bool found = false;
       foreach(const AttributeListener & l, m_listeners)
         if(l.listener == listener) { found = true; break; }

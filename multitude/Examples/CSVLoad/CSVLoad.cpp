@@ -24,7 +24,7 @@
 
 int main(int argc, char ** argv)
 {
-  Valuable::HasValues opts;
+  Valuable::Node opts;
   Valuable::AttributeString filename( & opts, "filename", "test.csv");
 
   Valuable::CmdParser::parse(argc, argv, opts);

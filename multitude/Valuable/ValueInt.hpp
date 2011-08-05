@@ -44,9 +44,9 @@ namespace Valuable
     using AttributeT<T>::operator =;
 
     AttributeIntT() : Base() {}
-    /// @copydoc Attribute::Attribute(HasValues *, const QString &, bool transit)
+    /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param v The numeric value of this object
-    AttributeIntT(HasValues * host, const QString & name, T v, bool transit = false)
+    AttributeIntT(Node * host, const QString & name, T v, bool transit = false)
         : AttributeNumeric<T>(host, name, v, transit)
     {}
 

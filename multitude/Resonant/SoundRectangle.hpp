@@ -34,7 +34,7 @@ The amount of loss in gain on the right channel when the sound source is in the
 left of the rectangle can be adjusted. The rectangle also has an extra border
 where the gain falls to zero if the sound source moves outside the rectangle.
   */
-  class RESONANT_API SoundRectangle : public Valuable::HasValues
+  class RESONANT_API SoundRectangle : public Valuable::Node
   {
   public:
     /// Constructs a sound rectangle

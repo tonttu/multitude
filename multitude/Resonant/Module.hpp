@@ -33,7 +33,7 @@ namespace Resonant {
   /** Base class for #Resonant signal processing blocks. */
   /// @todo Check if the id could be dropped in favor of
   /// Attribute::name
-  class RESONANT_API Module : public Valuable::HasValues
+  class RESONANT_API Module : public Valuable::Node
   {
   public:
 

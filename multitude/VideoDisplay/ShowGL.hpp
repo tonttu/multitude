@@ -68,9 +68,9 @@ namespace VideoDisplay {
       From application-programmers perspective, this is the main class
       of the VideoDisplay framework. */
   class VIDEODISPLAY_API ShowGL : public Luminous::Collectable,
-  public Valuable::HasValues
+  public Valuable::Node
   {
-    MEMCHECKED_USING(Valuable::HasValues);
+    MEMCHECKED_USING(Valuable::Node);
   private:
 
     class YUVProgram : public Luminous::GLSLProgramObject

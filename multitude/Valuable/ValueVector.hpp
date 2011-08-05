@@ -45,9 +45,9 @@ namespace Valuable
       using Base::value;
 
       AttributeVector() : Base() {}
-      /// @copydoc Attribute::Attribute(HasValues *, const QString &, bool transit)
+      /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
       /// @param v The value of this object
-      AttributeVector(HasValues * host, const QString & name, const VectorType & v = VectorType(), bool transit = false)
+      AttributeVector(Node * host, const QString & name, const VectorType & v = VectorType(), bool transit = false)
         : Base(host, name, v, transit) {}
 
       virtual ~AttributeVector();

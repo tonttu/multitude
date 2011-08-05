@@ -56,7 +56,7 @@ namespace Valuable
     /// Constructs a new container
     /// @param host host object
     /// @param name name of the value
-    AttributeContainer(HasValues * host, const QString & name)
+    AttributeContainer(Node * host, const QString & name)
       : Attribute(host, name, false)
     {}
 

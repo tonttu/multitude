@@ -108,7 +108,7 @@ namespace Resonant {
     void removeSource(const QString &);
 
     /// @cond
-    class LoudSpeaker : public Valuable::HasValues
+    class LoudSpeaker : public Valuable::Node
     {
     public:
       LoudSpeaker()

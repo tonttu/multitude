@@ -34,13 +34,13 @@ namespace Luminous {
       @see ShaderExample demo application
 */
   class LUMINOUS_API Shader : public ContextVariableT<GLSLProgramObject>,
-  public Valuable::HasValues
+  public Valuable::Node
   {
-    MEMCHECKED_USING(Valuable::HasValues);
+    MEMCHECKED_USING(Valuable::Node);
   public:
     Shader();
     /// Constructs a shader
-    Shader(Valuable::HasValues * host, const char * name);
+    Shader(Valuable::Node * host, const char * name);
     /// Deletes the shader
     virtual ~Shader();
 

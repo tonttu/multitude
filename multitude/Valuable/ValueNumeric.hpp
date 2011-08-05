@@ -35,9 +35,9 @@ namespace Valuable
       using Base::value;
 
       AttributeNumeric() : AttributeT<T>() {}
-      /// @copydoc Attribute::Attribute(HasValues *, const QString &, bool transit)
+      /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
       /// @param v The numeric value of this object.
-      AttributeNumeric(HasValues * host, const QString & name, T v, bool transit = false)
+      AttributeNumeric(Node * host, const QString & name, T v, bool transit = false)
       : Base(host, name, v, transit)
       {}
 

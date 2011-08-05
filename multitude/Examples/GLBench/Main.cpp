@@ -42,7 +42,7 @@ int main(int argc, char ** argv)
   const int texturesperlevel = 5;
   const int formatsperlevel = 3;
 
-  Valuable::HasValues opts;
+  Valuable::Node opts;
   Valuable::AttributeInt uselevels(&opts, "levels", 12);
   Valuable::AttributeBool drawrects(&opts, "drawrects", false);
 

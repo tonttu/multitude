@@ -28,7 +28,7 @@ namespace Luminous {
       is either impossible or very difficult.
   */
   /// @todo the "rotations" is not very descriptive, and should be removed.
-  class LUMINOUS_API GLKeyStone : public Valuable::HasValues
+  class LUMINOUS_API GLKeyStone : public Valuable::Node
   {
   public:
 
@@ -41,7 +41,7 @@ namespace Luminous {
     };
 
     /// Creates a new GLKeyStone object.
-    GLKeyStone(Valuable::HasValues * host, const QString & name);
+    GLKeyStone(Valuable::Node * host, const QString & name);
     virtual ~GLKeyStone();
 
     /// Returns the object type name = "glkeystone"

@@ -22,7 +22,7 @@
 namespace Valuable
 {
 
-  AttributeEnum::AttributeEnum(Valuable::HasValues * host, const char * name,
+  AttributeEnum::AttributeEnum(Valuable::Node * host, const char * name,
                        const char ** enumnames, int current)
   : AttributeIntT<int32_t>(host, name, current),
     m_enumnames(enumnames)

@@ -24,13 +24,13 @@
 
 namespace Valuable
 {
-  class HasValues;
+  class Node;
 
   /// Command line parser.
   class VALUABLE_API CmdParser
   {
   public:
-    /// Parses command line arguments to given HasValues object.
+    /// Parses command line arguments to given Node object.
     /**
      * @param argc Number of arguments in argv
      * @param argv Array of arguments
@@ -48,7 +48,7 @@ namespace Valuable
      *
      * Example:
      * \code
-     * HasValues opts;
+     * Node opts;
      * AttributeInt limit(&opts, "limit", 5);
      * ValueString target(&opts, "target", "/tmp/target");
      * ValueBool verbose(&opts, "v", false);
@@ -60,9 +60,9 @@ namespace Valuable
      * @return List of arguments that didn't match any Attribute in opts.
      */
     static QStringList parse(int argc, char * argv[],
-                                                  Valuable::HasValues & opts);
+                                                  Valuable::Node & opts);
 
-    /// Parses command line arguments to given HasValues object.
+    /// Parses command line arguments to given Node object.
     /**
       * @param argc Number of arguments in argv
       * @param argv Array of arguments
@@ -75,7 +75,7 @@ namespace Valuable
       * @return List of arguments that didn't match any Attribute in opts.
       */
     QStringList parseAndStore(int argc, char * argv[],
-                              Valuable::HasValues & opts);
+                              Valuable::Node & opts);
 
     /**
       * Query the CmdParser if a certain command line parameter has been parsed.

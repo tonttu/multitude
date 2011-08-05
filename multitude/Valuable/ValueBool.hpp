@@ -27,9 +27,9 @@ namespace Valuable
   public:
     using AttributeT<bool>::operator =;
 
-    /// @copydoc Attribute::Attribute(HasValues *, const QString &, bool transit)
+    /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param value The value of this object
-    AttributeBool(HasValues * host, const QString & name, bool value, bool transit = false);
+    AttributeBool(Node * host, const QString & name, bool value, bool transit = false);
     virtual ~AttributeBool();
 
     const char * type() const { return "bool"; }

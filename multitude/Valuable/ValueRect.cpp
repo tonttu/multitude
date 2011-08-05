@@ -10,7 +10,7 @@ namespace Valuable
 {
 
   template <class T>
-  AttributeRectT<T>::AttributeRectT(HasValues * host, const QString & name, const Nimble::RectT<T> & r, bool transit)
+  AttributeRectT<T>::AttributeRectT(Node * host, const QString & name, const Nimble::RectT<T> & r, bool transit)
     : Base(host, name, r, transit)
   {}
 
