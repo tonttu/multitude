@@ -22,11 +22,11 @@
 
 #include <cstddef>
 
-#ifndef __GCCXML__
-
 // try to detect c++0x
 #if defined(RADIANT_CPP0X)
   #include <memory>
+#elif defined(__GCCXML__)
+  #include <generator/gccxml_tr1.hpp>
 #else
   #if defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
     #include <tr1/memory>
@@ -47,8 +47,6 @@
     using tr1::enable_shared_from_this;
   }
 #endif
-
-#endif // __GCCXML__
 
 namespace Radiant
 {

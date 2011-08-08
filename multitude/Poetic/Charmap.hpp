@@ -22,11 +22,11 @@
 
 /// @cond
 
-#ifndef __GCCXML__
-
 // try to detect c++0x
 #if defined(RADIANT_CPP0X)
   #include <unordered_map>
+#elif defined(__GCCXML__)
+  #include <generator/gccxml_tr1.hpp>
 #else
   #if defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
     #include <tr1/unordered_map>
@@ -40,8 +40,6 @@
     using tr1::unordered_map;
   }
 #endif
-
-#endif // __GCCXML__
 
 /// @endcond
 
