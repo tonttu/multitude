@@ -50,7 +50,7 @@ namespace internal {
   entry(p0, p1, p2, p3, p4)
 
 typedef int (*mips_regexp_matcher)(String*, int, const byte*, const byte*,
-                                   int*, Address, int, Isolate*);
+                                   void*, int*, Address, int, Isolate*);
 
 
 // Call the generated regexp code directly. The code at the entry address
@@ -58,7 +58,8 @@ typedef int (*mips_regexp_matcher)(String*, int, const byte*, const byte*,
 // The fifth argument is a dummy that reserves the space used for
 // the return address added by the ExitFrame in native calls.
 #define CALL_GENERATED_REGEXP_CODE(entry, p0, p1, p2, p3, p4, p5, p6, p7) \
-  (FUNCTION_CAST<mips_regexp_matcher>(entry)(p0, p1, p2, p3, p4, p5, p6, p7))
+  (FUNCTION_CAST<mips_regexp_matcher>(entry)( \
+      p0, p1, p2, p3, NULL, p4, p5, p6, p7))
 
 #define TRY_CATCH_FROM_ADDRESS(try_catch_address) \
   reinterpret_cast<TryCatch*>(try_catch_address)
@@ -288,6 +289,18 @@ class Simulator {
   // Used for breakpoints and traps.
   void SoftwareInterrupt(Instruction* instr);
 
+  // Stop helper functions.
+  bool IsWatchpoint(uint32_t code);
+  void PrintWatchpoint(uint32_t code);
+  void HandleStop(uint32_t code, Instruction* instr);
+  bool IsStopInstruction(Instruction* instr);
+  bool IsEnabledStop(uint32_t code);
+  void EnableStop(uint32_t code);
+  void DisableStop(uint32_t code);
+  void IncreaseStopCounter(uint32_t code);
+  void PrintStopInfo(uint32_t code);
+
+
   // Executes one instruction.
   void InstructionDecode(Instruction* instr);
   // Execute one instruction placed in a branch delay slot.
@@ -322,9 +335,12 @@ class Simulator {
   static void* RedirectExternalReference(void* external_function,
                                          ExternalReference::Type type);
 
-  // Used for real time calls that takes two double values as arguments and
-  // returns a double.
-  void SetFpResult(double result);
+  // For use in calls that take double value arguments.
+  void GetFpArgs(double* x, double* y);
+  void GetFpArgs(double* x);
+  void GetFpArgs(double* x, int32_t* y);
+  void SetFpResult(const double& result);
+
 
   // Architecture state.
   // Registers.
@@ -350,6 +366,19 @@ class Simulator {
   // Registered breakpoints.
   Instruction* break_pc_;
   Instr break_instr_;
+
+  // Stop is disabled if bit 31 is set.
+  static const uint32_t kStopDisabledBit = 1 << 31;
+
+  // A stop is enabled, meaning the simulator will stop when meeting the
+  // instruction, if bit 31 of watched_stops[code].count is unset.
+  // The value watched_stops[code].count & ~(1 << 31) indicates how many times
+  // the breakpoint was hit or gone through.
+  struct StopCountAndDesc {
+    uint32_t count;
+    char* desc;
+  };
+  StopCountAndDesc watched_stops[kMaxStopCode + 1];
 };
 
 
@@ -361,7 +390,7 @@ class Simulator {
 
 #define CALL_GENERATED_REGEXP_CODE(entry, p0, p1, p2, p3, p4, p5, p6, p7) \
     Simulator::current(Isolate::Current())->Call( \
-        entry, 8, p0, p1, p2, p3, p4, p5, p6, p7)
+        entry, 9, p0, p1, p2, p3, NULL, p4, p5, p6, p7)
 
 #define TRY_CATCH_FROM_ADDRESS(try_catch_address)                              \
   try_catch_address == NULL ?                                                  \
@@ -394,4 +423,3 @@ class SimulatorStack : public v8::internal::AllStatic {
 
 #endif  // !defined(USE_SIMULATOR)
 #endif  // V8_MIPS_SIMULATOR_MIPS_H_
-

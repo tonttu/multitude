@@ -47,8 +47,9 @@ namespace internal {
 
 NativesExternalStringResource::NativesExternalStringResource(
     Bootstrapper* bootstrapper,
-    const char* source)
-    : data_(source), length_(StrLength(source)) {
+    const char* source,
+    size_t length)
+    : data_(source), length_(length) {
   if (bootstrapper->delete_these_non_arrays_on_tear_down_ == NULL) {
     bootstrapper->delete_these_non_arrays_on_tear_down_ = new List<char*>(2);
   }
@@ -75,16 +76,18 @@ Handle<String> Bootstrapper::NativesSourceLookup(int index) {
   if (heap->natives_source_cache()->get(index)->IsUndefined()) {
     if (!Snapshot::IsEnabled() || FLAG_new_snapshot) {
       // We can use external strings for the natives.
+      Vector<const char> source = Natives::GetRawScriptSource(index);
       NativesExternalStringResource* resource =
           new NativesExternalStringResource(this,
-              Natives::GetScriptSource(index).start());
+                                            source.start(),
+                                            source.length());
       Handle<String> source_code =
           factory->NewExternalStringFromAscii(resource);
       heap->natives_source_cache()->set(index, *source_code);
     } else {
       // Old snapshot code can't cope with external strings at all.
       Handle<String> source_code =
-        factory->NewStringFromAscii(Natives::GetScriptSource(index));
+        factory->NewStringFromAscii(Natives::GetRawScriptSource(index));
       heap->natives_source_cache()->set(index, *source_code);
     }
   }
@@ -171,7 +174,7 @@ class Genesis BASE_EMBEDDED {
   // Creates the empty function.  Used for creating a context from scratch.
   Handle<JSFunction> CreateEmptyFunction(Isolate* isolate);
   // Creates the ThrowTypeError function. ECMA 5th Ed. 13.2.3
-  Handle<JSFunction> CreateThrowTypeErrorFunction(Builtins::Name builtin);
+  Handle<JSFunction> GetThrowTypeErrorFunction();
 
   void CreateStrictModeFunctionMaps(Handle<JSFunction> empty);
   // Creates the global objects using the global and the template passed in
@@ -199,6 +202,7 @@ class Genesis BASE_EMBEDDED {
   // Installs the contents of the native .js files on the global objects.
   // Used for creating a context from scratch.
   void InstallNativeFunctions();
+  void InstallExperimentalNativeFunctions();
   bool InstallNatives();
   bool InstallExperimentalNatives();
   void InstallBuiltinFunctionIds();
@@ -264,6 +268,7 @@ class Genesis BASE_EMBEDDED {
   // These are the final, writable prototype, maps.
   Handle<Map> function_instance_map_writable_prototype_;
   Handle<Map> strict_mode_function_instance_map_writable_prototype_;
+  Handle<JSFunction> throw_type_error_function;
 
   BootstrapperActive active_;
   friend class Bootstrapper;
@@ -362,23 +367,24 @@ Handle<DescriptorArray> Genesis::ComputeFunctionInstanceDescriptor(
       static_cast<PropertyAttributes>(DONT_ENUM | DONT_DELETE | READ_ONLY);
 
   {  // Add length.
-    Handle<Proxy> proxy = factory()->NewProxy(&Accessors::FunctionLength);
-    CallbacksDescriptor d(*factory()->length_symbol(), *proxy, attributes);
+    Handle<Foreign> foreign = factory()->NewForeign(&Accessors::FunctionLength);
+    CallbacksDescriptor d(*factory()->length_symbol(), *foreign, attributes);
     descriptors->Set(0, &d);
   }
   {  // Add name.
-    Handle<Proxy> proxy = factory()->NewProxy(&Accessors::FunctionName);
-    CallbacksDescriptor d(*factory()->name_symbol(), *proxy, attributes);
+    Handle<Foreign> foreign = factory()->NewForeign(&Accessors::FunctionName);
+    CallbacksDescriptor d(*factory()->name_symbol(), *foreign, attributes);
     descriptors->Set(1, &d);
   }
   {  // Add arguments.
-    Handle<Proxy> proxy = factory()->NewProxy(&Accessors::FunctionArguments);
-    CallbacksDescriptor d(*factory()->arguments_symbol(), *proxy, attributes);
+    Handle<Foreign> foreign =
+        factory()->NewForeign(&Accessors::FunctionArguments);
+    CallbacksDescriptor d(*factory()->arguments_symbol(), *foreign, attributes);
     descriptors->Set(2, &d);
   }
   {  // Add caller.
-    Handle<Proxy> proxy = factory()->NewProxy(&Accessors::FunctionCaller);
-    CallbacksDescriptor d(*factory()->caller_symbol(), *proxy, attributes);
+    Handle<Foreign> foreign = factory()->NewForeign(&Accessors::FunctionCaller);
+    CallbacksDescriptor d(*factory()->caller_symbol(), *foreign, attributes);
     descriptors->Set(3, &d);
   }
   if (prototypeMode != DONT_ADD_PROTOTYPE) {
@@ -386,8 +392,9 @@ Handle<DescriptorArray> Genesis::ComputeFunctionInstanceDescriptor(
     if (prototypeMode == ADD_WRITEABLE_PROTOTYPE) {
       attributes = static_cast<PropertyAttributes>(attributes & ~READ_ONLY);
     }
-    Handle<Proxy> proxy = factory()->NewProxy(&Accessors::FunctionPrototype);
-    CallbacksDescriptor d(*factory()->prototype_symbol(), *proxy, attributes);
+    Handle<Foreign> foreign =
+        factory()->NewForeign(&Accessors::FunctionPrototype);
+    CallbacksDescriptor d(*factory()->prototype_symbol(), *foreign, attributes);
     descriptors->Set(4, &d);
   }
   descriptors->Sort();
@@ -509,13 +516,13 @@ Handle<DescriptorArray> Genesis::ComputeStrictFunctionInstanceDescriptor(
       DONT_ENUM | DONT_DELETE | READ_ONLY);
 
   {  // length
-    Handle<Proxy> proxy = factory()->NewProxy(&Accessors::FunctionLength);
-    CallbacksDescriptor d(*factory()->length_symbol(), *proxy, attributes);
+    Handle<Foreign> foreign = factory()->NewForeign(&Accessors::FunctionLength);
+    CallbacksDescriptor d(*factory()->length_symbol(), *foreign, attributes);
     descriptors->Set(0, &d);
   }
   {  // name
-    Handle<Proxy> proxy = factory()->NewProxy(&Accessors::FunctionName);
-    CallbacksDescriptor d(*factory()->name_symbol(), *proxy, attributes);
+    Handle<Foreign> foreign = factory()->NewForeign(&Accessors::FunctionName);
+    CallbacksDescriptor d(*factory()->name_symbol(), *foreign, attributes);
     descriptors->Set(1, &d);
   }
   {  // arguments
@@ -534,8 +541,9 @@ Handle<DescriptorArray> Genesis::ComputeStrictFunctionInstanceDescriptor(
     if (prototypeMode == ADD_WRITEABLE_PROTOTYPE) {
       attributes = static_cast<PropertyAttributes>(attributes & ~READ_ONLY);
     }
-    Handle<Proxy> proxy = factory()->NewProxy(&Accessors::FunctionPrototype);
-    CallbacksDescriptor d(*factory()->prototype_symbol(), *proxy, attributes);
+    Handle<Foreign> foreign =
+        factory()->NewForeign(&Accessors::FunctionPrototype);
+    CallbacksDescriptor d(*factory()->prototype_symbol(), *foreign, attributes);
     descriptors->Set(4, &d);
   }
 
@@ -545,22 +553,22 @@ Handle<DescriptorArray> Genesis::ComputeStrictFunctionInstanceDescriptor(
 
 
 // ECMAScript 5th Edition, 13.2.3
-Handle<JSFunction> Genesis::CreateThrowTypeErrorFunction(
-    Builtins::Name builtin) {
-  Handle<String> name = factory()->LookupAsciiSymbol("ThrowTypeError");
-  Handle<JSFunction> throw_type_error =
-      factory()->NewFunctionWithoutPrototype(name, kStrictMode);
-  Handle<Code> code = Handle<Code>(
-      isolate()->builtins()->builtin(builtin));
+Handle<JSFunction> Genesis::GetThrowTypeErrorFunction() {
+  if (throw_type_error_function.is_null()) {
+    Handle<String> name = factory()->LookupAsciiSymbol("ThrowTypeError");
+    throw_type_error_function =
+      factory()->NewFunctionWithoutPrototype(name, kNonStrictMode);
+    Handle<Code> code(isolate()->builtins()->builtin(
+        Builtins::kStrictModePoisonPill));
+    throw_type_error_function->set_map(
+        global_context()->function_map());
+    throw_type_error_function->set_code(*code);
+    throw_type_error_function->shared()->set_code(*code);
+    throw_type_error_function->shared()->DontAdaptArguments();
 
-  throw_type_error->set_map(global_context()->strict_mode_function_map());
-  throw_type_error->set_code(*code);
-  throw_type_error->shared()->set_code(*code);
-  throw_type_error->shared()->DontAdaptArguments();
-
-  PreventExtensions(throw_type_error);
-
-  return throw_type_error;
+    PreventExtensions(throw_type_error_function);
+  }
+  return throw_type_error_function;
 }
 
 
@@ -617,17 +625,15 @@ void Genesis::CreateStrictModeFunctionMaps(Handle<JSFunction> empty) {
       CreateStrictModeFunctionMap(
           ADD_WRITEABLE_PROTOTYPE, empty, arguments, caller);
 
-  // Create the ThrowTypeError function instances.
-  Handle<JSFunction> arguments_throw =
-      CreateThrowTypeErrorFunction(Builtins::kStrictFunctionArguments);
-  Handle<JSFunction> caller_throw =
-      CreateThrowTypeErrorFunction(Builtins::kStrictFunctionCaller);
+  // Create the ThrowTypeError function instance.
+  Handle<JSFunction> throw_function =
+      GetThrowTypeErrorFunction();
 
   // Complete the callback fixed arrays.
-  arguments->set(0, *arguments_throw);
-  arguments->set(1, *arguments_throw);
-  caller->set(0, *caller_throw);
-  caller->set(1, *caller_throw);
+  arguments->set(0, *throw_function);
+  arguments->set(1, *throw_function);
+  caller->set(0, *throw_function);
+  caller->set(1, *throw_function);
 }
 
 
@@ -808,7 +814,6 @@ void Genesis::InitializeGlobal(Handle<GlobalObject> inner_global,
   // --- G l o b a l   C o n t e x t ---
   // Use the empty function as closure (no scope info).
   global_context()->set_closure(*empty_function);
-  global_context()->set_fcontext(*global_context());
   global_context()->set_previous(NULL);
   // Set extension and global object.
   global_context()->set_extension(*inner_global);
@@ -846,10 +851,10 @@ void Genesis::InitializeGlobal(Handle<GlobalObject> inner_global,
     // is 1.
     array_function->shared()->set_length(1);
     Handle<DescriptorArray> array_descriptors =
-        factory->CopyAppendProxyDescriptor(
+        factory->CopyAppendForeignDescriptor(
             factory->empty_descriptor_array(),
             factory->length_symbol(),
-            factory->NewProxy(&Accessors::ArrayLength),
+            factory->NewForeign(&Accessors::ArrayLength),
             static_cast<PropertyAttributes>(DONT_ENUM | DONT_DELETE));
 
     // Cache the fast JavaScript array map
@@ -889,10 +894,10 @@ void Genesis::InitializeGlobal(Handle<GlobalObject> inner_global,
     global_context()->set_string_function(*string_fun);
     // Add 'length' property to strings.
     Handle<DescriptorArray> string_descriptors =
-        factory->CopyAppendProxyDescriptor(
+        factory->CopyAppendForeignDescriptor(
             factory->empty_descriptor_array(),
             factory->length_symbol(),
-            factory->NewProxy(&Accessors::StringLength),
+            factory->NewForeign(&Accessors::StringLength),
             static_cast<PropertyAttributes>(DONT_ENUM |
                                             DONT_DELETE |
                                             READ_ONLY));
@@ -1049,6 +1054,24 @@ void Genesis::InitializeGlobal(Handle<GlobalObject> inner_global,
 #endif
   }
 
+  {  // --- aliased_arguments_boilerplate_
+    Handle<Map> old_map(global_context()->arguments_boilerplate()->map());
+    Handle<Map> new_map = factory->CopyMapDropTransitions(old_map);
+    new_map->set_pre_allocated_property_fields(2);
+    Handle<JSObject> result = factory->NewJSObjectFromMap(new_map);
+    new_map->set_elements_kind(JSObject::NON_STRICT_ARGUMENTS_ELEMENTS);
+    // Set up a well-formed parameter map to make assertions happy.
+    Handle<FixedArray> elements = factory->NewFixedArray(2);
+    elements->set_map(heap->non_strict_arguments_elements_map());
+    Handle<FixedArray> array;
+    array = factory->NewFixedArray(0);
+    elements->set(0, *array);
+    array = factory->NewFixedArray(0);
+    elements->set(1, *array);
+    result->set_elements(*elements);
+    global_context()->set_aliased_arguments_boilerplate(*result);
+  }
+
   {  // --- strict mode arguments boilerplate
     const PropertyAttributes attributes =
       static_cast<PropertyAttributes>(DONT_ENUM | DONT_DELETE | READ_ONLY);
@@ -1057,16 +1080,14 @@ void Genesis::InitializeGlobal(Handle<GlobalObject> inner_global,
     Handle<FixedArray> callee = factory->NewFixedArray(2, TENURED);
     Handle<FixedArray> caller = factory->NewFixedArray(2, TENURED);
 
-    Handle<JSFunction> callee_throw =
-        CreateThrowTypeErrorFunction(Builtins::kStrictArgumentsCallee);
-    Handle<JSFunction> caller_throw =
-        CreateThrowTypeErrorFunction(Builtins::kStrictArgumentsCaller);
+    Handle<JSFunction> throw_function =
+        GetThrowTypeErrorFunction();
 
     // Install the ThrowTypeError functions.
-    callee->set(0, *callee_throw);
-    callee->set(1, *callee_throw);
-    caller->set(0, *caller_throw);
-    caller->set(1, *caller_throw);
+    callee->set(0, *throw_function);
+    callee->set(1, *throw_function);
+    caller->set(0, *throw_function);
+    caller->set(1, *throw_function);
 
     // Create the descriptor array for the arguments object.
     Handle<DescriptorArray> descriptors = factory->NewDescriptorArray(3);
@@ -1181,7 +1202,8 @@ bool Genesis::CompileExperimentalBuiltin(Isolate* isolate, int index) {
   Vector<const char> name = ExperimentalNatives::GetScriptName(index);
   Factory* factory = isolate->factory();
   Handle<String> source_code =
-      factory->NewStringFromAscii(ExperimentalNatives::GetScriptSource(index));
+      factory->NewStringFromAscii(
+          ExperimentalNatives::GetRawScriptSource(index));
   return CompileNative(name, source_code);
 }
 
@@ -1285,6 +1307,14 @@ void Genesis::InstallNativeFunctions() {
   INSTALL_NATIVE(JSObject, "functionCache", function_cache);
 }
 
+void Genesis::InstallExperimentalNativeFunctions() {
+  if (FLAG_harmony_proxies) {
+    INSTALL_NATIVE(JSFunction, "DerivedHasTrap", derived_has_trap);
+    INSTALL_NATIVE(JSFunction, "DerivedGetTrap", derived_get_trap);
+    INSTALL_NATIVE(JSFunction, "DerivedSetTrap", derived_set_trap);
+  }
+}
+
 #undef INSTALL_NATIVE
 
 
@@ -1351,104 +1381,108 @@ bool Genesis::InstallNatives() {
     // Add 'source' and 'data' property to scripts.
     PropertyAttributes common_attributes =
         static_cast<PropertyAttributes>(DONT_ENUM | DONT_DELETE | READ_ONLY);
-    Handle<Proxy> proxy_source = factory()->NewProxy(&Accessors::ScriptSource);
+    Handle<Foreign> foreign_source =
+        factory()->NewForeign(&Accessors::ScriptSource);
     Handle<DescriptorArray> script_descriptors =
-        factory()->CopyAppendProxyDescriptor(
+        factory()->CopyAppendForeignDescriptor(
             factory()->empty_descriptor_array(),
             factory()->LookupAsciiSymbol("source"),
-            proxy_source,
+            foreign_source,
             common_attributes);
-    Handle<Proxy> proxy_name = factory()->NewProxy(&Accessors::ScriptName);
+    Handle<Foreign> foreign_name =
+        factory()->NewForeign(&Accessors::ScriptName);
     script_descriptors =
-        factory()->CopyAppendProxyDescriptor(
+        factory()->CopyAppendForeignDescriptor(
             script_descriptors,
             factory()->LookupAsciiSymbol("name"),
-            proxy_name,
+            foreign_name,
             common_attributes);
-    Handle<Proxy> proxy_id = factory()->NewProxy(&Accessors::ScriptId);
+    Handle<Foreign> foreign_id = factory()->NewForeign(&Accessors::ScriptId);
     script_descriptors =
-        factory()->CopyAppendProxyDescriptor(
+        factory()->CopyAppendForeignDescriptor(
             script_descriptors,
             factory()->LookupAsciiSymbol("id"),
-            proxy_id,
+            foreign_id,
             common_attributes);
-    Handle<Proxy> proxy_line_offset =
-        factory()->NewProxy(&Accessors::ScriptLineOffset);
+    Handle<Foreign> foreign_line_offset =
+        factory()->NewForeign(&Accessors::ScriptLineOffset);
     script_descriptors =
-        factory()->CopyAppendProxyDescriptor(
+        factory()->CopyAppendForeignDescriptor(
             script_descriptors,
             factory()->LookupAsciiSymbol("line_offset"),
-            proxy_line_offset,
+            foreign_line_offset,
             common_attributes);
-    Handle<Proxy> proxy_column_offset =
-        factory()->NewProxy(&Accessors::ScriptColumnOffset);
+    Handle<Foreign> foreign_column_offset =
+        factory()->NewForeign(&Accessors::ScriptColumnOffset);
     script_descriptors =
-        factory()->CopyAppendProxyDescriptor(
+        factory()->CopyAppendForeignDescriptor(
             script_descriptors,
             factory()->LookupAsciiSymbol("column_offset"),
-            proxy_column_offset,
+            foreign_column_offset,
             common_attributes);
-    Handle<Proxy> proxy_data = factory()->NewProxy(&Accessors::ScriptData);
+    Handle<Foreign> foreign_data =
+        factory()->NewForeign(&Accessors::ScriptData);
     script_descriptors =
-        factory()->CopyAppendProxyDescriptor(
+        factory()->CopyAppendForeignDescriptor(
             script_descriptors,
             factory()->LookupAsciiSymbol("data"),
-            proxy_data,
+            foreign_data,
             common_attributes);
-    Handle<Proxy> proxy_type = factory()->NewProxy(&Accessors::ScriptType);
+    Handle<Foreign> foreign_type =
+        factory()->NewForeign(&Accessors::ScriptType);
     script_descriptors =
-        factory()->CopyAppendProxyDescriptor(
+        factory()->CopyAppendForeignDescriptor(
             script_descriptors,
             factory()->LookupAsciiSymbol("type"),
-            proxy_type,
+            foreign_type,
             common_attributes);
-    Handle<Proxy> proxy_compilation_type =
-        factory()->NewProxy(&Accessors::ScriptCompilationType);
+    Handle<Foreign> foreign_compilation_type =
+        factory()->NewForeign(&Accessors::ScriptCompilationType);
     script_descriptors =
-        factory()->CopyAppendProxyDescriptor(
+        factory()->CopyAppendForeignDescriptor(
             script_descriptors,
             factory()->LookupAsciiSymbol("compilation_type"),
-            proxy_compilation_type,
+            foreign_compilation_type,
             common_attributes);
-    Handle<Proxy> proxy_line_ends =
-        factory()->NewProxy(&Accessors::ScriptLineEnds);
+    Handle<Foreign> foreign_line_ends =
+        factory()->NewForeign(&Accessors::ScriptLineEnds);
     script_descriptors =
-        factory()->CopyAppendProxyDescriptor(
+        factory()->CopyAppendForeignDescriptor(
             script_descriptors,
             factory()->LookupAsciiSymbol("line_ends"),
-            proxy_line_ends,
+            foreign_line_ends,
             common_attributes);
-    Handle<Proxy> proxy_context_data =
-        factory()->NewProxy(&Accessors::ScriptContextData);
+    Handle<Foreign> foreign_context_data =
+        factory()->NewForeign(&Accessors::ScriptContextData);
     script_descriptors =
-        factory()->CopyAppendProxyDescriptor(
+        factory()->CopyAppendForeignDescriptor(
             script_descriptors,
             factory()->LookupAsciiSymbol("context_data"),
-            proxy_context_data,
+            foreign_context_data,
             common_attributes);
-    Handle<Proxy> proxy_eval_from_script =
-        factory()->NewProxy(&Accessors::ScriptEvalFromScript);
+    Handle<Foreign> foreign_eval_from_script =
+        factory()->NewForeign(&Accessors::ScriptEvalFromScript);
     script_descriptors =
-        factory()->CopyAppendProxyDescriptor(
+        factory()->CopyAppendForeignDescriptor(
             script_descriptors,
             factory()->LookupAsciiSymbol("eval_from_script"),
-            proxy_eval_from_script,
+            foreign_eval_from_script,
             common_attributes);
-    Handle<Proxy> proxy_eval_from_script_position =
-        factory()->NewProxy(&Accessors::ScriptEvalFromScriptPosition);
+    Handle<Foreign> foreign_eval_from_script_position =
+        factory()->NewForeign(&Accessors::ScriptEvalFromScriptPosition);
     script_descriptors =
-        factory()->CopyAppendProxyDescriptor(
+        factory()->CopyAppendForeignDescriptor(
             script_descriptors,
             factory()->LookupAsciiSymbol("eval_from_script_position"),
-            proxy_eval_from_script_position,
+            foreign_eval_from_script_position,
             common_attributes);
-    Handle<Proxy> proxy_eval_from_function_name =
-        factory()->NewProxy(&Accessors::ScriptEvalFromFunctionName);
+    Handle<Foreign> foreign_eval_from_function_name =
+        factory()->NewForeign(&Accessors::ScriptEvalFromFunctionName);
     script_descriptors =
-        factory()->CopyAppendProxyDescriptor(
+        factory()->CopyAppendForeignDescriptor(
             script_descriptors,
             factory()->LookupAsciiSymbol("eval_from_function_name"),
-            proxy_eval_from_function_name,
+            foreign_eval_from_function_name,
             common_attributes);
 
     Handle<Map> script_map = Handle<Map>(script_fun->initial_map());
@@ -1501,10 +1535,10 @@ bool Genesis::InstallNatives() {
 
     // Make "length" magic on instances.
     Handle<DescriptorArray> array_descriptors =
-        factory()->CopyAppendProxyDescriptor(
+        factory()->CopyAppendForeignDescriptor(
             factory()->empty_descriptor_array(),
             factory()->length_symbol(),
-            factory()->NewProxy(&Accessors::ArrayLength),
+            factory()->NewForeign(&Accessors::ArrayLength),
             static_cast<PropertyAttributes>(DONT_ENUM | DONT_DELETE));
 
     array_function->initial_map()->set_instance_descriptors(
@@ -1647,6 +1681,9 @@ bool Genesis::InstallExperimentalNatives() {
       if (!CompileExperimentalBuiltin(isolate(), i)) return false;
     }
   }
+
+  InstallExperimentalNativeFunctions();
+
   return true;
 }
 

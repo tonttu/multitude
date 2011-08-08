@@ -45,6 +45,7 @@ enum AllocationFlags {
   RESULT_CONTAINS_TOP = 1 << 1
 };
 
+
 // Convenience for platform-independent signatures.  We do not normally
 // distinguish memory operands from other operands on ia32.
 typedef Operand MemOperand;
@@ -152,31 +153,40 @@ class MacroAssembler: public Assembler {
   // ---------------------------------------------------------------------------
   // JavaScript invokes
 
+  // Setup call kind marking in ecx. The method takes ecx as an
+  // explicit first parameter to make the code more readable at the
+  // call sites.
+  void SetCallKind(Register dst, CallKind kind);
+
   // Invoke the JavaScript function code by either calling or jumping.
   void InvokeCode(const Operand& code,
                   const ParameterCount& expected,
                   const ParameterCount& actual,
                   InvokeFlag flag,
-                  const CallWrapper& call_wrapper = NullCallWrapper());
+                  const CallWrapper& call_wrapper,
+                  CallKind call_kind);
 
   void InvokeCode(Handle<Code> code,
                   const ParameterCount& expected,
                   const ParameterCount& actual,
                   RelocInfo::Mode rmode,
                   InvokeFlag flag,
-                  const CallWrapper& call_wrapper = NullCallWrapper());
+                  const CallWrapper& call_wrapper,
+                  CallKind call_kind);
 
   // Invoke the JavaScript function in the given register. Changes the
   // current context to the context in the function before invoking.
   void InvokeFunction(Register function,
                       const ParameterCount& actual,
                       InvokeFlag flag,
-                      const CallWrapper& call_wrapper = NullCallWrapper());
+                      const CallWrapper& call_wrapper,
+                      CallKind call_kind);
 
   void InvokeFunction(JSFunction* function,
                       const ParameterCount& actual,
                       InvokeFlag flag,
-                      const CallWrapper& call_wrapper = NullCallWrapper());
+                      const CallWrapper& call_wrapper,
+                      CallKind call_kind);
 
   // Invoke specified builtin JavaScript function. Adds an entry to
   // the unresolved list if the name does not resolve.
@@ -199,6 +209,9 @@ class MacroAssembler: public Assembler {
   void SafeSet(Register dst, const Immediate& x);
   void SafePush(const Immediate& x);
 
+  // Compare a register against a known root, e.g. undefined, null, true, ...
+  void CompareRoot(Register with, Heap::RootListIndex index);
+
   // Compare object type for heap object.
   // Incoming register is heap_object and outgoing register is map.
   void CmpObjectType(Register heap_object, InstanceType type, Register map);
@@ -206,13 +219,27 @@ class MacroAssembler: public Assembler {
   // Compare instance type for map.
   void CmpInstanceType(Register map, InstanceType type);
 
-  // Check if the map of an object is equal to a specified map and
-  // branch to label if not. Skip the smi check if not required
-  // (object is known to be a heap object)
+  // Check if a map for a JSObject indicates that the object has fast elements.
+  // Jump to the specified label if it does not.
+  void CheckFastElements(Register map,
+                         Label* fail,
+                         Label::Distance distance = Label::kFar);
+
+  // Check if the map of an object is equal to a specified map and branch to
+  // label if not. Skip the smi check if not required (object is known to be a
+  // heap object)
   void CheckMap(Register obj,
                 Handle<Map> map,
                 Label* fail,
                 SmiCheckType smi_check_type);
+
+  // Check if the map of an object is equal to a specified map and branch to a
+  // specified target if equal. Skip the smi check if not required (object is
+  // known to be a heap object)
+  void DispatchMap(Register obj,
+                   Handle<Map> map,
+                   Handle<Code> success,
+                   SmiCheckType smi_check_type);
 
   // Check if the object in register heap_object is a string. Afterwards the
   // register map contains the object map and the register instance_type
@@ -265,15 +292,28 @@ class MacroAssembler: public Assembler {
   }
 
   // Jump the register contains a smi.
-  inline void JumpIfSmi(Register value, Label* smi_label) {
+  inline void JumpIfSmi(Register value,
+                        Label* smi_label,
+                        Label::Distance distance = Label::kFar) {
     test(value, Immediate(kSmiTagMask));
-    j(zero, smi_label);
+    j(zero, smi_label, distance);
+  }
+  // Jump if the operand is a smi.
+  inline void JumpIfSmi(Operand value,
+                        Label* smi_label,
+                        Label::Distance distance = Label::kFar) {
+    test(value, Immediate(kSmiTagMask));
+    j(zero, smi_label, distance);
   }
   // Jump if register contain a non-smi.
-  inline void JumpIfNotSmi(Register value, Label* not_smi_label) {
+  inline void JumpIfNotSmi(Register value,
+                           Label* not_smi_label,
+                           Label::Distance distance = Label::kFar) {
     test(value, Immediate(kSmiTagMask));
-    j(not_zero, not_smi_label);
+    j(not_zero, not_smi_label, distance);
   }
+
+  void LoadInstanceDescriptors(Register map, Register descriptors);
 
   void LoadPowerOf2(XMMRegister dst, Register scratch, int power);
 
@@ -313,6 +353,15 @@ class MacroAssembler: public Assembler {
   void CheckAccessGlobalProxy(Register holder_reg,
                               Register scratch,
                               Label* miss);
+
+
+  void LoadFromNumberDictionary(Label* miss,
+                                Register elements,
+                                Register key,
+                                Register r0,
+                                Register r1,
+                                Register r2,
+                                Register result);
 
 
   // ---------------------------------------------------------------------------
@@ -521,10 +570,10 @@ class MacroAssembler: public Assembler {
 
   // Prepares stack to put arguments (aligns and so on). Reserves
   // space for return value if needed (assumes the return value is a handle).
-  // Uses callee-saved esi to restore stack state after call. Arguments must be
-  // stored in ApiParameterOperand(0), ApiParameterOperand(1) etc. Saves
-  // context (esi).
-  void PrepareCallApiFunction(int argc, Register scratch);
+  // Arguments must be stored in ApiParameterOperand(0), ApiParameterOperand(1)
+  // etc. Saves context (esi). If space was reserved for return value then
+  // stores the pointer to the reserved slot into esi.
+  void PrepareCallApiFunction(int argc);
 
   // Calls an API function. Allocates HandleScope, extracts
   // returned value from handle and propagates exceptions.
@@ -564,6 +613,9 @@ class MacroAssembler: public Assembler {
   void Move(Register target, Register source);
 
   void Move(Register target, Handle<Object> value);
+
+  // Push a handle value.
+  void Push(Handle<Object> handle) { push(handle); }
 
   Handle<Object> CodeObject() {
     ASSERT(!code_object_.is_null());
@@ -641,7 +693,8 @@ class MacroAssembler: public Assembler {
                       Label* done,
                       InvokeFlag flag,
                       Label::Distance done_near = Label::kFar,
-                      const CallWrapper& call_wrapper = NullCallWrapper());
+                      const CallWrapper& call_wrapper = NullCallWrapper(),
+                      CallKind call_kind = CALL_AS_METHOD);
 
   // Activation support.
   void EnterFrame(StackFrame::Type type);

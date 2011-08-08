@@ -118,7 +118,7 @@ typedef int (*RawComparer)(const void*, const void*);
   v(Code, "meta: Code") \
   v(Map, "meta: Map") \
   v(Oddball, "Oddball") \
-  v(Proxy, "meta: Proxy") \
+  v(Foreign, "meta: Foreign") \
   v(SharedFunctionInfo, "meta: SharedFunctionInfo") \
   v(Struct, "meta: Struct") \
   \
@@ -1649,7 +1649,6 @@ Object* LiveObjectList::GetObjId(Handle<String> address) {
 // Helper class for copying HeapObjects.
 class LolVisitor: public ObjectVisitor {
  public:
-
   LolVisitor(HeapObject* target, Handle<HeapObject> handle_to_skip)
       : target_(target), handle_to_skip_(handle_to_skip), found_(false) {}
 
@@ -2586,4 +2585,3 @@ void LiveObjectList::VerifyNotInFromSpace() {
 } }  // namespace v8::internal
 
 #endif  // LIVE_OBJECT_LIST
-

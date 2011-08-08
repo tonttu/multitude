@@ -30,7 +30,7 @@
     'use_system_v8%': 0,
     'msvs_use_common_release': 0,
     'gcc_version%': 'unknown',
-    'v8_compress_startup_data%': 'false',
+    'v8_compress_startup_data%': 'off',
     'v8_target_arch%': '<(target_arch)',
 
     # Setting 'v8_can_use_unaligned_accesses' to 'true' will allow the code
@@ -55,16 +55,14 @@
     'v8_use_arm_eabi_hardfloat%': 'false',
 
     'v8_use_snapshot%': 'true',
+    'host_os%': '<(OS)',
     'v8_use_liveobjectlist%': 'false',
   },
   'conditions': [
     ['use_system_v8==0', {
       'target_defaults': {
         'defines': [
-          'ENABLE_LOGGING_AND_PROFILING',
           'ENABLE_DEBUGGER_SUPPORT',
-          'ENABLE_VMSTATE_TRACKING',
-          'V8_FAST_TLS',
         ],
         'conditions': [
           ['OS!="mac"', {
@@ -231,6 +229,7 @@
       'targets': [
         {
           'target_name': 'v8',
+          'toolsets': ['host', 'target'],
           'conditions': [
             ['v8_use_snapshot=="true"', {
               'dependencies': ['v8_snapshot'],
@@ -280,9 +279,16 @@
         {
           'target_name': 'v8_snapshot',
           'type': '<(library)',
+          'toolsets': ['host', 'target'],
           'conditions': [
             ['component=="shared_library"', {
               'conditions': [
+                # The ARM assembler assumes the host is 32 bits, so force building
+                # 32-bit host tools.
+                ['v8_target_arch=="arm" and host_arch=="x64" and _toolset=="host"', {
+                  'cflags': ['-m32'],
+                  'ldflags': ['-m32'],
+                }],
                 ['OS=="win"', {
                   'defines': [
                     'BUILDING_V8_SHARED',
@@ -327,7 +333,47 @@
               'outputs': [
                 '<(INTERMEDIATE_DIR)/snapshot.cc',
               ],
-              'action': ['<@(_inputs)', '<@(_outputs)'],
+              'variables': {
+                'mksnapshot_flags': [],
+              },
+              'conditions': [
+                ['v8_target_arch=="arm"', {
+                  # The following rules should be consistent with chromium's
+                  # common.gypi and V8's runtime rule to ensure they all generate
+                  # the same correct machine code. The following issue is about
+                  # V8's runtime rule about vfpv3 and neon:
+                  # http://code.google.com/p/v8/issues/detail?id=914
+                  'conditions': [
+                    ['armv7==1', {
+                      # The ARM Architecture Manual mandates VFPv3 if NEON is
+                      # available.
+                      # The current V8 doesn't use d16-d31, so for vfpv3-d16, we can
+                      # also enable vfp3 for the better performance.
+                      'conditions': [
+                        ['arm_neon!=1 and arm_fpu!="vfpv3" and arm_fpu!="vfpv3-d16"', {
+                          'variables': {
+                            'mksnapshot_flags': [
+                              '--noenable_vfp3',
+                            ],
+                          },
+                        }],
+                      ],
+                    },{ # else: armv7!=1
+                      'variables': {
+                        'mksnapshot_flags': [
+                          '--noenable_armv7',
+                          '--noenable_vfp3',
+                        ],
+                      },
+                    }],
+                  ],
+                }],
+              ],
+              'action': [
+                '<@(_inputs)',
+                '<@(mksnapshot_flags)',
+                '<@(_outputs)'
+              ],
             },
           ],
         },
@@ -484,6 +530,7 @@
             '../../src/inspector.h',
             '../../src/interpreter-irregexp.cc',
             '../../src/interpreter-irregexp.h',
+            '../../src/json-parser.h',
             '../../src/jsregexp.cc',
             '../../src/jsregexp.h',
             '../../src/isolate.cc',
@@ -596,10 +643,13 @@
             '../../src/v8.cc',
             '../../src/v8.h',
             '../../src/v8checks.h',
+            '../../src/v8conversions.cc',
+            '../../src/v8conversions.h',
             '../../src/v8globals.h',
             '../../src/v8memory.h',
             '../../src/v8threads.cc',
             '../../src/v8threads.h',
+            '../../src/v8utils.cc',
             '../../src/v8utils.h',
             '../../src/variables.cc',
             '../../src/variables.h',
@@ -748,6 +798,30 @@
                 ],
               }
             ],
+            ['OS=="android"', {
+                'sources': [
+                  '../../src/platform-posix.cc',
+                ],
+                'conditions': [
+                  ['host_os=="mac" and _toolset!="target"', {
+                    'sources': [
+                      '../../src/platform-macos.cc'
+                    ]
+                  }, {
+                    'sources': [
+                      '../../src/platform-linux.cc'
+                    ]
+                  }],
+                  ['_toolset=="target"', {
+                    'link_settings': {
+                      'libraries': [
+                        '-llog',
+                       ],
+                     }
+                  }],
+                ],
+              },
+            ],
             ['OS=="freebsd"', {
                 'link_settings': {
                   'libraries': [
@@ -835,6 +909,7 @@
                 '../../tools/js2c.py',
                 '<@(_outputs)',
                 'CORE',
+                '<(v8_compress_startup_data)',
                 '<@(library_files)'
               ],
             },
@@ -852,6 +927,7 @@
                 '../../tools/js2c.py',
                 '<@(_outputs)',
                 'EXPERIMENTAL',
+                '<(v8_compress_startup_data)',
                 '<@(experimental_library_files)'
               ],
             },
@@ -886,6 +962,7 @@
         {
           'target_name': 'v8_shell',
           'type': 'executable',
+          'toolsets': ['host'],
           'dependencies': [
             'v8'
           ],
@@ -896,6 +973,12 @@
             ['OS=="win"', {
               # This could be gotten by not setting chromium_code, if that's OK.
               'defines': ['_CRT_SECURE_NO_WARNINGS'],
+            }],
+            # The ARM assembler assumes the host is 32 bits, so force building
+            # 32-bit host tools.
+            ['v8_target_arch=="arm" and host_arch=="x64" and _toolset=="host"', {
+              'cflags': ['-m32'],
+              'ldflags': ['-m32'],
             }],
             ['v8_compress_startup_data=="bz2"', {
               'libraries': [
@@ -909,6 +992,7 @@
         {
           'target_name': 'v8',
           'type': 'settings',
+          'toolsets': ['host', 'target'],
           'link_settings': {
             'libraries': [
               '-lv8',
@@ -918,6 +1002,7 @@
         {
           'target_name': 'v8_shell',
           'type': 'none',
+          'toolsets': ['host'],
           'dependencies': [
             'v8'
           ],

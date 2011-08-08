@@ -28,6 +28,7 @@
 #include "v8.h"
 
 #include "ast.h"
+#include "code-stubs.h"
 #include "compiler.h"
 #include "ic.h"
 #include "macro-assembler.h"
@@ -58,13 +59,10 @@ TypeInfo TypeInfo::TypeFromValue(Handle<Object> value) {
 }
 
 
-STATIC_ASSERT(DEFAULT_STRING_STUB == Code::kNoExtraICState);
-
-
 TypeFeedbackOracle::TypeFeedbackOracle(Handle<Code> code,
                                        Handle<Context> global_context) {
   global_context_ = global_context;
-  PopulateMap(code);
+  BuildDictionary(code);
   ASSERT(reinterpret_cast<Address>(*dictionary_.location()) != kHandleZapValue);
 }
 
@@ -77,25 +75,55 @@ Handle<Object> TypeFeedbackOracle::GetInfo(unsigned ast_id) {
 }
 
 
-bool TypeFeedbackOracle::LoadIsMonomorphic(Property* expr) {
+bool TypeFeedbackOracle::LoadIsMonomorphicNormal(Property* expr) {
   Handle<Object> map_or_code(GetInfo(expr->id()));
   if (map_or_code->IsMap()) return true;
   if (map_or_code->IsCode()) {
-    Handle<Code> code(Code::cast(*map_or_code));
-    return code->kind() == Code::KEYED_EXTERNAL_ARRAY_LOAD_IC &&
+    Handle<Code> code = Handle<Code>::cast(map_or_code);
+    return code->is_keyed_load_stub() &&
+        code->ic_state() == MONOMORPHIC &&
+        Code::ExtractTypeFromFlags(code->flags()) == NORMAL &&
         code->FindFirstMap() != NULL;
   }
   return false;
 }
 
 
-bool TypeFeedbackOracle::StoreIsMonomorphic(Expression* expr) {
+bool TypeFeedbackOracle::LoadIsMegamorphicWithTypeInfo(Property* expr) {
+  Handle<Object> map_or_code(GetInfo(expr->id()));
+  if (map_or_code->IsCode()) {
+    Handle<Code> code = Handle<Code>::cast(map_or_code);
+    Builtins* builtins = Isolate::Current()->builtins();
+    return code->is_keyed_load_stub() &&
+        *code != builtins->builtin(Builtins::kKeyedLoadIC_Generic) &&
+        code->ic_state() == MEGAMORPHIC;
+  }
+  return false;
+}
+
+
+bool TypeFeedbackOracle::StoreIsMonomorphicNormal(Expression* expr) {
   Handle<Object> map_or_code(GetInfo(expr->id()));
   if (map_or_code->IsMap()) return true;
   if (map_or_code->IsCode()) {
-    Handle<Code> code(Code::cast(*map_or_code));
-    return code->kind() == Code::KEYED_EXTERNAL_ARRAY_STORE_IC &&
-        code->FindFirstMap() != NULL;
+    Handle<Code> code = Handle<Code>::cast(map_or_code);
+    return code->is_keyed_store_stub() &&
+        code->ic_state() == MONOMORPHIC &&
+        Code::ExtractTypeFromFlags(code->flags()) == NORMAL;
+  }
+  return false;
+}
+
+
+bool TypeFeedbackOracle::StoreIsMegamorphicWithTypeInfo(Expression* expr) {
+  Handle<Object> map_or_code(GetInfo(expr->id()));
+  if (map_or_code->IsCode()) {
+    Handle<Code> code = Handle<Code>::cast(map_or_code);
+    Builtins* builtins = Isolate::Current()->builtins();
+    return code->is_keyed_store_stub() &&
+        *code != builtins->builtin(Builtins::kKeyedStoreIC_Generic) &&
+        *code != builtins->builtin(Builtins::kKeyedStoreIC_Generic_Strict) &&
+        code->ic_state() == MEGAMORPHIC;
   }
   return false;
 }
@@ -108,26 +136,26 @@ bool TypeFeedbackOracle::CallIsMonomorphic(Call* expr) {
 
 
 Handle<Map> TypeFeedbackOracle::LoadMonomorphicReceiverType(Property* expr) {
-  ASSERT(LoadIsMonomorphic(expr));
-  Handle<Object> map_or_code(
-      Handle<HeapObject>::cast(GetInfo(expr->id())));
+  ASSERT(LoadIsMonomorphicNormal(expr));
+  Handle<Object> map_or_code(GetInfo(expr->id()));
   if (map_or_code->IsCode()) {
-    Handle<Code> code(Code::cast(*map_or_code));
-    return Handle<Map>(code->FindFirstMap());
+    Handle<Code> code = Handle<Code>::cast(map_or_code);
+    Map* first_map = code->FindFirstMap();
+    ASSERT(first_map != NULL);
+    return Handle<Map>(first_map);
   }
-  return Handle<Map>(Map::cast(*map_or_code));
+  return Handle<Map>::cast(map_or_code);
 }
 
 
 Handle<Map> TypeFeedbackOracle::StoreMonomorphicReceiverType(Expression* expr) {
-  ASSERT(StoreIsMonomorphic(expr));
-  Handle<HeapObject> map_or_code(
-      Handle<HeapObject>::cast(GetInfo(expr->id())));
+  ASSERT(StoreIsMonomorphicNormal(expr));
+  Handle<Object> map_or_code(GetInfo(expr->id()));
   if (map_or_code->IsCode()) {
-    Handle<Code> code(Code::cast(*map_or_code));
+    Handle<Code> code = Handle<Code>::cast(map_or_code);
     return Handle<Map>(code->FindFirstMap());
   }
-  return Handle<Map>(Map::cast(*map_or_code));
+  return Handle<Map>::cast(map_or_code);
 }
 
 
@@ -146,15 +174,18 @@ ZoneMapList* TypeFeedbackOracle::StoreReceiverTypes(Assignment* expr,
 
 
 ZoneMapList* TypeFeedbackOracle::CallReceiverTypes(Call* expr,
-                                                   Handle<String> name) {
+                                                   Handle<String> name,
+                                                   CallKind call_kind) {
   int arity = expr->arguments()->length();
-  // Note: these flags won't let us get maps from stubs with
-  // non-default extra ic state in the megamorphic case. In the more
-  // important monomorphic case the map is obtained directly, so it's
-  // not a problem until we decide to emit more polymorphic code.
+
+  // Note: Currently we do not take string extra ic data into account
+  // here.
+  Code::ExtraICState extra_ic_state =
+      CallIC::Contextual::encode(call_kind == CALL_AS_FUNCTION);
+
   Code::Flags flags = Code::ComputeMonomorphicFlags(Code::CALL_IC,
                                                     NORMAL,
-                                                    Code::kNoExtraICState,
+                                                    extra_ic_state,
                                                     OWN_MAP,
                                                     NOT_IN_LOOP,
                                                     arity);
@@ -168,20 +199,6 @@ CheckType TypeFeedbackOracle::GetCallCheckType(Call* expr) {
   CheckType check = static_cast<CheckType>(Smi::cast(*value)->value());
   ASSERT(check != RECEIVER_MAP_CHECK);
   return check;
-}
-
-ExternalArrayType TypeFeedbackOracle::GetKeyedLoadExternalArrayType(
-    Property* expr) {
-  Handle<Object> stub = GetInfo(expr->id());
-  ASSERT(stub->IsCode());
-  return Code::cast(*stub)->external_array_type();
-}
-
-ExternalArrayType TypeFeedbackOracle::GetKeyedStoreExternalArrayType(
-    Expression* expr) {
-  Handle<Object> stub = GetInfo(expr->id());
-  ASSERT(stub->IsCode());
-  return Code::cast(*stub)->external_array_type();
 }
 
 Handle<JSObject> TypeFeedbackOracle::GetPrototypeForPrimitiveCheck(
@@ -223,8 +240,7 @@ TypeInfo TypeFeedbackOracle::CompareType(CompareOperation* expr) {
   switch (state) {
     case CompareIC::UNINITIALIZED:
       // Uninitialized means never executed.
-      // TODO(fschneider): Introduce a separate value for never-executed ICs.
-      return unknown;
+      return TypeInfo::Uninitialized();
     case CompareIC::SMIS:
       return TypeInfo::Smi();
     case CompareIC::HEAP_NUMBERS:
@@ -257,13 +273,13 @@ TypeInfo TypeFeedbackOracle::UnaryType(UnaryOperation* expr) {
   TypeInfo unknown = TypeInfo::Unknown();
   if (!object->IsCode()) return unknown;
   Handle<Code> code = Handle<Code>::cast(object);
-  ASSERT(code->is_type_recording_unary_op_stub());
-  TRUnaryOpIC::TypeInfo type = static_cast<TRUnaryOpIC::TypeInfo>(
-      code->type_recording_unary_op_type());
+  ASSERT(code->is_unary_op_stub());
+  UnaryOpIC::TypeInfo type = static_cast<UnaryOpIC::TypeInfo>(
+      code->unary_op_type());
   switch (type) {
-    case TRUnaryOpIC::SMI:
+    case UnaryOpIC::SMI:
       return TypeInfo::Smi();
-    case TRUnaryOpIC::HEAP_NUMBER:
+    case UnaryOpIC::HEAP_NUMBER:
       return TypeInfo::Double();
     default:
       return unknown;
@@ -276,41 +292,40 @@ TypeInfo TypeFeedbackOracle::BinaryType(BinaryOperation* expr) {
   TypeInfo unknown = TypeInfo::Unknown();
   if (!object->IsCode()) return unknown;
   Handle<Code> code = Handle<Code>::cast(object);
-  if (code->is_type_recording_binary_op_stub()) {
-    TRBinaryOpIC::TypeInfo type = static_cast<TRBinaryOpIC::TypeInfo>(
-        code->type_recording_binary_op_type());
-    TRBinaryOpIC::TypeInfo result_type = static_cast<TRBinaryOpIC::TypeInfo>(
-        code->type_recording_binary_op_result_type());
+  if (code->is_binary_op_stub()) {
+    BinaryOpIC::TypeInfo type = static_cast<BinaryOpIC::TypeInfo>(
+        code->binary_op_type());
+    BinaryOpIC::TypeInfo result_type = static_cast<BinaryOpIC::TypeInfo>(
+        code->binary_op_result_type());
 
     switch (type) {
-      case TRBinaryOpIC::UNINITIALIZED:
+      case BinaryOpIC::UNINITIALIZED:
         // Uninitialized means never executed.
-        // TODO(fschneider): Introduce a separate value for never-executed ICs
-        return unknown;
-      case TRBinaryOpIC::SMI:
+        return TypeInfo::Uninitialized();
+      case BinaryOpIC::SMI:
         switch (result_type) {
-          case TRBinaryOpIC::UNINITIALIZED:
-          case TRBinaryOpIC::SMI:
+          case BinaryOpIC::UNINITIALIZED:
+          case BinaryOpIC::SMI:
             return TypeInfo::Smi();
-          case TRBinaryOpIC::INT32:
+          case BinaryOpIC::INT32:
             return TypeInfo::Integer32();
-          case TRBinaryOpIC::HEAP_NUMBER:
+          case BinaryOpIC::HEAP_NUMBER:
             return TypeInfo::Double();
           default:
             return unknown;
         }
-      case TRBinaryOpIC::INT32:
+      case BinaryOpIC::INT32:
         if (expr->op() == Token::DIV ||
-            result_type == TRBinaryOpIC::HEAP_NUMBER) {
+            result_type == BinaryOpIC::HEAP_NUMBER) {
           return TypeInfo::Double();
         }
         return TypeInfo::Integer32();
-      case TRBinaryOpIC::HEAP_NUMBER:
+      case BinaryOpIC::HEAP_NUMBER:
         return TypeInfo::Double();
-      case TRBinaryOpIC::BOTH_STRING:
+      case BinaryOpIC::BOTH_STRING:
         return TypeInfo::String();
-      case TRBinaryOpIC::STRING:
-      case TRBinaryOpIC::GENERIC:
+      case BinaryOpIC::STRING:
+      case BinaryOpIC::GENERIC:
         return unknown;
      default:
         return unknown;
@@ -352,21 +367,21 @@ TypeInfo TypeFeedbackOracle::IncrementType(CountOperation* expr) {
   TypeInfo unknown = TypeInfo::Unknown();
   if (!object->IsCode()) return unknown;
   Handle<Code> code = Handle<Code>::cast(object);
-  if (!code->is_type_recording_binary_op_stub()) return unknown;
+  if (!code->is_binary_op_stub()) return unknown;
 
-  TRBinaryOpIC::TypeInfo type = static_cast<TRBinaryOpIC::TypeInfo>(
-      code->type_recording_binary_op_type());
+  BinaryOpIC::TypeInfo type = static_cast<BinaryOpIC::TypeInfo>(
+      code->binary_op_type());
   switch (type) {
-    case TRBinaryOpIC::UNINITIALIZED:
-    case TRBinaryOpIC::SMI:
+    case BinaryOpIC::UNINITIALIZED:
+    case BinaryOpIC::SMI:
       return TypeInfo::Smi();
-    case TRBinaryOpIC::INT32:
+    case BinaryOpIC::INT32:
       return TypeInfo::Integer32();
-    case TRBinaryOpIC::HEAP_NUMBER:
+    case BinaryOpIC::HEAP_NUMBER:
       return TypeInfo::Double();
-    case TRBinaryOpIC::BOTH_STRING:
-    case TRBinaryOpIC::STRING:
-    case TRBinaryOpIC::GENERIC:
+    case BinaryOpIC::BOTH_STRING:
+    case BinaryOpIC::STRING:
+    case BinaryOpIC::GENERIC:
       return unknown;
     default:
       return unknown;
@@ -403,104 +418,137 @@ ZoneMapList* TypeFeedbackOracle::CollectReceiverTypes(unsigned ast_id,
 }
 
 
-void TypeFeedbackOracle::SetInfo(unsigned ast_id, Object* target) {
-  ASSERT(dictionary_->FindEntry(ast_id) == NumberDictionary::kNotFound);
-  MaybeObject* maybe_result = dictionary_->AtNumberPut(ast_id, target);
-  USE(maybe_result);
-#ifdef DEBUG
-  Object* result;
-  // Dictionary has been allocated with sufficient size for all elements.
-  ASSERT(maybe_result->ToObject(&result));
-  ASSERT(*dictionary_ == result);
-#endif
+void TypeFeedbackOracle::CollectKeyedReceiverTypes(
+    unsigned ast_id,
+    ZoneMapList* types) {
+  Handle<Object> object = GetInfo(ast_id);
+  if (!object->IsCode()) return;
+  Handle<Code> code = Handle<Code>::cast(object);
+  if (code->kind() == Code::KEYED_LOAD_IC ||
+      code->kind() == Code::KEYED_STORE_IC) {
+    AssertNoAllocation no_allocation;
+    int mask = RelocInfo::ModeMask(RelocInfo::EMBEDDED_OBJECT);
+    for (RelocIterator it(*code, mask); !it.done(); it.next()) {
+      RelocInfo* info = it.rinfo();
+      Object* object = info->target_object();
+      if (object->IsMap()) {
+        types->Add(Handle<Map>(Map::cast(object)));
+      }
+    }
+  }
 }
 
 
-void TypeFeedbackOracle::PopulateMap(Handle<Code> code) {
-  Isolate* isolate = Isolate::Current();
-  HandleScope scope(isolate);
+byte TypeFeedbackOracle::ToBooleanTypes(unsigned ast_id) {
+  Handle<Object> object = GetInfo(ast_id);
+  return object->IsCode() ? Handle<Code>::cast(object)->to_boolean_state() : 0;
+}
 
-  const int kInitialCapacity = 16;
-  List<int> code_positions(kInitialCapacity);
-  List<unsigned> ast_ids(kInitialCapacity);
-  CollectIds(*code, &code_positions, &ast_ids);
 
-  ASSERT(dictionary_.is_null());  // Only initialize once.
-  dictionary_ = isolate->factory()->NewNumberDictionary(
-      code_positions.length());
-
-  const int length = code_positions.length();
-  ASSERT(ast_ids.length() == length);
-  for (int i = 0; i < length; i++) {
-    AssertNoAllocation no_allocation;
-    RelocInfo info(code->instruction_start() + code_positions[i],
-                   RelocInfo::CODE_TARGET, 0);
-    Code* target = Code::GetCodeFromTargetAddress(info.target_address());
-    unsigned id = ast_ids[i];
-    InlineCacheState state = target->ic_state();
-    Code::Kind kind = target->kind();
-
-    if (kind == Code::TYPE_RECORDING_BINARY_OP_IC ||
-        kind == Code::TYPE_RECORDING_UNARY_OP_IC ||
-        kind == Code::COMPARE_IC) {
-      SetInfo(id, target);
-    } else if (state == MONOMORPHIC) {
-      if (kind == Code::KEYED_EXTERNAL_ARRAY_LOAD_IC ||
-          kind == Code::KEYED_EXTERNAL_ARRAY_STORE_IC) {
-        SetInfo(id, target);
-      } else if (kind != Code::CALL_IC ||
-                 target->check_type() == RECEIVER_MAP_CHECK) {
-        Map* map = target->FindFirstMap();
-        if (map == NULL) {
-          SetInfo(id, target);
-        } else {
-          SetInfo(id, map);
-        }
-      } else {
-        ASSERT(target->kind() == Code::CALL_IC);
-        CheckType check = target->check_type();
-        ASSERT(check != RECEIVER_MAP_CHECK);
-        SetInfo(id,  Smi::FromInt(check));
-      }
-    } else if (state == MEGAMORPHIC) {
-      SetInfo(id, target);
-    }
-  }
+// Things are a bit tricky here: The iterator for the RelocInfos and the infos
+// themselves are not GC-safe, so we first get all infos, then we create the
+// dictionary (possibly triggering GC), and finally we relocate the collected
+// infos before we process them.
+void TypeFeedbackOracle::BuildDictionary(Handle<Code> code) {
+  AssertNoAllocation no_allocation;
+  ZoneList<RelocInfo> infos(16);
+  HandleScope scope;
+  GetRelocInfos(code, &infos);
+  CreateDictionary(code, &infos);
+  ProcessRelocInfos(&infos);
   // Allocate handle in the parent scope.
   dictionary_ = scope.CloseAndEscape(dictionary_);
 }
 
 
-void TypeFeedbackOracle::CollectIds(Code* code,
-                                    List<int>* code_positions,
-                                    List<unsigned>* ast_ids) {
-  AssertNoAllocation no_allocation;
+void TypeFeedbackOracle::GetRelocInfos(Handle<Code> code,
+                                       ZoneList<RelocInfo>* infos) {
   int mask = RelocInfo::ModeMask(RelocInfo::CODE_TARGET_WITH_ID);
-  for (RelocIterator it(code, mask); !it.done(); it.next()) {
-    RelocInfo* info = it.rinfo();
-    ASSERT(RelocInfo::IsCodeTarget(info->rmode()));
-    Code* target = Code::GetCodeFromTargetAddress(info->target_address());
-    if (target->is_inline_cache_stub()) {
-      InlineCacheState state = target->ic_state();
-      Code::Kind kind = target->kind();
-      if (kind == Code::TYPE_RECORDING_BINARY_OP_IC) {
-        if (target->type_recording_binary_op_type() ==
-            TRBinaryOpIC::GENERIC) {
-          continue;
-        }
-      } else if (kind == Code::COMPARE_IC) {
-        if (target->compare_state() == CompareIC::GENERIC) continue;
-      } else {
-        if (state != MONOMORPHIC && state != MEGAMORPHIC) continue;
-      }
-      code_positions->Add(
-          static_cast<int>(info->pc() - code->instruction_start()));
-      ASSERT(ast_ids->length() == 0 ||
-             (*ast_ids)[ast_ids->length()-1] !=
-             static_cast<unsigned>(info->data()));
-      ast_ids->Add(static_cast<unsigned>(info->data()));
-    }
+  for (RelocIterator it(*code, mask); !it.done(); it.next()) {
+    infos->Add(*it.rinfo());
   }
+}
+
+
+void TypeFeedbackOracle::CreateDictionary(Handle<Code> code,
+                                          ZoneList<RelocInfo>* infos) {
+  DisableAssertNoAllocation allocation_allowed;
+  byte* old_start = code->instruction_start();
+  dictionary_ = FACTORY->NewNumberDictionary(infos->length());
+  byte* new_start = code->instruction_start();
+  RelocateRelocInfos(infos, old_start, new_start);
+}
+
+
+void TypeFeedbackOracle::RelocateRelocInfos(ZoneList<RelocInfo>* infos,
+                                            byte* old_start,
+                                            byte* new_start) {
+  for (int i = 0; i < infos->length(); i++) {
+    RelocInfo* info = &(*infos)[i];
+    info->set_pc(new_start + (info->pc() - old_start));
+  }
+}
+
+
+void TypeFeedbackOracle::ProcessRelocInfos(ZoneList<RelocInfo>* infos) {
+  for (int i = 0; i < infos->length(); i++) {
+    unsigned ast_id = static_cast<unsigned>((*infos)[i].data());
+    Code* target = Code::GetCodeFromTargetAddress((*infos)[i].target_address());
+    ProcessTarget(ast_id, target);
+  }
+}
+
+
+void TypeFeedbackOracle::ProcessTarget(unsigned ast_id, Code* target) {
+  switch (target->kind()) {
+    case Code::LOAD_IC:
+    case Code::STORE_IC:
+    case Code::CALL_IC:
+    case Code::KEYED_CALL_IC:
+      if (target->ic_state() == MONOMORPHIC) {
+        if (target->kind() == Code::CALL_IC &&
+            target->check_type() != RECEIVER_MAP_CHECK) {
+          SetInfo(ast_id,  Smi::FromInt(target->check_type()));
+        } else {
+          Object* map = target->FindFirstMap();
+          SetInfo(ast_id, map == NULL ? static_cast<Object*>(target) : map);
+        }
+      } else if (target->ic_state() == MEGAMORPHIC) {
+        SetInfo(ast_id, target);
+      }
+      break;
+
+    case Code::KEYED_LOAD_IC:
+    case Code::KEYED_STORE_IC:
+      if (target->ic_state() == MONOMORPHIC ||
+          target->ic_state() == MEGAMORPHIC) {
+        SetInfo(ast_id, target);
+      }
+      break;
+
+    case Code::UNARY_OP_IC:
+    case Code::BINARY_OP_IC:
+    case Code::COMPARE_IC:
+    case Code::TO_BOOLEAN_IC:
+      SetInfo(ast_id, target);
+      break;
+
+    default:
+      break;
+  }
+}
+
+
+void TypeFeedbackOracle::SetInfo(unsigned ast_id, Object* target) {
+  ASSERT(dictionary_->FindEntry(ast_id) == NumberDictionary::kNotFound);
+  MaybeObject* maybe_result = dictionary_->AtNumberPut(ast_id, target);
+  USE(maybe_result);
+#ifdef DEBUG
+  Object* result = NULL;
+  // Dictionary has been allocated with sufficient size for all elements.
+  ASSERT(maybe_result->ToObject(&result));
+  ASSERT(*dictionary_ == result);
+#endif
 }
 
 } }  // namespace v8::internal

@@ -344,7 +344,7 @@ static void ArrayNativeCode(MacroAssembler* masm,
   // Handle construction of an empty array of a certain size. Bail out if size
   // is too large to actually allocate an elements array.
   ASSERT(kSmiTag == 0);
-  __ Branch(call_generic_code, ge, a2,
+  __ Branch(call_generic_code, Ugreater_equal, a2,
             Operand(JSObject::kInitialMaxFastElementArray << kSmiTagSize));
 
   // a0: argc
@@ -634,7 +634,7 @@ void Builtins::Generate_JSConstructCall(MacroAssembler* masm) {
   __ lw(a2, FieldMemOperand(a1, JSFunction::kSharedFunctionInfoOffset));
   __ lw(a2, FieldMemOperand(a2, SharedFunctionInfo::kConstructStubOffset));
   __ Addu(t9, a2, Operand(Code::kHeaderSize - kHeapObjectTag));
-  __ Jump(Operand(t9));
+  __ Jump(t9);
 
   // a0: number of arguments
   // a1: called object
@@ -645,6 +645,7 @@ void Builtins::Generate_JSConstructCall(MacroAssembler* masm) {
   // Set expected number of arguments to zero (not changing a0).
   __ mov(a2, zero_reg);
   __ GetBuiltinEntry(a3, Builtins::CALL_NON_FUNCTION_AS_CONSTRUCTOR);
+  __ SetCallKind(t1, CALL_AS_METHOD);
   __ Jump(masm->isolate()->builtins()->ArgumentsAdaptorTrampoline(),
           RelocInfo::CODE_TARGET);
 }
@@ -941,10 +942,11 @@ static void Generate_JSConstructStubHelper(MacroAssembler* masm,
         masm->isolate()->builtins()->HandleApiCallConstruct();
     ParameterCount expected(0);
     __ InvokeCode(code, expected, expected,
-                  RelocInfo::CODE_TARGET, CALL_FUNCTION);
+                  RelocInfo::CODE_TARGET, CALL_FUNCTION, CALL_AS_METHOD);
   } else {
     ParameterCount actual(a0);
-    __ InvokeFunction(a1, actual, CALL_FUNCTION);
+    __ InvokeFunction(a1, actual, CALL_FUNCTION,
+                      NullCallWrapper(), CALL_AS_METHOD);
   }
 
   // Pop the function from the stack.
@@ -972,9 +974,9 @@ static void Generate_JSConstructStubHelper(MacroAssembler* masm,
   __ Branch(&use_receiver, eq, t0, Operand(zero_reg));
 
   // If the type of the result (stored in its map) is less than
-  // FIRST_JS_OBJECT_TYPE, it is not an object in the ECMA sense.
+  // FIRST_SPEC_OBJECT_TYPE, it is not an object in the ECMA sense.
   __ GetObjectType(v0, a3, a3);
-  __ Branch(&exit, greater_equal, a3, Operand(FIRST_JS_OBJECT_TYPE));
+  __ Branch(&exit, greater_equal, a3, Operand(FIRST_SPEC_OBJECT_TYPE));
 
   // Throw away the result of the constructor invocation and use the
   // on-stack receiver as the result.
@@ -1073,11 +1075,11 @@ static void Generate_JSEntryTrampolineHelper(MacroAssembler* masm,
   // Invoke the code and pass argc as a0.
   __ mov(a0, a3);
   if (is_construct) {
-    __ Call(masm->isolate()->builtins()->JSConstructCall(),
-            RelocInfo::CODE_TARGET);
+    __ Call(masm->isolate()->builtins()->JSConstructCall());
   } else {
     ParameterCount actual(a0);
-    __ InvokeFunction(a1, actual, CALL_FUNCTION);
+    __ InvokeFunction(a1, actual, CALL_FUNCTION,
+                      NullCallWrapper(), CALL_AS_METHOD);
   }
 
   __ LeaveInternalFrame();
@@ -1102,6 +1104,8 @@ void Builtins::Generate_LazyCompile(MacroAssembler* masm) {
 
   // Preserve the function.
   __ push(a1);
+  // Push call kind information.
+  __ push(t1);
 
   // Push the function on the stack as the argument to the runtime function.
   __ push(a1);
@@ -1109,6 +1113,9 @@ void Builtins::Generate_LazyCompile(MacroAssembler* masm) {
   __ CallRuntime(Runtime::kLazyCompile, 1);
   // Calculate the entry point.
   __ addiu(t9, v0, Code::kHeaderSize - kHeapObjectTag);
+
+  // Restore call kind information.
+  __ pop(t1);
   // Restore saved function.
   __ pop(a1);
 
@@ -1126,12 +1133,17 @@ void Builtins::Generate_LazyRecompile(MacroAssembler* masm) {
 
   // Preserve the function.
   __ push(a1);
+  // Push call kind information.
+  __ push(t1);
 
   // Push the function on the stack as the argument to the runtime function.
   __ push(a1);
   __ CallRuntime(Runtime::kLazyRecompile, 1);
   // Calculate the entry point.
   __ Addu(t9, v0, Operand(Code::kHeaderSize - kHeapObjectTag));
+
+  // Restore call kind information.
+  __ pop(t1);
   // Restore saved function.
   __ pop(a1);
 
@@ -1202,13 +1214,9 @@ void Builtins::Generate_FunctionCall(MacroAssembler* masm) {
                                  kSmiTagSize)));
     __ Branch(&shift_arguments, ne, t0, Operand(zero_reg));
 
-    // Do not transform the receiver for native (shared already in r2).
-    __ lw(a2, FieldMemOperand(a2, SharedFunctionInfo::kScriptOffset));
-    __ LoadRoot(a3, Heap::kUndefinedValueRootIndex);
-    __ Branch(&shift_arguments, eq, a2, Operand(a3));
-    __ lw(a2, FieldMemOperand(a2, Script::kTypeOffset));
-    __ sra(a2, a2, kSmiTagSize);
-    __ Branch(&shift_arguments, eq, a2, Operand(Script::TYPE_NATIVE));
+    // Do not transform the receiver for native (Compilerhints already in a3).
+    __ And(t0, a3, Operand(1 << (SharedFunctionInfo::kNative + kSmiTagSize)));
+    __ Branch(&shift_arguments, ne, t0, Operand(zero_reg));
 
     // Compute the receiver in non-strict mode.
     // Load first argument in a2. a2 = -kPointerSize(sp + n_args << 2).
@@ -1220,14 +1228,14 @@ void Builtins::Generate_FunctionCall(MacroAssembler* masm) {
     // a2: first argument
     __ JumpIfSmi(a2, &convert_to_object, t2);
 
-    // Heap::kUndefinedValueRootIndex is already in a3.
+    __ LoadRoot(a3, Heap::kUndefinedValueRootIndex);
     __ Branch(&use_global_receiver, eq, a2, Operand(a3));
     __ LoadRoot(a3, Heap::kNullValueRootIndex);
     __ Branch(&use_global_receiver, eq, a2, Operand(a3));
 
+    STATIC_ASSERT(LAST_SPEC_OBJECT_TYPE == LAST_TYPE);
     __ GetObjectType(a2, a3, a3);
-    __ Branch(&convert_to_object, lt, a3, Operand(FIRST_JS_OBJECT_TYPE));
-    __ Branch(&shift_arguments, le, a3, Operand(LAST_JS_OBJECT_TYPE));
+    __ Branch(&shift_arguments, ge, a3, Operand(FIRST_SPEC_OBJECT_TYPE));
 
     __ bind(&convert_to_object);
     __ EnterInternalFrame();  // In order to preserve argument count.
@@ -1308,6 +1316,7 @@ void Builtins::Generate_FunctionCall(MacroAssembler* masm) {
     __ Branch(&function, ne, a1, Operand(zero_reg));
     __ mov(a2, zero_reg);  // expected arguments is 0 for CALL_NON_FUNCTION
     __ GetBuiltinEntry(a3, Builtins::CALL_NON_FUNCTION);
+    __ SetCallKind(t1, CALL_AS_METHOD);
     __ Jump(masm->isolate()->builtins()->ArgumentsAdaptorTrampoline(),
             RelocInfo::CODE_TARGET);
     __ bind(&function);
@@ -1323,12 +1332,14 @@ void Builtins::Generate_FunctionCall(MacroAssembler* masm) {
          FieldMemOperand(a3, SharedFunctionInfo::kFormalParameterCountOffset));
   __ sra(a2, a2, kSmiTagSize);
   __ lw(a3, FieldMemOperand(a1, JSFunction::kCodeEntryOffset));
+  __ SetCallKind(t1, CALL_AS_METHOD);
   // Check formal and actual parameter counts.
   __ Jump(masm->isolate()->builtins()->ArgumentsAdaptorTrampoline(),
           RelocInfo::CODE_TARGET, ne, a2, Operand(a0));
 
   ParameterCount expected(0);
-  __ InvokeCode(a3, expected, expected, JUMP_FUNCTION);
+  __ InvokeCode(a3, expected, expected, JUMP_FUNCTION,
+                NullCallWrapper(), CALL_AS_METHOD);
 }
 
 
@@ -1389,27 +1400,23 @@ void Builtins::Generate_FunctionApply(MacroAssembler* masm) {
                                kSmiTagSize)));
   __ Branch(&push_receiver, ne, t0, Operand(zero_reg));
 
-  // Do not transform the receiver for native (shared already in a1).
-  __ lw(a1, FieldMemOperand(a1, SharedFunctionInfo::kScriptOffset));
-  __ LoadRoot(a2, Heap::kUndefinedValueRootIndex);
-  __ Branch(&push_receiver, eq, a1, Operand(a2));
-  __ lw(a1, FieldMemOperand(a1, Script::kTypeOffset));
-  __ sra(a1, a1, kSmiTagSize);
-  __ Branch(&push_receiver, eq, a1, Operand(Script::TYPE_NATIVE));
+  // Do not transform the receiver for native (Compilerhints already in a2).
+  __ And(t0, a2, Operand(1 << (SharedFunctionInfo::kNative + kSmiTagSize)));
+  __ Branch(&push_receiver, ne, t0, Operand(zero_reg));
 
   // Compute the receiver in non-strict mode.
   __ And(t0, a0, Operand(kSmiTagMask));
   __ Branch(&call_to_object, eq, t0, Operand(zero_reg));
   __ LoadRoot(a1, Heap::kNullValueRootIndex);
   __ Branch(&use_global_receiver, eq, a0, Operand(a1));
-  // Heap::kUndefinedValueRootIndex is already in a2.
+  __ LoadRoot(a2, Heap::kUndefinedValueRootIndex);
   __ Branch(&use_global_receiver, eq, a0, Operand(a2));
 
   // Check if the receiver is already a JavaScript object.
   // a0: receiver
+  STATIC_ASSERT(LAST_SPEC_OBJECT_TYPE == LAST_TYPE);
   __ GetObjectType(a0, a1, a1);
-  __ Branch(&call_to_object, lt, a1, Operand(FIRST_JS_OBJECT_TYPE));
-  __ Branch(&push_receiver, le, a1, Operand(LAST_JS_OBJECT_TYPE));
+  __ Branch(&push_receiver, ge, a1, Operand(FIRST_SPEC_OBJECT_TYPE));
 
   // Convert the receiver to a regular object.
   // a0: receiver
@@ -1464,7 +1471,8 @@ void Builtins::Generate_FunctionApply(MacroAssembler* masm) {
   ParameterCount actual(a0);
   __ sra(a0, a0, kSmiTagSize);
   __ lw(a1, MemOperand(fp, kFunctionOffset));
-  __ InvokeFunction(a1, actual, CALL_FUNCTION);
+  __ InvokeFunction(a1, actual, CALL_FUNCTION,
+                    NullCallWrapper(), CALL_AS_METHOD);
 
   // Tear down the internal frame and remove function, receiver and args.
   __ LeaveInternalFrame();
@@ -1504,6 +1512,7 @@ void Builtins::Generate_ArgumentsAdaptorTrampoline(MacroAssembler* masm) {
   //  -- a1: function (passed through to callee)
   //  -- a2: expected arguments count
   //  -- a3: callee code entry
+  //  -- t1: call kind information
   // -----------------------------------
 
   Label invoke, dont_adapt_arguments;
@@ -1563,20 +1572,20 @@ void Builtins::Generate_ArgumentsAdaptorTrampoline(MacroAssembler* masm) {
     // Adjust for return address and receiver.
     __ Addu(a0, a0, Operand(2 * kPointerSize));
     // Compute copy end address. Also adjust for return address.
-    __ Addu(t1, fp, kPointerSize);
+    __ Addu(t3, fp, kPointerSize);
 
     // Copy the arguments (including the receiver) to the new stack frame.
     // a0: copy start address
     // a1: function
     // a2: expected number of arguments
     // a3: code entry to call
-    // t1: copy end address
+    // t3: copy end address
     Label copy;
     __ bind(&copy);
     __ lw(t0, MemOperand(a0));  // Adjusted above for return addr and receiver.
     __ push(t0);
     __ Subu(a0, a0, kPointerSize);
-    __ Branch(&copy, ne, a0, Operand(t1));
+    __ Branch(&copy, ne, a0, Operand(t3));
 
     // Fill the remaining expected arguments with undefined.
     // a1: function

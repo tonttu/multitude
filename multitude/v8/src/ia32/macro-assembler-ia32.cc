@@ -73,7 +73,12 @@ void MacroAssembler::RecordWriteHelper(Register object,
   shr(addr, Page::kRegionSizeLog2);
 
   // Set dirty mark for region.
-  bts(Operand(object, Page::kDirtyFlagOffset), addr);
+  // Bit tests with a memory operand should be avoided on Intel processors,
+  // as they usually have long latency and multiple uops. We load the bit base
+  // operand to a register at first and store it back after bit set.
+  mov(scratch, Operand(object, Page::kDirtyFlagOffset));
+  bts(Operand(scratch), addr);
+  mov(Operand(object, Page::kDirtyFlagOffset), scratch);
 }
 
 
@@ -144,8 +149,7 @@ void MacroAssembler::RecordWrite(Register object,
 
   // Skip barrier if writing a smi.
   ASSERT_EQ(0, kSmiTag);
-  test(value, Immediate(kSmiTagMask));
-  j(zero, &done, Label::kNear);
+  JumpIfSmi(value, &done, Label::kNear);
 
   InNewSpace(object, value, equal, &done, Label::kNear);
 
@@ -190,8 +194,7 @@ void MacroAssembler::RecordWrite(Register object,
 
   // Skip barrier if writing a smi.
   ASSERT_EQ(0, kSmiTag);
-  test(value, Immediate(kSmiTagMask));
-  j(zero, &done);
+  JumpIfSmi(value, &done, Label::kNear);
 
   InNewSpace(object, value, equal, &done);
 
@@ -260,6 +263,13 @@ void MacroAssembler::SafePush(const Immediate& x) {
 }
 
 
+void MacroAssembler::CompareRoot(Register with, Heap::RootListIndex index) {
+  // see ROOT_ACCESSOR macro in factory.h
+  Handle<Object> value(&isolate()->heap()->roots_address()[index]);
+  cmp(with, value);
+}
+
+
 void MacroAssembler::CmpObjectType(Register heap_object,
                                    InstanceType type,
                                    Register map) {
@@ -274,15 +284,40 @@ void MacroAssembler::CmpInstanceType(Register map, InstanceType type) {
 }
 
 
+void MacroAssembler::CheckFastElements(Register map,
+                                       Label* fail,
+                                       Label::Distance distance) {
+  STATIC_ASSERT(JSObject::FAST_ELEMENTS == 0);
+  cmpb(FieldOperand(map, Map::kBitField2Offset),
+       Map::kMaximumBitField2FastElementValue);
+  j(above, fail, distance);
+}
+
+
 void MacroAssembler::CheckMap(Register obj,
                               Handle<Map> map,
                               Label* fail,
                               SmiCheckType smi_check_type) {
-  if (smi_check_type == DONT_DO_SMI_CHECK) {
+  if (smi_check_type == DO_SMI_CHECK) {
     JumpIfSmi(obj, fail);
   }
   cmp(FieldOperand(obj, HeapObject::kMapOffset), Immediate(map));
   j(not_equal, fail);
+}
+
+
+void MacroAssembler::DispatchMap(Register obj,
+                                 Handle<Map> map,
+                                 Handle<Code> success,
+                                 SmiCheckType smi_check_type) {
+  Label fail;
+  if (smi_check_type == DO_SMI_CHECK) {
+    JumpIfSmi(obj, &fail);
+  }
+  cmp(FieldOperand(obj, HeapObject::kMapOffset), Immediate(map));
+  j(equal, success);
+
+  bind(&fail);
 }
 
 
@@ -310,8 +345,9 @@ void MacroAssembler::IsInstanceJSObjectType(Register map,
                                             Register scratch,
                                             Label* fail) {
   movzx_b(scratch, FieldOperand(map, Map::kInstanceTypeOffset));
-  sub(Operand(scratch), Immediate(FIRST_JS_OBJECT_TYPE));
-  cmp(scratch, LAST_JS_OBJECT_TYPE - FIRST_JS_OBJECT_TYPE);
+  sub(Operand(scratch), Immediate(FIRST_NONCALLABLE_SPEC_OBJECT_TYPE));
+  cmp(scratch,
+      LAST_NONCALLABLE_SPEC_OBJECT_TYPE - FIRST_NONCALLABLE_SPEC_OBJECT_TYPE);
   j(above, fail);
 }
 
@@ -333,8 +369,7 @@ void MacroAssembler::FCmp() {
 
 void MacroAssembler::AbortIfNotNumber(Register object) {
   Label ok;
-  test(object, Immediate(kSmiTagMask));
-  j(zero, &ok);
+  JumpIfSmi(object, &ok);
   cmp(FieldOperand(object, HeapObject::kMapOffset),
       isolate()->factory()->heap_number_map());
   Assert(equal, "Operand not a number");
@@ -703,6 +738,104 @@ void MacroAssembler::CheckAccessGlobalProxy(Register holder_reg,
   j(not_equal, miss);
 
   bind(&same_contexts);
+}
+
+
+void MacroAssembler::LoadFromNumberDictionary(Label* miss,
+                                              Register elements,
+                                              Register key,
+                                              Register r0,
+                                              Register r1,
+                                              Register r2,
+                                              Register result) {
+  // Register use:
+  //
+  // elements - holds the slow-case elements of the receiver and is unchanged.
+  //
+  // key      - holds the smi key on entry and is unchanged.
+  //
+  // Scratch registers:
+  //
+  // r0 - holds the untagged key on entry and holds the hash once computed.
+  //
+  // r1 - used to hold the capacity mask of the dictionary
+  //
+  // r2 - used for the index into the dictionary.
+  //
+  // result - holds the result on exit if the load succeeds and we fall through.
+
+  Label done;
+
+  // Compute the hash code from the untagged key.  This must be kept in sync
+  // with ComputeIntegerHash in utils.h.
+  //
+  // hash = ~hash + (hash << 15);
+  mov(r1, r0);
+  not_(r0);
+  shl(r1, 15);
+  add(r0, Operand(r1));
+  // hash = hash ^ (hash >> 12);
+  mov(r1, r0);
+  shr(r1, 12);
+  xor_(r0, Operand(r1));
+  // hash = hash + (hash << 2);
+  lea(r0, Operand(r0, r0, times_4, 0));
+  // hash = hash ^ (hash >> 4);
+  mov(r1, r0);
+  shr(r1, 4);
+  xor_(r0, Operand(r1));
+  // hash = hash * 2057;
+  imul(r0, r0, 2057);
+  // hash = hash ^ (hash >> 16);
+  mov(r1, r0);
+  shr(r1, 16);
+  xor_(r0, Operand(r1));
+
+  // Compute capacity mask.
+  mov(r1, FieldOperand(elements, NumberDictionary::kCapacityOffset));
+  shr(r1, kSmiTagSize);  // convert smi to int
+  dec(r1);
+
+  // Generate an unrolled loop that performs a few probes before giving up.
+  const int kProbes = 4;
+  for (int i = 0; i < kProbes; i++) {
+    // Use r2 for index calculations and keep the hash intact in r0.
+    mov(r2, r0);
+    // Compute the masked index: (hash + i + i * i) & mask.
+    if (i > 0) {
+      add(Operand(r2), Immediate(NumberDictionary::GetProbeOffset(i)));
+    }
+    and_(r2, Operand(r1));
+
+    // Scale the index by multiplying by the entry size.
+    ASSERT(NumberDictionary::kEntrySize == 3);
+    lea(r2, Operand(r2, r2, times_2, 0));  // r2 = r2 * 3
+
+    // Check if the key matches.
+    cmp(key, FieldOperand(elements,
+                          r2,
+                          times_pointer_size,
+                          NumberDictionary::kElementsStartOffset));
+    if (i != (kProbes - 1)) {
+      j(equal, &done);
+    } else {
+      j(not_equal, miss);
+    }
+  }
+
+  bind(&done);
+  // Check that the value is a normal propety.
+  const int kDetailsOffset =
+      NumberDictionary::kElementsStartOffset + 2 * kPointerSize;
+  ASSERT_EQ(NORMAL, 0);
+  test(FieldOperand(elements, r2, times_pointer_size, kDetailsOffset),
+       Immediate(PropertyDetails::TypeField::mask() << kSmiTagSize));
+  j(not_zero, miss);
+
+  // Get the value at the masked, scaled index.
+  const int kValueOffset =
+      NumberDictionary::kElementsStartOffset + kPointerSize;
+  mov(result, FieldOperand(elements, r2, times_pointer_size, kValueOffset));
 }
 
 
@@ -1145,8 +1278,7 @@ void MacroAssembler::TryGetFunctionPrototype(Register function,
                                              Register scratch,
                                              Label* miss) {
   // Check that the receiver isn't a smi.
-  test(function, Immediate(kSmiTagMask));
-  j(zero, miss);
+  JumpIfSmi(function, miss);
 
   // Check that the function really is a function.
   CmpObjectType(function, JS_FUNCTION_TYPE, result);
@@ -1385,32 +1517,30 @@ Operand ApiParameterOperand(int index) {
 }
 
 
-void MacroAssembler::PrepareCallApiFunction(int argc, Register scratch) {
+void MacroAssembler::PrepareCallApiFunction(int argc) {
   if (kReturnHandlesDirectly) {
     EnterApiExitFrame(argc);
     // When handles are returned directly we don't have to allocate extra
     // space for and pass an out parameter.
+    if (emit_debug_code()) {
+      mov(esi, Immediate(BitCast<int32_t>(kZapValue)));
+    }
   } else {
     // We allocate two additional slots: return value and pointer to it.
     EnterApiExitFrame(argc + 2);
 
     // The argument slots are filled as follows:
     //
-    //   n + 1: output cell
+    //   n + 1: output slot
     //   n: arg n
     //   ...
     //   1: arg1
-    //   0: pointer to the output cell
-    //
-    // Note that this is one more "argument" than the function expects
-    // so the out cell will have to be popped explicitly after returning
-    // from the function. The out cell contains Handle.
+    //   0: pointer to the output slot
 
-    // pointer to out cell.
-    lea(scratch, Operand(esp, (argc + 1) * kPointerSize));
-    mov(Operand(esp, 0 * kPointerSize), scratch);  // output.
+    lea(esi, Operand(esp, (argc + 1) * kPointerSize));
+    mov(Operand(esp, 0 * kPointerSize), esi);
     if (emit_debug_code()) {
-      mov(Operand(esp, (argc + 1) * kPointerSize), Immediate(0));  // out cell.
+      mov(Operand(esi, 0), Immediate(0));
     }
   }
 }
@@ -1434,9 +1564,9 @@ MaybeObject* MacroAssembler::TryCallApiFunctionAndReturn(ApiFunction* function,
   call(function->address(), RelocInfo::RUNTIME_ENTRY);
 
   if (!kReturnHandlesDirectly) {
-    // The returned value is a pointer to the handle holding the result.
-    // Dereference this to get to the location.
-    mov(eax, Operand(eax, 0));
+    // PrepareCallApiFunction saved pointer to the output slot into
+    // callee-save register esi.
+    mov(eax, Operand(esi, 0));
   }
 
   Label empty_handle;
@@ -1512,6 +1642,23 @@ MaybeObject* MacroAssembler::TryJumpToExternalReference(
 }
 
 
+void MacroAssembler::SetCallKind(Register dst, CallKind call_kind) {
+  // This macro takes the dst register to make the code more readable
+  // at the call sites. However, the dst register has to be ecx to
+  // follow the calling convention which requires the call type to be
+  // in ecx.
+  ASSERT(dst.is(ecx));
+  if (call_kind == CALL_AS_FUNCTION) {
+    // Set to some non-zero smi by updating the least significant
+    // byte.
+    mov_b(Operand(dst), 1 << kSmiTagSize);
+  } else {
+    // Set to smi zero by clearing the register.
+    xor_(dst, Operand(dst));
+  }
+}
+
+
 void MacroAssembler::InvokePrologue(const ParameterCount& expected,
                                     const ParameterCount& actual,
                                     Handle<Code> code_constant,
@@ -1519,7 +1666,8 @@ void MacroAssembler::InvokePrologue(const ParameterCount& expected,
                                     Label* done,
                                     InvokeFlag flag,
                                     Label::Distance done_near,
-                                    const CallWrapper& call_wrapper) {
+                                    const CallWrapper& call_wrapper,
+                                    CallKind call_kind) {
   bool definitely_matches = false;
   Label invoke;
   if (expected.is_immediate()) {
@@ -1570,10 +1718,12 @@ void MacroAssembler::InvokePrologue(const ParameterCount& expected,
 
     if (flag == CALL_FUNCTION) {
       call_wrapper.BeforeCall(CallSize(adaptor, RelocInfo::CODE_TARGET));
+      SetCallKind(ecx, call_kind);
       call(adaptor, RelocInfo::CODE_TARGET);
       call_wrapper.AfterCall();
       jmp(done, done_near);
     } else {
+      SetCallKind(ecx, call_kind);
       jmp(adaptor, RelocInfo::CODE_TARGET);
     }
     bind(&invoke);
@@ -1585,16 +1735,20 @@ void MacroAssembler::InvokeCode(const Operand& code,
                                 const ParameterCount& expected,
                                 const ParameterCount& actual,
                                 InvokeFlag flag,
-                                const CallWrapper& call_wrapper) {
+                                const CallWrapper& call_wrapper,
+                                CallKind call_kind) {
   Label done;
   InvokePrologue(expected, actual, Handle<Code>::null(), code,
-                 &done, flag, Label::kNear, call_wrapper);
+                 &done, flag, Label::kNear, call_wrapper,
+                 call_kind);
   if (flag == CALL_FUNCTION) {
     call_wrapper.BeforeCall(CallSize(code));
+    SetCallKind(ecx, call_kind);
     call(code);
     call_wrapper.AfterCall();
   } else {
     ASSERT(flag == JUMP_FUNCTION);
+    SetCallKind(ecx, call_kind);
     jmp(code);
   }
   bind(&done);
@@ -1606,17 +1760,20 @@ void MacroAssembler::InvokeCode(Handle<Code> code,
                                 const ParameterCount& actual,
                                 RelocInfo::Mode rmode,
                                 InvokeFlag flag,
-                                const CallWrapper& call_wrapper) {
+                                const CallWrapper& call_wrapper,
+                                CallKind call_kind) {
   Label done;
   Operand dummy(eax);
   InvokePrologue(expected, actual, code, dummy, &done, flag, Label::kNear,
-                 call_wrapper);
+                 call_wrapper, call_kind);
   if (flag == CALL_FUNCTION) {
     call_wrapper.BeforeCall(CallSize(code, rmode));
+    SetCallKind(ecx, call_kind);
     call(code, rmode);
     call_wrapper.AfterCall();
   } else {
     ASSERT(flag == JUMP_FUNCTION);
+    SetCallKind(ecx, call_kind);
     jmp(code, rmode);
   }
   bind(&done);
@@ -1626,7 +1783,8 @@ void MacroAssembler::InvokeCode(Handle<Code> code,
 void MacroAssembler::InvokeFunction(Register fun,
                                     const ParameterCount& actual,
                                     InvokeFlag flag,
-                                    const CallWrapper& call_wrapper) {
+                                    const CallWrapper& call_wrapper,
+                                    CallKind call_kind) {
   ASSERT(fun.is(edi));
   mov(edx, FieldOperand(edi, JSFunction::kSharedFunctionInfoOffset));
   mov(esi, FieldOperand(edi, JSFunction::kContextOffset));
@@ -1635,14 +1793,15 @@ void MacroAssembler::InvokeFunction(Register fun,
 
   ParameterCount expected(ebx);
   InvokeCode(FieldOperand(edi, JSFunction::kCodeEntryOffset),
-             expected, actual, flag, call_wrapper);
+             expected, actual, flag, call_wrapper, call_kind);
 }
 
 
 void MacroAssembler::InvokeFunction(JSFunction* function,
                                     const ParameterCount& actual,
                                     InvokeFlag flag,
-                                    const CallWrapper& call_wrapper) {
+                                    const CallWrapper& call_wrapper,
+                                    CallKind call_kind) {
   ASSERT(function->is_compiled());
   // Get the function and setup the context.
   mov(edi, Immediate(Handle<JSFunction>(function)));
@@ -1654,11 +1813,11 @@ void MacroAssembler::InvokeFunction(JSFunction* function,
     // code field in the function to allow recompilation to take effect
     // without changing any of the call sites.
     InvokeCode(FieldOperand(edi, JSFunction::kCodeEntryOffset),
-               expected, actual, flag, call_wrapper);
+               expected, actual, flag, call_wrapper, call_kind);
   } else {
     Handle<Code> code(function->code());
     InvokeCode(code, expected, actual, RelocInfo::CODE_TARGET,
-               flag, call_wrapper);
+               flag, call_wrapper, call_kind);
   }
 }
 
@@ -1675,7 +1834,7 @@ void MacroAssembler::InvokeBuiltin(Builtins::JavaScript id,
   ParameterCount expected(0);
   GetBuiltinFunction(edi, id);
   InvokeCode(FieldOperand(edi, JSFunction::kCodeEntryOffset),
-             expected, expected, flag, call_wrapper);
+             expected, expected, flag, call_wrapper, CALL_AS_METHOD);
 }
 
 void MacroAssembler::GetBuiltinFunction(Register target,
@@ -1699,12 +1858,9 @@ void MacroAssembler::GetBuiltinEntry(Register target, Builtins::JavaScript id) {
 void MacroAssembler::LoadContext(Register dst, int context_chain_length) {
   if (context_chain_length > 0) {
     // Move up the chain of contexts to the context containing the slot.
-    mov(dst, Operand(esi, Context::SlotOffset(Context::CLOSURE_INDEX)));
-    // Load the function context (which is the incoming, outer context).
-    mov(dst, FieldOperand(dst, JSFunction::kContextOffset));
+    mov(dst, Operand(esi, Context::SlotOffset(Context::PREVIOUS_INDEX)));
     for (int i = 1; i < context_chain_length; i++) {
-      mov(dst, Operand(dst, Context::SlotOffset(Context::CLOSURE_INDEX)));
-      mov(dst, FieldOperand(dst, JSFunction::kContextOffset));
+      mov(dst, Operand(dst, Context::SlotOffset(Context::PREVIOUS_INDEX)));
     }
   } else {
     // Slot is in the current function context.  Move it into the
@@ -1713,14 +1869,14 @@ void MacroAssembler::LoadContext(Register dst, int context_chain_length) {
     mov(dst, esi);
   }
 
-  // We should not have found a 'with' context by walking the context chain
+  // We should not have found a with context by walking the context chain
   // (i.e., the static scope chain and runtime context chain do not agree).
   // A variable occurring in such a scope should have slot type LOOKUP and
   // not CONTEXT.
   if (emit_debug_code()) {
-    cmp(dst, Operand(dst, Context::SlotOffset(Context::FCONTEXT_INDEX)));
-    Check(equal, "Yo dawg, I heard you liked function contexts "
-                 "so I put function contexts in all your contexts");
+    cmp(FieldOperand(dst, HeapObject::kMapOffset),
+        isolate()->factory()->with_context_map());
+    Check(not_equal, "Variable resolved to with context.");
   }
 }
 
@@ -1895,6 +2051,9 @@ void MacroAssembler::AssertFastElements(Register elements) {
         Immediate(factory->fixed_array_map()));
     j(equal, &ok);
     cmp(FieldOperand(elements, HeapObject::kMapOffset),
+        Immediate(factory->fixed_double_array_map()));
+    j(equal, &ok);
+    cmp(FieldOperand(elements, HeapObject::kMapOffset),
         Immediate(factory->fixed_cow_array_map()));
     j(equal, &ok);
     Abort("JSObject with fast elements map has slow elements");
@@ -1954,6 +2113,17 @@ void MacroAssembler::Abort(const char* msg) {
 }
 
 
+void MacroAssembler::LoadInstanceDescriptors(Register map,
+                                             Register descriptors) {
+  mov(descriptors,
+      FieldOperand(map, Map::kInstanceDescriptorsOrBitField3Offset));
+  Label not_smi;
+  JumpIfNotSmi(descriptors, &not_smi);
+  mov(descriptors, isolate()->factory()->empty_descriptor_array());
+  bind(&not_smi);
+}
+
+
 void MacroAssembler::LoadPowerOf2(XMMRegister dst,
                                   Register scratch,
                                   int power) {
@@ -1988,8 +2158,7 @@ void MacroAssembler::JumpIfNotBothSequentialAsciiStrings(Register object1,
   ASSERT_EQ(0, kSmiTag);
   mov(scratch1, Operand(object1));
   and_(scratch1, Operand(object2));
-  test(scratch1, Immediate(kSmiTagMask));
-  j(zero, failure);
+  JumpIfSmi(scratch1, failure);
 
   // Load instance type for both strings.
   mov(scratch1, FieldOperand(object1, HeapObject::kMapOffset));

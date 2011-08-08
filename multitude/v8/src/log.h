@@ -1,4 +1,4 @@
-// Copyright 2006-2008 the V8 project authors. All rights reserved.
+// Copyright 2011 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -78,7 +78,6 @@ class SlidingStateWindow;
 class Ticker;
 
 #undef LOG
-#ifdef ENABLE_LOGGING_AND_PROFILING
 #define LOG(isolate, Call)                          \
   do {                                              \
     v8::internal::Logger* logger =                  \
@@ -86,53 +85,52 @@ class Ticker;
     if (logger->is_logging())                       \
       logger->Call;                                 \
   } while (false)
-#else
-#define LOG(isolate, Call) ((void) 0)
-#endif
 
-#define LOG_EVENTS_AND_TAGS_LIST(V) \
-  V(CODE_CREATION_EVENT,            "code-creation")            \
-  V(CODE_MOVE_EVENT,                "code-move")                \
-  V(CODE_DELETE_EVENT,              "code-delete")              \
-  V(CODE_MOVING_GC,                 "code-moving-gc")           \
-  V(SHARED_FUNC_MOVE_EVENT,         "sfi-move")                 \
-  V(SNAPSHOT_POSITION_EVENT,        "snapshot-pos")             \
-  V(SNAPSHOT_CODE_NAME_EVENT,       "snapshot-code-name")       \
-  V(TICK_EVENT,                     "tick")                     \
-  V(REPEAT_META_EVENT,              "repeat")                   \
-  V(BUILTIN_TAG,                    "Builtin")                  \
-  V(CALL_DEBUG_BREAK_TAG,           "CallDebugBreak")           \
-  V(CALL_DEBUG_PREPARE_STEP_IN_TAG, "CallDebugPrepareStepIn")   \
-  V(CALL_IC_TAG,                    "CallIC")                   \
-  V(CALL_INITIALIZE_TAG,            "CallInitialize")           \
-  V(CALL_MEGAMORPHIC_TAG,           "CallMegamorphic")          \
-  V(CALL_MISS_TAG,                  "CallMiss")                 \
-  V(CALL_NORMAL_TAG,                "CallNormal")               \
-  V(CALL_PRE_MONOMORPHIC_TAG,       "CallPreMonomorphic")       \
-  V(KEYED_CALL_DEBUG_BREAK_TAG,     "KeyedCallDebugBreak")      \
-  V(KEYED_CALL_DEBUG_PREPARE_STEP_IN_TAG,                       \
-    "KeyedCallDebugPrepareStepIn")                              \
-  V(KEYED_CALL_IC_TAG,              "KeyedCallIC")              \
-  V(KEYED_CALL_INITIALIZE_TAG,      "KeyedCallInitialize")      \
-  V(KEYED_CALL_MEGAMORPHIC_TAG,     "KeyedCallMegamorphic")     \
-  V(KEYED_CALL_MISS_TAG,            "KeyedCallMiss")            \
-  V(KEYED_CALL_NORMAL_TAG,          "KeyedCallNormal")          \
-  V(KEYED_CALL_PRE_MONOMORPHIC_TAG, "KeyedCallPreMonomorphic")  \
-  V(CALLBACK_TAG,                   "Callback")                 \
-  V(EVAL_TAG,                       "Eval")                     \
-  V(FUNCTION_TAG,                   "Function")                 \
-  V(KEYED_LOAD_IC_TAG,              "KeyedLoadIC")              \
-  V(KEYED_EXTERNAL_ARRAY_LOAD_IC_TAG, "KeyedExternalArrayLoadIC") \
-  V(KEYED_STORE_IC_TAG,             "KeyedStoreIC")             \
-  V(KEYED_EXTERNAL_ARRAY_STORE_IC_TAG, "KeyedExternalArrayStoreIC")\
-  V(LAZY_COMPILE_TAG,               "LazyCompile")              \
-  V(LOAD_IC_TAG,                    "LoadIC")                   \
-  V(REG_EXP_TAG,                    "RegExp")                   \
-  V(SCRIPT_TAG,                     "Script")                   \
-  V(STORE_IC_TAG,                   "StoreIC")                  \
-  V(STUB_TAG,                       "Stub")                     \
-  V(NATIVE_FUNCTION_TAG,            "Function")                 \
-  V(NATIVE_LAZY_COMPILE_TAG,        "LazyCompile")              \
+#define LOG_EVENTS_AND_TAGS_LIST(V)                                     \
+  V(CODE_CREATION_EVENT,            "code-creation")                    \
+  V(CODE_MOVE_EVENT,                "code-move")                        \
+  V(CODE_DELETE_EVENT,              "code-delete")                      \
+  V(CODE_MOVING_GC,                 "code-moving-gc")                   \
+  V(SHARED_FUNC_MOVE_EVENT,         "sfi-move")                         \
+  V(SNAPSHOT_POSITION_EVENT,        "snapshot-pos")                     \
+  V(SNAPSHOT_CODE_NAME_EVENT,       "snapshot-code-name")               \
+  V(TICK_EVENT,                     "tick")                             \
+  V(REPEAT_META_EVENT,              "repeat")                           \
+  V(BUILTIN_TAG,                    "Builtin")                          \
+  V(CALL_DEBUG_BREAK_TAG,           "CallDebugBreak")                   \
+  V(CALL_DEBUG_PREPARE_STEP_IN_TAG, "CallDebugPrepareStepIn")           \
+  V(CALL_IC_TAG,                    "CallIC")                           \
+  V(CALL_INITIALIZE_TAG,            "CallInitialize")                   \
+  V(CALL_MEGAMORPHIC_TAG,           "CallMegamorphic")                  \
+  V(CALL_MISS_TAG,                  "CallMiss")                         \
+  V(CALL_NORMAL_TAG,                "CallNormal")                       \
+  V(CALL_PRE_MONOMORPHIC_TAG,       "CallPreMonomorphic")               \
+  V(KEYED_CALL_DEBUG_BREAK_TAG,     "KeyedCallDebugBreak")              \
+  V(KEYED_CALL_DEBUG_PREPARE_STEP_IN_TAG,                               \
+    "KeyedCallDebugPrepareStepIn")                                      \
+  V(KEYED_CALL_IC_TAG,              "KeyedCallIC")                      \
+  V(KEYED_CALL_INITIALIZE_TAG,      "KeyedCallInitialize")              \
+  V(KEYED_CALL_MEGAMORPHIC_TAG,     "KeyedCallMegamorphic")             \
+  V(KEYED_CALL_MISS_TAG,            "KeyedCallMiss")                    \
+  V(KEYED_CALL_NORMAL_TAG,          "KeyedCallNormal")                  \
+  V(KEYED_CALL_PRE_MONOMORPHIC_TAG, "KeyedCallPreMonomorphic")          \
+  V(CALLBACK_TAG,                   "Callback")                         \
+  V(EVAL_TAG,                       "Eval")                             \
+  V(FUNCTION_TAG,                   "Function")                         \
+  V(KEYED_LOAD_IC_TAG,              "KeyedLoadIC")                      \
+  V(KEYED_LOAD_MEGAMORPHIC_IC_TAG,  "KeyedLoadMegamorphicIC")           \
+  V(KEYED_EXTERNAL_ARRAY_LOAD_IC_TAG, "KeyedExternalArrayLoadIC")       \
+  V(KEYED_STORE_IC_TAG,             "KeyedStoreIC")                     \
+  V(KEYED_STORE_MEGAMORPHIC_IC_TAG, "KeyedStoreMegamorphicIC")          \
+  V(KEYED_EXTERNAL_ARRAY_STORE_IC_TAG, "KeyedExternalArrayStoreIC")     \
+  V(LAZY_COMPILE_TAG,               "LazyCompile")                      \
+  V(LOAD_IC_TAG,                    "LoadIC")                           \
+  V(REG_EXP_TAG,                    "RegExp")                           \
+  V(SCRIPT_TAG,                     "Script")                           \
+  V(STORE_IC_TAG,                   "StoreIC")                          \
+  V(STUB_TAG,                       "Stub")                             \
+  V(NATIVE_FUNCTION_TAG,            "Function")                         \
+  V(NATIVE_LAZY_COMPILE_TAG,        "LazyCompile")                      \
   V(NATIVE_SCRIPT_TAG,              "Script")
 // Note that 'NATIVE_' cases for functions and scripts are mapped onto
 // original tags when writing to the log.
@@ -159,7 +157,9 @@ class Logger {
   Sampler* sampler();
 
   // Frees resources acquired in Setup.
-  void TearDown();
+  // When a temporary file is used for the log, returns its stream descriptor,
+  // leaving the file open.
+  FILE* TearDown();
 
   // Enable the computation of a sliding window of states.
   void EnableSlidingStateWindow();
@@ -270,7 +270,6 @@ class Logger {
   // Log an event reported from generated code
   void LogRuntime(Vector<const char> format, JSArray* args);
 
-#ifdef ENABLE_LOGGING_AND_PROFILING
   bool is_logging() {
     return logging_nesting_ > 0;
   }
@@ -278,13 +277,9 @@ class Logger {
   // Pause/Resume collection of profiling data.
   // When data collection is paused, CPU Tick events are discarded until
   // data collection is Resumed.
-  void PauseProfiler(int flags, int tag);
-  void ResumeProfiler(int flags, int tag);
-  int GetActiveProfilerModules();
-
-  // If logging is performed into a memory buffer, allows to
-  // retrieve previously written messages. See v8.h.
-  int GetLogLines(int from_pos, char* dest_buf, int max_size);
+  void PauseProfiler();
+  void ResumeProfiler();
+  bool IsProfilerPaused();
 
   // Logs all compiled functions found in the heap.
   void LogCompiledFunctions();
@@ -399,7 +394,6 @@ class Logger {
 
   int logging_nesting_;
   int cpu_profiler_nesting_;
-  int heap_profiler_nesting_;
 
   Log* log_;
 
@@ -423,9 +417,6 @@ class Logger {
   Address prev_code_;
 
   friend class CpuProfiler;
-#else
-  bool is_logging() { return false; }
-#endif
 };
 
 

@@ -116,7 +116,7 @@ class Bootstrapper {
   bool IsActive() const { return nesting_ != 0; }
 
   // Support for thread preemption.
-  RLYSTC int ArchiveSpacePerThread();
+  static int ArchiveSpacePerThread();
   char* ArchiveState(char* to);
   char* RestoreState(char* from);
   void FreeThreadResources();
@@ -168,8 +168,9 @@ class BootstrapperActive BASE_EMBEDDED {
 class NativesExternalStringResource
     : public v8::String::ExternalAsciiStringResource {
  public:
-  explicit NativesExternalStringResource(Bootstrapper* bootstrapper,
-                                         const char* source);
+  NativesExternalStringResource(Bootstrapper* bootstrapper,
+                                const char* source,
+                                size_t length);
 
   const char* data() const {
     return data_;

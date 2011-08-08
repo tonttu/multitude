@@ -154,7 +154,7 @@ class Object;
 class MaybeObject;
 class OldSpace;
 class Property;
-class Proxy;
+class Foreign;
 class RegExpNode;
 struct RegExpCompileData;
 class RegExpTree;
@@ -310,7 +310,9 @@ enum InLoopFlag {
 
 enum CallFunctionFlags {
   NO_CALL_FUNCTION_FLAGS = 0,
-  RECEIVER_MIGHT_BE_VALUE = 1 << 0  // Receiver might not be a JSObject.
+  // Receiver might implicitly be the global objects. If it is, the
+  // hole is passed to the call function stub.
+  RECEIVER_MIGHT_BE_IMPLICIT = 1 << 0
 };
 
 
@@ -393,12 +395,11 @@ struct AccessorDescriptor {
 };
 
 
-// Logging and profiling.
-// A StateTag represents a possible state of the VM.  When compiled with
-// ENABLE_VMSTATE_TRACKING, the logger maintains a stack of these.
-// Creating a VMState object enters a state by pushing on the stack, and
-// destroying a VMState object leaves a state by popping the current state
-// from the stack.
+// Logging and profiling.  A StateTag represents a possible state of
+// the VM. The logger maintains a stack of these. Creating a VMState
+// object enters a state by pushing on the stack, and destroying a
+// VMState object leaves a state by popping the current state from the
+// stack.
 
 #define STATE_TAG_LIST(V) \
   V(JS)                   \
@@ -496,6 +497,24 @@ enum SmiCheckType {
   DONT_DO_SMI_CHECK = 0,
   DO_SMI_CHECK
 };
+
+
+// Used to specify whether a receiver is implicitly or explicitly
+// provided to a call.
+enum CallKind {
+  CALL_AS_METHOD = 0,
+  CALL_AS_FUNCTION
+};
+
+
+static const uint32_t kHoleNanUpper32 = 0x7FFFFFFF;
+static const uint32_t kHoleNanLower32 = 0xFFFFFFFF;
+static const uint32_t kNaNOrInfinityLowerBoundUpper32 = 0x7FF00000;
+
+const uint64_t kHoleNanInt64 =
+    (static_cast<uint64_t>(kHoleNanUpper32) << 32) | kHoleNanLower32;
+const uint64_t kLastNonNaNInt64 =
+    (static_cast<uint64_t>(kNaNOrInfinityLowerBoundUpper32) << 32);
 
 } }  // namespace v8::internal
 

@@ -1,4 +1,4 @@
-// Copyright 2010 the V8 project authors. All rights reserved.
+// Copyright 2011 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -58,6 +58,16 @@ Handle<FixedArray> Factory::NewFixedArrayWithHoles(int size,
 }
 
 
+Handle<FixedArray> Factory::NewFixedDoubleArray(int size,
+                                                PretenureFlag pretenure) {
+  ASSERT(0 <= size);
+  CALL_HEAP_FUNCTION(
+      isolate(),
+      isolate()->heap()->AllocateUninitializedFixedDoubleArray(size, pretenure),
+      FixedArray);
+}
+
+
 Handle<StringDictionary> Factory::NewStringDictionary(int at_least_space_for) {
   ASSERT(0 <= at_least_space_for);
   CALL_HEAP_FUNCTION(isolate(),
@@ -71,6 +81,14 @@ Handle<NumberDictionary> Factory::NewNumberDictionary(int at_least_space_for) {
   CALL_HEAP_FUNCTION(isolate(),
                      NumberDictionary::Allocate(at_least_space_for),
                      NumberDictionary);
+}
+
+
+Handle<ObjectHashTable> Factory::NewObjectHashTable(int at_least_space_for) {
+  ASSERT(0 <= at_least_space_for);
+  CALL_HEAP_FUNCTION(isolate(),
+                     ObjectHashTable::Allocate(at_least_space_for),
+                     ObjectHashTable);
 }
 
 
@@ -111,11 +129,30 @@ Handle<String> Factory::LookupSymbol(Vector<const char> string) {
                      String);
 }
 
+// Symbols are created in the old generation (data space).
+Handle<String> Factory::LookupSymbol(Handle<String> string) {
+  CALL_HEAP_FUNCTION(isolate(),
+                     isolate()->heap()->LookupSymbol(*string),
+                     String);
+}
+
 Handle<String> Factory::LookupAsciiSymbol(Vector<const char> string) {
   CALL_HEAP_FUNCTION(isolate(),
                      isolate()->heap()->LookupAsciiSymbol(string),
                      String);
 }
+
+
+Handle<String> Factory::LookupAsciiSymbol(Handle<SeqAsciiString> string,
+                                          int from,
+                                          int length) {
+  CALL_HEAP_FUNCTION(isolate(),
+                     isolate()->heap()->LookupAsciiSymbol(string,
+                                                          from,
+                                                          length),
+                     String);
+}
+
 
 Handle<String> Factory::LookupTwoByteSymbol(Vector<const uc16> string) {
   CALL_HEAP_FUNCTION(isolate(),
@@ -150,21 +187,21 @@ Handle<String> Factory::NewStringFromTwoByte(Vector<const uc16> string,
 }
 
 
-Handle<String> Factory::NewRawAsciiString(int length,
-                                          PretenureFlag pretenure) {
+Handle<SeqAsciiString> Factory::NewRawAsciiString(int length,
+                                                  PretenureFlag pretenure) {
   CALL_HEAP_FUNCTION(
       isolate(),
       isolate()->heap()->AllocateRawAsciiString(length, pretenure),
-      String);
+      SeqAsciiString);
 }
 
 
-Handle<String> Factory::NewRawTwoByteString(int length,
-                                            PretenureFlag pretenure) {
+Handle<SeqTwoByteString> Factory::NewRawTwoByteString(int length,
+                                                      PretenureFlag pretenure) {
   CALL_HEAP_FUNCTION(
       isolate(),
       isolate()->heap()->AllocateRawTwoByteString(length, pretenure),
-      String);
+      SeqTwoByteString);
 }
 
 
@@ -181,6 +218,16 @@ Handle<String> Factory::NewSubString(Handle<String> str,
                                      int end) {
   CALL_HEAP_FUNCTION(isolate(),
                      str->SubString(begin, end),
+                     String);
+}
+
+
+Handle<String> Factory::NewProperSubString(Handle<String> str,
+                                           int begin,
+                                           int end) {
+  ASSERT(begin > 0 || end < str->length());
+  CALL_HEAP_FUNCTION(isolate(),
+                     isolate()->heap()->AllocateSubString(*str, begin, end),
                      String);
 }
 
@@ -212,22 +259,34 @@ Handle<Context> Factory::NewGlobalContext() {
 
 
 Handle<Context> Factory::NewFunctionContext(int length,
-                                            Handle<JSFunction> closure) {
+                                            Handle<JSFunction> function) {
   CALL_HEAP_FUNCTION(
       isolate(),
-      isolate()->heap()->AllocateFunctionContext(length, *closure),
+      isolate()->heap()->AllocateFunctionContext(length, *function),
       Context);
 }
 
 
-Handle<Context> Factory::NewWithContext(Handle<Context> previous,
-                                        Handle<JSObject> extension,
-                                        bool is_catch_context) {
+Handle<Context> Factory::NewCatchContext(Handle<JSFunction> function,
+                                         Handle<Context> previous,
+                                         Handle<String> name,
+                                         Handle<Object> thrown_object) {
   CALL_HEAP_FUNCTION(
       isolate(),
-      isolate()->heap()->AllocateWithContext(*previous,
-                                             *extension,
-                                             is_catch_context),
+      isolate()->heap()->AllocateCatchContext(*function,
+                                              *previous,
+                                              *name,
+                                              *thrown_object),
+      Context);
+}
+
+
+Handle<Context> Factory::NewWithContext(Handle<JSFunction> function,
+                                        Handle<Context> previous,
+                                        Handle<JSObject> extension) {
+  CALL_HEAP_FUNCTION(
+      isolate(),
+      isolate()->heap()->AllocateWithContext(*function, *previous, *extension),
       Context);
 }
 
@@ -266,7 +325,7 @@ Handle<Script> Factory::NewScript(Handle<String> source) {
   heap->SetLastScriptId(Smi::FromInt(id));
 
   // Create and initialize script object.
-  Handle<Proxy> wrapper = NewProxy(0, TENURED);
+  Handle<Foreign> wrapper = NewForeign(0, TENURED);
   Handle<Script> script = Handle<Script>::cast(NewStruct(SCRIPT_TYPE));
   script->set_source(*source);
   script->set_name(heap->undefined_value());
@@ -286,15 +345,15 @@ Handle<Script> Factory::NewScript(Handle<String> source) {
 }
 
 
-Handle<Proxy> Factory::NewProxy(Address addr, PretenureFlag pretenure) {
+Handle<Foreign> Factory::NewForeign(Address addr, PretenureFlag pretenure) {
   CALL_HEAP_FUNCTION(isolate(),
-                     isolate()->heap()->AllocateProxy(addr, pretenure),
-                     Proxy);
+                     isolate()->heap()->AllocateForeign(addr, pretenure),
+                     Foreign);
 }
 
 
-Handle<Proxy> Factory::NewProxy(const AccessorDescriptor* desc) {
-  return NewProxy((Address) desc, TENURED);
+Handle<Foreign> Factory::NewForeign(const AccessorDescriptor* desc) {
+  return NewForeign((Address) desc, TENURED);
 }
 
 
@@ -712,7 +771,7 @@ MUST_USE_RESULT static inline MaybeObject* DoCopyInsert(
 
 
 // Allocate the new array.
-Handle<DescriptorArray> Factory::CopyAppendProxyDescriptor(
+Handle<DescriptorArray> Factory::CopyAppendForeignDescriptor(
     Handle<DescriptorArray> array,
     Handle<String> key,
     Handle<Object> value,
@@ -838,6 +897,13 @@ Handle<JSProxy> Factory::NewJSProxy(Handle<Object> handler,
       isolate(),
       isolate()->heap()->AllocateJSProxy(*handler, *prototype),
       JSProxy);
+}
+
+
+void Factory::BecomeJSObject(Handle<JSProxy> object) {
+  CALL_HEAP_FUNCTION_VOID(
+      isolate(),
+      isolate()->heap()->ReinitializeJSProxyAsJSObject(*object));
 }
 
 
@@ -1170,12 +1236,14 @@ void Factory::SetRegExpIrregexpData(Handle<JSRegExp> regexp,
                                     JSRegExp::Flags flags,
                                     int capture_count) {
   Handle<FixedArray> store = NewFixedArray(JSRegExp::kIrregexpDataSize);
-
+  Smi* uninitialized = Smi::FromInt(JSRegExp::kUninitializedValue);
   store->set(JSRegExp::kTagIndex, Smi::FromInt(type));
   store->set(JSRegExp::kSourceIndex, *source);
   store->set(JSRegExp::kFlagsIndex, Smi::FromInt(flags.value()));
-  store->set(JSRegExp::kIrregexpASCIICodeIndex, HEAP->the_hole_value());
-  store->set(JSRegExp::kIrregexpUC16CodeIndex, HEAP->the_hole_value());
+  store->set(JSRegExp::kIrregexpASCIICodeIndex, uninitialized);
+  store->set(JSRegExp::kIrregexpUC16CodeIndex, uninitialized);
+  store->set(JSRegExp::kIrregexpASCIICodeSavedIndex, uninitialized);
+  store->set(JSRegExp::kIrregexpUC16CodeSavedIndex, uninitialized);
   store->set(JSRegExp::kIrregexpMaxRegisterCountIndex, Smi::FromInt(0));
   store->set(JSRegExp::kIrregexpCaptureCountIndex,
              Smi::FromInt(capture_count));

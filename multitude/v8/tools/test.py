@@ -1208,7 +1208,7 @@ def BuildOptions():
         dest="suppress_dialogs", default=True, action="store_true")
   result.add_option("--no-suppress-dialogs", help="Display Windows dialogs for crashing tests",
         dest="suppress_dialogs", action="store_false")
-  result.add_option("--shell", help="Path to V8 shell", default="shell")
+  result.add_option("--shell", help="Path to V8 shell", default="d8")
   result.add_option("--isolates", help="Whether to test isolates", default=False, action="store_true")
   result.add_option("--store-unexpected-output",
       help="Store the temporary JS files from tests that fails",
@@ -1272,6 +1272,11 @@ def ProcessOptions(options):
       options.special_command += " --crankshaft"
     else:
       options.special_command = "@--crankshaft"
+  if options.shell == "d8":
+    if options.special_command:
+      options.special_command += " --test"
+    else:
+      options.special_command = "@--test"
   if options.noprof:
     options.scons_flags.append("prof=off")
     options.scons_flags.append("profilingsupport=off")
@@ -1437,7 +1442,8 @@ def Main():
         'system': utils.GuessOS(),
         'arch': options.arch,
         'simulator': options.simulator,
-        'crankshaft': options.crankshaft
+        'crankshaft': options.crankshaft,
+        'isolates': options.isolates
       }
       test_list = root.ListTests([], path, context, mode, [])
       unclassified_tests += test_list

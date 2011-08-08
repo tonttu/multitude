@@ -59,34 +59,14 @@ class TranscendentalCacheStub: public CodeStub {
 };
 
 
-class ToBooleanStub: public CodeStub {
+class UnaryOpStub: public CodeStub {
  public:
-  ToBooleanStub() { }
-
-  void Generate(MacroAssembler* masm);
-
- private:
-  Major MajorKey() { return ToBoolean; }
-  int MinorKey() { return 0; }
-};
-
-
-class TypeRecordingUnaryOpStub: public CodeStub {
- public:
-  TypeRecordingUnaryOpStub(Token::Value op, UnaryOverwriteMode mode)
+  UnaryOpStub(Token::Value op,
+              UnaryOverwriteMode mode,
+              UnaryOpIC::TypeInfo operand_type = UnaryOpIC::UNINITIALIZED)
       : op_(op),
         mode_(mode),
-        operand_type_(TRUnaryOpIC::UNINITIALIZED),
-        name_(NULL) {
-  }
-
-  TypeRecordingUnaryOpStub(
-      int key,
-      TRUnaryOpIC::TypeInfo operand_type)
-      : op_(OpBits::decode(key)),
-        mode_(ModeBits::decode(key)),
-        operand_type_(operand_type),
-        name_(NULL) {
+        operand_type_(operand_type) {
   }
 
  private:
@@ -94,28 +74,15 @@ class TypeRecordingUnaryOpStub: public CodeStub {
   UnaryOverwriteMode mode_;
 
   // Operand type information determined at runtime.
-  TRUnaryOpIC::TypeInfo operand_type_;
+  UnaryOpIC::TypeInfo operand_type_;
 
-  char* name_;
-
-  const char* GetName();
-
-#ifdef DEBUG
-  void Print() {
-    PrintF("TypeRecordingUnaryOpStub %d (op %s), "
-           "(mode %d, runtime_type_info %s)\n",
-           MinorKey(),
-           Token::String(op_),
-           static_cast<int>(mode_),
-           TRUnaryOpIC::GetName(operand_type_));
-  }
-#endif
+  virtual void PrintName(StringStream* stream);
 
   class ModeBits: public BitField<UnaryOverwriteMode, 0, 1> {};
   class OpBits: public BitField<Token::Value, 1, 7> {};
-  class OperandTypeInfoBits: public BitField<TRUnaryOpIC::TypeInfo, 8, 3> {};
+  class OperandTypeInfoBits: public BitField<UnaryOpIC::TypeInfo, 8, 3> {};
 
-  Major MajorKey() { return TypeRecordingUnaryOp; }
+  Major MajorKey() { return UnaryOp; }
   int MinorKey() {
     return ModeBits::encode(mode_)
            | OpBits::encode(op_)
@@ -151,38 +118,36 @@ class TypeRecordingUnaryOpStub: public CodeStub {
   void GenerateGenericStubBitNot(MacroAssembler* masm);
   void GenerateGenericCodeFallback(MacroAssembler* masm);
 
-  virtual int GetCodeKind() { return Code::TYPE_RECORDING_UNARY_OP_IC; }
+  virtual int GetCodeKind() { return Code::UNARY_OP_IC; }
 
   virtual InlineCacheState GetICState() {
-    return TRUnaryOpIC::ToState(operand_type_);
+    return UnaryOpIC::ToState(operand_type_);
   }
 
   virtual void FinishCode(Code* code) {
-    code->set_type_recording_unary_op_type(operand_type_);
+    code->set_unary_op_type(operand_type_);
   }
 };
 
 
-class TypeRecordingBinaryOpStub: public CodeStub {
+class BinaryOpStub: public CodeStub {
  public:
-  TypeRecordingBinaryOpStub(Token::Value op, OverwriteMode mode)
+  BinaryOpStub(Token::Value op, OverwriteMode mode)
       : op_(op),
         mode_(mode),
-        operands_type_(TRBinaryOpIC::UNINITIALIZED),
-        result_type_(TRBinaryOpIC::UNINITIALIZED),
-        name_(NULL) {
+        operands_type_(BinaryOpIC::UNINITIALIZED),
+        result_type_(BinaryOpIC::UNINITIALIZED) {
     ASSERT(OpBits::is_valid(Token::NUM_TOKENS));
   }
 
-  TypeRecordingBinaryOpStub(
+  BinaryOpStub(
       int key,
-      TRBinaryOpIC::TypeInfo operands_type,
-      TRBinaryOpIC::TypeInfo result_type = TRBinaryOpIC::UNINITIALIZED)
+      BinaryOpIC::TypeInfo operands_type,
+      BinaryOpIC::TypeInfo result_type = BinaryOpIC::UNINITIALIZED)
       : op_(OpBits::decode(key)),
         mode_(ModeBits::decode(key)),
         operands_type_(operands_type),
-        result_type_(result_type),
-        name_(NULL) { }
+        result_type_(result_type) { }
 
  private:
   enum SmiCodeGenerateHeapNumberResults {
@@ -194,31 +159,18 @@ class TypeRecordingBinaryOpStub: public CodeStub {
   OverwriteMode mode_;
 
   // Operand type information determined at runtime.
-  TRBinaryOpIC::TypeInfo operands_type_;
-  TRBinaryOpIC::TypeInfo result_type_;
+  BinaryOpIC::TypeInfo operands_type_;
+  BinaryOpIC::TypeInfo result_type_;
 
-  char* name_;
-
-  const char* GetName();
-
-#ifdef DEBUG
-  void Print() {
-    PrintF("TypeRecordingBinaryOpStub %d (op %s), "
-           "(mode %d, runtime_type_info %s)\n",
-           MinorKey(),
-           Token::String(op_),
-           static_cast<int>(mode_),
-           TRBinaryOpIC::GetName(operands_type_));
-  }
-#endif
+  virtual void PrintName(StringStream* stream);
 
   // Minor key encoding in 15 bits RRRTTTOOOOOOOMM.
   class ModeBits: public BitField<OverwriteMode, 0, 2> {};
   class OpBits: public BitField<Token::Value, 2, 7> {};
-  class OperandTypeInfoBits: public BitField<TRBinaryOpIC::TypeInfo, 9, 3> {};
-  class ResultTypeInfoBits: public BitField<TRBinaryOpIC::TypeInfo, 12, 3> {};
+  class OperandTypeInfoBits: public BitField<BinaryOpIC::TypeInfo, 9, 3> {};
+  class ResultTypeInfoBits: public BitField<BinaryOpIC::TypeInfo, 12, 3> {};
 
-  Major MajorKey() { return TypeRecordingBinaryOp; }
+  Major MajorKey() { return BinaryOp; }
   int MinorKey() {
     return OpBits::encode(op_)
            | ModeBits::encode(mode_)
@@ -252,15 +204,15 @@ class TypeRecordingBinaryOpStub: public CodeStub {
   void GenerateTypeTransition(MacroAssembler* masm);
   void GenerateTypeTransitionWithSavedArgs(MacroAssembler* masm);
 
-  virtual int GetCodeKind() { return Code::TYPE_RECORDING_BINARY_OP_IC; }
+  virtual int GetCodeKind() { return Code::BINARY_OP_IC; }
 
   virtual InlineCacheState GetICState() {
-    return TRBinaryOpIC::ToState(operands_type_);
+    return BinaryOpIC::ToState(operands_type_);
   }
 
   virtual void FinishCode(Code* code) {
-    code->set_type_recording_binary_op_type(operands_type_);
-    code->set_type_recording_binary_op_result_type(result_type_);
+    code->set_binary_op_type(operands_type_);
+    code->set_binary_op_result_type(result_type_);
   }
 
   friend class CodeGenerator;
@@ -430,14 +382,6 @@ class NumberToStringStub: public CodeStub {
   int MinorKey() { return 0; }
 
   void Generate(MacroAssembler* masm);
-
-  const char* GetName() { return "NumberToStringStub"; }
-
-#ifdef DEBUG
-  void Print() {
-    PrintF("NumberToStringStub\n");
-  }
-#endif
 };
 
 
@@ -480,13 +424,6 @@ class StringDictionaryLookupStub: public CodeStub {
   static const int kElementsStartOffset =
       StringDictionary::kHeaderSize +
       StringDictionary::kElementsStartIndex * kPointerSize;
-
-
-#ifdef DEBUG
-  void Print() {
-    PrintF("StringDictionaryLookupStub\n");
-  }
-#endif
 
   Major MajorKey() { return StringDictionaryNegativeLookup; }
 

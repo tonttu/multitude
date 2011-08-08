@@ -74,6 +74,8 @@ class Zone {
 
   inline void adjust_segment_bytes_allocated(int delta);
 
+  inline Isolate* isolate() { return isolate_; }
+
   static unsigned allocation_size_;
 
  private:
@@ -134,8 +136,8 @@ class Zone {
 class ZoneObject {
  public:
   // Allocate a new ZoneObject of 'size' bytes in the Zone.
-  inline void* operator new(size_t size);
-  inline void* operator new(size_t size, Zone* zone);
+  INLINE(void* operator new(size_t size));
+  INLINE(void* operator new(size_t size, Zone* zone));
 
   // Ideally, the delete operator should be private instead of
   // public, but unfortunately the compiler sometimes synthesizes
@@ -164,7 +166,7 @@ class AssertNoZoneAllocation {
 class ZoneListAllocationPolicy {
  public:
   // Allocate 'size' bytes of memory in the zone.
-  static inline void* New(int size);
+  static void* New(int size);
 
   // De-allocation attempts are silently ignored.
   static void Delete(void* p) { }
@@ -178,6 +180,9 @@ class ZoneListAllocationPolicy {
 template<typename T>
 class ZoneList: public List<T, ZoneListAllocationPolicy> {
  public:
+  INLINE(void* operator new(size_t size));
+  INLINE(void* operator new(size_t size, Zone* zone));
+
   // Construct a new ZoneList with the given capacity; the length is
   // always zero. The capacity must be non-negative.
   explicit ZoneList(int capacity)
@@ -200,8 +205,7 @@ typedef ZoneList<Handle<Map> > ZoneMapList;
 // outer-most scope.
 class ZoneScope BASE_EMBEDDED {
  public:
-  // TODO(isolates): pass isolate pointer here.
-  inline explicit ZoneScope(ZoneScopeMode mode);
+  INLINE(ZoneScope(Isolate* isolate, ZoneScopeMode mode));
 
   virtual ~ZoneScope();
 

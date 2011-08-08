@@ -1,4 +1,4 @@
-// Copyright 2006-2008 the V8 project authors. All rights reserved.
+// Copyright 2011 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -123,15 +123,16 @@ void PrettyPrinter::VisitReturnStatement(ReturnStatement* node) {
 }
 
 
-void PrettyPrinter::VisitWithEnterStatement(WithEnterStatement* node) {
-  Print("<enter with> (");
+void PrettyPrinter::VisitEnterWithContextStatement(
+    EnterWithContextStatement* node) {
+  Print("<enter with context> (");
   Visit(node->expression());
   Print(") ");
 }
 
 
-void PrettyPrinter::VisitWithExitStatement(WithExitStatement* node) {
-  Print("<exit with>");
+void PrettyPrinter::VisitExitContextStatement(ExitContextStatement* node) {
+  Print("<exit context>");
 }
 
 
@@ -201,7 +202,8 @@ void PrettyPrinter::VisitTryCatchStatement(TryCatchStatement* node) {
   Print("try ");
   Visit(node->try_block());
   Print(" catch (");
-  Visit(node->catch_var());
+  const bool quote = false;
+  PrintLiteral(node->variable()->name(), quote);
   Print(") ");
   Visit(node->catch_block());
 }
@@ -279,15 +281,6 @@ void PrettyPrinter::VisitArrayLiteral(ArrayLiteral* node) {
     Visit(node->values()->at(i));
   }
   Print(" ]");
-}
-
-
-void PrettyPrinter::VisitCatchExtensionObject(CatchExtensionObject* node) {
-  Print("{ ");
-  Visit(node->key());
-  Print(": ");
-  Visit(node->value());
-  Print(" }");
 }
 
 
@@ -370,7 +363,10 @@ void PrettyPrinter::VisitCallRuntime(CallRuntime* node) {
 
 
 void PrettyPrinter::VisitUnaryOperation(UnaryOperation* node) {
-  Print("(%s", Token::String(node->op()));
+  Token::Value op = node->op();
+  bool needsSpace =
+      op == Token::DELETE || op == Token::TYPEOF || op == Token::VOID;
+  Print("(%s%s", Token::String(op), needsSpace ? " " : "");
   Visit(node->expression());
   Print(")");
 }
@@ -388,7 +384,7 @@ void PrettyPrinter::VisitCountOperation(CountOperation* node) {
 void PrettyPrinter::VisitBinaryOperation(BinaryOperation* node) {
   Print("(");
   Visit(node->left());
-  Print("%s", Token::String(node->op()));
+  Print(" %s ", Token::String(node->op()));
   Visit(node->right());
   Print(")");
 }
@@ -397,7 +393,7 @@ void PrettyPrinter::VisitBinaryOperation(BinaryOperation* node) {
 void PrettyPrinter::VisitCompareOperation(CompareOperation* node) {
   Print("(");
   Visit(node->left());
-  Print("%s", Token::String(node->op()));
+  Print(" %s ", Token::String(node->op()));
   Visit(node->right());
   Print(")");
 }
@@ -802,13 +798,14 @@ void AstPrinter::VisitReturnStatement(ReturnStatement* node) {
 }
 
 
-void AstPrinter::VisitWithEnterStatement(WithEnterStatement* node) {
-  PrintIndentedVisit("WITH ENTER", node->expression());
+void AstPrinter::VisitEnterWithContextStatement(
+    EnterWithContextStatement* node) {
+  PrintIndentedVisit("ENTER WITH CONTEXT", node->expression());
 }
 
 
-void AstPrinter::VisitWithExitStatement(WithExitStatement* node) {
-  PrintIndented("WITH EXIT\n");
+void AstPrinter::VisitExitContextStatement(ExitContextStatement* node) {
+  PrintIndented("EXIT CONTEXT\n");
 }
 
 
@@ -859,7 +856,9 @@ void AstPrinter::VisitForInStatement(ForInStatement* node) {
 void AstPrinter::VisitTryCatchStatement(TryCatchStatement* node) {
   IndentedScope indent(this, "TRY CATCH");
   PrintIndentedVisit("TRY", node->try_block());
-  PrintIndentedVisit("CATCHVAR", node->catch_var());
+  PrintLiteralWithModeIndented("CATCHVAR",
+                               node->variable(),
+                               node->variable()->name());
   PrintIndentedVisit("CATCH", node->catch_block());
 }
 
@@ -956,13 +955,6 @@ void AstPrinter::VisitArrayLiteral(ArrayLiteral* node) {
       Visit(node->values()->at(i));
     }
   }
-}
-
-
-void AstPrinter::VisitCatchExtensionObject(CatchExtensionObject* node) {
-  IndentedScope indent(this, "CatchExtensionObject");
-  PrintIndentedVisit("KEY", node->key());
-  PrintIndentedVisit("VALUE", node->value());
 }
 
 
@@ -1202,14 +1194,15 @@ void JsonAstBuilder::VisitReturnStatement(ReturnStatement* stmt) {
 }
 
 
-void JsonAstBuilder::VisitWithEnterStatement(WithEnterStatement* stmt) {
-  TagScope tag(this, "WithEnterStatement");
+void JsonAstBuilder::VisitEnterWithContextStatement(
+    EnterWithContextStatement* stmt) {
+  TagScope tag(this, "EnterWithContextStatement");
   Visit(stmt->expression());
 }
 
 
-void JsonAstBuilder::VisitWithExitStatement(WithExitStatement* stmt) {
-  TagScope tag(this, "WithExitStatement");
+void JsonAstBuilder::VisitExitContextStatement(ExitContextStatement* stmt) {
+  TagScope tag(this, "ExitContextStatement");
 }
 
 
@@ -1251,8 +1244,10 @@ void JsonAstBuilder::VisitForInStatement(ForInStatement* stmt) {
 
 void JsonAstBuilder::VisitTryCatchStatement(TryCatchStatement* stmt) {
   TagScope tag(this, "TryCatchStatement");
+  { AttributesScope attributes(this);
+    AddAttribute("variable", stmt->variable()->name());
+  }
   Visit(stmt->try_block());
-  Visit(stmt->catch_var());
   Visit(stmt->catch_block());
 }
 
@@ -1357,13 +1352,6 @@ void JsonAstBuilder::VisitArrayLiteral(ArrayLiteral* expr) {
 }
 
 
-void JsonAstBuilder::VisitCatchExtensionObject(CatchExtensionObject* expr) {
-  TagScope tag(this, "CatchExtensionObject");
-  Visit(expr->key());
-  Visit(expr->value());
-}
-
-
 void JsonAstBuilder::VisitAssignment(Assignment* expr) {
   TagScope tag(this, "Assignment");
   {
@@ -1383,10 +1371,6 @@ void JsonAstBuilder::VisitThrow(Throw* expr) {
 
 void JsonAstBuilder::VisitProperty(Property* expr) {
   TagScope tag(this, "Property");
-  {
-    AttributesScope attributes(this);
-    AddAttribute("type", expr->is_synthetic() ? "SYNTHETIC" : "NORMAL");
-  }
   Visit(expr->obj());
   Visit(expr->key());
 }

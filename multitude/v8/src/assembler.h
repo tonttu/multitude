@@ -70,7 +70,8 @@ class DoubleConstant: public AllStatic {
   static const double zero;
   static const double uint8_max_value;
   static const double negative_infinity;
-  static const double nan;
+  static const double canonical_non_hole_nan;
+  static const double the_hole_nan;
 };
 
 
@@ -90,14 +91,18 @@ class Label BASE_EMBEDDED {
     Unuse();
     UnuseNear();
   }
-  INLINE(~Label())                { ASSERT(!is_linked()); }
 
-  INLINE(void Unuse())            { pos_ = 0; }
-  INLINE(void UnuseNear())        { near_link_pos_ = 0; }
+  INLINE(~Label()) {
+    ASSERT(!is_linked());
+    ASSERT(!is_near_linked());
+  }
 
-  INLINE(bool is_bound() const)  { return pos_ <  0; }
-  INLINE(bool is_unused() const)  { return pos_ == 0 && near_link_pos_ == 0; }
-  INLINE(bool is_linked() const)  { return pos_ >  0; }
+  INLINE(void Unuse()) { pos_ = 0; }
+  INLINE(void UnuseNear()) { near_link_pos_ = 0; }
+
+  INLINE(bool is_bound() const) { return pos_ <  0; }
+  INLINE(bool is_unused() const) { return pos_ == 0 && near_link_pos_ == 0; }
+  INLINE(bool is_linked() const) { return pos_ >  0; }
   INLINE(bool is_near_linked() const) { return near_link_pos_ > 0; }
 
   // Returns the position of bound or linked labels. Cannot be used
@@ -348,6 +353,19 @@ class RelocInfo BASE_EMBEDDED {
   byte* pc_;
   Mode rmode_;
   intptr_t data_;
+#ifdef V8_TARGET_ARCH_MIPS
+  // Code and Embedded Object pointers in mips are stored split
+  // across two consecutive 32-bit instructions. Heap management
+  // routines expect to access these pointers indirectly. The following
+  // location provides a place for these pointers to exist natually
+  // when accessed via the Iterator.
+  Object *reconstructed_obj_ptr_;
+  // External-reference pointers are also split across instruction-pairs
+  // in mips, but are accessed via indirect pointers. This location
+  // provides a place for that pointer to exist naturally. Its address
+  // is returned by RelocInfo::target_reference_address().
+  Address reconstructed_adr_ptr_;
+#endif  // V8_TARGET_ARCH_MIPS
   friend class RelocIterator;
 };
 
@@ -612,7 +630,8 @@ class ExternalReference BASE_EMBEDDED {
   static ExternalReference address_of_zero();
   static ExternalReference address_of_uint8_max_value();
   static ExternalReference address_of_negative_infinity();
-  static ExternalReference address_of_nan();
+  static ExternalReference address_of_canonical_non_hole_nan();
+  static ExternalReference address_of_the_hole_nan();
 
   static ExternalReference math_sin_double_function(Isolate* isolate);
   static ExternalReference math_cos_double_function(Isolate* isolate);

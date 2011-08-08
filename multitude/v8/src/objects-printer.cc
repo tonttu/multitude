@@ -1,4 +1,4 @@
-// Copyright 2010 the V8 project authors. All rights reserved.
+// Copyright 2011 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -151,8 +151,8 @@ void HeapObject::HeapObjectPrint(FILE* out) {
     case JS_PROXY_TYPE:
       JSProxy::cast(this)->JSProxyPrint(out);
       break;
-    case PROXY_TYPE:
-      Proxy::cast(this)->ProxyPrint(out);
+    case FOREIGN_TYPE:
+      Foreign::cast(this)->ForeignPrint(out);
       break;
     case SHARED_FUNCTION_INFO_TYPE:
       SharedFunctionInfo::cast(this)->SharedFunctionInfoPrint(out);
@@ -282,6 +282,19 @@ void JSObject::PrintElements(FILE* out) {
       }
       break;
     }
+    case FAST_DOUBLE_ELEMENTS: {
+      // Print in array notation for non-sparse arrays.
+      FixedDoubleArray* p = FixedDoubleArray::cast(elements());
+      for (int i = 0; i < p->length(); i++) {
+        if (p->is_the_hole(i)) {
+          PrintF(out, "   %d: <the hole>", i);
+        } else {
+          PrintF(out, "   %d: %g", i, p->get(i));
+        }
+        PrintF(out, "\n");
+      }
+      break;
+    }
     case EXTERNAL_PIXEL_ELEMENTS: {
       ExternalPixelArray* p = ExternalPixelArray::cast(elements());
       for (int i = 0; i < p->length(); i++) {
@@ -351,9 +364,15 @@ void JSObject::PrintElements(FILE* out) {
     case DICTIONARY_ELEMENTS:
       elements()->Print(out);
       break;
-    default:
-      UNREACHABLE();
+    case NON_STRICT_ARGUMENTS_ELEMENTS: {
+      FixedArray* p = FixedArray::cast(elements());
+      for (int i = 2; i < p->length(); i++) {
+        PrintF(out, "   %d: ", i);
+        p->get(i)->ShortPrint(out);
+        PrintF(out, "\n");
+      }
       break;
+    }
   }
 }
 
@@ -417,7 +436,7 @@ static const char* TypeToString(InstanceType type) {
     case JS_GLOBAL_OBJECT_TYPE: return "JS_GLOBAL_OBJECT";
     case JS_BUILTINS_OBJECT_TYPE: return "JS_BUILTINS_OBJECT";
     case JS_GLOBAL_PROXY_TYPE: return "JS_GLOBAL_PROXY";
-    case PROXY_TYPE: return "PROXY";
+    case FOREIGN_TYPE: return "FOREIGN";
     case JS_MESSAGE_OBJECT_TYPE: return "JS_MESSAGE_OBJECT_TYPE";
 #define MAKE_STRUCT_CASE(NAME, Name, name) case NAME##_TYPE: return #NAME;
   STRUCT_LIST(MAKE_STRUCT_CASE)
@@ -469,6 +488,13 @@ void CodeCache::CodeCachePrint(FILE* out) {
   default_cache()->ShortPrint(out);
   PrintF(out, "\n - normal_type_cache: ");
   normal_type_cache()->ShortPrint(out);
+}
+
+
+void PolymorphicCodeCache::PolymorphicCodeCachePrint(FILE* out) {
+  HeapObject::PrintHeader(out, "PolymorphicCodeCache");
+  PrintF(out, "\n - cache: ");
+  cache()->ShortPrint(out);
 }
 
 
@@ -531,6 +557,21 @@ void String::StringPrint(FILE* out) {
   }
 
   if (!StringShape(this).IsSymbol()) PrintF(out, "\"");
+}
+
+
+// This method is only meant to be called from gdb for debugging purposes.
+// Since the string can also be in two-byte encoding, non-ascii characters
+// will be ignored in the output.
+char* String::ToAsciiArray() {
+  // Static so that subsequent calls frees previously allocated space.
+  // This also means that previous results will be overwritten.
+  static char* buffer = NULL;
+  if (buffer != NULL) free(buffer);
+  buffer = new char[length()+1];
+  WriteToFlat(this, buffer, 0, length());
+  buffer[length()] = 0;
+  return buffer;
 }
 
 
@@ -635,8 +676,8 @@ void Code::CodePrint(FILE* out) {
 }
 
 
-void Proxy::ProxyPrint(FILE* out) {
-  PrintF(out, "proxy to %p", proxy());
+void Foreign::ForeignPrint(FILE* out) {
+  PrintF(out, "foreign address : %p", address());
 }
 
 

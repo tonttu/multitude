@@ -1,4 +1,4 @@
-// Copyright 2006-2008 the V8 project authors. All rights reserved.
+// Copyright 2011 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -35,6 +35,8 @@
 #include "safepoint-table.h"
 #include "scopeinfo.h"
 #include "string-stream.h"
+
+#include "allocation-inl.h"
 
 namespace v8 {
 namespace internal {
@@ -346,7 +348,6 @@ void SafeStackFrameIterator::Reset() {
 // -------------------------------------------------------------------------
 
 
-#ifdef ENABLE_LOGGING_AND_PROFILING
 SafeStackTraceFrameIterator::SafeStackTraceFrameIterator(
     Isolate* isolate,
     Address fp, Address sp, Address low_bound, Address high_bound) :
@@ -362,7 +363,6 @@ void SafeStackTraceFrameIterator::Advance() {
     if (frame()->is_java_script()) return;
   }
 }
-#endif
 
 
 Code* StackFrame::GetSafepointData(Isolate* isolate,
@@ -371,7 +371,6 @@ Code* StackFrame::GetSafepointData(Isolate* isolate,
                                    unsigned* stack_slots) {
   PcToCodeCache::PcToCodeCacheEntry* entry =
       isolate->pc_to_code_cache()->GetCacheEntry(pc);
-  SafepointEntry cached_safepoint_entry = entry->safepoint_entry;
   if (!entry->safepoint_entry.is_valid()) {
     entry->safepoint_entry = entry->code->GetSafepointEntry(pc);
     ASSERT(entry->safepoint_entry.is_valid());
@@ -528,6 +527,17 @@ Address StandardFrame::GetExpressionAddress(int n) const {
 }
 
 
+Object* StandardFrame::GetExpression(Address fp, int index) {
+  return Memory::Object_at(GetExpressionAddress(fp, index));
+}
+
+
+Address StandardFrame::GetExpressionAddress(Address fp, int n) {
+  const int offset = StandardFrameConstants::kExpressionsOffset;
+  return fp + offset - n * kPointerSize;
+}
+
+
 int StandardFrame::ComputeExpressionsCount() const {
   const int offset =
       StandardFrameConstants::kExpressionsOffset + kPointerSize;
@@ -646,6 +656,16 @@ bool JavaScriptFrame::IsConstructor() const {
 }
 
 
+int JavaScriptFrame::GetArgumentsLength() const {
+  // If there is an arguments adaptor frame get the arguments length from it.
+  if (has_adapted_arguments()) {
+    return Smi::cast(GetExpression(caller_fp(), 0))->value();
+  } else {
+    return GetNumberOfIncomingArguments();
+  }
+}
+
+
 Code* JavaScriptFrame::unchecked_code() const {
   JSFunction* function = JSFunction::cast(this->function());
   return function->unchecked_code();
@@ -742,24 +762,30 @@ void OptimizedFrame::Summarize(List<FrameSummary>* frames) {
       // at the first position. Since we are always at a call when we need
       // to construct a stack trace, the receiver is always in a stack slot.
       opcode = static_cast<Translation::Opcode>(it.Next());
-      ASSERT(opcode == Translation::STACK_SLOT);
-      int input_slot_index = it.Next();
+      ASSERT(opcode == Translation::STACK_SLOT ||
+             opcode == Translation::LITERAL);
+      int index = it.Next();
 
       // Get the correct receiver in the optimized frame.
       Object* receiver = NULL;
-      // Positive index means the value is spilled to the locals area. Negative
-      // means it is stored in the incoming parameter area.
-      if (input_slot_index >= 0) {
-        receiver = GetExpression(input_slot_index);
+      if (opcode == Translation::LITERAL) {
+        receiver = data->LiteralArray()->get(index);
       } else {
-        // Index -1 overlaps with last parameter, -n with the first parameter,
-        // (-n - 1) with the receiver with n being the number of parameters
-        // of the outermost, optimized frame.
-        int parameter_count = ComputeParametersCount();
-        int parameter_index = input_slot_index + parameter_count;
-        receiver = (parameter_index == -1)
-            ? this->receiver()
-            : this->GetParameter(parameter_index);
+        // Positive index means the value is spilled to the locals
+        // area. Negative means it is stored in the incoming parameter
+        // area.
+        if (index >= 0) {
+          receiver = GetExpression(index);
+        } else {
+          // Index -1 overlaps with last parameter, -n with the first parameter,
+          // (-n - 1) with the receiver with n being the number of parameters
+          // of the outermost, optimized frame.
+          int parameter_count = ComputeParametersCount();
+          int parameter_index = index + parameter_count;
+          receiver = (parameter_index == -1)
+              ? this->receiver()
+              : this->GetParameter(parameter_index);
+        }
       }
 
       Code* code = function->shared()->code();
@@ -803,6 +829,22 @@ DeoptimizationInputData* OptimizedFrame::GetDeoptimizationData(
   ASSERT(*deopt_index != Safepoint::kNoDeoptimizationIndex);
 
   return DeoptimizationInputData::cast(code->deoptimization_data());
+}
+
+
+int OptimizedFrame::GetInlineCount() {
+  ASSERT(is_optimized());
+
+  int deopt_index = Safepoint::kNoDeoptimizationIndex;
+  DeoptimizationInputData* data = GetDeoptimizationData(&deopt_index);
+
+  TranslationIterator it(data->TranslationByteArray(),
+                         data->TranslationIndex(deopt_index)->value());
+  Translation::Opcode opcode = static_cast<Translation::Opcode>(it.Next());
+  ASSERT(opcode == Translation::BEGIN);
+  USE(opcode);
+  int frame_count = it.Next();
+  return frame_count;
 }
 
 

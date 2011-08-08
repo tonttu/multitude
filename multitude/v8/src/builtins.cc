@@ -1,4 +1,4 @@
-// Copyright 2006-2008 the V8 project authors. All rights reserved.
+// Copyright 2011 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -378,8 +378,7 @@ static bool ArrayPrototypeHasNoElements(Heap* heap,
   array_proto = JSObject::cast(proto);
   if (array_proto != global_context->initial_object_prototype()) return false;
   if (array_proto->elements() != heap->empty_fixed_array()) return false;
-  ASSERT(array_proto->GetPrototype()->IsNull());
-  return true;
+  return array_proto->GetPrototype()->IsNull();
 }
 
 
@@ -983,33 +982,11 @@ BUILTIN(ArrayConcat) {
 // Strict mode poison pills
 
 
-BUILTIN(StrictArgumentsCallee) {
+BUILTIN(StrictModePoisonPill) {
   HandleScope scope;
   return isolate->Throw(*isolate->factory()->NewTypeError(
-      "strict_arguments_callee", HandleVector<Object>(NULL, 0)));
+      "strict_poison_pill", HandleVector<Object>(NULL, 0)));
 }
-
-
-BUILTIN(StrictArgumentsCaller) {
-  HandleScope scope;
-  return isolate->Throw(*isolate->factory()->NewTypeError(
-      "strict_arguments_caller", HandleVector<Object>(NULL, 0)));
-}
-
-
-BUILTIN(StrictFunctionCaller) {
-  HandleScope scope;
-  return isolate->Throw(*isolate->factory()->NewTypeError(
-      "strict_function_caller", HandleVector<Object>(NULL, 0)));
-}
-
-
-BUILTIN(StrictFunctionArguments) {
-  HandleScope scope;
-  return isolate->Throw(*isolate->factory()->NewTypeError(
-      "strict_function_arguments", HandleVector<Object>(NULL, 0)));
-}
-
 
 // -----------------------------------------------------------------------------
 //
@@ -1225,10 +1202,10 @@ MUST_USE_RESULT static MaybeObject* HandleApiCallAsFunctionOrConstructor(
   ASSERT(!CalledAsConstructor(isolate));
   Heap* heap = isolate->heap();
 
-  Handle<Object> receiver = args.at<Object>(0);
+  Handle<Object> receiver = args.receiver();
 
   // Get the object called.
-  JSObject* obj = JSObject::cast(*args.receiver());
+  JSObject* obj = JSObject::cast(*receiver);
 
   // Get the invocation callback from the function descriptor that was
   // used to create the called object.
@@ -1341,8 +1318,18 @@ static void Generate_KeyedLoadIC_Initialize(MacroAssembler* masm) {
 }
 
 
+static void Generate_KeyedLoadIC_Slow(MacroAssembler* masm) {
+  KeyedLoadIC::GenerateRuntimeGetProperty(masm);
+}
+
+
 static void Generate_KeyedLoadIC_Miss(MacroAssembler* masm) {
-  KeyedLoadIC::GenerateMiss(masm);
+  KeyedLoadIC::GenerateMiss(masm, false);
+}
+
+
+static void Generate_KeyedLoadIC_MissForceGeneric(MacroAssembler* masm) {
+  KeyedLoadIC::GenerateMiss(masm, true);
 }
 
 
@@ -1364,6 +1351,9 @@ static void Generate_KeyedLoadIC_IndexedInterceptor(MacroAssembler* masm) {
   KeyedLoadIC::GenerateIndexedInterceptor(masm);
 }
 
+static void Generate_KeyedLoadIC_NonStrictArguments(MacroAssembler* masm) {
+  KeyedLoadIC::GenerateNonStrictArguments(masm);
+}
 
 static void Generate_StoreIC_Initialize(MacroAssembler* masm) {
   StoreIC::GenerateInitialize(masm);
@@ -1431,7 +1421,17 @@ static void Generate_KeyedStoreIC_Generic_Strict(MacroAssembler* masm) {
 
 
 static void Generate_KeyedStoreIC_Miss(MacroAssembler* masm) {
-  KeyedStoreIC::GenerateMiss(masm);
+  KeyedStoreIC::GenerateMiss(masm, false);
+}
+
+
+static void Generate_KeyedStoreIC_MissForceGeneric(MacroAssembler* masm) {
+  KeyedStoreIC::GenerateMiss(masm, true);
+}
+
+
+static void Generate_KeyedStoreIC_Slow(MacroAssembler* masm) {
+  KeyedStoreIC::GenerateSlow(masm);
 }
 
 
@@ -1444,6 +1444,9 @@ static void Generate_KeyedStoreIC_Initialize_Strict(MacroAssembler* masm) {
   KeyedStoreIC::GenerateInitialize(masm);
 }
 
+static void Generate_KeyedStoreIC_NonStrictArguments(MacroAssembler* masm) {
+  KeyedStoreIC::GenerateNonStrictArguments(masm);
+}
 
 #ifdef ENABLE_DEBUGGER_SUPPORT
 static void Generate_LoadIC_DebugBreak(MacroAssembler* masm) {
