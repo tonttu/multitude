@@ -66,7 +66,10 @@ namespace Radiant
 
     gettimeofday(&endTime, 0);
 
-    return float((endTime.tv_sec + endTime.tv_usec * 1e-6f) - (m_d->m_startTime.tv_sec + m_d->m_startTime.tv_usec * 1e-6f));
+    float ds  = endTime.tv_sec - m_d->m_startTime.tv_sec;
+    float dus = endTime.tv_usec - m_d->m_startTime.tv_usec;
+
+    return ds + 1e-6f * dus;
 #endif
   }
 
