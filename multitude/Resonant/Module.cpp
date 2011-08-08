@@ -26,7 +26,6 @@ namespace Resonant {
   Module::Module(Application * app)
     : m_application(app)
   {
-    m_id[0] = 0;
   }
 
   Module::~Module()
