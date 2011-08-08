@@ -646,9 +646,11 @@ namespace Screenplay {
            }
            }*/
 
-        if(!m_vcodec || avcodec_open(enc, m_vcodec) < 0)
-          ; // THROW1(Exception, "Could not get video codec")
-        else if(flags & WITH_VIDEO)
+        if(!m_vcodec || avcodec_open(enc, m_vcodec) < 0) {
+          // Unsupported video codec
+          Radiant::warning("VideoInputFFMPEG::open # unsupported video codec.");
+          return false;
+        } else if(flags & WITH_VIDEO)
           m_flags = m_flags | WITH_VIDEO;
       }
       else if(enc->codec_type == AVMEDIA_TYPE_AUDIO) {
@@ -657,10 +659,11 @@ namespace Screenplay {
         m_acodec = avcodec_find_decoder(enc->codec_id);
         m_acontext = enc;
 
-        if((!m_acodec || avcodec_open(enc, m_acodec) < 0) &&
-           (flags & Radiant::WITH_AUDIO))
-          ; // THROW1(Exception, "Could not get audio codec")
-        else if(flags & WITH_AUDIO)
+        if((!m_acodec || avcodec_open(enc, m_acodec) < 0) && (flags & Radiant::WITH_AUDIO)) {
+          // Unsupported audio codec
+          Radiant::warning("VideoInputFFMPEG::open # unsupported audio codec. Trying to decode without audio stream...");
+          m_flags &= ~WITH_AUDIO;
+        } else if(flags & WITH_AUDIO)
           m_flags = m_flags | WITH_AUDIO;
       }
     }
