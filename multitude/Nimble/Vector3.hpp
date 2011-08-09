@@ -274,4 +274,11 @@ inline std::istream &operator>>(std::istream &is, Nimble::Vector3T<T> &t)
 #   endif
 #endif
 
+#ifdef __GCCXML__
+/// These are exported to JS
+template class Nimble::Vector3T<float>;
+template class Nimble::Vector3T<int>;
+template class Nimble::Vector3T<unsigned char>;
+#endif
+
 #endif
