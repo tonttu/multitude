@@ -542,8 +542,9 @@ namespace Valuable
           vp.m_listener->processMessage(vp.m_to.toUtf8().data(), bdsend);
           vp.m_listener->m_sender = 0;
         } else {
-          /// @todo what is the correct receiver?
+          /// @todo what is the correct receiver ("this" in the callback)?
           /// @todo should we set m_sender or something similar?
+          v8::HandleScope handle_scope;
           v8::Local<v8::Value> argv[10];
           argv[0] = v8::String::New(vp.m_to.utf16());
           int argc = 9;

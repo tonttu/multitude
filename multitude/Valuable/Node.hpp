@@ -185,6 +185,13 @@ namespace Valuable
                           const char * to,
                           v8::Persistent<v8::Function> func,
                           const Radiant::BinaryData * defaultData = 0);
+    void eventAddListener(const char * from,
+                          v8::Persistent<v8::Function> func,
+                          const Radiant::BinaryData * defaultData = 0)
+    {
+      eventAddListener(from, from, func, defaultData);
+    }
+
     /** Removes event listeners from this object.
 
       @code
