@@ -25,10 +25,10 @@
 #include <strings.h>
 #include <cassert>
 
-
 extern "C" {
 
   typedef uint64_t UINT64_C;
+  typedef int64_t INT64_C;
 
 # include <libavformat/avformat.h>
 # include <libavcodec/avcodec.h>
@@ -155,8 +155,8 @@ namespace Screenplay {
           got = true;
 
           int64_t pts = m_pkt->dts;
-          if(pts <= 0)
-            pts = m_frame->pts;
+          /*if(pts <= 0)
+            pts = m_frame->pts;*/
           if(pts <= 0)
             pts = m_pkt->pts;
           if(pts <= 0)
@@ -363,6 +363,7 @@ namespace Screenplay {
         }
         // printf("_"); fflush(0);
       }
+
     }
 
     if(!m_acodec && (m_flags & Radiant::WITH_AUDIO)) {
@@ -372,6 +373,8 @@ namespace Screenplay {
       double frames = secs * 44100;
 
       int perFrame = (int) (frames - m_capturedAudio);
+      if (perFrame < 0)
+        perFrame = 0;
 
       if(perFrame > 20000) {
         debugScreenplay("VideoInputFFMPEG::captureImage # Large audio generated");
@@ -618,6 +621,12 @@ namespace Screenplay {
       return false;
     }
 
+    /// @todo workaround for libav matroska seek bug (2256)
+    err = av_find_stream_info(m_ic);
+    if(err < 0) {
+      error("%s # Could not find stream info for %s", fname, filename);
+    }
+
     /* trace2("%s # Opened %s with %d Hx, %d channels, %dx%d",
        fname, filename, ap->sample_rate, ap->channels,
        ap->width, ap->height); */
@@ -834,8 +843,19 @@ namespace Screenplay {
 
     if(m_ic && m_vindex >= 0) {
       AVStream * s = m_ic->streams[m_vindex];
-      return s->duration * av_q2d(s->time_base);
+
+      if (s->duration != AV_NOPTS_VALUE) {
+        return s->duration * av_q2d(s->time_base);
+      }
+      else if (m_ic->duration != AV_NOPTS_VALUE) {
+        // If video stream doesn't have duration, check the container for valid duration info.
+        // Could also iterate over all other streams as well.
+        debugScreenplay("VideoInputFFMPEG::durationSeconds # Could not get video stream duration. Using container duration.");
+        AVRational av_time_base = {1, AV_TIME_BASE};
+        return m_ic->duration * av_q2d(av_time_base);
+      }
     }
+
     return 0.0;
   }
 
