@@ -133,6 +133,27 @@ namespace Luminous
     return (unsigned) m_taskQueue.size();
   }
 
+  unsigned int BGThread::runningTasks() const
+  {
+    return m_runningTasks;
+  }
+
+  unsigned int BGThread::overdueTasks() const
+  {
+    Radiant::Guard guard(m_mutexWait);
+
+    const Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
+    unsigned int counter = 0;
+
+    for(container::const_iterator it = m_taskQueue.begin(), end = m_taskQueue.end();
+        it != end; ++it) {
+      Radiant::TimeStamp tmp = it->second->scheduled() - now;
+      if(tmp <= 0) ++counter;
+    }
+
+    return counter;
+  }
+
   void BGThread::dumpInfo(FILE * f, int indent)
   {
     Radiant::Guard guard(m_mutexWait);
@@ -168,8 +189,11 @@ namespace Luminous
         task->m_state = Task::RUNNING;
       }
 
-      if(task->state() != Task::DONE)
+      if(task->state() != Task::DONE) {
+        m_runningTasks.ref();
         task->doTask();
+        m_runningTasks.deref();
+      }
 
       // Did the task complete?
       if(task->state() == Task::DONE) {

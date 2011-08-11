@@ -83,6 +83,16 @@ namespace Luminous
 
     /// Returns the number of tasks in the BGThread.
     unsigned taskCount();
+
+    /// Get the number of tasks right now in doTask().
+    /// This function is lock-free and O(1).
+    unsigned int runningTasks() const;
+
+    /// Get the number of tasks that should be running right now but are not
+    /// yet processed. This function is slow: O(N), needs a mutex lock and
+    /// calls TimeStamp::getTime().
+    unsigned int overdueTasks() const;
+
     /// Dump information about the tasks at hand
     void dumpInfo(FILE * f = 0, int indent = 0);
   private:
@@ -104,6 +114,8 @@ namespace Luminous
     // number of idle threads, excluding ones that are reserving a task
     int m_idle;
     Radiant::Condition m_idleWait;
+
+    QAtomicInt m_runningTasks;
 
     static std::weak_ptr<BGThread> m_instance;
   };
