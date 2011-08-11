@@ -77,6 +77,40 @@ namespace Luminous {
 
   using namespace Radiant;
 
+  static Radiant::Mutex s_storeMutex;
+
+  static std::map<QString, std::weak_ptr<CPUMipmaps> > s_mipmaps;
+
+  std::shared_ptr<CPUMipmaps> CPUMipmaps::acquire(const QString & filename,
+                                                  bool compressed_mipmaps)
+  {
+    Radiant::Guard g(s_storeMutex);
+
+    std::weak_ptr<CPUMipmaps> & mipmap_weak = s_mipmaps[filename];
+
+    // Check if ptr still points to something valid
+    std::shared_ptr<CPUMipmaps> mipmap_shared = mipmap_weak.lock();
+    if (mipmap_shared)
+      return mipmap_shared;
+
+    mipmap_shared.reset(new CPUMipmaps);
+
+    if(!mipmap_shared->startLoading(filename.toUtf8().data(), compressed_mipmaps)) {
+      return std::shared_ptr<CPUMipmaps>();
+    }
+
+    if(!compressed_mipmaps)
+      Luminous::BGThread::instance()->addTask(mipmap_shared);
+
+    // store new weak pointer
+    mipmap_weak = mipmap_shared;
+
+    debugLuminous("CPUMipmaps::acquire # Created new for %s (%ld links)",
+                  filename.toUtf8().data(), s_mipmaps[filename].use_count());
+
+    return mipmap_shared;
+  }
+
   CPUMipmaps::CPUMipmaps()
     : Task(),
     m_fileModified(0),

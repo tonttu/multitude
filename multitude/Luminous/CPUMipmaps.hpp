@@ -72,8 +72,6 @@ namespace Luminous {
       int bound;
     };
 
-    friend class GPUMipmaps;
-
     CPUMipmaps();
     virtual ~CPUMipmaps();
 
@@ -224,6 +222,19 @@ namespace Luminous {
     /// @return cache filename
     static QString cacheFileName(const QString & src, int level = -1,
                                  const QString & suffix = "png");
+
+    /** Gets a shared pointer to an image file CPU-side mipmap.
+        @sa Luminous::CPUMipmaps::startLoading
+
+        @param filename The name of the image file
+
+        @param compressed_mipmaps control whether compressed mipmaps should be used
+
+        @return If the file is already open, then a shared pointer is
+        returned. Otherwise this will create a new
+        #Luminous::CPUMipmaps object, and return a shared pointer to that (if opened successfully).
+     */
+    static std::shared_ptr<CPUMipmaps> acquire(const QString & filename, bool compressed_mipmaps);
 
   protected:
     virtual void doTask();
