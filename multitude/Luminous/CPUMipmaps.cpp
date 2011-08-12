@@ -86,6 +86,8 @@ namespace Luminous {
   {
     Radiant::Guard g(s_storeMutex);
 
+    /// @todo filename should be resolved (with ResourceLocator) absolute path
+
     std::weak_ptr<CPUMipmaps> & mipmap_weak = s_mipmaps[filename];
 
     // Check if ptr still points to something valid

@@ -74,7 +74,7 @@ namespace Valuable {
 
     const char * type() const { return "FlagAlias"; }
     ArchiveElement serialize(Archive &) const { return ArchiveElement(); }
-    bool deserialize(const ArchiveElement & element) { return false; }
+    bool deserialize(const ArchiveElement &) { return false; }
 
   private:
     AttributeFlagsT<T> & m_master;
