@@ -60,7 +60,9 @@ namespace Valuable
      * @return List of arguments that didn't match any Attribute in opts.
      */
     static QStringList parse(int argc, char * argv[],
-                                                  Valuable::Node & opts);
+                             Valuable::Node & opts);
+
+    static QStringList parse(const QStringList & argv, Valuable::Node & opts);
 
     /// Parses command line arguments to given Node object.
     /**
@@ -76,6 +78,8 @@ namespace Valuable
       */
     QStringList parseAndStore(int argc, char * argv[],
                               Valuable::Node & opts);
+
+    QStringList parseAndStore(const QStringList & argv, Valuable::Node & opts);
 
     /**
       * Query the CmdParser if a certain command line parameter has been parsed.

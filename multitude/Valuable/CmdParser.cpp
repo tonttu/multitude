@@ -31,6 +31,13 @@ namespace Valuable
     return parser.parseAndStore(argc, argv, opts);
   }
 
+  QStringList CmdParser::parse(const QStringList & argv,
+                               Valuable::Node & opts)
+  {
+    CmdParser parser;
+    return parser.parseAndStore(argv, opts);
+  }
+
   bool CmdParser::isParsed(const QString & name)
   {
     return m_parsedArgs.contains(name);
@@ -39,12 +46,23 @@ namespace Valuable
   QStringList CmdParser::parseAndStore(int argc, char * argv[],
                                        Valuable::Node & opts)
   {
+    QStringList tmp;
+    tmp.reserve(argc-1);
+    for(int i = 1; i < argc; ++i)
+      tmp << argv[i];
+    return parseAndStore(tmp, opts);
+  }
+
+  QStringList CmdParser::parseAndStore(const QStringList & argv,
+                                       Valuable::Node & opts)
+  {
     QStringList list;
 
     std::shared_ptr<Valuable::DOMDocument> tmpDoc(Valuable::DOMDocument::createDocument());
 
-    for(int i = 1; i < argc; i++) {
-      QString arg = argv[i];
+    int argc = argv.size();
+    for(int i = 0; i < argc; i++) {
+      const QString & arg = argv[i];
       QString name;
 
       if(arg.length() == 2 && arg[0] == '-') {
