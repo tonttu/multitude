@@ -47,6 +47,7 @@ namespace Luminous
 
   BGThread::~BGThread()
   {
+    Radiant::info("Waiting for all background threads to finish...");
     stop();
   }
 
