@@ -1,0 +1,86 @@
+#include "Mime.hpp"
+
+#include "Thread.hpp"
+#include "ResourceLocator.hpp"
+#include "Trace.hpp"
+
+#include <fstream>
+#include <sstream>
+
+namespace Radiant
+{
+
+  MimeType::MimeType(const QString & mime)
+    : m_toplevel(mime.section("/", 0, 0)),
+      m_subtype(mime.section("/", 1))
+  {}
+
+  MimeType::MimeType(const QString & toplevel, const QString & subtype) :
+    m_toplevel(toplevel), m_subtype(subtype)
+  {}
+
+  void MimeManager::initialize()
+  {
+    MULTI_ONCE_BEGIN {
+      const QString filename = Radiant::ResourceLocator::instance().locate("Mime/mime.types");
+      if (filename.isEmpty()) {
+        Radiant::error("FileLoader : Could not find mime.types");
+        return;
+      }
+
+      std::ifstream fileStream(filename.toUtf8().data());
+      if (!fileStream) {
+        Radiant::info("FileLoader : Could not load mime.types");
+        return;
+      }
+
+      std::string row;
+
+      std::vector<QString> extensions;
+      std::string mime;
+
+      while (std::getline(fileStream, row)) {
+
+        // skip comments and empty rows
+        if (row.length() == 0 || row[0] == '#')
+          continue;
+
+        extensions.clear();
+        std::istringstream rowStream(row);
+        rowStream >> mime;
+
+        std::string extension;
+        while (rowStream >> extension)
+          extensions.push_back(extension.c_str());
+
+        Radiant::MimeType mimeType(mime.c_str());
+        for (unsigned int i=0; i < extensions.size(); ++i) {
+          s_sharedExtensions.insert(std::make_pair(extensions[i], mimeType));
+        }
+      }
+    } MULTI_ONCE_END
+  }
+
+  MimeManager::MimeManager() {
+    initialize();
+  }
+
+  void MimeManager::insertSharedExtension(const QString & extension, const Radiant::MimeType& type)
+  {
+    if (s_sharedExtensions.find(extension) != s_sharedExtensions.end()) {
+      Radiant::info("Overriding shared extension->mime mapping for: %s -> %s", extension.toUtf8().data(), type.typeString().toUtf8().data());
+    }
+    s_sharedExtensions.insert(std::make_pair(extension, type));
+  }
+
+  /// add or replace a shared mapping from file extension to mime type
+  void MimeManager::insertExtension(const QString & extension, const Radiant::MimeType& type)
+  {
+    if (m_extensions.find(extension) != m_extensions.end()) {
+      Radiant::info("Overriding extension->mime mapping for: %s -> %s", extension.toUtf8().data(), type.typeString().toUtf8().data());
+    }
+    m_extensions.insert(std::make_pair(extension, type));
+  }
+
+  MimeManager::ExtensionMap MimeManager::s_sharedExtensions;
+}

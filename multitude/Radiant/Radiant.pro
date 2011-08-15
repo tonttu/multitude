@@ -1,7 +1,8 @@
 include(../multitude.pri)
 
 HEADERS += SynchronizedQueue.hpp \
-    Flags.hpp
+    Flags.hpp \
+    Mime.hpp
 HEADERS += CameraDriver.hpp
 HEADERS += Defines.hpp
 HEADERS += ThreadPool.hpp
@@ -65,7 +66,8 @@ HEADERS += VideoCamera.hpp
 HEADERS += SocketWrapper.hpp
 HEADERS += Singleton.hpp
 
-SOURCES += CameraDriver.cpp
+SOURCES += CameraDriver.cpp \
+    Mime.cpp
 SOURCES += SocketUtilPosix.cpp
 SOURCES += ThreadPoolQt.cpp
 SOURCES += CSVDocument.cpp
