@@ -92,11 +92,8 @@ namespace VideoDisplay {
   {
     float fps = m_fps > 0.0f ? m_fps : m_video.fps();
 
-    if(fps <= 1.0f)
+    if(fps <= 1.0f || fps >= 100.0f)
       fps = 30.0f;
-
-    while(fps > 100)
-      fps = fps / 10.0f;
 
     return fps;
   }

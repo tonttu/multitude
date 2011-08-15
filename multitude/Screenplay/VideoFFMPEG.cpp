@@ -110,7 +110,7 @@ namespace Screenplay {
 
       av_free_packet(m_pkt);
 
-      int ret = av_read_packet(m_ic, m_pkt);
+      int ret = av_read_frame(m_ic, m_pkt);
 
       if(ret < 0) {
 
@@ -131,7 +131,7 @@ namespace Screenplay {
           av_seek_frame(m_ic, -1, (int64_t) 0, 0);
 
           // av_free_packet(m_pkt);
-          ret = av_read_packet(m_ic, m_pkt);
+          ret = av_read_frame(m_ic, m_pkt);
           if(ret < 0) {
             // av_free_packet(m_pkt);
             return 0;
@@ -146,6 +146,7 @@ namespace Screenplay {
       got_picture = 0;
 
       if (m_pkt->stream_index == m_vindex) {
+
         vlen = avcodec_decode_video2(m_vcontext,
                                      m_frame, & got_picture,
                                      m_pkt);
@@ -154,31 +155,22 @@ namespace Screenplay {
         if (got_picture) {
           got = true;
 
-          int64_t pts = m_pkt->dts;
-          /*if(pts <= 0)
-            pts = m_frame->pts;*/
-          if(pts <= 0)
+          int64_t pts = 0;
+
+          if(m_pkt->dts != AV_NOPTS_VALUE) {
+            pts = m_pkt->dts;
+          } else if(m_pkt->pts != AV_NOPTS_VALUE) {
             pts = m_pkt->pts;
-          if(pts <= 0)
+          } else {
             pts = 0;
+          }
 
-          AVRational time_base = m_vcontext->time_base;
+          m_lastPts = pts;
 
-          if(!time_base.num || !time_base.den)
-            time_base = m_ic->streams[m_vindex]->time_base;
-          if(pts != m_frame->pts && m_ic->streams[m_vindex]->time_base.num)
-            time_base = m_ic->streams[m_vindex]->time_base;
+          AVRational time_base = m_ic->streams[m_vindex]->time_base;
 
           double rate = av_q2d(time_base);
           double secs = pts * rate; // x av_q2d(time_base);
-          /*
-             printf("VideoInputFFMPEG::captureImage # ls = %d, "
-             "pts = %ld (%ld/%ld) secs %.2lf\n",
-             (int) m_frame->linesize[0], (long) pts,
-             (long) time_base.num, (long) time_base.den,
-             secs);
-             */
-          m_lastPts = pts;
 
           if((m_lastPts == 0 && m_capturedVideo > 2) || (secs == 0)) {
 
@@ -201,7 +193,7 @@ namespace Screenplay {
 
           m_lastTS += m_offsetTS;
 
-          if(m_capturedVideo == 0)
+          if(m_capturedVideo == 0 && m_firstTS == 0)
             m_firstTS = m_lastTS;
         }
 
@@ -302,8 +294,6 @@ namespace Screenplay {
           aframesOut = resampled;
         }
 
-        int64_t pts = m_pkt->pts;
-
         if(m_flags & Radiant::MONOPHONIZE_AUDIO) {
           // Force to mono sound.
           for(int a = 0; a < aframesOut; a++) {
@@ -317,21 +307,27 @@ namespace Screenplay {
           }
         }
 
-        if(pts <= 0)
-          pts = m_pkt->dts;
-        if(pts <= 0)
-          pts = m_acontext->frame_number;
+        int64_t pts = 0;
 
-        AVRational time_base = m_acontext->time_base;
+        if (m_pkt->dts != AV_NOPTS_VALUE) {
+          pts = m_pkt->dts;
+        } else if(m_pkt->pts != AV_NOPTS_VALUE) {
+          pts = m_pkt->pts;
+        } else {
+          pts = 0;
+        }
+
+        /*AVRational time_base = m_acontext->time_base;
 
         if(!time_base.num || !time_base.den)
           time_base = m_ic->streams[m_aindex]->time_base;
         if(pts != m_frame->pts && m_ic->streams[m_aindex]->time_base.num)
-          time_base = m_ic->streams[m_aindex]->time_base;
+          time_base = m_ic->streams[m_aindex]->time_base;*/
+
+        AVRational time_base = m_ic->streams[m_aindex]->time_base;
 
         double rate = av_q2d(time_base);
         double secs = pts * rate;
-
 
         debugScreenplay("VideoInputFFMPEG::captureImage # af = %d ab = %d ppts = %d, pdts = %d afr = %d secs = %lf tb = %ld/%ld",
               aframesOut, m_audioFrames, (int) m_pkt->pts, (int) m_pkt->dts,
@@ -373,8 +369,6 @@ namespace Screenplay {
       double frames = secs * 44100;
 
       int perFrame = (int) (frames - m_capturedAudio);
-      if (perFrame < 0)
-        perFrame = 0;
 
       if(perFrame > 20000) {
         debugScreenplay("VideoInputFFMPEG::captureImage # Large audio generated");
@@ -532,36 +526,14 @@ namespace Screenplay {
     if(!m_vcontext)
       return 0;
 
-    AVRational time_base = m_vcontext->time_base;
+    double fps = 1/(m_vcontext->ticks_per_frame * av_q2d(m_vcontext->time_base));
 
-    if(!time_base.num || !time_base.den) {
-
-      time_base = m_ic->streams[m_vindex]->time_base;
-
-      if(!time_base.num || !time_base.den) {
-
-        if(m_capturedVideo && m_capturedAudio) {
-          int sr = m_acontext->sample_rate;
-          float seconds = m_capturedAudio / (float) sr;
-          return m_capturedVideo / seconds;
-        }
-        else
-          return 30.0f;
-      }
+    // If we get some wild values use "guess"
+    if (fps >= 100) {
+      fps = av_q2d(m_ic->streams[m_vindex]->r_frame_rate);
     }
 
-    double r = (double) time_base.den /
-               ((double) time_base.num);
-
-    if(m_lastPts != 0) {
-      r *= (double) (m_capturedVideo - 1) / (double) m_lastPts;
-    }
-
-    debugScreenplay("VideoInputFFMPEG::fps # %d %d -> %.2lf",
-                   time_base.den, time_base.num, r);
-
-    return float(r);
-    // return 30;
+    return float(fps);
   }
 
   Radiant::ImageFormat VideoInputFFMPEG::imageFormat() const
@@ -642,6 +614,12 @@ namespace Screenplay {
         m_vindex = i;
         m_vcodec = avcodec_find_decoder(enc->codec_id);
         m_vcontext = enc;
+
+        int64_t start_time = m_ic->streams[i]->start_time;
+        if (start_time != AV_NOPTS_VALUE) {
+          debugScreenplay("%s # Stream %d does not contain start time.", fname, i);
+          m_firstTS = Radiant::TimeStamp::createSecondsD(start_time * av_q2d(m_ic->streams[i]->time_base));
+        }
 
         AVRational fr = m_ic->streams[i]->r_frame_rate;
 
@@ -855,8 +833,6 @@ namespace Screenplay {
         return m_ic->duration * av_q2d(av_time_base);
       }
     }
-
-    return 0.0;
   }
 
   bool VideoInputFFMPEG::start()

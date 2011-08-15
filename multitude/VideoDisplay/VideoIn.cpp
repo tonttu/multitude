@@ -142,7 +142,7 @@ namespace VideoDisplay {
     m_continue(true),
     m_vmutex(false),
     m_amutex(false),
-    m_fps(30.0),
+    m_fps(-1),
     m_done(false),
     m_ending(false),
     m_decoding(true),
