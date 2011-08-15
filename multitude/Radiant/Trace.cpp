@@ -205,6 +205,10 @@ namespace Radiant {
     }
   }
 
+  void traceMsg(Severity s, const char * msg)
+  {
+    trace(s, "%s", msg);
+  }
 
   void trace(const char * module, Severity s, const char * msg, ...)
   {

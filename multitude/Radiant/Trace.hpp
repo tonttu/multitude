@@ -70,6 +70,8 @@ namespace Radiant {
       @param msg message format string */
   RADIANT_API void trace(Severity s, const char * msg, ...) RADIANT_PRINTF_CHECK(2, 3);
 
+  RADIANT_API void traceMsg(Severity s, const char * msg);
+
   /// @copydoc trace
   /// @param module outputting module from which this message originates
   RADIANT_API void trace
