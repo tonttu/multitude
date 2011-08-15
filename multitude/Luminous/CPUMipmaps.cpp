@@ -175,9 +175,8 @@ namespace Luminous {
     if(item.m_state == READY)
       return bestlevel;
 
-    m_priority = m_loadingPriority;
     reschedule();
-    BGThread::instance()->reschedule(shared_from_this());
+    BGThread::instance()->reschedule(shared_from_this(), m_loadingPriority);
 
     // Scan for the best available mip-map.
 

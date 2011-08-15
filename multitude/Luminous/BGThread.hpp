@@ -67,6 +67,8 @@ namespace Luminous
 
     /// Update the changed task timestamp to queue
     virtual void reschedule(std::shared_ptr<Task> task);
+    void reschedule(std::shared_ptr<Task> task, Priority p);
+
 
     /// Change the priority of a task
     virtual void setPriority(std::shared_ptr<Task> task, Priority p);
