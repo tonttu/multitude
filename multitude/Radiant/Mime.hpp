@@ -78,6 +78,8 @@ namespace Radiant
     /// @param ext filename extension
     /// @return The matching MimeType, or NULL if not found
     const MimeType * mimeTypeByExtension(const QString & ext) const;
+
+    QStringList extensionsByMimeRegexp(const QString & mime) const;
   };
 }
 #endif // MIME_HPP

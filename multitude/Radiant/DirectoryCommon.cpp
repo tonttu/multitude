@@ -18,6 +18,7 @@
 #include "FileUtils.hpp"
 #include "StringUtils.hpp"
 #include "Trace.hpp"
+#include "Mime.hpp"
 
 #include <cassert>
 
@@ -31,7 +32,7 @@ namespace Radiant
                        int filters, SortFlag sortFlag)
     : m_path(pathname),
       m_filterFlags(filters),
-      m_sortFlags(sortFlag)
+      m_sortFlag(sortFlag)
   {
     populate();
   }
@@ -41,7 +42,7 @@ namespace Radiant
                        int filters, SortFlag sortFlag)
   : m_path(pathname),
     m_filterFlags(filters),
-    m_sortFlags(sortFlag)
+    m_sortFlag(sortFlag)
   {
     m_suffixes = suffixlist.toLower().split(",", QString::SkipEmptyParts);
     populate();
@@ -71,4 +72,17 @@ namespace Radiant
   {
     return QDir().mkpath(dirname);
   }
+
+  Directory Directory::findByMimePattern(const QString & pathname, const QString & mimePattern,
+                                         int filters, SortFlag sortFlag)
+  {
+    MimeManager mime;
+    QStringList tmp;
+    foreach(const QString & t, mimePattern.split('*'))
+      tmp << QRegExp::escape(t);
+    /// @todo implement real mime loading. it shouldn't have anything to do with file extensions
+    return Directory(pathname, mime.extensionsByMimeRegexp(tmp.join(".*")).join(","),
+                     filters, sortFlag);
+  }
+
 }

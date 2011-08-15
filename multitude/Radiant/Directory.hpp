@@ -42,7 +42,7 @@ namespace Radiant
 
       @author Esa Nuuros
   */
-  class RADIANT_API Directory : public Patterns::NotCopyable
+  class RADIANT_API Directory
   {
   public:
     /// Flags to filter directory contents
@@ -121,6 +121,11 @@ namespace Radiant
     /// Checks if the given directory exists
     static bool exists(const QString & dir);
 
+    static Directory findByMimePattern(const QString & pathname,
+                                       const QString & mimePattern,
+                                       int filters = AllEntries | NoDotAndDotDot,
+                                       SortFlag sortFlag = Name);
+
   private:
     // This function takes care of the low-level platform
     // specific stuff.  All it does is fill up m_entries
@@ -131,7 +136,7 @@ namespace Radiant
     QStringList m_entries;
     QStringList m_suffixes;
     int m_filterFlags;
-    SortFlag m_sortFlags;
+    SortFlag m_sortFlag;
   };
 
 }

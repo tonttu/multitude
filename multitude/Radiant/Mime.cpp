@@ -7,6 +7,9 @@
 #include <fstream>
 #include <sstream>
 
+#include <QStringList>
+#include <QSet>
+
 namespace Radiant
 {
 
@@ -65,6 +68,9 @@ namespace Radiant
     initialize();
   }
 
+  MimeManager::~MimeManager() {
+  }
+
   void MimeManager::insertSharedExtension(const QString & extension, const Radiant::MimeType& type)
   {
     if (s_sharedExtensions.find(extension) != s_sharedExtensions.end()) {
@@ -80,6 +86,41 @@ namespace Radiant
       Radiant::info("Overriding extension->mime mapping for: %s -> %s", extension.toUtf8().data(), type.typeString().toUtf8().data());
     }
     m_extensions.insert(std::make_pair(extension, type));
+  }
+
+  const MimeType * MimeManager::mimeTypeByExtension(const QString & ext) const
+  {
+    ExtensionMap::const_iterator it = m_extensions.find(ext);
+    if (it != m_extensions.end())
+      return &it->second;
+
+    it = s_sharedExtensions.find(ext);
+    if (it != s_sharedExtensions.end())
+      return &it->second;
+
+    return 0;
+  }
+
+  QStringList MimeManager::extensionsByMimeRegexp(const QString & mime) const
+  {
+    QRegExp r(mime);
+    QSet<QString> extensions;
+    int step = 0;
+    for(ExtensionMap::const_iterator it = m_extensions.begin(),
+        end = m_extensions.end(); ; ++it) {
+      if (it == end && step == 0) {
+        it = s_sharedExtensions.begin();
+        end = s_sharedExtensions.end();
+        ++step;
+      }
+      if (it == end && step == 1) break;
+
+      if(r.indexIn(it->second.typeString()) >= 0) {
+        extensions << it->first;
+      }
+    }
+
+    return extensions.toList();
   }
 
   MimeManager::ExtensionMap MimeManager::s_sharedExtensions;

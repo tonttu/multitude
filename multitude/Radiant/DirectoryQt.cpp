@@ -36,7 +36,7 @@ namespace Radiant
 
   void Directory::populate()
   {
-    QDir::SortFlags sf = (m_sortFlags == Name) ? QDir::Name : QDir::Unsorted;
+    QDir::SortFlags sf = (m_sortFlag == Name) ? QDir::Name : QDir::Unsorted;
     QDir::Filters ff = 0;
 
     if(m_filterFlags & Dirs) ff |= QDir::Dirs;
