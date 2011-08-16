@@ -530,6 +530,10 @@ namespace Screenplay {
 
     // If we get some wild values use "guess"
     if (fps >= 100) {
+      if (!m_ic || m_vindex < 0) {
+        warning("VideoInputFFMPEG::fps # Could not get fps");
+        return 0;
+      }
       fps = av_q2d(m_ic->streams[m_vindex]->r_frame_rate);
     }
 
