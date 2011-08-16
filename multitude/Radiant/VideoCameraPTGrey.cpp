@@ -13,6 +13,10 @@
  * 
  */
 
+#include "Platform.hpp"
+
+#ifdef RADIANT_WINDOWS
+
 #include "VideoCameraPTGrey.hpp"
 
 #include "Mutex.hpp"
@@ -890,3 +894,5 @@ namespace Radiant
   }
 
 }
+
+#endif

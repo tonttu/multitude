@@ -13,9 +13,12 @@
  * 
  */
 
-#include <Radiant/SerialPort.hpp>
+#include "Platform.hpp"
 
-#include <Radiant/Trace.hpp>
+#ifdef RADIANT_UNIX
+
+#include "SerialPort.hpp"
+#include "Trace.hpp"
 
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -181,3 +184,5 @@ namespace Radiant
   }
 
 }
+
+#endif

@@ -1,7 +1,10 @@
-#include <Radiant/Platform.hpp>
-#include <Radiant/CallStack.hpp>
-#include <Radiant/Mutex.hpp>
-#include <Radiant/Trace.hpp>
+#include "Platform.hpp"
+
+#ifdef RADIANT_WINDOWS
+
+#include "CallStack.hpp"
+#include "Mutex.hpp"
+#include "Trace.hpp"
 
 #include <stdint.h>
 #include <sstream>
@@ -170,3 +173,5 @@ namespace Radiant
     }
   }
 }
+
+#endif
