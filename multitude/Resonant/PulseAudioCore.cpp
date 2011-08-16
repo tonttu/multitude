@@ -13,6 +13,10 @@
  * 
  */
 
+#include <Radiant/Platform.hpp>
+
+#ifdef RADIANT_LINUX
+
 #include "PulseAudioCore.hpp"
 #include "Resonant.hpp"
 
@@ -330,3 +334,5 @@ namespace Resonant
     }
   }
 }
+
+#endif
