@@ -12,6 +12,11 @@
  * from the GNU organization (www.gnu.org).
  * 
  */
+
+#include "Platform.hpp"
+
+#ifdef RADIANT_LINUX
+
 #include "PlatformUtils.hpp"
 #include "Trace.hpp"
 
@@ -123,3 +128,5 @@ namespace Radiant
   }
 
 }
+
+#endif

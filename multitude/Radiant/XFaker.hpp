@@ -16,6 +16,10 @@
 #ifndef XFAKER_HPP
 #define XFAKER_HPP
 
+#include "Platform.hpp"
+
+#ifdef RADIANT_LINUX
+
 namespace Radiant {
 
   /** Fabricate fake mouse events to the X11 Windowing environment. One day
@@ -44,5 +48,7 @@ namespace Radiant {
   };
 
 }
+
+#endif
 
 #endif

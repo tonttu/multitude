@@ -7,7 +7,6 @@ HEADERS += ScreenPlay.hpp
 SOURCES += VideoFFMPEG.cpp
 
 LIBS += $$MULTI_FFMPEG_LIBS
-#LIBS += avcodec.lib avutil.lib avformat.lib
 
 LIBS += $$LIB_RADIANT $$LIB_PATTERNS
 

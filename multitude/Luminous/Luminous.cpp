@@ -13,24 +13,17 @@
  * 
  */
 
-#include <Luminous/Luminous.hpp>
-#include <Luminous/Image.hpp>
-#include <Luminous/CodecRegistry.hpp>
-#include <Luminous/ImageCodecTGA.hpp>
-#include <Luminous/ImageCodecDDS.hpp>
+#include "Luminous.hpp"
+#include "Image.hpp"
+#include "CodecRegistry.hpp"
+#include "ImageCodecTGA.hpp"
+#include "ImageCodecDDS.hpp"
+#include "ImageCodecQT.hpp"
+#include "ImageCodecSVG.hpp"
 
-
-#ifdef USE_QT45
-#include <Luminous/ImageCodecQT.hpp>
 #include <QImageWriter>
 #include <QImageReader>
 #include <QCoreApplication>
-#else
-#include <Luminous/ImageCodecPNG.hpp>
-#include <Luminous/ImageCodecJPEG.hpp>
-#endif // USE_QT45
-
-#include <Luminous/ImageCodecSVG.hpp>
 
 #include <Radiant/Trace.hpp>
 
@@ -119,7 +112,6 @@ namespace Luminous
     QCoreApplication::addLibraryPath(pluginPath.c_str());
 #endif
 
-#ifdef USE_QT45
     // Debug output supported image formats
     {
       debugLuminous("Qt image support (read):");
@@ -145,12 +137,6 @@ namespace Luminous
       Image::codecs()->registerCodec(new ImageCodecQT(format.data()));
     }
     Image::codecs()->registerCodec(new ImageCodecQT("jpg"));
-#else
-    // Register built-in image codecs
-    Image::codecs()->registerCodec(new ImageCodecJPEG());
-    Image::codecs()->registerCodec(new ImageCodecPNG());
-#endif
-
     Image::codecs()->registerCodec(new ImageCodecDDS());
     Image::codecs()->registerCodec(new ImageCodecSVG());
     /* TGA has to be last, because its ping may return true even if

@@ -1,12 +1,8 @@
 include(../multitude.pri)
 
-HEADERS += Archive.hpp \
-    ValueMatrix.hpp \
-    ValueMatrixImpl.hpp
-HEADERS += XMLArchive.hpp
+HEADERS += Archive.hpp
 HEADERS += ChangeMap.hpp
 HEADERS += CmdParser.hpp
-HEADERS += ValueEnum.hpp
 HEADERS += ConfigDocument.hpp
 HEADERS += ConfigElement.hpp
 HEADERS += ConfigValue.hpp
@@ -17,15 +13,18 @@ HEADERS += HasValues.hpp
 HEADERS += HasValuesImpl.hpp
 HEADERS += Serializer.hpp
 HEADERS += Valuable.hpp
-HEADERS += Value.hpp
 HEADERS += ValueBool.hpp
 HEADERS += ValueColor.hpp
 HEADERS += ValueContainer.hpp
+HEADERS += ValueEnum.hpp
 HEADERS += ValueFloat.hpp
 HEADERS += ValueFloatImpl.hpp
+HEADERS += Value.hpp
 HEADERS += ValueInt.hpp
 HEADERS += ValueIntImpl.hpp
 HEADERS += ValueListener.hpp
+HEADERS += ValueMatrix.hpp
+HEADERS += ValueMatrixImpl.hpp
 HEADERS += ValueNumeric.hpp
 HEADERS += ValueObject.hpp
 HEADERS += ValueRect.hpp
@@ -33,42 +32,37 @@ HEADERS += ValueString.hpp
 HEADERS += ValueStringImpl.hpp
 HEADERS += ValueVector.hpp
 HEADERS += ValueVectorImpl.hpp
+HEADERS += XMLArchive.hpp
 
-SOURCES += Archive.cpp \
-    ValueMatrix.cpp
-SOURCES += XMLArchive.cpp
+SOURCES += Archive.cpp
 SOURCES += ChangeMap.cpp
 SOURCES += CmdParser.cpp
-SOURCES += ValueEnum.cpp
 SOURCES += ConfigDocument.cpp
 SOURCES += ConfigElement.cpp
 SOURCES += ConfigValue.cpp
+SOURCES += DOMDocumentQT.cpp
+SOURCES += DOMElementQT.cpp
 SOURCES += HasValues.cpp
 SOURCES += Serializer.cpp
 SOURCES += Valuable.cpp
 SOURCES += ValueBool.cpp
 SOURCES += ValueColor.cpp
+SOURCES += ValueEnum.cpp
 SOURCES += ValueFloat.cpp
 SOURCES += ValueInt.cpp
 SOURCES += ValueListener.cpp
+SOURCES += ValueMatrix.cpp
 SOURCES += ValueObject.cpp
 SOURCES += ValueRect.cpp
 SOURCES += ValueString.cpp
 SOURCES += ValueVector.cpp
+SOURCES += XMLArchive.cpp
 
-LIBS += $$LIB_RADIANT \
-    $$LIB_NIMBLE $$LIB_PATTERNS
+LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS
 
 win32:DEFINES += VALUABLE_EXPORT
 
-contains(HAS_QT_45,YES) {
-  message(Using QT XML parser)
-
-  SOURCES += DOMDocumentQT.cpp
-  SOURCES += DOMElementQT.cpp
-
-  CONFIG += qt
-  QT += xml
-}
+CONFIG += qt
+QT += xml
 
 include(../library.pri)

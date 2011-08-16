@@ -18,7 +18,7 @@
 
 /// @cond
 
-#include <Radiant/SHMPipe.hpp>
+#include "SHMPipe.hpp"
 
 namespace Radiant
 {
@@ -57,5 +57,3 @@ namespace Radiant
 /// @endcond
 
 #endif
-
-
