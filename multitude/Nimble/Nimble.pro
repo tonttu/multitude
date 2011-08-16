@@ -1,7 +1,6 @@
 include(../multitude.pri)
 
-HEADERS += Export.hpp \
-    Range.hpp
+HEADERS += Export.hpp
 HEADERS += Histogram.hpp 
 HEADERS += Interpolation.hpp
 HEADERS += KeyStone.hpp 
@@ -17,6 +16,7 @@ HEADERS += Plane.hpp
 HEADERS += Quaternion.hpp
 HEADERS += Ramp.hpp 
 HEADERS += Random.hpp 
+HEADERS += Range.hpp
 HEADERS += Rectangle.hpp
 HEADERS += Rect.hpp 
 HEADERS += Splines.hpp
@@ -25,8 +25,7 @@ HEADERS += Vector2.hpp
 HEADERS += Vector3.hpp 
 HEADERS += Vector4.hpp 
 
-SOURCES += Histogram.cpp \
-    Range.cpp
+SOURCES += Histogram.cpp
 SOURCES += KeyStone.cpp
 SOURCES += LensCorrection.cpp
 SOURCES += LineSegment2.cpp 
@@ -34,6 +33,7 @@ SOURCES += Matrix.cpp
 SOURCES += Path.cpp
 SOURCES += Plane.cpp
 SOURCES += Random.cpp
+SOURCES += Range.cpp
 SOURCES += Rectangle.cpp
 SOURCES += Rect.cpp
 SOURCES += Splines.cpp
