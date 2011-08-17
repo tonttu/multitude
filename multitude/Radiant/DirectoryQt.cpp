@@ -64,7 +64,10 @@ namespace Radiant
 
   void Directory::populate()
   {
-    MULTI_ONCE(QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));)
+    MULTI_ONCE(
+        QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
+        QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
+    )
 
     QDir::SortFlags sf = (m_sortFlags == Name) ? QDir::Name : QDir::Unsorted;
     QDir::Filters ff = 0;
