@@ -19,7 +19,7 @@ CONFIG(release, debug|release) {
   V8 += verbose=on mode=debug
 }
 
-first.commands = if test ! -f $$TARGET; then scons $$V8 library -j4; fi && cp $$TARGET $$DESTDIR/libv8.so
+first.commands = if test ! -s $$TARGET; then scons $$V8 library -j4; fi && cp $$TARGET $$DESTDIR/libv8.so
 
 MAKE_EXTRA_TARGETS += clean
 clean.commands = scons -c

@@ -367,4 +367,10 @@ namespace Nimble {
   /// Default (float) quaternion type
   typedef QuaternionT<float> Quaternion;
 }
+
+#ifdef __GCCXML__
+/// This is exported to JS
+template class Nimble::QuaternionT<float>;
+#endif
+
 #endif
