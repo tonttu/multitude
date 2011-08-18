@@ -19,11 +19,10 @@
 
 #include <Radiant/Export.hpp>
 
-/// @todo These two functions are kinda orphaned here. Maybe they should be
-/// moved to Nimble.
-
 namespace Radiant
 {
+
+  /// @todo These two functions are kinda orphaned here. Maybe they should be moved to Nimble.
 
   /// Given a size and target size, return a new size optionally preserving the
   /// original aspect ratio
