@@ -284,12 +284,10 @@ namespace Luminous
     GLSLShaderObject* vs = 0;
     if(vsFile) {
 
-      char* code = Radiant::FileUtils::loadTextFile(vsFile);
-      if (code) {
+      const QByteArray code = Radiant::FileUtils::loadTextFile(vsFile);
+      if(!code.isNull()) {
         vs = new GLSLShaderObject(GL_VERTEX_SHADER);
-        vs->setSource(code);
-
-        delete [] code;
+        vs->setSource(code.data());
 
         if(!vs->compile()) {
           error("GLSLProgramObject::fromFiles # vertex shader compile error: %s",
@@ -303,12 +301,10 @@ namespace Luminous
     // Load & compile fragment shader
     GLSLShaderObject* fs = 0;
     if(fsFile) {
-      char* code = Radiant::FileUtils::loadTextFile(fsFile);
-      if (code) {
+      const QByteArray code = Radiant::FileUtils::loadTextFile(fsFile);
+      if(!code.isNull()) {
         fs = new GLSLShaderObject(GL_FRAGMENT_SHADER);
-        fs->setSource(code);
-
-        delete [] code;
+        fs->setSource(code.data());
 
         if(!fs->compile()) {
           error("GLSLProgramObject::fromFiles # fragment shader "

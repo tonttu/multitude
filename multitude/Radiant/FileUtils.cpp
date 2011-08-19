@@ -99,38 +99,12 @@ namespace Radiant
     return remove(filename) == 0;
   }
 
-  char* FileUtils::loadTextFile(const char* filename)
-  {
-    std::ifstream file;
-
-    file.open(filename, std::ios::in | std::ios::binary);
-    if(!file.good()) {
-      error("loadTextFile # could not open '%s' for reading", filename);
-      return 0;
-    }
-
-    unsigned long len = getFileLen(file);
-
-    if(len == 0) {
-      error("loadTextFile # file '%s' is empty", filename);
-      return 0;
-    }
-
-    char* contents = new char [len + 1];
-    file.read(contents, len);
-    contents[len] = 0;
-
-    file.close();
-
-    return contents;
-  }
-
-  QString FileUtils::readTextFile(const QString & filename)
+  QByteArray FileUtils::loadTextFile(const QString & filename)
   {
     QFile file(filename);
     if(file.open(QIODevice::ReadOnly))
       return file.readAll();
-    return "";
+    return QByteArray(); // null bytearray
   }
 
   bool FileUtils::writeTextFile(const char * filename, const char * contents)

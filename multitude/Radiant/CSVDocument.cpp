@@ -35,7 +35,7 @@ namespace Radiant {
   {
     m_rows.clear();
 
-    QString contents = Radiant::FileUtils::readTextFile(filename);
+    QString contents = Radiant::FileUtils::loadTextFile(filename);
 
     if(contents.isEmpty()) {
       error("CSVParser::load # Empty file %s", filename);

@@ -38,18 +38,10 @@ namespace Radiant
     /// @returns the length of the file. Returns 0 if the file is empty or the file could not be found
     static unsigned long getFileLen(const QString & filename);
 
-    /// Load a text file.
-    /** The contents of the file are returned as a zero-terminated
-    string. The caller is responsible for freeing the memory,
-    using a call to <b>delete []</b>.*/
-    /// @todo rename to loadTextFileCStr, loadTextFileWStr
+    /// Load a text file. If the reading fails, the returned QByteArray.isNull().
     /// @param filename Name of file
     /// @returns the contents of the text file
-    static char * loadTextFile(const char* filename);
-    /// Reads the contents of a text file and returns them
-    /// @param file Name of file
-    /// @returns the contents of the text file
-    static QString readTextFile(const QString & file);
+    static QByteArray loadTextFile(const QString & filename);
 
     /// Writes a string to a text file.
     /// @param filename Name of output file

@@ -165,13 +165,12 @@ namespace Luminous {
 
   bool Shader::loadFragmentShader(const char * filename)
   {
-    char * str = Radiant::FileUtils::loadTextFile(filename);
+    const QByteArray str = Radiant::FileUtils::loadTextFile(filename);
 
-    if(!str)
+    if(str.isNull())
       return false;
 
     setFragmentShader(str);
-    delete [] str;
 
     return true;
   }
@@ -184,13 +183,12 @@ namespace Luminous {
 
   bool Shader::loadVertexShader(const char * filename)
   {
-    char * str = Radiant::FileUtils::loadTextFile(filename);
+    const QByteArray str = Radiant::FileUtils::loadTextFile(filename);
 
-    if(!str)
+    if(str.isNull())
       return false;
 
-    setVertexShader(str);
-    delete [] str;
+    setVertexShader(str.data());
 
     return true;
   }
@@ -203,13 +201,12 @@ namespace Luminous {
 
   bool Shader::loadGeometryShader(const char * filename)
   {
-    char * str = Radiant::FileUtils::loadTextFile(filename);
+    const QByteArray str = Radiant::FileUtils::loadTextFile(filename);
 
-    if(!str)
+    if(str.isNull())
       return false;
 
-    setGeometryShader(str);
-    delete [] str;
+    setGeometryShader(str.data());
 
     return true;
   }

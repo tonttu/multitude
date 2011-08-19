@@ -100,11 +100,10 @@ namespace Luminous
 
   bool GLSLShaderObject::loadSourceFile(const char* filename)
   {
-    char * str = Radiant::FileUtils::loadTextFile(filename);
-    if(!str)
+    const QByteArray str = Radiant::FileUtils::loadTextFile(filename);
+    if(str.isNull())
       return false;
     setSource(str);
-    delete [] str;
     return true;
   }
 
