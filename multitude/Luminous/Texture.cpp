@@ -36,7 +36,8 @@ namespace
 {
   static RADIANT_TLS(int) t_frame(0);
   static RADIANT_TLS(long) t_available(0);
-  static RADIANT_TLS(bool) t_enabled(true);
+  /// @todo Fix UploadLimiter.. #1982
+  static RADIANT_TLS(bool) t_enabled(false);
 }
 
 namespace Luminous
@@ -249,6 +250,7 @@ namespace Luminous
 
   bool Texture2D::loadImage(const Luminous::Image & image, bool buildMipmaps, int internalFormat)
   {
+    /// @todo use number of channels if internal format not specified???
     return loadBytes(internalFormat ? internalFormat : image.pixelFormat().numChannels(),
                      image.width(), image.height(),
                      image.bytes(),
@@ -445,19 +447,19 @@ namespace Luminous
     long uses = consumesBytes();
     available -= uses;
 
-
     if(data)
       changeByteConsumption(used, uses);
 
     /* try not to interfere with other users of glTexImage2d etc */
     if (alignment > 4) glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
-    if(data)
+    if(data) {
       m_loadedLines = h;
-    else
+      return true;
+    } else {
       m_loadedLines = 0;
-
-    return (int(m_loadedLines) == h);
+      return false;
+    }
   }
 
   void Texture2D::loadSubBytes(int x, int y, int w, int h, const void * data)
