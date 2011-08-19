@@ -44,6 +44,8 @@ namespace FireView {
 
   Mutex __cvmutex;
 
+  static long unsigned g_bandwidth;
+
   CamView::InputThread::InputThread()
       : m_camera(0),
       m_state(UNINITIALIZED),
@@ -247,6 +249,7 @@ namespace FireView {
     if(!m_camera) return false;
 
     if(!m_format7) {
+      increaseBandwidth(640, 480, Radiant::asFloat(m_fps));
       ok = m_camera->open(m_euid64, 640, 480, Radiant::IMAGE_UNKNOWN, m_fps);
     }
     else {
@@ -260,7 +263,7 @@ namespace FireView {
       /* static int index = 0;
       r.low().x += index * 4;
       index++; */
-
+      increaseBandwidth(r.width(), r.height(), m_customFps);
       ok = m_camera->openFormat7(m_euid64, r, m_customFps, CamView::format7Mode());
     }
 
@@ -373,6 +376,14 @@ namespace FireView {
     }
 
     return true;
+  }
+
+  void CamView::InputThread::increaseBandwidth(int width, int height, float fps)
+  {
+    long unsigned bandwidth = width * height * 8 * (int)fps;
+    g_bandwidth += bandwidth;
+
+    qDebug("Total bandwidth required: %lu Mbps", g_bandwidth >> 20);
   }
 
   /////////////////////////////////////////////////////////////////////////////
