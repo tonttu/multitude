@@ -13,6 +13,7 @@
  * 
  */
 
+#include "Platform.hpp"
 #include "TCPSocket.hpp"
 #include "SocketUtilPosix.hpp"
 #include "SocketWrapper.hpp"
@@ -142,7 +143,19 @@ namespace Radiant
       // int max = bytes - pos > SSIZE_MAX ? SSIZE_MAX : bytes - pos;
       int max = bytes - pos > 32767 ? 32767 : bytes - pos;
       bool block = flags == WAIT_ALL || (flags == WAIT_SOME && pos == 0);
-      int tmp = recv(m_d->m_fd, data + pos, max, block ? MSG_DONTWAIT : 0);
+      int tmp;
+
+      if(block) {
+        tmp = recv(m_d->m_fd, data + pos, max, 0);
+      } else {
+#ifdef RADIANT_WINDOWS
+        // there is no MSG_DONTWAIT in winsock, do poll with zero timeout instead
+        if(!isPendingInput()) return pos;
+        tmp = recv(m_d->m_fd, data + pos, max, 0);
+#else
+        tmp = recv(m_d->m_fd, data + pos, max, MSG_DONTWAIT);
+#endif
+      }
 
       if(tmp > 0) {
         pos += tmp;
