@@ -295,6 +295,7 @@ namespace Luminous
       glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
 
       if(width == 0) {
+        Luminous::glErrorToString(__FILE__, __LINE__);
         Radiant::error("Texture2D::loadImage: Cannot load compressed texture, too big? "
                          "(%d x %d, id = %.5d, %d bytes)", m_width, m_height, (int) id(), image.datasize());
         m_consumed = 0;
@@ -404,6 +405,7 @@ namespace Luminous
 
 
         if(width == 0) {
+          Luminous::glErrorToString(__FILE__, __LINE__);
           Radiant::error("Texture2D::loadBytes: Cannot load texture, too big? "
                          "(%d x %d, id = %.5d)", w, h, (int) id());
 
