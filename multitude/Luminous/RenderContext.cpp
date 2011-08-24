@@ -633,9 +633,9 @@ namespace Luminous
     m_data->m_clipStack.pop_back();
   }
 
-  const Nimble::Rectangle * RenderContext::clipRect() const
+  const std::vector<Nimble::Rectangle> & RenderContext::clipStack() const
   {
-    return m_data->m_clipStack.empty() ? 0 : &m_data->m_clipStack.back();
+    return m_data->m_clipStack;
   }
 
   bool RenderContext::isVisible(const Nimble::Rectangle & area)
