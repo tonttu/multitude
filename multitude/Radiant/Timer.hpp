@@ -22,6 +22,9 @@ namespace Radiant
     /// Construct a new Timer and start it
     Timer();
 
+    /// Deletes all resources allocated by the timer object
+    ~Timer();
+
     /// Start the timer
     /// Starts the timer by resetting its clock to zero
     void start();

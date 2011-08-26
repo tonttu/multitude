@@ -34,6 +34,11 @@ namespace Radiant
     start();
   }
 
+  Timer::~Timer()
+  {
+    delete m_d;
+  }
+
   void Timer::start()
   {
 #if defined(WIN32)
