@@ -828,8 +828,7 @@ namespace Screenplay {
 
       if (s->duration != AV_NOPTS_VALUE) {
         return s->duration * av_q2d(s->time_base);
-      }
-      else if (m_ic->duration != AV_NOPTS_VALUE) {
+      } else if (m_ic->duration != AV_NOPTS_VALUE) {
         // If video stream doesn't have duration, check the container for valid duration info.
         // Could also iterate over all other streams as well.
         debugScreenplay("VideoInputFFMPEG::durationSeconds # Could not get video stream duration. Using container duration.");
@@ -837,6 +836,8 @@ namespace Screenplay {
         return m_ic->duration * av_q2d(av_time_base);
       }
     }
+
+    return 0.0;
   }
 
   bool VideoInputFFMPEG::start()
