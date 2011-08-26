@@ -21,8 +21,6 @@
 #include <Luminous/PixelFormat.hpp>
 #include <Luminous/Texture.hpp>
 
-// #include <Nimble/Vector2.hpp>
-
 #include <cstdio>
 #include <vector>
 
@@ -201,12 +199,15 @@ namespace Luminous
     size_t m_generation;
   };
 
-  /** ImageTex provides an easy way to create OpenGL textures from images in a
-  way that handles multiple rendering contexts.
+  /** ImageTex is a utility class for rendering images.
+
+  ImageTex provides an easy way to create OpenGL textures from image files in a
+  way that handles multiple rendering contexts transparently.
   */
   class LUMINOUS_API ImageTex : public Luminous::Image, public Luminous::ContextVariableT<Luminous::Texture2D>
   {
   public:
+    ImageTex();
 
     /** Binds a texture representing this image to the current OpenGL context.
 
@@ -216,7 +217,9 @@ namespace Luminous
         (and the texture is created), after that the the same texture is used.
         @return true if the bind succeeded
     */
-    bool bind(GLenum textureUnit = GL_TEXTURE0, bool withmipmaps = true);
+    bool bind(GLenum textureUnit = GL_TEXTURE0, bool withmipmaps = true) {
+      return bind(0, textureUnit, withmipmaps);
+    }
 
     /** Binds a texture representing this image to the current OpenGL context.
 
@@ -239,10 +242,10 @@ namespace Luminous
 
     ImageTex & operator = (const Luminous::Image & that)
     {
-       * (Image * ) this = that;
-       // this->incrementGeneration();
-       return * this;
-     }
+      Image::operator =(that);
+
+      return *this;
+    }
 
     /// Creates a new ImageTex from this. All the cpu data from Luminous::Image
     /// is moved to the new object.
