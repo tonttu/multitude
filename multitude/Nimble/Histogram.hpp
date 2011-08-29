@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Nimble.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Nimble.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #ifndef NIMBLE_HISTOGRAM_HPP
@@ -183,6 +171,12 @@ namespace Nimble {
       return 0;
     }
 
+    /// Returns the number of bins in the histogram
+    /** This function returns the value of template parameter N. In your code, it is recommended that
+        you use this parameter rather than writing the magic value of N directly in your code, since
+        calling this function keeps you code working even if you change N in you code.  */
+    size_t size() const { return (size_t) N; }
+
     /// Returns a reference to a given bin
     T & operator [] (int i) { return m_data[i]; }
     /// Returns a const reference to a given bin
@@ -194,6 +188,8 @@ namespace Nimble {
     int m_count;
   };
 
+  /// Histogram of 64 unsigned integers
+  typedef Histogram<unsigned int,64> Histogramu64;
   /// Histogram of 256 unsigned integers
   typedef Histogram<unsigned int,256> Histogramu256;
   /// Histogram of 1024 unsigned integers
@@ -204,8 +200,9 @@ namespace Nimble {
   // This is needed on Windows
 #ifdef WIN32
 #ifdef NIMBLE_EXPORT
-template Histogram<unsigned int, 256>;
-template Histogram<unsigned int, 1024>;
+  template Histogram<unsigned int, 64>;
+  template Histogram<unsigned int, 256>;
+  template Histogram<unsigned int, 1024>;
   template Histogram<int, 256>;
 #endif
 #endif
