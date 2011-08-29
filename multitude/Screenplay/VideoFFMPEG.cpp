@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Screenplay.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Screenplay.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #include "VideoFFMPEG.hpp"
@@ -157,9 +145,9 @@ namespace Screenplay {
 
           int64_t pts = 0;
 
-          if(m_pkt->dts != AV_NOPTS_VALUE) {
+          if(m_pkt->dts != (int64_t) AV_NOPTS_VALUE) {
             pts = m_pkt->dts;
-          } else if(m_pkt->pts != AV_NOPTS_VALUE) {
+          } else if(m_pkt->pts != (int64_t) AV_NOPTS_VALUE) {
             pts = m_pkt->pts;
           } else {
             pts = 0;
@@ -309,9 +297,9 @@ namespace Screenplay {
 
         int64_t pts = 0;
 
-        if (m_pkt->dts != AV_NOPTS_VALUE) {
+        if (m_pkt->dts != (int64_t) AV_NOPTS_VALUE) {
           pts = m_pkt->dts;
-        } else if(m_pkt->pts != AV_NOPTS_VALUE) {
+        } else if(m_pkt->pts != (int64_t) AV_NOPTS_VALUE) {
           pts = m_pkt->pts;
         } else {
           pts = 0;
@@ -620,7 +608,7 @@ namespace Screenplay {
         m_vcontext = enc;
 
         int64_t start_time = m_ic->streams[i]->start_time;
-        if (start_time != AV_NOPTS_VALUE) {
+        if (start_time != (int64_t) AV_NOPTS_VALUE) {
           debugScreenplay("%s # Stream %d does not contain start time.", fname, i);
           m_firstTS = Radiant::TimeStamp::createSecondsD(start_time * av_q2d(m_ic->streams[i]->time_base));
         }
@@ -746,13 +734,13 @@ namespace Screenplay {
 
     if(m_ic)
       av_close_input_file(m_ic);
-    
+
     if(m_pkt) {
       av_free_packet(m_pkt);
       delete m_pkt;
       m_pkt = 0;
     }
-    
+
     if(m_resample_ctx) {
       audio_resample_close(m_resample_ctx);
       m_resample_ctx = 0;
@@ -826,9 +814,9 @@ namespace Screenplay {
     if(m_ic && m_vindex >= 0) {
       AVStream * s = m_ic->streams[m_vindex];
 
-      if (s->duration != AV_NOPTS_VALUE) {
+      if (s->duration != (int64_t) AV_NOPTS_VALUE) {
         return s->duration * av_q2d(s->time_base);
-      } else if (m_ic->duration != AV_NOPTS_VALUE) {
+      } else if (m_ic->duration != (int64_t) AV_NOPTS_VALUE) {
         // If video stream doesn't have duration, check the container for valid duration info.
         // Could also iterate over all other streams as well.
         debugScreenplay("VideoInputFFMPEG::durationSeconds # Could not get video stream duration. Using container duration.");
