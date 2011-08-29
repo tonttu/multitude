@@ -56,20 +56,6 @@ namespace Luminous
     };
   };
 
-  ////////////////////////////////////////////////////////////////////////
-  ////////////////////////////////////////////////////////////////////////
-
-  /** A dummy OpenGL context. This class can be used in place of a real OpenGL context. */
-  class LUMINOUS_API GLDummyContext : public GLContext
-  {
-  public:
-    GLDummyContext();
-    virtual ~GLDummyContext();
-
-    virtual void makeCurrent();
-    virtual GLContext * createSharedContext();
-    virtual Radiant::Mutex * mutex();
-  };
 }
 
 #endif // GLCONTEXT_HPP

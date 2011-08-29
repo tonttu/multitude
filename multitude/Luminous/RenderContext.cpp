@@ -188,7 +188,7 @@ namespace Luminous
         m_frameCount(0),
         m_window(win),
         m_viewStackPos(-1),
-        m_glContext(new GLDummyContext),
+        m_glContext(0),
         m_initialized(false),
         m_blendFunc(BLEND_USUAL)
         //m_rtm(rc)
@@ -203,7 +203,6 @@ namespace Luminous
 
     ~Internal()
     {
-      delete m_glContext;
     }
 
     void pushFBO(std::shared_ptr<FBOPackage> fbo)
@@ -1231,7 +1230,6 @@ namespace Luminous
 
   void RenderContext::setGLContext(Luminous::GLContext * ctx)
   {
-    delete m_data->m_glContext;
     m_data->m_glContext = ctx;
   }
 
