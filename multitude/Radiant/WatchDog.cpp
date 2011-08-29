@@ -41,6 +41,7 @@ namespace Radiant {
     : Radiant::Thread("Watchdog")
     , m_continue(true)
     , m_intervalSeconds(60.0f)
+    , m_paused(false)
   {
     if(!m_instance)
       m_instance = this;
@@ -75,6 +76,10 @@ namespace Radiant {
 
     while(m_continue) {
       int n = (int) ceilf(m_intervalSeconds * 10.0f);
+
+      // If paused, just sleep
+      while(m_paused)
+        Radiant::Sleep::sleepS(1);
 
       /* A single long sleep might get interrupted by system calls and
 	 return early. The method below should be more robust. */
