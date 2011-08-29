@@ -28,13 +28,9 @@ namespace Radiant {
     /// @param w The width of the grid
     /// @param h The height of the grid
     GridMemT(unsigned w = 0, unsigned h = 0)
-        : m_width(w), m_height(h)
+        : m_data(0), m_width(w), m_height(h)
     {
-      unsigned s = w * h;
-      if(s)
-        m_data = new T[s];
-      else
-        m_data = 0;
+      resize(w, h);
     }
     /// Constructs a copy
     GridMemT(const GridMemT & that) : m_data(0), m_width(0), m_height(0)
@@ -61,6 +57,9 @@ namespace Radiant {
 
       m_width = w;
       m_height = h;
+
+      // make the memory size dividable by 4
+      while(s & 0x3) ++s;
 
       if(s == smy)
         return;
