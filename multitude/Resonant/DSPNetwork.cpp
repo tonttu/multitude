@@ -315,12 +315,11 @@ namespace Resonant {
 
     m_incopy.rewind();
 
-    char buf[512];
-
-    std::string id;
-    id.reserve(512);
-
     while(m_incopy.pos() < sentinel) {
+      char buf[512];
+
+      std::string id;
+      id.reserve(512);
       buf[0] = 0;
 
       if(!m_incopy.readString(buf, 512)) {
