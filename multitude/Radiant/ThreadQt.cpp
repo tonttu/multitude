@@ -70,16 +70,23 @@ namespace Radiant {
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-  Thread::Thread()
-    : m_d(new D(this)),
-    m_state(STOPPED)
-  {}
+  Thread::Thread(const char * name)
+    : m_d(new D(this))
+    , m_state(STOPPED)
+  {
+    setName(name);
+  }
 
   Thread::~Thread()
   {
     assert(isRunning() == false);
 
 	  delete m_d;
+  }
+
+  void Thread::setName(const char * name)
+  {
+    m_d->setObjectName(QString(name));
   }
 
   Thread::id_t Thread::myThreadId()

@@ -38,8 +38,9 @@ namespace Radiant {
   WatchDog * WatchDog::m_instance = 0;
 
   WatchDog::WatchDog()
-    : m_continue(true),
-    m_intervalSeconds(60.0f)
+    : Radiant::Thread("Watchdog")
+    , m_continue(true),
+    , m_intervalSeconds(60.0f)
   {
     if(!m_instance)
       m_instance = this;
