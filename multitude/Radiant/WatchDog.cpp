@@ -39,7 +39,7 @@ namespace Radiant {
 
   WatchDog::WatchDog()
     : Radiant::Thread("Watchdog")
-    , m_continue(true),
+    , m_continue(true)
     , m_intervalSeconds(60.0f)
   {
     if(!m_instance)
