@@ -161,11 +161,13 @@ namespace Radiant {
       Guard lock(g_mutex);
 
       // Skip duplicates
-      std::string tmp(storage);
-      if(enabledDuplicateFilter() && g_lastLogLine == tmp)
-        return;
+      if(enabledDuplicateFilter()) {
+        std::string tmp(storage);
+        if(g_lastLogLine == tmp)
+          return;
 
-      g_lastLogLine = tmp;
+        g_lastLogLine = tmp;
+      }
 
       time_t t = now.value() >> 24;
       /// localtime is not thread-safe
