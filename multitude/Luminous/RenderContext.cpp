@@ -210,9 +210,8 @@ namespace Luminous
       m_fboStack.push(fbo);
     }
 
-    std::shared_ptr<FBOPackage> popFBO(std::shared_ptr<FBOPackage> fbo)
+    std::shared_ptr<FBOPackage> popFBO()
     {
-      assert(fbo == m_fboStack.top());
       m_fboStack.pop();
 
       return m_fboStack.empty() ? std::shared_ptr<FBOPackage>() : m_fboStack.top();
@@ -1210,7 +1209,7 @@ namespace Luminous
 
     fbo->m_fbo.unbind();
 
-    fbo = m_data->popFBO(fbo);
+    fbo = m_data->popFBO();
 
     if(fbo) {
       fbo->attach();
