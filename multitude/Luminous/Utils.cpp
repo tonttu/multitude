@@ -1487,12 +1487,12 @@ namespace Luminous {
       for(j = 0; j <= cornerLineSegments; j++)
       {
         angle = fromRadians + j * delta;
-	float sa = sinf(angle);
-	float ca = -cosf(angle);
+        float sa = sinf(angle);
+        float ca = -cosf(angle);
 
         x = sa * cornerRadius + arcCenters[i].x;
         y = ca * cornerRadius + arcCenters[i].y;
-	buffer[index++] = (m * Vector2(x, y)).vector2();
+        buffer[index++] = (m * Vector2(x, y)).vector2();
       }
       fromRadians += float(Math::HALF_PI);
     }
