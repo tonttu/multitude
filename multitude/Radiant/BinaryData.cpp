@@ -117,7 +117,7 @@ namespace Radiant {
   void BinaryData::writeInt64(int64_t v)
   {
     ensure(12);
-    getRef<int64_t>() = INT64_MARKER;
+    getRef<int32_t>() = INT64_MARKER;
     getRef<int64_t>() = v;
   }
 
@@ -371,7 +371,7 @@ namespace Radiant {
       return 0;
     }
 
-    int64_t marker = getRef<int64_t>();
+    int32_t marker = getRef<int32_t>();
 
     if(marker == INT64_MARKER)
       return getRef<int64_t>();
