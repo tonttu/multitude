@@ -42,13 +42,17 @@ namespace Radiant {
   enum VideoInputFlags {
     DONT_CARE = -1,
     /// Try to decode the video data from the data stream
-    WITH_VIDEO = 0x1,
+    WITH_VIDEO = (1 << 0),
     /// Try to decode the PCM audio from the data stream
-    WITH_AUDIO = 0x2,
+    WITH_AUDIO = (1 << 1),
     /// Loop the video source, when it reaches the end
-    DO_LOOP = 0x4,
+    DO_LOOP = (1 << 2),
     /// If the audio has multiple channels, force the audio to mono
-    MONOPHONIZE_AUDIO = 0x8
+    MONOPHONIZE_AUDIO = (1 << 3),
+    /// Display preview image when video is paused
+    PREVIEW_ON_PAUSE = (1 << 4),
+    /// Display preview image when video is in beginning
+    PREVIEW_ON_START = (1 << 5)
   };
 
   /// Convert enumerated frame rate into floating point
