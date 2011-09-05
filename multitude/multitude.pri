@@ -46,6 +46,8 @@ linux-*:vivid {
 }
 
 linux-*{
+  SHARED_LIB_SUFFIX = so
+
   contains(USEGLEW,no) {
     DEFINES += MULTI_WITHOUT_GLEW=1
   } else {
@@ -72,6 +74,7 @@ contains(MEMCHECK,yes) {
 }
 
 macx {
+  SHARED_LIB_SUFFIX = dylib
   LIBS += -undefined dynamic_lookup
 
   # Frameworks on OS X don't respect QMAKE_LIBDIR
