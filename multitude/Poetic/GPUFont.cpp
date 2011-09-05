@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Poetic.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Poetic.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #include "GPUFont.hpp"
@@ -68,7 +56,7 @@ namespace Poetic
   {
     std::wstring wstr = str.toStdWString();
     internalRender(wstr.c_str(), (int) wstr.size(),
-		   Nimble::Matrix3::translate2D(location));
+           Nimble::Matrix3::translate2D(location));
   }
 
   void GPUFont::render(const QString & str)
@@ -132,7 +120,7 @@ namespace Poetic
   }
 
   void GPUFont::renderCentered(const char * str,
-			       const Nimble::Matrix3 & transform)
+                   const Nimble::Matrix3 & transform)
   {
     BBox bb;
 
@@ -143,7 +131,7 @@ namespace Poetic
   }
 
   void GPUFont::renderCentered(const wchar_t * str,
-			       const Nimble::Matrix3 & transform)
+                   const Nimble::Matrix3 & transform)
   {
     BBox bb;
 
@@ -157,26 +145,38 @@ namespace Poetic
   {
     float lh = cpuFont()->lineHeight();
 
-    int left = (int) strlen(str);
-    int linelen = strchrnul(str, '\n') - str;
+    int left, linelen;
+
+    if(str) {
+      left = (int) strlen(str);
+      linelen = strchr(str, '\n') - str;
+    }
+    else {
+      left = 0;
+      linelen = 0;
+    }
 
     while(left) {
-          
+
       if(linelen) {
         render(str, linelen, Nimble::Matrix3::translate2D(loc));
       }
 
       loc.y += lh;
-          
+
       str += linelen + 1;
 
       if(linelen >= left)
         left = 0;
-      else {
+      else if(str) {
         left = (int) strlen(str);
-        linelen = strchrnul(str, '\n') - str;
+        linelen = strchr(str, '\n') - str;
+      }
+      else {
+        left = 0;
+        linelen = 0;
       }
     }
-    
+
   }
 }
