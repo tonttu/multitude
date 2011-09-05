@@ -20,6 +20,7 @@
 #include <Radiant/FileUtils.hpp>
 #include <Radiant/Sleep.hpp>
 #include <Radiant/Trace.hpp>
+#include <Radiant/StringUtils.hpp>
 
 #include <typeinfo>
 #include <cassert>
@@ -129,7 +130,7 @@ namespace Luminous
     for(container::iterator it = m_taskQueue.begin(); it != m_taskQueue.end(); it++) {
       Radiant::FileUtils::indent(f, indent);
       std::shared_ptr<Task> t = it->second;
-      fprintf(f, "TASK %s %p\n", typeid(*t).name(), t.get());
+      fprintf(f, "TASK %s %p\n", Radiant::StringUtils::demangle(typeid(*t).name()).c_str(), t.get());
       Radiant::FileUtils::indent(f, indent + 1);
       fprintf(f, "PRIORITY = %d UNTIL = %.3f\n", (int) t->priority(),
               (float) -t->scheduled().sinceSecondsD());
