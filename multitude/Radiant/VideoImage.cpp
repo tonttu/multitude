@@ -23,11 +23,21 @@
 #include <stdlib.h>
 #include <string.h>
 
+namespace {
+  // always allocate memory rounded to the next number dividable by four
+  // to make some optimization code possible
+  unsigned char * mtmalloc4(int size)
+  {
+    while(size & 0x3) ++size;
+    return new unsigned char[size];
+  }
+}
+
 namespace Radiant {
 
   void VideoImage::Plane::freeMemory()
   {
-    mtfree(m_data);
+    delete[] m_data;
     m_data = 0;
   }
 
@@ -118,7 +128,7 @@ namespace Radiant {
       else
         trace(FATAL, "VideoImage::allocateMemory");
 
-      unsigned char * buf = (unsigned char*) mtmalloc(ls * h);
+      unsigned char * buf = mtmalloc4(ls * h);
 
       m_planes[0].set(buf, ls, pt);
     }
@@ -128,9 +138,9 @@ namespace Radiant {
 
       int pixels4 = pixels >> 2;
 
-      m_planes[0].set((unsigned char *) mtmalloc(pixels),  w, PLANE_Y);
-      m_planes[1].set((unsigned char *) mtmalloc(pixels4), w / 2, PLANE_U);
-      m_planes[2].set((unsigned char *) mtmalloc(pixels4), w / 2, PLANE_V);
+      m_planes[0].set(mtmalloc4(pixels),  w, PLANE_Y);
+      m_planes[1].set(mtmalloc4(pixels4), w / 2, PLANE_U);
+      m_planes[2].set(mtmalloc4(pixels4), w / 2, PLANE_V);
     }
     else if(fmt == IMAGE_YUV_422P) {
 
@@ -138,9 +148,9 @@ namespace Radiant {
 
       int pixels2 = pixels >> 1;
 
-      m_planes[0].set((unsigned char *) mtmalloc(pixels), w, PLANE_Y);
-      m_planes[1].set((unsigned char *) mtmalloc(pixels2), w / 2, PLANE_U);
-      m_planes[2].set((unsigned char *) mtmalloc(pixels2), w / 2, PLANE_V);
+      m_planes[0].set(mtmalloc4(pixels), w, PLANE_Y);
+      m_planes[1].set(mtmalloc4(pixels2), w / 2, PLANE_U);
+      m_planes[2].set(mtmalloc4(pixels2), w / 2, PLANE_V);
     }
     else
       return false;

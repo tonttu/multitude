@@ -155,6 +155,9 @@ namespace Screenplay {
 
           m_lastPts = pts;
 
+          /// @todo crashes here once, trying find why
+          assert(m_vindex >= 0);
+
           AVRational time_base = m_ic->streams[m_vindex]->time_base;
 
           double rate = av_q2d(time_base);

@@ -270,14 +270,13 @@ namespace VideoDisplay {
     /* Wake up the decoder thread that might be (stuck) in the putFrame.*/
     if(m_decodedFrames > 4) {
       m_breakBack = true;
-      m_vmutex.lock();
 
+      Radiant::Guard g(m_vmutex);
       while(m_consumedFrames < m_decodedFrames - 2
             /* &&m_consumedAuFrames < m_decodedFrames - 2*/) {
         // info("Walkback the decoding process");
         m_decodedFrames--;
       }
-      m_vmutex.unlock();
       m_vcond.wakeAll();
     }
 
@@ -386,17 +385,16 @@ namespace VideoDisplay {
 
     while(m_continue) {
 
-      m_requestMutex.lock();
       Req req;
 
-      if(m_consumedRequests >= m_queuedRequests) {
-        ;
+      {
+        Radiant::Guard g(m_requestMutex);
+
+        if(m_consumedRequests < m_queuedRequests) {
+          req = m_requests[m_consumedRequests % REQUEST_QUEUE_SIZE];
+          m_consumedRequests++;
+        }
       }
-      else {
-        req = m_requests[m_consumedRequests % REQUEST_QUEUE_SIZE];
-        m_consumedRequests++;
-      }
-      m_requestMutex.unlock();
 
       if(req.m_request != NO_REQUEST && req.m_request != FREE_MEMORY)
         debugVideoDisplay("VideoIn::childLoop # REQ = %d p = %d",
@@ -441,21 +439,21 @@ namespace VideoDisplay {
   {
     assert(m_frames.size() != 0);
 
-    m_vmutex.lock();
+    {
+      Radiant::Guard g(m_vmutex);
 
-    if(immediate && false) {
-      // Ignored.
-      while((m_decodedFrames - 4) >= m_consumedFrames &&
-            (m_decodedFrames - 4) >= m_consumedAuFrames)
-        m_decodedFrames--;
+      if(immediate && false) {
+        // Ignored.
+        while((m_decodedFrames - 4) >= m_consumedFrames &&
+              (m_decodedFrames - 4) >= m_consumedAuFrames)
+          m_decodedFrames--;
+      }
+
+      while(((m_decodedFrames + 4) >= (m_consumedFrames + m_frames.size()) ||
+             (m_decodedFrames + 4) >= (m_consumedAuFrames + m_frames.size())) &&
+            m_continue)
+        m_vcond.wait(m_vmutex, 500);
     }
-
-    while(((m_decodedFrames + 4) >= (m_consumedFrames + m_frames.size()) ||
-           (m_decodedFrames + 4) >= (m_consumedAuFrames + m_frames.size())) &&
-          m_continue)
-      // m_vcond.wait(1000);
-      m_vcond.wait(m_vmutex, 500);
-    m_vmutex.unlock();
 
     if(!m_continue) {
       return 0;

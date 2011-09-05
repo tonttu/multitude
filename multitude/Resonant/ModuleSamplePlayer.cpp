@@ -371,9 +371,8 @@ namespace Resonant {
         }
       }
 
-      m_mutex.lock();
+      Radiant::Guard g(m_mutex);
       m_cond.wait(m_mutex);
-      m_mutex.unlock();
     }
   }
 

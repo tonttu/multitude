@@ -118,9 +118,9 @@ namespace Radiant {
     bool use_colors = g_forceColors || (out == stderr && stderr_is_tty) ||
         (out == stdout && stdout_is_tty);
 
-    const char* timestamp_color = "";
-    const char* color = "";
-    const char* colors_end = "";
+    const char * timestamp_color = "";
+    const char * color = "";
+    const char * colors_end = "";
 
     if(use_colors) {
       if(s == WARNING) {
@@ -134,54 +134,64 @@ namespace Radiant {
       colors_end = "\033[0m";
     }
 
-    Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
-
-    Guard lock(g_mutex);
-
-    // Skip duplicates
-    if (enabledDuplicateFilter() && g_lastLogLine == msg)
-      return;
-
-    g_lastLogLine = msg;
-
-    time_t t = now.value() >> 24;
-    /// localtime is not thread-safe
-    struct tm * ts = localtime(&t);
-    fprintf(out, "%s[%04d-%02d-%02d %02d:%02d:%02d.%03d]%s ", timestamp_color,
-            ts->tm_year+1900, ts->tm_mon+1, ts->tm_mday,
-            ts->tm_hour, ts->tm_min, ts->tm_sec, int(now.subSecondsUS()) / 1000,
-            colors_end);
+    char storage[1024];
+    char * buffer = storage;
+    int size = sizeof(storage), ret = 0;
 
     if(g_appname.empty()) {
-      if (module) {
-        fprintf(out, "%s> %s%s", module, color, prefixes[s]);
+      if(module) {
+        ret = snprintf(buffer, size, "%s> %s%s", module, color, prefixes[s]);
       } else {
-        fprintf(out, "%s%s", color, prefixes[s]);
+        ret = snprintf(buffer, size, "%s%s", color, prefixes[s]);
       }
     } else {
       if (module) {
-        fprintf(out, "%s: %s> %s%s", g_appname.c_str(), module, color, prefixes[s]);
+        ret = snprintf(buffer, size, "%s: %s> %s%s", g_appname.c_str(), module, color, prefixes[s]);
       } else {
-        fprintf(out, "%s: %s%s", g_appname.c_str(), color, prefixes[s]);
+        ret = snprintf(buffer, size, "%s: %s%s", g_appname.c_str(), color, prefixes[s]);
       }
     }
+    if(ret > 0) size -= ret, buffer += ret;
 
-    vfprintf(out, msg, args);
+    vsnprintf(buffer, size, msg, args);
+
+    Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
+
+    {
+      Guard lock(g_mutex);
+
+      // Skip duplicates
+      if(enabledDuplicateFilter()) {
+        std::string tmp(storage);
+        if(g_lastLogLine == tmp)
+          return;
+
+        g_lastLogLine = tmp;
+      }
+
+      time_t t = now.value() >> 24;
+      /// localtime is not thread-safe
+      struct tm * ts = localtime(&t);
+
+      fprintf(out, "%s[%04d-%02d-%02d %02d:%02d:%02d.%03d]%s %s%s\n", timestamp_color,
+              ts->tm_year+1900, ts->tm_mon+1, ts->tm_mday,
+              ts->tm_hour, ts->tm_min, ts->tm_sec,
+              int(now.subSecondsUS()) / 1000, colors_end, storage,
+              colors_end);
 
 #ifdef _WIN32
-	// Log to the Windows debug-console as well
-	char logmsg[256];
-	vsnprintf(logmsg, 256, msg, args);
+    // Log to the Windows debug-console as well
+    char logmsg[256];
+    vsnprintf(logmsg, 256, msg, args);
 
-  char threadId[16];
-  _snprintf(threadId, 16, "[thr:%d] ", GetCurrentThreadId());
+    char threadId[16];
+    _snprintf(threadId, 16, "[thr:%d] ", GetCurrentThreadId());
   
-  OutputDebugStringA(threadId);
-	OutputDebugStringA(logmsg);
-	OutputDebugStringA("\n");
+    OutputDebugStringA(threadId);
+    OutputDebugStringA(logmsg);
+    OutputDebugStringA("\n");
 #endif
-
-    fprintf(out,"%s\n", colors_end);
+    }
     fflush(out);
   }
 
