@@ -38,13 +38,17 @@
 
 #include <cmath>
 
+namespace {
+  Radiant::Mutex s_openCameraMutex;
+
+  long unsigned s_bandwidth = 0;
+}
+
 namespace FireView {
 
   const char * yesNo(bool v) { return v ? "yes" : "no"; }
 
   using namespace Radiant;
-
-  Mutex __cvmutex;
 
   CamView::InputThread::InputThread()
       : m_camera(0),
@@ -54,8 +58,6 @@ namespace FireView {
       m_lastCheckFrame(0),
       m_lastCheckFps(0)
   {
-    __cvmutex.lock();
-    __cvmutex.unlock();
   }
 
   CamView::InputThread::~InputThread()
@@ -238,7 +240,8 @@ namespace FireView {
 
   bool CamView::InputThread::openCamera()
   {
-    Radiant::Guard g(__cvmutex);
+    // Locking _before_ sleeping on purpose, since some drivers need the delay
+    Radiant::Guard g(s_openCameraMutex);
 
     Radiant::Sleep::sleepMs(200);
 
@@ -248,6 +251,7 @@ namespace FireView {
     if(!m_camera) return false;
 
     if(!m_format7) {
+      increaseBandwidth(640, 480, Radiant::asFloat(m_fps));
       ok = m_camera->open(m_euid64, 640, 480, Radiant::IMAGE_UNKNOWN, m_fps);
     }
     else {
@@ -261,7 +265,7 @@ namespace FireView {
       /* static int index = 0;
       r.low().x += index * 4;
       index++; */
-
+      increaseBandwidth(r.width(), r.height(), m_customFps);
       ok = m_camera->openFormat7(m_euid64, r, m_customFps, CamView::format7Mode());
     }
 
@@ -374,6 +378,14 @@ namespace FireView {
     }
 
     return true;
+  }
+
+  void CamView::InputThread::increaseBandwidth(int width, int height, float fps)
+  {
+    long unsigned bandwidth = width * height * 8 * (int)fps;
+    s_bandwidth += bandwidth;
+
+    qDebug("Total bandwidth required: %lu Mbps", s_bandwidth >> 20);
   }
 
   /////////////////////////////////////////////////////////////////////////////

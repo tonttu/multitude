@@ -54,6 +54,10 @@ namespace Radiant {
     /** Stops the watchdog. */
     void stop();
 
+    /// Pauses the watchdog
+    void pause() { m_paused = true; }
+    void unpause() { m_paused = false; }
+
     /// Gets the first watchdog instance.
     static WatchDog * instance();
 
@@ -75,6 +79,7 @@ namespace Radiant {
     Radiant::Mutex m_mutex;
     volatile bool m_continue;
     float m_intervalSeconds;
+    bool m_paused;
 
     static WatchDog *m_instance;
 

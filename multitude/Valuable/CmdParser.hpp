@@ -43,7 +43,7 @@ namespace Valuable
      * If the Attribute name is only one letter, then the parser also recognizes
      * the command like argument that begins with one dash, like <tt>-o dir</tt>
      *
-     * Boolean arguments (ValueBool objects) don't use distinct parameter, but
+     * Boolean arguments (AttributeBool objects) don't use distinct parameter, but
      * they will be switched on by \c --name and off by \c --no-name.
      *
      * Example:
@@ -51,8 +51,8 @@ namespace Valuable
      * Node opts;
      * AttributeInt limit(&opts, "limit", 5);
      * ValueString target(&opts, "target", "/tmp/target");
-     * ValueBool verbose(&opts, "v", false);
-     * ValueBool recursive(&opts, "recursive", true);
+     * AttributeBool verbose(&opts, "v", false);
+     * AttributeBool recursive(&opts, "recursive", true);
      * StringList files = CmdParser::parse(argc, argv, opts);
      * \endcode
      * Example input: -v --limit 12 --no-recursive --target out file1.txt file2.txt

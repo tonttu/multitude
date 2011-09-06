@@ -56,7 +56,7 @@ namespace Radiant {
 
     /** Construct a thread structure. The thread is NOT activated by this
     method. */
-    Thread();
+    Thread(const char * name = "Radiant::Thread");
 
     /// Destructor
     /** The thread must be stopped before this method is
@@ -65,6 +65,8 @@ namespace Radiant {
     function does not exist any more (its destructor is called
     before this function). */
     virtual ~Thread();
+
+    void setName(const char * name);
 
     /** Starts the thread */
     void run();

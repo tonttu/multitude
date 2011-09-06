@@ -12,14 +12,17 @@
  * from the GNU organization (www.gnu.org).
  * 
  */
+
+#include "Platform.hpp"
+
+#ifdef RADIANT_WINDOWS
+
 #include "PlatformUtils.hpp"
 #include "StringUtils.hpp"
 #include "Trace.hpp"
 
 #include <assert.h>
 
-// #include <windows.h>
-// #include <winbase.h>
 #include <shlobj.h>
 #include <shlwapi.h>
 
@@ -165,5 +168,6 @@ namespace Radiant
 
   }
 
-
 }
+
+#endif

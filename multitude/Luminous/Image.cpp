@@ -672,61 +672,6 @@ namespace Luminous
                                 PixelFormat::TYPE_UNKNOWN);
     changed();
   }
-  /*
-     void Image::scale(int reqWidth, int reqHeight, bool keepAspectRatio, Image& dest) const
-     {
-     dest.clear();
-
-     if(empty()) {
-     trace("Image::scaled # Scaling empty image");
-     return;
-     }
-#if 1
-dest = *this;
-#else
-  // Compute new dimensions
-  int newWidth, newHeight;
-
-  if(!keepAspectRatio) {
-  newWidth = reqWidth;
-  newHeight = reqHeight;
-  } else {
-  int rw = reqHeight * m_width / m_height;
-
-  bool useHeight = (rw <= reqWidth);
-
-  if(useHeight) {
-  newWidth = rw;
-  newHeight = reqHeight;
-  } else {
-  newHeight = reqWidth * m_height / m_width;
-  newWidth = reqWidth;
-  }
-  }
-
-  // No need to scale, just return a copy
-  if(newWidth == m_width && newHeight == m_height) {
-  dest = *this;
-  return;
-  }
-
-  dest.allocate(newWidth, newHeight, m_pixelFormat);
-
-  float xRatio = (float)m_width / (float)newWidth;
-  float yRatio = (float)m_height / (float)newHeight;
-
-  for(int y = 0; y < newHeight; y++) {
-  for(int x = 0; x < newWidth; x++) {
-
-  float sx = (float)x * xRatio;
-  float sy = (float)y * yRatio;
-
-  sample(sx, sy, xRatio, yRatio, dest, x, y);
-  }
-  }
-#endif
-}
-*/
 
   bool Image::ping(const char * filename, ImageInfo & info)
   {
@@ -797,36 +742,21 @@ dest = *this;
     return Nimble::Vector4(0, 0, 0, 1);
   }
 
+  ////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////
 
-  bool ImageTex::bind(GLenum textureUnit, bool withmimaps)
-  {
-    bool ret = true;
-
-    Texture2D & tex = ref();
-    tex.bind(textureUnit);
-
-    /// @todo checking generation should be enough unless stuff bugs
-    if(tex.width() != width() || tex.height() != height() || tex.generation() != generation()) {
-
-      ret = tex.loadImage(*this, withmimaps);
-      tex.setGeneration(generation());
-    }
-
-    return ret;
-  }
+  ImageTex::ImageTex()
+  {}
 
   bool ImageTex::bind(GLResources * resources, GLenum textureUnit, bool withmipmaps, int internalFormat)
   {
-    // Luminous::Utils::glCheck("ImageTex::bind # 0");
     bool ret = true;
 
     Texture2D & tex = ref(resources);
+
     tex.bind(textureUnit);
 
-    // Luminous::Utils::glCheck("ImageTex::bind # 1");
-
-    /// @todo checking generation should be enough unless stuff bugs
-    if(tex.width() != width() || tex.height() != height() || tex.generation() != generation()) {
+    if(tex.generation() != generation()) {
       ret = tex.loadImage(*this, withmipmaps, internalFormat);
       tex.setGeneration(generation());
     }
@@ -847,7 +777,7 @@ dest = *this;
 
     Texture2D & tex = ref(resources);
 
-    return (tex.loadedLines() == (unsigned) height());
+    return (tex.m_uploadedLines == size_t(height()));
   }
 
   ImageTex * ImageTex::move()

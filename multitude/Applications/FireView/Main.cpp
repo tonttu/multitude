@@ -58,10 +58,10 @@ void helper(const char * app)
      "\nEXAMPLES:\n"
      " %s             - Run all cameras at 15 fps\n"
      " %s --scanbus   - List cameras, with IDs\n"
-     " %s --fps 47    - Run all cameras at 47 fps (with SW triggering)\n"
-     " %s --rate 30   - Run all cameras at 30 fps (internal triggering)\n"
-     " %s --rate 60 --triggersource 0  - Run all cameras at max 60 fps with hardware trigger\n"
-     " %s --rate 60 --triggersource 0 --triggermode 0 - Run all cameras at max 60 fps with trigger source 0 and trigger mode 0\n"
+     " %s --fps 47    - Run all cameras at 47 fps (with SW triggering, It may run out of bandwith)\n"
+     " %s --rate 30   - Run all cameras at 30 fps (internal triggering, It may run out of bandwith)\n"
+     " %s --rate 60 --triggersource 0  - Run all cameras at max 60 fps with hardware trigger(It may run out of bandwith)\n"
+     " %s --rate 60 --triggersource 0 --triggermode 0 - Run all cameras at max 60 fps with trigger source 0 and trigger mode 0(It may run out of bandwith)\n"
      " %s --fps 120 --format7 1 --triggersource 0 --triggermode 0  --format7area \"60 0 356 206\" - Test high-speed triggered format 7 operation\n",
      7, Radiant::VideoCamera::TRIGGER_SOURCE_MAX - 1,
       app, app, app, app, app, app, app);

@@ -232,7 +232,7 @@ namespace Radiant {
     iterator begin() { return m_points.begin(); }
     /// Returns iterator to the end of the vector
     /// @returns Iterator to the end of the vector
-    iterator end() { return m_points.end(); }
+    iterator end() { return m_points.begin() + m_count; }
 
     /// Returns the element at the given index 
     /// @returns the element at the given index 

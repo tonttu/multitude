@@ -16,9 +16,9 @@
 #ifndef RADIANT_RADIANT_HPP
 #define RADIANT_RADIANT_HPP
 
-/// Radiant library is a collection of C++ utility classes.
+/** Radiant library is a collection of C++ utility classes.
 
-/** Radiant is a collection of C++ classes geared at wrapping
+    Radiant is a collection of C++ classes geared at wrapping
     platform-dependent programming features (threads, mutexes,
     sockets, etc.). Radiant also includes a collection of utilities
     for handling some vary basic string/file manipulation that is
@@ -26,20 +26,18 @@
 
     \b Copyright: The Radiant library has been developed by Helsinki
     Institute for Information Technology (HIIT, 2006-2008) and
-    MultiTouch Oy (2007-2008).
+    MultiTouch Oy (2007-2011).
 
     Radiant is released under the GNU Lesser General Public License
     (LGPL), version 2.1.
 
     @author Tommi Ilmonen, Esa Nuuros, Jarmo Hiipakka, Juha Laitinen,
     Jari Kleimola, George Whale
-
 */
-
-#define debugRadiant(...) (Radiant::trace("Radiant", Radiant::DEBUG, __VA_ARGS__))
-
 namespace Radiant {
 
 }
+
+#define debugRadiant(...) (Radiant::trace("Radiant", Radiant::DEBUG, __VA_ARGS__))
 
 #endif

@@ -21,6 +21,7 @@
 
 #include <Radiant/Condition.hpp>
 #include <Radiant/Mutex.hpp>
+#include <Radiant/Singleton.hpp>
 #include <Radiant/ThreadPool.hpp>
 #include <Radiant/RefPtr.hpp>
 
@@ -35,7 +36,7 @@ namespace Luminous
 
   class LUMINOUS_API BGThread : public Radiant::ThreadPool
   {
-
+    DECLARE_SINGLETON(BGThread);
   public:
     BGThread();
     virtual ~BGThread();
@@ -72,11 +73,6 @@ namespace Luminous
 
     /// Change the priority of a task
     virtual void setPriority(std::shared_ptr<Task> task, Priority p);
-
-    /** @return Returns the global BGThread instance. If no BGThread has been created
-        yet, one will be created now.
-        */
-    static std::shared_ptr<BGThread> instance();
 
     /// Container for the tasks
     typedef std::multimap<Priority, std::shared_ptr<Task>, std::greater<Priority> > container;
@@ -118,8 +114,6 @@ namespace Luminous
     Radiant::Condition m_idleWait;
 
     QAtomicInt m_runningTasks;
-
-    static std::weak_ptr<BGThread> m_instance;
   };
 
 }

@@ -39,8 +39,6 @@ namespace Luminous
     }
   };
 
-  std::weak_ptr<BGThread> BGThread::m_instance;
-
   BGThread::BGThread()
     : m_idle(0)
   {
@@ -48,6 +46,7 @@ namespace Luminous
 
   BGThread::~BGThread()
   {
+    Radiant::info("Waiting for all background threads to finish...");
     stop();
   }
 
@@ -135,19 +134,6 @@ namespace Luminous
       } else wakeThread();
     }
   }
-
-   std::shared_ptr<BGThread> BGThread::instance()
-   {
-     std::shared_ptr<BGThread> p = m_instance.lock();
-     if(!p) {
-       p.reset(new BGThread());
-       p->run();
-
-       m_instance = p;
-     }
-
-     return p;
-   }
 
   unsigned BGThread::taskCount()
   {
@@ -306,3 +292,5 @@ namespace Luminous
     m_idleWait.wakeAll();
   }
 }
+
+DEFINE_SINGLETON(Luminous::BGThread);

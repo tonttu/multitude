@@ -13,13 +13,16 @@
  * 
  */
 
+#include "Platform.hpp"
+
+#ifndef RADIANT_WINDOWS
+
 #include "SHMPipe.hpp"
 #include "Radiant.hpp"
-
-#include <Radiant/StringUtils.hpp>
-#include <Radiant/Sleep.hpp>
-#include <Radiant/TimeStamp.hpp>
-#include <Radiant/Trace.hpp>
+#include "StringUtils.hpp"
+#include "Sleep.hpp"
+#include "TimeStamp.hpp"
+#include "Trace.hpp"
 
 #include <Nimble/Math.hpp>
 
@@ -650,3 +653,5 @@ namespace Radiant
   }
 
 }
+
+#endif

@@ -188,7 +188,7 @@ namespace Luminous
         m_frameCount(0),
         m_window(win),
         m_viewStackPos(-1),
-        m_glContext(new GLDummyContext),
+        m_glContext(0),
         m_initialized(false),
         m_blendFunc(BLEND_USUAL)
         //m_rtm(rc)
@@ -203,7 +203,6 @@ namespace Luminous
 
     ~Internal()
     {
-      delete m_glContext;
     }
 
     void pushFBO(std::shared_ptr<FBOPackage> fbo)
@@ -211,9 +210,8 @@ namespace Luminous
       m_fboStack.push(fbo);
     }
 
-    std::shared_ptr<FBOPackage> popFBO(std::shared_ptr<FBOPackage> fbo)
+    std::shared_ptr<FBOPackage> popFBO()
     {
-      assert(fbo == m_fboStack.top());
       m_fboStack.pop();
 
       return m_fboStack.empty() ? std::shared_ptr<FBOPackage>() : m_fboStack.top();
@@ -633,9 +631,9 @@ namespace Luminous
     m_data->m_clipStack.pop_back();
   }
 
-  const Nimble::Rectangle * RenderContext::clipRect() const
+  const std::vector<Nimble::Rectangle> & RenderContext::clipStack() const
   {
-    return m_data->m_clipStack.empty() ? 0 : &m_data->m_clipStack.back();
+    return m_data->m_clipStack;
   }
 
   bool RenderContext::isVisible(const Nimble::Rectangle & area)
@@ -1211,7 +1209,7 @@ namespace Luminous
 
     fbo->m_fbo.unbind();
 
-    fbo = m_data->popFBO(fbo);
+    fbo = m_data->popFBO();
 
     if(fbo) {
       fbo->attach();
@@ -1231,7 +1229,6 @@ namespace Luminous
 
   void RenderContext::setGLContext(Luminous::GLContext * ctx)
   {
-    delete m_data->m_glContext;
     m_data->m_glContext = ctx;
   }
 

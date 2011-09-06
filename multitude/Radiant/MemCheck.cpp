@@ -24,6 +24,7 @@ namespace Radiant {
 
   MemChecker::~MemChecker()
   {
+#if MULTI_MEMCHECK
     Radiant::Guard lock(m_mutex);
 
     // Display any allocations that are still open
@@ -40,6 +41,7 @@ namespace Radiant {
         it->second.stack.print();
       }
     }
+#endif
   }
 
   void * MemChecker::malloc(size_t s)

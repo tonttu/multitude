@@ -1,6 +1,10 @@
 /* COPYRIGHT
  */
 
+#include "Platform.hpp"
+
+#ifdef RADIANT_UNIX
+
 #include "LockFile.hpp"
 #include <sys/file.h>
 #include <unistd.h>
@@ -46,3 +50,5 @@ namespace Radiant
     return m_impl->isLocked();
   }
 }
+
+#endif

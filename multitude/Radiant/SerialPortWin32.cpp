@@ -13,6 +13,10 @@
  * 
  */
 
+#include "Platform.hpp"
+
+#ifdef RADIANT_WINDOWS
+
 #include "Radiant.hpp"
 
 #include <Radiant/StringUtils.hpp>
@@ -203,3 +207,5 @@ namespace Radiant
   }
 
 }
+
+#endif

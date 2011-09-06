@@ -1,6 +1,10 @@
 /* COPYRIGHT
  */
 
+#include "Platform.hpp"
+
+#ifdef RADIANT_WINDOWS
+
 #include "LockFile.hpp"
 
 #define NOMINMAX
@@ -45,3 +49,5 @@ namespace Radiant
     return m_impl->isLocked();
   }
 }
+
+#endif

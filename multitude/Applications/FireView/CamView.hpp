@@ -159,6 +159,7 @@ namespace FireView {
       virtual void childLoop();
 
       bool openCamera();
+      void increaseBandwidth(int width, int height, float fps);
 
       Radiant::VideoCamera * m_camera;
       Radiant::Mutex m_mutex;

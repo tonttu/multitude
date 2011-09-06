@@ -371,6 +371,7 @@ namespace Luminous {
     // Mark the mipmap that it has been used
     markImage(bestAvailable);
 
+    // Handle compressed images
     if(m_info.pf.compression()) {
       si.bound = bestAvailable;
       std::shared_ptr<CompressedImageTex> img = getCompressedImage(bestAvailable);
@@ -378,6 +379,7 @@ namespace Luminous {
       return true;
     }
 
+    // Handle non-compressed images
     std::shared_ptr<ImageTex> img = getImage(bestAvailable);
 
     if(img->isFullyLoadedToGPU()) {
@@ -387,10 +389,25 @@ namespace Luminous {
       return true;
     }
 
-    if(img->bind(resources, textureUnit, false)) {
-      si.bound = bestAvailable;
-      return true;
+    // Do progressive upload
+    Luminous::Texture2D & tex = img->ref(resources);
+
+    // We must allocate the texture memory before we can upload anything
+    if(tex.generation() != img->generation()) {
+
+      //Radiant::warning("CPUMipmaps::bind # texture and image generations don't match, reallocate texture memory");
+
+      // Let the driver decide what internal format to use
+      GLenum internalFormat = img->pixelFormat().numChannels();
+
+      tex.loadBytes(internalFormat, img->width(), img->height(), NULL, img->pixelFormat(), false);
+      tex.setGeneration(img->generation());
     }
+
+    bool fullyUploaded = tex.progressiveUpload(resources, textureUnit, *img);
+
+    if(fullyUploaded)
+      return true;
 
     // If the requested texture is not fully uploaded, test if there is
     // anything we can use already

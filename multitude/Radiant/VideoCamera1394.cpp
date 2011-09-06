@@ -15,15 +15,19 @@
 
 // Some original source code by Juha Laitinen still may be around.
 
+#include "Platform.hpp"
+
+#ifdef RADIANT_UNIX
+
 #define __STDC_FORMAT_MACROS
 
 #include "VideoCamera1394.hpp"
 
-#include <Radiant/Radiant.hpp>
-#include <Radiant/Trace.hpp>
-#include <Radiant/Mutex.hpp>
-#include <Radiant/Sleep.hpp>
-#include <Radiant/Types.hpp>
+#include "Radiant.hpp"
+#include "Trace.hpp"
+#include "Mutex.hpp"
+#include "Sleep.hpp"
+#include "Types.hpp"
 
 #include <assert.h>
 #include <math.h>
@@ -42,6 +46,9 @@
 #define NUM_BUFFERS 10
 
 namespace {
+
+  Radiant::Mutex s_queryCamerasMutex;
+  dc1394_t * s_dc = 0;
 
   dc1394feature_t featureTypeToNative(Radiant::VideoCamera::FeatureType id)
   {
@@ -65,6 +72,10 @@ namespace {
     return result;
   }
 
+  void initDc()
+  {
+    MULTI_ONCE(s_dc = dc1394_new(););
+  }
 }
 
 namespace Radiant {
@@ -197,7 +208,6 @@ namespace Radiant {
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  static dc1394_t * g_dc = 0;
   static int g_count = 0;
   static int s_openDelay = 850;
 
@@ -216,8 +226,7 @@ namespace Radiant {
     m_cameraNum = 0;
     m_started = false;
 
-    if(!g_dc)
-      g_dc = dc1394_new();
+    initDc();
 
     if (g_count == 0) {
       char * s = getenv("MULTI_CAM_OPEN_DELAY");
@@ -1267,8 +1276,7 @@ namespace Radiant {
 
   size_t CameraDriver1394::queryCameras(std::vector<VideoCamera::CameraInfo> & cameras)
   {
-    static Mutex s_mutex;
-    Guard guard(s_mutex);
+    Guard guard(s_queryCamerasMutex);
 
     const char * fname = "CameraDriver1394::queryCameras";
 
@@ -1276,15 +1284,13 @@ namespace Radiant {
     dc1394error_t err;
     dc1394camera_list_t * camlist = 0;
 
-    if(!g_dc)
-      g_dc = dc1394_new();
+    initDc();
 
-    if(!g_dc) {
+    if(!s_dc) {
       Radiant::error("%s::queryCameras # failed to initialize libdc1394. Make sure you have permissions to access FireWire devices.", fname);
-      return false;
     }
 
-    err = dc1394_camera_enumerate(g_dc, & camlist);
+    err = dc1394_camera_enumerate(s_dc, & camlist);
 
     if(err != DC1394_SUCCESS || camlist->num == 0) {
 #ifdef __linux__
@@ -1357,7 +1363,7 @@ namespace Radiant {
           already = true;
 
       if(!already)
-        g_infos.push_back(dc1394_camera_new(g_dc, camlist->ids[i].guid));
+        g_infos.push_back(dc1394_camera_new(s_dc, camlist->ids[i].guid));
     }
 
     debugRadiant("Copying FireWire camera #%d information to user", (int) camlist->num);
@@ -1398,3 +1404,4 @@ namespace Radiant {
 
 }
 
+#endif

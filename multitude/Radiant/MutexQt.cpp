@@ -72,11 +72,10 @@ namespace Radiant {
     return 0;
   }
 
-  int Condition::wakeAll(Mutex &mutex)
+  int Condition::wakeAll(Mutex & mutex)
   {
-    mutex.lock();
+    Guard g(mutex);
     wakeAll();
-    mutex.unlock();
     return 0;
   }
 
@@ -86,11 +85,10 @@ namespace Radiant {
     return 0;
   }
 
-  int Condition::wakeOne(Mutex &mutex)
+  int Condition::wakeOne(Mutex & mutex)
   {
-    mutex.lock();
+    Guard g(mutex);
     m_d->wakeOne();
-    mutex.unlock();
     return 0;
   }
 }

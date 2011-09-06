@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #include "Texture.hpp"
@@ -36,6 +24,7 @@ namespace
 {
   static RADIANT_TLS(int) t_frame(0);
   static RADIANT_TLS(long) t_available(0);
+  /// @todo Fix UploadLimiter.. #1982
   static RADIANT_TLS(bool) t_enabled(true);
 }
 
@@ -117,6 +106,7 @@ namespace Luminous
       glDeleteTextures(1, &m_textureId);
       debugLuminous("Deallocated texture %.5d %p", (int) m_textureId, resources());
     }
+
     changeByteConsumption(consumesBytes(), 0);
   }
 
@@ -127,6 +117,42 @@ namespace Luminous
       glGenTextures(1, & m_textureId);
       debugLuminous("Allocated texture %.5d %p", (int) m_textureId, resources());
     }
+  }
+
+  template <GLenum TextureType>
+  size_t TextureT<TextureType>::estimateMemoryUse() const
+  {
+    size_t used = m_width * m_height;
+
+    // Estimate something, try to be conservative
+    switch(m_internalFormat) {
+    case GL_LUMINANCE:
+    case GL_INTENSITY:
+      used *= 1;
+      break;
+    case GL_RGB:
+    case GL_BGR:
+      used *= 3;
+      break;
+#ifdef GL_RGB32F
+    case GL_RGB32F:
+      used *= 3 * 4;
+      break;
+#endif
+#ifdef GL_RGBA32F
+    case GL_RGBA32F:
+      used *= 4 * 4;
+      break;
+#endif
+    default:
+      used *= 4;
+      break;
+    }
+
+    // Mipmaps used 33% more memory
+    used *= (4.f / 3.f);
+
+    return used;
   }
 
   template class TextureT<GL_TEXTURE_1D>;
@@ -174,17 +200,11 @@ namespace Luminous
       }
     }
 
-    long used = consumesBytes();
-
-    long & available = UploadLimiter::available();
-
-    if(available < used) return false;
-
+    // Reset byte consumption
+    m_consumed = 0;
     m_haveMipmaps = buildMipmaps;
     m_width = 1;
     m_height = h;
-    /// @todo this is actually wrong, should convert from internalFormat really
-    m_srcFormat = srcFormat;
 
     bind();
 
@@ -209,15 +229,12 @@ namespace Luminous
       glTexImage1D(GL_TEXTURE_1D, 0, internalFormat, h, 0,
                    srcFormat.layout(), srcFormat.type(), data);
 
-    long uses = consumesBytes();
-    available -= uses;
-
-    changeByteConsumption(used, uses);
+    // Notify UploadLimiter that we used some bandwidth
+    long & available = UploadLimiter::available();
+    available -= consumesBytes();
 
     return true;
-
   }
-
 
   bool Texture2D::loadImage(const char * filename, bool buildMipmaps) {
     Luminous::Image img;
@@ -227,30 +244,14 @@ namespace Luminous
     return loadImage(img, buildMipmaps);
   }
 
-  /*
-  bool Texture2D::loadImage(const char * filename, bool buildMipmaps)
-  {
-      Radiant::trace("Texture2D::LoadImage");
-    try {
-      Magick::Image im;
-      Radiant::trace("MUUUUUUUUUUU %s", filename);
-      im.read(filename);
-      Radiant::trace("MOOOOOOOOO");
-      if(im.columns()) {
-        loadImage(im, buildMipmaps);
-    return true;
-      }
-    }
-    catch(Magick::Exception & e) {
-        Radiant::error("Texture2D::loadImage # %s", e.what());
-    } catch(...) {}
-    return false;
-  }
-*/
-
   bool Texture2D::loadImage(const Luminous::Image & image, bool buildMipmaps, int internalFormat)
   {
-    return loadBytes(internalFormat ? internalFormat : image.pixelFormat().numChannels(),
+    // If internal format is not specified, use the number of channels to let
+    // the driver decide what to do.
+    // See http://www.opengl.org/sdk/docs/man/xhtml/glTexImage2D.xml
+    int iformat = (internalFormat ? internalFormat : image.pixelFormat().numChannels());
+
+    return loadBytes(iformat,
                      image.width(), image.height(),
                      image.bytes(),
                      image.pixelFormat(), buildMipmaps);
@@ -258,31 +259,11 @@ namespace Luminous
 
   bool Texture2D::loadImage(const CompressedImage & image)
   {
-    long & available = UploadLimiter::available();
-    // Radiant::info("available: %.1f, need: %.1f", available/1024.0f, image.datasize()/1024.0f);
-
-    if(available < image.datasize()) 
-    {
-      // Can't upload the entire texture: do a partial upload
-      unsigned int datasize = image.datasize();           // Total amount of data
-      unsigned int linesize = datasize / image.height();  // Data for 1 line
-      unsigned int lines = available / linesize;          // Number of lines we can upload
-
-      lines = std::min(lines, image.height() - m_loadedLines);
-
-      loadLines(m_loadedLines, lines, image.data(), PixelFormat());
-
-      available -= lines * linesize;                // Decrease available bandwidth
-      return true;
-    }
-
-    long used = consumesBytes();
-
-    m_internalFormat = image.compression();
+    // Update estimate about consumed bytes
     m_consumed = image.datasize();
+    m_internalFormat = image.compression();
     m_width = image.width();
     m_height = image.height();
-    m_srcFormat = PixelFormat();
     m_haveMipmaps = false;
 
     bind();
@@ -294,6 +275,7 @@ namespace Luminous
       glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
 
       if(width == 0) {
+        Luminous::glErrorToString(__FILE__, __LINE__);
         Radiant::error("Texture2D::loadImage: Cannot load compressed texture, too big? "
                          "(%d x %d, id = %.5d, %d bytes)", m_width, m_height, (int) id(), image.datasize());
         m_consumed = 0;
@@ -310,12 +292,11 @@ namespace Luminous
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    long uses = consumesBytes();
-    available -= uses;
+    long & available = UploadLimiter::available();
+    available -= consumesBytes();
 
-    changeByteConsumption(used, uses);
+    m_uploadedLines = m_height;
 
-    m_loadedLines = m_height;
     return true;
   }
 
@@ -335,28 +316,17 @@ namespace Luminous
       }
     }
 
-    long used = consumesBytes();
+    // If no data is specified, we just allocate the texture memory and reset
+    // m_uploadedLines. Otherwise we mark the lines loaded.
+    if(data)
+      m_uploadedLines = h;
+    else
+      m_uploadedLines = 0;
 
-    long & available = UploadLimiter::available();
-
-    if(available < used)
-    {
-      // Can't upload the entire texture: do a partial upload
-      unsigned int linesize = w * srcFormat.bytesPerPixel();  // width (in bytes) of 1 line
-      unsigned int lines = available / linesize;              // Number of lines we can upload
-
-      lines -= std::min(lines, h - m_loadedLines);
-
-      loadLines(m_loadedLines, lines, data, srcFormat);
-
-      available -= lines * linesize;                // Decrease available bandwidth
-      return true;
-    }
-
+    m_consumed = 0;
     m_internalFormat = internalFormat;
     m_width = w;
     m_height = h;
-    m_srcFormat = srcFormat;
     m_haveMipmaps = buildMipmaps;
 
     bind();
@@ -368,7 +338,7 @@ namespace Luminous
     // set byte alignment to maximum possible: 1,2,4 or 8
     int alignment = 1;
     while (alignment < 8) {
-      if ((m_width * m_srcFormat.bytesPerPixel()) % (alignment*2)) {
+      if ((m_width * srcFormat.bytesPerPixel()) % (alignment*2)) {
         break;
       }
       alignment *= 2;
@@ -379,9 +349,18 @@ namespace Luminous
     if(buildMipmaps) minFilter = GL_LINEAR_MIPMAP_LINEAR;
 
     if(buildMipmaps) {
+
+      assert(Utils::glCheck("Texture2D::loadBytes # 1"));
+
       glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
+
+      assert(Utils::glCheck("Texture2D::loadBytes # 2"));
+
       gluBuild2DMipmaps(GL_TEXTURE_2D, internalFormat,
                         w, h, srcFormat.layout(), srcFormat.type(), data);
+
+      assert(Utils::glCheck("Texture2D::loadBytes # 3"));
+
     } else {
       /* debugLuminous("TEXTURE UPLOAD :: INTERNAL %s FORMAT %s [%d %d]",
              glInternalFormatToString(internalFormat),
@@ -389,6 +368,8 @@ namespace Luminous
       */
 
       glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
+
+      assert(Utils::glCheck("Texture2D::loadBytes # 4"));
 
       GLint width = w;
 
@@ -399,35 +380,34 @@ namespace Luminous
         glTexImage2D(GL_PROXY_TEXTURE_2D, 0, internalFormat, w, h, 0,
                      srcFormat.layout(), srcFormat.type(), 0);
 
+        assert(Utils::glCheck("Texture2D::loadBytes # 5"));
+
         glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
 
+        assert(Utils::glCheck("Texture2D::loadBytes # 6"));
 
         if(width == 0) {
+          Luminous::glErrorToString(__FILE__, __LINE__);
           Radiant::error("Texture2D::loadBytes: Cannot load texture, too big? "
                          "(%d x %d, id = %.5d)", w, h, (int) id());
 
           glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+
+          assert(Utils::glCheck("Texture2D::loadBytes # 7"));
+
           return false;
         }
       }
 
-
-      /* should succeed */
-
-#if 0
-
-      glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0,
-                   srcFormat.layout(), srcFormat.type(), data);
-#else
       /* This seems to be faster on Linux and OS X at least. */
-      glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0,
-                   srcFormat.layout(), srcFormat.type(), 0);
+      glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0, srcFormat.layout(), srcFormat.type(), 0);
+
+      assert(Utils::glCheck("Texture2D::loadBytes # 8"));
 
       if(data)
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h,
-                        srcFormat.layout(), srcFormat.type(), data);
-#endif
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, srcFormat.layout(), srcFormat.type(), data);
 
+      assert(Utils::glCheck("Texture2D::loadBytes # 9"));
     }
 
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -439,102 +419,62 @@ namespace Luminous
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter);
 
-    float whitef[4] = { 1, 1, 1, 1 };
-
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, whitef);
-
-    long uses = consumesBytes();
-    available -= uses;
-
-
-    if(data)
-      changeByteConsumption(used, uses);
+//    float whitef[4] = { 1, 1, 1, 1 };
+//    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, whitef);
 
     /* try not to interfere with other users of glTexImage2d etc */
     if (alignment > 4) glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
-    if(data)
-      m_loadedLines = h;
-    else
-      m_loadedLines = 0;
+    long & available = UploadLimiter::available();
+    available -= consumesBytes();
 
-    return (int(m_loadedLines) == h);
+    assert(Utils::glCheck("Texture2D::loadBytes # end"));
+
+    return true;
   }
 
-  void Texture2D::loadSubBytes(int x, int y, int w, int h, const void * data)
+  void Texture2D::loadSubBytes(int x, int y, int w, int h, const void * data, const Luminous::PixelFormat & srcFormat)
   {
+    assert(Utils::glCheck("Texture2D::loadSubBytes # start") == true);
+
     bind();
+
     if(m_haveMipmaps)
     {
+      /// @todo mipmap support should be implemented
       error("Texture2D::loadSubBytes # Cannot be used with mipmaps");
-      // @todo
-    }
-    else
-    {
+    } else {
+
       int alignment = 1;
+
       while (alignment < 8) {
-        if ((w * m_srcFormat.bytesPerPixel()) % (alignment*2)) {
+        if ((w * srcFormat.bytesPerPixel()) % (alignment*2)) {
           break;
         }
+
         alignment *= 2;
       }
+
       glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
-      glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, w, h, m_srcFormat.layout(), m_srcFormat.type(), data);
-      if (alignment > 4) glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+
+      assert(Utils::glCheck("Texture2D::loadSubBytes # 1") == true);
+
+      glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, w, h, srcFormat.layout(), srcFormat.type(), data);
+
+      assert(Utils::glCheck("Texture2D::loadSubBytes # 2") == true);
+
+      if (alignment > 4)
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+
+      assert(Utils::glCheck("Texture2D::loadSubBytes # 3") == true);
+
+      // Update upload limits
+      long & available = UploadLimiter::available();
+      available -= w * h * srcFormat.bytesPerPixel();
     }
+
+    assert(Utils::glCheck("Texture2D::loadSubBytes # end") == true);
   }
-
-  void Texture2D::loadLines(int y, int h, const void * data, const PixelFormat& pf)
-  {
-    Utils::glCheck("Texture2D::loadLines # in");
-    bind();
-
-
-    // Flush the data by drawing a zero-size triangle
-    glColor4f(0,0,0,0);
-    glBegin(GL_TRIANGLES);
-    // info("BEGIN %.2lf", now.sinceSecondsD() * 1000);
-    glVertex2f(0,0);
-    glVertex2f(0,0);
-    glVertex2f(0,0);
-    //info("VERTI %.2lf", now.sinceSecondsD() * 1000);
-    glEnd();
-
-    Utils::glCheck("Texture2D::loadLines # Dummy TRI");
-
-    if(m_haveMipmaps)
-    {
-      error("Texture2D::loadLines # Cannot be used with mipmaps");
-
-      // @todo
-    }
-    else
-    {
-      int alignment = 1;
-      while (alignment < 8) {
-        if ((width() * pf.bytesPerPixel()) % (alignment*2)) {
-          break;
-        }
-        alignment *= 2;
-      }
-      glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
-      glTexSubImage2D(GL_TEXTURE_2D, 0, 0, y, width(), h, pf.layout(), pf.type(), data);
-      if (alignment > 4) glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-
-      if(!Utils::glCheck("Texture2D::loadLines # TEX SUB"))
-        error("PARAMS = %.5d %d %d %d", (int) id(), y, width(), h);
-    }
-
-    // Utils::glCheck("Texture2D::loadLines");
-
-    if((unsigned) y == m_loadedLines)
-      m_loadedLines += h;
-
-    unsigned bytes = h * width() * pf.bytesPerPixel();
-
-    changeByteConsumption(bytes, bytes);
-  }
-
 
   Texture2D* Texture2D::fromImage
       (Luminous::Image & image, bool buildMipmaps, GLResources * resources)
@@ -573,6 +513,73 @@ namespace Luminous
       return 0;
     }
     return tex;
+  }
+
+  bool Texture2D::progressiveUpload(Luminous::GLResources * resources, GLenum textureUnit, const Image & srcImage)
+  {
+    Utils::glCheck("Texture2D::progressiveUpload # begin");
+
+    // Do nothing if already uploaded
+    if(m_uploadedLines == size_t(height()))
+      return true;
+
+    // Get available bandwidth
+    long & available = UploadLimiter::available();
+
+    // Bandwidth may be negative if user has manually uploaded stuff
+    if(available <= 0)
+      return false;
+
+    // Check how many lines we could upload
+    /// @todo should estimate from texture pixel format, not image?
+    const size_t lineBytes = width() * srcImage.pixelFormat().bytesPerPixel();
+    const size_t lineBudget = available / lineBytes;
+
+    // If we have no bandwidth for anything, abort
+    if(lineBudget == 0)
+      return false;
+
+    // How many lines we need to upload to finish
+    const size_t linesToFinish = height() - m_uploadedLines;
+
+    assert(linesToFinish > 0);
+
+    if(!resources)
+      resources = GLResources::getThreadResources();
+
+    // Bind the texture and draw zero-area triangle to flush the texture data
+    bind(textureUnit);
+
+    // Flush the data by drawing a zero-size triangle
+    glColor4f(0,0,0,0);
+    glBegin(GL_TRIANGLES);
+    glVertex2f(0,0);
+    glVertex2f(0,0);
+    glVertex2f(0,0);
+    glEnd();
+
+    //Radiant::warning("ImageTex::progressiveUpload # lines to finish: %ld, line bytes: %ld, available bandwidth %ld, line budget: %ld", linesToFinish, lineBytes, available, lineBudget);
+
+    assert(Utils::glCheck("Texture2D::progressiveUpload # upload beg") == true);
+
+    size_t linesToUpload = std::min(linesToFinish, lineBudget);
+
+    // Do progressive upload continuing from what has been previously uploaded
+
+    // Compute source offset
+    size_t offset = srcImage.width() * m_uploadedLines;
+    const unsigned char * data = srcImage.data();
+    data += offset * srcImage.pixelFormat().bytesPerPixel();
+
+    loadSubBytes(0, m_uploadedLines, width(), linesToUpload, data, srcImage.pixelFormat());
+
+    m_uploadedLines += linesToUpload;
+
+    //Radiant::warning("Texture2D::progressiveUpload # uploaded %ld lines", linesToUpload);
+
+    assert(Utils::glCheck("Texture2D::progressiveUpload # end") == true);
+
+    return (m_uploadedLines == size_t(height()));
   }
 
 }

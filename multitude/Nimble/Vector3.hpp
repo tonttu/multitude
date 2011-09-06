@@ -139,12 +139,12 @@ namespace Nimble {
     /// Sum of all components
     inline T             sum() const { return x + y + z; }
 
-    // non-const reference version of vector2() was removed because it enabled
+    // reference versions of vector2() were removed because they enabled
     // really arcane code
 
-    /// Casts the first two components to Vector2
-    /// @return Const reference to the XY -components
-    inline const Vector2T<T> & vector2() const { return * (Vector2T<T> *) this; }
+    /// Returns a copy of the first two components as a Vector2
+    /// @return New vector2
+    inline Vector2T<T> vector2() const { return Vector2T<T>(x, y); }
     /// Makes a new vector2 of two freely selected components of vector3
     /// @param i0 Index of the first component,  vec2.x = vec3[i0], 0..2
     /// @param i1 Index of the second component, vec2.y = vec3[i1], 0..2

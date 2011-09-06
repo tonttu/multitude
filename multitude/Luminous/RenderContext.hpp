@@ -24,8 +24,7 @@
 #include <Luminous/Export.hpp>
 #include <Luminous/VertexBuffer.hpp>
 #include <Luminous/GLSLProgramObject.hpp>
-#include "FramebufferResource.hpp"
-#include <Luminous/RenderTarget.hpp>
+#include <Luminous/FramebufferResource.hpp>
 
 #include <Nimble/Rectangle.hpp>
 #include <Nimble/Vector2.hpp>
@@ -167,8 +166,8 @@ namespace Luminous
     /// Pops a clipping rectangle from the context
     void popClipRect();
 
-    /// Returns the clipping rectangle
-    const Nimble::Rectangle * clipRect() const;
+    /// Returns the clipping rectangle stack
+    const std::vector<Nimble::Rectangle> & clipStack() const;
 
     /// Checks if the given rectangle is visible (not clipped).
     bool isVisible(const Nimble::Rectangle & area);

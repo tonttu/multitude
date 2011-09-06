@@ -205,7 +205,7 @@ namespace Poetic
           onspace = true;
         }
         else if(c == W_NEWLINE) {
-          lines.push_back(QString::fromWCharArray( & ws[lineStart], i - lineStart));
+          lines.push_back(QString::fromWCharArray( & ws[lineStart], i - lineStart + 1));
           sum = 0.0f;
           okEnd = 0;
           lineStart = i+1;
@@ -222,6 +222,8 @@ namespace Poetic
 
     if(n != lineStart) {
       lines.push_back(QString::fromWCharArray( & ws[lineStart], n - lineStart));
+    } else {
+      lines.push_back(QString());
     }
   }
 

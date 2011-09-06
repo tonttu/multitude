@@ -520,7 +520,7 @@ namespace VideoDisplay {
 
     if(m_audio) {
       if(m_syncToTime) {
-        if(m_videoFrame > 1 && m_fps < 0) {
+        /*if(m_videoFrame > 1 && m_fps < 0) {
           VideoIn::Frame * f = m_video->getFrame(m_videoFrame-1, false);
           VideoIn::Frame * f2 = m_video->getFrame(m_videoFrame, false);
 
@@ -532,13 +532,12 @@ namespace VideoDisplay {
             if(tmp > 1.f && tmp < 100.f)
               m_fps = 1.0f / (f2->m_absolute.secondsD() - f->m_absolute.secondsD());
           }
-        }
+        }*/
         float fps = m_fps > 0 ? m_fps : m_video->fps();
         int videoFrameFromTime = started.sinceSecondsD() * fps;
         int videoFrameFromAudio = m_audio->videoFrame();
         int diff = videoFrameFromTime - videoFrameFromAudio;
         int adiff = Nimble::Math::Abs(diff);
-
         // Radiant::error("ShowGL::update # diff %d %d (fps %f)", syncing, diff, fps);
 
         if(adiff > (m_syncing ? 0 : 2) && ++m_outOfSync > (m_syncing ? 10 : 60)) {

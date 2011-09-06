@@ -16,8 +16,10 @@
 #include "Directory.hpp"
 #include "FileUtils.hpp"
 
+#include <Radiant/Mutex.hpp>
 #include <QDir>
 #include <QList>
+#include <QTextCodec>
 
 #include <algorithm>
 
@@ -36,6 +38,11 @@ namespace Radiant
 
   void Directory::populate()
   {
+    MULTI_ONCE(
+        QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
+        QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
+    )
+
     QDir::SortFlags sf = (m_sortFlag == Name) ? QDir::Name : QDir::Unsorted;
     QDir::Filters ff = 0;
 
@@ -52,7 +59,7 @@ namespace Radiant
     for(int i = 0; i < list.size(); i++) {
       QString entry = list.at(i);
       if(m_suffixes.isEmpty() || m_suffixes.contains(FileUtils::suffixLowerCase(entry)))
-        m_entries.push_back(entry.toAscii().data());
+        m_entries.push_back(entry);
     }
   }
 

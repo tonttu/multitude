@@ -61,9 +61,9 @@ win32 {
 
 	win64 {
 		INCLUDEPATH += ..\\Win64x\\include\\freetype2
-		LIBS += -lfreetype2
+		LIBS += -lfreetype246
 	} else {
 		INCLUDEPATH += ..\\Win32x\\include\\freetype2
-		LIBS += -lfreetype
+		LIBS += -lfreetype246
 	}
 }
