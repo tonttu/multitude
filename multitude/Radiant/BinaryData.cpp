@@ -474,7 +474,8 @@ namespace Radiant {
 
     str.resize(len);
 
-    memcpy( & str[0], source, len);
+    if (len > 0)
+      memcpy( & str[0], source, len);
 
     return true;
   }
