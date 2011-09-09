@@ -6,7 +6,8 @@
 
 #include "Export.hpp"
 
-#include <cmath>
+// #include <cmath>
+#include <math.h>
 #ifdef WIN32
 #	include <float.h>
 #endif
