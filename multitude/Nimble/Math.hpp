@@ -6,8 +6,7 @@
 
 #include "Export.hpp"
 
-// #include <cmath>
-#include <math.h>
+#include <cmath>
 #ifdef WIN32
 #	include <float.h>
 #endif
@@ -45,67 +44,67 @@ namespace Nimble {
     // float & double inlines:
 
     /// Returns the cosine
-    inline float Cos(float v)  { return cosf(v); }
+    inline float Cos(float v)  { return std::cos(v); }
     /// Returns the sine
-    inline float Sin(float v)  { return sinf(v); }
+    inline float Sin(float v)  { return std::sin(v); }
     /// Returns the tangent
-    inline float Tan(float v)  { return tanf(v); }
+    inline float Tan(float v)  { return std::tan(v); }
     /// Returns the square root
-    inline float Sqrt(float v) { return sqrtf(v); }
+    inline float Sqrt(float v) { return std::sqrt(v); }
     /// Returns the inverse square root
-    inline float InvSqrt(float v) { return 1.0f / sqrtf(v); }
+    inline float InvSqrt(float v) { return 1.0f / std::sqrt(v); }
     /// Returns the exponential function
-    inline float Exp(float v)  { return expf(v); }
+    inline float Exp(float v)  { return std::exp(v); }
     /// Returns the logarithm in base 10
-    inline float Log(float v)  { return logf(v); }
+    inline float Log(float v)  { return std::log(v); }
     /// Returns the logarithm in base 2
     inline float Log2(float v) { return Log(v) / Log(2.f); }
     /// Raises x to the yth power
-    inline float Pow(float x, float y)    { return powf(x, y); }
+    inline float Pow(float x, float y)    { return std::pow(x, y); }
 
     /// Returns the arccosine
-    inline float ACos(float v)  { return acosf(v); }
+    inline float ACos(float v)  { return std::acos(v); }
     /// Returns the arcsine
-    inline float ASin(float v)  { return asinf(v); }
+    inline float ASin(float v)  { return std::asin(v); }
     /// Returns the arctangent
-    inline float ATan(float v)  { return atanf(v); }
+    inline float ATan(float v)  { return std::atan(v); }
     /// Returns the arctangent
-    inline float ATan2(float x, float y)  { return atan2f(x, y); }
+    inline float ATan2(float x, float y)  { return std::atan2(x, y); }
 
     /// Returns the cosine
-    inline double Cos(double v)  { return cos(v); }
+    inline double Cos(double v)  { return std::cos(v); }
     /// Returns the sine
-    inline double Sin(double v)  { return sin(v); }
+    inline double Sin(double v)  { return std::sin(v); }
     /// Returns the tangent
-    inline double Tan(double v)  { return tan(v); }
+    inline double Tan(double v)  { return std::tan(v); }
     /// Returns the square root
-    inline double Sqrt(double v) { return sqrt(v); }
+    inline double Sqrt(double v) { return std::sqrt(v); }
     /// Returns the inverse square root
-    inline double InvSqrt(double v) { return 1.0 / sqrt(v); }
+    inline double InvSqrt(double v) { return 1.0 / std::sqrt(v); }
     /// Returns the exponential function
-    inline double Exp(double v)  { return exp(v); }
+    inline double Exp(double v)  { return std::exp(v); }
     /// Returns the logarithm in base 10
-    inline double Log(double v)  { return log(v); }
+    inline double Log(double v)  { return std::log(v); }
     /// Returns the logarithm in base 2
     inline double Log2(double v)  { return Log(v) / Log(2.0); }
     /// Raises x to the yth power
-    inline double Pow(double x, double y)    { return pow(x, y); }
+    inline double Pow(double x, double y)    { return std::pow(x, y); }
 
     /// Returns the arccosine
-    inline double ACos(double v)  { return acos(v); }
+    inline double ACos(double v)  { return std::acos(v); }
     /// Returns the arcsine
-    inline double ASin(double v)  { return asin(v); }
+    inline double ASin(double v)  { return std::asin(v); }
     /// Returns the arctangent
-    inline double ATan(double v)  { return atan(v); }
+    inline double ATan(double v)  { return std::atan(v); }
     /// Returns the arctangent
-    inline double ATan2(double x, double y)  { return atan2(x, y); }
+    inline double ATan2(double x, double y)  { return std::atan2(x, y); }
 
     /// Returns the square root
-    inline float Sqrt(int v) { return sqrtf(float(v)); }
+    inline float Sqrt(int v) { return std::sqrt(float(v)); }
     /// Returns the square root
-    inline double Sqrt(int64_t v) { return sqrt(double(v)); }
+    inline double Sqrt(int64_t v) { return std::sqrt(double(v)); }
     /// Returns the square root
-    inline double Sqrt(uint64_t v) { return sqrt(double(v)); }
+    inline double Sqrt(uint64_t v) { return std::sqrt(double(v)); }
 
     /// Converts degrees into radians
     inline double degToRad(const double degrees) { return (degrees * PI / 180.0); }
@@ -118,7 +117,7 @@ namespace Nimble {
 #ifdef WIN32
       return _finite(v) != 0;
 #else
-    return finite(v);
+      return finite(v);
 #endif
     }
     /// Checks if the given number is a NaN
@@ -129,7 +128,7 @@ namespace Nimble {
 #ifdef WIN32
     return _isnan(v) != 0;
 #else
-        return isnan(v);
+      return std::isnan(v);
 #endif
     }
 
