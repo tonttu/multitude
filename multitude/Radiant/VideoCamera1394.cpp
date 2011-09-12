@@ -1364,7 +1364,6 @@ namespace Radiant {
     Radiant::Guard g(s_infosMutex);
 
     for(i = 0; i < camlist->num; i++) {
-      std::vector<dc1394camera_t *> foo = s_infos;
       bool already = false;
 
       for(j = 0; j < s_infos.size(); j++)
