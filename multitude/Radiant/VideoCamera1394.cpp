@@ -897,6 +897,8 @@ namespace Radiant {
    */
   bool VideoCamera1394::stop()
   {
+    m_started = false;
+
     if(!m_initialized) {
       Radiant::error("VideoCamera1394::stop # camera has not been initialized");
       return false;
@@ -910,8 +912,6 @@ namespace Radiant {
       Radiant::error("VideoCamera1394::stop # unable to stop iso transmission");
     }
 
-    m_started = false;
-
     return true;
   }
 
@@ -924,8 +924,8 @@ namespace Radiant {
 
     assert(isInitialized());
 
-    if (!m_started)
-      start();
+    if(!m_started && !start())
+      return 0;
 
     m_frame = 0;
 
@@ -963,6 +963,12 @@ namespace Radiant {
     if(err ) {
       Radiant::error("VideoCamera1394::captureImage # Unable to capture a frame!");
       close();
+      return 0;
+    }
+
+    if(dc1394_capture_is_frame_corrupt(m_camera, m_frame) == DC1394_TRUE) {
+      Radiant::error("VideoCamera1394::captureImage # Got corrupted frame");
+      doneImage();
       return 0;
     }
 
