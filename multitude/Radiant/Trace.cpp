@@ -151,7 +151,7 @@ namespace Radiant {
     int size = sizeof(storage), ret = 0;
 
     if(g_enableThreadId) {
-      static RADIANT_TLS(int) t_id = -1;
+      static RADIANT_TLS(int) t_id(-1);
       int& id = t_id;
       static int s_id = 0;
       if(id < 0) {
