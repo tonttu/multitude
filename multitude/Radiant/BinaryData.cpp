@@ -95,35 +95,35 @@ namespace Radiant {
 
   void BinaryData::writeFloat32(float v)
   {
-    ensure(8);
+    ensure(sizeof(int32_t) + sizeof(float));
     getRef<int32_t>() = FLOAT_MARKER;
     getRef<float>()   = v;
   }
 
   void BinaryData::writeFloat64(double v)
   {
-    ensure(12);
+    ensure(sizeof(int32_t) + sizeof(double));
     getRef<int32_t>() = DOUBLE_MARKER;
     getRef<double>()  = v;
   }
 
   void BinaryData::writeInt32(int32_t v)
   {
-    ensure(8);
+    ensure(sizeof(int32_t) + sizeof(int32_t));
     getRef<int32_t>() = INT32_MARKER;
     getRef<int32_t>() = v;
   }
 
   void BinaryData::writeInt64(int64_t v)
   {
-    ensure(12);
+    ensure(sizeof(int32_t) + sizeof(int64_t));
     getRef<int32_t>() = INT64_MARKER;
     getRef<int64_t>() = v;
   }
 
   void BinaryData::writeTimeStamp(int64_t v)
   {
-    ensure(12);
+    ensure(sizeof(int32_t) + sizeof(int64_t));
     getRef<int32_t>() = TS_MARKER;
     getRef<int64_t>() = v;
   }
@@ -132,7 +132,7 @@ namespace Radiant {
   {
     size_t len = strlen(s);
     size_t space = stringSpace(s);
-    ensure(4 + space);
+    ensure(sizeof(int32_t) + space);
 
     getRef<int32_t>() = STRING_MARKER;
     char * ptr =  getPtr<char>(space);
@@ -141,7 +141,7 @@ namespace Radiant {
 
   void BinaryData::writeWString(const std::wstring & str)
   {
-    ensure(8 + str.size() * 4);
+    ensure(2*sizeof(int32_t) + str.size() * sizeof(int32_t));
 
     getRef<int32_t>() = (int32_t) WSTRING_MARKER;
     getRef<int32_t>() = (int32_t) str.size();
@@ -153,7 +153,7 @@ namespace Radiant {
 
   void BinaryData::writeBlob(const void * ptr, int n)
   {
-    ensure(8 + n);
+    ensure(2*sizeof(int32_t) + n);
 
     getRef<int32_t>() = BLOB_MARKER;
     getRef<int32_t>() = n;
@@ -164,7 +164,7 @@ namespace Radiant {
 
   void BinaryData::writeVector2Float32(Nimble::Vector2f v)
   {
-    ensure(12);
+    ensure(sizeof(int32_t) * sizeof(float) * 2);
     getRef<int32_t>() = VECTOR2F_MARKER;
     getRef<float>() = v[0];
     getRef<float>() = v[1];
@@ -172,7 +172,7 @@ namespace Radiant {
 
   void BinaryData::writeVector2Int32(Nimble::Vector2i v)
   {
-    ensure(12);
+    ensure(sizeof(int32_t) * sizeof(int) * 2);
     getRef<int32_t>() = VECTOR2I_MARKER;
     getRef<int>() = v[0];
     getRef<int>() = v[1];
@@ -180,7 +180,7 @@ namespace Radiant {
 
   void BinaryData::writeVector3Float32(Nimble::Vector3f v)
   {
-    ensure(16);
+    ensure(sizeof(int32_t) * sizeof(float) * 3);
     getRef<int32_t>() = VECTOR3F_MARKER;
     getRef<float>() = v[0];
     getRef<float>() = v[1];
@@ -189,7 +189,7 @@ namespace Radiant {
 
   void BinaryData::writeVector3Int32(Nimble::Vector3i v)
   {
-    ensure(16);
+    ensure(sizeof(int32_t) * sizeof(int) * 3);
     getRef<int32_t>() = VECTOR3I_MARKER;
     getRef<int>() = v[0];
     getRef<int>() = v[1];
@@ -198,7 +198,7 @@ namespace Radiant {
 
   void BinaryData::writeVector4Int32(const Nimble::Vector4i & v)
   {
-    ensure(20);
+    ensure(sizeof(int32_t) * sizeof(int) * 4);
     getRef<int32_t>() = VECTOR4I_MARKER;
     getRef<int>() = v[0];
     getRef<int>() = v[1];
@@ -208,7 +208,7 @@ namespace Radiant {
 
   void BinaryData::writeVector4Float32(const Nimble::Vector4f & v)
   {
-    ensure(20);
+    ensure(sizeof(int32_t) * sizeof(float) * 4);
     getRef<int32_t>() = VECTOR4F_MARKER;
     getRef<float>() = v[0];
     getRef<float>() = v[1];
