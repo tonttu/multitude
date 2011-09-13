@@ -618,7 +618,8 @@ namespace Radiant {
         Radiant::error("%s # dc1394_video_set_transmission failed", fname);
     }
 
-    captureSetup(NUM_BUFFERS);
+    if(!captureSetup(NUM_BUFFERS))
+      return false;
 
     m_initialized = true;
     m_started = false;
@@ -771,7 +772,8 @@ namespace Radiant {
       return false;
     }
 
-    captureSetup(NUM_BUFFERS);
+    if(!captureSetup(NUM_BUFFERS))
+      return false;
 
     // Here we only support grayscale for the time being...
     m_image.m_format = IMAGE_GRAYSCALE;
@@ -1252,7 +1254,7 @@ namespace Radiant {
     return true;
   }
 
-  void VideoCamera1394::captureSetup(int buffers)
+  bool VideoCamera1394::captureSetup(int buffers)
   {
     int flags = DC1394_CAPTURE_FLAGS_DEFAULT;
 
@@ -1269,8 +1271,9 @@ namespace Radiant {
                      "unable to setup camera- check that the video mode,"
                      "framerate and format are supported (%s)",
                      dc1394_error_get_string(res));
+      return false;
     }
-
+    return true;
   }
 
   bool VideoCamera1394::setCaptureTimeout(int ms)
