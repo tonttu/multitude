@@ -64,6 +64,7 @@ namespace Radiant
     struct termios opts;
     if (tcgetattr(m_fd, & opts) < 0) {
       Radiant::error("%s # Could get read port attributes (%s)", fname, device);
+      close();
       return false;
     }
 
@@ -144,6 +145,7 @@ namespace Radiant
 
     if(tcsetattr(m_fd, TCSANOW, & opts) < 0) {
       Radiant::error("%s # Failed to set TTY parameters (%s)", fname, strerror(errno));
+      close();
       errno = 0;
       return false;
     }
