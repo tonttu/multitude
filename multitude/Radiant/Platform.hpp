@@ -33,10 +33,18 @@
 // Discover the compiler
 #if defined (__clang__)
 #   define RADIANT_CLANG 1
+#   define DLLEXPORT __attribute__((visibility("default")))
+#   define DLLIMPORT __attribute__((visibility("default")))
+
 #elif defined (__GNUC__)
 #   define RADIANT_GNUC 1
+#   define DLLEXPORT __attribute__((visibility("default")))
+#   define DLLIMPORT __attribute__((visibility("default")))
+
 #elif defined (_MSC_VER)
 #   define RADIANT_MSVC 1
+#   define DLLEXPORT __declspec(dllexport)
+#   define DLLIMPORT __declspec(dllimport)
 #endif
 
 //

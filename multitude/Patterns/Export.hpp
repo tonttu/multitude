@@ -16,17 +16,13 @@
 #ifndef PATTERNS_EXPORT_HPP
 #define PATTERNS_EXPORT_HPP
 
-#ifdef WIN32
+#include "Radiant/Platform.hpp"
 
 // Import by default
 #ifdef PATTERNS_EXPORT
-#define PATTERNS_API __declspec(dllexport)
+#define PATTERNS_API DLLEXPORT
 #else
-#define PATTERNS_API __declspec(dllimport)
+#define PATTERNS_API DLLIMPORT
 #endif
-
-#else
-#define PATTERNS_API
-#endif  
 
 #endif

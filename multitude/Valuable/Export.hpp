@@ -16,17 +16,13 @@
 #ifndef VALUABLE_EXPORT_HPP
 #define VALUABLE_EXPORT_HPP
 
-#ifdef WIN32
+#include "Radiant/Platform.hpp"
 
 // Import by default
 #ifdef VALUABLE_EXPORT
-#define VALUABLE_API __declspec(dllexport)
+#define VALUABLE_API DLLEXPORT
 #else
-#define VALUABLE_API __declspec(dllimport)
+#define VALUABLE_API DLLIMPORT
 #endif
-
-#else
-#define VALUABLE_API
-#endif  
 
 #endif
