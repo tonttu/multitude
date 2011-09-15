@@ -163,24 +163,24 @@ namespace Radiant
 
   std::string FileUtils::path(const std::string & filepath)
   {
-    size_t cut = filepath.rfind(directorySeparator()) + 1;
+    size_t cut = filepath.find_last_of("/\\") + 1;
     return filepath.substr(0, cut);
   }
 
   std::string FileUtils::filename(const std::string & filepath)
   {
-    size_t cut = filepath.rfind(directorySeparator()) + 1;
+    size_t cut = filepath.find_last_of("/\\") + 1;
     return filepath.substr(cut);
   }
 
   std::string FileUtils::baseFilename(const std::string & filepath)
   {
-    size_t cut1 = filepath.rfind(directorySeparator()) + 1;
-    size_t cut2 = filepath.rfind(".");
+		std::string file = filename(filepath);
+    size_t cut = file.rfind(".");
 
-    // info("baseFilename %s %d %d", filepath.c_str(), cut1, cut2);
-    return (cut1 > 0) ?
-        filepath.substr(cut1, cut2 - cut1) : filepath.substr(0, cut2);
+    // info("baseFilename %s %d", filename.c_str(), cut);
+    return
+			file.substr(0, cut);
   }
 
   std::string FileUtils::baseFilenameWithPath(const std::string & filepath)
@@ -260,7 +260,7 @@ namespace Radiant
     if(filePath.empty()) return 0;
 
     StringList pieces;
-    split(filePath, directorySeparator().c_str(), pieces, true);
+    split(filePath, "/\\", pieces, true);
 
     const std::string file(pieces.back());
     pieces.pop_back();

@@ -96,31 +96,4 @@ namespace Radiant
       m_suffixes.push_back(*it);
     }
   }
-
-  bool Directory::mkdirRecursive(const std::string & dirname)
-  {
-    if(dirname.empty())
-      return false;
-
-    StringUtils::StringList sections;
-    StringUtils::split(dirname, "/", sections);
-
-    std::string dir;
-
-    if(dirname[0] == '/') {
-      dir += '/';
-    }
-
-    for(StringUtils::StringList::iterator it = sections.begin();
-	it != sections.end(); it++) {
-      dir += (*it) + "/";
-
-      if(!exists(dir)) {
-	if(!mkdir(dir))
-	  return false;
-      }
-    }
-    
-    return true;
-  }
 }
