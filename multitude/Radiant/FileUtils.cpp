@@ -163,19 +163,19 @@ namespace Radiant
 
   std::string FileUtils::path(const std::string & filepath)
   {
-    size_t cut = filepath.rfind("/") + 1;
+    size_t cut = filepath.rfind(directorySeparator()) + 1;
     return filepath.substr(0, cut);
   }
 
   std::string FileUtils::filename(const std::string & filepath)
   {
-    size_t cut = filepath.rfind("/") + 1;
+    size_t cut = filepath.rfind(directorySeparator()) + 1;
     return filepath.substr(cut);
   }
 
   std::string FileUtils::baseFilename(const std::string & filepath)
   {
-    size_t cut1 = filepath.rfind("/") + 1;
+    size_t cut1 = filepath.rfind(directorySeparator()) + 1;
     size_t cut2 = filepath.rfind(".");
 
     // info("baseFilename %s %d %d", filepath.c_str(), cut1, cut2);
@@ -222,11 +222,11 @@ namespace Radiant
   std::string FileUtils::findFile(const std::string & filename, const std::string & paths)
   {
     StringList pathList;
-    split(paths, ":;", pathList, true);
+    split(paths, pathSeparator().c_str(), pathList, true);
 
     for(StringList::iterator it = pathList.begin();
     it != pathList.end(); it++) {
-      std::string fullPath = (*it) + std::string("/") + filename;
+      std::string fullPath = (*it) + directorySeparator() + filename;
 
       debugRadiant("Radiant::findFile # Testing %s for %s", (*it).c_str(), filename.c_str());
 
@@ -242,11 +242,11 @@ namespace Radiant
   std::string FileUtils::findOverWritable(const std::string & filename, const std::string & paths)
   {
     StringList pathList;
-    split(paths, ":;", pathList, true);
+    split(paths, pathSeparator().c_str(), pathList, true);
 
     for(StringList::iterator it = pathList.begin();
     it != pathList.end(); it++) {
-      std::string fullPath = (*it) + std::string("/") + filename;
+      std::string fullPath = (*it) + directorySeparator() + filename;
 
       if(fileAppendable(fullPath.c_str()))
         return fullPath;
@@ -260,7 +260,7 @@ namespace Radiant
     if(filePath.empty()) return 0;
 
     StringList pieces;
-    split(filePath, "/", pieces, true);
+    split(filePath, directorySeparator().c_str(), pieces, true);
 
     const std::string file(pieces.back());
     pieces.pop_back();
@@ -268,14 +268,14 @@ namespace Radiant
     std::string soFar("");
 
     for(StringList::iterator it = pieces.begin(); it != pieces.end(); it++) {
-      soFar += std::string("/") + *it;
+      soFar += directorySeparator() + *it;
 
       if(!Directory::exists(soFar)) {
         Directory::mkdir(soFar);
       }
     }
 
-    soFar += std::string("/") + file;
+    soFar += directorySeparator() + file;
 
     return fopen(soFar.c_str(), "w");
   }
@@ -312,4 +312,22 @@ namespace Radiant
       fprintf(f, ". ");
     }
   }
+
+	std::string FileUtils::pathSeparator()
+	{
+#if defined RADIANT_WINDOWS
+		return std::string(";");
+#else
+		return std::string(":");
+#endif
+	}
+
+	std::string FileUtils::directorySeparator()
+	{
+#if defined RADIANT_WINDOWS
+		return std::string("\\");
+#else
+		return std::string("/");
+#endif
+	}
 }

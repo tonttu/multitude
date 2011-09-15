@@ -158,6 +158,12 @@ namespace Radiant
     /** This function is typically used when writing object hierarchies for
         human-readable output. */
     static void indent(FILE * f, int levels);
+
+		/// Returns the path separator for the current platform
+		static std::string pathSeparator();
+
+		/// Returns the directory separator for the current platform
+		static std::string directorySeparator();
   };
 }
 
