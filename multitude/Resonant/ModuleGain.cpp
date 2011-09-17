@@ -1,4 +1,5 @@
 /* COPYRIGHT
+<<<<<<< .merge_file_a09716
  *
  * This file is part of Resonant.
  *
@@ -11,6 +12,8 @@
  * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
  *
+=======
+>>>>>>> .merge_file_a03756
  */
 
 #include "ModuleGain.hpp"
@@ -43,7 +46,7 @@ namespace Resonant {
   {
     for(int i = 0; i < m_channels; i++) {
 
-      Nimble::RampT<float> g = m_gain;
+      Nimble::Rampf g = m_gain;
 
       const float * source = in[i];
       float * target = out[i];
