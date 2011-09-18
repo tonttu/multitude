@@ -318,7 +318,7 @@ namespace Radiant
 #if defined RADIANT_WINDOWS
 		return std::string(";");
 #else
-		return std::string(":");
+    return std::string(":");
 #endif
 	}
 
