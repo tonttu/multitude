@@ -1,9 +1,9 @@
 include(../multitude.pri)
 
 HEADERS += Application.hpp
-HEADERS += AudioLoop_private.hpp
 HEADERS += AudioFileHandler.hpp
 HEADERS += AudioLoop.hpp
+HEADERS += AudioLoop_private.hpp
 HEADERS += DSPNetwork.hpp
 HEADERS += Export.hpp
 HEADERS += ModuleFilePlay.hpp
@@ -11,11 +11,12 @@ HEADERS += ModuleGain.hpp
 HEADERS += Module.hpp
 HEADERS += ModuleOutCollect.hpp
 HEADERS += ModulePanner.hpp
+HEADERS += ModulePulseAudio.hpp
 HEADERS += ModuleRectPanner.hpp
 HEADERS += ModuleSamplePlayer.hpp
+HEADERS += PulseAudioCore.hpp
+HEADERS += Resonant.hpp
 HEADERS += SoundRectangle.hpp
-
-linux-*:HEADERS += ModulePulseAudio.hpp PulseAudioCore.hpp
 
 SOURCES += Application.cpp
 SOURCES += AudioFileHandler.cpp
@@ -26,12 +27,11 @@ SOURCES += ModuleFilePlay.cpp
 SOURCES += ModuleGain.cpp
 SOURCES += ModuleOutCollect.cpp
 SOURCES += ModulePanner.cpp
+SOURCES += ModulePulseAudio.cpp
 SOURCES += ModuleRectPanner.cpp
 SOURCES += ModuleSamplePlayer.cpp
+SOURCES += PulseAudioCore.cpp
 SOURCES += SoundRectangle.cpp
-
-linux-*:SOURCES += ModulePulseAudio.cpp PulseAudioCore.cpp
-
 
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_VALUABLE
 

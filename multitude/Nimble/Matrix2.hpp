@@ -90,6 +90,17 @@ namespace Nimble {
     /// Multiplies the matrix by a scalar
     Matrix2T operator *= (T s)         { m[0] *= s; m[1] *= s; return * this; }
 
+    /// Compare if two matrices are equal
+    /// Compares each element of this matrix to the given matrix
+    /// @param other matrix to compare to
+    /// @return true if the matrices are the same
+    bool operator==(const Matrix2T & other) const { return m[0] == other.m[0] && m[1] == other.m[1]; }
+    /// Compare if two matrices are not equal
+    /// Compares each element of this matrix to the given matrix
+    /// @param other matrix to compare to
+    /// @return true if the matrices differ
+    bool operator!=(const Matrix2T & other) const { return !(*this == other); }
+
     /// Returns the number of rows in this matrix type
     static int         rows() { return 2; }
     /// Returns the number of columns in this matrix type

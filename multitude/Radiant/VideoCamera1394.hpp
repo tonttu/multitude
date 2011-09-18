@@ -110,7 +110,7 @@ namespace Radiant {
                              unsigned int * feature_max_value);
 
     bool findCamera(uint64_t euid);
-    void captureSetup(int buffers);
+    bool captureSetup(int buffers);
 
     std::string    m_videodevice;
 

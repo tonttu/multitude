@@ -13,6 +13,7 @@
  * 
  */
 
+#include "Platform.hpp"
 #include "TCPSocket.hpp"
 #include "SocketUtilPosix.hpp"
 #include "SocketWrapper.hpp"
@@ -129,7 +130,7 @@ namespace Radiant
     return m_d->m_fd >= 0;
   }
 
-  int TCPSocket::read(void * buffer, int bytes, bool waitfordata)
+  int TCPSocket::read(void * buffer, int bytes, Flags flags)
   {
     if(m_d->m_fd < 0 || bytes < 0)
       return -1;
@@ -141,21 +142,32 @@ namespace Radiant
       errno = 0;
       // int max = bytes - pos > SSIZE_MAX ? SSIZE_MAX : bytes - pos;
       int max = bytes - pos > 32767 ? 32767 : bytes - pos;
-      int tmp = recv(m_d->m_fd, data + pos, max, 0);
+      bool block = flags == WAIT_ALL || (flags == WAIT_SOME && pos == 0);
+      int tmp;
+
+      if(block) {
+        tmp = recv(m_d->m_fd, data + pos, max, 0);
+      } else {
+#ifdef RADIANT_WINDOWS
+        // there is no MSG_DONTWAIT in winsock, do poll with zero timeout instead
+        if(!isPendingInput()) return pos;
+        tmp = recv(m_d->m_fd, data + pos, max, 0);
+#else
+        tmp = recv(m_d->m_fd, data + pos, max, MSG_DONTWAIT);
+#endif
+      }
 
       if(tmp > 0) {
         pos += tmp;
       } else if(tmp == 0 || m_d->m_fd == -1) {
         return pos;
       } else if(errno == EAGAIN || errno == EWOULDBLOCK) {
-        if(waitfordata) {
-          struct pollfd pfd;
-          pfd.fd = m_d->m_fd;
-          pfd.events = POLLIN;
-          wrap_poll(&pfd, 1, 5000);
-        } else {
-          return pos;
-        }
+        if(!block) return pos;
+
+        struct pollfd pfd;
+        pfd.fd = m_d->m_fd;
+        pfd.events = POLLIN;
+        wrap_poll(&pfd, 1, 5000);
       } else {
         error("TCPSocket::read # Failed to read: %s", wrap_strerror(wrap_errno));
         return pos;
@@ -163,38 +175,6 @@ namespace Radiant
     }
 
     return pos;
-  }
-
-  int TCPSocket::readSome(void * buffer, int bytes, bool waitfordata)
-  {
-    if(m_d->m_fd < 0 || bytes < 0)
-      return -1;
-
-    if(bytes > 32767)
-      bytes = 32767;
-
-    for(;;) {
-      errno = 0;
-      int tmp = recv(m_d->m_fd, (char*)buffer, bytes, 0);
-
-      if(tmp > 0) {
-        return tmp;
-      } else if(errno == EAGAIN || errno == EWOULDBLOCK) {
-        if(waitfordata) {
-          struct pollfd pfd;
-          pfd.fd = m_d->m_fd;
-          pfd.events = POLLIN;
-          wrap_poll(&pfd, 1, 5000);
-        } else {
-          return 0;
-        }
-      } else {
-        error("TCPSocket::readSome # Failed to read: %s", wrap_strerror(wrap_errno));
-        return 0;
-      }
-    }
-
-    return 0;
   }
 
   int TCPSocket::write(const void * buffer, int bytes)
@@ -261,7 +241,13 @@ namespace Radiant
     return (pfd.revents & POLLRDNORM) == POLLRDNORM;
   }
 
-  void TCPSocket::moveToThread(Thread *) {
+  void TCPSocket::moveToThread(Thread *)
+  {
+  }
+
+  int TCPSocket::fd() const
+  {
+    return m_d->m_fd;
   }
 
 }

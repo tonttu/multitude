@@ -15,6 +15,10 @@
 
 // Some original source code by Juha Laitinen still may be around.
 
+#include "Platform.hpp"
+
+#ifdef RADIANT_WIN32
+
 #include "VideoCameraCMU.hpp"
 #include "Radiant.hpp"
 
@@ -475,3 +479,5 @@ namespace Radiant {
   }
 
 }
+
+#endif

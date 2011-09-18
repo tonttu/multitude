@@ -20,6 +20,7 @@
 #include <Radiant/FileUtils.hpp>
 #include <Radiant/Sleep.hpp>
 #include <Radiant/Trace.hpp>
+#include <Radiant/StringUtils.hpp>
 
 #include <typeinfo>
 #include <cassert>
@@ -38,8 +39,6 @@ namespace Luminous
     }
   };
 
-  std::weak_ptr<BGThread> BGThread::m_instance;
-
   BGThread::BGThread()
     : m_idle(0)
   {
@@ -47,6 +46,7 @@ namespace Luminous
 
   BGThread::~BGThread()
   {
+    Radiant::info("Waiting for all background threads to finish...");
     stop();
   }
 
@@ -114,19 +114,6 @@ namespace Luminous
     }
   }
 
-   std::shared_ptr<BGThread> BGThread::instance()
-   {
-     std::shared_ptr<BGThread> p = m_instance.lock();
-     if(!p) {
-       p.reset(new BGThread());
-       p->run();
-
-       m_instance = p;
-     }
-
-     return p;
-   }
-
   unsigned BGThread::taskCount()
   {
     Radiant::Guard guard(m_mutexWait);
@@ -143,7 +130,7 @@ namespace Luminous
     for(container::iterator it = m_taskQueue.begin(); it != m_taskQueue.end(); it++) {
       Radiant::FileUtils::indent(f, indent);
       std::shared_ptr<Task> t = it->second;
-      fprintf(f, "TASK %s %p\n", typeid(*t).name(), t.get());
+      fprintf(f, "TASK %s %p\n", Radiant::StringUtils::demangle(typeid(*t).name()).c_str(), t.get());
       Radiant::FileUtils::indent(f, indent + 1);
       fprintf(f, "PRIORITY = %d UNTIL = %.3f\n", (int) t->priority(),
               (float) -t->scheduled().sinceSecondsD());
@@ -261,3 +248,5 @@ namespace Luminous
     m_idleWait.wakeAll();
   }
 }
+
+DEFINE_SINGLETON(Luminous::BGThread);

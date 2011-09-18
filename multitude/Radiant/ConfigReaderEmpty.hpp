@@ -13,8 +13,6 @@
  * 
  */
 
-/** This file is part of the Radiant library.*/
-
 #ifndef CONFIG_READER_EMPTY_HPP
 #define CONFIG_READER_EMPTY_HPP
 

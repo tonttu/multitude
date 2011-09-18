@@ -332,7 +332,7 @@ ConfigDocument::ParseFlags ConfigDocument::parseLine(std::string line)
     return ELEMENT_END;
   else {
     size_t pos=line.find("=");
-    if(pos == -1 || pos>=10000)
+    if(pos == std::string::npos)
       return NOT_VALID;
     else
       return ATTRIBUTE;

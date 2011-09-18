@@ -123,9 +123,10 @@ namespace Nimble {
     /// Returns the largest component
     inline T             maximum() const { T q = x>y?x:y; T a = z>w?z:w; return q>a?q:a; }
 
-    /// Casts the first two components to Vector2
-    /// @return Const reference to the XY -components
-    inline const Vector2T<T> & vector2() const { return * (Vector2T<T> *) this; }
+    /// Returns a copy of the first two components as a Vector2
+    /// @return New vector2
+    inline Vector2T<T> vector2() const { return Vector2T<T>(x, y); }
+
     /// Makes a new vector2 of two freely selected components of vector4
     /// @param i0 Index of the first component,  vec2.x = vec4[i0], 0..3
     /// @param i1 Index of the second component, vec2.y = vec4[i1], 0..3
@@ -134,9 +135,11 @@ namespace Nimble {
     {
       return Vector2T<T>(get(i0), get(i1));
     }
-    /// Casts the first three components to Vector3
-    /// @return Const reference to the XYZ -components
-    inline const Vector3T<T> & vector3() const { return * (Vector3T<T> *) this; }
+
+    /// Returns a copy of the first three components as a Vector3
+    /// @return New vector3
+    inline Vector3T<T> vector3() const { return Vector3T<T>(x, y, z); }
+
     /// Makes a new vector3 of two freely selected components of vector4
     /// @param i0 Index of the first component,  vec3.x = vec4[i0], 0..3
     /// @param i1 Index of the second component, vec3.y = vec4[i1], 0..3

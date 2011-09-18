@@ -13,9 +13,12 @@
  * 
  */
 
-#include <Radiant/StringUtils.hpp>
-#include "Radiant.hpp"
+#include "Platform.hpp"
 
+#ifndef RADIANT_WINDOWS
+
+#include "StringUtils.hpp"
+#include "Radiant.hpp"
 #include "SMRingBuffer.hpp"
 
 #include <Nimble/Math.hpp>
@@ -842,3 +845,5 @@ namespace Radiant
   }
 
 }
+
+#endif

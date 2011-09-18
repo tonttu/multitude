@@ -51,10 +51,15 @@ namespace Radiant {
     /// Returns the port number
     int port() const;
 
-    /// Return 'true' if connection pending.
+    /// Check for pending connections
+    /// Checks for pending connections and optionally blocks for the given timeout.
+    /// @param waitMicroSeconds micro seconds to block
+    /// @return true if there are pending connections
     bool isPendingConnection(unsigned int waitMicroSeconds = 0);
 
     /// Accept new connections
+    /// Accepts new connections. Blocks until a connection is received or the socket is closed.
+    /// @return connected socket or null in case of error
     TCPSocket * accept();
 
   private:

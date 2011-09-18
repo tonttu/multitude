@@ -16,17 +16,13 @@
 #ifndef LUMINOUS_EXPORT_HPP
 #define LUMINOUS_EXPORT_HPP
 
-#ifdef WIN32
+#include "Radiant/Platform.hpp"
 
 // Import by default
 #ifdef LUMINOUS_EXPORT
-#define LUMINOUS_API __declspec(dllexport)
+#define LUMINOUS_API DLLEXPORT
 #else
-#define LUMINOUS_API __declspec(dllimport)
+#define LUMINOUS_API DLLIMPORT
 #endif
-
-#else
-#define LUMINOUS_API
-#endif  
 
 #endif

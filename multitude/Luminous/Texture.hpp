@@ -105,15 +105,11 @@ namespace Luminous
       m_textureId(0),
       m_width(0),
       m_height(0),
-      m_srcFormat(PixelFormat::LAYOUT_UNKNOWN, PixelFormat::TYPE_UNKNOWN),
       m_internalFormat(0),
       m_haveMipmaps(false),
       m_consumed(0)
     {}
     virtual ~TextureT();
-
-    /// Allocates the texture object. Does not allocate memory for the texture data.
-    void allocate();
 
     /** Activate textureUnit and bind this texture to that unit.
     @param textureUnit texture unit to bind to*/
@@ -161,12 +157,9 @@ namespace Luminous
     virtual long consumesBytes()
     {
       /// @todo how about compressed formats with mipmaps, does the 4/3 rule apply here as well?
-      if(m_consumed > 0) return m_consumed;
-      /// @todo this is wrong, should use m_internalFormat to calculate the size
-      float used = float(m_width) * m_height * m_srcFormat.bytesPerPixel();
-      // Mipmaps used 33% more memory
-      used *= (m_haveMipmaps ? (4.f / 3.f) : 1.f);
-      return (long)used;
+      if(m_consumed > 0) return (long)m_consumed;
+
+      return (long)estimateMemoryUse();
     }
 
     /// Get the OpenGL texture id
@@ -176,24 +169,21 @@ namespace Luminous
     /// @return true if the texture object has been defined
     bool isDefined() const { return id() != 0; }
 
-    /// Get the pixel format of the source data.
-    /// Returns the pixel format of the source data, not the internal pixel format.
-    /// @see internalFormat()
-    /// @return pixel format of the source data
-    const PixelFormat & srcFormat() const { return m_srcFormat; }
     /// Get the internal format of the texture
     /// @return internal OpenGL texture format
     GLenum internalFormat() const { return m_internalFormat; }
 
+    bool haveMipmaps() const { return m_haveMipmaps; }
+
   protected:
+    size_t estimateMemoryUse() const;
+
     /// OpenGL texture handle
     GLuint m_textureId;
     /// Width of the texture
     int m_width;
     /// Height of the texture
     int m_height;
-    /// Pixel format of the source data, not the internal pixel format
-    PixelFormat m_srcFormat;
     /// The internal texture format
     GLenum m_internalFormat;
     /// Does the texture have mipmaps
@@ -201,6 +191,10 @@ namespace Luminous
     /// The actual consumed size on GPU, if good enough estimate is known
     /// If this is zero, the size is guessed from internalFormat and size
     int m_consumed;
+
+  private:
+    /// Allocates the texture object. Does not allocate memory for the texture data.
+    void allocate();
   };
 
   /// A 1D texture
@@ -233,7 +227,9 @@ namespace Luminous
   public:
     /// Constructs a 2D texture and adds it to the given resource collection
     Texture2D(GLResources * resources = 0) :
-        TextureT<GL_TEXTURE_2D>(resources), m_loadedLines(0) {}
+        TextureT<GL_TEXTURE_2D>(resources),
+      m_uploadedLines(0)
+    {}
 
     /// Get the aspect ratio of the texture
     /// Returns the aspect ratio of this texture, ie. the ratio of width to height
@@ -259,11 +255,9 @@ namespace Luminous
                    const void* data,
                    const PixelFormat& srcFormat,
                    bool buildMipmaps = true);
-    /// Load a sub-texture.
-    void loadSubBytes(int x, int y, int w, int h, const void * subData);
 
-    /// Load some lines to the texture:
-    void loadLines(int y, int h, const void * data, const PixelFormat& srcFormat);
+    /// Load a sub-texture.
+    void loadSubBytes(int x, int y, int w, int h, const void * subData, const PixelFormat & srcFormat);
 
     /// Create a new texture, from an image file
     static Texture2D * fromFile(const char * filename, bool buildMipmaps = true, GLResources * resources = 0);
@@ -274,12 +268,25 @@ namespace Luminous
                 const void * data,
                 const PixelFormat& srcFormat,
                 bool buildMipmaps = true, GLResources * resources = 0);
-    /// Get the number of scan-lines that have been uploaded to the GPU
-    /// This is used for example while doing progressive loading of images.
-    /// @return number of uploaded lines
-    inline unsigned loadedLines() const { return m_loadedLines; }
+
+    /// Do progressive texture upload
+    /// Continues uploading lines to texture memory using previously uploaded
+    /// lines as offset. The function checks the currently available bandwidth and
+    /// uploads data within that limit. If the texture size exceeds the available
+    /// bandwidth, only part of it that fits within the bandwidth limit is
+    /// uploaded. This function should be called once per frame until it returns
+    /// true indicating that the texture has been fully uploaded.
+    /// @param resources OpenGL resource collection
+    /// @param textureUnit OpenGL texture unit where the texture will be bound as a side effect of calling this function
+    /// @return true if the texture data was fully uploaded, false otherwise
+    bool progressiveUpload(Luminous::GLResources * resources, GLenum textureUnit, const Image & srcImage);
+
   private:
-    unsigned m_loadedLines;
+    /// Number of lines that have been uploaded to GPU. Used to track progressive uploads.
+    /// @sa progressiveUpload
+    size_t m_uploadedLines;
+
+    friend class ImageTex;
   };
 
   /// A 3D texture

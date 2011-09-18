@@ -13,6 +13,10 @@
  * 
  */
 
+#include "Platform.hpp"
+
+#ifdef RADIANT_LINUX
+
 #include "XFaker.hpp"
 
 #include <Nimble/Rect.hpp>
@@ -136,3 +140,5 @@ namespace Radiant {
   }
 
 }
+
+#endif

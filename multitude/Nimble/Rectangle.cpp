@@ -58,6 +58,19 @@ namespace Nimble
     return (0 <= u && u <= m_extent0) && (0 <= v && v <= m_extent1);
   }
 
+  bool Rectangle::inside(const Nimble::Rectangle & r) const
+  {
+    // rectangle is inside if all points are inside
+    std::vector<Nimble::Vector2f> corners;
+    corners.reserve(4);
+    r.computeCorners(corners);
+    assert(corners.size() == 4);
+
+    for(int i = 0; i < 4; ++i)
+      if(!inside(corners[i])) return false;
+    return true;
+  }
+
   bool Rectangle::intersects(const Rectangle & r) const
   {
     // Difference box centers

@@ -72,8 +72,6 @@ namespace Luminous {
       int bound;
     };
 
-    friend class GPUMipmaps;
-
     CPUMipmaps();
     virtual ~CPUMipmaps();
 

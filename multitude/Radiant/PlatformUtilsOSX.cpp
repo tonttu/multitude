@@ -13,6 +13,10 @@
  * 
  */
 
+#include "Platform.hpp"
+
+#ifdef RADIANT_OSX
+
 #include "PlatformUtils.hpp"
 
 #include "Trace.hpp"
@@ -114,3 +118,5 @@ namespace Radiant
   }
 
 }
+
+#endif

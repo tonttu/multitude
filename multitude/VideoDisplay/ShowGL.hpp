@@ -183,10 +183,6 @@ namespace VideoDisplay {
     /// @param gain The new gain factor
     void setGain(float gain);
 
-    // /// Opens the file for playing.
-    /* VIDEODISPLAY_API bool open(const char * filename, Resonant::DSPNetwork  * dsp,
-                               Radiant::TimeStamp pos = 0);
-    */
     /// Starts file playback. If the video is already playing and fromOldPos is
     /// false, we just seek to beginning.
     /// @param fromOldPos True if the playing should continue from the last
@@ -205,8 +201,6 @@ namespace VideoDisplay {
 
     /// Starts video playback from current position
     bool unpause();
-
-    // VIDEODISPLAY_API void enableLooping(bool enable);
 
     /// Returns the state of this video
     State state() const { return m_state; }
@@ -246,11 +240,11 @@ namespace VideoDisplay {
     Nimble::Vector2i size() const;
 
     /// Returns the duration (lenght) of the video
-    Radiant::TimeStamp duration() { return m_duration; }
+    Radiant::TimeStamp duration() const { return m_duration; }
     /// Returns the current playback position of the video
-    Radiant::TimeStamp position() { return m_position; }
+    Radiant::TimeStamp position() const { return m_position; }
     /// The relative playback position of the current video
-    double relativePosition() { return position() / (double) duration(); }
+    double relativePosition() const { return position() / (double) duration(); }
 
     /// Seek to given position. Due to limitations of underlying seek
     /// algorithms, this method is usually not exact.

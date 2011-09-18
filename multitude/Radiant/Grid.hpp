@@ -28,21 +28,17 @@ namespace Radiant {
     /// @param w The width of the grid
     /// @param h The height of the grid
     GridMemT(unsigned w = 0, unsigned h = 0)
-        : m_width(w), m_height(h)
+      : m_data(0), m_width(w), m_height(h), m_size(0)
     {
-      unsigned s = w * h;
-      if(s)
-        m_data = new T[s];
-      else
-        m_data = 0;
+      resize(w, h);
     }
     /// Constructs a copy
-    GridMemT(const GridMemT & that) : m_data(0), m_width(0), m_height(0)
+    GridMemT(const GridMemT & that) : m_data(0), m_width(0), m_height(0), m_size(0)
     { *this = that; }
 
     ~GridMemT()
     {
-        delete [] m_data;
+      delete [] m_data;
     }
 
     /// Resizes this grid, by allocating new memory as necessary
@@ -57,15 +53,18 @@ namespace Radiant {
     void resize(unsigned w, unsigned h)
     {
       unsigned s = w * h;
-      unsigned smy = m_width * m_height;
 
       m_width = w;
       m_height = h;
 
-      if(s == smy)
+      // make the memory size dividable by 4
+      while(s & 0x3) ++s;
+
+      if(m_size >= s)
         return;
 
       delete [] m_data;
+      m_size = s;
 
       if(s)
         m_data = new T[s];
@@ -80,13 +79,13 @@ namespace Radiant {
 
     /** frees up the memory, and sets the width and height of this
     object to zero. */
-    void clear() { delete [] m_data; m_width = m_height = 0; m_data = 0; }
+    void clear() { delete [] m_data; m_width = m_height = 0; m_data = 0; m_size = 0; }
 
     /// Copies data from memory
     /// @param src Source image data
     /// @param w Width of source image
     /// @param h Height of source image
-    void copy(T * src, unsigned w, unsigned h)
+    void copy(const T * src, unsigned w, unsigned h)
     {
       resize(w, h);
       const T * sentinel = src + w * h;
@@ -113,6 +112,8 @@ namespace Radiant {
     unsigned m_width;
     /// Height of the grid
     unsigned m_height;
+    /// Reserved data size in bytes
+    unsigned m_size;
   };
 
   /// Grid base class without memory management

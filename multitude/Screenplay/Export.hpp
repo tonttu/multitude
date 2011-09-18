@@ -16,19 +16,13 @@
 #ifndef SCREENPLAY_EXPORT_HPP
 #define SCREENPLAY_EXPORT_HPP
 
-#ifdef WIN32
+#include "Radiant/Platform.hpp"
 
 // Import by default
 #ifdef SCREENPLAY_EXPORT
-#define SCREENPLAY_API __declspec(dllexport)
+#define SCREENPLAY_API DLLEXPORT
 #else
-#define SCREENPLAY_API __declspec(dllimport)
+#define SCREENPLAY_API DLLIMPORT
 #endif
-
-#else
-
-#define SCREENPLAY_API
-
-#endif  
 
 #endif

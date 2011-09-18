@@ -99,8 +99,6 @@ namespace Resonant {
 
     private:
 
-      void lock()   { m_host->lock(); }
-      void unlock() { m_host->unlock(); }
       void waitCond()   { m_host->waitCond(); }
       void signalCond() { m_host->signalCond(); }
 
@@ -203,8 +201,6 @@ namespace Resonant {
 
     bool update();
 
-    void lock()   { m_mutex.lock(); }
-    void unlock() { m_mutex.unlock(); }
     void waitCond()   { m_cond.wait(m_mutex); }
     void signalCond() { m_cond.wakeOne(m_mutex); }
 
@@ -213,7 +209,9 @@ namespace Resonant {
 
     container m_files;
 
-    Radiant::Mutex m_mutex, m_mutex2;
+    Radiant::Mutex m_mutex;
+    /// For m_files
+    Radiant::Mutex m_filesMutex;
     Radiant::Condition m_cond;
 
     volatile bool m_done;

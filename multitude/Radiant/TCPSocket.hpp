@@ -33,6 +33,14 @@ namespace Radiant {
   class RADIANT_API TCPSocket : public Radiant::BinaryStream, public Patterns::NotCopyable
   {
   public:
+    /// Flags used with read() -function
+    enum Flags
+    {
+      NONBLOCK,   ///< Never block
+      WAIT_SOME,  ///< Block until some data is read or socket has a read error
+      WAIT_ALL    ///< Blocks until all requested data is read or socket has a read error
+    };
+
     TCPSocket();
     /// Construct a socket based on a file descriptor
     /// This method is potentially non-portable as not all platforms use file
@@ -67,25 +75,35 @@ namespace Radiant {
     /// Read bytes from the socket
     /** @param[out] buffer pointer to a buffer to store the read data to
         @param bytes how many bytes the buffer has room for
-        @param waitfordata Conditionally wait for all the data to arrive.
+        @param flags Blocking behaviour
         @return the number of bytes actually read
         */
-    int read(void * buffer, int bytes, bool waitfordata = true);
+    int read(void * buffer, int bytes, Flags flags);
+
+    /// Read bytes from the socket
+    /** @param[out] buffer pointer to a buffer to store the read data to
+        @param bytes how many bytes the buffer has room for
+        @param waitfordata wait for all data or do not block at all
+        @see read(void*,int,Flags)
+        @return the number of bytes actually read
+        */
+    virtual int read(void * buffer, int bytes, bool waitfordata = true)
+    {
+      return read(buffer, bytes, waitfordata ? WAIT_ALL : NONBLOCK);
+    }
+
     /// Write bytes to the socket
     int write(const void * buffer, int bytes);
-
-    /// Read some bytes from the socket
-    /// @param[out] buffer to write to
-    /// @param bytes bytes to read
-    /// @param waitfordata conditionally wait for some data to arrive
-    /// @return number of bytes read
-    int readSome(void * buffer, int bytes, bool waitfordata = true);
 
     /// Returns true if the socket has been closed
     bool isHungUp() const;
 
     /// Return 'true' if readable data is pending.
     bool isPendingInput(unsigned int waitMicroSeconds = 0);
+
+    /// @cond
+    int fd() const;
+    /// @endcond
 
 /// @cond
 

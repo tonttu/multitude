@@ -371,9 +371,8 @@ namespace Resonant {
         }
       }
 
-      m_mutex.lock();
+      Radiant::Guard g(m_mutex);
       m_cond.wait(m_mutex);
-      m_mutex.unlock();
     }
   }
 
@@ -547,7 +546,10 @@ namespace Resonant {
         sprintf(command, "mpg123 %s --wav %s", file.c_str(), wavname.c_str());
 #endif
         info("Performing mp3 -> wav conversion with [%s]", command);
-        system(command);
+        int err = system(command);
+        if(err != 0)
+          Radiant::error("ModuleSamplePlayer::createAmbientBackground # '%s' failed", command);
+
         file = wavname;
       }
 
@@ -599,7 +601,7 @@ namespace Resonant {
     sf_close(sndf);
 
     Radiant::BinaryData control;
-    control.writeString(std::string(id()) + "/playsample");
+    control.writeString(id() + "/playsample");
 
     control.writeString(filename);
 
