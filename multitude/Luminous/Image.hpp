@@ -132,7 +132,7 @@ namespace Luminous
     */
     bool copyResample(const Image & source, int w, int h);
 
-    bool minify(const Image & src, int w, int h);
+    void minify(const Image & src, int w, int h);
 
     /** Down-sample the given image to quarter size.
     @param source image to resample
@@ -179,6 +179,8 @@ namespace Luminous
     @param y pixel y coordinate
     @return color at the given pixel */
     Nimble::Vector4 pixel(unsigned x, unsigned y) const;
+
+    Nimble::Vector4 safePixel(int x, int y) const;
 
     void setPixel(unsigned x, unsigned y, const Nimble::Vector4 & pixel);
 

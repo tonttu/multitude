@@ -144,7 +144,7 @@ namespace Luminous
     changed();
   }
 
-  bool Image::minify(const Image &src, int w, int h)
+  void Image::minify(const Image &src, int w, int h)
   {
     changed();
 
@@ -171,8 +171,6 @@ namespace Luminous
         setPixel(x0, y0, value);
       }
     }
-
-    return true;
   }
 
   bool Image::copyResample(const Image & source, int w, int h)
@@ -748,11 +746,19 @@ namespace Luminous
     changed();
   }
 
+  Nimble::Vector4 Image::safePixel(int x, int y) const
+  {
+    if(x < 0 || x >= width())
+      return Nimble::Vector4(0.f, 0.f, 0.f, 0.f);
+
+    if(y < 0 || y >= height())
+      return Nimble::Vector4(0.f, 0.f, 0.f, 0.f);
+
+    return pixel(x, y);
+  }
+
   Nimble::Vector4 Image::pixel(unsigned x, unsigned y) const
   {
-    assert(x >= 0 && x < width());
-    assert(y >= 0 && y < height());
-
     if(empty())
       return Nimble::Vector4(0, 0, 0, 1);
 
