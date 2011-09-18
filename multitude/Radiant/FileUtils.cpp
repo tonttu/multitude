@@ -315,11 +315,7 @@ namespace Radiant
 
 	std::string FileUtils::pathSeparator()
 	{
-#if defined RADIANT_WINDOWS
 		return std::string(";");
-#else
-		return std::string(":");
-#endif
 	}
 
 	std::string FileUtils::directorySeparator()
