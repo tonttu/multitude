@@ -27,7 +27,13 @@ namespace Radiant
 
   ResourceLocator ResourceLocator::s_instance;
 
+#if defined RADIANT_WINDOWS
   std::string   ResourceLocator::separator = ";";
+  // return std::string(";");
+#else
+  std::string   ResourceLocator::separator = ":";
+  // return std::string(":");
+#endif
 
   ResourceLocator::ResourceLocator()
   {}
