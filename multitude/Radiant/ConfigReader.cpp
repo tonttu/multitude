@@ -219,14 +219,16 @@ namespace Radiant {
   int Variant::getDoubles(double *p, int n)
   {
     QByteArray ba = m_var.toUtf8();
-    char *str = (char *) ba.data();
+    const char * str = ba.data();
 
     int i=0;
 
     while(str < ba.data() + ba.size() && i < n) {
-      char * endStr = str;
+      const char * endStr = str;
 
-      double tmp = strtod(str, &endStr);
+      char * end = 0;
+      double tmp = strtod(str, &end);
+      endStr = end;
       
       if(endStr <= str)
 	return i;
@@ -264,7 +266,7 @@ namespace Radiant {
 
   void Variant::dump(std::ostream & os) const
   {
-    os << m_var;
+    os << m_var.toUtf8().data();
   }
 
   bool Variant::isEmpty() const 

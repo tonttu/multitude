@@ -68,9 +68,9 @@ namespace Radiant {
     bool isOpen() const;
 
     /// Returns the hostname
-    QString host() const;
+    //QString host() const;
     /// Returns the port number
-    int port() const;
+    //int port() const;
 
     /// Read bytes from the socket
     /** @param[out] buffer pointer to a buffer to store the read data to

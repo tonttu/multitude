@@ -50,7 +50,7 @@ namespace Valuable
      * \code
      * Node opts;
      * AttributeInt limit(&opts, "limit", 5);
-     * ValueString target(&opts, "target", "/tmp/target");
+     * AttributeString target(&opts, "target", "/tmp/target");
      * AttributeBool verbose(&opts, "v", false);
      * AttributeBool recursive(&opts, "recursive", true);
      * StringList files = CmdParser::parse(argc, argv, opts);
