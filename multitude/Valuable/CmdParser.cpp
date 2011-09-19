@@ -24,7 +24,7 @@
 
 namespace Valuable
 {
-  QStringList CmdParser::parse(int argc, char * argv[],
+  QStringList CmdParser::parse(int & argc, char * argv[],
                                Valuable::Node & opts)
   {
     CmdParser parser;
@@ -43,14 +43,27 @@ namespace Valuable
     return m_parsedArgs.contains(name);
   }
 
-  QStringList CmdParser::parseAndStore(int argc, char * argv[],
+  QStringList CmdParser::parseAndStore(int & argc, char * argv[],
                                        Valuable::Node & opts)
   {
     QStringList tmp;
     tmp.reserve(argc-1);
     for(int i = 1; i < argc; ++i)
       tmp << argv[i];
-    return parseAndStore(tmp, opts);
+
+    QStringList out = parseAndStore(tmp, opts);
+
+    if(out.size() > 0) {
+      int argv_out = 1;
+      for(int i = 1, j = 0; i < argc; ++i) {
+        if(j < out.size() && argv[i] == out[j]) {
+          argv[argv_out++] = argv[i];
+          ++j;
+        }
+      }
+      argc = argv_out;
+    }
+    return out;
   }
 
   QStringList CmdParser::parseAndStore(const QStringList & argv,

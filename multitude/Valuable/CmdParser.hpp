@@ -59,7 +59,7 @@ namespace Valuable
      *
      * @return List of arguments that didn't match any Attribute in opts.
      */
-    static QStringList parse(int argc, char * argv[],
+    static QStringList parse(int & argc, char * argv[],
                              Valuable::Node & opts);
 
     static QStringList parse(const QStringList & argv, Valuable::Node & opts);
@@ -76,7 +76,7 @@ namespace Valuable
       *
       * @return List of arguments that didn't match any Attribute in opts.
       */
-    QStringList parseAndStore(int argc, char * argv[],
+    QStringList parseAndStore(int & argc, char * argv[],
                               Valuable::Node & opts);
 
     QStringList parseAndStore(const QStringList & argv, Valuable::Node & opts);
