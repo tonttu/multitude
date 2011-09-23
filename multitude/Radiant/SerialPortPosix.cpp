@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #include "Platform.hpp"
@@ -42,9 +30,9 @@ namespace Radiant
   {
     close();
   }
-  
+
   bool SerialPort::open(const char * device, bool stopBit, bool parityBit,
-			int baud, int bits, int waitBytes, int waitTimeUS)
+            int baud, int bits, int waitBytes, int waitTimeUS)
   {
     close();
 
@@ -53,10 +41,10 @@ namespace Radiant
     const char * fname = "SerialPort::open";
 
     m_fd = ::open(device, O_RDWR | O_NOCTTY | O_NDELAY);
-    
+
     if(m_fd <= 0) {
       Radiant::error("%s # Failed to open \"%s\" (%s)",
-		     fname, device, strerror(errno));
+             fname, device, strerror(errno));
       errno = 0;
       return false;
     }
@@ -79,7 +67,7 @@ namespace Radiant
       opts.c_cflag &= ~PARENB;
 
     opts.c_cflag &= ~CSIZE;
-    
+
     if(bits == 5)
       opts.c_cflag |= CS5;
     else if(bits == 6)
@@ -94,24 +82,24 @@ namespace Radiant
 
     // Set bauds:
     if(baud == 1200)
-      speed = B1200; 
+      speed = B1200;
     else if(baud == 2400)
-      speed =  B2400; 
+      speed =  B2400;
     else if(baud == 4800)
-      speed =  B4800; 
+      speed =  B4800;
     else if(baud == 9600)
-      speed =  B9600; 
+      speed =  B9600;
     else if(baud == 19200)
-      speed =  B19200; 
+      speed =  B19200;
     else if(baud == 38400)
-      speed =  B38400; 
+      speed =  B38400;
     else if(baud == 57600)
-      speed =  B57600; 
+      speed =  B57600;
     else if(baud == 115200)
-      speed =  B115200; 
+      speed =  B115200;
 #ifdef B230400
     else if(baud == 230400)
-      speed =  B230400; 
+      speed =  B230400;
 #endif
 
     cfsetispeed( & opts, speed);
@@ -122,10 +110,10 @@ namespace Radiant
 
     opts.c_cflag |= CREAD;	/* Allow reading */
     opts.c_cflag |= CLOCAL;	/* No modem between us and device */
-    
+
     opts.c_cc[VMIN] = waitBytes;
     opts.c_cc[VTIME] = waitTimeUS / 100000; /* Unit = 0.1 s*/
-    
+
 
     opts.c_cflag |= CREAD | CLOCAL;  // turn on READ & ignore ctrl lines
     opts.c_iflag &= ~(IXON | IXOFF | IXANY); // turn off s/w flow ctrl
@@ -175,8 +163,11 @@ namespace Radiant
     return write( & byte, 1);
   }
 
-  int SerialPort::read(void * buf, int bytes)
+  int SerialPort::read(void * buf, int bytes, bool waitfordata)
   {
+    if(!waitfordata) {
+      error("SerialPort::read # !waitfordata nor supported yet.");
+    }
     return ::read(m_fd, buf, bytes);
   }
 
