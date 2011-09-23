@@ -132,23 +132,8 @@ win32 {
     QMAKE_CXXFLAGS += -D_CRT_SECURE_NO_WARNINGS -wd4244 -wd4251 -wd4355
     DEFINES += WIN32
 
-    # Debug builds have an extra extension
+	# These libs have an extra extension for debug builds
     build_pass:CONFIG(debug,debug|release) {
-      TARGET=$$join(TARGET,,,_d)
-    }
-
-    # Master builds have a release that links to debug runtime
-    build_pass:CONFIG(release,debug|release) {
-      CONFIG(master) {
-        !contains(QMAKE_CFLAGS_RELEASE,-MDd):QMAKE_CFLAGS_RELEASE=$$replace(QMAKE_CFLAGS_RELEASE,-MD,-MDd)
-        !contains(QMAKE_CXXFLAGS_RELEASE,-MDd):QMAKE_CXXFLAGS_RELEASE=$$replace(QMAKE_CXXFLAGS_RELEASE,-MD,-MDd)
-        EXPORT_HEADERS = nothing
-        TARGET=$$join(TARGET,,,_d)
-      }
-    }
-
-	# These libs have an extra extension for debug and master builds
-    build_pass:CONFIG(debug,debug|release) | CONFIG(master) {
       LIB_BOX2D = -lBox2D_d
       LIB_POETIC = -lPoetic_d
       LIB_FLUFFY = -lFluffy_d
