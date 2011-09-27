@@ -30,12 +30,13 @@ LIB_POETIC = -lPoetic
 LIB_FLUFFY = -lFluffy
 LIB_LUMINOUS = -lLuminous
 LIB_NIMBLE = -lNimble
-LIB_RADIANT = -lRadiant -lPatterns
+LIB_RADIANT = -lRadiant
 LIB_RESONANT = -lResonant
 LIB_SCREENPLAY = -lScreenplay
 LIB_VIDEODISPLAY = -lVideoDisplay
 LIB_VALUABLE = -lValuable
 LIB_PATTERNS = -lPatterns
+LIB_SQUISH = -lSquish
 
 linux-*:vivid {
   QMAKE_LIBDIR += $$(FBX_SDK)/lib/gcc4
@@ -131,6 +132,21 @@ win32 {
     QMAKE_CXXFLAGS += -D_CRT_SECURE_NO_WARNINGS -wd4244 -wd4251 -wd4355
     DEFINES += WIN32
 
+	# These libs have an extra extension for debug builds
+    build_pass:CONFIG(debug,debug|release) {
+      LIB_BOX2D = -lBox2D_d
+      LIB_POETIC = -lPoetic_d
+      LIB_FLUFFY = -lFluffy_d
+      LIB_LUMINOUS = -lLuminous_d
+      LIB_NIMBLE = -lNimble_d
+      LIB_RADIANT = -lRadiant_d
+      LIB_RESONANT = -lResonant_d
+      LIB_SCREENPLAY = -lScreenplay_d
+      LIB_VIDEODISPLAY = -lVideoDisplay_d
+      LIB_VALUABLE = -lValuable_d
+      LIB_PATTERNS = -lPatterns_d
+	  LIB_SQUISH = -lSquish_d
+	}
 }
 
 MULTI_VIDEO_LIBS = $$LIB_SCREENPLAY $$LIB_RESONANT $$LIB_VIDEODISPLAY
