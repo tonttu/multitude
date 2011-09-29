@@ -10,9 +10,9 @@ LIBS += $$MULTI_FFMPEG_LIBS
 
 LIBS += $$LIB_RADIANT $$LIB_PATTERNS
 
+DEFINES += SCREENPLAY_EXPORT	
+
 win32 {
-	DEFINES += SCREENPLAY_EXPORT	
-	
 	win64:INCLUDEPATH += ../Win64x/include/ffmpeg
 	else:INCLUDEPATH += ../Win32x/include/ffmpeg
 }
