@@ -160,7 +160,7 @@ namespace Valuable {
       }
     }
 
-    AttributeFlagsT & operator=(const Flags & b) { setValue(b, OVERRIDE); return *this; }
+    AttributeFlagsT & operator=(const Flags & b) { setValue(b, MANUAL); return *this; }
 
     bool operator==(const Flags & b) const { return value() == b; }
     bool operator!=(const Flags & b) const { return value() != b; }
@@ -172,9 +172,9 @@ namespace Valuable {
     Flags operator|(const Flags & b) const { return value() | b; }
     Flags operator^(const Flags & b) const { return value() ^ b; }
 
-    AttributeFlagsT & operator&=(const Flags & b) { setValue(value() & b, OVERRIDE); return *this; }
-    AttributeFlagsT & operator|=(const Flags & b) { setValue(value() & b, OVERRIDE); return *this; }
-    AttributeFlagsT & operator^=(const Flags & b) { setValue(value() & b, OVERRIDE); return *this; }
+    AttributeFlagsT & operator&=(const Flags & b) { setValue(value() & b, MANUAL); return *this; }
+    AttributeFlagsT & operator|=(const Flags & b) { setValue(value() & b, MANUAL); return *this; }
+    AttributeFlagsT & operator^=(const Flags & b) { setValue(value() & b, MANUAL); return *this; }
 
     operator Flags() const { return m_cache; }
 
@@ -187,7 +187,7 @@ namespace Valuable {
       return m_cache;
     }
 
-    void setFlags(const Flags & f, bool state = true, Layer layer = OVERRIDE)
+    void setFlags(const Flags & f, bool state = true, Layer layer = MANUAL)
     {
       if(state) m_values[layer] |= f;
       else m_values[layer] &= ~f;
@@ -234,7 +234,7 @@ namespace Valuable {
       bool ok = true;
       uint32_t v = uint32_t(data.readInt32(&ok));
 
-      if(ok) setValue(Flags::fromInt(v), OVERRIDE);
+      if(ok) setValue(Flags::fromInt(v), MANUAL);
     }
 
     bool set(int v, Layer layer)
@@ -244,7 +244,7 @@ namespace Valuable {
       return true;
     }
 
-    bool set(const QVariantList & v, QList<ValueUnit> units, Layer layer = OVERRIDE)
+    bool set(const QVariantList & v, QList<ValueUnit> units, Layer layer = MANUAL)
     {
       foreach(const ValueUnit & vu, units)
         if(vu != VU_UNKNOWN) return false;

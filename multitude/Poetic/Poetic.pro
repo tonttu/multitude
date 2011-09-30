@@ -56,8 +56,9 @@ macx:LIBS += -framework,OpenGL
 
 include(../library.pri)
 
+DEFINES += POETIC_EXPORT
+
 win32 {
-	DEFINES += POETIC_EXPORT
 
 	win64 {
 		INCLUDEPATH += ..\\Win64x\\include\\freetype2

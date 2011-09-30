@@ -71,10 +71,10 @@ namespace Valuable
     /// Prefix increment
     AttributeIntT<T> & operator ++ ()
     {
-      if(m_current != Base::OVERRIDE) {
-        m_values[Base::OVERRIDE] = m_values[m_current];
-        m_valueSet[Base::OVERRIDE] = true;
-        m_current = Base::OVERRIDE;
+      if(m_current != Base::MANUAL) {
+        m_values[Base::MANUAL] = m_values[m_current];
+        m_valueSet[Base::MANUAL] = true;
+        m_current = Base::MANUAL;
       }
       ++m_values[m_current];
       this->emitChange();
@@ -84,10 +84,10 @@ namespace Valuable
     /// Prefix decrement
     AttributeIntT<T> & operator -- ()
     {
-      if(m_current != Base::OVERRIDE) {
-        m_values[Base::OVERRIDE] = m_values[m_current];
-        m_valueSet[Base::OVERRIDE] = true;
-        m_current = Base::OVERRIDE;
+      if(m_current != Base::MANUAL) {
+        m_values[Base::MANUAL] = m_values[m_current];
+        m_valueSet[Base::MANUAL] = true;
+        m_current = Base::MANUAL;
       }
       --m_values[m_current];
       this->emitChange();
@@ -100,13 +100,13 @@ namespace Valuable
     AttributeIntT<T> & operator >>= (int i) { *this = value() >> i; return *this; }
 
     /// Sets the numeric value
-    inline virtual bool set(int v, Attribute::Layer layer = Attribute::OVERRIDE)
+    inline virtual bool set(int v, Attribute::Layer layer = Attribute::MANUAL)
     {
       this->setValue(v, layer);
       return true;
     }
     /// @copydoc set
-    inline virtual bool set(float v, Attribute::Layer layer = Attribute::OVERRIDE)
+    inline virtual bool set(float v, Attribute::Layer layer = Attribute::MANUAL)
     {
       this->setValue(v, layer);
       return true;

@@ -17,6 +17,7 @@
 #include "Mutex.hpp"
 #include "TimeStamp.hpp"
 #include "Platform.hpp"
+#include "Thread.hpp"
 
 #include <cassert>
 #include <cstdio>
@@ -45,6 +46,7 @@ namespace Radiant {
   static bool g_enableDuplicateFilter = false;
   static std::string g_lastLogLine = "";
   static bool g_forceColors = false;
+  static bool g_enableThreadId = false;
   static std::set<std::string> g_verboseModules;
 
   QString g_appname;
@@ -67,6 +69,16 @@ namespace Radiant {
   bool enabledDuplicateFilter()
   {
     return g_enableDuplicateFilter;
+  }
+
+  void enableThreadId(bool enable)
+  {
+    g_enableThreadId = enable;
+  }
+
+  bool enabledThreadId()
+  {
+    return g_enableThreadId;
   }
 
   void enableVerboseOutput(bool enable, const char * module)
@@ -138,6 +150,18 @@ namespace Radiant {
     char storage[1024];
     char * buffer = storage;
     int size = sizeof(storage), ret = 0;
+
+    if(g_enableThreadId) {
+      static RADIANT_TLS(int) t_id(-1);
+      int& id = t_id;
+      static int s_id = 0;
+      if(id < 0) {
+        Guard lock(g_mutex);
+        id = s_id++;
+      }
+      ret = snprintf(buffer, size, "%3d ", id);
+      if(ret > 0) size -= ret, buffer += ret;
+    }
 
     if(g_appname.isEmpty()) {
       if(module) {

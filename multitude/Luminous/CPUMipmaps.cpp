@@ -714,7 +714,8 @@ namespace Luminous {
       imdest->quarterSize(*imsrc);
     }
     else {
-      imdest->copyResample(*imsrc, is.x, is.y);
+      //imdest->copyResample(*imsrc, is.x, is.y);
+      imdest->minify(*imsrc, is.x, is.y);
     }
 
     item.m_image = imdest;

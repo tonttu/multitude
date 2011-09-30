@@ -39,6 +39,6 @@ SOURCES += Rect.cpp
 SOURCES += Splines.cpp
 SOURCES += Vector2.cpp
 
-win32:DEFINES += NIMBLE_EXPORT
+DEFINES += NIMBLE_EXPORT
 
 include(../library.pri)

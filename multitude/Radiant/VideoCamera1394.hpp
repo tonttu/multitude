@@ -100,7 +100,7 @@ namespace Radiant {
     virtual int framesBehind() const { return m_framesBehind; }
 
     /// Reset all Firewire buses
-    static void busReset();
+    RADIANT_API static void busReset();
 
   private:
     bool enableCameraFeature(unsigned int feature,
@@ -110,7 +110,7 @@ namespace Radiant {
                              unsigned int * feature_max_value);
 
     bool findCamera(uint64_t euid);
-    void captureSetup(int buffers);
+    bool captureSetup(int buffers);
 
     QString    m_videodevice;
 

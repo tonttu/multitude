@@ -144,6 +144,35 @@ namespace Luminous
     changed();
   }
 
+  void Image::minify(const Image &src, int w, int h)
+  {
+    changed();
+
+    allocate(w, h, src.pixelFormat());
+
+    const float sx = float(src.width()) / float(w);
+    const float sy = float(src.height()) / float(h);
+
+    for(int y0 = 0; y0 < h; y0++) {
+
+      for(int x0 = 0; x0 < w; x0++) {
+
+        Nimble::Vector4 value(0.f, 0.f, 0.f, 0.f);
+
+        int count = 0;
+        for(int j = sy * y0; j < sy * y0 + sy; j++)
+          for(int i = sx * x0; i < sx * x0 + sx; i++) {
+            ++count;
+            value += src.pixel(i, j);
+          }
+
+        value /= count;
+
+        setPixel(x0, y0, value);
+      }
+    }
+  }
+
   bool Image::copyResample(const Image & source, int w, int h)
   {
     changed();
@@ -717,7 +746,18 @@ namespace Luminous
     changed();
   }
 
-  Nimble::Vector4 Image::pixel(unsigned x, unsigned y)
+  Nimble::Vector4 Image::safePixel(int x, int y) const
+  {
+    if(x < 0 || x >= width())
+      return Nimble::Vector4(0.f, 0.f, 0.f, 0.f);
+
+    if(y < 0 || y >= height())
+      return Nimble::Vector4(0.f, 0.f, 0.f, 0.f);
+
+    return pixel(x, y);
+  }
+
+  Nimble::Vector4 Image::pixel(unsigned x, unsigned y) const
   {
     if(empty())
       return Nimble::Vector4(0, 0, 0, 1);
@@ -740,6 +780,30 @@ namespace Luminous
       return Nimble::Vector4(px[0] * s, px[1] * s, px[2] * s, px[3] * s);
 
     return Nimble::Vector4(0, 0, 0, 1);
+  }
+
+  void Image::setPixel(unsigned x, unsigned y, const Nimble::Vector4 &pixel)
+  {
+    assert(x >= 0 && x < width());
+    assert(y >= 0 && y < height());
+
+    uint8_t * px = line(y);
+    px += pixelFormat().bytesPerPixel() * x;
+
+    if(pixelFormat() == PixelFormat::alphaUByte()) {
+      px[0] = pixel.w * 255;
+    } else if(pixelFormat() == PixelFormat::rgbUByte()) {
+      px[0] = pixel.x * 255;
+      px[1] = pixel.y * 255;
+      px[2] = pixel.z * 255;
+    } else if(pixelFormat() == PixelFormat::rgbaUByte()) {
+      px[0] = pixel.x * 255;
+      px[1] = pixel.y * 255;
+      px[2] = pixel.z * 255;
+      px[3] = pixel.w * 255;
+    } else {
+      assert(0);
+    }
   }
 
   ////////////////////////////////////////////////////////////

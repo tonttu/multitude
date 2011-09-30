@@ -33,8 +33,8 @@ namespace Valuable
   using namespace Radiant;
 
 #ifdef MULTI_DOCUMENTER
-  std::map<QString, std::set<QString> > s_eventSendNames;
-  std::map<QString, std::set<QString> > s_eventListenNames;
+  VALUABLE_API std::map<QString, std::set<QString> > s_eventSendNames;
+  VALUABLE_API std::map<QString, std::set<QString> > s_eventListenNames;
 #endif
 
   class Shortcut : public Attribute

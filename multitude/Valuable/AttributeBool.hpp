@@ -40,7 +40,7 @@ namespace Valuable
     /// @endcond
 
     /// Boolean values can be set as integers in CSS files
-    bool set(int v, Layer layer = OVERRIDE);
+    bool set(int v, Layer layer = MANUAL);
 
     QString asString(bool * const ok = 0) const;
   };

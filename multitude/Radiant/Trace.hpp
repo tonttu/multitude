@@ -142,6 +142,15 @@ namespace Radiant {
   /// @return true if filtering is enabled
   RADIANT_API bool enabledDuplicateFilter();
 
+  /// Toggle thread id printing
+  /// If enabled, each log line will include a unique thread id
+  /// @param enable toggle id printing
+  RADIANT_API void enableThreadId(bool enable);
+
+  /// Returns true if the thread id printing is enabled
+  /// @return true if thread id printing is enabled
+  RADIANT_API bool enabledThreadId();
+
   /** Sets the application name to be used in debug output.
 
       By default the info/debug/error functions will print out the

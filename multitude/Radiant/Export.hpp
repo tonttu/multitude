@@ -16,19 +16,17 @@
 #ifndef RADIANT_EXPORT_HPP
 #define RADIANT_EXPORT_HPP
 
-#ifdef WIN32
+#include "Radiant/Platform.hpp"
 
+#ifdef RADIANT_MSVC
 #pragma warning( disable : 4275 )
+#endif
 
 // Import by default
 #ifdef RADIANT_EXPORT
-#define RADIANT_API __declspec(dllexport)
+#define RADIANT_API DLLEXPORT
 #else
-#define RADIANT_API __declspec(dllimport)
-#endif
-
-#else
-#define RADIANT_API
+#define RADIANT_API DLLIMPORT
 #endif
 
 #endif

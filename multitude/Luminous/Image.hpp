@@ -70,9 +70,12 @@ namespace Luminous
     Nimble::Vector2i size() const
     { return Nimble::Vector2i(m_width, m_height); }
     /// The number of bytes a single line in the image takes
-    int lineSize() { return m_width * m_pixelFormat.bytesPerPixel(); }
+    int lineSize() const { return m_width * m_pixelFormat.bytesPerPixel(); }
     /// Returns a pointer to a specific line
     unsigned char* line(unsigned y) { return &m_data[y * lineSize()]; }
+
+    const unsigned char* line(unsigned y) const { return &m_data[y * lineSize()]; }
+
     /// Returns a pointer to the image data
     unsigned char * bytes() { return & m_data[0]; }
     /// Returns a const pointer to the image data
@@ -129,6 +132,8 @@ namespace Luminous
     */
     bool copyResample(const Image & source, int w, int h);
 
+    void minify(const Image & src, int w, int h);
+
     /** Down-sample the given image to quarter size.
     @param source image to resample
     @return true if resampling succeeded */
@@ -173,7 +178,11 @@ namespace Luminous
     @param x pixel x coordinate
     @param y pixel y coordinate
     @return color at the given pixel */
-    Nimble::Vector4 pixel(unsigned x, unsigned y);
+    Nimble::Vector4 pixel(unsigned x, unsigned y) const;
+
+    Nimble::Vector4 safePixel(int x, int y) const;
+
+    void setPixel(unsigned x, unsigned y, const Nimble::Vector4 & pixel);
 
     /// Increments the generation count.
     /// This function should be called when the image has been modified.

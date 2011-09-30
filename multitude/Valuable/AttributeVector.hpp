@@ -79,7 +79,7 @@ namespace Valuable
       const char * type() const;
 
       /// Sets the value
-      virtual bool set(const VectorType & v, Attribute::Layer layer = Attribute::OVERRIDE);
+      virtual bool set(const VectorType & v, Attribute::Layer layer = Attribute::MANUAL);
 
       /// Returns the internal vector object as a constant reference.
       /// @return The wrapped vector value

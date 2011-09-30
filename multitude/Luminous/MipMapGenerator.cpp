@@ -124,7 +124,8 @@ namespace Luminous {
       // Resample next mipmap level
       Image mipmap;
       int w = img.width() >> 1, h = img.height() >> 1;
-      mipmap.copyResample(img, w ? w : 1, h ? h : 1);
+      //mipmap.copyResample(img, w ? w : 1, h ? h : 1);
+      mipmap.minify(img, w ? w : 1, h ? h : 1);
 
       resize(mipmap, level + 1);
     }

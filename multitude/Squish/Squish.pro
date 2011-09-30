@@ -1,3 +1,5 @@
+include(../multitude.pri)
+
 TEMPLATE = lib
 
 CONFIG += staticlib

@@ -142,6 +142,17 @@ namespace Radiant {
     /// @copydoc get
     operator T&() { return get(); }
 
+    void setAll(const T & t)
+    {
+      Radiant::Guard g(m_mutex);
+      m_default = t;
+      typename Map::iterator it = m_values.begin(), it2 = m_values.end();
+      while(it != it2) {
+        it->second = t;
+        ++it;
+      }
+    }
+
     /// Get all instances of the variable
     /// Returns a list of all instances of the TLS variable from different threads.
     /// @return list of all instances in different threads

@@ -109,7 +109,7 @@ namespace Valuable
     enum Layer {
       ORIGINAL = 0,
       STYLE,
-      OVERRIDE,
+      MANUAL,
       STYLE_IMPORTANT,
 
       LAYER_COUNT
@@ -222,19 +222,19 @@ namespace Valuable
     virtual QString asString(bool * const ok = 0) const;
 
     /// Sets the value of the object
-    virtual bool set(float v, Layer layer = OVERRIDE);
+    virtual bool set(float v, Layer layer = MANUAL);
     /// Sets the value of the object
-    virtual bool set(int v, Layer layer = OVERRIDE);
+    virtual bool set(int v, Layer layer = MANUAL);
     /// Sets the value of the object
-    virtual bool set(const QString & v, Layer layer = OVERRIDE);
+    virtual bool set(const QString & v, Layer layer = MANUAL);
     /// Sets the value of the object
-    virtual bool set(const Nimble::Vector2f & v, Layer layer = OVERRIDE);
+    virtual bool set(const Nimble::Vector2f & v, Layer layer = MANUAL);
     /// Sets the value of the object
-    virtual bool set(const Nimble::Vector3f & v, Layer layer = OVERRIDE);
+    virtual bool set(const Nimble::Vector3f & v, Layer layer = MANUAL);
     /// Sets the value of the object
-    virtual bool set(const Nimble::Vector4f & v, Layer layer = OVERRIDE);
+    virtual bool set(const Nimble::Vector4f & v, Layer layer = MANUAL);
     /// Sets the value of the object
-    virtual bool set(const QVariantList & v, QList<ValueUnit> unit, Layer layer = OVERRIDE);
+    virtual bool set(const QVariantList & v, QList<ValueUnit> unit, Layer layer = MANUAL);
 
     /// Get the type id of the type
     virtual const char * type() const = 0;
@@ -372,7 +372,7 @@ namespace Valuable
     /// @todo should return the derived type, not AttributeT
     inline AttributeT<T> & operator = (const T & t)
     {
-      setValue(t, OVERRIDE);
+      setValue(t, MANUAL);
       return *this;
     }
 

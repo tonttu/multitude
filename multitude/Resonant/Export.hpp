@@ -16,19 +16,13 @@
 #ifndef RESONANT_EXPORT_HPP
 #define RESONANT_EXPORT_HPP
 
-#ifdef WIN32
+#include "Radiant/Platform.hpp"
 
 // Import by default
 #ifdef RESONANT_EXPORT
-#define RESONANT_API __declspec(dllexport)
+#define RESONANT_API DLLEXPORT
 #else
-#define RESONANT_API __declspec(dllimport)
+#define RESONANT_API DLLIMPORT
 #endif
-
-#else
-
-#define RESONANT_API
-
-#endif  
 
 #endif

@@ -157,9 +157,9 @@ namespace Luminous
     virtual long consumesBytes()
     {
       /// @todo how about compressed formats with mipmaps, does the 4/3 rule apply here as well?
-      if(m_consumed > 0) return m_consumed;
+      if(m_consumed > 0) return (long)m_consumed;
 
-      return estimateMemoryUse();
+      return (long)estimateMemoryUse();
     }
 
     /// Get the OpenGL texture id

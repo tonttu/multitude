@@ -130,6 +130,8 @@ linux-*: LIBS += -lX11 -lXtst
 
 macx:LIBS += -framework,CoreFoundation
 
+DEFINES += RADIANT_EXPORT
+
 unix {
   LIBS += -lpthread $$LIB_RT -ldl
   PKGCONFIG += libdc1394-2
@@ -140,7 +142,6 @@ unix {
 
 win32 {
     message(Radiant on Windows)
-    DEFINES += RADIANT_EXPORT
     # CMU driver is only 32-bit 
     !win64 {
        DEFINES += CAMERA_DRIVER_CMU

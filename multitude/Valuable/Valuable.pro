@@ -1,6 +1,7 @@
 include(../multitude.pri)
 
 HEADERS += Archive.hpp
+HEADERS += AttributeFlags.hpp
 HEADERS += ChangeMap.hpp
 HEADERS += CmdParser.hpp
 HEADERS += ConfigDocument.hpp
@@ -58,7 +59,7 @@ SOURCES += XMLArchive.cpp
 
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS
 
-win32:DEFINES += VALUABLE_EXPORT
+DEFINES += VALUABLE_EXPORT
 
 CONFIG += qt
 QT += xml
