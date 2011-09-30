@@ -525,6 +525,9 @@ namespace Screenplay {
         warning("VideoInputFFMPEG::fps # Could not get fps");
         return 0;
       }
+      assert(m_ic->nb_streams > m_vindex && m_vindex >= 0);
+      if(m_ic->nb_streams <= m_vindex)
+        return 0;
       fps = av_q2d(m_ic->streams[m_vindex]->r_frame_rate);
     }
 

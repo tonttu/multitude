@@ -16,19 +16,13 @@
 #ifndef VIDEODISPLAY_EXPORT_HPP
 #define VIDEODISPLAY_EXPORT_HPP
 
-#ifdef WIN32
+#include "Radiant/Platform.hpp"
 
 // Import by default
 #ifdef VIDEODISPLAY_EXPORT
-#define VIDEODISPLAY_API __declspec(dllexport)
+#define VIDEODISPLAY_API DLLEXPORT
 #else
-#define VIDEODISPLAY_API __declspec(dllimport)
+#define VIDEODISPLAY_API DLLIMPORT
 #endif
-
-#else
-
-#define VIDEODISPLAY_API
-
-#endif  
 
 #endif

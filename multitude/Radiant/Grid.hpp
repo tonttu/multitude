@@ -204,16 +204,16 @@ namespace Radiant {
     /// @param x X-coordinate of point
     /// @param y Y-coordinate of point
     /// @returns true if the given coordinates are inside the grid
-    inline bool isInside(unsigned x, unsigned y)
+    inline bool isInside(unsigned x, unsigned y) const
     { return (x < this->m_width) && (y < this->m_height); }
     /// @copybrief isInside(unsigned x, unsigned y)
     /// @param v Point coordinate
     /// @returns true if the given coordinates are inside the grid
-    inline bool isInside(const Nimble::Vector2i & v)
+    inline bool isInside(const Nimble::Vector2i & v) const
     { return ((unsigned) v.x < this->m_width) &&
         ((unsigned) v.y < this->m_height); }
     /// @copydoc isInside(const Nimble::Vector2i & v)
-    inline bool isInside(const Nimble::Vector2f & v)
+    inline bool isInside(const Nimble::Vector2f & v) const
     { return ((unsigned) v.x < this->m_width) &&
         ((unsigned) v.y < this->m_height); }
 
@@ -264,12 +264,12 @@ namespace Radiant {
 
     /// @param v Coordinate of element
     /// @returns The requested element from the grid or zero if the coordinate is outside of the grid
-    inline T getSafe(const Nimble::Vector2i & v)
+    inline T getSafe(const Nimble::Vector2i & v) const
     { if(isInside(v)) return this->m_data[this->m_width * v.y + v.x];return 0;}
     /// @param x X-coordinate of element
     /// @param y Y-coordinate of element
     /// @returns The requested element from the grid or zero if the coordinate is outside of the grid
-    inline T getSafe(int x, int y)
+    inline T getSafe(int x, int y) const
     { if(isInside(x, y)) return this->m_data[this->m_width * y + x];return 0;}
 
     /** Returns a reference to the grid element that is closest to the
@@ -289,7 +289,7 @@ namespace Radiant {
         with a floating point number. */
     /// @param v Coordinate of element
     /// @returns Interpolated element
-    inline T getInterpolated(const Nimble::Vector2f & v)
+    inline T getInterpolated(const Nimble::Vector2f & v) const
     {
       int left = v.x;
       int top = v.y;
@@ -314,7 +314,7 @@ namespace Radiant {
         with a floating point number. */
     /// @param v Coordinate of element
     /// @returns The interpolated value from given coordinates
-    inline T getInterpolatedSafe(const Nimble::Vector2f & v)
+    inline T getInterpolatedSafe(const Nimble::Vector2f & v) const
     {
       int left = v.x;
       int top = v.y;

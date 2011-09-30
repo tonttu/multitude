@@ -16,19 +16,17 @@
 #ifndef NIMBLE_EXPORT_HPP
 #define NIMBLE_EXPORT_HPP
 
-#ifdef WIN32
+#include "Radiant/Platform.hpp"
 
+#ifdef RADIANT_MSVC
 #pragma warning( disable : 4275 )
+#endif
 
 // Import by default
 #ifdef NIMBLE_EXPORT
-#define NIMBLE_API __declspec(dllexport)
+#define NIMBLE_API DLLEXPORT
 #else
-#define NIMBLE_API __declspec(dllimport)
-#endif
-
-#else
-#define NIMBLE_API
+#define NIMBLE_API DLLIMPORT
 #endif
 
 #endif

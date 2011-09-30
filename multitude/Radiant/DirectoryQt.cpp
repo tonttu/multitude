@@ -56,6 +56,12 @@ namespace Radiant
     return mkdir(dirname.c_str());
   }
 
+  bool Directory::mkdirRecursive(const std::string & dirname)
+  {
+    QDir dir;
+    return dir.mkpath(dirname.c_str());
+  }
+
   bool Directory::exists(const std::string & path)
   {
     QDir dir(path.c_str());

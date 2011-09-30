@@ -40,8 +40,9 @@ unix:LIBS += -lportaudio -lsndfile
 
 include(../library.pri)
 
+DEFINES += RESONANT_EXPORT
+
 win32 {
-  DEFINES += RESONANT_EXPORT
   win64 {
     QMAKE_LIBDIR += $$DDK_PATH\\lib\\win7\\amd64
     INCLUDEPATH += ..\\Win64x\\include\\portaudio

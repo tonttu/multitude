@@ -32,7 +32,7 @@ namespace Luminous
     /// Creates an empty transformation stack
     Transformer();
     /// Deletes the transformation stack
-    ~Transformer();
+    virtual ~Transformer();
 
     /// Get the top matrix of the stack
     const Nimble::Matrix3 & transform() const { return m_stack.top(); }
