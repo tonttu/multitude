@@ -101,8 +101,6 @@ macx {
     LIB_VALUABLE = -framework,Valuable
     LIB_VIDEODISPLAY = -framework,VideoDisplay
     LIB_PATTERNS = -framework,Patterns
-
-    LIB_BOX2D = -framework,Box2D
   }
 
   # change architecture to x86_64 if snow leopard
