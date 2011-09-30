@@ -12,7 +12,7 @@ DEPENDPATH += $$PWD
 # The Cornerstone version for libraries
 unix {
 	# Make symbol export compatible with MSVC
-  QMAKE_CXXFLAGS += -fvisibility-ms-compat
+  !macx:QMAKE_CXXFLAGS += -fvisibility-ms-compat
 
   MULTITUDE_VERSION_MAJOR=$$system(cat ../VERSION | cut -d . -f 1)
   MULTITUDE_VERSION_MINOR=$$system(cat ../VERSION | cut -d . -f 2)
