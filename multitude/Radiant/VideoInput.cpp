@@ -63,7 +63,7 @@ namespace Radiant {
 
   void VideoInput::getAudioParameters(int * channels, 
 				      int * sample_rate,
-				      AudioSampleFormat * format)
+              AudioSampleFormat * format) const
   {
     * channels = 0;
     * sample_rate = 0;
