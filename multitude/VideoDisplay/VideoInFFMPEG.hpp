@@ -33,12 +33,12 @@ namespace VideoDisplay {
     /// Gets the audio parameters of the movie
     virtual void getAudioParameters(int * channels,
                     int * sample_rate,
-                    Radiant::AudioSampleFormat * format);
+                    Radiant::AudioSampleFormat * format) const;
     /// Returns the nominal fps of the movie
-    virtual float fps();
+    virtual float fps() const;
 
     /// Returns the total length of the movie, in seconds
-    virtual double durationSeconds();
+    virtual double durationSeconds() const;
 
     /// Seek to some time in the movie
     // virtual bool seekTo(double seconds);
@@ -74,6 +74,9 @@ namespace VideoDisplay {
     int m_sampleRate;
     int m_audioCount;
     Radiant::AudioSampleFormat m_auformat;
+
+    // Protect all critical variables in the class
+    Radiant::Mutex m_mutex;
   };
 
 }
