@@ -42,26 +42,26 @@ win32 {
 	DLLDESTDIR = $$PWD/bin
 
 	# Debug libraries have an extra extension
-    build_pass:CONFIG(debug,debug|release) {
-      TARGET=$$join(TARGET,,,_d)
-    }
+  build_pass:CONFIG(debug,debug|release) {
+    TARGET=$$join(TARGET,,,_d)
+  }
 
-    # Optimized debug libraries
-    build_pass:CONFIG(debug,debug|release) {
-      CONFIG(optimized) {
-		# Set optimization level
-        QMAKE_CXXFLAGS_RELEASE=$$replace(QMAKE_CXXFLAGS_RELEASE,/Od,/O2)
-		# Disable runtime checks
-		QMAKE_CXXFLAGS_DEBUG=$$replace(QMAKE_CXXFLAGS_DEBUG,/RTC1,)
-		# Enable intrinsics and whole program optimization
-		QMAKE_CXXFLAGS += "/Oi /GL"
-		# No need for symbols
-		QMAKE_CXXFLAGS_DEBUG=$$replace(QMAKE_CXXFLAGS_DEBUG,/Zi,)
-		QMAKE_LFLAGS_DEBUG=$$replace(QMAKE_LFLAGS_DEBUG,/DEBUG,)
-		# No need to install headers
-        EXPORT_HEADERS = nothing
-      }
+  # Optimized debug libraries
+  build_pass:CONFIG(debug,debug|release) {
+    CONFIG(optimized) {
+      # Set optimization level
+      #QMAKE_CXXFLAGS_DEBUG=$$replace(QMAKE_DEBUG,/Od,/O2)
+      # Disable runtime checks
+      #QMAKE_CXXFLAGS_DEBUG=$$replace(QMAKE_CXXFLAGS_DEBUG,/RTC1,)
+      # Enable intrinsics and whole program optimization
+      #QMAKE_CXXFLAGS_DEBUG += "/Oi /GL"
+      # No need for symbols
+      QMAKE_CXXFLAGS_DEBUG=$$replace(QMAKE_CXXFLAGS_DEBUG,-Zi,)
+      QMAKE_LFLAGS_DEBUG=$$replace(QMAKE_LFLAGS_DEBUG,/DEBUG,)
+      # No need to install headers
+      #EXPORT_HEADERS = nothing
     }
+  }
 	
 	# For some reason DESTDIR_TARGET doesn't work here
 	tt = $$join(TARGET, "", "$(DESTDIR)", ".dll")
@@ -83,6 +83,13 @@ win32 {
 		
 		INSTALLS += sdk_lib sdk_dll
 	}
+}
+
+unix {
+  # Make symbol export for shared libs compatible with MSVC
+  !CONFIG(staticlib) {
+    linux*:QMAKE_CXXFLAGS += -fvisibility-ms-compat
+  }
 }
 
 macx {
