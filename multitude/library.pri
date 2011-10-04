@@ -50,16 +50,16 @@ win32 {
   build_pass:CONFIG(debug,debug|release) {
     CONFIG(optimized) {
       # Set optimization level
-      QMAKE_CXXFLAGS_DEBUG=$$replace(QMAKE_DEBUG,/Od,/O2)
+      #QMAKE_CXXFLAGS_DEBUG=$$replace(QMAKE_DEBUG,/Od,/O2)
       # Disable runtime checks
-      QMAKE_CXXFLAGS_DEBUG=$$replace(QMAKE_CXXFLAGS_DEBUG,/RTC1,)
+      #QMAKE_CXXFLAGS_DEBUG=$$replace(QMAKE_CXXFLAGS_DEBUG,/RTC1,)
       # Enable intrinsics and whole program optimization
-      QMAKE_CXXFLAGS_DEBUG += "/Oi /GL"
+      #QMAKE_CXXFLAGS_DEBUG += "/Oi /GL"
       # No need for symbols
-      QMAKE_CXXFLAGS_DEBUG=$$replace(QMAKE_CXXFLAGS_DEBUG,/Zi,)
+      QMAKE_CXXFLAGS_DEBUG=$$replace(QMAKE_CXXFLAGS_DEBUG,-Zi,)
       QMAKE_LFLAGS_DEBUG=$$replace(QMAKE_LFLAGS_DEBUG,/DEBUG,)
-		  # No need to install headers
-      EXPORT_HEADERS = nothing
+      # No need to install headers
+      #EXPORT_HEADERS = nothing
     }
   }
 	
