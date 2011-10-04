@@ -93,6 +93,7 @@ namespace Valuable
           if(!Nimble::Math::isNAN(m_factors[i]))
             this->setValue(m_factors[i] * src, Attribute::Layer(i));
         }
+        m_src = src;
       }
 
       void setPercentage(float factor, Attribute::Layer layer)
