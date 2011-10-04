@@ -54,7 +54,7 @@
 #   define DLLIMPORT __attribute__((visibility("default")))
 
 //  Override is a GCC4.7 and up feature
-#   if (__GNUC__ == 4 && __GNUC_MINOR__ >= 7) || __GNUC__ > 5
+#   if (__GNUC__ == 4 && __GNUC_MINOR__ >= 7) || __GNUC__ > 4
 #     define OVERRIDE override
 #   else
 #     define OVERRIDE
