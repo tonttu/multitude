@@ -89,7 +89,7 @@ namespace Valuable
     }
 
     foreach(Attribute* vo, m_valueListening) {
-      for(QList<AttributeListener>::iterator it = vo->m_listeners.begin(); it != vo->m_listeners.end(); ) {
+      for(QMap<long, AttributeListener>::iterator it = vo->m_listeners.begin(); it != vo->m_listeners.end(); ) {
         if(it->listener == this) {
           it = vo->m_listeners.erase(it);
         } else ++it;

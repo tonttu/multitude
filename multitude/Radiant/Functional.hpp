@@ -27,6 +27,7 @@
     using tr1::result_of;
     using tr1::mem_fn;
     using tr1::ref;
+    using tr1::cref;
   }
 #endif
 

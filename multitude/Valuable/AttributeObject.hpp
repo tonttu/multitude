@@ -251,14 +251,15 @@ namespace Valuable
     void removeHost();
 
     /// Adds a listener that is invoked whenever the value is changed
-    void addListener(ListenerFunc func, int role = CHANGE);
+    long addListener(ListenerFunc func, int role = CHANGE);
     /// Adds a listener that is invoked whenever the value is changed
     /// The listener is removed when the listener object is deleted
-    void addListener(Node * listener, ListenerFunc func, int role = CHANGE);
+    long addListener(Node * listener, ListenerFunc func, int role = CHANGE);
     /// Removes listeners from the listener list
     void removeListeners(int role = ALL);
     /// Removes a listener from the listener list
     void removeListener(Node * listener, int role = ALL);
+    void removeListener(long id);
 
     /// Returns true if the current value of the object is different from the original value.
     virtual bool isChanged() const;
@@ -298,11 +299,14 @@ namespace Valuable
       AttributeListener(ListenerFunc func_, int role_, Node * listener_ = 0)
         : func(func_), role(role_), listener(listener_) {}
 
+      AttributeListener() : func(), role(), listener() {}
+
       ListenerFunc func;
       int role;
       Node * listener;
     };
-    QList<AttributeListener> m_listeners;
+    QMap<long, AttributeListener> m_listeners;
+    long m_listenersId;
 
     friend class Node;
   };
