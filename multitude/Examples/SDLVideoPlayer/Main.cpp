@@ -74,12 +74,12 @@ int main(int argc, char ** argv)
   Luminous::RenderContext rsc;
   Luminous::RenderContext::setThreadContext( & rsc);
 
-  Resonant::DSPNetwork dsp;
-  dsp.start();
+  std::shared_ptr<Resonant::DSPNetwork> dsp = Resonant::DSPNetwork::instance();
+  dsp->start();
 
   VideoDisplay::ShowGL show;
 
-  show.init(file, & dsp);
+  show.init(file);
 
   for(bool running = true; running; ) {
     SDL_Event event;
@@ -113,7 +113,7 @@ int main(int argc, char ** argv)
     glClear(GL_COLOR_BUFFER_BIT);
 
     show.update();
-    show.render( & rsc, Nimble::Vector2(0,0), Nimble::Vector2(width, height));
+    show.render( & rsc, Nimble::Vector2(0,0), Nimble::Vector2(width, height), Radiant::Color());
 
     Luminous::Utils::glCheck("Main.cpp");
 
@@ -123,7 +123,7 @@ int main(int argc, char ** argv)
   info("Stopping video player");
   show.stop();
   info("Stopping DSP network");
-  dsp.stop();
+  dsp->stop();
 
   return 0;
 }

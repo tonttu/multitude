@@ -15,11 +15,15 @@
 #ifndef POETIC_GPU_MANAGED_FONT_HPP
 #define POETIC_GPU_MANAGED_FONT_HPP
 
+#include "Export.hpp"
+
 #include <Luminous/GLResource.hpp>
 
 #include <Nimble/Matrix3.hpp>
 
 #include <vector>
+
+#include <QString>
 
 namespace Poetic
 {
@@ -29,22 +33,20 @@ namespace Poetic
 
   /// A managed font that contains multiple sizes of a single font residing on
   /// the GPU
-  class GPUManagedFont : public Luminous::GLResource
+  class POETIC_API GPUManagedFont : public Luminous::GLResource
   {
     public:
       /// Contructs a new managed GPU font
       GPUManagedFont(CPUManagedFont * font, Luminous::RenderContext * glrc);
+      ~GPUManagedFont();
 
       /// Render a string
-      void render(const std::string & text, int pointSize,
+      void render(const QString & text, int pointSize,
                   const Nimble::Matrix3 & m, float minimumSize = 0.0f);
-      /// @copydoc render
+      /// @copybrief render
       void render(const char * str, int n, int pointSize,
                   const Nimble::Matrix3 & m, float minimumSize = 0.0f);
-      /// @copydoc render
-      void render(const std::wstring & text, int pointSize,
-                  const Nimble::Matrix3 & m, float minimumSize = 0.0f);
-      /// @copydoc render
+      /// @copybrief render
       void render(const wchar_t * str, int n, int pointSize,
                   const Nimble::Matrix3 & m, float minimumSize = 0.0f);
 

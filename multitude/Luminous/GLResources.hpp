@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef LUMINOUS_GLRESOURCES_HPP
@@ -58,9 +58,8 @@ namespace Luminous
     virtual ~GLResources();
 
     /// Initialize the GLResources object.
-    /** This function performs checks on the underlying OpenGL implementation.
-        */
-    bool init();
+    /// This function performs checks on the underlying OpenGL implementation.
+    void init();
 
     /// Get a handle to a resource
     GLResource * getResource(const Collectable * key, int deleteAfterFrames=110);
@@ -116,6 +115,35 @@ namespace Luminous
     Radiant::ResourceLocator & resourceLocator() { return m_resourceLocator; }
 
     // static void setThreadResources(GLResources *);
+
+    /** Associates the resource collection, window, and area to the calling
+    thread. @sa getThreadMultiHead
+    @param resources resource collection
+    @param window window to associate with the calling thread
+    @param area area to associate with the calling thread
+    @todo not implemented on Windows */
+    static void setThreadResources(GLResources * resources,
+           const MultiHead::Window * window,
+           const MultiHead::Area * area);
+
+    /// Returns the resource collection associated with the calling thread
+    /// @return resource collection for the calling thread
+    static GLResources * getThreadResources();
+
+    /** Get rendering data associated with the calling thread.
+    @param w window associated with the calling thread
+    @param a area associated with the calling thread */
+    static void getThreadMultiHead(const MultiHead::Window ** w,
+           const MultiHead::Area ** a);
+
+    /// Get the current #Luminous::MultiHead::Area for this thread
+    /** @return The current area which has been set with #setThreadResources, or
+        null if the area has not been set. */
+    static const Luminous::MultiHead::Area * getThreadMultiHeadArea();
+    /// Get the current #Luminous::MultiHead::Window for this thread
+    /** @return The current window which has been set with #setThreadResources, or
+        null if the window has not been set. */
+    static const Luminous::MultiHead::Window * getThreadMultiHeadWindow();
 
     /// Query if the PROXY_TEXTURE_2D extension seems to be broken.
     /** On Linux, with ATI cards, this OpenGL feature appears to be broken, and

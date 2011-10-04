@@ -15,16 +15,15 @@
 
 #include "TCPServerSocket.hpp"
 #include "TCPSocket.hpp"
+#include "SocketUtilPosix.hpp"
+#include "SocketWrapper.hpp"
+#include "Trace.hpp"
 
-#include <arpa/inet.h>
 #include <errno.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <poll.h>
-#include <sys/socket.h>
 #include <sys/types.h>
 #include <strings.h>
 #include <string.h>
+#include <stdio.h>
 
 namespace Radiant
 {
@@ -35,19 +34,22 @@ namespace Radiant
 
       int m_fd;
       int m_port;
-      std::string m_host;
+      QString m_host;
   };
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
   TCPServerSocket::TCPServerSocket()
+    : m_d(new D)
   {
-    m_d = new D();
+    wrap_startup();
   }
   
   TCPServerSocket::~TCPServerSocket()
   {
+    debug("TCPServerSocket::~TCPServerSocket");
+    close();
     delete m_d;
   }
 
@@ -58,57 +60,49 @@ namespace Radiant
     m_d->m_host = host ? host : "";
     m_d->m_port = port;
 
-    m_d->m_fd = socket ( PF_INET, SOCK_STREAM, IPPROTO_TCP );
-    if(m_d->m_fd < 0){
-      return errno;
+    QString errstr;
+    int fd = -1;
+    int err = SocketUtilPosix::bindOrConnectSocket(fd, host, port, errstr,
+                  true, AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if(err) {
+      error("TCPServerSocket::open # %s", errstr.toUtf8().data());
+      return err;
     }
 
-    struct sockaddr_in server_address;
-
-    bzero( & server_address, sizeof(server_address));
-    server_address.sin_family = AF_INET;
-    server_address.sin_port = htons((unsigned short)(port));
-
-    if(!host || strlen(host) == 0)
-      server_address.sin_addr.s_addr = htonl(INADDR_ANY);
-    else {
-      in_addr * addr = TCPSocket::atoaddr(host);
-      
-      if(!addr)
-        return EHOSTUNREACH;
-      
-      server_address.sin_addr.s_addr = addr->s_addr;
+    if(::listen(fd, maxconnections) != 0) {
+      int err = wrap_errno;
+      error("TCPServerSocket::open # Failed to listen TCP socket: %s", wrap_strerror(err));
+      wrap_close(fd);
+      return err ? err : -1;
     }
 
-    if(bind(m_d->m_fd, ( struct sockaddr * ) & server_address,
-	    sizeof ( server_address ) ) < 0 ){
-      close();
-      return errno;
-    }
-
-    if(::listen(m_d->m_fd, maxconnections) != 0) {
-      close();
-      return errno;
-    }
+    m_d->m_fd = fd;
 
     return 0;
   }
 
- bool TCPServerSocket::close()
+  bool TCPServerSocket::close()
   {
-    if(m_d->m_fd < 0)
+    int fd = m_d->m_fd;
+    if(fd < 0)
       return false;
 
-    ::close(m_d->m_fd);
-
     m_d->m_fd = -1;
+
+    if(::shutdown(fd, SHUT_RDWR)) {
+      debug("TCPServerSocket::close # Failed to shut down the socket: %s", wrap_strerror(wrap_errno));
+    }
+
+    if(wrap_close(fd)) {
+      error("TCPServerSocket::close # Failed to close socket: %s", wrap_strerror(wrap_errno));
+    }
 
     return true;
   }
 
   bool TCPServerSocket::isOpen() const
   {
-    return (m_d->m_fd > 0);
+    return m_d->m_fd >= 0;
   }
 
   bool TCPServerSocket::isPendingConnection(unsigned int waitMicroSeconds)
@@ -119,28 +113,49 @@ namespace Radiant
     struct pollfd pfd;
     bzero( & pfd, sizeof(pfd));
     pfd.fd = m_d->m_fd;
-    pfd.events = POLLIN;
-    poll(&pfd, 1, waitMicroSeconds / 1000);
+    pfd.events = POLLRDNORM;
+    int status = wrap_poll(&pfd, 1, waitMicroSeconds / 1000);
+    if(status == -1) {
+      Radiant::error("TCPServerSocket::isPendingConnection %s", wrap_strerror(wrap_errno));
+    }
 
-    return pfd.revents & POLLIN;
+    return (pfd.revents & POLLRDNORM) == POLLRDNORM;
   }
 
   TCPSocket * TCPServerSocket::accept()
   {
+    if(m_d->m_fd < 0)
+      return 0;
+
     sockaddr newAddress;
     socklen_t addressLength(sizeof(newAddress));
 
     bzero( & newAddress, sizeof(newAddress));
 
-    int fd = ::accept(m_d->m_fd, (sockaddr *) & newAddress, & addressLength);
+    for(;;) {
+      errno = 0;
+      int fd = ::accept(m_d->m_fd, (sockaddr *) & newAddress, & addressLength);
 
-    if(fd < 0)
-      return 0;
+      if(fd >= 0)
+        return new TCPSocket(fd);
 
-    TCPSocket * sock = new TCPSocket(fd);
-    
-    return sock;
+      if(fd < 0) {
+        if(m_d->m_fd == -1)
+          return 0;
+        int err = wrap_errno;
+        if(err == EAGAIN || err == EWOULDBLOCK) {
+          struct pollfd pfd;
+          pfd.fd = m_d->m_fd;
+          pfd.events = POLLIN;
+          wrap_poll(&pfd, 1, 5000);
+        } else {
+          error("TCPServerSocket::accept # %s", wrap_strerror(wrap_errno));
+          return 0;
+        }
+      }
+    }
+
+    return 0;
   }
-
 }
 

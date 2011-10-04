@@ -23,9 +23,13 @@ namespace Poetic
 
   static FT_Library * g_library = 0;
   static FT_Error g_error = 0;
+  /* need a recursive mutex */
+  static Radiant::Mutex g_freetypeMutex(true);
 
   bool initialize()
   {
+    Radiant::Guard g(freetypeMutex());
+
     if(g_library) 
       return true;
 
@@ -53,6 +57,26 @@ namespace Poetic
     }
 
     return g_library;
+  }
+
+  bool finalize()
+  {
+    Radiant::Guard g(freetypeMutex());
+
+    if (!g_library)
+      return true;
+
+    g_error = FT_Done_FreeType(*g_library);
+
+    delete g_library;
+    g_library = 0;
+
+    return (g_error == 0);
+  }
+
+  Radiant::Mutex & freetypeMutex()
+  {
+    return g_freetypeMutex;
   }
 
 }

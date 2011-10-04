@@ -7,10 +7,10 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "BinaryData.hpp"
@@ -54,20 +54,20 @@ namespace Radiant {
     return a | (b << 8) | (c << 16) | (d << 24);
   }
 
-  const int FLOAT_MARKER  = makeMarker(',', 'f', '\0', '\0');
-  const int DOUBLE_MARKER  = makeMarker(',', 'd', '\0', '\0');
-  const int VECTOR2F_MARKER  = makeMarker(',', 'f', '2', '\0');
-  const int VECTOR2I_MARKER  = makeMarker(',', 'i', '2', '\0');
-  const int VECTOR3F_MARKER  = makeMarker(',', 'f', '3', '\0');
-  const int VECTOR3I_MARKER  = makeMarker(',', 'i', '3', '\0');
-  const int VECTOR4F_MARKER  = makeMarker(',', 'f', '4', '\0');
-  const int VECTOR4I_MARKER  = makeMarker(',', 'i', '4', '\0');
-  const int INT32_MARKER  = makeMarker(',', 'i', '\0', '\0');
-  const int INT64_MARKER  = makeMarker(',', 'l', '\0', '\0');
-  const int TS_MARKER     = makeMarker(',', 't', '\0', '\0');
-  const int STRING_MARKER = makeMarker(',', 's', '\0', '\0');
-  const int WSTRING_MARKER = makeMarker(',', 'S', '\0', '\0');
-  const int BLOB_MARKER   = makeMarker(',', 'b', '\0', '\0');
+  const int32_t FLOAT_MARKER  = makeMarker(',', 'f', '\0', '\0');
+  const int32_t DOUBLE_MARKER  = makeMarker(',', 'd', '\0', '\0');
+  const int32_t VECTOR2F_MARKER  = makeMarker(',', 'f', '2', '\0');
+  const int32_t VECTOR2I_MARKER  = makeMarker(',', 'i', '2', '\0');
+  const int32_t VECTOR3F_MARKER  = makeMarker(',', 'f', '3', '\0');
+  const int32_t VECTOR3I_MARKER  = makeMarker(',', 'i', '3', '\0');
+  const int32_t VECTOR4F_MARKER  = makeMarker(',', 'f', '4', '\0');
+  const int32_t VECTOR4I_MARKER  = makeMarker(',', 'i', '4', '\0');
+  const int32_t INT32_MARKER  = makeMarker(',', 'i', '\0', '\0');
+  const int32_t INT64_MARKER  = makeMarker(',', 'l', '\0', '\0');
+  const int32_t TS_MARKER     = makeMarker(',', 't', '\0', '\0');
+  const int32_t STRING_MARKER = makeMarker(',', 's', '\0', '\0');
+  const int32_t WSTRING_MARKER = makeMarker(',', 'S', '\0', '\0');
+  const int32_t BLOB_MARKER   = makeMarker(',', 'b', '\0', '\0');
 
   BinaryData::BinaryData()
     : m_current(0),
@@ -95,35 +95,35 @@ namespace Radiant {
 
   void BinaryData::writeFloat32(float v)
   {
-    ensure(8);
+    ensure(sizeof(int32_t) + sizeof(float));
     getRef<int32_t>() = FLOAT_MARKER;
     getRef<float>()   = v;
   }
 
   void BinaryData::writeFloat64(double v)
   {
-    ensure(12);
+    ensure(sizeof(int32_t) + sizeof(double));
     getRef<int32_t>() = DOUBLE_MARKER;
     getRef<double>()  = v;
   }
 
   void BinaryData::writeInt32(int32_t v)
   {
-    ensure(8);
+    ensure(sizeof(int32_t) + sizeof(int32_t));
     getRef<int32_t>() = INT32_MARKER;
     getRef<int32_t>() = v;
   }
 
   void BinaryData::writeInt64(int64_t v)
   {
-    ensure(12);
-    getRef<int64_t>() = INT64_MARKER;
+    ensure(sizeof(int32_t) + sizeof(int64_t));
+    getRef<int32_t>() = INT64_MARKER;
     getRef<int64_t>() = v;
   }
 
   void BinaryData::writeTimeStamp(int64_t v)
   {
-    ensure(12);
+    ensure(sizeof(int32_t) + sizeof(int64_t));
     getRef<int32_t>() = TS_MARKER;
     getRef<int64_t>() = v;
   }
@@ -132,19 +132,16 @@ namespace Radiant {
   {
     size_t len = strlen(s);
     size_t space = stringSpace(s);
-    ensure(4 + space);
+    ensure(sizeof(int32_t) + space);
 
     getRef<int32_t>() = STRING_MARKER;
     char * ptr =  getPtr<char>(space);
-    if(len)
-      memcpy(ptr, s, len + 1);
-    else
-      getRef<int32_t>() = 0;
+    memcpy(ptr, s, len + 1);
   }
 
   void BinaryData::writeWString(const std::wstring & str)
   {
-    ensure(8 + str.size() * 4);
+    ensure(2*sizeof(int32_t) + str.size() * sizeof(int32_t));
 
     getRef<int32_t>() = (int32_t) WSTRING_MARKER;
     getRef<int32_t>() = (int32_t) str.size();
@@ -156,7 +153,7 @@ namespace Radiant {
 
   void BinaryData::writeBlob(const void * ptr, int n)
   {
-    ensure(8 + n);
+    ensure(2*sizeof(int32_t) + n);
 
     getRef<int32_t>() = BLOB_MARKER;
     getRef<int32_t>() = n;
@@ -167,7 +164,7 @@ namespace Radiant {
 
   void BinaryData::writeVector2Float32(Nimble::Vector2f v)
   {
-    ensure(12);
+    ensure(sizeof(int32_t) * sizeof(float) * 2);
     getRef<int32_t>() = VECTOR2F_MARKER;
     getRef<float>() = v[0];
     getRef<float>() = v[1];
@@ -175,7 +172,7 @@ namespace Radiant {
 
   void BinaryData::writeVector2Int32(Nimble::Vector2i v)
   {
-    ensure(12);
+    ensure(sizeof(int32_t) * sizeof(int) * 2);
     getRef<int32_t>() = VECTOR2I_MARKER;
     getRef<int>() = v[0];
     getRef<int>() = v[1];
@@ -183,7 +180,7 @@ namespace Radiant {
 
   void BinaryData::writeVector3Float32(Nimble::Vector3f v)
   {
-    ensure(16);
+    ensure(sizeof(int32_t) * sizeof(float) * 3);
     getRef<int32_t>() = VECTOR3F_MARKER;
     getRef<float>() = v[0];
     getRef<float>() = v[1];
@@ -192,7 +189,7 @@ namespace Radiant {
 
   void BinaryData::writeVector3Int32(Nimble::Vector3i v)
   {
-    ensure(16);
+    ensure(sizeof(int32_t) * sizeof(int) * 3);
     getRef<int32_t>() = VECTOR3I_MARKER;
     getRef<int>() = v[0];
     getRef<int>() = v[1];
@@ -201,7 +198,7 @@ namespace Radiant {
 
   void BinaryData::writeVector4Int32(const Nimble::Vector4i & v)
   {
-    ensure(20);
+    ensure(sizeof(int32_t) * sizeof(int) * 4);
     getRef<int32_t>() = VECTOR4I_MARKER;
     getRef<int>() = v[0];
     getRef<int>() = v[1];
@@ -211,7 +208,7 @@ namespace Radiant {
 
   void BinaryData::writeVector4Float32(const Nimble::Vector4f & v)
   {
-    ensure(20);
+    ensure(sizeof(int32_t) * sizeof(float) * 4);
     getRef<int32_t>() = VECTOR4F_MARKER;
     getRef<float>() = v[0];
     getRef<float>() = v[1];
@@ -374,7 +371,7 @@ namespace Radiant {
       return 0;
     }
 
-    int64_t marker = getRef<int64_t>();
+    int32_t marker = getRef<int32_t>();
 
     if(marker == INT64_MARKER)
       return getRef<int64_t>();
@@ -430,6 +427,10 @@ namespace Radiant {
 
   bool BinaryData::readString(char * str, size_t maxbytes)
   {
+    if(!available(sizeof(int32_t))) {
+      *str = '\0';
+      return false;
+    }
 
     int32_t marker = getRef<int32_t>();
 
@@ -453,28 +454,40 @@ namespace Radiant {
     return true;
   }
 
-  bool BinaryData::readString(std::string & str)
+  bool BinaryData::readString(QString & str)
   {
+    if(!available(sizeof(int32_t))) {
+      str.clear();
+      return false;
+    }
+
     int32_t marker = getRef<int32_t>();
 
-    if(marker != STRING_MARKER) {
+    if(marker == STRING_MARKER) {
+      str = QString::fromUtf8(m_buf + m_current);
+      skipParameter(marker);
+    } else if(marker == WSTRING_MARKER) {
+      int len = getRef<int32_t>();
+      str.resize(len);
+      QChar* data = str.data();
+
+      for(int i = 0; i < len; i++) {
+        data[i] = getRef<int32_t>();
+      }
+    } else {
       skipParameter(marker);
       return false;
     }
-    const char * source = & m_buf[m_current];
-    size_t len = strlen(source);
-
-    skipParameter(marker);
-
-    str.resize(len);
-
-    memcpy( & str[0], source, len);
-
     return true;
   }
 
   bool BinaryData::readWString(std::wstring & str)
   {
+    if(!available(sizeof(int32_t))) {
+      str.clear();
+      return false;
+    }
+
     int32_t marker = getRef<int32_t>();
 
     if(marker == WSTRING_MARKER) {
@@ -491,13 +504,12 @@ namespace Radiant {
     }
     else if(marker == STRING_MARKER) {
 
-      std::string tmp;
-
       const char * source = & m_buf[m_current];
 
       skipParameter(marker);
 
-      StringUtils::utf8ToStdWstring(str, source);
+      QString tmp = QString::fromUtf8(source);
+      str = tmp.toStdWString();
 
       return true;
     }
@@ -509,6 +521,9 @@ namespace Radiant {
 
   bool BinaryData::readBlob(void * ptr, int n)
   {
+    if(!available(sizeof(int32_t)))
+      return false;
+
     int32_t marker = getRef<int32_t>();
 
     if(marker != BLOB_MARKER) {
@@ -520,7 +535,7 @@ namespace Radiant {
 
     const char * source = & m_buf[m_current];
 
-    skipParameter(marker);
+    m_current += recv;
 
     memcpy( ptr, source, Nimble::Math::Min(n, recv));
 
@@ -745,7 +760,7 @@ namespace Radiant {
   }
 
 
-  bool BinaryData::write(Radiant::BinaryStream * stream)
+  bool BinaryData::write(Radiant::BinaryStream * stream) const
   {
     int32_t s = pos();
     if(stream->write(&s, 4) != 4)
@@ -821,6 +836,32 @@ namespace Radiant {
     rewind();
 
     bzero(data(), m_size);
+  }
+
+  bool BinaryData::readTo(int & argc, v8::Handle<v8::Value> argv[])
+  {
+    int i = 0;
+    while(i < argc) {
+      bool ok = false;
+      if(!available(4)) break;
+      // peek marker
+      int32_t marker = *getPtr<int32_t>(0);
+      if(marker == FLOAT_MARKER || marker == DOUBLE_MARKER) {
+        double v = readFloat64(&ok);
+        if(ok) argv[i++] = v8::Number::New(v);
+      } else if(marker == INT32_MARKER || marker == INT64_MARKER) {
+        int v = readInt32(&ok);
+        if(ok) argv[i++] = v8::Integer::New(v);
+      } else if(marker == STRING_MARKER || marker == WSTRING_MARKER) {
+        QString v;
+        if(readString(v)) argv[i++] = v8::String::New(v.utf16());
+      }
+      /// @todo VECTOR2F_MARKER VECTOR2I_MARKER VECTOR3F_MARKER VECTOR3I_MARKER
+      ///       VECTOR4F_MARKER VECTOR4I_MARKER TS_MARKER BLOB_MARKER
+    }
+
+    argc = i;
+    return m_current == m_total;
   }
 
   void BinaryData::skipParameter(int marker)

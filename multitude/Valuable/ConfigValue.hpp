@@ -18,7 +18,7 @@
 
 #include <Valuable/Export.hpp>
 
-#include <string>
+#include <QString>
 
 namespace Valuable
 {  
@@ -30,20 +30,20 @@ namespace Valuable
     /** Constructs a new value with the given
     @param k name of the value
     @param v value */
-    ConfigValue(std::string k, std::string v);
+    ConfigValue(QString k, QString v);
     ~ConfigValue(void);
     
     /// Gets the name (key) of the value
-    const std::string & key() const { return m_key; }
+    const QString & key() const { return m_key; }
     /// Gets the value
-    const std::string & value() const { return m_value; }
+    const QString & value() const { return m_value; }
 
   private:
     friend class ConfigDocument;
 
     int m_depth;
-    std::string m_key;
-    std::string m_value;
+    QString m_key;
+    QString m_value;
   };
 }
 

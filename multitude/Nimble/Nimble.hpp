@@ -16,7 +16,11 @@
 #ifndef NIMBLE_NIMBLE_HPP
 #define NIMBLE_NIMBLE_HPP
 
-/// Nimble libary is a collection of C++ classes for 2D/3D graphics.
+#include <Radiant/Trace.hpp>
+
+
+#define debugNimble(...) (Radiant::trace("Nimble", Radiant::DEBUG, __VA_ARGS__))
+/// Nimble library is a collection of C++ classes for 2D/3D graphics.
 
 /** Nimble is used mostly for simple arithmetic/geometric
     calculations. The code is optimized for performance, thus there

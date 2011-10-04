@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 #ifndef LUMINOUS_TRANSFORMER_HPP
 #define LUMINOUS_TRANSFORMER_HPP
@@ -32,7 +32,7 @@ namespace Luminous
     /// Creates an empty transformation stack
     Transformer();
     /// Deletes the transformation stack
-    ~Transformer();
+    virtual ~Transformer();
 
     /// Get the top matrix of the stack
     const Nimble::Matrix3 & transform() const { return m_stack.top(); }

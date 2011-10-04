@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef LUMINOUS_GARBAGE_COLLECTOR_HPP
@@ -82,7 +82,7 @@ namespace Luminous
     static void objectDeleted(Collectable * obj);
 
     /// Returns the number of collectables in the garbage collector
-    static int size() { return (int) m_current->size(); }
+    static int size();
 
     /// Returns the list of objects that have been previously deleted.
     static const container & previousObjects();
@@ -90,11 +90,6 @@ namespace Luminous
     GarbageCollector();
     ~GarbageCollector();
 
-
-    // items are double-buffered to ensure free access to previous container
-    static container * m_current;
-    static container m_items1;
-    static container m_items2;
 
   };
 }

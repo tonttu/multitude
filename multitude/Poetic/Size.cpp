@@ -12,7 +12,10 @@
  * from the GNU organization (www.gnu.org).
  * 
  */
+#include "Poetic.hpp"
 #include "Size.hpp"
+
+#include <Radiant/Mutex.hpp>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -34,8 +37,9 @@ namespace Poetic
 
   bool Size::charSize(FT_FaceRec_ ** face, int pointSize, int xRes, int yRes)
   {
-
     if(m_size != pointSize || xRes != m_xRes || yRes != m_yRes) {
+      Radiant::Guard g(freetypeMutex());
+
       m_error = FT_Set_Char_Size(*face, 0L, pointSize * 64, xRes, yRes);
 
       if(!m_error) {

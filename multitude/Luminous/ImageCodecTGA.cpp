@@ -64,17 +64,30 @@ namespace Luminous
 
     fseek(file, pos, SEEK_SET);
 
-    return (w > 0) && (h > 0) && ((bpp == 8) || (bpp == 24) || (bpp == 32));
+    // Check image type
+    bool ok = false;
+
+    switch(header.imageType) {
+      case 2:   // RGB
+      case 3:   // Grayscale
+      case 10:  // RGB+RLE
+      case 11:  // Grayscale+RLE
+        ok = true;
+    };
+
+    if(header.colormapType != 0) ok = false;
+
+    return ok && (w > 0) && (h > 0) && ((bpp == 8) || (bpp == 24) || (bpp == 32));
   }
 
-  std::string ImageCodecTGA::extensions() const
+  QString ImageCodecTGA::extensions() const
   {
-    return std::string("tga");
+    return QString("tga");
   }
 
-  std::string ImageCodecTGA::name() const
+  QString ImageCodecTGA::name() const
   {
-    return std::string("targa");
+    return QString("targa");
   }
 
   bool ImageCodecTGA::ping(ImageInfo & info, FILE * file)

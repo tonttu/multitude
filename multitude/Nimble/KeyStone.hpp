@@ -7,20 +7,20 @@
  * See file "Nimble.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef NIMBLE_KEYSTONE_HPP
 #define NIMBLE_KEYSTONE_HPP
 
-#include <Nimble/Export.hpp>
-#include <Nimble/LensCorrection.hpp>
-#include <Nimble/Matrix3.hpp>
-#include <Nimble/Rect.hpp>
-#include <Nimble/Vector4.hpp>
+#include "Export.hpp"
+#include "LensCorrection.hpp"
+#include "Matrix3.hpp"
+#include "Rect.hpp"
+#include "Vector4.hpp"
 
 #include <vector>
 
@@ -94,16 +94,20 @@ namespace Nimble {
     void setVertex(int index, float x, float y)
     { m_vertices[index].make(x, y); }
 
-    /// Updates the proection matrix
+    /// Updates the projection matrix
     void calculateMatrix();
 
     /// Project a vector from camera coordinates to the display coordinates
-    /** This function applies the lens correction and projection
-  matrix on the coordinates. */
-    Nimble::Vector2 project(const Nimble::Vector2 &) const;
-    /** Project the point from camera coordinates to normalized
-  coordinates in range [0,1].*/
-    Nimble::Vector2 project01(const Nimble::Vector2 &) const;
+    /// This function applies the lens correction and projection
+    /// matrix on the coordinates.
+    /// @param p Point in camera coordinates
+    /// @return Point in display coordinates
+    Nimble::Vector2 project(const Nimble::Vector2 & p) const;
+    /// Project the point from camera coordinates to normalized
+    /// coordinates in range [0,1].
+    /// @param p Point in camera coordinates
+    /// @return Point in normalized display coordinates
+    Nimble::Vector2 project01(const Nimble::Vector2 & p) const;
     /// Applies a 3x3 correction marix on a 2D vector.
     static Nimble::Vector2 project(const Nimble::Matrix3 & m,
                                    const Nimble::Vector2 & v)
@@ -112,10 +116,12 @@ namespace Nimble {
       return Nimble::Vector2(p.x / p.z, p.y / p.z);
     }
 
-    /** Do inverse projection (from screen to camera coordinates),
-  ignoring the camera barrel distortion. Useful as a rough
-  estimation of the point location on the camera image. x*/
-    Nimble::Vector2 projectInverse(const Nimble::Vector2 &) const;
+    /// Do inverse projection (from screen to camera coordinates),
+    /// ignoring the camera barrel distortion. Useful as a rough
+    /// estimation of the point location on the camera image.
+    /// @param p Point in screen coordinates
+    /// @return Point in camera coordinates
+    Nimble::Vector2 projectInverse(const Nimble::Vector2 & p) const;
 
     /// Returns a corner point in camera coordinates
     const Nimble::Vector2 & original(int i) const { return m_originals[i]; }
@@ -154,13 +160,17 @@ namespace Nimble {
     /// Rotates the keystone corners
     void rotate(int turns = 1);
 
-    /// Information on which pixels are inside the camera area
-    /** Each item (2D vector) contains values for the first pixel
-  inside the camera area and width of the camera area, per
-  scanline. */
+    /// Writes the order of the corners to the given parameter
+    /// @param[out] indices Array of four corner indices
+    void getCornerOrdering(int indices[4]);
+
+    /// Information on which pixels are inside the camera area.
+    /// Each item (2D vector) contains values for the first pixel inside the
+    /// camera area and width of the camera area, per scanline.
+    /// @return List of scanline line segments
     const std::vector<Nimble::Vector2i> & limits() const { return m_limits; }
     /// Information on which pixels are part of the image processing area
-    /** The returned values work like the values returned from #limits. */
+    /// @return values work like the values returned from #limits.
     const std::vector<Nimble::Vector2i> & extraLimits() const
     { return m_extraLimits; }
 
@@ -191,18 +201,20 @@ namespace Nimble {
     { return Nimble::Vector2i(m_dpyX, m_dpyY); }
 
     /// The output area of the screen
-    /** This function basically returns the information you would
-  get from dpyWidth, dpyheight, dpyX and dpyY. */
+    /// @return Rectangle at [dpyX, dpyY] with size [dpyWidth, dpyHeight]
     Nimble::Rect outputBounds();
     /// Test the keystone correction routines
     static void testCorrection();
 
-    /// The rectangle which contains the ROI of this keystone
-    /** This is the ROI in camera images. */
+    /// The rectangle which contains the Region Of Interest of this keystone
+    /// This is the ROI in camera images.
+    /// @return Bounding rectangle of the ROI
     Nimble::Rect boundsROI() const { return m_boundsROI; }
 
     /// Reference to the lens correction
     LensCorrection & lensCorrection() { return m_lensCorrection; }
+    /// Const reference to the lens correction
+    const LensCorrection & lensCorrection() const { return m_lensCorrection; }
 
     /// Adjusts the lens correction
     void setLensParam(int i, float v);
@@ -231,34 +243,37 @@ namespace Nimble {
     { m_extra = borders; updateLimits(); }
 
     /// Returns information about the center shift
-    /** Center shift means that coordinates at the center of the image get this offset. */
-    Nimble::Vector3 centerShift()
+    /// Center shift means that coordinates at the center of the image get this offset.
+    /// @return First two elements mean the shift XY, last element is the center shift span
+    Nimble::Vector3 centerShift() const
     { return Vector3(m_centerShift.x, m_centerShift.y, m_centerShiftSpan); }
     /// Sets the parameters for the center shifting
     void setCenterShift(Nimble::Vector3 params)
-    { m_centerShift = params.xy(); m_centerShiftSpan = params[2]; }
+    { m_centerShift = params.vector2(); m_centerShiftSpan = params[2]; }
 
     /// Recalculates the limits of which pixels are inside the tracking area, and which are not.
     void updateLimits();
 
-    /** Returns the version number of the object. Whenever the
-  keystone information is modified, the version number is
-  incremented. This information can be used by other objects to
-  check is they need to update some of their data structures.*/
-    int version() const { return m_version; }
+    /** Returns the generation number of the object. Whenever the
+        keystone information is modified, the generation number is
+        incremented. This information can be used by other objects to
+        check is they need to update some of their data structures.*/
+    /// @return Generation number
+    int generation() const { return m_generation; }
 
     /// Controls if this keystone object uses the center shift features.
     void setUseCenterShift(bool use) { m_useCenterShift = use; }
 
     /// Calculates the projection matrix.
-    /** See Paul Heckbert's master's thesis, pages 19-21. Often you
-        need to invert this.
-    @param vertices an array of four corner vertices */
-    static Nimble::Matrix3 projectionMatrix(const Nimble::Vector2 * vertices);
+    /// See Paul Heckbert's master's thesis, pages 19-21. Often you
+    /// need to invert this.
+    /// @param vertices an array of four corner vertices
+    /// @return Generated projection matrix
+    static Nimble::Matrix3 projectionMatrix(const Nimble::Vector2 vertices[4]);
 
   private:
 
-    void updated() { m_version++; }
+    void updated() { m_generation++; }
 
     void updateLimits(std::vector<Nimble::Vector2i> & limits,
                       const Vector4 * offsets = 0);
@@ -304,7 +319,7 @@ namespace Nimble {
     std::vector<Nimble::Vector2i> m_extraLimits;
     // Total number of pixels to traverse.
     int            m_containedPixelCount;
-    int            m_version;
+    int            m_generation;
 
     Nimble::Rect m_boundsROI;
   };

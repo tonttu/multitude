@@ -13,9 +13,12 @@
  * 
  */
 
-#include <Radiant/SerialPort.hpp>
+#include "Platform.hpp"
 
-#include <Radiant/Trace.hpp>
+#ifdef RADIANT_UNIX
+
+#include "SerialPort.hpp"
+#include "Trace.hpp"
 
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -61,6 +64,7 @@ namespace Radiant
     struct termios opts;
     if (tcgetattr(m_fd, & opts) < 0) {
       Radiant::error("%s # Could get read port attributes (%s)", fname, device);
+      close();
       return false;
     }
 
@@ -141,6 +145,7 @@ namespace Radiant
 
     if(tcsetattr(m_fd, TCSANOW, & opts) < 0) {
       Radiant::error("%s # Failed to set TTY parameters (%s)", fname, strerror(errno));
+      close();
       errno = 0;
       return false;
     }
@@ -181,3 +186,5 @@ namespace Radiant
   }
 
 }
+
+#endif

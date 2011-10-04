@@ -35,32 +35,54 @@ src_code.files += $$PROJECT_FILE
 INSTALLS += target
 
 # Source code & headers go with the framework on OS X
-!macx:INSTALLS += includes src_code extra_inc
+INSTALLS += includes src_code extra_inc
 
 # On Windows, put DLLs into /bin with the exes
 win32 {
     DLLDESTDIR = $$PWD/bin
 
-    # For some reason DESTDIR_TARGET doesn't work here
-    tt = $$join(TARGET, "", "$(DESTDIR)", ".dll")
-    dlls.path = /bin
-    dlls.files += $$tt
-    dlls.CONFIG += no_check_exist
-
-    INSTALLS += dlls
-
-    !isEmpty(WINDOWS_INSTALL_SDK_LIB) {
-        # For some reason DESTDIR_TARGET doesn't work here
-        sdk_lib.path = /src/MultiTouch/lib
-        sdk_lib.files += $$join(TARGET, "", "$(DESTDIR)", ".lib")
-        sdk_lib.CONFIG += no_check_exist
-
-        sdk_dll.path = /src/MultiTouch/lib
-        sdk_dll.files += $$join(TARGET, "", "$(DESTDIR)", ".dll")
-        sdk_dll.CONFIG += no_check_exist
-
-        INSTALLS += sdk_lib sdk_dll
+	# Debug libraries have an extra extension
+    build_pass:CONFIG(debug,debug|release) {
+      TARGET=$$join(TARGET,,,_d)
     }
+
+    # Optimized debug libraries
+    build_pass:CONFIG(debug,debug|release) {
+      CONFIG(optimized) {
+		# Set optimization level
+        QMAKE_CXXFLAGS_RELEASE=$$replace(QMAKE_CXXFLAGS_RELEASE,/Od,/O2)
+		# Disable runtime checks
+		QMAKE_CXXFLAGS_DEBUG=$$replace(QMAKE_CXXFLAGS_DEBUG,/RTC1,)
+		# Enable intrinsics and whole program optimization
+		QMAKE_CXXFLAGS += "/Oi /GL"
+		# No need for symbols
+		QMAKE_CXXFLAGS_DEBUG=$$replace(QMAKE_CXXFLAGS_DEBUG,/Zi,)
+		QMAKE_LFLAGS_DEBUG=$$replace(QMAKE_LFLAGS_DEBUG,/DEBUG,)
+		# No need to install headers
+        EXPORT_HEADERS = nothing
+      }
+    }
+	
+	# For some reason DESTDIR_TARGET doesn't work here
+	tt = $$join(TARGET, "", "$(DESTDIR)", ".dll")
+	dlls.path = /bin
+	dlls.files += $$tt
+	dlls.CONFIG += no_check_exist
+	
+	INSTALLS += dlls
+	
+	!isEmpty(WINDOWS_INSTALL_SDK_LIB) {
+		# For some reason DESTDIR_TARGET doesn't work here
+		sdk_lib.path = /src/MultiTouch/lib
+		sdk_lib.files += $$join(TARGET, "", "$(DESTDIR)", ".lib")
+		sdk_lib.CONFIG += no_check_exist
+	
+		sdk_dll.path = /src/MultiTouch/lib
+		sdk_dll.files += $$join(TARGET, "", "$(DESTDIR)", ".dll")
+		sdk_dll.CONFIG += no_check_exist
+		
+		INSTALLS += sdk_lib sdk_dll
+	}
 }
 
 iphone* {

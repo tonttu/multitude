@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "GLResources.hpp"
@@ -65,17 +65,16 @@ namespace Luminous
                      m_consumingBytes);
   }
 
-  bool GLResources::init()
+  void GLResources::init()
   {
-
     const char * glvendor = (const char *) glGetString(GL_VENDOR);
-    if(strstr(glvendor, "ATI")) {
-      m_brokenProxyTexture2D = true;
-    }
-    else
-      m_brokenProxyTexture2D = false;
 
-    return true;
+    if(!glvendor) {
+      m_brokenProxyTexture2D = true;
+    } else if(strstr(glvendor, "ATI")) {
+      m_brokenProxyTexture2D = true;
+    } else
+      m_brokenProxyTexture2D = false;
   }
 
   GLResource * GLResources::getResource(const Collectable * key, int deleteAfterFrames)
@@ -233,42 +232,32 @@ namespace Luminous
     const MultiHead::Area   * m_area;
   };
 
-#ifndef WIN32
+
   typedef std::map<Thread::id_t, TGLRes> ResourceMap;
-#else
-  typedef std::map<unsigned int, TGLRes> ResourceMap;
-#endif
 
   static ResourceMap __resources;
-  static MutexStatic __mutex;
+  static Mutex __mutex;
 
   void GLResources::setThreadResources(GLResources * rsc,
                        const MultiHead::Window *w, const MultiHead::Area *a)
   {
-    GuardStatic g(&__mutex);
+    Guard g(__mutex);
     TGLRes tmp;
     tmp.m_glr = rsc;
     tmp.m_window = w;
     tmp.m_area = a;
-#ifndef WIN32
+
     __resources[Thread::myThreadId()] = tmp;
-#else
-    __resources[0] = tmp;
-#endif
   }
 
   GLResources * GLResources::getThreadContext()
   {
-    GuardStatic g(&__mutex);
+    Guard g(__mutex);
 
-#ifndef WIN32
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
-#else
-    ResourceMap::iterator it = __resources.find(0);
-#endif
 
     if(it == __resources.end()) {
-      debug("No OpenGL resources for current thread");
+      debugLuminous("No OpenGL resources for current thread");
       return 0;
     }
 
@@ -277,13 +266,9 @@ namespace Luminous
 
   void GLResources::getThreadMultiHead(const MultiHead::Window ** w, const MultiHead::Area ** a)
   {
-    GuardStatic g(&__mutex);
+    Guard g(__mutex);
 
-#ifndef WIN32
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
-#else
-    ResourceMap::iterator it = __resources.find(0);
-#endif
 
     if(it == __resources.end()) {
       error("No OpenGL resources for current thread");
@@ -298,13 +283,9 @@ namespace Luminous
 
   const MultiHead::Area * GLResources::getThreadMultiHeadArea()
   {
-    GuardStatic g(&__mutex);
+    Guard g(__mutex);
 
-#ifndef WIN32
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
-#else
-    ResourceMap::iterator it = __resources.find(0);
-#endif
 
     if(it == __resources.end()) {
       error("No OpenGL resources for current thread");
@@ -316,13 +297,9 @@ namespace Luminous
 
   const MultiHead::Window * GLResources::getThreadMultiHeadWindow()
   {
-    GuardStatic g(&__mutex);
+    Guard g(__mutex);
 
-#ifndef WIN32
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
-#else
-    ResourceMap::iterator it = __resources.find(0);
-#endif
 
     if(it == __resources.end()) {
       error("No OpenGL resources for current thread");

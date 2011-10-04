@@ -1,4 +1,4 @@
-// Copyright 2006-2008 the V8 project authors. All rights reserved.
+// Copyright 2011 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -29,17 +29,19 @@
 
 #include "bootstrapper.h"
 #include "code-stubs.h"
+#include "stub-cache.h"
 #include "factory.h"
+#include "gdb-jit.h"
 #include "macro-assembler.h"
-#include "oprofile-agent.h"
 
 namespace v8 {
 namespace internal {
 
 bool CodeStub::FindCodeInCache(Code** code_out) {
-  int index = Heap::code_stubs()->FindEntry(GetKey());
+  Heap* heap = Isolate::Current()->heap();
+  int index = heap->code_stubs()->FindEntry(GetKey());
   if (index != NumberDictionary::kNotFound) {
-    *code_out = Code::cast(Heap::code_stubs()->ValueAt(index));
+    *code_out = Code::cast(heap->code_stubs()->ValueAt(index));
     return true;
   }
   return false;
@@ -48,30 +50,40 @@ bool CodeStub::FindCodeInCache(Code** code_out) {
 
 void CodeStub::GenerateCode(MacroAssembler* masm) {
   // Update the static counter each time a new code stub is generated.
-  Counters::code_stubs.Increment();
+  masm->isolate()->counters()->code_stubs()->Increment();
+
   // Nested stubs are not allowed for leafs.
-  masm->set_allow_stub_calls(AllowsStubCalls());
+  AllowStubCallsScope allow_scope(masm, AllowsStubCalls());
+
   // Generate the code for the stub.
   masm->set_generating_stub(true);
   Generate(masm);
 }
 
 
+SmartPointer<const char> CodeStub::GetName() {
+  char buffer[100];
+  NoAllocationStringAllocator allocator(buffer,
+                                        static_cast<unsigned>(sizeof(buffer)));
+  StringStream stream(&allocator);
+  PrintName(&stream);
+  return stream.ToCString();
+}
+
+
 void CodeStub::RecordCodeGeneration(Code* code, MacroAssembler* masm) {
   code->set_major_key(MajorKey());
 
-  OPROFILE(CreateNativeCodeRegion(GetName(),
-                                  code->instruction_start(),
-                                  code->instruction_size()));
-  PROFILE(CodeCreateEvent(Logger::STUB_TAG, code, GetName()));
-  Counters::total_stubs_code_size.Increment(code->instruction_size());
+  Isolate* isolate = masm->isolate();
+  SmartPointer<const char> name = GetName();
+  PROFILE(isolate, CodeCreateEvent(Logger::STUB_TAG, code, *name));
+  GDBJIT(AddCode(GDBJITInterface::STUB, *name, code));
+  Counters* counters = isolate->counters();
+  counters->total_stubs_code_size()->Increment(code->instruction_size());
 
 #ifdef ENABLE_DISASSEMBLER
   if (FLAG_print_code_stubs) {
-#ifdef DEBUG
-    Print();
-#endif
-    code->Disassemble(GetName());
+    code->Disassemble(*name);
     PrintF("\n");
   }
 #endif
@@ -84,12 +96,15 @@ int CodeStub::GetCodeKind() {
 
 
 Handle<Code> CodeStub::GetCode() {
+  Isolate* isolate = Isolate::Current();
+  Factory* factory = isolate->factory();
+  Heap* heap = isolate->heap();
   Code* code;
   if (!FindCodeInCache(&code)) {
-    v8::HandleScope scope;
+    HandleScope scope(isolate);
 
     // Generate the new code.
-    MacroAssembler masm(NULL, 256);
+    MacroAssembler masm(isolate, NULL, 256);
     GenerateCode(&masm);
 
     // Create the code object.
@@ -101,21 +116,24 @@ Handle<Code> CodeStub::GetCode() {
         static_cast<Code::Kind>(GetCodeKind()),
         InLoop(),
         GetICState());
-    Handle<Code> new_object = Factory::NewCode(desc, flags, masm.CodeObject());
+    Handle<Code> new_object = factory->NewCode(
+        desc, flags, masm.CodeObject(), NeedsImmovableCode());
     RecordCodeGeneration(*new_object, &masm);
+    FinishCode(*new_object);
 
     // Update the dictionary and the root in Heap.
     Handle<NumberDictionary> dict =
-        Factory::DictionaryAtNumberPut(
-            Handle<NumberDictionary>(Heap::code_stubs()),
+        factory->DictionaryAtNumberPut(
+            Handle<NumberDictionary>(heap->code_stubs()),
             GetKey(),
             new_object);
-    Heap::public_set_code_stubs(*dict);
+    heap->public_set_code_stubs(*dict);
 
     code = *new_object;
   }
 
-  return Handle<Code>(code);
+  ASSERT(!NeedsImmovableCode() || heap->lo_space()->Contains(code));
+  return Handle<Code>(code, isolate);
 }
 
 
@@ -123,8 +141,9 @@ MaybeObject* CodeStub::TryGetCode() {
   Code* code;
   if (!FindCodeInCache(&code)) {
     // Generate the new code.
-    MacroAssembler masm(NULL, 256);
+    MacroAssembler masm(Isolate::Current(), NULL, 256);
     GenerateCode(&masm);
+    Heap* heap = masm.isolate()->heap();
 
     // Create the code object.
     CodeDesc desc;
@@ -137,17 +156,18 @@ MaybeObject* CodeStub::TryGetCode() {
         GetICState());
     Object* new_object;
     { MaybeObject* maybe_new_object =
-          Heap::CreateCode(desc, flags, masm.CodeObject());
+          heap->CreateCode(desc, flags, masm.CodeObject());
       if (!maybe_new_object->ToObject(&new_object)) return maybe_new_object;
     }
     code = Code::cast(new_object);
     RecordCodeGeneration(code, &masm);
+    FinishCode(code);
 
     // Try to update the code cache but do not fail if unable.
     MaybeObject* maybe_new_object =
-        Heap::code_stubs()->AtNumberPut(GetKey(), code);
+        heap->code_stubs()->AtNumberPut(GetKey(), code);
     if (maybe_new_object->ToObject(&new_object)) {
-      Heap::public_set_code_stubs(NumberDictionary::cast(new_object));
+      heap->public_set_code_stubs(NumberDictionary::cast(new_object));
     }
   }
 
@@ -158,7 +178,7 @@ MaybeObject* CodeStub::TryGetCode() {
 const char* CodeStub::MajorName(CodeStub::Major major_key,
                                 bool allow_unknown_keys) {
   switch (major_key) {
-#define DEF_CASE(name) case name: return #name;
+#define DEF_CASE(name) case name: return #name "Stub";
     CODE_STUB_LIST(DEF_CASE)
 #undef DEF_CASE
     default:
@@ -167,6 +187,219 @@ const char* CodeStub::MajorName(CodeStub::Major major_key,
       }
       return NULL;
   }
+}
+
+
+int ICCompareStub::MinorKey() {
+  return OpField::encode(op_ - Token::EQ) | StateField::encode(state_);
+}
+
+
+void ICCompareStub::Generate(MacroAssembler* masm) {
+  switch (state_) {
+    case CompareIC::UNINITIALIZED:
+      GenerateMiss(masm);
+      break;
+    case CompareIC::SMIS:
+      GenerateSmis(masm);
+      break;
+    case CompareIC::HEAP_NUMBERS:
+      GenerateHeapNumbers(masm);
+      break;
+    case CompareIC::STRINGS:
+      GenerateStrings(masm);
+      break;
+    case CompareIC::SYMBOLS:
+      GenerateSymbols(masm);
+      break;
+    case CompareIC::OBJECTS:
+      GenerateObjects(masm);
+      break;
+    default:
+      UNREACHABLE();
+  }
+}
+
+
+void InstanceofStub::PrintName(StringStream* stream) {
+  const char* args = "";
+  if (HasArgsInRegisters()) {
+    args = "_REGS";
+  }
+
+  const char* inline_check = "";
+  if (HasCallSiteInlineCheck()) {
+    inline_check = "_INLINE";
+  }
+
+  const char* return_true_false_object = "";
+  if (ReturnTrueFalseObject()) {
+    return_true_false_object = "_TRUEFALSE";
+  }
+
+  stream->Add("InstanceofStub%s%s%s",
+              args,
+              inline_check,
+              return_true_false_object);
+}
+
+
+void KeyedLoadElementStub::Generate(MacroAssembler* masm) {
+  switch (elements_kind_) {
+    case JSObject::FAST_ELEMENTS:
+      KeyedLoadStubCompiler::GenerateLoadFastElement(masm);
+      break;
+    case JSObject::FAST_DOUBLE_ELEMENTS:
+      KeyedLoadStubCompiler::GenerateLoadFastDoubleElement(masm);
+      break;
+    case JSObject::EXTERNAL_BYTE_ELEMENTS:
+    case JSObject::EXTERNAL_UNSIGNED_BYTE_ELEMENTS:
+    case JSObject::EXTERNAL_SHORT_ELEMENTS:
+    case JSObject::EXTERNAL_UNSIGNED_SHORT_ELEMENTS:
+    case JSObject::EXTERNAL_INT_ELEMENTS:
+    case JSObject::EXTERNAL_UNSIGNED_INT_ELEMENTS:
+    case JSObject::EXTERNAL_FLOAT_ELEMENTS:
+    case JSObject::EXTERNAL_DOUBLE_ELEMENTS:
+    case JSObject::EXTERNAL_PIXEL_ELEMENTS:
+      KeyedLoadStubCompiler::GenerateLoadExternalArray(masm, elements_kind_);
+      break;
+    case JSObject::DICTIONARY_ELEMENTS:
+      KeyedLoadStubCompiler::GenerateLoadDictionaryElement(masm);
+      break;
+    case JSObject::NON_STRICT_ARGUMENTS_ELEMENTS:
+      UNREACHABLE();
+      break;
+  }
+}
+
+
+void KeyedStoreElementStub::Generate(MacroAssembler* masm) {
+  switch (elements_kind_) {
+    case JSObject::FAST_ELEMENTS:
+      KeyedStoreStubCompiler::GenerateStoreFastElement(masm, is_js_array_);
+      break;
+    case JSObject::FAST_DOUBLE_ELEMENTS:
+      KeyedStoreStubCompiler::GenerateStoreFastDoubleElement(masm,
+                                                             is_js_array_);
+      break;
+    case JSObject::EXTERNAL_BYTE_ELEMENTS:
+    case JSObject::EXTERNAL_UNSIGNED_BYTE_ELEMENTS:
+    case JSObject::EXTERNAL_SHORT_ELEMENTS:
+    case JSObject::EXTERNAL_UNSIGNED_SHORT_ELEMENTS:
+    case JSObject::EXTERNAL_INT_ELEMENTS:
+    case JSObject::EXTERNAL_UNSIGNED_INT_ELEMENTS:
+    case JSObject::EXTERNAL_FLOAT_ELEMENTS:
+    case JSObject::EXTERNAL_DOUBLE_ELEMENTS:
+    case JSObject::EXTERNAL_PIXEL_ELEMENTS:
+      KeyedStoreStubCompiler::GenerateStoreExternalArray(masm, elements_kind_);
+      break;
+    case JSObject::DICTIONARY_ELEMENTS:
+      KeyedStoreStubCompiler::GenerateStoreDictionaryElement(masm);
+      break;
+    case JSObject::NON_STRICT_ARGUMENTS_ELEMENTS:
+      UNREACHABLE();
+      break;
+  }
+}
+
+
+void ArgumentsAccessStub::PrintName(StringStream* stream) {
+  const char* type_name = NULL;  // Make g++ happy.
+  switch (type_) {
+    case READ_ELEMENT: type_name = "ReadElement"; break;
+    case NEW_NON_STRICT_FAST: type_name = "NewNonStrictFast"; break;
+    case NEW_NON_STRICT_SLOW: type_name = "NewNonStrictSlow"; break;
+    case NEW_STRICT: type_name = "NewStrict"; break;
+  }
+  stream->Add("ArgumentsAccessStub_%s", type_name);
+}
+
+
+void CallFunctionStub::PrintName(StringStream* stream) {
+  const char* in_loop_name = NULL;  // Make g++ happy.
+  switch (in_loop_) {
+    case NOT_IN_LOOP: in_loop_name = ""; break;
+    case IN_LOOP: in_loop_name = "_InLoop"; break;
+  }
+  const char* flags_name = NULL;  // Make g++ happy.
+  switch (flags_) {
+    case NO_CALL_FUNCTION_FLAGS: flags_name = ""; break;
+    case RECEIVER_MIGHT_BE_IMPLICIT: flags_name = "_Implicit"; break;
+  }
+  stream->Add("CallFunctionStub_Args%d%s%s", argc_, in_loop_name, flags_name);
+}
+
+
+void ToBooleanStub::PrintName(StringStream* stream) {
+  stream->Add("ToBooleanStub_");
+  types_.Print(stream);
+}
+
+
+void ToBooleanStub::Types::Print(StringStream* stream) const {
+  if (IsEmpty()) stream->Add("None");
+  if (Contains(UNDEFINED)) stream->Add("Undefined");
+  if (Contains(BOOLEAN)) stream->Add("Bool");
+  if (Contains(SMI)) stream->Add("Smi");
+  if (Contains(NULL_TYPE)) stream->Add("Null");
+  if (Contains(SPEC_OBJECT)) stream->Add("SpecObject");
+  if (Contains(STRING)) stream->Add("String");
+  if (Contains(HEAP_NUMBER)) stream->Add("HeapNumber");
+  if (Contains(INTERNAL_OBJECT)) stream->Add("InternalObject");
+}
+
+
+void ToBooleanStub::Types::TraceTransition(Types to) const {
+  if (!FLAG_trace_ic) return;
+  char buffer[100];
+  NoAllocationStringAllocator allocator(buffer,
+                                        static_cast<unsigned>(sizeof(buffer)));
+  StringStream stream(&allocator);
+  stream.Add("[ToBooleanIC (");
+  Print(&stream);
+  stream.Add("->");
+  to.Print(&stream);
+  stream.Add(")]\n");
+  stream.OutputToStdOut();
+}
+
+
+bool ToBooleanStub::Types::Record(Handle<Object> object) {
+  if (object->IsUndefined()) {
+    Add(UNDEFINED);
+    return false;
+  } else if (object->IsBoolean()) {
+    Add(BOOLEAN);
+    return object->IsTrue();
+  } else if (object->IsNull()) {
+    Add(NULL_TYPE);
+    return false;
+  } else if (object->IsSmi()) {
+    Add(SMI);
+    return Smi::cast(*object)->value() != 0;
+  } else if (object->IsSpecObject()) {
+    Add(SPEC_OBJECT);
+    return !object->IsUndetectableObject();
+  } else if (object->IsString()) {
+    Add(STRING);
+    return !object->IsUndetectableObject() &&
+        String::cast(*object)->length() != 0;
+  } else if (object->IsHeapNumber()) {
+    Add(HEAP_NUMBER);
+    double value = HeapNumber::cast(*object)->value();
+    return !object->IsUndetectableObject() && value != 0 && !isnan(value);
+  } else {
+    Add(INTERNAL_OBJECT);
+    return !object->IsUndetectableObject();
+  }
+}
+
+
+bool ToBooleanStub::Types::NeedsMap() const {
+  return Contains(ToBooleanStub::SPEC_OBJECT)
+      || Contains(ToBooleanStub::STRING)
+      || Contains(ToBooleanStub::HEAP_NUMBER)
+      || Contains(ToBooleanStub::INTERNAL_OBJECT);
 }
 
 

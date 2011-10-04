@@ -4,7 +4,7 @@
 #ifndef NIMBLE_MATH_HPP
 #define NIMBLE_MATH_HPP
 
-#include <Nimble/Export.hpp>
+#include "Export.hpp"
 
 #include <Radiant/Platform.hpp>
 
@@ -46,73 +46,67 @@ namespace Nimble {
     // float & double inlines:
 
     /// Returns the cosine
-    inline float Cos(float v)  { return cosf(v); }
+    inline float Cos(float v)  { return std::cos(v); }
     /// Returns the sine
-    inline float Sin(float v)  { return sinf(v); }
+    inline float Sin(float v)  { return std::sin(v); }
     /// Returns the tangent
-    inline float Tan(float v)  { return tanf(v); }
+    inline float Tan(float v)  { return std::tan(v); }
     /// Returns the square root
-    inline float Sqrt(float v) { return sqrtf(v); }
+    inline float Sqrt(float v) { return std::sqrt(v); }
     /// Returns the inverse square root
-    inline float InvSqrt(float v) { return 1.0f / sqrtf(v); }
+    inline float InvSqrt(float v) { return 1.0f / std::sqrt(v); }
     /// Returns the exponential function
-    inline float Exp(float v)  { return expf(v); }
+    inline float Exp(float v)  { return std::exp(v); }
     /// Returns the logarithm in base 10
-    inline float Log(float v)  { return logf(v); }
+    inline float Log(float v)  { return std::log(v); }
     /// Returns the logarithm in base 2
     inline float Log2(float v) { return Log(v) / Log(2.f); }
     /// Raises x to the yth power
-    inline float Pow(float x, float y)    { return powf(x, y); }
+    inline float Pow(float x, float y)    { return std::pow(x, y); }
 
     /// Returns the arccosine
-    inline float ACos(float v)  { return acosf(v); }
+    inline float ACos(float v)  { return std::acos(v); }
     /// Returns the arcsine
-    inline float ASin(float v)  { return asinf(v); }
+    inline float ASin(float v)  { return std::asin(v); }
     /// Returns the arctangent
-    inline float ATan(float v)  { return atanf(v); }
+    inline float ATan(float v)  { return std::atan(v); }
     /// Returns the arctangent
-    inline float ATan2(float x, float y)  { return atan2f(x, y); }
+    inline float ATan2(float x, float y)  { return std::atan2(x, y); }
 
     /// Returns the cosine
-    inline double Cos(double v)  { return cos(v); }
+    inline double Cos(double v)  { return std::cos(v); }
     /// Returns the sine
-    inline double Sin(double v)  { return sin(v); }
+    inline double Sin(double v)  { return std::sin(v); }
     /// Returns the tangent
-    inline double Tan(double v)  { return tan(v); }
+    inline double Tan(double v)  { return std::tan(v); }
     /// Returns the square root
-    inline double Sqrt(double v) { return sqrt(v); }
+    inline double Sqrt(double v) { return std::sqrt(v); }
     /// Returns the inverse square root
-    inline double InvSqrt(double v) { return 1.0 / sqrt(v); }
+    inline double InvSqrt(double v) { return 1.0 / std::sqrt(v); }
     /// Returns the exponential function
-    inline double Exp(double v)  { return exp(v); }
+    inline double Exp(double v)  { return std::exp(v); }
     /// Returns the logarithm in base 10
-    inline double Log(double v)  { return log(v); }
+    inline double Log(double v)  { return std::log(v); }
     /// Returns the logarithm in base 2
     inline double Log2(double v)  { return Log(v) / Log(2.0); }
     /// Raises x to the yth power
-    inline double Pow(double x, double y)    { return pow(x, y); }
+    inline double Pow(double x, double y)    { return std::pow(x, y); }
 
     /// Returns the arccosine
-    inline double ACos(double v)  { return acos(v); }
+    inline double ACos(double v)  { return std::acos(v); }
     /// Returns the arcsine
-    inline double ASin(double v)  { return asin(v); }
+    inline double ASin(double v)  { return std::asin(v); }
     /// Returns the arctangent
-    inline double ATan(double v)  { return atan(v); }
+    inline double ATan(double v)  { return std::atan(v); }
     /// Returns the arctangent
-    inline double ATan2(double x, double y)  { return atan2(x, y); }
+    inline double ATan2(double x, double y)  { return std::atan2(x, y); }
 
     /// Returns the square root
-    inline float Sqrt(int v) { return sqrtf(float(v)); }
-#ifdef RADIANT_OSX
+    inline float Sqrt(int v) { return std::sqrt(float(v)); }
     /// Returns the square root
-    inline double Sqrt(long v) { return sqrt(double(v)); }
+    inline double Sqrt(int64_t v) { return std::sqrt(double(v)); }
     /// Returns the square root
-    inline double Sqrt(unsigned long v) { return sqrt(double(v)); }
-#endif
-    /// Returns the square root
-    inline double Sqrt(int64_t v) { return sqrt(double(v)); }
-    /// Returns the square root
-    inline double Sqrt(uint64_t v) { return sqrt(double(v)); }
+    inline double Sqrt(uint64_t v) { return std::sqrt(double(v)); }
 
     /// Converts degrees into radians
     inline double degToRad(const double degrees) { return (degrees * PI / 180.0); }
@@ -125,19 +119,18 @@ namespace Nimble {
 #ifdef WIN32
       return _finite(v) != 0;
 #else
-    return finite(v);
+      return finite(v);
 #endif
     }
-  /// Checks if the given number is not one
-  /// @param v number to check
+    /// Checks if the given number is a NaN
+    /// @param v number to check
+    /// @return Check result
     inline bool isNAN(float v)
     {
 #ifdef WIN32
     return _isnan(v) != 0;
-#elif defined(RADIANT_OSX)
-    return std::isnan(v);
 #else
-    return isnan(v);
+      return std::isnan(v);
 #endif
     }
 
@@ -183,6 +176,7 @@ namespace Nimble {
       @param a The first value to compare.
       @param b The second value to compare.
       @param limit The maximum difference between the values.
+      @return True if the difference between the numbers is small enough
       */
     template <class T>
     bool IsClose(const T & a, const T & b, const T & limit)
@@ -217,10 +211,10 @@ namespace Nimble {
     }
 
     /// Clamp a value between minimum and maximum values
-    /** @param x The input value to limit.
-    @param low The minimum value for comparison
-    @param high The maximum value for comparison
-     */
+    /// @param x The input value to limit.
+    /// @param low The minimum value for comparison
+    /// @param high The maximum value for comparison
+    /// @return Clamped value
     template <class T>
     inline T Clamp(T x, T low, T high)
     {
@@ -229,23 +223,36 @@ namespace Nimble {
       return x;
     }
 
-    /** Calculates the determinant of a 2x2 matrix, which is given in
-  the argument values.
-    @param a upper-left of the matrix
-    @param b upper-right of the matrix
-    @param c lower-left of the matrix
-    @param d lower-right of the matrix */
+    /// Wraps the input value between minimum and maximum values
+    /// For example you can normalize radians by Wrap(angle, 0, 2*PI)
+    /// @param x The input value to wrap.
+    /// @param low The minimum value
+    /// @param high The maximum value
+    /// @return Wrapped values
+    template <class T>
+    inline T Wrap(T x, T low, T high)
+    {
+      T diff = high - low;
+      return x - Floor((x - low) / diff) * diff;
+    }
+
+    /// Calculates the determinant of a 2x2 matrix, which is given in
+    /// the argument values.
+    /// @param a upper-left of the matrix
+    /// @param b upper-right of the matrix
+    /// @param c lower-left of the matrix
+    /// @param d lower-right of the matrix
+    /// @return Determinant
     template <class T>
     inline T Det(T a, T b, T c, T d)
     {
       return a * d - b * c;
     }
 
-    /** Calculates the average of arguments a and b.
-    @param a first argument
-    @param b second argument
-    @return (a + b) * 0.5f;
-     */
+    /// Calculates the average of arguments a and b.
+    /// @param a first argument
+    /// @param b second argument
+    /// @return (a + b) * 0.5f;
     template <class T>
     inline T Average(const T & a, const T & b)
     {
@@ -273,6 +280,70 @@ namespace Nimble {
         return rel * v3 + (1.0f - rel) * v2;
       }
     }
+
+    /// Perform linear interpolation between two samples
+    template<class T>
+    T lerp(const T & a, const T & b, float t)
+    {
+      return (1.f - t) * a + t * b;
+    }
+
+    /// Perform bi-linear interpolation between four samples
+    template<class T>
+    T bilerp(const T & s00, const T & s10, const T & s01, const T & s11, float u, float v)
+    {
+      return lerp<T>(lerp<T>(s00, s10, u),
+                     lerp<T>(s01, s11, u),
+                     v);
+    }
+
+    /// Interpolate smoothly between two values based on third (Texturing and
+    /// Modeling, Third Edition: A Procedural Approach, by Ken Perlin)
+
+    template<class T>
+    T smoothstep(const T & a, const T & b, float t)
+    {
+      t = Clamp((t - a) / (b - a), 0.f, 1.f);
+
+      return t * t * t * (t * (t * T(6) - T(15)) + T(10));
+    }
+
+
+
+    /// Calculates the mean and variance of a buffer of values
+
+    template <class T>
+        inline void calculateMeanVariance(const T * values, int n, T * mean, T * variance)
+    {
+      T ave = 0;
+      for(int i = 0; i < n; i++)
+        ave += values[i];
+
+      ave /= (double) n;
+      *mean = ave;
+
+      T vari = 0;
+      for(int i = 0; i < n; i++) {
+        T tmp = values[i] - ave;
+        vari += tmp * tmp;
+      }
+      *variance = vari / (double) n;
+    }
+
+    /// Calculates the sum of the absolute values in the argument array.
+    /// @param values Array of values
+    /// @param n Number of elements in the array
+    /// @return Sum of absolute values
+    template <class T>
+    inline T calculateAbsSum(const T * values, int n)
+    {
+      T sum = 0;
+      for(int i = 0; i < n; i++)
+        sum += Abs(values[i]);
+
+      return sum;
+    }
+
   }
 
 

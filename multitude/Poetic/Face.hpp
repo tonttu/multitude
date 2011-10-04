@@ -15,9 +15,13 @@
 #ifndef POETIC_FACE_HPP
 #define POETIC_FACE_HPP
 
+#include "Export.hpp"
 #include "Size.hpp"
 
 #include <Nimble/Vector2.hpp>
+
+#include <QString>
+#include <map>
 
 struct FT_GlyphSlotRec_;
 
@@ -25,7 +29,7 @@ namespace Poetic
 {
 
   /// Face contains information stored in a .tff file.
-  class Face
+  class POETIC_API Face
   {
     public:
       /// Constructs a new face from the given .ttf file
@@ -51,9 +55,14 @@ namespace Poetic
       int error() const { return m_error; }
 
       /// Returns the path for the file that this face was loaded from
-      std::string fontFilePath() const { return m_fontFilePath; }
+      QString fontFilePath() const { return m_fontFilePath; }
 
     private:
+
+      typedef std::map<uint64_t, Nimble::Vector2> KernMap;
+
+      KernMap m_kernings;
+
       FT_FaceRec_ ** m_ftFace;
       Size m_size;
       int m_numGlyphs;
@@ -61,7 +70,7 @@ namespace Poetic
       int * m_encodingList;
       bool m_hasKerningTable;
       int m_error;
-      std::string m_fontFilePath;
+      QString m_fontFilePath;
   };
 
 }

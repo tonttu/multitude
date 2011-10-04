@@ -27,6 +27,7 @@
 #include <time.h>
 #include <stdlib.h>
 
+#include <QRegExp>
 
 namespace Radiant {
 
@@ -102,46 +103,42 @@ namespace Radiant {
     }
   }
 
-  bool DateTime::fromString(const std::string & s, DateFormat df)
+  bool DateTime::fromString(const QString & s, DateFormat df)
   { 
     if (df == DATE_ISO) {
       if(s.length() < 8)
         return false;
 
-      std::string yearstr(s, 0, 4);
-      std::string monthstr(s, 5, 2);
-      std::string daystr(s, 8, 4);
-
-      m_year  = atoi(yearstr.c_str());
-      m_month = atoi(monthstr.c_str()) - 1;
-      m_monthDay = atoi(daystr.c_str()) - 1;
-
-      m_hour = 0;
-      m_minute = 0;
-      m_second = 0;
-      m_microsecond = 0;
-      m_summerTime = false;
+      QRegExp r("^(\\d{4}).(\\d{2}).(\\d{4})");
+      if(r.indexIn(s) >= 0) {
+        int m = r.cap(2).toInt() - 1;
+        int d = r.cap(3).toInt() - 1;
+        if(m >= 12 || d >= 31 || m < 0 || d < 0) return false;
+        *this = DateTime();
+        m_year = r.cap(1).toInt();
+        m_month = m;
+        m_monthDay = d;
+      } else return false;
     } else {
       if(s.length() < 19)
         return false;
 
-      std::string daystr(s, 0, 2);
-      std::string monthstr(s, 3, 2);
-      std::string yearstr(s, 6, 4);
+      QRegExp r("^(\\d{2}).(\\d{2}).(\\d{4}).(\\d{4}).(\\d{4}).(\\d{4})");
+      if(r.indexIn(s) >= 0) {
+        int m = r.cap(2).toInt() - 1;
+        int d = r.cap(1).toInt() - 1;
+        if(m >= 12 || d >= 31 || m < 0 || d < 0) return false;
 
-      std::string hourstr(s, 11, 2);
-      std::string minstr(s, 14, 2);
-      std::string secstr(s, 17, 2);
+        m_year  = r.cap(3).toInt();
+        m_month = m;
+        m_monthDay = d;
 
-      m_year  = atoi(yearstr.c_str());
-      m_month = atoi(monthstr.c_str()) - 1;
-      m_monthDay = atoi(daystr.c_str()) - 1;
-
-      m_hour = atoi(hourstr.c_str());
-      m_minute = atoi(minstr.c_str());
-      m_second = atoi(secstr.c_str());
-      m_microsecond = 0;
-      m_summerTime = false;
+        m_hour = r.cap(4).toInt();
+        m_minute = r.cap(5).toInt();
+        m_second = r.cap(6).toInt();
+        m_microsecond = 0;
+        m_summerTime = false;
+      } else return false;
     }
 
     return true;

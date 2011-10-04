@@ -1,4 +1,24 @@
+/* COPYRIGHT
+ *
+ * This file is part of Resonant.
+ *
+ * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
+ *
+ * See file "Resonant.hpp" for authors and more details.
+ *
+ * This file is licensed under GNU Lesser General Public
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
+ * from the GNU organization (www.gnu.org).
+ * 
+ */
+
+#include <Radiant/Platform.hpp>
+
+#ifdef RADIANT_LINUX
+
 #include "PulseAudioCore.hpp"
+#include "Resonant.hpp"
 
 #include <Radiant/Trace.hpp>
 #include <Radiant/Sleep.hpp>
@@ -149,7 +169,7 @@ namespace Resonant
 
   void PulseAudioCore::runClient()
   {
-    Radiant::debug("%p runClient", this);
+    debugResonant("%p runClient", this);
     m_restart = false;
     m_mainloop = pa_threaded_mainloop_new();
     if(!m_mainloop) {
@@ -159,7 +179,7 @@ namespace Resonant
 
     m_mainloopApi = pa_threaded_mainloop_get_api(m_mainloop);
 
-    Radiant::debug("%p pa_context_new", this);
+    debugResonant("%p pa_context_new", this);
     if(!(m_context = pa_context_new(m_mainloopApi, "Cornerstone"))) {
       Radiant::error("pa_context_new() failed.");
       pa_threaded_mainloop_free(m_mainloop);
@@ -170,7 +190,7 @@ namespace Resonant
 
     pa_context_connect(m_context, 0, (pa_context_flags_t)0, 0);
 
-    Radiant::debug("%p pa_mainloop_run", this);
+    debugResonant("%p pa_mainloop_run", this);
     if(pa_threaded_mainloop_start(m_mainloop) != 0) {
       Radiant::error("pa_threaded_mainloop_run() failed");
     }
@@ -183,7 +203,7 @@ namespace Resonant
 
     beforeShutdown();
 
-    Radiant::debug("%p pa_mainloop_run exit", this);
+    debugResonant("%p pa_mainloop_run exit", this);
     pa_threaded_mainloop_stop(m_mainloop);
     pa_context_unref(m_context);
     pa_threaded_mainloop_free(m_mainloop);
@@ -314,3 +334,5 @@ namespace Resonant
     }
   }
 }
+
+#endif

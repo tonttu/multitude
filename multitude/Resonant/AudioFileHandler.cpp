@@ -14,6 +14,7 @@
  */
 
 #include "AudioFileHandler.hpp"
+#include "Resonant.hpp"
 
 #include <Radiant/Trace.hpp>
 #include <Radiant/Sleep.hpp>
@@ -66,10 +67,9 @@ namespace Resonant {
     if(m_status == OPEN_DONE)
       return true;
   
-    lock();
+    Radiant::Guard g(m_host->m_mutex);
     while(m_status == OPEN_NOT)
       waitCond();
-    unlock();
 
     return m_status == OPEN_DONE;
   }
@@ -90,10 +90,11 @@ namespace Resonant {
 
       int avail = frames > blockleft ? blockleft : frames;
 
-      lock();
-      while(m_userFrames + avail > m_fileFrames + m_blockSize * (m_blocks - 1))
-	waitCond();
-      unlock();
+      {
+        Radiant::Guard g(m_host->m_mutex);
+        while(m_userFrames + avail > m_fileFrames + m_blockSize * (m_blocks - 1))
+          waitCond();
+      }
 
       // trace("AudioFileHandler::Handle::writeFrames >", frames);
     
@@ -130,10 +131,11 @@ namespace Resonant {
       /* trace2("AudioFileHandler::Handle::readFrames %ld %ld %ld %ld", 
 	 frames, avail, m_userFrames, m_fileFrames); */
 
-      lock();
-      while(m_userFrames + avail > m_fileFrames)
-	waitCond();
-      unlock();
+      {
+        Radiant::Guard g(m_host->m_mutex);
+        while(m_userFrames + avail > m_fileFrames)
+          waitCond();
+      }
 
       int samples = avail * channels();
 
@@ -228,7 +230,7 @@ namespace Resonant {
 
     int mode = (m_ioMode == IO_INPUT) ? SFM_READ : SFM_WRITE;
 
-    m_file = sf_open(m_fileName.c_str(), mode, m_info);
+    m_file = sf_open(m_fileName.toUtf8().data(), mode, m_info);
 
     if(!m_file)
       return false;
@@ -343,8 +345,8 @@ namespace Resonant {
 
   bool AudioFileHandler::Handle::moveReadHead(long frame, bool clear)
   {
-    debug("AudioFileHandler::Handle::moveReadHead # %s %ld ", 
-	  m_fileName.c_str(), frame);
+    debugResonant("AudioFileHandler::Handle::moveReadHead # %s %ld ", 
+    m_fileName.toUtf8().data(), frame);
 
     if(!m_data.empty() && clear)
       bzero( & m_data[0], m_data.size() * sizeof(float));
@@ -393,9 +395,8 @@ namespace Resonant {
 
     Handle * h = new Handle(this, filename, IO_INPUT, startFrame, userFormat);
 
-    m_mutex2.lock();
+    Radiant::Guard g(m_filesMutex);
     m_files.push_back(h);
-    m_mutex2.unlock();
 
     return h;
   }
@@ -425,9 +426,8 @@ namespace Resonant {
     h->m_info->samplerate = samplerate;
     h->m_info->format     = sfFormat;
 
-    m_mutex2.lock();
+    Radiant::Guard g(m_filesMutex);
     m_files.push_back(h);
-    m_mutex2.unlock();
 
     return h;
   }
@@ -499,10 +499,11 @@ namespace Resonant {
 
     while(!m_done) {
       if(!update()) {
-	Sleep::sleepMs(20);
+        Sleep::sleepMs(20);
       }
     }
 
+    Radiant::Guard g(m_filesMutex);
     for(iterator it = m_files.begin(); it != m_files.end(); it++) {
       Handle * h = (*it);
       h->m_userDone = true;
@@ -519,28 +520,23 @@ namespace Resonant {
 
     bool something = false;
 
-    m_mutex2.lock();
+    {
+      Radiant::Guard g(m_filesMutex);
+      for(iterator it = m_files.begin(); it != m_files.end(); ) {
 
-    for(iterator it = m_files.begin(); it != m_files.end(); ) {
+        Handle * h = (*it);
 
-      Handle * h = (*it);
+        something = something || h->update();
 
-      something = something || h->update();
-
-      if(h->m_status == OPEN_CLOSED) {
-	/* trace2("AudioFileHandler::update # Deleting file handle %s",
-	   h->m_fileName.c_str()); */
-	delete h;
-	iterator tmp = it;
-	tmp++;
-	m_files.erase(it);
-	it = tmp;
+        if(h->m_status == OPEN_CLOSED) {
+          /* trace2("AudioFileHandler::update # Deleting file handle %s",
+               h->m_fileName.c_str()); */
+          delete h;
+          it = m_files.erase(it);
+        } else
+          it++;
       }
-      else
-	it++;
     }
-
-    m_mutex2.unlock();
 
     if(something)
       signalCond();

@@ -1,25 +1,13 @@
 /* COPYRIGHT
- *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
  */
 
 #ifndef RADIANT_GRID_HPP
 #define RADIANT_GRID_HPP
 
-#include <Radiant/Export.hpp>
-#include <Radiant/RGBA.hpp>
+#include "Export.hpp"
+#include "RGBA.hpp"
 
-#include <Nimble/Vector2.hpp>
+#include <Nimble/Vector4.hpp>
 
 #include <cassert>
 
@@ -37,22 +25,20 @@ namespace Radiant {
   public:
 
     /// Constructs a new grid with the given size
+    /// @param w The width of the grid
+    /// @param h The height of the grid
     GridMemT(unsigned w = 0, unsigned h = 0)
-        : m_width(w), m_height(h)
+      : m_data(0), m_width(w), m_height(h), m_size(0)
     {
-      unsigned s = w * h;
-      if(s)
-        m_data = new T[s];
-      else
-        m_data = 0;
+      resize(w, h);
     }
     /// Constructs a copy
-    GridMemT(const GridMemT & that) : m_data(0), m_width(0), m_height(0)
+    GridMemT(const GridMemT & that) : m_data(0), m_width(0), m_height(0), m_size(0)
     { *this = that; }
 
     ~GridMemT()
     {
-        delete [] m_data;
+      delete [] m_data;
     }
 
     /// Resizes this grid, by allocating new memory as necessary
@@ -67,15 +53,18 @@ namespace Radiant {
     void resize(unsigned w, unsigned h)
     {
       unsigned s = w * h;
-      unsigned smy = m_width * m_height;
 
       m_width = w;
       m_height = h;
 
-      if(s == smy)
+      // make the memory size dividable by 4
+      while(s & 0x3) ++s;
+
+      if(m_size >= s)
         return;
 
       delete [] m_data;
+      m_size = s;
 
       if(s)
         m_data = new T[s];
@@ -84,15 +73,19 @@ namespace Radiant {
     }
 
     /// Resizes the grid
+    /// @param size New size of the grid
     /// @see resize(unsigned w, unsigned h)
     void resize(Nimble::Vector2i size) { resize(size.x, size.y); }
 
     /** frees up the memory, and sets the width and height of this
     object to zero. */
-    void clear() { delete [] m_data; m_width = m_height = 0; m_data = 0; }
+    void clear() { delete [] m_data; m_width = m_height = 0; m_data = 0; m_size = 0; }
 
     /// Copies data from memory
-    void copy(T * src, unsigned w, unsigned h)
+    /// @param src Source image data
+    /// @param w Width of source image
+    /// @param h Height of source image
+    void copy(const T * src, unsigned w, unsigned h)
     {
       resize(w, h);
       const T * sentinel = src + w * h;
@@ -104,6 +97,8 @@ namespace Radiant {
     }
 
     /// Copies a grid
+    /// @param that Source grid
+    /// @returns Reference to self
     GridMemT & operator = (const GridMemT & that)
     {
       copy(that.m_data, that.m_width, that.m_height);
@@ -117,6 +112,8 @@ namespace Radiant {
     unsigned m_width;
     /// Height of the grid
     unsigned m_height;
+    /// Reserved data size in bytes
+    unsigned m_size;
   };
 
   /// Grid base class without memory management
@@ -128,6 +125,9 @@ namespace Radiant {
   {
   public:
     /// Constructs a new grid with the given size
+    /// @param data Grid data
+    /// @param w Width of the grid
+    /// @param h Height of the grid
     GridNoMemT(T * data = 0, unsigned w = 0, unsigned h = 0)
       : m_data(data), m_width(w), m_height(h)
     {}
@@ -179,6 +179,9 @@ namespace Radiant {
   class GridT : public Base
   {
   public:
+    /// Type of grid data
+    typedef T value_type;
+
     /// Iterator for the grid
     typedef T * iterator;
     /// Const iterator for the grid
@@ -190,29 +193,27 @@ namespace Radiant {
     template <class S>
     GridT(S & that) : Base(that) {}
 
-    /// @todo Is this define really needed?
-#ifndef WIN32
     /** Constructor that takes the elements from the data pointer,
     with given width and height. */
+    /// @param data Grid data
+    /// @param w Width of the grid
+    /// @param h Height of the grid
     GridT(T * data, unsigned w, unsigned h) : Base(data, w, h) {}
-#else
-    GridT(T * data, unsigned w, unsigned h)
-    {
-      this->m_width = w;
-      this->m_height = h;
-      this->m_data = data;
-    }
-#endif
 
     /// Checks if the given point is inside the grid
-    inline bool isInside(unsigned x, unsigned y)
+    /// @param x X-coordinate of point
+    /// @param y Y-coordinate of point
+    /// @returns true if the given coordinates are inside the grid
+    inline bool isInside(unsigned x, unsigned y) const
     { return (x < this->m_width) && (y < this->m_height); }
-    /// Checks if the given point is inside the grid
-    inline bool isInside(const Nimble::Vector2i & v)
+    /// @copybrief isInside(unsigned x, unsigned y)
+    /// @param v Point coordinate
+    /// @returns true if the given coordinates are inside the grid
+    inline bool isInside(const Nimble::Vector2i & v) const
     { return ((unsigned) v.x < this->m_width) &&
         ((unsigned) v.y < this->m_height); }
-    /// Checks if the given point is inside the grid
-    inline bool isInside(const Nimble::Vector2f & v)
+    /// @copydoc isInside(const Nimble::Vector2i & v)
+    inline bool isInside(const Nimble::Vector2f & v) const
     { return ((unsigned) v.x < this->m_width) &&
         ((unsigned) v.y < this->m_height); }
 
@@ -221,27 +222,34 @@ namespace Radiant {
     builds, the program stops with an assertion, while on typical
     release builds the function will simply return invalid
     data. */
+    /// @param x X-coordinate of element
+    /// @param y Y-coordinate of element
+    /// @returns Reference to the element at (x,y)
     inline T & get(unsigned x, unsigned y)
     { GRID_CHECK(x,y); return this->m_data[this->m_width * y + x]; }
     /// @copydoc get
     inline const T & get(unsigned x, unsigned y) const
     { GRID_CHECK(x,y); return this->m_data[this->m_width * y + x]; }
 
-    /// @copydoc get
+    /// @copybrief get(unsigned x, unsigned y)
+    /// @param v Coordinate of element
+    /// @returns Reference to the element at (v.x,v.y)
     inline T & get(const Nimble::Vector2i & v)
     { GRID_CHECK2(v); return this->m_data[this->m_width * v.y + v.x]; }
-    /// @copydoc get
+    /// @copydoc get(const Nimble::Vector2i & v)
     inline const T & get(const Nimble::Vector2i & v) const
     { GRID_CHECK2(v); return this->m_data[this->m_width * v.y + v.x]; }
-    /// @copydoc get
+    /// @copydoc get(const Nimble::Vector2i & v)
     inline T & get(const Nimble::Vector2f & v)
     {
       GRID_CHECK2(v);
       return this->m_data[this->m_width * (unsigned) v.y + (unsigned) v.x];
     }
 
-    /** Gets an element from the grid. If the aruments are outside the grid area, then
-        they are returned inside the image area with modulo logic. */
+    /** Gets an element from the grid. */
+    /// @param x X-coordinate of element
+    /// @param y Y-coordinate of element
+    /// @returns the element at (x,y), wrapped with modulo logic.
     inline T & getCyclic(int x, int y)
     {
       x = x % (int) this->m_width;
@@ -254,18 +262,20 @@ namespace Radiant {
       return this->m_data[this->m_width * y + x];
     }
 
-
-
-    /** Returns an element from a grid. If the arguments are outside
-    the grid area, then zero is returned. */
-    inline T getSafe(const Nimble::Vector2i & v)
+    /// @param v Coordinate of element
+    /// @returns The requested element from the grid or zero if the coordinate is outside of the grid
+    inline T getSafe(const Nimble::Vector2i & v) const
     { if(isInside(v)) return this->m_data[this->m_width * v.y + v.x];return 0;}
-    /// @copydoc getSafe
-    inline T getSafe(int x, int y)
+    /// @param x X-coordinate of element
+    /// @param y Y-coordinate of element
+    /// @returns The requested element from the grid or zero if the coordinate is outside of the grid
+    inline T getSafe(int x, int y) const
     { if(isInside(x, y)) return this->m_data[this->m_width * y + x];return 0;}
 
     /** Returns a reference to the grid element that is closest to the
     argument vector. */
+    /// @param v Coordinate of element
+    /// @return a reference to the gridpoint nearest the given coordinate
     inline T & getNearest(const Nimble::Vector2f & v)
     {
       unsigned x = (unsigned) (v.x+0.5f);
@@ -277,7 +287,9 @@ namespace Radiant {
     /** Interpolates an element from the grid values.
         This function requires that the grid template type can be multiplied from the right
         with a floating point number. */
-    inline T getInterpolated(const Nimble::Vector2f & v)
+    /// @param v Coordinate of element
+    /// @returns Interpolated element
+    inline T getInterpolated(const Nimble::Vector2f & v) const
     {
       int left = v.x;
       int top = v.y;
@@ -297,10 +309,42 @@ namespace Radiant {
           get(left, bot) * wxl * wyb + get(right, bot) * wxr * wyb;
     }
 
-    /// Return a pointer to one line (aka row)
+    /** Interpolates an element from the grid values.
+        This function requires that the grid template type can be multiplied from the right
+        with a floating point number. */
+    /// @param v Coordinate of element
+    /// @returns The interpolated value from given coordinates
+    inline T getInterpolatedSafe(const Nimble::Vector2f & v) const
+    {
+      int left = v.x;
+      int top = v.y;
+      int right = left+1;
+      int bot = top + 1;
+
+      float wxr = v.x - left;
+      float wyb = v.y - top;
+
+      float wxl = 1.0f - wxr;
+      float wyt = 1.0f - wyb;
+
+      int wmax = width() - 1;
+      left = Nimble::Math::Clamp(left, 0, wmax);
+      right = Nimble::Math::Clamp(right, 0, wmax);
+
+      int hmax = height() - 1;
+      top = Nimble::Math::Clamp(top, 0, hmax);
+      bot = Nimble::Math::Clamp(bot, 0, hmax);
+
+      return get(left, top) * wxl * wyt + get(right, top) * wxr * wyt +
+          get(left, bot) * wxl * wyb + get(right, bot) * wxr * wyb;
+    }
+
+    /// @returns a pointer to one line (aka row)
+    /// @param y Line number
     inline T * line(int y)
     { return & this->m_data[this->m_width * y]; }
-    /// Return a const pointer to one line (aka row)
+    /// @returns a const pointer to one line (aka row)
+    /// @param y Line number
     inline const T * line(int y) const
     { return & this->m_data[this->m_width * y]; }
 
@@ -308,9 +352,15 @@ namespace Radiant {
     inline void zero() { bzero(this->data(), size() * sizeof(T)); }
 
     /// Fills the grid with the given value
+    /// @param val Value to fill with
+    /// @param xlow Start x-coordinate of area to fill
+    /// @param ylow Start y-coordinate of area to fill
+    /// @param width Width of area to fill
+    /// @param height Height of area to fill
     inline void fill(const T & val, int xlow, int ylow, int width, int height);
 
     /// Sets all grid elements to the given value
+    /// @param val Value to fill with
     inline void setAll(const T & val)
     { T * p = this->data();for(T * end = p + size(); p < end; p++) *p = val; }
 
@@ -325,21 +375,27 @@ namespace Radiant {
 
     /// Number of elements
     inline unsigned size()   const { return this->m_width * this->m_height; }
+    /// Number of bytes
+    inline unsigned sizeBytes() const { return this->size() * sizeof(T); }
     /// Returns the dimensions of the grid
     inline Nimble::Vector2i geometry() const
     { return Nimble::Vector2i(this->m_width, this->m_height); }
 
     /// Checks if the width and height of this and that are identical
+    /// @param that Grid to compare with
+    /// @returns true if this and that have the same dimensions
     template <typename S>
     bool hasIdenticalDimensions(const S & that)
     { return that.width() == width() && that.height() == height(); }
 
     /// Copies data from that to this using memcpy
+    /// @param that Grid to copy from
     template <typename S>
     void copyFast(const S & that)
     { memcpy(this->m_data, that.data(), sizeof(T) * size()); }
 
     /// Swaps the contents between this grid, and the other grid
+    /// @param that Grid to swap with
     template <typename S>
         void swap(S & that)
     {
@@ -355,7 +411,7 @@ namespace Radiant {
   void GridT<T, Base>::fill(const T & val,
                 int xlow, int ylow, int width, int height)
   {
-    for(int y = ylow; y <= ylow + height; y++) {
+    for(int y = ylow; y < (ylow + height); y++) {
       T * dest = & get(xlow, y);
       for(T * sentinel = dest + width; dest < sentinel; dest++) {
     *dest = val;
@@ -373,10 +429,30 @@ namespace Radiant {
   /// A grid of 16-bit values with memory management
   typedef GridT<uint16_t, GridMemT<uint16_t> >   MemGrid16u;
 
+  /// A grid of 32-bit values without memory management
+  typedef GridT<uint32_t, GridNoMemT<uint32_t> > PtrGrid32u;
+  /// A grid of 32-bit values with memory management
+  typedef GridT<uint32_t, GridMemT<uint32_t> >   MemGrid32u;
+
   /// A grid of floats without memory management
   typedef GridT<float, GridNoMemT<float> > PtrGrid32f;
   /// A grid of floats with memory management
   typedef GridT<float, GridMemT<float> >   MemGrid32f;
+
+  /// A grid of Vector2s without memory management
+  typedef GridT<Nimble::Vector2, GridNoMemT<Nimble::Vector2> > PtrGridVector2;
+  /// A grid of Vector2s with memory management
+  typedef GridT<Nimble::Vector2, GridMemT<Nimble::Vector2> >   MemGridVector2;
+
+  /// A grid of Vector3s without memory management
+  typedef GridT<Nimble::Vector3, GridNoMemT<Nimble::Vector3> > PtrGridVector3;
+  /// A grid of Vector3s with memory management
+  typedef GridT<Nimble::Vector3, GridMemT<Nimble::Vector3> >   MemGridVector3;
+
+  /// A grid of Vector4s without memory management
+  typedef GridT<Nimble::Vector4, GridNoMemT<Nimble::Vector4> > PtrGridVector4;
+  /// A grid of Vector4s with memory management
+  typedef GridT<Nimble::Vector4, GridMemT<Nimble::Vector4> >   MemGridVector4;
 
   /// A grid of color values without memory management
   typedef GridT<RGBAu8, GridNoMemT<RGBAu8> > PtrGridRGBAu8;
@@ -391,8 +467,20 @@ namespace Radiant {
         template class GridT<uint16_t, GridNoMemT<uint16_t>>;
         template class GridT<uint16_t, GridMemT<uint16_t>>;
 
+        template class GridT<uint32_t, GridNoMemT<uint32_t>>;
+        template class GridT<uint32_t, GridMemT<uint32_t>>;
+
         template class GridT<float, GridNoMemT<float>>;
         template class GridT<float, GridMemT<float>>;
+
+        template class GridT<Nimble::Vector2, GridNoMemT<Nimble::Vector2>>;
+        template class GridT<Nimble::Vector2, GridMemT<Nimble::Vector2>>;
+
+        template class GridT<Nimble::Vector3, GridNoMemT<Nimble::Vector3>>;
+        template class GridT<Nimble::Vector3, GridMemT<Nimble::Vector3>>;
+
+        template class GridT<Nimble::Vector4, GridNoMemT<Nimble::Vector4>>;
+        template class GridT<Nimble::Vector4, GridMemT<Nimble::Vector4>>;
 
         template class GridT<RGBAu8, GridNoMemT<RGBAu8>>;
         template class GridT<RGBAu8, GridMemT<RGBAu8>>;

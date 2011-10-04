@@ -7,21 +7,22 @@
  * See file "Screenplay.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef SCREENPLAY_VIDEO_FFMPEG_HPP
 #define SCREENPLAY_VIDEO_FFMPEG_HPP
 
+#include "Export.hpp"
+
 #include <Radiant/TimeStamp.hpp>
 #include <Radiant/VideoInput.hpp>
+#include <Radiant/Allocators.hpp>
 
-#include <Screenplay/Export.hpp>
-
-#include <string>
+#include <QString>
 
 extern "C" {
 
@@ -30,6 +31,7 @@ extern "C" {
   struct AVFormatContext;
   struct AVFrame;
   struct AVPacket;
+  struct ReSampleContext;
 }
 
 namespace Screenplay {
@@ -43,17 +45,21 @@ namespace Screenplay {
     virtual ~VideoInputFFMPEG();
 
     /// Reads and decodes the current frame from the video
+    /// @return current video frame
     virtual const Radiant::VideoImage * captureImage();
     /// The time-stamp of the latest video frame
+    /// @return time-stamp of the video
     Radiant::TimeStamp frameTime() { return m_lastTS; }
-    /// The time stamp of curren audio buffer
-    /** This timestamp is timed to match the beginning of the current
-    audio buffer. This is absolute time within the time-system of
-    the video file.  */
+    /// The time stamp of current audio buffer
+    /// This timestamp is timed to match the beginning of the current audio
+    /// buffer. This is absolute time within the time-system of the video file.
+    /// @return audio buffer time-stamp
     Radiant::TimeStamp audioTime() const { return m_audioTS; }
 
-    /** This function does not actually decode anything, it just returns data
-      decoded in the "captureFrame". */
+    /// This function does not actually decode anything, it just returns data
+    /// decoded in the "captureFrame".
+    /// @param[out] frameCount number of decoded audio frames
+    /// @return decoded data
     virtual const void * captureAudio(int * frameCount);
     /** Get audio parameters from the video */
     virtual void getAudioParameters(int * channels,
@@ -89,29 +95,26 @@ namespace Screenplay {
     long capturedVideo() { return m_capturedVideo; }
 
     /// Seeks to a given position in the file
-    /** Seek operation may not be entirely accurate, since the encoding strategy
-        of the file may prevent proper seeking. */
+    /// Seek operation may not be entirely accurate, since the encoding
+    /// strategy of the file may prevent proper seeking.
+    /// @param timeSeconds seek time in seconds
+    /// @return true on success
     bool seekPosition(double timeSeconds);
     /// The duration of the video in seconds
-    double durationSeconds();
+    /// @return duration in seconds
+    double durationSeconds() const;
 
     /// Returns true if there is an audio codec for this video
+    /// @return true if video has audio codec
     bool hasAudioCodec() const { return m_acodec != 0; }
     /// Returns true if there is a video codec for this video
+    /// @return true if video has video codec
     bool hasVideoCodec() const { return m_vcodec != 0; }
 
     /// Returns the audio sampling rate of this video, if known.
+    /// @return sample rate in Hz
     int audioSampleRate() const { return m_audioSampleRate; }
 
-    /*
-    void enableLooping(bool enable)
-    {
-      if(enable)
-    m_flags |= Radiant::DO_LOOP;
-      else
-    m_flags &= ~Radiant::DO_LOOP;
-    }
-    */
     /// Turn on/off the printing of debug messages
     static void setDebug(int debug);
 
@@ -122,16 +125,21 @@ namespace Screenplay {
           1 : m_audioChannels;
     }
 
-    std::string      m_fileName;
-    std::string      m_codecName;
+    QString      m_fileName;
+    QString      m_codecName;
 
     AVCodec        * m_acodec;
     int              m_aindex; // Audio index
     AVCodecContext * m_acontext;
-    std::vector<int16_t> m_audioBuffer;
-    int                  m_audioFrames;
-    int                  m_audioChannels;
-    int                  m_audioSampleRate;
+    ReSampleContext* m_resample_ctx;
+    
+    // Audiobuffers should be 128-bit aligned because of SSE
+    typedef std::vector<int16_t, Radiant::aligned_allocator<int16_t, 16> > AudioBuffer;
+    AudioBuffer      m_audioBuffer;
+    AudioBuffer      m_resampleBuffer;
+    int              m_audioFrames;
+    int              m_audioChannels;
+    int              m_audioSampleRate;
 
     long m_capturedAudio;
     long m_capturedVideo;

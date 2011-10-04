@@ -7,10 +7,10 @@
  * See file "Valuable.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef VALUABLE_CONFIG_DOCUMENT_HPP
@@ -46,19 +46,20 @@ namespace Valuable
     /// Gets the configuration element with the given name
     /// @param key name of the element
     /// @return pointer to the element or 0 if element is not found
-    ConfigElement *getConfigElement(std::string key);
+    ConfigElement *getConfigElement(const QString & key);
     /// @copybrief getConfigElement
-    ConfigElement *getConfigElement(std::string key,std::string value);
+    ConfigElement *getConfigElement(const QString & key, const QString & value);
     /// Returns the configuration as string
-    static std::string getConfigText(ConfigElement e, int recursion = 0);
+    static QString getConfigText(ConfigElement e, int recursion = 0);
 
   private:
 
     void loadConfigElement(std::string str);
     static void trimSpaces( std::string & str);
+    static void trimSpaces( QString & str);
     void loadConfigValue(std::string key,std::string val);
-    ConfigElement *findConfigElement(ConfigElement &e,std::string elementName,bool &found);
-    ConfigElement *findConfigElement(ConfigElement &e,bool &found,std::string key,std::string value);
+    ConfigElement *findConfigElement(ConfigElement &e,const QString & elementName,bool &found);
+    ConfigElement *findConfigElement(ConfigElement &e,bool &found,const QString& key, const QString & value);
 
     bool getline(FILE * source, std::string & str);
 

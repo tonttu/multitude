@@ -7,28 +7,26 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef RADIANT_EXPORT_HPP
 #define RADIANT_EXPORT_HPP
 
-#ifdef WIN32
+#include "Radiant/Platform.hpp"
 
+#ifdef RADIANT_MSVC
 #pragma warning( disable : 4275 )
+#endif
 
 // Import by default
 #ifdef RADIANT_EXPORT
-#define RADIANT_API __declspec(dllexport)
+#define RADIANT_API DLLEXPORT
 #else
-#define RADIANT_API __declspec(dllimport)
-#endif
-
-#else
-#define RADIANT_API
+#define RADIANT_API DLLIMPORT
 #endif
 
 #endif

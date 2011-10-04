@@ -1,3 +1,18 @@
+/* COPYRIGHT
+ *
+ * This file is part of Resonant.
+ *
+ * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
+ *
+ * See file "Resonant.hpp" for authors and more details.
+ *
+ * This file is licensed under GNU Lesser General Public
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
+ * from the GNU organization (www.gnu.org).
+ * 
+ */
+
 #ifndef RESONANT_MODULEPULSEAUDIO_HPP
 #define RESONANT_MODULEPULSEAUDIO_HPP
 
@@ -12,7 +27,7 @@ namespace Resonant {
   class RESONANT_API ModulePulseAudio : public Module, public PulseAudioCore
   {
   public:
-    ModulePulseAudio(const std::string & monitorName, uint32_t sinkInput);
+    ModulePulseAudio(const QString & monitorName, uint32_t sinkInput);
     virtual ~ModulePulseAudio();
 
     void contextChange(pa_context_state_t state);
@@ -27,7 +42,7 @@ namespace Resonant {
   protected:
     bool m_ready;
     pa_stream * m_stream;
-    std::string m_monitorName;
+    QString m_monitorName;
     uint32_t m_sinkInput;
     float * m_buffer; // pointer to m_buffer
     std::vector<float> m_bufferData; // actual storage

@@ -16,8 +16,8 @@
 #ifndef POETIC_UTILS_HPP
 #define POETIC_UTILS_HPP
 
-#include <Poetic/CPUBitmapFont.hpp>
-#include <Poetic/Export.hpp>
+#include "Export.hpp"
+#include "CPUBitmapFont.hpp"
 
 #include <Radiant/StringUtils.hpp>
 
@@ -26,7 +26,7 @@ namespace Poetic
 
   /** Utility functions for the Poetic font rendering engine. */
 
-  class Utils
+  class POETIC_API Utils
   {
   public:
     /// Zero-width space character is used as new line character.
@@ -41,24 +41,10 @@ namespace Poetic
       * @param bitmapFont Font used for rendering.
       * @param lines Reference to list to receive the lines.
       * @note Newline characters are retained in the output.
-      * @param afterSpace true to break lines after inter-word spaces.
       */
     /// @todo move inside CPUFont
-    static void POETIC_API breakToLines(const std::wstring & ws, const float width,
-                                        CPUFont & bitmapFont, Radiant::StringUtils::WStringList & lines,
-                                        const bool afterSpace = true);
-
-    /**
-      * @brief Tokenize wstring.
-      * @param ws The string to be tokenized.
-      * @param delim One or more delimiter characters.
-      * @param out Reference to list to receive the tokens.
-      * @param afterDelim true to split string after delimiter.
-      */
-    /// @todo Remove, the same is in Radiant::StringUtils
-    static void POETIC_API split(const std::wstring & ws, const std::wstring & delim,
-                                 Radiant::StringUtils::WStringList & out, const bool afterDelim = true);
-
+    static void breakToLines(const QString & ws, float width,
+                             CPUFont & bitmapFont, QStringList & lines);
 
   };
 

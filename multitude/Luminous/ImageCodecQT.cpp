@@ -1,3 +1,18 @@
+/* COPYRIGHT
+ *
+ * This file is part of Luminous.
+ *
+ * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
+ *
+ * See file "Luminous.hpp" for authors and more details.
+ *
+ * This file is licensed under GNU Lesser General Public
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
+ * from the GNU organization (www.gnu.org).
+ * 
+ */
+
 #include "ImageCodecQT.hpp"
 
 #include "Image.hpp"
@@ -29,14 +44,14 @@ namespace Luminous
     return r.canRead();
   }
 
-  std::string ImageCodecQT::extensions() const
+  QString ImageCodecQT::extensions() const
   {
     return m_suffix;
   }
 
-  std::string ImageCodecQT::name() const
+  QString ImageCodecQT::name() const
   {
-    return std::string("ImageCodecQT");
+    return QString("ImageCodecQT");
   }
 
   bool ImageCodecQT::ping(ImageInfo & info, FILE * file)
@@ -222,7 +237,7 @@ namespace Luminous
       return false;
     }
 
-    return qi.save(&f, m_suffix.c_str());
+    return qi.save(&f, m_suffix.toUtf8().data());
   }
 
 }

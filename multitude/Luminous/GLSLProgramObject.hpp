@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef LUMINOUS_GLSLPROGRAMOBJECT_HPP
@@ -25,13 +25,16 @@
 #include <Patterns/NotCopyable.hpp>
 
 #include <list>
-#include <string>
+#include <QString>
 #include <vector>
 
 namespace Luminous
 {
 
-  /// OpenGL shading language program object
+  /// OpenGL shading language program object. This class provides a wrapper for
+  /// OpenGL program object. If you want to use OpenGL shader, you will likely
+  /// want to use Luminous::Shader instead which provides a higher level
+  /// abstraction for shader. @sa Luminous::Shader
   class LUMINOUS_API GLSLProgramObject : public GLResource, public Patterns::NotCopyable
   {
   public:
@@ -55,22 +58,23 @@ namespace Luminous
 
     /// Binds the program to make it active
     virtual void bind();
-    /// Clears any binded programs
+    /// Clears any bound programs
     virtual void unbind();
 
     /// Gets the location of the given uniform variable
-    int getUniformLoc(const std::string & name);
+    int getUniformLoc(const QString & name);
     /// Gets the location of the given uniform variable
     int getUniformLoc(const char * name);
 
     /// Gets the location of the given attribute variable
-    int getAttribLoc(const std::string & name);
+    int getAttribLoc(const QString & name);
     /// Gets the location of the given attribute variable
     int getAttribLoc(const char * name);
 
     /// Sets the value of the given uniform
     /// @param name name of the uniform to set
     /// @param value uniform value
+    /// @return false if the location of the uniform can not be found, otherwise true
     bool setUniformInt(const char * name, int value);
     /// @copydoc setUniformInt
     bool setUniformFloat(const char * name, float value);
@@ -123,37 +127,55 @@ namespace Luminous
     @param fsString String containing the fragment shader source
     code. If fsString is NULL, then this argument is ignored.
 
-    @return This functions returns a compiled GLSL program
-    object. If the program could not be compiled, this function
+    @return This functions returns a linked GLSL program
+    object. If the program could not be linked, this function
     returns NULL.
      */
     static GLSLProgramObject* fromStrings
     (const char* vsString, const char* fsString);
 
-    /// Loads a program object from the given strings
+    /// Loads vertex shader and fragment shader from the given strings,
+    /// compiles and links them to this program object. This function requires
+    /// a valid OpenGL context.
     /// @param vsString vertex shader code
     /// @param fsString fragment shader code
+    /// @return true if the loading succeeded
     bool loadStrings(const char* vsString, const char* fsString);
 
     /// Returns the number of shader objects attached to the program
     int shaderObjectCount() const { return (int) m_shaderObjects.size(); }
 
-    /** Loads a #Luminous::GLSLShaderObject from a file, and adds it to this program object.
+    /** Loads a #Luminous::GLSLShaderObject from a file, compiles it, and adds
+    it to this program object. This function requires a valid OpenGL context.
     @param shaderType type of the shader
-    @param filename shader source code filename*/
+    @param filename shader source code filename
+    @return true if the loading succeeded*/
     bool loadFile(GLenum shaderType, const char * filename);
 
-    /** Loads a #Luminous::GLSLShaderObject from a string and adds it to this program object.
+    /** Loads a #Luminous::GLSLShaderObject from a string, compiles it, and
+    adds it to this program object. This function requires a valid OpenGL
+    context.
     @param shaderType type of the shader
-    @param shaderCode source code for the shader */
+    @param shaderCode source code for the shader
+    @return true if the loading succeed*/
     bool loadString(GLenum shaderType, const char * shaderCode);
 
     /// Returns the OpenGL handle for this program
+    /// @return OpenGL handle to the program object
     GLuint handle() const { return m_handle; }
 
     /// Returns true if the program has been linked successfully
+    /// @return true if the program has
     bool isLinked() const { return m_isLinked; }
 
+    /// Sets the internal error flag
+    /// @param errors value of error flag
+    void setErrors(bool errors) { m_errors = errors; }
+    /// Checks if the shader program has errors
+    /// @return true if the program has errors
+    bool hasErrors() const { return m_errors; }
+
+  protected:
   private:
 
     friend class RenderContext;
@@ -161,6 +183,8 @@ namespace Luminous
     std::vector<GLchar> m_linkerLog;
     /// True if the program has been linked
     bool m_isLinked;
+    /// True if there have been errors in the program
+    bool m_errors;
     /// Lis of shader objects making up this program
     std::list<GLSLShaderObject*> m_shaderObjects;
     /// The OpenGL handle for the program

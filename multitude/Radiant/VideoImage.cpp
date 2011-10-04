@@ -7,14 +7,15 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 
 #include "VideoImage.hpp"
+#include "MemCheck.hpp"
 
 #include "Trace.hpp"
 #include "Types.hpp"
@@ -22,11 +23,21 @@
 #include <stdlib.h>
 #include <string.h>
 
+namespace {
+  // always allocate memory rounded to the next number dividable by four
+  // to make some optimization code possible
+  unsigned char * mtmalloc4(int size)
+  {
+    while(size & 0x3) ++size;
+    return new unsigned char[size];
+  }
+}
+
 namespace Radiant {
 
   void VideoImage::Plane::freeMemory()
   {
-    free(m_data);
+    delete[] m_data;
     m_data = 0;
   }
 
@@ -59,10 +70,10 @@ namespace Radiant {
       else
         area.clear();
     }
-    else if(fmt == IMAGE_RGB) {
+    else if(fmt == IMAGE_RGB || fmt == IMAGE_BGR) {
       area.x *= 3;
     }
-    else if(fmt == IMAGE_RGBA) {
+    else if(fmt == IMAGE_RGBA || fmt == IMAGE_BGRA) {
       area.x *= 4;
     }
 
@@ -72,6 +83,9 @@ namespace Radiant {
 
   bool VideoImage::allocateMemory(ImageFormat fmt, int w, int h)
   {
+    if(w == m_width && h == m_height && fmt == m_format)
+      return true;
+
     freeMemory();
     reset();
 
@@ -81,7 +95,9 @@ namespace Radiant {
     unsigned pixels = w * h;
 
     if(fmt == IMAGE_RGB ||
+       fmt == IMAGE_BGR ||
        fmt == IMAGE_RGBA ||
+       fmt == IMAGE_BGRA ||
        fmt == IMAGE_GRAYSCALE) {
 
       m_format = fmt;
@@ -97,14 +113,22 @@ namespace Radiant {
         pt = PLANE_RGB;
         ls = w * 3;
       }
+      else if(fmt == IMAGE_BGR) {
+        pt = PLANE_BGR;
+        ls = w * 3;
+      }
       else if(fmt == IMAGE_RGBA) {
         pt = PLANE_RGBA;
+        ls = w * 4;
+      }
+      else if(fmt == IMAGE_BGRA) {
+        pt = PLANE_BGRA;
         ls = w * 4;
       }
       else
         trace(FATAL, "VideoImage::allocateMemory");
 
-      unsigned char * buf = (unsigned char*) malloc(ls * h);
+      unsigned char * buf = mtmalloc4(ls * h);
 
       m_planes[0].set(buf, ls, pt);
     }
@@ -114,9 +138,9 @@ namespace Radiant {
 
       int pixels4 = pixels >> 2;
 
-      m_planes[0].set((unsigned char *) malloc(pixels),  w, PLANE_Y);
-      m_planes[1].set((unsigned char *) malloc(pixels4), w / 2, PLANE_U);
-      m_planes[2].set((unsigned char *) malloc(pixels4), w / 2, PLANE_V);
+      m_planes[0].set(mtmalloc4(pixels),  w, PLANE_Y);
+      m_planes[1].set(mtmalloc4(pixels4), w / 2, PLANE_U);
+      m_planes[2].set(mtmalloc4(pixels4), w / 2, PLANE_V);
     }
     else if(fmt == IMAGE_YUV_422P) {
 
@@ -124,9 +148,9 @@ namespace Radiant {
 
       int pixels2 = pixels >> 1;
 
-      m_planes[0].set((unsigned char *) malloc(pixels), w, PLANE_Y);
-      m_planes[1].set((unsigned char *) malloc(pixels2), w / 2, PLANE_U);
-      m_planes[2].set((unsigned char *) malloc(pixels2), w / 2, PLANE_V);
+      m_planes[0].set(mtmalloc4(pixels), w, PLANE_Y);
+      m_planes[1].set(mtmalloc4(pixels2), w / 2, PLANE_U);
+      m_planes[2].set(mtmalloc4(pixels2), w / 2, PLANE_V);
     }
     else
       return false;
@@ -177,12 +201,12 @@ namespace Radiant {
       linecount[1] = linecount[2] = m_height;
       rowbytes[1]  = rowbytes[2]  = m_width / 2;
     }
-    else if(m_format == IMAGE_RGB) {
+    else if(m_format == IMAGE_RGB || m_format == IMAGE_BGR) {
       linecount[1] = linecount[2] = 0;
       rowbytes[1]  = rowbytes[2]  = 0;
       rowbytes[0]  = m_width * 3;
     }
-    else if(m_format == IMAGE_RGBA) {
+    else if(m_format == IMAGE_RGBA || m_format == IMAGE_BGRA) {
       linecount[1] = linecount[2] = 0;
       rowbytes[1]  = rowbytes[2]  = 0;
       rowbytes[0]  = m_width * 4;
@@ -240,7 +264,9 @@ namespace Radiant {
     switch(m_format) {
       case IMAGE_GRAYSCALE:
       case IMAGE_RGB:
+      case IMAGE_BGR:
       case IMAGE_RGBA:
+      case IMAGE_BGRA:
           memset(m_planes[0].m_data, 0, m_planes[0].m_linesize * m_height);
         break;
         case IMAGE_YUV_420P:

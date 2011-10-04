@@ -49,6 +49,10 @@ static const int kNumJSCallerSaved = 5;
 
 typedef Object* JSCallerSavedBuffer[kNumJSCallerSaved];
 
+
+// Number of registers for which space is reserved in safepoints.
+static const int kNumSafepointRegisters = 8;
+
 // ----------------------------------------------------
 
 
@@ -76,8 +80,8 @@ class EntryFrameConstants : public AllStatic {
 
 class ExitFrameConstants : public AllStatic {
  public:
-  static const int kCodeOffset      = -2 * kPointerSize;
-  static const int kSPOffset        = -1 * kPointerSize;
+  static const int kCodeOffset     = -2 * kPointerSize;
+  static const int kSPOffset       = -1 * kPointerSize;
 
   static const int kCallerFPOffset =  0 * kPointerSize;
   static const int kCallerPCOffset = +1 * kPointerSize;
@@ -90,6 +94,9 @@ class ExitFrameConstants : public AllStatic {
 
 class StandardFrameConstants : public AllStatic {
  public:
+  // StandardFrame::IterateExpressions assumes that kContextOffset is the last
+  // object pointer.
+  static const int kFixedFrameSize    =  4;  // Currently unused.
   static const int kExpressionsOffset = -3 * kPointerSize;
   static const int kMarkerOffset      = -2 * kPointerSize;
   static const int kContextOffset     = -1 * kPointerSize;
@@ -103,7 +110,7 @@ class JavaScriptFrameConstants : public AllStatic {
  public:
   // FP-relative.
   static const int kLocal0Offset = StandardFrameConstants::kExpressionsOffset;
-  static const int kSavedRegistersOffset = +2 * kPointerSize;
+  static const int kLastParameterOffset = +2 * kPointerSize;
   static const int kFunctionOffset = StandardFrameConstants::kMarkerOffset;
 
   // Caller SP-relative.

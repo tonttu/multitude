@@ -1,19 +1,8 @@
 /* COPYRIGHT
- *
- * This file is part of Resonant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Resonant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
  */
 
 #include "ModuleSamplePlayer.hpp"
+#include "Resonant.hpp"
 
 #include "DSPNetwork.hpp"
 
@@ -42,11 +31,14 @@ namespace Resonant {
 
   ModuleSamplePlayer::Sample::Sample()
   {
+    //info("ModuleSamplePlayer::Sample::Sample # %p", this);
     m_d = new Internal();
   }
 
   ModuleSamplePlayer::Sample::~Sample()
   {
+    //info("ModuleSamplePlayer::Sample::~Sample # %p", this);
+
     delete m_d;
   }
 
@@ -76,9 +68,9 @@ namespace Resonant {
 
     size_t block = 1000;
 
-    unsigned pos = 0;
+    size_t pos = 0;
 
-    while(pos < m_d->m_info.frames) {
+    while(pos < static_cast<size_t> (m_d->m_info.frames)) {
       size_t get = Nimble::Math::Min((size_t) (m_d->m_info.frames - pos), block);
       size_t n = get * m_d->m_info.channels;
 
@@ -95,7 +87,6 @@ namespace Resonant {
 
     return true;
   }
-
 
   unsigned ModuleSamplePlayer::Sample::available(unsigned pos) const
   {
@@ -116,9 +107,9 @@ namespace Resonant {
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  bool ModuleSamplePlayer::SampleVoice::synthesize(float ** out, int n)
+  bool ModuleSamplePlayer::SampleVoice::synthesize(float ** out, int n, ModuleSamplePlayer * host)
   {
-    if(m_state != PLAYING) {
+    if(m_state != PLAYING || m_startTime > host->time()) {
       //printf(":"); fflush(0);
       return m_state == WAITING_FOR_SAMPLE;
     }
@@ -127,6 +118,14 @@ namespace Resonant {
 
     if((int) avail > n)
       avail = n;
+
+    if(m_targetChannel >= host->channels()) {
+      error("ModuleSamplePlayer::SampleVoice::synthesize # channel count exceeded for %s "
+            "%ld >= %ld", m_sample->name().toUtf8().data(),
+            m_targetChannel, host->channels());
+      m_state = INACTIVE;
+      return false;
+    }
 
     float * b1 = out[m_targetChannel];
     float gain = m_gain;
@@ -170,13 +169,13 @@ namespace Resonant {
 
     if(!more) {
       if(m_loop) {
-        // debug("ModuleSamplePlayer::SampleVoice::synthesize # rewind");
+        // debugResonant("ModuleSamplePlayer::SampleVoice::synthesize # rewind");
         m_position = 0;
         m_dpos = 0.0f;
         more = 1;
       }
       else {
-        // debug("ModuleSamplePlayer::SampleVoice::synthesize # done");
+        // debugResonant("ModuleSamplePlayer::SampleVoice::synthesize # done");
         m_sample.reset();
         m_state = INACTIVE;
       }
@@ -221,6 +220,8 @@ namespace Resonant {
         m_targetChannel = data->readInt32( & ok);
       else if(strcmp(name, "loop") == 0)
         m_loop = (data->readInt32( & ok) != 0);
+      else if(strcmp(name, "time") == 0)
+        m_startTime = data->readTimeStamp( & ok);
       else {
         error("ModuleSamplePlayer::SampleVoice::init # Invalid parameter \"%s\"",
               name);
@@ -232,7 +233,7 @@ namespace Resonant {
               name);
       }
       else {
-        debug("ModuleSamplePlayer::SampleVoice::init # got %s", name);
+        debugResonant("ModuleSamplePlayer::SampleVoice::init # got %s", name);
       }
 
       name[0] = '\0';
@@ -246,14 +247,14 @@ namespace Resonant {
 
     m_state = sample ? PLAYING : WAITING_FOR_SAMPLE;
 
-    debug("ModuleSamplePlayer::SampleVoice::init # %p Playing gain = %.3f "
-          "rp = %.3f, ss = %d, ts = %d", this, m_gain, m_relPitch,
+    debugResonant("ModuleSamplePlayer::SampleVoice::init # %p Playing gain = %.3f "
+          "rp = %.3f, ss = %ld, ts = %ld", this, m_gain, m_relPitch,
           m_sampleChannel, m_targetChannel);
   }
 
   void ModuleSamplePlayer::SampleVoice::setSample(std::shared_ptr<Sample> s)
   {
-    if(m_state == WAITING_FOR_SAMPLE) {
+    if(m_state != WAITING_FOR_SAMPLE) {
 
       error("ModuleSamplePlayer::SampleVoice::setSample # Wrong state %p %d",
             this, (int) m_state);
@@ -293,11 +294,11 @@ namespace Resonant {
   bool ModuleSamplePlayer::BGLoader::addLoadable(const char * filename,
                                                  SampleVoice * waiting)
   {
-    debug("ModuleSamplePlayer::BGLoader::addLoadable # %s %p",
+    debugResonant("ModuleSamplePlayer::BGLoader::addLoadable # %s %p",
           filename, waiting);
 
     for(int i = 0; i < BINS; i++) {
-      if(m_loads[i].m_name == filename) {
+      if(m_loads[i].m_name == std::string(filename)) {
         return m_loads[i].addWaiting(waiting);
       }
     }
@@ -318,27 +319,27 @@ namespace Resonant {
   {
     while(m_continue) {
 
-      debug("ModuleSamplePlayer::BGLoader::childLoop # once");
+      debugResonant("ModuleSamplePlayer::BGLoader::childLoop # once");
 
       for(int i = 0; i < BINS; i++) {
         LoadItem & it = m_loads[i];
 
         if(!it.m_free) {
 
-          debug("ModuleSamplePlayer::BGLoader::childLoop # Something");
+          debugResonant("ModuleSamplePlayer::BGLoader::childLoop # Something");
 
           std::shared_ptr<Sample> s(new Sample);
 
           bool good = true;
 
-          if(!s->load(it.m_name.str(), it.m_name.str())) {
+          if(!s->load(it.m_name.c_str(), it.m_name.c_str())) {
             error("ModuleSamplePlayer::BGLoader::childLoop # Could not load "
-                  "\"%s\"", it.m_name.str());
+                  "\"%s\"", it.m_name.c_str());
             good = false;
           }
           else if(!m_host->addSample(s)) {
             error("ModuleSamplePlayer::BGLoader::childLoop # Could not add "
-                  "\"%s\"", it.m_name.str());
+                  "\"%s\"", it.m_name.c_str());
             good = false;
           }
 
@@ -351,16 +352,16 @@ namespace Resonant {
             }
           }
           else {
-            debug("ModuleSamplePlayer::BGLoader::childLoop # Loaded "
-                  "\"%s\"", it.m_name.str());
+            debugResonant("ModuleSamplePlayer::BGLoader::childLoop # Loaded "
+                  "\"%s\"", it.m_name.c_str());
 
             for(int j = 0; j < LoadItem::WAITING_COUNT; j++) {
               SampleVoice * voice = it.m_waiting[j];
               if(!voice)
                 break;
 
-              debug("ModuleSamplePlayer::BGLoader::childLoop # Delivering "
-                    "\"%s\" to %p", it.m_name.str(), voice);
+              debugResonant("ModuleSamplePlayer::BGLoader::childLoop # Delivering "
+                    "\"%s\" to %p", it.m_name.c_str(), voice);
 
               voice->setSample(s);
             }
@@ -370,9 +371,8 @@ namespace Resonant {
         }
       }
 
-      m_mutex.lock();
+      Radiant::Guard g(m_mutex);
       m_cond.wait(m_mutex);
-      m_mutex.unlock();
     }
   }
 
@@ -406,9 +406,9 @@ namespace Resonant {
       channelsIn = 0;
     }
 
-    if(channelsOut != (int) m_channels) {
+    if(channelsOut != static_cast<int> (m_channels)) {
       edit = true;
-      channelsOut = m_channels;
+      channelsOut = static_cast<int> (m_channels);
     }
 
     return true;
@@ -442,7 +442,7 @@ namespace Resonant {
       int sampleind = findSample(buf);
 
       if(sampleind < 0) {
-        debug("ModuleSamplePlayer::control # No sample \"%s\"", buf);
+        debugResonant("ModuleSamplePlayer::control # No sample \"%s\"", buf);
 
         m_loader->addLoadable(buf, & voice);
 
@@ -453,7 +453,7 @@ namespace Resonant {
                  m_samples[sampleind] : std::shared_ptr<Sample>(), data);
       m_active++;
 
-      debug("ModuleSamplePlayer::control # Started sample %s (%d/%d)",
+      debugResonant("ModuleSamplePlayer::control # Started sample %s (%d/%ld)",
             buf, voiceind, m_active);
       // assert(voiceind < (int) m_active);
 
@@ -472,6 +472,7 @@ namespace Resonant {
   void ModuleSamplePlayer::process(float ** , float ** out, int n)
   {
     size_t i;
+    m_time = Radiant::TimeStamp::getTime();
 
     // First zero the outputs
     for(i = 0; i < m_channels; i++)
@@ -479,7 +480,7 @@ namespace Resonant {
 
     // Then fill the outputs with audio
     for(i = 0; i < m_active; ) {
-      if(!m_voiceptrs[i]->synthesize(out, n))
+      if(!m_voiceptrs[i]->synthesize(out, n, this))
         dropVoice(i);
       else
         i++;
@@ -512,36 +513,70 @@ namespace Resonant {
   }
 
   void ModuleSamplePlayer::createAmbientBackground
-      (const char * directory, float gain)
+      (const char * directory, float gain, int fillchannels, float delay)
   {
-    using Radiant::Directory;
-    Directory dir(directory, Directory::Files);
+    Radiant::Directory dir(directory, Directory::Files);
 
     int n = 0;
 
+    if(static_cast<size_t> (fillchannels) > channels())
+      fillchannels = static_cast<int> (channels());
+
     for(int i = 0; i < dir.count(); i++) {
 
-      std::string file = dir.fileNameWithPath(i);
+      QString file = dir.fileNameWithPath(i);
+
+      QString suf = Radiant::FileUtils::suffixLowerCase(file);
+
+      if(suf == "mp3") {
+        std::string wavname(file.toStdString());
+        strcpy( & wavname[wavname.size() - 3], "wav");
+
+        // If the wav file already exists, then ignore the mp3 entry.
+        /* To make this better, we could compare the timestamps...*/
+        if(Radiant::FileUtils::fileReadable(QString::fromStdString(wavname)))
+          continue;
+
+        char command[128];
+
+		/// @todo These should probably be documented somewhere
+#ifdef WIN32
+        sprintf(command, "madplay.exe %s -o wave:%s", file.toUtf8().data(), wavname.c_str());
+#else
+        sprintf(command, "mpg123 %s --wav %s", file.toUtf8().data(), wavname.c_str());
+#endif
+        info("Performing mp3 -> wav conversion with [%s]", command);
+        int err = system(command);
+        if(err != 0)
+          Radiant::error("ModuleSamplePlayer::createAmbientBackground # '%s' failed", command);
+
+        file = QString::fromStdString(wavname);
+      }
 
       n++;
 
       SF_INFO info;
-      SNDFILE * sndf = sf_open(file.c_str(), SFM_READ, & info);
+      SNDFILE * sndf = sf_open(file.toUtf8().data(), SFM_READ, & info);
 
       if(!sndf) {
-        Radiant::debug("ModuleSamplePlayer::playSample # failed to load '%s'",
-                       file.c_str());
+        debugResonant("ModuleSamplePlayer::playSample # failed to load '%s'",
+                       file.toUtf8().data());
         continue;
       }
 
       sf_close(sndf);
 
-      for(int c = 0; c < info.channels; c++) {
-        playSample(file.c_str(), gain, 1.0f, c, c, true);
+
+      // Start everything in 7 seconds
+      Radiant::TimeStamp startTime = Radiant::TimeStamp::getTime() +
+                                     Radiant::TimeStamp::createSecondsD(delay);
+
+      for(int c = 0; c < fillchannels; c++) {
+        playSample(file.toUtf8().data(), gain, 1.0f, (c+i) % channels(), c % info.channels, true, startTime);
       }
     }
 
-    debug("ModuleSamplePlayer::createAmbientBackground # %d samples", n);
+    debugResonant("ModuleSamplePlayer::createAmbientBackground # %d samples", n);
   }
 
 
@@ -550,7 +585,8 @@ namespace Resonant {
                                       float relpitch,
                                       int targetChannel,
                                       int samplechannel,
-                                      bool loop)
+                                      bool loop,
+                                      Radiant::TimeStamp time)
   {
 
     SF_INFO info;
@@ -565,7 +601,7 @@ namespace Resonant {
     sf_close(sndf);
 
     Radiant::BinaryData control;
-    control.writeString(std::string(id()) + "/playsample");
+    control.writeString(id() + "/playsample");
 
     control.writeString(filename);
 
@@ -587,6 +623,9 @@ namespace Resonant {
     // Select the target channel for the sample
     control.writeString("targetchannel");
     control.writeInt32(targetChannel);
+
+    control.writeString("time");
+    control.writeTimeStamp(time);
 
     // Finish parameters
     control.writeString("end");
@@ -625,7 +664,7 @@ namespace Resonant {
     for(std::list<SampleInfo>::iterator it = m_sampleList.begin();
     it != m_sampleList.end(); it++) {
       std::shared_ptr<Sample> s(new Sample());
-      if(s->load((*it).m_filename.c_str(), (*it).m_name.c_str()))
+      if(s->load((*it).m_filename.toUtf8().data(), (*it).m_name.toUtf8().data()))
         m_samples.push_back(s);
     }
   }
@@ -637,17 +676,17 @@ namespace Resonant {
         m_samples[i] = s;
         return true;
       }
-      debug("ModuleSamplePlayer::addSample # m_samples[%u] = %p",
+      debugResonant("ModuleSamplePlayer::addSample # m_samples[%u] = %p",
             i, m_samples[i].get());
     }
 
     return false;
   }
 
-  void ModuleSamplePlayer::dropVoice(unsigned i)
+  void ModuleSamplePlayer::dropVoice(size_t i)
   {
     // trace("ModuleSamplePlayer::dropVoice # %d", i);
-    assert((size_t) i < m_active);
+    assert( i < m_active);
     m_active--;
     m_voiceptrs[i]->clear();
     for( ; i < m_active; i++) {

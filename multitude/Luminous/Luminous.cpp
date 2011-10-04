@@ -1,4 +1,4 @@
-/* COPYRIGHT
+ /* COPYRIGHT
  *
  * This file is part of Luminous.
  *
@@ -13,10 +13,13 @@
  *
  */
 
-#include <Luminous/Luminous.hpp>
-#include <Luminous/Image.hpp>
-#include <Luminous/CodecRegistry.hpp>
-#include <Luminous/ImageCodecTGA.hpp>
+#include "Luminous.hpp"
+#include "Image.hpp"
+#include "CodecRegistry.hpp"
+#include "ImageCodecTGA.hpp"
+#include "ImageCodecDDS.hpp"
+#include "ImageCodecQT.hpp"
+#include "ImageCodecSVG.hpp"
 
 
 #if defined(USE_QT45) && !defined(RADIANT_IOS)
@@ -24,16 +27,11 @@
 #include <QImageWriter>
 #include <QImageReader>
 #include <QCoreApplication>
-#else
-#include <Luminous/ImageCodecPNG.hpp>
-#include <Luminous/ImageCodecJPEG.hpp>
-#endif // USE_QT45
-
-#include <Luminous/ImageCodecSVG.hpp>
+#endif
 
 #include <Radiant/Trace.hpp>
 
-#include <string>
+#include <QString>
 #include <sstream>
 
 namespace Luminous
@@ -82,16 +80,16 @@ namespace Luminous
         warn = false;
         versionMsg << "OpenGL 2.0 supported";
       }
-      else if(GLEW_VERSION_1_5) versionMsg << std::string("OpenGL 1.5 supported");
-      else if(GLEW_VERSION_1_4) versionMsg << std::string("OpenGL 1.4 supported");
-      else if(GLEW_VERSION_1_3) versionMsg << std::string("OpenGL 1.3 supported");
-      else if(GLEW_VERSION_1_2) versionMsg << std::string("OpenGL 1.2 supported");
-      else if(GLEW_VERSION_1_1) versionMsg << std::string("OpenGL 1.1 supported");
+      else if(GLEW_VERSION_1_5) versionMsg << "OpenGL 1.5 supported";
+      else if(GLEW_VERSION_1_4) versionMsg << "OpenGL 1.4 supported";
+      else if(GLEW_VERSION_1_3) versionMsg << "OpenGL 1.3 supported";
+      else if(GLEW_VERSION_1_2) versionMsg << "OpenGL 1.2 supported";
+      else if(GLEW_VERSION_1_1) versionMsg << "OpenGL 1.1 supported";
 
       char * glsl = (char *)glGetString(GL_SHADING_LANGUAGE_VERSION);
-      std::string glslMsg = (glsl ? glsl : "GLSL not supported");
+      const char * glslMsg = (glsl ? glsl : "GLSL not supported");
 
-      Radiant::info("%s (%s)", versionMsg.str().c_str(), glslMsg.c_str());
+      Radiant::info("%s (%s)", versionMsg.str().c_str(), glslMsg);
       Radiant::info("%s (%s)", glvendor, glver);
 
       if(warn) {
@@ -118,26 +116,34 @@ namespace Luminous
 
 #ifdef WIN32
     // Make sure Qt plugins are found
-    QCoreApplication::addLibraryPath("C:\\Cornerstone\\bin\\plugins");
+    /// @todo does this work when the SDK is not installed? Where does find the plugins?
+    char* dir = getenv("CORNERSTONE_ROOT");
+    std::string pluginPath;
+    if(dir) {
+      pluginPath = std::string(dir) + std::string("\\bin\\plugins");
+    } else {
+      pluginPath = std::string("..\\lib\\Plugins");
+    }
+    QCoreApplication::addLibraryPath(pluginPath.c_str());
 #endif
 
 #if defined(USE_QT45) && !defined(RADIANT_IOS)
     // Debug output supported image formats
     {
-      Radiant::debug("Qt image support (read):");
+      debugLuminous("Qt image support (read):");
       QList<QByteArray> formats = QImageReader::supportedImageFormats ();
       for(QList<QByteArray>::iterator it = formats.begin(); it != formats.end(); it++) {
         QString format(*it);
-        Radiant::debug("%s", format.toStdString().c_str());
+        debugLuminous("%s", format.toUtf8().data());
       }
     }
 
     {
-      Radiant::debug("Qt image support (write):");
+      debugLuminous("Qt image support (write):");
       QList<QByteArray> formats = QImageWriter::supportedImageFormats ();
       for(QList<QByteArray>::iterator it = formats.begin(); it != formats.end(); it++) {
         QString format(*it);
-        Radiant::debug("%s", format.toStdString().c_str());
+        debugLuminous("%s", format.toUtf8().data());
       }
     }
 
@@ -147,6 +153,8 @@ namespace Luminous
       Image::codecs()->registerCodec(new ImageCodecQT(format.data()));
     }
     Image::codecs()->registerCodec(new ImageCodecQT("jpg"));
+    Image::codecs()->registerCodec(new ImageCodecDDS());
+    Image::codecs()->registerCodec(new ImageCodecSVG());
     Image::codecs()->registerCodec(new ImageCodecSVG());
 #else
     // Register built-in image codecs

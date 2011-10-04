@@ -11,7 +11,7 @@ namespace Luminous
   GLResource::GLResource(RenderContext * context)
     : m_context(context),
       m_deleteOnFrame(0),
-      m_generation(-1)
+      m_generation(0)
   {
     if(!context)
       m_context = RenderContext::getThreadContext();

@@ -49,21 +49,22 @@ DEFINES += POETIC_FLIP_Y
 
 unix: PKGCONFIG += freetype2
 
-LIBS += $$LIB_LUMINOUS $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS
+LIBS += $$LIB_LUMINOUS $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_VALUABLE
 LIBS += $$LIB_OPENGL $$LIB_GLEW
 
 macx:LIBS += -framework,OpenGL
 
 include(../library.pri)
 
+DEFINES += POETIC_EXPORT
+
 win32 {
-	DEFINES += POETIC_EXPORT
 
 	win64 {
-		INCLUDEPATH += ..\Win64x\include\freetype2
-		LIBS += -lfreetype2
+		INCLUDEPATH += ..\\Win64x\\include\\freetype2
+		LIBS += -lfreetype246
 	} else {
-		INCLUDEPATH += ..\Win32x\include\freetype2
-		LIBS += -lfreetype
+		INCLUDEPATH += ..\\Win32x\\include\\freetype2
+		LIBS += -lfreetype246
 	}
 }

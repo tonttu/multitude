@@ -7,10 +7,10 @@
  * See file "Applications/MoviePlayer.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef VIDEO_WINDOW_HPP
@@ -82,7 +82,7 @@ protected:
 
   container m_movies;
 
-  Resonant::DSPNetwork    m_dsp;
+  std::shared_ptr<Resonant::DSPNetwork> m_dsp;
 
   QTimer m_timer;
   Radiant::TimeStamp m_lastActivity;

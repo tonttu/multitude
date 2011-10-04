@@ -7,24 +7,24 @@
  * See file "VideoDisplay.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 
 #ifndef VIDEODISPLAY_VIDEO_IN_FFMPEG_HPP
 #define VIDEODISPLAY_VIDEO_IN_FFMPEG_HPP
 
-#include <VideoDisplay/VideoIn.hpp>
+#include "VideoIn.hpp"
 
 #include <Screenplay/VideoFFMPEG.hpp>
 
 namespace VideoDisplay {
 
   /// Movie file decoder, that uses the Screenplay::VideoInputFFMPEG
-  class VideoInFFMPEG : public VideoIn
+  class VIDEODISPLAY_API VideoInFFMPEG : public VideoIn
   {
   public:
     VideoInFFMPEG();

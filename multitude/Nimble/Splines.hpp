@@ -1,11 +1,26 @@
+/* COPYRIGHT
+ *
+ * This file is part of Nimble.
+ *
+ * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
+ *
+ * See file "Nimble.hpp" for authors and more details.
+ *
+ * This file is licensed under GNU Lesser General Public
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
+ * from the GNU organization (www.gnu.org).
+ * 
+ */
+
 #ifndef NIMBLE_SPLINES_HPP
 #define NIMBLE_SPLINES_HPP
 
-#include <Nimble/Export.hpp>
+#include "Export.hpp"
+#include "Vector2.hpp"
 
 #include <vector>
 
-#include <Nimble/Vector2.hpp>
 namespace Luminous {
   class RenderContext;
 }
@@ -30,6 +45,7 @@ namespace Nimble
     Nimble::Vector2 getDerivative(size_t ii, float t) const;
     /// Evaluates the spline at given t
     /// @param t position where to evaluate the spline. 0 <= t <= size() - 1
+    /// @return Interpolated point on spline
     Nimble::Vector2 get(float t) const;
     /// Adds a control point
     void add(Nimble::Vector2 point);
@@ -37,6 +53,8 @@ namespace Nimble
     void remove(size_t ii);
     /// Returns the number of control points
     size_t size() const { return m_points.size(); }
+    /// Returns the ith control point
+    Nimble::Vector2 getControlPoint(size_t i) const { return m_points[i]; }
 
     /// Clears the interpolation key-points
     void clear();

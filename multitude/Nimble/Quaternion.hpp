@@ -1,3 +1,18 @@
+/* COPYRIGHT
+ *
+ * This file is part of Nimble.
+ *
+ * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
+ *
+ * See file "Nimble.hpp" for authors and more details.
+ *
+ * This file is licensed under GNU Lesser General Public
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
+ * from the GNU organization (www.gnu.org).
+ * 
+ */
+
 #ifndef NIMBLE_QUATERNION_H
 #define NIMBLE_QUATERNION_H
 
@@ -50,14 +65,26 @@ namespace Nimble {
       *this = m;
     }
 
+    /// Normalizes the quaternion to length 1
+    /// @return Reference to self
+    QuaternionT & normalize()
+    {
+      float m = Nimble::Math::InvSqrt(lensq());
+      x *= m;
+      y *= m;
+      z *= m;
+      w *= m;
+      return *this;
+    }
+
     /// Transforms the argument vector this quaternion transformation
     template <typename Y>
     Vector3T<Y> operator*(const Vector3T<Y> & v) const
     {
       // nVidia SDK implementation
       Vector3T<Y> qvec(x, y, z);
-      Vector3T<Y> uv = cross(qvec, v);
-      Vector3T<Y> uuv = cross(qvec, uv);
+      Vector3T<Y> uv = ::cross(qvec, v);
+      Vector3T<Y> uuv = ::cross(qvec, uv);
       uv *= (2.0f * w);
       uuv *= 2.0f;
       return v + uv + uuv;
@@ -85,11 +112,12 @@ namespace Nimble {
     }
     /// Multiply the quaternion components
     /// @param v The multiplier
+    /// @return Reference to self
     QuaternionT & operator*=(T v)
     {
       x *= v; y *= v; z *= v; w *= v; return *this;
     }
-    /// Multiply this quaterion with another, and store the result into this quaternion
+    /// Multiply this quaternion with another, and store the result into this quaternion
     QuaternionT & operator*=(const QuaternionT & v)
     {
       T nx = y*v.z-z*v.y+w*v.x+x*v.w;
@@ -145,11 +173,12 @@ namespace Nimble {
     }
 
     /// The squared length of this quaterion
-    /** This function returns x*x+y*y+z*z+w*w. */
-    T lensq(void) const
+    /// @return x*x+y*y+z*z+w*w
+    T lensq() const
     {
       return(x*x+y*y+z*z+w*w);
     }
+
     /// Returns dot product between this quatertion and the argument quaternion
     T dotp(const QuaternionT & v) const
     {
@@ -315,6 +344,7 @@ namespace Nimble {
     /// Create a new quaternion based on rotation around an axis
     /// @param angle The rotation angle, in radians
     /// @param axis The axis, around which the rotation is performed
+    /// @return New quaternion
     static QuaternionT rotation(T angle, Vector3T<T> axis)
     {
       angle *= 0.5;
@@ -337,4 +367,10 @@ namespace Nimble {
   /// Default (float) quaternion type
   typedef QuaternionT<float> Quaternion;
 }
+
+#ifdef __GCCXML__
+/// This is exported to JS
+template class Nimble::QuaternionT<float>;
+#endif
+
 #endif

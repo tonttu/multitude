@@ -24,10 +24,71 @@
 
 #include <Patterns/NotCopyable.hpp>
 
+#include <Valuable/Node.hpp>
+
 namespace Luminous
 {
   class PixelFormat;
   class Image;
+  class CompressedImage;
+
+  /// UploadLimiter manages GPU upload limits for each RenderThread per frame.
+  /// These limits should be obeyed when loading data to GPU with glTexImage2D
+  /// or similar command. All classes in Luminous follow this limit automatically.
+  ///
+  /// Simple example:
+  /// @code
+  /// long & limit = UploadLimiter::available();
+  /// if(limit >= bytesToUpload) {
+  ///   glTexImage2D(...);
+  ///   limit -= bytesToUpload;
+  /// } /* else wait for the next frame */
+  /// @endcode
+  class LUMINOUS_API UploadLimiter : public Valuable::Node
+  {
+  public:
+    /// Accepts "frame" event, resets all limits for a new frame.
+    void processMessage(const char * type, Radiant::BinaryData & data);
+
+    /// Get the singleton instance. Usually not used, since all the important
+    /// functions are already static.
+    /// @return an instance of UploadLimiter
+    static UploadLimiter & instance();
+
+    /// Returns a reference to the thread-specific remaining upload capacity in
+    /// bytes. Use this to check if some GPU transfer operation should be
+    /// performed right away, delayed to the next frame or splitted to smaller
+    /// pieces.
+    /// After doing any upload operation, decrease this value accordingly.
+    /// @returns How many bytes there are available for uploading in this frame.
+    static long & available();
+
+    /// Returns the current frame number.
+    static long frame();
+
+    /// Ask the frame upload limit.
+    /// @return The frame upload limit in bytes.
+    static long limit();
+
+    /// Sets the upload limit
+    /// @param limit New upload limit in bytes.
+    static void setLimit(long limit);
+
+    /// Enable or disable the upload limiter. available() will always return
+    /// numeric_limits<long>::max() if limiter is disabled.
+    /// @param v True if limiter should be enabled
+    static void setEnabledForCurrentThread(bool v);
+
+    /// Ask the limiter status
+    /// @returns True if limiter is active for this thread.
+    static bool enabledForCurrentThread();
+
+  private:
+    UploadLimiter();
+    int m_frame;
+    long m_frameLimit;
+    bool m_inited;
+  };
 
   /// Base class for different textures
   /** Texture objects can be created without a valid OpenGL context, but their actual
@@ -44,13 +105,11 @@ namespace Luminous
       m_textureId(0),
       m_width(0),
       m_height(0),
-      m_pf(PixelFormat::LAYOUT_UNKNOWN, PixelFormat::TYPE_UNKNOWN),
-      m_haveMipmaps(false)
+      m_internalFormat(0),
+      m_haveMipmaps(false),
+      m_consumed(0)
     {}
     virtual ~TextureT();
-
-    /// Allocates the texture object. Does not allocate memory for the texture data.
-    void allocate();
 
     /** Activate textureUnit and bind this texture to that unit.
     @param textureUnit texture unit to bind to*/
@@ -82,45 +141,54 @@ namespace Luminous
     @param h texture height */
     void setHeight(int h) { m_height = h; }
 
-    /// Returns the number of pixels in this texture.
-    /** Note that the one might have initialized the texture without setting
-        width and height, so this information may be unreliable. As a programmer
-        you would know if the values have been set properly. */
+    /// Get the number of pixels in the texture.
+    /// Computes the area of the texture in pixels
+    /// @return the number of pixels in the texture
     int pixelCount() const { return m_width * m_height; }
 
-    /** Returns the aspect ratio of this texture. This operation makes
-      sense mostly for 2D tetures.  */
-    float aspectRatio()
-    { return m_height ? m_width / (float) m_height : 1.0f; }
-
     /// Returns estimation of much GPU RAM the texture uses.
+    /// @return estimated number of bytes
     virtual long consumesBytes()
     {
-      float used = float(m_width) * m_height * m_pf.bytesPerPixel();
-      // Mipmaps used 33% more memory
-      used *= (m_haveMipmaps ? (4.f / 3.f) : 1.f);
-      return (long)used;
+      /// @todo how about compressed formats with mipmaps, does the 4/3 rule apply here as well?
+      if(m_consumed > 0) return (long)m_consumed;
+
+      return (long)estimateMemoryUse();
     }
 
-    /** Returns the OpenGL texture id. */
-    GLuint id() const { return m_textureId; };
+    /// Get the OpenGL texture id
+    /// @return the OpenGL texture id
+    GLuint id() const { return m_textureId; }
     /// Returns true if the texture is defined
+    /// @return true if the texture object has been defined
     bool isDefined() const { return id() != 0; }
 
-    /// Returns the pixel format used by the texture
-    const PixelFormat & pixelFormat() const { return m_pf; }
+    /// Get the internal format of the texture
+    /// @return internal OpenGL texture format
+    GLenum internalFormat() const { return m_internalFormat; }
+
+    bool haveMipmaps() const { return m_haveMipmaps; }
 
   protected:
+    size_t estimateMemoryUse() const;
+
     /// OpenGL texture handle
     GLuint m_textureId;
     /// Width of the texture
     int m_width;
     /// Height of the texture
     int m_height;
-    /// Pixel format of the texture
-    PixelFormat m_pf;
+    /// The internal texture format
+    GLenum m_internalFormat;
     /// Does the texture have mipmaps
     bool m_haveMipmaps;
+    /// The actual consumed size on GPU, if good enough estimate is known
+    /// If this is zero, the size is guessed from internalFormat and size
+    int m_consumed;
+
+  private:
+    /// Allocates the texture object. Does not allocate memory for the texture data.
+    void allocate();
   };
 
 #ifndef LUMINOUS_OPENGLES
@@ -155,23 +223,35 @@ namespace Luminous
   public:
     /// Constructs a 2D texture and adds it to the given resource collection
     Texture2D(RenderContext * context = 0) :
-        TextureT<GL_TEXTURE_2D>(context), m_loadedLines(0) {}
+        TextureT<GL_TEXTURE_2D>(context), m_uploadedLines(0) {}
+
+    /// Get the aspect ratio of the texture
+    /// Returns the aspect ratio of this texture, ie. the ratio of width to height
+    /// @return the aspect ratio
+    float aspectRatio() const { return m_width / (float) m_height; }
 
     /// Load the texture from an image file
     bool loadImage(const char * filename, bool buildMipmaps = true);
     /// Load the texture from an image
-    bool loadImage(const Luminous::Image & image, bool buildMipmaps = true);
+    /// @param image image to generate the texture from
+    /// @param buildMipmaps if true, generate mipmaps automatically
+    /// @param internalFormat specify the internal OpenGL texture format. If
+    /// zero, set the format automatically
+    /// @return true on success
+    bool loadImage(const Luminous::Image & image, bool buildMipmaps = true, int internalFormat = 0);
+    /// Load the texture from a compressed image
+    /// @param image compressed image to load from
+    /// @return true on success
+    bool loadImage(const Luminous::CompressedImage & image);
 
-    /// Load the texture from from raw data, provided by the user
+    /// Load the texture from raw data, provided by the user
     bool loadBytes(GLenum internalFormat, int w, int h,
                    const void* data,
                    const PixelFormat& srcFormat,
                    bool buildMipmaps = true);
-    /// Load a sub-texture.
-    void loadSubBytes(int x, int y, int w, int h, const void * subData);
 
-    /// Load some lines to the texture:
-    void loadLines(int y, int h, const void * data, const PixelFormat& srcFormat);
+    /// Load a sub-texture.
+    void loadSubBytes(int x, int y, int w, int h, const void * subData, const PixelFormat & srcFormat);
 
     /// Create a new texture, from an image file
     static Texture2D * fromFile(const char * filename, bool buildMipmaps = true, RenderContext * context = 0);
@@ -184,9 +264,26 @@ namespace Luminous
                 bool buildMipmaps = true, RenderContext * context = 0);
     /// Returns the number of scan-lines that have been loaded into the GPU
     /** This function is mostly useful if one is using progressive image loading. */
-    inline unsigned loadedLines() const { return m_loadedLines; }
+    inline unsigned loadedLines() const { return m_uploadedLines; }
+
+    /// Do progressive texture upload
+    /// Continues uploading lines to texture memory using previously uploaded
+    /// lines as offset. The function checks the currently available bandwidth and
+    /// uploads data within that limit. If the texture size exceeds the available
+    /// bandwidth, only part of it that fits within the bandwidth limit is
+    /// uploaded. This function should be called once per frame until it returns
+    /// true indicating that the texture has been fully uploaded.
+    /// @param resources OpenGL resource collection
+    /// @param textureUnit OpenGL texture unit where the texture will be bound as a side effect of calling this function
+    /// @return true if the texture data was fully uploaded, false otherwise
+    bool progressiveUpload(Luminous::RenderContext * resources, GLenum textureUnit, const Image & srcImage);
+
   private:
-    unsigned m_loadedLines;
+    /// Number of lines that have been uploaded to GPU. Used to track progressive uploads.
+    /// @sa progressiveUpload
+    size_t m_uploadedLines;
+
+    friend class ImageTex;
   };
 
 #ifndef LUMINOUS_OPENGLES
@@ -196,7 +293,20 @@ namespace Luminous
   {
   public:
     /// Constructs a 3D texture and adds it to the given resource collection
-    Texture3D(RenderContext * context = 0) : TextureT<GL_TEXTURE_3D> (context) {}
+    /// @param resources resource collection to own this texture
+    Texture3D(RenderContext * resources = 0)
+      : TextureT<GL_TEXTURE_3D> (resources),
+      m_depth(0)
+    {}
+
+    /// Set the depth of the 3D texture (ie. the z dimension)
+    /// @param d new depth
+    void setDepth(int d) { m_depth = d; }
+    /// Get the depth of the 3D texture
+    /// @return depth of the texture
+    int depth() const { return m_depth; }
+  private:
+    int m_depth;
   };
 
   /// A cubemap texture

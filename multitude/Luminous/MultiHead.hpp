@@ -1,33 +1,22 @@
 /* COPYRIGHT
- *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
  */
 
 
 #ifndef LUMINOUS_MULTIHEAD_HPP
 #define LUMINOUS_MULTIHEAD_HPP
 
-#include <Luminous/Collectable.hpp>
-#include <Luminous/Export.hpp>
-#include <Luminous/GLKeyStone.hpp>
+#include "Export.hpp"
+#include "Collectable.hpp"
+#include "GLKeyStone.hpp"
 
 #include <Nimble/Rect.hpp>
 #include <Nimble/Vector4.hpp>
 
 #include <Radiant/RefPtr.hpp>
 
-#include <Valuable/ValueString.hpp>
-#include <Valuable/ValueFloat.hpp>
+#include <Valuable/AttributeString.hpp>
+#include <Valuable/AttributeFloat.hpp>
+#include <Valuable/AttributeBool.hpp>
 
 #include <vector>
 
@@ -47,7 +36,7 @@ namespace Luminous {
       once. MultiHead also includes keystone information, so that
       keystoning can be done by using skewed OpenGL transformation
       matrices. */
-  class MultiHead : public Valuable::HasValues
+  class LUMINOUS_API MultiHead : public Valuable::Node
   {
   public:
 
@@ -58,15 +47,16 @@ namespace Luminous {
     areas can share the same OpenGL context, as one window can
     have may areas inside it.*/
     /// @todo rename to ViewPort?
-    class Area : public Valuable::HasValues,
+    class LUMINOUS_API Area : public Valuable::Node,
     public Collectable
     {
+      MEMCHECKED_USING(Collectable);
     public:
       /// Constructs a new area for the given window
-      LUMINOUS_API Area(Window * window = 0);
-      LUMINOUS_API virtual ~Area();
+      Area(Window * window = 0);
+      virtual ~Area();
       /// Deserializes this area from an archive element
-      LUMINOUS_API bool deserialize(Valuable::ArchiveElement & element);
+      bool deserialize(const Valuable::ArchiveElement & element);
 
       /// Sets the geometry (size & offset) of the area
       /// @param x x offset
@@ -112,12 +102,13 @@ namespace Luminous {
       /// Applies an orthogonal projection to OpenGL defined by the graphics geometry of the area
       LUMINOUS_API void applyViewportAndTransform(Luminous::RenderContext &) const;
       /// Blends the edges defined by seams
-      LUMINOUS_API void cleanEdges() const;
+      void cleanEdges() const;
 
       /// Returns the type name for areas (="area").
       virtual const char * type() const { return "area"; }
 
       /// Returns the keystone correction
+      /// @return keystone correction
       GLKeyStone & keyStone() { return m_keyStone; }
       /// @copydoc keyStone
       const GLKeyStone & keyStone() const { return m_keyStone; }
@@ -151,12 +142,13 @@ namespace Luminous {
             m_graphicsSize.asVector();
       }
 
-      /// The bounds of the graphics
-      /** In principle this method only combines the information you
-          get with graphicsLocation() and graphicsSize(). In practice
-          how-ever that information is not exactly correct as the
-          bounds also need to include the small extra areas, if one is
-          using edge-blending. */
+      /** The bounds of the graphics.
+
+          In principle this method only combines the information you get with
+          graphicsLocation() and graphicsSize(). In practice however that
+          information is not exactly correct as the bounds also need to include
+          the small extra areas, if edge-blending is used.
+          @return graphics bounds rectangle*/
       const Rect & graphicsBounds() const
       { return m_graphicsBounds; }
 
@@ -168,10 +160,10 @@ namespace Luminous {
           false.
           @return The vector in graphics coordinates.
       */
-      LUMINOUS_API Nimble::Vector2f windowToGraphics(Nimble::Vector2f loc, int windowheight, bool & insideArea) const;
+      Nimble::Vector2f windowToGraphics(Nimble::Vector2f loc, int windowheight, bool & insideArea) const;
 
       /// Returns true if the area is active (graphics will be drawn to it)
-      int active() const { return m_active.asInt(); }
+      bool active() const { return m_active; }
 
       /// Sets the width of a single pixel in centimeters
       void setPixelSizeCm(float sizeCm) { m_pixelSizeCm = sizeCm; }
@@ -190,6 +182,9 @@ namespace Luminous {
         updateBBox();
       }
 
+      /// Returns a pointer to the window that holds this area
+      const Window * window() const { return m_window; }
+
     private:
 
       enum {
@@ -201,25 +196,25 @@ namespace Luminous {
         METHOD_MATRIX_TRICK
       };
 
-      LUMINOUS_API void updateBBox();
+      void updateBBox();
 
       Window * m_window;
       GLKeyStone m_keyStone;
-      Valuable::ValueVector2i   m_location;
-      Valuable::ValueVector2i   m_size;
-      Valuable::ValueVector2f   m_graphicsLocation;
-      Valuable::ValueVector2f   m_graphicsSize;
-      Valuable::ValueVector4f   m_seams;
-      Valuable::ValueInt        m_active;
-      Valuable::ValueInt        m_method;
-      Valuable::ValueString m_comment;
+      Valuable::AttributeVector2i   m_location;
+      Valuable::AttributeVector2i   m_size;
+      Valuable::AttributeVector2f   m_graphicsLocation;
+      Valuable::AttributeVector2f   m_graphicsSize;
+      Valuable::AttributeVector4f   m_seams;
+      Valuable::AttributeBool        m_active;
+      Valuable::AttributeInt        m_method;
+      Valuable::AttributeString m_comment;
       Rect m_graphicsBounds;
       float      m_pixelSizeCm;
     };
 
     /** One OpenGL window.
     A window is responsible for one OpenGL context.*/
-    class Window : public Valuable::HasValues
+    class Window : public Valuable::Node
     {
     public:
       friend class Area;
@@ -236,6 +231,9 @@ namespace Luminous {
         m_location = Nimble::Vector2i(x, y);
         m_size = Nimble::Vector2i(w, h);
       }
+
+      /// Sets the size of this Window
+      void setSize(const Nimble::Vector2i newSize) { m_size = newSize; }
 
       /// Resize the window, and automatically one child area
       /** This method is used when the window contains only one child
@@ -265,6 +263,13 @@ namespace Luminous {
       /// Size of the window on the computer display
       const Vector2i & size() const { return m_size.asVector(); }
 
+      /// Returns the width of this window in pixels
+      /// @return width of the window
+      int width() const { return m_size.x(); }
+      /// Returns the height of this window in pixels
+      /// @return height of the window
+      int height() const { return m_size.y(); }
+
       /** Convert a coordinate from screen to graphics coordinates.
           This class traverses through all the areas to find an area
           that would include given location. It is entirely possible
@@ -275,17 +280,19 @@ namespace Luminous {
 
           @param convOk set to true or false depending on whether the
           conversion could be carried out.
+
+          @return the point in graphics coordinates
       */
       LUMINOUS_API Nimble::Vector2f windowToGraphics(Nimble::Vector2f loc, bool & convOk) const;
 
       /// Should the window be frameless
-      bool frameless() const { return ((m_frameless.asInt() == 0) ? false : true); }
+      bool frameless() const { return m_frameless; }
       /// Should the window be full-screen
-      bool fullscreen() const { return ((m_fullscreen.asInt() == 0) ? false : true); }
+      bool fullscreen() const { return m_fullscreen; }
       /// Sets the fullscreen flag
       void setFullscreen(bool f) { m_fullscreen = f; }
       /// Should the window be resizeable
-      bool resizeable() const { return ((m_resizeable.asInt() == 0) ? false : true); }
+      bool resizeable() const { return m_resizeable; }
 
       /// X11 display number for threaded rendering, -1 if not specified
       int displaynumber() const { return m_displaynumber.asInt(); }
@@ -299,60 +306,64 @@ namespace Luminous {
       /// Sets the width of a pixel in centimeters to each area inside this window
       LUMINOUS_API void setPixelSizeCm(float sizeCm);
 
+      /// Return the screen configuration that this Window belongs to
+      const MultiHead * screen() const { return m_screen; }
+
     private:
       LUMINOUS_API virtual bool readElement(Valuable::DOMElement ce);
 
       MultiHead                *m_screen;
-      Valuable::ValueVector2i   m_location;
-      Valuable::ValueVector2i   m_size;
-      Valuable::ValueInt        m_frameless;
-      Valuable::ValueInt        m_fullscreen;
-      Valuable::ValueInt        m_resizeable;
-      Valuable::ValueInt        m_displaynumber; // for X11
-      Valuable::ValueInt        m_screennumber; // for X11
+      Valuable::AttributeVector2i   m_location;
+      Valuable::AttributeVector2i   m_size;
+      Valuable::AttributeBool       m_frameless;
+      Valuable::AttributeBool       m_fullscreen;
+      Valuable::AttributeBool       m_resizeable;
+      Valuable::AttributeInt        m_displaynumber; // for X11
+      Valuable::AttributeInt        m_screennumber; // for X11
       /// Pixel size in centimeters
       float      m_pixelSizeCm;
 
       std::vector<std::shared_ptr<Area> > m_areas;
     };
 
-    LUMINOUS_API MultiHead();
-    LUMINOUS_API virtual ~MultiHead();
+    MultiHead();
+    virtual ~MultiHead();
 
     /// The number of areas
-    LUMINOUS_API size_t areaCount();
+    size_t areaCount();
     /// Access the areas
     /** This method traverses all the windows to find the area with
     given index.
     @param index window index to look for
     @param winptr pointer to a window if the area is found
     @return area with the given index or the first area if no match is found */
-    LUMINOUS_API Area & area(size_t index, Window ** winptr = 0);
+    Area & area(size_t index, Window ** winptr = 0);
 
     /// Returns the number of windows
     size_t windowCount() const { return m_windows.size(); }
     /// Access the ith window
     /// @param i window index
-    LUMINOUS_API Window & window(size_t i);
+    /// @return the window
+    Window & window(size_t i);
     /// @copydoc window
-    LUMINOUS_API const Window & window(size_t i) const;
+    const Window & window(size_t i) const;
 
     /// Total size of all the windows
-    LUMINOUS_API Nimble::Vector2i totalSize();
+    Nimble::Vector2i totalSize();
 
     /// Returns the total graphics size
-    LUMINOUS_API Rect graphicsBounds() const;
+    Rect graphicsBounds() const;
 
     /// Returns the size of the total display in graphics pixels
     Nimble::Vector2i size()
     { return Nimble::Vector2i(width(), height()); }
 
     /// Total width of the display area, in graphics pixels.
-    LUMINOUS_API int width();
+    int width();
     /// Total height of the display area, in graphics pixels.
-    LUMINOUS_API int height();
+    int height();
 
-    LUMINOUS_API bool deserialize(Valuable::ArchiveElement & element);
+    bool deserialize(const Valuable::ArchiveElement & element);
 
     /// Adds a window to the collection
     void addWindow(Window * w) { m_windows.push_back(std::shared_ptr<Window>(w)); }
@@ -362,15 +373,26 @@ namespace Luminous {
     /// Returns true if the edited flag has been set
     bool isEdited() const { return m_edited; }
 
+    /// Sets the iconify flag
+    void setIconify(bool iconify) { m_iconify = iconify; }
+    /// Returns true if the iconify flag has been set
+    bool iconify() const { return m_iconify; }
+
     /// Returns the gamma value used for edge blending with projector setups.
     float gamma() const { return m_gamma; }
 
+    /// @todo This should be in configuration file, and the accessor probably
+    ///       shouldn't be static. Maybe this class could be singletonish?
+    /// 96 is the static value used in CSS 2.1
+    static float dpi() { return 96.0f; }
+
   private:
-    LUMINOUS_API virtual bool readElement(Valuable::DOMElement ce);
+    virtual bool readElement(Valuable::DOMElement ce);
 
     std::vector<std::shared_ptr<Window> > m_windows;
-    Valuable::ValueFloat m_widthcm;
-    Valuable::ValueFloat m_gamma;
+    Valuable::AttributeFloat m_widthcm;
+    Valuable::AttributeFloat m_gamma;
+    Valuable::AttributeBool m_iconify;
     bool m_edited;
   };
 

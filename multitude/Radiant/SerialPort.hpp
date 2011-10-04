@@ -21,11 +21,12 @@
 #include <stdint.h>
 
 #ifdef WIN32
+# define NOMINMAX
 # define WIN32_LEAN_AND_MEAN
 # include <windows.h>
 #endif
 
-#include <string>
+#include <QString>
 
 namespace Radiant
 {
@@ -52,6 +53,7 @@ namespace Radiant
       @param bits The number of data bits
       @param waitBytes The number of bytes to read before returning
       @param waitTimeUS Time to wait in microseconds
+      @return true on success
       */
     bool open(const char * device, 
 	      bool stopBit, 
@@ -64,22 +66,26 @@ namespace Radiant
     bool close();
 
     /// Write bytes to the port
-    /** This method returns the number of bytes written. */
+    /// @param buf buffer to write from
+    /// @param bytes bytes to write
+    /// @return number of bytes written
     int write(const void * buf, int bytes);
     /// Writes a byte to the port
     int writeByte(uint8_t byte);
     /// Read bytes from the port
-    /** This method returns the number of bytes read. */
+    /// @param[out] buf output buffer
+    /// @param bytes max bytes to read
+    /// @return number of bytes read
     int read(void * buf, int bytes);
 
     /// Checks if the port is open
     bool isOpen() const;
     /// Returns the name of the device
-    const std::string & deviceName() { return m_device; }
+    const QString & deviceName() { return m_device; }
 
   private:
   
-    std::string m_device;
+    QString m_device;
 
 #ifdef WIN32
     HANDLE  m_hPort;

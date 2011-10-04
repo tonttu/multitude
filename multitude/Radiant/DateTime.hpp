@@ -7,17 +7,17 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef RADIANT_DATETIME_HPP
 #define RADIANT_DATETIME_HPP
 
-#include <Radiant/Export.hpp>
-#include <Radiant/TimeStamp.hpp>
+#include "Export.hpp"
+#include "TimeStamp.hpp"
 
 namespace Radiant {
 
@@ -54,9 +54,9 @@ namespace Radiant {
     int minute() const { return m_minute; }
     /// Seconds since last full minute (0-59)
     int second() const { return m_second; }
-    /// Milliseconds since last full minute (0-59)
+    /// Milliseconds since last full second (0-999)
     int milliSecond() const { return m_microsecond / 1000; }
-    /// Microseconds since last full minute (0-59)
+    /// Microseconds since last full second (0-999999)
     int microSecond() const { return m_microsecond; }
     /// Reset the hour, minute and second values to zero
     void clearTime();
@@ -83,11 +83,14 @@ namespace Radiant {
     /// Advance time to next day of the month
     void toNextMonthDay();
     /// Read time and date from a string
-    bool fromString(const std::string & s, DateFormat format = DATE_ISO);
+    bool fromString(const QString & s, DateFormat format = DATE_ISO);
 
     /** Returns the number of days in the month. This function does
     take the leap years into account, so the length of Febuary changes
     between 28 and 29 days, depending on the year.
+    @param month month [0-11]
+    @param year year number
+    @return number of days in the month
 
     @todo Make the leap-year calculations take the longer cycles
     into account.
@@ -95,13 +98,17 @@ namespace Radiant {
     static int daysInMonth(int month, int year);
 
     /** Returns the number of days in the current month. This method
-    takes the leap-years into account. */
+    takes the leap-years into account.
+    @return number of days in the month*/
     int daysInMonth();
 
     /// Return the date and time as a TimeStamp
+    /// @return the date as time-stamp
     TimeStamp asTimeStamp() const;
 
-    /** Prints the date-time information to a string. */
+    /// Print the date-time information to a string.
+    /// @param[out] buf buffer to write to
+    /// @param isotime use ISO time format
     void print(char * buf, bool isotime = false);
 
   private:

@@ -1,6 +1,21 @@
+/* COPYRIGHT
+ *
+ * This file is part of Radiant.
+ *
+ * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
+ *
+ * See file "Radiant.hpp" for authors and more details.
+ *
+ * This file is licensed under GNU Lesser General Public
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
+ * from the GNU organization (www.gnu.org).
+ * 
+ */
+
 #include "CameraDriver.hpp"
-#include "Platform.hpp"
-#include "Trace.hpp"
+#include "Mutex.hpp"
+#include "Radiant.hpp"
 
 #ifdef RADIANT_IOS
 # undef CAMERA_DRIVER_1394
@@ -18,6 +33,7 @@
 #	include <Radiant/VideoCamera1394.hpp>
 #endif
 
+#include <Radiant/Trace.hpp>
 
 namespace Radiant
 {
@@ -37,7 +53,7 @@ namespace Radiant
       delete it->second;
   }
 
-  VideoCamera * CameraDriverFactory::createCamera(const std::string & driverName)
+  VideoCamera * CameraDriverFactory::createCamera(const QString & driverName)
   {
     CameraDriver * driver = getCameraDriver(driverName);
     if(driver)
@@ -54,13 +70,13 @@ namespace Radiant
     return 0;
   }
 
-  CameraDriver * CameraDriverFactory::getCameraDriver(const std::string & driverName)
+  CameraDriver * CameraDriverFactory::getCameraDriver(const QString & driverName)
   {
     // If the user has not registered any drivers, we register the defaults here once
-    static bool once = true;
-    if(once && m_drivers.empty()) {
+    MULTI_ONCE_BEGIN
+    assert(m_drivers.empty());
 #ifdef CAMERA_DRIVER_CMU
-      registerDriver(new CameraDriverCMU());
+    registerDriver(new CameraDriverCMU());
 #endif
 
 #ifdef CAMERA_DRIVER_PGR
@@ -68,10 +84,9 @@ namespace Radiant
 #endif
 
 #ifdef CAMERA_DRIVER_1394
-      registerDriver(new CameraDriver1394());
+    registerDriver(new CameraDriver1394());
 #endif
-      once = false;
-    }
+    MULTI_ONCE_END
 
     DriverMap::iterator it = m_drivers.find(driverName);
     if(it != m_drivers.end())
@@ -93,12 +108,12 @@ namespace Radiant
 
     std::vector<VideoCamera::CameraInfo> cameras;
 
-    for(StringUtils::StringList::iterator it = m_preferredDrivers.begin(); it != m_preferredDrivers.end(); it++) {
+    foreach(QString str, m_preferredDrivers) {
 
-      CameraDriver * cd = getCameraDriver((*it));
+      CameraDriver * cd = getCameraDriver(str);
 
-      debug("CameraDriverFactory::getPreferredCameraDriver # Checking driver %s = %p",
-            (*it).c_str(), cd);
+      debugRadiant("CameraDriverFactory::getPreferredCameraDriver # Checking driver %s = %p",
+          str.toUtf8().data(), cd);
       if(cd) {
         // Make sure there is at least one camera available using this driver
           size_t cameraCount = cd->queryCameras(cameras);
@@ -116,10 +131,9 @@ namespace Radiant
     m_drivers.insert(std::make_pair(driver->driverName(), driver));
   }
 
-  void CameraDriverFactory::setDriverPreference(const std::string & pref)
+  void CameraDriverFactory::setDriverPreference(const QString & pref)
   {
-    m_preferredDrivers.clear();
-    StringUtils::split(pref, ",", m_preferredDrivers, true);
+    m_preferredDrivers = pref.split(",", QString::SkipEmptyParts);
   }
 
 }

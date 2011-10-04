@@ -73,7 +73,11 @@ function InstantiateFunction(data, name) {
       if (name) %FunctionSetName(fun, name);
       cache[serialNumber] = fun;
       var prototype = %GetTemplateField(data, kApiPrototypeTemplateOffset);
+      var flags = %GetTemplateField(data, kApiFlagOffset);
       fun.prototype = prototype ? Instantiate(prototype) : {};
+      if (flags & (1 << kReadOnlyPrototypeBit)) {
+        %FunctionSetReadOnlyPrototype(fun);
+      }
       %SetProperty(fun.prototype, "constructor", fun, DONT_ENUM);
       var parent = %GetTemplateField(data, kApiParentTemplateOffset);
       if (parent) {

@@ -1,11 +1,14 @@
+/* COPYRIGHT
+ */
+
 #include "Shader.hpp"
 #include "Utils.hpp"
 
 #include <Radiant/FileUtils.hpp>
 
-#include <Valuable/ValueInt.hpp>
-#include <Valuable/ValueFloat.hpp>
-#include <Valuable/ValueVector.hpp>
+#include <Valuable/AttributeInt.hpp>
+#include <Valuable/AttributeFloat.hpp>
+#include <Valuable/AttributeVector.hpp>
 
 #include <typeinfo>
 #include <vector>
@@ -33,7 +36,7 @@ namespace Luminous {
       if(v.m_param == -1) {\
         int tmp = glslprog->glslfunc(((type*)v.m_obj)->name()); \
         if(tmp < 0) { \
-          error("Could not find location for %s", ((type*)v.m_obj)->name().c_str()); \
+          error("Could not find location for %s", ((type*)v.m_obj)->name().toUtf8().data()); \
           v.m_param = -2; \
           continue; \
         } \
@@ -41,7 +44,7 @@ namespace Luminous {
           v.m_param = tmp; \
         }\
       }\
-      func(v.m_param, ((const type *) v.m_obj)->data()); \
+      func(v.m_param, *((const type *) v.m_obj)); \
     } \
   }
 
@@ -54,7 +57,7 @@ namespace Luminous {
       if(v.m_param == -1) {\
         int tmp = glslprog->glslfunc(((type*)v.m_obj)->name()); \
         if(tmp < 0) { \
-          error("Could not find location for %s", ((type*)v.m_obj)->name().c_str()); \
+          error("Could not find location for %s", ((type*)v.m_obj)->name().toUtf8().data()); \
           v.m_param = -2; \
           continue; \
         } \
@@ -81,26 +84,26 @@ namespace Luminous {
 
     Params() {}
 
-    void add(const Valuable::ValueObject * obj)
+    void add(const Valuable::Attribute * obj)
     {
-      SHADER_PARAM_CHECK(obj, ValueInt,   m_i1);
-      SHADER_PARAM_CHECK(obj, ValueFloat, m_f1);
-      SHADER_PARAM_CHECK(obj, ValueVector2f, m_vec2f);
-      SHADER_PARAM_CHECK(obj, ValueVector3f, m_vec3f);
-      SHADER_PARAM_CHECK(obj, ValueVector4f, m_vec4f);
+      SHADER_PARAM_CHECK(obj, AttributeInt,   m_i1);
+      SHADER_PARAM_CHECK(obj, AttributeFloat, m_f1);
+      SHADER_PARAM_CHECK(obj, AttributeVector2f, m_vec2f);
+      SHADER_PARAM_CHECK(obj, AttributeVector3f, m_vec3f);
+      SHADER_PARAM_CHECK(obj, AttributeVector4f, m_vec4f);
 
       error("When adding shader parameter %s, type %s not supported",
-            obj->name().c_str(), typeid(*obj).name());
+            obj->name().toUtf8().data(), typeid(*obj).name());
     }
 
 
     void applyUniforms(GLSLProgramObject * glslprog)
     {
-      SHADER_PARAM_APPLY1(m_i1, ValueInt, glUniform1i, glslprog, getUniformLoc);
-      SHADER_PARAM_APPLY1(m_f1, ValueFloat, glUniform1f, glslprog, getUniformLoc);
-      SHADER_PARAM_APPLYN(m_vec2f, ValueVector2f, glUniform2fv, glslprog, getUniformLoc);
-      SHADER_PARAM_APPLYN(m_vec3f, ValueVector3f, glUniform3fv, glslprog, getUniformLoc);
-      SHADER_PARAM_APPLYN(m_vec4f, ValueVector4f, glUniform4fv, glslprog, getUniformLoc);
+      SHADER_PARAM_APPLY1(m_i1, AttributeInt, glUniform1i, glslprog, getUniformLoc);
+      SHADER_PARAM_APPLY1(m_f1, AttributeFloat, glUniform1f, glslprog, getUniformLoc);
+      SHADER_PARAM_APPLYN(m_vec2f, AttributeVector2f, glUniform2fv, glslprog, getUniformLoc);
+      SHADER_PARAM_APPLYN(m_vec3f, AttributeVector3f, glUniform3fv, glslprog, getUniformLoc);
+      SHADER_PARAM_APPLYN(m_vec4f, AttributeVector4f, glUniform4fv, glslprog, getUniformLoc);
     }
 
   private:
@@ -120,11 +123,11 @@ namespace Luminous {
     Params m_uniforms;
     Params m_varyings;
 
-    std::string m_fragmentShader;
-    std::string m_vertexShader;
-    std::string m_geometryShader;
+    QString m_fragmentShader;
+    QString m_vertexShader;
+    QString m_geometryShader;
 
-    int m_generation;
+    size_t m_generation;
   };
 
 
@@ -132,8 +135,8 @@ namespace Luminous {
       : m_self(new Self)
   {}
 
-  Shader::Shader(Valuable::HasValues * parent, const char * name)
-      : Valuable::HasValues(parent, name, true),
+  Shader::Shader(Valuable::Node * host, const char * name)
+      : Valuable::Node(host, name, true),
       m_self(new Self)
   {}
 
@@ -150,13 +153,12 @@ namespace Luminous {
 
   bool Shader::loadFragmentShader(const char * filename)
   {
-    char * str = Radiant::FileUtils::loadTextFile(filename);
+    const QByteArray str = Radiant::FileUtils::loadTextFile(filename);
 
-    if(!str)
+    if(str.isNull())
       return false;
 
     setFragmentShader(str);
-    delete [] str;
 
     return true;
   }
@@ -169,13 +171,12 @@ namespace Luminous {
 
   bool Shader::loadVertexShader(const char * filename)
   {
-    char * str = Radiant::FileUtils::loadTextFile(filename);
+    const QByteArray str = Radiant::FileUtils::loadTextFile(filename);
 
-    if(!str)
+    if(str.isNull())
       return false;
 
-    setVertexShader(str);
-    delete [] str;
+    setVertexShader(str.data());
 
     return true;
   }
@@ -188,24 +189,23 @@ namespace Luminous {
 
   bool Shader::loadGeometryShader(const char * filename)
   {
-    char * str = Radiant::FileUtils::loadTextFile(filename);
+    const QByteArray str = Radiant::FileUtils::loadTextFile(filename);
 
-    if(!str)
+    if(str.isNull())
       return false;
 
-    setGeometryShader(str);
-    delete [] str;
+    setGeometryShader(str.data());
 
     return true;
   }
 
   /*
-  void Shader::addShaderAttribute(const Valuable::ValueObject * obj)
+  void Shader::addShaderAttribute(const Valuable::Attribute * obj)
   {
     m_self->m_varyings.add(obj);
   }*/
 
-  void Shader::addShaderUniform(const Valuable::ValueObject * obj)
+  void Shader::addShaderUniform(const Valuable::Attribute * obj)
   {
     m_self->m_uniforms.add(obj);
   }
@@ -214,18 +214,19 @@ namespace Luminous {
   {
     Luminous::Utils::glCheck("Shader::bind # Before entry");
 
-    GLSLProgramObject & prog = *program();
+    GLSLProgramObject * prog = program();
 
-    if(&prog == 0) {
+//    Radiant::info("prog %p", prog);
+    if(!prog) {
       return 0;
     }
 
-    if(!prog.isLinked()) {
+    if(!prog->isLinked()) {
 
-      bool ok = prog.link();
+      bool ok = prog->link();
 
       if(!ok) {
-        error("Shader::program # Shader compilation failed: %s", prog.linkerLog());
+        error("Shader::program # Shader compilation failed: %s", prog->linkerLog());
         return 0;
       }
       else {
@@ -236,16 +237,16 @@ namespace Luminous {
 
     Luminous::Utils::glCheck("Shader::bind # Before bind");
 
-    prog.bind();
+    prog->bind();
 
     /*
     info("Prog = %p handle = %d isLinked = %d valid = %d objs = %d",
          &prog, (int) prog.handle(), (int) prog.isLinked(),
          (int) prog.validate(), prog.shaderObjectCount());
          */
-    m_self->m_uniforms.applyUniforms( & prog);
+    m_self->m_uniforms.applyUniforms(prog);
 
-    return & prog;
+    return prog;
   }
 
   void Shader::unbind()
@@ -263,25 +264,28 @@ namespace Luminous {
 
       bool ok = true;
 
-      if(!m_self->m_vertexShader.empty())
-        ok = ok && prog.loadString(GL_VERTEX_SHADER, m_self->m_vertexShader.c_str());
+      if(!m_self->m_vertexShader.isEmpty())
+        ok = ok && prog.loadString(GL_VERTEX_SHADER, m_self->m_vertexShader.toUtf8().data());
 
-      if(!m_self->m_fragmentShader.empty())
-        ok = ok && prog.loadString(GL_FRAGMENT_SHADER, m_self->m_fragmentShader.c_str());
+      if(!m_self->m_fragmentShader.isEmpty())
+        ok = ok && prog.loadString(GL_FRAGMENT_SHADER, m_self->m_fragmentShader.toUtf8().data());
 
 #ifndef LUMINOUS_OPENGLES
-      if(!m_self->m_geometryShader.empty())
+      if(!m_self->m_geometryShader.isEmpty())
         ok = ok && prog.loadString(GL_GEOMETRY_SHADER_EXT,
-                                   m_self->m_geometryShader.c_str());
+                                   m_self->m_geometryShader.toUtf8().data());
 #endif // LUMINOUS_OPENGLES
 
       /* Set the generation even if something has failed. */
       prog.setGeneration(m_self->m_generation);
 
       if(!ok || !prog.shaderObjectCount()) {
+        prog.setErrors(true);
         return 0;
-      }
+      } else prog.setErrors(false);
 
+    } else if(prog.hasErrors()) {
+      return 0;
     }
 
     return & prog;
@@ -289,7 +293,7 @@ namespace Luminous {
 
   bool Shader::isDefined() const
   {
-    return !m_self->m_fragmentShader.empty() ||
-        !m_self->m_vertexShader.empty();
+    return !m_self->m_fragmentShader.isEmpty() ||
+        !m_self->m_vertexShader.isEmpty();
   }
 }

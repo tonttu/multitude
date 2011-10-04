@@ -7,10 +7,10 @@
  * See file "VideoDisplay.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 
@@ -19,9 +19,9 @@
 
 #include <Radiant/TimeStamp.hpp>
 
-#include <VideoDisplay/Export.hpp>
+#include "Export.hpp"
 
-#include <string>
+#include <QString>
 #include <vector>
 
 namespace VideoDisplay {
@@ -51,7 +51,7 @@ namespace VideoDisplay {
       }
 
       /// The subtitle lines
-      std::vector<std::string> m_lines;
+      std::vector<QString> m_lines;
       /// The earliest time-stamp when one should display this subtitle item
       Radiant::TimeStamp m_begin;
       /// The latest time-stamp when one should display this subtitle item
@@ -67,15 +67,16 @@ namespace VideoDisplay {
     const Text * current();
 
     /// Read subtitles from an SRT file
-    /** @return Returns true if the SRT file was successfully laoded, false on
-        failure. */
+    /// @param filename SRT file name
+    /// @return Returns true if the SRT file was successfully laoded, false on
+    ///         failure.
     bool readSrt(const char * filename);
 
     /// Returns the number of subtitle items
     size_t size() const { return m_texts.size(); }
 
     /// Returns the longest subtitle string
-    std::string getLongestSubtitle() const;
+    QString getLongestSubtitle() const;
 
   private:
     typedef std::vector<Text> Texts;

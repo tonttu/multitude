@@ -1,88 +1,94 @@
 /* COPYRIGHT
- *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #include "Mutex.hpp"
 
+#include <Radiant/Condition.hpp>
+
 #include <QMutex>
+#include <QWaitCondition>
+
+#include <cassert>
+
 
 namespace Radiant {
 
-  static bool mutexDebug = false;
+  Mutex s_onceMutex;
 
-  class Mutex::D : public QMutex 
+  // static bool mutexDebug = false;
+
+  class Mutex::D : public QMutex
   {
   public:
-	  D(RecursionMode mode) : QMutex(mode) {}
+    D(bool recursive)
+      : QMutex(recursive ? QMutex::Recursive : QMutex::NonRecursive) {}
   };
 
-  Mutex::Mutex()
-    : m_d(0),
-	m_active(false)
+  Mutex::Mutex(bool recursive)
+    : m_d(new D(recursive))
   {}
 
   Mutex::~Mutex()
   {
-    if(!m_active) return;
-	delete m_d;
+    delete m_d;
   }
 
-  bool Mutex::init(bool /*shared*/, bool /*prio_inherit*/, bool recursive)
+  void Mutex::lock()
   {
-	  m_d = new D(recursive ? QMutex::Recursive : QMutex::NonRecursive);
-
-	  m_active = true;
-
-	  return true;
+    m_d->lock();
   }
 
-  bool Mutex::close()
+  bool Mutex::tryLock()
   {
-    if(m_active) {
-      m_active = false;
-      delete m_d;
-	  m_d = 0;
-
-	  return true;
-    }
-
-    return false;
+    return m_d->tryLock();
   }
 
-  bool Mutex::lock()
+  void Mutex::unlock()
   {
-	m_d->lock();
-
-	return true;
+    m_d->unlock();
   }
 
-  bool Mutex::lock(bool block)
+  class Condition::D : public QWaitCondition {};
+
+  Condition::Condition()
+    : m_d(new D())
   {
-    if(!block) return tryLock();
-    else return lock();
   }
 
-  bool Mutex::tryLock() 
-  { 
-	  return m_d->tryLock();
-  }
-
-  bool Mutex::unlock()
+  Condition::~Condition()
   {
-	  m_d->unlock();
+    delete m_d;
+  }
 
-	  return true;
-	}
+  bool Condition::wait(Mutex &mutex, unsigned long millsecs)
+  {
+    QMutex * qmutex = mutex.m_d;
+    return m_d->wait(qmutex, millsecs);
+  }
 
+  int Condition::wakeAll()
+  {
+    m_d->wakeAll();
+    return 0;
+  }
+
+  int Condition::wakeAll(Mutex & mutex)
+  {
+    Guard g(mutex);
+    wakeAll();
+    return 0;
+  }
+
+  int Condition::wakeOne()
+  {
+    m_d->wakeOne();
+    return 0;
+  }
+
+  int Condition::wakeOne(Mutex & mutex)
+  {
+    Guard g(mutex);
+    m_d->wakeOne();
+    return 0;
+  }
 }

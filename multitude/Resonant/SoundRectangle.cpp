@@ -1,3 +1,18 @@
+/* COPYRIGHT
+ *
+ * This file is part of Resonant.
+ *
+ * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
+ *
+ * See file "Resonant.hpp" for authors and more details.
+ *
+ * This file is licensed under GNU Lesser General Public
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
+ * from the GNU organization (www.gnu.org).
+ * 
+ */
+
 #include "SoundRectangle.hpp"
 
 #define DEFAULT_LOC           Nimble::Vector2i(0, 0)
@@ -11,7 +26,7 @@ namespace Resonant
 {
 
   SoundRectangle::SoundRectangle()
-    :HasValues(0, "SoundRectangle"),
+    :Node(0, "SoundRectangle"),
     m_location(this, "location", DEFAULT_LOC),
     m_size(this, "size", DEFAULT_SIZE),
     m_stereoPan(this, "stereo-pan", DEFAULT_PAN),
@@ -22,7 +37,7 @@ namespace Resonant
   }
 
   SoundRectangle::SoundRectangle(Nimble::Vector2i loc, Nimble::Vector2i size, float stereoPan, int fadeWidth, int leftChannel, int rightChannel)
-    :HasValues(0, "SoundRectangle"),
+    :Node(0, "SoundRectangle"),
     m_location(this, "location", loc),
     m_size(this, "size", size),
     m_stereoPan(this, "stereo-pan", stereoPan),

@@ -13,6 +13,9 @@
  * 
  */
 
+#include "Platform.hpp"
+
+#ifndef RADIANT_WINDOWS
 
 #include "SHMDuplexPipe.hpp"
 
@@ -28,3 +31,5 @@ namespace Radiant
   SHMDuplexPipe::~SHMDuplexPipe()
   {}
 }
+
+#endif

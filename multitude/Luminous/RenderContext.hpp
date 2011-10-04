@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
  */
 
 #ifndef LUMINOUS_RENDERCONTEXT_HPP
@@ -27,6 +15,7 @@
 #include <Luminous/Export.hpp>
 #include <Luminous/VertexBuffer.hpp>
 #include <Luminous/GLSLProgramObject.hpp>
+#include <Luminous/FramebufferResource.hpp>
 
 #include <Nimble/Rectangle.hpp>
 #include <Nimble/Vector2.hpp>
@@ -53,7 +42,7 @@ namespace Luminous
       BLEND_SUBTRACTIVE
     };
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+/// @cond
 
     class FBOPackage;
 
@@ -84,7 +73,7 @@ namespace Luminous
       int m_users;
     };
 
-#endif // DOXYGEN_SHOULD_SKIP_THIS
+/// @endcond
 
 /// @cond
     /** Experimental support for getting temporary FBOs for this context.
@@ -145,7 +134,7 @@ namespace Luminous
     /// @todo make deprecated
     Luminous::RenderContext * resources() { return this; }
 
-    static std::string locateStandardShader(const std::string & filename);
+    static QString locateStandardShader(const QString & filename);
 
     /// Prepares the context for rendering a frame. This is called once for
     /// every frame before rendering.
@@ -176,8 +165,8 @@ namespace Luminous
     /// Pops a clipping rectangle from the context
     void popClipRect();
 
-    /// Returns the clipping rectangle
-    const Nimble::Rectangle * clipRect() const;
+    /// Returns the clipping rectangle stack
+    const std::vector<Nimble::Rectangle> & clipStack() const;
 
     /// Checks if the given rectangle is visible (not clipped).
     bool isVisible(const Nimble::Rectangle & area);
@@ -270,7 +259,7 @@ namespace Luminous
     void drawLine(Nimble::Vector2f p1, Nimble::Vector2f p2,
                   float width, const float * rgba);
 
-    /** Draw a cubic bézier curve
+    /** Draw a cubic bzier curve
         @param controlPoints array of 4 control points
         @param width width of the curve
         @param rgba array of 4 color components
@@ -371,11 +360,32 @@ namespace Luminous
 
     /// @endcond
 
+    /// Get a temporary texture render target
+    // RenderTargetObject pushRenderTarget(Nimble::Vector2 size, float scale);
+    /// Pop a temporary texture render target
+    // Luminous::Texture2D & popRenderTarget(RenderTargetObject & trt);
+
+    /// Push a viewport to the viewport stack
+    /// Pushes a viewport to the top of the viewport stack.
+    /// @param viewport viewport to push
+    void pushViewport(const Nimble::Recti & viewport);
+    /// Pop a viewport from the viewport stack
+    /// Pops the viewport from the top of the viewport stack
+    void popViewport();
+    /// Get the current viewport
+    /// @return the viewport from the top of the viewport stack
+    const Nimble::Recti & currentViewport() const;
+
+
     static void setThreadContext(RenderContext * rsc);
 
     /// Returns the RenderContext for the calling thread
     /// @todo not really implemented on Windows
     static RenderContext * getThreadContext();
+
+    /// Returns the RenderContext for the calling thread
+    /// @todo not really implemented on Windows
+    static RenderContext * GLSLreadContext();
 
     void bindTexture(GLenum textureType, GLenum textureUnit, GLuint textureId);
     /// Bind GLSL program object

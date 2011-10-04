@@ -7,17 +7,17 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 #ifndef RADIANT_RESOURCE_LOCATOR_HPP
 #define RADIANT_RESOURCE_LOCATOR_HPP
 
 #include <Radiant/Export.hpp>
 
-#include <string>
+#include <QString>
 
 namespace Radiant
 {
@@ -34,10 +34,10 @@ namespace Radiant
       ~ResourceLocator();
 
       /// Character that separates paths.
-      static std::string  separator;
+      static QString  separator;
 
       /// Return the paths.
-      const std::string & paths() const { return  m_paths; }
+      const QString & paths() const { return  m_paths; }
 
       /** Add a path to the list to search though.
 
@@ -47,7 +47,7 @@ namespace Radiant
           future searches will start from it. Otherwise the new path is placed at the end
           of the path list.
        */
-      void addPath(const std::string & path, bool front = false);
+      void addPath(const QString & path, bool front = false);
       /** @copybrief addPath
 
           @param module The name of the module for which we are looking for some data.
@@ -56,20 +56,20 @@ namespace Radiant
           future searches will start from it. Otherwise the new path is placed at the end
           of the path list.
       **/
-      void addModuleDataPath(const std::string & module, bool front = false);
+      void addModuleDataPath(const QString & module, bool front = false);
 
       /// Locate a file
-      std::string locate(const std::string & file) const;
+      QString locate(const QString & file) const;
       /// Locate a file that can be written
-      std::string locateWriteable(const std::string & file) const;
+      QString locateWriteable(const QString & file) const;
       /// Locate an existing file that can be written
-      std::string locateOverWriteable(const std::string & file) const;
+      QString locateOverWriteable(const QString & file) const;
 
       /// Returns a ResourceLocator instance
       static ResourceLocator & instance() { return s_instance; }
 
     private:
-      std::string m_paths;
+      QString m_paths;
 
       static ResourceLocator s_instance;
   };

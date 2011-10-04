@@ -7,10 +7,10 @@
  * See file "Valuable.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef VALUABLE_DOM_DOCUMENT_HPP
@@ -20,7 +20,7 @@
 
 #include <Valuable/Export.hpp>
 
-#include <string>
+#include <QString>
 #include <vector>
 
 namespace Valuable
@@ -37,9 +37,9 @@ namespace Valuable
     static DOMDocument * createDocument();
 
     /// Creates a new DOM element with the given name
-    DOMElement createElement(const char * name);
-    /// @copydoc createElement
-    DOMElement createElement(const std::string & name);
+    /// @param name Tag name of the DOM element
+    /// @return The created element
+    DOMElement createElement(const QString & name);
 
     /// Appends an element to the document
     void appendChild(DOMElement element);
@@ -47,7 +47,7 @@ namespace Valuable
     /// Writes the document to a file
     bool writeToFile(const char * filename);
     /// Writes the document to memory
-    bool writeToMem(std::vector<char> & buf);
+    bool writeToMem(QByteArray & buf);
 
     /// Parse a document from a file.
     /// @param filename name of the file to read from

@@ -2,7 +2,7 @@
  *
  * This file is part of Patterns.
  *
- * Copyright: Helsinki University of Technology, MultiTouch Oy and others.
+ * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
  *
  * See file "Patterns.hpp" for authors and more details.
  *
@@ -16,17 +16,13 @@
 #ifndef PATTERNS_EXPORT_HPP
 #define PATTERNS_EXPORT_HPP
 
-#ifdef WIN32
+#include "Radiant/Platform.hpp"
 
 // Import by default
 #ifdef PATTERNS_EXPORT
-#define PATTERNS_API __declspec(dllexport)
+#define PATTERNS_API DLLEXPORT
 #else
-#define PATTERNS_API __declspec(dllimport)
+#define PATTERNS_API DLLIMPORT
 #endif
-
-#else
-#define PATTERNS_API
-#endif  
 
 #endif

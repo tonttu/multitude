@@ -8,17 +8,15 @@ HEADERS += LensCorrection.hpp
 HEADERS += LineSegment2.hpp 
 HEADERS += Math.hpp 
 HEADERS += Matrix2.hpp 
-HEADERS += Matrix2Impl.hpp
 HEADERS += Matrix3.hpp 
-HEADERS += Matrix3Impl.hpp 
 HEADERS += Matrix4.hpp 
-HEADERS += Matrix4Impl.hpp
 HEADERS += Nimble.hpp
 HEADERS += Path.hpp
 HEADERS += Plane.hpp
 HEADERS += Quaternion.hpp
 HEADERS += Ramp.hpp 
 HEADERS += Random.hpp 
+HEADERS += Range.hpp
 HEADERS += Rectangle.hpp
 HEADERS += Rect.hpp 
 HEADERS += Splines.hpp
@@ -35,11 +33,12 @@ SOURCES += Matrix.cpp
 SOURCES += Path.cpp
 SOURCES += Plane.cpp
 SOURCES += Random.cpp
+SOURCES += Range.cpp
 SOURCES += Rectangle.cpp
 SOURCES += Rect.cpp
 SOURCES += Splines.cpp
 SOURCES += Vector2.cpp
 
-win32:DEFINES += NIMBLE_EXPORT
+DEFINES += NIMBLE_EXPORT
 
 include(../library.pri)

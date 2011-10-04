@@ -7,18 +7,18 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef RADIANT_CSVDOCUMENT_HPP
 #define RADIANT_CSVDOCUMENT_HPP
 
-#include <Radiant/Export.hpp>
+#include "Export.hpp"
 
-#include <string>
+#include <QString>
 #include <list>
 #include <vector>
 
@@ -37,7 +37,7 @@ namespace Radiant {
   public:
 
     /// A single row of data
-    typedef std::vector<std::wstring> Row;
+    typedef std::vector<QString> Row;
     /// A list of rows
     typedef std::list<Row> Rows;
 
@@ -46,7 +46,9 @@ namespace Radiant {
 
     /** Load a file, and return the number of lines read. The file is assumed to be in the
         UTF-8 format.
-    */
+        @param filename filename to read
+        @param delimiter column delimiter
+        @return number of rows read */
     int load(const char * filename, const char * delimiter = ",");
     /** Finds a row in the document. For each row in the document,
         this function checks if the text in the cell at that column
@@ -59,9 +61,7 @@ namespace Radiant {
         @return If the key could not matched, return 0, otherwise returns a
         pointer to the row.
     */
-    Row * findRow(const std::wstring & key, unsigned col);
-    /// A version of findRow, with UTF-8 encoded key.
-    Row * findRow(const std::string & key, unsigned col);
+    Row * findRow(const QString & key, unsigned col);
 
     /// Returns an iterator to the first row in the document
     Rows::iterator begin() { return m_rows.begin(); }
@@ -73,14 +73,17 @@ namespace Radiant {
     Rows::const_iterator end() const { return m_rows.end(); }
 
     /// Returns the number of rows in the document
+    /// @return number of rows
     unsigned rowCount() const { return (unsigned) m_rows.size(); }
 
     /** Returns a given row. If the index is out of range, zero pointer is returned.
 
       This method is quite slow, since it must iterate through each row to find the
       correct one. If performance is an issue you should use the iterator-functions instead.
+      @param i index of the row
+      @return the ith row
     */
-    Row * row(unsigned index);
+    Row * row(unsigned i);
 
   private:
 

@@ -16,7 +16,7 @@ namespace Poetic
     Luminous::GLResource * gf = glr->getResource(this);
 
     if(gf) {
-      GPUFont * font = dynamic_cast<GPUFont *> (gf);
+      GPUFont * font = static_cast<GPUFont *> (gf);
       assert(font);
       return font;
     }
@@ -24,11 +24,11 @@ namespace Poetic
     // puts("CPUFontBase::getGPUFont # New GPU font");
 
     GPUFont * font = createGPUFont();
-    assert(font != 0);
+    if(font) {
+      glr->addResource(this, font);
 
-    glr->addResource(this, font);
-
-    // m_gpuFonts.push_back(font);
+      // m_gpuFonts.push_back(font);
+    }
 
     return font;
   }

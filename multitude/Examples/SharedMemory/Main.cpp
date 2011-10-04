@@ -98,7 +98,7 @@ void listenTest()
 
   int i, fails = 0;
 
-  std::string str;
+  QString str;
 
   for(i = 0; true; i++) {
     
@@ -119,7 +119,7 @@ void listenTest()
       bd.rewind();
 
       bd.readString(str);
-      printf("str = %s\n", str.c_str());
+      printf("str = %s\n", str.toUtf8().data());
       fflush(0);
     }
   }

@@ -7,17 +7,17 @@
  * See file "Poetic.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef POETIC_CPU_WRAPPER_FONT_HPP
 #define POETIC_CPU_WRAPPER_FONT_HPP
 
-#include <Poetic/CPUFont.hpp>
-#include <Poetic/Export.hpp>
+#include "Export.hpp"
+#include "CPUFont.hpp"
 
 #include <Luminous/GLResources.hpp>
 
@@ -34,14 +34,16 @@ namespace Poetic
     CPUWrapperFont(CPUManagedFont * mfont);
     ~CPUWrapperFont();
 
-    /// Returns the advance for the given string
+    /// @copydoc CPUFont::advance
     float advance(const char * str, int n = -1);
-    /// @copydoc advance
+    /// @copydoc CPUFont::advance
     float advance(const wchar_t * str, int n = -1);
-    /// @copydoc advance
-    float advance(const std::wstring & str)
-    { return advance(str.c_str(), (int) str.size()); }
-    
+    /// @copybrief CPUFont::advance
+    float advance(const QString & str)
+    { std::wstring wstr = str.toStdWString();
+      return advance(wstr.c_str(), (int) wstr.size()); }
+    virtual void advanceList(const wchar_t * str, float * advances, int n);
+
     /// Returns the face size
     int faceSize() const        { return m_pointSize; }
     /// Sets the face size for the wrapper
@@ -60,9 +62,9 @@ namespace Poetic
     /// Returns the line height
     float lineHeight() const;
 
-    /// Returns the bounding box for the given string
+    /// @copydoc CPUFont::bbox
     void bbox(const char * str, BBox & bbox);
-    /// @copydoc bbox
+    /// @copydoc CPUFont::bbox
     void bbox(const wchar_t * str, BBox & bbox);
 
     /// Loads a font from the given .ttf file

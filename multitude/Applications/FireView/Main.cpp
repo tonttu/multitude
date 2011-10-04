@@ -7,10 +7,10 @@
  * See file "Applications/FireView.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "CamView.hpp"
@@ -58,10 +58,10 @@ void helper(const char * app)
      "\nEXAMPLES:\n"
      " %s             - Run all cameras at 15 fps\n"
      " %s --scanbus   - List cameras, with IDs\n"
-     " %s --fps 47    - Run all cameras at 47 fps (with SW triggering)\n"
-     " %s --rate 30   - Run all cameras at 30 fps (internal triggering)\n"
-     " %s --rate 60 --triggersource 0  - Run all cameras at max 60 fps with hardware trigger\n"
-     " %s --rate 60 --triggersource 0 --triggermode 0 - Run all cameras at max 60 fps with trigger source 0 and trigger mode 0\n"
+     " %s --fps 47    - Run all cameras at 47 fps (with SW triggering, It may run out of bandwith)\n"
+     " %s --rate 30   - Run all cameras at 30 fps (internal triggering, It may run out of bandwith)\n"
+     " %s --rate 60 --triggersource 0  - Run all cameras at max 60 fps with hardware trigger(It may run out of bandwith)\n"
+     " %s --rate 60 --triggersource 0 --triggermode 0 - Run all cameras at max 60 fps with trigger source 0 and trigger mode 0(It may run out of bandwith)\n"
      " %s --fps 120 --format7 1 --triggersource 0 --triggermode 0  --format7area \"60 0 356 206\" - Test high-speed triggered format 7 operation\n",
      7, Radiant::VideoCamera::TRIGGER_SOURCE_MAX - 1,
       app, app, app, app, app, app, app);
@@ -72,8 +72,6 @@ void helper(const char * app)
 
 int main(int argc, char ** argv)
 {
-  QApplication qa(argc, argv);
-
   float fps = -1.0f;
 
   Radiant::VideoCamera::TriggerSource triggerSource = Radiant::VideoCamera::TRIGGER_SOURCE_MAX;
@@ -149,6 +147,20 @@ int main(int argc, char ** argv)
       FireView::CamView::setVerbose(true);
       Radiant::enableVerboseOutput(true);
     }
+    else if (strcmp(arg, "--celltest") == 0) {
+      triggerMode = Radiant::VideoCamera::TRIGGER_MODE_0;
+      triggerSource = Radiant::VideoCamera::TRIGGER_SOURCE_0;
+      format7 = true;
+      // full format7 area
+      Nimble::Vector4f vals(0, 0, 376, 240);
+      fps = 60;
+
+      FireView::CamView::setFormat7area(vals[0], vals[1], vals[2], vals[3]);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::SHUTTER, 30);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::BRIGHTNESS, 200);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::SHUTTER, 30);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::GAIN, 20);
+    }
     else {
       printf("%s Could not handle argument %s\n", argv[0], arg);
       helper(argv[0]);
@@ -157,7 +169,7 @@ int main(int argc, char ** argv)
   }
 
   if(triggerMode >= 0 && triggerSource < 0) {
-    printf("%s If you set trigger mode, you also need to set trigger mode\n",
+    printf("%s If you set trigger mode, you also need to set trigger source\n",
        argv[0]);
     return -1;
   }
@@ -173,13 +185,14 @@ int main(int argc, char ** argv)
       const Radiant::VideoCamera::CameraInfo & cam = cameras[i];
       printf("Camera %d: ID = %llx VENDOR = %s, MODEL = %s, DRIVER = %s\n",
          i + 1, (long long) cam.m_euid64,
-       cam.m_vendor.c_str(), cam.m_model.c_str(), cam.m_driver.c_str());
+       cam.m_vendor.toUtf8().data(), cam.m_model.toUtf8().data(), cam.m_driver.toUtf8().data());
       fflush(0);
 
       if(listmodes)
           Radiant::error("listmodes not implemented");
     }
   } else {
+    QApplication qa(argc, argv);
 
     FireView::MainWindow * mw =
       new FireView::MainWindow(rate, fps, triggerSource, triggerMode, format7);

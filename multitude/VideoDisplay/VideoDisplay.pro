@@ -4,15 +4,15 @@ HEADERS += AudioTransfer.hpp
 HEADERS += Export.hpp
 HEADERS += ShowGL.hpp
 HEADERS += SubTitles.hpp
-HEADERS += VideoIn.hpp
+HEADERS += VideoDisplay.hpp
 HEADERS += VideoInFFMPEG.hpp
-
-SOURCES += VideoIn.cpp
-SOURCES += VideoInFFMPEG.cpp
+HEADERS += VideoIn.hpp
 
 SOURCES += AudioTransfer.cpp
 SOURCES += ShowGL.cpp
 SOURCES += SubTitles.cpp
+SOURCES += VideoIn.cpp
+SOURCES += VideoInFFMPEG.cpp
 
 unix:LIBS += $$MULTI_FFMPEG_LIBS
 
@@ -24,8 +24,6 @@ LIBS += $$LIB_PATTERNS $$LIB_VALUABLE $$LIB_GLEW
 
 macx:LIBS += -framework,OpenGL
 
-include(../library.pri)
+DEFINES += VIDEODISPLAY_EXPORT
 
-win32 {
-    DEFINES += VIDEODISPLAY_EXPORT
-}
+include(../library.pri)

@@ -1,30 +1,18 @@
 /* COPYRIGHT
- *
- * This file is part of Resonant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Resonant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
  */
 
 #ifndef RESONANT_MODULE_SAMPLE_PLAYER_HPP
 #define RESONANT_MODULE_SAMPLE_PLAYER_HPP
 
-#include <Radiant/FixedStr.hpp>
 #include <Radiant/RefPtr.hpp>
 #include <Radiant/Thread.hpp>
+#include <Radiant/TimeStamp.hpp>
 #include <Radiant/Condition.hpp>
 
 #include <Resonant/Module.hpp>
 
 #include <list>
-#include <string>
+#include <QString>
 #include <vector>
 
 #include <strings.h>
@@ -59,21 +47,31 @@ namespace Resonant {
     virtual void processMessage(const char * address, Radiant::BinaryData *);
     virtual void process(float ** in, float ** out, int n);
 
-    /** Adds a few voices that will play an ambount sound background.
+    /** Adds a few voices that will play an ambient sound background.
         All files in the given directory are loaded looped
         for-ever. In practice one wants to put 3-5 audio files with
         different lengths in the directory. The length of the files
-        should be in the 20-30 second range. The end result will be a
+        should be usually in the 20-30 second range. The end result will be a
         nice ambient background that does not sound like it is
         looping.
+
+        The ambient sounds are replicated accross given number of channels, with channel rotation
+        to ensure that each loudspeaker will generate slightly different
+        sounds.
 
         @param directory Where the files are loaded from.
 
         @param gain The gain (volume) to give to the background material.
 
+        @param fillchannels The number of output channels to fill. This number is limited
+        by the active channel number.
+
+        @param delay Delay time to wait before starting the playback. Short delay times
+        may lead to poor synchronization between different channels.
     */
 
-    void createAmbientBackground(const char * directory, float gain);
+    void createAmbientBackground(const char * directory, float gain, int fillchannels = 1000,
+                                 float delay = 7.0f);
 
     /// Plays an audio sample
     /** This function starts the playback of an audio sample.
@@ -95,18 +93,30 @@ namespace Resonant {
         @param sampleChannel Select the channel of the source file that should be used as the
         source.
 
-        @param loop Turns of looping if necessary. With looping the sample will play
+        @param loop Turns on looping if necessary. With looping the sample will play
         back for-ever.
+
+        @param time optional timestamp when to play the sample
     */
     void playSample(const char * filename,
                     float gain,
                     float relpitch,
                     int targetChannel,
                     int sampleChannel,
-                    bool loop = false);
+                    bool loop = false,
+                    Radiant::TimeStamp time = 0);
 
     /** Sets the master gain */
     void setMasterGain(float gain) { m_masterGain = gain; }
+
+    /// Number of output channels
+    /// @return Number of output channels
+    size_t channels() const { return m_channels; }
+
+    /// Current playback time
+    /// @return Current playback time
+    const Radiant::TimeStamp & time() { return m_time; }
+
   private:
 
     bool addSample(const char * filename, const char * name);
@@ -119,12 +129,12 @@ namespace Resonant {
     class SampleInfo
     {
     public:
-      std::string m_name;
-      std::string m_filename;
+      QString m_name;
+      QString m_filename;
     };
 
     /* This class holds audio sample data in RAM. */
-    class Sample
+    class Sample : public Patterns::NotCopyable
     {
     public:
       Sample();
@@ -135,7 +145,7 @@ namespace Resonant {
       inline const std::vector<float> & data() const { return m_data; }
       const float * buf(unsigned i) const;
 
-      const std::string & name() const { return m_name; }
+      const QString & name() const { return m_name; }
       /** Number of samples available */
       unsigned available(unsigned pos) const;
       unsigned channels() const;
@@ -148,7 +158,7 @@ namespace Resonant {
 
       std::vector<float> m_data;
 
-      std::string m_name;
+      QString m_name;
     };
 
     /* This class controls the playback of a sample. */
@@ -161,7 +171,7 @@ namespace Resonant {
           m_sample(s), m_position(0)
       {}
 
-      bool synthesize(float ** out, int n);
+      bool synthesize(float ** out, int n, ModuleSamplePlayer *);
 
       void init(std::shared_ptr<Sample> sample, Radiant::BinaryData * data);
 
@@ -187,11 +197,12 @@ namespace Resonant {
       float m_relPitch;
       double m_dpos;
 
-      int      m_sampleChannel;
-      int      m_targetChannel;
+      size_t m_sampleChannel;
+      size_t m_targetChannel;
       bool     m_loop;
       std::shared_ptr<Sample> m_sample;
-      unsigned m_position;
+      size_t m_position;
+      Radiant::TimeStamp m_startTime;
     };
 
     /* Loads samples from the disk, as necessary. */
@@ -223,7 +234,7 @@ namespace Resonant {
       }
 
       bool m_free;
-      Radiant::FixedStrT<256> m_name;
+      std::string m_name;
 
       SampleVoice * m_waiting[WAITING_COUNT];
     };
@@ -245,7 +256,7 @@ namespace Resonant {
       enum { BINS = 256};
 
       Radiant::Condition m_cond;
-      Radiant::MutexAuto m_mutex;
+      Radiant::Mutex m_mutex;
 
       LoadItem m_loads[BINS];
 
@@ -256,7 +267,7 @@ namespace Resonant {
 
     bool addSample(std::shared_ptr<Sample> s);
 
-    void dropVoice(unsigned index);
+    void dropVoice(size_t index);
 
     std::list<SampleInfo> m_sampleList;
 
@@ -265,10 +276,11 @@ namespace Resonant {
     std::vector<SampleVoice> m_voices;
     std::vector<SampleVoice *> m_voiceptrs;
 
-    unsigned m_channels;
-    unsigned m_active;
+    size_t m_channels;
+    size_t m_active;
 
     float    m_masterGain;
+    Radiant::TimeStamp m_time;
 
     BGLoader * m_loader;
   };

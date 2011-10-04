@@ -68,6 +68,21 @@ namespace FireView {
       m_colorCheck = true;
     }
 
+    static void setDefaultParameter(Radiant::VideoCamera::FeatureType feature, uint32_t value)
+    {
+      s_defaults[feature] = value;
+    }
+
+    static bool getDefaultParameter(Radiant::VideoCamera::FeatureType feature, uint32_t* val)
+    {
+      if (s_defaults.count(feature) > 0) {
+        *val = s_defaults[feature];
+        return true;
+      }
+      return false;
+    }
+
+
   public slots:
 
     void openParams();
@@ -132,9 +147,10 @@ namespace FireView {
       virtual void childLoop();
 
       bool openCamera();
+      void increaseBandwidth(int width, int height, float fps);
 
       Radiant::VideoCamera * m_camera;
-      Radiant::MutexAuto m_mutex;
+      Radiant::Mutex m_mutex;
       Radiant::VideoImage m_frame;
       Radiant::FrameRate m_fps;
       float           m_customFps;
@@ -208,7 +224,7 @@ namespace FireView {
     static int           m_format7mode;
     static int           m_debayer;
     static bool          m_colorCheck;
-
+    static std::map<Radiant::VideoCamera::FeatureType, uint32_t> s_defaults;
   };
 
 }

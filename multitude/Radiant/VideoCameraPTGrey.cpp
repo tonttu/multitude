@@ -1,8 +1,27 @@
+/* COPYRIGHT
+ *
+ * This file is part of Radiant.
+ *
+ * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
+ *
+ * See file "Radiant.hpp" for authors and more details.
+ *
+ * This file is licensed under GNU Lesser General Public
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
+ * from the GNU organization (www.gnu.org).
+ * 
+ */
+
+#include "Platform.hpp"
+
+#ifdef RADIANT_WINDOWS
+
 #include "VideoCameraPTGrey.hpp"
 
 #include "Mutex.hpp"
 #include "Sleep.hpp"
-#include "Trace.hpp"
+#include "Radiant.hpp"
 
 #include <map>
 #ifndef WIN32
@@ -17,7 +36,7 @@ namespace Radiant
 {
   /* It seems that ptgrey drivers are not 100% thread-safe. To overcome this we
      use a mutex to lock captureImage calls to one-thread at a time. */
-  static MutexStatic __cmutex;
+  static Mutex s_cameraMutex;
 
   typedef std::map<uint64_t, FlyCapture2::PGRGuid> GuidMap;
   GuidMap g_guidMap;
@@ -138,12 +157,9 @@ namespace Radiant
 
   bool VideoCameraPTGrey::open(uint64_t euid, int , int , ImageFormat , FrameRate framerate)
   {
-
-    GuardStatic g(__cmutex);
-
     m_fakeFormat7 = false;
 
-    debug("VideoCameraPTGrey::open # %llx", (long long) euid);
+    debugRadiant("VideoCameraPTGrey::open # %llx", (long long) euid);
 
     FlyCapture2::PGRGuid guid;
 
@@ -164,6 +180,20 @@ namespace Radiant
       guid = it->second;
     }
 
+    m_image.allocateMemory(IMAGE_GRAYSCALE, 640, 480);
+
+    // Set BUFFER_FRAMES & capture timeout
+    FlyCapture2::FC2Config config;
+    config.grabMode = FlyCapture2::BUFFER_FRAMES;
+    config.numBuffers = NUM_BUFFERS;
+    config.bandwidthAllocation = FlyCapture2::BANDWIDTH_ALLOCATION_ON;
+    config.isochBusSpeed = FlyCapture2::BUSSPEED_S400;
+    config.asyncBusSpeed = FlyCapture2::BUSSPEED_ANY;
+    config.grabTimeout = 0;
+    config.numImageNotifications = 1;
+
+    /// @todo Do we need this?
+    // Guard g(s_cameraMutex);
     // Connect camera
     FlyCapture2::Error err = m_camera.Connect(&guid);
     if(err != FlyCapture2::PGRERROR_OK) {
@@ -177,25 +207,6 @@ namespace Radiant
       Radiant::error("VideoCameraPTGrey::open # %s", err.GetDescription());
       return false;
     }
-
-    m_image.allocateMemory(IMAGE_GRAYSCALE, 640, 480);
-
-    // Set BUFFER_FRAMES & capture timeout
-    FlyCapture2::FC2Config config;
-    /*
-    err = m_camera.GetConfiguration(&config);
-    if(err != FlyCapture2::PGRERROR_OK) {
-      Radiant::error("VideoCameraPTGrey::open # %s", err.GetDescription());
-      return false;
-    }
-    */
-    config.grabMode = FlyCapture2::BUFFER_FRAMES;
-    config.numBuffers = NUM_BUFFERS;
-    config.bandwidthAllocation = FlyCapture2::BANDWIDTH_ALLOCATION_ON;
-    config.isochBusSpeed = FlyCapture2::BUSSPEED_S400;
-    config.asyncBusSpeed = FlyCapture2::BUSSPEED_ANY;
-    config.grabTimeout = 0;
-    config.numImageNotifications = 1;
 
     err = m_camera.SetConfiguration(&config);
     if(err != FlyCapture2::PGRERROR_OK) {
@@ -246,7 +257,6 @@ namespace Radiant
 
   bool VideoCameraPTGrey::openFormat7(uint64_t euid, Nimble::Recti roi, float fps, int mode)
   {
-    GuardStatic g(__cmutex);
     fps = 180.0f;
 
     m_format7Rect = roi;
@@ -255,7 +265,7 @@ namespace Radiant
       roi.set(0, 0, 100000, 100000);
     }
 
-    debug("VideoCameraPTGrey::openFormat7 # %llx", (long long) euid);
+    debugRadiant("VideoCameraPTGrey::openFormat7 # %llx", (long long) euid);
 
     // Look up PGRGuid from our map (updated in queryCameras())
     GuidMap::iterator it = g_guidMap.find(euid);
@@ -265,6 +275,9 @@ namespace Radiant
     }
 
     FlyCapture2::PGRGuid guid = it->second;
+
+    /// @todo Do we need this?
+    // Guard g(s_cameraMutex);
 
     // Connect camera
     FlyCapture2::Error err = m_camera.Connect(&guid);
@@ -402,8 +415,6 @@ namespace Radiant
 
   bool VideoCameraPTGrey::start()
   {
-    GuardStatic g(__cmutex);
-
     if(m_state != OPENED) {
       /* If the device is already running, then return true. */
       if(m_state == RUNNING)
@@ -414,6 +425,8 @@ namespace Radiant
       return false;
     }
 
+    /// @todo Do we need this?
+    // Guard g(s_cameraMutex);
     FlyCapture2::Error err = m_camera.StartCapture();
     if(err != FlyCapture2::PGRERROR_OK) {
       Radiant::error("VideoCameraPTGrey::start # %s", err.GetDescription());
@@ -428,15 +441,16 @@ namespace Radiant
 
   bool VideoCameraPTGrey::stop()
   {
-    GuardStatic g(__cmutex);
-
     if(m_state != RUNNING) {
-      debug("VideoCameraPTGrey::stop # State != RUNNING");
+      debugRadiant("VideoCameraPTGrey::stop # State != RUNNING");
       /* If the device is already stopped, then return true. */
       return m_state == OPENED;
     }
 
     Radiant::info("VideoCameraPTGrey::stop");
+
+    /// @todo Do we need this?
+    // Guard g(s_cameraMutex);
     FlyCapture2::Error err = m_camera.StopCapture();
     if(err != FlyCapture2::PGRERROR_OK) {
       Radiant::error("VideoCameraPTGrey::stop # %s", err.GetDescription());
@@ -453,12 +467,12 @@ namespace Radiant
     if(m_state == UNINITIALIZED)
       return true;
 
-    GuardStatic g(__cmutex);
-
     Radiant::info("VideoCameraPTGrey::close");
-    m_camera.Disconnect();
-
     m_state = UNINITIALIZED;
+
+    /// @todo Do we need this?
+    // Guard g(s_cameraMutex);
+    m_camera.Disconnect();
 
     return true;
   }
@@ -470,11 +484,14 @@ namespace Radiant
 
   const Radiant::VideoImage * VideoCameraPTGrey::captureImage()
   {
-    GuardStatic g(__cmutex);
-
-    Sleep::sleepMs(2);
-
     FlyCapture2::Image img;
+
+    /// @todo What's this about??
+    // Sleep::sleepMs(2);
+
+    /// @todo Do we need this?
+    // Guard g(s_cameraMutex);
+
     FlyCapture2::Error err = m_camera.RetrieveBuffer(&img);
     if(err != FlyCapture2::PGRERROR_OK) {
       Radiant::error("VideoCameraPTGrey::captureImage # %llx %s",
@@ -515,7 +532,6 @@ namespace Radiant
 
   VideoCamera::CameraInfo VideoCameraPTGrey::cameraInfo()
   {
-    // GuardStatic g(__cmutex);
     return m_info;
 
   }
@@ -547,9 +563,10 @@ namespace Radiant
 
   void VideoCameraPTGrey::setFeature(FeatureType id, float value)
   {
-    GuardStatic g(__cmutex);
+    /// @todo Do we need this?
+    // Guard g(s_cameraMutex);
 
-    // Radiant::debug("VideoCameraPTGrey::setFeature # %d %f", id, value);
+    // debugRadiant("VideoCameraPTGrey::setFeature # %d %f", id, value);
 
     // If less than zero, use automatic mode
     if(value < 0.f) {
@@ -562,7 +579,7 @@ namespace Radiant
 
     FlyCapture2::Error err = m_camera.GetPropertyInfo(&pinfo);
     if(err != FlyCapture2::PGRERROR_OK) {
-      Radiant::debug("VideoCameraPTGrey::setFeature # Failed: \"%s\"",
+      debugRadiant("VideoCameraPTGrey::setFeature # Failed: \"%s\"",
                      err.GetDescription());
       return;
     }
@@ -574,7 +591,7 @@ namespace Radiant
 
   void VideoCameraPTGrey::setFeatureRaw(FeatureType id, int32_t value)
   {
-    // Radiant::debug("VideoCameraPTGrey::setFeatureRaw # %d %d", id, value);
+    // debugRadiant("VideoCameraPTGrey::setFeatureRaw # %d %d", id, value);
 
     FlyCapture2::Property prop;
     prop.type = propertyToFC2(id);
@@ -601,7 +618,7 @@ namespace Radiant
 
     FlyCapture2::Error err = m_camera.SetProperty(&prop);
     if(err != FlyCapture2::PGRERROR_OK) {
-      Radiant::debug("VideoCameraPTGrey::setFeatureRaw # Failed: \"%s\"",
+      debugRadiant("VideoCameraPTGrey::setFeatureRaw # Failed: \"%s\"",
                      err.GetDescription());
       err.PrintErrorTrace();
     }
@@ -614,15 +631,8 @@ namespace Radiant
 */
   }
 
-  void VideoCameraPTGrey::setWhiteBalance(float /*u_to_blue*/, float /*v_to_red*/)
-  {
-    Radiant::error("VideoCameraPTGrey::setWhiteBalance # not implemented");
-    assert(0);
-  }
-
   bool VideoCameraPTGrey::enableTrigger(TriggerSource src)
   {
-
     FlyCapture2::TriggerMode tm;
 
     FlyCapture2::Error err = m_camera.GetTriggerMode(&tm);
@@ -741,7 +751,7 @@ namespace Radiant
       return;
     }
 
-    if(!pinfo.present) { Radiant::debug("Skipping feature %d, not present", id); return; }
+    if(!pinfo.present) { debugRadiant("Skipping feature %d, not present", id); return; }
 
     VideoCamera::CameraFeature feat;
     feat.id = propertyToRadiant(id);
@@ -794,9 +804,6 @@ namespace Radiant
 
   CameraDriverPTGrey::CameraDriverPTGrey()
   {
-    // Initialize the mutex.
-    __cmutex.lock();
-    __cmutex.unlock();
   }
 
   size_t CameraDriverPTGrey::queryCameras(std::vector<VideoCamera::CameraInfo> & suppliedCameras)
@@ -887,3 +894,5 @@ namespace Radiant
   }
 
 }
+
+#endif

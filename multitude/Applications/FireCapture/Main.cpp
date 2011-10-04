@@ -1,10 +1,10 @@
 /* COPYRIGHT
  *
- * This file is part of Applications/FireView.
+ * This file is part of Applications/FireCapture.
  *
  * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
  *
- * See file "Applications/FireView.hpp" for authors and more details.
+ * See file "Applications/FireCapture.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
  * License (LGPL), version 2.1. The LGPL conditions can be found in 
@@ -39,7 +39,7 @@ class CameraThread : public Radiant::Thread
 {
 public:
 
-  CameraThread(uint64_t cameraId, const std::string & dir)
+  CameraThread(uint64_t cameraId, const QString & dir)
     : m_continue(true),
       m_cameraId(cameraId),
       m_format7Area(0, 0, 640, 480),
@@ -131,7 +131,7 @@ private:
       
         sprintf(buf, "frame-%.5d.tga", count);
         
-        saver.write((m_dir + buf).c_str());
+        saver.write((m_dir + buf).toUtf8().data());
       }
     }
     
@@ -149,7 +149,7 @@ private:
   Nimble::Recti m_format7Area;
   int           m_format7Mode;
 
-  std::string   m_dir;
+  QString   m_dir;
 
   Radiant::VideoCamera * m_camera;
 };
@@ -183,9 +183,9 @@ int main(int argc, char ** argv)
 
   int i, res = 0;
 
-  std::string baseDir("capture/");
+  QString baseDir("capture/");
 
-  std::string configFile;
+  QString configFile;
   bool defaultconfig = false;
   bool useConfig = false;
 
@@ -273,14 +273,14 @@ int main(int argc, char ** argv)
     }
   }
 
-  if(useConfig && !Radiant::FileUtils::fileReadable(configFile.c_str())) {
-    Radiant::error("FireCapture: Configuration file %s is not readable", configFile.c_str());
+  if(useConfig && !Radiant::FileUtils::fileReadable(configFile.toUtf8().data())) {
+    Radiant::error("FireCapture: Configuration file %s is not readable", configFile.toUtf8().data());
     return -1;
   }
 
   if (useConfig) {
-    if(!readConfig( & conf, configFile.c_str())) {
-      Radiant::error("Failed to read MultiTouch configuration file: %s", configFile.c_str());
+    if(!readConfig( & conf, configFile.toUtf8().data())) {
+      Radiant::error("Failed to read MultiTouch configuration file: %s", configFile.toUtf8().data());
       return -1;
     } else {
       // Overwrite globals if specified
@@ -311,7 +311,7 @@ int main(int argc, char ** argv)
     const Radiant::VideoCamera::CameraInfo & cam = cameras[i];
     printf("Camera %d: ID = %llx, VENDOR = %s, MODEL = %s\n",
            i + 1, (long long) cam.m_euid64,
-           cam.m_vendor.c_str(), cam.m_model.c_str());
+           cam.m_vendor.toUtf8().data(), cam.m_model.toUtf8().data());
     fflush(0);
 
     sprintf(buf, "/raw-frames-%llx/", (long long) cam.m_euid64);
@@ -328,10 +328,10 @@ int main(int argc, char ** argv)
 
         #ifdef WIN32
             long long lltmp = 0;
-            sscanf(camChunk.get("devuid").getString().c_str(), "%llx", &lltmp);
+            sscanf(camChunk.get("devuid").getString().toUtf8().data(), "%llx", &lltmp);
             camUID = lltmp;
         #else
-            camUID = strtoll(camChunk.get("devuid").getString().c_str(), 0, 16);
+            camUID = strtoll(camChunk.get("devuid").getString().toUtf8().data(), 0, 16);
         #endif
 
         if(camUID == cam.m_euid64 || cameras.size() == 1) {
@@ -341,10 +341,10 @@ int main(int argc, char ** argv)
           if(camChunk.get("format7area").getInts( f7a.low().data(), 4) == 4)
             thread->setFormat7Area(f7a);
 
-          std::string cameraType(buf);
+          QString cameraType(buf);
 
           camChunk.setClearFlag(true);
-          camChunk.set("device",Radiant::Variant(cameraType.substr(1,25), ""));
+          camChunk.set("device",Radiant::Variant(cameraType.mid(1,25), ""));
           camChunk.setClearFlag(false);
         }
       }
@@ -355,13 +355,13 @@ int main(int argc, char ** argv)
     thread->run();
   }
 
-  std::string outConfigFile = (baseDir + std::string("config.txt"));
+  QString outConfigFile = (baseDir + QString("config.txt"));
   // Cheat Radiant::writeConfig
   std::ofstream out;
-  out.open(outConfigFile.c_str());
+  out.open(outConfigFile.toUtf8().data());
   out.close();
 
-  Radiant::writeConfig( & conf, outConfigFile.c_str());
+  Radiant::writeConfig( & conf, outConfigFile.toUtf8().data());
 
   Radiant::Sleep::sleepS(secs);
 

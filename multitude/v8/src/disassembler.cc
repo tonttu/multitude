@@ -1,4 +1,4 @@
-// Copyright 2006-2008 the V8 project authors. All rights reserved.
+// Copyright 2011 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -28,8 +28,9 @@
 #include "v8.h"
 
 #include "code-stubs.h"
-#include "codegen-inl.h"
+#include "codegen.h"
 #include "debug.h"
+#include "deoptimizer.h"
 #include "disasm.h"
 #include "disassembler.h"
 #include "macro-assembler.h"
@@ -64,24 +65,24 @@ class V8NameConverter: public disasm::NameConverter {
   Code* code() const { return code_; }
  private:
   Code* code_;
+
+  EmbeddedVector<char, 128> v8_buffer_;
 };
 
 
 const char* V8NameConverter::NameOfAddress(byte* pc) const {
-  static v8::internal::EmbeddedVector<char, 128> buffer;
-
-  const char* name = Builtins::Lookup(pc);
+  const char* name = Isolate::Current()->builtins()->Lookup(pc);
   if (name != NULL) {
-    OS::SNPrintF(buffer, "%s  (%p)", name, pc);
-    return buffer.start();
+    OS::SNPrintF(v8_buffer_, "%s  (%p)", name, pc);
+    return v8_buffer_.start();
   }
 
   if (code_ != NULL) {
     int offs = static_cast<int>(pc - code_->instruction_start());
     // print as code offset, if it seems reasonable
     if (0 <= offs && offs < code_->instruction_size()) {
-      OS::SNPrintF(buffer, "%d  (%p)", offs, pc);
-      return buffer.start();
+      OS::SNPrintF(v8_buffer_, "%d  (%p)", offs, pc);
+      return v8_buffer_.start();
     }
   }
 
@@ -114,6 +115,7 @@ static int DecodeIt(FILE* f,
   NoHandleAllocation ha;
   AssertNoAllocation no_alloc;
   ExternalReferenceEncoder ref_encoder;
+  Heap* heap = HEAP;
 
   v8::internal::EmbeddedVector<char, 128> decode_buffer;
   v8::internal::EmbeddedVector<char, kOutBufferSize> out_buffer;
@@ -255,8 +257,8 @@ static int DecodeIt(FILE* f,
         } else if (kind == Code::STUB) {
           // Reverse lookup required as the minor key cannot be retrieved
           // from the code object.
-          Object* obj = Heap::code_stubs()->SlowReverseLookup(code);
-          if (obj != Heap::undefined_value()) {
+          Object* obj = heap->code_stubs()->SlowReverseLookup(code);
+          if (obj != heap->undefined_value()) {
             ASSERT(obj->IsSmi());
             // Get the STUB key and extract major and minor key.
             uint32_t key = Smi::cast(obj)->value();
@@ -267,15 +269,31 @@ static int DecodeIt(FILE* f,
                              Code::Kind2String(kind),
                              CodeStub::MajorName(major_key, false));
             switch (major_key) {
-              case CodeStub::CallFunction:
-                out.AddFormatted("argc = %d", minor_key);
+              case CodeStub::CallFunction: {
+                int argc =
+                    CallFunctionStub::ExtractArgcFromMinorKey(minor_key);
+                out.AddFormatted("argc = %d", argc);
                 break;
-            default:
+              }
+              default:
                 out.AddFormatted("minor: %d", minor_key);
             }
           }
         } else {
           out.AddFormatted(" %s", Code::Kind2String(kind));
+        }
+        if (rmode == RelocInfo::CODE_TARGET_WITH_ID) {
+          out.AddFormatted(" (id = %d)", static_cast<int>(relocinfo.data()));
+        }
+      } else if (rmode == RelocInfo::RUNTIME_ENTRY &&
+                 Isolate::Current()->deoptimizer_data() != NULL) {
+        // A runtime entry reloinfo might be a deoptimization bailout.
+        Address addr = relocinfo.target_address();
+        int id = Deoptimizer::GetDeoptimizationId(addr, Deoptimizer::EAGER);
+        if (id == Deoptimizer::kNotDeoptimizationEntry) {
+          out.AddFormatted("    ;; %s", RelocInfo::RelocModeName(rmode));
+        } else {
+          out.AddFormatted("    ;; deoptimization bailout %d", id);
         }
       } else {
         out.AddFormatted("    ;; %s", RelocInfo::RelocModeName(rmode));
@@ -299,8 +317,17 @@ int Disassembler::Decode(FILE* f, byte* begin, byte* end) {
 
 // Called by Code::CodePrint.
 void Disassembler::Decode(FILE* f, Code* code) {
-  byte* begin = Code::cast(code)->instruction_start();
-  byte* end = begin + Code::cast(code)->instruction_size();
+  int decode_size = (code->kind() == Code::OPTIMIZED_FUNCTION)
+      ? static_cast<int>(code->safepoint_table_offset())
+      : code->instruction_size();
+  // If there might be a stack check table, stop before reaching it.
+  if (code->kind() == Code::FUNCTION) {
+    decode_size =
+        Min(decode_size, static_cast<int>(code->stack_check_table_offset()));
+  }
+
+  byte* begin = code->instruction_start();
+  byte* end = begin + decode_size;
   V8NameConverter v8NameConverter(code);
   DecodeIt(f, v8NameConverter, begin, end);
 }

@@ -1,3 +1,18 @@
+/* COPYRIGHT
+ *
+ * This file is part of Nimble.
+ *
+ * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
+ *
+ * See file "Nimble.hpp" for authors and more details.
+ *
+ * This file is licensed under GNU Lesser General Public
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
+ * from the GNU organization (www.gnu.org).
+ * 
+ */
+
 #include "Rectangle.hpp"
 
 #include <numeric>
@@ -18,9 +33,9 @@ namespace Nimble
   Rectangle::Rectangle(Nimble::Vector2f size, const Nimble::Matrix3f & m)
   {
     // Transform the points
-    m_origin = (m * Vector2f(0, 0)).xy();
-    Vector2f c0 = (m * Vector2f(0.5f * size.x, 0.f)).xy();
-    Vector2f c1 = (m * Vector2f(0.f, 0.5f * size.y)).xy();
+    m_origin = (m * Vector2f(0, 0)).vector2();
+    Vector2f c0 = (m * Vector2f(0.5f * size.x, 0.f)).vector2();
+    Vector2f c1 = (m * Vector2f(0.f, 0.5f * size.y)).vector2();
 
     // Compute the axii and extents
     m_axis0 = c0 - m_origin;
@@ -41,6 +56,19 @@ namespace Nimble
     float v = Math::Abs(dot(p, m_axis1));
 
     return (0 <= u && u <= m_extent0) && (0 <= v && v <= m_extent1);
+  }
+
+  bool Rectangle::inside(const Nimble::Rectangle & r) const
+  {
+    // rectangle is inside if all points are inside
+    std::vector<Nimble::Vector2f> corners;
+    corners.reserve(4);
+    r.computeCorners(corners);
+    assert(corners.size() == 4);
+
+    for(int i = 0; i < 4; ++i)
+      if(!inside(corners[i])) return false;
+    return true;
   }
 
   bool Rectangle::intersects(const Rectangle & r) const

@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Poetic.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Poetic.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #include "GPUFont.hpp"
@@ -58,28 +46,25 @@ namespace Poetic
     internalRender(str, n, transform);
   }
 
-  void GPUFont::render(const std::string & str, const Nimble::Matrix3 & transform)
+  void GPUFont::render(const QString & str, const Nimble::Matrix3 & transform)
   {
-    internalRender(str.c_str(), (int) str.size(), transform);
+    std::wstring wstr = str.toStdWString();
+    internalRender(wstr.c_str(), (int) wstr.size(), transform);
   }
 
-  void GPUFont::render(const std::string & str, const Nimble::Vector2 & location)
+  void GPUFont::render(const QString & str, const Nimble::Vector2 & location)
   {
-    internalRender(str.c_str(), (int) str.size(),
-		   Nimble::Matrix3::translate2D(location));
+    std::wstring wstr = str.toStdWString();
+    internalRender(wstr.c_str(), (int) wstr.size(),
+           Nimble::Matrix3::translate2D(location));
   }
 
-  void GPUFont::render(const std::wstring & str, const Nimble::Vector2 & location)
-  {
-    internalRender(str.c_str(), (int) str.size(),
-		   Nimble::Matrix3::translate2D(location));
-  }
-
-  void GPUFont::render(const std::string & str)
+  void GPUFont::render(const QString & str)
   {
     Nimble::Matrix3 transform;
     transform.identity();
-    internalRender(str.c_str(), (int) str.size(), transform);
+    std::wstring wstr = str.toStdWString();
+    internalRender(wstr.c_str(), (int) wstr.size(), transform);
   }
 
   void GPUFont::render(const char * str)
@@ -94,13 +79,6 @@ namespace Poetic
     Nimble::Matrix3 transform;
     transform.identity();
     internalRender(str, (int) wcslen(str), transform);
-  }
-
-  void GPUFont::render(const std::wstring & str)
-  {
-    Nimble::Matrix3 transform;
-    transform.identity();
-    internalRender(str.c_str(), (int) str.length(), transform);
   }
 
   void GPUFont::render(const char * str, Nimble::Vector2 loc)
@@ -129,11 +107,6 @@ namespace Poetic
     internalRender(str, n, transform);
   }
 
-  void GPUFont::render(const std::wstring & str, const Nimble::Matrix3 & transform)
-  {
-    internalRender(str.c_str(), (int) str.length(), transform);
-  }
-
 
   void GPUFont::renderCentered(const char * str, float x, float y)
   {
@@ -147,7 +120,7 @@ namespace Poetic
   }
 
   void GPUFont::renderCentered(const char * str,
-			       const Nimble::Matrix3 & transform)
+                   const Nimble::Matrix3 & transform)
   {
     BBox bb;
 
@@ -158,7 +131,7 @@ namespace Poetic
   }
 
   void GPUFont::renderCentered(const wchar_t * str,
-			       const Nimble::Matrix3 & transform)
+                   const Nimble::Matrix3 & transform)
   {
     BBox bb;
 
@@ -172,26 +145,38 @@ namespace Poetic
   {
     float lh = cpuFont()->lineHeight();
 
-    int left = (int) strlen(str);
-    int linelen = Radiant::StringUtils::strchrnul(str, '\n') - str;
+    int left, linelen;
+
+    if(str) {
+      left = (int) strlen(str);
+      linelen = strchr(str, '\n') - str;
+    }
+    else {
+      left = 0;
+      linelen = 0;
+    }
 
     while(left) {
-          
+
       if(linelen) {
         render(str, linelen, Nimble::Matrix3::translate2D(loc));
       }
 
       loc.y += lh;
-          
+
       str += linelen + 1;
 
       if(linelen >= left)
         left = 0;
-      else {
+      else if(str) {
         left = (int) strlen(str);
-        linelen = Radiant::StringUtils::strchrnul(str, '\n') - str;
+        linelen = strchr(str, '\n') - str;
+      }
+      else {
+        left = 0;
+        linelen = 0;
       }
     }
-    
+
   }
 }

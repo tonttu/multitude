@@ -75,17 +75,12 @@ namespace Valuable
     return new DOMDocument();
   }
 
-  DOMElement DOMDocument::createElement(const char * name)
+  DOMElement DOMDocument::createElement(const QString & name)
   {
     QDomElement de = m_wrapped->x.createElement(name);
     DOMElement r;
     r.m_wrapped->x = de;
     return r;
-  }
-
-  DOMElement DOMDocument::createElement(const std::string & name)
-  {
-    return createElement(name.c_str());
   }
 
 
@@ -95,14 +90,10 @@ namespace Valuable
       (filename, m_wrapped->x.toByteArray().data());
   }
 
-  bool DOMDocument::writeToMem(std::vector<char> & buffer)
+  bool DOMDocument::writeToMem(QByteArray & buffer)
   {
     QDomDocument & qdoc = m_wrapped->x;
-    std::string xml = qdoc.toString().toStdString();
-
-    buffer.resize(xml.size());
-
-    memcpy( & buffer[0], xml.c_str(), xml.size());
+    buffer = qdoc.toByteArray();
     return true;
   }
 
@@ -119,7 +110,7 @@ namespace Valuable
     if(!m_wrapped->x.setContent( & file, & errstr, & errline)) {
       file.close();
       error("DOMDocument::readFromFile # Cannot read file %s, line %d: %s",
-            filename, errline, errstr.toStdString().c_str());
+            filename, errline, errstr.toUtf8().data());
       return false;
     }
 

@@ -1,5 +1,7 @@
 /* COPYRIGHT
  */
+
+#include "Poetic.hpp"
 #include "CPUWrapperFont.hpp"
 #include "GPUWrapperFont.hpp"
 #include "CPUManagedFont.hpp"
@@ -18,7 +20,10 @@ namespace Poetic
   {}
 
   CPUWrapperFont::~CPUWrapperFont()
-  {}
+  {
+    // Managed fonts are deleted in FontManager destructor
+    // delete m_managedFont;
+  }
 
   GPUWrapperFont * CPUWrapperFont::getGPUFont()
   {
@@ -59,6 +64,27 @@ namespace Poetic
     return f->advance(str, n) * s;
   }
 
+  void CPUWrapperFont::advanceList(const wchar_t * str, float * advances, int n)
+  {
+    CPUFont * f = m_managedFont->getMetricFont();
+    if (!f)
+      return;
+
+    float s = static_cast<float> (m_pointSize) / static_cast<float> (f->faceSize());
+
+    f->advanceList(str, advances, n);
+
+    for(int i = 0; i < n || n < 0; i++) {
+      if((*str) == 0)
+        break;
+      else
+        *advances *= s;
+
+      str++;
+      advances++;
+    }
+  }
+
   float CPUWrapperFont::ascender() const
   {
     CPUFont * f = m_managedFont->getMetricFont();
@@ -85,6 +111,7 @@ namespace Poetic
 
   void CPUWrapperFont::bbox(const char * str, BBox & bbox)
   {
+    //Radiant::Guard g(Poetic::freetypeMutex());
     CPUFont * f = m_managedFont->getMetricFont();
     float s = static_cast<float> (m_pointSize) / static_cast<float> (f->faceSize());
 
@@ -94,6 +121,7 @@ namespace Poetic
 
   void CPUWrapperFont::bbox(const wchar_t * str, BBox & bbox)
   {
+    //    Radiant::Guard g(Poetic::freetypeMutex());
     CPUFont * f = m_managedFont->getMetricFont();
     float s = static_cast<float> (m_pointSize) / static_cast<float> (f->faceSize());
 

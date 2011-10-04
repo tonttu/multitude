@@ -15,6 +15,7 @@
 #ifndef POETIC_GLYPH_HPP
 #define POETIC_GLYPH_HPP
 
+#include "Export.hpp"
 #include "BBox.hpp"
 
 #include <Nimble/Vector2.hpp>
@@ -25,7 +26,7 @@ namespace Poetic
 {
   /// The base class for Glyphs.
   /// Glyph provides an interface between FreeType glyphs and our own.
-  class Glyph
+  class POETIC_API Glyph
   {
     public:
       /// Constructs a new glyph

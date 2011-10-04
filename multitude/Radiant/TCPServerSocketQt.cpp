@@ -76,7 +76,7 @@ namespace Radiant
 
     if(!r)
       error("TCPServerSocket::open # %s:%d (%s)", h, port,
-	    m_d->errorString().toStdString().c_str());
+	    m_d->errorString().toUtf8().data());
 
     m_d->setMaxPendingConnections(maxconnections);
 
@@ -111,7 +111,7 @@ namespace Radiant
 
     if(!qtcp->waitForConnected()) {
       error("TCPServerSocket::accept # Could not connect %s",
-	    qtcp->errorString().toStdString().c_str());
+	    qtcp->errorString().toUtf8().data());
       delete tcp;
       return 0;
     }

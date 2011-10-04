@@ -1,17 +1,35 @@
+/* COPYRIGHT
+ *
+ * This file is part of Valuable.
+ *
+ * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
+ *
+ * See file "Valuable.hpp" for authors and more details.
+ *
+ * This file is licensed under GNU Lesser General Public
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
+ * from the GNU organization (www.gnu.org).
+ * 
+ */
+
 #ifndef VALUABLE_SERIALIZER_HPP
 #define VALUABLE_SERIALIZER_HPP
 
 #include "DOMElement.hpp"
 #include "DOMDocument.hpp"
-#include "ValueObject.hpp"
+#include "AttributeObject.hpp"
 #include "XMLArchive.hpp"
 
 #include <Radiant/StringUtils.hpp>
+#include <Radiant/Trace.hpp>
 
 #include <typeinfo>
 
 namespace Valuable
 {
+  class Serializable;
+
   /// XML Serializer namespace that has handles the (de)serialize dispatching
   /** Correct way to save/load object state to/from XML is to use static
       serialize/deserialize methods.
@@ -19,24 +37,24 @@ namespace Valuable
   namespace Serializer
   {
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+    /// @cond
+
     /// helper structs and enum for template specializations
-    /** Boost & TR1 have is_base_of & similar template hacks that basically do this */
+    /// Boost & TR1 have is_base_of & similar template hacks that basically do this
     namespace Type
     {
       /// Every object is one of these types, see Serializer::Trait
       enum { pair = 1, container = 2, serializable = 3, smart_ptr = 4, other = 5 };
       // All structs have same _ element with different size, so we can use
       // sizeof operator to make decisions in templates
-      /// @cond
       struct pair_trait { char _[1]; };
       struct container_trait { char _[2]; };
       struct serializable_trait { char _[3]; };
       struct smart_ptr_trait { char _[4]; };
       struct default_trait { char _[5]; };
-      /// @endcond
     }
-#endif
+
+    /// @endcond
 
     /// Removes const from type: remove_const<const Foo>::Type == Foo
     /// Works also with non-const types, remove_const<Foo>::Type == Foo
@@ -54,7 +72,7 @@ namespace Valuable
     /// Trait class for compile time separation of different kinds of serializable objects
     /** \code
         Trait<int>::type == Type::other
-        Trait<ValueInt>::type == Type::serializable
+        Trait<AttributeInt>::type == Type::serializable
         Trait<std::list<int> >::type == Type::container
         Trait<std::pair<int, int> >::type == Type::pair
         Trait<Radiant::IntrusivePtr<T> >::type == Type::smart_ptr
@@ -83,9 +101,9 @@ namespace Valuable
 
     /// @cond
 
-    /// FactoryInfo<T>::have_create is true, if there is T* T::create(ArchiveElement &)
+    /// FactoryInfo<T>::have_create is true, if there is T* T::create(const ArchiveElement &)
     template <typename T> struct FactoryInfo {
-      typedef T * (*Func)(ArchiveElement &);
+      typedef T * (*Func)(const ArchiveElement &);
       //typedef Radiant::IntrusivePtr<T> (*Func2)(ArchiveElement &);
       template <Func> struct Test {};
       //template <Func2> struct Test2 {};
@@ -95,7 +113,7 @@ namespace Valuable
       static const bool have_create = sizeof(test<T>(0)) == sizeof(char);
     };
 
-    /// Creator<T>::func() will return a pointer to a function of type T * (*)(ArchiveElement &)
+    /// Creator<T>::func() will return a pointer to a function of type T * (*)(const ArchiveElement &)
     /// that can create and deserialize instances of T. If there is a static method T::create
     /// that is correct type, then it is used. Otherwise we have a default implementation that
     /// just calls default constuctor and deserialize(element).
@@ -104,7 +122,7 @@ namespace Valuable
     template <typename T, bool have_create = FactoryInfo<T>::have_create> struct Creator
     {
       inline static typename FactoryInfo<T>::Func func() { return &create; }
-      inline static T * create(ArchiveElement & element)
+      inline static T * create(const ArchiveElement & element)
       {
         T * t = new T();
         t->deserialize(element);
@@ -120,18 +138,27 @@ namespace Valuable
     /// @endcond
 
     /// Serializes object t to new element that is added to the archive.
+    /// @param archive The serializer archive that is used to create the new
+    ///                element and maintains the serialization state and options.
+    /// @param t Object to be serialized
+    /// @return The new serialized element.
     template <typename T>
-    ArchiveElement & serialize(Archive & archive, T t);
+    ArchiveElement serialize(Archive & archive, const T & t);
 
     /// Deserializes an element. If deserialization fails or the template type
     /// is not compatible with the data in the element, an object of T created
     /// by its default constructor or NULL is returned.
+    /// @param element Serialized element that holds the data that should be deserialized.
+    /// @return Deserialized type
     template <typename T>
-    typename remove_const<T>::Type deserialize(ArchiveElement & element);
+    typename remove_const<T>::Type deserialize(const ArchiveElement & element);
 
-    /// Compatibility function that deserializes DOMElement. Use deserialize(ArchiveElement&) instead.
+    /// Compatibility function that deserializes DOMElement.
+    /// Use deserialize(const ArchiveElement&) instead.
+    /// @param element XML element that is deserialized
+    /// @return Deserialized type
     template <typename T>
-    typename remove_const<T>::Type deserializeXML(DOMElement & element);
+    typename remove_const<T>::Type deserializeXML(const DOMElement & element);
 
     /// @cond
 
@@ -140,33 +167,51 @@ namespace Valuable
     template <typename T, int type_id = Trait<T>::type>
     struct Impl
     {
-      inline static ArchiveElement & serialize(Archive &archive, T & t)
+      inline static ArchiveElement serialize(Archive &archive, const T & t)
       {
-        ArchiveElement & elem = archive.createElement(typeid(t).name());
+        ArchiveElement elem = archive.createElement(typeid(t).name());
         elem.set(Radiant::StringUtils::stringify(t));
         return elem;
       }
 
-      inline static typename remove_const<T>::Type deserialize(ArchiveElement & element)
+      inline static typename remove_const<T>::Type deserialize(const ArchiveElement & element)
       {
-        std::istringstream is(element.get());
+        /// @todo should use something else than stringstream
+        std::istringstream is(element.get().toUtf8().data());
         typename remove_const<T>::Type t;
         is >> t;
         return t;
       }
     };
 
+    /// Template specialization for QString.
+    template < >
+    struct Impl<QString>
+    {
+      inline static ArchiveElement serialize(Archive &archive, const QString & t)
+      {
+        ArchiveElement elem = archive.createElement(typeid(t).name());
+        elem.set(t);
+        return elem;
+      }
+
+      inline static QString deserialize(const ArchiveElement & element)
+      {
+        return element.get();
+      }
+    };
+
     template <typename T>
     struct Impl<T*, Type::other>
     {
-      inline static ArchiveElement & serialize(Archive & archive, T * t)
+      inline static ArchiveElement serialize(Archive & archive, const T * t)
       {
-        ArchiveElement & elem = archive.createElement(typeid(*t).name());
+        ArchiveElement elem = archive.createElement(typeid(*t).name());
         elem.set(Radiant::StringUtils::stringify(*t));
         return elem;
       }
 
-      inline static T * deserialize(ArchiveElement & element)
+      inline static T * deserialize(const ArchiveElement & element)
       {
         typedef typename remove_const<T>::Type T2;
         std::istringstream is(element.get());
@@ -179,12 +224,12 @@ namespace Valuable
     template <typename T>
     struct Impl<T, Type::smart_ptr>
     {
-      inline static ArchiveElement & serialize(Archive & archive, T & t)
+      inline static ArchiveElement serialize(Archive & archive, const T & t)
       {
         return Serializer::serialize(archive, t.get());
       }
 
-      inline static typename remove_const<T>::Type deserialize(ArchiveElement & element)
+      inline static typename remove_const<T>::Type deserialize(const ArchiveElement & element)
       {
         return T(Serializer::deserialize<typename T::element_type*>(element));
       }
@@ -193,12 +238,12 @@ namespace Valuable
     template <typename T>
     struct Impl<T, Type::serializable>
     {
-      inline static ArchiveElement & serialize(Archive & doc, T & t)
+      inline static ArchiveElement serialize(Archive & doc, const T & t)
       {
         return t.serialize(doc);
       }
 
-      inline static T deserialize(ArchiveElement & element)
+      inline static T deserialize(const ArchiveElement & element)
       {
         T t;
         t.deserialize(element);
@@ -209,12 +254,12 @@ namespace Valuable
     template <typename T>
     struct Impl<T*, Type::serializable>
     {
-      inline static ArchiveElement & serialize(Archive & archive, T * t)
+      inline static ArchiveElement serialize(Archive & archive, const T * t)
       {
         return t->serialize(archive);
       }
 
-      inline static T * deserialize(ArchiveElement & element)
+      inline static T * deserialize(const ArchiveElement & element)
       {
         return Creator<T>::func()(element);
       }
@@ -223,22 +268,22 @@ namespace Valuable
     template <typename T>
     struct Impl<T, Type::pair>
     {
-      inline static ArchiveElement & serialize(Archive & archive, T & pair)
+      inline static ArchiveElement serialize(Archive & archive, const T & pair)
       {
-        ArchiveElement & elem = archive.createElement("pair");
+        ArchiveElement elem = archive.createElement("pair");
         elem.add(Serializer::serialize(archive, pair.first));
         elem.add(Serializer::serialize(archive, pair.second));
         return elem;
       }
 
-      inline static T deserialize(ArchiveElement & element)
+      inline static T deserialize(const ArchiveElement & element)
       {
         typedef typename T::first_type A;
         typedef typename T::second_type B;
 
-        ArchiveElement::Iterator & it = element.children();
-        ArchiveElement & a = *it++;
-        ArchiveElement & b = *it;
+        ArchiveElement::Iterator it = element.children();
+        ArchiveElement a = *it;
+        ArchiveElement b = *(++it);
 
         if (!it || ++it) {
           Radiant::error("pair size is not 2");
@@ -250,53 +295,68 @@ namespace Valuable
       }
     };
 
-    /// @endcond
-
     template <typename T>
-    inline ArchiveElement & serialize(Archive & archive, T t)
+    inline ArchiveElement serialize(Archive & archive, const T & t)
     {
       return Impl<T>::serialize(archive, t);
     }
 
     template <typename T>
-    inline typename remove_const<T>::Type deserialize(ArchiveElement & element)
+    inline ArchiveElement serialize(Archive & archive, const T * t)
+    {
+      return Impl<T*>::serialize(archive, t);
+    }
+
+    template <typename T>
+    inline typename remove_const<T>::Type deserialize(const ArchiveElement & element)
     {
       return Impl<T>::deserialize(element);
     }
 
     template <typename T>
-    inline typename remove_const<T>::Type deserializeXML(DOMElement & element)
+    inline typename remove_const<T>::Type deserializeXML(const DOMElement & element)
     {
       XMLArchiveElement e(element);
       return deserialize<T>(e);
     }
+    /// @endcond
 
     /// Serialize object to a XML file. Example usage:
+    /// @code
     /// Serializer::serializeXML("widget.xml", widget, SerializationOptions::ONLY_CHANGED);
+    /// @endcode
+    /// @param filename output xml filename
+    /// @param t Object to be serialized
+    /// @param opts Bitmask of SerializationOptions::Options
+    /// @return True on success
     template <typename T>
-    inline bool serializeXML(const std::string & filename, T t,
-                            SerializationOptions::Options opts = SerializationOptions::DEFAULTS)
+    inline bool serializeXML(const QString & filename, const T & t,
+                             unsigned int opts = SerializationOptions::DEFAULTS)
     {
       XMLArchive archive(opts);
-      ArchiveElement & e = serialize(archive, t);
+      ArchiveElement e = serialize<T>(archive, t);
       if(e.isNull()) {
         return false;
       }
       archive.setRoot(e);
-      return archive.writeToFile(filename.c_str());
+      return archive.writeToFile(filename.toUtf8().data());
     }
 
     /// Deserialize object from a XML file. Example usage:
+    /// @code
     /// Widget * widget = Serializer::deserializeXML<Widget*>("widget.xml");
+    /// @endcode
+    /// @param filename Name of the XML file
+    /// @return Serialized object
     template <typename T>
-    inline T deserializeXML(const std::string & filename)
+    inline T deserializeXML(const QString & filename)
     {
       XMLArchive archive;
 
-      if(!archive.readFromFile(filename.c_str()))
+      if(!archive.readFromFile(filename.toUtf8().data()))
         return T();
 
-      ArchiveElement & e = archive.root();
+      ArchiveElement e = archive.root();
       return deserialize<T>(e);
     }
   }

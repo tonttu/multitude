@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include <Luminous/BGThread.hpp>
@@ -20,6 +20,7 @@
 #include <Radiant/FileUtils.hpp>
 #include <Radiant/Sleep.hpp>
 #include <Radiant/Trace.hpp>
+#include <Radiant/StringUtils.hpp>
 
 #include <typeinfo>
 #include <cassert>
@@ -28,24 +29,38 @@
 namespace Luminous
 {
 
-  BGThread * BGThread::m_instance = 0;
-
-  BGThread::BGThread() : m_idle(0)
+  // Helper to get around the fact that Task destructor is protected.
+  class TaskDeleter
   {
-    if(m_instance == 0)
-      m_instance = this;
+  public:
+    void operator()(Task* p)
+    {
+      delete p;
+    }
+  };
+
+  BGThread::BGThread()
+    : m_idle(0)
+  {
   }
 
   BGThread::~BGThread()
   {
-    if(m_instance == this)
-      m_instance = 0;
+    Radiant::info("Waiting for all background threads to finish...");
     stop();
   }
 
+  /// @todo should this be deprecated?
   void BGThread::addTask(Task * task)
   {
+    // Have to use custom deleter because Task destructor is protected
+    addTask(std::shared_ptr<Task>(task, TaskDeleter()));
+  }
+
+  void BGThread::addTask(std::shared_ptr<Task> task)
+  {
     assert(task);
+    if(task->m_host == this) return;
     task->m_host = this;
 
     Radiant::Guard g(m_mutexWait);
@@ -53,7 +68,7 @@ namespace Luminous
     wakeThread();
   }
 
-  bool BGThread::removeTask(Task * task)
+  bool BGThread::removeTask(std::shared_ptr<Task> task)
   {
     if(task->m_host != this)
       return false;
@@ -65,6 +80,7 @@ namespace Luminous
 
     container::iterator it = findTask(task);
     if(it != m_taskQueue.end()) {
+      task->m_host = 0;
       m_taskQueue.erase(it);
       return true;
     }
@@ -73,15 +89,36 @@ namespace Luminous
     return false;
   }
 
-  void BGThread::reschedule(Task * task)
+  void BGThread::reschedule(std::shared_ptr<Task> task)
   {
     Radiant::Guard g(m_mutexWait);
     if(m_reserved.find(task) != m_reserved.end()) {
       m_wait.wakeAll();
-    } else wakeThread();
+    } else {
+      wakeThread();
+    }
   }
 
-  void BGThread::setPriority(Task * task, Priority p)
+  void BGThread::reschedule(std::shared_ptr<Task> task, Priority p)
+  {
+    Radiant::Guard g(m_mutexWait);
+    if(m_reserved.find(task) != m_reserved.end()) {
+      task->m_priority = p;
+      m_wait.wakeAll();
+    } else {
+      if (task->m_priority != p) {
+        container::iterator it = findTask(task);
+        task->m_priority = p;
+        if(it != m_taskQueue.end()) {
+          m_taskQueue.erase(it);
+         m_taskQueue.insert(contained(task->priority(), task));
+        }
+      }
+      wakeThread();
+    }
+  }
+
+  void BGThread::setPriority(std::shared_ptr<Task> task, Priority p)
   {
     Radiant::Guard g(m_mutexWait);
 
@@ -98,22 +135,31 @@ namespace Luminous
     }
   }
 
-   BGThread * BGThread::instance()
-   {
-     if(!m_instance) {
-       m_instance = new BGThread();
-       m_instance->run();
-     }
-     else if(!m_instance->isRunning())
-       m_instance->run();
-
-     return m_instance;
-   }
-
   unsigned BGThread::taskCount()
   {
     Radiant::Guard guard(m_mutexWait);
     return (unsigned) m_taskQueue.size();
+  }
+
+  unsigned int BGThread::runningTasks() const
+  {
+    return m_runningTasks;
+  }
+
+  unsigned int BGThread::overdueTasks() const
+  {
+    Radiant::Guard guard(m_mutexWait);
+
+    const Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
+    unsigned int counter = 0;
+
+    for(container::const_iterator it = m_taskQueue.begin(), end = m_taskQueue.end();
+        it != end; ++it) {
+      Radiant::TimeStamp tmp = it->second->scheduled() - now;
+      if(tmp <= 0) ++counter;
+    }
+
+    return counter;
   }
 
   void BGThread::dumpInfo(FILE * f, int indent)
@@ -125,12 +171,11 @@ namespace Luminous
 
     for(container::iterator it = m_taskQueue.begin(); it != m_taskQueue.end(); it++) {
       Radiant::FileUtils::indent(f, indent);
-      Task * t = it->second;
-      fprintf(f, "TASK %s %p\n", typeid(*t).name(), t);
+      std::shared_ptr<Task> t = it->second;
+      fprintf(f, "TASK %s %p\n", Radiant::StringUtils::demangle(typeid(*t).name()).toUtf8().data(), t.get());
       Radiant::FileUtils::indent(f, indent + 1);
       fprintf(f, "PRIORITY = %d UNTIL = %.3f\n", (int) t->priority(),
               (float) -t->scheduled().sinceSecondsD());
-
     }
   }
 
@@ -138,7 +183,7 @@ namespace Luminous
   {
     while(running()) {
       // Pick a task to run
-      Task * task = pickNextTask();
+      std::shared_ptr<Task> task = pickNextTask();
 
       if(!task)
         break;
@@ -151,13 +196,16 @@ namespace Luminous
         task->m_state = Task::RUNNING;
       }
 
-      if(task->state() != Task::DONE)
+      if(task->state() != Task::DONE) {
+        m_runningTasks.ref();
         task->doTask();
+        m_runningTasks.deref();
+      }
 
       // Did the task complete?
       if(task->state() == Task::DONE) {
         task->finished();
-        delete task;
+        task->m_host = 0;
       } else {
         // If we are still running, push the task to the back of the given
         // priority range so that other tasks with the same priority will be
@@ -168,7 +216,7 @@ namespace Luminous
     }
   }
 
-  Task * BGThread::pickNextTask()
+  std::shared_ptr<Task> BGThread::pickNextTask()
   {
     while(running()) {
       Radiant::TimeStamp wait = std::numeric_limits<Radiant::TimeStamp::type>::max();
@@ -179,7 +227,7 @@ namespace Luminous
       const Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
 
       for(container::iterator it = m_taskQueue.begin(); it != m_taskQueue.end(); it++) {
-        Task * task = it->second;
+        std::shared_ptr<Task> task = it->second;
         Radiant::TimeStamp next = task->scheduled() - now;
 
         // Should the task be run now?
@@ -197,16 +245,16 @@ namespace Luminous
         m_idleWait.wait(m_mutexWait);
         --m_idle;
       } else {
-        Task * task = nextTask->second;
+        std::shared_ptr<Task> task = nextTask->second;
         m_reserved.insert(task);
         m_wait.wait(m_mutexWait, int(wait.secondsD() * 1000.0));
         m_reserved.erase(task);
       }
     }
-    return 0;
+    return std::shared_ptr<Task>();
   }
 
-  BGThread::container::iterator BGThread::findTask(Task * task)
+  BGThread::container::iterator BGThread::findTask(std::shared_ptr<Task> task)
   {
     // Try optimized search first, assume that the priority hasn't changed
     std::pair<container::iterator, container::iterator> range = m_taskQueue.equal_range(task->priority());
@@ -244,3 +292,5 @@ namespace Luminous
     m_idleWait.wakeAll();
   }
 }
+
+DEFINE_SINGLETON(Luminous::BGThread);

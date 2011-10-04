@@ -16,6 +16,8 @@
 #include "Trace.hpp"
 #include "Mutex.hpp"
 #include "TimeStamp.hpp"
+#include "Platform.hpp"
+#include "Thread.hpp"
 
 #include <cassert>
 #include <cstdio>
@@ -23,15 +25,31 @@
 #include <cstring>
 #include <cstdlib>
 
-#include <string>
+#include <QString>
+#include <set>
+#include <ctime>
+
+#ifndef RADIANT_WINDOWS
+#include <unistd.h> // for istty
+#else
+#define WIN32_MEAN_AND_LEAN
+#define NOMINMAX
+#include <windows.h>
+#endif
+
 
 namespace Radiant {
 
-  static Radiant::MutexStatic g_mutex;
+  static Radiant::Mutex g_mutex;
 
   static bool g_enableVerboseOutput = false;
+  static bool g_enableDuplicateFilter = false;
+  static std::string g_lastLogLine = "";
+  static bool g_forceColors = false;
+  static bool g_enableThreadId = false;
+  static std::set<std::string> g_verboseModules;
 
-  std::string g_appname;
+  QString g_appname;
 
   static FILE * __outfile = 0;
 
@@ -43,9 +61,38 @@ namespace Radiant {
     "[FATAL] "
   };
 
-  void enableVerboseOutput(bool enable)
+  void enableDuplicateFilter(bool enable)
   {
-    g_enableVerboseOutput = enable;
+    g_enableDuplicateFilter = enable;
+  }
+
+  bool enabledDuplicateFilter()
+  {
+    return g_enableDuplicateFilter;
+  }
+
+  void enableThreadId(bool enable)
+  {
+    g_enableThreadId = enable;
+  }
+
+  bool enabledThreadId()
+  {
+    return g_enableThreadId;
+  }
+
+  void enableVerboseOutput(bool enable, const char * module)
+  {
+
+    if (module) {
+      if (enable) {
+        g_verboseModules.insert(std::string(module));
+      } else {
+        g_verboseModules.erase(module);
+      }
+    } else {
+      g_enableVerboseOutput = enable;
+    }
   }
 
   bool enabledVerboseOutput()
@@ -53,40 +100,138 @@ namespace Radiant {
     return g_enableVerboseOutput;
   }
 
-  static void g_output(Severity s, const char * msg)
+  void forceColors(bool enable)
   {
+    g_forceColors = enable;
+  }
+
+  static void g_output(Severity s, const char * module, const char * msg, va_list& args)
+  {
+    static bool stderr_is_tty = false, stdout_is_tty = false;
+
+#ifndef RADIANT_WINDOWS
+    // this doesn't need mutex, it doesn't matter if this is ran
+    // in two different threads at the same time
+    static bool once = false;
+    if (!once) {
+      const char* term = getenv("TERM");
+      if(term && term != std::string("dumb")) {
+        stderr_is_tty = isatty(2);
+        stdout_is_tty = isatty(1);
+      }
+      once = true;
+    }
+#endif
+
     FILE * out = (s > WARNING) ? stderr : stdout;
 
     if(__outfile)
       out = __outfile;
 
+    bool use_colors = g_forceColors || (out == stderr && stderr_is_tty) ||
+        (out == stdout && stdout_is_tty);
+
+    const char * timestamp_color = "";
+    const char * color = "";
+    const char * colors_end = "";
+
+    if(use_colors) {
+      if(s == WARNING) {
+        color = "\033[1;33m";
+      } else if(s > WARNING) {
+        color = "\033[1;31m";
+      } else if(s == DEBUG) {
+        color = "\033[35m";
+      }
+      timestamp_color = "\033[1;30m";
+      colors_end = "\033[0m";
+    }
+
+    char storage[1024];
+    char * buffer = storage;
+    int size = sizeof(storage), ret = 0;
+
+    if(g_enableThreadId) {
+      static RADIANT_TLS(int) t_id(-1);
+      int& id = t_id;
+      static int s_id = 0;
+      if(id < 0) {
+        Guard lock(g_mutex);
+        id = s_id++;
+      }
+      ret = snprintf(buffer, size, "%3d ", id);
+      if(ret > 0) size -= ret, buffer += ret;
+    }
+
+    if(g_appname.isEmpty()) {
+      if(module) {
+        ret = snprintf(buffer, size, "%s> %s%s", module, color, prefixes[s]);
+      } else {
+        ret = snprintf(buffer, size, "%s%s", color, prefixes[s]);
+      }
+    } else {
+      if (module) {
+        ret = snprintf(buffer, size, "%s: %s> %s%s", g_appname.toUtf8().data(), module, color, prefixes[s]);
+      } else {
+        ret = snprintf(buffer, size, "%s: %s%s", g_appname.toUtf8().data(), color, prefixes[s]);
+      }
+    }
+    if(ret > 0) size -= ret, buffer += ret;
+
+    vsnprintf(buffer, size, msg, args);
+
     Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
 
-    g_mutex.lock();
-    if(g_appname.empty())
-      fprintf(out, "[%s] %s%s\n", now.asString().c_str(), prefixes[s], msg);
-    else
-      fprintf(out, "[%s] %s: %s%s\n", now.asString().c_str(), g_appname.c_str(), prefixes[s], msg);
+    {
+      Guard lock(g_mutex);
+
+      // Skip duplicates
+      if(enabledDuplicateFilter()) {
+        std::string tmp(storage);
+        if(g_lastLogLine == tmp)
+          return;
+
+        g_lastLogLine = tmp;
+      }
+
+      time_t t = now.value() >> 24;
+      /// localtime is not thread-safe
+      struct tm * ts = localtime(&t);
+
+      fprintf(out, "%s[%04d-%02d-%02d %02d:%02d:%02d.%03d]%s %s%s\n", timestamp_color,
+              ts->tm_year+1900, ts->tm_mon+1, ts->tm_mday,
+              ts->tm_hour, ts->tm_min, ts->tm_sec,
+              int(now.subSecondsUS()) / 1000, colors_end, storage,
+              colors_end);
+
+#ifdef _WIN32
+    // Log to the Windows debug-console as well
+    char logmsg[256];
+    vsnprintf(logmsg, 256, msg, args);
+
+    char threadId[16];
+    _snprintf(threadId, 16, "[thr:%d] ", GetCurrentThreadId());
+  
+    OutputDebugStringA(threadId);
+    OutputDebugStringA(logmsg);
+    OutputDebugStringA("\n");
+#endif
+    }
     fflush(out);
-    g_mutex.unlock();
   }
 
   void trace(Severity s, const char * msg, ...)
   {
     if(g_enableVerboseOutput || s > DEBUG) {
 
-
-      char buf[4096];
       va_list args;
-
       va_start(args, msg);
-      vsnprintf(buf, 4096, msg, args);
+      g_output(s, 0, msg, args);
       va_end(args);
-
-      g_output(s, buf);
 
       if(s >= FATAL) {
         exit(0);
+        _exit(0);
         // Sometimes "exit" is not enough, this is guaranteed to work
         int * bad = 0;
         *bad = 123456;
@@ -94,55 +239,71 @@ namespace Radiant {
     }
   }
 
+  void traceMsg(Severity s, const char * msg)
+  {
+    trace(s, "%s", msg);
+  }
+
+  void trace(const char * module, Severity s, const char * msg, ...)
+  {
+    if (s > DEBUG || (g_enableVerboseOutput || (module && g_verboseModules.count(module) > 0))) {
+      va_list args;
+      va_start(args, msg);
+      g_output(s, module, msg, args);
+      va_end(args);
+
+      if(s >= FATAL) {
+        exit(0);
+        _exit(0);
+        // Sometimes "exit" is not enough, this is guaranteed to work
+        int * bad = 0;
+        *bad = 123456;
+      }
+    }
+  }
+
+
   void debug(const char * msg, ...)
   {
     if(!g_enableVerboseOutput)
       return;
 
-    char buf[4096];
     va_list args;
-
     va_start(args, msg);
-    vsnprintf(buf, 4096, msg, args);
+    g_output(DEBUG, 0, msg, args);
     va_end(args);
-
-    g_output(DEBUG, buf);
   }
 
   void info(const char * msg, ...)
   {
-    char buf[4096];
     va_list args;
-
     va_start(args, msg);
-    vsnprintf(buf, 4096, msg, args);
+    g_output(INFO, 0, msg, args);
     va_end(args);
+  }
 
-    g_output(INFO, buf);
+  void warning(const char * msg, ...)
+  {
+    va_list args;
+    va_start(args, msg);
+    g_output(WARNING, 0, msg, args);
+    va_end(args);
   }
 
   void error(const char * msg, ...)
   {
-    char buf[4096];
     va_list args;
-
     va_start(args, msg);
-    vsnprintf(buf, 4096, msg, args);
+    g_output(FAILURE, 0, msg, args);
     va_end(args);
-
-    g_output(FAILURE, buf);
   }
 
   void fatal(const char * msg, ...)
   {
-    char buf[4096];
     va_list args;
-
     va_start(args, msg);
-    vsnprintf(buf, 4096, msg, args);
+    g_output(FATAL, 0, msg, args);
     va_end(args);
-
-    g_output(FATAL, buf);
 
     exit(EXIT_FAILURE);
   }

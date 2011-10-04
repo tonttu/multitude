@@ -7,10 +7,10 @@
  * See file "Applications/FireView.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "CamView.hpp"
@@ -38,11 +38,17 @@
 
 #include <cmath>
 
+namespace {
+  Radiant::Mutex s_openCameraMutex;
+
+  long unsigned s_bandwidth = 0;
+}
+
 namespace FireView {
 
-  using namespace Radiant;
+  const char * yesNo(bool v) { return v ? "yes" : "no"; }
 
-  MutexStatic __cvmutex;
+  using namespace Radiant;
 
   CamView::InputThread::InputThread()
       : m_camera(0),
@@ -52,8 +58,6 @@ namespace FireView {
       m_lastCheckFrame(0),
       m_lastCheckFps(0)
   {
-    __cvmutex.lock();
-    __cvmutex.unlock();
   }
 
   CamView::InputThread::~InputThread()
@@ -88,8 +92,7 @@ namespace FireView {
     m_lastCheckFrame = 0;
     m_lastCheckFps = 0;
 
-    if(!run())
-      return false;
+    run();
 
     while(m_state == STARTING) {
       Radiant::Sleep::sleepMs(20);
@@ -119,7 +122,6 @@ namespace FireView {
     return "unknown";
   }
 */
-  using Radiant::StringUtils::yesNo;
 
   void CamView::InputThread::childLoop()
   {
@@ -181,7 +183,7 @@ namespace FireView {
 
       // qDebug("CamView::InputThread::childLoop # Captured");
 
-      Radiant::Guard g( & m_mutex);
+      Radiant::Guard g( m_mutex);
 
       m_frame.allocateMemory(*img);
 
@@ -238,7 +240,8 @@ namespace FireView {
 
   bool CamView::InputThread::openCamera()
   {
-    Radiant::GuardStatic g(__cvmutex);
+    // Locking _before_ sleeping on purpose, since some drivers need the delay
+    Radiant::Guard g(s_openCameraMutex);
 
     Radiant::Sleep::sleepMs(200);
 
@@ -248,6 +251,7 @@ namespace FireView {
     if(!m_camera) return false;
 
     if(!m_format7) {
+      increaseBandwidth(640, 480, Radiant::asFloat(m_fps));
       ok = m_camera->open(m_euid64, 640, 480, Radiant::IMAGE_UNKNOWN, m_fps);
     }
     else {
@@ -261,7 +265,7 @@ namespace FireView {
       /* static int index = 0;
       r.low().x += index * 4;
       index++; */
-
+      increaseBandwidth(r.width(), r.height(), m_customFps);
       ok = m_camera->openFormat7(m_euid64, r, m_customFps, CamView::format7Mode());
     }
 
@@ -327,8 +331,10 @@ namespace FireView {
       debug("Disabled trigger.");
     }
 
-    m_camera->setTriggerPolarity(CamView::triggerPolarity());
-    debug("Set trigger polarity to %d", CamView::triggerPolarity());
+    if(CamView::triggerPolarity() != VideoCamera::TRIGGER_ACTIVE_UNDEFINED) {
+      m_camera->setTriggerPolarity(CamView::triggerPolarity());
+      debug("Set trigger polarity to %d", CamView::triggerPolarity());
+    }
 
     debug("Getting features");
 
@@ -338,6 +344,8 @@ namespace FireView {
       m_featureSend.resize(m_features.size());
 
       for(unsigned i = 0; i < m_features.size(); i++) {
+        m_featureSend[i] = false;
+
         Radiant::VideoCamera::CameraFeature & info = m_features[i];
         if(info.id == Radiant::VideoCamera::GAMMA &&
            info.value > ((info.max * 3 + info.min) / 4)) {
@@ -350,8 +358,11 @@ namespace FireView {
           info.value = (info.max + info.min) / 2;
           m_featureSend[i] = true;
         }
-        else
-          m_featureSend[i] = false;
+        uint32_t val;
+        if (CamView::getDefaultParameter(info.id, &val)) {
+          info.value = val;
+          m_featureSend[i] = true;
+        }
       }
 
       m_autoSend = m_featureSend;
@@ -369,17 +380,27 @@ namespace FireView {
     return true;
   }
 
+  void CamView::InputThread::increaseBandwidth(int width, int height, float fps)
+  {
+    long unsigned bandwidth = width * height * 8 * (int)fps;
+    s_bandwidth += bandwidth;
+
+    qDebug("Total bandwidth required: %lu Mbps", s_bandwidth >> 20);
+  }
+
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
   bool CamView::m_verbose = false;
-  Radiant::VideoCamera::TriggerPolarity CamView::m_triggerPolarity = Radiant::VideoCamera::TriggerPolarity(-1);
+  Radiant::VideoCamera::TriggerPolarity CamView::m_triggerPolarity =
+      Radiant::VideoCamera::TRIGGER_ACTIVE_UNDEFINED;
   int CamView::m_format7mode = 1;
 
   int CamView::m_debayer = 0;
   bool CamView::m_colorCheck = false;
 
   Nimble::Recti CamView::m_format7rect(0, 0, 2000, 1500);
+  std::map<Radiant::VideoCamera::FeatureType, uint32_t> CamView::s_defaults;
 
   static int __interval = 50;
 
@@ -437,7 +458,7 @@ namespace FireView {
     QString title;
 
     title.sprintf("%s: %s (%llx)",
-                  info.m_vendor.c_str(), info.m_model.c_str(),
+                  info.m_vendor.toUtf8().data(), info.m_model.toUtf8().data(),
                   (long long) euid64);
 
     ((QWidget *) parent())->setWindowTitle(title);
@@ -449,7 +470,7 @@ namespace FireView {
                         triggerSource, triggerMode, format7);
 
     if(ok) {
-      Radiant::Guard g( & m_thread.m_mutex);
+      Radiant::Guard g( m_thread.m_mutex);
       Radiant::VideoImage frame = m_thread.m_frame;
       move(100, 100);
       resize(frame.width(), frame.height());
@@ -553,7 +574,7 @@ namespace FireView {
 
     if(m_thread.m_frameCount && m_texFrame != m_thread.m_frameCount) {
 
-      Radiant::Guard g( & m_thread.m_mutex);
+      Radiant::Guard g( m_thread.m_mutex);
       Radiant::VideoImage frame = m_thread.m_frame;
 
       if(!m_debayer) {

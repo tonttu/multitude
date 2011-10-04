@@ -1,9 +1,24 @@
+/* COPYRIGHT
+ *
+ * This file is part of Nimble.
+ *
+ * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
+ *
+ * See file "Nimble.hpp" for authors and more details.
+ *
+ * This file is licensed under GNU Lesser General Public
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
+ * from the GNU organization (www.gnu.org).
+ * 
+ */
+
 #ifndef NIMBLE_RECTANGLE_HPP
 #define NIMBLE_RECTANGLE_HPP
 
-#include <Nimble/Export.hpp>
-#include <Nimble/Vector2.hpp>
-#include <Nimble/Matrix3.hpp>
+#include "Export.hpp"
+#include "Vector2.hpp"
+#include "Matrix3.hpp"
 
 #include <vector>
 
@@ -36,6 +51,11 @@ namespace Nimble {
       /// @return true if p is inside or on the rectangle
       bool inside(Nimble::Vector2f p) const;
 
+      /// Test if an another rectangle is fully inside this rectangle
+      /// @param r rectangle to test
+      /// @return true if r is fully inside or on the rectangle
+      bool inside(const Nimble::Rectangle & r) const;
+
       /// Test if two rectangles intersect
       /// @param r rectangle to test
       /// @return true if the rectangles intersect
@@ -64,6 +84,7 @@ namespace Nimble {
       /// input rectangles.
       /// @param a rectangle to merge
       /// @param b rectangle to merge
+      /// @return Bouding rectangle of the two input rectangles
       static Nimble::Rectangle merge(const Nimble::Rectangle & a, const Nimble::Rectangle & b);
 
       /// Transforms the rectangle with the given matrix. If the matrix is not

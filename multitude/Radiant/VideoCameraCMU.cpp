@@ -15,9 +15,13 @@
 
 // Some original source code by Juha Laitinen still may be around.
 
-#include "VideoCameraCMU.hpp"
+#include "Platform.hpp"
 
-#include <Radiant/Trace.hpp>
+#ifdef RADIANT_WIN32
+
+#include "VideoCameraCMU.hpp"
+#include "Radiant.hpp"
+
 #include <Radiant/Mutex.hpp>
 #include <Radiant/Sleep.hpp>
 #include <Radiant/Types.hpp>
@@ -36,7 +40,7 @@
 #define NUM_BUFFERS 10
 
 namespace Radiant {
-    static MutexAuto g_mutex;
+    static Mutex g_mutex;
 
     static std::map<VideoCamera::FeatureType, CAMERA_FEATURE> g_featureToCMU;
 
@@ -101,10 +105,6 @@ namespace Radiant {
   unsigned int VideoCameraCMU::size() const
   {
     return m_image.size();
-  }
-
-  void VideoCameraCMU::setWhiteBalance(float /*u_to_blue*/, float /*v_to_red*/)
-  {
   }
 
   void VideoCameraCMU::setFeature(VideoCamera::FeatureType feat, float value)
@@ -299,7 +299,7 @@ namespace Radiant {
 
   bool VideoCameraCMU::open(uint64_t euid, int, int, ImageFormat /*fmt*/, FrameRate framerate)
     {
-      Guard guard(&g_mutex);
+      Guard guard(g_mutex);
 
       m_camera = new C1394Camera();
       m_camera->RefreshCameraList();
@@ -326,7 +326,7 @@ namespace Radiant {
 
       m_image.allocateMemory(IMAGE_GRAYSCALE, 640, 480);
 
-      Radiant::debug("VideoCameraCMU::open # Camera max speed %d", m_camera->GetMaxSpeed());
+      debugRadiant("VideoCameraCMU::open # Camera max speed %d", m_camera->GetMaxSpeed());
 
     int mbps = m_camera->GetMaxSpeed();
     trace(Radiant::DEBUG, "CAMERA MAX SPEED %d", mbps);
@@ -479,3 +479,5 @@ namespace Radiant {
   }
 
 }
+
+#endif

@@ -1,35 +1,25 @@
 /* COPYRIGHT
- *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
  */
 
 #include "RenderContext.hpp"
 
+// #include "Dum"
 #include "Error.hpp"
 #include "GLContext.hpp"
 #include "Texture.hpp"
 #include "FramebufferObject.hpp"
+//#include "RenderTarget.hpp"
 
 #include "Utils.hpp"
 #include "GLSLProgramObject.hpp"
 
-#include <Radiant/FixedStr.hpp>
 #include <Radiant/Mutex.hpp>
 #include <Radiant/Thread.hpp>
 
 #include <strings.h>
 
 #define DEFAULT_RECURSION_LIMIT 8
+#define SHADER(str) #str
 
 namespace Luminous
 {
@@ -53,6 +43,9 @@ namespace Luminous
     if(size == m_tex.size())
       return;
 
+    GLint textureId = 0;
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureId);
+
     m_tex.bind();
     m_tex.setWidth(size.x);
     m_tex.setHeight(size.y);
@@ -63,6 +56,8 @@ namespace Luminous
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // <- essential on Nvidia
+
+    glBindTexture(GL_TEXTURE_2D, textureId);
   }
 
   void RenderContext::FBOPackage::attach()
@@ -219,7 +214,6 @@ namespace Luminous
 
     ~Internal()
     {
-      delete m_glContext;
     }
 
     void pushFBO(std::shared_ptr<FBOPackage> fbo)
@@ -227,9 +221,8 @@ namespace Luminous
       m_fboStack.push(fbo);
     }
 
-    std::shared_ptr<FBOPackage> popFBO(std::shared_ptr<FBOPackage> fbo)
+    std::shared_ptr<FBOPackage> popFBO()
     {
-      assert(fbo == m_fboStack.top());
       m_fboStack.pop();
 
       return m_fboStack.empty() ? std::shared_ptr<FBOPackage>() : m_fboStack.top();
@@ -265,36 +258,38 @@ namespace Luminous
         m_circle_shader->loadStrings(circ_vert_shader, circ_frag_shader);
 
         m_polyline_shader.reset(new GLSLProgramObject());
-        const char * polyline_frag = ""
-                            " varying vec2 p1;\n"\
-                            " varying vec2 p2;\n"\
-                            "varying vec2 vertexcoord;\n"\
-                            "uniform float width;\n"\
-                            "void main() {\n"\
-                            "gl_FragColor = gl_Color;\n"\
-                            "vec2 pp = p2-p1;\n"\
-                            "float t = ((vertexcoord.x-p1.x)*(p2.x-p1.x)+(vertexcoord.y-p1.y)*(p2.y-p1.y))/dot(pp,pp);\n"\
-                            "t = clamp(t, 0.0, 1.0);\n"\
-                            "vec2 point_on_line = p1+t*(p2-p1);\n"\
-                            "float dist = length(vertexcoord-point_on_line);\n"\
-                            "gl_FragColor.w *= clamp(width-dist, 0.0, 1.0);\n"\
-                            "}";
+        const char * polyline_frag = SHADER(
+            varying vec2 p1;
+            varying vec2 p2;
+            varying vec2 vertexcoord;
+            uniform float width;
+            void main() {
+              gl_FragColor = gl_Color;
+              vec2 pp = p2-p1;
+              float t = ((vertexcoord.x-p1.x)*(p2.x-p1.x)+(vertexcoord.y-p1.y)*(p2.y-p1.y))/dot(pp,pp);
+              t = clamp(t, 0.0, 1.0);
+              vec2 point_on_line = p1+t*(p2-p1);
+              float dist = length(vertexcoord-point_on_line);
+              gl_FragColor.w *= clamp(width-dist, 0.0, 1.0);
+            }
+          );
 
-        const char * polyline_vert = "\n"
-                            "attribute vec2 coord;\n"\
-                            "attribute vec2 coord2;\n"\
-                            "uniform float width;\n"\
-                            " varying vec2 p1;\n"\
-                            " varying vec2 p2;\n"\
-                            "varying vec2 vertexcoord;\n"\
-                            "void main() {\n"\
-                            "p1 = coord;\n"\
-                            "p2 = coord2;\n"\
-                            "vertexcoord = gl_Vertex.xy;\n"\
-                            "gl_Position = gl_ProjectionMatrix * gl_Vertex;\n"\
-                            "gl_ClipVertex = gl_ModelViewMatrix * gl_Vertex;\n"\
-                            "gl_FrontColor = gl_Color;\n"\
-                            "}\n";
+          const char * polyline_vert = SHADER(
+              attribute vec2 coord;
+              attribute vec2 coord2;
+              uniform float width;
+              varying vec2 p1;
+              varying vec2 p2;
+              varying vec2 vertexcoord;
+              void main() {
+                p1 = coord;
+                p2 = coord2;
+                vertexcoord = gl_Vertex.xy;
+                gl_Position = gl_ProjectionMatrix * gl_Vertex;
+                gl_ClipVertex = gl_ModelViewMatrix * gl_Vertex;
+                gl_FrontColor = gl_Color;
+              }
+            );
         m_polyline_shader->loadStrings(polyline_vert, polyline_frag);
 #endif
 
@@ -302,8 +297,8 @@ namespace Luminous
             ("/Users/tommi/cornerstone/share/MultiTouch/");
 
         GLSLProgramObject * basic =
-            GLSLProgramObject::fromFiles(locateStandardShader("basic_tex.vs").c_str(),
-                                         locateStandardShader("basic_tex.fs").c_str());
+            GLSLProgramObject::fromFiles(locateStandardShader("basic_tex.vs").toUtf8().data(),
+                                         locateStandardShader("basic_tex.fs").toUtf8().data());
         if(!basic)
           fatal("Could not load basic shader for rendering");
         m_basic_shader.reset(basic);
@@ -480,6 +475,11 @@ namespace Luminous
 
     BlendFunc m_blendFunc;
 
+    /// Viewports defined as x1,y1,x2,y2
+    typedef std::stack<Nimble::Recti> ViewportStack;
+    ViewportStack m_viewportStack;
+    //RenderTargetManager m_rtm;
+
     GLenum m_textures[MAX_TEXTURES];
     GLSLProgramObject * m_program;
   };
@@ -612,7 +612,7 @@ namespace Luminous
 
   RenderContext::~RenderContext()
   {
-    debug("Closing OpenGL context. Rendered %lu things in %lu frames, %lu things per frame",
+    debugLuminous("Closing OpenGL context. Rendered %lu things in %lu frames, %lu things per frame",
          m_data->m_renderCount, m_data->m_frameCount,
          m_data->m_renderCount / Nimble::Math::Max(m_data->m_frameCount, (unsigned long) 1));
     delete m_data;
@@ -635,9 +635,9 @@ namespace Luminous
     return m_data->m_area;
   }
 
-  std::string RenderContext::locateStandardShader(const std::string & filename)
+  QString RenderContext::locateStandardShader(const QString & filename)
   {
-    std::string pathname;
+    QString pathname;
 #ifdef LUMINOUS_OPENGL_FULL
     // pathname = "../MultiTouch/GL20Shaders/";
     pathname = "../MultiTouch/ES20Shaders/";
@@ -732,9 +732,9 @@ namespace Luminous
     m_data->m_clipStack.pop_back();
   }
 
-  const Nimble::Rectangle * RenderContext::clipRect() const
+  const std::vector<Nimble::Rectangle> & RenderContext::clipStack() const
   {
-    return m_data->m_clipStack.empty() ? 0 : &m_data->m_clipStack.back();
+    return m_data->m_clipStack;
   }
 
   bool RenderContext::isVisible(const Nimble::Rectangle & area)
@@ -743,7 +743,7 @@ namespace Luminous
     // area.center().x, area.center().y, area.size().x, area.size().y);
 
       if(m_data->m_clipStack.empty()) {
-        Radiant::debug("\tclip stack is empty");
+        debugLuminous("\tclip stack is empty");
         return true;
       } else {
 
@@ -1421,7 +1421,7 @@ namespace Luminous
 
     fbo->m_fbo.unbind();
 
-    fbo = m_data->popFBO(fbo);
+    fbo = m_data->popFBO();
 
     if(fbo) {
       fbo->attach();
@@ -1441,7 +1441,6 @@ namespace Luminous
 
   void RenderContext::setGLContext(Luminous::GLContext * ctx)
   {
-    delete m_data->m_glContext;
     m_data->m_glContext = ctx;
   }
 
@@ -1461,11 +1460,11 @@ namespace Luminous
 #endif
 
   static ResourceMap __resources;
-  static MutexStatic __mutex;
+  static Mutex __mutex;
 
   void RenderContext::setThreadContext(RenderContext * rsc)
   {
-    GuardStatic g(&__mutex);
+    Guard g(__mutex);
     TGLRes tmp;
     tmp.m_context = rsc;
 #ifndef WIN32
@@ -1477,7 +1476,7 @@ namespace Luminous
 
   RenderContext * RenderContext::getThreadContext()
   {
-    GuardStatic g(&__mutex);
+    Guard g(__mutex);
 
 #ifndef WIN32
     ResourceMap::iterator it = __resources.find(Radiant::Thread::myThreadId());
@@ -1563,6 +1562,35 @@ namespace Luminous
   Luminous::GLContext * RenderContext::glContext()
   {
     return m_data->m_glContext;
+  }
+/*
+  RenderTargetObject RenderContext::pushRenderTarget(Nimble::Vector2 size, float scale) {
+    return m_data->m_rtm.pushRenderTarget(size, scale);
+  }
+
+  Luminous::Texture2D & RenderContext::popRenderTarget(RenderTargetObject & trt) {
+    return m_data->m_rtm.popRenderTarget(trt);
+  }
+*/
+  void RenderContext::pushViewport(const Nimble::Recti &viewport)
+  {
+    m_data->m_viewportStack.push(viewport);
+    glViewport(viewport.low().x, viewport.low().y, viewport.width(), viewport.height());
+  }
+
+  void RenderContext::popViewport()
+  {
+    m_data->m_viewportStack.pop();
+
+    if(!m_data->m_viewportStack.empty()) {
+      const Nimble::Recti & viewport = currentViewport();
+      glViewport(viewport.low().x, viewport.low().y, viewport.width(), viewport.height());
+    }
+  }
+
+  const Nimble::Recti & RenderContext::currentViewport() const
+  {
+    return m_data->m_viewportStack.top();
   }
 
 }

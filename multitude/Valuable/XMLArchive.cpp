@@ -1,10 +1,23 @@
+/* COPYRIGHT
+ *
+ * This file is part of Valuable.
+ *
+ * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
+ *
+ * See file "Valuable.hpp" for authors and more details.
+ *
+ * This file is licensed under GNU Lesser General Public
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
+ * from the GNU organization (www.gnu.org).
+ * 
+ */
+
 #include "XMLArchive.hpp"
 
 namespace Valuable
 {
-  XMLArchiveElement XMLArchiveElement::s_emptyElement = DOMElement();
-
-  XMLArchiveElement::XMLIterator::XMLIterator(XMLArchiveElement & parent)
+  XMLArchiveElement::XMLIterator::XMLIterator(const XMLArchiveElement & parent)
     : m_parent(parent),
     m_nodes(parent.xml()->getChildNodes()),
     m_it(m_nodes.begin()),
@@ -23,54 +36,26 @@ namespace Valuable
     }
   }
 
-  XMLArchiveElement::XMLIterator::operator const void * ()
+  bool XMLArchiveElement::XMLIterator::isValid() const
   {
-    return m_valid ? this : 0;
+    return m_valid;
   }
 
-  ArchiveElement & XMLArchiveElement::XMLIterator::operator * ()
+  std::shared_ptr<ArchiveElementImpl> XMLArchiveElement::XMLIterator::get() const
   {
-    if (m_valid) {
-      m_elements.push_back(XMLArchiveElement(*m_it));
-      return m_elements.back();
-    }
-    return XMLArchiveElement::s_emptyElement;
+    if(!m_valid) return std::shared_ptr<ArchiveElementImpl>();
+    return std::shared_ptr<ArchiveElementImpl>(new XMLArchiveElement(*m_it));
   }
 
-  ArchiveElement * XMLArchiveElement::XMLIterator::operator -> ()
-  {
-    if (m_valid) {
-      m_elements.push_back(XMLArchiveElement(*m_it));
-      return &m_elements.back();
-    }
-    return &XMLArchiveElement::s_emptyElement;
-  }
-
-  ArchiveElement::Iterator & XMLArchiveElement::XMLIterator::operator ++ ()
+  void XMLArchiveElement::XMLIterator::next()
   {
     if (m_valid) m_valid = ++m_it != m_nodes.end();
-    return *this;
   }
 
-  ArchiveElement::Iterator & XMLArchiveElement::XMLIterator::operator ++ (int)
-  {
-    if (m_valid) {
-      m_iterators.push_back(*this);
-      m_valid = ++m_it != m_nodes.end();
-      return m_iterators.back();
-    }
-    return *this;
-  }
-
-  bool XMLArchiveElement::XMLIterator::operator == (const Iterator & other)
+  bool XMLArchiveElement::XMLIterator::operator == (const ArchiveIteratorImpl & other) const
   {
     const XMLArchiveElement::XMLIterator * it = dynamic_cast<const XMLArchiveElement::XMLIterator *>(&other);
     return it && it->m_it == m_it;
-  }
-
-  bool XMLArchiveElement::XMLIterator::operator != (const Iterator & other)
-  {
-    return !(*this == other);
   }
 
   ///////////////////////////////////////////////////////////////////////////
@@ -79,68 +64,56 @@ namespace Valuable
     : m_element(element)
   {}
 
-  XMLArchiveElement::~XMLArchiveElement()
-  {}
-
-  void XMLArchiveElement::add(ArchiveElement & element)
+  void XMLArchiveElement::add(ArchiveElementImpl & element)
   {
-    m_element.appendChild(*element.xml());
+    XMLArchiveElement * e = dynamic_cast<XMLArchiveElement*>(&element);
+    if(e) m_element.appendChild(*e->xml());
   }
 
-  ArchiveElement::Iterator & XMLArchiveElement::children()
+  ArchiveElement::Iterator XMLArchiveElement::children() const
   {
-    m_iterators.push_back(XMLIterator(*this));
-    return m_iterators.back();
+    return ArchiveElement::Iterator(std::shared_ptr<ArchiveIteratorImpl>(
+                                      new XMLIterator(*this)));
   }
 
-  void XMLArchiveElement::add(const char * name, const char * value)
+  void XMLArchiveElement::add(const QString & name, const QString & value)
   {
-    m_element.setAttribute(name, value);
+    m_element.setAttribute(name.toUtf8().data(), value.toUtf8().data());
   }
 
-  std::string XMLArchiveElement::get(const char * name) const
+  QString XMLArchiveElement::get(const QString & name) const
   {
-    return m_element.getAttribute(name);
+    return m_element.getAttribute(name.toUtf8().data());
   }
 
-  void XMLArchiveElement::set(const std::string & s)
+  void XMLArchiveElement::set(const QString & s)
   {
     m_element.setTextContent(s);
   }
 
-  void XMLArchiveElement::set(const std::wstring & s)
-  {
-    m_element.setTextContent(s);
-  }
-
-  std::string XMLArchiveElement::get() const
+  QString XMLArchiveElement::get() const
   {
     return m_element.getTextContent();
   }
 
-  std::wstring XMLArchiveElement::getW() const
-  {
-    return m_element.getTextContentW();
-  }
-
-  std::string XMLArchiveElement::name() const
+  QString XMLArchiveElement::name() const
   {
     return m_element.getTagName();
   }
 
-  bool XMLArchiveElement::isNull() const
-  {
-    return m_element.isNull();
-  }
-
-  DOMElement * XMLArchiveElement::xml()
+  const DOMElement * XMLArchiveElement::xml() const
   {
     return &m_element;
   }
 
+  ArchiveElement XMLArchiveElement::create(const DOMElement & element)
+  {
+    return std::shared_ptr<ArchiveElementImpl>(new XMLArchiveElement(element));
+  }
+
   ///////////////////////////////////////////////////////////////////////////
 
-  XMLArchive::XMLArchive(Options options)
+  XMLArchive::XMLArchive(unsigned int options)
     : Archive(options),
     m_document(DOMDocument::createDocument())
   {}
@@ -148,47 +121,36 @@ namespace Valuable
   XMLArchive::~XMLArchive()
   {}
 
-  ArchiveElement & XMLArchive::createElement(const char * name)
+  ArchiveElement XMLArchive::createElement(const QString & name)
   {
-    m_elements.push_back(XMLArchiveElement(m_document->createElement(name)));
-    return m_elements.back();
+    return std::shared_ptr<ArchiveElementImpl>(
+          new XMLArchiveElement(m_document->createElement(name)));
   }
 
-  XMLArchiveElement & XMLArchive::createElement(const DOMElement & element)
+  ArchiveElement XMLArchive::root() const
   {
-    m_elements.push_back(XMLArchiveElement(element));
-    return m_elements.back();
+    return XMLArchiveElement::create(m_document->getDocumentElement());
   }
 
-  ArchiveElement & XMLArchive::emptyElement()
+  void XMLArchive::setRoot(const ArchiveElement & element)
   {
-    return XMLArchiveElement::s_emptyElement;
-  }
-
-  ArchiveElement & XMLArchive::root()
-  {
-    m_elements.push_back(XMLArchiveElement(m_document->getDocumentElement()));
-    return m_elements.back();
-  }
-
-  void XMLArchive::setRoot(ArchiveElement & element)
-  {
+    assert(element.xml());
     m_document->appendChild(*element.xml());
   }
 
-  bool XMLArchive::writeToFile(const char * file)
+  bool XMLArchive::writeToFile(const QString & file) const
   {
-    return m_document->writeToFile(file);
+    return m_document->writeToFile(file.toUtf8().data());
   }
 
-  bool XMLArchive::writeToMem(std::vector<char> & buffer)
+  bool XMLArchive::writeToMem(QByteArray & buffer) const
   {
     return m_document->writeToMem(buffer);
   }
 
-  bool XMLArchive::readFromFile(const char * filename)
+  bool XMLArchive::readFromFile(const QString & filename)
   {
-    return m_document->readFromFile(filename);
+    return m_document->readFromFile(filename.toUtf8().data());
   }
 
   DOMDocument * XMLArchive::xml()

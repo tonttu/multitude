@@ -16,9 +16,10 @@
 #ifndef NIMBLE_VECTOR4T_HPP
 #define NIMBLE_VECTOR4T_HPP
 
-#include <Nimble/Export.hpp>
-#include <Nimble/Vector3.hpp>
+#include "Export.hpp"
+#include "Vector3.hpp"
 
+#include <limits>
 #include <iostream>
 
 namespace Nimble {
@@ -34,6 +35,9 @@ namespace Nimble {
   public:
     /// Data type of the vector
     typedef T type;
+
+    enum { Elements = 4 };
+
     /// The x-component
     T		x;
     /// The y-component
@@ -42,87 +46,112 @@ namespace Nimble {
     T		z;
     /// The w-component
     T   w;
-    Vector4T	()					       {}
+
+    inline Vector4T	() {}
+    /// Constructs a vector copying the given value to all vector values
+    /// @param xyzw Value to use to initialize all vector values
+    inline explicit Vector4T(T xyzw) : x(xyzw), y(xyzw), z(xyzw), w(xyzw) { }
     /// Constructs a vector and initializes it with the given values
-    Vector4T	(T cx, T cy, T cz, T cw)                       { x = cx;       y = cy;	     z = cz;      w =  cw; }
+    inline Vector4T (T cx, T cy, T cz, T cw) : x(cx), y(cy), z(cz), w(cw) {}
     /// Copy constructor
-    template <class S> Vector4T(const Vector4T<S>& v)	       { x = (T)v.x;   y = (T)v.y;  z = (T)v.z;  w = (T) v.w; }
+    template <class K> inline Vector4T(const Vector4T<K>& v)	       { x = (T)v.x;   y = (T)v.y;  z = (T)v.z;  w = (T) v.w; }
     /// @todo remove the conversion (make static functions)
     /// Constructs a vector from memory
     /// @param v array of four decimals
-    template <class S> Vector4T(const S * v)	               { x = (T)v[0];  y = (T)v[1]; z = (T)v[2]; w = (T) v[3]; }
-    //template <class S> Vector4T& operator=(const Vector4T<S>& v) { x = (T)v.x; y = (T)v.y; z = (T)v.z; w = (T) v.w; return *this; }
+    template <class K> inline Vector4T(const K * v)	               { x = (T)v[0];  y = (T)v[1]; z = (T)v[2]; w = (T) v[3]; }
+    //template <class K> Vector4T& operator=(const Vector4T<S>& v) { x = (T)v.x; y = (T)v.y; z = (T)v.z; w = (T) v.w; return *this; }
     /// Fills the vector with zeroes
-    Vector4T&	clear(void)                                    { x = (T)(0);  y = (T)(0); z = (T)(0); w = (T)(0); return *this;	}
+    inline Vector4T&	clear(void)                                    { x = (T)(0);  y = (T)(0); z = (T)(0); w = (T)(0); return *this;	}
+
     /// Compares if two vectors are equal
-    bool		operator==  (const Vector4T& src) const        { return (x == src.x && y == src.y && z == src.z && w == src.w);	}
+    inline bool operator==  (const Vector4T& src) const
+    {
+      static const float eps = std::numeric_limits<T>::epsilon();
+      return
+        x >= src.x - eps && x<= src.x + eps && y >= src.y - eps && y<= src.y + eps &&
+        z >= src.z - eps && z<= src.z + eps && w >= src.w - eps && w<= src.w + eps;
+    }
+
     /// Compares if two vectors differ
-    bool		operator!=  (const Vector4T& src) const        { return !(x == src.x && y == src.y && z == src.z && w == src.w); }
+    inline bool         operator!=  (const Vector4T& src) const        { return !operator==(src); }
     /// Adds two vectors
-    Vector4T&	operator+=  (const Vector4T& v)	               { x += v.x; y += v.y; z += v.z;  w += v.w; return *this; }
+    inline Vector4T&	operator+=  (const Vector4T& v)	               { x += v.x; y += v.y; z += v.z;  w += v.w; return *this; }
     /// Subtracts two vectors
-    Vector4T&	operator-=  (const Vector4T& v)                { x -= v.x; y -= v.y; z -= v.z;  w -= v.w; return *this; }
+    inline Vector4T&	operator-=  (const Vector4T& v)                { x -= v.x; y -= v.y; z -= v.z;  w -= v.w; return *this; }
     /// Multiplies a vector by scalar
-    Vector4T&	operator*=  (T s)		               { x = (x*s), y = (y*s); z = (z*s); w = (w*s); return *this; }
+    inline Vector4T&	operator*=  (T s)		               { x = (x*s), y = (y*s); z = (z*s); w = (w*s); return *this; }
     /// Divides a vector by scalar
-    Vector4T&	operator/=  (T s)		               { s = T(1)/s; x = (x*s), y = (y*s); z = (z*s); w = (w*s); return *this; }
+    inline Vector4T&	operator/=  (T s)		               { s = T(1)/s; x = (x*s), y = (y*s); z = (z*s); w = (w*s); return *this; }
     /// Checks if all components are one
-    bool		isOne	    (void) const		       { return (x == 1.0f && y == 1.0f && z == 1.0f && w == 1.0f); }
+    inline bool		isOne	    (void) const		       { return (x == 1.0f && y == 1.0f && z == 1.0f && w == 1.0f); }
     /// Checks if all components are zero
-    bool		isZero	    (void) const		       { return (x == 0.0f && y == 0.0f && z == 0.0f && w == 0.0f); }
+    inline bool		isZero	    (void) const		       { return (x == 0.0f && y == 0.0f && z == 0.0f && w == 0.0f); }
     /// Returns the length of the vector
-    double	length	    (void) const		       { return sqrt(double(x*x+y*y+z*z+w*w)); }
+    inline double	length	    (void) const		       { return sqrt(double(x*x+y*y+z*z+w*w)); }
    /// Returns the squared length of the vector
-    double	lengthSqr   (void) const		       { return x*x+y*y+z*z+w*w; }
+    inline double	lengthSqr   (void) const		       { return x*x+y*y+z*z+w*w; }
     /// Normalizes the vector to given length
-    Vector4T&	normalize   (double len = 1.0)		       { double l = length(); if (l!=0.0) *this *= T(len/l); return *this; }
-    /// Normalizes the first three components to given length
-    Vector4T&	normalize3   (double len = 1.0)		       { vector3().normalize(len); return *this; }
+    inline Vector4T&	normalize   (double len = 1.0)		       { double l = length(); if (l!=0.0) *this *= T(len/l); return *this; }
     /// Multiplies the vector component-wise
-    Vector4T&	scale		(const Vector4T& v)	       { x *= v.x; y *= v.y; z *= v.z; w *= v.w; return *this; }
+    inline Vector4T&	scale		(const Vector4T& v)	       { x *= v.x; y *= v.y; z *= v.z; w *= v.w; return *this; }
     /// Divides the vector component-wise
-    Vector4T&	descale		(const Vector4T& v)	       { x /= v.x; y /= v.y; z /= v.z; w /= v.w; return *this; }
+    inline Vector4T&	descale		(const Vector4T& v)	       { x /= v.x; y /= v.y; z /= v.z; w /= v.w; return *this; }
+
+    /// Clamps both components to the range [0,1]
+    inline Vector4T&	clampUnit	(void)						{ return clamp(T(0.0), T(1.0)); }
+    /// Clamps both components to the range [low, high]
+    inline Vector4T&	clamp (T low, T high)       { x = Math::Clamp(x, low, high); y = Math::Clamp(y, low, high); z = Math::Clamp(z, low, high); w = Math::Clamp(w, low, high); return * this; }
 
     /// Returns a vector with components reordered.
-    Vector4T    shuffle         (int i1, int i2, int i3, int i4) const { return Vector4T(get(i1), get(i2), get(i3), get(i4)); }
+    inline Vector4T    shuffle         (int i1, int i2, int i3, int i4) const { return Vector4T(get(i1), get(i2), get(i3), get(i4)); }
 
     /// Returns the ith component
-    const	T&	operator[]	(int i) const		       { return ((T*)this)[i]; }
+    inline const	T&	operator[]	(int i) const		       { return ((T*)this)[i]; }
     /// Returns the ith component
-    T&		operator[]	(int i)			       { return ((T*)this)[i]; }
+    inline T&		operator[]	(int i)			       { return ((T*)this)[i]; }
 
     /// Sets the vector to given values
-    void 	        make(T cx, T cy, T cz, T cw)                   { x = cx; y = cy; z = cz; w = cw; }
+    inline void 	        make(T cx, T cy, T cz, T cw)                   { x = cx; y = cy; z = cz; w = cw; }
 
     /// Returns a pointer to the first component
-    T *           data() { return &x; }
+    inline T *           data() { return &x; }
     /// Returns a pointer to the first component
-    const T *     data() const { return &x; }
+    inline const T *     data() const { return &x; }
 
     /// Returns the ith component
-    T&            get(int i)        { return ((T*)this)[i]; }
+    inline T&            get(int i)        { return ((T*)this)[i]; }
     /// Returns the ith component
-    const T&      get(int i) const  { return ((T*)this)[i]; }
+    inline const T&      get(int i) const  { return ((T*)this)[i]; }
 
     /// Returns the largest component
-    T             maximum() const { T q = x>y?x:y; T a = z>w?z:w; return q>a?q:a; }
+    inline T             maximum() const { T q = x>y?x:y; T a = z>w?z:w; return q>a?q:a; }
 
-    /// Cast to Vector2T
-    const Vector2T<T> & xy() const { return * (Vector2T<T> *) this; }
-    /// Cast to Vector2T
-    const Vector2T<T> & vector2() const { return * (Vector2T<T> *) this; }
-    /// Cast to Vector3T
-    Vector3T<T> & vector3() { return * (Vector3T<T> *) this; }
-    /// Returns a vector containing the first three components
-    const Vector3T<T> & vector3() const { return * (Vector3T<T> *) this; }
+    /// Returns a copy of the first two components as a Vector2
+    /// @return New vector2
+    inline Vector2T<T> vector2() const { return Vector2T<T>(x, y); }
 
-    /// Copy some data
-    template <class S>
-    void copy(const S * data) { x = data[0]; y = data[1]; z = data[2]; w = data[3]; }
-    /** Copies three elements without affecting the fourth element.
-    @param data array of three decimals */
-    template <class S>
-    void copy3(const S * data) { x = data[0]; y = data[1]; z = data[2]; }
+    /// Makes a new vector2 of two freely selected components of vector4
+    /// @param i0 Index of the first component,  vec2.x = vec4[i0], 0..3
+    /// @param i1 Index of the second component, vec2.y = vec4[i1], 0..3
+    /// @return New vector2
+    inline Vector2T<T> vector2(int i0, int i1) const
+    {
+      return Vector2T<T>(get(i0), get(i1));
+    }
+
+    /// Returns a copy of the first three components as a Vector3
+    /// @return New vector3
+    inline Vector3T<T> vector3() const { return Vector3T<T>(x, y, z); }
+
+    /// Makes a new vector3 of two freely selected components of vector4
+    /// @param i0 Index of the first component,  vec3.x = vec4[i0], 0..3
+    /// @param i1 Index of the second component, vec3.y = vec4[i1], 0..3
+    /// @param i2 Index of the third component,  vec3.z = vec4[i2], 0..3
+    /// @return New vector2
+    inline Vector3T<T> vector3(int i0, int i1, int i2) const
+    {
+      return Vector3T<T>(get(i0), get(i1), get(i2));
+    }
   };
 
   /// Add two vectors
@@ -136,7 +165,7 @@ namespace Nimble {
   /// Divide a vector by scalar
   template <class T> inline	Vector4T<T>	operator/	(const Vector4T<T>& v, const double s)		{ double r = 1.0/s; return v*r; }
   /// Returns the negation of a vector
-  template <class T> inline	Vector4T<T>	operator-	(const Vector4T<T>& v)						{ return Vector4T<T>(-v.x, -v.y, -v.z, -v.w); }   
+  template <class T> inline	Vector4T<T>	operator-	(const Vector4T<T>& v)						{ return Vector4T<T>(-v.x, -v.y, -v.z, -v.w); }
   /// Vector of four floats
   typedef Vector4T<float> Vector4;
   /// Vector of four floats
@@ -148,6 +177,15 @@ namespace Nimble {
   /// Vector of four doubles
   typedef Vector4T<double> Vector4d;
 
+
+  namespace Math {
+    /// Specialize Abs
+    template <class T>
+    inline float Abs(const Vector4T<T>& t)
+    {
+      return t.length();
+    }
+  }
 } // namespace
 
 template <class T>
@@ -222,6 +260,13 @@ inline std::istream &operator>>(std::istream &is, Nimble::Vector4T<T> &t)
         template Nimble::Vector4T<int>;
         template Nimble::Vector4T<double>;
 #   endif
+#endif
+
+#ifdef __GCCXML__
+/// These are exported to JS
+template class Nimble::Vector4T<float>;
+template class Nimble::Vector4T<int>;
+template class Nimble::Vector4T<unsigned char>;
 #endif
 
 #endif

@@ -1,207 +1,83 @@
+/* COPYRIGHT
+ *
+ * This file is part of Radiant.
+ *
+ * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
+ *
+ * See file "Radiant.hpp" for authors and more details.
+ *
+ * This file is licensed under GNU Lesser General Public
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
+ * from the GNU organization (www.gnu.org).
+ *
+ */
+
 #include "MemCheck.hpp"
-
-#ifdef MULTI_MEMCHECK
-
-#include "Mutex.hpp"
 #include "Trace.hpp"
-#include <typeinfo>
-
-#ifndef __GNUC__
-
-#include <set>
-
-#else // __GNUC__
-
-#include <execinfo.h>
-#include <cxxabi.h>
-#include <map>
-#include <strings.h>
-#include <iostream>
-#include <stdlib.h>
-
-#endif
-
 
 namespace Radiant {
-  static MutexStatic s_mutex;
-  static long s_total = 0;
-
-#ifndef __GNUC__
-
-  typedef std::set<MemCheck*> MemSet;
-  static MemSet s_set;
-
-  MemCheck::MemCheck()
+  MemChecker::MemChecker()
+    : m_allocated(0)
   {
-    Guard g(s_mutex);
-    s_set.insert(this);
-    ++s_total;
   }
 
-  MemCheck::MemCheck(const MemCheck &)
+  MemChecker::~MemChecker()
   {
-    Guard g(s_mutex);
-    s_set.insert(this);
-    ++s_total;
-  }
+#if MULTI_MEMCHECK
+    Radiant::Guard lock(m_mutex);
 
-  MemCheck & MemCheck::operator=(const MemCheck &)
-  {
-    Guard g(s_mutex);
-    s_set.insert(this);
-    ++s_total;
-
-    return *this;
-  }
-
-  MemCheck::~MemCheck()
-  {
-    Guard g(s_mutex);
-
-    MemSet::iterator it = s_set.find(this);
-    if(it == s_set.end()) {
-      std::cerr << "~MemCheck: Couldn't find object " << this << std::endl;
-    } else {
-      s_set.erase(it);
+    // Display any allocations that are still open
+    if (m_allocations.empty()) {
+      Radiant::info("Memcheck: No leaked allocations: Great!");
     }
-  }
-
-  class Checker {
-  public:
-    virtual ~Checker()
+    else
     {
-      GuardStatic g(s_mutex);
-      if(s_set.empty()) {
-        info("All %d MemCheck objects were released", s_total);
-      } else {
-        info("%d of %d MemCheck objects were not released", s_map.size(), s_total);
-        std::map<std::string, int> map;
-        for(MemSet::iterator it = s_set.begin(); it != s_set.end(); ++it)
-          ++map[typeid(**it).name()];
-        for(std::map<std::string, int>::iterator it = map.begin(); it != map.end(); ++it) {
-          error("%d %s objects were not released", it->second, it->first);
-        }
+      Radiant::error("Memcheck: Leaked %ld bytes in %ld allocation(s)", allocated(), m_allocations.size());
+
+      AllocationMap::iterator it = m_allocations.begin();
+      for (; it != m_allocations.end(); ++it) {
+        Radiant::error("Allocated %ld bytes @ %p", it->second.bytes, it->first);
+        it->second.stack.print();
       }
     }
-  };
-#else // __GNUC__
-
-  typedef std::map<MemCheck*, std::pair<void **, size_t> > MemMap;
-  static MemMap s_map;
-
-  inline void print_bt(void ** data, size_t size)
-  {
-    char ** strings = backtrace_symbols(data, size);
-
-    int status;
-    for(size_t i = 0; i < size; i++) {
-      char * a = index(strings[i], '(');
-      char * b = index(strings[i], '+');
-      char * c = index(strings[i], ')');
-
-      if(a && b && c && b > a + 1) {
-        *b = '\0';
-        char * tmp = abi::__cxa_demangle(a + 1, 0, 0, &status);
-        if(tmp) {
-          *a = '\0';
-          std::cerr << tmp << ' ' << strings[i] << std::endl;
-          free(tmp);
-        } else {
-          std::cerr << strings[i] << '+' << (b+1) << std::endl;
-        }
-      } else {
-        std::cerr << strings[i] << std::endl;
-      }
-    }
-    std::cerr << std::endl;
-    free (strings);
-  }
-
-  MemCheck::MemCheck()
-  {
-    void ** bt = new void*[50];
-    size_t size = backtrace(bt, 50);
-
-    Guard g(s_mutex);
-    s_map[this] = std::make_pair(bt, size);
-    ++s_total;
-  }
-
-  MemCheck::MemCheck(const MemCheck &)
-  {
-    void ** bt = new void*[50];
-    size_t size = backtrace(bt, 50);
-
-    Guard g(s_mutex);
-    s_map[this] = std::make_pair(bt, size);
-    ++s_total;
-  }
-
-  MemCheck & MemCheck::operator=(const MemCheck &)
-  {
-    void ** bt = new void*[50];
-    size_t size = backtrace(bt, 50);
-
-    Guard g(s_mutex);
-    s_map[this] = std::make_pair(bt, size);
-    ++s_total;
-
-    return *this;
-  }
-
-  MemCheck::~MemCheck()
-  {
-    Guard g(s_mutex);
-    MemMap::iterator it = s_map.find(this);
-    if(it == s_map.end()) {
-      error("~MemCheck: Couldn't find object %p", this);
-      void ** bt = new void*[50];
-      size_t size = backtrace(bt, 50);
-      print_bt(bt, size);
-      delete[] bt;
-    } else {
-      delete[] it->second.first;
-      s_map.erase(it);
-    }
-  }
-
-  class Checker {
-  public:
-    virtual ~Checker()
-    {
-      GuardStatic g(s_mutex);
-      if(s_map.empty()) {
-        info("All %ld MemCheck objects were released", s_total);
-      } else {
-        info("%ld of %ld MemCheck objects were not released",
-             (long) s_map.size(), (long) s_total);
-        std::multimap<int, MemMap::value_type> sorted;
-        for(MemMap::iterator it = s_map.begin(); it != s_map.end(); ++it)
-          sorted.insert(std::pair<int, MemMap::value_type>(it->second.second, *it));
-
-        int count = 0;
-        for(std::multimap<int, MemMap::value_type>::iterator it2 = sorted.begin(); it2 != sorted.end(); ++it2, ++count) {
-          size_t size = it2->first;
-          MemCheck * obj = it2->second.first;
-          void ** data = it2->second.second.first;
-
-          int status;
-          char * tmp = abi::__cxa_demangle(typeid(*obj).name(), 0, 0, &status);
-          error("MemCheck object %s was not released", tmp ? tmp : typeid(*obj).name());
-          free(tmp);
-
-          print_bt(data, size);
-          if(count == 500) {
-            error(".. limiting error printing to 500 errors (there are %ld errors)",
-                  (long) s_map.size());
-            break;
-          }
-        }
-      }
-    }
-  };
 #endif
+  }
 
-  static Checker s_checker;
+  void * MemChecker::malloc(size_t s)
+  {
+    void * ptr = ::malloc(s);
+
+    Radiant::Guard lock(m_mutex);
+    m_allocations[ptr] = Allocation(s);
+    m_allocated += s;
+    return ptr;
+  }
+
+    void MemChecker::free(void * ptr)
+  {
+    // Don't do anything with NULL pointers
+    if (ptr == NULL)
+      return;
+
+    Radiant::Guard lock(m_mutex);
+    // Find the allocation and free it
+    AllocationMap::iterator it = m_allocations.find(ptr);
+    if (it != m_allocations.end()) {
+      m_allocated -= it->second.bytes;
+
+      m_allocations.erase(it);
+      ::free(ptr);
+    } else {
+      Radiant::error("Tried to free invalid pointer %p! (maybe tried to mtfree a normal malloc?)", ptr);
+
+      // Free anyway to avoid leaks
+      ::free(ptr);
+
+      // Shouldn't ever happen, so assert
+      assert(false);
+    }
+  }
 }
-#endif // MULTI_MEMCHECK
+
+DEFINE_SINGLETON(Radiant::MemChecker);

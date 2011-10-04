@@ -35,12 +35,13 @@ namespace Poetic
   
   GPUTextureFont * CPUBitmapFont::createGPUFont()
   {
+    if(!m_face->freetype()) return 0;
     return new GPUTextureFont(this);
   }
 
   Glyph * CPUBitmapFont::makeGlyph(unsigned int glyphIndex)
   {
-    Radiant::Guard g( & m_mutex);
+    Radiant::Guard g( m_mutex);
     
     assert(m_face != 0);
 

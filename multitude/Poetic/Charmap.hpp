@@ -15,26 +15,22 @@
 #ifndef POETIC_CHARMAP_HPP
 #define POETIC_CHARMAP_HPP
 
+#include "Export.hpp"
 #include "Face.hpp"
+
 #include <Radiant/Platform.hpp>
 
-
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+/// @cond
 
 // try to detect c++0x
 #if defined(RADIANT_CPP0X)
   #include <unordered_map>
+#elif defined(__GCCXML__)
+  #include <generator/gccxml_tr1.hpp>
 #else
-  #if defined(__GCCXML__)
-#include <map>
-    namespace tr1 {
-      template <typename A, typename B>
-      class unordered_map : public std::map<A, B>
-      {};
-    }
-  #elif defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
+  #if defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
     #include <tr1/unordered_map>
-  #elif defined(RADIANT_WIN32) && defined(_HAS_TR1)
+  #elif defined(RADIANT_WINDOWS) && defined(_HAS_TR1)
     #include <unordered_map>
   #else
     #include <boost/tr1/unordered_map.hpp>
@@ -45,7 +41,7 @@
   }
 #endif
 
-#endif // DOXYGEN_SHOULD_SKIP_THIS
+/// @endcond
 
 struct FT_FaceRec_;
 
@@ -54,7 +50,7 @@ namespace Poetic
 
   /// A character map contains the translation from character codes to glyphs
   /// indices.
-  class Charmap
+  class POETIC_API Charmap
   {
     public:
       /// Constructs a charmap for the given font face

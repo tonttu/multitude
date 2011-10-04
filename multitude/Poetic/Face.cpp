@@ -30,6 +30,8 @@ namespace Poetic
     FT_Long DEFAULT_FACE_INDEX = 0;
     m_ftFace = new FT_Face;
 
+    Radiant::Guard g(freetypeMutex());
+
     m_error = FT_New_Face(*Poetic::freetype(), fontFilePath, DEFAULT_FACE_INDEX, m_ftFace);
     if(m_error) {
       delete m_ftFace;
@@ -42,6 +44,8 @@ namespace Poetic
 
   Face::~Face()
   {
+    Radiant::Guard g(freetypeMutex());
+
     if(m_ftFace) {
       FT_Done_Face(*m_ftFace);
       delete m_ftFace;
@@ -51,21 +55,40 @@ namespace Poetic
 
   Nimble::Vector2 Face::kernAdvance(unsigned int index1, unsigned int index2)
   {
+    if(!m_hasKerningTable)
+      return Nimble::Vector2(0, 0);
+
+    uint64_t index = index1;
+    index <<= 32;
+    index |= index2;
+
+    KernMap::iterator it = m_kernings.find(index);
+
+    if(it != m_kernings.end())
+      return it->second;
+
     float x = 0.f;
     float y = 0.f;
 
-    if(m_hasKerningTable && index1 && index2) {
+    if(index1 && index2) {
+      Radiant::Guard g(freetypeMutex());
+
       FT_Vector kernAdvance;
       kernAdvance.x = kernAdvance.y = 0;
 
       m_error = FT_Get_Kerning(*m_ftFace, index1, index2, ft_kerning_unfitted, &kernAdvance);
+
       if(!m_error) {
         x = static_cast <float> (kernAdvance.x) / 64.0f;
         y = static_cast <float> (kernAdvance.y) / 64.0f;
       }
     }
 
-    return Nimble::Vector2(x, y);
+    Nimble::Vector2 k(x, y);
+
+    m_kernings[index] = k;
+
+    return k;
   }
 
   const Size & Face::size(int size, int res)
@@ -78,6 +101,8 @@ namespace Poetic
 
   FT_GlyphSlot Face::glyph(unsigned int index, signed int flags)
   {
+    Radiant::Guard g(freetypeMutex());
+
     m_error = FT_Load_Glyph(*m_ftFace, index, flags);
     if(m_error)
         return 0;

@@ -1,11 +1,26 @@
+/* COPYRIGHT
+ *
+ * This file is part of Radiant.
+ *
+ * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
+ *
+ * See file "Radiant.hpp" for authors and more details.
+ *
+ * This file is licensed under GNU Lesser General Public
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
+ * from the GNU organization (www.gnu.org).
+ * 
+ */
+
 #ifndef RADIANT_VIDEOCAMERAPTGREY_HPP
 #define RADIANT_VIDEOCAMERAPTGREY_HPP
 
 /// @cond
 
-#include <Radiant/Export.hpp>
-#include <Radiant/VideoCamera.hpp>
-#include <Radiant/CameraDriver.hpp>
+#include "Export.hpp"
+#include "VideoCamera.hpp"
+#include "CameraDriver.hpp"
 
 #ifndef WIN32
 #include <flycapture/FlyCapture2.h>
@@ -46,7 +61,6 @@ namespace Radiant
     virtual void setFeatureRaw(FeatureType id, int32_t value);
     virtual void getFeatures(std::vector<CameraFeature> * features);
 
-    virtual void setWhiteBalance(float u_to_blue, float v_to_red);
     virtual bool setCaptureTimeout(int ms);
 
     virtual bool enableTrigger(TriggerSource src);
@@ -81,14 +95,14 @@ namespace Radiant
     CameraInfo m_info;
   };
 
-  class CameraDriverPTGrey : public CameraDriver
+  class RADIANT_API CameraDriverPTGrey : public CameraDriver
   {
   public:
     CameraDriverPTGrey();
 
     virtual size_t queryCameras(std::vector<VideoCamera::CameraInfo> & cameras);
     virtual VideoCamera * createCamera();
-    virtual std::string driverName() const { return "ptgrey"; }
+    virtual QString driverName() const { return "ptgrey"; }
   };
 
 }

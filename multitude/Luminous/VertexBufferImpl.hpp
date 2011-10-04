@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include <Luminous/VertexBuffer.hpp>
@@ -93,16 +93,48 @@ namespace Luminous
 
 #ifndef LUMINOUS_OPENGLES
   template<GLenum type>
+  void BufferObject<type>::read(Nimble::Vector2i size, Nimble::Vector2i pos,
+                                Luminous::PixelFormat pix, Usage usage)
+  {
+    if(!m_bound)
+      glBindBuffer(type, m_bufferId);
+
+    size_t bytes = pix.bytesPerPixel()*size.x*size.y;
+    if(m_filled < bytes) {
+      m_filled = bytes;
+      glBufferData(type, bytes, 0, usage);
+    }
+
+    glReadPixels(pos.x, pos.y, size.x, size.y, pix.layout(), pix.type(), 0);
+
+    if(!m_bound)
+      glBindBuffer(type, 0);
+  }
+
+  template<GLenum type>
   void * BufferObject<type>::map(AccessMode mode)
   {
-    bind();
-    return glMapBuffer(type, mode);
+    if(!m_bound)
+      glBindBuffer(type, m_bufferId);
+
+    void * data = glMapBuffer(type, mode);
+
+    if(!m_bound)
+      glBindBuffer(type, 0);
+
+    return data;
   }
 
   template<GLenum type>
   void BufferObject<type>::unmap()
   {
+    if(!m_bound)
+      glBindBuffer(type, m_bufferId);
+
     glUnmapBuffer(type);
+
+    if(!m_bound)
+      glBindBuffer(type, 0);
   }
 #endif // LUMINOUS_OPENGLES
 

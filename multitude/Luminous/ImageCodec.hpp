@@ -16,18 +16,17 @@
 #ifndef IMAGE_CODEC_HPP
 #define IMAGE_CODEC_HPP
 
-#include <cstdio>
+#include "Export.hpp"
+#include "Image.hpp"
 
-#include <string>
+#include <QString>
+#include <cstdio>
 
 namespace Luminous
 {
-  class Image;
-  struct ImageInfo;
-  
   /// The base class for different image codecs. Derive your own codec from this
   /// and override the three methods.
-  class ImageCodec 
+  class LUMINOUS_API ImageCodec 
   {
     public:
       virtual ~ImageCodec() {}
@@ -41,11 +40,11 @@ namespace Luminous
       /// Get the extensions associated with this codec in a string separated by
       /// spaces
       ///  @return extensions separated by spaces (eg. "jpeg jpg")
-      virtual std::string extensions() const = 0;
+      virtual QString extensions() const = 0;
 
       /// Return name of the codec
       /// @return name of the codec
-      virtual std::string name() const = 0;
+      virtual QString name() const = 0;
 
       /// Pinging an image just reads the width, height, and pixel format from a file.
       /// @param info ImageInfo struct to store the read info to
@@ -58,6 +57,13 @@ namespace Luminous
       /// @param file file to read the data from
       /// @return true if the file was decoded successfully, false otherwise
       virtual bool read(Image & image, FILE * file) = 0;
+
+      /// Read compressed image data from the given file.
+      /// @param image image to read to
+      /// @param file file to read from
+      /// @param level mipmap level to read
+      /// @return true if the file was decoded successfully, false otherwise
+      virtual bool read(CompressedImage & image, FILE * file, int level = 0) { (void)level;(void)file; (void)image; return false; }
 
       /// Store the given Image into a file
       /// @param image Image to store

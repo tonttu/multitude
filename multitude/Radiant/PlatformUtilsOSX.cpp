@@ -1,21 +1,12 @@
 /* COPYRIGHT
- *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
  */
+
+#include "Platform.hpp"
+
+#ifdef RADIANT_OSX
 
 #include "PlatformUtils.hpp"
 
-#include "FixedStr.hpp"
 #include "Platform.hpp"
 #include "Trace.hpp"
 
@@ -36,15 +27,16 @@ namespace Radiant
   {
 
 #ifndef RADIANT_IOS
-    std::string getExecutablePath()
+    QString getExecutablePath()
     {
       CFURLRef url = CFBundleCopyBundleURL(CFBundleGetMainBundle());
 
-      FixedStrT<512> buf;
+      char buf[512];
+      buf[0] = '\0';
 
-      CFURLGetFileSystemRepresentation(url, true,
-                       (UInt8*) buf.str(), buf.capacity());
-      return buf.str();
+      CFURLGetFileSystemRepresentation(url, true, (UInt8*) buf, 512);
+
+      return buf;
     }
 #else
     std::string getExecutablePath()
@@ -53,12 +45,12 @@ namespace Radiant
     }
 #endif
 
-    std::string getUserHomePath()
+    QString getUserHomePath()
     {
-      return std::string(getenv("HOME"));
+      return QString(getenv("HOME"));
     }
 
-    std::string getModuleGlobalDataPath(const char * module, bool isapplication)
+    QString getModuleGlobalDataPath(const char * module, bool isapplication)
     {
       assert(strlen(module) < 128);
       char buf[312];
@@ -72,14 +64,14 @@ namespace Radiant
       return buf;
     }
 
-    std::string getModuleUserDataPath(const char * module, bool isapplication)
+    QString getModuleUserDataPath(const char * module, bool isapplication)
     {
       (void) isapplication;
 
       assert(strlen(module) < 128);
       char buf[312];
 
-      sprintf(buf, "%s/Library/%s", getUserHomePath().c_str(), module);
+      sprintf(buf, "%s/Library/%s", getUserHomePath().toUtf8().data(), module);
 
       return buf;
     }
@@ -124,3 +116,5 @@ namespace Radiant
   }
 
 }
+
+#endif

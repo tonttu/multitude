@@ -7,10 +7,10 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef RADIANT_CONFIG_READER_HPP
@@ -18,11 +18,13 @@
 
 #include <Radiant/Export.hpp>
 
-#include <string>
+#include <QString>
 #include <map>
 #include <stdint.h>
 
 #include <iostream>
+
+#include <QString>
 
 /// @todo add chunk free config file support
 
@@ -47,7 +49,7 @@ namespace Radiant {
   public:
     Variant();
     /// Constructs a new variable and sets it value
-    Variant(const std::string & a, const char * doc = 0);
+    Variant(const QString & a, const char * doc = 0);
     /// Constructs a new variable and sets it value
     Variant(const char *, const char * doc = 0);
     /// Constructs a new variable and sets it value
@@ -68,7 +70,7 @@ namespace Radiant {
     /// Returns the value as double
     operator double () const;
     /// Returns the value as string
-    operator const std::string & () const;
+    operator const QString & () const;
 
     /// Returns the value as a double
     double              getDouble(double def = 0.0f) const;
@@ -79,9 +81,9 @@ namespace Radiant {
     /// Returns the value as unsigned 64 bit integer (interpreted as hexadecimal)
     uint64_t            getFromHex64(uint64_t def = 0) const;
     /// Returns the value as string or the given default value if the value has not been set
-    const std::string & getString(const std::string & def) const;
+    const QString & getString(const QString & def) const;
     /// Returns the value as string
-    const std::string & getString() const;
+    const QString & getString() const;
 
     /// Returns the value as several integers
     int                 getInts(int *, int);
@@ -91,7 +93,7 @@ namespace Radiant {
     int                 getDoubles(double *, int);
 
     /// Sets the value
-    void                set(const std::string &s);
+    void                set(const QString &s);
 
     /// Prints the value to given stream
     void                dump(std::ostream& os) const;
@@ -103,11 +105,11 @@ namespace Radiant {
     bool                hasDocumentation() const;
 
     /// Returns the documentation
-    const std::string & documentation() const;
+    const QString & documentation() const;
 
   private:
-    std::string m_var;
-    std::string m_doc;
+    QString m_var;
+    QString m_doc;
   };
 
   /** A template chunk class. A chunk contains elements that are named
@@ -132,7 +134,7 @@ namespace Radiant {
       // We can provide default values for variables in case the variable
       // has not been defined in the configuration.
 
-      std::string fileName = chunk.get("filename").getString("default-file");
+      QString fileName = chunk.get("filename").getString("default-file");
       float scale = chunk.get("scale").getFloat(1.0);
 
       \endcode
@@ -145,56 +147,64 @@ namespace Radiant {
   class RADIANT_API ChunkT {
   public:
     /// Iterator for traversing all elements
-    typedef typename std::multimap<std::string, T>::iterator iterator;
+    typedef typename std::multimap<QString, T>::iterator iterator;
     /// Constant iterator for traversing all elements
-    typedef typename std::multimap<std::string, T>::const_iterator const_iterator;
+    typedef typename std::multimap<QString, T>::const_iterator const_iterator;
 
     /// Iterator for traversing chunks
-    typedef typename std::multimap<std::string, ChunkT<T> >::iterator chunk_iterator;
+    typedef typename std::multimap<QString, ChunkT<T> >::iterator chunk_iterator;
     /// Constant iterator for traversing chunks
-    typedef typename std::multimap<std::string, ChunkT<T> >::const_iterator const_chunk_iterator;
+    typedef typename std::multimap<QString, ChunkT<T> >::const_iterator const_chunk_iterator;
 
     /// Creates an empty configuration chunk
     ChunkT() {clearFirst=false;}
     ~ChunkT() {}
 
     /// Returns the number of elements with given id/tag
-    int numberOf(const std::string & id) const;
+    int numberOf(const QString & id) const;
 
     /// Gets an element from the chunk
-    /** @return The first element of type T. If there is no element
-    with the given id, then an element will be created withthe
-    default constructor. */
-    T                  get(const std::string &id) const;
+    /// @param id element id
+    /// @return The first element of type T. If there is no element
+    /// with the given id, then an element will be created with the
+    /// default constructor.
+    T                  get(const QString &id) const;
     /** Gets an element from the chunk.
       @param id the primary id to search for
       @param alternateId if the primary id does not match, alternate is used
+      @return matching element
       */
-    T                  get(const std::string &id,
-                           const std::string &alternateId) const;
+    T                  get(const QString &id,
+                           const QString &alternateId) const;
 
     /// Check if this chunk contains an element with given id
-    bool               contains(const std::string &id) const;
+    bool               contains(const QString &id) const;
 
     /// Adds an element to the chunk
     /** If there are other elements with the same id before, then
-    this element is added among those. */
-    void               set(const std::string & id, const T &v);
+    this element is added among those.
+    @param id element id
+    @param v chunk to add */
+    void               set(const QString & id, const T &v);
     /// Adds a new child node to this chunk
-    void               addChunk(const std::string & id, const ChunkT<T> &v);
+    void               addChunk(const QString & id, const ChunkT<T> &v);
     /// Gets a child chunk
-    const ChunkT<T> &        getChunk(const std::string & id) const;
+    const ChunkT<T> &        getChunk(const QString & id) const;
 
   /// Sets the flag to inform whether an old value should be removed before defining a new
     void setClearFlag(bool clearF);
     /// Adds an element to the chunk, erasing any elements with identical id
-    /** After calling this method, the chunk will contain only one
-    element this this id. */
-    void               override(const std::string & id, const T &v);
+    /// After calling this method, the chunk will contain only one
+    /// element this this id.
+    /// @param id id to override
+    /// @param v chunk to override with
+    void               override(const QString & id, const T &v);
 
-    /// Dumps this chunk into the stream
-    /** May be specialized at each level. */
-    void               dump(std::ostream& os, int indent=0);
+    /// Dump chunk into stream
+    /// May be specialized at each level.
+    /// @param[out] os output stream
+    /// @param indent text indent for formatting
+    void               dump(std::ostream& os, int indent=0) const;
 
     /// Empties this chunk
     void               clear() { m_variants.clear(); m_chunks.clear(); }
@@ -206,7 +216,7 @@ namespace Radiant {
     bool               isEmpty() const { return m_variants.size() == 0; }
 
     /// Check if at least one variant with given name exists
-    bool               containsVariant(const std::string & variantName) const
+    bool               containsVariant(const QString & variantName) const
     { return m_variants.find(variantName) != m_variants.end(); }
 
     /// Iterator to the first element
@@ -220,24 +230,30 @@ namespace Radiant {
     const_iterator end()   const { return m_variants.end(); }
 
     /// Iterator to the first child chunk
-    chunk_iterator chunkBegin() { return m_chunks.begin(); }
+    //chunk_iterator chunkBegin() { return m_chunks.begin(); }
+    /// Const Iterator to the first child chunk
+    /// @return iterator to the first child
+    const_chunk_iterator chunkBegin() const { return m_chunks.begin(); }
     /// Iterator to the after-the-end chunk
-    chunk_iterator chunkEnd() { return m_chunks.end(); }
+    //chunk_iterator chunkEnd() { return m_chunks.end(); }
+    /// Const Iterator to the after-the-end chunk
+    /// @return iterator to one past the last child
+    const_chunk_iterator chunkEnd() const { return m_chunks.end(); }
 
     /// Gets the data element from an iterator
     static T & getType(iterator & it) { return (*it).second; }
     /// Gets the data element from an constant iterator
     static const T & getType(const_iterator & it) { return (*it).second; }
     /// Gets the name (id) from an iterator
-    static const std::string & getName(iterator & it) { return (*it).first; }
+    static const QString & getName(iterator & it) { return (*it).first; }
     /// Gets the name (id) from a constant iterator
-    static const std::string & getName(const_iterator & it) { return (*it).first; }
+    static const QString & getName(const_iterator & it) { return (*it).first; }
 
   private:
 
     bool clearFirst;
-    std::multimap<std::string, T> m_variants;
-    std::multimap<std::string, ChunkT<T> > m_chunks;
+    std::multimap<QString, T> m_variants;
+    std::multimap<QString, ChunkT<T> > m_chunks;
   };
 
   /// A chunk of configuration variables
@@ -251,6 +267,7 @@ namespace Radiant {
   /** @param c The configuration object to fill.
       @param buf The configuration string.
       @param n The length of the configuration string
+      @return false if nothing was read, otherwise true
   */
   bool  RADIANT_API readConfig(Config *c, const char * buf, int n);
   /// Write the given configuration into a file

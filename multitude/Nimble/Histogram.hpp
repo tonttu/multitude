@@ -7,18 +7,18 @@
  * See file "Nimble.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef NIMBLE_HISTOGRAM_HPP
 #define NIMBLE_HISTOGRAM_HPP
 
-#include <Nimble/Export.hpp>
+#include "Export.hpp"
 
-#include <string>
+#include <QString>
 
 namespace Nimble {
 
@@ -83,16 +83,19 @@ namespace Nimble {
 
     /// Find the bin below which there are required number of samples
     /** @param ratio relative ratio for selection (0-1). */
+    /// @return the asked histogram bin, between 0 and N-1.
     int getLowValueRelative(float ratio) const
     { return getLowValueFixed((int) (ratio * m_count)); }
 
     /// Find the bin above which there are required number of samples
-    /** @param ratio relative ratio for selection (0-1). */
+    /// @param ratio relative ratio for selection (0-1).
+    /// @return the asked histogram bin, between 0 and N-1.
     int getHighValueRelative(float ratio) const
     { return getHighValueFixed((int) (ratio * m_count)); }
 
     /// Find the bin below which there are required number of samples
-    /** @param need required sum of bins (0-count()). */
+    /// @param need required sum of bins (0-count()).
+    /// @return the asked histogram bin, between 0 and N-1.
     int getLowValueFixed(int need) const
     {
       int count = 0;
@@ -105,7 +108,8 @@ namespace Nimble {
     }
 
     /// Find the bin above which there are required number of samples
-    /** @param need required sum of bins (0-count()). */
+    /// @param need required sum of bins (0-count()).
+    /// @return the asked histogram bin, between 0 and N-1.
     int getHighValueFixed(int need) const
     {
       int count = 0;
@@ -146,6 +150,7 @@ namespace Nimble {
     }
 
     /// Returns the lowest bin that is not empty
+    /// @return lowest non-empty bin, between 0 and N-1.
     /**
 
         \code
@@ -166,8 +171,9 @@ namespace Nimble {
       return N-1;
     }
 
-    /// Returns the highest lowest bin that is not empty
+    /// Returns the highest bin that is not empty
     /// @see #lowestNonEmpty()
+    /// @return highest non-empty bin, between 0 and N-1.
     int highestNonEmpty() const
     {
       for(int i = N - 1; i > 0; i--) {
@@ -188,15 +194,18 @@ namespace Nimble {
     int m_count;
   };
 
-  /// Histogram of unsigned integers
+  /// Histogram of 256 unsigned integers
   typedef Histogram<unsigned int,256> Histogramu256;
+  /// Histogram of 1024 unsigned integers
+  typedef Histogram<unsigned int,1024> Histogramu1024;
   /// Histogram of signed integers
   typedef Histogram<int,256> Histogrami256;
 
   // This is needed on Windows
 #ifdef WIN32
 #ifdef NIMBLE_EXPORT
-  template Histogram<unsigned int, 256>;
+template Histogram<unsigned int, 256>;
+template Histogram<unsigned int, 1024>;
   template Histogram<int, 256>;
 #endif
 #endif

@@ -1,9 +1,9 @@
 include(../Examples.pri)
 
-SOURCES += Main.cpp
+SOURCES += UDPExample.cpp
 
 LIBS += $$LIB_RADIANT  $$LIB_PATTERNS
 
 win32 {
-	CONFIG += console
+    CONFIG += console
 }

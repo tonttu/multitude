@@ -15,6 +15,10 @@
 #ifndef POETIC_FREETYPE_HPP
 #define POETIC_FREETYPE_HPP
 
+#include <Radiant/Mutex.hpp>
+
+#define debugPoetic(...) (Radiant::trace("Poetic", Radiant::DEBUG, __VA_ARGS__))
+
 struct FT_LibraryRec_;
 
 /// Poetic is an OpenGL font rendering library.
@@ -37,8 +41,14 @@ namespace Poetic
   /// Returns a handle to the freetype library
   FT_LibraryRec_ ** freetype();
 
+  /// Finalizes Poetic and cleans up resources. This function should be called after the library is no longer needed.
+  bool finalize();
+
   /// Returns the last freetype error
   int error();
+
+  /// Returns the global FreeType mutex
+  Radiant::Mutex & freetypeMutex();
 }
 
 #endif

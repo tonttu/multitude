@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef ERROR_HPP
@@ -20,6 +20,8 @@
 #include <Luminous/Export.hpp>
 
 #include <iostream>
+
+#include <QString>
 
 #define CHECK_GL_ERROR Luminous::glErrorToString()
 
@@ -31,7 +33,7 @@ namespace Luminous
   LUMINOUS_API const char * glFormatToString(GLenum format);
 
   /// Converts OpenGL error into a human-readalbe string
-  LUMINOUS_API void glErrorToString(const std::string & msg = __FILE__, int line = __LINE__);
+  LUMINOUS_API void glErrorToString(const QString & msg = __FILE__, int line = __LINE__);
 
 
 }

@@ -34,9 +34,18 @@
 
 namespace v8 {
 
-void PrintPrompt() {
-  printf("dbg> ");
+static bool was_running = true;
+
+void PrintPrompt(bool is_running) {
+  const char* prompt = is_running? "> " : "dbg> ";
+  was_running = is_running;
+  printf("%s", prompt);
   fflush(stdout);
+}
+
+
+void PrintPrompt() {
+  PrintPrompt(was_running);
 }
 
 
@@ -91,7 +100,7 @@ void HandleDebugEvent(DebugEvent event,
   bool running = false;
   while (!running) {
     char command[kBufferSize];
-    PrintPrompt();
+    PrintPrompt(running);
     char* str = fgets(command, kBufferSize, stdin);
     if (str == NULL) break;
 
@@ -263,6 +272,7 @@ RemoteDebuggerEvent* RemoteDebugger::GetEvent() {
 
 
 void RemoteDebugger::HandleMessageReceived(char* message) {
+  Locker lock;
   HandleScope scope;
 
   // Print the event details.
@@ -284,11 +294,14 @@ void RemoteDebugger::HandleMessageReceived(char* message) {
   } else {
     printf("???\n");
   }
-  PrintPrompt();
+
+  bool is_running = details->Get(String::New("running"))->ToBoolean()->Value();
+  PrintPrompt(is_running);
 }
 
 
 void RemoteDebugger::HandleKeyboardCommand(char* command) {
+  Locker lock;
   HandleScope scope;
 
   // Convert the debugger command to a JSON debugger request.

@@ -20,7 +20,7 @@
 namespace Luminous
 {
 
-  void glErrorToString(const std::string & msg, int line)
+  void glErrorToString(const QString & msg, int line)
   {
     GLenum err;
 
@@ -30,7 +30,7 @@ namespace Luminous
 #else
       const char * glErrMsg = (const char*)gluErrorString(err);
 
-      Radiant::error("OpenGL : %s:%d: %s", msg.c_str(), line, glErrMsg);
+      Radiant::error("%s:%d: %s", msg.toUtf8().data(), line, glErrMsg);
 #endif
     };
   }

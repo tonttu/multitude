@@ -26,7 +26,6 @@ namespace Resonant {
   Module::Module(Application * app)
     : m_application(app)
   {
-    m_id[0] = 0;
   }
 
   Module::~Module()
@@ -45,19 +44,9 @@ namespace Resonant {
     return true;
   }
 
-  void Module::setId(const char * id)
+  void Module::setId(const QString & id)
   {
-    if(!id)
-      m_id[0] = 0;
-    else {
-      int len = strlen(id);
-
-      if(len >= MAX_ID_LENGTH) {
-       error("Module::setId # Too long id, %d bytes", len);
-      }
-      else
-	memcpy(m_id, id, len + 1);
-    }
+    m_id = id;
   }
 
 }

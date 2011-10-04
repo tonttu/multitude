@@ -30,9 +30,16 @@
 #include <iostream>
 #include <stdint.h>
 #include <stdlib.h>
-#include <string>
+#include <QString>
 #include <string.h>
 #include <typeinfo>
+#include <errno.h>
+
+#ifdef RADIANT_LINUX
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#endif
 
 #ifdef WIN32
 #include <strings.h>	// strcasecmp()
@@ -50,6 +57,36 @@ namespace Luminous
 
     return &cr;
   }
+
+  template <PixelFormat::ChannelType type> struct PixelType;
+  template <> struct PixelType<PixelFormat::TYPE_UBYTE> { typedef unsigned char Type; };
+
+  template <PixelFormat::ChannelLayout layout> int get_index(int i);
+  template <> int get_index<PixelFormat::LAYOUT_RGBA>(int i) { return i; }
+
+  template <typename From, typename To> To convert_value(From from);
+  template <> unsigned char convert_value(unsigned char x) { return x; }
+
+  template <typename Type, PixelFormat::ChannelLayout layout> struct get_data {};
+  template <typename Type> struct get_data<Type, PixelFormat::LAYOUT_RGB> {
+    static Type get(const Type * t, int i) { return i < 3 ? t[i] : convert_value<unsigned char, Type>(255); }
+  };
+
+  template <PixelFormat::ChannelType TypeFrom, PixelFormat::ChannelType TypeTo,
+            PixelFormat::ChannelLayout LayoutFrom, PixelFormat::ChannelLayout LayoutTo>
+  void convert(int channels, uint8_t * l, uint8_t * dest) {
+    typedef typename PixelType<TypeFrom>::Type FromT;
+    typedef typename PixelType<TypeTo>::Type ToT;
+    FromT * from = reinterpret_cast<FromT*>(l);
+    ToT * to = reinterpret_cast<ToT*>(dest);
+
+    for (int i = 0; i < channels; ++i)
+      to[get_index<LayoutTo>(i)] = convert_value<FromT, ToT>(
+            get_data<FromT, LayoutFrom>::get(from, i));
+}
+
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
 
   Image::Image()
       : m_width(0),
@@ -83,7 +120,8 @@ namespace Luminous
 
   void Image::flipVertical()
   {
-    int linesize = m_width * m_pixelFormat.numChannels();
+    int bpp = m_pixelFormat.bytesPerPixel();
+    int linesize = m_width * bpp;
 
     int n = m_height / 2;
 
@@ -104,6 +142,35 @@ namespace Luminous
     }
 
     changed();
+  }
+
+  void Image::minify(const Image &src, int w, int h)
+  {
+    changed();
+
+    allocate(w, h, src.pixelFormat());
+
+    const float sx = float(src.width()) / float(w);
+    const float sy = float(src.height()) / float(h);
+
+    for(int y0 = 0; y0 < h; y0++) {
+
+      for(int x0 = 0; x0 < w; x0++) {
+
+        Nimble::Vector4 value(0.f, 0.f, 0.f, 0.f);
+
+        int count = 0;
+        for(int j = sy * y0; j < sy * y0 + sy; j++)
+          for(int i = sx * x0; i < sx * x0 + sx; i++) {
+            ++count;
+            value += src.pixel(i, j);
+          }
+
+        value /= count;
+
+        setPixel(x0, y0, value);
+      }
+    }
   }
 
   bool Image::copyResample(const Image & source, int w, int h)
@@ -472,15 +539,15 @@ namespace Luminous
 
   void Image::allocate(int width, int height, const PixelFormat & pf)
   {
-    unsigned int bytes = width * height * pf.numChannels();
-    unsigned int mybytes = m_width * m_height * m_pixelFormat.numChannels();
+    unsigned int bytes = width * height * pf.bytesPerPixel();
+    unsigned int mybytes = m_width * m_height * m_pixelFormat.bytesPerPixel();
 
     if(width && height)
       assert(pf.numChannels() > 0);
 
     /*
-    Radiant::debug("Image::allocate # PARAMS(%d, %d, %s) CURRENT(%d, %d, %s)", width, height, pf.toString().c_str(), m_width, m_height, m_pixelFormat.toString().c_str());
-    Radiant::debug("\tbytes = %u, mybytes = %u", bytes, mybytes);
+    debugLuminous("Image::allocate # PARAMS(%d, %d, %s) CURRENT(%d, %d, %s)", width, height, pf.toString().toUtf8().data(), m_width, m_height, m_pixelFormat.toString().toUtf8().data());
+    debugLuminous("\tbytes = %u, mybytes = %u", bytes, mybytes);
     */
     m_width = width;
     m_height = height;
@@ -498,7 +565,7 @@ namespace Luminous
   }
   /*
   // Guess the filetype from the extension
-  static Image::ImageType typeFromFileExt(const std::string & filename)
+  static Image::ImageType typeFromFileExt(const QString & filename)
   {
     Image::ImageType type = Image::IMAGE_TYPE_UNKNOWN;
     string ext = filename.substr(filename.rfind(".") + 1);
@@ -558,9 +625,11 @@ namespace Luminous
     ImageCodec * codec = codecs()->getCodec(filename);
     if(codec) {
       ret = codec->write(*this, file);
-    }
-    else {
-      error("Image::write # No codec for file '%s'", filename);
+    } else {
+      debugLuminous("Image::write # Could not deduce image codec based on filename '%s', using png", filename);
+
+      codec = codecs()->getCodec(".png");
+      ret = codec->write(*this, file);
     }
 
     fclose(file);
@@ -574,7 +643,8 @@ namespace Luminous
 
     allocate(width, height, format);
     unsigned pixels = width * height;
-    unsigned nbytes = pixels * format.numChannels();
+    unsigned nbytes = pixels * format.bytesPerPixel();
+
 
     if(bytes)
       memcpy( & m_data[0], bytes, nbytes);
@@ -582,6 +652,43 @@ namespace Luminous
     changed();
   }
 
+  bool Image::setPixelFormat(const PixelFormat & format)
+  {
+    if(m_pixelFormat == format) return true;
+
+    /// @todo finish this
+    if(format.compression() != PixelFormat::COMPRESSION_NONE ||
+       m_pixelFormat.compression() != PixelFormat::COMPRESSION_NONE ||
+       format.type() != PixelFormat::TYPE_UBYTE ||
+       m_pixelFormat.type() != PixelFormat::TYPE_UBYTE ||
+       m_pixelFormat.layout() != PixelFormat::LAYOUT_RGB ||
+       format.layout() != PixelFormat::LAYOUT_RGBA) {
+      Radiant::error("Image::setPixelFormat # unsupported conversion");
+      return false;
+    }
+
+    PixelFormat srcFormat = m_pixelFormat;
+    uint8_t * src = m_data;
+    m_data = 0;
+
+    allocate(m_width, m_height, format);
+
+    int src_bpp = srcFormat.bytesPerPixel();
+    int dest_bpp = format.bytesPerPixel();
+    for(int y = 0; y < m_height; ++y) {
+      uint8_t * l = src + y * m_width * src_bpp;
+      uint8_t * dest = bytes() + y * m_width * dest_bpp;
+
+      for(int x = 0; x < m_width; ++x) {
+        convert<PixelFormat::TYPE_UBYTE, PixelFormat::TYPE_UBYTE,
+            PixelFormat::LAYOUT_RGB, PixelFormat::LAYOUT_RGBA>(
+              format.numChannels(), l + x*src_bpp, dest + x*dest_bpp);
+      }
+    }
+
+    if(src != m_data) delete [] src;
+    return true;
+  }
 
   void Image::clear()
   {
@@ -594,61 +701,6 @@ namespace Luminous
                                 PixelFormat::TYPE_UNKNOWN);
     changed();
   }
-  /*
-     void Image::scale(int reqWidth, int reqHeight, bool keepAspectRatio, Image& dest) const
-     {
-     dest.clear();
-
-     if(empty()) {
-     trace("Image::scaled # Scaling empty image");
-     return;
-     }
-#if 1
-dest = *this;
-#else
-  // Compute new dimensions
-  int newWidth, newHeight;
-
-  if(!keepAspectRatio) {
-  newWidth = reqWidth;
-  newHeight = reqHeight;
-  } else {
-  int rw = reqHeight * m_width / m_height;
-
-  bool useHeight = (rw <= reqWidth);
-
-  if(useHeight) {
-  newWidth = rw;
-  newHeight = reqHeight;
-  } else {
-  newHeight = reqWidth * m_height / m_width;
-  newWidth = reqWidth;
-  }
-  }
-
-  // No need to scale, just return a copy
-  if(newWidth == m_width && newHeight == m_height) {
-  dest = *this;
-  return;
-  }
-
-  dest.allocate(newWidth, newHeight, m_pixelFormat);
-
-  float xRatio = (float)m_width / (float)newWidth;
-  float yRatio = (float)m_height / (float)newHeight;
-
-  for(int y = 0; y < newHeight; y++) {
-  for(int x = 0; x < newWidth; x++) {
-
-  float sx = (float)x * xRatio;
-  float sy = (float)y * yRatio;
-
-  sample(sx, sy, xRatio, yRatio, dest, x, y);
-  }
-  }
-#endif
-}
-*/
 
   bool Image::ping(const char * filename, ImageInfo & info)
   {
@@ -694,7 +746,18 @@ dest = *this;
     changed();
   }
 
-  Nimble::Vector4 Image::pixel(unsigned x, unsigned y)
+  Nimble::Vector4 Image::safePixel(int x, int y) const
+  {
+    if(x < 0 || x >= width())
+      return Nimble::Vector4(0.f, 0.f, 0.f, 0.f);
+
+    if(y < 0 || y >= height())
+      return Nimble::Vector4(0.f, 0.f, 0.f, 0.f);
+
+    return pixel(x, y);
+  }
+
+  Nimble::Vector4 Image::pixel(unsigned x, unsigned y) const
   {
     if(empty())
       return Nimble::Vector4(0, 0, 0, 1);
@@ -719,35 +782,50 @@ dest = *this;
     return Nimble::Vector4(0, 0, 0, 1);
   }
 
-
-  void ImageTex::bind(GLenum textureUnit, bool withmimaps)
+  void Image::setPixel(unsigned x, unsigned y, const Nimble::Vector4 &pixel)
   {
-    Texture2D & tex = ref();
-    tex.bind(textureUnit);
+    assert(x < width());
+    assert(y < height());
 
-    if(tex.width() != width() ||
-       tex.height() != height() ||
-       tex.generation() != generation()) {
-      tex.loadImage(*this, withmimaps);
-      tex.setGeneration(generation());
+    uint8_t * px = line(y);
+    px += pixelFormat().bytesPerPixel() * x;
+
+    if(pixelFormat() == PixelFormat::alphaUByte()) {
+      px[0] = pixel.w * 255;
+    } else if(pixelFormat() == PixelFormat::rgbUByte()) {
+      px[0] = pixel.x * 255;
+      px[1] = pixel.y * 255;
+      px[2] = pixel.z * 255;
+    } else if(pixelFormat() == PixelFormat::rgbaUByte()) {
+      px[0] = pixel.x * 255;
+      px[1] = pixel.y * 255;
+      px[2] = pixel.z * 255;
+      px[3] = pixel.w * 255;
+    } else {
+      assert(0);
     }
   }
 
-  void ImageTex::bind(RenderContext * resources, GLenum textureUnit, bool withmimaps)
+  ////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////
+
+  ImageTex::ImageTex()
+  {}
+
+  bool ImageTex::bind(RenderContext * resources, GLenum textureUnit, bool withmipmaps, int internalFormat)
   {
-    // Luminous::Utils::glCheck("ImageTex::bind # 0");
+    bool ret = true;
 
     Texture2D & tex = ref(resources);
+
     tex.bind(textureUnit);
 
-    // Luminous::Utils::glCheck("ImageTex::bind # 1");
-
-    if(tex.width() != width() ||
-       tex.height() != height() ||
-       tex.generation() != generation()) {
-      tex.loadImage(*this, withmimaps);
+    if(tex.generation() != generation()) {
+      ret = tex.loadImage(*this, withmipmaps, internalFormat);
       tex.setGeneration(generation());
     }
+
+    return ret;
   }
 
   bool ImageTex::isFullyLoadedToGPU(RenderContext * resources)
@@ -763,69 +841,214 @@ dest = *this;
 
     Texture2D & tex = ref(resources);
 
-    return tex.loadedLines() == (unsigned) height();
+    return (tex.m_uploadedLines == size_t(height()));
   }
 
-  unsigned ImageTex::uploadBytesToGPU(RenderContext * resources, unsigned bytes)
+  ImageTex * ImageTex::move()
   {
+    ImageTex * t = new ImageTex;
+    std::swap(t->m_width, m_width);
+    std::swap(t->m_height, m_height);
+    std::swap(t->m_pixelFormat, m_pixelFormat);
+    std::swap(t->m_data, m_data);
+    t->m_generation = ++m_generation;
 
-    Utils::glCheck("ImageTex::uploadBytesToGPU # 0");
+    return t;
+  }
 
-    if(!resources)
-      resources = RenderContext::getThreadContext();
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
 
+  class CompressedImage::Private
+  {
+  public:
+    Private(CompressedImage & img) : ptr(0), size(0), m_img(img) {}
+
+    char * ptr;
+    int size;
+
+  private:
+    CompressedImage & m_img;
+  };
+
+  CompressedImage::CompressedImage() : m_compression(PixelFormat::COMPRESSION_NONE), m_d(new Private(*this))
+  {
+  }
+
+  CompressedImage::~CompressedImage()
+  {
+    clear();
+    delete m_d;
+  }
+
+  void CompressedImage::clear()
+  {
+#if 0
+    if(m_d->ptr) munmap(m_d->ptr, m_d->size + m_d->offset);
+    if(m_d->fd) {
+      counter(-1);
+      close(m_d->fd);
+    }
+    m_d->ptr = 0;
+    m_d->size = 0;
+    m_d->offset = 0;
+    m_d->fd = 0;
+#endif
+    if(m_d->ptr) delete[] m_d->ptr;
+    m_d->ptr = 0;
+    m_d->size = 0;
+  }
+
+  bool CompressedImage::read(const QString & filename, int level)
+  {
+    initDefaultImageCodecs();
+    clear();
+
+    bool result = false;
+
+    FILE * file = fopen(filename.toUtf8().data(), "rb");
+    if(!file) {
+      error("CompressedImage::read # failed to open file '%s': %s", filename.toUtf8().data(), strerror(errno));
+      return false;
+    }
+
+    ImageCodec * codec = Image::codecs()->getCodec(filename, file);
+    if(codec) {
+      result = codec->read(*this, file, level);
+    } else {
+      error("CompressedImage::read # no suitable codec found for '%s'", filename.toUtf8().data());
+    }
+    fclose(file);
+
+    return result;
+  }
+
+  bool CompressedImage::loadImage(FILE * file, const ImageInfo & info, int size)
+  {
+    clear();
+#if 0
+    /// Ubuntu has ulimit -Hn == 1024, that is way too low for this kind of optimization
+    static int pagesize = sysconf(_SC_PAGE_SIZE);
+    int fd = dup(fileno(file));
+    if(fd == -1) return false;
+    lseek(fd, 0, SEEK_SET);
+
+    int aligned_offset = offset / pagesize * pagesize;
+    offset = offset - aligned_offset;
+    void * ptr = mmap(NULL, size + offset, PROT_READ, MAP_SHARED, fd, aligned_offset);
+
+    if(ptr == (void*)-1) {
+      close(fd);
+      return false;
+    }
+    m_d->ptr = reinterpret_cast<char*>(ptr);
+    m_d->size = size;
+    m_d->fd = fd;
+    m_d->offset = offset;
+#endif
+    m_d->ptr = new char[size];
+
+    if (fread(m_d->ptr, size, 1, file) != 1) {
+      Radiant::error("CompressedImage::loadImage # Failed to read image");
+      delete m_d->ptr;
+      m_d->ptr = 0;
+    }
+    m_d->size = size;
+
+    m_size.make(info.width, info.height);
+    m_compression = info.pf.compression();
+    return true;
+  }
+
+  void * CompressedImage::data() const
+  {
+#if 0
+    return m_d->ptr + m_d->offset;
+#endif
+    return m_d->ptr;
+  }
+
+  int CompressedImage::datasize() const
+  {
+    return m_d->size;
+  }
+
+  float CompressedImage::readAlpha(Nimble::Vector2i pos) const
+  {
+    if(pos.x < 0 || pos.y < 0 || pos.x >= width() || pos.y >= height()) return 1.0f;
+
+    if(m_compression == PixelFormat::COMPRESSED_RGBA_DXT1) {
+      /// @todo implement this for COMPRESSED_RGBA_DXT1
+    } else if(m_compression == PixelFormat::COMPRESSED_RGBA_DXT3) {
+      /* {
+        Image img;
+        img.allocate(width(), height(), PixelFormat(PixelFormat::LAYOUT_LUMINANCE, PixelFormat::TYPE_UBYTE));
+        unsigned char* out = img.bytes();
+        const unsigned char* d = reinterpret_cast<const unsigned char*>(data());
+        int blocksize = 16;
+        int blocks_on_x_direction = (width() + 3) / 4;
+
+        for(int x = 0; x < width(); ++x) {
+          for(int y = 0; y < height(); ++y) {
+
+            Vector2i blockid(x / 4, y / 4);
+
+            const unsigned char* block = d + blocksize * (blockid.x + blockid.y * blocks_on_x_direction);
+
+            int nibble_index = x % 4 + (y % 4) * 4;
+            unsigned char byte = block[nibble_index/2];
+
+            out[x+y*width()] = (nibble_index % 2) ? (byte >> 4) << 4 : (byte & 0xF) << 4;
+          }
+        }
+        img.write("out.png");
+      }*/
+      const unsigned char* d = reinterpret_cast<const unsigned char*>(data());
+
+      Vector2i blockid(pos.x / 4, pos.y / 4);
+
+      int blocksize = 16;
+      int blocks_on_x_direction = (width() + 3) / 4;
+      const unsigned char* block = d + blocksize * (blockid.x + blockid.y * blocks_on_x_direction);
+
+      int nibble_index = pos.x % 4 + (pos.y % 4) * 4;
+      unsigned char byte = block[nibble_index/2];
+
+      byte = (nibble_index % 2) ? (byte >> 4) : (byte & 0xF);
+      return byte / 16.0f;
+    }
+    /// @todo implement this for COMPRESSED_RGBA_DXT5
+
+    return 1.0f;
+  }
+
+  CompressedImageTex::~CompressedImageTex()
+  {
+  }
+
+  void CompressedImageTex::bind(RenderContext * resources, GLenum textureUnit)
+  {
     Texture2D & tex = ref(resources);
+    tex.bind(textureUnit);
+
+    // Luminous::Utils::glCheck("ImageTex::bind # 1");
 
     if(tex.width() != width() || tex.height() != height()) {
-      // Allocate texture memory, this is always fast.
-      tex.loadBytes(pixelFormat().layout(),
-                    width(), height(), 0,
-                    pixelFormat(), false);
-
-      tex.setGeneration(generation());
-      Utils::glCheck("ImageTex::uploadBytesToGPU # 1");
+      tex.loadImage(*this);
     }
-
-
-    if(tex.loadedLines() >= (unsigned) height()) {
-      // We are ready
-      return 0;
-    }
-
-    int lines = bytes / (pixelFormat().bytesPerPixel() * width()) + 1;
-
-    int avail = height() - tex.loadedLines();
-
-    lines = Nimble::Math::Min(lines, avail);
-
-    tex.loadLines(tex.loadedLines(), lines, line(tex.loadedLines()), pixelFormat());
-
-    Utils::glCheck("ImageTex::uploadBytesToGPU # 3");
-
-    return lines * (pixelFormat().bytesPerPixel() * width());
   }
 
-  bool ImageTex::tryBind(unsigned & limit)
+  /// Creates a new CompressedImageTex from this, all the cpu data from
+  /// Luminous::CompressedImage is moved to the new object.
+  CompressedImageTex * CompressedImageTex::move()
   {
-    if(limit == 0 && width() == 0)
-      return false;
-
-    RenderContext * resources = RenderContext::getThreadContext();
-    if(isFullyLoadedToGPU(resources)) {
-      bind(resources);
-      return true;
-    }
-
-    if(limit == 0)
-      return false;
-
-    unsigned tmp = uploadBytesToGPU(resources, limit);
-    limit = tmp > limit ? 0 : limit - tmp;
-
-    if(isFullyLoadedToGPU(resources)) {
-      bind(resources);
-      return true;
-    }
-    return false;
+    CompressedImageTex * t = new CompressedImageTex;
+    std::swap(t->m_size, m_size);
+    std::swap(t->m_compression, m_compression);
+    std::swap(t->m_d->ptr, m_d->ptr);
+    std::swap(t->m_d->size, m_d->size);
+    return t;
   }
+
+
 }

@@ -63,12 +63,12 @@ namespace Valuable
     return m_wrapped->x.isNull();
   }
 
-  std::string DOMElement::getTagName() const
+  QString DOMElement::getTagName() const
   {
     if(!m_wrapped)
-      return std::string();
+      return QString();
     
-    return m_wrapped->x.tagName().toStdString();
+    return m_wrapped->x.tagName();
   }
 
   void DOMElement::appendChild(DOMElement element)
@@ -163,15 +163,15 @@ namespace Valuable
 
     addSpace(f, recursion);
     fprintf(f, "NODE <%s> (%d children, %d deep)",
-            getTagName().c_str(), (int) nodes.size(), recursion);
+            getTagName().toUtf8().data(), (int) nodes.size(), recursion);
 
-    std::string str = getTextContent();
+    QString str = getTextContent();
     if(str.size() > 0 && str.size() < 100) {
-      fprintf(f, " TEXT = \"%s\"", str.c_str());
+      fprintf(f, " TEXT = \"%s\"", str.toUtf8().data());
     }
     else {
-      std::string tmp = str.substr(0, 100) + "...";
-      fprintf(f, " TEXT = \"%s\"", tmp.c_str());
+      QString tmp = str.left(100) + "...";
+      fprintf(f, " TEXT = \"%s\"", tmp.toUtf8().data());
     }
 
     fprintf(f, "\n");
@@ -188,7 +188,7 @@ namespace Valuable
     }
   }
 
-  void DOMElement::setTextContent(const std::string & s)
+  void DOMElement::setTextContent(const QString & s)
   {
       if(isNull()) {
           Radiant::error("DOMElement::setTextContent # can not set content of a null element");
@@ -196,41 +196,18 @@ namespace Valuable
       }
     
     QDomElement & qde = m_wrapped->x;
-    qde.appendChild(qde.ownerDocument().createTextNode(s.c_str()));
+    qde.appendChild(qde.ownerDocument().createTextNode(s.toUtf8().data()));
   }
 
-  void DOMElement::setTextContent(const std::wstring & ws)
-  {
-      if(isNull()) {
-          Radiant::error("DOMElement::setTextContent # can not set content of a null element");
-          return;
-      }
-    
-    QString qs(QString::fromStdWString(ws));
-    QDomElement & qde = m_wrapped->x;
-    // info("WIDE Text content : %s : %d", qs.toStdString().c_str(), (int) ws.size());
-    qde.appendChild(qde.ownerDocument().createTextNode(qs));
-  }
-
-  std::string DOMElement::getTextContent() const
+  QString DOMElement::getTextContent() const
   {
       if(isNull()) {
           Radiant::error("DOMElement::getTextContent # can not get content of a null element");
-          return std::string();
+          return QString();
       }
 
-      std::string tmp(m_wrapped->x.text().toUtf8().data());
+      QString tmp(m_wrapped->x.text().toUtf8().data());
       return tmp;
-  }
-
-  std::wstring DOMElement::getTextContentW() const
-  {
-      if(isNull()) {
-          Radiant::error("DOMElement::setTextContent # can not get content of a null element");
-          return std::wstring();
-      }
-
-    return m_wrapped->x.text().toStdWString();
   }
 
   bool DOMElement::hasAttribute(const char * name) const
@@ -241,14 +218,14 @@ namespace Valuable
     return m_wrapped->x.hasAttribute(name);
   }
 
-  std::string DOMElement::getAttribute(const char * name) const
+  QString DOMElement::getAttribute(const char * name) const
   {
       if(isNull()) {
           Radiant::error("DOMElement::getAttribute # can not get attribute from a null element");
-          return std::string();
+          return QString();
       }
 
-    return m_wrapped->x.attribute(name).toStdString();
+    return m_wrapped->x.attribute(name);
   }
 
 }

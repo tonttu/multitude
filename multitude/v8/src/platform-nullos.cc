@@ -35,6 +35,7 @@
 #include "v8.h"
 
 #include "platform.h"
+#include "vm-state-inl.h"
 
 
 namespace v8 {
@@ -127,6 +128,19 @@ void OS::VPrint(const char* format, va_list args) {
 }
 
 
+void OS::FPrint(FILE* out, const char* format, ...) {
+  va_list args;
+  va_start(args, format);
+  VFPrint(out, format, args);
+  va_end(args);
+}
+
+
+void OS::VFPrint(FILE* out, const char* format, va_list args) {
+  vfprintf(out, format, args);
+}
+
+
 // Print error message to console.
 void OS::PrintError(const char* format, ...) {
   // Minimalistic implementation for bootstrapping.
@@ -172,6 +186,11 @@ bool OS::ArmCpuHasFeature(CpuFeature feature) {
 }
 
 
+bool OS::ArmUsingHardFloat() {
+  UNIMPLEMENTED();
+}
+
+
 bool OS::IsOutsideAllocatedSpace(void* address) {
   UNIMPLEMENTED();
   return false;
@@ -198,18 +217,9 @@ void OS::Free(void* buf, const size_t length) {
 }
 
 
-#ifdef ENABLE_HEAP_PROTECTION
-
-void OS::Protect(void* address, size_t size) {
+void OS::Guard(void* address, const size_t size) {
   UNIMPLEMENTED();
 }
-
-
-void OS::Unprotect(void* address, size_t size, bool is_executable) {
-  UNIMPLEMENTED();
-}
-
-#endif
 
 
 void OS::Sleep(int milliseconds) {
@@ -225,6 +235,12 @@ void OS::Abort() {
 
 void OS::DebugBreak() {
   UNIMPLEMENTED();
+}
+
+
+OS::MemoryMappedFile* OS::MemoryMappedFile::open(const char* name) {
+  UNIMPLEMENTED();
+  return NULL;
 }
 
 
@@ -279,9 +295,9 @@ bool VirtualMemory::Uncommit(void* address, size_t size) {
 }
 
 
-class ThreadHandle::PlatformData : public Malloced {
+class Thread::PlatformData : public Malloced {
  public:
-  explicit PlatformData(ThreadHandle::Kind kind) {
+  PlatformData() {
     UNIMPLEMENTED();
   }
 
@@ -289,44 +305,31 @@ class ThreadHandle::PlatformData : public Malloced {
 };
 
 
-ThreadHandle::ThreadHandle(Kind kind) {
-  UNIMPLEMENTED();
-  // Shared setup follows.
-  data_ = new PlatformData(kind);
-}
-
-
-void ThreadHandle::Initialize(ThreadHandle::Kind kind) {
+Thread::Thread(const Options& options)
+    : data_(new PlatformData()),
+      stack_size_(options.stack_size) {
+  set_name(options.name);
   UNIMPLEMENTED();
 }
 
 
-ThreadHandle::~ThreadHandle() {
-  UNIMPLEMENTED();
-  // Shared tear down follows.
-  delete data_;
-}
-
-
-bool ThreadHandle::IsSelf() const {
-  UNIMPLEMENTED();
-  return false;
-}
-
-
-bool ThreadHandle::IsValid() const {
-  UNIMPLEMENTED();
-  return false;
-}
-
-
-Thread::Thread() : ThreadHandle(ThreadHandle::INVALID) {
+Thread::Thread(const char* name)
+    : data_(new PlatformData()),
+      stack_size_(0) {
+  set_name(name);
   UNIMPLEMENTED();
 }
 
 
 Thread::~Thread() {
+  delete data_;
   UNIMPLEMENTED();
+}
+
+
+void Thread::set_name(const char* name) {
+  strncpy(name_, name, sizeof(name_));
+  name_[sizeof(name_) - 1] = '\0';
 }
 
 
@@ -425,7 +428,6 @@ Semaphore* OS::CreateSemaphore(int count) {
   return new NullSemaphore(count);
 }
 
-#ifdef ENABLE_LOGGING_AND_PROFILING
 
 class ProfileSampler::PlatformData  : public Malloced {
  public:
@@ -460,6 +462,5 @@ void ProfileSampler::Stop() {
   UNIMPLEMENTED();
 }
 
-#endif  // ENABLE_LOGGING_AND_PROFILING
 
 } }  // namespace v8::internal

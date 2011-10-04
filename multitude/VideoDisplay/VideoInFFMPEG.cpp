@@ -1,63 +1,54 @@
 /* COPYRIGHT
- *
- * This file is part of VideoDisplay.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "VideoDisplay.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
  */
 
 #include "VideoInFFMPEG.hpp"
+#include "VideoDisplay.hpp"
 
 #include <Radiant/Trace.hpp>
+#include <Radiant/Mutex.hpp>
 
 #include <map>
-#include <vector>
+#include <string>
 #include <algorithm>
 
 namespace VideoDisplay {
   namespace
   {
-    class FFVideodebug
+    class VideoFirstFrame
     {
     public:
-      FFVideodebug() : m_channels(0), m_duration(0.0f) {}
+      VideoFirstFrame() : m_channels(0), m_duration(0.0f) {}
 
       Radiant::VideoImage m_firstFrame;
       int   m_channels;
       float m_duration;
       /* Can be used later on to drop frames out of memory selectively. */
       Radiant::TimeStamp m_used;
+      Radiant::TimeStamp m_firstFrameTime;
     };
 
     /// how many videos to cache
-    /// @see FFVideodebug
+    /// @see VideoFirstFrame
     const unsigned int s_MaxCached = 100;
 
-    bool comp_ffvideodebug_timestamp(const std::pair<std::string, FFVideodebug> & a, const std::pair<std::string, FFVideodebug> & b)
+    bool comp_ffvideodebug_timestamp(const std::pair<QString, VideoFirstFrame> & a, const std::pair<QString, VideoFirstFrame> & b)
     {
       return a.second.m_used < b.second.m_used;
     }
   }
 
-  /* Here we cache the first frames off all viedos. */
-  static std::map<std::string, FFVideodebug> __ffcache;
+  // Cache of the first frames of all loaded videos
+  static std::map<QString, VideoFirstFrame> s_firstFrameCache;
+  // Mutex to guard access to s_firstFrameCache
+  static Radiant::Mutex s_firstFrameCacheMutex;
 
-  static Radiant::MutexStatic __mutex;
-
-  const FFVideodebug * __cacheddebug(const std::string & filename)
+  const VideoFirstFrame * __cacheddebugVideoDisplay(const QString & filename)
   {
-    Radiant::GuardStatic g(&__mutex);
+    Radiant::Guard g(s_firstFrameCacheMutex);
 
-    std::map<std::string, FFVideodebug>::iterator it = __ffcache.find(filename);
+    std::map<QString, VideoFirstFrame>::iterator it = s_firstFrameCache.find(filename);
 
-    if(it == __ffcache.end())
+    if(it == s_firstFrameCache.end())
       return 0;
 
     (*it).second.m_used = Radiant::TimeStamp::getTime();
@@ -79,13 +70,13 @@ namespace VideoDisplay {
 
   VideoInFFMPEG::~VideoInFFMPEG()
   {
-    debug("VideoInFFMPEG::~VideoInFFMPEG");
+    debugVideoDisplay("VideoInFFMPEG::~VideoInFFMPEG");
     if(isRunning()) {
       m_continue = false;
       m_vcond.wakeAll(m_vmutex);
       waitEnd();
     }
-    debug("VideoInFFMPEG::~VideoInFFMPEG # EXIT");
+    debugVideoDisplay("VideoInFFMPEG::~VideoInFFMPEG # EXIT");
   }
 
   void VideoInFFMPEG::getAudioParameters(int * channels,
@@ -101,11 +92,8 @@ namespace VideoDisplay {
   {
     float fps = m_fps > 0.0f ? m_fps : m_video.fps();
 
-    if(fps <= 1.0f)
+    if(fps <= 1.0f || fps >= 100.0f)
       fps = 30.0f;
-
-    while(fps > 100)
-      fps = fps / 10.0f;
 
     return fps;
   }
@@ -120,29 +108,46 @@ namespace VideoDisplay {
     m_buffered = 0;
     m_audioCount = 0;
 
-    float latency = 1.7f;
 
-    const FFVideodebug * vi = __cacheddebug(filename);
+    static float extralatency = 0.0f;
+    static bool checked = false;
+
+    if(!checked) {
+
+      const char * lat = getenv("RESONANT_LATENCY");
+      if(lat) {
+        extralatency = atof(lat) * 0.001;
+      }
+      checked = true;
+      debug("VideoInFFMPEG::open # Extra latenty set to %.3f", extralatency);
+    }
+
+    const float bufferLengthInSeconds = 1.7f + Nimble::Math::Clamp(extralatency * 1.5f, 0.0f, 5.0f);
+
+    // Try to find the video info from cache
+    const VideoFirstFrame * vi = __cacheddebugVideoDisplay(filename);
 
     if(vi) {
 
-      Radiant::debug("%s # %s using cached preview", fname, filename);
+      debugVideoDisplay("%s # %s using cached preview", fname, filename);
 
       m_duration = vi->m_duration;
       const VideoImage * img = & vi->m_firstFrame;
 
       m_info.m_videoFrameSize.make(img->m_width, img->m_height);
 
-      m_frames.resize(latency * fps());
+      m_frames.resize(bufferLengthInSeconds * fps());
 
       putFrame(img, FRAME_SNAPSHOT, 0, 0, false);
 
       m_channels = vi->m_channels;
 
+      m_firstFrameTime = vi->m_firstFrameTime;
+
       return true;
     }
 
-    Radiant::debug("%s # %s opening new file", fname, filename);
+    debugVideoDisplay("%s # %s opening new file", fname, filename);
 
     Screenplay::VideoInputFFMPEG video;
 
@@ -156,14 +161,14 @@ namespace VideoDisplay {
     }
 
     if(!video.hasAudioCodec()) {
-      Radiant::debug("%s # No audio codec", fname);
+      debugVideoDisplay("%s # No audio codec", fname);
       /* video.close();
      return false; */
     }
     pos = TimeStamp::createSecondsD(0.0);
 
     if(pos != 0) {
-      debug("%s # Doing a seek", fname);
+      debugVideoDisplay("%s # Doing a seek", fname);
       if(!video.seekPosition(pos.secondsD()))
         video.seekPosition(0);
     }
@@ -182,9 +187,9 @@ namespace VideoDisplay {
 
     m_duration = TimeStamp::createSecondsD(video.durationSeconds());
 
-    debug("%s # %f fps", fname, fp);
+    debugVideoDisplay("%s # %f fps", fname, fp);
 
-    m_frames.resize(latency * fp);
+    m_frames.resize(bufferLengthInSeconds * fp);
 
     int channels, sample_rate;
     AudioSampleFormat fmt;
@@ -195,26 +200,29 @@ namespace VideoDisplay {
 
     {
       // Cache the first frame for later use.
-      Radiant::GuardStatic g(&__mutex);
+      Radiant::Guard g(s_firstFrameCacheMutex);
 
       video.getAudioParameters( & m_channels, & m_sampleRate, & m_auformat);
       // remove the item with the smallest timestamp
-      if (__ffcache.size() >= s_MaxCached) {
-        __ffcache.erase(std::min_element(__ffcache.begin(), __ffcache.end(), comp_ffvideodebug_timestamp));
+      if (s_firstFrameCache.size() >= s_MaxCached) {
+        s_firstFrameCache.erase(std::min_element(s_firstFrameCache.begin(), s_firstFrameCache.end(), comp_ffvideodebug_timestamp));
       }
 
-      FFVideodebug & vi2 = __ffcache[filename];
+      VideoFirstFrame & vi2 = s_firstFrameCache[filename];
 
       vi2.m_duration = m_duration;
       vi2.m_firstFrame.allocateMemory(*img);
       vi2.m_firstFrame.copyData(*img);
       vi2.m_channels = m_channels;
       vi2.m_used = Radiant::TimeStamp::getTime();
+      vi2.m_firstFrameTime = video.frameTime();
+
+      m_firstFrameTime = video.frameTime();
     }
 
     video.close();
 
-    debug("%s # EXIT OK", fname);
+    debugVideoDisplay("%s # EXIT OK", fname);
 
     return true;
   }
@@ -222,11 +230,11 @@ namespace VideoDisplay {
 
   void VideoInFFMPEG::videoGetSnapshot(Radiant::TimeStamp pos)
   {
-    debug("VideoInFFMPEG::videoGetSnapshot # %lf", pos.secondsD());
+    debugVideoDisplay("VideoInFFMPEG::videoGetSnapshot # %lf", pos.secondsD());
 
     Screenplay::VideoInputFFMPEG video;
 
-    if(!video.open(m_name.c_str(), m_flags)) {
+    if(!video.open(m_name.toUtf8().data(), m_flags)) {
       endOfFile();
       return;
     }
@@ -252,10 +260,10 @@ namespace VideoDisplay {
   {
     //info("VideoInFFMPEG::videoPlay # %lf", pos.secondsD());
 
-    if(!m_video.open(m_name.c_str(), m_flags)) {
+    if(!m_video.open(m_name.toUtf8().data(), m_flags)) {
       endOfFile();
-      debug("VideoInFFMPEG::videoPlay # Open failed for \"%s\"",
-            m_name.c_str());
+      debugVideoDisplay("VideoInFFMPEG::videoPlay # Open failed for \"%s\"",
+            m_name.toUtf8().data());
       return;
     }
 
@@ -285,8 +293,8 @@ namespace VideoDisplay {
     Radiant::TimeStamp audioTS = m_video.audioTime();
 
     if(!img) {
-      debug("VideoInFFMPEG::videoPlay # Image capture failed \"%s\"",
-            m_name.c_str());
+      debugVideoDisplay("VideoInFFMPEG::videoPlay # Image capture failed \"%s\"",
+            m_name.toUtf8().data());
       endOfFile();
       return;
     }
@@ -309,8 +317,8 @@ namespace VideoDisplay {
       m_frameTime = m_video.frameTime();
 
       if(!img) {
-        debug("VideoInFFMPEG::videoPlay # Image capture failed in scan \"%s\"",
-              m_name.c_str());
+        debugVideoDisplay("VideoInFFMPEG::videoPlay # Image capture failed in scan \"%s\"",
+              m_name.toUtf8().data());
         endOfFile();
         return;
       }
@@ -326,7 +334,7 @@ namespace VideoDisplay {
         audioTS = audioTS2;
       }
 
-      debug("ideoInFFMPEG::videoPlay # Forward one frame");
+      debugVideoDisplay("VideoInFFMPEG::videoPlay # Forward one frame");
 
       if(m_frameTime >= pos) {
 
@@ -339,7 +347,7 @@ namespace VideoDisplay {
           m_audioCount = 1;
           ignorePreviousFrames();
 
-          debug("VideoInFFMPEG::videoPlay # EXIT OK %d %p", aframes, f);
+          debugVideoDisplay("VideoInFFMPEG::videoPlay # EXIT OK %d %p", aframes, f);
         }
 
         return;
@@ -351,7 +359,7 @@ namespace VideoDisplay {
 
   void VideoInFFMPEG::videoGetNextFrame()
   {
-    debug("VideoInFFMPEG::videoGetNextFrame");
+    debugVideoDisplay("VideoInFFMPEG::videoGetNextFrame");
 
     const VideoImage * img = m_video.captureImage();
 
@@ -387,7 +395,7 @@ namespace VideoDisplay {
 
   void VideoInFFMPEG::videoStop()
   {
-    debug("VideoInFFMPEG::videoStop");
+    debugVideoDisplay("VideoInFFMPEG::videoStop");
     m_video.close();
 
   }
@@ -400,7 +408,7 @@ namespace VideoDisplay {
   /*
   void VideoInFFMPEG::enableLooping(bool enable)
   {
-    debug("VideoInFFMPEG::enableLooping # %d", (int) enable);
+    debugVideoDisplay("VideoInFFMPEG::enableLooping # %d", (int) enable);
     m_video.enableLooping(enable);
     m_duration = TimeStamp::createSecondsD(m_video.durationSeconds());
   }

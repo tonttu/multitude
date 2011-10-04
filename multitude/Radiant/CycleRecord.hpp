@@ -7,17 +7,18 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef RADIANT_CYCLE_RECORD_HPP
 #define RADIANT_CYCLE_RECORD_HPP
 
-#include <Radiant/cycle.h>
-#include <Radiant/Trace.hpp>
+#include "Export.hpp"
+#include "cycle.h"
+#include "Trace.hpp"
 
 #include <stdio.h>
 #include <vector>
@@ -74,7 +75,7 @@ namespace Radiant {
     }
 
     /// Normalize the accumulation buffers, so that one can print the report
-    /** This method returns the total CPU cycle count. */
+    /// @return total CPU cycle count.
     double normalize()
     {
       unsigned i;

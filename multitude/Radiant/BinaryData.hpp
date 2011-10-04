@@ -7,10 +7,10 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef RADIANT_BINARY_DATA_HPP
@@ -19,13 +19,22 @@
 #include <Nimble/Vector2.hpp>
 #include <Nimble/Vector4.hpp>
 
-#include <Radiant/Export.hpp>
+#include "Export.hpp"
 
 #include <stdint.h>
 #include <vector>
 
+#include <QString>
+
+#include <v8.h>
+
 namespace Radiant {
   class BinaryStream;
+}
+
+namespace v8 {
+  class Value;
+  template <class T> class Handle;
 }
 
 namespace Radiant {
@@ -87,18 +96,21 @@ namespace Radiant {
     void writeInt64(int64_t v);
     /// Writes a 64-bit integer to the data buffer
     void writePointer(void * ptr) { writeInt64((int64_t) ptr); }
-    /// Writes a 64-bit time-stamp to the data buffer
-    /** The timestamp uses Radiant::TimeStamp internal structure (40+24
-    bit fixed-point value).*/
+    /// Write a 64-bit time-stamp to the data buffer
+    /// The timestamp uses Radiant::TimeStamp internal structure (40+24
+    /// bit fixed-point value).
+    /// @param v time-stamp to write
     void writeTimeStamp(int64_t v);
 
     /// Write a null-terminated string to the buffer
     void writeString(const char *);
     /// Write a string to the buffer
-    void writeString(const std::string & str) { writeString(str.c_str()); }
+    /// @param str string to write
+    void writeString(const QString & str) { writeString(str.toUtf8().data()); }
     /** Writes a wide-string to the buffer. The string is internally
     stored as 32-bit integers, since that is the typical
-    wchar_t.*/
+    wchar_t.
+    @param str string to write*/
     void writeWString(const std::wstring & str);
 
     /// Writes binary blob to the buffer.
@@ -126,27 +138,43 @@ namespace Radiant {
     /// Read a value from the data
     template <class T> inline T read(bool * ok = 0);
 
-    /// Reads a 32-bit floating point number from the data buffer
+    /// Read a value from the buffer
+    /// Tries to read the matching value type from the buffer. If successful
+    /// the value is returned and the buffer read position is incremented. If the
+    /// read fails, zero is returned and the optional ok flag is set to false.
+    /// @param[out] ok check if the read was successful
+    /// @return requested value or zero on failure
     float readFloat32(bool * ok = 0);
-    /// Reads a 32-bit floating point number from the data buffer
-    /** If the value cannot be read, then the default is returned. */
+    /// @copydoc readFloat32
+    /// @param defval default value to return in case of failure
+    /// @todo why only this has default value and not the others?
     float readFloat32(float defval, bool * ok = 0);
-    /// Reads a 64-bit floating point number from the data buffer
+    /// @copydoc readFloat32
     double readFloat64(bool * ok = 0);
-    /// Reads a 32-bit integer from the data buffer
+    /// @copydoc readFloat32
     int32_t readInt32(bool * ok = 0);
-
-    /// Reads a 64-bit integer from the data buffer
+    /// @copydoc readFloat32
     int64_t readInt64(bool * ok = 0);
-    /// Reads a 64-bit time-stamp from the data buffer
+    /// @copydoc readFloat32
     int64_t readTimeStamp(bool * ok = 0);
+
     /// Read a null-terminated string from the buffer
+    /// @param[out] str string buffer to write to
+    /// @param maxbytes maximum number of bytes to read
+    /// @return true on success
     bool readString(char * str, size_t maxbytes);
     /// Read a string from the buffer
-    bool readString(std::string & str);
+    /// @param[out] str string to write to
+    /// @return true on success
+    bool readString(QString & str);
     /// Reads a wide string from the buffer
+    /// @param[out] str string to write to
+    /// @return true on success
     bool readWString(std::wstring & str);
     /// Reads a blob of expected size
+    /// @param[out] ptr buffer to write to
+    /// @param n bytes to read
+    /// @return true on success
     bool readBlob(void * ptr, int n);
 
     /// Reads a 2D 32-bit floating point vector from the buffer
@@ -177,7 +205,7 @@ namespace Radiant {
     inline void setTotal(int bytes) { m_total = bytes; }
 
     /// Writes the buffer into a stream
-    bool write(Radiant::BinaryStream *);
+    bool write(Radiant::BinaryStream *) const;
     /// Reads the buffer from a stream
     bool read(Radiant::BinaryStream *);
 
@@ -197,6 +225,12 @@ namespace Radiant {
     /// Copy a buffer object
     inline BinaryData & operator = (const BinaryData & that)
     { rewind(); append(that); return * this;}
+
+    /// Copies the binary data stream to v8 value array
+    /// v8 values have to be defined in stack, so we can't use std::vector etc
+    /// @param argc in = size of argv, out = number of values filled
+    /// @todo isn't implemented fully
+    bool readTo(int & argc, v8::Handle<v8::Value> argv[]);
 
   private:
 
@@ -250,9 +284,9 @@ namespace Radiant {
   template <> inline Nimble::Vector4i BinaryData::read(bool * ok)
   { return readVector4Int32(ok); }
 
-  template <> inline std::string BinaryData::read(bool * ok)
+  template <> inline QString BinaryData::read(bool * ok)
   {
-      std::string tmp;
+      QString tmp;
       bool good = readString(tmp);
       if(ok)
             *ok = good;
@@ -267,7 +301,6 @@ namespace Radiant {
             *ok = good;
     return tmp;
   }
-
 }
 
 #endif

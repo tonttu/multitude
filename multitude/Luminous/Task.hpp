@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 #ifndef LUMINOUS_TASK_HPP
 #define LUMINOUS_TASK_HPP
@@ -29,6 +29,7 @@ namespace Radiant {
 namespace Luminous
 {
   class BGThread;
+  class TaskDeleter;
 
   /// Priority for the tasks
   typedef float Priority;
@@ -52,8 +53,9 @@ namespace Luminous
       launching a separate thread for them. For this purpose,
       see #Radiant::Thread.
     */
-  class LUMINOUS_API Task : Patterns::NotCopyable, Radiant::MemCheck
+  class LUMINOUS_API Task : Patterns::NotCopyable
   {
+    MEMCHECKED
   public:
     /// Standard priorities for tasks
     enum {
@@ -67,7 +69,6 @@ namespace Luminous
 
       /// Constructs a task with the given priority
       Task(Priority p = PRIORITY_NORMAL);
-      virtual ~Task();
 
       /// State of the task
       enum State
@@ -100,6 +101,9 @@ namespace Luminous
       { m_scheduled = Radiant::TimeStamp::getTime() +
           Radiant::TimeStamp::createSecondsD(seconds); }
 
+      /// Marks the task as finished, so it will be removed.
+      void setFinished() { setState(DONE); }
+
     protected:
        /// Initialize the task. Called by BGThread before the task is processed
       virtual void initialize();
@@ -121,7 +125,10 @@ namespace Luminous
       /// The background thread where this task is executed
       BGThread * m_host;
 
+      virtual ~Task();
+
       friend class BGThread;
+      friend class TaskDeleter;
   };
 
 }

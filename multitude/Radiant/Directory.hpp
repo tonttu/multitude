@@ -16,13 +16,15 @@
 #ifndef RADIANT_DIRECTORY_HPP
 #define RADIANT_DIRECTORY_HPP
 
+#include "Export.hpp"
+
 #include <Patterns/NotCopyable.hpp>
 
-#include <Radiant/Export.hpp>
-
 #include <stdexcept>
-#include <string>
+#include <QString>
 #include <vector>
+
+#include <QStringList>
 
 #ifdef WIN32
 #pragma warning(disable : 4290)
@@ -40,7 +42,7 @@ namespace Radiant
 
       @author Esa Nuuros
   */
-  class RADIANT_API Directory : public Patterns::NotCopyable
+  class RADIANT_API Directory
   {
   public:
     /// Flags to filter directory contents
@@ -50,7 +52,8 @@ namespace Radiant
       Files = 0x002,
       NoDotAndDotDot = 0x1000,
       Hidden = 0x100,
-      AllEntries = Dirs | Files      
+      System = 0x004,
+      AllEntries = Dirs | Files | System
     };
 
     /// Flags to sort files
@@ -64,17 +67,6 @@ namespace Radiant
 
     /// Construct a directory listing
     /** Creating a Directory object immediately scans the contents
-	of the directory. Entries matching the given filters are
-	included.
-
-	@param pathname directory path
-	@param filters one or more filter flags OR'ed together
-	@param sortFlag flag indicating how the results should be sorted
-    */
-    Directory(const char * pathname,
-	      int filters = AllEntries, SortFlag sortFlag = Name);
-    /// Construct a directory listing
-    /** Creating a Directory object immediately scans the contents
   of the directory. Entries matching the given filters are
   included.
 
@@ -82,8 +74,8 @@ namespace Radiant
   @param filters one or more filter flags OR'ed together
   @param sortFlag flag indicating how the results should be sorted
     */
-    Directory(const std::string & pathname,
-	      int filters = AllEntries, SortFlag sortFlag = Name);
+    Directory(const QString & pathname,
+        int filters = AllEntries | NoDotAndDotDot, SortFlag sortFlag = Name);
     /// Construct a directory listing
     /** Creating a Directory object immediately scans the contents
 	of the directory. Entries matching the given filters are
@@ -97,8 +89,8 @@ namespace Radiant
 	@param filters one or more filter flags OR'ed together
 	@param sortFlag flag indicating how the results should be sorted
     */
-    Directory(const char * pathname, const char * suffixlist,
-	      int filters = AllEntries, SortFlag sortFlag = Name);
+    Directory(const QString & pathname, const QString & suffixlist,
+        int filters = AllEntries | NoDotAndDotDot, SortFlag sortFlag = Name);
 
  
     /// Deallocates the list
@@ -111,43 +103,40 @@ namespace Radiant
 	@param n integer index of file   
 	@return filename
     */
-    std::string fileName(int n) const;
+    QString fileName(int n) const;
 
-    /** Return the full path name of the nth file.
-
-	This method is equal to calling "dir.path() + dir.filename(n)".
-    */
-    std::string fileNameWithPath(int n) const;
+    /// Get the full path name of the nth file.
+    /// This method is equal to calling "dir.path() + dir.filename(n)".
+    /// @param n index of the file
+    /// @return full path to the requested file
+    QString fileNameWithPath(int n) const;
 
     /// Returns the directory path
-    const std::string & path() const { return m_path; } 
+    const QString & path() const { return m_path; } 
 
     /// Creates a new directory.
-    static bool mkdir(const char * dirname);
-    /// Creates a new directory.
-    static bool mkdir(const std::string & dirname);
+    static bool mkdir(const QString & dirname);
     /// Creates a new directory recursively
-    static bool mkdirRecursive(const std::string & dirname);
+    static bool mkdirRecursive(const QString & dirname);
     /// Checks if the given directory exists
-    static bool exists(const std::string & dir);
+    static bool exists(const QString & dir);
+
+    static Directory findByMimePattern(const QString & pathname,
+                                       const QString & mimePattern,
+                                       int filters = AllEntries | NoDotAndDotDot,
+                                       SortFlag sortFlag = Name);
 
   private:
-    // Calling a constructor from another is evil but we
-    // can put all dupplicated code in the same private
-    // method
-    void init(const std::string & pathname, const char * suffixlist,
-	      const int filters, const SortFlag sortFlag) ;
-
     // This function takes care of the low-level platform
     // specific stuff.  All it does is fill up m_entries
     // with the directory contents matching the flags.
     void populate();
 		
-    std::string m_path;
-    std::vector<std::string> m_entries;      
-    std::vector<std::string> m_suffixes;
+    QString m_path;
+    QStringList m_entries;
+    QStringList m_suffixes;
     int m_filterFlags;
-    SortFlag m_sortFlags;
+    SortFlag m_sortFlag;
   };
 
 }

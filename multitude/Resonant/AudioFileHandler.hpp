@@ -7,21 +7,23 @@
  * See file "Resonant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef RESONANT_AUDIO_FILE_HANDLER_HPP
 #define RESONANT_AUDIO_FILE_HANDLER_HPP
+
+#include "Export.hpp"
 
 #include <Radiant/Condition.hpp>
 #include <Radiant/IODefs.hpp>
 #include <Radiant/Thread.hpp>
 
 #include <list>
-#include <string>
+#include <QString>
 #include <vector>
 
 struct SNDFILE_tag;
@@ -32,7 +34,7 @@ namespace Resonant {
   /** Read/write multiple audio files at the same time in one
       background-thread. */
 
-  class AudioFileHandler : public Radiant::Thread
+  class RESONANT_API AudioFileHandler : public Radiant::Thread
   {
     friend class Handle;
 
@@ -59,12 +61,19 @@ namespace Resonant {
       /// Blocks until the file has been opened
       /** @return True if the file was opened successfully. */
       bool waitOpen();
-      /** Checks if the file is now open. */
+      /// Checks if the file is now open.
+      /// @return True is file is open
       bool isOpen() const { return m_file != 0; }
 
-      /** Write frames into the file (asynchronously). */
+      /// Write frames into the file (asynchronously).
+      /// @param data Buffer to write, (channels() * frames) floats
+      /// @param frames number of frames in the buffer
+      /// @return Number of frames written, or negative value on error
       int writeFrames(float * data, int frames);
-      /** Read frames from the file. */
+      /// Read frames from the file.
+      /// @param data Buffer that should hold at least (channels() * frames) floats
+      /// @param frames Maximum number of frames to read
+      /// @return Number of frames read to data, or negative value on error
       int readFrames(float * data, int frames);
 
       /// @copydoc writeFrames(float * data, int frames)
@@ -90,8 +99,6 @@ namespace Resonant {
 
     private:
 
-      void lock()   { m_host->lock(); }
-      void unlock() { m_host->unlock(); }
       void waitCond()   { m_host->waitCond(); }
       void signalCond() { m_host->signalCond(); }
 
@@ -115,7 +122,7 @@ namespace Resonant {
 
       AudioFileHandler * m_host;
 
-      std::string m_fileName;
+      QString m_fileName;
       Radiant::IoMode   m_ioMode;
 
       long        m_blocks;
@@ -147,7 +154,7 @@ namespace Resonant {
         @param startFrame The initial frame for reading.
         This value is usually zero, for reading from the beginning of the file.
         @param userFormat The sample format the user of the handle is going to use.
-
+        @return Read-only handle to the new audio file
         */
     Handle * readFile(const char * filename, long startFrame,
               Radiant::AudioSampleFormat userFormat = Radiant::ASF_FLOAT32);
@@ -159,6 +166,7 @@ namespace Resonant {
         sample type with lbsndfile file type. For example SF_FORMAT_WAV | SF_FORMAT_PCM_24
         will give file in wav format, with 24-bits per sample.
         @param userFormat The sample format the user of the handle is going to use.
+        @return Write-only handle to the new audio file
 
         @see http://www.mega-nerd.com/libsndfile/api.html#open
 
@@ -193,8 +201,6 @@ namespace Resonant {
 
     bool update();
 
-    void lock()   { m_mutex.lock(); }
-    void unlock() { m_mutex.unlock(); }
     void waitCond()   { m_cond.wait(m_mutex); }
     void signalCond() { m_cond.wakeOne(m_mutex); }
 
@@ -203,7 +209,9 @@ namespace Resonant {
 
     container m_files;
 
-    Radiant::MutexAuto m_mutex, m_mutex2;
+    Radiant::Mutex m_mutex;
+    /// For m_files
+    Radiant::Mutex m_filesMutex;
     Radiant::Condition m_cond;
 
     volatile bool m_done;

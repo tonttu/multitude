@@ -37,7 +37,7 @@ namespace Poetic
 
   void GlyphContainer::add(Glyph * glyph, unsigned int charCode)
   {
-    m_charmap->insertIndex(charCode, m_glyphs.size());
+    m_charmap->insertIndex(charCode, static_cast<unsigned int> (m_glyphs.size()));
     m_glyphs.push_back(glyph);
   }
 

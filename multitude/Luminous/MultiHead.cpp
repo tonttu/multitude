@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
  */
 
 #include "MultiHead.hpp"
@@ -20,7 +8,6 @@
 #include "Texture.hpp"
 #include "Utils.hpp"
 
-#include <Radiant/FixedStr.hpp>
 #include <Radiant/Trace.hpp>
 
 #include <Valuable/DOMElement.hpp>
@@ -30,7 +17,7 @@ namespace Luminous {
   using namespace Radiant;
 
   MultiHead::Area::Area(Window * window)
-      : HasValues(0, "Area"),
+      : Node(0, "Area"),
       m_window(window),
       m_keyStone(this, "keystone"),
       m_location(this, "location", Nimble::Vector2i(0, 0)),
@@ -38,7 +25,7 @@ namespace Luminous {
       m_graphicsLocation(this, "graphicslocation", Nimble::Vector2i(0, 0)),
       m_graphicsSize(this, "graphicssize", Nimble::Vector2i(100, 100)),
       m_seams(this, "seams", Nimble::Vector4f(0, 0, 0, 0)),
-      m_active(this, "active", 1),
+      m_active(this, "active", true),
       m_method(this, "method", METHOD_MATRIX_TRICK),
       m_comment(this, "comment"),
       m_graphicsBounds(0, 0, 100, 100),
@@ -49,9 +36,9 @@ namespace Luminous {
   MultiHead::Area::~Area()
   {}
 
-  bool MultiHead::Area::deserialize(Valuable::ArchiveElement & element)
+  bool MultiHead::Area::deserialize(const Valuable::ArchiveElement & element)
   {
-    bool ok = HasValues::deserialize(element);
+    bool ok = Node::deserialize(element);
 
     updateBBox();
 
@@ -107,8 +94,19 @@ namespace Luminous {
     glPopMatrix(); // From applyGlState
     glLoadIdentity();
 
-    float totalh = m_size[1] + m_seams[2] + m_seams[3];
-    float totalw = m_size[0] + m_seams[0] + m_seams[1];
+    float totalh, totalw;
+
+    float areaaspect = m_size[0] / m_size[1];
+    float gfxaspect = m_graphicsSize[0] / m_graphicsSize[1];
+
+    if((gfxaspect / areaaspect) > 0.75f) {
+      totalh = m_size[1] + m_seams[2] + m_seams[3];
+      totalw = m_size[0] + m_seams[0] + m_seams[1];
+    }
+    else {
+      totalh = m_size[0] + m_seams[2] + m_seams[3];
+      totalw = m_size[1] + m_seams[0] + m_seams[1];
+    }
 
     // float relh = totalh / m_size[1];
     // float relx = totalw / m_size[0];
@@ -246,13 +244,13 @@ namespace Luminous {
   /////////////////////////////////////////////////////////////////////////////
 
   MultiHead::Window::Window(MultiHead * screen)
-      : HasValues(0, "Window"),
+      : Node(0, "Window"),
       m_screen(screen),
       m_location(this, "location", Nimble::Vector2i(0, 0)),
       m_size(this, "size", Nimble::Vector2i(100, 100)),
-      m_frameless(this, "frameless", 1),
-      m_fullscreen(this, "fullscreen", 0),
-      m_resizeable(this, "resizeable", 0),
+      m_frameless(this, "frameless", true),
+      m_fullscreen(this, "fullscreen", false),
+      m_resizeable(this, "resizeable", false),
       m_displaynumber(this, "displaynumber", -1),
       m_screennumber(this, "screennumber", -1),
       m_pixelSizeCm(0.1f)
@@ -267,7 +265,7 @@ namespace Luminous {
     m_size = size;
 
     if(m_areas.size() == 1) {
-      Radiant::debug("MultiHead::Window::resizeEvent");
+      debugLuminous("MultiHead::Window::resizeEvent");
       m_areas[0]->setSize(size);
     }
   }
@@ -299,9 +297,10 @@ namespace Luminous {
   {
     //      Radiant::trace("MultiHead::Window::windowToGraphics # loc(%f,%f), m_size[1] = %d", loc.x, loc.y, m_size[1]);
 
+    Nimble::Vector2f res(0, 0);
     for(size_t i = 0; i < m_areas.size(); i++) {
       bool ok = false;
-      Nimble::Vector2f res = m_areas[i]->windowToGraphics(loc, m_size[1], ok);
+      res = m_areas[i]->windowToGraphics(loc, m_size[1], ok);
 
       if(ok) {
         convOk = true;
@@ -311,7 +310,7 @@ namespace Luminous {
 
     convOk = false;
 
-    return Nimble::Vector2f(0, 0);
+    return res;
   }
 
   void MultiHead::Window::setPixelSizeCm(float sizeCm)
@@ -326,18 +325,18 @@ namespace Luminous {
 
   bool MultiHead::Window::readElement(Valuable::DOMElement ce)
   {
-    const std::string & name = ce.getTagName();
+    const QString & name = ce.getTagName();
 
     // Get the 'type' attribute
     if(!ce.hasAttribute("type")) {
       Radiant::error("MultiHead::Window::readElement # "
-                     "no type attribute on element '%s'", name.c_str());
+                     "no type attribute on element '%s'", name.toUtf8().data());
       return false;
     }
 
-    const std::string & type = ce.getAttribute("type");
+    const QString & type = ce.getAttribute("type");
 
-    if(type == std::string("area")) {
+    if(type == QString("area")) {
       Area * area = new Area(this);
       // Add as child & recurse
       addValue(name, area);
@@ -354,9 +353,10 @@ namespace Luminous {
   /////////////////////////////////////////////////////////////////////////////
 
   MultiHead::MultiHead()
-      : HasValues(0, "MultiHead", false),
+      : Node(0, "MultiHead", false),
       m_widthcm(this, "widthcm", 100, true),
       m_gamma(this, "gamma", 1.1f, true),
+      m_iconify(this, "iconify", false),
       m_edited(false)
   {
   }
@@ -461,7 +461,7 @@ namespace Luminous {
 
     size_t n = areaCount();
 
-    Radiant::debug("MultiHead::width # %lu", n);
+//    debugLuminous("MultiHead::width # %lu", n);
 
     for(size_t i = 0; i < n; i++) {
       Area & a = area(i);
@@ -475,7 +475,7 @@ namespace Luminous {
       left  = Nimble::Math::Min(left,  wleft);
       right = Nimble::Math::Max(right, wright);
 
-      Radiant::debug("lr = %f %f", left, right);
+//      debugLuminous("lr = %f %f", left, right);
     }
 
     return (int) (right - left);
@@ -501,11 +501,11 @@ namespace Luminous {
     return (int) (bottom - top);
   }
 
-  bool MultiHead::deserialize(Valuable::ArchiveElement & element)
+  bool MultiHead::deserialize(const Valuable::ArchiveElement & element)
   {
     m_windows.clear();
 
-    bool ok = HasValues::deserialize(element);
+    bool ok = Node::deserialize(element);
 
     const float pixelSizeCm = m_widthcm.asFloat() / width();
 
@@ -520,17 +520,17 @@ namespace Luminous {
 
   bool MultiHead::readElement(Valuable::DOMElement ce)
   {
-    const std::string & name = ce.getTagName();
+    const QString & name = ce.getTagName();
 
     // Get the 'type' attribute
     if(!ce.hasAttribute("type")) {
-      Radiant::error("MultiHead::readElement # no type attribute on element '%s'", name.c_str());
+      Radiant::error("MultiHead::readElement # no type attribute on element '%s'", name.toUtf8().data());
       return false;
     }
 
-    const std::string & type = ce.getAttribute("type");
+    const QString & type = ce.getAttribute("type");
 
-    if(type == std::string("window")) {
+    if(type == QString("window")) {
       Window * win = new Window(this);
 
       // Add as child & recurse

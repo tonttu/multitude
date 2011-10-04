@@ -1,24 +1,13 @@
 /* COPYRIGHT
- *
- * This file is part of Nimble.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Nimble.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
  */
 
 #ifndef NIMBLE_VECTOR3T_HPP
 #define NIMBLE_VECTOR3T_HPP
 
-#include <Nimble/Export.hpp>
-#include <Nimble/Vector2.hpp>
+#include "Export.hpp"
+#include "Vector2.hpp"
 
+#include <limits>
 #include <iostream>
 
 #include <stdint.h>
@@ -34,22 +23,24 @@ namespace Nimble {
     /// Data type of the vector
     typedef T type;
 
+    enum { Elements = 3 };
+
     T		x;										///< x-component of the vector
     T		y;										///< y-component of the vector
     T		z;										///< z-component of the vector
     inline Vector3T()							   {}
     /// Constructs a vector initializing all components to given value
-    inline explicit Vector3T(T xyz)		           { x = y = z = xyz; }
+    inline explicit Vector3T(T xyz) : x(xyz), y(xyz), z(xyz) {}
     /// Constructs a vector initializing it to given values
-    inline Vector3T(T cx, T cy, T cz)		           { x = cx;	y = cy;		z = cz; }
+    inline Vector3T(T cx, T cy, T cz) : x(cx), y(cy), z(cz) {}
     /// Constructs a vector copying values from memory
-    template <class S> Vector3T(const S * v) { x = (T)v[0]; y = (T)v[1]; z = (T)v[2]; }
+    template <class K> Vector3T(const K * v) { x = (T)v[0]; y = (T)v[1]; z = (T)v[2]; }
     /// Constructs a vector copying it from another vector
-    template <class S> Vector3T(const Vector3T<S>& v)		   { x = (T)v.x;	y = (T)v.y; z = (T)v.z; }
+    template <class K> Vector3T(const Vector3T<K>& v)		   { x = (T)v.x;	y = (T)v.y; z = (T)v.z; }
     /// Constructs a vector using a 2d vector and a scalar component
-    template <class S> Vector3T(const Vector2T<S>& v, S az)		   { x = (T)v.x;	y = (T)v.y; z = az; }
+    template <class K> Vector3T(const Vector2T<K>& v, K az)		   { x = (T)v.x;	y = (T)v.y; z = az; }
     /// Copies a vector
-    template <class S> Vector3T& operator=(const Vector3T<S>& v)	   { x = (T)v.x; y = (T)v.y; z = (T)v.z; return *this; }
+    template <class K> Vector3T& operator=(const Vector3T<K>& v)	   { x = (T)v.x; y = (T)v.y; z = (T)v.z; return *this; }
     /// Fills the vector with zeroes
     inline Vector3T&	clear		(void)				   { x = (T)(0);  y = (T)(0); z = (T)(0); return *this;	}
     /// Sets the vector to given values
@@ -61,9 +52,16 @@ namespace Nimble {
     /// Returns a pointer to the first element
     inline const T * data() const { return &x; }
     /// Compares if two vectors are equal
-    inline bool		operator==  (const Vector3T& src) const		   { return (x == src.x && y == src.y && z == src.z); }
+    inline bool operator==  (const Vector3T& src) const
+    {
+      static const float eps = std::numeric_limits<T>::epsilon();
+      return
+        x >= src.x - eps && x<= src.x + eps &&
+        y >= src.y - eps && y<= src.y + eps &&
+        z >= src.z - eps && z<= src.z + eps;
+    }
     /// Compares if two vectors differ
-    inline bool		operator!=  (const Vector3T& src) const		   { return !(x == src.x && y == src.y && z == src.z); }
+    inline bool		operator!=  (const Vector3T& src) const { return !operator==(src); }
 
     /// Adds two vectors
     inline Vector3T      operator+	(const Vector3T& v) const { return Vector3T(x + v.x, y + v.y, z + v.z); }
@@ -103,8 +101,9 @@ namespace Nimble {
     /// Divide component-wise
     inline Vector3T&	descale		(const Vector3T& v)		   { x /= v.x; y /= v.y; z /= v.z; return *this; }
     /// Clamps components to range [0,1]
-    inline Vector3T&	clampUnit	(void)				   { if(x <= (T)0.0) x = (T)0.0; else if(x >= (T)1.0) x = (T)1.0; if(y <= (T)0.0) y = (T)0.0; else if(y >= (T)1.0) y = (T)1.0; if(z <= (T)0.0) z = (T)0.0; else if(z >= (T)1.0) z = (T)1.0; return *this; }
-
+    inline Vector3T&	clampUnit	(void)				   { return clamp(T(0.0), T(1.0)); }
+    /// Clamps all components to the range [low, high]
+    inline Vector3T&	clamp (T low, T high)       { x = Math::Clamp(x, low, high); y = Math::Clamp(y, low, high);  z = Math::Clamp(z,low, high); return * this; }
     /// Returns a vector with components reordered.
     inline Vector3T    shuffle         (int i1, int i2, int i3) const { return Vector3T(get(i1), get(i2), get(i3)); }
 
@@ -128,19 +127,20 @@ namespace Nimble {
     /// Sum of all components
     inline T             sum() const { return x + y + z; }
 
-    //template <class S>
-    //void copy(const S * data) { x = data[0]; y = data[1]; z = data[2]; }
+    // reference versions of vector2() were removed because they enabled
+    // really arcane code
 
-    //static Vector3T & cast(T * ptr) { return * (Vector3T *) ptr; }
-    //static const Vector3T & cast(const T * ptr) { return * (Vector3T *) ptr; }
-
-    /// @todo duplicates (vector2(), xy())
-    /// Returns a vector containing the two first components
-    inline Vector2T<T> & vector2() { return * (Vector2T<T> *) this; }
-    /// Returns a vector containing the two first components
-    inline const Vector2T<T> & vector2() const { return * (Vector2T<T> *) this; }
-    /// Returns a vector containing the two first components
-    inline Vector2T<T> xy() const { return Vector2T<T>(x, y); }
+    /// Returns a copy of the first two components as a Vector2
+    /// @return New vector2
+    inline Vector2T<T> vector2() const { return Vector2T<T>(x, y); }
+    /// Makes a new vector2 of two freely selected components of vector3
+    /// @param i0 Index of the first component,  vec2.x = vec3[i0], 0..2
+    /// @param i1 Index of the second component, vec2.y = vec3[i1], 0..2
+    /// @return New vector2
+    inline Vector2T<T> vector2(int i0, int i1) const
+    {
+      return Vector2T<T>(get(i0), get(i1));
+    }
   };
 
 #ifdef WIN32
@@ -188,6 +188,14 @@ namespace Nimble {
   Nimble::Vector3T<T> operator* (T s, const Nimble::Vector3T<T>& v)
   { return v * s; }
 
+  namespace Math {
+    /// Specialize Abs
+    template <class T>
+    inline float Abs(const Vector3T<T>& t)
+    {
+      return t.length();
+    }
+  }
 } // namespace
 
 template <class T>
@@ -196,20 +204,20 @@ inline T abs(Nimble::Vector3T<T> t)
   return t.length();
 }
 
-template <class S, class T>
-inline T dot(const Nimble::Vector3T<S>& a, const Nimble::Vector3T<T>& b)
+template <class K, class T>
+inline T dot(const Nimble::Vector3T<K>& a, const Nimble::Vector3T<T>& b)
 {
   return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
 }
 
-template <class S, class T>
-inline T dot2(const Nimble::Vector3T<S>& a, const Nimble::Vector2T<T>& b)
+template <class K, class T>
+inline T dot2(const Nimble::Vector3T<K>& a, const Nimble::Vector2T<T>& b)
 {
   return a[0]*b[0] + a[1]*b[1];
 }
 
-template <class S, class T>
-inline T dot3(const Nimble::Vector3T<S>& a, const Nimble::Vector2T<T>& b)
+template <class K, class T>
+inline T dot3(const Nimble::Vector3T<K>& a, const Nimble::Vector2T<T>& b)
 {
   return a[0]*b[0] + a[1]*b[1] + a[2];
 }
@@ -252,6 +260,13 @@ inline std::istream &operator>>(std::istream &is, Nimble::Vector3T<T> &t)
         template Nimble::Vector3T<int64_t>;
         template Nimble::Vector3T<uint64_t>;
 #   endif
+#endif
+
+#ifdef __GCCXML__
+/// These are exported to JS
+template class Nimble::Vector3T<float>;
+template class Nimble::Vector3T<int>;
+template class Nimble::Vector3T<unsigned char>;
 #endif
 
 #endif

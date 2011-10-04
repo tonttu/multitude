@@ -28,9 +28,16 @@ namespace Poetic
   : m_metricFont(0)
   {}
 
+  CPUManagedFont::~CPUManagedFont()
+  {
+    for(container::iterator it = m_fonts.begin(); it != m_fonts.end(); it++)
+      delete *it;
+    delete m_metricFont;
+  }
+
   bool CPUManagedFont::load(const char * fontFilePath)
   {
-    m_file = std::string(fontFilePath);
+    m_file = QString(fontFilePath);
 
     bool ok = true;
 
@@ -38,16 +45,24 @@ namespace Poetic
     for(uint32_t i = 0; i < sizeof(g_faceSizes) / sizeof(g_faceSizes[0]); i++) {
       CPUBitmapFont * font = new CPUBitmapFont();
 
-      ok = font->load(m_file.c_str());
-      if(!ok) return false;
+      ok = font->load(m_file.toUtf8().data());
+      if(!ok) {
+        delete font;
+        return false;
+      }
+
       ok = font->setFaceSize(g_faceSizes[i]);
-      if(!ok) return false;
+      if(!ok) {
+        delete font;
+        return false;
+      }
+
       m_fonts.push_back(font);
     }
 
     // Load the specified metric font
     CPUBitmapFont * bf = new CPUBitmapFont();
-    ok = bf->load(m_file.c_str());
+    ok = bf->load(m_file.toUtf8().data());
     assert(ok);
     ok = bf->setFaceSize(METRIC_FONT_POINT_SIZE);
     assert(ok);

@@ -11,15 +11,15 @@ contains(QMAKE_HOST.arch, x86_64) {
 } else {
   V8 += arch=ia32
 }
-debug {
-  TARGET=libv8_g.so
-  V8 += verbose=on mode=debug
-} else {
-  TARGET=libv8.so
+CONFIG(release, debug|release) {
+  TARGET=libv8.$$SHARED_LIB_SUFFIX
   V8 += mode=release
+} else {
+  TARGET=libv8_g.$$SHARED_LIB_SUFFIX
+  V8 += verbose=on mode=debug
 }
 
-first.commands = test ! -f $$TARGET && scons $$V8 library -j4 && cp $$TARGET $$DESTDIR/libv8.so || true
+first.commands = if test ! -s $$TARGET; then scons $$V8 library -j4; fi && cp $$TARGET $$DESTDIR/libv8.$$SHARED_LIB_SUFFIX
 
 MAKE_EXTRA_TARGETS += clean
 clean.commands = scons -c

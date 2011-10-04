@@ -7,12 +7,13 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
+#include "Export.hpp"
 #include "Log.hpp"
 
 #include "DateTime.hpp"
@@ -23,13 +24,13 @@
 #include "Trace.hpp"
 
 #include <list>
-#include <string>
+#include <QString>
 #include <cassert>
 #include <stdarg.h>
 
 namespace Radiant {
 
-  class LogThread : public Thread
+  class RADIANT_API LogThread : public Thread
   {
   public:
     LogThread() : m_file(0), m_ready(false) {}
@@ -38,7 +39,7 @@ namespace Radiant {
     {
       if(!m_file)
         return;
-      Guard g( & m_mutex);
+      Guard g( m_mutex);
       m_messages.push_back(msg);
     }
 
@@ -57,7 +58,7 @@ namespace Radiant {
       while(true) {
         m_ready = true;
         Sleep::sleepS(1);
-        Guard g( & m_mutex);
+        Guard g( m_mutex);
 
         for(container::iterator it = m_messages.begin();
         it != m_messages.end(); it++) {
@@ -69,7 +70,7 @@ namespace Radiant {
                     dt.monthDay() + 1, dt.month() + 1, dt.year(),
                     dt.hour(), dt.minute(), dt.second(), dt.milliSecond());
 
-            fprintf((FILE *) m_file, "%s,%s\n", m_buf, (*it).m_str.c_str());
+            fprintf((FILE *) m_file, "%s,%s\n", m_buf, (*it).m_str.toUtf8().data());
 
             // info("LOG: %s", m_buf);
           }
@@ -85,13 +86,13 @@ namespace Radiant {
     {
     public:
       Item(const char * str) : m_str(str), m_time(TimeStamp::getTime()) {}
-      std::string m_str;
+      QString m_str;
       TimeStamp   m_time;
     };
     typedef std::list<Item> container;
     container m_messages;
 
-    MutexAuto m_mutex;
+    Mutex m_mutex;
 
     volatile FILE * m_file;
     volatile bool   m_ready;
@@ -120,14 +121,14 @@ namespace Radiant {
     return file != 0;
   }
 
-  bool Log::setTimedLogFile(const char * appname)
+  bool Log::setTimedLogFile(const char * prefix)
   {
     makeThread();
 
     DateTime dt(TimeStamp::getTime());
     char buf[128], buf2[128];
     dt.print(buf2);
-    sprintf(buf, "%s-%s-log.txt", appname, buf2);
+    sprintf(buf, "%s-%s-log.txt", prefix, buf2);
     return setLogFile(buf);
   }
 

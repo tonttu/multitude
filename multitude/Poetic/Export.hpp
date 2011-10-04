@@ -16,19 +16,13 @@
 #ifndef POETIC_EXPORT_HPP
 #define POETIC_EXPORT_HPP
 
-#ifdef WIN32
+#include "Radiant/Platform.hpp"
 
 // Import by default
 #ifdef POETIC_EXPORT
-#define POETIC_API __declspec(dllexport)
+#define POETIC_API DLLEXPORT
 #else
-#define POETIC_API __declspec(dllimport)
+#define POETIC_API DLLIMPORT
 #endif
-
-#else
-
-#define POETIC_API
-
-#endif  
 
 #endif

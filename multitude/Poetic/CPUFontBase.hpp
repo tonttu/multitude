@@ -1,22 +1,10 @@
 /* COPYRIGHT
- *
- * This file is part of Poetic.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Poetic.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 #ifndef POETIC_CPU_FONT_BASE_HPP
 #define POETIC_CPU_FONT_BASE_HPP
 
-#include <Poetic/CPUFont.hpp>
-#include <Poetic/Export.hpp>
+#include "Export.hpp"
+#include "CPUFont.hpp"
 
 #include <Luminous/Collectable.hpp>
 
@@ -42,10 +30,12 @@ namespace Poetic
       /// Returns the last error
       int error() const;
 
-      /// Returns the advance for the given string
+      /// @copydoc CPUFont::advance
       float advance(const char * str, int n = -1);
-      /// @copydoc advance
+      /// @copydoc CPUFont::advance
       float advance(const wchar_t * str, int n = -1);
+      /// @copydoc CPUFont::advanceList
+      virtual void advanceList(const wchar_t * str, float * advances, int n = -1);
 
       /// Returns the face size in points
       int faceSize() const;
@@ -55,14 +45,14 @@ namespace Poetic
       /// Returns the ascender height
       float ascender() const;
       /// Returns the descender height
-      float descender() const;      
+      float descender() const;
       /// Returns the line height
       float lineHeight() const;
 
-      /// Returns the bounding box for the given string
+      /// @copydoc CPUFont::bbox
       void bbox(const char * str, BBox & bbox);
-      /// @copydoc bbox
-      void bbox(const wchar_t * wstr, BBox & bbox);
+      /// @copydoc CPUFont::bbox
+      void bbox(const wchar_t * str, BBox & bbox);
 
       /// Detaches the given GPU font
       void detach(GPUFontBase * gpuFont);
@@ -86,7 +76,7 @@ namespace Poetic
       int m_error;
 
       /// Mutex to control access to CPU resources
-      Radiant::MutexAuto m_mutex;
+      Radiant::Mutex m_mutex;
 
     private:
       inline bool checkGlyph(unsigned int g);
@@ -94,7 +84,7 @@ namespace Poetic
       GlyphContainer * m_glyphList;
       Nimble::Vector2 m_pen;
 
-      typedef std::vector<GPUFontBase *> container;  
+      typedef std::vector<GPUFontBase *> container;
       container m_gpuFonts;
 
       friend class GPUFont;

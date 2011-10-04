@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
  */
 
 #ifndef RADIANT_TIMESTAMP_HPP
@@ -20,7 +8,9 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <string>
+#include <QString>
+
+#include <QString>
 
 namespace Radiant {
 
@@ -100,7 +90,12 @@ namespace Radiant {
     static TimeStamp createDaysI(type days)
     { return (type) (days * ticksPerDay()); }
 
-    /** Creates a time-stamp consisting of days, hours, minutes, and seconds. */
+    /// Creates a time-stamp consisting of days, hours, minutes, and seconds.
+    /// @param days number of days
+    /// @param hours number of hours
+    /// @param minutes number of minutes
+    /// @param seconds number of seconds
+    /// @return new time-stamp
     static TimeStamp createDHMS(int days, int hours, int minutes, int seconds)
     {
       type tmp = ((type) seconds) << 24;
@@ -155,10 +150,13 @@ namespace Radiant {
     double usecsTo(const TimeStamp & that) const
     { return (that.m_val - m_val) * 1000000.0/(double) FRACTIONS_PER_SECOND; }
 
-    /** Returns the amount of time passed since this timestamp. */
+    /// Returns the amount of time passed since this timestamp.
+    /// Computes the difference between getTime and this time-stamp
+    /// @return amount of time passed since this time-stamp
     TimeStamp since() const { return getTime() - *this; }
 
-    /** Returns the number of seconds passed since this timestamp. */
+    /// Returns the number of seconds passed since this timestamp.
+    /// @return seconds passed since this time-stamp
     double sinceSecondsD() const { return since().secondsD(); }
 
     /// Automatic cast operator that converts the time-stamp object to int64_t
@@ -166,16 +164,16 @@ namespace Radiant {
     /// Automatic const-cast operator that converts the time-stamp object to int64_t
     inline operator const type & () const { return m_val; }
 
-    /** Returns the current time value, by looking at the wall clock. */
-    /// @see getCurrent()
+    /// Returns the current time value, by looking at the wall clock
+    /// @return current time
     static type getTime();
 
+    /// Converts the time-stamp to a string
+    /// @return time-stamp as string
+    QString asString() const;
     /// Copies the current tame value into this object.
     /// @see getTime()
     inline void getCurrent() { *this = getTime(); }
-
-    /** Converts the time-stamp to a string. */
-    std::string asString() const;
 
   private:
     type m_val;

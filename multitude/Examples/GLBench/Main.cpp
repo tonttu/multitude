@@ -13,6 +13,8 @@
 
 #include <Valuable/CmdParser.hpp>
 
+#include <QStringList>
+
 using namespace Radiant;
 
 int main(int argc, char ** argv)
@@ -40,9 +42,9 @@ int main(int argc, char ** argv)
   const int texturesperlevel = 5;
   const int formatsperlevel = 3;
 
-  Valuable::HasValues opts;
-  Valuable::ValueInt uselevels(&opts, "levels", 12);
-  Valuable::ValueInt drawrects(&opts, "drawrects", 0);
+  Valuable::Node opts;
+  Valuable::AttributeInt uselevels(&opts, "levels", 12);
+  Valuable::AttributeBool drawrects(&opts, "drawrects", false);
 
   Valuable::CmdParser::parse(argc, argv, opts);
 

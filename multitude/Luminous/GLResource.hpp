@@ -19,6 +19,8 @@
 #include <Luminous/Export.hpp>
 #include <Radiant/MemCheck.hpp>
 
+#include <cstddef>
+
 namespace Luminous
 {
   class RenderContext;
@@ -53,7 +55,7 @@ namespace Luminous
 
       MyWidget is the object that uses OpenGL resources
 
-      class MyWidget : public virtual Widget
+      class MyWidget : public Widget
       {
       public:
 
@@ -111,11 +113,9 @@ namespace Luminous
      </PRE>
   */
   class LUMINOUS_API GLResource
-#ifdef MULTI_MEMCHECK
-    : public Radiant::MemCheck
-#endif
   {
     enum { PERSISTENT = -2 };
+    MEMCHECKED
 
   public:
     friend class GLResources;
@@ -137,13 +137,14 @@ namespace Luminous
     virtual long consumesBytes();
 
     /// Sets the generation for the resource. Used to determine if a resource is up-to-date for a rendering context.
-    void setGeneration(int g) { m_generation = g; }
+    void setGeneration(size_t g) { m_generation = g; }
     /// Returns the generation of the resource.
-    int generation() const { return m_generation; }
+    size_t generation() const { return m_generation; }
 
     /// Tells if this object is persistent
     /** Persistent GPU resources should not be deleted, unless the Collectable is deleted.
-        Default implementation returns false. */
+        Default implementation returns false.
+    @return true if the resource is persistent*/
     bool persistent() { return m_deleteOnFrame == PERSISTENT; }
 
     /// Makes this resource persistent
@@ -163,7 +164,7 @@ namespace Luminous
     RenderContext * m_context;
 
     long m_deleteOnFrame;
-    int  m_generation;
+    size_t m_generation;
   };
 }
 

@@ -13,12 +13,17 @@
  * 
  */
 
+#include "Platform.hpp"
+
+#ifdef RADIANT_WINDOWS
+
+#include "Radiant.hpp"
+
 #include <Radiant/StringUtils.hpp>
-#include <Radiant/Trace.hpp>
 #include <Radiant/SerialPort.hpp>
 
 #include <cassert>
-#include <string>
+#include <QString>
 
 namespace Radiant
 {
@@ -36,21 +41,22 @@ namespace Radiant
     int baud, int bits, int /*waitBytes*/, int /*waitTimeUS*/)
   {
     // First make sure serial port is closed
-    debug("SerialPort::open(%s)", device);
+    debugRadiant("SerialPort::open(%s)", device);
     close();
-      
-    m_device = device;
+    
+    // Make the devicename compliant to new addressing (needed for >COM9) 	
+	m_device = std::string("\\\\.\\") + device;
 
     // Open serial port
 
     const char * fName = "SerialPort::open";
 
-    m_hPort = CreateFileA(device, GENERIC_READ | GENERIC_WRITE,
-      0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    m_hPort = CreateFileA(m_device.c_str(), GENERIC_READ | GENERIC_WRITE,
+      0, 0, OPEN_EXISTING, 0, 0);
     
     if(m_hPort == INVALID_HANDLE_VALUE)
     {
-      const std::string   strErr = StringUtils::getLastErrorMessage();
+      const QString   strErr = StringUtils::getLastErrorMessage();
       error("%s # Failed to open serial port (%s): %s", fName, device, strErr.c_str());
 
       m_hPort = 0;
@@ -201,3 +207,5 @@ namespace Radiant
   }
 
 }
+
+#endif

@@ -7,11 +7,16 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
+
+#include "Platform.hpp"
+
+#ifdef RADIANT_LINUX
+
 #include "PlatformUtils.hpp"
 #include "Trace.hpp"
 
@@ -30,7 +35,7 @@ namespace Radiant
   namespace PlatformUtils
   {
 
-    std::string getExecutablePath()
+    QString getExecutablePath()
     {
       char buf[512];
       int len;
@@ -39,18 +44,18 @@ namespace Radiant
 
       if(len == -1) {
         Radiant::error("PlatformUtils::getExecutablePath # readlink() failed");
-        return std::string("");
+        return QString("");
       }
 
-      return std::string(buf, len);
+      return QString::fromUtf8(buf, len);
     }
 
-    std::string getUserHomePath()
+    QString getUserHomePath()
     {
-      return std::string(getenv("HOME"));
+      return QString::fromUtf8(getenv("HOME"));
     }
 
-    std::string getModuleGlobalDataPath(const char * module, bool isapplication)
+    QString getModuleGlobalDataPath(const char * module, bool isapplication)
     {
       (void) isapplication;
 
@@ -61,14 +66,14 @@ namespace Radiant
       return buf;
     }
 
-    std::string getModuleUserDataPath(const char * module, bool isapplication)
+    QString getModuleUserDataPath(const char * module, bool isapplication)
     {
       (void) isapplication;
 
       assert(strlen(module) < 128);
       char buf[312];
 
-      sprintf(buf, "%s/.%s", getUserHomePath().c_str(), module);
+      sprintf(buf, "%s/.%s", getUserHomePath().toUtf8().data(), module);
 
       return buf;
     }
@@ -123,3 +128,5 @@ namespace Radiant
   }
 
 }
+
+#endif

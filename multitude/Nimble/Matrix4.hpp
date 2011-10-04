@@ -1,24 +1,12 @@
 /* COPYRIGHT
- *
- * This file is part of Nimble.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Nimble.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
  */
 
 #ifndef NIMBLE_MATRIX4T_HPP
 #define NIMBLE_MATRIX4T_HPP
 
-#include <Nimble/Export.hpp>
-#include <Nimble/Matrix3.hpp>
-#include <Nimble/Vector4.hpp>
+#include "Export.hpp"
+#include "Matrix3.hpp"
+#include "Vector4.hpp"
 
 namespace Nimble {
 
@@ -30,8 +18,8 @@ namespace Nimble {
   {
   public:
     /// Constructs a matrix and fills it from memory
-    template <class S>
-    Matrix4T(const S * x) { const S * end = x + 16; T * my = data(); while(x!=end) *my++ = *x++; }
+    template <class K>
+    Matrix4T(const K * x) { const K * end = x + 16; T * my = data(); while(x!=end) *my++ = *x++; }
     /// Constructs a matrix without initializing it
     Matrix4T() {}
     /// Constructs a matrix and fills it with given values
@@ -69,22 +57,34 @@ namespace Nimble {
 
     /// Returns the ith row
     /// @param i row number
+    /// @return Reference to the row
     Vector4T<T>&       operator[](int i)      { return row(i); }
     /// Returns the ith row
+    /// @param i row number
+    /// @return Const reference to the row
     const Vector4T<T>& operator[](int i) const{ return row(i); }
     /// Replaces the upper-left 3x3 matrix
     inline void               setRotation(const Nimble::Matrix3T<T>& that);
     /// Returns the upper-left 3x3 matrix
     inline Matrix3T<T>        getRotation() const;
     /// Sets the translation part of a 4x4 transformation matrix
-    void                      setTranslation(const Vector3T<T> & v);
+    void                      setTranslation(const Vector3T<T> & v)
+    {
+      m[0][3] = v.x;
+      m[1][3] = v.y;
+      m[2][3] = v.z;
+    }
+
     /// Returns the translation part of a 4x4 matrix
-    Vector3T<T>               getTranslation() const;
+    Vector3T<T>               getTranslation() const
+    {
+      return Nimble::Vector3T<T>(m[0][3], m[1][3], m[2][3]);
+    }
 
     /// Transposes the matrix
-    inline void              transpose();
+    inline Matrix4T<T>&       transpose();
     /// Returns a transposed matrix
-    inline Matrix4T<T>       transposed() const;
+    inline Matrix4T<T> transposed() const { Matrix4T<T> m(*this); m.transpose(); return m; }
     /// Fills the matrix with zeroes
     void                      clear()         { m[0].clear(); m[1].clear(); m[2].clear(); m[3].clear(); }
     /// Sets the matrix to identity
@@ -96,12 +96,12 @@ namespace Nimble {
                 T x21, T x22, T x23, T x24,
                 T x31, T x32, T x33, T x34,
                 T x41, T x42, T x43, T x44)
-      {
-    m[0].make(x11, x12, x13, x14);
-    m[1].make(x21, x22, x23, x24);
-    m[2].make(x31, x32, x33, x34);
-    m[3].make(x41, x42, x43, x44);
-      }
+    {
+      m[0].make(x11, x12, x13, x14);
+      m[1].make(x21, x22, x23, x24);
+      m[2].make(x31, x32, x33, x34);
+      m[3].make(x41, x42, x43, x44);
+    }
     /// Returns the inverse of the matrix
     inline Matrix4T<T>        inverse(bool * ok = 0) const;
 
@@ -124,26 +124,191 @@ namespace Nimble {
     /// Returns a pointer to the first element
     const T * data() const { return m[0].data(); }
 
-    Matrix4T<T> orthoNormalize();
+        /// Returns an orthonormalized version of this matrix.
+        /// @todo could improve numerical stability easily etc.
+        /// @return Normalized matrix
+        Matrix4T<T> orthoNormalize() const
+        {
+            Matrix4T<T> tmp(transposed());
+            Matrix4T<T> res(tmp);
+            for (int i=0; i < 4; ++i) {
+                Vector4T<T> & v = res.row(i);
+                for (int j=0; j < i; ++j) {
+                    v -= projection(res.row(j), tmp.row(i));
+                }
+            }
+
+            for (int i=0; i < 4; ++i)
+                res.row(i).normalize();
+
+            return res.transposed();
+        }
 
     /// Fills the matrix by copying values from memory
-    template <class S>
-    void copy (const S * x) { const S * end = x + 16; T * my = data(); while(x!=end) *my++ = (T) *x++; }
+    template <class K>
+    void copy (const K * x) { const K * end = x + 16; T * my = data(); while(x!=end) *my++ = (T) *x++; }
     /// Fills the matrix by copying transposed values from memory
-    template <class S>
-    void copyTranspose (const S * x) { for(int i = 0; i < 4; i++) for(int j = 0; j < 4; j++) m[j][i] = (T) x[i*4+j]; }
+    template <class K>
+    void copyTranspose (const K * x) { for(int i = 0; i < 4; i++) for(int j = 0; j < 4; j++) m[j][i] = (T) x[i*4+j]; }
+
+    /// Apply the matrix on a 4D vector.
+    /// @param v homogenous 3D vector
+    /// @return projected 3D vector
+    inline Vector3T<T> project(const Vector4T<T> & v) const
+    {
+      /// This is needed because there is an another operator* in Nimble-namespace in Vector3.hpp
+      using ::operator*;
+      Nimble::Vector4T<T> p = *this * v;
+      return Nimble::Vector3T<T>(p.x / p.w, p.y / p.w, p.z / p.w);
+    }
+
+    /// Apply the matrix on a 3D vector.
+    /// @param v 3D vector
+    /// @return transformed 3D vector
+    inline Vector3T<T> project(const Vector3T<T> & v) const
+    {
+      return project(Vector4T<T>(v.x, v.y, v.z, T(1.0)));
+    }
+
+    /// Creates a new WPCV-matrix (window-projection-camera-view -matrix)
+    /// Camera is positioned so that 0,0,0 is mapped to 0,0,0 and
+    /// w,h,0 is mapped to w,h,0. The projection matrix doesn't have the third
+    /// row, no depth information, so no near/far values needed.
+    /// (0,0,0) is lower left bottom, (w,h,0) is in right top, z increases towards the camera
+    /// @param width Width of the viewport
+    /// @param height Height of the viewport
+    /// @param fovy Field of view in y-direction in radians
+    /// @return New projection matrix
+    static Matrix4T<T> simpleProjection(T width, T height, T fovy = Math::PI*0.5)
+    {
+      using ::operator*;
+
+      // Camera distance to the center widget center point (assuming it's resting).
+      T dist = height * T(.5) / Nimble::Math::Tan(fovy * T(.5));
+      T aspect = width/height;
+
+      // we won't be needing depth, so the third column is just zero unlike normally
+      T f = T(1.0) / Nimble::Math::Tan(fovy*T(.5));
+      Nimble::Matrix4T<T> projection(f/aspect, 0, 0, 0,
+                                     0, f, 0, 0,
+                                     0, 0, 0, 0,
+                                     0, 0, -1, 0);
+
+      // could just change the projection plane in projection matrix,
+      // but maybe this is a bit more clear
+      Matrix4T<T> camera = makeTranslation(Vector3f(0, 0, -dist));
+
+      Matrix4T<T> window(width*0.5, 0, 0, 0.0 + width*0.5,
+                         0, height * 0.5, 0, 0.0+height*0.5,
+                         0, 0, 1, 0,
+                         0, 0, 0, 1);
+
+      Matrix4T<T> view = makeTranslation(Vector3f(-width*.5f, -height*.5f, 0));
+
+      return window * projection * camera * view;
+    }
 
     /// @todo duplicates (makeTranslation vs. translate3D)
     /// Create a rotation matrix
     /// @param radians angle in radians
     /// @param axis axis to rotate around
-    static Matrix4T<T> makeRotation(T radians, const Vector3T<T> & axis);
+    /// @return New rotation matrix
+    static Matrix4T<T> makeRotation(T radians, const Vector3T<T> & axis)
+    {
+      Nimble::Matrix4T<T> mm;
+      mm.identity();
+
+      mm.setRotation(Nimble::Matrix3T<T>::makeRotation(radians, axis));
+      return mm;
+    }
+
     /// Create a translation matrix
-    static Matrix4T<T> makeTranslation(const Vector3T<T> & v);
+    /// @param v Translation vector
+    /// @return New translation matrix
+    static Matrix4T<T> makeTranslation(const Vector3T<T> & v)
+    {
+      Nimble::Matrix4T<T> mm;
+      mm.identity();
+
+      mm.setTranslation(v);
+      return mm;
+    }
     /// Create a translation matrix
-    NIMBLE_API static Matrix4T<T> translate3D(const Vector3T<T> & v);
-    /// Create a scaling matrix
-    NIMBLE_API static Matrix4T<T> scale3D(const Vector3T<T> & v);
+    /// @param v Translation vector
+    /// @return New translation matrix
+    static Matrix4T<T> translate3D(const Vector3T<T> & v)
+    {
+      return Matrix4T(1, 0, 0, v[0],
+                      0, 1, 0, v[1],
+                      0, 0, 1, v[2],
+                      0, 0, 0, 1);
+    }
+
+    /// Create a non-uniform scaling matrix
+    /// @param v XYZ scaling factors
+    /// @return new Scaling matrix
+    static Matrix4T<T> scale3D(const Vector3T<T> & v)
+    {
+      return Matrix4T(v[0], 0, 0, 0,
+                      0, v[1], 0, 0,
+                      0, 0, v[2], 0,
+                      0, 0, 0, 1);
+    }
+
+    /// Create a uniform scaling matrix
+    /// @param s Scaling factor
+    /// @return new Scaling matrix
+    inline static Matrix4T<T> scaleUniform3D(const T & s)
+    { return scale3D(Vector3T<T>(s, s, s)); }
+
+    /// Creates a perspective projection matrix
+    /// @param fovY field of view in degress in the Y direction
+    /// @param aspect aspect ratio (width / height)
+    /// @param nearPlane distance to the near clipping plane, always positive
+    /// @param farPlane distance to the far clipping plane, always positive
+    /// @return New projection matrix
+    static Matrix4T<T> perspectiveProjection(T fovY, T aspect, T nearPlane, T farPlane)
+    {
+      assert(nearPlane > T(0));
+      assert(farPlane > T(0));
+
+      fovY = Nimble::Math::degToRad(fovY);
+
+      const T f = T(1) / T(tan(fovY / T(2)));
+
+      Nimble::Matrix4T<T> result;
+      result.clear();
+
+      result[0][0] = f / aspect;
+      result[1][1] = f;
+      result[2][2] = (farPlane + nearPlane) / (nearPlane - farPlane);
+      result[2][3] = T(2) * (farPlane * nearPlane) / (nearPlane - farPlane);
+      result[3][2] = T(-1);
+
+      return result;
+    }
+
+    /// Creates an orthogonal projection matrix
+    /// @param left Left clip plane location
+    /// @param right Right clip plane location
+    /// @param bottom Bottom clip plane location
+    /// @param top Top clip plane location
+    /// @param near Near clip plane location
+    /// @param far Far clip plane location
+    /// @return New projection matrix
+    static Matrix4T<T> orthogonalProjection(T left, T right, T bottom, T top, T near, T far)
+    {
+      Nimble::Matrix4T<T> result;
+      result.clear();
+      result[0][0] = T(2)/(right-left);
+      result[1][1] = T(2)/(top-bottom);
+      result[2][2] = -T(2)/(far-near);
+      result[3][3] = T(1);
+      result[0][3] = -(right+left)/(right-left);
+      result[1][3] = -(top+bottom)/(top-bottom);
+      result[2][3] = -(far+near)/(far-near);
+      return result;
+    }
 
     /// Creates an orthogonal projection matrix in 3D
     /** This function works in a way similar to glOrtho
@@ -153,11 +318,6 @@ namespace Nimble {
 
     /** Identity matrix. */
     NIMBLE_API static const Matrix4T<T> IDENTITY;
-
-    /// @cond
-    // Run internal test function
-    NIMBLE_API static void    test();
-    /// @endcond
 
   private:
     inline static void swap(T &a, T& b);
@@ -193,7 +353,7 @@ namespace Nimble {
   }
 
   template <class T>
-  inline void Matrix4T<T>::transpose()
+  inline Matrix4T<T> & Matrix4T<T>::transpose()
   {
     swap(m[0][1],m[1][0]);
     swap(m[0][2],m[2][0]);
@@ -201,40 +361,7 @@ namespace Nimble {
     swap(m[1][2],m[2][1]);
     swap(m[1][3],m[3][1]);
     swap(m[2][3],m[3][2]);
-  }
-
-  template <class T>
-  inline Matrix4T<T> Matrix4T<T>::transposed() const
-  {
-    Matrix4T<T> r;
-
-    for(int i = 0; i < 4; i++) {
-      for(int j = 0; j < 4; j++) {
-        r[i][j] = m[j][i];
-      }
-    }
-
-    return r;
-  }
-
-  /// @todo could improve numerical stability easily etc.
-  template <class T>
-  inline Matrix4T<T> Matrix4T<T>::orthoNormalize()
-  {
-    transpose();
-    Matrix4T<T> res(*this);
-    for (int i=0; i < 4; ++i) {
-      Vector4T<T> & v = res.row(i);
-      for (int j=0; j < i; ++j) {
-        v -= projection(res.row(j), row(i));
-      }
-    }
-
-    for (int i=0; i < 4; ++i)
-      res.row(i).normalize();
-
-    res.transpose();
-    return res;
+    return * this;
   }
 
   template <class T>
@@ -254,9 +381,10 @@ namespace Nimble {
     m[3].make(0,    0,    0,    1);
   }
 
-  /** Inverts the matrix. The boolean argument is set to true or false
-      depending on how well the operation went.
-  @param ok (optional) false if the inversion fails, otherwise true */
+  /// Inverts the matrix. The boolean argument is set to true or false
+  /// depending on how well the operation went.
+  /// @param[out] ok (optional) false if the inversion fails, otherwise true
+  /// @return Inverse matrix
   template <class T>
   Matrix4T<T> Matrix4T<T>::inverse(bool * ok) const
   {
@@ -405,42 +533,8 @@ inline Nimble::Vector3T<T> operator*(const Nimble::Vector3T<T>& m2, const Nimble
 template <class T>
 inline std::ostream& operator<<(std::ostream& os, const Nimble::Matrix4T<T>& m)
 {
-  os << m[0] << ", " << m[1] << ", " << m[2] << ", " << m[3];
+  os << m[0] << std::endl << m[1] << std::endl << m[2] << std::endl << m[3] << std::endl;
   return os;
-}
-
-template<class T>
-void Nimble::Matrix4T<T>::setTranslation(const Nimble::Vector3T<T> & v)
-{
-  m[0][3] = v.x;
-  m[1][3] = v.y;
-  m[2][3] = v.z;
-}
-
-template<class T>
-Nimble::Vector3T<T> Nimble::Matrix4T<T>::getTranslation() const
-{
-  return Nimble::Vector3T<T>(m[0][3], m[1][3], m[2][3]);
-}
-
-template<class T>
-Nimble::Matrix4T<T> Nimble::Matrix4T<T>::makeRotation(T radians, const Nimble::Vector3T<T> & axis)
-{
-  Nimble::Matrix4T<T> mm;
-  mm.identity();
-
-  mm.setRotation(Nimble::Matrix3T<T>::makeRotation(radians, axis));
-  return mm;
-}
-
-template<class T>
-Nimble::Matrix4T<T> Nimble::Matrix4T<T>::makeTranslation(const Nimble::Vector3T<T> & v)
-{
-  Nimble::Matrix4T<T> mm;
-  mm.identity();
-
-  mm.setTranslation(v);
-  return mm;
 }
 
 #endif

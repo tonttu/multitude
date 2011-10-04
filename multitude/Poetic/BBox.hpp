@@ -15,7 +15,7 @@
 #ifndef POETIC_BBOX_HPP
 #define POETIC_BBOX_HPP
 
-#include <Poetic/Export.hpp>
+#include "Export.hpp"
 
 #include <Nimble/Rect.hpp>
 

@@ -7,10 +7,10 @@
  * See file "Resonant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef RESONANT_DSPNETWORK_HPP
@@ -20,9 +20,7 @@
 #include <Resonant/Module.hpp>
 
 #include <Radiant/BinaryData.hpp>
-#include <Radiant/Mutex.hpp>
-
-#include <Radiant/RefPtr.hpp>
+#include <Radiant/Singleton.hpp>
 
 #include <list>
 #include <vector>
@@ -48,21 +46,17 @@ namespace Resonant {
 
   /** An audio signal processing engine.
 
-      DSPNetwork implements a simple signal processing graph
-      driver. The graph has hot-plug -feature so new modules can be
-      added in run-time, and the engine will re-wire the connetions as
-      necessary.
+      DSPNetwork implements a simple signal processing graph driver. The graph
+      has hot-plug -feature so new modules can be added in run-time, and the
+      engine will re-wire the connetions as necessary.
 
-      DSPNetwork follows a semi-singleton approach: It is possible to create multiple
-      DSPNetwork objects, that use different audio devices. In reality this is seldom practical
-      and thus there is usually exactly one DSPNetwork per application. When the first
-      DSPNetwork is created it becomes the default network, and calls to #instance() will
-      return pointer to the network. It is strongly recommended that you do not delete the
-      defualt DSPNetwork before application is ready exit, as doing so may invalidate
-      pointers that are held to it.
-   */
+      DSPNetwork is a singleton. The instance is kept alive as long as there is
+      a reference to the shared pointer returned by the DSPNetwork::instance()
+      function. It is strongly recommended that you keep a reference to it
+      during the lifetime of your application.*/
   class RESONANT_API DSPNetwork : public AudioLoop
   {
+    DECLARE_SINGLETON(DSPNetwork);
   public:
 
     /** Holds audio sample buffers for inter-module transfer.
@@ -103,34 +97,26 @@ namespace Resonant {
     {
     public:
       /// Creates an empty connection object, with undefined connections.
-      Connection() : m_channel(0),m_buf(0) { m_moduleId[0] = '\0'; }
+      Connection() : m_channel(0),m_buf(0) { }
       /// Creates a connection object
       /** @param moduleId The id of the module that we are connecting to.
           @param channel The channel to connect to.
       */
-      Connection(const char * moduleId, int channel)
-          : m_channel(channel),m_buf(0)
+      Connection(const QString & moduleId, int channel)
+        : m_moduleId(moduleId), m_channel(channel),m_buf(0)
       {
-        setModuleId(moduleId);
       }
 
       /// Sets the id of the connected module
-      void setModuleId(const char * id)
+      void setModuleId(const QString & id)
       {
-        if(id)
-#ifdef WIN32
-          strcpy_s(m_moduleId, id);
-#else
-        strcpy(m_moduleId, id);
-#endif
-        else
-          m_moduleId[0] = '\0';
+        m_moduleId = id;
       }
 
       /// Compare two Connection objects
       inline bool operator == (const Connection & that) const
       {
-        return (strcmp(m_moduleId, that.m_moduleId) == 0) &&
+        return (m_moduleId == that.m_moduleId) &&
             (m_channel == that.m_channel);
       }
 
@@ -138,7 +124,7 @@ namespace Resonant {
       friend class DSPNetwork;
 
       /// @cond
-      char        m_moduleId[Module::MAX_ID_LENGTH];
+      QString m_moduleId;
       int         m_channel;
       Buf        *m_buf;
       /// @endcond
@@ -153,16 +139,16 @@ namespace Resonant {
     public:
       NewConnection() : m_sourceChannel(0), m_targetChannel(0) {}
       /** The id of the audio source module. */
-      char        m_sourceId[Module::MAX_ID_LENGTH];
+      QString m_sourceId;
       /** The id of the audio destination module. */
-      char        m_targetId[Module::MAX_ID_LENGTH];
+      QString m_targetId;
       /** The channel index in the source module (where the signal is coming from). */
       int         m_sourceChannel;
       /** The channel index in the target module (where the signal is going to). */
       int         m_targetChannel;
     };
 
-    /** Stores a sinple audio processing #Resonant::Module.*/
+    /** Stores a simple audio processing #Resonant::Module.*/
     class RESONANT_API Item
     {
       friend class DSPNetwork;
@@ -188,6 +174,19 @@ namespace Resonant {
         m_module = 0;
       }
 
+      /// Sets if the item should use panner
+      void setUsePanner(bool usePanner)
+      {
+        m_usePanner = usePanner;
+      }
+
+      /// Returns if the item use panner
+      bool usePanner()
+      {
+        return m_usePanner;
+      }
+
+
     private:
 
       // Process n samples
@@ -200,10 +199,10 @@ namespace Resonant {
       }
 
       void eraseInput(const Connection & c);
-      void eraseInputs(const std::string & moduleId);
+      void eraseInputs(const QString & moduleId);
       int findInInput(float * ptr) const;
       int findInOutput(float * ptr) const;
-      void removeInputsFrom(const char * id);
+      void removeInputsFrom(const QString & id);
 
       Module * m_module;
 
@@ -215,6 +214,7 @@ namespace Resonant {
 
       bool m_compiled;
       bool m_done;
+      bool m_usePanner;
 
       int  m_targetChannel;
     };
@@ -224,16 +224,16 @@ namespace Resonant {
     typedef container::iterator iterator;
     /// @endcond
 
-    /// Creates an empty DSPNetwork object.
-    DSPNetwork();
     virtual ~DSPNetwork();
 
     /** Starts the DSPNetwork, using given audio device.
 
         To get a list of possible sound device names we recommend you use utility application
         ListPortAudioDevices.
+        @param device Device name or empty string for default device
+        @return False on error
     */
-    bool start(const char * device = 0);
+    bool start(const QString & device = "");
 
     /// Adds a DSP #Resonant::Module to the signal processing graph
     /** This function does not perform the actual addition, but puts the module into a FIFO,
@@ -254,20 +254,36 @@ control.writeString("moviegain/gain");
 control.writeFloat32(0.3);
 DSPNetwork::instance().send(control);
         \endcode
+        @param control Identifier string and correct commands for corresponding Module
     */
     void send(Radiant::BinaryData & control);
 
     /// Returns the default sample player object.
-    /** If the object does not exis yet, it is created on the fly. */
+    /// If the object does not exis yet, it is created on the fly.
+    /// This is not thread-safe
+    /// @return Default sampley player object
     ModuleSamplePlayer * samplePlayer();
-    /// Returns the DSPNetwork instance.
-    /**  */
-    static DSPNetwork * instance();
+
+    /// Finds an item that holds a module with given id
+    /// @param id Module id, @see Module::id()
+    /// @return Pointer to the item inside DSPNetwork or NULL
+    Item * findItem(const QString & id);
+    /// Finds a module with name id inside one of the items in DSPNetwork
+    /// @param id Module id, @see Module::id()
+    /// @return Pointer to the module or NULL
+    Module * findModule(const QString & id);
+
+    /// @cond
+    void dumpInfo(FILE *f);
+    /// @endcond
 
   private:
+    /// Creates an empty DSPNetwork object.
+    DSPNetwork();
 
     virtual int callback(const void *in, void *out,
-                         unsigned long framesPerBuffer
+                         unsigned long framesPerBuffer,
+                         int streamid
                          //       , const PaStreamCallbackTimeInfo* time,
                          //			 PaStreamCallbackFlags status
                          );
@@ -277,7 +293,7 @@ DSPNetwork::instance().send(control);
     void checkNewControl();
     void checkNewItems();
     void checkDoneItems();
-    void deliverControl(const char * moduleid, const char * commandid,
+    void deliverControl(const QString & moduleid, const char * commandid,
                         Radiant::BinaryData &);
 
     bool uncompile(Item &);
@@ -286,10 +302,9 @@ DSPNetwork::instance().send(control);
     Buf & findFreeBuf(int);
     bool bufIsFree(int, int);
     void checkValidId(Item &);
-    Item * findItem(const char * id);
-    Module * findModule(const char * id);
-    float * findOutput(const char * id, int channel);
+    float * findOutput(const QString & id, int channel);
     long countBufferBytes();
+    void duDumpInfo(FILE *f);
 
     container m_items;
 
@@ -297,24 +312,23 @@ DSPNetwork::instance().send(control);
 
     std::vector<Buf> m_buffers;
 
+    /// @todo remove these special hacks
     ModuleOutCollect *m_collect;
     ModulePanner   *m_panner;
 
     Radiant::BinaryData m_controlData;
     Radiant::BinaryData m_incoming;
     Radiant::BinaryData m_incopy;
-    Radiant::MutexAuto m_inMutex;
+    Radiant::Mutex m_inMutex;
 
-    char        m_devName[128];
+    QString m_devName;
     // bool        m_continue;
     long        m_frames;
     int         m_doneCount;
 
-    Radiant::MutexAuto m_newMutex;
+    Radiant::Mutex m_newMutex;
 
-    Radiant::MutexAuto m_startupMutex;
-
-    static DSPNetwork * m_instance;
+    Radiant::Mutex m_startupMutex;
   };
 
 }

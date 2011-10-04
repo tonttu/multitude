@@ -16,9 +16,9 @@
 #ifndef RADIANT_COLOR_HPP
 #define RADIANT_COLOR_HPP
 
-#include <Nimble/Vector4.hpp>
+#include "Export.hpp"
 
-#include <Radiant/Export.hpp>
+#include <Nimble/Vector4.hpp>
 
 namespace Radiant
 {
@@ -37,15 +37,15 @@ namespace Radiant
   {
     public:
       Color();
-      /** Decode color from a hex-string. The string must be in
-	  typical hex format and start with hash. If the string
-	  contains 8 number values, then the last to are interpreted
-	  as alpha. By default the alpha is set to 255 (fully opaque).
-	  
-          Example arguments are \#000000 (black), \#FFFFFF (white),
-          \#FF0000 (red) and \#FF000088 (transparent red).
 
-      */
+      /** Decode color from a hex-string. The string must be in typical hex
+      format and start with hash. If the string contains 8 number values, then
+      the last to are interpreted as alpha. By default the alpha is set to 255
+      (fully opaque).
+
+      Example arguments are \#000000 (black), \#FFFFFF (white), \#FF0000
+      (red) and \#FF000088 (transparent red).
+      @param color color string to parse */
       Color(const char * color);
       /// Constructs a color from the given bytes
       Color(unsigned char r, unsigned char g, unsigned char b, unsigned char a = 255);
@@ -73,8 +73,9 @@ namespace Radiant
       /// Returns the blue color component
       float blue()  const { return get(2); }
       /// Returns the alpha component
-      /** Alpha value zero means fully transparent color, while alpha
-	  value of 1 means fully opaque color.*/
+      /// Alpha value zero means fully transparent color, while alpha
+      /// value of 1 means fully opaque color.
+      /// @return alpha component of the color
       float alpha() const { return get(3); }
  };
 

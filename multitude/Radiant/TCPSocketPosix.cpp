@@ -7,68 +7,86 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
+#include "Platform.hpp"
 #include "TCPSocket.hpp"
-
+#include "SocketUtilPosix.hpp"
+#include "SocketWrapper.hpp"
 #include "Trace.hpp"
 
-#include <arpa/inet.h>
 #include <errno.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <poll.h>
-#include <sys/socket.h>
 #include <sys/types.h>
 #include <strings.h>
 #include <string.h>
-#include <iostream>
+
+#include "signal.h"
+
 namespace Radiant
 {
 
   class TCPSocket::D {
     public:
-      D() : m_fd(-1), m_port(0) {}
+      D(int fd = -1)
+        : m_fd(fd),
+        m_port(0),
+        m_noDelay(0)
+      {}
+
+      bool setOpts()
+      {
+        if(m_fd < 0) return true;
+
+        bool ok = true;
+
+        if(setsockopt(m_fd, IPPROTO_TCP, TCP_NODELAY, (const char*)&m_noDelay, sizeof(m_noDelay))) {
+          ok = false;
+          error("Failed to set TCP_NODELAY: %s", wrap_strerror(wrap_errno));
+        }
+
+        return ok;
+      }
 
       int m_fd;
       int m_port;
-      std::string m_host;
+      int m_noDelay;
+      QString m_host;
   };
 
  ////////////////////////////////////////////////////////////////////////////////
  ////////////////////////////////////////////////////////////////////////////////
 
-  TCPSocket::TCPSocket()
+  TCPSocket::TCPSocket() : m_d(new D)
   {
-    m_d = new D();
+    /// @todo this should probably moved elsewhere. No reason to run this multiple times.
+    // ignore SIGPIPE (ie. when client closes the socket)
+  #ifndef _MSC_VER
+    signal(SIGPIPE, SIG_IGN);
+  #endif
+
+    wrap_startup();
   }
 
-  TCPSocket::TCPSocket(int fd)
+  TCPSocket::TCPSocket(int fd) : m_d(new D(fd))
   {
-    m_d = new D();
-    m_d->m_fd = fd;
+    wrap_startup();
+    m_d->setOpts();
   }
 
   TCPSocket::~TCPSocket()
   {
+    close();
     delete m_d;
   }
 
   bool TCPSocket::setNoDelay(bool noDelay)
   {
-    int yes = noDelay;
-
-    if (setsockopt(m_d->m_fd, IPPROTO_TCP, TCP_NODELAY, (char *) & yes,
-           sizeof(int))) {
-      return false;
-    }
-
-    return true;
+    m_d->m_noDelay = noDelay;
+    return m_d->setOpts();
   }
 
   int TCPSocket::open(const char * host, int port)
@@ -78,93 +96,131 @@ namespace Radiant
     m_d->m_host = host;
     m_d->m_port = port;
 
-    m_d->m_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if(m_d->m_fd < 0)
-      return errno;
-
-    struct sockaddr_in server_address;
-
-    bzero( & server_address, sizeof(server_address));
-    server_address.sin_family = AF_INET;
-    server_address.sin_port = htons((short) port);
-
-    in_addr * addr = TCPSocket::atoaddr(host);
-
-    if(!addr)
-      return EHOSTUNREACH;
-
-    server_address.sin_addr.s_addr = addr->s_addr;
-
-    if(connect(m_d->m_fd, (struct sockaddr *) &server_address, sizeof(server_address)) < 0)
-      return errno;
-
-    return 0;
+    QString errstr;
+    int err = SocketUtilPosix::bindOrConnectSocket(m_d->m_fd, host, port, errstr,
+                  false, AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if(err == 0) {
+      m_d->setOpts();
+    } else {
+      error("TCPSocket::open # %s", errstr.toUtf8().data());
+    }
+    return err;
   }
 
   bool TCPSocket::close()
   {
-    if(m_d->m_fd < 0)
+    int fd = m_d->m_fd;
+    if(fd < 0)
       return false;
 
-    ::close(m_d->m_fd);
-
     m_d->m_fd = -1;
+
+    // ignore error if the connection closed in abortive way
+    shutdown(fd, SHUT_RDWR);
+
+    if(wrap_close(fd)) {
+      error("TCPSocket::close # Failed to close socket: %s", wrap_strerror(wrap_errno));
+    }
 
     return true;
   }
 
   bool TCPSocket::isOpen() const
   {
-    return (m_d->m_fd > 0);
+    return m_d->m_fd >= 0;
   }
 
-  int TCPSocket::read(void * buffer, int bytes, bool waitfordata)
+  int TCPSocket::read(void * buffer, int bytes, Flags flags)
   {
-    if(m_d->m_fd < 0)
+    if(m_d->m_fd < 0 || bytes < 0)
       return -1;
 
-    int got = 0;
-    char * ptr = (char *) buffer;
+    int pos = 0;
+    char * data = reinterpret_cast<char*>(buffer);
 
-    while(got < bytes && (!waitfordata || isPendingInput(500000))) {
-      int n = ::read(m_d->m_fd, ptr + got, bytes - got);
-std::cout << "LL ";
-      if(n < 0) {
-    error("TCPSocket::read # n < 0");
-    break;
+    while(pos < bytes) {
+      errno = 0;
+      // int max = bytes - pos > SSIZE_MAX ? SSIZE_MAX : bytes - pos;
+      int max = bytes - pos > 32767 ? 32767 : bytes - pos;
+      bool block = flags == WAIT_ALL || (flags == WAIT_SOME && pos == 0);
+      int tmp;
+
+      if(block) {
+        tmp = recv(m_d->m_fd, data + pos, max, 0);
+      } else {
+#ifdef RADIANT_WINDOWS
+        // there is no MSG_DONTWAIT in winsock, do poll with zero timeout instead
+        if(!isPendingInput()) return pos;
+        tmp = recv(m_d->m_fd, data + pos, max, 0);
+#else
+        tmp = recv(m_d->m_fd, data + pos, max, MSG_DONTWAIT);
+#endif
       }
 
-      got += n;
+      if(tmp > 0) {
+        pos += tmp;
+      } else if(tmp == 0 || m_d->m_fd == -1) {
+        return pos;
+      } else if(errno == EAGAIN || errno == EWOULDBLOCK) {
+        if(!block) return pos;
 
-      if(!waitfordata) {
-    return got;
+        struct pollfd pfd;
+        pfd.fd = m_d->m_fd;
+        pfd.events = POLLIN;
+        wrap_poll(&pfd, 1, 5000);
+      } else {
+        error("TCPSocket::read # Failed to read: %s", wrap_strerror(wrap_errno));
+        return pos;
       }
     }
 
-    return got;
+    return pos;
   }
 
   int TCPSocket::write(const void * buffer, int bytes)
   {
-    if(m_d->m_fd < 0)
+    if(m_d->m_fd < 0 || bytes < 0)
       return -1;
 
-    return ::write(m_d->m_fd, buffer, bytes);
+    int pos = 0;
+    const char * data = reinterpret_cast<const char*>(buffer);
+
+    while(pos < bytes) {
+      errno = 0;
+      // int max = bytes - pos > SSIZE_MAX ? SSIZE_MAX : bytes - pos;
+      int max = bytes - pos > 32767 ? 32767 : bytes - pos;
+      int tmp = send(m_d->m_fd, data + pos, max, 0);
+      if(tmp > 0) {
+        pos += tmp;
+      } else if(errno == EAGAIN || errno == EWOULDBLOCK) {
+        struct pollfd pfd;
+        pfd.fd = m_d->m_fd;
+        pfd.events = POLLOUT;
+        wrap_poll(&pfd, 1, 5000);
+      } else {
+        error("TCPSocket::write # Failed to write: %s", wrap_strerror(wrap_errno));
+        return pos;
+      }
+    }
+
+    return pos;
   }
 
   bool TCPSocket::isHungUp() const
   {
     if(m_d->m_fd < 0)
-      return false;
+      return true;
 
     struct pollfd pfd;
     bzero( & pfd, sizeof(pfd));
     pfd.fd = m_d->m_fd;
-    pfd.events = ~0;
-    poll(&pfd, 1, 0);
+    pfd.events = POLLWRNORM;
+    int status = wrap_poll(&pfd, 1, 0);
+    if(status == -1) {
+      Radiant::error("TCPSocket::isHungUp %s", wrap_strerror(wrap_errno));
+    }
 
-   return (pfd.revents & (POLLHUP)) != 0;
-   // return (pfd.revents & (POLLERR | POLLHUP | POLLNVAL)) != 0;
+    return (pfd.revents & (POLLERR | POLLHUP | POLLNVAL)) != 0;
   }
 
   bool TCPSocket::isPendingInput(unsigned int waitMicroSeconds)
@@ -176,32 +232,23 @@ std::cout << "LL ";
     bzero( & pfd, sizeof(pfd));
 
     pfd.fd = m_d->m_fd;
-    pfd.events = POLLIN;
-    poll(&pfd, 1, waitMicroSeconds / 1000);
+    pfd.events = POLLRDNORM;
+    int status = wrap_poll(&pfd, 1, waitMicroSeconds / 1000);
+    if(status == -1) {
+      Radiant::error("TCPSocket::isPendingInput %s", wrap_strerror(wrap_errno));
+    }
 
-    return pfd.revents & POLLIN;
+    return (pfd.revents & POLLRDNORM) == POLLRDNORM;
   }
 
-  /* Converts ascii text to in_addr struct.  NULL is returned if the address
-     can not be found. */
-  struct in_addr * TCPSocket::atoaddr(const char *address)
-
+  void TCPSocket::moveToThread(Thread *)
   {
-    struct hostent *host;
-    static struct in_addr saddr;
-
-    /* First try it as aaa.bbb.ccc.ddd. */
-    saddr.s_addr = inet_addr(address);
-    if ((int) saddr.s_addr != -1) {
-      return &saddr;
-    }
-    host = gethostbyname(address);
-    if (host != NULL) {
-      return (struct in_addr *) *host->h_addr_list;
-    }
-    return NULL;
   }
 
+  int TCPSocket::fd() const
+  {
+    return m_d->m_fd;
+  }
 
 }
 

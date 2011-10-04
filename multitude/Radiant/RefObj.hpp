@@ -7,10 +7,10 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef RADIANT_REF_OBJ_HPP
@@ -93,7 +93,8 @@ namespace Radiant {
 
     /// Create a deep copy of the object
     /** Instead of sharing a link to an object, this method creates a
-    real copy of the object. */
+    real copy of the object.
+    @param that object to copy */
     void deepCopy(const RefObj &that)
     {
       if(!m_holder)

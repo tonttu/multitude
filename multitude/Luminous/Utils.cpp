@@ -1489,12 +1489,12 @@ namespace Luminous {
       for(j = 0; j <= cornerLineSegments; j++)
       {
         angle = fromRadians + j * delta;
-    float sa = sinf(angle);
-    float ca = -cosf(angle);
+        float sa = sinf(angle);
+        float ca = -cosf(angle);
 
         x = sa * cornerRadius + arcCenters[i].x;
         y = ca * cornerRadius + arcCenters[i].y;
-    buffer[index++] = (m * Vector2(x, y)).vector2();
+        buffer[index++] = (m * Vector2(x, y)).vector2();
       }
       fromRadians += float(Math::HALF_PI);
     }
@@ -1670,10 +1670,16 @@ namespace Luminous {
   bool Utils::glCheck(const char * msg)
   {
     bool result = true;
-    GLenum e;
+    GLenum e, e2 = GL_NO_ERROR;
 
     while((e = glGetError()) != GL_NO_ERROR) {
 #ifndef LUMINOUS_OPENGLES
+      // If glGetError ever returns the same error twice, it's broken somehow.
+      // This happens when called without GL context etc.
+      if(e == e2) {
+        Radiant::error("%s # glGetError called with broken GL context (%s)", msg, gluErrorString(e));
+        return false;
+      }
       Radiant::error("%s # GL ERROR %s", msg, gluErrorString(e));
       int *bad = 0;
       *bad = 123;
@@ -1681,6 +1687,7 @@ namespace Luminous {
       Radiant::error("%s # GL ERROR %d", msg, (int) e);
 #endif
       result = false;
+      e2 = e;
     }
 
     return result;

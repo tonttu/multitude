@@ -7,10 +7,10 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "ThreadPool.hpp"
@@ -137,7 +137,7 @@ namespace Radiant {
       return num;
     }
 
-    Radiant::MutexAuto m_mutex;
+    Radiant::Mutex m_mutex;
     ThreadPool & m_threadPool;
     Threads m_threads;
   };
@@ -154,11 +154,10 @@ namespace Radiant {
     delete m_p;
   }
 
-  bool ThreadPool::run(int number)
+  void ThreadPool::run(int number)
   {
     if(m_p->setThreads(number))
       wakeAll();
-    return true;
   }
 
   bool ThreadPool::stop()

@@ -7,21 +7,22 @@
  * See file "VideoDisplay.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef VIDEODISPLAY_AUDIO_TRANSFER_HPP
 #define VIDEODISPLAY_AUDIO_TRANSFER_HPP
 
+#include "Export.hpp"
+#include "VideoIn.hpp"
+
 #include <Radiant/IODefs.hpp>
 #include <Radiant/TimeStamp.hpp>
 
 #include <Resonant/Module.hpp>
-
-#include <VideoDisplay/VideoIn.hpp>
 
 namespace VideoDisplay {
 
@@ -35,7 +36,7 @@ namespace VideoDisplay {
 
       @see VideoIn
    */
-  class AudioTransfer : public Resonant::Module
+  class VIDEODISPLAY_API AudioTransfer : public Resonant::Module
   {
   public:
     /// Constructs an audio transfer object
@@ -93,13 +94,15 @@ namespace VideoDisplay {
 
     // Time stamp at the beginning of the current audio package.
     Radiant::TimeStamp m_baseTS;
+    Radiant::TimeStamp m_timingBase;
+    Radiant::TimeStamp m_showTime;
     int                m_sinceBase;
     bool      m_ending;
     bool      m_end;
     bool      m_first;
     double    m_audioLatency;
     float     m_gain;
-    Radiant::MutexAuto m_mutex;
+    Radiant::Mutex m_mutex;
   };
 
 }

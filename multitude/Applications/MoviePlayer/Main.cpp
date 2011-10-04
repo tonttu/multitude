@@ -7,10 +7,10 @@
  * See file "Applications/MoviePlayer.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "VideoWindow.hpp"
@@ -20,6 +20,8 @@
 
 #include <Radiant/PlatformUtils.hpp>
 #include <Radiant/Trace.hpp>
+#include <Radiant/MemCheck.hpp>
+
 #include <Screenplay/VideoFFMPEG.hpp>
 
 #include <QtGui/QApplication>
@@ -62,6 +64,8 @@ void opentest(const char * filename)
 
 int main(int argc, char ** argv)
 {
+  std::shared_ptr<Radiant::MemChecker> ptr = Radiant::MemChecker::instance();
+
   QApplication qa(argc, argv);
 
   if(argc < 2) {

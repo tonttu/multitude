@@ -7,16 +7,17 @@
  * See file "Nimble.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef NIMBLE_LINESEGMENT2T_HPP
 #define NIMBLE_LINESEGMENT2T_HPP
 
-#include <Nimble/Vector2.hpp>
+#include "Export.hpp"
+#include "Vector2.hpp"
 
 namespace Nimble {
 
@@ -81,7 +82,8 @@ template <typename T>
 
     /// Returns true if the two line segments intersect
     /// @param that line segment to compare
-    /// @param point optional intersection point
+    /// @param[out] point optional intersection point
+    /// @return True if lines intersect
     inline bool intersects(const LineSegment2T & that,
                            Vector2T<T> * point = 0) const
     {
@@ -96,9 +98,10 @@ template <typename T>
       return r;
     }
 
-    /** Tests for intersection with a given line.
-    @param that line to test against
-    @param point (optional) intersection point if found */
+    /// Tests for intersection with a given line.
+    /// @param that line to test against
+    /// @param[out] point (optional) intersection point if found
+    /// @return True if lines intersect
     inline bool intersectsInfinite(const LineSegment2T & that,
                                    Vector2T<T> * point) const
     {
@@ -163,6 +166,16 @@ template <typename T>
         return false;
       }
 
+    }
+
+    /// Calculates the distance between this (infinite) line and a point.
+    /// @param point 2D point
+    /// @return Distance between a line and point
+    inline float distanceInfinite(const Vector2T<T> & point)
+    {
+      Nimble::Vector2T<T> perp = directionNormalized().perpendicular();
+
+      return Nimble::Math::Abs(dot(perp, point - m_points[0]));
     }
 
     /// Returns true if the line segment intersects with the given bezier curve

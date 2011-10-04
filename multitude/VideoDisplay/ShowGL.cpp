@@ -7,13 +7,14 @@
  * See file "VideoDisplay.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "ShowGL.hpp"
+#include "VideoDisplay.hpp"
 
 #include "AudioTransfer.hpp"
 #include "VideoInFFMPEG.hpp"
@@ -33,16 +34,30 @@ namespace VideoDisplay {
 
   using namespace Nimble;
 
-  static const char * rgbshader =
-      "uniform sampler2D tex;\n"
-      "uniform float contrast;\n"
-      "void main (void) {\n"
-      "  vec4 color = texture2D(tex, gl_TexCoord[0].st);\n"
-      "  gl_FragColor.rgb = vec3(0.5, 0.5, 0.5) + \n"
-      "     contrast * (color.rgb - vec3(0.5, 0.5, 0.5));\n"
-      "  gl_FragColor.a = gl_Color.a;\n"
-      "}\n";
+#define SHADER(str) #str
+  static const char * rgbshader = SHADER(
+      uniform sampler2D tex;
+      uniform float contrast;
+      void main (void) {
+        vec4 color = texture2D(tex, gl_TexCoord[0].st);
+        color.rgb = vec3(0.5, 0.5, 0.5) +
+           contrast * (color.rgb - vec3(0.5, 0.5, 0.5));
+        gl_FragColor = color * gl_Color;
+      });
 
+  static const char * shadersource = SHADER(
+      uniform sampler2D ytex;
+      uniform sampler2D utex;
+      uniform sampler2D vtex;
+      uniform mat4 zm;
+      void main (void) {
+        vec4 ycolor = texture2D(ytex, gl_TexCoord[0].st);
+        vec4 ucolor = texture2D(utex, gl_TexCoord[0].st);
+        vec4 vcolor = texture2D(vtex, gl_TexCoord[0].st);
+        vec4 yuv = vec4(ycolor.r, ucolor.r - 0.5, vcolor.r - 0.5, 1.0);
+        yuv.rgb = (zm * yuv).rgb;
+        gl_FragColor = yuv * gl_Color;
+      });
 
   ShowGL::YUVProgram::YUVProgram(Luminous::RenderContext * resources)
       : Luminous::GLSLProgramObject(resources)
@@ -59,36 +74,6 @@ namespace VideoDisplay {
 
   bool ShowGL::YUVProgram::init()
   {
-    static const char * shadersource =
-        "uniform sampler2D ytex;\n"
-        "uniform sampler2D utex;\n"
-        "uniform sampler2D vtex;\n"
-        "uniform mat4 zm;\n"
-        "void main (void) {\n"
-        "  vec4 ycolor = texture2D(ytex, gl_TexCoord[0].st);\n"
-        "  vec4 ucolor = texture2D(utex, gl_TexCoord[0].st);\n"
-        "  vec4 vcolor = texture2D(vtex, gl_TexCoord[0].st);\n"
-        "  vec4 yuv = vec4(ycolor.r, ucolor.r - 0.5, vcolor.r - 0.5, 1.0);\n"
-        "  gl_FragColor.rgb = (zm * yuv).rgb;\n"
-        "  gl_FragColor.a = gl_Color.a;\n"
-        "}\n";
-    /*
-    static const char * shadersource =
-      "uniform sampler2D ytex;\n"
-      "uniform sampler2D utex;\n"
-      "uniform sampler2D vtex;\n"
-      "uniform vec2 offset;\n"
-      "uniform mat3 zm;\n"
-      "void main (void) {\n"
-      "  vec4 ycolor = texture2D(ytex, gl_TexCoord[0].st + offset);\n"
-      "  ycolor = texture2D(ytex, gl_TexCoord[0].st - offset);\n"
-      "  vec4 ucolor = texture2D(utex, gl_TexCoord[0].st);\n"
-      "  vec4 vcolor = texture2D(vtex, gl_TexCoord[0].st);\n"
-      "  vec3 yuv = vec3(ycolor.r * 0.25, ucolor.r - 0.5, vcolor.r - 0.5);\n"
-      "  gl_FragColor.rgb = zm * yuv;\n"
-      "  gl_FragColor.a = gl_Color.a;\n"
-      "}\n";
-    */
     clear();
 
     Luminous::GLSLShaderObject * fragShader =
@@ -150,7 +135,7 @@ namespace VideoDisplay {
       int tmp = getUniformLoc(params[i]);
       m_uniforms[i] = tmp;
       ok = ok && (tmp >= 0);
-      debug("ShowGL::YUVProgram::link # %s -> %d", params[i], i);
+      debugVideoDisplay("ShowGL::YUVProgram::link # %s -> %d", params[i], i);
     }
 
     return ok;
@@ -197,11 +182,10 @@ namespace VideoDisplay {
     if(m_frame == frame)
       return;
 
-    if(img->m_format == Radiant::IMAGE_RGB_24) {
-      doTexturesRGB(img);
-    }
-    else {
+    if(img->m_format < Radiant::IMAGE_RGB_24) {
       doTexturesYUV(img);
+    } else {
+      doTexturesRGB(img);
     }
 
     m_frame = frame;
@@ -234,8 +218,18 @@ namespace VideoDisplay {
     glEnable(GL_TEXTURE_2D);
     Luminous::Texture2D * tex = & m_texIds[0];
     tex->bind();
-    tex->loadBytes(GL_RGB, img->width(), img->height(), img->m_planes[0].m_data,
-                   Luminous::PixelFormat::rgbUByte());
+    ImageFormat f = img->m_format;
+    GLenum internalFormat = (f == IMAGE_RGBA || f == IMAGE_BGRA) ? GL_RGBA : GL_RGB;
+    // use RGB as default
+    Luminous::PixelFormat pf = Luminous::PixelFormat::rgbUByte();
+    if (f == IMAGE_RGBA)
+      pf = Luminous::PixelFormat::rgbaUByte();
+    else if (f == IMAGE_BGRA)
+      pf = Luminous::PixelFormat::bgraUByte();
+    else if (f == IMAGE_BGR)
+      pf = Luminous::PixelFormat::bgrUByte();
+
+    tex->loadBytes(internalFormat, img->width(), img->height(), img->m_planes[0].m_data, pf);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -269,7 +263,7 @@ namespace VideoDisplay {
 
       if(m_frame < 0 || area != tex->size()) {
 
-        debug("ShowGL::YUVProgram::doTextures # area = [%d %d] ptr = %p",
+        debugVideoDisplay("ShowGL::YUVProgram::doTextures # area = [%d %d] ptr = %p",
               area.x, area.y, img->m_planes[i].m_data);
 
         tex->setWidth(area.x);
@@ -319,7 +313,6 @@ namespace VideoDisplay {
   ShowGL::ShowGL()
       : m_video(0),
       m_frame(0),
-      m_dsp(0),
       m_audio(0),
       m_targetChannel(-1),
       m_gain(1.0f),
@@ -328,15 +321,24 @@ namespace VideoDisplay {
       m_state(PAUSE),
       m_updates(0),
       m_seeking(false),
-      m_contrast(this, "contrast", 1.0f)
+      m_contrast(this, "contrast", 1.0f),
+      m_fps(-1),
+      m_syncToTime(true),
+      m_outOfSync(0),
+      m_outOfSyncTotal(0),
+      m_syncing(false)
   {
-    debug("ShowGL::ShowGL # %p", this);
+    eventAddOut("videoatend");
+    debugVideoDisplay("ShowGL::ShowGL # %p", this);
+
     clearHistogram();
+
+    m_dsp = Resonant::DSPNetwork::instance();
   }
 
   ShowGL::~ShowGL()
   {
-    debug("ShowGL::~ShowGL # %p", this);
+    debugVideoDisplay("ShowGL::~ShowGL # %p", this);
     stop();
     delete m_video;
   }
@@ -346,12 +348,12 @@ namespace VideoDisplay {
     return m_subTitles.readSrt(filename);
   }
 
-  bool ShowGL::init(const char * filename, Resonant::DSPNetwork  * dsp,
+  bool ShowGL::init(const char * filename,
                     float /*previewpos*/,
                     int targetChannel,
                     int flags)
   {
-    debug("ShowGL::init # %s", filename);
+    debugVideoDisplay("ShowGL::init # %s", filename);
 
     assert(filename != 0);
 
@@ -359,15 +361,13 @@ namespace VideoDisplay {
       return true;
     }
 
+    m_fps = -1;
+
     if(m_state == PLAY) {
       stop();
     }
 
     m_filename = filename;
-    if(dsp)
-      m_dsp = dsp;
-    else
-      m_dsp = Resonant::DSPNetwork::instance();
 
     m_targetChannel = targetChannel;
 
@@ -388,7 +388,7 @@ namespace VideoDisplay {
       m_preview.m_image.copyData(m_frame->m_image);
       m_preview.m_time = m_frame->m_time;
       m_frame = & m_preview;
-      debug("Captured preview frame %p", m_frame);
+      debugVideoDisplay("Captured preview frame %p", m_frame);
     }
 
     delete m_video;
@@ -398,7 +398,7 @@ namespace VideoDisplay {
     m_duration = Radiant::TimeStamp::createSecondsD(m_video->durationSeconds());
     m_seeking = true;
 
-    debug("ShowGL::init # Opened %s (%lf secs)",
+    debugVideoDisplay("ShowGL::init # Opened %s (%lf secs)",
           filename, m_duration.secondsD());
 
     return true;
@@ -416,9 +416,13 @@ namespace VideoDisplay {
   {
     static int __count = 1;
 
-    debug("ShowGL::start # %p", this);
+    debugVideoDisplay("ShowGL::start # %p", this);
 
-    if(m_state == PLAY || !m_video) {
+    if(m_state == PLAY) {
+      if(!fromOldPos)
+        seekTo(0);
+      return true;
+    } else if(!m_video) {
       return false;
     }
 
@@ -439,10 +443,14 @@ namespace VideoDisplay {
     m_audio = au;
     m_audio->setGain(m_gain);
 
-    if(fromOldPos)
+    started = Radiant::TimeStamp::getTime();
+    if(fromOldPos) {
+      if(!m_video->atEnd())
+        started -= m_video->displayFrameTime();
       m_video->play();
-    else
+    } else {
       m_video->play(0);
+    }
 
     m_state = PLAY;
 
@@ -451,7 +459,7 @@ namespace VideoDisplay {
 
   bool ShowGL::stop()
   {
-    debug("ShowGL::stop # %p", this);
+    debugVideoDisplay("ShowGL::stop # %p", this);
 
     if(m_state != PLAY)
       return false;
@@ -481,40 +489,21 @@ namespace VideoDisplay {
 
   bool ShowGL::togglePause()
   {
-    if(m_state == PLAY) {
-      return stop();
-    }
-    else {
-
-      Radiant::TimeStamp pos = m_position;
-      if(Radiant::TimeStamp(m_duration - m_position).secondsD() < 2.5)
-        pos = 0;
-
+    if (!stop()) {
       start();
-
       return false;
-    }
-  }
-
-  bool ShowGL::pause()
-  {
-    if(m_state == PLAY) {
-      return stop();
     }
     return true;
   }
 
+  bool ShowGL::pause()
+  {
+    return stop();
+  }
+
   bool ShowGL::unpause()
   {
-    if(m_state == PLAY)
-      return true;
-
-    Radiant::TimeStamp pos = m_position;
-
-    if(Radiant::TimeStamp(m_duration - m_position).secondsD() < 2.5)
-      pos = 0;
-
-    return false; // play(pos);
+    return start();
   }
 
   /*
@@ -531,9 +520,52 @@ namespace VideoDisplay {
     int videoFrame;
 
     if(m_audio) {
-      videoFrame = m_audio->videoFrame();
+      if(m_syncToTime) {
+        /*if(m_videoFrame > 1 && m_fps < 0) {
+          VideoIn::Frame * f = m_video->getFrame(m_videoFrame-1, false);
+          VideoIn::Frame * f2 = m_video->getFrame(m_videoFrame, false);
+
+          if(f && f2) {
+            // Timestamps can be equal for first frames!
+            float tmp = 1.0f / (f2->m_absolute.secondsD() - f->m_absolute.secondsD());
+
+            // Check if our estimated fps is even remotely feasible
+            if(tmp > 1.f && tmp < 100.f)
+              m_fps = 1.0f / (f2->m_absolute.secondsD() - f->m_absolute.secondsD());
+          }
+        }*/
+        float fps = m_fps > 0 ? m_fps : m_video->fps();
+        int videoFrameFromTime = started.sinceSecondsD() * fps;
+        int videoFrameFromAudio = m_audio->videoFrame();
+        int diff = videoFrameFromTime - videoFrameFromAudio;
+        int adiff = Nimble::Math::Abs(diff);
+        // Radiant::error("ShowGL::update # diff %d %d (fps %f)", syncing, diff, fps);
+
+        if(adiff > (m_syncing ? 0 : 2) && ++m_outOfSync > (m_syncing ? 10 : 60)) {
+          if(m_outOfSyncTotal > 120 || adiff > 10) {
+            Radiant::error("ShowGL::update # Video out of sync, resyncing. %d (fps %f)", diff, fps);
+            started = Radiant::TimeStamp::getTime() - Radiant::TimeStamp::createSecondsD(videoFrameFromAudio / fps);
+          } else {
+            //Radiant::error("ShowGL::update # Video out of sync, adjusting. %d (fps %f)", diff, fps);
+            started += Radiant::TimeStamp::createSecondsD((diff > 0 ? 1.0f : -1.0f) / fps);
+
+          }
+          m_syncing = true;
+          m_outOfSync = 0;
+          videoFrameFromTime = videoFrameFromAudio;
+        } else if(adiff == 0) {
+          //if(outOfSync > 0) Radiant::info("Aborting sync correction %d", outOfSync);
+          m_syncing = false;
+          m_outOfSync = 0;
+          m_outOfSyncTotal = 0;
+        }
+        if(m_syncing) ++ m_outOfSyncTotal;
+
+        videoFrame = m_videoFrame > videoFrameFromTime + 20 ?
+              videoFrameFromTime : Nimble::Math::Max(videoFrameFromTime, m_videoFrame);
+      } else videoFrame = m_audio->videoFrame();
       if(m_audio->atEnd()) {
-        debug("ShowGL::update # At end");
+        debugVideoDisplay("ShowGL::update # At end");
         stop();
 
         Radiant::BinaryData bd;
@@ -560,7 +592,7 @@ namespace VideoDisplay {
     VideoIn::Frame * f = m_video->getFrame(videoFrame, true);
 
     if(!f) {
-      debug("ShowGL::update # NO FRAME %d", videoFrame);
+      debugVideoDisplay("ShowGL::update # NO FRAME %d", videoFrame);
       return;
     }
 
@@ -573,14 +605,14 @@ namespace VideoDisplay {
     m_frame = f;
 
     if(m_videoFrame != videoFrame) {
-      debug("ShowGL::update # Move %d -> %d (%lf, %d x %d)",
+      debugVideoDisplay("ShowGL::update # Move %d -> %d (%lf, %d x %d)",
             m_videoFrame, videoFrame, m_position.secondsD(),
             m_frame->m_image.m_width, m_frame->m_image.m_height);
       m_count++;
       m_videoFrame = videoFrame;
     }
 
-    debug("ShowGL::update # %p f = %p index = %d", this, m_frame, videoFrame);
+    debugVideoDisplay("ShowGL::update # %p f = %p index = %d", this, m_frame, videoFrame);
 
     // m_subTitles.update(m_position);
   }
@@ -591,13 +623,13 @@ namespace VideoDisplay {
 
   void ShowGL::render(Luminous::RenderContext * resources,
                       Vector2 topleft, Vector2 bottomright,
+                      Radiant::Color baseColor,
                       const Nimble::Matrix3f * transform,
                       Poetic::GPUFont * subtitleFont,
-                      float subTitleSpace,
-                      float alpha)
+                      float subTitleSpace)
   {
 
-    debug("ShowGL::render");
+    debugVideoDisplay("ShowGL::render");
     GLRESOURCE_ENSURE(MyTextures, textures, this, resources);
 
     Luminous::GLSLProgramObject * shader = 0;
@@ -609,13 +641,13 @@ namespace VideoDisplay {
       bottomright.y = topleft.y + s.y;
     }
 
-    debug("ShowGL::render # %p f = %p", this, m_frame);
+    debugVideoDisplay("ShowGL::render # %p f = %p", this, m_frame);
 
     Luminous::Utils::glCheck("ShowGL::render # entry");
 
     if(m_frame) {
 
-      // debug("ShowGL::render # %p %p", this, m_frame);
+      // debugVideoDisplay("ShowGL::render # %p %p", this, m_frame);
 
       textures->doTextures(m_count, & m_frame->m_image);
       textures->bind();
@@ -628,8 +660,8 @@ namespace VideoDisplay {
       else {
         GLRESOURCE_ENSURE(Luminous::GLSLProgramObject, rgb2rgb, & rgbkey, resources);
         if(rgb2rgb->shaderObjectCount() == 0) {
-          assert(rgb2rgb->loadStrings(0, rgbshader));
-          debug("Loaded rgb2rgb shader");
+          rgb2rgb->loadStrings(0, rgbshader);
+          debugVideoDisplay("Loaded rgb2rgb shader");
         }
 
         rgb2rgb->bind();
@@ -644,15 +676,13 @@ namespace VideoDisplay {
 
     glEnable(GL_BLEND);
 
-    Nimble::Vector4 white(1, 1, 1, alpha);
-
     if(transform) {
       Luminous::Utils::glTexRectAA(bottomright - topleft, *transform,
-                                   white.data());
+                                   baseColor.data());
     }
     else {
       Nimble::Rect r(topleft, bottomright);
-      Luminous::Utils::glTexRectAA(r, white.data());
+      Luminous::Utils::glTexRectAA(r, baseColor.data());
     }
 
     // Then a thin strip around to anti-alias:
@@ -709,7 +739,7 @@ namespace VideoDisplay {
     // info("The video frame is %d", m_videoFrame);
 
     Luminous::Utils::glCheck("ShowGL::render");
-    debug("ShowGL::render # EXIT");
+    debugVideoDisplay("ShowGL::render # EXIT");
   }
 
   Nimble::Vector2i ShowGL::size() const
@@ -727,14 +757,10 @@ namespace VideoDisplay {
     if(!m_video)
       return;
 
-    if(time < 0)
-      time = 0;
-    else if(time >= m_duration)
-      time = m_duration - Radiant::TimeStamp::createSecondsD(2);
-
+    time = Nimble::Math::Clamp<Radiant::TimeStamp>(time, 0, m_duration);
+    debugVideoDisplay("ShowGL::seekTo # %lf", time.secondsD());
     m_position = time;
-
-    debug("ShowGL::seekTo # %lf", time.secondsD());
+    started = Radiant::TimeStamp::getTime() - time;
 
     m_video->seek(time);
     m_seeking = true;
@@ -757,7 +783,7 @@ namespace VideoDisplay {
     if(!m_audio)
       return;
 
-    debug("ShowGL::panAudioTo # %p %p %p [%.2f %.2f]", this, m_video, m_audio,
+    debugVideoDisplay("ShowGL::panAudioTo # %p %p %p [%.2f %.2f]", this, m_video, m_audio,
           location.x, location.y);
 
     char buf[128];
@@ -766,7 +792,7 @@ namespace VideoDisplay {
 
     control.writeString("panner/setsourcelocation");
 
-    sprintf(buf, "%s-%d", m_audio->id(), (int) 0);
+    snprintf(buf, sizeof(buf), "%s-%d", m_audio->id().toUtf8().data(), (int) 0);
 
     control.writeString(buf);
     control.writeVector2Float32(location); // sound source location
@@ -774,9 +800,21 @@ namespace VideoDisplay {
     m_dsp->send(control);
   }
 
+  void ShowGL::setSyncToTime(bool flag)
+  {    
+    m_syncToTime = flag;
+  }
+
   void ShowGL::clearHistogram()
   {
     bzero(m_histogram, sizeof(m_histogram));
   }
 
+  Radiant::TimeStamp ShowGL::firstFrameTime() const
+  {
+    if(m_video)
+      return m_video->firstFrameTime();
+
+    return 0;
+  }
 }

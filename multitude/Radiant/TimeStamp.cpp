@@ -25,10 +25,13 @@
 #ifndef WIN32
 #include <sys/time.h>
 #else
+#define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winsock2.h>
 #endif
+
+#include <QStringList>
 
 namespace Radiant {
 
@@ -90,8 +93,7 @@ namespace Radiant {
     if(!date)
       return 0;
 
-    StringUtils::StringList segments;
-    StringUtils::split(date, delim, segments);
+    QStringList segments = QString::fromUtf8(date).split(delim);
 
     if(segments.size() != 3) {
       return TimeStamp(0);
@@ -99,11 +101,8 @@ namespace Radiant {
 
     int vals[3];
 
-    StringUtils::StringList::iterator it = segments.begin();
-
     for(int i = 0; i < 3; i++) {
-      vals[i] = atoi((*it).c_str());
-      it++;
+      vals[i] = segments[i].toInt();
     }
 
     int year, month, day;
@@ -140,8 +139,7 @@ namespace Radiant {
     if(!time)
       return 0;
 
-    StringUtils::StringList segments;
-    StringUtils::split(time, delim, segments);
+    QStringList segments = QString::fromUtf8(time).split(delim);
     
     if(segments.size() != 3) {
       return TimeStamp(0);
@@ -149,11 +147,8 @@ namespace Radiant {
 
     int vals[3];
 
-    StringUtils::StringList::iterator it = segments.begin();
-
     for(int i = 0; i < 3; i++) {
-      vals[i] = atoi((*it).c_str());
-      it++;
+      vals[i] = segments[i].toInt();
     }
 
     int hour = vals[0];
@@ -182,7 +177,7 @@ namespace Radiant {
 	  return tmp;
   }
 
-  std::string TimeStamp::asString() const {
+  QString TimeStamp::asString() const {
 	  time_t t = (m_val >> 24);
 
 #ifdef WIN32
@@ -190,13 +185,13 @@ namespace Radiant {
 	  char  buf[bufSize];
 	  ctime_s(buf, bufSize, & t);
 	  buf[strlen(buf) - 1] = '\0';
-	  return std::string(buf);
+	  return QString(buf);
 #else
 	// Convert to char* and remove \n
 	char * str = ctime(&t);
 	str[strlen(str) - 1] = '\0';
 
-	return std::string(str);
+	return QString(str);
 #endif
 
   }

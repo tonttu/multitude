@@ -18,8 +18,12 @@
 #include "Luminous.hpp"
 
 #include <Radiant/StringUtils.hpp>
+#include <Radiant/FileUtils.hpp>
+#include <Radiant/Trace.hpp>
 
 #include <typeinfo>
+
+#include <QStringList>
 
 namespace Luminous
 {
@@ -30,14 +34,14 @@ namespace Luminous
   CodecRegistry::~CodecRegistry()
   {}
 
-  ImageCodec * CodecRegistry::getCodec(const std::string & filename, FILE * file)
+  ImageCodec * CodecRegistry::getCodec(const QString & filename, FILE * file)
   {
     Luminous::initDefaultImageCodecs();
 
     ImageCodec * codec = 0;
 
     // Try a codec that matches the extension first
-    const std::string ext = filename.substr(filename.rfind(".") + 1);
+    const QString ext = Radiant::FileUtils::suffix(filename);
     Aliases::iterator alias = m_aliases.find(ext);
 
     if(alias != m_aliases.end())
@@ -49,8 +53,8 @@ namespace Luminous
       if(codec && codec->canRead(file))
         return codec;
 
-      Radiant::debug("CodecRegistry::getCodec # Default codec failed for %s (%s, %p)",
-		     filename.c_str(), ext.c_str(), codec);
+      debugLuminous("CodecRegistry::getCodec # Default codec failed for %s (%s, %p)",
+         filename.toUtf8().data(), ext.toUtf8().data(), codec);
       
       // No codec matched the extension, go through all registered codecs and
       // see if they match
@@ -70,20 +74,15 @@ namespace Luminous
 
   void CodecRegistry::registerCodec(ImageCodec * codec)
   {
-    Radiant::debug("CodecRegistry::registerCodec # %s",
+    debugLuminous("CodecRegistry::registerCodec # %s",
 		   typeid(*codec).name());
-
-    namespace su = Radiant::StringUtils;
 
     m_codecs.push_back(codec);
 
     // Associate extensions with this codec
-    su::StringList exts;
-    su::split(codec->extensions(), " ", exts);
-
-    for(su::StringList::iterator it = exts.begin(); it != exts.end(); it++) {
-      m_aliases.insert(std::make_pair(*it, codec));
-      Radiant::debug("Adding codec %p for file type %s", codec, (*it).c_str());
+    foreach(QString ext, codec->extensions().split(" ", QString::SkipEmptyParts)) {
+      m_aliases.insert(std::make_pair(ext, codec));
+      debugLuminous("Adding codec %p for file type %s", codec, ext.toUtf8().data());
     }    
   }
 

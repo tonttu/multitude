@@ -1,19 +1,8 @@
 /* COPYRIGHT
- *
- * This file is part of Screenplay.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Screenplay.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
  */
 
 #include "VideoFFMPEG.hpp"
+#include "Screenplay.hpp"
 
 #include <Radiant/Mutex.hpp>
 #include <Radiant/Trace.hpp>
@@ -24,10 +13,10 @@
 #include <strings.h>
 #include <cassert>
 
-
 extern "C" {
 
   typedef uint64_t UINT64_C;
+  typedef int64_t INT64_C;
 
 # include <libavformat/avformat.h>
 # include <libavcodec/avcodec.h>
@@ -38,16 +27,16 @@ namespace Screenplay {
 
   using namespace Radiant;
 
-  static Radiant::MutexStatic __openmutex;
-  static Radiant::MutexStatic __countermutex;
-  int    __instancecount = 0;
+  // FFMPEG is not thread-safe
+  static Radiant::Mutex s_ffmpegMutex(true);
 
-  int VideoInputFFMPEG::m_debug = 1;
+  int VideoInputFFMPEG::m_debug = 0;
 
   VideoInputFFMPEG::VideoInputFFMPEG()
     : m_acodec(0),
     m_aindex(-1),
     m_acontext(0),
+    m_resample_ctx(0),
     m_audioFrames(0),
     m_audioChannels(0),
     m_capturedAudio(0),
@@ -61,46 +50,40 @@ namespace Screenplay {
     m_flags(0),
     m_lastPts(0)
   {
-    static bool once = false;
+    static volatile bool ffmpegInitialized = false;
 
-    if(!once) {
-      debug("Initializing AVCODEC 1");
+    // while used instead of if to break out early
+    while(!ffmpegInitialized) {
+
+      Radiant::Guard g(s_ffmpegMutex);
+
+      if(ffmpegInitialized)
+        break;
+
+      debugScreenplay("Initializing AVCODEC 1");
       avcodec_init();
-      debug("Initializing AVCODEC 2");
+      debugScreenplay("Initializing AVCODEC 2");
       avcodec_register_all();
-      debug("Initializing AVCODEC 3");
+      debugScreenplay("Initializing AVCODEC 3");
       av_register_all();
-      debug("Initializing AVCODEC 4");
-      once = true;
+      debugScreenplay("Initializing AVCODEC 4");
+      ffmpegInitialized = true;
     }
 
     m_lastSeek = 0;
-
-
-    int tmp = 0;
-    {
-      Radiant::GuardStatic g(__countermutex);
-      __instancecount++;
-      tmp = __instancecount;
-    }
-    debug("VideoInputFFMPEG::VideoInputFFMPEG # Instance count at %d", tmp);
   }
 
   VideoInputFFMPEG::~VideoInputFFMPEG()
   {
     close();
-
-    int tmp = 0;
-    {
-      Radiant::GuardStatic g(__countermutex);
-      __instancecount--;
-      tmp = __instancecount;
-    }
-    debug("VideoInputFFMPEG::~VideoInputFFMPEG # Instance count at %d", tmp);
   }
 
   const Radiant::VideoImage * VideoInputFFMPEG::captureImage()
   {
+    /// @todo this effectively prevents multi-threaded video decoding. Someone
+    /// can figure out a fix if this becomes a problem.
+    Radiant::Guard g(s_ffmpegMutex);
+
     assert(this != 0);
 
     static const char * fname = "VideoInputFFMPEG::captureImage";
@@ -115,25 +98,28 @@ namespace Screenplay {
 
       av_free_packet(m_pkt);
 
-      int ret = av_read_packet(m_ic, m_pkt);
+      int ret = av_read_frame(m_ic, m_pkt);
 
       if(ret < 0) {
 
         /* In the following we do not free the packet, since the read failed. Hope
            this is the correct behavior. */
-        debug("VideoInputFFMPEG::captureImage ret < 0 %x", m_flags);
+        debugScreenplay("VideoInputFFMPEG::captureImage ret < 0 %x", m_flags);
 
         if(! (m_flags & DO_LOOP)) {
           // av_free_packet(m_pkt);
           return 0;
         }
         else {
-          debug("VideoInputFFMPEG::captureImage # Looping %s", m_fileName.c_str());
+          debugScreenplay("VideoInputFFMPEG::captureImage # Looping %s", m_fileName.toUtf8().data());
           m_offsetTS = m_lastTS;
+          // Reset counters
+          m_capturedAudio = 0;
+          m_capturedVideo = 0;
           av_seek_frame(m_ic, -1, (int64_t) 0, 0);
 
           // av_free_packet(m_pkt);
-          ret = av_read_packet(m_ic, m_pkt);
+          ret = av_read_frame(m_ic, m_pkt);
           if(ret < 0) {
             // av_free_packet(m_pkt);
             return 0;
@@ -148,6 +134,7 @@ namespace Screenplay {
       got_picture = 0;
 
       if (m_pkt->stream_index == m_vindex) {
+
         vlen = avcodec_decode_video2(m_vcontext,
                                      m_frame, & got_picture,
                                      m_pkt);
@@ -156,31 +143,25 @@ namespace Screenplay {
         if (got_picture) {
           got = true;
 
-          int64_t pts = m_pkt->dts;
-          if(pts <= 0)
-            pts = m_frame->pts;
-          if(pts <= 0)
+          int64_t pts = 0;
+
+          if(m_pkt->dts != (int64_t) AV_NOPTS_VALUE) {
+            pts = m_pkt->dts;
+          } else if(m_pkt->pts != (int64_t) AV_NOPTS_VALUE) {
             pts = m_pkt->pts;
-          if(pts <= 0)
+          } else {
             pts = 0;
+          }
 
-          AVRational time_base = m_vcontext->time_base;
+          m_lastPts = pts;
 
-          if(!time_base.num || !time_base.den)
-            time_base = m_ic->streams[m_vindex]->time_base;
-          if(pts != m_frame->pts && m_ic->streams[m_vindex]->time_base.num)
-            time_base = m_ic->streams[m_vindex]->time_base;
+          /// @todo crashes here once, trying find why
+          assert(m_vindex >= 0);
+
+          AVRational time_base = m_ic->streams[m_vindex]->time_base;
 
           double rate = av_q2d(time_base);
           double secs = pts * rate; // x av_q2d(time_base);
-          /*
-             printf("VideoInputFFMPEG::captureImage # ls = %d, "
-             "pts = %ld (%ld/%ld) secs %.2lf\n",
-             (int) m_frame->linesize[0], (long) pts,
-             (long) time_base.num, (long) time_base.den,
-             secs);
-             */
-          m_lastPts = pts;
 
           if((m_lastPts == 0 && m_capturedVideo > 2) || (secs == 0)) {
 
@@ -197,13 +178,13 @@ namespace Screenplay {
           else
             m_lastTS = Radiant::TimeStamp::createSecondsD(secs);
 
-          debug("VideoInputFFMPEG::captureImage # pts = %d %d %d lts = %lf\n",
+          debugScreenplay("VideoInputFFMPEG::captureImage # pts = %d %d %d lts = %lf\n",
                 (int) m_frame->pts, (int) m_pkt->pts, (int) m_pkt->dts,
                 m_lastTS.secondsD());
 
           m_lastTS += m_offsetTS;
 
-          if(m_capturedVideo == 0)
+          if(m_capturedVideo == 0 && m_firstTS == 0)
             m_firstTS = m_lastTS;
         }
 
@@ -226,27 +207,87 @@ namespace Screenplay {
 
         int index = m_audioFrames * actualChannels();
 
-        int aframes = ((int) m_audioBuffer.size() - index) * 2;
+        int aframesOut = 0;
 
-        if(aframes < AVCODEC_MAX_AUDIO_FRAME_SIZE) {
-          m_audioBuffer.resize(m_audioBuffer.size() + AVCODEC_MAX_AUDIO_FRAME_SIZE * m_audioChannels);
-          aframes = ((int) m_audioBuffer.size() - index) * 2;
-          if(m_audioBuffer.size() > 1000000) {
-            info("VideoInputFFMPEG::captureImage # %p Audio buffer is very large now: %d (%ld)",
-                 this, (int) m_audioBuffer.size(), m_capturedVideo);
+        // decode to audiobuffer if sample rate is 44.1khz
+        if(m_audioSampleRate == 44100 || !m_resample_ctx) {
+
+
+          int aframes = ((int)m_audioBuffer.size() - index) * 2;
+
+          if(aframes < AVCODEC_MAX_AUDIO_FRAME_SIZE) {
+
+            m_audioBuffer.resize(m_audioBuffer.size() + AVCODEC_MAX_AUDIO_FRAME_SIZE * m_audioChannels);
+            aframes = ((int) m_audioBuffer.size() - index) * 2;
+            if(m_audioBuffer.size() > 1000000) {
+              info("VideoInputFFMPEG::captureImage # %p Audio buffer is very large now: %d (%ld)",
+                   this, (int) m_audioBuffer.size(), m_capturedVideo);
+            }
           }
+
+          avcodec_decode_audio3(m_acontext,
+                                & m_audioBuffer[index],
+                                & aframes, m_pkt);
+
+          aframes /= (2 * m_audioChannels);
+          aframesOut = aframes;
+
+        } else {
+
+          // decode into a temporay audio buffer, later will be resampled
+          int aBytesIn = AVCODEC_MAX_AUDIO_FRAME_SIZE * m_audioChannels + FF_INPUT_BUFFER_PADDING_SIZE;   // in bytes
+          int aFramesIn = aBytesIn / sizeof(AudioBuffer::value_type);
+
+          m_resampleBuffer.resize(aFramesIn);
+          int usedBytes = avcodec_decode_audio3(m_acontext,
+                                & m_resampleBuffer[0],
+                                & aBytesIn, m_pkt);
+
+          if (m_acodec->id == CODEC_ID_VORBIS)
+          {
+            // From Vorbis documentation:
+            // Data is not returned from the first frame; it must be used to
+            // ’prime’ the decode engine. The encoder accounts for this priming
+            // when calculating PCM offsets; after the first frame, the proper
+            // PCM output offset is ’0’ (as no data has been returned yet).
+
+            if (usedBytes > 0 && aBytesIn == 0)
+              continue;
+          }
+
+          // Resample
+          int srcChannelBytes = aBytesIn / m_audioChannels;
+          int srcChannelSamples = srcChannelBytes / sizeof(AudioBuffer::value_type);
+          int destChannelBytes = Nimble::Math::Ceil((float)srcChannelBytes * 44100 / m_audioSampleRate);
+          int destSamples = (destChannelBytes * m_audioChannels) / sizeof(AudioBuffer::value_type);
+
+          // Check if we have enough space left in the audio buffer
+          int freeSamples = ((int) m_audioBuffer.size() - index);                                       // Free space left in audiobuffer
+          if(freeSamples < destSamples) {
+            m_audioBuffer.resize(index + destSamples);
+
+            if(m_audioBuffer.size() > 1000000) {
+              info("VideoInputFFMPEG::captureImage # %p Audio buffer is very large now: %d (%ld)",
+                   this, (int) m_audioBuffer.size(), m_capturedVideo);
+            }
+          }
+
+          int resampled = audio_resample(m_resample_ctx,
+                                         & m_audioBuffer[index], // out buf
+                                         & m_resampleBuffer[0],  // in buf
+                                         srcChannelSamples);     // nb samples per channel
+
+          if(!(resampled > 0))
+            error("%s: Failed to resample", fname);
+
+          debugScreenplay("resampled: %d; inrate: %d; outrate: %d", resampled, m_audioSampleRate, 44100);
+
+          aframesOut = resampled;
         }
-
-        avcodec_decode_audio3(m_acontext,
-                              & m_audioBuffer[index],
-                              & aframes, m_pkt);
-
-        aframes /= (2 * m_audioChannels);
-        int64_t pts = m_pkt->pts;
 
         if(m_flags & Radiant::MONOPHONIZE_AUDIO) {
           // Force to mono sound.
-          for(int a = 0; a < aframes; a++) {
+          for(int a = 0; a < aframesOut; a++) {
             int sum = 0;
             int base = index + a * m_audioChannels;
             for(int chan = 0; chan < m_audioChannels; chan++) {
@@ -257,28 +298,34 @@ namespace Screenplay {
           }
         }
 
-        if(pts <= 0)
-          pts = m_pkt->dts;
-        if(pts <= 0)
-          pts = m_acontext->frame_number;
+        int64_t pts = 0;
 
-        AVRational time_base = m_acontext->time_base;
+        if (m_pkt->dts != (int64_t) AV_NOPTS_VALUE) {
+          pts = m_pkt->dts;
+        } else if(m_pkt->pts != (int64_t) AV_NOPTS_VALUE) {
+          pts = m_pkt->pts;
+        } else {
+          pts = 0;
+        }
+
+        /*AVRational time_base = m_acontext->time_base;
 
         if(!time_base.num || !time_base.den)
           time_base = m_ic->streams[m_aindex]->time_base;
         if(pts != m_frame->pts && m_ic->streams[m_aindex]->time_base.num)
-          time_base = m_ic->streams[m_aindex]->time_base;
+          time_base = m_ic->streams[m_aindex]->time_base;*/
+
+        AVRational time_base = m_ic->streams[m_aindex]->time_base;
 
         double rate = av_q2d(time_base);
         double secs = pts * rate;
 
-
-        debug("VideoInputFFMPEG::captureImage # af = %d ab = %d ppts = %d, pdts = %d afr = %d secs = %lf tb = %ld/%ld",
-              aframes, m_audioFrames, (int) m_pkt->pts, (int) m_pkt->dts,
+        debugScreenplay("VideoInputFFMPEG::captureImage # af = %d ab = %d ppts = %d, pdts = %d afr = %d secs = %lf tb = %ld/%ld",
+              aframesOut, m_audioFrames, (int) m_pkt->pts, (int) m_pkt->dts,
               (int) m_acontext->frame_number, secs,
               (long) time_base.num, (long) time_base.den);
 
-        if(aframes > 10000)
+        if(aframesOut > 10000)
           pts = m_capturedAudio;
 
         if(m_audioFrames == 0) {
@@ -292,17 +339,18 @@ namespace Screenplay {
           m_audioTS += m_offsetTS;
         }
 
-        debug("Decoding audio # %d %lf", aframes, m_audioTS.secondsD());
+        debugScreenplay("Decoding audio # %d %lf", aframesOut, m_audioTS.secondsD());
 
-        m_audioFrames   += aframes;
-        m_capturedAudio += aframes;
+        m_audioFrames   += aframesOut;
+        m_capturedAudio += aframesOut;
 
         if((uint)(m_audioFrames * m_audioChannels) >= m_audioBuffer.size()) {
           Radiant::error("VideoInputFFMPEG::captureImage # %p Audio trouble %d %d (%ld)",
-                         this, aframes, m_audioFrames, m_capturedVideo);
+                         this, aframesOut, m_audioFrames, m_capturedVideo);
         }
         // printf("_"); fflush(0);
       }
+
     }
 
     if(!m_acodec && (m_flags & Radiant::WITH_AUDIO)) {
@@ -314,12 +362,12 @@ namespace Screenplay {
       int perFrame = (int) (frames - m_capturedAudio);
 
       if(perFrame > 20000) {
-        debug("VideoInputFFMPEG::captureImage # Large audio generated");
+        debugScreenplay("VideoInputFFMPEG::captureImage # Large audio generated");
         perFrame = 20000;
       }
 
-      debug("VideoInputFFMPEG::captureImage # %lf %d %d %d aufr in total %d vidfr",
-            secs, perFrame, (int) m_audioFrames, (int) m_capturedAudio, (int) m_capturedVideo);
+      debugScreenplay("VideoInputFFMPEG::captureImage # firstTS %lf lastTS %lf; %lf %d %d %d aufr in total %d vidfr",
+            m_firstTS.secondsD(), m_lastTS.secondsD(), secs, perFrame, (int) m_audioFrames, (int) m_capturedAudio, (int) m_capturedVideo);
 
       m_audioTS = m_lastTS;
 
@@ -343,25 +391,42 @@ namespace Screenplay {
     if(avcfmt == PIX_FMT_YUV420P) {
       m_image.setFormatYUV420P();
       if(m_debug && m_capturedVideo < 10)
-        debug("%s # PIX_FMT_YUV420P", fname);
+        debugScreenplay("%s # PIX_FMT_YUV420P", fname);
     }
     else if(avcfmt == PIX_FMT_YUVJ420P) {
       m_image.setFormatYUV420P();
       if(m_debug && m_capturedVideo < 10)
-        debug("%s # PIX_FMT_YUV420P", fname);
+        debugScreenplay("%s # PIX_FMT_YUV420P", fname);
     }
     else if(avcfmt == PIX_FMT_YUVJ422P) {
       m_image.setFormatYUV422P();
       if(m_debug && m_capturedVideo < 10)
-        debug("%s # PIX_FMT_YUV422P", fname);
+        debugScreenplay("%s # PIX_FMT_YUV422P", fname);
     }
     else if(avcfmt == PIX_FMT_RGB24) {
       m_image.setFormatRGB();
       if(m_debug && m_capturedVideo < 10)
-        debug("%s # PIX_FMT_RGB24", fname);
+        debugScreenplay("%s # PIX_FMT_RGB24", fname);
+    }
+    else if(avcfmt == PIX_FMT_BGR24) {
+      m_image.setFormatBGR();
+      if(m_debug && m_capturedVideo < 10)
+        debugScreenplay("%s # PIX_FMT_BGR24", fname);
+    }
+    else if(avcfmt == PIX_FMT_RGBA) {
+      m_image.setFormatRGBA();
+      if(m_debug && m_capturedVideo < 10)
+        debugScreenplay("%s # PIX_FMT_RGBA", fname);
+    }
+    else if(avcfmt == PIX_FMT_BGRA) {
+      m_image.setFormatBGRA();
+      if(m_debug && m_capturedVideo < 10)
+        debugScreenplay("%s # PIX_FMT_BGRA", fname);
     }
     else {
       Radiant::error("%s # unsupported FFMPEG pixel format %d", fname, (int) avcfmt);
+      av_free_packet(m_pkt);
+      return 0;
     }
 
     m_image.m_width = width();
@@ -387,7 +452,9 @@ namespace Screenplay {
        printf("ls[%u] = %d  ", p, (int) m_image.m_planes[p].m_linesize);
        }*/
 
-    av_free_packet(m_pkt);
+    // can't free here, still need m_data later. m_pkt is freed on each
+    // new frame and when video closes
+    //av_free_packet(m_pkt);
 
     return & m_image;
   }
@@ -397,7 +464,7 @@ namespace Screenplay {
     /* trace2("VideoInputFFMPEG::captureAudio # %d %d",
      * frameCount, m_audioFrames); */
 
-    if(!m_audioBuffer.size()) {
+    if(m_audioBuffer.empty()) {
       * frameCount = 0;
       return 0;
     }
@@ -450,36 +517,21 @@ namespace Screenplay {
     if(!m_vcontext)
       return 0;
 
-    AVRational time_base = m_vcontext->time_base;
+    double fps = 1/(m_vcontext->ticks_per_frame * av_q2d(m_vcontext->time_base));
 
-    if(!time_base.num || !time_base.den) {
-
-      time_base = m_ic->streams[m_vindex]->time_base;
-
-      if(!time_base.num || !time_base.den) {
-
-        if(m_capturedVideo && m_capturedAudio) {
-          int sr = m_acontext->sample_rate;
-          float seconds = m_capturedAudio / (float) sr;
-          return m_capturedVideo / seconds;
-        }
-        else
-          return 30.0f;
+    // If we get some wild values use "guess"
+    if (fps >= 100) {
+      if (!m_ic || m_vindex < 0) {
+        warning("VideoInputFFMPEG::fps # Could not get fps");
+        return 0;
       }
+      assert(m_ic->nb_streams > m_vindex && m_vindex >= 0);
+      if(m_ic->nb_streams <= m_vindex)
+        return 0;
+      fps = av_q2d(m_ic->streams[m_vindex]->r_frame_rate);
     }
 
-    double r = (double) time_base.den /
-               ((double) time_base.num);
-
-    if(m_lastPts != 0) {
-      r *= (double) (m_capturedVideo - 1) / (double) m_lastPts;
-    }
-
-    Radiant::debug("VideoInputFFMPEG::fps # %d %d -> %.2lf",
-                   time_base.den, time_base.num, r);
-
-    return float(r);
-    // return 30;
+    return float(fps);
   }
 
   Radiant::ImageFormat VideoInputFFMPEG::imageFormat() const
@@ -495,9 +547,10 @@ namespace Screenplay {
   bool VideoInputFFMPEG::open(const char * filename,
                               int flags)
   {
-
     if(m_vcodec)
       close();
+
+    Radiant::Guard g(s_ffmpegMutex);
 
     if(!m_pkt) {
       m_pkt = new AVPacket();
@@ -530,14 +583,18 @@ namespace Screenplay {
 
     bzero( & params, sizeof(params));
 
-    GuardStatic g( & __openmutex);
-
     int err = av_open_input_file( & m_ic, filename, iformat, 0, ap);
 
     if(err < 0) {
       error("%s # Could not open file \"%s\" %s",
             fname, filename, strerror(-err));
       return false;
+    }
+
+    /// @todo workaround for libav matroska seek bug (2256)
+    err = av_find_stream_info(m_ic);
+    if(err < 0) {
+      error("%s # Could not find stream info for %s", fname, filename);
     }
 
     /* trace2("%s # Opened %s with %d Hx, %d channels, %dx%d",
@@ -550,15 +607,21 @@ namespace Screenplay {
 
       AVCodecContext *enc = m_ic->streams[i]->codec;
 
-      if(enc->codec_type == CODEC_TYPE_VIDEO) {
+      if(enc->codec_type == AVMEDIA_TYPE_VIDEO) {
 
         m_vindex = i;
         m_vcodec = avcodec_find_decoder(enc->codec_id);
         m_vcontext = enc;
 
+        int64_t start_time = m_ic->streams[i]->start_time;
+        if (start_time != (int64_t) AV_NOPTS_VALUE) {
+          debugScreenplay("%s # Stream %d does not contain start time.", fname, i);
+          m_firstTS = Radiant::TimeStamp::createSecondsD(start_time * av_q2d(m_ic->streams[i]->time_base));
+        }
+
         AVRational fr = m_ic->streams[i]->r_frame_rate;
 
-        debug("%s # Got frame rate of %d %d", fname, fr.num, fr.den);
+        debugScreenplay("%s # Got frame rate of %d %d", fname, fr.num, fr.den);
 
         /* if(m_vcodec->supported_framerates) {
            for(int k = 0; m_vcodec->supported_framerates[k].num != 0; k++) {
@@ -568,21 +631,24 @@ namespace Screenplay {
            }
            }*/
 
-        if(!m_vcodec || avcodec_open(enc, m_vcodec) < 0)
-          ; // THROW1(Exception, "Could not get video codec")
-        else if(flags & WITH_VIDEO)
+        if(!m_vcodec || avcodec_open(enc, m_vcodec) < 0) {
+          // Unsupported video codec
+          Radiant::warning("VideoInputFFMPEG::open # unsupported video codec.");
+          return false;
+        } else if(flags & WITH_VIDEO)
           m_flags = m_flags | WITH_VIDEO;
       }
-      else if(enc->codec_type == CODEC_TYPE_AUDIO) {
+      else if(enc->codec_type == AVMEDIA_TYPE_AUDIO) {
 
         m_aindex = i;
         m_acodec = avcodec_find_decoder(enc->codec_id);
         m_acontext = enc;
 
-        if((!m_acodec || avcodec_open(enc, m_acodec) < 0) &&
-           (flags & Radiant::WITH_AUDIO))
-          ; // THROW1(Exception, "Could not get audio codec")
-        else if(flags & WITH_AUDIO)
+        if((!m_acodec || avcodec_open(enc, m_acodec) < 0) && (flags & Radiant::WITH_AUDIO)) {
+          // Unsupported audio codec
+          Radiant::warning("VideoInputFFMPEG::open # unsupported audio codec. Trying to decode without audio stream...");
+          m_flags &= ~WITH_AUDIO;
+        } else if(flags & WITH_AUDIO)
           m_flags = m_flags | WITH_AUDIO;
       }
     }
@@ -609,6 +675,24 @@ namespace Screenplay {
 
     m_frame = avcodec_alloc_frame();
 
+    if(m_audioSampleRate != 44100) {
+      // resample to 44100HZ
+      m_resample_ctx = av_audio_resample_init(m_audioChannels,  // nb output channels
+                                              m_audioChannels,  // nb input channels
+                                              44100,             // out rate
+                                              m_audioSampleRate, // in rate
+                                              SAMPLE_FMT_S16,
+                                              SAMPLE_FMT_S16,
+                                              16,                // filter length
+                                              10,                // phase count
+                                              0,                 // linear FIR filter
+                                              0.8);              // cutoff frequency
+
+
+      if(!m_resample_ctx)
+        error("%s: Failed to create resampling context", fname);
+    }
+
     m_image.m_width = width();
     m_image.m_height = height();
 
@@ -626,11 +710,11 @@ namespace Screenplay {
     }
 
     if(!acname) {
-      debug("%s # File %s has unsupported audio codec.", fname, filename);
+      debugScreenplay("%s # File %s has unsupported audio codec.", fname, filename);
       // return false;
     }
 
-    debug("%s # Opened file %s,  (%d x %d %s, %s %d chans @ %d Hz) %d (%d, %f)",
+    debugScreenplay("%s # Opened file %s,  (%d x %d %s, %s %d chans @ %d Hz) %d (%d, %f)",
           fname, filename, width(), height(), vcname, acname, m_audioChannels,
           m_audioSampleRate,
           (int) m_image.m_format, (int) m_vcontext->pix_fmt, ratio);
@@ -643,7 +727,7 @@ namespace Screenplay {
     //    if(!m_ic)
     //      return false;
 
-    GuardStatic g( & __openmutex);
+    Guard g( s_ffmpegMutex);
 
     if(m_frame)
       av_free(m_frame);
@@ -656,15 +740,22 @@ namespace Screenplay {
 
     if(m_ic)
       av_close_input_file(m_ic);
-    
+
     if(m_pkt) {
       av_free_packet(m_pkt);
       delete m_pkt;
       m_pkt = 0;
     }
-    
-    std::vector<int16_t> tmp;
+
+    if(m_resample_ctx) {
+      audio_resample_close(m_resample_ctx);
+      m_resample_ctx = 0;
+    }
+
+    // Cleanup audio buffers
+    AudioBuffer tmp, tmp2;
     m_audioBuffer.swap(tmp);
+    m_resampleBuffer.swap(tmp2);
 
     m_audioFrames = 0;
 
@@ -685,7 +776,9 @@ namespace Screenplay {
 
   bool VideoInputFFMPEG::seekPosition(double timeSeconds)
   {
-    debug("VideoInputFFMPEG::seekPosition # %lf", timeSeconds);
+    Radiant::Guard g(s_ffmpegMutex);
+
+    debugScreenplay("VideoInputFFMPEG::seekPosition # %lf", timeSeconds);
 
     if(m_vcontext)
       avcodec_flush_buffers(m_vcontext);
@@ -695,8 +788,8 @@ namespace Screenplay {
 
     if(timeSeconds <= 1e-10) {
       close();
-      std::string tmp = m_fileName;
-      open(tmp.c_str(), m_flags);
+      QString tmp = m_fileName;
+      open(tmp.toUtf8().data(), m_flags);
       timeSeconds = 0;
     }
     else {
@@ -719,15 +812,25 @@ namespace Screenplay {
     return true;
   }
 
-  double VideoInputFFMPEG::durationSeconds()
+  double VideoInputFFMPEG::durationSeconds() const
   {
     if(m_flags & Radiant::DO_LOOP)
       return 1.0e+9f;
 
     if(m_ic && m_vindex >= 0) {
       AVStream * s = m_ic->streams[m_vindex];
-      return s->duration * av_q2d(s->time_base);
+
+      if (s->duration != (int64_t) AV_NOPTS_VALUE) {
+        return s->duration * av_q2d(s->time_base);
+      } else if (m_ic->duration != (int64_t) AV_NOPTS_VALUE) {
+        // If video stream doesn't have duration, check the container for valid duration info.
+        // Could also iterate over all other streams as well.
+        debugScreenplay("VideoInputFFMPEG::durationSeconds # Could not get video stream duration. Using container duration.");
+        AVRational av_time_base = {1, AV_TIME_BASE};
+        return m_ic->duration * av_q2d(av_time_base);
+      }
     }
+
     return 0.0;
   }
 

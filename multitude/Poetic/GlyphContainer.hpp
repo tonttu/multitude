@@ -15,16 +15,18 @@
 #ifndef POETIC_GLYPH_CONTAINER_HPP
 #define POETIC_GLYPH_CONTAINER_HPP
 
+#include "Export.hpp"
 #include "Face.hpp"
 #include "Glyph.hpp"
 #include "Charmap.hpp"
+
 #include <vector>
 
 namespace Poetic
 {
 
   /// A container class for glyphs.
-  class GlyphContainer
+  class POETIC_API GlyphContainer
   {
     public:
       /// Constructs a new container for the given face

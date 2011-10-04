@@ -1,15 +1,15 @@
-#include <Valuable/HasValues.hpp>
+#include <Valuable/Node.hpp>
 #include <Valuable/Valuable.hpp>
-#include <Valuable/ValueFloat.hpp>
-#include <Valuable/ValueRect.hpp>
-#include <Valuable/ValueString.hpp>
+#include <Valuable/AttributeFloat.hpp>
+#include <Valuable/AttributeRect.hpp>
+#include <Valuable/AttributeString.hpp>
 
 #include <string.h>
 
 
 using namespace Valuable;
 
-class MyValues : public Valuable::HasValues
+class MyValues : public Valuable::Node
 {
 public:
   MyValues()
@@ -24,10 +24,10 @@ public:
 
   virtual const char * type() const { return "MyValues"; }
 
-  ValueFloat   m_v;
-  ValueRect    m_r;
-  ValueWString m_ws;
-  ValueString  m_s;
+  AttributeFloat   m_v;
+  AttributeRect    m_r;
+  AttributeString  m_ws;
+  AttributeString  m_s;
 };
 
 int main(int, char **)

@@ -25,43 +25,44 @@
 
 #define VERTEX_ARRAY_SIZE 1024
 
-#include <Luminous/Shader.hpp>
+
 
 namespace Poetic
 {
   using namespace Radiant;
 
-  static const char * g_fontVShaderSource =
-      "uniform mat3   transform;\n"
-      "varying vec4   color;\n"
-      "varying vec4   uv;\n"
-      "void main (void) {\n"
-      "  mat4 trans4 = mat4(transform[0].x, transform[0].y, 0, transform[0].z,\n"
-      "    transform[1].x, transform[1].y, 0, transform[1].z,\n"
-      "    0, 0, 1, 0,\n"
-      "    transform[2].x, transform[2].y, 0, transform[2].z);\n"
-      "  vec3 pos = transform * vec3(gl_Vertex.x, gl_Vertex.y, 1);\n"
-      "  pos.xy = pos.xy / pos.z;\n"
-      "  pos.z = 1.0;\n"
-      "  uv = gl_MultiTexCoord0;\n"
-      "  gl_ClipVertex = gl_ModelViewMatrix * trans4 * gl_Vertex;\n"
-      "  color = gl_Color\n;"
-      "  gl_Position = gl_ModelViewProjectionMatrix * vec4(pos.x, pos.y, pos.z, 1);\n"
-      "}\n";
+#define SHADER(str) #str
+  static const char * g_fontVShaderSource = SHADER(
+    uniform mat3   transform;
+    varying vec4   color;
+    varying vec4   uv;
+    void main (void) {
+      mat4 trans4 = mat4(transform[0].x, transform[0].y, 0, transform[0].z,
+        transform[1].x, transform[1].y, 0, transform[1].z,
+        0, 0, 1, 0,
+        transform[2].x, transform[2].y, 0, transform[2].z);
+      vec3 pos = transform * vec3(gl_Vertex.x, gl_Vertex.y, 1);
+      pos.xy = pos.xy / pos.z;
+      pos.z = 1.0;
+      uv = gl_MultiTexCoord0;
+      gl_ClipVertex = gl_ModelViewMatrix * trans4 * gl_Vertex;
+      color = gl_Color;
+      gl_Position = gl_ModelViewProjectionMatrix * vec4(pos.x, pos.y, pos.z, 1);
+    }
+  );
 
-  static const char * g_fontFShaderSource =
-      "uniform sampler2D fontTexture;\n"
-      "varying vec4 color;\n"
-      "varying vec4 uv;\n"
-      "void main (void) {\n"
-      "gl_FragColor = color;\n"
-      "gl_FragColor.a *= texture2D(fontTexture, uv.st).a;\n"
-      "}\n";
-
-  Luminous::Shader g_fontShader;
+  static const char * g_fontFShaderSource = SHADER(
+    uniform sampler2D fontTexture;
+    varying vec4 color;
+    varying vec4 uv;
+    void main (void) {
+      gl_FragColor = color;
+      gl_FragColor.a *= texture2D(fontTexture, uv.st).a;
+    }
+  );
 
   /* Creates a number that is a multiple of four. Four is used as the
-     buggy OSX (NVidia) drivers cannot handle arbitratry textures,
+     buggy OS X (NVidia) drivers cannot handle arbitratry textures,
      even OpenGL 2.0 spec-compliant multiples-of-two -textures do not
      work in all conditions (sigh).
 
@@ -86,12 +87,13 @@ namespace Poetic
     m_padding(DEFAULT_PADDING),
     m_xOffset(0),
     m_yOffset(0),
-    m_reset(false)
+    m_reset(false),
+    m_fontShader(new Luminous::Shader())
   {
 
-    if(!g_fontShader.isDefined()) {
-      g_fontShader.setVertexShader(g_fontVShaderSource);
-      g_fontShader.setFragmentShader(g_fontFShaderSource);
+    if(!m_fontShader->isDefined()) {
+      m_fontShader->setVertexShader(g_fontVShaderSource);
+      m_fontShader->setFragmentShader(g_fontFShaderSource);
     }
 
     m_remGlyphs = m_numGlyphs = m_cpuFont->face()->numGlyphs();
@@ -99,6 +101,8 @@ namespace Poetic
 
   GPUTextureFont::~GPUTextureFont()
   {
+    delete m_fontShader;
+
     // Accessing [0] on empty vectors crashes on Windows
     if(!m_textures.empty())
         glDeleteTextures((GLsizei) m_textures.size(), (const GLuint *)&m_textures[0]);
@@ -171,8 +175,8 @@ namespace Poetic
       assert(m_maxTextureSize);
 
       /* Limit the maximum dimensions of the texture. This is done so
-     that OSX would not crash (Leopard) or corrupt the graphics
-     (Tiger).*/
+	 that OS X would not crash (Leopard) or corrupt the graphics
+	 (Tiger).*/
       if(m_maxTextureSize > 2048)
     m_maxTextureSize = 2048;
     }
@@ -204,7 +208,7 @@ namespace Poetic
     // GPUTextureGlyph::resetActiveTexture();
 
     // info("GPUTextureFont::internalRender # in");
-    Luminous::GLSLProgramObject * shader = g_fontShader.bind();
+    Luminous::GLSLProgramObject * shader = m_fontShader->bind();
     // info("GPUTextureFont::internalRender # out");
 
     shader->setUniformInt("fontTexture", 0);
@@ -287,7 +291,7 @@ namespace Poetic
     // GPUTextureGlyph::resetActiveTexture();
 
     // info("GPUTextureFont::internalRender # in");
-    Luminous::GLSLProgramObject * shader = g_fontShader.bind();
+    Luminous::GLSLProgramObject * shader = m_fontShader->bind();
     // info("GPUTextureFont::internalRender # out");
 
     shader->setUniformInt("fontTexture", 0);

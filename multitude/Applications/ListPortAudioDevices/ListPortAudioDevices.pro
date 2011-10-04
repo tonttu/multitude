@@ -10,15 +10,17 @@ CONFIG -= qt
 
 win32 {
     
-    win64 {
+  win64 {
 		INCLUDEPATH += ../../Win64x/include/portaudio
 		INCLUDEPATH += ../../Win64x/include/libsndfile
-		
+
+    QMAKE_LIBDIR += $$DDK_PATH\\lib\\win7\\amd64
 		LIBS += -llibsndfile-1 -lportaudio -lole32 -luser32
 	} else { 
 		INCLUDEPATH += ../../Win32x/include/portaudio
 		INCLUDEPATH += ../../Win32x/include/libsndfile
 	
+    QMAKE_LIBDIR += $$DDK_PATH\\lib\\win7\\i386
 		LIBS += -llibsndfile-1 -lportaudio_x86
 	}
 }

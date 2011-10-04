@@ -94,7 +94,7 @@ namespace Luminous
     const char * file() { return m_file.c_str(); }
     protected:
     int m_levels;
-    std::string m_file;
+    QString m_file;
     Tile m_root;
   };
 }

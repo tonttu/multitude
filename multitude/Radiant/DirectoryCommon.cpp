@@ -18,46 +18,33 @@
 #include "FileUtils.hpp"
 #include "StringUtils.hpp"
 #include "Trace.hpp"
+#include "Mime.hpp"
 
 #include <cassert>
 
 #include <algorithm>
 
+#include <QDir>
+
 namespace Radiant
 {
-  Directory::Directory(const char * pathname,
+  Directory::Directory(const QString & pathname,
                        int filters, SortFlag sortFlag)
     : m_path(pathname),
       m_filterFlags(filters),
-      m_sortFlags(sortFlag)
-  {
-    populate();
-  }
-
-  Directory::Directory(const std::string & pathname,
-                       int filters, SortFlag sortFlag)
-    : m_path(pathname),
-      m_filterFlags(filters),
-      m_sortFlags(sortFlag)
+      m_sortFlag(sortFlag)
   {
     populate();
   }
 
 
-  Directory::Directory(const char * pathname, const char * suffixlist,
+  Directory::Directory(const QString & pathname, const QString & suffixlist,
                        int filters, SortFlag sortFlag)
   : m_path(pathname),
     m_filterFlags(filters),
-    m_sortFlags(sortFlag)
+    m_sortFlag(sortFlag)
   {
-    StringUtils::StringList suflist;
-    StringUtils::split(suffixlist, ",", suflist);
-
-    for(StringUtils::StringList::iterator it = suflist.begin();
-	it != suflist.end(); it++) {
-      m_suffixes.push_back(*it);
-    }
-
+    m_suffixes = suffixlist.toLower().split(",", QString::SkipEmptyParts);
     populate();
   }
 
@@ -70,57 +57,32 @@ namespace Radiant
     return (int)m_entries.size();
   }
 
-  std::string Directory::fileName(int i) const
+  QString Directory::fileName(int i) const
   {
     assert(i >= 0 && i < count());
     return m_entries[i];
   }
 
-  std::string Directory::fileNameWithPath(int n) const
+  QString Directory::fileNameWithPath(int n) const
   {
     return path() + "/" + fileName(n);
   }
 
-  void Directory::init(const std::string & pathname, const char * suffixlist,
-                       const int filters, const SortFlag sortFlag) 
+  bool Directory::mkdirRecursive(const QString & dirname)
   {
-    m_path = pathname ;
-    m_filterFlags = filters ;
-    m_sortFlags = sortFlag ;
-    
-    StringUtils::StringList suflist;
-    StringUtils::split(suffixlist, ",", suflist);
-    
-    for(StringUtils::StringList::iterator it = suflist.begin();
-	it != suflist.end(); it++) {
-      m_suffixes.push_back(*it);
-    }
+    return QDir().mkpath(dirname);
   }
 
-  bool Directory::mkdirRecursive(const std::string & dirname)
+  Directory Directory::findByMimePattern(const QString & pathname, const QString & mimePattern,
+                                         int filters, SortFlag sortFlag)
   {
-    if(dirname.empty())
-      return false;
-
-    StringUtils::StringList sections;
-    StringUtils::split(dirname, "/", sections);
-
-    std::string dir;
-
-    if(dirname[0] == '/') {
-      dir += '/';
-    }
-
-    for(StringUtils::StringList::iterator it = sections.begin();
-	it != sections.end(); it++) {
-      dir += (*it) + "/";
-
-      if(!exists(dir)) {
-	if(!mkdir(dir))
-	  return false;
-      }
-    }
-    
-    return true;
+    MimeManager mime;
+    QStringList tmp;
+    foreach(const QString & t, mimePattern.split('*'))
+      tmp << QRegExp::escape(t);
+    /// @todo implement real mime loading. it shouldn't have anything to do with file extensions
+    return Directory(pathname, mime.extensionsByMimeRegexp(tmp.join(".*")).join(","),
+                     filters, sortFlag);
   }
+
 }

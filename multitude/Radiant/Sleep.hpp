@@ -7,10 +7,10 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef RADIANT_SLEEP_HPP
@@ -28,9 +28,6 @@
 #  include <sys/time.h>
 #endif
 
-#define RADIANT_BILLION 1000000000
-#define RADIANT_MILLION 1000000
-
 namespace Radiant {
 
   class TimeStamp;
@@ -47,19 +44,21 @@ namespace Radiant {
     ~Sleep() {}
 
     /// Sleep for n seconds.
-    static bool sleepS(uint32_t secs);
+    /// @param secs Number of seconds to sleep
+    static void sleepS(uint32_t secs);
 
     /** Sleep for n milliseconds. You cannot sleep more than one second
     with this function. */
-    static bool sleepMs(uint32_t msecs);
+    /// @param msecs Number of milliseconds to sleep
+    static void sleepMs(uint32_t msecs);
 
     /** Sleep for n microseconds. You cannot sleep more than one
         second with this function. The resolution of this function is
         unlikely to be better than one millisecond on any platform,
         even if the underlying APIs might imply this.
-
     */
-    static bool sleepUs(uint32_t usecs);
+    /// @param usecs Number of microseconds to sleep
+    static void sleepUs(uint32_t usecs);
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -84,8 +83,10 @@ namespace Radiant {
 
     /// Sleep for n microseconds
     /** This function calculates how much time has passed since the
-    last sleep and sleeps to fulfill the required time period. */
-    long sleepSynchroUs(long us);
+    last sleep and sleeps to fulfill the required time period.
+    @param us microseconds to sleep
+    */
+    void sleepSynchroUs(long us);
 
   private:
 

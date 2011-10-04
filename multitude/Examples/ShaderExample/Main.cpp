@@ -9,6 +9,8 @@
 
 #include <SDL/SDL.h>
 
+#define SHADER(str) #str
+
 int main(int, char**)
 {
   Radiant::enableVerboseOutput(true);
@@ -26,15 +28,16 @@ int main(int, char**)
   /* Then something a bit more interesting. This creates rings. When the
      scale goes up, we get really cool moire-effects.
   */
-  rings.setFragmentShader
-      ("uniform float scale;\n"
-       "void main(void) { \n"
-       " vec2 offset = gl_TexCoord[0].st - vec2(0.5, 0.5);\n"
-       " float val = 0.5 + 2.5 *  sin(length(offset) * scale);\n"
-       " gl_FragColor = vec4(val, val, val, 1); \n"
-       "}\n");
+  rings.setFragmentShader(SHADER(
+      uniform float scale;
+      void main(void) {
+        vec2 offset = gl_TexCoord[0].st - vec2(0.5, 0.5);
+        float val = 0.5 + 2.5 *  sin(length(offset) * scale);
+        gl_FragColor = vec4(val, val, val, 1);
+      }
+    ));
 
-  Valuable::ValueFloat scale(0, "scale", 10.0f);
+  Valuable::AttributeFloat scale(0, "scale", 10.0f);
   rings.addShaderUniform( & scale);
 
   SDL_Init(SDL_INIT_VIDEO);

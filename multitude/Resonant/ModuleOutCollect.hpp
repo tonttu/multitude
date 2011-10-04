@@ -7,21 +7,23 @@
  * See file "Resonant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #ifndef RESONANT_MODULE_OUT_COLLECT_HPP
 #define RESONANT_MODULE_OUT_COLLECT_HPP
 
-#include <string>
+#include <QString>
 #include <string.h>
 
-#include <Resonant/Module.hpp>
+#include "Module.hpp"
 
 #include <vector>
+#include <string>
+#include <string.h>
 
 namespace Resonant {
 
@@ -30,19 +32,19 @@ namespace Resonant {
   /** Collect input from various sources and interleave it for audio
       playback. */
 
-  class ModuleOutCollect : public Module
+  class RESONANT_API ModuleOutCollect : public Module
   {
   public:
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+/// @cond
     class Move
     {
     public:
-      Move() : from(0), to(0) { sourceId[0] = 0; }
-      char sourceId[Module::MAX_ID_LENGTH];
+      Move() : from(0), to(0) {}
+      QString sourceId;
       int from, to;
     };
-#endif
+/// @endcond
 
     /// Creates a new ModuleOutCollect
     ModuleOutCollect(Application *, DSPNetwork *);
@@ -56,12 +58,12 @@ namespace Resonant {
     const float * interleaved() const { return & m_interleaved[0]; }
 
     /// Returns the number of channels that are collected by this module
-    int channels() const { return m_channels; }
+    size_t channels() const { return m_channels; }
 
   private:
 
-    int  m_channels;
-    int  m_subwooferChannel;
+    size_t m_channels;
+    int m_subwooferChannel;
     DSPNetwork * m_host;
     std::vector<float> m_interleaved;
 
@@ -75,7 +77,7 @@ namespace Resonant {
                            const ModuleOutCollect::Move & b)
   {
     return (a.from == b.from)  && (a.to == b.to) &&
-      (strcmp(a.sourceId, b.sourceId) == 0);
+      (a.sourceId == b.sourceId);
   }
 
   /// @endcond

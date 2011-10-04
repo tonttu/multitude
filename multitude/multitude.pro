@@ -7,12 +7,19 @@ SUBDIRS += Patterns
 SUBDIRS += Nimble
 SUBDIRS += Radiant
 SUBDIRS += Valuable
+SUBDIRS += Squish
 SUBDIRS += Luminous
 SUBDIRS += Poetic
 SUBDIRS += Resonant
 !iphone*:SUBDIRS += Screenplay
 !iphone*:SUBDIRS += VideoDisplay
 SUBDIRS += Box2D
+#SUBDIRS += Posh
+
+
+vivid {
+  SUBDIRS += Vivid
+}
 
 !iphone* {
   exists(Examples/Examples.pro):SUBDIRS += Examples
@@ -26,7 +33,7 @@ CONFIG += ordered
 stuff.path = /src/MultiTouch/multitude
 stuff.files = LGPL.txt multitude.pro multitude.pri library.pri
 
-!macx:INSTALLS += stuff
+INSTALLS += stuff
 
 win32 {
     win64:include(Win64x/Win64x.pri)

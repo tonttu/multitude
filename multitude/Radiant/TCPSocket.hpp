@@ -16,9 +16,11 @@
 #ifndef RADIANT_TCP_SOCKET_HPP
 #define RADIANT_TCP_SOCKET_HPP
 
+#include <Patterns/NotCopyable.hpp>
+
 #include <Radiant/BinaryStream.hpp>
 
-#include <string>
+#include <QString>
 
 struct in_addr;
 
@@ -28,24 +30,36 @@ namespace Radiant {
 
   /// A client TCP socket for connecting to remote hosts
   /** @author Tommi Ilmonen*/
-  class RADIANT_API TCPSocket : public Radiant::BinaryStream
+  class RADIANT_API TCPSocket : public Radiant::BinaryStream, public Patterns::NotCopyable
   {
   public:
+    /// Flags used with read() -function
+    enum Flags
+    {
+      NONBLOCK,   ///< Never block
+      WAIT_SOME,  ///< Block until some data is read or socket has a read error
+      WAIT_ALL    ///< Blocks until all requested data is read or socket has a read error
+    };
+
     TCPSocket();
     /// Construct a socket based on a file descriptor
-    /** This method is potentially non-portable as not all platforms
-        use file descriptors to handle sockets. */
+    /// This method is potentially non-portable as not all platforms use file
+    /// descriptors to handle sockets.
+    /// @param fd socket file descriptor
     TCPSocket(int fd);
     ~TCPSocket();
 
-    /** Turn the Nagle algorithm on or off. This controls the queuing of messages to fill packets.
-      @param noDelay if true, the queing is not used and packets are sent immediately
-    */
+    /// Turn the Nagle algorithm on or off. This controls the queuing of
+    /// messages to fill packets.
+    /// @param noDelay if true, the queing is not used and packets are sent immediately
+    /// @return true on success
     bool setNoDelay(bool noDelay);
 
     /// Opens a TCP socket to desired host:port
-    /** @return On successful execution, returns zero, otherwise an
-        error code (as in errno.h). */
+    /// @param host hostname
+    /// @param port port
+    /// @return On successful execution, returns zero, otherwise an
+    /// error code (as in errno.h).
     int open(const char * host, int port);
     /// Closes the socket
     bool close();
@@ -54,41 +68,53 @@ namespace Radiant {
     bool isOpen() const;
 
     /// Returns the hostname
-    const char * host() const;
+    //QString host() const;
     /// Returns the port number
-    int port() const;
+    //int port() const;
 
     /// Read bytes from the socket
-    /** @param buffer pointer to a buffer to store the read data to
+    /** @param[out] buffer pointer to a buffer to store the read data to
         @param bytes how many bytes the buffer has room for
-        @param waitfordata Conditionally wait for all the data to arrive.
+        @param flags Blocking behaviour
         @return the number of bytes actually read
         */
-    int read(void * buffer, int bytes, bool waitfordata = true);
+    int read(void * buffer, int bytes, Flags flags);
+
+    /// Read bytes from the socket
+    /** @param[out] buffer pointer to a buffer to store the read data to
+        @param bytes how many bytes the buffer has room for
+        @param waitfordata wait for all data or do not block at all
+        @see read(void*,int,Flags)
+        @return the number of bytes actually read
+        */
+    virtual int read(void * buffer, int bytes, bool waitfordata = true)
+    {
+      return read(buffer, bytes, waitfordata ? WAIT_ALL : NONBLOCK);
+    }
+
     /// Write bytes to the socket
     int write(const void * buffer, int bytes);
-    
+
     /// Returns true if the socket has been closed
     bool isHungUp() const;
 
     /// Return 'true' if readable data is pending.
     bool isPendingInput(unsigned int waitMicroSeconds = 0);
 
-    /// Convert an IP address to in_addr structure
-    static struct in_addr *atoaddr(const char *address);
+    /// @cond
+    int fd() const;
+    /// @endcond
 
-    //void debug();
+/// @cond
 
-    /** Moves the ownership of the socket to another thread. Sockets can not be
-    created and used in different threads unless the ownership is moved with
-    this function. */
+    /// Currently not used.
+    /// @param t destination thread
     void moveToThread(Thread * t);
+
+/// @endcond
 
   private:
     friend class TCPServerSocket;
-    
-    TCPSocket(const TCPSocket & ) : BinaryStream() {}
-    TCPSocket & operator = (const TCPSocket & )  { return * this; }
 
     class D;
     D * m_d;

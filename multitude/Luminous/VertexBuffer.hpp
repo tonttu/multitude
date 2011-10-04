@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
  */
 
 #ifndef LUMINOUS_VERTEX_BUFFER_HPP
@@ -18,8 +6,10 @@
 
 #include <Luminous/Export.hpp>
 #include <Luminous/Luminous.hpp>
-
+#include <Luminous/PixelFormat.hpp>
 #include <Luminous/GLResource.hpp>
+
+#include <Nimble/Vector2.hpp>
 
 #include <stdlib.h> // size_t
 
@@ -90,7 +80,7 @@ namespace Luminous
 #endif // LUMINOUS_OPENGLES
 
           /// The buffer contents will be specified repeatedly, and used many
-          // /times as the source for GL drawing and image specification commands.
+          /// times as the source for GL drawing and image specification commands.
           DYNAMIC_DRAW = GL_DYNAMIC_DRAW,
 #ifndef LUMINOUS_OPENGLES
           /// The buffer contents will be specified repeatedly by reading data
@@ -118,9 +108,14 @@ namespace Luminous
         /// Fills the vertex buffer with data
         void fill(void * data, size_t bytes, Usage usage);
         /// Fills a part of the vertex buffer with data
-        void partialFill(size_t start, void * data, size_t count);
+        void partialFill(size_t offsetInBytes, void * data, size_t bytes);
 
 #ifndef LUMINOUS_OPENGLES
+
+        /// Starts reading data from GPU, allocating memory with given usage hint if necessary.
+        void read(Nimble::Vector2i size, Nimble::Vector2i pos = Nimble::Vector2i(0, 0),
+                  Luminous::PixelFormat pix = Luminous::PixelFormat::bgraUByte(),
+                  Usage usage = STATIC_READ);
 
         /// Maps the vertex buffer to CPU memory. The pointer is valid until unmap() is called.
         void * map(AccessMode mode);
@@ -136,7 +131,7 @@ namespace Luminous
          */
         GLuint handle() const { return m_bufferId; }
 
-        /** @return Returns the current number of filled bytes in the boffer. */
+        /** @return Returns the current number of filled bytes in the buffer. */
         size_t filled() const { return m_filled; }
       private:
         /// OpenGL handle for the vertex buffer
@@ -147,8 +142,7 @@ namespace Luminous
     };
 
   /// An OpenGL vertex buffer
-
-  class VertexBuffer : public BufferObject<GL_ARRAY_BUFFER>
+  class LUMINOUS_API VertexBuffer : public BufferObject<GL_ARRAY_BUFFER>
   {
   public:
     /// Constructs an empty vertex buffer.
@@ -158,7 +152,7 @@ namespace Luminous
   };
 
   /// An OpenGL index buffer
-  class IndexBuffer : public BufferObject<GL_ELEMENT_ARRAY_BUFFER>
+  class LUMINOUS_API IndexBuffer : public BufferObject<GL_ELEMENT_ARRAY_BUFFER>
   {
   public:
     /// Constructs an empty index buffer.
@@ -166,6 +160,17 @@ namespace Luminous
       : BufferObject<GL_ELEMENT_ARRAY_BUFFER>(resources)
     {}
 
+  };
+
+  /// An OpenGL pixel read buffer for reading pixels from framebuffer.
+  class ReadBuffer : public BufferObject<GL_PIXEL_PACK_BUFFER>
+  {
+  public:
+    /// Constructs an empty read buffer
+    /// @param resources resource collection to own the buffer
+    ReadBuffer(Luminous::RenderContext * resources = 0)
+      : BufferObject<GL_PIXEL_PACK_BUFFER>(resources)
+    {}
   };
 
 }

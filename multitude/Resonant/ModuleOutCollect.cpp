@@ -7,13 +7,14 @@
  * See file "Resonant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "ModuleOutCollect.hpp"
+#include "Resonant.hpp"
 
 #include "DSPNetwork.hpp"
 
@@ -53,7 +54,7 @@ namespace Resonant {
   {
     channelsOut = 0;
 
-    channelsIn = m_map.size();
+    channelsIn = (int) m_map.size();
     m_channels = m_host->outChannels();
 
     /* For debugging purposes you can override (=expand) the number of
@@ -61,7 +62,7 @@ namespace Resonant {
     const char * forcechans = getenv("RESONANT_FORCE_CHANNELS");
     if(forcechans) {
       m_channels =  atoi(forcechans);
-      Radiant::info("ModuleOutCollect::prepare # forcing channel count to %d",
+      Radiant::info("ModuleOutCollect::prepare # forcing channel count to %ld",
                     m_channels);
     }
 
@@ -69,7 +70,7 @@ namespace Resonant {
 
     m_interleaved.resize(m_channels * MAX_CYCLE);
 
-    Radiant::debug("ModuleOutCollect::prepare # %d", (int) m_channels);
+    debugResonant("ModuleOutCollect::prepare # %d", (int) m_channels);
 
     return true;
   }
@@ -81,7 +82,7 @@ namespace Resonant {
     bool ok = true;
     Move tmp;
 
-    ok = control->readString(tmp.sourceId, Module::MAX_ID_LENGTH);
+    ok = control->readString(tmp.sourceId);
 
     // info("ModuleOutCollect::control # Now %d sources in the map", (int) m_map.size());
 
@@ -92,9 +93,9 @@ namespace Resonant {
       // Remove all the mappings that match the given input.
 
       for(iterator it = m_map.begin(); it != m_map.end(); ) {
-        if(strcmp(tmp.sourceId, (*it).sourceId) == 0) {
-          debug("ModuleOutCollect::control # dropping connection to %s:%d",
-                tmp.sourceId, (*it).from);
+        if(tmp.sourceId == it->sourceId) {
+          debugResonant("ModuleOutCollect::control # dropping connection to %s:%d",
+                        tmp.sourceId.toUtf8().data(), (*it).from);
           it = m_map.erase(it);
         }
         else
@@ -105,17 +106,17 @@ namespace Resonant {
       tmp.from = control->readInt32( & ok);
       tmp.to   = control->readInt32( & ok);
 
-      Radiant::debug("ModuleOutCollect::control # %s", address);
+      debugResonant("ModuleOutCollect::control # %s", address);
 
       if(!ok) {
         error("ModuleOutCollect::control # Could not parse control # %s",
-              tmp.sourceId);
+              tmp.sourceId.toUtf8().data());
         return;
       }
       else if(strcmp(address, "newmapping") == 0) {
         m_map.push_back(tmp);
-        debug("ModuleOutCollect::control # newmapping %s %d -> %d",
-              tmp.sourceId, tmp.from, tmp.to);
+        debugResonant("ModuleOutCollect::control # newmapping %s %d -> %d",
+                      tmp.sourceId.toUtf8().data(), tmp.from, tmp.to);
       }
       else if(strcmp(address, "removemapping") == 0) {
         iterator it = std::find(m_map.begin(), m_map.end(), tmp);
@@ -125,7 +126,7 @@ namespace Resonant {
         }
         else
           error("ModuleOutCollect::control # Could not erase mapping # %s:%d -> %d",
-                tmp.sourceId, tmp.from, tmp.to);
+                tmp.sourceId.toUtf8().data(), tmp.from, tmp.to);
       }
       else {
         error("ModuleOutCollect::control # No param \"%s\"", address);
@@ -135,9 +136,9 @@ namespace Resonant {
 
   void ModuleOutCollect::process(float ** in, float **, int n)
   {
-    int chans = m_channels;
+    size_t chans = m_channels;
 
-    assert((int) m_interleaved.size() >= (n * chans));
+    assert(m_interleaved.size() >= (n * chans));
 
     // Set to zero
     if(!m_interleaved.empty())
@@ -166,7 +167,7 @@ namespace Resonant {
         dest += chans;
       }
 
-      if(m_subwooferChannel >= 0 && m_subwooferChannel < chans) {
+      if(m_subwooferChannel >= 0 && m_subwooferChannel < static_cast<int> (chans)) {
         src = in[i];
         dest = & m_interleaved[m_subwooferChannel];
 

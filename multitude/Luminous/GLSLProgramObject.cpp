@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "GLSLProgramObject.hpp"
@@ -29,7 +29,8 @@ namespace Luminous
 
   GLSLProgramObject::GLSLProgramObject(RenderContext * resources)
       : GLResource(resources),
-      m_isLinked(false)
+      m_isLinked(false),
+      m_errors(false)
   {
     m_handle = glCreateProgram();
     setPersistent(true);
@@ -51,13 +52,13 @@ namespace Luminous
     }
 
     if(!obj->m_isCompiled) {
-      debug("GLSLProgramObject::addObject # attempt to add "
+      debugLuminous("GLSLProgramObject::addObject # attempt to add "
             "non-compiled object: trying to compile it...");
       if(!obj->compile()) {
         error("GLSLProgramObject::addObject # compilation failed");
         return;
       } else {
-        debug("Shader compilation ok");
+        debugLuminous("Shader compilation ok");
       }
     }
 
@@ -89,7 +90,7 @@ namespace Luminous
       m_isLinked = true;
       const char * log = linkerLog();
       if(log)
-        debug("GLSLProgramObject::link # log:\n%s", log);
+        debugLuminous("GLSLProgramObject::link # log:\n%s", log);
     } else  {
       const char * log = linkerLog();
       error("GLSLProgramObject::link # linking failed, log: %s",
@@ -167,9 +168,9 @@ namespace Luminous
     context()->bindProgram(0);
   }
 
-  int GLSLProgramObject::getUniformLoc(const std::string& name)
+  int GLSLProgramObject::getUniformLoc(const QString& name)
   {
-    return glGetUniformLocation(m_handle, name.c_str());
+    return glGetUniformLocation(m_handle, name.toUtf8().data());
   }
 
   int GLSLProgramObject::getUniformLoc(const char * name)
@@ -177,9 +178,9 @@ namespace Luminous
     return glGetUniformLocation(m_handle, name);
   }
 
-  int GLSLProgramObject::getAttribLoc(const std::string & name)
+  int GLSLProgramObject::getAttribLoc(const QString & name)
   {
-    return glGetAttribLocation(m_handle, name.c_str());
+    return glGetAttribLocation(m_handle, name.toUtf8().data());
   }
 
   int GLSLProgramObject::getAttribLoc(const char * name)
@@ -314,40 +315,41 @@ namespace Luminous
     // Load & compile vertex shader
     GLSLShaderObject* vs = 0;
     if(vsFile) {
-      vs = new GLSLShaderObject(GL_VERTEX_SHADER);
 
-      char* code = Radiant::FileUtils::loadTextFile(vsFile);
-      vs->setSource(code);
+      const QByteArray code = Radiant::FileUtils::loadTextFile(vsFile);
+      if(!code.isNull()) {
+        vs = new GLSLShaderObject(GL_VERTEX_SHADER);
+        vs->setSource(code.data());
 
-      delete [] code;
-
-      if(!vs->compile()) {
-        error("GLSLProgramObject::fromFiles # vertex shader %s compile error: %s",
-              vsFile, vs->compilerLog());
-        error("%s", vs->source());
-        delete vs;
-        return 0;
+        if(!vs->compile()) {
+          error("GLSLProgramObject::fromFiles # vertex shader compile error: %s",
+                vs->compilerLog());
+          delete vs;
+          return 0;
+        }
       }
     }
 
     // Load & compile fragment shader
     GLSLShaderObject* fs = 0;
     if(fsFile) {
-      fs = new GLSLShaderObject(GL_FRAGMENT_SHADER);
+      const QByteArray code = Radiant::FileUtils::loadTextFile(fsFile);
+      if(!code.isNull()) {
+        fs = new GLSLShaderObject(GL_FRAGMENT_SHADER);
+        fs->setSource(code.data());
 
-      char* code = Radiant::FileUtils::loadTextFile(fsFile);
-      fs->setSource(code);
-
-      delete [] code;
-
-      if(!fs->compile()) {
-        error("GLSLProgramObject::fromFiles # fragment shader %s"
-              "compile error:%s", fsFile, fs->compilerLog());
-        error("%s", fs->source());
-        delete fs;
-        return 0;
+        if(!fs->compile()) {
+          error("GLSLProgramObject::fromFiles # fragment shader "
+                "compile error:%s", fs->compilerLog());
+          delete vs;
+          delete fs;
+          return 0;
+        }
       }
     }
+
+    if (!vs && !fs)
+      return 0;
 
     // Create a program object and link it
     GLSLProgramObject* program = new GLSLProgramObject();
@@ -358,6 +360,8 @@ namespace Luminous
     if(!program->link()) {
       error("GLSLProgramObject::fromFiles # linking shader failed:\n%s",
             program->linkerLog());
+      delete vs;
+      delete fs;
       delete program;
       return 0;
     }
@@ -439,10 +443,12 @@ namespace Luminous
   {
     GLSLShaderObject * shader = new GLSLShaderObject(shaderType);
     if(!shader->loadSourceFile(filename)) {
+      delete shader;
       return false;
     }
 
     if(!shader->compile()) {
+      delete shader;
       return false;
     }
 
@@ -461,6 +467,7 @@ namespace Luminous
     if(!shader->compile()) {
       error("GLSLProgramObject::loadString # Compilation failed : %s\n%s",
             shader->compilerLog(), shaderCode);
+      delete shader;
       return false;
     }
 

@@ -13,14 +13,12 @@
  * 
  */
 
-/** This file is part of the Radiant library.*/
-
 #ifndef CONFIG_READER_EMPTY_HPP
 #define CONFIG_READER_EMPTY_HPP
 
 #include <Radiant/Export.hpp>
 
-/** @file 
+/*
     Empty declarations of the classes. Use this header to avoid loading the more
     complex stuff into all of your files.
 */

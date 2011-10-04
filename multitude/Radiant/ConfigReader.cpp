@@ -35,7 +35,7 @@ namespace Radiant {
   Variant::Variant()
   {}
 
-  Variant::Variant(const std::string& a, const char * doc)
+  Variant::Variant(const QString& a, const char * doc)
     : m_var(a)
   {
     if(doc) m_doc = doc;
@@ -98,7 +98,8 @@ namespace Radiant {
 
   double Variant::getDouble(double def) const
   { 
-    const char * str = m_var.c_str();
+    QByteArray ba = m_var.toUtf8();
+    const char * str = ba.data();
     char * strEnd = (char *) str;
 
     double v = strtod(str, &strEnd);
@@ -116,7 +117,8 @@ namespace Radiant {
 
   int Variant::getInt(int def) const
   {
-    const char * str = m_var.c_str();
+    QByteArray ba = m_var.toUtf8();
+    const char * str = ba.data();
     char * strEnd = (char *) str;
 
     int v = strtol(str, &strEnd, 0);
@@ -128,20 +130,20 @@ namespace Radiant {
   }
   uint64_t Variant::getFromHex64(uint64_t def) const
   {
-    if (m_var.empty())
+    if (m_var.isEmpty())
       return def;
 
     long long lltmp = 0;
 #ifdef WIN32
     sscanf(m_var.c_str(), "%llx", &lltmp);
 #else
-    lltmp = strtoll(m_var.c_str(), 0, 16);
+    lltmp = m_var.toLongLong(0, 16);
 #endif
     return lltmp;
   }
 
 
-  const std::string & Variant::getString(const std::string & def) const
+  const QString & Variant::getString(const QString & def) const
   {
     if(m_var.size())
       return m_var;
@@ -149,7 +151,7 @@ namespace Radiant {
     return def;
   }
 
-  const std::string & Variant::getString() const
+  const QString & Variant::getString() const
   {
     return m_var;
   }
@@ -159,10 +161,11 @@ namespace Radiant {
 
   int Variant::getInts(int *p, int n)
   {
-    char *str = (char *) m_var.c_str();
+    QByteArray ba = m_var.toUtf8();
+    char *str = (char *) ba.data();
     int i = 0;
 
-    while(str < m_var.c_str() + m_var.size() && i < n) {
+    while(str < ba.data() + ba.size() && i < n) {
       char * endStr = str;
 
       long tmp = strtol(str, &endStr, 10);
@@ -186,10 +189,12 @@ namespace Radiant {
 
   int Variant::getFloats(float *p, int n)
   {
-    char *str = (char *) m_var.c_str();
+    QByteArray ba = m_var.toUtf8();
+    char *str = (char *) ba.data();
+
     int i = 0;
 
-    while(str < m_var.c_str() + m_var.size() && i < n) {
+    while(str < ba.data() + ba.size() && i < n) {
       char * endStr = str;
 
       double tmp = strtod(str, &endStr);
@@ -213,13 +218,17 @@ namespace Radiant {
 
   int Variant::getDoubles(double *p, int n)
   {
-    char *str = (char *) m_var.c_str();
+    QByteArray ba = m_var.toUtf8();
+    const char * str = ba.data();
+
     int i=0;
 
-    while(str < m_var.c_str() + m_var.size() && i < n) {
-      char * endStr = str;
+    while(str < ba.data() + ba.size() && i < n) {
+      const char * endStr = str;
 
-      double tmp = strtod(str, &endStr);
+      char * end = 0;
+      double tmp = strtod(str, &end);
+      endStr = end;
       
       if(endStr <= str)
 	return i;
@@ -235,7 +244,7 @@ namespace Radiant {
     return i;
   }
 
-  void Variant::set(const std::string &s)
+  void Variant::set(const QString &s)
   {
     m_var = s;
   }
@@ -250,14 +259,14 @@ namespace Radiant {
     return getDouble(0.0);
   }
 
-  Variant::operator const std::string & () const
+  Variant::operator const QString & () const
   {
     return m_var;
   }
 
   void Variant::dump(std::ostream & os) const
   {
-    os << m_var;
+    os << m_var.toUtf8().data();
   }
 
   bool Variant::isEmpty() const 
@@ -270,7 +279,7 @@ namespace Radiant {
     return m_doc.size() ? m_doc[0] != '\0' : false;
   }
     
-  const std::string & Variant::documentation() const
+  const QString & Variant::documentation() const
   {
     return m_doc;
   }
@@ -278,13 +287,13 @@ namespace Radiant {
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  static std::set<std::string> __writtenDocs;
+  static std::set<QString> __writtenDocs;
 
-  static Radiant::MutexStatic __mutex;
+  static Radiant::Mutex __mutex;
 
   static void cleardocs()
   {
-    Radiant::GuardStatic g( & __mutex);
+    Radiant::Guard g( __mutex);
 
     __writtenDocs.clear();
   }
@@ -294,9 +303,9 @@ namespace Radiant {
     if(!var.hasDocumentation())
       return false;
 
-    Radiant::GuardStatic g( & __mutex);
+    Radiant::Guard g( __mutex);
 
-    std::set<std::string>::iterator it = 
+    std::set<QString>::iterator it = 
       __writtenDocs.find(var.documentation());
 
     if(it != __writtenDocs.end())
@@ -309,17 +318,17 @@ namespace Radiant {
 
   /** Specialized version that mimics the file format. */
   template <>
-  void ChunkT<Variant>::dump(std::ostream& os, int indent)
+  void ChunkT<Variant>::dump(std::ostream& os, int indent) const
   {
-    std::string ws(indent, ' ');
+    QString ws(indent, ' ');
 
-    for(chunk_iterator it = chunkBegin(); it != chunkEnd(); ++it) {
+    for(const_chunk_iterator it = chunkBegin(); it != chunkEnd(); ++it) {
       os << ws << it->first << " {\n";
       it->second.dump(os, indent+2);
       os << ws << "}\n";
     }
 
-    for(iterator it = m_variants.begin();it != m_variants.end(); it++) {
+    for(const_iterator it = m_variants.begin();it != m_variants.end(); it++) {
       if((*it).second.hasDocumentation() && writedocs((*it).second))
         os << ws << "/* " << (*it).second.documentation() << " */\n";
       os << ws << (*it).first << " = \"" << (*it).second << "\"\n";
@@ -376,13 +385,13 @@ namespace Radiant {
     int state = SCAN_CHUNK_NAME;
     int stackState = 0;
 
-    typedef std::pair<std::string, Chunk> StackItem;
+    typedef std::pair<QString, Chunk> StackItem;
     std::stack<StackItem> stack;
     stack.push(std::make_pair("global", Chunk()));
 
-    std::string chunkName;
-    std::string variantName;
-    std::string variantVal;
+    QString chunkName;
+    QString variantName;
+    QString variantVal;
 
     Chunk chunk;
 
@@ -546,7 +555,7 @@ namespace Radiant {
 
     // @todo collect global variables from stack.top()
     Chunk & ch = chunk;
-    for (Chunk::chunk_iterator it = ch.chunkBegin(); it != ch.chunkEnd(); ++it) {
+    for (Chunk::const_chunk_iterator it = ch.chunkBegin(); it != ch.chunkEnd(); ++it) {
       c->set(it->first, it->second);
     }
 
@@ -584,10 +593,10 @@ namespace Radiant {
   {
     cleardocs();
 
-    std::string tmpfile = std::string(filename) + ".tmp";
+    QString tmpfile = QString(filename) + ".tmp";
 
     std::ofstream out;
-    out.open(tmpfile.c_str());
+    out.open(tmpfile.toUtf8().data());
 
     if(!out.good())
       return false;
@@ -598,7 +607,7 @@ namespace Radiant {
     // remove original and replace with temporary
     // there doesn't seem to be a portable way to do this atomically
     if (FileUtils::removeFile(filename)) {
-      return FileUtils::renameFile(tmpfile.c_str(), filename);
+      return FileUtils::renameFile(tmpfile.toUtf8().data(), filename);
     }
     return false;
   }

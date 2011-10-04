@@ -45,19 +45,17 @@ int main(int argc, char ** argv)
     }
   }
 
-  Resonant::DSPNetwork dsp;
+  std::shared_ptr<Resonant::DSPNetwork> dsp = Resonant::DSPNetwork::instance();
 
-  dsp.start();
+  dsp->start();
 
-  Radiant::BinaryData control;
-
-  Resonant::ModuleSamplePlayer * player = dsp.samplePlayer();
+  Resonant::ModuleSamplePlayer * player = dsp->samplePlayer();
 
   player->createAmbientBackground(directory, gain);
 
   Radiant::Sleep::sleepS(1000);
 
-  dsp.stop();
+  dsp->stop();
 
   return 0;
 }

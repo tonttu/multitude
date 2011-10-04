@@ -1,4 +1,4 @@
-// Copyright 2006-2008 the V8 project authors. All rights reserved.
+// Copyright 2011 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -32,46 +32,6 @@
 
 namespace v8 {
 namespace internal {
-
-// Variables and AST expression nodes can track their "type" to enable
-// optimizations and removal of redundant checks when generating code.
-
-class StaticType {
- public:
-  enum Kind {
-    UNKNOWN,
-    LIKELY_SMI
-  };
-
-  StaticType() : kind_(UNKNOWN) {}
-
-  bool Is(Kind kind) const { return kind_ == kind; }
-
-  bool IsKnown() const { return !Is(UNKNOWN); }
-  bool IsUnknown() const { return Is(UNKNOWN); }
-  bool IsLikelySmi() const { return Is(LIKELY_SMI); }
-
-  void CopyFrom(StaticType* other) {
-    kind_ = other->kind_;
-  }
-
-  static const char* Type2String(StaticType* type);
-
-  // LIKELY_SMI accessors
-  void SetAsLikelySmi() {
-    kind_ = LIKELY_SMI;
-  }
-
-  void SetAsLikelySmiIfUnknown() {
-    if (IsUnknown()) {
-      SetAsLikelySmi();
-    }
-  }
-
- private:
-  Kind kind_;
-};
-
 
 // The AST refers to variables via VariableProxies - placeholders for the actual
 // variables. Variables themselves are never directly referred to from the AST,
@@ -121,7 +81,7 @@ class Variable: public ZoneObject {
   // Printing support
   static const char* Mode2String(Mode mode);
 
-  // Type testing & conversion
+  // Type testing & conversion.  Global variables are not slots.
   Property* AsProperty() const;
   Slot* AsSlot() const;
 
@@ -138,6 +98,9 @@ class Variable: public ZoneObject {
   bool is_accessed_from_inner_scope() const {
     return is_accessed_from_inner_scope_;
   }
+  void MarkAsAccessedFromInnerScope() {
+    is_accessed_from_inner_scope_ = true;
+  }
   bool is_used() { return is_used_; }
   void set_is_used(bool flag) { is_used_ = flag; }
 
@@ -146,6 +109,9 @@ class Variable: public ZoneObject {
   }
 
   bool IsStackAllocated() const;
+  bool IsParameter() const;  // Includes 'this'.
+  bool IsStackLocal() const;
+  bool IsContextSlot() const;
 
   bool is_dynamic() const {
     return (mode_ == DYNAMIC ||
@@ -159,7 +125,7 @@ class Variable: public ZoneObject {
 
   // True if the variable is named eval and not known to be shadowed.
   bool is_possibly_eval() const {
-    return IsVariable(Factory::eval_symbol()) &&
+    return IsVariable(FACTORY->eval_symbol()) &&
         (mode_ == DYNAMIC || mode_ == DYNAMIC_GLOBAL);
   }
 
@@ -172,31 +138,26 @@ class Variable: public ZoneObject {
     local_if_not_shadowed_ = local;
   }
 
-  Expression* rewrite() const { return rewrite_; }
-
-  StaticType* type() { return &type_; }
+  Slot* rewrite() const { return rewrite_; }
+  void set_rewrite(Slot* slot) { rewrite_ = slot; }
 
  private:
   Scope* scope_;
   Handle<String> name_;
   Mode mode_;
-  bool is_valid_LHS_;
   Kind kind_;
 
   Variable* local_if_not_shadowed_;
 
+  // Code generation.
+  Slot* rewrite_;
+
+  // Valid as a LHS? (const and this are not valid LHS, for example)
+  bool is_valid_LHS_;
+
   // Usage info.
   bool is_accessed_from_inner_scope_;  // set by variable resolver
   bool is_used_;
-
-  // Static type information
-  StaticType type_;
-
-  // Code generation.
-  // rewrite_ is usually a Slot or a Property, but may be any expression.
-  Expression* rewrite_;
-
-  friend class Scope;  // Has explicit access to rewrite_.
 };
 
 

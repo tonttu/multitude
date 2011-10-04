@@ -1,20 +1,10 @@
 /* COPYRIGHT
- *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
  */
 
 #ifndef LUMINOUS_GLCONTEXT_HPP
 #define LUMINOUS_GLCONTEXT_HPP
+
+#include "Export.hpp"
 
 #include <Radiant/Mutex.hpp>
 
@@ -25,7 +15,7 @@ namespace Luminous
 
       This class is still experimental, and its API and operation may yet change.
  */
-  class GLContext
+  class LUMINOUS_API GLContext
   {
   public:
     GLContext();
@@ -47,18 +37,24 @@ namespace Luminous
     public:
       /** Constructs a Guard object, and locks the argument mutex.
 
-          @param m The mutex to lock. The mutex may be null, in which case nothing happens.
+          @param c The OpenGL context to lock. It may be null, in which case nothing happens.
       */
-      Guard(Radiant::Mutex * m) : m_mutex(m) { if(m) m->lock(); }
+      Guard(GLContext * c)
+      {
+        if(c) {
+          m_mutex = c->mutex();
+          if(m_mutex) m_mutex->lock();
+        }
+        else
+          m_mutex = 0;
+      }
+
       /** Deletes this Guard object, and frees the mutex if it is non-null. */
       ~Guard() { if(m_mutex) m_mutex->unlock(); }
     private:
       Radiant::Mutex * m_mutex;
     };
   };
-
-  ////////////////////////////////////////////////////////////////////////
-  ////////////////////////////////////////////////////////////////////////
 
   /** A dummy OpenGL context. This class can be used in place of a real OpenGL context. */
   class GLDummyContext : public GLContext
@@ -71,6 +67,7 @@ namespace Luminous
     virtual GLContext * createSharedContext();
     virtual Radiant::Mutex * mutex();
   };
+
 }
 
 #endif // GLCONTEXT_HPP

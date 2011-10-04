@@ -1,4 +1,24 @@
+/* COPYRIGHT
+ *
+ * This file is part of Resonant.
+ *
+ * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
+ *
+ * See file "Resonant.hpp" for authors and more details.
+ *
+ * This file is licensed under GNU Lesser General Public
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
+ * from the GNU organization (www.gnu.org).
+ * 
+ */
+
+#include <Radiant/Platform.hpp>
+
+#ifdef RADIANT_LINUX
+
 #include "ModulePulseAudio.hpp"
+#include "Resonant.hpp"
 
 #include <Radiant/Sleep.hpp>
 
@@ -22,7 +42,7 @@ namespace
 
 namespace Resonant
 {
-  ModulePulseAudio::ModulePulseAudio(const std::string & monitorName, uint32_t sinkInput)
+  ModulePulseAudio::ModulePulseAudio(const QString & monitorName, uint32_t sinkInput)
     : Module(0), m_ready(false), m_stream(0), m_monitorName(monitorName),
     m_sinkInput(sinkInput), m_buffer(0), m_bufferSize(0),
     m_syncCount(0), m_canSync(false)
@@ -52,7 +72,7 @@ namespace Resonant
       break;
 
     case PA_STREAM_READY:
-      Radiant::debug("Audio recording started");
+      debugResonant("Audio recording started");
       m_ready = true;
       break;
 
@@ -75,23 +95,23 @@ namespace Resonant
 
     static const pa_sample_spec ss = {PA_SAMPLE_FLOAT32, 44100, 1};
 
-    Radiant::debug("Starting capture %d", pa_sample_spec_valid(&ss));
+    debugResonant("Starting capture %d", pa_sample_spec_valid(&ss));
     if(!(m_stream = pa_stream_new(m_context, "Cornerstone capture", &ss, NULL))) {
       restart();
       return;
     }
 
-    Radiant::debug("setting callbacks");
+    debugResonant("setting callbacks");
     pa_stream_set_state_callback(m_stream, s_streamStateCb, this);
     pa_stream_set_read_callback(m_stream, s_streamRequestCb, this);
 
-    Radiant::debug("monitoring %d", m_sinkInput);
+    debugResonant("monitoring %d", m_sinkInput);
     if(pa_stream_set_monitor_stream(m_stream, m_sinkInput) != 0) {
       restart();
       return;
     }
 
-    Radiant::debug("starting record");
+    debugResonant("starting record");
     pa_buffer_attr attr;
     attr.maxlength = attr.tlength = attr.prebuf = attr.minreq = (uint32_t)-1;
     double latency = getenv("MODULE_PULSEAUDIO_FRAGSIZE")
@@ -101,7 +121,7 @@ namespace Resonant
     if(getenv("MODULE_PULSEAUDIO_BUFFERSIZE"))
       attr.maxlength = pa_usec_to_bytes(atof(getenv("MODULE_PULSEAUDIO_BUFFERSIZE")) * 1000, &ss);
 
-    if(pa_stream_connect_record(m_stream, m_monitorName.c_str(), &attr,
+    if(pa_stream_connect_record(m_stream, m_monitorName.toUtf8().data(), &attr,
                                 (pa_stream_flags_t)
                                 (PA_STREAM_INTERPOLATE_TIMING |
                                  PA_STREAM_ADJUST_LATENCY |
@@ -109,7 +129,7 @@ namespace Resonant
       restart();
       return;
     }
-    Radiant::debug("record request done");
+    debugResonant("record request done");
   }
 
   bool ModulePulseAudio::prepare(int & channelsIn, int & channelsOut)
@@ -210,3 +230,5 @@ namespace Resonant
     }
   }
 }
+
+#endif

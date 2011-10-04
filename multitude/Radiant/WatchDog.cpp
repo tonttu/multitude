@@ -14,6 +14,7 @@
  */
 
 #include "WatchDog.hpp"
+#include "Radiant.hpp"
 
 #include "Platform.hpp"
 #include "Sleep.hpp"
@@ -37,8 +38,10 @@ namespace Radiant {
   WatchDog * WatchDog::m_instance = 0;
 
   WatchDog::WatchDog()
-    : m_continue(true),
-    m_intervalSeconds(60.0f)
+    : Radiant::Thread("Watchdog")
+    , m_continue(true)
+    , m_intervalSeconds(60.0f)
+    , m_paused(false)
   {
     if(!m_instance)
       m_instance = this;
@@ -73,6 +76,10 @@ namespace Radiant {
 
     while(m_continue) {
       int n = (int) ceilf(m_intervalSeconds * 10.0f);
+
+      // If paused, just sleep
+      while(m_paused)
+        Radiant::Sleep::sleepS(1);
 
       /* A single long sleep might get interrupted by system calls and
 	 return early. The method below should be more robust. */
@@ -127,6 +134,8 @@ namespace Radiant {
         // Stop the app:
         abort();
 
+        _exit(1);
+
         // Stop it again:
         Sleep::sleepS(1);
         Sleep::sleepS(1);
@@ -137,7 +146,7 @@ namespace Radiant {
         exit(0);
       }
 
-      debug("WATCHDOG CHECK");
+      debugRadiant("WATCHDOG CHECK");
 
     }
   }
@@ -150,6 +159,11 @@ namespace Radiant {
     m_continue = false;
     if(isRunning())
       waitEnd();
+  }
+
+  WatchDog * WatchDog::instance()
+  {
+    return m_instance;
   }
 
 }

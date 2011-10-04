@@ -7,56 +7,61 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
+ * License (LGPL), version 2.1. The LGPL conditions can be found in 
+ * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
- *
+ * 
  */
 
 #include "FileUtils.hpp"
+#include "Platform.hpp"
 #include "PlatformUtils.hpp"
 #include "StringUtils.hpp"
 #include "Directory.hpp"
+#include "Radiant.hpp"
+#include "Trace.hpp"
 
 #include <assert.h>
 #include <fcntl.h>
 #include <iostream>
 #include <sstream>
-#include <string.h>
+#include <QString>
 
 #include <sys/stat.h>
 
-#ifdef WIN32
+#include <QFileInfo>
+#include <QDir>
+
+#ifdef RADIANT_WINDOWS
 #include <io.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
 #include <sys/types.h>
-#endif
-
-
-using namespace std;
+// The POSIX name for this item is deprecated..
+#pragma warning(disable: 4996)
+#endif // PLATFORM_WINDOWS
 
 namespace Radiant
 {
 
   using namespace StringUtils;
 
-  unsigned long FileUtils::getFileLen(ifstream& file)
+  unsigned long FileUtils::getFileLen(std::ifstream& file)
   {
     if(!file.good()) return 0;
 
     unsigned long pos = file.tellg();
-    file.seekg(0, ios::end);
+    file.seekg(0, std::ios::end);
     unsigned long len = file.tellg();
-    file.seekg(pos, ios::beg);
+    file.seekg(pos, std::ios::beg);
 
     return len;
   }
 
-  unsigned long FileUtils::getFileLen(const std::string & filename)
+  unsigned long FileUtils::getFileLen(const QString & filename)
   {
-    std::ifstream file(filename.c_str());
+    std::ifstream file(filename.toUtf8().data());
 
     return getFileLen(file);
   }
@@ -66,17 +71,17 @@ namespace Radiant
     return PlatformUtils::fileReadable(filename);
   }
 
-  bool FileUtils::fileReadable(const std::string & filename)
+  bool FileUtils::fileReadable(const QString & filename)
   {
-    return PlatformUtils::fileReadable(filename.c_str());
+    return PlatformUtils::fileReadable(filename.toUtf8().data());
   }
 
-  bool FileUtils::fileAppendable(const char* filename)
+  bool FileUtils::fileAppendable(const QString & filename)
   {
     if(!fileReadable(filename))
       return false;
 
-    FILE * f = fopen(filename, "r+");
+    FILE * f = fopen(filename.toUtf8().data(), "r+");
     if(!f)
       return false;
     fclose(f);
@@ -94,55 +99,17 @@ namespace Radiant
     return remove(filename) == 0;
   }
 
-  char* FileUtils::loadTextFile(const char* filename)
+  QByteArray FileUtils::loadTextFile(const QString & filename)
   {
-    ifstream file;
-
-    file.open(filename, ios::in | ios::binary);
-    if(!file.good()) {
-      cerr << "loadTextFile # could not open '" << filename <<
-          "' for reading" << endl;
-      return 0;
-    }
-
-    unsigned long len = getFileLen(file);
-
-    if(len == 0) {
-      cerr << "loadTextFile # file '" << filename << "' is empty" << endl;
-      return 0;
-    }
-
-    char* contents = new char [len + 1];
-    file.read(contents, len);
-    contents[len] = 0;
-
-    file.close();
-
-    return contents;
-  }
-
-  std::wstring FileUtils::readTextFile(const std::string & filename)
-  {
-    std::wstring res;
-
-    ifstream file(filename.c_str());
-
-    if(file.is_open()) {
-
-      string line;
-
-      while(getline(file, line))
-        res += StringUtils::utf8AsStdWstring(line) + wchar_t(0x200B); // W_NEWLINE
-
-      file.close();
-    }
-
-    return res;
+    QFile file(filename);
+    if(file.open(QIODevice::ReadOnly))
+      return file.readAll();
+    return QByteArray(); // null bytearray
   }
 
   bool FileUtils::writeTextFile(const char * filename, const char * contents)
   {
-#ifdef WIN32
+#ifdef RADIANT_WINDOWS
     int fd = _creat(filename, _S_IWRITE);
 #else
     int fd = creat(filename, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
@@ -159,142 +126,101 @@ namespace Radiant
     return ok;
   }
 
-  string FileUtils::path(const string & filepath)
+  QString FileUtils::path(const QString & filepath)
   {
-    size_t cut = filepath.rfind("/") + 1;
-    return filepath.substr(0, cut);
+    QFileInfo fi(filepath);
+    return fi.path();
   }
 
-  string FileUtils::filename(const string & filepath)
+  QString FileUtils::filename(const QString & filepath)
   {
-    size_t cut = filepath.rfind("/") + 1;
-    return filepath.substr(cut);
+    QFileInfo fi(filepath);
+    return fi.fileName();
   }
 
-  string FileUtils::baseFilename(const string & filepath)
+  QString FileUtils::baseFilename(const QString & filepath)
   {
-    size_t cut1 = filepath.rfind("/") + 1;
-    size_t cut2 = filepath.rfind(".");
-
-    // info("baseFilename %s %d %d", filepath.c_str(), cut1, cut2);
-    return (cut1 > 0) ?
-        filepath.substr(cut1, cut2 - cut1) : filepath.substr(0, cut2);
-  }
-
-  std::string FileUtils::baseFilenameWithPath(const std::string & filepath)
-  {
-    size_t cut2 = filepath.rfind(".");
-    return filepath.substr(0, cut2);
-  }
-
-  std::string FileUtils::withoutSuffix(const std::string & filepath)
-  {
-    size_t cut = filepath.rfind(".");
-    if(cut > 0)
-      return filepath.substr(0, cut);
-
-    return filepath;
+    QFileInfo fi(filepath);
+    return fi.baseName();
   }
 
 
-  string FileUtils::suffix(const string & filepath)
+  QString FileUtils::baseFilenameWithPath(const QString & filepath)
   {
-    size_t cut = filepath.rfind(".") + 1;
-    return filepath.substr(cut);
+    return path(filepath) + '/' + baseFilename(filepath);
   }
 
-  string FileUtils::suffixLowerCase(const string & filepath)
+  QString FileUtils::suffix(const QString & filepath)
   {
-    size_t cut = filepath.rfind(".") + 1;
-    return StringUtils::lowerCase(filepath.substr(cut));
+    QFileInfo fi(filepath);
+    return fi.suffix();
   }
 
-  bool FileUtils::suffixMatch(const std::string & filename,
-                              const std::string & suf)
+  QString FileUtils::suffixLowerCase(const QString & filepath)
   {
-    string s = suffix(filename);
-    return StringUtils::lowerCase(s) == StringUtils::lowerCase(suf);
+    return suffix(filepath).toLower();
   }
 
-  string FileUtils::findFile(const string & filename, const string & paths)
+  bool FileUtils::suffixMatch(const QString & filename,
+                              const QString & suf)
   {
-    StringList pathList;
-    split(paths, ";", pathList, true);
-
-    for(StringList::iterator it = pathList.begin();
-    it != pathList.end(); it++) {
-      string fullPath = (*it) + string("/") + filename;
-
-      debug("Radiant::findFile # Testing %s for %s", (*it).c_str(), filename.c_str());
-
-      if(fileReadable(fullPath.c_str())) {
-        debug("Radiant::findFile # FOUND %s", fullPath.c_str());
-        return fullPath;
-      }
-    }
-
-    return std::string();
+    return suffixLowerCase(filename) == suf.toLower();
   }
 
-  string FileUtils::findOverWritable(const string & filename, const string & paths)
+  QString FileUtils::findFile(const QString & filename, const QString & paths)
   {
-    StringList pathList;
-    split(paths, ";", pathList, true);
+    foreach(QString str, paths.split(";", QString::SkipEmptyParts)) {
+      QString fullPath = str + "/" + filename;
 
-    for(StringList::iterator it = pathList.begin();
-    it != pathList.end(); it++) {
-      string fullPath = (*it) + string("/") + filename;
-
-      if(fileAppendable(fullPath.c_str()))
+      if(fileReadable(fullPath))
         return fullPath;
     }
 
+    return "";
+  }
+
+  QString FileUtils::findOverWritable(const QString & filename, const QString & paths)
+  {
+    foreach(QString str, paths.split(pathSeparator(), QString::SkipEmptyParts)) {
+      QString fullPath = str + "/" + filename;
+
+      if(fileAppendable(fullPath))
+        return fullPath;
+    }
     return filename;
   }
 
-  FILE * FileUtils::createFilePath(const std::string & filePath)
+  FILE * FileUtils::createFilePath(const QString & filePath)
   {
-    if(filePath.empty()) return 0;
+    if(filePath.isEmpty()) return 0;
 
-    StringList pieces;
-    split(filePath, "/", pieces, true);
+    QFileInfo fi(filePath);
+    QDir().mkpath(fi.path());
 
-    const string file(pieces.back());
-    pieces.pop_back();
-
-    string soFar("");
-
-    for(StringList::iterator it = pieces.begin(); it != pieces.end(); it++) {
-      soFar += string("/") + *it;
-
-      if(!Directory::exists(soFar)) {
-        Directory::mkdir(soFar);
-      }
-    }
-
-    soFar += string("/") + file;
-
-    return fopen(soFar.c_str(), "w");
+    /// @todo change to something else than FILE/fopen
+    return fopen(filePath.toUtf8().data(), "w");
   }
 
-  bool FileUtils::looksLikeImage(const std::string & filePath)
+  bool FileUtils::looksLikeImage(const QString & filePath)
   {
     return suffixMatch(filePath, "png") ||
         suffixMatch(filePath, "jpg") ||
-        suffixMatch(filePath, "jpeg");
+        suffixMatch(filePath, "jpeg") ||
+        suffixMatch(filePath, "dds");
   }
 
-  bool FileUtils::looksLikeVideo(const std::string & filePath)
+  bool FileUtils::looksLikeVideo(const QString & filePath)
   {
     return suffixMatch(filePath, "avi") ||
         suffixMatch(filePath, "qt") ||
-        suffixMatch(filePath, "mov");
+        suffixMatch(filePath, "mov") ||
+        suffixMatch(filePath, "mp4");
   }
 
-  unsigned long int FileUtils::lastModified(const std::string & filePath)
+  unsigned long int FileUtils::lastModified(const QString & filePath)
   {
     struct stat file;
-    if(stat(filePath.c_str(), &file) == -1) {
+    if(stat(filePath.toUtf8().data(), &file) == -1) {
       return 0;
     }
     return file.st_mtime;
@@ -304,9 +230,21 @@ namespace Radiant
   {
     assert(f != 0);
     for(int i = 0; i < levels; i++) {
-      fprintf(f, "  ");
+      fprintf(f, ". ");
     }
   }
 
+	QString FileUtils::pathSeparator()
+	{
+		return QString(";");
+	}
 
+	QString FileUtils::directorySeparator()
+	{
+#if defined RADIANT_WINDOWS
+		return QString("\\");
+#else
+		return QString("/");
+#endif
+	}
 }
