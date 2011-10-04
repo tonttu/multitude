@@ -39,10 +39,8 @@
 #   define DLLIMPORT __attribute__((visibility("default")))
 
 // Test if we have override
-#   if __has_feature(cxx_override_control)
-#     define OVERRIDE override
-#   else
-#     define OVERRIDE
+#   if !__has_feature(cxx_override_control)
+#     define override
 #   endif
 
 // 
@@ -54,10 +52,8 @@
 #   define DLLIMPORT __attribute__((visibility("default")))
 
 //  Override is a GCC4.7 and up feature
-#   if (__GNUC__ == 4 && __GNUC_MINOR__ >= 7) || __GNUC__ > 5
-#     define OVERRIDE override
-#   else
-#     define OVERRIDE
+#   if (__GNUC__ == 4 && __GNUC_MINOR__ < 7) || __GNUC__ < 4
+#     define override
 #   endif
 
 // 
@@ -67,8 +63,6 @@
 #   define RADIANT_MSVC 1
 #   define DLLEXPORT __declspec(dllexport)
 #   define DLLIMPORT __declspec(dllimport)
-
-#   define OVERRIDE override
 #endif
 
 //
