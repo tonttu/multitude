@@ -262,49 +262,49 @@ namespace Valuable
     return false;
   }
 
-  bool Attribute::set(float, Layer)
+  bool Attribute::set(float, Layer, ValueUnit)
   {
     Radiant::error("Attribute::set(float) # %s: conversion not available",
                    m_name.toUtf8().data());
     return false;
   }
 
-  bool Attribute::set(int, Layer)
+  bool Attribute::set(int, Layer, ValueUnit)
   {
     Radiant::error("Attribute::set(int) # %s: conversion not available",
                    m_name.toUtf8().data());
     return false;
   }
 
-  bool Attribute::set(const QString &, Layer)
+  bool Attribute::set(const QString &, Layer, ValueUnit)
   {
     Radiant::error("Attribute::set(string) # %s: conversion not available",
                    m_name.toUtf8().data());
     return false;
   }
 
-  bool Attribute::set(const Nimble::Vector2f &, Layer)
+  bool Attribute::set(const Nimble::Vector2f &, Layer, QList<ValueUnit>)
   {
     Radiant::error("Attribute::set(Vector2f) # %s: conversion not available",
                    m_name.toUtf8().data());
     return false;
   }
 
-  bool Attribute::set(const Nimble::Vector3f & v, Layer layer)
+  bool Attribute::set(const Nimble::Vector3f &, Layer, QList<ValueUnit>)
   {
     Radiant::error("Attribute::set(Vector3f) # %s: conversion not available",
                    m_name.toUtf8().data());
     return false;
   }
 
-  bool Attribute::set(const Nimble::Vector4f &, Layer)
+  bool Attribute::set(const Nimble::Vector4f &, Layer, QList<ValueUnit>)
   {
     Radiant::error("Attribute::set(Vector4f) # %s: conversion not available",
                    m_name.toUtf8().data());
     return false;
   }
 
-  bool Attribute::set(const QVariantList & v, QList<ValueUnit> units, Layer layer)
+  bool Attribute::set(const QVariantList & v, QList<ValueUnit>, Layer)
   {
     Radiant::error("Attribute::set(QVariantList) # %s: conversion not available",
                    m_name.toUtf8().data());

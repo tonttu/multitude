@@ -79,7 +79,8 @@ namespace Valuable
       const char * type() const;
 
       /// Sets the value
-      virtual bool set(const VectorType & v, Attribute::Layer layer = Attribute::MANUAL);
+      virtual bool set(const VectorType & v, Attribute::Layer layer = Attribute::MANUAL,
+                       QList<Attribute::ValueUnit> units = QList<Attribute::ValueUnit>());
 
       /// Returns the internal vector object as a constant reference.
       /// @return The wrapped vector value

@@ -100,13 +100,15 @@ namespace Valuable
     AttributeIntT<T> & operator >>= (int i) { *this = value() >> i; return *this; }
 
     /// Sets the numeric value
-    inline virtual bool set(int v, Attribute::Layer layer = Attribute::MANUAL)
+    inline virtual bool set(int v, Attribute::Layer layer = Attribute::MANUAL,
+                            Attribute::ValueUnit = Attribute::VU_UNKNOWN)
     {
       this->setValue(v, layer);
       return true;
     }
     /// @copydoc set
-    inline virtual bool set(float v, Attribute::Layer layer = Attribute::MANUAL)
+    inline virtual bool set(float v, Attribute::Layer layer = Attribute::MANUAL,
+                            Attribute::ValueUnit = Attribute::VU_UNKNOWN)
     {
       this->setValue(v, layer);
       return true;

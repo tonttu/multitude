@@ -45,7 +45,7 @@ namespace Valuable
     return Radiant::StringUtils::stringify((int32_t)value());
   }
 
-  bool AttributeBool::set(int value, Layer layer)
+  bool AttributeBool::set(int value, Layer layer, ValueUnit)
   {
     setValue(!!value, layer);
     return true;

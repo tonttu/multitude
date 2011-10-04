@@ -71,7 +71,7 @@ namespace Valuable
     /// Returns the value as string
     QString asString(bool * const ok = 0) const;
 
-    virtual bool set(const QString & v, Layer layer = MANUAL);
+    virtual bool set(const QString & v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN);
 
     const char * type() const { return VO_TYPE_STRING; }
 
