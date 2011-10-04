@@ -39,12 +39,20 @@ namespace Valuable
       using Base::value;
       using AttributeT<T>::operator =;
 
-      AttributeFloatT() : Base() {}
+      AttributeFloatT() : Base(), m_src(1)
+      {
+        for(int i = 0; i < Attribute::LAYER_COUNT; ++i)
+          m_factors[i] = std::numeric_limits<float>::quiet_NaN();
+      }
       /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
       /// @param v The numeric value of this object
       AttributeFloatT(Node * host, const QString & name, T v = T(0), bool transit = false)
-      : AttributeNumeric<T>(host, name, v, transit)
-      {}
+      : AttributeNumeric<T>(host, name, v, transit),
+        m_src(1)
+      {
+        for(int i = 0; i < Attribute::LAYER_COUNT; ++i)
+          m_factors[i] = std::numeric_limits<float>::quiet_NaN();
+      }
 
       /// Assignment by subtraction
       AttributeFloatT<T> & operator -= (T i) { *this = value() - i; return *this; }
@@ -66,7 +74,12 @@ namespace Valuable
       inline virtual bool set(float v, Attribute::Layer layer = Attribute::MANUAL,
                               Attribute::ValueUnit unit = Attribute::VU_UNKNOWN)
       {
-        this->setValue(v, layer);
+        if(unit == Attribute::VU_PERCENTAGE) {
+          setPercentage(v, layer);
+          this->setValue(v * m_src, layer);
+        } else {
+          this->setValue(v, layer);
+        }
         return true;
       }
 
@@ -74,10 +87,32 @@ namespace Valuable
 
       bool deserialize(const ArchiveElement & element);
 
+      void setSrc(float src)
+      {
+        for(int i = 0; i < Attribute::LAYER_COUNT; ++i) {
+          if(!Nimble::Math::isNAN(m_factors[i]))
+            this->setValue(m_factors[i] * src, Attribute::Layer(i));
+        }
+      }
+
+      void setPercentage(float factor, Attribute::Layer layer)
+      {
+        m_factors[layer] = factor;
+      }
+
+      virtual void clearValue(Attribute::Layer layer)
+      {
+        m_factors[layer] = std::numeric_limits<float>::quiet_NaN();
+        Base::clearValue(layer);
+      }
+
       /// @cond
       virtual void processMessage(const char * id, Radiant::BinaryData & data);
       /// @endcond
 
+  private:
+      float m_factors[Attribute::LAYER_COUNT];
+      float m_src;
   };
 
   /// Float value object
