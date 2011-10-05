@@ -1,6 +1,7 @@
 include(../multitude.pri)
 
-HEADERS += Archive.hpp
+HEADERS += Archive.hpp \
+    AttributeFrame.hpp
 HEADERS += AttributeFlags.hpp
 HEADERS += ChangeMap.hpp
 HEADERS += CmdParser.hpp

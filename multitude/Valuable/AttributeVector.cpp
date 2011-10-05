@@ -16,7 +16,7 @@
 // The purpose of this file is to include ValueVector.hpp and ValueVectorImpl.hpp in the
 // Valuable build, thereby including any template instantiations defined in those files
 
-#include "AttributeVector.hpp"
+#include "AttributeFrame.hpp"
 #include "AttributeVectorImpl.hpp"
 
 namespace Valuable {
@@ -28,5 +28,7 @@ namespace Valuable {
   template class AttributeVector<Nimble::Vector2i>;
   template class AttributeVector<Nimble::Vector3i>;
   template class AttributeVector<Nimble::Vector4i>;
+
+  template class AttributeVector<Nimble::Frame4f>;
 }
 

@@ -18,6 +18,7 @@
 
 #include <Nimble/Vector2.hpp>
 #include <Nimble/Vector4.hpp>
+#include <Nimble/Frame4.hpp>
 
 #include "Export.hpp"
 
@@ -273,6 +274,9 @@ namespace Radiant {
   { return readVector3Float32(ok); }
 
   template <> inline Nimble::Vector4f BinaryData::read(bool * ok)
+  { return readVector4Float32(ok); }
+
+  template <> inline Nimble::Frame4f BinaryData::read(bool * ok)
   { return readVector4Float32(ok); }
 
   template <> inline Nimble::Vector2i BinaryData::read(bool * ok)
