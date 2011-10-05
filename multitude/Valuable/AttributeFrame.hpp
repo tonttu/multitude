@@ -51,7 +51,7 @@ namespace Valuable
       return true;
     }
 
-    virtual bool set(int v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN)
+    virtual bool set(int v, Layer layer = MANUAL, ValueUnit = VU_UNKNOWN)
     {
       for(int j = 0; j < m_factors[layer].Elements; ++j)
         m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
