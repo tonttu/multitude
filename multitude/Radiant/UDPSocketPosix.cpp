@@ -6,10 +6,8 @@
 #include "SocketUtilPosix.hpp"
 #include "Trace.hpp"
 
-#include <errno.h>
 #include <sys/types.h>
 #include <strings.h>
-#include <string.h>
 
 namespace Radiant
 {
@@ -30,12 +28,12 @@ namespace Radiant
 
   UDPSocket::UDPSocket() : m_d(new D)
   {
-    wrap_startup();
+    SocketWrapper::startup();
   }
 
   UDPSocket::UDPSocket(int fd) : m_d(new D(fd))
   {
-    wrap_startup();
+    SocketWrapper::startup();
   }
 
   UDPSocket::~UDPSocket()
@@ -87,10 +85,10 @@ namespace Radiant
     m_d->m_fd = -1;
 
     if(!m_d->m_host.isEmpty() && shutdown(fd, SHUT_RDWR)) {
-      error("UDPSocket::close # Failed to shut down the socket: %s", wrap_strerror(wrap_errno));
+      error("UDPSocket::close # Failed to shut down the socket: %s", SocketWrapper::strerror(SocketWrapper::err()));
     }
-    if(wrap_close(fd)) {
-      error("UDPSocket::close # Failed to close socket: %s", wrap_strerror(wrap_errno));
+    if(SocketWrapper::close(fd)) {
+      error("UDPSocket::close # Failed to close socket: %s", SocketWrapper::strerror(SocketWrapper::err()));
     }
 
     return true;
@@ -120,7 +118,7 @@ namespace Radiant
       struct pollfd pfd;
       pfd.fd = m_d->m_fd;
       pfd.events = POLLIN;
-      if(wrap_poll(&pfd, 1, 0) <= 0 || (pfd.revents & POLLIN) == 0)
+      if(SocketWrapper::poll(&pfd, 1, 0) <= 0 || (pfd.revents & POLLIN) == 0)
         return 0;
     }
     int flags = 0;
@@ -129,7 +127,7 @@ namespace Radiant
 #endif
 
     while(pos < bytes) {
-      errno = 0;
+      SocketWrapper::clearErr();
       // int max = bytes - pos > SSIZE_MAX ? SSIZE_MAX : bytes - pos;
       int max = bytes - pos > 32767 ? 32767 : bytes - pos;
       /// @todo should we care about the sender?
@@ -140,17 +138,17 @@ namespace Radiant
         if(!readAll) return pos;
       } else if(tmp == 0 || m_d->m_fd == -1) {
         return pos;
-      } else if(errno == EAGAIN || errno == EWOULDBLOCK) {
+      } else if(SocketWrapper::err() == EAGAIN || SocketWrapper::err() == EWOULDBLOCK) {
         if(readAll || (waitfordata && pos == 0)) {
           struct pollfd pfd;
           pfd.fd = m_d->m_fd;
           pfd.events = POLLIN;
-          wrap_poll(&pfd, 1, 5000);
+          SocketWrapper::poll(&pfd, 1, 5000);
         } else {
           return pos;
         }
       } else {
-        error("UDPSocket::read # Failed to read: %s", wrap_strerror(wrap_errno));
+        error("UDPSocket::read # Failed to read: %s", SocketWrapper::strerror(SocketWrapper::err()));
         return pos;
       }
     }
@@ -179,13 +177,13 @@ namespace Radiant
       int tmp = send(m_d->m_fd, data + pos, max, 0);
       if(tmp > 0) {
         pos += tmp;
-      } else if(errno == EAGAIN || errno == EWOULDBLOCK) {
+      } else if(SocketWrapper::err() == EAGAIN || SocketWrapper::err() == EWOULDBLOCK) {
         struct pollfd pfd;
         pfd.fd = m_d->m_fd;
         pfd.events = POLLOUT;
-        wrap_poll(&pfd, 1, 5000);
+        SocketWrapper::poll(&pfd, 1, 5000);
       } else {
-        error("UDPSocket::write # Failed to write: %s", wrap_strerror(wrap_errno));
+        error("UDPSocket::write # Failed to write: %s", SocketWrapper::strerror(SocketWrapper::err()));
         return pos;
       }
     }

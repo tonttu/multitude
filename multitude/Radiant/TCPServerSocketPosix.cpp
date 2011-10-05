@@ -19,10 +19,8 @@
 #include "SocketWrapper.hpp"
 #include "Trace.hpp"
 
-#include <errno.h>
 #include <sys/types.h>
 #include <strings.h>
-#include <string.h>
 #include <stdio.h>
 
 namespace Radiant
@@ -43,7 +41,7 @@ namespace Radiant
   TCPServerSocket::TCPServerSocket()
     : m_d(new D)
   {
-    wrap_startup();
+    SocketWrapper::startup();
   }
   
   TCPServerSocket::~TCPServerSocket()
@@ -70,9 +68,9 @@ namespace Radiant
     }
 
     if(::listen(fd, maxconnections) != 0) {
-      int err = wrap_errno;
-      error("TCPServerSocket::open # Failed to listen TCP socket: %s", wrap_strerror(err));
-      wrap_close(fd);
+      int err = SocketWrapper::err();
+      error("TCPServerSocket::open # Failed to listen TCP socket: %s", SocketWrapper::strerror(err));
+      SocketWrapper::close(fd);
       return err ? err : -1;
     }
 
@@ -90,11 +88,11 @@ namespace Radiant
     m_d->m_fd = -1;
 
     if(::shutdown(fd, SHUT_RDWR)) {
-      debug("TCPServerSocket::close # Failed to shut down the socket: %s", wrap_strerror(wrap_errno));
+      debug("TCPServerSocket::close # Failed to shut down the socket: %s", SocketWrapper::strerror(SocketWrapper::err()));
     }
 
-    if(wrap_close(fd)) {
-      error("TCPServerSocket::close # Failed to close socket: %s", wrap_strerror(wrap_errno));
+    if(SocketWrapper::close(fd)) {
+      error("TCPServerSocket::close # Failed to close socket: %s", SocketWrapper::strerror(SocketWrapper::err()));
     }
 
     return true;
@@ -114,9 +112,9 @@ namespace Radiant
     bzero( & pfd, sizeof(pfd));
     pfd.fd = m_d->m_fd;
     pfd.events = POLLRDNORM;
-    int status = wrap_poll(&pfd, 1, waitMicroSeconds / 1000);
+    int status = SocketWrapper::poll(&pfd, 1, waitMicroSeconds / 1000);
     if(status == -1) {
-      Radiant::error("TCPServerSocket::isPendingConnection %s", wrap_strerror(wrap_errno));
+      Radiant::error("TCPServerSocket::isPendingConnection %s", SocketWrapper::strerror(SocketWrapper::err()));
     }
 
     return (pfd.revents & POLLRDNORM) == POLLRDNORM;
@@ -133,7 +131,7 @@ namespace Radiant
     bzero( & newAddress, sizeof(newAddress));
 
     for(;;) {
-      errno = 0;
+      SocketWrapper::clearErr();
       int fd = ::accept(m_d->m_fd, (sockaddr *) & newAddress, & addressLength);
 
       if(fd >= 0)
@@ -142,14 +140,14 @@ namespace Radiant
       if(fd < 0) {
         if(m_d->m_fd == -1)
           return 0;
-        int err = wrap_errno;
+        int err = SocketWrapper::err();
         if(err == EAGAIN || err == EWOULDBLOCK) {
           struct pollfd pfd;
           pfd.fd = m_d->m_fd;
           pfd.events = POLLIN;
-          wrap_poll(&pfd, 1, 5000);
+          SocketWrapper::poll(&pfd, 1, 5000);
         } else {
-          error("TCPServerSocket::accept # %s", wrap_strerror(wrap_errno));
+          error("TCPServerSocket::accept # %s", SocketWrapper::strerror(SocketWrapper::err()));
           return 0;
         }
       }

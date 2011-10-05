@@ -19,10 +19,8 @@
 #include "SocketWrapper.hpp"
 #include "Trace.hpp"
 
-#include <errno.h>
 #include <sys/types.h>
 #include <strings.h>
-#include <string.h>
 
 #include "signal.h"
 
@@ -45,7 +43,7 @@ namespace Radiant
 
         if(setsockopt(m_fd, IPPROTO_TCP, TCP_NODELAY, (const char*)&m_noDelay, sizeof(m_noDelay))) {
           ok = false;
-          error("Failed to set TCP_NODELAY: %s", wrap_strerror(wrap_errno));
+          error("Failed to set TCP_NODELAY: %s", SocketWrapper::strerror(SocketWrapper::err()));
         }
 
         return ok;
@@ -68,12 +66,12 @@ namespace Radiant
     signal(SIGPIPE, SIG_IGN);
   #endif
 
-    wrap_startup();
+    SocketWrapper::startup();
   }
 
   TCPSocket::TCPSocket(int fd) : m_d(new D(fd))
   {
-    wrap_startup();
+    SocketWrapper::startup();
     m_d->setOpts();
   }
 
@@ -118,8 +116,8 @@ namespace Radiant
     // ignore error if the connection closed in abortive way
     shutdown(fd, SHUT_RDWR);
 
-    if(wrap_close(fd)) {
-      error("TCPSocket::close # Failed to close socket: %s", wrap_strerror(wrap_errno));
+    if(SocketWrapper::close(fd)) {
+      error("TCPSocket::close # Failed to close socket: %s", SocketWrapper::strerror(SocketWrapper::err()));
     }
 
     return true;
@@ -139,7 +137,7 @@ namespace Radiant
     char * data = reinterpret_cast<char*>(buffer);
 
     while(pos < bytes) {
-      errno = 0;
+      SocketWrapper::clearErr();
       // int max = bytes - pos > SSIZE_MAX ? SSIZE_MAX : bytes - pos;
       int max = bytes - pos > 32767 ? 32767 : bytes - pos;
       bool block = flags == WAIT_ALL || (flags == WAIT_SOME && pos == 0);
@@ -161,15 +159,15 @@ namespace Radiant
         pos += tmp;
       } else if(tmp == 0 || m_d->m_fd == -1) {
         return pos;
-      } else if(errno == EAGAIN || errno == EWOULDBLOCK) {
+      } else if(SocketWrapper::err() == EAGAIN || SocketWrapper::err() == EWOULDBLOCK) {
         if(!block) return pos;
 
         struct pollfd pfd;
         pfd.fd = m_d->m_fd;
         pfd.events = POLLIN;
-        wrap_poll(&pfd, 1, 5000);
+        SocketWrapper::poll(&pfd, 1, 5000);
       } else {
-        error("TCPSocket::read # Failed to read: %s", wrap_strerror(wrap_errno));
+        error("TCPSocket::read # Failed to read: %s", SocketWrapper::strerror(SocketWrapper::err()));
         return pos;
       }
     }
@@ -186,19 +184,19 @@ namespace Radiant
     const char * data = reinterpret_cast<const char*>(buffer);
 
     while(pos < bytes) {
-      errno = 0;
+      SocketWrapper::clearErr();
       // int max = bytes - pos > SSIZE_MAX ? SSIZE_MAX : bytes - pos;
       int max = bytes - pos > 32767 ? 32767 : bytes - pos;
       int tmp = send(m_d->m_fd, data + pos, max, 0);
       if(tmp > 0) {
         pos += tmp;
-      } else if(errno == EAGAIN || errno == EWOULDBLOCK) {
+      } else if(SocketWrapper::err() == EAGAIN || SocketWrapper::err() == EWOULDBLOCK) {
         struct pollfd pfd;
         pfd.fd = m_d->m_fd;
         pfd.events = POLLOUT;
-        wrap_poll(&pfd, 1, 5000);
+        SocketWrapper::poll(&pfd, 1, 5000);
       } else {
-        error("TCPSocket::write # Failed to write: %s", wrap_strerror(wrap_errno));
+        error("TCPSocket::write # Failed to write: %s", SocketWrapper::strerror(SocketWrapper::err()));
         return pos;
       }
     }
@@ -215,9 +213,9 @@ namespace Radiant
     bzero( & pfd, sizeof(pfd));
     pfd.fd = m_d->m_fd;
     pfd.events = POLLWRNORM;
-    int status = wrap_poll(&pfd, 1, 0);
+    int status = SocketWrapper::poll(&pfd, 1, 0);
     if(status == -1) {
-      Radiant::error("TCPSocket::isHungUp %s", wrap_strerror(wrap_errno));
+      Radiant::error("TCPSocket::isHungUp %s", SocketWrapper::strerror(SocketWrapper::err()));
     }
 
     return (pfd.revents & (POLLERR | POLLHUP | POLLNVAL)) != 0;
@@ -233,9 +231,9 @@ namespace Radiant
 
     pfd.fd = m_d->m_fd;
     pfd.events = POLLRDNORM;
-    int status = wrap_poll(&pfd, 1, waitMicroSeconds / 1000);
+    int status = SocketWrapper::poll(&pfd, 1, waitMicroSeconds / 1000);
     if(status == -1) {
-      Radiant::error("TCPSocket::isPendingInput %s", wrap_strerror(wrap_errno));
+      Radiant::error("TCPSocket::isPendingInput %s", SocketWrapper::strerror(SocketWrapper::err()));
     }
 
     return (pfd.revents & POLLRDNORM) == POLLRDNORM;
