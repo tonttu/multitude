@@ -85,6 +85,6 @@ namespace Valuable
   };
 }
 
-QString operator + (const QString & a, const Valuable::AttributeString & b);
+VALUABLE_API QString operator + (const QString & a, const Valuable::AttributeString & b);
 
 #endif

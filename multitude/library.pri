@@ -88,7 +88,7 @@ win32 {
 unix {
   # Make symbol export for shared libs compatible with MSVC
   !CONFIG(staticlib) {
-    #linux*:QMAKE_CXXFLAGS += -fvisibility-ms-compat
+    linux*:QMAKE_CXXFLAGS += -fvisibility-ms-compat
   }
 }
 
