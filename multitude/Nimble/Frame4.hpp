@@ -27,6 +27,7 @@ namespace Nimble
   {
   public:
     Frame4f(const Nimble::Vector4f & v = Nimble::Vector4f(0, 0, 0, 0)) : Vector4f(v) {}
+    Frame4f(float t, float r, float b, float l) : Vector4f(t, r, b, l) {}
 
     float top() const { return x; }
     float right() const { return y; }

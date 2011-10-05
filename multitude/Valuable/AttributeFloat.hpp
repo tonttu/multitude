@@ -67,6 +67,7 @@ namespace Valuable
       inline virtual bool set(int v, Attribute::Layer layer = Attribute::MANUAL,
                               Attribute::ValueUnit = Attribute::VU_UNKNOWN)
       {
+        m_factors[layer] = std::numeric_limits<float>::quiet_NaN();
         this->setValue(v, layer);
         return true;
       }
@@ -89,11 +90,12 @@ namespace Valuable
 
       void setSrc(float src)
       {
-        for(int i = 0; i < Attribute::LAYER_COUNT; ++i) {
-          if(!Nimble::Math::isNAN(m_factors[i]))
-            this->setValue(m_factors[i] * src, Attribute::Layer(i));
-        }
         m_src = src;
+        for(Attribute::Layer l = Attribute::ORIGINAL; l < Attribute::LAYER_COUNT; ++((int&)l)) {
+          if(!this->m_valueSet[l]) continue;
+          if(!Nimble::Math::isNAN(m_factors[l]))
+            this->setValue(m_factors[l] * src, l);
+        }
       }
 
       void setPercentage(float factor, Attribute::Layer layer)
