@@ -213,7 +213,7 @@ void VideoWindow::initializeGL()
   const char * path = ".:/Users/tommi/screenapps/Fonts/";
   std::string filename = Radiant::FileUtils::findFile(ttf, path);
 
-  if(filename.size()) {
+  if(!filename.empty()) {
     m_subCPUFont = Poetic::FontManager::instance()->getFont(ttf);
     /*
     new Poetic::CPUBitmapFont();

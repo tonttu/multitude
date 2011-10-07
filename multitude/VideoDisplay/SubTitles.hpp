@@ -41,9 +41,9 @@ namespace VideoDisplay {
       int lineCount() const
       {
         int n = 0;
-        if(m_lines[0].size()) {
+        if(!m_lines[0].empty()) {
           n = 1;
-          if(m_lines[1].size())
+          if(!m_lines[1].empty())
             n = 2;
         }
 
