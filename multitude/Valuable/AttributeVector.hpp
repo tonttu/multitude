@@ -34,7 +34,7 @@ namespace Valuable
       objects.
    */
   template<class VectorType>
-  class VALUABLE_API AttributeVector : public AttributeT<VectorType>
+  class AttributeVector : public AttributeT<VectorType>
   {
     typedef AttributeT<VectorType> Base;
     typedef typename VectorType::type ElementType;
@@ -50,7 +50,7 @@ namespace Valuable
       AttributeVector(Node * host, const QString & name, const VectorType & v = VectorType(), bool transit = false)
         : Base(host, name, v, transit) {}
 
-      virtual ~AttributeVector();
+      VALUABLE_API virtual ~AttributeVector();
 
       /// Assigns by addition
       AttributeVector<VectorType> & operator += (const VectorType & v) { *this = value() + v; return *this; }
@@ -73,20 +73,20 @@ namespace Valuable
       const ElementType * data() const
       { return value().data(); }
 
-      virtual void processMessage(const char * id, Radiant::BinaryData & data);
-      virtual bool deserialize(const ArchiveElement & element);
+      VALUABLE_API virtual void processMessage(const char * id, Radiant::BinaryData & data);
+      VALUABLE_API virtual bool deserialize(const ArchiveElement & element);
 
-      const char * type() const;
+      VALUABLE_API const char * type() const;
 
       /// Sets the value
-      virtual bool set(const VectorType & v, Attribute::Layer layer = Attribute::MANUAL,
-                       QList<Attribute::ValueUnit> units = QList<Attribute::ValueUnit>());
+      VALUABLE_API virtual bool set(const VectorType & v, Attribute::Layer layer = Attribute::MANUAL,
+                                    QList<Attribute::ValueUnit> units = QList<Attribute::ValueUnit>());
 
       /// Returns the internal vector object as a constant reference.
       /// @return The wrapped vector value
       const VectorType & asVector() const { return value(); }
 
-      QString asString(bool * const ok = 0) const;
+      VALUABLE_API QString asString(bool * const ok = 0) const;
 
       /// Returns the ith element
       inline const ElementType & get(int i) const { return value()[i]; }

@@ -193,7 +193,7 @@ namespace Valuable
 //    Radiant::trace("Attribute::emitChange # '%s'", m_name.toUtf8().data());
     m_changed = true;
     foreach(const AttributeListener & l, m_listeners)
-      if(l.role & CHANGE) l.func();
+      if(l.role & CHANGE_ROLE) l.func();
     ChangeMap::addChange(this);
   }
 
@@ -201,7 +201,7 @@ namespace Valuable
   {
     //Radiant::trace("Attribute::emitDelete");
     foreach(const AttributeListener & l, m_listeners) {
-      if(l.role & DELETE) l.func();
+      if(l.role & DELETE_ROLE) l.func();
       if(l.listener) l.listener->m_valueListening.remove(this);
     }
     m_listeners.clear();

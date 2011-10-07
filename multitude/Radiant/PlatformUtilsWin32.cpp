@@ -135,9 +135,7 @@ namespace Radiant
 
     void * openPlugin(const char * path)
     {
-      const QString  wp = StringUtils::stdStringToStdWstring(QString(path));
-
-      return (void *)(LoadLibrary(wp.data()));
+      return (void *)(LoadLibraryA(path));
     }
 
     uint64_t processMemoryUsage()

@@ -1,8 +1,11 @@
 #ifndef SOCKETWRAPPER_HPP
 #define SOCKETWRAPPER_HPP
 
-#include "Platform.hpp"
+#include "Export.hpp"
+
 #ifdef RADIANT_WINDOWS
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
 #include <winsock2.h>
 #include <WS2tcpip.h>
 #include <cerrno>
@@ -54,13 +57,13 @@
 namespace SocketWrapper
 {
   inline int close(int fd) { return closesocket(fd); }
-  inline int poll(struct pollfd * fds, nfds_t nfds, int timeout) { return WSAPoll(fds, nfds, timeout); }
-  char * strerror(int errnum);
+  inline int poll(struct pollfd * fds, unsigned long nfds, int timeout) { return WSAPoll(fds, nfds, timeout); }
+  RADIANT_API const char * strerror(int errnum);
   // errno seems to be a macro in GCC, can't have function named errno..
   inline int err() { return WSAGetLastError(); }
   inline void clearErr() {}
   inline const char * gai_strerror(int errcode) { return ::gai_strerrorA(errcode); }
-  void startup();
+  RADIANT_API void startup();
 }
 
 #else

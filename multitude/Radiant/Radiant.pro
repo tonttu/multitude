@@ -124,7 +124,7 @@ SOURCES += SerialPortWin32.cpp
 SOURCES += LockFileWin32.cpp
 SOURCES += VideoCameraPTGrey.cpp
  
-LIBS += $$LIB_NIMBLE $$LIB_PATTERNS
+LIBS += $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
 
 linux-*: LIBS += -lX11 -lXtst
 

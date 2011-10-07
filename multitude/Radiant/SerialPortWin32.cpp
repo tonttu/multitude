@@ -21,6 +21,7 @@
 
 #include <Radiant/StringUtils.hpp>
 #include <Radiant/SerialPort.hpp>
+#include <Radiant/Trace.hpp>
 
 #include <cassert>
 #include <QString>
@@ -45,19 +46,19 @@ namespace Radiant
     close();
     
     // Make the devicename compliant to new addressing (needed for >COM9) 	
-	m_device = std::string("\\\\.\\") + device;
+    m_device = QString("\\\\.\\") + device;
 
     // Open serial port
 
     const char * fName = "SerialPort::open";
 
-    m_hPort = CreateFileA(m_device.c_str(), GENERIC_READ | GENERIC_WRITE,
+    m_hPort = CreateFileA(m_device.toUtf8().data(), GENERIC_READ | GENERIC_WRITE,
       0, 0, OPEN_EXISTING, 0, 0);
     
     if(m_hPort == INVALID_HANDLE_VALUE)
     {
-      const QString   strErr = StringUtils::getLastErrorMessage();
-      error("%s # Failed to open serial port (%s): %s", fName, device, strErr.c_str());
+      const QString strErr = StringUtils::getLastErrorMessage();
+      error("%s # Failed to open serial port (%s): %s", fName, device, strErr.toUtf8().data());
 
       m_hPort = 0;
       return false;

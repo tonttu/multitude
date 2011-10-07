@@ -33,13 +33,14 @@ LIB_POETIC = -lPoetic
 LIB_FLUFFY = -lFluffy
 LIB_LUMINOUS = -lLuminous
 LIB_NIMBLE = -lNimble
-LIB_RADIANT = -lRadiant -lv8
+LIB_RADIANT = -lRadiant
 LIB_RESONANT = -lResonant
 LIB_SCREENPLAY = -lScreenplay
 LIB_VIDEODISPLAY = -lVideoDisplay
-LIB_VALUABLE = -lValuable -lv8
+LIB_VALUABLE = -lValuable
 LIB_PATTERNS = -lPatterns
 LIB_SQUISH = -lSquish
+LIB_V8 = -lv8
 
 linux-*:vivid {
   QMAKE_LIBDIR += $$(FBX_SDK)/lib/gcc4
@@ -47,6 +48,7 @@ linux-*:vivid {
 }
 
 linux-*{
+  LIB_PREFIX =
   SHARED_LIB_SUFFIX = so
 
   contains(USEGLEW,no) {
@@ -75,6 +77,7 @@ contains(MEMCHECK,yes) {
 }
 
 macx {
+  LIB_PREFIX = lib
   SHARED_LIB_SUFFIX = dylib
   LIBS += -undefined dynamic_lookup
 
@@ -117,6 +120,8 @@ macx {
 }
 
 win32 {
+    LIB_PREFIX =
+    SHARED_LIB_SUFFIX = dll
     # Try to identify used compiler on Windows (32 vs 64)
     COMPILER_OUTPUT=$$system(cl 2>&1)
     contains(COMPILER_OUTPUT,x64):CONFIG+=win64
@@ -152,7 +157,8 @@ win32 {
       LIB_VIDEODISPLAY = -lVideoDisplay_d
       LIB_VALUABLE = -lValuable_d
       LIB_PATTERNS = -lPatterns_d
-	  LIB_SQUISH = -lSquish_d
+      LIB_SQUISH = -lSquish_d
+      LIB_V8 = -lv8_d
 	}
 }
 
@@ -164,6 +170,8 @@ QMAKE_LIBDIR += $$PWD/lib
 CONFIG(release, debug|release) {
   DEFINES += NDEBUG
 }
+
+DEFINES += USING_V8_SHARED
 
 # Use ccache if available
 unix:exists(/usr/bin/ccache):QMAKE_CXX=ccache g++

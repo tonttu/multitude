@@ -45,9 +45,6 @@ namespace Valuable
 
     virtual void processMessage(const char * id, Radiant::BinaryData & data);
 
-    /// Copies a string
-    AttributeString & operator = (const AttributeString & i);
-
     /// Concatenates two strings
     /// @param i The string to be appended to this string
     /// @return A new string that contains both this string, and the argument string.

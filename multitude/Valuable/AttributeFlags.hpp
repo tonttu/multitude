@@ -47,7 +47,7 @@ namespace Valuable {
     {
     }
 
-    bool set(int v, Layer layer, ValueUnit unit)
+    bool set(int v, Layer layer, ValueUnit)
     {
       m_master.setFlags(m_flags, v, layer);
       return true;
@@ -237,7 +237,7 @@ namespace Valuable {
       if(ok) setValue(Flags::fromInt(v), MANUAL);
     }
 
-    bool set(int v, Layer layer, ValueUnit unit = VU_UNKNOWN)
+    bool set(int v, Layer layer, ValueUnit /*unit*/ = VU_UNKNOWN)
     {
       Radiant::warning("AttributeFlagsT::set # using deprecated functionality, do not set flags with numbers");
       setValue(Flags::fromInt(v), layer);

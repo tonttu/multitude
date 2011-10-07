@@ -59,12 +59,6 @@ namespace Valuable
     return true;
   }
 
-  AttributeString & AttributeString::operator=(const AttributeString & i)
-  {
-    *this = i.value();
-    return *this;
-  }
-
   QString AttributeString::operator+(const AttributeString & i) const
   {
     return value() + i.value();

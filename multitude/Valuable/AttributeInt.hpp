@@ -33,7 +33,7 @@ namespace Valuable
       @see AttributeInt, AttributeTimeStamp */
 
   template<class T>
-      class VALUABLE_API AttributeIntT : public AttributeNumeric<T>
+  class VALUABLE_API AttributeIntT : public AttributeNumeric<T>
   {
     typedef AttributeNumeric<T> Base;
   public:

@@ -22,7 +22,7 @@
 
 namespace Valuable
 {
-  class VALUABLE_API AttributeFrame : public AttributeVector<Nimble::Frame4f>
+  class AttributeFrame : public AttributeVector<Nimble::Frame4f>
   {
   public:
     using AttributeVector<Nimble::Frame4f>::operator =;
@@ -36,6 +36,8 @@ namespace Valuable
         for(int j = 0; j < m_factors[i].Elements; ++j)
           m_factors[i][j] = std::numeric_limits<float>::quiet_NaN();
     }
+
+    virtual ~AttributeFrame() {}
 
     virtual bool set(float v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN)
     {

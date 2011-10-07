@@ -6,7 +6,7 @@
 namespace Valuable
 {
 
-  class VALUABLE_API AttributeLocation2f : public AttributeVector<Nimble::Vector2f>
+  class AttributeLocation2f : public AttributeVector<Nimble::Vector2f>
   {
   public:
     using AttributeVector<Nimble::Vector2f>::operator =;

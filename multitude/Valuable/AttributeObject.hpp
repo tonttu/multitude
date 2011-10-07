@@ -35,6 +35,13 @@
 #include <QList>
 #include <QVariantList>
 
+// new behavior: elements of array 'array' will be default initialized
+#if RADIANT_WINDOWS
+# if _MSC_VER >= 1310
+#  pragma warning(disable: 4351)
+# endif
+#endif
+
 #ifdef MULTI_DOCUMENTER
 #include "Serializer.hpp"
 #include "XMLArchive.hpp"
@@ -251,14 +258,14 @@ namespace Valuable
     void removeHost();
 
     /// Adds a listener that is invoked whenever the value is changed
-    long addListener(ListenerFunc func, int role = CHANGE);
+    long addListener(ListenerFunc func, int role = CHANGE_ROLE);
     /// Adds a listener that is invoked whenever the value is changed
     /// The listener is removed when the listener object is deleted
-    long addListener(Node * listener, ListenerFunc func, int role = CHANGE);
+    long addListener(Node * listener, ListenerFunc func, int role = CHANGE_ROLE);
     /// Removes listeners from the listener list
-    void removeListeners(int role = ALL);
+    void removeListeners(int role = ALL_ROLES);
     /// Removes a listener from the listener list
-    void removeListener(Node * listener, int role = ALL);
+    void removeListener(Node * listener, int role = ALL_ROLES);
     void removeListener(long id);
 
     /// Returns true if the current value of the object is different from the original value.

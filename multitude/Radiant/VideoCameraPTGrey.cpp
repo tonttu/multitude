@@ -22,6 +22,7 @@
 #include "Mutex.hpp"
 #include "Sleep.hpp"
 #include "Radiant.hpp"
+#include "Trace.hpp"
 
 #include <map>
 #ifndef WIN32
