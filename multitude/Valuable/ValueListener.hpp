@@ -79,7 +79,7 @@ namespace Valuable
     unsigned size() const { return m_list ? (unsigned) m_list->size(): 0; }
 
     /// Returns true if there are no listeners
-    bool empty() const { return m_list ? m_list->empty() : false; }
+    bool empty() const { return m_list ? m_list->empty() : true; }
 
     /// Returns an iterator to the first listener
     iterator begin() { return m_list->begin(); }
