@@ -70,8 +70,6 @@ contains(MEMCHECK,yes) {
 }
 
 macx {
-  LIBS += -undefined dynamic_lookup
-
   # Frameworks on OS X don't respect QMAKE_LIBDIR
   QMAKE_LFLAGS += -F$$PWD/lib
 
