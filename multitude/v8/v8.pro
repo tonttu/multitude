@@ -16,7 +16,7 @@ CONFIG(release, debug|release) {
   TARGET=$${V8LIB}.$$SHARED_LIB_SUFFIX
   V8 += mode=release
 } else {
-  V8LIB=$${LIB_PREFIX}v8_g
+  V8LIB=$${LIB_PREFIX}v8_d
   V8LIB_OUT=$${LIB_PREFIX}v8_d
   TARGET=$${V8LIB}.$$SHARED_LIB_SUFFIX
   V8 += verbose=on mode=debug

@@ -134,9 +134,9 @@ namespace Valuable
 
     typedef std::function<void ()> ListenerFunc;
     enum ListenerRole {
-      DELETE = 1 << 0,
-      CHANGE = 1 << 1,
-      ALL = (CHANGE << 1) -1
+      DELETE_ROLE = 1 << 0,
+      CHANGE_ROLE = 1 << 1,
+      ALL_ROLES = (CHANGE_ROLE << 1) -1
     };
 
     Attribute();
