@@ -15,6 +15,8 @@
 #ifndef POETIC_FREETYPE_HPP
 #define POETIC_FREETYPE_HPP
 
+#include "Export.hpp"
+
 #include <Radiant/Mutex.hpp>
 
 #define debugPoetic(...) (Radiant::trace("Poetic", Radiant::DEBUG, __VA_ARGS__))
@@ -36,19 +38,19 @@ namespace Poetic
 {
 
   /// Initialize Poetic. This function must be called before using any other functions in the library.
-  bool initialize();
+  POETIC_API bool initialize();
   
   /// Returns a handle to the freetype library
-  FT_LibraryRec_ ** freetype();
+  POETIC_API FT_LibraryRec_ ** freetype();
 
   /// Finalizes Poetic and cleans up resources. This function should be called after the library is no longer needed.
-  bool finalize();
+  POETIC_API bool finalize();
 
   /// Returns the last freetype error
-  int error();
+  POETIC_API int error();
 
   /// Returns the global FreeType mutex
-  Radiant::Mutex & freetypeMutex();
+  POETIC_API Radiant::Mutex & freetypeMutex();
 }
 
 #endif

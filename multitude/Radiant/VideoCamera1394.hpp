@@ -32,7 +32,7 @@ namespace Radiant {
 
       For more information on libdc1394, see:
       http://damien.douxchamps.net/ieee1394/libdc1394/ */
-  class VideoCamera1394 : public VideoCamera
+  class RADIANT_API VideoCamera1394 : public VideoCamera
   {
   public:
     VideoCamera1394(CameraDriver * driver);
@@ -100,7 +100,7 @@ namespace Radiant {
     virtual int framesBehind() const { return m_framesBehind; }
 
     /// Reset all Firewire buses
-    RADIANT_API static void busReset();
+    static void busReset();
 
   private:
     bool enableCameraFeature(unsigned int feature,
@@ -143,7 +143,7 @@ namespace Radiant {
   //////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////
 
-  class CameraDriver1394 : public CameraDriver
+  class RADIANT_API CameraDriver1394 : public CameraDriver
   {
   public:
     CameraDriver1394() {}
