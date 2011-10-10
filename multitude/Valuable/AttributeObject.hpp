@@ -249,7 +249,7 @@ namespace Valuable
     /// The object is serialized using its name as a tag name.
     /// @param archive Serialization archive that is used to create new elements.
     /// @return Serialized object as an ArchiveElement
-    virtual ArchiveElement serialize(Archive & archive) const;
+    virtual ArchiveElement serialize(Archive & archive) const OVERRIDE;
 
     /// The host object of the value object (is any).
     /// @return Pointer to the host

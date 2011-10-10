@@ -32,17 +32,17 @@ namespace Valuable
     AttributeBool(Node * host, const QString & name, bool value, bool transit = false);
     virtual ~AttributeBool();
 
-    const char * type() const { return "bool"; }
-    bool deserialize(const ArchiveElement & element);
+    virtual const char * type() const OVERRIDE { return "bool"; }
+    bool deserialize(const ArchiveElement & element) OVERRIDE;
 
     /// @cond
-    virtual void processMessage(const char *, Radiant::BinaryData & data);
+    virtual void processMessage(const char *, Radiant::BinaryData & data) OVERRIDE;
     /// @endcond
 
     /// Boolean values can be set as integers in CSS files
-    bool set(int v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN);
+    bool set(int v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN) OVERRIDE;
 
-    QString asString(bool * const ok = 0) const;
+    virtual QString asString(bool * const ok = 0) const OVERRIDE;
   };
 
 }

@@ -21,7 +21,7 @@ namespace Valuable
           m_factors[i][j] = std::numeric_limits<float>::quiet_NaN();
     }
 
-    virtual bool set(float v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN)
+    virtual bool set(float v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN) OVERRIDE
     {
       const Nimble::Vector2f f(v, v);
       if(unit == VU_PERCENTAGE) {
@@ -35,7 +35,7 @@ namespace Valuable
       return true;
     }
 
-    virtual bool set(int v, Layer layer = MANUAL, ValueUnit = VU_UNKNOWN)
+    virtual bool set(int v, Layer layer = MANUAL, ValueUnit = VU_UNKNOWN) OVERRIDE
     {
       for(int j = 0; j < m_factors[layer].Elements; ++j)
         m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
@@ -43,7 +43,7 @@ namespace Valuable
       return true;
     }
 
-    virtual bool set(const Nimble::Vector2f & v, Layer layer = MANUAL, QList<ValueUnit> units = QList<ValueUnit>())
+    virtual bool set(const Nimble::Vector2f & v, Layer layer = MANUAL, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
     {
       Nimble::Vector2f f(v);
       for(int j = 0; j < m_factors[layer].Elements; ++j) {
@@ -78,7 +78,7 @@ namespace Valuable
       }
     }
 
-    virtual void clearValue(Attribute::Layer layer)
+    virtual void clearValue(Attribute::Layer layer) OVERRIDE
     {
       for(int j = 0; j < m_factors[layer].Elements; ++j)
         m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();

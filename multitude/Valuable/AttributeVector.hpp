@@ -73,12 +73,13 @@ namespace Valuable
       const ElementType * data() const
       { return value().data(); }
 
-      VALUABLE_API virtual void processMessage(const char * id, Radiant::BinaryData & data);
-      VALUABLE_API virtual bool deserialize(const ArchiveElement & element);
+      VALUABLE_API virtual void processMessage(const char * id, Radiant::BinaryData & data) OVERRIDE;
+      VALUABLE_API virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
 
-      VALUABLE_API const char * type() const;
+      VALUABLE_API const char * type() const OVERRIDE;
 
       /// Sets the value
+      // In some cases this is a override function, but not always
       VALUABLE_API virtual bool set(const VectorType & v, Attribute::Layer layer = Attribute::MANUAL,
                                     QList<Attribute::ValueUnit> units = QList<Attribute::ValueUnit>());
 
@@ -86,7 +87,7 @@ namespace Valuable
       /// @return The wrapped vector value
       const VectorType & asVector() const { return value(); }
 
-      VALUABLE_API QString asString(bool * const ok = 0) const;
+      VALUABLE_API virtual QString asString(bool * const ok = 0) const OVERRIDE;
 
       /// Returns the ith element
       inline const ElementType & get(int i) const { return value()[i]; }

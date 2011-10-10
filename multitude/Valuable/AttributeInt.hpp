@@ -101,14 +101,14 @@ namespace Valuable
 
     /// Sets the numeric value
     inline virtual bool set(int v, Attribute::Layer layer = Attribute::MANUAL,
-                            Attribute::ValueUnit = Attribute::VU_UNKNOWN)
+                            Attribute::ValueUnit = Attribute::VU_UNKNOWN) OVERRIDE
     {
       this->setValue(v, layer);
       return true;
     }
     /// @copydoc set
     inline virtual bool set(float v, Attribute::Layer layer = Attribute::MANUAL,
-                            Attribute::ValueUnit = Attribute::VU_UNKNOWN)
+                            Attribute::ValueUnit = Attribute::VU_UNKNOWN) OVERRIDE
     {
       this->setValue(v, layer);
       return true;
@@ -123,11 +123,11 @@ namespace Valuable
     /// Compares greater or equal than
     bool operator >= (const T & i) const { return value() >= i; }
 
-    const char * type() const { return VO_TYPE_INT; }
+    virtual const char * type() const OVERRIDE { return VO_TYPE_INT; }
 
-    virtual void processMessage(const char * id, Radiant::BinaryData & data);
+    virtual void processMessage(const char * id, Radiant::BinaryData & data) OVERRIDE;
 
-    bool deserialize(const ArchiveElement & element);
+    virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
   };
 
   /// 32-bit integer value object.

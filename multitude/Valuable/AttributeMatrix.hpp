@@ -48,9 +48,9 @@ namespace Valuable
     { return this->value().data(); }
 
     // virtual void processMessage(const char * id, Radiant::BinaryData & data);
-    virtual bool deserialize(const ArchiveElement & element);
-    const char * type() const;
-    QString asString(bool * const ok = 0) const;
+    virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
+    virtual const char * type() const OVERRIDE;
+    virtual QString asString(bool * const ok = 0) const OVERRIDE;
   };
 
   /// A float Matrix2 value object

@@ -42,11 +42,11 @@ namespace Valuable
       {}
 
       /// Converts the numeric value to float
-      float asFloat(bool * const ok = 0) const { if(ok) *ok = true; return static_cast<float> (value()); }
+      virtual float asFloat(bool * const ok = 0) const OVERRIDE { if(ok) *ok = true; return static_cast<float> (value()); }
       /// Converts the numeric value to integer
-      int asInt(bool * const ok = 0) const { if(ok) *ok = true; return static_cast<int> (value()); }
+      virtual int asInt(bool * const ok = 0) const OVERRIDE { if(ok) *ok = true; return static_cast<int> (value()); }
       /// Converts the numeric value to string
-      QString asString(bool * const ok = 0) const { if(ok) *ok = true; return Radiant::StringUtils::stringify(value()); }
+      virtual QString asString(bool * const ok = 0) const OVERRIDE { if(ok) *ok = true; return Radiant::StringUtils::stringify(value()); }
   };
 
 }

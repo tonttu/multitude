@@ -38,7 +38,7 @@ namespace Valuable
     AttributeColor & operator = (const Radiant::Color & c)
       { (* (AttributeVector<Nimble::Vector4f> *) this) = c; return *this; }
     
-    const char * type() const { return "color"; }
+    const char * type() const OVERRIDE { return "color"; }
     
     /// Converts the value object to color
     Radiant::Color asColor() const { return asVector(); }

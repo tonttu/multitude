@@ -317,7 +317,7 @@ namespace Valuable
     return false;
   }
 
-  bool Attribute::set(const QVariantList & v, QList<ValueUnit>, Layer)
+  bool Attribute::set(const QVariantList &, QList<ValueUnit>, Layer)
   {
     Radiant::error("Attribute::set(QVariantList) # %s: conversion not available",
                    m_name.toUtf8().data());

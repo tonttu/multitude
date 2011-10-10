@@ -43,7 +43,7 @@ namespace Valuable
     AttributeString(Node * host, const QString & name,
                 const QString & v = "", bool transit = false);
 
-    virtual void processMessage(const char * id, Radiant::BinaryData & data);
+    virtual void processMessage(const char * id, Radiant::BinaryData & data) OVERRIDE;
 
     /// Concatenates two strings
     /// @param i The string to be appended to this string
@@ -62,17 +62,17 @@ namespace Valuable
     bool operator != (const QString & that) const;
 
     /// Returns the value as float
-    float asFloat(bool * const ok = 0) const;
+    virtual float asFloat(bool * const ok = 0) const OVERRIDE;
     /// Returns the value as integer
-    int asInt(bool * const ok = 0) const;
+    virtual int asInt(bool * const ok = 0) const OVERRIDE;
     /// Returns the value as string
-    QString asString(bool * const ok = 0) const;
+    virtual QString asString(bool * const ok = 0) const OVERRIDE;
 
-    virtual bool set(const QString & v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN);
+    virtual bool set(const QString & v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN) OVERRIDE;
 
-    const char * type() const { return VO_TYPE_STRING; }
+    virtual const char * type() const OVERRIDE { return VO_TYPE_STRING; }
 
-    bool deserialize(const ArchiveElement & element);
+    virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
 
     /// Makes the string empty
     void clear();

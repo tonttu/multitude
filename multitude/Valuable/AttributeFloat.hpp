@@ -65,7 +65,7 @@ namespace Valuable
 
       /// Sets the numeric value
       inline virtual bool set(int v, Attribute::Layer layer = Attribute::MANUAL,
-                              Attribute::ValueUnit = Attribute::VU_UNKNOWN)
+                              Attribute::ValueUnit = Attribute::VU_UNKNOWN) OVERRIDE
       {
         m_factors[layer] = std::numeric_limits<float>::quiet_NaN();
         this->setValue(v, layer);
@@ -73,7 +73,7 @@ namespace Valuable
       }
       /// @copydoc set
       inline virtual bool set(float v, Attribute::Layer layer = Attribute::MANUAL,
-                              Attribute::ValueUnit unit = Attribute::VU_UNKNOWN)
+                              Attribute::ValueUnit unit = Attribute::VU_UNKNOWN) OVERRIDE
       {
         if(unit == Attribute::VU_PERCENTAGE) {
           setPercentage(v, layer);
@@ -84,9 +84,9 @@ namespace Valuable
         return true;
       }
 
-      const char * type() const { return VO_TYPE_FLOAT; }
+      virtual const char * type() const OVERRIDE { return VO_TYPE_FLOAT; }
 
-      bool deserialize(const ArchiveElement & element);
+      virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
 
       void setSrc(float src)
       {
@@ -103,14 +103,14 @@ namespace Valuable
         m_factors[layer] = factor;
       }
 
-      virtual void clearValue(Attribute::Layer layer)
+      virtual void clearValue(Attribute::Layer layer) OVERRIDE
       {
         m_factors[layer] = std::numeric_limits<float>::quiet_NaN();
         Base::clearValue(layer);
       }
 
       /// @cond
-      virtual void processMessage(const char * id, Radiant::BinaryData & data);
+      virtual void processMessage(const char * id, Radiant::BinaryData & data) OVERRIDE;
       /// @endcond
 
   private:

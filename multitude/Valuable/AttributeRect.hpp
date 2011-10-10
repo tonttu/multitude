@@ -24,11 +24,11 @@ namespace Valuable
     /// @param r The rectangle to be stored in the AttributeRect
     AttributeRectT(Node * host, const QString & name, const Nimble::RectT<T> & r, bool transit = false);
 
-    const char * type() const;
+    virtual const char * type() const OVERRIDE;
 
-    QString asString(bool * const ok = 0) const;
+    virtual QString asString(bool * const ok = 0) const OVERRIDE;
 
-    bool deserialize(const ArchiveElement & element);
+    virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
 
     /// Converts the object to rectangle
     Nimble::RectT<T> asRect() const { return this->value(); }
