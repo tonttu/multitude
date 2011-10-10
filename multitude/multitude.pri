@@ -55,7 +55,7 @@ linux-*:vivid {
 }
 
 linux-*{
-  LIB_PREFIX =
+  LIB_PREFIX = lib
   SHARED_LIB_SUFFIX = so
 
   contains(USEGLEW,no) {
