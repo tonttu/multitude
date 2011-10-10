@@ -22,8 +22,8 @@
 
 #include <cstddef>
 
-// try to detect c++0x
-#if defined(RADIANT_CPP0X)
+// try to detect C++11
+#if defined(RADIANT_CXX11)
   #include <memory>
 #elif defined(__GCCXML__)
   #include <generator/gccxml_tr1.hpp>

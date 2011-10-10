@@ -16,9 +16,11 @@
 #ifndef RADIANT_PLATFORM_HPP
 #define RADIANT_PLATFORM_HPP
 
-// C++0x check
-#if __cplusplus > 199711L
-  #define RADIANT_CPP0X 1
+static const long foobar = __cplusplus;
+
+// C++11 check
+#if __cplusplus > 199711L || defined(__GXX_EXPERIMENTAL_CXX0X__)
+  #define RADIANT_CXX11 1
 #endif
 
 // Discover the architecture
@@ -53,8 +55,8 @@
 #   define DLLEXPORT __attribute__((visibility("default")))
 #   define DLLIMPORT __attribute__((visibility("default")))
 
-//  Override is a GCC4.7 and up feature
-#   if (__GNUC__ == 4 && __GNUC_MINOR__ >= 7) || __GNUC__ > 4
+//  Override is a GCC4.7 and up feature when compiling code as c++0x/c++11
+#   if defined(RADIANT_CXX11) && ((__GNUC__ == 4 && __GNUC_MINOR__ >= 7) || __GNUC__ > 4)
 #     define OVERRIDE override
 #   else
 #     define OVERRIDE
