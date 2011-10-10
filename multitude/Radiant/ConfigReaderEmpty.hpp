@@ -26,7 +26,7 @@
 namespace Radiant {
 
   class Variant;
-  template <class T> RADIANT_API class ChunkT;
+  template <class T> class RADIANT_API ChunkT;
 
   typedef ChunkT<Variant> Chunk;
   typedef ChunkT<Chunk>   Config;

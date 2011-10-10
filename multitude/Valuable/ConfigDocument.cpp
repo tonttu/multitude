@@ -47,7 +47,7 @@ bool ConfigDocument::readConfigFile(const char *fileName)
   }
 
   int depth = 0;
-  bool flag = false, atFlag = false;
+  //bool flag = false, atFlag = false;
 
   int k = 0;
 
@@ -154,8 +154,8 @@ bool ConfigDocument::readConfigFile(const char *fileName)
               m_doc.m_nodes.push_back(el);
               elm.m_nodes.clear();
               elm.m_values.clear();
-              flag=false;
-              atFlag=false;
+              //flag=false;
+              //atFlag=false;
             }
           }
         }

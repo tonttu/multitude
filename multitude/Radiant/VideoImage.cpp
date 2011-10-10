@@ -167,11 +167,11 @@ namespace Radiant {
 
     // The line counts of different planes
     uint linecount[4] = {
-      m_height, m_height, m_height, 0
+      uint(m_height), uint(m_height), uint(m_height), 0
     };
 
     uint rowbytes[4] = {
-      m_width, m_width, m_width, 0
+      uint(m_width), uint(m_width), uint(m_width), 0
     };
 
     if(m_format == IMAGE_GRAYSCALE) {

@@ -141,9 +141,11 @@ namespace Screenplay {
         vlen = avcodec_decode_video2(m_vcontext,
                                      m_frame, & got_picture,
                                      m_pkt);
+
         // printf("|");fflush(0);
 
         if (got_picture) {
+          assert(vlen > 0);
           got = true;
 
           int64_t pts = 0;
@@ -538,8 +540,8 @@ namespace Screenplay {
         warning("VideoInputFFMPEG::fps # Could not get fps");
         return 0;
       }
-      assert(m_ic->nb_streams > m_vindex && m_vindex >= 0);
-      if(m_ic->nb_streams <= m_vindex)
+      assert(int(m_ic->nb_streams) > m_vindex && m_vindex >= 0);
+      if(int(m_ic->nb_streams) <= m_vindex || m_vindex < 0)
         return 0;
       fps = av_q2d(m_ic->streams[m_vindex]->r_frame_rate);
     }
