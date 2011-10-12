@@ -91,7 +91,8 @@ namespace Valuable
       void setSrc(float src)
       {
         m_src = src;
-        for(Attribute::Layer l = Attribute::ORIGINAL; l < Attribute::LAYER_COUNT; ++((int&)l)) {
+        for(Attribute::Layer l = Attribute::ORIGINAL; l < Attribute::LAYER_COUNT;
+            l = Attribute::Layer(l + 1)) {
           if(!this->m_valueSet[l]) continue;
           if(!Nimble::Math::isNAN(m_factors[l]))
             this->setValue(m_factors[l] * src, l);

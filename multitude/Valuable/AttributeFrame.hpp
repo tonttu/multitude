@@ -124,7 +124,8 @@ namespace Valuable
     void setSrc(float src)
     {
       m_src = src;
-      for(Attribute::Layer l = Attribute::ORIGINAL; l < Attribute::LAYER_COUNT; ++((int&)l)) {
+      for(Attribute::Layer l = Attribute::ORIGINAL; l < Attribute::LAYER_COUNT;
+          l = Attribute::Layer(l + 1)) {
         if(!m_valueSet[l]) continue;
         int count = 0;
         Nimble::Frame4f f = value(l);

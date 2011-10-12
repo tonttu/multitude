@@ -61,7 +61,8 @@ namespace Valuable
     void setSrcx(float src)
     {
       m_src.x = src;
-      for(Attribute::Layer l = Attribute::ORIGINAL; l < Attribute::LAYER_COUNT; ++((int&)l)) {
+      for(Attribute::Layer l = Attribute::ORIGINAL; l < Attribute::LAYER_COUNT;
+          l = Attribute::Layer(l + 1)) {
         if(!m_valueSet[l]) continue;
         if(!Nimble::Math::isNAN(m_factors[l].x))
           this->setValue(Nimble::Vector2f(src * m_factors[l].x, value().y), l);
@@ -71,7 +72,8 @@ namespace Valuable
     void setSrcy(float src)
     {
       m_src.y = src;
-      for(Attribute::Layer l = Attribute::ORIGINAL; l < Attribute::LAYER_COUNT; ++((int&)l)) {
+      for(Attribute::Layer l = Attribute::ORIGINAL; l < Attribute::LAYER_COUNT;
+          l = Attribute::Layer(l + 1)) {
         if(!m_valueSet[l]) continue;
         if(!Nimble::Math::isNAN(m_factors[l].y))
           this->setValue(Nimble::Vector2f(value().x, src * m_factors[l].y), l);
