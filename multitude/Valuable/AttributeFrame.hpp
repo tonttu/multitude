@@ -64,13 +64,18 @@ namespace Valuable
     virtual bool set(const Nimble::Vector2f & v, Layer layer = MANUAL, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
     {
       Nimble::Frame4f f(v.x, v.y, v.x, v.y);
-      for(int j = 0; j < m_factors[layer].Elements; ++j) {
-        if(units[j % 2] == VU_PERCENTAGE) {
-          m_factors[layer][j] = f[j];
-          f[j] *= m_src;
-        } else {
-          m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
+      if(units.size() == 2) {
+        for(int j = 0; j < m_factors[layer].Elements; ++j) {
+          if(units[j % 2] == VU_PERCENTAGE) {
+            m_factors[layer][j] = f[j];
+            f[j] *= m_src;
+          } else {
+            m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
+          }
         }
+      } else {
+        for(int j = 0; j < m_factors[layer].Elements; ++j)
+          m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
       }
       setValue(f, layer);
       return true;
@@ -79,13 +84,18 @@ namespace Valuable
     virtual bool set(const Nimble::Vector3f & v, Layer layer = MANUAL, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
     {
       Nimble::Frame4f f(v.x, v.y, v.z, v.x);
-      for(int j = 0; j < m_factors[layer].Elements; ++j) {
-        if(units[j % 3] == VU_PERCENTAGE) {
-          m_factors[layer][j] = f[j];
-          f[j] *= m_src;
-        } else {
-          m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
+      if(units.size() == 3) {
+        for(int j = 0; j < m_factors[layer].Elements; ++j) {
+          if(units[j % 3] == VU_PERCENTAGE) {
+            m_factors[layer][j] = f[j];
+            f[j] *= m_src;
+          } else {
+            m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
+          }
         }
+      } else {
+        for(int j = 0; j < m_factors[layer].Elements; ++j)
+          m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
       }
       setValue(f, layer);
       return true;
@@ -94,13 +104,18 @@ namespace Valuable
     virtual bool set(const Nimble::Vector4f & v, Layer layer = MANUAL, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
     {
       Nimble::Frame4f f(v);
-      for(int j = 0; j < m_factors[layer].Elements; ++j) {
-        if(units[j] == VU_PERCENTAGE) {
-          m_factors[layer][j] = f[j];
-          f[j] *= m_src;
-        } else {
-          m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
+      if(units.size() == 4) {
+        for(int j = 0; j < m_factors[layer].Elements; ++j) {
+          if(units[j] == VU_PERCENTAGE) {
+            m_factors[layer][j] = f[j];
+            f[j] *= m_src;
+          } else {
+            m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
+          }
         }
+      } else {
+        for(int j = 0; j < m_factors[layer].Elements; ++j)
+          m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
       }
       setValue(f, layer);
       return true;
