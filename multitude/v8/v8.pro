@@ -17,13 +17,12 @@ CONFIG(release, debug|release) {
   V8 += mode=release
 } else {
   win32 {
-    V8LIB=$${LIB_PREFIX}v8_d
     V8LIB_OUT=$${LIB_PREFIX}v8_d
   }
   !win32 {
-    V8LIB=$${LIB_PREFIX}v8
     V8LIB_OUT=$${LIB_PREFIX}v8
   }
+  V8LIB=$${LIB_PREFIX}v8_d
   TARGET=$${V8LIB}.$$SHARED_LIB_SUFFIX
   V8 += verbose=on mode=debug
 }
@@ -33,7 +32,7 @@ win32 {
   first.commands = if not exist $$TARGET scons env='"PATH:%PATH%,INCLUDE:%INCLUDE%,LIB:%LIB%"' $$V8 $$TARGET -j4 && copy $${V8LIB}.dll $${DEST}.dll && copy $${V8LIB}.lib $${DEST}.lib
 }
 !win32 {
-  DEST=$$DESTDIR/$${V8LIB}.$$SHARED_LIB_SUFFIX
+  DEST=$$DESTDIR/$${V8LIB_OUT}.$$SHARED_LIB_SUFFIX
   first.commands = if test ! -s $$TARGET; then scons $$V8 $$TARGET -j4; fi && cp $$TARGET $$DEST
 }
 
