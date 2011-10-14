@@ -398,7 +398,7 @@ void convert(ConfigElement & to, DOMElement from)
 
     DOMElement::NodeList nodes2 = de.getChildNodes();
 
-    if(nodes2.size()) {
+    if(!nodes2.empty()) {
       ConfigElement tmp;
       convert(tmp, de);
       to.addElement(tmp);

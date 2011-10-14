@@ -128,9 +128,9 @@ namespace VideoDisplay {
 
     virtual void getAudioParameters(int * channels,
                     int * sample_rate,
-                    Radiant::AudioSampleFormat * format) = 0;
+                    Radiant::AudioSampleFormat * format) const = 0;
 
-    virtual float fps() = 0;
+    virtual float fps() const = 0;
 
     size_t latestFrame() const { return m_decodedFrames - 1; }
     bool atEnd();
@@ -142,7 +142,7 @@ namespace VideoDisplay {
     size_t decodedFrames() const { return m_decodedFrames; }
     size_t frameRingBufferSize() const { return m_frames.size(); }
 
-    virtual double durationSeconds() = 0;
+    virtual double durationSeconds() const = 0;
 
     size_t finalFrames()   const { return m_finalFrames; }
 

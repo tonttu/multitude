@@ -37,7 +37,7 @@ namespace VideoDisplay {
 
   void SubTitles::update(Radiant::TimeStamp time)
   {
-    if(!m_texts.size()) {
+    if(m_texts.empty()) {
       m_current = 0;
       return;
     }

@@ -968,11 +968,13 @@ namespace Radiant {
       return 0;
     }
 
+#ifndef RADIANT_OSX
     if(dc1394_capture_is_frame_corrupt(m_camera, m_frame) == DC1394_TRUE) {
       Radiant::error("VideoCamera1394::captureImage # Got corrupted frame");
       doneImage();
       return 0;
     }
+#endif
 
     if(!m_frame)
       return 0;

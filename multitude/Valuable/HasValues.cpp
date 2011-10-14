@@ -34,8 +34,8 @@ namespace Valuable
   using namespace Radiant;
 
 #ifdef MULTI_DOCUMENTER
-  std::map<std::string, std::set<std::string> > s_eventSendNames;
-  std::map<std::string, std::set<std::string> > s_eventListenNames;
+  VALUABLE_API std::map<std::string, std::set<std::string> > s_eventSendNames;
+  VALUABLE_API std::map<std::string, std::set<std::string> > s_eventListenNames;
 #endif
 
   inline bool HasValues::ValuePass::operator == (const ValuePass & that) const

@@ -30,21 +30,52 @@
 #   define RADIANT_IA64 1
 #endif
 
-// Discover the compiler
+// Discover debug builds
+#if defined NDEBUG
+#   define RADIANT_RELEASE 1
+#else
+#   define RADIANT_DEBUG 1
+#endif
+
+// 
+// Detect LLVM/CLANG
+//
 #if defined (__clang__)
 #   define RADIANT_CLANG 1
 #   define DLLEXPORT __attribute__((visibility("default")))
 #   define DLLIMPORT __attribute__((visibility("default")))
 
+// Test if we have override
+#   if __has_feature(cxx_override_control)
+#     define OVERRIDE override
+#   else
+#     define OVERRIDE
+#   endif
+
+// 
+// Detect GNU GCC/G++
+//
 #elif defined (__GNUC__)
 #   define RADIANT_GNUC 1
 #   define DLLEXPORT __attribute__((visibility("default")))
 #   define DLLIMPORT __attribute__((visibility("default")))
 
+//  Override is a GCC4.7 and up feature
+#   if (__GNUC__ == 4 && __GNUC_MINOR__ >= 7) || __GNUC__ > 4
+#     define OVERRIDE override
+#   else
+#     define OVERRIDE
+#   endif
+
+// 
+// Detect Microsoft Visual C++
+//
 #elif defined (_MSC_VER)
 #   define RADIANT_MSVC 1
 #   define DLLEXPORT __declspec(dllexport)
 #   define DLLIMPORT __declspec(dllimport)
+
+#   define OVERRIDE override
 #endif
 
 //

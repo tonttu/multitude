@@ -17,6 +17,7 @@
 #define XFAKER_HPP
 
 #include "Platform.hpp"
+#include "Export.hpp"
 
 #ifdef RADIANT_LINUX
 
@@ -30,15 +31,15 @@ namespace Radiant {
   {
   public:
     /// Constructs XFaker for the given display
-    XFaker(const char* displayName = 0);
-    ~XFaker();
+    RADIANT_API XFaker(const char* displayName = 0);
+    RADIANT_API ~XFaker();
 
     /// Fakes mouse move event to given coordinates 
-    void fakeMouseMove(int x, int y);
+    RADIANT_API void fakeMouseMove(int x, int y);
     /// Fakes mouse button press
-    void fakeMouseButton(int button, bool press);
+    RADIANT_API void fakeMouseButton(int button, bool press);
     /// Fakes mouse wheel event
-    void fakeMouseWheel(int dx, int dy);
+    RADIANT_API void fakeMouseWheel(int dx, int dy);
 
   private:
 

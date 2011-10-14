@@ -143,7 +143,7 @@ namespace Radiant {
 
   const std::string & Variant::getString(const std::string & def) const
   {
-    if(m_var.size())
+    if(!m_var.empty())
       return m_var;
 
     return def;

@@ -21,6 +21,7 @@
 #include <Radiant/TimeStamp.hpp>
 #include <Radiant/VideoInput.hpp>
 #include <Radiant/Allocators.hpp>
+#include <Radiant/Mutex.hpp>
 
 #include <string>
 
@@ -64,7 +65,7 @@ namespace Screenplay {
     /** Get audio parameters from the video */
     virtual void getAudioParameters(int * channels,
                     int * sample_rate,
-                    Radiant::AudioSampleFormat * format);
+                    Radiant::AudioSampleFormat * format) const;
 
     /// The width of the video stream images.
     virtual int width() const;
@@ -168,6 +169,10 @@ namespace Screenplay {
     Radiant::TimeStamp  m_offsetTS;
 
     static int       m_debug;
+
+    // This class is accessed at least from the main thread and VideoInFFMPEG.
+    // This mutex tries to make that safe.
+    mutable Radiant::Mutex m_mutex;
   };
 
 }

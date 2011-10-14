@@ -24,6 +24,6 @@ LIBS += $$LIB_PATTERNS $$LIB_VALUABLE $$LIB_GLEW
 
 macx:LIBS += -framework,OpenGL
 
-win32:DEFINES += VIDEODISPLAY_EXPORT
+DEFINES += VIDEODISPLAY_EXPORT
 
 include(../library.pri)

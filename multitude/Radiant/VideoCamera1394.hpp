@@ -100,7 +100,7 @@ namespace Radiant {
     virtual int framesBehind() const { return m_framesBehind; }
 
     /// Reset all Firewire buses
-    static void busReset();
+    RADIANT_API static void busReset();
 
   private:
     bool enableCameraFeature(unsigned int feature,
