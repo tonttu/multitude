@@ -70,12 +70,13 @@ namespace VideoDisplay {
 
   VideoInFFMPEG::~VideoInFFMPEG()
   {
-    Radiant::Guard g(m_mutex);
-
     debugVideoDisplay("VideoInFFMPEG::~VideoInFFMPEG");
     if(isRunning()) {
-      m_continue = false;
-      m_vcond.wakeAll(m_vmutex);
+      {
+        Radiant::Guard g(m_mutex);
+        m_continue = false;
+        m_vcond.wakeAll(m_vmutex);
+      }
       waitEnd();
     }
     debugVideoDisplay("VideoInFFMPEG::~VideoInFFMPEG # EXIT");
@@ -133,7 +134,10 @@ namespace VideoDisplay {
 
       debugVideoDisplay("%s # %s using cached preview", fname, filename);
 
-      m_duration = vi->m_duration;
+      if(m_flags & Radiant::DO_LOOP)
+        m_duration = Radiant::TimeStamp::createSecondsD(1.0e+9f);
+      else
+        m_duration = vi->m_duration;
       const VideoImage * img = & vi->m_firstFrame;
 
       m_info.m_videoFrameSize.make(img->m_width, img->m_height);

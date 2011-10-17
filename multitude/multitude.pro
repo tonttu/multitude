@@ -21,7 +21,7 @@ vivid {
   SUBDIRS += Vivid
 }
 
-exists(Examples/Examples.pro):SUBDIRS += Examples
+#exists(Examples/Examples.pro):SUBDIRS += Examples
 
 SUBDIRS += Applications
 

@@ -13,7 +13,7 @@ namespace Resonant {
 
   /** Gain control audio module. The gain is defined by a single gain
       coefficient, which is used for linear multiplication. */
-  class RESONANT_API ModuleGain : public Module
+  class RESONANT_API ModuleGain : public Resonant::Module
   {
   public:
     /// Constructs a new gain controller module
@@ -31,7 +31,7 @@ namespace Resonant {
 
     int m_channels;
 
-    Nimble::RampT<float> m_gain;
+    Nimble::Rampf m_gain;
   };
 
 }

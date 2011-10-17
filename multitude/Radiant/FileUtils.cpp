@@ -236,10 +236,10 @@ namespace Radiant
     }
   }
 
-	QString FileUtils::pathSeparator()
-	{
-		return QString(";");
-	}
+  QString FileUtils::pathSeparator()
+  {
+    return QString(";");
+  }
 
 	QString FileUtils::directorySeparator()
 	{

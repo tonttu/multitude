@@ -1,22 +1,10 @@
 /* COPYRIGHT
- *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #ifndef RADIANT_SERIAL_PORT_HPP
 #define RADIANT_SERIAL_PORT_HPP
 
-#include <Radiant/Export.hpp>
+#include <Radiant/BinaryStream.hpp>
 
 #include <stdint.h>
 
@@ -31,19 +19,19 @@
 namespace Radiant
 {
 
-  /// A serial port handler. 
+  /// A serial port handler.
   /** This class is for binary IO with serial ports.
 
       @author Tommi Ilmonen
   */
 
-  class RADIANT_API SerialPort
+  class RADIANT_API SerialPort : public Radiant::BinaryStream
   {
   public:
     SerialPort();
     /// Delete the object and close the port
-    ~SerialPort();
-  
+    virtual ~SerialPort();
+
     /// Opens a serial port for communications
     /** If the port was open, this method will close it before opening it.
       @param device name of the device to open
@@ -55,13 +43,13 @@ namespace Radiant
       @param waitTimeUS Time to wait in microseconds
       @return true on success
       */
-    bool open(const char * device, 
-	      bool stopBit, 
-	      bool parityBit,
-	      int baud, 
-	      int bits, 
-	      int waitBytes, 
-	      int waitTimeUS);
+    bool open(const char * device,
+          bool stopBit,
+          bool parityBit,
+          int baud,
+          int bits,
+          int waitBytes,
+          int waitTimeUS);
     /// Close the serial port.
     bool close();
 
@@ -69,14 +57,14 @@ namespace Radiant
     /// @param buf buffer to write from
     /// @param bytes bytes to write
     /// @return number of bytes written
-    int write(const void * buf, int bytes);
+    virtual int write(const void * buf, int bytes);
     /// Writes a byte to the port
     int writeByte(uint8_t byte);
     /// Read bytes from the port
     /// @param[out] buf output buffer
     /// @param bytes max bytes to read
     /// @return number of bytes read
-    int read(void * buf, int bytes);
+    virtual int read(void * buf, int bytes, bool waitfordata = true);
 
     /// Checks if the port is open
     bool isOpen() const;
@@ -84,7 +72,7 @@ namespace Radiant
     const QString & deviceName() { return m_device; }
 
   private:
-  
+
     QString m_device;
 
 #ifdef WIN32

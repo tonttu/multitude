@@ -141,7 +141,7 @@ namespace Radiant {
 
   const QString & Variant::getString(const QString & def) const
   {
-    if(m_var.size())
+    if(!m_var.isEmpty())
       return m_var;
 
     return def;

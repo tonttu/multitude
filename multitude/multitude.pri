@@ -86,6 +86,7 @@ contains(MEMCHECK,yes) {
 macx {
   LIB_PREFIX = lib
   SHARED_LIB_SUFFIX = dylib
+  # For Deft (which depends on MultiTouch)
   LIBS += -undefined dynamic_lookup
 
   # Frameworks on OS X don't respect QMAKE_LIBDIR
@@ -151,7 +152,7 @@ win32 {
     QMAKE_CXXFLAGS += -D_CRT_SECURE_NO_WARNINGS -wd4244 -wd4251 -wd4355
     DEFINES += WIN32
 
-	# These libs have an extra extension for debug builds
+    # These libs have an extra extension for debug builds
     build_pass:CONFIG(debug,debug|release) {
       LIB_BOX2D = -lBox2D_d
       LIB_POETIC = -lPoetic_d

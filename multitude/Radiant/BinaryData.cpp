@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #include "BinaryData.hpp"
@@ -542,6 +530,33 @@ namespace Radiant {
     return n == recv;
   }
 
+  bool BinaryData::readBlob(std::vector<uint8_t> & buf)
+  {
+    if(!available(sizeof(int32_t)))
+      return false;
+
+    int32_t marker = getRef<int32_t>();
+
+    if(marker != BLOB_MARKER) {
+      skipParameter(marker);
+      return false;
+    }
+
+    int32_t recv = getRef<int32_t>();
+
+    const char * source = & m_buf[m_current];
+
+    m_current += recv;
+
+    buf.resize(recv);
+
+    if(recv > 0)
+      memcpy( & buf[0], source, recv);
+
+    return true;
+
+  }
+
 #define BD_STR_TO_VEC(type, n, ok) \
   const char * source = & m_buf[m_current]; \
                         Radiant::Variant v(source); \
@@ -862,6 +877,50 @@ namespace Radiant {
 
     argc = i;
     return m_current == m_total;
+  }
+
+  bool BinaryData::saveToFile(const char * filename) const
+  {
+    FILE * f = fopen(filename, "wb");
+
+    if(!f)
+      return false;
+
+    uint64_t s = m_current;
+    fwrite(& s, 8, 1, f);
+    bool ok = fwrite(m_buf, m_current, 1, f) == 1;
+
+    fclose(f);
+
+    return ok;
+  }
+
+  bool BinaryData::loadFromFile(const char * filename, size_t maxSize)
+  {
+    FILE * f = fopen(filename, "rb");
+
+    if(!f)
+      return false;
+
+    uint64_t s = 0;
+    bool ok = fread( & s, 8, 1, f) == 1;
+
+    if(s > maxSize) {
+      ok = false;
+    }
+    else if(ok) {
+      clear();
+      ensure(s);
+      ok = fread(m_buf, s, 1, f) == 1;
+      if(ok) {
+        m_total = s;
+        rewind();
+      }
+    }
+
+    fclose(f);
+
+    return ok;
   }
 
   void BinaryData::skipParameter(int marker)

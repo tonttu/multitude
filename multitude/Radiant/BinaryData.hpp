@@ -7,10 +7,10 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef RADIANT_BINARY_DATA_HPP
@@ -177,6 +177,10 @@ namespace Radiant {
     /// @param n bytes to read
     /// @return true on success
     bool readBlob(void * ptr, int n);
+    /// Reads a blob of expected size
+    /// @param[out] bug buffer to write to. The buffer will be resized to fit the data
+    /// @return true on success
+    bool readBlob(std::vector<uint8_t> & buf);
 
     /// Reads a 2D 32-bit floating point vector from the buffer
     Nimble::Vector2f readVector2Float32(bool * ok = 0);
@@ -203,7 +207,7 @@ namespace Radiant {
     /// Returns the total number of bytes used by this buffer
     inline int total() const { return m_total; }
     /// Sets the total number of bytes used by this buffer
-    inline void setTotal(int bytes) { m_total = bytes; }
+    inline void setTotal(unsigned bytes) { if(bytes > m_size) ensure(bytes - m_size); m_total = bytes; }
 
     /// Writes the buffer into a stream
     bool write(Radiant::BinaryStream *) const;
@@ -232,6 +236,11 @@ namespace Radiant {
     /// @param argc in = size of argv, out = number of values filled
     /// @todo isn't implemented fully
     bool readTo(int & argc, v8::Handle<v8::Value> argv[]);
+
+    /// Saves this buffer to the given file
+    bool saveToFile(const char * filename) const;
+    /// Reads data from a file
+    bool loadFromFile(const char * filename, size_t maxSize = 10000000);
 
   private:
 
