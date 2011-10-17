@@ -13,6 +13,7 @@ contains(QMAKE_HOST.arch, x86_64) {
 }
 CONFIG(release, debug|release) {
   V8LIB=$${LIB_PREFIX}v8
+  V8LIB_OUT=$${V8LIB}
   TARGET=$${V8LIB}.$$SHARED_LIB_SUFFIX
   V8 += mode=release
 } else {
