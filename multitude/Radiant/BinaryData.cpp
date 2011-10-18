@@ -870,6 +870,9 @@ namespace Radiant {
       } else if(marker == STRING_MARKER || marker == WSTRING_MARKER) {
         QString v;
         if(readString(v)) argv[i++] = v8::String::New(v.utf16());
+      } else {
+        Radiant::warning("BinaryData::readTo # Type with marker %d is not implemented", marker);
+        break;
       }
       /// @todo VECTOR2F_MARKER VECTOR2I_MARKER VECTOR3F_MARKER VECTOR3I_MARKER
       ///       VECTOR4F_MARKER VECTOR4I_MARKER TS_MARKER BLOB_MARKER
