@@ -262,6 +262,7 @@ namespace Valuable
     /// Adds a listener that is invoked whenever the value is changed
     /// The listener is removed when the listener object is deleted
     long addListener(Node * listener, ListenerFunc func, int role = CHANGE_ROLE);
+    long addListener(v8::Persistent<v8::Function> func, int role = CHANGE_ROLE);
     /// Removes listeners from the listener list
     void removeListeners(int role = ALL_ROLES);
     /// Removes a listener from the listener list
@@ -306,9 +307,13 @@ namespace Valuable
       AttributeListener(ListenerFunc func_, int role_, Node * listener_ = 0)
         : func(func_), role(role_), listener(listener_) {}
 
+      AttributeListener(v8::Persistent<v8::Function> func_, int role_)
+        : func(), scriptFunc(func_), role(role_), listener(0) {}
+
       AttributeListener() : func(), role(), listener() {}
 
       ListenerFunc func;
+      v8::Persistent<v8::Function> scriptFunc;
       int role;
       Node * listener;
     };

@@ -192,8 +192,16 @@ namespace Valuable
   {
 //    Radiant::trace("Attribute::emitChange # '%s'", m_name.toUtf8().data());
     m_changed = true;
-    foreach(const AttributeListener & l, m_listeners)
-      if(l.role & CHANGE_ROLE) l.func();
+    foreach(const AttributeListener & l, m_listeners) {
+      if(l.role & CHANGE_ROLE) {
+        if(!l.func) {
+          /// @todo what is the correct receiver ("this" in the callback)?
+          /// @todo is this legal without v8::HandleScope handle_scope;
+          /// @todo is it legal to give null pointer to argv parameter?
+          l.scriptFunc->Call(v8::Context::GetCurrent()->Global(), 0, 0);
+        } else l.func();
+      }
+    }
     ChangeMap::addChange(this);
   }
 
@@ -201,7 +209,12 @@ namespace Valuable
   {
     //Radiant::trace("Attribute::emitDelete");
     foreach(const AttributeListener & l, m_listeners) {
-      if(l.role & DELETE_ROLE) l.func();
+      if(l.role & DELETE_ROLE) {
+        if(!l.func) {
+          /// @todo what is the correct receiver ("this" in the callback)?
+          l.scriptFunc->Call(v8::Context::GetCurrent()->Global(), 0, 0);
+        } else l.func();
+      }
       if(l.listener) l.listener->m_valueListening.remove(this);
     }
     m_listeners.clear();
@@ -226,6 +239,13 @@ namespace Valuable
     long id = m_listenersId++;
     m_listeners[id] = AttributeListener(func, role, listener);
     if(listener) listener->m_valueListening << listener;
+    return id;
+  }
+
+  long Attribute::addListener(v8::Persistent<v8::Function> func, int role)
+  {
+    long id = m_listenersId++;
+    m_listeners[id] = AttributeListener(func, role);
     return id;
   }
 

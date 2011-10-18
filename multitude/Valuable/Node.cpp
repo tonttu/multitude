@@ -504,6 +504,16 @@ namespace Valuable
     return m_eventListenNames.contains(id);
   }
 
+  long Node::addListener(const QString & name, v8::Persistent<v8::Function> func, int role)
+  {
+    Attribute * attr = getValue(name);
+    if(!attr) {
+      warning("Node::addListener # Failed to find attribute %s", name.toUtf8().data());
+      return -1;
+    }
+    return attr->addListener(func, role);
+  }
+
   void Node::eventSend(const QString & id, Radiant::BinaryData & bd)
   {
     eventSend(id.toUtf8().data(), bd);
