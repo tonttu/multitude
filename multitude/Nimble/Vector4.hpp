@@ -66,7 +66,7 @@ namespace Nimble {
     /// Compares if two vectors are equal
     inline bool operator==  (const Vector4T& src) const
     {
-      static const float eps = std::numeric_limits<T>::epsilon();
+      static const T eps = std::numeric_limits<T>::epsilon();
       return
         x >= src.x - eps && x<= src.x + eps && y >= src.y - eps && y<= src.y + eps &&
         z >= src.z - eps && z<= src.z + eps && w >= src.w - eps && w<= src.w + eps;
@@ -181,7 +181,7 @@ namespace Nimble {
   namespace Math {
     /// Specialize Abs
     template <class T>
-    inline float Abs(const Vector4T<T>& t)
+    inline T Abs(const Vector4T<T>& t)
     {
       return t.length();
     }
