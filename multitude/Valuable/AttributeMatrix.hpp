@@ -26,7 +26,7 @@ namespace Valuable
 
   /// A matrix value object
   template<class MatrixType, typename ElementType, int N>
-  class AttributeMatrix : public AttributeT<MatrixType>
+  class VALUABLE_API AttributeMatrix : public AttributeT<MatrixType>
   {
     typedef AttributeT<MatrixType> Base;
   public:
