@@ -181,7 +181,7 @@ namespace Radiant
     return write(& byte, 1);
   }
 
-  int SerialPort::read(void * buf, int bytes)
+  int SerialPort::read(void * buf, int bytes, bool /*waitfordata*/)
   {
     if(!isOpen()) {
       error("SerialPort::read # device not open");
