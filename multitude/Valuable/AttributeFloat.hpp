@@ -65,7 +65,7 @@ namespace Valuable
 
       /// Sets the numeric value
       inline virtual bool set(int v, Attribute::Layer layer = Attribute::MANUAL,
-                              Attribute::ValueUnit = Attribute::VU_UNKNOWN) OVERRIDE
+                              Attribute::ValueUnit = Attribute::VU_UNKNOWN)
       {
         m_factors[layer] = std::numeric_limits<float>::quiet_NaN();
         this->setValue(v, layer);
@@ -73,7 +73,7 @@ namespace Valuable
       }
       /// @copydoc set
       inline virtual bool set(float v, Attribute::Layer layer = Attribute::MANUAL,
-                              Attribute::ValueUnit unit = Attribute::VU_UNKNOWN) OVERRIDE
+                              Attribute::ValueUnit unit = Attribute::VU_UNKNOWN)
       {
         if(unit == Attribute::VU_PERCENTAGE) {
           setPercentage(v, layer);
