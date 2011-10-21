@@ -74,7 +74,7 @@ SOURCES += Utils.cpp
 SOURCES += VertexBuffer.cpp
 
 # Link in Squish statically
-LIBS += -lSquish
+LIBS += $$LIB_SQUISH
 QMAKE_LIBDIR += ../Squish
 
 LIBS += $$LIB_RADIANT \
@@ -84,7 +84,7 @@ LIBS += $$LIB_RADIANT \
     $$LIB_PATTERNS \
     $$LIB_GLEW
 
-win32:DEFINES += LUMINOUS_EXPORT
+DEFINES += LUMINOUS_EXPORT
 
 CONFIG += qt
 QT += gui

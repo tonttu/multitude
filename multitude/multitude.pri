@@ -30,12 +30,13 @@ LIB_POETIC = -lPoetic
 LIB_FLUFFY = -lFluffy
 LIB_LUMINOUS = -lLuminous
 LIB_NIMBLE = -lNimble
-LIB_RADIANT = -lRadiant -lPatterns
+LIB_RADIANT = -lRadiant
 LIB_RESONANT = -lResonant
 LIB_SCREENPLAY = -lScreenplay
 LIB_VIDEODISPLAY = -lVideoDisplay
 LIB_VALUABLE = -lValuable
 LIB_PATTERNS = -lPatterns
+LIB_SQUISH = -lSquish
 
 linux-*:vivid {
   QMAKE_LIBDIR += $$(FBX_SDK)/lib/gcc4
@@ -69,8 +70,6 @@ contains(MEMCHECK,yes) {
 }
 
 macx {
-  LIBS += -undefined dynamic_lookup
-
   # Frameworks on OS X don't respect QMAKE_LIBDIR
   QMAKE_LFLAGS += -F$$PWD/lib
 
@@ -97,13 +96,14 @@ macx {
     LIB_VALUABLE = -framework,Valuable
     LIB_VIDEODISPLAY = -framework,VideoDisplay
     LIB_PATTERNS = -framework,Patterns
-
-    LIB_BOX2D = -framework,Box2D
   }
 
   # change architecture to x86_64 if snow leopard
   system([ `uname -r | cut -d . -f1` -gt 9 ] )  {
   CONFIG += x86_64
+
+  system([ `uname -r | cut -d . -f1` -eq 10 ] ):DEFINES+=RADIANT_OSX_SNOW_LEOPARD
+  system([ `uname -r | cut -d . -f1` -eq 11 ] ):DEFINES+=RADIANT_OSX_LION
   }
 
 }
@@ -131,6 +131,21 @@ win32 {
     QMAKE_CXXFLAGS += -D_CRT_SECURE_NO_WARNINGS -wd4244 -wd4251 -wd4355
     DEFINES += WIN32
 
+	# These libs have an extra extension for debug builds
+    build_pass:CONFIG(debug,debug|release) {
+      LIB_BOX2D = -lBox2D_d
+      LIB_POETIC = -lPoetic_d
+      LIB_FLUFFY = -lFluffy_d
+      LIB_LUMINOUS = -lLuminous_d
+      LIB_NIMBLE = -lNimble_d
+      LIB_RADIANT = -lRadiant_d
+      LIB_RESONANT = -lResonant_d
+      LIB_SCREENPLAY = -lScreenplay_d
+      LIB_VIDEODISPLAY = -lVideoDisplay_d
+      LIB_VALUABLE = -lValuable_d
+      LIB_PATTERNS = -lPatterns_d
+	  LIB_SQUISH = -lSquish_d
+	}
 }
 
 MULTI_VIDEO_LIBS = $$LIB_SCREENPLAY $$LIB_RESONANT $$LIB_VIDEODISPLAY

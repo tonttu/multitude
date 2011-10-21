@@ -41,6 +41,24 @@ INSTALLS += includes src_code extra_inc
 win32 {
 	DLLDESTDIR = $$PWD/bin
 
+	# Debug libraries have an extra extension
+  build_pass:CONFIG(debug,debug|release) {
+    TARGET=$$join(TARGET,,,_d)
+  }
+
+  # Optimized debug libraries
+  build_pass:CONFIG(debug,debug|release) {
+    CONFIG(optimized) {
+      # Set optimization level
+	  QMAKE_CFLAGS_DEBUG += -O2
+      QMAKE_CXXFLAGS_DEBUG += -O2
+      QMAKE_CXXFLAGS_DEBUG=$$replace(QMAKE_CXXFLAGS_DEBUG,-Zi,)
+      QMAKE_LFLAGS_DEBUG=$$replace(QMAKE_LFLAGS_DEBUG,/DEBUG,)
+      # No need to install headers
+      #EXPORT_HEADERS = nothing
+    }
+  }
+	
 	# For some reason DESTDIR_TARGET doesn't work here
 	tt = $$join(TARGET, "", "$(DESTDIR)", ".dll")
 	dlls.path = /bin
@@ -61,6 +79,13 @@ win32 {
 		
 		INSTALLS += sdk_lib sdk_dll
 	}
+}
+
+unix {
+  # Make symbol export for shared libs compatible with MSVC
+  !CONFIG(staticlib) {
+    linux*:QMAKE_CXXFLAGS += -fvisibility-ms-compat
+  }
 }
 
 macx {

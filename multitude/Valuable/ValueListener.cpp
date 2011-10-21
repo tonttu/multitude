@@ -51,7 +51,7 @@ namespace Valuable
 
   ValueListeners::ValueListeners(const ValueListeners & that)
   {
-    if(that.size())
+    if(!that.empty())
       m_list = new container(*that.m_list);
     else
       m_list = 0;
@@ -105,7 +105,7 @@ namespace Valuable
 
   ValueListeners & ValueListeners::operator = (const ValueListeners & that)
   {
-    if(that.size()) {
+    if(!that.empty()) {
       makeList();
       *m_list = *that.m_list;
     }

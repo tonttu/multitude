@@ -48,7 +48,8 @@ namespace Screenplay {
     m_ic(0),
     m_pkt(0),
     m_flags(0),
-    m_lastPts(0)
+    m_lastPts(0),
+    m_mutex(true)
   {
     static volatile bool ffmpegInitialized = false;
 
@@ -80,9 +81,11 @@ namespace Screenplay {
 
   const Radiant::VideoImage * VideoInputFFMPEG::captureImage()
   {
+    Radiant::Guard g(m_mutex);
+
     /// @todo this effectively prevents multi-threaded video decoding. Someone
     /// can figure out a fix if this becomes a problem.
-    Radiant::Guard g(s_ffmpegMutex);
+    Radiant::Guard g2(s_ffmpegMutex);
 
     assert(this != 0);
 
@@ -461,6 +464,8 @@ namespace Screenplay {
 
   const void * VideoInputFFMPEG::captureAudio(int * frameCount)
   {
+    Radiant::Guard g(m_mutex);
+
     /* trace2("VideoInputFFMPEG::captureAudio # %d %d",
      * frameCount, m_audioFrames); */
 
@@ -477,8 +482,10 @@ namespace Screenplay {
 
   void VideoInputFFMPEG::getAudioParameters(int * channels,
                                             int * sample_rate,
-                                            Radiant::AudioSampleFormat * format)
+                                            Radiant::AudioSampleFormat * format) const
   {
+    Radiant::Guard g(m_mutex);
+
     if(!m_acontext){
 
       if(m_flags & WITH_AUDIO) {
@@ -504,16 +511,22 @@ namespace Screenplay {
 
   int VideoInputFFMPEG::width() const
   {
+    Radiant::Guard g(m_mutex);
+
     return m_vcontext ? m_vcontext->width : 0;
   }
 
   int VideoInputFFMPEG::height() const
   {
+    Radiant::Guard g(m_mutex);
+
     return m_vcontext ? m_vcontext->height : 0;
   }
 
   float VideoInputFFMPEG::fps() const
   {
+    Radiant::Guard g(m_mutex);
+
     if(!m_vcontext)
       return 0;
 
@@ -525,6 +538,9 @@ namespace Screenplay {
         warning("VideoInputFFMPEG::fps # Could not get fps");
         return 0;
       }
+      assert(m_ic->nb_streams > m_vindex && m_vindex >= 0);
+      if(m_ic->nb_streams <= m_vindex)
+        return 0;
       fps = av_q2d(m_ic->streams[m_vindex]->r_frame_rate);
     }
 
@@ -533,21 +549,25 @@ namespace Screenplay {
 
   Radiant::ImageFormat VideoInputFFMPEG::imageFormat() const
   {
+    Radiant::Guard g(m_mutex);
     return m_image.m_format;
   }
 
   unsigned int VideoInputFFMPEG::size() const
   {
+    Radiant::Guard g(m_mutex);
     return m_image.size();
   }
 
   bool VideoInputFFMPEG::open(const char * filename,
                               int flags)
   {
+    Radiant::Guard g(m_mutex);
+
     if(m_vcodec)
       close();
 
-    Radiant::Guard g(s_ffmpegMutex);
+    Radiant::Guard g2(s_ffmpegMutex);
 
     if(!m_pkt) {
       m_pkt = new AVPacket();
@@ -721,10 +741,11 @@ namespace Screenplay {
 
   bool VideoInputFFMPEG::close()
   {
+    Radiant::Guard g(m_mutex);
     //    if(!m_ic)
     //      return false;
 
-    Guard g( s_ffmpegMutex);
+    Guard g2( s_ffmpegMutex);
 
     if(m_frame)
       av_free(m_frame);
@@ -773,7 +794,8 @@ namespace Screenplay {
 
   bool VideoInputFFMPEG::seekPosition(double timeSeconds)
   {
-    Radiant::Guard g(s_ffmpegMutex);
+    Radiant::Guard g(m_mutex);
+    Radiant::Guard g2(s_ffmpegMutex);
 
     debugScreenplay("VideoInputFFMPEG::seekPosition # %lf", timeSeconds);
 
@@ -811,6 +833,8 @@ namespace Screenplay {
 
   double VideoInputFFMPEG::durationSeconds() const
   {
+    Radiant::Guard g(m_mutex);
+
     if(m_flags & Radiant::DO_LOOP)
       return 1.0e+9f;
 
@@ -833,21 +857,24 @@ namespace Screenplay {
 
   bool VideoInputFFMPEG::start()
   {
+    Radiant::Guard g(m_mutex);
     return ((m_vcodec == 0) ? false : true);
   }
 
   bool VideoInputFFMPEG::isStarted() const
   {
+    Radiant::Guard g(m_mutex);
     return ((m_vcodec == 0) ? false : true);
   }
 
   bool VideoInputFFMPEG::stop()
   {
+    Radiant::Guard g(m_mutex);
     return true;
   }
 
   void VideoInputFFMPEG::setDebug(int debug)
-  {
+  {    
     m_debug = debug;
   }
 

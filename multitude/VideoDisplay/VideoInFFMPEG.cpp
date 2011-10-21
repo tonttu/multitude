@@ -62,8 +62,8 @@ namespace VideoDisplay {
       : m_channels(0),
       m_sampleRate(44100),
       m_audioCount(0),
-      m_auformat(ASF_INT16)
-
+      m_auformat(ASF_INT16),
+      m_mutex(true)
   {
     // m_audiobuf.resize(2 * 44100);
   }
@@ -72,8 +72,11 @@ namespace VideoDisplay {
   {
     debugVideoDisplay("VideoInFFMPEG::~VideoInFFMPEG");
     if(isRunning()) {
-      m_continue = false;
-      m_vcond.wakeAll(m_vmutex);
+      {
+        Radiant::Guard g(m_mutex);
+        m_continue = false;
+        m_vcond.wakeAll(m_vmutex);
+      }
       waitEnd();
     }
     debugVideoDisplay("VideoInFFMPEG::~VideoInFFMPEG # EXIT");
@@ -81,14 +84,14 @@ namespace VideoDisplay {
 
   void VideoInFFMPEG::getAudioParameters(int * channels,
                                          int * sample_rate,
-                                         AudioSampleFormat * format)
+                                         AudioSampleFormat * format) const
   {
     * channels = m_channels;
     * sample_rate = m_sample_rate;
     * format = m_auformat;
   }
 
-  float VideoInFFMPEG::fps()
+  float VideoInFFMPEG::fps() const
   {
     float fps = m_fps > 0.0f ? m_fps : m_video.fps();
 
@@ -100,6 +103,7 @@ namespace VideoDisplay {
 
   bool VideoInFFMPEG::open(const char * filename, Radiant::TimeStamp pos)
   {
+    Radiant::Guard g(m_mutex);
 
     static const char * fname = "VideoInFFMPEG::open";
 
@@ -107,7 +111,6 @@ namespace VideoDisplay {
 
     m_buffered = 0;
     m_audioCount = 0;
-
 
     static float extralatency = 0.0f;
     static bool checked = false;
@@ -131,7 +134,10 @@ namespace VideoDisplay {
 
       debugVideoDisplay("%s # %s using cached preview", fname, filename);
 
-      m_duration = vi->m_duration;
+      if(m_flags & Radiant::DO_LOOP)
+        m_duration = Radiant::TimeStamp::createSecondsD(1.0e+9f);
+      else
+        m_duration = vi->m_duration;
       const VideoImage * img = & vi->m_firstFrame;
 
       m_info.m_videoFrameSize.make(img->m_width, img->m_height);
@@ -227,7 +233,6 @@ namespace VideoDisplay {
     return true;
   }
 
-
   void VideoInFFMPEG::videoGetSnapshot(Radiant::TimeStamp pos)
   {
     debugVideoDisplay("VideoInFFMPEG::videoGetSnapshot # %lf", pos.secondsD());
@@ -249,8 +254,9 @@ namespace VideoDisplay {
       return;
     }
 
-    putFrame(img, FRAME_SNAPSHOT, 0, video.frameTime(), false);
+    Radiant::Guard g(m_mutex);
 
+    putFrame(img, FRAME_SNAPSHOT, 0, video.frameTime(), false);
     m_frameTime = video.frameTime();
 
     video.close();
@@ -258,6 +264,8 @@ namespace VideoDisplay {
 
   void VideoInFFMPEG::videoPlay(Radiant::TimeStamp pos)
   {
+    Radiant::Guard g(m_mutex);
+
     //info("VideoInFFMPEG::videoPlay # %lf", pos.secondsD());
 
     if(!m_video.open(m_name.c_str(), m_flags)) {
@@ -359,6 +367,8 @@ namespace VideoDisplay {
 
   void VideoInFFMPEG::videoGetNextFrame()
   {
+    Radiant::Guard g(m_mutex);
+
     debugVideoDisplay("VideoInFFMPEG::videoGetNextFrame");
 
     const VideoImage * img = m_video.captureImage();
@@ -395,12 +405,13 @@ namespace VideoDisplay {
 
   void VideoInFFMPEG::videoStop()
   {
+    Radiant::Guard g(m_mutex);
+
     debugVideoDisplay("VideoInFFMPEG::videoStop");
     m_video.close();
-
   }
 
-  double VideoInFFMPEG::durationSeconds()
+  double VideoInFFMPEG::durationSeconds() const
   {
     return m_duration.secondsD();
   }
@@ -416,6 +427,8 @@ namespace VideoDisplay {
 
   void VideoInFFMPEG::endOfFile()
   {
+    Radiant::Guard g(m_mutex);
+
     m_finalFrames = m_decodedFrames;
     m_playing = false;
     m_atEnd = true;
