@@ -416,6 +416,11 @@ namespace VideoDisplay {
     return m_duration.secondsD();
   }
 
+  double VideoInFFMPEG::runtimeSeconds() const
+  {
+    return m_video.runtimeSeconds();
+  }
+
   /*
   void VideoInFFMPEG::enableLooping(bool enable)
   {
