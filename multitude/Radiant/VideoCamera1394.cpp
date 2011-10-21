@@ -1112,16 +1112,14 @@ namespace Radiant {
       }
     }
 
-#if defined (RADIANT_OSX_SNOW_LEOPARD)
-    debugRadiant("%s # Running Leopard, no FireWire bus reset", fname);
-#elif defined (RADIANT_OSX_LION)
-    debugRadiant("%s # Running Lion, no FireWire bus reset", fname);
+#ifdef RADIANT_OSX
+    debugRadiant("%s # Running OS X, no FireWire bus reset", fname);
 #else
     // Clean up in the first start:
     MULTI_ONCE_BEGIN {
      Radiant::Guard g(s_infosMutex);
      for(int c = 0; c < (int) s_infos.size(); c++) {
-      dc1394_reset_bus(s_infos[c]);
+      dc1394_reset_bus(s_infos[c]); // no resetting bus for OSX
       Sleep::sleepMs(100);
      }
     } MULTI_ONCE_END
