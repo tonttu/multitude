@@ -63,7 +63,7 @@ namespace VideoDisplay {
     {
       if(!f)
         m_ending = true;
-      else if(f->m_absolute.secondsD() > m_video->runtimeSeconds() - 0.5f)
+      else if(f->m_absolute.secondsD() > m_video->durationSeconds() - 0.5f)
         m_ending = true;
     }
 
