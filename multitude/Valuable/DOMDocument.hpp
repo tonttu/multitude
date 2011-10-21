@@ -56,6 +56,8 @@ namespace Valuable
     /// @return true if there were no errors
     bool readFromFile(const char * filename, bool validate = false);
 
+    bool readFromMem(const QByteArray & buffer);
+
     /// Returns the main document element
     DOMElement getDocumentElement();
 

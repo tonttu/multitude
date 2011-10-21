@@ -117,7 +117,20 @@ namespace Valuable
     file.close();
     return true;
   }
-   
+
+  bool DOMDocument::readFromMem(const QByteArray & buffer)
+  {
+    QString errstr;
+    int errline = 0;
+
+    if(!m_wrapped->x.setContent(buffer, &errstr, &errline)) {
+      error("DOMDocument::readFromMem # Cannot parse line %d: %s",
+            errline, errstr.toUtf8().data());
+      return false;
+    }
+    return true;
+  }
+
   DOMElement DOMDocument::getDocumentElement()
   {
     DOMElement r;

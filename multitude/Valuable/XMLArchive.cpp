@@ -153,6 +153,11 @@ namespace Valuable
     return m_document->readFromFile(filename.toUtf8().data());
   }
 
+  bool XMLArchive::readFromMem(const QByteArray & buffer)
+  {
+    return m_document->readFromMem(buffer);
+  }
+
   DOMDocument * XMLArchive::xml()
   {
     return m_document.get();

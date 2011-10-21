@@ -263,6 +263,8 @@ namespace Valuable
     /// @return True on success
     virtual bool readFromFile(const QString & filename) = 0;
 
+    virtual bool readFromMem(const QByteArray & buffer) = 0;
+
     /// If this is actually a XMLArchive, return the wrapped DOMDocument
     /// @return Default implementation returns NULL.
     virtual DOMDocument * xml();
