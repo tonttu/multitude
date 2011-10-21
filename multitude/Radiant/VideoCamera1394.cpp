@@ -1112,33 +1112,22 @@ namespace Radiant {
       }
     }
 
-    bool isleopard = false;
-
-#ifndef WIN32
-    struct utsname sn;
-    uname(& sn);
-
-    debugRadiant("%s # System: %s # %s # %s", fname, sn.sysname, sn.release, sn.version);
-    isleopard = strcmp(sn.sysname, "Darwin") == 0 &&
-                ((strncmp(sn.release, "9.", 2) == 0) ||
-                 (strncmp(sn.release, "10.", 3) == 0));
-#endif
-
+#if defined (RADIANT_OSX_SNOW_LEOPARD)
+    debugRadiant("%s # Running Leopard, no FireWire bus reset", fname);
+#elif defined (RADIANT_OSX_LION)
+    debugRadiant("%s # Running Lion, no FireWire bus reset", fname);
+#else
     // Clean up in the first start:
     MULTI_ONCE_BEGIN {
-      if(isleopard)
-        debugRadiant("%s # Running Leopard, no FireWire bus reset", fname);
-      else {
-        Radiant::Guard g(s_infosMutex);
-        for(int c = 0; c < (int) s_infos.size(); c++) {
-          dc1394_reset_bus(s_infos[c]);
-          Sleep::sleepMs(100);
-        }
-      }
+     Radiant::Guard g(s_infosMutex);
+     for(int c = 0; c < (int) s_infos.size(); c++) {
+      dc1394_reset_bus(s_infos[c]);
+      Sleep::sleepMs(100);
+     }
     } MULTI_ONCE_END
+#endif
 
     // Now seek the camera we are interested in:
-
     bool foundCorrect = false;
 
     Radiant::Guard g(s_infosMutex);
