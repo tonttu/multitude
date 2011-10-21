@@ -3,7 +3,7 @@ include(../Applications.pri)
 SOURCES += Main.cpp
 
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE
-LIBS += $$LIB_PATTERNS $$LIB_LUMINOUS $$LIB_VALUABLE
+LIBS += $$LIB_PATTERNS $$LIB_LUMINOUS $$LIB_VALUABLE $$LIB_V8
 
 unix: PKGCONFIG += portaudio-2.0
 CONFIG -= qt
