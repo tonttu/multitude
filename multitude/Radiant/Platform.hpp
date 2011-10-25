@@ -16,8 +16,6 @@
 #ifndef RADIANT_PLATFORM_HPP
 #define RADIANT_PLATFORM_HPP
 
-static const long foobar = __cplusplus;
-
 // C++11 check
 #if __cplusplus > 199711L || defined(__GXX_EXPERIMENTAL_CXX0X__)
   #define RADIANT_CXX11 1
