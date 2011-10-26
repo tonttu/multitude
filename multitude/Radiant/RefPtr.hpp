@@ -21,6 +21,7 @@
 #include "Radiant/Platform.hpp"
 
 #include <cstddef>
+#include <cassert>
 
 // try to detect C++11
 #if defined(RADIANT_CXX11)
@@ -108,23 +109,23 @@ namespace Radiant
 
     T & operator* ()
     {
-      // assert(m_ptr);
+      assert(m_ptr);
       return *m_ptr;
     }
     const T & operator* () const
     {
-      // assert(m_ptr);
+      assert(m_ptr);
       return *m_ptr;
     }
 
     T * operator-> ()
     {
-      // assert(m_ptr);
+      assert(m_ptr);
       return m_ptr;
     }
     const T * operator-> () const
     {
-      // assert(m_ptr);
+      assert(m_ptr);
       return m_ptr;
     }
 
