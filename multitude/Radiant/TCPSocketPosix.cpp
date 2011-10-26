@@ -32,7 +32,9 @@ namespace Radiant
       D(int fd = -1)
         : m_fd(fd),
         m_port(0),
-        m_noDelay(0)
+        m_noDelay(0),
+        m_rxBytes(0),
+        m_txBytes(0)
       {}
 
       bool setOpts()
@@ -52,6 +54,7 @@ namespace Radiant
       int m_fd;
       int m_port;
       int m_noDelay;
+      unsigned long m_rxBytes, m_txBytes;
       QString m_host;
   };
 
@@ -93,6 +96,7 @@ namespace Radiant
 
     m_d->m_host = host;
     m_d->m_port = port;
+    m_d->m_rxBytes = m_d->m_txBytes = 0;
 
     QString errstr;
     int err = SocketUtilPosix::bindOrConnectSocket(m_d->m_fd, host, port, errstr,
@@ -157,6 +161,7 @@ namespace Radiant
 
       if(tmp > 0) {
         pos += tmp;
+        m_d->m_rxBytes += tmp;
       } else if(tmp == 0 || m_d->m_fd == -1) {
         return pos;
       } else if(SocketWrapper::err() == EAGAIN || SocketWrapper::err() == EWOULDBLOCK) {
@@ -190,6 +195,7 @@ namespace Radiant
       int tmp = send(m_d->m_fd, data + pos, max, 0);
       if(tmp > 0) {
         pos += tmp;
+        m_d->m_txBytes += tmp;
       } else if(SocketWrapper::err() == EAGAIN || SocketWrapper::err() == EWOULDBLOCK) {
         struct pollfd pfd;
         pfd.fd = m_d->m_fd;
@@ -248,5 +254,14 @@ namespace Radiant
     return m_d->m_fd;
   }
 
+  unsigned long TCPSocket::rxBytes() const
+  {
+    return m_d->m_rxBytes;
+  }
+
+  unsigned long TCPSocket::txBytes() const
+  {
+    return m_d->m_txBytes;
+  }
 }
 
