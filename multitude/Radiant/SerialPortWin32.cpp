@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #include "Platform.hpp"
@@ -43,9 +31,9 @@ namespace Radiant
     // First make sure serial port is closed
     debugRadiant("SerialPort::open(%s)", device);
     close();
-    
-    // Make the devicename compliant to new addressing (needed for >COM9) 	
-	m_device = std::string("\\\\.\\") + device;
+
+    // Make the devicename compliant to new addressing (needed for >COM9)
+    m_device = std::string("\\\\.\\") + device;
 
     // Open serial port
 
@@ -53,7 +41,7 @@ namespace Radiant
 
     m_hPort = CreateFileA(m_device.c_str(), GENERIC_READ | GENERIC_WRITE,
       0, 0, OPEN_EXISTING, 0, 0);
-    
+
     if(m_hPort == INVALID_HANDLE_VALUE)
     {
       const std::string   strErr = StringUtils::getLastErrorMessage();
@@ -117,9 +105,9 @@ namespace Radiant
 
     // Set timeouts
 //    const int   waitTimeMS = waitTimeUS / 1000;
-	
+
 //trace(INFO, "SerialPort::open # timeout %dus (%dms)", waitTimeUS, waitTimeMS);
-	
+
     COMMTIMEOUTS  timeouts;
     memset(& timeouts, 0, sizeof(COMMTIMEOUTS));
     // Returns immediately
@@ -166,11 +154,11 @@ namespace Radiant
     DWORD   bytesWritten = 0;
     WriteFile(m_hPort, buf, bytes, & bytesWritten, 0);
 /*
-	std::ostringstream os;
-	for(int i = 0; i < bytesWritten; i++)
-		os << (int)((char*)buf)[i] << " ";
-	
-	info("SerialPort::write # wrote %d bytes (%s)", bytesWritten, os.str().c_str());
+    std::ostringstream os;
+    for(int i = 0; i < bytesWritten; i++)
+        os << (int)((char*)buf)[i] << " ";
+
+    info("SerialPort::write # wrote %d bytes (%s)", bytesWritten, os.str().c_str());
 */
     return int(bytesWritten);
   }
@@ -180,24 +168,28 @@ namespace Radiant
     return write(& byte, 1);
   }
 
-  int SerialPort::read(void * buf, int bytes)
+  int SerialPort::read(void * buf, int bytes, bool waitfordata)
   {
     if(!isOpen()) {
       error("SerialPort::read # device not open");
       return -1;
     }
 
+    if(!waitfordata) {
+      error("SerialPort::read # !waitfordata nor supported yet.");
+    }
+
     DWORD   bytesRead = 0;
     if(ReadFile(m_hPort, buf, bytes, & bytesRead, 0) == FALSE)
-		error("SerialPort::read # read failed");
-/*	
-	
-	std::ostringstream os;
-	for(int i = 0; i < bytesRead; i++)
-		os << (int)((char*)buf)[i] << " ";
-	info("SerialPort::read # read %d bytes (%s)", bytesRead, os.str().c_str());
-*/	
-	
+        error("SerialPort::read # read failed");
+/*
+
+    std::ostringstream os;
+    for(int i = 0; i < bytesRead; i++)
+        os << (int)((char*)buf)[i] << " ";
+    info("SerialPort::read # read %d bytes (%s)", bytesRead, os.str().c_str());
+*/
+
     return int(bytesRead);
   }
 
