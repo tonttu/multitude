@@ -34,6 +34,9 @@ namespace Luminous
 
   /// A class used to execute tasks in a separated threads.
 
+  /// @todo There is currently no way to figure out if a given individual task
+  /// is running or not. This would be useful information especially when
+  /// closing the application or if your tasks have external dependencies.
   class LUMINOUS_API BGThread : public Radiant::ThreadPool
   {
     DECLARE_SINGLETON(BGThread);
@@ -55,7 +58,7 @@ namespace Luminous
 
         @param task The task that needs to be added.
     */
-    virtual void addTask(Task * task);
+    virtual std::shared_ptr<Task> addTask(Task * task);
 
     /// Remove the task from the BGThread
     /** If you just want to delete the task, then it is generally better to set the state of

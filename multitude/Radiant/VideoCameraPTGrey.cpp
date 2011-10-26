@@ -486,17 +486,15 @@ namespace Radiant
   {
     FlyCapture2::Image img;
 
-    /// @todo What's this about??
-    // Sleep::sleepMs(2);
-
-    /// @todo Do we need this?
-    // Guard g(s_cameraMutex);
-
-    FlyCapture2::Error err = m_camera.RetrieveBuffer(&img);
-    if(err != FlyCapture2::PGRERROR_OK) {
-      Radiant::error("VideoCameraPTGrey::captureImage # %llx %s",
-                     m_info.m_euid64, err.GetDescription());
-      return false;
+    // Lock the global mutex so we don't retrieve multiple buffers at the same time
+    {
+      Guard g(s_cameraMutex);
+      FlyCapture2::Error err = m_camera.RetrieveBuffer(&img);
+      if(err != FlyCapture2::PGRERROR_OK) {
+        Radiant::error("VideoCameraPTGrey::captureImage # %llx %s",
+          m_info.m_euid64, err.GetDescription());
+        return false;
+      }
     }
     /*
     if(m_image.size() != img.GetDataSize()) {

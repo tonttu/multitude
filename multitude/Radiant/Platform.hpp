@@ -30,6 +30,13 @@
 #   define RADIANT_IA64 1
 #endif
 
+// Discover debug builds
+#if defined NDEBUG
+#   define RADIANT_RELEASE 1
+#else
+#   define RADIANT_DEBUG 1
+#endif
+
 // 
 // Detect LLVM/CLANG
 //
@@ -54,7 +61,7 @@
 #   define DLLIMPORT __attribute__((visibility("default")))
 
 //  Override is a GCC4.7 and up feature
-#   if (__GNUC__ == 4 && __GNUC_MINOR__ >= 7) || __GNUC__ > 5
+#   if (__GNUC__ == 4 && __GNUC_MINOR__ >= 7) || __GNUC__ > 4
 #     define OVERRIDE override
 #   else
 #     define OVERRIDE

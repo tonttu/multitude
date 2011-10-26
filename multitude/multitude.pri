@@ -11,9 +11,6 @@ DEPENDPATH += $$PWD
 
 # The Cornerstone version for libraries
 unix {
-	# Make symbol export compatible with MSVC
-  !macx:QMAKE_CXXFLAGS += -fvisibility-ms-compat
-
   MULTITUDE_VERSION_MAJOR=$$system(cat ../VERSION | cut -d . -f 1)
   MULTITUDE_VERSION_MINOR=$$system(cat ../VERSION | cut -d . -f 2)
   MULTITUDE_VERSION_PATCH=$$system(cat ../VERSION | cut -d . -f 3 | cut -d - -f 1)
@@ -73,8 +70,6 @@ contains(MEMCHECK,yes) {
 }
 
 macx {
-  LIBS += -undefined dynamic_lookup
-
   # Frameworks on OS X don't respect QMAKE_LIBDIR
   QMAKE_LFLAGS += -F$$PWD/lib
 
@@ -106,6 +101,9 @@ macx {
   # change architecture to x86_64 if snow leopard
   system([ `uname -r | cut -d . -f1` -gt 9 ] )  {
   CONFIG += x86_64
+
+  system([ `uname -r | cut -d . -f1` -eq 10 ] ):DEFINES+=RADIANT_OSX_SNOW_LEOPARD
+  system([ `uname -r | cut -d . -f1` -eq 11 ] ):DEFINES+=RADIANT_OSX_LION
   }
 
 }
