@@ -52,6 +52,12 @@ namespace Luminous
       example database queries, or network file transfers), are best handled by
       launching a separate thread for them. For this purpose,
       see #Radiant::Thread.
+
+      If you implement tasks that take a long time to execute, you should check
+      the task state periodically inside you Task::doTask function and return from
+      the method if the task is set to Task::DONE state. Otherwise your application
+      may stall for a while when closing down because the application will wait
+      for any tasks to finish before it stops the BGThread running them.
     */
   class LUMINOUS_API Task : Patterns::NotCopyable
   {
