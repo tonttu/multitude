@@ -34,7 +34,8 @@ win32 {
 }
 !win32 {
   DEST=$$DESTDIR/$${V8LIB_OUT}.$$SHARED_LIB_SUFFIX
-  first.commands = if test ! -s $$TARGET; then scons $$V8 $$TARGET -j4; fi && cp $$TARGET $$DEST
+  # Running application will crash with sigbus without --remove-destination
+  first.commands = if test ! -s $$TARGET; then scons $$V8 $$TARGET -j4; fi && cp --remove-destination $$TARGET $$DEST
 }
 
 clean.commands = scons -c $$TARGET
