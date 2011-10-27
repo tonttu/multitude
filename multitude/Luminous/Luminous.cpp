@@ -88,9 +88,11 @@ namespace Luminous
 #endif
 
       // Check for DXT support
+#ifndef MULTI_WITHOUT_GLEW
       bool dxtSupport = glewIsSupported("GL_EXT_texture_compression_s3tc");
       Radiant::info("Hardware DXT texture compression support: %s", dxtSupport ? "yes" : "no");
       Luminous::CPUMipmaps::s_dxtSupported = dxtSupport;
+#endif
     }
 
     return true;

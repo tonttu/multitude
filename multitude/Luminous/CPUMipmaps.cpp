@@ -76,7 +76,7 @@ static Profiler s_profiler;
 namespace Luminous {
 
   // DXT support is tested in Luminous::initLuminous()
-  bool CPUMipmaps::s_dxtSupported = false;
+  bool CPUMipmaps::s_dxtSupported = true;
 
   using namespace Radiant;
 
