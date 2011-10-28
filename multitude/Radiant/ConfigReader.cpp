@@ -134,18 +134,14 @@ namespace Radiant {
       return def;
 
     long long lltmp = 0;
-#ifdef WIN32
-    sscanf(m_var.c_str(), "%llx", &lltmp);
-#else
     lltmp = m_var.toLongLong(0, 16);
-#endif
     return lltmp;
   }
 
 
   const QString & Variant::getString(const QString & def) const
   {
-    if(m_var.size())
+    if(!m_var.isEmpty())
       return m_var;
 
     return def;

@@ -112,9 +112,10 @@ namespace Valuable
   }
 
   template<class VectorType>
-  bool AttributeVector<VectorType>::set(const VectorType & v, Attribute::Layer layer)
+  bool AttributeVector<VectorType>::set(const VectorType & v, Attribute::Layer layer,
+                                        QList<Attribute::ValueUnit>)
   {
-    setValue(v, layer);
+    this->setValue(v, layer);
     return true;
   }
 

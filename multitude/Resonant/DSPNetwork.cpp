@@ -353,7 +353,7 @@ namespace Resonant {
 
   void DSPNetwork::checkNewItems()
   {
-    if(m_newItems.size()) {
+    if(!m_newItems.empty()) {
       debugResonant("DSPNetwork::checkNewItems # Now %d items, adding %d, buffer memory %ld byes",
            (int) m_items.size(), (int) m_newItems.size(),
            countBufferBytes());

@@ -205,7 +205,7 @@ namespace Radiant {
     /// @param that Vector to merge with
     void merge(VectorStorage & that)
     {
-      if(!that.size()) return;
+      if(that.empty()) return;
 
       if((size() + that.size()) > m_points.size())
         m_points.resize(size() + that.size() + 100);

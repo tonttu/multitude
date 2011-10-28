@@ -399,15 +399,15 @@ namespace Resonant {
 
   bool ModuleSamplePlayer::prepare(int & channelsIn, int & channelsOut)
   {
-    bool edit = false;
+    //bool edit = false;
 
     if(channelsIn) {
-      edit = true;
+      //edit = true;
       channelsIn = 0;
     }
 
     if(channelsOut != static_cast<int> (m_channels)) {
-      edit = true;
+      //edit = true;
       channelsOut = static_cast<int> (m_channels);
     }
 

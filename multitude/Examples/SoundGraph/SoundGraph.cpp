@@ -31,13 +31,13 @@
 int main(int argc, char ** argv)
 {
   const char * directory = 0;
-  float gain = 0.2f;
+  float gainv = 0.5f;
 
   for(int i = 1; i < argc; i++) {
     if(strcmp(argv[i], "--dir") == 0 && (i + 1) < argc)
       directory = argv[++i];
     else if(strcmp(argv[i], "--gain") == 0 && (i + 1) < argc)
-      gain = atof(argv[++i]);
+      gainv = atof(argv[++i]);
     else if(strcmp(argv[i], "--verbose") == 0)
       Radiant::enableVerboseOutput(true);
     else {
@@ -71,7 +71,7 @@ int main(int argc, char ** argv)
   {
     Resonant::ModuleGain * gain = new Resonant::ModuleGain(0);
     gain->setId("mygain");
-    gain->setGainInstant(0.5f);
+    gain->setGainInstant(gainv);
 
     Resonant::DSPNetwork::Item gainItem;
     gainItem.setModule(gain);

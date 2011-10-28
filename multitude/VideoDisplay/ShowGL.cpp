@@ -357,10 +357,6 @@ namespace VideoDisplay {
 
     assert(filename != 0);
 
-    if(m_filename == filename) {
-      return true;
-    }
-
     m_fps = -1;
 
     if(m_state == PLAY) {

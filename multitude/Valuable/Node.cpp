@@ -89,7 +89,7 @@ namespace Valuable
     }
 
     foreach(Attribute* vo, m_valueListening) {
-      for(QList<AttributeListener>::iterator it = vo->m_listeners.begin(); it != vo->m_listeners.end(); ) {
+      for(QMap<long, AttributeListener>::iterator it = vo->m_listeners.begin(); it != vo->m_listeners.end(); ) {
         if(it->listener == this) {
           it = vo->m_listeners.erase(it);
         } else ++it;
@@ -502,6 +502,16 @@ namespace Valuable
   bool Node::acceptsEvent(const QString & id) const
   {
     return m_eventListenNames.contains(id);
+  }
+
+  long Node::addListener(const QString & name, v8::Persistent<v8::Function> func, int role)
+  {
+    Attribute * attr = getValue(name);
+    if(!attr) {
+      warning("Node::addListener # Failed to find attribute %s", name.toUtf8().data());
+      return -1;
+    }
+    return attr->addListener(func, role);
   }
 
   void Node::eventSend(const QString & id, Radiant::BinaryData & bd)

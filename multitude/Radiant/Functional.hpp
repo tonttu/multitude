@@ -7,8 +7,8 @@
 
 #include <cstddef>
 
-// try to detect c++0x
-#if defined(RADIANT_CPP0X)
+// try to detect C++11
+#if defined(RADIANT_CXX11)
   #include <functional>
 #elif defined(__GCCXML__)
   #include <generator/gccxml_tr1.hpp>
@@ -27,6 +27,7 @@
     using tr1::result_of;
     using tr1::mem_fn;
     using tr1::ref;
+    using tr1::cref;
   }
 #endif
 

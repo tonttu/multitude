@@ -511,7 +511,7 @@ namespace Radiant
   {
     int bytes = data.pos();
     const void * ptrs[2] = { & bytes, data.data() };
-    uint32_t sizes[2] = { 4, data.pos() };
+    uint32_t sizes[2] = { 4, uint32_t(data.pos()) };
 
     return write(2, ptrs, sizes);
   }

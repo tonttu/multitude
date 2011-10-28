@@ -120,7 +120,7 @@ namespace Radiant {
      */
     virtual void getAudioParameters(int * channels,
                                     int * sample_rate,
-                                    AudioSampleFormat * format);
+                                    AudioSampleFormat * format) const;
 
     /// Returns the current width of a frame in the video stream images.
     // Note that it is quite common for video devices to not report the correct frame

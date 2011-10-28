@@ -254,6 +254,9 @@ namespace Valuable
     /// Returns set of all registered IN events
     const QSet<QString> & eventInNames() const { return m_eventListenNames; }
 
+    long addListener(const QString & name, v8::Persistent<v8::Function> func,
+                     int role = Attribute::CHANGE_ROLE);
+
   protected:
 
     /// Sends an event to all listeners on this object

@@ -21,9 +21,8 @@ vivid {
   SUBDIRS += Vivid
 }
 
-!iphone* {
-  exists(Examples/Examples.pro):SUBDIRS += Examples
-
+#exists(Examples/Examples.pro):SUBDIRS += Examples
+!iphone*{
   SUBDIRS += Applications
 }
 

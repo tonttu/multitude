@@ -60,9 +60,9 @@ namespace Valuable
       : Attribute(host, name, false)
     {}
 
-    virtual const char* type() const { return "container"; }
+    virtual const char* type() const OVERRIDE { return "container"; }
 
-    virtual ArchiveElement serialize(Archive & archive) const
+    virtual ArchiveElement serialize(Archive & archive) const OVERRIDE
     {
       ArchiveElement elem = archive.createElement((name().isEmpty() ? type() : name()).toUtf8().data());
       for(const_iterator it = m_container.begin(); it != m_container.end(); it++) {
@@ -71,7 +71,7 @@ namespace Valuable
       return elem;
     }
 
-    virtual bool deserialize(const ArchiveElement & element)
+    virtual bool deserialize(const ArchiveElement & element) OVERRIDE
     {
       std::insert_iterator<T> inserter(m_container, m_container.end());
       for(ArchiveElement::Iterator it = element.children(); it; ++it) {
@@ -80,7 +80,7 @@ namespace Valuable
       return true;
     }
 
-    virtual bool isChanged() const { return !m_container.empty(); }
+    virtual bool isChanged() const OVERRIDE { return !m_container.empty(); }
 
     /// Typecast operator for the wrapped container
     operator T & () { return m_container; }

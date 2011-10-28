@@ -1,8 +1,11 @@
 #ifndef SOCKETWRAPPER_HPP
 #define SOCKETWRAPPER_HPP
 
-#include "Platform.hpp"
+#include "Export.hpp"
+
 #ifdef RADIANT_WINDOWS
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
 #include <winsock2.h>
 #include <WS2tcpip.h>
 #include <cerrno>
@@ -51,16 +54,17 @@
 
 #define SHUT_RDWR SD_BOTH
 
-#define wrap_close(fd) closesocket(fd)
-
-#define wrap_poll(fdarray, nfds, timeout) \
-  WSAPoll((fdarray), (nfds), (timeout))
-
-const char * wrap_strerror(int err);
-#define wrap_errno WSAGetLastError()
-#define wrap_gai_strerror(e) gai_strerrorA(e)
-
-void wrap_startup();
+namespace SocketWrapper
+{
+  inline int close(int fd) { return closesocket(fd); }
+  inline int poll(struct pollfd * fds, unsigned long nfds, int timeout) { return WSAPoll(fds, nfds, timeout); }
+  RADIANT_API const char * strerror(int errnum);
+  // errno seems to be a macro in GCC, can't have function named errno..
+  inline int err() { return WSAGetLastError(); }
+  inline void clearErr() {}
+  inline const char * gai_strerror(int errcode) { return ::gai_strerrorA(errcode); }
+  RADIANT_API void startup();
+}
 
 #else
 #include <arpa/inet.h>
@@ -69,17 +73,21 @@ void wrap_startup();
 #include <netinet/tcp.h>
 #include <poll.h>
 #include <sys/socket.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
 
-#define wrap_close(fd) ::close(fd)
-
-#define wrap_poll(fdarray, nfds, timeout) \
-  poll((fdarray), (nfds), (timeout))
-
-#define wrap_strerror(e) strerror(e)
-#define wrap_errno errno
-#define wrap_gai_strerror(e) gai_strerror(e)
-
-#define wrap_startup()
+namespace SocketWrapper
+{
+  inline int close(int fd) { return ::close(fd); }
+  inline int poll(struct pollfd * fds, nfds_t nfds, int timeout) { return ::poll(fds, nfds, timeout); }
+  inline char * strerror(int errnum) { return ::strerror(errnum); }
+  // errno seems to be a macro in GCC, can't have function named errno..
+  inline int err() { return errno; }
+  inline void clearErr() { errno = 0; }
+  inline const char * gai_strerror(int errcode) { return ::gai_strerror(errcode); }
+  inline void startup() {}
+}
 
 #endif
 

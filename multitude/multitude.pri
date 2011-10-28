@@ -8,15 +8,19 @@ CONFIG += thread
 
 CONFIG += embed_manifest_exe
 
+c++11 {
+  !win32 {
+    message(Enabling C++11)
+    QMAKE_CXXFLAGS += -std=c++0x
+  }
+}
+
 INCLUDEPATH += $$PWD
 INCLUDEPATH += $$PWD/v8/include
 DEPENDPATH += $$PWD
 
 # The Cornerstone version for libraries
 unix {
-    # Make symbol export compatible with MSVC
-  #!macx:QMAKE_CXXFLAGS += -fvisibility-ms-compat
-
   MULTITUDE_VERSION_MAJOR=$$system(cat ../VERSION | cut -d . -f 1)
   MULTITUDE_VERSION_MINOR=$$system(cat ../VERSION | cut -d . -f 2)
   MULTITUDE_VERSION_PATCH=$$system(cat ../VERSION | cut -d . -f 3 | cut -d - -f 1)
@@ -36,13 +40,14 @@ LIB_POETIC = -lPoetic
 LIB_FLUFFY = -lFluffy
 LIB_LUMINOUS = -lLuminous
 LIB_NIMBLE = -lNimble
-LIB_RADIANT = -lRadiant -lv8
+LIB_RADIANT = -lRadiant
 LIB_RESONANT = -lResonant
 !iphone*:LIB_SCREENPLAY = -lScreenplay
 !iphone*:LIB_VIDEODISPLAY = -lVideoDisplay
 LIB_VALUABLE = -lValuable
 LIB_PATTERNS = -lPatterns
 LIB_SQUISH = -lSquish
+LIB_V8 = -lv8
 
 linux-*:vivid {
   QMAKE_LIBDIR += $$(FBX_SDK)/lib/gcc4
@@ -51,6 +56,7 @@ linux-*:vivid {
 
 MULTI_LIB_FLAG = -L
 linux-*{
+  LIB_PREFIX = lib
   SHARED_LIB_SUFFIX = so
 
   contains(USEGLEW,no) {
@@ -83,8 +89,10 @@ iphone*:INCLUDES += /usr/local/include
 !iphone*:LIB_SDL = -lSDL
 
 macx {
+  LIB_PREFIX = lib
   SHARED_LIB_SUFFIX = dylib
-#  LIBS += -undefined dynamic_lookup
+  # For Deft (which depends on MultiTouch)
+  # LIBS += -undefined dynamic_lookup
 
   # Frameworks on OS X don't respect QMAKE_LIBDIR
   QMAKE_LFLAGS += -F$$PWD/lib
@@ -97,7 +105,18 @@ macx {
   # LIB_GLEW = -lGLEW
 
   !iphone* {
-  DEFINES += QT_MAC_USE_COCOA Q_OS_MAC64
+    LIB_POETIC = -framework,Poetic
+    LIB_FLUFFY = -framework,Fluffy
+    LIB_LUMINOUS = -framework,Luminous
+    LIB_NIMBLE = -framework,Nimble
+    LIB_RADIANT = -framework,Radiant
+    LIB_RESONANT = -framework,Resonant -lsndfile
+    LIB_SCREENPLAY = -framework,Screenplay
+    LIB_VALUABLE = -framework,Valuable
+    LIB_VIDEODISPLAY = -framework,VideoDisplay
+    LIB_PATTERNS = -framework,Patterns
+
+    DEFINES += QT_MAC_USE_COCOA Q_OS_MAC64
 
     DEFINES += QT_MAC_USE_COCOA Q_OS_MAC64
 
@@ -105,30 +124,19 @@ macx {
 
     contains(withbundles,YES) {
 
-      MULTI_LIB_FLAG = -F
+  # change architecture to x86_64 if snow leopard
+  system([ `uname -r | cut -d . -f1` -gt 9 ] )  {
+  CONFIG += x86_64
 
-      LIB_POETIC = -framework,Poetic
-      LIB_FLUFFY = -framework,Fluffy
-      LIB_LUMINOUS = -framework,Luminous
-      LIB_NIMBLE = -framework,Nimble
-      LIB_RADIANT = -framework,Radiant
-      LIB_RESONANT = -framework,Resonant -lsndfile
-      LIB_SCREENPLAY = -framework,Screenplay
-      LIB_VALUABLE = -framework,Valuable
-      LIB_VIDEODISPLAY = -framework,VideoDisplay
-      LIB_PATTERNS = -framework,Patterns
-
-      # LIB_BOX2D = -framework,Box2D
-    }
-
-    # change architecture to x86_64 if snow leopard
-    system([ `uname -r | cut -d . -f1` -gt 9 ] )  {
-      CONFIG += x86_64
-    }
+  system([ `uname -r | cut -d . -f1` -eq 10 ] ):DEFINES+=RADIANT_OSX_SNOW_LEOPARD
+  system([ `uname -r | cut -d . -f1` -eq 11 ] ):DEFINES+=RADIANT_OSX_LION
   }
 }
-
+}
+}
 win32 {
+    LIB_PREFIX =
+    SHARED_LIB_SUFFIX = dll
     # Try to identify used compiler on Windows (32 vs 64)
     COMPILER_OUTPUT=$$system(cl 2>&1)
     contains(COMPILER_OUTPUT,x64):CONFIG+=win64
@@ -165,6 +173,7 @@ win32 {
       LIB_VALUABLE = -lValuable_d
       LIB_PATTERNS = -lPatterns_d
       LIB_SQUISH = -lSquish_d
+      LIB_V8 = -lv8_d
     }
 }
 
@@ -186,6 +195,8 @@ contains(QT_MAJOR_VERSION,4) {
 CONFIG(release, debug|release) {
   DEFINES += NDEBUG
 }
+
+DEFINES += USING_V8_SHARED
 
 # Use ccache if available
 unix:exists(/usr/bin/ccache):QMAKE_CXX=ccache g++

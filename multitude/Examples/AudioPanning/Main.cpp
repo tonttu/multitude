@@ -33,7 +33,7 @@ int main(int argc, char ** argv)
 {
   const char * file = "../test.wav";
   float pitch = 1.0f;
-  int repeats = 5;
+  //int repeats = 5;
   bool loop = true;
 
   Resonant::DSPNetwork::Item item;
@@ -41,8 +41,8 @@ int main(int argc, char ** argv)
   for(int i = 1; i < argc; i++) {
     if(strcmp(argv[i], "--sample") == 0 && (i + 1) < argc)
       file = argv[++i];
-    else if(strcmp(argv[i], "--repeat") == 0 && (i + 1) < argc)
-      repeats = atoi(argv[++i]);
+    /*else if(strcmp(argv[i], "--repeat") == 0 && (i + 1) < argc)
+      repeats = atoi(argv[++i]);*/
     else if(strcmp(argv[i], "--targetchannel") == 0 && (i + 1) < argc)
       item.setTargetChannel(atoi(argv[++i]) - 1);
     else if(strcmp(argv[i], "--verbose") == 0)
@@ -53,8 +53,8 @@ int main(int argc, char ** argv)
     }
   }
 
-  if(loop)
-    repeats = 1;
+  /*if(loop)
+    repeats = 1;*/
   
   SF_INFO info;
   SNDFILE * sndf = sf_open(file, SFM_READ, & info);
@@ -75,19 +75,19 @@ int main(int argc, char ** argv)
   {
     Resonant::DSPNetwork::Item pitem;
     
-    item.setModule(new Resonant::ModulePanner(0));
-    item.module()->setId("panner");
+    pitem.setModule(new Resonant::ModulePanner(0));
+    pitem.module()->setId("panner");
     
     control.rewind();
     control.writeInt32(2);
     control.rewind();
     
-    item.module()->processMessage("channels", & control);
+    pitem.module()->processMessage("channels", & control);
 
     control.rewind();
-    item.module()->processMessage("fullhdstereo", & control);
+    pitem.module()->processMessage("fullhdstereo", & control);
     
-    dsp->addModule(item);
+    dsp->addModule(pitem);
   }
 
   item.setModule(new Resonant::ModuleSamplePlayer(0));

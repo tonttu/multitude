@@ -99,11 +99,14 @@ namespace Radiant {
     bool isHungUp() const;
 
     /// Return 'true' if readable data is pending.
-    bool isPendingInput(unsigned int waitMicroSeconds = 0);
+    virtual bool isPendingInput(unsigned int waitMicroSeconds = 0);
 
     /// @cond
     int fd() const;
     /// @endcond
+
+    unsigned long rxBytes() const;
+    unsigned long txBytes() const;
 
 /// @cond
 

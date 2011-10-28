@@ -62,14 +62,14 @@ namespace Radiant
     }
 
 #ifdef WIN32
-    std::string getLastErrorMessage()
+    QString getLastErrorMessage()
     {
       const int   errStrSize = 1024;
-      char  szErrStr[errStrSize] = "";
+      char  szErrStr[errStrSize] = {'\0'};
       FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, 0,
         GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), szErrStr, errStrSize, 0);
 
-      return string(szErrStr);
+      return QString::fromAscii(szErrStr);
     }
 #endif
 

@@ -25,20 +25,20 @@ namespace Valuable
 {
 
   /** A value object holding a #Radiant::Color value. */
-  class VALUABLE_API AttributeColor : public AttributeVector<Nimble::Vector4f>
+  class AttributeColor : public AttributeVector<Nimble::Vector4f>
   {
   public:
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param c The color value
-    AttributeColor(Node * host, const QString & name, const Radiant::Color & c, bool transit = false);
+    VALUABLE_API AttributeColor(Node * host, const QString & name, const Radiant::Color & c, bool transit = false);
     
-    virtual ~AttributeColor();
+    VALUABLE_API virtual ~AttributeColor();
 
     /// Copies a color
     AttributeColor & operator = (const Radiant::Color & c)
       { (* (AttributeVector<Nimble::Vector4f> *) this) = c; return *this; }
     
-    const char * type() const { return "color"; }
+    const char * type() const OVERRIDE { return "color"; }
     
     /// Converts the value object to color
     Radiant::Color asColor() const { return asVector(); }

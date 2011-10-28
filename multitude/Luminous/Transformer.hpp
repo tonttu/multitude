@@ -20,6 +20,7 @@
 #include <Nimble/Matrix3.hpp>
 
 #include <stack>
+#include <vector>
 
 namespace Luminous
 {
@@ -87,7 +88,7 @@ namespace Luminous
     virtual void beforeTransformChange();
 
     /// The transformation stack
-    std::stack<Nimble::Matrix3> m_stack;
+    std::stack<Nimble::Matrix3, std::vector<Nimble::Matrix3> > m_stack;
   };
 }
 

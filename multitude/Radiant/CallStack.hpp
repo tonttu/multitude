@@ -1,6 +1,7 @@
 #if !defined (RADIANT_CALLSTACK_HPP)
 #define RADIANT_CALLSTACK_HPP
 
+#include "Export.hpp"
 #include "Platform.hpp"
 
 #include <iostream>
@@ -22,8 +23,8 @@ namespace Radiant
   {
   public:
 
-    CallStack();
-    ~CallStack();
+    RADIANT_API CallStack();
+    RADIANT_API ~CallStack();
 
     /// @returns the raw callstack
     const stackptr_t * stack() const { return m_frames; }
@@ -36,7 +37,7 @@ namespace Radiant
     size_t size() const { return m_frameCount; }
 
     /// Prints a human-readable version of the stack to the log
-    void print() const;
+    RADIANT_API void print() const;
 
   private:
     enum { max_frames = 32 };

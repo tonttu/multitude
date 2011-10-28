@@ -53,16 +53,10 @@ namespace Valuable
     return value().toUtf8().data();
   }
 
-  bool AttributeString::set(const QString & v, Layer layer)
+  bool AttributeString::set(const QString & v, Layer layer, ValueUnit)
   {
     setValue(v, layer);
     return true;
-  }
-
-  AttributeString & AttributeString::operator=(const AttributeString & i)
-  {
-    *this = i.value();
-    return *this;
   }
 
   QString AttributeString::operator+(const AttributeString & i) const

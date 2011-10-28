@@ -47,13 +47,13 @@ namespace Valuable {
     {
     }
 
-    bool set(int v, Layer layer)
+    virtual bool set(int v, Layer layer, ValueUnit) OVERRIDE
     {
       m_master.setFlags(m_flags, v, layer);
       return true;
     }
 
-    bool set(const QVariantList & v, QList<ValueUnit> unit, Layer layer)
+    bool set(const QVariantList & v, QList<ValueUnit> unit, Layer layer) OVERRIDE
     {
       if(v.size() != 1 || unit[0] != VU_UNKNOWN) return false;
       QString p = v[0].toString().toLower();
@@ -65,16 +65,16 @@ namespace Valuable {
       return false;
     }
 
-    void clearValue(Layer layout)
+    void clearValue(Layer layout) OVERRIDE
     {
       m_master.clearFlags(m_flags, layout);
     }
 
     Radiant::FlagsT<T> flags() const { return m_flags; }
 
-    const char * type() const { return "FlagAlias"; }
-    ArchiveElement serialize(Archive &) const { return ArchiveElement(); }
-    bool deserialize(const ArchiveElement &) { return false; }
+    const char * type() const OVERRIDE { return "FlagAlias"; }
+    ArchiveElement serialize(Archive &) const OVERRIDE { return ArchiveElement(); }
+    bool deserialize(const ArchiveElement &) OVERRIDE { return false; }
 
   private:
     AttributeFlagsT<T> & m_master;
@@ -201,35 +201,35 @@ namespace Valuable {
       updateCache();
     }
 
-    void setValue(Flags flags, Layer layer)
+    virtual void setValue(const Flags & flags, Layer layer)
     {
       m_masks[layer] = ~Flags();
       m_values[layer] = flags;
       updateCache();
     }
 
-    void clearValue(Layer layout)
+    virtual void clearValue(Layer layout) OVERRIDE
     {
       m_masks[layout].clear();
       updateCache();
     }
 
-    virtual bool deserialize(const ArchiveElement & element)
+    virtual bool deserialize(const ArchiveElement & element) OVERRIDE
     {
       /// @todo Should we serialize all layers?
       *this = Radiant::StringUtils::fromString<T>(element.get().toUtf8().data());
       return true;
     }
 
-    virtual const char * type() const { return "AttributeFlags"; }
+    virtual const char * type() const OVERRIDE { return "AttributeFlags"; }
 
-    int asInt(bool * const ok = 0) const
+    virtual int asInt(bool * const ok = 0) const OVERRIDE
     {
       if(ok) *ok = true;
       return value().asInt();
     }
 
-    void processMessage(const char *, Radiant::BinaryData & data)
+    virtual void processMessage(const char *, Radiant::BinaryData & data) OVERRIDE
     {
       bool ok = true;
       uint32_t v = uint32_t(data.readInt32(&ok));
@@ -237,14 +237,14 @@ namespace Valuable {
       if(ok) setValue(Flags::fromInt(v), MANUAL);
     }
 
-    bool set(int v, Layer layer)
+    virtual bool set(int v, Layer layer, ValueUnit /*unit*/ = VU_UNKNOWN) OVERRIDE
     {
       Radiant::warning("AttributeFlagsT::set # using deprecated functionality, do not set flags with numbers");
       setValue(Flags::fromInt(v), layer);
       return true;
     }
 
-    bool set(const QVariantList & v, QList<ValueUnit> units, Layer layer = MANUAL)
+    virtual bool set(const QVariantList & v, QList<ValueUnit> units, Layer layer = MANUAL) OVERRIDE
     {
       foreach(const ValueUnit & vu, units)
         if(vu != VU_UNKNOWN) return false;

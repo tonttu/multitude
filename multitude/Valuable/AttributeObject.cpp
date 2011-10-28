@@ -41,14 +41,16 @@ namespace Valuable
   Attribute::Attribute()
   : m_host(0),
     m_changed(false),
-    m_transit(false)
+    m_transit(false),
+    m_listenersId(0)
   {}
 
   Attribute::Attribute(Node * host, const QString & name, bool transit)
     : m_host(0),
       m_changed(false),
       m_name(name),
-      m_transit(transit)
+      m_transit(transit),
+      m_listenersId(0)
   {
     if(host) {
       host->addValue(name, this);
@@ -65,7 +67,8 @@ namespace Valuable
   Attribute::Attribute(const Attribute & o)
     : Serializable(), // GCC wants this
     m_host(0),
-    m_changed(false)
+    m_changed(false),
+    m_listenersId(o.m_listenersId)
   {
     m_name = o.m_name;
     m_transit = o.m_transit;
@@ -189,8 +192,16 @@ namespace Valuable
   {
 //    Radiant::trace("Attribute::emitChange # '%s'", m_name.toUtf8().data());
     m_changed = true;
-    foreach(const AttributeListener & l, m_listeners)
-      if(l.role & CHANGE) l.func();
+    foreach(const AttributeListener & l, m_listeners) {
+      if(l.role & CHANGE_ROLE) {
+        if(!l.func) {
+          /// @todo what is the correct receiver ("this" in the callback)?
+          /// @todo is this legal without v8::HandleScope handle_scope;
+          /// @todo is it legal to give null pointer to argv parameter?
+          l.scriptFunc->Call(v8::Context::GetCurrent()->Global(), 0, 0);
+        } else l.func();
+      }
+    }
     ChangeMap::addChange(this);
   }
 
@@ -198,7 +209,12 @@ namespace Valuable
   {
     //Radiant::trace("Attribute::emitDelete");
     foreach(const AttributeListener & l, m_listeners) {
-      if(l.role & DELETE) l.func();
+      if(l.role & DELETE_ROLE) {
+        if(!l.func) {
+          /// @todo what is the correct receiver ("this" in the callback)?
+          l.scriptFunc->Call(v8::Context::GetCurrent()->Global(), 0, 0);
+        } else l.func();
+      }
       if(l.listener) l.listener->m_valueListening.remove(this);
     }
     m_listeners.clear();
@@ -213,15 +229,24 @@ namespace Valuable
     }
   }
 
-  void Attribute::addListener(ListenerFunc func, int role)
+  long Attribute::addListener(ListenerFunc func, int role)
   {
-    addListener(0, func, role);
+    return addListener(0, func, role);
   }
 
-  void Attribute::addListener(Node * listener, ListenerFunc func, int role)
+  long Attribute::addListener(Node * listener, ListenerFunc func, int role)
   {
-    m_listeners << AttributeListener(func, role, listener);
+    long id = m_listenersId++;
+    m_listeners[id] = AttributeListener(func, role, listener);
     if(listener) listener->m_valueListening << listener;
+    return id;
+  }
+
+  long Attribute::addListener(v8::Persistent<v8::Function> func, int role)
+  {
+    long id = m_listenersId++;
+    m_listeners[id] = AttributeListener(func, role);
+    return id;
   }
 
   void Attribute::removeListeners(int role)
@@ -232,8 +257,8 @@ namespace Valuable
   void Attribute::removeListener(Node * listener, int role)
   {
     QList<Node*> listeners;
-    for(QList<AttributeListener>::iterator it = m_listeners.begin(); it != m_listeners.end(); ) {
-      if(it->role & role && (!listener || listener == it->listener)) {
+    for(QMap<long, AttributeListener>::iterator it = m_listeners.begin(); it != m_listeners.end(); ) {
+      if((it->role & role) && (!listener || listener == it->listener)) {
         if(it->listener) listeners << it->listener;
         it = m_listeners.erase(it);
       } else ++it;
@@ -246,6 +271,14 @@ namespace Valuable
       if(!found)
         listener->m_valueListening.remove(this);
     }
+  }
+
+  void Attribute::removeListener(long id)
+  {
+    QMap<long, AttributeListener>::iterator it = m_listeners.find(id);
+    if(it == m_listeners.end()) return;
+    if(it->listener) it->listener->m_valueListening.remove(this);
+    m_listeners.erase(it);
   }
 
   bool Attribute::isChanged() const
@@ -262,49 +295,49 @@ namespace Valuable
     return false;
   }
 
-  bool Attribute::set(float, Layer)
+  bool Attribute::set(float, Layer, ValueUnit)
   {
     Radiant::error("Attribute::set(float) # %s: conversion not available",
                    m_name.toUtf8().data());
     return false;
   }
 
-  bool Attribute::set(int, Layer)
+  bool Attribute::set(int, Layer, ValueUnit)
   {
     Radiant::error("Attribute::set(int) # %s: conversion not available",
                    m_name.toUtf8().data());
     return false;
   }
 
-  bool Attribute::set(const QString &, Layer)
+  bool Attribute::set(const QString &, Layer, ValueUnit)
   {
     Radiant::error("Attribute::set(string) # %s: conversion not available",
                    m_name.toUtf8().data());
     return false;
   }
 
-  bool Attribute::set(const Nimble::Vector2f &, Layer)
+  bool Attribute::set(const Nimble::Vector2f &, Layer, QList<ValueUnit>)
   {
     Radiant::error("Attribute::set(Vector2f) # %s: conversion not available",
                    m_name.toUtf8().data());
     return false;
   }
 
-  bool Attribute::set(const Nimble::Vector3f & v, Layer layer)
+  bool Attribute::set(const Nimble::Vector3f &, Layer, QList<ValueUnit>)
   {
     Radiant::error("Attribute::set(Vector3f) # %s: conversion not available",
                    m_name.toUtf8().data());
     return false;
   }
 
-  bool Attribute::set(const Nimble::Vector4f &, Layer)
+  bool Attribute::set(const Nimble::Vector4f &, Layer, QList<ValueUnit>)
   {
     Radiant::error("Attribute::set(Vector4f) # %s: conversion not available",
                    m_name.toUtf8().data());
     return false;
   }
 
-  bool Attribute::set(const QVariantList & v, QList<ValueUnit> units, Layer layer)
+  bool Attribute::set(const QVariantList &, QList<ValueUnit>, Layer)
   {
     Radiant::error("Attribute::set(QVariantList) # %s: conversion not available",
                    m_name.toUtf8().data());

@@ -112,6 +112,7 @@ namespace Nimble {
       @param tolerance if determinant smaller than tolerance, abort
       @return the inverted matrix */
     inline Matrix3T<T>        inverse(bool * ok = 0, T tolerance = 1.0e-8) const;
+    inline Matrix3T<T>        inverse23() const;
 
     /// Create a matrix that performs 2D translation
     static Matrix3T<T> translation(const Vector2T<T> & t) { Matrix3T<T> m; m.identity(); m.set(0, 2, t.x); m.set(1, 2, t.y); return m; }
@@ -552,6 +553,36 @@ namespace Nimble {
       for (int iCol = 0; iCol < 3; iCol++)
     res[iRow][iCol] *= fInvDet;
     }
+    return res;
+  }
+
+  template <class T>
+  Matrix3T<T> Matrix3T<T>::inverse23() const
+  {
+
+    Matrix3T<T> res;
+
+    // Invert a 3x3 using cofactors.  This is about 8 times faster than
+    // the Numerical Recipes code which uses Gaussian elimination.
+
+    // Code from Wild Magic library.
+
+    res[0][0] = m[1][1];
+    res[0][1] = - m[0][1];
+    res[0][2] = m[0][1] * m[1][2] - m[0][2] * m[1][1];
+    res[1][0] = - m[1][0];
+    res[1][1] = m[0][0];
+    res[1][2] = m[0][2] * m[1][0] - m[0][0] * m[1][2];
+    res[2][0] = 0;
+    res[2][1] = 0;
+    res[2][2] = m[0][0] * m[1][1] - m[0][1] * m[1][0];
+
+    T fDet = m[0][0] * res[0][0] + m[0][1] * res[1][0] + m[0][2] * res[2][0];
+
+    T fInvDet = 1.0f / fDet;
+    for (int iRow = 0; iRow < 3; iRow++)
+      for (int iCol = 0; iCol < 3; iCol++)
+        res[iRow][iCol] *= fInvDet;
     return res;
   }
 

@@ -23,6 +23,13 @@
 #include <QList>
 #include <QVariantList>
 
+// new behavior: elements of array 'array' will be default initialized
+#if RADIANT_WINDOWS
+# if _MSC_VER >= 1310
+#  pragma warning(disable: 4351)
+# endif
+#endif
+
 #ifdef MULTI_DOCUMENTER
 #include "Serializer.hpp"
 #include "XMLArchive.hpp"
@@ -115,9 +122,9 @@ namespace Valuable
 
     typedef std::function<void ()> ListenerFunc;
     enum ListenerRole {
-      DELETE = 1 << 0,
-      CHANGE = 1 << 1,
-      ALL = (CHANGE << 1) -1
+      DELETE_ROLE = 1 << 0,
+      CHANGE_ROLE = 1 << 1,
+      ALL_ROLES = (CHANGE_ROLE << 1) -1
     };
 
     Attribute();
@@ -210,17 +217,17 @@ namespace Valuable
     virtual QString asString(bool * const ok = 0) const;
 
     /// Sets the value of the object
-    virtual bool set(float v, Layer layer = MANUAL);
+    virtual bool set(float v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN);
     /// Sets the value of the object
-    virtual bool set(int v, Layer layer = MANUAL);
+    virtual bool set(int v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN);
     /// Sets the value of the object
-    virtual bool set(const QString & v, Layer layer = MANUAL);
+    virtual bool set(const QString & v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN);
     /// Sets the value of the object
-    virtual bool set(const Nimble::Vector2f & v, Layer layer = MANUAL);
+    virtual bool set(const Nimble::Vector2f & v, Layer layer = MANUAL, QList<ValueUnit> units = QList<ValueUnit>());
     /// Sets the value of the object
-    virtual bool set(const Nimble::Vector3f & v, Layer layer = MANUAL);
+    virtual bool set(const Nimble::Vector3f & v, Layer layer = MANUAL, QList<ValueUnit> units = QList<ValueUnit>());
     /// Sets the value of the object
-    virtual bool set(const Nimble::Vector4f & v, Layer layer = MANUAL);
+    virtual bool set(const Nimble::Vector4f & v, Layer layer = MANUAL, QList<ValueUnit> units = QList<ValueUnit>());
     /// Sets the value of the object
     virtual bool set(const QVariantList & v, QList<ValueUnit> unit, Layer layer = MANUAL);
 
@@ -230,7 +237,7 @@ namespace Valuable
     /// The object is serialized using its name as a tag name.
     /// @param archive Serialization archive that is used to create new elements.
     /// @return Serialized object as an ArchiveElement
-    virtual ArchiveElement serialize(Archive & archive) const;
+    virtual ArchiveElement serialize(Archive & archive) const OVERRIDE;
 
     /// The host object of the value object (is any).
     /// @return Pointer to the host
@@ -239,14 +246,16 @@ namespace Valuable
     void removeHost();
 
     /// Adds a listener that is invoked whenever the value is changed
-    void addListener(ListenerFunc func, int role = CHANGE);
+    long addListener(ListenerFunc func, int role = CHANGE_ROLE);
     /// Adds a listener that is invoked whenever the value is changed
     /// The listener is removed when the listener object is deleted
-    void addListener(Node * listener, ListenerFunc func, int role = CHANGE);
+    long addListener(Node * listener, ListenerFunc func, int role = CHANGE_ROLE);
+    long addListener(v8::Persistent<v8::Function> func, int role = CHANGE_ROLE);
     /// Removes listeners from the listener list
-    void removeListeners(int role = ALL);
+    void removeListeners(int role = ALL_ROLES);
     /// Removes a listener from the listener list
-    void removeListener(Node * listener, int role = ALL);
+    void removeListener(Node * listener, int role = ALL_ROLES);
+    void removeListener(long id);
 
     /// Returns true if the current value of the object is different from the original value.
     virtual bool isChanged() const;
@@ -286,11 +295,18 @@ namespace Valuable
       AttributeListener(ListenerFunc func_, int role_, Node * listener_ = 0)
         : func(func_), role(role_), listener(listener_) {}
 
+      AttributeListener(v8::Persistent<v8::Function> func_, int role_)
+        : func(), scriptFunc(func_), role(role_), listener(0) {}
+
+      AttributeListener() : func(), role(), listener() {}
+
       ListenerFunc func;
+      v8::Persistent<v8::Function> scriptFunc;
       int role;
       Node * listener;
     };
-    QList<AttributeListener> m_listeners;
+    QMap<long, AttributeListener> m_listeners;
+    long m_listenersId;
 
     friend class Node;
   };
@@ -364,7 +380,7 @@ namespace Valuable
       return *this;
     }
 
-    void clearValue(Layer layout)
+    virtual void clearValue(Layer layout)
     {
       assert(layout > ORIGINAL);
       m_valueSet[layout] = false;

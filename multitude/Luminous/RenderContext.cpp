@@ -420,7 +420,7 @@ namespace Luminous
     FBOPackages m_fbos;
 
 
-    std::stack<std::shared_ptr<FBOPackage> > m_fboStack;
+    std::stack<std::shared_ptr<FBOPackage>, std::vector<std::shared_ptr<FBOPackage> > > m_fboStack;
 
     class DrawBuf
     {
@@ -431,7 +431,7 @@ namespace Luminous
       GLenum m_dest;
     };
 
-    std::stack<DrawBuf> m_drawBufferStack;
+    std::stack<DrawBuf, std::vector<DrawBuf> > m_drawBufferStack;
 
     class Vertex
     {
@@ -476,7 +476,7 @@ namespace Luminous
     BlendFunc m_blendFunc;
 
     /// Viewports defined as x1,y1,x2,y2
-    typedef std::stack<Nimble::Recti> ViewportStack;
+    typedef std::stack<Nimble::Recti, std::vector<Nimble::Recti> > ViewportStack;
     ViewportStack m_viewportStack;
     //RenderTargetManager m_rtm;
 

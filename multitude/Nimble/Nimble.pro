@@ -1,6 +1,7 @@
 include(../multitude.pri)
 
-HEADERS += Export.hpp
+HEADERS += Export.hpp \
+    Frame4.hpp
 HEADERS += Histogram.hpp 
 HEADERS += Interpolation.hpp
 HEADERS += KeyStone.hpp 

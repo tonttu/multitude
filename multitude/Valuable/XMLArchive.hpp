@@ -102,6 +102,7 @@ namespace Valuable
     bool writeToFile(const QString & file) const;
     bool writeToMem(QByteArray & buffer) const;
     bool readFromFile(const QString & filename);
+    bool readFromMem(const QByteArray & buffer);
 
     /// Returns a pointer to wrapped DOMDocument
     /// @return The wrapped DOMDocument

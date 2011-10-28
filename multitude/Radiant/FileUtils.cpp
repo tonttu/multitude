@@ -40,6 +40,8 @@
 #include <sys/types.h>
 // The POSIX name for this item is deprecated..
 #pragma warning(disable: 4996)
+#else
+#include <unistd.h>
 #endif // PLATFORM_WINDOWS
 
 namespace Radiant
@@ -234,10 +236,10 @@ namespace Radiant
     }
   }
 
-	QString FileUtils::pathSeparator()
-	{
-		return QString(";");
-	}
+  QString FileUtils::pathSeparator()
+  {
+    return QString(";");
+  }
 
 	QString FileUtils::directorySeparator()
 	{

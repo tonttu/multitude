@@ -267,7 +267,7 @@ int main(int argc, char ** argv)
     locator.addPath(".", true);
     configFile = locator.locate("config.txt");
 
-    if(!configFile.size()) {
+    if(configFile.isEmpty()) {
       Radiant::error("FireCapture: Could not locate the standard configuration file");
       return -1;
     }
@@ -298,7 +298,7 @@ int main(int argc, char ** argv)
 
   printf("Found %d FireWire cameras\n", (int) cameras.size());
 
-  if(! cameras.size())
+  if(cameras.empty())
     return 0;
 
   std::vector<CameraThread *> threads;

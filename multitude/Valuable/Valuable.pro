@@ -1,6 +1,8 @@
 include(../multitude.pri)
 
-HEADERS += Archive.hpp
+HEADERS += Archive.hpp \
+    AttributeFrame.hpp \
+    AttributeLocation.hpp
 HEADERS += AttributeFlags.hpp
 HEADERS += ChangeMap.hpp
 HEADERS += CmdParser.hpp
@@ -57,7 +59,7 @@ SOURCES += AttributeString.cpp
 SOURCES += AttributeVector.cpp
 SOURCES += XMLArchive.cpp
 
-LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS
+LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
 
 DEFINES += VALUABLE_EXPORT
 

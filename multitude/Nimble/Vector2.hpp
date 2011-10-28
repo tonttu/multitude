@@ -68,9 +68,9 @@ namespace Nimble {
     /// Returns a pointer to the first element
     const T *   data() const { return &x; }
     /// Compares if two vectors are equal
-    inline bool operator==  (const Vector2T& src) const
-    {
-      static const float eps = std::numeric_limits<T>::epsilon();
+   	inline bool operator==  (const Vector2T& src) const
+	{
+      static const T eps = std::numeric_limits<T>::epsilon();
       return
         x >= src.x - eps && x<= src.x + eps && y >= src.y - eps && y<= src.y + eps;
     }
@@ -190,7 +190,7 @@ namespace Nimble {
   namespace Math {
     /// Specialize Abs
     template <class T>
-    inline float Abs(const Vector2T<T>& t)
+    inline T Abs(const Vector2T<T>& t)
     {
       return t.length();
     }
@@ -201,7 +201,7 @@ namespace Nimble {
   /// @param t2 second dot product vector
   /// @return Dot product
   template <class T>
-  inline float dot(const Vector2T<T> &t1, const Vector2T<T> &t2)
+  inline T dot(const Vector2T<T> &t1, const Vector2T<T> &t2)
   {
     return t1.x * t2.x + t1.y * t2.y;
   }
@@ -209,7 +209,7 @@ namespace Nimble {
   /// Compute the cross product of two 2d vectors by assuming the z components are zero
   /// Returns the magnitude (z component) of the resulting vector
   template<class T>
-  inline float cross(const Vector2T<T> & a, const Vector2T<T> & b)
+  inline T cross(const Vector2T<T> & a, const Vector2T<T> & b)
   {
     return (a.x * b.y) - (a.y * b.x);
   }

@@ -27,7 +27,7 @@
 namespace Valuable
 {
 
-  class FileWatcher : public Node
+  class VALUABLE_API FileWatcher : public Node
   {
   public:
     void add(QString filename);

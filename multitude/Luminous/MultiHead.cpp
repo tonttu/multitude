@@ -187,8 +187,6 @@ namespace Luminous {
 
     assert((m_size[0] > 0.01f) && (m_size[1] > 0.01f));
 
-    Nimble::Vector2f orig = loc;
-
     loc.x -= m_location[0];
     loc.y -= (windowheight - m_size[1] - m_location[1]);
     loc.descale(m_size.asVector());

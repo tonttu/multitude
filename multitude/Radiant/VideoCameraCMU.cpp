@@ -26,6 +26,7 @@
 #include <Radiant/Sleep.hpp>
 #include <Radiant/Types.hpp>
 #include <Radiant/Mutex.hpp>
+#include <Radiant/Trace.hpp>
 
 #include <cassert>
 #include <math.h>
