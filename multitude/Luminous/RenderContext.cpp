@@ -1524,6 +1524,11 @@ namespace Luminous
     }
   }
 
+  void RenderContext::bindDefaultProgram()
+  {
+    bindProgram(&*m_data->m_basic_shader);
+  }
+
   void RenderContext::flush()
   {
     if(!m_data->m_vertices.size())

@@ -390,6 +390,7 @@ namespace Luminous
     void bindTexture(GLenum textureType, GLenum textureUnit, GLuint textureId);
     /// Bind GLSL program object
     void bindProgram(GLSLProgramObject * program);
+    void bindDefaultProgram();
 
     void flush();
 

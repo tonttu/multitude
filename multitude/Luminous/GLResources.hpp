@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #ifndef LUMINOUS_GLRESOURCES_HPP
@@ -116,6 +104,7 @@ namespace Luminous
 
     // static void setThreadResources(GLResources *);
 
+#if 0
     /** Associates the resource collection, window, and area to the calling
     thread. @sa getThreadMultiHead
     @param resources resource collection
@@ -144,7 +133,7 @@ namespace Luminous
     /** @return The current window which has been set with #setThreadResources, or
         null if the window has not been set. */
     static const Luminous::MultiHead::Window * getThreadMultiHeadWindow();
-
+#endif
     /// Query if the PROXY_TEXTURE_2D extension seems to be broken.
     /** On Linux, with ATI cards, this OpenGL feature appears to be broken, and
         cannot be used. To overcome this issue, one can use this function

@@ -4,7 +4,7 @@
 #include <Nimble/Matrix4.hpp>
 
 namespace Nimble {
-
+  /*
   template <class T>
   const Matrix4T<T> Matrix4T<T>::IDENTITY(1, 0, 0, 0,
                       0, 1, 0, 0,
@@ -29,7 +29,7 @@ namespace Nimble {
                     0, 0, 0, 1);
 
   }
-
+*/
   template <class T> Matrix4T<T> Matrix4T<T>::ortho3D
       (T left, T right, T bottom, T top, T near, T far)
   {
@@ -59,7 +59,7 @@ namespace Nimble {
   }
 
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#if 0
   /// @todo Move test out of the header
   template <class T>
   void Matrix4T<T>::test()
