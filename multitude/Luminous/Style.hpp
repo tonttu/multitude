@@ -6,19 +6,27 @@
 
 namespace Luminous
 {
-
+  /// Style object for giving rendering parameters to the RenderContext
   class Style
   {
   public:
     Style();
 
+    /// Returns the color of the object to be drawn
     const Nimble::Vector4 & color () const { return m_color; }
+    /// Sets the color of the object to be drawn
     void setColor(const Nimble::Vector4 & c) { m_color = c; }
 
+    /// Returns the texture coordinates to use
     const Nimble::Rect & texCoords () const { return m_texCoords; }
+    /// Sets the texture coordinates to be use
     void setTexCoords(const Nimble::Rect &tc) { m_texCoords = tc; }
 
+    /// Control the amount of texturing
+    /** @param texturing Variable control of the texture weight. 1 gives full weight to the texture
+        while zero make non-textured objects. */
     void setTexturing(float texturing) { m_texturing = texturing; }
+    /// Returns the amount of texturing
     float texturing() const { return m_texturing; }
 
     /// Flips the y-coordinates used for texturing
