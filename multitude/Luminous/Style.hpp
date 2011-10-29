@@ -8,13 +8,9 @@
 
 namespace Luminous
 {
-<<<<<<< HEAD
 
-  class LUMINOUS_API Style
-=======
   /// Style object for giving rendering parameters to the RenderContext
-  class Style
->>>>>>> 943e4b1528859193b2e77e058d72f80527e3baf0
+  class LUMINOUS_API Style
   {
   public:
     Style();
