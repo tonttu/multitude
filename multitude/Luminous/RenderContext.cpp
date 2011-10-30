@@ -1361,6 +1361,78 @@ namespace Luminous
     m_data->m_vertices.push_back(v);
   }
 
+  void RenderContext::drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2,
+                               float width, const Luminous::Style & fill)
+  {
+    Nimble::Vector2 dir = p2 - p1;
+    float l = dir.length();
+    if(l < 1.0e-6f)
+      return;
+
+    dir /= l;
+
+    Nimble::Vector2 perp = dir.perpendicular() * (width * 0.500001f);
+
+    Nimble::Vector2 corners[4] = {
+      p1 + perp,
+      p1 - perp,
+      p2 - perp,
+      p2 + perp
+    };
+
+    drawQuad(corners, fill);
+  }
+
+  void RenderContext::drawLineStrip(const Nimble::Vector2 * vertices, size_t npoints,
+                                    float width, const Luminous::Style & fill)
+  {
+    if(npoints < 2)
+      return;
+
+    npoints--;
+
+    // Nimble::Vector2 prevdir = vertices[1] - vertices[0];
+    // prevdir.normalize();
+
+    for(size_t i = 0; i < npoints; i++) {
+      drawLine(vertices[i], vertices[i+1], width, fill);
+      // Nimble::Vector2 dir = vertices[i+1] - vertices[1];
+    }
+  }
+
+
+  void RenderContext::drawLineStrip(const std::vector<Nimble::Vector2> & vertices,
+                                    float width, const Luminous::Style & fill)
+  {
+    drawLineStrip( & vertices[0], vertices.size(), width, fill);
+  }
+
+  void RenderContext::drawQuad(const Nimble::Vector2 * corners, const Luminous::Style & style)
+  {
+    Internal::Vertex v;
+    v.m_color = style.color();
+    v.m_useTexture = style.texturing();
+
+    v.m_location = corners[0];
+    v.m_texCoord = style.texCoords().lowHigh();
+    if(!m_data->m_vertices.empty())
+      m_data->m_vertices.push_back(v);
+    m_data->m_vertices.push_back(v);
+
+    v.m_location = corners[1];
+    v.m_texCoord = style.texCoords().high();
+    m_data->m_vertices.push_back(v);
+
+    v.m_location = corners[3];
+    v.m_texCoord = style.texCoords().low();
+    m_data->m_vertices.push_back(v);
+
+    v.m_location = corners[2];
+    v.m_texCoord = style.texCoords().highLow();
+    m_data->m_vertices.push_back(v);
+    m_data->m_vertices.push_back(v);
+  }
+
   Nimble::Vector2 RenderContext::contextSize() const
   {
     return m_data->contextSize();

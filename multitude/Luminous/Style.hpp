@@ -16,6 +16,8 @@ namespace Luminous
     const Nimble::Vector4 & color () const { return m_color; }
     /// Sets the color of the object to be drawn
     void setColor(const Nimble::Vector4 & c) { m_color = c; }
+    /// Sets the color of the object to be drawn
+    void setColor(float r, float g, float b, float a) { m_color.make(r, g, b, a); }
 
     /// Returns the texture coordinates to use
     const Nimble::Rect & texCoords () const { return m_texCoords; }

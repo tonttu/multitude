@@ -320,6 +320,13 @@ namespace Luminous
     void drawRectWithHole(const Nimble::Rect & area,
                           const Nimble::Rect & hole,
                           const Luminous::Style & fill);
+    void drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2,
+                  float width, const Luminous::Style & fill);
+    void drawLineStrip(const Nimble::Vector2 * vertices, size_t npoints,
+                       float width, const Luminous::Style & fill);
+    void drawLineStrip(const std::vector<Nimble::Vector2> & vertices,
+                       float width, const Luminous::Style & fill);
+    void drawQuad(const Nimble::Vector2 * corners, const Luminous::Style & fill);
 
     /// Sets the current blend function, and enables blending
     /** If the function is BLEND_NONE, then blending is disabled.
