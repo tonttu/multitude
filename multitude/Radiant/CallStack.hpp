@@ -9,8 +9,6 @@
 #include <stdint.h>
 
 #ifdef RADIANT_WINDOWS
-# define WIN32_MEAN_AND_LEAN
-# define NOMINMAX
   typedef uint64_t stackptr_t;
 #else
   typedef void * stackptr_t;
