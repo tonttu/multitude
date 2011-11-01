@@ -37,6 +37,7 @@ namespace Radiant {
     virtual bool close();
 
     static bool listDevices(std::list<std::string> & devices);
+    static bool describeDevices();
 
   private:
     FT2xxStreamInternal * m_data;
