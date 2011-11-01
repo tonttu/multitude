@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Poetic.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Poetic.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #ifndef POETIC_GPU_TEXTURE_GLYPH_HPP
@@ -21,6 +9,11 @@
 
 #include <Luminous/Luminous.hpp>
 
+namespace Luminous {
+
+  class Texture2D;
+}
+
 namespace Poetic
 {
   class CPUBitmapGlyph;
@@ -30,7 +23,7 @@ namespace Poetic
   {
     public:
       /// Constructs a new texture glyph
-      GPUTextureGlyph(const CPUBitmapGlyph * glyph, int texId, int xOff, int yOff, GLsizei width, GLsizei height);
+      GPUTextureGlyph(const CPUBitmapGlyph * glyph, Luminous::Texture2D * tex, int xOff, int yOff, GLsizei width, GLsizei height);
       virtual ~GPUTextureGlyph();
 
       virtual Nimble::Vector2 render(Nimble::Vector2 pen, const Nimble::Matrix3 & m, Nimble::Vector2f ** ptr);
@@ -42,7 +35,7 @@ namespace Poetic
       Nimble::Vector2 m_pos;
       Nimble::Vector2 m_uv[2];
 
-      GLuint m_textureId;
+      Luminous::Texture2D * m_textureId;
   };
 
 }

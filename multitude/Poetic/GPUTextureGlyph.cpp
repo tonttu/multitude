@@ -15,6 +15,7 @@
 #include "GPUTextureGlyph.hpp"
 #include "CPUBitmapGlyph.hpp"
 
+#include <Luminous/Texture.hpp>
 #include <Luminous/Utils.hpp>
 
 #include <Nimble/Vector4.hpp>
@@ -30,11 +31,11 @@ namespace Poetic
 
   // GLuint GPUTextureGlyph::s_activeTexture = 0;
 
-  GPUTextureGlyph::GPUTextureGlyph(const CPUBitmapGlyph * glyph, int texId, int xOff, int yOff, GLsizei width, GLsizei height)
+  GPUTextureGlyph::GPUTextureGlyph(const CPUBitmapGlyph * glyph, Luminous::Texture2D * tex, int xOff, int yOff, GLsizei width, GLsizei height)
     : Glyph(*glyph),
     m_width(0),
     m_height(0),
-    m_textureId(texId)
+    m_textureId(tex)
   {
     m_width = glyph->m_size.x;
     m_height = glyph->m_size.y;
@@ -46,7 +47,7 @@ namespace Poetic
       */
       glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-      glBindTexture(GL_TEXTURE_2D, m_textureId);
+      m_textureId->bind();
       glTexSubImage2D(GL_TEXTURE_2D, 0, xOff, yOff, m_width, m_height, GL_ALPHA, GL_UNSIGNED_BYTE, glyph->m_bitmap);
 
       // glPopClientAttrib();
@@ -67,7 +68,8 @@ namespace Poetic
   Nimble::Vector2 GPUTextureGlyph::render(Nimble::Vector2 pen, const Nimble::Matrix3 & /*m*/, Nimble::Vector2f ** ptr)
   {
     // if(s_activeTexture != m_textureId) {
-    glBindTexture(GL_TEXTURE_2D, m_textureId);
+    m_textureId->bind();
+    // glBindTexture(GL_TEXTURE_2D, m_textureId);
     // s_activeTexture = m_textureId;
     // }
 

@@ -18,6 +18,8 @@
 #include "CPUFont.hpp"
 #include "FontManager.hpp"
 
+#include <Luminous/Utils.hpp>
+
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
@@ -145,7 +147,7 @@ namespace Poetic
     return 0;
   }
 
-  GLuint GPUTextureFont::createTexture()
+  Luminous::Texture2D * GPUTextureFont::createTexture()
   {
     calculateTextureSize();
 
@@ -155,17 +157,22 @@ namespace Poetic
     if(!bytes.empty())
       bzero( & bytes[0], totalMemory);
 
+    Luminous::Texture2D * tex = new Luminous::Texture2D();
+    tex->loadBytes(GL_ALPHA, m_texWidth, m_texHeight, 0, Luminous::PixelFormat::alphaUByte(), false);
+    tex->setPersistent(true);
+    /*
     GLuint texID;
     glGenTextures(1, & texID);
     glBindTexture(GL_TEXTURE_2D, texID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, m_texWidth, m_texHeight,
+         0, GL_ALPHA, GL_UNSIGNED_BYTE,  & bytes[0]);
+         */
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, m_texWidth, m_texHeight,
-         0, GL_ALPHA, GL_UNSIGNED_BYTE,  & bytes[0]);
 
-    return texID;
+    return tex;
   }
 
   void GPUTextureFont::calculateTextureSize()
@@ -175,8 +182,8 @@ namespace Poetic
       assert(m_maxTextureSize);
 
       /* Limit the maximum dimensions of the texture. This is done so
-	 that OS X would not crash (Leopard) or corrupt the graphics
-	 (Tiger).*/
+     that OS X would not crash (Leopard) or corrupt the graphics
+     (Tiger).*/
       if(m_maxTextureSize > 2048)
     m_maxTextureSize = 2048;
     }
@@ -290,9 +297,11 @@ namespace Poetic
 
     // GPUTextureGlyph::resetActiveTexture();
 
-    // info("GPUTextureFont::internalRender # in");
+    info("GPUTextureFont::internalRender # in");
     Luminous::GLSLProgramObject * shader = m_fontShader->bind();
     // info("GPUTextureFont::internalRender # out");
+
+    Luminous::Utils::glCheck("GPUTextureFont::internalRender");
 
     shader->setUniformInt("fontTexture", 0);
 
@@ -362,6 +371,8 @@ namespace Poetic
 
 
 #endif
+
+    Luminous::Utils::glCheck("GPUTextureFont::internalRender # EXIT");
 
   }
 

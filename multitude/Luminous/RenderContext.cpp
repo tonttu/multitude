@@ -667,6 +667,8 @@ namespace Luminous
 
   void RenderContext::finish()
   {
+    flush();
+    bindProgram(0);
   }
 
   void RenderContext::pushViewTransform()
@@ -1386,6 +1388,8 @@ namespace Luminous
   void RenderContext::drawLineStrip(const Nimble::Vector2 * vertices, size_t npoints,
                                     float width, const Luminous::Style & fill)
   {
+    /* This is a very brutal line-strip implementation, that would need to be fixed. */
+
     if(npoints < 2)
       return;
 
@@ -1624,7 +1628,8 @@ namespace Luminous
     VertexAttribArrayStep ut(prog.getAttribLoc("use_tex"), 1, GL_FLOAT,
                              vsize, & vr.m_useTexture);
 
-    // info("RenderContext::flush # %d vertices", (int) m_data->m_vertices.size());
+    info("RenderContext::flush # %d vertices %p %p", (int) m_data->m_vertices.size(),
+         m_data->m_program, m_data->m_basic_shader);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, m_data->m_vertices.size());
     m_data->m_vertices.clear();
 
