@@ -1,6 +1,7 @@
 include(../multitude.pri)
 
-HEADERS += Timer.hpp
+HEADERS += Timer.hpp \
+    FT2xxStream.hpp
 HEADERS += SynchronizedQueue.hpp
 HEADERS += CameraDriver.hpp
 HEADERS += Defines.hpp
@@ -69,7 +70,8 @@ HEADERS += VideoCameraPTGrey.hpp
 HEADERS += VideoCameraCMU.hpp
 HEADERS += VideoCamera1394.hpp
 
-SOURCES += Timer.cpp
+SOURCES += Timer.cpp \
+    FT2xxStream.cpp
 SOURCES += CameraDriver.cpp
 SOURCES += SocketUtilPosix.cpp
 SOURCES += ThreadPoolQt.cpp
@@ -122,6 +124,7 @@ SOURCES += LockFileWin32.cpp
 SOURCES += VideoCameraPTGrey.cpp
  
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS
+LIBS += $$LIB_FTD2XX
 
 linux-*: LIBS += -lX11 -lXtst
 

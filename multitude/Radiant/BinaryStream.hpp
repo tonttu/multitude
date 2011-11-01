@@ -27,7 +27,7 @@ namespace Radiant {
     /// Returns true if the stream has been closed
     virtual bool isHungUp() const { return false; }
 
-    virtual bool close() const { return true; }
+    virtual bool close() { return true; }
   };
 
 }
