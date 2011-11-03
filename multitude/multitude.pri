@@ -23,12 +23,14 @@ withbundles = $$(MULTI_BUNDLES)
 MULTI_FFMPEG_LIBS = -lavcodec -lavformat -lavutil
 
 LIB_BOX2D = -lBox2D
-exists(/usr/local/lib/libftd2xx.so) {
-#  message(FTD2XX support detected.)
+
+exists(/usr/local/lib/libftd2xx.so)|exists(/opt/multitouch/lib/libftd2xx.dylib) {
+  # message(FTD2XX support detected.)
   LIB_FTD2XX = -lftd2xx
   WITH_FTD2XX = yes
   DEFINES += MULTI_WITH_FTD2XX=1
 }
+
 LIB_OPENCL = -lOpenCL
 LIB_OPENGL = -lGL -lGLU
 

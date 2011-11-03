@@ -1,7 +1,6 @@
 include(../multitude.pri)
 
-HEADERS += Timer.hpp \
-    FT2xxStream.hpp
+HEADERS += Timer.hpp
 HEADERS += SynchronizedQueue.hpp
 HEADERS += CameraDriver.hpp
 HEADERS += Defines.hpp
@@ -70,8 +69,7 @@ HEADERS += VideoCameraPTGrey.hpp
 HEADERS += VideoCameraCMU.hpp
 HEADERS += VideoCamera1394.hpp
 
-SOURCES += Timer.cpp \
-    FT2xxStream.cpp
+SOURCES += Timer.cpp
 SOURCES += CameraDriver.cpp
 SOURCES += SocketUtilPosix.cpp
 SOURCES += ThreadPoolQt.cpp
@@ -122,7 +120,7 @@ SOURCES += PlatformUtilsWin32.cpp
 SOURCES += SerialPortWin32.cpp
 SOURCES += LockFileWin32.cpp
 SOURCES += VideoCameraPTGrey.cpp
- 
+
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS
 LIBS += $$LIB_FTD2XX
 
@@ -140,9 +138,14 @@ unix {
   QT = core network
 }
 
+contains(WITH_FTD2XX,yes) {
+  HEADERS += FT2xxStream.hpp
+  SOURCES += FT2xxStream.cpp
+}
+
 win32 {
     message(Radiant on Windows)
-    # CMU driver is only 32-bit 
+    # CMU driver is only 32-bit
     !win64 {
        DEFINES += CAMERA_DRIVER_CMU
        LIBS += 1394camera.lib
