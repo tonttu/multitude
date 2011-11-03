@@ -1,13 +1,16 @@
 #ifndef LUMINOUS_STYLE_HPP
 #define LUMINOUS_STYLE_HPP
 
+#include "Export.hpp"
+
 #include <Nimble/Rect.hpp>
 #include <Nimble/Vector4.hpp>
 
 namespace Luminous
 {
+
   /// Style object for giving rendering parameters to the RenderContext
-  class Style
+  class LUMINOUS_API Style
   {
   public:
     Style();
