@@ -784,8 +784,8 @@ namespace Luminous
 
   void Image::setPixel(unsigned x, unsigned y, const Nimble::Vector4 &pixel)
   {
-    assert(x < (unsigned) width());
-    assert(y < (unsigned) height());
+    assert(x < unsigned(width()));
+    assert(y < unsigned(height()));
 
     uint8_t * px = line(y);
     px += pixelFormat().bytesPerPixel() * x;
