@@ -297,7 +297,7 @@ namespace Poetic
 
     // GPUTextureGlyph::resetActiveTexture();
 
-    info("GPUTextureFont::internalRender # in");
+    // info("GPUTextureFont::internalRender # in");
     Luminous::GLSLProgramObject * shader = m_fontShader->bind();
     // info("GPUTextureFont::internalRender # out");
 

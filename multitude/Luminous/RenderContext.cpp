@@ -1619,20 +1619,24 @@ namespace Luminous
     prog.setUniformMatrix4("view_transform", m_data->m_viewTransform);
     prog.setUniformMatrix3("object_transform", transform());
 
-    VertexAttribArrayStep ls(prog.getAttribLoc("location"), 2, GL_FLOAT,
-                             vsize, & vr.m_location);
-    VertexAttribArrayStep cs(prog.getAttribLoc("color"), 4, GL_FLOAT,
-                             vsize, & vr.m_color);
-    VertexAttribArrayStep ts(prog.getAttribLoc("tex_coord"), 4, GL_FLOAT,
-                             vsize, & vr.m_texCoord);
-    VertexAttribArrayStep ut(prog.getAttribLoc("use_tex"), 1, GL_FLOAT,
-                             vsize, & vr.m_useTexture);
+    int aloc = prog.getAttribLoc("location");
+    int acol = prog.getAttribLoc("color");
+    int atex = prog.getAttribLoc("tex_coord");
+    int aute = prog.getAttribLoc("use_tex");
 
-    info("RenderContext::flush # %d vertices %p %p", (int) m_data->m_vertices.size(),
-         m_data->m_program, m_data->m_basic_shader);
+    if((aloc < 0) || (acol < 0) || (atex < 0) || (aute < 0)) {
+      fatal("RenderContext::flush # %d vertices %p %p %d", (int) m_data->m_vertices.size(),
+            m_data->m_program, &*m_data->m_basic_shader, (int) prog.getAttribLoc("location"));
+    }
+
+    VertexAttribArrayStep ls(aloc, 2, GL_FLOAT, vsize, & vr.m_location);
+    VertexAttribArrayStep cs(acol, 4, GL_FLOAT, vsize, & vr.m_color);
+    VertexAttribArrayStep ts(atex, 4, GL_FLOAT, vsize, & vr.m_texCoord);
+    VertexAttribArrayStep ut(aute, 1, GL_FLOAT, vsize, & vr.m_useTexture);
+
     glDrawArrays(GL_TRIANGLE_STRIP, 0, m_data->m_vertices.size());
     m_data->m_vertices.clear();
-
+    Utils::glCheck("RenderContext::flush # 3");
   }
 
   void RenderContext::beforeTransformChange()
