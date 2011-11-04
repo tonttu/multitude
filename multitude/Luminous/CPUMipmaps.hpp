@@ -223,6 +223,7 @@ namespace Luminous {
     static std::string cacheFileName(const std::string & src, int level = -1,
                                      const std::string & suffix = "png");
 
+    static bool s_dxtSupported;
   protected:
     virtual void doTask();
 

@@ -75,6 +75,9 @@ static Profiler s_profiler;
 
 namespace Luminous {
 
+  // DXT support is tested in Luminous::initLuminous()
+  bool CPUMipmaps::s_dxtSupported = true;
+
   using namespace Radiant;
 
   CPUMipmaps::CPUMipmaps()
@@ -217,7 +220,9 @@ namespace Luminous {
     m_info = Luminous::ImageInfo();
     m_shouldSave.clear();
     m_stack.clear();
-    m_compressedMipmaps = compressedMipmaps;
+
+    // Use DXT compression if it is requested and supported
+    m_compressedMipmaps = (compressedMipmaps && s_dxtSupported);
 
     if(m_fileModified == 0) {
       error("CPUMipmaps::startLoading # failed to stat file %s", filename);

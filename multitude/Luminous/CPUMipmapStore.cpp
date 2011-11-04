@@ -16,6 +16,7 @@
 #include "Export.hpp"
 #include "CPUMipmapStore.hpp"
 
+#include <Radiant/FileUtils.hpp>
 #include <Radiant/Trace.hpp>
 
 namespace Luminous {
@@ -24,14 +25,18 @@ namespace Luminous {
 
   static Radiant::Mutex s_mutex;
 
-  static std::map<std::string, std::weak_ptr<CPUMipmaps> > s_mipmaps;
+  static std::map<std::pair<std::string, unsigned long>, std::weak_ptr<CPUMipmaps> > s_mipmaps;
 
   std::shared_ptr<CPUMipmaps> CPUMipmapStore::acquire(const std::string & filename,
                                                       bool compressed_mipmaps)
   {
     Radiant::Guard g( s_mutex);
 
-    std::weak_ptr<CPUMipmaps> & mipmap_weak = s_mipmaps[filename];
+    // Check the timestamp
+    unsigned long lastMod = Radiant::FileUtils::lastModified(filename);
+    const std::pair<std::string, unsigned long> key = std::make_pair(filename, lastMod);
+
+    std::weak_ptr<CPUMipmaps> & mipmap_weak = s_mipmaps[key];
 
     // Check if ptr still points to something valid
     std::shared_ptr<CPUMipmaps> mipmap_shared = mipmap_weak.lock();
@@ -50,8 +55,7 @@ namespace Luminous {
     // store new weak pointer
     mipmap_weak = mipmap_shared;
 
-    debugLuminous("CPUMipmapStore::acquire # Created new for %s (%ld links)",
-          filename.c_str(), s_mipmaps[filename].use_count());
+    debugLuminous("CPUMipmapStore::acquire # Created new for [%s, %ld] (%ld links)", filename.c_str(), lastMod, s_mipmaps[key].use_count());
 
     return mipmap_shared;
   }

@@ -76,6 +76,9 @@
 #   define DLLIMPORT __declspec(dllimport)
 
 #   define OVERRIDE override
+
+// warning C4251: class X needs to have dll-interface to be used by clients of class Y
+#   pragma warning(disable:4251)
 #endif
 
 //
@@ -98,6 +101,9 @@
 #   ifndef _HAS_TR1
 #     error "Compiler TR1 support was not found. Please install Visual Studio 2008 Service Pack 1 or use a newer compiler."
 #   endif
+
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 
 // Grmblrgrmbl, weird windows CRT stuffs
 #define snprintf _snprintf
