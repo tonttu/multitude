@@ -220,6 +220,18 @@ namespace Luminous
       */
     void drawArc(Nimble::Vector2f center, float radius, float fromRadians, float toRadians, float width, float blendWidth, const float * rgba, int segments);
 
+    /** Draws an arc
+      @param center center of the arc
+      @param radius radius of the arc
+      @param fromRadians start angle in radians
+      @param toRadians end angle in radians
+      @param width width of the arc
+      @param fill color and other parameters for the arc
+      @param segments number of segments to use
+      */
+    void drawArc(Nimble::Vector2f center, float radius, float fromRadians, float toRadians,
+                 float width, const Luminous::Style & fill);
+
     /** Draws a cut sector in a circle or a wedge.
       @param center center of the circle
       @param radius1 inner radius
@@ -327,6 +339,8 @@ namespace Luminous
     void drawLineStrip(const std::vector<Nimble::Vector2> & vertices,
                        float width, const Luminous::Style & fill);
     void drawQuad(const Nimble::Vector2 * corners, const Luminous::Style & fill);
+
+
 
     /// Sets the current blend function, and enables blending
     /** If the function is BLEND_NONE, then blending is disabled.

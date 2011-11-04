@@ -303,6 +303,13 @@ namespace Luminous
           fatal("Could not load basic shader for rendering");
         m_basic_shader.reset(basic);
 
+        GLSLProgramObject * arc =
+            GLSLProgramObject::fromFiles(locateStandardShader("arc_tex.vs").toUtf8().data(),
+                                         locateStandardShader("arc_tex.fs").toUtf8().data());
+        if(!arc)
+          fatal("Could not load arc shader for rendering");
+        m_arc_shader.reset(arc);
+
         m_viewFBO.reset(new Luminous::Framebuffer());
         info("RenderContext::Internal # init ok");
       }
@@ -451,6 +458,7 @@ namespace Luminous
     std::shared_ptr<Luminous::GLSLProgramObject> m_circle_shader;
     std::shared_ptr<Luminous::GLSLProgramObject> m_polyline_shader;
     std::shared_ptr<Luminous::GLSLProgramObject> m_basic_shader;
+    std::shared_ptr<Luminous::GLSLProgramObject> m_arc_shader;
 
     const Luminous::MultiHead::Area * m_area;
     const Luminous::MultiHead::Window * m_window;
@@ -997,6 +1005,28 @@ namespace Luminous
       glEnd();
     }
   }
+
+  void RenderContext::drawArc(Nimble::Vector2f center, float radius,
+                              float fromRadians, float toRadians,
+                              float width, const Luminous::Style & fill)
+  {
+    flush();
+
+    bindProgram(&*m_data->m_arc_shader);
+
+    GLSLProgramObject & prog = * m_data->m_arc_shader;
+
+    prog.setUniformFloat("fs_fromRadians", fromRadians);
+    prog.setUniformFloat("fs_toRadians", toRadians);
+    prog.setUniformFloat("fs_thickness", 0.5f * width / radius);
+
+    float dim = radius + width * 0.5f;
+    Nimble::Vector2 corners(dim, dim);
+
+    drawRect(Nimble::Rect(center - corners, center + corners), fill);
+    flush();
+  }
+
 
   void RenderContext::drawWedge(Nimble::Vector2f center, float radius1,
                                 float radius2, float fromRadians, float toRadians,
@@ -1609,6 +1639,8 @@ namespace Luminous
   {
     if(!m_data->m_vertices.size())
       return;
+
+    assert(m_data->m_program != 0);
 
     const int vsize = sizeof(Internal::Vertex);
 
