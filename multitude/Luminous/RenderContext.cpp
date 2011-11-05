@@ -1016,12 +1016,13 @@ namespace Luminous
 
     GLSLProgramObject & prog = * m_data->m_arc_shader;
 
-    prog.setUniformFloat("fs_fromRadians", fromRadians);
-    prog.setUniformFloat("fs_toRadians", toRadians);
-    prog.setUniformFloat("fs_thickness", 0.5f * width / radius);
-
     float dim = radius + width * 0.5f;
     Nimble::Vector2 corners(dim, dim);
+
+    prog.setUniformFloat("fs_fromRadians", fromRadians);
+    prog.setUniformFloat("fs_toRadians", toRadians);
+    prog.setUniformFloat("fs_thickness", (0.5f * width) / dim);
+
 
     drawRect(Nimble::Rect(center - corners, center + corners), fill);
     flush();
