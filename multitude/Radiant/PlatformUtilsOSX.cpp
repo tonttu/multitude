@@ -16,6 +16,8 @@
 #include <mach/mach_traps.h>
 #include <mach/mach.h>
 
+#include <assert.h>
+
 #ifndef RADIANT_IOS
 # include <CoreFoundation/CoreFoundation.h>
 #endif
@@ -39,9 +41,9 @@ namespace Radiant
       return buf;
     }
 #else
-    std::string getExecutablePath()
+    QString getExecutablePath()
     {
-      return std::string();
+      return QString();
     }
 #endif
 

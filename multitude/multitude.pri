@@ -84,7 +84,7 @@ contains(MEMCHECK,yes) {
   linux:LIBS += -rdynamic
 }
 
-iphone*:INCLUDES += /usr/local/include
+# iphone*:INCLUDES += /usr/local/include
 
 !iphone*:LIB_SDL = -lSDL
 
@@ -182,7 +182,7 @@ MULTI_VIDEO_LIBS = $$LIB_SCREENPLAY $$LIB_RESONANT $$LIB_VIDEODISPLAY
 QMAKE_LIBDIR += $$PWD/lib
 
 # message(QT version is $${QT_MAJOR_VERSION}.$${QT_MINOR_VERSION}.$${QT_PATCH_VERSION})
-iphone*:DEFINES += __IPHONE_OS_VERSION_MIN_REQUIRED=40100
+# iphone*:DEFINES += __IPHONE_OS_VERSION_MIN_REQUIRED=40100
 
 contains(QT_MAJOR_VERSION,4) {
 
@@ -199,9 +199,9 @@ CONFIG(release, debug|release) {
 DEFINES += USING_V8_SHARED
 
 # Use ccache if available
-unix:exists(/usr/bin/ccache):QMAKE_CXX=ccache g++
-unix:exists(/sw/bin/ccache):QMAKE_CXX=/sw/bin/ccache g++
-unix:exists(/opt/local/bin/ccache):QMAKE_CXX=/opt/local/bin/ccache g++
+unix:exists(/usr/bin/ccache):QMAKE_CXX=ccache $$QMAKE_CXX
+unix:exists(/sw/bin/ccache):QMAKE_CXX=/sw/bin/ccache $$QMAKE_CXX
+unix:exists(/opt/local/bin/ccache):QMAKE_CXX=/opt/local/bin/ccache $$QMAKE_CXX
 
 unix:exists(/opt/multitouch):INCLUDEPATH+=/opt/multitouch/include
 unix:exists(/opt/multitouch):LIBS+=-L/opt/multitouch/lib

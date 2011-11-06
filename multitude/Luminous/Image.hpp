@@ -262,6 +262,8 @@ namespace Luminous
     ImageTex * move();
   };
 
+#ifndef LUMINOUS_OPENGLES
+
   /// A compressed image. Currently supports DXT format.
   class LUMINOUS_API CompressedImage
   {
@@ -331,5 +333,6 @@ namespace Luminous
     CompressedImageTex * move();
   };
 }
+#endif // LUMINOUS_OPENGLES
 
 #endif

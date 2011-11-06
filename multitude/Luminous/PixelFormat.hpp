@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #ifndef LUMINOUS_PIXELFORMAT_HPP
@@ -48,14 +36,17 @@ namespace Luminous
       TYPE_DOUBLE       = GL_DOUBLE
 #endif // LUMINOUS_OPENGLES
                         };
+
     /// Compression used
     enum Compression
     {
-      COMPRESSION_NONE,                                                 ///< No compression
-      COMPRESSED_RGB_DXT1         = GL_COMPRESSED_RGB_S3TC_DXT1_EXT,    ///< DXT1 RGB compression
+      COMPRESSION_NONE                                                 ///< No compression
+#ifndef LUMINOUS_OPENGLES
+      , COMPRESSED_RGB_DXT1         = GL_COMPRESSED_RGB_S3TC_DXT1_EXT,    ///< DXT1 RGB compression
       COMPRESSED_RGBA_DXT1        = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,   ///< DXT1 RGBA compression
       COMPRESSED_RGBA_DXT3        = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,   ///< DXT3 RGBA compression
       COMPRESSED_RGBA_DXT5        = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT    ///< DXT5 RGBA compression
+#endif // LUMINOUS_OPENGLES
     };
 
     /// Layout of channels
@@ -119,7 +110,7 @@ namespace Luminous
     /** Some platforms do not support this format. */
         static PixelFormat bgrUByte()
     { return PixelFormat(LAYOUT_BGR, TYPE_UBYTE); }
-    /// Constructs an 8-bit BGRA pixel format    
+    /// Constructs an 8-bit BGRA pixel format
     /// @return new pixel format
     static PixelFormat bgraUByte()
     { return PixelFormat(LAYOUT_BGRA, TYPE_UBYTE); }

@@ -26,7 +26,7 @@ namespace Luminous
 
     while((err = glGetError()) != GL_NO_ERROR) {
 #ifdef LUMINOUS_OPENGLES
-      Radiant::error("OpenGLES : %s:%d", msg.c_str(), line);
+      Radiant::error("OpenGLES : %s:%d", msg.toUtf8().data(), line);
 #else
       const char * glErrMsg = (const char*)gluErrorString(err);
 

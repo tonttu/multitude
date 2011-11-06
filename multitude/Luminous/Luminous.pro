@@ -19,7 +19,7 @@ HEADERS += GLResource.hpp
 HEADERS += GLResources.hpp
 HEADERS += GLSLProgramObject.hpp
 HEADERS += GLSLShaderObject.hpp
-HEADERS += ImageCodecDDS.hpp
+!iphone*:HEADERS += ImageCodecDDS.hpp
 HEADERS += ImageCodec.hpp
 HEADERS += ImageCodecTGA.hpp
 HEADERS += Image.hpp
@@ -54,7 +54,7 @@ SOURCES += GLSLProgramObject.cpp
 SOURCES += GLSLShaderObject.cpp
 # TGA loader tries to create BGR & BGRA textures, which are not availale on OpenGL ES
 !iphone*:SOURCES += ImageCodecTGA.cpp
-SOURCES += ImageCodecDDS.cpp
+!iphone*:SOURCES += ImageCodecDDS.cpp
 SOURCES += Image.cpp
 SOURCES += Luminous.cpp
 SOURCES += MipMapGenerator.cpp

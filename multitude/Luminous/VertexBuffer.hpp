@@ -161,6 +161,7 @@ namespace Luminous
     {}
 
   };
+#ifndef LUMINOUS_OPENGLES
 
   /// An OpenGL pixel read buffer for reading pixels from framebuffer.
   class ReadBuffer : public BufferObject<GL_PIXEL_PACK_BUFFER>
@@ -172,6 +173,7 @@ namespace Luminous
       : BufferObject<GL_PIXEL_PACK_BUFFER>(resources)
     {}
   };
+#endif // LUMINOUS_OPENGLES
 
 }
 
