@@ -33,7 +33,7 @@ namespace Luminous
   }
 
   PixelFormat::PixelFormat(ChannelLayout layout, ChannelType type):
-    m_layout(layout), 
+    m_layout(layout),
     m_type(type),
     m_compression(COMPRESSION_NONE)
   {}
@@ -49,6 +49,7 @@ namespace Luminous
 
   int PixelFormat::numChannels() const
   {
+#ifndef LUMINOUS_OPENGLES
     switch(m_compression) {
       case COMPRESSED_RGB_DXT1:
         return 3;
@@ -59,6 +60,7 @@ namespace Luminous
       case COMPRESSION_NONE:
         break;
     }
+#endif // LUMINOUS_OPENGLES
 
     switch(m_layout) {
 #ifndef LUMINOUS_OPENGLES
@@ -121,7 +123,7 @@ namespace Luminous
     }
   }
 
-  static QString typeToString(PixelFormat::ChannelType type) 
+  static QString typeToString(PixelFormat::ChannelType type)
   {
     switch(type)
     {

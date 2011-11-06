@@ -127,11 +127,11 @@ namespace Luminous
     // Estimate something, try to be conservative
     switch(m_internalFormat) {
     case GL_LUMINANCE:
-    case GL_INTENSITY:
+    LUMINOUS_IN_FULL_OPENGL(case GL_INTENSITY:)
       used *= 1;
       break;
     case GL_RGB:
-    case GL_BGR:
+    LUMINOUS_IN_FULL_OPENGL(case GL_BGR:)
       used *= 3;
       break;
 #ifdef GL_RGB32F
@@ -263,6 +263,8 @@ namespace Luminous
                      image.pixelFormat(), buildMipmaps);
   }
 
+#ifndef LUMINOUS_OPENGLES
+
   bool Texture2D::loadImage(const CompressedImage & image)
   {
     // Update estimate about consumed bytes
@@ -305,6 +307,7 @@ namespace Luminous
 
     return true;
   }
+#endif // LUMINOUS_OPENGLES
 
   bool Texture2D::loadBytes(GLenum internalFormat, int w, int h,
                             const void * data,
@@ -362,19 +365,19 @@ namespace Luminous
     if(buildMipmaps) minFilter = GL_LINEAR_MIPMAP_LINEAR;
 
     if(buildMipmaps) {
-// #ifndef LUMINOUS_OPENGLES
+#ifndef LUMINOUS_OPENGLES
 
       assert(Utils::glCheck("Texture2D::loadBytes # 1"));
 
       glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
 
       assert(Utils::glCheck("Texture2D::loadBytes # 2"));
-// #endif // LUMINOUS_OPENGLES
 
       gluBuild2DMipmaps(GL_TEXTURE_2D, internalFormat,
                         w, h, srcFormat.layout(), srcFormat.type(), data);
       assert(Utils::glCheck("Texture2D::loadBytes # 3"));
 
+#endif // LUMINOUS_OPENGLES
 
     } else {
       /* debugLuminous("TEXTURE UPLOAD :: INTERNAL %s FORMAT %s [%d %d]",

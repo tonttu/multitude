@@ -2,9 +2,13 @@
  */
 
 #include "CPUMipmaps.hpp"
-#include "MipMapGenerator.hpp"
+
+#ifndef LUMINOUS_OPENGLES
+# include "MipMapGenerator.hpp"
+#endif
 
 #include <Luminous/RenderContext.hpp>
+
 #include <Luminous/Utils.hpp>
 
 #include <Radiant/PlatformUtils.hpp>
@@ -197,6 +201,7 @@ namespace Luminous {
     return image;
   }
 
+#ifndef LUMINOUS_OPENGLES
   std::shared_ptr<CompressedImageTex> CPUMipmaps::getCompressedImage(int i)
   {
     CPUItem item = getStack(i);
@@ -208,6 +213,7 @@ namespace Luminous {
 
     return image;
   }
+#endif // LUMINOUS_OPENGLES
 
   void CPUMipmaps::markImage(size_t i)
   {
@@ -247,6 +253,7 @@ namespace Luminous {
       return false;
     }
 
+#ifndef LUMINOUS_OPENGLES
     MipMapGenerator * gen = 0;
     if(compressedMipmaps) {
       m_compFilename = cacheFileName(filename, -1, "dds");
@@ -271,6 +278,7 @@ namespace Luminous {
         gen->setListener(shared_from_this());
       }
     }
+#endif // LUMINOUS_OPENGLES
 
     if(m_info.width == 0 && !Luminous::Image::ping(filename, m_info)) {
       error("CPUMipmaps::startLoading # failed to query image size for %s", filename);
@@ -309,9 +317,12 @@ namespace Luminous {
     markImage(m_maxLevel);
     reschedule();
 
+#ifndef LUMINOUS_OPENGLES
     if(gen) {
       Luminous::BGThread::instance()->addTask(gen);
-    } else if(compressedMipmaps) {
+    } else
+#endif // LUMINOUS_OPENGLES
+      if(compressedMipmaps) {
       Luminous::BGThread::instance()->addTask(shared_from_this());
     }
     return true;
@@ -359,6 +370,7 @@ namespace Luminous {
     // Mark the mipmap that it has been used
     markImage(bestAvailable);
 
+#ifndef LUMINOUS_OPENGLES
     // Handle compressed images
     if(m_info.pf.compression()) {
       si.bound = bestAvailable;
@@ -366,6 +378,7 @@ namespace Luminous {
       img->bind(resources, textureUnit);
       return true;
     }
+#endif // LUMINOUS_OPENGLES
 
     // Handle non-compressed images
     std::shared_ptr<ImageTex> img = getImage(bestAvailable);
@@ -436,12 +449,14 @@ namespace Luminous {
     // info("CPUMipmaps::pixelAlpha # %f %f", relLoc.x, relLoc.y);
 
     for(int i = 0; i <= m_maxLevel; ++i) {
+#ifndef LUMINOUS_OPENGLES
       if(m_info.pf.compression()) {
         std::shared_ptr<CompressedImage> c = getCompressedImage(i);
         if(!c) continue;
 
         return 255 * c->readAlpha(Nimble::Vector2f(relLoc.x * c->width(), relLoc.y * c->height()));
       }
+#endif // LUMINOUS_OPENGLES
 
       std::shared_ptr<ImageTex> im = getImage(i);
 
@@ -609,6 +624,7 @@ namespace Luminous {
       return;
     item.m_lastUsed = Radiant::TimeStamp::getTime();
 
+#ifndef LUMINOUS_OPENGLES
     if(m_info.pf.compression()) {
       std::shared_ptr<Luminous::CompressedImageTex> im(new Luminous::CompressedImageTex);
       QString filename = m_compFilename.isEmpty() ? m_filename : m_compFilename;
@@ -624,6 +640,7 @@ namespace Luminous {
       }
       return;
     }
+#endif // LUMINOUS_OPENGLES
 
     if(level == 0) {
       // Load original

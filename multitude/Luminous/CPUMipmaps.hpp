@@ -96,6 +96,7 @@ namespace Luminous {
         @return Pointer to the image, which may be null.
     */
     std::shared_ptr<ImageTex> getImage(int i);
+#ifndef LUMINOUS_OPENGLES
     /** Gets the compressed image on given level.
         @param i the mipmap level
         @return shared pointer to the mipmap */
@@ -106,6 +107,7 @@ namespace Luminous {
 
         @param i The index of the mipmap-level to be marked
     */
+#endif // LUMINOUS_OPENGLES
     void markImage(size_t i);
     /** Check ifthe mipmaps are ready for rendering.
         @return Returns true if the object has loaded enough mipmaps. */
@@ -261,14 +263,14 @@ namespace Luminous {
       {
         m_state = WAITING;
         m_image.reset();
-        m_compressedImage.reset();
+        LUMINOUS_IN_FULL_OPENGL(m_compressedImage.reset());
         m_lastUsed = 0;
       }
 
       void dropFromGPU()
       {
         if(m_image) m_image.reset(m_image->move());
-        if(m_compressedImage) m_compressedImage.reset(m_compressedImage->move());
+        LUMINOUS_IN_FULL_OPENGL(if(m_compressedImage) m_compressedImage.reset(m_compressedImage->move());)
       }
 
       float sinceLastUse() const { return m_lastUsed.sinceSecondsD(); }
@@ -276,7 +278,9 @@ namespace Luminous {
     private:
       ItemState m_state;
       std::shared_ptr<ImageTex> m_image;
+#ifndef LUMINOUS_OPENGLES
       std::shared_ptr<CompressedImageTex> m_compressedImage;
+#endif // LUMINOUS_OPENGLES
       Radiant::TimeStamp m_lastUsed;
     };
 

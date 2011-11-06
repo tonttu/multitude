@@ -332,7 +332,7 @@ namespace Luminous
     /// @return new CompressedImageTex object
     CompressedImageTex * move();
   };
-}
 #endif // LUMINOUS_OPENGLES
+}
 
 #endif

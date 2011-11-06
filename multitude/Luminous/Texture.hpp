@@ -30,7 +30,7 @@ namespace Luminous
 {
   class PixelFormat;
   class Image;
-  class CompressedImage;
+  LUMINOUS_IN_FULL_OPENGL(class CompressedImage);
 
   /// UploadLimiter manages GPU upload limits for each RenderThread per frame.
   /// These limits should be obeyed when loading data to GPU with glTexImage2D
@@ -239,10 +239,12 @@ namespace Luminous
     /// zero, set the format automatically
     /// @return true on success
     bool loadImage(const Luminous::Image & image, bool buildMipmaps = true, int internalFormat = 0);
+#ifndef LUMINOUS_OPENGLES
     /// Load the texture from a compressed image
     /// @param image compressed image to load from
     /// @return true on success
     bool loadImage(const Luminous::CompressedImage & image);
+#endif // LUMINOUS_OPENGLES
 
     /// Load the texture from raw data, provided by the user
     bool loadBytes(GLenum internalFormat, int w, int h,

@@ -1,6 +1,10 @@
 #ifndef IMAGECODECDDS_HPP
 #define IMAGECODECDDS_HPP
 
+#ifdef LUMINOUS_OPENGLES
+# error "ImageCodecDDS cannot be used in OpenGL ES"
+#endif
+
 #include "ImageCodec.hpp"
 #include "PixelFormat.hpp"
 

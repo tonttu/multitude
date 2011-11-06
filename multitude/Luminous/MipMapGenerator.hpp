@@ -16,6 +16,10 @@
 #ifndef LUMINOUS_MIPMAPGENERATOR_HPP
 #define LUMINOUS_MIPMAPGENERATOR_HPP
 
+#ifdef LUMINOUS_OPENGLES
+# error "MipMapGenerator cannot be used in OpenGL ES"
+#endif
+
 #include "Export.hpp"
 #include "Task.hpp"
 #include "PixelFormat.hpp"
