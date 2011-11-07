@@ -152,6 +152,8 @@ namespace Nimble {
     {
       return Vector3T<T>(get(i0), get(i1), get(i2));
     }
+
+    static inline Vector4T<T> null() { return Vector4T<T>(0, 0, 0, 0); }
   };
 
   /// Add two vectors

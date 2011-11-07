@@ -336,6 +336,7 @@ namespace Valuable
     AttributeT(Node * host, const QString & name, const T & v = T(), bool transit = false)
       : Attribute(host, name, transit),
       m_current(ORIGINAL),
+      m_values(),
       m_valueSet()
     {
       m_values[ORIGINAL] = v;
