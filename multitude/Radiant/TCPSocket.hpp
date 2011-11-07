@@ -105,6 +105,9 @@ namespace Radiant {
     int fd() const;
     /// @endcond
 
+    unsigned long rxBytes() const;
+    unsigned long txBytes() const;
+
 /// @cond
 
     /// Currently not used.

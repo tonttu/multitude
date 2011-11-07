@@ -58,6 +58,8 @@ namespace Radiant {
     void pause() { m_paused = true; }
     void unpause() { m_paused = false; }
 
+    bool paused() const { return m_paused; }
+
     /// Gets the first watchdog instance.
     static WatchDog * instance();
 

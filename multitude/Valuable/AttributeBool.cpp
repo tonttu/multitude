@@ -50,4 +50,16 @@ namespace Valuable
     setValue(!!value, layer);
     return true;
   }
+
+  bool AttributeBool::set(const QVariantList & v, QList<ValueUnit> units, Layer layer)
+  {
+    if(v.size() == 1 && units[0] == VU_UNKNOWN && v[0].type() == QVariant::ByteArray) {
+      QByteArray ba = v[0].toByteArray().toLower();
+      if(ba == "true") setValue(true, layer);
+      else if(ba == "false") setValue(false, layer);
+      else return false;
+      return true;
+    }
+    return false;
+  }
 }
