@@ -47,7 +47,6 @@ namespace Valuable
                                        Valuable::Node & opts)
   {
     QStringList tmp;
-    tmp.reserve(argc-1);
     for(int i = 1; i < argc; ++i)
       tmp << argv[i];
 
