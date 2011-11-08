@@ -88,9 +88,11 @@ contains(MEMCHECK,yes) {
 
 !iphone*:LIB_SDL = -lSDL
 
-macx {
+macx*|iphone* {
   LIB_PREFIX = lib
-  SHARED_LIB_SUFFIX = dylib
+  !iphone*:SHARED_LIB_SUFFIX = dylib
+  # Fake SHARED_LIB_SUFFIX, since iOS does not accept shared libs
+  iphone*:SHARED_LIB_SUFFIX = a
   # For Deft (which depends on MultiTouch)
   # LIBS += -undefined dynamic_lookup
 

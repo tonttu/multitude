@@ -20,9 +20,9 @@
 
 #include "ImageCodecTGA.hpp"
 #include "ImageCodecQT.hpp"
+#ifndef LUMINOUS_OPENGLES
 #include "ImageCodecSVG.hpp"
 
-#ifndef LUMINOUS_OPENGLES
 #include "ImageCodecDDS.hpp"
 #endif // LUMINOUS_OPENGLES
 
@@ -159,9 +159,9 @@ namespace Luminous
       Image::codecs()->registerCodec(new ImageCodecQT(format.data()));
     }
     Image::codecs()->registerCodec(new ImageCodecQT("jpg"));
-    Image::codecs()->registerCodec(new ImageCodecSVG());
-    Image::codecs()->registerCodec(new ImageCodecSVG());
 # if !defined(RADIANT_IOS)
+    // Image::codecs()->registerCodec(new ImageCodecSVG());
+    Image::codecs()->registerCodec(new ImageCodecSVG());
   Image::codecs()->registerCodec(new ImageCodecDDS());
 # endif
 

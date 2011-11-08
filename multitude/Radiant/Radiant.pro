@@ -117,14 +117,17 @@ SOURCES += PlatformUtilsLinux.cpp
 SOURCES += XFaker.cpp
 SOURCES += PlatformUtilsOSX.cpp
 SOURCES += SerialPortPosix.cpp
-SOURCES += VideoCamera1394.cpp
 SOURCES += LockFilePosix.cpp
-SOURCES += VideoCameraCMU.cpp
 SOURCES += PlatformUtilsWin32.cpp
 SOURCES += SerialPortWin32.cpp
 SOURCES += LockFileWin32.cpp
-SOURCES += VideoCameraPTGrey.cpp
- 
+
+!iphone* {
+  SOURCES += VideoCameraCMU.cpp
+  SOURCES += VideoCamera1394.cpp
+  SOURCES += VideoCameraPTGrey.cpp
+}
+
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
 
 linux-*: LIBS += -lX11 -lXtst

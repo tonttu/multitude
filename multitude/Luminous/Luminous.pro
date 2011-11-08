@@ -95,12 +95,12 @@ win32:DEFINES += LUMINOUS_EXPORT
 contains(HAS_QT_45,YES) {
     message(Including QT Image codecs)
     HEADERS += ImageCodecQT.hpp
-    HEADERS += ImageCodecSVG.hpp
+    !iphone*:HEADERS += ImageCodecSVG.hpp
     SOURCES += ImageCodecQT.cpp
-    SOURCES += ImageCodecSVG.cpp
+    !iphone*:SOURCES += ImageCodecSVG.cpp
     CONFIG += qt
     QT += gui
-    QT += svg
+    !iphone*:QT += svg
 
     # On Windows we need to install the Qt plugins
     win32 {
@@ -113,6 +113,6 @@ DEFINES += LUMINOUS_EXPORT
 
 CONFIG += qt
 QT += gui
-QT += svg
+# QT += svg
 
 include(../library.pri)
