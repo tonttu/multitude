@@ -496,6 +496,8 @@ namespace Luminous {
 
   bool MultiHead::deserialize(const Valuable::ArchiveElement & element)
   {
+    for(std::vector<std::shared_ptr<Window> >::iterator it = m_windows.begin(); it != m_windows.end(); ++it)
+      removeValue(it->get());
     m_windows.clear();
 
     bool ok = Node::deserialize(element);
