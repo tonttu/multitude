@@ -311,6 +311,9 @@ namespace Luminous
         m_arc_shader.reset(arc);
 
         m_viewFBO.reset(new Luminous::Framebuffer());
+
+        m_emptyTexture.reset(Texture2D::fromBytes(GL_RGB, 32, 32, 0,
+                                                  Luminous::PixelFormat::rgbUByte(), false));
         info("RenderContext::Internal # init ok");
       }
 
@@ -320,6 +323,8 @@ namespace Luminous
       while(!m_drawBufferStack.empty())
         m_drawBufferStack.pop();
       m_drawBufferStack.push(DrawBuf(GL_BACK, 0)); // Start off by rendering to the back buffer
+
+      m_emptyTexture->bind(GL_TEXTURE0);
     }
     Nimble::Vector2 contextSize() const
     {
@@ -490,6 +495,7 @@ namespace Luminous
 
     GLenum m_textures[MAX_TEXTURES];
     GLSLProgramObject * m_program;
+    std::shared_ptr<Texture2D> m_emptyTexture;
   };
 
   void RenderContext::Internal::drawPolyLine(RenderContext& r, const Nimble::Vector2f * vertices, int n,
@@ -659,6 +665,8 @@ namespace Luminous
 
   void RenderContext::prepare()
   {
+    Utils::glCheck("RenderContext::prepare # 1");
+
     resetTransform();
     m_data->initialize();
     m_data->m_recursionDepth = 0;
@@ -671,6 +679,8 @@ namespace Luminous
     // Make sure the clip stack is empty
     while(!m_data->m_clipStack.empty())
       m_data->m_clipStack.pop_back();
+
+    Utils::glCheck("RenderContext::prepare # 2");
   }
 
   void RenderContext::finish()
@@ -1602,6 +1612,8 @@ namespace Luminous
   void RenderContext::bindTexture(GLenum textureType, GLenum textureUnit,
                                     GLuint textureId)
   {
+    Utils::glCheck("RenderContext::bindTexture # 1");
+
     unsigned textureIndex = textureUnit - GL_TEXTURE0;
 
     assert(textureIndex < Internal::MAX_TEXTURES);
@@ -1618,10 +1630,14 @@ namespace Luminous
 
     glActiveTexture(textureUnit);
     glBindTexture(textureType, textureId);
+
+    Utils::glCheck("RenderContext::bindTexture # 2");
   }
 
   void RenderContext::bindProgram(GLSLProgramObject * program)
   {
+    Utils::glCheck("RenderContext::bindProgram # 1");
+
     if(m_data->m_program != program) {
       if(program)
         glUseProgram(program->m_handle);
@@ -1629,6 +1645,8 @@ namespace Luminous
         glUseProgram(0);
       m_data->m_program = program;
     }
+
+    Utils::glCheck("RenderContext::bindProgram # 2");
   }
 
   void RenderContext::bindDefaultProgram()
@@ -1640,6 +1658,8 @@ namespace Luminous
   {
     if(!m_data->m_vertices.size())
       return;
+
+    Utils::glCheck("RenderContext::flush # 1");
 
     assert(m_data->m_program != 0);
 
@@ -1661,6 +1681,7 @@ namespace Luminous
       fatal("RenderContext::flush # %d vertices %p %p %d", (int) m_data->m_vertices.size(),
             m_data->m_program, &*m_data->m_basic_shader, (int) prog.getAttribLoc("location"));
     }
+    Utils::glCheck("RenderContext::flush # 2");
 
     VertexAttribArrayStep ls(aloc, 2, GL_FLOAT, vsize, & vr.m_location);
     VertexAttribArrayStep cs(acol, 4, GL_FLOAT, vsize, & vr.m_color);
