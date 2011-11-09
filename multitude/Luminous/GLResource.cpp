@@ -13,8 +13,11 @@ namespace Luminous
       m_deleteOnFrame(0),
       m_generation(0)
   {
-    if(!context)
+    if(!context) {
       m_context = RenderContext::getThreadContext();
+      if(!m_context)
+        Radiant::fatal("GLResource::GLResource # Thread context not set");
+    }
   }
 
   GLResource::~GLResource()

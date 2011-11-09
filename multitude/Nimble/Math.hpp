@@ -116,7 +116,9 @@ namespace Nimble {
     /// Checks if the given value if finite
     inline bool isFinite(float v)
     {
-#ifdef WIN32
+#ifdef RADIANT_IOS
+      return std::isfinite(v);
+#elif defined(WIN32)
       return _finite(v) != 0;
 #else
       return finite(v);
