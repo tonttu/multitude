@@ -123,9 +123,9 @@ SOURCES += SerialPortWin32.cpp
 SOURCES += LockFileWin32.cpp
 
 !iphone* {
-  SOURCES += VideoCameraCMU.cpp
+  win32:SOURCES += VideoCameraCMU.cpp
   SOURCES += VideoCamera1394.cpp
-  SOURCES += VideoCameraPTGrey.cpp
+  win32:SOURCES += VideoCameraPTGrey.cpp
 }
 
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
