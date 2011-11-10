@@ -1,24 +1,20 @@
 /* COPYRIGHT
- *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #ifndef RADIANT_CYCLE_RECORD_HPP
 #define RADIANT_CYCLE_RECORD_HPP
 
 #include "Export.hpp"
-#include "cycle.h"
 #include "Trace.hpp"
+
+#ifdef RADIANT_IOS
+// Dummy implementation
+typedef size_t ticks;
+inline ticks getticks() { return 0; }
+inline double elapsed(ticks, ticks) { return 0.0; }
+#else
+# include "cycle.h"
+#endif
 
 #include <stdio.h>
 #include <vector>
