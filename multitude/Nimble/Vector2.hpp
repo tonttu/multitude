@@ -157,6 +157,8 @@ namespace Nimble {
     }
     //template <class K>
     //void copy(const S * data) { x = data[0]; y = data[1]; }
+
+    static inline Vector2T<T> null() { return Vector2T<T>(0, 0); }
   };
 
   /// Add two vectors

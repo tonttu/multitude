@@ -141,6 +141,8 @@ namespace Nimble {
     {
       return Vector2T<T>(get(i0), get(i1));
     }
+
+    static inline Vector3T<T> null() { return Vector3T<T>(0, 0, 0); }
   };
 
 #ifdef WIN32

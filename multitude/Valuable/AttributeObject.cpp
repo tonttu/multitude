@@ -238,7 +238,7 @@ namespace Valuable
   {
     long id = m_listenersId++;
     m_listeners[id] = AttributeListener(func, role, listener);
-    if(listener) listener->m_valueListening << listener;
+    if(listener) listener->m_valueListening << this;
     return id;
   }
 

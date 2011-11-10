@@ -88,6 +88,10 @@ unix {
   }
 }
 
+#ios {
+#  message(This is for iOS)
+#}
+
 iphone* {
   message(This is for iPhone)
   CONFIG += static
