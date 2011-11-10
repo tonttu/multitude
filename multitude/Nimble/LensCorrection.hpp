@@ -47,14 +47,18 @@ namespace Nimble {
     /// Sets the camera resolution that will be used for camera correction
     void setCameraResolution(int w, int h);
 
-    /// Performs barrel distortion correction on the 
+    /// Performs barrel distortion correction on the given vector
     Vector2 correct(Vector2 loc) const;
 
-    /// Sets all the lens correction paramters
+    /// Set the correction mapping to identity
+    void setIdentity()
+    { setParams(0.0f, 0.0f, 0.0f); }
+
+    /// Sets all the lens correction parameters
     void setParams(float a, float b, float c)
     { m_params.make(a, b, c, 1.0f - (a + b + c)); }
 
-    /// Sets all the lens correction paramters
+    /// Sets all the lens correction parameters
     void setParams(const float * abc)
     { setParams(abc[0], abc[1], abc[2]); }
 
