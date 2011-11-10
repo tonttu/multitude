@@ -35,20 +35,27 @@ CONFIG(release, debug|release) {
   V8 += verbose=on mode=debug
 }
 
+target.path = /lib
+INSTALLS += target
+macx:target.path = /Applications/MultiTouch
+
 win32 {
   DEST=$$replace(DESTDIR, /, \\)\\$$V8LIB_OUT
   first.commands = if not exist $$TARGET scons env='"PATH:%PATH%,INCLUDE:%INCLUDE%,LIB:%LIB%"' $$V8 $$TARGET -j4 && copy $${V8LIB}.dll $${DEST}.dll && copy $${V8LIB}.lib $${DEST}.lib
+  target.files += $${DEST}.dll $${DEST}.lib
 }
 linux-* {
   DEST=$$DESTDIR/$${V8LIB_OUT}.$$SHARED_LIB_SUFFIX
   # Running application will crash with sigbus without --remove-destination
   first.commands = if test ! -s $$TARGET; then scons $$V8 $$TARGET -j4; fi && cp --remove-destination $$TARGET $$DEST
+  target.files += $$DEST
 }
 
 macx {
   DEST=$$DESTDIR/$${V8LIB_OUT}.$$SHARED_LIB_SUFFIX
   # Running application will crash with sigbus without --remove-destination, but it does not exist on OSX
   first.commands = if test ! -s $$TARGET; then scons $$V8 $$TARGET -j4; fi && cp $$TARGET $$DEST
+  target.files += $$DEST
 }
 
 clean.commands = scons -c $$TARGET
