@@ -35,7 +35,7 @@ CONFIG(release, debug|release) {
   V8 += verbose=on mode=debug
 }
 
-stufft.path = /lib
+stuff.path = /lib
 INSTALLS += stuff
 macx:stuff.path = /Applications/MultiTouch
 
