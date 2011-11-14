@@ -111,21 +111,32 @@ namespace Radiant
 
   bool FileUtils::writeTextFile(const char * filename, const char * contents)
   {
-#ifdef RADIANT_WINDOWS
-    int fd = _creat(filename, _S_IWRITE);
-#else
-    int fd = creat(filename, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-#endif
-    if(fd <= 0)
-      return false;
-
     uint32_t len = uint32_t(strlen(contents));
 
-    bool ok = write(fd, contents, len) == len;
-
-    close(fd);
-
-    return ok;
+    QString tmpname = QString(filename)+".cornerstone_tmp";
+    QFile tmp(tmpname), file(filename);
+    if(tmp.open(QIODevice::WriteOnly)) {
+      if(tmp.write(contents, len) != len) {
+        /// @todo does this check actually fail on windows, when doing some line change conversions?
+        //return false;
+      }
+      tmp.close();
+      if(QFile::exists(filename))
+        QFile::remove(filename);
+      return QFile::rename(tmpname, filename);
+    } else {
+      Radiant::warning("FileUtils::writeTextFile # Failed to write to %s", tmpname.toUtf8().data());
+      if(file.open(QIODevice::WriteOnly)) {
+        if(file.write(contents, len) != len) {
+          /// @todo does this check actually fail on windows, when doing some line change conversions?
+          //Radiant::error("FileUtils::writeTextFile # Failed to write to %s", filename);
+          //return false;
+        }
+        return true;
+      } else {
+        return false;
+      }
+    }
   }
 
   QString FileUtils::path(const QString & filepath)
