@@ -17,7 +17,7 @@ namespace Radiant
   /// @code
   /// Radiant::Timer t;
   /// // <Do something>
-  /// float elapsed = t.time();
+  /// double elapsed = t.time();
   /// @endcode
   /// @sa Radiant::TimeStamp
   class Timer
@@ -32,22 +32,22 @@ namespace Radiant
     /// Get start time
     /// Returns the time of the last start() call.
     /// @return start time in seconds
-    inline float startTime() const;
+    inline double startTime() const;
     /// Get elapsed time
     /// Returns the elapsed time in seconds since last start() call.
     /// @return elapsed time in seconds
-    inline float time() const;
+    inline double time() const;
     /// Get the timer resolution
     /// Returns the number of timer ticks per second.
     /// @return resolution in ticks per second
     inline int resolution() const;
 
     /// Operators
-    inline float operator-(const Timer & rhs) const;
+    inline double operator-(const Timer & rhs) const;
 
     /// Returns the time of the last start() call. Equivalent to calling startTime();
     /// @return the start time in seconds
-    inline operator float() const;
+    inline operator double() const;
   private:
     LARGE_INTEGER m_performanceFrequency;
     double m_performanceReciprocal;
@@ -71,24 +71,24 @@ namespace Radiant
     return static_cast<int> (m_performanceFrequency.QuadPart);
   }
 
-  float Timer::startTime() const
+  double Timer::startTime() const
   {
     return m_startTime.QuadPart * m_performanceReciprocal;
   }
 
-  float Timer::time() const
+  double Timer::time() const
   {
     LARGE_INTEGER endTime;
     QueryPerformanceCounter(&endTime);
-    return float((endTime.QuadPart - m_startTime.QuadPart) * m_performanceReciprocal);
+    return double((endTime.QuadPart - m_startTime.QuadPart) * m_performanceReciprocal);
   }
 
-  float Timer::operator-(const Timer & rhs) const
+  double Timer::operator-(const Timer & rhs) const
   {
     return startTime() - rhs.startTime();
   }
 
-  Timer::operator float() const
+  Timer::operator double() const
   {
     return startTime();
   }

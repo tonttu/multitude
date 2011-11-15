@@ -17,7 +17,7 @@ namespace Radiant
   /// @code
   /// Radiant::Timer t;
   /// // <Do something>
-  /// float elapsed = t.time();
+  /// double elapsed = t.time();
   /// @endcode
   /// @sa Radiant::TimeStamp
   class Timer
@@ -32,22 +32,22 @@ namespace Radiant
     /// Get start time
     /// Returns the time of the last start() call.
     /// @return start time in seconds
-    inline float startTime() const;
+    inline double startTime() const;
     /// Get elapsed time
     /// Returns the elapsed time in seconds since last start() call.
     /// @return elapsed time in seconds
-    inline float time() const;
+    inline double time() const;
     /// Get the timer resolution
     /// Returns the number of timer ticks per second.
     /// @return resolution in ticks per second
     inline int resolution() const;
 
     /// Operators
-    inline float operator-(const Timer & rhs) const;
+    inline double operator-(const Timer & rhs) const;
 
     /// Returns the time of the last start() call. Equivalent to calling startTime();
     /// @return the start time in seconds
-    inline operator float() const;
+    inline operator double() const;
   private:
     struct timeval m_startTime;
   };
@@ -68,32 +68,32 @@ namespace Radiant
     return static_cast<int> (1e6);
   }
 
-  float Timer::startTime() const
+  double Timer::startTime() const
   {
-    float ds  = m_startTime.tv_sec;
-    float dus = m_startTime.tv_usec;
+    double ds  = m_startTime.tv_sec;
+    double dus = m_startTime.tv_usec;
 
-    return ds + 1e-6f * dus;
+    return ds + 1e-6 * dus;
   }
 
-  float Timer::time() const
+  double Timer::time() const
   {
     struct timeval endTime;
 
     gettimeofday(&endTime, 0);
 
-    float ds  = endTime.tv_sec - m_startTime.tv_sec;
-    float dus = endTime.tv_usec - m_startTime.tv_usec;
+    double ds  = endTime.tv_sec - m_startTime.tv_sec;
+    double dus = endTime.tv_usec - m_startTime.tv_usec;
 
-    return ds + 1e-6f * dus;
+    return ds + 1e-6 * dus;
   }
 
-  float Timer::operator-(const Timer & rhs) const
+  double Timer::operator-(const Timer & rhs) const
   {
     return startTime() - rhs.startTime();
   }
 
-  Timer::operator float() const
+  Timer::operator double() const
   {
     return startTime();
   }
