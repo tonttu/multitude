@@ -18,6 +18,9 @@
 
 #include "Export.hpp"
 #include "Platform.hpp"
+#include "Functional.hpp"
+
+#include <Patterns/NotCopyable.hpp>
 
 #include <fstream>
 
@@ -25,6 +28,16 @@
 
 namespace Radiant
 {
+  class RADIANT_API FileWriter : public Patterns::NotCopyable
+  {
+  public:
+    FileWriter();
+    ~FileWriter();
+
+    static void setInitFunction(std::function<void ()> f);
+    static void setDeinitFunction(std::function<void ()> f);
+  };
+
   /// FileUtils contains functions for platform independent file-handing
   class RADIANT_API FileUtils
   {

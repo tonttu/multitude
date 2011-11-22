@@ -14,6 +14,7 @@
  */
 
 #include "FileUtils.hpp"
+#include "Mutex.hpp"
 #include "Platform.hpp"
 #include "PlatformUtils.hpp"
 #include "StringUtils.hpp"
@@ -44,8 +45,41 @@
 #include <unistd.h>
 #endif // PLATFORM_WINDOWS
 
+namespace {
+  Radiant::Mutex s_fileWriterMutex;
+  std::function<void ()> s_fileWriterInit;
+  std::function<void ()> s_fileWriterDeinit;
+  volatile int s_fileWriterCount = 0;
+}
+
 namespace Radiant
 {
+  FileWriter::FileWriter()
+  {
+    Guard g(s_fileWriterMutex);
+    if(s_fileWriterCount++ == 0 && s_fileWriterInit)
+      s_fileWriterInit();
+  }
+
+  FileWriter::~FileWriter()
+  {
+    Guard g(s_fileWriterMutex);
+    if(--s_fileWriterCount == 0 && s_fileWriterDeinit)
+      s_fileWriterDeinit();
+  }
+
+  void FileWriter::setInitFunction(std::function<void ()> f)
+  {
+    s_fileWriterInit = f;
+  }
+
+  void FileWriter::setDeinitFunction(std::function<void ()> f)
+  {
+    s_fileWriterDeinit = f;
+  }
+
+  /////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////
 
   using namespace StringUtils;
 
@@ -92,12 +126,14 @@ namespace Radiant
 
   bool FileUtils::renameFile(const char * from, const char * to)
   {
+    FileWriter writer;
     int ok = rename(from, to);
     return (ok == 0);
   }
 
   bool FileUtils::removeFile(const char * filename)
   {
+    FileWriter writer;
     return remove(filename) == 0;
   }
 
@@ -111,6 +147,7 @@ namespace Radiant
 
   bool FileUtils::writeTextFile(const char * filename, const char * contents)
   {
+    FileWriter writer;
     uint32_t len = uint32_t(strlen(contents));
 
     QString tmpname = QString(filename)+".cornerstone_tmp";
