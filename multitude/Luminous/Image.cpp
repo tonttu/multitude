@@ -821,7 +821,7 @@ namespace Luminous
     tex.bind(textureUnit);
 
     if(tex.generation() != generation()) {
-      ret = tex.loadImage(*this, withmipmaps, internalFormat);
+      ret = tex.loadImage(textureUnit, *this, withmipmaps, internalFormat);
       tex.setGeneration(generation());
     }
 
