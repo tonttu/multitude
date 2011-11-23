@@ -59,13 +59,7 @@ namespace VideoDisplay {
     static void zero(float ** dest,
              int chans, int frames, int offset);
 
-    void checkEnd(const VideoIn::Frame * f)
-    {
-      if(!f)
-        m_ending = true;
-      else if(f->m_absolute.secondsD() > m_video->runtimeSeconds() - 0.5f)
-        m_ending = true;
-    }
+    void checkEnd(const VideoIn::Frame * f);
 
     VideoIn * m_video;
     int       m_channels;
