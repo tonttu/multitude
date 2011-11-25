@@ -22,6 +22,8 @@ iphone {
 
 ios {
   CONFIG += mobile
+  QMAKE_CXXFLAGS -= -std=gnu99
+  QMAKE_CXXFLAGS -= -fobjc-legacy-dispatch
 }
 
 mobile {
