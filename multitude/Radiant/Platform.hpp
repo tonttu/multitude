@@ -76,6 +76,7 @@
 
 #if defined(__IPHONE_OS_VERSION_MIN_REQUIRED)
 # define RADIANT_IOS 1
+# define RADIANT_OS_MOBILE 1
 #endif
 //
 // Detect Windows
