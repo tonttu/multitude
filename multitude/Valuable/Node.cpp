@@ -7,10 +7,10 @@
  * See file "Valuable.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #include <Valuable/DOMDocument.hpp>
@@ -52,7 +52,11 @@ namespace Valuable
   {
     return m_valid && that.m_valid &&
         (m_listener == that.m_listener) && (m_from == that.m_from) &&
-        (m_to == that.m_to) && (*m_func == *that.m_func);
+        (m_to == that.m_to)
+    #ifdef MULTI_WITH_V8
+        && (*m_func == *that.m_func)
+    #endif
+        ;
   }
 
   Node::Node()
@@ -83,8 +87,10 @@ namespace Valuable
       if(it->m_valid) {
         if(it->m_listener)
           it->m_listener->eventRemoveSource(this);
+#ifdef MULTI_WITH_V8
         else
           it->m_func.Dispose();
+#endif
       }
     }
 
@@ -152,6 +158,8 @@ namespace Valuable
     value->m_host = 0;
   }
 
+#ifdef MULTI_WITH_V8
+
   bool Node::setValue(const QString & name, v8::Handle<v8::Value> v)
   {
     using namespace v8;
@@ -213,6 +221,7 @@ namespace Valuable
     }
     return false;
   }
+#endif
 
   bool Node::saveToFileXML(const char * filename)
   {
@@ -346,6 +355,8 @@ namespace Valuable
     }
   }
 
+#ifdef MULTI_WITH_V8
+
   void Node::eventAddListener(const char * from,
                                    const char * to,
                                    v8::Persistent<v8::Function> func,
@@ -371,7 +382,7 @@ namespace Valuable
       m_elisteners.push_back(vp);
     }
   }
-
+#endif
   int Node::eventRemoveListener(Valuable::Node * obj, const char * from, const char * to)
   {
     int removed = 0;
@@ -504,6 +515,7 @@ namespace Valuable
     return m_eventListenNames.contains(id);
   }
 
+#ifdef MULTI_WITH_V8
   long Node::addListener(const QString & name, v8::Persistent<v8::Function> func, int role)
   {
     Attribute * attr = getValue(name);
@@ -513,7 +525,7 @@ namespace Valuable
     }
     return attr->addListener(func, role);
   }
-
+#endif
   void Node::eventSend(const QString & id, Radiant::BinaryData & bd)
   {
     eventSend(id.toUtf8().data(), bd);
@@ -552,6 +564,7 @@ namespace Valuable
           vp.m_listener->processMessage(vp.m_to.toUtf8().data(), bdsend);
           vp.m_listener->m_sender = 0;
         } else {
+#ifdef MULTI_WITH_V8
           /// @todo what is the correct receiver ("this" in the callback)?
           /// @todo should we set m_sender or something similar?
           v8::HandleScope handle_scope;
@@ -560,6 +573,7 @@ namespace Valuable
           int argc = 9;
           bdsend.readTo(argc, argv + 1);
           vp.m_func->Call(v8::Context::GetCurrent()->Global(), argc+1, argv);
+#endif
         }
       }
     }

@@ -15,8 +15,24 @@ c++11 {
   }
 }
 
+iphone {
+  CONFIG += mobile
+  CONFIG += ios
+}
+
+ios {
+  CONFIG += mobile
+}
+
+mobile {
+  message(Mobile device compilation)
+  # For QString::toStdWString
+  DEFINES += QT_STL=1
+  CONFIG += without-js
+}
+
 INCLUDEPATH += $$PWD
-INCLUDEPATH += $$PWD/v8/include
+!mobile:INCLUDEPATH += $$PWD/v8/include
 DEPENDPATH += $$PWD
 
 # The Cornerstone version for libraries
@@ -30,7 +46,7 @@ unix {
 
 withbundles = $$(MULTI_BUNDLES)
 
-!iphone*:MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat
+!mobile*:MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat
 
 LIB_BOX2D = -lBox2D
 LIB_OPENCL = -lOpenCL
@@ -42,12 +58,12 @@ LIB_LUMINOUS = -lLuminous
 LIB_NIMBLE = -lNimble
 LIB_RADIANT = -lRadiant
 LIB_RESONANT = -lResonant
-!iphone*:LIB_SCREENPLAY = -lScreenplay
-!iphone*:LIB_VIDEODISPLAY = -lVideoDisplay
+!mobile*:LIB_SCREENPLAY = -lScreenplay
+!mobile*:LIB_VIDEODISPLAY = -lVideoDisplay
 LIB_VALUABLE = -lValuable
 LIB_PATTERNS = -lPatterns
 LIB_SQUISH = -lSquish
-LIB_V8 = -lv8
+!mobile:LIB_V8 = -lv8
 
 linux-*:vivid {
   QMAKE_LIBDIR += $$(FBX_SDK)/lib/gcc4
@@ -84,15 +100,15 @@ contains(MEMCHECK,yes) {
   linux:LIBS += -rdynamic
 }
 
-# iphone*:INCLUDES += /usr/local/include
+# mobile*:INCLUDES += /usr/local/include
 
-!iphone*:LIB_SDL = -lSDL
+!mobile*:LIB_SDL = -lSDL
 
-macx*|iphone* {
+macx*|mobile* {
   LIB_PREFIX = lib
-  !iphone*:SHARED_LIB_SUFFIX = dylib
+  !mobile*:SHARED_LIB_SUFFIX = dylib
   # Fake SHARED_LIB_SUFFIX, since iOS does not accept shared libs
-  iphone*:SHARED_LIB_SUFFIX = a
+  mobile*:SHARED_LIB_SUFFIX = a
   # For Deft (which depends on MultiTouch)
   # LIBS += -undefined dynamic_lookup
 
@@ -106,7 +122,7 @@ macx*|iphone* {
   LIB_OPENGL = -framework,OpenGL
   # LIB_GLEW = -lGLEW
 
-  !iphone* {
+  !mobile* {
     LIB_POETIC = -framework,Poetic
     LIB_FLUFFY = -framework,Fluffy
     LIB_LUMINOUS = -framework,Luminous
@@ -175,7 +191,7 @@ win32 {
       LIB_VALUABLE = -lValuable_d
       LIB_PATTERNS = -lPatterns_d
       LIB_SQUISH = -lSquish_d
-      LIB_V8 = -lv8_d
+      !mobile:LIB_V8 = -lv8_d
     }
 }
 
@@ -184,7 +200,7 @@ MULTI_VIDEO_LIBS = $$LIB_SCREENPLAY $$LIB_RESONANT $$LIB_VIDEODISPLAY
 QMAKE_LIBDIR += $$PWD/lib
 
 # message(QT version is $${QT_MAJOR_VERSION}.$${QT_MINOR_VERSION}.$${QT_PATCH_VERSION})
-# iphone*:DEFINES += __IPHONE_OS_VERSION_MIN_REQUIRED=40100
+# mobile*:DEFINES += __IPHONE_OS_VERSION_MIN_REQUIRED=40100
 
 contains(QT_MAJOR_VERSION,4) {
 
@@ -198,7 +214,8 @@ CONFIG(release, debug|release) {
   DEFINES += NDEBUG
 }
 
-DEFINES += USING_V8_SHARED
+!mobile:DEFINES += USING_V8_SHARED
+!mobile:DEFINES += MULTI_WITH_V8
 
 # Use ccache if available
 unix:exists(/usr/bin/ccache):QMAKE_CXX=ccache $$QMAKE_CXX

@@ -2,17 +2,17 @@ TEMPLATE = subdirs
 
 include(multitude.pri)
 
-SUBDIRS += v8
+!without-js:SUBDIRS += v8
 SUBDIRS += Patterns
 SUBDIRS += Nimble
 SUBDIRS += Radiant
 SUBDIRS += Valuable
-!iphone*:SUBDIRS += Squish
+!mobile*:SUBDIRS += Squish
 SUBDIRS += Luminous
 SUBDIRS += Poetic
 SUBDIRS += Resonant
-!iphone*:SUBDIRS += Screenplay
-!iphone*:SUBDIRS += VideoDisplay
+!mobile*:SUBDIRS += Screenplay
+!mobile*:SUBDIRS += VideoDisplay
 SUBDIRS += Box2D
 #SUBDIRS += Posh
 
@@ -22,7 +22,7 @@ vivid {
 }
 
 #exists(Examples/Examples.pro):SUBDIRS += Examples
-!iphone*{
+!mobile*{
   SUBDIRS += Applications
 }
 

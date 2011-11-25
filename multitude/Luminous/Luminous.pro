@@ -19,19 +19,19 @@ HEADERS += GLResource.hpp
 HEADERS += GLResources.hpp
 HEADERS += GLSLProgramObject.hpp
 HEADERS += GLSLShaderObject.hpp
-!iphone*:HEADERS += ImageCodecDDS.hpp
+!mobile*:HEADERS += ImageCodecDDS.hpp
 HEADERS += ImageCodec.hpp
 HEADERS += ImageCodecTGA.hpp
 HEADERS += Image.hpp
 HEADERS += Luminous.hpp
 HEADERS += MatrixStep.hpp
-!iphone*:HEADERS += MipMapGenerator.hpp
+!mobile*:HEADERS += MipMapGenerator.hpp
 HEADERS += MultiHead.hpp
 HEADERS += PixelFormat.hpp
 HEADERS += RenderContext.hpp
 #HEADERS += RenderTarget.hpp
 HEADERS += Shader.hpp
-!iphone*:HEADERS += SpriteRenderer.hpp
+!mobile*:HEADERS += SpriteRenderer.hpp
 HEADERS += Task.hpp
 HEADERS += Texture.hpp
 HEADERS += Transformer.hpp
@@ -53,17 +53,17 @@ SOURCES += GLResources.cpp
 SOURCES += GLSLProgramObject.cpp
 SOURCES += GLSLShaderObject.cpp
 # TGA loader tries to create BGR & BGRA textures, which are not availale on OpenGL ES
-!iphone*:SOURCES += ImageCodecTGA.cpp
-!iphone*:SOURCES += ImageCodecDDS.cpp
+!mobile*:SOURCES += ImageCodecTGA.cpp
+!mobile*:SOURCES += ImageCodecDDS.cpp
 SOURCES += Image.cpp
 SOURCES += Luminous.cpp
-!iphone*:SOURCES += MipMapGenerator.cpp
+!mobile*:SOURCES += MipMapGenerator.cpp
 SOURCES += MultiHead.cpp
 SOURCES += PixelFormat.cpp
 SOURCES += RenderContext.cpp
 #SOURCES += RenderTarget.cpp
 SOURCES += Shader.cpp
-!iphone*:SOURCES += SpriteRenderer.cpp
+!mobile*:SOURCES += SpriteRenderer.cpp
 SOURCES += Task.cpp
 SOURCES += Texture.cpp
 SOURCES += Transformer.cpp
@@ -82,7 +82,7 @@ LIBS += $$LIB_RADIANT \
     $$LIB_GLEW
 
 DEFINES += LUMINOUS_COMPILE
-# iphone*:HAS_QT_45 = NO
+# mobile*:HAS_QT_45 = NO
 unix:!contains(HAS_QT_45,YES) {
     HEADERS += ImageCodecJPEG.hpp
     HEADERS += ImageCodecPNG.hpp
@@ -95,12 +95,12 @@ win32:DEFINES += LUMINOUS_EXPORT
 contains(HAS_QT_45,YES) {
     message(Including QT Image codecs)
     HEADERS += ImageCodecQT.hpp
-    !iphone*:HEADERS += ImageCodecSVG.hpp
+    !mobile*:HEADERS += ImageCodecSVG.hpp
     SOURCES += ImageCodecQT.cpp
-    !iphone*:SOURCES += ImageCodecSVG.cpp
+    !mobile*:SOURCES += ImageCodecSVG.cpp
     CONFIG += qt
     QT += gui
-    !iphone*:QT += svg
+    !mobile*:QT += svg
 
     # On Windows we need to install the Qt plugins
     win32 {

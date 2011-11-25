@@ -92,7 +92,7 @@ unix {
 #  message(This is for iOS)
 #}
 
-iphone* {
+mobile* {
   message(This is for iPhone)
   CONFIG += static
 }
@@ -100,7 +100,7 @@ iphone* {
 macx {
   # Dynamic lookup is the best so that circular references do not matter so much
   LIBS += -undefined dynamic_lookup
-  !iphone* {
+  !mobile* {
     CONFIG += lib_bundle
 
     target.path = /Library/Frameworks

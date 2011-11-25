@@ -7,10 +7,10 @@
  * See file "Valuable.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #include "AttributeObject.hpp"
@@ -195,10 +195,12 @@ namespace Valuable
     foreach(const AttributeListener & l, m_listeners) {
       if(l.role & CHANGE_ROLE) {
         if(!l.func) {
+#ifdef MULTI_WITH_V8
           /// @todo what is the correct receiver ("this" in the callback)?
           /// @todo is this legal without v8::HandleScope handle_scope;
           /// @todo is it legal to give null pointer to argv parameter?
           l.scriptFunc->Call(v8::Context::GetCurrent()->Global(), 0, 0);
+#endif
         } else l.func();
       }
     }
@@ -211,8 +213,10 @@ namespace Valuable
     foreach(const AttributeListener & l, m_listeners) {
       if(l.role & DELETE_ROLE) {
         if(!l.func) {
+#ifdef MULTI_WITH_V8
           /// @todo what is the correct receiver ("this" in the callback)?
           l.scriptFunc->Call(v8::Context::GetCurrent()->Global(), 0, 0);
+#endif
         } else l.func();
       }
       if(l.listener) l.listener->m_valueListening.remove(this);
@@ -242,13 +246,14 @@ namespace Valuable
     return id;
   }
 
+#ifdef MULTI_WITH_V8
   long Attribute::addListener(v8::Persistent<v8::Function> func, int role)
   {
     long id = m_listenersId++;
     m_listeners[id] = AttributeListener(func, role);
     return id;
   }
-
+#endif
   void Attribute::removeListeners(int role)
   {
     removeListener(0, role);

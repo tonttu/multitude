@@ -122,7 +122,7 @@ SOURCES += PlatformUtilsWin32.cpp
 SOURCES += SerialPortWin32.cpp
 SOURCES += LockFileWin32.cpp
 
-!iphone* {
+!mobile* {
   win32:SOURCES += VideoCameraCMU.cpp
   SOURCES += VideoCamera1394.cpp
   win32:SOURCES += VideoCameraPTGrey.cpp
@@ -139,7 +139,7 @@ DEFINES += RADIANT_EXPORT
 unix {
   LIBS += -lpthread $$LIB_RT -ldl
   PKGCONFIG += libdc1394-2
-  !iphone*:DEFINES += CAMERA_DRIVER_1394
+  !mobile*:DEFINES += CAMERA_DRIVER_1394
   CONFIG += qt
   QT = core network
 }
