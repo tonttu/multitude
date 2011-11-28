@@ -14,6 +14,7 @@
 #include "GLSLProgramObject.hpp"
 
 #include <Radiant/Mutex.hpp>
+#include <Radiant/PlatformUtils.hpp>
 #include <Radiant/Thread.hpp>
 
 #include <strings.h>
@@ -293,8 +294,10 @@ namespace Luminous
         m_polyline_shader->loadStrings(polyline_vert, polyline_frag);
 #endif
 
+        /*
         Radiant::ResourceLocator::instance().addPath
             ("/Users/tommi/cornerstone/share/MultiTouch/");
+            */
 
         GLSLProgramObject * basic =
             GLSLProgramObject::fromFiles(locateStandardShader("basic_tex.vs").toUtf8().data(),

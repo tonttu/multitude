@@ -41,10 +41,13 @@ namespace Radiant
       return buf;
     }
 #else
+  /*
     QString getExecutablePath()
     {
-      return QString();
+      NSSstring * str = NSHomeDirectory();
+      return QString(NSStringGetFileSystemRepresentation(str));
     }
+    */
 #endif
 
     QString getUserHomePath()

@@ -82,7 +82,7 @@ SOURCES += BinaryData.cpp
 SOURCES += VideoCamera.cpp
 SOURCES += Color.cpp
 SOURCES += ColorUtils.cpp
-SOURCES += ConditionQt.cpp
+# SOURCES += ConditionQt.cpp
 SOURCES += MutexQt.cpp
 SOURCES += ThreadQt.cpp
 SOURCES += ConfigReader.cpp
@@ -94,7 +94,6 @@ SOURCES += ImageConversion.cpp
 SOURCES += Log.cpp
 SOURCES += MemCheck.cpp
 SOURCES += CallStackLinux.cpp
-SOURCES += CallStackW32.cpp
 SOURCES += ResourceLocator.cpp
 SOURCES += RingBuffer.cpp
 SOURCES += Size2D.cpp
@@ -113,14 +112,25 @@ SOURCES += Singleton.cpp
 SOURCES += TCPServerSocketPosix.cpp
 SOURCES += TCPSocketPosix.cpp
 SOURCES += UDPSocketPosix.cpp
+linux-* {
 SOURCES += PlatformUtilsLinux.cpp
 SOURCES += XFaker.cpp
+}
 SOURCES += PlatformUtilsOSX.cpp
 SOURCES += SerialPortPosix.cpp
 SOURCES += LockFilePosix.cpp
+win32 {
 SOURCES += PlatformUtilsWin32.cpp
 SOURCES += SerialPortWin32.cpp
 SOURCES += LockFileWin32.cpp
+SOURCES += CallStackW32.cpp
+}
+
+# ios:OTHER_FILES += PlatformUtilsIOS.mm
+ios {
+  OBJECTIVE_SOURCES += PlatformUtilsIOS.mm
+
+}
 
 !mobile* {
   win32:SOURCES += VideoCameraCMU.cpp
@@ -171,3 +181,7 @@ win32 {
     LIBS += FlyCapture2.lib
 }
 include(../library.pri)
+
+
+
+

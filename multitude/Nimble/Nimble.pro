@@ -27,7 +27,7 @@ HEADERS += Vector2.hpp
 HEADERS += Vector3.hpp
 HEADERS += Vector4.hpp
 
-SOURCES += Histogram.cpp
+# SOURCES += Histogram.cpp
 SOURCES += KeyStone.cpp
 SOURCES += LensCorrection.cpp
 SOURCES += LineSegment2.cpp
@@ -35,7 +35,7 @@ SOURCES += Matrix.cpp
 SOURCES += Path.cpp
 SOURCES += Plane.cpp
 SOURCES += Random.cpp
-SOURCES += Range.cpp
+# SOURCES += Range.cpp
 SOURCES += Rectangle.cpp
 SOURCES += Rect.cpp
 SOURCES += Splines.cpp
