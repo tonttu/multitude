@@ -47,8 +47,10 @@
 
 namespace {
   Radiant::Mutex s_fileWriterMutex;
-  std::function<void ()> s_fileWriterInit;
-  std::function<void ()> s_fileWriterDeinit;
+  //std::function<void ()> s_fileWriterInit;
+  //std::function<void ()> s_fileWriterDeinit;
+  void (*s_fileWriterInit)() = 0;
+  void (*s_fileWriterDeinit)() = 0;
   volatile int s_fileWriterCount = 0;
 }
 
@@ -56,24 +58,26 @@ namespace Radiant
 {
   FileWriter::FileWriter()
   {
+    if(!s_fileWriterInit) return;
     Guard g(s_fileWriterMutex);
-    if(s_fileWriterCount++ == 0 && s_fileWriterInit)
+    if(s_fileWriterCount++ == 0)
       s_fileWriterInit();
   }
 
   FileWriter::~FileWriter()
   {
+    if(!s_fileWriterDeinit) return;
     Guard g(s_fileWriterMutex);
-    if(--s_fileWriterCount == 0 && s_fileWriterDeinit)
+    if(--s_fileWriterCount == 0)
       s_fileWriterDeinit();
   }
 
-  void FileWriter::setInitFunction(std::function<void ()> f)
+  void FileWriter::setInitFunction(void (*f)())
   {
     s_fileWriterInit = f;
   }
 
-  void FileWriter::setDeinitFunction(std::function<void ()> f)
+  void FileWriter::setDeinitFunction(void (*f)())
   {
     s_fileWriterDeinit = f;
   }
