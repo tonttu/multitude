@@ -19,12 +19,27 @@
 #include "Export.hpp"
 #include "Platform.hpp"
 
+#include <Patterns/NotCopyable.hpp>
+
 #include <fstream>
 
 #include <QString>
 
 namespace Radiant
 {
+  class RADIANT_API FileWriter : public Patterns::NotCopyable
+  {
+  public:
+    FileWriter();
+    ~FileWriter();
+
+    /// with std::function<void ()> f GCC 4.4 gives internal compiler error:
+    /// /usr/include/c++/4.4/tr1_impl/functional:1535: internal compiler error: Segmentation fault
+    /// so we use plain function pointers
+    static void setInitFunction(void (*f)());
+    static void setDeinitFunction(void (*f)());
+  };
+
   /// FileUtils contains functions for platform independent file-handing
   class RADIANT_API FileUtils
   {
