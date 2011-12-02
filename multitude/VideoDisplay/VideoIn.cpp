@@ -452,7 +452,7 @@ namespace VideoDisplay {
       while(((m_decodedFrames + 4) >= (m_consumedFrames + m_frames.size()) ||
              (m_decodedFrames + 4) >= (m_consumedAuFrames + m_frames.size())) &&
             m_continue)
-        m_vcond.wait(m_vmutex, 500);
+        m_vcond.wait(m_vmutex, 10);
     }
 
     if(!m_continue) {

@@ -61,7 +61,7 @@ namespace Radiant
     sprintf(buf, "/Applications/%s.app/Contents/Resources", module);
       }
       else {
-    sprintf(buf, "/Library/Frameworks/%s.framework", module);
+    sprintf(buf, "/Library/Frameworks/%s.framework/data", module);
       }
       return buf;
     }

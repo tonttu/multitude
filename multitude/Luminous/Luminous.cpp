@@ -20,6 +20,7 @@
 #include "ImageCodecDDS.hpp"
 #include "ImageCodecQT.hpp"
 #include "ImageCodecSVG.hpp"
+#include "CPUMipmaps.hpp"
 
 #include <QImageWriter>
 #include <QImageReader>
@@ -84,6 +85,13 @@ namespace Luminous
       }
 #else
       info("OpenGL without GLEW # %s : %s", glvendor, glver);
+#endif
+
+      // Check for DXT support
+#ifndef MULTI_WITHOUT_GLEW
+      bool dxtSupport = glewIsSupported("GL_EXT_texture_compression_s3tc");
+      Radiant::info("Hardware DXT texture compression support: %s", dxtSupport ? "yes" : "no");
+      Luminous::CPUMipmaps::s_dxtSupported = dxtSupport;
 #endif
     }
 

@@ -45,6 +45,9 @@ namespace Valuable
     const ElementType * native() const
     { return Base::m_value.data(); }
 
+    const ElementType * data() const
+    { return Base::m_value.data(); }
+
     // virtual void processMessage(const char * id, Radiant::BinaryData & data);
     virtual bool deserialize(const ArchiveElement & element);
     const char * type() const;

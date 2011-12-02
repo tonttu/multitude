@@ -1,6 +1,8 @@
 include(../multitude.pri)
 
 HEADERS += Timer.hpp
+HEADERS += TimerW32.hpp
+HEADERS += TimerPosix.hpp
 HEADERS += SynchronizedQueue.hpp
 HEADERS += CameraDriver.hpp
 HEADERS += Defines.hpp
@@ -69,7 +71,6 @@ HEADERS += VideoCameraPTGrey.hpp
 HEADERS += VideoCameraCMU.hpp
 HEADERS += VideoCamera1394.hpp
 
-SOURCES += Timer.cpp
 SOURCES += CameraDriver.cpp
 SOURCES += SocketUtilPosix.cpp
 SOURCES += ThreadPoolQt.cpp
