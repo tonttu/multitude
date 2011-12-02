@@ -21,6 +21,14 @@ namespace Radiant {
   class RADIANT_API FT2xxStream : public BinaryStream, public Patterns::NotCopyable
   {
   public:
+
+    enum DeviceType {
+      /// Ordinary slow FT232 device
+      DEVICE_FT232,
+      /// High-speed device
+      DEVICE_FT232H
+    };
+
     FT2xxStream();
     virtual ~FT2xxStream();
 
