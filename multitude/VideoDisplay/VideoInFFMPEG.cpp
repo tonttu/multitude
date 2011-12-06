@@ -73,8 +73,8 @@ namespace VideoDisplay {
     debugVideoDisplay("VideoInFFMPEG::~VideoInFFMPEG");
     if(isRunning()) {
       {
-        Radiant::Guard g(m_mutex);
         m_continue = false;
+        Radiant::Guard g(m_mutex);
         m_vcond.wakeAll(m_vmutex);
       }
       waitEnd();

@@ -26,7 +26,7 @@ namespace Valuable
 
   /// A matrix value object
   template<class MatrixType, typename ElementType, int N>
-  class ValueMatrix : public ValueObjectT<MatrixType>
+  class VALUABLE_API ValueMatrix : public ValueObjectT<MatrixType>
   {
     typedef ValueObjectT<MatrixType> Base;
   public:
@@ -43,6 +43,9 @@ namespace Valuable
 
     /// Returns the data in its native format
     const ElementType * native() const
+    { return Base::m_value.data(); }
+
+    const ElementType * data() const
     { return Base::m_value.data(); }
 
     // virtual void processMessage(const char * id, Radiant::BinaryData & data);

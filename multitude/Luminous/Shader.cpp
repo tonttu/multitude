@@ -21,6 +21,7 @@
 #include <Valuable/ValueInt.hpp>
 #include <Valuable/ValueFloat.hpp>
 #include <Valuable/ValueVector.hpp>
+#include <Valuable/ValueMatrix.hpp>
 
 #include <typeinfo>
 #include <vector>
@@ -81,6 +82,27 @@ namespace Luminous {
     } \
   }
 
+#define SHADER_PARAM_APPLYMATRIX(objs, type, func, glslprog, glslfunc) \
+  { \
+    for(std::vector<Item>::iterator it = objs.begin(); it != objs.end(); it++) { \
+      Item & v = (*it); \
+      if(v.m_param == -2) \
+        continue; \
+      if(v.m_param == -1) {\
+        int tmp = glslprog->glslfunc(((type*)v.m_obj)->name()); \
+        if(tmp < 0) { \
+          error("Could not find location for %s", ((type*)v.m_obj)->name().c_str()); \
+          v.m_param = -2; \
+          continue; \
+        } \
+        else { \
+          v.m_param = tmp; \
+        }\
+      }\
+      func(v.m_param, 1, true, ((const type *) v.m_obj)->data()); \
+    } \
+  }
+
   class Shader::Params
   {
   public:
@@ -103,6 +125,9 @@ namespace Luminous {
       SHADER_PARAM_CHECK(obj, ValueVector2f, m_vec2f);
       SHADER_PARAM_CHECK(obj, ValueVector3f, m_vec3f);
       SHADER_PARAM_CHECK(obj, ValueVector4f, m_vec4f);
+      SHADER_PARAM_CHECK(obj, ValueMatrix2f, m_mat2f);
+      SHADER_PARAM_CHECK(obj, ValueMatrix3f, m_mat3f);
+      SHADER_PARAM_CHECK(obj, ValueMatrix4f, m_mat4f);
 
       error("When adding shader parameter %s, type %s not supported",
             obj->name().c_str(), typeid(*obj).name());
@@ -116,6 +141,9 @@ namespace Luminous {
       SHADER_PARAM_APPLYN(m_vec2f, ValueVector2f, glUniform2fv, glslprog, getUniformLoc);
       SHADER_PARAM_APPLYN(m_vec3f, ValueVector3f, glUniform3fv, glslprog, getUniformLoc);
       SHADER_PARAM_APPLYN(m_vec4f, ValueVector4f, glUniform4fv, glslprog, getUniformLoc);
+      SHADER_PARAM_APPLYMATRIX(m_mat2f, ValueMatrix2f, glUniformMatrix2fv, glslprog, getUniformLoc);
+      SHADER_PARAM_APPLYMATRIX(m_mat3f, ValueMatrix3f, glUniformMatrix3fv, glslprog, getUniformLoc);
+      SHADER_PARAM_APPLYMATRIX(m_mat4f, ValueMatrix4f, glUniformMatrix4fv, glslprog, getUniformLoc);
     }
 
   private:
@@ -125,6 +153,9 @@ namespace Luminous {
     std::vector<Item> m_vec2f;
     std::vector<Item> m_vec3f;
     std::vector<Item> m_vec4f;
+    std::vector<Item> m_mat2f;
+    std::vector<Item> m_mat3f;
+    std::vector<Item> m_mat4f;
   };
 
   class Shader::Self
