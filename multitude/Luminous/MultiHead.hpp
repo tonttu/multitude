@@ -359,6 +359,9 @@ namespace Luminous {
     /// Total height of the display area, in graphics pixels.
     int height();
 
+    Nimble::Vector3i dpms() const { return m_dpms; }
+    void setDpms(const Nimble::Vector3i & dpms);
+
     bool deserialize(const Valuable::ArchiveElement & element);
 
     /// Adds a window to the collection
@@ -384,11 +387,13 @@ namespace Luminous {
 
   private:
     virtual bool readElement(Valuable::DOMElement ce);
+    virtual void dpmsChanged();
 
     std::vector<std::shared_ptr<Window> > m_windows;
     Valuable::AttributeFloat m_widthcm;
     Valuable::AttributeFloat m_gamma;
     Valuable::AttributeBool m_iconify;
+    Valuable::AttributeVector3i m_dpms;
     bool m_edited;
   };
 
