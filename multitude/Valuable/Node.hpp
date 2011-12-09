@@ -126,6 +126,7 @@ namespace Valuable
     }
 
     /// Saves this object (and its children) to an XML file
+    /// @todo why isn't this QString?
     bool saveToFileXML(const char * filename);
     /// Saves this object (and its children) to binary data buffer
     bool saveToMemoryXML(QByteArray & buffer);
