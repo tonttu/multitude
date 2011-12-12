@@ -22,6 +22,8 @@ namespace Radiant
     /// Construct a new Timer and start it
     Timer();
 
+    Timer(const Timer & timer);
+
     /// Deletes all resources allocated by the timer object
     ~Timer();
 
