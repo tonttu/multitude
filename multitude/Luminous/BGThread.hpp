@@ -55,7 +55,7 @@ namespace Luminous
 
         @param task The task that needs to be added.
     */
-    virtual void addTask(Task * task);
+    virtual std::shared_ptr<Task> addTask(Task * task);
 
     /// Remove the task from the BGThread
     /** If you just want to delete the task, then it is generally better to set the state of

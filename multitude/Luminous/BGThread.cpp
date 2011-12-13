@@ -51,10 +51,12 @@ namespace Luminous
   }
 
   /// @todo should this be deprecated?
-  void BGThread::addTask(Task * task)
+  std::shared_ptr<Task> BGThread::addTask(Task * task)
   {
     // Have to use custom deleter because Task destructor is protected
-    addTask(std::shared_ptr<Task>(task, TaskDeleter()));
+    std::shared_ptr<Task> ptr(task, TaskDeleter());
+    addTask(ptr);
+    return ptr;
   }
 
   void BGThread::addTask(std::shared_ptr<Task> task)
