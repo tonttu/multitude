@@ -230,7 +230,7 @@ namespace Luminous {
     }
 
     MipMapGenerator * gen = 0;
-    if(compressedMipmaps) {
+    if(m_compressedMipmaps) {
       m_compFilename = cacheFileName(filename, -1, "dds");
       unsigned long int ts = FileUtils::lastModified(m_compFilename);
       if(ts == 0) {
@@ -293,7 +293,7 @@ namespace Luminous {
 
     if(gen) {
       Luminous::BGThread::instance()->addTask(gen);
-    } else if(compressedMipmaps) {
+    } else if(m_compressedMipmaps) {
       Luminous::BGThread::instance()->addTask(shared_from_this());
     }
     return true;
