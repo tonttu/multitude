@@ -69,7 +69,7 @@ namespace Nimble {
     /// Returns the arctangent
     inline float ATan(float v)  { return atanf(v); }
     /// Returns the arctangent
-    inline float ATan2(float x, float y)  { return atan2f(x, y); }
+    inline float ATan2(float y, float x)  { return atan2f(y, x); }
 
     /// Returns the cosine
     inline double Cos(double v)  { return cos(v); }
@@ -97,7 +97,7 @@ namespace Nimble {
     /// Returns the arctangent
     inline double ATan(double v)  { return atan(v); }
     /// Returns the arctangent
-    inline double ATan2(double x, double y)  { return atan2(x, y); }
+    inline double ATan2(double y, double x)  { return atan2(y, x); }
 
     /// Returns the square root
     inline float Sqrt(int v) { return sqrtf(float(v)); }
