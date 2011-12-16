@@ -171,6 +171,21 @@ namespace Nimble {
       return 0;
     }
 
+    /// Returns the sum of all bins in the given range
+    T sumBins(int bottom, int top) const
+    {
+      if(top >= N)
+        top = N - 1;
+
+      T sum = 0;
+
+      for(int i = bottom; i <= top; i++) {
+        sum += m_data[i];
+      }
+
+      return sum;
+    }
+
     /// Returns the number of bins in the histogram
     /** This function returns the value of template parameter N. In your code, it is recommended that
         you use this parameter rather than writing the magic value of N directly in your code, since
