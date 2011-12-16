@@ -291,11 +291,11 @@ namespace Luminous {
     markImage(m_maxLevel);
     reschedule();
 
-    if(gen) {
+    if(gen)
       Luminous::BGThread::instance()->addTask(gen);
-    } else if(m_compressedMipmaps) {
+    else
       Luminous::BGThread::instance()->addTask(shared_from_this());
-    }
+
     return true;
   }
 
