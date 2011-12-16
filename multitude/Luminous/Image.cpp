@@ -1017,7 +1017,7 @@ namespace Luminous
       byte = (nibble_index % 2) ? (byte >> 4) : (byte & 0xF);
       return byte / 16.0f;
     } else if(m_compression == PixelFormat::COMPRESSED_RGBA_DXT5) {
-
+      // refer to http://en.wikipedia.org/wiki/S3_Texture_Compression
       const unsigned char* d = reinterpret_cast<const unsigned char*>(data());
 
       Vector2i blockid(pos.x / 4, pos.y / 4);
@@ -1032,23 +1032,16 @@ namespace Luminous
       unsigned char a1 = block[1];
 
       uint64_t lookupTable = 0;
-      std::cout << "debug " << std::hex ;
       for(int i = 0; i < 6; i++) {
         lookupTable <<=8;
-        std::cout<< " # " << (int)block[2+i];
         lookupTable ^= (int)block[2+i] & 0xFF;
-        std::cout << " lookup@" << lookupTable;
       }
-      std::cout << std::endl;
       uint64_t tripleBitMask = 0x7;
       tripleBitMask <<= 45 - nibble_index*3;
-
-      std::cout << "mask:" << tripleBitMask << std::dec << " ,ni=" << nibble_index << std::endl;
 
       lookupTable &= tripleBitMask;
       unsigned alphaIndex = (unsigned)(lookupTable >> (45 - nibble_index*3));
 
-      std::cout << "alpha index: " << alphaIndex << std::endl;
       float alpha;
       if(a0 > a1) {
         alpha = ((8-alphaIndex)*a0 + (alphaIndex-1)*a1)/(7*255.f);
@@ -1060,7 +1053,7 @@ namespace Luminous
         else
           alpha = ((6-alphaIndex)*a0 + (alphaIndex-1)*a1)/(5*255.f);
       }
-      std::cout << std::dec << (int)a0 << " " << (int)a1 << " " << alpha << "\n";
+//      std::cout << std::dec << (int)a0 << " " << (int)a1 << " " << alpha << "\n";
       return alpha;
     }
 
