@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Screenplay.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Screenplay.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #ifndef SCREENPLAY_VIDEO_FFMPEG_HPP
@@ -104,6 +92,11 @@ namespace Screenplay {
     /// The duration of the video in seconds
     /// @return duration in seconds
     double durationSeconds() const;
+    /// The run-time of the video in seconds
+    /** Usually this value is the same as #durationSeconds, but if looping is enabled, then
+        the run-time is reported as a very large value. */
+    /// @return run-time in seconds
+    double runtimeSeconds() const;
 
     /// Returns true if there is an audio codec for this video
     /// @return true if video has audio codec
@@ -133,7 +126,7 @@ namespace Screenplay {
     int              m_aindex; // Audio index
     AVCodecContext * m_acontext;
     ReSampleContext* m_resample_ctx;
-    
+
     // Audiobuffers should be 128-bit aligned because of SSE
     typedef std::vector<int16_t, Radiant::aligned_allocator<int16_t, 16> > AudioBuffer;
     AudioBuffer      m_audioBuffer;

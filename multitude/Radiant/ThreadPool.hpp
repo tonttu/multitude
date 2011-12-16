@@ -39,9 +39,12 @@ namespace Radiant {
     /// Sets the number of threads.
     /// If number is bigger than threads(), new threads are started immediately
     /// If number is smaller, then we politely give a hint to randomly chosen
-    /// "extra" threads to shut down (@see stop())
+    /// "extra" threads to shut down (ThreadPool::stop).
+    ///
     /// This can be freely called many times.
+    ///
     /// This function is thread-safe.
+
     /// @param number the target number of threads
     void run(int number = 1);
 

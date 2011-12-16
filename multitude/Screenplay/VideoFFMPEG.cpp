@@ -540,8 +540,8 @@ namespace Screenplay {
         warning("VideoInputFFMPEG::fps # Could not get fps");
         return 0;
       }
-      assert(int(m_ic->nb_streams) > m_vindex && m_vindex >= 0);
-      if(int(m_ic->nb_streams) <= m_vindex || m_vindex < 0)
+      assert((int) m_ic->nb_streams > m_vindex && m_vindex >= 0);
+      if((int) m_ic->nb_streams <= m_vindex)
         return 0;
       fps = av_q2d(m_ic->streams[m_vindex]->r_frame_rate);
     }
@@ -837,9 +837,6 @@ namespace Screenplay {
   {
     Radiant::Guard g(m_mutex);
 
-    if(m_flags & Radiant::DO_LOOP)
-      return 1.0e+9f;
-
     if(m_ic && m_vindex >= 0) {
       AVStream * s = m_ic->streams[m_vindex];
 
@@ -855,6 +852,14 @@ namespace Screenplay {
     }
 
     return 0.0;
+  }
+
+  double VideoInputFFMPEG::runtimeSeconds() const
+  {
+    if(m_flags & Radiant::DO_LOOP)
+      return 1.0e+9f;
+
+    return durationSeconds();
   }
 
   bool VideoInputFFMPEG::start()
@@ -876,7 +881,7 @@ namespace Screenplay {
   }
 
   void VideoInputFFMPEG::setDebug(int debug)
-  {    
+  {
     m_debug = debug;
   }
 

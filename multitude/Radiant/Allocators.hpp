@@ -3,6 +3,8 @@
 
 #include <Radiant/Memory.hpp>
 
+#include <stddef.h>
+
 namespace Radiant
 {
   /// Aligned memory allocator that can be used for STL containers

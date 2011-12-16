@@ -44,7 +44,7 @@ namespace Valuable
     virtual ~AttributeMatrix();
 
     /// Returns the data in its native format
-    const ElementType * native() const
+    const ElementType * data() const
     { return this->value().data(); }
 
     // virtual void processMessage(const char * id, Radiant::BinaryData & data);

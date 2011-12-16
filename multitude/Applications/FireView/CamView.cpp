@@ -385,7 +385,7 @@ namespace FireView {
     long unsigned bandwidth = width * height * 8 * (int)fps;
     s_bandwidth += bandwidth;
 
-    qDebug("Total bandwidth required: %lu Mbps", s_bandwidth >> 20);
+    qDebug("Total bandwidth required: %lu Mbps for width=%d, heigh=%d, fps=%f", s_bandwidth >> 20, width, height, fps);
   }
 
   /////////////////////////////////////////////////////////////////////////////

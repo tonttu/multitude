@@ -73,8 +73,8 @@ namespace VideoDisplay {
     debugVideoDisplay("VideoInFFMPEG::~VideoInFFMPEG");
     if(isRunning()) {
       {
-        Radiant::Guard g(m_mutex);
         m_continue = false;
+        Radiant::Guard g(m_mutex);
         m_vcond.wakeAll(m_vmutex);
       }
       waitEnd();
@@ -134,10 +134,13 @@ namespace VideoDisplay {
 
       debugVideoDisplay("%s # %s using cached preview", fname, filename);
 
+      m_duration = vi->m_duration;
+
       if(m_flags & Radiant::DO_LOOP)
-        m_duration = Radiant::TimeStamp::createSecondsD(1.0e+9f);
+        m_runtime = Radiant::TimeStamp::createSecondsD(1.0e+9f);
       else
-        m_duration = vi->m_duration;
+        m_runtime = m_duration;
+
       const VideoImage * img = & vi->m_firstFrame;
 
       m_info.m_videoFrameSize.make(img->m_width, img->m_height);
@@ -192,6 +195,7 @@ namespace VideoDisplay {
     float fp = fps();
 
     m_duration = TimeStamp::createSecondsD(video.durationSeconds());
+    m_runtime = TimeStamp::createSecondsD(video.runtimeSeconds());
 
     debugVideoDisplay("%s # %f fps", fname, fp);
 
@@ -412,6 +416,11 @@ namespace VideoDisplay {
   }
 
   double VideoInFFMPEG::durationSeconds() const
+  {
+    return m_duration.secondsD();
+  }
+
+  double VideoInFFMPEG::runtimeSeconds() const
   {
     return m_duration.secondsD();
   }

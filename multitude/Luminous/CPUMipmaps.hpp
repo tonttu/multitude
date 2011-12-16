@@ -236,6 +236,7 @@ namespace Luminous {
      */
     static std::shared_ptr<CPUMipmaps> acquire(const QString & filename, bool compressed_mipmaps);
 
+    static bool s_dxtSupported;
   protected:
     virtual void doTask();
 

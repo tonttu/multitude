@@ -323,8 +323,23 @@ namespace VideoDisplay {
         *d++ = 0;
       }
     }
-
   }
 
+  void AudioTransfer::checkEnd(const VideoIn::Frame * f)
+  {
+    if(!f) {
+      m_ending = true;
+      debugVideoDisplay("ShowGL::checkEnd # At end 1");
+    }
+    else {
+      double runtime = m_video->runtimeSeconds();
+      if(runtime > 0.6)
+        runtime -= 0.5;
+      if(f->m_absolute.secondsD() > runtime) {
+        m_ending = true;
+        debugVideoDisplay("ShowGL::checkEnd # At end 2 %lf %lf", f->m_absolute.secondsD(), runtime);
+      }
+    }
+  }
 
 }

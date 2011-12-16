@@ -3,6 +3,7 @@
 #define MULTITUDE_STRINGS_H
 
 #include <string.h>
+#include <stdlib.h>
 
 inline void bzero(void * ptr, size_t n)
 {
