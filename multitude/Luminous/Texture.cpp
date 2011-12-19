@@ -550,7 +550,12 @@ namespace Luminous
     bind(textureUnit);
 
     // Flush the data by drawing a zero-size triangle
-    glColor4f(0,0,0,0);
+
+    /// @todo This is hazardous. We have no idea what shader etc. is active
+    /// when this is called. Also this function must not have side-effects like
+    /// changing OpenGL color as it breaks rendering in Widget-level.
+    //glColor4f(0,0,0,0);
+
     glBegin(GL_TRIANGLES);
     glVertex2f(0,0);
     glVertex2f(0,0);
