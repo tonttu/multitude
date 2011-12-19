@@ -1042,19 +1042,25 @@ namespace Luminous
       lookupTable &= tripleBitMask;
       unsigned alphaIndex = (unsigned)(lookupTable >> (45 - nibble_index*3));
 
-      float alpha;
-      if(a0 > a1) {
-        alpha = ((8-alphaIndex)*a0 + (alphaIndex-1)*a1)/(7*255.f);
-      } else {
-        if(alphaIndex == 7)
-          alpha = 1.f;
-        else if(alphaIndex == 6)
-          alpha = 0.f;
-        else
-          alpha = ((6-alphaIndex)*a0 + (alphaIndex-1)*a1)/(5*255.f);
+      if( alphaIndex == 0)
+        return  a0/255.f;
+      else if(alphaIndex == 1)
+        return a1/255.f;
+      else {
+        float alpha;
+        if(a0 > a1) {
+          alpha = ((8-alphaIndex)*a0 + (alphaIndex-1)*a1)/(7*255.f);
+        } else {
+          if(alphaIndex == 7)
+            alpha = 1.f;
+          else if(alphaIndex == 6)
+            alpha = 0.f;
+          else
+            alpha = ((6-alphaIndex)*a0 + (alphaIndex-1)*a1)/(5*255.f);
+        }
+        //      std::cout << std::dec << (int)a0 << " " << (int)a1 << " " << alpha << "\n";
+        return alpha;
       }
-//      std::cout << std::dec << (int)a0 << " " << (int)a1 << " " << alpha << "\n";
-      return alpha;
     }
 
     return 1.0f;
