@@ -978,7 +978,7 @@ namespace Luminous
     if(pos.x < 0 || pos.y < 0 || pos.x >= width() || pos.y >= height()) return 1.0f;
 
     if(m_compression == PixelFormat::COMPRESSED_RGBA_DXT1) {
-      /// @todo implement this for COMPRESSED_RGBA_DXT1
+      // This is not a standard format.
     } else if(m_compression == PixelFormat::COMPRESSED_RGBA_DXT3) {
       /* {
         Image img;
@@ -1016,8 +1016,52 @@ namespace Luminous
 
       byte = (nibble_index % 2) ? (byte >> 4) : (byte & 0xF);
       return byte / 16.0f;
+    } else if(m_compression == PixelFormat::COMPRESSED_RGBA_DXT5) {
+      // refer to http://en.wikipedia.org/wiki/S3_Texture_Compression
+      const unsigned char* d = reinterpret_cast<const unsigned char*>(data());
+
+      Vector2i blockid(pos.x / 4, pos.y / 4);
+
+      int blocksize = 16;
+      int blocks_on_x_direction = (width() + 3) / 4;
+      const unsigned char* block = d + blocksize * (blockid.x + blockid.y * blocks_on_x_direction);
+
+      int nibble_index = pos.x % 4 + (pos.y % 4) * 4;
+
+      unsigned char a0 = block[0];
+      unsigned char a1 = block[1];
+
+      uint64_t lookupTable = 0;
+      for(int i = 0; i < 6; i++) {
+        lookupTable <<=8;
+        lookupTable ^= (int)block[2+i] & 0xFF;
+      }
+      uint64_t tripleBitMask = 0x7;
+      tripleBitMask <<= 45 - nibble_index*3;
+
+      lookupTable &= tripleBitMask;
+      unsigned alphaIndex = (unsigned)(lookupTable >> (45 - nibble_index*3));
+
+      if( alphaIndex == 0)
+        return  a0/255.f;
+      else if(alphaIndex == 1)
+        return a1/255.f;
+      else {
+        float alpha;
+        if(a0 > a1) {
+          alpha = ((8-alphaIndex)*a0 + (alphaIndex-1)*a1)/(7*255.f);
+        } else {
+          if(alphaIndex == 7)
+            alpha = 1.f;
+          else if(alphaIndex == 6)
+            alpha = 0.f;
+          else
+            alpha = ((6-alphaIndex)*a0 + (alphaIndex-1)*a1)/(5*255.f);
+        }
+        //      std::cout << std::dec << (int)a0 << " " << (int)a1 << " " << alpha << "\n";
+        return alpha;
+      }
     }
-    /// @todo implement this for COMPRESSED_RGBA_DXT5
 
     return 1.0f;
   }
