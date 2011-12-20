@@ -106,29 +106,32 @@ namespace Radiant {
               "export NO_WATCHDOG=1;\n", (float) m_intervalSeconds);
 
 #ifdef RADIANT_LINUX
-        FILE * pattern = fopen("/proc/sys/kernel/core_pattern", "r");
-        char buffer[5] = {0};
-        char * foo1 = fgets(buffer, sizeof(buffer), pattern);
-        (void) foo1;
-        fclose(pattern);
-
-        // If there isn't any fancy core naming rule,
-        // put the core in /tmp/core-timestamp directory
-        if(strcmp(buffer, "core") == 0) {
-          DateTime dt(TimeStamp::getTime());
-          char filename[255];
-          sprintf(filename, "/tmp/core-%d.%04d-%02d-%02d", getpid(), dt.year(), dt.month()+1, dt.monthDay()+1);
-          mkdir(filename, 0700);
-          int foo = chdir(filename);
-          (void) foo; // Silence the GCC warning
-          info("Changing working directory to %s", filename);
-        }
-
-        // Set the maximum core size limit
         struct rlimit limit;
         getrlimit(RLIMIT_CORE, &limit);
-        limit.rlim_cur = limit.rlim_max;
-        setrlimit(RLIMIT_CORE, &limit);
+
+        if(limit.rlim_max > 0) {
+          // Set the maximum core size limit
+          limit.rlim_cur = limit.rlim_max;
+          setrlimit(RLIMIT_CORE, &limit);
+
+          FILE * pattern = fopen("/proc/sys/kernel/core_pattern", "r");
+          char buffer[5] = {0};
+          char * foo1 = fgets(buffer, sizeof(buffer), pattern);
+          (void) foo1;
+          fclose(pattern);
+
+          // If there isn't any fancy core naming rule,
+          // put the core in /tmp/core-timestamp directory
+          if(strcmp(buffer, "core") == 0) {
+            DateTime dt(TimeStamp::getTime());
+            char filename[255];
+            sprintf(filename, "/tmp/core-%d.%04d-%02d-%02d", getpid(), dt.year(), dt.month()+1, dt.monthDay()+1);
+            mkdir(filename, 0700);
+            int foo = chdir(filename);
+            (void) foo; // Silence the GCC warning
+            info("Changing working directory to %s", filename);
+          }
+        }
 #endif
 
         // Stop the app:
