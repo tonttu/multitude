@@ -138,7 +138,7 @@ namespace Nimble {
 	}
 
     /// Create a matrix that performs uniform scaling around the given point
-    NIMBLE_API static Matrix3T<T> scaleAroundPoint2D(Vector2T<T> p,
+    static Matrix3T<T> scaleAroundPoint2D(Vector2T<T> p,
                                                      const T & xscale, const T & yscale)
     {
       return translate2D(p) * scale2D(xscale, yscale) * translate2D(-p);
