@@ -49,9 +49,6 @@ namespace Luminous {
       return std::shared_ptr<CPUMipmaps>();
     }
 
-    if(!compressed_mipmaps)
-      Luminous::BGThread::instance()->addTask(mipmap_shared);
-
     // store new weak pointer
     mipmap_weak = mipmap_shared;
 
