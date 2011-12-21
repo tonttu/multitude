@@ -84,11 +84,11 @@ namespace Valuable
   QString AttributeMatrix<MatrixType, ElementType, N>::asString(bool * const ok) const {
     if(ok) *ok = true;
 
-    const ElementType * data = native();
-    QString r = Radiant::StringUtils::stringify(data[0]);
+    const ElementType * buf = data();
+    QString r = Radiant::StringUtils::stringify(buf[0]);
 
     for(int i = 1; i < N; i++)
-      r += " " + Radiant::StringUtils::stringify(data[i]);
+      r += " " + Radiant::StringUtils::stringify(buf[i]);
 
     return r;
   }

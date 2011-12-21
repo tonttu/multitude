@@ -124,7 +124,8 @@ namespace Radiant {
 
     getRef<int32_t>() = STRING_MARKER;
     char * ptr =  getPtr<char>(space);
-    memcpy(ptr, s, len + 1);
+    memcpy(ptr, s, len);
+    memset(ptr + len, 0, space - len);
   }
 
   void BinaryData::writeWString(const std::wstring & str)

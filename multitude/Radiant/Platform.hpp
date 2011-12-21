@@ -11,8 +11,7 @@
  * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
  * 
- */
-
+ */ 
 #ifndef RADIANT_PLATFORM_HPP
 #define RADIANT_PLATFORM_HPP
 
@@ -69,6 +68,9 @@
 #   define RADIANT_MSVC 1
 #   define DLLEXPORT __declspec(dllexport)
 #   define DLLIMPORT __declspec(dllimport)
+
+// warning C4251: class X needs to have dll-interface to be used by clients of class Y
+#   pragma warning(disable:4251)
 #endif
 
 #if !defined(NO_OVERRIDE)
@@ -97,6 +99,9 @@
 #   ifndef _HAS_TR1
 #     error "Compiler TR1 support was not found. Please install Visual Studio 2008 Service Pack 1 or use a newer compiler."
 #   endif
+
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 
 // Grmblrgrmbl, weird windows CRT stuffs
 #define snprintf _snprintf

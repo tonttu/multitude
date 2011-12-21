@@ -203,8 +203,9 @@ namespace Poetic
       else {
         if(c == ' ' || c == '.' || c == ',' || c == '!') {
           onspace = true;
-        }
-        else if(c == W_NEWLINE) {
+        } else if(c == '\r') {
+		  continue;
+		} else if(c == W_NEWLINE) {
           lines.push_back(QString::fromWCharArray( & ws[lineStart], i - lineStart + 1));
           sum = 0.0f;
           okEnd = 0;

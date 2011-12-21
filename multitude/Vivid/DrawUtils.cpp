@@ -45,7 +45,8 @@ namespace Vivid
     {
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
-      gluPerspective(fovY, aspect, nearPlane, farPlane);
+      Nimble::Matrix4f matPers = Nimble::Matrix4f::perspectiveProjection(fovY, aspect, nearPlane, farPlane);
+      glMultTransposeMatrixf(matPers.data());
 
       glMatrixMode(GL_MODELVIEW);
       glLoadIdentity();

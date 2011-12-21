@@ -350,8 +350,10 @@ namespace Luminous {
       m_widthcm(this, "widthcm", 100, true),
       m_gamma(this, "gamma", 1.1f, true),
       m_iconify(this, "iconify", false),
+      m_dpms(this, "dpms", Nimble::Vector3i(0, 0, 0)),
       m_edited(false)
   {
+    m_dpms.addListener(std::bind(&MultiHead::dpmsChanged, this));
   }
 
   MultiHead::~MultiHead()
@@ -494,6 +496,11 @@ namespace Luminous {
     return (int) (bottom - top);
   }
 
+  void MultiHead::setDpms(const Nimble::Vector3i & dpms)
+  {
+    m_dpms = dpms;
+  }
+
   bool MultiHead::deserialize(const Valuable::ArchiveElement & element)
   {
     for(std::vector<std::shared_ptr<Window> >::iterator it = m_windows.begin(); it != m_windows.end(); ++it)
@@ -540,4 +547,15 @@ namespace Luminous {
     return true;
   }
 
+  void MultiHead::dpmsChanged()
+  {
+#ifdef RADIANT_LINUX
+    /// runSystem shouldn't be run with temporary cstr, so we use system() instead
+    /// @todo shouldn't this be done in MultiHead, actually?
+    int err = system(QString("xset dpms %1 %2 %3").arg(m_dpms[0]).arg(m_dpms[1]).arg(m_dpms[2]).toUtf8().data());
+    if(err)
+      Radiant::warning("MultiHead::dpmsChanged # Failed to execute xset dpms %d %d %d (return value %d)",
+                       m_dpms[0], m_dpms[1], m_dpms[2], err);
+#endif
+  }
 }

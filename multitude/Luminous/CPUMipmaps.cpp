@@ -75,20 +75,26 @@ static Profiler s_profiler;
 
 namespace Luminous {
 
+  // DXT support is tested in Luminous::initLuminous()
+  bool CPUMipmaps::s_dxtSupported = true;
+
   using namespace Radiant;
 
   static Radiant::Mutex s_storeMutex;
 
-  static std::map<QString, std::weak_ptr<CPUMipmaps> > s_mipmaps;
+  static std::map<std::pair<QString, unsigned long>, std::weak_ptr<CPUMipmaps> > s_mipmaps;
 
   std::shared_ptr<CPUMipmaps> CPUMipmaps::acquire(const QString & filename,
                                                   bool compressed_mipmaps)
   {
     Radiant::Guard g(s_storeMutex);
 
-    /// @todo filename should be resolved (with ResourceLocator) absolute path
+    // Check the timestamp
+    unsigned long lastMod = Radiant::FileUtils::lastModified(filename);
+    const std::pair<QString, unsigned long> key = std::make_pair(filename, lastMod);
 
-    std::weak_ptr<CPUMipmaps> & mipmap_weak = s_mipmaps[filename];
+    /// @todo filename should be resolved (with ResourceLocator) absolute path
+    std::weak_ptr<CPUMipmaps> & mipmap_weak = s_mipmaps[key];
 
     // Check if ptr still points to something valid
     std::shared_ptr<CPUMipmaps> mipmap_shared = mipmap_weak.lock();
@@ -107,8 +113,8 @@ namespace Luminous {
     // store new weak pointer
     mipmap_weak = mipmap_shared;
 
-    debugLuminous("CPUMipmaps::acquire # Created new for %s (%ld links)",
-                  filename.toUtf8().data(), s_mipmaps[filename].use_count());
+    debugLuminous("CPUMipmaps::acquire # Created new for [%s %ld] (%ld links)",
+                  filename.toUtf8().data(), lastMod, s_mipmaps[key].use_count());
 
     return mipmap_shared;
   }
@@ -252,7 +258,9 @@ namespace Luminous {
     m_info = Luminous::ImageInfo();
     m_shouldSave.clear();
     m_stack.clear();
-    m_compressedMipmaps = compressedMipmaps;
+
+    // Use DXT compression if it is requested and supported
+    m_compressedMipmaps = (compressedMipmaps && s_dxtSupported);
 
     if(m_fileModified == 0) {
       error("CPUMipmaps::startLoading # failed to stat file %s", filename);

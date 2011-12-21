@@ -271,6 +271,7 @@ namespace Radiant
         suffixMatch(filePath, "mp4");
   }
 
+  /// @todo why is the return value not a TimeStamp?
   unsigned long int FileUtils::lastModified(const QString & filePath)
   {
     struct stat file;
