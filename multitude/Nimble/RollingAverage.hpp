@@ -73,7 +73,7 @@ namespace Nimble {
   typedef RollinAverageT<Vector2> RollinAverageVector2;
   typedef RollinAverageT<Vector3> RollinAverageVector3;
   typedef RollinAverageT<Vector4> RollinAverageVector4;
-}
+
 #ifdef WIN32
 #ifdef NIMBLE_EXPORT
   // In WIN32 template classes must be instantiated to be exported
@@ -84,5 +84,7 @@ namespace Nimble {
   template class RollinAverageT<Vector4>;
 #endif
 #endif
+
+}
 
 #endif // NIMBLE_ROLLINGAVERAGE_HPP
