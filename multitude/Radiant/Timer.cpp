@@ -34,12 +34,6 @@ namespace Radiant
     start();
   }
 
-  Timer::Timer(const Timer & timer) :
-    m_d(new D)
-  {
-    *m_d = *timer.m_d;
-  }
-
   Timer::~Timer()
   {
     delete m_d;
