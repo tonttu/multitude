@@ -23,6 +23,8 @@
 #include <Radiant/Trace.hpp>
 #include <Radiant/Sleep.hpp>
 
+#include <stdio.h>
+
 // these four for stat()
 #include <sys/types.h>
 #include <sys/stat.h>
