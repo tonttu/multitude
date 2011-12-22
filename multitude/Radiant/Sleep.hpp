@@ -18,15 +18,9 @@
 
 #include <Radiant/Export.hpp>
 #include <Radiant/Types.hpp>
-#include <Radiant/TimeStamp.hpp>
+#include <Radiant/Timer.hpp>
 
 #include <stdint.h>
-#include <time.h>
-
-#ifndef WIN32
-#  include <unistd.h>
-#  include <sys/time.h>
-#endif
 
 namespace Radiant {
 
@@ -78,7 +72,7 @@ namespace Radiant {
     /// Resets the reference time to current time.
     void resetTiming()
     {
-      m_initial = TimeStamp::getTime();
+      m_initial.start();
     }
 
     /// Sleep for n microseconds
@@ -90,7 +84,7 @@ namespace Radiant {
 
   private:
 
-    TimeStamp m_initial;
+    Timer m_initial;
 
   };
 
