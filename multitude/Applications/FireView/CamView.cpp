@@ -570,6 +570,9 @@ namespace FireView {
 
   void CamView::paintGL()
   {
+    // We must initialize GLEW for OpenGL to work
+    Luminous::initLuminous(true);
+
     using Luminous::PixelFormat;
 
     Luminous::GLResources::setThreadResources( & m_glrs, 0, 0);
