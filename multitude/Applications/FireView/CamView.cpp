@@ -386,10 +386,10 @@ namespace FireView {
 
     qDebug("Total bandwidth required: %lu Mbps for width=%d, heigh=%d, fps=%f", s_bandwidth >> 20, width, height, fps);
 
-    const size_t FW400_BW_LIMIT = 0.8 * 400;
+    const size_t FW400_BW_LIMIT = 0.8 * (400 << 20);
 
     if(s_bandwidth > FW400_BW_LIMIT)
-      Radiant::warning("Requested FireWire bandwidth exceeds 80 percent (%ld Mbps) of FW400 bus.", FW400_BW_LIMIT);
+      Radiant::warning("Requested (%ld Mbps) FireWire bandwidth exceeds 80 percent (%ld Mbps) of FW400 bus.", s_bandwidth >> 20, FW400_BW_LIMIT);
   }
 
   /////////////////////////////////////////////////////////////////////////////
