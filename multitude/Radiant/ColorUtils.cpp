@@ -131,13 +131,18 @@ namespace Radiant
     }
   }
 
+  const Nimble::Matrix3f g_tristimulusMatrix(0.4142f, 0.3576f, 0.1805f,
+                                           0.2126f, 0.7152f, 0.0722f,
+                                           0.0193f, 0.1192f, 0.9505);
+
+
   void ColorUtils::rgbToCIEXYZ(const Nimble::Vector3f &rgb, Nimble::Vector3f &cie)
   {
-    const Nimble::Matrix3f tristimulusMatrix(0.4142f, 0.3576f, 0.1805f,
-                                             0.2126f, 0.7152f, 0.0722f,
-                                             0.0193f, 0.1192f, 0.9505);
-
-    cie = tristimulusMatrix * rgb;
+    cie = g_tristimulusMatrix * rgb;
   }
 
+  void ColorUtils::CIEXYZToRGB(const Nimble::Vector3f & cie, Nimble::Vector3f & rgb)
+  {
+    rgb = g_tristimulusMatrix.inverse() * cie;
+  }
 }

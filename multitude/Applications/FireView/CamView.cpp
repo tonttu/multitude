@@ -427,6 +427,8 @@ namespace FireView {
   {
     m_colorBalance.clear();
     m_chromaticity.clear();
+    //m_binning.defineBins_ANSI_C78_377();
+    m_binning.defineBins_CREE();
 
     // QTimer::singleShot(1000, this, SLOT(locate()));
     connect( & m_timer, SIGNAL(timeout()), this, SLOT(updateGL()));
@@ -789,7 +791,15 @@ namespace FireView {
       glColor3f(1.f, 1.f, 1.f);
       char buf[64];
       sprintf(buf, "Chromaticity %.4f, %.4f", m_chromaticity.x, m_chromaticity.y);
-      renderText(5, 35, buf);
+      renderText(5, 68, buf);
+
+      sprintf(buf, "RGB: %.4f, %.4f, %.4f", m_colorBalance.x, m_colorBalance.y, m_colorBalance.z);
+      renderText(5, 55, buf);
+
+      sprintf(buf, "Class: %s", m_binning.classify(m_chromaticity).toUtf8().data());
+      renderText(5, 81, buf);
+
+      m_binning.debugVisualize(width(), height());
     }
 
     glColor3f(1.0f, 1.0f, 1.0f);
@@ -1006,7 +1016,7 @@ namespace FireView {
 
     Radiant::ColorUtils::rgbToCIEXYZ(m_colorBalance, CIEXYZ);
 
-    // Convert to CIE xyY color space (chromaticity)
+    // Convert to CIE xyY color space (chromaticity + luminance)
     m_chromaticity.x = CIEXYZ.x / CIEXYZ.sum();
     m_chromaticity.y = CIEXYZ.y / CIEXYZ.sum();
 

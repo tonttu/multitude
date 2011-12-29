@@ -16,6 +16,8 @@
 #ifndef FIREVIEW_CAMVIEW_HPP
 #define FIREVIEW_CAMVIEW_HPP
 
+#include "Binning.hpp"
+
 #include <Luminous/GLResources.hpp>
 #include <Luminous/Texture.hpp>
 
@@ -226,6 +228,7 @@ namespace FireView {
     Nimble::Vector3 m_colorBalance;
     Radiant::VideoImage m_rgb;
     Nimble::Vector2f m_chromaticity;
+    Binning m_binning;
 
     Analysis   m_averages[AREA_COUNT]; // Grid.
     QImage     m_foo;
