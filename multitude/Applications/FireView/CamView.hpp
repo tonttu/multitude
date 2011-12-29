@@ -80,6 +80,8 @@ namespace FireView {
       m_colorCheck = true;
     }
 
+    static void setColorBalanceCoeffs(const Nimble::Vector3f & coeffs) { s_colorBalanceCoeffs = coeffs; }
+
     static void setDefaultParameter(Radiant::VideoCamera::FeatureType feature, uint32_t value)
     {
       s_defaults[feature] = value;
@@ -93,7 +95,6 @@ namespace FireView {
       }
       return false;
     }
-
 
   public slots:
 
@@ -224,6 +225,7 @@ namespace FireView {
     float       m_textColor;
     Nimble::Vector3 m_colorBalance;
     Radiant::VideoImage m_rgb;
+    Nimble::Vector2f m_chromaticity;
 
     Analysis   m_averages[AREA_COUNT]; // Grid.
     QImage     m_foo;
@@ -237,6 +239,8 @@ namespace FireView {
     static int           m_debayer;
     static bool          m_colorCheck;
     static std::map<Radiant::VideoCamera::FeatureType, uint32_t> s_defaults;
+
+    static Nimble::Vector3f s_colorBalanceCoeffs;
   };
 
 }

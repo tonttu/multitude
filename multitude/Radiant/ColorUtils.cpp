@@ -13,7 +13,11 @@
  * 
  */
 
-#include <Radiant/ColorUtils.hpp>
+#include "ColorUtils.hpp"
+
+#include <Nimble/Matrix3.hpp>
+
+#include <cassert>
 
 namespace Radiant
 {
@@ -110,5 +114,30 @@ namespace Radiant
     hsvTorgb(hsv[0], hsv[1], hsv[2], rgb[0], rgb[1], rgb[2]);
   }
 
+  void ColorUtils::colorBalance(VideoImage & img, Nimble::Vector3f rgbCoeff)
+  {
+    size_t offset = 0;
+
+    assert(img.m_format == IMAGE_RGB);
+
+    for(int y = 0; y < img.height(); ++y) {
+      for(int x = 0; x < img.width(); ++x) {
+
+        for(int i = 0; i < 3; ++i) {
+          unsigned char & v = img.m_planes[0].m_data[offset++];
+          v = static_cast<unsigned char> (Nimble::Math::Clamp<int>(v * rgbCoeff[i], 0, 255));
+        }
+      }
+    }
+  }
+
+  void ColorUtils::rgbToCIEXYZ(const Nimble::Vector3f &rgb, Nimble::Vector3f &cie)
+  {
+    const Nimble::Matrix3f tristimulusMatrix(0.4142f, 0.3576f, 0.1805f,
+                                             0.2126f, 0.7152f, 0.0722f,
+                                             0.0193f, 0.1192f, 0.9505);
+
+    cie = tristimulusMatrix * rgb;
+  }
 
 }

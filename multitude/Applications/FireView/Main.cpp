@@ -52,6 +52,7 @@ void helper(const char * app)
      " --triggersource +int - Selects the trigger source, range: 0-%d\n"
      " --debayer - Enable de-Bayer filter\n"
      " --colorbal - Show color balance of color camera\n"
+     " --wb +coeffs - Color balance coefficients, for example \"1.0 1.1 1.2\"\n"
 #ifndef WIN32
      " --busreset - Resets the firewire bus\n"
 #endif
@@ -160,6 +161,14 @@ int main(int argc, char ** argv)
       FireView::CamView::setDefaultParameter(Radiant::VideoCamera::BRIGHTNESS, 200);
       FireView::CamView::setDefaultParameter(Radiant::VideoCamera::SHUTTER, 30);
       FireView::CamView::setDefaultParameter(Radiant::VideoCamera::GAIN, 20);
+    }
+    else if(strcmp(arg, "--wb") == 0 && (i+1) < argc) {
+      Radiant::Variant tmp(argv[++i]);
+
+      Nimble::Vector3f vals(1.f, 1.f, 1.f);
+      tmp.getFloats(vals.data(), 3);
+
+      FireView::CamView::setColorBalanceCoeffs(vals);
     }
     else {
       printf("%s Could not handle argument %s\n", argv[0], arg);

@@ -19,6 +19,7 @@
 
 #include <Radiant/Sleep.hpp>
 #include <Radiant/TimeStamp.hpp>
+#include <Radiant/ColorUtils.hpp>
 
 #include <Luminous/Utils.hpp>
 #include <Luminous/PixelFormat.hpp>
@@ -408,6 +409,8 @@ namespace FireView {
 
   static int __interval = 50;
 
+  Nimble::Vector3f CamView::s_colorBalanceCoeffs(1.f, 1.f, 1.f);
+
   CamView::CamView(QWidget * parent)
       : QGLWidget(parent),
       m_tex(0),
@@ -423,6 +426,8 @@ namespace FireView {
       m_glrs(Radiant::ResourceLocator::instance())
   {
     m_colorBalance.clear();
+    m_chromaticity.clear();
+
     // QTimer::singleShot(1000, this, SLOT(locate()));
     connect( & m_timer, SIGNAL(timeout()), this, SLOT(updateGL()));
     bzero(m_averages, sizeof(m_averages));
@@ -612,6 +617,9 @@ namespace FireView {
 
         Radiant::ImageConversion::bayerToRGB(&frame, &m_rgb);
 
+        // Do color correction
+        Radiant::ColorUtils::colorBalance(m_rgb, s_colorBalanceCoeffs);
+
         m_tex->loadBytes(GL_RGB, m_rgb.width(), m_rgb.height(),
                          m_rgb.m_planes[0].m_data,
                          PixelFormat(PixelFormat::LAYOUT_RGB, PixelFormat::TYPE_UBYTE), false);
@@ -777,6 +785,11 @@ namespace FireView {
       glColor3f(0, 0, 1);
       glRectf(50, bot, 60, bot - barHeight * m_colorBalance[2]);
 
+      // Display chromaticity coordinates
+      glColor3f(1.f, 1.f, 1.f);
+      char buf[64];
+      sprintf(buf, "Chromaticity %.4f, %.4f", m_chromaticity.x, m_chromaticity.y);
+      renderText(5, 35, buf);
     }
 
     glColor3f(1.0f, 1.0f, 1.0f);
@@ -984,6 +997,21 @@ namespace FireView {
     if(peak <= 0.5f)
       peak = 1;
 
+    // Compute normalized average RGB from the image
     m_colorBalance =  Nimble::Vector3(sum[0] / peak, sum[1] / peak, sum[2] / peak);
+
+    // Convert to CIE XYZ color space
+    /// @todo the conversion assumes linear RGB color space as source, is this correct?
+    Nimble::Vector3f CIEXYZ;
+
+    Radiant::ColorUtils::rgbToCIEXYZ(m_colorBalance, CIEXYZ);
+
+    // Convert to CIE xyY color space (chromaticity)
+    m_chromaticity.x = CIEXYZ.x / CIEXYZ.sum();
+    m_chromaticity.y = CIEXYZ.y / CIEXYZ.sum();
+
+//    Radiant::warning("CamView::checkColorBalance # mean rgb (%f,%f,%f)", m_colorBalance.x, m_colorBalance.y, m_colorBalance.z);
+//    Radiant::warning("CamView::checkColorBalance # XYZ (%f,%f,%f)", CIEXYZ.x, CIEXYZ.y, CIEXYZ.z);
+//    Radiant::warning("CamView::checkColorBalance # chromacity (%f,%f)", m_chromaticity.x, m_chromaticity.y);
   }
 }
