@@ -284,3 +284,41 @@ void Binning::defineBins_CREE()
               )
             );
 }
+
+void Binning::defineBins_TACTION()
+{
+  const char * labels[9] = {"AA", "AB", "AC", "BA", "BB", "BC", "CA", "CB", "CC" };
+
+  float xmin = 0.3034f;
+  float xmax = 0.3178f;
+  float ymin = 0.3129f;
+  float ymax = 0.3345f;
+
+  float xstep = (xmax - xmin) / 3.0f;
+  float ystep = (ymax - ymin) / 3.0f;
+
+  int index = 0;
+
+  for(int x = 0; x < 3; x++) {
+
+    float xlower  = xmin + x * xstep;
+    float xhigher = xmin + (x+1) * xstep;
+
+    for(int y = 0; y < 3; y++) {
+
+      float ylower  = ymin + y * ystep;
+      float yhigher = ymin + (y+1) * ystep;
+      /*
+      defineBin(labels[index], Quadrangle(
+          Nimble::Vector2(0.348, 0.384),
+          Nimble::Vector2(0.346, 0.359),
+          Nimble::Vector2(0.329, 0.345),
+          Nimble::Vector2(0.329, 0.369)
+          )
+                );
+      */
+    }
+  }
+
+}
+

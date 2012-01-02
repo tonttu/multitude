@@ -1013,9 +1013,14 @@ namespace FireView {
         sum[j] += rgb[j];
     }
 
+    sum[0] *= 1.26f;
+    sum[2] *= 0.99f;
+    sum[2] *= 1.33f;
+
     float peak = sum.maximum();
     if(peak <= 0.5f)
       peak = 1;
+
 
     // Compute normalized average RGB from the image
     m_colorBalance =  Nimble::Vector3(sum[0] / peak, sum[1] / peak, sum[2] / peak);
@@ -1023,6 +1028,7 @@ namespace FireView {
     // Convert to CIE XYZ color space
     /// @todo the conversion assumes linear RGB color space as source, is this correct?
     Nimble::Vector3f CIEXYZ;
+
 
     Radiant::ColorUtils::rgbToCIEXYZ(m_colorBalance, CIEXYZ);
 

@@ -28,6 +28,7 @@ public:
 
     void defineBins_ANSI_C78_377();
     void defineBins_CREE();
+    void defineBins_TACTION();
 
     void debugVisualize(int sx, int sy);
     mutable Nimble::Vector2 m_debugLastPoint;
