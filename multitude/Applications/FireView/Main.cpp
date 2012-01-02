@@ -92,6 +92,14 @@ int main(int argc, char ** argv)
     }
     else if(strcmp(arg, "--colorbal") == 0) {
       FireView::CamView::calculateColorBalance();
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::SHUTTER, 1);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::BRIGHTNESS, 10);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::EXPOSURE, 0);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::GAMMA, 0);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::FRAME_RATE, 466);
+      // FireView::CamView::setDefaultParameter(Radiant::VideoCamera::SHUTTER, 30);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::GAIN, 16);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::PAN, 0);
     }
     else if(strcmp(arg, "--format7") == 0 && (i+1) < argc) {
       format7 = true;

@@ -191,16 +191,24 @@ namespace FireView {
       m_frameCount++;
       m_camera->doneImage();
 
+      bool updated = false;
+
       for(unsigned i = 0; i < m_features.size(); i++) {
         if(m_featureSend[i]) {
           m_camera->setFeatureRaw(m_features[i].id, m_features[i].value);
           m_featureSend[i] = false;
+          updated = true;
         }
         else if(m_autoSend[i]) {
           m_camera->setFeature(m_features[i].id, -1);
           m_autoSend[i] = false;
+          updated = true;
         }
       }
+
+      if(updated)
+        m_camera->getFeatures( & m_features);
+
 
       Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
 
@@ -342,8 +350,10 @@ namespace FireView {
 
     {
       m_featureSend.resize(m_features.size());
+      m_autoSend.resize(m_features.size());
 
       for(unsigned i = 0; i < m_features.size(); i++) {
+        m_autoSend[i] = false;
         m_featureSend[i] = false;
 
         Radiant::VideoCamera::CameraFeature & info = m_features[i];
@@ -365,7 +375,7 @@ namespace FireView {
         }
       }
 
-      m_autoSend = m_featureSend;
+      // m_autoSend = m_featureSend;
     }
 
     m_camera->setCaptureTimeout(8000);
