@@ -194,6 +194,7 @@ namespace FireView {
       bool updated = false;
 
       for(unsigned i = 0; i < m_features.size(); i++) {
+
         if(m_featureSend[i]) {
           m_camera->setFeatureRaw(m_features[i].id, m_features[i].value);
           m_featureSend[i] = false;
@@ -395,7 +396,7 @@ namespace FireView {
     long unsigned bandwidth = width * height * 8 * (int)fps;
     s_bandwidth += bandwidth;
 
-    qDebug("Total bandwidth required: %lu Mbps for width=%d, heigh=%d, fps=%f", s_bandwidth >> 20, width, height, fps);
+    qDebug("Total bandwidth required: %lu Mbps for width=%d, height=%d, fps=%f", s_bandwidth >> 20, width, height, fps);
 
     const size_t FW400_BW_LIMIT = 0.8 * (400 << 20);
 
