@@ -29,6 +29,7 @@ HEADERS += Functional.hpp
 HEADERS += Grid.hpp
 HEADERS += ImageConversion.hpp
 HEADERS += IODefs.hpp
+HEADERS += KeyEvent.hpp
 HEADERS += LockFile.hpp
 HEADERS += Log.hpp
 HEADERS += MemCheck.hpp

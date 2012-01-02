@@ -130,7 +130,7 @@ namespace Poetic
     Radiant::Guard g(m_mutex);
 
     if(str && (*str != '\0')) {
-        const unsigned char * c = (unsigned char *)str;
+        const unsigned char * c = (const unsigned char *)str;
         float advance = 0.f;
         if(checkGlyph(*c)) {
             bbox = m_glyphList->bbox(*c);
