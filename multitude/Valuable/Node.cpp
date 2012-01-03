@@ -214,7 +214,7 @@ namespace Valuable
     return false;
   }
 
-  bool Node::saveToFileXML(const char * filename)
+  bool Node::saveToFileXML(const QString & filename)
   {
     bool ok = Serializer::serializeXML(filename, this);
     if (!ok) {
@@ -231,7 +231,7 @@ namespace Valuable
     return archive.writeToMem(buffer);
   }
 
-  bool Node::loadFromFileXML(const char * filename)
+  bool Node::loadFromFileXML(const QString & filename)
   {
     XMLArchive archive;
 
@@ -311,10 +311,10 @@ namespace Valuable
     Radiant::trace(Radiant::DEBUG, "}");
   }
 
-  void Node::eventAddListener(const char * from,
-                                   const char * to,
-                                   Valuable::Node * obj,
-                                   const Radiant::BinaryData * defaultData)
+  void Node::eventAddListener(const QString & from,
+                              const QString & to,
+                              Valuable::Node * obj,
+                              const Radiant::BinaryData * defaultData)
   {
     ValuePass vp;
     vp.m_listener = obj;
@@ -323,13 +323,13 @@ namespace Valuable
     vp.m_frame = m_frame;
 
     if(!m_eventSendNames.contains(from)) {
-      warning("Node::eventAddListener # Adding listener to unexistent event '%s'", from);
+      warning("Node::eventAddListener # Adding listener to unexistent event '%s'", from.toUtf8().data());
     }
 
     if(!obj->m_eventListenNames.contains(to)) {
       const QString & klass = Radiant::StringUtils::demangle(typeid(*obj).name());
       warning("Node::eventAddListener # %s (%s %p) doesn't accept event '%s'",
-              klass.toUtf8().data(), obj->name().toUtf8().data(), obj, to);
+              klass.toUtf8().data(), obj->name().toUtf8().data(), obj, to.toUtf8().data());
     }
 
     if(defaultData)
@@ -338,7 +338,7 @@ namespace Valuable
     if(std::find(m_elisteners.begin(), m_elisteners.end(), vp) !=
        m_elisteners.end())
       debugValuable("Widget::eventAddListener # Already got item %s -> %s (%p)",
-            from, to, obj);
+            from.toUtf8().data(), to.toUtf8().data(), obj);
     else {
       // m_elisteners.push_back(vp);
       m_elisteners.push_back(vp);
@@ -346,10 +346,10 @@ namespace Valuable
     }
   }
 
-  void Node::eventAddListener(const char * from,
-                                   const char * to,
-                                   v8::Persistent<v8::Function> func,
-                                   const Radiant::BinaryData * defaultData)
+  void Node::eventAddListener(const QString & from,
+                              const QString & to,
+                              v8::Persistent<v8::Function> func,
+                              const Radiant::BinaryData * defaultData)
   {
     ValuePass vp;
     vp.m_func = func;
@@ -357,7 +357,7 @@ namespace Valuable
     vp.m_to = to;
 
     if(!m_eventSendNames.contains(from)) {
-      warning("Node::eventAddListener # Adding listener to unexistent event '%s'", from);
+      warning("Node::eventAddListener # Adding listener to unexistent event '%s'", from.toUtf8().data());
     }
 
     if(defaultData)
@@ -366,13 +366,13 @@ namespace Valuable
     if(std::find(m_elisteners.begin(), m_elisteners.end(), vp) !=
        m_elisteners.end())
       debug("Widget::eventAddListener # Already got item %s -> %s",
-            from, to);
+            from.toUtf8().data(), to.toUtf8().data());
     else {
       m_elisteners.push_back(vp);
     }
   }
 
-  int Node::eventRemoveListener(Valuable::Node * obj, const char * from, const char * to)
+  int Node::eventRemoveListener(const QString & from, const QString & to, Valuable::Node * obj)
   {
     int removed = 0;
 
@@ -382,8 +382,8 @@ namespace Valuable
       // match obj if specified
       if((!obj || it->m_listener == obj) && it->m_valid) {
         // match from & to if specified
-        if ( (!from || it->m_from == from) &&
-             (!to || it->m_to == to) ) {
+        if((from.isNull() || it->m_from == from) &&
+           (to.isNull() || it->m_to == to)) {
           it->m_valid = false;
           nodes << it->m_listener;
           /* We cannot erase the list iterator, since that might invalidate iterators
@@ -507,16 +507,11 @@ namespace Valuable
 
   void Node::eventSend(const QString & id, Radiant::BinaryData & bd)
   {
-    eventSend(id.toUtf8().data(), bd);
-  }
-
-  void Node::eventSend(const char * id, Radiant::BinaryData & bd)
-  {
-    if(!id || !m_eventsEnabled)
+    if(!m_eventsEnabled)
       return;
 
     if(!m_eventSendNames.contains(id)) {
-      error("Node::eventSend # Sending unknown event '%s'", id);
+      error("Node::eventSend # Sending unknown event '%s'", id.toUtf8().data());
     }
 
     m_frame++;
@@ -540,7 +535,7 @@ namespace Valuable
         if(vp.m_listener) {
           // m_sender is valid only at the beginning of processMessage call
           vp.m_listener->m_sender = this;
-          vp.m_listener->processMessage(vp.m_to.toUtf8().data(), bdsend);
+          vp.m_listener->processMessage(vp.m_to, bdsend);
           vp.m_listener->m_sender = 0;
         } else {
           /// @todo what is the correct receiver ("this" in the callback)?
@@ -556,7 +551,7 @@ namespace Valuable
     }
   }
 
-  void Node::eventSend(const char * id)
+  void Node::eventSend(const QString & id)
   {
     Radiant::BinaryData tmp;
     eventSend(id, tmp);

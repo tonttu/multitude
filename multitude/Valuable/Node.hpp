@@ -126,13 +126,12 @@ namespace Valuable
     }
 
     /// Saves this object (and its children) to an XML file
-    /// @todo why isn't this QString?
-    bool saveToFileXML(const char * filename);
+    bool saveToFileXML(const QString & filename);
     /// Saves this object (and its children) to binary data buffer
     bool saveToMemoryXML(QByteArray & buffer);
 
     /// Reads this object (and its children) from an XML file
-    bool loadFromFileXML(const char * filename);
+    bool loadFromFileXML(const QString & filename);
 
     /// Returns the typename of this object.
     virtual const char * type() const { return VO_TYPE_HASVALUES; }
@@ -178,15 +177,15 @@ namespace Valuable
         delivering the message.
 
     */
-    void eventAddListener(const char * from,
-                          const char * to,
+    void eventAddListener(const QString & from,
+                          const QString & to,
                           Valuable::Node * obj,
                           const Radiant::BinaryData * defaultData = 0);
-    void eventAddListener(const char * from,
-                          const char * to,
+    void eventAddListener(const QString & from,
+                          const QString & to,
                           v8::Persistent<v8::Function> func,
                           const Radiant::BinaryData * defaultData = 0);
-    void eventAddListener(const char * from,
+    void eventAddListener(const QString & from,
                           v8::Persistent<v8::Function> func,
                           const Radiant::BinaryData * defaultData = 0)
     {
@@ -200,26 +199,31 @@ namespace Valuable
       myWidget1->eventRemoveListener(myWidget2);
 
       // Remove selected event links between two widgets:
-      myWidget1->eventRemoveListener(myWidget3, "interactionbegin");
-      myWidget1->eventRemoveListener(myWidget4, 0, "clear");
+      myWidget1->eventRemoveListener("interactionbegin", myWidget3);
+      myWidget1->eventRemoveListener(QString(), "clear", myWidget4);
 
       // Remove all selected events to any other widgets
-      myWidget1->eventRemoveListener(0, "singletap");
+      myWidget1->eventRemoveListener("singletap");
       @endcode
 
+
+      @param from The name of the originating event that should be cleared. If this parameter
+      is null (QString()), then all originating events are matched.
+
+      @param to The name of of the destination event that should be cleared. If this parameter
+      is null (QString()), then all destination events are matched.
 
       @param obj The target object for which the events should be cleared. If
                  this parameter is null, then all objects are matched.
 
-      @param from The name of the originating event that should be cleared. If this parameter
-      is null, then all originating events are matched.
-
-      @param to The name of of the destination event that should be cleared. If this parameter
-      is null, then all destination events are matched.
-
       @return number of event listener links removed
       */
-    int eventRemoveListener(Valuable::Node * obj = 0, const char * from = 0, const char * to = 0);
+    int eventRemoveListener(const QString & from = QString(), const QString & to = QString(), Valuable::Node * obj = 0);
+    int eventRemoveListener(Valuable::Node * obj)
+    {
+      return eventRemoveListener(QString(), QString(), obj);
+    }
+
     /// Adds an event source
     void eventAddSource(Valuable::Node * source);
     /// Removes an event source
@@ -266,10 +270,7 @@ namespace Valuable
 
     /// Sends an event to all listeners on this object
     void eventSend(const QString & id, Radiant::BinaryData &);
-    /// @copydoc eventSend
-    void eventSend(const char *, Radiant::BinaryData &);
-    /// @copydoc eventSend
-    void eventSend(const char *);
+    void eventSend(const QString & id);
 
     void defineShortcut(const QString & name);
 
