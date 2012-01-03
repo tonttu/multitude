@@ -6,6 +6,8 @@
 #include <Radiant/Color.hpp>
 #include <Radiant/Trace.hpp>
 
+#include <cstdio>
+
 namespace FireView {
 
   Quadrangle::Quadrangle()
