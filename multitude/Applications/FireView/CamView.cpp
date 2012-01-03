@@ -410,6 +410,7 @@ namespace FireView {
   Radiant::VideoCamera::TriggerPolarity CamView::m_triggerPolarity =
       Radiant::VideoCamera::TRIGGER_ACTIVE_UNDEFINED;
   int CamView::m_format7mode = 1;
+  int CamView::m_binningMethod = Binning::BINNING_TACTION7;
 
   int CamView::m_debayer = 0;
   bool CamView::m_colorCheck = false;
@@ -438,7 +439,7 @@ namespace FireView {
     m_colorBalance.clear();
     m_chromaticity.clear();
     //m_binning.defineBins_ANSI_C78_377();
-    m_binning.defineBins_CREE();
+    m_binning.defineBins((Binning::Layout) m_binningMethod);
 
     // QTimer::singleShot(1000, this, SLOT(locate()));
     connect( & m_timer, SIGNAL(timeout()), this, SLOT(updateGL()));
