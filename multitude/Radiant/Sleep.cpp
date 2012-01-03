@@ -16,18 +16,8 @@
 #include "Sleep.hpp"
 
 #include "Mutex.hpp"
-#include "TimeStamp.hpp"
+#include "Timer.hpp"
 
-// #include <QThread>
-
-#ifdef WIN32
-extern "C" {
-#define NOMINMAX
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <winbase.h>
-}
-#endif
 
 #include <time.h>
 
@@ -50,7 +40,15 @@ namespace Radiant {
   void Sleep::sleepUs(uint32_t usecs)
   {
 #ifdef WIN32
-    ::Sleep(usecs / 1000);
+    // For smaller than 10ms we use a busy-loop to avoid problems with timer resolution
+    if (usecs < 10 * 1000) {
+      Radiant::Timer t;
+      while (t.time() < (double)usecs * 0.000001)
+        ::Sleep(0);
+    } else
+    {
+      ::Sleep(usecs / 1000);
+    }
 #else
     usleep(usecs);
 #endif
@@ -59,15 +57,15 @@ namespace Radiant {
   /** Sleep in synchronous mode. The argument value is added to current time value.*/
   void SleepSync::sleepSynchroUs(long us)
   {
-    TimeStamp target = m_initial + TimeStamp::createSecondsD(us * 0.000001);
-    TimeStamp now = TimeStamp::getTime();
+    double target = m_initial.startTime() + (us * 0.000001);
+    Timer now;
 
     if(now < target) {
-      double secs = TimeStamp(target - now).secondsD();
+      double secs = target - now.startTime();
       Sleep::sleepUs(secs * 1000000.0);
     }
 
-    m_initial = target;
+    m_initial.start();
   }
 
 }

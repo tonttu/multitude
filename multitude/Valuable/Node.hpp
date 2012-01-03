@@ -202,20 +202,24 @@ namespace Valuable
       // Remove selected event links between two widgets:
       myWidget1->eventRemoveListener(myWidget3, "interactionbegin");
       myWidget1->eventRemoveListener(myWidget4, 0, "clear");
+
+      // Remove all selected events to any other widgets
+      myWidget1->eventRemoveListener(0, "singletap");
       @endcode
 
 
-      @param obj The target object for which the events should be cleared
+      @param obj The target object for which the events should be cleared. If
+                 this parameter is null, then all objects are matched.
 
       @param from The name of the originating event that should be cleared. If this parameter
-      is null, then all all originating events are matched.
+      is null, then all originating events are matched.
 
       @param to The name of of the destination event that should be cleared. If this parameter
-      is null, then all all destination events are matched.
+      is null, then all destination events are matched.
 
       @return number of event listener links removed
       */
-    int eventRemoveListener(Valuable::Node * obj, const char * from = 0, const char * to = 0);
+    int eventRemoveListener(Valuable::Node * obj = 0, const char * from = 0, const char * to = 0);
     /// Adds an event source
     void eventAddSource(Valuable::Node * source);
     /// Removes an event source

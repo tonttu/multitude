@@ -376,13 +376,16 @@ namespace Valuable
   {
     int removed = 0;
 
+    QSet<Node *> nodes;
     for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); it++) {
 
-      if(it->m_listener == obj && it->m_valid) {
+      // match obj if specified
+      if((!obj || it->m_listener == obj) && it->m_valid) {
         // match from & to if specified
         if ( (!from || it->m_from == from) &&
              (!to || it->m_to == to) ) {
           it->m_valid = false;
+          nodes << it->m_listener;
           /* We cannot erase the list iterator, since that might invalidate iterators
              elsewhere. */
           removed++;
@@ -392,16 +395,17 @@ namespace Valuable
 
     if(removed) {
 
-      // Count number of references left to the object
-      size_t count = 0;
+      // Count number of references left to the objects
+      QMap<Node *, size_t> count;
       for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); it++) {
-        if(it->m_listener == obj && it->m_valid)
-          count++;
+        if(nodes.contains(it->m_listener) && it->m_valid)
+          ++count[it->m_listener];
       }
 
       // If nothing references the object, remove the source
-      if(count == 0)
-        obj->eventRemoveSource(this);
+      foreach(Node * node, nodes)
+        if(node && count.value(node) == 0)
+          node->eventRemoveSource(this);
     }
 
     return removed;

@@ -60,18 +60,18 @@ namespace Radiant
     IntrusivePtr() : m_ptr(0) {}
     IntrusivePtr(T * ptr) : m_ptr(ptr)
     {
-      if(ptr) ptr->ref();
+      if(ptr) intrusive_ptr_add_ref(ptr);
     }
 
     IntrusivePtr(const IntrusivePtr<T> & iptr) : m_ptr(iptr.m_ptr)
     {
-      if(m_ptr) m_ptr->ref();
+      if(m_ptr) intrusive_ptr_add_ref(m_ptr);
     }
 
     template <typename Y>
     IntrusivePtr(const IntrusivePtr<Y> & iptr) : m_ptr(iptr.get())
     {
-      if(m_ptr) m_ptr->ref();
+      if(m_ptr) intrusive_ptr_add_ref(m_ptr);
     }
 
     virtual ~IntrusivePtr()
@@ -153,13 +153,12 @@ namespace Radiant
   private:
     inline void deref()
     {
-      if(m_ptr && !m_ptr->deref())
-        delete m_ptr;
+      if(m_ptr) intrusive_ptr_release(m_ptr);
     }
     inline void ref(T * ptr)
     {
       m_ptr = ptr;
-      if(ptr) ptr->ref();
+      if(ptr) intrusive_ptr_add_ref(ptr);
     }
 
     T * m_ptr;

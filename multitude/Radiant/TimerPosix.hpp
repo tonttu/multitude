@@ -5,6 +5,7 @@
 #error "You shouldn't include TimerPosix.hpp directly. Use Timer.hpp instead"
 #endif
 
+# include <unistd.h>
 # include <sys/time.h>
 
 namespace Radiant

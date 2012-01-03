@@ -11,8 +11,7 @@
  * file "LGPL.txt" that is distributed with this source package or obtained 
  * from the GNU organization (www.gnu.org).
  * 
- */
-
+ */ 
 #ifndef RADIANT_PLATFORM_HPP
 #define RADIANT_PLATFORM_HPP
 
@@ -46,12 +45,9 @@
 #   define DLLIMPORT __attribute__((visibility("default")))
 
 // Test if we have override
-#   if __has_feature(cxx_override_control)
-#     define OVERRIDE override
-#   else
-#     define OVERRIDE
+#   if !__has_feature(cxx_override_control)
+#     define NO_OVERRIDE
 #   endif
-
 // 
 // Detect GNU GCC/G++
 //
@@ -61,10 +57,8 @@
 #   define DLLIMPORT __attribute__((visibility("default")))
 
 //  Override is a GCC4.7 and up feature when compiling code as c++0x/c++11
-#   if defined(RADIANT_CXX11) && ((__GNUC__ == 4 && __GNUC_MINOR__ >= 7) || __GNUC__ > 4)
-#     define OVERRIDE override
-#   else
-#     define OVERRIDE
+#   if !defined(RADIANT_CXX11) || ((__GNUC__ == 4 && __GNUC_MINOR__ < 7) || __GNUC__ < 4)
+#     define NO_OVERRIDE
 #   endif
 
 // 
@@ -75,10 +69,14 @@
 #   define DLLEXPORT __declspec(dllexport)
 #   define DLLIMPORT __declspec(dllimport)
 
-#   define OVERRIDE override
-
 // warning C4251: class X needs to have dll-interface to be used by clients of class Y
 #   pragma warning(disable:4251)
+#endif
+
+#if !defined(NO_OVERRIDE)
+#  define OVERRIDE override
+#else
+#  define OVERRIDE
 #endif
 
 //
