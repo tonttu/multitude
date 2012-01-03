@@ -1015,10 +1015,6 @@ namespace FireView {
         sum[j] += rgb[j];
     }
 
-    sum[0] *= 1.26f;
-    sum[2] *= 0.99f;
-    sum[2] *= 1.33f;
-
     float peak = sum.maximum();
     if(peak <= 0.5f)
       peak = 1;
