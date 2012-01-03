@@ -234,7 +234,7 @@ namespace Valuable
     void eventPassingEnable(bool enable) { m_eventsEnabled = enable; }
 
     /// @cond
-    virtual void processMessage(const char * type, Radiant::BinaryData & data);
+    virtual void processMessage(const QString & type, Radiant::BinaryData & data);
 
     /// @endcond
 

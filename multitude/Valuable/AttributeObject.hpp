@@ -181,11 +181,11 @@ namespace Valuable
         either process the message, or call the function of the parent class.
 
         \code
-        void MyClass::processMessage(const char * type, Radiant::BinaryData & data)
+        void MyClass::processMessage(const QString & type, Radiant::BinaryData & data)
         {
-          if(strcmp(type, "jump") == 0)
+          if(type == "jump")
             doJump();
-          else if(strcmp(type, "crawl") == 0) {
+          else if(type == "crawl") {
             bool ok;
             int speed = data.readInt32(&ok);
             if(ok)
@@ -201,7 +201,7 @@ namespace Valuable
         @param data Binary blob that contains the argument data in easily parseable format.
 
     */
-    virtual void processMessage(const char *id, Radiant::BinaryData &data);
+    virtual void processMessage(const QString &id, Radiant::BinaryData &data);
     /// Utility function for sending string message to the object
     void processMessageString(const char * id, const char * str);
     /// Utility function for sending a float message to the object

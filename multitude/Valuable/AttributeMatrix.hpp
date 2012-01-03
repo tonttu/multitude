@@ -47,7 +47,7 @@ namespace Valuable
     const ElementType * data() const
     { return this->value().data(); }
 
-    // virtual void processMessage(const char * id, Radiant::BinaryData & data);
+    // virtual void processMessage(const QString & id, Radiant::BinaryData & data);
     virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
     virtual const char * type() const OVERRIDE;
     virtual QString asString(bool * const ok = 0) const OVERRIDE;

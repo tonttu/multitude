@@ -229,7 +229,7 @@ namespace Valuable {
       return value().asInt();
     }
 
-    virtual void processMessage(const char *, Radiant::BinaryData & data) OVERRIDE
+    virtual void processMessage(const QString &, Radiant::BinaryData & data) OVERRIDE
     {
       bool ok = true;
       uint32_t v = uint32_t(data.readInt32(&ok));

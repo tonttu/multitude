@@ -39,7 +39,7 @@ namespace Valuable
               const char ** enumnames, int current);
     virtual ~AttributeEnum();
 
-    virtual void processMessage(const char * id, Radiant::BinaryData & data) OVERRIDE;
+    virtual void processMessage(const QString & id, Radiant::BinaryData & data) OVERRIDE;
 
   private:
     const char ** m_enumnames;

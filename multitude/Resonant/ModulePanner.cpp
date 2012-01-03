@@ -68,27 +68,27 @@ namespace Resonant {
     return true;
   }
 
-  void ModulePanner::processMessage(const char * id,
+  void ModulePanner::processMessage(const QString & id,
                                     Radiant::BinaryData * data)
   {
-    debugResonant("ModulePanner::control # %s", id);
+    debugResonant("ModulePanner::control # %s", id.toUtf8().data());
 
     bool ok = true;
 
-    if(strcmp(id, "fullhdstereo") == 0) {
+    if(id == "fullhdstereo") {
       makeFullHDStereo();
     }
-    else if(strcmp(id, "addsource") == 0) {
+    else if(id == "addsource") {
       Source s;
       data->readString(s.m_id);
       m_sources.push_back(s);
     }
-    else if(strcmp(id, "removesource") == 0) {
+    else if(id == "removesource") {
       QString id;
       data->readString(id);
       removeSource(id);
     }
-    else if(strcmp(id, "setsourcelocation") == 0) {
+    else if(id == "setsourcelocation") {
       QString id;
       data->readString(id);
       Nimble::Vector2 loc = data->readVector2Float32( & ok);
@@ -102,7 +102,7 @@ namespace Resonant {
       }
     }
     else {
-      error("ModulePanner::control # Unknown command %s", id);
+      error("ModulePanner::control # Unknown command %s", id.toUtf8().data());
     }
   }
 

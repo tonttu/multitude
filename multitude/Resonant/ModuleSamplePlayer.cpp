@@ -414,14 +414,14 @@ namespace Resonant {
     return true;
   }
 
-  void ModuleSamplePlayer::processMessage(const char * id, Radiant::BinaryData * data)
+  void ModuleSamplePlayer::processMessage(const QString & id, Radiant::BinaryData * data)
   {
     const int bufsize = 256;
     char buf[bufsize];
 
     bool ok = true;
 
-    if(strcmp(id, "playsample") == 0) {
+    if(id == "playsample") {
       int voiceind = findFreeVoice();
 
       if(voiceind < 0) {
@@ -458,14 +458,14 @@ namespace Resonant {
       // assert(voiceind < (int) m_active);
 
     }
-    else if(strcmp(id, "channels") == 0) {
+    else if(id == "channels") {
       m_channels = data->readInt32( & ok);
     }
     else
-      error("ModuleSamplePlayer::control # Unknown message \"%s\"", id);
+      error("ModuleSamplePlayer::control # Unknown message \"%s\"", id.toUtf8().data());
 
     if(!ok) {
-      error("ModuleSamplePlayer::control # When processing \"%s\"", id);
+      error("ModuleSamplePlayer::control # When processing \"%s\"", id.toUtf8().data());
     }
   }
 

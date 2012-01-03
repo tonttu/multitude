@@ -43,7 +43,7 @@ namespace Valuable
     AttributeString(Node * host, const QString & name,
                 const QString & v = "", bool transit = false);
 
-    virtual void processMessage(const char * id, Radiant::BinaryData & data) OVERRIDE;
+    virtual void processMessage(const QString & id, Radiant::BinaryData & data) OVERRIDE;
 
     /// Concatenates two strings
     /// @param i The string to be appended to this string

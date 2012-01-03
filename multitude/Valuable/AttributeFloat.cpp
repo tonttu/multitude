@@ -19,7 +19,7 @@ namespace Valuable
 {
 
   template <>
-  void AttributeFloatT<float>::processMessage(const char *, Radiant::BinaryData & data)
+  void AttributeFloatT<float>::processMessage(const QString &, Radiant::BinaryData & data)
   {
     bool ok = true;
     float v = data.readFloat32( & ok);
@@ -29,7 +29,7 @@ namespace Valuable
   }
 
   template <>
-  void AttributeFloatT<double>::processMessage(const char *, Radiant::BinaryData & data)
+  void AttributeFloatT<double>::processMessage(const QString &, Radiant::BinaryData & data)
   {
     bool ok = true;
     double v = data.readFloat64( & ok);

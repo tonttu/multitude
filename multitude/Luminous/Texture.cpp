@@ -80,9 +80,9 @@ namespace Luminous
   }
 
 
-  void UploadLimiter::processMessage(const char * type, Radiant::BinaryData &)
+  void UploadLimiter::processMessage(const QString & type, Radiant::BinaryData &)
   {
-    if(strcmp(type, "frame") == 0) {
+    if(type == "frame") {
       m_inited = true;
       ++m_frame;
     }

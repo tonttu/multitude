@@ -29,13 +29,13 @@ namespace Valuable
   {}
 
   template <class T>
-  void AttributeVector<T>::processMessage(const char * id,
+  void AttributeVector<T>::processMessage(const QString & id,
                       Radiant::BinaryData & data)
   {
     /// @todo this isn't how processMessage should be used
-    if(id && strlen(id)) {
-      int index = strtol(id, 0, 10);
-      if(index >= N) {
+    if(!id.isEmpty()) {
+      int index = id.toInt();
+      if(index >= N || index < 0) {
         return;
       }
 

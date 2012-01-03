@@ -73,7 +73,7 @@ namespace Valuable
       const ElementType * data() const
       { return value().data(); }
 
-      VALUABLE_API virtual void processMessage(const char * id, Radiant::BinaryData & data) OVERRIDE;
+      VALUABLE_API virtual void processMessage(const QString & id, Radiant::BinaryData & data) OVERRIDE;
       VALUABLE_API virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
 
       VALUABLE_API const char * type() const OVERRIDE;

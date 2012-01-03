@@ -33,7 +33,7 @@ namespace Valuable
 
   /*
   template <class T, typename S, int N>
-  void AttributeMatrix<T,S,N>::processMessage(const char * id,
+  void AttributeMatrix<T,S,N>::processMessage(const QString & id,
                       Radiant::BinaryData & data)
   {
     if(id && strlen(id)) {

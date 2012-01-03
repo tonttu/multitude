@@ -424,42 +424,29 @@ namespace Valuable
       m_eventSources.erase(it);
   }
 
-  void Node::processMessage(const char * id, Radiant::BinaryData & data)
+  void Node::processMessage(const QString & id, Radiant::BinaryData & data)
   {
     // info("Node::processMessage # %s %s", typeid(*this).name(), id);
 
-    if(!id)
-      return;
-
-    const char * delim = strchr(id, '/');
-
-    std::string key(id);
-    int skip;
-
-    if(delim) {
-      skip = delim - id;
-      key.erase(key.begin() + skip, key.end());
-      skip++;
-    }
-    else
-      skip = (int) key.size();
+    int idx = id.indexOf('/');
+    QString n = idx == -1 ? id : id.left(idx);
 
     // info("Node::processMessage # Child id = %s", key.c_str());
 
-    Attribute * vo = getValue(QString::fromUtf8(key.c_str()));
+    Attribute * vo = getValue(n);
 
     if(vo) {
       // info("Node::processMessage # Sending message \"%s\" to %s",
       // id + skip, typeid(*vo).name());
-      vo->processMessage(id + skip, data);
+      vo->processMessage(idx == -1 ? "" : id.mid(idx + 1), data);
     } else {
-      if(!m_eventListenNames.contains(id)) {
+      if(!m_eventListenNames.contains(n)) {
         /*warning("Node::processMessage # %s (%s %p) doesn't accept event '%s'",
                   klass.c_str(), name().c_str(), this, id);*/
       } else {
         const QString klass = Radiant::StringUtils::demangle(typeid(*this).name());
         warning("Node::processMessage # %s (%s %p): unhandled event '%s'",
-                klass.toUtf8().data(), name().toUtf8().data(), this, id);
+                klass.toUtf8().data(), name().toUtf8().data(), this, id.toUtf8().data());
       }
     }
   }

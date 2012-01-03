@@ -36,7 +36,7 @@ namespace Resonant {
     return true;
   }
 
-  void Module::processMessage(const char *, Radiant::BinaryData *)
+  void Module::processMessage(const QString &, Radiant::BinaryData *)
   {}
 
   bool Module::stop()

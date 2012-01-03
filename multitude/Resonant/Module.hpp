@@ -70,7 +70,7 @@ namespace Resonant {
         @param id Command name
         @param data Command parameters
      */
-    virtual void processMessage(const char * id, Radiant::BinaryData * data);
+    virtual void processMessage(const QString & id, Radiant::BinaryData * data);
     /** Processes one cycle of audio data.
 
     @param in Input audio data.

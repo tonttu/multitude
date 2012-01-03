@@ -75,10 +75,8 @@ namespace Resonant {
     return true;
   }
 
-  void ModuleOutCollect::processMessage(const char * address, Radiant::BinaryData * control)
+  void ModuleOutCollect::processMessage(const QString & id, Radiant::BinaryData * control)
   {
-    assert(address != 0);
-
     bool ok = true;
     Move tmp;
 
@@ -86,10 +84,10 @@ namespace Resonant {
 
     // info("ModuleOutCollect::control # Now %d sources in the map", (int) m_map.size());
 
-    if(strcmp(address, "subwooferchannel") == 0) {
+    if(id == "subwooferchannel") {
       m_subwooferChannel = control->readInt32();
     }
-    if(strcmp(address, "removemappings") == 0) {
+    if(id == "removemappings") {
       // Remove all the mappings that match the given input.
 
       for(iterator it = m_map.begin(); it != m_map.end(); ) {
@@ -106,19 +104,19 @@ namespace Resonant {
       tmp.from = control->readInt32( & ok);
       tmp.to   = control->readInt32( & ok);
 
-      debugResonant("ModuleOutCollect::control # %s", address);
+      debugResonant("ModuleOutCollect::control # %s", id.toUtf8().data());
 
       if(!ok) {
         error("ModuleOutCollect::control # Could not parse control # %s",
               tmp.sourceId.toUtf8().data());
         return;
       }
-      else if(strcmp(address, "newmapping") == 0) {
+      else if(id == "newmapping") {
         m_map.push_back(tmp);
         debugResonant("ModuleOutCollect::control # newmapping %s %d -> %d",
                       tmp.sourceId.toUtf8().data(), tmp.from, tmp.to);
       }
-      else if(strcmp(address, "removemapping") == 0) {
+      else if(id == "removemapping") {
         iterator it = std::find(m_map.begin(), m_map.end(), tmp);
 
         if(it != m_map.end()) {
@@ -129,7 +127,7 @@ namespace Resonant {
                 tmp.sourceId.toUtf8().data(), tmp.from, tmp.to);
       }
       else {
-        error("ModuleOutCollect::control # No param \"%s\"", address);
+        error("ModuleOutCollect::control # No param \"%s\"", id.toUtf8().data());
       }
     }
   }

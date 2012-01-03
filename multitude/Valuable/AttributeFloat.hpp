@@ -111,7 +111,7 @@ namespace Valuable
       }
 
       /// @cond
-      virtual void processMessage(const char * id, Radiant::BinaryData & data) OVERRIDE;
+      virtual void processMessage(const QString & id, Radiant::BinaryData & data) OVERRIDE;
       /// @endcond
 
   private:
