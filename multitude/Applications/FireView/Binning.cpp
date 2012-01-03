@@ -309,8 +309,8 @@ namespace FireView {
       float xlower  = xmin + i * xstep;
       float xhigher = xmin + (i+1) * xstep;
 
-      /* This is the "A" binning system, where each bin name */
-      sprintf(buf, "A%d", i + 1);
+      /* This is the "X" binning system, where each bin name stars with capital X. */
+      sprintf(buf, "X%d", i + 1);
 
       defineBin(buf, Quadrangle(Nimble::Vector2(xhigher, ymax),
                                 Nimble::Vector2(xhigher, ymin),
