@@ -39,7 +39,9 @@ void helper(const char * app)
   printf("USAGE:\n %s [options]\n\n", app);
   printf
     ("OPTIONS:\n"
-     " --format7 +int - Uses Format 7 mode in the argument\n"
+     " --binning [ansi|cree|taction7] - select color binning mode for color calibration\n"
+     " --debayer - Enable de-Bayer filter\n"
+     " --colorbal - Show color balance of color camera\n"     " --format7 +int - Uses Format 7 mode in the argument\n"
      " --format7area +rect - Select Format 7 capture area, for example \"0 0 200 100\"\n"
      " --fps  +float  - Sets arbitrary capture rate for the cameras, with SW trigger\n"
      " --help         - This help\n"
@@ -50,8 +52,7 @@ void helper(const char * app)
      " --triggerpolarity   +up/down - Selects the trigger polarity, either "
           "\"up\" or \"down\"\n"
      " --triggersource +int - Selects the trigger source, range: 0-%d\n"
-     " --debayer - Enable de-Bayer filter\n"
-     " --colorbal - Show color balance of color camera\n"
+     " --wb +coeffs - Color balance coefficients, for example \"1.0 1.1 1.2\"\n"
 #ifndef WIN32
      " --busreset - Resets the firewire bus\n"
 #endif
@@ -89,8 +90,31 @@ int main(int argc, char ** argv)
     if(strcmp(arg, "--debayer") == 0) {
       FireView::CamView::setDebayer(1);
     }
+    else if(strcmp(arg, "--binning") == 0 && (i+1) < argc) {
+      const char * tmp(argv[++i]);
+
+      if(strcmp(tmp, "ansi") == 0)
+        FireView::CamView::setBinningMethod(FireView::Binning::BINNING_ANSI_C78_377);
+      else if(strcmp(tmp, "cree") == 0)
+        FireView::CamView::setBinningMethod(FireView::Binning::BINNING_CREE);
+      else if(strcmp(tmp, "taction7") == 0)
+        FireView::CamView::setBinningMethod(FireView::Binning::BINNING_TACTION7);
+      else {
+        Radiant::error("%s : Unknown binning mode \"%s\"", argv[0], tmp);
+        helper(argv[0]);
+        return -1;
+      }
+    }
     else if(strcmp(arg, "--colorbal") == 0) {
       FireView::CamView::calculateColorBalance();
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::SHUTTER, 1);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::BRIGHTNESS, 10);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::EXPOSURE, 0);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::GAMMA, 0);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::FRAME_RATE, 466);
+      // FireView::CamView::setDefaultParameter(Radiant::VideoCamera::SHUTTER, 30);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::GAIN, 16);
+      FireView::CamView::setDefaultParameter(Radiant::VideoCamera::PAN, 0);
     }
     else if(strcmp(arg, "--format7") == 0 && (i+1) < argc) {
       format7 = true;
@@ -160,6 +184,14 @@ int main(int argc, char ** argv)
       FireView::CamView::setDefaultParameter(Radiant::VideoCamera::BRIGHTNESS, 200);
       FireView::CamView::setDefaultParameter(Radiant::VideoCamera::SHUTTER, 30);
       FireView::CamView::setDefaultParameter(Radiant::VideoCamera::GAIN, 20);
+    }
+    else if(strcmp(arg, "--wb") == 0 && (i+1) < argc) {
+      Radiant::Variant tmp(argv[++i]);
+
+      Nimble::Vector3f vals(1.f, 1.f, 1.f);
+      tmp.getFloats(vals.data(), 3);
+
+      FireView::CamView::setColorBalanceCoeffs(vals);
     }
     else {
       printf("%s Could not handle argument %s\n", argv[0], arg);

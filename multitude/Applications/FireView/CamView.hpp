@@ -7,14 +7,16 @@
  * See file "Applications/FireView.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef FIREVIEW_CAMVIEW_HPP
 #define FIREVIEW_CAMVIEW_HPP
+
+#include "Binning.hpp"
 
 #include <Luminous/GLResources.hpp>
 #include <Luminous/Texture.hpp>
@@ -43,8 +45,8 @@ namespace FireView {
     virtual ~CamView();
 
     bool start(uint64_t euid64, Radiant::FrameRate fps, float customFps = 0.0f,
-         Radiant::VideoCamera::TriggerSource triggerSource = Radiant::VideoCamera::TriggerSource(-1), Radiant::VideoCamera::TriggerMode triggerMode = Radiant::VideoCamera::TriggerMode(-1),
-	       bool format7 = false);
+               Radiant::VideoCamera::TriggerSource triggerSource = Radiant::VideoCamera::TriggerSource(-1), Radiant::VideoCamera::TriggerMode triggerMode = Radiant::VideoCamera::TriggerMode(-1),
+               bool format7 = false);
 
     std::vector<Radiant::VideoCamera::CameraFeature> & features()
     { return m_thread.m_features; }
@@ -74,11 +76,15 @@ namespace FireView {
 
     static void setDebayer(int mode) { m_debayer = mode; }
 
+    static void setBinningMethod(int method) { m_binningMethod = method; }
+
     static void calculateColorBalance()
     {
       setDebayer(1);
       m_colorCheck = true;
     }
+
+    static void setColorBalanceCoeffs(const Nimble::Vector3f & coeffs) { s_colorBalanceCoeffs = coeffs; }
 
     static void setDefaultParameter(Radiant::VideoCamera::FeatureType feature, uint32_t value)
     {
@@ -93,7 +99,6 @@ namespace FireView {
       }
       return false;
     }
-
 
   public slots:
 
@@ -137,19 +142,19 @@ namespace FireView {
     public:
 
       enum State {
-	UNINITIALIZED,
-	STARTING,
-	FAILED,
-	RUNNING
+        UNINITIALIZED,
+        STARTING,
+        FAILED,
+        RUNNING
       };
       
       friend class CamView;
       InputThread();
       virtual ~InputThread();
 
-      bool start(uint64_t euid64, Radiant::FrameRate fps, 
-     float customFps, Radiant::VideoCamera::TriggerSource triggerSource, Radiant::VideoCamera::TriggerMode triggerMode,
-		 bool format7);
+      bool start(uint64_t euid64, Radiant::FrameRate fps,
+                 float customFps, Radiant::VideoCamera::TriggerSource triggerSource, Radiant::VideoCamera::TriggerMode triggerMode,
+                 bool format7);
       void stop();
 
       bool isRunning() const { return m_state == RUNNING; }
@@ -185,6 +190,9 @@ namespace FireView {
 
       uint64_t m_euid64;
     };
+
+    int getDCUId() const;
+    void setDCUId(int id);
 
     class Analysis
     {
@@ -224,6 +232,8 @@ namespace FireView {
     float       m_textColor;
     Nimble::Vector3 m_colorBalance;
     Radiant::VideoImage m_rgb;
+    Nimble::Vector2f m_chromaticity;
+    Binning m_binning;
 
     Analysis   m_averages[AREA_COUNT]; // Grid.
     QImage     m_foo;
@@ -234,11 +244,14 @@ namespace FireView {
 
     static Nimble::Recti m_format7rect;
     static int           m_format7mode;
+    static int           m_binningMethod;
     static int           m_debayer;
     static bool          m_colorCheck;
     static std::map<Radiant::VideoCamera::FeatureType, uint32_t> s_defaults;
+
+    static Nimble::Vector3f s_colorBalanceCoeffs;
   };
 
-}
+  }
 
 #endif
