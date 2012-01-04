@@ -28,6 +28,29 @@
 #include <typeinfo>
 #include <cstring>
 
+namespace
+{
+  struct QueueItem
+  {
+    QueueItem(Valuable::Node * sender_, Valuable::Node * target_,
+              const QString & to_, const Radiant::BinaryData & data_)
+      : sender(sender_)
+      , target(target_)
+      , to(to_)
+      , data(data_)
+    {}
+
+    Valuable::Node * sender;
+    Valuable::Node * target;
+    const QString & to;
+    Radiant::BinaryData data;
+  };
+
+  // recursive because ~Node() might be called from processQueue()
+  Radiant::Mutex s_queueMutex(true);
+  QList<QueueItem*> s_queue;
+}
+
 namespace Valuable
 {
   using namespace Radiant;
@@ -94,6 +117,18 @@ namespace Valuable
           it = vo->m_listeners.erase(it);
         } else ++it;
       }
+    }
+
+    Radiant::Guard g(s_queueMutex);
+    for(QList<QueueItem*>::iterator it = s_queue.begin(); it != s_queue.end(); ) {
+      QueueItem* item = *it;
+      if(item->target == this) {
+        it = s_queue.erase(it);
+        continue;
+      } else if(item->sender == this) {
+        item->sender = 0;
+      }
+      ++it;
     }
   }
 
@@ -314,6 +349,7 @@ namespace Valuable
   void Node::eventAddListener(const QString & from,
                               const QString & to,
                               Valuable::Node * obj,
+                              ListenerType listenerType,
                               const Radiant::BinaryData * defaultData)
   {
     ValuePass vp;
@@ -321,6 +357,7 @@ namespace Valuable
     vp.m_from = from;
     vp.m_to = to;
     vp.m_frame = m_frame;
+    vp.m_type = listenerType;
 
     if(!m_eventSendNames.contains(from)) {
       warning("Node::eventAddListener # Adding listener to unexistent event '%s'", from.toUtf8().data());
@@ -340,7 +377,6 @@ namespace Valuable
       debugValuable("Widget::eventAddListener # Already got item %s -> %s (%p)",
             from.toUtf8().data(), to.toUtf8().data(), obj);
     else {
-      // m_elisteners.push_back(vp);
       m_elisteners.push_back(vp);
       obj->eventAddSource(this);
     }
@@ -505,6 +541,21 @@ namespace Valuable
     return attr->addListener(func, role);
   }
 
+  int Node::processQueue()
+  {
+    /// The queue must be locked during the whole time when calling the callback
+    Radiant::Guard g(s_queueMutex);
+    foreach(QueueItem* item, s_queue) {
+      std::swap(item->target->m_sender, item->sender);
+      item->target->processMessage(item->to, item->data);
+      std::swap(item->target->m_sender, item->sender);
+      delete item;
+    }
+    int r = s_queue.size();
+    s_queue.clear();
+    return r;
+  }
+
   void Node::eventSend(const QString & id, Radiant::BinaryData & bd)
   {
     if(!m_eventsEnabled)
@@ -533,10 +584,15 @@ namespace Valuable
         bdsend.rewind();
 
         if(vp.m_listener) {
-          // m_sender is valid only at the beginning of processMessage call
-          vp.m_listener->m_sender = this;
-          vp.m_listener->processMessage(vp.m_to, bdsend);
-          vp.m_listener->m_sender = 0;
+          if(vp.m_type == AFTER_UPDATE) {
+            queueEvent(this, vp.m_listener, vp.m_to, bdsend);
+          } else {
+            // m_sender is valid only at the beginning of processMessage call
+            Node * sender = this;
+            std::swap(vp.m_listener->m_sender, sender);
+            vp.m_listener->processMessage(vp.m_to, bdsend);
+            vp.m_listener->m_sender = sender;
+          }
         } else {
           /// @todo what is the correct receiver ("this" in the callback)?
           /// @todo should we set m_sender or something similar?
@@ -580,6 +636,15 @@ namespace Valuable
     Attribute * vo = (*it).second;
     m_values.erase(it);
     m_values[now] = vo;
+  }
+
+  void Node::queueEvent(Valuable::Node * sender, Valuable::Node * target,
+                        const QString & to, const Radiant::BinaryData & data)
+  {
+    // make a new item before locking
+    QueueItem * item = new QueueItem(sender, target, to, data);
+    Radiant::Guard g(s_queueMutex);
+    s_queue << item;
   }
 
   bool Node::readElement(DOMElement )
