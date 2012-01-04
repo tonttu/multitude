@@ -73,6 +73,7 @@ namespace Radiant {
     m_buf(0)
   {
     *this = that;
+    m_current = that.m_current;
   }
 
   BinaryData::~BinaryData()
@@ -207,9 +208,8 @@ namespace Radiant {
 
   void BinaryData::append(const BinaryData & that)
   {
-    ensure(that.pos());
-    memcpy(getPtr<char>(that.pos()), that.data(), that.pos());
-    m_total += that.m_total;
+    ensure(that.m_size);
+    memcpy(getPtr<char>(that.m_size), that.data(), that.m_size);
   }
 
   float BinaryData::readFloat32(bool * ok)
