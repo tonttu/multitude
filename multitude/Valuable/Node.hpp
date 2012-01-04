@@ -160,11 +160,14 @@ namespace Valuable
     typedef std::map<QString, Attribute *> container;
     /// Iterator for the container
     typedef container::iterator iterator;
+    typedef container::const_iterator const_iterator;
 
     /// Returns an iterator to the beginning of the values
     iterator valuesBegin() { return m_values.begin(); }
+    const_iterator valuesBegin() const { return m_values.begin(); }
     /// Returns an iterator to the end of the values
     iterator valuesEnd() { return m_values.end(); }
+    const_iterator valuesEnd() const { return m_values.end(); }
 
     const container & values() { return m_values; }
 
@@ -282,6 +285,8 @@ namespace Valuable
                      int role = Attribute::CHANGE_ROLE);
 
     static int processQueue();
+
+    static bool copyValues(const Node & from, Node & to);
 
   protected:
 

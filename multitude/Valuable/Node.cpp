@@ -556,6 +556,15 @@ namespace Valuable
     return r;
   }
 
+  bool Node::copyValues(const Node & from, Node & to)
+  {
+    XMLArchive archive;
+    ArchiveElement e = Valuable::Serializer::serialize(archive, from);
+    if(!e.isNull())
+      return to.deserialize(e);
+    return false;
+  }
+
   void Node::eventSend(const QString & id, Radiant::BinaryData & bd)
   {
     if(!m_eventsEnabled)
