@@ -15,6 +15,21 @@
 
 #include "Serializer.hpp"
 
+#include <QRegExp>
+
 namespace Valuable
 {
+  namespace Serializer
+  {
+    QString tagName(const std::type_info & typeinfo)
+    {
+      QString demangled = Radiant::StringUtils::demangle(typeinfo.name());
+      demangled.replace(" ", "");
+      demangled.replace(QRegExp("<[^>]*>"), "");
+      demangled.replace(QRegExp("^.*::"), "");
+      QRegExp az("[a-zA-Z:_][a-zA-Z0-9_:.-]*");
+      if(az.indexIn(demangled) >= 0) return az.cap(0);
+      return "value";
+    }
+  }
 }

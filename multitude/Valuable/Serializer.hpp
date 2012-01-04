@@ -39,6 +39,14 @@ namespace Valuable
 
     /// @cond
 
+    VALUABLE_API QString tagName(const std::type_info & typeinfo);
+
+    template <typename T>
+    QString tagName()
+    {
+      return tagName(typeid(T));
+    }
+
     /// helper structs and enum for template specializations
     /// Boost & TR1 have is_base_of & similar template hacks that basically do this
     namespace Type
@@ -169,7 +177,7 @@ namespace Valuable
     {
       inline static ArchiveElement serialize(Archive &archive, const T & t)
       {
-        ArchiveElement elem = archive.createElement(typeid(t).name());
+        ArchiveElement elem = archive.createElement(tagName<T>());
         elem.set(Radiant::StringUtils::stringify(t));
         return elem;
       }
@@ -190,7 +198,7 @@ namespace Valuable
     {
       inline static ArchiveElement serialize(Archive &archive, const QString & t)
       {
-        ArchiveElement elem = archive.createElement(typeid(t).name());
+        ArchiveElement elem = archive.createElement("QString");
         elem.set(t);
         return elem;
       }
@@ -206,7 +214,7 @@ namespace Valuable
     {
       inline static ArchiveElement serialize(Archive & archive, const T * t)
       {
-        ArchiveElement elem = archive.createElement(typeid(*t).name());
+        ArchiveElement elem = archive.createElement(tagName<T>());
         elem.set(Radiant::StringUtils::stringify(*t));
         return elem;
       }
@@ -310,7 +318,7 @@ namespace Valuable
     template <typename T>
     inline typename remove_const<T>::Type deserialize(const ArchiveElement & element)
     {
-      return Impl<T>::deserialize(element);
+      return Impl<typename remove_const<T>::Type>::deserialize(element);
     }
 
     template <typename T>
