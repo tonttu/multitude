@@ -110,7 +110,7 @@ namespace Valuable
     inline virtual bool set(float v, Attribute::Layer layer = Attribute::MANUAL,
                             Attribute::ValueUnit = Attribute::VU_UNKNOWN)
     {
-      this->setValue(v, layer);
+      this->setValue(Nimble::Math::Round(v), layer);
       return true;
     }
 
