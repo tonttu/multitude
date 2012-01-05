@@ -37,7 +37,13 @@
 #include <QtGui/QMouseEvent>
 #include <QtGui/QPainter>
 
+#include <QFile>
+#include <QTextStream>
+#include <QSettings>
+
 #include <cmath>
+
+const QString COLORCHECK_LOGFILE("colorcheck.log");
 
 namespace {
   Radiant::Mutex s_openCameraMutex;
@@ -194,6 +200,7 @@ namespace FireView {
       bool updated = false;
 
       for(unsigned i = 0; i < m_features.size(); i++) {
+
         if(m_featureSend[i]) {
           m_camera->setFeatureRaw(m_features[i].id, m_features[i].value);
           m_featureSend[i] = false;
@@ -395,7 +402,7 @@ namespace FireView {
     long unsigned bandwidth = width * height * 8 * (int)fps;
     s_bandwidth += bandwidth;
 
-    qDebug("Total bandwidth required: %lu Mbps for width=%d, heigh=%d, fps=%f", s_bandwidth >> 20, width, height, fps);
+    qDebug("Total bandwidth required: %lu Mbps for width=%d, height=%d, fps=%f", s_bandwidth >> 20, width, height, fps);
 
     const size_t FW400_BW_LIMIT = 0.8 * (400 << 20);
 
@@ -410,7 +417,7 @@ namespace FireView {
   Radiant::VideoCamera::TriggerPolarity CamView::m_triggerPolarity =
       Radiant::VideoCamera::TRIGGER_ACTIVE_UNDEFINED;
   int CamView::m_format7mode = 1;
-  int CamView::m_binningMethod = Binning::BINNING_TACTION7;
+  int CamView::m_binningMethod = Binning::BINNING_TACTION7AB;
 
   int CamView::m_debayer = 0;
   bool CamView::m_colorCheck = false;
@@ -581,6 +588,23 @@ namespace FireView {
   {
     if(e->key() == Qt::Key_Space) {
       m_doAnalysis = true;
+    } else if(e->key() == Qt::Key_L && m_colorCheck) {
+
+      QFile file(COLORCHECK_LOGFILE);
+      if(!file.open(QIODevice::WriteOnly | QIODevice::Append))
+        Radiant::error("Failed to open log file '%s' for writing", file.fileName().toUtf8().data());
+      else {
+        QTextStream ts(&file);
+
+        int dcuId = getDCUId();
+
+        QString line = QString("%7,%1,%2,%3,%4,%5,%6\n").arg(m_colorBalance.x,0,'f',4).arg(m_colorBalance.y,0,'f',4).arg(m_colorBalance.z,0,'f',4).arg(m_chromaticity.x,0,'f',4).arg(m_chromaticity.y,0,'f',4).arg(m_binning.classify(m_chromaticity)).arg(dcuId, 4, 10, QChar('0'));
+        ts << line;
+
+        setDCUId(++dcuId);
+
+        Radiant::warning("LOGGED COLOR VALUES: %s", line.toUtf8().data());
+      }
     }
     else
       e->ignore();
@@ -810,6 +834,11 @@ namespace FireView {
       sprintf(buf, "Class: %s", m_binning.classify(m_chromaticity).toUtf8().data());
       renderText(5, 81, buf);
 
+      int dcuId = getDCUId();
+
+      sprintf(buf, "DCU Id: %04d", dcuId);
+      renderText(5, 94, buf);
+
       m_binning.debugVisualize(width(), height());
     }
 
@@ -1014,10 +1043,6 @@ namespace FireView {
         sum[j] += rgb[j];
     }
 
-    sum[0] *= 1.26f;
-    sum[2] *= 0.99f;
-    sum[2] *= 1.33f;
-
     float peak = sum.maximum();
     if(peak <= 0.5f)
       peak = 1;
@@ -1030,7 +1055,6 @@ namespace FireView {
     /// @todo the conversion assumes linear RGB color space as source, is this correct?
     Nimble::Vector3f CIEXYZ;
 
-
     Radiant::ColorUtils::rgbToCIEXYZ(m_colorBalance, CIEXYZ);
 
     // Convert to CIE xyY color space (chromaticity + luminance)
@@ -1040,5 +1064,19 @@ namespace FireView {
 //    Radiant::warning("CamView::checkColorBalance # mean rgb (%f,%f,%f)", m_colorBalance.x, m_colorBalance.y, m_colorBalance.z);
 //    Radiant::warning("CamView::checkColorBalance # XYZ (%f,%f,%f)", CIEXYZ.x, CIEXYZ.y, CIEXYZ.z);
 //    Radiant::warning("CamView::checkColorBalance # chromacity (%f,%f)", m_chromaticity.x, m_chromaticity.y);
+  }
+
+  int CamView::getDCUId() const
+  {
+    QSettings settings("MultiTouch", "FireView");
+
+    return settings.value("colorcheck/dcu_count", 1).toUInt();
+  }
+
+  void CamView::setDCUId(int id)
+  {
+    QSettings settings("MultiTouch", "FireView");
+
+    settings.setValue("colorcheck/dcu_count", id);
   }
 }

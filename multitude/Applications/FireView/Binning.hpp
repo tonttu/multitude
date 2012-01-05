@@ -25,7 +25,8 @@ namespace FireView {
     enum Layout {
       BINNING_ANSI_C78_377,
       BINNING_CREE,
-      BINNING_TACTION7
+      BINNING_TACTION7,
+      BINNING_TACTION7AB
     };
 
     Binning();
@@ -38,6 +39,7 @@ namespace FireView {
     void defineBins_ANSI_C78_377();
     void defineBins_CREE();
     void defineBins_TACTION7();
+    void defineBins_TACTION7AB();
 
     void defineBins(Layout type)
     {
@@ -47,6 +49,8 @@ namespace FireView {
         defineBins_CREE();
       else if(type == BINNING_TACTION7)
         defineBins_TACTION7();
+      else if(type == BINNING_TACTION7AB)
+        defineBins_TACTION7AB();
     }
 
     void debugVisualize(int sx, int sy);

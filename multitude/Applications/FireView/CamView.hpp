@@ -191,6 +191,9 @@ namespace FireView {
       uint64_t m_euid64;
     };
 
+    int getDCUId() const;
+    void setDCUId(int id);
+
     class Analysis
     {
     public:

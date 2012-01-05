@@ -6,6 +6,8 @@
 #include <Radiant/Color.hpp>
 #include <Radiant/Trace.hpp>
 
+#include <cstdio>
+
 namespace FireView {
 
   Quadrangle::Quadrangle()
@@ -51,6 +53,8 @@ namespace FireView {
     if(m_regions.contains(name))
       Radiant::warning("Binning::defineBin # bin '%s' already exists! Overwriting...", name.toUtf8().data());
 
+    // Radiant::info("Binning::defineBin # %s %f %f", name.toUtf8().data(), region.m_p[2].x, region.m_p[0].x);
+
     m_regions[name] = region;
   }
 
@@ -70,13 +74,13 @@ namespace FireView {
   }
 
   void Binning::debugVisualize(int sx, int sy)
-  {
+  {/*
     Radiant::Color c[] = {
       Radiant::Color(1.f, 0.f, 0.f, 1.f),
       Radiant::Color(0.f, 1.f, 0.f, 1.f),
       Radiant::Color(0.f, 0.f, 1.f, 1.f),
       Radiant::Color(1.f, 1.f, 0.f, 1.f),
-    };
+    };*/
 
     glColor3f(1.f, 1.f, 1.f);
     glBegin(GL_QUADS);
@@ -317,30 +321,47 @@ namespace FireView {
                                 Nimble::Vector2(xlower, ymin),
                                 Nimble::Vector2(xlower, ymax)));
     }
+  }
+  void Binning::defineBins_TACTION7AB()
+  {
+    Radiant::info("Binning::defineBins_TACTION7AB");
 
-    /*
-  const char * labels[9] = {"AA", "AB", "AC", "BA", "BB", "BC", "CA", "CB", "CC" };
+    const int bins = 7;
 
-  int index = 0;
+    // These ranges are expected to exceed the actual range of x, so that we do not run out of bins
 
-  for(int x = 0; x < 3; x++) {
+    const float xmin = 0.3014f;
+    const float xmax = 0.322f;
 
-    float xlower  = xmin + x * xstep;
-    float xhigher = xmin + (x+1) * xstep;
+    const float xstep = (xmax - xmin) / bins;
 
-    for(int y = 0; y < 3; y++) {
+    // These are basically out of range, sorting is done based purely on X value
+    const float ymin = 0.0f;
+    const float ymax = 1.0f;
 
-      float ylower  = ymin + y * ystep;
-      float yhigher = ymin + (y+1) * ystep;
-      /*
-      defineBin(labels[index], Quadrangle(
-          Nimble::Vector2(0.348, 0.384),
-          Nimble::Vector2(0.346, 0.359),
-          Nimble::Vector2(0.329, 0.345),
-          Nimble::Vector2(0.329, 0.369)
-          )
-                );
-      */
+    char buf[32];
+
+    for(int i = 0; i < bins; i++) {
+
+      float xlower  = xmin + i * xstep;
+      float xhigher = xmin + (i+1) * xstep;
+      float xmid = (xlower + xhigher) * 0.5f;
+
+      /* This is the "X" binning system, where each bin name starts with capital X. */
+      sprintf(buf, "X%dA", i + 1);
+
+      defineBin(buf, Quadrangle(Nimble::Vector2(xmid, ymax),
+                                Nimble::Vector2(xmid, ymin),
+                                Nimble::Vector2(xlower, ymin),
+                                Nimble::Vector2(xlower, ymax)));
+      /* This is the "X" binning system, where each bin name starts with capital X. */
+      sprintf(buf, "X%dB", i + 1);
+
+      defineBin(buf, Quadrangle(Nimble::Vector2(xhigher, ymax),
+                                Nimble::Vector2(xhigher, ymin),
+                                Nimble::Vector2(xmid, ymin),
+                                Nimble::Vector2(xmid, ymax)));
+    }
   }
 
   }

@@ -39,7 +39,7 @@ void helper(const char * app)
   printf("USAGE:\n %s [options]\n\n", app);
   printf
     ("OPTIONS:\n"
-     " --binning [ansi|cree|taction7] - select color binning mode for color calibration\n"
+     " --binning [ansi|cree|taction7|taction7ab] - select color binning mode for color calibration\n"
      " --debayer - Enable de-Bayer filter\n"
      " --colorbal - Show color balance of color camera\n"     " --format7 +int - Uses Format 7 mode in the argument\n"
      " --format7area +rect - Select Format 7 capture area, for example \"0 0 200 100\"\n"
@@ -99,6 +99,8 @@ int main(int argc, char ** argv)
         FireView::CamView::setBinningMethod(FireView::Binning::BINNING_CREE);
       else if(strcmp(tmp, "taction7") == 0)
         FireView::CamView::setBinningMethod(FireView::Binning::BINNING_TACTION7);
+      else if(strcmp(tmp, "taction7ab") == 0)
+        FireView::CamView::setBinningMethod(FireView::Binning::BINNING_TACTION7AB);
       else {
         Radiant::error("%s : Unknown binning mode \"%s\"", argv[0], tmp);
         helper(argv[0]);
