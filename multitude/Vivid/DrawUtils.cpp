@@ -1,6 +1,8 @@
 #include "DrawUtils.hpp"
 
 #include <Luminous/Luminous.hpp>
+#include <Nimble/Matrix3.hpp>
+#include <Nimble/Matrix4.hpp>
 
 namespace Vivid
 {

@@ -1,5 +1,4 @@
 #include "Renderable.hpp"
-
 namespace Vivid
 {
 

@@ -3,6 +3,7 @@
 
 #include "Triangle.hpp"
 #include "Material.hpp"
+#include "Export.hpp"
 
 #include <Luminous/ContextVariable.hpp>
 #include <Luminous/VertexBuffer.hpp>
@@ -16,7 +17,7 @@
 namespace Vivid
 {
 
-class Mesh
+class VIVID_API Mesh
 {
 public:
   std::string m_name;
