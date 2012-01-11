@@ -259,7 +259,9 @@ namespace Radiant {
     void unavailable(const char * func);
 
     unsigned m_current;
+    // number of bytes used in the buffer
     unsigned m_total;
+    // number of bytes allocated, the capacity of m_buf
     unsigned m_size;
     bool     m_shared;
     char    *m_buf;

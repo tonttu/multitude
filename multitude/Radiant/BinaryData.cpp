@@ -208,8 +208,8 @@ namespace Radiant {
 
   void BinaryData::append(const BinaryData & that)
   {
-    ensure(that.m_size);
-    memcpy(getPtr<char>(that.m_size), that.data(), that.m_size);
+    ensure(that.m_total);
+    memcpy(getPtr<char>(that.m_total), that.data(), that.m_total);
   }
 
   float BinaryData::readFloat32(bool * ok)
