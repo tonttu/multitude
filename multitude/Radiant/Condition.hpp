@@ -65,6 +65,7 @@ namespace Radiant {
     /// @param millisecs timeout in milliseconds
     /// @return false if the wait timed out
     bool wait(Mutex &mutex, unsigned long millisecs = std::numeric_limits<unsigned long>::max());
+    bool wait2(Mutex & mutex, unsigned int & timeoutMs);
 
     /// Wakes all threads waiting on the condition
 		int wakeAll();

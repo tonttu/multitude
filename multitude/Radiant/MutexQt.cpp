@@ -2,6 +2,7 @@
  */
 
 #include "Mutex.hpp"
+#include "Timer.hpp"
 
 #include <Radiant/Condition.hpp>
 
@@ -64,6 +65,21 @@ namespace Radiant {
   {
     QMutex * qmutex = mutex.m_d;
     return m_d->wait(qmutex, millsecs);
+  }
+
+  bool Condition::wait2(Mutex & mutex, unsigned int & millsecs)
+  {
+    Timer timer;
+    QMutex * qmutex = mutex.m_d;
+    bool ret = m_d->wait(qmutex, millsecs);
+    if(!ret) {
+      millsecs = 0;
+    } else {
+      unsigned int diff = timer.time()*1000;
+      if(diff > millsecs) millsecs = 0;
+      else millsecs -= diff;
+    }
+    return ret;
   }
 
   int Condition::wakeAll()
