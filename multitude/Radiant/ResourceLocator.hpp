@@ -60,6 +60,8 @@ namespace Radiant
 
       /// Locate a file
       QString locate(const QString & file) const;
+      /// Locate a directory
+      QString locateDirectory(const QString & dir) const;
       /// Locate a file that can be written
       QString locateWriteable(const QString & file) const;
       /// Locate an existing file that can be written

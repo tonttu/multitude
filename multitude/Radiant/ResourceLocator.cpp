@@ -23,6 +23,7 @@
 #include <sstream>
 
 #include <QStringList>
+#include <QDir>
 
 namespace Radiant
 {
@@ -78,6 +79,20 @@ namespace Radiant
     }
    */
     return r;
+  }
+
+  QString ResourceLocator::locateDirectory(const QString & dir) const
+  {
+    if(dir.isEmpty()) return dir;
+
+    if(QDir(dir).exists()) return dir;
+
+    foreach(QString path, m_paths.split(";", QString::SkipEmptyParts)) {
+      QString fullPath = path + "/" + dir;
+
+      if(QDir(fullPath).exists()) return fullPath;
+    }
+    return "";
   }
 
   QString ResourceLocator::locateWriteable(const QString & file) const
