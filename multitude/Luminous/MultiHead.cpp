@@ -316,24 +316,19 @@ namespace Luminous {
       m_areas[i]->setPixelSizeCm(sizeCm);
   }
 
-  bool MultiHead::Window::readElement(Valuable::DOMElement ce)
+  bool MultiHead::Window::readElement(const Valuable::ArchiveElement & ce)
   {
-    const QString & name = ce.getTagName();
+    /// @todo Remove this function and use the correct serialization API
+    const QString & name = ce.name();
 
     // Get the 'type' attribute
-    if(!ce.hasAttribute("type")) {
-      Radiant::error("MultiHead::Window::readElement # "
-                     "no type attribute on element '%s'", name.toUtf8().data());
-      return false;
-    }
-
-    const QString & type = ce.getAttribute("type");
+    const QString & type = ce.get("type");
 
     if(type == QString("area")) {
       Area * area = new Area(this);
       // Add as child & recurse
       addValue(name, area);
-      area->deserializeXML(ce);
+      area->deserialize(ce);
       m_areas.push_back(std::shared_ptr<Area>(area));
     } else {
       return false;
@@ -520,24 +515,18 @@ namespace Luminous {
     return ok;
   }
 
-  bool MultiHead::readElement(Valuable::DOMElement ce)
+  bool MultiHead::readElement(const Valuable::ArchiveElement & ce)
   {
-    const QString & name = ce.getTagName();
+    const QString & name = ce.name();
 
-    // Get the 'type' attribute
-    if(!ce.hasAttribute("type")) {
-      Radiant::error("MultiHead::readElement # no type attribute on element '%s'", name.toUtf8().data());
-      return false;
-    }
-
-    const QString & type = ce.getAttribute("type");
+    const QString & type = ce.get("type");
 
     if(type == QString("window")) {
       Window * win = new Window(this);
 
       // Add as child & recurse
       addValue(name, win);
-      win->deserializeXML(ce);
+      win->deserialize(ce);
 
       m_windows.push_back(std::shared_ptr<Window>(win));
     } else {

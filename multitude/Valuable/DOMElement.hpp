@@ -47,14 +47,14 @@ namespace Valuable
     QString getTagName() const;
 
     /// Appends another element as a child
-    void appendChild(DOMElement element);
+    void appendChild(const DOMElement & element);
     /// Sets an attribute for the element
-    void setAttribute(const char * name, const char * value);
+    void setAttribute(const QString & name, const QString & value);
 
     /// Checks if this element has an attribute of the given name
-    bool hasAttribute(const char * name) const;
+    bool hasAttribute(const QString & name) const;
     /// Returns the value of an attribute
-    QString getAttribute(const char * name) const;
+    QString getAttribute(const QString & name) const;
 
     /// Gets the text content of this element
     /// @return The text content of this element
@@ -66,9 +66,9 @@ namespace Valuable
     /// Gets a list of child elements
     NodeList getChildNodes() const;
     /// Gets a list of child elements with the given name
-    NodeList selectChildNodes(const char * tagname) const;
+    NodeList selectChildNodes(const QString & tagname) const;
     /// Gets a child element with the given name
-    DOMElement getChildNode(const char * tagname);
+    DOMElement getChildNode(const QString & tagname);
 
     /// Dumps this elements into the given file
     void dumpInfo(FILE *, int recursion = 0);

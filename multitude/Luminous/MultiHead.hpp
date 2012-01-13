@@ -306,7 +306,7 @@ namespace Luminous {
       const MultiHead * screen() const { return m_screen; }
 
     private:
-      LUMINOUS_API virtual bool readElement(Valuable::DOMElement ce);
+      LUMINOUS_API virtual bool readElement(const Valuable::ArchiveElement & ce);
 
       MultiHead                *m_screen;
       Valuable::AttributeVector2i   m_location;
@@ -386,7 +386,7 @@ namespace Luminous {
     static float dpi() { return 96.0f; }
 
   private:
-    virtual bool readElement(Valuable::DOMElement ce);
+    virtual bool readElement(const Valuable::ArchiveElement & ce);
     virtual void dpmsChanged();
 
     std::vector<std::shared_ptr<Window> > m_windows;

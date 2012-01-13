@@ -71,17 +71,14 @@ namespace Valuable
     return m_wrapped->x.tagName();
   }
 
-  void DOMElement::appendChild(DOMElement element)
+  void DOMElement::appendChild(const DOMElement & element)
   {
     m_wrapped->x.appendChild(element.m_wrapped->x);
   }
 
-  void DOMElement::setAttribute(const char * name, const char * value)
+  void DOMElement::setAttribute(const QString & name, const QString & value)
   {
-    if(!value || !name || !m_wrapped)
-      return;
-
-    if(!strlen(value))
+    if(!m_wrapped)
       return;
 
     m_wrapped->x.setAttribute(name, value);
@@ -112,7 +109,7 @@ namespace Valuable
     return list;
   }
   
-  DOMElement::NodeList DOMElement::selectChildNodes(const char * tagname) const
+  DOMElement::NodeList DOMElement::selectChildNodes(const QString & tagname) const
   {
     NodeList list; 
 
@@ -137,7 +134,7 @@ namespace Valuable
     return list; 
   }
 
-  DOMElement DOMElement::getChildNode(const char * tagname)
+  DOMElement DOMElement::getChildNode(const QString & tagname)
   {
     NodeList nodes = getChildNodes();
     
@@ -210,7 +207,7 @@ namespace Valuable
       return tmp;
   }
 
-  bool DOMElement::hasAttribute(const char * name) const
+  bool DOMElement::hasAttribute(const QString & name) const
   {
     if(isNull())
       return false;
@@ -218,7 +215,7 @@ namespace Valuable
     return m_wrapped->x.hasAttribute(name);
   }
 
-  QString DOMElement::getAttribute(const char * name) const
+  QString DOMElement::getAttribute(const QString & name) const
   {
       if(isNull()) {
           Radiant::error("DOMElement::getAttribute # can not get attribute from a null element");

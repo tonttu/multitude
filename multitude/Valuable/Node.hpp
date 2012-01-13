@@ -147,11 +147,10 @@ namespace Valuable
     /// De-serializes this object (and its children) from a DOM node
     virtual bool deserialize(const ArchiveElement & element);
 
-    /// Handles a DOM element that lacks automatic handlers.
-    /// This function is only for keeping backwards compatibility.
+    /// Handles a serialization element that lacks automatic handlers.
     /// @param element The element to be deserialized
     /// @return true on success
-    virtual bool readElement(DOMElement element);
+    virtual bool readElement(const ArchiveElement & element);
 
     /// Prints the contents of this Attribute to the terminal
     void debugDump();

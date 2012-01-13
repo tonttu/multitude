@@ -84,10 +84,10 @@ namespace Valuable
   }
 
 
-  bool DOMDocument::writeToFile(const char * filename)
+  bool DOMDocument::writeToFile(const QString & filename)
   {
     return Radiant::FileUtils::writeTextFile
-      (filename, m_wrapped->x.toByteArray().data());
+      (filename.toUtf8().data(), m_wrapped->x.toByteArray().data());
   }
 
   bool DOMDocument::writeToMem(QByteArray & buffer)
@@ -97,7 +97,7 @@ namespace Valuable
     return true;
   }
 
-  bool DOMDocument::readFromFile(const char * filename, bool /*validate*/)
+  bool DOMDocument::readFromFile(const QString & filename, bool /*validate*/)
   {
     QFile file(filename);
 
@@ -110,7 +110,7 @@ namespace Valuable
     if(!m_wrapped->x.setContent( & file, & errstr, & errline)) {
       file.close();
       error("DOMDocument::readFromFile # Cannot read file %s, line %d: %s",
-            filename, errline, errstr.toUtf8().data());
+            filename.toUtf8().data(), errline, errstr.toUtf8().data());
       return false;
     }
 

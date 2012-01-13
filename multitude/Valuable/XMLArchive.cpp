@@ -78,12 +78,12 @@ namespace Valuable
 
   void XMLArchiveElement::add(const QString & name, const QString & value)
   {
-    m_element.setAttribute(name.toUtf8().data(), value.toUtf8().data());
+    m_element.setAttribute(name, value);
   }
 
   QString XMLArchiveElement::get(const QString & name) const
   {
-    return m_element.getAttribute(name.toUtf8().data());
+    return m_element.getAttribute(name);
   }
 
   void XMLArchiveElement::set(const QString & s)
@@ -140,7 +140,7 @@ namespace Valuable
 
   bool XMLArchive::writeToFile(const QString & file) const
   {
-    return m_document->writeToFile(file.toUtf8().data());
+    return m_document->writeToFile(file);
   }
 
   bool XMLArchive::writeToMem(QByteArray & buffer) const
@@ -150,7 +150,7 @@ namespace Valuable
 
   bool XMLArchive::readFromFile(const QString & filename)
   {
-    return m_document->readFromFile(filename.toUtf8().data());
+    return m_document->readFromFile(filename);
   }
 
   bool XMLArchive::readFromMem(const QByteArray & buffer)

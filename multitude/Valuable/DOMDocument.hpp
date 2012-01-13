@@ -45,7 +45,7 @@ namespace Valuable
     void appendChild(DOMElement element);
 
     /// Writes the document to a file
-    bool writeToFile(const char * filename);
+    bool writeToFile(const QString & filename);
     /// Writes the document to memory
     bool writeToMem(QByteArray & buf);
 
@@ -54,7 +54,7 @@ namespace Valuable
     /// @param validate if set to true, the XML must validate (it must have a
     /// schema)
     /// @return true if there were no errors
-    bool readFromFile(const char * filename, bool validate = false);
+    bool readFromFile(const QString & filename, bool validate = false);
 
     bool readFromMem(const QByteArray & buffer);
 

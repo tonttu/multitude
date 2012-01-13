@@ -317,9 +317,12 @@ namespace Valuable
 
       // If the value exists, just deserialize it. Otherwise, pass the element
       // to readElement()
+      bool ok = false;
       if(vo)
-        vo->deserialize(elem);
-      else if(!elem.xml() || !readElement(*elem.xml())) {
+        ok = vo->deserialize(elem);
+      if(!ok)
+        ok = readElement(elem);
+      if(!ok) {
         Radiant::error(
             "Node::deserialize # (%s) don't know how to handle element '%s'", type(), name.toUtf8().data());
         return false;
@@ -656,7 +659,7 @@ namespace Valuable
     s_queue << item;
   }
 
-  bool Node::readElement(DOMElement )
+  bool Node::readElement(const ArchiveElement &)
   {
     return false;
   }
