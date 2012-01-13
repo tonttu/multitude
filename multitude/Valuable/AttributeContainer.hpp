@@ -22,22 +22,7 @@
 
 namespace Valuable
 {
-  /// Template class for all STL-like containers
-  /**
-    The container type can be nested STL-style container (like
-    AttributeContainer<std::map<int, std::vector<float> > >), it will be
-    (de)serialized recursively.
-
-    Example:
-    \code
-    typedef AttributeContainer<std::list<int> > List;
-    HasValue values;
-    List list(values, "list");
-    list->push_back(4);
-    List::iterator it = list->begin();
-    \endcode
-  */
-  template<typename T> class AttributeContainer : public Attribute
+  template<typename T> class AttributeContainerT : public Attribute
   {
   public:
     /// STL-compatible iterator
@@ -50,15 +35,6 @@ namespace Valuable
     typedef typename T::const_reverse_iterator const_reverse_iterator;
     /// STL-like typedef for value type inside of T
     typedef typename T::value_type value_type;
-
-    AttributeContainer() {}
-
-    /// Constructs a new container
-    /// @param host host object
-    /// @param name name of the value
-    AttributeContainer(Node * host, const QString & name)
-      : Attribute(host, name, false)
-    {}
 
     virtual const char* type() const OVERRIDE { return "container"; }
 
@@ -100,8 +76,71 @@ namespace Valuable
     const T * operator -> () const { return &m_container; }
 
   protected:
+    AttributeContainerT() {}
+
+    /// Constructs a new container
+    /// @param host host object
+    /// @param name name of the value
+    AttributeContainerT(Node * host, const QString & name)
+      : Attribute(host, name, false)
+    {}
+
     /// The actual container that this AttributeContainer wraps.
     T m_container;
+  };
+
+  /// Template class for all STL-like containers
+  /**
+    The container type can be nested STL-style container (like
+    AttributeContainer<std::map<int, std::vector<float> > >), it will be
+    (de)serialized recursively.
+
+    Example:
+    \code
+    typedef AttributeContainer<std::list<int> > List;
+    HasValue values;
+    List list(values, "list");
+    list->push_back(4);
+    List::iterator it = list->begin();
+    \endcode
+  */
+  template<typename T> class AttributeContainer : public AttributeContainerT<T>
+  {
+  public:
+    AttributeContainer() {}
+
+    /// Constructs a new container
+    /// @param host host object
+    /// @param name name of the value
+    AttributeContainer(Node * host, const QString & name)
+      : AttributeContainerT<T>(host, name)
+    {}
+  };
+
+  template <typename Key, typename T, typename Compare, typename Allocator>
+  class AttributeContainer<std::map<Key, T, Compare, Allocator> >
+    : public AttributeContainerT<std::map<Key, T, Compare, Allocator> >
+  {
+  public:
+    typedef AttributeContainerT<std::map<Key, T, Compare, Allocator> > Container;
+
+    AttributeContainer() {}
+
+    /// Constructs a new container
+    /// @param host host object
+    /// @param name name of the value
+    AttributeContainer(Node * host, const QString & name)
+      : Container(host, name)
+    {}
+
+    virtual bool deserialize(const ArchiveElement & element) OVERRIDE
+    {
+      for(ArchiveElement::Iterator it = element.children(); it; ++it) {
+        typename Container::value_type p = Serializer::deserialize<typename Container::value_type>(*it);
+        Container::m_container[p.first] = p.second;
+      }
+      return true;
+    }
   };
 }
 
