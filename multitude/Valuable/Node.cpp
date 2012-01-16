@@ -579,7 +579,7 @@ namespace Valuable
 
     m_frame++;
 
-    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); ++it) {
+    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end();) {
       ValuePass & vp = *it;
 
       if(!vp.m_valid) {
@@ -616,6 +616,7 @@ namespace Valuable
           vp.m_func->Call(v8::Context::GetCurrent()->Global(), argc+1, argv);
         }
       }
+      ++it;
     }
   }
 
