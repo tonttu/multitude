@@ -1,5 +1,5 @@
-#ifndef FT2XXSTREAM_HPP
-#define FT2XXSTREAM_HPP
+#ifndef RADIANT_FT2XXSTREAM_HPP
+#define RADIANT_FT2XXSTREAM_HPP
 
 #ifndef MULTI_WITH_FTD2XX
 #error "Must have FTD2XX support to compile the FT2xxStream"
