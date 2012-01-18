@@ -327,12 +327,13 @@ namespace VideoDisplay {
 
     Valuable::ValueFloat    m_contrast;
 
-    Radiant::TimeStamp started;
+    Radiant::TimeStamp      m_started;
     float m_fps;
     bool m_syncToTime;
     int m_outOfSync;
     int m_outOfSyncTotal;
     int m_syncing;
+    int m_frames;
   };
 
 }

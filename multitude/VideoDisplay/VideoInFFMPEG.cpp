@@ -96,7 +96,7 @@ namespace VideoDisplay {
     float fps = m_fps > 0.0f ? m_fps : m_video.fps();
 
     if(fps <= 1.0f || fps >= 100.0f)
-      fps = 30.0f;
+      fps = 0.0f;
 
     return fps;
   }
@@ -192,7 +192,7 @@ namespace VideoDisplay {
 
     m_info.m_videoFrameSize.make(img->m_width, img->m_height);
 
-    float fp = fps();
+    float fp = video.fps();
 
     m_duration = TimeStamp::createSecondsD(video.durationSeconds());
     m_runtime = TimeStamp::createSecondsD(video.runtimeSeconds());
