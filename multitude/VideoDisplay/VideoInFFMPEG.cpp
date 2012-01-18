@@ -145,7 +145,9 @@ namespace VideoDisplay {
 
       m_info.m_videoFrameSize.make(img->m_width, img->m_height);
 
-      m_frames.resize(bufferLengthInSeconds * fps());
+      //m_frames.resize(bufferLengthInSeconds * fps());
+      // Assume 30fps as the video has not been opened yet
+      m_frames.resize(bufferLengthInSeconds * 30.f);
 
       putFrame(img, FRAME_SNAPSHOT, 0, 0, false);
 
