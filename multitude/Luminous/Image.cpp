@@ -157,18 +157,29 @@ namespace Luminous
 
       for(int x0 = 0; x0 < w; x0++) {
 
-        Nimble::Vector4 value(0.f, 0.f, 0.f, 0.f);
-
         int count = 0;
-        for(int j = sy * y0; j < sy * y0 + sy; j++)
-          for(int i = sx * x0; i < sx * x0 + sx; i++) {
+        int alphaCount = 0;
+        float alphaSum = 0.f;
+        Nimble::Vector3 colorSum(0.f, 0.f, 0.f);
+
+        for(int j = sy * y0; j < sy * y0 + sy; ++j) {
+          for(int i = sx * x0; i < sx * x0 + sx; ++i) {
+            Nimble::Vector4 p = src.pixel(i,j);
+            // If this pixel contributes any color, scale by alpha and add it to the sum
+            if (p.w > std::numeric_limits<float>::epsilon()) {
+              alphaSum += p.w;
+              colorSum += p.vector3() * p.w;
+              ++alphaCount;
+            }
             ++count;
-            value += src.pixel(i, j);
           }
+        }
+        // Scale the color by the number of pixels that contribute
+        colorSum /= alphaCount;
+        // Scale the alpha by all the pixels
+        alphaSum = std::min<float>(alphaSum / count, 1.f);
 
-        value /= count;
-
-        setPixel(x0, y0, value);
+        setPixel(x0, y0, Nimble::Vector4(colorSum.x, colorSum.y, colorSum.z, alphaSum));
       }
     }
   }
@@ -285,11 +296,6 @@ namespace Luminous
           float a01 = v01[3];
           float a11 = v11[3];
 
-          /*a00 = 200;
-            a10 = 200;
-            a01 = 200;
-            a11 = 20;
-            */
           float asum = a00 * fw00 + a10 * fw10 + a01 * fw01 + a11 * fw11;
           float ascale = asum > 0.00001 ? 1.0f / asum : 0.0f;
 
