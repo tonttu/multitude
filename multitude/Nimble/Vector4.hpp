@@ -94,10 +94,10 @@ namespace Nimble {
     /// Divides the vector component-wise
     inline Vector4T&	descale		(const Vector4T& v)	       { x /= v.x; y /= v.y; z /= v.z; w /= v.w; return *this; }
 
-	/// Clamps both components to the range [0,1]
-	inline Vector4T&	clampUnit	(void)						{ return clamp(T(0.0), T(1.0)); }
-	/// Clamps both components to the range [low, high]
-	inline Vector4T&	clamp (T low, T high)       { x = Math::Clamp(x, low, high); y = Math::Clamp(y, low, high); z = Math::Clamp(z, low, high); w = Math::Clamp(w, low, high); return * this; }
+	  /// Clamps both components to the range [0,1]
+	  inline Vector4T&	clampUnit	(void)						{ return clamp(T(0.0), T(1.0)); }
+	  /// Clamps both components to the range [low, high]
+	  inline Vector4T&	clamp (T low, T high)       { x = Math::Clamp(x, low, high); y = Math::Clamp(y, low, high); z = Math::Clamp(z, low, high); w = Math::Clamp(w, low, high); return * this; }
 
     /// Returns a vector with components reordered.
     inline Vector4T    shuffle         (int i1, int i2, int i3, int i4) const { return Vector4T(get(i1), get(i2), get(i3), get(i4)); }

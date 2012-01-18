@@ -56,22 +56,22 @@ namespace Nimble {
     //template <class S> Vector2T& operator=  (const Vector2T<S>& v)	{ x = (T)v.x; y = (T)v.y; return *this; }
 
     /// Fill the vector with zeroes
-    Vector2T&	clear		(void)					{ x = (T)(0); y = (T)(0); return *this; }
+    inline Vector2T&	clear		(void)					{ x = (T)(0); y = (T)(0); return *this; }
     /// Set the vector to given values
-    Vector2T&	make		(T cx, T cy)		{ x = cx; y = cy; return *this; }
+    inline Vector2T&	make		(T cx, T cy)		{ x = cx; y = cy; return *this; }
     /// Set both components to the given value
-    Vector2T&	make		(T xy)					{ x = (xy); y = (xy); return *this; }
+    inline Vector2T&	make		(T xy)					{ x = (xy); y = (xy); return *this; }
     /// Returns a pointer to the first element
-    T *         data() { return &x; }
+    inline  T *         data() { return &x; }
     /// Returns a pointer to the first element
-    const T *   data() const { return &x; }
+    inline  const T *   data() const { return &x; }
     /// Compares if two vectors are equal
    	inline bool operator==  (const Vector2T& src) const
-	{
+	  {
       static const float eps = std::numeric_limits<T>::epsilon();
       return
         x >= src.x - eps && x<= src.x + eps && y >= src.y - eps && y<= src.y + eps;
-	}
+	  }
 
     /// Compares if two vectors differ
     inline bool	operator!=  (const Vector2T& src) const { return !operator==(src); }

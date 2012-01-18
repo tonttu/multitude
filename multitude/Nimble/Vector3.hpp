@@ -44,13 +44,13 @@ namespace Nimble {
     /// Constructs a vector initializing it to given values
     inline Vector3T(T cx, T cy, T cz) : x(cx), y(cy), z(cz) {}
     /// Constructs a vector copying values from memory
-    template <class S> Vector3T(const S * v) { x = (T)v[0]; y = (T)v[1]; z = (T)v[2]; }
+    template <class S> inline Vector3T(const S * v) { x = (T)v[0]; y = (T)v[1]; z = (T)v[2]; }
     /// Constructs a vector copying it from another vector
-    template <class S> Vector3T(const Vector3T<S>& v)		   { x = (T)v.x;	y = (T)v.y; z = (T)v.z; }
+    template <class S> inline Vector3T(const Vector3T<S>& v)		   { x = (T)v.x;	y = (T)v.y; z = (T)v.z; }
     /// Constructs a vector using a 2d vector and a scalar component
-    template <class S> Vector3T(const Vector2T<S>& v, S az)		   { x = (T)v.x;	y = (T)v.y; z = az; }
+    template <class S> inline Vector3T(const Vector2T<S>& v, S az)		   { x = (T)v.x;	y = (T)v.y; z = az; }
     /// Copies a vector
-    template <class S> Vector3T& operator=(const Vector3T<S>& v)	   { x = (T)v.x; y = (T)v.y; z = (T)v.z; return *this; }
+    template <class S> inline Vector3T& operator=(const Vector3T<S>& v)	   { x = (T)v.x; y = (T)v.y; z = (T)v.z; return *this; }
     /// Fills the vector with zeroes
     inline Vector3T&	clear		(void)				   { x = (T)(0);  y = (T)(0); z = (T)(0); return *this;	}
     /// Sets the vector to given values
@@ -62,14 +62,14 @@ namespace Nimble {
     /// Returns a pointer to the first element
     inline const T * data() const { return &x; }
     /// Compares if two vectors are equal
-	inline bool operator==  (const Vector3T& src) const
-	{
+	  inline bool operator==  (const Vector3T& src) const
+	  {
       static const float eps = std::numeric_limits<T>::epsilon();
       return
         x >= src.x - eps && x<= src.x + eps &&
         y >= src.y - eps && y<= src.y + eps &&
         z >= src.z - eps && z<= src.z + eps;
-	}
+	  }
     /// Compares if two vectors differ
     inline bool		operator!=  (const Vector3T& src) const { return !operator==(src); }
 
@@ -112,8 +112,8 @@ namespace Nimble {
     inline Vector3T&	descale		(const Vector3T& v)		   { x /= v.x; y /= v.y; z /= v.z; return *this; }
     /// Clamps components to range [0,1]
     inline Vector3T&	clampUnit	(void)				   { return clamp(T(0.0), T(1.0)); }
-	/// Clamps all components to the range [low, high]
-	inline Vector3T&	clamp (T low, T high)       { x = Math::Clamp(x, low, high); y = Math::Clamp(y, low, high);  z = Math::Clamp(z,low, high); return * this; }
+	  /// Clamps all components to the range [low, high]
+	  inline Vector3T&	clamp (T low, T high)       { x = Math::Clamp(x, low, high); y = Math::Clamp(y, low, high);  z = Math::Clamp(z,low, high); return * this; }
     /// Returns a vector with components reordered.
     inline Vector3T    shuffle         (int i1, int i2, int i3) const { return Vector3T(get(i1), get(i2), get(i3)); }
 
