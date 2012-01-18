@@ -170,7 +170,7 @@ MULTI_VIDEO_LIBS = $$LIB_SCREENPLAY $$LIB_RESONANT $$LIB_VIDEODISPLAY
 QMAKE_LIBDIR += $$PWD/lib
 
 # Disable asserts in release mode
-CONFIG(release, debug|release) {
+build_pass:CONFIG(release, debug|release) {
   DEFINES += NDEBUG
 }
 

@@ -163,6 +163,10 @@ namespace Screenplay {
 
     static int       m_debug;
 
+    double           m_durationSeconds;
+    float            m_fps;
+    Nimble::Vector2i m_vcontextSize;
+
     // This class is accessed at least from the main thread and VideoInFFMPEG.
     // This mutex tries to make that safe.
     mutable Radiant::Mutex m_mutex;

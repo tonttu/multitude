@@ -27,7 +27,9 @@ namespace Screenplay {
 
   using namespace Radiant;
 
-  // FFMPEG is not thread-safe
+  /// Some functions in FFMPEG aren't thread-safe, like avcodec_find_*, av_find_,
+  /// avcodec_(open|close) and some initialization functions. Decoding should
+  /// be thread-safe
   static Radiant::Mutex s_ffmpegMutex(true);
 
   int VideoInputFFMPEG::m_debug = 0;
@@ -49,6 +51,9 @@ namespace Screenplay {
     m_pkt(0),
     m_flags(0),
     m_lastPts(0),
+    m_durationSeconds(0.0),
+    m_fps(0.0f),
+    m_vcontextSize(0, 0),
     m_mutex(true)
   {
     static volatile bool ffmpegInitialized = false;
@@ -82,10 +87,6 @@ namespace Screenplay {
   const Radiant::VideoImage * VideoInputFFMPEG::captureImage()
   {
     Radiant::Guard g(m_mutex);
-
-    /// @todo this effectively prevents multi-threaded video decoding. Someone
-    /// can figure out a fix if this becomes a problem.
-    Radiant::Guard g2(s_ffmpegMutex);
 
     assert(this != 0);
 
@@ -511,51 +512,26 @@ namespace Screenplay {
 
   int VideoInputFFMPEG::width() const
   {
-    Radiant::Guard g(m_mutex);
-
-    return m_vcontext ? m_vcontext->width : 0;
+    return m_vcontextSize.x;
   }
 
   int VideoInputFFMPEG::height() const
   {
-    Radiant::Guard g(m_mutex);
-
-    return m_vcontext ? m_vcontext->height : 0;
+    return m_vcontextSize.y;
   }
 
   float VideoInputFFMPEG::fps() const
   {
-    Radiant::Guard g(m_mutex);
-
-    if(!m_vcontext)
-      return 0;
-
-    double fps = 1/(m_vcontext->ticks_per_frame * av_q2d(m_vcontext->time_base));
-
-    // If we get some wild values use "guess"
-    if (fps >= 100) {
-      if (!m_ic || m_vindex < 0) {
-        warning("VideoInputFFMPEG::fps # Could not get fps");
-        return 0;
-      }
-      assert((int) m_ic->nb_streams > m_vindex && m_vindex >= 0);
-      if((int) m_ic->nb_streams <= m_vindex)
-        return 0;
-      fps = av_q2d(m_ic->streams[m_vindex]->r_frame_rate);
-    }
-
-    return float(fps);
+    return m_fps;
   }
 
   Radiant::ImageFormat VideoInputFFMPEG::imageFormat() const
   {
-    Radiant::Guard g(m_mutex);
     return m_image.m_format;
   }
 
   unsigned int VideoInputFFMPEG::size() const
   {
-    Radiant::Guard g(m_mutex);
     return m_image.size();
   }
 
@@ -731,6 +707,39 @@ namespace Screenplay {
       // return false;
     }
 
+    if(m_ic && m_vindex >= 0) {
+      AVStream * s = m_ic->streams[m_vindex];
+
+      if (s->duration != (int64_t) AV_NOPTS_VALUE) {
+        m_durationSeconds = s->duration * av_q2d(s->time_base);
+      } else if (m_ic->duration != (int64_t) AV_NOPTS_VALUE) {
+        // If video stream doesn't have duration, check the container for valid duration info.
+        // Could also iterate over all other streams as well.
+        debugScreenplay("VideoInputFFMPEG::open # Could not get video stream duration. Using container duration.");
+        AVRational av_time_base = {1, AV_TIME_BASE};
+        m_durationSeconds = m_ic->duration * av_q2d(av_time_base);
+      }
+    }
+
+    if(m_vcontext) {
+      float fps = 1.0f/(m_vcontext->ticks_per_frame * av_q2d(m_vcontext->time_base));
+
+      // If we get some wild values use "guess"
+      if(fps >= 100) {
+        if(!m_ic || m_vindex < 0) {
+          fps = 0.0f;
+          warning("VideoInputFFMPEG::open # Could not get fps");
+        } else {
+          assert((int) m_ic->nb_streams > m_vindex && m_vindex >= 0);
+          if((int) m_ic->nb_streams > m_vindex) {
+            fps = av_q2d(m_ic->streams[m_vindex]->r_frame_rate);
+          } else fps = 0.0f;
+        }
+      }
+      m_fps = fps;
+      m_vcontextSize.make(m_vcontext->width, m_vcontext->height);
+    }
+
     debugScreenplay("%s # Opened file %s,  (%d x %d %s, %s %d chans @ %d Hz) %d (%d, %f)",
           fname, filename, width(), height(), vcname, acname, m_audioChannels,
           m_audioSampleRate,
@@ -789,13 +798,16 @@ namespace Screenplay {
 
     m_ic = 0;
 
+    m_durationSeconds = 0.0;
+    m_fps = 0.0f;
+    m_vcontextSize.make(0, 0);
+
     return true;
   }
 
   bool VideoInputFFMPEG::seekPosition(double timeSeconds)
   {
     Radiant::Guard g(m_mutex);
-    Radiant::Guard g2(s_ffmpegMutex);
 
     debugScreenplay("VideoInputFFMPEG::seekPosition # %lf", timeSeconds);
 
@@ -833,23 +845,7 @@ namespace Screenplay {
 
   double VideoInputFFMPEG::durationSeconds() const
   {
-    Radiant::Guard g(m_mutex);
-
-    if(m_ic && m_vindex >= 0) {
-      AVStream * s = m_ic->streams[m_vindex];
-
-      if (s->duration != (int64_t) AV_NOPTS_VALUE) {
-        return s->duration * av_q2d(s->time_base);
-      } else if (m_ic->duration != (int64_t) AV_NOPTS_VALUE) {
-        // If video stream doesn't have duration, check the container for valid duration info.
-        // Could also iterate over all other streams as well.
-        debugScreenplay("VideoInputFFMPEG::durationSeconds # Could not get video stream duration. Using container duration.");
-        AVRational av_time_base = {1, AV_TIME_BASE};
-        return m_ic->duration * av_q2d(av_time_base);
-      }
-    }
-
-    return 0.0;
+    return m_durationSeconds;
   }
 
   double VideoInputFFMPEG::runtimeSeconds() const
@@ -862,19 +858,16 @@ namespace Screenplay {
 
   bool VideoInputFFMPEG::start()
   {
-    Radiant::Guard g(m_mutex);
-    return ((m_vcodec == 0) ? false : true);
+    return isStarted();
   }
 
   bool VideoInputFFMPEG::isStarted() const
   {
-    Radiant::Guard g(m_mutex);
-    return ((m_vcodec == 0) ? false : true);
+    return m_vcodec && m_fps > 0.0f;
   }
 
   bool VideoInputFFMPEG::stop()
   {
-    Radiant::Guard g(m_mutex);
     return true;
   }
 

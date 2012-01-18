@@ -40,26 +40,49 @@ namespace Luminous {
         gets a direct pointer to the GLResources object, it is slightly faster than
         the function without this argument.
 
+        @param wasCreated true if the resource was created, false if it already existed
         @return Returns a reference to the OpenGL resource.
     */
-    inline T & ref()
+    inline T & ref(bool * wasCreated = 0)
     {
-      GLRESOURCE_ENSURE3(T, obj, this);
+      if(wasCreated)
+        *wasCreated = false;
+
+      Luminous::GLResources * grs = Luminous::GLResources::getThreadResources();
+      T * obj = dynamic_cast<T *> (grs->getResource(this));
+      if(!obj) {
+        obj = new T(grs);
+        grs->addResource(this, obj);
+
+        if(wasCreated)
+          *wasCreated = true;
+      }
+
       return *obj;
     }
 
-
-
     /** @copydoc ref
         @param rs Pointer to the OpenGL resource container
-
+        @param wasCreated true if the resource was created, false if it already existed
         */
-    inline T & ref(GLResources * rs)
+    inline T & ref(GLResources * rs, bool * wasCreated = 0)
     {
       if(!rs) {
-        return ref();
+        return ref(wasCreated);
       }
-      GLRESOURCE_ENSURE(T, obj, this, rs);
+
+      if(wasCreated)
+        *wasCreated = false;
+
+      T * obj = dynamic_cast<T *> (rs->getResource(this));
+      if(!obj) {
+        obj = new T(rs);
+        rs->addResource(this, obj);
+
+        if(wasCreated)
+          *wasCreated = true;
+      }
+
       return *obj;
     }
 

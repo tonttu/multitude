@@ -1,13 +1,14 @@
 #ifndef CAMERA_HPP
 #define CAMERA_HPP
 
+#include "Export.hpp"
 #include "Transform.hpp"
 
 namespace Vivid
 {
 
 /// A pespective camera
-class Camera : public Transform
+class VIVID_API Camera : public Transform
 {
 public:
     Camera();

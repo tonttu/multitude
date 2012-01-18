@@ -1,6 +1,8 @@
 #ifndef VIVID_RENDERABLE_HPP
 #define VIVID_RENDERABLE_HPP
 
+#include "Export.hpp"
+
 #include <Radiant/RefPtr.hpp>
 
 #include <Nimble/Matrix4.hpp>
@@ -15,7 +17,7 @@ namespace Vivid
 
 class Mesh;
 
-class Renderable
+class VIVID_API Renderable
 {
 public:
   Renderable();

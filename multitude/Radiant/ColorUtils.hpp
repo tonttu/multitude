@@ -17,12 +17,10 @@
 #define RADIANT_COLOR_UTILS_HPP
 
 #include "Export.hpp"
-#include "Trace.hpp"
+#include "VideoImage.hpp"
 
 #include <Nimble/Math.hpp>
 #include <Nimble/Vector3.hpp>
-
-#include <cassert>
 
 namespace Radiant
 {
@@ -47,6 +45,18 @@ namespace Radiant
     static void hsvTorgb(float h, float s, float v, float & r, float & g, float & b);
     /// @copybrief rgbTohsv
     static void hsvTorgb(Nimble::Vector3f & hsv, Nimble::Vector3f & rgb);
+
+    /// Convert linear RGB to CIE XYZ tristimulus values
+    /// @param rgb linear rgb color
+    /// @param[out] cie CIE XYZ tristimulus values
+    static void rgbToCIEXYZ(const Nimble::Vector3f & rgb, Nimble::Vector3f & cie);
+    static void CIEXYZToRGB(const Nimble::Vector3f & cie, Nimble::Vector3f & rgb);
+
+    /// Color balance the given RGB image
+    /// Performs linear scaling of the RGB components with the given values and clamps them to [0,255] range
+    /// @param img image to color balance
+    /// @param rgbCoeff scaling coefficients for each color component
+    static void colorBalance(VideoImage & img, Nimble::Vector3f rgbCoeff);
   };
 
 }
