@@ -44,7 +44,12 @@
 */
 
 namespace Nimble {
-
+  template <typename T> class Vector2T;
+  template <typename T> class Vector3T;
+  template <typename T> class Vector4T;
+  template <typename T> class Matrix2T;
+  template <typename T> class Matrix3T;
+  template <typename T> class Matrix4T;
 }
 
 #endif

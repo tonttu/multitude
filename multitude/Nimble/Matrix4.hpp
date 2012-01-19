@@ -16,9 +16,16 @@
 #ifndef NIMBLE_MATRIX4T_HPP
 #define NIMBLE_MATRIX4T_HPP
 
+#include "Nimble.hpp"
 #include "Export.hpp"
 #include "Matrix3.hpp"
 #include "Vector4.hpp"
+
+template <class T>
+inline Nimble::Matrix4T<T> operator*(const Nimble::Matrix4T<T> &, const Nimble::Matrix4T<T> &);
+
+template <class T>
+inline Nimble::Vector4T<T> operator*(const Nimble::Matrix4T<T> &, const Nimble::Vector4T<T> &);
 
 namespace Nimble {
 

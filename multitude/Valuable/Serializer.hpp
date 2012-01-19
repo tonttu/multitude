@@ -222,7 +222,7 @@ namespace Valuable
       inline static T * deserialize(const ArchiveElement & element)
       {
         typedef typename remove_const<T>::Type T2;
-        std::istringstream is(element.get());
+        std::istringstream is(element.get().toStdString());
         T2 * t = new T2;
         is >> *t;
         return t;
