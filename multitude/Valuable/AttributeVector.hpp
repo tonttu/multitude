@@ -44,7 +44,7 @@ namespace Valuable
       using Base::operator =;
       using Base::value;
 
-      AttributeVector() : Base() {}
+      AttributeVector() : Base(0, "", VectorType::null(), false) {}
       /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
       /// @param v The value of this object
       AttributeVector(Node * host, const QString & name, const VectorType & v = VectorType::null(), bool transit = false)
