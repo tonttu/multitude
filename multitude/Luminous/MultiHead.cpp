@@ -521,7 +521,7 @@ namespace Luminous {
 
     const QString & type = ce.get("type");
 
-    if(type == QString("window")) {
+    if(type == "window") {
       Window * win = new Window(this);
 
       // Add as child & recurse
