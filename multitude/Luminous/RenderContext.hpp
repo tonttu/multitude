@@ -414,6 +414,7 @@ namespace Luminous
     void bindDefaultProgram();
 
     void flush();
+    void restart();
 
   protected:
     virtual void beforeTransformChange();
@@ -428,6 +429,14 @@ namespace Luminous
     Internal * m_data;
   };
 
+  class LegacyOpenGL : Patterns::NotCopyable
+  {
+  public:
+    LegacyOpenGL(RenderContext * r) : m_r(r) { r->flush(); }
+    ~LegacyOpenGL() { m_r->restart(); }
+  private:
+    RenderContext * m_r;
+  };
 
   class VertexAttribArrayStep : public Patterns::NotCopyable
   {

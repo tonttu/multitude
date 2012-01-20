@@ -672,11 +672,6 @@ namespace Luminous
 
     resetTransform();
     m_data->initialize();
-    m_data->m_recursionDepth = 0;
-    m_data->m_frameCount++;
-    m_data->m_vertices.clear();
-    m_data->m_program = 0;
-    m_data->m_basic_shader->bind();
 
 
     // Make sure the clip stack is empty
@@ -1694,6 +1689,14 @@ namespace Luminous
     glDrawArrays(GL_TRIANGLE_STRIP, 0, m_data->m_vertices.size());
     m_data->m_vertices.clear();
     Utils::glCheck("RenderContext::flush # 3");
+  }
+
+  void RenderContext::restart()
+  {
+    m_data->m_program = 0;
+    m_data->m_basic_shader->bind();
+
+    memset(m_data->m_textures, 0, sizeof(m_data->m_textures));
   }
 
   void RenderContext::beforeTransformChange()
