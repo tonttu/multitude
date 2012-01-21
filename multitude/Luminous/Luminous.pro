@@ -2,7 +2,8 @@ include(../multitude.pri)
 
 HEADERS += BGThread.hpp \
     DummyOpenGL.hpp \
-    Style.hpp
+    Style.hpp \
+    VertexHolder.hpp
 HEADERS += FramebufferResource.hpp
 HEADERS += CodecRegistry.hpp
 HEADERS += Collectable.hpp
@@ -39,7 +40,8 @@ HEADERS += Utils.hpp
 HEADERS += VertexBuffer.hpp
 HEADERS += VertexBufferImpl.hpp
 SOURCES += BGThread.cpp \
-    Style.cpp
+    Style.cpp \
+    VertexHolder.cpp
 SOURCES += CodecRegistry.cpp
 SOURCES += CPUMipmaps.cpp
 SOURCES += Error.cpp
@@ -116,3 +118,5 @@ QT += gui
 # QT += svg
 
 include(../library.pri)
+
+

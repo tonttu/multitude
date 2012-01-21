@@ -11,6 +11,7 @@
 //#include "RenderTarget.hpp"
 
 #include "Utils.hpp"
+#include "VertexHolder.hpp"
 #include "GLSLProgramObject.hpp"
 
 #include <Radiant/Mutex.hpp>
@@ -448,6 +449,7 @@ namespace Luminous
 
     std::stack<DrawBuf, std::vector<DrawBuf> > m_drawBufferStack;
 
+    /*
     class Vertex
     {
     public:
@@ -459,6 +461,9 @@ namespace Luminous
     };
 
     std::vector<Vertex> m_vertices;
+    */
+
+    RenderPacket m_renderPacket;
 
     unsigned long m_renderCount;
     unsigned long m_frameCount;
@@ -1336,70 +1341,76 @@ namespace Luminous
 
   void RenderContext::drawRect(const Nimble::Rect & area, const Style & style)
   {
-    Internal::Vertex v;
-    v.m_color = style.color();
-    v.m_useTexture = style.texturing();
+    RenderPacket & rp = m_data->m_renderPacket;
+
+    RectVertex va;
+    va.m_color = style.color();
+    va.m_useTexture = style.texturing();
+    va.m_transform = transform();
 
     // GLSLProgramObject & prog = *m_data->m_basic_shader;
     // prog.bind();
 
-    v.m_location = area.low();
-    v.m_texCoord = style.texCoords().lowHigh();
-    if(!m_data->m_vertices.empty())
-      m_data->m_vertices.push_back(v);
-    m_data->m_vertices.push_back(v);
+    va.m_location = area.low();
+    va.m_texCoord = style.texCoords().lowHigh();
+    if(!rp.empty())
+      rp.addVertex(va);
+    rp.addVertex(va);
 
-    v.m_location = area.highLow();
-    v.m_texCoord = style.texCoords().high();
-    m_data->m_vertices.push_back(v);
+    va.m_location = area.highLow();
+    va.m_texCoord = style.texCoords().high();
+    rp.addVertex(va);
 
-    v.m_location = area.lowHigh();
-    v.m_texCoord = style.texCoords().low();
-    m_data->m_vertices.push_back(v);
+    va.m_location = area.lowHigh();
+    va.m_texCoord = style.texCoords().low();
+    rp.addVertex(va);
 
-    v.m_location = area.high();
-    v.m_texCoord = style.texCoords().highLow();
-    m_data->m_vertices.push_back(v);
-    m_data->m_vertices.push_back(v);
+    va.m_location = area.high();
+    va.m_texCoord = style.texCoords().highLow();
+    rp.addVertex(va);
+    rp.addVertex(va);
   }
 
   void RenderContext::drawRectWithHole(const Nimble::Rect & area,
                                        const Nimble::Rect & hole,
                                        const Luminous::Style & style)
   {
-    Internal::Vertex v;
-    v.m_color = style.color();
-    v.m_useTexture = false;
+    RenderPacket & rp = m_data->m_renderPacket;
 
-    v.m_location = area.low();
+    RectVertex va;
 
-    if(!m_data->m_vertices.empty())
-      m_data->m_vertices.push_back(v);
-    m_data->m_vertices.push_back(v);
+    va.m_color = style.color();
+    va.m_useTexture = false;
+    va.m_transform = transform();
+    va.m_location = area.low();
 
-    v.m_location = hole.low();
-    m_data->m_vertices.push_back(v);
+    if(!rp.empty())
+      rp.addVertex(va);
+    rp.addVertex(va);
 
-    v.m_location = area.highLow();
-    m_data->m_vertices.push_back(v);
-    v.m_location = hole.highLow();
-    m_data->m_vertices.push_back(v);
+    va.m_location = hole.low();
+    rp.addVertex(va);
 
-    v.m_location = area.high();
-    m_data->m_vertices.push_back(v);
-    v.m_location = hole.high();
-    m_data->m_vertices.push_back(v);
+    va.m_location = area.highLow();
+    rp.addVertex(va);
+    va.m_location = hole.highLow();
+    rp.addVertex(va);
 
-    v.m_location = area.lowHigh();
-    m_data->m_vertices.push_back(v);
-    v.m_location = hole.lowHigh();
-    m_data->m_vertices.push_back(v);
+    va.m_location = area.high();
+    rp.addVertex(va);
+    va.m_location = hole.high();
+    rp.addVertex(va);
 
-    v.m_location = area.low();
-    m_data->m_vertices.push_back(v);
-    v.m_location = hole.low();
-    m_data->m_vertices.push_back(v);
-    m_data->m_vertices.push_back(v);
+    va.m_location = area.lowHigh();
+    rp.addVertex(va);
+    va.m_location = hole.lowHigh();
+    rp.addVertex(va);
+
+    va.m_location = area.low();
+    rp.addVertex(va);
+    va.m_location = hole.low();
+    rp.addVertex(va);
+    rp.addVertex(va);
   }
 
   void RenderContext::drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2,
@@ -1452,28 +1463,31 @@ namespace Luminous
 
   void RenderContext::drawQuad(const Nimble::Vector2 * corners, const Luminous::Style & style)
   {
-    Internal::Vertex v;
-    v.m_color = style.color();
-    v.m_useTexture = style.texturing();
+    RenderPacket & rp = m_data->m_renderPacket;
 
-    v.m_location = corners[0];
-    v.m_texCoord = style.texCoords().lowHigh();
-    if(!m_data->m_vertices.empty())
-      m_data->m_vertices.push_back(v);
-    m_data->m_vertices.push_back(v);
+    RectVertex va;
+    va.m_color = style.color();
+    va.m_useTexture = style.texturing();
+    va.m_transform = transform();
 
-    v.m_location = corners[1];
-    v.m_texCoord = style.texCoords().high();
-    m_data->m_vertices.push_back(v);
+    va.m_location = corners[0];
+    va.m_texCoord = style.texCoords().lowHigh();
+    if(!rp.empty())
+      rp.addVertex(va);
+    rp.addVertex(va);
 
-    v.m_location = corners[3];
-    v.m_texCoord = style.texCoords().low();
-    m_data->m_vertices.push_back(v);
+    va.m_location = corners[1];
+    va.m_texCoord = style.texCoords().high();
+    rp.addVertex(va);
 
-    v.m_location = corners[2];
-    v.m_texCoord = style.texCoords().highLow();
-    m_data->m_vertices.push_back(v);
-    m_data->m_vertices.push_back(v);
+    va.m_location = corners[3];
+    va.m_texCoord = style.texCoords().low();
+    rp.addVertex(va);
+
+    va.m_location = corners[2];
+    va.m_texCoord = style.texCoords().highLow();
+    rp.addVertex(va);
+    rp.addVertex(va);
   }
 
   Nimble::Vector2 RenderContext::contextSize() const
@@ -1654,29 +1668,32 @@ namespace Luminous
 
   void RenderContext::flush()
   {
-    if(!m_data->m_vertices.size())
+    RenderPacket & rp = m_data->m_renderPacket;
+
+    if(rp.empty())
       return;
 
     Utils::glCheck("RenderContext::flush # 1");
 
     assert(m_data->m_program != 0);
 
-    const int vsize = sizeof(Internal::Vertex);
 
-    Internal::Vertex & vr = m_data->m_vertices[0];
+    const int vsize = sizeof(RectVertex);
+
+    RectVertex & vr = * rp.vertexData<RectVertex>();
 
     GLSLProgramObject & prog = * m_data->m_program;
 
     prog.setUniformMatrix4("view_transform", m_data->m_viewTransform);
-    prog.setUniformMatrix3("object_transform", transform());
 
     int aloc = prog.getAttribLoc("location");
     int acol = prog.getAttribLoc("color");
     int atex = prog.getAttribLoc("tex_coord");
     int aute = prog.getAttribLoc("use_tex");
+    int aobj = prog.getAttribLoc("object_transform");
 
     if((aloc < 0) || (acol < 0) || (atex < 0) || (aute < 0)) {
-      fatal("RenderContext::flush # %d vertices %p %p %d", (int) m_data->m_vertices.size(),
+      fatal("RenderContext::flush # %d vertices %p %p %d", (int) rp.vertices().count<RectVertex>(),
             m_data->m_program, &*m_data->m_basic_shader, (int) prog.getAttribLoc("location"));
     }
     Utils::glCheck("RenderContext::flush # 2");
@@ -1686,8 +1703,9 @@ namespace Luminous
     VertexAttribArrayStep ts(atex, 4, GL_FLOAT, vsize, & vr.m_texCoord);
     VertexAttribArrayStep ut(aute, 1, GL_FLOAT, vsize, & vr.m_useTexture);
 
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, m_data->m_vertices.size());
-    m_data->m_vertices.clear();
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, rp.vertices().count<RectVertex>());
+
+    rp.clear();
     Utils::glCheck("RenderContext::flush # 3");
   }
 
