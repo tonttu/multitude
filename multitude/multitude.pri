@@ -65,7 +65,7 @@ LIB_RESONANT = -lResonant
 LIB_VALUABLE = -lValuable
 LIB_PATTERNS = -lPatterns
 LIB_SQUISH = -lSquish
-!mobile:LIB_V8 = -lv8
+!without-js:LIB_V8 = -lv8
 
 linux-*:vivid {
   QMAKE_LIBDIR += $$(FBX_SDK)/lib/gcc4
@@ -148,9 +148,10 @@ macx*|mobile* {
   system([ `uname -r | cut -d . -f1` -gt 9 ] )  {
   CONFIG += x86_64
 
+  }
+
   system([ `uname -r | cut -d . -f1` -eq 10 ] ):DEFINES+=RADIANT_OSX_SNOW_LEOPARD
   system([ `uname -r | cut -d . -f1` -eq 11 ] ):DEFINES+=RADIANT_OSX_LION
-  }
 }
 }
 }
