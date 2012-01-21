@@ -38,7 +38,7 @@ namespace Luminous
       }
 
       size_t now = m_buffer.size();
-      m_buffer.resize(now, sizeof(v));
+      m_buffer.resize(now + sizeof(v));
       * (S*) & m_buffer[now] = v;
     }
 

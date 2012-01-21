@@ -683,6 +683,8 @@ namespace Luminous
     while(!m_data->m_clipStack.empty())
       m_data->m_clipStack.pop_back();
 
+    restart();
+
     Utils::glCheck("RenderContext::prepare # 2");
   }
 
