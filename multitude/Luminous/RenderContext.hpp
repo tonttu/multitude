@@ -409,6 +409,7 @@ namespace Luminous
     static RenderContext * GLSLreadContext();
 
     void bindTexture(GLenum textureType, GLenum textureUnit, GLuint textureId);
+    void bindBuffer(GLenum type, GLuint id);
     /// Bind GLSL program object
     void bindProgram(GLSLProgramObject * program);
     void bindDefaultProgram();

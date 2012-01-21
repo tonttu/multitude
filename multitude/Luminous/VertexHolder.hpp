@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "GLSLProgramObject.hpp"
+#include "VertexBuffer.hpp"
 
 #include <Radiant/Trace.hpp>
 
@@ -42,8 +43,12 @@ namespace Luminous
       * (S*) & m_buffer[now] = v;
     }
 
+    /// Number of elements of kind S in the buffer
     template <class S>
     size_t count() const { return m_buffer.size() / sizeof(S); }
+
+    /// Number of bytes in the buffer
+    size_t bytes() const { return m_buffer.size(); }
 
   private:
 
@@ -73,10 +78,13 @@ namespace Luminous
 
     VertexHolder & vertices() { return m_vertices; }
 
+    VertexBuffer & vbo() { return  m_vbo; }
+
   private:
 
     GLSLProgramObject * m_program;
     VertexHolder        m_vertices;
+    VertexBuffer        m_vbo;
   };
 
 

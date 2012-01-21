@@ -130,11 +130,6 @@ namespace Luminous {
     int m_pos;
   };
   */
-  template <class A, class B>
-      inline size_t offsetBytes(const A & higher, const B & lower)
-  {
-    return ((uint8_t *) & higher) - ((uint8_t *) & lower);
-  }
 
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
