@@ -72,13 +72,6 @@ namespace {
     return result;
   }
 
-  dc1394trigger_source_t triggerSourceToNative(Radiant::VideoCamera::TriggerSource id)
-  {
-    dc1394trigger_source_t result = dc1394trigger_source_t(int(DC1394_TRIGGER_SOURCE_0) + int(id));
-
-    return result;
-  }
-
   void initDc()
   {
     MULTI_ONCE(s_dc = dc1394_new(););
