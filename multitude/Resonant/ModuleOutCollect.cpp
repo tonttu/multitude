@@ -75,17 +75,17 @@ namespace Resonant {
     return true;
   }
 
-  void ModuleOutCollect::processMessage(const QString & id, Radiant::BinaryData * control)
+  void ModuleOutCollect::processMessage(const QString & id, Radiant::BinaryData & control)
   {
     bool ok = true;
     Move tmp;
 
-    ok = control->readString(tmp.sourceId);
+    ok = control.readString(tmp.sourceId);
 
     // info("ModuleOutCollect::control # Now %d sources in the map", (int) m_map.size());
 
     if(id == "subwooferchannel") {
-      m_subwooferChannel = control->readInt32();
+      m_subwooferChannel = control.readInt32();
     }
     if(id == "removemappings") {
       // Remove all the mappings that match the given input.
@@ -101,8 +101,8 @@ namespace Resonant {
       }
     }
     else {
-      tmp.from = control->readInt32( & ok);
-      tmp.to   = control->readInt32( & ok);
+      tmp.from = control.readInt32( & ok);
+      tmp.to   = control.readInt32( & ok);
 
       debugResonant("ModuleOutCollect::control # %s", id.toUtf8().data());
 
