@@ -46,11 +46,13 @@ namespace Luminous
 
   void Transformer::pushTransformLeftMul(const Nimble::Matrix3 & m)
   {
+    beforeTransformChange();
     m_stack.push(m * m_stack.top());
   }
 
   void Transformer::pushTransformRightMul(const Nimble::Matrix3 & m)
   {
+    beforeTransformChange();
     m_stack.push(m_stack.top() * m);
   }
 
@@ -61,27 +63,32 @@ namespace Luminous
 
   void Transformer::pushTransform(const Nimble::Matrix3 & m)
   {
+    beforeTransformChange();
     m_stack.push(m);
   }
 
   void Transformer::setTransform(const Nimble::Matrix3 & m)
   {
+    beforeTransformChange();
     m_stack.top() = m;
   }
 
   void Transformer::leftMul(const Nimble::Matrix3 &m)
   {
+    beforeTransformChange();
     Nimble::Matrix3 & top = m_stack.top();
     top = top * m;
   }
 
   void Transformer::rightMul(const Nimble::Matrix3 &m)
   {
+    beforeTransformChange();
     m_stack.top() *= m;
   }
 
   void Transformer::resetTransform()
   {
+    beforeTransformChange();
     while(!m_stack.empty())
       m_stack.pop();
 
@@ -90,5 +97,8 @@ namespace Luminous
 
     m_stack.push(m);
   }
+
+  void Transformer::beforeTransformChange()
+  {}
 
 }

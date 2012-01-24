@@ -4,11 +4,15 @@ include(../library.pri)
 TEMPLATE=subdirs
 QMAKE_EXTRA_TARGETS += first
 
-V8 += library=shared
+!mobile*:V8 += library=shared
 
 macx {
   # This is not 100% correct, but for now we can assume that all OSX is 64-bits
-  V8 += arch=x64
+  mobile* {
+    V8 += arch=ia32  
+  } else {
+    V8 += arch=x64
+  }
 }
 else {
   contains(QMAKE_HOST.arch, x86_64) {
@@ -21,7 +25,8 @@ else {
 CONFIG(release, debug|release) {
   V8LIB=$${LIB_PREFIX}v8
   V8LIB_OUT=$${V8LIB}
-  TARGET=$${V8LIB}.$$SHARED_LIB_SUFFIX
+  !mobile*:TARGET=$${V8LIB}.$$SHARED_LIB_SUFFIX
+  mobile*:TARGET=$${V8LIB}.a
   V8 += mode=release
 } else {
   win32 {
@@ -31,7 +36,8 @@ CONFIG(release, debug|release) {
     V8LIB_OUT=$${LIB_PREFIX}v8
   }
   V8LIB=$${LIB_PREFIX}v8_d
-  TARGET=$${V8LIB}.$$SHARED_LIB_SUFFIX
+  !mobile*:TARGET=$${V8LIB}.$$SHARED_LIB_SUFFIX
+  mobile*:TARGET=$${V8LIB}.a
   V8 += verbose=on mode=debug
 }
 
@@ -44,6 +50,11 @@ linux-* {
   # Running application will crash with sigbus without --remove-destination
   first.commands = if test ! -s $$TARGET; then scons $$V8 $$TARGET -j4; fi && cp --remove-destination $$TARGET $$DEST
   stuff.files += $$DEST
+}
+macx*|mobile* {
+  DEST=$$DESTDIR/$${V8LIB_OUT}.$$SHARED_LIB_SUFFIX
+  # Running application will crash with sigbus without --remove-destination
+  first.commands = if test ! -s $$TARGET; then scons $$V8 $$TARGET -j4; fi && cp $$TARGET $$DEST
 }
 
 macx {

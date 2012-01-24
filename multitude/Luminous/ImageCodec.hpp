@@ -1,20 +1,8 @@
 /* COPYRIGHT
- *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
-#ifndef IMAGE_CODEC_HPP
-#define IMAGE_CODEC_HPP
+#ifndef LUMINOUS_IMAGE_CODEC_HPP
+#define LUMINOUS_IMAGE_CODEC_HPP
 
 #include "Export.hpp"
 #include "Image.hpp"
@@ -26,7 +14,7 @@ namespace Luminous
 {
   /// The base class for different image codecs. Derive your own codec from this
   /// and override the three methods.
-  class LUMINOUS_API ImageCodec 
+  class LUMINOUS_API ImageCodec
   {
     public:
       virtual ~ImageCodec() {}
@@ -58,12 +46,14 @@ namespace Luminous
       /// @return true if the file was decoded successfully, false otherwise
       virtual bool read(Image & image, FILE * file) = 0;
 
+#ifndef LUMINOUS_OPENGLES
       /// Read compressed image data from the given file.
       /// @param image image to read to
       /// @param file file to read from
       /// @param level mipmap level to read
       /// @return true if the file was decoded successfully, false otherwise
       virtual bool read(CompressedImage & image, FILE * file, int level = 0) { (void)level;(void)file; (void)image; return false; }
+#endif // LUMINOUS_OPENGLES
 
       /// Store the given Image into a file
       /// @param image Image to store

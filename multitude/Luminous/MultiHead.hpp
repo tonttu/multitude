@@ -27,6 +27,8 @@ namespace Luminous {
   using Nimble::Vector2i;
   using Nimble::Vector4f;
 
+  class RenderContext;
+
   /// Class for managing information on multiple OpenGL vindows/viewports.
   /** This class stores information about the layout of multiple
       OpenGL windows and viewports. This information is used in
@@ -67,8 +69,10 @@ namespace Luminous {
         m_location = Nimble::Vector2i(x, y);
         m_size = Nimble::Vector2i(w, h);
 
-        if(copyToGraphics)
+        if(copyToGraphics) {
           setGraphicsGeometry(x, y, w, h);
+          updateBBox();
+        }
       }
 
       /// Sets the size of the area
@@ -96,7 +100,7 @@ namespace Luminous {
       float maxSeam() { return m_seams.asVector().maximum(); }
 
       /// Applies an orthogonal projection to OpenGL defined by the graphics geometry of the area
-      void applyGlState() const;
+      LUMINOUS_API void applyViewportAndTransform(Luminous::RenderContext &) const;
       /// Blends the edges defined by seams
       void cleanEdges() const;
 

@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Applications/MoviePlayer.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Applications/MoviePlayer.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #include "VideoWindow.hpp"
@@ -41,8 +29,6 @@ bool VideoWindow::m_fullScreen = false;
 
 VideoWindow::VideoWindow()
     : m_subCPUFont(0),
-    // m_subGPUFont(0),
-    m_glResources(m_resourceLocator),
     m_showProgress(true),
     m_showSteps(false)
 {
@@ -171,7 +157,7 @@ void VideoWindow::keyPressEvent(QKeyEvent * e)
     m_showSteps = !m_showSteps;
   else if(e->key() == Qt::Key_Escape || e->key() == Qt::Key_Q) {
     makeCurrent();
-    m_glResources.clear();
+    m_context.clearResources();
     m_movies.clear();
     QCoreApplication::exit();
   }
@@ -230,7 +216,7 @@ void VideoWindow::paintGL()
 {
   // puts("VideoWindow::paintGL");
 
-  m_glResources.eraseResources();
+  m_context.eraseResources();
   Luminous::GarbageCollector::clear();
 
   Poetic::GPUFont * gpufont = 0;
@@ -308,7 +294,7 @@ void VideoWindow::paintGL()
                  float((index / cols) * itemh), 0.0f);
     index++;
 
-    show.render(& m_glResources,
+    show.render(& m_context,
                 center - span, center + span, Radiant::Color(1.f, 1.f, 1.f, 1.f), 0, gpufont, h);
 
     if(!m_showProgress)

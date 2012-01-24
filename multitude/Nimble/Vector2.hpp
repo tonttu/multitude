@@ -51,11 +51,11 @@ namespace Nimble {
     /// Constructs a vector initializing it to given values
     inline Vector2T (T cx, T cy) : x(cx), y(cy) {}
     /// Constructs a vector initializing from memory
-    template <class S> inline Vector2T(const S * v) { x = v[0]; y = v[1]; }
+    template <class K> inline Vector2T(const K * v) { x = v[0]; y = v[1]; }
     /// Copy constructor
-    template <class S> inline Vector2T	(const Vector2T<S>& v) { x = (T)v.x; y = (T)v.y; }
+    template <class K> inline Vector2T	(const Vector2T<K>& v) { x = (T)v.x; y = (T)v.y; }
 
-    //template <class S> Vector2T& operator=  (const Vector2T<S>& v)	{ x = (T)v.x; y = (T)v.y; return *this; }
+    //template <class K> Vector2T& operator=  (const Vector2T<S>& v)	{ x = (T)v.x; y = (T)v.y; return *this; }
 
     /// Fill the vector with zeroes
     Vector2T&	clear		(void)					{ x = (T)(0); y = (T)(0); return *this; }
@@ -73,7 +73,7 @@ namespace Nimble {
       static const T eps = std::numeric_limits<T>::epsilon();
       return
         x >= src.x - eps && x<= src.x + eps && y >= src.y - eps && y<= src.y + eps;
-	}
+    }
 
     /// Compares if two vectors differ
     inline bool	operator!=  (const Vector2T& src) const { return !operator==(src); }
@@ -155,7 +155,7 @@ namespace Nimble {
     {
       return x == v2.x ? y < v2.y : x < v2.x;
     }
-    //template <class S>
+    //template <class K>
     //void copy(const S * data) { x = data[0]; y = data[1]; }
 
     static inline Vector2T<T> null() { return Vector2T<T>(0, 0); }
@@ -337,8 +337,8 @@ namespace Nimble {
 } // namespace
 
 
-template <class S, class T>
-inline S &operator<<(S &os, const Nimble::Vector2T<T> &t)
+template <class K, class T>
+inline K &operator<<(K &os, const Nimble::Vector2T<T> &t)
 {
   os << t.x << ' ' << t.y;
   return os;

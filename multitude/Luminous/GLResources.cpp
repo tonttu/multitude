@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #include "GLResources.hpp"
@@ -166,7 +166,7 @@ namespace Luminous
     }
   }
 
-  void GLResources::clear()
+  void GLResources::clearResources()
   {
     while(m_resources.size()) {
       GLResource * res = (*m_resources.begin()).second;
@@ -220,6 +220,7 @@ namespace Luminous
       resource->m_deleteOnFrame = 0;
   }
 
+  /*
   // Doesn't work under windows where pthread_t (id_t) is a struct
   //typedef std::map<Thread::id_t, GLResources *> ResourceMap;
   class TGLRes
@@ -249,7 +250,7 @@ namespace Luminous
     __resources[Thread::myThreadId()] = tmp;
   }
 
-  GLResources * GLResources::getThreadResources()
+  GLResources * GLResources::getThreadContext()
   {
     Guard g(__mutex);
 
@@ -307,7 +308,7 @@ namespace Luminous
 
     return (*it).second.m_window;
   }
-
+*/
   bool GLResources::isBrokenProxyTexture2D()
   {
     return m_brokenProxyTexture2D;

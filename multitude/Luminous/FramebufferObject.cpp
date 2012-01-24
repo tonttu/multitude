@@ -24,7 +24,7 @@ using namespace std;
 namespace Luminous
 {
 
-  Renderbuffer::Renderbuffer(Luminous::GLResources * res)
+  Renderbuffer::Renderbuffer(Luminous::RenderContext * res)
     : GLResource(res),
     m_bufferId((GLuint) -1)
   {
@@ -62,7 +62,7 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  Framebuffer::Framebuffer(Luminous::GLResources * res)
+  Framebuffer::Framebuffer(Luminous::RenderContext * res)
     : GLResource(res),
     m_bufferId((GLuint) -1)
   {
@@ -105,15 +105,17 @@ namespace Luminous
       case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT:
         cerr << "Error: Framebuffer object incomplete - dimensions." << endl;
         break;
+#ifndef LUMINOUS_OPENGLES
       case GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT:
         cerr << "Error: Framebuffer object incomplete - formats." << endl;
         break;
-     case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT:
+    case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT:
         cerr << "Error: Framebuffer object incomplete - draw buffer." << endl;
         break;
       case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT:
         cerr << "Error: Framebuffer object incomplete - read buffer." << endl;
         break;
+#endif
       case GL_FRAMEBUFFER_UNSUPPORTED_EXT:
         // Choose different format
         cerr << "Warning: Unsupported framebuffer object format. Try another format." << endl;
@@ -127,46 +129,48 @@ namespace Luminous
     return false;
   }
 
-  void Framebuffer::attachTexture1D(Texture1D* texture, FramebufferAttachment attachment, int level)
-  {
-    bind();
-    glFramebufferTexture1DEXT(GL_FRAMEBUFFER_EXT, attachment,
-                  GL_TEXTURE_1D, texture->id(), level);
-  }
-
-  void Framebuffer::detachTexture1D(FramebufferAttachment attachment)
-  {
-    bind();
-    glFramebufferTexture1DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_1D, 0, 0);
-  }
-
-  void Framebuffer::attachTexture2D(Texture2D* texture, FramebufferAttachment attachment, int level)
+  void Framebuffer::attachTexture2D(Texture2D* texture, GLenum attachment, int level)
   {
     bind();
     glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_2D,
                   texture->id(), level);
   }
 
-  void Framebuffer::detachTexture2D(FramebufferAttachment attachment)
+  void Framebuffer::detachTexture2D(GLenum attachment)
   {
     bind();
     glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_2D, 0, 0);
   }
 
-  void Framebuffer::attachTexture3D(Texture3D* texture, FramebufferAttachment attachment, int zOffset, int level)
+#ifndef LUMINOUS_OPENGLES
+
+  void Framebuffer::attachTexture1D(Texture1D* texture, GLenum attachment, int level)
+  {
+    bind();
+    glFramebufferTexture1DEXT(GL_FRAMEBUFFER_EXT, attachment,
+                  GL_TEXTURE_1D, texture->id(), level);
+  }
+
+  void Framebuffer::detachTexture1D(GLenum attachment)
+  {
+    bind();
+    glFramebufferTexture1DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_1D, 0, 0);
+  }
+
+  void Framebuffer::attachTexture3D(Texture3D* texture, GLenum attachment, int zOffset, int level)
   {
     bind();
     glFramebufferTexture3DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_3D,
                   texture->id(), level, zOffset);
   }
 
-  void Framebuffer::detachTexture3D(FramebufferAttachment attachment)
+  void Framebuffer::detachTexture3D(GLenum attachment)
   {
     bind();
     glFramebufferTexture3DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_3D, 0, 0, 0);
   }
 
-  void Framebuffer::attachTextureCube(TextureCube* texture, FramebufferAttachment attachment, int face, int level)
+  void Framebuffer::attachTextureCube(TextureCube* texture, GLenum attachment, int face, int level)
   {
     bind();
     glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, attachment,
@@ -174,19 +178,21 @@ namespace Luminous
                   texture->id(), level);
   }
 
-  void Framebuffer::detachTextureCube(FramebufferAttachment attachment, int face)
+  void Framebuffer::detachTextureCube(GLenum attachment, int face)
   {
     bind();
     glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB + face, 0, 0);
   }
 
-  void Framebuffer::attachRenderbuffer(Renderbuffer* renderbuffer, FramebufferAttachment attachment)
+#endif // LUMINOUS_OPENGLES
+
+  void Framebuffer::attachRenderbuffer(Renderbuffer* renderbuffer, GLenum attachment)
   {
     bind();
     glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, attachment, GL_RENDERBUFFER_EXT, renderbuffer->m_bufferId);
   }
 
-  void Framebuffer::detachRenderbuffer(FramebufferAttachment attachment)
+  void Framebuffer::detachRenderbuffer(GLenum attachment)
   {
     bind();
     glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, attachment, GL_RENDERBUFFER_EXT, 0);

@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Nimble.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Nimble.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #ifndef NIMBLE_MATRIX4T_HPP
@@ -37,8 +25,8 @@ namespace Nimble {
   {
   public:
     /// Constructs a matrix and fills it from memory
-    template <class S>
-    Matrix4T(const S * x) { const S * end = x + 16; T * my = data(); while(x!=end) *my++ = *x++; }
+    template <class K>
+    Matrix4T(const K * x) { const K * end = x + 16; T * my = data(); while(x!=end) *my++ = *x++; }
     /// Constructs a matrix without initializing it
     Matrix4T() {}
     /// Constructs a matrix and fills it with given values
@@ -143,32 +131,32 @@ namespace Nimble {
     /// Returns a pointer to the first element
     const T * data() const { return m[0].data(); }
 
-		/// Returns an orthonormalized version of this matrix.
-		/// @todo could improve numerical stability easily etc.
-		/// @return Normalized matrix
-		Matrix4T<T> orthoNormalize() const
-		{
-			Matrix4T<T> tmp(transposed());
-			Matrix4T<T> res(tmp);
-			for (int i=0; i < 4; ++i) {
-				Vector4T<T> & v = res.row(i);
-				for (int j=0; j < i; ++j) {
-					v -= projection(res.row(j), tmp.row(i));
-				}
-			}
+        /// Returns an orthonormalized version of this matrix.
+        /// @todo could improve numerical stability easily etc.
+        /// @return Normalized matrix
+        Matrix4T<T> orthoNormalize() const
+        {
+            Matrix4T<T> tmp(transposed());
+            Matrix4T<T> res(tmp);
+            for (int i=0; i < 4; ++i) {
+                Vector4T<T> & v = res.row(i);
+                for (int j=0; j < i; ++j) {
+                    v -= projection(res.row(j), tmp.row(i));
+                }
+            }
 
-			for (int i=0; i < 4; ++i)
-				res.row(i).normalize();
+            for (int i=0; i < 4; ++i)
+                res.row(i).normalize();
 
-			return res.transposed();
-		}
+            return res.transposed();
+        }
 
     /// Fills the matrix by copying values from memory
-    template <class S>
-    void copy (const S * x) { const S * end = x + 16; T * my = data(); while(x!=end) *my++ = (T) *x++; }
+    template <class K>
+    void copy (const K * x) { const K * end = x + 16; T * my = data(); while(x!=end) *my++ = (T) *x++; }
     /// Fills the matrix by copying transposed values from memory
-    template <class S>
-    void copyTranspose (const S * x) { for(int i = 0; i < 4; i++) for(int j = 0; j < 4; j++) m[j][i] = (T) x[i*4+j]; }
+    template <class K>
+    void copyTranspose (const K * x) { for(int i = 0; i < 4; i++) for(int j = 0; j < 4; j++) m[j][i] = (T) x[i*4+j]; }
 
     /// Apply the matrix on a 4D vector.
     /// @param v homogenous 3D vector
@@ -329,6 +317,12 @@ namespace Nimble {
       return result;
     }
 
+    /// Creates an orthogonal projection matrix in 3D
+    /** This function works in a way similar to glOrtho
+        (http://lmb.informatik.uni-freiburg.de/people/reisert/opengl/doc/glOrtho.html).
+    */
+    NIMBLE_API static Matrix4T<T> ortho3D(T left, T right, T bottom, T top, T near, T far);
+
     /** Identity matrix. */
     NIMBLE_API static const Matrix4T<T> IDENTITY;
 
@@ -366,7 +360,7 @@ namespace Nimble {
   }
 
   template <class T>
-  inline Matrix4T<T>& Matrix4T<T>::transpose()
+  inline Matrix4T<T> & Matrix4T<T>::transpose()
   {
     swap(m[0][1],m[1][0]);
     swap(m[0][2],m[2][0]);
@@ -374,7 +368,7 @@ namespace Nimble {
     swap(m[1][2],m[2][1]);
     swap(m[1][3],m[3][1]);
     swap(m[2][3],m[3][2]);
-    return *this;
+    return * this;
   }
 
   template <class T>
@@ -499,6 +493,12 @@ inline Nimble::Matrix4T<T> operator*(const Nimble::Matrix4T<T>& m1,const Nimble:
 }
 
 template <class T>
+inline Nimble::Matrix4T<T> mul(const Nimble::Matrix4T<T>& m1,const Nimble::Matrix4T<T>& m2)
+{
+  return m1 * m2;
+}
+
+template <class T>
 inline Nimble::Vector4T<T> operator*(const Nimble::Matrix4T<T>& m1,const Nimble::Vector4T<T>& m2)
 {
   Nimble::Vector4T<T> res;
@@ -509,7 +509,7 @@ inline Nimble::Vector4T<T> operator*(const Nimble::Matrix4T<T>& m1,const Nimble:
 
 
 template <class T>
-inline Nimble::Vector3T<T> operator*(const Nimble::Matrix4T<T>& m1,const Nimble::Vector3T<T>& m2)
+    inline Nimble::Vector3T<T> operator*(const Nimble::Matrix4T<T>& m1,const Nimble::Vector3T<T>& m2)
 {
   Nimble::Vector3T<T> res;
   for(int i = 0; i < 3; i++)
@@ -517,7 +517,7 @@ inline Nimble::Vector3T<T> operator*(const Nimble::Matrix4T<T>& m1,const Nimble:
   return res;
 }
 
-/// @todo Vector4 * Matrix4 is not defined. This implicitly transposes the vector. This should not 
+/// @todo Vector4 * Matrix4 is not defined. This implicitly transposes the vector. This should not
 /// operator should not be defined. Also check other Matrix classes.
 template <class T>
 inline Nimble::Vector4T<T> operator*(const Nimble::Vector4T<T>& m2, const Nimble::Matrix4T<T>& m1)

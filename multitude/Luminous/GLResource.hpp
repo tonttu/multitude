@@ -23,7 +23,7 @@
 
 namespace Luminous
 {
-  class GLResources;
+  class RenderContext;
 
   /// Abstract base class for OpenGL resource objects
   /** This class is used to represent arbitrary OpenGL resources per
@@ -122,16 +122,16 @@ namespace Luminous
 
     /// Constructs a new resource and associates it with the given resources
     /// collection
-    GLResource(GLResources * resources = 0);
+    GLResource(RenderContext * resources = 0);
     virtual ~GLResource();
 
     /// Returns the resources collection this resource belongs to
-    GLResources * resources() { return m_resources; }
+    RenderContext * context() { return m_context; }
 
     /** Change the current resource host. This function can only be
       called once.
     @param resources new resource host*/
-    virtual void setResources(GLResources * resources);
+    virtual void setContext(RenderContext * resources);
 
     /// Returns the number of bytes this object consumes at the moment
     virtual long consumesBytes();
@@ -161,7 +161,7 @@ namespace Luminous
     void changeByteConsumption(long deallocated, long allocated);
 
   private:
-    GLResources * m_resources;
+    RenderContext * m_context;
 
     long m_deleteOnFrame;
     size_t m_generation;

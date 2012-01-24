@@ -25,7 +25,7 @@ namespace Luminous
   using namespace Radiant;
 
   template<GLenum type>
-  BufferObject<type>::BufferObject(Luminous::GLResources * resources)
+  BufferObject<type>::BufferObject(Luminous::RenderContext * resources)
     : GLResource(resources),
     m_filled(0),
     m_bound(false)
@@ -91,6 +91,7 @@ namespace Luminous
       glBindBuffer(type, 0);
   }
 
+#ifndef LUMINOUS_OPENGLES
   template<GLenum type>
   void BufferObject<type>::read(Nimble::Vector2i size, Nimble::Vector2i pos,
                                 Luminous::PixelFormat pix, Usage usage)
@@ -135,4 +136,6 @@ namespace Luminous
     if(!m_bound)
       glBindBuffer(type, 0);
   }
+#endif // LUMINOUS_OPENGLES
+
 }

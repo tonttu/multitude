@@ -104,7 +104,7 @@ namespace Luminous
 
     if(m_textureId)  {
       glDeleteTextures(1, &m_textureId);
-      debugLuminous("Deallocated texture %.5d %p", (int) m_textureId, resources());
+      debugLuminous("Deallocated texture %.5d %p", (int) m_textureId, this->context());
     }
 
     changeByteConsumption(consumesBytes(), 0);
@@ -115,7 +115,7 @@ namespace Luminous
   {
     if(!m_textureId) {
       glGenTextures(1, & m_textureId);
-      debugLuminous("Allocated texture %.5d %p", (int) m_textureId, resources());
+      debugLuminous("Allocated texture %.5d %p", (int) m_textureId, this->context());
     }
   }
 
@@ -127,11 +127,11 @@ namespace Luminous
     // Estimate something, try to be conservative
     switch(m_internalFormat) {
     case GL_LUMINANCE:
-    case GL_INTENSITY:
+    LUMINOUS_IN_FULL_OPENGL(case GL_INTENSITY:)
       used *= 1;
       break;
     case GL_RGB:
-    case GL_BGR:
+    LUMINOUS_IN_FULL_OPENGL(case GL_BGR:)
       used *= 3;
       break;
 #ifdef GL_RGB32F
@@ -155,27 +155,32 @@ namespace Luminous
     return used;
   }
 
-  template class TextureT<GL_TEXTURE_1D>;
-  template class TextureT<GL_TEXTURE_2D>;
-  template class TextureT<GL_TEXTURE_3D>;
-  template class TextureT<GL_TEXTURE_CUBE_MAP>;
+  template <GLenum TextureType>
+      void TextureT<TextureType>::bind(GLenum textureUnit)
+  {
+    allocate();
+    if(context() == 0)
+      fatal("TextureT::bind # NULL context");
 
+    context()->bindTexture(TextureType, textureUnit, m_textureId);
+  }
   //////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
+#ifndef LUMINOUS_OPENGLES
 
-  Texture1D * Texture1D::fromImage(Luminous::Image & image, bool buildMipmaps, GLResources * resources)
+  Texture1D * Texture1D::fromImage(Luminous::Image & image, bool buildMipmaps, RenderContext * context)
   {
     return fromBytes(GL_RGBA, image.height(), image.bytes(), image.pixelFormat(),
-                     buildMipmaps, resources);
+                     buildMipmaps, context);
   }
 
   Texture1D* Texture1D::fromBytes(GLenum internalFormat,
                                   int h,
                                   const void* data,
                                   const PixelFormat& srcFormat, bool buildMipmaps,
-                                  GLResources * resources)
+                                  RenderContext * context)
   {
-    Texture1D * tex = new Texture1D(resources);
+    Texture1D * tex = new Texture1D(context);
 
     if(!tex->loadBytes(internalFormat, h, data, srcFormat, buildMipmaps)) {
       delete tex;
@@ -235,6 +240,7 @@ namespace Luminous
 
     return true;
   }
+#endif // LUMINOUS_OPENGLES
 
   bool Texture2D::loadImage(const char * filename, bool buildMipmaps) {
     Luminous::Image img;
@@ -257,6 +263,8 @@ namespace Luminous
                      image.pixelFormat(), buildMipmaps);
   }
 
+#ifndef LUMINOUS_OPENGLES
+
   bool Texture2D::loadImage(const CompressedImage & image)
   {
     // Update estimate about consumed bytes
@@ -268,7 +276,7 @@ namespace Luminous
 
     bind();
 
-    if(resources() && !resources()->isBrokenProxyTexture2D()) {
+    if(this->context() && !this->context()->isBrokenProxyTexture2D()) {
       glCompressedTexImage2D(GL_PROXY_TEXTURE_2D, 0, m_internalFormat,
                              m_width, m_height, 0, image.datasize(), 0);
       GLint width = m_width;
@@ -299,12 +307,14 @@ namespace Luminous
 
     return true;
   }
+#endif // LUMINOUS_OPENGLES
 
   bool Texture2D::loadBytes(GLenum internalFormat, int w, int h,
                             const void * data,
                             const PixelFormat& srcFormat,
                             bool buildMipmaps)
   {
+#ifndef LUMINOUS_OPENGLES
     // Check dimensions
     if(!GL_ARB_texture_non_power_of_two) {
       bool isPowerOfTwo1 = !((w - 1) & w);
@@ -315,6 +325,7 @@ namespace Luminous
         return false;
       }
     }
+#endif // LUMINOUS_OPENGLES
 
     // If no data is specified, we just allocate the texture memory and reset
     // m_uploadedLines. Otherwise we mark the lines loaded.
@@ -331,6 +342,8 @@ namespace Luminous
 
     bind();
 
+    long used = consumesBytes();
+
     // Default to bilinear filtering
     GLint minFilter = GL_LINEAR;
     GLint magFilter = GL_LINEAR;
@@ -344,11 +357,15 @@ namespace Luminous
       alignment *= 2;
     }
 
+#ifdef LUMINOUS_OPENGLES
+    buildMipmaps = false;
+#endif // LUMINOUS_OPENGLES
 
     // ...or trilinear if we have mipmaps
     if(buildMipmaps) minFilter = GL_LINEAR_MIPMAP_LINEAR;
 
     if(buildMipmaps) {
+#ifndef LUMINOUS_OPENGLES
 
       assert(Utils::glCheck("Texture2D::loadBytes # 1"));
 
@@ -358,8 +375,9 @@ namespace Luminous
 
       gluBuild2DMipmaps(GL_TEXTURE_2D, internalFormat,
                         w, h, srcFormat.layout(), srcFormat.type(), data);
-
       assert(Utils::glCheck("Texture2D::loadBytes # 3"));
+
+#endif // LUMINOUS_OPENGLES
 
     } else {
       /* debugLuminous("TEXTURE UPLOAD :: INTERNAL %s FORMAT %s [%d %d]",
@@ -372,8 +390,9 @@ namespace Luminous
       assert(Utils::glCheck("Texture2D::loadBytes # 4"));
 
       GLint width = w;
+#ifndef LUMINOUS_OPENGLES
 
-      if(resources() && !resources()->isBrokenProxyTexture2D()) {
+      if(context() && !context()->isBrokenProxyTexture2D()) {
         /* On ATI/Linux combination it seems that the GL_PROXY_TEXTURE_2D is
          broken, and cannot be trusted to give correct answers.
          It will at times fail with 1024x768 RGB textures. Sigh. */
@@ -398,6 +417,7 @@ namespace Luminous
           return false;
         }
       }
+#endif // LUMINOUS_OPENGLES
 
       /* This seems to be faster on Linux and OS X at least. */
       glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0, srcFormat.layout(), srcFormat.type(), 0);
@@ -419,9 +439,16 @@ namespace Luminous
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter);
 
-//    float whitef[4] = { 1, 1, 1, 1 };
-//    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, whitef);
+#ifndef LUMINOUS_OPENGLES
 
+    // float whitef[4] = { 1, 1, 1, 1 };
+    // glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, whitef);
+#endif // LUMINOUS_OPENGLES
+
+    long uses = consumesBytes();
+
+    if(data)
+      changeByteConsumption(used, uses);
     /* try not to interfere with other users of glTexImage2d etc */
     if (alignment > 4) glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
@@ -459,10 +486,14 @@ namespace Luminous
 
       assert(Utils::glCheck("Texture2D::loadSubBytes # 1") == true);
 
+// #ifndef LUMINOUS_OPENGLES
+
       glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, w, h, srcFormat.layout(), srcFormat.type(), data);
 
       assert(Utils::glCheck("Texture2D::loadSubBytes # 2") == true);
 
+    Utils::glCheck("Texture2D::loadLines # Dummy TRI");
+//#endif // LUMINOUS_OPENGLES
       if (alignment > 4)
         glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
@@ -477,13 +508,13 @@ namespace Luminous
   }
 
   Texture2D* Texture2D::fromImage
-      (Luminous::Image & image, bool buildMipmaps, GLResources * resources)
+      (Luminous::Image & image, bool buildMipmaps, RenderContext * context)
   {
     return fromBytes(GL_RGBA, image.width(), image.height(), image.bytes(), image.pixelFormat(),
-                     buildMipmaps, resources);
+                     buildMipmaps, context);
   }
 
-  Texture2D * Texture2D::fromFile(const char * filename, bool buildMipmaps, GLResources * rs)
+  Texture2D * Texture2D::fromFile(const char * filename, bool buildMipmaps, RenderContext * rs)
   {
     Luminous::Image img;
     if(!img.read(filename)) return 0;
@@ -494,8 +525,10 @@ namespace Luminous
   Texture2D* Texture2D::fromBytes(GLenum internalFormat, int w, int h,
                                   const void* data,
                                   const PixelFormat& srcFormat,
-                                  bool buildMipmaps, GLResources * resources)
+                                  bool buildMipmaps, RenderContext * context)
   {
+#ifndef LUMINOUS_OPENGLES
+
     // Check dimensions
     if(!GL_ARB_texture_non_power_of_two) {
       bool isPowerOfTwo1 = !((w - 1) & w);
@@ -506,8 +539,10 @@ namespace Luminous
         return 0;
       }
     }
+#endif // LUMINOUS_OPENGLES
 
-    Texture2D* tex = new Texture2D(resources);
+
+    Texture2D* tex = new Texture2D(context);
     if(!tex->loadBytes(internalFormat, w, h, data, srcFormat, buildMipmaps)) {
       delete tex;
       return 0;
@@ -515,7 +550,7 @@ namespace Luminous
     return tex;
   }
 
-  bool Texture2D::progressiveUpload(Luminous::GLResources * resources, GLenum textureUnit, const Image & srcImage)
+  bool Texture2D::progressiveUpload(Luminous::RenderContext * resources, GLenum textureUnit, const Image & srcImage)
   {
     Utils::glCheck("Texture2D::progressiveUpload # begin");
 
@@ -545,7 +580,7 @@ namespace Luminous
     assert(linesToFinish > 0);
 
     if(!resources)
-      resources = GLResources::getThreadResources();
+      resources = RenderContext::getThreadContext();
 
     // Bind the texture and draw zero-area triangle to flush the texture data
     bind(textureUnit);
@@ -581,6 +616,10 @@ namespace Luminous
 
     return (m_uploadedLines == size_t(height()));
   }
+
+  template class TextureT<GL_TEXTURE_2D>;
+  LUMINOUS_IN_FULL_OPENGL(template class TextureT<GL_TEXTURE_1D>;)
+  LUMINOUS_IN_FULL_OPENGL(template class TextureT<GL_TEXTURE_3D>;)
 
 }
 

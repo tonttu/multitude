@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #ifndef RADIANT_TIMESTAMP_HPP
@@ -183,6 +171,9 @@ namespace Radiant {
     /// Converts the time-stamp to a string
     /// @return time-stamp as string
     QString asString() const;
+    /// Copies the current tame value into this object.
+    /// @see getTime()
+    inline void getCurrent() { *this = getTime(); }
 
   private:
     type m_val;

@@ -211,7 +211,7 @@ namespace Radiant {
 
     char threadId[16];
     _snprintf(threadId, 16, "[thr:%d] ", GetCurrentThreadId());
-  
+
     OutputDebugStringA(threadId);
     OutputDebugStringA(logmsg);
     OutputDebugStringA("\n");
@@ -304,6 +304,12 @@ namespace Radiant {
     va_start(args, msg);
     g_output(FATAL, 0, msg, args);
     va_end(args);
+
+#ifdef RADIANT_IOS
+    // Make debugger catch this
+    int * bad = 0;
+    *bad = 123;
+#endif
 
     exit(EXIT_FAILURE);
   }

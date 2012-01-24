@@ -17,6 +17,10 @@
 #include "Mutex.hpp"
 #include "Radiant.hpp"
 
+#ifdef RADIANT_IOS
+# undef CAMERA_DRIVER_1394
+#endif // RADIANT_IOS
+
 #ifdef CAMERA_DRIVER_CMU
 #	include <Radiant/VideoCameraCMU.hpp>
 #endif
@@ -76,7 +80,7 @@ namespace Radiant
 #endif
 
 #ifdef CAMERA_DRIVER_PGR
-	  registerDriver(new CameraDriverPTGrey());
+      registerDriver(new CameraDriverPTGrey());
 #endif
 
 #ifdef CAMERA_DRIVER_1394
@@ -112,10 +116,10 @@ namespace Radiant
           str.toUtf8().data(), cd);
       if(cd) {
         // Make sure there is at least one camera available using this driver
-		  size_t cameraCount = cd->queryCameras(cameras);
-        
-		if(cameraCount > 0) 
-			return cd;
+          size_t cameraCount = cd->queryCameras(cameras);
+
+        if(cameraCount > 0)
+            return cd;
       }
     }
 

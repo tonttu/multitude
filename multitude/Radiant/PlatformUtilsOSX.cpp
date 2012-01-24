@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #include "Platform.hpp"
@@ -19,6 +7,7 @@
 
 #include "PlatformUtils.hpp"
 
+#include "Platform.hpp"
 #include "Trace.hpp"
 
 #include <dlfcn.h>
@@ -27,7 +16,11 @@
 #include <mach/mach_traps.h>
 #include <mach/mach.h>
 
-#include <CoreFoundation/CoreFoundation.h>
+#include <assert.h>
+
+#ifndef RADIANT_IOS
+# include <CoreFoundation/CoreFoundation.h>
+#endif
 
 namespace Radiant
 {
@@ -35,6 +28,7 @@ namespace Radiant
   namespace PlatformUtils
   {
 
+#ifndef RADIANT_IOS
     QString getExecutablePath()
     {
       CFURLRef url = CFBundleCopyBundleURL(CFBundleGetMainBundle());
@@ -46,6 +40,15 @@ namespace Radiant
 
       return buf;
     }
+#else
+  /*
+    QString getExecutablePath()
+    {
+      NSSstring * str = NSHomeDirectory();
+      return QString(NSStringGetFileSystemRepresentation(str));
+    }
+    */
+#endif
 
     QString getUserHomePath()
     {
@@ -58,9 +61,10 @@ namespace Radiant
       char buf[312];
 
       if(isapplication) {
-    sprintf(buf, "/Applications/%s.app/Contents/Resources", module);
+        sprintf(buf, "/Applications/%s.app/Contents/Resources", module);
       }
       else {
+	/// @todo should this be %s.framework or %s.framework/data ?
     sprintf(buf, "/Library/Frameworks/%s.framework/data", module);
       }
       return buf;

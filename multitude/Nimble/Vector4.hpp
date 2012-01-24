@@ -54,15 +54,15 @@ namespace Nimble {
     /// Constructs a vector and initializes it with the given values
     inline Vector4T (T cx, T cy, T cz, T cw) : x(cx), y(cy), z(cz), w(cw) {}
     /// Copy constructor
-    template <class S> inline Vector4T(const Vector4T<S>& v)	       { x = (T)v.x;   y = (T)v.y;  z = (T)v.z;  w = (T) v.w; }
+    template <class K> inline Vector4T(const Vector4T<K>& v)	       { x = (T)v.x;   y = (T)v.y;  z = (T)v.z;  w = (T) v.w; }
     /// @todo remove the conversion (make static functions)
     /// Constructs a vector from memory
     /// @param v array of four decimals
-    template <class S> inline Vector4T(const S * v)	               { x = (T)v[0];  y = (T)v[1]; z = (T)v[2]; w = (T) v[3]; }
-    //template <class S> Vector4T& operator=(const Vector4T<S>& v) { x = (T)v.x; y = (T)v.y; z = (T)v.z; w = (T) v.w; return *this; }
+    template <class K> inline Vector4T(const K * v)	               { x = (T)v[0];  y = (T)v[1]; z = (T)v[2]; w = (T) v[3]; }
+    //template <class K> Vector4T& operator=(const Vector4T<S>& v) { x = (T)v.x; y = (T)v.y; z = (T)v.z; w = (T) v.w; return *this; }
     /// Fills the vector with zeroes
     inline Vector4T&	clear(void)                                    { x = (T)(0);  y = (T)(0); z = (T)(0); w = (T)(0); return *this;	}
-	
+
     /// Compares if two vectors are equal
     inline bool operator==  (const Vector4T& src) const
     {
@@ -97,10 +97,10 @@ namespace Nimble {
     /// Divides the vector component-wise
     inline Vector4T&	descale		(const Vector4T& v)	       { x /= v.x; y /= v.y; z /= v.z; w /= v.w; return *this; }
 
-	/// Clamps both components to the range [0,1]
-	inline Vector4T&	clampUnit	(void)						{ return clamp(T(0.0), T(1.0)); }
-	/// Clamps both components to the range [low, high]
-	inline Vector4T&	clamp (T low, T high)       { x = Math::Clamp(x, low, high); y = Math::Clamp(y, low, high); z = Math::Clamp(z, low, high); w = Math::Clamp(w, low, high); return * this; }
+    /// Clamps both components to the range [0,1]
+    inline Vector4T&	clampUnit	(void)						{ return clamp(T(0.0), T(1.0)); }
+    /// Clamps both components to the range [low, high]
+    inline Vector4T&	clamp (T low, T high)       { x = Math::Clamp(x, low, high); y = Math::Clamp(y, low, high); z = Math::Clamp(z, low, high); w = Math::Clamp(w, low, high); return * this; }
 
     /// Returns a vector with components reordered.
     inline Vector4T    shuffle         (int i1, int i2, int i3, int i4) const { return Vector4T(get(i1), get(i2), get(i3), get(i4)); }

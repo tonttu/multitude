@@ -241,13 +241,13 @@ namespace Luminous
         let the GPU automatically choose one.
         @return true if the bind succeeded
     */
-    bool bind(GLResources * resources, GLenum textureUnit = GL_TEXTURE0,
+    bool bind(RenderContext * resources, GLenum textureUnit = GL_TEXTURE0,
               bool withmipmaps = true, int internalFormat = 0);
 
     /// Checks if the image data is fully loaded to the GPU, inside a texture
     /// @param resources OpenGL resource collection to use
     /// @return true if the texture data has been fully uploaded to the GPU
-    bool isFullyLoadedToGPU(GLResources * resources = 0);
+    bool isFullyLoadedToGPU(RenderContext * resources = 0);
 
     ImageTex & operator = (const Luminous::Image & that)
     {
@@ -261,6 +261,8 @@ namespace Luminous
     /// @return cloned ImageTex
     ImageTex * move();
   };
+
+#ifndef LUMINOUS_OPENGLES
 
   /// A compressed image. Currently supports DXT format.
   class LUMINOUS_API CompressedImage
@@ -323,13 +325,14 @@ namespace Luminous
     OpenGL context.
     @param resources The OpenGL resource handler
     @param textureUnit The OpenGL texture unit to bind to*/
-    void bind(GLResources * resources, GLenum textureUnit = GL_TEXTURE0);
+    void bind(RenderContext * resources, GLenum textureUnit = GL_TEXTURE0);
 
     /// Creates a new CompressedImageTex from this object. All the cpu data from
     /// Luminous::CompressedImage is moved to the new object.
     /// @return new CompressedImageTex object
     CompressedImageTex * move();
   };
+#endif // LUMINOUS_OPENGLES
 }
 
 #endif

@@ -1,19 +1,9 @@
 /* COPYRIGHT
- *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
-#include <Luminous/GLSLProgramObject.hpp>
+#include "GLSLProgramObject.hpp"
+
+#include "RenderContext.hpp"
 
 #include <Radiant/FileUtils.hpp>
 #include <Radiant/Trace.hpp>
@@ -25,7 +15,7 @@ namespace Luminous
 
   using namespace Radiant;
 
-  GLSLProgramObject::GLSLProgramObject(GLResources * resources)
+  GLSLProgramObject::GLSLProgramObject(RenderContext * resources)
       : GLResource(resources),
       m_isLinked(false),
       m_errors(false)
@@ -39,6 +29,7 @@ namespace Luminous
     GLSLProgramObject::clear();
 
     glDeleteProgram(m_handle);
+    // info("GLSLProgramObject::~GLSLProgramObject # %p", this);
   }
 
   void GLSLProgramObject::addObject(GLSLShaderObject* obj)
@@ -154,12 +145,16 @@ namespace Luminous
       return;
     }
 
-    glUseProgram(m_handle);
+    if(!context()) {
+      fatal("GLSLProgramObject::bind # NULL context");
+    }
+
+    context()->bindProgram(this);
   }
 
   void GLSLProgramObject::unbind()
   {
-    glUseProgram(0);
+    context()->bindProgram(0);
   }
 
   int GLSLProgramObject::getUniformLoc(const QString& name)
@@ -252,16 +247,42 @@ namespace Luminous
 
     if(loc < 0)
       return false;
+    // info("GLSLProgramObject::setUniformMatrix3 # %d %s", loc, name);
 
+#ifdef LUMINOUS_OPENGL_FULL
     glUniformMatrix3fv(loc, 1, true, value.data());
+#else
+    glUniformMatrix3fv(loc, 1, false, value.transposed().data());
+#endif
+    return true;
+  }
+
+
+  bool GLSLProgramObject::setUniformMatrix4(const char * name, const Nimble::Matrix4f & value)
+  {
+    int loc = getUniformLoc(name);
+
+    if(loc < 0)
+      return false;
+
+#ifdef LUMINOUS_OPENGL_FULL
+    glUniformMatrix4fv(loc, 1, true, value.data());
+
+#else
+    glUniformMatrix4fv(loc, 1, false, value.transposed().data());
+#endif
 
     return true;
   }
+
+#ifndef LUMINOUS_OPENGLES
 
   void GLSLProgramObject::setProgramParameter(GLenum pname, GLint value)
   {
     glProgramParameteriEXT(handle(), pname, value);
   }
+#endif // LUMINOUS_OPENGLES
+
 
   bool GLSLProgramObject::validate()
   {

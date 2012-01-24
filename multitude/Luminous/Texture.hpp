@@ -30,7 +30,7 @@ namespace Luminous
 {
   class PixelFormat;
   class Image;
-  class CompressedImage;
+  LUMINOUS_IN_FULL_OPENGL(class CompressedImage);
 
   /// UploadLimiter manages GPU upload limits for each RenderThread per frame.
   /// These limits should be obeyed when loading data to GPU with glTexImage2D
@@ -91,7 +91,7 @@ namespace Luminous
   };
 
   /// Base class for different textures
-  /** Texture objects can be create without a valid OpenGL context, but their actual
+  /** Texture objects can be created without a valid OpenGL context, but their actual
       usage requires a valid OpenGL context. */
   template<GLenum TextureType>
   class LUMINOUS_API TextureT : public GLResource, public Patterns::NotCopyable
@@ -100,7 +100,7 @@ namespace Luminous
 
   public:
     /// Constructs a texture and adds it to the given resource collection
-    TextureT(GLResources * res = 0)
+    TextureT(RenderContext * res = 0)
     : GLResource(res),
       m_textureId(0),
       m_width(0),
@@ -113,18 +113,12 @@ namespace Luminous
 
     /** Activate textureUnit and bind this texture to that unit.
     @param textureUnit texture unit to bind to*/
-    void bind(GLenum textureUnit)
-    {
-      allocate();
-      glActiveTexture(textureUnit);
-      glBindTexture(TextureType, m_textureId);
-    }
+    void bind(GLenum textureUnit);
 
-    /** Bind this texture to the currently active texture unit. */
+    /** Bind this texture to tecture unit GL_TEXTURE0. */
     void bind()
     {
-      allocate();
-      glBindTexture(TextureType, m_textureId);
+      bind(GL_TEXTURE0);
     }
 
     /// Returns the width of the texture (if known)
@@ -197,12 +191,13 @@ namespace Luminous
     void allocate();
   };
 
+#ifndef LUMINOUS_OPENGLES
   /// A 1D texture
   class LUMINOUS_API Texture1D : public TextureT<GL_TEXTURE_1D>
   {
   public:
     /// Constructs a 1D texture and adds it to the given resource collection
-    Texture1D(GLResources * resources = 0) : TextureT<GL_TEXTURE_1D> (resources) {}
+    Texture1D(RenderContext * context = 0) : TextureT<GL_TEXTURE_1D> (context) {}
 
     /// Load the texture from from raw data, provided by the user
     bool loadBytes(GLenum internalFormat, int h,
@@ -211,25 +206,24 @@ namespace Luminous
                    bool buildMipmaps = true);
 
     /// Constructs a 1D texture by loading it from a file
-    static Texture1D* fromImage(Image & image, bool buildMipmaps = true, GLResources * resources = 0);
+    static Texture1D* fromImage(Image & image, bool buildMipmaps = true, RenderContext * context = 0);
     /// Constructs a 1D texture by loading it from memory
     static Texture1D* fromBytes(GLenum internalFormat,
                                 int h,
                                 const void* data,
                                 const PixelFormat& srcFormat, bool buildMipmaps = true,
-                                GLResources * resources = 0);
+                                RenderContext * context = 0);
 
   };
+#endif // LUMINOUS_OPENGLES
 
   /// A 2D texture
   class LUMINOUS_API Texture2D : public TextureT<GL_TEXTURE_2D>
   {
   public:
     /// Constructs a 2D texture and adds it to the given resource collection
-    Texture2D(GLResources * resources = 0) :
-        TextureT<GL_TEXTURE_2D>(resources),
-      m_uploadedLines(0)
-    {}
+    Texture2D(RenderContext * context = 0) :
+        TextureT<GL_TEXTURE_2D>(context), m_uploadedLines(0) {}
 
     /// Get the aspect ratio of the texture
     /// Returns the aspect ratio of this texture, ie. the ratio of width to height
@@ -245,10 +239,12 @@ namespace Luminous
     /// zero, set the format automatically
     /// @return true on success
     bool loadImage(const Luminous::Image & image, bool buildMipmaps = true, int internalFormat = 0);
+#ifndef LUMINOUS_OPENGLES
     /// Load the texture from a compressed image
     /// @param image compressed image to load from
     /// @return true on success
     bool loadImage(const Luminous::CompressedImage & image);
+#endif // LUMINOUS_OPENGLES
 
     /// Load the texture from raw data, provided by the user
     bool loadBytes(GLenum internalFormat, int w, int h,
@@ -260,14 +256,17 @@ namespace Luminous
     void loadSubBytes(int x, int y, int w, int h, const void * subData, const PixelFormat & srcFormat);
 
     /// Create a new texture, from an image file
-    static Texture2D * fromFile(const char * filename, bool buildMipmaps = true, GLResources * resources = 0);
+    static Texture2D * fromFile(const char * filename, bool buildMipmaps = true, RenderContext * context = 0);
     /// Create a new texture, from an image
-    static Texture2D * fromImage(Luminous::Image & img, bool buildMipmaps = true, GLResources * resources = 0);
+    static Texture2D * fromImage(Luminous::Image & img, bool buildMipmaps = true, RenderContext * context = 0);
     /// Create a new texture from raw image data, provided by the user
     static Texture2D * fromBytes(GLenum internalFormat, int w, int h,
                 const void * data,
                 const PixelFormat& srcFormat,
-                bool buildMipmaps = true, GLResources * resources = 0);
+                bool buildMipmaps = true, RenderContext * context = 0);
+    /// Returns the number of scan-lines that have been loaded into the GPU
+    /** This function is mostly useful if one is using progressive image loading. */
+    inline unsigned loadedLines() const { return m_uploadedLines; }
 
     /// Do progressive texture upload
     /// Continues uploading lines to texture memory using previously uploaded
@@ -279,7 +278,7 @@ namespace Luminous
     /// @param resources OpenGL resource collection
     /// @param textureUnit OpenGL texture unit where the texture will be bound as a side effect of calling this function
     /// @return true if the texture data was fully uploaded, false otherwise
-    bool progressiveUpload(Luminous::GLResources * resources, GLenum textureUnit, const Image & srcImage);
+    bool progressiveUpload(Luminous::RenderContext * resources, GLenum textureUnit, const Image & srcImage);
 
   private:
     /// Number of lines that have been uploaded to GPU. Used to track progressive uploads.
@@ -289,13 +288,15 @@ namespace Luminous
     friend class ImageTex;
   };
 
+#ifndef LUMINOUS_OPENGLES
+
   /// A 3D texture
   class LUMINOUS_API Texture3D : public TextureT<GL_TEXTURE_3D>
   {
   public:
     /// Constructs a 3D texture and adds it to the given resource collection
     /// @param resources resource collection to own this texture
-    Texture3D(GLResources * resources = 0)
+    Texture3D(RenderContext * resources = 0)
       : TextureT<GL_TEXTURE_3D> (resources),
       m_depth(0)
     {}
@@ -315,10 +316,11 @@ namespace Luminous
   {
   public:
     /// Constructs a cube texture and adds it to the given resource collection
-    TextureCube(GLResources * resources = 0)
-        : TextureT<GL_TEXTURE_CUBE_MAP> (resources) {}
+    TextureCube(RenderContext * context = 0)
+        : TextureT<GL_TEXTURE_CUBE_MAP> (context) {}
 
   };
+#endif // LUMINOUS_OPENGLES
 
 }
 

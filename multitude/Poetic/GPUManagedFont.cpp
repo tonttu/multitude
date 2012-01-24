@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Poetic.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Poetic.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 #include "GPUManagedFont.hpp"
 #include "CPUBitmapFont.hpp"
@@ -24,10 +12,9 @@ namespace Poetic
 {
 
   GPUManagedFont::GPUManagedFont(CPUManagedFont * cmf,
-				 Luminous::GLResources * glrc)
+                 Luminous::RenderContext * glrc)
     : GLResource(glrc),
-    m_cmf(cmf),
-    m_resources(glrc)
+    m_cmf(cmf)
   {
     assert(m_cmf != 0);
     m_fonts.resize(m_cmf->fontCount());
@@ -71,7 +58,7 @@ namespace Poetic
   {
     GPUFont * gf;
     float sfix;
-    
+
     if(!computeRenderParams(m, pointSize, &gf, &sfix, minimumSize))
       return;
 

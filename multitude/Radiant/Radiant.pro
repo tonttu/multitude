@@ -1,3 +1,4 @@
+
 include(../multitude.pri)
 
 HEADERS += Flags.hpp
@@ -83,7 +84,7 @@ SOURCES += BinaryData.cpp
 SOURCES += VideoCamera.cpp
 SOURCES += Color.cpp
 SOURCES += ColorUtils.cpp
-SOURCES += ConditionQt.cpp
+# SOURCES += ConditionQt.cpp
 SOURCES += MutexQt.cpp
 SOURCES += ThreadQt.cpp
 SOURCES += ConfigReader.cpp
@@ -95,7 +96,6 @@ SOURCES += ImageConversion.cpp
 SOURCES += Log.cpp
 SOURCES += MemCheck.cpp
 SOURCES += CallStackLinux.cpp
-SOURCES += CallStackW32.cpp
 SOURCES += ResourceLocator.cpp
 SOURCES += RingBuffer.cpp
 SOURCES += Size2D.cpp
@@ -114,18 +114,32 @@ SOURCES += Singleton.cpp
 SOURCES += TCPServerSocketPosix.cpp
 SOURCES += TCPSocketPosix.cpp
 SOURCES += UDPSocketPosix.cpp
+linux-* {
 SOURCES += PlatformUtilsLinux.cpp
 SOURCES += XFaker.cpp
+}
 SOURCES += PlatformUtilsOSX.cpp
 SOURCES += SerialPortPosix.cpp
-SOURCES += VideoCamera1394.cpp
 SOURCES += LockFilePosix.cpp
-SOURCES += VideoCameraCMU.cpp
+win32 {
 SOURCES += PlatformUtilsWin32.cpp
 SOURCES += SerialPortWin32.cpp
 SOURCES += LockFileWin32.cpp
-SOURCES += VideoCameraPTGrey.cpp
- 
+SOURCES += CallStackW32.cpp
+}
+
+# ios:OTHER_FILES += PlatformUtilsIOS.mm
+ios {
+  OBJECTIVE_SOURCES += PlatformUtilsIOS.mm
+
+}
+
+!mobile* {
+  win32:SOURCES += VideoCameraCMU.cpp
+  SOURCES += VideoCamera1394.cpp
+  win32:SOURCES += VideoCameraPTGrey.cpp
+}
+
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
 
 linux-*: LIBS += -lX11 -lXtst
@@ -137,14 +151,14 @@ DEFINES += RADIANT_EXPORT
 unix {
   LIBS += -lpthread $$LIB_RT -ldl
   PKGCONFIG += libdc1394-2
-  DEFINES += CAMERA_DRIVER_1394
+  !mobile*:DEFINES += CAMERA_DRIVER_1394
   CONFIG += qt
   QT = core network
 }
 
 win32 {
     message(Radiant on Windows)
-    # CMU driver is only 32-bit 
+    # CMU driver is only 32-bit
     !win64 {
        DEFINES += CAMERA_DRIVER_CMU
        LIBS += 1394camera.lib
@@ -169,3 +183,7 @@ win32 {
     LIBS += FlyCapture2.lib
 }
 include(../library.pri)
+
+
+
+

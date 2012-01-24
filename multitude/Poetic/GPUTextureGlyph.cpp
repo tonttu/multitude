@@ -7,14 +7,15 @@
  * See file "Poetic.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 #include "GPUTextureGlyph.hpp"
 #include "CPUBitmapGlyph.hpp"
 
+#include <Luminous/Texture.hpp>
 #include <Luminous/Utils.hpp>
 
 #include <Nimble/Vector4.hpp>
@@ -30,25 +31,26 @@ namespace Poetic
 
   // GLuint GPUTextureGlyph::s_activeTexture = 0;
 
-  GPUTextureGlyph::GPUTextureGlyph(const CPUBitmapGlyph * glyph, int texId, int xOff, int yOff, GLsizei width, GLsizei height)
+  GPUTextureGlyph::GPUTextureGlyph(const CPUBitmapGlyph * glyph, Luminous::Texture2D * tex, int xOff, int yOff, GLsizei width, GLsizei height)
     : Glyph(*glyph),
     m_width(0),
     m_height(0),
-    m_textureId(texId)
+    m_textureId(tex)
   {
     m_width = glyph->m_size.x;
     m_height = glyph->m_size.y;
 
     if(m_width && m_height) {
-      glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT); 
+      /* glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
       glPixelStorei(GL_UNPACK_LSB_FIRST, GL_FALSE);
       glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+      */
       glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-      glBindTexture(GL_TEXTURE_2D, m_textureId);
+      m_textureId->bind();
       glTexSubImage2D(GL_TEXTURE_2D, 0, xOff, yOff, m_width, m_height, GL_ALPHA, GL_UNSIGNED_BYTE, glyph->m_bitmap);
 
-      glPopClientAttrib();
+      // glPopClientAttrib();
     }
 
     m_uv[0].x = static_cast<float> (xOff) / static_cast<float> (width);
@@ -66,7 +68,8 @@ namespace Poetic
   Nimble::Vector2 GPUTextureGlyph::render(Nimble::Vector2 pen, const Nimble::Matrix3 & /*m*/, Nimble::Vector2f ** ptr)
   {
     // if(s_activeTexture != m_textureId) {
-    glBindTexture(GL_TEXTURE_2D, m_textureId);
+    m_textureId->bind();
+    // glBindTexture(GL_TEXTURE_2D, m_textureId);
     // s_activeTexture = m_textureId;
     // }
 

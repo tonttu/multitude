@@ -8,7 +8,7 @@ isEmpty(DESTDIR):DESTDIR = $$PWD/lib
 
 isEmpty(EXPORT_HEADERS):EXPORT_HEADERS = $$HEADERS
 isEmpty(EXPORT_SOURCES):EXPORT_SOURCES = $$SOURCES
-contains(EXPORT_SOURCES, nothing) { 
+contains(EXPORT_SOURCES, nothing) {
   EXPORT_SOURCES=
   PROJECT_FILE=
 }
@@ -17,7 +17,7 @@ contains(EXPORT_SOURCES, nothing) {
 # below)
 target.path = /lib
 
-# Installation target for header files 
+# Installation target for header files
 includes.path = /include/$$TARGET
 includes.files = $$EXPORT_HEADERS
 
@@ -39,7 +39,7 @@ INSTALLS += includes src_code extra_inc
 
 # On Windows, put DLLs into /bin with the exes
 win32 {
-	DLLDESTDIR = $$PWD/bin
+    DLLDESTDIR = $$PWD/bin
 
 	# Debug libraries have an extra extension
   build_pass:CONFIG(debug,debug|release) {
@@ -88,7 +88,19 @@ unix {
   }
 }
 
+#ios {
+#  message(This is for iOS)
+#}
+
+mobile* {
+  message(This is for iPhone)
+  CONFIG += static
+}
+
 macx {
+  # Dynamic lookup is the best so that circular references do not matter so much
+  LIBS += -undefined dynamic_lookup
+  !mobile* {
     CONFIG += lib_bundle
 
     target.path = /Library/Frameworks
@@ -107,5 +119,5 @@ macx {
 
       QMAKE_BUNDLE_DATA += FRAMEWORK_SOURCES
     }
-
+  }
 }

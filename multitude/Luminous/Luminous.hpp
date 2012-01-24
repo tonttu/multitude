@@ -27,19 +27,66 @@
 
 #ifdef MULTI_WITHOUT_GLEW
 // This define is for glext.h
-#ifdef RADIANT_OSX
-#define GL_GLEXT_PROTOTYPES 1
-#include <OpenGL/gl.h>
-#include <OpenGL/glext.h>
-#include <OpenGL/glu.h>
+# define GL_GLEXT_PROTOTYPES 1
+
+# ifdef RADIANT_OSX
+#  ifdef RADIANT_IOS
+//#   include <OpenGLES/ES1/gl.h>
+#   include <OpenGLES/ES2/gl.h>
+#   ifdef LUMINOUS_COMPILE
+//#    include <OpenGLES/ES1/glext.h>
+#    include <OpenGLES/ES2/glext.h>
+#   endif
+#   define LUMINOUS_OPENGLES 1
+#  else
+#   include <OpenGL/gl.h>
+#   include <OpenGL/glext.h>
+#   include <OpenGL/glu.h>
+#  endif
+# else
+#  define GL_GLEXT_PROTOTYPES 1
+#  include <GL/gl.h>
+#  include <GL/glext.h>
+#  include <GL/glu.h>
+# endif
 #else
-#define GL_GLEXT_PROTOTYPES 1
-#include <GL/gl.h>
-#include <GL/glext.h>
-#include <GL/glu.h>
+# include <GL/glew.h>
 #endif
+
+#ifdef LUMINOUS_OPENGLES
+# define LUMINOUS_IN_FULL_OPENGL(x)
 #else
-#include <GL/glew.h>
+# define LUMINOUS_OPENGL_FULL
+# define LUMINOUS_IN_FULL_OPENGL(x) x
+#endif
+
+#ifdef LUMINOUS_OPENGLES
+# include <Luminous/DummyOpenGL.hpp>
+
+# define glGenRenderbuffersEXT glGenRenderbuffers
+# define glDeleteRenderbuffersEXT glDeleteRenderbuffers
+# define glBindRenderbufferEXT glBindRenderbuffer
+# define glRenderbufferStorageEXT glRenderbufferStorage
+# define GL_RENDERBUFFER_EXT GL_RENDERBUFFER
+
+# define glGenFramebuffersEXT glGenFramebuffers
+# define glDeleteFramebuffersEXT glDeleteFramebuffers
+# define glBindFramebufferEXT glBindFramebuffer
+# define glCheckFramebufferStatusEXT glCheckFramebufferStatus
+# define glFramebufferRenderbufferEXT glFramebufferRenderbuffer
+# define glFramebufferRenderbufferEXT glFramebufferRenderbuffer
+# define glFramebufferTexture2DEXT glFramebufferTexture2D
+
+# define GL_FRAMEBUFFER_EXT GL_FRAMEBUFFER
+# define GL_FRAMEBUFFER_COMPLETE_EXT GL_FRAMEBUFFER_COMPLETE
+# define GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT
+# define GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT
+# define GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS
+# define GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT GL_FRAMEBUFFER_INCOMPLETE_FORMATS
+# define GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER
+# define GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER
+# define GL_FRAMEBUFFER_UNSUPPORTED_EXT GL_FRAMEBUFFER_UNSUPPORTED
+
 #endif
 
 #define debugLuminous(...) (Radiant::trace("Luminous", Radiant::DEBUG, __VA_ARGS__))

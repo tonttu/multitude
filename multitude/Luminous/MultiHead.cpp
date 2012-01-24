@@ -1,21 +1,10 @@
 /* COPYRIGHT
- *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #include "MultiHead.hpp"
 
 #include "GLResources.hpp"
+#include "RenderContext.hpp"
 #include "Texture.hpp"
 #include "Utils.hpp"
 
@@ -56,13 +45,26 @@ namespace Luminous {
     return ok;
   }
 
-  void MultiHead::Area::applyGlState() const
+  void MultiHead::Area::applyViewportAndTransform(Luminous::RenderContext & r) const
   {
     /* info("MultiHead::Area::applyGlState # %d %d %d %d",
        m_location[0], m_location[1], m_size[0], m_size[1]);
     */
-    // Now set in RenderContext::pushViewport
-    //glViewport(m_location[0], m_location[1], m_size[0], m_size[1]);
+    glViewport(m_location[0], m_location[1], m_size[0], m_size[1]);
+    Nimble::Rect b = graphicsBounds();
+
+    /*info("MultiHead::Area::applyViewportAndTransform # %f %f %f %f",
+         b.low().x, b.high().x,
+         b.high().y, b.low().y);
+         */
+    Nimble::Matrix4 m = Nimble::Matrix4::ortho3D(b.low().x, b.high().x,
+                                                 b.high().y, b.low().y,
+                                                 -1000.0f, 1000.0f);
+    // Radiant::info("Matrix = %s", Radiant::FixedStr256(m, 5).str());
+
+    r.setViewTransform(m_keyStone.matrix() * m);
+
+#ifdef LUMINOUS_OPENGL_FULL
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
@@ -78,11 +80,12 @@ namespace Luminous {
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+#endif
   }
 
   void MultiHead::Area::cleanEdges() const
   {
-
+#ifdef LUMINOUS_OPENGL_FULL
     glViewport(m_location[0], m_location[1], m_size[0], m_size[1]);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -173,6 +176,8 @@ namespace Luminous {
 
     if(m_method != METHOD_TEXTURE_READBACK)
       m_keyStone.cleanExterior();
+#endif // LUMINOUS_OPENGL_FULL
+
   }
 
   Nimble::Vector2f MultiHead::Area::windowToGraphics
@@ -266,7 +271,7 @@ namespace Luminous {
   Nimble::Rect MultiHead::Window::graphicsBounds() const
   {
     if(m_areas.empty())
-      return Nimble::Rect(0,0, 1, 1);
+      return Nimble::Rect(0,0, 99, 99);
 
     Rect r = m_areas[0]->graphicsBounds();
 

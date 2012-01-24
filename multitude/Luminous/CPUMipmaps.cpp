@@ -1,22 +1,14 @@
 /* COPYRIGHT
- *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #include "CPUMipmaps.hpp"
-#include "MipMapGenerator.hpp"
 
-#include <Luminous/GLResources.hpp>
+#ifndef LUMINOUS_OPENGLES
+# include "MipMapGenerator.hpp"
+#endif
+
+#include <Luminous/RenderContext.hpp>
+
 #include <Luminous/Utils.hpp>
 
 #include <Radiant/PlatformUtils.hpp>
@@ -215,6 +207,7 @@ namespace Luminous {
     return image;
   }
 
+#ifndef LUMINOUS_OPENGLES
   std::shared_ptr<CompressedImageTex> CPUMipmaps::getCompressedImage(int i)
   {
     CPUItem item = getStack(i);
@@ -226,6 +219,7 @@ namespace Luminous {
 
     return image;
   }
+#endif // LUMINOUS_OPENGLES
 
   void CPUMipmaps::markImage(size_t i)
   {
@@ -267,6 +261,7 @@ namespace Luminous {
       return false;
     }
 
+#ifndef LUMINOUS_OPENGLES
     MipMapGenerator * gen = 0;
     if(compressedMipmaps) {
       m_compFilename = cacheFileName(filename, -1, "dds");
@@ -291,6 +286,7 @@ namespace Luminous {
         gen->setListener(shared_from_this());
       }
     }
+#endif // LUMINOUS_OPENGLES
 
     if(m_info.width == 0 && !Luminous::Image::ping(filename, m_info)) {
       error("CPUMipmaps::startLoading # failed to query image size for %s", filename);
@@ -329,9 +325,12 @@ namespace Luminous {
     markImage(m_maxLevel);
     reschedule();
 
+#ifndef LUMINOUS_OPENGLES
     if(gen) {
       Luminous::BGThread::instance()->addTask(gen);
-    } else if(compressedMipmaps) {
+    } else
+#endif // LUMINOUS_OPENGLES
+      if(compressedMipmaps) {
       Luminous::BGThread::instance()->addTask(shared_from_this());
     }
     return true;
@@ -339,15 +338,15 @@ namespace Luminous {
 
   bool CPUMipmaps::bind(Nimble::Vector2 pixelSize, GLenum textureUnit)
   {
-    return bind(GLResources::getThreadResources(), pixelSize, textureUnit);
+    return bind(RenderContext::getThreadContext(), pixelSize, textureUnit);
   }
 
   bool CPUMipmaps::bind(const Nimble::Matrix3 &transform, Nimble::Vector2 pixelSize, GLenum textureUnit)
   {
-    return bind(GLResources::getThreadResources(), transform, pixelSize, textureUnit);
+    return bind(RenderContext::getThreadContext(), transform, pixelSize, textureUnit);
   }
 
-  bool CPUMipmaps::bind(GLResources * resources, const Nimble::Matrix3 &transform, Nimble::Vector2 pixelSize, GLenum textureUnit)
+  bool CPUMipmaps::bind(RenderContext * resources, const Nimble::Matrix3 &transform, Nimble::Vector2 pixelSize, GLenum textureUnit)
   {
     // Transform the corners and compute the lengths of the sides of the transformed rectangle.
     // We use the maximum of the edge lengths to get sheared textures appear correctly.
@@ -365,7 +364,7 @@ namespace Luminous {
     return bind(resources, Nimble::Vector2(std::max(x1, x2), std::max(y1, y2)), textureUnit);
   }
 
-  bool CPUMipmaps::bind(GLResources * resources, Nimble::Vector2 pixelSize, GLenum textureUnit)
+  bool CPUMipmaps::bind(RenderContext * resources, Nimble::Vector2 pixelSize, GLenum textureUnit)
   {
     StateInfo & si = m_stateInfo.ref(resources);
     si.bound = -1;
@@ -379,6 +378,7 @@ namespace Luminous {
     // Mark the mipmap that it has been used
     markImage(bestAvailable);
 
+#ifndef LUMINOUS_OPENGLES
     // Handle compressed images
     if(m_info.pf.compression()) {
       si.bound = bestAvailable;
@@ -386,6 +386,7 @@ namespace Luminous {
       img->bind(resources, textureUnit);
       return true;
     }
+#endif // LUMINOUS_OPENGLES
 
     // Handle non-compressed images
     std::shared_ptr<ImageTex> img = getImage(bestAvailable);
@@ -434,7 +435,7 @@ namespace Luminous {
     return false;
   }
 
-  CPUMipmaps::StateInfo CPUMipmaps::stateInfo(GLResources * resources)
+  CPUMipmaps::StateInfo CPUMipmaps::stateInfo(RenderContext * resources)
   {
     return m_stateInfo.ref(resources);
   }
@@ -456,12 +457,14 @@ namespace Luminous {
     // info("CPUMipmaps::pixelAlpha # %f %f", relLoc.x, relLoc.y);
 
     for(int i = 0; i <= m_maxLevel; ++i) {
+#ifndef LUMINOUS_OPENGLES
       if(m_info.pf.compression()) {
         std::shared_ptr<CompressedImage> c = getCompressedImage(i);
         if(!c) continue;
 
         return 255 * c->readAlpha(Nimble::Vector2f(relLoc.x * c->width(), relLoc.y * c->height()));
       }
+#endif // LUMINOUS_OPENGLES
 
       std::shared_ptr<ImageTex> im = getImage(i);
 
@@ -629,6 +632,7 @@ namespace Luminous {
       return;
     item.m_lastUsed = Radiant::TimeStamp::getTime();
 
+#ifndef LUMINOUS_OPENGLES
     if(m_info.pf.compression()) {
       std::shared_ptr<Luminous::CompressedImageTex> im(new Luminous::CompressedImageTex);
       QString filename = m_compFilename.isEmpty() ? m_filename : m_compFilename;
@@ -644,6 +648,7 @@ namespace Luminous {
       }
       return;
     }
+#endif // LUMINOUS_OPENGLES
 
     if(level == 0) {
       // Load original

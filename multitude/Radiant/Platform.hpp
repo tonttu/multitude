@@ -36,7 +36,7 @@
 #   define RADIANT_DEBUG 1
 #endif
 
-// 
+//
 // Detect LLVM/CLANG
 //
 #if defined (__clang__)
@@ -61,7 +61,7 @@
 #     define NO_OVERRIDE
 #   endif
 
-// 
+//
 // Detect Microsoft Visual C++
 //
 #elif defined (_MSC_VER)
@@ -81,13 +81,19 @@
 
 //
 // Detect OSX
-// 
-#if defined (__APPLE__) && defined (__MACH__)
+//
+#if defined (__APPLE__)
+// && defined (__MACH__)
 #   define RADIANT_OSX 1
 #   define RADIANT_UNIX 1
+
+#if defined(__IPHONE_OS_VERSION_MIN_REQUIRED)
+# define RADIANT_IOS 1
+# define RADIANT_OS_MOBILE 1
+#endif
 //
 // Detect Windows
-// 
+//
 #elif defined(_WIN32)
 #	include <yvals.h>
 #   define RADIANT_WINDOWS 1
@@ -108,14 +114,14 @@
 
 //
 // Detect linux
-// 
+//
 #elif __linux__
 #   define RADIANT_LINUX 1
 #   define RADIANT_UNIX 1
 #else
 //
 // Unsupported
-// 
+//
 #   error "Unsupported platform!"
 #endif
 

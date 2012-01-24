@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #include <Luminous/Utils.hpp>
@@ -37,38 +37,40 @@ namespace Luminous {
 
   using namespace Nimble;
 
+#ifndef LUMINOUS_OPENGLES
+
   void Utils::blendCenterSeamHorizontal(int w, int h,
-					int seamWidth,
-					bool withGrid)
+                    int seamWidth,
+                    bool withGrid)
   {
     assert(seamWidth > 1); // NVidia bug...
     /* printf("Utils::blendCenterSeamHorizontal %d\n", seamWidth);
        fflush(0); */
-    
+
     glViewport (0, 0, w, h);
-    
+
     glDisable(GL_LIGHTING);
     glDisable(GL_CULL_FACE);
     glDisable(GL_TEXTURE_2D);
-    glUseProgram(0);
+    // glUseProgram(0);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
     glShadeModel(GL_SMOOTH);
-    
+
     int i;
     int center = w / 2;
     int left = center - seamWidth;
     int right = center + seamWidth;
-    
+
     glMatrixMode (GL_MODELVIEW);
     glLoadIdentity();
     gluOrtho2D(0, w, h, 0);
 
     glRasterPos2i(center, h);
     glCopyPixels(left, 0, center, h, GL_COLOR);
-     
+
     glBegin(GL_QUAD_STRIP);
-    
+
     float p = 2.2f;
 
     for(i = 0; i < 5; i++) {
@@ -82,7 +84,7 @@ namespace Luminous {
     glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
     glVertex2i(center, 0);
     glVertex2i(center, h);
-    
+
     for(i = 1; i <= 5; i++) {
       float rel = i / (float)5;
       float x = center + seamWidth * rel;
@@ -131,7 +133,7 @@ namespace Luminous {
     last = float(h) - 1.5f;
     ampl = last - first;
 
-    
+
     glColor3f(1.0f, 0.0f, 0.0f);
     glVertex2f(float(left), 0.0f);
     glVertex2f(float(left), float(h));
@@ -150,17 +152,17 @@ namespace Luminous {
       glVertex2f(float(center), y);
       glVertex2f(float(w), y);
     }
-    
+
     glEnd();
   }
-  
+
   void Utils::fadeEdge(float w, float h, float seam,
-		       float gamma, Edge e, bool withGrid)
+               float gamma, Edge e, bool withGrid)
   {
     glDisable(GL_LIGHTING);
     glDisable(GL_CULL_FACE);
     glDisable(GL_TEXTURE_2D);
-    glUseProgram(0);
+    // glUseProgram(0);
     glUsualBlend();
     glEnable(GL_BLEND);
     glShadeModel(GL_SMOOTH);
@@ -168,7 +170,7 @@ namespace Luminous {
     MatrixStep ms;
 
     bool horiz = true;
-    
+
     if(e == RIGHT) // The default
       ;
     else if(e == LEFT) {
@@ -179,8 +181,8 @@ namespace Luminous {
       horiz = false;
 
       if(e == BOTTOM) {
-	glScalef(1, -1, 1);
-	glTranslatef(0, -h, 0);
+    glScalef(1, -1, 1);
+    glTranslatef(0, -h, 0);
       }
     }
 
@@ -189,7 +191,7 @@ namespace Luminous {
     float top = h - seam;
 
     glBegin(GL_QUAD_STRIP);
-    
+
     // glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
 
     if(horiz) {
@@ -197,26 +199,26 @@ namespace Luminous {
       float hextra = h * 0.5f;
 
       for(i = 0; i <= n; i++) {
-	
-	float rel = i / (float) n;
-	float x = left + seam * rel * 1 + 0.00001;
-	
-	glColor4f(0.0f, 0.0f, 0.0f, powf(rel, gamma));
-	glVertex2f(x, -hextra);
-	glVertex2f(x, h + hextra);
+
+    float rel = i / (float) n;
+    float x = left + seam * rel * 1 + 0.00001;
+
+    glColor4f(0.0f, 0.0f, 0.0f, powf(rel, gamma));
+    glVertex2f(x, -hextra);
+    glVertex2f(x, h + hextra);
       }
     }
     else {
       float wextra = w * 0.5f;
-      
+
       for(i = 0; i <= n; i++) {
-	
-	float rel = i / (float) n;
-	float y = top + seam * rel * 1.0 + 0.00001f;
-	
-	glColor4f(0.0f, 0.0f, 0.0f, powf(rel, gamma));
-	glVertex2f(-wextra, y);
-	glVertex2f(w + wextra, y);
+
+    float rel = i / (float) n;
+    float y = top + seam * rel * 1.0 + 0.00001f;
+
+    glColor4f(0.0f, 0.0f, 0.0f, powf(rel, gamma));
+    glVertex2f(-wextra, y);
+    glVertex2f(w + wextra, y);
 
       }
     }
@@ -234,7 +236,7 @@ namespace Luminous {
       Vector3(0, 0, 1),
       Vector3(0.5, 0.5, 0)
     };
-  
+
     glColor3fv(colors[(int) e].data());
     glBegin(GL_LINES);
 
@@ -251,7 +253,7 @@ namespace Luminous {
 
     last = h - 1.5f;
     ampl = last - first;
-    
+
     glVertex2f(left, 0);
     glVertex2f(left, h);
 
@@ -268,17 +270,18 @@ namespace Luminous {
     glVertex2f(0.0f, h);
 
     glColor3f(0.0f, 0.0f, 0.0f);
-    
+
     glVertex2f(left + seam * 0.5f, 0.0f);
     glVertex2f(left + seam * 0.5f, h);
 
     glEnd();
   }
+#endif // LUMINOUS_OPENGLES
 
   void Utils::glTexRect(float x1, float y1, float x2, float y2)
   {
     glBegin(GL_QUADS);
-    
+
     glTexCoord2f(0.0f, 0.0f);
     glVertex2f(x1, y1);
 
@@ -310,10 +313,10 @@ namespace Luminous {
 
     glTexCoord2f(1.0f, 0.0f);
     glVertex4fv(v[1].data());
-  
+
     glTexCoord2f(1.0f, 1.0f);
     glVertex4fv(v[2].data());
-    
+
     glTexCoord2f(0.0f, 1.0f);
     glVertex4fv(v[3].data());
 
@@ -384,10 +387,10 @@ namespace Luminous {
 
     glTexCoord2f(uv2.x - e, uv1.y + e);
     glVertex4fv(v[1].data());
-  
+
     glTexCoord2f(uv2.x - e, uv2.y - e);
     glVertex4fv(v[2].data());
-    
+
     glTexCoord2f(uv1.x, uv2.y - e);
     glVertex4fv(v[3].data());
 
@@ -406,19 +409,19 @@ namespace Luminous {
     glVertex4fv((v[1] - up + right).data());
     glColor4f(r, g, b, a);
     glVertex4fv(v[1].data());
-    
+
     glTexCoord2f(uv2.x - e, uv2.y - e);
     glColor4f(r, g, b, 0);
     glVertex4fv((v[2] + up + right).data());
     glColor4f(r, g, b, a);
     glVertex4fv(v[2].data());
-    
+
     glTexCoord2f(uv1.x, uv2.y - e);
     glColor4f(r, g, b, 0);
     glVertex4fv((v[3] + up - right).data());
     glColor4f(r, g, b, a);
     glVertex4fv(v[3].data());
-    
+
     glTexCoord2f(uv1.x + e, uv1.y + e);
     glColor4f(r, g, b, 0);
     glVertex4fv((v[0] - up - right).data());
@@ -426,11 +429,10 @@ namespace Luminous {
     glVertex4fv(v[0].data());
 
     glEnd();
-
   }
 
   void Utils::glTexRect(Nimble::Vector2f v1, Nimble::Vector2f v2,
-			Nimble::Vector2f uv1, Nimble::Vector2f uv2)
+            Nimble::Vector2f uv1, Nimble::Vector2f uv2)
   {
     glBegin(GL_QUADS);
 
@@ -448,7 +450,7 @@ namespace Luminous {
 
     glEnd();
   }
-  
+
   void Utils::glCenteredTexRect(Nimble::Vector2 size, const Nimble::Matrix3 & m)
   {
     float xh = size.x * 0.5f;
@@ -467,10 +469,10 @@ namespace Luminous {
 
     glTexCoord2f(1.0f, 0.0f);
     glVertex2fv(v[1].data());
-  
+
     glTexCoord2f(1.0f, 1.0f);
     glVertex2fv(v[2].data());
-    
+
     glTexCoord2f(0.0f, 1.0f);
     glVertex2fv(v[3].data());
 
@@ -478,7 +480,7 @@ namespace Luminous {
   }
 
   void Utils::glRectWithHole(const Nimble::Rect & area,
-			     const Nimble::Rect & hole)
+                 const Nimble::Rect & hole)
   {
     glBegin(GL_TRIANGLE_STRIP);
 
@@ -521,11 +523,11 @@ namespace Luminous {
     glVertex2fv(hole.low().data());
 
     glEnd();
-    
+
   }
   void Utils::glRectWithHole(const Nimble::Rect & area,
-			     const Nimble::Rect & hole,
-			     const Nimble::Matrix3 & m)
+                 const Nimble::Rect & hole,
+                 const Nimble::Matrix3 & m)
   {
     glBegin(GL_TRIANGLE_STRIP);
 
@@ -568,13 +570,13 @@ namespace Luminous {
     glVertex2fv((m * hole.low()).data());
 
     glEnd();
-    
+
   }
 
   void Utils::glRectWithHoleAA(const Nimble::Rect & area,
-			       const Nimble::Rect & hole,
-			       const Nimble::Matrix3 & m,
-			       const float * rgba)
+                   const Nimble::Rect & hole,
+                   const Nimble::Matrix3 & m,
+                   const float * rgba)
   {
     float r = rgba[0];
     float g = rgba[1];
@@ -802,7 +804,7 @@ namespace Luminous {
     up.normalize(width);
 
     glBegin(GL_QUAD_STRIP);
-    
+
     glColor4f(r, g, b, 0.0f);
     glVertex2fv((begin - up).data());
     glVertex2fv((end - up).data());
@@ -819,14 +821,14 @@ namespace Luminous {
   }
 
   void Utils::glSoftLine(const float * v1, const float * v2, float width,
-			 const float * color)
+             const float * color)
   {
     glSoftLine(v1[0], v1[1], v2[0], v2[1], width, color);
   }
 
   void Utils::glFilledSoftLine(float x1, float y1, float x2, float y2,
-			       float width, float edgeWidth,
-			       const float * color)
+                   float width, float edgeWidth,
+                   const float * color)
   {
     width *= 0.5f;
 
@@ -845,7 +847,7 @@ namespace Luminous {
     Vector2f dir2(-up2.y, up2.x);
 
     glBegin(GL_QUADS);
-    
+
     glColor4f(r, g, b, a);
     glVertex2fv((begin - up).data());
     glVertex2fv((end - up).data());
@@ -890,21 +892,21 @@ namespace Luminous {
 
     glEnd();
   }
-  
+
   void Utils::glFilledLineAA(const float * v1, const float * v2,
-			     float width,
-			     const Nimble::Matrix3 & m,
-			     const float * color)
+                 float width,
+                 const Nimble::Matrix3 & m,
+                 const float * color)
   {
     float scale = m.extractScale();
 
     glFilledSoftLine((m * Vector2(v1[0], v1[1])).data(),
-		     (m * Vector2(v2[0], v2[1])).data(),
-		     width * scale, 1.0f, color);
+             (m * Vector2(v2[0], v2[1])).data(),
+             width * scale, 1.0f, color);
   }
 
   void Utils::glFilledSoftLine(const float * v1, const float * v2, float width,
-			       float blendwidth, const float * color)
+                   float blendwidth, const float * color)
   {
     glFilledSoftLine(v1[0], v1[1], v2[0], v2[1], width, blendwidth, color);
   }
@@ -931,16 +933,16 @@ namespace Luminous {
   }
 
   void Utils::glArc(float centerx, float centery, float radius,
-		    float fromRadians, float toRadians, int linesegments)
+            float fromRadians, float toRadians, int linesegments)
   {
     float delta = (toRadians - fromRadians) / linesegments;
 
     glBegin(GL_LINE_STRIP);
-    
+
     for(int i = 0; i <= linesegments; i++) {
       float angle = fromRadians + i * delta;
       glVertex2f(sinf(angle) * radius + centerx,
-		 -cosf(angle) * radius + centery);
+         -cosf(angle) * radius + centery);
     }
 
     glEnd();
@@ -957,8 +959,8 @@ namespace Luminous {
   }
 
   void Utils::glSoftArc(float centerx, float centery, float radius,
-			float fromRadians, float toRadians, float width,
-			int linesegments, const float * color)
+            float fromRadians, float toRadians, float width,
+            int linesegments, const float * color)
   {
     float r = color[0];
     float g = color[1];
@@ -980,10 +982,10 @@ namespace Luminous {
       float ca = cosf(angle);
       glColor4f(r, g, b, a);
       glVertex2f(sa * radius + centerx,
-		 ca * radius + centery);
+         ca * radius + centery);
       glColor4f(r, g, b, 0.0f);
       glVertex2f(sa * outrad + centerx,
-		 ca * outrad + centery);
+         ca * outrad + centery);
     }
 
     glEnd();
@@ -998,10 +1000,10 @@ namespace Luminous {
       float ca = cosf(angle);
       glColor4f(r, g, b, a);
       glVertex2f(sa * radius + centerx,
-		 ca * radius + centery);
+         ca * radius + centery);
       glColor4f(r, g, b, 0.0f);
       glVertex2f(sa * inrad + centerx,
-		 ca * inrad + centery);
+         ca * inrad + centery);
     }
 
     glEnd();
@@ -1009,9 +1011,9 @@ namespace Luminous {
   }
 
   void Utils::glFilledSoftArc(float centerx, float centery, float radius,
-			      float fromRadians, float toRadians, float width,
-			      float blendwidth,
-			      int linesegments, const float * color)
+                  float fromRadians, float toRadians, float width,
+                  float blendwidth,
+                  int linesegments, const float * color)
   {
     float r = color[0];
     float g = color[1];
@@ -1036,7 +1038,7 @@ namespace Luminous {
       float ca2 = - cosf(a2);
 
       glBegin(GL_QUAD_STRIP);
-      
+
       glColor4f(r, g, b, 0.0f);
 
       glVertex2f(sa1 * rs[0] + centerx, ca1 * rs[0] + centery);
@@ -1056,7 +1058,7 @@ namespace Luminous {
       glVertex2f(sa2 * rs[3] + centerx, ca2 * rs[3] + centery);
 
       glEnd();
-    }    
+    }
 
   }
 
@@ -1065,15 +1067,15 @@ namespace Luminous {
                               float width, float blendwidth,
                               int linesegments, const float * color)
   {
-    glFilledSoftArc(center[0], center[1], radius, fromRadians, toRadians, 
+    glFilledSoftArc(center[0], center[1], radius, fromRadians, toRadians,
                     width, blendwidth, linesegments, color);
   }
 
 
   void Utils::glFilledSoftArc(const Nimble::Matrix3 & m, float radius,
-			      float fromRadians, float toRadians, float width,
-			      float blendwidth,
-			      int linesegments, const float * color)
+                  float fromRadians, float toRadians, float width,
+                  float blendwidth,
+                  int linesegments, const float * color)
   {
     float r = color[0];
     float g = color[1];
@@ -1098,7 +1100,7 @@ namespace Luminous {
       float ca2 = - cosf(a2);
 
       glBegin(GL_QUAD_STRIP);
-      
+
       glColor4f(r, g, b, 0.0f);
 
       glVertex2(m, sa1 * rs[0], ca1 * rs[0]);
@@ -1118,15 +1120,15 @@ namespace Luminous {
       glVertex2(m, sa2 * rs[3], ca2 * rs[3]);
 
       glEnd();
-    }    
+    }
 
   }
 
 
   void Utils::glSolidSoftArc(float centerx, float centery, float radius,
-			      float fromRadians, float toRadians,
-			      float blendwidth,
-			      int linesegments, const float * color)
+                  float fromRadians, float toRadians,
+                  float blendwidth,
+                  int linesegments, const float * color)
   {
     float r = color[0];
     float g = color[1];
@@ -1194,45 +1196,45 @@ namespace Luminous {
                            int linesegments, const float * color)
   {
     glSoftArc(centerx, centery, radius, 0.0f, float(Nimble::Math::TWO_PI),
-	      width, linesegments, color);
+          width, linesegments, color);
   }
 
   void Utils::glFilledSoftCircle(float centerx, float centery, float radius,
-				 float width, float blendwidth,
-				 int linesegments, const float * color)
+                 float width, float blendwidth,
+                 int linesegments, const float * color)
   {
     glFilledSoftArc(centerx, centery, radius, 0.0f, float(Nimble::Math::TWO_PI),
-		    width, blendwidth, linesegments, color);
+            width, blendwidth, linesegments, color);
   }
 
   void Utils::glFilledSoftCircle(const float * center, float radius,
-				 float width, float blendwidth,
-				 int linesegments, const float * color)
+                 float width, float blendwidth,
+                 int linesegments, const float * color)
   {
     glFilledSoftArc(center[0], center[1], radius, 0.0f,
-		    float(Nimble::Math::TWO_PI),
-		    width, blendwidth, linesegments, color);
+            float(Nimble::Math::TWO_PI),
+            width, blendwidth, linesegments, color);
   }
 
   void Utils::glFilledSoftCircle(const Nimble::Matrix3 & m, float radius,
-				 float width, float blendwidth,
-				 int linesegments, const float * color)
+                 float width, float blendwidth,
+                 int linesegments, const float * color)
   {
     glFilledSoftArc(m, radius, 0.0f, float(Nimble::Math::TWO_PI),
-		    width, blendwidth, linesegments, color);
+            width, blendwidth, linesegments, color);
   }
 
   void Utils::glSolidSoftCircle(float centerx, float centery, float radius,
-				float blendwidth,
-				int linesegments, const float * color)
+                float blendwidth,
+                int linesegments, const float * color)
   {
     glSolidSoftArc(centerx, centery, radius, 0, Nimble::Math::TWO_PI, blendwidth,
-		   linesegments, color);
-  } 
+           linesegments, color);
+  }
 
   void Utils::glSolidSoftCircle(const Nimble::Matrix3 & m, float radius,
-				float blendwidth,
-				int segments, const float * color)
+                float blendwidth,
+                int segments, const float * color)
   {
     float delta = Nimble::Math::TWO_PI / segments;
 
@@ -1249,7 +1251,7 @@ namespace Luminous {
     }
 
     glEnd();
-    
+
     float r = color[0];
     float g = color[1];
     float b = color[2];
@@ -1260,7 +1262,7 @@ namespace Luminous {
 
     for(int i = 0; i <= segments; i++) {
       float angle = i * delta;
-      
+
       float sa = sinf(angle);
       float ca = cosf(angle);
 
@@ -1302,7 +1304,7 @@ namespace Luminous {
     glLine(centerx, centery, vertices[0].x, vertices[0].y);
     glLine(centerx, centery, vertices[lineSegments].x, vertices[lineSegments].y);
 
-		delete [] vertices;
+        delete [] vertices;
   }
 
   void Utils::glFilledSectorf(float centerx, float centery, float radius,
@@ -1325,8 +1327,8 @@ namespace Luminous {
   }
 
   void Utils::glFilledSoftLinePolygon(const Vector2f * corners, int n,
-				  float width, float blendwidth,
-				  const float * color)
+                  float width, float blendwidth,
+                  const float * color)
   {
     float r = color[0];
     float g = color[1];
@@ -1351,23 +1353,23 @@ namespace Luminous {
       dir2.normalize();
 
       Vector2 q = dir1.perpendicular();
-            
+
       Vector2 p01 = (dir0 + dir1).perpendicular();
       p01.normalize();
 
       float q01 = dot(p01, q);
       if(q01 > 0.000001f)
-	p01 /= q01;
+    p01 /= q01;
 
       Vector2 p12 = (dir2 + dir1).perpendicular();
       p12.normalize();
 
       float q12 = dot(p12, q);
       if(q12 > 0.000001f)
-	p12 /= q12;
+    p12 /= q12;
 
       glBegin(GL_QUAD_STRIP);
-      
+
       glColor4f(r, g, b, 0.0f);
       glVertex2fv((cnow + p12 * fullw).data());
       glVertex2fv((cnext + p01 * fullw).data());
@@ -1387,20 +1389,20 @@ namespace Luminous {
     }
   }
 
-  void Utils::glFilledSoftLineTriangle(Nimble::Vector2f c1, 
-				       Nimble::Vector2f c2, 
-				       Nimble::Vector2f c3,
-				       float width, float blendwidth,
-				       const float * color)
+  void Utils::glFilledSoftLineTriangle(Nimble::Vector2f c1,
+                       Nimble::Vector2f c2,
+                       Nimble::Vector2f c3,
+                       float width, float blendwidth,
+                       const float * color)
   {
     Vector2 corners[3] = { c1, c2, c3 };
 
-    glFilledSoftLinePolygon(corners, 3, width, blendwidth, color);    
+    glFilledSoftLinePolygon(corners, 3, width, blendwidth, color);
   }
 
   void Utils::glTriangle(float x1, float y1,
-			 float x2, float y2,
-			 float x3, float y3)
+             float x2, float y2,
+             float x3, float y3)
   {
     glBegin(GL_TRIANGLES);
 
@@ -1410,7 +1412,7 @@ namespace Luminous {
 
     glEnd();
   }
-  
+
 
   void Utils::glRoundedRectf(const float x1, const float y1, const float x2, const float y2,
     const float cornerRadius, const int cornerLineSegments)
@@ -1454,12 +1456,12 @@ namespace Luminous {
 
 
   void Utils::glSoftRoundedRectf(float x1, float y1,
-				 float x2, float y2,
-				 float cornerRadius,
-				 int cornerLineSegments,
-				 float lineWidth, float blendWidth,
-				 const float * rgba,
-				 const Nimble::Matrix3 & m)
+                 float x2, float y2,
+                 float cornerRadius,
+                 int cornerLineSegments,
+                 float lineWidth, float blendWidth,
+                 const float * rgba,
+                 const Nimble::Matrix3 & m)
   {
     assert(cornerLineSegments > 0);
 
@@ -1538,8 +1540,8 @@ namespace Luminous {
   void Utils::glFilledRoundedRectfv(const Vector2 & low, const Vector2 & high,
     const float cornerRadius, const int cornerLineSegments)
   {
-    glFilledRoundedRectf(low.x, low.y, high.x, high.y, 
-			 cornerRadius, cornerLineSegments);
+    glFilledRoundedRectf(low.x, low.y, high.x, high.y,
+             cornerRadius, cornerLineSegments);
   }
 
   void Utils::glSoftFilledRoundedRectf
@@ -1596,24 +1598,24 @@ namespace Luminous {
       {
         angle = fromRadians + j * delta;
 
-	sa = sinf(angle);
-	ca = -cosf(angle);
+    sa = sinf(angle);
+    ca = -cosf(angle);
 
         x = sa * cornerRadius + arcCenters[i].x;
         y = ca * cornerRadius + arcCenters[i].y;
 
-	glColor4fv(rgba);
+    glColor4fv(rgba);
         glVertex2fv((m * Vector2(x, y)).data());
 
         x += sa * blendWidth;
         y += ca * blendWidth;
 
-	glColor4f(r, g, b, 0);
+    glColor4f(r, g, b, 0);
         glVertex2fv((m * Vector2(x, y)).data());
       }
       fromRadians += float(Math::HALF_PI);
     }
-    
+
     x = sa * cornerRadius + arcCenters[0].x;
     y = ca * cornerRadius + arcCenters[0].y;
 
@@ -1622,10 +1624,10 @@ namespace Luminous {
 
     x += sa * blendWidth;
     y += ca * blendWidth;
-    
+
     glColor4f(r, g, b, 0);
     glVertex2fv((m * Vector2(x, y)).data());
-	
+
     glEnd();
   }
   void Utils::glSoftFilledRoundedRectfv
@@ -1634,8 +1636,8 @@ namespace Luminous {
    float blendWidth, const float * rgba, const Nimble::Matrix3 & m)
   {
     glSoftFilledRoundedRectf(low.x, low.y, high.x, high.y,
-			     cornerRadius, cornerLineSegments,
-			     blendWidth, rgba, m);
+                 cornerRadius, cornerLineSegments,
+                 blendWidth, rgba, m);
   }
 
   void Utils::glUsualBlend()
@@ -1671,6 +1673,7 @@ namespace Luminous {
     GLenum e, e2 = GL_NO_ERROR;
 
     while((e = glGetError()) != GL_NO_ERROR) {
+#ifndef LUMINOUS_OPENGLES
       // If glGetError ever returns the same error twice, it's broken somehow.
       // This happens when called without GL context etc.
       if(e == e2) {
@@ -1678,6 +1681,11 @@ namespace Luminous {
         return false;
       }
       Radiant::error("%s # GL ERROR %s", msg, gluErrorString(e));
+      int *bad = 0;
+      *bad = 123;
+#else
+      Radiant::error("%s # GL ERROR %d", msg, (int) e);
+#endif
       result = false;
       e2 = e;
     }
@@ -1686,25 +1694,25 @@ namespace Luminous {
   }
 
   void Utils::glCircularHalo(float x, float y, float inside, float outside,
-			     float radians1,
-			     float radians2, 
-			     int rings, int sectors,
-			     const float * rgba)
+                 float radians1,
+                 float radians2,
+                 int rings, int sectors,
+                 const float * rgba)
   {
     float span = outside - inside;
-    
+
     float spanstep = span / rings;
 
     float secstep = (radians2 - radians1) / sectors;
 
     glColor4fv(rgba);
-    
+
     glBegin(GL_TRIANGLE_FAN);
 
     glVertex2f(x, y);
-    
+
     for(int sec = 0; sec <= sectors; sec++) {
-      
+
       float angle = radians1 + secstep * sec;
       float yd = cosf(angle);
       float xd = sinf(angle);
@@ -1732,16 +1740,16 @@ namespace Luminous {
       glBegin(GL_QUAD_STRIP);
 
       for(int sec = 0; sec <= sectors; sec++) {
-	
-	float angle = radians1 + secstep * sec;
-	float yd = cosf(angle);
-	float xd = sinf(angle);
 
-	glColor4f(r, g, b, a1);
-	glVertex2f(x + xd * rad1, y + yd * rad1);
+    float angle = radians1 + secstep * sec;
+    float yd = cosf(angle);
+    float xd = sinf(angle);
 
-	glColor4f(r, g, b, a2);
-	glVertex2f(x + xd * rad2, y + yd * rad2);
+    glColor4f(r, g, b, a1);
+    glVertex2f(x + xd * rad1, y + yd * rad1);
+
+    glColor4f(r, g, b, a2);
+    glVertex2f(x + xd * rad2, y + yd * rad2);
       }
 
       glEnd();
@@ -1750,38 +1758,38 @@ namespace Luminous {
   }
 
   void Utils::glCircularHalo(float x, float y, float inside, float outside,
-			     float radians1,
-			     float radians2, 
-			     int rings, int sectors,
-			     const float * rgba,
-			     const Nimble::Matrix3 & m)
+                 float radians1,
+                 float radians2,
+                 int rings, int sectors,
+                 const float * rgba,
+                 const Nimble::Matrix3 & m)
   {
     Nimble::Matrix3 m2 = m * Matrix3::translate2D(x, y);
-    glCircularHalo(inside, outside, radians1, radians2, 
-		   rings,  sectors, rgba, m2);
+    glCircularHalo(inside, outside, radians1, radians2,
+           rings,  sectors, rgba, m2);
   }
 
   void Utils::glCircularHalo(float inside, float outside,
-			     float radians1,
-			     float radians2, 
-			     int rings, int sectors,
-			     const float * rgba,
-			     const Nimble::Matrix3 & m)
+                 float radians1,
+                 float radians2,
+                 int rings, int sectors,
+                 const float * rgba,
+                 const Nimble::Matrix3 & m)
   {
     float span = outside - inside;
-    
+
     float spanstep = span / rings;
 
     float secstep = (radians2 - radians1) / sectors;
 
     glColor4fv(rgba);
-    
+
     glBegin(GL_TRIANGLE_FAN);
 
     glVertex2fv((m * Vector2(0, 0)).data());
-    
+
     for(int sec = 0; sec <= sectors; sec++) {
-      
+
       float angle = radians1 + secstep * sec;
       float yd = cosf(angle);
       float xd = sinf(angle);
@@ -1809,16 +1817,16 @@ namespace Luminous {
       glBegin(GL_QUAD_STRIP);
 
       for(int sec = 0; sec <= sectors; sec++) {
-	
-	float angle = radians1 + secstep * sec;
-	float yd = cosf(angle);
-	float xd = sinf(angle);
 
-	glColor4f(r, g, b, a1);
-	glVertex2fv((m * Vector2(xd * rad1, yd * rad1)).data());
+    float angle = radians1 + secstep * sec;
+    float yd = cosf(angle);
+    float xd = sinf(angle);
 
-	glColor4f(r, g, b, a2);
-	glVertex2fv((m * Vector2(xd * rad2, yd * rad2)).data());
+    glColor4f(r, g, b, a1);
+    glVertex2fv((m * Vector2(xd * rad1, yd * rad1)).data());
+
+    glColor4f(r, g, b, a2);
+    glVertex2fv((m * Vector2(xd * rad2, yd * rad2)).data());
       }
 
       glEnd();
@@ -1826,16 +1834,16 @@ namespace Luminous {
 
   }
 
-  void Utils::glHorizontalHalo(float x1, float y1, 
-			       float x2, float y2,
-			       float inside, float outside,
-			       int rings, int sectors,
-			       const float * rgba)
+  void Utils::glHorizontalHalo(float x1, float y1,
+                   float x2, float y2,
+                   float inside, float outside,
+                   int rings, int sectors,
+                   const float * rgba)
   {
     glCircularHalo(x2, y2, inside, outside, float(Math::PI) * 0.0f, float(Math::PI) * 1.0f,
-		   rings, sectors / 2, rgba);
+           rings, sectors / 2, rgba);
     glCircularHalo(x1, y1, inside, outside, float(Math::PI) * 1.0f, float(Math::PI) * 2.0f,
-		   rings, sectors / 2, rgba);
+           rings, sectors / 2, rgba);
 
     Vector2 p1(x1, y1);
     Vector2 p2(x2, y2);
@@ -1846,7 +1854,7 @@ namespace Luminous {
     perp.normalize();
 
     // perp /= rings;
-    
+
     float r = rgba[0];
     float g = rgba[1];
     float b = rgba[2];
@@ -1865,7 +1873,7 @@ namespace Luminous {
       float a1 = a * (0.5f + 0.5f * cosf(rel1 * float(Math::PI)));
 
       float d = rel1 * span - inside;
-      
+
       glColor4f(r, g, b, a1);
       glVertex2fv((p1 + d * perp).data());
       glVertex2fv((p2 + d * perp).data());
@@ -1878,7 +1886,7 @@ namespace Luminous {
       float a1 = a * (0.5f + 0.5f * cosf(rel1 * float(Math::PI)));
 
       float d = rel1 * span + inside;
-      
+
       glColor4f(r, g, b, a1);
       glVertex2fv((p1 + d * perp).data());
       glVertex2fv((p2 + d * perp).data());
@@ -1887,30 +1895,30 @@ namespace Luminous {
     glEnd();
   }
 
-  void Utils::glRectHalo(float x1, float y1, 
-			 float x2, float y2,
-			 float inside, float outside,
-			 int segments, int sectors,
-			 const float * rgba,
-			 const Nimble::Matrix3 & m)
+  void Utils::glRectHalo(float x1, float y1,
+             float x2, float y2,
+             float inside, float outside,
+             int segments, int sectors,
+             const float * rgba,
+             const Nimble::Matrix3 & m)
   {
 
     // First the roundings around the corners:
     glCircularHalo(x1, y1,
-		   inside, outside, Nimble::Math::PI, Nimble::Math::PI * 1.5f, 
-		   segments, sectors, rgba, m);
+           inside, outside, Nimble::Math::PI, Nimble::Math::PI * 1.5f,
+           segments, sectors, rgba, m);
 
     glCircularHalo(x2, y1,
-		   inside, outside, Nimble::Math::PI, Nimble::Math::HALF_PI,
-		   segments, sectors, rgba, m);
+           inside, outside, Nimble::Math::PI, Nimble::Math::HALF_PI,
+           segments, sectors, rgba, m);
 
     glCircularHalo(x2, y2,
-		   inside, outside, Nimble::Math::HALF_PI, 0,
-		   segments, sectors, rgba, m);
+           inside, outside, Nimble::Math::HALF_PI, 0,
+           segments, sectors, rgba, m);
 
     glCircularHalo(x1, y2,
-		   inside, outside, Nimble::Math::PI * -.5f, 0,
-		   segments, sectors, rgba, m);
+           inside, outside, Nimble::Math::PI * -.5f, 0,
+           segments, sectors, rgba, m);
 
     // Then the central rectangle
 
@@ -1934,7 +1942,7 @@ namespace Luminous {
       float a1 = a * (0.5f + 0.5f * cosf(rel1 * float(Math::PI)));
 
       float d = rel1 * span;
-      
+
       glColor4f(r, g, b, a1);
       glVertex2fv(( m * Vector2(x1, y1 - inside + d)).data());
       glVertex2fv(( m * Vector2(x2, y1 - inside + d)).data());
@@ -1949,7 +1957,7 @@ namespace Luminous {
       float a1 = a * (0.5f + 0.5f * cosf(rel1 * float(Math::PI)));
 
       float d = rel1 * span;
-      
+
       glColor4f(r, g, b, a1);
       glVertex2fv(( m * Vector2(x1, y2 + inside + d)).data());
       glVertex2fv(( m * Vector2(x2, y2 + inside + d)).data());
@@ -1967,7 +1975,7 @@ namespace Luminous {
       float a1 = a * (0.5f + 0.5f * cosf(rel1 * float(Math::PI)));
 
       float d = rel1 * span;
-      
+
       glColor4f(r, g, b, a1);
       glVertex2fv(( m * Vector2(x1 - inside + d, y1)).data());
       glVertex2fv(( m * Vector2(x1 - inside + d, y2)).data());
@@ -1987,7 +1995,7 @@ namespace Luminous {
       float a1 = a * (0.5f + 0.5f * cosf(rel1 * float(Math::PI)));
 
       float d = rel1 * span;
-      
+
       glColor4f(r, g, b, a1);
       glVertex2fv(( m * Vector2(x2 + inside - d, y1)).data());
       glVertex2fv(( m * Vector2(x2 + inside - d, y2)).data());

@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #include "Shader.hpp"
@@ -294,10 +282,12 @@ namespace Luminous {
 
   void Shader::unbind()
   {
-    glUseProgram(0);
+    GLSLProgramObject * p = program();
+    if(p)
+      p->unbind();
   }
 
-  GLSLProgramObject * Shader::program(Luminous::GLResources * res)
+  GLSLProgramObject * Shader::program(Luminous::RenderContext * res)
   {
     GLSLProgramObject & prog = ref(res);
 
@@ -311,9 +301,11 @@ namespace Luminous {
       if(!m_self->m_fragmentShader.isEmpty())
         ok = ok && prog.loadString(GL_FRAGMENT_SHADER, m_self->m_fragmentShader.toUtf8().data());
 
+#ifndef LUMINOUS_OPENGLES
       if(!m_self->m_geometryShader.isEmpty())
         ok = ok && prog.loadString(GL_GEOMETRY_SHADER_EXT,
                                    m_self->m_geometryShader.toUtf8().data());
+#endif // LUMINOUS_OPENGLES
 
       /* Set the generation even if something has failed. */
       prog.setGeneration(m_self->m_generation);

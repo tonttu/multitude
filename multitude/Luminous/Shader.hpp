@@ -90,10 +90,8 @@ namespace Luminous {
     /// Returns a compiled program object that has not been linked.
     /// @param res resource container to associate the shader program with
     /// @return OpenGL program object
-    GLSLProgramObject * program(Luminous::GLResources * res = 0);
+    GLSLProgramObject * program(Luminous::RenderContext * res = 0);
 
-    // Adds a Attribute as a shader attribute
-    //LUMINOUS_API void addShaderAttribute(const Valuable::Attribute *);
     /// Adds a Attribute as a shader uniform
     /** Once the Attribute has been added to this shader its value
         is automatically used with the shader, as the shader is bound.

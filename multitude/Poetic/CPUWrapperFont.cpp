@@ -6,6 +6,8 @@
 #include "GPUWrapperFont.hpp"
 #include "CPUManagedFont.hpp"
 
+#include <Luminous/RenderContext.hpp>
+
 #include <Radiant/Trace.hpp>
 
 namespace Poetic
@@ -25,7 +27,7 @@ namespace Poetic
 
   GPUWrapperFont * CPUWrapperFont::getGPUFont()
   {
-    Luminous::GLResources * glr = Luminous::GLResources::getThreadResources();
+    Luminous::RenderContext * glr = Luminous::RenderContext::getThreadContext();
 
     GPUWrapperFont * gf = dynamic_cast<GPUWrapperFont *> (glr->getResource(this, -1));
     GPUManagedFont * gmf = dynamic_cast<GPUManagedFont *> (glr->getResource(m_managedFont, -1));

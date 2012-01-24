@@ -6,9 +6,11 @@
 
 #include "Export.hpp"
 
+#include <Radiant/Platform.hpp>
+
 #include <cmath>
 #ifdef WIN32
-#	include <float.h>
+# include <float.h>
 #endif
 
 #include <stdint.h>
@@ -114,7 +116,9 @@ namespace Nimble {
     /// Checks if the given value if finite
     inline bool isFinite(float v)
     {
-#ifdef WIN32
+#ifdef RADIANT_IOS
+      return std::isfinite(v);
+#elif defined(WIN32)
       return _finite(v) != 0;
 #else
       return finite(v);
@@ -343,6 +347,8 @@ namespace Nimble {
     }
 
   }
+
+
 }
 
 #endif

@@ -1,26 +1,17 @@
 /* COPYRIGHT
- *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #ifndef LUMINOUS_RENDERCONTEXT_HPP
 #define LUMINOUS_RENDERCONTEXT_HPP
 
 #include <Luminous/Luminous.hpp>
+
 #include <Luminous/FramebufferObject.hpp>
 #include <Luminous/Transformer.hpp>
+#include <Luminous/Style.hpp>
 #include <Luminous/GLResource.hpp>
 #include <Luminous/GLResources.hpp>
+#include <Luminous/RenderContext.hpp>
 #include <Luminous/Export.hpp>
 #include <Luminous/VertexBuffer.hpp>
 #include <Luminous/GLSLProgramObject.hpp>
@@ -36,9 +27,10 @@ namespace Luminous
 {
   class Texture2D;
   class GLContext;
+  class GLSLProgramObject;
 
   /// RenderContext contains the current rendering state.
-  class LUMINOUS_API RenderContext : public Transformer
+  class LUMINOUS_API RenderContext : public Transformer, public GLResources
   {
   public:
 
@@ -60,7 +52,7 @@ namespace Luminous
       friend class FBOHolder;
       friend class RenderContext;
 
-      FBOPackage(Luminous::GLResources *res = 0) : m_fbo(res), m_rbo(res), m_tex(res), m_users(0) {}
+      FBOPackage(Luminous::RenderContext *res = 0) : m_fbo(res), m_rbo(res), m_tex(res), m_users(0) {}
       virtual ~FBOPackage();
 
       void setSize(Nimble::Vector2i size);
@@ -127,19 +119,22 @@ namespace Luminous
     /// Constructs a new render context and associates the given resources to it
     /// @param resources OpenGL resource container to associate with the context
     /// @param window window to associate this context with
-    RenderContext(Luminous::GLResources * resources, const Luminous::MultiHead::Window * window);
+    RenderContext(const Luminous::MultiHead::Window * window = 0);
     virtual ~RenderContext();
 
     /// Sets the associated window for this context
     /// @param window window to associate
-    void setWindow(const Luminous::MultiHead::Window * window);
-    /// Get the window associated with this context
-    /// @return window for this context
-    const Luminous::MultiHead::Window * window() const;
+    void setWindow(const Luminous::MultiHead::Window * window,
+                   const Luminous::MultiHead::Area * area);
 
-    /// Returns the resource collection associated with this context
-    /// @return resource collection for this context
-    Luminous::GLResources * resources() { return m_resources; }
+    const Luminous::MultiHead::Window * window() const;
+    const Luminous::MultiHead::Area * area() const;
+
+    /// Returns the resources of this context
+    /// @todo make deprecated
+    Luminous::RenderContext * resources() { return this; }
+
+    static QString locateStandardShader(const QString & filename);
 
     /// Prepares the context for rendering a frame. This is called once for
     /// every frame before rendering.
@@ -148,6 +143,10 @@ namespace Luminous
     /// Notifies the context that a frame has been renreded. This is called
     /// once after each frame.
     virtual void finish();
+
+    void pushViewTransform();
+    void popViewTransform();
+    void setViewTransform(const Nimble::Matrix4 &);
 
     /// Sets the rendering recursion limit for the context. This is relevant
     /// for ViewWidgets which can cause recursive rendering of the scene.
@@ -220,6 +219,18 @@ namespace Luminous
       @param segments number of segments to use
       */
     void drawArc(Nimble::Vector2f center, float radius, float fromRadians, float toRadians, float width, float blendWidth, const float * rgba, int segments);
+
+    /** Draws an arc
+      @param center center of the arc
+      @param radius radius of the arc
+      @param fromRadians start angle in radians
+      @param toRadians end angle in radians
+      @param width width of the arc
+      @param fill color and other parameters for the arc
+      @param segments number of segments to use
+      */
+    void drawArc(Nimble::Vector2f center, float radius, float fromRadians, float toRadians,
+                 float width, const Luminous::Style & fill);
 
     /** Draws a cut sector in a circle or a wedge.
       @param center center of the circle
@@ -316,6 +327,21 @@ namespace Luminous
                then it will be ignored.
         @param area The rectangle to drawn **/
     void drawTexRect(const Nimble::Rect & area, const float * rgba);
+
+    void drawRect(const Nimble::Rect & area, const Luminous::Style & fill);
+    void drawRectWithHole(const Nimble::Rect & area,
+                          const Nimble::Rect & hole,
+                          const Luminous::Style & fill);
+    void drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2,
+                  float width, const Luminous::Style & fill);
+    void drawLineStrip(const Nimble::Vector2 * vertices, size_t npoints,
+                       float width, const Luminous::Style & fill);
+    void drawLineStrip(const std::vector<Nimble::Vector2> & vertices,
+                       float width, const Luminous::Style & fill);
+    void drawQuad(const Nimble::Vector2 * corners, const Luminous::Style & fill);
+
+
+
     /// Sets the current blend function, and enables blending
     /** If the function is BLEND_NONE, then blending is disabled.
     @param f blend function */
@@ -371,15 +397,66 @@ namespace Luminous
     /// @return the viewport from the top of the viewport stack
     const Nimble::Recti & currentViewport() const;
 
+
+    static void setThreadContext(RenderContext * rsc);
+
+    /// Returns the RenderContext for the calling thread
+    /// @todo not really implemented on Windows
+    static RenderContext * getThreadContext();
+
+    /// Returns the RenderContext for the calling thread
+    /// @todo not really implemented on Windows
+    static RenderContext * GLSLreadContext();
+
+    void bindTexture(GLenum textureType, GLenum textureUnit, GLuint textureId);
+    /// Bind GLSL program object
+    void bindProgram(GLSLProgramObject * program);
+    void bindDefaultProgram();
+
+    void flush();
+    void restart();
+
+  protected:
+    virtual void beforeTransformChange();
   private:
     void drawCircleWithSegments(Nimble::Vector2f center, float radius, const float *rgba, int segments);
     void drawCircleImpl(Nimble::Vector2f center, float radius, const float *rgba);
 
     void clearTemporaryFBO(std::shared_ptr<FBOPackage> fbo);
 
-    Luminous::GLResources * m_resources;
+    Luminous::RenderContext * m_resources;
     class Internal;
     Internal * m_data;
+  };
+
+  class LegacyOpenGL : Patterns::NotCopyable
+  {
+  public:
+    LegacyOpenGL(RenderContext * r) : m_r(r) { r->flush(); }
+    ~LegacyOpenGL() { m_r->restart(); }
+  private:
+    RenderContext * m_r;
+  };
+
+  class VertexAttribArrayStep : public Patterns::NotCopyable
+  {
+  public:
+    VertexAttribArrayStep(int pos, int elems, GLenum type, size_t stride,
+                          void * offset)
+                            : m_pos(pos)
+    {
+      glEnableVertexAttribArray(pos);
+      glVertexAttribPointer(pos, elems, type, GL_FALSE,
+                            stride, offset);
+    }
+
+    ~VertexAttribArrayStep ()
+    {
+      glDisableVertexAttribArray(m_pos);
+    }
+
+  private:
+    int m_pos;
   };
 
 }

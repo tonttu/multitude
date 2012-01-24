@@ -24,9 +24,12 @@ namespace Luminous
 {
 
   /// @todo remove, and use the GL constants directly
-  enum FramebufferAttachment
+  enum Foo
   {
-    COLOR0  = GL_COLOR_ATTACHMENT0_EXT,
+    COLOR0  = GL_COLOR_ATTACHMENT0,
+    DEPTH   = GL_DEPTH_ATTACHMENT,
+#ifndef LUMINOUS_OPENGLES
+
     COLOR1  = GL_COLOR_ATTACHMENT1_EXT,
     COLOR2  = GL_COLOR_ATTACHMENT2_EXT,
     COLOR3  = GL_COLOR_ATTACHMENT3_EXT,
@@ -42,16 +45,18 @@ namespace Luminous
     COLOR13 = GL_COLOR_ATTACHMENT13_EXT,
     COLOR14 = GL_COLOR_ATTACHMENT14_EXT,
     COLOR15 = GL_COLOR_ATTACHMENT15_EXT,
-    DEPTH   = GL_DEPTH_ATTACHMENT_EXT,
     STENCIL = GL_STENCIL_ATTACHMENT_EXT
+#endif // LUMINOUS_OPENGLES
+
   };
+
 
   /// An abstraction of an off-screen render target.
   class LUMINOUS_API Renderbuffer : public Luminous::GLResource
   {
   public:
     /// Creates an empty Renderbuffer object
-    Renderbuffer(Luminous::GLResources * res = 0);
+    Renderbuffer(Luminous::RenderContext * res = 0);
     ~Renderbuffer();
 
     /// Binds the buffer and creates it if necessary.
@@ -78,7 +83,7 @@ namespace Luminous
   {
   public:
     /// Creates an empty FrameBuffer object
-    Framebuffer(Luminous::GLResources * res = 0);
+    Framebuffer(Luminous::RenderContext * res = 0);
     ~Framebuffer();
 
     /// Binds the framebuffer
@@ -89,40 +94,44 @@ namespace Luminous
     /// Checks the framebuffer for validity @return true if the framebuffer is
     /// valid and can be rendered into. Possible errors are sent to cerr.
     bool check();
+#ifndef LUMINOUS_OPENGLES
 
     /// Attaches the framebuffer as 1D texture to the given attachment
     void attachTexture1D(Texture1D* texture,
-             FramebufferAttachment attachment,
+             GLenum attachment,
              int mipmapLevel = 0);
     /// Detaches the given 1D texture attachment
-    void detachTexture1D(FramebufferAttachment attachment);
-
-    /// Attaches the framebuffer as 2D texture to the given attachment
-    void attachTexture2D(Texture2D* texture,
-             FramebufferAttachment attachment,
-             int mipmapLevel = 0);
-    /// Detaches the given 2D texture attachment
-    void detachTexture2D(FramebufferAttachment attachment);
+    void detachTexture1D(GLenum attachment);
 
     /// Attaches the framebuffer as 3D texture to the given attachment
     void attachTexture3D(Texture3D* texture,
-             FramebufferAttachment attachment,
+             GLenum attachment,
              int zSlice, int mipmapLevel = 0);
     /// Detaches the given 3D texture attachment
-    void detachTexture3D(FramebufferAttachment attachment);
+    void detachTexture3D(GLenum attachment);
 
     /// Attaches the framebuffer as a single face of a cube texture to the given attachment
     void attachTextureCube(TextureCube* texture,
-               FramebufferAttachment attachment,
+               GLenum attachment,
                int face, int mipmapLevel = 0);
     /// Detaches the given cube texture attachment
-    void detachTextureCube(FramebufferAttachment attachment, int face);
+    void detachTextureCube(GLenum attachment, int face);
+
+#endif // LUMINOUS_OPENGLES
+
+    /// Attaches the framebuffer as 2D texture to the given attachment
+    void attachTexture2D(Texture2D* texture,
+             GLenum attachment,
+             int mipmapLevel = 0);
+    /// Detaches the given 2D texture attachment
+    void detachTexture2D(GLenum attachment);
+
 
     /// Attaches the framebuffer as a renderbuffer attachment
     void attachRenderbuffer(Renderbuffer* renderbuffer,
-                FramebufferAttachment attachment);
+                GLenum attachment);
     /// Detaches the given renderbuffer attachment
-    void detachRenderbuffer(FramebufferAttachment attachment);
+    void detachRenderbuffer(GLenum attachment);
 
     /// Deallocates the framebuffer object from the GPU
     void destroy();

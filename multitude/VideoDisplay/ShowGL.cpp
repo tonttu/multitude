@@ -15,6 +15,7 @@
 #include <Poetic/GPUFont.hpp>
 #include <Poetic/CPUFont.hpp>
 
+#include <Luminous/RenderContext.hpp>
 #include <Luminous/Utils.hpp>
 
 namespace VideoDisplay {
@@ -46,7 +47,7 @@ namespace VideoDisplay {
         gl_FragColor = yuv * gl_Color;
       });
 
-  ShowGL::YUVProgram::YUVProgram(Luminous::GLResources * resources)
+  ShowGL::YUVProgram::YUVProgram(Luminous::RenderContext * resources)
       : Luminous::GLSLProgramObject(resources)
   {
     for(uint i = 0; i < PARAM_SIZEOF; i++)
@@ -64,7 +65,7 @@ namespace VideoDisplay {
     clear();
 
     Luminous::GLSLShaderObject * fragShader =
-        new Luminous::GLSLShaderObject(GL_FRAGMENT_SHADER, resources());
+        new Luminous::GLSLShaderObject(GL_FRAGMENT_SHADER, context());
 
     fragShader->setSource(shadersource);
     if(!fragShader->compile()) {
@@ -130,7 +131,7 @@ namespace VideoDisplay {
 
   // static int __mytexcount = 0;
 
-  ShowGL::MyTextures::MyTextures(Luminous::GLResources * resources)
+  ShowGL::MyTextures::MyTextures(Luminous::RenderContext * resources)
       : GLResource(resources)
   {
     m_frame = -1;
@@ -604,7 +605,7 @@ namespace VideoDisplay {
   static Luminous::Collectable rgbkey;
   // static int yuvkeyaa = 0;
 
-  void ShowGL::render(Luminous::GLResources * resources,
+  void ShowGL::render(Luminous::RenderContext * resources,
                       Vector2 topleft, Vector2 bottomright,
                       Radiant::Color baseColor,
                       const Nimble::Matrix3f * transform,

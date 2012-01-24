@@ -33,7 +33,7 @@ namespace Luminous
     /// Creates a new shader of the given type.
     /// @param type either GL_VERTEX_SHADER or GL_FRAGMENT_SHADER
     /// @param resources resource collection
-    GLSLShaderObject(GLenum type, GLResources * resources = 0);
+    GLSLShaderObject(GLenum type, RenderContext * resources = 0);
     ~GLSLShaderObject();
 
     /// Compiles the shader
@@ -44,6 +44,10 @@ namespace Luminous
 
     /// Sets the source code for the shader
     void setSource(const char* code);
+
+    /// Returns the current source code for this shader
+    const char * source() const
+    { return m_shaderSource; }
 
     /// Loads the source for the shader from a given file
     bool loadSourceFile(const char* filename);

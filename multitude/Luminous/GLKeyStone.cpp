@@ -192,6 +192,7 @@ namespace Luminous {
 
   void GLKeyStone::cleanExterior() const
   {
+#ifdef LUMINOUS_OPENGL_FULL
     glDisable(GL_BLEND);
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
@@ -202,7 +203,7 @@ namespace Luminous {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    gluOrtho2D(0, 1, 0, 1);
+    glOrtho(0, 1, 0, 1, -1, 1);
 
     glBegin(GL_TRIANGLE_STRIP);
 
@@ -222,7 +223,9 @@ namespace Luminous {
     glVertex2fv(closest(Vector2(0, 0)).data());
 
     glEnd();
+#endif
   }
+
 
   Vector2 GLKeyStone::closest(Vector2 loc) const
   {

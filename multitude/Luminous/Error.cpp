@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #include <Luminous/Error.hpp>
@@ -25,10 +25,13 @@ namespace Luminous
     GLenum err;
 
     while((err = glGetError()) != GL_NO_ERROR) {
-
+#ifdef LUMINOUS_OPENGLES
+      Radiant::error("OpenGLES : %s:%d", msg.toUtf8().data(), line);
+#else
       const char * glErrMsg = (const char*)gluErrorString(err);
 
       Radiant::error("%s:%d: %s", msg.toUtf8().data(), line, glErrMsg);
+#endif
     };
   }
 
@@ -37,6 +40,14 @@ namespace Luminous
     switch(format) {
       case GL_ALPHA:
         return "GL_ALPHA";
+    case GL_LUMINANCE:
+      return "GL_LUMINANCE";
+    case GL_RGB:
+      return "GL_RGB";
+    case GL_RGBA:
+      return "GL_RGBA";
+
+#ifndef LUMINOUS_OPENGLES
       case GL_ALPHA4:
         return "GL_ALPHA4";
       case GL_ALPHA8:
@@ -64,8 +75,9 @@ namespace Luminous
         return "GL_DEPTH_COMPONENT24";
       case GL_DEPTH_COMPONENT32:
         return "GL_DEPTH_COMPONENT32";
-      case GL_LUMINANCE:
-        return "GL_LUMINANCE";
+    case GL_INTENSITY:
+      return "GL_INTENSITY";
+
       case GL_LUMINANCE4:
         return "GL_LUMINANCE4";
       case GL_LUMINANCE8:
@@ -88,8 +100,6 @@ namespace Luminous
         return "GL_LUMINANCE12_ALPHA12";
       case GL_LUMINANCE16_ALPHA16:
         return "GL_LUMINANCE16_ALPHA16";
-      case GL_INTENSITY:
-        return "GL_INTENSITY";
       case GL_INTENSITY4:
         return "GL_INTENSITY4";
       case GL_INTENSITY8:
@@ -100,8 +110,6 @@ namespace Luminous
         return "GL_INTENSITY16";
       case GL_R3_G3_B2:
         return "GL_R3_G3_B2";
-      case GL_RGB:
-        return "GL_RGB";
       case GL_RGB4:
         return "GL_RGB4";
       case GL_RGB5:
@@ -114,8 +122,6 @@ namespace Luminous
         return "GL_RGB12";
       case GL_RGB16:
         return "GL_RGB16";
-      case GL_RGBA:
-        return "GL_RGBA";
       case GL_RGBA2:
         return "GL_RGBA2";
       case GL_RGBA4:
@@ -143,9 +149,10 @@ namespace Luminous
       case GL_SRGB8:
         return "GL_SRGB8";
       case GL_SRGB_ALPHA:
-        return "GL_SRGB_ALPHA"; 
+        return "GL_SRGB_ALPHA";
       case GL_SRGB8_ALPHA8:
         return "GL_SRGB8_ALPHA8";
+#endif // LUMINOUS_OPENGLES
       default:
         return "Incorrect internal format";
     }
@@ -155,6 +162,19 @@ namespace Luminous
   {
     switch(format)
     {
+    case GL_RGB:
+      return "GL_RGB";
+    case GL_RGBA:
+      return "GL_RGBA";
+    case GL_LUMINANCE:
+      return "GL_LUMINANCE";
+    case GL_LUMINANCE_ALPHA:
+      return "GL_LUMINANCE_ALPHA";
+    case GL_ALPHA:
+      return "GL_ALPHA";
+
+#ifndef LUMINOUS_OPENGLES
+
       case GL_COLOR_INDEX:
         return "GL_CLOR_INDEX";
       case GL_RED:
@@ -163,20 +183,12 @@ namespace Luminous
         return "GL_GREEN";
       case GL_BLUE:
         return "GL_BLUE";
-      case GL_ALPHA:
-        return "GL_ALPHA";
-      case GL_RGB:
-        return "GL_RGB";
       case GL_BGR:
         return "GL_BGR";
-      case GL_RGBA:
-        return "GL_RGBA";
       case GL_BGRA:
         return "GL_BGRA";
-      case GL_LUMINANCE:
-        return "GL_LUMINANCE";
-      case GL_LUMINANCE_ALPHA:
-        return "GL_LUMINANCE_ALPHA";
+#endif // LUMINOUS_OPENGLES
+
       default:
         return "Invalid format";
     }

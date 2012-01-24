@@ -15,8 +15,26 @@ c++11 {
   }
 }
 
+iphone {
+  CONFIG += mobile
+  CONFIG += ios
+}
+
+ios {
+  CONFIG += mobile
+  QMAKE_CXXFLAGS -= -std=gnu99
+  QMAKE_CXXFLAGS -= -fobjc-legacy-dispatch
+}
+
+mobile {
+  message(Mobile device compilation)
+  # For QString::toStdWString
+  DEFINES += QT_STL=1
+  CONFIG += without-js
+}
+
 INCLUDEPATH += $$PWD
-INCLUDEPATH += $$PWD/v8/include
+!mobile:INCLUDEPATH += $$PWD/v8/include
 DEPENDPATH += $$PWD
 
 # The Cornerstone version for libraries
@@ -30,7 +48,7 @@ unix {
 
 withbundles = $$(MULTI_BUNDLES)
 
-MULTI_FFMPEG_LIBS = -lavcodec -lavformat -lavutil
+!mobile*:MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat
 
 LIB_BOX2D = -lBox2D
 LIB_OPENCL = -lOpenCL
@@ -42,18 +60,19 @@ LIB_LUMINOUS = -lLuminous
 LIB_NIMBLE = -lNimble
 LIB_RADIANT = -lRadiant
 LIB_RESONANT = -lResonant
-LIB_SCREENPLAY = -lScreenplay
-LIB_VIDEODISPLAY = -lVideoDisplay
+!mobile*:LIB_SCREENPLAY = -lScreenplay
+!mobile*:LIB_VIDEODISPLAY = -lVideoDisplay
 LIB_VALUABLE = -lValuable
 LIB_PATTERNS = -lPatterns
 LIB_SQUISH = -lSquish
-LIB_V8 = -lv8
+!without-js:LIB_V8 = -lv8
 
 linux-*:vivid {
   QMAKE_LIBDIR += $$(FBX_SDK)/lib/gcc4
   LIB_VIVID = -lVivid -lfbxsdk_20113_1_x64
 }
 
+MULTI_LIB_FLAG = -L
 linux-*{
   LIB_PREFIX = lib
   SHARED_LIB_SUFFIX = so
@@ -83,11 +102,17 @@ contains(MEMCHECK,yes) {
   linux:LIBS += -rdynamic
 }
 
-macx {
+# mobile*:INCLUDES += /usr/local/include
+
+!mobile*:LIB_SDL = -lSDL
+
+macx*|mobile* {
   LIB_PREFIX = lib
-  SHARED_LIB_SUFFIX = dylib
+  !mobile*:SHARED_LIB_SUFFIX = dylib
+  # Fake SHARED_LIB_SUFFIX, since iOS does not accept shared libs
+  mobile*:SHARED_LIB_SUFFIX = a
   # For Deft (which depends on MultiTouch)
-  LIBS += -undefined dynamic_lookup
+  # LIBS += -undefined dynamic_lookup
 
   # Frameworks on OS X don't respect QMAKE_LIBDIR
   QMAKE_LFLAGS += -F$$PWD/lib
@@ -99,12 +124,7 @@ macx {
   LIB_OPENGL = -framework,OpenGL
   # LIB_GLEW = -lGLEW
 
-  DEFINES += QT_MAC_USE_COCOA Q_OS_MAC64
-
-  # DEFINES += __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__=1050
-
-  contains(withbundles,YES) {
-
+  !mobile* {
     LIB_POETIC = -framework,Poetic
     LIB_FLUFFY = -framework,Fluffy
     LIB_LUMINOUS = -framework,Luminous
@@ -115,18 +135,26 @@ macx {
     LIB_VALUABLE = -framework,Valuable
     LIB_VIDEODISPLAY = -framework,VideoDisplay
     LIB_PATTERNS = -framework,Patterns
-  }
+
+    DEFINES += QT_MAC_USE_COCOA Q_OS_MAC64
+
+    DEFINES += QT_MAC_USE_COCOA Q_OS_MAC64
+
+    # DEFINES += __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__=1050
+
+    contains(withbundles,YES) {
 
   # change architecture to x86_64 if snow leopard
   system([ `uname -r | cut -d . -f1` -gt 9 ] )  {
   CONFIG += x86_64
 
-  system([ `uname -r | cut -d . -f1` -eq 10 ] ):DEFINES+=RADIANT_OSX_SNOW_LEOPARD
-  system([ `uname -r | cut -d . -f1` -eq 11 ] ):DEFINES+=RADIANT_OSX_LION
   }
 
+  system([ `uname -r | cut -d . -f1` -eq 10 ] ):DEFINES+=RADIANT_OSX_SNOW_LEOPARD
+  system([ `uname -r | cut -d . -f1` -eq 11 ] ):DEFINES+=RADIANT_OSX_LION
 }
-
+}
+}
 win32 {
     LIB_PREFIX =
     SHARED_LIB_SUFFIX = dll
@@ -166,25 +194,36 @@ win32 {
       LIB_VALUABLE = -lValuable_d
       LIB_PATTERNS = -lPatterns_d
       LIB_SQUISH = -lSquish_d
-      LIB_V8 = -lv8_d
-	}
+      !mobile:LIB_V8 = -lv8_d
+    }
 }
 
 MULTI_VIDEO_LIBS = $$LIB_SCREENPLAY $$LIB_RESONANT $$LIB_VIDEODISPLAY
 
 QMAKE_LIBDIR += $$PWD/lib
 
+# message(QT version is $${QT_MAJOR_VERSION}.$${QT_MINOR_VERSION}.$${QT_PATCH_VERSION})
+# mobile*:DEFINES += __IPHONE_OS_VERSION_MIN_REQUIRED=40100
+
+contains(QT_MAJOR_VERSION,4) {
+
+  contains(QT_MINOR_VERSION,5) || contains(QT_MINOR_VERSION,6) || contains(QT_MINOR_VERSION,7) {
+    HAS_QT_45=YES
+    DEFINES += USE_QT45
+  }
+}
 # Disable asserts in release mode
 CONFIG(release, debug|release) {
   DEFINES += NDEBUG
 }
 
-DEFINES += USING_V8_SHARED
+!mobile:DEFINES += USING_V8_SHARED
+!mobile:DEFINES += MULTI_WITH_V8
 
 # Use ccache if available
-unix:exists(/usr/bin/ccache):QMAKE_CXX=ccache g++
-unix:exists(/sw/bin/ccache):QMAKE_CXX=/sw/bin/ccache g++
-unix:exists(/opt/local/bin/ccache):QMAKE_CXX=/opt/local/bin/ccache g++
+unix:exists(/usr/bin/ccache):QMAKE_CXX=ccache $$QMAKE_CXX
+unix:exists(/sw/bin/ccache):QMAKE_CXX=/sw/bin/ccache $$QMAKE_CXX
+unix:exists(/opt/local/bin/ccache):QMAKE_CXX=/opt/local/bin/ccache $$QMAKE_CXX
 
 unix:exists(/opt/multitouch):INCLUDEPATH+=/opt/multitouch/include
 unix:exists(/opt/multitouch):LIBS+=-L/opt/multitouch/lib

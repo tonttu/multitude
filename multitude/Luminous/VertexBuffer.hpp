@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #ifndef LUMINOUS_VERTEX_BUFFER_HPP
@@ -40,6 +28,8 @@ namespace Luminous
 
         /// The policy for mapping a buffer object
         enum AccessMode {
+#ifndef LUMINOUS_OPENGLES
+
           /// The client may perform a read operation on the pointer while the
           /// buffer is mapped.
           READ_ONLY = GL_READ_ONLY,
@@ -49,6 +39,12 @@ namespace Luminous
           /// The client may perform both read and write operation on the
           /// pointer while the buffer is mapped.
           READ_WRITE = GL_READ_WRITE
+#else
+                       READ_ONLY,
+                       WRITE_ONLY,
+                       READ_WRITE
+#endif // LUMINOUS_OPENGLES
+
         };
 
         /// A hint for the GL implementation as how a buffer object's data will
@@ -60,6 +56,7 @@ namespace Luminous
           /// times as the source for GL drawing and image specification
           /// commands.
           STREAM_DRAW = GL_STREAM_DRAW,
+#ifndef LUMINOUS_OPENGLES
           /// The buffer contents will be specified once by reading data from
           /// the GL and used at most a few times by the application.
           STREAM_READ = GL_STREAM_READ,
@@ -67,10 +64,12 @@ namespace Luminous
           /// the GL and used at most a few times as the source for GL drawing
           /// and image specification commands.
           STREAM_COPY = GL_STREAM_COPY,
+#endif // LUMINOUS_OPENGLES
 
           /// The buffer contents will be specified once, and used many times as
           /// the source for GL drawing and image specification commands.
           STATIC_DRAW = GL_STATIC_DRAW,
+#ifndef LUMINOUS_OPENGLES
           /// The buffer contents will be specified once by reading data from
           /// the GL, and used many times by the application.
           STATIC_READ = GL_STATIC_READ,
@@ -78,10 +77,12 @@ namespace Luminous
           /// the GL, and used many times as the source for GL drawing and image
           /// specification commands.
           STATIC_COPY = GL_STATIC_COPY,
+#endif // LUMINOUS_OPENGLES
 
           /// The buffer contents will be specified repeatedly, and used many
           /// times as the source for GL drawing and image specification commands.
           DYNAMIC_DRAW = GL_DYNAMIC_DRAW,
+#ifndef LUMINOUS_OPENGLES
           /// The buffer contents will be specified repeatedly by reading data
           /// from the GL, and used many times by the application.
           DYNAMIC_READ = GL_DYNAMIC_READ,
@@ -89,10 +90,11 @@ namespace Luminous
           /// from the GL, and used many times as the source for GL drawing and
           /// image specification commands.
           DYNAMIC_COPY = GL_DYNAMIC_COPY
+#endif // LUMINOUS_OPENGLES
         };
 
         /// Creates an empty OpenGL buffer object.
-        BufferObject(Luminous::GLResources * resources = 0);
+        BufferObject(Luminous::RenderContext * resources = 0);
         virtual ~BufferObject();
 
         /// Allocates memory for the vertex buffer
@@ -108,6 +110,8 @@ namespace Luminous
         /// Fills a part of the vertex buffer with data
         void partialFill(size_t offsetInBytes, void * data, size_t bytes);
 
+#ifndef LUMINOUS_OPENGLES
+
         /// Starts reading data from GPU, allocating memory with given usage hint if necessary.
         void read(Nimble::Vector2i size, Nimble::Vector2i pos = Nimble::Vector2i(0, 0),
                   Luminous::PixelFormat pix = Luminous::PixelFormat::bgraUByte(),
@@ -117,6 +121,7 @@ namespace Luminous
         void * map(AccessMode mode);
         /// Unmaps the vertex buffer from CPU memory. The pointer to the buffer is invalidated.
         void unmap();
+#endif // LUMINOUS_OPENGLES
 
         /** Access the OpenGL handle id.
 
@@ -141,8 +146,7 @@ namespace Luminous
   {
   public:
     /// Constructs an empty vertex buffer.
-    /// @param resources resource collection to own the buffer
-    VertexBuffer(Luminous::GLResources * resources = 0)
+    VertexBuffer(Luminous::RenderContext * resources = 0)
       : BufferObject<GL_ARRAY_BUFFER>(resources)
     {}
   };
@@ -152,12 +156,12 @@ namespace Luminous
   {
   public:
     /// Constructs an empty index buffer.
-    /// @param resources resource collection to own the buffer
-    IndexBuffer(Luminous::GLResources * resources = 0)
+    IndexBuffer(Luminous::RenderContext * resources = 0)
       : BufferObject<GL_ELEMENT_ARRAY_BUFFER>(resources)
     {}
 
   };
+#ifndef LUMINOUS_OPENGLES
 
   /// An OpenGL pixel read buffer for reading pixels from framebuffer.
   class ReadBuffer : public BufferObject<GL_PIXEL_PACK_BUFFER>
@@ -165,10 +169,11 @@ namespace Luminous
   public:
     /// Constructs an empty read buffer
     /// @param resources resource collection to own the buffer
-    ReadBuffer(Luminous::GLResources * resources = 0)
+    ReadBuffer(Luminous::RenderContext * resources = 0)
       : BufferObject<GL_PIXEL_PACK_BUFFER>(resources)
     {}
   };
+#endif // LUMINOUS_OPENGLES
 
 }
 

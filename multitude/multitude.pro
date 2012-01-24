@@ -2,17 +2,17 @@ TEMPLATE = subdirs
 
 include(multitude.pri)
 
-SUBDIRS += v8
+!without-js:SUBDIRS += v8
 SUBDIRS += Patterns
 SUBDIRS += Nimble
 SUBDIRS += Radiant
 SUBDIRS += Valuable
-SUBDIRS += Squish
+!mobile*:SUBDIRS += Squish
 SUBDIRS += Luminous
 SUBDIRS += Poetic
 SUBDIRS += Resonant
-SUBDIRS += Screenplay
-SUBDIRS += VideoDisplay
+!mobile*:SUBDIRS += Screenplay
+!mobile*:SUBDIRS += VideoDisplay
 SUBDIRS += Box2D
 #SUBDIRS += Posh
 
@@ -22,18 +22,21 @@ vivid {
 }
 
 #exists(Examples/Examples.pro):SUBDIRS += Examples
-
-SUBDIRS += Applications
+!mobile*{
+  SUBDIRS += Applications
+}
 
 CONFIG += ordered
 
 # Install some build files to the source package
 stuff.path = /src/MultiTouch/multitude
-stuff.files = LGPL.txt multitude.pro multitude.pri library.pri 
+stuff.files = LGPL.txt multitude.pro multitude.pri library.pri
 
 INSTALLS += stuff
 
 win32 {
-	win64:include(Win64x/Win64x.pri)
-	else:include(Win32x/Win32x.pri)
+    win64:include(Win64x/Win64x.pri)
+    else:include(Win32x/Win32x.pri)
 }
+
+# message(Config is $${CONFIG})

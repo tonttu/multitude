@@ -812,7 +812,7 @@ namespace Luminous
   ImageTex::ImageTex()
   {}
 
-  bool ImageTex::bind(GLResources * resources, GLenum textureUnit, bool withmipmaps, int internalFormat)
+  bool ImageTex::bind(RenderContext * resources, GLenum textureUnit, bool withmipmaps, int internalFormat)
   {
     bool ret = true;
 
@@ -828,13 +828,13 @@ namespace Luminous
     return ret;
   }
 
-  bool ImageTex::isFullyLoadedToGPU(GLResources * resources)
+  bool ImageTex::isFullyLoadedToGPU(RenderContext * resources)
   {
     if(!width() || !height())
       return false;
 
     if(!resources)
-      resources = GLResources::getThreadResources();
+      resources = RenderContext::getThreadContext();
 
     if(!resources->getResource(this))
       return false;
@@ -858,6 +858,8 @@ namespace Luminous
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
+
+#ifndef LUMINOUS_OPENGLES
 
   class CompressedImage::Private
   {
@@ -1026,7 +1028,7 @@ namespace Luminous
   {
   }
 
-  void CompressedImageTex::bind(GLResources * resources, GLenum textureUnit)
+  void CompressedImageTex::bind(RenderContext * resources, GLenum textureUnit)
   {
     Texture2D & tex = ref(resources);
     tex.bind(textureUnit);
@@ -1050,5 +1052,6 @@ namespace Luminous
     return t;
   }
 
+#endif // LUMINOUS_OPENGLES
 
 }

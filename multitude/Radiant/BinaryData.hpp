@@ -27,16 +27,19 @@
 
 #include <QString>
 
+#ifdef MULTI_WITH_V8
 #include <v8.h>
-
-namespace Radiant {
-  class BinaryStream;
-}
 
 namespace v8 {
   class Value;
   template <class T> class Handle;
 }
+#endif
+
+namespace Radiant {
+  class BinaryStream;
+}
+
 
 namespace Radiant {
 
@@ -230,13 +233,13 @@ namespace Radiant {
     /// Copy a buffer object
     inline BinaryData & operator = (const BinaryData & that)
     { rewind(); append(that); return * this;}
-
+#ifdef MULTI_WITH_V8
     /// Copies the binary data stream to v8 value array
     /// v8 values have to be defined in stack, so we can't use std::vector etc
     /// @param argc in = size of argv, out = number of values filled
     /// @todo isn't implemented fully
     bool readTo(int & argc, v8::Handle<v8::Value> argv[]);
-
+#endif
     /// Saves this buffer to the given file
     bool saveToFile(const char * filename) const;
     /// Reads data from a file

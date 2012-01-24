@@ -7,24 +7,33 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #include "Luminous.hpp"
 #include "Image.hpp"
 #include "CodecRegistry.hpp"
+
+
 #include "ImageCodecTGA.hpp"
-#include "ImageCodecDDS.hpp"
 #include "ImageCodecQT.hpp"
+#ifndef LUMINOUS_OPENGLES
 #include "ImageCodecSVG.hpp"
 #include "CPUMipmaps.hpp"
 
+#include "ImageCodecDDS.hpp"
+#endif // LUMINOUS_OPENGLES
+
+#if defined(USE_QT45)
+//&& !defined(RADIANT_IOS)
+#include <Luminous/ImageCodecQT.hpp>
 #include <QImageWriter>
 #include <QImageReader>
 #include <QCoreApplication>
+#endif
 
 #include <Radiant/Trace.hpp>
 
@@ -34,6 +43,18 @@
 namespace Luminous
 {
   using namespace Radiant;
+#ifdef LUMINOUS_OPENGLES
+  void dumymWarn(const char * funcname, const char * file, int line)
+  {
+    Radiant::error("Unimplemented OpenGL call: %s in %s:%d", funcname, file, line);
+  }
+  int dummyEnum(const char * file, int line)
+  {
+    Radiant::error("Unimplemented OpenGL call: %s:%d", file, line);
+    return 0;
+  }
+
+#endif
 
   bool initLuminous(bool initOpenGL)
   {
@@ -97,7 +118,7 @@ namespace Luminous
 
     return true;
   }
-  
+
   void initDefaultImageCodecs()
   {
     static bool done = false;
@@ -120,6 +141,7 @@ namespace Luminous
     QCoreApplication::addLibraryPath(pluginPath.c_str());
 #endif
 
+#if defined(USE_QT45)
     // Debug output supported image formats
     {
       debugLuminous("Qt image support (read):");
@@ -145,11 +167,23 @@ namespace Luminous
       Image::codecs()->registerCodec(new ImageCodecQT(format.data()));
     }
     Image::codecs()->registerCodec(new ImageCodecQT("jpg"));
-    Image::codecs()->registerCodec(new ImageCodecDDS());
+# if !defined(RADIANT_IOS)
+    // Image::codecs()->registerCodec(new ImageCodecSVG());
     Image::codecs()->registerCodec(new ImageCodecSVG());
+  Image::codecs()->registerCodec(new ImageCodecDDS());
+# endif
+
+#endif
+// #else
+// Register built-in image codecs
+    //Image::codecs()->registerCodec(new ImageCodecJPEG());
+    //Image::codecs()->registerCodec(new ImageCodecPNG());
+
     /* TGA has to be last, because its ping may return true even if
        the file has other type. */
-    Image::codecs()->registerCodec(new ImageCodecTGA());
+
+    LUMINOUS_IN_FULL_OPENGL(Image::codecs()->registerCodec(new ImageCodecTGA()));
+
   }
 
 }

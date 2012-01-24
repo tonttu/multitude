@@ -1,3 +1,4 @@
+
 /* COPYRIGHT
  *
  * This file is part of Valuable.
@@ -25,7 +26,9 @@
 #include <Radiant/Color.hpp>
 #include <Radiant/Trace.hpp>
 
+#ifdef MULTI_WITH_V8
 #include <v8.h>
+#endif
 
 #include <map>
 #include <set>
@@ -126,10 +129,13 @@ namespace Valuable
       return vo->set(v);
     }
 
+#ifdef MULTI_WITH_V8
+
     bool setValue(const QString & name, v8::Handle<v8::Value> v);
     bool setValue(const QString & name, v8::Local<v8::Value> v) {
       return setValue(name, static_cast<v8::Handle<v8::Value> >(v));
     }
+#endif
 
     /// Saves this object (and its children) to an XML file
     bool saveToFileXML(const QString & filename);
@@ -198,6 +204,7 @@ namespace Valuable
       eventAddListener(from, to, obj, DIRECT, defaultData);
     }
 
+#ifdef MULTI_WITH_V8
     void eventAddListener(const QString & from,
                           const QString & to,
                           v8::Persistent<v8::Function> func,
@@ -208,7 +215,7 @@ namespace Valuable
     {
       eventAddListener(from, from, func, defaultData);
     }
-
+#endif
     /** Removes event listeners from this object.
 
       @code
@@ -280,9 +287,10 @@ namespace Valuable
     /// Returns set of all registered IN events
     const QSet<QString> & eventInNames() const { return m_eventListenNames; }
 
+#ifdef MULTI_WITH_V8
     long addListener(const QString & name, v8::Persistent<v8::Function> func,
                      int role = Attribute::CHANGE_ROLE);
-
+#endif
     static int processQueue();
 
     static bool copyValues(const Node & from, Node & to);
@@ -314,7 +322,9 @@ namespace Valuable
       inline bool operator == (const ValuePass & that) const;
 
       Valuable::Node * m_listener;
+#ifdef MULTI_WITH_V8
       v8::Persistent<v8::Function> m_func;
+#endif
       Radiant::BinaryData   m_defaultData;
       QString m_from;
       QString m_to;

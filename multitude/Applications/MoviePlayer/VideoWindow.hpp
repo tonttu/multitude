@@ -16,14 +16,10 @@
 #ifndef VIDEO_WINDOW_HPP
 #define VIDEO_WINDOW_HPP
 
-#ifdef WIN32
-#define _WINSOCKAPI_	// timeval struct redefinition
-#endif
-
 #include <Poetic/GPUFont.hpp>
 
 
-#include <Luminous/GLResources.hpp>
+#include <Luminous/RenderContext.hpp>
 
 #include <Nimble/Random.hpp>
 
@@ -95,7 +91,7 @@ protected:
 
   Radiant::ResourceLocator   m_resourceLocator;
 
-  Luminous::GLResources      m_glResources;
+  Luminous::RenderContext      m_context;
   Nimble::RandomUniform m_rand;
   static float m_contrast;
   bool   m_showProgress;

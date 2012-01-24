@@ -47,7 +47,7 @@ namespace Luminous
     float scale() const;
 
     /// Pops the top matrix from the stack
-    void popTransform() { m_stack.pop(); }
+    void popTransform() { beforeTransformChange(); m_stack.pop(); }
 
     /// Multiply the top matrix from the left with the given matrix and push the
     /// result into the stack
@@ -85,6 +85,8 @@ namespace Luminous
     void resetTransform();
 
   protected:
+    virtual void beforeTransformChange();
+
     /// The transformation stack
     std::stack<Nimble::Matrix3, std::vector<Nimble::Matrix3> > m_stack;
   };

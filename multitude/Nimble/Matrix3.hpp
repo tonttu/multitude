@@ -22,8 +22,8 @@ namespace Nimble {
     /// Constructs the matrix without initializing any values.
     Matrix3T() {}
     /// Constructs a matrix and initializes it from memory
-    template <class S>
-    Matrix3T(const S * x)
+    template <class K>
+    Matrix3T(const K * x)
     {
       m[0][0] = x[0]; m[0][1] = x[1]; m[0][2] = x[2];
       m[1][0] = x[3]; m[1][1] = x[4]; m[1][2] = x[5];
@@ -65,7 +65,7 @@ namespace Nimble {
     /// Transposes the matrix
     inline void               transpose();
     /// Returns a transposed matrix
-    inline Matrix3T transposed() const { Matrix3T m(*this); m.transpose(); return m; }
+    inline Matrix3T transposed() const; // { Matrix3T m(*this); m.transpose(); return m; }
     /// Fills the matrix with zeroes
     void                      clear() { m[0].clear(); m[1].clear(); m[2].clear(); }
     /// Makes the matrix an identity matrix
@@ -133,9 +133,9 @@ namespace Nimble {
     /// Create a matrix that performs uniform scaling around the given point
     static Matrix3T<T> scaleUniformAroundPoint2D(Vector2T<T> p,
                                                      T s)
-	{
-		return translate2D(p) * scaleUniform2D(s) * translate2D(-p);
-	}
+    {
+        return translate2D(p) * scaleUniform2D(s) * translate2D(-p);
+    }
 
     /// Create a matrix that performs uniform scaling around the given point
     static Matrix3T<T> scaleAroundPoint2D(Vector2T<T> p,
@@ -154,9 +154,9 @@ namespace Nimble {
     */
     static Matrix3T<T> rotateAroundPoint2D(Vector2T<T> p,
                                            T radians)
-	{
-		return translate2D(p) * rotate2D(radians) * translate2D(-p);
-	}
+    {
+        return translate2D(p) * rotate2D(radians) * translate2D(-p);
+    }
 
     /// Create a rotation matrix
     inline static Matrix3T<T> makeRotation(T radians, const Vector3T<T> & axis);
@@ -289,6 +289,19 @@ namespace Nimble {
     swap(m[1][2],m[2][1]);
   }
 
+  template <class T>
+  inline Matrix3T<T> Matrix3T<T>::transposed() const
+  {
+    Matrix3T<T> r;
+
+    for(int i = 0; i < 3; i++) {
+      for(int j = 0; j < 3; j++) {
+        r[i][j] = m[j][i];
+      }
+    }
+
+    return r;
+  }
   template <class T>
   inline void Matrix3T<T>::identity()
   {
@@ -591,8 +604,8 @@ inline Nimble::Matrix3T<T> operator * (const Nimble::Matrix3T<T>& m1,
 }
 
 /// Multiply a matrix and a vector
-template <class S, class T>
-inline Nimble::Vector3T<T> operator*(const Nimble::Matrix3T<S>& m1,
+template <class K, class T>
+inline Nimble::Vector3T<T> operator*(const Nimble::Matrix3T<K>& m1,
                    const Nimble::Vector3T<T>& m2)
 {
   Nimble::Vector3T<T> res;

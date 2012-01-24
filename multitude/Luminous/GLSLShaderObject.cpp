@@ -26,7 +26,7 @@ namespace Luminous
 {
   using namespace Radiant;
 
-  GLSLShaderObject::GLSLShaderObject(GLenum shaderType, GLResources * resources)
+  GLSLShaderObject::GLSLShaderObject(GLenum shaderType, RenderContext * resources)
     : GLResource(resources),
       m_compilerLog(0),
       m_isCompiled(false),
@@ -90,12 +90,37 @@ namespace Luminous
 
   void GLSLShaderObject::setSource(const char* code)
   {
-    int len = (int) strlen(code) + 1;
 
     delete[] m_shaderSource;
+
+#ifdef LUMINOUS_OPENGL_FULL
+
+    std::string tmp(code);
+    static const char * removes [] = {
+      " mediump ", " highp ", " lowp ", 0
+    };
+
+    for(int i = 0; removes[i]; i++) {
+      const char * s;
+      int len = strlen(removes[i]);
+      while((s = strstr(tmp.c_str(), removes[i]))) {
+        int place = s - tmp.c_str();
+        tmp.erase(place, len);
+        tmp.insert(place, " ");
+      }
+    }
+
+    m_shaderSource = new char [tmp.size() + 1];
+
+    strcpy(m_shaderSource, tmp.c_str());
+
+
+#else
+    int len = (int) strlen(code) + 1;
     m_shaderSource = new char [len];
 
     strcpy(m_shaderSource, code);
+#endif
   }
 
   bool GLSLShaderObject::loadSourceFile(const char* filename)

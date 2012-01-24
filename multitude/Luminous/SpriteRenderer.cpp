@@ -38,7 +38,7 @@ namespace Luminous {
   class SpriteRenderer::GPUData : public Luminous::GLResource
   {
   public:
-    GPUData(Luminous::GLResources * res)
+    GPUData(Luminous::RenderContext * res)
       : m_vbo(res)
     {}
 
@@ -108,6 +108,7 @@ namespace Luminous {
     float m_velocityScale;
   };
 
+  /*
   class VertexAttribArrayStep : public Patterns::NotCopyable
   {
   public:
@@ -128,7 +129,7 @@ namespace Luminous {
   private:
     int m_pos;
   };
-
+  */
   template <class A, class B>
       inline size_t offsetBytes(const A & higher, const B & lower)
   {
@@ -262,10 +263,10 @@ namespace Luminous {
     {
       Sprite tmp;
 
-      VertexAttribArrayStep sl(lpos, 2, GL_FLOAT, sizeof(Sprite), offsetBytes(tmp.m_location, tmp));
-      VertexAttribArrayStep sv(vpos, 2, GL_FLOAT, sizeof(Sprite), offsetBytes(tmp.m_velocity, tmp));
-      VertexAttribArrayStep sc(cpos, 4, GL_FLOAT, sizeof(Sprite), offsetBytes(tmp.m_color, tmp));
-      VertexAttribArrayStep ss(spos, 1, GL_FLOAT, sizeof(Sprite), offsetBytes(tmp.m_size, tmp));
+      VertexAttribArrayStep sl(lpos, 2, GL_FLOAT, sizeof(Sprite), (void*) offsetBytes(tmp.m_location, tmp));
+      VertexAttribArrayStep sv(vpos, 2, GL_FLOAT, sizeof(Sprite), (void*) offsetBytes(tmp.m_velocity, tmp));
+      VertexAttribArrayStep sc(cpos, 4, GL_FLOAT, sizeof(Sprite), (void*) offsetBytes(tmp.m_color, tmp));
+      VertexAttribArrayStep ss(spos, 1, GL_FLOAT, sizeof(Sprite), (void*) offsetBytes(tmp.m_size, tmp));
 
       size_t n = gld.m_vbo.filled() / sizeof(Sprite);
 

@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Nimble.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Nimble.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 #ifndef NIMBLE_MATRIX2T_HPP
@@ -36,14 +24,15 @@ namespace Nimble {
     Matrix2T(T v11, T v12, T v21, T v22) { m[0].make(v11, v12); m[1].make(v21, v22); }
     /// Copy constructor
     Matrix2T(const Matrix2T &that) { m[0] = that.m[0]; m[1] = that.m[1]; }
-    template <class S>
     /// Creates a matrix and initializes it with the given row vectors
-    Matrix2T(const Vector2T<S> & r1, const Vector2T<S> & r2)
+    template <class K>
+        Matrix2T(const Vector2T<K> & r1,
+                 const Vector2T<K> & r2)
     { m[0] = r1; m[1] = r2; }
     /// Empty destructor
     /** This method is defined because otherwise so compilers might
-	  complain. We expect that a decent compiler knows how to
-	  eliminate this function. */
+      complain. We expect that a decent compiler knows how to
+      eliminate this function. */
     ~Matrix2T() {}
 
     /// Fills the matrix with the given values
@@ -74,7 +63,7 @@ namespace Nimble {
     Matrix2T           transposed() const
     { return Matrix2T(m[0][0], m[1][0], m[0][1], m[1][1]); }
     /// Set all matrix elements to zero
-    void               clear()                { m[0].clear(); m[1].clear(); } 
+    void               clear()                { m[0].clear(); m[1].clear(); }
     /// Create an identity matrix
     void               identity()             { m[0].make(1.0, 0.0); m[1].make(0.0, 1.0);}
     /// Create a rotation matrix
@@ -110,16 +99,16 @@ namespace Nimble {
     static Matrix2T rotation(T r) { T c = Math::Cos(r); T s = Math::Sin(r); return Matrix2T(c, -s, s, c); }
     /// Returns a scaling matrix
     static Matrix2T scaling(T s)  { Matrix2T m; m.identity(); m.set(0, 0, s); m.set(1, 1, s); return m; }
-    
-    /** Identity matrix. */
-	//static Matrix2T IDENTITY(1, 0, 0, 1);
-	//static Matrix2T identity() 
-	//{
-	//	static Matrix2T i(1, 0, 0, 1);
-	//	return i;
-	//}
 
-	NIMBLE_API static const Matrix2T<T> IDENTITY;
+    /** Identity matrix. */
+    //static Matrix2T IDENTITY(1, 0, 0, 1);
+    //static Matrix2T identity()
+    //{
+    //	static Matrix2T i(1, 0, 0, 1);
+    //	return i;
+    //}
+
+    NIMBLE_API static const Matrix2T<T> IDENTITY;
 
   private:
     inline static void swap(T &a, T& b);
@@ -225,8 +214,8 @@ namespace Nimble {
 
 }
 
-template <class S, class T>
-inline S &operator<<(S &os, const Nimble::Matrix2T<T> &t)
+template <class K, class T>
+inline K &operator<<(K &os, const Nimble::Matrix2T<T> &t)
 {
   os << t[0].x << ' ' << t[0].y << " ; " << t[1].x << ' ' << t[1].y;
   return os;

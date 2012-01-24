@@ -1,6 +1,9 @@
 include(../multitude.pri)
 
-HEADERS += BGThread.hpp
+HEADERS += BGThread.hpp \
+    DummyOpenGL.hpp \
+    Style.hpp
+HEADERS += FramebufferResource.hpp
 HEADERS += CodecRegistry.hpp
 HEADERS += Collectable.hpp
 HEADERS += ContextVariable.hpp
@@ -9,7 +12,6 @@ HEADERS += EnableStep.hpp
 HEADERS += Error.hpp
 HEADERS += Export.hpp
 HEADERS += FramebufferObject.hpp
-HEADERS += FramebufferResource.hpp
 HEADERS += GarbageCollector.hpp
 HEADERS += GLContext.hpp
 HEADERS += GLKeyStone.hpp
@@ -17,29 +19,27 @@ HEADERS += GLResource.hpp
 HEADERS += GLResources.hpp
 HEADERS += GLSLProgramObject.hpp
 HEADERS += GLSLShaderObject.hpp
-HEADERS += ImageCodecDDS.hpp
+!mobile*:HEADERS += ImageCodecDDS.hpp
 HEADERS += ImageCodec.hpp
-HEADERS += ImageCodecQT.hpp
-HEADERS += ImageCodecSVG.hpp
 HEADERS += ImageCodecTGA.hpp
 HEADERS += Image.hpp
 HEADERS += Luminous.hpp
 HEADERS += MatrixStep.hpp
-HEADERS += MipMapGenerator.hpp
+!mobile*:HEADERS += MipMapGenerator.hpp
 HEADERS += MultiHead.hpp
 HEADERS += PixelFormat.hpp
 HEADERS += RenderContext.hpp
 #HEADERS += RenderTarget.hpp
 HEADERS += Shader.hpp
-HEADERS += SpriteRenderer.hpp
+!mobile*:HEADERS += SpriteRenderer.hpp
 HEADERS += Task.hpp
 HEADERS += Texture.hpp
 HEADERS += Transformer.hpp
 HEADERS += Utils.hpp
 HEADERS += VertexBuffer.hpp
 HEADERS += VertexBufferImpl.hpp
-
-SOURCES += BGThread.cpp
+SOURCES += BGThread.cpp \
+    Style.cpp
 SOURCES += CodecRegistry.cpp
 SOURCES += CPUMipmaps.cpp
 SOURCES += Error.cpp
@@ -52,19 +52,18 @@ SOURCES += GLResource.cpp
 SOURCES += GLResources.cpp
 SOURCES += GLSLProgramObject.cpp
 SOURCES += GLSLShaderObject.cpp
-SOURCES += ImageCodecDDS.cpp
-SOURCES += ImageCodecQT.cpp
-SOURCES += ImageCodecSVG.cpp
-SOURCES += ImageCodecTGA.cpp
+# TGA loader tries to create BGR & BGRA textures, which are not availale on OpenGL ES
+!mobile*:SOURCES += ImageCodecTGA.cpp
+!mobile*:SOURCES += ImageCodecDDS.cpp
 SOURCES += Image.cpp
 SOURCES += Luminous.cpp
-SOURCES += MipMapGenerator.cpp
+!mobile*:SOURCES += MipMapGenerator.cpp
 SOURCES += MultiHead.cpp
 SOURCES += PixelFormat.cpp
 SOURCES += RenderContext.cpp
 #SOURCES += RenderTarget.cpp
 SOURCES += Shader.cpp
-SOURCES += SpriteRenderer.cpp
+!mobile*:SOURCES += SpriteRenderer.cpp
 SOURCES += Task.cpp
 SOURCES += Texture.cpp
 SOURCES += Transformer.cpp
@@ -82,17 +81,38 @@ LIBS += $$LIB_RADIANT \
     $$LIB_PATTERNS \
     $$LIB_GLEW
 
+DEFINES += LUMINOUS_COMPILE
+# mobile*:HAS_QT_45 = NO
+unix:!contains(HAS_QT_45,YES) {
+    HEADERS += ImageCodecJPEG.hpp
+    HEADERS += ImageCodecPNG.hpp
+    SOURCES += ImageCodecJPEG.cpp
+    SOURCES += ImageCodecPNG.cpp
+    LIBS += -ljpeg \
+        -lpng
+}
+win32:DEFINES += LUMINOUS_EXPORT
+contains(HAS_QT_45,YES) {
+    message(Including QT Image codecs)
+    HEADERS += ImageCodecQT.hpp
+    !mobile*:HEADERS += ImageCodecSVG.hpp
+    SOURCES += ImageCodecQT.cpp
+    !mobile*:SOURCES += ImageCodecSVG.cpp
+    CONFIG += qt
+    QT += gui
+    !mobile*:QT += svg
+
+    # On Windows we need to install the Qt plugins
+    win32 {
+        qt_plugin_install.path += /bin
+        qt_plugin_install.files = $$[QT_INSTALL_PLUGINS]
+        INSTALLS += qt_plugin_install
+    }
+}
 DEFINES += LUMINOUS_EXPORT
 
 CONFIG += qt
 QT += gui
-QT += svg
-
-# On Windows we need to install the Qt plugins
-win32 {
-  qt_plugin_install.path += /bin
-  qt_plugin_install.files = $$[QT_INSTALL_PLUGINS]
-  INSTALLS += qt_plugin_install
-}
+# QT += svg
 
 include(../library.pri)
