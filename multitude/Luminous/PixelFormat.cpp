@@ -136,7 +136,7 @@ namespace Luminous
       case PixelFormat::TYPE_DOUBLE:
         return "TYPE_DOUBLE";
       default:
-        return "Invalid value (should never happen";
+        return "Invalid value (should never happen)";
     }
 
   }
