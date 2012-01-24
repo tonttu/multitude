@@ -351,7 +351,7 @@ namespace Luminous
         On some platforms this call may return null.
         */
     /// @internal
-    MULTI_ATTR_DEPRECATED(Luminous::GLContext * glContext());
+    MULTI_ATTR_DEPRECATED("Will be removed in 2.0", Luminous::GLContext * glContext());
 
     /// @endcond
 

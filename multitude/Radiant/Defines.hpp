@@ -16,12 +16,12 @@
 #ifndef RADIANT_DEFINES_HPP
 #define RADIANT_DEFINES_HPP
 
-#ifdef __GNUC__
-#define MULTI_ATTR_DEPRECATED(f) f __attribute__ ((deprecated))
+#if defined(__GNUC__) || defined(__clang__)
+#define MULTI_ATTR_DEPRECATED(description, f) f __attribute__ ((deprecated(description)))
 #elif defined(_MSC_VER)
-#define MULTI_ATTR_DEPRECATED(f) __declspec(deprecated) f
+#define MULTI_ATTR_DEPRECATED(description, f) __declspec(deprecated(description)) f
 #else
-#define MULTI_ATTR_DEPRECATED(f) f
+#define MULTI_ATTR_DEPRECATED(description, f) f
 #endif
 
 
