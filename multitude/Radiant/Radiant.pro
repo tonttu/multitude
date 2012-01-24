@@ -73,8 +73,8 @@ HEADERS += XFaker.hpp
 HEADERS += VideoCameraPTGrey.hpp
 HEADERS += VideoCameraCMU.hpp
 HEADERS += VideoCamera1394.hpp
-
 SOURCES += Mime.cpp
+SOURCES += RefPtr.cpp
 SOURCES += CameraDriver.cpp
 SOURCES += SocketUtilPosix.cpp
 SOURCES += ThreadPoolQt.cpp

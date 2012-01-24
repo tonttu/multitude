@@ -49,6 +49,37 @@
   }
 #endif
 
+// #define INTRUSIVE_PTR_DEBUG
+#ifdef INTRUSIVE_PTR_DEBUG
+
+#include "Export.hpp"
+#include "CallStack.hpp"
+
+#include <map>
+
+#define INTRUSIVE_PTR_DEBUG_ACQUIRE \
+  IntrusivePtrDebug::add(m_ptr, this)
+
+#define INTRUSIVE_PTR_DEBUG_RELEASE \
+      IntrusivePtrDebug::remove(m_ptr, this)
+
+namespace Radiant
+{
+  namespace IntrusivePtrDebug
+  {
+    typedef std::map<const void *, Radiant::CallStack> CallMap;
+
+    RADIANT_API CallMap fetch(const void * ptr);
+    RADIANT_API void add(const void * ptr, const void * intrusivePtr);
+    RADIANT_API void remove(const void * ptr, const void * intrusivePtr);
+  };
+}
+
+#else
+#define INTRUSIVE_PTR_DEBUG_ACQUIRE
+#define INTRUSIVE_PTR_DEBUG_RELEASE
+#endif
+
 namespace Radiant
 {
   template <typename T>
@@ -60,18 +91,27 @@ namespace Radiant
     IntrusivePtr() : m_ptr(0) {}
     IntrusivePtr(T * ptr) : m_ptr(ptr)
     {
-      if(ptr) intrusive_ptr_add_ref(ptr);
+      if(ptr) {
+        intrusive_ptr_add_ref(ptr);
+        INTRUSIVE_PTR_DEBUG_ACQUIRE;
+      }
     }
 
     IntrusivePtr(const IntrusivePtr<T> & iptr) : m_ptr(iptr.m_ptr)
     {
-      if(m_ptr) intrusive_ptr_add_ref(m_ptr);
+      if(m_ptr) {
+        intrusive_ptr_add_ref(m_ptr);
+        INTRUSIVE_PTR_DEBUG_ACQUIRE;
+      }
     }
 
     template <typename Y>
     IntrusivePtr(const IntrusivePtr<Y> & iptr) : m_ptr(iptr.get())
     {
-      if(m_ptr) intrusive_ptr_add_ref(m_ptr);
+      if(m_ptr) {
+        intrusive_ptr_add_ref(m_ptr);
+        INTRUSIVE_PTR_DEBUG_ACQUIRE;
+      }
     }
 
     virtual ~IntrusivePtr()
@@ -154,11 +194,13 @@ namespace Radiant
     inline void deref()
     {
       if(m_ptr) intrusive_ptr_release(m_ptr);
+      INTRUSIVE_PTR_DEBUG_RELEASE;
     }
     inline void ref(T * ptr)
     {
       m_ptr = ptr;
       if(ptr) intrusive_ptr_add_ref(ptr);
+      INTRUSIVE_PTR_DEBUG_ACQUIRE;
     }
 
     T * m_ptr;
