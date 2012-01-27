@@ -70,14 +70,14 @@ namespace Radiant
   {
     if(file.isEmpty()) return file;
 
-    if(FileUtils::fileReadable(file)) return file;
+    if(QFile::exists(file))
+      return file;
 
     QString r = FileUtils::findFile(file, m_paths);
 
-    /*if(r.empty()) {
-      Radiant::trace(WARNING, "ResourceLocator::locate # couldn't locate %s", file.c_str());
-    }
-   */
+//    if(r.isEmpty())
+//      Radiant::warning("ResourceLocator::locate # couldn't locate %s (from %s)", file.toUtf8().data(), m_paths.toUtf8().data());
+
     return r;
   }
 

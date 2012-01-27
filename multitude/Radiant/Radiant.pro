@@ -149,7 +149,7 @@ macx:LIBS += -framework,CoreFoundation
 DEFINES += RADIANT_EXPORT
 
 unix {
-  LIBS += -lpthread $$LIB_RT -ldl
+  LIBS += $$LIB_RT -ldl
   PKGCONFIG += libdc1394-2
   !mobile*:DEFINES += CAMERA_DRIVER_1394
   CONFIG += qt

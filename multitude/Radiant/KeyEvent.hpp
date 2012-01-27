@@ -16,6 +16,7 @@
 #define RADIANT_KEY_EVENT_HPP
 
 #include <QKeyEvent>
+#include <QMouseEvent>
 
 namespace Radiant
 {
@@ -32,6 +33,15 @@ namespace Radiant
 
   private:
     bool m_virtual;
+  };
+
+  class MouseEvent : public QMouseEvent
+  {
+  public:
+    MouseEvent(QEvent::Type type, const QPoint & position, Qt::MouseButton button, Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers())
+      : QMouseEvent(type, position, button, buttons, modifiers())
+    {}
+    MouseEvent(const QMouseEvent & event) : QMouseEvent(event) {}
   };
 }
 
