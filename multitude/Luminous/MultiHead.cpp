@@ -7,10 +7,10 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #include "MultiHead.hpp"
@@ -18,10 +18,29 @@
 #include "GLResources.hpp"
 #include "Texture.hpp"
 #include "Utils.hpp"
+#include "Shader.hpp"
+#include "Texture.hpp"
+#include "PixelFormat.hpp"
 
 #include <Radiant/Trace.hpp>
 
 #include <Valuable/DOMElement.hpp>
+#include <Valuable/AttributeContainer.hpp>
+
+static const char* fs_shader =
+"#version 120\n"
+"uniform sampler2D tex;\n"
+"uniform sampler1D lut;\n"
+"const float off = 0*0.5*(1.0/256.0);"
+"void main() {\n"
+"vec2 uv = gl_TexCoord[0].st;\n"
+"vec3 color = texture2D(tex, uv).rgb;\n"
+"float r = texture1D(lut, color.r+off).r;\n"
+"float g = texture1D(lut, color.g+off).g;\n"
+"float b = texture1D(lut, color.b+off).b;\n"
+//" r = color.r; g = color.g; b = color.b;\n"
+"gl_FragColor = vec4(r, g, b, 1);\n"
+"}";
 
 namespace Luminous {
 
@@ -40,12 +59,19 @@ namespace Luminous {
       m_method(this, "method", METHOD_MATRIX_TRICK),
       m_comment(this, "comment"),
       m_graphicsBounds(0, 0, 100, 100),
-      m_pixelSizeCm(0.1f)
+      m_pixelSizeCm(0.1f),
+      m_colorCorrection(this, "colorcorrection")
   {
+    m_colorCorrectionShader = new Luminous::Shader();
+    m_colorCorrectionShader->setFragmentShader(fs_shader);
+
+    m_colorCorrectionTexture = new Luminous::Texture1D();
   }
 
   MultiHead::Area::~Area()
-  {}
+  {
+    delete m_colorCorrectionShader;
+  }
 
   bool MultiHead::Area::deserialize(const Valuable::ArchiveElement & element)
   {
@@ -122,6 +148,13 @@ namespace Luminous {
                        false);
       }
 
+      Nimble::Vector3T<uint8_t> tmp[256];
+      m_colorCorrection.fillAsBytes(&tmp[0]);
+
+      m_colorCorrectionTexture->loadBytes(GL_RGB, 256,
+                                          &tmp[0],
+                                          PixelFormat::rgbUByte(), false);
+
       tex->bind(GL_TEXTURE0);
 
       glReadBuffer(GL_BACK);
@@ -144,7 +177,30 @@ namespace Luminous {
       glDisable(GL_BLEND);
 
       glColor3f(1, 1, 1);
+
+
+      m_colorCorrectionTexture->bind(GL_TEXTURE1);
+
+
+
+      glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+      GLSLProgramObject * program = m_colorCorrectionShader->bind();
+
+      program->setUniformInt("tex", 0);
+      program->setUniformInt("lut", 1);
       Utils::glTexRect(0, 1, 1, 0);
+
+      program->unbind();
+
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, 0);
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, 0);
+
+      glDisable(GL_TEXTURE_2D);
     }
     else {
       glLoadIdentity();

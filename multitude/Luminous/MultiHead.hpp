@@ -1,4 +1,16 @@
 /* COPYRIGHT
+ *
+ * This file is part of Luminous.
+ *
+ * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
+ *
+ * See file "Luminous.hpp" for authors and more details.
+ *
+ * This file is licensed under GNU Lesser General Public
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
+ * from the GNU organization (www.gnu.org).
+ *
  */
 
 
@@ -8,6 +20,7 @@
 #include "Export.hpp"
 #include "Collectable.hpp"
 #include "GLKeyStone.hpp"
+#include "ColorCorrection.hpp"
 
 #include <Nimble/Rect.hpp>
 #include <Nimble/Vector4.hpp>
@@ -20,12 +33,16 @@
 
 #include <vector>
 
+
 namespace Luminous {
 
   using Nimble::Rect;
   using Nimble::Vector2f;
   using Nimble::Vector2i;
   using Nimble::Vector4f;
+
+  class Shader;
+  class Texture1D;
 
   /// Class for managing information on multiple OpenGL vindows/viewports.
   /** This class stores information about the layout of multiple
@@ -50,6 +67,7 @@ namespace Luminous {
     {
       MEMCHECKED_USING(Collectable);
     public:
+
       /// Constructs a new area for the given window
       Area(Window * window = 0);
       virtual ~Area();
@@ -181,6 +199,16 @@ namespace Luminous {
       /// Returns a pointer to the window that holds this area
       const Window * window() const { return m_window; }
 
+      ColorCorrection & getColorCorrection()
+      {
+        return m_colorCorrection;
+      }
+
+      const ColorCorrection & getColorCorrection() const
+      {
+        return m_colorCorrection;
+      }
+
     private:
 
       enum {
@@ -206,6 +234,9 @@ namespace Luminous {
       Valuable::AttributeString m_comment;
       Rect m_graphicsBounds;
       float      m_pixelSizeCm;
+      Shader * m_colorCorrectionShader;
+      Texture1D * m_colorCorrectionTexture;
+      ColorCorrection m_colorCorrection;
     };
 
     /** One OpenGL window.

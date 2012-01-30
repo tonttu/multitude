@@ -40,6 +40,7 @@ HEADERS += VertexBuffer.hpp
 HEADERS += VertexBufferImpl.hpp
 
 SOURCES += BGThread.cpp
+HEADERS += ColorCorrection.hpp
 SOURCES += CodecRegistry.cpp
 SOURCES += CPUMipmaps.cpp
 SOURCES += Error.cpp
@@ -70,6 +71,7 @@ SOURCES += Texture.cpp
 SOURCES += Transformer.cpp
 SOURCES += Utils.cpp
 SOURCES += VertexBuffer.cpp
+SOURCES += ColorCorrection.cpp
 
 # Link in Squish statically
 LIBS += $$LIB_SQUISH

@@ -49,6 +49,7 @@ namespace Valuable
 
     virtual bool deserialize(const ArchiveElement & element) OVERRIDE
     {
+      m_container.clear();
       std::insert_iterator<T> inserter(m_container, m_container.end());
       for(ArchiveElement::Iterator it = element.children(); it; ++it) {
         *inserter = Serializer::deserialize<typename T::value_type>(*it);
@@ -135,6 +136,7 @@ namespace Valuable
 
     virtual bool deserialize(const ArchiveElement & element) OVERRIDE
     {
+      Container::m_container.clear();
       for(ArchiveElement::Iterator it = element.children(); it; ++it) {
         typename Container::value_type p = Serializer::deserialize<typename Container::value_type>(*it);
         Container::m_container[p.first] = p.second;
