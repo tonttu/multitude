@@ -200,12 +200,12 @@ namespace Luminous {
       /// Returns a pointer to the window that holds this area
       const Window * window() const { return m_window; }
 
-      ColorCorrection & getColorCorrection()
+      ColorCorrection & colorCorrection()
       {
         return m_colorCorrection;
       }
 
-      const ColorCorrection & getColorCorrection() const
+      const ColorCorrection & colorCorrection() const
       {
         return m_colorCorrection;
       }
@@ -237,7 +237,6 @@ namespace Luminous {
       float      m_pixelSizeCm;
       Shader * m_colorCorrectionShader;
       Texture1D * m_colorCorrectionTexture;
-      HardwareColorCorrection m_hwColorCorrection;
       ColorCorrection m_colorCorrection;
     };
 
@@ -398,7 +397,7 @@ namespace Luminous {
     bool deserialize(const Valuable::ArchiveElement & element);
 
     /// Adds a window to the collection
-    void addWindow(Window * w) { m_windows.push_back(std::shared_ptr<Window>(w)); }
+    void addWindow(Window * w);
 
     /// Sets the edited flag
     void setEdited(bool edited) { m_edited = edited; }
@@ -412,6 +411,16 @@ namespace Luminous {
 
     /// Returns the gamma value used for edge blending with projector setups.
     float gamma() const { return m_gamma; }
+
+    const HardwareColorCorrection & hwColorCorrection() const
+    {
+      return m_hwColorCorrection;
+    }
+
+    HardwareColorCorrection & hwColorCorrection()
+    {
+      return m_hwColorCorrection;
+    }
 
     /// @todo This should be in configuration file, and the accessor probably
     ///       shouldn't be static. Maybe this class could be singletonish?
@@ -427,6 +436,8 @@ namespace Luminous {
     Valuable::AttributeFloat m_gamma;
     Valuable::AttributeBool m_iconify;
     Valuable::AttributeVector3i m_dpms;
+    HardwareColorCorrection m_hwColorCorrection;
+
     bool m_edited;
   };
 

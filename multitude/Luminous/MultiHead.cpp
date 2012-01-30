@@ -66,8 +66,6 @@ namespace Luminous {
     m_colorCorrectionShader->setFragmentShader(fs_shader);
 
     m_colorCorrectionTexture = new Luminous::Texture1D();
-
-    m_hwColorCorrection.syncWith(&m_colorCorrection);
   }
 
   MultiHead::Area::~Area()
@@ -150,7 +148,9 @@ namespace Luminous {
                        false);
       }
 
-      bool useColorCorrection = !m_colorCorrection.isIdentity() && !m_hwColorCorrection.ok();
+      bool useColorCorrection = !m_colorCorrection.isIdentity() &&
+          (window()->areaCount() != 1 || window()->screen()->windowCount() != 1 ||
+          !window()->screen()->hwColorCorrection().ok());
 
       if(useColorCorrection) {
         Nimble::Vector3T<uint8_t> tmp[256];
@@ -563,6 +563,7 @@ namespace Luminous {
 
   bool MultiHead::deserialize(const Valuable::ArchiveElement & element)
   {
+    m_hwColorCorrection.syncWith(0);
     for(std::vector<std::shared_ptr<Window> >::iterator it = m_windows.begin(); it != m_windows.end(); ++it)
       removeValue(it->get());
     m_windows.clear();
@@ -580,6 +581,16 @@ namespace Luminous {
     return ok;
   }
 
+  void MultiHead::addWindow(Window * w)
+  {
+    m_windows.push_back(std::shared_ptr<Window>(w));
+    if(m_windows.size() == 1 && w->areaCount() == 1) {
+      m_hwColorCorrection.syncWith(&w->area(0).colorCorrection());
+    } else {
+      m_hwColorCorrection.syncWith(0);
+    }
+  }
+
   bool MultiHead::readElement(const Valuable::ArchiveElement & ce)
   {
     const QString & name = ce.name();
@@ -593,7 +604,7 @@ namespace Luminous {
       addValue(name, win);
       win->deserialize(ce);
 
-      m_windows.push_back(std::shared_ptr<Window>(win));
+      addWindow(win);
     } else {
       return false;
     }
