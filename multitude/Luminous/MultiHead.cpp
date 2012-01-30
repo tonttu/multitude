@@ -148,12 +148,17 @@ namespace Luminous {
                        false);
       }
 
-      Nimble::Vector3T<uint8_t> tmp[256];
-      m_colorCorrection.fillAsBytes(&tmp[0]);
+      /// @todo This should be enabled only if we don't have VM1
+      bool useColorCorrection = !m_colorCorrection.isIdentity();
 
-      m_colorCorrectionTexture->loadBytes(GL_RGB, 256,
-                                          &tmp[0],
-                                          PixelFormat::rgbUByte(), false);
+      if(useColorCorrection) {
+        Nimble::Vector3T<uint8_t> tmp[256];
+        m_colorCorrection.fillAsBytes(&tmp[0]);
+
+        m_colorCorrectionTexture->loadBytes(GL_RGB, 256,
+                                            &tmp[0],
+                                            PixelFormat::rgbUByte(), false);
+      }
 
       tex->bind(GL_TEXTURE0);
 
@@ -178,25 +183,28 @@ namespace Luminous {
 
       glColor3f(1, 1, 1);
 
+      if(useColorCorrection) {
+        m_colorCorrectionTexture->bind(GL_TEXTURE1);
 
-      m_colorCorrectionTexture->bind(GL_TEXTURE1);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
+        GLSLProgramObject * program = m_colorCorrectionShader->bind();
 
+        program->setUniformInt("tex", 0);
+        program->setUniformInt("lut", 1);
 
-      glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-      glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        Utils::glTexRect(0, 1, 1, 0);
 
-      GLSLProgramObject * program = m_colorCorrectionShader->bind();
+        program->unbind();
 
-      program->setUniformInt("tex", 0);
-      program->setUniformInt("lut", 1);
-      Utils::glTexRect(0, 1, 1, 0);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, 0);
+      } else {
+        Utils::glTexRect(0, 1, 1, 0);
+      }
 
-      program->unbind();
-
-      glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, 0);
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, 0);
 

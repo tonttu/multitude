@@ -32,7 +32,6 @@ namespace Luminous
   public:
     ColorCorrection(Node * parent, const QString & name, bool transit = false);
 
-
     void setOffset(int idx, const Nimble::Vector3 & offset);
     void setOffset(int idx, int channel, float value);
     const Nimble::Vector3 & getOffset(int idx) const;
@@ -41,6 +40,7 @@ namespace Luminous
 
     //const Nimble::Vector3T<float>* getLUT() const;
 
+    bool isIdentity() const;
     void setIdentity();
     void changeUniform(int channel, float v);
 
@@ -55,11 +55,15 @@ namespace Luminous
     Nimble::Vector3 brightness() { return m_brightness; }
     void setBrightness(const Nimble::Vector3 & brightness) { m_brightness = brightness; }
 
+    void setChanged();
+
   private:
+    /// If this is changed outside the class, setChanged must be called
     Valuable::AttributeContainer< std::vector<Nimble::Vector3> > m_offsets;
     Valuable::AttributeVector3f m_gamma;
     Valuable::AttributeVector3f m_contrast;
     Valuable::AttributeVector3f m_brightness;
+    bool m_identity;
   };
 }
 
