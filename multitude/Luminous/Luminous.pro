@@ -1,6 +1,8 @@
 include(../multitude.pri)
 
 HEADERS += BGThread.hpp
+HEADERS += HardwareColorCorrection.hpp
+HEADERS += VM1.hpp
 HEADERS += CodecRegistry.hpp
 HEADERS += Collectable.hpp
 HEADERS += ContextVariable.hpp
@@ -40,6 +42,7 @@ HEADERS += VertexBuffer.hpp
 HEADERS += VertexBufferImpl.hpp
 
 SOURCES += BGThread.cpp
+SOURCES += HardwareColorCorrection.cpp
 HEADERS += ColorCorrection.hpp
 SOURCES += CodecRegistry.cpp
 SOURCES += CPUMipmaps.cpp
@@ -72,6 +75,7 @@ SOURCES += Transformer.cpp
 SOURCES += Utils.cpp
 SOURCES += VertexBuffer.cpp
 SOURCES += ColorCorrection.cpp
+SOURCES += VM1.cpp
 
 # Link in Squish statically
 LIBS += $$LIB_SQUISH

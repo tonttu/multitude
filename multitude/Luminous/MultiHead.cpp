@@ -66,6 +66,8 @@ namespace Luminous {
     m_colorCorrectionShader->setFragmentShader(fs_shader);
 
     m_colorCorrectionTexture = new Luminous::Texture1D();
+
+    m_hwColorCorrection.syncWith(&m_colorCorrection);
   }
 
   MultiHead::Area::~Area()
@@ -148,8 +150,7 @@ namespace Luminous {
                        false);
       }
 
-      /// @todo This should be enabled only if we don't have VM1
-      bool useColorCorrection = !m_colorCorrection.isIdentity();
+      bool useColorCorrection = !m_colorCorrection.isIdentity() && !m_hwColorCorrection.ok();
 
       if(useColorCorrection) {
         Nimble::Vector3T<uint8_t> tmp[256];

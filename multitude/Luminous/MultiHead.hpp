@@ -20,6 +20,7 @@
 #include "Export.hpp"
 #include "Collectable.hpp"
 #include "GLKeyStone.hpp"
+#include "HardwareColorCorrection.hpp"
 #include "ColorCorrection.hpp"
 
 #include <Nimble/Rect.hpp>
@@ -236,6 +237,7 @@ namespace Luminous {
       float      m_pixelSizeCm;
       Shader * m_colorCorrectionShader;
       Texture1D * m_colorCorrectionTexture;
+      HardwareColorCorrection m_hwColorCorrection;
       ColorCorrection m_colorCorrection;
     };
 
