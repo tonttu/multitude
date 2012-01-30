@@ -55,7 +55,8 @@ namespace Valuable
     enum ListenerType
     {
       DIRECT,
-      AFTER_UPDATE
+      AFTER_UPDATE,
+      AFTER_UPDATE_ONCE
     };
 
     Node();
@@ -302,8 +303,6 @@ namespace Valuable
     friend class Attribute; // So that Attribute can call the function below.
 
     void valueRenamed(const QString & was, const QString & now);
-    static void queueEvent(Valuable::Node * sender, Valuable::Node * target,
-                           const QString & to, const Radiant::BinaryData & data);
 
     container m_values;
 

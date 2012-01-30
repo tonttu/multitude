@@ -49,6 +49,21 @@ namespace
   // recursive because ~Node() might be called from processQueue()
   Radiant::Mutex s_queueMutex(true);
   QList<QueueItem*> s_queue;
+  QSet<void *> s_queueOnce;
+
+  void queueEvent(Valuable::Node * sender, Valuable::Node * target,
+                  const QString & to, const Radiant::BinaryData & data,
+                  void * once)
+  {
+    // make a new item before locking
+    QueueItem * item = new QueueItem(sender, target, to, data);
+    Radiant::Guard g(s_queueMutex);
+    if(once) {
+      if(s_queueOnce.contains(once)) return;
+      s_queueOnce << once;
+    }
+    s_queue << item;
+  }
 }
 
 namespace Valuable
@@ -556,6 +571,7 @@ namespace Valuable
     }
     int r = s_queue.size();
     s_queue.clear();
+    s_queueOnce.clear();
     return r;
   }
 
@@ -596,8 +612,10 @@ namespace Valuable
         bdsend.rewind();
 
         if(vp.m_listener) {
-          if(vp.m_type == AFTER_UPDATE) {
-            queueEvent(this, vp.m_listener, vp.m_to, bdsend);
+          if(vp.m_type == AFTER_UPDATE_ONCE) {
+            queueEvent(this, vp.m_listener, vp.m_to, bdsend, &vp);
+          } else if(vp.m_type == AFTER_UPDATE) {
+            queueEvent(this, vp.m_listener, vp.m_to, bdsend, 0);
           } else {
             // m_sender is valid only at the beginning of processMessage call
             Node * sender = this;
@@ -649,15 +667,6 @@ namespace Valuable
     Attribute * vo = (*it).second;
     m_values.erase(it);
     m_values[now] = vo;
-  }
-
-  void Node::queueEvent(Valuable::Node * sender, Valuable::Node * target,
-                        const QString & to, const Radiant::BinaryData & data)
-  {
-    // make a new item before locking
-    QueueItem * item = new QueueItem(sender, target, to, data);
-    Radiant::Guard g(s_queueMutex);
-    s_queue << item;
   }
 
   bool Node::readElement(const ArchiveElement &)
