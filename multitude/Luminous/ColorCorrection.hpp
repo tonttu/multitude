@@ -64,6 +64,8 @@ namespace Luminous
     Valuable::AttributeVector3f m_contrast;
     Valuable::AttributeVector3f m_brightness;
     bool m_identity;
+
+    std::vector<Nimble::Vector3T<uint8_t> > m_prev;
   };
 }
 

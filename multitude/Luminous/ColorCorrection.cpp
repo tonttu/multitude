@@ -17,6 +17,8 @@ namespace Luminous
     m_gamma.addListener(std::bind(&ColorCorrection::setChanged, this));
     m_contrast.addListener(std::bind(&ColorCorrection::setChanged, this));
     m_brightness.addListener(std::bind(&ColorCorrection::setChanged, this));
+
+    eventAddOut("changed");
   }
 
   void ColorCorrection::setOffset(int idx, const Nimble::Vector3 & offset)
@@ -66,6 +68,7 @@ namespace Luminous
     m_contrast = Nimble::Vector3(1);
     m_brightness = Nimble::Vector3(0);
     m_identity = true;
+    eventSend("changed");
   }
 
   // Change every value if given channel by v
@@ -90,14 +93,22 @@ namespace Luminous
 
   void ColorCorrection::setChanged()
   {
-    Nimble::Vector3T<uint8_t> tmp[256];
-    fillAsBytes(tmp);
-    m_identity = true;
+    std::vector<Nimble::Vector3T<uint8_t> > tmp(256);
+    fillAsBytes(&tmp[0]);
+    bool identity = true;
     for(int i = 0; i < 256; ++i) {
       if(tmp[i].x != i || tmp[i].y != i || tmp[i].z != i) {
-        m_identity = false;
+        identity = false;
         break;
       }
+    }
+    if(m_identity != identity) {
+      m_identity = identity;
+      // eventSend(...);
+    }
+    if(tmp != m_prev) {
+      m_prev = tmp;
+      eventSend("changed");
     }
   }
 
