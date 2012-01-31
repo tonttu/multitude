@@ -6,6 +6,8 @@
 #include <Radiant/SerialPort.hpp>
 #include <Radiant/Mutex.hpp>
 
+#include <QMap>
+
 namespace Luminous
 {
   class ColorCorrection;
@@ -16,6 +18,10 @@ namespace Luminous
 
     bool detected() const;
     void setColorCorrection(const ColorCorrection & cc);
+
+    QString info();
+
+    static QMap<QString, QString> parseInfo(const QString & info);
 
     QByteArray takeData();
     Radiant::SerialPort & open(bool & ok);

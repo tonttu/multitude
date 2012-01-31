@@ -7,6 +7,9 @@
 #include <Radiant/Trace.hpp>
 #include <Radiant/Sleep.hpp>
 
+#include <QRegExp>
+#include <QStringList>
+
 #ifdef RADIANT_LINUX
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -126,6 +129,87 @@ namespace Luminous
       Luminous::BGThread::instance()->addTask(new BGWriter(*this));
   }
 
+  QString VM1::info()
+  {
+    Radiant::Guard g(s_vm1Mutex);
+
+    bool ok;
+    Radiant::SerialPort & port = open(ok);
+    if(!ok) return "";
+
+    char buffer[256];
+    while(port.read(buffer, 256) > 0) {}
+
+    QByteArray ba("i");
+    if(writeAll(ba.data(), ba.size(), port, 300) != ba.size())
+      return "";
+
+    QByteArray res;
+    for(;;) {
+      /// @todo Add timeout reading to SerialPort! This is just very temporary stupid hack
+      Radiant::Sleep::sleepMs(4);
+      int r = port.read(buffer, 256);
+      if(r > 0) {
+        res.append(buffer, r);
+      } else break;
+    }
+    return res;
+  }
+
+  QMap<QString, QString> VM1::parseInfo(const QString & info)
+  {
+    QRegExp header("Info");
+    QRegExp version("Firmware version (.+)");
+    QRegExp board("Board revision (.+)");
+    QRegExp autosel("Autoselect is (on|off)");
+    QRegExp priority ("(.+) has priority");
+    QRegExp not_connected("(.+) not connected");
+    QRegExp detected("(.+) detected");
+    QRegExp active("(.+) active");
+    QRegExp pixelsLines("Total pixels: (\\d+) Actives pixels: (\\d+) Total lines: (\\d+) Actives lines: (\\d+)");
+    QRegExp uptime("Operation time (\\d+) hours and (\\d+) minutes");
+    QRegExp screensaver("Screensaver time (\\d+) minutes");
+    QRegExp temp("Temperature (\\d+) degrees");
+
+    QRegExp split("\\s*[\\r\\n]+\\s*", Qt::CaseInsensitive, QRegExp::RegExp2);
+
+    QMap<QString, QString> map;
+
+    foreach(const QString & line, info.split(split, QString::SkipEmptyParts)) {
+      if(header.exactMatch(line)) {
+        continue;
+      } else if(version.exactMatch(line)) {
+        map["version"] = version.cap(1);
+      } else if(board.exactMatch(line)) {
+        map["board-revision"] = board.cap(1);
+      } else if(autosel.exactMatch(line)) {
+        map["autoselect"] = autosel.cap(1) == "on" ? "1" : "0";
+      } else if(priority.exactMatch(line)) {
+        map["priority"] = priority.cap(1);
+      } else if(not_connected.exactMatch(line)) {
+        map[not_connected.cap(1)] = "not connected";
+      } else if(detected.exactMatch(line)) {
+        map[detected.cap(1)] = "detected";
+      } else if(active.exactMatch(line)) {
+        map[active.cap(1)] = "active";
+      } else if(pixelsLines.exactMatch(line)) {
+        map["total-pixels"] = pixelsLines.cap(1);
+        map["active-pixels"] = pixelsLines.cap(2);
+        map["total-lines"] = pixelsLines.cap(3);
+        map["active-lines"] = pixelsLines.cap(4);
+      } else if(uptime.exactMatch(line)) {
+        map["uptime"] = QString::number(uptime.cap(1).toInt() * 60 + uptime.cap(2).toInt());
+      } else if(screensaver.exactMatch(line)) {
+        map["screensaver"] = QString::number(screensaver.cap(1).toInt() * 60);
+      } else if(temp.exactMatch(line)) {
+        map["temperature"] = temp.cap(1);
+      } else {
+        Radiant::warning("VM1::parseInfo # Failed to parse line %s", line.toUtf8().data());
+      }
+    }
+    return map;
+  }
+
   QByteArray VM1::takeData()
   {
     QByteArray ba;
@@ -137,7 +221,7 @@ namespace Luminous
   Radiant::SerialPort & VM1::open(bool & ok)
   {
     QString dev = findVM1();
-    if(!m_port.isOpen() && !m_port.open(dev.toUtf8().data(), false, false, 115200, 8, 0, 0)) {
+    if(!m_port.isOpen() && !m_port.open(dev.toUtf8().data(), false, false, 115200, 8, 1, 10000)) {
       Radiant::error("Failed to open %s", dev.toUtf8().data());
       ok = false;
     } else {
