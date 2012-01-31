@@ -30,11 +30,14 @@ namespace Luminous
   class LUMINOUS_API ColorCorrection : public Valuable::Node
   {
   public:
-    ColorCorrection(Node * parent, const QString & name, bool transit = false);
+    ColorCorrection(Node * parent = 0, const QString & name = "", bool transit = false);
 
     void setOffset(int idx, const Nimble::Vector3 & offset);
     void setOffset(int idx, int channel, float value);
     const Nimble::Vector3 & getOffset(int idx) const;
+
+    const std::vector<Nimble::Vector3> & offsets() const { return *m_offsets; }
+    void setOffsets(const std::vector<Nimble::Vector3f> & offsets);
 
     Nimble::Vector3 getValue(int idx) const;
 
@@ -46,13 +49,13 @@ namespace Luminous
 
     void fillAsBytes(Nimble::Vector3T<uint8_t> * to) const;
 
-    Nimble::Vector3 gamma() { return m_gamma; }
+    Nimble::Vector3 gamma() const { return m_gamma; }
     void setGamma(const Nimble::Vector3 & gamma) { m_gamma = gamma; }
 
-    Nimble::Vector3 contrast() { return m_contrast; }
+    Nimble::Vector3 contrast() const { return m_contrast; }
     void setContrast(const Nimble::Vector3 & contrast) { m_contrast = contrast; }
 
-    Nimble::Vector3 brightness() { return m_brightness; }
+    Nimble::Vector3 brightness() const { return m_brightness; }
     void setBrightness(const Nimble::Vector3 & brightness) { m_brightness = brightness; }
 
     void setChanged();

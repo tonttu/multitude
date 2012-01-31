@@ -33,10 +33,17 @@ namespace Luminous
     setChanged();
   }
 
-
   const Nimble::Vector3& ColorCorrection::getOffset(int idx) const
   {
     return m_offsets->at(idx);
+  }
+
+  void ColorCorrection::setOffsets(const std::vector<Nimble::Vector3f> & offsets)
+  {
+    if(offsets.size() == m_offsets->size()) {
+      *m_offsets = offsets;
+      setChanged();
+    }
   }
 
   Nimble::Vector3 ColorCorrection::getValue(int idx) const
