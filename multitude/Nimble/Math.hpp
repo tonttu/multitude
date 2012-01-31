@@ -55,10 +55,16 @@ namespace Nimble {
     inline float InvSqrt(float v) { return 1.0f / std::sqrt(v); }
     /// Returns the exponential function
     inline float Exp(float v)  { return std::exp(v); }
-    /// Returns the logarithm in base 10
+    /// Returns the natural logarithm (base e)
     inline float Log(float v)  { return std::log(v); }
+    /// Returns the logarithm in base 10
+    inline float Log10(float v)  { return std::log10(v); }
     /// Returns the logarithm in base 2
+#ifdef RADIANT_CXX11
+    inline float Log2(float v) { return std::log2(v); }
+#else
     inline float Log2(float v) { return Log(v) / Log(2.f); }
+#endif
     /// Raises x to the yth power
     inline float Pow(float x, float y)    { return std::pow(x, y); }
 
@@ -83,10 +89,16 @@ namespace Nimble {
     inline double InvSqrt(double v) { return 1.0 / std::sqrt(v); }
     /// Returns the exponential function
     inline double Exp(double v)  { return std::exp(v); }
-    /// Returns the logarithm in base 10
+    /// Returns the natural logarithm (base e)
     inline double Log(double v)  { return std::log(v); }
+    /// Returns the logarithm in base 10
+    inline double Log10(double v)  { return std::log10(v); }
     /// Returns the logarithm in base 2
-    inline double Log2(double v)  { return Log(v) / Log(2.0); }
+#ifdef RADIANT_CXX11
+    inline double Log2(double v) { return std::log2(v); }
+#else
+    inline double Log2(double v) { return Log(v) / Log(2.0); }
+#endif
     /// Raises x to the yth power
     inline double Pow(double x, double y)    { return std::pow(x, y); }
 
