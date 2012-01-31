@@ -80,7 +80,7 @@ namespace Valuable
       }
     }
 
-    virtual void clearValue(Attribute::Layer layer) OVERRIDE
+    virtual void clearValue(Attribute::Layer layer = MANUAL) OVERRIDE
     {
       for(int j = 0; j < m_factors[layer].Elements; ++j)
         m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();

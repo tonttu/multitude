@@ -99,12 +99,12 @@ namespace Valuable
         }
       }
 
-      void setPercentage(float factor, Attribute::Layer layer)
+      void setPercentage(float factor, Attribute::Layer layer = Attribute::MANUAL)
       {
         m_factors[layer] = factor;
       }
 
-      virtual void clearValue(Attribute::Layer layer) OVERRIDE
+      virtual void clearValue(Attribute::Layer layer = Attribute::MANUAL) OVERRIDE
       {
         m_factors[layer] = std::numeric_limits<float>::quiet_NaN();
         Base::clearValue(layer);
