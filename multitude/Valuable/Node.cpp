@@ -55,7 +55,7 @@ namespace
                   const QString & to, const Radiant::BinaryData & data,
                   void * once)
   {
-    // make a new item before locking
+    // make the new item before locking
     QueueItem * item = new QueueItem(sender, target, to, data);
     Radiant::Guard g(s_queueMutex);
     if(once) {
@@ -135,15 +135,12 @@ namespace Valuable
     }
 
     Radiant::Guard g(s_queueMutex);
-    for(QList<QueueItem*>::iterator it = s_queue.begin(); it != s_queue.end(); ) {
+    for(QList<QueueItem*>::iterator it = s_queue.begin(); it != s_queue.end(); ++it) {
       QueueItem* item = *it;
-      if(item->target == this) {
-        it = s_queue.erase(it);
-        continue;
-      } else if(item->sender == this) {
+      if(item->target == this)
+        item->target = 0;
+      if(item->sender == this)
         item->sender = 0;
-      }
-      ++it;
     }
   }
 
@@ -564,11 +561,15 @@ namespace Valuable
     /// The queue must be locked during the whole time when calling the callback
     Radiant::Guard g(s_queueMutex);
     foreach(QueueItem* item, s_queue) {
+      if(!item->target) continue;
       std::swap(item->target->m_sender, item->sender);
       item->target->processMessage(item->to, item->data);
       std::swap(item->target->m_sender, item->sender);
-      delete item;
+      // can't call "delete item" here, because that processMessage call could
+      // call some destructors that iterate s_queue
     }
+    foreach(QueueItem* item, s_queue)
+      delete item;
     int r = s_queue.size();
     s_queue.clear();
     s_queueOnce.clear();
