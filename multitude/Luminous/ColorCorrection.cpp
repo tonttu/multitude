@@ -87,6 +87,40 @@ namespace Luminous
     setChanged();
   }
 
+  void ColorCorrection::encode(Radiant::BinaryData & bd) const
+  {
+    const std::vector<Nimble::Vector3> & offsets_tmp = offsets();
+    std::vector<float> offsets(offsets_tmp.size() * 3);
+    for(int i = 0; i < offsets_tmp.size(); ++i) {
+      offsets[i*3] = offsets_tmp[i].x;
+      offsets[i*3+1] = offsets_tmp[i].y;
+      offsets[i*3+2] = offsets_tmp[i].z;
+    }
+    bd.writeVector3Float32(gamma());
+    bd.writeVector3Float32(contrast());
+    bd.writeVector3Float32(brightness());
+    bd.writeBlob(&offsets[0], offsets.size() * sizeof(offsets[0]));
+  }
+
+  bool ColorCorrection::decode(Radiant::BinaryData & bd)
+  {
+    Nimble::Vector3f gamma = bd.readVector3Float32();
+    Nimble::Vector3f contrast = bd.readVector3Float32();
+    Nimble::Vector3f brightness = bd.readVector3Float32();
+    std::vector<float> offsets(256 * 3);
+    if(bd.readBlob(&offsets[0], offsets.size() * sizeof(offsets[0]))) {
+      std::vector<Nimble::Vector3f> offsetsv(256);
+      for(int i = 0; i < offsets.size()/3; ++i)
+        offsetsv[i].make(offsets[i*3], offsets[i*3+1], offsets[i*3+2]);
+      setGamma(gamma);
+      setContrast(contrast);
+      setBrightness(brightness);
+      setOffsets(offsetsv);
+      return true;
+    }
+    return false;
+  }
+
   void ColorCorrection::fillAsBytes(Nimble::Vector3T<uint8_t> * to) const
   {
     for (int i=0; i < 256; ++i) {

@@ -47,6 +47,9 @@ namespace Luminous
     void setIdentity();
     void changeUniform(int channel, float v);
 
+    void encode(Radiant::BinaryData & bd) const;
+    bool decode(Radiant::BinaryData & bd);
+
     void fillAsBytes(Nimble::Vector3T<uint8_t> * to) const;
 
     Nimble::Vector3 gamma() const { return m_gamma; }
