@@ -1,6 +1,11 @@
 
 include(../multitude.pri)
 
+HEADERS += WindowConfig.hpp
+HEADERS += Window.hpp
+HEADERS += XWindow.hpp
+HEADERS += QtWindow.hpp
+HEADERS += WindowEventHook.hpp
 HEADERS += Flags.hpp
 HEADERS += Mime.hpp
 HEADERS += Timer.hpp
@@ -75,6 +80,10 @@ HEADERS += VideoCameraPTGrey.hpp
 HEADERS += VideoCameraCMU.hpp
 HEADERS += VideoCamera1394.hpp
 
+SOURCES += WindowConfig.cpp
+SOURCES += Window.cpp
+SOURCES += XWindow.cpp
+SOURCES += QtWindow.cpp
 SOURCES += Mime.cpp
 SOURCES += CameraDriver.cpp
 SOURCES += SocketUtilPosix.cpp
@@ -149,11 +158,11 @@ macx:LIBS += -framework,CoreFoundation
 DEFINES += RADIANT_EXPORT
 
 unix {
-  LIBS += -lpthread $$LIB_RT -ldl
+  LIBS += $$LIB_RT -ldl
   PKGCONFIG += libdc1394-2
   !mobile*:DEFINES += CAMERA_DRIVER_1394
   CONFIG += qt
-  QT = core network
+  QT = core network opengl gui
 }
 
 win32 {

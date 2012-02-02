@@ -104,8 +104,6 @@ contains(MEMCHECK,yes) {
 
 # mobile*:INCLUDES += /usr/local/include
 
-!mobile*:LIB_SDL = -lSDL
-
 macx*|mobile* {
   LIB_PREFIX = lib
   !mobile*:SHARED_LIB_SUFFIX = dylib
@@ -217,8 +215,10 @@ CONFIG(release, debug|release) {
   DEFINES += NDEBUG
 }
 
-!mobile:DEFINES += USING_V8_SHARED
-!mobile:DEFINES += MULTI_WITH_V8
+!without-js {
+  DEFINES += USING_V8_SHARED
+  DEFINES += MULTI_WITH_V8
+}
 
 # Use ccache if available
 unix:exists(/usr/bin/ccache):QMAKE_CXX=ccache $$QMAKE_CXX

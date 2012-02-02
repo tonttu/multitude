@@ -1681,8 +1681,8 @@ namespace Luminous {
         return false;
       }
       Radiant::error("%s # GL ERROR %s", msg, gluErrorString(e));
-      int *bad = 0;
-      *bad = 123;
+      /*int *bad = 0;
+      *bad = 123;*/
 #else
       Radiant::error("%s # GL ERROR %d", msg, (int) e);
 #endif

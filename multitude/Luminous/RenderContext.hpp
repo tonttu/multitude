@@ -409,6 +409,7 @@ namespace Luminous
     static RenderContext * GLSLreadContext();
 
     void bindTexture(GLenum textureType, GLenum textureUnit, GLuint textureId);
+    void bindBuffer(GLenum type, GLuint id);
     /// Bind GLSL program object
     void bindProgram(GLSLProgramObject * program);
     void bindDefaultProgram();
@@ -429,11 +430,11 @@ namespace Luminous
     Internal * m_data;
   };
 
-  class LegacyOpenGL : Patterns::NotCopyable
+  class CustomOpenGL : Patterns::NotCopyable
   {
   public:
-    LegacyOpenGL(RenderContext * r) : m_r(r) { r->flush(); }
-    ~LegacyOpenGL() { m_r->restart(); }
+    CustomOpenGL(RenderContext * r) : m_r(r) { r->flush(); }
+    ~CustomOpenGL() { m_r->restart(); }
   private:
     RenderContext * m_r;
   };

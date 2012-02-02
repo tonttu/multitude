@@ -14,6 +14,6 @@ CONFIG += qt
 
 QT = core gui opengl xml
 
-LIBS += -lGLU
+LIBS += $$LIB_GLU
 
 include(../Applications_end.pri)

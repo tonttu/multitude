@@ -19,6 +19,7 @@
 
 #include <Radiant/Trace.hpp>
 
+#include "RenderContext.hpp"
 
 namespace Luminous
 {
@@ -52,14 +53,14 @@ namespace Luminous
   template<GLenum type>
   void BufferObject<type>::bind()
   {
-    glBindBuffer(type, m_bufferId);
+    context()->bindBuffer(type, m_bufferId);
     m_bound = true;
   }
 
   template<GLenum type>
   void BufferObject<type>::unbind()
   {
-    glBindBuffer(type, 0);
+    context()->bindBuffer(type, 0);
     m_bound = false;
   }
 
