@@ -58,12 +58,16 @@ namespace {
   public:
     BGWriter(Luminous::VM1 & vm1) : m_vm1(vm1)
     {
-      /// At least VM1 Firmware version 2.4 turns off the "Color gamma" mode
+      /// VM1 Firmware version 2.4 turns off the "Color gamma" mode
       /// while reading the new color table, meaning that if we always
       /// immediately set the new color table when moving a slider in GUI,
       /// all we get is a blinking screen without the color correction.
       /// .. with this delay we get slower blinking screen with color correction
-      scheduleFromNowSecs(0.1);
+      //scheduleFromNowSecs(0.1);
+
+      /// That is fixed in 2.6, we could check version numbers, but that could
+      /// cause some extra latency. For now just assume that we have a new
+      /// enough version.
     }
 
     void doTask()
@@ -163,18 +167,26 @@ namespace Luminous
     QRegExp board("Board revision (.+)");
     QRegExp autosel("Autoselect is (on|off)");
     QRegExp priority ("(.+) has priority");
-    QRegExp not_connected("(.+) not connected");
+    QRegExp notConnected("(.+) not connected");
     QRegExp detected("(.+) detected");
     QRegExp active("(.+) active");
     QRegExp pixelsLines("Total pixels: (\\d+) Actives pixels: (\\d+) Total lines: (\\d+) Actives lines: (\\d+)");
     QRegExp uptime("Operation time (\\d+) hours and (\\d+) minutes");
     QRegExp screensaver("Screensaver time (\\d+) minutes");
     QRegExp temp("Temperature (\\d+) degrees");
+    QRegExp src("Video source is (.+)");
+    QRegExp totalPixels("Total pixels: (\\d+)");
+    QRegExp activePixels("Actives? pixels: (\\d+)");
+    QRegExp totalLines("Total lines: (\\d+)");
+    QRegExp activeLines("Actives? lines: (\\d+)");
+    QRegExp colorCorrection("Color gamma is (on|off)");
+    QRegExp sdram("SDRAM status (\\d+) / (\\d+)");
 
     QRegExp split("\\s*[\\r\\n]+\\s*", Qt::CaseInsensitive, QRegExp::RegExp2);
 
     QMap<QString, QString> map;
 
+    QSet<QString> outputs;
     foreach(const QString & line, info.split(split, QString::SkipEmptyParts)) {
       if(header.exactMatch(line)) {
         continue;
@@ -183,15 +195,19 @@ namespace Luminous
       } else if(board.exactMatch(line)) {
         map["board-revision"] = board.cap(1);
       } else if(autosel.exactMatch(line)) {
-        map["autoselect"] = autosel.cap(1) == "on" ? "1" : "0";
+        map["autoselect"] = autosel.cap(1) == "on" ? "1" : "";
       } else if(priority.exactMatch(line)) {
+        outputs << priority.cap(1);
         map["priority"] = priority.cap(1);
-      } else if(not_connected.exactMatch(line)) {
-        map[not_connected.cap(1)] = "not connected";
+      } else if(notConnected.exactMatch(line)) {
+        map[notConnected.cap(1)] = "not connected";
+        outputs << notConnected.cap(1);
       } else if(detected.exactMatch(line)) {
         map[detected.cap(1)] = "detected";
+        outputs << detected.cap(1);
       } else if(active.exactMatch(line)) {
         map[active.cap(1)] = "active";
+        outputs << active.cap(1);
       } else if(pixelsLines.exactMatch(line)) {
         map["total-pixels"] = pixelsLines.cap(1);
         map["active-pixels"] = pixelsLines.cap(2);
@@ -200,13 +216,31 @@ namespace Luminous
       } else if(uptime.exactMatch(line)) {
         map["uptime"] = QString::number(uptime.cap(1).toInt() * 60 + uptime.cap(2).toInt());
       } else if(screensaver.exactMatch(line)) {
-        map["screensaver"] = QString::number(screensaver.cap(1).toInt() * 60);
+        map["screensaver"] = screensaver.cap(1);
       } else if(temp.exactMatch(line)) {
         map["temperature"] = temp.cap(1);
+      } else if(src.exactMatch(line)) {
+        map["source"] = src.cap(1);
+        outputs << src.cap(1);
+      } else if(totalPixels.exactMatch(line)) {
+        map["total-pixels"] = totalPixels.cap(1);
+      } else if(activePixels.exactMatch(line)) {
+        map["active-pixels"] = activePixels.cap(1);
+      } else if(totalLines.exactMatch(line)) {
+        map["total-lines"] = totalLines.cap(1);
+      } else if(activeLines.exactMatch(line)) {
+        map["active-lines"] = activeLines.cap(1);
+      } else if(colorCorrection.exactMatch(line)) {
+        map["color-correction"] = activeLines.cap(1) == "on" ? "1" : "";
+      } else if(sdram.exactMatch(line)) {
+        map["sdram-status"] = sdram.cap(1).toInt();
+        map["sdram-total"] = sdram.cap(2).toInt();
       } else {
-        Radiant::warning("VM1::parseInfo # Failed to parse line %s", line.toUtf8().data());
+        Radiant::warning("VM1::parseInfo # Failed to parse line '%s'", line.toUtf8().data());
       }
     }
+    if(!outputs.isEmpty())
+      map["outputs"] = QStringList(outputs.toList()).join("\n");
     return map;
   }
 
