@@ -302,6 +302,9 @@ namespace Radiant
   {
     QFileInfo fi(filePath.c_str());
 
+    if(!fi.exists())
+      return 0;
+
     QDateTime newer = std::max(fi.created(), fi.lastModified());
 
     return newer.toTime_t();
