@@ -10,7 +10,7 @@ namespace Luminous
 {
 
 #ifdef RADIANT_LINUX
-  void ScreenDetector::scan()
+  void ScreenDetector::scan(bool /*forceRescan*/)
   {
     m_results.clear();
 

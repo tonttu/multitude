@@ -55,7 +55,7 @@ namespace Luminous
   class LUMINOUS_API ScreenDetector
   {
   public:
-    void scan();
+    void scan(bool forceRescan = false);
     inline const QList<ScreenInfo> & results() const { return m_results; }
 
   private:
