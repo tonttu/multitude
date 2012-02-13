@@ -143,6 +143,6 @@ namespace Luminous
       }
     }
 
-    return false;
+    return true;
   }
 }
