@@ -49,7 +49,7 @@ namespace Valuable
 
     virtual bool deserialize(const ArchiveElement & element) OVERRIDE
     {
-      m_container.clear();
+      if(m_clearOnDeserialize) m_container.clear();
       std::insert_iterator<T> inserter(m_container, m_container.end());
       for(ArchiveElement::Iterator it = element.children(); it; ++it) {
         *inserter = Serializer::deserialize<typename T::value_type>(*it);
@@ -76,18 +76,24 @@ namespace Valuable
     /// @copydoc operator->()
     const T * operator -> () const { return &m_container; }
 
+    void setClearOnDeserialize(bool v) { m_clearOnDeserialize = v; }
+    bool clearOnDeserialize() const { return m_clearOnDeserialize; }
+
   protected:
-    AttributeContainerT() {}
+    AttributeContainerT() : m_clearOnDeserialize(true) {}
 
     /// Constructs a new container
     /// @param host host object
     /// @param name name of the value
     AttributeContainerT(Node * host, const QString & name)
       : Attribute(host, name, false)
+      , m_clearOnDeserialize(true)
     {}
 
     /// The actual container that this AttributeContainer wraps.
     T m_container;
+
+    bool m_clearOnDeserialize;
   };
 
   /// Template class for all STL-like containers
@@ -136,7 +142,7 @@ namespace Valuable
 
     virtual bool deserialize(const ArchiveElement & element) OVERRIDE
     {
-      Container::m_container.clear();
+      if(Container::m_clearOnDeserialize) Container::m_container.clear();
       for(ArchiveElement::Iterator it = element.children(); it; ++it) {
         typename Container::value_type p = Serializer::deserialize<typename Container::value_type>(*it);
         Container::m_container[p.first] = p.second;
