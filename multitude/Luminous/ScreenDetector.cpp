@@ -22,12 +22,12 @@ namespace Luminous
     }
   }
 #elif RADIANT_WINDOWS
-  void ScreenDetector::scan()
+  void ScreenDetector::scan(bool /*forceRescan*/)
   {
     m_results.clear();
   }
 #else
-  void ScreenDetector::scan()
+  void ScreenDetector::scan(bool /*forceRescan*/)
   {
     m_results.clear();
   }
