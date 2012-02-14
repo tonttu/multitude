@@ -177,7 +177,7 @@ win32 {
         shell32.lib \
         psapi.lib
     CONFIG += qt
-    QT = core network
+    QT = core network opengl gui
 
     PTGREY_PATH = "C:\\Program Files\\Point Grey Research\\FlyCapture2"
     !exists($$PTGREY_PATH/include):error(PTGrey driver must be installed on Windows)

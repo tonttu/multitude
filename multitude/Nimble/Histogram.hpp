@@ -39,7 +39,7 @@ namespace Nimble {
 
     @author Tommi Ilmonen */
 
-  template <class T, int N> class NIMBLE_API Histogram
+  template <class T, int N> class Histogram
   {
   public:
     /** Constructs an empty histogram object.

@@ -100,7 +100,7 @@ namespace Luminous {
       float maxSeam() { return m_seams.asVector().maximum(); }
 
       /// Applies an orthogonal projection to OpenGL defined by the graphics geometry of the area
-      LUMINOUS_API void applyViewportAndTransform(Luminous::RenderContext &) const;
+      void applyViewportAndTransform(Luminous::RenderContext &) const;
       /// Blends the edges defined by seams
       void cleanEdges() const;
 
