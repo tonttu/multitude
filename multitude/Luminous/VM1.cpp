@@ -9,6 +9,7 @@
 
 #include <QRegExp>
 #include <QStringList>
+#include <QFile>
 
 #ifdef RADIANT_LINUX
 #include <sys/types.h>
