@@ -11,7 +11,7 @@ namespace Nimble {
 
   */
   template <class T>
-  class NIMBLE_API RangeT
+  class RangeT
   {
   public:
     /// Create a new range with low and high values
