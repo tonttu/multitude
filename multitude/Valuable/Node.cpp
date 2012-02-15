@@ -265,7 +265,7 @@ namespace Valuable
   {
     bool ok = Serializer::serializeXML(filename, this);
     if (!ok) {
-      Radiant::error("Node::saveToFileXML # object failed to serialize");
+      Radiant::error("Node::saveToFileXML # object failed to serialize (%s)", filename.toUtf8().data());
     }
     return ok;
   }
