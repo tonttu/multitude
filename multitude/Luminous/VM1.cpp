@@ -11,7 +11,7 @@
 #include <QStringList>
 #include <QFile>
 
-#ifdef RADIANT_LINUX
+#ifdef RADIANT_UNIX
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
