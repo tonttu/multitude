@@ -8,25 +8,9 @@ CONFIG += thread
 
 CONFIG += embed_manifest_exe
 
-c++11 {
-  !win32 {
-    message(Enabling C++11)
-    QMAKE_CXXFLAGS += -std=c++0x
-  }
-}
-
 INCLUDEPATH += $$PWD
 INCLUDEPATH += $$PWD/v8/include
 DEPENDPATH += $$PWD
-
-# The Cornerstone version for libraries
-unix {
-  MULTITUDE_VERSION_MAJOR=$$system(cat ../VERSION | cut -d . -f 1)
-  MULTITUDE_VERSION_MINOR=$$system(cat ../VERSION | cut -d . -f 2)
-  MULTITUDE_VERSION_PATCH=$$system(cat ../VERSION | cut -d . -f 3 | cut -d - -f 1)
-
-  VERSION = $${MULTITUDE_VERSION_MAJOR}.$${MULTITUDE_VERSION_MINOR}.$${MULTITUDE_VERSION_PATCH}
-}
 
 withbundles = $$(MULTI_BUNDLES)
 
@@ -49,12 +33,34 @@ LIB_PATTERNS = -lPatterns
 LIB_SQUISH = -lSquish
 LIB_V8 = -lv8
 
-linux-*:vivid {
-  QMAKE_LIBDIR += $$(FBX_SDK)/lib/gcc4
-  LIB_VIVID = -lVivid -lfbxsdk_20113_1_x64
+#
+# Platform specific: Unix (OSX & linux)
+#
+unix {
+  MULTITUDE_VERSION_MAJOR=$$system(cat ../VERSION | cut -d . -f 1)
+  MULTITUDE_VERSION_MINOR=$$system(cat ../VERSION | cut -d . -f 2)
+  MULTITUDE_VERSION_PATCH=$$system(cat ../VERSION | cut -d . -f 3 | cut -d - -f 1)
+
+  VERSION = $${MULTITUDE_VERSION_MAJOR}.$${MULTITUDE_VERSION_MINOR}.$${MULTITUDE_VERSION_PATCH}
+  
+  # Use ccache if available
+  exists(/usr/bin/ccache):QMAKE_CXX=ccache g++
+  exists(/sw/bin/ccache):QMAKE_CXX=/sw/bin/ccache g++
+  exists(/opt/local/bin/ccache):QMAKE_CXX=/opt/local/bin/ccache g++
+
+  exists(/opt/multitouch):INCLUDEPATH+=/opt/multitouch/include
+  exists(/opt/multitouch):LIBS+=-L/opt/multitouch/lib
 }
 
+#
+# Platform specific: GNU Linux
+#
 linux-*{
+  vivid {
+    QMAKE_LIBDIR += $$(FBX_SDK)/lib/gcc4
+    LIB_VIVID = -lVivid -lfbxsdk_20113_1_x64
+  }
+
   LIB_PREFIX = lib
   SHARED_LIB_SUFFIX = so
 
@@ -77,12 +83,9 @@ linux-*{
   }
 }
 
-contains(MEMCHECK,yes) {
-  message(Using Radiant::MemCheck)
-  DEFINES += MULTI_MEMCHECK=1
-  linux:LIBS += -rdynamic
-}
-
+#
+# Platform specific: Apple OSX
+#
 macx {
   LIB_PREFIX = lib
   SHARED_LIB_SUFFIX = dylib
@@ -124,33 +127,37 @@ macx {
   system([ `uname -r | cut -d . -f1` -eq 10 ] ):DEFINES+=RADIANT_OSX_SNOW_LEOPARD
   system([ `uname -r | cut -d . -f1` -eq 11 ] ):DEFINES+=RADIANT_OSX_LION
   }
-
 }
 
+#
+# Platform specific: Microsoft Windows
+#
 win32 {
-    LIB_PREFIX =
-    SHARED_LIB_SUFFIX = dll
     # Try to identify used compiler on Windows (32 vs 64)
     COMPILER_OUTPUT=$$system(cl 2>&1)
     contains(COMPILER_OUTPUT,x64):CONFIG+=win64
 
-    win64:WINPORT_INCLUDE = $$PWD\\Win64x\\include
-    else:WINPORT_INCLUDE = $$PWD\\Win32x\\include
+    win64 {
+      WINPORT_INCLUDE = $$PWD\\Win64x\\include
+      INCLUDEPATH += $$PWD\\Win64x\\include
+      INCLUDEPATH += $$PWD/../multitude/Win64x/include/ffmpeg
+      QMAKE_LIBDIR += $$PWD\\Win64x\\lib64
+      LIB_GLEW = -lglew64
+    } else {
+      WINPORT_INCLUDE = $$PWD\\Win32x\\include
+      INCLUDEPATH += $$PWD\\Win32x\\include
+      INCLUDEPATH += $$PWD/../multitude/Win32x/include/ffmpeg
+      QMAKE_LIBDIR += $$PWD\\Win32x\\lib32
+      LIB_GLEW = -lglew32
+    }
 
-    win64:INCLUDEPATH += $$PWD\\Win64x\\include
-    else:INCLUDEPATH += $$PWD\\Win32x\\include
-
-    win64:QMAKE_LIBDIR += $$PWD\\Win64x\\lib64
-    else:QMAKE_LIBDIR += $$PWD\\Win32x\\lib32
-
-    win64:LIB_GLEW = -lglew64
-    else:LIB_GLEW = -lglew32
+    LIB_PREFIX =
+    SHARED_LIB_SUFFIX = dll
 
     DDK_PATH="C:\\WinDDK\\7600.16385.1"
 
     LIB_OPENGL = -lopengl32 -lglu32
     QMAKE_CXXFLAGS += -D_CRT_SECURE_NO_WARNINGS -wd4244 -wd4251 -wd4355
-    DEFINES += WIN32
 
     # These libs have an extra extension for debug builds
     build_pass:CONFIG(debug,debug|release) {
@@ -181,10 +188,17 @@ CONFIG(release, debug|release) {
 
 DEFINES += USING_V8_SHARED
 
-# Use ccache if available
-unix:exists(/usr/bin/ccache):QMAKE_CXX=ccache g++
-unix:exists(/sw/bin/ccache):QMAKE_CXX=/sw/bin/ccache g++
-unix:exists(/opt/local/bin/ccache):QMAKE_CXX=/opt/local/bin/ccache g++
+# Compiler detection
+c++11 {
+  !win32 {
+    message(Enabling C++11)
+    QMAKE_CXXFLAGS += -std=c++0x
+  }
+}
 
-unix:exists(/opt/multitouch):INCLUDEPATH+=/opt/multitouch/include
-unix:exists(/opt/multitouch):LIBS+=-L/opt/multitouch/lib
+# Enable memchecking
+contains(MEMCHECK,yes) {
+  message(Using Radiant::MemCheck)
+  DEFINES += MULTI_MEMCHECK=1
+  linux:LIBS += -rdynamic
+}
