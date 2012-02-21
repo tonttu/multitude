@@ -1,6 +1,7 @@
 include(../multitude.pri)
 
 HEADERS += BGThread.hpp
+linux-*:HEADERS += XRandR.hpp
 HEADERS += ScreenDetector.hpp
 linux-*:HEADERS += ScreenDetectorNV.hpp
 HEADERS += HardwareColorCorrection.hpp
@@ -44,6 +45,7 @@ HEADERS += VertexBuffer.hpp
 HEADERS += VertexBufferImpl.hpp
 
 SOURCES += BGThread.cpp
+linux-*:SOURCES += XRandR.cpp
 SOURCES += ScreenDetector.cpp
 linux-*:SOURCES += ScreenDetectorNV.cpp
 SOURCES += HardwareColorCorrection.cpp
@@ -92,7 +94,7 @@ LIBS += $$LIB_RADIANT \
     $$LIB_PATTERNS \
     $$LIB_GLEW
 
-linux-*:LIBS += -lXNVCtrl
+linux-*:LIBS += -lXNVCtrl -lXrandr
 
 DEFINES += LUMINOUS_EXPORT
 
