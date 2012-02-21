@@ -1,6 +1,7 @@
 TEMPLATE = subdirs
 
 include(multitude.pri)
+include(Externals.pri)
 
 SUBDIRS += v8
 SUBDIRS += Patterns
