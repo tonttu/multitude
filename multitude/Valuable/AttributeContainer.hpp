@@ -36,6 +36,8 @@ namespace Valuable
     /// STL-like typedef for value type inside of T
     typedef typename T::value_type value_type;
 
+    typedef T container_type;
+
     virtual const char* type() const OVERRIDE { return "container"; }
 
     virtual ArchiveElement serialize(Archive & archive) const OVERRIDE
