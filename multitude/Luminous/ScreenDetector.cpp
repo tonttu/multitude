@@ -1,5 +1,7 @@
 #include "ScreenDetector.hpp"
 
+#include "ScreenDetectorAMD.hpp"
+
 #ifdef RADIANT_LINUX
 #include "ScreenDetectorNV.hpp"
 #include <QX11Info>
@@ -15,10 +17,12 @@ namespace Luminous
     m_results.clear();
 
     ScreenDetectorNV nv;
+    ScreenDetectorAMD amd;
 
     int screens = XScreenCount(QX11Info::display());
     for(int screen = 0; screen < screens; ++screen) {
       if(nv.detect(screen, m_results)) continue;
+      if(amd.detect(screen, m_results)) continue;
     }
   }
 #elif RADIANT_WINDOWS
