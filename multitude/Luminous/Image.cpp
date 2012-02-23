@@ -430,11 +430,6 @@ namespace Luminous
           unsigned a01 = l1[3];
           unsigned a11 = l1[7];
 
-          /* a00 = 255;
-             a10 = 255;
-             a01 = 255;
-             a11 = 255;
-             */
           unsigned asum = a00 + a10 + a01 + a11;
 
           if(!asum)
@@ -465,6 +460,7 @@ namespace Luminous
       return true;
     }
 
+    Radiant::error("Image::quarterSize # unsupported pixel format");
     return false;
   }
 

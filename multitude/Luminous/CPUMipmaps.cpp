@@ -682,7 +682,10 @@ namespace Luminous {
     Nimble::Vector2i is = mipmapSize(level);
 
     if(is * 2 == ss) {
-      imdest->quarterSize(*imsrc);
+      bool ok = imdest->quarterSize(*imsrc);
+      if(!ok)
+        Radiant::error("CPUMipmaps::recursiveLoad # failed to resize image");
+      assert(ok);
     }
     else {
       //imdest->copyResample(*imsrc, is.x, is.y);
