@@ -54,8 +54,16 @@ namespace Resonant {
 
   bool ModulePanner::deserialize(const Valuable::ArchiveElement & element)
   {
+    m_rectangles->clear();
+    m_speakers->clear();
     bool ok = Module::deserialize(element);
     ++m_generation;
+
+    if(ok && !m_rectangles->empty() && m_speakers->empty()) {
+      for(size_t i = 0; i < m_rectangles->size(); ++i)
+        addSoundRectangleSpeakers((*m_rectangles)[i]);
+    }
+
     return ok;
   }
 
@@ -177,16 +185,7 @@ namespace Resonant {
 
     m_rectangles->push_back(r);
 
-    // Add the two speakers
-    int x1 = r->location().x;
-    int x2 = r->location().x + r->size().x;
-    int y = r->location().y + r->size().y / 2;
-
-    setSpeaker(r->leftChannel(), x1, y);
-    setSpeaker(r->rightChannel(), x2, y);
-
-    //  Radiant::info("ModuleRectPanner::addSoundRectangle # new speaker %d at %d,%d", r.leftChannel(), x1, y);
-    //  Radiant::info("ModuleRectPanner::addSoundRectangle # new speaker %d at %d,%d", r.rightChannel(), x2, y);
+    addSoundRectangleSpeakers(r);
   }
 
   void ModulePanner::setMode(Mode mode)
@@ -326,6 +325,24 @@ namespace Resonant {
 
     error("ModulePanner::removeSource # No such source: \"%s\"", id.c_str());
   }
+
+  void ModulePanner::addSoundRectangleSpeakers(SoundRectangle * r)
+  {
+    // Add the two speakers
+    int x1 = r->location().x;
+    int x2 = r->location().x + r->size().x;
+    int y = r->location().y + r->size().y / 2;
+
+    if(r->leftChannel() == r->rightChannel())
+      x1 = x2 = 0.5f * (x1+x2);
+
+    setSpeaker(r->leftChannel(), x1, y);
+    setSpeaker(r->rightChannel(), x2, y);
+
+    //  Radiant::info("ModuleRectPanner::addSoundRectangle # new speaker %d at %d,%d", r.leftChannel(), x1, y);
+    //  Radiant::info("ModuleRectPanner::addSoundRectangle # new speaker %d at %d,%d", r.rightChannel(), x2, y);
+  }
+
   float ModulePanner::computeGain(const LoudSpeaker * ls, Nimble::Vector2 srcLocation) const
   {
     switch(*m_operatingMode) {

@@ -106,6 +106,7 @@ namespace Resonant {
 
     void setSourceLocation(const std::string &, Nimble::Vector2 location);
     void removeSource(const std::string &);
+    void addSoundRectangleSpeakers(SoundRectangle * r);
 
     /// @cond
     class LoudSpeaker : public Valuable::HasValues
