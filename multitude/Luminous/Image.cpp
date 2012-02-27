@@ -734,10 +734,10 @@ namespace Luminous
 
       size_t offset = absolute.y * width() + absolute.x;
 
-      if(pixelFormat() == PixelFormat::alphaUByte())
-          return m_data[offset];
-      else if(pixelFormat() == PixelFormat::rgbaUByte())
-          return m_data[4 * offset + 3];
+      if(pixelFormat().numChannels() == 1)
+        return m_data[offset];
+      else if(pixelFormat().numChannels() == 4)
+        return m_data[4 * offset + 3];
 
       return 255;
   }
