@@ -204,6 +204,7 @@ namespace Valuable
     {
       inline static ArchiveElement serialize(Archive & archive, const T * t)
       {
+        if(!t) return ArchiveElement();
         ArchiveElement elem = archive.createElement(typeid(*t).name());
         elem.set(Radiant::StringUtils::stringify(*t));
         return elem;
@@ -224,6 +225,7 @@ namespace Valuable
     {
       inline static ArchiveElement serialize(Archive & archive, const T & t)
       {
+        if(!t) return ArchiveElement();
         return Serializer::serialize(archive, t.get());
       }
 
@@ -254,6 +256,7 @@ namespace Valuable
     {
       inline static ArchiveElement serialize(Archive & archive, const T * t)
       {
+        if(!t) return ArchiveElement();
         return t->serialize(archive);
       }
 
