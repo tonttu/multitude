@@ -302,8 +302,10 @@ namespace Radiant
   {
     QFileInfo fi(filePath.c_str());
 
-    if(!fi.exists())
+    if(!fi.exists()) {
+      Radiant::error("FileUtils::lastModified # file (%s) does not exist", filePath.c_str());
       return 0;
+    }
 
     QDateTime newer = std::max(fi.created(), fi.lastModified());
 
