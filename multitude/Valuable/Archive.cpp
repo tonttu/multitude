@@ -118,7 +118,7 @@ namespace Valuable
 
   bool ArchiveElement::isNull() const
   {
-    return m_impl == 0;
+    return !m_impl;
   }
 
   const DOMElement * ArchiveElement::xml() const
