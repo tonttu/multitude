@@ -52,6 +52,9 @@ namespace Valuable
     /// Universally unique identifier type
     typedef int64_t Uuid;
 
+    typedef std::function<void ()> ListenerFunc;
+    typedef std::function<void (Radiant::BinaryData &)> ListenerFunc2;
+
     enum ListenerType
     {
       DIRECT,
@@ -210,6 +213,12 @@ namespace Valuable
       eventAddListener(from, from, func, defaultData);
     }
 
+    void eventAddListener(const QString & from, ListenerFunc func,
+                          ListenerType listenerType = DIRECT);
+
+    void eventAddListenerBd(const QString & from, ListenerFunc2 func,
+                            ListenerType listenerType = DIRECT);
+
     /** Removes event listeners from this object.
 
       @code
@@ -308,12 +317,14 @@ namespace Valuable
 
     class ValuePass {
     public:
-      ValuePass() : m_listener(0), m_valid(true), m_frame(-1), m_type(DIRECT) {}
+      ValuePass() : m_listener(0), m_func(), m_func2(), m_valid(true), m_frame(-1), m_type(DIRECT) {}
 
       inline bool operator == (const ValuePass & that) const;
 
       Valuable::Node * m_listener;
-      v8::Persistent<v8::Function> m_func;
+      ListenerFunc m_func;
+      ListenerFunc2 m_func2;
+      v8::Persistent<v8::Function> m_funcv8;
       Radiant::BinaryData   m_defaultData;
       QString m_from;
       QString m_to;
