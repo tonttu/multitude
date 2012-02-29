@@ -233,7 +233,11 @@ namespace Luminous {
     MipMapGenerator * gen = 0;
     if(m_compressedMipmaps) {
       m_compFilename = cacheFileName(filename, -1, "dds");
-      unsigned long int ts = FileUtils::lastModified(m_compFilename);
+
+      unsigned long int ts = 0;
+      if(QFile::exists(m_compFilename.c_str()))
+        ts = FileUtils::lastModified(m_compFilename);
+
       if(ts == 0) {
         // Cache file does not exist. Check if we want to generate mipmaps for
         // this file, or does it have those already
