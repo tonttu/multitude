@@ -91,7 +91,7 @@ namespace Luminous
   {
     const std::vector<Nimble::Vector3> & offsets_tmp = offsets();
     std::vector<float> offsets(offsets_tmp.size() * 3);
-    for(int i = 0; i < offsets_tmp.size(); ++i) {
+    for(std::size_t i = 0; i < offsets_tmp.size(); ++i) {
       offsets[i*3] = offsets_tmp[i].x;
       offsets[i*3+1] = offsets_tmp[i].y;
       offsets[i*3+2] = offsets_tmp[i].z;
@@ -110,7 +110,7 @@ namespace Luminous
     std::vector<float> offsets(256 * 3);
     if(bd.readBlob(&offsets[0], offsets.size() * sizeof(offsets[0]))) {
       std::vector<Nimble::Vector3f> offsetsv(256);
-      for(int i = 0; i < offsets.size()/3; ++i)
+      for(std::size_t i = 0; i < offsets.size()/3; ++i)
         offsetsv[i].make(offsets[i*3], offsets[i*3+1], offsets[i*3+2]);
       setGamma(gamma);
       setContrast(contrast);

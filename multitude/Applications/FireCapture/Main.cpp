@@ -179,7 +179,7 @@ int main(int argc, char ** argv)
 {
   int secs = 20;
   
-  float fps = -1.0f;
+  // float fps = -1.0f;
 
   int i, res = 0;
 
@@ -205,9 +205,9 @@ int main(int argc, char ** argv)
 
       format7area.set(vals[0], vals[1], vals[2], vals[3]);
     }
-    else if(strcmp(arg, "--fps") == 0 && (i+1) < argc) {
+/*    else if(strcmp(arg, "--fps") == 0 && (i+1) < argc) {
       fps = atof(argv[++i]);
-    }
+    }*/
     else if(strcmp(arg, "--help") == 0) {
       helper(argv[0]);
       return 0;

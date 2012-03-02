@@ -131,7 +131,8 @@ namespace Luminous
       info.setConnection(connectionName(port));
       info.setLogicalScreen(screen);
 
-      for(int di = 0, xinerama_idx = 0; di < desktopWidget.screenCount(); ++di) {
+      std::size_t xinerama_idx = 0;
+      for(int di = 0; di < desktopWidget.screenCount(); ++di) {
         if(desktopWidget.screen(di)->x11Info().screen() != screen) continue;
         if(xinerama_order.size() <= xinerama_idx) break;
         if(xinerama_order[xinerama_idx++] != port)
