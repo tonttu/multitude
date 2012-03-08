@@ -571,7 +571,7 @@ namespace Luminous
     const unsigned char * data = srcImage.data();
     data += offset * srcImage.pixelFormat().bytesPerPixel();
 
-    loadSubBytes(0, m_uploadedLines, width(), linesToUpload, data, srcImage.pixelFormat());
+    loadSubBytes(0, int(m_uploadedLines), width(), linesToUpload, data, srcImage.pixelFormat());
 
     m_uploadedLines += linesToUpload;
 

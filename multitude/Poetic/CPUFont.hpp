@@ -40,7 +40,7 @@ namespace Poetic
     /// @copybrief advance
     float advance(const QString & str) {
       std::wstring wstr = str.toStdWString();
-      return advance(wstr.c_str(), wstr.length());
+      return advance(wstr.c_str(), int(wstr.length()));
     }
 
     /// Returns the face size of the font

@@ -238,7 +238,7 @@ namespace Luminous
     for(std::size_t adapter = 0; adapter < adapterInfoList.size(); ++adapter)
       adapterInfoList[adapter].iSize = sizeof(AdapterInfo);
 
-    int err = ADL_Adapter_AdapterInfo_Get(&adapterInfoList[0], adapterInfoList.size() * sizeof(AdapterInfo));
+    int err = ADL_Adapter_AdapterInfo_Get(&adapterInfoList[0], int(adapterInfoList.size() * sizeof(AdapterInfo)));
     if(err != ADL_OK) {
       Radiant::error("ScreenDetectorAMD::detect # ADL_Adapter_AdapterInfo_Get: %d", err);
       ADL_Main_Control_Destroy();
@@ -261,7 +261,7 @@ namespace Luminous
       AdapterInfo & adapterInfo = adapterInfoList[i];
 
       if(udidToIndex.count(adapterInfo.strUDID) == 0) {
-        int adapter = udidToIndex.size();
+        int adapter = (int)udidToIndex.size();
         udidToIndex[adapterInfo.strUDID] = adapter;
       }
 

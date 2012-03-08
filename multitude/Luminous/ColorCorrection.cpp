@@ -99,7 +99,7 @@ namespace Luminous
     bd.writeVector3Float32(gamma());
     bd.writeVector3Float32(contrast());
     bd.writeVector3Float32(brightness());
-    bd.writeBlob(&offsets[0], offsets.size() * sizeof(offsets[0]));
+    bd.writeBlob(&offsets[0], int(offsets.size() * sizeof(offsets[0])));
   }
 
   bool ColorCorrection::decode(Radiant::BinaryData & bd)
@@ -108,7 +108,7 @@ namespace Luminous
     Nimble::Vector3f contrast = bd.readVector3Float32();
     Nimble::Vector3f brightness = bd.readVector3Float32();
     std::vector<float> offsets(256 * 3);
-    if(bd.readBlob(&offsets[0], offsets.size() * sizeof(offsets[0]))) {
+    if(bd.readBlob(&offsets[0], int(offsets.size() * sizeof(offsets[0])))) {
       std::vector<Nimble::Vector3f> offsetsv(256);
       for(std::size_t i = 0; i < offsets.size()/3; ++i)
         offsetsv[i].make(offsets[i*3], offsets[i*3+1], offsets[i*3+2]);

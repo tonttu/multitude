@@ -465,7 +465,7 @@ namespace Resonant {
             m_controlData.rewind();
             m_controlData.writeString(id); // Source id
             m_controlData.writeInt32(i % mchans);// Source module output channel
-            m_controlData.writeInt32(i % outchans); // Target channels
+            m_controlData.writeInt32(i % int(outchans)); // Target channels
             m_controlData.rewind();
             m_collect->processMessage("newmapping", m_controlData);
           }

@@ -201,7 +201,7 @@ namespace Resonant {
       size_t m_targetChannel;
       bool     m_loop;
       std::shared_ptr<Sample> m_sample;
-      size_t m_position;
+      unsigned m_position;
       Radiant::TimeStamp m_startTime;
     };
 
