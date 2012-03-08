@@ -70,7 +70,6 @@ HEADERS += VideoCamera.hpp
 HEADERS += SocketWrapper.hpp
 HEADERS += Singleton.hpp
 HEADERS += XFaker.hpp
-HEADERS += VideoCameraPTGrey.hpp
 HEADERS += VideoCameraCMU.hpp
 HEADERS += VideoCamera1394.hpp
 SOURCES += Mime.cpp
@@ -124,7 +123,6 @@ SOURCES += VideoCameraCMU.cpp
 SOURCES += PlatformUtilsWin32.cpp
 SOURCES += SerialPortWin32.cpp
 SOURCES += LockFileWin32.cpp
-SOURCES += VideoCameraPTGrey.cpp
  
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
 
@@ -143,7 +141,6 @@ unix {
 }
 
 win32 {
-    message(Radiant on Windows)
     # CMU driver is only 32-bit 
     !win64 {
        DEFINES += CAMERA_DRIVER_CMU
@@ -157,15 +154,24 @@ win32 {
     QT = core network
 
     PTGREY_PATH = "C:\\Program Files\\Point Grey Research\\FlyCapture2"
-    !exists($$PTGREY_PATH/include):error(PTGrey driver must be installed on Windows)
+    !exists($$PTGREY_PATH/include):warning("PTGrey driver not installed, not building CameraDriverPTGrey")
+    exists($$PTGREY_PATH/include) {
+        HEADERS += VideoCameraPTGrey.hpp
+        SOURCES += VideoCameraPTGrey.cpp
 
-    DEFINES += CAMERA_DRIVER_PGR
-    message(Using PTGrey camera drivers)
-    INCLUDEPATH += $$PTGREY_PATH/include
+        DEFINES += CAMERA_DRIVER_PGR
+        message(Using PTGrey camera drivers)
+        INCLUDEPATH += $$PTGREY_PATH/include
 
-    # 64bit libs have different path
-    win64:QMAKE_LIBDIR += $$PTGREY_PATH/lib64
-    else:QMAKE_LIBDIR += $$PTGREY_PATH/lib
-    LIBS += FlyCapture2.lib
+        # 64bit libs have different path
+        win64:QMAKE_LIBDIR += $$PTGREY_PATH/lib64
+        else:QMAKE_LIBDIR += $$PTGREY_PATH/lib
+        LIBS += FlyCapture2.lib
+    }
 }
+!win32 {
+    HEADERS += VideoCameraPTGrey.hpp
+    SOURCES += VideoCameraPTGrey.cpp
+}
+
 include(../library.pri)
