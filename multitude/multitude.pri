@@ -16,32 +16,46 @@ withbundles = $$(MULTI_BUNDLES)
 
 MULTI_FFMPEG_LIBS = -lavcodec -lavformat -lavutil
 
-LIB_BOX2D = -lBox2D
+# 1.9.2-rc2
+CORNERSTONE_VERSION_STR = $$cat(../VERSION)
+# 1.9.2
+CORNERSTONE_VERSION = $$section(CORNERSTONE_VERSION_STR, "-", 0, 0)
+# 1
+CORNERSTONE_VERSION_MAJOR = $$section(CORNERSTONE_VERSION, ".", 0, 0)
+# 9
+CORNERSTONE_VERSION_MINOR = $$section(CORNERSTONE_VERSION, ".", 1, 1)
+# 2
+CORNERSTONE_VERSION_PATCH = $$section(CORNERSTONE_VERSION, ".", 2, 2)
+
+win32 {
+  CORNERSTONE_LIB_SUFFIX = .$${CORNERSTONE_VERSION}
+}
+!win32 {
+  CORNERSTONE_LIB_SUFFIX =
+}
+
+LIB_RESONANT = -lResonant$${CORNERSTONE_LIB_SUFFIX}
+LIB_BOX2D = -lBox2D$${CORNERSTONE_LIB_SUFFIX}
 LIB_OPENCL = -lOpenCL
 LIB_OPENGL = -lGL -lGLU
 
-LIB_POETIC = -lPoetic
-LIB_FLUFFY = -lFluffy
-LIB_LUMINOUS = -lLuminous
-LIB_NIMBLE = -lNimble
-LIB_RADIANT = -lRadiant
-LIB_RESONANT = -lResonant
-LIB_SCREENPLAY = -lScreenplay
-LIB_VIDEODISPLAY = -lVideoDisplay
-LIB_VALUABLE = -lValuable
-LIB_PATTERNS = -lPatterns
-LIB_SQUISH = -lSquish
+LIB_POETIC = -lPoetic$${CORNERSTONE_LIB_SUFFIX}
+LIB_FLUFFY = -lFluffy$${CORNERSTONE_LIB_SUFFIX}
+LIB_LUMINOUS = -lLuminous$${CORNERSTONE_LIB_SUFFIX}
+LIB_NIMBLE = -lNimble$${CORNERSTONE_LIB_SUFFIX}
+LIB_RADIANT = -lRadiant$${CORNERSTONE_LIB_SUFFIX}
+LIB_SCREENPLAY = -lScreenplay$${CORNERSTONE_LIB_SUFFIX}
+LIB_VIDEODISPLAY = -lVideoDisplay$${CORNERSTONE_LIB_SUFFIX}
+LIB_VALUABLE = -lValuable$${CORNERSTONE_LIB_SUFFIX}
+LIB_PATTERNS = -lPatterns$${CORNERSTONE_LIB_SUFFIX}
+LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}
 LIB_V8 = -lv8
 
 #
 # Platform specific: Unix (OSX & linux)
 #
 unix {
-  MULTITUDE_VERSION_MAJOR=$$system(cat ../VERSION | cut -d . -f 1)
-  MULTITUDE_VERSION_MINOR=$$system(cat ../VERSION | cut -d . -f 2)
-  MULTITUDE_VERSION_PATCH=$$system(cat ../VERSION | cut -d . -f 3 | cut -d - -f 1)
-
-  VERSION = $${MULTITUDE_VERSION_MAJOR}.$${MULTITUDE_VERSION_MINOR}.$${MULTITUDE_VERSION_PATCH}
+  VERSION = $${CORNERSTONE_VERSION}
   
   # Use ccache if available
   exists(/usr/bin/ccache):QMAKE_CXX=ccache g++
@@ -161,18 +175,18 @@ win32 {
 
     # These libs have an extra extension for debug builds
     build_pass:CONFIG(debug,debug|release) {
-      LIB_BOX2D = -lBox2D_d
-      LIB_POETIC = -lPoetic_d
-      LIB_FLUFFY = -lFluffy_d
-      LIB_LUMINOUS = -lLuminous_d
-      LIB_NIMBLE = -lNimble_d
-      LIB_RADIANT = -lRadiant_d
-      LIB_RESONANT = -lResonant_d
-      LIB_SCREENPLAY = -lScreenplay_d
-      LIB_VIDEODISPLAY = -lVideoDisplay_d
-      LIB_VALUABLE = -lValuable_d
-      LIB_PATTERNS = -lPatterns_d
-      LIB_SQUISH = -lSquish_d
+      LIB_BOX2D = -lBox2D$${CORNERSTONE_LIB_SUFFIX}_d
+      LIB_POETIC = -lPoetic$${CORNERSTONE_LIB_SUFFIX}_d
+      LIB_FLUFFY = -lFluffy$${CORNERSTONE_LIB_SUFFIX}_d
+      LIB_LUMINOUS = -lLuminous$${CORNERSTONE_LIB_SUFFIX}_d
+      LIB_NIMBLE = -lNimble$${CORNERSTONE_LIB_SUFFIX}_d
+      LIB_RADIANT = -lRadiant$${CORNERSTONE_LIB_SUFFIX}_d
+      LIB_RESONANT = -lResonant$${CORNERSTONE_LIB_SUFFIX}_d
+      LIB_SCREENPLAY = -lScreenplay$${CORNERSTONE_LIB_SUFFIX}_d
+      LIB_VIDEODISPLAY = -lVideoDisplay$${CORNERSTONE_LIB_SUFFIX}_d
+      LIB_VALUABLE = -lValuable$${CORNERSTONE_LIB_SUFFIX}_d
+      LIB_PATTERNS = -lPatterns$${CORNERSTONE_LIB_SUFFIX}_d
+      LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_V8 = -lv8_d
 	}
 }
