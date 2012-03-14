@@ -60,7 +60,7 @@ namespace Valuable
     /// Gets a ValueObject with the given name
     /// @param name Value object name to search for
     /// @return Null if no object can be found
-    ValueObject * getValue(const std::string & name);
+    virtual ValueObject * getValue(const std::string & name);
     /// Removes a ValueObject from the list of value.
     void removeValue(ValueObject * const value);
 

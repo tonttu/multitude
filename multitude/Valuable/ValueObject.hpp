@@ -236,6 +236,11 @@ namespace Valuable
     static std::list<Doc> doc;
 #endif
 
+    /// Gets a ValueObject with the given name
+    /// @param name Value object name to search for
+    /// @return Null if no object can be found
+    virtual ValueObject * getValue(const std::string & name);
+
   protected:
 
     /// Invokes the change valueChanged function of all listeners

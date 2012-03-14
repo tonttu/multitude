@@ -187,6 +187,11 @@ namespace Valuable
     return elem;
   }
 
+  ValueObject * ValueObject::getValue(const std::string & name)
+  {
+    return 0;
+  }
+
   void ValueObject::emitChange()
   {
 //    Radiant::trace("ValueObject::emitChange # '%s'", m_name.c_str());

@@ -79,9 +79,24 @@ namespace Valuable
 
   ValueObject * HasValues::getValue(const std::string & name)
   {
-    container::iterator it = m_values.find(name);
+    size_t slashIndex = name.find('/');
 
-    return it == m_values.end() ? 0 : it->second;
+    if(slashIndex == std::string::npos) {
+      container::iterator it = m_values.find(name);
+
+      return it == m_values.end() ? 0 : it->second;
+    }
+    else {
+      std::string part1(name.substr(0, slashIndex));
+      std::string part2(name.substr(slashIndex + 1));
+
+      ValueObject * vo = getValue(part1);
+      if(vo) {
+        return vo->getValue(part2);
+      }
+    }
+
+    return 0;
   }
 
   bool HasValues::addValue(const std::string & cname, ValueObject * const value)
