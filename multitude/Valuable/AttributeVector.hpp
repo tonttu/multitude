@@ -82,11 +82,8 @@ namespace Valuable
       // In some cases this is a override function, but not always
       /// @todo This should be fixed properly, but it's not important and just
       ///       fills the compiler output with the same warning
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Woverloaded-virtual"
       VALUABLE_API virtual bool set(const VectorType & v, Attribute::Layer layer = Attribute::MANUAL,
                                     QList<Attribute::ValueUnit> units = QList<Attribute::ValueUnit>());
-#pragma clang diagnostic pop
 
       /// Returns the internal vector object as a constant reference.
       /// @return The wrapped vector value

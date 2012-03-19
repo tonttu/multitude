@@ -41,8 +41,6 @@ namespace Valuable
 
     /// @todo This should be fixed properly, but it's not important and just
     ///       fills the compiler output with the same warning
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Woverloaded-virtual"
     virtual bool set(float v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN) OVERRIDE
     {
       const Nimble::Frame4f f(v, v, v, v);
@@ -124,7 +122,6 @@ namespace Valuable
       setValue(f, layer);
       return true;
     }
-#pragma clang diagnostic pop
 
     void setSrc(float src)
     {
