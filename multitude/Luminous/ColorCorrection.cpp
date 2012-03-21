@@ -11,14 +11,14 @@ namespace Luminous
       m_brightness(this, "brightness", Nimble::Vector3(0.0f, 0.0f, 0.0f)),
       m_identity(true)
   {
+    eventAddOut("changed");
+
     m_offsets->resize(256);
     setIdentity();
     m_offsets.addListener(std::bind(&ColorCorrection::setChanged, this));
     m_gamma.addListener(std::bind(&ColorCorrection::setChanged, this));
     m_contrast.addListener(std::bind(&ColorCorrection::setChanged, this));
     m_brightness.addListener(std::bind(&ColorCorrection::setChanged, this));
-
-    eventAddOut("changed");
   }
 
   void ColorCorrection::setOffset(int idx, const Nimble::Vector3 & offset)

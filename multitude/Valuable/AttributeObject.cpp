@@ -77,6 +77,9 @@ namespace Valuable
   Attribute::~Attribute()
   {
     emitDelete();
+
+    removeHost();
+
 #ifdef MULTI_DOCUMENTER
     for(std::list<Doc>::iterator it = doc.begin(); it != doc.end();) {
       if(it->vo == this) it = doc.erase(it);
@@ -186,6 +189,11 @@ namespace Valuable
     elem.set(asString());
 
     return elem;
+  }
+
+  Attribute * Attribute::getValue(const QString & )
+  {
+    return 0;
   }
 
   void Attribute::emitChange()

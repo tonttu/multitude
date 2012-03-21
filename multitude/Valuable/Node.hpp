@@ -76,7 +76,7 @@ namespace Valuable
     /// Gets a Attribute with the given name
     /// @param name Value object name to search for
     /// @return Null if no object can be found
-    Attribute * getValue(const QString & name);
+    virtual Attribute * getValue(const QString & name);
     /// Removes a Attribute from the list of value.
     void removeValue(Attribute * const value);
 
@@ -92,6 +92,7 @@ namespace Valuable
     ///        under Attribute "foo" that is sibling of this object.
     /// @param value The new value
     /// @return True if object was found and the value was set successfully.
+    /// @todo implement similar to getValue (to avoid dynamic_cast)
     template<class T>
     bool setValue(const QString & name, const T & v)
     {

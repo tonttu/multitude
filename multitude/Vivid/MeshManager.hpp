@@ -1,6 +1,8 @@
 #ifndef VIVID_MESHMANAGER_HPP
 #define VIVID_MESHMANAGER_HPP
 
+#include "Export.hpp"
+
 #include <Radiant/RefPtr.hpp>
 #include <Radiant/Singleton.hpp>
 
@@ -11,7 +13,7 @@ namespace Vivid
 
 class Mesh;
 
-class MeshManager
+class VIVID_API MeshManager
 {
   DECLARE_SINGLETON(MeshManager);
 public:

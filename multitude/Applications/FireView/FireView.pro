@@ -1,10 +1,12 @@
 include(../Applications.pri)
 
-HEADERS += CamView.hpp 
+HEADERS += CamView.hpp \ 
+    Binning.hpp
 HEADERS += MainWindow.hpp 
 HEADERS += ParamView.hpp
 
-SOURCES += CamView.cpp 
+SOURCES += CamView.cpp \ 
+    Binning.cpp
 SOURCES += MainWindow.cpp 
 SOURCES += ParamView.cpp 
 SOURCES += Main.cpp

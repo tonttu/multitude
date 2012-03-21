@@ -359,6 +359,12 @@ namespace Radiant {
     /// @param height Height of area to fill
     inline void fill(const T & val, int xlow, int ylow, int width, int height);
 
+    /// Fills a circle in the grid with the given value
+    /// @param val Value to fill with
+    /// @param center The center point of the circle
+    /// @param radius The radius of the circle
+    inline void fillCircle(const T & val, Nimble::Vector2 center, float radius);
+
     /// Sets all grid elements to the given value
     /// @param val Value to fill with
     inline void setAll(const T & val)
@@ -415,6 +421,24 @@ namespace Radiant {
       T * dest = & get(xlow, y);
       for(T * sentinel = dest + width; dest < sentinel; dest++) {
     *dest = val;
+      }
+    }
+  }
+
+  template <typename T, class Base>
+  void GridT<T, Base>::fillCircle(const T & val, Nimble::Vector2 center, float radius)
+  {
+    int ylow = Nimble::Math::Max((int) (center.y - radius), 0);
+    int yhigh = Nimble::Math::Min((int) (center.y + radius + 1), (int) height());
+
+    int xlow = Nimble::Math::Max((int) (center.x - radius), 0);
+    int xhigh = Nimble::Math::Min((int) (center.x + radius + 1), (int) width());
+
+    for(int y = ylow; y < yhigh; y++) {
+      for(int x = xlow; x < xhigh; x++) {
+        float dist = (center - Nimble::Vector2(x, y)).length();
+        if(dist <= radius)
+          get(x, y) = val;
       }
     }
   }

@@ -154,6 +154,9 @@ namespace Valuable
 
   Node::~Node()
   {
+    // Host of HasValues class member ValueObjects must be zeroed to avoid double-delete
+    m_id.removeHost();
+
     while(!m_eventSources.empty()) {
       /* The eventRemoveListener call will also clear the relevant part from m_eventSources. */
       (*m_eventSources.begin())->eventRemoveListener(this);
@@ -177,21 +180,43 @@ namespace Valuable
       }
     }
 
-    Radiant::Guard g(s_queueMutex);
-    for(QList<QueueItem*>::iterator it = s_queue.begin(); it != s_queue.end(); ++it) {
-      QueueItem* item = *it;
-      if(item->target == this)
-        item->target = 0;
-      if(item->sender == this)
-        item->sender = 0;
+    {
+      Radiant::Guard g(s_queueMutex);
+      for(QList<QueueItem*>::iterator it = s_queue.begin(); it != s_queue.end(); ++it) {
+        QueueItem* item = *it;
+        if(item->target == this)
+          item->target = 0;
+        if(item->sender == this)
+          item->sender = 0;
+      }
     }
+
+    // Release memory for any value objects that are left (should be only
+    // heap-allocated at this point)
+    for(container::iterator it = m_values.begin(); it != m_values.end(); ++it)
+      delete it->second;
   }
 
   Attribute * Node::getValue(const QString & name)
   {
-    container::iterator it = m_values.find(name);
+    size_t slashIndex = name.indexOf('/');
 
-    return it == m_values.end() ? 0 : it->second;
+    if(slashIndex == std::string::npos) {
+      container::iterator it = m_values.find(name);
+
+      return it == m_values.end() ? 0 : it->second;
+    }
+    else {
+      const QString part1 = name.left(slashIndex);
+      const QString part2 = name.mid(slashIndex + 1);
+
+      Attribute * attribute = getValue(part1);
+      if(attribute) {
+        return attribute->getValue(part2);
+      }
+    }
+
+    return 0;
   }
 
   bool Node::addValue(const QString & cname, Attribute * const value)
