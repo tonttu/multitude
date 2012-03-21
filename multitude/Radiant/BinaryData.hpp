@@ -210,9 +210,9 @@ namespace Radiant {
     inline void setTotal(unsigned bytes) { if(bytes > m_size) ensure(bytes - m_size); m_total = bytes; }
 
     /// Writes the buffer into a stream
-    bool write(Radiant::BinaryStream *) const;
+    bool write(Radiant::BinaryStream &) const;
     /// Reads the buffer from a stream
-    bool read(Radiant::BinaryStream *);
+    bool read(Radiant::BinaryStream &);
 
     /// Returns a pointer to the buffer
     inline char * data() { return & m_buf[0]; }
