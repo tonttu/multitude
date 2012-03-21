@@ -86,8 +86,6 @@ namespace Valuable
       /// Returns the internal vector object as a constant reference.
       /// @return The wrapped vector value
       const VectorType & asVector() const { return Base::m_value; }
-      /// @copydoc asVector()
-      const VectorType & operator * () const { return Base::m_value; }
 
       std::string asString(bool * const ok = 0) const;
 
