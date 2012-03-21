@@ -156,21 +156,21 @@ namespace Poetic
     if(ws.empty())
       return;
 
-    size_t n = ws.size();
+    int n = (int)ws.size();
 
     std::vector<float> advances;
     advances.resize(n, 0);
 
-    fnt.advanceList(ws.c_str(), & advances[0], static_cast<int> (n));
+    fnt.advanceList(ws.c_str(), & advances[0], n);
 
-    size_t lineStart = 0;
+    int lineStart = 0;
     int okEnd = 0;
     float sum = 0.0f;
     float okEndSum = 0.0f;
 
     bool onspace = false;
 
-    for(size_t i = 0; i < n; i++) {
+    for(int i = 0; i < n; i++) {
 
       int c = ws[i];
       float a = advances[i];

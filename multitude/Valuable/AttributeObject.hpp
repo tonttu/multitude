@@ -370,7 +370,7 @@ namespace Valuable
 
     inline const T & value() const { return m_values[m_current]; }
 
-    inline void setValue(const T & t, Layer layer)
+    inline void setValue(const T & t, Layer layer = MANUAL)
     {
       bool top = layer >= m_current;
       bool sendSignal = top && value() != t;
@@ -383,11 +383,11 @@ namespace Valuable
     /// @todo should return the derived type, not AttributeT
     inline AttributeT<T> & operator = (const T & t)
     {
-      setValue(t, MANUAL);
+      setValue(t);
       return *this;
     }
 
-    virtual void clearValue(Layer layout)
+    virtual void clearValue(Layer layout = MANUAL)
     {
       assert(layout > ORIGINAL);
       m_valueSet[layout] = false;
@@ -396,6 +396,8 @@ namespace Valuable
         int l = int(layout) - 1;
         while(!m_valueSet[l]) --l;
         m_current = l;
+        if(m_values[l] != m_values[layout])
+          this->emitChange();
       }
     }
 

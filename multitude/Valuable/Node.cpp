@@ -32,23 +32,81 @@ namespace
 {
   struct QueueItem
   {
+    QueueItem(Valuable::Node * sender_, Valuable::Node::ListenerFunc2 func_,
+              const Radiant::BinaryData & data_)
+      : sender(sender_)
+      , func2(func_)
+      , target()
+      , data(data_)
+    {}
+
+    QueueItem(Valuable::Node * sender_, Valuable::Node::ListenerFunc func_)
+      : sender(sender_)
+      , func(func_)
+      , func2()
+      , target()
+    {}
+
     QueueItem(Valuable::Node * sender_, Valuable::Node * target_,
               const QString & to_, const Radiant::BinaryData & data_)
       : sender(sender_)
+      , func()
+      , func2()
       , target(target_)
       , to(to_)
       , data(data_)
     {}
 
     Valuable::Node * sender;
+    Valuable::Node::ListenerFunc func;
+    Valuable::Node::ListenerFunc2 func2;
     Valuable::Node * target;
-    const QString & to;
+    const QString to;
     Radiant::BinaryData data;
   };
 
   // recursive because ~Node() might be called from processQueue()
   Radiant::Mutex s_queueMutex(true);
   QList<QueueItem*> s_queue;
+  QSet<void *> s_queueOnce;
+
+  void queueEvent(Valuable::Node * sender, Valuable::Node * target,
+                  const QString & to, const Radiant::BinaryData & data,
+                  void * once)
+  {
+    // make the new item before locking
+    QueueItem * item = new QueueItem(sender, target, to, data);
+    Radiant::Guard g(s_queueMutex);
+    if(once) {
+      if(s_queueOnce.contains(once)) return;
+      s_queueOnce << once;
+    }
+    s_queue << item;
+  }
+
+  void queueEvent(Valuable::Node * sender, Valuable::Node::ListenerFunc func,
+                  void * once)
+  {
+    QueueItem * item = new QueueItem(sender, func);
+    Radiant::Guard g(s_queueMutex);
+    if(once) {
+      if(s_queueOnce.contains(once)) return;
+      s_queueOnce << once;
+    }
+    s_queue << item;
+  }
+
+  void queueEvent(Valuable::Node * sender, Valuable::Node::ListenerFunc2 func,
+                  const Radiant::BinaryData & data, void * once)
+  {
+    QueueItem * item = new QueueItem(sender, func, data);
+    Radiant::Guard g(s_queueMutex);
+    if(once) {
+      if(s_queueOnce.contains(once)) return;
+      s_queueOnce << once;
+    }
+    s_queue << item;
+  }
 }
 
 namespace Valuable
@@ -77,7 +135,7 @@ namespace Valuable
         (m_listener == that.m_listener) && (m_from == that.m_from) &&
         (m_to == that.m_to)
     #ifdef MULTI_WITH_V8
-        && (*m_func == *that.m_func)
+        && (*m_funcv8 == *that.m_funcv8)
     #endif
         ;
   }
@@ -111,8 +169,8 @@ namespace Valuable
         if(it->m_listener)
           it->m_listener->eventRemoveSource(this);
 #ifdef MULTI_WITH_V8
-        else
-          it->m_func.Dispose();
+        else if(!it->m_funcv8.IsEmpty())
+          it->m_funcv8.Dispose();
 #endif
       }
     }
@@ -126,15 +184,12 @@ namespace Valuable
     }
 
     Radiant::Guard g(s_queueMutex);
-    for(QList<QueueItem*>::iterator it = s_queue.begin(); it != s_queue.end(); ) {
+    for(QList<QueueItem*>::iterator it = s_queue.begin(); it != s_queue.end(); ++it) {
       QueueItem* item = *it;
-      if(item->target == this) {
-        it = s_queue.erase(it);
-        continue;
-      } else if(item->sender == this) {
+      if(item->target == this)
+        item->target = 0;
+      if(item->sender == this)
         item->sender = 0;
-      }
-      ++it;
     }
   }
 
@@ -262,7 +317,7 @@ namespace Valuable
   {
     bool ok = Serializer::serializeXML(filename, this);
     if (!ok) {
-      Radiant::error("Node::saveToFileXML # object failed to serialize");
+      Radiant::error("Node::saveToFileXML # object failed to serialize (%s)", filename.toUtf8().data());
     }
     return ok;
   }
@@ -401,7 +456,7 @@ namespace Valuable
                               const Radiant::BinaryData * defaultData)
   {
     ValuePass vp;
-    vp.m_func = func;
+    vp.m_funcv8 = func;
     vp.m_from = from;
     vp.m_to = to;
 
@@ -421,6 +476,38 @@ namespace Valuable
     }
   }
 #endif
+
+  void Node::eventAddListener(const QString & from, ListenerFunc func,
+                              ListenerType listenerType)
+  {
+    ValuePass vp;
+    vp.m_func = func;
+    vp.m_from = from;
+    vp.m_type = listenerType;
+
+    if(!m_eventSendNames.contains(from)) {
+      warning("Node::eventAddListener # Adding listener to unexistent event '%s'", from.toUtf8().data());
+    }
+
+    // No duplicate check, since there is no way to compare std::function objects
+    m_elisteners.push_back(vp);
+  }
+
+  void Node::eventAddListenerBd(const QString & from, ListenerFunc2 func,
+                                ListenerType listenerType)
+  {
+    ValuePass vp;
+    vp.m_func2 = func;
+    vp.m_from = from;
+    vp.m_type = listenerType;
+
+    if(!m_eventSendNames.contains(from)) {
+      warning("Node::eventAddListenerBd # Adding listener to unexistent event '%s'", from.toUtf8().data());
+    }
+
+    // No duplicate check, since there is no way to compare std::function objects
+    m_elisteners.push_back(vp);
+  }
 
   int Node::eventRemoveListener(const QString & from, const QString & to, Valuable::Node * obj)
   {
@@ -562,13 +649,23 @@ namespace Valuable
     /// The queue must be locked during the whole time when calling the callback
     Radiant::Guard g(s_queueMutex);
     foreach(QueueItem* item, s_queue) {
-      std::swap(item->target->m_sender, item->sender);
-      item->target->processMessage(item->to, item->data);
-      std::swap(item->target->m_sender, item->sender);
-      delete item;
+      if(item->target) {
+        std::swap(item->target->m_sender, item->sender);
+        item->target->processMessage(item->to, item->data);
+        std::swap(item->target->m_sender, item->sender);
+      } else if(item->func) {
+        item->func();
+      } else if(item->func2) {
+        item->func2(item->data);
+      }
+      // can't call "delete item" here, because that processMessage call could
+      // call some destructors that iterate s_queue
     }
+    foreach(QueueItem* item, s_queue)
+      delete item;
     int r = s_queue.size();
     s_queue.clear();
+    s_queueOnce.clear();
     return r;
   }
 
@@ -609,8 +706,10 @@ namespace Valuable
         bdsend.rewind();
 
         if(vp.m_listener) {
-          if(vp.m_type == AFTER_UPDATE) {
-            queueEvent(this, vp.m_listener, vp.m_to, bdsend);
+          if(vp.m_type == AFTER_UPDATE_ONCE) {
+            queueEvent(this, vp.m_listener, vp.m_to, bdsend, &vp);
+          } else if(vp.m_type == AFTER_UPDATE) {
+            queueEvent(this, vp.m_listener, vp.m_to, bdsend, 0);
           } else {
             // m_sender is valid only at the beginning of processMessage call
             Node * sender = this;
@@ -618,17 +717,34 @@ namespace Valuable
             vp.m_listener->processMessage(vp.m_to, bdsend);
             vp.m_listener->m_sender = sender;
           }
-        } else {
 #ifdef MULTI_WITH_V8
+        } else if(!vp.m_funcv8.IsEmpty()) {
           /// @todo what is the correct receiver ("this" in the callback)?
           /// @todo should we set m_sender or something similar?
+          /// @todo queueEvent?
           v8::HandleScope handle_scope;
           v8::Local<v8::Value> argv[10];
           argv[0] = v8::String::New(vp.m_to.utf16());
           int argc = 9;
           bdsend.readTo(argc, argv + 1);
-          vp.m_func->Call(v8::Context::GetCurrent()->Global(), argc+1, argv);
+          vp.m_funcv8->Call(v8::Context::GetCurrent()->Global(), argc+1, argv);
 #endif
+        } else if(vp.m_func) {
+          if(vp.m_type == AFTER_UPDATE_ONCE) {
+            queueEvent(this, vp.m_func, &vp);
+          } else if(vp.m_type == AFTER_UPDATE) {
+            queueEvent(this, vp.m_func, 0);
+          } else {
+            vp.m_func();
+          }
+        } else if(vp.m_func2) {
+          if(vp.m_type == AFTER_UPDATE_ONCE) {
+            queueEvent(this, vp.m_func2, bdsend, &vp);
+          } else if(vp.m_type == AFTER_UPDATE) {
+            queueEvent(this, vp.m_func2, bdsend, 0);
+          } else {
+            vp.m_func2(bdsend);
+          }
         }
       }
       ++it;
@@ -664,15 +780,6 @@ namespace Valuable
     Attribute * vo = (*it).second;
     m_values.erase(it);
     m_values[now] = vo;
-  }
-
-  void Node::queueEvent(Valuable::Node * sender, Valuable::Node * target,
-                        const QString & to, const Radiant::BinaryData & data)
-  {
-    // make a new item before locking
-    QueueItem * item = new QueueItem(sender, target, to, data);
-    Radiant::Guard g(s_queueMutex);
-    s_queue << item;
   }
 
   bool Node::readElement(const ArchiveElement &)

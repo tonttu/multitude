@@ -149,7 +149,7 @@ namespace Luminous
         return "TYPE_DOUBLE";
 #endif // LUMINOUS_OPENGLES
       default:
-        return "Invalid value (should never happen";
+        return "Invalid value (should never happen)";
     }
 
   }

@@ -44,7 +44,7 @@ namespace Resonant {
     virtual ~ModuleSamplePlayer();
 
     virtual bool prepare(int & channelsIn, int & channelsOut);
-    virtual void processMessage(const QString & address, Radiant::BinaryData *);
+    virtual void processMessage(const QString & address, Radiant::BinaryData &) OVERRIDE;
     virtual void process(float ** in, float ** out, int n);
 
     /** Adds a few voices that will play an ambient sound background.
@@ -173,7 +173,7 @@ namespace Resonant {
 
       bool synthesize(float ** out, int n, ModuleSamplePlayer *);
 
-      void init(std::shared_ptr<Sample> sample, Radiant::BinaryData * data);
+      void init(std::shared_ptr<Sample> sample, Radiant::BinaryData & data);
 
       bool isActive() { return m_state != INACTIVE; }
 
@@ -201,7 +201,7 @@ namespace Resonant {
       size_t m_targetChannel;
       bool     m_loop;
       std::shared_ptr<Sample> m_sample;
-      size_t m_position;
+      unsigned m_position;
       Radiant::TimeStamp m_startTime;
     };
 

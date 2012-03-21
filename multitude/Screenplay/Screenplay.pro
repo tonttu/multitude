@@ -12,10 +12,4 @@ LIBS += $$LIB_RADIANT $$LIB_PATTERNS
 
 DEFINES += SCREENPLAY_EXPORT	
 
-win32 {
-	win64:INCLUDEPATH += ../Win64x/include/ffmpeg
-	else:INCLUDEPATH += ../Win32x/include/ffmpeg
-}
-
-
 include(../library.pri)

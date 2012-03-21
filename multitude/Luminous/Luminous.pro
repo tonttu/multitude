@@ -1,9 +1,15 @@
 include(../multitude.pri)
 
-HEADERS += BGThread.hpp \
-    DummyOpenGL.hpp \
-    Style.hpp \
-    VertexHolder.hpp
+HEADERS += BGThread.hpp
+linux-*:HEADERS += XRandR.hpp
+HEADERS += ScreenDetectorAMD.hpp
+HEADERS += ScreenDetector.hpp
+linux-*:HEADERS += ScreenDetectorNV.hpp
+HEADERS += HardwareColorCorrection.hpp
+HEADERS += VM1.hpp
+HEADERS += VertexHolder.hpp
+HEADERS += Style.hpp
+HEADERS += DummyOpenGL.hpp
 HEADERS += FramebufferResource.hpp
 HEADERS += CodecRegistry.hpp
 HEADERS += Collectable.hpp
@@ -39,9 +45,16 @@ HEADERS += Transformer.hpp
 HEADERS += Utils.hpp
 HEADERS += VertexBuffer.hpp
 HEADERS += VertexBufferImpl.hpp
-SOURCES += BGThread.cpp \
-    Style.cpp \
-    VertexHolder.cpp
+
+SOURCES += Style.cpp
+SOURCES += VertexHolder.cpp
+SOURCES += BGThread.cpp
+linux-*:SOURCES += XRandR.cpp
+SOURCES += ScreenDetectorAMD.cpp
+SOURCES += ScreenDetector.cpp
+linux-*:SOURCES += ScreenDetectorNV.cpp
+SOURCES += HardwareColorCorrection.cpp
+HEADERS += ColorCorrection.hpp
 SOURCES += CodecRegistry.cpp
 SOURCES += CPUMipmaps.cpp
 SOURCES += Error.cpp
@@ -71,6 +84,8 @@ SOURCES += Texture.cpp
 SOURCES += Transformer.cpp
 SOURCES += Utils.cpp
 SOURCES += VertexBuffer.cpp
+SOURCES += ColorCorrection.cpp
+SOURCES += VM1.cpp
 
 # Link in Squish statically
 LIBS += $$LIB_SQUISH
@@ -111,6 +126,11 @@ contains(HAS_QT_45,YES) {
         INSTALLS += qt_plugin_install
     }
 }
+
+linux-*:LIBS += -lXNVCtrl -lXrandr
+
+INCLUDEPATH += ../Externals/adl_sdk
+
 DEFINES += LUMINOUS_EXPORT
 
 CONFIG += qt

@@ -1,4 +1,16 @@
 /* COPYRIGHT
+ *
+ * This file is part of Luminous.
+ *
+ * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
+ *
+ * See file "Luminous.hpp" for authors and more details.
+ *
+ * This file is licensed under GNU Lesser General Public
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
+ * from the GNU organization (www.gnu.org).
+ *
  */
 
 
@@ -8,6 +20,8 @@
 #include "Export.hpp"
 #include "Collectable.hpp"
 #include "GLKeyStone.hpp"
+#include "HardwareColorCorrection.hpp"
+#include "ColorCorrection.hpp"
 
 #include <Nimble/Rect.hpp>
 #include <Nimble/Vector4.hpp>
@@ -20,6 +34,7 @@
 
 #include <vector>
 
+
 namespace Luminous {
 
   using Nimble::Rect;
@@ -28,6 +43,8 @@ namespace Luminous {
   using Nimble::Vector4f;
 
   class RenderContext;
+  class Shader;
+  class Texture1D;
 
   /// Class for managing information on multiple OpenGL vindows/viewports.
   /** This class stores information about the layout of multiple
@@ -52,6 +69,7 @@ namespace Luminous {
     {
       MEMCHECKED_USING(Collectable);
     public:
+
       /// Constructs a new area for the given window
       Area(Window * window = 0);
       virtual ~Area();
@@ -185,6 +203,16 @@ namespace Luminous {
       /// Returns a pointer to the window that holds this area
       const Window * window() const { return m_window; }
 
+      ColorCorrection & colorCorrection()
+      {
+        return m_colorCorrection;
+      }
+
+      const ColorCorrection & colorCorrection() const
+      {
+        return m_colorCorrection;
+      }
+
     private:
 
       enum {
@@ -210,6 +238,9 @@ namespace Luminous {
       Valuable::AttributeString m_comment;
       Rect m_graphicsBounds;
       float      m_pixelSizeCm;
+      Shader * m_colorCorrectionShader;
+      ColorCorrection m_colorCorrection;
+      Collectable m_colorCorrectionTextureKey;
     };
 
     /** One OpenGL window.
@@ -369,7 +400,7 @@ namespace Luminous {
     bool deserialize(const Valuable::ArchiveElement & element);
 
     /// Adds a window to the collection
-    void addWindow(Window * w) { m_windows.push_back(std::shared_ptr<Window>(w)); }
+    void addWindow(Window * w);
 
     /// Sets the edited flag
     void setEdited(bool edited) { m_edited = edited; }
@@ -383,6 +414,16 @@ namespace Luminous {
 
     /// Returns the gamma value used for edge blending with projector setups.
     float gamma() const { return m_gamma; }
+
+    const HardwareColorCorrection & hwColorCorrection() const
+    {
+      return m_hwColorCorrection;
+    }
+
+    HardwareColorCorrection & hwColorCorrection()
+    {
+      return m_hwColorCorrection;
+    }
 
     /// @todo This should be in configuration file, and the accessor probably
     ///       shouldn't be static. Maybe this class could be singletonish?
@@ -398,6 +439,8 @@ namespace Luminous {
     Valuable::AttributeFloat m_gamma;
     Valuable::AttributeBool m_iconify;
     Valuable::AttributeVector3i m_dpms;
+    HardwareColorCorrection m_hwColorCorrection;
+
     bool m_edited;
   };
 

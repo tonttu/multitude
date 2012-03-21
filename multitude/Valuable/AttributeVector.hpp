@@ -80,6 +80,8 @@ namespace Valuable
 
       /// Sets the value
       // In some cases this is a override function, but not always
+      /// @todo This should be fixed properly, but it's not important and just
+      ///       fills the compiler output with the same warning
       VALUABLE_API virtual bool set(const VectorType & v, Attribute::Layer layer = Attribute::MANUAL,
                                     QList<Attribute::ValueUnit> units = QList<Attribute::ValueUnit>());
 

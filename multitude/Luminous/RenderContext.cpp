@@ -1616,11 +1616,7 @@ namespace Luminous
   {
     Guard g(__mutex);
 
-#ifndef WIN32
     ResourceMap::iterator it = __resources.find(Radiant::Thread::myThreadId());
-#else
-    ResourceMap::iterator it = __resources.find(0);
-#endif
 
     if(it == __resources.end()) {
       debug("No OpenGL resources for current thread");

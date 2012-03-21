@@ -35,7 +35,7 @@ namespace Radiant
     /// Opens a serial port for communications
     /** If the port was open, this method will close it before opening it.
       @param device name of the device to open
-      @param stopBit Use stop bit?
+      @param stopBit Use two stop bits instead of one
       @param parityBit Use parity stop bit?
       @param baud The baud rate
       @param bits The number of data bits

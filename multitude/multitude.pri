@@ -37,43 +37,69 @@ INCLUDEPATH += $$PWD
 !mobile:INCLUDEPATH += $$PWD/v8/include
 DEPENDPATH += $$PWD
 
-# The Cornerstone version for libraries
-unix {
-  MULTITUDE_VERSION_MAJOR=$$system(cat ../VERSION | cut -d . -f 1)
-  MULTITUDE_VERSION_MINOR=$$system(cat ../VERSION | cut -d . -f 2)
-  MULTITUDE_VERSION_PATCH=$$system(cat ../VERSION | cut -d . -f 3 | cut -d - -f 1)
-
-  VERSION = $${MULTITUDE_VERSION_MAJOR}.$${MULTITUDE_VERSION_MINOR}.$${MULTITUDE_VERSION_PATCH}
-}
-
 withbundles = $$(MULTI_BUNDLES)
 
 !mobile*:MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat
 
-LIB_BOX2D = -lBox2D
+# 1.9.2-rc2
+CORNERSTONE_VERSION_STR = $$cat(../VERSION)
+# 1.9.2
+CORNERSTONE_VERSION = $$section(CORNERSTONE_VERSION_STR, "-", 0, 0)
+# 1
+CORNERSTONE_VERSION_MAJOR = $$section(CORNERSTONE_VERSION, ".", 0, 0)
+# 9
+CORNERSTONE_VERSION_MINOR = $$section(CORNERSTONE_VERSION, ".", 1, 1)
+# 2
+CORNERSTONE_VERSION_PATCH = $$section(CORNERSTONE_VERSION, ".", 2, 2)
+
+win32 {
+  CORNERSTONE_LIB_SUFFIX = .$${CORNERSTONE_VERSION}
+}
+!win32 {
+  CORNERSTONE_LIB_SUFFIX =
+}
+
+LIB_RESONANT = -lResonant$${CORNERSTONE_LIB_SUFFIX}
+LIB_BOX2D = -lBox2D$${CORNERSTONE_LIB_SUFFIX}
 LIB_OPENCL = -lOpenCL
 LIB_OPENGL = -lGL -lGLU
 
-LIB_POETIC = -lPoetic
-LIB_FLUFFY = -lFluffy
-LIB_LUMINOUS = -lLuminous
-LIB_NIMBLE = -lNimble
-LIB_RADIANT = -lRadiant
-LIB_RESONANT = -lResonant
-!mobile*:LIB_SCREENPLAY = -lScreenplay
-!mobile*:LIB_VIDEODISPLAY = -lVideoDisplay
-LIB_VALUABLE = -lValuable
-LIB_PATTERNS = -lPatterns
-LIB_SQUISH = -lSquish
+LIB_POETIC = -lPoetic$${CORNERSTONE_LIB_SUFFIX}
+LIB_FLUFFY = -lFluffy$${CORNERSTONE_LIB_SUFFIX}
+LIB_LUMINOUS = -lLuminous$${CORNERSTONE_LIB_SUFFIX}
+LIB_NIMBLE = -lNimble$${CORNERSTONE_LIB_SUFFIX}
+LIB_RADIANT = -lRadiant$${CORNERSTONE_LIB_SUFFIX}
+!mobile*:LIB_SCREENPLAY = -lScreenplay$${CORNERSTONE_LIB_SUFFIX}
+!mobile*:LIB_VIDEODISPLAY = -lVideoDisplay$${CORNERSTONE_LIB_SUFFIX}
+LIB_VALUABLE = -lValuable$${CORNERSTONE_LIB_SUFFIX}
+LIB_PATTERNS = -lPatterns$${CORNERSTONE_LIB_SUFFIX}
+LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}
 !without-js:LIB_V8 = -lv8
 
-linux-*:vivid {
-  QMAKE_LIBDIR += $$(FBX_SDK)/lib/gcc4
-  LIB_VIVID = -lVivid -lfbxsdk_20113_1_x64
+#
+# Platform specific: Unix (OSX & linux)
+#
+unix {
+  VERSION = $${CORNERSTONE_VERSION}
+  
+  # Use ccache if available
+  exists(/usr/bin/ccache):QMAKE_CXX=ccache g++
+  exists(/sw/bin/ccache):QMAKE_CXX=/sw/bin/ccache g++
+  exists(/opt/local/bin/ccache):QMAKE_CXX=/opt/local/bin/ccache g++
+
+  exists(/opt/multitouch):INCLUDEPATH+=/opt/multitouch/include
+  exists(/opt/multitouch):LIBS+=-L/opt/multitouch/lib
 }
 
-MULTI_LIB_FLAG = -L
+#
+# Platform specific: GNU Linux
+#
 linux-*{
+  vivid {
+    QMAKE_LIBDIR += $$(FBX_SDK)/lib/gcc4
+    LIB_VIVID = -lVivid -lfbxsdk_20113_1_x64
+  }
+
   LIB_PREFIX = lib
   SHARED_LIB_SUFFIX = so
 
@@ -101,8 +127,6 @@ contains(MEMCHECK,yes) {
   DEFINES += MULTI_MEMCHECK=1
   linux:LIBS += -rdynamic
 }
-
-# mobile*:INCLUDES += /usr/local/include
 
 macx*|mobile* {
   LIB_PREFIX = lib
@@ -153,47 +177,53 @@ macx*|mobile* {
 }
 }
 }
+
+#
+# Platform specific: Microsoft Windows
+#
 win32 {
-    LIB_PREFIX =
-    SHARED_LIB_SUFFIX = dll
     # Try to identify used compiler on Windows (32 vs 64)
     COMPILER_OUTPUT=$$system(cl 2>&1)
     contains(COMPILER_OUTPUT,x64):CONFIG+=win64
 
-    win64:WINPORT_INCLUDE = $$PWD\\Win64x\\include
-    else:WINPORT_INCLUDE = $$PWD\\Win32x\\include
+    win64 {
+      WINPORT_INCLUDE = $$PWD\\Win64x\\include
+      INCLUDEPATH += $$PWD\\Win64x\\include
+      INCLUDEPATH += $$PWD/../multitude/Win64x/include/ffmpeg
+      QMAKE_LIBDIR += $$PWD\\Win64x\\lib64
+      LIB_GLEW = -lglew64
+    } else {
+      WINPORT_INCLUDE = $$PWD\\Win32x\\include
+      INCLUDEPATH += $$PWD\\Win32x\\include
+      INCLUDEPATH += $$PWD/../multitude/Win32x/include/ffmpeg
+      QMAKE_LIBDIR += $$PWD\\Win32x\\lib32
+      LIB_GLEW = -lglew32
+    }
 
-    win64:INCLUDEPATH += $$PWD\\Win64x\\include
-    else:INCLUDEPATH += $$PWD\\Win32x\\include
-
-    win64:QMAKE_LIBDIR += $$PWD\\Win64x\\lib64
-    else:QMAKE_LIBDIR += $$PWD\\Win32x\\lib32
-
-    win64:LIB_GLEW = -lglew64
-    else:LIB_GLEW = -lglew32
+    LIB_PREFIX =
+    SHARED_LIB_SUFFIX = dll
 
     DDK_PATH="C:\\WinDDK\\7600.16385.1"
 
     LIB_OPENGL = -lopengl32 -lglu32
     QMAKE_CXXFLAGS += -D_CRT_SECURE_NO_WARNINGS -wd4244 -wd4251 -wd4355
-    DEFINES += WIN32
 
     # These libs have an extra extension for debug builds
     build_pass:CONFIG(debug,debug|release) {
-      LIB_BOX2D = -lBox2D_d
-      LIB_POETIC = -lPoetic_d
-      LIB_FLUFFY = -lFluffy_d
-      LIB_LUMINOUS = -lLuminous_d
-      LIB_NIMBLE = -lNimble_d
-      LIB_RADIANT = -lRadiant_d
-      LIB_RESONANT = -lResonant_d
-      LIB_SCREENPLAY = -lScreenplay_d
-      LIB_VIDEODISPLAY = -lVideoDisplay_d
-      LIB_VALUABLE = -lValuable_d
-      LIB_PATTERNS = -lPatterns_d
-      LIB_SQUISH = -lSquish_d
+      LIB_BOX2D = -lBox2D$${CORNERSTONE_LIB_SUFFIX}_d
+      LIB_POETIC = -lPoetic$${CORNERSTONE_LIB_SUFFIX}_d
+      LIB_FLUFFY = -lFluffy$${CORNERSTONE_LIB_SUFFIX}_d
+      LIB_LUMINOUS = -lLuminous$${CORNERSTONE_LIB_SUFFIX}_d
+      LIB_NIMBLE = -lNimble$${CORNERSTONE_LIB_SUFFIX}_d
+      LIB_RADIANT = -lRadiant$${CORNERSTONE_LIB_SUFFIX}_d
+      LIB_RESONANT = -lResonant$${CORNERSTONE_LIB_SUFFIX}_d
+      LIB_SCREENPLAY = -lScreenplay$${CORNERSTONE_LIB_SUFFIX}_d
+      LIB_VIDEODISPLAY = -lVideoDisplay$${CORNERSTONE_LIB_SUFFIX}_d
+      LIB_VALUABLE = -lValuable$${CORNERSTONE_LIB_SUFFIX}_d
+      LIB_PATTERNS = -lPatterns$${CORNERSTONE_LIB_SUFFIX}_d
+      LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}_d
       !mobile:LIB_V8 = -lv8_d
-    }
+	}
 }
 
 MULTI_VIDEO_LIBS = $$LIB_SCREENPLAY $$LIB_RESONANT $$LIB_VIDEODISPLAY
@@ -215,15 +245,19 @@ CONFIG(release, debug|release) {
   DEFINES += NDEBUG
 }
 
-!without-js {
-  DEFINES += USING_V8_SHARED
-  DEFINES += MULTI_WITH_V8
+DEFINES += USING_V8_SHARED
+
+# Compiler detection
+c++11 {
+  !win32 {
+    message(Enabling C++11)
+    QMAKE_CXXFLAGS += -std=c++0x
+  }
 }
 
-# Use ccache if available
-unix:exists(/usr/bin/ccache):QMAKE_CXX=ccache $$QMAKE_CXX
-unix:exists(/sw/bin/ccache):QMAKE_CXX=/sw/bin/ccache $$QMAKE_CXX
-unix:exists(/opt/local/bin/ccache):QMAKE_CXX=/opt/local/bin/ccache $$QMAKE_CXX
-
-unix:exists(/opt/multitouch):INCLUDEPATH+=/opt/multitouch/include
-unix:exists(/opt/multitouch):LIBS+=-L/opt/multitouch/lib
+# Enable memchecking
+contains(MEMCHECK,yes) {
+  message(Using Radiant::MemCheck)
+  DEFINES += MULTI_MEMCHECK=1
+  linux:LIBS += -rdynamic
+}

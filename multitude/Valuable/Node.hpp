@@ -55,10 +55,14 @@ namespace Valuable
     /// Universally unique identifier type
     typedef int64_t Uuid;
 
+    typedef std::function<void ()> ListenerFunc;
+    typedef std::function<void (Radiant::BinaryData &)> ListenerFunc2;
+
     enum ListenerType
     {
       DIRECT,
-      AFTER_UPDATE
+      AFTER_UPDATE,
+      AFTER_UPDATE_ONCE
     };
 
     Node();
@@ -216,6 +220,13 @@ namespace Valuable
       eventAddListener(from, from, func, defaultData);
     }
 #endif
+
+    void eventAddListener(const QString & from, ListenerFunc func,
+                          ListenerType listenerType = DIRECT);
+
+    void eventAddListenerBd(const QString & from, ListenerFunc2 func,
+                            ListenerType listenerType = DIRECT);
+
     /** Removes event listeners from this object.
 
       @code
@@ -310,20 +321,20 @@ namespace Valuable
     friend class Attribute; // So that Attribute can call the function below.
 
     void valueRenamed(const QString & was, const QString & now);
-    static void queueEvent(Valuable::Node * sender, Valuable::Node * target,
-                           const QString & to, const Radiant::BinaryData & data);
 
     container m_values;
 
     class ValuePass {
     public:
-      ValuePass() : m_listener(0), m_valid(true), m_frame(-1), m_type(DIRECT) {}
+      ValuePass() : m_listener(0), m_func(), m_func2(), m_valid(true), m_frame(-1), m_type(DIRECT) {}
 
       inline bool operator == (const ValuePass & that) const;
 
       Valuable::Node * m_listener;
+      ListenerFunc m_func;
+      ListenerFunc2 m_func2;
 #ifdef MULTI_WITH_V8
-      v8::Persistent<v8::Function> m_func;
+      v8::Persistent<v8::Function> m_funcv8;
 #endif
       Radiant::BinaryData   m_defaultData;
       QString m_from;

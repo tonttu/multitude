@@ -41,7 +41,9 @@ INSTALLS += includes src_code extra_inc
 win32 {
     DLLDESTDIR = $$PWD/bin
 
-	# Debug libraries have an extra extension
+  TARGET=$$join(TARGET,,,$${CORNERSTONE_LIB_SUFFIX})
+
+  # Debug libraries have an extra extension
   build_pass:CONFIG(debug,debug|release) {
     TARGET=$$join(TARGET,,,_d)
   }

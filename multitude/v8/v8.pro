@@ -45,6 +45,11 @@ stuff.path = /lib
 INSTALLS += stuff
 macx:stuff.path = /Applications/MultiTouch
 
+win32 {
+  DEST=$$replace(DESTDIR, /, \\)\\$$V8LIB_OUT
+  first.commands = if not exist $$TARGET scons env='"PATH:%PATH%,INCLUDE:%INCLUDE%,LIB:%LIB%"' $$V8 $$TARGET -j4 && copy $${V8LIB}.dll $${DEST}.dll && copy $${V8LIB}.lib $${DEST}.lib
+  stuff.files += $${DEST}.dll $${DEST}.lib
+}
 linux-* {
   DEST=$$DESTDIR/$${V8LIB_OUT}.$$SHARED_LIB_SUFFIX
   # Running application will crash with sigbus without --remove-destination

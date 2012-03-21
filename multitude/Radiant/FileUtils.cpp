@@ -175,6 +175,7 @@ namespace Radiant
         }
         return true;
       } else {
+        Radiant::warning("FileUtils::writeTextFile # Failed to write to %s", filename);
         return false;
       }
     }

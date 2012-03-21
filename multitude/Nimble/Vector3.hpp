@@ -249,6 +249,23 @@ inline std::istream &operator>>(std::istream &is, Nimble::Vector3T<T> &t)
   return is;
 }
 
+template <>
+inline std::ostream &operator<<(std::ostream &os, const Nimble::Vector3T<uint8_t> &t)
+{
+  os << int(t.x) << ' ' << int(t.y) << ' ' << int(t.z);
+  return os;
+}
+
+template <>
+inline std::istream &operator>>(std::istream &is, Nimble::Vector3T<uint8_t> &t)
+{
+  int x, y, z;
+  is >> x >> y >> z;
+  t.x = x;
+  t.y = y;
+  t.z = z;
+  return is;
+}
 /// @todo never use 'using' in a header file!
 //using Nimble::operator *;
 

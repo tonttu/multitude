@@ -1,7 +1,11 @@
+
+#include "Radiant/KeyEvent.hpp"
+
 #ifdef RADIANT_OSX_LION
 
 #import <Cocoa/Cocoa.h>
 #import "CocoaWindow.hpp"
+
 
 @interface CocoaView : NSOpenGLView
 {
@@ -138,6 +142,9 @@ return self;
   if([theEvent isARepeat])
     repeat = true;
 
+  // QKeyEvent xke;
+  // QKeyEvent qkev(QEvent::KeyPress, (int) unichar, Qt::NoModifier));
+
   switch(key) {
 
   //esc
@@ -148,7 +155,10 @@ return self;
     break;
 
   default:
-    hook->handleKeyboardEvent(key, true, 0, repeat);
+  {
+    // hook->handleKeyboardEvent(key, true, 0, repeat);
+    hook->handleKeyboardEvent(Radiant::KeyEvent::createKeyPress(key));
+  }
     break;
   };
 
@@ -174,7 +184,8 @@ return self;
     break;
 
   default:
-    hook->handleKeyboardEvent(key, false, 0, false);
+    // hook->handleKeyboardEvent(key, false, 0, false);
+    hook->handleKeyboardEvent(Radiant::KeyEvent::createKeyRelease(key));
     break;
   };
 }

@@ -185,7 +185,7 @@ namespace Resonant {
   }
 
   void ModuleSamplePlayer::SampleVoice::init
-      (std::shared_ptr<Sample> sample, Radiant::BinaryData * data)
+      (std::shared_ptr<Sample> sample, Radiant::BinaryData & data)
   {
     m_sample = sample;
     m_position = 0;
@@ -200,7 +200,7 @@ namespace Resonant {
     const int buflen = 64;
     char name[buflen] = { '\0' };
 
-    if(!data->readString(name, buflen)) {
+    if(!data.readString(name, buflen)) {
       error("ModuleSamplePlayer::SampleVoice::init # Invalid beginning");
 
       return;
@@ -211,17 +211,17 @@ namespace Resonant {
       bool ok = true;
 
       if(strcmp(name, "gain") == 0)
-        m_gain = data->readFloat32( & ok);
+        m_gain = data.readFloat32( & ok);
       else if(strcmp(name, "relpitch") == 0)
-        m_relPitch = data->readFloat32( & ok);
+        m_relPitch = data.readFloat32( & ok);
       else if(strcmp(name, "samplechannel") == 0)
-        m_sampleChannel = data->readInt32( & ok);
+        m_sampleChannel = data.readInt32( & ok);
       else if(strcmp(name, "targetchannel") == 0)
-        m_targetChannel = data->readInt32( & ok);
+        m_targetChannel = data.readInt32( & ok);
       else if(strcmp(name, "loop") == 0)
-        m_loop = (data->readInt32( & ok) != 0);
+        m_loop = (data.readInt32( & ok) != 0);
       else if(strcmp(name, "time") == 0)
-        m_startTime = data->readTimeStamp( & ok);
+        m_startTime = data.readTimeStamp( & ok);
       else {
         error("ModuleSamplePlayer::SampleVoice::init # Invalid parameter \"%s\"",
               name);
@@ -237,7 +237,7 @@ namespace Resonant {
       }
 
       name[0] = '\0';
-      if(!data->readString(name, buflen)) {
+      if(!data.readString(name, buflen)) {
         error("ModuleSamplePlayer::SampleVoice::init # Error reading parameter");
         break;
       }
@@ -414,7 +414,7 @@ namespace Resonant {
     return true;
   }
 
-  void ModuleSamplePlayer::processMessage(const QString & id, Radiant::BinaryData * data)
+  void ModuleSamplePlayer::processMessage(const QString & id, Radiant::BinaryData & data)
   {
     const int bufsize = 256;
     char buf[bufsize];
@@ -429,7 +429,7 @@ namespace Resonant {
         return;
       }
 
-      ok = data->readString(buf, bufsize);
+      ok = data.readString(buf, bufsize);
 
       if(!ok) {
         error("ModuleSamplePlayer::control # Could not get sample name ");
@@ -459,7 +459,7 @@ namespace Resonant {
 
     }
     else if(id == "channels") {
-      m_channels = data->readInt32( & ok);
+      m_channels = data.readInt32( & ok);
     }
     else
       error("ModuleSamplePlayer::control # Unknown message \"%s\"", id.toUtf8().data());

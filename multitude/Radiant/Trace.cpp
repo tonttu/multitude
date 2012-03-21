@@ -321,8 +321,15 @@ namespace Radiant {
 
   void setTraceFile(const char * filename)
   {
-    __outfile = fopen(filename, "w");
-    printf("Trace file set to %s (%p)\n", filename, __outfile);
+    FILE * tmp = fopen(filename, "w");
+    if(!tmp) {
+      error("Radiant::setTraceFile # Failed to open %s", filename);
+    } else {
+      if(__outfile)
+        fclose(__outfile);
+      __outfile = tmp;
+      printf("Trace file set to %s (%p)\n", filename, __outfile);
+    }
     fflush(0);
   }
 

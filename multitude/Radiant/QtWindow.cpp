@@ -167,6 +167,9 @@ namespace Radiant
     host->show();
     host->resize(hint.width, hint.height);
 
+    if(hint.fullscreen)
+      host->showFullScreen();
+
     m_mainWindow = new GLThreadWidget(host, *this, flags);
 
     m_mainWindow->raise();

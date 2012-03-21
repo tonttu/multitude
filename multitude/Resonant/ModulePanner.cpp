@@ -69,7 +69,7 @@ namespace Resonant {
   }
 
   void ModulePanner::processMessage(const QString & id,
-                                    Radiant::BinaryData * data)
+                                    Radiant::BinaryData & data)
   {
     debugResonant("ModulePanner::control # %s", id.toUtf8().data());
 
@@ -80,18 +80,18 @@ namespace Resonant {
     }
     else if(id == "addsource") {
       Source s;
-      data->readString(s.m_id);
+      data.readString(s.m_id);
       m_sources.push_back(s);
     }
     else if(id == "removesource") {
       QString id;
-      data->readString(id);
+      data.readString(id);
       removeSource(id);
     }
     else if(id == "setsourcelocation") {
       QString id;
-      data->readString(id);
-      Nimble::Vector2 loc = data->readVector2Float32( & ok);
+      data.readString(id);
+      Nimble::Vector2 loc = data.readVector2Float32( & ok);
 
       if(ok) {
         setSourceLocation(id, loc);

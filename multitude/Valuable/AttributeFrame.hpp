@@ -39,6 +39,8 @@ namespace Valuable
 
     virtual ~AttributeFrame() {}
 
+    /// @todo This should be fixed properly, but it's not important and just
+    ///       fills the compiler output with the same warning
     virtual bool set(float v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN) OVERRIDE
     {
       const Nimble::Frame4f f(v, v, v, v);
