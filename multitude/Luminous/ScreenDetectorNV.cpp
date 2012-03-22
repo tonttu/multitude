@@ -109,8 +109,8 @@ namespace
       int d = 1 << port;
       if((mask & d) == 0) continue;
 
-      results.push_back(ScreenInfo());
-      ScreenInfo& info = results.back();
+      results.push_back(Luminous::ScreenInfo());
+      Luminous::ScreenInfo& info = results.back();
 
       if(XNVCTRLQueryStringAttribute(display, screen, d,
         NV_CTRL_STRING_DISPLAY_DEVICE_NAME, &name)) {

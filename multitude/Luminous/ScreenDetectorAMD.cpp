@@ -6,6 +6,8 @@
 
 #if defined (RADIANT_WINDOWS)
 #  include <windows.h>
+#elif defined (RADIANT_WINDOWS)
+#  include "XRandR.hpp"
 #endif
 
 #include <adl_functions.h>
@@ -34,18 +36,18 @@ namespace {
   {
     switch (err)
     {
-    case ADL_ERR:                         Radiant::error("ScreenDetectorAMD::detect # %s: Generic error", msg.c_str(), err); break;
-    case ADL_ERR_NOT_INIT:                Radiant::error("ScreenDetectorAMD::detect # %s: ADL not initialized", msg.c_str(), err); break;
-    case ADL_ERR_INVALID_PARAM:           Radiant::error("ScreenDetectorAMD::detect # %s: Invalid parameter", msg.c_str(), err); break;
-    case ADL_ERR_INVALID_PARAM_SIZE:      Radiant::error("ScreenDetectorAMD::detect # %s: Invalid parameter size", msg.c_str(), err); break;
-    case ADL_ERR_INVALID_ADL_IDX:         Radiant::error("ScreenDetectorAMD::detect # %s: Invalid ADL index", msg.c_str(), err); break;
-    case ADL_ERR_INVALID_CONTROLLER_IDX:  Radiant::error("ScreenDetectorAMD::detect # %s: Invalid controller index", msg.c_str(), err); break;
-    case ADL_ERR_INVALID_DIPLAY_IDX:      Radiant::error("ScreenDetectorAMD::detect # %s: Invalid display index", msg.c_str(), err); break;
-    case ADL_ERR_NOT_SUPPORTED:           Radiant::error("ScreenDetectorAMD::detect # %s: Function not supported", msg.c_str(), err); break;
-    case ADL_ERR_NULL_POINTER:            Radiant::error("ScreenDetectorAMD::detect # %s: Null pointer error", msg.c_str(), err); break;
-    case ADL_ERR_DISABLED_ADAPTER:        Radiant::error("ScreenDetectorAMD::detect # %s: Disabled adapter", msg.c_str(), err); break;
-    case ADL_ERR_INVALID_CALLBACK:        Radiant::error("ScreenDetectorAMD::detect # %s: Invalid callback", msg.c_str(), err); break;
-    case ADL_ERR_RESOURCE_CONFLICT:       Radiant::error("ScreenDetectorAMD::detect # %s: Resource conflict", msg.c_str(), err); break;
+    case ADL_ERR:                         Radiant::error("ScreenDetectorAMD::detect # %s: Generic error (%d)", msg.c_str(), err); break;
+    case ADL_ERR_NOT_INIT:                Radiant::error("ScreenDetectorAMD::detect # %s: ADL not initialized (%d)", msg.c_str(), err); break;
+    case ADL_ERR_INVALID_PARAM:           Radiant::error("ScreenDetectorAMD::detect # %s: Invalid parameter (%d)", msg.c_str(), err); break;
+    case ADL_ERR_INVALID_PARAM_SIZE:      Radiant::error("ScreenDetectorAMD::detect # %s: Invalid parameter size (%d)", msg.c_str(), err); break;
+    case ADL_ERR_INVALID_ADL_IDX:         Radiant::error("ScreenDetectorAMD::detect # %s: Invalid ADL index (%d)", msg.c_str(), err); break;
+    case ADL_ERR_INVALID_CONTROLLER_IDX:  Radiant::error("ScreenDetectorAMD::detect # %s: Invalid controller index (%d)", msg.c_str(), err); break;
+    case ADL_ERR_INVALID_DIPLAY_IDX:      Radiant::error("ScreenDetectorAMD::detect # %s: Invalid display index (%d)", msg.c_str(), err); break;
+    case ADL_ERR_NOT_SUPPORTED:           Radiant::error("ScreenDetectorAMD::detect # %s: Function not supported (%d)", msg.c_str(), err); break;
+    case ADL_ERR_NULL_POINTER:            Radiant::error("ScreenDetectorAMD::detect # %s: Null pointer error (%d)", msg.c_str(), err); break;
+    case ADL_ERR_DISABLED_ADAPTER:        Radiant::error("ScreenDetectorAMD::detect # %s: Disabled adapter (%d)", msg.c_str(), err); break;
+    case ADL_ERR_INVALID_CALLBACK:        Radiant::error("ScreenDetectorAMD::detect # %s: Invalid callback (%d)", msg.c_str(), err); break;
+    case ADL_ERR_RESOURCE_CONFLICT:       Radiant::error("ScreenDetectorAMD::detect # %s: Resource conflict (%d)", msg.c_str(), err); break;
     case ADL_OK:                          return true; // All ok
     default:
       Radiant::error("ScreenDetectorAMD::detect # Error %d", err);
@@ -66,6 +68,7 @@ namespace {
     return success;
   }
 
+#if defined (RADIANT_WINDOWS)
   // Retrieve display configuration
   bool getDisplayMapConfig(int adapterIndex, std::vector<ADLDisplayMap> & displayMap, std::vector<ADLDisplayTarget> & displayTarget)
   {
@@ -168,6 +171,7 @@ namespace {
 
     return success;
   }
+#endif
 
   // Get display information for all displays on the specified adapter
   bool getDisplayInfo(int adapterIndex, std::vector<ADLDisplayInfo> & displayInfo)
@@ -183,43 +187,43 @@ namespace {
   }
 
   #if defined (RADIANT_LINUX)
-  bool detectLinux(int screen, QList<ScreenInfo> & results)
+  bool detectLinux(int screen, QList<Luminous::ScreenInfo> & results)
   {
+    std::vector<AdapterInfo> adapterInfo;
+    getAdapterInformation(adapterInfo);
+    if (adapterInfo.empty())
+      return false;
+
     // Fetch the XScreen information
     std::vector<XScreenInfo> xscreens(adapterInfo.size());
     memset(xscreens.data(), 0, sizeof(XScreenInfo) * xscreens.size());
     if (!checkADL("ADL_Adapter_XScreenInfo_Get", ADL_Adapter_XScreenInfo_Get(xscreens.data(), sizeof(XScreenInfo) * xscreens.size())))
       return false;
 
-    std::vector<AdapterInfo> adapterInfo;
-    getAdapterInformation(adapterInfo);
-    if (adapterInfo.empty())
-      return false;
-
     for (int adapterIdx = 0; adapterIdx < adapterInfo.size(); ++adapterIdx) {
 
       // XScreen doesn't match the requested screen: skip
-      if(xscreens[adapterInfo.iAdapterIndex].iXScreenNum != screen) continue;
+      if(xscreens[adapterInfo[adapterIdx].iAdapterIndex].iXScreenNum != screen) continue;
 
-      AdapterInfo & adapterInfo = adapterInfoList[activeAdapters[i]];
+      const AdapterInfo & currentAdapter = adapterInfo[adapterIdx];
 
       std::vector<ADLDisplayInfo> displayInfos;
-      if (!getDisplayInfo(adapterInfo.iAdapterIndex, displayInfos))
+      if (!getDisplayInfo(currentAdapter.iAdapterIndex, displayInfos))
         continue;
 
       for(int displayIdx = 0; displayIdx < displayInfos.size(); ++displayIdx) {
-        ADLDisplayInfo & displayInfo = displayInfos[displayIdx];
+        const ADLDisplayInfo & currentDisplay = displayInfos[displayIdx];
 
-        if((displayInfo.iDisplayInfoValue & ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED) == 0)  // Don't care about disconnected outputs
+        if((currentDisplay.iDisplayInfoValue & ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED) == 0)  // Don't care about disconnected outputs
           continue;
 
-        ScreenInfo screenInfo;
-        screenInfo.setName(displayInfo.strDisplayName);
-        screenInfo.setGpuName(adapterInfo.strAdapterName);
+        Luminous::ScreenInfo screenInfo;
+        screenInfo.setName(currentDisplay.strDisplayName);
+        screenInfo.setGpuName(currentAdapter.strAdapterName);
         //screenInfo.setGpu("GPU-"+QString::number(udidToIndex[adapterInfo.strUDID]));
 
         QString type;
-        switch (displayInfo.iDisplayType)
+        switch (currentDisplay.iDisplayType)
         {
         case ADL_DT_MONITOR: type = "Monitor-"; break;
         case ADL_DT_TELEVISION: type = "TV-"; break;
@@ -231,20 +235,20 @@ namespace {
           type = "Unknown-";
         }
 
-        screenInfo.setConnection(type + QString::number(displayInfo.displayID.iDisplayLogicalIndex));
+        screenInfo.setConnection(type + QString::number(currentDisplay.displayID.iDisplayLogicalIndex));
         screenInfo.setLogicalScreen(screen);
 
         // Get geometry from XRandr
         char name[256];
-        bool err = ADL_Display_XrandrDisplayName_Get(adapterInfo.iAdapterIndex,
-          displayInfo.displayID.iDisplayLogicalIndex,
+        bool err = ADL_Display_XrandrDisplayName_Get(currentAdapter.iAdapterIndex,
+          currentDisplay.displayID.iDisplayLogicalIndex,
           name, sizeof(name));
         if(err != ADL_OK) {
           Radiant::error("ScreenDetectorAMD::detect # ADL_Display_XrandrDisplayName_Get: %d", err);
           continue;
         }
         Nimble::Recti rect;
-        XRandR xrandr;
+        Luminous::XRandR xrandr;
         if(xrandr.getGeometry(screen, name, rect)) {
           screenInfo.setGeometry(rect);
         } else {
