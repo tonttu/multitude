@@ -236,7 +236,7 @@ namespace Luminous {
       Rect m_graphicsBounds;
       float      m_pixelSizeCm;
       Shader * m_colorCorrectionShader;
-      Texture1D * m_colorCorrectionTexture;
+      Collectable m_colorCorrectionTextureKey;
       ColorCorrection m_colorCorrection;
     };
 
