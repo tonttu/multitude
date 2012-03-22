@@ -1,393 +1,417 @@
 #include "ScreenDetectorAMD.hpp"
 
+#include <Radiant/Platform.hpp>
 #include <Radiant/Mutex.hpp>
 #include <Radiant/Trace.hpp>
 
-#ifdef RADIANT_LINUX
-/// ADL uses this
-#define LINUX
-
-#include "XRandR.hpp"
+#if defined (RADIANT_WINDOWS)
+#  include <windows.h>
 #endif
 
-#include <adl_sdk.h>
+#include <adl_functions.h>
 
-#include <QLibrary>
-
+#include <vector>
+#include <algorithm>
 #include <set>
 #include <map>
 
-namespace
-{
-  /// Function to initialize the ADL interface. This function should be called first.
-  /// [in] callback
-  ///      The memory allocation function for memory buffer allocation.
-  ///      This must be provided by the user.
-  /// [in] iEnumConnectedAdapters
-  ///      Specify a value of 0 to retrieve adapter information for all adapters
-  ///      that have ever been present in the system. Specify a value of 1 to
-  ///      retrieve adapter information only for adapters that are physically
-  ///      present and enabled in the system.
-  typedef int (*ADL_MAIN_CONTROL_CREATE)(ADL_MAIN_MALLOC_CALLBACK, int);
+// Compare display modes
+bool operator==(const ADLMode & lhs, const ADLMode & rhs) { return (lhs.iXRes == rhs.iXRes && lhs.iYRes == rhs.iYRes); }
+template <typename T> bool operator==(const ADLMode & lhs, const T & rhs) { return lhs == rhs.displayMode; }
+template <typename T> bool operator==(const T & lhs, const ADLMode & rhs) { return lhs.displayMode == rhs; }
 
-  /// Function to destroy ADL global pointers. This function should be called last.
-  typedef int (*ADL_MAIN_CONTROL_DESTROY)();
+// Compare display targets
+bool operator==(const ADLDisplayTarget & lhs, const ADLDisplayTarget & rhs) { return ( lhs.displayID.iDisplayLogicalIndex == rhs.displayID.iDisplayLogicalIndex ); }
+template <typename T> bool operator==(const ADLDisplayTarget & lhs, const T & rhs) { return lhs == rhs.displayTarget; }
+template <typename T> bool operator==(const T & lhs, const ADLDisplayTarget & rhs) { return lhs.displayTarget == rhs; }
 
-  /// Function to refresh adapter information. This function generates an
-  /// adapter index value for all logical adapters that have ever been
-  /// present in the system.
-  typedef int (*ADL_MAIN_CONTROL_REFRESH)();
+// Compare display IDs
+bool operator<(const ADLDisplayID & a, const ADLDisplayID & b) { return memcmp(&a, &b, sizeof(ADLDisplayID)) < 0; }
 
-  /// Function to retrieve the number of OS-known adapters.
-  /// [out] lpNumAdapters The pointer to the number of OS-known adapters.
-  typedef int (*ADL_ADAPTER_NUMBEROFADAPTERS_GET)(int *);
-
-  /// Function to determine if the adapter is active or not.
-  /// [in]  iAdapterIndex
-  ///       The ADL index handle of the desired adapter.
-  /// [out] lpStatus
-  ///       The pointer to the retrieved status.
-  ///       ADL_TRUE : Active; ADL_FALSE : Disabled.
-  typedef int (*ADL_ADAPTER_ACTIVE_GET)(int, int *);
-
-  /// Retrieves all OS-known adapter information.
-  /// [in]  iInputSize
-  ///       The size of the lpInfo buffer.
-  /// [out] lpInfo
-  ///       The pointer to the buffer containing the retrieved adapter information.
-  typedef int (*ADL_ADAPTER_ADAPTERINFO_GET)(LPAdapterInfo, int);
-
-  /// Function to retrieve the adapter display information.
-  /// [in]  iAdapterIndex
-  ///       The ADL index handle of the desired adapter. A value of -1 returns
-  ///       all displays in the system across multiple GPUs.
-  /// [out] lpNumDisplays
-  ///       The pointer to the number of displays detected.
-  /// [out] lppInfo
-  ///       The pointer to the pointer to the retrieved display information
-  ///       array. Initialize to NULL before calling this API. Refer to the
-  ///       ADLDisplayInfo structure for more information.
-  /// [in]  iForceDetect
-  ///       0: Do not force detection of the adapters in the system
-  ///       1 : Force detection
-  typedef int (*ADL_DISPLAY_DISPLAYINFO_GET)(int, int *, ADLDisplayInfo **, int);
-
-  /// Function to get Device Display Position.
-  /// [in]  iAdapterIndex, The ADL index handle of the desired adapter.
-  /// [in]  iDisplayIndex, The desired display index. It can be retrieved from the ADLDisplayInfo data structure.
-  /// [out] lpX, The pointer to the current X coordinate display position.
-  /// [out] lpY, The pointer to the current Y coordinate display position.
-  /// [out] lpXDefault, The pointer to the default X coordinate display position.
-  /// [out] lpYDefault, The pointer to the default Y coordinate display position.
-  /// [out] lpMinX, The pointer to the minimum X display size.
-  /// [out] lpMinY, The pointer to the minimum Y display size.
-  /// [out] lpMaxX, The pointer to the maximum X display size.
-  /// [out] lpMaxY, The pointer to the maximum Y display size.
-  /// [out] lpStepX, The pointer to the step size along the X axis.
-  /// [out] lpStepY, The pointer to the step size along the Y axis.
-  typedef int (*ADL_DISPLAY_POSITION_GET)(int, int, int *, int *, int *, int *, int *,
-                                          int *, int *, int *, int *, int *);
-
-  /// Function to get the Device Display Size.
-  /// [in]  iAdapterIndex, The ADL index handle of the desired adapter.
-  /// [in]  iDisplayIndex, The desired display index. It can be retrieved from the ADLDisplayInfo data structure.
-  /// [out] lpWidth, The pointer to the current display width.
-  /// [out] lpHeight, The pointer to the current display height.
-  /// [out] lpDefaultWidth, The pointer to the default display width.
-  /// [out] lpDefaultHeight, The pointer to the default display height.
-  /// [out] lpMinWidth, The pointer to the minimum display width.
-  /// [out] lpMinHeight, The pointer to the minimum display height.
-  /// [out] lpMaxWidth, The pointer to the maximum display width.
-  /// [out] lpMaxHeight, The pointer to the maximum display height.
-  /// [out] lpStepWidth, The pointer to the step width.
-  /// [out] lpStepHeight, The pointer to the step height.
-  typedef int (*ADL_DISPLAY_SIZE_GET)(int, int, int *, int *, int *, int *,
-                                       int *, int *, int *, int *, int *, int *);
-
-#ifdef RADIANT_LINUX
-  /// Function to retrieve all X Screen information for all OS-known adapters.
-  /// [in]  iInputSize
-  ///       The size of lpInfo buffer.
-  /// [out] lpXScreenInfo
-  ///       The pointer to the buffer storing the retrieved X Screen information.
-  typedef int (*ADL_ADAPTER_XSCREENINFO_GET)(LPXScreenInfo, int);
-
-  /// Function to get the Desktop Configuration.
-  /// @see ADL_DESKTOPCONFIG_UNKNOWN etc
-  /// [in]	iAdapterIndex, The ADL index handle of the desired adapter.
-  /// [out]	lpDesktopConfig, The pointer to the retrieved desktop configuration information.
-  typedef int (*ADL_DESKTOPCONFIG_GET)(int, int *);
-
-  /// Function to retrieve the name of the Xrandr display.
-  /// [in]  iAdapterIndex, The ADL index handle of the desired adapter.
-  /// [in]	iDisplayIndex, The ADL index handle of the desired display.
-  /// [out]	lpXrandrDisplayName, The pointer to the buffer storing the retrieved Xrandr display name.
-  /// [in]	iBuffSize, The size of the lpXrandrDisplayName buffer.
-  typedef int (*ADL_DISPLAY_XRANDRDISPLAYNAME_GET)(int, int, char *, int);
-#endif
-
-  ADL_MAIN_CONTROL_CREATE ADL_Main_Control_Create = 0;
-  ADL_MAIN_CONTROL_DESTROY ADL_Main_Control_Destroy = 0;
-  ADL_ADAPTER_NUMBEROFADAPTERS_GET ADL_Adapter_NumberOfAdapters_Get = 0;
-  ADL_MAIN_CONTROL_REFRESH ADL_Main_Control_Refresh = 0;
-  ADL_ADAPTER_ACTIVE_GET ADL_Adapter_Active_Get = 0;
-  ADL_DISPLAY_DISPLAYINFO_GET ADL_Display_DisplayInfo_Get = 0;
-  ADL_ADAPTER_ADAPTERINFO_GET ADL_Adapter_AdapterInfo_Get = 0;
-  ADL_DISPLAY_POSITION_GET ADL_Display_Position_Get = 0;
-  ADL_DISPLAY_SIZE_GET ADL_Display_Size_Get = 0;
-
-#ifdef RADIANT_LINUX
-  ADL_ADAPTER_XSCREENINFO_GET ADL_Adapter_XScreenInfo_Get = 0;
-  ADL_DESKTOPCONFIG_GET ADL_DesktopConfig_Get = 0;
-  ADL_DISPLAY_XRANDRDISPLAYNAME_GET ADL_Display_XrandrDisplayName_Get = 0;
-#endif
-
-  bool s_ok = false;
-}
-
-bool operator<(const ADLDisplayID & a, const ADLDisplayID & b)
-{
-  return memcmp(&a, &b, sizeof(ADLDisplayID)) < 0;
-}
-
-namespace
-{
-  void initADL()
+namespace {
+  // Error checking for ADL functions
+  bool checkADL(const std::string & msg, int err)
   {
-    QLibrary lib("atiadlxx");
-    if(!lib.load()) {
-      Radiant::info("AMD screen detector is disabled: %s", lib.errorString().toUtf8().data());
-      return;
+    switch (err)
+    {
+    case ADL_ERR:                         Radiant::error("ScreenDetectorAMD::detect # %s: Generic error", msg.c_str(), err); break;
+    case ADL_ERR_NOT_INIT:                Radiant::error("ScreenDetectorAMD::detect # %s: ADL not initialized", msg.c_str(), err); break;
+    case ADL_ERR_INVALID_PARAM:           Radiant::error("ScreenDetectorAMD::detect # %s: Invalid parameter", msg.c_str(), err); break;
+    case ADL_ERR_INVALID_PARAM_SIZE:      Radiant::error("ScreenDetectorAMD::detect # %s: Invalid parameter size", msg.c_str(), err); break;
+    case ADL_ERR_INVALID_ADL_IDX:         Radiant::error("ScreenDetectorAMD::detect # %s: Invalid ADL index", msg.c_str(), err); break;
+    case ADL_ERR_INVALID_CONTROLLER_IDX:  Radiant::error("ScreenDetectorAMD::detect # %s: Invalid controller index", msg.c_str(), err); break;
+    case ADL_ERR_INVALID_DIPLAY_IDX:      Radiant::error("ScreenDetectorAMD::detect # %s: Invalid display index", msg.c_str(), err); break;
+    case ADL_ERR_NOT_SUPPORTED:           Radiant::error("ScreenDetectorAMD::detect # %s: Function not supported", msg.c_str(), err); break;
+    case ADL_ERR_NULL_POINTER:            Radiant::error("ScreenDetectorAMD::detect # %s: Null pointer error", msg.c_str(), err); break;
+    case ADL_ERR_DISABLED_ADAPTER:        Radiant::error("ScreenDetectorAMD::detect # %s: Disabled adapter", msg.c_str(), err); break;
+    case ADL_ERR_INVALID_CALLBACK:        Radiant::error("ScreenDetectorAMD::detect # %s: Invalid callback", msg.c_str(), err); break;
+    case ADL_ERR_RESOURCE_CONFLICT:       Radiant::error("ScreenDetectorAMD::detect # %s: Resource conflict", msg.c_str(), err); break;
+    case ADL_OK:                          return true; // All ok
+    default:
+      Radiant::error("ScreenDetectorAMD::detect # Error %d", err);
     }
-
-    ADL_Main_Control_Create = (ADL_MAIN_CONTROL_CREATE) lib.resolve("ADL_Main_Control_Create");
-    ADL_Main_Control_Destroy = (ADL_MAIN_CONTROL_DESTROY) lib.resolve("ADL_Main_Control_Destroy");
-    ADL_Adapter_NumberOfAdapters_Get = (ADL_ADAPTER_NUMBEROFADAPTERS_GET) lib.resolve("ADL_Adapter_NumberOfAdapters_Get");
-    ADL_Main_Control_Refresh = (ADL_MAIN_CONTROL_REFRESH) lib.resolve("ADL_Main_Control_Refresh");
-    ADL_Adapter_Active_Get = (ADL_ADAPTER_ACTIVE_GET) lib.resolve("ADL_Adapter_Active_Get");
-    ADL_Display_DisplayInfo_Get = (ADL_DISPLAY_DISPLAYINFO_GET) lib.resolve("ADL_Display_DisplayInfo_Get");
-    ADL_Adapter_AdapterInfo_Get = (ADL_ADAPTER_ADAPTERINFO_GET) lib.resolve("ADL_Adapter_AdapterInfo_Get");
-    ADL_Display_Position_Get = (ADL_DISPLAY_POSITION_GET) lib.resolve("ADL_Display_Position_Get");
-    ADL_Display_Size_Get = (ADL_DISPLAY_SIZE_GET) lib.resolve("ADL_Display_Size_Get");
-
-#ifdef RADIANT_LINUX
-    ADL_Adapter_XScreenInfo_Get = (ADL_ADAPTER_XSCREENINFO_GET) lib.resolve("ADL_Adapter_XScreenInfo_Get");
-    ADL_DesktopConfig_Get = (ADL_DESKTOPCONFIG_GET) lib.resolve("ADL_DesktopConfig_Get");
-    ADL_Display_XrandrDisplayName_Get = (ADL_DISPLAY_XRANDRDISPLAYNAME_GET) lib.resolve("ADL_Display_XrandrDisplayName_Get");
-#endif
-
-    if(ADL_Main_Control_Create && ADL_Main_Control_Destroy
-       && ADL_Adapter_NumberOfAdapters_Get && ADL_Main_Control_Refresh
-       && ADL_Adapter_Active_Get && ADL_Display_DisplayInfo_Get
-       && ADL_Adapter_AdapterInfo_Get && ADL_Display_Position_Get
-       && ADL_Display_Size_Get
- #ifdef RADIANT_LINUX
-       && ADL_Adapter_XScreenInfo_Get && ADL_DesktopConfig_Get
-       && ADL_Display_XrandrDisplayName_Get
- #endif
-      ) s_ok = true;
+    return false;
   }
 
-  void * adlAlloc(int size)
+  // Retrieve adapter information
+  bool getAdapterInformation( std::vector<AdapterInfo> & adapterInfo )
   {
-    return operator new(size);
-  }
-
-  void adlFree(void * ptr)
-  {
-    operator delete(ptr);
-  }
-}
-
-namespace Luminous
-{
-  ScreenDetectorAMD::ScreenDetectorAMD()
-  {
-    MULTI_ONCE(initADL();)
-  }
-
-  bool ScreenDetectorAMD::detect(int screen, QList<ScreenInfo> & results)
-  {
-    if(!s_ok) return false;
-
-    if(ADL_Main_Control_Create(adlAlloc, 1) != ADL_OK) {
-      Radiant::error("ADL Initialization error");
-      return false;
-    }
-
-    /// @todo What does this actually do?
-    ADL_Main_Control_Refresh();
-
-    // At least on Linux, this isn't the number of adapters, it's the number of
-    // total outputs in the system. For example this is 12 if you have two
-    // Eyefinity cards connected.
     int adapterCount = 0;
-    if(ADL_Adapter_NumberOfAdapters_Get(&adapterCount) != ADL_OK || adapterCount <= 0) {
-      ADL_Main_Control_Destroy();
-      return false;
+    bool success = checkADL("ADL_Adapter_NumberOfAdapters_Get", ADL_Adapter_NumberOfAdapters_Get(&adapterCount));
+    if (success) {
+      adapterInfo.resize(adapterCount);
+      memset(adapterInfo.data(), 0, adapterCount * sizeof(AdapterInfo));
+      success = checkADL("ADL_Adapter_AdapterInfo_Get", ADL_Adapter_AdapterInfo_Get( adapterInfo.data(), adapterCount * sizeof(AdapterInfo)));
     }
+    return success;
+  }
 
-    // Because we can't trust the adapter count or adapter indices, we try to
-    // determine the actual physical GPUs in the system with UDIDs (unique device id)
-    std::map<std::string, int> udidToIndex;
-    std::vector<int> activeAdapters;
-    std::vector<AdapterInfo> adapterInfoList(adapterCount);
-    memset(&adapterInfoList[0], 0, sizeof(AdapterInfo) * adapterInfoList.size());
+  // Retrieve display configuration
+  bool getDisplayMapConfig(int adapterIndex, std::vector<ADLDisplayMap> & displayMap, std::vector<ADLDisplayTarget> & displayTarget)
+  {
+    ADLDisplayMap * maps = NULL;
+    ADLDisplayTarget * targets = NULL;
+    int numDisplayMaps = 0;
+    int numDisplayTargets = 0;
 
-    /// @todo It is unknown if iSize is required to be set before calling (maybe it should be zero?)
-    for(std::size_t adapter = 0; adapter < adapterInfoList.size(); ++adapter)
-      adapterInfoList[adapter].iSize = sizeof(AdapterInfo);
+    bool success = checkADL("ADL_Display_DisplayMapConfig_Get", ADL_Display_DisplayMapConfig_Get(adapterIndex, &numDisplayMaps, &maps, &numDisplayTargets, &targets, ADL_DISPLAY_DISPLAYMAP_OPTION_GPUINFO));
+    if (success) {
+      // Copy into target containers
+      displayMap.resize(numDisplayMaps); memcpy(displayMap.data(), maps, numDisplayMaps * sizeof(ADLDisplayMap));
+      displayTarget.resize(numDisplayTargets); memcpy(displayTarget.data(), targets, numDisplayTargets * sizeof(ADLDisplayTarget));
 
-    int err = ADL_Adapter_AdapterInfo_Get(&adapterInfoList[0], int(adapterInfoList.size() * sizeof(AdapterInfo)));
-    if(err != ADL_OK) {
-      Radiant::error("ScreenDetectorAMD::detect # ADL_Adapter_AdapterInfo_Get: %d", err);
-      ADL_Main_Control_Destroy();
-      return false;
+      // Clean-up
+      adlFree(maps);
+      adlFree(targets);
     }
+    return success;
+  }
 
-#ifdef RADIANT_LINUX
-    std::vector<XScreenInfo> xscreens(adapterInfoList.size());
-    memset(&xscreens[0], 0, sizeof(XScreenInfo) * xscreens.size());
+  // Retrieve SLS (EyeFinity) configuration
+  bool getSLSMapConfig(int adapterIndex, std::vector<ADLDisplayTarget> displayTargets, ADLSLSMap & slsMap, std::vector<ADLSLSTarget> & targets, std::vector<ADLSLSMode> & modes, std::vector<ADLBezelTransientMode> & bezels, std::vector<ADLBezelTransientMode> & transients, std::vector<ADLSLSOffset> & offsets)
+  {
+    int slsIndex = 0;
+    int numDisplayTarget = (int)displayTargets.size();
+    ADLDisplayTarget * displayTarget = displayTargets.data();
 
-    err = ADL_Adapter_XScreenInfo_Get(&xscreens[0], sizeof(XScreenInfo) * xscreens.size());
-    if(err != ADL_OK) {
-      Radiant::error("ScreenDetectorAMD::detect # ADL_Adapter_XScreenInfo_Get: %d", err);
-      ADL_Main_Control_Destroy();
-      return false;
-    }
-#endif
+    bool success = false;
+    // NOTE: we don't use checkADL here since this is allowed to fail on non-SLS targets
+    if (ADL_Display_SLSMapIndex_Get(adapterIndex, numDisplayTarget, displayTarget, &slsIndex) == ADL_OK) {
+      int numSLSTargets = 0;
+      int numNativeModes = 0;
+      int numBezelModes = 0;
+      int numTransientModes = 0;
+      int numSLSOffsets = 0;
 
-    for(std::size_t i = 0; i < adapterInfoList.size(); ++i) {
-      AdapterInfo & adapterInfo = adapterInfoList[i];
+      ADLSLSTarget * slsTargets = NULL;
+      ADLSLSMode * nativeModes = NULL;
+      ADLBezelTransientMode * bezelModes = NULL;
+      ADLBezelTransientMode * transientModes = NULL;
+      ADLSLSOffset * slsOffsets = NULL;
 
-      if(udidToIndex.count(adapterInfo.strUDID) == 0) {
-        int adapter = (int)udidToIndex.size();
-        udidToIndex[adapterInfo.strUDID] = adapter;
+      if (checkADL("ADL_Display_SLSMapConfig_Get", ADL_Display_SLSMapConfig_Get(adapterIndex, slsIndex, &slsMap,
+        &numSLSTargets, &slsTargets,
+        &numNativeModes, &nativeModes,
+        &numBezelModes, &bezelModes,
+        &numTransientModes, &transientModes,
+        &numSLSOffsets, &slsOffsets,
+        ADL_DISPLAY_SLSGRID_CAP_OPTION_RELATIVETO_CURRENTANGLE)))
+      {
+        if ( slsMap.grid.iSLSGridColumn * slsMap.grid.iSLSGridRow == numDisplayTarget ) {
+          success = true;
+          targets.resize(numSLSTargets); memcpy(targets.data(), slsTargets, numSLSTargets * sizeof(ADLSLSTarget));
+          modes.resize(numNativeModes); memcpy(modes.data(), nativeModes, numNativeModes * sizeof(ADLSLSMode));
+          bezels.resize(numBezelModes); memcpy(bezels.data(), bezelModes, numBezelModes * sizeof(ADLBezelTransientMode));
+          transients.resize(numTransientModes); memcpy(transients.data(), transientModes, numTransientModes * sizeof(ADLBezelTransientMode));
+          offsets.resize(numSLSOffsets); memcpy(offsets.data(), slsOffsets, numSLSOffsets * sizeof(ADLSLSOffset));
+        }
+        else
+          Radiant::error("Number of display targets returned is not equal to the SLS grid size");
+
+        // Free resources
+        adlFree(slsTargets);
+        adlFree(nativeModes);
+        adlFree(bezelModes);
+        adlFree(transientModes);
+        adlFree(slsOffsets);
       }
+    }
+    return success;
+  }
 
-#ifdef RADIANT_LINUX
-      if(xscreens[adapterInfo.iAdapterIndex].iXScreenNum != screen) continue;
-#endif
+  // Checks validity of a display mode
+  bool isValidMode(const ADLMode & mode)
+  {
+    // Check if we have a valid orientation
+    return
+      mode.iModeValue != 0 &&
+      mode.iOrientation != -1;
+  }
 
-      int status = ADL_FALSE;
-      if(ADL_Adapter_Active_Get(adapterInfo.iAdapterIndex, &status) == ADL_OK &&
-         status == ADL_TRUE)
-        activeAdapters.push_back(adapterInfo.iAdapterIndex);
+  // Retrieve mode for a single displaytarget
+  bool getDisplayTargetMode(int adapterIndex, int displayTargetIndex, std::vector<ADLMode> & mode)
+  {
+    int numModes = 0;
+    ADLMode *modes = NULL;
+
+    // Retrieve mode for this target
+    bool success = checkADL("ADL_Display_Modes_Get", ADL_Display_Modes_Get( adapterIndex, displayTargetIndex, &numModes, &modes));
+    if (success) {
+      mode.clear();
+      // Filter out invalid modes
+      for (int i = 0; i < numModes; ++i) {
+        if (isValidMode(modes[i]))
+          mode.push_back(modes[i]);
+      }
+      adlFree(modes);
     }
 
-    if(activeAdapters.empty()) {
-      ADL_Main_Control_Destroy();
+    return success;
+  }
+
+  // Get display information for all displays on the specified adapter
+  bool getDisplayInfo(int adapterIndex, std::vector<ADLDisplayInfo> & displayInfo)
+  {
+    int displayCount = 0;
+    ADLDisplayInfo * lst = 0;
+    bool success = checkADL("ADL_Display_DisplayInfo_Get", ADL_Display_DisplayInfo_Get(adapterIndex, &displayCount, &lst, 1));
+    if (success) {
+      displayInfo.resize(displayCount); memcpy(displayInfo.data(), lst, displayCount * sizeof(ADLDisplayInfo));
+      adlFree(lst);
+    }
+    return success;
+  }
+
+  #if defined (RADIANT_LINUX)
+  bool detectLinux(int screen, QList<ScreenInfo> & results)
+  {
+    // Fetch the XScreen information
+    std::vector<XScreenInfo> xscreens(adapterInfo.size());
+    memset(xscreens.data(), 0, sizeof(XScreenInfo) * xscreens.size());
+    if (!checkADL("ADL_Adapter_XScreenInfo_Get", ADL_Adapter_XScreenInfo_Get(xscreens.data(), sizeof(XScreenInfo) * xscreens.size())))
       return false;
-    }
 
-    // Since we get lots of duplicate displays, we need to filter them with this
-    std::set<ADLDisplayID> seenDisplays;
+    std::vector<AdapterInfo> adapterInfo;
+    getAdapterInformation(adapterInfo);
+    if (adapterInfo.empty())
+      return false;
 
-    for(std::size_t i = 0; i < activeAdapters.size(); ++i) {
+    for (int adapterIdx = 0; adapterIdx < adapterInfo.size(); ++adapterIdx) {
+
+      // XScreen doesn't match the requested screen: skip
+      if(xscreens[adapterInfo.iAdapterIndex].iXScreenNum != screen) continue;
+
       AdapterInfo & adapterInfo = adapterInfoList[activeAdapters[i]];
 
-      int displayCount = 0;
-      ADLDisplayInfo * lst = 0;
-      err = ADL_Display_DisplayInfo_Get(adapterInfo.iAdapterIndex, &displayCount, &lst, 1);
-      if(err != ADL_OK) {
-        Radiant::error("ScreenDetectorAMD::detect # ADL_Display_DisplayInfo_Get: %d", err);
+      std::vector<ADLDisplayInfo> displayInfos;
+      if (!getDisplayInfo(adapterInfo.iAdapterIndex, displayInfos))
         continue;
-      }
 
-      int desktopConfig = 0;
-#ifdef RADIANT_LINUX
-      err = ADL_DesktopConfig_Get(adapterInfo.iAdapterIndex, &desktopConfig);
-      if(err != ADL_OK) {
-        adlFree(lst);
-        Radiant::error("ScreenDetectorAMD::detect # ADL_DesktopConfig_Get: %d", err);
-        continue;
-      }
-#endif
+      for(int displayIdx = 0; displayIdx < displayInfos.size(); ++displayIdx) {
+        ADLDisplayInfo & displayInfo = displayInfos[displayIdx];
 
-      for(int j = 0; j < displayCount; ++j) {
-        ADLDisplayInfo & displayInfo = lst[j];
-
-        if(seenDisplays.count(displayInfo.displayID) > 0) continue;
-        seenDisplays.insert(displayInfo.displayID);
-
-        // Don't care about disconnected outputs
-        if((ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED & displayInfo.iDisplayInfoValue) == 0) continue;
+        if((displayInfo.iDisplayInfoValue & ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED) == 0)  // Don't care about disconnected outputs
+          continue;
 
         ScreenInfo screenInfo;
         screenInfo.setName(displayInfo.strDisplayName);
-        screenInfo.setGpu("GPU-"+QString::number(udidToIndex[adapterInfo.strUDID]));
         screenInfo.setGpuName(adapterInfo.strAdapterName);
+        //screenInfo.setGpu("GPU-"+QString::number(udidToIndex[adapterInfo.strUDID]));
 
         QString type;
-        if(displayInfo.iDisplayType == ADL_DT_MONITOR)
-          type = "Monitor-";
-        else if(displayInfo.iDisplayType == ADL_DT_TELEVISION)
-          type = "TV-";
-        else if(displayInfo.iDisplayType == ADL_DT_LCD_PANEL)
-          type = "LCD-";
-        else if(displayInfo.iDisplayType == ADL_DT_DIGITAL_FLAT_PANEL)
-          type = "DFP-";
-        else if(displayInfo.iDisplayType == ADL_DT_COMPONENT_VIDEO)
-          type = "Component-";
-        else if(displayInfo.iDisplayType == ADL_DT_PROJECTOR)
-          type = "Projector-";
+        switch (displayInfo.iDisplayType)
+        {
+        case ADL_DT_MONITOR: type = "Monitor-"; break;
+        case ADL_DT_TELEVISION: type = "TV-"; break;
+        case ADL_DT_LCD_PANEL: type = "LCD-"; break;
+        case ADL_DT_DIGITAL_FLAT_PANEL: type = "DFP-"; break;
+        case ADL_DT_COMPONENT_VIDEO: type = "Component-"; break;
+        case ADL_DT_PROJECTOR: type = "Projector-"; break;
+        default:
+          type = "Unknown-";
+        }
 
         screenInfo.setConnection(type + QString::number(displayInfo.displayID.iDisplayLogicalIndex));
         screenInfo.setLogicalScreen(screen);
 
-        if(desktopConfig != ADL_DESKTOPCONFIG_RANDR12) {
-
-        int lpX = 0, lpY = 0, lpXDefault = 0, lpYDefault = 0, lpMinX = 0,
-            lpMinY = 0, lpMaxX = 0, lpMaxY = 0, lpStepX = 0, lpStepY = 0;
-        err = ADL_Display_Position_Get(adapterInfo.iAdapterIndex,
-                                       displayInfo.displayID.iDisplayLogicalIndex,
-                                       &lpX, &lpY, &lpXDefault, &lpYDefault,
-                                       &lpMinX, &lpMinY, &lpMaxX, &lpMaxY,
-                                       &lpStepX, &lpStepY);
+        // Get geometry from XRandr
+        char name[256];
+        bool err = ADL_Display_XrandrDisplayName_Get(adapterInfo.iAdapterIndex,
+          displayInfo.displayID.iDisplayLogicalIndex,
+          name, sizeof(name));
         if(err != ADL_OK) {
-          Radiant::error("ScreenDetectorAMD::detect # ADL_Display_Position_Get: %d", err);
+          Radiant::error("ScreenDetectorAMD::detect # ADL_Display_XrandrDisplayName_Get: %d", err);
           continue;
         }
-
-        int lpWidth = 0, lpHeight = 0, lpDefaultWidth = 0, lpDefaultHeight = 0,
-            lpMinWidth = 0, lpMinHeight = 0, lpMaxWidth = 0, lpMaxHeight = 0,
-            lpStepWidth = 0, lpStepHeight = 0;
-        err = ADL_Display_Size_Get(adapterInfo.iAdapterIndex,
-                                   displayInfo.displayID.iDisplayLogicalIndex,
-                                   &lpWidth, &lpHeight, &lpDefaultWidth,
-                                   &lpDefaultHeight, &lpMinWidth, &lpMinHeight,
-                                   &lpMaxWidth, &lpMaxHeight, &lpStepWidth, &lpStepHeight);
-        if(err != ADL_OK) {
-          Radiant::error("ScreenDetectorAMD::detect # ADL_Display_Size_Get: %d", err);
-          continue;
-        }
-
-        screenInfo.setGeometry(Nimble::Recti(lpX, lpY, lpX+lpWidth, lpY+lpHeight));
+        Nimble::Recti rect;
+        XRandR xrandr;
+        if(xrandr.getGeometry(screen, name, rect)) {
+          screenInfo.setGeometry(rect);
         } else {
-#ifdef RADIANT_LINUX
-          char name[256];
-          err = ADL_Display_XrandrDisplayName_Get(adapterInfo.iAdapterIndex,
-                                                  displayInfo.displayID.iDisplayLogicalIndex,
-                                                  name, sizeof(name));
-          if(err != ADL_OK) {
-            Radiant::error("ScreenDetectorAMD::detect # ADL_Display_XrandrDisplayName_Get: %d", err);
-            continue;
-          }
-          Nimble::Recti rect;
-          XRandR xrandr;
-          if(xrandr.getGeometry(screen, name, rect)) {
-            screenInfo.setGeometry(rect);
-          } else {
-            continue;
-          }
-#endif
+          continue;
         }
+
         results.push_back(screenInfo);
       }
-      adlFree(lst);
     }
+  }
+
+  #elif defined (RADIANT_WINDOWS)
+  bool detectWindows(QList< Luminous::ScreenInfo> & results)
+  {
+    std::vector<AdapterInfo> adapterInfo;
+    getAdapterInformation(adapterInfo);
+    if (adapterInfo.empty())
+      return false;
+
+    Luminous::ScreenInfo screeninfo;
+    screeninfo.setLogicalScreen(0); // Windows doesn't have a logical screen
+
+    for (int adapterIdx = 0; adapterIdx < adapterInfo.size(); ++adapterIdx) {
+      int active;
+      checkADL("ADL_Adapter_Active_Get", ADL_Adapter_Active_Get(adapterInfo[adapterIdx].iAdapterIndex, & active));
+      // Get rid of invalid adapters
+      if (active == ADL_FALSE
+        || adapterInfo[adapterIdx].iPresent == 0
+        || adapterInfo[adapterIdx].iExist == 0
+        || adapterInfo[adapterIdx].iAdapterIndex == -1)
+      {
+        continue;
+      }
+
+      // Set GPU information
+      int gpuID = 0;
+      ADL_Adapter_ID_Get(adapterInfo[adapterIdx].iAdapterIndex, &gpuID);
+      screeninfo.setGpu(QString("GPU-0x") + QString::number(gpuID,16));
+      screeninfo.setGpuName(adapterInfo[adapterIdx].strAdapterName);
+
+      // Retrieve display device name
+      DISPLAY_DEVICEA dd;
+      memset(&dd, 0, sizeof(dd));
+      dd.cb = sizeof(dd);
+      EnumDisplayDevicesA(adapterInfo[adapterIdx].strDisplayName, 0, &dd, 0);
+      screeninfo.setName(dd.DeviceString);
+
+      //
+      std::vector<ADLDisplayMap> displayMaps;
+      std::vector<ADLDisplayTarget> displayTargets;
+
+      if (!getDisplayMapConfig( adapterInfo[adapterIdx].iAdapterIndex, displayMaps, displayTargets))
+        continue;
+
+      ADLSLSMap slsMap = { 0 };
+
+      std::vector<ADLSLSTarget> slsTargets;
+      std::vector<ADLSLSMode> slsModes;
+      std::vector<ADLBezelTransientMode> bezelModes;
+      std::vector<ADLBezelTransientMode> transientModes;
+      std::vector<ADLSLSOffset> slsOffsets;
+
+      if (!getSLSMapConfig(adapterInfo[adapterIdx].iAdapterIndex, displayTargets, slsMap, slsTargets, slsModes, bezelModes, transientModes, slsOffsets))
+        continue;
+
+      // Get the display mode for each target
+      for ( int displayTargetIdx = 0; displayTargetIdx < displayTargets.size(); ++displayTargetIdx )
+      {
+        std::vector<ADLMode> targetMode;
+        if (!getDisplayTargetMode(adapterInfo[adapterIdx].iAdapterIndex, displayTargets[displayTargetIdx].displayID.iDisplayLogicalIndex, targetMode))
+          continue;
+
+        // Search the 'normal' modes
+        std::vector<ADLSLSMode>::const_iterator slsIter = std::find(slsModes.begin(), slsModes.end(), targetMode[0]);
+        std::vector<ADLBezelTransientMode>::const_iterator bezelIter;
+        if (slsIter != slsModes.end()) {
+          /// Found a 'normal' mode (without bezel correction)
+          //////////////////////////////////////////////////////////////////////////
+          // Find the SLSTarget that maps to the current display target
+          std::vector<ADLSLSTarget>::const_iterator slsTargetIter = std::find(slsTargets.begin(), slsTargets.end(), displayTargets[displayTargetIdx]);
+
+          // Determine if we're in portrait or landscape
+          bool portrait = (targetMode[0].iOrientation != 0 && targetMode[0].iOrientation != 180);
+          // Set geometry
+          int width = (portrait ? targetMode[0].iYRes : targetMode[0].iXRes) / slsMap.grid.iSLSGridColumn;
+          int height = (portrait ? targetMode[0].iXRes : targetMode[0].iYRes) / slsMap.grid.iSLSGridRow;
+          int posX = width * slsTargetIter->iSLSGridPositionX;
+          int posY = height * slsTargetIter->iSLSGridPositionY;
+
+          screeninfo.setGeometry(Nimble::Recti(posX, posY, posX + width, posY + height));
+          screeninfo.setConnection(QString("DFP-%1").arg(slsTargetIter->displayTarget.displayID.iDisplayLogicalIndex));
+          results.push_back(screeninfo);
+        } else
+        {
+          // Search bezel-corrected modes
+          bezelIter = std::find(bezelModes.begin(), bezelModes.end(), targetMode[0]);
+
+          if (bezelIter != bezelModes.end()) {
+            /// Found a bezel corrected mode
+            //////////////////////////////////////////////////////////////////////////
+            // Find the current SLS Offset
+            int currentSLSOffset = -1;
+            for ( int slsOffsetIdx = 0; slsOffsetIdx< slsOffsets.size(); slsOffsetIdx++) {
+              if ( bezelIter->iSLSModeIndex == slsOffsets[slsOffsetIdx].iBezelModeIndex &&
+                displayTargets[displayTargetIdx].displayID.iDisplayLogicalIndex == slsOffsets[slsOffsetIdx].displayID.iDisplayLogicalIndex )
+              {
+                currentSLSOffset = slsOffsetIdx;
+                break;
+              }
+            }
+
+            // Set geometry
+            int left = slsOffsets[currentSLSOffset].iBezelOffsetX;
+            int top = slsOffsets[currentSLSOffset].iBezelOffsetY;
+            int right = left + slsOffsets[currentSLSOffset].iDisplayWidth;
+            int bottom = top + slsOffsets[currentSLSOffset].iDisplayHeight;
+
+            screeninfo.setGeometry(Nimble::Recti(left, top, right, bottom));
+            screeninfo.setConnection(QString("DFP-%1").arg(slsOffsets[currentSLSOffset].displayID.iDisplayLogicalIndex));
+            results.push_back(screeninfo);
+          }
+          else
+          {
+            // Single display
+            //////////////////////////////////////////////////////////////////////////
+            // Determine if we're in portrait or landscape
+            bool portrait = (targetMode[0].iOrientation != 0 && targetMode[0].iOrientation != 180);
+            // Set geometry
+            int left = targetMode[0].iXPos;
+            int top = targetMode[0].iYPos;
+            int right = left + (portrait ? targetMode[0].iYRes : targetMode[0].iXRes);
+            int bottom = top + (portrait ? targetMode[0].iXRes : targetMode[0].iYRes);
+
+            screeninfo.setGeometry(Nimble::Recti(left, top, right, bottom));
+            screeninfo.setConnection(QString("DFP-%1").arg(targetMode[0].displayID.iDisplayLogicalIndex));
+            results.push_back(screeninfo);
+          }
+        }
+      }
+    }
+    return true;
+  }
+  #endif // PLATFORM
+}
+
+namespace Luminous
+{
+  static bool adlAvailable = false;
+
+  bool ScreenDetectorAMD::detect(int screen, QList<ScreenInfo> & results)
+  {
+    MULTI_ONCE(adlAvailable = initADL(););
+    if (!adlAvailable)
+      return false;
+
+    checkADL("ADL_Main_Control_Create", ADL_Main_Control_Create(adlAlloc, 1));
+
+#if defined (RADIANT_LINUX)
+    bool success = detectLinux(screen, results);
+#elif defined (RADIANT_WINDOWS)
+    (void)screen;
+    bool success = detectWindows(results);
+#else
+#  error "ScreenDetectorAMD Not implemented on this platform"
+#endif
 
     ADL_Main_Control_Destroy();
-    return true;
+    return success;
   }
 }

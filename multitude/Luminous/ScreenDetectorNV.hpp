@@ -8,8 +8,7 @@ namespace Luminous
   class ScreenDetectorNV
   {
   public:
-    ScreenDetectorNV();
-    virtual bool detect(int screen, QList<ScreenInfo> & results);
+    static bool detect(int screen, QList<ScreenInfo> & results);
   };
 }
 

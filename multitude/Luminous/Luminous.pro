@@ -4,7 +4,7 @@ HEADERS += BGThread.hpp
 linux-*:HEADERS += XRandR.hpp
 HEADERS += ScreenDetectorAMD.hpp
 HEADERS += ScreenDetector.hpp
-linux-*:HEADERS += ScreenDetectorNV.hpp
+HEADERS += ScreenDetectorNV.hpp
 HEADERS += HardwareColorCorrection.hpp
 HEADERS += VM1.hpp
 HEADERS += CodecRegistry.hpp
@@ -49,7 +49,7 @@ SOURCES += BGThread.cpp
 linux-*:SOURCES += XRandR.cpp
 SOURCES += ScreenDetectorAMD.cpp
 SOURCES += ScreenDetector.cpp
-linux-*:SOURCES += ScreenDetectorNV.cpp
+SOURCES += ScreenDetectorNV.cpp
 SOURCES += HardwareColorCorrection.cpp
 HEADERS += ColorCorrection.hpp
 SOURCES += CodecRegistry.cpp
@@ -96,6 +96,10 @@ LIBS += $$LIB_RADIANT \
     $$LIB_PATTERNS \
     $$LIB_GLEW
 
+win32 {
+  win64:LIBS += -lnvapi64
+  else:LIBS += -lnvapi
+}
 linux-*:LIBS += -lXNVCtrl -lXrandr
 
 INCLUDEPATH += ../Externals/adl_sdk

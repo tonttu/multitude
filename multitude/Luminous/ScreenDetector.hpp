@@ -10,7 +10,6 @@
 
 namespace Luminous
 {
-
   class ScreenInfo
   {
   public:
