@@ -776,24 +776,24 @@ namespace Radiant {
   }
 
 
-  bool BinaryData::write(Radiant::BinaryStream * stream) const
+  bool BinaryData::write(Radiant::BinaryStream & stream) const
   {
     int32_t s = pos();
-    if(stream->write(&s, 4) != 4)
+    if(stream.write(&s, 4) != 4)
       return false;
 
     // info("BinaryData::write # %d", pos());
 
-    return stream->write( & m_buf[0], s) == s;
+    return stream.write( & m_buf[0], s) == s;
   }
 
-  bool BinaryData::read(Radiant::BinaryStream * stream)
+  bool BinaryData::read(Radiant::BinaryStream & stream)
   {
     uint32_t s = 0;
     m_current = 0;
     m_total = 0;
 
-    if(stream->read(&s, 4) != 4) {
+    if(stream.read(&s, 4) != 4) {
       error("BinaryData::read # Could not read the 4 header bytes");
       return false;
     }
@@ -809,7 +809,7 @@ namespace Radiant {
 
     bzero(&m_buf[0], m_size);
 
-    int n = stream->read( & m_buf[0], s);
+    int n = stream.read( & m_buf[0], s);
     if(n != (int) s) {
       error("BinaryData::read # buffer read failed (got %d != %d)",
             n, s);

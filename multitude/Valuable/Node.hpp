@@ -304,6 +304,56 @@ namespace Valuable
     void eventSend(const QString & id, Radiant::BinaryData &);
     void eventSend(const QString & id);
 
+    template <typename P1>
+    void eventSend(const QString & id, const P1 & p1)
+    {
+      Radiant::BinaryData bd;
+      bd.write(p1);
+      eventSend(id, bd);
+    }
+
+    template <typename P1, typename P2>
+    void eventSend(const QString & id, const P1 & p1, const P2 & p2)
+    {
+      Radiant::BinaryData bd;
+      bd.write(p1);
+      bd.write(p2);
+      eventSend(id, bd);
+    }
+
+    template <typename P1, typename P2, typename P3>
+    void eventSend(const QString & id, const P1 & p1, const P2 & p2, const P3 & p3)
+    {
+      Radiant::BinaryData bd;
+      bd.write(p1);
+      bd.write(p2);
+      bd.write(p3);
+      eventSend(id, bd);
+    }
+
+    template <typename P1, typename P2, typename P3, typename P4>
+    void eventSend(const QString & id, const P1 & p1, const P2 & p2, const P3 & p3, const P4 & p4)
+    {
+      Radiant::BinaryData bd;
+      bd.write(p1);
+      bd.write(p2);
+      bd.write(p3);
+      bd.write(p4);
+      eventSend(id, bd);
+    }
+
+    template <typename P1, typename P2, typename P3, typename P4, typename P5>
+    void eventSend(const QString & id, const P1 & p1, const P2 & p2, const P3 & p3, const P4 & p4, const P5 & p5)
+    {
+      Radiant::BinaryData bd;
+      bd.write(p1);
+      bd.write(p2);
+      bd.write(p3);
+      bd.write(p4);
+      bd.write(p5);
+      eventSend(id, bd);
+    }
+
     void defineShortcut(const QString & name);
 
     /// The sender of the event, can be read in processMessage()

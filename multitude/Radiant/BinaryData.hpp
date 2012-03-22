@@ -21,6 +21,7 @@
 #include <Nimble/Frame4.hpp>
 
 #include "Export.hpp"
+#include "TimeStamp.hpp"
 
 #include <stdint.h>
 #include <vector>
@@ -133,6 +134,41 @@ namespace Radiant {
     /// Writes a 4D 32-bit float vector to the data buffer
     void writeVector4Float32(const Nimble::Vector4f &);
 
+    /// Writes a 32-bit floating point number to the data buffer
+    inline void write(float v) { writeFloat32(v); }
+    /// Writes a 32-bit floating point number to the data buffer
+    inline void write(double v) { writeFloat64(v); }
+    /// Writes a 32-bit integer to the data buffer
+    inline void write(int32_t v) { writeInt32(v); }
+    /// Writes a 64-bit integer to the data buffer
+    inline void write(int64_t v) { writeInt64(v); }
+    /// Write a 64-bit time-stamp to the data buffer
+    /// The timestamp uses Radiant::TimeStamp internal structure (40+24
+    /// bit fixed-point value).
+    /// @param v time-stamp to write
+    inline void write(const Radiant::TimeStamp & ts) { writeTimeStamp(ts.value()); }
+
+    /// Write a null-terminated string to the buffer
+    inline void write(const char * str) { writeString(str); }
+    /// Write a string to the buffer
+    /// @param str string to write
+    inline void write(const QString & str) { writeString(str); }
+    /// Writes a 2D 32-bit floating point vector to the data buffer
+    inline void write(Nimble::Vector2f v) { writeVector2Float32(v); }
+    /// Writes a 3D 32-bit floating point vector to the data buffer
+    inline void write(Nimble::Vector3f v) { writeVector3Float32(v); }
+
+    /// Writes a 2D 32-bit integer vector to the data buffer
+    inline void write(Nimble::Vector2i v) { writeVector2Int32(v); }
+    /// Writes a 3D 32-bit integer vector to the data buffer
+    inline void write(Nimble::Vector3i v) { writeVector3Int32(v); }
+
+    /// Writes a 4D 32-bit integer vector to the data buffer
+    inline void write(const Nimble::Vector4i & v) { writeVector4Int32(v); }
+
+    /// Writes a 4D 32-bit float vector to the data buffer
+    inline void write(const Nimble::Vector4f & v) { writeVector4Float32(v); }
+
     /// Appends another BinaryData object to this
     void append(const BinaryData & that);
 
@@ -210,9 +246,9 @@ namespace Radiant {
     inline void setTotal(unsigned bytes) { if(bytes > m_size) ensure(bytes - m_size); m_total = bytes; }
 
     /// Writes the buffer into a stream
-    bool write(Radiant::BinaryStream *) const;
+    bool write(Radiant::BinaryStream &) const;
     /// Reads the buffer from a stream
-    bool read(Radiant::BinaryStream *);
+    bool read(Radiant::BinaryStream &);
 
     /// Returns a pointer to the buffer
     inline char * data() { return & m_buf[0]; }
