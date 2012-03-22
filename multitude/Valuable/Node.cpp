@@ -315,8 +315,6 @@ namespace Valuable
       Radiant::error("Node::setValue # v8::Value type External is not supported");
     } else if (v->IsObject()) {
       Radiant::error("Node::setValue # v8::Value type Object is not supported");
-    } else if (v->IsArray()) {
-      Radiant::error("Node::setValue # v8::Value type Array is not supported");
     } else if (v->IsFunction()) {
       Radiant::error("Node::setValue # v8::Value type Function is not supported");
     } else if (v->IsNull()) {
