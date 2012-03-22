@@ -238,7 +238,9 @@ namespace Luminous
     /// @param internalFormat specify the internal OpenGL texture format. If
     /// zero, set the format automatically
     /// @return true on success
-    bool loadImage(const Luminous::Image & image, bool buildMipmaps = true, int internalFormat = 0);
+    bool loadImage(GLenum textureUnit, const Luminous::Image & image, bool buildMipmaps = true, int internalFormat = 0);
+    bool loadImage(const Luminous::Image & image, bool buildMipmaps = true, int internalFormat = 0)
+    { return loadImage(GL_TEXTURE0, image, buildMipmaps, internalFormat); }
 #ifndef LUMINOUS_OPENGLES
     /// Load the texture from a compressed image
     /// @param image compressed image to load from
@@ -247,10 +249,17 @@ namespace Luminous
 #endif // LUMINOUS_OPENGLES
 
     /// Load the texture from raw data, provided by the user
-    bool loadBytes(GLenum internalFormat, int w, int h,
+    bool loadBytes(GLenum textureUnit, GLenum internalFormat, int w, int h,
                    const void* data,
                    const PixelFormat& srcFormat,
                    bool buildMipmaps = true);
+
+    /// Load the texture from raw data, provided by the user
+    bool loadBytes(GLenum internalFormat, int w, int h,
+                   const void* data,
+                   const PixelFormat& srcFormat,
+                   bool buildMipmaps = true)
+    { return loadBytes(GL_TEXTURE0, internalFormat, w, h, data, srcFormat, buildMipmaps); }
 
     /// Load a sub-texture.
     void loadSubBytes(int x, int y, int w, int h, const void * subData, const PixelFormat & srcFormat);

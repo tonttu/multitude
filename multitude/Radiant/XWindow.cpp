@@ -263,7 +263,9 @@ namespace Radiant
   XWindow::XWindow(const WindowConfig & hint, const char* caption)
     : m_display(0),
     m_drawable(0),
-    m_context(0)
+    m_context(0),
+    m_autoRepeats(256),
+    m_ignoreNextMotionEvent(false)
   {
     int (*handler)(Display*, XErrorEvent*) = XSetErrorHandler(errorHandler);
 
@@ -428,6 +430,9 @@ namespace Radiant
     // root window, do nothing
     if (m_drawable == 0) return;
 
+    // Changing the cursor will emit motion event, we ignore this
+    m_ignoreNextMotionEvent = true;
+
     if (show)
       XDefineCursor(m_display, m_drawable, 0);
     else
@@ -458,8 +463,13 @@ namespace Radiant
 
     float since = m_lastAction.sinceSecondsD();
 
-    if(since < 20) {
-      if(since > 5.0)
+    // The cursor is hidden repeatedly for several frames in succession to make
+    // sure it is hidden
+    const float hideCursorUpperLimit = 7.f;
+    const float hideCursorLowerLimit = 5.f;
+
+    if(since < hideCursorUpperLimit) {
+      if(since > hideCursorLowerLimit)
         showCursor(false);
       else
         showCursor(true);
@@ -542,7 +552,7 @@ namespace Radiant
 
     while (XCheckMaskEvent(m_display, X11_CHECK_EVENT_MASK, &event))
     {
-      bool nothing = false;
+      bool autoRepeat = false;
 
       switch (event.type)
       {
@@ -550,6 +560,9 @@ namespace Radiant
       case KeyPress:
         if(hook)
           qApp->x11ProcessEvent(&event);
+
+        // Reset cursor hide counter
+        m_lastAction = Radiant::TimeStamp::getTime();
         break;
       case MotionNotify:
         {
@@ -558,6 +571,10 @@ namespace Radiant
             //hook->handleMouseMove(event.xmotion.x, event.xmotion.y, event.xmotion.state);          
             qApp->x11ProcessEvent(&event);
           }
+          // Reset cursor hide counter only if this event is not to be ignored
+          if(!m_ignoreNextMotionEvent)
+            m_lastAction = Radiant::TimeStamp::getTime();
+          m_ignoreNextMotionEvent = false;
           break;
         }
       case ButtonPress:
@@ -576,6 +593,9 @@ namespace Radiant
           //dispatchXMouseEvent(hook, event.xbutton);
           qApp->x11ProcessEvent(&event);
         }
+
+        // Reset cursor hide counter
+        m_lastAction = Radiant::TimeStamp::getTime();
         break;
       case ConfigureNotify:
         /*std::cout << "ConfigureNotify: xy (" << event.xconfigure.x << ", " << event.xconfigure.y
@@ -596,13 +616,7 @@ namespace Radiant
 
       default:
         //         cout << "!! Unknown event of type " << event.type << endl;
-        nothing = true;
         break;
-      }
-
-      if(!nothing) {
-        m_lastAction = Radiant::TimeStamp::getTime();
-        showCursor(true);
       }
     }
   }

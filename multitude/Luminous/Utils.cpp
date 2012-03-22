@@ -1669,6 +1669,9 @@ namespace Luminous {
 
   bool Utils::glCheck(const char * msg)
   {
+#ifdef RADIANT_RELEASE
+	return true;
+#endif
     bool result = true;
     GLenum e, e2 = GL_NO_ERROR;
 

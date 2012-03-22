@@ -19,6 +19,7 @@
 
 #include <Radiant/Sleep.hpp>
 #include <Radiant/TimeStamp.hpp>
+#include <Radiant/ColorUtils.hpp>
 
 #include <Luminous/Utils.hpp>
 #include <Luminous/PixelFormat.hpp>
@@ -36,7 +37,13 @@
 #include <QtGui/QMouseEvent>
 #include <QtGui/QPainter>
 
+#include <QFile>
+#include <QTextStream>
+#include <QSettings>
+
 #include <cmath>
+
+const QString COLORCHECK_LOGFILE("colorcheck.log");
 
 namespace {
   Radiant::Mutex s_openCameraMutex;
@@ -191,16 +198,25 @@ namespace FireView {
       m_frameCount++;
       m_camera->doneImage();
 
+      bool updated = false;
+
       for(unsigned i = 0; i < m_features.size(); i++) {
+
         if(m_featureSend[i]) {
           m_camera->setFeatureRaw(m_features[i].id, m_features[i].value);
           m_featureSend[i] = false;
+          updated = true;
         }
         else if(m_autoSend[i]) {
           m_camera->setFeature(m_features[i].id, -1);
           m_autoSend[i] = false;
+          updated = true;
         }
       }
+
+      if(updated)
+        m_camera->getFeatures( & m_features);
+
 
       Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
 
@@ -342,8 +358,10 @@ namespace FireView {
 
     {
       m_featureSend.resize(m_features.size());
+      m_autoSend.resize(m_features.size());
 
       for(unsigned i = 0; i < m_features.size(); i++) {
+        m_autoSend[i] = false;
         m_featureSend[i] = false;
 
         Radiant::VideoCamera::CameraFeature & info = m_features[i];
@@ -365,7 +383,7 @@ namespace FireView {
         }
       }
 
-      m_autoSend = m_featureSend;
+      // m_autoSend = m_featureSend;
     }
 
     m_camera->setCaptureTimeout(8000);
@@ -385,7 +403,12 @@ namespace FireView {
     long unsigned bandwidth = width * height * 8 * (int)fps;
     s_bandwidth += bandwidth;
 
-    qDebug("Total bandwidth required: %lu Mbps for width=%d, heigh=%d, fps=%f", s_bandwidth >> 20, width, height, fps);
+    qDebug("Total bandwidth required: %lu Mbps for width=%d, height=%d, fps=%f", s_bandwidth >> 20, width, height, fps);
+
+    const size_t FW400_BW_LIMIT = 0.8 * (400 << 20);
+
+    if(s_bandwidth > FW400_BW_LIMIT)
+      Radiant::warning("Requested (%ld Mbps) FireWire bandwidth exceeds 80 percent (%ld Mbps) of FW400 bus.", s_bandwidth >> 20, FW400_BW_LIMIT);
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -395,6 +418,7 @@ namespace FireView {
   Radiant::VideoCamera::TriggerPolarity CamView::m_triggerPolarity =
       Radiant::VideoCamera::TRIGGER_ACTIVE_UNDEFINED;
   int CamView::m_format7mode = 1;
+  int CamView::m_binningMethod = Binning::BINNING_TACTION7AB;
 
   int CamView::m_debayer = 0;
   bool CamView::m_colorCheck = false;
@@ -403,6 +427,8 @@ namespace FireView {
   std::map<Radiant::VideoCamera::FeatureType, uint32_t> CamView::s_defaults;
 
   static int __interval = 50;
+
+  Nimble::Vector3f CamView::s_colorBalanceCoeffs(1.f, 1.f, 1.f);
 
   CamView::CamView(QWidget * parent)
       : QGLWidget(parent),
@@ -418,6 +444,10 @@ namespace FireView {
       m_foo(300, 100, QImage::Format_ARGB32)
   {
     m_colorBalance.clear();
+    m_chromaticity.clear();
+    //m_binning.defineBins_ANSI_C78_377();
+    m_binning.defineBins((Binning::Layout) m_binningMethod);
+
     // QTimer::singleShot(1000, this, SLOT(locate()));
     connect( & m_timer, SIGNAL(timeout()), this, SLOT(updateGL()));
     bzero(m_averages, sizeof(m_averages));
@@ -558,6 +588,23 @@ namespace FireView {
   {
     if(e->key() == Qt::Key_Space) {
       m_doAnalysis = true;
+    } else if(e->key() == Qt::Key_L && m_colorCheck) {
+
+      QFile file(COLORCHECK_LOGFILE);
+      if(!file.open(QIODevice::WriteOnly | QIODevice::Append))
+        Radiant::error("Failed to open log file '%s' for writing", file.fileName().toUtf8().data());
+      else {
+        QTextStream ts(&file);
+
+        int dcuId = getDCUId();
+
+        QString line = QString("%7,%1,%2,%3,%4,%5,%6\n").arg(m_colorBalance.x,0,'f',4).arg(m_colorBalance.y,0,'f',4).arg(m_colorBalance.z,0,'f',4).arg(m_chromaticity.x,0,'f',4).arg(m_chromaticity.y,0,'f',4).arg(m_binning.classify(m_chromaticity)).arg(dcuId, 4, 10, QChar('0'));
+        ts << line;
+
+        setDCUId(++dcuId);
+
+        Radiant::warning("LOGGED COLOR VALUES: %s", line.toUtf8().data());
+      }
     }
     else
       e->ignore();
@@ -565,6 +612,9 @@ namespace FireView {
 
   void CamView::paintGL()
   {
+    // We must initialize GLEW for OpenGL to work
+    Luminous::initLuminous(true);
+
     using Luminous::PixelFormat;
 
     Luminous::RenderContext::setThreadContext( & m_context);
@@ -603,6 +653,9 @@ namespace FireView {
           m_rgb.allocateMemory(Radiant::IMAGE_RGB_24, frame.width() / 2, frame.height() / 2);
 
         Radiant::ImageConversion::bayerToRGB(&frame, &m_rgb);
+
+        // Do color correction
+        Radiant::ColorUtils::colorBalance(m_rgb, s_colorBalanceCoeffs);
 
         m_tex->loadBytes(GL_RGB, m_rgb.width(), m_rgb.height(),
                          m_rgb.m_planes[0].m_data,
@@ -769,6 +822,24 @@ namespace FireView {
       glColor3f(0, 0, 1);
       glRectf(50, bot, 60, bot - barHeight * m_colorBalance[2]);
 
+      // Display chromaticity coordinates
+      glColor3f(1.f, 1.f, 1.f);
+      char buf[64];
+      sprintf(buf, "Chromaticity %.4f, %.4f", m_chromaticity.x, m_chromaticity.y);
+      renderText(5, 68, buf);
+
+      sprintf(buf, "RGB: %.4f, %.4f, %.4f", m_colorBalance.x, m_colorBalance.y, m_colorBalance.z);
+      renderText(5, 55, buf);
+
+      sprintf(buf, "Class: %s", m_binning.classify(m_chromaticity).toUtf8().data());
+      renderText(5, 81, buf);
+
+      int dcuId = getDCUId();
+
+      sprintf(buf, "DCU Id: %04d", dcuId);
+      renderText(5, 94, buf);
+
+      m_binning.debugVisualize(width(), height());
     }
 
     glColor3f(1.0f, 1.0f, 1.0f);
@@ -976,6 +1047,36 @@ namespace FireView {
     if(peak <= 0.5f)
       peak = 1;
 
+
+    // Compute normalized average RGB from the image
     m_colorBalance =  Nimble::Vector3(sum[0] / peak, sum[1] / peak, sum[2] / peak);
+
+    // Convert to CIE XYZ color space
+    /// @todo the conversion assumes linear RGB color space as source, is this correct?
+    Nimble::Vector3f CIEXYZ;
+
+    Radiant::ColorUtils::rgbToCIEXYZ(m_colorBalance, CIEXYZ);
+
+    // Convert to CIE xyY color space (chromaticity + luminance)
+    m_chromaticity.x = CIEXYZ.x / CIEXYZ.sum();
+    m_chromaticity.y = CIEXYZ.y / CIEXYZ.sum();
+
+//    Radiant::warning("CamView::checkColorBalance # mean rgb (%f,%f,%f)", m_colorBalance.x, m_colorBalance.y, m_colorBalance.z);
+//    Radiant::warning("CamView::checkColorBalance # XYZ (%f,%f,%f)", CIEXYZ.x, CIEXYZ.y, CIEXYZ.z);
+//    Radiant::warning("CamView::checkColorBalance # chromacity (%f,%f)", m_chromaticity.x, m_chromaticity.y);
+  }
+
+  int CamView::getDCUId() const
+  {
+    QSettings settings("MultiTouch", "FireView");
+
+    return settings.value("colorcheck/dcu_count", 1).toUInt();
+  }
+
+  void CamView::setDCUId(int id)
+  {
+    QSettings settings("MultiTouch", "FireView");
+
+    settings.setValue("colorcheck/dcu_count", id);
   }
 }

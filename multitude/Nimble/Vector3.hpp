@@ -34,13 +34,13 @@ namespace Nimble {
     /// Constructs a vector initializing it to given values
     inline Vector3T(T cx, T cy, T cz) : x(cx), y(cy), z(cz) {}
     /// Constructs a vector copying values from memory
-    template <class K> Vector3T(const K * v) { x = (T)v[0]; y = (T)v[1]; z = (T)v[2]; }
+    template <class S> inline Vector3T(const S * v) { x = (T)v[0]; y = (T)v[1]; z = (T)v[2]; }
     /// Constructs a vector copying it from another vector
-    template <class K> Vector3T(const Vector3T<K>& v)		   { x = (T)v.x;	y = (T)v.y; z = (T)v.z; }
+    template <class S> inline Vector3T(const Vector3T<S>& v)		   { x = (T)v.x;	y = (T)v.y; z = (T)v.z; }
     /// Constructs a vector using a 2d vector and a scalar component
-    template <class K> Vector3T(const Vector2T<K>& v, K az)		   { x = (T)v.x;	y = (T)v.y; z = az; }
+    template <class S> inline Vector3T(const Vector2T<S>& v, S az)		   { x = (T)v.x;	y = (T)v.y; z = az; }
     /// Copies a vector
-    template <class K> Vector3T& operator=(const Vector3T<K>& v)	   { x = (T)v.x; y = (T)v.y; z = (T)v.z; return *this; }
+    template <class S> inline Vector3T& operator=(const Vector3T<S>& v)	   { x = (T)v.x; y = (T)v.y; z = (T)v.z; return *this; }
     /// Fills the vector with zeroes
     inline Vector3T&	clear		(void)				   { x = (T)(0);  y = (T)(0); z = (T)(0); return *this;	}
     /// Sets the vector to given values

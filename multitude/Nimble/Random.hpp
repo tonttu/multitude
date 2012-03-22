@@ -71,9 +71,7 @@ namespace Nimble {
     /// Random numbers between 0 and x-1
     inline uint32_t rand0X(uint32_t x)
     {
-      uint32_t tmp = m_val * m_randMul + 1;
-      m_val = tmp;
-      return tmp % x;
+      return rand32() % x;
     }
 
     /// Random numbers between 0 and x-1

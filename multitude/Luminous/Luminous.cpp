@@ -58,6 +58,10 @@ namespace Luminous
 
   bool initLuminous(bool initOpenGL)
   {
+    // Only run this function once. First from simpleInit then later from
+    // RenderThread if the first run fails.
+    MULTI_ONCE_BEGIN
+
     initDefaultImageCodecs();
 
     if(initOpenGL) {
@@ -115,6 +119,8 @@ namespace Luminous
       Luminous::CPUMipmaps::s_dxtSupported = dxtSupport;
 #endif
     }
+
+    MULTI_ONCE_END
 
     return true;
   }

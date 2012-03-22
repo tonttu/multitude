@@ -5,6 +5,8 @@
 #include <Luminous/GLKeyStone.hpp>
 
 #include <Valuable/DOMElement.hpp>
+#include <Nimble/Vector2.hpp>
+#include <Nimble/Vector4.hpp>
 
 namespace Luminous {
 
@@ -73,7 +75,7 @@ namespace Luminous {
     return index;
   }
 
-  bool GLKeyStone::moveVertex(Vector2 loc)
+  bool GLKeyStone::moveVertex(Nimble::Vector2 loc)
   {
     selectVertex(loc);
 
@@ -87,14 +89,14 @@ namespace Luminous {
     return true;
   }
 
-  void GLKeyStone::selectVertex(Vector2 loc)
+  void GLKeyStone::selectVertex(Nimble::Vector2 loc)
   {
     m_selected = closestVertex(loc);
   }
 
   void GLKeyStone::rotateVertices()
   {
-    Vector2 v = m_vertices[0].asVector();
+    Nimble::Vector2 v = m_vertices[0].asVector();
 
     m_vertices[0] = m_vertices[1].asVector();
     m_vertices[1] = m_vertices[2].asVector();
@@ -143,10 +145,10 @@ namespace Luminous {
                   g, h, 0, 1);
   }
 
-  Vector4 GLKeyStone::project(Vector2 v) const
+  Nimble::Vector4 GLKeyStone::project(Nimble::Vector2 v) const
   {
-    Vector4 tmp(v.x, v.y, 0.5, 1.0);
-    Vector4 p = m_matrix * tmp;
+    Nimble::Vector4 tmp(v.x, v.y, 0.5, 1.0);
+    Nimble::Vector4 p = m_matrix * tmp;
 
     // g * u + h * v + 1
     float zscale = m_matrix[3][0] * v.x + m_matrix[3][1] * v.y + 1.0f;
@@ -154,10 +156,10 @@ namespace Luminous {
     return p;
   }
 
-  Vector4 GLKeyStone::projectCorrected(const Nimble::Matrix4 & m, Nimble::Vector2 v)
+  Nimble::Vector4 GLKeyStone::projectCorrected(const Nimble::Matrix4 & m, Nimble::Vector2 v)
   {
-    Vector4 tmp(v.x, v.y, 0.0, 1.0);
-    Vector4 p = m * tmp;
+    Nimble::Vector4 tmp(v.x, v.y, 0.0, 1.0);
+    Nimble::Vector4 p = m * tmp;
 
     // g * u + h * v + 1
     float zscale = m[3][0] * v.x + m[3][1] * v.y + 1.0f;
@@ -208,26 +210,25 @@ namespace Luminous {
     glBegin(GL_TRIANGLE_STRIP);
 
     glVertex2f(0, 0);
-    glVertex2fv(closest(Vector2(0, 0)).data());
+    glVertex2fv(closest(Nimble::Vector2(0, 0)).data());
 
     glVertex2f(1, 0);
-    glVertex2fv(closest(Vector2(1, 0)).data());
+    glVertex2fv(closest(Nimble::Vector2(1, 0)).data());
 
     glVertex2f(1, 1);
-    glVertex2fv(closest(Vector2(1, 1)).data());
+    glVertex2fv(closest(Nimble::Vector2(1, 1)).data());
 
     glVertex2f(0, 1);
-    glVertex2fv(closest(Vector2(0, 1)).data());
+    glVertex2fv(closest(Nimble::Vector2(0, 1)).data());
 
     glVertex2f(0, 0);
-    glVertex2fv(closest(Vector2(0, 0)).data());
+    glVertex2fv(closest(Nimble::Vector2(0, 0)).data());
 
     glEnd();
 #endif
   }
 
-
-  Vector2 GLKeyStone::closest(Vector2 loc) const
+  Nimble::Vector2 GLKeyStone::closest(Nimble::Vector2 loc) const
   {
     int index = 0;
     float best = (m_vertices[0].asVector() - loc).length();

@@ -250,14 +250,14 @@ namespace Luminous
     return loadImage(img, buildMipmaps);
   }
 
-  bool Texture2D::loadImage(const Luminous::Image & image, bool buildMipmaps, int internalFormat)
+  bool Texture2D::loadImage(GLenum textureUnit, const Luminous::Image & image, bool buildMipmaps, int internalFormat)
   {
     // If internal format is not specified, use the number of channels to let
     // the driver decide what to do.
     // See http://www.opengl.org/sdk/docs/man/xhtml/glTexImage2D.xml
     int iformat = (internalFormat ? internalFormat : image.pixelFormat().numChannels());
 
-    return loadBytes(iformat,
+    return loadBytes(textureUnit, iformat,
                      image.width(), image.height(),
                      image.bytes(),
                      image.pixelFormat(), buildMipmaps);
@@ -309,7 +309,7 @@ namespace Luminous
   }
 #endif // LUMINOUS_OPENGLES
 
-  bool Texture2D::loadBytes(GLenum internalFormat, int w, int h,
+  bool Texture2D::loadBytes(GLenum textureUnit, GLenum internalFormat, int w, int h,
                             const void * data,
                             const PixelFormat& srcFormat,
                             bool buildMipmaps)
@@ -340,7 +340,7 @@ namespace Luminous
     m_height = h;
     m_haveMipmaps = buildMipmaps;
 
-    bind();
+    bind(textureUnit);
 
     long used = consumesBytes();
 
@@ -586,7 +586,12 @@ namespace Luminous
     bind(textureUnit);
 
     // Flush the data by drawing a zero-size triangle
-    glColor4f(0,0,0,0);
+
+    /// @todo This is hazardous. We have no idea what shader etc. is active
+    /// when this is called. Also this function must not have side-effects like
+    /// changing OpenGL color as it breaks rendering in Widget-level.
+    //glColor4f(0,0,0,0);
+
     glBegin(GL_TRIANGLES);
     glVertex2f(0,0);
     glVertex2f(0,0);

@@ -32,6 +32,7 @@
 
 #include <QFileInfo>
 #include <QDir>
+#include <QDateTime>
 
 #ifdef RADIANT_WINDOWS
 #include <io.h>
@@ -275,11 +276,16 @@ namespace Radiant
   /// @todo why is the return value not a TimeStamp?
   unsigned long int FileUtils::lastModified(const QString & filePath)
   {
-    struct stat file;
-    if(stat(filePath.toUtf8().data(), &file) == -1) {
+    QFileInfo fi(filePath);
+
+    if(!fi.exists()) {
+      Radiant::error("FileUtils::lastModified # file (%s) does not exist", filePath.toUtf8().data());
       return 0;
     }
-    return file.st_mtime;
+
+    QDateTime newer = std::max(fi.created(), fi.lastModified());
+
+    return newer.toTime_t();
   }
 
   void FileUtils::indent(FILE * f, int levels)

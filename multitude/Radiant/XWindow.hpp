@@ -82,6 +82,9 @@ namespace Radiant
     Radiant::TimeStamp m_lastAction;
 
     X11GLContext * m_context;
+    std::vector<bool> m_autoRepeats;
+
+    bool m_ignoreNextMotionEvent;
 
     void showCursor(bool show);
   };
