@@ -200,6 +200,7 @@ namespace {
     if (!checkADL("ADL_Adapter_XScreenInfo_Get", ADL_Adapter_XScreenInfo_Get(xscreens.data(), sizeof(XScreenInfo) * xscreens.size())))
       return false;
 
+    std::set<ADLDisplayID> uniqueDisplays;
     for (int adapterIdx = 0; adapterIdx < adapterInfo.size(); ++adapterIdx) {
 
       // XScreen doesn't match the requested screen: skip
@@ -214,13 +215,19 @@ namespace {
       for(int displayIdx = 0; displayIdx < displayInfos.size(); ++displayIdx) {
         const ADLDisplayInfo & currentDisplay = displayInfos[displayIdx];
 
-        if((currentDisplay.iDisplayInfoValue & ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED) == 0)  // Don't care about disconnected outputs
+	if (uniqueDisplays.find(currentDisplay.displayID) != uniqueDisplays.end()                   // Already seen this display
+            ||(currentDisplay.iDisplayInfoValue & ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED ) == 0)  // Don't care about disconnected outputs
           continue;
+
+        uniqueDisplays.insert(currentDisplay.displayID);
 
         Luminous::ScreenInfo screenInfo;
         screenInfo.setName(currentDisplay.strDisplayName);
         screenInfo.setGpuName(currentAdapter.strAdapterName);
-        //screenInfo.setGpu("GPU-"+QString::number(udidToIndex[adapterInfo.strUDID]));
+
+        int gpuID = 0;
+        ADL_Adapter_ID_Get(adapterInfo[adapterIdx].iAdapterIndex, &gpuID);
+        screenInfo.setGpu(QString("GPU-0x") + QString::number(gpuID,16));
 
         QString type;
         switch (currentDisplay.iDisplayType)
