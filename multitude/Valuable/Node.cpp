@@ -199,8 +199,8 @@ namespace Valuable
 
     // Release memory for any value objects that are left (should be only
     // heap-allocated at this point)
-    for(container::iterator it = m_values.begin(); it != m_values.end(); ++it)
-      delete it->second;
+    while(!m_values.empty())
+      delete m_values.begin()->second;
   }
 
   Attribute * Node::getValue(const QString & name)
@@ -323,8 +323,6 @@ namespace Valuable
       Radiant::error("Node::setValue # v8::Value type External is not supported");
     } else if (v->IsObject()) {
       Radiant::error("Node::setValue # v8::Value type Object is not supported");
-    } else if (v->IsArray()) {
-      Radiant::error("Node::setValue # v8::Value type Array is not supported");
     } else if (v->IsFunction()) {
       Radiant::error("Node::setValue # v8::Value type Function is not supported");
     } else if (v->IsNull()) {

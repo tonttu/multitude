@@ -239,8 +239,8 @@ namespace Luminous {
       Rect m_graphicsBounds;
       float      m_pixelSizeCm;
       Shader * m_colorCorrectionShader;
-      ColorCorrection m_colorCorrection;
       Collectable m_colorCorrectionTextureKey;
+      ColorCorrection m_colorCorrection;
     };
 
     /** One OpenGL window.

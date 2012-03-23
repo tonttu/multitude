@@ -170,7 +170,6 @@ namespace Luminous {
         m_colorCorrection.fillAsBytes(&tmp[0]);
 
         GLRESOURCE_ENSURE2(Texture1D, colorCorrectionTexture, &m_colorCorrectionTextureKey);
-
         colorCorrectionTexture->loadBytes(GL_RGB, 256,
                                             &tmp[0],
                                             PixelFormat::rgbUByte(), false);
@@ -200,9 +199,7 @@ namespace Luminous {
       glColor3f(1, 1, 1);
 
       if(useColorCorrection) {
-
         GLRESOURCE_ENSURE2(Texture1D, colorCorrectionTexture, &m_colorCorrectionTextureKey);
-
         colorCorrectionTexture->bind(GL_TEXTURE1);
 
         glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
