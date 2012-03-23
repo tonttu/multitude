@@ -66,6 +66,7 @@ namespace std
 #undef NEED_MAKE_SHARED
 #endif
 
+/// @todo seems broken, doesn't do anything (esa)
 // #define INTRUSIVE_PTR_DEBUG
 #ifdef INTRUSIVE_PTR_DEBUG
 
