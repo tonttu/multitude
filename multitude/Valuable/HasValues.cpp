@@ -80,8 +80,8 @@ namespace Valuable
 
     // Release memory for any value objects that are left (should be only
     // heap-allocated at this point)
-    for(container::iterator it = m_values.begin(); it != m_values.end(); ++it)
-      delete it->second;
+    while(!m_values.empty())
+      delete m_values.begin()->second;
   }
 
   ValueObject * HasValues::getValue(const std::string & name)
