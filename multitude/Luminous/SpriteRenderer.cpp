@@ -25,10 +25,11 @@ namespace Luminous {
   using namespace Radiant;
 
   SpriteRenderer::Sprite::Sprite()
-    : m_location(0,0),
-    m_velocity(1,0),
-    m_color(1, 1, 1, 1),
-    m_size(10)
+    : m_location(0,0)
+    , m_velocity(1,0)
+    , m_color(1, 1, 1, 1)
+    , m_size(10)
+    , m_rotation(0.f)
   {}
 
   ///////////////////////////////////////////////////////////////////
@@ -54,8 +55,8 @@ namespace Luminous {
   public:
 
     Internal()
-      : m_blendFunc(Luminous::RenderContext::BLEND_ADDITIVE),
-      m_velocityScale(0.0f)
+      : m_blendFunc(Luminous::RenderContext::BLEND_ADDITIVE)
+      , m_velocityScale(0.0f)
     {
       // Build a texture that will be used in this widget
       /* Maybe different widgets should share the texture to save a bit of resources.
@@ -149,6 +150,7 @@ namespace Luminous {
       error("SpriteRenderer::SpriteRenderer # Could not locate shaders");
     }
     else {
+      Radiant::info("Using shaders from %s", shaderPath.c_str());
       m_data->m_shader.loadFragmentShader(shaderPath + "/sprites.fs");
       m_data->m_shader.loadVertexShader(shaderPath + "/sprites.vs");
       m_data->m_shader.loadGeometryShader(shaderPath + "/sprites.gs");
@@ -165,7 +167,7 @@ namespace Luminous {
     m_data->m_sprites.resize(n);
   }
 
-  size_t SpriteRenderer::spriteCount()
+  size_t SpriteRenderer::spriteCount() const
   {
     return m_data->m_sprites.size();
   }
@@ -207,6 +209,9 @@ namespace Luminous {
     glPointSize(4);
     glDisable(GL_TEXTURE_2D);
     glColor4f(1, 1, 1, 0.1);
+
+    glEnable(GL_CLIP_DISTANCE0);
+
     glDrawArrays(GL_POINTS, 0, n);
 
     glDisableClientState(GL_VERTEX_ARRAY);
@@ -220,14 +225,13 @@ namespace Luminous {
     if(!prog->isLinked()) {
       prog->setProgramParameter(GL_GEOMETRY_INPUT_TYPE_EXT, GL_POINTS);
       prog->setProgramParameter(GL_GEOMETRY_OUTPUT_TYPE_EXT, GL_TRIANGLE_STRIP);
-      prog->setProgramParameter(GL_GEOMETRY_VERTICES_OUT_EXT, 6);
+      prog->setProgramParameter(GL_GEOMETRY_VERTICES_OUT_EXT, 4);
 
       if(!prog->link()) {
         error("When linking program: %s", prog->linkerLog());
         return;
       }
     }
-
 
     m_data->m_texture.bind(r.resources());
 
@@ -242,8 +246,8 @@ namespace Luminous {
     else
       prog->setUniformVector2("viewsize", a->size());
    */
-    prog->setUniformInt("tex", 0);
-    prog->setUniformFloat("velocityscale", m_data->m_velocityScale * 0.05f);
+    bool t = prog->setUniformInt("tex", 0);
+    bool v = prog->setUniformFloat("velocityscale", m_data->m_velocityScale * 0.05f);
     // info("m_data->m_velocityScale = %f", m_data->m_velocityScale);
     // prog->setUniformFloat("velocityscale", 0.1);
 
@@ -255,6 +259,8 @@ namespace Luminous {
     int vpos = prog->getAttribLoc("velocity");
     int cpos = prog->getAttribLoc("color");
     int spos = prog->getAttribLoc("size");
+    int rpos = prog->getAttribLoc("rotation");
+    //assert(rpos != -1);
 
     r.setBlendFunc(m_data->m_blendFunc);
     r.useCurrentBlendMode();
@@ -266,6 +272,7 @@ namespace Luminous {
       VertexAttribArrayStep sv(vpos, 2, GL_FLOAT, sizeof(Sprite), offsetBytes(tmp.m_velocity, tmp));
       VertexAttribArrayStep sc(cpos, 4, GL_FLOAT, sizeof(Sprite), offsetBytes(tmp.m_color, tmp));
       VertexAttribArrayStep ss(spos, 1, GL_FLOAT, sizeof(Sprite), offsetBytes(tmp.m_size, tmp));
+      VertexAttribArrayStep rs(rpos, 1, GL_FLOAT, sizeof(Sprite), offsetBytes(tmp.m_rotation, tmp));
 
       size_t n = gld.m_vbo.filled() / sizeof(Sprite);
 
