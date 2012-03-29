@@ -77,9 +77,11 @@ namespace Radiant {
     while(m_continue) {
       int n = (int) ceilf(m_intervalSeconds * 10.0f);
 
-      // If paused, just sleep
-      while(m_paused)
+      // If paused, just sleep and try again
+      if(m_paused) {
         Radiant::Sleep::sleepS(1);
+        continue;
+      }
 
       /* A single long sleep might get interrupted by system calls and
 	 return early. The method below should be more robust. */
