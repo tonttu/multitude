@@ -354,6 +354,79 @@ namespace Nimble {
       return sum;
     }
 
+
+    /// Calculate the two principal axes in 2d data
+    /// Length of the axes are the corresponding eigenvalues
+    /// @param values Array of values, the value type must support operator[] for indices 0 and 1
+    /// @param n Number of values
+    /// @param axis1 The major axis, length is the same as the larger eigenvalue
+    /// @param axis2 The minor axis, length is the same as the smaller eigenvalue
+    template <class T, class U>
+    void calculatePrincipalAxes(const T* values, int n, U & axis1, U & axis2)
+    {
+      double mean[] = { 0, 0 };
+
+      for(int i=0; i < n; ++i) {
+        mean[0] += values[i][0];
+        mean[1] += values[i][1];
+      }
+      mean[0] /= n;
+      mean[1] /= n;
+
+      float covariance[3] = { 0, 0, 0 };
+
+
+      for(int i=0; i < n; ++i) {
+        double vx = values[i][0] - mean[0];
+        double vy = values[i][1] - mean[1];
+
+        covariance[0] += vx*vx;
+        covariance[1] += vx*vy;
+        covariance[2] += vy*vy;
+      }
+
+      covariance[0] /= n;
+      covariance[1] /= n;
+      covariance[2] /= n;
+
+
+      if(Nimble::Math::Abs(covariance[1]) < 1e-5f) {
+
+        double smaller = Min(covariance[0], covariance[2]);
+        double bigger = Max(covariance[0], covariance[2]);
+
+        axis1[0] = bigger;
+        axis1[1] = 0;
+
+        axis2[0] = 0;
+        axis2[1] = smaller;
+
+      } else {
+        // Eigenvalues are roots of x^2 + bx + c = 0
+        double b = -covariance[0] - covariance[2];
+        double c = -covariance[1]*covariance[1] + covariance[0]*covariance[2];
+
+        double discr = Nimble::Math::Sqrt(b*b - 4*c);
+        double q = -0.5*(b + Nimble::Math::Sign(b)*discr);
+
+        double eigs[] = { q, c/q };
+
+        double e1 = Max(eigs[0], eigs[1]);
+        double e2 = Min(eigs[0], eigs[1]);
+
+        double v1x = (e1-covariance[2])/covariance[1];
+        double v2x = (e2-covariance[2])/covariance[1];
+
+        double l1 = Nimble::Math::Sqrt(v1x*v1x+1);
+        double l2 = Nimble::Math::Sqrt(v2x*v2x+1);
+
+        axis1[0] = e1*(v1x/l1);
+        axis1[1] = e1/l1;
+
+        axis2[0] = e2*(v2x/l2);
+        axis2[1] = e2/l2;
+      }
+    }
   }
 }
 
