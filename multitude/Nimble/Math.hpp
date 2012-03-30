@@ -11,7 +11,6 @@
 #	include <float.h>
 #endif
 
-#include <type_traits>
 #include <stdint.h>
 
 namespace Nimble {
@@ -229,8 +228,7 @@ namespace Nimble {
     /// @param high The maximum value
     /// @return Wrapped values
     template <class T>
-    inline typename std::enable_if<std::is_floating_point<T>::value, T>::type 
-      Wrap(T x, T low, T high)
+    inline T Wrap(T x, T low, T high)
     {
       T diff = high - low;
       return x - Floor((x - low) / diff) * diff;
