@@ -150,7 +150,6 @@ namespace Luminous {
       error("SpriteRenderer::SpriteRenderer # Could not locate shaders");
     }
     else {
-      Radiant::info("Using shaders from %s", shaderPath.c_str());
       m_data->m_shader.loadFragmentShader(shaderPath + "/sprites.fs");
       m_data->m_shader.loadVertexShader(shaderPath + "/sprites.vs");
       m_data->m_shader.loadGeometryShader(shaderPath + "/sprites.gs");
@@ -182,7 +181,6 @@ namespace Luminous {
     return m_data->m_sprites;
   }
 
-
   void SpriteRenderer::uploadSpritesToGPU(Luminous::RenderContext & r)
   {
     GPUData & gld = m_data->m_gpuData.ref(r.resources());
@@ -197,26 +195,6 @@ namespace Luminous {
     if(!gld.m_vbo.filled())
       return; // Nothing to render
 
-#if 0
-
-    gld.m_vbo.bind();
-    glEnableClientState(GL_VERTEX_ARRAY);
-
-    size_t n = gld.m_vbo.filled() / sizeof(Sprite);
-
-    glVertexPointer(2, GL_FLOAT, sizeof(Sprite), 0);
-
-    glPointSize(4);
-    glDisable(GL_TEXTURE_2D);
-    glColor4f(1, 1, 1, 0.1);
-
-    glEnable(GL_CLIP_DISTANCE0);
-
-    glDrawArrays(GL_POINTS, 0, n);
-
-    glDisableClientState(GL_VERTEX_ARRAY);
-    gld.m_vbo.unbind();
-#else
     Luminous::GLSLProgramObject * prog = m_data->m_shader.program();
 
     if(!prog)
@@ -238,19 +216,7 @@ namespace Luminous {
     // Set the GLSL program parameters
     prog->bind();
 
-    // const Luminous::MultiHead::Area * a = Luminous::GLResources::getThreadMultiHeadArea();
-
-    /*
-    if(!a)
-      prog->setUniformVector2("viewsize", Nimble::Vector2(800, 800));
-    else
-      prog->setUniformVector2("viewsize", a->size());
-   */
-    bool t = prog->setUniformInt("tex", 0);
-    bool v = prog->setUniformFloat("velocityscale", m_data->m_velocityScale * 0.05f);
-    // info("m_data->m_velocityScale = %f", m_data->m_velocityScale);
-    // prog->setUniformFloat("velocityscale", 0.1);
-
+    prog->setUniformFloat("velocityscale", m_data->m_velocityScale * 0.05f);
     prog->setUniformMatrix3("modelmatrix2d", r.transform());
 
     gld.m_vbo.bind();
@@ -260,7 +226,6 @@ namespace Luminous {
     int cpos = prog->getAttribLoc("color");
     int spos = prog->getAttribLoc("size");
     int rpos = prog->getAttribLoc("rotation");
-    //assert(rpos != -1);
 
     r.setBlendFunc(m_data->m_blendFunc);
     r.useCurrentBlendMode();
@@ -285,7 +250,6 @@ namespace Luminous {
 
     prog->unbind();
     r.setBlendFunc(Luminous::RenderContext::BLEND_USUAL);
-#endif
   }
 
   void SpriteRenderer::setTexture(const Luminous::Image & image)
