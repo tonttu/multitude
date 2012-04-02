@@ -8,6 +8,8 @@
 #  include <windows.h>
 #elif defined (RADIANT_WINDOWS)
 #  include "XRandR.hpp"
+#elif defined (RADIONT_OSX)
+#  error "Not supported on OSX"
 #endif
 
 #include <adl_functions.h>
