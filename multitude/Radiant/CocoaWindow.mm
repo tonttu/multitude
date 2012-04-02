@@ -16,12 +16,12 @@
 
   NSOpenGLContext context;
 
-  ThreadedRendering::CocoaWindow * m_window;
+  Radiant::CocoaWindow * m_window;
 }
 
 - (id) initWithFrame:(NSRect)frame
 colorBits:(int)numColorBits depthBits:(int)numDepthBits fullscreen:(bool)runFullScreen
-m_window:(ThreadedRendering::CocoaWindow *)parent;
+m_window:(Radiant::CocoaWindow *)parent;
 
 - (void) dealloc;
 
@@ -50,7 +50,7 @@ m_window:(ThreadedRendering::CocoaWindow *)parent;
 
 - (id) initWithFrame:(NSRect)frame
 colorBits:(int)numColorBits depthBits:(int)numDepthBits fullscreen:(bool)runFullScreen
-m_window:(ThreadedRendering::CocoaWindow *)parent;
+m_window:(Radiant::CocoaWindow *)parent;
 {
 NSOpenGLPixelFormat *pixelFormat;
 
@@ -128,7 +128,7 @@ return self;
 
 - (void) keyDown:(NSEvent *)theEvent
 {
-  ThreadedRendering::WindowEventHook * hook = m_window->eventHook();
+  Radiant::WindowEventHook * hook = m_window->eventHook();
   if(!hook) {
     Radiant::error("Cannot obtain WindowEventHook");
     return;
@@ -166,7 +166,7 @@ return self;
 
 -(void) keyUp:(NSEvent *)theEvent
 {
-  ThreadedRendering::WindowEventHook * hook = m_window->eventHook();
+  Radiant::WindowEventHook * hook = m_window->eventHook();
   if(!hook) {
     Radiant::error("Cannot obtain WindowEventHook");
     return;
@@ -192,19 +192,19 @@ return self;
 
 -(void) mouseDown:(NSEvent *)theEvent
 {
-  ThreadedRendering::WindowEventHook * hook = m_window->eventHook();
+  Radiant::WindowEventHook * hook = m_window->eventHook();
   if(!hook) {
     Radiant::error("Cannot obtain WindowEventHook");
     return;
   }
 
-  ThreadedRendering::WindowEventHook::MouseButtonMask button =
-      ThreadedRendering::WindowEventHook::NoButton;
+  Radiant::WindowEventHook::MouseButtonMask button =
+      Radiant::WindowEventHook::NoButton;
 
   int buttonNumber = [theEvent buttonNumber];
 
   if(buttonNumber == 0)
-    button = ThreadedRendering::WindowEventHook::LeftButton;
+    button = Radiant::WindowEventHook::LeftButton;
 
   NSPoint location;
   location = [theEvent locationInWindow];
@@ -213,7 +213,11 @@ return self;
   //invert y
   float y = [self frame].size.height - location.y;
 
-  hook->handleMouseButton(button, x, y, true);
+  hook->handleMouseEvent(Radiant::MouseEvent
+                         (QEvent::MouseButtonPress,
+                          QPoint(x,y),
+                          (Qt::MouseButton) buttonNumber, (Qt::MouseButtons) (1 << buttonNumber),
+                          0));
 
   [timer invalidate];
   timer = [NSTimer scheduledTimerWithTimeInterval:5.0 target:self selector:@selector(hideCursor:) userInfo:nil repeats:NO];
@@ -221,19 +225,19 @@ return self;
 
 -(void) mouseUp:(NSEvent *)theEvent
 {
-  ThreadedRendering::WindowEventHook * hook = m_window->eventHook();
+  Radiant::WindowEventHook * hook = m_window->eventHook();
   if(!hook) {
     Radiant::error("Cannot obtain WindowEventHook");
     return;
   }
 
-  ThreadedRendering::WindowEventHook::MouseButtonMask button =
-      ThreadedRendering::WindowEventHook::NoButton;
+  Radiant::WindowEventHook::MouseButtonMask button =
+      Radiant::WindowEventHook::NoButton;
 
   int buttonNumber = [theEvent buttonNumber];
 
   if(buttonNumber == 0)
-    button = ThreadedRendering::WindowEventHook::LeftButton;
+    button = Radiant::WindowEventHook::LeftButton;
 
   NSPoint location;
   location = [theEvent locationInWindow];
@@ -242,7 +246,12 @@ return self;
   //invert y
   float y = [self frame].size.height - location.y;
 
-  hook->handleMouseButton(button, x, y, false);
+  hook->handleMouseEvent(Radiant::MouseEvent
+                         (QEvent::MouseButtonRelease,
+                          QPoint(x,y),
+                          (Qt::MouseButton) buttonNumber, (Qt::MouseButtons) 0,
+                          0));
+
 
   [timer invalidate];
   timer = [NSTimer scheduledTimerWithTimeInterval:5.0 target:self selector:@selector(hideCursor:) userInfo:nil repeats:NO];
@@ -250,20 +259,20 @@ return self;
 
 -(void) rightMouseDown:(NSEvent *)theEvent
 {
-  ThreadedRendering::WindowEventHook * hook = m_window->eventHook();
+  Radiant::WindowEventHook * hook = m_window->eventHook();
   if(!hook) {
     Radiant::error("Cannot obtain WindowEventHook");
     return;
   }
 
 
-  ThreadedRendering::WindowEventHook::MouseButtonMask button =
-      ThreadedRendering::WindowEventHook::NoButton;
+  Radiant::WindowEventHook::MouseButtonMask button =
+      Radiant::WindowEventHook::NoButton;
 
   int buttonNumber = [theEvent buttonNumber];
 
   if(buttonNumber == 1)
-    button = ThreadedRendering::WindowEventHook::RightButton;
+    button = Radiant::WindowEventHook::RightButton;
 
   NSPoint location;
   location = [theEvent locationInWindow];
@@ -272,7 +281,12 @@ return self;
   //invert y
   float y = [self frame].size.height - location.y;
 
-  hook->handleMouseButton(button, x, y, true);
+  hook->handleMouseEvent(Radiant::MouseEvent
+                         (QEvent::MouseButtonPress,
+                          QPoint(x,y),
+                          (Qt::MouseButton) buttonNumber, (Qt::MouseButtons) (1 << buttonNumber),
+                          0));
+
 
   [timer invalidate];
   timer = [NSTimer scheduledTimerWithTimeInterval:5.0 target:self selector:@selector(hideCursor:) userInfo:nil repeats:NO];
@@ -280,20 +294,20 @@ return self;
 
 -(void) rightMouseUp:(NSEvent *)theEvent
 {
-  ThreadedRendering::WindowEventHook * hook = m_window->eventHook();
+  Radiant::WindowEventHook * hook = m_window->eventHook();
   if(!hook) {
     Radiant::error("Cannot obtain WindowEventHook");
     return;
   }
 
 
-  ThreadedRendering::WindowEventHook::MouseButtonMask button =
-      ThreadedRendering::WindowEventHook::NoButton;
+  Radiant::WindowEventHook::MouseButtonMask button =
+      Radiant::WindowEventHook::NoButton;
 
   int buttonNumber = [theEvent buttonNumber];
 
   if(buttonNumber == 1)
-    button = ThreadedRendering::WindowEventHook::RightButton;
+    button = Radiant::WindowEventHook::RightButton;
 
   NSPoint location;
   location = [theEvent locationInWindow];
@@ -302,7 +316,11 @@ return self;
   //invert y
   float y = [self frame].size.height - location.y;
 
-  hook->handleMouseButton(button, x, y, false);
+  hook->handleMouseEvent(Radiant::MouseEvent
+                         (QEvent::MouseButtonRelease,
+                          QPoint(x,y),
+                          (Qt::MouseButton) buttonNumber, (Qt::MouseButtons) 0,
+                          0));
 
   [timer invalidate];
   timer = [NSTimer scheduledTimerWithTimeInterval:5.0 target:self selector:@selector(hideCursor:) userInfo:nil repeats:NO];
@@ -313,7 +331,7 @@ return self;
 
 -(void) mouseDragged:(NSEvent *)theEvent
 {
-  ThreadedRendering::WindowEventHook * hook = m_window->eventHook();
+  Radiant::WindowEventHook * hook = m_window->eventHook();
   if(!hook) {
     Radiant::error("Cannot obtain WindowEventHook");
     return;
@@ -326,8 +344,11 @@ return self;
   //invert y
   float y = [self frame].size.height - location.y;
 
-  hook->handleMouseMove(x, y, ThreadedRendering::WindowEventHook::LeftButton);
-
+  hook->handleMouseEvent(Radiant::MouseEvent
+                         (QEvent::MouseMove,
+                          QPoint(x,y),
+                          (Qt::MouseButton) 0, (Qt::MouseButtons) 0,
+                          0));
   [timer invalidate];
   timer = [NSTimer scheduledTimerWithTimeInterval:5.0 target:self selector:@selector(hideCursor:) userInfo:nil repeats:NO];
 }
@@ -344,27 +365,31 @@ return self;
 
   (void) theEvent;
 
-  ThreadedRendering::WindowEventHook * hook = m_window->eventHook();
+  Radiant::WindowEventHook * hook = m_window->eventHook();
   if(!hook) {
     Radiant::error("Cannot obtain WindowEventHook");
     return;
   }
 
-  ThreadedRendering::WindowEventHook::MouseButtonMask button =
-      ThreadedRendering::WindowEventHook::NoButton;
+  Radiant::WindowEventHook::MouseButtonMask button =
+      Radiant::WindowEventHook::NoButton;
 
   float delta = [theEvent scrollingDeltaY];
 
   if( delta > 0.0 )
-    button = ThreadedRendering::WindowEventHook::WheelForward;
-  else button = ThreadedRendering::WindowEventHook::WheelBackward;
+    button = Radiant::WindowEventHook::WheelForward;
+  else button = Radiant::WindowEventHook::WheelBackward;
 
   NSPoint loc;
   loc = [theEvent locationInWindow];
   float x = loc.x;
   float y = loc.y;
 
-  hook->handleMouseButton(button, x, y, true);
+  hook->handleMouseEvent(Radiant::MouseEvent
+                         (QEvent::MouseButtonPress,
+                          QPoint(x,y),
+                          (Qt::MouseButton) button, (Qt::MouseButtons) 0,
+                          0));
 
   [timer invalidate];
   timer = [NSTimer scheduledTimerWithTimeInterval:5.0 target:self selector:@selector(hideCursor:) userInfo:nil repeats:NO];
@@ -403,13 +428,13 @@ return self;
 
   CocoaView *glView;
 
-  ThreadedRendering::CocoaWindow * m_window;
+  Radiant::CocoaWindow * m_window;
 
-  const ThreadedRendering::WindowConfig * m_hint;
+  const Radiant::WindowConfig * m_hint;
 
 }
-- (Controller *) initialize:(ThreadedRendering::CocoaWindow *)parent
-                           :(const ThreadedRendering::WindowConfig &)hint;
+- (Controller *) initialize:(Radiant::CocoaWindow *)parent
+                           :(const Radiant::WindowConfig &)hint;
 
 - (void) dealloc;
 
@@ -424,8 +449,8 @@ return self;
 
 @implementation Controller
 
-- (Controller *) initialize:(ThreadedRendering::CocoaWindow *)parent
-                           :(const ThreadedRendering::WindowConfig &)hint
+- (Controller *) initialize:(Radiant::CocoaWindow *)parent
+                           :(const Radiant::WindowConfig &)hint
 {
 
   m_window = parent;
@@ -508,7 +533,7 @@ return self;
 @end
 
 
-namespace ThreadedRendering
+namespace Radiant
 {
 
 

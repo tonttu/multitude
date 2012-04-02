@@ -48,7 +48,8 @@ namespace Radiant
   class MouseEvent : public QMouseEvent
   {
   public:
-    MouseEvent(QEvent::Type type, const QPoint & position, Qt::MouseButton button, Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers)
+    MouseEvent(QEvent::Type type, const QPoint & position, Qt::MouseButton button,
+               Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers)
       : QMouseEvent(type, position, button, buttons, modifiers)
     {}
     MouseEvent(const QMouseEvent & event) : QMouseEvent(event) {}

@@ -6,6 +6,12 @@
 
 #include <Radiant/Trace.hpp>
 
+#include <Radiant/Platform.hpp>
+
+#ifndef RADIANT_OSX
+# error "CocoaWindow only works on OS X"
+#endif
+
 namespace Radiant
 {
 

@@ -3,6 +3,7 @@ include(../multitude.pri)
 
 HEADERS += WindowConfig.hpp
 HEADERS += Window.hpp
+macx:HEADERS += CocoaWindow.hpp
 HEADERS += XWindow.hpp
 HEADERS += QtWindow.hpp
 HEADERS += WindowEventHook.hpp
@@ -81,6 +82,7 @@ HEADERS += VideoCamera1394.hpp
 
 SOURCES += WindowConfig.cpp
 SOURCES += Window.cpp
+macx:SOURCES += CocoaWindow.mm
 SOURCES += XWindow.cpp
 SOURCES += QtWindow.cpp
 SOURCES += Mime.cpp
