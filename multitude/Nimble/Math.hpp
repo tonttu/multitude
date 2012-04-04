@@ -359,10 +359,12 @@ namespace Nimble {
     /// Length of the axes are the corresponding eigenvalues
     /// @param values Array of values, the value type must support operator[] for indices 0 and 1
     /// @param n Number of values
-    /// @param axis1 The major axis, length is the same as the larger eigenvalue
-    /// @param axis2 The minor axis, length is the same as the smaller eigenvalue
+    /// @param axis1 The major axis
+    /// @param axis2 The minor axis
+    /// @param variance1 Variance for the projection of values to the major axis
+    /// @param variance2 Variance for the projection of values to the minor axis
     template <class T, class U>
-    void calculatePrincipalAxes(const T* values, int n, U & axis1, U & axis2)
+    void calculatePrincipalAxes(const T* values, int n, U & axis1, U & axis2, float * variance1 = 0, float * variance2 = 0)
     {
       double mean[] = { 0, 0 };
 
@@ -395,11 +397,16 @@ namespace Nimble {
         double smaller = Min(covariance[0], covariance[2]);
         double bigger = Max(covariance[0], covariance[2]);
 
-        axis1[0] = bigger;
+        axis1[0] = 1;
         axis1[1] = 0;
 
         axis2[0] = 0;
-        axis2[1] = smaller;
+        axis2[1] = 1;
+
+        if(variance1)
+          *variance1 = bigger;
+        if(variance2)
+          *variance2 = smaller;
 
       } else {
         // Eigenvalues are roots of x^2 + bx + c = 0
@@ -417,14 +424,19 @@ namespace Nimble {
         double v1x = (e1-covariance[2])/covariance[1];
         double v2x = (e2-covariance[2])/covariance[1];
 
-        double l1 = Nimble::Math::Sqrt(v1x*v1x+1);
-        double l2 = Nimble::Math::Sqrt(v2x*v2x+1);
+        double l1 = 1.0/Nimble::Math::Sqrt(v1x*v1x+1);
+        double l2 = 1.0/Nimble::Math::Sqrt(v2x*v2x+1);
 
-        axis1[0] = e1*(v1x/l1);
-        axis1[1] = e1/l1;
+        axis1[0] = (v1x * l1);
+        axis1[1] = l1;
 
-        axis2[0] = e2*(v2x/l2);
-        axis2[1] = e2/l2;
+        axis2[0] = v2x * l2;
+        axis2[1] = l2;
+
+        if(variance1)
+          *variance1 = e1;
+        if(variance2)
+          *variance2 = e2;
       }
     }
   }
