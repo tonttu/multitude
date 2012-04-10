@@ -77,6 +77,8 @@ namespace Luminous {
       Nimble::Vector2 m_velocity;
       /// The color of the sprite
       Nimble::Vector4 m_color;
+      /// The rotation of the sprite
+      float m_rotation;
       /// The size (diameter) of the particle.
       float m_size;
     };
@@ -87,7 +89,7 @@ namespace Luminous {
     /// Resize the sprite buffer
     void resize(size_t n);
     /// Returns the number of allocated sprites
-    size_t spriteCount();
+    size_t spriteCount() const;
     /// A pointer to the sprites
     Sprite * sprites();
 

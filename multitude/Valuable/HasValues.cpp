@@ -64,6 +64,9 @@ namespace Valuable
 
   HasValues::~HasValues()
   {
+    // Host of HasValues class member ValueObjects must be zeroed to avoid double-delete
+    m_id.removeHost();
+
     while(!m_eventSources.empty()) {
       /* The eventRemoveListener call will also clear the relevant part from m_eventSources. */
       (*m_eventSources.begin())->eventRemoveListener(this);
@@ -75,13 +78,32 @@ namespace Valuable
         (*it).m_listener->eventRemoveSource(this);
     }
 
+    // Release memory for any value objects that are left (should be only
+    // heap-allocated at this point)
+    while(!m_values.empty())
+      delete m_values.begin()->second;
   }
 
   ValueObject * HasValues::getValue(const std::string & name)
   {
-    container::iterator it = m_values.find(name);
+    size_t slashIndex = name.find('/');
 
-    return it == m_values.end() ? 0 : it->second;
+    if(slashIndex == std::string::npos) {
+      container::iterator it = m_values.find(name);
+
+      return it == m_values.end() ? 0 : it->second;
+    }
+    else {
+      std::string part1(name.substr(0, slashIndex));
+      std::string part2(name.substr(slashIndex + 1));
+
+      ValueObject * vo = getValue(part1);
+      if(vo) {
+        return vo->getValue(part2);
+      }
+    }
+
+    return 0;
   }
 
   bool HasValues::addValue(const std::string & cname, ValueObject * const value)

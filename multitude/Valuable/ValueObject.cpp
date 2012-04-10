@@ -74,6 +74,9 @@ namespace Valuable
   ValueObject::~ValueObject()
   {
     emitDelete();
+
+    removeHost();
+
 #ifdef MULTI_DOCUMENTER
     for(std::list<Doc>::iterator it = doc.begin(); it != doc.end();) {
       if(it->vo == this) it = doc.erase(it);
@@ -185,6 +188,11 @@ namespace Valuable
     elem.set(asString());
 
     return elem;
+  }
+
+  ValueObject * ValueObject::getValue(const std::string & name)
+  {
+    return 0;
   }
 
   void ValueObject::emitChange()

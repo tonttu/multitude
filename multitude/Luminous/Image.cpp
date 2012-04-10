@@ -332,6 +332,7 @@ namespace Luminous
   }
 
 
+  /// @todo this function is retarded. It should be simplified.
   bool Image::quarterSize(const Image & source)
   {
     changed();
@@ -410,7 +411,7 @@ namespace Luminous
 
       return true;
     }
-    else if(source.pixelFormat() == PixelFormat::rgbaUByte()) {
+    else if(source.pixelFormat() == PixelFormat::rgbaUByte() || source.pixelFormat() == PixelFormat::bgraUByte()) {
 
       allocate(w, h, source.pixelFormat());
 
@@ -430,11 +431,6 @@ namespace Luminous
           unsigned a01 = l1[3];
           unsigned a11 = l1[7];
 
-          /* a00 = 255;
-             a10 = 255;
-             a01 = 255;
-             a11 = 255;
-             */
           unsigned asum = a00 + a10 + a01 + a11;
 
           if(!asum)
@@ -465,6 +461,7 @@ namespace Luminous
       return true;
     }
 
+    Radiant::error("Image::quarterSize # unsupported pixel format");
     return false;
   }
 
@@ -737,10 +734,10 @@ namespace Luminous
 
       size_t offset = absolute.y * width() + absolute.x;
 
-      if(pixelFormat() == PixelFormat::alphaUByte())
-          return m_data[offset];
-      else if(pixelFormat() == PixelFormat::rgbaUByte())
-          return m_data[4 * offset + 3];
+      if(pixelFormat().numChannels() == 1)
+        return m_data[offset];
+      else if(pixelFormat().numChannels() == 4)
+        return m_data[4 * offset + 3];
 
       return 255;
   }
@@ -778,12 +775,16 @@ namespace Luminous
 
     const float s = 1.0f / 255.0f;
 
-    if(m_pixelFormat == PixelFormat::alphaUByte())
+    // I guess alpha is special case
+    if(m_pixelFormat == PixelFormat::alphaUByte() || m_pixelFormat == PixelFormat::luminanceUByte())
       return Nimble::Vector4(1, 1, 1, px[0] * s);
-    else if(m_pixelFormat == PixelFormat::rgbUByte())
+    else if(m_pixelFormat.numChannels() == 3)
       return Nimble::Vector4(px[0] * s, px[1] * s, px[2] * s, 1);
-    else if(m_pixelFormat == PixelFormat::rgbaUByte())
+    else if(m_pixelFormat.numChannels() == 4)
       return Nimble::Vector4(px[0] * s, px[1] * s, px[2] * s, px[3] * s);
+    else {
+      assert(0);
+    }
 
     return Nimble::Vector4(0, 0, 0, 1);
   }
@@ -796,18 +797,20 @@ namespace Luminous
     uint8_t * px = line(y);
     px += pixelFormat().bytesPerPixel() * x;
 
-    if(pixelFormat() == PixelFormat::alphaUByte()) {
-      px[0] = pixel.w * 255;
-    } else if(pixelFormat() == PixelFormat::rgbUByte()) {
-      px[0] = pixel.x * 255;
-      px[1] = pixel.y * 255;
-      px[2] = pixel.z * 255;
-    } else if(pixelFormat() == PixelFormat::rgbaUByte()) {
-      px[0] = pixel.x * 255;
-      px[1] = pixel.y * 255;
-      px[2] = pixel.z * 255;
-      px[3] = pixel.w * 255;
+
+    if(m_pixelFormat == PixelFormat::alphaUByte() || m_pixelFormat == PixelFormat::luminanceUByte()) {
+        px[0] = pixel.w * 255;
+    } else if(pixelFormat().numChannels() == 3) {
+        px[0] = pixel.x * 255;
+        px[1] = pixel.y * 255;
+        px[2] = pixel.z * 255;
+    } else if(pixelFormat().numChannels() == 4) {
+        px[0] = pixel.x * 255;
+        px[1] = pixel.y * 255;
+        px[2] = pixel.z * 255;
+        px[3] = pixel.w * 255;
     } else {
+      Radiant::error("Image::setPixel # unsupported pixel format");
       assert(0);
     }
   }

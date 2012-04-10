@@ -214,6 +214,12 @@ namespace Luminous {
 #ifdef CPUMIPMAPS_PROFILING
     m_profile.filename = filename;
 #endif
+
+    if(!QFile::exists(filename)) {
+      Radiant::error("CPUMipmaps::startLoading # file '%s' does not exist", filename);
+      return false;
+    }
+
     m_filename = filename;
     m_compFilename.clear();
     m_fileModified = FileUtils::lastModified(m_filename);
@@ -224,15 +230,14 @@ namespace Luminous {
     // Use DXT compression if it is requested and supported
     m_compressedMipmaps = (compressedMipmaps && s_dxtSupported);
 
-    if(m_fileModified == 0) {
-      error("CPUMipmaps::startLoading # failed to stat file %s", filename);
-      return false;
-    }
-
     MipMapGenerator * gen = 0;
     if(m_compressedMipmaps) {
       m_compFilename = cacheFileName(filename, -1, "dds");
-      unsigned long int ts = FileUtils::lastModified(m_compFilename);
+
+      unsigned long int ts = 0;
+      if(QFile::exists(m_compFilename.c_str()))
+        ts = FileUtils::lastModified(m_compFilename);
+
       if(ts == 0) {
         // Cache file does not exist. Check if we want to generate mipmaps for
         // this file, or does it have those already
@@ -682,7 +687,10 @@ namespace Luminous {
     Nimble::Vector2i is = mipmapSize(level);
 
     if(is * 2 == ss) {
-      imdest->quarterSize(*imsrc);
+      bool ok = imdest->quarterSize(*imsrc);
+      if(!ok)
+        Radiant::error("CPUMipmaps::recursiveLoad # failed to resize image");
+      assert(ok);
     }
     else {
       //imdest->copyResample(*imsrc, is.x, is.y);
