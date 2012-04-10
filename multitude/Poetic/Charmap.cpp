@@ -29,10 +29,14 @@ namespace Poetic
   {
     Radiant::Guard g(freetypeMutex());
 
-    if(!m_ftFace->charmap)  
-      m_error = FT_Set_Charmap(m_ftFace, m_ftFace->charmaps[0]);
+    if(!m_ftFace->charmap) {
+      if(m_ftFace->charmaps) {
+        m_error = FT_Set_Charmap(m_ftFace, m_ftFace->charmaps[0]);
+      }
+    }
 
-    m_ftEncoding = m_ftFace->charmap->encoding;
+    if(m_ftFace->charmap)
+      m_ftEncoding = m_ftFace->charmap->encoding;
   }
 
   Charmap::~Charmap()
