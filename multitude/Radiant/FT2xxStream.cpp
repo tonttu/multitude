@@ -189,4 +189,35 @@ namespace Radiant {
     return true;
   }
 
+  int FT2xxStream::cycleAllDevices()
+  {
+    int count = 0;
+
+    DWORD n = 0;
+
+    FT_STATUS status = FT_ListDevices(&n, NULL, FT_LIST_NUMBER_ONLY);
+
+    if(status != FT_OK) {
+      error("FT2xxStream::cycleAllDevices # Could not list devices");
+      return 0;
+    }
+
+    for(int i = 0; i < (int) n; i++) {
+      FT_HANDLE handle;
+      memset( & handle, 0, sizeof(handle));
+
+      status = FT_Open(i,& handle);
+      if(status == FT_OK) {
+        FT_CyclePort(handle);
+        FT_Close(handle);
+        count++;
+      }
+      else {
+        error("FT2xxStream::cycleAllDevices # Could not open device %d for cycling", i);
+      }
+    }
+
+    return count;
+  }
+
 }

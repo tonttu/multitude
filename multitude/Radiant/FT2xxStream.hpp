@@ -47,6 +47,10 @@ namespace Radiant {
     static bool listDevices(std::list<std::string> & devices);
     static bool describeDevices();
 
+    /// Resets all available FTDI devices
+    /** You should close all FT2xxStream instances before calling this function. */
+    static int cycleAllDevices();
+
   private:
     FT2xxStreamInternal * m_data;
   };
