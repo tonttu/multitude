@@ -95,6 +95,21 @@ namespace Radiant
     return "";
   }
 
+  QStringList ResourceLocator::locateDirectories(const QString & name) const
+  {
+    if(name.isEmpty())
+      return QStringList();
+
+    QStringList dirs;
+    foreach(QString path, m_paths.split(";", QString::SkipEmptyParts)) {
+      QString fullPath = path + "/" + name;
+
+      if(QDir(fullPath).exists())
+        dirs.push_back(fullPath);
+    }
+    return dirs;
+  }
+
   QString ResourceLocator::locateWriteable(const QString & file) const
   {
     foreach(QString str, m_paths.split(";", QString::SkipEmptyParts)) {
