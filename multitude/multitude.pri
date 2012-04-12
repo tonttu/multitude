@@ -27,6 +27,7 @@ LIB_BOX2D = -lBox2D
 !mobile {
   # exists(/usr/local/lib/libftd2xx.so)|exists(/opt/multitouch/lib/libftd2xx.dylib) {
   # message(FTD2XX support detected.)
+  CONFIG += with-ftd2xx
   with-ftd2xx {
     LIB_FTD2XX = -lftd2xx
     WITH_FTD2XX = yes
