@@ -832,6 +832,8 @@ namespace Luminous
 
   void RenderContext::drawArc(Nimble::Vector2f center, float radius, float fromRadians, float toRadians, float width, float blendWidth, const float * color, int linesegments)
   {
+    width *= 0.5f;
+
     float delta = (toRadians - fromRadians) / linesegments;
 
     float tanFactor = tan(delta);
