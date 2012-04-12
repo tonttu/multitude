@@ -142,6 +142,22 @@ unix {
 contains(WITH_FTD2XX,yes) {
   HEADERS += FT2xxStream.hpp
   SOURCES += FT2xxStream.cpp
+
+  # Create symlinks to the relevant library:
+  linux-* {
+    libftdlink.target = ../Linux/lib/libftd2xx.so
+    libftdlink.commands = ln -sf libftd2xx.so.1.1.0 ../Linux/lib/libftd2xx.so
+    libftdlink.depends =
+    QMAKE_EXTRA_TARGETS += libftdlink
+    PRE_TARGETDEPS += ../Linux/lib/libftd2xx.so
+  }
+  macx {
+    libftdlink.target = ../OSX/lib/libftd2xx.dylib
+    libftdlink.commands = ln -sf libftd2xx.1.1.0.dylib ../OSX/lib/libftd2xx.dylib
+    libftdlink.depends =
+    QMAKE_EXTRA_TARGETS += libftdlink
+    PRE_TARGETDEPS += ../OSX/lib/libftd2xx.dylib
+  }
 }
 
 win32 {
