@@ -85,12 +85,6 @@ namespace {
         return true;
       }
 
-      const QMouseEvent * mouseEvent = dynamic_cast<const QMouseEvent*>(event);
-      if(mouseEvent) {
-        m_hook.handleMouseEvent(Radiant::MouseEvent(*mouseEvent));
-        return true;
-      }
-
       return m_context.filterEvent(event);
     }
 
@@ -135,57 +129,69 @@ namespace Radiant
     return(attributes);
   }
 
+  static QPair<Qt::MouseButtons, Qt::KeyboardModifiers> x11StateToQt(unsigned int state)
+  {
+    Qt::MouseButtons buttons = 0;
+
+    if(state & Button1Mask)
+      buttons |= Qt::LeftButton;
+    if(state & Button2Mask)
+      buttons |= Qt::MidButton;
+    if(state & Button3Mask)
+      buttons |= Qt::RightButton;
+
+    Qt::KeyboardModifiers modifiers = 0;
+
+    if(state & ShiftMask)
+      modifiers |= Qt::ShiftModifier;
+    if(state & ControlMask)
+      modifiers |= Qt::ControlModifier;
+
+    return qMakePair(buttons, modifiers);
+  }
+
   static void dispatchXConfigureEvent(WindowEventHook * hook, const XConfigureEvent & event)
   {
     hook->handleWindowMove(event.x, event.y, event.width, event.height);
   }
-/*
+
   static void dispatchXMouseEvent(WindowEventHook * hook, XButtonEvent & event)
   {
     //Radiant::info("dispatchXMouseEvent # button: %d", event.button);
 
-    WindowEventHook::MouseButtonMask myButton = WindowEventHook::NoButton;
-    
+    QEvent::Type type = (event.type == ButtonPress) ? QEvent::MouseButtonPress : QEvent::MouseButtonRelease;
+    QPoint position(event.x, event.y);
+
+    Qt::MouseButton button = Qt::NoButton;
     if(event.button == Button1)
-      myButton = WindowEventHook::LeftButton;
+      button = Qt::LeftButton;
+    else if(event.button == Button2)
+      button = Qt::MidButton;
+    else if(event.button == Button3)
+      button = Qt::RightButton;
 
-    if(event.button == Button2)
-      myButton = WindowEventHook::MiddleButton;
+    QPair<Qt::MouseButtons, Qt::KeyboardModifiers> mods = x11StateToQt(event.state);
 
-    if(event.button == Button3)
-      myButton = WindowEventHook::RightButton;
+    QMouseEvent qtEvent(type, position, button, mods.first, mods.second);
 
-    if(event.button == Button4)
-      myButton = WindowEventHook::WheelForward;
-
-    if(event.button == Button5)
-      myButton = WindowEventHook::WheelBackward;
-    
-    hook->handleMouseButton(myButton, event.x, event.y, event.type == ButtonPress);
+    hook->handleMouseEvent(qtEvent);
   }
 
   static void dispatchXMouseMoveEvent(WindowEventHook * hook, XMotionEvent & event)
   {
-    WindowEventHook::MouseButtonMask myButton = WindowEventHook::NoButton;
+    //Radiant::info("dispatchXMouseMoveEvent # button: %d", event.state);
 
-    if(event.state & Button1Mask)
-      myButton = WindowEventHook::LeftButton;
+    QEvent::Type type = QEvent::MouseMove;
+    QPoint position(event.x, event.y);
+    Qt::MouseButton button = Qt::NoButton;
 
-    if(event.state & Button2Mask)
-      myButton = WindowEventHook::MiddleButton;
+    QPair<Qt::MouseButtons, Qt::KeyboardModifiers> mods = x11StateToQt(event.state);
 
-    if(event.state & Button3Mask)
-      myButton = WindowEventHook::RightButton;
+    QMouseEvent qtEvent(type, position, button, mods.first, mods.second);
 
-    if(event.state & Button4Mask)
-      myButton = WindowEventHook::WheelForward;
-
-    if(event.state & Button5Mask)
-      myButton = WindowEventHook::WheelBackward;
-
-    hook->handleMouseMove(event.x, event.y, myButton);
+    hook->handleMouseEvent(qtEvent);
   }
-*/
+
   static int errorHandler(Display * display, XErrorEvent * e)
   {
     (void)display;
@@ -567,7 +573,7 @@ namespace Radiant
       case MotionNotify:
         {
           if(hook) {
-            //dispatchXMouseMoveEvent(hook, event.xmotion);
+            dispatchXMouseMoveEvent(hook, event.xmotion);
             //hook->handleMouseMove(event.xmotion.x, event.xmotion.y, event.xmotion.state);          
             qApp->x11ProcessEvent(&event);
           }
@@ -590,7 +596,7 @@ namespace Radiant
         }
 
         if(hook) {
-          //dispatchXMouseEvent(hook, event.xbutton);
+          dispatchXMouseEvent(hook, event.xbutton);
           qApp->x11ProcessEvent(&event);
         }
 
@@ -659,7 +665,6 @@ namespace Radiant
     // Will trigger an error, since s_keyboardGrabbers isn't mapped. We don't care.
     int (*handler)(Display*, XErrorEvent*) = XSetErrorHandler(ignoreErrorHandler);
     s_keyboardGrabber->grabKeyboard();
-    s_keyboardGrabber->grabMouse();
     XSetErrorHandler(handler);
   }
 }
