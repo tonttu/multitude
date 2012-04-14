@@ -137,6 +137,10 @@ return self;
   unichar key;
   key = [ [ theEvent characters ] characterAtIndex:0 ];
 
+  QChar qc(key);
+  QString qstr(qc);
+  key = qc.toUpper().toAscii();
+
   bool repeat = false;
 
   if([theEvent isARepeat])
@@ -156,6 +160,7 @@ return self;
 
   default:
   {
+    Radiant::debug("CocoaWindow::keyDown (ObjC) # %d %c", (int) key, (char) key);
     // hook->handleKeyboardEvent(key, true, 0, repeat);
     hook->handleKeyboardEvent(Radiant::KeyEvent::createKeyPress(key));
   }
@@ -174,6 +179,10 @@ return self;
 
   unichar key;
   key = [ [ theEvent characters ] characterAtIndex:0 ];
+
+  QChar qc(key);
+  QString qstr(qc);
+  key = qc.toUpper().toAscii();
 
   switch(key) {
 
@@ -213,7 +222,7 @@ return self;
   //invert y
   float y = [self frame].size.height - location.y;
 
-  Radiant::info("CocoaWindow::mouseDown (ObjC) # %d", (int) buttonNumber);
+  Radiant::debug("CocoaWindow::mouseDown (ObjC) # %d", (int) buttonNumber);
 
   hook->handleMouseEvent(Radiant::MouseEvent
                          (QEvent::MouseButtonPress,
@@ -233,13 +242,13 @@ return self;
     return;
   }
 
-  Radiant::WindowEventHook::MouseButtonMask button =
+  int button =
       Radiant::WindowEventHook::NoButton;
 
   int buttonNumber = [theEvent buttonNumber];
 
   if(buttonNumber == 0)
-    button = Radiant::WindowEventHook::LeftButton;
+    button = Qt::LeftButton;
 
   NSPoint location;
   location = [theEvent locationInWindow];
@@ -248,10 +257,12 @@ return self;
   //invert y
   float y = [self frame].size.height - location.y;
 
+  Radiant::debug("CocoaWindow::mouseUp (ObjC) # %d", (int) buttonNumber);
+
   hook->handleMouseEvent(Radiant::MouseEvent
                          (QEvent::MouseButtonRelease,
                           QPoint(x,y),
-                          (Qt::MouseButton) buttonNumber, (Qt::MouseButtons) 0,
+                          (Qt::MouseButton) button, (Qt::MouseButtons) 0,
                           0));
 
 
