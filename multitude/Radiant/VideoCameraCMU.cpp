@@ -17,7 +17,7 @@
 
 #include "Platform.hpp"
 
-#ifdef RADIANT_WIN32
+#ifdef CAMERA_DRIVER_CMU
 
 #include "VideoCameraCMU.hpp"
 #include "Radiant.hpp"
@@ -481,4 +481,4 @@ namespace Radiant {
 
 }
 
-#endif
+#endif // CAMERA_DRIVER_CMU

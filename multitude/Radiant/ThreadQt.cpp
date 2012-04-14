@@ -26,24 +26,6 @@
 
 #include <QThread>
 
-#ifdef RADIANT_LINUX
-#include <sys/syscall.h>
-namespace Radiant {
-  int gettid() { return syscall(SYS_gettid); }
-}
-#elif defined(RADIANT_WINDOWS)
-#define NOMINMAX
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-namespace Radiant {
-  int gettid() { return GetCurrentThreadId(); }
-}
-#else
-namespace Radiant {
-  int gettid() { return getpid(); }
-}
-#endif
-
 namespace Radiant {
 
   enum {

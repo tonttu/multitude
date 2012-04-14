@@ -448,7 +448,7 @@ namespace Luminous
     {
       glEnableVertexAttribArray(pos);
       glVertexAttribPointer(pos, elems, type, GL_FALSE,
-                            stride, offset);
+                            (GLsizei)stride, offset);
     }
 
     ~VertexAttribArrayStep ()

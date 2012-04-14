@@ -32,13 +32,6 @@ class QThread;
 namespace Radiant {
 
   class Mutex;
-
-  /** Returns the current thread id as an integer, that is expected to match the thread id
-      that is shown by "top -H" and other similar tools.
-      @return calling thread id */
-  /// @todo isn't this duplicate functionality with Thread::myThreadId() ?
-  int RADIANT_API gettid();
-
   /// Platform-independent threading
   /** This class is used by inheriting it and overriding the virtual
       method childLoop().

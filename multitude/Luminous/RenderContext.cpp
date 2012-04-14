@@ -1591,11 +1591,7 @@ namespace Luminous
     RenderContext       * m_context;
   };
 
-#ifndef WIN32
   typedef std::map<Radiant::Thread::id_t, TGLRes> ResourceMap;
-#else
-  typedef std::map<unsigned int, TGLRes> ResourceMap;
-#endif
 
   static ResourceMap __resources;
   static Mutex __mutex;
@@ -1730,7 +1726,7 @@ namespace Luminous
     VertexAttribArrayStep ms3(aobj, 3, GL_FLOAT, vsize, (void*) (offsetBytes(vr, vr.m_transform) + 24));
     VertexAttribArrayStep ut(aute, 1, GL_FLOAT, vsize, (void*) offsetBytes(vr, vr.m_useTexture));
 
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, rp.vertices().count<RectVertex>());
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, GLsizei(rp.vertices().count<RectVertex>()));
     // glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
 
     rp.clear();

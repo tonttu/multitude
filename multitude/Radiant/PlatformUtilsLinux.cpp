@@ -51,6 +51,11 @@ namespace Radiant
       return QString::fromUtf8(buf, len);
     }
 
+    int getProcessId()
+    {
+      return getpid();
+    }
+	
     QString getUserHomePath()
     {
       return QString::fromUtf8(getenv("HOME"));

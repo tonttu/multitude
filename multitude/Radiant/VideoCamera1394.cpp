@@ -17,7 +17,7 @@
 
 #include "Platform.hpp"
 
-#ifdef RADIANT_UNIX
+#ifdef CAMERA_DRIVER_1394
 
 #define __STDC_FORMAT_MACROS
 

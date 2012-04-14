@@ -50,6 +50,12 @@ namespace Radiant
     */
 #endif
 
+    /// Returns the current process identifier
+    int getProcessId()
+    {
+      return getpid();
+    }
+
     QString getUserHomePath()
     {
       return QString(getenv("HOME"));

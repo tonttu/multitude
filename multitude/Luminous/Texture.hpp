@@ -275,7 +275,7 @@ namespace Luminous
                 bool buildMipmaps = true, RenderContext * context = 0);
     /// Returns the number of scan-lines that have been loaded into the GPU
     /** This function is mostly useful if one is using progressive image loading. */
-    inline unsigned loadedLines() const { return m_uploadedLines; }
+    inline size_t loadedLines() const { return m_uploadedLines; }
 
     /// Do progressive texture upload
     /// Continues uploading lines to texture memory using previously uploaded

@@ -79,6 +79,7 @@ HEADERS += Singleton.hpp
 HEADERS += XFaker.hpp
 HEADERS += VideoCameraCMU.hpp
 HEADERS += VideoCamera1394.hpp
+HEADERS += VideoCameraPTGrey.hpp
 
 SOURCES += WindowConfig.cpp
 SOURCES += Window.cpp
@@ -95,7 +96,6 @@ SOURCES += BinaryData.cpp
 SOURCES += VideoCamera.cpp
 SOURCES += Color.cpp
 SOURCES += ColorUtils.cpp
-# SOURCES += ConditionQt.cpp
 SOURCES += MutexQt.cpp
 SOURCES += ThreadQt.cpp
 SOURCES += ConfigReader.cpp
@@ -125,30 +125,23 @@ SOURCES += Singleton.cpp
 SOURCES += TCPServerSocketPosix.cpp
 SOURCES += TCPSocketPosix.cpp
 SOURCES += UDPSocketPosix.cpp
-linux-* {
 SOURCES += PlatformUtilsLinux.cpp
 SOURCES += XFaker.cpp
-}
 SOURCES += PlatformUtilsOSX.cpp
 SOURCES += SerialPortPosix.cpp
 SOURCES += LockFilePosix.cpp
-win32 {
 SOURCES += PlatformUtilsWin32.cpp
 SOURCES += SerialPortWin32.cpp
 SOURCES += LockFileWin32.cpp
 SOURCES += CallStackW32.cpp
-}
+SOURCES += VideoCameraCMU.cpp
+SOURCES += VideoCamera1394.cpp
+SOURCES += VideoCameraPTGrey.cpp
 
 # ios:OTHER_FILES += PlatformUtilsIOS.mm
 ios {
   OBJECTIVE_SOURCES += PlatformUtilsIOS.mm
 
-}
-
-!mobile* {
-  win32:SOURCES += VideoCameraCMU.cpp
-  SOURCES += VideoCamera1394.cpp
-  win32:SOURCES += VideoCameraPTGrey.cpp
 }
 
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
@@ -184,9 +177,6 @@ win32 {
     PTGREY_PATH = "C:\\Program Files\\Point Grey Research\\FlyCapture2"
     !exists($$PTGREY_PATH/include):warning("PTGrey driver not installed, not building CameraDriverPTGrey")
     exists($$PTGREY_PATH/include) {
-        HEADERS += VideoCameraPTGrey.hpp
-        SOURCES += VideoCameraPTGrey.cpp
-
         DEFINES += CAMERA_DRIVER_PGR
         message(Using PTGrey camera drivers)
         INCLUDEPATH += $$PTGREY_PATH/include
@@ -196,10 +186,6 @@ win32 {
         else:QMAKE_LIBDIR += $$PTGREY_PATH/lib
         LIBS += FlyCapture2.lib
     }
-}
-!win32 {
-    HEADERS += VideoCameraPTGrey.hpp
-    SOURCES += VideoCameraPTGrey.cpp
 }
 
 include(../library.pri)

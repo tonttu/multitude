@@ -59,6 +59,12 @@ namespace Radiant
       return path;
     }
 
+    /// Returns the current process identifier
+    int getProcessId()
+    {
+      return GetCurrentProcessId();
+    }
+
     QString getUserHomePath()
     {
       // Typically this retrieves "C:\Documents and Settings\(username)"

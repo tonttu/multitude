@@ -33,6 +33,9 @@ namespace Radiant
     /// Return absolute path to the executable that was used to launch the process.
     RADIANT_API QString getExecutablePath();
 
+    /// Returns the current process identifier
+    RADIANT_API int getProcessId();
+
     /// Return absolute path to the user's home directory.
     RADIANT_API QString getUserHomePath();
 

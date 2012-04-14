@@ -15,7 +15,7 @@
 
 #include "Platform.hpp"
 
-#ifdef RADIANT_WINDOWS
+#ifdef CAMERA_DRIVER_PGR
 
 #include "VideoCameraPTGrey.hpp"
 
@@ -894,4 +894,4 @@ namespace Radiant
 
 }
 
-#endif
+#endif // CAMERA_DRIVER_PGR
