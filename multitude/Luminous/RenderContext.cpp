@@ -1601,11 +1601,7 @@ namespace Luminous
     Guard g(__mutex);
     TGLRes tmp;
     tmp.m_context = rsc;
-#ifndef WIN32
     __resources[Radiant::Thread::myThreadId()] = tmp;
-#else
-    __resources[0] = tmp;
-#endif
   }
 
   RenderContext * RenderContext::getThreadContext()
