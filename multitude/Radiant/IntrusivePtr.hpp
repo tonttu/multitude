@@ -42,7 +42,7 @@ namespace Radiant
   public:
     typedef T element_type;
   public:
-    inline IntrusivePtr( int n ) : m_ptr((T*)nullptr) { assert(n==0); }
+    inline IntrusivePtr( int n ) : m_ptr((T*)nullptr) { (void)n; assert(n==0); }
     inline IntrusivePtr( T * object = nullptr ) : m_ptr(object) { ref(); INTRUSIVE_PTR_DEBUG_ACQUIRE; }
 
     inline IntrusivePtr( const IntrusivePtr<T> & ptr ) : m_ptr((T*)nullptr) { ref(ptr.get()); INTRUSIVE_PTR_DEBUG_ACQUIRE; }
@@ -59,7 +59,7 @@ namespace Radiant
 
     inline const IntrusivePtr<T> & operator=(const IntrusivePtr<T> & ptr) { ref(ptr.get()); return *this; }
     inline const IntrusivePtr<T> & operator=(T * ptr) { ref(ptr); return *this; }
-    inline const IntrusivePtr<T> & operator=(int n) { assert(n == 0); ref((T*)nullptr); return *this; }
+    inline const IntrusivePtr<T> & operator=(int n) { (void)n; assert(n == 0); ref((T*)nullptr); return *this; }
 
     /// Implicit "bool" conversion with safe bool idiom
     typedef T * (IntrusivePtr::*bool_type)() const;
