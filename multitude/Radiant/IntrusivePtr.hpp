@@ -3,7 +3,7 @@
 
 #include <cassert>
 
-// #define INTRUSIVE_PTR_DEBUG
+//#define INTRUSIVE_PTR_DEBUG
 #ifdef INTRUSIVE_PTR_DEBUG
 
 #include "Export.hpp"
