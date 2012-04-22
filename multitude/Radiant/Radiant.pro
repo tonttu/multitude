@@ -50,6 +50,7 @@ HEADERS += Radiant.hpp
 HEADERS += RGBA.hpp
 HEADERS += RefObj.hpp
 HEADERS += RefPtr.hpp
+HEADERS += IntrusivePtr.hpp
 HEADERS += ResourceLocator.hpp
 HEADERS += RingBuffer.hpp
 HEADERS += RingBufferImpl.hpp
