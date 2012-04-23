@@ -2,6 +2,7 @@
 #define LUMINOUS_VERTEXHOLDER_HPP
 
 #include <vector>
+#include <typeinfo>
 
 #include "GLSLProgramObject.hpp"
 #include "VertexBuffer.hpp"

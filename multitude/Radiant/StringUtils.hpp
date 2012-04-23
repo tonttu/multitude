@@ -20,7 +20,6 @@
 #include <sstream>
 #include <QString>
 
-#include <strings.h> // atoll on windows
 #include <stdlib.h>
 
 namespace Radiant
@@ -48,7 +47,11 @@ namespace Radiant
     /// Convert string to integer
     template <class T>
     inline T fromString(const char * str)
+#ifdef _MSC_VER
+    { return T(_atoi64(str)); }
+#else
     { return T(atoll(str)); }
+#endif
 
     template <long>
     inline long fromString(const char * str)

@@ -130,6 +130,7 @@ contains(HAS_QT_45,YES) {
 win32 {
   win64:LIBS += -lnvapi64
   else:LIBS += -lnvapi
+  LIBS += -lUser32
 }
 linux-*:LIBS += -lXNVCtrl -lXrandr
 

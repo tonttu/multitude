@@ -1,4 +1,4 @@
-    /* COPYRIGHT
+/* COPYRIGHT
  *
  * This file is part of Radiant.
  *
@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <cassert>
+#include <cstring>
 
 namespace Radiant {
 

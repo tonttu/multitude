@@ -130,7 +130,7 @@ namespace Nimble {
     {
 #ifdef RADIANT_IOS
       return std::isfinite(v);
-#elif defined(WIN32)
+#elif defined(_MSC_VER)
       return _finite(v) != 0;
 #else
       return finite(v);
@@ -141,8 +141,8 @@ namespace Nimble {
     /// @return Check result
     inline bool isNAN(float v)
     {
-#ifdef WIN32
-    return _isnan(v) != 0;
+#ifdef _MSC_VER
+      return _isnan(v) != 0;
 #else
       return std::isnan(v);
 #endif
