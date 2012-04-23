@@ -406,7 +406,8 @@ namespace Luminous
 
     /// Returns the RenderContext for the calling thread
     /// @todo not really implemented on Windows
-    static RenderContext * GLSLreadContext();
+    /// @todo not really implemented on anything?
+    /// static RenderContext * GLSLreadContext();
 
     void bindTexture(GLenum textureType, GLenum textureUnit, GLuint textureId);
     void bindBuffer(GLenum type, GLuint id);

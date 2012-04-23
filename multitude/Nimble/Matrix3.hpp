@@ -16,7 +16,7 @@ namespace Nimble {
   /** This class is a row-major 3x3 matrix. The matrix functions
       (rotations etc.) assume right-handed coordinate system. */
   template <class T>
-  class Matrix3T
+  class NIMBLE_API Matrix3T
   {
   public:
     /// Constructs the matrix without initializing any values.
@@ -170,7 +170,7 @@ namespace Nimble {
     inline Vector2T<T> project(const T & x, const T & y) const;
 
     /** Identity matrix. */
-    NIMBLE_API static const Matrix3T<T> IDENTITY;
+    static const Matrix3T<T> IDENTITY;
 
     /// Returns a 2d transformation matrix that does scale, rotate & translation (in this order)
     /// @param rad rotation angle (counter-clockwise)

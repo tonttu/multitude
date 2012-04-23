@@ -23,7 +23,7 @@ namespace Nimble
   ///             x
   ///         w       y
   ///             z
-  class Frame4f : public Vector4f
+  class NIMBLE_API Frame4f : public Vector4f
   {
   public:
     Frame4f(const Nimble::Vector4f & v = Nimble::Vector4f(0, 0, 0, 0)) : Vector4f(v) {}
