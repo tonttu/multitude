@@ -16,7 +16,9 @@
 #ifndef RADIANT_DEFINES_HPP
 #define RADIANT_DEFINES_HPP
 
-#if defined(__GNUC__) && ((__GNUC__ == 4 && __GNUC_MINOR__ < 5) || __GNUC__ < 4)
+#if defined(__GCCXML__)
+#define MULTI_ATTR_DEPRECATED(description, f) f
+#elif defined(__GNUC__) && ((__GNUC__ == 4 && __GNUC_MINOR__ < 5) || __GNUC__ < 4)
 #define MULTI_ATTR_DEPRECATED(description, f) f __attribute__ ((deprecated))
 #elif defined(__GNUC__) || defined(__clang__)
 #define MULTI_ATTR_DEPRECATED(description, f) f __attribute__ ((deprecated(description)))

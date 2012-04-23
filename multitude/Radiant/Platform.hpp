@@ -77,7 +77,7 @@
 #   pragma warning(disable:4251)
 #endif
 
-#if !defined(NO_OVERRIDE)
+#if !defined(NO_OVERRIDE) && !defined(__GCCXML__)
 #  define OVERRIDE override
 #else
 #  define OVERRIDE
