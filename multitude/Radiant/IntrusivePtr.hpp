@@ -1,12 +1,9 @@
 #if !defined (RADIANT_INTRUSIVEPTR_HPP)
 #define RADIANT_INTRUSIVEPTR_HPP
 
-#include "Platform.hpp"
-
 #include <cassert>
-#include <cstring>
 
-//#define INTRUSIVE_PTR_DEBUG
+// #define INTRUSIVE_PTR_DEBUG
 #ifdef INTRUSIVE_PTR_DEBUG
 
 #include "Export.hpp"
@@ -44,103 +41,110 @@ namespace Radiant
   {
   public:
     typedef T element_type;
-  public:
-    inline IntrusivePtr( int n ) : m_ptr((T*)nullptr) { (void)n; assert(n==0); }
-    inline IntrusivePtr( T * object = nullptr ) : m_ptr(object) { ref(); INTRUSIVE_PTR_DEBUG_ACQUIRE; }
 
-    inline IntrusivePtr( const IntrusivePtr<T> & ptr ) : m_ptr((T*)nullptr) { ref(ptr.get()); INTRUSIVE_PTR_DEBUG_ACQUIRE; }
-
-    template <typename Y> inline IntrusivePtr( const IntrusivePtr<Y> & ptr )
-      : m_ptr((T*)nullptr)
+    IntrusivePtr() : m_ptr(0) {}
+    IntrusivePtr(T * ptr) : m_ptr(ptr)
     {
-      assert(ptr == nullptr || dynamic_cast<T *>(ptr.get()) != nullptr);
-      ref(ptr.get());
-      INTRUSIVE_PTR_DEBUG_ACQUIRE;
+      if(ptr) {
+        intrusive_ptr_add_ref(ptr);
+        INTRUSIVE_PTR_DEBUG_ACQUIRE;
+      }
     }
 
-    inline ~IntrusivePtr() { deref(); }
+    IntrusivePtr(const IntrusivePtr<T> & iptr) : m_ptr(iptr.m_ptr)
+    {
+      if(m_ptr) {
+        intrusive_ptr_add_ref(m_ptr);
+        INTRUSIVE_PTR_DEBUG_ACQUIRE;
+      }
+    }
 
-    inline const IntrusivePtr<T> & operator=(const IntrusivePtr<T> & ptr) { ref(ptr.get()); return *this; }
-    inline const IntrusivePtr<T> & operator=(T * ptr) { ref(ptr); return *this; }
-    inline const IntrusivePtr<T> & operator=(int n) { (void)n; assert(n == 0); ref((T*)nullptr); return *this; }
+    template <typename Y>
+    IntrusivePtr(const IntrusivePtr<Y> & iptr) : m_ptr(iptr.get())
+    {
+      if(m_ptr) {
+        intrusive_ptr_add_ref(m_ptr);
+        INTRUSIVE_PTR_DEBUG_ACQUIRE;
+      }
+    }
+
+    virtual ~IntrusivePtr()
+    {
+      deref();
+    }
+
+    IntrusivePtr<T> & operator= (const IntrusivePtr<T> & iptr)
+    {
+      deref();
+      ref(iptr.m_ptr);
+      return *this;
+    }
+
+    template <typename Y>
+    IntrusivePtr<T> & operator= (const IntrusivePtr<Y> & iptr)
+    {
+      deref();
+      ref(iptr.get());
+      return *this;
+    }
+
+    IntrusivePtr<T> & operator= (T * ptr)
+    {
+      deref();
+      ref(ptr);
+      return *this;
+    }
+
+    template <typename Y>
+    IntrusivePtr<Y> cast()
+    {
+      return IntrusivePtr<Y>(dynamic_cast<Y*>(m_ptr));
+    }
+
+    T & operator* () const
+    {
+      assert(m_ptr);
+      return *m_ptr;
+    }
+
+    T * operator-> () const
+    {
+      assert(m_ptr);
+      return m_ptr;
+    }
+
+    inline T * get() const { return m_ptr; }
 
     /// Implicit "bool" conversion with safe bool idiom
     typedef T * (IntrusivePtr::*bool_type)() const;
-    inline operator bool_type() const { return m_ptr ? &IntrusivePtr<T>::get : 0; }
+    operator bool_type() const { return m_ptr ? &IntrusivePtr<T>::get : 0; }
 
-    inline bool operator! () const { return m_ptr == nullptr; }
-
-    inline void reset() { ref((T*)nullptr); }
-    inline T * get() const { return m_ptr; }
-    template <typename Y> IntrusivePtr<Y> cast() { return IntrusivePtr<Y>(dynamic_cast<Y*>(m_ptr)); }
-
-    inline T * operator->() const { return get(); }
-
-    inline T & operator*() { assert(m_ptr); return *m_ptr; }
-    inline const T & operator*() const { assert(m_ptr); return *m_ptr; }
+    bool operator! () const { return m_ptr == 0; }
 
   private:
-    inline void ref() const
+    inline void deref()
     {
-      if (m_ptr)
-        m_ptr->ref();
+      if(m_ptr) intrusive_ptr_release(m_ptr);
+      INTRUSIVE_PTR_DEBUG_RELEASE;
+    }
+    inline void ref(T * ptr)
+    {
+      m_ptr = ptr;
+      if(ptr) intrusive_ptr_add_ref(ptr);
       INTRUSIVE_PTR_DEBUG_ACQUIRE;
     }
 
-    inline void ref(T * ptr)
-    {
-      deref();
-      m_ptr = ptr;
-      ref();
-    }
-
-    inline void deref()
-    {
-      if (m_ptr && m_ptr->deref() == 0) {
-        delete m_ptr;
-        m_ptr = nullptr;
-      }
-      INTRUSIVE_PTR_DEBUG_RELEASE;
-    }
-
-  private:
     T * m_ptr;
-  };
-
-  template <typename T>
-  class RefCounted
-  {
-  public:
-    inline virtual ~RefCounted() { assert (m_refCount == 0); }  // Assert if there's stale pointers
-    inline const RefCounted<T> & operator=(const RefCounted<T> & rhs ) { m_refCount = 0; }
-
-    inline size_t refCount() const { return m_refCount; }
-    inline size_t ref() const { return ++m_refCount; }
-    inline size_t deref() const { return --m_refCount; }
-
-  protected:
-    inline RefCounted()
-      : m_refCount(0)
-    {
-      /// @todo Will break if we allocate these things on the stack of course. Should we bother?
-      /// There's no 100% guaranteed way to prevent stack allocation.
-      /// Could overload operator new/delete, but we probably don't want to go there.
-      /// Maybe a private ctor and factory function might help
-    }
-    inline RefCounted( const RefCounted<T> & rhs ) : m_refCount(0) {}
-
-  private:
-    mutable size_t m_refCount;
   };
 
   template <typename T, typename Y> inline bool operator==( const IntrusivePtr<T> & lhs, const IntrusivePtr<Y> & rhs) { return lhs.get() == rhs.get(); }
   template <typename T, typename Y> inline bool operator!=( const IntrusivePtr<T> & lhs, const IntrusivePtr<Y> & rhs) { return !(lhs == rhs); }
-  
+
   template <typename T, typename Y> inline bool operator== ( const IntrusivePtr<T> & lhs, const Y * rhs) { return lhs.get() == rhs; }
   template <typename T, typename Y> inline bool operator!= ( const IntrusivePtr<T> & lhs, const Y * rhs) { return !(lhs == rhs); }
   template <typename T, typename Y> inline bool operator== ( const Y * lhs, const IntrusivePtr<T> & rhs) { return rhs == lhs; }
   template <typename T, typename Y> inline bool operator!= ( const Y * lhs, const IntrusivePtr<T> & rhs) { return rhs != lhs; }
-  
+
   template <typename T, typename Y> inline bool operator< (const IntrusivePtr<T> & lhs, const IntrusivePtr<Y> & rhs) { return lhs.get() < rhs.get(); }
   template <typename T, typename Y> inline bool operator< (const IntrusivePtr<T> & lhs, const Y * rhs) { return lhs.get() < rhs; }
   template <typename T, typename Y> inline bool operator< (const T * lhs, const IntrusivePtr<Y> & rhs) { return lhs < rhs.get(); }
