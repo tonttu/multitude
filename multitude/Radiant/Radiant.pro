@@ -88,7 +88,6 @@ macx:SOURCES += CocoaWindow.mm
 SOURCES += XWindow.cpp
 SOURCES += QtWindow.cpp
 SOURCES += Mime.cpp
-SOURCES += IntrusivePtr.cpp
 SOURCES += CameraDriver.cpp
 SOURCES += SocketUtilPosix.cpp
 SOURCES += ThreadPoolQt.cpp

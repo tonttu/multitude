@@ -1,7 +1,10 @@
 #if !defined (RADIANT_INTRUSIVEPTR_HPP)
 #define RADIANT_INTRUSIVEPTR_HPP
 
+#include "Platform.hpp"
+
 #include <cassert>
+#include <cstring>
 
 //#define INTRUSIVE_PTR_DEBUG
 #ifdef INTRUSIVE_PTR_DEBUG
