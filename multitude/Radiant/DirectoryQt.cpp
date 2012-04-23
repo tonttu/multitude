@@ -19,7 +19,6 @@
 #include <Radiant/Mutex.hpp>
 #include <QDir>
 #include <QList>
-#include <QTextCodec>
 
 #include <algorithm>
 
@@ -38,11 +37,6 @@ namespace Radiant
 
   void Directory::populate()
   {
-    MULTI_ONCE(
-        QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
-        QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
-    )
-
     QDir::SortFlags sf = (m_sortFlag == Name) ? QDir::Name : QDir::Unsorted;
     QDir::Filters ff = 0;
 
