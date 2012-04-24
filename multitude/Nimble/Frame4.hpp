@@ -15,6 +15,7 @@
 #ifndef NIMBLE_FRAME4_HPP
 #define NIMBLE_FRAME4_HPP
 
+#include "Vector2.hpp"
 #include "Vector4.hpp"
 
 namespace Nimble
@@ -23,7 +24,7 @@ namespace Nimble
   ///             x
   ///         w       y
   ///             z
-  class NIMBLE_API Frame4f : public Vector4f
+  class Frame4f : public Vector4f
   {
   public:
     Frame4f(const Nimble::Vector4f & v = Nimble::Vector4f(0, 0, 0, 0)) : Vector4f(v) {}
@@ -37,9 +38,9 @@ namespace Nimble
     float width() const { return left() + right(); }
     float height() const { return top() + bottom(); }
 
-    Vector2 leftTop() const { return Vector2(left(), top()); }
-    Vector2 rightBottom() const { return Vector2(right(), bottom()); }
-    Vector2 size() const { return Vector2(width(), height()); }
+    Vector2f leftTop() const { return Vector2f(left(), top()); }
+    Vector2f rightBottom() const { return Vector2f(right(), bottom()); }
+    Vector2f size() const { return Vector2f(width(), height()); }
   };
 
 }

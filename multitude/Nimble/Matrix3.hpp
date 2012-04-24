@@ -16,7 +16,7 @@ namespace Nimble {
   /** This class is a row-major 3x3 matrix. The matrix functions
       (rotations etc.) assume right-handed coordinate system. */
   template <class T>
-  class NIMBLE_API Matrix3T
+  class Matrix3T
   {
   public:
     /// Constructs the matrix without initializing any values.
@@ -196,6 +196,11 @@ namespace Nimble {
 
     Vector3T<T> m[3];
   };
+
+  template<typename T> const Matrix3T<T> Matrix3T<T>::IDENTITY(
+    1, 0, 0,
+    0, 1, 0,
+    0, 0, 1);
 
   template <class T>
   inline void Matrix3T<T>::test()

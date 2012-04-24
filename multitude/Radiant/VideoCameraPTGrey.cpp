@@ -325,7 +325,7 @@ namespace Radiant
 
     // Set Format7 frame size
     FlyCapture2::Format7ImageSettings f7s;
-    bzero(&f7s, sizeof(f7s));
+    memset(&f7s, 0, sizeof(f7s));
     f7s.offsetX = roi.low().x;
     f7s.offsetY = roi.low().y;
     Nimble::Vector2i avail(f7info.maxWidth, f7info.maxHeight);
@@ -356,7 +356,7 @@ namespace Radiant
     // Validate
     Radiant::info("Validating format7 settings...");
     FlyCapture2::Format7PacketInfo f7pi;
-    bzero(&f7pi, sizeof(f7pi));
+    memset(&f7pi, 0, sizeof(f7pi));
     err = m_camera.ValidateFormat7Settings(&f7s, &supported, &f7pi);
     if(err != FlyCapture2::PGRERROR_OK) {
       Radiant::error("VideoCameraPTGrey::openFormat7 # ValidateFormat7Settings %s", err.GetDescription());

@@ -155,7 +155,7 @@ namespace Poetic
     std::vector<uint8_t> bytes(totalMemory);
 
     if(!bytes.empty())
-      bzero( & bytes[0], totalMemory);
+      memset( & bytes[0], 0, totalMemory);
 
     Luminous::Texture2D * tex = new Luminous::Texture2D();
     tex->loadBytes(GL_ALPHA, m_texWidth, m_texHeight, 0, Luminous::PixelFormat::alphaUByte(), false);

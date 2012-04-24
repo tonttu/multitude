@@ -23,8 +23,8 @@
 #include "Texture.hpp"
 #include "PixelFormat.hpp"
 
+#include <Nimble/Matrix4Impl.hpp>
 #include <Radiant/Trace.hpp>
-
 #include <Valuable/DOMElement.hpp>
 #include <Valuable/AttributeContainer.hpp>
 

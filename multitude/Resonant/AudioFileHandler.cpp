@@ -349,7 +349,7 @@ namespace Resonant {
     m_fileName.toUtf8().data(), frame);
 
     if(!m_data.empty() && clear)
-      bzero( & m_data[0], m_data.size() * sizeof(float));
+      memset( & m_data[0], 0, m_data.size() * sizeof(float));
 
     if(sf_seek(m_file, frame, SEEK_SET) != frame) {
 		Radiant::error("AudioFileHandler::Handle::moveReadHead");
@@ -471,7 +471,7 @@ namespace Resonant {
 
   bool AudioFileHandler::getInfo(const char * filename, SF_INFO * info)
   {
-    bzero(info, sizeof(SF_INFO));
+    memset(info, 0, sizeof(SF_INFO));
 
     SNDFILE * file = sf_open(filename, SFM_READ, info);
 

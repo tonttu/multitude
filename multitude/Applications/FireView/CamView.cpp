@@ -450,7 +450,7 @@ namespace FireView {
 
     // QTimer::singleShot(1000, this, SLOT(locate()));
     connect( & m_timer, SIGNAL(timeout()), this, SLOT(updateGL()));
-    bzero(m_averages, sizeof(m_averages));
+    memset(m_averages, 0, sizeof(m_averages));
     setFocusPolicy(Qt::ClickFocus);
 
     // setAttribute(Qt::WA_DeleteOnClose, true);

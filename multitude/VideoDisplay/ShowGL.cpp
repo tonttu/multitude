@@ -136,7 +136,7 @@ namespace VideoDisplay {
   {
     m_frame = -1;
 
-    bzero(m_texSizes, sizeof(m_texSizes));
+    memset(m_texSizes, 0, sizeof(m_texSizes));
     // __mytexcount++;
     // info("ShowGL::MyTextures::MyTextures # %d", __mytexcount);
   }
@@ -804,7 +804,7 @@ namespace VideoDisplay {
 
   void ShowGL::clearHistogram()
   {
-    bzero(m_histogram, sizeof(m_histogram));
+    memset(m_histogram, 0, sizeof(m_histogram));
   }
 
   Radiant::TimeStamp ShowGL::firstFrameTime() const

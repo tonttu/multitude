@@ -108,13 +108,18 @@ namespace Nimble {
     //	return i;
     //}
 
-    NIMBLE_API static const Matrix2T<T> IDENTITY;
+    static const Matrix2T<T> IDENTITY;
 
   private:
     inline static void swap(T &a, T& b);
 
     Vector2T<T> m[2];
   };
+
+
+  template<typename T> const Matrix2T<T> Matrix2T<T>::IDENTITY(
+    1, 0,
+    0, 1);
 
   /// Swaps two matrices
   template <class T>

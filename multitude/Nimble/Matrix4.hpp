@@ -321,16 +321,22 @@ namespace Nimble {
     /** This function works in a way similar to glOrtho
         (http://lmb.informatik.uni-freiburg.de/people/reisert/opengl/doc/glOrtho.html).
     */
-    NIMBLE_API static Matrix4T<T> ortho3D(T left, T right, T bottom, T top, T near, T far);
+    static Matrix4T<T> ortho3D(T left, T right, T bottom, T top, T near, T far);
 
     /** Identity matrix. */
-    NIMBLE_API static const Matrix4T<T> IDENTITY;
+    static const Matrix4T<T> IDENTITY;
 
   private:
     inline static void swap(T &a, T& b);
 
     Vector4T<T> m[4];
   };
+
+  template<typename T> const Matrix4T<T> Matrix4T<T>::IDENTITY(
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1);
 
   /// Swaps two matrices
   template <class T>
