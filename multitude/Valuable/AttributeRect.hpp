@@ -4,6 +4,7 @@
 #ifndef VALUABLE_VALUE_RECT_HPP
 #define VALUABLE_VALUE_RECT_HPP
 
+#include <Radiant/StringUtils.hpp>
 #include <Valuable/Export.hpp>
 #include <Valuable/AttributeObject.hpp>
 
