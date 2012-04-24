@@ -667,8 +667,8 @@ namespace Luminous
   {
     QString pathname;
 #ifdef LUMINOUS_OPENGL_FULL
-    // pathname = "../MultiTouch/GL20Shaders/";
-    pathname = "../MultiTouch/ES20Shaders/";
+     pathname = "../MultiTouch/GL20Shaders/";
+    //pathname = "../MultiTouch/ES20Shaders/";
 #else
     pathname = "../MultiTouch/ES20Shaders/";
 #endif
@@ -1268,15 +1268,12 @@ namespace Luminous
   void RenderContext::drawTexRect(Nimble::Vector2 size, const float * rgba,
                                   const Nimble::Rect & texUV)
   {
-    const Nimble::Matrix3 & m = transform();
-
-    Nimble::Vector2 v[] = {
-      m.project(0, 0),
-      m.project(size.x, 0),
-      m.project(0, size.y),
-      m.project(size.x, size.y)
+    GLfloat v[] = {
+      0.0 , 0.0,
+      size.x, 0.0,
+      0.0, size.y,
+      size.x, size.y
     };
-
 
     const Vector2 & low = texUV.low();
     const Vector2 & high = texUV.high();
@@ -1288,42 +1285,71 @@ namespace Luminous
       high.x, high.y
     };
 
-#if 1
-
     Nimble::Vector4 c(rgba[0], rgba[1], rgba[2], rgba[3]);
     Nimble::Vector4 colors[4] = {
       c, c, c, c
     };
 
-    // This fails when some other OpenGL features are used (FBOs, VBOs)
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glEnableClientState(GL_COLOR_ARRAY);
+    const GLfloat usetex[] = {
+        1.0, 1.0, 1.0, 1.0
+    };
 
-    glTexCoordPointer(2, GL_FLOAT, 0, texCoords);
-    glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat*>(v));
-    glColorPointer(4, GL_FLOAT, 0, colors);
+    //make sure basic shader is bound
+    GLint prev_prog;
+    GLint basic_prog = m_data->m_basic_shader->handle();
+    glGetIntegerv(GL_CURRENT_PROGRAM, &prev_prog);
+
+    if(prev_prog != basic_prog)
+    {
+        glUseProgram(prev_prog);
+    }
+
+#ifdef LUMINOUS_OPENGL_FULL
+
+    //only for desktop GL version of the shaders.
+
+    //3x3 modelview transform for 2D tranformations
+    m_data->m_basic_shader->setUniformMatrix3("object_transform", this->transform());
+
+    //4x4 projection transform
+    m_data->m_basic_shader->setUniformMatrix4("view_transform", m_data->m_viewTransform);
+
+    //set the sampler value
+    m_data->m_basic_shader->setUniformInt("tex_0", 0);
+
+    int location =  m_data->m_basic_shader->getAttribLoc("location");
+    int color =  m_data->m_basic_shader->getAttribLoc("color");
+    int tex_coord =  m_data->m_basic_shader->getAttribLoc("tex_coord");
+    int use_tex =  m_data->m_basic_shader->getAttribLoc("use_tex");
+
+    //make sure the attributes are active
+    assert(location >=0 && color>=0 && tex_coord>=0 && use_tex >=0);
+
+    glEnableVertexAttribArray(location);
+    glEnableVertexAttribArray(color);
+    glEnableVertexAttribArray(tex_coord);
+    glEnableVertexAttribArray(use_tex);
+
+    glVertexAttribPointer(location, 2, GL_FLOAT, 0, 0, v);
+    glVertexAttribPointer(color, 4, GL_FLOAT, 0, 0, colors);
+    glVertexAttribPointer(tex_coord, 2, GL_FLOAT, 0, 0,texCoords);
+    glVertexAttribPointer(use_tex, 1, GL_FLOAT, 0, 0, usetex);
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
-
+    glDisableVertexAttribArray(location);
+    glDisableVertexAttribArray(color);
+    glDisableVertexAttribArray(tex_coord);
+    glDisableVertexAttribArray(use_tex);
 #else
-
-    if(rgba)
-      glColor4fv(rgba);
-
-    glBegin(GL_TRIANGLE_STRIP);
-
-    for(int i = 0; i < 4; i++) {
-      glTexCoord2fv(&texCoords[i * 2]);
-      glVertex2fv(v[i].data());
-    }
-
-    glEnd();
+    //only for GL ES 2.0 version of the shaders.
+    //TODO
 #endif
+    //just being extra careful that we go back to the previous state when finished
+    if(prev_prog != basic_prog)
+    {
+        glUseProgram(prev_prog);
+    }
   }
 
   void RenderContext::drawTexRect(Nimble::Vector2 size, const float * rgba,
