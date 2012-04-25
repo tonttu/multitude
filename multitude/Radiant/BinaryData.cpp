@@ -775,39 +775,6 @@ namespace Radiant {
 
   }
 
-  template <> RADIANT_API float BinaryData::read(bool * ok)            { return readFloat32(ok); }
-  template <> RADIANT_API double BinaryData::read(bool * ok)           { return readFloat64(ok); }
-  template <> RADIANT_API int BinaryData::read(bool * ok)              { return readInt32(ok); }
-  template <> RADIANT_API unsigned int BinaryData::read(bool * ok)     { return readInt32(ok); }
-  template <> RADIANT_API int64_t BinaryData::read(bool * ok)          { return readInt64(ok); }
-  template <> RADIANT_API TimeStamp BinaryData::read(bool * ok)        { return readTimeStamp(ok); }
-  template <> RADIANT_API uint64_t BinaryData::read(bool * ok)         { return readInt64(ok); }
-  template <> RADIANT_API Nimble::Vector2f BinaryData::read(bool * ok) { return readVector2Float32(ok); }
-  template <> RADIANT_API Nimble::Vector3f BinaryData::read(bool * ok) { return readVector3Float32(ok); }
-  template <> RADIANT_API Nimble::Vector4f BinaryData::read(bool * ok) { return readVector4Float32(ok); }
-  template <> RADIANT_API Nimble::Frame4f BinaryData::read(bool * ok)  { return readVector4Float32(ok); }
-  template <> RADIANT_API Nimble::Vector2i BinaryData::read(bool * ok) { return readVector2Int32(ok); }
-  template <> RADIANT_API Nimble::Vector3i BinaryData::read(bool * ok) { return readVector3Int32(ok); }
-  template <> RADIANT_API Nimble::Vector4i BinaryData::read(bool * ok) { return readVector4Int32(ok); }
-
-  template <> RADIANT_API QString BinaryData::read(bool * ok)
-  {
-    QString tmp;
-    bool good = readString(tmp);
-    if(ok)
-      *ok = good;
-    return tmp;
-  }
-
-  template <> RADIANT_API std::wstring BinaryData::read(bool * ok)
-  {
-    std::wstring tmp;
-    bool good = readWString(tmp);
-    if(ok)
-      *ok = good;
-    return tmp;
-  }
-
   bool BinaryData::write(Radiant::BinaryStream & stream) const
   {
     int32_t s = pos();
