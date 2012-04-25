@@ -31,13 +31,13 @@ namespace Valuable
 
       @see AttributeFloat. */
   template<class T>
-  class VALUABLE_API AttributeFloatT : public AttributeNumeric<T>
+  class AttributeFloatT : public AttributeNumeric<T>
   {
     typedef AttributeNumeric<T> Base;
 
     public:
       using Base::value;
-      using AttributeT<T>::operator =;
+      using Base::operator =;
 
       AttributeFloatT() : Base(), m_src(1)
       {
@@ -86,7 +86,11 @@ namespace Valuable
 
       virtual const char * type() const OVERRIDE { return VO_TYPE_FLOAT; }
 
-      virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
+      virtual bool deserialize(const ArchiveElement & element) OVERRIDE
+      {
+        *this = element.get().toFloat();
+        return true;
+      }
 
       void setSrc(float src)
       {
@@ -110,9 +114,14 @@ namespace Valuable
         Base::clearValue(layer);
       }
 
-      /// @cond
-      virtual void processMessage(const QString & id, Radiant::BinaryData & data) OVERRIDE;
-      /// @endcond
+      virtual void processMessage(const QString &, Radiant::BinaryData & data) OVERRIDE
+      {
+        bool ok = true;
+        float v = data.read<T>( & ok);
+
+        if(ok)
+          *this = v;
+      }
 
   private:
       float m_factors[Attribute::LAYER_COUNT];
@@ -121,14 +130,6 @@ namespace Valuable
 
   /// Float value object
   typedef AttributeFloatT<float> AttributeFloat;
-
-#ifdef WIN32
-#ifdef VALUABLE_EXPORT
-  // In WIN32 template classes must be instantiated to be exported
-  template class AttributeFloatT<float>;
-#endif
-#endif
-
 }
 
 #endif

@@ -13,22 +13,18 @@
  * 
  */
 
-// The purpose of this file is to include ValueVector.hpp and ValueVectorImpl.hpp in the
-// Valuable build, thereby including any template instantiations defined in those files
-
-#include "AttributeFrame.hpp"
-#include "AttributeVectorImpl.hpp"
-
-namespace Valuable {
-
-  template class AttributeVector<Nimble::Vector2f>;
-  template class AttributeVector<Nimble::Vector3f>;
-  template class AttributeVector<Nimble::Vector4f>;
-  
-  template class AttributeVector<Nimble::Vector2i>;
-  template class AttributeVector<Nimble::Vector3i>;
-  template class AttributeVector<Nimble::Vector4i>;
-
-  template class AttributeVector<Nimble::Frame4f>;
+#include "AttributeVector.hpp"
+namespace Valuable
+{
+  template<> VALUABLE_API const char * AttributeVector<Nimble::Vector2i>::type() const { return "vec2i"; }
+  template<> VALUABLE_API const char * AttributeVector<Nimble::Vector3i>::type() const { return "vec3i"; }
+  template<> VALUABLE_API const char * AttributeVector<Nimble::Vector4i>::type() const { return "vec4i"; }
+  template<> VALUABLE_API const char * AttributeVector<Nimble::Vector2f>::type() const { return "vec2f"; }
+  template<> VALUABLE_API const char * AttributeVector<Nimble::Vector3f>::type() const { return "vec3f"; }
+  template<> VALUABLE_API const char * AttributeVector<Nimble::Vector4f>::type() const { return "vec4f"; }
+/*
+  template<> VALUABLE_API const char * AttributeVector<Nimble::Vector2d>::type() const { return "vec2d"; }
+  template<> VALUABLE_API const char * AttributeVector<Nimble::Vector3d>::type() const { return "vec3d"; }
+  template<> VALUABLE_API const char * AttributeVector<Nimble::Vector4d>::type() const { return "vec4d"; }
+*/
 }
-

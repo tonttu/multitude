@@ -10,10 +10,10 @@ namespace Luminous
 {
 
   /// Style object for giving rendering parameters to the RenderContext
-  class LUMINOUS_API Style
+  class Style
   {
   public:
-    Style();
+    LUMINOUS_API Style();
 
     /// Returns the color of the object to be drawn
     const Nimble::Vector4 & color () const { return m_color; }

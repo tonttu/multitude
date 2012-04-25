@@ -23,6 +23,9 @@
 
 #include <Radiant/StringUtils.hpp>
 
+#include "DOMElement.hpp"
+
+#include <string.h>
 #include <sstream>
 
 namespace Valuable
@@ -50,7 +53,7 @@ namespace Valuable
       AttributeVector(Node * host, const QString & name, const VectorType & v = VectorType::null(), bool transit = false)
         : Base(host, name, v, transit) {}
 
-      VALUABLE_API virtual ~AttributeVector();
+      virtual ~AttributeVector();
 
       /// Assigns by addition
       AttributeVector<VectorType> & operator += (const VectorType & v) { *this = value() + v; return *this; }
@@ -73,23 +76,23 @@ namespace Valuable
       const ElementType * data() const
       { return value().data(); }
 
-      VALUABLE_API virtual void processMessage(const QString & id, Radiant::BinaryData & data) OVERRIDE;
-      VALUABLE_API virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
+      virtual void processMessage(const QString & id, Radiant::BinaryData & data) OVERRIDE;
+      virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
 
-      VALUABLE_API const char * type() const OVERRIDE;
+      const char * type() const OVERRIDE;
 
       /// Sets the value
       // In some cases this is a override function, but not always
       /// @todo This should be fixed properly, but it's not important and just
       ///       fills the compiler output with the same warning
-      VALUABLE_API virtual bool set(const VectorType & v, Attribute::Layer layer = Attribute::MANUAL,
+      virtual bool set(const VectorType & v, Attribute::Layer layer = Attribute::MANUAL,
                                     QList<Attribute::ValueUnit> units = QList<Attribute::ValueUnit>());
 
       /// Returns the internal vector object as a constant reference.
       /// @return The wrapped vector value
       const VectorType & asVector() const { return value(); }
 
-      VALUABLE_API virtual QString asString(bool * const ok = 0) const OVERRIDE;
+      virtual QString asString(bool * const ok = 0) const OVERRIDE;
 
       /// Returns the ith element
       inline const ElementType & get(int i) const { return value()[i]; }
@@ -122,6 +125,75 @@ namespace Valuable
   /// A float vector4 value object
   typedef AttributeVector<Nimble::Vector4f> AttributeVector4f;
 
+  template<class VectorType>
+  bool AttributeVector<VectorType>::deserialize(const ArchiveElement & element) {
+    std::stringstream in(element.get().toUtf8().data());
+
+    VectorType vector;
+    for(int i = 0; i < N; i++)
+      in >> vector[i];
+
+    *this = vector;
+    return true;
+  }
+
+  template<class VectorType>
+  QString AttributeVector<VectorType>::asString(bool * const ok) const {
+    if(ok) *ok = true;
+
+    QString r = Radiant::StringUtils::stringify(value()[0]);
+
+    for(int i = 1; i < N; i++)
+      r += QString(" ") + Radiant::StringUtils::stringify(value()[i]);
+
+    return r;
+  }
+
+  template<class VectorType>
+  bool AttributeVector<VectorType>::set(const VectorType & v, Attribute::Layer layer,
+    QList<Attribute::ValueUnit>)
+  {
+    this->setValue(v, layer);
+    return true;
+  }
+
+  template <class T>
+  AttributeVector<T>::~AttributeVector()
+  {}
+
+  template <class T>
+  void AttributeVector<T>::processMessage(const QString & id,
+    Radiant::BinaryData & data)
+  {
+    /// @todo this isn't how processMessage should be used
+    if(!id.isEmpty()) {
+      int index = id.toInt();
+      if(index >= N || index < 0) {
+        return;
+      }
+
+      bool ok = true;
+
+      ElementType v = data.read<ElementType>(&ok);
+
+      if(ok) {
+        T tmp = value();
+        tmp[index] = v;
+        *this = tmp;
+      }
+    }
+    else {
+
+      bool ok = true;
+
+      T v = data.read<T>(&ok);
+
+      if(ok)
+        (*this) = v;
+    }
+  }
+
+  template<class VectorType> const char *  AttributeVector<VectorType>::type() const { return "vector"; }
 }
 
 #endif

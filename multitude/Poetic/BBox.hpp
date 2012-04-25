@@ -25,12 +25,12 @@ namespace Poetic
 {
 
   /** A bounding box class for glyphs. */
-  class POETIC_API BBox : public Nimble::Rect
+  class BBox : public Nimble::Rect
   {
     public:
-      BBox();
+      POETIC_API BBox();
       /// Constructs a bounding box for the given glyph
-      BBox(FT_GlyphSlotRec_ * glyph);
+      POETIC_API BBox(FT_GlyphSlotRec_ * glyph);
   };
 
 }

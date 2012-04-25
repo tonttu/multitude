@@ -26,7 +26,7 @@ namespace Valuable
 
   /// A matrix value object
   template<class MatrixType, typename ElementType, int N>
-  class VALUABLE_API AttributeMatrix : public AttributeT<MatrixType>
+  class AttributeMatrix : public AttributeT<MatrixType>
   {
     typedef AttributeT<MatrixType> Base;
   public:
@@ -49,9 +49,73 @@ namespace Valuable
 
     // virtual void processMessage(const QString & id, Radiant::BinaryData & data);
     virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
-    virtual const char * type() const OVERRIDE;
+    virtual const char * type() const OVERRIDE { return "Matrix"; }
     virtual QString asString(bool * const ok = 0) const OVERRIDE;
   };
+
+
+  
+  template <class T, typename S, int N>
+  AttributeMatrix<T,S,N>::~AttributeMatrix()
+  {}
+
+  /*
+  template <class T, typename S, int N>
+  void AttributeMatrix<T,S,N>::processMessage(const QString & id,
+                      Radiant::BinaryData & data)
+  {
+    if(id && strlen(id)) {
+      int index = strtol(id, 0, 10);
+      if(index >= N) {
+        return;
+      }
+
+      bool ok = true;
+
+      S v = data.read<S>(&ok);
+
+      if(ok) {
+        T tmp = Base::m_value;
+        tmp.data()[index] = v;
+        (*this) = tmp;
+      }
+    }
+    else {
+
+      bool ok = true;
+
+      T v = data.read<T>(&ok);
+
+      if(ok)
+        (*this) = v;
+    }
+  }
+  */
+
+  template<class MatrixType, typename ElementType, int N>
+  bool AttributeMatrix<MatrixType, ElementType, N>::deserialize(const ArchiveElement & element) {
+    std::stringstream in(element.get().toStdString());
+
+    MatrixType m;
+    for(int i = 0; i < N; i++)
+      in >> m.data()[i];
+
+    *this = m;
+    return true;
+  }
+
+  template<class MatrixType, typename ElementType, int N>
+  QString AttributeMatrix<MatrixType, ElementType, N>::asString(bool * const ok) const {
+    if(ok) *ok = true;
+
+    const ElementType * buf = data();
+    QString r = Radiant::StringUtils::stringify(buf[0]);
+
+    for(int i = 1; i < N; i++)
+      r += " " + Radiant::StringUtils::stringify(buf[i]);
+
+    return r;
+  }
 
   /// A float Matrix2 value object
   typedef AttributeMatrix<Nimble::Matrix2f, float, 4> AttributeMatrix2f;

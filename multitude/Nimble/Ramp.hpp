@@ -10,7 +10,7 @@ namespace Nimble {
   /** This class is used to interpolate between key-point values. The stepping/time value N
       van be an integer or floating point number. */
   template <class T, class N>
-  class /*NIMBLE_API*/ RampT
+  class RampT
   {
   public:
     RampT(const T & val) { reset(val); }

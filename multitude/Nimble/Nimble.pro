@@ -30,13 +30,11 @@ HEADERS += Vector4.hpp
 # SOURCES += Histogram.cpp
 SOURCES += KeyStone.cpp
 SOURCES += LensCorrection.cpp
-SOURCES += LineSegment2.cpp
 SOURCES += Path.cpp
 SOURCES += Plane.cpp
 SOURCES += Random.cpp
 SOURCES += Rectangle.cpp
 SOURCES += Splines.cpp
-SOURCES += Vector2.cpp
 
 DEFINES += NIMBLE_EXPORT
 

@@ -809,11 +809,4 @@ namespace Valuable
   {
     return false;
   }
-
-  // Template functions must be instantiated to be exported
-  template VALUABLE_API bool Node::setValue<float>(const QString & name, const float &);
-  template VALUABLE_API bool Node::setValue<Nimble::Vector2T<float> >(const QString & name, const Nimble::Vector2T<float> &);
-  template VALUABLE_API bool Node::setValue<Nimble::Vector4T<float> >(const QString & name, const Nimble::Vector4T<float> &);
-
-
 }

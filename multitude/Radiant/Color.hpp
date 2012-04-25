@@ -33,10 +33,10 @@ namespace Radiant
 
     /// @todo not really the correct place for this (Luminous would be
     /// better place, but dependency with Valuable), add HSV support
-    class RADIANT_API Color : public Nimble::Vector4f
+    class Color : public Nimble::Vector4f
   {
     public:
-      Color();
+      RADIANT_API Color();
 
       /** Decode color from a hex-string. The string must be in typical hex
       format and start with hash. If the string contains 8 number values, then
@@ -46,25 +46,25 @@ namespace Radiant
       Example arguments are \#000000 (black), \#FFFFFF (white), \#FF0000
       (red) and \#FF000088 (transparent red).
       @param color color string to parse */
-      Color(const char * color);
+      RADIANT_API Color(const char * color);
       /// Constructs a color from the given bytes
-      Color(unsigned char r, unsigned char g, unsigned char b, unsigned char a = 255);
+      RADIANT_API Color(unsigned char r, unsigned char g, unsigned char b, unsigned char a = 255);
       /// Constructs a color from the given integers. The values are expected to be [0,255]
-      Color(int r, int g, int b, int a = 255);
+      RADIANT_API Color(int r, int g, int b, int a = 255);
       /// Constructs a color from the given floats. The values are expected to be [0,1]
-      Color(float r, float g, float b, float a = 1.f);
+      RADIANT_API Color(float r, float g, float b, float a = 1.f);
       /// Constructs a color from the given doubles. The values are expected to be [0,1]
-      Color(double r, double g, double b, double a = 1.f);
+      RADIANT_API Color(double r, double g, double b, double a = 1.f);
       /// Constructs a color from the given vector. The component values are expected to be [0,1]
-      Color(const Nimble::Vector4f & v);
-      ~Color();
+      RADIANT_API Color(const Nimble::Vector4f & v);
+      RADIANT_API ~Color();
 
       /// Make RGBA color from floats. Valid range is [0, 1]
-      void setRGBA(float r, float g, float b, float a);
+      RADIANT_API void setRGBA(float r, float g, float b, float a);
       /// Make RGBA color from doubles. Valid range is [0, 1]
-      void setRGBA(double r, double g, double b, double a);
+      RADIANT_API void setRGBA(double r, double g, double b, double a);
       /// Make RGBA color from unsiged bytes. Each value will be divided by 255.
-      void setRGBA(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+      RADIANT_API void setRGBA(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 
       /// Returns the red color component
       float red()   const { return get(0); }

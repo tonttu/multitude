@@ -33,7 +33,7 @@ namespace Valuable
       @see AttributeInt, AttributeTimeStamp */
 
   template<class T>
-  class VALUABLE_API AttributeIntT : public AttributeNumeric<T>
+  class AttributeIntT : public AttributeNumeric<T>
   {
     typedef AttributeNumeric<T> Base;
   public:
@@ -41,7 +41,7 @@ namespace Valuable
     using Base::m_current;
     using Base::m_values;
     using Base::m_valueSet;
-    using AttributeT<T>::operator =;
+    using Base::operator =;
 
     AttributeIntT() : Base() {}
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
@@ -125,7 +125,14 @@ namespace Valuable
 
     virtual const char * type() const OVERRIDE { return VO_TYPE_INT; }
 
-    virtual void processMessage(const QString & id, Radiant::BinaryData & data) OVERRIDE;
+    virtual void processMessage(const QString & /*id*/, Radiant::BinaryData & data) OVERRIDE
+    {
+      bool ok = true;
+      int32_t v = data.read<T>( & ok);
+
+      if(ok)
+        *this = v;
+    }
 
     virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
   };
@@ -144,6 +151,23 @@ namespace Valuable
   /// Time-stamp value object.
   typedef AttributeIntT<Radiant::TimeStamp> AttributeTimeStamp;
 
+  template<class T>
+  bool AttributeIntT<T>::deserialize(const ArchiveElement & e)
+  {
+    *this = Radiant::StringUtils::fromString<T>(e.get().toUtf8().data());
+    
+    return true;
+  }
+  /*
+template<>
+  bool AttributeIntT<Radiant::TimeStamp>::deserialize(const ArchiveElement & )
+  {
+    Radiant::error("AttributeIntT<Radiant::TimeStamp>::deserialize # not implemented!");
+    return false;
+  }
+
+  Default implementation is fine also for TimeStamps.
+  */
 }
 
 #ifdef __GCCXML__

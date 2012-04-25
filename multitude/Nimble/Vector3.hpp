@@ -17,7 +17,7 @@ namespace Nimble {
   /** Three-dimensional vector class for 3D mathematics. */
 
   template <class T>
-  class NIMBLE_API Vector3T
+  class Vector3T
   {
   public:
     /// Data type of the vector
@@ -145,35 +145,6 @@ namespace Nimble {
     static inline Vector3T<T> null() { return Vector3T<T>(0, 0, 0); }
   };
 
-#ifdef WIN32
-  /* A bunch of specializations, so that the compiler does not warn about
-     negating vectors with unsigned components.
-  */
-  template <>
-      Vector3T<unsigned char>
-      Vector3T<unsigned char>::operator-	() const { return * this; }
-
-  template <>
-      Vector3T<unsigned>
-      Vector3T<unsigned>::operator-	() const { return * this; }
-
-  template <>
-      Vector3T<uint64_t>
-      Vector3T<uint64_t>::operator-	() const { return * this; }
-
-  template <>
-      Vector3T<unsigned char> &
-      Vector3T<unsigned char>::negate() { return * this; }
-
-  template <>
-      Vector3T<unsigned> &
-      Vector3T<unsigned>::negate() { return * this; }
-
-  template <>
-      Vector3T<uint64_t> &
-      Vector3T<uint64_t>::negate() { return * this; }
-#endif
-
   /// Vector of three floats
   typedef Vector3T<float> Vector3;
   /// Vector of three floats
@@ -268,18 +239,6 @@ inline std::istream &operator>>(std::istream &is, Nimble::Vector3T<uint8_t> &t)
 }
 /// @todo never use 'using' in a header file!
 //using Nimble::operator *;
-
-// These are needed under Windows
-#ifdef WIN32
-#   ifdef NIMBLE_EXPORT
-        template Nimble::Vector3T<float>;
-        template Nimble::Vector3T<unsigned char>;
-        template Nimble::Vector3T<int>;
-        template Nimble::Vector3T<double>;
-        template Nimble::Vector3T<int64_t>;
-        template Nimble::Vector3T<uint64_t>;
-#   endif
-#endif
 
 #ifdef __GCCXML__
 /// These are exported to JS

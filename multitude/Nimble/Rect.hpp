@@ -16,7 +16,6 @@
 #ifndef NIMBLE_RECT_HPP
 #define NIMBLE_RECT_HPP
 
-#include "Export.hpp"
 #include "Matrix3.hpp"
 #include "Vector2.hpp"
 
@@ -34,11 +33,11 @@ namespace Nimble {
       bottom). */
 
   /// @todo rename to AARect/RectAA
-  template <class T>
-      class NIMBLE_API RectT
+  template <typename T>
+      class RectT
   {
   public:
-    RectT()
+    inline RectT()
       : m_low(0, 0),
       m_high(-1, -1)
     {}
@@ -47,28 +46,28 @@ namespace Nimble {
     inline bool isEmpty() const { return m_low.x > m_high.x || m_low.y > m_high.y; }
 
     /// Constructs a rectangle and initializes both corners to the given point
-    RectT(const Vector2T<T> & lowHigh)
+    inline RectT(const Vector2T<T> & lowHigh)
       : m_low(lowHigh), m_high(lowHigh) {}
     /// Constructs a rectangle and initializes both corners to the given point
-    RectT(const Vector2T<T> * lowHigh)
+    inline RectT(const Vector2T<T> * lowHigh)
       : m_low(*lowHigh), m_high(*lowHigh) {}
     /// Constructs a rectangle and initializes it to the given points
-    RectT(const Vector2T<T> & low, const Vector2T<T> & high)
+    inline RectT(const Vector2T<T> & low, const Vector2T<T> & high)
       : m_low(low), m_high(high) {}
     /// Constructs a rectangle and initializes it to the given points
-    RectT(T xlow, T ylow, T xhigh, T yhigh)
+    inline RectT(T xlow, T ylow, T xhigh, T yhigh)
       : m_low(xlow, ylow), m_high(xhigh, yhigh) {}
-    ~RectT() {}
+    inline ~RectT() {}
 
     /// Scales the rectangle uniformly
-    void scale(T v) { m_low = m_low * v; m_high = m_high * v; }
+    inline void scale(T v) { m_low = m_low * v; m_high = m_high * v; }
     /// Scales the rectangle
     inline void scale(const Vector2T<T> &v);
 
     /// Translate the rectangle by v
-    void move(const Vector2T<T> &v) { m_low += v; m_high += v; }
+    inline void move(const Vector2T<T> &v) { m_low += v; m_high += v; }
     /// Translate the higher corner by v but make sure it never goes below the lower corner
-    void moveHighClamped(const Vector2T<T> &v)
+    inline void moveHighClamped(const Vector2T<T> &v)
     {
       m_high += v;
       for(int i = 0 ; i < 2; i++)
@@ -77,9 +76,9 @@ namespace Nimble {
     }
 
     /// Resets both low and high point to origin.
-    void clear() { m_low.clear(); m_high.clear(); }
+    inline void clear() { m_low.clear(); m_high.clear(); }
     /// Resets both low and high point to the given argument point.
-    void clear(const Vector2T<T> &v) { m_low = m_high = v; }
+    inline void clear(const Vector2T<T> &v) { m_low = m_high = v; }
 
     /// Expands this rectangle to include the argument point
     inline void expand(const Vector2T<T> &v);
@@ -92,45 +91,45 @@ namespace Nimble {
     { m_low.x += v; m_low.y += v; m_high.x -= v; m_high.y -= v; }
 
     /// Returns the low X/Y vector
-    Vector2T<T> & low() { return m_low; }
+    inline Vector2T<T> & low() { return m_low; }
     /// Returns the low X/Y vector
-    const Vector2T<T> & low() const { return m_low; }
+    inline const Vector2T<T> & low() const { return m_low; }
     /// Returns the high X/Y vector
-    Vector2T<T> & high() { return m_high; }
+    inline Vector2T<T> & high() { return m_high; }
     /// Returns the high X/Y vector
-    const Vector2T<T> & high() const { return m_high; }
+    inline const Vector2T<T> & high() const { return m_high; }
 
     /// Returns the low x value combined with high y value.
     /// @return (low.x, high.y)
-    Vector2T<T> lowHigh() const { return Vector2T<T>(m_low.x, m_high.y); }
+    inline Vector2T<T> lowHigh() const { return Vector2T<T>(m_low.x, m_high.y); }
     /// Returns the high x value combined with low y value.
     /// @return (high.x, low.y)
-    Vector2T<T> highLow() const { return Vector2T<T>(m_high.x, m_low.y); }
+    inline Vector2T<T> highLow() const { return Vector2T<T>(m_high.x, m_low.y); }
 
     /// Sets the corner to given values
-    void set(T lx, T ly, T hx, T hy)
+    inline void set(T lx, T ly, T hx, T hy)
     { m_low.make(lx, ly); m_high.make(hx, hy); }
     /// Sets the corner to given values
-    void set(const Vector2T<T> &low, const Vector2T<T> &high)
+    inline void set(const Vector2T<T> &low, const Vector2T<T> &high)
     { m_low = low; m_high = high; }
     /// Sets both corners to the given value
-    void set(const Vector2T<T> &point)
+    inline void set(const Vector2T<T> &point)
     { m_low = m_high = point; }
 
     /*void set(const Vector2T<T> &point, T radius)
     { m_low = point - radius; m_high = point + radius; }*/
     /// Sets the low corner
-    void setLow(const Vector2T<T> &low) { m_low = low; }
+    inline void setLow(const Vector2T<T> &low) { m_low = low; }
     /// Sets the high corner
-    void setHigh(const Vector2T<T> &high) { m_high = high; }
+    inline void setHigh(const Vector2T<T> &high) { m_high = high; }
     /// Sets the x of the low corner
-    void setLowX(const T lowX) { m_low.x = lowX; }
+    inline void setLowX(const T lowX) { m_low.x = lowX; }
     /// Sets the y of the low corner
-    void setLowY(const T lowY) { m_low.y = lowY; }
+    inline void setLowY(const T lowY) { m_low.y = lowY; }
     /// Sets the x of the high corner
-    void setHighX(const T highX) { m_high.x = highX; }
+    inline void setHighX(const T highX) { m_high.x = highX; }
     /// Sets the y of the high corner
-    void setHighY(const T highY) { m_high.y = highY; }
+    inline void setHighY(const T highY) { m_high.y = highY; }
 
     /// Returns the center of the rectangle.
     inline Vector2T<T> center() const { return (m_low + m_high) * (T) 0.5; }
@@ -457,15 +456,6 @@ namespace Nimble {
   typedef RectT<int> Recti;
   /// Rectangle of doubles
   typedef RectT<double> Rectd;
-
-  // These are needed under Windows
-#ifdef WIN32
-#   ifdef NIMBLE_EXPORT
-  template Nimble::RectT<float>;
-  template Nimble::RectT<int>;
-  template Nimble::RectT<double>;
-#   endif
-#endif
 
   /// Write a vector into a stream
   template <class T>

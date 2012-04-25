@@ -31,15 +31,15 @@ namespace Valuable
    *
    * @see AttributeFlags for more information and example
    */
-  class VALUABLE_API AttributeEnum : public AttributeIntT<int32_t>
+  class AttributeEnum : public AttributeIntT<int32_t>
   {
   public:
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
-    AttributeEnum(Valuable::Node * host, const char * name,
+    VALUABLE_API AttributeEnum(Valuable::Node * host, const char * name,
               const char ** enumnames, int current);
-    virtual ~AttributeEnum();
+    VALUABLE_API virtual ~AttributeEnum();
 
-    virtual void processMessage(const QString & id, Radiant::BinaryData & data) OVERRIDE;
+    VALUABLE_API virtual void processMessage(const QString & id, Radiant::BinaryData & data) OVERRIDE;
 
   private:
     const char ** m_enumnames;

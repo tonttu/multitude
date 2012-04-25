@@ -16,7 +16,6 @@
 #ifndef NIMBLE_VECTOR4T_HPP
 #define NIMBLE_VECTOR4T_HPP
 
-#include "Export.hpp"
 #include "Vector3.hpp"
 
 #include <limits>
@@ -30,7 +29,7 @@ namespace Nimble {
 
       Vector4T is also widely used to carry RGBA color values.*/
   template <class T>
-  class NIMBLE_API Vector4T
+  class Vector4T
   {
   public:
     /// Data type of the vector
@@ -253,16 +252,6 @@ inline std::istream &operator>>(std::istream &is, Nimble::Vector4T<T> &t)
   is >> t.w;
   return is;
 }
-
-// These are needed under Windows
-#ifdef WIN32
-#   ifdef NIMBLE_EXPORT
-        template Nimble::Vector4T<float>;
-        template Nimble::Vector4T<unsigned char>;
-        template Nimble::Vector4T<int>;
-        template Nimble::Vector4T<double>;
-#   endif
-#endif
 
 #ifdef __GCCXML__
 /// These are exported to JS

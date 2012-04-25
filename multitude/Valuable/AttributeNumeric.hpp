@@ -27,12 +27,13 @@ namespace Valuable
   /** The actual value classes are inherited from this template
       class. */
   template<class T>
-  class VALUABLE_API AttributeNumeric : public AttributeT<T>
+  class AttributeNumeric : public AttributeT<T>
   {
     typedef AttributeT<T> Base;
 
   public:
       using Base::value;
+      using Base::operator =;
 
       AttributeNumeric() : AttributeT<T>() {}
       /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)

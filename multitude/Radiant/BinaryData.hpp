@@ -305,56 +305,6 @@ namespace Radiant {
     bool     m_shared;
     char    *m_buf;
   };
-
-
-  template <> inline float BinaryData::read(bool * ok)
-  { return readFloat32(ok); }
-
-  template <> inline double BinaryData::read(bool * ok)
-  { return readFloat64(ok); }
-
-  template <> inline int BinaryData::read(bool * ok)
-  { return readInt32(ok); }
-
-
-  template <> inline Nimble::Vector2f BinaryData::read(bool * ok)
-  { return readVector2Float32(ok); }
-
-  template <> inline Nimble::Vector3f BinaryData::read(bool * ok)
-  { return readVector3Float32(ok); }
-
-  template <> inline Nimble::Vector4f BinaryData::read(bool * ok)
-  { return readVector4Float32(ok); }
-
-  template <> inline Nimble::Frame4f BinaryData::read(bool * ok)
-  { return readVector4Float32(ok); }
-
-  template <> inline Nimble::Vector2i BinaryData::read(bool * ok)
-  { return readVector2Int32(ok); }
-
-  template <> inline Nimble::Vector3i BinaryData::read(bool * ok)
-  { return readVector3Int32(ok); }
-
-  template <> inline Nimble::Vector4i BinaryData::read(bool * ok)
-  { return readVector4Int32(ok); }
-
-  template <> inline QString BinaryData::read(bool * ok)
-  {
-      QString tmp;
-      bool good = readString(tmp);
-      if(ok)
-            *ok = good;
-    return tmp;
-  }
-
-  template <> inline std::wstring BinaryData::read(bool * ok)
-  {
-      std::wstring tmp;
-      bool good = readWString(tmp);
-      if(ok)
-            *ok = good;
-    return tmp;
-  }
 }
 
 #endif
