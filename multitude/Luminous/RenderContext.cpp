@@ -14,7 +14,7 @@
 #include "VertexHolder.hpp"
 #include "GLSLProgramObject.hpp"
 
-#include <Nimble/Matrix4Impl.hpp>
+#include <Nimble/Matrix4.hpp>
 
 #include <Radiant/Mutex.hpp>
 #include <Radiant/PlatformUtils.hpp>

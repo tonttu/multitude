@@ -11,7 +11,6 @@ HEADERS += Math.hpp
 HEADERS += Matrix2.hpp
 HEADERS += Matrix3.hpp
 HEADERS += Matrix4.hpp
-HEADERS += Matrix4Impl.hpp
 HEADERS += Nimble.hpp
 HEADERS += Path.hpp
 HEADERS += Plane.hpp

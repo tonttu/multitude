@@ -1,12 +1,9 @@
 /* COPYRIGHT
  */
 
-#include "SplinesImpl.hpp"
+#include "Splines.hpp"
 
 #include <Nimble/Vector3.hpp>
-
-template Nimble::Vector3 Nimble::evalCatmullRom(float t, const std::vector<Nimble::Vector3> & cp, size_t index);
-
 
 namespace Nimble
 {
