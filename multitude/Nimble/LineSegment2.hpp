@@ -239,7 +239,7 @@ template <typename T>
         Vector2T<T> p12 = 0.5f*(p1+p2);
         Vector2T<T> p23 = 0.5f*(p2+p3);
         Vector2T<T> p34 = 0.5f*(p3+p4);
-        Vector2T<T> tor2 p123 = 0.5f*(p12+p23);
+        Vector2T<T> p123 = 0.5f*(p12+p23);
         Vector2T<T> p234 = 0.5f*(p23+p34);
         Vector2T<T> p1234 = 0.5f*(p123 + p234);
 
