@@ -96,9 +96,17 @@ namespace Luminous
 
     Nimble::Vector2 m_location;
     Nimble::Vector2 m_texCoord;
-    Nimble::Matrix3 m_transform;
     Nimble::Vector4 m_color;
     float           m_useTexture;
+    //to help debug
+    friend std::ostream& operator<<(std::ostream& s, RectVertex& r)
+    {
+        s<<"[ m_location ="<<r.m_location
+         <<", m_texCoord="<<r.m_texCoord
+         <<", m_useTexture="<<r.m_useTexture
+         <<" ]"<<std::endl;
+        return s;
+    }
   };
 
 

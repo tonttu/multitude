@@ -1270,79 +1270,37 @@ namespace Luminous
   void RenderContext::drawTexRect(Nimble::Vector2 size, const float * rgba,
                                   const Nimble::Rect & texUV)
   {
-    GLfloat v[] = {
-      0.0 , 0.0,
-      size.x, 0.0,
-      0.0, size.y,
-      size.x, size.y
-    };
-
-    const Vector2 & low = texUV.low();
-    const Vector2 & high = texUV.high();
-
-    const GLfloat texCoords[] = {
-      low.x, low.y,
-      high.x, low.y,
-      low.x, high.y,
-      high.x, high.y
-    };
-
-    Nimble::Vector4 c(rgba[0], rgba[1], rgba[2], rgba[3]);
-    Nimble::Vector4 colors[4] = {
-      c, c, c, c
-    };
-
-    const GLfloat usetex[] = {
-        1.0, 1.0, 1.0, 1.0
-    };
-
-    //make sure basic shader is bound
+    //save the previously bound program
     GLint prev_prog;
     GLint basic_prog = m_data->m_basic_shader->handle();
     glGetIntegerv(GL_CURRENT_PROGRAM, &prev_prog);
+    //make sure basic shader is bound
+    bindProgram(m_data->m_basic_shader.get());
 
-    if(prev_prog != basic_prog)
-    {
-        glUseProgram(prev_prog);
-    }
 
 #ifdef LUMINOUS_OPENGL_FULL
 
     //only for desktop GL version of the shaders.
 
     //3x3 modelview transform for 2D tranformations
-    m_data->m_basic_shader->setUniformMatrix3("object_transform", this->transform());
+    m_data->m_program->setUniformMatrix3("object_transform", this->transform());
 
     //4x4 projection transform
-    m_data->m_basic_shader->setUniformMatrix4("view_transform", m_data->m_viewTransform);
+    m_data->m_program->setUniformMatrix4("view_transform", m_data->m_viewTransform);
 
     //set the sampler value
-    m_data->m_basic_shader->setUniformInt("tex_0", 0);
+    m_data->m_program->setUniformInt("tex_0", 0);
 
-    int location =  m_data->m_basic_shader->getAttribLoc("location");
-    int color =  m_data->m_basic_shader->getAttribLoc("color");
-    int tex_coord =  m_data->m_basic_shader->getAttribLoc("tex_coord");
-    int use_tex =  m_data->m_basic_shader->getAttribLoc("use_tex");
+    Nimble::Rect area(Nimble::Vector2(0,0), size);
+    Nimble::Vector4 color(rgba[0], rgba[1], rgba[2], rgba[3]);
 
-    //make sure the attributes are active
-    assert(location >=0 && color>=0 && tex_coord>=0 && use_tex >=0);
+    Luminous::Style style;
+    style.setTexturing(1.0f);
+    style.setColor(color);
+    style.setTexCoords(texUV);
+    drawRect(area, style);
 
-    glEnableVertexAttribArray(location);
-    glEnableVertexAttribArray(color);
-    glEnableVertexAttribArray(tex_coord);
-    glEnableVertexAttribArray(use_tex);
-
-    glVertexAttribPointer(location, 2, GL_FLOAT, 0, 0, v);
-    glVertexAttribPointer(color, 4, GL_FLOAT, 0, 0, colors);
-    glVertexAttribPointer(tex_coord, 2, GL_FLOAT, 0, 0,texCoords);
-    glVertexAttribPointer(use_tex, 1, GL_FLOAT, 0, 0, usetex);
-
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-    glDisableVertexAttribArray(location);
-    glDisableVertexAttribArray(color);
-    glDisableVertexAttribArray(tex_coord);
-    glDisableVertexAttribArray(use_tex);
+    flush();
 #else
     //only for GL ES 2.0 version of the shaders.
     //TODO
@@ -1383,28 +1341,23 @@ namespace Luminous
     RectVertex va;
     va.m_color = style.color();
     va.m_useTexture = style.texturing();
-    va.m_transform = transform();
-
-    // GLSLProgramObject & prog = *m_data->m_basic_shader;
-    // prog.bind();
 
     va.m_location = area.low();
-    va.m_texCoord = style.texCoords().lowHigh();
+    va.m_texCoord = style.texCoords().low();
     if(!rp.empty())
       rp.addVertex(va);
     rp.addVertex(va);
 
     va.m_location = area.highLow();
-    va.m_texCoord = style.texCoords().high();
+    va.m_texCoord = style.texCoords().highLow();
     rp.addVertex(va);
 
     va.m_location = area.lowHigh();
-    va.m_texCoord = style.texCoords().low();
+    va.m_texCoord = style.texCoords().lowHigh();
     rp.addVertex(va);
 
     va.m_location = area.high();
-    va.m_texCoord = style.texCoords().highLow();
-    rp.addVertex(va);
+    va.m_texCoord = style.texCoords().high();
     rp.addVertex(va);
   }
 
@@ -1418,7 +1371,6 @@ namespace Luminous
 
     va.m_color = style.color();
     va.m_useTexture = false;
-    va.m_transform = transform().transposed();
     va.m_location = area.low();
 
     if(!rp.empty())
@@ -1505,7 +1457,6 @@ namespace Luminous
     RectVertex va;
     va.m_color = style.color();
     va.m_useTexture = style.texturing();
-    va.m_transform = transform().transposed();
 
     va.m_location = corners[0];
     va.m_texCoord = style.texCoords().lowHigh();
@@ -1729,29 +1680,25 @@ namespace Luminous
     int acol = prog.getAttribLoc("color");
     int atex = prog.getAttribLoc("tex_coord");
     int aute = prog.getAttribLoc("use_tex");
-    int aobj = prog.getAttribLoc("object_transform");
 
-    if((aloc < 0) || (acol < 0) || (atex < 0) || (aute < 0) || (aobj < 0)) {
-      fatal("RenderContext::flush # %d vertices %p %p %d %d", (int) rp.vertices().count<RectVertex>(),
-            m_data->m_program, &*m_data->m_basic_shader, aobj, (int) prog.getAttribLoc("location"));
+
+    if((aloc < 0) || (acol < 0) || (atex < 0) || (aute < 0)) {
+      fatal("RenderContext::flush # %d vertices %p %p %d", (int) rp.vertices().count<RectVertex>(),
+            m_data->m_program, &*m_data->m_basic_shader, (int) prog.getAttribLoc("location"));
     }
     Utils::glCheck("RenderContext::flush # 2");
 
-    info("shader attribs are %d %d %d %d %d for %d", aloc, acol, atex, aute, aobj, (int) rp.vertices().count<RectVertex>());
+    //info("shader attribs are %d %d %d %d for %d", aloc, acol, atex, aute, (int) rp.vertices().count<RectVertex>());
 
     rp.vbo().bind();
     rp.vbo().fill(rp.vertexData<RectVertex>(), rp.vertices().bytes(), Luminous::VertexBuffer::DYNAMIC_DRAW);
 
-    VertexAttribArrayStep ls(aloc, 2, GL_FLOAT, vsize, (void*) offsetBytes(vr, vr.m_location));
-    VertexAttribArrayStep cs(acol, 4, GL_FLOAT, vsize, (void*) offsetBytes(vr, vr.m_color));
-    VertexAttribArrayStep ts(atex, 4, GL_FLOAT, vsize, (void*) offsetBytes(vr, vr.m_texCoord));
-    VertexAttribArrayStep ms1(aobj, 3, GL_FLOAT, vsize, (void*) offsetBytes(vr, vr.m_transform));
-    VertexAttribArrayStep ms2(aobj, 3, GL_FLOAT, vsize, (void*) (offsetBytes(vr, vr.m_transform) + 12));
-    VertexAttribArrayStep ms3(aobj, 3, GL_FLOAT, vsize, (void*) (offsetBytes(vr, vr.m_transform) + 24));
-    VertexAttribArrayStep ut(aute, 1, GL_FLOAT, vsize, (void*) offsetBytes(vr, vr.m_useTexture));
+    VertexAttribArrayStep ls(aloc, 2, GL_FLOAT, vsize, (void*) offsetBytes(vr.m_location, vr));
+    VertexAttribArrayStep cs(acol, 4, GL_FLOAT, vsize, (void*) offsetBytes(vr.m_color, vr));
+    VertexAttribArrayStep ts(atex, 2, GL_FLOAT, vsize, (void*) offsetBytes(vr.m_texCoord, vr));
+    VertexAttribArrayStep ut(aute, 1, GL_FLOAT, vsize, (void*) offsetBytes(vr.m_useTexture, vr));
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, GLsizei(rp.vertices().count<RectVertex>()));
-    // glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
 
     rp.clear();
     rp.vbo().unbind(); // Should not really call this
