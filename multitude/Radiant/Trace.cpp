@@ -315,17 +315,17 @@ namespace Radiant {
 
   void setTraceFile(const char * filename)
   {
-    Guard lock(g_mutex);
     FILE * tmp = fopen(filename, "w");
     if(!tmp) {
       error("Radiant::setTraceFile # Failed to open %s", filename);
     } else {
+      Guard lock(g_mutex);
       if(__outfile)
         fclose(__outfile);
       __outfile = tmp;
       printf("Trace file set to %s (%p)\n", filename, __outfile);
+      fflush(0);
     }
-    fflush(0);
   }
 
 }
