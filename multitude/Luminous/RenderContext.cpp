@@ -1034,19 +1034,22 @@ namespace Luminous
                               float fromRadians, float toRadians,
                               float width, const Luminous::Style & fill)
   {
-    flush();
+    bindProgram(m_data->m_arc_shader.get());
 
-    bindProgram(&*m_data->m_arc_shader);
-
-    GLSLProgramObject & prog = * m_data->m_arc_shader;
+    GLSLProgramObject * prog =  m_data->m_arc_shader.get();
 
     float dim = radius + width * 0.5f;
     Nimble::Vector2 corners(dim, dim);
 
-    prog.setUniformFloat("fs_fromRadians", fromRadians);
-    prog.setUniformFloat("fs_toRadians", toRadians);
-    prog.setUniformFloat("fs_thickness", (0.5f * width) / dim);
+    //3x3 modelview transform for 2D tranformations
+    prog->setUniformMatrix3("object_transform", this->transform());
 
+    //4x4 projection transform
+    prog->setUniformMatrix4("view_transform", m_data->m_viewTransform);
+
+    prog->setUniformFloat("fs_fromRadians", fromRadians);
+    prog->setUniformFloat("fs_toRadians", toRadians);
+    prog->setUniformFloat("fs_thickness", (0.5f * width) / dim);
 
     drawRect(Nimble::Rect(center - corners, center + corners), fill);
     flush();
@@ -1682,10 +1685,10 @@ namespace Luminous
     int aute = prog.getAttribLoc("use_tex");
 
 
-    if((aloc < 0) || (acol < 0) || (atex < 0) || (aute < 0)) {
-      fatal("RenderContext::flush # %d vertices %p %p %d", (int) rp.vertices().count<RectVertex>(),
-            m_data->m_program, &*m_data->m_basic_shader, (int) prog.getAttribLoc("location"));
-    }
+//    if((aloc < 0) || (acol < 0) || (atex < 0) || (aute < 0)) {
+//      fatal("RenderContext::flush # %d vertices %p %p %d", (int) rp.vertices().count<RectVertex>(),
+//            m_data->m_program, &*m_data->m_basic_shader, (int) prog.getAttribLoc("location"));
+//    }
     Utils::glCheck("RenderContext::flush # 2");
 
     //info("shader attribs are %d %d %d %d for %d", aloc, acol, atex, aute, (int) rp.vertices().count<RectVertex>());
