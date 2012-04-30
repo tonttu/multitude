@@ -18,6 +18,9 @@
 
 #include "Export.hpp"
 #include "Vector2.hpp"
+#include "Matrix3.hpp"
+
+#include <vector>
 
 namespace Nimble {
 

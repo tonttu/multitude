@@ -19,6 +19,8 @@
 #include <Valuable/Export.hpp>
 #include <Valuable/AttributeObject.hpp>
 
+#include <Radiant/StringUtils.hpp>
+
 #include <Nimble/Matrix4.hpp>
 
 namespace Valuable
