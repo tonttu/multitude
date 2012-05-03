@@ -201,7 +201,8 @@ namespace {
       return false;
 
     std::set<ADLDisplayID> uniqueDisplays;
-    for (int adapterIdx = 0; adapterIdx < adapterInfo.size(); ++adapterIdx) {
+    bool ok = false;
+    for(size_t adapterIdx = 0; adapterIdx < adapterInfo.size(); ++adapterIdx) {
 
       // XScreen doesn't match the requested screen: skip
       if(xscreens[adapterInfo[adapterIdx].iAdapterIndex].iXScreenNum != screen) continue;
@@ -212,10 +213,10 @@ namespace {
       if (!getDisplayInfo(currentAdapter.iAdapterIndex, displayInfos))
         continue;
 
-      for(int displayIdx = 0; displayIdx < displayInfos.size(); ++displayIdx) {
+      for(size_t displayIdx = 0; displayIdx < displayInfos.size(); ++displayIdx) {
         const ADLDisplayInfo & currentDisplay = displayInfos[displayIdx];
 
-	if (uniqueDisplays.find(currentDisplay.displayID) != uniqueDisplays.end()                   // Already seen this display
+        if (uniqueDisplays.find(currentDisplay.displayID) != uniqueDisplays.end()                   // Already seen this display
             ||(currentDisplay.iDisplayInfoValue & ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED ) == 0)  // Don't care about disconnected outputs
           continue;
 
@@ -262,9 +263,11 @@ namespace {
           continue;
         }
 
+        ok = true;
         results.push_back(screenInfo);
       }
     }
+    return ok;
   }
 
   #elif defined (RADIANT_WINDOWS)
