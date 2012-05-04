@@ -21,7 +21,6 @@ HEADERS += Range.hpp
 HEADERS += Rectangle.hpp
 HEADERS += Rect.hpp
 HEADERS += Splines.hpp
-HEADERS += SplinesImpl.hpp
 HEADERS += Vector2.hpp
 HEADERS += Vector3.hpp
 HEADERS += Vector4.hpp
