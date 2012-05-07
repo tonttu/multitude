@@ -51,6 +51,11 @@
 # endif
 #else
 # include <GL/glew.h>
+# if defined (RADIANT_WINDOWS)
+#   include <GL/wglew.h>
+# elif defined (RADIANT_LINUX)
+#   include <GL/glxew.h>
+# endif
 #endif
 
 #ifdef LUMINOUS_OPENGLES
@@ -59,6 +64,7 @@
 # define LUMINOUS_OPENGL_FULL
 # define LUMINOUS_IN_FULL_OPENGL(x) x
 #endif
+
 
 #ifdef LUMINOUS_OPENGLES
 # include <Luminous/DummyOpenGL.hpp>
@@ -121,6 +127,98 @@ namespace Luminous
   */
   LUMINOUS_API void initDefaultImageCodecs();
 
+
+  //////////////////////////////////////////////////////////////////////////
+  enum PrimitiveType
+  {
+    PT_Triangle,
+    PT_TriangleStrip,
+    PT_Line,
+    PT_LineStrip,
+    PT_Point,
+  };
+
+  /// @note Only the write options are supported on OpenGL/ES
+  enum BufferUsage {
+    BU_Unknown,        // Undefined
+    // Defined once, used many times
+    BU_Static_Read,    // GPU->CPU
+    BU_Static_Write,   // CPU->GPU
+    BU_Static_Copy,    // GPU->GPU
+    // Defined repeatedly, used many times
+    BU_Dynamic_Read,   // GPU->CPU
+    BU_Dynamic_Write,  // CPU->GPU
+    BU_Dynamic_Copy,   // GPU->GPU
+    // Defined repeatedly, used a few times
+    BU_Stream_Read,    // GPU->CPU 
+    BU_Stream_Write,   // CPU->GPU
+    BU_Stream_Copy,    // GPU->GPU
+  };
+
+  enum BufferType {
+    BT_VertexBuffer,
+    BT_IndexBuffer,
+  };
+
+  enum DataType
+  {
+    DT_Unknown,
+    DT_Byte,
+    DT_Short,
+    DT_Int,
+    DT_UnsignedByte,
+    DT_UnsignedShort,
+    DT_UnsignedInt,
+    DT_Float,
+    DT_Double
+  };
+  
+  enum BufferLockOptions {
+    BLO_Discard     = (1 << 0),
+    BLO_Read        = (1 << 1),
+    BLO_Write       = (1 << 2),
+    BLO_NoOverwrite = (1 << 3),
+    BLO_ReadWrite   = BLO_Read | BLO_Write,
+  };
+
+  enum ClearMask
+  {
+    CM_Color        = (1 << 0),
+    CM_Depth        = (1 << 1),
+    CM_Stencil      = (1 << 2),
+    CM_ColorDepth   = CM_Color | CM_Depth,
+    CM_ColorStencil = CM_Color | CM_Stencil,
+    CM_DepthStencil = CM_Depth | CM_Stencil,
+  };
+
+  enum BlendFunction
+  {
+
+  };
+  enum BlendEquation
+  {
+
+  };
+
+  enum RenderBin
+  {
+    RB_Opaque,
+    RB_Transparent,
+  };
+
+  //////////////////////////////////////////////////////////////////////////
+  /// Forward declarations
+
+  // 
+  class RenderDriver;
+  class GLContext;
+  class ShaderGLSL;
+  // Resources
+  class HardwareBuffer;
+  // Vertex data
+  struct VertexAttribute;
+  class VertexDescription;
+  class VertexAttributeBinding;
 }
 
 #endif

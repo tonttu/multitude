@@ -1,5 +1,36 @@
 include(../multitude.pri)
 
+# Drivers
+HEADERS += RenderDriver.hpp
+HEADERS += RenderDriverGL.hpp
+SOURCES += RenderDriverGL.cpp
+
+# Device contexts
+HEADERS += GLContext.hpp
+SOURCES += GLContext.cpp
+
+# Render contexts
+HEADERS += RenderContext2.hpp
+HEADERS += RenderContextImmediate.hpp
+SOURCES += RenderContextImmediate.cpp
+
+# Render resources
+HEADERS += RenderResource.hpp
+SOURCES += RenderResource.hpp
+HEADERS += HardwareBuffer.hpp
+HEADERS += HardwareBufferGL.hpp
+SOURCES += HardwareBufferGL.cpp
+HEADERS += VertexAttributeBinding.hpp
+HEADERS += VertexAttributeBindingGL.hpp
+SOURCES += VertexAttributeBindingGL.cpp
+
+HEADERS += VertexDescription.hpp
+SOURCES += VertexDescription.cpp
+
+# Utility functions
+HEADERS += GLUtils.hpp
+SOURCES += GLUtils.cpp
+
 HEADERS += BGThread.hpp
 linux-*:HEADERS += XRandR.hpp
 !macx:HEADERS += ScreenDetectorAMD.hpp
@@ -20,7 +51,8 @@ HEADERS += Error.hpp
 HEADERS += Export.hpp
 HEADERS += FramebufferObject.hpp
 HEADERS += GarbageCollector.hpp
-HEADERS += GLContext.hpp
+
+
 HEADERS += GLKeyStone.hpp
 HEADERS += GLResource.hpp
 HEADERS += GLResources.hpp
@@ -36,6 +68,7 @@ HEADERS += MatrixStep.hpp
 HEADERS += MultiHead.hpp
 HEADERS += PixelFormat.hpp
 HEADERS += RenderContext.hpp
+
 #HEADERS += RenderTarget.hpp
 HEADERS += Shader.hpp
 !mobile*:HEADERS += SpriteRenderer.hpp
@@ -61,7 +94,7 @@ SOURCES += Error.cpp
 SOURCES += FramebufferObject.cpp
 SOURCES += FramebufferResource.cpp
 SOURCES += GarbageCollector.cpp
-SOURCES += GLContext.cpp
+
 SOURCES += GLKeyStone.cpp
 SOURCES += GLResource.cpp
 SOURCES += GLResources.cpp
