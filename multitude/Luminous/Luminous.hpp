@@ -53,8 +53,6 @@
 # include <GL/glew.h>
 # if defined (RADIANT_WINDOWS)
 #   include <GL/wglew.h>
-# elif defined (RADIANT_LINUX)
-#   include <GL/glxew.h>
 # endif
 #endif
 
