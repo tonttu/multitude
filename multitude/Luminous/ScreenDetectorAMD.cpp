@@ -267,6 +267,7 @@ namespace {
         results.push_back(screenInfo);
       }
     }
+    return true;
   }
 
   #elif defined (RADIANT_WINDOWS)
