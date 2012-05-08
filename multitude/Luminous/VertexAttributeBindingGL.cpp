@@ -38,8 +38,8 @@ namespace Luminous
     std::vector<GLuint> vao;
   };
 
-  VertexAttributeBindingGL::VertexAttributeBindingGL(unsigned int threadCount)
-    : RenderResource(threadCount)
+  VertexAttributeBindingGL::VertexAttributeBindingGL(RenderResource::Id id, unsigned int threadCount)
+    : RenderResource(id, threadCount)
     , m_impl(new VertexAttributeBindingGL::Impl(threadCount))
   {
 
@@ -64,7 +64,7 @@ namespace Luminous
     glBindVertexArray(m_impl->vao[threadIndex]);
   }
 
-  void VertexAttributeBindingGL::unbind(unsigned int threadIndex)
+  void VertexAttributeBindingGL::unbind(unsigned int)
   {
     glBindVertexArray(0);
   }

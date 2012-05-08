@@ -16,7 +16,7 @@ namespace Luminous
     unsigned int threadCount() const;
 
   protected:
-    RenderResource(unsigned int threadCount);
+    RenderResource(Id id, unsigned int threadCount);
     // Instruct the resource to reallocate the GPU data
     void reallocateGPU();
     // Instruct the resource to update the GPU data

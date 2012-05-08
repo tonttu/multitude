@@ -12,7 +12,7 @@ namespace Luminous
     , public RenderResource
   {
   public:
-    HardwareBufferGL(BufferType bufferType, unsigned int threadCount);
+    HardwareBufferGL(RenderResource::Id id, BufferType bufferType, unsigned int threadCount);
     ~HardwareBufferGL();
 
     // HardwareBuffer interface

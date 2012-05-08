@@ -23,8 +23,8 @@ namespace Luminous
     BufferUsage usage;
   };
 
-  HardwareBufferGL::HardwareBufferGL(BufferType type, unsigned int threadCount)
-    : RenderResource(threadCount)
+  HardwareBufferGL::HardwareBufferGL(RenderResource::Id id, BufferType type, unsigned int threadCount)
+    : RenderResource(id, threadCount)
     , m_impl(new HardwareBufferGL::Impl(type, BU_Unknown, threadCount))
   {
   }

@@ -8,9 +8,10 @@ namespace Luminous
   class RenderResource::Impl
   {
   public:
-    Impl(int threadCount)
+    Impl(RenderResource::Id id, int threadCount)
       : gpuState(threadCount, GPU_Initializing)
       , cpuState(CPU_Clean)
+      , id(id)
     {
     }
 
@@ -33,10 +34,11 @@ namespace Luminous
 
     CPUState cpuState;
     std::vector<GPUState> gpuState;
+    RenderResource::Id id;
   };
 
-  RenderResource::RenderResource(unsigned int threadCount)
-    : m_impl(new RenderResource::Impl(threadCount))
+  RenderResource::RenderResource(RenderResource::Id id, unsigned int threadCount)
+    : m_impl(new RenderResource::Impl(id, threadCount))
   {
   }
 
@@ -118,6 +120,11 @@ namespace Luminous
     return static_cast<int>(m_impl->gpuState.size());
   }
   
+  RenderResource::Id RenderResource::resourceId() const
+  {
+    return m_impl->id;
+  }
+
   void RenderResource::initializeResources(unsigned int) {}
   void RenderResource::reallocateResources(unsigned int) {}
   void RenderResource::updateResources(unsigned int) {}

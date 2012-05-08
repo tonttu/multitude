@@ -13,7 +13,7 @@ namespace Luminous
   {
     typedef VertexAttributeBinding Parent;
   public:
-    VertexAttributeBindingGL(unsigned int threadCount);
+    VertexAttributeBindingGL(RenderResource::Id id, unsigned int threadCount);
     ~VertexAttributeBindingGL();
 
     // VertexAttributeBinding interface
