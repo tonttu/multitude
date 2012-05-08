@@ -16,8 +16,8 @@ namespace Luminous
 
     virtual void clear() = 0;
 
-    virtual void bind(int threadIndex) = 0;
-    virtual void unbind(int threadIndex) = 0;
+    virtual void bind(unsigned int threadIndex) = 0;
+    virtual void unbind(unsigned int threadIndex) = 0;
   };
 }
 

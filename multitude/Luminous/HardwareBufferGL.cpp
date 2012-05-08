@@ -9,7 +9,7 @@ namespace Luminous
   class HardwareBufferGL::Impl
   {
   public:
-    Impl(BufferType type, BufferUsage usage, int threadCount)
+    Impl(BufferType type, BufferUsage usage, unsigned int threadCount)
       : buffers(threadCount, 0)
       , type(type)
       , usage(usage)
@@ -23,7 +23,7 @@ namespace Luminous
     BufferUsage usage;
   };
 
-  HardwareBufferGL::HardwareBufferGL(BufferType type, int threadCount)
+  HardwareBufferGL::HardwareBufferGL(BufferType type, unsigned int threadCount)
     : RenderResource(threadCount)
     , m_impl(new HardwareBufferGL::Impl(type, BU_Unknown, threadCount))
   {
@@ -54,7 +54,7 @@ namespace Luminous
     assert(offset + bytes < m_impl->data.size());
     /// @todo For _READ types we need to sync with the GPU somehow
     /// Contents could be different in different threads, so user should select thread perhaps?
-    const char * start = &(*(m_impl->data.cbegin() + offset));
+    const char * start = &(*(m_impl->data.begin() + offset));
     std::copy(start, start + bytes, data);
   }
 
@@ -68,14 +68,14 @@ namespace Luminous
     updateGPU();
   }
 
-  void HardwareBufferGL::bind(int threadIndex)
+  void HardwareBufferGL::bind(unsigned int threadIndex)
   {
     assert(threadIndex < m_impl->buffers.size());
     GLenum type = GLUtils::getBufferType(m_impl->type);
     glBindBuffer(type, m_impl->buffers[threadIndex]);
   }
 
-  void HardwareBufferGL::unbind(int threadIndex)
+  void HardwareBufferGL::unbind(unsigned int threadIndex)
   {
     assert(threadIndex < m_impl->buffers.size());
     GLenum type = GLUtils::getBufferType(m_impl->type);
@@ -92,20 +92,20 @@ namespace Luminous
     return m_impl->usage;
   }
 
-  void HardwareBufferGL::initializeResources(int threadIndex)
+  void HardwareBufferGL::initializeResources(unsigned int threadIndex)
   {
     assert(threadIndex < m_impl->buffers.size());
     glGenBuffers(1, &m_impl->buffers[threadIndex]);
   }
 
-  void HardwareBufferGL::deinitializeResources(int threadIndex)
+  void HardwareBufferGL::deinitializeResources(unsigned int threadIndex)
   {
     assert(threadIndex < m_impl->buffers.size());
     glDeleteBuffers(1, &m_impl->buffers[threadIndex]);
     m_impl->buffers[threadIndex] = 0;
   }
 
-  void HardwareBufferGL::reallocateResources(int threadIndex)
+  void HardwareBufferGL::reallocateResources(unsigned int threadIndex)
   {
     assert(threadIndex < m_impl->buffers.size());
     GLenum type = GLUtils::getBufferType(m_impl->type);
@@ -113,7 +113,7 @@ namespace Luminous
     glBufferData(type, m_impl->data.size(), 0, m_impl->usage);
   }
 
-  void HardwareBufferGL::updateResources(int threadIndex)
+  void HardwareBufferGL::updateResources(unsigned int threadIndex)
   {
     assert(threadIndex < m_impl->buffers.size());
     /// @todo Should we bother with doing partial updates?
@@ -122,7 +122,7 @@ namespace Luminous
     glBufferSubData(type, 0, m_impl->data.size(), m_impl->data.data());
   }
 
-  GLuint HardwareBufferGL::handle(int threadIndex) const
+  GLuint HardwareBufferGL::handle(unsigned int threadIndex) const
   {
     assert(threadIndex < m_impl->buffers.size());
     return m_impl->buffers[threadIndex];

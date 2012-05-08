@@ -13,23 +13,23 @@ namespace Luminous
 
     typedef uint64_t Id;
     Id resourceId() const;
-    int threadCount() const;
+    unsigned int threadCount() const;
 
   protected:
-    RenderResource(int threadCount);
+    RenderResource(unsigned int threadCount);
     // Instruct the resource to reallocate the GPU data
     void reallocateGPU();
     // Instruct the resource to update the GPU data
     void updateGPU();
 
-    virtual void initializeResources(int threadIndex);
-    virtual void reallocateResources(int threadIndex);
-    virtual void updateResources(int threadIndex);
-    virtual void deinitializeResources(int threadIndex);
+    virtual void initializeResources(unsigned int threadIndex);
+    virtual void reallocateResources(unsigned int threadIndex);
+    virtual void updateResources(unsigned int threadIndex);
+    virtual void deinitializeResources(unsigned int threadIndex);
 
   private:
     // Update the GPU resources (called by the resource manager)
-    void update(int threadIndex);
+    void update(unsigned int threadIndex);
     // Returns true if all resources have been released (called by the resource manager)
     bool released() const;
 

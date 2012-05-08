@@ -17,8 +17,8 @@ namespace Luminous
     virtual void read(char * data, size_t offset, size_t bytes) const = 0;
     virtual void write(const char * data, size_t offset, size_t bytes) = 0;
 
-    virtual void bind(int threadIndex) = 0;
-    virtual void unbind(int threadIndex) = 0;
+    virtual void bind(unsigned int threadIndex) = 0;
+    virtual void unbind(unsigned int threadIndex) = 0;
     
     virtual BufferType type() const = 0;
     virtual BufferUsage usage() const = 0;

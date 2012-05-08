@@ -23,7 +23,7 @@ namespace Luminous
     std::shared_ptr<RenderDriver> driver;
 
     /// @todo Use threadIndex
-    int threadIndex;
+    unsigned int threadIndex;
     size_t frame;
     float fps;
   };

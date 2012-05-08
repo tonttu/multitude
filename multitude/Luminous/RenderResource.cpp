@@ -35,7 +35,7 @@ namespace Luminous
     std::vector<GPUState> gpuState;
   };
 
-  RenderResource::RenderResource(int threadCount)
+  RenderResource::RenderResource(unsigned int threadCount)
     : m_impl(new RenderResource::Impl(threadCount))
   {
   }
@@ -56,7 +56,7 @@ namespace Luminous
     m_impl->cpuState = Impl::CPU_Updated;
   }
 
-  void RenderResource::update(int threadIndex)
+  void RenderResource::update(unsigned int threadIndex)
   {
     switch (m_impl->gpuState[threadIndex])
     {
@@ -107,19 +107,19 @@ namespace Luminous
 
   bool RenderResource::released() const
   {
-    for (int i = 0; i < threadCount(); ++i)
+    for (unsigned int i = 0; i < threadCount(); ++i)
       if (m_impl->gpuState[i] != Impl::GPU_Uninitialized)
         return false;
     return true;
   }
 
-  int RenderResource::threadCount() const
+  unsigned int RenderResource::threadCount() const
   {
     return static_cast<int>(m_impl->gpuState.size());
   }
   
-  void RenderResource::initializeResources(int) {}
-  void RenderResource::reallocateResources(int) {}
-  void RenderResource::updateResources(int) {}
-  void RenderResource::deinitializeResources(int) {}
+  void RenderResource::initializeResources(unsigned int) {}
+  void RenderResource::reallocateResources(unsigned int) {}
+  void RenderResource::updateResources(unsigned int) {}
+  void RenderResource::deinitializeResources(unsigned int) {}
 }

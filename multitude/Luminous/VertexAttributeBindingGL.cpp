@@ -11,7 +11,7 @@ namespace Luminous
   class VertexAttributeBindingGL::Impl
   {
   public:
-    Impl(int threadCount)
+    Impl(unsigned int threadCount)
       : vao(threadCount, 0)
     {
     }
@@ -38,7 +38,7 @@ namespace Luminous
     std::vector<GLuint> vao;
   };
 
-  VertexAttributeBindingGL::VertexAttributeBindingGL(int threadCount)
+  VertexAttributeBindingGL::VertexAttributeBindingGL(unsigned int threadCount)
     : RenderResource(threadCount)
     , m_impl(new VertexAttributeBindingGL::Impl(threadCount))
   {
@@ -49,19 +49,19 @@ namespace Luminous
     delete m_impl;
   }
 
-  void VertexAttributeBindingGL::initializeResources(int threadIndex)
+  void VertexAttributeBindingGL::initializeResources(unsigned int threadIndex)
   {
     glGenVertexArrays(1, &m_impl->vao[threadIndex]);
   }
 
-  void VertexAttributeBindingGL::updateResources(int threadIndex)
+  void VertexAttributeBindingGL::updateResources(unsigned int threadIndex)
   {
     glBindVertexArray(m_impl->vao[threadIndex]);
 
     // @todo Set vertex attributes
   }
 
-  void VertexAttributeBindingGL::deinitializeResources(int threadIndex)
+  void VertexAttributeBindingGL::deinitializeResources(unsigned int threadIndex)
   {
     glDeleteVertexArrays(1, &m_impl->vao[threadIndex]);
   }
@@ -93,12 +93,12 @@ namespace Luminous
     }
   }
 
-  void VertexAttributeBindingGL::bind(int threadIndex)
+  void VertexAttributeBindingGL::bind(unsigned int threadIndex)
   {
     glBindVertexArray(m_impl->vao[threadIndex]);
   }
 
-  void VertexAttributeBindingGL::unbind(int threadIndex)
+  void VertexAttributeBindingGL::unbind(unsigned int threadIndex)
   {
     glBindVertexArray(0);
   }
