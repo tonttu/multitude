@@ -17,17 +17,12 @@ namespace Luminous
     ~VertexAttributeBindingGL();
 
     // VertexAttributeBinding interface
-    virtual void addBinding(const std::shared_ptr<HardwareBuffer> & buffer, const std::shared_ptr<VertexDescription> & description) OVERRIDE;
-    virtual void removeBinding(const std::shared_ptr<HardwareBuffer> & buffer) OVERRIDE;
-    virtual void clear() OVERRIDE;
-
     virtual void bind(unsigned int threadIndex) OVERRIDE;
     virtual void unbind(unsigned int threadIndex) OVERRIDE;
 
     // RenderResource interface
-    virtual void initializeResources(unsigned int threadIndex);
-    virtual void updateResources(unsigned int threadIndex);
-    virtual void deinitializeResources(unsigned int threadIndex);
+    virtual void initializeResources(unsigned int threadIndex) OVERRIDE;
+    virtual void deinitializeResources(unsigned int threadIndex) OVERRIDE;
   private:
     class Impl;
     Impl * m_impl;

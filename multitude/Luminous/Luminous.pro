@@ -21,6 +21,7 @@ HEADERS += HardwareBuffer.hpp
 HEADERS += HardwareBufferGL.hpp
 SOURCES += HardwareBufferGL.cpp
 HEADERS += VertexAttributeBinding.hpp
+SOURCES += VertexAttributeBinding.cpp
 HEADERS += VertexAttributeBindingGL.hpp
 SOURCES += VertexAttributeBindingGL.cpp
 

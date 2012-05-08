@@ -54,43 +54,9 @@ namespace Luminous
     glGenVertexArrays(1, &m_impl->vao[threadIndex]);
   }
 
-  void VertexAttributeBindingGL::updateResources(unsigned int threadIndex)
-  {
-    glBindVertexArray(m_impl->vao[threadIndex]);
-
-    // @todo Set vertex attributes
-  }
-
   void VertexAttributeBindingGL::deinitializeResources(unsigned int threadIndex)
   {
     glDeleteVertexArrays(1, &m_impl->vao[threadIndex]);
-  }
-
-  void VertexAttributeBindingGL::addBinding(const std::shared_ptr<HardwareBuffer> & buffer, const std::shared_ptr<VertexDescription> & description)
-  {
-    // Add the binding if it doesn't already exist
-    Impl::Bindings::const_iterator it = std::find(m_impl->bindings.begin(), m_impl->bindings.end(), buffer);
-    if (it == m_impl->bindings.end()) {
-      m_impl->bindings.push_back(Impl::Binding(buffer, description));
-      updateGPU();
-    }
-  }
-
-  void VertexAttributeBindingGL::removeBinding(const std::shared_ptr<HardwareBuffer> & buffer)
-  {
-    Impl::Bindings::iterator it = std::find(m_impl->bindings.begin(), m_impl->bindings.end(), buffer);
-    if (it != m_impl->bindings.end()) {
-      m_impl->bindings.erase( it );
-      updateGPU();
-    }
-  }
-
-  void VertexAttributeBindingGL::clear()
-  {
-    if (!m_impl->bindings.empty()) {
-      m_impl->bindings.clear();
-      updateGPU();
-    }
   }
 
   void VertexAttributeBindingGL::bind(unsigned int threadIndex)
