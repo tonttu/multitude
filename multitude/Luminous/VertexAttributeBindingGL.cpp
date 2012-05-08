@@ -18,7 +18,7 @@ namespace Luminous
 
     struct Binding
     {
-      Binding() : buffer(nullptr), description(nullptr)
+      Binding()
       {}
 
       Binding(std::shared_ptr<HardwareBuffer> buffer, std::shared_ptr<VertexDescription> description)

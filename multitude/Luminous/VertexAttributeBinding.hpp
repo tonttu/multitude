@@ -4,6 +4,8 @@
 #include "Luminous/Luminous.hpp"
 #include "Luminous/HardwareBuffer.hpp"
 #include "Luminous/VertexDescription.hpp"
+
+#include <Radiant/RefPtr.hpp>
 #include <vector>
 
 namespace Luminous

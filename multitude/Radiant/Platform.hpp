@@ -61,10 +61,6 @@
 #     define NO_OVERRIDE
 #   endif
 
-#   if !defined(RADIANT_CXX11)
-#     define nullptr 0
-#   endif
-
 //
 // Detect Microsoft Visual C++
 //

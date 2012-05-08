@@ -34,7 +34,7 @@ namespace Luminous
       if (m_attributes[i].name == attrName)
         return &m_attributes[i];
     }
-    return nullptr;
+    return 0;
   }
 
   void VertexDescription::removeAttribute(const QString & attrName)

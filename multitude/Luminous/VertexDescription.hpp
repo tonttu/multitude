@@ -15,7 +15,7 @@ namespace Luminous
   public:
     /// Add an attribute
     template <typename AttrType> void addAttribute(const QString & attrName, uint offset);
-    /// Tries to find a named attributes. Returns nullptr if it's not found
+    /// Tries to find a named attributes. Returns 0 if it's not found
     LUMINOUS_API const VertexAttribute * findAttribute(const QString & attrName) const;
     /// Remove a named attribute
     LUMINOUS_API void removeAttribute(const QString & attrName);
