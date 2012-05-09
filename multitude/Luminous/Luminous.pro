@@ -16,7 +16,7 @@ SOURCES += RenderContextImmediate.cpp
 
 # Render resources
 HEADERS += RenderResource.hpp
-SOURCES += RenderResource.hpp
+SOURCES += RenderResource.cpp
 HEADERS += HardwareBuffer.hpp
 HEADERS += HardwareBufferGL.hpp
 SOURCES += HardwareBufferGL.cpp
