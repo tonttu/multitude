@@ -2,6 +2,7 @@
 #include "Luminous/VertexAttributeBindingGL.hpp"
 #include "Luminous/VertexDescription.hpp"
 #include "Luminous/HardwareBufferGL.hpp"
+#include "Luminous/ShaderConstantsGL.hpp"
 #include "Luminous/GLUtils.hpp"
 
 #include <Nimble/Matrix4.hpp>
@@ -12,22 +13,39 @@ namespace Luminous
 {
   class RenderDriverGL::Impl
   {
-    enum { max_textures = 8 };
   public:
-    Impl() {}
+    Impl(unsigned int threadId, unsigned int threadCount)
+      : threadId(threadId)
+      , threadCount(threadCount)
+      , currentProgram(0)
+      , resourceId(0)
+    {}
 
-    // Render state
-    std::shared_ptr<ShaderGLSL> m_currentShader;
-    std::shared_ptr<HardwareBuffer> m_currentVertexBuffer;
-    std::shared_ptr<HardwareBuffer> m_currentIndexBuffer;
+    RenderResource::Id createId()
+    {
+      return resourceId++;
+    }
 
-    //std::shared_ptr<Texture2> m_currentTexture[max_textures];
+    // ThreadID that is serviced by this driver
+    unsigned int threadId;
+    // Total number of render threads
+    unsigned int threadCount;
+    // Currently bound shader program
+    GLuint currentProgram;
+
+    // Next free available resource ID
+    RenderResource::Id resourceId;
   };
 
-  RenderDriverGL::RenderDriverGL()
-    : m_impl(std::make_shared<RenderDriverGL::Impl>())
+  RenderDriverGL::RenderDriverGL(unsigned int threadId, unsigned int threadCount)
+    : m_impl(new RenderDriverGL::Impl(threadId, threadCount))
   {
 
+  }
+
+  RenderDriverGL::~RenderDriverGL()
+  {
+    delete m_impl;
   }
 
   std::shared_ptr<VertexDescription> RenderDriverGL::createVertexDescription()
@@ -37,14 +55,17 @@ namespace Luminous
 
   std::shared_ptr<VertexAttributeBinding> RenderDriverGL::createVertexAttributeBinding()
   {
-    /// @todo implement (fetch threadCount from system)
-    return std::shared_ptr<VertexAttributeBinding>();
+    return std::make_shared<VertexAttributeBindingGL>(m_impl->createId(), m_impl->threadCount);
   }
 
   std::shared_ptr<HardwareBuffer> RenderDriverGL::createVertexBuffer(size_t vertexSize, size_t vertexCount, BufferUsage usage)
   {
-    /// @todo implement (fetch threadCount from system)
-    return std::shared_ptr<HardwareBuffer>();
+    return std::make_shared<HardwareBufferGL>(m_impl->createId(), BT_VertexBuffer, m_impl->threadCount);
+  }
+
+  std::shared_ptr<HardwareBuffer> RenderDriverGL::createConstantBuffer(BufferUsage usage)
+  {
+    return std::make_shared<ShaderConstantsGL>(usage, m_impl->createId(), m_impl->threadCount);
   }
 
   void RenderDriverGL::clear(ClearMask mask, const Radiant::Color & color, double depth, int stencil)

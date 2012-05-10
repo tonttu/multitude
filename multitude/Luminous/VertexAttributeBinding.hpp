@@ -13,19 +13,26 @@ namespace Luminous
   class VertexAttributeBinding
   {
   public:
+    struct Binding
+    {
+      std::shared_ptr<HardwareBuffer> buffer;
+      std::shared_ptr<VertexDescription> description;
+    };
+  public:
     VertexAttributeBinding();
     ~VertexAttributeBinding();
 
     void addBinding(const std::shared_ptr<HardwareBuffer> & buffer, const std::shared_ptr<VertexDescription> & description);
     void removeBinding(const std::shared_ptr<HardwareBuffer> & buffer);
-
     void clear();
+
+    size_t bindingCount() const;
+    const Binding & binding(size_t index) const;
 
     virtual void bind(unsigned int threadIndex) = 0;
     virtual void unbind(unsigned int threadIndex) = 0;
 
     bool dirty() const;
-  protected:
     void setDirty(bool dirty);
   private:
     class Impl;

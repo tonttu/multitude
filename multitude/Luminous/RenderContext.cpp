@@ -1757,5 +1757,17 @@ namespace Luminous
     return m_data->m_viewportStack.top();
   }
 
+
+  //////////////////////////////////////////////////////////////////////////
+  // Luminousv2
+  void RenderContext::setVertexBinding(const VertexAttributeBinding & binding)
+  {
+    //binding.bind();
+  }
+
+  void RenderContext::drawArrays(PrimitiveType primType, unsigned int offset, unsigned int vertexCount)
+  {
+    m_driver->drawArrays(primType, offset, vertexCount);
+  }
 }
 

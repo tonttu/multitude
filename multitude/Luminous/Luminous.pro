@@ -24,6 +24,9 @@ HEADERS += VertexAttributeBinding.hpp
 SOURCES += VertexAttributeBinding.cpp
 HEADERS += VertexAttributeBindingGL.hpp
 SOURCES += VertexAttributeBindingGL.cpp
+HEADERS += ShaderConstants.hpp
+HEADERS += ShaderConstantsGL.hpp
+SOURCES += ShaderConstantsGL.cpp
 
 HEADERS += VertexDescription.hpp
 SOURCES += VertexDescription.cpp

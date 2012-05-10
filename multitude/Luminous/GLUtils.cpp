@@ -45,6 +45,7 @@ namespace Luminous
     {
     case BT_VertexBuffer: return GL_ARRAY_BUFFER;
     case BT_IndexBuffer: return GL_ELEMENT_ARRAY_BUFFER;
+    case BT_ConstantBuffer: return GL_UNIFORM_BUFFER_EXT;
     default:
       Radiant::error("GLUtils: Unknown buffer type (%d)", type);
       assert(false);

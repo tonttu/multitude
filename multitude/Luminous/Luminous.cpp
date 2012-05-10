@@ -194,4 +194,25 @@ namespace Luminous
 
   }
 
+  namespace Utils2
+  {
+    size_t getDataSize(DataType type)
+    {
+      switch (type)
+      {
+      case Luminous::DT_Byte:           return sizeof(char);
+      case Luminous::DT_UnsignedByte:   return sizeof(unsigned char);
+      case Luminous::DT_Short:          return sizeof(short);
+      case Luminous::DT_UnsignedShort:  return sizeof(unsigned short);
+      case Luminous::DT_Int:            return sizeof(int);
+      case Luminous::DT_UnsignedInt:    return sizeof(unsigned int);
+      case Luminous::DT_Float:          return sizeof(float);
+      case Luminous::DT_Double:         return sizeof(double);
+      default:
+        Radiant::error("Requesting size of unsupported datatype");
+        return 0;
+      }
+    }
+  }
+
 }

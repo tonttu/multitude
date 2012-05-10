@@ -7,24 +7,12 @@ namespace Luminous
   class VertexAttributeBinding::Impl
   {
   public:
-    struct Binding
-    {
-      Binding(std::shared_ptr<HardwareBuffer> buffer, std::shared_ptr<VertexDescription> description)
-        : buffer(buffer)
-        , description(description)
-      {}
-
-      bool operator==(const std::shared_ptr<HardwareBuffer> & rhs) const { return buffer == rhs; }
-
-      std::shared_ptr<HardwareBuffer> buffer;
-      std::shared_ptr<VertexDescription> description;
-    };
-
-    typedef std::vector< Binding > Bindings;
+    typedef std::vector< VertexAttributeBinding::Binding > Bindings;
     Bindings bindings;
-
     bool dirty;
   };
+
+  bool operator==(const VertexAttributeBinding::Binding & lhs, const std::shared_ptr<HardwareBuffer> & rhs) { return lhs.buffer == rhs; }
 
   VertexAttributeBinding::VertexAttributeBinding()
     : m_impl(new VertexAttributeBinding::Impl())
@@ -41,7 +29,10 @@ namespace Luminous
     // Add the binding if it doesn't already exist
     Impl::Bindings::const_iterator it = std::find(m_impl->bindings.begin(), m_impl->bindings.end(), buffer);
     if (it == m_impl->bindings.end()) {
-      m_impl->bindings.push_back(Impl::Binding(buffer, description));
+      Binding binding;
+      binding.buffer = buffer;
+      binding.description = description;
+      m_impl->bindings.push_back(binding);
       setDirty(true);
     }
   }
@@ -61,6 +52,17 @@ namespace Luminous
       m_impl->bindings.clear();
       setDirty(true);
     }
+  }
+
+  size_t VertexAttributeBinding::bindingCount() const
+  {
+    return m_impl->bindings.size();
+  }
+
+  const VertexAttributeBinding::Binding & VertexAttributeBinding::binding(size_t index) const
+  {
+    assert( index < bindingCount() );
+    return m_impl->bindings[index];
   }
 
   void VertexAttributeBinding::setDirty(bool dirty)

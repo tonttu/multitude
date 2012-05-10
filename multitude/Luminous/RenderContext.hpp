@@ -6,6 +6,10 @@
 
 #include <Luminous/Luminous.hpp>
 
+// <Luminousv2>
+#include <Luminous/RenderDriver.hpp>
+// </Luminousv2>
+
 #include <Luminous/FramebufferObject.hpp>
 #include <Luminous/Transformer.hpp>
 #include <Luminous/Style.hpp>
@@ -418,6 +422,25 @@ namespace Luminous
     void flush();
     void restart();
 
+    //////////////////////////////////////////////////////////////////////////
+    /// <Luminousv2>
+    //////////////////////////////////////////////////////////////////////////
+
+    //void bindTexture(const QString & name, int unit, std::shared_ptr<Luminous::Texture> texture);
+    template <typename T> void setUniform(const QString & name, const T & value)
+    {
+      int location = m_driver->getUniformLocation(name);
+      if (location != -1)
+        m_driver->setUniform(location, value);
+    }
+    void setVertexBinding(const VertexAttributeBinding & binding);
+    void drawArrays(PrimitiveType primType, unsigned int offset, unsigned int vertexCount);
+
+  private:
+    std::shared_ptr<RenderDriver> m_driver;
+    //////////////////////////////////////////////////////////////////////////
+    /// </Luminousv2>
+    //////////////////////////////////////////////////////////////////////////
   protected:
     virtual void beforeTransformChange();
   private:

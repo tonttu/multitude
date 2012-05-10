@@ -156,6 +156,7 @@ namespace Luminous
   enum BufferType {
     BT_VertexBuffer,
     BT_IndexBuffer,
+    BT_ConstantBuffer,
   };
 
   enum DataType
@@ -181,12 +182,13 @@ namespace Luminous
 
   enum ClearMask
   {
-    CM_Color        = (1 << 0),
-    CM_Depth        = (1 << 1),
-    CM_Stencil      = (1 << 2),
-    CM_ColorDepth   = CM_Color | CM_Depth,
-    CM_ColorStencil = CM_Color | CM_Stencil,
-    CM_DepthStencil = CM_Depth | CM_Stencil,
+    CM_Color              = (1 << 0),
+    CM_Depth              = (1 << 1),
+    CM_Stencil            = (1 << 2),
+    CM_ColorDepth         = CM_Color | CM_Depth,
+    CM_ColorStencil       = CM_Color | CM_Stencil,
+    CM_DepthStencil       = CM_Depth | CM_Stencil,
+    CM_ColorDepthStencil  = CM_Color | CM_Depth | CM_Stencil,
   };
 
   enum BlendFunction
@@ -203,6 +205,14 @@ namespace Luminous
     RB_Opaque,
     RB_Transparent,
   };
+
+  //////////////////////////////////////////////////////////////////////////
+  // Utility functions
+  /// @todo Luminous2 utilities, should rename once Luminous::Utils has been killed with fire
+  namespace Utils2
+  {
+    size_t getDataSize(DataType type);
+  }
 
   //////////////////////////////////////////////////////////////////////////
   /// Forward declarations

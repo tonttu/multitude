@@ -5,27 +5,6 @@
 #include <Nimble/Vector4.hpp>
 #include <cassert>
 
-namespace
-{
-  uint typeSize( Luminous::DataType type )
-  {
-    switch (type)
-    {
-    case Luminous::DT_Byte:
-    case Luminous::DT_UnsignedByte:   return sizeof(char);
-    case Luminous::DT_Short:
-    case Luminous::DT_UnsignedShort:  return sizeof(short);
-    case Luminous::DT_Int:
-    case Luminous::DT_UnsignedInt:    return sizeof(int);
-    case Luminous::DT_Float:          return sizeof(float);
-    case Luminous::DT_Double:         return sizeof(double);
-    default:
-      Radiant::error("Requesting size of unsupported vertex attribute");
-      return 0;
-    }
-  }
-}
-
 namespace Luminous
 {
   const VertexAttribute * VertexDescription::findAttribute(const QString & attrName) const
@@ -66,7 +45,7 @@ namespace Luminous
     for (size_t i = 0; i < m_attributes.size(); ++i) {
       if (m_attributes[i].offset >= maxOffset) {
         maxOffset = m_attributes[i].offset;
-        size = m_attributes[i].offset + m_attributes[i].count * typeSize(m_attributes[i].type);
+        size = m_attributes[i].offset + m_attributes[i].count * Luminous::Utils2::getDataSize(m_attributes[i].type);
       }
     }
     return size;
