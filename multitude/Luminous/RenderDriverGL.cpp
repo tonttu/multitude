@@ -117,13 +117,11 @@ namespace Luminous
       else 
         glBufferSubData(bufferTarget, 0, buffer.size(), buffer.data());
 
-      // Update version/size
+      // Update cache
       h.version = buffer.version();
       h.size = buffer.size();
+      m_impl->threadResources[threadIndex][buffer.resourceId()] = h;
     }
-
-    // Update cache
-    m_impl->threadResources[threadIndex][buffer.resourceId()] = h;
   }
 
   void RenderDriverGL::bind(unsigned int threadIndex, const VertexAttributeBinding & binding)
@@ -165,7 +163,7 @@ namespace Luminous
     }
   }
 
-  /// @todo: duplicate code from buffer binding: make functions
+  /// @todo: duplicate code with HardwareBuffer binding: make function(s)
   void RenderDriverGL::bind(unsigned int threadIndex, const ShaderConstantBlock & constants)
   {
     Impl::ResourceHandle h;
@@ -192,6 +190,11 @@ namespace Luminous
         glBufferData(GL_UNIFORM_BUFFER_EXT, constants.size(), constants.data(), GL_DYNAMIC_DRAW );
       else 
         glBufferSubData(GL_UNIFORM_BUFFER_EXT, 0, constants.size(), constants.data());
+
+      // Update cache
+      h.version = constants.version();
+      h.size = constants.size();
+      m_impl->threadResources[threadIndex][constants.resourceId()] = h;
     }
   }
 
