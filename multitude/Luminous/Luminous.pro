@@ -16,7 +16,6 @@ SOURCES += RenderContextImmediate.cpp
 
 # Render resources
 HEADERS += RenderResource.hpp
-SOURCES += RenderResource.cpp
 HEADERS += HardwareBuffer.hpp
 SOURCES += HardwareBuffer.cpp
 HEADERS += VertexAttributeBinding.hpp
