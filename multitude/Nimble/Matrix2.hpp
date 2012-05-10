@@ -216,7 +216,8 @@ namespace Nimble {
   typedef Matrix2T<float> Matrix2;
   /// 2x2 matrix of floats
   typedef Matrix2T<float> Matrix2f;
-
+  /// 2x2 matrix of doubles
+  typedef Matrix2T<double> Matrix2d;
 }
 
 template <class K, class T>

@@ -277,6 +277,8 @@ namespace Nimble {
   typedef Matrix3T<float> Matrix3;
   /// 3x3 matrix of floats
   typedef Matrix3T<float> Matrix3f;
+  /// 3x3 matrix of doubles
+  typedef Matrix3T<double> Matrix3d;
 
   template <class T>
   inline void Matrix3T<T>::swap(T &a, T& b)
