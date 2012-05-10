@@ -21,7 +21,7 @@ namespace Luminous
     LUMINOUS_API void removeAttribute(const QString & attrName);
 
     /// Returns the number of attributes in this description
-    LUMINOUS_API size_t numAttributes() const;
+    LUMINOUS_API size_t attributeCount() const;
     /// Returns the requested attribute
     LUMINOUS_API VertexAttribute attribute(size_t index) const;
     /// Returns the total size of a vertex

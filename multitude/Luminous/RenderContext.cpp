@@ -1765,9 +1765,9 @@ namespace Luminous
     //binding.bind();
   }
 
-  void RenderContext::drawArrays(PrimitiveType primType, unsigned int offset, unsigned int vertexCount)
+  void RenderContext::draw(PrimitiveType primType, unsigned int offset, unsigned int vertexCount)
   {
-    m_driver->drawArrays(primType, offset, vertexCount);
+    // m_driver->draw(primType, offset, vertexCount);
   }
 }
 

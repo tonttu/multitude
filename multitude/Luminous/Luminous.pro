@@ -18,18 +18,17 @@ SOURCES += RenderContextImmediate.cpp
 HEADERS += RenderResource.hpp
 SOURCES += RenderResource.cpp
 HEADERS += HardwareBuffer.hpp
-HEADERS += HardwareBufferGL.hpp
-SOURCES += HardwareBufferGL.cpp
+SOURCES += HardwareBuffer.cpp
 HEADERS += VertexAttributeBinding.hpp
 SOURCES += VertexAttributeBinding.cpp
-HEADERS += VertexAttributeBindingGL.hpp
-SOURCES += VertexAttributeBindingGL.cpp
-HEADERS += ShaderConstants.hpp
-HEADERS += ShaderConstantsGL.hpp
-SOURCES += ShaderConstantsGL.cpp
+HEADERS += ShaderConstantBlock.hpp
+SOURCES += ShaderConstantBlock.cpp
 
 HEADERS += VertexDescription.hpp
 SOURCES += VertexDescription.cpp
+
+# Shaders
+HEADERS += ShaderConstant.hpp
 
 # Utility functions
 HEADERS += GLUtils.hpp

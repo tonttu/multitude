@@ -51,13 +51,13 @@ namespace Luminous
   /// Binds a set of vertex buffers and their vertexdescriptions
   void RenderContextImmediate::bind(VertexAttributeBinding & binding)
   {
-    binding.bind(m_impl->threadIndex);
+    
   }
 
   /// Issue a draw-call
   void RenderContextImmediate::draw(PrimitiveType type, size_t offset, size_t primitiveCount)
   {
-    /// @todo use drawIndexedArrays if an index buffer is active
-    m_impl->driver->drawArrays(type, offset, primitiveCount);
+    /// @todo use drawIndexed if an index buffer is active
+    m_impl->driver->draw(type, offset, primitiveCount);
   }
 }

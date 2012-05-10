@@ -14,11 +14,12 @@ namespace Luminous
 
   bool operator==(const VertexAttributeBinding::Binding & lhs, const std::shared_ptr<HardwareBuffer> & rhs) { return lhs.buffer == rhs; }
 
-  VertexAttributeBinding::VertexAttributeBinding()
-    : m_impl(new VertexAttributeBinding::Impl())
+  VertexAttributeBinding::VertexAttributeBinding(RenderResource::Id id)
+    : RenderResource(id)
+    , m_impl(new VertexAttributeBinding::Impl())
   {
-
   }
+
   VertexAttributeBinding::~VertexAttributeBinding()
   {
     delete m_impl;
@@ -33,7 +34,8 @@ namespace Luminous
       binding.buffer = buffer;
       binding.description = description;
       m_impl->bindings.push_back(binding);
-      setDirty(true);
+      
+      setVersion(version() + 1);
     }
   }
 
@@ -42,7 +44,7 @@ namespace Luminous
     Impl::Bindings::iterator it = std::find(m_impl->bindings.begin(), m_impl->bindings.end(), buffer);
     if (it != m_impl->bindings.end()) {
       m_impl->bindings.erase( it );
-      setDirty(true);
+      setVersion(version() + 1);
     }
   }
 
@@ -50,7 +52,7 @@ namespace Luminous
   {
     if (!m_impl->bindings.empty()) {
       m_impl->bindings.clear();
-      setDirty(true);
+      setVersion(version() + 1);
     }
   }
 
@@ -63,15 +65,5 @@ namespace Luminous
   {
     assert( index < bindingCount() );
     return m_impl->bindings[index];
-  }
-
-  void VertexAttributeBinding::setDirty(bool dirty)
-  {
-    m_impl->dirty = dirty;
-  }
-
-  bool VertexAttributeBinding::dirty() const
-  {
-    return m_impl->dirty;
   }
 }

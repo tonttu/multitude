@@ -434,7 +434,7 @@ namespace Luminous
         m_driver->setUniform(location, value);
     }
     void setVertexBinding(const VertexAttributeBinding & binding);
-    void drawArrays(PrimitiveType primType, unsigned int offset, unsigned int vertexCount);
+    void draw(PrimitiveType primType, unsigned int offset, unsigned int vertexCount);
 
   private:
     std::shared_ptr<RenderDriver> m_driver;

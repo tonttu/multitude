@@ -2,6 +2,7 @@
 #define LUMINOUS_VERTEXATTRIBUTEBINDING_HPP
 
 #include "Luminous/Luminous.hpp"
+#include "Luminous/RenderResource.hpp"
 #include "Luminous/HardwareBuffer.hpp"
 #include "Luminous/VertexDescription.hpp"
 
@@ -11,6 +12,7 @@
 namespace Luminous
 {
   class VertexAttributeBinding
+    : public RenderResource
   {
   public:
     struct Binding
@@ -19,7 +21,7 @@ namespace Luminous
       std::shared_ptr<VertexDescription> description;
     };
   public:
-    VertexAttributeBinding();
+    VertexAttributeBinding(RenderResource::Id id);
     ~VertexAttributeBinding();
 
     void addBinding(const std::shared_ptr<HardwareBuffer> & buffer, const std::shared_ptr<VertexDescription> & description);
@@ -28,12 +30,6 @@ namespace Luminous
 
     size_t bindingCount() const;
     const Binding & binding(size_t index) const;
-
-    virtual void bind(unsigned int threadIndex) = 0;
-    virtual void unbind(unsigned int threadIndex) = 0;
-
-    bool dirty() const;
-    void setDirty(bool dirty);
   private:
     class Impl;
     Impl * m_impl;

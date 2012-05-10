@@ -223,6 +223,7 @@ namespace Luminous
   class ShaderGLSL;
   // Resources
   class HardwareBuffer;
+  class ShaderConstantBlock;
   // Vertex data
   struct VertexAttribute;
   class VertexDescription;

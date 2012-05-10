@@ -26,14 +26,14 @@ namespace Luminous
     }
   }
 
-  size_t VertexDescription::numAttributes() const
+  size_t VertexDescription::attributeCount() const
   {
     return m_attributes.size();
   }
 
   VertexAttribute VertexDescription::attribute(size_t index) const
   {
-    assert(index < numAttributes());  // Out of bounds check
+    assert(index < attributeCount());  // Out of bounds check
     return m_attributes[index];
   }
 
