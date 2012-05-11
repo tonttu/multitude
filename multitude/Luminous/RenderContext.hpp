@@ -123,7 +123,7 @@ namespace Luminous
     /// Constructs a new render context and associates the given resources to it
     /// @param resources OpenGL resource container to associate with the context
     /// @param window window to associate this context with
-    RenderContext(const Luminous::MultiHead::Window * window = 0);
+    RenderContext(unsigned int threadIndex, Luminous::RenderDriver & driver, const Luminous::MultiHead::Window * window = 0);
     virtual ~RenderContext();
 
     /// Sets the associated window for this context
@@ -426,12 +426,12 @@ namespace Luminous
     /// <Luminousv2>
     //////////////////////////////////////////////////////////////////////////
 
+    unsigned int threadIndex() const;
+
     //void bindTexture(const QString & name, int unit, std::shared_ptr<Luminous::Texture> texture);
     void setVertexBinding(const VertexAttributeBinding & binding);
     void draw(PrimitiveType primType, unsigned int offset, unsigned int vertexCount);
 
-  private:
-    std::shared_ptr<RenderDriver> m_driver;
     //////////////////////////////////////////////////////////////////////////
     /// </Luminousv2>
     //////////////////////////////////////////////////////////////////////////

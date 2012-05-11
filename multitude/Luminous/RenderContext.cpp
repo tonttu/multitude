@@ -14,6 +14,12 @@
 #include "VertexHolder.hpp"
 #include "GLSLProgramObject.hpp"
 
+// Luminous v2
+#include "Luminous/VertexAttributeBinding.hpp"
+#include "Luminous/HardwareBuffer.hpp"
+#include "Luminous/ShaderConstant.hpp"
+#include "Luminous/ShaderConstantBlock.hpp"
+
 #include <Nimble/Matrix4.hpp>
 
 #include <Radiant/Mutex.hpp>
@@ -185,21 +191,23 @@ namespace Luminous
   public:
     enum { MAX_TEXTURES = 64 };
 
-    Internal(const Luminous::MultiHead::Window * win)
-        : m_recursionLimit(DEFAULT_RECURSION_LIMIT),
-        m_recursionDepth(0),
-          m_renderPacket(0),
-        m_renderCount(0),
-        m_frameCount(0),
-        m_area(0),
-        m_window(win),
-        m_viewStackPos(-1),
-        m_glContext(new GLDummyContext),
-        m_boundProgram(0),
-        m_initialized(false),
-        m_blendFunc(BLEND_USUAL),
-        m_program(0),
-          m_vbo(0)
+    Internal(unsigned int threadIndex, RenderDriver & renderDriver, const Luminous::MultiHead::Window * win)
+        : m_recursionLimit(DEFAULT_RECURSION_LIMIT)
+        , m_recursionDepth(0)
+        , m_renderPacket(0)
+        , m_renderCount(0)
+        , m_frameCount(0)
+        , m_area(0)
+        , m_window(win)
+        , m_viewStackPos(-1)
+        , m_glContext(new GLDummyContext)
+        , m_boundProgram(0)
+        , m_initialized(false)
+        , m_blendFunc(RenderContext::BLEND_USUAL)
+        , m_program(0)
+        , m_vbo(0)
+        , m_driver(renderDriver)
+        , m_threadIndex(threadIndex)
     {
       m_viewTransform.identity();
       m_viewTransformStack.push_back(m_viewTransform);
@@ -217,16 +225,16 @@ namespace Luminous
       delete m_renderPacket;
     }
 
-    void pushFBO(std::shared_ptr<FBOPackage> fbo)
+    void pushFBO(std::shared_ptr<RenderContext::FBOPackage> fbo)
     {
       m_fboStack.push(fbo);
     }
 
-    std::shared_ptr<FBOPackage> popFBO()
+    std::shared_ptr<RenderContext::FBOPackage> popFBO()
     {
       m_fboStack.pop();
 
-      return m_fboStack.empty() ? std::shared_ptr<FBOPackage>() : m_fboStack.top();
+      return m_fboStack.empty() ? std::shared_ptr<RenderContext::FBOPackage>() : m_fboStack.top();
     }
 
     void initialize() {
@@ -437,19 +445,19 @@ namespace Luminous
 
     std::vector<Nimble::Rectangle> m_clipStack;
 
-    typedef std::list<std::shared_ptr<FBOPackage> > FBOPackages;
+    typedef std::list<std::shared_ptr<RenderContext::FBOPackage> > FBOPackages;
 
     FBOPackages m_fbos;
 
 
-    std::stack<std::shared_ptr<FBOPackage>, std::vector<std::shared_ptr<FBOPackage> > > m_fboStack;
+    std::stack<std::shared_ptr<RenderContext::FBOPackage>, std::vector<std::shared_ptr<RenderContext::FBOPackage> > > m_fboStack;
 
     class DrawBuf
     {
     public:
       DrawBuf() : m_fbo(0), m_dest(GL_BACK) {}
-      DrawBuf(GLenum dest, FBOPackage * fbo) : m_fbo(fbo), m_dest(dest) {}
-      FBOPackage * m_fbo;
+      DrawBuf(GLenum dest, RenderContext::FBOPackage * fbo) : m_fbo(fbo), m_dest(dest) {}
+      RenderContext::FBOPackage * m_fbo;
       GLenum m_dest;
     };
 
@@ -512,6 +520,9 @@ namespace Luminous
     GLSLProgramObject * m_program;
     GLuint              m_vbo;
     std::shared_ptr<Texture2D> m_emptyTexture;
+
+    Luminous::RenderDriver & m_driver;
+    unsigned int m_threadIndex;
   };
 
   void RenderContext::Internal::drawPolyLine(RenderContext& r, const Nimble::Vector2f * vertices, int n,
@@ -628,9 +639,9 @@ namespace Luminous
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
 
-  RenderContext::RenderContext(const Luminous::MultiHead::Window * win)
+  RenderContext::RenderContext(unsigned int threadIndex, Luminous::RenderDriver & driver, const Luminous::MultiHead::Window * win)
       : Transformer(),
-      m_data(new Internal(win))
+      m_data(new Internal(threadIndex, driver, win))
   {
     resetTransform();
     m_data->m_recursionDepth = 0;
@@ -1762,12 +1773,17 @@ namespace Luminous
   // Luminousv2
   void RenderContext::setVertexBinding(const VertexAttributeBinding & binding)
   {
-    //binding.bind();
+    m_data->m_driver.bind(threadIndex(), binding);
   }
 
   void RenderContext::draw(PrimitiveType primType, unsigned int offset, unsigned int vertexCount)
   {
-    // m_driver->draw(primType, offset, vertexCount);
+    m_data->m_driver.draw(primType, offset, vertexCount);
+  }
+
+  unsigned int RenderContext::threadIndex() const
+  {
+    return m_data->m_threadIndex;
   }
 }
 

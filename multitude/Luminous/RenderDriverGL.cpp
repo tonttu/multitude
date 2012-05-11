@@ -17,9 +17,24 @@ namespace Luminous
   class RenderDriverGL::Impl
   {
   public:
+    // Some types
+    struct BufferHandle {
+      GLuint handle;
+      uint64_t version;
+      size_t size;
+    };
+    typedef std::map<RenderResource::Id, BufferHandle> BufferList;
+
+    // Current state of a single thread
+    struct ThreadState
+    {
+      GLuint currentProgram;    // Currently bound shader program
+      BufferList bufferList;    // List of active HardwareBuffer objects
+    };
+
+  public:
     Impl(unsigned int threadCount)
       : resourceId(0)
-      , currentProgram(threadCount, 0)
       , threadResources(threadCount)
     {}
 
@@ -28,28 +43,34 @@ namespace Luminous
       return resourceId++;
     }
 
-    // Next free available resource ID
-    RenderResource::Id resourceId;
+    BufferHandle getOrCreateBuffer(unsigned int threadIndex, RenderResource::Id id)
+    {
+      BufferHandle bufferHandle;
+      BufferList & res = threadResources[threadIndex].bufferList;
+      BufferList::iterator it = res.find(id);
 
-    // Hardware buffer management
-    struct ResourceHandle {
-      GLuint handle;
-      uint64_t version;
-      size_t size;
-    };
+      // See if the buffer exists in cache
+      if (it != res.end())
+        return it->second;
 
-    typedef std::map<RenderResource::Id, ResourceHandle> ResourceList;
-    typedef std::vector<ResourceList> ThreadResources;
+      // No hit, create new buffer
+      glGenBuffers(1, &bufferHandle.handle);
+      bufferHandle.version = 0;
+      bufferHandle.size = 0;
+      return bufferHandle;
+    }
 
-    // Thread state
-    std::vector<GLuint> currentProgram;
-
-    // Thread resources
-    ThreadResources threadResources;
+    void updateBuffer(unsigned int threadIndex, RenderResource::Id id, BufferHandle handle)
+    {
+      threadResources[threadIndex].bufferList[id] = handle;
+    }
+  public:
+    RenderResource::Id resourceId;              // Next free available resource ID
+    std::vector<ThreadState> threadResources;   // Thread resources
   };
 
-  RenderDriverGL::RenderDriverGL(unsigned int threadId)
-    : m_impl(new RenderDriverGL::Impl(threadId))
+  RenderDriverGL::RenderDriverGL(unsigned int threadCount)
+    : m_impl(new RenderDriverGL::Impl(threadCount))
   {
 
   }
@@ -91,41 +112,30 @@ namespace Luminous
 
   void RenderDriverGL::bind(unsigned int threadIndex, const HardwareBuffer & buffer)
   {
-    // See if the buffer exists in cache
-    Impl::ResourceHandle h;
-    Impl::ResourceList::iterator it = m_impl->threadResources[threadIndex].find(buffer.resourceId());
-    if (it == m_impl->threadResources[threadIndex].end()) {
-      // No hit, create new buffer
-      glGenBuffers(1, &h.handle);
-      h.version = 0;
-      h.size = 0;
-    }
-    else {
-      // Existing buffer
-      h = it->second;
-    }
+    Impl::BufferHandle bufferHandle = m_impl->getOrCreateBuffer(threadIndex, buffer.resourceId());
 
-    // Bind it
+    // Bind buffer
     GLenum bufferTarget = Luminous::GLUtils::getBufferType(buffer.type());
-    glBindBuffer(bufferTarget, h.handle);
+    glBindBuffer(bufferTarget, bufferHandle.handle);
 
     // Update if dirty
-    if (h.version < buffer.version()) {
-      // Update or reallocate
-      if (buffer.size() != h.size)
+    if (bufferHandle.version < buffer.version()) {
+      // Update or reallocate the resource
+      if (buffer.size() != bufferHandle.size)
         glBufferData(bufferTarget, buffer.size(), buffer.data(), buffer.usage() );
       else 
         glBufferSubData(bufferTarget, 0, buffer.size(), buffer.data());
 
-      // Update cache
-      h.version = buffer.version();
-      h.size = buffer.size();
-      m_impl->threadResources[threadIndex][buffer.resourceId()] = h;
+      // Update cache handle
+      bufferHandle.version = buffer.version();
+      bufferHandle.size = buffer.size();
+      m_impl->updateBuffer(threadIndex, buffer.resourceId(), bufferHandle);
     }
   }
 
   void RenderDriverGL::bind(unsigned int threadIndex, const VertexAttributeBinding & binding)
   {
+    /*
     Impl::ResourceHandle h;
     Impl::ResourceList::iterator it = m_impl->threadResources[threadIndex].find(binding.resourceId());
     if (it == m_impl->threadResources[threadIndex].end()) {
@@ -161,57 +171,47 @@ namespace Luminous
       h.version = binding.version();
       m_impl->threadResources[threadIndex][binding.resourceId()] = h;
     }
+    */
   }
 
-  /// @todo: duplicate code with HardwareBuffer binding: make function(s)
+  /// @todo: duplicate code with HardwareBuffer binding: split up more
   void RenderDriverGL::bind(unsigned int threadIndex, const ShaderConstantBlock & constants)
   {
-    Impl::ResourceHandle h;
-    Impl::ResourceList::iterator it = m_impl->threadResources[threadIndex].find(constants.resourceId());
-
-    // See if the buffer exists in cache
-    if (it == m_impl->threadResources[threadIndex].end()) {
-      // No hit, create new buffer
-      glGenBuffers(1, &h.handle);
-      h.version = 0;
-      h.size = 0;
-    }
-    else {
-      // Existing buffer
-      h = it->second;
-    }
+    Impl::BufferHandle bufferHandle = m_impl->getOrCreateBuffer(threadIndex, constants.resourceId());
 
     // Bind buffer
-    glBindBuffer(GL_UNIFORM_BUFFER_EXT, h.handle);
+    glBindBuffer(GL_UNIFORM_BUFFER_EXT, bufferHandle.handle);
 
     // Update if dirty
-    if (h.version < constants.version()) {
-      if (h.size != constants.size())
-        glBufferData(GL_UNIFORM_BUFFER_EXT, constants.size(), constants.data(), GL_DYNAMIC_DRAW );
+    if (bufferHandle.version < constants.version()) {
+      // Update or reallocate the resource
+      if (constants.size() != bufferHandle.size)
+        /// @todo What should be the usage type for a uniform buffer? Should it be flexible like a normal buffer?
+        glBufferData(GL_UNIFORM_BUFFER_EXT, constants.size(), constants.data(), GL_DYNAMIC_DRAW);
       else 
         glBufferSubData(GL_UNIFORM_BUFFER_EXT, 0, constants.size(), constants.data());
 
-      // Update cache
-      h.version = constants.version();
-      h.size = constants.size();
-      m_impl->threadResources[threadIndex][constants.resourceId()] = h;
+      // Update cache handle
+      bufferHandle.version = constants.version();
+      bufferHandle.size = constants.size();
+      m_impl->updateBuffer(threadIndex, constants.resourceId(), bufferHandle);
     }
   }
 
-  void RenderDriverGL::unbind(unsigned int threadIndex, const HardwareBuffer & buffer)
+  void RenderDriverGL::unbind(unsigned int, const HardwareBuffer & buffer)
   {
     /// @todo Should we verify it's a valid resource?
     GLenum bufferTarget = Luminous::GLUtils::getBufferType(buffer.type());
     glBindBuffer(bufferTarget, 0);
   }
 
-  void RenderDriverGL::unbind(unsigned int threadIndex, const VertexAttributeBinding & binding)
+  void RenderDriverGL::unbind(unsigned int, const VertexAttributeBinding &)
   {
     /// @todo Should we verify it's a valid resource?
     glBindVertexArray(0);
   }
 
-  void RenderDriverGL::unbind(unsigned int threadIndex, const ShaderConstantBlock & constants)
+  void RenderDriverGL::unbind(unsigned int, const ShaderConstantBlock &)
   {
     glBindBuffer(GL_UNIFORM_BUFFER_EXT, 0);
   }

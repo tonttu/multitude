@@ -9,7 +9,6 @@ namespace Luminous
   public:
     typedef std::vector< VertexAttributeBinding::Binding > Bindings;
     Bindings bindings;
-    bool dirty;
   };
 
   bool operator==(const VertexAttributeBinding::Binding & lhs, const std::shared_ptr<HardwareBuffer> & rhs) { return lhs.buffer == rhs; }

@@ -9,7 +9,7 @@ namespace Luminous
   class RenderDriverGL : public RenderDriver
   {
   public:
-    LUMINOUS_API RenderDriverGL(unsigned int threadId);
+    LUMINOUS_API RenderDriverGL(unsigned int threadCount);
     LUMINOUS_API ~RenderDriverGL();
 
     LUMINOUS_API virtual std::shared_ptr<VertexDescription> createVertexDescription() OVERRIDE;

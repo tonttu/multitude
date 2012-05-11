@@ -32,6 +32,8 @@ namespace Luminous
     LUMINOUS_API virtual void unbind(unsigned int threadIndex, const HardwareBuffer & buffer) = 0;
     LUMINOUS_API virtual void unbind(unsigned int threadIndex, const VertexAttributeBinding & buffer) = 0;
     LUMINOUS_API virtual void unbind(unsigned int threadIndex, const ShaderConstantBlock & buffer) = 0;
+
+    LUMINOUS_API static std::shared_ptr<RenderDriver> createInstance(unsigned int renderThreads);
   };
 }
 #endif // LUMINOUS_RENDERDRIVER_HPP
