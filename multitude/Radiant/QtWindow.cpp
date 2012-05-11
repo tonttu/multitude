@@ -12,8 +12,8 @@
 #include <Radiant/KeyEvent.hpp>
 
 #include <QApplication>
+#include <QGLWidget>
 #include <QMouseEvent>
-#include <QDesktopWidget>
 
 namespace Radiant
 {

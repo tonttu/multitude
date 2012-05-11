@@ -75,13 +75,47 @@ namespace {
     InputContextGrabber(QInputContext & origContext,
                         Radiant::WindowEventHook & hook)
       : m_context(origContext)
-      , m_hook(hook) {}
+      , m_hook(hook)
+      , m_isAutoRepeat(false)
+      , m_autoRepeats(256) {}
+
+    virtual bool x11FilterEvent(QWidget * keywidget, XEvent * event)
+    {
+      KeySym keysym;
+      bzero(&keysym, sizeof(keysym));
+
+      bool autoRepeat = false;
+
+      switch(event->type) {
+      case KeyRelease:
+        if(event->xkey.keycode < 256) {
+          char keys[32];
+          XQueryKeymap(event->xkey.display, keys);
+          autoRepeat = keys[event->xkey.keycode / 8] &
+              (1 << (event->xkey.keycode & 7));
+          m_autoRepeats[event->xkey.keycode] = autoRepeat;
+        }
+      // Intentional fallthrough
+      case KeyPress:
+        keysym = XLookupKeysym(&event->xkey, 0);
+        if(!autoRepeat && event->xkey.keycode < 256 && event->type == KeyPress)
+          autoRepeat = m_autoRepeats[event->xkey.keycode];
+        break;
+      }
+
+      m_isAutoRepeat = autoRepeat;
+
+      // Do not consume the event so that it is forwarded to filterEvent()
+      return false;
+    }
 
     virtual bool filterEvent(const QEvent * event)
     {
       const QKeyEvent* keyEvent = dynamic_cast<const QKeyEvent*>(event);
       if(keyEvent) {
-        m_hook.handleKeyboardEvent(Radiant::KeyEvent(*keyEvent));
+
+        QKeyEvent copy(keyEvent->type(), keyEvent->key(), keyEvent->modifiers(), keyEvent->text(), m_isAutoRepeat);
+        m_hook.handleKeyboardEvent(Radiant::KeyEvent(copy));
         return true;
       }
 
@@ -101,6 +135,9 @@ namespace {
   private:
     QInputContext & m_context;
     Radiant::WindowEventHook & m_hook;
+
+    bool m_isAutoRepeat;
+    std::vector<bool> m_autoRepeats;
   };
 }
 

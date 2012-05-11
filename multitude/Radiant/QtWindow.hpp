@@ -5,8 +5,6 @@
 #include "Window.hpp"
 #include "WindowConfig.hpp"
 
-#include <QGLWidget>
-
 namespace Radiant
 {
   class GLThreadWidget;
