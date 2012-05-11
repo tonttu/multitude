@@ -87,4 +87,18 @@ namespace Luminous
       return GL_FLOAT;
     }
   }
+
+  GLenum GLUtils::getShaderType(ShaderType type)
+  {
+    switch (type)
+    {
+    case ST_VertexShader:   return GL_VERTEX_SHADER;
+    case ST_FragmentShader: return GL_FRAGMENT_SHADER;
+    case ST_GeometryShader: return GL_GEOMETRY_SHADER_EXT;
+    default:
+      Radiant::error("GLUtils: cannot determine shader type (%d)", type);
+      assert(false);
+      return GL_VERTEX_SHADER;
+    }
+  }
 }

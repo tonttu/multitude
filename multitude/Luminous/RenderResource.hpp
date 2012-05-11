@@ -22,7 +22,7 @@ namespace Luminous
 
     inline void setVersion(uint64_t version) { m_version = version; }
     inline uint64_t version() const { return m_version; }
-
+    inline void invalidate() { setVersion(version() + 1); }
   private:
     uint64_t m_version;
     Id m_id;

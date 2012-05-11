@@ -34,7 +34,7 @@ namespace Luminous
       binding.description = description;
       m_impl->bindings.push_back(binding);
       
-      setVersion(version() + 1);
+      invalidate();
     }
   }
 
@@ -43,7 +43,7 @@ namespace Luminous
     Impl::Bindings::iterator it = std::find(m_impl->bindings.begin(), m_impl->bindings.end(), buffer);
     if (it != m_impl->bindings.end()) {
       m_impl->bindings.erase( it );
-      setVersion(version() + 1);
+      invalidate();
     }
   }
 
@@ -51,7 +51,7 @@ namespace Luminous
   {
     if (!m_impl->bindings.empty()) {
       m_impl->bindings.clear();
-      setVersion(version() + 1);
+      invalidate();
     }
   }
 

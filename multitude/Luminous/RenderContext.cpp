@@ -1773,7 +1773,13 @@ namespace Luminous
   // Luminousv2
   void RenderContext::setVertexBinding(const VertexAttributeBinding & binding)
   {
+    // Bind the VAO: Binds all the associated vertex buffers and sets the appropriate vertex attributes
     m_data->m_driver.bind(threadIndex(), binding);
+  }
+
+  void RenderContext::setShaderProgram(const ShaderProgram & program)
+  {
+
   }
 
   void RenderContext::draw(PrimitiveType primType, unsigned int offset, unsigned int vertexCount)

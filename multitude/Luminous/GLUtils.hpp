@@ -12,6 +12,7 @@ namespace Luminous
     static GLenum getBufferType(BufferType type);
     static GLenum getPrimitiveType(PrimitiveType type);
     static GLenum getDataType(DataType type);
+    static GLenum getShaderType(ShaderType type);
   };
 }
 

@@ -44,8 +44,7 @@ namespace Luminous
     m_impl->data.resize(location + dataSize);
     memcpy(&(m_impl->data[location]), &constant.value.f, dataSize);
     
-    // Invalidate
-    setVersion(version() + 1);
+    invalidate();
     return true;
   }
 
@@ -83,7 +82,7 @@ namespace Luminous
     m_impl->constants.clear();
     m_impl->data.clear();
     // Trigger buffer reallocation
-    setVersion(version() + 1);
+    invalidate();
   }
 
   const char * ShaderConstantBlock::data() const

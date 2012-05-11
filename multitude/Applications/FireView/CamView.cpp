@@ -430,7 +430,7 @@ namespace FireView {
 
   Nimble::Vector3f CamView::s_colorBalanceCoeffs(1.f, 1.f, 1.f);
 
-  CamView::CamView(QWidget * parent)
+  CamView::CamView(unsigned int threadIndex, Luminous::RenderDriver & renderDriver, QWidget * parent)
       : QGLWidget(parent),
       m_tex(0),
       m_params(0),
@@ -441,7 +441,8 @@ namespace FireView {
       m_doFocus(false),
       m_focusidx(0),
       m_peakidx(0),
-      m_foo(300, 100, QImage::Format_ARGB32)
+      m_foo(300, 100, QImage::Format_ARGB32),
+      m_context(threadIndex, renderDriver)
   {
     m_colorBalance.clear();
     m_chromaticity.clear();

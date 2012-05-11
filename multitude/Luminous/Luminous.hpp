@@ -191,6 +191,13 @@ namespace Luminous
     CM_ColorDepthStencil  = CM_Color | CM_Depth | CM_Stencil,
   };
 
+  enum ShaderType
+  {
+    ST_VertexShader,
+    ST_FragmentShader,
+    ST_GeometryShader,
+  };
+
   enum BlendFunction
   {
 
@@ -220,10 +227,11 @@ namespace Luminous
   // 
   class RenderDriver;
   class GLContext;
-  class ShaderGLSL;
   // Resources
   class HardwareBuffer;
   class ShaderConstantBlock;
+  class ShaderProgram;
+  class ShaderGLSL;
   // Vertex data
   struct VertexAttribute;
   class VertexDescription;

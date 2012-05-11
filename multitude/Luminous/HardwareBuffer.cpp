@@ -55,7 +55,7 @@ namespace Luminous
     std::copy(data, data + bytes, start);
 
     // Update version
-    setVersion(version() + 1);
+    invalidate();
   }
 
   BufferType HardwareBuffer::type() const

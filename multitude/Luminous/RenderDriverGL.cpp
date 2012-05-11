@@ -3,6 +3,7 @@
 #include "Luminous/VertexDescription.hpp"
 #include "Luminous/HardwareBuffer.hpp"
 #include "Luminous/ShaderConstantBlock.hpp"
+#include "Luminous/ShaderProgram.hpp"
 #include "Luminous/GLUtils.hpp"
 
 #include <Nimble/Matrix4.hpp>
@@ -18,24 +19,45 @@ namespace Luminous
   {
   public:
     // Some types
-    struct BufferHandle {
+    struct SizedHandle
+    {
+      SizedHandle() : handle(0), version(0), size(0) {}
       GLuint handle;
       uint64_t version;
       size_t size;
     };
+    struct ResourceHandle
+    {
+      ResourceHandle() : handle(0), version(0) {}
+      GLuint handle;
+      uint64_t version;
+    };
+    typedef SizedHandle BufferHandle;
+    typedef ResourceHandle BindingHandle;
+    typedef ResourceHandle ShaderHandle;
+
     typedef std::map<RenderResource::Id, BufferHandle> BufferList;
+    typedef std::map<RenderResource::Id, BindingHandle> BindingList;
+    typedef std::map<RenderResource::Id, ShaderHandle> ShaderList;
 
     // Current state of a single thread
     struct ThreadState
     {
+      ThreadState()
+        : currentProgram(0)
+      {
+      }
+
       GLuint currentProgram;    // Currently bound shader program
-      BufferList bufferList;    // List of active HardwareBuffer objects
+      BufferList bufferList;    // Active buffer objects
+      BindingList bindings;     // Active buffer bindings
+      ShaderList shaders;       // Active shaders
     };
 
   public:
     Impl(unsigned int threadCount)
       : resourceId(0)
-      , threadResources(threadCount)
+      , m_threadResources(threadCount)
     {}
 
     RenderResource::Id createId()
@@ -43,30 +65,69 @@ namespace Luminous
       return resourceId++;
     }
 
+    //////////////////////////////////////////////////////////////////////////
+    // @todo All these getOrCreate* functions have a lot of duplication. Should make better functions?
     BufferHandle getOrCreateBuffer(unsigned int threadIndex, RenderResource::Id id)
     {
-      BufferHandle bufferHandle;
-      BufferList & res = threadResources[threadIndex].bufferList;
+      // See if we can find it in cache
+      BufferList & res = m_threadResources[threadIndex].bufferList;
       BufferList::iterator it = res.find(id);
-
-      // See if the buffer exists in cache
       if (it != res.end())
         return it->second;
 
       // No hit, create new buffer
+      BufferHandle bufferHandle;
       glGenBuffers(1, &bufferHandle.handle);
-      bufferHandle.version = 0;
-      bufferHandle.size = 0;
       return bufferHandle;
+    }
+
+    BindingHandle getOrCreateBinding(unsigned int threadIndex, RenderResource::Id id)
+    {
+      BindingList & res = m_threadResources[threadIndex].bindings;
+      BindingList::iterator it = res.find(id);
+      if (it != res.end())
+        return it->second;
+      return BindingHandle();
+    }
+
+    ShaderHandle getOrCreateShaderProgram(unsigned int threadIndex, RenderResource::Id id)
+    {
+      ShaderList & res = m_threadResources[threadIndex].shaders;
+      ShaderList::iterator it = res.find(id);
+      if (it != res.end())
+        return it->second;
+      return ShaderHandle();
+    }
+
+    ShaderHandle getOrCreateShader(unsigned int threadIndex, RenderResource::Id id, ShaderType type)
+    {
+      ShaderList & res = m_threadResources[threadIndex].shaders;
+      ShaderList::iterator it = res.find(id);
+      if (it != res.end())
+        return it->second;
+
+      ShaderHandle shaderHandle;
+      shaderHandle.handle = glCreateShader(GLUtils::getShaderType(type));
+      return shaderHandle;
     }
 
     void updateBuffer(unsigned int threadIndex, RenderResource::Id id, BufferHandle handle)
     {
-      threadResources[threadIndex].bufferList[id] = handle;
+      m_threadResources[threadIndex].bufferList[id] = handle;
     }
+    void updateBinding(unsigned int threadIndex, RenderResource::Id id, BindingHandle handle)
+    {
+      m_threadResources[threadIndex].bindings[id] = handle;
+    }
+
+    void updateShader(unsigned int threadIndex, RenderResource::Id id, ShaderHandle handle)
+    {
+      m_threadResources[threadIndex].shaders[id] = handle;
+    }
+
   public:
     RenderResource::Id resourceId;              // Next free available resource ID
-    std::vector<ThreadState> threadResources;   // Thread resources
+    std::vector<ThreadState> m_threadResources;   // Thread resources
   };
 
   RenderDriverGL::RenderDriverGL(unsigned int threadCount)
@@ -100,6 +161,16 @@ namespace Luminous
     return std::make_shared<ShaderConstantBlock>(m_impl->createId());
   }
 
+  std::shared_ptr<ShaderProgram> RenderDriverGL::createShaderProgram()
+  {
+    return std::make_shared<ShaderProgram>(m_impl->createId());
+  }
+
+  std::shared_ptr<ShaderGLSL> RenderDriverGL::createShader(ShaderType type)
+  {
+    return std::make_shared<ShaderGLSL>(m_impl->createId(), type);
+  }
+
   void RenderDriverGL::preFrame(unsigned int threadIndex)
   {
 
@@ -108,6 +179,51 @@ namespace Luminous
   void RenderDriverGL::postFrame(unsigned int threadIndex)
   {
 
+  }
+
+  void RenderDriverGL::bind(unsigned int threadIndex, const ShaderProgram & program)
+  {
+    Impl::ShaderHandle programHandle = m_impl->getOrCreateShaderProgram(threadIndex, program.resourceId());
+    
+    // Recreate if the program is dirty
+    if (programHandle.version < program.version()) {
+      glDeleteProgram(programHandle.handle);
+      programHandle.handle = glCreateProgram();
+      programHandle.version = program.version();
+      m_impl->updateShader(threadIndex, program.resourceId(), programHandle);
+    }
+
+    // Check if any of the shaders are dirty
+    bool needsRelink = false;
+    for (size_t i = 0; i < program.shaderCount(); ++i) {
+      const std::shared_ptr<ShaderGLSL> & shader = program.shader(i);
+      Impl::ShaderHandle shaderHandle = m_impl->getOrCreateShader(threadIndex, shader->resourceId(), shader->type());
+      if (shaderHandle.version < shader->version()) {
+        needsRelink = true;
+        // Detach old (if exists), recompile and relink
+        glDetachShader(programHandle.handle, shaderHandle.handle);
+        const GLchar * text = shader->text().toAscii().data();
+        const GLint length = shader->text().length();
+        glShaderSource(shaderHandle.handle, 1, &text, &length);
+        glCompileShader(shaderHandle.handle);
+        GLint compiled = GL_FALSE;
+        glGetShaderiv(shaderHandle.handle, GL_COMPILE_STATUS, &compiled);
+        if (compiled == GL_TRUE) {
+          glAttachShader(programHandle.handle, shaderHandle.handle);
+          m_impl->updateShader(threadIndex, shader->resourceId(), shaderHandle);
+        }
+        else {
+          /// @todo Dump error log if failed to compile
+          Radiant::error("Failed to compile shader");
+        }
+      }
+    }
+    if (needsRelink) {
+      /// @todo Check for linking errors
+      glLinkProgram(programHandle.handle);
+    }
+
+    glUseProgram(programHandle.handle);
   }
 
   void RenderDriverGL::bind(unsigned int threadIndex, const HardwareBuffer & buffer)
@@ -135,24 +251,16 @@ namespace Luminous
 
   void RenderDriverGL::bind(unsigned int threadIndex, const VertexAttributeBinding & binding)
   {
-    /*
-    Impl::ResourceHandle h;
-    Impl::ResourceList::iterator it = m_impl->threadResources[threadIndex].find(binding.resourceId());
-    if (it == m_impl->threadResources[threadIndex].end()) {
-      // No hit, create new vertex array
-      glGenVertexArrays(1, &h.handle);
-      h.version = 0;
-    }
-    else {
-      // Existing array
-      h = it->second;
-    }
+    Impl::BindingHandle bindingHandle = m_impl->getOrCreateBinding(threadIndex, binding.resourceId());
 
-    glBindVertexArray(h.handle);
+    if (bindingHandle.version < binding.version()) {
+      // Recreate the binding
+      /// @todo I don't imagine these can really be updated, right?
+      glDeleteVertexArrays(1, &bindingHandle.handle);
+      glGenVertexArrays(1, &bindingHandle.handle);
+      glBindVertexArray(bindingHandle.handle);
 
-    // Update if dirty
-    if (h.version < binding.version()) {
-      /// @todo Should we just kill the old one to get rid of old bindings?
+      // Bind all vertex buffers
       for (size_t i = 0; i < binding.bindingCount(); ++i) {
         VertexAttributeBinding::Binding b = binding.binding(i);
         // Attach buffer
@@ -160,27 +268,29 @@ namespace Luminous
         // Set buffer attributes
         for (size_t attrIndex = 0; attrIndex < b.description->attributeCount(); ++attrIndex) {
           VertexAttribute attr = b.description->attribute(attrIndex);
-          /// @todo Should cache these locations
-          GLint location = glGetAttribLocation(m_impl->currentProgram[threadIndex], attr.name.toAscii().data());
+          /// @todo Should cache these locations somewhere
+          GLint location = glGetAttribLocation(m_impl->m_threadResources[threadIndex].currentProgram, attr.name.toAscii().data());
           GLenum normalized = (attr.normalized ? GL_TRUE : GL_FALSE);
           glVertexAttribPointer(location, attr.count, GLUtils::getDataType(attr.type), normalized, b.description->vertexSize(), (const GLvoid*)attr.offset);
         }
-      }
 
-      // Update cache
-      h.version = binding.version();
-      m_impl->threadResources[threadIndex][binding.resourceId()] = h;
+        // Update cache
+        bindingHandle.version = binding.version();
+        m_impl->updateBinding(threadIndex, binding.resourceId(), bindingHandle);
+      }
     }
-    */
+    else
+      glBindVertexArray(bindingHandle.handle);
   }
 
-  /// @todo: duplicate code with HardwareBuffer binding: split up more
   void RenderDriverGL::bind(unsigned int threadIndex, const ShaderConstantBlock & constants)
   {
     Impl::BufferHandle bufferHandle = m_impl->getOrCreateBuffer(threadIndex, constants.resourceId());
 
     // Bind buffer
     glBindBuffer(GL_UNIFORM_BUFFER_EXT, bufferHandle.handle);
+
+    /// @todo: duplicate code with HardwareBuffer binding: split up more
 
     // Update if dirty
     if (bufferHandle.version < constants.version()) {
@@ -214,6 +324,11 @@ namespace Luminous
   void RenderDriverGL::unbind(unsigned int, const ShaderConstantBlock &)
   {
     glBindBuffer(GL_UNIFORM_BUFFER_EXT, 0);
+  }
+
+  void RenderDriverGL::unbind(unsigned int, const ShaderProgram &)
+  {
+    glUseProgram(0);
   }
 
   void RenderDriverGL::clear(ClearMask mask, const Radiant::Color & color, double depth, int stencil)

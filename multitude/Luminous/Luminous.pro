@@ -2,6 +2,7 @@ include(../multitude.pri)
 
 # Drivers
 HEADERS += RenderDriver.hpp
+SOURCES += RenderDriver.cpp
 HEADERS += RenderDriverGL.hpp
 SOURCES += RenderDriverGL.cpp
 
@@ -22,6 +23,8 @@ HEADERS += VertexAttributeBinding.hpp
 SOURCES += VertexAttributeBinding.cpp
 HEADERS += ShaderConstantBlock.hpp
 SOURCES += ShaderConstantBlock.cpp
+HEADERS += ShaderProgram.hpp
+SOURCES += ShaderProgram.cpp
 
 HEADERS += VertexDescription.hpp
 SOURCES += VertexDescription.cpp
