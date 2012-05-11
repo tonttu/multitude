@@ -27,10 +27,11 @@ using namespace Radiant;
 float VideoWindow::m_contrast = 1.0f;
 bool VideoWindow::m_fullScreen = false;
 
-VideoWindow::VideoWindow()
-    : m_subCPUFont(0),
-    m_showProgress(true),
-    m_showSteps(false)
+VideoWindow::VideoWindow(Luminous::RenderDriver & driver)
+    : m_subCPUFont(0)
+    , m_showProgress(true)
+    , m_showSteps(false)
+    , m_context(0, driver)
 {
   connect( & m_timer, SIGNAL(timeout()), this, SLOT(updateGL()));
   m_timer.start(10);

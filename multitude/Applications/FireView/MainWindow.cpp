@@ -90,6 +90,7 @@ namespace FireView {
     std::vector<Radiant::VideoCamera::CameraInfo> infos;
     Radiant::CameraDriver * cd = Radiant::VideoCamera::drivers().getPreferredCameraDriver();
     if(cd) cd->queryCameras(infos);
+    m_renderDriver = Luminous::RenderDriver::createInstance(infos.size());
 
     for(unsigned i = 0; i < infos.size(); i++) {
       uint64_t euid = infos[i].m_euid64;
@@ -109,7 +110,7 @@ namespace FireView {
 
         QMenuBar * mb = new QMenuBar(base);
         QMenu * menu = new QMenu(mb);
-        CamView * cv = new CamView(base);
+        CamView * cv = new CamView(i, *m_renderDriver, base);
 
         menu->addAction("OpenGL Image Filtering", cv, SLOT(toggleFiltering()));
         menu->addAction("Parameters...", cv, SLOT(openParams()));

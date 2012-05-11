@@ -16,6 +16,7 @@
 #ifndef FIREVIEW_MAINWINDOW_HPP
 #define FIREVIEW_MAINWINDOW_HPP
 
+#include <Luminous/RenderDriver.hpp>
 #include <Radiant/VideoInput.hpp>
 #include <Radiant/VideoCamera.hpp>
 
@@ -51,6 +52,7 @@ namespace FireView {
     bool  m_format7;
 
     std::set<QWidget *> m_displays;
+    std::shared_ptr<Luminous::RenderDriver> m_renderDriver;
   };
 }
 

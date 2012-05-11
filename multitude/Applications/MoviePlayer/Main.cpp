@@ -16,7 +16,7 @@
 #include "VideoWindow.hpp"
 
 #include <Luminous/Luminous.hpp>
-#include <Luminous/Luminous.hpp>
+#include <Luminous/RenderDriver.hpp>
 
 #include <Radiant/PlatformUtils.hpp>
 #include <Radiant/Trace.hpp>
@@ -73,7 +73,8 @@ int main(int argc, char ** argv)
     return 0;
   }
 
-  VideoWindow * vw = new VideoWindow();
+  std::shared_ptr<Luminous::RenderDriver> driver = Luminous::RenderDriver::createInstance(1);
+  VideoWindow * vw = new VideoWindow(*driver);
 
   vw->makeCurrent();
 

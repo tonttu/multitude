@@ -36,7 +36,7 @@ class VideoWindow : public QGLWidget
 {
   Q_OBJECT;
 public:
-  VideoWindow();
+  VideoWindow(Luminous::RenderDriver & driver);
   virtual ~VideoWindow();
 
   /** Adds a new movie to the player. Calling open multiple times will
