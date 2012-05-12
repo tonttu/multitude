@@ -18,7 +18,7 @@ namespace Luminous
   };
 
   ShaderConstantBlock::ShaderConstantBlock(RenderResource::Id id)
-    : RenderResource(id)
+    : RenderResource(id, RT_VertexArray)
     , m_impl(new ShaderConstantBlock::Impl())
   {
   }

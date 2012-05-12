@@ -213,6 +213,17 @@ namespace Luminous
     RB_Transparent,
   };
 
+  enum ResourceType {
+    RT_Unknown,
+    RT_VertexArray,
+    RT_ShaderProgram,
+    RT_VertexShader,
+    RT_FragmentShader,
+    RT_GeometryShader,
+    RT_Texture,
+    RT_Buffer,
+  };
+
   //////////////////////////////////////////////////////////////////////////
   // Utility functions
   /// @todo Luminous2 utilities, should rename once Luminous::Utils has been killed with fire

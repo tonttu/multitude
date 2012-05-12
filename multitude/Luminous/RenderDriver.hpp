@@ -28,6 +28,10 @@ namespace Luminous
     LUMINOUS_API virtual void preFrame(unsigned int threadIndex) = 0;
     LUMINOUS_API virtual void postFrame(unsigned int threadIndex) = 0;
 
+    // LUMINOUS_API virtual void setTarget(RenderTarget & target) = 0;
+    LUMINOUS_API virtual void setViewport(unsigned int threadIndex, float x, float y, float width, float height) = 0;
+
+    // Resource binding
     LUMINOUS_API virtual void bind(unsigned int threadIndex, const HardwareBuffer & buffer) = 0;
     LUMINOUS_API virtual void bind(unsigned int threadIndex, const VertexAttributeBinding & binding) = 0;
     LUMINOUS_API virtual void bind(unsigned int threadIndex, const ShaderConstantBlock & constants) = 0;

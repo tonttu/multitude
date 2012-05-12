@@ -4,6 +4,22 @@
 #include <cassert>
 #include <algorithm>
 
+namespace {
+  Luminous::ResourceType getResourceType(Luminous::ShaderType type)
+  {
+    /// @note I agree this looks a bit dumb since this is a one-to-one-mapping. They are different types though.
+    switch (type) {
+    case Luminous::ST_VertexShader: return Luminous::RT_VertexShader;
+    case Luminous::ST_FragmentShader: return Luminous::RT_FragmentShader;
+    case Luminous::ST_GeometryShader: return Luminous::RT_GeometryShader;
+    default:
+      assert(false);
+      Radiant::error("Can't determine resource type: Unknown shader type %d", type);
+      return Luminous::RT_VertexShader;
+    }
+  }
+}
+
 namespace Luminous
 {
   //////////////////////////////////////////////////////////////////////////
@@ -20,8 +36,9 @@ namespace Luminous
     QString text;
   };
 
+
   ShaderGLSL::ShaderGLSL(RenderResource::Id id, ShaderType type)
-    : RenderResource(id)
+    : RenderResource(id, getResourceType(type))
     , m_d(new ShaderGLSL::D(type))
   {
   }
@@ -56,7 +73,7 @@ namespace Luminous
   };
 
   ShaderProgram::ShaderProgram(RenderResource::Id id)
-    : RenderResource(id)
+    : RenderResource(id, RT_ShaderProgram)
     , m_d(new ShaderProgram::D())
   {
 

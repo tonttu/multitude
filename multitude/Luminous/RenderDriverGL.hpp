@@ -26,6 +26,8 @@ namespace Luminous
     LUMINOUS_API virtual void preFrame(unsigned int threadIndex) OVERRIDE;
     LUMINOUS_API virtual void postFrame(unsigned int threadIndex) OVERRIDE;
 
+    // LUMINOUS_API virtual void setTarget(RenderTarget & target) OVERRIDE;
+    LUMINOUS_API virtual void setViewport(unsigned int threadIndex, float x, float y, float width, float height) OVERRIDE;
     LUMINOUS_API virtual void bind(unsigned int threadIndex, const HardwareBuffer & buffer) OVERRIDE;
     LUMINOUS_API virtual void bind(unsigned int threadIndex, const VertexAttributeBinding & binding) OVERRIDE;
     LUMINOUS_API virtual void bind(unsigned int threadIndex, const ShaderConstantBlock & constants) OVERRIDE;
@@ -35,8 +37,8 @@ namespace Luminous
     LUMINOUS_API virtual void unbind(unsigned int threadIndex, const ShaderConstantBlock & buffer) OVERRIDE;
     LUMINOUS_API virtual void unbind(unsigned int threadIndex, const ShaderProgram & shader) OVERRIDE;
   private:
-    class Impl;
-    Impl * m_impl;
+    class D;
+    D * m_d;
   };
 }
 

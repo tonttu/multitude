@@ -20,7 +20,7 @@ namespace Luminous
   };
 
   HardwareBuffer::HardwareBuffer(RenderResource::Id id, BufferType type)
-    : RenderResource(id)
+    : RenderResource(id, RT_Buffer)
     , m_impl(new HardwareBuffer::Impl(type, BU_Unknown))
   {
   }
