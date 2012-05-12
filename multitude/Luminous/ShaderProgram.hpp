@@ -13,7 +13,7 @@ namespace Luminous
     : public RenderResource
   {
   public:
-    ShaderGLSL(RenderResource::Id id, ShaderType type);
+    ShaderGLSL(RenderResource::Id id, ShaderType type, RenderDriver & driver);
     ~ShaderGLSL();
 
     void setText(const QString & text);
@@ -30,7 +30,7 @@ namespace Luminous
     : public RenderResource
   {
   public:
-    ShaderProgram(RenderResource::Id id);
+    ShaderProgram(RenderResource::Id id, RenderDriver & driver);
     ~ShaderProgram();
 
     void addShader(const std::shared_ptr<ShaderGLSL> & shader);

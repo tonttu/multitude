@@ -36,6 +36,9 @@ namespace Luminous
     LUMINOUS_API virtual void unbind(unsigned int threadIndex, const VertexAttributeBinding & buffer) OVERRIDE;
     LUMINOUS_API virtual void unbind(unsigned int threadIndex, const ShaderConstantBlock & buffer) OVERRIDE;
     LUMINOUS_API virtual void unbind(unsigned int threadIndex, const ShaderProgram & shader) OVERRIDE;
+
+  private:
+    virtual void removeResource(RenderResource::Id id) OVERRIDE;
   private:
     class D;
     D * m_d;

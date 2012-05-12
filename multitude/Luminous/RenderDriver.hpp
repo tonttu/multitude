@@ -2,6 +2,7 @@
 #define LUMINOUS_RENDERDRIVER_HPP
 
 #include "Luminous/Luminous.hpp"
+#include "Luminous/RenderResource.hpp"
 
 #include <Radiant/Color.hpp>
 #include <Radiant/RefPtr.hpp>
@@ -42,6 +43,11 @@ namespace Luminous
     LUMINOUS_API virtual void unbind(unsigned int threadIndex, const ShaderProgram & shader) = 0;
 
     LUMINOUS_API static std::shared_ptr<RenderDriver> createInstance(unsigned int renderThreads);
+
+  private:
+    // Not exported, should only be used by render resources
+    friend class RenderResource;
+    virtual void removeResource(RenderResource::Id id) = 0;
   };
 }
 #endif // LUMINOUS_RENDERDRIVER_HPP

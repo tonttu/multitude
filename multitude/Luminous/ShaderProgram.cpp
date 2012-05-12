@@ -37,8 +37,8 @@ namespace Luminous
   };
 
 
-  ShaderGLSL::ShaderGLSL(RenderResource::Id id, ShaderType type)
-    : RenderResource(id, getResourceType(type))
+  ShaderGLSL::ShaderGLSL(RenderResource::Id id, ShaderType type, RenderDriver & driver)
+    : RenderResource(id, getResourceType(type), driver)
     , m_d(new ShaderGLSL::D(type))
   {
   }
@@ -72,8 +72,8 @@ namespace Luminous
     ShaderList shaders;
   };
 
-  ShaderProgram::ShaderProgram(RenderResource::Id id)
-    : RenderResource(id, RT_ShaderProgram)
+  ShaderProgram::ShaderProgram(RenderResource::Id id, RenderDriver & driver)
+    : RenderResource(id, RT_ShaderProgram, driver)
     , m_d(new ShaderProgram::D())
   {
 

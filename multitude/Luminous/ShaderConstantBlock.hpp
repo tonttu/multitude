@@ -18,7 +18,7 @@ namespace Luminous
     : public RenderResource
   {
   public:
-    ShaderConstantBlock(RenderResource::Id id);
+    ShaderConstantBlock(RenderResource::Id id, RenderDriver & driver);
     ~ShaderConstantBlock();
 
     bool addConstant(const ShaderConstant & constant);

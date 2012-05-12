@@ -113,27 +113,27 @@ namespace Luminous
 
   std::shared_ptr<VertexAttributeBinding> RenderDriverGL::createVertexAttributeBinding()
   {
-    return std::make_shared<VertexAttributeBinding>(m_d->createId());
+    return std::make_shared<VertexAttributeBinding>(m_d->createId(), *this);
   }
 
   std::shared_ptr<HardwareBuffer> RenderDriverGL::createVertexBuffer()
   {
-    return std::make_shared<HardwareBuffer>(m_d->createId(), BT_VertexBuffer);
+    return std::make_shared<HardwareBuffer>(m_d->createId(), BT_VertexBuffer, *this);
   }
 
   std::shared_ptr<ShaderConstantBlock> RenderDriverGL::createConstantBuffer()
   {
-    return std::make_shared<ShaderConstantBlock>(m_d->createId());
+    return std::make_shared<ShaderConstantBlock>(m_d->createId(), *this);
   }
 
   std::shared_ptr<ShaderProgram> RenderDriverGL::createShaderProgram()
   {
-    return std::make_shared<ShaderProgram>(m_d->createId());
+    return std::make_shared<ShaderProgram>(m_d->createId(), *this);
   }
 
   std::shared_ptr<ShaderGLSL> RenderDriverGL::createShader(ShaderType type)
   {
-    return std::make_shared<ShaderGLSL>(m_d->createId(), type);
+    return std::make_shared<ShaderGLSL>(m_d->createId(), type, *this);
   }
 
   void RenderDriverGL::preFrame(unsigned int threadIndex)
@@ -346,5 +346,10 @@ namespace Luminous
     /// @todo allow other index types (unsigned byte, unsigned short and unsigned int)
     GLenum mode = GLUtils::getPrimitiveType(type);
     glDrawElements(mode, (GLsizei) primitives, GL_UNSIGNED_INT, (const GLvoid *)((sizeof(uint) * offset)));
+  }
+
+  void RenderDriverGL::removeResource(RenderResource::Id id)
+  {
+    /// @todo Queue resource for removal
   }
 }

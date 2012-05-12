@@ -21,7 +21,7 @@ namespace Luminous
       std::shared_ptr<VertexDescription> description;
     };
   public:
-    VertexAttributeBinding(RenderResource::Id id);
+    VertexAttributeBinding(RenderResource::Id id, RenderDriver & driver);
     ~VertexAttributeBinding();
 
     void addBinding(const std::shared_ptr<HardwareBuffer> & buffer, const std::shared_ptr<VertexDescription> & description);

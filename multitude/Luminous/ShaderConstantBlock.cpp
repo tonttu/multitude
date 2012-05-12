@@ -17,8 +17,8 @@ namespace Luminous
     std::vector<char> data;
   };
 
-  ShaderConstantBlock::ShaderConstantBlock(RenderResource::Id id)
-    : RenderResource(id, RT_VertexArray)
+  ShaderConstantBlock::ShaderConstantBlock(RenderResource::Id id, RenderDriver & driver)
+    : RenderResource(id, RT_VertexArray, driver)
     , m_impl(new ShaderConstantBlock::Impl())
   {
   }

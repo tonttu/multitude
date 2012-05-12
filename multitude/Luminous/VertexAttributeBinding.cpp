@@ -13,8 +13,8 @@ namespace Luminous
 
   bool operator==(const VertexAttributeBinding::Binding & lhs, const std::shared_ptr<HardwareBuffer> & rhs) { return lhs.buffer == rhs; }
 
-  VertexAttributeBinding::VertexAttributeBinding(RenderResource::Id id)
-    : RenderResource(id, RT_VertexArray)
+  VertexAttributeBinding::VertexAttributeBinding(RenderResource::Id id, RenderDriver & driver)
+    : RenderResource(id, RT_VertexArray, driver)
     , m_impl(new VertexAttributeBinding::Impl())
   {
   }

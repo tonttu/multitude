@@ -10,7 +10,7 @@ namespace Luminous
   class HardwareBuffer : public RenderResource
   {
   public:
-    HardwareBuffer(RenderResource::Id id, BufferType type);
+    HardwareBuffer(RenderResource::Id id, BufferType type, RenderDriver & driver);
     virtual ~HardwareBuffer();
 
     virtual void reallocate(size_t bytes, BufferUsage usage);
