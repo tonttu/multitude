@@ -14,12 +14,12 @@ namespace Luminous
   {
   public:
     ShaderGLSL(RenderResource::Id id, ShaderType type, RenderDriver & driver);
-    ~ShaderGLSL();
+    LUMINOUS_API ~ShaderGLSL();
 
-    void setText(const QString & text);
-    const QString & text() const;
+    LUMINOUS_API void setText(const QString & text);
+    LUMINOUS_API const QString & text() const;
 
-    ShaderType type() const;
+    LUMINOUS_API ShaderType type() const;
   private:
     class D;
     D * m_d;
@@ -31,13 +31,13 @@ namespace Luminous
   {
   public:
     ShaderProgram(RenderResource::Id id, RenderDriver & driver);
-    ~ShaderProgram();
+    LUMINOUS_API ~ShaderProgram();
 
-    void addShader(const std::shared_ptr<ShaderGLSL> & shader);
-    void removeShader(const std::shared_ptr<ShaderGLSL> & shader);
+    LUMINOUS_API void addShader(const std::shared_ptr<ShaderGLSL> & shader);
+    LUMINOUS_API void removeShader(const std::shared_ptr<ShaderGLSL> & shader);
 
-    const std::shared_ptr<ShaderGLSL> & shader(size_t index) const;
-    size_t shaderCount() const;
+    LUMINOUS_API const std::shared_ptr<ShaderGLSL> & shader(size_t index) const;
+    LUMINOUS_API size_t shaderCount() const;
 
   private:
     class D;

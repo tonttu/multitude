@@ -7,7 +7,7 @@
 
 namespace Luminous
 {
-  class ShaderConstantBlock::Impl
+  class ShaderConstantBlock::D
   {
   public:
     // List of constants
@@ -19,37 +19,37 @@ namespace Luminous
 
   ShaderConstantBlock::ShaderConstantBlock(RenderResource::Id id, RenderDriver & driver)
     : RenderResource(id, RT_VertexArray, driver)
-    , m_impl(new ShaderConstantBlock::Impl())
+    , m_d(new ShaderConstantBlock::D())
   {
   }
 
   ShaderConstantBlock::~ShaderConstantBlock()
   {
-    delete m_impl;
+    delete m_d;
   }
 
   bool ShaderConstantBlock::addConstant(const ShaderConstant & constant)
   {
     // Check for duplicates
-    Impl::ConstantList::iterator it = std::find(m_impl->constants.begin(), m_impl->constants.end(), constant.name);
-    if ( it != m_impl->constants.end())
+    D::ConstantList::iterator it = std::find(m_d->constants.begin(), m_d->constants.end(), constant.name);
+    if ( it != m_d->constants.end())
         return false;
 
     // Store constant
-    m_impl->constants.push_back(constant);
+    m_d->constants.push_back(constant);
 
     // Make space and add raw data
-    size_t location = m_impl->data.size();
+    size_t location = m_d->data.size();
     size_t dataSize = Utils2::getDataSize(constant.type) * constant.count;
-    m_impl->data.resize(location + dataSize);
-    memcpy(&(m_impl->data[location]), &constant.value.f, dataSize);
+    m_d->data.resize(location + dataSize);
+    memcpy(&(m_d->data[location]), &constant.value.f, dataSize);
     
     invalidate();
     return true;
   }
 
 #define ADDCONSTANTIMPL(TYPE, DATATYPE, COUNT, VALUE) \
-  bool ShaderConstantBlock::addConstant(const QString & name, const TYPE & value) { \
+  template <> LUMINOUS_API bool ShaderConstantBlock::addConstant<TYPE>(const QString & name, const TYPE & value) { \
     ShaderConstant constant; \
     constant.name = name; \
     constant.type = DATATYPE; \
@@ -79,19 +79,19 @@ namespace Luminous
 
   void ShaderConstantBlock::clear()
   {
-    m_impl->constants.clear();
-    m_impl->data.clear();
+    m_d->constants.clear();
+    m_d->data.clear();
     // Trigger buffer reallocation
     invalidate();
   }
 
   const char * ShaderConstantBlock::data() const
   {
-    return m_impl->data.data();
+    return m_d->data.data();
   }
 
   size_t ShaderConstantBlock::size() const
   {
-    return m_impl->data.size();
+    return m_d->data.size();
   }
 }

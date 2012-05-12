@@ -31,8 +31,8 @@ namespace Luminous
     size_t bindingCount() const;
     const Binding & binding(size_t index) const;
   private:
-    class Impl;
-    Impl * m_impl;
+    class D;
+    D * m_d;
   };
 }
 

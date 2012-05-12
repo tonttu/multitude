@@ -11,21 +11,21 @@ namespace Luminous
   {
   public:
     HardwareBuffer(RenderResource::Id id, BufferType type, RenderDriver & driver);
-    virtual ~HardwareBuffer();
+    LUMINOUS_API virtual ~HardwareBuffer();
 
-    virtual void reallocate(size_t bytes, BufferUsage usage);
-    virtual size_t size() const;
+    LUMINOUS_API virtual void reallocate(size_t bytes, BufferUsage usage);
+    LUMINOUS_API virtual size_t size() const;
 
-    virtual void read(char * data, size_t offset, size_t bytes) const;
-    virtual void write(const char * data, size_t offset, size_t bytes);
+    LUMINOUS_API virtual void read(char * data, size_t offset, size_t bytes) const;
+    LUMINOUS_API virtual void write(const char * data, size_t offset, size_t bytes);
     
-    virtual BufferType type() const;
-    virtual BufferUsage usage() const;
+    LUMINOUS_API virtual BufferType type() const;
+    LUMINOUS_API virtual BufferUsage usage() const;
 
-    virtual const char * data() const;
+    LUMINOUS_API virtual const char * data() const;
   private:
-    class Impl;
-    Impl * m_impl;
+    class D;
+    D * m_d;
   };
 }
 #endif // LUMINOUS_HARDWAREBUFFER_HPP

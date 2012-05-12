@@ -7,10 +7,10 @@ namespace Luminous
 {
   //////////////////////////////////////////////////////////////////////////
   /// Rendercontext implementation details
-  class RenderContextImmediate::Impl
+  class RenderContextImmediate::D
   {
   public:
-    Impl(const std::shared_ptr<GLContext> & deviceContext, const std::shared_ptr<RenderDriver> & driver)
+    D(const std::shared_ptr<GLContext> & deviceContext, const std::shared_ptr<RenderDriver> & driver)
       : context(deviceContext)
       , driver(driver)
       , threadIndex(0)
@@ -30,7 +30,7 @@ namespace Luminous
 
   //////////////////////////////////////////////////////////////////////////
   RenderContextImmediate::RenderContextImmediate(const std::shared_ptr<GLContext> & deviceContext, const std::shared_ptr<RenderDriver> & driver)
-    : m_impl(std::make_shared<RenderContextImmediate::Impl>(deviceContext, driver))
+    : m_d(new D(deviceContext, driver))
   {
   }
 
@@ -38,26 +38,13 @@ namespace Luminous
   size_t RenderContextImmediate::frame() const
   {
     /// @todo should get this from the device context
-    return m_impl->frame;
+    return m_d->frame;
   }
 
   /// Returns the framerate (frames per second)
   float RenderContextImmediate::framerate() const
   {
     /// @todo should get this from the device context
-    return m_impl->fps;
-  }
-
-  /// Binds a set of vertex buffers and their vertexdescriptions
-  void RenderContextImmediate::bind(VertexAttributeBinding & binding)
-  {
-    
-  }
-
-  /// Issue a draw-call
-  void RenderContextImmediate::draw(PrimitiveType type, size_t offset, size_t primitiveCount)
-  {
-    /// @todo use drawIndexed if an index buffer is active
-    m_impl->driver->draw(type, offset, primitiveCount);
+    return m_d->fps;
   }
 }

@@ -12,15 +12,14 @@ namespace Luminous
   public:
     RenderContextImmediate(const std::shared_ptr<GLContext> & deviceContext, const std::shared_ptr<RenderDriver> & driver);
 
+    /// Returns the current frame
     virtual size_t frame() const OVERRIDE;
+    /// Returns the framerate (frames per second)
     virtual float framerate() const OVERRIDE;
 
-    virtual void bind(VertexAttributeBinding & binding) OVERRIDE;
-    virtual void draw(PrimitiveType type, size_t offset, size_t primitiveCount) OVERRIDE;
-
   private:
-    class Impl;
-    std::shared_ptr<Impl> m_impl;
+    class D;
+    D * m_d;
   };
 }
 #endif // LUMINOUS_RENDERCONTEXTIMMEDIATE_HPP

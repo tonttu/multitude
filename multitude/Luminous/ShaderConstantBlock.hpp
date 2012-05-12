@@ -19,37 +19,24 @@ namespace Luminous
   {
   public:
     ShaderConstantBlock(RenderResource::Id id, RenderDriver & driver);
-    ~ShaderConstantBlock();
+    LUMINOUS_API ~ShaderConstantBlock();
 
-    bool addConstant(const ShaderConstant & constant);
+    LUMINOUS_API bool addConstant(const ShaderConstant & constant);
 
-    bool addConstant(const QString & name, const short & value);
-    bool addConstant(const QString & name, const int & value);
-    bool addConstant(const QString & name, const float & value);
-    bool addConstant(const QString & name, const double & value);
-    bool addConstant(const QString & name, const Nimble::Vector2f & value);
-    bool addConstant(const QString & name, const Nimble::Vector3f & value);
-    bool addConstant(const QString & name, const Nimble::Vector4f & value);
-    bool addConstant(const QString & name, const Nimble::Matrix2f & value);
-    bool addConstant(const QString & name, const Nimble::Matrix3f & value);
-    bool addConstant(const QString & name, const Nimble::Matrix4f & value);
-    bool addConstant(const QString & name, const Nimble::Vector2d & value);
-    bool addConstant(const QString & name, const Nimble::Vector3d & value);
-    bool addConstant(const QString & name, const Nimble::Vector4d & value);
-    bool addConstant(const QString & name, const Nimble::Matrix2d & value);
-    bool addConstant(const QString & name, const Nimble::Matrix3d & value);
-    bool addConstant(const QString & name, const Nimble::Matrix4d & value);
-    void clear();
+    template <typename T>
+    LUMINOUS_API bool addConstant(const QString & name, const T & value);
 
-    const ShaderConstant & constant(size_t index) const;
-    size_t constantCount() const;
+    LUMINOUS_API void clear();
 
-    const char * data() const;
-    size_t size() const;
+    LUMINOUS_API const ShaderConstant & constant(size_t index) const;
+    LUMINOUS_API size_t constantCount() const;
+
+    LUMINOUS_API const char * data() const;
+    LUMINOUS_API size_t size() const;
 
   private:
-    class Impl;
-    Impl * m_impl;
+    class D;
+    D * m_d;
   };
 }
 #endif // LUMINOUS_SHADERCONSTANTBLOCK_HPP

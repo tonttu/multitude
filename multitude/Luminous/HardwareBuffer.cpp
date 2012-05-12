@@ -5,10 +5,10 @@
 
 namespace Luminous
 {
-  class HardwareBuffer::Impl
+  class HardwareBuffer::D
   {
   public:
-    Impl(BufferType type, BufferUsage usage)
+    D(BufferType type, BufferUsage usage)
       : type(type)
       , usage(usage)
     {
@@ -21,37 +21,37 @@ namespace Luminous
 
   HardwareBuffer::HardwareBuffer(RenderResource::Id id, BufferType type, RenderDriver & driver)
     : RenderResource(id, RT_Buffer, driver)
-    , m_impl(new HardwareBuffer::Impl(type, BU_Unknown))
+    , m_d(new HardwareBuffer::D(type, BU_Unknown))
   {
   }
 
   HardwareBuffer::~HardwareBuffer()
   {
-    delete m_impl;
+    delete m_d;
   }
 
   void HardwareBuffer::reallocate(size_t bytes, BufferUsage usage)
   {
-    m_impl->data.resize(bytes);
-    m_impl->usage = usage;
+    m_d->data.resize(bytes);
+    m_d->usage = usage;
   }
 
   size_t HardwareBuffer::size() const
   {
-    return m_impl->data.size();
+    return m_d->data.size();
   }
 
   void HardwareBuffer::read(char * data, size_t offset, size_t bytes) const
   {
-    assert(offset + bytes < m_impl->data.size());
-    const char * start = &(*(m_impl->data.begin() + offset));
+    assert(offset + bytes < m_d->data.size());
+    const char * start = &(*(m_d->data.begin() + offset));
     std::copy(start, start + bytes, data);
   }
 
   void HardwareBuffer::write(const char * data, size_t bytes, size_t offset)
   {
-    assert(offset + bytes < m_impl->data.size());
-    char * start = &(*(m_impl->data.begin() + offset));
+    assert(offset + bytes < m_d->data.size());
+    char * start = &(*(m_d->data.begin() + offset));
     std::copy(data, data + bytes, start);
 
     // Update version
@@ -60,16 +60,16 @@ namespace Luminous
 
   BufferType HardwareBuffer::type() const
   {
-    return m_impl->type;
+    return m_d->type;
   }
 
   BufferUsage HardwareBuffer::usage() const
   {
-    return m_impl->usage;
+    return m_d->usage;
   }
 
   const char * HardwareBuffer::data() const
   {
-    return m_impl->data.data();
+    return m_d->data.data();
   }
 }
