@@ -19,6 +19,10 @@ namespace Nimble {
   class Matrix3T
   {
   public:
+    typedef T type;
+
+    enum { Elements = 9 };
+
     /// Constructs the matrix without initializing any values.
     Matrix3T() {}
     /// Constructs a matrix and initializes it from memory

@@ -24,6 +24,10 @@ namespace Nimble {
   class Matrix4T
   {
   public:
+    typedef T type;
+
+    enum { Elements = 4 };
+
     /// Constructs a matrix and fills it from memory
     template <class K>
     Matrix4T(const K * x) { const K * end = x + 16; T * my = data(); while(x!=end) *my++ = *x++; }

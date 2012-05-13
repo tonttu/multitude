@@ -18,6 +18,10 @@ namespace Nimble {
   class Matrix2T
   {
   public:
+    typedef T type;
+
+    enum { Elements = 4 };
+
     /// Creates a matrix without initializing the elements
     Matrix2T() {}
     /// Constructs a matrix and initializes it to the given values
