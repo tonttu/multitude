@@ -242,6 +242,7 @@ namespace Luminous
           /// @todo Should cache these locations somewhere
           GLint location = glGetAttribLocation(m_d->m_threadResources[threadIndex].currentProgram, attr.name.toAscii().data());
           GLenum normalized = (attr.normalized ? GL_TRUE : GL_FALSE);
+          glEnableVertexAttribArray(location);
           glVertexAttribPointer(location, attr.count, GLUtils::getDataType(attr.type), normalized, b.description->vertexSize(), (const GLvoid*)attr.offset);
         }
 
@@ -268,7 +269,7 @@ namespace Luminous
       if (constants.size() != bufferHandle.size)
         /// @todo What should be the usage type for a uniform buffer? Should it be configurable like a normal buffer?
         glBufferData(GL_UNIFORM_BUFFER_EXT, constants.size(), constants.data(), GL_DYNAMIC_DRAW);
-      else 
+      else
         glBufferSubData(GL_UNIFORM_BUFFER_EXT, 0, constants.size(), constants.data());
 
       // Update cache handle
