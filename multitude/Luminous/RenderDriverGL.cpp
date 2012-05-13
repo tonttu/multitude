@@ -117,14 +117,15 @@ namespace Luminous
     return std::shared_ptr<VertexAttributeBinding>(new VertexAttributeBinding(m_d->createId(), *this));
   }
 
-  std::shared_ptr<HardwareBuffer> RenderDriverGL::createVertexBuffer()
+  std::shared_ptr<HardwareBuffer> RenderDriverGL::createHardwareBuffer(BufferType type)
   {
     /// @todo use make_shared once fully available
-    return std::shared_ptr<HardwareBuffer>(new HardwareBuffer(m_d->createId(), BT_VertexBuffer, *this));
+    return std::shared_ptr<HardwareBuffer>(new HardwareBuffer(m_d->createId(), type, *this));
   }
 
-  std::shared_ptr<ShaderConstantBlock> RenderDriverGL::createConstantBuffer()
+  std::shared_ptr<ShaderConstantBlock> RenderDriverGL::createShaderConstantBlock()
   {
+    /// @todo this should be done with createHardwareBuffer once ShaderConstantBlock has been redesigned
     /// @todo use make_shared once fully available
     return std::shared_ptr<ShaderConstantBlock>(new ShaderConstantBlock(m_d->createId(), *this));
   }
@@ -352,6 +353,37 @@ namespace Luminous
     GLenum mode = GLUtils::getPrimitiveType(type);
     glDrawElements(mode, (GLsizei) primitives, GL_UNSIGNED_INT, (const GLvoid *)((sizeof(uint) * offset)));
   }
+
+#define SETUNIFORM(TYPE, FUNCTION) \
+  void RenderDriverGL::setShaderConstant(unsigned int threadIndex, const QString & name, const TYPE & value) { \
+    GLint location = glGetUniformLocation(m_d->m_threadResources[threadIndex].currentProgram, name.toAscii().data()); \
+    if (location != -1) FUNCTION(location, value); \
+  }
+#define SETUNIFORMVECTOR(TYPE, FUNCTION) \
+  void RenderDriverGL::setShaderConstant(unsigned int threadIndex, const QString & name, const TYPE & value) { \
+    GLint location = glGetUniformLocation(m_d->m_threadResources[threadIndex].currentProgram, name.toAscii().data()); \
+    if (location != -1) FUNCTION(location, 1, value.data()); \
+  }
+#define SETUNIFORMMATRIX(TYPE, FUNCTION) \
+  void RenderDriverGL::setShaderConstant(unsigned int threadIndex, const QString & name, const TYPE & value) { \
+    GLint location = glGetUniformLocation(m_d->m_threadResources[threadIndex].currentProgram, name.toAscii().data()); \
+    if (location != -1) FUNCTION(location, 1, GL_FALSE, value.data()); \
+  }
+
+  SETUNIFORM(int, glUniform1i);
+  SETUNIFORM(float, glUniform1f);
+  SETUNIFORMVECTOR(Nimble::Vector2i, glUniform2iv);
+  SETUNIFORMVECTOR(Nimble::Vector3i, glUniform3iv);
+  SETUNIFORMVECTOR(Nimble::Vector4i, glUniform4iv);
+  SETUNIFORMVECTOR(Nimble::Vector2f, glUniform2fv);
+  SETUNIFORMVECTOR(Nimble::Vector3f, glUniform3fv);
+  SETUNIFORMVECTOR(Nimble::Vector4f, glUniform4fv);
+  SETUNIFORMMATRIX(Nimble::Matrix2f, glUniformMatrix2fv);
+  SETUNIFORMMATRIX(Nimble::Matrix3f, glUniformMatrix3fv);
+  SETUNIFORMMATRIX(Nimble::Matrix4f, glUniformMatrix4fv);
+#undef SETUNIFORM
+#undef SETUNIFORMVECTOR
+#undef SETUNIFORMMATRIX
 
   void RenderDriverGL::removeResource(RenderResource::Id id)
   {

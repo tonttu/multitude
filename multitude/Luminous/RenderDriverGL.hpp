@@ -14,14 +14,27 @@ namespace Luminous
 
     LUMINOUS_API virtual std::shared_ptr<VertexDescription> createVertexDescription() OVERRIDE;
     LUMINOUS_API virtual std::shared_ptr<VertexAttributeBinding> createVertexAttributeBinding() OVERRIDE;
-    LUMINOUS_API virtual std::shared_ptr<HardwareBuffer> createVertexBuffer() OVERRIDE;
-    LUMINOUS_API virtual std::shared_ptr<ShaderConstantBlock> createConstantBuffer() OVERRIDE;
+    LUMINOUS_API virtual std::shared_ptr<HardwareBuffer> createHardwareBuffer(BufferType type) OVERRIDE;
+    LUMINOUS_API virtual std::shared_ptr<ShaderConstantBlock> createShaderConstantBlock() OVERRIDE;
     LUMINOUS_API virtual std::shared_ptr<ShaderProgram> createShaderProgram() OVERRIDE;
     LUMINOUS_API virtual std::shared_ptr<ShaderGLSL> createShader(ShaderType type) OVERRIDE;
 
     LUMINOUS_API virtual void clear(ClearMask mask, const Radiant::Color & color, double depth, int stencil) OVERRIDE;
     LUMINOUS_API virtual void draw(PrimitiveType type, size_t primitives, size_t offset) OVERRIDE;
     LUMINOUS_API virtual void drawIndexed(PrimitiveType type, size_t primitives, size_t offset) OVERRIDE;
+
+    // Shaders: Manually set shader uniforms
+    LUMINOUS_API virtual void setShaderConstant(unsigned int threadIndex, const QString & name, const int & value) OVERRIDE;
+    LUMINOUS_API virtual void setShaderConstant(unsigned int threadIndex, const QString & name, const float & value) OVERRIDE;
+    LUMINOUS_API virtual void setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Vector2i & value) OVERRIDE;
+    LUMINOUS_API virtual void setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Vector3i & value) OVERRIDE;
+    LUMINOUS_API virtual void setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Vector4i & value) OVERRIDE;
+    LUMINOUS_API virtual void setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Vector2f & value) OVERRIDE;
+    LUMINOUS_API virtual void setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Vector3f & value) OVERRIDE;
+    LUMINOUS_API virtual void setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Vector4f & value) OVERRIDE;
+    LUMINOUS_API virtual void setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Matrix2f & value) OVERRIDE;
+    LUMINOUS_API virtual void setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Matrix3f & value) OVERRIDE;
+    LUMINOUS_API virtual void setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Matrix4f & value) OVERRIDE;
 
     LUMINOUS_API virtual void preFrame(unsigned int threadIndex) OVERRIDE;
     LUMINOUS_API virtual void postFrame(unsigned int threadIndex) OVERRIDE;

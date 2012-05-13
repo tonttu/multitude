@@ -1771,15 +1771,15 @@ namespace Luminous
 
   //////////////////////////////////////////////////////////////////////////
   // Luminousv2
-  void RenderContext::setVertexBinding(const VertexAttributeBinding & binding)
+  void RenderContext::setVertexBinding(const std::shared_ptr<VertexAttributeBinding> & binding)
   {
     // Bind the VAO: Binds all the associated vertex buffers and sets the appropriate vertex attributes
-    m_data->m_driver.bind(threadIndex(), binding);
+    m_data->m_driver.bind(threadIndex(), *binding);
   }
 
-  void RenderContext::setShaderProgram(const ShaderProgram & program)
+  void RenderContext::setShaderProgram(const std::shared_ptr<ShaderProgram> & program)
   {
-
+    m_data->m_driver.bind(threadIndex(), *program);
   }
 
   void RenderContext::draw(PrimitiveType primType, unsigned int offset, unsigned int vertexCount)
@@ -1791,5 +1791,18 @@ namespace Luminous
   {
     return m_data->m_threadIndex;
   }
+
+  // Create all the setters for shader constants
+#define SETSHADERCONSTANT(TYPE) \
+  template<> LUMINOUS_API void RenderContext::setShaderConstant<TYPE>(const QString & name, const TYPE & value) { m_data->m_driver.setShaderConstant(threadIndex(), name, value); }
+  SETSHADERCONSTANT(int);
+  SETSHADERCONSTANT(float);
+  SETSHADERCONSTANT(Nimble::Vector2f);
+  SETSHADERCONSTANT(Nimble::Vector3f);
+  SETSHADERCONSTANT(Nimble::Vector4f);
+  SETSHADERCONSTANT(Nimble::Matrix2f);
+  SETSHADERCONSTANT(Nimble::Matrix3f);
+  SETSHADERCONSTANT(Nimble::Matrix4f);
+#undef SETSHADERCONSTANT
 }
 
