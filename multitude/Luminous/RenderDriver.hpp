@@ -20,7 +20,7 @@ namespace Luminous
   class RenderDriver
   {
   public:
-    LUMINOUS_API virtual ~RenderDriver() {}
+    virtual ~RenderDriver() {}
 
     LUMINOUS_API virtual std::shared_ptr<VertexDescription> createVertexDescription() = 0;
     LUMINOUS_API virtual std::shared_ptr<VertexAttributeBinding> createVertexAttributeBinding() = 0;

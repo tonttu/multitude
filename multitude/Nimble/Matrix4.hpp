@@ -9,6 +9,14 @@
 #include "Matrix3.hpp"
 #include "Vector4.hpp"
 
+#ifdef near
+#undef near
+#endif
+
+#ifdef far
+#undef far
+#endif
+
 template <class T>
 inline Nimble::Matrix4T<T> operator*(const Nimble::Matrix4T<T> &, const Nimble::Matrix4T<T> &);
 

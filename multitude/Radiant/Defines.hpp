@@ -22,7 +22,7 @@
 #define MULTI_ATTR_DEPRECATED(description, f) f __attribute__ ((deprecated))
 #elif defined(__GNUC__) || defined(__clang__)
 #define MULTI_ATTR_DEPRECATED(description, f) f __attribute__ ((deprecated(description)))
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && !defined(__GCCXML__)
 #define MULTI_ATTR_DEPRECATED(description, f) __declspec(deprecated(description)) f
 #else
 #define MULTI_ATTR_DEPRECATED(description, f) f

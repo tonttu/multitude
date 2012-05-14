@@ -4,6 +4,8 @@
 #include "Luminous.hpp"
 #include <QString>
 
+#include <stdint.h>
+
 namespace Luminous
 {
   struct ShaderConstant

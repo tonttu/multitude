@@ -60,12 +60,12 @@ namespace Radiant
   public:
 
     /// Constructor.
-#ifdef WIN32
+#ifdef RADIANT_WINDOWS
     /// @param smName User-defined name for shared memory.
     /// @param size Size in bytes of the ring buffer: if size > 0,
     /// creates a new ring buffer of that size; if size == 0,
     /// references the existing buffer identified by smKey.
-    RADIANT_API SHMPipe::SHMPipe(const QString smName, uint32_t size);
+    RADIANT_API SHMPipe(const QString smName, uint32_t size);
 #else
     /// @param smKey User-defined key to shared memory.
     /// @param size Size in bytes of the ring buffer: if size > 0, creates a new ring buffer
@@ -81,7 +81,7 @@ namespace Radiant
     /** @return This function returns the number of bytes read from the buffer. */
     RADIANT_API int read(void * ptr, int n, bool block = false, bool peek = false);
     RADIANT_API int read(BinaryData &);
-    RADIANT_API int peek(void * ptr, int n, bool block = false)
+    int peek(void * ptr, int n, bool block = false)
     { return read(ptr, n, block, true); }
     /// The number of bytes available for reading immediately
     RADIANT_API uint32_t readAvailable();
@@ -102,7 +102,7 @@ namespace Radiant
     RADIANT_API void flush();
 
     /// Returns the size of the shared memory area
-    RADIANT_API uint32_t size() const { return m_data ? m_data->size : 0; }
+    uint32_t size() const { return m_data ? m_data->size : 0; }
 
     /// Clears the transfer counters
     RADIANT_API void clear();

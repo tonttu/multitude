@@ -128,7 +128,9 @@ namespace Nimble {
     /// Checks if the given value if finite
     inline bool isFinite(float v)
     {
-#ifdef RADIANT_IOS
+#ifdef __GCCXML__
+      return v == v && (v == 0 || v != 2*v);
+#elif defined(RADIANT_IOS)
       return std::isfinite(v);
 #elif defined(_MSC_VER)
       return _finite(v) != 0;
@@ -141,7 +143,9 @@ namespace Nimble {
     /// @return Check result
     inline bool isNAN(float v)
     {
-#ifdef _MSC_VER
+#ifdef __GCCXML__
+      return v != v;
+#elif defined(_MSC_VER)
       return _isnan(v) != 0;
 #else
       return std::isnan(v);
