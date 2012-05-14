@@ -187,52 +187,54 @@ namespace Nimble {
       return t.length();
     }
   }
+
+  template <class T>
+  inline T abs(Vector4T<T> t)
+  {
+    return t.length();
+  }
+
+  /// Returns 4D dot product of the two Vector4T objects.
+  template <class T>
+  inline T dot(const Vector4T<T> & a, const Vector4T<T> & b)
+  {
+    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3];
+  }
+
+  /// Returns 3D dot product of Vector4T and Vector3T objects.
+  template <class T>
+  inline T dot3(const Vector4T<T> & a, const Vector3T<T> & b)
+  {
+    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+  }
+
+  /// Returns 3D dot product of Vector3T and Vector4T objects.
+  template <class T>
+  inline T dot3(const Vector3T<T> & a, const Vector4T<T> & b)
+  {
+    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+  }
+
+  template <class T>
+  inline T dot4(const Vector3T<T> & a, const Vector4T<T> & b)
+  {
+    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + b[3];
+  }
+
+  template <class T>
+  inline T dot4(const Vector4T<T> & a, const Vector3T<T> & b)
+  {
+    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3];
+  }
+
+  template <class T>
+  inline Vector4T<T> projection(const Vector4T<T> & u, const Vector4T<T> & v)
+  {
+    return (dot(v, u)/u.lengthSqr())*u;
+  }
+
 } // namespace
 
-template <class T>
-inline T abs(Nimble::Vector4T<T> t)
-{
-  return t.length();
-}
-
-/// Returns 4D dot product of the two Vector4T objects.
-template <class T>
-inline T dot(const Nimble::Vector4T<T>& a, const Nimble::Vector4T<T>& b)
-{
-  return a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3];
-}
-
-/// Returns 3D dot product of Vector4T and Vector3T objects.
-template <class T>
-inline T dot3(const Nimble::Vector4T<T>& a, const Nimble::Vector3T<T>& b)
-{
-  return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
-}
-
-/// Returns 3D dot product of Vector3T and Vector4T objects.
-template <class T>
-inline T dot3(const Nimble::Vector3T<T>& a, const Nimble::Vector4T<T>& b)
-{
-  return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
-}
-
-template <class T>
-inline T dot4(const Nimble::Vector3T<T>& a, const Nimble::Vector4T<T>& b)
-{
-  return a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + b[3];
-}
-
-template <class T>
-inline T dot4(const Nimble::Vector4T<T>& a, const Nimble::Vector3T<T>& b)
-{
-  return a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3];
-}
-
-template <class T>
-inline Nimble::Vector4T<T> projection(const Nimble::Vector4T<T>& u, const Nimble::Vector4T<T>& v)
-{
-  return (dot(v, u)/u.lengthSqr())*u;
-}
 
 /// Serialize a 4D vector into a stream
 template <class T>

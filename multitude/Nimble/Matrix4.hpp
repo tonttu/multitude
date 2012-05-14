@@ -17,13 +17,13 @@
 #undef far
 #endif
 
-template <class T>
-inline Nimble::Matrix4T<T> operator*(const Nimble::Matrix4T<T> &, const Nimble::Matrix4T<T> &);
-
-template <class T>
-inline Nimble::Vector4T<T> operator*(const Nimble::Matrix4T<T> &, const Nimble::Vector4T<T> &);
-
 namespace Nimble {
+
+  template <class T>
+  inline Matrix4T<T> operator*(const Matrix4T<T> &, const Matrix4T<T> &);
+
+  template <class T>
+  inline Vector4T<T> operator*(const Matrix4T<T> &, const Vector4T<T> &);
 
   /// 4x4 transformation matrix
   /** This class is a row-major 4x4 matrix. The matrix functions
@@ -582,76 +582,77 @@ namespace Nimble {
         assert(a3 == b3);
   }
 #endif
-}
 
-template <class T>
-inline bool Nimble::Matrix4T<T>::operator==(const Nimble::Matrix4T<T>& that) const
-{
-  return m[0] == that.m[0] && m[1] == that.m[1] && m[2] == that.m[2] && m[3] == that.m[3];
-}
-
-template <class T>
-inline bool Nimble::Matrix4T<T>::operator!=(const Nimble::Matrix4T<T>& that) const
-{
-  return !(*this == that);
-}
-
-template <class T>
-inline Nimble::Matrix4T<T> operator*(const Nimble::Matrix4T<T>& m1,const Nimble::Matrix4T<T>& m2)
-{
-  Nimble::Matrix4T<T> res;
-  for(int j = 0; j < 4; j++) {
-    Nimble::Vector4T<T> t = m2.column(j);
-    for(int i = 0; i < 4; i++)
-      res[i][j] = dot(m1.row(i),t);
+  template <class T>
+  inline bool Matrix4T<T>::operator==(const Matrix4T<T> & that) const
+  {
+    return m[0] == that.m[0] && m[1] == that.m[1] && m[2] == that.m[2] && m[3] == that.m[3];
   }
-  return res;
-}
 
-template <class T>
-inline Nimble::Matrix4T<T> mul(const Nimble::Matrix4T<T>& m1,const Nimble::Matrix4T<T>& m2)
-{
-  return m1 * m2;
-}
+  template <class T>
+  inline bool Matrix4T<T>::operator!=(const Matrix4T<T> & that) const
+  {
+    return !(*this == that);
+  }
 
-template <class T>
-inline Nimble::Vector4T<T> operator*(const Nimble::Matrix4T<T>& m1,const Nimble::Vector4T<T>& m2)
-{
-  Nimble::Vector4T<T> res;
-  for(int i = 0; i < 4; i++)
-    res[i] = dot(m1.row(i),m2);
-  return res;
-}
+  template <class T>
+  inline Matrix4T<T> operator*(const Matrix4T<T> & m1, const Matrix4T<T> & m2)
+  {
+    Matrix4T<T> res;
+    for(int j = 0; j < 4; j++) {
+      Vector4T<T> t = m2.column(j);
+      for(int i = 0; i < 4; i++)
+        res[i][j] = dot(m1.row(i),t);
+    }
+    return res;
+  }
+
+  template <class T>
+  inline Matrix4T<T> mul(const Matrix4T<T> & m1, const Matrix4T<T> & m2)
+  {
+    return m1 * m2;
+  }
+
+  template <class T>
+  inline Vector4T<T> operator*(const Matrix4T<T> & m1, const Vector4T<T> & m2)
+  {
+    Vector4T<T> res;
+    for(int i = 0; i < 4; i++)
+      res[i] = dot(m1.row(i),m2);
+    return res;
+  }
 
 
-template <class T>
-    inline Nimble::Vector3T<T> operator*(const Nimble::Matrix4T<T>& m1,const Nimble::Vector3T<T>& m2)
-{
-  Nimble::Vector3T<T> res;
-  for(int i = 0; i < 3; i++)
-    res[i] = dot4(m1.row(i),m2);
-  return res;
-}
+  template <class T>
+  inline Vector3T<T> operator*(const Matrix4T<T> & m1, const Vector3T<T> & m2)
+  {
+    Vector3T<T> res;
+    for(int i = 0; i < 3; i++)
+      res[i] = dot4(m1.row(i),m2);
+    return res;
+  }
 
-/// @todo Vector4 * Matrix4 is not defined. This implicitly transposes the vector. This should not
-/// operator should not be defined. Also check other Matrix classes.
-template <class T>
-inline Nimble::Vector4T<T> operator*(const Nimble::Vector4T<T>& m2, const Nimble::Matrix4T<T>& m1)
-{
-  Nimble::Vector4T<T> res;
-  for(int i = 0; i < 4; i++)
-    res[i] = dot(m1.column(i),m2);
-  return res;
-}
+  /// @todo Vector4 * Matrix4 is not defined. This implicitly transposes the vector. This should not
+  /// operator should not be defined. Also check other Matrix classes.
+  template <class T>
+  inline Vector4T<T> operator*(const Vector4T<T> & m2, const Matrix4T<T> & m1)
+  {
+    Vector4T<T> res;
+    for(int i = 0; i < 4; i++)
+      res[i] = dot(m1.column(i),m2);
+    return res;
+  }
 
-template <class T>
-inline Nimble::Vector3T<T> operator*(const Nimble::Vector3T<T>& m2, const Nimble::Matrix4T<T>& m1)
-{
-  Nimble::Vector3T<T> res;
-  for(int i = 0; i < 3; i++)
-    res[i] = dot4(m1.column(i),m2);
-  return res;
-}
+  template <class T>
+  inline Vector3T<T> operator*(const Vector3T<T> & m2, const Matrix4T<T> & m1)
+  {
+    Vector3T<T> res;
+    for(int i = 0; i < 3; i++)
+      res[i] = dot4(m1.column(i),m2);
+    return res;
+  }
+
+} // namespace Nimble
 
 template <class T>
 inline std::ostream& operator<<(std::ostream& os, const Nimble::Matrix4T<T>& m)
