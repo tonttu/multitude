@@ -7,12 +7,12 @@ namespace Luminous
 {
   class GLUtils {
   public:
-    static GLenum getBufferLockOptions(BufferLockOptions lock);
-    static GLenum getBufferUsage(BufferUsage usage);
-    static GLenum getBufferType(BufferType type);
-    static GLenum getPrimitiveType(PrimitiveType type);
-    static GLenum getDataType(DataType type);
-    static GLenum getShaderType(ShaderType type);
+    LUMINOUS_API static GLenum getBufferLockOptions(BufferLockOptions lock);
+    LUMINOUS_API static GLenum getBufferUsage(BufferUsage usage);
+    LUMINOUS_API static GLenum getBufferType(BufferType type);
+    LUMINOUS_API static GLenum getPrimitiveType(PrimitiveType type);
+    LUMINOUS_API static GLenum getDataType(DataType type);
+    LUMINOUS_API static GLenum getShaderType(ShaderType type);
   };
 }
 

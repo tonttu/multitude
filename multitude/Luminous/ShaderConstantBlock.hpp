@@ -28,8 +28,8 @@ namespace Luminous
 
     LUMINOUS_API void clear();
 
-    LUMINOUS_API const ShaderConstant & constant(size_t index) const;
-    LUMINOUS_API size_t constantCount() const;
+    //LUMINOUS_API const ShaderConstant & constant(size_t index) const;
+    //LUMINOUS_API size_t constantCount() const;
 
     LUMINOUS_API const char * data() const;
     LUMINOUS_API size_t size() const;

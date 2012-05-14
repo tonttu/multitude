@@ -22,14 +22,14 @@ namespace Luminous
     };
   public:
     VertexAttributeBinding(RenderResource::Id id, RenderDriver & driver);
-    ~VertexAttributeBinding();
+    LUMINOUS_API ~VertexAttributeBinding();
 
-    void addBinding(const std::shared_ptr<HardwareBuffer> & buffer, const std::shared_ptr<VertexDescription> & description);
-    void removeBinding(const std::shared_ptr<HardwareBuffer> & buffer);
-    void clear();
+    LUMINOUS_API void addBinding(const std::shared_ptr<HardwareBuffer> & buffer, const std::shared_ptr<VertexDescription> & description);
+    LUMINOUS_API void removeBinding(const std::shared_ptr<HardwareBuffer> & buffer);
+    LUMINOUS_API void clear();
 
-    size_t bindingCount() const;
-    const Binding & binding(size_t index) const;
+    LUMINOUS_API size_t bindingCount() const;
+    LUMINOUS_API const Binding & binding(size_t index) const;
   private:
     class D;
     D * m_d;

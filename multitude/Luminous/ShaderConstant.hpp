@@ -1,6 +1,7 @@
 #if !defined (LUMINOUS_SHADERCONSTANT_HPP)
 #define LUMINOUS_SHADERCONSTANT_HPP
 
+#include "Luminous.hpp"
 #include <QString>
 
 namespace Luminous

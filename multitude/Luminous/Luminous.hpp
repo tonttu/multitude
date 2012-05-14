@@ -229,7 +229,7 @@ namespace Luminous
   /// @todo Luminous2 utilities, should rename once Luminous::Utils has been killed with fire
   namespace Utils2
   {
-    size_t getDataSize(DataType type);
+    LUMINOUS_API size_t getDataSize(DataType type);
   }
 
   //////////////////////////////////////////////////////////////////////////
