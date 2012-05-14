@@ -1,4 +1,4 @@
-// Copyright 2008 the V8 project authors. All rights reserved.
+// Copyright 2011 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -34,7 +34,8 @@
 #include "ast.h"
 #include "bytecodes-irregexp.h"
 #include "interpreter-irregexp.h"
-
+#include "jsregexp.h"
+#include "regexp-macro-assembler.h"
 
 namespace v8 {
 namespace internal {
@@ -187,12 +188,12 @@ class BacktrackStack {
 
 
 template <typename Char>
-static bool RawMatch(Isolate* isolate,
-                     const byte* code_base,
-                     Vector<const Char> subject,
-                     int* registers,
-                     int current,
-                     uint32_t current_char) {
+static RegExpImpl::IrregexpResult RawMatch(Isolate* isolate,
+                                           const byte* code_base,
+                                           Vector<const Char> subject,
+                                           int* registers,
+                                           int current,
+                                           uint32_t current_char) {
   const byte* pc = code_base;
   // BacktrackStack ensures that the memory allocated for the backtracking stack
   // is returned to the system or cached if there is no stack being cached at
@@ -211,24 +212,24 @@ static bool RawMatch(Isolate* isolate,
     switch (insn & BYTECODE_MASK) {
       BYTECODE(BREAK)
         UNREACHABLE();
-        return false;
+        return RegExpImpl::RE_FAILURE;
       BYTECODE(PUSH_CP)
         if (--backtrack_stack_space < 0) {
-          return false;  // No match on backtrack stack overflow.
+          return RegExpImpl::RE_EXCEPTION;
         }
         *backtrack_sp++ = current;
         pc += BC_PUSH_CP_LENGTH;
         break;
       BYTECODE(PUSH_BT)
         if (--backtrack_stack_space < 0) {
-          return false;  // No match on backtrack stack overflow.
+          return RegExpImpl::RE_EXCEPTION;
         }
         *backtrack_sp++ = Load32Aligned(pc + 4);
         pc += BC_PUSH_BT_LENGTH;
         break;
       BYTECODE(PUSH_REGISTER)
         if (--backtrack_stack_space < 0) {
-          return false;  // No match on backtrack stack overflow.
+          return RegExpImpl::RE_EXCEPTION;
         }
         *backtrack_sp++ = registers[insn >> BYTECODE_SHIFT];
         pc += BC_PUSH_REGISTER_LENGTH;
@@ -278,9 +279,9 @@ static bool RawMatch(Isolate* isolate,
         pc += BC_POP_REGISTER_LENGTH;
         break;
       BYTECODE(FAIL)
-        return false;
+        return RegExpImpl::RE_FAILURE;
       BYTECODE(SUCCEED)
-        return true;
+        return RegExpImpl::RE_SUCCESS;
       BYTECODE(ADVANCE_CP)
         current += insn >> BYTECODE_SHIFT;
         pc += BC_ADVANCE_CP_LENGTH;
@@ -449,6 +450,37 @@ static bool RawMatch(Isolate* isolate,
         }
         break;
       }
+      BYTECODE(CHECK_CHAR_IN_RANGE) {
+        uint32_t from = Load16Aligned(pc + 4);
+        uint32_t to = Load16Aligned(pc + 6);
+        if (from <= current_char && current_char <= to) {
+          pc = code_base + Load32Aligned(pc + 8);
+        } else {
+          pc += BC_CHECK_CHAR_IN_RANGE_LENGTH;
+        }
+        break;
+      }
+      BYTECODE(CHECK_CHAR_NOT_IN_RANGE) {
+        uint32_t from = Load16Aligned(pc + 4);
+        uint32_t to = Load16Aligned(pc + 6);
+        if (from > current_char || current_char > to) {
+          pc = code_base + Load32Aligned(pc + 8);
+        } else {
+          pc += BC_CHECK_CHAR_NOT_IN_RANGE_LENGTH;
+        }
+        break;
+      }
+      BYTECODE(CHECK_BIT_IN_TABLE) {
+        int mask = RegExpMacroAssembler::kTableMask;
+        byte b = pc[8 + ((current_char & mask) >> kBitsPerByteLog2)];
+        int bit = (current_char & (kBitsPerByte - 1));
+        if ((b & (1 << bit)) != 0) {
+          pc = code_base + Load32Aligned(pc + 4);
+        } else {
+          pc += BC_CHECK_BIT_IN_TABLE_LENGTH;
+        }
+        break;
+      }
       BYTECODE(CHECK_LT) {
         uint32_t limit = (insn >> BYTECODE_SHIFT);
         if (current_char < limit) {
@@ -488,59 +520,6 @@ static bool RawMatch(Isolate* isolate,
           pc += BC_CHECK_REGISTER_EQ_POS_LENGTH;
         }
         break;
-      BYTECODE(LOOKUP_MAP1) {
-        // Look up character in a bitmap.  If we find a 0, then jump to the
-        // location at pc + 8.  Otherwise fall through!
-        int index = current_char - (insn >> BYTECODE_SHIFT);
-        byte map = code_base[Load32Aligned(pc + 4) + (index >> 3)];
-        map = ((map >> (index & 7)) & 1);
-        if (map == 0) {
-          pc = code_base + Load32Aligned(pc + 8);
-        } else {
-          pc += BC_LOOKUP_MAP1_LENGTH;
-        }
-        break;
-      }
-      BYTECODE(LOOKUP_MAP2) {
-        // Look up character in a half-nibble map.  If we find 00, then jump to
-        // the location at pc + 8.   If we find 01 then jump to location at
-        // pc + 11, etc.
-        int index = (current_char - (insn >> BYTECODE_SHIFT)) << 1;
-        byte map = code_base[Load32Aligned(pc + 3) + (index >> 3)];
-        map = ((map >> (index & 7)) & 3);
-        if (map < 2) {
-          if (map == 0) {
-            pc = code_base + Load32Aligned(pc + 8);
-          } else {
-            pc = code_base + Load32Aligned(pc + 12);
-          }
-        } else {
-          if (map == 2) {
-            pc = code_base + Load32Aligned(pc + 16);
-          } else {
-            pc = code_base + Load32Aligned(pc + 20);
-          }
-        }
-        break;
-      }
-      BYTECODE(LOOKUP_MAP8) {
-        // Look up character in a byte map.  Use the byte as an index into a
-        // table that follows this instruction immediately.
-        int index = current_char - (insn >> BYTECODE_SHIFT);
-        byte map = code_base[Load32Aligned(pc + 4) + index];
-        const byte* new_pc = code_base + Load32Aligned(pc + 8) + (map << 2);
-        pc = code_base + Load32Aligned(new_pc);
-        break;
-      }
-      BYTECODE(LOOKUP_HI_MAP8) {
-        // Look up high byte of this character in a byte map.  Use the byte as
-        // an index into a table that follows this instruction immediately.
-        int index = (current_char >> 8) - (insn >> BYTECODE_SHIFT);
-        byte map = code_base[Load32Aligned(pc + 4) + index];
-        const byte* new_pc = code_base + Load32Aligned(pc + 8) + (map << 2);
-        pc = code_base + Load32Aligned(new_pc);
-        break;
-      }
       BYTECODE(CHECK_NOT_REGS_EQUAL)
         if (registers[insn >> BYTECODE_SHIFT] ==
             registers[Load32Aligned(pc + 4)]) {
@@ -625,18 +604,20 @@ static bool RawMatch(Isolate* isolate,
 }
 
 
-bool IrregexpInterpreter::Match(Isolate* isolate,
-                                Handle<ByteArray> code_array,
-                                Handle<String> subject,
-                                int* registers,
-                                int start_position) {
+RegExpImpl::IrregexpResult IrregexpInterpreter::Match(
+    Isolate* isolate,
+    Handle<ByteArray> code_array,
+    Handle<String> subject,
+    int* registers,
+    int start_position) {
   ASSERT(subject->IsFlat());
 
   AssertNoAllocation a;
   const byte* code_base = code_array->GetDataStartAddress();
   uc16 previous_char = '\n';
-  if (subject->IsAsciiRepresentation()) {
-    Vector<const char> subject_vector = subject->ToAsciiVector();
+  String::FlatContent subject_content = subject->GetFlatContent();
+  if (subject_content.IsAscii()) {
+    Vector<const char> subject_vector = subject_content.ToAsciiVector();
     if (start_position != 0) previous_char = subject_vector[start_position - 1];
     return RawMatch(isolate,
                     code_base,
@@ -645,7 +626,8 @@ bool IrregexpInterpreter::Match(Isolate* isolate,
                     start_position,
                     previous_char);
   } else {
-    Vector<const uc16> subject_vector = subject->ToUC16Vector();
+    ASSERT(subject_content.IsTwoByte());
+    Vector<const uc16> subject_vector = subject_content.ToUC16Vector();
     if (start_position != 0) previous_char = subject_vector[start_position - 1];
     return RawMatch(isolate,
                     code_base,

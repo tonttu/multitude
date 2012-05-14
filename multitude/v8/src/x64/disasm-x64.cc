@@ -34,6 +34,7 @@
 #if defined(V8_TARGET_ARCH_X64)
 
 #include "disasm.h"
+#include "lazy-instance.h"
 
 namespace disasm {
 
@@ -58,7 +59,7 @@ struct ByteMnemonic {
 };
 
 
-static ByteMnemonic two_operands_instr[] = {
+static const ByteMnemonic two_operands_instr[] = {
   { 0x00, BYTE_OPER_REG_OP_ORDER, "add" },
   { 0x01, OPER_REG_OP_ORDER,      "add" },
   { 0x02, BYTE_REG_OPER_OP_ORDER, "add" },
@@ -105,10 +106,11 @@ static ByteMnemonic two_operands_instr[] = {
 };
 
 
-static ByteMnemonic zero_operands_instr[] = {
+static const ByteMnemonic zero_operands_instr[] = {
   { 0xC3, UNSET_OP_ORDER, "ret" },
   { 0xC9, UNSET_OP_ORDER, "leave" },
   { 0xF4, UNSET_OP_ORDER, "hlt" },
+  { 0xFC, UNSET_OP_ORDER, "cld" },
   { 0xCC, UNSET_OP_ORDER, "int3" },
   { 0x60, UNSET_OP_ORDER, "pushad" },
   { 0x61, UNSET_OP_ORDER, "popad" },
@@ -125,14 +127,14 @@ static ByteMnemonic zero_operands_instr[] = {
 };
 
 
-static ByteMnemonic call_jump_instr[] = {
+static const ByteMnemonic call_jump_instr[] = {
   { 0xE8, UNSET_OP_ORDER, "call" },
   { 0xE9, UNSET_OP_ORDER, "jmp" },
   { -1, UNSET_OP_ORDER, "" }
 };
 
 
-static ByteMnemonic short_immediate_instr[] = {
+static const ByteMnemonic short_immediate_instr[] = {
   { 0x05, UNSET_OP_ORDER, "add" },
   { 0x0D, UNSET_OP_ORDER, "or" },
   { 0x15, UNSET_OP_ORDER, "adc" },
@@ -145,7 +147,7 @@ static ByteMnemonic short_immediate_instr[] = {
 };
 
 
-static const char* conditional_code_suffix[] = {
+static const char* const conditional_code_suffix[] = {
   "o", "no", "c", "nc", "z", "nz", "na", "a",
   "s", "ns", "pe", "po", "l", "ge", "le", "g"
 };
@@ -193,7 +195,7 @@ class InstructionTable {
   InstructionDesc instructions_[256];
   void Clear();
   void Init();
-  void CopyTable(ByteMnemonic bm[], InstructionType type);
+  void CopyTable(const ByteMnemonic bm[], InstructionType type);
   void SetTableRange(InstructionType type, byte start, byte end, bool byte_size,
                      const char* mnem);
   void AddJumpConditionalShort();
@@ -228,7 +230,8 @@ void InstructionTable::Init() {
 }
 
 
-void InstructionTable::CopyTable(ByteMnemonic bm[], InstructionType type) {
+void InstructionTable::CopyTable(const ByteMnemonic bm[],
+                                 InstructionType type) {
   for (int i = 0; bm[i].b >= 0; i++) {
     InstructionDesc* id = &instructions_[bm[i].b];
     id->mnem = bm[i].mnem;
@@ -267,7 +270,8 @@ void InstructionTable::AddJumpConditionalShort() {
 }
 
 
-static InstructionTable instruction_table;
+static v8::internal::LazyInstance<InstructionTable>::type instruction_table =
+    LAZY_INSTANCE_INITIALIZER;
 
 
 static InstructionDesc cmov_instructions[16] = {
@@ -311,7 +315,8 @@ class DisassemblerX64 {
         rex_(0),
         operand_size_(0),
         group_1_prefix_(0),
-        byte_size_operand_(false) {
+        byte_size_operand_(false),
+        instruction_table_(instruction_table.Pointer()) {
     tmp_buffer_[0] = '\0';
   }
 
@@ -340,6 +345,7 @@ class DisassemblerX64 {
   byte group_1_prefix_;  // 0xF2, 0xF3, or (if no group 1 prefix is present) 0.
   // Byte size operand override.
   bool byte_size_operand_;
+  const InstructionTable* const instruction_table_;
 
   void setRex(byte rex) {
     ASSERT_EQ(0x40, rex & 0xF0);
@@ -909,15 +915,19 @@ int DisassemblerX64::RegisterFPUInstruction(int escape_opcode,
           switch (modrm_byte) {
             case 0xE0: mnem = "fchs"; break;
             case 0xE1: mnem = "fabs"; break;
+            case 0xE3: mnem = "fninit"; break;
             case 0xE4: mnem = "ftst"; break;
             case 0xE8: mnem = "fld1"; break;
             case 0xEB: mnem = "fldpi"; break;
             case 0xED: mnem = "fldln2"; break;
             case 0xEE: mnem = "fldz"; break;
+            case 0xF0: mnem = "f2xm1"; break;
             case 0xF1: mnem = "fyl2x"; break;
+            case 0xF2: mnem = "fptan"; break;
             case 0xF5: mnem = "fprem1"; break;
             case 0xF7: mnem = "fincstp"; break;
             case 0xF8: mnem = "fprem"; break;
+            case 0xFD: mnem = "fscale"; break;
             case 0xFE: mnem = "fsin"; break;
             case 0xFF: mnem = "fcos"; break;
             default: UnimplementedInstruction();
@@ -1033,7 +1043,18 @@ int DisassemblerX64::TwoByteOpcodeInstruction(byte* data) {
       }
     } else {
       get_modrm(*current, &mod, &regop, &rm);
-      if (opcode == 0x28) {
+      if (opcode == 0x1f) {
+        current++;
+        if (rm == 4) {  // SIB byte present.
+          current++;
+        }
+        if (mod == 1) {  // Byte displacement.
+          current += 1;
+        } else if (mod == 2) {  // 32-bit displacement.
+          current += 4;
+        }  // else no immediate displacement.
+        AppendToBuffer("nop");
+      } else if (opcode == 0x28) {
         AppendToBuffer("movapd %s, ", NameOfXMMRegister(regop));
         current += PrintRightXMMOperand(current);
       } else if (opcode == 0x29) {
@@ -1177,7 +1198,7 @@ int DisassemblerX64::TwoByteOpcodeInstruction(byte* data) {
     int mod, regop, rm;
     get_modrm(*current, &mod, &regop, &rm);
     current++;
-    if (regop == 4) {  // SIB byte present.
+    if (rm == 4) {  // SIB byte present.
       current++;
     }
     if (mod == 1) {  // Byte displacement.
@@ -1321,7 +1342,7 @@ int DisassemblerX64::InstructionDecode(v8::internal::Vector<char> out_buffer,
     data++;
   }
 
-  const InstructionDesc& idesc = instruction_table.Get(current);
+  const InstructionDesc& idesc = instruction_table_->Get(current);
   byte_size_operand_ = idesc.byte_size_operation;
   switch (idesc.type) {
     case ZERO_OPERANDS_INSTR:

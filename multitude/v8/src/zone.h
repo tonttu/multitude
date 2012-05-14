@@ -1,4 +1,4 @@
-// Copyright 2011 the V8 project authors. All rights reserved.
+// Copyright 2012 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -29,6 +29,11 @@
 #define V8_ZONE_H_
 
 #include "allocation.h"
+#include "checks.h"
+#include "hashmap.h"
+#include "globals.h"
+#include "list.h"
+#include "splay-tree.h"
 
 namespace v8 {
 namespace internal {
@@ -42,6 +47,7 @@ enum ZoneScopeMode {
 };
 
 class Segment;
+class Isolate;
 
 // The Zone supports very fast allocation of small chunks of
 // memory. The chunks cannot be deallocated individually, but instead
@@ -65,8 +71,12 @@ class Zone {
   template <typename T>
   inline T* NewArray(int length);
 
-  // Delete all objects and free all memory allocated in the Zone.
+  // Deletes all objects and free all memory allocated in the Zone. Keeps one
+  // small (size <= kMaximumKeptSegmentSize) segment around if it finds one.
   void DeleteAll();
+
+  // Deletes the last small segment kept around by DeleteAll().
+  void DeleteKeptSegment();
 
   // Returns true if more memory has been allocated in zones than
   // the limit allows.
@@ -82,7 +92,9 @@ class Zone {
   friend class Isolate;
   friend class ZoneScope;
 
-  // All pointers returned from New() have this alignment.
+  // All pointers returned from New() have this alignment.  In addition, if the
+  // object being allocated has a size that is divisible by 8 then its alignment
+  // will be 8.
   static const int kAlignment = kPointerSize;
 
   // Never allocate segments smaller than this size in bytes.
@@ -148,15 +160,7 @@ class ZoneObject {
   // ZoneObjects should never be deleted individually; use
   // Zone::DeleteAll() to delete all zone objects in one go.
   void operator delete(void*, size_t) { UNREACHABLE(); }
-};
-
-
-class AssertNoZoneAllocation {
- public:
-  inline AssertNoZoneAllocation();
-  inline ~AssertNoZoneAllocation();
- private:
-  bool prev_;
+  void operator delete(void* pointer, Zone* zone) { UNREACHABLE(); }
 };
 
 
@@ -193,11 +197,10 @@ class ZoneList: public List<T, ZoneListAllocationPolicy> {
       : List<T, ZoneListAllocationPolicy>(other.length()) {
     AddAll(other);
   }
+
+  void operator delete(void* pointer) { UNREACHABLE(); }
+  void operator delete(void* pointer, Zone* zone) { UNREACHABLE(); }
 };
-
-
-// Introduce a convenience type for zone lists of map handles.
-typedef ZoneList<Handle<Map> > ZoneMapList;
 
 
 // ZoneScopes keep track of the current parsing and compilation
@@ -236,6 +239,8 @@ class ZoneSplayTree: public SplayTree<Config, ZoneListAllocationPolicy> {
   ~ZoneSplayTree();
 };
 
+
+typedef TemplateHashMapImpl<ZoneListAllocationPolicy> ZoneHashMap;
 
 } }  // namespace v8::internal
 

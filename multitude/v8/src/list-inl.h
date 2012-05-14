@@ -72,9 +72,9 @@ void List<T, P>::ResizeAdd(const T& element) {
 template<typename T, class P>
 void List<T, P>::ResizeAddInternal(const T& element) {
   ASSERT(length_ >= capacity_);
-  // Grow the list capacity by 50%, but make sure to let it grow
+  // Grow the list capacity by 100%, but make sure to let it grow
   // even when the capacity is zero (possible initial case).
-  int new_capacity = 1 + capacity_ + (capacity_ >> 1);
+  int new_capacity = 1 + 2 * capacity_;
   // Since the element reference could be an element of the list, copy
   // it out of the old backing storage before resizing.
   T temp = element;
@@ -133,6 +133,14 @@ bool List<T, P>::RemoveElement(const T& elm) {
     }
   }
   return false;
+}
+
+
+template<typename T, class P>
+void List<T, P>::Allocate(int length) {
+  DeleteData(data_);
+  Initialize(length);
+  length_ = length;
 }
 
 
@@ -204,6 +212,47 @@ void List<T, P>::Initialize(int capacity) {
   data_ = (capacity > 0) ? NewData(capacity) : NULL;
   capacity_ = capacity;
   length_ = 0;
+}
+
+
+template <typename T, typename P>
+int SortedListBSearch(const List<T>& list, P cmp) {
+  int low = 0;
+  int high = list.length() - 1;
+  while (low <= high) {
+    int mid = (low + high) / 2;
+    T mid_elem = list[mid];
+
+    if (cmp(&mid_elem) > 0) {
+      high = mid - 1;
+      continue;
+    }
+    if (cmp(&mid_elem) < 0) {
+      low = mid + 1;
+      continue;
+    }
+    // Found the elememt.
+    return mid;
+  }
+  return -1;
+}
+
+
+template<typename T>
+class ElementCmp {
+ public:
+  explicit ElementCmp(T e) : elem_(e) {}
+  int operator()(const T* other) {
+    return PointerValueCompare(other, &elem_);
+  }
+ private:
+  T elem_;
+};
+
+
+template <typename T>
+int SortedListBSearch(const List<T>& list, T elem) {
+  return SortedListBSearch<T, ElementCmp<T> > (list, ElementCmp<T>(elem));
 }
 
 

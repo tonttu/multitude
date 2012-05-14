@@ -54,6 +54,7 @@ class ThreadState {
 
   // Get data area for archiving a thread.
   char* data() { return data_; }
+
  private:
   explicit ThreadState(ThreadManager* thread_manager);
 
@@ -71,7 +72,7 @@ class ThreadState {
 };
 
 
-// Defined in top.h
+// Defined in isolate.h.
 class ThreadLocalTop;
 
 

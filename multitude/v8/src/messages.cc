@@ -1,5 +1,4 @@
-
-// Copyright 2006-2008 the V8 project authors. All rights reserved.
+// Copyright 2011 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -41,13 +40,13 @@ namespace internal {
 // by default.
 void MessageHandler::DefaultMessageReport(const MessageLocation* loc,
                                           Handle<Object> message_obj) {
-  SmartPointer<char> str = GetLocalizedMessage(message_obj);
+  SmartArrayPointer<char> str = GetLocalizedMessage(message_obj);
   if (loc == NULL) {
     PrintF("%s\n", *str);
   } else {
     HandleScope scope;
     Handle<Object> data(loc->script()->name());
-    SmartPointer<char> data_str;
+    SmartArrayPointer<char> data_str;
     if (data->IsString())
       data_str = Handle<String>::cast(data)->ToCString(DISALLOW_NULLS);
     PrintF("%s:%i: %s\n", *data_str ? *data_str : "<unknown>",
@@ -81,11 +80,11 @@ Handle<JSMessageObject> MessageHandler::MakeMessageObject(
   }
 
   Handle<Object> stack_trace_handle = stack_trace.is_null()
-      ? FACTORY->undefined_value()
+      ? Handle<Object>::cast(FACTORY->undefined_value())
       : Handle<Object>::cast(stack_trace);
 
   Handle<Object> stack_frames_handle = stack_frames.is_null()
-      ? FACTORY->undefined_value()
+      ? Handle<Object>::cast(FACTORY->undefined_value())
       : Handle<Object>::cast(stack_frames);
 
   Handle<JSMessageObject> message =
@@ -127,7 +126,7 @@ void MessageHandler::ReportMessage(Isolate* isolate,
       v8::NeanderObject listener(JSObject::cast(global_listeners.get(i)));
       Handle<Foreign> callback_obj(Foreign::cast(listener.get(0)));
       v8::MessageCallback callback =
-          FUNCTION_CAST<v8::MessageCallback>(callback_obj->address());
+          FUNCTION_CAST<v8::MessageCallback>(callback_obj->foreign_address());
       Handle<Object> callback_data(listener.get(1));
       {
         // Do not allow exceptions to propagate.
@@ -149,12 +148,15 @@ Handle<String> MessageHandler::GetMessage(Handle<Object> data) {
           JSFunction::cast(
               Isolate::Current()->js_builtins_object()->
               GetPropertyNoExceptionThrown(*fmt_str)));
-  Object** argv[1] = { data.location() };
+  Handle<Object> argv[] = { data };
 
   bool caught_exception;
   Handle<Object> result =
       Execution::TryCall(fun,
-          Isolate::Current()->js_builtins_object(), 1, argv, &caught_exception);
+                         Isolate::Current()->js_builtins_object(),
+                         ARRAY_SIZE(argv),
+                         argv,
+                         &caught_exception);
 
   if (caught_exception || !result->IsString()) {
     return FACTORY->LookupAsciiSymbol("<error>");
@@ -170,7 +172,8 @@ Handle<String> MessageHandler::GetMessage(Handle<Object> data) {
 }
 
 
-SmartPointer<char> MessageHandler::GetLocalizedMessage(Handle<Object> data) {
+SmartArrayPointer<char> MessageHandler::GetLocalizedMessage(
+    Handle<Object> data) {
   HandleScope scope;
   return GetMessage(data)->ToCString(DISALLOW_NULLS);
 }

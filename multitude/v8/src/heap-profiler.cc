@@ -33,7 +33,6 @@
 namespace v8 {
 namespace internal {
 
-
 HeapProfiler::HeapProfiler()
     : snapshots_(new HeapSnapshotsCollection()),
       next_snapshot_uid_(1) {
@@ -51,7 +50,7 @@ void HeapProfiler::ResetSnapshots() {
 }
 
 
-void HeapProfiler::Setup() {
+void HeapProfiler::SetUp() {
   Isolate* isolate = Isolate::Current();
   if (isolate->heap_profiler() == NULL) {
     isolate->set_heap_profiler(new HeapProfiler());
@@ -86,6 +85,24 @@ HeapSnapshot* HeapProfiler::TakeSnapshot(String* name,
 }
 
 
+void HeapProfiler::StartHeapObjectsTracking() {
+  ASSERT(Isolate::Current()->heap_profiler() != NULL);
+  Isolate::Current()->heap_profiler()->StartHeapObjectsTrackingImpl();
+}
+
+
+void HeapProfiler::StopHeapObjectsTracking() {
+  ASSERT(Isolate::Current()->heap_profiler() != NULL);
+  Isolate::Current()->heap_profiler()->StopHeapObjectsTrackingImpl();
+}
+
+
+void HeapProfiler::PushHeapObjectsStats(v8::OutputStream* stream) {
+  ASSERT(Isolate::Current()->heap_profiler() != NULL);
+  return Isolate::Current()->heap_profiler()->PushHeapObjectsStatsImpl(stream);
+}
+
+
 void HeapProfiler::DefineWrapperClass(
     uint16_t class_id, v8::HeapProfiler::WrapperInfoCallback callback) {
   ASSERT(class_id != v8::HeapProfiler::kPersistentHandleNoClassId);
@@ -114,7 +131,6 @@ HeapSnapshot* HeapProfiler::TakeSnapshotImpl(const char* name,
   bool generation_completed = true;
   switch (s_type) {
     case HeapSnapshot::kFull: {
-      HEAP->CollectAllGarbage(true);
       HeapSnapshotGenerator generator(result, control);
       generation_completed = generator.GenerateSnapshot();
       break;
@@ -137,6 +153,20 @@ HeapSnapshot* HeapProfiler::TakeSnapshotImpl(String* name,
   return TakeSnapshotImpl(snapshots_->names()->GetName(name), type, control);
 }
 
+void HeapProfiler::StartHeapObjectsTrackingImpl() {
+  snapshots_->StartHeapObjectsTracking();
+}
+
+
+void HeapProfiler::PushHeapObjectsStatsImpl(OutputStream* stream) {
+  snapshots_->PushHeapObjectsStats(stream);
+}
+
+
+void HeapProfiler::StopHeapObjectsTrackingImpl() {
+  snapshots_->StopHeapObjectsTracking();
+}
+
 
 int HeapProfiler::GetSnapshotsCount() {
   HeapProfiler* profiler = Isolate::Current()->heap_profiler();
@@ -156,6 +186,15 @@ HeapSnapshot* HeapProfiler::FindSnapshot(unsigned uid) {
   HeapProfiler* profiler = Isolate::Current()->heap_profiler();
   ASSERT(profiler != NULL);
   return profiler->snapshots_->GetSnapshot(uid);
+}
+
+
+SnapshotObjectId HeapProfiler::GetSnapshotObjectId(Handle<Object> obj) {
+  if (!obj->IsHeapObject())
+    return v8::HeapProfiler::kUnknownObjectId;
+  HeapProfiler* profiler = Isolate::Current()->heap_profiler();
+  ASSERT(profiler != NULL);
+  return profiler->snapshots_->FindObjectId(HeapObject::cast(*obj)->address());
 }
 
 

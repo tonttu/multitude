@@ -1,4 +1,4 @@
-# Copyright 2010 the V8 project authors. All rights reserved.
+# Copyright 2012 the V8 project authors. All rights reserved.
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
@@ -26,6 +26,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 {
+  'includes': ['../build/common.gypi'],
   'variables': {
     'console%': '',
   },
@@ -36,26 +37,32 @@
       'dependencies': [
         '../tools/gyp/v8.gyp:v8',
       ],
+      # Generated source files need this explicitly:
       'include_dirs+': [
         '../src',
-      ],
-      'defines': [
-        'ENABLE_DEBUGGER_SUPPORT',
       ],
       'sources': [
         'd8.cc',
       ],
       'conditions': [
         [ 'component!="shared_library"', {
-          'dependencies': [ 'd8_js2c#host', ], 
           'sources': [ 'd8-debug.cc', '<(SHARED_INTERMEDIATE_DIR)/d8-js.cc', ],
           'conditions': [
+            [ 'want_separate_host_toolset==1', {
+              'dependencies': [
+                'd8_js2c#host',
+              ],
+            }, {
+              'dependencies': [
+                'd8_js2c',
+              ],
+            }],
             [ 'console=="readline"', {
               'libraries': [ '-lreadline', ],
               'sources': [ 'd8-readline.cc' ],
             }],
-            [ '(OS=="linux" or OS=="mac" or OS=="freebsd" \
-              or OS=="openbsd" or OS=="solaris")', {
+            ['(OS=="linux" or OS=="mac" or OS=="freebsd" or OS=="netbsd" \
+               or OS=="openbsd" or OS=="solaris" or OS=="android")', {
               'sources': [ 'd8-posix.cc', ]
             }],
             [ 'OS=="win"', {
@@ -68,13 +75,19 @@
     {
       'target_name': 'd8_js2c',
       'type': 'none',
-      'toolsets': ['host'],
       'variables': {
         'js_files': [
           'd8.js',
           'macros.py',
         ],
       },
+      'conditions': [
+        [ 'want_separate_host_toolset==1', {
+          'toolsets': ['host'],
+        }, {
+          'toolsets': ['target'],
+        }]
+      ],
       'actions': [
         {
           'action_name': 'd8_js2c',
@@ -90,6 +103,7 @@
             '../tools/js2c.py',
             '<@(_outputs)',
             'D8',
+            'off',  # compress startup data
             '<@(js_files)'
           ],
         },

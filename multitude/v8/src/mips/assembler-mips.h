@@ -30,7 +30,7 @@
 
 // The original source code covered by the above license above has been
 // modified significantly by Google Inc.
-// Copyright 2011 the V8 project authors. All rights reserved.
+// Copyright 2012 the V8 project authors. All rights reserved.
 
 
 #ifndef V8_MIPS_ASSEMBLER_MIPS_H_
@@ -125,40 +125,59 @@ struct Register {
   int code_;
 };
 
-const Register no_reg = { -1 };
+#define REGISTER(N, C) \
+  const int kRegister_ ## N ## _Code = C; \
+  const Register N = { C }
 
-const Register zero_reg = { 0 };
-const Register at = { 1 };
-const Register v0 = { 2 };
-const Register v1 = { 3 };
-const Register a0 = { 4 };
-const Register a1 = { 5 };
-const Register a2 = { 6 };
-const Register a3 = { 7 };
-const Register t0 = { 8 };
-const Register t1 = { 9 };
-const Register t2 = { 10 };
-const Register t3 = { 11 };
-const Register t4 = { 12 };
-const Register t5 = { 13 };
-const Register t6 = { 14 };
-const Register t7 = { 15 };
-const Register s0 = { 16 };
-const Register s1 = { 17 };
-const Register s2 = { 18 };
-const Register s3 = { 19 };
-const Register s4 = { 20 };
-const Register s5 = { 21 };
-const Register s6 = { 22 };
-const Register s7 = { 23 };
-const Register t8 = { 24 };
-const Register t9 = { 25 };
-const Register k0 = { 26 };
-const Register k1 = { 27 };
-const Register gp = { 28 };
-const Register sp = { 29 };
-const Register s8_fp = { 30 };
-const Register ra = { 31 };
+REGISTER(no_reg, -1);
+// Always zero.
+REGISTER(zero_reg, 0);
+// at: Reserved for synthetic instructions.
+REGISTER(at, 1);
+// v0, v1: Used when returning multiple values from subroutines.
+REGISTER(v0, 2);
+REGISTER(v1, 3);
+// a0 - a4: Used to pass non-FP parameters.
+REGISTER(a0, 4);
+REGISTER(a1, 5);
+REGISTER(a2, 6);
+REGISTER(a3, 7);
+// t0 - t9: Can be used without reservation, act as temporary registers and are
+// allowed to be destroyed by subroutines.
+REGISTER(t0, 8);
+REGISTER(t1, 9);
+REGISTER(t2, 10);
+REGISTER(t3, 11);
+REGISTER(t4, 12);
+REGISTER(t5, 13);
+REGISTER(t6, 14);
+REGISTER(t7, 15);
+// s0 - s7: Subroutine register variables. Subroutines that write to these
+// registers must restore their values before exiting so that the caller can
+// expect the values to be preserved.
+REGISTER(s0, 16);
+REGISTER(s1, 17);
+REGISTER(s2, 18);
+REGISTER(s3, 19);
+REGISTER(s4, 20);
+REGISTER(s5, 21);
+REGISTER(s6, 22);
+REGISTER(s7, 23);
+REGISTER(t8, 24);
+REGISTER(t9, 25);
+// k0, k1: Reserved for system calls and interrupt handlers.
+REGISTER(k0, 26);
+REGISTER(k1, 27);
+// gp: Reserved.
+REGISTER(gp, 28);
+// sp: Stack pointer.
+REGISTER(sp, 29);
+// fp: Frame pointer.
+REGISTER(fp, 30);
+// ra: Return address pointer.
+REGISTER(ra, 31);
+
+#undef REGISTER
 
 
 int ToNumber(Register reg);
@@ -168,24 +187,31 @@ Register ToRegister(int num);
 // Coprocessor register.
 struct FPURegister {
   static const int kNumRegisters = v8::internal::kNumFPURegisters;
-  // f0 has been excluded from allocation. This is following ia32
-  // where xmm0 is excluded.
-  static const int kNumAllocatableRegisters = 15;
 
-  static int ToAllocationIndex(FPURegister reg) {
-    ASSERT(reg.code() != 0);
-    ASSERT(reg.code() % 2 == 0);
-    return (reg.code() / 2) - 1;
-  }
+  // TODO(plind): Warning, inconsistent numbering here. kNumFPURegisters refers
+  // to number of 32-bit FPU regs, but kNumAllocatableRegisters refers to
+  // number of Double regs (64-bit regs, or FPU-reg-pairs).
+
+  // A few double registers are reserved: one as a scratch register and one to
+  // hold 0.0.
+  //  f28: 0.0
+  //  f30: scratch register.
+  static const int kNumReservedRegisters = 2;
+  static const int kNumAllocatableRegisters = kNumRegisters / 2 -
+      kNumReservedRegisters;
+
+
+  inline static int ToAllocationIndex(FPURegister reg);
 
   static FPURegister FromAllocationIndex(int index) {
     ASSERT(index >= 0 && index < kNumAllocatableRegisters);
-    return from_code((index + 1) * 2);
+    return from_code(index * 2);
   }
 
   static const char* AllocationIndexToString(int index) {
     ASSERT(index >= 0 && index < kNumAllocatableRegisters);
     const char* const names[] = {
+      "f0",
       "f2",
       "f4",
       "f6",
@@ -198,9 +224,7 @@ struct FPURegister {
       "f20",
       "f22",
       "f24",
-      "f26",
-      "f28",
-      "f30"
+      "f26"
     };
     return names[index];
   }
@@ -212,6 +236,23 @@ struct FPURegister {
 
   bool is_valid() const { return 0 <= code_ && code_ < kNumFPURegisters ; }
   bool is(FPURegister creg) const { return code_ == creg.code_; }
+  FPURegister low() const {
+    // Find low reg of a Double-reg pair, which is the reg itself.
+    ASSERT(code_ % 2 == 0);  // Specified Double reg must be even.
+    FPURegister reg;
+    reg.code_ = code_;
+    ASSERT(reg.is_valid());
+    return reg;
+  }
+  FPURegister high() const {
+    // Find high reg of a Doubel-reg pair, which is reg + 1.
+    ASSERT(code_ % 2 == 0);  // Specified Double reg must be even.
+    FPURegister reg;
+    reg.code_ = code_ + 1;
+    ASSERT(reg.is_valid());
+    return reg;
+  }
+
   int code() const {
     ASSERT(is_valid());
     return code_;
@@ -228,9 +269,19 @@ struct FPURegister {
   int code_;
 };
 
-typedef FPURegister DoubleRegister;
+// V8 now supports the O32 ABI, and the FPU Registers are organized as 32
+// 32-bit registers, f0 through f31. When used as 'double' they are used
+// in pairs, starting with the even numbered register. So a double operation
+// on f0 really uses f0 and f1.
+// (Modern mips hardware also supports 32 64-bit registers, via setting
+// (priviledged) Status Register FR bit to 1. This is used by the N32 ABI,
+// but it is not in common use. Someday we will want to support this in v8.)
 
-const FPURegister no_creg = { -1 };
+// For O32 ABI, Floats and Doubles refer to same set of 32 32-bit registers.
+typedef FPURegister DoubleRegister;
+typedef FPURegister FloatRegister;
+
+const FPURegister no_freg = { -1 };
 
 const FPURegister f0 = { 0 };  // Return value in hard float mode.
 const FPURegister f1 = { 1 };
@@ -264,6 +315,15 @@ const FPURegister f28 = { 28 };
 const FPURegister f29 = { 29 };
 const FPURegister f30 = { 30 };
 const FPURegister f31 = { 31 };
+
+// Register aliases.
+// cp is assumed to be a callee saved register.
+static const Register& kLithiumScratchReg = s3;  // Scratch register.
+static const Register& kLithiumScratchReg2 = s4;  // Scratch register.
+static const Register& kRootRegister = s6;  // Roots array pointer.
+static const Register& cp = s7;     // JavaScript context pointer.
+static const DoubleRegister& kLithiumScratchDouble = f30;
+static const FPURegister& kDoubleRegZero = f28;
 
 // FPU (coprocessor 1) control registers.
 // Currently only FCSR (#31) is implemented.
@@ -330,6 +390,10 @@ class MemOperand : public Operand {
  public:
   explicit MemOperand(Register rn, int32_t offset = 0);
   int32_t offset() const { return offset_; }
+
+  bool OffsetIsInt16Encodable() const {
+    return is_int16(offset_);
+  }
 
  private:
   int32_t offset_;
@@ -504,11 +568,18 @@ class Assembler : public AssemblerBase {
   static Address target_address_at(Address pc);
   static void set_target_address_at(Address pc, Address target);
 
+  static void JumpLabelToJumpRegister(Address pc);
+
+  static void QuietNaN(HeapObject* nan);
+
   // This sets the branch destination (which gets loaded at the call address).
-  // This is for calls and branches within generated code.
-  inline static void set_target_at(Address instruction_payload,
-                                   Address target) {
-    set_target_address_at(instruction_payload, target);
+  // This is for calls and branches within generated code.  The serializer
+  // has already deserialized the lui/ori instructions etc.
+  inline static void deserialization_set_special_target_at(
+      Address instruction_payload, Address target) {
+    set_target_address_at(
+        instruction_payload - kInstructionsFor32BitConstant * kInstrSize,
+        target);
   }
 
   // This sets the branch destination.
@@ -530,13 +601,16 @@ class Assembler : public AssemblerBase {
   // are split across two consecutive instructions and don't exist separately
   // in the code, so the serializer should not step forwards in memory after
   // a target is resolved and written.
-  static const int kCallTargetSize = 0 * kInstrSize;
-  static const int kExternalTargetSize = 0 * kInstrSize;
+  static const int kSpecialTargetSize = 0;
 
   // Number of consecutive instructions used to store 32bit constant.
-  // Used in RelocInfo::target_address_address() function to tell serializer
-  // address of the instruction that follows LUI/ORI instruction pair.
-  static const int kInstructionsFor32BitConstant = 2;
+  // Before jump-optimizations, this constant was used in
+  // RelocInfo::target_address_address() function to tell serializer address of
+  // the instruction that follows LUI/ORI instruction pair. Now, with new jump
+  // optimization, where jump-through-register instruction that usually
+  // follows LUI/ORI pair is substituted with J/JAL, this constant equals
+  // to 3 instructions (LUI+ORI+J/JAL/JR/JALR).
+  static const int kInstructionsFor32BitConstant = 3;
 
   // Distance between the instruction referring to the address of the call
   // target and the return address.
@@ -618,11 +692,13 @@ class Assembler : public AssemblerBase {
   // Never use the int16_t b(l)cond version with a branch offset
   // instead of using the Label* version.
 
-  // Jump targets must be in the current 256 MB-aligned region. ie 28 bits.
+  // Jump targets must be in the current 256 MB-aligned region. i.e. 28 bits.
   void j(int32_t target);
   void jal(int32_t target);
   void jalr(Register rs, Register rd = ra);
   void jr(Register target);
+  void j_or_jr(int32_t target, Register rs);
+  void jal_or_jalr(int32_t target, Register rs);
 
 
   //-------Data-processing-instructions---------
@@ -892,6 +968,10 @@ class Assembler : public AssemblerBase {
   static bool IsLui(Instr instr);
   static bool IsOri(Instr instr);
 
+  static bool IsJal(Instr instr);
+  static bool IsJr(Instr instr);
+  static bool IsJalr(Instr instr);
+
   static bool IsNop(Instr instr, unsigned int type);
   static bool IsPop(Instr instr);
   static bool IsPush(Instr instr);
@@ -975,6 +1055,8 @@ class Assembler : public AssemblerBase {
   bool has_exception() const {
     return internal_trampoline_exception_;
   }
+
+  void DoubleAsTwoUInt32(double d, uint32_t* lo, uint32_t* hi);
 
   bool is_trampoline_emitted() const {
     return trampoline_emitted_;
@@ -1159,6 +1241,7 @@ class Assembler : public AssemblerBase {
       }
       return trampoline_slot;
     }
+
    private:
     int start_;
     int end_;

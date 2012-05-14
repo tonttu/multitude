@@ -134,8 +134,7 @@ v8::Handle<v8::Value> ExternalizeStringExtension::IsAscii(
 
 void ExternalizeStringExtension::Register() {
   static ExternalizeStringExtension externalize_extension;
-  static v8::DeclareExtension externalize_extension_declaration(
-      &externalize_extension);
+  static v8::DeclareExtension declaration(&externalize_extension);
 }
 
 } }  // namespace v8::internal

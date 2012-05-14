@@ -1,4 +1,4 @@
-# Copyright 2011 the V8 project authors. All rights reserved.
+# Copyright 2012 the V8 project authors. All rights reserved.
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
@@ -33,6 +33,7 @@ import os
 from os.path import join, dirname, abspath
 from types import DictType, StringTypes
 root_dir = dirname(File('SConstruct').rfile().abspath)
+src_dir = join(root_dir, 'src')
 sys.path.insert(0, join(root_dir, 'tools'))
 import js2c, utils
 
@@ -53,7 +54,7 @@ GCC_DTOA_EXTRA_CCFLAGS = []
 
 LIBRARY_FLAGS = {
   'all': {
-    'CPPPATH': [join(root_dir, 'src')],
+    'CPPPATH': [src_dir],
     'regexp:interpreted': {
       'CPPDEFINES': ['V8_INTERPRETED_REGEXP']
     },
@@ -111,13 +112,13 @@ LIBRARY_FLAGS = {
       }
     },
     'os:freebsd': {
-      'CPPPATH' : ['/usr/local/include'],
+      'CPPPATH' : [src_dir, '/usr/local/include'],
       'LIBPATH' : ['/usr/local/lib'],
       'CCFLAGS':      ['-ansi'],
       'LIBS': ['execinfo']
     },
     'os:openbsd': {
-      'CPPPATH' : ['/usr/local/include'],
+      'CPPPATH' : [src_dir, '/usr/local/include'],
       'LIBPATH' : ['/usr/local/lib'],
       'CCFLAGS':      ['-ansi'],
     },
@@ -125,9 +126,13 @@ LIBRARY_FLAGS = {
       # On Solaris, to get isinf, INFINITY, fpclassify and other macros one
       # needs to define __C99FEATURES__.
       'CPPDEFINES': ['__C99FEATURES__'],
-      'CPPPATH' : ['/usr/local/include'],
+      'CPPPATH' : [src_dir, '/usr/local/include'],
       'LIBPATH' : ['/usr/local/lib'],
       'CCFLAGS':      ['-ansi'],
+    },
+    'os:netbsd': {
+      'CPPPATH' : [src_dir, '/usr/pkg/include'],
+      'LIBPATH' : ['/usr/pkg/lib'],
     },
     'os:win32': {
       'CCFLAGS':      ['-DWIN32'],
@@ -153,13 +158,19 @@ LIBRARY_FLAGS = {
         }
       },
       'armeabi:softfp' : {
-        'CPPDEFINES' : ['USE_EABI_HARDFLOAT=0', 'CAN_USE_VFP_INSTRUCTIONS'],
+        'CPPDEFINES' : ['USE_EABI_HARDFLOAT=0'],
+        'vfp3:on': {
+          'CPPDEFINES' : ['CAN_USE_VFP_INSTRUCTIONS']
+        },
         'simulator:none': {
           'CCFLAGS':     ['-mfloat-abi=softfp'],
         }
       },
       'armeabi:hard' : {
-        'CPPDEFINES' : ['USE_EABI_HARDFLOAT=1', 'CAN_USE_VFP_INSTRUCTIONS'],
+        'CPPDEFINES' : ['USE_EABI_HARDFLOAT=1'],
+        'vfp3:on': {
+          'CPPDEFINES' : ['CAN_USE_VFP_INSTRUCTIONS']
+        },
         'simulator:none': {
           'CCFLAGS':     ['-mfloat-abi=hard'],
         }
@@ -174,6 +185,9 @@ LIBRARY_FLAGS = {
       'mips_arch_variant:mips32r2': {
         'CPPDEFINES':    ['_MIPS_ARCH_MIPS32R2']
       },
+      'mips_arch_variant:loongson': {
+        'CPPDEFINES':    ['_MIPS_ARCH_LOONGSON']
+      },
       'simulator:none': {
         'CCFLAGS':      ['-EL'],
         'LINKFLAGS':    ['-EL'],
@@ -182,6 +196,9 @@ LIBRARY_FLAGS = {
         },
         'mips_arch_variant:mips32r1': {
           'CCFLAGS':      ['-mips32', '-Wa,-mips32']
+        },
+        'mips_arch_variant:loongson': {
+          'CCFLAGS':      ['-march=mips3', '-Wa,-march=mips3']
         },
         'library:static': {
           'LINKFLAGS':    ['-static', '-static-libgcc']
@@ -201,9 +218,12 @@ LIBRARY_FLAGS = {
       'LINKFLAGS':    ['-m32'],
       'mipsabi:softfloat': {
         'CPPDEFINES':    ['__mips_soft_float=1'],
+        'fpu:on': {
+          'CPPDEFINES' : ['CAN_USE_FPU_INSTRUCTIONS']
+        }
       },
       'mipsabi:hardfloat': {
-        'CPPDEFINES':    ['__mips_hard_float=1'],
+        'CPPDEFINES':    ['__mips_hard_float=1', 'CAN_USE_FPU_INSTRUCTIONS'],
       }
     },
     'arch:x64': {
@@ -285,10 +305,16 @@ V8_EXTRA_FLAGS = {
                        '-Werror',
                        '-W',
                        '-Wno-unused-parameter',
+                       '-Woverloaded-virtual',
                        '-Wnon-virtual-dtor']
     },
     'os:win32': {
-      'WARNINGFLAGS': ['-pedantic', '-Wno-long-long']
+      'WARNINGFLAGS': ['-pedantic',
+                       '-Wno-long-long',
+                       '-Wno-pedantic-ms-format'],
+      'library:shared': {
+        'LIBS': ['winmm', 'ws2_32']
+      }
     },
     'os:linux': {
       'WARNINGFLAGS': ['-pedantic'],
@@ -358,6 +384,9 @@ MKSNAPSHOT_EXTRA_FLAGS = {
     'os:win32': {
       'LIBS': ['winmm', 'ws2_32'],
     },
+    'os:netbsd': {
+      'LIBS': ['execinfo', 'pthread']
+    },
     'compress_startup_data:bz2': {
       'os:linux': {
         'LIBS': ['bz2']
@@ -390,7 +419,7 @@ DTOA_EXTRA_FLAGS = {
 
 CCTEST_EXTRA_FLAGS = {
   'all': {
-    'CPPPATH': [join(root_dir, 'src')],
+    'CPPPATH': [src_dir],
     'library:shared': {
       'CPPDEFINES': ['USING_V8_SHARED']
     },
@@ -422,6 +451,9 @@ CCTEST_EXTRA_FLAGS = {
     'os:win32': {
       'LIBS': ['winmm', 'ws2_32']
     },
+    'os:netbsd': {
+      'LIBS':         ['execinfo', 'pthread']
+    },
     'arch:arm': {
       'LINKFLAGS':   ARM_LINK_FLAGS
     },
@@ -436,7 +468,7 @@ CCTEST_EXTRA_FLAGS = {
     },
     'arch:x64': {
       'CPPDEFINES':   ['V8_TARGET_ARCH_X64'],
-      'LINKFLAGS': ['/STACK:2091752']
+      'LINKFLAGS': ['/STACK:2097152']
     },
   }
 }
@@ -444,7 +476,7 @@ CCTEST_EXTRA_FLAGS = {
 
 SAMPLE_FLAGS = {
   'all': {
-    'CPPPATH': [join(abspath('.'), 'include')],
+    'CPPPATH': [join(root_dir, 'include')],
     'library:shared': {
       'CPPDEFINES': ['USING_V8_SHARED']
     },
@@ -481,6 +513,10 @@ SAMPLE_FLAGS = {
     'os:win32': {
       'LIBS':         ['winmm', 'ws2_32']
     },
+    'os:netbsd': {
+      'LIBPATH' :     ['/usr/pkg/lib'],
+      'LIBS':         ['execinfo', 'pthread']
+    },
     'arch:arm': {
       'LINKFLAGS':   ARM_LINK_FLAGS,
       'armeabi:soft' : {
@@ -496,7 +532,10 @@ SAMPLE_FLAGS = {
         }
       },
       'armeabi:hard' : {
-        'CPPDEFINES' : ['USE_EABI_HARDFLOAT=1', 'CAN_USE_VFP_INSTRUCTIONS'],
+        'CPPDEFINES' : ['USE_EABI_HARDFLOAT=1'],
+        'vfp3:on': {
+          'CPPDEFINES' : ['CAN_USE_VFP_INSTRUCTIONS']
+        },
         'simulator:none': {
           'CCFLAGS':     ['-mfloat-abi=hard'],
         }
@@ -515,6 +554,9 @@ SAMPLE_FLAGS = {
       'mips_arch_variant:mips32r2': {
         'CPPDEFINES':    ['_MIPS_ARCH_MIPS32R2']
       },
+      'mips_arch_variant:loongson': {
+        'CPPDEFINES':    ['_MIPS_ARCH_LOONGSON']
+      },
       'simulator:none': {
         'CCFLAGS':      ['-EL'],
         'LINKFLAGS':    ['-EL'],
@@ -523,6 +565,9 @@ SAMPLE_FLAGS = {
         },
         'mips_arch_variant:mips32r1': {
           'CCFLAGS':      ['-mips32', '-Wa,-mips32']
+        },
+        'mips_arch_variant:loongson': {
+          'CCFLAGS':      ['-march=mips3', '-Wa,-march=mips3']
         },
         'library:static': {
           'LINKFLAGS':    ['-static', '-static-libgcc']
@@ -533,7 +578,10 @@ SAMPLE_FLAGS = {
         },
         'mipsabi:hardfloat': {
           'CCFLAGS':      ['-mhard-float'],
-          'LINKFLAGS':    ['-mhard-float']
+          'LINKFLAGS':    ['-mhard-float'],
+          'fpu:on': {
+            'CPPDEFINES' : ['CAN_USE_FPU_INSTRUCTIONS']
+          }
         }
       }
     },
@@ -601,7 +649,7 @@ SAMPLE_FLAGS = {
     },
     'arch:x64': {
       'CPPDEFINES': ['V8_TARGET_ARCH_X64', 'WIN32'],
-      'LINKFLAGS': ['/MACHINE:X64', '/STACK:2091752']
+      'LINKFLAGS': ['/MACHINE:X64', '/STACK:2097152']
     },
     'mode:debug': {
       'CCFLAGS':    ['/Od'],
@@ -620,7 +668,7 @@ SAMPLE_FLAGS = {
 
 PREPARSER_FLAGS = {
   'all': {
-    'CPPPATH': [join(abspath('.'), 'include'), join(abspath('.'), 'src')],
+    'CPPPATH': [join(root_dir, 'include'), src_dir],
     'library:shared': {
       'CPPDEFINES': ['USING_V8_SHARED']
     },
@@ -667,6 +715,9 @@ PREPARSER_FLAGS = {
       'mips_arch_variant:mips32r2': {
         'CPPDEFINES':    ['_MIPS_ARCH_MIPS32R2']
       },
+      'mips_arch_variant:loongson': {
+        'CPPDEFINES':    ['_MIPS_ARCH_LOONGSON']
+      },
       'simulator:none': {
         'CCFLAGS':      ['-EL'],
         'LINKFLAGS':    ['-EL'],
@@ -675,6 +726,9 @@ PREPARSER_FLAGS = {
         },
         'mips_arch_variant:mips32r1': {
           'CCFLAGS':      ['-mips32', '-Wa,-mips32']
+        },
+        'mips_arch_variant:loongson': {
+          'CCFLAGS':      ['-march=mips3', '-Wa,-march=mips3']
         },
         'library:static': {
           'LINKFLAGS':    ['-static', '-static-libgcc']
@@ -756,7 +810,7 @@ PREPARSER_FLAGS = {
     },
     'arch:x64': {
       'CPPDEFINES': ['V8_TARGET_ARCH_X64', 'WIN32'],
-      'LINKFLAGS': ['/MACHINE:X64', '/STACK:2091752']
+      'LINKFLAGS': ['/MACHINE:X64', '/STACK:2097152']
     },
     'mode:debug': {
       'CCFLAGS':    ['/Od'],
@@ -809,6 +863,9 @@ D8_FLAGS = {
     'os:win32': {
       'LIBS': ['winmm', 'ws2_32'],
     },
+    'os:netbsd': {
+      'LIBS': ['pthread'],
+    },
     'arch:arm': {
       'LINKFLAGS':   ARM_LINK_FLAGS
     },
@@ -822,6 +879,57 @@ D8_FLAGS = {
   'msvc': {
     'all': {
       'LIBS': ['winmm', 'ws2_32']
+    },
+    'verbose:off': {
+      'CCFLAGS': ['/nologo'],
+      'LINKFLAGS': ['/NOLOGO']
+    },
+    'verbose:on': {
+      'LINKFLAGS': ['/VERBOSE']
+    },
+    'prof:on': {
+      'LINKFLAGS': ['/MAP']
+    },
+    'mode:release': {
+      'CCFLAGS':   ['/O2'],
+      'LINKFLAGS': ['/OPT:REF', '/OPT:ICF'],
+      'msvcrt:static': {
+        'CCFLAGS': ['/MT']
+      },
+      'msvcrt:shared': {
+        'CCFLAGS': ['/MD']
+      },
+      'msvcltcg:on': {
+        'CCFLAGS':      ['/GL'],
+        'pgo:off': {
+          'LINKFLAGS':    ['/LTCG'],
+        },
+      },
+      'pgo:instrument': {
+        'LINKFLAGS':    ['/LTCG:PGI']
+      },
+      'pgo:optimize': {
+        'LINKFLAGS':    ['/LTCG:PGO']
+      }
+    },
+    'arch:ia32': {
+      'CPPDEFINES': ['V8_TARGET_ARCH_IA32', 'WIN32'],
+      'LINKFLAGS': ['/MACHINE:X86']
+    },
+    'arch:x64': {
+      'CPPDEFINES': ['V8_TARGET_ARCH_X64', 'WIN32'],
+      'LINKFLAGS': ['/MACHINE:X64', '/STACK:2097152']
+    },
+    'mode:debug': {
+      'CCFLAGS':    ['/Od'],
+      'LINKFLAGS':  ['/DEBUG'],
+      'CPPDEFINES': ['DEBUG'],
+      'msvcrt:static': {
+        'CCFLAGS':  ['/MTd']
+      },
+      'msvcrt:shared': {
+        'CCFLAGS':  ['/MDd']
+      }
     }
   }
 }
@@ -891,7 +999,7 @@ PLATFORM_OPTIONS = {
     'help': 'the architecture to build for'
   },
   'os': {
-    'values': ['freebsd', 'linux', 'macos', 'win32', 'openbsd', 'solaris', 'cygwin'],
+    'values': ['freebsd', 'linux', 'macos', 'win32', 'openbsd', 'solaris', 'cygwin', 'netbsd'],
     'guess': GuessOS,
     'help': 'the os to build for'
   },
@@ -1030,7 +1138,7 @@ SIMPLE_OPTIONS = {
     'help': 'generate calling conventiont according to selected mips ABI'
   },
   'mips_arch_variant': {
-    'values': ['mips32r2', 'mips32r1'],
+    'values': ['mips32r2', 'mips32r1', 'loongson'],
     'default': 'mips32r2',
     'help': 'mips variant'
   },
@@ -1039,6 +1147,17 @@ SIMPLE_OPTIONS = {
     'default': 'off',
     'help': 'compress startup data (snapshot) [Linux only]'
   },
+  'vfp3': {
+    'values': ['on', 'off'],
+    'default': 'on',
+    'help': 'use vfp3 instructions when building the snapshot [Arm only]'
+  },
+  'fpu': {
+    'values': ['on', 'off'],
+    'default': 'on',
+    'help': 'use fpu instructions when building the snapshot [MIPS only]'
+  },
+
 }
 
 ALL_OPTIONS = dict(PLATFORM_OPTIONS, **SIMPLE_OPTIONS)
@@ -1343,10 +1462,12 @@ def BuildSpecific(env, mode, env_overrides, tools):
     env['SONAME'] = soname
 
   # Build the object files by invoking SCons recursively.
+  d8_env = Environment(tools=tools)
+  d8_env.Replace(**context.flags['d8'])
   (object_files, shell_files, mksnapshot, preparser_files) = env.SConscript(
     join('src', 'SConscript'),
     build_dir=join('obj', target_id),
-    exports='context tools',
+    exports='context tools d8_env',
     duplicate=False
   )
 
@@ -1375,8 +1496,6 @@ def BuildSpecific(env, mode, env_overrides, tools):
   context.library_targets.append(library)
   context.library_targets.append(preparser_library)
 
-  d8_env = Environment(tools=tools)
-  d8_env.Replace(**context.flags['d8'])
   context.ApplyEnvOverrides(d8_env)
   if context.options['library'] == 'static':
     shell = d8_env.Program('d8' + suffix, object_files + shell_files)
@@ -1482,4 +1601,17 @@ except:
   pass
 
 
+def WarnAboutDeprecation():
+  print """
+#######################################################
+#  WARNING: Building V8 with SCons is deprecated and  #
+#  will not work much longer. Please switch to using  #
+#  the GYP-based build now. Instructions are at       #
+#  http://code.google.com/p/v8/wiki/BuildingWithGYP.  #
+#######################################################
+  """
+
+WarnAboutDeprecation()
+import atexit
+atexit.register(WarnAboutDeprecation)
 Build()

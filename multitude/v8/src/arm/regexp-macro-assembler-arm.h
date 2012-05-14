@@ -79,6 +79,14 @@ class RegExpMacroAssemblerARM: public NativeRegExpMacroAssembler {
                                               uc16 minus,
                                               uc16 mask,
                                               Label* on_not_equal);
+  virtual void CheckCharacterInRange(uc16 from,
+                                     uc16 to,
+                                     Label* on_in_range);
+  virtual void CheckCharacterNotInRange(uc16 from,
+                                        uc16 to,
+                                        Label* on_not_in_range);
+  virtual void CheckBitInTable(Handle<ByteArray> table, Label* on_bit_set);
+
   // Checks whether the given offset from the current position is before
   // the end of the string.
   virtual void CheckPosition(int cp_offset, Label* on_outside_input);
@@ -116,6 +124,7 @@ class RegExpMacroAssemblerARM: public NativeRegExpMacroAssembler {
   static int CheckStackGuardState(Address* return_address,
                                   Code* re_code,
                                   Address re_frame);
+
  private:
   // Offsets from frame_pointer() of function parameters and stored registers.
   static const int kFramePointer = 0;

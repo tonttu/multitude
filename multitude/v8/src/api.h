@@ -1,4 +1,4 @@
-// Copyright 2011 the V8 project authors. All rights reserved.
+// Copyright 2012 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -28,10 +28,14 @@
 #ifndef V8_API_H_
 #define V8_API_H_
 
-#include "apiutils.h"
-#include "factory.h"
+#include "v8.h"
 
 #include "../include/v8-testing.h"
+#include "apiutils.h"
+#include "contexts.h"
+#include "factory.h"
+#include "isolate.h"
+#include "list-inl.h"
 
 namespace v8 {
 
@@ -112,15 +116,16 @@ void NeanderObject::set(int offset, v8::internal::Object* value) {
 }
 
 
-template <typename T> static inline T ToCData(v8::internal::Object* obj) {
+template <typename T> inline T ToCData(v8::internal::Object* obj) {
   STATIC_ASSERT(sizeof(T) == sizeof(v8::internal::Address));
   return reinterpret_cast<T>(
-      reinterpret_cast<intptr_t>(v8::internal::Foreign::cast(obj)->address()));
+      reinterpret_cast<intptr_t>(
+          v8::internal::Foreign::cast(obj)->foreign_address()));
 }
 
 
 template <typename T>
-static inline v8::internal::Handle<v8::internal::Object> FromCData(T obj) {
+inline v8::internal::Handle<v8::internal::Object> FromCData(T obj) {
   STATIC_ASSERT(sizeof(T) == sizeof(v8::internal::Address));
   return FACTORY->NewForeign(
       reinterpret_cast<v8::internal::Address>(reinterpret_cast<intptr_t>(obj)));
@@ -136,26 +141,20 @@ class ApiFunction {
 };
 
 
-enum ExtensionTraversalState {
-  UNVISITED, VISITED, INSTALLED
-};
-
 
 class RegisteredExtension {
  public:
   explicit RegisteredExtension(Extension* extension);
   static void Register(RegisteredExtension* that);
+  static void UnregisterAll();
   Extension* extension() { return extension_; }
   RegisteredExtension* next() { return next_; }
   RegisteredExtension* next_auto() { return next_auto_; }
-  ExtensionTraversalState state() { return state_; }
-  void set_state(ExtensionTraversalState value) { state_ = value; }
   static RegisteredExtension* first_extension() { return first_extension_; }
  private:
   Extension* extension_;
   RegisteredExtension* next_;
   RegisteredExtension* next_auto_;
-  ExtensionTraversalState state_;
   static RegisteredExtension* first_extension_;
 };
 
@@ -242,7 +241,7 @@ class Utils {
 
 
 template <class T>
-static inline T* ToApi(v8::internal::Handle<v8::internal::Object> obj) {
+inline T* ToApi(v8::internal::Handle<v8::internal::Object> obj) {
   return reinterpret_cast<T*>(obj.location());
 }
 
@@ -404,8 +403,11 @@ class HandleScopeImplementer {
         entered_contexts_(0),
         saved_contexts_(0),
         spare_(NULL),
-        ignore_out_of_memory_(false),
         call_depth_(0) { }
+
+  ~HandleScopeImplementer() {
+    DeleteArray(spare_);
+  }
 
   // Threading support for handle data.
   static int ArchiveSpacePerThread();
@@ -437,10 +439,6 @@ class HandleScopeImplementer {
   inline bool HasSavedContexts();
 
   inline List<internal::Object**>* blocks() { return &blocks_; }
-  inline bool ignore_out_of_memory() { return ignore_out_of_memory_; }
-  inline void set_ignore_out_of_memory(bool value) {
-    ignore_out_of_memory_ = value;
-  }
 
  private:
   void ResetAfterArchive() {
@@ -448,7 +446,6 @@ class HandleScopeImplementer {
     entered_contexts_.Initialize(0);
     saved_contexts_.Initialize(0);
     spare_ = NULL;
-    ignore_out_of_memory_ = false;
     call_depth_ = 0;
   }
 
@@ -473,7 +470,6 @@ class HandleScopeImplementer {
   // Used as a stack to keep track of saved contexts.
   List<Context*> saved_contexts_;
   Object** spare_;
-  bool ignore_out_of_memory_;
   int call_depth_;
   // This is only used for threading support.
   v8::ImplementationUtilities::HandleScopeData handle_scope_data_;
@@ -486,7 +482,7 @@ class HandleScopeImplementer {
 };
 
 
-static const int kHandleBlockSize = v8::internal::KB - 2;  // fit in one page
+const int kHandleBlockSize = v8::internal::KB - 2;  // fit in one page
 
 
 void HandleScopeImplementer::SaveContext(Context* context) {

@@ -32,26 +32,29 @@
 #include <math.h>
 #include <float.h>         // Required for DBL_MAX and on Win32 for finite()
 #include <stdarg.h>
+#include "globals.h"       // Required for V8_INFINITY
 
 // ----------------------------------------------------------------------------
 // Extra POSIX/ANSI functions for Win32/MSVC.
 
 #include "conversions.h"
-#include "strtod.h"
+#include "double.h"
 #include "platform.h"
+#include "scanner.h"
+#include "strtod.h"
 
 namespace v8 {
 namespace internal {
 
-static inline double JunkStringValue() {
-  return std::numeric_limits<double>::quiet_NaN();
+inline double JunkStringValue() {
+  return BitCast<double, uint64_t>(kQuietNaNMask);
 }
 
 
 // The fast double-to-unsigned-int conversion routine does not guarantee
 // rounding towards zero, or any reasonable value if the argument is larger
 // than what fits in an unsigned 32-bit integer.
-static inline unsigned int FastD2UI(double x) {
+inline unsigned int FastD2UI(double x) {
   // There is no unsigned version of lrint, so there is no fast path
   // in this function as there is in FastD2I. Using lrint doesn't work
   // for values of 2^31 and above.
@@ -77,7 +80,7 @@ static inline unsigned int FastD2UI(double x) {
 }
 
 
-static inline double DoubleToInteger(double x) {
+inline double DoubleToInteger(double x) {
   if (isnan(x)) return 0;
   if (!isfinite(x) || x == 0) return x;
   return (x >= 0) ? floor(x) : ceil(x);
@@ -87,19 +90,22 @@ static inline double DoubleToInteger(double x) {
 int32_t DoubleToInt32(double x) {
   int32_t i = FastD2I(x);
   if (FastI2D(i) == x) return i;
-  static const double two32 = 4294967296.0;
-  static const double two31 = 2147483648.0;
-  if (!isfinite(x) || x == 0) return 0;
-  if (x < 0 || x >= two32) x = modulo(x, two32);
-  x = (x >= 0) ? floor(x) : ceil(x) + two32;
-  return (int32_t) ((x >= two31) ? x - two32 : x);
+  Double d(x);
+  int exponent = d.Exponent();
+  if (exponent < 0) {
+    if (exponent <= -Double::kSignificandSize) return 0;
+    return d.Sign() * static_cast<int32_t>(d.Significand() >> -exponent);
+  } else {
+    if (exponent > 31) return 0;
+    return d.Sign() * static_cast<int32_t>(d.Significand() << exponent);
+  }
 }
 
 
 template <class Iterator, class EndMark>
-static bool SubStringEquals(Iterator* current,
-                            EndMark end,
-                            const char* substring) {
+bool SubStringEquals(Iterator* current,
+                     EndMark end,
+                     const char* substring) {
   ASSERT(**current == *substring);
   for (substring++; *substring != '\0'; substring++) {
     ++*current;
@@ -113,9 +119,9 @@ static bool SubStringEquals(Iterator* current,
 // Returns true if a nonspace character has been found and false if the
 // end was been reached before finding a nonspace character.
 template <class Iterator, class EndMark>
-static inline bool AdvanceToNonspace(UnicodeCache* unicode_cache,
-                                     Iterator* current,
-                                     EndMark end) {
+inline bool AdvanceToNonspace(UnicodeCache* unicode_cache,
+                              Iterator* current,
+                              EndMark end) {
   while (*current != end) {
     if (!unicode_cache->IsWhiteSpace(**current)) return true;
     ++*current;
@@ -126,11 +132,11 @@ static inline bool AdvanceToNonspace(UnicodeCache* unicode_cache,
 
 // Parsing integers with radix 2, 4, 8, 16, 32. Assumes current != end.
 template <int radix_log_2, class Iterator, class EndMark>
-static double InternalStringToIntDouble(UnicodeCache* unicode_cache,
-                                        Iterator current,
-                                        EndMark end,
-                                        bool negative,
-                                        bool allow_trailing_junk) {
+double InternalStringToIntDouble(UnicodeCache* unicode_cache,
+                                 Iterator current,
+                                 EndMark end,
+                                 bool negative,
+                                 bool allow_trailing_junk) {
   ASSERT(current != end);
 
   // Skip leading 0s.
@@ -222,17 +228,15 @@ static double InternalStringToIntDouble(UnicodeCache* unicode_cache,
   }
 
   ASSERT(number != 0);
-  // The double could be constructed faster from number (mantissa), exponent
-  // and sign. Assuming it's a rare case more simple code is used.
-  return static_cast<double>(negative ? -number : number) * pow(2.0, exponent);
+  return ldexp(static_cast<double>(negative ? -number : number), exponent);
 }
 
 
 template <class Iterator, class EndMark>
-static double InternalStringToInt(UnicodeCache* unicode_cache,
-                                  Iterator current,
-                                  EndMark end,
-                                  int radix) {
+double InternalStringToInt(UnicodeCache* unicode_cache,
+                           Iterator current,
+                           EndMark end,
+                           int radix) {
   const bool allow_trailing_junk = true;
   const double empty_string_val = JunkStringValue();
 
@@ -424,11 +428,11 @@ static double InternalStringToInt(UnicodeCache* unicode_cache,
 // 2. *current - gets the current character in the sequence.
 // 3. ++current (advances the position).
 template <class Iterator, class EndMark>
-static double InternalStringToDouble(UnicodeCache* unicode_cache,
-                                     Iterator current,
-                                     EndMark end,
-                                     int flags,
-                                     double empty_string_val) {
+double InternalStringToDouble(UnicodeCache* unicode_cache,
+                              Iterator current,
+                              EndMark end,
+                              int flags,
+                              double empty_string_val) {
   // To make sure that iterator dereferencing is valid the following
   // convention is used:
   // 1. Each '++current' statement is followed by check for equality to 'end'.

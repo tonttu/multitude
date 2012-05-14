@@ -1,4 +1,4 @@
-// Copyright 2006-2008 the V8 project authors. All rights reserved.
+// Copyright 2012 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -25,30 +25,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 // -------------------------------------------------------------------
 //
-// Matches Script::Type from objects.h
-var TYPE_NATIVE = 0;
-var TYPE_EXTENSION = 1;
-var TYPE_NORMAL = 2;
-
-// Matches Script::CompilationType from objects.h
-var COMPILATION_TYPE_HOST = 0;
-var COMPILATION_TYPE_EVAL = 1;
-var COMPILATION_TYPE_JSON = 2;
-
-// Matches Messages::kNoLineNumberInfo from v8.h
-var kNoLineNumberInfo = 0;
-
 // If this object gets passed to an error constructor the error will
 // get an accessor for .message that constructs a descriptive error
 // message on access.
 var kAddMessageAccessorsMarker = { };
 
+// This will be lazily initialized when first needed (and forcibly
+// overwritten even though it's const).
 var kMessages = 0;
-
-var kReplacementMarkers = [ "%0", "%1", "%2", "%3" ];
 
 function FormatString(format, message) {
   var args = %MessageGetArguments(message);
@@ -56,12 +42,16 @@ function FormatString(format, message) {
   var arg_num = 0;
   for (var i = 0; i < format.length; i++) {
     var str = format[i];
-    for (arg_num = 0; arg_num < kReplacementMarkers.length; arg_num++) {
-      if (format[i] !== kReplacementMarkers[arg_num]) continue;
-      try {
-        str = ToDetailString(args[arg_num]);
-      } catch (e) {
-        str = "#<error>";
+    if (str.length == 2 && %_StringCharCodeAt(str, 0) == 0x25) {
+      // Two-char string starts with "%".
+      var arg_num = (%_StringCharCodeAt(str, 1) - 0x30) >>> 0;
+      if (arg_num < 4) {
+        // str is one of %0, %1, %2 or %3.
+        try {
+          str = ToDetailString(args[arg_num]);
+        } catch (e) {
+          str = "#<error>";
+        }
       }
     }
     result += str;
@@ -92,7 +82,7 @@ function IsNativeErrorObject(obj) {
 // objects between script tags in a browser setting.
 function ToStringCheckErrorObject(obj) {
   if (IsNativeErrorObject(obj)) {
-    return %_CallFunction(obj, errorToString);
+    return %_CallFunction(obj, ErrorToString);
   } else {
     return ToString(obj);
   }
@@ -100,17 +90,16 @@ function ToStringCheckErrorObject(obj) {
 
 
 function ToDetailString(obj) {
-  if (obj != null && IS_OBJECT(obj) && obj.toString === $Object.prototype.toString) {
+  if (obj != null && IS_OBJECT(obj) && obj.toString === ObjectToString) {
     var constructor = obj.constructor;
-    if (!constructor) return ToStringCheckErrorObject(obj);
-    var constructorName = constructor.name;
-    if (!constructorName || !IS_STRING(constructorName)) {
-      return ToStringCheckErrorObject(obj);
+    if (typeof constructor == "function") {
+      var constructorName = constructor.name;
+      if (IS_STRING(constructorName) && constructorName !== "") {
+        return "#<" + constructorName + ">";
+      }
     }
-    return "#<" + constructorName + ">";
-  } else {
-    return ToStringCheckErrorObject(obj);
   }
+  return ToStringCheckErrorObject(obj);
 }
 
 
@@ -126,10 +115,11 @@ function MakeGenericError(constructor, type, args) {
 
 
 /**
- * Setup the Script function and constructor.
+ * Set up the Script function and constructor.
  */
 %FunctionSetInstanceClassName(Script, 'Script');
-%SetProperty(Script.prototype, 'constructor', Script, DONT_ENUM);
+%SetProperty(Script.prototype, 'constructor', Script,
+             DONT_ENUM | DONT_DELETE | READ_ONLY);
 %SetCode(Script, function(x) {
   // Script objects can only be created by the VM.
   throw new $Error("Not supported");
@@ -139,114 +129,147 @@ function MakeGenericError(constructor, type, args) {
 // Helper functions; called from the runtime system.
 function FormatMessage(message) {
   if (kMessages === 0) {
-    kMessages = {
+    var messagesDictionary = [
       // Error
-      cyclic_proto:                 ["Cyclic __proto__ value"],
-      code_gen_from_strings:        ["Code generation from strings disallowed for this context"],
+      "cyclic_proto",                 ["Cyclic __proto__ value"],
+      "code_gen_from_strings",        ["Code generation from strings disallowed for this context"],
       // TypeError
-      unexpected_token:             ["Unexpected token ", "%0"],
-      unexpected_token_number:      ["Unexpected number"],
-      unexpected_token_string:      ["Unexpected string"],
-      unexpected_token_identifier:  ["Unexpected identifier"],
-      unexpected_reserved:          ["Unexpected reserved word"],
-      unexpected_strict_reserved:   ["Unexpected strict mode reserved word"],
-      unexpected_eos:               ["Unexpected end of input"],
-      malformed_regexp:             ["Invalid regular expression: /", "%0", "/: ", "%1"],
-      unterminated_regexp:          ["Invalid regular expression: missing /"],
-      regexp_flags:                 ["Cannot supply flags when constructing one RegExp from another"],
-      incompatible_method_receiver: ["Method ", "%0", " called on incompatible receiver ", "%1"],
-      invalid_lhs_in_assignment:    ["Invalid left-hand side in assignment"],
-      invalid_lhs_in_for_in:        ["Invalid left-hand side in for-in"],
-      invalid_lhs_in_postfix_op:    ["Invalid left-hand side expression in postfix operation"],
-      invalid_lhs_in_prefix_op:     ["Invalid left-hand side expression in prefix operation"],
-      multiple_defaults_in_switch:  ["More than one default clause in switch statement"],
-      newline_after_throw:          ["Illegal newline after throw"],
-      redeclaration:                ["%0", " '", "%1", "' has already been declared"],
-      no_catch_or_finally:          ["Missing catch or finally after try"],
-      unknown_label:                ["Undefined label '", "%0", "'"],
-      uncaught_exception:           ["Uncaught ", "%0"],
-      stack_trace:                  ["Stack Trace:\n", "%0"],
-      called_non_callable:          ["%0", " is not a function"],
-      undefined_method:             ["Object ", "%1", " has no method '", "%0", "'"],
-      property_not_function:        ["Property '", "%0", "' of object ", "%1", " is not a function"],
-      cannot_convert_to_primitive:  ["Cannot convert object to primitive value"],
-      not_constructor:              ["%0", " is not a constructor"],
-      not_defined:                  ["%0", " is not defined"],
-      non_object_property_load:     ["Cannot read property '", "%0", "' of ", "%1"],
-      non_object_property_store:    ["Cannot set property '", "%0", "' of ", "%1"],
-      non_object_property_call:     ["Cannot call method '", "%0", "' of ", "%1"],
-      with_expression:              ["%0", " has no properties"],
-      illegal_invocation:           ["Illegal invocation"],
-      no_setter_in_callback:        ["Cannot set property ", "%0", " of ", "%1", " which has only a getter"],
-      apply_non_function:           ["Function.prototype.apply was called on ", "%0", ", which is a ", "%1", " and not a function"],
-      apply_wrong_args:             ["Function.prototype.apply: Arguments list has wrong type"],
-      invalid_in_operator_use:      ["Cannot use 'in' operator to search for '", "%0", "' in ", "%1"],
-      instanceof_function_expected: ["Expecting a function in instanceof check, but got ", "%0"],
-      instanceof_nonobject_proto:   ["Function has non-object prototype '", "%0", "' in instanceof check"],
-      null_to_object:               ["Cannot convert null to object"],
-      reduce_no_initial:            ["Reduce of empty array with no initial value"],
-      getter_must_be_callable:      ["Getter must be a function: ", "%0"],
-      setter_must_be_callable:      ["Setter must be a function: ", "%0"],
-      value_and_accessor:           ["Invalid property.  A property cannot both have accessors and be writable or have a value: ", "%0"],
-      proto_object_or_null:         ["Object prototype may only be an Object or null"],
-      property_desc_object:         ["Property description must be an object: ", "%0"],
-      redefine_disallowed:          ["Cannot redefine property: ", "%0"],
-      define_disallowed:            ["Cannot define property:", "%0", ", object is not extensible."],
-      non_extensible_proto:         ["%0", " is not extensible"],
-      handler_non_object:           ["Proxy.", "%0", " called with non-object as handler"],
-      handler_trap_missing:         ["Proxy handler ", "%0", " has no '", "%1", "' trap"],
-      handler_trap_must_be_callable: ["Proxy handler ", "%0", " has non-callable '", "%1", "' trap"],
-      handler_returned_false:       ["Proxy handler ", "%0", " returned false for '", "%1", "' trap"],
-      handler_returned_undefined:   ["Proxy handler ", "%0", " returned undefined for '", "%1", "' trap"],
-      proxy_prop_not_configurable:  ["Trap ", "%1", " of proxy handler ", "%0", " returned non-configurable descriptor for property ", "%2"],
-      proxy_non_object_prop_names:  ["Trap ", "%1", " returned non-object ", "%0"],
-      proxy_repeated_prop_name:     ["Trap ", "%1", " returned repeated property name ", "%2"],
+      "unexpected_token",             ["Unexpected token ", "%0"],
+      "unexpected_token_number",      ["Unexpected number"],
+      "unexpected_token_string",      ["Unexpected string"],
+      "unexpected_token_identifier",  ["Unexpected identifier"],
+      "unexpected_reserved",          ["Unexpected reserved word"],
+      "unexpected_strict_reserved",   ["Unexpected strict mode reserved word"],
+      "unexpected_eos",               ["Unexpected end of input"],
+      "malformed_regexp",             ["Invalid regular expression: /", "%0", "/: ", "%1"],
+      "unterminated_regexp",          ["Invalid regular expression: missing /"],
+      "regexp_flags",                 ["Cannot supply flags when constructing one RegExp from another"],
+      "incompatible_method_receiver", ["Method ", "%0", " called on incompatible receiver ", "%1"],
+      "invalid_lhs_in_assignment",    ["Invalid left-hand side in assignment"],
+      "invalid_lhs_in_for_in",        ["Invalid left-hand side in for-in"],
+      "invalid_lhs_in_postfix_op",    ["Invalid left-hand side expression in postfix operation"],
+      "invalid_lhs_in_prefix_op",     ["Invalid left-hand side expression in prefix operation"],
+      "multiple_defaults_in_switch",  ["More than one default clause in switch statement"],
+      "newline_after_throw",          ["Illegal newline after throw"],
+      "redeclaration",                ["%0", " '", "%1", "' has already been declared"],
+      "no_catch_or_finally",          ["Missing catch or finally after try"],
+      "unknown_label",                ["Undefined label '", "%0", "'"],
+      "uncaught_exception",           ["Uncaught ", "%0"],
+      "stack_trace",                  ["Stack Trace:\n", "%0"],
+      "called_non_callable",          ["%0", " is not a function"],
+      "undefined_method",             ["Object ", "%1", " has no method '", "%0", "'"],
+      "property_not_function",        ["Property '", "%0", "' of object ", "%1", " is not a function"],
+      "cannot_convert_to_primitive",  ["Cannot convert object to primitive value"],
+      "not_constructor",              ["%0", " is not a constructor"],
+      "not_defined",                  ["%0", " is not defined"],
+      "non_object_property_load",     ["Cannot read property '", "%0", "' of ", "%1"],
+      "non_object_property_store",    ["Cannot set property '", "%0", "' of ", "%1"],
+      "non_object_property_call",     ["Cannot call method '", "%0", "' of ", "%1"],
+      "with_expression",              ["%0", " has no properties"],
+      "illegal_invocation",           ["Illegal invocation"],
+      "no_setter_in_callback",        ["Cannot set property ", "%0", " of ", "%1", " which has only a getter"],
+      "apply_non_function",           ["Function.prototype.apply was called on ", "%0", ", which is a ", "%1", " and not a function"],
+      "apply_wrong_args",             ["Function.prototype.apply: Arguments list has wrong type"],
+      "invalid_in_operator_use",      ["Cannot use 'in' operator to search for '", "%0", "' in ", "%1"],
+      "instanceof_function_expected", ["Expecting a function in instanceof check, but got ", "%0"],
+      "instanceof_nonobject_proto",   ["Function has non-object prototype '", "%0", "' in instanceof check"],
+      "null_to_object",               ["Cannot convert null to object"],
+      "reduce_no_initial",            ["Reduce of empty array with no initial value"],
+      "getter_must_be_callable",      ["Getter must be a function: ", "%0"],
+      "setter_must_be_callable",      ["Setter must be a function: ", "%0"],
+      "value_and_accessor",           ["Invalid property.  A property cannot both have accessors and be writable or have a value, ", "%0"],
+      "proto_object_or_null",         ["Object prototype may only be an Object or null"],
+      "property_desc_object",         ["Property description must be an object: ", "%0"],
+      "redefine_disallowed",          ["Cannot redefine property: ", "%0"],
+      "define_disallowed",            ["Cannot define property:", "%0", ", object is not extensible."],
+      "non_extensible_proto",         ["%0", " is not extensible"],
+      "handler_non_object",           ["Proxy.", "%0", " called with non-object as handler"],
+      "proto_non_object",             ["Proxy.", "%0", " called with non-object as prototype"],
+      "trap_function_expected",       ["Proxy.", "%0", " called with non-function for '", "%1", "' trap"],
+      "handler_trap_missing",         ["Proxy handler ", "%0", " has no '", "%1", "' trap"],
+      "handler_trap_must_be_callable", ["Proxy handler ", "%0", " has non-callable '", "%1", "' trap"],
+      "handler_returned_false",       ["Proxy handler ", "%0", " returned false from '", "%1", "' trap"],
+      "handler_returned_undefined",   ["Proxy handler ", "%0", " returned undefined from '", "%1", "' trap"],
+      "proxy_prop_not_configurable",  ["Proxy handler ", "%0", " returned non-configurable descriptor for property '", "%2", "' from '", "%1", "' trap"],
+      "proxy_non_object_prop_names",  ["Trap '", "%1", "' returned non-object ", "%0"],
+      "proxy_repeated_prop_name",     ["Trap '", "%1", "' returned repeated property name '", "%2", "'"],
+      "invalid_weakmap_key",          ["Invalid value used as weak map key"],
       // RangeError
-      invalid_array_length:         ["Invalid array length"],
-      stack_overflow:               ["Maximum call stack size exceeded"],
+      "invalid_array_length",         ["Invalid array length"],
+      "stack_overflow",               ["Maximum call stack size exceeded"],
+      "invalid_time_value",           ["Invalid time value"],
       // SyntaxError
-      unable_to_parse:              ["Parse error"],
-      duplicate_regexp_flag:        ["Duplicate RegExp flag ", "%0"],
-      invalid_regexp:               ["Invalid RegExp pattern /", "%0", "/"],
-      illegal_break:                ["Illegal break statement"],
-      illegal_continue:             ["Illegal continue statement"],
-      illegal_return:               ["Illegal return statement"],
-      error_loading_debugger:       ["Error loading debugger"],
-      no_input_to_regexp:           ["No input to ", "%0"],
-      invalid_json:                 ["String '", "%0", "' is not valid JSON"],
-      circular_structure:           ["Converting circular structure to JSON"],
-      obj_ctor_property_non_object: ["Object.", "%0", " called on non-object"],
-      called_on_null_or_undefined:  ["%0", " called on null or undefined"],
-      array_indexof_not_defined:    ["Array.getIndexOf: Argument undefined"],
-      object_not_extensible:        ["Can't add property ", "%0", ", object is not extensible"],
-      illegal_access:               ["Illegal access"],
-      invalid_preparser_data:       ["Invalid preparser data for function ", "%0"],
-      strict_mode_with:             ["Strict mode code may not include a with statement"],
-      strict_catch_variable:        ["Catch variable may not be eval or arguments in strict mode"],
-      too_many_arguments:           ["Too many arguments in function call (only 32766 allowed)"],
-      too_many_parameters:          ["Too many parameters in function definition (only 32766 allowed)"],
-      too_many_variables:           ["Too many variables declared (only 32767 allowed)"],
-      strict_param_name:            ["Parameter name eval or arguments is not allowed in strict mode"],
-      strict_param_dupe:            ["Strict mode function may not have duplicate parameter names"],
-      strict_var_name:              ["Variable name may not be eval or arguments in strict mode"],
-      strict_function_name:         ["Function name may not be eval or arguments in strict mode"],
-      strict_octal_literal:         ["Octal literals are not allowed in strict mode."],
-      strict_duplicate_property:    ["Duplicate data property in object literal not allowed in strict mode"],
-      accessor_data_property:       ["Object literal may not have data and accessor property with the same name"],
-      accessor_get_set:             ["Object literal may not have multiple get/set accessors with the same name"],
-      strict_lhs_assignment:        ["Assignment to eval or arguments is not allowed in strict mode"],
-      strict_lhs_postfix:           ["Postfix increment/decrement may not have eval or arguments operand in strict mode"],
-      strict_lhs_prefix:            ["Prefix increment/decrement may not have eval or arguments operand in strict mode"],
-      strict_reserved_word:         ["Use of future reserved word in strict mode"],
-      strict_delete:                ["Delete of an unqualified identifier in strict mode."],
-      strict_delete_property:       ["Cannot delete property '", "%0", "' of ", "%1"],
-      strict_const:                 ["Use of const in strict mode."],
-      strict_function:              ["In strict mode code, functions can only be declared at top level or immediately within another function." ],
-      strict_read_only_property:    ["Cannot assign to read only property '", "%0", "' of ", "%1"],
-      strict_cannot_assign:         ["Cannot assign to read only '", "%0", "' in strict mode"],
-      strict_poison_pill:           ["'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them"],
-      strict_caller:                ["Illegal access to a strict mode caller function."],
-    };
+      "unable_to_parse",              ["Parse error"],
+      "invalid_regexp_flags",         ["Invalid flags supplied to RegExp constructor '", "%0", "'"],
+      "invalid_regexp",               ["Invalid RegExp pattern /", "%0", "/"],
+      "illegal_break",                ["Illegal break statement"],
+      "illegal_continue",             ["Illegal continue statement"],
+      "illegal_return",               ["Illegal return statement"],
+      "illegal_let",                  ["Illegal let declaration outside extended mode"],
+      "error_loading_debugger",       ["Error loading debugger"],
+      "no_input_to_regexp",           ["No input to ", "%0"],
+      "invalid_json",                 ["String '", "%0", "' is not valid JSON"],
+      "circular_structure",           ["Converting circular structure to JSON"],
+      "called_on_non_object",         ["%0", " called on non-object"],
+      "called_on_null_or_undefined",  ["%0", " called on null or undefined"],
+      "array_indexof_not_defined",    ["Array.getIndexOf: Argument undefined"],
+      "object_not_extensible",        ["Can't add property ", "%0", ", object is not extensible"],
+      "illegal_access",               ["Illegal access"],
+      "invalid_preparser_data",       ["Invalid preparser data for function ", "%0"],
+      "strict_mode_with",             ["Strict mode code may not include a with statement"],
+      "strict_catch_variable",        ["Catch variable may not be eval or arguments in strict mode"],
+      "too_many_arguments",           ["Too many arguments in function call (only 32766 allowed)"],
+      "too_many_parameters",          ["Too many parameters in function definition (only 32766 allowed)"],
+      "too_many_variables",           ["Too many variables declared (only 32767 allowed)"],
+      "strict_param_name",            ["Parameter name eval or arguments is not allowed in strict mode"],
+      "strict_param_dupe",            ["Strict mode function may not have duplicate parameter names"],
+      "strict_var_name",              ["Variable name may not be eval or arguments in strict mode"],
+      "strict_function_name",         ["Function name may not be eval or arguments in strict mode"],
+      "strict_octal_literal",         ["Octal literals are not allowed in strict mode."],
+      "strict_duplicate_property",    ["Duplicate data property in object literal not allowed in strict mode"],
+      "accessor_data_property",       ["Object literal may not have data and accessor property with the same name"],
+      "accessor_get_set",             ["Object literal may not have multiple get/set accessors with the same name"],
+      "strict_lhs_assignment",        ["Assignment to eval or arguments is not allowed in strict mode"],
+      "strict_lhs_postfix",           ["Postfix increment/decrement may not have eval or arguments operand in strict mode"],
+      "strict_lhs_prefix",            ["Prefix increment/decrement may not have eval or arguments operand in strict mode"],
+      "strict_reserved_word",         ["Use of future reserved word in strict mode"],
+      "strict_delete",                ["Delete of an unqualified identifier in strict mode."],
+      "strict_delete_property",       ["Cannot delete property '", "%0", "' of ", "%1"],
+      "strict_const",                 ["Use of const in strict mode."],
+      "strict_function",              ["In strict mode code, functions can only be declared at top level or immediately within another function." ],
+      "strict_read_only_property",    ["Cannot assign to read only property '", "%0", "' of ", "%1"],
+      "strict_cannot_assign",         ["Cannot assign to read only '", "%0", "' in strict mode"],
+      "strict_poison_pill",           ["'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them"],
+      "strict_caller",                ["Illegal access to a strict mode caller function."],
+      "unprotected_let",              ["Illegal let declaration in unprotected statement context."],
+      "unprotected_const",            ["Illegal const declaration in unprotected statement context."],
+      "cant_prevent_ext_external_array_elements", ["Cannot prevent extension of an object with external array elements"],
+      "redef_external_array_element", ["Cannot redefine a property of an object with external array elements"],
+      "harmony_const_assign",         ["Assignment to constant variable."],
+      "invalid_module_path",          ["Module does not export '", "%0", "', or export is not itself a module"],
+      "module_type_error",            ["Module '", "%0", "' used improperly"],
+    ];
+    var messages = { __proto__ : null };
+    for (var i = 0; i < messagesDictionary.length; i += 2) {
+      var key = messagesDictionary[i];
+      var format = messagesDictionary[i + 1];
+
+      for (var j = 0; j < format.length; j++) {
+        %IgnoreAttributesAndSetProperty(format, %_NumberToString(j), format[j],
+                                        DONT_DELETE | READ_ONLY | DONT_ENUM);
+      }
+      %IgnoreAttributesAndSetProperty(format, 'length', format.length,
+                                      DONT_DELETE | READ_ONLY | DONT_ENUM);
+      %PreventExtensions(format);
+      %IgnoreAttributesAndSetProperty(messages,
+                                      key,
+                                      format,
+                                      DONT_DELETE | DONT_ENUM | READ_ONLY);
+    }
+    %PreventExtensions(messages);
+    %IgnoreAttributesAndSetProperty(builtins, "kMessages",
+                                    messages,
+                                    DONT_DELETE | DONT_ENUM | READ_ONLY);
   }
   var message_type = %MessageGetType(message);
   var format = kMessages[message_type];
@@ -312,7 +335,7 @@ function MakeError(type, args) {
  * @return {number} 0 if input too small, -1 if input too large,
        else the line number.
  */
-Script.prototype.lineFromPosition = function(position) {
+function ScriptLineFromPosition(position) {
   var lower = 0;
   var upper = this.lineCount() - 1;
   var line_ends = this.line_ends;
@@ -351,8 +374,8 @@ Script.prototype.lineFromPosition = function(position) {
  * @return {SourceLocation}
  *     If line is negative or not in the source null is returned.
  */
-Script.prototype.locationFromPosition = function (position,
-                                                  include_resource_offset) {
+function ScriptLocationFromPosition(position,
+                                    include_resource_offset) {
   var line = this.lineFromPosition(position);
   if (line == -1) return null;
 
@@ -360,7 +383,9 @@ Script.prototype.locationFromPosition = function (position,
   var line_ends = this.line_ends;
   var start = line == 0 ? 0 : line_ends[line - 1] + 1;
   var end = line_ends[line];
-  if (end > 0 && %_CallFunction(this.source, end - 1, StringCharAt) == '\r') end--;
+  if (end > 0 && %_CallFunction(this.source, end - 1, StringCharAt) == '\r') {
+    end--;
+  }
   var column = position - start;
 
   // Adjust according to the offset within the resource.
@@ -372,7 +397,7 @@ Script.prototype.locationFromPosition = function (position,
   }
 
   return new SourceLocation(this, position, line, column, start, end);
-};
+}
 
 
 /**
@@ -385,11 +410,12 @@ Script.prototype.locationFromPosition = function (position,
  * @param {number} opt_line The line within the source. Default value is 0
  * @param {number} opt_column The column in within the line. Default value is 0
  * @param {number} opt_offset_position The offset from the begining of the
- *     source from where the line and column calculation starts. Default value is 0
+ *     source from where the line and column calculation starts.
+ *     Default value is 0
  * @return {SourceLocation}
  *     If line is negative or not in the source null is returned.
  */
-Script.prototype.locationFromLine = function (opt_line, opt_column, opt_offset_position) {
+function ScriptLocationFromLine(opt_line, opt_column, opt_offset_position) {
   // Default is the first line in the script. Lines in the script is relative
   // to the offset within the resource.
   var line = 0;
@@ -401,7 +427,7 @@ Script.prototype.locationFromLine = function (opt_line, opt_column, opt_offset_p
   // resource.
   var column = opt_column || 0;
   if (line == 0) {
-    column -= this.column_offset
+    column -= this.column_offset;
   }
 
   var offset_position = opt_offset_position || 0;
@@ -416,7 +442,8 @@ Script.prototype.locationFromLine = function (opt_line, opt_column, opt_offset_p
       return null;
     }
 
-    return this.locationFromPosition(this.line_ends[offset_line + line - 1] + 1 + column);  // line > 0 here.
+    return this.locationFromPosition(
+        this.line_ends[offset_line + line - 1] + 1 + column);  // line > 0 here.
   }
 }
 
@@ -431,9 +458,11 @@ Script.prototype.locationFromLine = function (opt_line, opt_column, opt_offset_p
  * @return {SourceSlice} The source slice or null of the parameters where
  *     invalid
  */
-Script.prototype.sourceSlice = function (opt_from_line, opt_to_line) {
-  var from_line = IS_UNDEFINED(opt_from_line) ? this.line_offset : opt_from_line;
-  var to_line = IS_UNDEFINED(opt_to_line) ? this.line_offset + this.lineCount() : opt_to_line
+function ScriptSourceSlice(opt_from_line, opt_to_line) {
+  var from_line = IS_UNDEFINED(opt_from_line) ? this.line_offset
+                                              : opt_from_line;
+  var to_line = IS_UNDEFINED(opt_to_line) ? this.line_offset + this.lineCount()
+                                          : opt_to_line;
 
   // Adjust according to the offset within the resource.
   from_line -= this.line_offset;
@@ -453,12 +482,14 @@ Script.prototype.sourceSlice = function (opt_from_line, opt_to_line) {
   var to_position = to_line == 0 ? 0 : line_ends[to_line - 1] + 1;
 
   // Return a source slice with line numbers re-adjusted to the resource.
-  return new SourceSlice(this, from_line + this.line_offset, to_line + this.line_offset,
-                         from_position, to_position);
+  return new SourceSlice(this,
+                         from_line + this.line_offset,
+                         to_line + this.line_offset,
+                          from_position, to_position);
 }
 
 
-Script.prototype.sourceLine = function (opt_line) {
+function ScriptSourceLine(opt_line) {
   // Default is the first line in the script. Lines in the script are relative
   // to the offset within the resource.
   var line = 0;
@@ -484,10 +515,10 @@ Script.prototype.sourceLine = function (opt_line) {
  * @return {number}
  *     Number of source lines.
  */
-Script.prototype.lineCount = function() {
+function ScriptLineCount() {
   // Return number of source lines.
   return this.line_ends.length;
-};
+}
 
 
 /**
@@ -500,9 +531,17 @@ Script.prototype.lineCount = function() {
  * @return {?string} script name if present, value for //@ sourceURL comment
  * otherwise.
  */
-Script.prototype.nameOrSourceURL = function() {
-  if (this.name)
+function ScriptNameOrSourceURL() {
+  if (this.name) {
     return this.name;
+  }
+
+  // The result is cached as on long scripts it takes noticable time to search
+  // for the sourceURL.
+  if (this.hasCachedNameOrSourceURL)
+      return this.cachedNameOrSourceURL;
+  this.hasCachedNameOrSourceURL = true;
+
   // TODO(608): the spaces in a regexp below had to be escaped as \040
   // because this file is being processed by js2c whose handling of spaces
   // in regexps is broken. Also, ['"] are excluded from allowed URLs to
@@ -511,6 +550,7 @@ Script.prototype.nameOrSourceURL = function() {
   // the scanner/parser.
   var source = ToString(this.source);
   var sourceUrlPos = %StringIndexOf(source, "sourceURL=", 0);
+  this.cachedNameOrSourceURL = this.name;
   if (sourceUrlPos > 4) {
     var sourceUrlPattern =
         /\/\/@[\040\t]sourceURL=[\040\t]*([^\s\'\"]*)[\040\t]*$/gm;
@@ -521,11 +561,27 @@ Script.prototype.nameOrSourceURL = function() {
     var match =
         %_RegExpExec(sourceUrlPattern, source, sourceUrlPos - 4, matchInfo);
     if (match) {
-      return SubString(source, matchInfo[CAPTURE(2)], matchInfo[CAPTURE(3)]);
+      this.cachedNameOrSourceURL =
+          SubString(source, matchInfo[CAPTURE(2)], matchInfo[CAPTURE(3)]);
     }
   }
-  return this.name;
+  return this.cachedNameOrSourceURL;
 }
+
+
+SetUpLockedPrototype(Script,
+  $Array("source", "name", "line_ends", "line_offset", "column_offset",
+         "cachedNameOrSourceURL", "hasCachedNameOrSourceURL" ),
+  $Array(
+    "lineFromPosition", ScriptLineFromPosition,
+    "locationFromPosition", ScriptLocationFromPosition,
+    "locationFromLine", ScriptLocationFromLine,
+    "sourceSlice", ScriptSourceSlice,
+    "sourceLine", ScriptSourceLine,
+    "lineCount", ScriptLineCount,
+    "nameOrSourceURL", ScriptNameOrSourceURL
+  )
+);
 
 
 /**
@@ -537,10 +593,10 @@ Script.prototype.nameOrSourceURL = function() {
  *   position : position within the source
  *   start    : position of start of source context (inclusive)
  *   end      : position of end of source context (not inclusive)
- * Source text for the source context is the character interval [start, end[. In
- * most cases end will point to a newline character. It might point just past
- * the final position of the source if the last source line does not end with a
- * newline character.
+ * Source text for the source context is the character interval
+ * [start, end[. In most cases end will point to a newline character.
+ * It might point just past the final position of the source if the last
+ * source line does not end with a newline character.
  * @param {Script} script The Script object for which this is a location
  * @param {number} position Source position for the location
  * @param {number} line The line number for the location
@@ -558,8 +614,7 @@ function SourceLocation(script, position, line, column, start, end) {
   this.end = end;
 }
 
-
-const kLineLengthLimit = 78;
+var kLineLengthLimit = 78;
 
 /**
  * Restrict source location start and end positions to make the source slice
@@ -569,7 +624,7 @@ const kLineLengthLimit = 78;
  * @param {number} opt_before The number of characters to prefer before the
  *     position with a default value of 10 less that the limit
  */
-SourceLocation.prototype.restrict = function (opt_limit, opt_before) {
+function SourceLocationRestrict(opt_limit, opt_before) {
   // Find the actual limit to use.
   var limit;
   var before;
@@ -608,7 +663,7 @@ SourceLocation.prototype.restrict = function (opt_limit, opt_before) {
       this.end = this.start + limit;
     }
   }
-};
+}
 
 
 /**
@@ -616,9 +671,21 @@ SourceLocation.prototype.restrict = function (opt_limit, opt_before) {
  * @return {String}
  *     Source text for this location.
  */
-SourceLocation.prototype.sourceText = function () {
-  return %_CallFunction(this.script.source, this.start, this.end, StringSubstring);
-};
+function SourceLocationSourceText() {
+  return %_CallFunction(this.script.source,
+                        this.start,
+                        this.end,
+                        StringSubstring);
+}
+
+
+SetUpLockedPrototype(SourceLocation,
+  $Array("script", "position", "line", "column", "start", "end"),
+  $Array(
+    "restrict", SourceLocationRestrict,
+    "sourceText", SourceLocationSourceText
+ )
+);
 
 
 /**
@@ -647,18 +714,22 @@ function SourceSlice(script, from_line, to_line, from_position, to_position) {
   this.to_position = to_position;
 }
 
-
 /**
  * Get the source text for a SourceSlice
  * @return {String} Source text for this slice. The last line will include
  *     the line terminating characters (if any)
  */
-SourceSlice.prototype.sourceText = function () {
+function SourceSliceSourceText() {
   return %_CallFunction(this.script.source,
                         this.from_position,
                         this.to_position,
                         StringSubstring);
-};
+}
+
+SetUpLockedPrototype(SourceSlice,
+  $Array("script", "from_line", "to_line", "from_position", "to_position"),
+  $Array("sourceText", SourceSliceSourceText)
+);
 
 
 // Returns the offset of the given position within the containing
@@ -688,24 +759,19 @@ function DefineOneShotAccessor(obj, name, fun) {
   // can't rely on 'this' being the same as 'obj'.
   var hasBeenSet = false;
   var value;
-  function getter() {
+  var getter = function() {
     if (hasBeenSet) {
       return value;
     }
     hasBeenSet = true;
     value = fun(obj);
     return value;
-  }
-  function setter(v) {
+  };
+  var setter = function(v) {
     hasBeenSet = true;
     value = v;
-  }
-  var desc = { get: getter,
-               set: setter,
-               enumerable: false,
-               configurable: true };
-  desc = ToPropertyDescriptor(desc);
-  DefineOwnProperty(obj, name, desc, true);
+  };
+  %DefineOrRedefineAccessorProperty(obj, name, getter, setter, DONT_ENUM);
 }
 
 function CallSite(receiver, fun, pos) {
@@ -714,46 +780,49 @@ function CallSite(receiver, fun, pos) {
   this.pos = pos;
 }
 
-CallSite.prototype.getThis = function () {
+function CallSiteGetThis() {
   return this.receiver;
-};
+}
 
-CallSite.prototype.getTypeName = function () {
+function CallSiteGetTypeName() {
   var constructor = this.receiver.constructor;
-  if (!constructor)
+  if (!constructor) {
     return %_CallFunction(this.receiver, ObjectToString);
+  }
   var constructorName = constructor.name;
-  if (!constructorName)
+  if (!constructorName) {
     return %_CallFunction(this.receiver, ObjectToString);
+  }
   return constructorName;
-};
+}
 
-CallSite.prototype.isToplevel = function () {
-  if (this.receiver == null)
+function CallSiteIsToplevel() {
+  if (this.receiver == null) {
     return true;
+  }
   return IS_GLOBAL(this.receiver);
-};
+}
 
-CallSite.prototype.isEval = function () {
+function CallSiteIsEval() {
   var script = %FunctionGetScript(this.fun);
   return script && script.compilation_type == COMPILATION_TYPE_EVAL;
-};
+}
 
-CallSite.prototype.getEvalOrigin = function () {
+function CallSiteGetEvalOrigin() {
   var script = %FunctionGetScript(this.fun);
   return FormatEvalOrigin(script);
-};
+}
 
-CallSite.prototype.getScriptNameOrSourceURL = function () {
+function CallSiteGetScriptNameOrSourceURL() {
   var script = %FunctionGetScript(this.fun);
   return script ? script.nameOrSourceURL() : null;
-};
+}
 
-CallSite.prototype.getFunction = function () {
+function CallSiteGetFunction() {
   return this.fun;
-};
+}
 
-CallSite.prototype.getFunctionName = function () {
+function CallSiteGetFunctionName() {
   // See if the function knows its own name
   var name = this.fun.name;
   if (name) {
@@ -763,18 +832,23 @@ CallSite.prototype.getFunctionName = function () {
   }
   // Maybe this is an evaluation?
   var script = %FunctionGetScript(this.fun);
-  if (script && script.compilation_type == COMPILATION_TYPE_EVAL)
+  if (script && script.compilation_type == COMPILATION_TYPE_EVAL) {
     return "eval";
+  }
   return null;
-};
+}
 
-CallSite.prototype.getMethodName = function () {
+function CallSiteGetMethodName() {
   // See if we can find a unique property on the receiver that holds
   // this function.
   var ownName = this.fun.name;
   if (ownName && this.receiver &&
-      (%_CallFunction(this.receiver, ownName, ObjectLookupGetter) === this.fun ||
-       %_CallFunction(this.receiver, ownName, ObjectLookupSetter) === this.fun ||
+      (%_CallFunction(this.receiver,
+                      ownName,
+                      ObjectLookupGetter) === this.fun ||
+       %_CallFunction(this.receiver,
+                      ownName,
+                      ObjectLookupSetter) === this.fun ||
        this.receiver[ownName] === this.fun)) {
     // To handle DontEnum properties we guess that the method has
     // the same name as the function.
@@ -784,65 +858,91 @@ CallSite.prototype.getMethodName = function () {
   for (var prop in this.receiver) {
     if (this.receiver.__lookupGetter__(prop) === this.fun ||
         this.receiver.__lookupSetter__(prop) === this.fun ||
-        (!this.receiver.__lookupGetter__(prop) && this.receiver[prop] === this.fun)) {
+        (!this.receiver.__lookupGetter__(prop) &&
+         this.receiver[prop] === this.fun)) {
       // If we find more than one match bail out to avoid confusion.
-      if (name)
+      if (name) {
         return null;
+      }
       name = prop;
     }
   }
-  if (name)
+  if (name) {
     return name;
+  }
   return null;
-};
+}
 
-CallSite.prototype.getFileName = function () {
+function CallSiteGetFileName() {
   var script = %FunctionGetScript(this.fun);
   return script ? script.name : null;
-};
+}
 
-CallSite.prototype.getLineNumber = function () {
-  if (this.pos == -1)
+function CallSiteGetLineNumber() {
+  if (this.pos == -1) {
     return null;
+  }
   var script = %FunctionGetScript(this.fun);
   var location = null;
   if (script) {
     location = script.locationFromPosition(this.pos, true);
   }
   return location ? location.line + 1 : null;
-};
+}
 
-CallSite.prototype.getColumnNumber = function () {
-  if (this.pos == -1)
+function CallSiteGetColumnNumber() {
+  if (this.pos == -1) {
     return null;
+  }
   var script = %FunctionGetScript(this.fun);
   var location = null;
   if (script) {
     location = script.locationFromPosition(this.pos, true);
   }
   return location ? location.column + 1: null;
-};
+}
 
-CallSite.prototype.isNative = function () {
+function CallSiteIsNative() {
   var script = %FunctionGetScript(this.fun);
   return script ? (script.type == TYPE_NATIVE) : false;
-};
+}
 
-CallSite.prototype.getPosition = function () {
+function CallSiteGetPosition() {
   return this.pos;
-};
+}
 
-CallSite.prototype.isConstructor = function () {
+function CallSiteIsConstructor() {
   var constructor = this.receiver ? this.receiver.constructor : null;
-  if (!constructor)
+  if (!constructor) {
     return false;
+  }
   return this.fun === constructor;
-};
+}
+
+SetUpLockedPrototype(CallSite, $Array("receiver", "fun", "pos"), $Array(
+  "getThis", CallSiteGetThis,
+  "getTypeName", CallSiteGetTypeName,
+  "isToplevel", CallSiteIsToplevel,
+  "isEval", CallSiteIsEval,
+  "getEvalOrigin", CallSiteGetEvalOrigin,
+  "getScriptNameOrSourceURL", CallSiteGetScriptNameOrSourceURL,
+  "getFunction", CallSiteGetFunction,
+  "getFunctionName", CallSiteGetFunctionName,
+  "getMethodName", CallSiteGetMethodName,
+  "getFileName", CallSiteGetFileName,
+  "getLineNumber", CallSiteGetLineNumber,
+  "getColumnNumber", CallSiteGetColumnNumber,
+  "isNative", CallSiteIsNative,
+  "getPosition", CallSiteGetPosition,
+  "isConstructor", CallSiteIsConstructor
+));
+
 
 function FormatEvalOrigin(script) {
   var sourceURL = script.nameOrSourceURL();
-  if (sourceURL)
+  if (sourceURL) {
     return sourceURL;
+  }
 
   var eval_origin = "eval at ";
   if (script.eval_from_function_name) {
@@ -860,12 +960,13 @@ function FormatEvalOrigin(script) {
       // eval script originated from "real" source.
       if (eval_from_script.name) {
         eval_origin += " (" + eval_from_script.name;
-        var location = eval_from_script.locationFromPosition(script.eval_from_script_position, true);
+        var location = eval_from_script.locationFromPosition(
+            script.eval_from_script_position, true);
         if (location) {
           eval_origin += ":" + (location.line + 1);
           eval_origin += ":" + (location.column + 1);
         }
-        eval_origin += ")"
+        eval_origin += ")";
       } else {
         eval_origin += " (unknown source)";
       }
@@ -873,7 +974,7 @@ function FormatEvalOrigin(script) {
   }
 
   return eval_origin;
-};
+}
 
 function FormatSourcePosition(frame) {
   var fileName;
@@ -882,8 +983,9 @@ function FormatSourcePosition(frame) {
     fileLocation = "native";
   } else if (frame.isEval()) {
     fileName = frame.getScriptNameOrSourceURL();
-    if (!fileName)
+    if (!fileName) {
       fileLocation = frame.getEvalOrigin();
+    }
   } else {
     fileName = frame.getFileName();
   }
@@ -979,150 +1081,162 @@ function FormatRawStackTrace(error, raw_stack) {
   }
 }
 
-function DefineError(f) {
-  // Store the error function in both the global object
-  // and the runtime object. The function is fetched
-  // from the runtime object when throwing errors from
-  // within the runtime system to avoid strange side
-  // effects when overwriting the error functions from
-  // user code.
-  var name = f.name;
-  %SetProperty(global, name, f, DONT_ENUM);
-  this['$' + name] = f;
-  // Configure the error function.
-  if (name == 'Error') {
-    // The prototype of the Error object must itself be an error.
-    // However, it can't be an instance of the Error object because
-    // it hasn't been properly configured yet.  Instead we create a
-    // special not-a-true-error-but-close-enough object.
-    function ErrorPrototype() {}
-    %FunctionSetPrototype(ErrorPrototype, $Object.prototype);
-    %FunctionSetInstanceClassName(ErrorPrototype, 'Error');
-    %FunctionSetPrototype(f, new ErrorPrototype());
-  } else {
-    %FunctionSetPrototype(f, new $Error());
-  }
-  %FunctionSetInstanceClassName(f, 'Error');
-  %SetProperty(f.prototype, 'constructor', f, DONT_ENUM);
-  // The name property on the prototype of error objects is not
-  // specified as being read-one and dont-delete. However, allowing
-  // overwriting allows leaks of error objects between script blocks
-  // in the same context in a browser setting. Therefore we fix the
-  // name.
-  %SetProperty(f.prototype, "name", name, DONT_ENUM | DONT_DELETE | READ_ONLY);
-  %SetCode(f, function(m) {
-    if (%_IsConstructCall()) {
-      // Define all the expected properties directly on the error
-      // object. This avoids going through getters and setters defined
-      // on prototype objects.
-      %IgnoreAttributesAndSetProperty(this, 'stack', void 0, DONT_ENUM);
-      %IgnoreAttributesAndSetProperty(this, 'arguments', void 0, DONT_ENUM);
-      %IgnoreAttributesAndSetProperty(this, 'type', void 0, DONT_ENUM);
-      if (m === kAddMessageAccessorsMarker) {
-        // DefineOneShotAccessor always inserts a message property and
-        // ignores setters.
-        DefineOneShotAccessor(this, 'message', function (obj) {
-            return FormatMessage(%NewMessageObject(obj.type, obj.arguments));
-        });
-      } else if (!IS_UNDEFINED(m)) {
-        %IgnoreAttributesAndSetProperty(this,
-                                        'message',
-                                        ToString(m),
-                                        DONT_ENUM);
-      }
-      captureStackTrace(this, f);
-    } else {
-      return new f(m);
-    }
-  });
-}
 
 function captureStackTrace(obj, cons_opt) {
   var stackTraceLimit = $Error.stackTraceLimit;
   if (!stackTraceLimit || !IS_NUMBER(stackTraceLimit)) return;
-  if (stackTraceLimit < 0 || stackTraceLimit > 10000)
+  if (stackTraceLimit < 0 || stackTraceLimit > 10000) {
     stackTraceLimit = 10000;
-  var raw_stack = %CollectStackTrace(cons_opt
-                                     ? cons_opt
-                                     : captureStackTrace, stackTraceLimit);
+  }
+  var raw_stack = %CollectStackTrace(obj,
+                                     cons_opt ? cons_opt : captureStackTrace,
+                                     stackTraceLimit);
   DefineOneShotAccessor(obj, 'stack', function (obj) {
     return FormatRawStackTrace(obj, raw_stack);
   });
-};
+}
 
-$Math.__proto__ = global.Object.prototype;
 
-// DefineError is a native function. Use explicit receiver. Otherwise
-// the receiver will be 'undefined'.
-this.DefineError(function Error() { });
-this.DefineError(function TypeError() { });
-this.DefineError(function RangeError() { });
-this.DefineError(function SyntaxError() { });
-this.DefineError(function ReferenceError() { });
-this.DefineError(function EvalError() { });
-this.DefineError(function URIError() { });
+function SetUpError() {
+  // Define special error type constructors.
+
+  var DefineError = function(f) {
+    // Store the error function in both the global object
+    // and the runtime object. The function is fetched
+    // from the runtime object when throwing errors from
+    // within the runtime system to avoid strange side
+    // effects when overwriting the error functions from
+    // user code.
+    var name = f.name;
+    %SetProperty(global, name, f, DONT_ENUM);
+    %SetProperty(builtins, '$' + name, f, DONT_ENUM | DONT_DELETE | READ_ONLY);
+    // Configure the error function.
+    if (name == 'Error') {
+      // The prototype of the Error object must itself be an error.
+      // However, it can't be an instance of the Error object because
+      // it hasn't been properly configured yet.  Instead we create a
+      // special not-a-true-error-but-close-enough object.
+      var ErrorPrototype = function() {};
+      %FunctionSetPrototype(ErrorPrototype, $Object.prototype);
+      %FunctionSetInstanceClassName(ErrorPrototype, 'Error');
+      %FunctionSetPrototype(f, new ErrorPrototype());
+    } else {
+      %FunctionSetPrototype(f, new $Error());
+    }
+    %FunctionSetInstanceClassName(f, 'Error');
+    %SetProperty(f.prototype, 'constructor', f, DONT_ENUM);
+    %SetProperty(f.prototype, "name", name, DONT_ENUM);
+    %SetCode(f, function(m) {
+      if (%_IsConstructCall()) {
+        // Define all the expected properties directly on the error
+        // object. This avoids going through getters and setters defined
+        // on prototype objects.
+        %IgnoreAttributesAndSetProperty(this, 'stack', void 0, DONT_ENUM);
+        %IgnoreAttributesAndSetProperty(this, 'arguments', void 0, DONT_ENUM);
+        %IgnoreAttributesAndSetProperty(this, 'type', void 0, DONT_ENUM);
+        if (m === kAddMessageAccessorsMarker) {
+          // DefineOneShotAccessor always inserts a message property and
+          // ignores setters.
+          DefineOneShotAccessor(this, 'message', function (obj) {
+              return FormatMessage(%NewMessageObject(obj.type, obj.arguments));
+          });
+        } else if (!IS_UNDEFINED(m)) {
+          %IgnoreAttributesAndSetProperty(
+            this, 'message', ToString(m), DONT_ENUM);
+        }
+        captureStackTrace(this, f);
+      } else {
+        return new f(m);
+      }
+    });
+    %SetNativeFlag(f);
+  };
+
+  DefineError(function Error() { });
+  DefineError(function TypeError() { });
+  DefineError(function RangeError() { });
+  DefineError(function SyntaxError() { });
+  DefineError(function ReferenceError() { });
+  DefineError(function EvalError() { });
+  DefineError(function URIError() { });
+}
+
+SetUpError();
 
 $Error.captureStackTrace = captureStackTrace;
 
-// Setup extra properties of the Error.prototype object.
-function setErrorMessage() {
-  var desc = {value: '',
-              enumerable: false,
-              configurable: true,
-              writable: true };
-  DefineOwnProperty($Error.prototype,
-                    'message',
-                    ToPropertyDescriptor(desc),
-                    true);
+%SetProperty($Error.prototype, 'message', '', DONT_ENUM);
 
-}
-
-setErrorMessage();
-
-// Global list of error objects visited during errorToString. This is
+// Global list of error objects visited during ErrorToString. This is
 // used to detect cycles in error toString formatting.
-var visited_errors = new $Array();
+var visited_errors = new InternalArray();
 var cyclic_error_marker = new $Object();
 
-function errorToStringDetectCycle() {
-  if (!%PushIfAbsent(visited_errors, this)) throw cyclic_error_marker;
+function GetPropertyWithoutInvokingMonkeyGetters(error, name) {
+  // Climb the prototype chain until we find the holder.
+  while (error && !%HasLocalProperty(error, name)) {
+    error = error.__proto__;
+  }
+  if (error === null) return void 0;
+  if (!IS_OBJECT(error)) return error[name];
+  // If the property is an accessor on one of the predefined errors that can be
+  // generated statically by the compiler, don't touch it. This is to address
+  // http://code.google.com/p/chromium/issues/detail?id=69187
+  var desc = %GetOwnProperty(error, name);
+  if (desc && desc[IS_ACCESSOR_INDEX]) {
+    var isName = name === "name";
+    if (error === $ReferenceError.prototype)
+      return isName ? "ReferenceError" : void 0;
+    if (error === $SyntaxError.prototype)
+      return isName ? "SyntaxError" : void 0;
+    if (error === $TypeError.prototype)
+      return isName ? "TypeError" : void 0;
+  }
+  // Otherwise, read normally.
+  return error[name];
+}
+
+function ErrorToStringDetectCycle(error) {
+  if (!%PushIfAbsent(visited_errors, error)) throw cyclic_error_marker;
   try {
-    var type = this.type;
-    if (type && !%_CallFunction(this, "message", ObjectHasOwnProperty)) {
-      var formatted = FormatMessage(%NewMessageObject(type, this.arguments));
-      return this.name + ": " + formatted;
+    var type = GetPropertyWithoutInvokingMonkeyGetters(error, "type");
+    var name = GetPropertyWithoutInvokingMonkeyGetters(error, "name");
+    name = IS_UNDEFINED(name) ? "Error" : TO_STRING_INLINE(name);
+    var message = GetPropertyWithoutInvokingMonkeyGetters(error, "message");
+    var hasMessage = %_CallFunction(error, "message", ObjectHasOwnProperty);
+    if (type && !hasMessage) {
+      var args = GetPropertyWithoutInvokingMonkeyGetters(error, "arguments");
+      message = FormatMessage(%NewMessageObject(type, args));
     }
-    var message = %_CallFunction(this, "message", ObjectHasOwnProperty)
-        ? (": " + this.message)
-        : "";
-    return this.name + message;
+    message = IS_UNDEFINED(message) ? "" : TO_STRING_INLINE(message);
+    if (name === "") return message;
+    if (message === "") return name;
+    return name + ": " + message;
   } finally {
     visited_errors.length = visited_errors.length - 1;
   }
 }
 
-function errorToString() {
-  if (IS_NULL_OR_UNDEFINED(this) && !IS_UNDETECTABLE(this)) {
-    throw MakeTypeError("called_on_null_or_undefined",
-                        ["Error.prototype.toString"]);
+function ErrorToString() {
+  if (!IS_SPEC_OBJECT(this)) {
+    throw MakeTypeError("called_on_non_object", ["Error.prototype.toString"]);
   }
-  // This helper function is needed because access to properties on
-  // the builtins object do not work inside of a catch clause.
-  function isCyclicErrorMarker(o) { return o === cyclic_error_marker; }
 
   try {
-    return %_CallFunction(this, errorToStringDetectCycle);
+    return ErrorToStringDetectCycle(this);
   } catch(e) {
     // If this error message was encountered already return the empty
     // string for it instead of recursively formatting it.
-    if (isCyclicErrorMarker(e)) return '';
-    else throw e;
+    if (e === cyclic_error_marker) {
+      return '';
+    }
+    throw e;
   }
 }
 
 
-InstallFunctions($Error.prototype, DONT_ENUM, ['toString', errorToString]);
+InstallFunctions($Error.prototype, DONT_ENUM, ['toString', ErrorToString]);
 
 // Boilerplate for exceptions for stack overflows. Used from
 // Isolate::StackOverflow().
-const kStackOverflowBoilerplate = MakeRangeError('stack_overflow', []);
+var kStackOverflowBoilerplate = MakeRangeError('stack_overflow', []);

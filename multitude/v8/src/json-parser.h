@@ -130,7 +130,7 @@ class JsonParser BASE_EMBEDDED {
   // An object literal is a squiggly-braced and comma separated sequence
   // (possibly empty) of key/value pairs, where the key is a JSON string
   // literal, the value is a JSON value, and the two are separated by a colon.
-  // A JSON array dosn't allow numbers and identifiers as keys, like a
+  // A JSON array doesn't allow numbers and identifiers as keys, like a
   // JavaScript array.
   Handle<Object> ParseJsonObject();
 
@@ -165,7 +165,7 @@ class JsonParser BASE_EMBEDDED {
 
 template <bool seq_ascii>
 Handle<Object> JsonParser<seq_ascii>::ParseJson(Handle<String> source) {
-  isolate_ = source->map()->isolate();
+  isolate_ = source->map()->GetHeap()->isolate();
   FlattenString(source);
   source_ = source;
   source_length_ = source_->length();
@@ -177,7 +177,7 @@ Handle<Object> JsonParser<seq_ascii>::ParseJson(Handle<String> source) {
 
   // Set initial position right before the string.
   position_ = -1;
-  // Advance to the first character (posibly EOS)
+  // Advance to the first character (possibly EOS)
   AdvanceSkipWhitespace();
   Handle<Object> result = ParseJsonValue();
   if (result.is_null() || c0_ != kEndOfString) {
@@ -303,11 +303,12 @@ Handle<Object> JsonParser<seq_ascii>::ParseJsonObject() {
 
       uint32_t index;
       if (key->AsArrayIndex(&index)) {
-        SetOwnElement(json_object, index, value, kNonStrictMode);
+        JSObject::SetOwnElement(json_object, index, value, kNonStrictMode);
       } else if (key->Equals(isolate()->heap()->Proto_symbol())) {
         SetPrototype(json_object, value);
       } else {
-        SetLocalPropertyIgnoreAttributes(json_object, key, value, NONE);
+        JSObject::SetLocalPropertyIgnoreAttributes(
+            json_object, key, value, NONE);
       }
     } while (MatchSkipWhiteSpace(','));
     if (c0_ != '}') {
@@ -458,12 +459,12 @@ Handle<String> JsonParser<seq_ascii>::SlowScanJsonString(
   String::WriteToFlat(*prefix, dest, start, end);
 
   while (c0_ != '"') {
+    // Check for control character (0x00-0x1f) or unterminated string (<0).
+    if (c0_ < 0x20) return Handle<String>::null();
     if (count >= length) {
       // We need to create a longer sequential string for the result.
       return SlowScanJsonString<StringType, SinkChar>(seq_str, 0, count);
     }
-    // Check for control character (0x00-0x1f) or unterminated string (<0).
-    if (c0_ < 0x20) return Handle<String>::null();
     if (c0_ != '\\') {
       // If the sink can contain UC16 characters, or source_ contains only
       // ASCII characters, there's no need to test whether we can store the

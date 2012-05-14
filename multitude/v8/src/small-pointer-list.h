@@ -44,6 +44,37 @@ class SmallPointerList {
  public:
   SmallPointerList() : data_(kEmptyTag) {}
 
+  explicit SmallPointerList(int capacity) : data_(kEmptyTag) {
+    Reserve(capacity);
+  }
+
+  void Reserve(int capacity) {
+    if (capacity < 2) return;
+    if ((data_ & kTagMask) == kListTag) {
+      if (list()->capacity() >= capacity) return;
+      int old_length = list()->length();
+      list()->AddBlock(NULL, capacity - list()->capacity());
+      list()->Rewind(old_length);
+      return;
+    }
+    PointerList* list = new PointerList(capacity);
+    if ((data_ & kTagMask) == kSingletonTag) {
+      list->Add(single_value());
+    }
+    ASSERT(IsAligned(reinterpret_cast<intptr_t>(list), kPointerAlignment));
+    data_ = reinterpret_cast<intptr_t>(list) | kListTag;
+  }
+
+  void Clear() {
+    data_ = kEmptyTag;
+  }
+
+  void Sort() {
+    if ((data_ & kTagMask) == kListTag) {
+      list()->Sort(compare_value);
+    }
+  }
+
   bool is_empty() const { return length() == 0; }
 
   int length() const {
@@ -133,6 +164,10 @@ class SmallPointerList {
 
  private:
   typedef ZoneList<T*> PointerList;
+
+  static int compare_value(T* const* a, T* const* b) {
+    return Compare<T>(**a, **b);
+  }
 
   static const intptr_t kEmptyTag = 1;
   static const intptr_t kSingletonTag = 0;

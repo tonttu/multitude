@@ -1,4 +1,4 @@
-// Copyright 2011 the V8 project authors. All rights reserved.
+// Copyright 2012 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -65,13 +65,10 @@ namespace internal {
   F(ToSlowProperties, 1, 1) \
   F(FinishArrayPrototypeSetup, 1, 1) \
   F(SpecialArrayFunctions, 1, 1) \
-  F(GetGlobalReceiver, 0, 1) \
+  F(GetDefaultReceiver, 1, 1) \
   \
   F(GetPrototype, 1, 1) \
   F(IsInPrototypeChain, 2, 1) \
-  F(SetHiddenPrototype, 2, 1) \
-  \
-  F(IsConstructCall, 0, 1) \
   \
   F(GetOwnProperty, 2, 1) \
   \
@@ -79,6 +76,10 @@ namespace internal {
   F(PreventExtensions, 1, 1)\
   \
   /* Utilities */ \
+  F(CheckIsBootstrapping, 0, 1) \
+  F(GetRootNaN, 0, 1) \
+  F(Call, -1 /* >= 2 */, 1) \
+  F(Apply, 5, 1) \
   F(GetFunctionDelegate, 1, 1) \
   F(GetConstructorDelegate, 1, 1) \
   F(NewArgumentsFast, 3, 1) \
@@ -88,14 +89,18 @@ namespace internal {
   F(NotifyDeoptimized, 1, 1) \
   F(NotifyOSR, 0, 1) \
   F(DeoptimizeFunction, 1, 1) \
+  F(ClearFunctionTypeFeedback, 1, 1) \
   F(RunningInSimulator, 0, 1) \
-  F(OptimizeFunctionOnNextCall, 1, 1) \
+  F(OptimizeFunctionOnNextCall, -1, 1) \
   F(GetOptimizationStatus, 1, 1) \
   F(GetOptimizationCount, 1, 1) \
   F(CompileForOnStackReplacement, 1, 1) \
   F(SetNewFunctionAttributes, 1, 1) \
   F(AllocateInNewSpace, 1, 1) \
   F(SetNativeFlag, 1, 1) \
+  F(StoreArrayLiteralElement, 5, 1) \
+  F(DebugCallbackSupportsStepping, 1, 1) \
+  F(DebugPrepareStepInIfStepping, 1, 1) \
   \
   /* Array join support */ \
   F(PushIfAbsent, 2, 1) \
@@ -140,7 +145,7 @@ namespace internal {
   F(StringAdd, 2, 1) \
   F(StringBuilderConcat, 3, 1) \
   F(StringBuilderJoin, 3, 1) \
-  F(SparseJoinWithSeparator, 3, 1)            \
+  F(SparseJoinWithSeparator, 3, 1) \
   \
   /* Bit operations */ \
   F(NumberOr, 2, 1) \
@@ -194,6 +199,7 @@ namespace internal {
   F(StringLocaleCompare, 2, 1) \
   F(SubString, 3, 1) \
   F(StringReplaceRegExpWithString, 4, 1) \
+  F(StringReplaceOneCharWithString, 3, 1) \
   F(StringMatch, 3, 1) \
   F(StringTrim, 3, 1) \
   F(StringToArray, 2, 1) \
@@ -213,7 +219,10 @@ namespace internal {
   F(FunctionSetReadOnlyPrototype, 1, 1) \
   F(FunctionGetName, 1, 1) \
   F(FunctionSetName, 2, 1) \
-  F(FunctionSetBound, 1, 1) \
+  F(FunctionNameShouldPrintAsAnonymous, 1, 1) \
+  F(FunctionMarkNameShouldPrintAsAnonymous, 1, 1) \
+  F(FunctionBindArguments, 4, 1) \
+  F(BoundFunctionGetBindings, 1, 1) \
   F(FunctionRemovePrototype, 1, 1) \
   F(FunctionGetSourceCode, 1, 1) \
   F(FunctionGetScript, 1, 1) \
@@ -222,7 +231,7 @@ namespace internal {
   F(FunctionIsAPIFunction, 1, 1) \
   F(FunctionIsBuiltin, 1, 1) \
   F(GetScript, 1, 1) \
-  F(CollectStackTrace, 2, 1) \
+  F(CollectStackTrace, 3, 1) \
   F(GetV8Version, 0, 1) \
   \
   F(ClassOf, 1, 1) \
@@ -239,10 +248,9 @@ namespace internal {
   F(DateCurrentTime, 0, 1) \
   F(DateParseString, 2, 1) \
   F(DateLocalTimezone, 1, 1) \
-  F(DateLocalTimeOffset, 0, 1) \
-  F(DateDaylightSavingsOffset, 1, 1) \
-  F(DateMakeDay, 3, 1) \
-  F(DateYMDFromTime, 2, 1) \
+  F(DateToUTC, 1, 1) \
+  F(DateMakeDay, 2, 1) \
+  F(DateSetValue, 3, 1) \
   \
   /* Numbers */ \
   \
@@ -252,8 +260,7 @@ namespace internal {
   \
   /* Eval */ \
   F(GlobalReceiver, 1, 1) \
-  F(ResolvePossiblyDirectEval, 4, 2) \
-  F(ResolvePossiblyDirectEvalNoLookup, 4, 2) \
+  F(ResolvePossiblyDirectEval, 5, 2) \
   \
   F(SetProperty, -1 /* 4 or 5 */, 1) \
   F(DefineOrRedefineDataProperty, 4, 1) \
@@ -268,14 +275,10 @@ namespace internal {
   F(SwapElements, 3, 1) \
   \
   /* Getters and Setters */ \
-  F(DefineAccessor, -1 /* 4 or 5 */, 1) \
   F(LookupAccessor, 3, 1) \
   \
   /* Literals */ \
   F(MaterializeRegExpLiteral, 4, 1)\
-  F(CreateArrayLiteralBoilerplate, 3, 1) \
-  F(CloneLiteralBoilerplate, 1, 1) \
-  F(CloneShallowLiteralBoilerplate, 1, 1) \
   F(CreateObjectLiteral, 4, 1) \
   F(CreateObjectLiteralShallow, 4, 1) \
   F(CreateArrayLiteral, 3, 1) \
@@ -283,32 +286,55 @@ namespace internal {
   \
   /* Harmony proxies */ \
   F(CreateJSProxy, 2, 1) \
+  F(CreateJSFunctionProxy, 4, 1) \
   F(IsJSProxy, 1, 1) \
+  F(IsJSFunctionProxy, 1, 1) \
   F(GetHandler, 1, 1) \
+  F(GetCallTrap, 1, 1) \
+  F(GetConstructTrap, 1, 1) \
   F(Fix, 1, 1) \
+  \
+  /* Harmony sets */ \
+  F(SetInitialize, 1, 1) \
+  F(SetAdd, 2, 1) \
+  F(SetHas, 2, 1) \
+  F(SetDelete, 2, 1) \
+  \
+  /* Harmony maps */ \
+  F(MapInitialize, 1, 1) \
+  F(MapGet, 2, 1) \
+  F(MapSet, 3, 1) \
+  \
+  /* Harmony weakmaps */ \
+  F(WeakMapInitialize, 1, 1) \
+  F(WeakMapGet, 2, 1) \
+  F(WeakMapSet, 3, 1) \
   \
   /* Statements */ \
   F(NewClosure, 3, 1) \
   F(NewObject, 1, 1) \
-  F(NewObjectFromBound, 2, 1) \
+  F(NewObjectFromBound, 1, 1) \
   F(FinalizeInstanceSize, 1, 1) \
   F(Throw, 1, 1) \
   F(ReThrow, 1, 1) \
   F(ThrowReferenceError, 1, 1) \
   F(StackGuard, 0, 1) \
+  F(Interrupt, 0, 1) \
   F(PromoteScheduledException, 0, 1) \
   \
   /* Contexts */ \
   F(NewFunctionContext, 1, 1) \
   F(PushWithContext, 2, 1) \
   F(PushCatchContext, 3, 1) \
+  F(PushBlockContext, 2, 1) \
+  F(PushModuleContext, 2, 1) \
   F(DeleteContextSlot, 2, 1) \
   F(LoadContextSlot, 2, 2) \
   F(LoadContextSlotNoReferenceError, 2, 2) \
   F(StoreContextSlot, 4, 1) \
   \
   /* Declarations and initialization */ \
-  F(DeclareGlobals, 4, 1) \
+  F(DeclareGlobals, 3, 1) \
   F(DeclareContextSlot, 4, 1) \
   F(InitializeVarGlobal, -1 /* 2 or 3 */, 1) \
   F(InitializeConstGlobal, 2, 1) \
@@ -339,6 +365,7 @@ namespace internal {
   F(IS_VAR, 1, 1) \
   \
   /* expose boolean functions from objects-inl.h */ \
+  F(HasFastSmiOnlyElements, 1, 1) \
   F(HasFastElements, 1, 1) \
   F(HasFastDoubleElements, 1, 1) \
   F(HasDictionaryElements, 1, 1) \
@@ -352,6 +379,9 @@ namespace internal {
   F(HasExternalUnsignedIntElements, 1, 1) \
   F(HasExternalFloatElements, 1, 1) \
   F(HasExternalDoubleElements, 1, 1) \
+  F(TransitionElementsSmiToDouble, 1, 1) \
+  F(TransitionElementsDoubleToObject, 1, 1) \
+  F(HaveSameMap, 2, 1) \
   /* profiler */ \
   F(ProfilerResume, 0, 1) \
   F(ProfilerPause, 0, 1)
@@ -375,6 +405,8 @@ namespace internal {
   F(GetFrameDetails, 2, 1) \
   F(GetScopeCount, 2, 1) \
   F(GetScopeDetails, 4, 1) \
+  F(GetFunctionScopeCount, 1, 1) \
+  F(GetFunctionScopeDetails, 2, 1) \
   F(DebugPrintScopes, 0, 1) \
   F(GetThreadCount, 1, 1) \
   F(GetThreadDetails, 2, 1) \
@@ -393,6 +425,7 @@ namespace internal {
   F(DebugReferencedBy, 3, 1) \
   F(DebugConstructedBy, 2, 1) \
   F(DebugGetPrototype, 1, 1) \
+  F(DebugSetScriptSource, 2, 1) \
   F(SystemBreak, 0, 1) \
   F(DebugDisassembleFunction, 1, 1) \
   F(DebugDisassembleConstructor, 1, 1) \
@@ -460,11 +493,13 @@ namespace internal {
   F(IsNonNegativeSmi, 1, 1)                                                  \
   F(IsArray, 1, 1)                                                           \
   F(IsRegExp, 1, 1)                                                          \
+  F(IsConstructCall, 0, 1)                                                   \
   F(CallFunction, -1 /* receiver + n args + function */, 1)                  \
   F(ArgumentsLength, 0, 1)                                                   \
   F(Arguments, 1, 1)                                                         \
   F(ValueOf, 1, 1)                                                           \
   F(SetValueOf, 2, 1)                                                        \
+  F(DateField, 2 /* date object, field index */, 1)                          \
   F(StringCharFromCode, 1, 1)                                                \
   F(StringCharAt, 2, 1)                                                      \
   F(ObjectEquals, 2, 1)                                                      \
@@ -477,13 +512,13 @@ namespace internal {
   F(MathPow, 2, 1)                                                           \
   F(MathSin, 1, 1)                                                           \
   F(MathCos, 1, 1)                                                           \
+  F(MathTan, 1, 1)                                                           \
   F(MathSqrt, 1, 1)                                                          \
   F(MathLog, 1, 1)                                                           \
   F(IsRegExpEquivalent, 2, 1)                                                \
   F(HasCachedArrayIndex, 1, 1)                                               \
   F(GetCachedArrayIndex, 1, 1)                                               \
-  F(FastAsciiArrayJoin, 2, 1)                                                \
-  F(IsNativeOrStrictMode, 1, 1)
+  F(FastAsciiArrayJoin, 2, 1)
 
 
 // ----------------------------------------------------------------------------
@@ -492,7 +527,6 @@ namespace internal {
 // a corresponding runtime function, that is called for slow cases.
 // Entries have the form F(name, number of arguments, number of return values).
 #define INLINE_RUNTIME_FUNCTION_LIST(F) \
-  F(IsConstructCall, 0, 1)                                                   \
   F(ClassOf, 1, 1)                                                           \
   F(StringCharCodeAt, 2, 1)                                                  \
   F(Log, 3, 1)                                                               \
@@ -602,6 +636,13 @@ class Runtime : public AllStatic {
   // Get the intrinsic function with the given FunctionId.
   static const Function* FunctionForId(FunctionId id);
 
+  static Handle<String> StringReplaceOneCharWithString(Isolate* isolate,
+                                                       Handle<String> subject,
+                                                       Handle<String> search,
+                                                       Handle<String> replace,
+                                                       bool* found,
+                                                       int recursion_limit);
+
   // General-purpose helper functions for runtime system.
   static int StringMatch(Isolate* isolate,
                          Handle<String> sub,
@@ -610,16 +651,14 @@ class Runtime : public AllStatic {
 
   static bool IsUpperCaseChar(RuntimeState* runtime_state, uint16_t ch);
 
-  // TODO(1240886): The following three methods are *not* handle safe,
-  // but accept handle arguments. This seems fragile.
+  // TODO(1240886): Some of the following methods are *not* handle safe, but
+  // accept handle arguments. This seems fragile.
 
   // Support getting the characters in a string using [] notation as
   // in Firefox/SpiderMonkey, Safari and Opera.
   MUST_USE_RESULT static MaybeObject* GetElementOrCharAt(Isolate* isolate,
                                                          Handle<Object> object,
                                                          uint32_t index);
-  MUST_USE_RESULT static MaybeObject* GetElement(Handle<Object> object,
-                                                 uint32_t index);
 
   MUST_USE_RESULT static MaybeObject* SetObjectProperty(
       Isolate* isolate,
@@ -653,7 +692,21 @@ class Runtime : public AllStatic {
 
   // Helper functions used stubs.
   static void PerformGC(Object* result);
+
+  // Used in runtime.cc and hydrogen's VisitArrayLiteral.
+  static Handle<Object> CreateArrayLiteralBoilerplate(
+      Isolate* isolate,
+      Handle<FixedArray> literals,
+      Handle<FixedArray> elements);
 };
+
+
+//---------------------------------------------------------------------------
+// Constants used by interface to runtime functions.
+
+class DeclareGlobalsEvalFlag:     public BitField<bool,         0, 1> {};
+class DeclareGlobalsNativeFlag:   public BitField<bool,         1, 1> {};
+class DeclareGlobalsLanguageMode: public BitField<LanguageMode, 2, 2> {};
 
 } }  // namespace v8::internal
 

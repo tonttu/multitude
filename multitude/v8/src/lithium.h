@@ -1,4 +1,4 @@
-// Copyright 2011 the V8 project authors. All rights reserved.
+// Copyright 2012 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -35,6 +35,14 @@
 namespace v8 {
 namespace internal {
 
+#define LITHIUM_OPERAND_LIST(V)         \
+  V(ConstantOperand, CONSTANT_OPERAND)  \
+  V(StackSlot,       STACK_SLOT)        \
+  V(DoubleStackSlot, DOUBLE_STACK_SLOT) \
+  V(Register,        REGISTER)          \
+  V(DoubleRegister,  DOUBLE_REGISTER)
+
+
 class LOperand: public ZoneObject {
  public:
   enum Kind {
@@ -52,15 +60,14 @@ class LOperand: public ZoneObject {
 
   Kind kind() const { return KindField::decode(value_); }
   int index() const { return static_cast<int>(value_) >> kKindFieldWidth; }
-  bool IsConstantOperand() const { return kind() == CONSTANT_OPERAND; }
-  bool IsStackSlot() const { return kind() == STACK_SLOT; }
-  bool IsDoubleStackSlot() const { return kind() == DOUBLE_STACK_SLOT; }
-  bool IsRegister() const { return kind() == REGISTER; }
-  bool IsDoubleRegister() const { return kind() == DOUBLE_REGISTER; }
-  bool IsArgument() const { return kind() == ARGUMENT; }
-  bool IsUnallocated() const { return kind() == UNALLOCATED; }
+#define LITHIUM_OPERAND_PREDICATE(name, type) \
+  bool Is##name() const { return kind() == type; }
+  LITHIUM_OPERAND_LIST(LITHIUM_OPERAND_PREDICATE)
+  LITHIUM_OPERAND_PREDICATE(Argument, ARGUMENT)
+  LITHIUM_OPERAND_PREDICATE(Unallocated, UNALLOCATED)
+  LITHIUM_OPERAND_PREDICATE(Ignored, INVALID)
+#undef LITHIUM_OPERAND_PREDICATE
   bool Equals(LOperand* other) const { return value_ == other->value_; }
-  int VirtualRegister();
 
   void PrintTo(StringStream* stream);
   void ConvertTo(Kind kind, int index) {
@@ -68,6 +75,10 @@ class LOperand: public ZoneObject {
     value_ |= index << kKindFieldWidth;
     ASSERT(this->index() == index);
   }
+
+  // Calls SetUpCache()/TearDownCache() for each subclass.
+  static void SetUpCaches();
+  static void TearDownCaches();
 
  protected:
   static const int kKindFieldWidth = 3;
@@ -89,8 +100,7 @@ class LUnallocated: public LOperand {
     FIXED_SLOT,
     MUST_HAVE_REGISTER,
     WRITABLE_REGISTER,
-    SAME_AS_FIRST_INPUT,
-    IGNORE
+    SAME_AS_FIRST_INPUT
   };
 
   // Lifetime of operand inside the instruction.
@@ -121,9 +131,9 @@ class LUnallocated: public LOperand {
 
   // The superclass has a KindField.  Some policies have a signed fixed
   // index in the upper bits.
-  static const int kPolicyWidth = 4;
+  static const int kPolicyWidth = 3;
   static const int kLifetimeWidth = 1;
-  static const int kVirtualRegisterWidth = 17;
+  static const int kVirtualRegisterWidth = 18;
 
   static const int kPolicyShift = kKindFieldWidth;
   static const int kLifetimeShift = kPolicyShift + kPolicyWidth;
@@ -143,12 +153,10 @@ class LUnallocated: public LOperand {
                         kVirtualRegisterWidth> {
   };
 
-  static const int kMaxVirtualRegisters = 1 << (kVirtualRegisterWidth + 1);
+  static const int kMaxVirtualRegisters = 1 << kVirtualRegisterWidth;
   static const int kMaxFixedIndex = 63;
   static const int kMinFixedIndex = -64;
 
-  bool HasIgnorePolicy() const { return policy() == IGNORE; }
-  bool HasNoPolicy() const { return policy() == NONE; }
   bool HasAnyPolicy() const {
     return policy() == ANY;
   }
@@ -165,20 +173,18 @@ class LUnallocated: public LOperand {
   }
   Policy policy() const { return PolicyField::decode(value_); }
   void set_policy(Policy policy) {
-    value_ &= ~PolicyField::mask();
-    value_ |= PolicyField::encode(policy);
+    value_ = PolicyField::update(value_, policy);
   }
   int fixed_index() const {
     return static_cast<int>(value_) >> kFixedIndexShift;
   }
 
-  unsigned virtual_register() const {
+  int virtual_register() const {
     return VirtualRegisterField::decode(value_);
   }
 
   void set_virtual_register(unsigned id) {
-    value_ &= ~VirtualRegisterField::mask();
-    value_ |= VirtualRegisterField::encode(id);
+    value_ = VirtualRegisterField::update(value_, id);
   }
 
   LUnallocated* CopyUnconstrained() {
@@ -236,9 +242,7 @@ class LMoveOperands BASE_EMBEDDED {
   }
 
   bool IsIgnored() const {
-    return destination_ != NULL &&
-        destination_->IsUnallocated() &&
-        LUnallocated::cast(destination_)->HasIgnorePolicy();
+    return destination_ != NULL && destination_->IsIgnored();
   }
 
   // We clear both operands to indicate move that's been eliminated.
@@ -267,11 +271,12 @@ class LConstantOperand: public LOperand {
     return reinterpret_cast<LConstantOperand*>(op);
   }
 
-  static void SetupCache();
+  static void SetUpCache();
+  static void TearDownCache();
 
  private:
   static const int kNumCachedOperands = 128;
-  static LConstantOperand cache[];
+  static LConstantOperand* cache;
 
   LConstantOperand() : LOperand() { }
   explicit LConstantOperand(int index) : LOperand(CONSTANT_OPERAND, index) { }
@@ -302,11 +307,12 @@ class LStackSlot: public LOperand {
     return reinterpret_cast<LStackSlot*>(op);
   }
 
-  static void SetupCache();
+  static void SetUpCache();
+  static void TearDownCache();
 
  private:
   static const int kNumCachedOperands = 128;
-  static LStackSlot cache[];
+  static LStackSlot* cache;
 
   LStackSlot() : LOperand() { }
   explicit LStackSlot(int index) : LOperand(STACK_SLOT, index) { }
@@ -326,11 +332,12 @@ class LDoubleStackSlot: public LOperand {
     return reinterpret_cast<LDoubleStackSlot*>(op);
   }
 
-  static void SetupCache();
+  static void SetUpCache();
+  static void TearDownCache();
 
  private:
   static const int kNumCachedOperands = 128;
-  static LDoubleStackSlot cache[];
+  static LDoubleStackSlot* cache;
 
   LDoubleStackSlot() : LOperand() { }
   explicit LDoubleStackSlot(int index) : LOperand(DOUBLE_STACK_SLOT, index) { }
@@ -350,11 +357,12 @@ class LRegister: public LOperand {
     return reinterpret_cast<LRegister*>(op);
   }
 
-  static void SetupCache();
+  static void SetUpCache();
+  static void TearDownCache();
 
  private:
   static const int kNumCachedOperands = 16;
-  static LRegister cache[];
+  static LRegister* cache;
 
   LRegister() : LOperand() { }
   explicit LRegister(int index) : LOperand(REGISTER, index) { }
@@ -374,11 +382,12 @@ class LDoubleRegister: public LOperand {
     return reinterpret_cast<LDoubleRegister*>(op);
   }
 
-  static void SetupCache();
+  static void SetUpCache();
+  static void TearDownCache();
 
  private:
   static const int kNumCachedOperands = 16;
-  static LDoubleRegister cache[];
+  static LDoubleRegister* cache;
 
   LDoubleRegister() : LOperand() { }
   explicit LDoubleRegister(int index) : LOperand(DOUBLE_REGISTER, index) { }
@@ -409,9 +418,18 @@ class LParallelMove : public ZoneObject {
 class LPointerMap: public ZoneObject {
  public:
   explicit LPointerMap(int position)
-      : pointer_operands_(8), position_(position), lithium_position_(-1) { }
+      : pointer_operands_(8),
+        untagged_operands_(0),
+        position_(position),
+        lithium_position_(-1) { }
 
-  const ZoneList<LOperand*>* operands() const { return &pointer_operands_; }
+  const ZoneList<LOperand*>* GetNormalizedOperands() {
+    for (int i = 0; i < untagged_operands_.length(); ++i) {
+      RemovePointer(untagged_operands_[i]);
+    }
+    untagged_operands_.Clear();
+    return &pointer_operands_;
+  }
   int position() const { return position_; }
   int lithium_position() const { return lithium_position_; }
 
@@ -421,10 +439,13 @@ class LPointerMap: public ZoneObject {
   }
 
   void RecordPointer(LOperand* op);
+  void RemovePointer(LOperand* op);
+  void RecordUntagged(LOperand* op);
   void PrintTo(StringStream* stream);
 
  private:
   ZoneList<LOperand*> pointer_operands_;
+  ZoneList<LOperand*> untagged_operands_;
   int position_;
   int lithium_position_;
 };
@@ -433,30 +454,34 @@ class LPointerMap: public ZoneObject {
 class LEnvironment: public ZoneObject {
  public:
   LEnvironment(Handle<JSFunction> closure,
+               FrameType frame_type,
                int ast_id,
                int parameter_count,
                int argument_count,
                int value_count,
                LEnvironment* outer)
       : closure_(closure),
+        frame_type_(frame_type),
         arguments_stack_height_(argument_count),
         deoptimization_index_(Safepoint::kNoDeoptimizationIndex),
         translation_index_(-1),
         ast_id_(ast_id),
         parameter_count_(parameter_count),
+        pc_offset_(-1),
         values_(value_count),
-        representations_(value_count),
+        is_tagged_(value_count, closure->GetHeap()->isolate()->zone()),
         spilled_registers_(NULL),
         spilled_double_registers_(NULL),
-        outer_(outer) {
-  }
+        outer_(outer) { }
 
   Handle<JSFunction> closure() const { return closure_; }
+  FrameType frame_type() const { return frame_type_; }
   int arguments_stack_height() const { return arguments_stack_height_; }
   int deoptimization_index() const { return deoptimization_index_; }
   int translation_index() const { return translation_index_; }
   int ast_id() const { return ast_id_; }
   int parameter_count() const { return parameter_count_; }
+  int pc_offset() const { return pc_offset_; }
   LOperand** spilled_registers() const { return spilled_registers_; }
   LOperand** spilled_double_registers() const {
     return spilled_double_registers_;
@@ -466,17 +491,22 @@ class LEnvironment: public ZoneObject {
 
   void AddValue(LOperand* operand, Representation representation) {
     values_.Add(operand);
-    representations_.Add(representation);
+    if (representation.IsTagged()) {
+      is_tagged_.Add(values_.length() - 1);
+    }
   }
 
   bool HasTaggedValueAt(int index) const {
-    return representations_[index].IsTagged();
+    return is_tagged_.Contains(index);
   }
 
-  void Register(int deoptimization_index, int translation_index) {
+  void Register(int deoptimization_index,
+                int translation_index,
+                int pc_offset) {
     ASSERT(!HasBeenRegistered());
     deoptimization_index_ = deoptimization_index;
     translation_index_ = translation_index;
+    pc_offset_ = pc_offset;
   }
   bool HasBeenRegistered() const {
     return deoptimization_index_ != Safepoint::kNoDeoptimizationIndex;
@@ -492,13 +522,15 @@ class LEnvironment: public ZoneObject {
 
  private:
   Handle<JSFunction> closure_;
+  FrameType frame_type_;
   int arguments_stack_height_;
   int deoptimization_index_;
   int translation_index_;
   int ast_id_;
   int parameter_count_;
+  int pc_offset_;
   ZoneList<LOperand*> values_;
-  ZoneList<Representation> representations_;
+  BitVector is_tagged_;
 
   // Allocation index indexed arrays of spill slot operands for registers
   // that are also in spill slots at an OSR entry.  NULL for environments
@@ -507,8 +539,6 @@ class LEnvironment: public ZoneObject {
   LOperand** spilled_double_registers_;
 
   LEnvironment* outer_;
-
-  friend class LCodegen;
 };
 
 
@@ -586,7 +616,7 @@ class DeepIterator BASE_EMBEDDED {
 };
 
 
-int ElementsKindToShiftSize(JSObject::ElementsKind elements_kind);
+int ElementsKindToShiftSize(ElementsKind elements_kind);
 
 
 } }  // namespace v8::internal

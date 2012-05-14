@@ -1,4 +1,4 @@
-// Copyright (c) 2011 Sun Microsystems Inc.
+// Copyright (c) 1994-2006 Sun Microsystems Inc.
 // All Rights Reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,23 +30,43 @@
 
 // The original source code covered by the above license above has been
 // modified significantly by Google Inc.
-// Copyright 2011 the V8 project authors. All rights reserved.
+// Copyright 2012 the V8 project authors. All rights reserved.
 
-#include "v8.h"
+#include "assembler.h"
 
-#include "arguments.h"
+#include <math.h>  // For cos, log, pow, sin, tan, etc.
+#include "api.h"
+#include "builtins.h"
+#include "counters.h"
+#include "cpu.h"
+#include "debug.h"
 #include "deoptimizer.h"
 #include "execution.h"
-#include "ic-inl.h"
-#include "factory.h"
-#include "runtime.h"
-#include "runtime-profiler.h"
-#include "serialize.h"
-#include "stub-cache.h"
-#include "regexp-stack.h"
-#include "ast.h"
-#include "regexp-macro-assembler.h"
+#include "ic.h"
+#include "isolate.h"
+#include "jsregexp.h"
+#include "lazy-instance.h"
 #include "platform.h"
+#include "regexp-macro-assembler.h"
+#include "regexp-stack.h"
+#include "runtime.h"
+#include "serialize.h"
+#include "store-buffer-inl.h"
+#include "stub-cache.h"
+#include "token.h"
+
+#if V8_TARGET_ARCH_IA32
+#include "ia32/assembler-ia32-inl.h"
+#elif V8_TARGET_ARCH_X64
+#include "x64/assembler-x64-inl.h"
+#elif V8_TARGET_ARCH_ARM
+#include "arm/assembler-arm-inl.h"
+#elif V8_TARGET_ARCH_MIPS
+#include "mips/assembler-mips-inl.h"
+#else
+#error "Unknown architecture."
+#endif
+
 // Include native regexp-macro-assembler.
 #ifndef V8_INTERPRETED_REGEXP
 #if V8_TARGET_ARCH_IA32
@@ -65,16 +85,23 @@
 namespace v8 {
 namespace internal {
 
+// -----------------------------------------------------------------------------
+// Common double constants.
 
-const double DoubleConstant::min_int = kMinInt;
-const double DoubleConstant::one_half = 0.5;
-const double DoubleConstant::minus_zero = -0.0;
-const double DoubleConstant::uint8_max_value = 255;
-const double DoubleConstant::zero = 0.0;
-const double DoubleConstant::canonical_non_hole_nan = OS::nan_value();
-const double DoubleConstant::the_hole_nan = BitCast<double>(kHoleNanInt64);
-const double DoubleConstant::negative_infinity = -V8_INFINITY;
-const char* RelocInfo::kFillerCommentString = "DEOPTIMIZATION PADDING";
+struct DoubleConstant BASE_EMBEDDED {
+  double min_int;
+  double one_half;
+  double minus_zero;
+  double zero;
+  double uint8_max_value;
+  double negative_infinity;
+  double canonical_non_hole_nan;
+  double the_hole_nan;
+};
+
+static DoubleConstant double_constants;
+
+const char* const RelocInfo::kFillerCommentString = "DEOPTIMIZATION PADDING";
 
 // -----------------------------------------------------------------------------
 // Implementation of AssemblerBase
@@ -516,6 +543,7 @@ void RelocIterator::next() {
 
 
 RelocIterator::RelocIterator(Code* code, int mode_mask) {
+  rinfo_.host_ = code;
   rinfo_.pc_ = code->instruction_start();
   rinfo_.data_ = 0;
   // Relocation info is read backwards.
@@ -684,6 +712,18 @@ void RelocInfo::Verify() {
 // -----------------------------------------------------------------------------
 // Implementation of ExternalReference
 
+void ExternalReference::SetUp() {
+  double_constants.min_int = kMinInt;
+  double_constants.one_half = 0.5;
+  double_constants.minus_zero = -0.0;
+  double_constants.uint8_max_value = 255;
+  double_constants.zero = 0.0;
+  double_constants.canonical_non_hole_nan = OS::nan_value();
+  double_constants.the_hole_nan = BitCast<double>(kHoleNanInt64);
+  double_constants.negative_infinity = -V8_INFINITY;
+}
+
+
 ExternalReference::ExternalReference(Builtins::CFunctionId id, Isolate* isolate)
   : address_(Redirect(isolate, Builtins::c_function_address(id))) {}
 
@@ -736,9 +776,38 @@ ExternalReference::ExternalReference(const SCTableReference& table_ref)
   : address_(table_ref.address()) {}
 
 
+ExternalReference ExternalReference::
+    incremental_marking_record_write_function(Isolate* isolate) {
+  return ExternalReference(Redirect(
+      isolate,
+      FUNCTION_ADDR(IncrementalMarking::RecordWriteFromCode)));
+}
+
+
+ExternalReference ExternalReference::
+    incremental_evacuation_record_write_function(Isolate* isolate) {
+  return ExternalReference(Redirect(
+      isolate,
+      FUNCTION_ADDR(IncrementalMarking::RecordWriteForEvacuationFromCode)));
+}
+
+
+ExternalReference ExternalReference::
+    store_buffer_overflow_function(Isolate* isolate) {
+  return ExternalReference(Redirect(
+      isolate,
+      FUNCTION_ADDR(StoreBuffer::StoreBufferOverflow)));
+}
+
+
+ExternalReference ExternalReference::flush_icache_function(Isolate* isolate) {
+  return ExternalReference(Redirect(isolate, FUNCTION_ADDR(CPU::FlushICache)));
+}
+
+
 ExternalReference ExternalReference::perform_gc_function(Isolate* isolate) {
-  return ExternalReference(Redirect(isolate,
-                                    FUNCTION_ADDR(Runtime::PerformGC)));
+  return
+      ExternalReference(Redirect(isolate, FUNCTION_ADDR(Runtime::PerformGC)));
 }
 
 
@@ -764,6 +833,17 @@ ExternalReference ExternalReference::random_uint32_function(
 }
 
 
+ExternalReference ExternalReference::get_date_field_function(
+    Isolate* isolate) {
+  return ExternalReference(Redirect(isolate, FUNCTION_ADDR(JSDate::GetField)));
+}
+
+
+ExternalReference ExternalReference::date_cache_stamp(Isolate* isolate) {
+  return ExternalReference(isolate->date_cache()->stamp_address());
+}
+
+
 ExternalReference ExternalReference::transcendental_cache_array_address(
     Isolate* isolate) {
   return ExternalReference(
@@ -785,11 +865,6 @@ ExternalReference ExternalReference::compute_output_frames_function(
 }
 
 
-ExternalReference ExternalReference::global_contexts_list(Isolate* isolate) {
-  return ExternalReference(isolate->heap()->global_contexts_list_address());
-}
-
-
 ExternalReference ExternalReference::keyed_lookup_cache_keys(Isolate* isolate) {
   return ExternalReference(isolate->keyed_lookup_cache()->keys_address());
 }
@@ -802,19 +877,8 @@ ExternalReference ExternalReference::keyed_lookup_cache_field_offsets(
 }
 
 
-ExternalReference ExternalReference::the_hole_value_location(Isolate* isolate) {
-  return ExternalReference(isolate->factory()->the_hole_value().location());
-}
-
-
-ExternalReference ExternalReference::arguments_marker_location(
-    Isolate* isolate) {
-  return ExternalReference(isolate->factory()->arguments_marker().location());
-}
-
-
-ExternalReference ExternalReference::roots_address(Isolate* isolate) {
-  return ExternalReference(isolate->heap()->roots_address());
+ExternalReference ExternalReference::roots_array_start(Isolate* isolate) {
+  return ExternalReference(isolate->heap()->roots_array_start());
 }
 
 
@@ -840,9 +904,14 @@ ExternalReference ExternalReference::new_space_start(Isolate* isolate) {
 }
 
 
+ExternalReference ExternalReference::store_buffer_top(Isolate* isolate) {
+  return ExternalReference(isolate->heap()->store_buffer()->TopAddress());
+}
+
+
 ExternalReference ExternalReference::new_space_mask(Isolate* isolate) {
-  Address mask = reinterpret_cast<Address>(isolate->heap()->NewSpaceMask());
-  return ExternalReference(mask);
+  return ExternalReference(reinterpret_cast<Address>(
+      isolate->heap()->NewSpaceMask()));
 }
 
 
@@ -887,50 +956,47 @@ ExternalReference ExternalReference::scheduled_exception_address(
 
 
 ExternalReference ExternalReference::address_of_min_int() {
-  return ExternalReference(reinterpret_cast<void*>(
-      const_cast<double*>(&DoubleConstant::min_int)));
+  return ExternalReference(reinterpret_cast<void*>(&double_constants.min_int));
 }
 
 
 ExternalReference ExternalReference::address_of_one_half() {
-  return ExternalReference(reinterpret_cast<void*>(
-      const_cast<double*>(&DoubleConstant::one_half)));
+  return ExternalReference(reinterpret_cast<void*>(&double_constants.one_half));
 }
 
 
 ExternalReference ExternalReference::address_of_minus_zero() {
-  return ExternalReference(reinterpret_cast<void*>(
-      const_cast<double*>(&DoubleConstant::minus_zero)));
+  return ExternalReference(
+      reinterpret_cast<void*>(&double_constants.minus_zero));
 }
 
 
 ExternalReference ExternalReference::address_of_zero() {
-  return ExternalReference(reinterpret_cast<void*>(
-      const_cast<double*>(&DoubleConstant::zero)));
+  return ExternalReference(reinterpret_cast<void*>(&double_constants.zero));
 }
 
 
 ExternalReference ExternalReference::address_of_uint8_max_value() {
-  return ExternalReference(reinterpret_cast<void*>(
-      const_cast<double*>(&DoubleConstant::uint8_max_value)));
+  return ExternalReference(
+      reinterpret_cast<void*>(&double_constants.uint8_max_value));
 }
 
 
 ExternalReference ExternalReference::address_of_negative_infinity() {
-  return ExternalReference(reinterpret_cast<void*>(
-      const_cast<double*>(&DoubleConstant::negative_infinity)));
+  return ExternalReference(
+      reinterpret_cast<void*>(&double_constants.negative_infinity));
 }
 
 
 ExternalReference ExternalReference::address_of_canonical_non_hole_nan() {
-  return ExternalReference(reinterpret_cast<void*>(
-      const_cast<double*>(&DoubleConstant::canonical_non_hole_nan)));
+  return ExternalReference(
+      reinterpret_cast<void*>(&double_constants.canonical_non_hole_nan));
 }
 
 
 ExternalReference ExternalReference::address_of_the_hole_nan() {
-  return ExternalReference(reinterpret_cast<void*>(
-      const_cast<double*>(&DoubleConstant::the_hole_nan)));
+  return ExternalReference(
+      reinterpret_cast<void*>(&double_constants.the_hole_nan));
 }
 
 
@@ -1025,6 +1091,11 @@ static double math_cos_double(double x) {
 }
 
 
+static double math_tan_double(double x) {
+  return tan(x);
+}
+
+
 static double math_log_double(double x) {
   return log(x);
 }
@@ -1042,6 +1113,14 @@ ExternalReference ExternalReference::math_cos_double_function(
     Isolate* isolate) {
   return ExternalReference(Redirect(isolate,
                                     FUNCTION_ADDR(math_cos_double),
+                                    BUILTIN_FP_CALL));
+}
+
+
+ExternalReference ExternalReference::math_tan_double_function(
+    Isolate* isolate) {
+  return ExternalReference(Redirect(isolate,
+                                    FUNCTION_ADDR(math_tan_double),
                                     BUILTIN_FP_CALL));
 }
 
@@ -1074,17 +1153,23 @@ double power_double_int(double x, int y) {
 
 
 double power_double_double(double x, double y) {
-  int y_int = static_cast<int>(y);
-  if (y == y_int) {
-    return power_double_int(x, y_int);  // Returns 1.0 for exponent 0.
+#ifdef __MINGW64_VERSION_MAJOR
+  // MinGW64 has a custom implementation for pow.  This handles certain
+  // special cases that are different.
+  if ((x == 0.0 || isinf(x)) && isfinite(y)) {
+    double f;
+    if (modf(y, &f) != 0.0) return ((x == 0.0) ^ (y > 0)) ? V8_INFINITY : 0;
   }
-  if (!isinf(x)) {
-    if (y == 0.5) return sqrt(x + 0.0);  // -0 must be converted to +0.
-    if (y == -0.5) return 1.0 / sqrt(x + 0.0);
+
+  if (x == 2.0) {
+    int y_int = static_cast<int>(y);
+    if (y == y_int) return ldexp(1.0, y_int);
   }
-  if (isnan(y) || ((x == 1 || x == -1) && isinf(y))) {
-    return OS::nan_value();
-  }
+#endif
+
+  // The checks for special cases can be dropped in ia32 because it has already
+  // been done in generated code before bailing out here.
+  if (isnan(y) || ((x == 1 || x == -1) && isinf(y))) return OS::nan_value();
   return pow(x, y);
 }
 
@@ -1108,6 +1193,23 @@ ExternalReference ExternalReference::power_double_int_function(
 static int native_compare_doubles(double y, double x) {
   if (x == y) return EQUAL;
   return x < y ? LESS : GREATER;
+}
+
+
+bool EvalComparison(Token::Value op, double op1, double op2) {
+  ASSERT(Token::IsCompareOp(op));
+  switch (op) {
+    case Token::EQ:
+    case Token::EQ_STRICT: return (op1 == op2);
+    case Token::NE: return (op1 != op2);
+    case Token::LT: return (op1 < op2);
+    case Token::GT: return (op1 > op2);
+    case Token::LTE: return (op1 <= op2);
+    case Token::GTE: return (op1 >= op2);
+    default:
+      UNREACHABLE();
+      return false;
+  }
 }
 
 

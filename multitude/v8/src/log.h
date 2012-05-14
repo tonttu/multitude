@@ -1,4 +1,4 @@
-// Copyright 2011 the V8 project authors. All rights reserved.
+// Copyright 2012 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -29,6 +29,7 @@
 #define V8_LOG_H_
 
 #include "allocation.h"
+#include "objects.h"
 #include "platform.h"
 #include "log-utils.h"
 
@@ -70,7 +71,6 @@ namespace internal {
 // tick profiler requires code events, so --prof implies --log-code.
 
 // Forward declarations.
-class HashMap;
 class LogMessageBuilder;
 class Profiler;
 class Semaphore;
@@ -149,14 +149,14 @@ class Logger {
 #undef DECLARE_ENUM
 
   // Acquires resources for logging if the right flags are set.
-  bool Setup();
+  bool SetUp();
 
   void EnsureTickerStarted();
   void EnsureTickerStopped();
 
   Sampler* sampler();
 
-  // Frees resources acquired in Setup.
+  // Frees resources acquired in SetUp.
   // When a temporary file is used for the log, returns its stream descriptor,
   // leaving the file open.
   FILE* TearDown();
@@ -281,6 +281,8 @@ class Logger {
   void ResumeProfiler();
   bool IsProfilerPaused();
 
+  void LogExistingFunction(Handle<SharedFunctionInfo> shared,
+                           Handle<Code> code);
   // Logs all compiled functions found in the heap.
   void LogCompiledFunctions();
   // Logs all accessor callbacks found in the heap.
@@ -292,7 +294,13 @@ class Logger {
   INLINE(static LogEventsAndTags ToNativeByScript(LogEventsAndTags, Script*));
 
   // Profiler's sampling interval (in milliseconds).
+#if defined(ANDROID)
+  // Phones and tablets have processors that are much slower than desktop
+  // and laptop computers for which current heuristics are tuned.
+  static const int kSamplingIntervalMs = 5;
+#else
   static const int kSamplingIntervalMs = 1;
+#endif
 
   // Callback from Log, stops profiling in case of insufficient resources.
   void LogFailure();
@@ -402,7 +410,7 @@ class Logger {
   NameMap* address_to_name_map_;
 
   // Guards against multiple calls to TearDown() that can happen in some tests.
-  // 'true' between Setup() and TearDown().
+  // 'true' between SetUp() and TearDown().
   bool is_initialized_;
 
   // Support for 'incremental addresses' in compressed logs:
@@ -429,6 +437,8 @@ class SamplerRegistry : public AllStatic {
     HAS_CPU_PROFILING_SAMPLERS
   };
 
+  static void SetUp();
+
   typedef void (*VisitSampler)(Sampler*, void*);
 
   static State GetState();
@@ -446,7 +456,6 @@ class SamplerRegistry : public AllStatic {
     return active_samplers_ != NULL && !active_samplers_->is_empty();
   }
 
-  static Mutex* mutex_;  // Protects the state below.
   static List<Sampler*>* active_samplers_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(SamplerRegistry);

@@ -1,4 +1,4 @@
-// Copyright 2011 the V8 project authors. All rights reserved.
+// Copyright 2012 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -29,6 +29,7 @@
 #define V8_TYPE_INFO_H_
 
 #include "allocation.h"
+#include "ast.h"
 #include "globals.h"
 #include "zone-inl.h"
 
@@ -64,6 +65,8 @@ class TypeInfo {
   static TypeInfo Integer32() { return TypeInfo(kInteger32); }
   // We know it's a Smi.
   static TypeInfo Smi() { return TypeInfo(kSmi); }
+  // We know it's a Symbol.
+  static TypeInfo Symbol() { return TypeInfo(kSymbol); }
   // We know it's a heap number.
   static TypeInfo Double() { return TypeInfo(kDouble); }
   // We know it's a string.
@@ -137,6 +140,16 @@ class TypeInfo {
     return ((type_ & kSmi) == kSmi);
   }
 
+  inline bool IsSymbol() {
+    ASSERT(type_ != kUninitialized);
+    return ((type_ & kSymbol) == kSymbol);
+  }
+
+  inline bool IsNonSymbol() {
+    ASSERT(type_ != kUninitialized);
+    return ((type_ & kSymbol) == kString);
+  }
+
   inline bool IsInteger32() {
     ASSERT(type_ != kUninitialized);
     return ((type_ & kInteger32) == kInteger32);
@@ -168,6 +181,7 @@ class TypeInfo {
       case kNumber: return "Number";
       case kInteger32: return "Integer32";
       case kSmi: return "Smi";
+      case kSymbol: return "Symbol";
       case kDouble: return "Double";
       case kString: return "String";
       case kNonPrimitive: return "Object";
@@ -186,6 +200,7 @@ class TypeInfo {
     kSmi = 0x17,           // 0010111
     kDouble = 0x19,        // 0011001
     kString = 0x30,        // 0110000
+    kSymbol = 0x32,        // 0110010
     kNonPrimitive = 0x40,  // 1000000
     kUninitialized = 0x7f  // 1111111
   };
@@ -203,38 +218,64 @@ enum StringStubFeedback {
 
 // Forward declarations.
 class Assignment;
-class UnaryOperation;
 class BinaryOperation;
 class Call;
-class CompareOperation;
-class CountOperation;
-class CompilationInfo;
-class Property;
+class CallNew;
 class CaseClause;
+class CompareOperation;
+class CompilationInfo;
+class CountOperation;
+class Expression;
+class Property;
+class SmallMapList;
+class UnaryOperation;
+class ForInStatement;
+
 
 class TypeFeedbackOracle BASE_EMBEDDED {
  public:
-  TypeFeedbackOracle(Handle<Code> code, Handle<Context> global_context);
+  TypeFeedbackOracle(Handle<Code> code,
+                     Handle<Context> global_context,
+                     Isolate* isolate);
 
   bool LoadIsMonomorphicNormal(Property* expr);
+  bool LoadIsUninitialized(Property* expr);
   bool LoadIsMegamorphicWithTypeInfo(Property* expr);
   bool StoreIsMonomorphicNormal(Expression* expr);
   bool StoreIsMegamorphicWithTypeInfo(Expression* expr);
   bool CallIsMonomorphic(Call* expr);
+  bool CallNewIsMonomorphic(CallNew* expr);
+  bool ObjectLiteralStoreIsMonomorphic(ObjectLiteral::Property* prop);
+
+  bool IsForInFastCase(ForInStatement* expr);
 
   Handle<Map> LoadMonomorphicReceiverType(Property* expr);
   Handle<Map> StoreMonomorphicReceiverType(Expression* expr);
 
-  ZoneMapList* LoadReceiverTypes(Property* expr, Handle<String> name);
-  ZoneMapList* StoreReceiverTypes(Assignment* expr, Handle<String> name);
-  ZoneMapList* CallReceiverTypes(Call* expr,
-                                 Handle<String> name,
-                                 CallKind call_kind);
+  void LoadReceiverTypes(Property* expr,
+                         Handle<String> name,
+                         SmallMapList* types);
+  void StoreReceiverTypes(Assignment* expr,
+                          Handle<String> name,
+                          SmallMapList* types);
+  void CallReceiverTypes(Call* expr,
+                         Handle<String> name,
+                         CallKind call_kind,
+                         SmallMapList* types);
   void CollectKeyedReceiverTypes(unsigned ast_id,
-                                 ZoneMapList* types);
+                                 SmallMapList* types);
+
+  static bool CanRetainOtherContext(Map* map, Context* global_context);
+  static bool CanRetainOtherContext(JSFunction* function,
+                                    Context* global_context);
 
   CheckType GetCallCheckType(Call* expr);
   Handle<JSObject> GetPrototypeForPrimitiveCheck(CheckType check);
+
+  Handle<JSFunction> GetCallTarget(Call* expr);
+  Handle<JSFunction> GetCallNewTarget(CallNew* expr);
+
+  Handle<Map> GetObjectLiteralStoreMap(ObjectLiteral::Property* prop);
 
   bool LoadIsBuiltin(Property* expr, Builtins::Name id);
 
@@ -248,13 +289,15 @@ class TypeFeedbackOracle BASE_EMBEDDED {
   TypeInfo BinaryType(BinaryOperation* expr);
   TypeInfo CompareType(CompareOperation* expr);
   bool IsSymbolCompare(CompareOperation* expr);
+  Handle<Map> GetCompareMap(CompareOperation* expr);
   TypeInfo SwitchType(CaseClause* clause);
   TypeInfo IncrementType(CountOperation* expr);
 
  private:
-  ZoneMapList* CollectReceiverTypes(unsigned ast_id,
-                                    Handle<String> name,
-                                    Code::Flags flags);
+  void CollectReceiverTypes(unsigned ast_id,
+                            Handle<String> name,
+                            Code::Flags flags,
+                            SmallMapList* types);
 
   void SetInfo(unsigned ast_id, Object* target);
 
@@ -265,14 +308,15 @@ class TypeFeedbackOracle BASE_EMBEDDED {
                           byte* old_start,
                           byte* new_start);
   void ProcessRelocInfos(ZoneList<RelocInfo>* infos);
-  void ProcessTarget(unsigned ast_id, Code* target);
+  void ProcessTypeFeedbackCells(Handle<Code> code);
 
   // Returns an element from the backing store. Returns undefined if
   // there is no information.
   Handle<Object> GetInfo(unsigned ast_id);
 
   Handle<Context> global_context_;
-  Handle<NumberDictionary> dictionary_;
+  Isolate* isolate_;
+  Handle<UnseededNumberDictionary> dictionary_;
 
   DISALLOW_COPY_AND_ASSIGN(TypeFeedbackOracle);
 };

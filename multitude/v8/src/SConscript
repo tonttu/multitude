@@ -1,4 +1,4 @@
-# Copyright 2011 the V8 project authors. All rights reserved.
+# Copyright 2012 the V8 project authors. All rights reserved.
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
@@ -32,6 +32,7 @@ sys.path.append(join(root_dir, 'tools'))
 import js2c
 Import('context')
 Import('tools')
+Import('d8_env')
 
 
 SOURCES = {
@@ -58,6 +59,7 @@ SOURCES = {
     counters.cc
     cpu-profiler.cc
     data-flow.cc
+    date.cc
     dateparser.cc
     debug-agent.cc
     debug.cc
@@ -65,6 +67,7 @@ SOURCES = {
     disassembler.cc
     diy-fp.cc
     dtoa.cc
+    elements.cc
     execution.cc
     factory.cc
     flags.cc
@@ -76,12 +79,13 @@ SOURCES = {
     fast-dtoa.cc
     fixed-dtoa.cc
     handles.cc
-    hashmap.cc
     heap-profiler.cc
     heap.cc
     hydrogen.cc
     hydrogen-instructions.cc
     ic.cc
+    incremental-marking.cc
+    interface.cc
     inspector.cc
     interpreter-irregexp.cc
     isolate.cc
@@ -97,6 +101,7 @@ SOURCES = {
     objects.cc
     objects-printer.cc
     objects-visiting.cc
+    once.cc
     parser.cc
     preparser.cc
     preparse-data.cc
@@ -109,8 +114,8 @@ SOURCES = {
     runtime.cc
     runtime-profiler.cc
     safepoint-table.cc
-    scanner-base.cc
     scanner.cc
+    scanner-character-streams.cc
     scopeinfo.cc
     scopes.cc
     serialize.cc
@@ -131,6 +136,7 @@ SOURCES = {
     v8utils.cc
     variables.cc
     version.cc
+    store-buffer.cc
     zone.cc
     extensions/gc-extension.cc
     extensions/externalize-string-extension.cc
@@ -168,6 +174,9 @@ SOURCES = {
     mips/frames-mips.cc
     mips/full-codegen-mips.cc
     mips/ic-mips.cc
+    mips/lithium-codegen-mips.cc
+    mips/lithium-gap-resolver-mips.cc
+    mips/lithium-mips.cc
     mips/macro-assembler-mips.cc
     mips/regexp-macro-assembler-mips.cc
     mips/stub-cache-mips.cc
@@ -220,7 +229,7 @@ SOURCES = {
   'os:solaris': ['platform-solaris.cc', 'platform-posix.cc'],
   'os:cygwin':  ['platform-cygwin.cc', 'platform-posix.cc'],
   'os:nullos':  ['platform-nullos.cc'],
-  'os:win32':   ['platform-win32.cc'],
+  'os:win32':   ['platform-win32.cc', 'win32-math.cc'],
   'mode:release': [],
   'mode:debug': [
     'objects-debug.cc', 'prettyprinter.cc', 'regexp-macro-assembler-tracer.cc'
@@ -231,15 +240,24 @@ SOURCES = {
 PREPARSER_SOURCES = {
   'all': Split("""
     allocation.cc
-    hashmap.cc
+    bignum.cc
+    bignum-dtoa.cc
+    cached-powers.cc
+    conversions.cc
+    diy-fp.cc
+    dtoa.cc
+    fast-dtoa.cc
+    fixed-dtoa.cc
     preparse-data.cc
     preparser.cc
     preparser-api.cc
-    scanner-base.cc
+    scanner.cc
+    strtod.cc
     token.cc
     unicode.cc
     utils.cc
-    """)
+    """),
+  'os:win32': ['win32-math.cc']
 }
 
 
@@ -307,6 +325,7 @@ debug-debugger.js
 
 EXPERIMENTAL_LIBRARY_FILES = '''
 proxy.js
+collection.js
 '''.split()
 
 
@@ -338,7 +357,7 @@ def ConfigureObjectFiles():
   else:
     d8_files = context.GetRelevantSources(D8_FULL_FILES)
     d8_objs = [d8_js_obj]
-  d8_objs.append(context.ConfigureObject(env, [d8_files]))
+  d8_objs.append(context.ConfigureObject(d8_env, [d8_files]))
 
   # Combine the JavaScript library files into a single C++ file and
   # compile it.

@@ -58,10 +58,13 @@ StaticVisitorBase::VisitorId StaticVisitorBase::GetVisitorId(
           return kVisitConsString;
         }
 
+      case kSlicedStringTag:
+        return kVisitSlicedString;
+
       case kExternalStringTag:
         return GetVisitorIdForSize(kVisitDataObject,
                                    kVisitDataObjectGeneric,
-                                   ExternalString::kSize);
+                                   instance_size);
     }
     UNREACHABLE();
   }
@@ -69,6 +72,9 @@ StaticVisitorBase::VisitorId StaticVisitorBase::GetVisitorId(
   switch (instance_type) {
     case BYTE_ARRAY_TYPE:
       return kVisitByteArray;
+
+    case FREE_SPACE_TYPE:
+      return kVisitFreeSpace;
 
     case FIXED_ARRAY_TYPE:
       return kVisitFixedArray;
@@ -88,6 +94,19 @@ StaticVisitorBase::VisitorId StaticVisitorBase::GetVisitorId(
     case JS_GLOBAL_PROPERTY_CELL_TYPE:
       return kVisitPropertyCell;
 
+    case JS_SET_TYPE:
+      return GetVisitorIdForSize(kVisitStruct,
+                                 kVisitStructGeneric,
+                                 JSSet::kSize);
+
+    case JS_MAP_TYPE:
+      return GetVisitorIdForSize(kVisitStruct,
+                                 kVisitStructGeneric,
+                                 JSMap::kSize);
+
+    case JS_WEAK_MAP_TYPE:
+      return kVisitJSWeakMap;
+
     case JS_REGEXP_TYPE:
       return kVisitJSRegExp;
 
@@ -99,6 +118,11 @@ StaticVisitorBase::VisitorId StaticVisitorBase::GetVisitorId(
                                  kVisitStructGeneric,
                                  JSProxy::kSize);
 
+    case JS_FUNCTION_PROXY_TYPE:
+      return GetVisitorIdForSize(kVisitStruct,
+                                 kVisitStructGeneric,
+                                 JSFunctionProxy::kSize);
+
     case FOREIGN_TYPE:
       return GetVisitorIdForSize(kVisitDataObject,
                                  kVisitDataObjectGeneric,
@@ -109,7 +133,9 @@ StaticVisitorBase::VisitorId StaticVisitorBase::GetVisitorId(
 
     case JS_OBJECT_TYPE:
     case JS_CONTEXT_EXTENSION_OBJECT_TYPE:
+    case JS_MODULE_TYPE:
     case JS_VALUE_TYPE:
+    case JS_DATE_TYPE:
     case JS_ARRAY_TYPE:
     case JS_GLOBAL_PROXY_TYPE:
     case JS_GLOBAL_OBJECT_TYPE:

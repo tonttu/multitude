@@ -1,4 +1,4 @@
-// Copyright 2011 the V8 project authors. All rights reserved.
+// Copyright 2012 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -28,8 +28,19 @@
 #ifndef V8_PREPARSER_H
 #define V8_PREPARSER_H
 
+#include "hashmap.h"
+#include "token.h"
+#include "scanner.h"
+
 namespace v8 {
+
+namespace internal {
+class UnicodeCache;
+}
+
 namespace preparser {
+
+typedef uint8_t byte;
 
 // Preparsing checks a JavaScript program and emits preparse-data that helps
 // a later parsing to be faster.
@@ -46,6 +57,53 @@ namespace preparser {
 
 namespace i = v8::internal;
 
+class DuplicateFinder {
+ public:
+  explicit DuplicateFinder(i::UnicodeCache* constants)
+      : unicode_constants_(constants),
+        backing_store_(16),
+        map_(&Match) { }
+
+  int AddAsciiSymbol(i::Vector<const char> key, int value);
+  int AddUtf16Symbol(i::Vector<const uint16_t> key, int value);
+  // Add a a number literal by converting it (if necessary)
+  // to the string that ToString(ToNumber(literal)) would generate.
+  // and then adding that string with AddAsciiSymbol.
+  // This string is the actual value used as key in an object literal,
+  // and the one that must be different from the other keys.
+  int AddNumber(i::Vector<const char> key, int value);
+
+ private:
+  int AddSymbol(i::Vector<const byte> key, bool is_ascii, int value);
+  // Backs up the key and its length in the backing store.
+  // The backup is stored with a base 127 encoding of the
+  // length (plus a bit saying whether the string is ASCII),
+  // followed by the bytes of the key.
+  byte* BackupKey(i::Vector<const byte> key, bool is_ascii);
+
+  // Compare two encoded keys (both pointing into the backing store)
+  // for having the same base-127 encoded lengths and ASCII-ness,
+  // and then having the same 'length' bytes following.
+  static bool Match(void* first, void* second);
+  // Creates a hash from a sequence of bytes.
+  static uint32_t Hash(i::Vector<const byte> key, bool is_ascii);
+  // Checks whether a string containing a JS number is its canonical
+  // form.
+  static bool IsNumberCanonical(i::Vector<const char> key);
+
+  // Size of buffer. Sufficient for using it to call DoubleToCString in
+  // from conversions.h.
+  static const int kBufferSize = 100;
+
+  i::UnicodeCache* unicode_constants_;
+  // Backing store used to store strings used as hashmap keys.
+  i::SequenceCollector<unsigned char> backing_store_;
+  i::HashMap map_;
+  // Buffer used for string->number->canonical string conversions.
+  char number_buffer_[kBufferSize];
+};
+
+
 class PreParser {
  public:
   enum PreParseResult {
@@ -53,20 +111,94 @@ class PreParser {
     kPreParseSuccess
   };
 
-  ~PreParser() { }
+
+  PreParser(i::Scanner* scanner,
+            i::ParserRecorder* log,
+            uintptr_t stack_limit,
+            bool allow_lazy,
+            bool allow_natives_syntax,
+            bool allow_modules)
+      : scanner_(scanner),
+        log_(log),
+        scope_(NULL),
+        stack_limit_(stack_limit),
+        strict_mode_violation_location_(i::Scanner::Location::invalid()),
+        strict_mode_violation_type_(NULL),
+        stack_overflow_(false),
+        allow_lazy_(allow_lazy),
+        allow_modules_(allow_modules),
+        allow_natives_syntax_(allow_natives_syntax),
+        parenthesized_function_(false),
+        harmony_scoping_(scanner->HarmonyScoping()) { }
+
+  ~PreParser() {}
 
   // Pre-parse the program from the character stream; returns true on
   // success (even if parsing failed, the pre-parse data successfully
   // captured the syntax error), and false if a stack-overflow happened
   // during parsing.
-  static PreParseResult PreParseProgram(i::JavaScriptScanner* scanner,
+  static PreParseResult PreParseProgram(i::Scanner* scanner,
                                         i::ParserRecorder* log,
-                                        bool allow_lazy,
+                                        int flags,
                                         uintptr_t stack_limit) {
-    return PreParser(scanner, log, stack_limit, allow_lazy).PreParse();
+    bool allow_lazy = (flags & i::kAllowLazy) != 0;
+    bool allow_natives_syntax = (flags & i::kAllowNativesSyntax) != 0;
+    bool allow_modules = (flags & i::kAllowModules) != 0;
+    return PreParser(scanner, log, stack_limit, allow_lazy,
+                     allow_natives_syntax, allow_modules).PreParse();
   }
 
+  // Parses a single function literal, from the opening parentheses before
+  // parameters to the closing brace after the body.
+  // Returns a FunctionEntry describing the body of the funciton in enough
+  // detail that it can be lazily compiled.
+  // The scanner is expected to have matched the "function" keyword and
+  // parameters, and have consumed the initial '{'.
+  // At return, unless an error occured, the scanner is positioned before the
+  // the final '}'.
+  PreParseResult PreParseLazyFunction(i::LanguageMode mode,
+                                      i::ParserRecorder* log);
+
  private:
+  // Used to detect duplicates in object literals. Each of the values
+  // kGetterProperty, kSetterProperty and kValueProperty represents
+  // a type of object literal property. When parsing a property, its
+  // type value is stored in the DuplicateFinder for the property name.
+  // Values are chosen so that having intersection bits means the there is
+  // an incompatibility.
+  // I.e., you can add a getter to a property that already has a setter, since
+  // kGetterProperty and kSetterProperty doesn't intersect, but not if it
+  // already has a getter or a value. Adding the getter to an existing
+  // setter will store the value (kGetterProperty | kSetterProperty), which
+  // is incompatible with adding any further properties.
+  enum PropertyType {
+    kNone = 0,
+    // Bit patterns representing different object literal property types.
+    kGetterProperty = 1,
+    kSetterProperty = 2,
+    kValueProperty = 7,
+    // Helper constants.
+    kValueFlag = 4
+  };
+
+  // Checks the type of conflict based on values coming from PropertyType.
+  bool HasConflict(int type1, int type2) { return (type1 & type2) != 0; }
+  bool IsDataDataConflict(int type1, int type2) {
+    return ((type1 & type2) & kValueFlag) != 0;
+  }
+  bool IsDataAccessorConflict(int type1, int type2) {
+    return ((type1 ^ type2) & kValueFlag) != 0;
+  }
+  bool IsAccessorAccessorConflict(int type1, int type2) {
+    return ((type1 | type2) & kValueFlag) == 0;
+  }
+
+
+  void CheckDuplicate(DuplicateFinder* finder,
+                      i::Token::Value property,
+                      int type,
+                      bool* ok);
+
   // These types form an algebra over syntactic categories that is just
   // rich enough to let us recognize and propagate the constructs that
   // are either being counted in the preparser data, or is important
@@ -75,6 +207,18 @@ class PreParser {
   enum ScopeType {
     kTopLevelScope,
     kFunctionScope
+  };
+
+  enum VariableDeclarationContext {
+    kSourceElement,
+    kStatement,
+    kForStatement
+  };
+
+  // If a list of variable declarations includes any initializers.
+  enum VariableDeclarationProperties {
+    kHasInitializers,
+    kHasNoInitializers
   };
 
   class Expression;
@@ -306,7 +450,8 @@ class PreParser {
           materialized_literal_count_(0),
           expected_properties_(0),
           with_nesting_count_(0),
-          strict_((prev_ != NULL) && prev_->is_strict()) {
+          language_mode_(
+              (prev_ != NULL) ? prev_->language_mode() : i::CLASSIC_MODE) {
       *variable = this;
     }
     ~Scope() { *variable_ = prev_; }
@@ -316,10 +461,28 @@ class PreParser {
     int expected_properties() { return expected_properties_; }
     int materialized_literal_count() { return materialized_literal_count_; }
     bool IsInsideWith() { return with_nesting_count_ != 0; }
-    bool is_strict() { return strict_; }
-    void set_strict() { strict_ = true; }
-    void EnterWith() { with_nesting_count_++; }
-    void LeaveWith() { with_nesting_count_--; }
+    bool is_classic_mode() {
+      return language_mode_ == i::CLASSIC_MODE;
+    }
+    i::LanguageMode language_mode() {
+      return language_mode_;
+    }
+    void set_language_mode(i::LanguageMode language_mode) {
+      language_mode_ = language_mode;
+    }
+
+    class InsideWith {
+     public:
+      explicit InsideWith(Scope* scope) : scope_(scope) {
+        scope->with_nesting_count_++;
+      }
+
+      ~InsideWith() { scope_->with_nesting_count_--; }
+
+     private:
+      Scope* scope_;
+      DISALLOW_COPY_AND_ASSIGN(InsideWith);
+    };
 
    private:
     Scope** const variable_;
@@ -328,23 +491,8 @@ class PreParser {
     int materialized_literal_count_;
     int expected_properties_;
     int with_nesting_count_;
-    bool strict_;
+    i::LanguageMode language_mode_;
   };
-
-  // Private constructor only used in PreParseProgram.
-  PreParser(i::JavaScriptScanner* scanner,
-            i::ParserRecorder* log,
-            uintptr_t stack_limit,
-            bool allow_lazy)
-      : scanner_(scanner),
-        log_(log),
-        scope_(NULL),
-        stack_limit_(stack_limit),
-        strict_mode_violation_location_(i::Scanner::Location::invalid()),
-        strict_mode_violation_type_(NULL),
-        stack_overflow_(false),
-        allow_lazy_(true),
-        parenthesized_function_(false) { }
 
   // Preparse the program. Only called in PreParseProgram after creating
   // the instance.
@@ -356,7 +504,7 @@ class PreParser {
     if (stack_overflow_) return kPreParseStackOverflow;
     if (!ok) {
       ReportUnexpectedToken(scanner_->current_token());
-    } else if (scope_->is_strict()) {
+    } else if (!scope_->is_classic_mode()) {
       CheckOctalLiteral(start_position, scanner_->location().end_pos, &ok);
     }
     return kPreParseSuccess;
@@ -364,6 +512,11 @@ class PreParser {
 
   // Report syntax error
   void ReportUnexpectedToken(i::Token::Value token);
+  void ReportMessageAt(i::Scanner::Location location,
+                       const char* type,
+                       const char* name_opt) {
+    log_->LogMessage(location.beg_pos, location.end_pos, type, name_opt);
+  }
   void ReportMessageAt(int start_pos,
                        int end_pos,
                        const char* type,
@@ -377,12 +530,17 @@ class PreParser {
   // which is set to false if parsing failed; it is unchanged otherwise.
   // By making the 'exception handling' explicit, we are forced to check
   // for failure at the call sites.
+  Statement ParseSourceElement(bool* ok);
   SourceElements ParseSourceElements(int end_token, bool* ok);
   Statement ParseStatement(bool* ok);
   Statement ParseFunctionDeclaration(bool* ok);
   Statement ParseBlock(bool* ok);
-  Statement ParseVariableStatement(bool* ok);
-  Statement ParseVariableDeclarations(bool accept_IN, int* num_decl, bool* ok);
+  Statement ParseVariableStatement(VariableDeclarationContext var_context,
+                                   bool* ok);
+  Statement ParseVariableDeclarations(VariableDeclarationContext var_context,
+                                      VariableDeclarationProperties* decl_props,
+                                      int* num_decl,
+                                      bool* ok);
   Statement ParseExpressionOrLabelledStatement(bool* ok);
   Statement ParseIfStatement(bool* ok);
   Statement ParseContinueStatement(bool* ok);
@@ -415,6 +573,7 @@ class PreParser {
 
   Arguments ParseArguments(bool* ok);
   Expression ParseFunctionLiteral(bool* ok);
+  void ParseLazyFunctionLiteralBody(bool* ok);
 
   Identifier ParseIdentifier(bool* ok);
   Identifier ParseIdentifierName(bool* ok);
@@ -450,11 +609,19 @@ class PreParser {
 
   bool peek_any_identifier();
 
-  void set_strict_mode() {
-    scope_->set_strict();
+  void set_language_mode(i::LanguageMode language_mode) {
+    scope_->set_language_mode(language_mode);
   }
 
-  bool strict_mode() { return scope_->is_strict(); }
+  bool is_classic_mode() {
+    return scope_->language_mode() == i::CLASSIC_MODE;
+  }
+
+  bool is_extended_mode() {
+    return scope_->language_mode() == i::EXTENDED_MODE;
+  }
+
+  i::LanguageMode language_mode() { return scope_->language_mode(); }
 
   void Consume(i::Token::Value token) { Next(); }
 
@@ -478,7 +645,7 @@ class PreParser {
 
   void SetStrictModeViolation(i::Scanner::Location,
                               const char* type,
-                              bool *ok);
+                              bool* ok);
 
   void CheckDelayedStrictModeViolation(int beg_pos, int end_pos, bool* ok);
 
@@ -487,7 +654,7 @@ class PreParser {
                                      Identifier identifier,
                                      bool* ok);
 
-  i::JavaScriptScanner* scanner_;
+  i::Scanner* scanner_;
   i::ParserRecorder* log_;
   Scope* scope_;
   uintptr_t stack_limit_;
@@ -495,7 +662,10 @@ class PreParser {
   const char* strict_mode_violation_type_;
   bool stack_overflow_;
   bool allow_lazy_;
+  bool allow_modules_;
+  bool allow_natives_syntax_;
   bool parenthesized_function_;
+  bool harmony_scoping_;
 };
 } }  // v8::preparser
 

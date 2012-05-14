@@ -29,6 +29,7 @@
 #define V8_VARIABLES_H_
 
 #include "zone.h"
+#include "interface.h"
 
 namespace v8 {
 namespace internal {
@@ -40,50 +41,49 @@ namespace internal {
 
 class Variable: public ZoneObject {
  public:
-  enum Mode {
-    // User declared variables:
-    VAR,       // declared via 'var', and 'function' declarations
-
-    CONST,     // declared via 'const' declarations
-
-    // Variables introduced by the compiler:
-    DYNAMIC,         // always require dynamic lookup (we don't know
-                     // the declaration)
-
-    DYNAMIC_GLOBAL,  // requires dynamic lookup, but we know that the
-                     // variable is global unless it has been shadowed
-                     // by an eval-introduced variable
-
-    DYNAMIC_LOCAL,   // requires dynamic lookup, but we know that the
-                     // variable is local and where it is unless it
-                     // has been shadowed by an eval-introduced
-                     // variable
-
-    INTERNAL,        // like VAR, but not user-visible (may or may not
-                     // be in a context)
-
-    TEMPORARY        // temporary variables (not user-visible), never
-                     // in a context
-  };
-
   enum Kind {
     NORMAL,
     THIS,
     ARGUMENTS
   };
 
+  enum Location {
+    // Before and during variable allocation, a variable whose location is
+    // not yet determined.  After allocation, a variable looked up as a
+    // property on the global object (and possibly absent).  name() is the
+    // variable name, index() is invalid.
+    UNALLOCATED,
+
+    // A slot in the parameter section on the stack.  index() is the
+    // parameter index, counting left-to-right.  The reciever is index -1;
+    // the first parameter is index 0.
+    PARAMETER,
+
+    // A slot in the local section on the stack.  index() is the variable
+    // index in the stack frame, starting at 0.
+    LOCAL,
+
+    // An indexed slot in a heap context.  index() is the variable index in
+    // the context object on the heap, starting at 0.  scope() is the
+    // corresponding scope.
+    CONTEXT,
+
+    // A named slot in a heap context.  name() is the variable name in the
+    // context object on the heap, with lookup starting at the current
+    // context.  index() is invalid.
+    LOOKUP
+  };
+
   Variable(Scope* scope,
            Handle<String> name,
-           Mode mode,
+           VariableMode mode,
            bool is_valid_lhs,
-           Kind kind);
+           Kind kind,
+           InitializationFlag initialization_flag,
+           Interface* interface = Interface::NewValue());
 
   // Printing support
-  static const char* Mode2String(Mode mode);
-
-  // Type testing & conversion.  Global variables are not slots.
-  Property* AsProperty() const;
-  Slot* AsSlot() const;
+  static const char* Mode2String(VariableMode mode);
 
   bool IsValidLeftHandSide() { return is_valid_LHS_; }
 
@@ -94,29 +94,42 @@ class Variable: public ZoneObject {
   Scope* scope() const { return scope_; }
 
   Handle<String> name() const { return name_; }
-  Mode mode() const { return mode_; }
-  bool is_accessed_from_inner_scope() const {
-    return is_accessed_from_inner_scope_;
+  VariableMode mode() const { return mode_; }
+  bool has_forced_context_allocation() const {
+    return force_context_allocation_;
   }
-  void MarkAsAccessedFromInnerScope() {
-    is_accessed_from_inner_scope_ = true;
+  void ForceContextAllocation() {
+    ASSERT(mode_ != TEMPORARY);
+    force_context_allocation_ = true;
   }
   bool is_used() { return is_used_; }
   void set_is_used(bool flag) { is_used_ = flag; }
+
+  int initializer_position() { return initializer_position_; }
+  void set_initializer_position(int pos) { initializer_position_ = pos; }
 
   bool IsVariable(Handle<String> n) const {
     return !is_this() && name().is_identical_to(n);
   }
 
-  bool IsStackAllocated() const;
-  bool IsParameter() const;  // Includes 'this'.
-  bool IsStackLocal() const;
-  bool IsContextSlot() const;
+  bool IsUnallocated() const { return location_ == UNALLOCATED; }
+  bool IsParameter() const { return location_ == PARAMETER; }
+  bool IsStackLocal() const { return location_ == LOCAL; }
+  bool IsStackAllocated() const { return IsParameter() || IsStackLocal(); }
+  bool IsContextSlot() const { return location_ == CONTEXT; }
+  bool IsLookupSlot() const { return location_ == LOOKUP; }
 
   bool is_dynamic() const {
     return (mode_ == DYNAMIC ||
             mode_ == DYNAMIC_GLOBAL ||
             mode_ == DYNAMIC_LOCAL);
+  }
+  bool is_const_mode() const {
+    return (mode_ == CONST ||
+            mode_ == CONST_HARMONY);
+  }
+  bool binding_needs_init() const {
+    return initialization_flag_ == kNeedsInitialization;
   }
 
   bool is_global() const;
@@ -125,8 +138,7 @@ class Variable: public ZoneObject {
 
   // True if the variable is named eval and not known to be shadowed.
   bool is_possibly_eval() const {
-    return IsVariable(FACTORY->eval_symbol()) &&
-        (mode_ == DYNAMIC || mode_ == DYNAMIC_GLOBAL);
+    return IsVariable(FACTORY->eval_symbol());
   }
 
   Variable* local_if_not_shadowed() const {
@@ -138,26 +150,45 @@ class Variable: public ZoneObject {
     local_if_not_shadowed_ = local;
   }
 
-  Slot* rewrite() const { return rewrite_; }
-  void set_rewrite(Slot* slot) { rewrite_ = slot; }
+  Location location() const { return location_; }
+  int index() const { return index_; }
+  InitializationFlag initialization_flag() const {
+    return initialization_flag_;
+  }
+  Interface* interface() const { return interface_; }
+
+  void AllocateTo(Location location, int index) {
+    location_ = location;
+    index_ = index;
+  }
+
+  static int CompareIndex(Variable* const* v, Variable* const* w);
 
  private:
   Scope* scope_;
   Handle<String> name_;
-  Mode mode_;
+  VariableMode mode_;
   Kind kind_;
+  Location location_;
+  int index_;
+  int initializer_position_;
 
+  // If this field is set, this variable references the stored locally bound
+  // variable, but it might be shadowed by variable bindings introduced by
+  // non-strict 'eval' calls between the reference scope (inclusive) and the
+  // binding scope (exclusive).
   Variable* local_if_not_shadowed_;
-
-  // Code generation.
-  Slot* rewrite_;
 
   // Valid as a LHS? (const and this are not valid LHS, for example)
   bool is_valid_LHS_;
 
   // Usage info.
-  bool is_accessed_from_inner_scope_;  // set by variable resolver
+  bool force_context_allocation_;  // set by variable resolver
   bool is_used_;
+  InitializationFlag initialization_flag_;
+
+  // Module type info.
+  Interface* interface_;
 };
 
 

@@ -34,7 +34,7 @@ namespace v8 {
 namespace internal {
 
 
-const char* Log::kLogToTemporaryFile = "&";
+const char* const Log::kLogToTemporaryFile = "&";
 
 
 Log::Log(Logger* logger)
@@ -125,7 +125,7 @@ void Log::Initialize() {
             stream.Put(*p);
           }
         }
-        SmartPointer<const char> expanded = stream.ToCString();
+        SmartArrayPointer<const char> expanded = stream.ToCString();
         OpenFile(*expanded);
       } else {
         OpenFile(FLAG_logfile);

@@ -191,6 +191,7 @@ bool Instruction::IsLinkingInstruction() const {
   const int op = OpcodeFieldRaw();
   switch (op) {
     case JAL:
+      return true;
     case REGIMM:
       switch (RtFieldRaw()) {
         case BGEZAL:
@@ -272,7 +273,7 @@ Instruction::Type Instruction::InstructionType() const {
         case MOVCI:
           return kRegisterType;
         default:
-          UNREACHABLE();
+          return kUnsupported;
       };
       break;
     case SPECIAL2:
@@ -281,7 +282,7 @@ Instruction::Type Instruction::InstructionType() const {
         case CLZ:
           return kRegisterType;
         default:
-          UNREACHABLE();
+          return kUnsupported;
       };
       break;
     case SPECIAL3:
@@ -290,7 +291,7 @@ Instruction::Type Instruction::InstructionType() const {
         case EXT:
           return kRegisterType;
         default:
-          UNREACHABLE();
+          return kUnsupported;
       };
       break;
     case COP1:    // Coprocessor instructions.
@@ -301,7 +302,7 @@ Instruction::Type Instruction::InstructionType() const {
           return kRegisterType;
       };
       break;
-    // 16 bits Immediate type instructions. eg: addi dest, src, imm16.
+    // 16 bits Immediate type instructions. e.g.: addi dest, src, imm16.
     case REGIMM:
     case BEQ:
     case BNE:
@@ -336,12 +337,12 @@ Instruction::Type Instruction::InstructionType() const {
     case SWC1:
     case SDC1:
       return kImmediateType;
-    // 26 bits immediate type instructions. eg: j imm26.
+    // 26 bits immediate type instructions. e.g.: j imm26.
     case J:
     case JAL:
       return kJumpType;
     default:
-      UNREACHABLE();
+      return kUnsupported;
   };
   return kUnsupported;
 }

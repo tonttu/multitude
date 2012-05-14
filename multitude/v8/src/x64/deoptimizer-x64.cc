@@ -1,4 +1,4 @@
-// Copyright 2011 the V8 project authors. All rights reserved.
+// Copyright 2012 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -38,71 +38,11 @@ namespace v8 {
 namespace internal {
 
 
-int Deoptimizer::table_entry_size_ = 10;
+const int Deoptimizer::table_entry_size_ = 10;
 
 
 int Deoptimizer::patch_size() {
-  return MacroAssembler::kCallInstructionLength;
-}
-
-
-#ifdef DEBUG
-// Overwrites code with int3 instructions.
-static void ZapCodeRange(Address from, Address to) {
-  CHECK(from <= to);
-  int length = static_cast<int>(to - from);
-  CodePatcher destroyer(from, length);
-  while (length-- > 0) {
-    destroyer.masm()->int3();
-  }
-}
-#endif
-
-
-// Iterate through the entries of a SafepointTable that corresponds to
-// deoptimization points.
-class SafepointTableDeoptimiztionEntryIterator {
- public:
-  explicit SafepointTableDeoptimiztionEntryIterator(Code* code)
-      : code_(code), table_(code), index_(-1), limit_(table_.length()) {
-    FindNextIndex();
-  }
-
-  SafepointEntry Next(Address* pc) {
-    if (index_ >= limit_) {
-      *pc = NULL;
-      return SafepointEntry();  // Invalid entry.
-    }
-    *pc = code_->instruction_start() + table_.GetPcOffset(index_);
-    SafepointEntry entry = table_.GetEntry(index_);
-    FindNextIndex();
-    return entry;
-  }
-
- private:
-  void FindNextIndex() {
-    ASSERT(index_ < limit_);
-    while (++index_ < limit_) {
-      if (table_.GetEntry(index_).deoptimization_index() !=
-          Safepoint::kNoDeoptimizationIndex) {
-        return;
-      }
-    }
-  }
-
-  Code* code_;
-  SafepointTable table_;
-  // Index of next deoptimization entry. If negative after calling
-  // FindNextIndex, there are no more, and Next will return an invalid
-  // SafepointEntry.
-  int index_;
-  // Table length.
-  int limit_;
-};
-
-
-void Deoptimizer::EnsureRelocSpaceForLazyDeoptimization(Handle<Code> code) {
-  // TODO(1276): Implement.
+  return Assembler::kCallInstructionLength;
 }
 
 
@@ -119,90 +59,46 @@ void Deoptimizer::DeoptimizeFunction(JSFunction* function) {
   // code patching below, and is not needed any more.
   code->InvalidateRelocation();
 
-  // For each return after a safepoint insert a absolute call to the
+  // For each LLazyBailout instruction insert a absolute call to the
   // corresponding deoptimization entry, or a short call to an absolute
   // jump if space is short. The absolute jumps are put in a table just
   // before the safepoint table (space was allocated there when the Code
   // object was created, if necessary).
 
   Address instruction_start = function->code()->instruction_start();
-  Address jump_table_address =
-      instruction_start + function->code()->safepoint_table_offset();
 #ifdef DEBUG
-  Address previous_pc = instruction_start;
+  Address prev_call_address = NULL;
 #endif
-
-  SafepointTableDeoptimiztionEntryIterator deoptimizations(function->code());
-  Address entry_pc = NULL;
-
-  SafepointEntry current_entry = deoptimizations.Next(&entry_pc);
-  while (current_entry.is_valid()) {
-    int gap_code_size = current_entry.gap_code_size();
-    unsigned deoptimization_index = current_entry.deoptimization_index();
-
-#ifdef DEBUG
-    // Destroy the code which is not supposed to run again.
-    ZapCodeRange(previous_pc, entry_pc);
-#endif
+  DeoptimizationInputData* deopt_data =
+      DeoptimizationInputData::cast(code->deoptimization_data());
+  for (int i = 0; i < deopt_data->DeoptCount(); i++) {
+    if (deopt_data->Pc(i)->value() == -1) continue;
     // Position where Call will be patched in.
-    Address call_address = entry_pc + gap_code_size;
-    // End of call instruction, if using a direct call to a 64-bit address.
-    Address call_end_address =
-        call_address + MacroAssembler::kCallInstructionLength;
-
-    // Find next deoptimization entry, if any.
-    Address next_pc = NULL;
-    SafepointEntry next_entry = deoptimizations.Next(&next_pc);
-
-    if (!next_entry.is_valid() || next_pc >= call_end_address) {
-      // Room enough to write a long call instruction.
-      CodePatcher patcher(call_address, Assembler::kCallInstructionLength);
-      patcher.masm()->Call(GetDeoptimizationEntry(deoptimization_index, LAZY),
-                           RelocInfo::NONE);
+    Address call_address = instruction_start + deopt_data->Pc(i)->value();
+    // There is room enough to write a long call instruction because we pad
+    // LLazyBailout instructions with nops if necessary.
+    CodePatcher patcher(call_address, Assembler::kCallInstructionLength);
+    patcher.masm()->Call(GetDeoptimizationEntry(i, LAZY), RelocInfo::NONE);
+    ASSERT(prev_call_address == NULL ||
+           call_address >= prev_call_address + patch_size());
+    ASSERT(call_address + patch_size() <= code->instruction_end());
 #ifdef DEBUG
-      previous_pc = call_end_address;
+    prev_call_address = call_address;
 #endif
-    } else {
-      // Not room enough for a long Call instruction. Write a short call
-      // instruction to a long jump placed elsewhere in the code.
-#ifdef DEBUG
-      Address short_call_end_address =
-          call_address + MacroAssembler::kShortCallInstructionLength;
-#endif
-      ASSERT(next_pc >= short_call_end_address);
-
-      // Write jump in jump-table.
-      jump_table_address -= MacroAssembler::kJumpInstructionLength;
-      CodePatcher jump_patcher(jump_table_address,
-                               MacroAssembler::kJumpInstructionLength);
-      jump_patcher.masm()->Jump(
-          GetDeoptimizationEntry(deoptimization_index, LAZY),
-          RelocInfo::NONE);
-
-      // Write call to jump at call_offset.
-      CodePatcher call_patcher(call_address,
-                               MacroAssembler::kShortCallInstructionLength);
-      call_patcher.masm()->call(jump_table_address);
-#ifdef DEBUG
-      previous_pc = short_call_end_address;
-#endif
-    }
-
-    // Continue with next deoptimization entry.
-    current_entry = next_entry;
-    entry_pc = next_pc;
   }
 
-#ifdef DEBUG
-  // Destroy the code which is not supposed to run again.
-  ZapCodeRange(previous_pc, jump_table_address);
-#endif
+  Isolate* isolate = code->GetIsolate();
 
   // Add the deoptimizing code to the list.
   DeoptimizingCodeListNode* node = new DeoptimizingCodeListNode(code);
-  DeoptimizerData* data = code->GetIsolate()->deoptimizer_data();
+  DeoptimizerData* data = isolate->deoptimizer_data();
   node->set_next(data->deoptimizing_code_list_);
   data->deoptimizing_code_list_ = node;
+
+  // We might be in the middle of incremental marking with compaction.
+  // Tell collector to treat this code object in a special way and
+  // ignore all slots that might have been recorded on it.
+  isolate->heap()->mark_compact_collector()->InvalidateCode(code);
 
   // Set the code for the function to non-optimized version.
   function->ReplaceCode(function->shared()->code());
@@ -211,21 +107,25 @@ void Deoptimizer::DeoptimizeFunction(JSFunction* function) {
     PrintF("[forced deoptimization: ");
     function->PrintName();
     PrintF(" / %" V8PRIxPTR "]\n", reinterpret_cast<intptr_t>(function));
-#ifdef DEBUG
-    if (FLAG_print_code) {
-      code->PrintLn();
-    }
-#endif
   }
 }
 
 
-void Deoptimizer::PatchStackCheckCodeAt(Address pc_after,
+static const byte kJnsInstruction = 0x79;
+static const byte kJnsOffset = 0x1f;
+static const byte kJaeInstruction = 0x73;
+static const byte kJaeOffset = 0x07;
+static const byte kCallInstruction = 0xe8;
+static const byte kNopByteOne = 0x66;
+static const byte kNopByteTwo = 0x90;
+
+void Deoptimizer::PatchStackCheckCodeAt(Code* unoptimized_code,
+                                        Address pc_after,
                                         Code* check_code,
                                         Code* replacement_code) {
   Address call_target_address = pc_after - kIntSize;
-  ASSERT(check_code->entry() ==
-         Assembler::target_address_at(call_target_address));
+  ASSERT_EQ(check_code->entry(),
+            Assembler::target_address_at(call_target_address));
   // The stack check code matches the pattern:
   //
   //     cmp rsp, <limit>
@@ -243,17 +143,26 @@ void Deoptimizer::PatchStackCheckCodeAt(Address pc_after,
   //     test rax, <loop nesting depth>
   // ok:
   //
-  ASSERT(*(call_target_address - 3) == 0x73 &&  // jae
-         *(call_target_address - 2) == 0x07 &&  // offset
-         *(call_target_address - 1) == 0xe8);   // call
-  *(call_target_address - 3) = 0x90;  // nop
-  *(call_target_address - 2) = 0x90;  // nop
+  if (FLAG_count_based_interrupts) {
+    ASSERT_EQ(kJnsInstruction,       *(call_target_address - 3));
+    ASSERT_EQ(kJnsOffset,            *(call_target_address - 2));
+  } else {
+    ASSERT_EQ(kJaeInstruction,       *(call_target_address - 3));
+    ASSERT_EQ(kJaeOffset,            *(call_target_address - 2));
+  }
+  ASSERT_EQ(kCallInstruction,        *(call_target_address - 1));
+  *(call_target_address - 3) = kNopByteOne;
+  *(call_target_address - 2) = kNopByteTwo;
   Assembler::set_target_address_at(call_target_address,
                                    replacement_code->entry());
+
+  unoptimized_code->GetHeap()->incremental_marking()->RecordCodeTargetPatch(
+      unoptimized_code, call_target_address, replacement_code);
 }
 
 
-void Deoptimizer::RevertStackCheckCodeAt(Address pc_after,
+void Deoptimizer::RevertStackCheckCodeAt(Code* unoptimized_code,
+                                         Address pc_after,
                                          Code* check_code,
                                          Code* replacement_code) {
   Address call_target_address = pc_after - kIntSize;
@@ -261,13 +170,21 @@ void Deoptimizer::RevertStackCheckCodeAt(Address pc_after,
          Assembler::target_address_at(call_target_address));
   // Replace the nops from patching (Deoptimizer::PatchStackCheckCode) to
   // restore the conditional branch.
-  ASSERT(*(call_target_address - 3) == 0x90 &&  // nop
-         *(call_target_address - 2) == 0x90 &&  // nop
-         *(call_target_address - 1) == 0xe8);   // call
-  *(call_target_address - 3) = 0x73;  // jae
-  *(call_target_address - 2) = 0x07;  // offset
+  ASSERT_EQ(kNopByteOne,      *(call_target_address - 3));
+  ASSERT_EQ(kNopByteTwo,      *(call_target_address - 2));
+  ASSERT_EQ(kCallInstruction, *(call_target_address - 1));
+  if (FLAG_count_based_interrupts) {
+    *(call_target_address - 3) = kJnsInstruction;
+    *(call_target_address - 2) = kJnsOffset;
+  } else {
+    *(call_target_address - 3) = kJaeInstruction;
+    *(call_target_address - 2) = kJaeOffset;
+  }
   Assembler::set_target_address_at(call_target_address,
                                    check_code->entry());
+
+  check_code->GetHeap()->incremental_marking()->RecordCodeTargetPatch(
+      unoptimized_code, call_target_address, check_code);
 }
 
 
@@ -307,12 +224,13 @@ void Deoptimizer::DoComputeOsrOutputFrame() {
   ASSERT(Translation::BEGIN == opcode);
   USE(opcode);
   int count = iterator.Next();
+  iterator.Skip(1);  // Drop JS frame count.
   ASSERT(count == 1);
   USE(count);
 
   opcode = static_cast<Translation::Opcode>(iterator.Next());
   USE(opcode);
-  ASSERT(Translation::FRAME == opcode);
+  ASSERT(Translation::JS_FRAME == opcode);
   unsigned node_id = iterator.Next();
   USE(node_id);
   ASSERT(node_id == ast_id);
@@ -348,9 +266,7 @@ void Deoptimizer::DoComputeOsrOutputFrame() {
   output_ = new FrameDescription*[1];
   output_[0] = new(output_frame_size) FrameDescription(
       output_frame_size, function_);
-#ifdef DEBUG
-  output_[0]->SetKind(Code::OPTIMIZED_FUNCTION);
-#endif
+  output_[0]->SetFrameType(StackFrame::JAVA_SCRIPT);
 
   // Clear the incoming parameters in the optimized frame to avoid
   // confusing the garbage collector.
@@ -415,7 +331,7 @@ void Deoptimizer::DoComputeOsrOutputFrame() {
     output_[0] = input_;
     output_[0]->SetPc(reinterpret_cast<intptr_t>(from_));
   } else {
-    // Setup the frame pointer and the context pointer.
+    // Set up the frame pointer and the context pointer.
     output_[0]->SetRegister(rbp.code(), input_->GetRegister(rbp.code()));
     output_[0]->SetRegister(rsi.code(), input_->GetRegister(rsi.code()));
 
@@ -439,13 +355,229 @@ void Deoptimizer::DoComputeOsrOutputFrame() {
 }
 
 
-void Deoptimizer::DoComputeFrame(TranslationIterator* iterator,
-                                 int frame_index) {
-  // Read the ast node id, function, and frame height for this output frame.
-  Translation::Opcode opcode =
-      static_cast<Translation::Opcode>(iterator->Next());
-  USE(opcode);
-  ASSERT(Translation::FRAME == opcode);
+void Deoptimizer::DoComputeArgumentsAdaptorFrame(TranslationIterator* iterator,
+                                                 int frame_index) {
+  JSFunction* function = JSFunction::cast(ComputeLiteral(iterator->Next()));
+  unsigned height = iterator->Next();
+  unsigned height_in_bytes = height * kPointerSize;
+  if (FLAG_trace_deopt) {
+    PrintF("  translating arguments adaptor => height=%d\n", height_in_bytes);
+  }
+
+  unsigned fixed_frame_size = ArgumentsAdaptorFrameConstants::kFrameSize;
+  unsigned output_frame_size = height_in_bytes + fixed_frame_size;
+
+  // Allocate and store the output frame description.
+  FrameDescription* output_frame =
+      new(output_frame_size) FrameDescription(output_frame_size, function);
+  output_frame->SetFrameType(StackFrame::ARGUMENTS_ADAPTOR);
+
+  // Arguments adaptor can not be topmost or bottommost.
+  ASSERT(frame_index > 0 && frame_index < output_count_ - 1);
+  ASSERT(output_[frame_index] == NULL);
+  output_[frame_index] = output_frame;
+
+  // The top address of the frame is computed from the previous
+  // frame's top and this frame's size.
+  intptr_t top_address;
+  top_address = output_[frame_index - 1]->GetTop() - output_frame_size;
+  output_frame->SetTop(top_address);
+
+  // Compute the incoming parameter translation.
+  int parameter_count = height;
+  unsigned output_offset = output_frame_size;
+  for (int i = 0; i < parameter_count; ++i) {
+    output_offset -= kPointerSize;
+    DoTranslateCommand(iterator, frame_index, output_offset);
+  }
+
+  // Read caller's PC from the previous frame.
+  output_offset -= kPointerSize;
+  intptr_t callers_pc = output_[frame_index - 1]->GetPc();
+  output_frame->SetFrameSlot(output_offset, callers_pc);
+  if (FLAG_trace_deopt) {
+    PrintF("    0x%08" V8PRIxPTR ": [top + %d] <- 0x%08"
+           V8PRIxPTR " ; caller's pc\n",
+           top_address + output_offset, output_offset, callers_pc);
+  }
+
+  // Read caller's FP from the previous frame, and set this frame's FP.
+  output_offset -= kPointerSize;
+  intptr_t value = output_[frame_index - 1]->GetFp();
+  output_frame->SetFrameSlot(output_offset, value);
+  intptr_t fp_value = top_address + output_offset;
+  output_frame->SetFp(fp_value);
+  if (FLAG_trace_deopt) {
+    PrintF("    0x%08" V8PRIxPTR ": [top + %d] <- 0x%08"
+           V8PRIxPTR " ; caller's fp\n",
+           fp_value, output_offset, value);
+  }
+
+  // A marker value is used in place of the context.
+  output_offset -= kPointerSize;
+  intptr_t context = reinterpret_cast<intptr_t>(
+      Smi::FromInt(StackFrame::ARGUMENTS_ADAPTOR));
+  output_frame->SetFrameSlot(output_offset, context);
+  if (FLAG_trace_deopt) {
+    PrintF("    0x%08" V8PRIxPTR ": [top + %d] <- 0x%08"
+           V8PRIxPTR " ; context (adaptor sentinel)\n",
+           top_address + output_offset, output_offset, context);
+  }
+
+  // The function was mentioned explicitly in the ARGUMENTS_ADAPTOR_FRAME.
+  output_offset -= kPointerSize;
+  value = reinterpret_cast<intptr_t>(function);
+  output_frame->SetFrameSlot(output_offset, value);
+  if (FLAG_trace_deopt) {
+    PrintF("    0x%08" V8PRIxPTR ": [top + %d] <- 0x%08"
+           V8PRIxPTR " ; function\n",
+           top_address + output_offset, output_offset, value);
+  }
+
+  // Number of incoming arguments.
+  output_offset -= kPointerSize;
+  value = reinterpret_cast<intptr_t>(Smi::FromInt(height - 1));
+  output_frame->SetFrameSlot(output_offset, value);
+  if (FLAG_trace_deopt) {
+    PrintF("    0x%08" V8PRIxPTR ": [top + %d] <- 0x%08"
+           V8PRIxPTR " ; argc (%d)\n",
+           top_address + output_offset, output_offset, value, height - 1);
+  }
+
+  ASSERT(0 == output_offset);
+
+  Builtins* builtins = isolate_->builtins();
+  Code* adaptor_trampoline =
+      builtins->builtin(Builtins::kArgumentsAdaptorTrampoline);
+  intptr_t pc_value = reinterpret_cast<intptr_t>(
+      adaptor_trampoline->instruction_start() +
+      isolate_->heap()->arguments_adaptor_deopt_pc_offset()->value());
+  output_frame->SetPc(pc_value);
+}
+
+
+void Deoptimizer::DoComputeConstructStubFrame(TranslationIterator* iterator,
+                                              int frame_index) {
+  Builtins* builtins = isolate_->builtins();
+  Code* construct_stub = builtins->builtin(Builtins::kJSConstructStubGeneric);
+  JSFunction* function = JSFunction::cast(ComputeLiteral(iterator->Next()));
+  unsigned height = iterator->Next();
+  unsigned height_in_bytes = height * kPointerSize;
+  if (FLAG_trace_deopt) {
+    PrintF("  translating construct stub => height=%d\n", height_in_bytes);
+  }
+
+  unsigned fixed_frame_size = 7 * kPointerSize;
+  unsigned output_frame_size = height_in_bytes + fixed_frame_size;
+
+  // Allocate and store the output frame description.
+  FrameDescription* output_frame =
+      new(output_frame_size) FrameDescription(output_frame_size, function);
+  output_frame->SetFrameType(StackFrame::CONSTRUCT);
+
+  // Construct stub can not be topmost or bottommost.
+  ASSERT(frame_index > 0 && frame_index < output_count_ - 1);
+  ASSERT(output_[frame_index] == NULL);
+  output_[frame_index] = output_frame;
+
+  // The top address of the frame is computed from the previous
+  // frame's top and this frame's size.
+  intptr_t top_address;
+  top_address = output_[frame_index - 1]->GetTop() - output_frame_size;
+  output_frame->SetTop(top_address);
+
+  // Compute the incoming parameter translation.
+  int parameter_count = height;
+  unsigned output_offset = output_frame_size;
+  for (int i = 0; i < parameter_count; ++i) {
+    output_offset -= kPointerSize;
+    DoTranslateCommand(iterator, frame_index, output_offset);
+  }
+
+  // Read caller's PC from the previous frame.
+  output_offset -= kPointerSize;
+  intptr_t callers_pc = output_[frame_index - 1]->GetPc();
+  output_frame->SetFrameSlot(output_offset, callers_pc);
+  if (FLAG_trace_deopt) {
+    PrintF("    0x%08" V8PRIxPTR ": [top + %d] <- 0x%08"
+           V8PRIxPTR " ; caller's pc\n",
+           top_address + output_offset, output_offset, callers_pc);
+  }
+
+  // Read caller's FP from the previous frame, and set this frame's FP.
+  output_offset -= kPointerSize;
+  intptr_t value = output_[frame_index - 1]->GetFp();
+  output_frame->SetFrameSlot(output_offset, value);
+  intptr_t fp_value = top_address + output_offset;
+  output_frame->SetFp(fp_value);
+  if (FLAG_trace_deopt) {
+    PrintF("    0x%08" V8PRIxPTR ": [top + %d] <- 0x%08"
+           V8PRIxPTR " ; caller's fp\n",
+           fp_value, output_offset, value);
+  }
+
+  // The context can be gotten from the previous frame.
+  output_offset -= kPointerSize;
+  value = output_[frame_index - 1]->GetContext();
+  output_frame->SetFrameSlot(output_offset, value);
+  if (FLAG_trace_deopt) {
+    PrintF("    0x%08" V8PRIxPTR ": [top + %d] <- 0x%08"
+           V8PRIxPTR " ; context\n",
+           top_address + output_offset, output_offset, value);
+  }
+
+  // A marker value is used in place of the function.
+  output_offset -= kPointerSize;
+  value = reinterpret_cast<intptr_t>(Smi::FromInt(StackFrame::CONSTRUCT));
+  output_frame->SetFrameSlot(output_offset, value);
+  if (FLAG_trace_deopt) {
+    PrintF("    0x%08" V8PRIxPTR ": [top + %d] <- 0x%08"
+           V8PRIxPTR " ; function (construct sentinel)\n",
+           top_address + output_offset, output_offset, value);
+  }
+
+  // The output frame reflects a JSConstructStubGeneric frame.
+  output_offset -= kPointerSize;
+  value = reinterpret_cast<intptr_t>(construct_stub);
+  output_frame->SetFrameSlot(output_offset, value);
+  if (FLAG_trace_deopt) {
+    PrintF("    0x%08" V8PRIxPTR ": [top + %d] <- 0x%08"
+           V8PRIxPTR " ; code object\n",
+           top_address + output_offset, output_offset, value);
+  }
+
+  // Number of incoming arguments.
+  output_offset -= kPointerSize;
+  value = reinterpret_cast<intptr_t>(Smi::FromInt(height - 1));
+  output_frame->SetFrameSlot(output_offset, value);
+  if (FLAG_trace_deopt) {
+    PrintF("    0x%08" V8PRIxPTR ": [top + %d] <- 0x%08"
+           V8PRIxPTR " ; argc (%d)\n",
+           top_address + output_offset, output_offset, value, height - 1);
+  }
+
+  // The newly allocated object was passed as receiver in the artificial
+  // constructor stub environment created by HEnvironment::CopyForInlining().
+  output_offset -= kPointerSize;
+  value = output_frame->GetFrameSlot(output_frame_size - kPointerSize);
+  output_frame->SetFrameSlot(output_offset, value);
+  if (FLAG_trace_deopt) {
+    PrintF("    0x%08" V8PRIxPTR ": [top + %d] <- 0x%08"
+           V8PRIxPTR " ; allocated receiver\n",
+           top_address + output_offset, output_offset, value);
+  }
+
+  ASSERT(0 == output_offset);
+
+  intptr_t pc = reinterpret_cast<intptr_t>(
+      construct_stub->instruction_start() +
+      isolate_->heap()->construct_stub_deopt_pc_offset()->value());
+  output_frame->SetPc(pc);
+}
+
+
+void Deoptimizer::DoComputeJSFrame(TranslationIterator* iterator,
+                                   int frame_index) {
   int node_id = iterator->Next();
   JSFunction* function = JSFunction::cast(ComputeLiteral(iterator->Next()));
   unsigned height = iterator->Next();
@@ -465,9 +597,7 @@ void Deoptimizer::DoComputeFrame(TranslationIterator* iterator,
   // Allocate and store the output frame description.
   FrameDescription* output_frame =
       new(output_frame_size) FrameDescription(output_frame_size, function);
-#ifdef DEBUG
-  output_frame->SetKind(Code::FUNCTION);
-#endif
+  output_frame->SetFrameType(StackFrame::JAVA_SCRIPT);
 
   bool is_bottommost = (0 == frame_index);
   bool is_topmost = (output_count_ - 1 == frame_index);
@@ -555,6 +685,7 @@ void Deoptimizer::DoComputeFrame(TranslationIterator* iterator,
     value = reinterpret_cast<intptr_t>(function->context());
   }
   output_frame->SetFrameSlot(output_offset, value);
+  output_frame->SetContext(value);
   if (is_topmost) output_frame->SetRegister(rsi.code(), value);
   if (FLAG_trace_deopt) {
     PrintF("    0x%08" V8PRIxPTR ": [top + %d] <- 0x%08"
@@ -605,8 +736,6 @@ void Deoptimizer::DoComputeFrame(TranslationIterator* iterator,
     output_frame->SetContinuation(
         reinterpret_cast<intptr_t>(continuation->entry()));
   }
-
-  if (output_count_ - 1 == frame_index) iterator->Done();
 }
 
 
@@ -715,7 +844,10 @@ void Deoptimizer::EntryGenerator::Generate() {
 
   Isolate* isolate = masm()->isolate();
 
-  __ CallCFunction(ExternalReference::new_deoptimizer_function(isolate), 6);
+  {
+    AllowExternalCallThatCantCauseGC scope(masm());
+    __ CallCFunction(ExternalReference::new_deoptimizer_function(isolate), 6);
+  }
   // Preserve deoptimizer object in register rax and get the input
   // frame descriptor pointer.
   __ movq(rbx, Operand(rax, Deoptimizer::input_offset()));
@@ -761,8 +893,11 @@ void Deoptimizer::EntryGenerator::Generate() {
   __ PrepareCallCFunction(2);
   __ movq(arg1, rax);
   __ LoadAddress(arg2, ExternalReference::isolate_address());
-  __ CallCFunction(
-      ExternalReference::compute_output_frames_function(isolate), 2);
+  {
+    AllowExternalCallThatCantCauseGC scope(masm());
+    __ CallCFunction(
+        ExternalReference::compute_output_frames_function(isolate), 2);
+  }
   __ pop(rax);
 
   // Replace the current frame with the output frames.

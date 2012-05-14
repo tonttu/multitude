@@ -1,4 +1,4 @@
-// Copyright 2011 the V8 project authors. All rights reserved.
+// Copyright 2012 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -36,8 +36,10 @@
 #include "contexts.h"
 #include "execution.h"
 #include "frames.h"
+#include "date.h"
 #include "global-handles.h"
 #include "handles.h"
+#include "hashmap.h"
 #include "heap.h"
 #include "regexp-stack.h"
 #include "runtime-profiler.h"
@@ -47,7 +49,6 @@
 namespace v8 {
 namespace internal {
 
-class AstSentinels;
 class Bootstrapper;
 class CodeGenerator;
 class CodeRange;
@@ -67,7 +68,7 @@ class HandleScopeImplementer;
 class HeapProfiler;
 class InlineRuntimeFunctionsTable;
 class NoAllocationStringAllocator;
-class PcToCodeCache;
+class InnerPointerToCodeCache;
 class PreallocatedMemoryThread;
 class RegExpStack;
 class SaveContext;
@@ -107,26 +108,39 @@ class Simulator;
 // of handles to the actual constants.
 typedef ZoneList<Handle<Object> > ZoneObjectList;
 
-#define RETURN_IF_SCHEDULED_EXCEPTION(isolate)    \
-  if (isolate->has_scheduled_exception())         \
-      return isolate->PromoteScheduledException()
+#define RETURN_IF_SCHEDULED_EXCEPTION(isolate)            \
+  do {                                                    \
+    Isolate* __isolate__ = (isolate);                     \
+    if (__isolate__->has_scheduled_exception()) {         \
+      return __isolate__->PromoteScheduledException();    \
+    }                                                     \
+  } while (false)
 
 #define RETURN_IF_EMPTY_HANDLE_VALUE(isolate, call, value) \
-  if (call.is_null()) {                                    \
-    ASSERT(isolate->has_pending_exception());              \
-    return value;                                          \
-  }
+  do {                                                     \
+    if ((call).is_null()) {                                \
+      ASSERT((isolate)->has_pending_exception());          \
+      return (value);                                      \
+    }                                                      \
+  } while (false)
+
+#define CHECK_NOT_EMPTY_HANDLE(isolate, call)     \
+  do {                                            \
+    ASSERT(!(isolate)->has_pending_exception());  \
+    CHECK(!(call).is_null());                     \
+    CHECK(!(isolate)->has_pending_exception());   \
+  } while (false)
 
 #define RETURN_IF_EMPTY_HANDLE(isolate, call)                       \
   RETURN_IF_EMPTY_HANDLE_VALUE(isolate, call, Failure::Exception())
 
-#define ISOLATE_ADDRESS_LIST(C)            \
-  C(handler_address)                       \
-  C(c_entry_fp_address)                    \
-  C(context_address)                       \
-  C(pending_exception_address)             \
-  C(external_caught_exception_address)     \
-  C(js_entry_sp_address)
+#define FOR_EACH_ISOLATE_ADDRESS_NAME(C)                \
+  C(Handler, handler)                                   \
+  C(CEntryFP, c_entry_fp)                               \
+  C(Context, context)                                   \
+  C(PendingException, pending_exception)                \
+  C(ExternalCaughtException, external_caught_exception) \
+  C(JSEntrySP, js_entry_sp)
 
 
 // Platform-independent, reliable thread identifier.
@@ -246,7 +260,7 @@ class ThreadLocalTop BASE_EMBEDDED {
 #endif
 #endif  // USE_SIMULATOR
 
-  Address js_entry_sp_;  // the stack pointer of the bottom js entry frame
+  Address js_entry_sp_;  // the stack pointer of the bottom JS entry frame
   Address external_callback_;  // the external callback we're currently in
   StateTag current_vm_state_;
 
@@ -256,29 +270,18 @@ class ThreadLocalTop BASE_EMBEDDED {
   // Call back function to report unsafe JS accesses.
   v8::FailedAccessCheckCallback failed_access_check_callback_;
 
+  // Head of the list of live LookupResults.
+  LookupResult* top_lookup_result_;
+
+  // Whether out of memory exceptions should be ignored.
+  bool ignore_out_of_memory_;
+
  private:
   void InitializeInternal();
 
   Address try_catch_handler_address_;
 };
 
-#if defined(V8_TARGET_ARCH_ARM) || defined(V8_TARGET_ARCH_MIPS)
-
-#define ISOLATE_PLATFORM_INIT_LIST(V)                                          \
-  /* VirtualFrame::SpilledScope state */                                       \
-  V(bool, is_virtual_frame_in_spilled_scope, false)                            \
-  /* CodeGenerator::EmitNamedStore state */                                    \
-  V(int, inlined_write_barrier_size, -1)
-
-#if !defined(__arm__) && !defined(__mips__)
-class HashMap;
-#endif
-
-#else
-
-#define ISOLATE_PLATFORM_INIT_LIST(V)
-
-#endif
 
 #ifdef ENABLE_DEBUGGER_SUPPORT
 
@@ -309,15 +312,12 @@ class HashMap;
   V(int, bad_char_shift_table, kUC16AlphabetSize)                              \
   V(int, good_suffix_shift_table, (kBMMaxShift + 1))                           \
   V(int, suffix_table, (kBMMaxShift + 1))                                      \
-  V(uint32_t, random_seed, 2)                                                  \
   V(uint32_t, private_random_seed, 2)                                          \
   ISOLATE_INIT_DEBUG_ARRAY_LIST(V)
 
 typedef List<HeapObject*, PreallocatedStorage> DebugObjectCache;
 
 #define ISOLATE_INIT_LIST(V)                                                   \
-  /* AssertNoZoneAllocation state. */                                          \
-  V(bool, zone_allow_allocation, true)                                         \
   /* SerializerDeserializer state. */                                          \
   V(int, serialize_partial_snapshot_cache_length, 0)                           \
   /* Assembler state. */                                                       \
@@ -345,14 +345,13 @@ typedef List<HeapObject*, PreallocatedStorage> DebugObjectCache;
   /* Serializer state. */                                                      \
   V(ExternalReferenceTable*, external_reference_table, NULL)                   \
   /* AstNode state. */                                                         \
-  V(unsigned, ast_node_id, 0)                                                  \
+  V(int, ast_node_id, 0)                                                       \
   V(unsigned, ast_node_count, 0)                                               \
   /* SafeStackFrameIterator activations count. */                              \
   V(int, safe_stack_iterator_counter, 0)                                       \
   V(uint64_t, enabled_cpu_features, 0)                                         \
   V(CpuProfiler*, cpu_profiler, NULL)                                          \
   V(HeapProfiler*, heap_profiler, NULL)                                        \
-  ISOLATE_PLATFORM_INIT_LIST(V)                                                \
   ISOLATE_DEBUGGER_INIT_LIST(V)
 
 class Isolate {
@@ -421,10 +420,10 @@ class Isolate {
 
 
   enum AddressId {
-#define C(name) k_##name,
-    ISOLATE_ADDRESS_LIST(C)
-#undef C
-    k_isolate_address_count
+#define DECLARE_ENUM(CamelName, hacker_name) k##CamelName##Address,
+    FOR_EACH_ISOLATE_ADDRESS_NAME(DECLARE_ENUM)
+#undef DECLARE_ENUM
+    kIsolateAddressCount
   };
 
   // Returns the PerIsolateThreadData for the current thread (or NULL if one is
@@ -446,6 +445,13 @@ class Isolate {
     return reinterpret_cast<Isolate*>(Thread::GetThreadLocal(isolate_key_));
   }
 
+  // Usually called by Init(), but can be called early e.g. to allow
+  // testing components that require logging but not the whole
+  // isolate.
+  //
+  // Safe to call more than once.
+  void InitializeLoggingAndCounters();
+
   bool Init(Deserializer* des);
 
   bool IsInitialized() { return state_ == INITIALIZED; }
@@ -461,7 +467,7 @@ class Isolate {
   bool IsDefaultIsolate() const { return this == default_isolate_; }
 
   // Ensures that process-wide resources and the default isolate have been
-  // allocated. It is only necessary to call this method in rare casses, for
+  // allocated. It is only necessary to call this method in rare cases, for
   // example if you are using V8 from within the body of a static initializer.
   // Safe to call multiple times.
   static void EnsureDefaultIsolate();
@@ -492,15 +498,19 @@ class Isolate {
     return thread_id_key_;
   }
 
+  static Thread::LocalStorageKey per_isolate_thread_data_key();
+
   // If a client attempts to create a Locker without specifying an isolate,
   // we assume that the client is using legacy behavior. Set up the current
   // thread to be inside the implicit isolate (or fail a check if we have
   // switched to non-legacy behavior).
   static void EnterDefaultIsolate();
 
-  // Debug.
   // Mutex for serializing access to break control structures.
   Mutex* break_access() { return break_access_; }
+
+  // Mutex for serializing access to debugger.
+  Mutex* debugger_access() { return debugger_access_; }
 
   Address get_address_from_id(AddressId id);
 
@@ -609,7 +619,7 @@ class Isolate {
   void* formal_count_address() { return &thread_local_top_.formal_count_; }
 
   // Returns the global object of the current context. It could be
-  // a builtin object, or a js global object.
+  // a builtin object, or a JS global object.
   Handle<GlobalObject> global() {
     return Handle<GlobalObject>(context()->global());
   }
@@ -661,6 +671,12 @@ class Isolate {
   // Tells whether the current context has experienced an out of memory
   // exception.
   bool is_out_of_memory();
+  bool ignore_out_of_memory() {
+    return thread_local_top_.ignore_out_of_memory_;
+  }
+  void set_ignore_out_of_memory(bool value) {
+    thread_local_top_.ignore_out_of_memory_ = value;
+  }
 
   void PrintCurrentStackTrace(FILE* out);
   void PrintStackTrace(FILE* out, char* thread_data);
@@ -670,6 +686,8 @@ class Isolate {
   Handle<JSArray> CaptureCurrentStackTrace(
       int frame_limit,
       StackTrace::StackTraceOptions options);
+
+  void CaptureAndSetCurrentStackTraceFor(Handle<JSObject> error_object);
 
   // Returns if the top context may access the given global object. If
   // the result is false, the pending exception is guaranteed to be
@@ -697,7 +715,7 @@ class Isolate {
 
   // Promote a scheduled exception to pending. Asserts has_scheduled_exception.
   Failure* PromoteScheduledException();
-  void DoThrow(MaybeObject* exception, MessageLocation* location);
+  void DoThrow(Object* exception, MessageLocation* location);
   // Checks if exception should be reported and finds out if it's
   // caught externally.
   bool ShouldReportException(bool* can_be_caught_externally,
@@ -769,14 +787,24 @@ class Isolate {
 #undef GLOBAL_CONTEXT_FIELD_ACCESSOR
 
   Bootstrapper* bootstrapper() { return bootstrapper_; }
-  Counters* counters() { return counters_; }
+  Counters* counters() {
+    // Call InitializeLoggingAndCounters() if logging is needed before
+    // the isolate is fully initialized.
+    ASSERT(counters_ != NULL);
+    return counters_;
+  }
   CodeRange* code_range() { return code_range_; }
   RuntimeProfiler* runtime_profiler() { return runtime_profiler_; }
   CompilationCache* compilation_cache() { return compilation_cache_; }
-  Logger* logger() { return logger_; }
+  Logger* logger() {
+    // Call InitializeLoggingAndCounters() if logging is needed before
+    // the isolate is fully initialized.
+    ASSERT(logger_ != NULL);
+    return logger_;
+  }
   StackGuard* stack_guard() { return &stack_guard_; }
   Heap* heap() { return &heap_; }
-  StatsTable* stats_table() { return stats_table_; }
+  StatsTable* stats_table();
   StubCache* stub_cache() { return stub_cache_; }
   DeoptimizerData* deoptimizer_data() { return deoptimizer_data_; }
   ThreadLocalTop* thread_local_top() { return &thread_local_top_; }
@@ -814,7 +842,9 @@ class Isolate {
     return unicode_cache_;
   }
 
-  PcToCodeCache* pc_to_code_cache() { return pc_to_code_cache_; }
+  InnerPointerToCodeCache* inner_pointer_to_code_cache() {
+    return inner_pointer_to_code_cache_;
+  }
 
   StringInputBuffer* write_input_buffer() { return write_input_buffer_; }
 
@@ -850,15 +880,25 @@ class Isolate {
     return &objects_string_input_buffer_;
   }
 
-  AstSentinels* ast_sentinels() { return ast_sentinels_; }
-
   RuntimeState* runtime_state() { return &runtime_state_; }
+
+  void set_fp_stubs_generated(bool value) {
+    fp_stubs_generated_ = value;
+  }
+
+  bool fp_stubs_generated() { return fp_stubs_generated_; }
 
   StaticResource<SafeStringInputBuffer>* compiler_safe_string_input_buffer() {
     return &compiler_safe_string_input_buffer_;
   }
 
   Builtins* builtins() { return &builtins_; }
+
+  void NotifyExtensionInstalled() {
+    has_installed_extensions_ = true;
+  }
+
+  bool has_installed_extensions() { return has_installed_extensions_; }
 
   unibrow::Mapping<unibrow::Ecma262Canonicalize>*
       regexp_macro_assembler_canonicalize() {
@@ -877,10 +917,17 @@ class Isolate {
   void PreallocatedStorageInit(size_t size);
 
 #ifdef ENABLE_DEBUGGER_SUPPORT
-  Debugger* debugger() { return debugger_; }
-  Debug* debug() { return debug_; }
+  Debugger* debugger() {
+    if (!NoBarrier_Load(&debugger_initialized_)) InitializeDebugger();
+    return debugger_;
+  }
+  Debug* debug() {
+    if (!NoBarrier_Load(&debugger_initialized_)) InitializeDebugger();
+    return debug_;
+  }
 #endif
 
+  inline bool IsDebuggerActive();
   inline bool DebuggerHasBreakPoints();
 
 #ifdef DEBUG
@@ -956,8 +1003,52 @@ class Isolate {
   void SetData(void* data) { embedder_data_ = data; }
   void* GetData() { return embedder_data_; }
 
+  LookupResult* top_lookup_result() {
+    return thread_local_top_.top_lookup_result_;
+  }
+  void SetTopLookupResult(LookupResult* top) {
+    thread_local_top_.top_lookup_result_ = top;
+  }
+
+  bool context_exit_happened() {
+    return context_exit_happened_;
+  }
+  void set_context_exit_happened(bool context_exit_happened) {
+    context_exit_happened_ = context_exit_happened;
+  }
+
+  double time_millis_since_init() {
+    return OS::TimeCurrentMillis() - time_millis_at_init_;
+  }
+
+  DateCache* date_cache() {
+    return date_cache_;
+  }
+
+  void set_date_cache(DateCache* date_cache) {
+    if (date_cache != date_cache_) {
+      delete date_cache_;
+    }
+    date_cache_ = date_cache;
+  }
+
  private:
   Isolate();
+
+  friend struct GlobalState;
+  friend struct InitializeGlobalState;
+
+  enum State {
+    UNINITIALIZED,    // Some components may not have been allocated.
+    INITIALIZED       // All components are fully initialized.
+  };
+
+  // These fields are accessed through the API, offsets must be kept in sync
+  // with v8::internal::Internals (in include/v8.h) constants. This is also
+  // verified in Isolate::Init() using runtime checks.
+  State state_;  // Will be padded to kApiPointerSize.
+  void* embedder_data_;
+  Heap heap_;
 
   // The per-process lock should be acquired before the ThreadDataTable is
   // modified.
@@ -997,6 +1088,7 @@ class Isolate {
     Isolate* previous_isolate;
     EntryStackItem* previous_item;
 
+   private:
     DISALLOW_COPY_AND_ASSIGN(EntryStackItem);
   };
 
@@ -1010,21 +1102,10 @@ class Isolate {
   static Isolate* default_isolate_;
   static ThreadDataTable* thread_data_table_;
 
-  bool PreInit();
-
   void Deinit();
 
   static void SetIsolateThreadLocals(Isolate* isolate,
                                      PerIsolateThreadData* data);
-
-  enum State {
-    UNINITIALIZED,    // Some components may not have been allocated.
-    PREINITIALIZED,   // Components have been allocated but not initialized.
-    INITIALIZED       // All components are fully initialized.
-  };
-
-  State state_;
-  EntryStackItem* entry_stack_;
 
   // Allocate and insert PerIsolateThreadData into the ThreadDataTable
   // (regardless of whether such data already exists).
@@ -1034,7 +1115,7 @@ class Isolate {
   // If one does not yet exist, allocate a new one.
   PerIsolateThreadData* FindOrAllocatePerThreadDataForThisThread();
 
-// PreInits and returns a default isolate. Needed when a new thread tries
+  // PreInits and returns a default isolate. Needed when a new thread tries
   // to create a Locker for the first time (the lock itself is in the isolate).
   static Isolate* GetDefaultIsolateForLocking();
 
@@ -1063,20 +1144,27 @@ class Isolate {
 
   void PropagatePendingExceptionToExternalTryCatch();
 
+  void InitializeDebugger();
+
+  // Traverse prototype chain to find out whether the object is derived from
+  // the Error object.
+  bool IsErrorObject(Handle<Object> obj);
+
+  EntryStackItem* entry_stack_;
   int stack_trace_nesting_level_;
   StringStream* incomplete_message_;
   // The preallocated memory thread singleton.
   PreallocatedMemoryThread* preallocated_memory_thread_;
-  Address isolate_addresses_[k_isolate_address_count + 1];  // NOLINT
+  Address isolate_addresses_[kIsolateAddressCount + 1];  // NOLINT
   NoAllocationStringAllocator* preallocated_message_space_;
-
   Bootstrapper* bootstrapper_;
   RuntimeProfiler* runtime_profiler_;
   CompilationCache* compilation_cache_;
   Counters* counters_;
   CodeRange* code_range_;
   Mutex* break_access_;
-  Heap heap_;
+  Atomic32 debugger_initialized_;
+  Mutex* debugger_access_;
   Logger* logger_;
   StackGuard stack_guard_;
   StatsTable* stats_table_;
@@ -1098,15 +1186,16 @@ class Isolate {
   PreallocatedStorage in_use_list_;
   PreallocatedStorage free_list_;
   bool preallocated_storage_preallocated_;
-  PcToCodeCache* pc_to_code_cache_;
+  InnerPointerToCodeCache* inner_pointer_to_code_cache_;
   StringInputBuffer* write_input_buffer_;
   GlobalHandles* global_handles_;
   ContextSwitcher* context_switcher_;
   ThreadManager* thread_manager_;
-  AstSentinels* ast_sentinels_;
   RuntimeState runtime_state_;
+  bool fp_stubs_generated_;
   StaticResource<SafeStringInputBuffer> compiler_safe_string_input_buffer_;
   Builtins builtins_;
+  bool has_installed_extensions_;
   StringTracker* string_tracker_;
   unibrow::Mapping<unibrow::Ecma262UnCanonicalize> jsregexp_uncanonicalize_;
   unibrow::Mapping<unibrow::CanonicalizationRange> jsregexp_canonrange_;
@@ -1116,8 +1205,15 @@ class Isolate {
   unibrow::Mapping<unibrow::Ecma262Canonicalize>
       regexp_macro_assembler_canonicalize_;
   RegExpStack* regexp_stack_;
+  DateCache* date_cache_;
   unibrow::Mapping<unibrow::Ecma262Canonicalize> interp_canonicalize_mapping_;
-  void* embedder_data_;
+
+  // The garbage collector should be a little more aggressive when it knows
+  // that a context was recently exited.
+  bool context_exit_happened_;
+
+  // Time stamp at initialization.
+  double time_millis_at_init_;
 
 #if defined(V8_TARGET_ARCH_ARM) && !defined(__arm__) || \
     defined(V8_TARGET_ARCH_MIPS) && !defined(__mips__)
@@ -1165,6 +1261,7 @@ class Isolate {
   friend class Simulator;
   friend class StackGuard;
   friend class ThreadId;
+  friend class TestMemoryAllocatorScope;
   friend class v8::Isolate;
   friend class v8::Locker;
   friend class v8::Unlocker;
@@ -1178,19 +1275,7 @@ class Isolate {
 // versions of GCC. See V8 issue 122 for details.
 class SaveContext BASE_EMBEDDED {
  public:
-  explicit SaveContext(Isolate* isolate) : prev_(isolate->save_context()) {
-    if (isolate->context() != NULL) {
-      context_ = Handle<Context>(isolate->context());
-#if __GNUC_VERSION__ >= 40100 && __GNUC_VERSION__ < 40300
-      dummy_ = Handle<Context>(isolate->context());
-#endif
-    }
-    isolate->set_save_context(this);
-
-    // If there is no JS frame under the current C frame, use the value 0.
-    JavaScriptFrameIterator it(isolate);
-    js_sp_ = it.done() ? 0 : it.frame()->sp();
-  }
+  inline explicit SaveContext(Isolate* isolate);
 
   ~SaveContext() {
     if (context_.is_null()) {
@@ -1208,8 +1293,8 @@ class SaveContext BASE_EMBEDDED {
   SaveContext* prev() { return prev_; }
 
   // Returns true if this save context is below a given JavaScript frame.
-  bool below(JavaScriptFrame* frame) {
-    return (js_sp_ == 0) || (frame->sp() < js_sp_);
+  bool IsBelowFrame(JavaScriptFrame* frame) {
+    return (c_entry_fp_ == 0) || (c_entry_fp_ > frame->sp());
   }
 
  private:
@@ -1218,7 +1303,7 @@ class SaveContext BASE_EMBEDDED {
   Handle<Context> dummy_;
 #endif
   SaveContext* prev_;
-  Address js_sp_;  // The top JS frame's sp when saving context.
+  Address c_entry_fp_;
 };
 
 

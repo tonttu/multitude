@@ -1,4 +1,4 @@
-// Copyright 2011 the V8 project authors. All rights reserved.
+// Copyright 2012 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -25,31 +25,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "v8.h"
+#include <string.h>
 
+#include "v8.h"
 #include "zone-inl.h"
-#include "splay-tree-inl.h"
 
 namespace v8 {
 namespace internal {
-
-
-Zone::Zone()
-    : zone_excess_limit_(256 * MB),
-      segment_bytes_allocated_(0),
-      position_(0),
-      limit_(0),
-      scope_nesting_(0),
-      segment_head_(NULL) {
-}
-unsigned Zone::allocation_size_ = 0;
-
-
-ZoneScope::~ZoneScope() {
-  ASSERT_EQ(Isolate::Current(), isolate_);
-  if (ShouldDeleteOnExit()) isolate_->zone()->DeleteAll();
-  isolate_->zone()->scope_nesting_--;
-}
 
 
 // Segments represent chunks of memory: They have starting address
@@ -60,6 +42,11 @@ ZoneScope::~ZoneScope() {
 
 class Segment {
  public:
+  void Initialize(Segment* next, int size) {
+    next_ = next;
+    size_ = size;
+  }
+
   Segment* next() const { return next_; }
   void clear_next() { next_ = NULL; }
 
@@ -77,9 +64,24 @@ class Segment {
 
   Segment* next_;
   int size_;
-
-  friend class Zone;
 };
+
+
+Zone::Zone()
+    : zone_excess_limit_(256 * MB),
+      segment_bytes_allocated_(0),
+      position_(0),
+      limit_(0),
+      scope_nesting_(0),
+      segment_head_(NULL) {
+}
+unsigned Zone::allocation_size_ = 0;
+
+ZoneScope::~ZoneScope() {
+  ASSERT_EQ(Isolate::Current(), isolate_);
+  if (ShouldDeleteOnExit()) isolate_->zone()->DeleteAll();
+  isolate_->zone()->scope_nesting_--;
+}
 
 
 // Creates a new segment, sets it size, and pushes it to the front
@@ -88,8 +90,7 @@ Segment* Zone::NewSegment(int size) {
   Segment* result = reinterpret_cast<Segment*>(Malloced::New(size));
   adjust_segment_bytes_allocated(size);
   if (result != NULL) {
-    result->next_ = segment_head_;
-    result->size_ = size;
+    result->Initialize(segment_head_, size);
     segment_head_ = result;
   }
   return result;
@@ -155,11 +156,19 @@ void Zone::DeleteAll() {
 }
 
 
+void Zone::DeleteKeptSegment() {
+  if (segment_head_ != NULL) {
+    DeleteSegment(segment_head_, segment_head_->size());
+    segment_head_ = NULL;
+  }
+}
+
+
 Address Zone::NewExpand(int size) {
   // Make sure the requested size is already properly aligned and that
   // there isn't enough room in the Zone to satisfy the request.
   ASSERT(size == RoundDown(size, kAlignment));
-  ASSERT(position_ + size > limit_);
+  ASSERT(size > limit_ - position_);
 
   // Compute the new segment size. We use a 'high water mark'
   // strategy, where we increase the segment size every time we expand
@@ -168,7 +177,13 @@ Address Zone::NewExpand(int size) {
   Segment* head = segment_head_;
   int old_size = (head == NULL) ? 0 : head->size();
   static const int kSegmentOverhead = sizeof(Segment) + kAlignment;
-  int new_size = kSegmentOverhead + size + (old_size << 1);
+  int new_size_no_overhead = size + (old_size << 1);
+  int new_size = kSegmentOverhead + new_size_no_overhead;
+  // Guard against integer overflow.
+  if (new_size_no_overhead < size || new_size < kSegmentOverhead) {
+    V8::FatalProcessOutOfMemory("Zone");
+    return NULL;
+  }
   if (new_size < kMinimumSegmentSize) {
     new_size = kMinimumSegmentSize;
   } else if (new_size > kMaximumSegmentSize) {
@@ -187,6 +202,11 @@ Address Zone::NewExpand(int size) {
   // Recompute 'top' and 'limit' based on the new segment.
   Address result = RoundUp(segment->start(), kAlignment);
   position_ = result + size;
+  // Check for address overflow.
+  if (position_ < result) {
+    V8::FatalProcessOutOfMemory("Zone");
+    return NULL;
+  }
   limit_ = segment->end();
   ASSERT(position_ <= limit_);
   return result;

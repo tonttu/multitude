@@ -193,7 +193,7 @@ void RegExpMacroAssemblerX64::CheckCharacterGT(uc16 limit, Label* on_greater) {
 void RegExpMacroAssemblerX64::CheckAtStart(Label* on_at_start) {
   Label not_at_start;
   // Did we start the match at the start of the string at all?
-  __ cmpb(Operand(rbp, kStartIndex), Immediate(0));
+  __ cmpl(Operand(rbp, kStartIndex), Immediate(0));
   BranchOrBacktrack(not_equal, &not_at_start);
   // If we did, are we still at the start of the input?
   __ lea(rax, Operand(rsi, rdi, times_1, 0));
@@ -205,7 +205,7 @@ void RegExpMacroAssemblerX64::CheckAtStart(Label* on_at_start) {
 
 void RegExpMacroAssemblerX64::CheckNotAtStart(Label* on_not_at_start) {
   // Did we start the match at the start of the string at all?
-  __ cmpb(Operand(rbp, kStartIndex), Immediate(0));
+  __ cmpl(Operand(rbp, kStartIndex), Immediate(0));
   BranchOrBacktrack(not_equal, on_not_at_start);
   // If we did, are we still at the start of the input?
   __ lea(rax, Operand(rsi, rdi, times_1, 0));
@@ -226,7 +226,7 @@ void RegExpMacroAssemblerX64::CheckCharacters(Vector<const uc16> str,
                                               bool check_end_of_string) {
 #ifdef DEBUG
   // If input is ASCII, don't even bother calling here if the string to
-  // match contains a non-ascii character.
+  // match contains a non-ASCII character.
   if (mode_ == ASCII) {
     ASSERT(String::IsAscii(str.start(), str.length()));
   }
@@ -431,9 +431,14 @@ void RegExpMacroAssemblerX64::CheckNotBackReferenceIgnoreCase(
     // Isolate.
     __ LoadAddress(rcx, ExternalReference::isolate_address());
 #endif
-    ExternalReference compare =
-        ExternalReference::re_case_insensitive_compare_uc16(masm_.isolate());
-    __ CallCFunction(compare, num_arguments);
+
+    { // NOLINT: Can't find a way to open this scope without confusing the
+      // linter.
+      AllowExternalCallThatCantCauseGC scope(&masm_);
+      ExternalReference compare =
+          ExternalReference::re_case_insensitive_compare_uc16(masm_.isolate());
+      __ CallCFunction(compare, num_arguments);
+    }
 
     // Restore original values before reacting on result value.
     __ Move(code_object_pointer(), masm_.CodeObject());
@@ -537,9 +542,13 @@ void RegExpMacroAssemblerX64::CheckNotCharacter(uint32_t c,
 void RegExpMacroAssemblerX64::CheckCharacterAfterAnd(uint32_t c,
                                                      uint32_t mask,
                                                      Label* on_equal) {
-  __ movl(rax, current_character());
-  __ and_(rax, Immediate(mask));
-  __ cmpl(rax, Immediate(c));
+  if (c == 0) {
+    __ testl(current_character(), Immediate(mask));
+  } else {
+    __ movl(rax, Immediate(mask));
+    __ and_(rax, current_character());
+    __ cmpl(rax, Immediate(c));
+  }
   BranchOrBacktrack(equal, on_equal);
 }
 
@@ -547,9 +556,13 @@ void RegExpMacroAssemblerX64::CheckCharacterAfterAnd(uint32_t c,
 void RegExpMacroAssemblerX64::CheckNotCharacterAfterAnd(uint32_t c,
                                                         uint32_t mask,
                                                         Label* on_not_equal) {
-  __ movl(rax, current_character());
-  __ and_(rax, Immediate(mask));
-  __ cmpl(rax, Immediate(c));
+  if (c == 0) {
+    __ testl(current_character(), Immediate(mask));
+  } else {
+    __ movl(rax, Immediate(mask));
+    __ and_(rax, current_character());
+    __ cmpl(rax, Immediate(c));
+  }
   BranchOrBacktrack(not_equal, on_not_equal);
 }
 
@@ -559,11 +572,47 @@ void RegExpMacroAssemblerX64::CheckNotCharacterAfterMinusAnd(
     uc16 minus,
     uc16 mask,
     Label* on_not_equal) {
-  ASSERT(minus < String::kMaxUC16CharCode);
+  ASSERT(minus < String::kMaxUtf16CodeUnit);
   __ lea(rax, Operand(current_character(), -minus));
   __ and_(rax, Immediate(mask));
   __ cmpl(rax, Immediate(c));
   BranchOrBacktrack(not_equal, on_not_equal);
+}
+
+
+void RegExpMacroAssemblerX64::CheckCharacterInRange(
+    uc16 from,
+    uc16 to,
+    Label* on_in_range) {
+  __ leal(rax, Operand(current_character(), -from));
+  __ cmpl(rax, Immediate(to - from));
+  BranchOrBacktrack(below_equal, on_in_range);
+}
+
+
+void RegExpMacroAssemblerX64::CheckCharacterNotInRange(
+    uc16 from,
+    uc16 to,
+    Label* on_not_in_range) {
+  __ leal(rax, Operand(current_character(), -from));
+  __ cmpl(rax, Immediate(to - from));
+  BranchOrBacktrack(above, on_not_in_range);
+}
+
+
+void RegExpMacroAssemblerX64::CheckBitInTable(
+    Handle<ByteArray> table,
+    Label* on_bit_set) {
+  __ Move(rax, table);
+  Register index = current_character();
+  if (mode_ != ASCII || kTableMask != String::kMaxAsciiCharCode) {
+    __ movq(rbx, current_character());
+    __ and_(rbx, Immediate(kTableMask));
+    index = rbx;
+  }
+  __ cmpb(FieldOperand(rax, index, times_1, ByteArray::kHeaderSize),
+          Immediate(0));
+  BranchOrBacktrack(not_equal, on_bit_set);
 }
 
 
@@ -706,7 +755,12 @@ Handle<HeapObject> RegExpMacroAssemblerX64::GetCode(Handle<String> source) {
   // registers we need.
   // Entry code:
   __ bind(&entry_label_);
-  // Start new stack frame.
+
+  // Tell the system that we have a stack frame.  Because the type is MANUAL, no
+  // is generated.
+  FrameScope scope(&masm_, StackFrame::MANUAL);
+
+  // Actually emit code to start a new stack frame.
   __ push(rbp);
   __ movq(rbp, rsp);
   // Save parameters and callee-save registers. Order here should correspond
@@ -1170,21 +1224,22 @@ int RegExpMacroAssemblerX64::CheckStackGuardState(Address* return_address,
   }
 
   // Prepare for possible GC.
-  HandleScope handles;
+  HandleScope handles(isolate);
   Handle<Code> code_handle(re_code);
 
   Handle<String> subject(frame_entry<String*>(re_frame, kInputString));
+
   // Current string.
-  bool is_ascii = subject->IsAsciiRepresentation();
+  bool is_ascii = subject->IsAsciiRepresentationUnderneath();
 
   ASSERT(re_code->instruction_start() <= *return_address);
   ASSERT(*return_address <=
       re_code->instruction_start() + re_code->instruction_size());
 
-  MaybeObject* result = Execution::HandleStackGuardInterrupt();
+  MaybeObject* result = Execution::HandleStackGuardInterrupt(isolate);
 
   if (*code_handle != re_code) {  // Return address no longer valid
-    intptr_t delta = *code_handle - re_code;
+    intptr_t delta = code_handle->address() - re_code->address();
     // Overwrite the return address on the stack.
     *return_address += delta;
   }
@@ -1193,8 +1248,20 @@ int RegExpMacroAssemblerX64::CheckStackGuardState(Address* return_address,
     return EXCEPTION;
   }
 
+  Handle<String> subject_tmp = subject;
+  int slice_offset = 0;
+
+  // Extract the underlying string and the slice offset.
+  if (StringShape(*subject_tmp).IsCons()) {
+    subject_tmp = Handle<String>(ConsString::cast(*subject_tmp)->first());
+  } else if (StringShape(*subject_tmp).IsSliced()) {
+    SlicedString* slice = SlicedString::cast(*subject_tmp);
+    subject_tmp = Handle<String>(slice->parent());
+    slice_offset = slice->offset();
+  }
+
   // String might have changed.
-  if (subject->IsAsciiRepresentation() != is_ascii) {
+  if (subject_tmp->IsAsciiRepresentation() != is_ascii) {
     // If we changed between an ASCII and an UC16 string, the specialized
     // code cannot be used, and we need to restart regexp matching from
     // scratch (including, potentially, compiling a new version of the code).
@@ -1205,8 +1272,8 @@ int RegExpMacroAssemblerX64::CheckStackGuardState(Address* return_address,
   // be a sequential or external string with the same content.
   // Update the start and end pointers in the stack frame to the current
   // location (whether it has actually moved or not).
-  ASSERT(StringShape(*subject).IsSequential() ||
-      StringShape(*subject).IsExternal());
+  ASSERT(StringShape(*subject_tmp).IsSequential() ||
+      StringShape(*subject_tmp).IsExternal());
 
   // The original start address of the characters to match.
   const byte* start_address = frame_entry<const byte*>(re_frame, kInputStart);
@@ -1214,7 +1281,8 @@ int RegExpMacroAssemblerX64::CheckStackGuardState(Address* return_address,
   // Find the current start address of the same character at the current string
   // position.
   int start_index = frame_entry<int>(re_frame, kStartIndex);
-  const byte* new_address = StringCharacterPosition(*subject, start_index);
+  const byte* new_address = StringCharacterPosition(*subject_tmp,
+                                                    start_index + slice_offset);
 
   if (start_address != new_address) {
     // If there is a difference, update the object pointer and start and end
@@ -1224,6 +1292,11 @@ int RegExpMacroAssemblerX64::CheckStackGuardState(Address* return_address,
     frame_entry<const String*>(re_frame, kInputString) = *subject;
     frame_entry<const byte*>(re_frame, kInputStart) = new_address;
     frame_entry<const byte*>(re_frame, kInputEnd) = new_address + byte_length;
+  } else if (frame_entry<const String*>(re_frame, kInputString) != *subject) {
+    // Subject string might have been a ConsString that underwent
+    // short-circuiting during GC. That will not change start_address but
+    // will change pointer inside the subject handle.
+    frame_entry<const String*>(re_frame, kInputString) = *subject;
   }
 
   return 0;

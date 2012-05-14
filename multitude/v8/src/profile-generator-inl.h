@@ -78,22 +78,6 @@ ProfileNode::ProfileNode(ProfileTree* tree, CodeEntry* entry)
 }
 
 
-void CodeMap::AddCode(Address addr, CodeEntry* entry, unsigned size) {
-  CodeTree::Locator locator;
-  tree_.Insert(addr, &locator);
-  locator.set_value(CodeEntryInfo(entry, size));
-}
-
-
-void CodeMap::MoveCode(Address from, Address to) {
-  tree_.Move(from, to);
-}
-
-void CodeMap::DeleteCode(Address addr) {
-  tree_.Remove(addr);
-}
-
-
 CodeEntry* ProfileGenerator::EntryForVMState(StateTag tag) {
   switch (tag) {
     case GC:
@@ -111,12 +95,72 @@ CodeEntry* ProfileGenerator::EntryForVMState(StateTag tag) {
 }
 
 
-uint64_t HeapEntry::id() {
-  union {
-    Id stored_id;
-    uint64_t returned_id;
-  } id_adaptor = {id_};
-  return id_adaptor.returned_id;
+HeapEntry* HeapGraphEdge::from() const {
+  return &snapshot()->entries()[from_index_];
+}
+
+
+HeapSnapshot* HeapGraphEdge::snapshot() const {
+  return to_entry_->snapshot();
+}
+
+
+int HeapEntry::index() const {
+  return static_cast<int>(this - &snapshot_->entries().first());
+}
+
+
+int HeapEntry::set_children_index(int index) {
+  children_index_ = index;
+  int next_index = index + children_count_;
+  children_count_ = 0;
+  return next_index;
+}
+
+
+int HeapEntry::set_retainers_index(int index) {
+  retainers_index_ = index;
+  int next_index = index + retainers_count_;
+  retainers_count_ = 0;
+  return next_index;
+}
+
+
+HeapGraphEdge** HeapEntry::children_arr() {
+  ASSERT(children_index_ >= 0);
+  return &snapshot_->children()[children_index_];
+}
+
+
+HeapGraphEdge** HeapEntry::retainers_arr() {
+  ASSERT(retainers_index_ >= 0);
+  return &snapshot_->retainers()[retainers_index_];
+}
+
+
+HeapEntry* HeapEntry::dominator() const {
+  ASSERT(dominator_ >= 0);
+  return &snapshot_->entries()[dominator_];
+}
+
+
+SnapshotObjectId HeapObjectsMap::GetNthGcSubrootId(int delta) {
+  return kGcRootsFirstSubrootId + delta * kObjectIdStep;
+}
+
+
+HeapObject* V8HeapExplorer::GetNthGcSubrootObject(int delta) {
+  return reinterpret_cast<HeapObject*>(
+      reinterpret_cast<char*>(kFirstGcSubrootObject) +
+      delta * HeapObjectsMap::kObjectIdStep);
+}
+
+
+int V8HeapExplorer::GetGcSubrootOrder(HeapObject* subroot) {
+  return static_cast<int>(
+      (reinterpret_cast<char*>(subroot) -
+       reinterpret_cast<char*>(kFirstGcSubrootObject)) /
+      HeapObjectsMap::kObjectIdStep);
 }
 
 } }  // namespace v8::internal

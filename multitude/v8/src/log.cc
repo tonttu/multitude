@@ -35,6 +35,7 @@
 #include "global-handles.h"
 #include "log.h"
 #include "macro-assembler.h"
+#include "platform.h"
 #include "runtime-profiler.h"
 #include "serialize.h"
 #include "string-stream.h"
@@ -461,18 +462,20 @@ class Logger::NameBuffer {
       utf8_pos_ += utf8_length;
       return;
     }
-    int uc16_length = Min(str->length(), kUc16BufferSize);
-    String::WriteToFlat(str, uc16_buffer_, 0, uc16_length);
+    int uc16_length = Min(str->length(), kUtf16BufferSize);
+    String::WriteToFlat(str, utf16_buffer, 0, uc16_length);
+    int previous = unibrow::Utf16::kNoPreviousCharacter;
     for (int i = 0; i < uc16_length && utf8_pos_ < kUtf8BufferSize; ++i) {
-      uc16 c = uc16_buffer_[i];
+      uc16 c = utf16_buffer[i];
       if (c <= String::kMaxAsciiCharCodeU) {
         utf8_buffer_[utf8_pos_++] = static_cast<char>(c);
       } else {
-        int char_length = unibrow::Utf8::Length(c);
+        int char_length = unibrow::Utf8::Length(c, previous);
         if (utf8_pos_ + char_length > kUtf8BufferSize) break;
-        unibrow::Utf8::Encode(utf8_buffer_ + utf8_pos_, c);
+        unibrow::Utf8::Encode(utf8_buffer_ + utf8_pos_, c, previous);
         utf8_pos_ += char_length;
       }
+      previous = c;
     }
   }
 
@@ -504,11 +507,11 @@ class Logger::NameBuffer {
 
  private:
   static const int kUtf8BufferSize = 512;
-  static const int kUc16BufferSize = 128;
+  static const int kUtf16BufferSize = 128;
 
   int utf8_pos_;
   char utf8_buffer_[kUtf8BufferSize];
-  uc16 uc16_buffer_[kUc16BufferSize];
+  uc16 utf16_buffer[kUtf16BufferSize];
 };
 
 
@@ -617,7 +620,7 @@ void Logger::ApiEvent(const char* format, ...) {
 void Logger::ApiNamedSecurityCheck(Object* key) {
   if (!log_->IsEnabled() || !FLAG_log_api) return;
   if (key->IsString()) {
-    SmartPointer<char> str =
+    SmartArrayPointer<char> str =
         String::cast(key)->ToCString(DISALLOW_NULLS, ROBUST_STRING_TRAVERSAL);
     ApiEvent("api,check-security,\"%s\"\n", *str);
   } else if (key->IsUndefined()) {
@@ -762,9 +765,9 @@ void Logger::ApiNamedPropertyAccess(const char* tag,
   ASSERT(name->IsString());
   if (!log_->IsEnabled() || !FLAG_log_api) return;
   String* class_name_obj = holder->class_name();
-  SmartPointer<char> class_name =
+  SmartArrayPointer<char> class_name =
       class_name_obj->ToCString(DISALLOW_NULLS, ROBUST_STRING_TRAVERSAL);
-  SmartPointer<char> property_name =
+  SmartArrayPointer<char> property_name =
       String::cast(name)->ToCString(DISALLOW_NULLS, ROBUST_STRING_TRAVERSAL);
   ApiEvent("api,%s,\"%s\",\"%s\"\n", tag, *class_name, *property_name);
 }
@@ -774,7 +777,7 @@ void Logger::ApiIndexedPropertyAccess(const char* tag,
                                       uint32_t index) {
   if (!log_->IsEnabled() || !FLAG_log_api) return;
   String* class_name_obj = holder->class_name();
-  SmartPointer<char> class_name =
+  SmartArrayPointer<char> class_name =
       class_name_obj->ToCString(DISALLOW_NULLS, ROBUST_STRING_TRAVERSAL);
   ApiEvent("api,%s,\"%s\",%u\n", tag, *class_name, index);
 }
@@ -782,7 +785,7 @@ void Logger::ApiIndexedPropertyAccess(const char* tag,
 void Logger::ApiObjectAccess(const char* tag, JSObject* object) {
   if (!log_->IsEnabled() || !FLAG_log_api) return;
   String* class_name_obj = object->class_name();
-  SmartPointer<char> class_name =
+  SmartArrayPointer<char> class_name =
       class_name_obj->ToCString(DISALLOW_NULLS, ROBUST_STRING_TRAVERSAL);
   ApiEvent("api,%s,\"%s\"\n", tag, *class_name);
 }
@@ -836,7 +839,7 @@ void Logger::CallbackEventInternal(const char* prefix, const char* name,
 
 void Logger::CallbackEvent(String* name, Address entry_point) {
   if (!log_->IsEnabled() || !FLAG_log_code) return;
-  SmartPointer<char> str =
+  SmartArrayPointer<char> str =
       name->ToCString(DISALLOW_NULLS, ROBUST_STRING_TRAVERSAL);
   CallbackEventInternal("", *str, entry_point);
 }
@@ -844,7 +847,7 @@ void Logger::CallbackEvent(String* name, Address entry_point) {
 
 void Logger::GetterCallbackEvent(String* name, Address entry_point) {
   if (!log_->IsEnabled() || !FLAG_log_code) return;
-  SmartPointer<char> str =
+  SmartArrayPointer<char> str =
       name->ToCString(DISALLOW_NULLS, ROBUST_STRING_TRAVERSAL);
   CallbackEventInternal("get ", *str, entry_point);
 }
@@ -852,7 +855,7 @@ void Logger::GetterCallbackEvent(String* name, Address entry_point) {
 
 void Logger::SetterCallbackEvent(String* name, Address entry_point) {
   if (!log_->IsEnabled() || !FLAG_log_code) return;
-  SmartPointer<char> str =
+  SmartArrayPointer<char> str =
       name->ToCString(DISALLOW_NULLS, ROBUST_STRING_TRAVERSAL);
   CallbackEventInternal("set ", *str, entry_point);
 }
@@ -957,7 +960,7 @@ void Logger::CodeCreateEvent(LogEventsAndTags tag,
     return;
 
   LogMessageBuilder msg(this);
-  SmartPointer<char> str =
+  SmartArrayPointer<char> str =
       name->ToCString(DISALLOW_NULLS, ROBUST_STRING_TRAVERSAL);
   msg.Append("%s,%s,",
              kLogEventsNames[CODE_CREATION_EVENT],
@@ -998,9 +1001,9 @@ void Logger::CodeCreateEvent(LogEventsAndTags tag,
   }
   if (!FLAG_log_code) return;
   LogMessageBuilder msg(this);
-  SmartPointer<char> name =
+  SmartArrayPointer<char> name =
       shared->DebugName()->ToCString(DISALLOW_NULLS, ROBUST_STRING_TRAVERSAL);
-  SmartPointer<char> sourcestr =
+  SmartArrayPointer<char> sourcestr =
       source->ToCString(DISALLOW_NULLS, ROBUST_STRING_TRAVERSAL);
   msg.Append("%s,%s,",
              kLogEventsNames[CODE_CREATION_EVENT],
@@ -1356,12 +1359,12 @@ class EnumerateOptimizedFunctionsVisitor: public OptimizedFunctionVisitor {
 
 static int EnumerateCompiledFunctions(Handle<SharedFunctionInfo>* sfis,
                                       Handle<Code>* code_objects) {
+  HeapIterator iterator;
   AssertNoAllocation no_alloc;
   int compiled_funcs_count = 0;
 
   // Iterate the heap to find shared function info objects and record
   // the unoptimized code for them.
-  HeapIterator iterator;
   for (HeapObject* obj = iterator.next(); obj != NULL; obj = iterator.next()) {
     if (!obj->IsSharedFunctionInfo()) continue;
     SharedFunctionInfo* sfi = SharedFunctionInfo::cast(obj);
@@ -1450,6 +1453,8 @@ void Logger::LogCodeInfo() {
   const char arch[] = "x64";
 #elif V8_TARGET_ARCH_ARM
   const char arch[] = "arm";
+#elif V8_TARGET_ARCH_MIPS
+  const char arch[] = "mips";
 #else
   const char arch[] = "unknown";
 #endif
@@ -1519,15 +1524,64 @@ void Logger::LowLevelLogWriteBytes(const char* bytes, int size) {
 
 
 void Logger::LogCodeObjects() {
-  AssertNoAllocation no_alloc;
+  HEAP->CollectAllGarbage(Heap::kMakeHeapIterableMask,
+                          "Logger::LogCodeObjects");
   HeapIterator iterator;
+  AssertNoAllocation no_alloc;
   for (HeapObject* obj = iterator.next(); obj != NULL; obj = iterator.next()) {
     if (obj->IsCode()) LogCodeObject(obj);
   }
 }
 
 
+void Logger::LogExistingFunction(Handle<SharedFunctionInfo> shared,
+                                 Handle<Code> code) {
+  Handle<String> func_name(shared->DebugName());
+  if (shared->script()->IsScript()) {
+    Handle<Script> script(Script::cast(shared->script()));
+    if (script->name()->IsString()) {
+      Handle<String> script_name(String::cast(script->name()));
+      int line_num = GetScriptLineNumber(script, shared->start_position());
+      if (line_num > 0) {
+        PROFILE(ISOLATE,
+                CodeCreateEvent(
+                    Logger::ToNativeByScript(Logger::LAZY_COMPILE_TAG, *script),
+                    *code, *shared,
+                    *script_name, line_num + 1));
+      } else {
+        // Can't distinguish eval and script here, so always use Script.
+        PROFILE(ISOLATE,
+                CodeCreateEvent(
+                    Logger::ToNativeByScript(Logger::SCRIPT_TAG, *script),
+                    *code, *shared, *script_name));
+      }
+    } else {
+      PROFILE(ISOLATE,
+              CodeCreateEvent(
+                  Logger::ToNativeByScript(Logger::LAZY_COMPILE_TAG, *script),
+                  *code, *shared, *func_name));
+    }
+  } else if (shared->IsApiFunction()) {
+    // API function.
+    FunctionTemplateInfo* fun_data = shared->get_api_func_data();
+    Object* raw_call_data = fun_data->call_code();
+    if (!raw_call_data->IsUndefined()) {
+      CallHandlerInfo* call_data = CallHandlerInfo::cast(raw_call_data);
+      Object* callback_obj = call_data->callback();
+      Address entry_point = v8::ToCData<Address>(callback_obj);
+      PROFILE(ISOLATE, CallbackEvent(*func_name, entry_point));
+    }
+  } else {
+    PROFILE(ISOLATE,
+            CodeCreateEvent(
+                Logger::LAZY_COMPILE_TAG, *code, *shared, *func_name));
+  }
+}
+
+
 void Logger::LogCompiledFunctions() {
+  HEAP->CollectAllGarbage(Heap::kMakeHeapIterableMask,
+                          "Logger::LogCompiledFunctions");
   HandleScope scope;
   const int compiled_funcs_count = EnumerateCompiledFunctions(NULL, NULL);
   ScopedVector< Handle<SharedFunctionInfo> > sfis(compiled_funcs_count);
@@ -1540,56 +1594,16 @@ void Logger::LogCompiledFunctions() {
     if (*code_objects[i] == Isolate::Current()->builtins()->builtin(
         Builtins::kLazyCompile))
       continue;
-    Handle<SharedFunctionInfo> shared = sfis[i];
-    Handle<String> func_name(shared->DebugName());
-    if (shared->script()->IsScript()) {
-      Handle<Script> script(Script::cast(shared->script()));
-      if (script->name()->IsString()) {
-        Handle<String> script_name(String::cast(script->name()));
-        int line_num = GetScriptLineNumber(script, shared->start_position());
-        if (line_num > 0) {
-          PROFILE(ISOLATE,
-                  CodeCreateEvent(
-                    Logger::ToNativeByScript(Logger::LAZY_COMPILE_TAG, *script),
-                    *code_objects[i], *shared,
-                    *script_name, line_num + 1));
-        } else {
-          // Can't distinguish eval and script here, so always use Script.
-          PROFILE(ISOLATE,
-                  CodeCreateEvent(
-                      Logger::ToNativeByScript(Logger::SCRIPT_TAG, *script),
-                      *code_objects[i], *shared, *script_name));
-        }
-      } else {
-        PROFILE(ISOLATE,
-                CodeCreateEvent(
-                    Logger::ToNativeByScript(Logger::LAZY_COMPILE_TAG, *script),
-                    *code_objects[i], *shared, *func_name));
-      }
-    } else if (shared->IsApiFunction()) {
-      // API function.
-      FunctionTemplateInfo* fun_data = shared->get_api_func_data();
-      Object* raw_call_data = fun_data->call_code();
-      if (!raw_call_data->IsUndefined()) {
-        CallHandlerInfo* call_data = CallHandlerInfo::cast(raw_call_data);
-        Object* callback_obj = call_data->callback();
-        Address entry_point = v8::ToCData<Address>(callback_obj);
-        PROFILE(ISOLATE, CallbackEvent(*func_name, entry_point));
-      }
-    } else {
-      PROFILE(ISOLATE,
-              CodeCreateEvent(
-                  Logger::LAZY_COMPILE_TAG, *code_objects[i],
-                  *shared, *func_name));
-    }
+    LogExistingFunction(sfis[i], code_objects[i]);
   }
 }
 
 
 void Logger::LogAccessorCallbacks() {
-  AssertNoAllocation no_alloc;
+  HEAP->CollectAllGarbage(Heap::kMakeHeapIterableMask,
+                          "Logger::LogAccessorCallbacks");
   HeapIterator iterator;
-  i::Isolate* isolate = ISOLATE;
+  AssertNoAllocation no_alloc;
   for (HeapObject* obj = iterator.next(); obj != NULL; obj = iterator.next()) {
     if (!obj->IsAccessorInfo()) continue;
     AccessorInfo* ai = AccessorInfo::cast(obj);
@@ -1597,17 +1611,17 @@ void Logger::LogAccessorCallbacks() {
     String* name = String::cast(ai->name());
     Address getter_entry = v8::ToCData<Address>(ai->getter());
     if (getter_entry != 0) {
-      PROFILE(isolate, GetterCallbackEvent(name, getter_entry));
+      PROFILE(ISOLATE, GetterCallbackEvent(name, getter_entry));
     }
     Address setter_entry = v8::ToCData<Address>(ai->setter());
     if (setter_entry != 0) {
-      PROFILE(isolate, SetterCallbackEvent(name, setter_entry));
+      PROFILE(ISOLATE, SetterCallbackEvent(name, setter_entry));
     }
   }
 }
 
 
-bool Logger::Setup() {
+bool Logger::SetUp() {
   // Tests and EnsureInitialize() can call this twice in a row. It's harmless.
   if (is_initialized_) return true;
   is_initialized_ = true;
@@ -1700,9 +1714,9 @@ FILE* Logger::TearDown() {
 
 
 void Logger::EnableSlidingStateWindow() {
-  // If the ticker is NULL, Logger::Setup has not been called yet.  In
+  // If the ticker is NULL, Logger::SetUp has not been called yet.  In
   // that case, we set the sliding_state_window flag so that the
-  // sliding window computation will be started when Logger::Setup is
+  // sliding window computation will be started when Logger::SetUp is
   // called.
   if (ticker_ == NULL) {
     FLAG_sliding_state_window = true;
@@ -1715,13 +1729,21 @@ void Logger::EnableSlidingStateWindow() {
   }
 }
 
+// Protects the state below.
+static Mutex* active_samplers_mutex = NULL;
 
-Mutex* SamplerRegistry::mutex_ = OS::CreateMutex();
 List<Sampler*>* SamplerRegistry::active_samplers_ = NULL;
 
 
+void SamplerRegistry::SetUp() {
+  if (!active_samplers_mutex) {
+    active_samplers_mutex = OS::CreateMutex();
+  }
+}
+
+
 bool SamplerRegistry::IterateActiveSamplers(VisitSampler func, void* param) {
-  ScopedLock lock(mutex_);
+  ScopedLock lock(active_samplers_mutex);
   for (int i = 0;
        ActiveSamplersExist() && i < active_samplers_->length();
        ++i) {
@@ -1748,7 +1770,7 @@ SamplerRegistry::State SamplerRegistry::GetState() {
 
 void SamplerRegistry::AddActiveSampler(Sampler* sampler) {
   ASSERT(sampler->IsActive());
-  ScopedLock lock(mutex_);
+  ScopedLock lock(active_samplers_mutex);
   if (active_samplers_ == NULL) {
     active_samplers_ = new List<Sampler*>;
   } else {
@@ -1760,7 +1782,7 @@ void SamplerRegistry::AddActiveSampler(Sampler* sampler) {
 
 void SamplerRegistry::RemoveActiveSampler(Sampler* sampler) {
   ASSERT(sampler->IsActive());
-  ScopedLock lock(mutex_);
+  ScopedLock lock(active_samplers_mutex);
   ASSERT(active_samplers_ != NULL);
   bool removed = active_samplers_->RemoveElement(sampler);
   ASSERT(removed);

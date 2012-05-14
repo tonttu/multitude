@@ -1,4 +1,4 @@
-// Copyright 2011 the V8 project authors. All rights reserved.
+// Copyright 2012 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -26,15 +26,16 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "v8.h"
-
 #include "accessors.h"
-#include "ast.h"
+
+#include "contexts.h"
 #include "deoptimizer.h"
 #include "execution.h"
 #include "factory.h"
+#include "frames-inl.h"
+#include "isolate.h"
 #include "list-inl.h"
-#include "safepoint-table.h"
-#include "scopeinfo.h"
+#include "property-details.h"
 
 namespace v8 {
 namespace internal {
@@ -486,16 +487,6 @@ MaybeObject* Accessors::FunctionSetPrototype(JSObject* object,
                                                     NONE);
   }
 
-  if (function->has_initial_map()) {
-    // If the function has allocated the initial map
-    // replace it with a copy containing the new prototype.
-    Object* new_map;
-    { MaybeObject* maybe_new_map =
-          function->initial_map()->CopyDropTransitions();
-      if (!maybe_new_map->ToObject(&new_map)) return maybe_new_map;
-    }
-    function->set_initial_map(Map::cast(new_map));
-  }
   Object* prototype;
   { MaybeObject* maybe_prototype = function->SetPrototype(value);
     if (!maybe_prototype->ToObject(&prototype)) return maybe_prototype;
@@ -527,7 +518,9 @@ MaybeObject* Accessors::FunctionGetLength(Object* object, void*) {
     // correctly yet. Compile it now and return the right length.
     HandleScope scope;
     Handle<JSFunction> handle(function);
-    if (!CompileLazy(handle, KEEP_EXCEPTION)) return Failure::Exception();
+    if (!JSFunction::CompileLazy(handle, KEEP_EXCEPTION)) {
+      return Failure::Exception();
+    }
     return Smi::FromInt(handle->shared()->length());
   } else {
     return Smi::FromInt(function->shared()->length());
@@ -572,11 +565,12 @@ static MaybeObject* ConstructArgumentsObjectForInlinedFunction(
     Handle<JSFunction> inlined_function,
     int inlined_frame_index) {
   Factory* factory = Isolate::Current()->factory();
-  int args_count = inlined_function->shared()->formal_parameter_count();
-  ScopedVector<SlotRef> args_slots(args_count);
-  SlotRef::ComputeSlotMappingForArguments(frame,
-                                          inlined_frame_index,
-                                          &args_slots);
+  Vector<SlotRef> args_slots =
+      SlotRef::ComputeSlotMappingForArguments(
+          frame,
+          inlined_frame_index,
+          inlined_function->shared()->formal_parameter_count());
+  int args_count = args_slots.length();
   Handle<JSObject> arguments =
       factory->NewArgumentsObject(inlined_function, args_count);
   Handle<FixedArray> array = factory->NewFixedArray(args_count);
@@ -585,6 +579,7 @@ static MaybeObject* ConstructArgumentsObjectForInlinedFunction(
     array->set(i, *value);
   }
   arguments->set_elements(*array);
+  args_slots.Dispose();
 
   // Return the freshly allocated arguments object.
   return *arguments;
@@ -599,6 +594,7 @@ MaybeObject* Accessors::FunctionGetArguments(Object* object, void*) {
   if (!found_it) return isolate->heap()->undefined_value();
   Handle<JSFunction> function(holder, isolate);
 
+  if (function->shared()->native()) return isolate->heap()->null_value();
   // Find the top invocation of the function by traversing frames.
   List<JSFunction*> functions(2);
   for (JavaScriptFrameIterator it(isolate); !it.done(); it.Advance()) {
@@ -618,8 +614,9 @@ MaybeObject* Accessors::FunctionGetArguments(Object* object, void*) {
 
       if (!frame->is_optimized()) {
         // If there is an arguments variable in the stack, we return that.
-        Handle<SerializedScopeInfo> info(function->shared()->scope_info());
-        int index = info->StackSlotIndex(isolate->heap()->arguments_symbol());
+        Handle<ScopeInfo> scope_info(function->shared()->scope_info());
+        int index = scope_info->StackSlotIndex(
+            isolate->heap()->arguments_symbol());
         if (index >= 0) {
           Handle<Object> arguments(frame->GetExpression(index), isolate);
           if (!arguments->IsArgumentsMarker()) return *arguments;
@@ -671,13 +668,59 @@ static MaybeObject* CheckNonStrictCallerOrThrow(
     Isolate* isolate,
     JSFunction* caller) {
   DisableAssertNoAllocation enable_allocation;
-  if (caller->shared()->strict_mode()) {
+  if (!caller->shared()->is_classic_mode()) {
     return isolate->Throw(
         *isolate->factory()->NewTypeError("strict_caller",
                                           HandleVector<Object>(NULL, 0)));
   }
   return caller;
 }
+
+
+class FrameFunctionIterator {
+ public:
+  FrameFunctionIterator(Isolate* isolate, const AssertNoAllocation& promise)
+      : frame_iterator_(isolate),
+        functions_(2),
+        index_(0) {
+    GetFunctions();
+  }
+  JSFunction* next() {
+    if (functions_.length() == 0) return NULL;
+    JSFunction* next_function = functions_[index_];
+    index_--;
+    if (index_ < 0) {
+      GetFunctions();
+    }
+    return next_function;
+  }
+
+  // Iterate through functions until the first occurence of 'function'.
+  // Returns true if 'function' is found, and false if the iterator ends
+  // without finding it.
+  bool Find(JSFunction* function) {
+    JSFunction* next_function;
+    do {
+      next_function = next();
+      if (next_function == function) return true;
+    } while (next_function != NULL);
+    return false;
+  }
+
+ private:
+  void GetFunctions() {
+    functions_.Rewind(0);
+    if (frame_iterator_.done()) return;
+    JavaScriptFrame* frame = frame_iterator_.frame();
+    frame->GetFunctions(&functions_);
+    ASSERT(functions_.length() > 0);
+    frame_iterator_.Advance();
+    index_ = functions_.length() - 1;
+  }
+  JavaScriptFrameIterator frame_iterator_;
+  List<JSFunction*> functions_;
+  int index_;
+};
 
 
 MaybeObject* Accessors::FunctionGetCaller(Object* object, void*) {
@@ -687,40 +730,38 @@ MaybeObject* Accessors::FunctionGetCaller(Object* object, void*) {
   bool found_it = false;
   JSFunction* holder = FindInPrototypeChain<JSFunction>(object, &found_it);
   if (!found_it) return isolate->heap()->undefined_value();
+  if (holder->shared()->native()) return isolate->heap()->null_value();
   Handle<JSFunction> function(holder, isolate);
 
-  List<JSFunction*> functions(2);
-  for (JavaScriptFrameIterator it(isolate); !it.done(); it.Advance()) {
-    JavaScriptFrame* frame = it.frame();
-    frame->GetFunctions(&functions);
-    for (int i = functions.length() - 1; i >= 0; i--) {
-      if (functions[i] == *function) {
-        // Once we have found the frame, we need to go to the caller
-        // frame. This may require skipping through a number of top-level
-        // frames, e.g. frames for scripts not functions.
-        if (i > 0) {
-          ASSERT(!functions[i - 1]->shared()->is_toplevel());
-          return CheckNonStrictCallerOrThrow(isolate, functions[i - 1]);
-        } else {
-          for (it.Advance(); !it.done(); it.Advance()) {
-            frame = it.frame();
-            functions.Rewind(0);
-            frame->GetFunctions(&functions);
-            if (!functions.last()->shared()->is_toplevel()) {
-              return CheckNonStrictCallerOrThrow(isolate, functions.last());
-            }
-            ASSERT(functions.length() == 1);
-          }
-          if (it.done()) return isolate->heap()->null_value();
-          break;
-        }
-      }
-    }
-    functions.Rewind(0);
+  FrameFunctionIterator it(isolate, no_alloc);
+
+  // Find the function from the frames.
+  if (!it.Find(*function)) {
+    // No frame corresponding to the given function found. Return null.
+    return isolate->heap()->null_value();
   }
 
-  // No frame corresponding to the given function found. Return null.
-  return isolate->heap()->null_value();
+  // Find previously called non-toplevel function.
+  JSFunction* caller;
+  do {
+    caller = it.next();
+    if (caller == NULL) return isolate->heap()->null_value();
+  } while (caller->shared()->is_toplevel());
+
+  // If caller is a built-in function and caller's caller is also built-in,
+  // use that instead.
+  JSFunction* potential_caller = caller;
+  while (potential_caller != NULL && potential_caller->IsBuiltin()) {
+    caller = potential_caller;
+    potential_caller = it.next();
+  }
+  // If caller is bound, return null. This is compatible with JSC, and
+  // allows us to make bound functions use the strict function map
+  // and its associated throwing caller and arguments.
+  if (caller->shared()->bound()) {
+    return isolate->heap()->null_value();
+  }
+  return CheckNonStrictCallerOrThrow(isolate, caller);
 }
 
 

@@ -1,4 +1,4 @@
-// Copyright 2011 the V8 project authors. All rights reserved.
+// Copyright 2012 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -142,8 +142,14 @@ inline void CopyWords(T* dst, T* src, int num_words) {
 }
 
 
-template <typename T>
-static inline void MemsetPointer(T** dest, T* value, int counter) {
+template <typename T, typename U>
+inline void MemsetPointer(T** dest, U* value, int counter) {
+#ifdef DEBUG
+  T* a = NULL;
+  U* b = NULL;
+  a = b;  // Fake assignment to check assignability.
+  USE(a);
+#endif  // DEBUG
 #if defined(V8_HOST_ARCH_IA32)
 #define STOS "stosl"
 #elif defined(V8_HOST_ARCH_X64)
@@ -193,10 +199,13 @@ Vector<const char> ReadFile(FILE* file,
                             bool verbose = true);
 
 
-
 // Copy from ASCII/16bit chars to ASCII/16bit chars.
 template <typename sourcechar, typename sinkchar>
-static inline void CopyChars(sinkchar* dest, const sourcechar* src, int chars) {
+INLINE(void CopyChars(sinkchar* dest, const sourcechar* src, int chars));
+
+
+template <typename sourcechar, typename sinkchar>
+void CopyChars(sinkchar* dest, const sourcechar* src, int chars) {
   sinkchar* limit = dest + chars;
 #ifdef V8_HOST_CAN_READ_UNALIGNED
   if (sizeof(*dest) == sizeof(*src)) {

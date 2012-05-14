@@ -25,23 +25,60 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "../include/v8stdint.h"
-#include "unicode.h"
-#include "globals.h"
-#include "checks.h"
-#include "allocation.h"
-#include "utils.h"
-#include "list.h"
+#include <math.h>
 
-#include "scanner-base.h"
+#include "../include/v8stdint.h"
+
+#include "allocation.h"
+#include "checks.h"
+#include "conversions.h"
+#include "conversions-inl.h"
+#include "globals.h"
+#include "hashmap.h"
+#include "list.h"
 #include "preparse-data-format.h"
 #include "preparse-data.h"
 #include "preparser.h"
-
-#include "conversions-inl.h"
+#include "unicode.h"
+#include "utils.h"
 
 namespace v8 {
+
+#ifdef _MSC_VER
+// Usually defined in math.h, but not in MSVC.
+// Abstracted to work
+int isfinite(double value);
+#endif
+
 namespace preparser {
+
+PreParser::PreParseResult PreParser::PreParseLazyFunction(
+    i::LanguageMode mode, i::ParserRecorder* log) {
+  log_ = log;
+  // Lazy functions always have trivial outer scopes (no with/catch scopes).
+  Scope top_scope(&scope_, kTopLevelScope);
+  set_language_mode(mode);
+  Scope function_scope(&scope_, kFunctionScope);
+  ASSERT_EQ(i::Token::LBRACE, scanner_->current_token());
+  bool ok = true;
+  int start_position = scanner_->peek_location().beg_pos;
+  ParseLazyFunctionLiteralBody(&ok);
+  if (stack_overflow_) return kPreParseStackOverflow;
+  if (!ok) {
+    ReportUnexpectedToken(scanner_->current_token());
+  } else {
+    ASSERT_EQ(i::Token::RBRACE, scanner_->peek());
+    if (!is_classic_mode()) {
+      int end_pos = scanner_->location().end_pos;
+      CheckOctalLiteral(start_position, end_pos, &ok);
+      if (ok) {
+        CheckDelayedStrictModeViolation(start_position, end_pos, &ok);
+      }
+    }
+  }
+  return kPreParseSuccess;
+}
+
 
 // Preparsing checks a JavaScript program and emits preparse-data that helps
 // a later parsing to be faster.
@@ -56,8 +93,6 @@ namespace preparser {
 // That means that contextual checks (like a label being declared where
 // it is used) are generally omitted.
 
-namespace i = ::v8::internal;
-
 void PreParser::ReportUnexpectedToken(i::Token::Value token) {
   // We don't report stack overflows here, to avoid increasing the
   // stack depth even further.  Instead we report it after parsing is
@@ -65,32 +100,27 @@ void PreParser::ReportUnexpectedToken(i::Token::Value token) {
   if (token == i::Token::ILLEGAL && stack_overflow_) {
     return;
   }
-  i::JavaScriptScanner::Location source_location = scanner_->location();
+  i::Scanner::Location source_location = scanner_->location();
 
   // Four of the tokens are treated specially
   switch (token) {
   case i::Token::EOS:
-    return ReportMessageAt(source_location.beg_pos, source_location.end_pos,
-                           "unexpected_eos", NULL);
+    return ReportMessageAt(source_location, "unexpected_eos", NULL);
   case i::Token::NUMBER:
-    return ReportMessageAt(source_location.beg_pos, source_location.end_pos,
-                           "unexpected_token_number", NULL);
+    return ReportMessageAt(source_location, "unexpected_token_number", NULL);
   case i::Token::STRING:
-    return ReportMessageAt(source_location.beg_pos, source_location.end_pos,
-                           "unexpected_token_string", NULL);
+    return ReportMessageAt(source_location, "unexpected_token_string", NULL);
   case i::Token::IDENTIFIER:
-    return ReportMessageAt(source_location.beg_pos, source_location.end_pos,
+    return ReportMessageAt(source_location,
                            "unexpected_token_identifier", NULL);
   case i::Token::FUTURE_RESERVED_WORD:
-    return ReportMessageAt(source_location.beg_pos, source_location.end_pos,
-                           "unexpected_reserved", NULL);
+    return ReportMessageAt(source_location, "unexpected_reserved", NULL);
   case i::Token::FUTURE_STRICT_RESERVED_WORD:
-    return ReportMessageAt(source_location.beg_pos, source_location.end_pos,
+    return ReportMessageAt(source_location,
                            "unexpected_strict_reserved", NULL);
   default:
     const char* name = i::Token::String(token);
-    ReportMessageAt(source_location.beg_pos, source_location.end_pos,
-                    "unexpected_token", name);
+    ReportMessageAt(source_location, "unexpected_token", name);
   }
 }
 
@@ -100,7 +130,7 @@ void PreParser::ReportUnexpectedToken(i::Token::Value token) {
 void PreParser::CheckOctalLiteral(int beg_pos, int end_pos, bool* ok) {
   i::Scanner::Location octal = scanner_->octal_position();
   if (beg_pos <= octal.beg_pos && octal.end_pos <= end_pos) {
-    ReportMessageAt(octal.beg_pos, octal.end_pos, "strict_octal_literal", NULL);
+    ReportMessageAt(octal, "strict_octal_literal", NULL);
     scanner_->clear_octal_position();
     *ok = false;
   }
@@ -114,6 +144,29 @@ void PreParser::CheckOctalLiteral(int beg_pos, int end_pos, bool* ok) {
 #undef DUMMY
 
 
+PreParser::Statement PreParser::ParseSourceElement(bool* ok) {
+  // (Ecma 262 5th Edition, clause 14):
+  // SourceElement:
+  //    Statement
+  //    FunctionDeclaration
+  //
+  // In harmony mode we allow additionally the following productions
+  // SourceElement:
+  //    LetDeclaration
+  //    ConstDeclaration
+
+  switch (peek()) {
+    case i::Token::FUNCTION:
+      return ParseFunctionDeclaration(ok);
+    case i::Token::LET:
+    case i::Token::CONST:
+      return ParseVariableStatement(kSourceElement, ok);
+    default:
+      return ParseStatement(ok);
+  }
+}
+
+
 PreParser::SourceElements PreParser::ParseSourceElements(int end_token,
                                                          bool* ok) {
   // SourceElements ::
@@ -121,10 +174,11 @@ PreParser::SourceElements PreParser::ParseSourceElements(int end_token,
 
   bool allow_directive_prologue = true;
   while (peek() != end_token) {
-    Statement statement = ParseStatement(CHECK_OK);
+    Statement statement = ParseSourceElement(CHECK_OK);
     if (allow_directive_prologue) {
       if (statement.IsUseStrictLiteral()) {
-        set_strict_mode();
+        set_language_mode(harmony_scoping_ ?
+                          i::EXTENDED_MODE : i::STRICT_MODE);
       } else if (!statement.IsStringLiteral()) {
         allow_directive_prologue = false;
       }
@@ -173,8 +227,9 @@ PreParser::Statement PreParser::ParseStatement(bool* ok) {
       return ParseBlock(ok);
 
     case i::Token::CONST:
+    case i::Token::LET:
     case i::Token::VAR:
-      return ParseVariableStatement(ok);
+      return ParseVariableStatement(kStatement, ok);
 
     case i::Token::SEMICOLON:
       Next();
@@ -213,8 +268,19 @@ PreParser::Statement PreParser::ParseStatement(bool* ok) {
     case i::Token::TRY:
       return ParseTryStatement(ok);
 
-    case i::Token::FUNCTION:
-      return ParseFunctionDeclaration(ok);
+    case i::Token::FUNCTION: {
+      i::Scanner::Location start_location = scanner_->peek_location();
+      Statement statement = ParseFunctionDeclaration(CHECK_OK);
+      i::Scanner::Location end_location = scanner_->location();
+      if (!is_classic_mode()) {
+        ReportMessageAt(start_location.beg_pos, end_location.end_pos,
+                        "strict_function", NULL);
+        *ok = false;
+        return Statement::Default();
+      } else {
+        return statement;
+      }
+    }
 
     case i::Token::DEBUGGER:
       return ParseDebuggerStatement(ok);
@@ -243,7 +309,7 @@ PreParser::Statement PreParser::ParseFunctionDeclaration(bool* ok) {
     if (identifier.IsFutureStrictReserved()) {
       type = "strict_reserved_word";
     }
-    ReportMessageAt(location.beg_pos, location.end_pos, type, NULL);
+    ReportMessageAt(location, type, NULL);
     *ok = false;
   }
   return Statement::FunctionDeclaration();
@@ -259,14 +325,10 @@ PreParser::Statement PreParser::ParseBlock(bool* ok) {
   //
   Expect(i::Token::LBRACE, CHECK_OK);
   while (peek() != i::Token::RBRACE) {
-    i::Scanner::Location start_location = scanner_->peek_location();
-    Statement statement = ParseStatement(CHECK_OK);
-    i::Scanner::Location end_location = scanner_->location();
-    if (strict_mode() && statement.IsFunctionDeclaration()) {
-      ReportMessageAt(start_location.beg_pos, end_location.end_pos,
-                      "strict_function", NULL);
-      *ok = false;
-      return Statement::Default();
+    if (is_extended_mode()) {
+      ParseSourceElement(CHECK_OK);
+    } else {
+      ParseStatement(CHECK_OK);
     }
   }
   Expect(i::Token::RBRACE, ok);
@@ -274,11 +336,16 @@ PreParser::Statement PreParser::ParseBlock(bool* ok) {
 }
 
 
-PreParser::Statement PreParser::ParseVariableStatement(bool* ok) {
+PreParser::Statement PreParser::ParseVariableStatement(
+    VariableDeclarationContext var_context,
+    bool* ok) {
   // VariableStatement ::
   //   VariableDeclarations ';'
 
-  Statement result = ParseVariableDeclarations(true, NULL, CHECK_OK);
+  Statement result = ParseVariableDeclarations(var_context,
+                                               NULL,
+                                               NULL,
+                                               CHECK_OK);
   ExpectSemicolon(CHECK_OK);
   return result;
 }
@@ -289,36 +356,98 @@ PreParser::Statement PreParser::ParseVariableStatement(bool* ok) {
 // *var is untouched; in particular, it is the caller's responsibility
 // to initialize it properly. This mechanism is also used for the parsing
 // of 'for-in' loops.
-PreParser::Statement PreParser::ParseVariableDeclarations(bool accept_IN,
-                                                          int* num_decl,
-                                                          bool* ok) {
+PreParser::Statement PreParser::ParseVariableDeclarations(
+    VariableDeclarationContext var_context,
+    VariableDeclarationProperties* decl_props,
+    int* num_decl,
+    bool* ok) {
   // VariableDeclarations ::
   //   ('var' | 'const') (Identifier ('=' AssignmentExpression)?)+[',']
-
+  //
+  // The ES6 Draft Rev3 specifies the following grammar for const declarations
+  //
+  // ConstDeclaration ::
+  //   const ConstBinding (',' ConstBinding)* ';'
+  // ConstBinding ::
+  //   Identifier '=' AssignmentExpression
+  //
+  // TODO(ES6):
+  // ConstBinding ::
+  //   BindingPattern '=' AssignmentExpression
+  bool require_initializer = false;
   if (peek() == i::Token::VAR) {
     Consume(i::Token::VAR);
   } else if (peek() == i::Token::CONST) {
-    if (strict_mode()) {
+    // TODO(ES6): The ES6 Draft Rev4 section 12.2.2 reads:
+    //
+    // ConstDeclaration : const ConstBinding (',' ConstBinding)* ';'
+    //
+    // * It is a Syntax Error if the code that matches this production is not
+    //   contained in extended code.
+    //
+    // However disallowing const in classic mode will break compatibility with
+    // existing pages. Therefore we keep allowing const with the old
+    // non-harmony semantics in classic mode.
+    Consume(i::Token::CONST);
+    switch (language_mode()) {
+      case i::CLASSIC_MODE:
+        break;
+      case i::STRICT_MODE: {
+        i::Scanner::Location location = scanner_->peek_location();
+        ReportMessageAt(location, "strict_const", NULL);
+        *ok = false;
+        return Statement::Default();
+      }
+      case i::EXTENDED_MODE:
+        if (var_context != kSourceElement &&
+            var_context != kForStatement) {
+          i::Scanner::Location location = scanner_->peek_location();
+          ReportMessageAt(location.beg_pos, location.end_pos,
+                          "unprotected_const", NULL);
+          *ok = false;
+          return Statement::Default();
+        }
+        require_initializer = true;
+        break;
+    }
+  } else if (peek() == i::Token::LET) {
+    // ES6 Draft Rev4 section 12.2.1:
+    //
+    // LetDeclaration : let LetBindingList ;
+    //
+    // * It is a Syntax Error if the code that matches this production is not
+    //   contained in extended code.
+    if (!is_extended_mode()) {
       i::Scanner::Location location = scanner_->peek_location();
       ReportMessageAt(location.beg_pos, location.end_pos,
-                      "strict_const", NULL);
+                      "illegal_let", NULL);
       *ok = false;
       return Statement::Default();
     }
-    Consume(i::Token::CONST);
+    Consume(i::Token::LET);
+    if (var_context != kSourceElement &&
+        var_context != kForStatement) {
+      i::Scanner::Location location = scanner_->peek_location();
+      ReportMessageAt(location.beg_pos, location.end_pos,
+                      "unprotected_let", NULL);
+      *ok = false;
+      return Statement::Default();
+    }
   } else {
     *ok = false;
     return Statement::Default();
   }
 
-  // The scope of a variable/const declared anywhere inside a function
-  // is the entire function (ECMA-262, 3rd, 10.1.3, and 12.2). .
+  // The scope of a var/const declared variable anywhere inside a function
+  // is the entire function (ECMA-262, 3rd, 10.1.3, and 12.2). The scope
+  // of a let declared variable is the scope of the immediately enclosing
+  // block.
   int nvars = 0;  // the number of variables declared
   do {
     // Parse variable name.
     if (nvars > 0) Consume(i::Token::COMMA);
     Identifier identifier  = ParseIdentifier(CHECK_OK);
-    if (strict_mode() && !identifier.IsValidStrictVariable()) {
+    if (!is_classic_mode() && !identifier.IsValidStrictVariable()) {
       StrictModeIdentifierViolation(scanner_->location(),
                                     "strict_var_name",
                                     identifier,
@@ -326,9 +455,10 @@ PreParser::Statement PreParser::ParseVariableDeclarations(bool accept_IN,
       return Statement::Default();
     }
     nvars++;
-    if (peek() == i::Token::ASSIGN) {
+    if (peek() == i::Token::ASSIGN || require_initializer) {
       Expect(i::Token::ASSIGN, CHECK_OK);
-      ParseAssignmentExpression(accept_IN, CHECK_OK);
+      ParseAssignmentExpression(var_context != kForStatement, CHECK_OK);
+      if (decl_props != NULL) *decl_props = kHasInitializers;
     }
   } while (peek() == i::Token::COMMA);
 
@@ -344,18 +474,11 @@ PreParser::Statement PreParser::ParseExpressionOrLabelledStatement(bool* ok) {
 
   Expression expr = ParseExpression(true, CHECK_OK);
   if (expr.IsRawIdentifier()) {
-    if (peek() == i::Token::COLON &&
-        (!strict_mode() || !expr.AsIdentifier().IsFutureReserved())) {
+    ASSERT(!expr.AsIdentifier().IsFutureReserved());
+    ASSERT(is_classic_mode() || !expr.AsIdentifier().IsFutureStrictReserved());
+    if (peek() == i::Token::COLON) {
       Consume(i::Token::COLON);
-      i::Scanner::Location start_location = scanner_->peek_location();
-      Statement statement = ParseStatement(CHECK_OK);
-      if (strict_mode() && statement.IsFunctionDeclaration()) {
-        i::Scanner::Location end_location = scanner_->location();
-        ReportMessageAt(start_location.beg_pos, end_location.end_pos,
-                        "strict_function", NULL);
-        *ok = false;
-      }
-      return Statement::Default();
+      return ParseStatement(ok);
     }
     // Preparsing is disabled for extensions (because the extension details
     // aren't passed to lazily compiled functions), so we don't
@@ -448,10 +571,9 @@ PreParser::Statement PreParser::ParseWithStatement(bool* ok) {
   // WithStatement ::
   //   'with' '(' Expression ')' Statement
   Expect(i::Token::WITH, CHECK_OK);
-  if (strict_mode()) {
+  if (!is_classic_mode()) {
     i::Scanner::Location location = scanner_->location();
-    ReportMessageAt(location.beg_pos, location.end_pos,
-                    "strict_mode_with", NULL);
+    ReportMessageAt(location, "strict_mode_with", NULL);
     *ok = false;
     return Statement::Default();
   }
@@ -459,9 +581,8 @@ PreParser::Statement PreParser::ParseWithStatement(bool* ok) {
   ParseExpression(true, CHECK_OK);
   Expect(i::Token::RPAREN, CHECK_OK);
 
-  scope_->EnterWith();
+  Scope::InsideWith iw(scope_);
   ParseStatement(CHECK_OK);
-  scope_->LeaveWith();
   return Statement::Default();
 }
 
@@ -486,15 +607,7 @@ PreParser::Statement PreParser::ParseSwitchStatement(bool* ok) {
       Expect(i::Token::DEFAULT, CHECK_OK);
       Expect(i::Token::COLON, CHECK_OK);
     } else {
-      i::Scanner::Location start_location = scanner_->peek_location();
-      Statement statement = ParseStatement(CHECK_OK);
-      if (strict_mode() && statement.IsFunctionDeclaration()) {
-        i::Scanner::Location end_location = scanner_->location();
-        ReportMessageAt(start_location.beg_pos, end_location.end_pos,
-                        "strict_function", NULL);
-        *ok = false;
-        return Statement::Default();
-      }
+      ParseStatement(CHECK_OK);
     }
     token = peek();
   }
@@ -513,6 +626,7 @@ PreParser::Statement PreParser::ParseDoWhileStatement(bool* ok) {
   Expect(i::Token::LPAREN, CHECK_OK);
   ParseExpression(true, CHECK_OK);
   Expect(i::Token::RPAREN, ok);
+  if (peek() == i::Token::SEMICOLON) Consume(i::Token::SEMICOLON);
   return Statement::Default();
 }
 
@@ -537,10 +651,16 @@ PreParser::Statement PreParser::ParseForStatement(bool* ok) {
   Expect(i::Token::FOR, CHECK_OK);
   Expect(i::Token::LPAREN, CHECK_OK);
   if (peek() != i::Token::SEMICOLON) {
-    if (peek() == i::Token::VAR || peek() == i::Token::CONST) {
+    if (peek() == i::Token::VAR || peek() == i::Token::CONST ||
+        peek() == i::Token::LET) {
+      bool is_let = peek() == i::Token::LET;
       int decl_count;
-      ParseVariableDeclarations(false, &decl_count, CHECK_OK);
-      if (peek() == i::Token::IN && decl_count == 1) {
+      VariableDeclarationProperties decl_props = kHasNoInitializers;
+      ParseVariableDeclarations(
+          kForStatement, &decl_props, &decl_count, CHECK_OK);
+      bool accept_IN = decl_count == 1 &&
+          !(is_let && decl_props == kHasInitializers);
+      if (peek() == i::Token::IN && accept_IN) {
         Expect(i::Token::IN, CHECK_OK);
         ParseExpression(true, CHECK_OK);
         Expect(i::Token::RPAREN, CHECK_OK);
@@ -585,9 +705,8 @@ PreParser::Statement PreParser::ParseThrowStatement(bool* ok) {
 
   Expect(i::Token::THROW, CHECK_OK);
   if (scanner_->HasAnyLineTerminatorBeforeNext()) {
-    i::JavaScriptScanner::Location pos = scanner_->location();
-    ReportMessageAt(pos.beg_pos, pos.end_pos,
-                    "newline_after_throw", NULL);
+    i::Scanner::Location pos = scanner_->location();
+    ReportMessageAt(pos, "newline_after_throw", NULL);
     *ok = false;
     return Statement::Default();
   }
@@ -621,7 +740,7 @@ PreParser::Statement PreParser::ParseTryStatement(bool* ok) {
     Consume(i::Token::CATCH);
     Expect(i::Token::LPAREN, CHECK_OK);
     Identifier id = ParseIdentifier(CHECK_OK);
-    if (strict_mode() && !id.IsValidStrictVariable()) {
+    if (!is_classic_mode() && !id.IsValidStrictVariable()) {
       StrictModeIdentifierViolation(scanner_->location(),
                                     "strict_catch_variable",
                                     id,
@@ -629,10 +748,9 @@ PreParser::Statement PreParser::ParseTryStatement(bool* ok) {
       return Statement::Default();
     }
     Expect(i::Token::RPAREN, CHECK_OK);
-    scope_->EnterWith();
-    ParseBlock(ok);
-    scope_->LeaveWith();
-    if (!*ok) Statement::Default();
+    { Scope::InsideWith iw(scope_);
+      ParseBlock(CHECK_OK);
+    }
     catch_or_finally_seen = true;
   }
   if (peek() == i::Token::FINALLY) {
@@ -699,7 +817,8 @@ PreParser::Expression PreParser::ParseAssignmentExpression(bool accept_IN,
     return expression;
   }
 
-  if (strict_mode() && expression.IsIdentifier() &&
+  if (!is_classic_mode() &&
+      expression.IsIdentifier() &&
       expression.AsIdentifier().IsEvalOrArguments()) {
     i::Scanner::Location after = scanner_->location();
     ReportMessageAt(before.beg_pos, after.end_pos,
@@ -787,7 +906,8 @@ PreParser::Expression PreParser::ParseUnaryExpression(bool* ok) {
     op = Next();
     i::Scanner::Location before = scanner_->peek_location();
     Expression expression = ParseUnaryExpression(CHECK_OK);
-    if (strict_mode() && expression.IsIdentifier() &&
+    if (!is_classic_mode() &&
+        expression.IsIdentifier() &&
         expression.AsIdentifier().IsEvalOrArguments()) {
       i::Scanner::Location after = scanner_->location();
       ReportMessageAt(before.beg_pos, after.end_pos,
@@ -809,7 +929,8 @@ PreParser::Expression PreParser::ParsePostfixExpression(bool* ok) {
   Expression expression = ParseLeftHandSideExpression(CHECK_OK);
   if (!scanner_->HasAnyLineTerminatorBeforeNext() &&
       i::Token::IsCountOp(peek())) {
-    if (strict_mode() && expression.IsIdentifier() &&
+    if (!is_classic_mode() &&
+        expression.IsIdentifier() &&
         expression.AsIdentifier().IsEvalOrArguments()) {
       i::Scanner::Location after = scanner_->location();
       ReportMessageAt(before.beg_pos, after.end_pos,
@@ -996,11 +1117,10 @@ PreParser::Expression PreParser::ParsePrimaryExpression(bool* ok) {
     }
 
     case i::Token::FUTURE_STRICT_RESERVED_WORD:
-      if (strict_mode()) {
+      if (!is_classic_mode()) {
         Next();
         i::Scanner::Location location = scanner_->location();
-        ReportMessageAt(location.beg_pos, location.end_pos,
-                        "strict_reserved_word", NULL);
+        ReportMessageAt(location, "strict_reserved_word", NULL);
         *ok = false;
         return Expression::Default();
       }
@@ -1081,6 +1201,39 @@ PreParser::Expression PreParser::ParseArrayLiteral(bool* ok) {
   return Expression::Default();
 }
 
+void PreParser::CheckDuplicate(DuplicateFinder* finder,
+                               i::Token::Value property,
+                               int type,
+                               bool* ok) {
+  int old_type;
+  if (property == i::Token::NUMBER) {
+    old_type = finder->AddNumber(scanner_->literal_ascii_string(), type);
+  } else if (scanner_->is_literal_ascii()) {
+    old_type = finder->AddAsciiSymbol(scanner_->literal_ascii_string(),
+                                      type);
+  } else {
+    old_type = finder->AddUtf16Symbol(scanner_->literal_utf16_string(), type);
+  }
+  if (HasConflict(old_type, type)) {
+    if (IsDataDataConflict(old_type, type)) {
+      // Both are data properties.
+      if (is_classic_mode()) return;
+      ReportMessageAt(scanner_->location(),
+                      "strict_duplicate_property", NULL);
+    } else if (IsDataAccessorConflict(old_type, type)) {
+      // Both a data and an accessor property with the same name.
+      ReportMessageAt(scanner_->location(),
+                      "accessor_data_property", NULL);
+    } else {
+      ASSERT(IsAccessorAccessorConflict(old_type, type));
+      // Both accessors of the same type.
+      ReportMessageAt(scanner_->location(),
+                      "accessor_get_set", NULL);
+    }
+    *ok = false;
+  }
+}
+
 
 PreParser::Expression PreParser::ParseObjectLiteral(bool* ok) {
   // ObjectLiteral ::
@@ -1090,6 +1243,7 @@ PreParser::Expression PreParser::ParseObjectLiteral(bool* ok) {
   //    )*[','] '}'
 
   Expect(i::Token::LBRACE, CHECK_OK);
+  DuplicateFinder duplicate_finder(scanner_->unicode_cache());
   while (peek() != i::Token::RBRACE) {
     i::Token::Value next = peek();
     switch (next) {
@@ -1114,24 +1268,30 @@ PreParser::Expression PreParser::ParseObjectLiteral(bool* ok) {
             if (!is_keyword) {
               LogSymbol();
             }
+            PropertyType type = is_getter ? kGetterProperty : kSetterProperty;
+            CheckDuplicate(&duplicate_finder, name, type, CHECK_OK);
             ParseFunctionLiteral(CHECK_OK);
             if (peek() != i::Token::RBRACE) {
               Expect(i::Token::COMMA, CHECK_OK);
             }
             continue;  // restart the while
         }
+        CheckDuplicate(&duplicate_finder, next, kValueProperty, CHECK_OK);
         break;
       }
       case i::Token::STRING:
         Consume(next);
+        CheckDuplicate(&duplicate_finder, next, kValueProperty, CHECK_OK);
         GetStringSymbol();
         break;
       case i::Token::NUMBER:
         Consume(next);
+        CheckDuplicate(&duplicate_finder, next, kValueProperty, CHECK_OK);
         break;
       default:
         if (i::Token::IsKeyword(next)) {
           Consume(next);
+          CheckDuplicate(&duplicate_finder, next, kValueProperty, CHECK_OK);
         } else {
           // Unexpected token.
           *ok = false;
@@ -1156,9 +1316,7 @@ PreParser::Expression PreParser::ParseRegExpLiteral(bool seen_equal,
                                                     bool* ok) {
   if (!scanner_->ScanRegExpPattern(seen_equal)) {
     Next();
-    i::JavaScriptScanner::Location location = scanner_->location();
-    ReportMessageAt(location.beg_pos, location.end_pos,
-                    "unterminated_regexp", NULL);
+    ReportMessageAt(scanner_->location(), "unterminated_regexp", NULL);
     *ok = false;
     return Expression::Default();
   }
@@ -1167,9 +1325,7 @@ PreParser::Expression PreParser::ParseRegExpLiteral(bool seen_equal,
 
   if (!scanner_->ScanRegExpFlags()) {
     Next();
-    i::JavaScriptScanner::Location location = scanner_->location();
-    ReportMessageAt(location.beg_pos, location.end_pos,
-                    "invalid_regexp_flags", NULL);
+    ReportMessageAt(scanner_->location(), "invalid_regexp_flags", NULL);
     *ok = false;
     return Expression::Default();
   }
@@ -1214,6 +1370,7 @@ PreParser::Expression PreParser::ParseFunctionLiteral(bool* ok) {
   Expect(i::Token::LPAREN, CHECK_OK);
   int start_position = scanner_->location().beg_pos;
   bool done = (peek() == i::Token::RPAREN);
+  DuplicateFinder duplicate_finder(scanner_->unicode_cache());
   while (!done) {
     Identifier id = ParseIdentifier(CHECK_OK);
     if (!id.IsValidStrictVariable()) {
@@ -1222,15 +1379,26 @@ PreParser::Expression PreParser::ParseFunctionLiteral(bool* ok) {
                                     id,
                                     CHECK_OK);
     }
+    int prev_value;
+    if (scanner_->is_literal_ascii()) {
+      prev_value =
+          duplicate_finder.AddAsciiSymbol(scanner_->literal_ascii_string(), 1);
+    } else {
+      prev_value =
+          duplicate_finder.AddUtf16Symbol(scanner_->literal_utf16_string(), 1);
+    }
+
+    if (prev_value != 0) {
+      SetStrictModeViolation(scanner_->location(),
+                             "strict_param_dupe",
+                             CHECK_OK);
+    }
     done = (peek() == i::Token::RPAREN);
     if (!done) {
       Expect(i::Token::COMMA, CHECK_OK);
     }
   }
   Expect(i::Token::RPAREN, CHECK_OK);
-
-  Expect(i::Token::LBRACE, CHECK_OK);
-  int function_block_pos = scanner_->location().beg_pos;
 
   // Determine if the function will be lazily compiled.
   // Currently only happens to top-level functions.
@@ -1240,26 +1408,15 @@ PreParser::Expression PreParser::ParseFunctionLiteral(bool* ok) {
                              !parenthesized_function_);
   parenthesized_function_ = false;
 
+  Expect(i::Token::LBRACE, CHECK_OK);
   if (is_lazily_compiled) {
-    log_->PauseRecording();
-    ParseSourceElements(i::Token::RBRACE, ok);
-    log_->ResumeRecording();
-    if (!*ok) Expression::Default();
-
-    Expect(i::Token::RBRACE, CHECK_OK);
-
-    // Position right after terminal '}'.
-    int end_pos = scanner_->location().end_pos;
-    log_->LogFunction(function_block_pos, end_pos,
-                      function_scope.materialized_literal_count(),
-                      function_scope.expected_properties(),
-                      strict_mode() ? 1 : 0);
+    ParseLazyFunctionLiteralBody(CHECK_OK);
   } else {
-    ParseSourceElements(i::Token::RBRACE, CHECK_OK);
-    Expect(i::Token::RBRACE, CHECK_OK);
+    ParseSourceElements(i::Token::RBRACE, ok);
   }
+  Expect(i::Token::RBRACE, CHECK_OK);
 
-  if (strict_mode()) {
+  if (!is_classic_mode()) {
     int end_position = scanner_->location().end_pos;
     CheckOctalLiteral(start_position, end_position, CHECK_OK);
     CheckDelayedStrictModeViolation(start_position, end_position, CHECK_OK);
@@ -1270,11 +1427,31 @@ PreParser::Expression PreParser::ParseFunctionLiteral(bool* ok) {
 }
 
 
+void PreParser::ParseLazyFunctionLiteralBody(bool* ok) {
+  int body_start = scanner_->location().beg_pos;
+  log_->PauseRecording();
+  ParseSourceElements(i::Token::RBRACE, ok);
+  log_->ResumeRecording();
+  if (!*ok) return;
+
+  // Position right after terminal '}'.
+  ASSERT_EQ(i::Token::RBRACE, scanner_->peek());
+  int body_end = scanner_->peek_location().end_pos;
+  log_->LogFunction(body_start, body_end,
+                    scope_->materialized_literal_count(),
+                    scope_->expected_properties(),
+                    language_mode());
+}
+
+
 PreParser::Expression PreParser::ParseV8Intrinsic(bool* ok) {
   // CallRuntime ::
   //   '%' Identifier Arguments
-
   Expect(i::Token::MOD, CHECK_OK);
+  if (!allow_natives_syntax_) {
+    *ok = false;
+    return Expression::Default();
+  }
   ParseIdentifier(CHECK_OK);
   ParseArguments(ok);
 
@@ -1306,7 +1483,7 @@ void PreParser::LogSymbol() {
   if (scanner_->is_literal_ascii()) {
     log_->LogAsciiSymbol(identifier_pos, scanner_->literal_ascii_string());
   } else {
-    log_->LogUC16Symbol(identifier_pos, scanner_->literal_uc16_string());
+    log_->LogUtf16Symbol(identifier_pos, scanner_->literal_utf16_string());
   }
 }
 
@@ -1357,9 +1534,16 @@ PreParser::Identifier PreParser::ParseIdentifier(bool* ok) {
       ReportMessageAt(location.beg_pos, location.end_pos,
                       "reserved_word", NULL);
       *ok = false;
+      return GetIdentifierSymbol();
     }
-      // FALLTHROUGH
     case i::Token::FUTURE_STRICT_RESERVED_WORD:
+      if (!is_classic_mode()) {
+        i::Scanner::Location location = scanner_->location();
+        ReportMessageAt(location.beg_pos, location.end_pos,
+                        "strict_reserved_word", NULL);
+        *ok = false;
+      }
+      // FALLTHROUGH
     case i::Token::IDENTIFIER:
       return GetIdentifierSymbol();
     default:
@@ -1372,14 +1556,19 @@ PreParser::Identifier PreParser::ParseIdentifier(bool* ok) {
 void PreParser::SetStrictModeViolation(i::Scanner::Location location,
                                        const char* type,
                                        bool* ok) {
-  if (strict_mode()) {
-    ReportMessageAt(location.beg_pos, location.end_pos, type, NULL);
+  if (!is_classic_mode()) {
+    ReportMessageAt(location, type, NULL);
     *ok = false;
     return;
   }
   // Delay report in case this later turns out to be strict code
   // (i.e., for function names and parameters prior to a "use strict"
   // directive).
+  // It's safe to overwrite an existing violation.
+  // It's either from a function that turned out to be non-strict,
+  // or it's in the current function (and we just need to report
+  // one error), or it's in a unclosed nesting function that wasn't
+  // strict (otherwise we would already be in strict mode).
   strict_mode_violation_location_ = location;
   strict_mode_violation_type_ = type;
 }
@@ -1391,11 +1580,9 @@ void PreParser::CheckDelayedStrictModeViolation(int beg_pos,
   i::Scanner::Location location = strict_mode_violation_location_;
   if (location.IsValid() &&
       location.beg_pos > beg_pos && location.end_pos < end_pos) {
-    ReportMessageAt(location.beg_pos, location.end_pos,
-                    strict_mode_violation_type_, NULL);
+    ReportMessageAt(location, strict_mode_violation_type_, NULL);
     *ok = false;
   }
-  strict_mode_violation_location_ = i::Scanner::Location::invalid();
 }
 
 
@@ -1409,8 +1596,8 @@ void PreParser::StrictModeIdentifierViolation(i::Scanner::Location location,
   } else if (identifier.IsFutureStrictReserved()) {
     type = "strict_reserved_word";
   }
-  if (strict_mode()) {
-    ReportMessageAt(location.beg_pos, location.end_pos, type, NULL);
+  if (!is_classic_mode()) {
+    ReportMessageAt(location, type, NULL);
     *ok = false;
     return;
   }
@@ -1461,5 +1648,139 @@ bool PreParser::peek_any_identifier() {
   return next == i::Token::IDENTIFIER ||
          next == i::Token::FUTURE_RESERVED_WORD ||
          next == i::Token::FUTURE_STRICT_RESERVED_WORD;
+}
+
+
+int DuplicateFinder::AddAsciiSymbol(i::Vector<const char> key, int value) {
+  return AddSymbol(i::Vector<const byte>::cast(key), true, value);
+}
+
+int DuplicateFinder::AddUtf16Symbol(i::Vector<const uint16_t> key, int value) {
+  return AddSymbol(i::Vector<const byte>::cast(key), false, value);
+}
+
+int DuplicateFinder::AddSymbol(i::Vector<const byte> key,
+                               bool is_ascii,
+                               int value) {
+  uint32_t hash = Hash(key, is_ascii);
+  byte* encoding = BackupKey(key, is_ascii);
+  i::HashMap::Entry* entry = map_.Lookup(encoding, hash, true);
+  int old_value = static_cast<int>(reinterpret_cast<intptr_t>(entry->value));
+  entry->value =
+    reinterpret_cast<void*>(static_cast<intptr_t>(value | old_value));
+  return old_value;
+}
+
+
+int DuplicateFinder::AddNumber(i::Vector<const char> key, int value) {
+  ASSERT(key.length() > 0);
+  // Quick check for already being in canonical form.
+  if (IsNumberCanonical(key)) {
+    return AddAsciiSymbol(key, value);
+  }
+
+  int flags = i::ALLOW_HEX | i::ALLOW_OCTALS;
+  double double_value = StringToDouble(unicode_constants_, key, flags, 0.0);
+  int length;
+  const char* string;
+  if (!isfinite(double_value)) {
+    string = "Infinity";
+    length = 8;  // strlen("Infinity");
+  } else {
+    string = DoubleToCString(double_value,
+                             i::Vector<char>(number_buffer_, kBufferSize));
+    length = i::StrLength(string);
+  }
+  return AddSymbol(i::Vector<const byte>(reinterpret_cast<const byte*>(string),
+                                         length), true, value);
+}
+
+
+bool DuplicateFinder::IsNumberCanonical(i::Vector<const char> number) {
+  // Test for a safe approximation of number literals that are already
+  // in canonical form: max 15 digits, no leading zeroes, except an
+  // integer part that is a single zero, and no trailing zeros below
+  // the decimal point.
+  int pos = 0;
+  int length = number.length();
+  if (number.length() > 15) return false;
+  if (number[pos] == '0') {
+    pos++;
+  } else {
+    while (pos < length &&
+           static_cast<unsigned>(number[pos] - '0') <= ('9' - '0')) pos++;
+  }
+  if (length == pos) return true;
+  if (number[pos] != '.') return false;
+  pos++;
+  bool invalid_last_digit = true;
+  while (pos < length) {
+    byte digit = number[pos] - '0';
+    if (digit > '9' - '0') return false;
+    invalid_last_digit = (digit == 0);
+    pos++;
+  }
+  return !invalid_last_digit;
+}
+
+
+uint32_t DuplicateFinder::Hash(i::Vector<const byte> key, bool is_ascii) {
+  // Primitive hash function, almost identical to the one used
+  // for strings (except that it's seeded by the length and ASCII-ness).
+  int length = key.length();
+  uint32_t hash = (length << 1) | (is_ascii ? 1 : 0) ;
+  for (int i = 0; i < length; i++) {
+    uint32_t c = key[i];
+    hash = (hash + c) * 1025;
+    hash ^= (hash >> 6);
+  }
+  return hash;
+}
+
+
+bool DuplicateFinder::Match(void* first, void* second) {
+  // Decode lengths.
+  // Length + ASCII-bit is encoded as base 128, most significant heptet first,
+  // with a 8th bit being non-zero while there are more heptets.
+  // The value encodes the number of bytes following, and whether the original
+  // was ASCII.
+  byte* s1 = reinterpret_cast<byte*>(first);
+  byte* s2 = reinterpret_cast<byte*>(second);
+  uint32_t length_ascii_field = 0;
+  byte c1;
+  do {
+    c1 = *s1;
+    if (c1 != *s2) return false;
+    length_ascii_field = (length_ascii_field << 7) | (c1 & 0x7f);
+    s1++;
+    s2++;
+  } while ((c1 & 0x80) != 0);
+  int length = static_cast<int>(length_ascii_field >> 1);
+  return memcmp(s1, s2, length) == 0;
+}
+
+
+byte* DuplicateFinder::BackupKey(i::Vector<const byte> bytes,
+                                 bool is_ascii) {
+  uint32_t ascii_length = (bytes.length() << 1) | (is_ascii ? 1 : 0);
+  backing_store_.StartSequence();
+  // Emit ascii_length as base-128 encoded number, with the 7th bit set
+  // on the byte of every heptet except the last, least significant, one.
+  if (ascii_length >= (1 << 7)) {
+    if (ascii_length >= (1 << 14)) {
+      if (ascii_length >= (1 << 21)) {
+        if (ascii_length >= (1 << 28)) {
+          backing_store_.Add(static_cast<byte>((ascii_length >> 28) | 0x80));
+        }
+        backing_store_.Add(static_cast<byte>((ascii_length >> 21) | 0x80u));
+      }
+      backing_store_.Add(static_cast<byte>((ascii_length >> 14) | 0x80u));
+    }
+    backing_store_.Add(static_cast<byte>((ascii_length >> 7) | 0x80u));
+  }
+  backing_store_.Add(static_cast<byte>(ascii_length & 0x7f));
+
+  backing_store_.AddBlock(bytes);
+  return backing_store_.EndSequence().start();
 }
 } }  // v8::preparser

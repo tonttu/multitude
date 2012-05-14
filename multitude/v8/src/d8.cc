@@ -1,4 +1,4 @@
-// Copyright 2011 the V8 project authors. All rights reserved.
+// Copyright 2012 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -26,8 +26,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-#ifdef V8_SHARED
-#define USING_V8_SHARED
+#ifdef USING_V8_SHARED  // Defined when linking against shared lib on Windows.
+#define V8_SHARED
 #endif
 
 #ifdef COMPRESS_STARTUP_DATA_BZ2
@@ -37,15 +37,16 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
-#ifdef USING_V8_SHARED
+#ifdef V8_SHARED
 #include <assert.h>
 #include "../include/v8-testing.h"
-#endif  // USING_V8_SHARED
+#endif  // V8_SHARED
 
 #include "d8.h"
 
-#ifndef USING_V8_SHARED
+#ifndef V8_SHARED
 #include "api.h"
 #include "checks.h"
 #include "d8-debug.h"
@@ -53,22 +54,19 @@
 #include "natives.h"
 #include "platform.h"
 #include "v8.h"
-#endif  // USING_V8_SHARED
+#endif  // V8_SHARED
 
 #if !defined(_WIN32) && !defined(_WIN64)
 #include <unistd.h>  // NOLINT
 #endif
 
-#ifdef USING_V8_SHARED
+#ifndef ASSERT
 #define ASSERT(condition) assert(condition)
-#endif  // USING_V8_SHARED
+#endif
 
 namespace v8 {
 
-
-#ifndef USING_V8_SHARED
 LineEditor *LineEditor::first_ = NULL;
-const char* Shell::kHistoryFileName = ".d8_history";
 
 
 LineEditor::LineEditor(Type type, const char* name)
@@ -94,42 +92,44 @@ LineEditor* LineEditor::Get() {
 class DumbLineEditor: public LineEditor {
  public:
   DumbLineEditor() : LineEditor(LineEditor::DUMB, "dumb") { }
-  virtual i::SmartPointer<char> Prompt(const char* prompt);
+  virtual Handle<String> Prompt(const char* prompt);
 };
 
 
 static DumbLineEditor dumb_line_editor;
 
 
-i::SmartPointer<char> DumbLineEditor::Prompt(const char* prompt) {
-  static const int kBufferSize = 256;
-  char buffer[kBufferSize];
+Handle<String> DumbLineEditor::Prompt(const char* prompt) {
   printf("%s", prompt);
-  char* str = fgets(buffer, kBufferSize, stdin);
-  return i::SmartPointer<char>(str ? i::StrDup(str) : str);
+  return Shell::ReadFromStdin();
 }
 
 
+#ifndef V8_SHARED
 CounterMap* Shell::counter_map_;
 i::OS::MemoryMappedFile* Shell::counters_file_ = NULL;
 CounterCollection Shell::local_counters_;
 CounterCollection* Shell::counters_ = &local_counters_;
 i::Mutex* Shell::context_mutex_(i::OS::CreateMutex());
 Persistent<Context> Shell::utility_context_;
-#endif  // USING_V8_SHARED
+#endif  // V8_SHARED
 
+LineEditor* Shell::console = NULL;
 Persistent<Context> Shell::evaluation_context_;
 ShellOptions Shell::options;
 const char* Shell::kPrompt = "d8> ";
 
 
-#ifndef USING_V8_SHARED
+const int MB = 1024 * 1024;
+
+
+#ifndef V8_SHARED
 bool CounterMap::Match(void* key1, void* key2) {
   const char* name1 = reinterpret_cast<const char*>(key1);
   const char* name2 = reinterpret_cast<const char*>(key2);
   return strcmp(name1, name2) == 0;
 }
-#endif  // USING_V8_SHARED
+#endif  // V8_SHARED
 
 
 // Converts a V8 value to a C string.
@@ -143,11 +143,11 @@ bool Shell::ExecuteString(Handle<String> source,
                           Handle<Value> name,
                           bool print_result,
                           bool report_exceptions) {
-#ifndef USING_V8_SHARED
+#if !defined(V8_SHARED) && defined(ENABLE_DEBUGGER_SUPPORT)
   bool FLAG_debugger = i::FLAG_debugger;
 #else
   bool FLAG_debugger = false;
-#endif  // USING_V8_SHARED
+#endif  // !V8_SHARED && ENABLE_DEBUGGER_SUPPORT
   HandleScope handle_scope;
   TryCatch try_catch;
   options.script_executed = true;
@@ -175,8 +175,9 @@ bool Shell::ExecuteString(Handle<String> source,
         // If all went well and the result wasn't undefined then print
         // the returned value.
         v8::String::Utf8Value str(result);
-        const char* cstr = ToCString(str);
-        printf("%s\n", cstr);
+        size_t count = fwrite(*str, sizeof(**str), str.length(), stdout);
+        (void) count;  // Silence GCC-4.5.x "unused result" warning.
+        printf("\n");
       }
       return true;
     }
@@ -202,9 +203,21 @@ Handle<Value> Shell::Write(const Arguments& args) {
     int n = static_cast<int>(fwrite(*str, sizeof(**str), str.length(), stdout));
     if (n != str.length()) {
       printf("Error in fwrite\n");
-      exit(1);
+      Exit(1);
     }
   }
+  return Undefined();
+}
+
+
+Handle<Value> Shell::EnableProfiler(const Arguments& args) {
+  V8::ResumeProfiler();
+  return Undefined();
+}
+
+
+Handle<Value> Shell::DisableProfiler(const Arguments& args) {
+  V8::PauseProfiler();
   return Undefined();
 }
 
@@ -222,7 +235,7 @@ Handle<Value> Shell::Read(const Arguments& args) {
 }
 
 
-Handle<Value> Shell::ReadLine(const Arguments& args) {
+Handle<String> Shell::ReadFromStdin() {
   static const int kBufferSize = 256;
   char buffer[kBufferSize];
   Handle<String> accumulator = String::New("");
@@ -231,7 +244,12 @@ Handle<Value> Shell::ReadLine(const Arguments& args) {
     // Continue reading if the line ends with an escape '\\' or the line has
     // not been fully read into the buffer yet (does not end with '\n').
     // If fgets gets an error, just give up.
-    if (fgets(buffer, kBufferSize, stdin) == NULL) return Null();
+    char* input = NULL;
+    {  // Release lock for blocking input.
+      Unlocker unlock(Isolate::GetCurrent());
+      input = fgets(buffer, kBufferSize, stdin);
+    }
+    if (input == NULL) return Handle<String>();
     length = static_cast<int>(strlen(buffer));
     if (length == 0) {
       return accumulator;
@@ -258,56 +276,181 @@ Handle<Value> Shell::Load(const Arguments& args) {
     if (source.IsEmpty()) {
       return ThrowException(String::New("Error loading file"));
     }
-    if (!ExecuteString(source, String::New(*file), false, false)) {
+    if (!ExecuteString(source, String::New(*file), false, true)) {
       return ThrowException(String::New("Error executing file"));
     }
   }
   return Undefined();
 }
 
+static size_t convertToUint(Local<Value> value_in, TryCatch* try_catch) {
+  if (value_in->IsUint32()) {
+    return value_in->Uint32Value();
+  }
+
+  Local<Value> number = value_in->ToNumber();
+  if (try_catch->HasCaught()) return 0;
+
+  ASSERT(number->IsNumber());
+  Local<Int32> int32 = number->ToInt32();
+  if (try_catch->HasCaught() || int32.IsEmpty()) return 0;
+
+  int32_t raw_value = int32->Int32Value();
+  if (try_catch->HasCaught()) return 0;
+
+  if (raw_value < 0) {
+    ThrowException(String::New("Array length must not be negative."));
+    return 0;
+  }
+
+  static const int kMaxLength = 0x3fffffff;
+#ifndef V8_SHARED
+  ASSERT(kMaxLength == i::ExternalArray::kMaxLength);
+#endif  // V8_SHARED
+  if (raw_value > static_cast<int32_t>(kMaxLength)) {
+    ThrowException(
+        String::New("Array length exceeds maximum length."));
+  }
+  return static_cast<size_t>(raw_value);
+}
+
+
+const char kArrayBufferReferencePropName[] = "_is_array_buffer_";
+const char kArrayBufferMarkerPropName[] = "_array_buffer_ref_";
+
+static const int kExternalArrayAllocationHeaderSize = 2;
 
 Handle<Value> Shell::CreateExternalArray(const Arguments& args,
                                          ExternalArrayType type,
                                          size_t element_size) {
+  TryCatch try_catch;
+  bool is_array_buffer_construct = element_size == 0;
+  if (is_array_buffer_construct) {
+    type = v8::kExternalByteArray;
+    element_size = 1;
+  }
   ASSERT(element_size == 1 || element_size == 2 || element_size == 4 ||
          element_size == 8);
-  if (args.Length() != 1) {
+  if (args.Length() == 0) {
     return ThrowException(
-        String::New("Array constructor needs one parameter."));
+        String::New("Array constructor must have at least one "
+                    "parameter."));
   }
-  static const int kMaxLength = 0x3fffffff;
-#ifndef USING_V8_SHARED
-  ASSERT(kMaxLength == i::ExternalArray::kMaxLength);
-#endif  // USING_V8_SHARED
-  size_t length = 0;
-  if (args[0]->IsUint32()) {
-    length = args[0]->Uint32Value();
-  } else if (args[0]->IsNumber()) {
-    double raw_length = args[0]->NumberValue();
-    if (raw_length < 0) {
-      return ThrowException(String::New("Array length must not be negative."));
-    }
-    if (raw_length > kMaxLength) {
-      return ThrowException(
-          String::New("Array length exceeds maximum length."));
-    }
-    length = static_cast<size_t>(raw_length);
-  } else {
-    return ThrowException(String::New("Array length must be a number."));
+  bool first_arg_is_array_buffer =
+      args[0]->IsObject() &&
+      args[0]->ToObject()->Get(
+          String::New(kArrayBufferMarkerPropName))->IsTrue();
+  // Currently, only the following constructors are supported:
+  //   TypedArray(unsigned long length)
+  //   TypedArray(ArrayBuffer buffer,
+  //              optional unsigned long byteOffset,
+  //              optional unsigned long length)
+  if (args.Length() > 3) {
+    return ThrowException(
+        String::New("Array constructor from ArrayBuffer must "
+                    "have 1-3 parameters."));
   }
-  if (length > static_cast<size_t>(kMaxLength)) {
-    return ThrowException(String::New("Array length exceeds maximum length."));
-  }
-  void* data = calloc(length, element_size);
-  if (data == NULL) {
-    return ThrowException(String::New("Memory allocation failed."));
-  }
+
+  Local<Value> length_value = (args.Length() < 3)
+      ? (first_arg_is_array_buffer
+         ? args[0]->ToObject()->Get(String::New("length"))
+         : args[0])
+      : args[2];
+  size_t length = convertToUint(length_value, &try_catch);
+  if (try_catch.HasCaught()) return try_catch.Exception();
+
+  void* data = NULL;
+  size_t offset = 0;
+
   Handle<Object> array = Object::New();
+  if (first_arg_is_array_buffer) {
+    Handle<Object> derived_from = args[0]->ToObject();
+    data = derived_from->GetIndexedPropertiesExternalArrayData();
+
+    size_t array_buffer_length = convertToUint(
+        derived_from->Get(String::New("length")),
+        &try_catch);
+    if (try_catch.HasCaught()) return try_catch.Exception();
+
+    if (data == NULL && array_buffer_length != 0) {
+      return ThrowException(
+          String::New("ArrayBuffer doesn't have data"));
+    }
+
+    if (args.Length() > 1) {
+      offset = convertToUint(args[1], &try_catch);
+      if (try_catch.HasCaught()) return try_catch.Exception();
+
+      // The given byteOffset must be a multiple of the element size of the
+      // specific type, otherwise an exception is raised.
+      if (offset % element_size != 0) {
+        return ThrowException(
+            String::New("offset must be multiple of element_size"));
+      }
+    }
+
+    if (offset > array_buffer_length) {
+      return ThrowException(
+          String::New("byteOffset must be less than ArrayBuffer length."));
+    }
+
+    if (args.Length() == 2) {
+      // If length is not explicitly specified, the length of the ArrayBuffer
+      // minus the byteOffset must be a multiple of the element size of the
+      // specific type, or an exception is raised.
+      length = array_buffer_length - offset;
+    }
+
+    if (args.Length() != 3) {
+      if (length % element_size != 0) {
+        return ThrowException(
+            String::New("ArrayBuffer length minus the byteOffset must be a "
+                        "multiple of the element size"));
+      }
+      length /= element_size;
+    }
+
+    // If a given byteOffset and length references an area beyond the end of
+    // the ArrayBuffer an exception is raised.
+    if (offset + (length * element_size) > array_buffer_length) {
+      return ThrowException(
+          String::New("length references an area beyond the end of the "
+                      "ArrayBuffer"));
+    }
+
+    // Hold a reference to the ArrayBuffer so its buffer doesn't get collected.
+    array->Set(String::New(kArrayBufferReferencePropName), args[0], ReadOnly);
+  }
+
+  if (is_array_buffer_construct) {
+    array->Set(String::New(kArrayBufferMarkerPropName), True(), ReadOnly);
+  }
+
   Persistent<Object> persistent_array = Persistent<Object>::New(array);
+  if (data == NULL && length != 0) {
+    // Make sure the total size fits into a (signed) int.
+    static const int kMaxSize = 0x7fffffff;
+    if (length > (kMaxSize - sizeof(size_t)) / element_size) {
+      return ThrowException(String::New("Array exceeds maximum size (2G)"));
+    }
+    // Prepend the size of the allocated chunk to the data itself.
+    int total_size = length * element_size +
+        kExternalArrayAllocationHeaderSize * sizeof(size_t);
+    data = malloc(total_size);
+    if (data == NULL) {
+      return ThrowException(String::New("Memory allocation failed."));
+    }
+    *reinterpret_cast<size_t*>(data) = total_size;
+    data = reinterpret_cast<size_t*>(data) + kExternalArrayAllocationHeaderSize;
+    memset(data, 0, length * element_size);
+    V8::AdjustAmountOfExternalAllocatedMemory(total_size);
+  }
   persistent_array.MakeWeak(data, ExternalArrayWeakCallback);
   persistent_array.MarkIndependent();
-  array->SetIndexedPropertiesToExternalArrayData(data, type,
-                                                 static_cast<int>(length));
+
+  array->SetIndexedPropertiesToExternalArrayData(
+      reinterpret_cast<uint8_t*>(data) + offset, type,
+      static_cast<int>(length));
   array->Set(String::New("length"),
              Int32::New(static_cast<int32_t>(length)), ReadOnly);
   array->Set(String::New("BYTES_PER_ELEMENT"),
@@ -317,8 +460,22 @@ Handle<Value> Shell::CreateExternalArray(const Arguments& args,
 
 
 void Shell::ExternalArrayWeakCallback(Persistent<Value> object, void* data) {
-  free(data);
+  HandleScope scope;
+  Handle<String> prop_name = String::New(kArrayBufferReferencePropName);
+  Handle<Object> converted_object = object->ToObject();
+  Local<Value> prop_value = converted_object->Get(prop_name);
+  if (data != NULL && !prop_value->IsObject()) {
+    data = reinterpret_cast<size_t*>(data) - kExternalArrayAllocationHeaderSize;
+    V8::AdjustAmountOfExternalAllocatedMemory(
+        -static_cast<int>(*reinterpret_cast<size_t*>(data)));
+    free(data);
+  }
   object.Dispose();
+}
+
+
+Handle<Value> Shell::ArrayBuffer(const Arguments& args) {
+  return CreateExternalArray(args, v8::kExternalByteArray, 0);
 }
 
 
@@ -378,9 +535,9 @@ Handle<Value> Shell::Yield(const Arguments& args) {
 
 Handle<Value> Shell::Quit(const Arguments& args) {
   int exit_code = args[0]->Int32Value();
-#ifndef USING_V8_SHARED
+#ifndef V8_SHARED
   OnExit();
-#endif  // USING_V8_SHARED
+#endif  // V8_SHARED
   exit(exit_code);
   return Undefined();
 }
@@ -393,6 +550,10 @@ Handle<Value> Shell::Version(const Arguments& args) {
 
 void Shell::ReportException(v8::TryCatch* try_catch) {
   HandleScope handle_scope;
+#if !defined(V8_SHARED) && defined(ENABLE_DEBUGGER_SUPPORT)
+  bool enter_context = !Context::InContext();
+  if (enter_context) utility_context_->Enter();
+#endif  // !V8_SHARED && ENABLE_DEBUGGER_SUPPORT
   v8::String::Utf8Value exception(try_catch->Exception());
   const char* exception_string = ToCString(exception);
   Handle<Message> message = try_catch->Message();
@@ -426,10 +587,14 @@ void Shell::ReportException(v8::TryCatch* try_catch) {
       printf("%s\n", stack_trace_string);
     }
   }
+  printf("\n");
+#if !defined(V8_SHARED) && defined(ENABLE_DEBUGGER_SUPPORT)
+  if (enter_context) utility_context_->Exit();
+#endif  // !V8_SHARED && ENABLE_DEBUGGER_SUPPORT
 }
 
 
-#ifndef USING_V8_SHARED
+#ifndef V8_SHARED
 Handle<Array> Shell::GetCompletions(Handle<String> text, Handle<String> full) {
   HandleScope handle_scope;
   Context::Scope context_scope(utility_context_);
@@ -463,11 +628,17 @@ Handle<Value> Shell::DebugCommandToJSONRequest(Handle<String> command) {
   Handle<Value> val = Handle<Function>::Cast(fun)->Call(global, kArgc, argv);
   return val;
 }
+
+
+void Shell::DispatchDebugMessages() {
+  v8::Context::Scope scope(Shell::evaluation_context_);
+  v8::Debug::ProcessDebugMessages();
+}
 #endif  // ENABLE_DEBUGGER_SUPPORT
-#endif  // USING_V8_SHARED
+#endif  // V8_SHARED
 
 
-#ifndef USING_V8_SHARED
+#ifndef V8_SHARED
 int32_t* Counter::Bind(const char* name, bool is_histogram) {
   int i;
   for (i = 0; i < kMaxNameSize - 1 && name[i]; i++)
@@ -505,7 +676,7 @@ void Shell::MapCounters(const char* name) {
       NULL : counters_file_->memory();
   if (memory == NULL) {
     printf("Could not map counters file %s\n", name);
-    exit(1);
+    Exit(1);
   }
   counters_ = static_cast<CounterCollection*>(memory);
   V8::SetCounterFunction(LookupCounter);
@@ -576,6 +747,7 @@ void Shell::InstallUtilityScript() {
   Context::Scope utility_scope(utility_context_);
 
 #ifdef ENABLE_DEBUGGER_SUPPORT
+  if (i::FLAG_debugger) printf("JavaScript debugger enabled\n");
   // Install the debugger object in the utility scope
   i::Debug* debug = i::Isolate::Current()->debug();
   debug->Load();
@@ -615,7 +787,7 @@ void Shell::InstallUtilityScript() {
   }
 #endif  // ENABLE_DEBUGGER_SUPPORT
 }
-#endif  // USING_V8_SHARED
+#endif  // V8_SHARED
 
 
 #ifdef COMPRESS_STARTUP_DATA_BZ2
@@ -650,13 +822,21 @@ Handle<ObjectTemplate> Shell::CreateGlobalTemplate() {
   global_template->Set(String::New("print"), FunctionTemplate::New(Print));
   global_template->Set(String::New("write"), FunctionTemplate::New(Write));
   global_template->Set(String::New("read"), FunctionTemplate::New(Read));
+  global_template->Set(String::New("readbinary"),
+                       FunctionTemplate::New(ReadBinary));
   global_template->Set(String::New("readline"),
                        FunctionTemplate::New(ReadLine));
   global_template->Set(String::New("load"), FunctionTemplate::New(Load));
   global_template->Set(String::New("quit"), FunctionTemplate::New(Quit));
   global_template->Set(String::New("version"), FunctionTemplate::New(Version));
+  global_template->Set(String::New("enableProfiler"),
+                       FunctionTemplate::New(EnableProfiler));
+  global_template->Set(String::New("disableProfiler"),
+                       FunctionTemplate::New(DisableProfiler));
 
   // Bind the handlers for external arrays.
+  global_template->Set(String::New("ArrayBuffer"),
+                       FunctionTemplate::New(ArrayBuffer));
   global_template->Set(String::New("Int8Array"),
                        FunctionTemplate::New(Int8Array));
   global_template->Set(String::New("Uint8Array"),
@@ -677,16 +857,16 @@ Handle<ObjectTemplate> Shell::CreateGlobalTemplate() {
                        FunctionTemplate::New(PixelArray));
 
 #ifdef LIVE_OBJECT_LIST
-  global_template->Set(String::New("lol_is_enabled"), Boolean::New(true));
+  global_template->Set(String::New("lol_is_enabled"), True());
 #else
-  global_template->Set(String::New("lol_is_enabled"), Boolean::New(false));
+  global_template->Set(String::New("lol_is_enabled"), False());
 #endif
 
-#ifndef USING_V8_SHARED
+#if !defined(V8_SHARED) && !defined(_WIN32) && !defined(_WIN64)
   Handle<ObjectTemplate> os_templ = ObjectTemplate::New();
   AddOSMethods(os_templ);
   global_template->Set(String::New("os"), os_templ);
-#endif  // USING_V8_SHARED
+#endif  // V8_SHARED
 
   return global_template;
 }
@@ -698,11 +878,11 @@ void Shell::Initialize() {
   int bz2_result = startup_data_decompressor.Decompress();
   if (bz2_result != BZ_OK) {
     fprintf(stderr, "bzip error code: %d\n", bz2_result);
-    exit(1);
+    Exit(1);
   }
 #endif
 
-#ifndef USING_V8_SHARED
+#ifndef V8_SHARED
   Shell::counter_map_ = new CounterMap();
   // Set up counters
   if (i::StrLength(i::FLAG_map_counters) != 0)
@@ -712,10 +892,10 @@ void Shell::Initialize() {
     V8::SetCreateHistogramFunction(CreateHistogram);
     V8::SetAddHistogramSampleFunction(AddHistogramSample);
   }
-#endif  // USING_V8_SHARED
+#endif  // V8_SHARED
   if (options.test_shell) return;
 
-#ifndef USING_V8_SHARED
+#ifndef V8_SHARED
   Locker lock;
   HandleScope scope;
   Handle<ObjectTemplate> global_template = CreateGlobalTemplate();
@@ -725,23 +905,25 @@ void Shell::Initialize() {
   // Start the debugger agent if requested.
   if (i::FLAG_debugger_agent) {
     v8::Debug::EnableAgent("d8 shell", i::FLAG_debugger_port, true);
+    v8::Debug::SetDebugMessageDispatchHandler(DispatchDebugMessages, true);
   }
 #endif  // ENABLE_DEBUGGER_SUPPORT
-#endif  // USING_V8_SHARED
+#endif  // V8_SHARED
 }
 
 
 Persistent<Context> Shell::CreateEvaluationContext() {
-#ifndef USING_V8_SHARED
+#ifndef V8_SHARED
   // This needs to be a critical section since this is not thread-safe
   i::ScopedLock lock(context_mutex_);
-#endif  // USING_V8_SHARED
+#endif  // V8_SHARED
   // Initialize the global objects
   Handle<ObjectTemplate> global_template = CreateGlobalTemplate();
   Persistent<Context> context = Context::New(NULL, global_template);
+  ASSERT(!context.IsEmpty());
   Context::Scope scope(context);
 
-#ifndef USING_V8_SHARED
+#ifndef V8_SHARED
   i::JSArguments js_args = i::FLAG_js_arguments;
   i::Handle<i::FixedArray> arguments_array =
       FACTORY->NewFixedArray(js_args.argc());
@@ -754,43 +936,94 @@ Persistent<Context> Shell::CreateEvaluationContext() {
       FACTORY->NewJSArrayWithElements(arguments_array);
   context->Global()->Set(String::New("arguments"),
                          Utils::ToLocal(arguments_jsarray));
-#endif  // USING_V8_SHARED
+#endif  // V8_SHARED
   return context;
 }
 
 
-#ifndef USING_V8_SHARED
+void Shell::Exit(int exit_code) {
+  // Use _exit instead of exit to avoid races between isolate
+  // threads and static destructors.
+  fflush(stdout);
+  fflush(stderr);
+  _exit(exit_code);
+}
+
+
+#ifndef V8_SHARED
+struct CounterAndKey {
+  Counter* counter;
+  const char* key;
+};
+
+
+int CompareKeys(const void* a, const void* b) {
+  return strcmp(static_cast<const CounterAndKey*>(a)->key,
+                static_cast<const CounterAndKey*>(b)->key);
+}
+
+
 void Shell::OnExit() {
+  if (console != NULL) console->Close();
   if (i::FLAG_dump_counters) {
-    printf("+----------------------------------------+-------------+\n");
-    printf("| Name                                   | Value       |\n");
-    printf("+----------------------------------------+-------------+\n");
+    int number_of_counters = 0;
     for (CounterMap::Iterator i(counter_map_); i.More(); i.Next()) {
-      Counter* counter = i.CurrentValue();
+      number_of_counters++;
+    }
+    CounterAndKey* counters = new CounterAndKey[number_of_counters];
+    int j = 0;
+    for (CounterMap::Iterator i(counter_map_); i.More(); i.Next(), j++) {
+      counters[j].counter = i.CurrentValue();
+      counters[j].key = i.CurrentKey();
+    }
+    qsort(counters, number_of_counters, sizeof(counters[0]), CompareKeys);
+    printf("+--------------------------------------------+-------------+\n");
+    printf("| Name                                       | Value       |\n");
+    printf("+--------------------------------------------+-------------+\n");
+    for (j = 0; j < number_of_counters; j++) {
+      Counter* counter = counters[j].counter;
+      const char* key = counters[j].key;
       if (counter->is_histogram()) {
-        printf("| c:%-36s | %11i |\n", i.CurrentKey(), counter->count());
-        printf("| t:%-36s | %11i |\n", i.CurrentKey(), counter->sample_total());
+        printf("| c:%-40s | %11i |\n", key, counter->count());
+        printf("| t:%-40s | %11i |\n", key, counter->sample_total());
       } else {
-        printf("| %-38s | %11i |\n", i.CurrentKey(), counter->count());
+        printf("| %-42s | %11i |\n", key, counter->count());
       }
     }
-    printf("+----------------------------------------+-------------+\n");
+    printf("+--------------------------------------------+-------------+\n");
+    delete [] counters;
   }
-  if (counters_file_ != NULL)
-    delete counters_file_;
+  delete counters_file_;
+  delete counter_map_;
 }
-#endif  // USING_V8_SHARED
+#endif  // V8_SHARED
+
+
+static FILE* FOpen(const char* path, const char* mode) {
+#if defined(_MSC_VER) && (defined(_WIN32) || defined(_WIN64))
+  FILE* result;
+  if (fopen_s(&result, path, mode) == 0) {
+    return result;
+  } else {
+    return NULL;
+  }
+#else
+  FILE* file = fopen(path, mode);
+  if (file == NULL) return NULL;
+  struct stat file_stat;
+  if (fstat(fileno(file), &file_stat) != 0) return NULL;
+  bool is_regular_file = ((file_stat.st_mode & S_IFREG) != 0);
+  if (is_regular_file) return file;
+  fclose(file);
+  return NULL;
+#endif
+}
 
 
 static char* ReadChars(const char* name, int* size_out) {
   // Release the V8 lock while reading files.
   v8::Unlocker unlocker(Isolate::GetCurrent());
-#ifndef USING_V8_SHARED
-  FILE* file = i::OS::FOpen(name, "rb");
-#else
-  // TODO(yangguo@chromium.org): reading from a directory hangs!
-  FILE* file = fopen(name, "rb");
-#endif  // USING_V8_SHARED
+  FILE* file = FOpen(name, "rb");
   if (file == NULL) return NULL;
 
   fseek(file, 0, SEEK_END);
@@ -809,7 +1042,24 @@ static char* ReadChars(const char* name, int* size_out) {
 }
 
 
-#ifndef USING_V8_SHARED
+Handle<Value> Shell::ReadBinary(const Arguments& args) {
+  String::Utf8Value filename(args[0]);
+  int size;
+  if (*filename == NULL) {
+    return ThrowException(String::New("Error loading file"));
+  }
+  char* chars = ReadChars(*filename, &size);
+  if (chars == NULL) {
+    return ThrowException(String::New("Error reading file"));
+  }
+  // We skip checking the string for UTF8 characters and use it raw as
+  // backing store for the external string with 8-bit characters.
+  BinaryResource* resource = new BinaryResource(chars, size);
+  return String::NewExternal(resource);
+}
+
+
+#ifndef V8_SHARED
 static char* ReadToken(char* data, char token) {
   char* next = i::OS::StrChr(data, token);
   if (next != NULL) {
@@ -829,7 +1079,7 @@ static char* ReadLine(char* data) {
 static char* ReadWord(char* data) {
   return ReadToken(data, ' ');
 }
-#endif  // USING_V8_SHARED
+#endif  // V8_SHARED
 
 
 // Reads a file into a v8 string.
@@ -846,51 +1096,42 @@ Handle<String> Shell::ReadFile(const char* name) {
 void Shell::RunShell() {
   Locker locker;
   Context::Scope context_scope(evaluation_context_);
-  HandleScope handle_scope;
+  HandleScope outer_scope;
   Handle<String> name = String::New("(d8)");
-#ifndef USING_V8_SHARED
-  LineEditor* editor = LineEditor::Get();
-  printf("V8 version %s [console: %s]\n", V8::GetVersion(), editor->name());
-  if (i::FLAG_debugger) {
-    printf("JavaScript debugger enabled\n");
-  }
-  editor->Open();
+  console = LineEditor::Get();
+  printf("V8 version %s [console: %s]\n", V8::GetVersion(), console->name());
+  console->Open();
   while (true) {
-    i::SmartPointer<char> input = editor->Prompt(Shell::kPrompt);
-    if (input.is_empty()) break;
-    editor->AddHistory(*input);
-    ExecuteString(String::New(*input), name, true, true);
+    HandleScope inner_scope;
+    Handle<String> input = console->Prompt(Shell::kPrompt);
+    if (input.IsEmpty()) break;
+    ExecuteString(input, name, true, true);
   }
-  editor->Close();
-#else
-  printf("V8 version %s [D8 light using shared library]\n", V8::GetVersion());
-  static const int kBufferSize = 256;
-  while (true) {
-    char buffer[kBufferSize];
-    printf("%s", Shell::kPrompt);
-    if (fgets(buffer, kBufferSize, stdin) == NULL) break;
-    ExecuteString(String::New(buffer), name, true, true);
-  }
-#endif  // USING_V8_SHARED
   printf("\n");
 }
 
 
-#ifndef USING_V8_SHARED
+#ifndef V8_SHARED
 class ShellThread : public i::Thread {
  public:
-  ShellThread(int no, i::Vector<const char> files)
+  // Takes ownership of the underlying char array of |files|.
+  ShellThread(int no, char* files)
       : Thread("d8:ShellThread"),
         no_(no), files_(files) { }
+
+  ~ShellThread() {
+    delete[] files_;
+  }
+
   virtual void Run();
  private:
   int no_;
-  i::Vector<const char> files_;
+  char* files_;
 };
 
 
 void ShellThread::Run() {
-  char* ptr = const_cast<char*>(files_.start());
+  char* ptr = files_;
   while ((ptr != NULL) && (*ptr != '\0')) {
     // For each newline-separated line.
     char* next_line = ReadLine(ptr);
@@ -903,23 +1144,24 @@ void ShellThread::Run() {
 
     // Prepare the context for this thread.
     Locker locker;
-    HandleScope scope;
+    HandleScope outer_scope;
     Persistent<Context> thread_context = Shell::CreateEvaluationContext();
     Context::Scope context_scope(thread_context);
 
     while ((ptr != NULL) && (*ptr != '\0')) {
+      HandleScope inner_scope;
       char* filename = ptr;
       ptr = ReadWord(ptr);
 
       // Skip empty strings.
       if (strlen(filename) == 0) {
-        break;
+        continue;
       }
 
       Handle<String> str = Shell::ReadFile(filename);
       if (str.IsEmpty()) {
-        printf("WARNING: %s not found\n", filename);
-        break;
+        printf("File '%s' not found\n", filename);
+        Shell::Exit(1);
       }
 
       Shell::ExecuteString(str, String::New(filename), false, false);
@@ -929,15 +1171,18 @@ void ShellThread::Run() {
     ptr = next_line;
   }
 }
-#endif  // USING_V8_SHARED
+#endif  // V8_SHARED
 
 
-void SourceGroup::ExitShell(int exit_code) {
-  // Use _exit instead of exit to avoid races between isolate
-  // threads and static destructors.
-  fflush(stdout);
-  fflush(stderr);
-  _exit(exit_code);
+SourceGroup::~SourceGroup() {
+#ifndef V8_SHARED
+  delete next_semaphore_;
+  next_semaphore_ = NULL;
+  delete done_semaphore_;
+  done_semaphore_ = NULL;
+  delete thread_;
+  thread_ = NULL;
+#endif  // V8_SHARED
 }
 
 
@@ -950,8 +1195,7 @@ void SourceGroup::Execute() {
       Handle<String> file_name = String::New("unnamed");
       Handle<String> source = String::New(argv_[i + 1]);
       if (!Shell::ExecuteString(source, file_name, false, true)) {
-        ExitShell(1);
-        return;
+        Shell::Exit(1);
       }
       ++i;
     } else if (arg[0] == '-') {
@@ -963,12 +1207,10 @@ void SourceGroup::Execute() {
       Handle<String> source = ReadFile(arg);
       if (source.IsEmpty()) {
         printf("Error reading '%s'\n", arg);
-        ExitShell(1);
-        return;
+        Shell::Exit(1);
       }
       if (!Shell::ExecuteString(source, file_name, false, true)) {
-        ExitShell(1);
-        return;
+        Shell::Exit(1);
       }
     }
   }
@@ -976,41 +1218,22 @@ void SourceGroup::Execute() {
 
 
 Handle<String> SourceGroup::ReadFile(const char* name) {
-#ifndef USING_V8_SHARED
-  FILE* file = i::OS::FOpen(name, "rb");
-#else
-  // TODO(yangguo@chromium.org): reading from a directory hangs!
-  FILE* file = fopen(name, "rb");
-#endif  // USING_V8_SHARED
-  if (file == NULL) return Handle<String>();
-
-  fseek(file, 0, SEEK_END);
-  int size = ftell(file);
-  rewind(file);
-
-  char* chars = new char[size + 1];
-  chars[size] = '\0';
-  for (int i = 0; i < size;) {
-    int read = static_cast<int>(fread(&chars[i], 1, size - i, file));
-    i += read;
-  }
-  fclose(file);
+  int size;
+  const char* chars = ReadChars(name, &size);
+  if (chars == NULL) return Handle<String>();
   Handle<String> result = String::New(chars, size);
   delete[] chars;
   return result;
 }
 
 
-#ifndef USING_V8_SHARED
+#ifndef V8_SHARED
 i::Thread::Options SourceGroup::GetThreadOptions() {
-  i::Thread::Options options;
-  options.name = "IsolateThread";
   // On some systems (OSX 10.6) the stack size default is 0.5Mb or less
   // which is not enough to parse the big literal expressions used in tests.
   // The stack size should be at least StackGuard::kLimitSize + some
-  // OS-specific padding for thread startup code.
-  options.stack_size = 2 << 20;  // 2 Mb seems to be enough
-  return options;
+  // OS-specific padding for thread startup code.  2Mbytes seems to be enough.
+  return i::Thread::Options("IsolateThread", 2 * MB);
 }
 
 
@@ -1048,12 +1271,11 @@ void SourceGroup::WaitForThread() {
   if (thread_ == NULL) return;
   if (Shell::options.last_run) {
     thread_->Join();
-    thread_ = NULL;
   } else {
     done_semaphore_->Wait();
   }
 }
-#endif  // USING_V8_SHARED
+#endif  // V8_SHARED
 
 
 bool Shell::SetOptions(int argc, char* argv[]) {
@@ -1075,23 +1297,23 @@ bool Shell::SetOptions(int argc, char* argv[]) {
       options.test_shell = true;
       argv[i] = NULL;
     } else if (strcmp(argv[i], "--preemption") == 0) {
-#ifdef USING_V8_SHARED
+#ifdef V8_SHARED
       printf("D8 with shared library does not support multi-threading\n");
       return false;
 #else
       options.use_preemption = true;
       argv[i] = NULL;
-#endif  // USING_V8_SHARED
-    } else if (strcmp(argv[i], "--no-preemption") == 0) {
-#ifdef USING_V8_SHARED
+#endif  // V8_SHARED
+    } else if (strcmp(argv[i], "--nopreemption") == 0) {
+#ifdef V8_SHARED
       printf("D8 with shared library does not support multi-threading\n");
       return false;
 #else
       options.use_preemption = false;
       argv[i] = NULL;
-#endif  // USING_V8_SHARED
+#endif  // V8_SHARED
     } else if (strcmp(argv[i], "--preemption-interval") == 0) {
-#ifdef USING_V8_SHARED
+#ifdef V8_SHARED
       printf("D8 with shared library does not support multi-threading\n");
       return false;
 #else
@@ -1110,34 +1332,40 @@ bool Shell::SetOptions(int argc, char* argv[]) {
         printf("Missing value for --preemption-interval\n");
         return false;
       }
-#endif  // USING_V8_SHARED
+#endif  // V8_SHARED
     } else if (strcmp(argv[i], "-f") == 0) {
       // Ignore any -f flags for compatibility with other stand-alone
       // JavaScript engines.
       continue;
     } else if (strcmp(argv[i], "--isolate") == 0) {
-#ifdef USING_V8_SHARED
+#ifdef V8_SHARED
       printf("D8 with shared library does not support multi-threading\n");
       return false;
-#endif  // USING_V8_SHARED
+#endif  // V8_SHARED
       options.num_isolates++;
+    } else if (strcmp(argv[i], "-p") == 0) {
+#ifdef V8_SHARED
+      printf("D8 with shared library does not support multi-threading\n");
+      return false;
+#else
+      options.num_parallel_files++;
+#endif  // V8_SHARED
     }
-#ifdef USING_V8_SHARED
+#ifdef V8_SHARED
     else if (strcmp(argv[i], "--dump-counters") == 0) {
       printf("D8 with shared library does not include counters\n");
-      return false;
-    } else if (strcmp(argv[i], "-p") == 0) {
-      printf("D8 with shared library does not support multi-threading\n");
       return false;
     } else if (strcmp(argv[i], "--debugger") == 0) {
       printf("Javascript debugger not included\n");
       return false;
     }
-#endif  // USING_V8_SHARED
+#endif  // V8_SHARED
   }
 
-#ifndef USING_V8_SHARED
+#ifndef V8_SHARED
   // Run parallel threads if we are not using --isolate
+  options.parallel_files = new char*[options.num_parallel_files];
+  int parallel_files_set = 0;
   for (int i = 1; i < argc; i++) {
     if (argv[i] == NULL) continue;
     if (strcmp(argv[i], "-p") == 0 && i + 1 < argc) {
@@ -1146,24 +1374,21 @@ bool Shell::SetOptions(int argc, char* argv[]) {
         return false;
       }
       argv[i] = NULL;
-      if (options.parallel_files == NULL) {
-        options.parallel_files = new i::List<i::Vector<const char> >();
-      }
-      int size = 0;
-      const char* files = ReadChars(argv[++i], &size);
-      if (files == NULL) {
-        printf("-p option incomplete\n");
-        return false;
-      }
+      i++;
+      options.parallel_files[parallel_files_set] = argv[i];
+      parallel_files_set++;
       argv[i] = NULL;
-      options.parallel_files->Add(i::Vector<const char>(files, size));
     }
   }
-#endif  // USING_V8_SHARED
+  if (parallel_files_set != options.num_parallel_files) {
+    printf("-p requires a file containing a list of files as parameter\n");
+    return false;
+  }
+#endif  // V8_SHARED
 
   v8::V8::SetFlagsFromCommandLine(&argc, argv, true);
 
-  // set up isolated source groups
+  // Set up isolated source groups.
   options.isolate_sources = new SourceGroup[options.num_isolates];
   SourceGroup* current = options.isolate_sources;
   current->Begin(argv, 1);
@@ -1184,59 +1409,83 @@ bool Shell::SetOptions(int argc, char* argv[]) {
 
 
 int Shell::RunMain(int argc, char* argv[]) {
-#ifndef USING_V8_SHARED
+#ifndef V8_SHARED
   i::List<i::Thread*> threads(1);
-  if (options.parallel_files != NULL)
-    for (int i = 0; i < options.parallel_files->length(); i++) {
-      i::Vector<const char> files = options.parallel_files->at(i);
+  if (options.parallel_files != NULL) {
+    for (int i = 0; i < options.num_parallel_files; i++) {
+      char* files = NULL;
+      { Locker lock(Isolate::GetCurrent());
+        int size = 0;
+        files = ReadChars(options.parallel_files[i], &size);
+      }
+      if (files == NULL) {
+        printf("File list '%s' not found\n", options.parallel_files[i]);
+        Exit(1);
+      }
       ShellThread* thread = new ShellThread(threads.length(), files);
       thread->Start();
       threads.Add(thread);
     }
-
+  }
   for (int i = 1; i < options.num_isolates; ++i) {
     options.isolate_sources[i].StartExecuteInThread();
   }
-#endif  // USING_V8_SHARED
+#endif  // V8_SHARED
   {  // NOLINT
     Locker lock;
     HandleScope scope;
     Persistent<Context> context = CreateEvaluationContext();
+    if (options.last_run) {
+      // Keep using the same context in the interactive shell.
+      evaluation_context_ = context;
+#if !defined(V8_SHARED) && defined(ENABLE_DEBUGGER_SUPPORT)
+      // If the interactive debugger is enabled make sure to activate
+      // it before running the files passed on the command line.
+      if (i::FLAG_debugger) {
+        InstallUtilityScript();
+      }
+#endif  // !V8_SHARED && ENABLE_DEBUGGER_SUPPORT
+    }
     {
       Context::Scope cscope(context);
       options.isolate_sources[0].Execute();
     }
-    if (options.last_run) {
-      // Keep using the same context in the interactive shell
-      evaluation_context_ = context;
-    } else {
+    if (!options.last_run) {
       context.Dispose();
+#if !defined(V8_SHARED)
+      if (i::FLAG_send_idle_notification) {
+        const int kLongIdlePauseInMs = 1000;
+        V8::ContextDisposedNotification();
+        V8::IdleNotification(kLongIdlePauseInMs);
+      }
+#endif  // !V8_SHARED
     }
 
-#ifndef USING_V8_SHARED
+#ifndef V8_SHARED
     // Start preemption if threads have been created and preemption is enabled.
-    if (options.parallel_files != NULL
-        && threads.length() > 0
+    if (threads.length() > 0
         && options.use_preemption) {
       Locker::StartPreemption(options.preemption_interval);
     }
-#endif  // USING_V8_SHARED
+#endif  // V8_SHARED
   }
 
-#ifndef USING_V8_SHARED
+#ifndef V8_SHARED
   for (int i = 1; i < options.num_isolates; ++i) {
     options.isolate_sources[i].WaitForThread();
   }
 
-  if (options.parallel_files != NULL)
-    for (int i = 0; i < threads.length(); i++) {
-      i::Thread* thread = threads[i];
-      thread->Join();
-      delete thread;
-    }
+  for (int i = 0; i < threads.length(); i++) {
+    i::Thread* thread = threads[i];
+    thread->Join();
+    delete thread;
+  }
 
-  OnExit();
-#endif  // USING_V8_SHARED
+  if (threads.length() > 0 && options.use_preemption) {
+    Locker lock;
+    Locker::StopPreemption();
+  }
+#endif  // V8_SHARED
   return 0;
 }
 
@@ -1259,19 +1508,28 @@ int Shell::Main(int argc, char* argv[]) {
     }
     printf("======== Full Deoptimization =======\n");
     Testing::DeoptimizeAll();
+#if !defined(V8_SHARED)
+  } else if (i::FLAG_stress_runs > 0) {
+    int stress_runs = i::FLAG_stress_runs;
+    for (int i = 0; i < stress_runs && result == 0; i++) {
+      printf("============ Run %d/%d ============\n", i + 1, stress_runs);
+      options.last_run = (i == stress_runs - 1);
+      result = RunMain(argc, argv);
+    }
+#endif
   } else {
     result = RunMain(argc, argv);
   }
 
 
-#if !defined(USING_V8_SHARED) && defined(ENABLE_DEBUGGER_SUPPORT)
+#if !defined(V8_SHARED) && defined(ENABLE_DEBUGGER_SUPPORT)
   // Run remote debugger if requested, but never on --test
   if (i::FLAG_remote_debugger && !options.test_shell) {
     InstallUtilityScript();
     RunRemoteDebugger(i::FLAG_debugger_port);
     return 0;
   }
-#endif  // !USING_V8_SHARED && ENABLE_DEBUGGER_SUPPORT
+#endif  // !V8_SHARED && ENABLE_DEBUGGER_SUPPORT
 
   // Run interactive shell if explicitly requested or if no script has been
   // executed, but never on --test
@@ -1279,13 +1537,19 @@ int Shell::Main(int argc, char* argv[]) {
   if (( options.interactive_shell
       || !options.script_executed )
       && !options.test_shell ) {
-#ifndef USING_V8_SHARED
-    InstallUtilityScript();
-#endif  // USING_V8_SHARED
+#if !defined(V8_SHARED) && defined(ENABLE_DEBUGGER_SUPPORT)
+    if (!i::FLAG_debugger) {
+      InstallUtilityScript();
+    }
+#endif  // !V8_SHARED && ENABLE_DEBUGGER_SUPPORT
     RunShell();
   }
 
   V8::Dispose();
+
+#ifndef V8_SHARED
+  OnExit();
+#endif  // V8_SHARED
 
   return result;
 }
