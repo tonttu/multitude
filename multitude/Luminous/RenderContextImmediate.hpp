@@ -10,7 +10,7 @@ namespace Luminous
   class RenderContextImmediate : public RenderContext2
   {
   public:
-    RenderContextImmediate(const std::shared_ptr<GLContext> & deviceContext, const std::shared_ptr<RenderDriver> & driver);
+    RenderContextImmediate(const std::shared_ptr<RenderDriver> & driver);
 
     /// Returns the current frame
     virtual size_t frame() const OVERRIDE;

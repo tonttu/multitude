@@ -30,7 +30,6 @@
 namespace Luminous
 {
   class Texture2D;
-  class GLContext;
   class GLSLProgramObject;
 
   /// RenderContext contains the current rendering state.
@@ -371,17 +370,6 @@ namespace Luminous
     void pushViewStack();
     /// Pops view stack, leaves current texture attached
     void popViewStack();
-
-    /// @internal
-    /// Sets the current rendering context
-    void setGLContext(Luminous::GLContext *);
-
-    /// Returns a handle to the current OpenGL rendering context
-    /** This function is seldom necessary, and its use is deprecated and unsupported.
-        On some platforms this call may return null.
-        */
-    /// @internal
-    MULTI_ATTR_DEPRECATED("Will be removed in 2.0", Luminous::GLContext * glContext());
 
     /// @endcond
 

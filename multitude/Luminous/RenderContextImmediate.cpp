@@ -1,7 +1,6 @@
 #include "Luminous/RenderContextImmediate.hpp"
 #include "Luminous/RenderDriver.hpp"
 #include "Luminous/VertexAttributeBinding.hpp"
-#include "Luminous/GLContext.hpp"
 
 namespace Luminous
 {
@@ -10,16 +9,14 @@ namespace Luminous
   class RenderContextImmediate::D
   {
   public:
-    D(const std::shared_ptr<GLContext> & deviceContext, const std::shared_ptr<RenderDriver> & driver)
-      : context(deviceContext)
-      , driver(driver)
+    D(const std::shared_ptr<RenderDriver> & driver)
+      : driver(driver)
       , threadIndex(0)
       , frame(0)
       , fps(0.f)
     {
     }
 
-    std::shared_ptr<GLContext> context;
     std::shared_ptr<RenderDriver> driver;
 
     /// @todo Use threadIndex
@@ -29,8 +26,8 @@ namespace Luminous
   };
 
   //////////////////////////////////////////////////////////////////////////
-  RenderContextImmediate::RenderContextImmediate(const std::shared_ptr<GLContext> & deviceContext, const std::shared_ptr<RenderDriver> & driver)
-    : m_d(new D(deviceContext, driver))
+  RenderContextImmediate::RenderContextImmediate(const std::shared_ptr<RenderDriver> & driver)
+    : m_d(new D(driver))
   {
   }
 

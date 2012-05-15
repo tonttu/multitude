@@ -237,7 +237,6 @@ namespace Luminous
 
   // 
   class RenderDriver;
-  class GLContext;
   // Resources
   class HardwareBuffer;
   class ShaderConstantBlock;

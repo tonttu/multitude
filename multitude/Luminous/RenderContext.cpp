@@ -5,7 +5,6 @@
 
 // #include "Dum"
 #include "Error.hpp"
-#include "GLContext.hpp"
 #include "Texture.hpp"
 #include "FramebufferObject.hpp"
 //#include "RenderTarget.hpp"
@@ -200,7 +199,6 @@ namespace Luminous
         , m_area(0)
         , m_window(win)
         , m_viewStackPos(-1)
-        , m_glContext(new GLDummyContext)
         , m_boundProgram(0)
         , m_initialized(false)
         , m_blendFunc(RenderContext::BLEND_USUAL)
@@ -503,7 +501,6 @@ namespace Luminous
 
     Nimble::Matrix4 m_viewTransform;
 
-    Luminous::GLContext * m_glContext;
     GLSLProgramObject * m_boundProgram;
 
     bool m_initialized;
@@ -1570,11 +1567,6 @@ namespace Luminous
     popTransform();
   }
 
-  void RenderContext::setGLContext(Luminous::GLContext * ctx)
-  {
-    m_data->m_glContext = ctx;
-  }
-
   // Doesn't work under windows where pthread_t (id_t) is a struct
   //typedef std::map<Thread::id_t, RenderContext *> ResourceMap;
   class TGLRes
@@ -1733,11 +1725,6 @@ namespace Luminous
     // flush();
   }
 
-
-  Luminous::GLContext * RenderContext::glContext()
-  {
-    return m_data->m_glContext;
-  }
 /*
   RenderTargetObject RenderContext::pushRenderTarget(Nimble::Vector2 size, float scale) {
     return m_data->m_rtm.pushRenderTarget(size, scale);

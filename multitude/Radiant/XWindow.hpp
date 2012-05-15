@@ -26,8 +26,6 @@
 
 #include <GL/glx.h>
 
-#include <Luminous/GLContext.hpp>
-
 namespace Radiant
 {
   /** X11 OpenGL window class. */
@@ -43,7 +41,6 @@ namespace Radiant
     virtual void swapBuffers();
     virtual void makeCurrent();
 
-    virtual Luminous::GLContext * glContext() { return m_context; }
     virtual void deinit();
 
     virtual void minimize();
@@ -54,7 +51,7 @@ namespace Radiant
   private:
     void mapWindow();
 
-    class X11GLContext : public Luminous::GLContext
+    class X11GLContext
     {
     public:
       X11GLContext(Display     * display,
@@ -64,9 +61,6 @@ namespace Radiant
       virtual ~X11GLContext();
 
       virtual void makeCurrent();
-      virtual GLContext * createSharedContext();
-      virtual Radiant::Mutex * mutex();
-
 
     private:
       Display     * m_display;

@@ -21,8 +21,6 @@
 
 #include <Nimble/Vector2.hpp>
 
-#include <Luminous/GLContext.hpp>
-
 namespace Radiant
 {
 
@@ -49,8 +47,6 @@ namespace Radiant
 
     /// Sets the OpenGL context for the current thread
     virtual void makeCurrent() = 0;
-    /// Returns a pointer to the OpenGL context object
-    virtual Luminous::GLContext * glContext() = 0;
 
     /// Returns the width of the window
     int width() const;

@@ -26,8 +26,6 @@ namespace Radiant
     virtual void maximize();
     virtual void restore();
 
-    virtual Luminous::GLContext * glContext() { return 0; }
-
   private:
     GLThreadWidget * m_mainWindow;
 

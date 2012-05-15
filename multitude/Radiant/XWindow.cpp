@@ -270,24 +270,6 @@ namespace Radiant
       Radiant::error("XWindow::X11GLContext::makeCurrent # glXMakeCurrent failed");
   }
 
-  Luminous::GLContext * XWindow::X11GLContext::createSharedContext()
-  {
-    if(!m_mutex)
-      m_mutex = new Radiant::Mutex;
-
-
-    X11GLContext * ctx = new X11GLContext(m_display, m_context, m_visualInfo, m_drawable);
-    ctx->m_mutex = m_mutex;
-
-    return ctx;
-  }
-
-
-  Radiant::Mutex * XWindow::X11GLContext::mutex()
-  {
-    return m_mutex;
-  }
-
   //////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////
 

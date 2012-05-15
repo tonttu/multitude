@@ -32,7 +32,6 @@ namespace Radiant
     virtual void minimize();
     virtual void restore();
 
-    virtual Luminous::GLContext * glContext() {return 0;}
   private:
     class D;
     D * m_d;

@@ -6,10 +6,6 @@ SOURCES += RenderDriver.cpp
 HEADERS += RenderDriverGL.hpp
 SOURCES += RenderDriverGL.cpp
 
-# Device contexts
-HEADERS += GLContext.hpp
-SOURCES += GLContext.cpp
-
 # Render contexts
 HEADERS += RenderContext2.hpp
 HEADERS += RenderContextImmediate.hpp
