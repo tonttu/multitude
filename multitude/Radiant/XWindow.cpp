@@ -33,7 +33,7 @@
 #include <iostream>
 
 #include <X11/keysym.h>
-
+#include <qinputcontextfactory.h>
 // Mask for events that the window listens
 #define X11_CHECK_EVENT_MASK \
     ( KeyPressMask | KeyReleaseMask | \
@@ -697,7 +697,12 @@ namespace Radiant
 
     s_keyboardGrabber = new QWidget;
     s_keyboardGrabber->setAttribute(Qt::WA_InputMethodEnabled);
-    s_keyboardGrabber->setInputContext(new InputContextGrabber(*s_keyboardGrabber->inputContext(), *hook));
+
+    const QString key = QInputContextFactory::keys().size()?QInputContextFactory::keys().at(0):"xim";
+
+    QInputContext *qic = QInputContextFactory::create(key, 0);
+    QInputContext* c = new InputContextGrabber(*qic, *hook);
+    s_keyboardGrabber->setInputContext(c);
 
     // Will trigger an error, since s_keyboardGrabbers isn't mapped. We don't care.
     int (*handler)(Display*, XErrorEvent*) = XSetErrorHandler(ignoreErrorHandler);
