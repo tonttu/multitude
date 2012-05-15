@@ -53,6 +53,9 @@ namespace Radiant
     /// Returns the height of the window
     int height() const;
 
+    void setWidth(int w) { m_width = w; }
+    void setHeight(int h) { m_height = h; }
+
     /// Sets the object for sending window events
     virtual void setEventHook(WindowEventHook * hook);
     /// A pointer to the window event callback listener
@@ -64,7 +67,10 @@ namespace Radiant
     virtual void minimize() = 0;
     virtual void restore() = 0;
 
-  protected:
+    Nimble::Vector2i position() const { return m_pos; }
+    void setPosition(Nimble::Vector2i pos) { m_pos = pos; }
+
+  private:
     ///@cond
     bool m_active;
     bool m_finished;

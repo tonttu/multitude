@@ -17,14 +17,8 @@
 #define RADIANT_XWINDOW_HPP
 
 #include "Export.hpp"
-#include "Mutex.hpp"
-#include "TimeStamp.hpp"
 #include "Window.hpp"
 #include "WindowConfig.hpp"
-
-#include <QString>
-
-#include <GL/glx.h>
 
 namespace Radiant
 {
@@ -49,38 +43,8 @@ namespace Radiant
     virtual void setEventHook(WindowEventHook * hook);
 
   private:
-    void mapWindow();
-
-    class X11GLContext
-    {
-    public:
-      X11GLContext(Display     * display,
-                   GLXContext    sharecontext,
-                   XVisualInfo * visualInfo,
-                   GLXWindow     drawable);
-      virtual ~X11GLContext();
-
-      virtual void makeCurrent();
-
-    private:
-      Display     * m_display;
-      GLXContext    m_context;
-      XVisualInfo * m_visualInfo;
-      GLXWindow     m_drawable;
-      Radiant::Mutex * m_mutex;
-    };
-
-    Display* m_display;
-    GLXWindow m_drawable;
-
-    Radiant::TimeStamp m_lastAction;
-
-    X11GLContext * m_context;
-    std::vector<bool> m_autoRepeats;
-
-    bool m_ignoreNextMotionEvent;
-
-    void showCursor(bool show);
+    class D;
+    D * m_d;
   };
 
 }

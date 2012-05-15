@@ -21,11 +21,11 @@
 #include <QInputContext>
 
 #include <Radiant/KeyEvent.hpp>
-
 #include <Radiant/XWindow.hpp>
 #include <Radiant/WindowEventHook.hpp>
-
+#include <Radiant/Mutex.hpp>
 #include <Radiant/Trace.hpp>
+#include <Radiant/TimeStamp.hpp>
 
 #include <strings.h>
 #include <string.h>
@@ -33,7 +33,11 @@
 #include <iostream>
 
 #include <X11/keysym.h>
+
+#include <GL/glx.h>
+
 #include <QInputContextFactory>
+
 // Mask for events that the window listens
 #define X11_CHECK_EVENT_MASK \
     ( KeyPressMask | KeyReleaseMask | \
@@ -144,6 +148,164 @@ namespace {
 namespace Radiant
 {
 
+  class XWindow::D
+  {
+  public:
+    D(Window & win)
+      : m_window(win)
+      , m_display(0)
+      , m_drawable(0)
+      , m_context(0)
+      , m_autoRepeats(256)
+      , m_ignoreNextMotionEvent(false)
+    {}
+
+    class X11GLContext
+    {
+    public:
+      X11GLContext(Display     * display,
+                   GLXContext    sharecontext,
+                   XVisualInfo * visualInfo,
+                   GLXWindow     drawable)
+        : m_display(display),
+          m_visualInfo(visualInfo),
+          m_drawable(drawable),
+          m_mutex(0)
+      {
+        m_context = glXCreateContext(m_display, visualInfo, sharecontext, GL_TRUE);
+      }
+
+      virtual ~X11GLContext()
+      {
+        glXDestroyContext(m_display, m_context);
+      }
+
+      virtual void makeCurrent()
+      {
+        if(glXMakeCurrent(m_display, m_drawable, m_context) == False)
+          Radiant::error("XWindow::X11GLContext::makeCurrent # glXMakeCurrent failed");
+      }
+
+    private:
+      Display     * m_display;
+      GLXContext    m_context;
+      XVisualInfo * m_visualInfo;
+      GLXWindow     m_drawable;
+      Radiant::Mutex * m_mutex;
+    };
+
+    // Hackish way to access the outer class
+    Window & m_window;
+
+    Display* m_display;
+    GLXWindow m_drawable;
+
+    Radiant::TimeStamp m_lastAction;
+
+    X11GLContext * m_context;
+    std::vector<bool> m_autoRepeats;
+
+    bool m_ignoreNextMotionEvent;
+
+    void showCursor(bool show)
+    {
+      // root window, do nothing
+      if (m_drawable == 0) return;
+
+      // Changing the cursor will emit motion event, we ignore this
+      m_ignoreNextMotionEvent = true;
+
+      if (show)
+        XDefineCursor(m_display, m_drawable, 0);
+      else
+      {
+        Cursor no_ptr;
+        Pixmap bm_no;
+        XColor black, dummy;
+        Colormap colormap;
+        static const char bm_no_data[] = { 0,0,0,0, 0,0,0,0 };
+
+        /// For example when using 15 render threads on one GPU,
+        /// XCreateBitmapFromData almost always hangs, sometimes in ~7 different
+        /// threads with identical backtrace. It seems it's not thread-safe.
+        Radiant::Guard g(s_X11mutex);
+
+        colormap = DefaultColormap(m_display, DefaultScreen(m_display));
+        XAllocNamedColor(m_display, colormap, "black", &black, &dummy);
+        bm_no = XCreateBitmapFromData(m_display, m_drawable, bm_no_data, 8, 8);
+        no_ptr = XCreatePixmapCursor(m_display, bm_no, bm_no, &black, &black, 0, 0);
+        XDefineCursor(m_display, m_drawable, no_ptr);
+        XFreeCursor(m_display, no_ptr);
+      }
+    }
+
+    void mapWindow()
+    {
+      bool volatile running = true;
+      bool ok = false, visible = false;
+
+      const double quiet_time = 0.1;
+
+      XEvent e = {0};
+      XSelectInput(m_display, m_drawable, StructureNotifyMask);
+
+      int tries = 100;
+
+      while(running) {
+        bool got = WaitForXNextEvent(m_display, &e, quiet_time*1000);
+        if(!running) return;
+        if(tries <= 0) break;
+        if(!got) {
+          if(ok && visible) break;
+          XWindowAttributes attr;
+          memset(&attr, 0, sizeof(XWindowAttributes));
+          XGetWindowAttributes(m_display, m_drawable, &attr);
+          if(attr.x == m_window.position().x && attr.y == m_window.position().y &&
+             attr.width == m_window.width() && attr.height == m_window.height()) break;
+          XWindowChanges changes = { m_window.position().x, m_window.position().y, m_window.width(), m_window.height(), 0, 0, 0 };
+          XUnmapWindow(m_display, m_drawable);
+          XSync(m_display, 0);
+          XConfigureWindow(m_display, m_drawable, CWX | CWY | CWWidth | CWHeight, &changes);
+          XMapWindow(m_display, m_drawable);
+          tries -= 20;
+          continue;
+        }
+
+        if(e.type == UnmapNotify) {
+          visible = false;
+        } else if(e.type == MapNotify) {
+          visible = true;
+        } else if(e.type == ConfigureNotify) {
+          if(e.xconfigure.x != m_window.position().x || e.xconfigure.y != m_window.position().y ||
+             e.xconfigure.width != m_window.width() || e.xconfigure.height != m_window.height()) {
+            XWindowChanges changes = { m_window.position().x, m_window.position().y, m_window.width(), m_window.height(), 0, 0, 0 };
+            XConfigureWindow(m_display, m_drawable, CWX | CWY | CWWidth | CWHeight, &changes);
+            --tries;
+          } else {
+            ok = true;
+          }
+        } else if(e.type == CreateNotify) {
+          if(e.xcreatewindow.x != m_window.position().x || e.xcreatewindow.y != m_window.position().y ||
+             e.xcreatewindow.width != m_window.width() || e.xcreatewindow.height != m_window.height()) {
+            XWindowChanges changes = { m_window.position().x, m_window.position().y, m_window.width(), m_window.height(), 0, 0, 0 };
+            XConfigureWindow(m_display, m_drawable, CWX | CWY | CWWidth | CWHeight, &changes);
+            --tries;
+          } else {
+            ok = true;
+          }
+        } else if(e.type == ReparentNotify) {
+          /* ignore */
+        } else {
+          Radiant::error("XWindow::mapWindow # Unknown event %d", e.type);
+        }
+      }
+      XSelectInput(m_display, m_drawable, 0);
+    }
+  };
+
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+
   static int* generateAttributesFromHint(const WindowConfig & hint)
   {
     (void)hint;
@@ -245,34 +407,6 @@ namespace Radiant
   //////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////
 
-
-
-  XWindow::X11GLContext::X11GLContext(Display     * display,
-                                      GLXContext    sharecontext,
-                                      XVisualInfo * visualInfo,
-                                      GLXWindow     drawable)
-                                        : m_display(display),
-                                        m_visualInfo(visualInfo),
-                                        m_drawable(drawable),
-                                        m_mutex(0)
-  {
-    m_context = glXCreateContext(m_display, visualInfo, sharecontext, GL_TRUE);
-  }
-
-  XWindow::X11GLContext::~X11GLContext()
-  {
-    glXDestroyContext(m_display, m_context);
-  }
-
-  void XWindow::X11GLContext::makeCurrent()
-  {
-    if(glXMakeCurrent(m_display, m_drawable, m_context) == False)
-      Radiant::error("XWindow::X11GLContext::makeCurrent # glXMakeCurrent failed");
-  }
-
-  //////////////////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////
-
   /// MwmHints in MwmUtil.h seems to be broken on 64-bit computers.
   /// Even if the data is always 32-bit integers, the struct
   /// is defined to have long (64 bit) integers.
@@ -286,16 +420,12 @@ namespace Radiant
   } MwmHintsLong;
 
   XWindow::XWindow(const WindowConfig & hint, const char* caption)
-    : m_display(0),
-    m_drawable(0),
-    m_context(0),
-    m_autoRepeats(256),
-    m_ignoreNextMotionEvent(false)
+      : m_d(new D(*this))
   {
     int (*handler)(Display*, XErrorEvent*) = XSetErrorHandler(errorHandler);
 
-    m_display = XOpenDisplay(hint.display.toUtf8().data());
-    if(m_display == 0) {
+    m_d->m_display = XOpenDisplay(hint.display.toUtf8().data());
+    if(m_d->m_display == 0) {
       Radiant::error("XOpenDisplay failed for %s", hint.display.toUtf8().data());
       XSetErrorHandler(handler);
       return;
@@ -303,7 +433,7 @@ namespace Radiant
 
 
     int* attributes = generateAttributesFromHint(hint);
-    XVisualInfo* visualInfo = glXChooseVisual(m_display, DefaultScreen(m_display), attributes);
+    XVisualInfo* visualInfo = glXChooseVisual(m_d->m_display, DefaultScreen(m_d->m_display), attributes);
     delete[] attributes;
     if(visualInfo == 0) {
       Radiant::error("failed to get visual info");
@@ -314,18 +444,18 @@ namespace Radiant
 
     int redSize, greenSize, blueSize, alphaSize, depthSize, stencilSize;
 
-    glXGetConfig(m_display, visualInfo, GLX_RED_SIZE,   &redSize);
-    glXGetConfig(m_display, visualInfo, GLX_GREEN_SIZE, &greenSize);
-    glXGetConfig(m_display, visualInfo, GLX_BLUE_SIZE,  &blueSize);
-    glXGetConfig(m_display, visualInfo, GLX_ALPHA_SIZE, &alphaSize);
-    glXGetConfig(m_display, visualInfo, GLX_DEPTH_SIZE, &depthSize);
-    glXGetConfig(m_display, visualInfo, GLX_STENCIL_SIZE, &stencilSize);
+    glXGetConfig(m_d->m_display, visualInfo, GLX_RED_SIZE,   &redSize);
+    glXGetConfig(m_d->m_display, visualInfo, GLX_GREEN_SIZE, &greenSize);
+    glXGetConfig(m_d->m_display, visualInfo, GLX_BLUE_SIZE,  &blueSize);
+    glXGetConfig(m_d->m_display, visualInfo, GLX_ALPHA_SIZE, &alphaSize);
+    glXGetConfig(m_d->m_display, visualInfo, GLX_DEPTH_SIZE, &depthSize);
+    glXGetConfig(m_d->m_display, visualInfo, GLX_STENCIL_SIZE, &stencilSize);
 
     Colormap colormap;
 
     int screen_number = visualInfo->screen;
-    ::Window root = RootWindow(m_display, screen_number);
-    colormap = XCreateColormap(m_display, root,
+    ::Window root = RootWindow(m_d->m_display, screen_number);
+    colormap = XCreateColormap(m_d->m_display, root,
                                visualInfo->visual, AllocNone);
 
     XSetWindowAttributes wAttributes;
@@ -333,26 +463,26 @@ namespace Radiant
     wAttributes.border_pixel = 0;
     wAttributes.override_redirect = hint.frameless && !hint.fullscreen;
 
-    m_width = hint.width;
-    m_height = hint.height;
-    m_pos.make(hint.x, hint.y);
+    setWidth(hint.width);
+    setHeight(hint.height);
+    setPosition(Nimble::Vector2i(hint.x, hint.y));
 
     wAttributes.event_mask = StructureNotifyMask;
 
-    m_drawable = XCreateWindow(m_display, RootWindow(m_display, screen_number),
-                               hint.x, hint.y, m_width, m_height, 0,
+    m_d->m_drawable = XCreateWindow(m_d->m_display, RootWindow(m_d->m_display, screen_number),
+                                    hint.x, hint.y, width(), height(), 0,
                                visualInfo->depth, InputOutput, visualInfo->visual,
                                CWBorderPixel | CWColormap | CWEventMask | CWOverrideRedirect,
                                &wAttributes);
 
     // Make window visible
-    XMapWindow(m_display, m_drawable);
+    XMapWindow(m_d->m_display, m_d->m_drawable);
 
     // Try to remove the decorations (create frameless window).
     if(hint.frameless) {
       MwmHintsLong mwmhints;
       Atom prop = None;
-      prop = XInternAtom(m_display, "_MOTIF_WM_HINTS", True);
+      prop = XInternAtom(m_d->m_display, "_MOTIF_WM_HINTS", True);
       if (prop == None) {
         Radiant::info("Window Manager does not support MWM hints. To get a borderless window I have to bypass your wm.");
         mwmhints.flags = 0;
@@ -360,7 +490,7 @@ namespace Radiant
         mwmhints.flags = 2; //MWM_HINTS_DECORATIONS;
         mwmhints.decorations = 0;
 
-        XChangeProperty(m_display, m_drawable,
+        XChangeProperty(m_d->m_display, m_d->m_drawable,
                         prop, prop, 32, PropModeReplace,
                         (unsigned char *) &mwmhints, sizeof(mwmhints)/sizeof(long));
       }
@@ -370,8 +500,8 @@ namespace Radiant
       const char * statetype = (hint.fullscreen
             ? "_NET_WM_STATE_FULLSCREEN"
             : "_NET_WM_STATE_ABOVE");
-      Atom state_above = XInternAtom(m_display, statetype, False);
-      Atom state = XInternAtom(m_display, "_NET_WM_STATE", False);
+      Atom state_above = XInternAtom(m_d->m_display, statetype, False);
+      Atom state = XInternAtom(m_d->m_display, "_NET_WM_STATE", False);
       if (state == None || state_above == None) {
         Radiant::info("Window Manager does not support window state hints.");
       } else {
@@ -379,26 +509,26 @@ namespace Radiant
         memset(&ev, 0, sizeof(ev));
         ev.type = ClientMessage;
         ev.message_type = state;
-        ev.display = m_display;
-        ev.window = m_drawable;
+        ev.display = m_d->m_display;
+        ev.window = m_d->m_drawable;
         ev.format = 32;
         ev.data.l[0] = 1;
         ev.data.l[1] = state_above;
 
-        XLockDisplay(m_display);
-        XSendEvent(m_display, root, 0, SubstructureRedirectMask |
+        XLockDisplay(m_d->m_display);
+        XSendEvent(m_d->m_display, root, 0, SubstructureRedirectMask |
                    SubstructureNotifyMask, (XEvent*) &ev);
-        XUnlockDisplay(m_display);
+        XUnlockDisplay(m_d->m_display);
       }
     }
 
     if (hint.iconify) {
-      XIconifyWindow(m_display, m_drawable, screen_number);
+      XIconifyWindow(m_d->m_display, m_d->m_drawable, screen_number);
     }
 
     // Move the window to desired location
-    XMoveWindow(m_display, m_drawable, hint.x, hint.y);
-    XResizeWindow(m_display, m_drawable, m_width, m_height);
+    XMoveWindow(m_d->m_display, m_d->m_drawable, hint.x, hint.y);
+    XResizeWindow(m_d->m_display, m_d->m_drawable, width(), height());
 
     // Set title
     if(caption)
@@ -406,31 +536,31 @@ namespace Radiant
       XTextProperty textProp;
       memset(&textProp, 0, sizeof(textProp));
       XStringListToTextProperty(const_cast<char **> (&caption), 1, &textProp);
-      XSetWMName(m_display, m_drawable, &textProp);
+      XSetWMName(m_d->m_display, m_d->m_drawable, &textProp);
       XFree(textProp.value);
     }
 
     // Wait for Window to be mapped with a right size
-    mapWindow();
+    m_d->mapWindow();
 
     // Set input focus manually, since override_redirect with non-fullscreen
     // windows disables the input focus be default.
-    XSetInputFocus(m_display, m_drawable, RevertToPointerRoot, CurrentTime);
+    XSetInputFocus(m_d->m_display, m_d->m_drawable, RevertToPointerRoot, CurrentTime);
 
     // Set the window to receive KeyPress and KeyRelease events
-    XSelectInput(m_display, m_drawable, X11_CHECK_EVENT_MASK);
+    XSelectInput(m_d->m_display, m_d->m_drawable, X11_CHECK_EVENT_MASK);
 
     /*if (!hint.showCursor)
       showCursor(false);
 */
 
-    m_lastAction = Radiant::TimeStamp::getTime();
-    showCursor(false);
+    m_d->m_lastAction = Radiant::TimeStamp::getTime();
+    m_d->showCursor(false);
     // Allow the window to be deleted by the window manager
     // WM_DELETE_WINDOW = XInternAtom(m_display, "WM_DELETE_WINDOW", False);
     // XSetWMProtocols(m_display, m_drawable, &WM_DELETE_WINDOW, 1);
 
-    m_context = new X11GLContext(m_display, 0, visualInfo, m_drawable);
+    m_d->m_context = new D::X11GLContext(m_d->m_display, 0, visualInfo, m_d->m_drawable);
 
     makeCurrent();
 
@@ -439,54 +569,22 @@ namespace Radiant
 
   XWindow::~XWindow()
   {
-    //    m_display = XOpenDisplay(0);
+    m_d->showCursor(true);
 
-    showCursor(true);
-
-    delete m_context;
+    delete m_d->m_context;
 
     // Destroy automatically unmaps the window
-    XDestroyWindow(m_display, m_drawable);
-    XCloseDisplay(m_display);
-  }
+    XDestroyWindow(m_d->m_display, m_d->m_drawable);
+    XCloseDisplay(m_d->m_display);
 
-  void XWindow::showCursor(bool show)
-  {
-    // root window, do nothing
-    if (m_drawable == 0) return;
-
-    // Changing the cursor will emit motion event, we ignore this
-    m_ignoreNextMotionEvent = true;
-
-    if (show)
-      XDefineCursor(m_display, m_drawable, 0);
-    else
-    {
-      Cursor no_ptr;
-      Pixmap bm_no;
-      XColor black, dummy;
-      Colormap colormap;
-      static const char bm_no_data[] = { 0,0,0,0, 0,0,0,0 };
-
-      /// For example when using 15 render threads on one GPU,
-      /// XCreateBitmapFromData almost always hangs, sometimes in ~7 different
-      /// threads with identical backtrace. It seems it's not thread-safe.
-      Radiant::Guard g(s_X11mutex);
-
-      colormap = DefaultColormap(m_display, DefaultScreen(m_display));
-      XAllocNamedColor(m_display, colormap, "black", &black, &dummy);
-      bm_no = XCreateBitmapFromData(m_display, m_drawable, bm_no_data, 8, 8);
-      no_ptr = XCreatePixmapCursor(m_display, bm_no, bm_no, &black, &black, 0, 0);
-      XDefineCursor(m_display, m_drawable, no_ptr);
-      XFreeCursor(m_display, no_ptr);
-    }
+    delete m_d;
   }
 
   void XWindow::swapBuffers()
   {
-    glXSwapBuffers(m_display, m_drawable);
+    glXSwapBuffers(m_d->m_display, m_d->m_drawable);
 
-    float since = m_lastAction.sinceSecondsD();
+    float since = m_d->m_lastAction.sinceSecondsD();
 
     // The cursor is hidden repeatedly for several frames in succession to make
     // sure it is hidden
@@ -495,74 +593,11 @@ namespace Radiant
 
     if(since < hideCursorUpperLimit) {
       if(since > hideCursorLowerLimit)
-        showCursor(false);
+        m_d->showCursor(false);
       else
-        showCursor(true);
+        m_d->showCursor(true);
     }
 
-  }
-
-  void XWindow::mapWindow()
-  {
-    bool volatile running = true;
-    bool ok = false, visible = false;
-
-    const double quiet_time = 0.1;
-
-    XEvent e = {0};
-    XSelectInput(m_display, m_drawable, StructureNotifyMask);
-
-    int tries = 100;
-
-    while(running) {
-      bool got = WaitForXNextEvent(m_display, &e, quiet_time*1000);
-      if(!running) return;
-      if(tries <= 0) break;
-      if(!got) {
-        if(ok && visible) break;
-        XWindowAttributes attr;
-        memset(&attr, 0, sizeof(XWindowAttributes));
-        XGetWindowAttributes(m_display, m_drawable, &attr);
-        if(attr.x == m_pos.x && attr.y == m_pos.y &&
-          attr.width == m_width && attr.height == m_height) break;
-        XWindowChanges changes = { m_pos.x, m_pos.y, m_width, m_height, 0, 0, 0 };
-        XUnmapWindow(m_display, m_drawable);
-        XSync(m_display, 0);
-        XConfigureWindow(m_display, m_drawable, CWX | CWY | CWWidth | CWHeight, &changes);
-        XMapWindow(m_display, m_drawable);
-        tries -= 20;
-        continue;
-      }
-
-      if(e.type == UnmapNotify) {
-        visible = false;
-      } else if(e.type == MapNotify) {
-        visible = true;
-      } else if(e.type == ConfigureNotify) {
-        if(e.xconfigure.x != m_pos.x || e.xconfigure.y != m_pos.y ||
-           e.xconfigure.width != m_width || e.xconfigure.height != m_height) {
-          XWindowChanges changes = { m_pos.x, m_pos.y, m_width, m_height, 0, 0, 0 };
-          XConfigureWindow(m_display, m_drawable, CWX | CWY | CWWidth | CWHeight, &changes);
-          --tries;
-        } else {
-          ok = true;
-        }
-      } else if(e.type == CreateNotify) {
-        if(e.xcreatewindow.x != m_pos.x || e.xcreatewindow.y != m_pos.y ||
-           e.xcreatewindow.width != m_width || e.xcreatewindow.height != m_height) {
-          XWindowChanges changes = { m_pos.x, m_pos.y, m_width, m_height, 0, 0, 0 };
-          XConfigureWindow(m_display, m_drawable, CWX | CWY | CWWidth | CWHeight, &changes);
-          --tries;
-        } else {
-          ok = true;
-        }
-      } else if(e.type == ReparentNotify) {
-        /* ignore */
-      } else {
-        Radiant::error("XWindow::mapWindow # Unknown event %d", e.type);
-      }
-    }
-    XSelectInput(m_display, m_drawable, 0);
   }
 
   void XWindow::poll()
@@ -575,7 +610,7 @@ namespace Radiant
 
     WindowEventHook * hook = eventHook();
 
-    while (XCheckMaskEvent(m_display, X11_CHECK_EVENT_MASK, &event))
+    while (XCheckMaskEvent(m_d->m_display, X11_CHECK_EVENT_MASK, &event))
     {
       bool autoRepeat = false;
 
@@ -587,7 +622,7 @@ namespace Radiant
           qApp->x11ProcessEvent(&event);
 
         // Reset cursor hide counter
-        m_lastAction = Radiant::TimeStamp::getTime();
+        m_d->m_lastAction = Radiant::TimeStamp::getTime();
         break;
       case MotionNotify:
         {
@@ -597,9 +632,9 @@ namespace Radiant
             qApp->x11ProcessEvent(&event);
           }
           // Reset cursor hide counter only if this event is not to be ignored
-          if(!m_ignoreNextMotionEvent)
-            m_lastAction = Radiant::TimeStamp::getTime();
-          m_ignoreNextMotionEvent = false;
+          if(!m_d->m_ignoreNextMotionEvent)
+            m_d->m_lastAction = Radiant::TimeStamp::getTime();
+          m_d->m_ignoreNextMotionEvent = false;
           break;
         }
       case ButtonPress:
@@ -609,9 +644,9 @@ namespace Radiant
           // window managers (at least in Metacity). Do it manually here.
           ::Window focus_return = 0;
           int revert_to_return = 0;
-          XGetInputFocus(m_display, &focus_return, &revert_to_return);
-          if(focus_return != m_drawable)
-            XSetInputFocus(m_display, m_drawable, RevertToPointerRoot, CurrentTime);
+          XGetInputFocus(m_d->m_display, &focus_return, &revert_to_return);
+          if(focus_return != m_d->m_drawable)
+            XSetInputFocus(m_d->m_display, m_d->m_drawable, RevertToPointerRoot, CurrentTime);
         }
 
         if(hook) {
@@ -620,7 +655,7 @@ namespace Radiant
         }
 
         // Reset cursor hide counter
-        m_lastAction = Radiant::TimeStamp::getTime();
+        m_d->m_lastAction = Radiant::TimeStamp::getTime();
         break;
       case ConfigureNotify:
         /*std::cout << "ConfigureNotify: xy (" << event.xconfigure.x << ", " << event.xconfigure.y
@@ -648,7 +683,7 @@ namespace Radiant
 
   void XWindow::makeCurrent()
   {
-    m_context->makeCurrent();
+    m_d->m_context->makeCurrent();
   }
 
   void XWindow::deinit()
