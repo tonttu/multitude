@@ -33,7 +33,7 @@
 #include <iostream>
 
 #include <X11/keysym.h>
-#include <qinputcontextfactory.h>
+#include <QInputContextFactory>
 // Mask for events that the window listens
 #define X11_CHECK_EVENT_MASK \
     ( KeyPressMask | KeyReleaseMask | \
