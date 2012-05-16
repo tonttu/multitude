@@ -9,6 +9,10 @@
 #include <Nimble/Matrix4.hpp>
 #include <Radiant/RefPtr.hpp>
 
+#ifdef RADIANT_OSX
+#include <OpenGL/gl3.h>
+#endif
+
 #include <cassert>
 #include <map>
 #include <vector>
