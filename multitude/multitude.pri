@@ -83,9 +83,12 @@ unix {
   VERSION = $${CORNERSTONE_VERSION}
   
   # Use ccache if available
-  exists(/usr/bin/ccache):QMAKE_CXX=ccache g++
-  exists(/sw/bin/ccache):QMAKE_CXX=/sw/bin/ccache g++
-  exists(/opt/local/bin/ccache):QMAKE_CXX=/opt/local/bin/ccache g++
+  exists(/usr/bin/ccache):QMAKE_CXX=ccache $$QMAKE_CXX
+  exists(/usr/bin/ccache):QMAKE_CC=ccache $$QMAKE_CC
+  exists(/sw/bin/ccache):QMAKE_CXX=/sw/bin/ccache $$QMAKE_CXX
+  exists(/sw/bin/ccache):QMAKE_CC=/sw/bin/ccache $$QMAKE_CC
+  exists(/opt/local/bin/ccache):QMAKE_CXX=/opt/local/bin/ccache $$QMAKE_CXX
+  exists(/opt/local/bin/ccache):QMAKE_CC=/opt/local/bin/ccache $$QMAKE_CC
 
   exists(/opt/multitouch):INCLUDEPATH+=/opt/multitouch/include
   exists(/opt/multitouch):LIBS+=-L/opt/multitouch/lib

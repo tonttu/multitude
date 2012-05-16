@@ -289,7 +289,8 @@ namespace Radiant {
         with a floating point number. */
     /// @param v Coordinate of element
     /// @returns Interpolated element
-    inline T getInterpolated(const Nimble::Vector2f & v) const
+    template<typename U>
+    inline U getInterpolated(const Nimble::Vector2f & v) const
     {
       int left = v.x;
       int top = v.y;
@@ -309,12 +310,18 @@ namespace Radiant {
           get(left, bot) * wxl * wyb + get(right, bot) * wxr * wyb;
     }
 
+    inline T getInterpolated(const Nimble::Vector2f & v) const
+    {
+      return getInterpolated<T>(v);
+    }
+
     /** Interpolates an element from the grid values.
         This function requires that the grid template type can be multiplied from the right
         with a floating point number. */
     /// @param v Coordinate of element
     /// @returns The interpolated value from given coordinates
-    inline T getInterpolatedSafe(const Nimble::Vector2f & v) const
+    template<typename U>
+    inline U getInterpolatedSafe(const Nimble::Vector2f & v) const
     {
       int left = v.x;
       int top = v.y;
@@ -338,6 +345,12 @@ namespace Radiant {
       return get(left, top) * wxl * wyt + get(right, top) * wxr * wyt +
           get(left, bot) * wxl * wyb + get(right, bot) * wxr * wyb;
     }
+
+    inline T getInterpolatedSafe(const Nimble::Vector2f & v) const
+    {
+      return getInterpolatedSafe<T>(v);
+    }
+
 
     /// @returns a pointer to one line (aka row)
     /// @param y Line number

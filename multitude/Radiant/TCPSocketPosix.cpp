@@ -134,8 +134,15 @@ namespace Radiant
 
   int TCPSocket::read(void * buffer, int bytes, Flags flags)
   {
-    if(m_d->m_fd < 0 || bytes < 0)
+    if(m_d->m_fd < 0) {
+      Radiant::error("TCPSocket::read # invalid socket (file descriptor = %d)", m_d->m_fd);
       return -1;
+    }
+
+    if(bytes < 1) {
+      Radiant::error("TCPSocket::read # bytes to read must be >= 1 (was %d)", bytes);
+      return -1;
+    }
 
     int pos = 0;
     char * data = reinterpret_cast<char*>(buffer);
@@ -182,8 +189,15 @@ namespace Radiant
 
   int TCPSocket::write(const void * buffer, int bytes)
   {
-    if(m_d->m_fd < 0 || bytes < 0)
+    if(m_d->m_fd < 0) {
+      Radiant::error("TCPSocket::write # invalid socket (file descriptor = %d)", m_d->m_fd);
       return -1;
+    }
+
+    if(bytes < 1) {
+      Radiant::error("TCPSocket::write # bytes to write must be >= 1 (was %d)", bytes);
+      return -1;
+    }
 
     int pos = 0;
     const char * data = reinterpret_cast<const char*>(buffer);

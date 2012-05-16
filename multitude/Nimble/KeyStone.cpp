@@ -406,33 +406,7 @@ namespace Nimble {
 
   Matrix3 KeyStone::projectionMatrix(const Vector2 vertices[4])
   {
-    float dx1 = vertices[1].x - vertices[2].x;
-    float dx2 = vertices[3].x - vertices[2].x;
-    float dy1 = vertices[1].y - vertices[2].y;
-    float dy2 = vertices[3].y - vertices[2].y;
-
-    float sx = vertices[0].x - vertices[1].x +
-               vertices[2].x - vertices[3].x;
-
-    float sy = vertices[0].y - vertices[1].y +
-               vertices[2].y - vertices[3].y;
-
-    float del = Math::Det(dx1, dx2, dy1, dy2);
-
-    float g = Math::Det(sx, dx2, sy, dy2) / del;
-    float h = Math::Det(dx1, sx, dy1, sy) / del;
-
-    float a = vertices[1].x - vertices[0].x + g * vertices[1].x;
-    float b = vertices[3].x - vertices[0].x + h * vertices[3].x;
-    float c = vertices[0].x;
-
-    float d = vertices[1].y - vertices[0].y + g * vertices[1].y;
-    float e = vertices[3].y - vertices[0].y + h * vertices[3].y;
-    float f = vertices[0].y;
-
-    return Matrix3(a, b, c,
-                   d, e, f,
-                   g, h, 1);
+    return Nimble::Matrix3::projectionMatrix(vertices);
   }
 
 

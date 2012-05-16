@@ -982,6 +982,8 @@ namespace Luminous
                               float width, float blendWidth, const float * color,
                               int linesegments)
   {
+    width *= 0.5f;
+
     float delta = (toRadians - fromRadians) / linesegments;
 
     float tanFactor = tan(delta);

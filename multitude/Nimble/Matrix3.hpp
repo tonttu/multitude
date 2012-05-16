@@ -195,6 +195,49 @@ namespace Nimble {
           );
     }
 
+    /// Create a projection matrix which maps the unit square to given vertices
+    static Nimble::Matrix3T<T> projectionMatrix(const Nimble::Vector2T<T> vertices[4])
+    {
+      float dx1 = vertices[1].x - vertices[2].x;
+      float dx2 = vertices[3].x - vertices[2].x;
+      float dy1 = vertices[1].y - vertices[2].y;
+      float dy2 = vertices[3].y - vertices[2].y;
+
+      float sx = vertices[0].x - vertices[1].x +
+                 vertices[2].x - vertices[3].x;
+
+      float sy = vertices[0].y - vertices[1].y +
+                 vertices[2].y - vertices[3].y;
+
+      float del = Math::Det(dx1, dx2, dy1, dy2);
+
+      float g = Math::Det(sx, dx2, sy, dy2) / del;
+      float h = Math::Det(dx1, sx, dy1, sy) / del;
+
+      float a = vertices[1].x - vertices[0].x + g * vertices[1].x;
+      float b = vertices[3].x - vertices[0].x + h * vertices[3].x;
+      float c = vertices[0].x;
+
+      float d = vertices[1].y - vertices[0].y + g * vertices[1].y;
+      float e = vertices[3].y - vertices[0].y + h * vertices[3].y;
+      float f = vertices[0].y;
+
+      return Matrix3T<T>(a, b, c,
+                     d, e, f,
+                     g, h, 1);
+    }
+
+    /// Create a projective matrix which maps from[i] to to[i] for i=0..3
+    /// @param from The four source points
+    /// @param to The four targets points
+    static Nimble::Matrix3T<T> mapCorrespondingPoints(const Nimble::Vector2T<T> from[4],
+                                                  const Nimble::Vector2T<T> to[4],
+                                                  bool * ok = 0)
+    {
+      return  projectionMatrix(to) * projectionMatrix(from).inverse(ok);
+    }
+
+
   private:
     inline static void swap(T &a, T& b);
 

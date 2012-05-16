@@ -52,6 +52,16 @@ namespace Radiant
     static void rgbToCIEXYZ(const Nimble::Vector3f & rgb, Nimble::Vector3f & cie);
     static void CIEXYZToRGB(const Nimble::Vector3f & cie, Nimble::Vector3f & rgb);
 
+    /// Convert CIE XYZ tristimulus values to CIE xyY values
+    /// @param xyz CIE XYZ tristimulus values
+    /// @param[out] xyy CIE xyY values
+    static void CIEXYZtoCIEXYY(const Nimble::Vector3f & xyz, Nimble::Vector3f & xyy);
+
+    /// Convert CIE xyY values to CIE XYZ tristimulus  values
+    /// @param xyy CIE xyY values
+    /// @param [xyz] CIE XYZ tristimulus values
+    static void CIEXYYtoCIEXYZ(const Nimble::Vector3f & xyy, Nimble::Vector3f & xyz);
+
     /// Color balance the given RGB image
     /// Performs linear scaling of the RGB components with the given values and clamps them to [0,255] range
     /// @param img image to color balance
