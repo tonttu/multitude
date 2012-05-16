@@ -23,6 +23,7 @@
 #ifdef RADIANT_OSX
 // We do not use GLEW on OSX
 #define MULTI_WITHOUT_GLEW 1
+#include <cstring>
 #endif
 
 #ifdef MULTI_WITHOUT_GLEW
