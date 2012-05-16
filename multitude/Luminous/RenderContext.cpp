@@ -1701,10 +1701,10 @@ namespace Luminous
     rp.vbo().bind();
     rp.vbo().fill(rp.vertexData<RectVertex>(), rp.vertices().bytes(), Luminous::VertexBuffer::DYNAMIC_DRAW);
 
-    VertexAttribArrayStep ls(aloc, 2, GL_FLOAT, vsize, (void*) offsetBytes(vr.m_location, vr));
-    VertexAttribArrayStep cs(acol, 4, GL_FLOAT, vsize, (void*) offsetBytes(vr.m_color, vr));
-    VertexAttribArrayStep ts(atex, 2, GL_FLOAT, vsize, (void*) offsetBytes(vr.m_texCoord, vr));
-    VertexAttribArrayStep ut(aute, 1, GL_FLOAT, vsize, (void*) offsetBytes(vr.m_useTexture, vr));
+    VertexAttribArrayStep ls(aloc, 2, GL_FLOAT, vsize, offsetBytes(vr.m_location, vr));
+    VertexAttribArrayStep cs(acol, 4, GL_FLOAT, vsize, offsetBytes(vr.m_color, vr));
+    VertexAttribArrayStep ts(atex, 2, GL_FLOAT, vsize, offsetBytes(vr.m_texCoord, vr));
+    VertexAttribArrayStep ut(aute, 1, GL_FLOAT, vsize, offsetBytes(vr.m_useTexture, vr));
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, GLsizei(rp.vertices().count<RectVertex>()));
 

@@ -452,12 +452,12 @@ namespace Luminous
   {
   public:
     VertexAttribArrayStep(int pos, int elems, GLenum type, size_t stride,
-                          void * offset)
+                          size_t offset)
                             : m_pos(pos)
     {
       glEnableVertexAttribArray(pos);
       glVertexAttribPointer(pos, elems, type, GL_FALSE,
-                            (GLsizei)stride, offset);
+                            (GLsizei)stride, (char*)0 + offset);
     }
 
     ~VertexAttribArrayStep ()
