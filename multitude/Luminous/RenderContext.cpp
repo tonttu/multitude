@@ -1683,12 +1683,12 @@ namespace Luminous
     GLSLProgramObject & prog = * m_data->m_program;
 
     prog.setUniformMatrix4("view_transform", m_data->m_viewTransform);
+    prog.setUniformMatrix3("object_transform", transform());
 
     int aloc = prog.getAttribLoc("location");
     int acol = prog.getAttribLoc("color");
     int atex = prog.getAttribLoc("tex_coord");
     int aute = prog.getAttribLoc("use_tex");
-
 
 //    if((aloc < 0) || (acol < 0) || (atex < 0) || (aute < 0)) {
 //      fatal("RenderContext::flush # %d vertices %p %p %d", (int) rp.vertices().count<RectVertex>(),
@@ -1696,7 +1696,7 @@ namespace Luminous
 //    }
     Utils::glCheck("RenderContext::flush # 2");
 
-    //info("shader attribs are %d %d %d %d for %d", aloc, acol, atex, aute, (int) rp.vertices().count<RectVertex>());
+    // info("shader attribs are %d %d %d %d for %d", aloc, acol, atex, aute, (int) rp.vertices().count<RectVertex>());
 
     rp.vbo().bind();
     rp.vbo().fill(rp.vertexData<RectVertex>(), rp.vertices().bytes(), Luminous::VertexBuffer::DYNAMIC_DRAW);
@@ -1724,7 +1724,7 @@ namespace Luminous
 
   void RenderContext::beforeTransformChange()
   {
-    // flush();
+    flush();
   }
 
 /*
