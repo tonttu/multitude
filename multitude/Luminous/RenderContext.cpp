@@ -677,8 +677,8 @@ namespace Luminous
   {
     QString pathname;
 #ifdef LUMINOUS_OPENGL_FULL
-     pathname = "../MultiTouch/GL20Shaders/";
-    //pathname = "../MultiTouch/ES20Shaders/";
+    // pathname = "../MultiTouch/GL20Shaders/";
+    pathname = "../MultiTouch/ES20Shaders/";
 #else
     pathname = "../MultiTouch/ES20Shaders/";
 #endif
@@ -1361,6 +1361,7 @@ namespace Luminous
     RectVertex va;
     va.m_color = style.color();
     va.m_useTexture = style.texturing();
+    va.m_objectTransform = transform().transposed();
 
     va.m_location = area.low();
     va.m_texCoord = style.texCoords().low();
@@ -1392,6 +1393,7 @@ namespace Luminous
     va.m_color = style.color();
     va.m_useTexture = false;
     va.m_location = area.low();
+    va.m_objectTransform = transform().transposed();
 
     if(!rp.empty())
       rp.addVertex(va);
@@ -1477,6 +1479,7 @@ namespace Luminous
     RectVertex va;
     va.m_color = style.color();
     va.m_useTexture = style.texturing();
+    va.m_objectTransform = transform().transposed();
 
     va.m_location = corners[0];
     va.m_texCoord = style.texCoords().lowHigh();
@@ -1694,7 +1697,7 @@ namespace Luminous
 
   void RenderContext::beforeTransformChange()
   {
-    flush();
+    // flush();
   }
 
 /*

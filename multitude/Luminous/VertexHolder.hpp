@@ -94,8 +94,6 @@ namespace Luminous
     void setProgram(GLSLProgramObject * prog) { m_program = prog; }
     GLSLProgramObject * program() { return m_program; }
 
-
-
   private:
 
     GLSLProgramObject * m_program;
@@ -112,6 +110,7 @@ namespace Luminous
 
     static void render(RenderContext &, RenderPacket &);
 
+    Nimble::Matrix3 m_objectTransform;
     Nimble::Vector2 m_location;
     Nimble::Vector2 m_texCoord;
     Nimble::Vector4 m_color;
