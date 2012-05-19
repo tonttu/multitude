@@ -9,9 +9,14 @@
 
 #include <Radiant/Trace.hpp>
 
+#include <functional>
+
 //@cond
 namespace Luminous
 {
+  class RenderPacket;
+  // typedef std::function< void (RenderContext &) > PacketLoaderFunction;
+
   // This class is internal to the Luminous library, it is not exported or anything like that
   class VertexHolder
   {
@@ -62,6 +67,8 @@ namespace Luminous
   {
   public:
 
+    typedef void(*RenderFunction)(RenderContext &, RenderPacket &);
+
     RenderPacket();
     ~RenderPacket();
 
@@ -81,11 +88,20 @@ namespace Luminous
 
     VertexBuffer & vbo() { return  m_vbo; }
 
+    void setPacketRenderFunction(RenderFunction func) { m_func = func; }
+    RenderFunction renderFunction() const { return m_func;  }
+
+    void setProgram(GLSLProgramObject * prog) { m_program = prog; }
+    GLSLProgramObject * program() { return m_program; }
+
+
+
   private:
 
     GLSLProgramObject * m_program;
     VertexHolder        m_vertices;
     VertexBuffer        m_vbo;
+    RenderFunction      m_func;
   };
 
 
@@ -93,6 +109,8 @@ namespace Luminous
   {
   public:
     RectVertex() { memset(this, 0, sizeof (*this)); }
+
+    static void render(RenderContext &, RenderPacket &);
 
     Nimble::Vector2 m_location;
     Nimble::Vector2 m_texCoord;

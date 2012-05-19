@@ -742,6 +742,12 @@ namespace Luminous
     m_data->m_viewTransform = m;
   }
 
+  const Nimble::Matrix4 & RenderContext::viewTransform() const
+  {
+    return m_data->m_viewTransform;
+  }
+
+
   void RenderContext::setRecursionLimit(size_t limit)
   {
     m_data->m_recursionLimit = limit;
@@ -1350,6 +1356,7 @@ namespace Luminous
   void RenderContext::drawRect(const Nimble::Rect & area, const Style & style)
   {
     RenderPacket & rp = * m_data->m_renderPacket;
+    rp.setProgram(m_data->m_program);
 
     RectVertex va;
     va.m_color = style.color();
@@ -1664,53 +1671,16 @@ namespace Luminous
 
   void RenderContext::flush()
   {
-    RenderPacket & rp = * m_data->m_renderPacket;
+    RenderPacket::RenderPacket * rp = m_data->m_renderPacket;
 
-    if(! & rp)
+    if(!rp)
       return;
 
-    if(rp.empty())
-      return;
+    RenderPacket::RenderFunction rf = rp->renderFunction();
 
-    Utils::glCheck("RenderContext::flush # 1");
+    assert(rf != 0);
 
-    assert(m_data->m_program != 0);
-
-    const int vsize = sizeof(RectVertex);
-
-    RectVertex & vr = * rp.vertexData<RectVertex>();
-
-    GLSLProgramObject & prog = * m_data->m_program;
-
-    prog.setUniformMatrix4("view_transform", m_data->m_viewTransform);
-    prog.setUniformMatrix3("object_transform", transform());
-
-    int aloc = prog.getAttribLoc("location");
-    int acol = prog.getAttribLoc("color");
-    int atex = prog.getAttribLoc("tex_coord");
-    int aute = prog.getAttribLoc("use_tex");
-
-//    if((aloc < 0) || (acol < 0) || (atex < 0) || (aute < 0)) {
-//      fatal("RenderContext::flush # %d vertices %p %p %d", (int) rp.vertices().count<RectVertex>(),
-//            m_data->m_program, &*m_data->m_basic_shader, (int) prog.getAttribLoc("location"));
-//    }
-    Utils::glCheck("RenderContext::flush # 2");
-
-    // info("shader attribs are %d %d %d %d for %d", aloc, acol, atex, aute, (int) rp.vertices().count<RectVertex>());
-
-    rp.vbo().bind();
-    rp.vbo().fill(rp.vertexData<RectVertex>(), rp.vertices().bytes(), Luminous::VertexBuffer::DYNAMIC_DRAW);
-
-    VertexAttribArrayStep ls(aloc, 2, GL_FLOAT, vsize, offsetBytes(vr.m_location, vr));
-    VertexAttribArrayStep cs(acol, 4, GL_FLOAT, vsize, offsetBytes(vr.m_color, vr));
-    VertexAttribArrayStep ts(atex, 2, GL_FLOAT, vsize, offsetBytes(vr.m_texCoord, vr));
-    VertexAttribArrayStep ut(aute, 1, GL_FLOAT, vsize, offsetBytes(vr.m_useTexture, vr));
-
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, GLsizei(rp.vertices().count<RectVertex>()));
-
-    rp.clear();
-    rp.vbo().unbind(); // Should not really call this
-    Utils::glCheck("RenderContext::flush # 3");
+    (*rf)(*this, *rp);
   }
 
   void RenderContext::restart()
