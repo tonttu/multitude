@@ -536,7 +536,7 @@ namespace Radiant {
     const char * fname = "VideoCamera1394::initialize";
 
     if(!findCamera(euid)) {
-      error("%s # Could not find FireWire camera %"PRIx64, fname, euid);
+      error("%s # Could not find FireWire camera %" PRIx64, fname, euid);
       return false;
     }
 
@@ -1364,7 +1364,7 @@ namespace Radiant {
       if(!already) {
         dc1394camera_t * cam = dc1394_camera_new(s_dc, camlist->ids[i].guid);
         if(!cam) {
-          Radiant::error("CameraDriver1394::queryCameras # dc1394_camera_new failed for %"PRIx64,
+          Radiant::error("CameraDriver1394::queryCameras # dc1394_camera_new failed for %" PRIx64,
                          camlist->ids[i].guid);
         } else {
           s_infos.push_back(cam);
@@ -1386,7 +1386,7 @@ namespace Radiant {
       if(!c->guid || !c->vendor || !c->model)
         continue;
 
-      debugRadiant("Got camera %p: %s %s (%"PRIx64")", c, c->vendor, c->model, c->guid);
+      debugRadiant("Got camera %p: %s %s (%" PRIx64")", c, c->vendor, c->model, c->guid);
 
       ci.m_euid64 = c->guid;
       ci.m_vendor = c->vendor;
