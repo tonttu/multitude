@@ -10,19 +10,19 @@ namespace Luminous
   class HardwareBuffer : public RenderResource
   {
   public:
-    HardwareBuffer(RenderResource::Id id, BufferType type, RenderDriver & driver);
-    LUMINOUS_API virtual ~HardwareBuffer();
+    LUMINOUS_API HardwareBuffer(RenderResource::Id id, BufferType type, RenderDriver & driver);
+    LUMINOUS_API ~HardwareBuffer();
 
-    LUMINOUS_API virtual void reallocate(size_t bytes, BufferUsage usage);
-    LUMINOUS_API virtual size_t size() const;
+    LUMINOUS_API void reallocate(size_t bytes, BufferUsage usage);
+    LUMINOUS_API size_t size() const;
 
-    LUMINOUS_API virtual void read(char * data, size_t offset, size_t bytes) const;
-    LUMINOUS_API virtual void write(const char * data, size_t offset, size_t bytes);
-    
-    LUMINOUS_API virtual BufferType type() const;
-    LUMINOUS_API virtual BufferUsage usage() const;
+    LUMINOUS_API void read(char * data, size_t offset, size_t bytes) const;
+    LUMINOUS_API void write(const char * data, size_t offset, size_t bytes);
 
-    LUMINOUS_API virtual const char * data() const;
+    LUMINOUS_API BufferType type() const;
+    LUMINOUS_API BufferUsage usage() const;
+
+    LUMINOUS_API const char * data() const;
   private:
     class D;
     D * m_d;
