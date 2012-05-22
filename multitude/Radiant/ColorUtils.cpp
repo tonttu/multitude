@@ -145,4 +145,19 @@ namespace Radiant
   {
     rgb = g_tristimulusMatrix.inverse() * cie;
   }
+
+  void ColorUtils::CIEXYZtoCIEXYY(const Nimble::Vector3f & xyz, Nimble::Vector3f & xyy)
+  {
+    xyy.z = xyz.y;
+    float sum = xyz.sum();
+    xyy.x = xyz.x / sum;
+    xyy.y = xyz.y / sum;
+  }
+
+  void ColorUtils::CIEXYYtoCIEXYZ(const Nimble::Vector3f & xyy, Nimble::Vector3f & xyz)
+  {
+    xyz.x = xyy.x * (xyy.z / xyy.y);
+    xyz.y = xyy.z;
+    xyz.z = (1.0f - xyy.x - xyy.y) * (xyy.z / xyy.y);
+  }
 }

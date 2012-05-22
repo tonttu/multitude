@@ -2,9 +2,9 @@ include(../multitude.pri)
 
 HEADERS += BGThread.hpp
 linux-*:HEADERS += XRandR.hpp
-HEADERS += ScreenDetectorAMD.hpp
+!macx:HEADERS += ScreenDetectorAMD.hpp
 HEADERS += ScreenDetector.hpp
-HEADERS += ScreenDetectorNV.hpp
+!macx:HEADERS += ScreenDetectorNV.hpp
 HEADERS += HardwareColorCorrection.hpp
 HEADERS += VM1.hpp
 HEADERS += CodecRegistry.hpp
@@ -47,9 +47,9 @@ HEADERS += VertexBufferImpl.hpp
 
 SOURCES += BGThread.cpp
 linux-*:SOURCES += XRandR.cpp
-SOURCES += ScreenDetectorAMD.cpp
+!macx:SOURCES += ScreenDetectorAMD.cpp
 SOURCES += ScreenDetector.cpp
-SOURCES += ScreenDetectorNV.cpp
+!macx:SOURCES += ScreenDetectorNV.cpp
 SOURCES += HardwareColorCorrection.cpp
 HEADERS += ColorCorrection.hpp
 SOURCES += CodecRegistry.cpp
