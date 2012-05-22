@@ -78,6 +78,7 @@ namespace Luminous
       GLuint resource;
       switch (type)
       {
+      case RT_VertexArray: glGenVertexArrays(1, &resource); return resource;
       case RT_Buffer: glGenBuffers(1, &resource); return resource;
       case RT_ShaderProgram: return glCreateProgram();
       case RT_VertexShader: return glCreateShader(GL_VERTEX_SHADER);
@@ -144,16 +145,16 @@ namespace Luminous
 
   void RenderDriverGL::preFrame(unsigned int threadIndex)
   {
-
   }
 
   void RenderDriverGL::postFrame(unsigned int threadIndex)
   {
-
   }
 
   void RenderDriverGL::bind(unsigned int threadIndex, const ShaderProgram & program)
   {
+    m_d->m_threadResources[threadIndex].currentProgram = 0;
+
     D::ResourceHandle programHandle = m_d->getOrCreateResource(threadIndex, program);
     
     // Recreate if the program is dirty
@@ -161,20 +162,24 @@ namespace Luminous
       glDeleteProgram(programHandle.handle);
       programHandle.handle = glCreateProgram();
       programHandle.version = program.version();
+
       m_d->updateResource(threadIndex, program.resourceId(), programHandle);
     }
 
     // Check if any of the shaders are dirty
     bool needsRelink = false;
+
     for (size_t i = 0; i < program.shaderCount(); ++i) {
       const std::shared_ptr<ShaderGLSL> & shader = program.shader(i);
       D::ResourceHandle shaderHandle = m_d->getOrCreateResource(threadIndex, *shader);
       if (shaderHandle.version < shader->version()) {
         needsRelink = true;
-        // Detach old (if exists), recompile and relink
+        // Detach old shader (if it exists)
         glDetachShader(programHandle.handle, shaderHandle.handle);
-        const GLchar * text = shader->text().toAscii().data();
-        const GLint length = shader->text().length();
+        // Recompile and link
+        const QByteArray shaderData = shader->text().toAscii();
+        const GLchar * text = shaderData.data();
+        const GLint length = shaderData.size();
         glShaderSource(shaderHandle.handle, 1, &text, &length);
         glCompileShader(shaderHandle.handle);
         GLint compiled = GL_FALSE;
@@ -184,16 +189,37 @@ namespace Luminous
           m_d->updateResource(threadIndex, shader->resourceId(), shaderHandle);
         }
         else {
-          /// @todo Dump error log if failed to compile
-          Radiant::error("Failed to compile shader");
+          Radiant::error("Failed to compile shader %d (type %d)", shaderHandle.handle, shaderHandle.type);
+
+          // Dump info log
+          GLsizei len;
+          glGetShaderiv(shaderHandle.handle, GL_INFO_LOG_LENGTH, &len);
+          std::vector<GLchar> log(len);
+          glGetShaderInfoLog(shaderHandle.handle, len, &len, log.data());
+          Radiant::error("%s", log.data());
+          // Abort binding
+          return;
         }
       }
     }
     if (needsRelink) {
-      /// @todo Check for linking errors
       glLinkProgram(programHandle.handle);
+      // Check for linking errors
+      GLint status;
+      glGetProgramiv(programHandle.handle, GL_LINK_STATUS, &status);
+      if (status == GL_FALSE) {
+        Radiant::error("Failed to link shader program %d", programHandle.handle);
+        GLsizei len;
+        glGetProgramiv(programHandle.handle, GL_INFO_LOG_LENGTH, &len);
+        std::vector<GLchar> log(len);
+        glGetProgramInfoLog(programHandle.handle, len, &len, log.data());
+        Radiant::error("%s", log.data());
+        // Can't link: abort binding
+        return;
+      }
     }
 
+    m_d->m_threadResources[threadIndex].currentProgram = programHandle.handle;
     glUseProgram(programHandle.handle);
   }
 
@@ -241,9 +267,14 @@ namespace Luminous
           VertexAttribute attr = b.description->attribute(attrIndex);
           /// @todo Should cache these locations somewhere
           GLint location = glGetAttribLocation(m_d->m_threadResources[threadIndex].currentProgram, attr.name.toAscii().data());
-          GLenum normalized = (attr.normalized ? GL_TRUE : GL_FALSE);
-          glEnableVertexAttribArray(location);
-          glVertexAttribPointer(location, attr.count, GLUtils::getDataType(attr.type), normalized, b.description->vertexSize(), (const GLvoid*)attr.offset);
+          if (location == -1) {
+            Radiant::warning("Unable to bind vertex attribute %s", attr.name.toAscii().data());
+          }
+          else {
+            GLenum normalized = (attr.normalized ? GL_TRUE : GL_FALSE);
+            glEnableVertexAttribArray(location);
+            glVertexAttribPointer(location, attr.count, GLUtils::getDataType(attr.type), normalized, b.description->vertexSize(), (const GLvoid*)attr.offset);
+          }
         }
 
         // Update cache
