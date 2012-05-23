@@ -372,7 +372,8 @@ namespace Resonant {
   AudioFileHandler * AudioFileHandler::m_instance = 0;
 
   AudioFileHandler::AudioFileHandler()
-    : m_done(true)
+    : Thread("AudioFileHandler")
+    , m_done(true)
   {
     if(!m_instance)
       m_instance = this;
