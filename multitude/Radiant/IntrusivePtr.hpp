@@ -113,6 +113,11 @@ namespace Radiant
       return m_ptr;
     }
 
+    operator T * () const
+    {
+      return m_ptr;
+    }
+
     inline T * get() const { return m_ptr; }
 
     /// Implicit "bool" conversion with safe bool idiom
