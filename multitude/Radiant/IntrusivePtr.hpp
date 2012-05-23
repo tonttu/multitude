@@ -120,9 +120,8 @@ namespace Radiant
 
     inline T * get() const { return m_ptr; }
 
-    /// Implicit "bool" conversion with safe bool idiom
-    typedef T * (IntrusivePtr::*bool_type)() const;
-    operator bool_type() const { return m_ptr ? &IntrusivePtr<T>::get : 0; }
+    /// @todo add this when we have C++11 enabled
+    // explicit bool operator () const { return m_ptr }
 
     bool operator! () const { return m_ptr == 0; }
 
