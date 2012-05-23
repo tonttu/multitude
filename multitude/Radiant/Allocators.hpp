@@ -44,6 +44,8 @@ namespace Radiant
     pointer allocate(size_type n, const void* = 0) { return reinterpret_cast<pointer>(Radiant::alignedMalloc(n * sizeof(T), alignment)); }
     void deallocate(pointer ptr, size_type) { Radiant::alignedFree(ptr); }
 
+    /// @todo this should actually be defined as template<class U, class... Args> void construct(U* p, Args&&... args);
+    void construct(pointer ptr) { ::new((void *)ptr) T(); }
     void construct(pointer ptr, const T & val) { ::new((void *)ptr) T(val); }
     void destroy(pointer ptr) { ptr->~T(); }
 
