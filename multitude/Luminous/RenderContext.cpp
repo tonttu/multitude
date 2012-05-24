@@ -1790,7 +1790,10 @@ namespace Luminous
 
   // Create all the setters for shader constants
 #define SETSHADERCONSTANT(TYPE) \
-  template<> LUMINOUS_API void RenderContext::setShaderConstant<TYPE>(const QString & name, const TYPE & value) { m_data->m_driver.setShaderConstant(threadIndex(), name, value); }
+  template<> LUMINOUS_API bool RenderContext::setShaderConstant(const QString & name, const TYPE & value) \
+  { \
+    return m_data->m_driver.setShaderConstant(threadIndex(), name, value); \
+  }
   SETSHADERCONSTANT(int);
   SETSHADERCONSTANT(float);
   SETSHADERCONSTANT(Nimble::Vector2f);

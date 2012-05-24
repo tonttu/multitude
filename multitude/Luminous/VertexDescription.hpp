@@ -13,8 +13,11 @@ namespace Luminous
   class VertexDescription
   {
   public:
-    /// Add an attribute
+    /// Add an attribute at the end
+    template <typename AttrType> void addAttribute(const QString & attrName);
+    /// Add an attribute at a specific offset
     template <typename AttrType> void addAttribute(const QString & attrName, uint offset);
+
     /// Tries to find a named attributes. Returns 0 if it's not found
     LUMINOUS_API const VertexAttribute * findAttribute(const QString & attrName) const;
     /// Remove a named attribute
@@ -47,6 +50,11 @@ namespace Luminous
       attr.offset = offset;
       m_attributes.push_back(attr);
     }
+  }
+
+  template <typename AttrType> void VertexDescription::addAttribute(const QString & attrName)
+  {
+    addAttribute<AttrType>(attrName, vertexSize());
   }
 }
 #endif // LUMINOUS_VERTEXDESCRIPTION_HPP
