@@ -48,7 +48,7 @@ namespace Luminous
     std::copy(start, start + bytes, data);
   }
 
-  void HardwareBuffer::write(const char * data, size_t bytes, size_t offset)
+  void HardwareBuffer::write(const char * data, size_t offset, size_t bytes)
   {
     assert(offset + bytes <= m_d->data.size());
     char * start = m_d->data.data() + offset;
