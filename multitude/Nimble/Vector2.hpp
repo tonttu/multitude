@@ -45,17 +45,8 @@ namespace Nimble {
 
     /** Default constructor, does \b not initialize the values. */
     inline Vector2T () {}
-    /// Constructs a vector copying the given value to both vector values
-    /// @param xy Value to use to initialize both x and y values
-    inline explicit Vector2T(T xy) : x(xy), y(xy) { }
     /// Constructs a vector initializing it to given values
     inline Vector2T (T cx, T cy) : x(cx), y(cy) {}
-    /// Constructs a vector initializing from memory
-    template <class K> inline Vector2T(const K * v) { x = v[0]; y = v[1]; }
-    /// Copy constructor
-    template <class K> inline Vector2T	(const Vector2T<K>& v) { x = (T)v.x; y = (T)v.y; }
-
-    //template <class K> Vector2T& operator=  (const Vector2T<S>& v)	{ x = (T)v.x; y = (T)v.y; return *this; }
 
     /// Fill the vector with zeroes
     inline Vector2T&	clear		(void)					{ x = (T)(0); y = (T)(0); return *this; }
@@ -89,16 +80,17 @@ namespace Nimble {
     inline bool	isOne		(void) const					        { return (x == (T) 1 && y == (T) 1); }
     /// Checks if both components are zero
     inline bool	isZero		(void) const					      { return (x == (T) 0 && y == (T) 0); }
+
     /// Returns the length of the vector
-    inline T    	length		(void) const				        { return (T)Math::Sqrt(x*x+y*y); }
+    auto length() const -> decltype(x * 1.f)          { return Math::Sqrt(lengthSqr()); }
     /// Returns the squared length of the vector
     inline T      	lengthSqr	(void) const				      { return x*x+y*y; }
     /// Negates the vector
     inline Vector2T&	negate		(void)						      { x=-x; y=-y; return *this; }
     /// Normalizes the vector to the given length
-    inline Vector2T&	normalize	(T len = T(1))			{ T l = length(); if (l!= T(0)) *this *= (len/l); return *this; }
+    Vector2T& normalize(T len = T(1)) { auto l = length(); if(l != 0) *this *= (len / l); return *this; }
     /// Normalizes the vector to the given length if it is longer
-    inline Vector2T&	limitLength	(T len)	 { T l = length(); if (l > len) *this *= (len/l); return *this; }
+    inline Vector2T&	limitLength	(T len)	 { auto l = length(); if (l > len) *this *= (len/l); return *this; }
     /// Scales the vector
     inline Vector2T&	scale		(const Vector2T& v)				{ x *= v.x; y *= v.y; return *this; }
     /// Scales the vector
@@ -155,39 +147,29 @@ namespace Nimble {
     {
       return x == v2.x ? y < v2.y : x < v2.x;
     }
-    //template <class K>
-    //void copy(const S * data) { x = data[0]; y = data[1]; }
 
     static inline Vector2T<T> null() { return Vector2T<T>(0, 0); }
+
+    /// Cast the vector to another type
+    template<typename S>
+    Nimble::Vector2T<S> cast() const
+    {
+      return Nimble::Vector2T<S>(S(x), S(y));
+    }
   };
 
   /// Add two vectors
   template <class T> inline	Vector2T<T>	operator+	(const Vector2T<T>& v1, const Vector2T<T>& v2) { return Vector2T<T>(v1.x+v2.x, v1.y+v2.y); }
 
-  //template <class T> inline	Vector2T<T>	operator+	(const Vector2T<T>& v1, T v2) { return Vector2T<T>(v1.x+v2, v1.y+v2); }
   /// Subract two vectors
   template <class T> inline	Vector2T<T>	operator-	(const Vector2T<T>& v1, const Vector2T<T>& v2) { return Vector2T<T>(v1.x-v2.x, v1.y-v2.y); }
-  //template <class T> inline	Vector2T<T>	operator-	(const Vector2T<T>& v1, T v2) { return Vector2T<T>(v1.x-v2, v1.y-v2); }
-  /// Multiply a vector by scalar
-  template <class T> inline	Vector2T<T>	operator*	(const Vector2T<T>& v, const T s) { return Vector2T<T>((T)(v.x*s), (T)(v.y*s)); }
-  /// Multiply a vector by scalar
-  template <class T> inline	Vector2T<T>	operator*	(const T s, const Vector2T<T>& v) { return v*s; }
+
   /// Divide a vector by scalar
   template <class T> inline	Vector2T<T>	operator/	(const Vector2T<T>& v, const double s) { T r = T(1.0/s); return v*r; }
   /// Divide a vector by scalar
   template <class T> inline Vector2T<T> operator/ (const Vector2T<T>& v, const T s) { return Vector2T<T>(v.x / s, v.y / s); }
   /// Returns the negation of a vector
   template <class T> inline	Vector2T<T>	operator-	(const Vector2T<T>& v) { return Vector2T<T>(-v.x, -v.y); }
-
-  /// @cond
-  template <>
-  inline Vector2T<int> & Vector2T<int>::operator /= (int s)
-  {
-    x = x/s;
-    y = y/s;
-    return *this;
-  }
-  /// @endcond
 
   namespace Math {
     /// Specialize Abs
@@ -216,39 +198,6 @@ namespace Nimble {
     return (a.x * b.y) - (a.y * b.x);
   }
 
-  /* Note that these overloads are NOT redundant, integer math is
-     different from floating point math. */
-  /// Divide a vector by scalar
-  inline Vector2T<short> operator / (const Vector2T<short>& v, const short s)
-  {
-    return Vector2T<short>(v.x / s, v.y / s);
-  }
-  /// Divide a vector by scalar
-  inline Vector2T<int> operator / (const Vector2T<int>& v, const int s)
-  {
-    return Vector2T<int>(v.x / s, v.y / s);
-  }
-  /// Divide a vector by scalar
-  inline Vector2T<long> operator / (const Vector2T<long>& v, const long s)
-  {
-    return Vector2T<long>(v.x / s, v.y / s);
-  }
-  /// Multiply a vector by scalar
-  inline Vector2T<short> operator * (const Vector2T<short>& v, const short s)
-  {
-    return Vector2T<short>(v.x * s, v.y * s);
-  }
-  /// Multiply a vector by scalar
-  inline Vector2T<int> operator * (const Vector2T<int>& v, const int s)
-  {
-    return Vector2T<int>(v.x * s, v.y * s);
-  }
-  /// Multiply a vector by scalar
-  inline Vector2T<long> operator * (const Vector2T<long>& v, const long s)
-  {
-    return Vector2T<long>(v.x * s, v.y * s);
-  }
-
   /// Write a vector into a stream
   template <class T>
   inline std::ostream &operator<<(std::ostream &os, const Nimble::Vector2T<T> &t)
@@ -264,6 +213,22 @@ namespace Nimble {
     is >> t.x;
     is >> t.y;
     return is;
+  }
+
+  // Multiply vector with a scalar (v * s)
+  template<class T, class S>
+  auto operator* (const Nimble::Vector2T<T> & v, S s) -> Nimble::Vector2T<decltype(v.x*s)>
+  {
+    static_assert(std::is_arithmetic<S>::value, "vector multiplication operator is only defined to arithmetic types");
+    return Nimble::Vector2T<decltype(v.x*s)>(v.x * s, v.y * s);
+  }
+
+  // Multiply vector with a scalar (s * v)
+  template<class T, class S>
+  auto operator* (S s, const Nimble::Vector2T<T> & v) -> Nimble::Vector2T<decltype(v.x*s)>
+  {
+    static_assert(std::is_arithmetic<S>::value, "vector multiplication operator is only defined to arithmetic types");
+    return v * s;
   }
 
   namespace Math {
@@ -287,6 +252,7 @@ namespace Nimble {
   /// Vector of two doubles
   typedef Vector2T<double> Vector2d;
 
+  /// @todo this line stuff really doesn't belong in here!
   /// Line slope types.
   enum LineSlopeType
   {

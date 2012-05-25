@@ -47,18 +47,8 @@ namespace Nimble {
     T   w;
 
     inline Vector4T	() {}
-    /// Constructs a vector copying the given value to all vector values
-    /// @param xyzw Value to use to initialize all vector values
-    inline explicit Vector4T(T xyzw) : x(xyzw), y(xyzw), z(xyzw), w(xyzw) { }
     /// Constructs a vector and initializes it with the given values
     inline Vector4T (T cx, T cy, T cz, T cw) : x(cx), y(cy), z(cz), w(cw) {}
-    /// Copy constructor
-    template <class K> inline Vector4T(const Vector4T<K>& v)	       { x = (T)v.x;   y = (T)v.y;  z = (T)v.z;  w = (T) v.w; }
-    /// @todo remove the conversion (make static functions)
-    /// Constructs a vector from memory
-    /// @param v array of four decimals
-    template <class K> inline Vector4T(const K * v)	               { x = (T)v[0];  y = (T)v[1]; z = (T)v[2]; w = (T) v[3]; }
-    //template <class K> Vector4T& operator=(const Vector4T<S>& v) { x = (T)v.x; y = (T)v.y; z = (T)v.z; w = (T) v.w; return *this; }
     /// Fills the vector with zeroes
     inline Vector4T&	clear(void)                                    { x = (T)(0);  y = (T)(0); z = (T)(0); w = (T)(0); return *this;	}
 
@@ -153,20 +143,41 @@ namespace Nimble {
     }
 
     static inline Vector4T<T> null() { return Vector4T<T>(0, 0, 0, 0); }
+
+    /// Cast the vector to another type
+    template<typename S>
+    Nimble::Vector4T<S> cast() const
+    {
+      return Nimble::Vector4T<S>(S(x), S(y), S(z), S(w));
+    }
   };
 
   /// Add two vectors
   template <class T> inline	Vector4T<T>	operator+	(const Vector4T<T>& v1, const Vector4T<T>& v2)	{ Vector4T<T> t(v1); t+=v2; return t; }
   /// Subtract two vectors
   template <class T> inline	Vector4T<T>	operator-	(const Vector4T<T>& v1, const Vector4T<T>& v2)	{ Vector4T<T> t(v1); t-=v2; return t; }
-  /// Multiply a vector by scalar
-  template <class T> inline	Vector4T<T>	operator*	(const Vector4T<T>& v, const double s)		{ Vector4T<T> t(v); t*=s; return t; }
-  /// Multiply a vector by scalar
-  template <class T> inline	Vector4T<T>	operator*	(const double s, const Vector4T<T>& v)		{ return v*s; }
+
+  // Multiply vector with a scalar (v * s)
+  template<class T, class S>
+  auto operator* (const Nimble::Vector4T<T> & v, S s) -> Nimble::Vector4T<decltype(v.x*s)>
+  {
+    static_assert(std::is_arithmetic<S>::value, "vector multiplication operator is only defined to arithmetic types");
+    return Nimble::Vector4T<decltype(v.x*s)>(v.x * s, v.y * s, v.z * s, v.w * s);
+  }
+
+  // Multiply vector with a scalar (s * v)
+  template<class T, class S>
+  auto operator* (S s, const Nimble::Vector4T<T> & v) -> Nimble::Vector4T<decltype(v.x*s)>
+  {
+    static_assert(std::is_arithmetic<S>::value, "vector multiplication operator is only defined to arithmetic types");
+    return v * s;
+  }
+
   /// Divide a vector by scalar
   template <class T> inline	Vector4T<T>	operator/	(const Vector4T<T>& v, const double s)		{ double r = 1.0/s; return v*r; }
   /// Returns the negation of a vector
   template <class T> inline	Vector4T<T>	operator-	(const Vector4T<T>& v)						{ return Vector4T<T>(-v.x, -v.y, -v.z, -v.w); }
+
   /// Vector of four floats
   typedef Vector4T<float> Vector4;
   /// Vector of four floats

@@ -188,7 +188,7 @@ namespace Nimble {
     int dpyHeight() const { return m_dpyHeight; }
 
     /// The size of the display area (in pixels) that matches this keystone area
-    Nimble::Vector2f dpySize() const
+    Nimble::Vector2i dpySize() const
     { return Nimble::Vector2i(m_dpyWidth, m_dpyHeight); }
 
     /// The x offset to the origin of the output display area
@@ -197,7 +197,7 @@ namespace Nimble {
     int dpyY()  const { return m_dpyY; }
 
     /// The offset to the origin of the output display area
-    Nimble::Vector2f dpyOffset() const
+    Nimble::Vector2i dpyOffset() const
     { return Nimble::Vector2i(m_dpyX, m_dpyY); }
 
     /// The output area of the screen

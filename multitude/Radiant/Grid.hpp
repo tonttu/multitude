@@ -245,6 +245,13 @@ namespace Radiant {
       GRID_CHECK2(v);
       return this->m_data[this->m_width * (unsigned) v.y + (unsigned) v.x];
     }
+    /// @copydoc get(const Nimble::Vector2i & v)
+    inline T & get(const Nimble::Vector2f & v) const
+    {
+      GRID_CHECK2(v);
+      return this->m_data[this->m_width * (unsigned) v.y + (unsigned) v.x];
+    }
+
 
     /** Gets an element from the grid. */
     /// @param x X-coordinate of element

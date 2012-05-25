@@ -29,18 +29,10 @@ namespace Nimble {
     T		y;										///< y-component of the vector
     T		z;										///< z-component of the vector
     inline Vector3T()							   {}
-    /// Constructs a vector initializing all components to given value
-    inline explicit Vector3T(T xyz) : x(xyz), y(xyz), z(xyz) {}
     /// Constructs a vector initializing it to given values
     inline Vector3T(T cx, T cy, T cz) : x(cx), y(cy), z(cz) {}
-    /// Constructs a vector copying values from memory
-    template <class S> inline Vector3T(const S * v) { x = (T)v[0]; y = (T)v[1]; z = (T)v[2]; }
-    /// Constructs a vector copying it from another vector
-    template <class S> inline Vector3T(const Vector3T<S>& v)		   { x = (T)v.x;	y = (T)v.y; z = (T)v.z; }
     /// Constructs a vector using a 2d vector and a scalar component
-    template <class S> inline Vector3T(const Vector2T<S>& v, S az)		   { x = (T)v.x;	y = (T)v.y; z = az; }
-    /// Copies a vector
-    template <class S> inline Vector3T& operator=(const Vector3T<S>& v)	   { x = (T)v.x; y = (T)v.y; z = (T)v.z; return *this; }
+    inline Vector3T(const Vector2T<T>& v, T az)		   { x = v.x;	y = v.y; z = az; }
     /// Fills the vector with zeroes
     inline Vector3T&	clear		(void)				   { x = (T)(0);  y = (T)(0); z = (T)(0); return *this;	}
     /// Sets the vector to given values
@@ -143,6 +135,13 @@ namespace Nimble {
     }
 
     static inline Vector3T<T> null() { return Vector3T<T>(0, 0, 0); }
+
+    /// Cast the vector to another type
+    template<typename S>
+    Nimble::Vector3T<S> cast() const
+    {
+      return Nimble::Vector3T<S>(S(x), S(y), S(z));
+    }
   };
 
   /// Vector of three floats
@@ -156,10 +155,21 @@ namespace Nimble {
   /// Vector of three doubles
   typedef Vector3T<double> Vector3d;
 
-  /// Multiply a vector with scalar
-  template <class T>
-  Nimble::Vector3T<T> operator* (T s, const Nimble::Vector3T<T>& v)
-  { return v * s; }
+  // Multiply vector with a scalar (v * s)
+  template<class T, class S>
+  auto operator* (const Nimble::Vector3T<T> & v, S s) -> Nimble::Vector3T<decltype(v.x*s)>
+  {
+    static_assert(std::is_arithmetic<S>::value, "vector multiplication operator is only defined to arithmetic types");
+    return Nimble::Vector3T<decltype(v.x*s)>(v.x * s, v.y * s, v.z * s);
+  }
+
+  // Multiply vector with a scalar (s * v)
+  template<class T, class S>
+  auto operator* (S s, const Nimble::Vector3T<T> & v) -> Nimble::Vector3T<decltype(v.x*s)>
+  {
+    static_assert(std::is_arithmetic<S>::value, "vector multiplication operator is only defined to arithmetic types");
+    return v * s;
+  }
 
   namespace Math {
     /// Specialize Abs

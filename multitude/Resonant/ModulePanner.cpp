@@ -373,7 +373,7 @@ namespace Resonant {
     if(r) {
       //Radiant::info("ModuleRectPanner::computeGain # SPEAKER (%f,%f) source is inside rectangle (%d,%d) (%d,%d)", ls->m_location.x(), ls->m_location.y(), r->location().x, r->location().y, r->size().x, r->size().y);
 
-      Nimble::Vector2 tmp = r->location();
+      Nimble::Vector2 tmp(r->location().x, r->location().y);
       Nimble::Vector2 local = srcLocation - tmp;
 
       // Compute gain in y direction

@@ -338,9 +338,14 @@ namespace Luminous
 
       m_emptyTexture->bind(GL_TEXTURE0);
     }
-    Nimble::Vector2 contextSize() const
+
+    Nimble::Vector2f contextSize() const
     {
-      return m_window ? m_window->size() : Nimble::Vector2i(10, 10);
+      if(m_window)
+        return Nimble::Vector2f(m_window->size().x, m_window->size().y);
+
+      /// @todo why not zero vector?
+      return Nimble::Vector2f(10, 10);
     }
 
     void drawCircle(RenderContext & r, Nimble::Vector2f center, float radius,
@@ -856,7 +861,9 @@ namespace Luminous
   RenderContext::FBOHolder RenderContext::getTemporaryFBO
       (Nimble::Vector2f basicsize, float scaling, uint32_t flags)
   {
-    Nimble::Vector2i minimumsize = basicsize * scaling;
+    Nimble::Vector2f r = basicsize * scaling;
+
+    Nimble::Vector2i minimumsize(r.x, r.y);
 
     /* First we try to find a reasonable available FBO, that is not more than
        100% too large.

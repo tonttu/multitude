@@ -464,7 +464,9 @@ namespace Luminous {
         std::shared_ptr<CompressedImage> c = getCompressedImage(i);
         if(!c) continue;
 
-        return 255 * c->readAlpha(Nimble::Vector2f(relLoc.x * c->width(), relLoc.y * c->height()));
+        Nimble::Vector2i pixel(relLoc.x * c->width(), relLoc.y * c->height());
+
+        return 255 * c->readAlpha(pixel);
       }
 #endif // LUMINOUS_OPENGLES
 
@@ -472,10 +474,10 @@ namespace Luminous {
 
       if(!im) continue;
 
-      Nimble::Vector2f locf(im->size());
+      Nimble::Vector2f locf(im->size().x, im->size().y);
       locf.scale(relLoc);
 
-      Vector2i loci(locf);
+      Vector2i loci(locf.x, locf.y);
 
       loci.x = Nimble::Math::Clamp(loci.x, 0, im->width() - 1);
       loci.y = Nimble::Math::Clamp(loci.y, 0, im->height() - 1);

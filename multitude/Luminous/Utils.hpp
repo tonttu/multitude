@@ -265,7 +265,8 @@ namespace Luminous {
 
     static inline void glVertex2(const Nimble::Matrix3 & m, const Nimble::Vector2 & v)
     {
-      Nimble::Vector2 tmp((m * v).data());
+      Nimble::Vector2f tmp = m.project(v);
+
       glVertex2f(tmp.x, tmp.y);
     }
 

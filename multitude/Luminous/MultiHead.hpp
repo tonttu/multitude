@@ -102,8 +102,8 @@ namespace Luminous {
       /// Sets the graphics geometry of the area
       void setGraphicsGeometry(int x, int y, int w, int h)
       {
-        m_graphicsLocation = Nimble::Vector2i(x, y);
-        m_graphicsSize = Nimble::Vector2i(w, h);
+        m_graphicsLocation = Nimble::Vector2f(x, y);
+        m_graphicsSize = Nimble::Vector2f(w, h);
         updateBBox();
       }
 
