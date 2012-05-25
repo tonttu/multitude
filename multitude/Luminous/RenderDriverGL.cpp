@@ -5,9 +5,7 @@
 #include "Luminous/ShaderConstantBlock.hpp"
 #include "Luminous/ShaderProgram.hpp"
 #include "Luminous/GLUtils.hpp"
-
-// For glCheck
-#include "Luminous/Utils.hpp"
+#include "Luminous/Utils.hpp"   // glCheck
 
 #include <Nimble/Matrix4.hpp>
 #include <Radiant/RefPtr.hpp>
@@ -30,11 +28,11 @@ namespace Luminous
     // Some types
     struct ResourceHandle
     {
-      ResourceHandle() : handle(0), version(0), type(RT_Unknown), size(0) {}
-      ResourceHandle(ResourceType type) : handle(0), version(0), type(type), size(0) {}
+      ResourceHandle() : handle(0), generation(0), type(RT_Unknown), size(0) {}
+      ResourceHandle(ResourceType type) : handle(0), generation(0), type(type), size(0) {}
       ResourceType type;
       GLuint handle;
-      uint64_t version;
+      uint64_t generation;
       size_t size;
     };
     typedef std::map<RenderResource::Id, ResourceHandle> ResourceList;
@@ -172,19 +170,19 @@ namespace Luminous
     bool needsRelink = false;
 
     // Recreate if the program is dirty
-    if (programHandle.version < program.version()) {
+    if (programHandle.generation < program.generation()) {
       needsRelink = true;
 
       glDeleteProgram(programHandle.handle);
       GLERROR("RenderDriverGL::Bind ShaderProgram delete");
       programHandle.handle = glCreateProgram();
-      programHandle.version = program.version();
+      programHandle.generation = program.generation();
     }
 
     for (size_t i = 0; i < program.shaderCount(); ++i) {
       const std::shared_ptr<ShaderGLSL> & shader = program.shader(i);
       D::ResourceHandle shaderHandle = m_d->getOrCreateResource(threadIndex, *shader);
-      if (shaderHandle.version < shader->version()) {
+      if (shaderHandle.generation < shader->generation()) {
         needsRelink = true;
         /// @todo Detach old shader? (if it exists)
         //glDetachShader(programHandle.handle, shaderHandle.handle);
@@ -204,7 +202,7 @@ namespace Luminous
           glAttachShader(programHandle.handle, shaderHandle.handle);
           GLERROR("RenderDriverGL::Bind ShaderProgram attach");
           // All seems okay, update resource handle
-          shaderHandle.version = shader->version();
+          shaderHandle.generation = shader->generation();
           m_d->updateResource(threadIndex, shader->resourceId(), shaderHandle);
         }
         else {
@@ -254,7 +252,7 @@ namespace Luminous
     GLERROR("RenderDriverGL::Bind HardwareBuffer");
 
     // Update if dirty
-    if (bufferHandle.version < buffer.version()) {
+    if (bufferHandle.generation < buffer.generation()) {
       // Update or reallocate the resource
       if (buffer.size() != bufferHandle.size) {
         GLenum bufferUsage = Luminous::GLUtils::getBufferUsage(buffer.usage());
@@ -267,7 +265,7 @@ namespace Luminous
       }
 
       // Update cache handle
-      bufferHandle.version = buffer.version();
+      bufferHandle.generation = buffer.generation();
       bufferHandle.size = buffer.size();
       m_d->updateResource(threadIndex, buffer.resourceId(), bufferHandle);
     }
@@ -277,7 +275,7 @@ namespace Luminous
   {
     D::ResourceHandle bindingHandle = m_d->getOrCreateResource(threadIndex, binding);
 
-    if (bindingHandle.version < binding.version()) {
+    if (bindingHandle.generation < binding.generation()) {
       // Recreate the binding
       /// @todo I don't imagine these can really be updated, right?
       glDeleteVertexArrays(1, &bindingHandle.handle);
@@ -307,7 +305,7 @@ namespace Luminous
         }
 
         // Update cache
-        bindingHandle.version = binding.version();
+        bindingHandle.generation = binding.generation();
         m_d->updateResource(threadIndex, binding.resourceId(), bindingHandle);
       }
     }
@@ -326,7 +324,7 @@ namespace Luminous
 
     /// @note: Basically same code as buffer binding with few different arguments
     // Update if dirty
-    if (bufferHandle.version < constants.version()) {
+    if (bufferHandle.generation < constants.generation()) {
       // Update or reallocate the resource
       if (constants.size() != bufferHandle.size) {
         /// @todo What should be the usage type for a uniform buffer? Should it be configurable like a normal buffer?
@@ -337,7 +335,7 @@ namespace Luminous
       }
 
       // Update cache handle
-      bufferHandle.version = constants.version();
+      bufferHandle.generation = constants.generation();
       bufferHandle.size = constants.size();
       m_d->updateResource(threadIndex, constants.resourceId(), bufferHandle);
     }
@@ -385,7 +383,7 @@ namespace Luminous
 
   void RenderDriverGL::clear(ClearMask mask, const Radiant::Color & color, double depth, int stencil)
   {
-    /// @todo check current target for depth and stencil buffers?
+    /// @todo check current target for availability of depth and stencil buffers?
 
     GLbitfield glMask = 0;
     // Clear color buffer
@@ -434,7 +432,7 @@ namespace Luminous
 #define SETUNIFORMMATRIX(TYPE, FUNCTION) \
   bool RenderDriverGL::setShaderConstant(unsigned int threadIndex, const QString & name, const TYPE & value) { \
     GLint location = glGetUniformLocation(m_d->m_threadResources[threadIndex].currentProgram, name.toAscii().data()); \
-    if (location != -1) FUNCTION(location, 1, GL_FALSE, value.data()); \
+    if (location != -1) FUNCTION(location, 1, GL_TRUE, value.data()); \
     return (location != -1); \
   }
 

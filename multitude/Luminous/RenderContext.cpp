@@ -1776,6 +1776,7 @@ namespace Luminous
   void RenderContext::setShaderProgram(const std::shared_ptr<ShaderProgram> & program)
   {
     m_data->m_driver.bind(threadIndex(), *program);
+    m_data->m_driver.setShaderConstant(threadIndex(), "mt_projMatrix", m_data->m_viewTransform);
   }
 
   void RenderContext::draw(PrimitiveType primType, unsigned int offset, unsigned int vertexCount)

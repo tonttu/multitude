@@ -18,11 +18,11 @@ namespace Luminous
     inline Id resourceId() const { return m_id; }
     inline ResourceType resourceType() const { return m_type; }
 
-    inline void setVersion(uint64_t version) { m_version = version; }
-    inline uint64_t version() const { return m_version; }
-    inline void invalidate() { setVersion(version() + 1); }
+    inline void setGeneration(uint64_t generation) { m_generation = generation; }
+    inline uint64_t generation() const { return m_generation; }
+    inline void invalidate() { m_generation++; }
   private:
-    uint64_t m_version;
+    uint64_t m_generation;
     Id m_id;
     ResourceType m_type;
     RenderDriver & m_driver;
