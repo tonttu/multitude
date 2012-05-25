@@ -229,8 +229,8 @@ namespace
 
         // Geometry
         Nimble::Recti rect;
-        rect.setLow( Nimble::Vector2(devMode.dmPosition.x, devMode.dmPosition.y) );
-        rect.setHigh( Nimble::Vector2(devMode.dmPosition.x + devMode.dmPelsWidth, devMode.dmPosition.y + devMode.dmPelsHeight) );
+        rect.setLow( Nimble::Vector2i(devMode.dmPosition.x, devMode.dmPosition.y) );
+        rect.setHigh( Nimble::Vector2i(devMode.dmPosition.x + devMode.dmPelsWidth, devMode.dmPosition.y + devMode.dmPelsHeight) );
         info.setGeometry(rect);
 
         results.push_back(info);

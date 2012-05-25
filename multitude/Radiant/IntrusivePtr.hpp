@@ -144,14 +144,14 @@ namespace Radiant
   template <typename T, typename Y> inline bool operator==( const IntrusivePtr<T> & lhs, const IntrusivePtr<Y> & rhs) { return lhs.get() == rhs.get(); }
   template <typename T, typename Y> inline bool operator!=( const IntrusivePtr<T> & lhs, const IntrusivePtr<Y> & rhs) { return !(lhs == rhs); }
 
-  template <typename T, typename Y> inline bool operator== ( const IntrusivePtr<T> & lhs, const Y * rhs) { return lhs.get() == rhs; }
-  template <typename T, typename Y> inline bool operator!= ( const IntrusivePtr<T> & lhs, const Y * rhs) { return !(lhs == rhs); }
-  template <typename T, typename Y> inline bool operator== ( const Y * lhs, const IntrusivePtr<T> & rhs) { return rhs == lhs; }
-  template <typename T, typename Y> inline bool operator!= ( const Y * lhs, const IntrusivePtr<T> & rhs) { return rhs != lhs; }
+  template <typename T, typename Y> inline bool operator== ( const IntrusivePtr<T> & lhs, Y * rhs) { return lhs.get() == rhs; }
+  template <typename T, typename Y> inline bool operator!= ( const IntrusivePtr<T> & lhs, Y * rhs) { return !(lhs == rhs); }
+  template <typename T, typename Y> inline bool operator== ( Y * lhs, const IntrusivePtr<T> & rhs) { return rhs == lhs; }
+  template <typename T, typename Y> inline bool operator!= ( Y * lhs, const IntrusivePtr<T> & rhs) { return rhs != lhs; }
 
   template <typename T, typename Y> inline bool operator< (const IntrusivePtr<T> & lhs, const IntrusivePtr<Y> & rhs) { return lhs.get() < rhs.get(); }
-  template <typename T, typename Y> inline bool operator< (const IntrusivePtr<T> & lhs, const Y * rhs) { return lhs.get() < rhs; }
-  template <typename T, typename Y> inline bool operator< (const T * lhs, const IntrusivePtr<Y> & rhs) { return lhs < rhs.get(); }
+  template <typename T, typename Y> inline bool operator< (const IntrusivePtr<T> & lhs, Y * rhs) { return lhs.get() < rhs; }
+  template <typename T, typename Y> inline bool operator< (T * lhs, const IntrusivePtr<Y> & rhs) { return lhs < rhs.get(); }
 }
 
 #endif // RADIANT_INTRUSIVEPTR_HPP

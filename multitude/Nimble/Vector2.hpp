@@ -82,7 +82,7 @@ namespace Nimble {
     inline bool	isZero		(void) const					      { return (x == (T) 0 && y == (T) 0); }
 
     /// Returns the length of the vector
-    auto length() const -> decltype(x * 1.f)          { return Math::Sqrt(lengthSqr()); }
+    auto length() const -> decltype(T() * 1.f)          { return Math::Sqrt(lengthSqr()); }
     /// Returns the squared length of the vector
     inline T      	lengthSqr	(void) const				      { return x*x+y*y; }
     /// Negates the vector
@@ -217,15 +217,15 @@ namespace Nimble {
 
   // Multiply vector with a scalar (v * s)
   template<class T, class S>
-  auto operator* (const Nimble::Vector2T<T> & v, S s) -> Nimble::Vector2T<decltype(v.x*s)>
+  auto operator* (const Nimble::Vector2T<T> & v, S s) -> Nimble::Vector2T<decltype(T()*S())>
   {
     static_assert(std::is_arithmetic<S>::value, "vector multiplication operator is only defined to arithmetic types");
-    return Nimble::Vector2T<decltype(v.x*s)>(v.x * s, v.y * s);
+    return Nimble::Vector2T<decltype(T()*S())>(v.x * s, v.y * s);
   }
 
   // Multiply vector with a scalar (s * v)
   template<class T, class S>
-  auto operator* (S s, const Nimble::Vector2T<T> & v) -> Nimble::Vector2T<decltype(v.x*s)>
+  auto operator* (S s, const Nimble::Vector2T<T> & v) -> Nimble::Vector2T<decltype(T()*S())>
   {
     static_assert(std::is_arithmetic<S>::value, "vector multiplication operator is only defined to arithmetic types");
     return v * s;

@@ -159,15 +159,15 @@ namespace Nimble {
 
   // Multiply vector with a scalar (v * s)
   template<class T, class S>
-  auto operator* (const Nimble::Vector4T<T> & v, S s) -> Nimble::Vector4T<decltype(v.x*s)>
+  auto operator* (const Nimble::Vector4T<T> & v, S s) -> Nimble::Vector4T<decltype(T()*S())>
   {
     static_assert(std::is_arithmetic<S>::value, "vector multiplication operator is only defined to arithmetic types");
-    return Nimble::Vector4T<decltype(v.x*s)>(v.x * s, v.y * s, v.z * s, v.w * s);
+    return Nimble::Vector4T<decltype(T()*S())>(v.x * s, v.y * s, v.z * s, v.w * s);
   }
 
   // Multiply vector with a scalar (s * v)
   template<class T, class S>
-  auto operator* (S s, const Nimble::Vector4T<T> & v) -> Nimble::Vector4T<decltype(v.x*s)>
+  auto operator* (S s, const Nimble::Vector4T<T> & v) -> Nimble::Vector4T<decltype(T()*S())>
   {
     static_assert(std::is_arithmetic<S>::value, "vector multiplication operator is only defined to arithmetic types");
     return v * s;
