@@ -28,8 +28,8 @@ namespace Luminous
     // Some types
     struct ResourceHandle
     {
-      ResourceHandle() : handle(0), generation(0), type(RT_Unknown), size(0) {}
-      ResourceHandle(ResourceType type) : handle(0), generation(0), type(type), size(0) {}
+      ResourceHandle() : type(RT_Unknown), handle(0), generation(0) , size(0) {}
+      ResourceHandle(ResourceType type) : type(type), handle(0), generation(0),  size(0) {}
       ResourceType type;
       GLuint handle;
       uint64_t generation;

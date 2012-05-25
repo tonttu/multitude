@@ -2,12 +2,13 @@
 #define LUMINOUS_RENDERRESOURCE_HPP
 
 #include "Luminous/Luminous.hpp"
+#include "Patterns/NotCopyable.hpp"
 
 #include <stdint.h>
 
 namespace Luminous
 {
-  class RenderResource
+  class RenderResource : public Patterns::NotCopyable
   {
   public:
     typedef uint64_t Id;

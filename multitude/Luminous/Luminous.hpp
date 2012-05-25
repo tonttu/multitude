@@ -223,6 +223,7 @@ namespace Luminous
     RT_FragmentShader,
     RT_GeometryShader,
     RT_Texture,
+    RT_TextureArray,
     RT_Buffer,
   };
 
