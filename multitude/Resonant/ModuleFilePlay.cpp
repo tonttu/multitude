@@ -44,7 +44,7 @@ namespace Resonant {
     return true;
   }
 
-  void ModuleFilePlay::process(float **, float ** out, int n)
+  void ModuleFilePlay::process(float **, float ** out, int n, const CallbackTime &)
   {
     // assert(m_file);
 

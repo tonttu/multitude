@@ -114,7 +114,7 @@ namespace Resonant {
     }
   }
 
-  void ModulePanner::process(float ** in, float ** out, int n)
+  void ModulePanner::process(float ** in, float ** out, int n, const CallbackTime &)
   {
     int bufferbytes = n * sizeof(float);
 

@@ -31,7 +31,7 @@ namespace Resonant {
     virtual ~ModuleFilePlay();
 
     virtual bool prepare(int & channelsIn, int & channelsOut);
-    virtual void process(float ** in, float ** out, int n);
+    virtual void process(float ** in, float ** out, int n, const CallbackTime &);
     virtual bool stop();
 
   private:

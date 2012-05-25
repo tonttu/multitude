@@ -21,7 +21,7 @@ namespace Resonant {
     virtual ~ModuleGain();
 
     virtual bool prepare(int & channelsIn, int & channelsOut);
-    virtual void process(float ** in, float ** out, int n);
+    virtual void process(float ** in, float ** out, int n, const CallbackTime &);
 
     /// Set the gain instantly
     /// @param gain New gain coefficient

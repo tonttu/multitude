@@ -143,7 +143,7 @@ namespace Resonant
   {
   }
 
-  void ModulePulseAudio::process(float **, float ** out, int n)
+  void ModulePulseAudio::process(float **, float ** out, int n, const CallbackTime &)
   {
     if(!m_ready) {
       memset(out[0], 0, n*4);

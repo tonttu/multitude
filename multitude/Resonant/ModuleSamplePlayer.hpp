@@ -45,7 +45,7 @@ namespace Resonant {
 
     virtual bool prepare(int & channelsIn, int & channelsOut);
     virtual void processMessage(const QString & address, Radiant::BinaryData &) OVERRIDE;
-    virtual void process(float ** in, float ** out, int n);
+    virtual void process(float ** in, float ** out, int n, const Resonant::CallbackTime &);
 
     /** Adds a few voices that will play an ambient sound background.
         All files in the given directory are loaded looped

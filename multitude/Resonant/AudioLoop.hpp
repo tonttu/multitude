@@ -18,13 +18,25 @@
 
 #include <Patterns/NotCopyable.hpp>
 
+#include <Radiant/TimeStamp.hpp>
+
 #include <Resonant/Export.hpp>
 
 #include <cstdlib>
 
 class QString;
-
+class PaStreamCallbackTimeInfo;
 namespace Resonant {
+
+  struct CallbackTime
+  {
+    /// When will be this sample be played on the sound card
+    const Radiant::TimeStamp outputTime;
+    /// Estimated latency
+    const double latency;
+    /// PaStreamCallbackFlags
+    const unsigned long flags;
+  };
 
   /** A simple audio IO class.
 
@@ -84,7 +96,9 @@ namespace Resonant {
     ///         for more information
     /// @see PaStreamCallback in PortAudio documentation
     virtual int callback(const void * in, void * out,
-                         unsigned long framesPerBuffer, int streamid) = 0;
+                         unsigned long framesPerBuffer, int streamid,
+                         const PaStreamCallbackTimeInfo & time,
+                         unsigned long flags) = 0;
 
     /// @cond
     bool       m_isRunning;
