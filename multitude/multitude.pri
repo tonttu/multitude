@@ -8,12 +8,8 @@ CONFIG += thread
 
 CONFIG += embed_manifest_exe
 
-c++11 {
-  !win32 {
-    message(Enabling C++11)
-    QMAKE_CXXFLAGS += -std=c++0x
-  }
-}
+# We need C++11 to compile
+*g++*:QMAKE_CXXFLAGS += -std=c++0x
 
 iphone {
   CONFIG += mobile
