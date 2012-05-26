@@ -5,6 +5,7 @@
 #ifndef VIDEODISPLAY_VIDEO_IN_FFMPEG_HPP
 #define VIDEODISPLAY_VIDEO_IN_FFMPEG_HPP
 
+#if 0
 #include "VideoIn.hpp"
 
 #include <Screenplay/VideoFFMPEG.hpp>
@@ -69,5 +70,6 @@ namespace VideoDisplay {
   };
 
 }
+#endif
 
 #endif

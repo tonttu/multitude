@@ -4,6 +4,8 @@
 #ifndef SCREENPLAY_VIDEO_FFMPEG_HPP
 #define SCREENPLAY_VIDEO_FFMPEG_HPP
 
+#if 0
+
 #include "Export.hpp"
 
 #include <Radiant/TimeStamp.hpp>
@@ -173,5 +175,7 @@ namespace Screenplay {
   };
 
 }
+
+#endif
 
 #endif

@@ -342,6 +342,8 @@ namespace VideoDisplay {
                     int targetChannel,
                     int flags)
   {
+    return false;
+#if 0
     debugVideoDisplay("ShowGL::init # %s", filename);
 
     assert(filename != 0);
@@ -387,6 +389,7 @@ namespace VideoDisplay {
                       filename, m_duration.secondsD());
 
     return true;
+#endif
   }
 
 

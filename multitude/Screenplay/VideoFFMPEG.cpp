@@ -1,6 +1,7 @@
 /* COPYRIGHT
  */
 
+#if 0
 #include "VideoFFMPEG.hpp"
 #include "Screenplay.hpp"
 
@@ -879,3 +880,4 @@ namespace Screenplay {
   }
 
 }
+#endif
