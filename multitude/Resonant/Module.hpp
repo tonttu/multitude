@@ -29,6 +29,7 @@ namespace  Radiant {
 namespace Resonant {
 
   class Application;
+  class CallbackTime;
 
   /** Base class for #Resonant signal processing blocks. */
   /// @todo Check if the id could be dropped in favor of
@@ -80,7 +81,8 @@ namespace Resonant {
     @param n Number of samples to process. Guaranteed to be between
     1 and #MAX_CYCLE.
      */
-    virtual void process(float ** in, float ** out, int n) = 0;
+    virtual void process(float ** in, float ** out, int n, const CallbackTime & time) = 0;
+
     /// Stops the signal processing, freeing any resources necessary.
     /// @return True if stopping succeeded (or was already stopped). False on error.
     virtual bool stop();

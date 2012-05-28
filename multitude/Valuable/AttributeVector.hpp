@@ -79,7 +79,7 @@ namespace Valuable
       virtual void processMessage(const QString & id, Radiant::BinaryData & data) OVERRIDE;
       virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
 
-      const char * type() const OVERRIDE;
+      virtual const char * type() const OVERRIDE;
 
       /// Sets the value
       // In some cases this is a override function, but not always

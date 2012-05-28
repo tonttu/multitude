@@ -24,7 +24,10 @@
 #include "PixelFormat.hpp"
 
 #include <Nimble/Matrix4.hpp>
+
+#include <Radiant/Functional.hpp>
 #include <Radiant/Trace.hpp>
+
 #include <Valuable/DOMElement.hpp>
 #include <Valuable/AttributeContainer.hpp>
 
@@ -53,8 +56,8 @@ namespace Luminous {
       m_keyStone(this, "keystone"),
       m_location(this, "location", Nimble::Vector2i(0, 0)),
       m_size(this, "size", Nimble::Vector2i(100, 100)),
-      m_graphicsLocation(this, "graphicslocation", Nimble::Vector2i(0, 0)),
-      m_graphicsSize(this, "graphicssize", Nimble::Vector2i(100, 100)),
+      m_graphicsLocation(this, "graphicslocation", Nimble::Vector2f(0, 0)),
+      m_graphicsSize(this, "graphicssize", Nimble::Vector2f(100, 100)),
       m_seams(this, "seams", Nimble::Vector4f(0, 0, 0, 0)),
       m_active(this, "active", true),
       m_method(this, "method", METHOD_MATRIX_TRICK),
@@ -266,7 +269,7 @@ namespace Luminous {
 
     loc.x -= m_location[0];
     loc.y -= (windowheight - m_size[1] - m_location[1]);
-    loc.descale(m_size.asVector());
+    loc.descale(Nimble::Vector2f(m_size->x, m_size->y));
     loc.y = 1.0f - loc.y;
 
     bool dontCare = false;

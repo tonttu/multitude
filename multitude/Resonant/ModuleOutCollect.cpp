@@ -132,7 +132,7 @@ namespace Resonant {
     }
   }
 
-  void ModuleOutCollect::process(float ** in, float **, int n)
+  void ModuleOutCollect::process(float ** in, float **, int n, const CallbackTime &)
   {
     size_t chans = m_channels;
 

@@ -40,6 +40,7 @@
 #   endif
 #   define LUMINOUS_OPENGLES 1
 #  else
+#   include <OpenGL/gl3.h>
 #   include <OpenGL/gl.h>
 #   include <OpenGL/glext.h>
 #   include <OpenGL/glu.h>
@@ -222,6 +223,7 @@ namespace Luminous
     RT_FragmentShader,
     RT_GeometryShader,
     RT_Texture,
+    RT_TextureArray,
     RT_Buffer,
   };
 

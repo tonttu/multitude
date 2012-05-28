@@ -70,8 +70,8 @@ namespace Valuable
     if(ok) *ok = true;
 
     const Nimble::RectT<T> & rect = this->value();
-    const Nimble::Vector2f & lo = rect.low();
-    const Nimble::Vector2f & hi = rect.high();
+    const auto lo = rect.low();
+    const auto hi = rect.high();
 
     QString r = Radiant::StringUtils::stringify(lo[0]);
     r += QString(" ") + Radiant::StringUtils::stringify(lo[1]);

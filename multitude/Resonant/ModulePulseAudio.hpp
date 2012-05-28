@@ -35,7 +35,7 @@ namespace Resonant {
     void streamState(pa_stream_state_t state);
 
     bool prepare(int & channelsIn, int & channelsOut);
-    void process(float ** in, float ** out, int n);
+    void process(float ** in, float ** out, int n, const CallbackTime &);
 
     bool stop();
 

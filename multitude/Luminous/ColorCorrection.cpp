@@ -53,7 +53,7 @@ namespace Luminous
     float x = idx/255.0f;
 
 
-    v += x*m_contrast.asVector() + 0.5f*(Nimble::Vector3(1) - m_contrast);
+    v += x * contrast() + 0.5f * (Nimble::Vector3f(1.f, 1.f, 1.f) - contrast());
 
     return Nimble::Vector3(
           Nimble::Math::Pow(v[0], m_gamma[0]) + m_brightness[0],
@@ -71,9 +71,9 @@ namespace Luminous
     for (int i=0; i < 256; ++i) {
       m_offsets->at(i).make( 0 * i/255.0f);
     }
-    m_gamma = Nimble::Vector3(1);
-    m_contrast = Nimble::Vector3(1);
-    m_brightness = Nimble::Vector3(0);
+    m_gamma = Nimble::Vector3(1.f, 1.f, 1.f);
+    m_contrast = Nimble::Vector3(1.f, 1.f, 1.f);
+    m_brightness = Nimble::Vector3(0.f, 0.f, 0.f);
     m_identity = true;
     eventSend("changed");
   }

@@ -84,7 +84,7 @@ HEADERS += VideoCameraPTGrey.hpp
 
 SOURCES += WindowConfig.cpp
 SOURCES += Window.cpp
-macx:SOURCES += CocoaWindow.mm
+macx:OBJECTIVE_SOURCES += CocoaWindow.mm
 SOURCES += XWindow.cpp
 SOURCES += QtWindow.cpp
 SOURCES += Mime.cpp

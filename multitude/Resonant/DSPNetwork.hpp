@@ -190,12 +190,12 @@ namespace Resonant {
     private:
 
       // Process n samples
-      inline void process(int n)
+      inline void process(int n, const CallbackTime & time)
       {
         assert(m_compiled != false);
         float ** in = m_ins.empty() ? 0 : &m_ins[0];
         float ** out = m_outs.empty() ? 0 : &m_outs[0];
-        m_module->process(in, out, n);
+        m_module->process(in, out, n, time);
       }
 
       void eraseInput(const Connection & c);
@@ -283,12 +283,11 @@ DSPNetwork::instance().send(control);
 
     virtual int callback(const void *in, void *out,
                          unsigned long framesPerBuffer,
-                         int streamid
-                         //       , const PaStreamCallbackTimeInfo* time,
-                         //			 PaStreamCallbackFlags status
-                         );
+                         int streamid,
+                         const PaStreamCallbackTimeInfo & time,
+                         unsigned long flags);
 
-    void doCycle(int);
+    void doCycle(int, const CallbackTime & time);
 
     void checkNewControl();
     void checkNewItems();
@@ -325,6 +324,12 @@ DSPNetwork::instance().send(control);
     // bool        m_continue;
     long        m_frames;
     int         m_doneCount;
+
+    struct
+    {
+      Radiant::TimeStamp baseTime;
+      int framesProcessed;
+    } m_syncinfo;
 
     Radiant::Mutex m_newMutex;
 

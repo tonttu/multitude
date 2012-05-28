@@ -338,9 +338,14 @@ namespace Luminous
 
       m_emptyTexture->bind(GL_TEXTURE0);
     }
-    Nimble::Vector2 contextSize() const
+
+    Nimble::Vector2f contextSize() const
     {
-      return m_window ? m_window->size() : Nimble::Vector2i(10, 10);
+      if(m_window)
+        return Nimble::Vector2f(m_window->size().x, m_window->size().y);
+
+      /// @todo why not zero vector?
+      return Nimble::Vector2f(10, 10);
     }
 
     void drawCircle(RenderContext & r, Nimble::Vector2f center, float radius,
@@ -862,7 +867,9 @@ namespace Luminous
   RenderContext::FBOHolder RenderContext::getTemporaryFBO
       (Nimble::Vector2f basicsize, float scaling, uint32_t flags)
   {
-    Nimble::Vector2i minimumsize = basicsize * scaling;
+    Nimble::Vector2f r = basicsize * scaling;
+
+    Nimble::Vector2i minimumsize(r.x, r.y);
 
     /* First we try to find a reasonable available FBO, that is not more than
        100% too large.
@@ -1742,6 +1749,7 @@ namespace Luminous
   void RenderContext::setShaderProgram(const std::shared_ptr<ShaderProgram> & program)
   {
     m_data->m_driver.bind(threadIndex(), *program);
+    m_data->m_driver.setShaderConstant(threadIndex(), "mt_projMatrix", m_data->m_viewTransform);
   }
 
   void RenderContext::draw(PrimitiveType primType, unsigned int offset, unsigned int vertexCount)
@@ -1756,7 +1764,10 @@ namespace Luminous
 
   // Create all the setters for shader constants
 #define SETSHADERCONSTANT(TYPE) \
-  template<> LUMINOUS_API void RenderContext::setShaderConstant<TYPE>(const QString & name, const TYPE & value) { m_data->m_driver.setShaderConstant(threadIndex(), name, value); }
+  template<> LUMINOUS_API bool RenderContext::setShaderConstant(const QString & name, const TYPE & value) \
+  { \
+    return m_data->m_driver.setShaderConstant(threadIndex(), name, value); \
+  }
   SETSHADERCONSTANT(int);
   SETSHADERCONSTANT(float);
   SETSHADERCONSTANT(Nimble::Vector2f);

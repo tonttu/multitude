@@ -469,7 +469,7 @@ namespace Resonant {
     }
   }
 
-  void ModuleSamplePlayer::process(float ** , float ** out, int n)
+  void ModuleSamplePlayer::process(float ** , float ** out, int n, const CallbackTime &)
   {
     size_t i;
     m_time = Radiant::TimeStamp::getTime();

@@ -629,7 +629,6 @@ namespace Radiant
           if(hook) {
             dispatchXMouseMoveEvent(hook, event.xmotion);
             //hook->handleMouseMove(event.xmotion.x, event.xmotion.y, event.xmotion.state);          
-            qApp->x11ProcessEvent(&event);
           }
           // Reset cursor hide counter only if this event is not to be ignored
           if(!m_d->m_ignoreNextMotionEvent)
@@ -651,7 +650,6 @@ namespace Radiant
 
         if(hook) {
           dispatchXMouseEvent(hook, event.xbutton);
-          qApp->x11ProcessEvent(&event);
         }
 
         // Reset cursor hide counter

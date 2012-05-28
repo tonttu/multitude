@@ -31,9 +31,9 @@ namespace Radiant
       , m_virtual(true) {}
     inline bool virtualEvent() const { return m_virtual; }
 
-    static KeyEvent createKeyPress(int key)
+    static KeyEvent createKeyPress(int key, bool autoRepeat)
     {
-      return KeyEvent(QKeyEvent(QEvent::KeyPress, key, Qt::NoModifier));
+      return KeyEvent(QKeyEvent(QEvent::KeyPress, key, Qt::NoModifier, QString(), autoRepeat));
     }
 
     static KeyEvent createKeyRelease(int key)

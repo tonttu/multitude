@@ -601,7 +601,9 @@ namespace Radiant {
         return Nimble::Vector2f(0, 0);
       }
 
-      return getRef<Nimble::Vector2i>();
+      Nimble::Vector2i r = getRef<Nimble::Vector2i>();
+
+      return Nimble::Vector2f(r.x, r.y);
     }
     else if(marker == STRING_MARKER) {
       BD_STR_TO_VEC(Vector2f, 2, ok);
@@ -644,7 +646,9 @@ namespace Radiant {
       return getRef<Nimble::Vector3f>();
     }
     else if(marker == VECTOR3I_MARKER) {
-      return getRef<Nimble::Vector3i>();
+      Nimble::Vector3i r = getRef<Nimble::Vector3i>();
+
+      return Nimble::Vector3f(r.x, r.y, r.z);
     }
     else if(marker == STRING_MARKER) {
       BD_STR_TO_VEC(Vector3f, 3, ok);
@@ -666,7 +670,7 @@ namespace Radiant {
 
     if(!available(12)) {
       if(ok) * ok = false;
-      return Nimble::Vector2f(0, 0);
+      return Nimble::Vector2i(0, 0);
     }
 
     int32_t marker = getRef<int32_t>();
@@ -675,14 +679,16 @@ namespace Radiant {
       return getRef<Nimble::Vector2i>();
     }
     else if(marker == VECTOR2F_MARKER) {
-      return getRef<Nimble::Vector2f>();
+      Nimble::Vector2f r = getRef<Nimble::Vector2f>();
+
+      return Nimble::Vector2i(r.x, r.y);
     }
     else {
       skipParameter(marker);
       if(ok)
         *ok = false;
 
-      return Nimble::Vector2f(0, 0);
+      return Nimble::Vector2i(0, 0);
     }
 
   }
@@ -694,7 +700,7 @@ namespace Radiant {
 
     if(!available(16)) {
       if(ok) * ok = false;
-      return Nimble::Vector3f(0, 0, 0);
+      return Nimble::Vector3i(0, 0, 0);
     }
 
     int32_t marker = getRef<int32_t>();
@@ -703,14 +709,16 @@ namespace Radiant {
       return getRef<Nimble::Vector3i>();
     }
     else if(marker == VECTOR3F_MARKER) {
-      return getRef<Nimble::Vector3f>();
+      Nimble::Vector3f r = getRef<Nimble::Vector3f>();
+
+      return Nimble::Vector3i(r.x, r.y, r.z);
     }
     else {
       skipParameter(marker);
       if(ok)
         *ok = false;
 
-      return Nimble::Vector3f(0, 0, 0);
+      return Nimble::Vector3i(0, 0, 0);
     }
 
   }
@@ -731,7 +739,9 @@ namespace Radiant {
       return getRef<Nimble::Vector4i>();
     }
     else if(marker == VECTOR4F_MARKER) {
-      return getRef<Nimble::Vector4f>();
+      Nimble::Vector4f r = getRef<Nimble::Vector4f>();
+
+      return Nimble::Vector4i(r.x, r.y, r.z, r.w);
     }
     else {
       skipParameter(marker);
@@ -757,7 +767,9 @@ namespace Radiant {
     int32_t marker = getRef<int32_t>();
 
     if(marker == VECTOR4I_MARKER) {
-      return getRef<Nimble::Vector4i>();
+      Nimble::Vector4i r = getRef<Nimble::Vector4i>();
+
+      return Nimble::Vector4f(r.x, r.y, r.z, r.w);
     }
     else if(marker == VECTOR4F_MARKER) {
       return getRef<Nimble::Vector4f>();

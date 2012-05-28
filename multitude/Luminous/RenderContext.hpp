@@ -419,7 +419,7 @@ namespace Luminous
     //void bindTexture(const QString & name, int unit, std::shared_ptr<Luminous::Texture> texture);
     void setVertexBinding(const std::shared_ptr<VertexAttributeBinding> & binding);
     void setShaderProgram(const std::shared_ptr<ShaderProgram> & program);
-    template <typename T> void setShaderConstant(const QString & name, const T & value) {}
+    template <typename T> bool setShaderConstant(const QString & name, const T & value);
 
     void draw(PrimitiveType primType, unsigned int offset, unsigned int vertexCount);
 

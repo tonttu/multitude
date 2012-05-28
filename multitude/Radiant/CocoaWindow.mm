@@ -1,4 +1,6 @@
 
+
+#define RADIANT_OBJECTIVE_C 1
 #include "Radiant/KeyEvent.hpp"
 
 #ifdef RADIANT_OSX_LION
@@ -14,7 +16,7 @@
   bool runningFullScreen;
   NSTimer* timer;
 
-  NSOpenGLContext context;
+  NSOpenGLContext * context;
 
   Radiant::CocoaWindow * m_window;
 }
@@ -141,7 +143,7 @@ return self;
   QString qstr(qc);
   key = qc.toUpper().toAscii();
 
-  bool repeat = false;
+  bool repeat = [ theEvent isARepeat ];
 
   if([theEvent isARepeat])
     repeat = true;
@@ -162,7 +164,7 @@ return self;
   {
     Radiant::debug("CocoaWindow::keyDown (ObjC) # %d %c", (int) key, (char) key);
     // hook->handleKeyboardEvent(key, true, 0, repeat);
-    hook->handleKeyboardEvent(Radiant::KeyEvent::createKeyPress(key));
+    hook->handleKeyboardEvent(Radiant::KeyEvent::createKeyPress(key, repeat));
   }
     break;
   };

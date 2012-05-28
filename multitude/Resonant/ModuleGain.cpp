@@ -42,7 +42,7 @@ namespace Resonant {
     return true;
   }
 
-  void ModuleGain::process(float ** in, float ** out, int n)
+  void ModuleGain::process(float ** in, float ** out, int n, const CallbackTime &)
   {
     for(int i = 0; i < m_channels; i++) {
 

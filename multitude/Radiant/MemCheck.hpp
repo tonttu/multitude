@@ -19,6 +19,8 @@
 #include "Radiant/Singleton.hpp"
 #include "Radiant/CallStack.hpp"
 
+#include "RefPtr.hpp"
+
 #include <map>
 
 namespace Radiant {

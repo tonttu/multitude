@@ -102,8 +102,11 @@ namespace Valuable
 
     public:
       /// @cond
-      enum { type = sizeof(s_test<T>(t())._) == sizeof(Type::serializable_trait)
-                    ? sizeof(Type::serializable_trait) : sizeof(test<T>(0)._) };
+      enum { type = sizeof(test<T>(t())._) == sizeof(Type::smart_ptr_trait)
+             ? sizeof(Type::smart_ptr_trait)
+             : sizeof(s_test<T>(t())._) == sizeof(Type::serializable_trait)
+             ? sizeof(Type::serializable_trait)
+             : sizeof(test<T>(0)._) };
       /// @endcond
     };
 

@@ -131,7 +131,7 @@ namespace VideoDisplay {
     return true;
   }
 
-  void AudioTransfer::process(float **, float ** out, int n)
+  void AudioTransfer::process(float **, float ** out, int n, const Resonant::CallbackTime &)
   {
     Radiant::Guard g2(m_mutex);
 

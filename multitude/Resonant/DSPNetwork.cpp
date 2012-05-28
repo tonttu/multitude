@@ -113,7 +113,8 @@ namespace Resonant {
     : // m_continue(false),
     m_panner(0),
     m_frames(0),
-    m_doneCount(0)
+    m_doneCount(0),
+    m_syncinfo()
   {
     m_collect = new ModuleOutCollect(0, this);
     m_collect->setId("outcollect");
@@ -218,11 +219,58 @@ namespace Resonant {
   }
 
   int DSPNetwork::callback(const void *in, void *out,
-      unsigned long framesPerBuffer, int streamnum)
+                           unsigned long framesPerBuffer, int streamnum,
+                           const PaStreamCallbackTimeInfo & time,
+                           unsigned long flags)
   {
     (void) in;
 
     size_t streams = m_d->m_streams.size();
+
+    Radiant::TimeStamp outputTime;
+    double latency;
+
+    const bool outputError = (flags & paOutputUnderflow) || (flags & paOutputOverflow);
+
+    if(flags & paOutputUnderflow) {
+      Radiant::warning("DSPNetwork::callback # output underflow");
+    }
+    if(flags & paOutputOverflow) {
+      Radiant::warning("DSPNetwork::callback # output overflow");
+    }
+
+    // We either have multiple streams or have a broken implementation
+    // (Linux/Pulseaudio). In that case we just generate the timing information
+    // ourselves. In this case we also guess that the latency is ~30 ms
+    // (on Linux/Alsa it seems to be ~20-30 ms when having some cheap hw)
+    if(streams > 1 || time.outputBufferDacTime == 0) {
+      latency = 0.030;
+      /// @todo shouldn't hardcode 44100
+      if(m_syncinfo.baseTime == 0 /*|| m_syncinfo.framesProcessed > 44100 * 5*/ ||
+         outputError) {
+        m_syncinfo.baseTime = Radiant::TimeStamp(Radiant::TimeStamp::getTime()) +
+            Radiant::TimeStamp::createSecondsD(latency);
+        outputTime = m_syncinfo.baseTime;
+        m_syncinfo.framesProcessed = 0;
+      } else {
+        outputTime = m_syncinfo.baseTime + Radiant::TimeStamp::createSecondsD(
+              m_syncinfo.framesProcessed / 44100.0);
+      }
+    } else {
+      latency = time.outputBufferDacTime - time.currentTime;
+      if(m_syncinfo.baseTime == 0 || m_syncinfo.framesProcessed > 44100 * 60 ||
+         outputError) {
+        m_syncinfo.baseTime = Radiant::TimeStamp(Radiant::TimeStamp::getTime()) +
+            Radiant::TimeStamp::createSecondsD(latency - time.outputBufferDacTime);
+        m_syncinfo.framesProcessed = 0;
+      }
+      outputTime = m_syncinfo.baseTime + Radiant::TimeStamp::
+          createSecondsD(time.outputBufferDacTime);
+    }
+    m_syncinfo.framesProcessed += framesPerBuffer;
+
+    // Radiant::info("Latency: %.2lf ms, Diff from getTime: %.2lf ms",
+    //               latency*1000.0, (Radiant::TimeStamp(Radiant::TimeStamp::getTime()).secondsD()-outputTime.secondsD()+latency)*1000.0);
 
     /// Here we assume that every stream (== audio device) is running in its
     /// own separate thread, that is, this callback is called from multiple
@@ -235,10 +283,10 @@ namespace Resonant {
     /// We also assume, that framesPerBuffer is somewhat constant in different
     /// threads at the same time.
     if(streams == 1) {
-      doCycle(framesPerBuffer);
+      doCycle(framesPerBuffer, CallbackTime(outputTime, latency, flags));
     } else if(streamnum == 0) {
       m_d->m_sem.acquire(static_cast<int> (streams));
-      doCycle(framesPerBuffer);
+      doCycle(framesPerBuffer, CallbackTime(outputTime, latency, flags));
       for (size_t i = 1; i < streams; ++i)
         m_d->m_streams[i].m_barrier->release();
     } else {
@@ -283,7 +331,7 @@ namespace Resonant {
     return paContinue;
   }
 
-  void DSPNetwork::doCycle(int framesPerBuffer)
+  void DSPNetwork::doCycle(int framesPerBuffer, const CallbackTime & time)
   {
     const int cycle = framesPerBuffer;
 
@@ -296,7 +344,7 @@ namespace Resonant {
          Module * m = item.m_module;
          trace("DSPNetwork::doCycle # Processing %p %s", m, typeid(*m).name());
          */
-      item.process(cycle);
+      item.process(cycle, time);
     }
 
     checkDoneItems();

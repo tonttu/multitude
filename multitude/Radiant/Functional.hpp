@@ -8,7 +8,7 @@
 #include <cstddef>
 
 // try to detect C++11
-#if defined(RADIANT_CXX11)
+#if defined(RADIANT_CXX11) && !defined(__APPLE__)
   #include <functional>
 #elif defined(__GCCXML__)
   #include <generator/gccxml_tr1.hpp>
@@ -29,6 +29,7 @@
     using tr1::ref;
     using tr1::cref;
   }
+
 #endif
 
 /// @endcond

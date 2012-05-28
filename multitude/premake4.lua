@@ -1,14 +1,18 @@
 -- Include the Windows specific stuff
 includedirs { "." }
 
-configuration { "x64", "windows" }
+--
+-- Platform
+--
+configuration { "windows", "x64" }
   libdirs { "Win64x/lib64" }
   includedirs { "Win64x/include" }
-configuration { "x32", "windows" }
+configuration { "windows", "x32" }
   libdirs { "Win32x/lib32" }
   includedirs { "Win32x/include" }
 configuration {}
 
+include "Box2D"
 include "Patterns"
 include "Nimble"
 include "Radiant"
@@ -19,3 +23,5 @@ include "VideoDisplay"
 include "Squish"
 include "Luminous"
 include "Screenplay"
+
+include "Applications"

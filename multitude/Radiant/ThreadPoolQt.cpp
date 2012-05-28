@@ -38,7 +38,10 @@ namespace Radiant {
       Private & m_private;
 
     public:
-      T(Private & p) : m_private(p) {}
+      T(Private & p) : m_private(p)
+      {
+        setObjectName("ThreadPool");
+      }
       virtual ~T() {}
 
       void run()

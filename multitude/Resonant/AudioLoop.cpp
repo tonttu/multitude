@@ -298,13 +298,13 @@ namespace Resonant {
 
   int AudioLoop::AudioLoopInternal::paCallback(const void *in, void *out,
                 unsigned long framesPerBuffer,
-                const PaStreamCallbackTimeInfo * /*time*/,
-                PaStreamCallbackFlags /*status*/,
+                const PaStreamCallbackTimeInfo * time,
+                PaStreamCallbackFlags status,
                 void * self)
   {
     std::pair<AudioLoop*, int> stream = *reinterpret_cast<std::pair<AudioLoop*, int>*>(self);
 
-    int r = stream.first->callback(in, out, framesPerBuffer, stream.second /*, time, status*/);
+    int r = stream.first->callback(in, out, framesPerBuffer, stream.second, *time, status);
     return stream.first->m_isRunning ? r : paComplete;
   }
 
