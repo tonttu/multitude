@@ -13,6 +13,15 @@
 # include <float.h>
 #endif
 
+#ifdef __APPLE__
+#include <tr1/cmath>
+namespace std
+{
+using tr1::is_arithmetic;
+using tr1::log2;
+}
+#endif
+
 #include <stdint.h>
 
 namespace Nimble {
@@ -130,7 +139,7 @@ namespace Nimble {
     {
 #ifdef __GCCXML__
       return v == v && (v == 0 || v != 2*v);
-#elif defined(RADIANT_IOS)
+#elif defined(__APPLE__)
       return std::isfinite(v);
 #elif defined(_MSC_VER)
       return _finite(v) != 0;

@@ -1,4 +1,6 @@
 
+
+#define RADIANT_OBJECTIVE_C 1
 #include "Radiant/KeyEvent.hpp"
 
 #ifdef RADIANT_OSX_LION
@@ -14,7 +16,7 @@
   bool runningFullScreen;
   NSTimer* timer;
 
-  NSOpenGLContext context;
+  NSOpenGLContext * context;
 
   Radiant::CocoaWindow * m_window;
 }

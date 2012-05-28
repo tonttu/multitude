@@ -9,7 +9,7 @@ CONFIG += thread
 CONFIG += embed_manifest_exe
 
 # We need C++11 to compile
-*g++*:QMAKE_CXXFLAGS += -std=c++0x
+!macx:*g++*:QMAKE_CXXFLAGS += -std=c++0x
 
 iphone {
   CONFIG += mobile
@@ -77,6 +77,9 @@ LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}
 #
 unix {
   VERSION = $${CORNERSTONE_VERSION}
+
+  macx:QMAKE_CXX=c++
+# -std=c11
   
   # Use ccache if available
   exists(/usr/bin/ccache):QMAKE_CXX=ccache $$QMAKE_CXX
@@ -250,9 +253,13 @@ DEFINES += USING_V8_SHARED
 c++11 {
   !win32 {
     message(Enabling C++11)
-    QMAKE_CXXFLAGS += -std=c++0x
+    linux-*:QMAKE_CXXFLAGS += -std=c++0x
+    macx:QMAKE_CXXFLAGS += -std=c11
   }
 }
+
+macx:QMAKE_CC = cc -std=c++11
+macx:QMAKE_CXXFLAGS += -std=c++11
 
 # Enable memchecking
 contains(MEMCHECK,yes) {

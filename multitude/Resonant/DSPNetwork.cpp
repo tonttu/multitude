@@ -283,10 +283,10 @@ namespace Resonant {
     /// We also assume, that framesPerBuffer is somewhat constant in different
     /// threads at the same time.
     if(streams == 1) {
-      doCycle(framesPerBuffer, {outputTime, latency, flags});
+      doCycle(framesPerBuffer, CallbackTime(outputTime, latency, flags));
     } else if(streamnum == 0) {
       m_d->m_sem.acquire(static_cast<int> (streams));
-      doCycle(framesPerBuffer, {outputTime, latency, flags});
+      doCycle(framesPerBuffer, CallbackTime(outputTime, latency, flags));
       for (size_t i = 1; i < streams; ++i)
         m_d->m_streams[i].m_barrier->release();
     } else {

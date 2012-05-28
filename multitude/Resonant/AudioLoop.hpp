@@ -30,6 +30,11 @@ namespace Resonant {
 
   struct CallbackTime
   {
+    CallbackTime(Radiant::TimeStamp outputTime, double latency, unsigned long flags)
+      : outputTime(outputTime),
+        latency(latency),
+        flags(flags)
+    {}
     /// When will be this sample be played on the sound card
     const Radiant::TimeStamp outputTime;
     /// Estimated latency

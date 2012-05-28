@@ -24,7 +24,10 @@
 #include "PixelFormat.hpp"
 
 #include <Nimble/Matrix4.hpp>
+
+#include <Radiant/Functional.hpp>
 #include <Radiant/Trace.hpp>
+
 #include <Valuable/DOMElement.hpp>
 #include <Valuable/AttributeContainer.hpp>
 
