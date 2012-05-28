@@ -264,8 +264,9 @@ c++11 {
 }
 
 macx {
-  # This section overrides g++, and selects clang instead. Warning ags are modified to
-  #
+  # This section overrides g++, and selects clang instead. Warning flags are modified to
+  # reduce the error spam. Without these we get a constant stream of warnings for
+  # each Q_OBJECT macro (which is many).
   REDUCE_CLANG_WARNINGS = -Wno-self-assign -Wno-overloaded-virtual -Qunused-arguments
   QMAKE_CC = cc -std=c++11 -stdlib=libc++ $$REDUCE_CLANG_WARNINGS
   QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++ $$REDUCE_CLANG_WARNINGS
