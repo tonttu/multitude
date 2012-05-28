@@ -1387,6 +1387,7 @@ namespace Luminous
     va.m_location = area.high();
     va.m_texCoord = style.texCoords().high();
     rp.addVertex(va);
+    rp.addVertex(va);
   }
 
   void RenderContext::drawRectWithHole(const Nimble::Rect & area,
