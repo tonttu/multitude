@@ -3,12 +3,26 @@ project ("Luminous")
   defines {"LUMINOUS_EXPORT"}
   files  { "**.hpp", "**.cpp" }
   includedirs { "." }
-  excludes { "TiledMipMapImage.cpp" }
   includedirs { "../Externals/adl_sdk" }
-  
-  links{"Radiant","Valuable","Nimble","Patterns"}
-  links{"OpenGL32", "GLU32","glew64","nvapi64", "Squish"}
+
+  links{"Radiant","Valuable","Nimble","Patterns", "Squish"}
+  links{QtSvg}
+  links{OpenGL}
+
+  -- Deprecated, should be removed
+  excludes { "TiledMipMapImage.cpp" }
   
   configuration{"windows"}
     excludes{"XRandR.cpp"}
-	
+  configuration{}
+
+  configuration{"linux"}
+    links{"Xrandr", "XNVCtrl"}
+  configuration{}
+
+  -- OpenGL and NVApi
+  configuration{"windows", "x64"}
+    links{"nvapi64"}
+  configuration{"windows", "x32"}
+    links{"nvapi"}
+  configuration{}

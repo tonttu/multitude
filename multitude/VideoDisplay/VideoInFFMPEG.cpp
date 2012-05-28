@@ -1,6 +1,8 @@
 /* COPYRIGHT
  */
 
+#if 0
+
 #include "VideoInFFMPEG.hpp"
 #include "VideoDisplay.hpp"
 
@@ -445,3 +447,5 @@ namespace VideoDisplay {
     m_atEnd = true;
   }
 }
+
+#endif

@@ -243,7 +243,7 @@ contains(QT_MAJOR_VERSION,4) {
   }
 }
 # Disable asserts in release mode
-build_pass:CONFIG(release, debug|release) {
+CONFIG(release, debug|release) {
   DEFINES += NDEBUG
 }
 

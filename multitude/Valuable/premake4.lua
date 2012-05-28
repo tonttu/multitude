@@ -5,3 +5,4 @@ project ("Valuable")
   includedirs { "." }
   
   links {"Radiant", "Patterns", "Nimble"}
+  links {QtXml}

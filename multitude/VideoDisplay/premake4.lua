@@ -3,4 +3,4 @@ project ("VideoDisplay")
   defines {"VIDEODISPLAY_EXPORT"}
   files  { "**.hpp", "**.cpp" }
   includedirs { "." }
-  links{"Radiant", "Resonant", "Valuable", "Luminous", "Nimble", "Screenplay", "Patterns", "Poetic", "OpenGL32", "GLU32", "glew64"}
+  links{"Radiant", "Resonant", "Valuable", "Luminous", "Nimble", "Screenplay", "Patterns", "Poetic", OpenGL}
