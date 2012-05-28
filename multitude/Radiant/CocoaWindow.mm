@@ -52,7 +52,7 @@ m_window:(Radiant::CocoaWindow *)parent;
 
 - (id) initWithFrame:(NSRect)frame
 colorBits:(int)numColorBits depthBits:(int)numDepthBits fullscreen:(bool)runFullScreen
-m_window:(Radiant::CocoaWindow *)parent;
+m_window:(Radiant::CocoaWindow *)parent
 {
 NSOpenGLPixelFormat *pixelFormat;
 
