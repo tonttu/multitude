@@ -23,7 +23,7 @@
 /// @cond
 
 // try to detect C++11
-#if defined(RADIANT_CXX11) && !defined (__APPLE__)
+#if defined(RADIANT_CXX11)
   #include <unordered_map>
 #elif defined(__GCCXML__)
   #include <generator/gccxml_tr1.hpp>

@@ -12,16 +12,6 @@
 #ifdef WIN32
 # include <float.h>
 #endif
-
-#ifdef __APPLE__
-#include <tr1/cmath>
-namespace std
-{
-using tr1::is_arithmetic;
-using tr1::log2;
-}
-#endif
-
 #include <stdint.h>
 
 namespace Nimble {

@@ -258,8 +258,9 @@ c++11 {
   }
 }
 
-macx:QMAKE_CC = cc -std=c++11
-macx:QMAKE_CXXFLAGS += -std=c++11
+macx:QMAKE_CC = cc -std=c++11 -stdlib=libc++
+macx:QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++ -Wno-overloaded-virtual
+QMAKE_LINK       = $$QMAKE_CXX -stdlib=libc++
 
 # Enable memchecking
 contains(MEMCHECK,yes) {
