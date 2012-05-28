@@ -263,9 +263,17 @@ c++11 {
   }
 }
 
-macx:QMAKE_CC = cc -std=c++11 -stdlib=libc++
-macx:QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++ -Wno-overloaded-virtual
-QMAKE_LINK       = $$QMAKE_CXX -stdlib=libc++
+macx {
+  # This section overrides g++, and selects clang instead. Warning ags are modified to
+  #
+  REDUCE_CLANG_WARNINGS = -Wno-self-assign -Wno-overloaded-virtual -Qunused-arguments
+  QMAKE_CC = cc -std=c++11 -stdlib=libc++ $$REDUCE_CLANG_WARNINGS
+  QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++ $$REDUCE_CLANG_WARNINGS
+  QMAKE_LINK       = $$QMAKE_CXX -stdlib=libc++
+  QMAKE_CFLAGS_WARN_ON =
+  QMAKE_CXXFLAGS_WARN_ON =
+}
+
 
 # Enable memchecking
 contains(MEMCHECK,yes) {
