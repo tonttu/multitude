@@ -114,7 +114,7 @@ linux-*{
   QMAKE_LIBDIR += /usr/lib/nvidia-current
 
   exists(/opt/multitouch-ffmpeg/include/libavcodec/avcodec.h) {
-    MULTI_FFMPEG_LIBS = -L/opt/multitouch-ffmpeg/lib -lavcodec-multitouch -lavutil-multitouch -lavformat-multitouch
+    MULTI_FFMPEG_LIBS = -L/opt/multitouch-ffmpeg/lib -lavcodec-multitouch -lavutil-multitouch -lavformat-multitouch -lavdevice-multitouch
     INCLUDEPATH += /opt/multitouch-ffmpeg/include
   }
 
