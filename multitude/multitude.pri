@@ -27,6 +27,11 @@ mobile {
   # For QString::toStdWString
   DEFINES += QT_STL=1
   CONFIG += without-js
+  CONFIG += render_es2
+}
+
+render_es2 {
+  DEFINES += CORNERSTONE_RENDER_ES2=1
 }
 
 INCLUDEPATH += $$PWD
