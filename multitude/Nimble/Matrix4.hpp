@@ -338,6 +338,14 @@ namespace Nimble {
     /** Identity matrix. */
     static const Matrix4T<T> IDENTITY;
 
+    /// Returns a 3d transformation matrix that does scale, rotate & translation (in this order)
+    /// @param angle rotation angle (counter-clockwise)
+    /// @param axis rotation axis (normalized)
+    /// @param scale 3D scale
+    /// @param translation 3D translation
+    /// @return New transformation matrix
+    inline static Matrix4T<T> transformation(T angle, const Vector3T<T> & axis, const Vector3T<T> &scale, const Vector3T<T> & translation);
+
   private:
     inline static void swap(T &a, T& b);
 
@@ -349,6 +357,15 @@ namespace Nimble {
     0, 1, 0, 0,
     0, 0, 1, 0,
     0, 0, 0, 1);
+
+  template <typename T>
+  Matrix4T<T> Matrix4T<T>::transformation(T angle, const Vector3T<T> & axis, const Vector3T<T> & scale, const Vector3T<T> & translation)
+  {
+    return
+      Matrix4T<T>::translate3D(translation) *
+      Matrix4T<T>::makeRotation(angle, axis) *
+      Matrix4T<T>::scale3D(scale);
+  }
 
   /// Swaps two matrices
   template <class T>
