@@ -1,5 +1,7 @@
 #include "Luminous/ShaderProgram.hpp"
 
+#include <QFile>
+
 #include <vector>
 #include <cassert>
 #include <algorithm>
@@ -51,6 +53,17 @@ namespace Luminous
   void ShaderGLSL::setText(const QString & text)
   {
     m_d->text = text;
+    invalidate();
+  }
+
+  void ShaderGLSL::loadText(const QString & filename)
+  {
+    QFile shaderFile(filename);
+    if (!shaderFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+      Radiant::warning("ShaderGLSL: Unable to open shader file %s", filename.toAscii().data());
+      return;
+    }
+    m_d->text = shaderFile.readAll();
     invalidate();
   }
 

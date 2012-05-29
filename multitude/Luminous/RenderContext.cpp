@@ -1827,5 +1827,11 @@ namespace Luminous
   SETSHADERCONSTANT(Nimble::Matrix3f);
   SETSHADERCONSTANT(Nimble::Matrix4f);
 #undef SETSHADERCONSTANT
+
+  // Manual conversion: Radiant::Color > Nimble::Vector4f
+  template<> LUMINOUS_API bool RenderContext::setShaderConstant(const QString & name, const Radiant::Color & value)
+  {
+    return m_data->m_driver.setShaderConstant(threadIndex(), name, (Nimble::Vector4f)value);
+  }
 }
 

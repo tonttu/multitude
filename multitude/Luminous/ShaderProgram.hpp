@@ -16,6 +16,7 @@ namespace Luminous
     ShaderGLSL(RenderResource::Id id, ShaderType type, RenderDriver & driver);
     LUMINOUS_API ~ShaderGLSL();
 
+    LUMINOUS_API void loadText(const QString & filename);
     LUMINOUS_API void setText(const QString & text);
     LUMINOUS_API const QString & text() const;
 
