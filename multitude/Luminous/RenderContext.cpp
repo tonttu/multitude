@@ -1326,7 +1326,7 @@ namespace Luminous
     style.setTexCoords(texUV);
     drawRect(area, style);
 
-    flush();
+    // flush();
 #else
     //only for GL ES 2.0 version of the shaders.
     //TODO
