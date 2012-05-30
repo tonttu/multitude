@@ -225,6 +225,11 @@ namespace Valuable
     return 0;
   }
 
+  bool Node::addValue(Attribute * const value)
+  {
+    Node::addValue(value->name(), value);
+  }
+
   bool Node::addValue(const QString & cname, Attribute * const value)
   {
     //    Radiant::trace("Node::addValue # adding %s", cname.c_str());
