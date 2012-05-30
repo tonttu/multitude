@@ -361,7 +361,7 @@ namespace Radiant
     //Radiant::info("dispatchXMouseEvent # button: %d", event.button);
 
     QEvent::Type type = (event.type == ButtonPress) ? QEvent::MouseButtonPress : QEvent::MouseButtonRelease;
-    QPoint position(event.x, event.y);
+    Nimble::Vector2f position(event.x, event.y);
 
     Qt::MouseButton button = Qt::NoButton;
     if(event.button == Button1)
@@ -373,7 +373,7 @@ namespace Radiant
 
     QPair<Qt::MouseButtons, Qt::KeyboardModifiers> mods = x11StateToQt(event.state);
 
-    QMouseEvent qtEvent(type, position, button, mods.first, mods.second);
+    Radiant::MouseEvent qtEvent(type, position, button, mods.first, mods.second);
 
     hook->handleMouseEvent(qtEvent);
   }
