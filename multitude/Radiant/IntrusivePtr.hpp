@@ -41,6 +41,7 @@ namespace Radiant
   {
   public:
     typedef T element_type;
+    typedef T intrusive_element_type;
 
     IntrusivePtr() : m_ptr(0) {}
     IntrusivePtr(T * ptr) : m_ptr(ptr)

@@ -21,6 +21,7 @@
 #include "AttributeObject.hpp"
 #include "XMLArchive.hpp"
 
+#include <Radiant/IntrusivePtr.hpp>
 #include <Radiant/StringUtils.hpp>
 #include <Radiant/Trace.hpp>
 
@@ -52,14 +53,15 @@ namespace Valuable
     namespace Type
     {
       /// Every object is one of these types, see Serializer::Trait
-      enum { pair = 1, container = 2, serializable = 3, smart_ptr = 4, other = 5 };
+      enum { pair = 1, container = 2, serializable = 3, smart_ptr = 4, intrusive_ptr = 5, other = 6 };
       // All structs have same _ element with different size, so we can use
       // sizeof operator to make decisions in templates
       struct pair_trait { char _[1]; };
       struct container_trait { char _[2]; };
       struct serializable_trait { char _[3]; };
       struct smart_ptr_trait { char _[4]; };
-      struct default_trait { char _[5]; };
+      struct intrusive_ptr_trait { char _[5]; };
+      struct default_trait { char _[6]; };
     }
 
     /// @endcond
@@ -93,6 +95,8 @@ namespace Valuable
       template <typename Y> static Type::pair_trait test(typename Y::first_type*);
       template <typename Y> static Type::container_trait test(typename Y::value_type*);
       template <typename Y> static Type::smart_ptr_trait test(typename Y::element_type*);
+      template <typename Y> static Type::intrusive_ptr_trait test2(typename Y::intrusive_element_type*);
+      template <typename Y> static Type::default_trait test2(...);
       // the default one, if nothing matches
       template <typename Y> static Type::default_trait test(...);
 
@@ -102,7 +106,9 @@ namespace Valuable
 
     public:
       /// @cond
-      enum { type = sizeof(test<T>(t())._) == sizeof(Type::smart_ptr_trait)
+      enum { type = sizeof(test2<T>(0)._) == sizeof(Type::intrusive_ptr_trait)
+             ? sizeof(Type::intrusive_ptr_trait)
+             : sizeof(test<T>(t())._) == sizeof(Type::smart_ptr_trait)
              ? sizeof(Type::smart_ptr_trait)
              : sizeof(s_test<T>(t())._) == sizeof(Type::serializable_trait)
              ? sizeof(Type::serializable_trait)
@@ -115,11 +121,11 @@ namespace Valuable
     /// FactoryInfo<T>::have_create is true, if there is T* T::create(const ArchiveElement &)
     template <typename T> struct FactoryInfo {
       typedef T * (*Func)(const ArchiveElement &);
-      //typedef Radiant::IntrusivePtr<T> (*Func2)(ArchiveElement &);
+      typedef Radiant::IntrusivePtr<T> (*Func2)(const ArchiveElement &);
       template <Func> struct Test {};
-      //template <Func2> struct Test2 {};
+      template <Func2> struct Test2 {};
       template <class C> static char test(Test<&C::create>*);
-      //template <class C> static char test(Test2<&C::create>*);
+      template <class C> static char test(Test2<&C::create>*);
       template <class C> static long test(...);
       static const bool have_create = sizeof(test<T>(0)) == sizeof(char);
     };
@@ -143,7 +149,7 @@ namespace Valuable
 
     template <typename T> struct Creator<T, true>
     {
-      inline static typename FactoryInfo<T>::Func func() { return &T::create; }
+      inline static auto func() -> decltype(&T::create) { return &T::create; }
     };
 
     /// @endcond
@@ -245,6 +251,21 @@ namespace Valuable
       inline static typename remove_const<T>::Type deserialize(const ArchiveElement & element)
       {
         return T(Serializer::deserialize<typename T::element_type*>(element));
+      }
+    };
+
+    template <typename T>
+    struct Impl<T, Type::intrusive_ptr>
+    {
+      inline static ArchiveElement serialize(Archive & archive, const Radiant::IntrusivePtr<T> & t)
+      {
+        if(!t) return ArchiveElement();
+        return Serializer::serialize(archive, t);
+      }
+
+      inline static typename remove_const<T>::Type deserialize(const ArchiveElement & element)
+      {
+        return T::element_type::create(element);
       }
     };
 
