@@ -104,6 +104,7 @@ SOURCES += DirectoryCommon.cpp
 SOURCES += DirectoryQt.cpp
 SOURCES += FileUtils.cpp
 SOURCES += ImageConversion.cpp
+SOURCES += KeyEvent.cpp
 SOURCES += Log.cpp
 SOURCES += MemCheck.cpp
 SOURCES += CallStackLinux.cpp

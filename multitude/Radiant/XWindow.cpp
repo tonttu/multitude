@@ -118,8 +118,10 @@ namespace {
       const QKeyEvent* keyEvent = dynamic_cast<const QKeyEvent*>(event);
       if(keyEvent) {
 
-        QKeyEvent copy(keyEvent->type(), keyEvent->key(), keyEvent->modifiers(), keyEvent->text(), m_isAutoRepeat);
-        m_hook.handleKeyboardEvent(Radiant::KeyEvent(copy));
+        Radiant::KeyEvent e(*keyEvent);
+        e.setAutoRepeat(m_isAutoRepeat);
+
+        m_hook.handleKeyboardEvent(e);
         return true;
       }
 
@@ -612,8 +614,6 @@ namespace Radiant
 
     while (XCheckMaskEvent(m_d->m_display, X11_CHECK_EVENT_MASK, &event))
     {
-      bool autoRepeat = false;
-
       switch (event.type)
       {
       case KeyRelease:
