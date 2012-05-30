@@ -196,6 +196,7 @@ namespace Valuable
         delivering the message.
 
     */
+    /// @todo the raw pointer in these should be fixed!
     void eventAddListener(const QString & from,
                           const QString & to,
                           Valuable::Node * obj,
