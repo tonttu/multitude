@@ -43,6 +43,8 @@ namespace Radiant
     typedef T element_type;
     typedef T intrusive_element_type;
 
+    template <typename Y> friend class IntrusivePtr;
+
     IntrusivePtr() : m_ptr(0) {}
     IntrusivePtr(T * ptr) : m_ptr(ptr)
     {
@@ -52,7 +54,8 @@ namespace Radiant
       }
     }
 
-    IntrusivePtr(const IntrusivePtr<T> & iptr) : m_ptr(iptr.m_ptr)
+    template <typename Y>
+    IntrusivePtr(const IntrusivePtr<Y> & iptr) : m_ptr(iptr.m_ptr)
     {
       if(m_ptr) {
         intrusive_ptr_add_ref(m_ptr);
@@ -61,12 +64,9 @@ namespace Radiant
     }
 
     template <typename Y>
-    IntrusivePtr(const IntrusivePtr<Y> & iptr):m_ptr(&*iptr)
+    IntrusivePtr(IntrusivePtr<Y> && iptr) : m_ptr(iptr.m_ptr)
     {
-      if(m_ptr) {
-        intrusive_ptr_add_ref(m_ptr);
-        INTRUSIVE_PTR_DEBUG_ACQUIRE;
-      }
+      iptr.m_ptr = nullptr;
     }
 
     virtual ~IntrusivePtr()
@@ -74,7 +74,8 @@ namespace Radiant
       deref();
     }
 
-    IntrusivePtr<T> & operator= (const IntrusivePtr<T> & iptr)
+    template <typename Y>
+    IntrusivePtr<T> & operator= (const IntrusivePtr<Y> & iptr)
     {
       deref();
       ref(iptr.m_ptr);
@@ -82,10 +83,11 @@ namespace Radiant
     }
 
     template <typename Y>
-    IntrusivePtr<T> & operator= (const IntrusivePtr<Y> & iptr)
+    IntrusivePtr<T> & operator= (IntrusivePtr<Y> && iptr)
     {
       deref();
-      ref(&*iptr);
+      m_ptr = iptr.m_ptr;
+      iptr.m_ptr = nullptr;
       return *this;
     }
 
@@ -128,6 +130,28 @@ namespace Radiant
 
     bool operator! () const { return m_ptr == 0; }
 
+    /// These operators must be inside the class so that they can access m_ptr
+    /// Using &* -hack will crash the application with null pointers, and
+    /// adding friends is uglier.
+
+    template <typename Y>
+    inline bool operator==(const IntrusivePtr<Y> & rhs) const { return m_ptr == rhs.m_ptr; }
+
+    template <typename Y>
+    inline bool operator!=(const IntrusivePtr<Y> & rhs) const { return m_ptr != rhs.m_ptr; }
+
+    template <typename Y>
+    inline bool operator== (const Y * rhs) const { return m_ptr == rhs; }
+
+    template <typename Y>
+    inline bool operator!= (const Y * rhs) const { return m_ptr != rhs; }
+
+    template <typename Y>
+    inline bool operator< (const IntrusivePtr<Y> & rhs) const { return m_ptr < rhs.m_ptr; }
+
+    template <typename Y>
+    inline bool operator< (const Y * rhs) const { return m_ptr < rhs; }
+
   private:
     inline void deref()
     {
@@ -144,17 +168,9 @@ namespace Radiant
     T * m_ptr;
   };
 
-  template <typename T, typename Y> inline bool operator==( const IntrusivePtr<T> & lhs, const IntrusivePtr<Y> & rhs) { return &*lhs == &*rhs;}
-  template <typename T, typename Y> inline bool operator!=( const IntrusivePtr<T> & lhs, const IntrusivePtr<Y> & rhs) { return !(lhs == rhs); }
-
-  template <typename T, typename Y> inline bool operator== ( const IntrusivePtr<T> & lhs, const Y * rhs) { return lhs && &*lhs == rhs; }
-  template <typename T, typename Y> inline bool operator!= ( const IntrusivePtr<T> & lhs, const Y * rhs) { return !(lhs == rhs); }
-  template <typename T, typename Y> inline bool operator== ( const Y * lhs, const IntrusivePtr<T> & rhs) { return rhs == lhs; }
-  template <typename T, typename Y> inline bool operator!= ( const Y * lhs, const IntrusivePtr<T> & rhs) { return rhs != lhs; }
-
-  template <typename T, typename Y> inline bool operator< (const IntrusivePtr<T> & lhs, const IntrusivePtr<Y> & rhs) { return !lhs || &*lhs < &*rhs; }
-  template <typename T, typename Y> inline bool operator< (const IntrusivePtr<T> & lhs, const Y * rhs) { return !lhs || &*lhs < rhs; }
-  template <typename T, typename Y> inline bool operator< (const T * lhs, const IntrusivePtr<Y> & rhs) { return rhs && lhs < &*rhs; }
+  template <typename T, typename Y> inline bool operator== (const Y * lhs, const IntrusivePtr<T> & rhs) { return rhs == lhs; }
+  template <typename T, typename Y> inline bool operator!= (const Y * lhs, const IntrusivePtr<T> & rhs) { return rhs != lhs; }
+  template <typename T, typename Y> inline bool operator< (const T * lhs, const IntrusivePtr<Y> & rhs) { return !(rhs == lhs || rhs < lhs); }
 }
 
 #endif // RADIANT_INTRUSIVEPTR_HPP
