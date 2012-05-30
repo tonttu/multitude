@@ -45,11 +45,22 @@ namespace Radiant
 
     template <typename Y> friend class IntrusivePtr;
 
-    IntrusivePtr() : m_ptr(0) {}
+    IntrusivePtr() : m_ptr(nullptr) {}
     IntrusivePtr(T * ptr) : m_ptr(ptr)
     {
       if(ptr) {
         intrusive_ptr_add_ref(ptr);
+        INTRUSIVE_PTR_DEBUG_ACQUIRE;
+      }
+    }
+
+    // Need to have explicit version of this, since the template version isn't
+    // user-defined copy constructor, and the default copy ctor for T would be
+    // used instead of the template one
+    IntrusivePtr(const IntrusivePtr<T> & iptr) : m_ptr(iptr.m_ptr)
+    {
+      if(m_ptr) {
+        intrusive_ptr_add_ref(m_ptr);
         INTRUSIVE_PTR_DEBUG_ACQUIRE;
       }
     }
@@ -61,6 +72,11 @@ namespace Radiant
         intrusive_ptr_add_ref(m_ptr);
         INTRUSIVE_PTR_DEBUG_ACQUIRE;
       }
+    }
+
+    IntrusivePtr(IntrusivePtr<T> && iptr) : m_ptr(iptr.m_ptr)
+    {
+      iptr.m_ptr = nullptr;
     }
 
     template <typename Y>
@@ -79,6 +95,21 @@ namespace Radiant
     {
       deref();
       ref(iptr.m_ptr);
+      return *this;
+    }
+
+    IntrusivePtr<T> & operator= (const IntrusivePtr<T> & iptr)
+    {
+      deref();
+      ref(iptr.m_ptr);
+      return *this;
+    }
+
+    IntrusivePtr<T> & operator= (IntrusivePtr<T> && iptr)
+    {
+      deref();
+      m_ptr = iptr.m_ptr;
+      iptr.m_ptr = nullptr;
       return *this;
     }
 
