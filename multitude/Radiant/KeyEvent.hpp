@@ -16,6 +16,7 @@
 #define RADIANT_KEY_EVENT_HPP
 
 #include <Radiant/Export.hpp>
+#include "Defines.hpp"
 
 #include <Nimble/Vector2.hpp>
 
@@ -88,15 +89,22 @@ namespace Radiant
   class RADIANT_API MouseEvent
   {
   public:
-
     MouseEvent(const QMouseEvent & event);
-    MouseEvent(QEvent::Type type, const Nimble::Vector2i & pos, Qt::MouseButton button,
+    MouseEvent(QEvent::Type type, const Nimble::Vector2f & location, Qt::MouseButton button,
                 Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers);
+
+    MouseEvent(const MouseEvent &);
+    MouseEvent & operator=(const MouseEvent &);
+
     virtual ~MouseEvent();
 
-    int x() const;
-    int y() const;
+    MULTI_ATTR_DEPRECATED("Use location() instead", int x() const ) { return location().x; }
+    MULTI_ATTR_DEPRECATED("Use location() instead", int y() const ) { return location().y; }
 
+    Nimble::Vector2f location() const;
+    void setLocation(const Nimble::Vector2f & location);
+
+    /// @todo should use our own enums
     QEvent::Type type() const;
 
     Qt::MouseButton button() const;

@@ -84,29 +84,37 @@ namespace Radiant
   //////////////////////////////////////////////////
   //////////////////////////////////////////////////
 
-  class MouseEvent::D : public QMouseEvent
+  class MouseEvent::D
   {
   public:
-    D(const QMouseEvent & qMouseEvent)
-      : QMouseEvent(qMouseEvent)
-    {}
-
-    D(QEvent::Type type, const QPoint & pos,
-                    Qt::MouseButton button, Qt::MouseButtons buttons,
-                    Qt::KeyboardModifiers modifiers)
-      : QMouseEvent(type, pos, button, buttons, modifiers)
-    {}
+    QEvent::Type type;
+    Nimble::Vector2f location;
+    Qt::MouseButton button;
+    Qt::MouseButtons buttons;
+    Qt::KeyboardModifiers modifiers;
   };
 
   MouseEvent::MouseEvent(const QMouseEvent & event)
-    : m_d(new D(event))
+    : m_d(new D({event.type(), Nimble::Vector2f(event.posF().x(), event.posF().y()),
+                event.button(), event.buttons(), event.modifiers()}))
   {
   }
 
-  MouseEvent::MouseEvent(QEvent::Type type, const Nimble::Vector2i & pos, Qt::MouseButton button,
+  MouseEvent::MouseEvent(QEvent::Type type, const Nimble::Vector2f & location, Qt::MouseButton button,
               Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers)
-    : m_d(new D(type, QPoint(pos.x, pos.y), button, buttons, modifiers))
+    : m_d(new D({type, location, button, buttons, modifiers}))
   {
+  }
+
+  MouseEvent::MouseEvent(const MouseEvent & ev)
+    : m_d(new D(*ev.m_d))
+  {
+  }
+
+  MouseEvent & MouseEvent::operator=(const MouseEvent & ev)
+  {
+    *m_d = *ev.m_d;
+    return *this;
   }
 
   MouseEvent::~MouseEvent()
@@ -114,33 +122,33 @@ namespace Radiant
     delete m_d;
   }
 
-  int MouseEvent::x() const
+  Nimble::Vector2f MouseEvent::location() const
   {
-    return m_d->x();
+    return m_d->location;
   }
 
-  int MouseEvent::y() const
+  void MouseEvent::setLocation(const Nimble::Vector2f & location)
   {
-    return m_d->y();
+    m_d->location = location;
   }
 
   QEvent::Type MouseEvent::type() const
   {
-    return m_d->type();
+    return m_d->type;
   }
 
   Qt::MouseButton MouseEvent::button() const
   {
-    return m_d->button();
+    return m_d->button;
   }
 
   Qt::MouseButtons MouseEvent::buttons() const
   {
-    return m_d->buttons();
+    return m_d->buttons;
   }
 
   Qt::KeyboardModifiers MouseEvent::modifiers() const
   {
-    return m_d->modifiers();
+    return m_d->modifiers;
   }
 }

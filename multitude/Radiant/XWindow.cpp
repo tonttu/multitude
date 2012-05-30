@@ -383,14 +383,14 @@ namespace Radiant
     //Radiant::info("dispatchXMouseMoveEvent # button: %d", event.state);
 
     QEvent::Type type = QEvent::MouseMove;
-    QPoint position(event.x, event.y);
+    Nimble::Vector2f position(event.x, event.y);
     Qt::MouseButton button = Qt::NoButton;
 
     QPair<Qt::MouseButtons, Qt::KeyboardModifiers> mods = x11StateToQt(event.state);
 
-    QMouseEvent qtEvent(type, position, button, mods.first, mods.second);
+    Radiant::MouseEvent mouseEvent(type, position, button, mods.first, mods.second);
 
-    hook->handleMouseEvent(qtEvent);
+    hook->handleMouseEvent(mouseEvent);
   }
 
   static int errorHandler(Display * display, XErrorEvent * e)
