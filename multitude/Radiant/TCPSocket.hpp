@@ -7,10 +7,10 @@
  * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #ifndef RADIANT_TCP_SOCKET_HPP
@@ -62,7 +62,7 @@ namespace Radiant {
     /// error code (as in errno.h).
     int open(const char * host, int port);
     /// Closes the socket
-    bool close();
+    virtual bool close();
 
     /// Returns true of the socket is open.
     bool isOpen() const;
@@ -96,7 +96,7 @@ namespace Radiant {
     int write(const void * buffer, int bytes);
 
     /// Returns true if the socket has been closed
-    bool isHungUp() const;
+    virtual bool isHungUp() const;
 
     /// Return 'true' if readable data is pending.
     virtual bool isPendingInput(unsigned int waitMicroSeconds = 0);
