@@ -74,6 +74,10 @@ namespace Valuable
     Node(Node * host, const QString & name = "", bool transit = false);
     virtual ~Node();
 
+    /// Adds new Attribute to the lsit of values.
+    /// Copies the name of the attribute from the given value.
+    bool addValue(Attribute * const value);
+
     /// Adds new Attribute to the list of values
     bool addValue(const QString & name, Attribute * const value);
     /// Gets a Attribute with the given name
@@ -196,6 +200,7 @@ namespace Valuable
         delivering the message.
 
     */
+    /// @todo the raw pointer in these should be fixed!
     void eventAddListener(const QString & from,
                           const QString & to,
                           Valuable::Node * obj,

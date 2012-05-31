@@ -104,13 +104,13 @@ namespace Radiant
     {
       // All done if there's no hooks installed
       if(m_window.eventHook())
-        m_window.eventHook()->handleKeyboardEvent(*e);
+        m_window.eventHook()->handleKeyboardEvent(Radiant::KeyEvent(*e));
     }
 
     virtual void keyReleaseEvent(QKeyEvent * e)
     {
       if(m_window.eventHook())
-        m_window.eventHook()->handleKeyboardEvent(*e);
+        m_window.eventHook()->handleKeyboardEvent(Radiant::KeyEvent(*e));
     }
 
     virtual void showCursor()

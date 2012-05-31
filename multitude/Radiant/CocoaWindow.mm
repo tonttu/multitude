@@ -8,7 +8,6 @@
 #import <Cocoa/Cocoa.h>
 #import "CocoaWindow.hpp"
 
-
 @interface CocoaView : NSOpenGLView
 {
   int colorBits;
@@ -228,7 +227,7 @@ return self;
 
   hook->handleMouseEvent(Radiant::MouseEvent
                          (QEvent::MouseButtonPress,
-                          QPoint(x,y),
+                          Nimble::Vector2(x,y),
                           (Qt::MouseButton) button, (Qt::MouseButtons) (1 << buttonNumber),
                           0));
 
@@ -263,7 +262,7 @@ return self;
 
   hook->handleMouseEvent(Radiant::MouseEvent
                          (QEvent::MouseButtonRelease,
-                          QPoint(x,y),
+                          Nimble::Vector2(x,y),
                           (Qt::MouseButton) button, (Qt::MouseButtons) 0,
                           0));
 
@@ -298,7 +297,7 @@ return self;
 
   hook->handleMouseEvent(Radiant::MouseEvent
                          (QEvent::MouseButtonPress,
-                          QPoint(x,y),
+                          Nimble::Vector2(x,y),
                           (Qt::MouseButton) buttonNumber, (Qt::MouseButtons) (1 << buttonNumber),
                           0));
 
@@ -333,7 +332,7 @@ return self;
 
   hook->handleMouseEvent(Radiant::MouseEvent
                          (QEvent::MouseButtonRelease,
-                          QPoint(x,y),
+                          Nimble::Vector2(x,y),
                           (Qt::MouseButton) buttonNumber, (Qt::MouseButtons) 0,
                           0));
 
@@ -361,7 +360,7 @@ return self;
 
   hook->handleMouseEvent(Radiant::MouseEvent
                          (QEvent::MouseMove,
-                          QPoint(x,y),
+                          Nimble::Vector2(x,y),
                           (Qt::MouseButton) 0, (Qt::MouseButtons) 0,
                           0));
   [timer invalidate];
@@ -402,7 +401,7 @@ return self;
 
   hook->handleMouseEvent(Radiant::MouseEvent
                          (QEvent::MouseButtonPress,
-                          QPoint(x,y),
+                          Nimble::Vector2(x,y),
                           (Qt::MouseButton) button, (Qt::MouseButtons) 0,
                           0));
 

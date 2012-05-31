@@ -1396,6 +1396,8 @@ namespace Luminous
   {
     RenderPacket & rp = * m_data->m_renderPacket;
 
+    rp.setProgram(m_data->m_program);
+
     RectVertex va;
 
     va.m_color = style.color();
@@ -1662,6 +1664,7 @@ namespace Luminous
 
   void RenderContext::bindProgram(GLSLProgramObject * program)
   {
+    // Radiant::info("RenderContext::bindProgram # %p", program);
     Utils::glCheck("RenderContext::bindProgram # 1");
 
     if(m_data->m_program != program) {
@@ -1685,6 +1688,9 @@ namespace Luminous
     RenderPacket::RenderPacket * rp = m_data->m_renderPacket;
 
     if(!rp)
+      return;
+
+    if(rp->empty())
       return;
 
     RenderPacket::RenderFunction rf = rp->renderFunction();

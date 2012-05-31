@@ -1,16 +1,4 @@
 /* COPYRIGHT
- *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
- * 
  */
 
 
@@ -35,7 +23,11 @@ namespace Radiant {
     virtual int write(const void * buffer, int bytes) = 0;
     virtual bool isPendingInput(unsigned int waitMicroSeconds = 0)
     { (void) waitMicroSeconds; return false; }
-    
+
+    /// Returns true if the stream has been closed
+    virtual bool isHungUp() const { return false; }
+
+    virtual bool close() { return true; }
   };
 
 }

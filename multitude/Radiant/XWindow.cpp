@@ -118,8 +118,10 @@ namespace {
       const QKeyEvent* keyEvent = dynamic_cast<const QKeyEvent*>(event);
       if(keyEvent) {
 
-        QKeyEvent copy(keyEvent->type(), keyEvent->key(), keyEvent->modifiers(), keyEvent->text(), m_isAutoRepeat);
-        m_hook.handleKeyboardEvent(Radiant::KeyEvent(copy));
+        Radiant::KeyEvent e(*keyEvent);
+        e.setAutoRepeat(m_isAutoRepeat);
+
+        m_hook.handleKeyboardEvent(e);
         return true;
       }
 
@@ -359,7 +361,7 @@ namespace Radiant
     //Radiant::info("dispatchXMouseEvent # button: %d", event.button);
 
     QEvent::Type type = (event.type == ButtonPress) ? QEvent::MouseButtonPress : QEvent::MouseButtonRelease;
-    QPoint position(event.x, event.y);
+    Nimble::Vector2f position(event.x, event.y);
 
     Qt::MouseButton button = Qt::NoButton;
     if(event.button == Button1)
@@ -371,7 +373,7 @@ namespace Radiant
 
     QPair<Qt::MouseButtons, Qt::KeyboardModifiers> mods = x11StateToQt(event.state);
 
-    QMouseEvent qtEvent(type, position, button, mods.first, mods.second);
+    Radiant::MouseEvent qtEvent(type, position, button, mods.first, mods.second);
 
     hook->handleMouseEvent(qtEvent);
   }
@@ -381,14 +383,14 @@ namespace Radiant
     //Radiant::info("dispatchXMouseMoveEvent # button: %d", event.state);
 
     QEvent::Type type = QEvent::MouseMove;
-    QPoint position(event.x, event.y);
+    Nimble::Vector2f position(event.x, event.y);
     Qt::MouseButton button = Qt::NoButton;
 
     QPair<Qt::MouseButtons, Qt::KeyboardModifiers> mods = x11StateToQt(event.state);
 
-    QMouseEvent qtEvent(type, position, button, mods.first, mods.second);
+    Radiant::MouseEvent mouseEvent(type, position, button, mods.first, mods.second);
 
-    hook->handleMouseEvent(qtEvent);
+    hook->handleMouseEvent(mouseEvent);
   }
 
   static int errorHandler(Display * display, XErrorEvent * e)
@@ -612,8 +614,6 @@ namespace Radiant
 
     while (XCheckMaskEvent(m_d->m_display, X11_CHECK_EVENT_MASK, &event))
     {
-      bool autoRepeat = false;
-
       switch (event.type)
       {
       case KeyRelease:

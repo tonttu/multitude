@@ -30,6 +30,8 @@ mobile {
   CONFIG += render_es2
 }
 
+CONFIG += render_es2
+
 render_es2 {
   DEFINES += CORNERSTONE_RENDER_ES2=1
 }
@@ -62,6 +64,18 @@ win32 {
 
 LIB_RESONANT = -lResonant$${CORNERSTONE_LIB_SUFFIX}
 LIB_BOX2D = -lBox2D$${CORNERSTONE_LIB_SUFFIX}
+
+!mobile {
+  # exists(/usr/local/lib/libftd2xx.so)|exists(/opt/multitouch/lib/libftd2xx.dylib) {
+  # message(FTD2XX support detected.)
+  # !win32:CONFIG += with-ftd2xx
+  with-ftd2xx {
+    LIB_FTD2XX = -lftd2xx
+    WITH_FTD2XX = yes
+    DEFINES += MULTI_WITH_FTD2XX=1
+  }
+}
+
 LIB_OPENCL = -lOpenCL
 LIB_OPENGL = -lGL -lGLU
 
@@ -69,7 +83,7 @@ LIB_POETIC = -lPoetic$${CORNERSTONE_LIB_SUFFIX}
 LIB_FLUFFY = -lFluffy$${CORNERSTONE_LIB_SUFFIX}
 LIB_LUMINOUS = -lLuminous$${CORNERSTONE_LIB_SUFFIX}
 LIB_NIMBLE = -lNimble$${CORNERSTONE_LIB_SUFFIX}
-LIB_RADIANT = -lRadiant$${CORNERSTONE_LIB_SUFFIX}
+LIB_RADIANT = -lRadiant$${CORNERSTONE_LIB_SUFFIX} $$LIB_FTD2XX
 !mobile*:LIB_SCREENPLAY = -lScreenplay$${CORNERSTONE_LIB_SUFFIX}
 !mobile*:LIB_VIDEODISPLAY = -lVideoDisplay$${CORNERSTONE_LIB_SUFFIX}
 LIB_VALUABLE = -lValuable$${CORNERSTONE_LIB_SUFFIX}
@@ -118,6 +132,8 @@ linux-*{
 
   QMAKE_LIBDIR += /usr/lib/nvidia-current
 
+  !mobile:QMAKE_LIBDIR += $$PWD/Linux/lib
+
   exists(/opt/multitouch-ffmpeg/include/libavcodec/avcodec.h) {
     MULTI_FFMPEG_LIBS = -L/opt/multitouch-ffmpeg/lib -lavcodec-multitouch -lavutil-multitouch -lavformat-multitouch -lavdevice-multitouch
     INCLUDEPATH += /opt/multitouch-ffmpeg/include
@@ -144,7 +160,7 @@ macx*|mobile* {
   # LIBS += -undefined dynamic_lookup
 
   # Frameworks on OS X don't respect QMAKE_LIBDIR
-  QMAKE_LFLAGS += -F$$PWD/lib
+  !mobile:QMAKE_LFLAGS += -F$$PWD/lib -L$$PWD/OSX/lib
 
   # withbundles = $$(MULTI_BUNDLES)
   withbundles = YES

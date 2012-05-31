@@ -14,8 +14,6 @@ namespace Luminous
   VertexHolder::~VertexHolder()
   {}
 
-
-
   RenderPacket::RenderPacket()
     : m_program(0),
       m_func(RectVertex::render)
