@@ -444,6 +444,7 @@ namespace Luminous
   class CustomOpenGL : Patterns::NotCopyable
   {
   public:
+    CustomOpenGL(RenderContext & r) : m_r(&r) { r.flush(); }
     CustomOpenGL(RenderContext * r) : m_r(r) { r->flush(); }
     ~CustomOpenGL() { m_r->restart(); }
   private:
