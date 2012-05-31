@@ -1724,7 +1724,7 @@ namespace Luminous
 
   void RenderContext::flush()
   {
-    RenderPacket::RenderPacket * rp = m_data->m_renderPacket;
+    RenderPacket * rp = m_data->m_renderPacket;
 
     if(!rp)
       return;
