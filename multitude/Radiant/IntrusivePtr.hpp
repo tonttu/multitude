@@ -41,7 +41,6 @@ namespace Radiant
   {
   public:
     typedef T element_type;
-    typedef T intrusive_element_type;
 
     template <typename Y> friend class IntrusivePtr;
 
