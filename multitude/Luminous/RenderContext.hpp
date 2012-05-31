@@ -331,6 +331,8 @@ namespace Luminous
         @param area The rectangle to drawn **/
     void drawTexRect(const Nimble::Rect & area, const float * rgba);
 
+    void drawStyledRect(Nimble::Vector2 size, const Luminous::Style & style);
+
     void drawRect(const Nimble::Rect & area, const Luminous::Style & fill);
     void drawRectWithHole(const Nimble::Rect & area,
                           const Nimble::Rect & hole,
