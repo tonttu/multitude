@@ -1338,6 +1338,45 @@ namespace Luminous
     }
   }
 
+  void RenderContext::drawStyledRect(Nimble::Vector2 size, const Luminous::Style & style)
+  {
+    //save the previously bound program
+    GLint prev_prog;
+    GLint basic_prog = m_data->m_basic_shader->handle();
+    glGetIntegerv(GL_CURRENT_PROGRAM, &prev_prog);
+    //make sure basic shader is bound
+    bindProgram(m_data->m_basic_shader.get());
+
+#ifdef LUMINOUS_OPENGL_FULL
+
+    //only for desktop GL version of the shaders.
+
+    //3x3 modelview transform for 2D tranformations
+    m_data->m_program->setUniformMatrix3("object_transform", this->transform());
+
+    //4x4 projection transform
+    m_data->m_program->setUniformMatrix4("view_transform", m_data->m_viewTransform);
+
+    //set the sampler value
+    m_data->m_program->setUniformInt("tex_0", 0);
+
+    m_data->m_program->setUniformFloat("use_tex", style.texturing());
+
+    Nimble::Rect area(Nimble::Vector2(0,0), size);
+    drawRect(area, style);
+
+    flush();
+#else
+    //only for GL ES 2.0 version of the shaders.
+    //TODO
+#endif
+    //just being extra careful that we go back to the previous state when finished
+    if(prev_prog != basic_prog)
+    {
+        glUseProgram(prev_prog);
+    }
+  }
+
   void RenderContext::drawTexRect(Nimble::Vector2 size, const float * rgba,
                                   Nimble::Vector2 texUV)
   {
