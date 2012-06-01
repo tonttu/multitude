@@ -1401,6 +1401,8 @@ namespace Luminous
 
   void RenderContext::drawRect(const Nimble::Rect & area, const Style & style)
   {
+    m_data->m_basic_shader->bind();
+
     RenderPacket & rp = * m_data->m_renderPacket;
     rp.setProgram(m_data->m_program);
 
