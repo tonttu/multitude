@@ -384,6 +384,9 @@ namespace Valuable
     for(container::const_iterator it = m_values.begin(); it != m_values.end(); it++) {
       Attribute * vo = it->second;
 
+      if(vo->shortcut())
+        continue;
+
       if (!archive.checkFlag(Archive::ONLY_CHANGED) || vo->isChanged()) {
         ArchiveElement child = vo->serialize(archive);
         if(!child.isNull())

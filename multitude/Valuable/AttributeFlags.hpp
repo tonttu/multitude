@@ -214,6 +214,12 @@ namespace Valuable {
       updateCache();
     }
 
+    virtual QString asString(bool * const ok) const OVERRIDE
+    {
+      /// @todo should serialize using flag names, not ints
+      return QString::number(asInt(ok));
+    }
+
     virtual bool deserialize(const ArchiveElement & element) OVERRIDE
     {
       /// @todo Should we serialize all layers?
