@@ -76,6 +76,7 @@ namespace Valuable
   {
     // Do not copy the name or listeners. It will break stuff.
     m_transit = o.m_transit;
+    return *this;
   }
 
   Attribute::~Attribute()
