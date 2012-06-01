@@ -284,11 +284,14 @@ macx {
   # reduce the error spam. Without these we get a constant stream of warnings for
   # each Q_OBJECT macro (which is many).
   REDUCE_CLANG_WARNINGS = -Wno-self-assign -Wno-overloaded-virtual -Qunused-arguments
-  QMAKE_CC = cc -std=c++11 -stdlib=libc++ $$REDUCE_CLANG_WARNINGS
-  QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++ $$REDUCE_CLANG_WARNINGS
-  QMAKE_LINK       = $$QMAKE_CXX -stdlib=libc++
+  QMAKE_CC  = /opt/local//libexec/llvm-3.2/bin/clang -std=c++11 $$REDUCE_CLANG_WARNINGS
+  QMAKE_CXX = /opt/local//libexec/llvm-3.2/bin/clang++ -std=c++11 $$REDUCE_CLANG_WARNINGS
+  QMAKE_LINK       = $$QMAKE_CXX /opt/local//lib/gcc47/libstdc++.6.dylib
   QMAKE_CFLAGS_WARN_ON =
   QMAKE_CXXFLAGS_WARN_ON =
+  CLANG_INCLUDEPATH += -I/opt/local//include/gcc47/c++/ -I/opt/local//include/gcc47/c++/x86_64-apple-darwin11/
+  QMAKE_CXX += $$CLANG_INCLUDEPATH
+  QMAKE_CC  += $$CLANG_INCLUDEPATH
 }
 
 
