@@ -20,6 +20,38 @@
 #include "AttributeObject.hpp"
 #include <iterator>
 
+namespace
+{
+  template <typename Container, typename T>
+  struct NotNullInserter
+  {
+    static void insert(std::insert_iterator<Container> & inserter, const T & t)
+    {
+      *inserter = t;
+    }
+  };
+
+  template <typename Container, typename T>
+  struct NotNullInserter<Container, T*>
+  {
+    static void insert(std::insert_iterator<Container> & inserter, T * t)
+    {
+      if(t)
+        *inserter = t;
+    }
+  };
+
+  template <typename Container, typename T>
+  struct NotNullInserter<Container, std::shared_ptr<T>>
+  {
+    static void insert(std::insert_iterator<Container> & inserter, const std::shared_ptr<T> & t)
+    {
+      if(t)
+        *inserter = t;
+    }
+  };
+}
+
 namespace Valuable
 {
   template<typename T> class AttributeContainerT : public Attribute
@@ -54,7 +86,7 @@ namespace Valuable
       if(m_clearOnDeserialize) m_container.clear();
       std::insert_iterator<T> inserter(m_container, m_container.end());
       for(ArchiveElement::Iterator it = element.children(); it; ++it) {
-        *inserter = Serializer::deserialize<typename T::value_type>(*it);
+        NotNullInserter<T, typename T::value_type>::insert(inserter, Serializer::deserialize<typename T::value_type>(*it));
       }
       return true;
     }
