@@ -114,9 +114,16 @@ namespace Radiant {
     typedef std::map<Thread::id_t, T> Map;
 
   public:
-    TLS() : m_default() {}
+    TLS() {}
     /// Copy constructor
     TLS(const T& t) : m_default(t) {}
+    TLS(const  TLS & t)
+    {
+      Radiant::Guard g1(m_mutex);
+      Radiant::Guard g2(m_mutex);
+      m_default = t.m_default;
+      m_values = t.m_values;
+    }
 
     /// Get the calling thread instance of the TLS variable
     /// @return variable instance in calling thread

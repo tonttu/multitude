@@ -22,6 +22,7 @@ namespace VideoPlayer2
 {
   struct Timestamp
   {
+    Timestamp (double p = 0.0, int sg = 0) : pts(p), seekGeneration(sg) {}
     double pts;
     int seekGeneration;
     bool operator<(const Timestamp & ts) const
@@ -38,7 +39,8 @@ namespace VideoPlayer2
     DecodedImageBuffer & operator=(DecodedImageBuffer &) = delete;
 
     QAtomicInt refcount;
-    std::vector<uint8_t, Radiant::aligned_allocator<float, 32>> data;
+    // std::vector<uint8_t, Radiant::aligned_allocator<float, 32>> data;
+    std::vector<uint8_t, Radiant::aligned_allocator<uint8_t, 32>> data;
   };
 
   class VideoFrame

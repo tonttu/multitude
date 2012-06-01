@@ -136,6 +136,7 @@ namespace
   }
 
   RADIANT_TLS(const char *) s_src = nullptr;
+
   void ffmpegLog(void *, int level, const char * fmt, va_list vl)
   {
     if(level > AV_LOG_INFO) return;
@@ -151,11 +152,11 @@ namespace
     }
 
     if(level > AV_LOG_WARNING) {
-      Radiant::info("%s: %s", s_src, buffer);
+      Radiant::info("%s: %s", s_src.get(), buffer);
     } else if(level > AV_LOG_ERROR) {
-      Radiant::warning("%s: %s", s_src, buffer);
+      Radiant::warning("%s: %s", s_src.get(), buffer);
     } else {
-      Radiant::error("%s: %s", s_src, buffer);
+      Radiant::error("%s: %s", s_src.get(), buffer);
     }
   }
 
@@ -252,32 +253,8 @@ namespace VideoPlayer2
   class AVDecoderFFMPEG::D
   {
   public:
-    D()
-      : seekGeneration(0)
-      , running(true)
-      , av()
-      , videoFilter()
-      , audioFilter()
-      , radiantTimestampToPts(std::numeric_limits<double>::quiet_NaN())
-      , loopOffset(0)
-      , audioTransfer(nullptr)
-    {
-      av.videoStreamIndex = -1;
-      av.audioStreamIndex = -1;
-      av.videoSize = {0, 0};
-    }
 
-    int seekGeneration;
-
-    bool running;
-
-    MemoryPool<DecodedImageBuffer, 80> imageBuffers;
-
-    SeekRequest seekRequest;
-
-    AVDecoder::Options options;
-
-    struct
+    struct MyAV
     {
       AVPacket packet;
       AVFrame * frame;
@@ -303,7 +280,34 @@ namespace VideoPlayer2
       double duration;
       double start;
       Nimble::Vector2i videoSize;
-    } av;
+    };
+
+    D()
+      : seekGeneration(0)
+      , running(true)
+      , av()
+      , videoFilter()
+      , audioFilter()
+      , radiantTimestampToPts(std::numeric_limits<double>::quiet_NaN())
+      , loopOffset(0)
+      , audioTransfer(nullptr)
+    {
+      av.videoStreamIndex = -1;
+      av.audioStreamIndex = -1;
+      av.videoSize.clear();
+    }
+
+    int seekGeneration;
+
+    bool running;
+
+    MyAV av;
+
+    MemoryPool<DecodedImageBuffer, 80> imageBuffers;
+
+    SeekRequest seekRequest;
+
+    AVDecoder::Options options;
 
     struct FilterGraph
     {
@@ -752,9 +756,9 @@ namespace VideoPlayer2
     }
 
     if(av.videoCodecContext) {
-      av.videoSize = {av.videoCodecContext->width, av.videoCodecContext->height};
+      av.videoSize = Nimble::Vector2i(av.videoCodecContext->width, av.videoCodecContext->height);
     } else {
-      av.videoSize = {0, 0};
+      av.videoSize.clear();
     }
     av.duration = av.formatContext->duration / double(AV_TIME_BASE);
     av.start = std::numeric_limits<double>::quiet_NaN();
@@ -765,7 +769,7 @@ namespace VideoPlayer2
   void AVDecoderFFMPEG::D::close()
   {
     av.duration = 0;
-    av.videoSize = {0, 0};
+    av.videoSize.clear();
 
     // Close the codecs
     if(av.audioCodecContext || av.videoCodecContext) {
@@ -1001,7 +1005,7 @@ namespace VideoPlayer2
               dpts = av.videoTsToSecs * output->pts;
             }
             frame->imageSize = size;
-            frame->timestamp = {dpts + loopOffset, seekGeneration};
+            frame->timestamp = Timestamp(dpts + loopOffset, seekGeneration);
 
             decodedVideoFrames.put();
           }
@@ -1038,7 +1042,7 @@ namespace VideoPlayer2
       }
 
       frame->imageSize = Nimble::Vector2i(av.frame->width, av.frame->height);
-      frame->timestamp = {dpts + loopOffset, seekGeneration};
+      frame->timestamp = Timestamp(dpts + loopOffset, seekGeneration);
       decodedVideoFrames.put();
     }
 
@@ -1122,7 +1126,7 @@ namespace VideoPlayer2
                 }
 
                 // av_get_channel_layout_nb_channels
-                decodedAudioBuffer->fillPlanar(Timestamp({dpts + loopOffset, seekGeneration}),
+                decodedAudioBuffer->fillPlanar(Timestamp(dpts + loopOffset, seekGeneration),
                                                options.audioChannels, output->audio->nb_samples,
                                                (const float **)(output->data));
                 audioTransfer->putReadyBuffer(output->audio->nb_samples);
@@ -1143,7 +1147,7 @@ namespace VideoPlayer2
             Radiant::Sleep::sleepMs(10);
           }
 
-          decodedAudioBuffer->fill(Timestamp({dpts + loopOffset, seekGeneration}),
+          decodedAudioBuffer->fill(Timestamp(dpts + loopOffset, seekGeneration),
                                    av.audioCodecContext->channels, av.frame->nb_samples,
                                    reinterpret_cast<const int16_t *>(av.frame->data[0]));
           audioTransfer->putReadyBuffer(av.frame->nb_samples);
@@ -1364,7 +1368,7 @@ namespace VideoPlayer2
     if(std::isnan(m_d->radiantTimestampToPts))
       return Timestamp();
 
-    return Timestamp({ts.secondsD() + m_d->radiantTimestampToPts, m_d->seekGeneration});
+    return Timestamp(ts.secondsD() + m_d->radiantTimestampToPts, m_d->seekGeneration);
   }
 
   VideoFrame * AVDecoderFFMPEG::getFrame(const Timestamp & ts) const

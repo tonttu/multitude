@@ -211,7 +211,7 @@ namespace VideoPlayer2
 
   Timestamp AudioTransfer::toPts(const Radiant::TimeStamp & ts) const
   {
-    const Timestamp newts({ts.secondsD() + m_d->resonantToPts, m_d->usedSeekGeneration});
+    const Timestamp newts(ts.secondsD() + m_d->resonantToPts, m_d->usedSeekGeneration);
     return std::min(m_d->pts, newts);
   }
 
