@@ -371,9 +371,11 @@ namespace Valuable
     void defineShortcut(const QString & name);
 
     /// The sender of the event, can be read in processMessage()
+    Node * sender() { return m_sender; }
+  private:
+
     Node * m_sender;
 
-  private:
     friend class Attribute; // So that Attribute can call the function below.
 
     void valueRenamed(const QString & was, const QString & now);
