@@ -7,7 +7,7 @@ namespace VideoPlayer2
 {
   AVDecoder::AVDecoder()
   {
-    eventAddOut("decoder-error");
+    eventAddOut("error");
     eventAddOut("ready");
     eventAddOut("finished");
   }

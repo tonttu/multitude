@@ -1505,7 +1505,7 @@ namespace VideoPlayer2
     ffmpegInit();
 
     if(!m_d->open()) {
-      eventSend("decoder-error");
+      eventSend("error");
       return;
     }
     eventSend("ready");
