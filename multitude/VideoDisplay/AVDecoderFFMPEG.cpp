@@ -1173,8 +1173,8 @@ namespace VideoPlayer2
   {
     frame->opaque = nullptr;
 
-    Nimble::Vector2i bufferSize(frame->width, frame->height);
-    if(av_image_check_size(frame->width, frame->height, 0, context) || context->pix_fmt < 0)
+    Nimble::Vector2i bufferSize(context->width, context->height);
+    if(av_image_check_size(context->width, context->height, 0, context) || context->pix_fmt < 0)
       return -1;
 
     // ffplay nor the default get_buffer will check this (they might crash with
