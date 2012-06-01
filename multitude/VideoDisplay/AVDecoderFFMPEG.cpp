@@ -151,12 +151,18 @@ namespace
         break;
     }
 
+#ifdef RADIANT_OSX
+    QString msg = QString("%1: %2").arg(s_src.get()).arg(buffer);
+#else
+    QString msg = QString("%1: %2").arg(s_src).arg(buffer);
+#endif
+
     if(level > AV_LOG_WARNING) {
-      Radiant::info("%s: %s", s_src.get(), buffer);
+      Radiant::info("%s", msg.toUtf8().data());
     } else if(level > AV_LOG_ERROR) {
-      Radiant::warning("%s: %s", s_src.get(), buffer);
+      Radiant::warning("%s", msg.toUtf8().data());
     } else {
-      Radiant::error("%s: %s", s_src.get(), buffer);
+      Radiant::error("%s", msg.toUtf8().data());
     }
   }
 
