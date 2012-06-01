@@ -98,7 +98,7 @@ namespace Valuable
   /// @todo the "set" functions are duplicating the processMessage functionality
   /// @todo processMessage should be renamed to eventProcess (can be tricky to do)
   /// @todo Doc
-  class VALUABLE_API Attribute : public Serializable
+  class VALUABLE_API Attribute : public Serializable, public Patterns::NotCopyable
   {
   public:
     enum Layer {
@@ -128,9 +128,15 @@ namespace Valuable
     };
 
     Attribute();
-    /// The copy constructor creates a copy of the Attribute WITHOUT the
-    /// link to host
+
+    /// Create a copy of the given Attribute WITHOUT the link to host,
+    /// listeners, or the attribute name. So only the values and transit
+    /// parameter are copied.
     Attribute(const Attribute & o);
+
+    /// @copydoc Attribute(const Attribute & o);
+    const Attribute & operator = (const Attribute &);
+
     /** Constructs a new value object and attaches it to its host.
 
     @param host The host object. This object is automatically

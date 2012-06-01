@@ -65,12 +65,16 @@ namespace Valuable
   }
 
   Attribute::Attribute(const Attribute & o)
-    : Serializable(), // GCC wants this
-    m_host(0),
-    m_changed(false),
-    m_listenersId(o.m_listenersId)
+    : m_host(0)
+    , m_changed(false)
+    , m_listenersId(0)
   {
-    m_name = o.m_name;
+    *this = o;
+  }
+
+  const Attribute & Attribute::operator = (const Attribute & o)
+  {
+    // Do not copy the name or listeners. It will break stuff.
     m_transit = o.m_transit;
   }
 

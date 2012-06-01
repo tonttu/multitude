@@ -49,7 +49,7 @@ namespace Valuable
       classes, Node simply maintains a list of children.
   */
   /// @todo Examples
-  class VALUABLE_API Node : public Attribute, public Patterns::NotCopyable
+  class VALUABLE_API Node : public Attribute
   {
   public:
     /// Universally unique identifier type
