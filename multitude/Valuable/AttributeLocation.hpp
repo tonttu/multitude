@@ -47,7 +47,7 @@ namespace Valuable
     {
       Nimble::Vector2f f(v);
       for(int j = 0; j < m_factors[layer].Elements; ++j) {
-        if(units[j] == VU_PERCENTAGE) {
+        if(j < units.size() && units[j] == VU_PERCENTAGE) {
           m_factors[layer][j] = f[j];
           f[j] *= m_src[j];
         } else {
