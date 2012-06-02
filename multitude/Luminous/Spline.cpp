@@ -60,7 +60,7 @@ namespace Luminous {
 
     void addPoint(const Point & p);
 
-    void update();
+    void recalculate();
 
     void render(Luminous::RenderContext &) const;
 
@@ -87,7 +87,7 @@ namespace Luminous {
     m_curve.add(p.m_location);
   }
 
-  void Spline::D::update()
+  void Spline::D::recalculate()
   {
     m_vertices.clear();
     m_generation++;
@@ -152,7 +152,7 @@ namespace Luminous {
       avg.normalize();
     }
 
-    avg *= p->m_width;
+    avg *= p->m_width * 0.5f;
 
     m_vertices.clear();
 
@@ -193,7 +193,7 @@ namespace Luminous {
 
       float dp = Nimble::Math::Clamp(dot(avg, dirPrev.perpendicular()), 1e-2f, 1.0f);
       avg /= dp;
-      avg *= p->m_width;
+      avg *= p->m_width * 0.5f;
 
       v.m_color = p->m_color;
 
@@ -219,20 +219,39 @@ namespace Luminous {
 
     bool created = false;
     VertexBuffer & vbo = m_vbo.ref(&r, & created);
-    if(created) {
-
-    }
 
     if(vbo.generation() != m_generation) {
       // Load new vertex data to the GPU
       vbo.fill( & m_vertices[0], m_vertices.size() * sizeof(Vertex), VertexBuffer::STATIC_DRAW);
+      vbo.setGeneration(m_generation);
     }
 
-    vbo.setGeneration(m_generation);
-
     vbo.bind();
-  }
 
+    GLSLProgramObject * prog = s_shader.bind();
+
+    assert(prog != nullptr);
+
+    prog->bind();
+    prog->setUniformMatrix4("view_transform", r.viewTransform());
+    prog->setUniformMatrix3("object_transform", r.transform());
+
+
+    int aloc = prog->getAttribLoc("location");
+    int acol = prog->getAttribLoc("color");
+
+    assert(aloc >= 0 && acol >= 0);
+
+    Vertex vr;
+    const int vsize = sizeof(vr);
+
+    VertexAttribArrayStep ls(aloc, 2, GL_FLOAT, vsize, offsetBytes(vr.m_location, vr));
+    VertexAttribArrayStep cs(acol, 4, GL_FLOAT, vsize, offsetBytes(vr.m_color, vr));
+
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, GLsizei(m_vertices.size()));
+
+    // Radiant::info("Spline::D::render # %d", (int) m_vertices.size());
+  }
 
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
@@ -252,6 +271,8 @@ namespace Luminous {
         QString vspath = RenderContext::locateStandardShader("spline.vs");
         s_shader.loadFragmentShader(fspath);
         s_shader.loadVertexShader(vspath);
+
+        assert(s_shader.isDefined());
       }
     }
   }
@@ -281,4 +302,8 @@ namespace Luminous {
     m_d->render(r);
   }
 
+  void Spline::recalculate()
+  {
+    m_d->recalculate();
+  }
 }

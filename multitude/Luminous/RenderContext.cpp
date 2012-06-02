@@ -1435,6 +1435,8 @@ namespace Luminous
                                        const Nimble::Rect & hole,
                                        const Luminous::Style & style)
   {
+    m_data->m_basic_shader->bind();
+
     RenderPacket & rp = * m_data->m_renderPacket;
 
     rp.setProgram(m_data->m_program);

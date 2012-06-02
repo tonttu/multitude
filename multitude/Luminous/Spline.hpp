@@ -22,6 +22,7 @@ namespace Luminous {
 
     void render(Luminous::RenderContext &) const;
 
+    void recalculate();
   private:
     class Point;
     class Vertex;
