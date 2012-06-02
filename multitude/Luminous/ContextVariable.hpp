@@ -43,7 +43,7 @@ namespace Luminous {
         @param wasCreated true if the resource was created, false if it already existed
         @return Returns a reference to the OpenGL resource.
     */
-    inline T & ref(bool * wasCreated = 0)
+    inline T & ref(bool * wasCreated = 0) const
     {
       if(wasCreated)
         *wasCreated = false;
@@ -65,7 +65,7 @@ namespace Luminous {
         @param rs Pointer to the OpenGL resource container
         @param wasCreated true if the resource was created, false if it already existed
         */
-    inline T & ref(RenderContext * rs, bool * wasCreated = 0)
+    inline T & ref(RenderContext * rs, bool * wasCreated = 0) const
     {
       if(!rs) {
         return ref(wasCreated);
