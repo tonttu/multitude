@@ -106,9 +106,9 @@ namespace Luminous
         void unbind();
 
         /// Fills the vertex buffer with data
-        void fill(void * data, size_t bytes, Usage usage);
+        void fill(const void * data, size_t bytes, Usage usage);
         /// Fills a part of the vertex buffer with data
-        void partialFill(size_t offsetInBytes, void * data, size_t bytes);
+        void partialFill(size_t offsetInBytes, const void * data, size_t bytes);
 
 #ifndef LUMINOUS_OPENGLES
 

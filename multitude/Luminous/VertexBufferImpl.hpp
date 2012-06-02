@@ -65,7 +65,7 @@ namespace Luminous
   }
 
   template<GLenum type>
-  void BufferObject<type>::fill(void * data, size_t bytes, Usage usage)
+  void BufferObject<type>::fill(const void * data, size_t bytes, Usage usage)
   {
     m_filled = bytes;
 
@@ -80,7 +80,7 @@ namespace Luminous
   }
 
   template<GLenum type>
-  void BufferObject<type>::partialFill(size_t offsetInBytes, void * data, size_t bytes)
+  void BufferObject<type>::partialFill(size_t offsetInBytes, const void * data, size_t bytes)
   {
     if(!m_bound)
       glBindBuffer(type, m_bufferId);
