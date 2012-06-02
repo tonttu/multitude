@@ -1,8 +1,10 @@
 include(../multitude.pri)
 
 # Drivers
-HEADERS += RenderDriver.hpp
-SOURCES += RenderDriver.cpp
+HEADERS += RenderDriver.hpp \
+    Spline.hpp
+SOURCES += RenderDriver.cpp \
+    Spline.cpp
 HEADERS += RenderDriverGL.hpp
 SOURCES += RenderDriverGL.cpp
 
@@ -178,5 +180,7 @@ QT += gui
 # QT += svg
 
 include(../library.pri)
+
+
 
 
