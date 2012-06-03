@@ -322,13 +322,14 @@ namespace Luminous {
   /////////////////////////////////////////////////////////////////////////////
 
   MultiHead::Window::Window(MultiHead * screen)
-      : Node(0, "Window"),
+    : Node(0, "Window"),
       m_screen(screen),
       m_location(this, "location", Nimble::Vector2i(0, 0)),
       m_size(this, "size", Nimble::Vector2i(100, 100)),
       m_frameless(this, "frameless", true),
       m_fullscreen(this, "fullscreen", false),
       m_resizeable(this, "resizeable", false),
+      m_fsaaSamplesPerPixel(this, "fsaa-samples", 4),
       m_displaynumber(this, "displaynumber", -1),
       m_screennumber(this, "screennumber", -1),
       m_pixelSizeCm(0.1f)

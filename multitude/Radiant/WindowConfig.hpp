@@ -30,7 +30,8 @@ namespace Radiant
   public:
     /// Constructs a WindowConfig object, with given values
     WindowConfig(int x, int y, int width, int height,
-                 bool fullscreen, bool frameless, bool showCursor, const QString & display = ":0.0");
+                 bool fullscreen, bool frameless, bool showCursor, int antiAliasing,
+                 const QString & display = ":0.0");
     ///@cond
     // Window position and size
     int x, y, width, height;
@@ -42,6 +43,8 @@ namespace Radiant
     bool frameless;
     /// Show cursor?
     bool showCursor;
+    /// Controls anti-aliasing
+    int m_antiAliasing;
     /// Iconify (minimize) on startup?
     bool iconify;
     /// Which display (X screen) to put the window on

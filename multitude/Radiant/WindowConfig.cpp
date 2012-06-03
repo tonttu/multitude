@@ -17,7 +17,8 @@
 
 namespace Radiant
 {
-  WindowConfig::WindowConfig(int x, int y, int width, int height, bool fullscreen, bool frameless, bool showCursor, const QString &display)
+  WindowConfig::WindowConfig(int x, int y, int width, int height, bool fullscreen, bool frameless,
+                             bool showCursor, int antiAliasing, const QString &display)
   {
     this->x = x;
     this->y = y;
@@ -27,6 +28,7 @@ namespace Radiant
     this->frameless = frameless;
     this->display = display;
     this->showCursor = showCursor;
+    this->m_antiAliasing = antiAliasing;
   }
 
 }

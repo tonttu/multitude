@@ -15,7 +15,7 @@ namespace Radiant
     /// Constructs a new window
     /// @param hint window configuration
     /// @param caption window caption
-    QtWindow(const WindowConfig & hint = WindowConfig(0, 0, 640, 480, false, true, true), const char * caption = 0);
+    QtWindow(const WindowConfig & hint = WindowConfig(0, 0, 640, 480, false, true, true, 0), const char * caption = 0);
     ~QtWindow();
 
     virtual void poll();

@@ -334,6 +334,13 @@ namespace Luminous {
       /// Sets X11 screen number for threaded rendering, -1 disables
       void setScreennumber(int s) { m_screennumber = s; }
 
+      /// Number of samples per pixel for full-screen anti-aliasing
+      int antiAliasingSamples() const
+      { return m_fsaaSamplesPerPixel; }
+      /// Sets the number of samples per pixel for full-screen anti-aliasing
+      void setAntiAliasingSamples(int samplesPerPixel)
+      { m_fsaaSamplesPerPixel = samplesPerPixel; }
+
       /// Sets the width of a pixel in centimeters to each area inside this window
       LUMINOUS_API void setPixelSizeCm(float sizeCm);
 
@@ -349,6 +356,7 @@ namespace Luminous {
       Valuable::AttributeBool       m_frameless;
       Valuable::AttributeBool       m_fullscreen;
       Valuable::AttributeBool       m_resizeable;
+      Valuable::AttributeInt        m_fsaaSamplesPerPixel;
       Valuable::AttributeInt        m_displaynumber; // for X11
       Valuable::AttributeInt        m_screennumber; // for X11
       /// Pixel size in centimeters
