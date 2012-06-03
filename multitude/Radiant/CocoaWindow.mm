@@ -18,11 +18,12 @@
   NSOpenGLContext * context;
 
   Radiant::CocoaWindow * m_window;
+  int m_antiAliasing;
 }
 
 - (id) initWithFrame:(NSRect)frame
 colorBits:(int)numColorBits depthBits:(int)numDepthBits fullscreen:(bool)runFullScreen
-m_window:(Radiant::CocoaWindow *)parent;
+m_window:(Radiant::CocoaWindow *)parent m_antiAliasing:(int)antiAliasing;
 
 - (void) dealloc;
 
@@ -51,12 +52,12 @@ m_window:(Radiant::CocoaWindow *)parent;
 
 - (id) initWithFrame:(NSRect)frame
 colorBits:(int)numColorBits depthBits:(int)numDepthBits fullscreen:(bool)runFullScreen
-m_window:(Radiant::CocoaWindow *)parent
+m_window:(Radiant::CocoaWindow *)parent  m_antiAliasing:(int)antiAliasing
 {
 NSOpenGLPixelFormat *pixelFormat;
 
 m_window = parent;
-colorBits = numColorBits;
+m_antiAliasing = antiAliasing;
 depthBits = numDepthBits;
 runningFullScreen = runFullScreen;
 
@@ -103,7 +104,7 @@ return self;
 {
   (void) frame;
 
-  NSOpenGLPixelFormatAttribute attributes [16];
+  NSOpenGLPixelFormatAttribute attributes [24];
 
   NSOpenGLPixelFormat *pixelFormat;
 
@@ -112,9 +113,18 @@ return self;
   attributes[ index++ ] = NSOpenGLPFADoubleBuffer;
   attributes[ index++ ] = NSOpenGLPFAAccelerated;
   attributes[ index++ ] = NSOpenGLPFAColorSize;
-  attributes[ index++ ] = colorBits;
+  attributes[ index++ ] = (NSOpenGLPixelFormatAttribute) colorBits;
   attributes[ index++ ] = NSOpenGLPFADepthSize;
-  attributes[ index++ ] = depthBits;
+  attributes[ index++ ] = (NSOpenGLPixelFormatAttribute) depthBits;
+
+  if(m_antiAliasing) {
+    attributes[ index++ ] = NSOpenGLPFASupersample;
+    // attributes[ index++ ] = true;
+    attributes[ index++ ] = NSOpenGLPFASampleBuffers;
+    attributes[ index++ ] = (NSOpenGLPixelFormatAttribute) 1;
+    attributes[ index++ ] = NSOpenGLPFASamples;
+    attributes[ index++ ] = (NSOpenGLPixelFormatAttribute) 4;
+  }
 
   attributes[index] = 0;
   pixelFormat = [ [NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
@@ -511,7 +521,7 @@ return self;
 
   glView = [ [CocoaView alloc] initWithFrame:[glWindow frame]
       colorBits:8 depthBits:8 fullscreen:m_hint->fullscreen
-      m_window:m_window];
+      m_window:m_window m_antiAliasing:m_hint->m_antiAliasing];
 
   if(glView != nil)
   {

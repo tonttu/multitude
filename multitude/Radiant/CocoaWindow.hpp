@@ -22,7 +22,7 @@ namespace Radiant
     /// Constructs a new window
     /// @param hint window configuration
     /// @param caption window caption
-    CocoaWindow(const WindowConfig & hint = WindowConfig(0, 0, 640, 480, false, true, true));
+    CocoaWindow(const WindowConfig & hint = WindowConfig(0, 0, 640, 480, false, true, true, 0));
     ~CocoaWindow();
 
     virtual void poll();
