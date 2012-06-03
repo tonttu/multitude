@@ -23,6 +23,7 @@
 
 namespace Luminous {
   class RenderContext;
+  class Spline;
 }
 
 namespace Nimble
@@ -81,6 +82,7 @@ namespace Nimble
     void clear();
 
     friend class Luminous::RenderContext;
+    friend class Luminous::Spline;
   private:
     typedef std::vector<Nimble::Vector2> PointList;
 

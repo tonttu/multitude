@@ -60,9 +60,12 @@ namespace Luminous {
 
     void addPoint(const Point & p);
 
+    Point interpolate(float index) const;
+
     void recalculate();
 
     void render(Luminous::RenderContext &) const;
+
 
     std::vector<Point> m_points;
     std::vector<Vertex> m_vertices;
@@ -87,6 +90,34 @@ namespace Luminous {
     m_curve.add(p.m_location);
   }
 
+  Spline::Point Spline::D::interpolate(float index) const
+  {
+    assert(Nimble::Math::isFinite(index));
+
+    Point res;
+
+    int indexi = (int) index;
+
+    if(indexi >= ((int) m_points.size()) - 1) {
+      if(m_points.empty())
+        return res;
+      else
+        return m_points[m_points.size() - 1];
+    }
+
+    const Point & p1 = m_points.at(indexi);
+    const Point & p2 = m_points.at(indexi + 1);
+
+    float w2 = index - (float) indexi;
+    float w1 = 1.0f - w2;
+
+    res.m_width = p1.m_width * w1 + p2.m_width * w2;
+    res.m_color = p1.m_color * w1 + p2.m_color * w2;
+    res.m_location = p1.m_location * w1 + p2.m_location * w2;
+
+    return res;
+  }
+
   void Spline::D::recalculate()
   {
     m_vertices.clear();
@@ -96,19 +127,18 @@ namespace Luminous {
       return;
     }
 
-    /*
-    float step = 0.25f;
+    float step = 0.1f;
     const float len = m_curve.size();
     std::vector<Point> points;
 
     for(float t = 0.f; t < len - 1; t += step) {
       int ii = static_cast<int>(t);
       float t2 = t - ii;
-      Vector2 point = m_curve.getPoint(ii, t2);
+      Nimble::Vector2 lov = m_curve.getPoint(ii, t2);
 
       if (points.size() >= 2) {
-        Vector2 p1 = (point - points[points.size()-2]);
-        Vector2 p2 = (point - points[points.size()-1]);
+        Nimble::Vector2 p1 = (lov - points[points.size()-2].m_location);
+        Nimble::Vector2 p2 = (lov - points[points.size()-1].m_location);
         p1.normalize();
         p2.normalize();
         // 3 degrees
@@ -116,12 +146,14 @@ namespace Luminous {
           points.pop_back();
         }
       }
-      points.push_back(point);
+
+      Point p = interpolate(t);
+      p.m_location = lov;
+
+      points.push_back(p);
     }
 
-    */
-
-    std::vector<Point> & vertices = m_points;
+    std::vector<Point> & vertices = points;
 
     const float aapad = 1; // for antialiasing
     const float mingapSqr = 3.0f * 3.0f;
