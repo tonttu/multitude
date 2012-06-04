@@ -146,19 +146,15 @@ namespace Radiant {
   template <class T>
   class RADIANT_API ChunkT {
   public:
+
     /// Iterator for traversing all elements
     typedef typename std::multimap<QString, T>::iterator iterator;
     /// Constant iterator for traversing all elements
     typedef typename std::multimap<QString, T>::const_iterator const_iterator;
 
-    /// Iterator for traversing chunks
-    typedef typename std::multimap<QString, ChunkT<T> >::iterator chunk_iterator;
-    /// Constant iterator for traversing chunks
-    typedef typename std::multimap<QString, ChunkT<T> >::const_iterator const_chunk_iterator;
-
     /// Creates an empty configuration chunk
-    ChunkT() {clearFirst=false;}
-    ~ChunkT() {}
+    ChunkT() {clearFirst=false; m_chunks = new std::multimap<QString, ChunkT<T> >(); }
+    ~ChunkT() { delete m_chunks; }
 
     /// Returns the number of elements with given id/tag
     int numberOf(const QString & id) const;
@@ -207,7 +203,9 @@ namespace Radiant {
     void               dump(std::ostream& os, int indent=0) const;
 
     /// Empties this chunk
-    void               clear() { m_variants.clear(); m_chunks.clear(); }
+    void               clear() {
+      m_variants.clear(); m_chunks->clear();
+    }
 
     /// Number of elements
     size_t size() const { return m_variants.size(); }
@@ -229,16 +227,7 @@ namespace Radiant {
     /// Iterator to the after-the-end element
     const_iterator end()   const { return m_variants.end(); }
 
-    /// Iterator to the first child chunk
-    //chunk_iterator chunkBegin() { return m_chunks.begin(); }
-    /// Const Iterator to the first child chunk
-    /// @return iterator to the first child
-    const_chunk_iterator chunkBegin() const { return m_chunks.begin(); }
-    /// Iterator to the after-the-end chunk
-    //chunk_iterator chunkEnd() { return m_chunks.end(); }
-    /// Const Iterator to the after-the-end chunk
-    /// @return iterator to one past the last child
-    const_chunk_iterator chunkEnd() const { return m_chunks.end(); }
+    const std::multimap<QString, ChunkT<T> > * chunks() const { return m_chunks; }
 
     /// Gets the data element from an iterator
     static T & getType(iterator & it) { return (*it).second; }
@@ -249,11 +238,12 @@ namespace Radiant {
     /// Gets the name (id) from a constant iterator
     static const QString & getName(const_iterator & it) { return (*it).first; }
 
+
   private:
 
     bool clearFirst;
     std::multimap<QString, T> m_variants;
-    std::multimap<QString, ChunkT<T> > m_chunks;
+    std::multimap<QString, ChunkT<T> > * m_chunks;
   };
 
   /// A chunk of configuration variables

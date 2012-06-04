@@ -318,7 +318,7 @@ namespace Radiant {
   {
     QString ws(indent, ' ');
 
-    for(const_chunk_iterator it = chunkBegin(); it != chunkEnd(); ++it) {
+    for(auto it = m_chunks->begin(); it != m_chunks->end(); ++it) {
       os << ws << it->first << " {\n";
       it->second.dump(os, indent+2);
       os << ws << "}\n";
@@ -551,7 +551,7 @@ namespace Radiant {
 
     // @todo collect global variables from stack.top()
     Chunk & ch = chunk;
-    for (Chunk::const_chunk_iterator it = ch.chunkBegin(); it != ch.chunkEnd(); ++it) {
+    for (auto it = ch.chunks()->begin(); it != ch.chunks()->end(); ++it) {
       c->set(it->first, it->second);
     }
 

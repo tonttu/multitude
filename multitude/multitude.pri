@@ -10,6 +10,12 @@ CONFIG += embed_manifest_exe
 
 # We need C++11 to compile
 !macx:*g++*:QMAKE_CXXFLAGS += -std=c++0x
+macx {
+	QMAKE_MACOSX_DEPLOYMENT_TARGET=10.7
+	QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++
+        QMAKE_CC = clang -std=c++11 -stdlib=libc++
+        QMAKE_LFLAGS += -stdlib=libc++
+}
 
 iphone {
   CONFIG += mobile
@@ -279,7 +285,8 @@ c++11 {
   }
 }
 
-macx {
+# Tommi's hack
+exists(/opt/local/libexec/llvm-3.2/bin/clang) {
   # This section overrides g++, and selects clang instead. Warning flags are modified to
   # reduce the error spam. Without these we get a constant stream of warnings for
   # each Q_OBJECT macro (which is many).
