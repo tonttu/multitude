@@ -27,7 +27,7 @@ namespace Radiant
   {
   public:
     /// Creates a new XWindow
-    XWindow(const WindowConfig& hint = WindowConfig(0, 0, 640, 480, false, false, true),
+    XWindow(const WindowConfig& hint = WindowConfig(0, 0, 640, 480, false, false, true, 0),
             const char* caption = 0);
     ~XWindow();
 
