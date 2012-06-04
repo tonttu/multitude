@@ -24,6 +24,8 @@ HEADERS += ShaderConstantBlock.hpp
 SOURCES += ShaderConstantBlock.cpp
 HEADERS += ShaderProgram.hpp
 SOURCES += ShaderProgram.cpp
+HEADERS += Texture2.hpp
+SOURCES += Texture2.cpp
 
 HEADERS += VertexDescription.hpp
 SOURCES += VertexDescription.cpp
