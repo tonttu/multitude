@@ -28,8 +28,7 @@ namespace Luminous
   template<GLenum type>
   BufferObject<type>::BufferObject(Luminous::RenderContext * resources)
     : GLResource(resources),
-    m_filled(0),
-    m_bound(false)
+    m_filled(0)
   {
     // info("BufferObject<type>::BufferObject # %p", this);
     glGenBuffers(1, &m_bufferId);
@@ -54,14 +53,12 @@ namespace Luminous
   void BufferObject<type>::bind()
   {
     context()->bindBuffer(type, m_bufferId);
-    m_bound = true;
   }
 
   template<GLenum type>
   void BufferObject<type>::unbind()
   {
     context()->bindBuffer(type, 0);
-    m_bound = false;
   }
 
   template<GLenum type>
@@ -69,27 +66,19 @@ namespace Luminous
   {
     m_filled = bytes;
 
-    if(!m_bound)
-      glBindBuffer(type, m_bufferId);
+    bind();
 
     if(bytes)
       glBufferData(type, bytes, data, usage);
-
-    if(!m_bound)
-      glBindBuffer(type, 0);
   }
 
   template<GLenum type>
   void BufferObject<type>::partialFill(size_t offsetInBytes, const void * data, size_t bytes)
   {
-    if(!m_bound)
-      glBindBuffer(type, m_bufferId);
+    bind();
 
     glBufferSubData(type, offsetInBytes, bytes, data);
     m_filled = Nimble::Math::Max(m_filled, offsetInBytes + bytes);
-
-    if(!m_bound)
-      glBindBuffer(type, 0);
   }
 
 #ifndef LUMINOUS_OPENGLES
@@ -97,8 +86,7 @@ namespace Luminous
   void BufferObject<type>::read(Nimble::Vector2i size, Nimble::Vector2i pos,
                                 Luminous::PixelFormat pix, Usage usage)
   {
-    if(!m_bound)
-      glBindBuffer(type, m_bufferId);
+    bind();
 
     size_t bytes = pix.bytesPerPixel()*size.x*size.y;
     if(m_filled < bytes) {
@@ -107,35 +95,22 @@ namespace Luminous
     }
 
     glReadPixels(pos.x, pos.y, size.x, size.y, pix.layout(), pix.type(), 0);
-
-    if(!m_bound)
-      glBindBuffer(type, 0);
   }
 
   template<GLenum type>
   void * BufferObject<type>::map(AccessMode mode)
   {
-    if(!m_bound)
-      glBindBuffer(type, m_bufferId);
+    bind();
 
-    void * data = glMapBuffer(type, mode);
-
-    if(!m_bound)
-      glBindBuffer(type, 0);
-
-    return data;
+    return glMapBuffer(type, mode);
   }
 
   template<GLenum type>
   void BufferObject<type>::unmap()
   {
-    if(!m_bound)
-      glBindBuffer(type, m_bufferId);
+    bind();
 
     glUnmapBuffer(type);
-
-    if(!m_bound)
-      glBindBuffer(type, 0);
   }
 #endif // LUMINOUS_OPENGLES
 

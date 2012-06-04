@@ -137,8 +137,6 @@ namespace Luminous
         /// OpenGL handle for the vertex buffer
         GLuint m_bufferId;
         size_t m_filled;
-        /// Is the buffer bound or not
-        bool   m_bound;
     };
 
   /// An OpenGL vertex buffer
