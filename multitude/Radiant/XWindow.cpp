@@ -308,26 +308,29 @@ namespace Radiant
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 
-  static int* generateAttributesFromHint(const WindowConfig & hint)
+  static QVector<int> generateAttributesFromHint(const WindowConfig & hint)
   {
-    (void)hint;
+    QVector<int> attributes;
 
-    int* attributes = new int[1024];
-    int* cur = attributes;
+    attributes << GLX_RGBA;
+    attributes << GLX_DOUBLEBUFFER;
+    attributes << GLX_RED_SIZE;
+    attributes << 8;
+    attributes << GLX_GREEN_SIZE;
+    attributes << 8;
+    attributes << GLX_BLUE_SIZE;
+    attributes << 8;
+    attributes << GLX_ALPHA_SIZE;
+    attributes << 8;
+    if(hint.m_antiAliasing > 0) {
+      attributes << GLX_SAMPLE_BUFFERS;
+      attributes << 1;
+      attributes << GLX_SAMPLES;
+      attributes << hint.m_antiAliasing;
+    }
+    attributes << None;
 
-    *(cur++) = GLX_RGBA;
-    *(cur++) = GLX_DOUBLEBUFFER;
-    *(cur++) = GLX_RED_SIZE;
-    *(cur++) = 8;
-    *(cur++) = GLX_GREEN_SIZE;
-    *(cur++) = 8;
-    *(cur++) = GLX_BLUE_SIZE;
-    *(cur++) = 8;
-    *(cur++) = GLX_ALPHA_SIZE;
-    *(cur++) = 8;
-    *(cur++) = None;
-
-    return(attributes);
+    return attributes;
   }
 
   static QPair<Qt::MouseButtons, Qt::KeyboardModifiers> x11StateToQt(unsigned int state)
@@ -433,25 +436,30 @@ namespace Radiant
       return;
     }
 
-
-    int* attributes = generateAttributesFromHint(hint);
-    XVisualInfo* visualInfo = glXChooseVisual(m_d->m_display, DefaultScreen(m_d->m_display), attributes);
-    delete[] attributes;
-    if(visualInfo == 0) {
-      Radiant::error("failed to get visual info");
-      XSetErrorHandler(handler);
-      return;
+    WindowConfig cfg = hint;
+    XVisualInfo* visualInfo = 0;
+    for(;;) {
+      QVector<int> attributes = generateAttributesFromHint(cfg);
+      visualInfo = glXChooseVisual(m_d->m_display, DefaultScreen(m_d->m_display), attributes.data());
+      if(visualInfo) break;
+      if(cfg.m_antiAliasing > 0) {
+        Radiant::warning("Failed to get visual info with %d samples, trying with %d samples", cfg.m_antiAliasing, cfg.m_antiAliasing >> 1);
+        cfg.m_antiAliasing >>= 1;
+      } else {
+        Radiant::error("Failed to get visual info");
+        XSetErrorHandler(handler);
+        return;
+      }
     }
 
-
-    int redSize, greenSize, blueSize, alphaSize, depthSize, stencilSize;
+/*    int redSize, greenSize, blueSize, alphaSize, depthSize, stencilSize;
 
     glXGetConfig(m_d->m_display, visualInfo, GLX_RED_SIZE,   &redSize);
     glXGetConfig(m_d->m_display, visualInfo, GLX_GREEN_SIZE, &greenSize);
     glXGetConfig(m_d->m_display, visualInfo, GLX_BLUE_SIZE,  &blueSize);
     glXGetConfig(m_d->m_display, visualInfo, GLX_ALPHA_SIZE, &alphaSize);
     glXGetConfig(m_d->m_display, visualInfo, GLX_DEPTH_SIZE, &depthSize);
-    glXGetConfig(m_d->m_display, visualInfo, GLX_STENCIL_SIZE, &stencilSize);
+    glXGetConfig(m_d->m_display, visualInfo, GLX_STENCIL_SIZE, &stencilSize);*/
 
     Colormap colormap;
 
