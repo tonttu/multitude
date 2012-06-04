@@ -17,6 +17,9 @@ namespace Luminous {
     Spline();
     ~Spline();
 
+    Spline(Spline && spline);
+    Spline & operator=(Spline && spline);
+
     void addControlPoint(Nimble::Vector2 point, Nimble::Vector4 color, float width);
     void clear();
 
@@ -24,8 +27,6 @@ namespace Luminous {
 
     void recalculate();
   private:
-    class Point;
-    class Vertex;
     class D;
     D * m_d;
   };

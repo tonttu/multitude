@@ -7,11 +7,11 @@
 
 #include <Nimble/Splines.hpp>
 
-namespace Luminous {
+namespace
+{
+  static Luminous::Shader s_shader;
 
-  static Shader s_shader;
-
-  class Spline::Point
+  class Point
   {
   public:
     Point()
@@ -26,7 +26,7 @@ namespace Luminous {
     float           m_width;
   };
 
-  class Spline::Vertex
+  class Vertex
   {
   public:
 
@@ -40,9 +40,13 @@ namespace Luminous {
     Nimble::Vector4 m_color;
   };
 
+}
+
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
+
+namespace Luminous {
 
   class Spline::D
   {
@@ -90,7 +94,7 @@ namespace Luminous {
     m_curve.add(p.m_location);
   }
 
-  Spline::Point Spline::D::interpolate(float index) const
+  Point Spline::D::interpolate(float index) const
   {
     assert(Nimble::Math::isFinite(index));
 
@@ -291,7 +295,7 @@ namespace Luminous {
 
 
   Spline::Spline()
-    : m_d(new D())
+    : m_d(nullptr)
   {
     {
       // Load the shader for rendering
@@ -314,6 +318,19 @@ namespace Luminous {
     delete m_d;
   }
 
+  Spline::Spline(Spline && spline) : m_d(spline.m_d)
+  {
+    spline.m_d = nullptr;
+  }
+
+  Spline & Spline::operator=(Spline && spline)
+  {
+    delete m_d;
+    m_d = spline.m_d;
+    spline.m_d = nullptr;
+    return *this;
+  }
+
   void Spline::addControlPoint(Nimble::Vector2 point, Nimble::Vector4 color, float width)
   {
     Point p;
@@ -321,21 +338,26 @@ namespace Luminous {
     p.m_color = color;
     p.m_width = width;
 
+    if(!m_d)
+      m_d = new D();
     m_d->addPoint(p);
   }
 
   void Spline::clear()
   {
-    m_d->clear();
+    if(m_d)
+      m_d->clear();
   }
 
   void Spline::render(Luminous::RenderContext & r) const
   {
-    m_d->render(r);
+    if(m_d)
+      m_d->render(r);
   }
 
   void Spline::recalculate()
   {
-    m_d->recalculate();
+    if(m_d)
+      m_d->recalculate();
   }
 }
