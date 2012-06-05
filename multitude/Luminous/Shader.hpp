@@ -81,16 +81,16 @@ namespace Luminous {
     /// applies all defined uniforms if necessary. A valid OpenGL context is
     /// required. This function is thread-safe.
     /// @return the program object or null if it failed to link
-    GLSLProgramObject * bind();
+    GLSLProgramObject * bind() const;
 
     /** Unbinds the shader. */
-    void unbind();
+    void unbind() const;
 
     /// Get the OpenGL program object
     /// Returns a compiled program object that has not been linked.
     /// @param res resource container to associate the shader program with
     /// @return OpenGL program object
-    GLSLProgramObject * program(Luminous::RenderContext * res = 0);
+    GLSLProgramObject * program(Luminous::RenderContext * res = 0) const;
 
     /// Adds a Attribute as a shader uniform
     /** Once the Attribute has been added to this shader its value

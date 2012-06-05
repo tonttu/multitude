@@ -241,7 +241,7 @@ namespace Luminous {
     m_self->m_uniforms.add(obj);
   }
 
-  GLSLProgramObject * Shader::bind()
+  GLSLProgramObject * Shader::bind() const
   {
     Luminous::Utils::glCheck("Shader::bind # Before entry");
 
@@ -280,14 +280,14 @@ namespace Luminous {
     return prog;
   }
 
-  void Shader::unbind()
+  void Shader::unbind() const
   {
     GLSLProgramObject * p = program();
     if(p)
       p->unbind();
   }
 
-  GLSLProgramObject * Shader::program(Luminous::RenderContext * res)
+  GLSLProgramObject * Shader::program(Luminous::RenderContext * res) const
   {
     GLSLProgramObject & prog = ref(res);
 
