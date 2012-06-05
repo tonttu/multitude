@@ -85,6 +85,7 @@ namespace Luminous
     template <class S>
     void addFirstVertex(const S & a)
     {
+      assert(m_program != nullptr && m_func != nullptr);
       if(!empty())
         m_vertices.addVertex<S>(a);
       m_vertices.addVertex<S>(a);

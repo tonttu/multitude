@@ -1449,6 +1449,7 @@ namespace Luminous
 
     RenderPacket & rp = * m_data->m_renderPacket;
     rp.setProgram(m_data->m_program);
+    rp.setPacketRenderFunction(RectVertex::render);
 
     RectVertex va;
     va.m_color = style.color();
@@ -1458,7 +1459,7 @@ namespace Luminous
     va.m_location = area.low();
     va.m_texCoord = style.texCoords().low();
 
-    rp.addLastVertex(va);
+    rp.addFirstVertex(va);
 
     va.m_location = area.highLow();
     va.m_texCoord = style.texCoords().highLow();
@@ -1482,6 +1483,7 @@ namespace Luminous
     RenderPacket & rp = * m_data->m_renderPacket;
 
     rp.setProgram(m_data->m_program);
+    rp.setPacketRenderFunction(RectVertex::render);
 
     RectVertex va;
 
@@ -1490,9 +1492,7 @@ namespace Luminous
     va.m_location = area.low();
     va.m_objectTransform = transform().transposed();
 
-    if(!rp.empty())
-      rp.addVertex(va);
-    rp.addVertex(va);
+    rp.addFirstVertex(va);
 
     va.m_location = hole.low();
     rp.addVertex(va);
@@ -1515,8 +1515,7 @@ namespace Luminous
     va.m_location = area.low();
     rp.addVertex(va);
     va.m_location = hole.low();
-    rp.addVertex(va);
-    rp.addVertex(va);
+    rp.addLastVertex(va);
   }
 
   void RenderContext::drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2,
@@ -1572,6 +1571,8 @@ namespace Luminous
     m_data->m_basic_shader->bind();
 
     RenderPacket & rp = * m_data->m_renderPacket;
+    rp.setProgram(m_data->m_basic_shader.get());
+    rp.setPacketRenderFunction(RectVertex::render);
 
     RectVertex va;
     va.m_color = style.color();
@@ -1580,9 +1581,8 @@ namespace Luminous
 
     va.m_location = corners[0];
     va.m_texCoord = style.texCoords().lowHigh();
-    if(!rp.empty())
-      rp.addVertex(va);
-    rp.addVertex(va);
+
+    rp.addFirstVertex(va);
 
     va.m_location = corners[1];
     va.m_texCoord = style.texCoords().high();
@@ -1594,8 +1594,7 @@ namespace Luminous
 
     va.m_location = corners[2];
     va.m_texCoord = style.texCoords().highLow();
-    rp.addVertex(va);
-    rp.addVertex(va);
+    rp.addLastVertex(va);
   }
 
   Nimble::Vector2 RenderContext::contextSize() const
