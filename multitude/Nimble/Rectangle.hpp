@@ -19,6 +19,7 @@
 #include "Export.hpp"
 #include "Vector2.hpp"
 #include "Matrix3.hpp"
+#include "Rect.hpp"
 
 #include <vector>
 
@@ -45,6 +46,8 @@ namespace Nimble {
       /// @param size size (width & height) of the rectangle
       /// @param m transformation matrix defining the center of the rectangle
       Rectangle(Nimble::Vector2f size, const Nimble::Matrix3 & m);
+
+      Rectangle(const Nimble::Rectf & rect);
 
       /// Test if a point is inside the rectangle
       /// @param p point to test
