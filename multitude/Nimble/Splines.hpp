@@ -88,6 +88,8 @@ namespace Nimble
 
     PointList m_points;
     PointList m_tangents;
+
+    /// @todo why are these private?
     Nimble::Vector2 get(size_t ii, float h1, float h2, float h3, float h4) const;
     Nimble::Vector2 getPoint(size_t ii, float t) const;
   };
