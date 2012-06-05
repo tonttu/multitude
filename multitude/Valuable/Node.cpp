@@ -131,9 +131,8 @@ namespace Valuable
 
   inline bool Node::ValuePass::operator == (const ValuePass & that) const
   {
-    return m_valid && that.m_valid &&
-        (m_listener == that.m_listener) && (m_from == that.m_from) &&
-        (m_to == that.m_to)
+    return (m_listener == that.m_listener) && (m_from == that.m_from) &&
+           (m_to == that.m_to)
     #ifdef MULTI_WITH_V8
         && (*m_funcv8 == *that.m_funcv8)
     #endif
@@ -166,16 +165,15 @@ namespace Valuable
       (*m_eventSources.begin())->eventRemoveListener(this);
     }
 
-    for(Listeners::iterator it = m_elisteners.begin();
-    it != m_elisteners.end(); it++) {
-      if(it->m_valid) {
-        if(it->m_listener)
-          it->m_listener->eventRemoveSource(this);
+    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); it++) {
+
+      if(it->m_listener)
+        it->m_listener->eventRemoveSource(this);
 #ifdef MULTI_WITH_V8
-        else if(!it->m_funcv8.IsEmpty())
-          it->m_funcv8.Dispose();
+      else if(!it->m_funcv8.IsEmpty())
+        it->m_funcv8.Dispose();
 #endif
-      }
+
     }
 
     foreach(Attribute* vo, m_valueListening) {
@@ -545,20 +543,24 @@ namespace Valuable
     int removed = 0;
 
     QSet<Node *> nodes;
-    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); it++) {
+
+    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); ) {
 
       // match obj if specified
-      if((!obj || it->m_listener == obj) && it->m_valid) {
+      if((!obj || it->m_listener == obj)) {
         // match from & to if specified
         if((from.isNull() || it->m_from == from) &&
            (to.isNull() || it->m_to == to)) {
-          it->m_valid = false;
+
           nodes << it->m_listener;
+          it = m_elisteners.erase(it);
           /* We cannot erase the list iterator, since that might invalidate iterators
              elsewhere. */
           removed++;
+          continue;
         }
       }
+      ++it;
     }
 
     if(removed) {
@@ -566,7 +568,7 @@ namespace Valuable
       // Count number of references left to the objects
       QMap<Node *, size_t> count;
       for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); it++) {
-        if(nodes.contains(it->m_listener) && it->m_valid)
+        if(nodes.contains(it->m_listener))
           ++count[it->m_listener];
       }
 
@@ -720,14 +722,12 @@ namespace Valuable
 
     m_frame++;
 
-    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end();) {
+    auto listenerCopy = m_elisteners;
+
+    for(Listeners::iterator it = listenerCopy.begin(); it != listenerCopy.end();) {
       ValuePass & vp = *it;
 
-      if(!vp.m_valid) {
-        it = m_elisteners.erase(it);
-        continue;
-      }
-      else if(vp.m_frame == m_frame) {
+      if(vp.m_frame == m_frame) {
         /* The listener was added during this function call. Lets not call it yet. */
       }
       else if(vp.m_from == id) {

@@ -186,6 +186,8 @@ namespace Luminous {
 
   void SpriteRenderer::renderSprites(Luminous::RenderContext & r)
   {
+    Luminous::CustomOpenGL cgl(r);
+
     GPUData & gld = m_data->m_gpuData.ref(r.resources());
 
     if(!gld.m_vbo.filled())

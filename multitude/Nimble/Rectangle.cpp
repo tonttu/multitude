@@ -47,7 +47,16 @@ namespace Nimble
     m_axis0.normalize();
     m_axis1.normalize();
   }
-  
+
+  Rectangle::Rectangle(const Nimble::Rectf & rect)
+  {
+    m_origin = rect.center();
+    m_axis0 = Nimble::Vector2f(1, 0);
+    m_axis1 = Nimble::Vector2f(0, 1);
+    m_extent0 = rect.width() * 0.5f;
+    m_extent1 = rect.height() * 0.5f;
+  }
+
   bool Rectangle::inside(Nimble::Vector2f p) const
   {
     p -= m_origin;

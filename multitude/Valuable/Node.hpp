@@ -384,7 +384,7 @@ namespace Valuable
 
     class ValuePass {
     public:
-      ValuePass() : m_listener(0), m_func(), m_func2(), m_valid(true), m_frame(-1), m_type(DIRECT) {}
+      ValuePass() : m_listener(0), m_func(), m_func2(), m_frame(-1), m_type(DIRECT) {}
 
       inline bool operator == (const ValuePass & that) const;
 
@@ -397,7 +397,6 @@ namespace Valuable
       Radiant::BinaryData   m_defaultData;
       QString m_from;
       QString m_to;
-      bool        m_valid;
       int         m_frame;
       ListenerType m_type;
     };
