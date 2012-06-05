@@ -191,7 +191,7 @@ namespace Luminous {
       return;
     }
 
-    float step = 1;
+    float step = 0.1f;
     const float len = path.curve.size();
     std::vector<Point> points;
 
