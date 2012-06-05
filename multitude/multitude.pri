@@ -48,7 +48,7 @@ DEPENDPATH += $$PWD
 
 withbundles = $$(MULTI_BUNDLES)
 
-!mobile*:MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat
+!mobile*:MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat -lavfilter -lswscale
 
 # 1.9.2-rc2
 CORNERSTONE_VERSION_STR = $$cat(../VERSION)
@@ -141,7 +141,7 @@ linux-*{
   !mobile:QMAKE_LIBDIR += $$PWD/Linux/lib
 
   exists(/opt/multitouch-ffmpeg/include/libavcodec/avcodec.h) {
-    MULTI_FFMPEG_LIBS = -L/opt/multitouch-ffmpeg/lib -lavcodec-multitouch -lavutil-multitouch -lavformat-multitouch -lavdevice-multitouch
+    MULTI_FFMPEG_LIBS = -L/opt/multitouch-ffmpeg/lib -lavcodec-multitouch -lavutil-multitouch -lavformat-multitouch -lavdevice-multitouch -lavfilter-multitouch -lswscale-multitouch
     INCLUDEPATH += /opt/multitouch-ffmpeg/include
   }
 
