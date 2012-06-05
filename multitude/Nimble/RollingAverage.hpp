@@ -28,13 +28,13 @@ namespace Nimble {
 
       */
   template <class T>
-  class NIMBLE_API RollinAverageT
+  class NIMBLE_API RollingAverageT
   {
   public:
     /// Data type of the vector
     typedef T type;
 
-    RollinAverageT() : m_any(false) {}
+    RollingAverageT() : m_any(false) {}
 
     void reset(const T & value)
     {
@@ -68,11 +68,11 @@ namespace Nimble {
   };
 
 
-  typedef RollinAverageT<float> RollinAverageFloat;
-  typedef RollinAverageT<double> RollinAverageDouble;
-  typedef RollinAverageT<Vector2> RollinAverageVector2;
-  typedef RollinAverageT<Vector3> RollinAverageVector3;
-  typedef RollinAverageT<Vector4> RollinAverageVector4;
+  typedef RollingAverageT<float> RollingAverageFloat;
+  typedef RollingAverageT<double> RollingAverageDouble;
+  typedef RollingAverageT<Vector2> RollingAverageVector2;
+  typedef RollingAverageT<Vector3> RollingAverageVector3;
+  typedef RollingAverageT<Vector4> RollingAverageVector4;
 
 #ifdef WIN32
 #ifdef NIMBLE_EXPORT
