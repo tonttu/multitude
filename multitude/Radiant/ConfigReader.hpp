@@ -156,6 +156,31 @@ namespace Radiant {
     ChunkT() {clearFirst=false; m_chunks = new std::multimap<QString, ChunkT<T> >(); }
     ~ChunkT() { delete m_chunks; }
 
+    ChunkT(const ChunkT & copy)
+      : clearFirst(copy.clearFirst)
+      , m_chunks(new std::multimap<QString, ChunkT<T> >(*copy.m_chunks))
+      , m_variants(copy.m_variants)
+    {
+    }
+
+    ChunkT & operator= (const ChunkT & copy)
+    {
+      clear();
+
+      clearFirst = copy.clearFirst;
+
+      /// @todo why doesn't this work?
+      //std::copy(copy.m_chunks->begin(), copy.m_chunks->end(), m_chunks->begin());
+
+      for(auto i = copy.m_chunks->begin(); i != copy.m_chunks->end(); ++i)
+        m_chunks->insert(*i);
+
+      for(auto i = copy.m_variants.begin(); i != copy.m_variants.end(); ++i)
+        m_variants.insert(*i);
+
+      return *this;
+    }
+
     /// Returns the number of elements with given id/tag
     int numberOf(const QString & id) const;
 
