@@ -8,7 +8,7 @@
 
 #include <Patterns/NotCopyable.hpp>
 
-class QIODevice;
+class QDataStream;
 
 namespace Luminous {
 
@@ -35,14 +35,16 @@ namespace Luminous {
 
     float endTime() const;
 
-    void saveTo(QIODevice & io) const;
-    void loadFrom(QIODevice & io);
-
   private:
+    friend QDataStream & operator<<(QDataStream & out, const Spline & spline);
+    friend QDataStream & operator>>(QDataStream & in, Spline & spline);
+
     class D;
     D * m_d;
   };
 
+  LUMINOUS_API QDataStream & operator<<(QDataStream & out, const Spline & spline);
+  LUMINOUS_API QDataStream & operator>>(QDataStream & in, Spline & spline);
 }
 
 #endif // SPLINE_HPP

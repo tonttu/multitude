@@ -458,43 +458,42 @@ namespace Luminous {
     return m_d ? m_d->m_endTime : 0;
   }
 
-  void Spline::saveTo(QIODevice & io) const
+  QDataStream & operator<<(QDataStream & out, const Spline & spline)
   {
-    if(!m_d) return;
+    if(!spline.m_d) return out;
 
-    const long hdr = 0;
-    io.write(reinterpret_cast<const char*>(&hdr), sizeof(hdr));
-
-    const long paths = m_d->m_paths.size();
-    io.write(reinterpret_cast<const char*>(&paths), sizeof(paths));
+    const qint64 hdr = 0;
+    const qint64 paths = spline.m_d->m_paths.size();
+    out << hdr << paths;
 
     for(long i = 0; i < paths; ++i) {
-      const std::vector<Point> & points = m_d->m_paths[i].points;
-      const long size = points.size();
-      io.write(reinterpret_cast<const char*>(&size), sizeof(size));
-      io.write(reinterpret_cast<const char*>(points.data(), size * sizeof(points[0])));
+      const std::vector<Point> & points = spline.m_d->m_paths[i].points;
+      const qint64 size = points.size();
+      out << size;
+      out.writeRawData(reinterpret_cast<const char*>(points.data()), size * sizeof(points[0]));
     }
+    return out;
   }
 
-  void Spline::loadFrom(QIODevice & io)
+  QDataStream & operator>>(QDataStream & in, Spline & spline)
   {
-    clear();
-    if(!m_d)
-      m_d = new D();
-    long hdr = 0;
-    long paths = 0;
-    io.read(reinterpret_cast<char*>(&hdr), sizeof(hdr));
-    io.read(reinterpret_cast<char*>(&paths), sizeof(paths));
+    spline.clear();
+    if(!spline.m_d)
+      spline.m_d = new Spline::D();
+    qint64 hdr = 0;
+    qint64 paths = 0;
+    in >> hdr >> paths;
 
     std::vector<Point> points;
     for(long i = 0; i < paths; ++i) {
-      long size = 0;
-      io.read(reinterpret_cast<char*>(&size), sizeof(size));
+      qint64 size = 0;
+      in >> size;
       points.resize(size);
-      io.read(reinterpret_cast<char*>(points.data()), size * sizeof(points[0]));
+      in.readRawData(reinterpret_cast<char*>(points.data()), size * sizeof(points[0]));
       for(std::size_t j = 0; j < points.size(); ++j)
-        m_d->addPoint(points[j]);
-      m_d->endPath();
+        spline.m_d->addPoint(points[j]);
+      spline.m_d->endPath();
     }
+    return in;
   }
 }
