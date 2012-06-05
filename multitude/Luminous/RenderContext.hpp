@@ -230,10 +230,16 @@ namespace Luminous
       @param toRadians end angle in radians
       @param width width of the arc
       @param fill color and other parameters for the arc
-      @param segments number of segments to use
       */
     void drawArc(Nimble::Vector2f center, float radius, float fromRadians, float toRadians,
                  float width, const Luminous::Style & fill);
+
+    /** Draws a circle
+      @param center center of the arc
+      @param radius radius of the arc
+      @param fill color and other parameters for the circle
+      */
+    void drawCircle(Nimble::Vector2f center, float radius, const Luminous::Style & fill);
 
     /** Draws a cut sector in a circle or a wedge.
       @param center center of the circle

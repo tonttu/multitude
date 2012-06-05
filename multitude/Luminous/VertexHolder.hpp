@@ -40,13 +40,14 @@ namespace Luminous
         if(empty())
           strcpy(m_vertextype, stype);
         else if(strcmp(stype, m_vertextype) != 0) {
-          Radiant::fatal("VertexHolder::addVertex # Expected \"%s\" got \"%s\"", m_vertextype, stype);
+          Radiant::fatal("VertexHolder::addVertex # Expected \"%s\" got \"%s\" after %d",
+                         m_vertextype, stype, (int) bytes());
         }
       }
 
       size_t now = m_buffer.size();
       m_buffer.resize(now + sizeof(v));
-      * (S*) & m_buffer[now] = v;
+      * ((S*) & m_buffer[now]) = v;
     }
 
     /// Number of elements of kind S in the buffer
@@ -78,6 +79,21 @@ namespace Luminous
     template <class S>
     void addVertex(const S & a)
     {
+      m_vertices.addVertex<S>(a);
+    }
+
+    template <class S>
+    void addFirstVertex(const S & a)
+    {
+      if(!empty())
+        m_vertices.addVertex<S>(a);
+      m_vertices.addVertex<S>(a);
+    }
+
+    template <class S>
+    void addLastVertex(const S & a)
+    {
+      m_vertices.addVertex<S>(a);
       m_vertices.addVertex<S>(a);
     }
 
@@ -117,6 +133,30 @@ namespace Luminous
     float           m_useTexture;
     //to help debug
     friend std::ostream& operator<<(std::ostream& s, RectVertex& r)
+    {
+        s<<"[ m_location ="<<r.m_location
+         <<", m_texCoord="<<r.m_texCoord
+         <<", m_useTexture="<<r.m_useTexture
+         <<" ]"<<std::endl;
+        return s;
+    }
+  };
+
+  class CircleVertex
+  {
+  public:
+    CircleVertex() { memset(this, 0, sizeof (*this)); }
+
+    static void render(RenderContext &, RenderPacket &);
+
+    Nimble::Matrix3 m_objectTransform;
+    Nimble::Vector2 m_location;
+    Nimble::Vector2 m_objCoord;
+    Nimble::Vector2 m_texCoord;
+    Nimble::Vector4 m_color;
+    float           m_useTexture;
+    //to help debug
+    friend std::ostream& operator<<(std::ostream& s, CircleVertex& r)
     {
         s<<"[ m_location ="<<r.m_location
          <<", m_texCoord="<<r.m_texCoord

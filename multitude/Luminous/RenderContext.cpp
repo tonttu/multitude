@@ -261,8 +261,8 @@ namespace Luminous
             "  gl_FragColor.w *= smoothstep(1.00, border_start, r);"\
             "}";
 
-        m_circle_shader.reset(new GLSLProgramObject());
-        m_circle_shader->loadStrings(circ_vert_shader, circ_frag_shader);
+        m_circle_shader_old.reset(new GLSLProgramObject());
+        m_circle_shader_old->loadStrings(circ_vert_shader, circ_frag_shader);
 
         m_polyline_shader.reset(new GLSLProgramObject());
         const char * polyline_frag = SHADER(
@@ -319,6 +319,13 @@ namespace Luminous
           fatal("Could not load arc shader for rendering");
         m_arc_shader.reset(arc);
 
+        GLSLProgramObject * circle =
+            GLSLProgramObject::fromFiles(locateStandardShader("circle_tex.vs").toUtf8().data(),
+                                         locateStandardShader("circle_tex.fs").toUtf8().data());
+        if(!circle)
+          fatal("Could not load circle shader for rendering");
+        m_circle_shader.reset(circle);
+
         m_viewFBO.reset(new Luminous::Framebuffer());
 
         m_emptyTexture.reset(Texture2D::fromBytes(GL_RGB, 32, 32, 0,
@@ -371,13 +378,13 @@ namespace Luminous
       if(rgba)
         glColor4fv(rgba);
 
-      m_circle_shader->bind();
+      m_circle_shader_old->bind();
 
       // uniform scaling assumed, should work fine with "reasonable" non-uniform scaling
       float totalRadius = m.extractScale() * radius;
       float border = Nimble::Math::Min(1.0f, totalRadius-2.0f);
-      m_circle_shader->setUniformFloat("border_start", (totalRadius-border)/totalRadius);
-      GLint matrixLoc = m_circle_shader->getUniformLoc("matrix");
+      m_circle_shader_old->setUniformFloat("border_start", (totalRadius-border)/totalRadius);
+      GLint matrixLoc = m_circle_shader_old->getUniformLoc("matrix");
       glUniformMatrix4fv(matrixLoc, 1, GL_TRUE, t.data());
 
       // using a VBO with 4 vertices is actually slower than this
@@ -385,7 +392,7 @@ namespace Luminous
       glVertexPointer(2, GL_FLOAT, 0, rect_vertices);
       glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
       glDisableClientState(GL_VERTEX_ARRAY);
-      m_circle_shader->unbind();
+      m_circle_shader_old->unbind();
     }
 
     void drawPolyLine(RenderContext& r, const Nimble::Vector2f * vertices, int n,
@@ -485,10 +492,11 @@ namespace Luminous
     unsigned long m_renderCount;
     unsigned long m_frameCount;
 
-    std::shared_ptr<Luminous::GLSLProgramObject> m_circle_shader;
+    std::shared_ptr<Luminous::GLSLProgramObject> m_circle_shader_old;
     std::shared_ptr<Luminous::GLSLProgramObject> m_polyline_shader;
     std::shared_ptr<Luminous::GLSLProgramObject> m_basic_shader;
     std::shared_ptr<Luminous::GLSLProgramObject> m_arc_shader;
+    std::shared_ptr<Luminous::GLSLProgramObject> m_circle_shader;
 
     const Luminous::MultiHead::Area * m_area;
     const Luminous::MultiHead::Window * m_window;
@@ -1078,6 +1086,42 @@ namespace Luminous
     flush();
   }
 
+  void RenderContext::drawCircle(Nimble::Vector2f center, float radius, const Luminous::Style & style)
+  {
+    flush();
+    m_data->m_circle_shader->bind();
+
+    RenderPacket & rp = * m_data->m_renderPacket;
+    rp.setProgram(&*m_data->m_circle_shader);
+    rp.setPacketRenderFunction(CircleVertex::render);
+
+    CircleVertex va;
+    va.m_color = style.color();
+    va.m_useTexture = style.texturing();
+    va.m_objectTransform = transform().transposed();
+
+    va.m_location = center - Nimble::Vector2(radius, radius);
+    va.m_texCoord = style.texCoords().low();
+    va.m_objCoord.make(0, 0);
+
+    rp.addFirstVertex(va);
+
+    va.m_location = center + Nimble::Vector2(radius, -radius);
+    va.m_texCoord = style.texCoords().highLow();
+    va.m_objCoord.make(1, 0);
+    rp.addVertex(va);
+
+    va.m_location = center + Nimble::Vector2(-radius, radius);
+    va.m_texCoord = style.texCoords().lowHigh();
+    va.m_objCoord.make(0, 1);
+    rp.addVertex(va);
+
+    va.m_location = center + Nimble::Vector2(radius, radius);
+    va.m_texCoord = style.texCoords().high();
+    va.m_objCoord.make(1, 1);
+    rp.addLastVertex(va);
+    flush();
+  }
 
   void RenderContext::drawWedge(Nimble::Vector2f center, float radius1,
                                 float radius2, float fromRadians, float toRadians,
@@ -1413,9 +1457,8 @@ namespace Luminous
 
     va.m_location = area.low();
     va.m_texCoord = style.texCoords().low();
-    if(!rp.empty())
-      rp.addVertex(va);
-    rp.addVertex(va);
+
+    rp.addLastVertex(va);
 
     va.m_location = area.highLow();
     va.m_texCoord = style.texCoords().highLow();
@@ -1427,8 +1470,7 @@ namespace Luminous
 
     va.m_location = area.high();
     va.m_texCoord = style.texCoords().high();
-    rp.addVertex(va);
-    rp.addVertex(va);
+    rp.addLastVertex(va);
   }
 
   void RenderContext::drawRectWithHole(const Nimble::Rect & area,
@@ -1527,6 +1569,8 @@ namespace Luminous
 
   void RenderContext::drawQuad(const Nimble::Vector2 * corners, const Luminous::Style & style)
   {
+    m_data->m_basic_shader->bind();
+
     RenderPacket & rp = * m_data->m_renderPacket;
 
     RectVertex va;
@@ -1711,6 +1755,7 @@ namespace Luminous
     Utils::glCheck("RenderContext::bindProgram # 1");
 
     if(m_data->m_program != program) {
+      flush();
       if(program)
         glUseProgram(program->m_handle);
       else
@@ -1741,6 +1786,9 @@ namespace Luminous
     assert(rf != 0);
 
     (*rf)(*this, *rp);
+
+    rp->setPacketRenderFunction(0);
+    rp->setProgram(0);
   }
 
   void RenderContext::restart()
