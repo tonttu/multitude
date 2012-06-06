@@ -324,7 +324,7 @@ namespace Luminous {
 
   bool Shader::isDefined() const
   {
-    return !m_self->m_fragmentShader.isEmpty() ||
+    return !m_self->m_fragmentShader.isEmpty() &&
         !m_self->m_vertexShader.isEmpty();
   }
 }

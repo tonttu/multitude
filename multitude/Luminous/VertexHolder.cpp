@@ -51,10 +51,11 @@ namespace Luminous
     int omr2 = prog.getAttribLoc("object_transform_r2");
     int omr3 = prog.getAttribLoc("object_transform_r3");
 
-//    if((aloc < 0) || (acol < 0) || (atex < 0) || (aute < 0)) {
-//      fatal("RenderContext::flush # %d vertices %p %p %d", (int) rp.vertices().count<RectVertex>(),
-//            m_data->m_program, &*m_data->m_basic_shader, (int) prog.getAttribLoc("location"));
-//    }
+    if((aloc < 0) || (acol < 0) || (atex < 0) || (aute < 0)) {
+      Radiant::warning("RenderContext::flush # %d vertices program=%p aloc=%d, acol=%d, atex=%d, aute=%d\n",
+            (int) rp.vertices().count<RectVertex>(),
+                     rp.program(), aloc, acol, atex, aute);
+    }
     Utils::glCheck("RectVertex::render # 2");
 
     /*

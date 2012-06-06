@@ -463,9 +463,16 @@ namespace Luminous
                           size_t offset)
                             : m_pos(pos)
     {
+      if(pos >= 0)
+      {
       glEnableVertexAttribArray(pos);
       glVertexAttribPointer(pos, elems, type, normalized,
                             (GLsizei)stride, (char*)0 + offset);
+      }
+      else
+      {
+        Radiant::warning("Luminous::VertexAttribArrayStep: trying to enable an attribute array with invalid index\n");
+      }
     }
 
     ~VertexAttribArrayStep ()
