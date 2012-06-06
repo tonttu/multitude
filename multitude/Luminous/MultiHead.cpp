@@ -101,8 +101,53 @@ namespace Luminous {
                                                  -1000.0f, 1000.0f);
     // Radiant::info("Matrix = %s", Radiant::FixedStr256(m, 5).str());
 
-    r.setViewTransform(m_keyStone.matrix() * m);
+    Nimble::Matrix4 km = m_keyStone.matrix();
 
+    Nimble::Matrix4 x1 = Nimble::Matrix4::scale3D(Nimble::Vector3(2, 2, 2));
+
+    Nimble::Matrix4 x2 = Nimble::Matrix4::translate3D(Nimble::Vector3(-1, -1, 0));
+
+    Nimble::Matrix4 x3 = Nimble::Matrix4::translate3D(Nimble::Vector3(1, 1, 0));
+    Nimble::Matrix4 x4 = Nimble::Matrix4::scale3D(Nimble::Vector3(.5f, .5f, .5f));
+
+    /*
+#if 1
+    Nimble::Matrix4 t1 = Nimble::Matrix4::scale3D(Nimble::Vector3(2, 2, 2)) *
+        Nimble::Matrix4::translate3D(Nimble::Vector3(-1, -1, -1));
+
+    Nimble::Matrix4 t2 = Nimble::Matrix4::translate3D(Nimble::Vector3(1, 1, 1)) *
+        Nimble::Matrix4::scale3D(Nimble::Vector3(.5f, .5f, .5f));
+#else
+    Nimble::Matrix4 t1 =
+        Nimble::Matrix4::translate3D(Nimble::Vector3(-1, -1, -1)) *
+        Nimble::Matrix4::scale3D(Nimble::Vector3(2, 2, 2));
+
+    Nimble::Matrix4 t2 =
+        Nimble::Matrix4::scale3D(Nimble::Vector3(.5f, .5f, .5f)) *
+        Nimble::Matrix4::translate3D(Nimble::Vector3(1, 1, 1));
+#endif
+*/
+    // r.setViewTransform(m * t2 * km * t1);
+    // r.setViewTransform(x3 * x4 * km * x1 * x2 * m);
+    // r.setViewTransform(x2 * x1 * km * x4 * x3 * m);
+    // r.setViewTransform(x2 * x1 * km * x4 * x3 * m);
+    // r.setViewTransform(x2 * x1 * km * x4 * x3 * m); // This is "correct" line that does not work
+    r.setViewTransform(m);
+
+    // Nimble::Vector4 tmp(b.high().x, b.high().y, 0, 1);
+    // Nimble::Vector4 tmp(0, 0, 0, 1);
+    // tmp = r.viewTransform() * tmp;
+
+    /*Nimble::Vector4 tmp(-1, -1, 0, 1);
+    tmp = x2 * x1 * km * x4 * x3 * tmp;
+    */
+    /*Nimble::Vector4 tmp(650, 380, 0, 1);
+    tmp = m * tmp;
+    */
+    /*
+    std::cout << "Matrices:\n" << m << km << r.viewTransform() << "\n"
+              << tmp << "\n";
+              */
 #ifdef LUMINOUS_OPENGL_FULL
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -110,12 +155,13 @@ namespace Luminous {
     if(m_method == METHOD_MATRIX_TRICK)
       m_keyStone.applyGlState();
 
-    glPushMatrix(); // Recovered in cleanEdges
 
     glOrtho(m_graphicsLocation[0] - m_seams[0],
             m_graphicsLocation[0] + m_graphicsSize[0] + m_seams[1],
             m_graphicsLocation[1] + m_graphicsSize[1] + m_seams[2],
             m_graphicsLocation[1] - m_seams[3], -1e3, 1e3);
+
+    glPushMatrix(); // Recovered in cleanEdges
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
