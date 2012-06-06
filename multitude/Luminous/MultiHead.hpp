@@ -191,7 +191,7 @@ namespace Luminous {
       float cmToPixels(float cm) { return cm / m_pixelSizeCm; }
 
       /// Returns the view transform matrix
-      Nimble::Matrix3 viewTransform();
+      Nimble::Matrix3 viewTransform() const;
 
       /// Swaps the width and height of the graphics size
       void swapGraphicsWidthHeight()

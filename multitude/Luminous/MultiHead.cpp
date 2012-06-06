@@ -344,7 +344,7 @@ namespace Luminous {
     return loc;
   }
 
-  Nimble::Matrix3 MultiHead::Area::viewTransform()
+  Nimble::Matrix3 MultiHead::Area::viewTransform() const
   {
     Nimble::Vector2 gs = m_graphicsBounds.size();
 
