@@ -131,8 +131,14 @@ namespace Luminous {
     // r.setViewTransform(x3 * x4 * km * x1 * x2 * m);
     // r.setViewTransform(x2 * x1 * km * x4 * x3 * m);
     // r.setViewTransform(x2 * x1 * km * x4 * x3 * m);
-    // r.setViewTransform(x2 * x1 * km * x4 * x3 * m); // This is "correct" line that does not work
-    r.setViewTransform(m);
+    if(m_method == METHOD_MATRIX_TRICK) {
+      r.setViewTransform(x2 * x1 * km * x4 * x3 * m);
+    }
+    else {
+      r.setViewTransform(m);
+    }
+
+    // r.setViewTransform(m);
 
     // Nimble::Vector4 tmp(b.high().x, b.high().y, 0, 1);
     // Nimble::Vector4 tmp(0, 0, 0, 1);
@@ -152,15 +158,17 @@ namespace Luminous {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    if(m_method == METHOD_MATRIX_TRICK)
-      m_keyStone.applyGlState();
-
-
-    glOrtho(m_graphicsLocation[0] - m_seams[0],
-            m_graphicsLocation[0] + m_graphicsSize[0] + m_seams[1],
-            m_graphicsLocation[1] + m_graphicsSize[1] + m_seams[2],
-            m_graphicsLocation[1] - m_seams[3], -1e3, 1e3);
-
+    if(m_method == METHOD_MATRIX_TRICK) {
+      // m_keyStone.applyGlState();
+      glLoadMatrixf(r.viewTransform().transposed().data());
+    }
+    else {
+      Radiant::error("METHOD_TEXTURE_READBACK currently unsupported");
+      glOrtho(m_graphicsLocation[0] - m_seams[0],
+              m_graphicsLocation[0] + m_graphicsSize[0] + m_seams[1],
+              m_graphicsLocation[1] + m_graphicsSize[1] + m_seams[2],
+              m_graphicsLocation[1] - m_seams[3], -1e3, 1e3);
+    }
     glPushMatrix(); // Recovered in cleanEdges
 
     glMatrixMode(GL_MODELVIEW);
