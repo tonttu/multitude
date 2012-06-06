@@ -231,11 +231,11 @@ namespace Luminous {
     {
       Sprite tmp;
 
-      VertexAttribArrayStep sl(lpos, 2, GL_FLOAT, sizeof(Sprite), offsetBytes(tmp.m_location, tmp));
-      VertexAttribArrayStep sv(vpos, 2, GL_FLOAT, sizeof(Sprite), offsetBytes(tmp.m_velocity, tmp));
-      VertexAttribArrayStep sc(cpos, 4, GL_FLOAT, sizeof(Sprite), offsetBytes(tmp.m_color, tmp));
-      VertexAttribArrayStep ss(spos, 1, GL_FLOAT, sizeof(Sprite), offsetBytes(tmp.m_size, tmp));
-      VertexAttribArrayStep rs(rpos, 1, GL_FLOAT, sizeof(Sprite), offsetBytes(tmp.m_rotation, tmp));
+      VertexAttribArrayStep sl(lpos, 2, GL_FLOAT, GL_FALSE, sizeof(Sprite), offsetBytes(tmp.m_location, tmp));
+      VertexAttribArrayStep sv(vpos, 2, GL_FLOAT, GL_FALSE, sizeof(Sprite), offsetBytes(tmp.m_velocity, tmp));
+      VertexAttribArrayStep sc(cpos, 4, GL_FLOAT, GL_FALSE, sizeof(Sprite), offsetBytes(tmp.m_color, tmp));
+      VertexAttribArrayStep ss(spos, 1, GL_FLOAT, GL_FALSE, sizeof(Sprite), offsetBytes(tmp.m_size, tmp));
+      VertexAttribArrayStep rs(rpos, 1, GL_FLOAT, GL_FALSE, sizeof(Sprite), offsetBytes(tmp.m_rotation, tmp));
 
       size_t n = gld.m_vbo.filled() / sizeof(Sprite);
 

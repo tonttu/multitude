@@ -65,14 +65,14 @@ namespace Luminous
     rp.vbo().bind();
     rp.vbo().fill(rp.vertexData<RectVertex>(), rp.vertices().bytes(), Luminous::VertexBuffer::DYNAMIC_DRAW);
 
-    VertexAttribArrayStep ls(aloc, 2, GL_FLOAT, vsize, offsetBytes(vr.m_location, vr));
-    VertexAttribArrayStep cs(acol, 4, GL_FLOAT, vsize, offsetBytes(vr.m_color, vr));
-    VertexAttribArrayStep ts(atex, 2, GL_FLOAT, vsize, offsetBytes(vr.m_texCoord, vr));
-    VertexAttribArrayStep ut(aute, 1, GL_FLOAT, vsize, offsetBytes(vr.m_useTexture, vr));
+    VertexAttribArrayStep ls(aloc, 2, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_location, vr));
+    VertexAttribArrayStep cs(acol, 4, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_color, vr));
+    VertexAttribArrayStep ts(atex, 2, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_texCoord, vr));
+    VertexAttribArrayStep ut(aute, 1, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_useTexture, vr));
 
-    VertexAttribArrayStep mr1(omr1, 3, GL_FLOAT, vsize, offsetBytes(vr.m_objectTransform[0], vr));
-    VertexAttribArrayStep mr2(omr2, 3, GL_FLOAT, vsize, offsetBytes(vr.m_objectTransform[1], vr));
-    VertexAttribArrayStep mr3(omr3, 3, GL_FLOAT, vsize, offsetBytes(vr.m_objectTransform[2], vr));
+    VertexAttribArrayStep mr1(omr1, 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[0], vr));
+    VertexAttribArrayStep mr2(omr2, 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[1], vr));
+    VertexAttribArrayStep mr3(omr3, 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[2], vr));
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, GLsizei(rp.vertices().count<RectVertex>()));
 
@@ -126,15 +126,15 @@ namespace Luminous
     rp.vbo().bind();
     rp.vbo().fill(rp.vertexData<CircleVertex>(), rp.vertices().bytes(), Luminous::VertexBuffer::DYNAMIC_DRAW);
 
-    VertexAttribArrayStep ls(aloc, 2, GL_FLOAT, vsize, offsetBytes(vr.m_location, vr));
-    VertexAttribArrayStep cs(acol, 4, GL_FLOAT, vsize, offsetBytes(vr.m_color, vr));
-    VertexAttribArrayStep ts(atex, 2, GL_FLOAT, vsize, offsetBytes(vr.m_texCoord, vr));
-    VertexAttribArrayStep os(aobj, 2, GL_FLOAT, vsize, offsetBytes(vr.m_objCoord, vr));
-    VertexAttribArrayStep ut(aute, 1, GL_FLOAT, vsize, offsetBytes(vr.m_useTexture, vr));
+    VertexAttribArrayStep ls(aloc, 2, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_location, vr));
+    VertexAttribArrayStep cs(acol, 4, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_color, vr));
+    VertexAttribArrayStep ts(atex, 2, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_texCoord, vr));
+    VertexAttribArrayStep os(aobj, 2, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objCoord, vr));
+    VertexAttribArrayStep ut(aute, 1, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_useTexture, vr));
 
-    VertexAttribArrayStep mr1(omr1, 3, GL_FLOAT, vsize, offsetBytes(vr.m_objectTransform[0], vr));
-    VertexAttribArrayStep mr2(omr2, 3, GL_FLOAT, vsize, offsetBytes(vr.m_objectTransform[1], vr));
-    VertexAttribArrayStep mr3(omr3, 3, GL_FLOAT, vsize, offsetBytes(vr.m_objectTransform[2], vr));
+    VertexAttribArrayStep mr1(omr1, 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[0], vr));
+    VertexAttribArrayStep mr2(omr2, 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[1], vr));
+    VertexAttribArrayStep mr3(omr3, 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[2], vr));
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, GLsizei(rp.vertices().count<RectVertex>()));
 

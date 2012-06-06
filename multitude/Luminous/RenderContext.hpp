@@ -459,12 +459,12 @@ namespace Luminous
   class VertexAttribArrayStep : public Patterns::NotCopyable
   {
   public:
-    VertexAttribArrayStep(int pos, int elems, GLenum type, size_t stride,
+    VertexAttribArrayStep(int pos, int elems, GLenum type, GLboolean normalized, size_t stride,
                           size_t offset)
                             : m_pos(pos)
     {
       glEnableVertexAttribArray(pos);
-      glVertexAttribPointer(pos, elems, type, GL_FALSE,
+      glVertexAttribPointer(pos, elems, type, normalized,
                             (GLsizei)stride, (char*)0 + offset);
     }
 

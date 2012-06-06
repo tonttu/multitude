@@ -358,12 +358,13 @@ namespace Luminous {
     Vertex vr;
     const int vsize = sizeof(vr);
 
-    VertexAttribArrayStep ls(aloc, 2, GL_FLOAT, vsize, offsetBytes(vr.m_location, vr));
-    VertexAttribArrayStep ts(aran, 2, GL_FLOAT, vsize, offsetBytes(vr.m_range, vr));
-    VertexAttribArrayStep cs(acol, 4, GL_UNSIGNED_BYTE, vsize, offsetBytes(vr.m_color, vr));
+    VertexAttribArrayStep ls(aloc, 2, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_location, vr));
+    VertexAttribArrayStep ts(aran, 2, GL_FLOAT, false, vsize, offsetBytes(vr.m_range, vr));
+    VertexAttribArrayStep cs(acol, 4, GL_UNSIGNED_BYTE, GL_TRUE, vsize, offsetBytes(vr.m_color, vr));
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, GLsizei(vertices));
 
+    vbo.unbind();
     // Radiant::info("Spline::D::render # %d / %d", vertices, (int) m_vertices.size());
   }
 
