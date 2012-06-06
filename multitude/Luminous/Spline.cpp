@@ -256,6 +256,7 @@ namespace Luminous {
 
     if(!m_vertices.empty()) {
       // degenerated triangle
+      m_vertices.push_back(m_vertices.back());
       m_vertices.push_back(v);
     }
 
@@ -313,8 +314,7 @@ namespace Luminous {
       i = nextIdx;
     }
 
-    // degenerated triangle
-    m_vertices.push_back(m_vertices.back());
+    m_index[v.m_range.x] = m_vertices.size();
   }
 
   void Spline::D::render(Luminous::RenderContext & r, float time) const
