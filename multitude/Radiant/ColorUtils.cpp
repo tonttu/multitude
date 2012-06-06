@@ -64,7 +64,7 @@ namespace Radiant
     }
   }
 
-  void ColorUtils::rgbTohsv(Vector3f & rgb, Vector3f & hsv)
+  void ColorUtils::rgbTohsv(const Vector3f & rgb, Vector3f & hsv)
   {
     rgbTohsv(rgb[0], rgb[1], rgb[2], hsv[0], hsv[1], hsv[2]);
   }
@@ -109,7 +109,7 @@ namespace Radiant
     }
   }
 
-  void ColorUtils::hsvTorgb(Vector3f & hsv, Vector3f & rgb)
+  void ColorUtils::hsvTorgb(const Vector3f & hsv, Vector3f & rgb)
   {
     hsvTorgb(hsv[0], hsv[1], hsv[2], rgb[0], rgb[1], rgb[2]);
   }
