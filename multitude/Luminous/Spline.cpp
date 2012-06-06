@@ -494,6 +494,7 @@ namespace Luminous {
         spline.m_d->addPoint(points[j]);
       spline.m_d->endPath();
     }
+    spline.recalculate();
     return in;
   }
 }
