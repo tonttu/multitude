@@ -817,4 +817,11 @@ namespace Valuable
   {
     return false;
   }
+
+  void Node::clearValues(Layer layer)
+  {
+    for(auto i = m_values.begin(); i != m_values.end(); ++i)
+      i->second->clearValue(layer);
+  }
+
 }

@@ -87,6 +87,10 @@ namespace Valuable
     /// Removes a Attribute from the list of value.
     void removeValue(Attribute * const value);
 
+    /// Clears all values of the given layer
+    /// @param layer layer to clear
+    void clearValues(Layer layer);
+
     /// @todo add 'shortcut' API
     // float getAttributeFloat(const QString & name, bool * ok = 0, float default = 0.f)
     // ...
