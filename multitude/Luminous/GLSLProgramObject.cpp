@@ -245,8 +245,10 @@ namespace Luminous
   {
     int loc = getUniformLoc(name);
 
-    if(loc < 0)
+    if(loc < 0) {
+      Radiant::error("GLSLProgramObject::setUniformMatrix3 # Uniform %s not found", name);
       return false;
+    }
     // info("GLSLProgramObject::setUniformMatrix3 # %d %s", loc, name);
 
 #ifdef LUMINOUS_OPENGL_FULL
@@ -262,8 +264,10 @@ namespace Luminous
   {
     int loc = getUniformLoc(name);
 
-    if(loc < 0)
+    if(loc < 0) {
+      Radiant::error("GLSLProgramObject::setUniformMatrix4 # Uniform %s not found", name);
       return false;
+    }
 
 #ifdef LUMINOUS_OPENGL_FULL
     glUniformMatrix4fv(loc, 1, true, value.data());
