@@ -40,11 +40,11 @@ namespace Radiant
     /// @param[out] v value
     static void rgbTohsv(float r, float g, float b, float & h, float & s, float & v);
     /// @copybrief rgbTohsv
-    static void rgbTohsv(Nimble::Vector3f & rgb, Nimble::Vector3f & hsv);
+    static void rgbTohsv(const Nimble::Vector3f & rgb, Nimble::Vector3f & hsv);
     /// @copybrief rgbTohsv
     static void hsvTorgb(float h, float s, float v, float & r, float & g, float & b);
     /// @copybrief rgbTohsv
-    static void hsvTorgb(Nimble::Vector3f & hsv, Nimble::Vector3f & rgb);
+    static void hsvTorgb(const Nimble::Vector3f & hsv, Nimble::Vector3f & rgb);
 
     /// Convert linear RGB to CIE XYZ tristimulus values
     /// @param rgb linear rgb color
