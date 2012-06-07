@@ -52,7 +52,7 @@ namespace Luminous
     int omr3 = prog.getAttribLoc("object_transform_r3");
 
     if((aloc < 0) || (acol < 0) || (atex < 0) || (aute < 0)) {
-      Radiant::warning("RenderContext::flush # %d vertices program=%p aloc=%d, acol=%d, atex=%d, aute=%d\n",
+      Radiant::warning("RectVertex::render# %d vertices program=%p aloc=%d, acol=%d, atex=%d, aute=%d\n",
             (int) rp.vertices().count<RectVertex>(),
                      rp.program(), aloc, acol, atex, aute);
     }
@@ -105,15 +105,15 @@ namespace Luminous
     int aloc = prog.getAttribLoc("location");
     int acol = prog.getAttribLoc("color");
     int atex = prog.getAttribLoc("tex_coord");
-    int aobj = prog.getAttribLoc("obj_coord");
     int aute = prog.getAttribLoc("use_tex");
+    int aobj = prog.getAttribLoc("obj_coord");
 
     int omr1 = prog.getAttribLoc("object_transform_r1");
     int omr2 = prog.getAttribLoc("object_transform_r2");
     int omr3 = prog.getAttribLoc("object_transform_r3");
 
     if((aloc < 0) || (acol < 0) || (atex < 0) || (aute < 0) || (aobj < 0)) {
-      Radiant::fatal("CircleVertex::render # %d vertices %p %d %d %d %d %d",
+      Radiant::warning("CircleVertex::render # %d vertices %p %d %d %d %d %d",
                      (int) rp.vertices().count<CircleVertex>(),
                      &prog, aloc, acol, atex, aute, aobj);
     }
