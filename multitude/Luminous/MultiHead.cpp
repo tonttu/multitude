@@ -344,6 +344,29 @@ namespace Luminous {
     return loc;
   }
 
+  Nimble::Vector2f MultiHead::Area::graphicsToWindow
+      (Nimble::Vector2f loc, int windowheight, bool & isInside) const
+  {
+    loc -= graphicsBounds().low();
+    loc.descale(graphicsBounds().size());
+    loc.y = 1.0f - loc.y;
+
+    Nimble::Matrix4 m = m_keyStone.matrix();
+    loc = GLKeyStone::projectCorrected(m, loc).vector2();
+
+    Nimble::Rectf rectangle(0.f, 0.f, 1.f, 1.f);
+    bool ok = rectangle.contains(loc);
+
+    isInside = ok;
+
+    loc.y = 1.0f - loc.y;
+    loc.scale(Nimble::Vector2f(m_size->x, m_size->y));
+    loc.y += (windowheight - m_size[1] - m_location[1]);
+    loc.x += m_location[0];
+
+    return loc;
+  }
+
   Nimble::Matrix3 MultiHead::Area::viewTransform() const
   {
     Nimble::Vector2 gs = m_graphicsBounds.size();

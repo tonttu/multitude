@@ -180,6 +180,8 @@ namespace Luminous {
       */
       Nimble::Vector2f windowToGraphics(Nimble::Vector2f loc, int windowheight, bool & insideArea) const;
 
+      Nimble::Vector2f graphicsToWindow(Nimble::Vector2f loc, int windowheight, bool & insideArea) const;
+
       /// Returns true if the area is active (graphics will be drawn to it)
       bool active() const { return m_active; }
 
