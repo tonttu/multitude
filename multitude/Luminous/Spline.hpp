@@ -33,6 +33,7 @@ namespace Luminous {
 
     void recalculate();
 
+    float beginTime() const;
     float endTime() const;
 
   private:
