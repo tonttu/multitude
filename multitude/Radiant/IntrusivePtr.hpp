@@ -152,10 +152,9 @@ namespace Radiant
       return m_ptr;
     }
 
-    /// @todo add explicit keyword (currently my gcc doesnt support it)
-    operator bool() const
+    explicit operator bool() const
     {
-      return m_ptr!=0;
+      return m_ptr!=nullptr;
     }
 
     bool operator! () const { return m_ptr == 0; }
