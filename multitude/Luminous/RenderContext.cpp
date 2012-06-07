@@ -691,15 +691,23 @@ namespace Luminous
     QString pathname;
 #ifdef LUMINOUS_OPENGL_FULL
 
+    const char * shaderpath = getenv("CORNERSTONE_CUSTOM_SHADER_PATH");
+
 #ifdef RADIANT_OSX
-    /* OSX has broken shaders, so lets just go with a different set of shaders where necessary. */
-    QString tmp("../MultiTouch/GL21OSXShaders/");
-    tmp += filename;
-    tmp = Radiant::ResourceLocator::instance().locate(tmp);
-    if(!tmp.isEmpty()) {
-      return tmp;
-    }
+    /* OSX has broken shaders, so lets just go with custom shaders by default. */
+    if(!shaderpath)
+      shaderpath = "../MultiTouch/GL21OSXShaders/";
 #endif
+
+    if(shaderpath) {
+      QString tmp(shaderpath);
+      tmp += filename;
+      tmp = Radiant::ResourceLocator::instance().locate(tmp);
+      if(!tmp.isEmpty()) {
+        return tmp;
+      }
+    }
+
     // pathname = "../MultiTouch/GL20Shaders/";
     pathname = "../MultiTouch/ES20Shaders/";
 #else
