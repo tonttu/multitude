@@ -790,7 +790,7 @@ namespace VideoPlayer2
 
     av_free(av.frame);
 
-    delete audioTransfer;
+    Resonant::DSPNetwork::instance()->markDone(*audioTransfer);
     audioTransfer = 0;
   }
 
@@ -804,7 +804,7 @@ namespace VideoPlayer2
                                  std::numeric_limits<int64_t>::max(),
                                  AVSEEK_FLAG_BYTE);
       } else {
-        int64_t pos = av.formatContext->start_time == AV_NOPTS_VALUE
+        int64_t pos = av.formatContext->start_time == (int64_t) AV_NOPTS_VALUE
             ? 0 : av.formatContext->start_time;
         err = avformat_seek_file(av.formatContext, -1,
                                  std::numeric_limits<int64_t>::min(), pos,
@@ -872,7 +872,7 @@ namespace VideoPlayer2
           seekByBytes = true;
         }
       }
-      if(av.formatContext->start_time != AV_NOPTS_VALUE)
+      if(av.formatContext->start_time != (int64_t) AV_NOPTS_VALUE)
           pos += av.formatContext->start_time;
     }
 
@@ -940,9 +940,9 @@ namespace VideoPlayer2
       return false;
 
     int64_t pts = av_frame_get_best_effort_timestamp(av.frame);
-    if(pts == AV_NOPTS_VALUE)
+    if(pts == (int64_t) AV_NOPTS_VALUE)
       pts = av.frame->pts;
-    if(pts == AV_NOPTS_VALUE)
+    if(pts == (int64_t) AV_NOPTS_VALUE)
       pts = av.frame->pkt_pts;
 
     dpts = av.videoTsToSecs * pts;
@@ -1005,7 +1005,7 @@ namespace VideoPlayer2
               frame->data[i] = output->data[i];
             }
 
-            if(output->pts != AV_NOPTS_VALUE) {
+            if(output->pts != (int64_t) AV_NOPTS_VALUE) {
               pts = output->pts;
               dpts = av.videoTsToSecs * output->pts;
             }
@@ -1085,9 +1085,9 @@ namespace VideoPlayer2
       if(gotFrame) {
         gotFrames = true;
         int64_t pts = av_frame_get_best_effort_timestamp(av.frame);
-        if(pts == AV_NOPTS_VALUE)
+        if(pts == (int64_t) AV_NOPTS_VALUE)
           pts = av.frame->pts;
-        if(pts == AV_NOPTS_VALUE)
+        if(pts == (int64_t) AV_NOPTS_VALUE)
           pts = av.frame->pkt_pts;
 
         dpts = av.audioTsToSecs * pts;
@@ -1124,7 +1124,7 @@ namespace VideoPlayer2
                   Radiant::Sleep::sleepMs(10);
                 }
 
-                if(output->pts != AV_NOPTS_VALUE) {
+                if(output->pts != (int64_t) AV_NOPTS_VALUE) {
                   pts = output->pts;
                   dpts = av.audioTsToSecs * output->pts;
                   nextDpts = dpts + double(output->audio->nb_samples) / output->audio->sample_rate;
