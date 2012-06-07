@@ -34,23 +34,19 @@ namespace VideoPlayer2
 
   struct DecodedImageBuffer
   {
-    DecodedImageBuffer() = default;
-    DecodedImageBuffer(const DecodedImageBuffer &) = delete;
-    DecodedImageBuffer & operator=(DecodedImageBuffer &) = delete;
-
+    DecodedImageBuffer() {}
     QAtomicInt refcount;
     // std::vector<uint8_t, Radiant::aligned_allocator<float, 32>> data;
     std::vector<uint8_t, Radiant::aligned_allocator<uint8_t, 32>> data;
+  private:
+    DecodedImageBuffer(const DecodedImageBuffer &);
+    DecodedImageBuffer & operator=(DecodedImageBuffer &);
   };
 
   class VideoFrame
   {
   public:
     VideoFrame() : imageSize(0, 0), imageBuffer(nullptr) {}
-    VideoFrame(const VideoFrame &) = delete;
-    VideoFrame(VideoFrame &&) = delete;
-    VideoFrame& operator=(const VideoFrame &) = delete;
-    VideoFrame& operator=(VideoFrame &&) = delete;
 
     Timestamp timestamp;
 
@@ -61,12 +57,17 @@ namespace VideoPlayer2
     std::array<const uint8_t *, 3> data;
 
     DecodedImageBuffer * imageBuffer;
+  private:
+    VideoFrame(const VideoFrame &);
+    VideoFrame(VideoFrame &&);
+    VideoFrame& operator=(const VideoFrame &);
+    VideoFrame& operator=(VideoFrame &&);
   };
 
   class VIDEODISPLAY_API AVDecoder : public Radiant::Thread, public Valuable::Node
   {
   public:
-    enum class SeekType
+    enum SeekType
     {
       None = 0,
       Seconds,
@@ -74,7 +75,7 @@ namespace VideoPlayer2
       Bytes
     };
 
-    enum class SeekDirection
+    enum SeekDirection
     {
       Any = 0,
       OnlyForward,

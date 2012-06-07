@@ -95,15 +95,24 @@ namespace Radiant
   };
 
   MouseEvent::MouseEvent(const QMouseEvent & event)
-    : m_d(new D({event.type(), Nimble::Vector2f(event.posF().x(), event.posF().y()),
-                event.button(), event.buttons(), event.modifiers()}))
+    : m_d(new D())
   {
+    m_d->type = event.type();
+    m_d->location = Nimble::Vector2f(event.posF().x(), event.posF().y());
+    m_d->button = event.button();
+    m_d->buttons = event.buttons();
+    m_d->modifiers = event.modifiers();
   }
 
   MouseEvent::MouseEvent(QEvent::Type type, const Nimble::Vector2f & location, Qt::MouseButton button,
               Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers)
-    : m_d(new D({type, location, button, buttons, modifiers}))
+    : m_d(new D())
   {
+    m_d->type = type;
+    m_d->location = location;
+    m_d->button = button;
+    m_d->buttons = buttons;
+    m_d->modifiers = modifiers;
   }
 
   MouseEvent::MouseEvent(const MouseEvent & ev)

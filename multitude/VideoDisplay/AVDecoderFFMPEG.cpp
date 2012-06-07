@@ -31,7 +31,6 @@ extern "C" {
 # include <libavutil/pixdesc.h>
 
 # include <libavformat/avformat.h>
-# include <libavformat/avformat.h>
 
 # include <libavcodec/avcodec.h>
 
@@ -983,7 +982,7 @@ namespace VideoPlayer2
               if(frame) break;
               // Set this here, because another frame might be waiting for us
               // However, if we have a filter that changes pts, this might not be right.
-              if(std::isnan(radiantTimestampToPts)) {
+              if(Nimble::Math::isNAN(radiantTimestampToPts)) {
                 const Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
                 radiantTimestampToPts = dpts + loopOffset - now.secondsD() + 2.0/60.0;
                 setTimestampToPts = true;
@@ -1025,7 +1024,7 @@ namespace VideoPlayer2
       for(;;) {
         frame = decodedVideoFrames.takeFree();
         if(frame) break;
-        if(std::isnan(radiantTimestampToPts)) {
+        if(Nimble::Math::isNAN(radiantTimestampToPts)) {
           const Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
           radiantTimestampToPts = dpts + loopOffset - now.secondsD() + 2.0/60.0;
           setTimestampToPts = true;
@@ -1053,13 +1052,13 @@ namespace VideoPlayer2
     }
 
     // Normally av.packet.duration can't be trusted
-    if(std::isnan(prevDpts)) {
+    if(Nimble::Math::isNAN(prevDpts)) {
       nextDpts = av.videoTsToSecs * (av.packet.duration + pts);
     } else {
       nextDpts = dpts + (dpts - prevDpts);
     }
 
-    if(std::isnan(radiantTimestampToPts) || setTimestampToPts) {
+    if(Nimble::Math::isNAN(radiantTimestampToPts) || setTimestampToPts) {
       const Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
       radiantTimestampToPts = dpts + loopOffset - now.secondsD() + 2.0/60.0;
     }
@@ -1371,7 +1370,7 @@ namespace VideoPlayer2
     if(m_d->audioTransfer)
       return m_d->audioTransfer->toPts(ts);
 
-    if(std::isnan(m_d->radiantTimestampToPts))
+    if(Nimble::Math::isNAN(m_d->radiantTimestampToPts))
       return Timestamp();
 
     return Timestamp(ts.secondsD() + m_d->radiantTimestampToPts, m_d->seekGeneration);
@@ -1510,7 +1509,7 @@ namespace VideoPlayer2
     }
     eventSend("ready");
 
-    enum class EofState {
+    enum EofState {
       Normal,
       Flush,
       Eof
@@ -1570,7 +1569,7 @@ namespace VideoPlayer2
           m_d->seekToBeginning();
           eof = EofState::Normal;
 
-          if(!std::isnan(av.start)) {
+          if(!Nimble::Math::isNAN(av.start)) {
             // might be NaN
             // no need to check because the comparision will just be false
             double newDuration = nextVideoDpts - av.start;
@@ -1625,10 +1624,10 @@ namespace VideoPlayer2
       if(eof == EofState::Flush && !gotFrames)
         eof = EofState::Eof;
 
-      if(std::isnan(av.start) && gotFrames) {
-        if(std::isnan(videoDpts))
+      if(Nimble::Math::isNAN(av.start) && gotFrames) {
+        if(Nimble::Math::isNAN(videoDpts))
           av.start = audioDpts;
-        else if(std::isnan(audioDpts))
+        else if(Nimble::Math::isNAN(audioDpts))
           av.start = videoDpts;
         else
           av.start = std::min(videoDpts, audioDpts);

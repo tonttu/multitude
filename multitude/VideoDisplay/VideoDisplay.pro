@@ -18,7 +18,7 @@ SOURCES += VideoInFFMPEG.cpp
 HEADERS += AudioTransfer2.hpp AVDecoder.hpp AVDecoderFFMPEG.hpp MemoryPool.hpp
 SOURCES += AudioTransfer2.cpp AVDecoder.cpp AVDecoderFFMPEG.cpp
 
-unix:LIBS += $$MULTI_FFMPEG_LIBS
+LIBS += $$MULTI_FFMPEG_LIBS
 
 DEFINES += __STDC_CONSTANT_MACROS
 

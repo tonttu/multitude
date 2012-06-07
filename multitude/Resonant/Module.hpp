@@ -29,7 +29,7 @@ namespace  Radiant {
 namespace Resonant {
 
   class Application;
-  class CallbackTime;
+  struct CallbackTime;
 
   /** Base class for #Resonant signal processing blocks. */
   /// @todo Check if the id could be dropped in favor of

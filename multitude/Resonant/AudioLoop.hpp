@@ -25,7 +25,7 @@
 #include <cstdlib>
 
 class QString;
-class PaStreamCallbackTimeInfo;
+struct PaStreamCallbackTimeInfo;
 namespace Resonant {
 
   struct CallbackTime
