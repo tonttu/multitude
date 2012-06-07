@@ -195,6 +195,8 @@ namespace Luminous {
     const float len = path.curve.size();
     std::vector<Point> points;
 
+    const float mingapSqr = 3.0f * 3.0f;
+
     for(float t = 0.f; t < len - 1; t += step) {
       int ii = static_cast<int>(t);
       float t2 = t - ii;
@@ -203,10 +205,11 @@ namespace Luminous {
       if (points.size() >= 2) {
         Nimble::Vector2 p1 = (lov - points[points.size()-2].m_location);
         Nimble::Vector2 p2 = (lov - points[points.size()-1].m_location);
+        const float p1len2 = p1.lengthSqr();
         p1.normalize();
         p2.normalize();
         // 3 degrees
-        if (dot(p1, p2) > 0.99862953475457383) {
+        if (dot(p1, p2) > 0.99862953475457383 || p1len2 < mingapSqr) {
           points.pop_back();
         }
       }
@@ -217,26 +220,16 @@ namespace Luminous {
       points.push_back(p);
     }
 
-    std::vector<Point> & vertices = points;
-
-    const float mingapSqr = 3.0f * 3.0f;
-
-    const Point * p = & vertices[0];
-    const int n = (int) vertices.size();
+    const int n = (int) points.size();
 
     Vector2f cprev;
-    Vector2f cnow = p->m_location;
+    Vector2f cnow = points[0].m_location;
     Vector2f cnext;
     Vector2f avg;
     Vector2f dirNext;
     Vector2f dirPrev;
 
-    int nextIdx = 1;
-    while ((vertices[nextIdx].m_location - cnow).length() < mingapSqr && nextIdx < n-1) {
-      nextIdx++;
-    }
-
-    cnext = vertices[nextIdx].m_location;
+    cnext = points[1].m_location;
     dirNext = cnext - cnow;
     dirNext.normalize();
     avg = dirNext.perpendicular();
@@ -247,12 +240,12 @@ namespace Luminous {
       avg.normalize();
     }
 
-    avg *= p->m_width * 0.5f;
+    avg *= points[0].m_width * 0.5f;
 
     Vertex v;
-    v.m_color = p->m_color;
+    v.m_color = points[0].m_color;
     v.m_location = cnow - avg;
-    v.m_range = p->m_range;
+    v.m_range = points[0].m_range;
 
     if(!m_vertices.empty()) {
       // degenerated triangle
@@ -265,18 +258,16 @@ namespace Luminous {
     v.m_location = cnow + avg;
     m_vertices.push_back(v);
 
-    for (int i = nextIdx; i < n; ) {
-      nextIdx = i + 1;
+    for (int i = 1; i < n; ++i) {
+      const Point & p = points[i];
+
       cprev = cnow;
       cnow = cnext;
 
-      while (nextIdx < n-1 && (vertices[nextIdx].m_location - cnow).lengthSqr() < mingapSqr) {
-        nextIdx++;
-      }
-      if (nextIdx > n-1) {
+      if (i+1 > n-1) {
         cnext = 2.0f*cnow - cprev;
       } else {
-        cnext = vertices[nextIdx].m_location;
+        cnext = points[i+1].m_location;
       }
 
       dirPrev = dirNext;
@@ -293,10 +284,10 @@ namespace Luminous {
 
       float dp = Nimble::Math::Clamp(dot(avg, dirPrev.perpendicular()), 0.7f, 1.0f);
       avg /= dp;
-      avg *= p->m_width * 0.5f;
+      avg *= p.m_width * 0.5f;
 
-      v.m_range = p->m_range;
-      v.m_color = p->m_color;
+      v.m_range = p.m_range;
+      v.m_color = p.m_color;
 
       v.m_location = cnow - avg;
       m_vertices.push_back(v);
@@ -309,9 +300,6 @@ namespace Luminous {
       if(m_vertices.size() % 50 == 0) {
         m_index[v.m_range.x] = m_vertices.size();
       }
-
-      p = & vertices[nextIdx];
-      i = nextIdx;
     }
 
     m_index[v.m_range.x] = m_vertices.size();
