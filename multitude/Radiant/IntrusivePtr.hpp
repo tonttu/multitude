@@ -10,6 +10,8 @@
 #include "CallStack.hpp"
 
 #include <map>
+// for std::nullptr_t
+#include <cstddef>
 
 #define INTRUSIVE_PTR_DEBUG_ACQUIRE \
   IntrusivePtrDebug::add(m_ptr, this)
@@ -36,6 +38,11 @@ namespace Radiant
 
 namespace Radiant
 {
+  /// This is also declared in <cstddef> in std-namespace, but if you /
+  /// any other library (Xlib!) happen to include <stddef.h>, then it isn't
+  /// found anymore. Use this to be safe.
+  typedef decltype(nullptr) nullptr_t;
+
   template <typename T>
   class IntrusivePtr
   {
@@ -172,6 +179,9 @@ namespace Radiant
     template <typename Y>
     inline bool operator== (const Y * rhs) const { return m_ptr == rhs; }
 
+    inline bool operator== (nullptr_t) const { return m_ptr == nullptr; }
+    inline bool operator!= (nullptr_t) const { return m_ptr != nullptr; }
+
     template <typename Y>
     inline bool operator!= (const Y * rhs) const { return m_ptr != rhs; }
 
@@ -200,6 +210,8 @@ namespace Radiant
   template <typename T, typename Y> inline bool operator== (const Y * lhs, const IntrusivePtr<T> & rhs) { return rhs == lhs; }
   template <typename T, typename Y> inline bool operator!= (const Y * lhs, const IntrusivePtr<T> & rhs) { return rhs != lhs; }
   template <typename T, typename Y> inline bool operator< (const T * lhs, const IntrusivePtr<Y> & rhs) { return !(rhs == lhs || rhs < lhs); }
+  template <typename T> inline bool operator== (nullptr_t, const IntrusivePtr<T> & rhs) { return rhs == nullptr; }
+  template <typename T> inline bool operator!= (nullptr_t, const IntrusivePtr<T> & rhs) { return rhs != nullptr; }
 }
 
 #endif // RADIANT_INTRUSIVEPTR_HPP
