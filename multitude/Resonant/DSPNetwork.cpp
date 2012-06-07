@@ -46,6 +46,15 @@ namespace Resonant {
   DSPNetwork::Item::~Item()
   {}
 
+  void DSPNetwork::Item::deleteModule()
+  {
+    if(m_module) {
+
+    }
+    delete m_module;
+    m_module = 0;
+  }
+
   void DSPNetwork::Item::eraseInput(const Connection & c)
   {
     std::vector<Connection>::iterator it =
@@ -164,15 +173,21 @@ namespace Resonant {
 
   void DSPNetwork::markDone(Item & i)
   {
+    assert(i.module());
+    markDone(*i.module());
+  }
+
+  void DSPNetwork::markDone(Module & m)
+  {
     Radiant::Guard g( m_newMutex);
-    Item * it = findItem(i.m_module->id());
+    Item * it = findItem(m.id());
 
     if(it) {
       it->m_done = true;
       m_doneCount++;
     }
     else
-      error("DSPNetwork::markDone # Failed for \"%s\"", i.m_module->id().toUtf8().data());
+      error("DSPNetwork::markDone # Failed for \"%s\"", m.id().toUtf8().data());
   }
 
   void DSPNetwork::send(Radiant::BinaryData & control)
