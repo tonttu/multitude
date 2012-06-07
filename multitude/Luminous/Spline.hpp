@@ -33,11 +33,12 @@ namespace Luminous {
 
     void recalculate();
 
+    float beginTime() const;
     float endTime() const;
 
   private:
-    friend QDataStream & operator<<(QDataStream & out, const Spline & spline);
-    friend QDataStream & operator>>(QDataStream & in, Spline & spline);
+    friend LUMINOUS_API QDataStream & operator<<(QDataStream & out, const Spline & spline);
+    friend LUMINOUS_API QDataStream & operator>>(QDataStream & in, Spline & spline);
 
     class D;
     D * m_d;

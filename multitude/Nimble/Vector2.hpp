@@ -75,7 +75,7 @@ namespace Nimble {
     /// Multiplies a vector with a scalar
     inline Vector2T&	operator*=	(T s)					        { x = (x*s), y = (T)(y*s); return *this; }
     /// Divides a vector with a scalar
-    inline Vector2T&	operator/=	(T s)					        { s = T(1)/s; x = (x*s), y = (y*s); return *this; }
+    inline Vector2T&	operator/=	(T s)					        { x /= s; y /= s; return *this; }
     /// Checks if both components are one
     inline bool	isOne		(void) const					        { return (x == (T) 1 && y == (T) 1); }
     /// Checks if both components are zero

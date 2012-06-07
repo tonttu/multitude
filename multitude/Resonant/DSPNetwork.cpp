@@ -233,7 +233,12 @@ namespace Resonant {
     const bool outputError = (flags & paOutputUnderflow) || (flags & paOutputOverflow);
 
     if(flags & paOutputUnderflow) {
-      Radiant::warning("DSPNetwork::callback # output underflow");
+      static int s_underflowWarnings = 0;
+      if(++s_underflowWarnings == 20) {
+        Radiant::warning("DSPNetwork::callback # Too many output underflow warnings, ignoring them in future");
+      } else if(s_underflowWarnings < 20) {
+        Radiant::warning("DSPNetwork::callback # output underflow");
+      }
     }
     if(flags & paOutputOverflow) {
       Radiant::warning("DSPNetwork::callback # output overflow");

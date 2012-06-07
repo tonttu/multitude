@@ -454,6 +454,16 @@ namespace Luminous {
       m_d->recalculate();
   }
 
+  float Spline::beginTime() const
+  {
+    if(m_d && !m_d->m_paths.empty()) {
+      std::vector<Point> & points = m_d->m_paths[0].points;
+      if(!points.empty())
+        return points[0].m_range.x;
+    }
+    return 0.0f;
+  }
+
   float Spline::endTime() const
   {
     return m_d ? m_d->m_endTime : 0;

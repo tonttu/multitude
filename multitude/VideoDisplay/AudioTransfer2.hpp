@@ -14,8 +14,6 @@ namespace VideoPlayer2
   {
   public:
     DecodedAudioBuffer() : m_timestamp(), m_offset(0) {}
-    DecodedAudioBuffer(const DecodedAudioBuffer &) = delete;
-    DecodedAudioBuffer & operator=(DecodedAudioBuffer &) = delete;
 
     void fill(Timestamp timestamp, int channels, int samples, const int16_t * src);
     void fillPlanar(Timestamp timestamp, int channels, int samples, const float ** src);
@@ -33,6 +31,9 @@ namespace VideoPlayer2
 
     int samples() const { return m_data.empty() ? 0 : m_data[0].size(); }
 
+  private:
+    //DecodedAudioBuffer(const DecodedAudioBuffer &);
+    //DecodedAudioBuffer & operator=(DecodedAudioBuffer &);
   private:
     Timestamp m_timestamp;
     int m_offset;

@@ -48,7 +48,7 @@ DEPENDPATH += $$PWD
 
 withbundles = $$(MULTI_BUNDLES)
 
-!mobile*:MULTI_FFMPEG_LIBS = -lavcodec -lavutil -lavformat -lavfilter -lswscale
+!mobile*:MULTI_FFMPEG_LIBS = -lavdevice -lavcodec -lavutil -lavformat -lavfilter -lswscale
 
 # 1.9.2-rc2
 CORNERSTONE_VERSION_STR = $$cat(../VERSION)
@@ -90,7 +90,6 @@ LIB_FLUFFY = -lFluffy$${CORNERSTONE_LIB_SUFFIX}
 LIB_LUMINOUS = -lLuminous$${CORNERSTONE_LIB_SUFFIX}
 LIB_NIMBLE = -lNimble$${CORNERSTONE_LIB_SUFFIX}
 LIB_RADIANT = -lRadiant$${CORNERSTONE_LIB_SUFFIX} $$LIB_FTD2XX
-!mobile*:LIB_SCREENPLAY = -lScreenplay$${CORNERSTONE_LIB_SUFFIX}
 !mobile*:LIB_VIDEODISPLAY = -lVideoDisplay$${CORNERSTONE_LIB_SUFFIX}
 LIB_VALUABLE = -lValuable$${CORNERSTONE_LIB_SUFFIX}
 LIB_PATTERNS = -lPatterns$${CORNERSTONE_LIB_SUFFIX}
@@ -177,7 +176,6 @@ macx*|mobile* {
     LIB_NIMBLE = -framework,Nimble
     LIB_RADIANT = -framework,Radiant
     LIB_RESONANT = -framework,Resonant -lsndfile
-    LIB_SCREENPLAY = -framework,Screenplay
     LIB_VALUABLE = -framework,Valuable
     LIB_VIDEODISPLAY = -framework,VideoDisplay
     LIB_PATTERNS = -framework,Patterns
@@ -242,7 +240,6 @@ win32 {
       LIB_NIMBLE = -lNimble$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_RADIANT = -lRadiant$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_RESONANT = -lResonant$${CORNERSTONE_LIB_SUFFIX}_d
-      LIB_SCREENPLAY = -lScreenplay$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_VIDEODISPLAY = -lVideoDisplay$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_VALUABLE = -lValuable$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_PATTERNS = -lPatterns$${CORNERSTONE_LIB_SUFFIX}_d
@@ -251,7 +248,7 @@ win32 {
 	}
 }
 
-MULTI_VIDEO_LIBS = $$LIB_SCREENPLAY $$LIB_RESONANT $$LIB_VIDEODISPLAY
+MULTI_VIDEO_LIBS = $$LIB_RESONANT $$LIB_VIDEODISPLAY
 
 QMAKE_LIBDIR += $$PWD/lib
 
