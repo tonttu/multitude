@@ -28,7 +28,7 @@ namespace Nimble {
 
       */
   template <class T>
-  class NIMBLE_API RollingAverageT
+  class RollingAverageT
   {
   public:
     /// Data type of the vector
@@ -73,18 +73,6 @@ namespace Nimble {
   typedef RollingAverageT<Vector2> RollingAverageVector2;
   typedef RollingAverageT<Vector3> RollingAverageVector3;
   typedef RollingAverageT<Vector4> RollingAverageVector4;
-
-#ifdef WIN32
-#ifdef NIMBLE_EXPORT
-  // In WIN32 template classes must be instantiated to be exported
-  template class RollinAverageT<float>;
-  template class RollinAverageT<double>;
-  template class RollinAverageT<Vector2>;
-  template class RollinAverageT<Vector3>;
-  template class RollinAverageT<Vector4>;
-#endif
-#endif
-
 }
 
 #endif // NIMBLE_ROLLINGAVERAGE_HPP
