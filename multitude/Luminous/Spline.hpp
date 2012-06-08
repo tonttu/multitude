@@ -23,6 +23,7 @@ namespace Luminous {
     Spline(Spline && spline);
     Spline & operator=(Spline && spline);
 
+    /// @param time use only posivive timestamps here, if negative time is given, it's clamped to 0
     void addControlPoint(Nimble::Vector2 point, Nimble::Vector4 color, float width, float time = 0.0f);
     void endPath();
     void clear();
@@ -35,6 +36,9 @@ namespace Luminous {
 
     float beginTime() const;
     float endTime() const;
+
+    /// @param points negative number == undo, positive == redo
+    int undoRedo(int points);
 
   private:
     friend LUMINOUS_API QDataStream & operator<<(QDataStream & out, const Spline & spline);
