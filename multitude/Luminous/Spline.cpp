@@ -136,7 +136,7 @@ namespace Luminous {
       for(int j = 0; j < points.size(); ++j) {
         Point & p = points[j];
         if(p.m_range.x <= time && p.m_range.y > time && eraser.inside(p.m_location)) {
-          p.m_range.y = time;
+          p.m_range.y = time - 0.0001f;
           changed = true;
         }
       }
@@ -195,7 +195,10 @@ namespace Luminous {
     const float len = path.curve.size();
     std::vector<Point> points;
 
-    const float mingapSqr = 3.0f * 3.0f;
+    /// @todo these should be configurable
+    const float mingapSqr = 2.0f * 2.0f;
+    // erasing works much better if there is a maximum gap
+    const float maxgapSqr = 3.0f * 3.0f;
 
     for(float t = 0.f; t < len - 1; t += step) {
       int ii = static_cast<int>(t);
@@ -209,7 +212,7 @@ namespace Luminous {
         p1.normalize();
         p2.normalize();
         // 3 degrees
-        if (dot(p1, p2) > 0.99862953475457383 || p1len2 < mingapSqr) {
+        if ((dot(p1, p2) > 0.99862953475457383 || p1len2 < mingapSqr) && (p1len2 < maxgapSqr)) {
           points.pop_back();
         }
       }
