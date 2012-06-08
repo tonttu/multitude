@@ -1,6 +1,7 @@
 #if !defined (RADIANT_INTRUSIVEPTR_HPP)
 #define RADIANT_INTRUSIVEPTR_HPP
 
+#include "Radiant/SafeBool.hpp"
 #include <cassert>
 
 // #define INTRUSIVE_PTR_DEBUG
@@ -44,7 +45,7 @@ namespace Radiant
   typedef decltype(nullptr) nullptr_t;
 
   template <typename T>
-  class IntrusivePtr
+  class IntrusivePtr : public SafeBool< IntrusivePtr<T> >
   {
   public:
     typedef T element_type;
@@ -159,7 +160,7 @@ namespace Radiant
       return m_ptr;
     }
 
-    explicit operator bool() const
+    bool boolean_test() const
     {
       return m_ptr!=nullptr;
     }
