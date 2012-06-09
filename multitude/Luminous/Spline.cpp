@@ -62,7 +62,7 @@ namespace Luminous {
       Nimble::Rectf bounds;
     };
 
-    D() : m_path(nullptr), m_endTime(0), m_generation(0) {}
+    D() : m_path(nullptr), m_redoLocation(), m_endTime(0), m_generation(0) {}
 
     void clear()
     {
@@ -70,6 +70,8 @@ namespace Luminous {
       m_vertices.clear();
       m_bounds.clear();
       m_path = nullptr;
+      m_redoLocation.pathIndex = 0;
+      m_redoLocation.nextPointIndex = 0;
       ++m_generation;
     }
 
@@ -84,6 +86,8 @@ namespace Luminous {
 
     void render(Luminous::RenderContext & r, float time) const;
 
+    int undoRedo(int points);
+
   public:
     /// timestamp -> vertices
     std::map<float, std::size_t> m_index;
@@ -91,6 +95,10 @@ namespace Luminous {
     std::vector<Path> m_paths;
     Path * m_path;
 
+    struct {
+      int pathIndex;
+      int nextPointIndex;
+    } m_redoLocation;
     float m_endTime;
 
     Nimble::Rect m_bounds;
@@ -114,6 +122,8 @@ namespace Luminous {
     m_path->curve.add(p.m_location);
     m_path->bounds.expand(p.m_location);
     m_endTime = std::max(m_endTime, p.m_range.x);
+    m_redoLocation.pathIndex = m_paths.size() - 1;
+    m_redoLocation.nextPointIndex = m_path->points.size();
   }
 
   void Spline::D::endPath()
@@ -136,7 +146,7 @@ namespace Luminous {
       for(int j = 0; j < points.size(); ++j) {
         Point & p = points[j];
         if(p.m_range.x <= time && p.m_range.y > time && eraser.inside(p.m_location)) {
-          p.m_range.y = time;
+          p.m_range.y = time - 0.0001f;
           changed = true;
         }
       }
@@ -195,6 +205,11 @@ namespace Luminous {
     const float len = path.curve.size();
     std::vector<Point> points;
 
+    /// @todo these should be configurable
+    const float mingapSqr = 2.0f * 2.0f;
+    // erasing works much better if there is a maximum gap
+    const float maxgapSqr = 3.0f * 3.0f;
+
     for(float t = 0.f; t < len - 1; t += step) {
       int ii = static_cast<int>(t);
       float t2 = t - ii;
@@ -203,10 +218,11 @@ namespace Luminous {
       if (points.size() >= 2) {
         Nimble::Vector2 p1 = (lov - points[points.size()-2].m_location);
         Nimble::Vector2 p2 = (lov - points[points.size()-1].m_location);
+        const float p1len2 = p1.lengthSqr();
         p1.normalize();
         p2.normalize();
         // 3 degrees
-        if (dot(p1, p2) > 0.99862953475457383) {
+        if ((dot(p1, p2) > 0.99862953475457383 || p1len2 < mingapSqr) && (p1len2 < maxgapSqr)) {
           points.pop_back();
         }
       }
@@ -217,26 +233,16 @@ namespace Luminous {
       points.push_back(p);
     }
 
-    std::vector<Point> & vertices = points;
-
-    const float mingapSqr = 3.0f * 3.0f;
-
-    const Point * p = & vertices[0];
-    const int n = (int) vertices.size();
+    const int n = (int) points.size();
 
     Vector2f cprev;
-    Vector2f cnow = p->m_location;
+    Vector2f cnow = points[0].m_location;
     Vector2f cnext;
     Vector2f avg;
     Vector2f dirNext;
     Vector2f dirPrev;
 
-    int nextIdx = 1;
-    while ((vertices[nextIdx].m_location - cnow).length() < mingapSqr && nextIdx < n-1) {
-      nextIdx++;
-    }
-
-    cnext = vertices[nextIdx].m_location;
+    cnext = points[1].m_location;
     dirNext = cnext - cnow;
     dirNext.normalize();
     avg = dirNext.perpendicular();
@@ -247,12 +253,12 @@ namespace Luminous {
       avg.normalize();
     }
 
-    avg *= p->m_width * 0.5f;
+    avg *= points[0].m_width * 0.5f;
 
     Vertex v;
-    v.m_color = p->m_color;
+    v.m_color = points[0].m_color;
     v.m_location = cnow - avg;
-    v.m_range = p->m_range;
+    v.m_range = points[0].m_range;
 
     if(!m_vertices.empty()) {
       // degenerated triangle
@@ -265,18 +271,16 @@ namespace Luminous {
     v.m_location = cnow + avg;
     m_vertices.push_back(v);
 
-    for (int i = nextIdx; i < n; ) {
-      nextIdx = i + 1;
+    for (int i = 1; i < n; ++i) {
+      const Point & p = points[i];
+
       cprev = cnow;
       cnow = cnext;
 
-      while (nextIdx < n-1 && (vertices[nextIdx].m_location - cnow).lengthSqr() < mingapSqr) {
-        nextIdx++;
-      }
-      if (nextIdx > n-1) {
+      if (i+1 > n-1) {
         cnext = 2.0f*cnow - cprev;
       } else {
-        cnext = vertices[nextIdx].m_location;
+        cnext = points[i+1].m_location;
       }
 
       dirPrev = dirNext;
@@ -293,10 +297,10 @@ namespace Luminous {
 
       float dp = Nimble::Math::Clamp(dot(avg, dirPrev.perpendicular()), 0.7f, 1.0f);
       avg /= dp;
-      avg *= p->m_width * 0.5f;
+      avg *= p.m_width * 0.5f;
 
-      v.m_range = p->m_range;
-      v.m_color = p->m_color;
+      v.m_range = p.m_range;
+      v.m_color = p.m_color;
 
       v.m_location = cnow - avg;
       m_vertices.push_back(v);
@@ -309,9 +313,6 @@ namespace Luminous {
       if(m_vertices.size() % 50 == 0) {
         m_index[v.m_range.x] = m_vertices.size();
       }
-
-      p = & vertices[nextIdx];
-      i = nextIdx;
     }
 
     m_index[v.m_range.x] = m_vertices.size();
@@ -368,6 +369,55 @@ namespace Luminous {
     // Radiant::info("Spline::D::render # %d / %d", vertices, (int) m_vertices.size());
   }
 
+  int Spline::D::undoRedo(int points)
+  {
+    int changes = 0;
+    if(m_redoLocation.pathIndex >= m_paths.size())
+      m_redoLocation.pathIndex = m_paths.size() - 1;
+    if(m_redoLocation.pathIndex < 0)
+      return 0;
+
+    // undo
+    while(points < 0) {
+      if(m_redoLocation.nextPointIndex <= 0) {
+        if(m_redoLocation.pathIndex <= 0)
+          break;
+        --m_redoLocation.pathIndex;
+        m_redoLocation.nextPointIndex = m_paths[m_redoLocation.pathIndex].points.size();
+      }
+      int diff = std::min(m_redoLocation.nextPointIndex, -points);
+      points += diff;
+      changes += diff;
+      Path & path = m_paths[m_redoLocation.pathIndex];
+      for(int i = m_redoLocation.nextPointIndex - diff; i < m_redoLocation.nextPointIndex; ++i) {
+        Point & point = path.points[i];
+        point.m_range.y = std::min(point.m_range.y, -point.m_range.y);
+      }
+      m_redoLocation.nextPointIndex -= diff;
+    }
+
+    // redo
+    while(points > 0) {
+      if(m_redoLocation.nextPointIndex >= m_paths[m_redoLocation.pathIndex].points.size()) {
+        if(m_redoLocation.pathIndex+2 >= m_paths.size())
+          break;
+        ++m_redoLocation.pathIndex;
+        m_redoLocation.nextPointIndex = 0;
+      }
+      int diff = std::min(int(m_paths[m_redoLocation.pathIndex].points.size()) -
+          m_redoLocation.nextPointIndex, points);
+      points -= diff;
+      changes += diff;
+      Path & path = m_paths[m_redoLocation.pathIndex];
+      for(int i = m_redoLocation.nextPointIndex; i < m_redoLocation.nextPointIndex + diff; ++i) {
+        Point & point = path.points[i];
+        point.m_range.y = std::max(point.m_range.y, -point.m_range.y);
+      }
+      m_redoLocation.nextPointIndex += diff;
+    }
+    return changes;
+  }
+
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
@@ -415,7 +465,7 @@ namespace Luminous {
     Point p;
     p.m_location = point;
     p.m_width = width;
-    p.m_range[0] = time;
+    p.m_range[0] = std::max(time, 0.0f);
     for(int i = 0; i < 4; ++i)
       p.m_color[i] = Nimble::Math::Clamp<unsigned char>(color[i] * 255.0f, 0, 255);
 
@@ -467,6 +517,14 @@ namespace Luminous {
   float Spline::endTime() const
   {
     return m_d ? m_d->m_endTime : 0;
+  }
+
+  int Spline::undoRedo(int points)
+  {
+    int changes = m_d ? m_d->undoRedo(points) : 0;
+    if(changes > 0)
+      recalculate();
+    return changes;
   }
 
   QDataStream & operator<<(QDataStream & out, const Spline & spline)
