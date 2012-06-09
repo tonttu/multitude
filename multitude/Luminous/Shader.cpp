@@ -157,6 +157,7 @@ namespace Luminous {
     QString m_fragmentShader;
     QString m_vertexShader;
     QString m_geometryShader;
+    QString m_label; // just for bug hunting
 
     size_t m_generation;
   };
@@ -184,6 +185,10 @@ namespace Luminous {
 
   bool Shader::loadFragmentShader(const char * filename)
   {
+    if(m_self->m_label.isEmpty()) {
+      m_self->m_label = filename;
+    }
+
     const QByteArray str = Radiant::FileUtils::loadTextFile(filename);
 
     if(str.isNull())
@@ -202,6 +207,10 @@ namespace Luminous {
 
   bool Shader::loadVertexShader(const char * filename)
   {
+    if(m_self->m_label.isEmpty()) {
+      m_self->m_label = filename;
+    }
+
     const QByteArray str = Radiant::FileUtils::loadTextFile(filename);
 
     if(str.isNull())
@@ -254,6 +263,7 @@ namespace Luminous {
 
     if(!prog->isLinked()) {
 
+      prog->setLabel(m_self->m_label);
       bool ok = prog->link();
 
       if(!ok) {

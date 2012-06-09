@@ -175,6 +175,13 @@ namespace Luminous
     /// @return true if the program has errors
     bool hasErrors() const { return m_errors; }
 
+    /// Sets the label of this program.
+    void setLabel(const QString & l) { m_label = l; }
+    /// The label of this program
+    /** The label has no functional significance. It is only used for printing error messages,
+        and it makes it easier to track cases where wrong program might be accidentally loaded. */
+    const QString & label() const { return m_label; }
+
   protected:
   private:
 
@@ -189,6 +196,8 @@ namespace Luminous
     std::list<GLSLShaderObject*> m_shaderObjects;
     /// The OpenGL handle for the program
     GLuint m_handle;
+    /// A label to help debugging
+    QString m_label;
   };
 
 }
