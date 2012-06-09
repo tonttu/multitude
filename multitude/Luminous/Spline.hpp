@@ -40,6 +40,8 @@ namespace Luminous {
     /// @param points negative number == undo, positive == redo
     int undoRedo(int points);
 
+    size_t controlPointCount() const;
+
   private:
     friend LUMINOUS_API QDataStream & operator<<(QDataStream & out, const Spline & spline);
     friend LUMINOUS_API QDataStream & operator>>(QDataStream & in, Spline & spline);

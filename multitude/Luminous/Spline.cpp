@@ -527,6 +527,14 @@ namespace Luminous {
     return changes;
   }
 
+  size_t Spline::controlPointCount() const
+  {
+    if(!m_d->m_path)
+      return 0;
+    return m_d->m_path->points.size();
+  }
+
+
   QDataStream & operator<<(QDataStream & out, const Spline & spline)
   {
     if(!spline.m_d) return out;
