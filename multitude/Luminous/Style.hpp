@@ -8,6 +8,7 @@
 
 namespace Luminous
 {
+  class GLSLProgramObject;
 
   /// Style object for giving rendering parameters to the RenderContext
   class Style
@@ -43,11 +44,20 @@ namespace Luminous
       m_texCoords.high().y = tmp;
     }
 
+    /// Sets the GLSLProgramObject to be used.
+    /** This feature is seldom used, as the underlying system generally
+        selects the right program automatically.*/
+    void setProgram(GLSLProgramObject * prog) { m_program = prog; }
+
+    /// Returns a custom GLSLProgramObject for rendering
+    /** This function is hacked to be const to enable "const Style &" objects to be passed about. */
+    GLSLProgramObject * program() const { return ((Style *)this)->m_program; }
   private:
 
     Nimble::Vector4 m_color;
     Nimble::Rect m_texCoords;
     float m_texturing;
+    GLSLProgramObject * m_program;
   };
 
 }

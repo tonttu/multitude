@@ -1386,6 +1386,13 @@ namespace Luminous
 
   void RenderContext::drawRect(const Nimble::Rect & area, const Style & style)
   {
+    if(style.program()) {
+      style.program()->bind();
+    }
+    else {
+      m_data->m_basic_shader->bind();
+    }
+
     RenderPacket & rp = * m_data->m_renderPacket;
     rp.setProgram(m_data->m_program);
     rp.setPacketRenderFunction(RectVertex::render);
@@ -1419,7 +1426,12 @@ namespace Luminous
                                        const Nimble::Rect & hole,
                                        const Luminous::Style & style)
   {
-    m_data->m_basic_shader->bind();
+    if(style.program()) {
+      style.program()->bind();
+    }
+    else {
+      m_data->m_basic_shader->bind();
+    }
 
     RenderPacket & rp = * m_data->m_renderPacket;
 
