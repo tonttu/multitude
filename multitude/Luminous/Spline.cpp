@@ -62,7 +62,7 @@ namespace Luminous {
       Nimble::Rectf bounds;
     };
 
-    D() : m_path(nullptr), m_redoLocation(), m_endTime(0), m_generation(0) {}
+    D() : m_path(nullptr), m_redoLocation(), m_endTime(0), m_generation(0),m_mingap(2.0f), m_maxgap(3.0f) {}
 
     void clear()
     {
@@ -100,6 +100,8 @@ namespace Luminous {
       int nextPointIndex;
     } m_redoLocation;
     float m_endTime;
+    float m_mingap;
+    float m_maxgap;
 
     Nimble::Rect m_bounds;
 
@@ -205,10 +207,9 @@ namespace Luminous {
     const float len = path.curve.size();
     std::vector<Point> points;
 
-    /// @todo these should be configurable
-    const float mingapSqr = 2.0f * 2.0f;
+    const float mingapSqr = m_mingap * m_mingap;
     // erasing works much better if there is a maximum gap
-    const float maxgapSqr = 3.0f * 3.0f;
+    const float maxgapSqr = m_maxgap * m_maxgap;
 
     for(float t = 0.f; t < len - 1; t += step) {
       int ii = static_cast<int>(t);
@@ -496,6 +497,15 @@ namespace Luminous {
   {
     if(m_d)
       m_d->render(r, time);
+  }
+
+  void Spline::setCalculationParameters(float mingap, float maxgap)
+  {
+    if(!m_d)
+      m_d = new D();
+
+    m_d->m_mingap = mingap;
+    m_d->m_maxgap = maxgap;
   }
 
   void Spline::recalculate()

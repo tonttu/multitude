@@ -32,6 +32,7 @@ namespace Luminous {
 
     void render(Luminous::RenderContext & r, float time = 0.0f) const;
 
+    void setCalculationParameters(float mingap, float maxgap);
     void recalculate();
 
     float beginTime() const;
