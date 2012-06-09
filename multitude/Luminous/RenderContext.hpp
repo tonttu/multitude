@@ -460,25 +460,13 @@ namespace Luminous
   {
   public:
     VertexAttribArrayStep(int pos, int elems, GLenum type, GLboolean normalized, size_t stride,
-                          size_t offset)
-                            : m_pos(pos)
-    {
-      if(pos >= 0)
-      {
-      glEnableVertexAttribArray(pos);
-      glVertexAttribPointer(pos, elems, type, normalized,
-                            (GLsizei)stride, (char*)0 + offset);
-      }
-      else
-      {
-        Radiant::warning("Luminous::VertexAttribArrayStep: trying to enable an attribute array with invalid index\n");
-      }
-    }
+                          size_t offset);
 
-    ~VertexAttribArrayStep ()
-    {
-      glDisableVertexAttribArray(m_pos);
-    }
+    VertexAttribArrayStep(GLSLProgramObject & prog, const char * attribname,
+                          int elems, GLenum type, GLboolean normalized, size_t stride,
+                          size_t offset, const char * userstr = 0);
+
+    ~VertexAttribArrayStep ();
 
   private:
     int m_pos;
