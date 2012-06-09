@@ -46,13 +46,13 @@ namespace Radiant
   };
 
   template <typename T, typename U> 
-  void operator==(const SafeBool<T>& lhs,const SafeBool<U>& rhs) {
+  bool operator==(const SafeBool<T>& lhs,const SafeBool<U>& rhs) {
     lhs.this_type_does_not_support_comparisons();	
     return false;
   }
 
   template <typename T,typename U> 
-  void operator!=(const SafeBool<T>& lhs,const SafeBool<U>& rhs) {
+  bool operator!=(const SafeBool<T>& lhs,const SafeBool<U>& rhs) {
     lhs.this_type_does_not_support_comparisons();
     return false;	
   }
