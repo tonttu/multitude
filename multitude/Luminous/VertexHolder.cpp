@@ -42,43 +42,26 @@ namespace Luminous
 
     prog.setUniformMatrix4("view_transform", r.viewTransform());
 
-    int aloc = prog.getAttribLoc("location");
-    int acol = prog.getAttribLoc("color");
-    int atex = prog.getAttribLoc("tex_coord");
-    int aute = prog.getAttribLoc("use_tex");
-
-    int omr1 = prog.getAttribLoc("object_transform_r1");
-    int omr2 = prog.getAttribLoc("object_transform_r2");
-    int omr3 = prog.getAttribLoc("object_transform_r3");
-
-    if((aloc < 0) || (acol < 0) || (atex < 0) || (aute < 0)) {
-      Radiant::warning("RectVertex::render# %d vertices program=%p aloc=%d, acol=%d, atex=%d, aute=%d\n",
-            (int) rp.vertices().count<RectVertex>(),
-                     rp.program(), aloc, acol, atex, aute);
-    }
     Utils::glCheck("RectVertex::render # 2");
 
-    /*
-    Radiant::info("shader attribs are %d %d %d %d : %d %d %d for %d", aloc, acol, atex, aute,
-                  omr1, omr2, omr3,
-                  (int) rp.vertices().count<RectVertex>());
-                  */
     rp.vbo().bind();
     rp.vbo().fill(rp.vertexData<RectVertex>(), rp.vertices().bytes(), Luminous::VertexBuffer::DYNAMIC_DRAW);
 
-    VertexAttribArrayStep ls(aloc, 2, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_location, vr));
-    VertexAttribArrayStep cs(acol, 4, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_color, vr));
-    VertexAttribArrayStep ts(atex, 2, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_texCoord, vr));
-    VertexAttribArrayStep ut(aute, 1, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_useTexture, vr));
+    const char * func = "RectVertex::render";
 
-    VertexAttribArrayStep mr1(omr1, 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[0], vr));
-    VertexAttribArrayStep mr2(omr2, 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[1], vr));
-    VertexAttribArrayStep mr3(omr3, 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[2], vr));
+    VertexAttribArrayStep ls(prog, "location", 2, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_location, vr), func);
+    VertexAttribArrayStep cs(prog, "color", 4, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_color, vr), func);
+    VertexAttribArrayStep ts(prog, "tex_coord", 2, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_texCoord, vr), func);
+    VertexAttribArrayStep ut(prog, "use_tex", 1, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_useTexture, vr), func);
+
+    VertexAttribArrayStep mr1(prog, "object_transform_r1", 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[0], vr), func);
+    VertexAttribArrayStep mr2(prog, "object_transform_r2", 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[1], vr), func);
+    VertexAttribArrayStep mr3(prog, "object_transform_r3", 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[2], vr), func);
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, GLsizei(rp.vertices().count<RectVertex>()));
 
     rp.clear();
-    rp.vbo().unbind(); // Should not really call this
+    rp.vbo().unbind(); // Should not really need call this
     Utils::glCheck("RectVertex::render # 3");
   }
 
@@ -102,40 +85,22 @@ namespace Luminous
 
     prog.setUniformMatrix4("view_transform", r.viewTransform());
 
-    int aloc = prog.getAttribLoc("location");
-    int acol = prog.getAttribLoc("color");
-    int atex = prog.getAttribLoc("tex_coord");
-    int aute = prog.getAttribLoc("use_tex");
-    int aobj = prog.getAttribLoc("obj_coord");
-
-    int omr1 = prog.getAttribLoc("object_transform_r1");
-    int omr2 = prog.getAttribLoc("object_transform_r2");
-    int omr3 = prog.getAttribLoc("object_transform_r3");
-
-    if((aloc < 0) || (acol < 0) || (atex < 0) || (aute < 0) || (aobj < 0)) {
-      Radiant::warning("CircleVertex::render # %d vertices %p %d %d %d %d %d",
-                     (int) rp.vertices().count<CircleVertex>(),
-                     &prog, aloc, acol, atex, aute, aobj);
-    }
     Utils::glCheck("CircleVertex::render # 2");
 
-    /*
-    Radiant::info("shader attribs are %d %d %d %d : %d %d %d for %d", aloc, acol, atex, aute,
-                  omr1, omr2, omr3,
-                  (int) rp.vertices().count<RectVertex>());
-                  */
     rp.vbo().bind();
     rp.vbo().fill(rp.vertexData<CircleVertex>(), rp.vertices().bytes(), Luminous::VertexBuffer::DYNAMIC_DRAW);
 
-    VertexAttribArrayStep ls(aloc, 2, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_location, vr));
-    VertexAttribArrayStep cs(acol, 4, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_color, vr));
-    VertexAttribArrayStep ts(atex, 2, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_texCoord, vr));
-    VertexAttribArrayStep os(aobj, 2, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objCoord, vr));
-    VertexAttribArrayStep ut(aute, 1, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_useTexture, vr));
+    const char * func = "RectVertex::render";
 
-    VertexAttribArrayStep mr1(omr1, 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[0], vr));
-    VertexAttribArrayStep mr2(omr2, 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[1], vr));
-    VertexAttribArrayStep mr3(omr3, 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[2], vr));
+    VertexAttribArrayStep ls(prog, "location", 2, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_location, vr));
+    VertexAttribArrayStep cs(prog, "color", 4, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_color, vr));
+    VertexAttribArrayStep ts(prog, "tex_coord", 2, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_texCoord, vr));
+    VertexAttribArrayStep os(prog, "obj_coord", 2, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objCoord, vr));
+    VertexAttribArrayStep ut(prog, "use_tex", 1, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_useTexture, vr));
+
+    VertexAttribArrayStep mr1(prog, "object_transform_r1", 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[0], vr), func);
+    VertexAttribArrayStep mr2(prog, "object_transform_r2", 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[1], vr), func);
+    VertexAttribArrayStep mr3(prog, "object_transform_r3", 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[2], vr), func);
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, GLsizei(rp.vertices().count<RectVertex>()));
 
