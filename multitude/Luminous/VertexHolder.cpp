@@ -28,7 +28,7 @@ namespace Luminous
 
 #define VERTEX_ATTRIB_STEP(prog, paramName, paramRef, objRef) \
   VertexAttribArrayStep step_##paramName (prog, #paramName, sizeof(paramRef) / 4, GL_FLOAT, GL_FALSE, sizeof(objRef), \
-    offsetBytes(paramRef, objRef), func)
+    offsetBytes(objRef.paramRef, objRef), func)
 
   void RectVertex::render(RenderContext &r, RenderPacket & rp)
   {
@@ -57,14 +57,14 @@ namespace Luminous
 
     const char * func = "RectVertex::render"; // Needed by the macros below
 
-    VERTEX_ATTRIB_STEP(prog, location, vr.m_location, vr);
-    VERTEX_ATTRIB_STEP(prog, color, vr.m_color, vr);
-    VERTEX_ATTRIB_STEP(prog, tex_coord, vr.m_texCoord, vr);
-    VERTEX_ATTRIB_STEP(prog, use_tex, vr.m_useTexture, vr);
+    VERTEX_ATTRIB_STEP(prog, location, m_location, vr);
+    VERTEX_ATTRIB_STEP(prog, color, m_color, vr);
+    VERTEX_ATTRIB_STEP(prog, tex_coord, m_texCoord, vr);
+    VERTEX_ATTRIB_STEP(prog, use_tex, m_useTexture, vr);
 
-    VERTEX_ATTRIB_STEP(prog, object_transform_r1, vr.m_objectTransform[0], vr);
-    VERTEX_ATTRIB_STEP(prog, object_transform_r2, vr.m_objectTransform[1], vr);
-    VERTEX_ATTRIB_STEP(prog, object_transform_r3, vr.m_objectTransform[2], vr);
+    VERTEX_ATTRIB_STEP(prog, object_transform_r1, m_objectTransform[0], vr);
+    VERTEX_ATTRIB_STEP(prog, object_transform_r2, m_objectTransform[1], vr);
+    VERTEX_ATTRIB_STEP(prog, object_transform_r3, m_objectTransform[2], vr);
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, GLsizei(rp.vertices().count<RectVertex>()));
 
@@ -98,15 +98,15 @@ namespace Luminous
 
     const char * func = "RectVertex::render"; // Needed by the macros below
 
-    VERTEX_ATTRIB_STEP(prog, location, vr.m_location, vr);
-    VERTEX_ATTRIB_STEP(prog, color, vr.m_color, vr);
-    VERTEX_ATTRIB_STEP(prog, tex_coord, vr.m_texCoord, vr);
-    VERTEX_ATTRIB_STEP(prog, obj_coord, vr.m_objCoord, vr);
-    VERTEX_ATTRIB_STEP(prog, use_tex, vr.m_useTexture, vr);
+    VERTEX_ATTRIB_STEP(prog, location, m_location, vr);
+    VERTEX_ATTRIB_STEP(prog, color, m_color, vr);
+    VERTEX_ATTRIB_STEP(prog, tex_coord, m_texCoord, vr);
+    VERTEX_ATTRIB_STEP(prog, obj_coord, m_objCoord, vr);
+    VERTEX_ATTRIB_STEP(prog, use_tex, m_useTexture, vr);
 
-    VERTEX_ATTRIB_STEP(prog, object_transform_r1, vr.m_objectTransform[0], vr);
-    VERTEX_ATTRIB_STEP(prog, object_transform_r2, vr.m_objectTransform[1], vr);
-    VERTEX_ATTRIB_STEP(prog, object_transform_r3, vr.m_objectTransform[2], vr);
+    VERTEX_ATTRIB_STEP(prog, object_transform_r1, m_objectTransform[0], vr);
+    VERTEX_ATTRIB_STEP(prog, object_transform_r2, m_objectTransform[1], vr);
+    VERTEX_ATTRIB_STEP(prog, object_transform_r3, m_objectTransform[2], vr);
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, GLsizei(rp.vertices().count<RectVertex>()));
 
