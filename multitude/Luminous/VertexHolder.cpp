@@ -22,6 +22,10 @@ namespace Luminous
   RenderPacket::~RenderPacket()
   {}
 
+#define VERTEX_ATTRIB_STEP(prog, paramName, paramRef, objRef) \
+  VertexAttribArrayStep step_##paramName (prog, #paramName, sizeof(paramRef) / 4, GL_FLOAT, GL_FALSE, sizeof(objRef), \
+    offsetBytes(paramRef, objRef), func)
+
   void RectVertex::render(RenderContext &r, RenderPacket & rp)
   {
     if(! & rp)
@@ -49,14 +53,14 @@ namespace Luminous
 
     const char * func = "RectVertex::render";
 
-    VertexAttribArrayStep ls(prog, "location", 2, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_location, vr), func);
-    VertexAttribArrayStep cs(prog, "color", 4, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_color, vr), func);
-    VertexAttribArrayStep ts(prog, "tex_coord", 2, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_texCoord, vr), func);
-    VertexAttribArrayStep ut(prog, "use_tex", 1, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_useTexture, vr), func);
+    VERTEX_ATTRIB_STEP(prog, location, vr.m_location, vr);
+    VERTEX_ATTRIB_STEP(prog, color, vr.m_color, vr);
+    VERTEX_ATTRIB_STEP(prog, tex_coord, vr.m_texCoord, vr);
+    VERTEX_ATTRIB_STEP(prog, use_tex, vr.m_useTexture, vr);
 
-    VertexAttribArrayStep mr1(prog, "object_transform_r1", 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[0], vr), func);
-    VertexAttribArrayStep mr2(prog, "object_transform_r2", 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[1], vr), func);
-    VertexAttribArrayStep mr3(prog, "object_transform_r3", 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[2], vr), func);
+    VERTEX_ATTRIB_STEP(prog, object_transform_r1, vr.m_objectTransform[0], vr);
+    VERTEX_ATTRIB_STEP(prog, object_transform_r2, vr.m_objectTransform[1], vr);
+    VERTEX_ATTRIB_STEP(prog, object_transform_r3, vr.m_objectTransform[2], vr);
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, GLsizei(rp.vertices().count<RectVertex>()));
 
@@ -77,8 +81,6 @@ namespace Luminous
 
     assert(rp.program() != 0);
 
-    const int vsize = sizeof(CircleVertex);
-
     CircleVertex & vr = * rp.vertexData<CircleVertex>();
 
     GLSLProgramObject & prog = * rp.program();
@@ -90,17 +92,17 @@ namespace Luminous
     rp.vbo().bind();
     rp.vbo().fill(rp.vertexData<CircleVertex>(), rp.vertices().bytes(), Luminous::VertexBuffer::DYNAMIC_DRAW);
 
-    const char * func = "RectVertex::render";
+    const char * func = "RectVertex::render"; // Needed by the macros below
 
-    VertexAttribArrayStep ls(prog, "location", 2, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_location, vr));
-    VertexAttribArrayStep cs(prog, "color", 4, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_color, vr));
-    VertexAttribArrayStep ts(prog, "tex_coord", 2, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_texCoord, vr));
-    VertexAttribArrayStep os(prog, "obj_coord", 2, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objCoord, vr));
-    VertexAttribArrayStep ut(prog, "use_tex", 1, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_useTexture, vr));
+    VERTEX_ATTRIB_STEP(prog, location, vr.m_location, vr);
+    VERTEX_ATTRIB_STEP(prog, color, vr.m_color, vr);
+    VERTEX_ATTRIB_STEP(prog, tex_coord, vr.m_texCoord, vr);
+    VERTEX_ATTRIB_STEP(prog, obj_coord, vr.m_objCoord, vr);
+    VERTEX_ATTRIB_STEP(prog, use_tex, vr.m_useTexture, vr);
 
-    VertexAttribArrayStep mr1(prog, "object_transform_r1", 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[0], vr), func);
-    VertexAttribArrayStep mr2(prog, "object_transform_r2", 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[1], vr), func);
-    VertexAttribArrayStep mr3(prog, "object_transform_r3", 3, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_objectTransform[2], vr), func);
+    VERTEX_ATTRIB_STEP(prog, object_transform_r1, vr.m_objectTransform[0], vr);
+    VERTEX_ATTRIB_STEP(prog, object_transform_r2, vr.m_objectTransform[1], vr);
+    VERTEX_ATTRIB_STEP(prog, object_transform_r3, vr.m_objectTransform[2], vr);
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, GLsizei(rp.vertices().count<RectVertex>()));
 
@@ -108,6 +110,5 @@ namespace Luminous
     rp.vbo().unbind(); // Should not really call this
     Utils::glCheck("CircleVertex::render # 3");
   }
-
 
 }
