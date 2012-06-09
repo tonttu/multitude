@@ -529,11 +529,17 @@ namespace Luminous {
 
   size_t Spline::controlPointCount() const
   {
+    if(!m_d)
+      return 0;
     if(!m_d->m_path)
       return 0;
     return m_d->m_path->points.size();
   }
 
+  Nimble::Rect Spline::controlPointBounds() const
+  {
+    return m_d ? m_d->m_bounds : Nimble::Rect(0,0,0,0);
+  }
 
   QDataStream & operator<<(QDataStream & out, const Spline & spline)
   {

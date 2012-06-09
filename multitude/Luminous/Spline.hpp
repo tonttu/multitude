@@ -41,6 +41,7 @@ namespace Luminous {
     int undoRedo(int points);
 
     size_t controlPointCount() const;
+    Nimble::Rect controlPointBounds() const;
 
   private:
     friend LUMINOUS_API QDataStream & operator<<(QDataStream & out, const Spline & spline);
