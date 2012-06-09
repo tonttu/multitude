@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <QString>
 
-#include <QString>
 
 namespace Radiant {
 
