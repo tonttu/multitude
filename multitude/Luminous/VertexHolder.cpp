@@ -22,6 +22,10 @@ namespace Luminous
   RenderPacket::~RenderPacket()
   {}
 
+  /* Maybe this could be done without a macro, with some clever C++ hacks.
+     That way one might also avoid the hard-coded GL_FLOAT parameter.
+  */
+
 #define VERTEX_ATTRIB_STEP(prog, paramName, paramRef, objRef) \
   VertexAttribArrayStep step_##paramName (prog, #paramName, sizeof(paramRef) / 4, GL_FLOAT, GL_FALSE, sizeof(objRef), \
     offsetBytes(paramRef, objRef), func)
@@ -51,7 +55,7 @@ namespace Luminous
     rp.vbo().bind();
     rp.vbo().fill(rp.vertexData<RectVertex>(), rp.vertices().bytes(), Luminous::VertexBuffer::DYNAMIC_DRAW);
 
-    const char * func = "RectVertex::render";
+    const char * func = "RectVertex::render"; // Needed by the macros below
 
     VERTEX_ATTRIB_STEP(prog, location, vr.m_location, vr);
     VERTEX_ATTRIB_STEP(prog, color, vr.m_color, vr);
