@@ -690,6 +690,16 @@ namespace Luminous
   {
     QString pathname;
 #ifdef LUMINOUS_OPENGL_FULL
+
+#ifdef RADIANT_OSX
+    /* OSX has broken shaders, so lets just go with a different set of shaders where necessary. */
+    QString tmp("../MultiTouch/GL21OSXShaders/");
+    tmp += filename;
+    tmp = Radiant::ResourceLocator::instance().locate(tmp);
+    if(!tmp.isEmpty()) {
+      return tmp;
+    }
+#endif
     // pathname = "../MultiTouch/GL20Shaders/";
     pathname = "../MultiTouch/ES20Shaders/";
 #else
