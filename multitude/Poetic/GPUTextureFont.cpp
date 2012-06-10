@@ -158,7 +158,11 @@ namespace Poetic
       memset( & bytes[0], 0, totalMemory);
 
     Luminous::Texture2D * tex = new Luminous::Texture2D();
-    tex->loadBytes(GL_ALPHA, m_texWidth, m_texHeight, 0, Luminous::PixelFormat::alphaUByte(), false);
+    // Make sure that the texture is filled with zeroes, at least on OSX this is necessary
+    std::vector<uint8_t> zeroes;
+    zeroes.resize(m_texWidth * m_texHeight);
+    memset(&zeroes[0], 0, zeroes.size());
+    tex->loadBytes(GL_ALPHA, m_texWidth, m_texHeight, & zeroes[0], Luminous::PixelFormat::alphaUByte(), false);
     tex->setPersistent(true);
     /*
     GLuint texID;
