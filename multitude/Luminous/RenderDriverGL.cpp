@@ -156,11 +156,11 @@ namespace Luminous
     return std::shared_ptr<ShaderGLSL>(new ShaderGLSL(m_d->createId(), type, *this));
   }
 
-  void RenderDriverGL::preFrame(unsigned int threadIndex)
+  void RenderDriverGL::preFrame(unsigned int)
   {
   }
 
-  void RenderDriverGL::postFrame(unsigned int threadIndex)
+  void RenderDriverGL::postFrame(unsigned int)
   {
   }
 
@@ -372,6 +372,12 @@ namespace Luminous
 
   void RenderDriverGL::setViewport(unsigned int threadIndex, float x, float y, float width, float height)
   {
+    (void) threadIndex;
+    (void) x;
+    (void) y;
+    (void) width;
+    (void) height;
+
 /*
     const std::shared_ptr<RenderTarget> & target = m_d->m_threadResources[threadIndex].currentTarget;
     GLint realX = target->width() * x;
@@ -455,7 +461,7 @@ namespace Luminous
 #undef SETUNIFORMVECTOR
 #undef SETUNIFORMMATRIX
 
-  void RenderDriverGL::removeResource(RenderResource::Id id)
+  void RenderDriverGL::removeResource(RenderResource::Id)
   {
     /// @todo Queue resource for removal
   }

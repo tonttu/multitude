@@ -168,11 +168,7 @@ namespace Resonant {
       }
 
       /// Deletes the module.
-      void deleteModule()
-      {
-        delete m_module;
-        m_module = 0;
-      }
+      void deleteModule();
 
       /// Sets if the item should use panner
       void setUsePanner(bool usePanner)
@@ -242,6 +238,9 @@ namespace Resonant {
     /** Marks a given DSP module as finished. Once this function has been called the
         DSP thread will remove the module from the graph, and delete it. */
     void markDone(Item &);
+    /** Marks a given DSP module as finished. Once this function has been called the
+        DSP thread will remove the module from the graph, and delete it. */
+    void markDone(Module &);
 
     /** Send binary control data to the DSP network.
         When sending messages, the BinaryData object should contain an identifier string

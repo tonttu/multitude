@@ -38,7 +38,7 @@ namespace Radiant
     {
       QGLWidget::swapBuffers();
 
-      float since = m_lastAction.sinceSecondsD();
+      // float since = m_lastAction.sinceSecondsD();
 
       /// @todo implement
 //      if(since < 6.0) {

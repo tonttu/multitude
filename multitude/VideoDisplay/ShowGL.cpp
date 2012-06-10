@@ -337,10 +337,10 @@ namespace VideoDisplay {
     return m_subTitles.readSrt(filename);
   }
 
-  bool ShowGL::init(const char * filename,
+  bool ShowGL::init(const char * /*filename */,
                     float /*previewpos*/,
-                    int targetChannel,
-                    int flags)
+                    int /*targetChannel*/,
+                    int /*flags*/)
   {
     return false;
 #if 0

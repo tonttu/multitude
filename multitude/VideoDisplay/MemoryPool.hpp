@@ -27,7 +27,7 @@ namespace VideoPlayer2
   template <typename T, size_t N>
   T * MemoryPool<T, N>::get()
   {
-    for(int i = 0; i < N; ++i) {
+    for(int i = 0; i < (int) N; ++i) {
       auto & item = m_data[i];
       if(item.inUse) continue;
       item.inUse = true;
@@ -39,7 +39,7 @@ namespace VideoPlayer2
   template <typename T, size_t N>
   void MemoryPool<T, N>::put(const T & t)
   {
-    for(int i = 0; i < N; ++i) {
+    for(int i = 0; i < (int) N; ++i) {
       auto & item = m_data[i];
       if(item.inUse && &item.data == &t) {
         item.inUse = false;
