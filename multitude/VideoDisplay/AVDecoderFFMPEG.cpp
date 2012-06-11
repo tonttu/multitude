@@ -801,8 +801,9 @@ namespace VideoPlayer2
 
     av_free(av.frame);
 
-    Resonant::DSPNetwork::instance()->markDone(*audioTransfer);
-    audioTransfer = 0;
+    if(audioTransfer)
+      Resonant::DSPNetwork::instance()->markDone(*audioTransfer);
+    audioTransfer = nullptr;
   }
 
   bool AVDecoderFFMPEG::D::seekToBeginning()
