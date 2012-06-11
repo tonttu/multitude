@@ -17,6 +17,7 @@ namespace VideoPlayer2
     virtual void setPlayMode(PlayMode mode) OVERRIDE;
 
     virtual void seek(const SeekRequest & req) OVERRIDE;
+    virtual void setRealTimeSeeking(bool value) OVERRIDE;
 
     virtual Nimble::Vector2i videoSize() const OVERRIDE;
 

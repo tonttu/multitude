@@ -46,7 +46,7 @@ namespace VideoPlayer2
   class AudioTransfer : public Resonant::Module
   {
   public:
-    AudioTransfer(int channels, int & seekGeneration, AVDecoder::PlayMode & playMode);
+    AudioTransfer(int channels);
     virtual ~AudioTransfer();
 
     virtual bool prepare(int & channelsIn, int & channelsOut);
@@ -60,6 +60,10 @@ namespace VideoPlayer2
 
     DecodedAudioBuffer * takeFreeBuffer(int samples);
     void putReadyBuffer(int samples);
+
+    void setPlayMode(AVDecoder::PlayMode playMode);
+    void setSeeking(bool seeking);
+    void setSeekGeneration(int seekGeneration);
 
   private:
     class D;

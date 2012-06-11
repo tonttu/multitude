@@ -55,22 +55,25 @@ namespace VideoPlayer2
   class AudioTransfer::D
   {
   public:
-    D(int channels, int & seekGeneration, AVDecoder::PlayMode & playMode)
+    D(int channels)
       : channels(channels)
-      , seekGeneration(seekGeneration)
-      , playMode(playMode)
+      , seekGeneration(0)
+      , playMode(AVDecoder::Pause)
+      , seeking(false)
       , decodedBuffers(s_decodedBufferCount)
       , buffersReader(0)
       , buffersWriter(0)
       , resonantToPts(0)
       , usedSeekGeneration(0)
+      , samplesInGeneration(0)
       , gain(1.0f)
       /*, samplesProcessed(0)*/
     {}
 
     const int channels;
-    int & seekGeneration;
-    AVDecoder::PlayMode & playMode;
+    int seekGeneration;
+    AVDecoder::PlayMode playMode;
+    bool seeking;
 
     Timestamp pts;
 
@@ -89,6 +92,7 @@ namespace VideoPlayer2
 
     double resonantToPts;
     int usedSeekGeneration;
+    int samplesInGeneration;
 
     float gain;
     /*long samplesProcessed;*/
@@ -99,7 +103,7 @@ namespace VideoPlayer2
 
   DecodedAudioBuffer * AudioTransfer::D::getReadyBuffer()
   {
-    while(playMode == AVDecoder::Play && readyBuffers > 0) {
+    while((playMode == AVDecoder::Play || seeking) && readyBuffers > 0) {
       DecodedAudioBuffer * buffer = & decodedBuffers[buffersReader % s_decodedBufferCount];
       if(buffer->timestamp().seekGeneration < seekGeneration) {
         samplesInBuffers.fetchAndAddRelaxed(-buffer->samples());
@@ -107,9 +111,12 @@ namespace VideoPlayer2
         ++buffersReader;
         continue;
       }
+      /// @todo shouldn't be hard-coded
+      if(seeking && samplesInGeneration > 44100.0/24.0)
+        return nullptr;
       return buffer;
     }
-    return 0;
+    return nullptr;
   }
 
   void AudioTransfer::D::bufferConsumed(int samples)
@@ -119,9 +126,9 @@ namespace VideoPlayer2
     ++buffersReader;
   }
 
-  AudioTransfer::AudioTransfer(int channels, int & seekGeneration, AVDecoder::PlayMode & playMode)
+  AudioTransfer::AudioTransfer(int channels)
     : Module(0)
-    , m_d(new D(channels, seekGeneration, playMode))
+    , m_d(new D(channels))
   {
     assert(channels > 0);
   }
@@ -180,12 +187,12 @@ namespace VideoPlayer2
 
           first = false;
         }
-
+        m_d->samplesInGeneration += samples;
 
         // We could take the gain into account in the preprocessing stage,
         // in another thread with more resources, but then changing gain
         // would have a noticeably latency
-        const float gain = m_d->gain;
+        const float gain = m_d->seeking ? m_d->gain * 0.35 : m_d->gain;
         if(std::abs(gain - 1.0f) < 1e-5f) {
           for(int channel = 0; channel < m_d->channels; ++channel)
             memcpy(out[channel] + processed, decodedBuffer->data(channel) + offset, samples * sizeof(float));
@@ -243,5 +250,22 @@ namespace VideoPlayer2
   {
     m_d->samplesInBuffers.fetchAndAddRelaxed(samples);
     m_d->readyBuffers.ref();
+  }
+
+  void AudioTransfer::setPlayMode(AVDecoder::PlayMode playMode)
+  {
+    m_d->playMode = playMode;
+  }
+
+  void AudioTransfer::setSeeking(bool seeking)
+  {
+    m_d->seeking = seeking;
+  }
+
+  void AudioTransfer::setSeekGeneration(int seekGeneration)
+  {
+    if(m_d->seekGeneration != seekGeneration)
+      m_d->samplesInGeneration = 0;
+    m_d->seekGeneration = seekGeneration;
   }
 }
