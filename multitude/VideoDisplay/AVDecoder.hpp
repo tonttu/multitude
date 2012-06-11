@@ -272,7 +272,7 @@ namespace VideoPlayer2
 
     virtual Timestamp getTimestampAt(const Radiant::TimeStamp & ts) const = 0;
     virtual VideoFrame * getFrame(const Timestamp & ts) const = 0;
-    virtual void releaseOldVideoFrames(const Timestamp & ts) = 0;
+    virtual void releaseOldVideoFrames(const Timestamp & ts, bool * eof = nullptr) = 0;
 
     static std::unique_ptr<AVDecoder> create(const Options & options,
                                              const QString & backend = "");

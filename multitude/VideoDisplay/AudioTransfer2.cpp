@@ -220,6 +220,11 @@ namespace VideoPlayer2
     return m_d->pts;
   }
 
+  bool AudioTransfer::isBufferEmpty() const
+  {
+    return m_d->readyBuffers <= 0;
+  }
+
   DecodedAudioBuffer * AudioTransfer::takeFreeBuffer(int samples)
   {
     if(m_d->readyBuffers >= m_d->decodedBuffers.size())

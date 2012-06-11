@@ -54,6 +54,8 @@ namespace
     T * takeFree();
     void put();
 
+    int itemCount() const;
+
     T * readyItem(int index = 0);
     void next();
 
@@ -93,6 +95,12 @@ namespace
   void LockFreeQueue<T, N>::put()
   {
     m_readyItems.ref();
+  }
+
+  template <typename T, size_t N>
+  int LockFreeQueue<T, N>::itemCount() const
+  {
+    return m_readyItems;
   }
 
   template <typename T, size_t N>
@@ -290,6 +298,7 @@ namespace VideoPlayer2
     D()
       : seekGeneration(0)
       , running(true)
+      , finished(false)
       , av()
       , videoFilter()
       , audioFilter()
@@ -305,6 +314,7 @@ namespace VideoPlayer2
     int seekGeneration;
 
     bool running;
+    bool finished;
 
     MyAV av;
 
@@ -328,7 +338,6 @@ namespace VideoPlayer2
 
     double loopOffset;
 
-    /// @todo can this be unique_ptr, how does resonant modules work?
     AudioTransfer * audioTransfer;
 
     /// From main thread to decoder thread, list of BufferRefs that should be
@@ -1395,7 +1404,7 @@ namespace VideoPlayer2
     return ret;
   }
 
-  void AVDecoderFFMPEG::releaseOldVideoFrames(const Timestamp & ts)
+  void AVDecoderFFMPEG::releaseOldVideoFrames(const Timestamp & ts, bool * eof)
   {
     int frameIndex = 0;
     for(;; ++frameIndex) {
@@ -1408,7 +1417,7 @@ namespace VideoPlayer2
     }
 
     // always keep one frame alive
-    if (--frameIndex < 1) return;
+    --frameIndex;
 
     for(int i = 0; i < frameIndex; ++i) {
       VideoFrameFFMPEG * frame = m_d->decodedVideoFrames.readyItem();
@@ -1430,6 +1439,11 @@ namespace VideoPlayer2
       }
 
       m_d->decodedVideoFrames.next();
+    }
+
+    if(eof) {
+      *eof = m_d->finished && (!m_d->audioTransfer || m_d->audioTransfer->isBufferEmpty())
+          && m_d->decodedVideoFrames.itemCount() <= 1;
     }
   }
 
@@ -1504,6 +1518,7 @@ namespace VideoPlayer2
     ffmpegInit();
 
     if(!m_d->open()) {
+      m_d->finished = true;
       eventSend("error");
       return;
     }
@@ -1584,8 +1599,6 @@ namespace VideoPlayer2
           m_d->loopOffset += m_d->av.duration;
           continue;
         } else {
-          eventSend("finished");
-          /// @todo need to wait until all frames are actually displayed
           // all done
           break;
         }
@@ -1637,6 +1650,8 @@ namespace VideoPlayer2
       av_free_packet(&av.packet);
     }
 
+    eventSend("finished");
+    m_d->finished = true;
     s_src = nullptr;
   }
 }

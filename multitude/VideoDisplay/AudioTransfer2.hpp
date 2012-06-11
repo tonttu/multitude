@@ -56,6 +56,8 @@ namespace VideoPlayer2
 
     Timestamp lastPts() const;
 
+    bool isBufferEmpty() const;
+
     DecodedAudioBuffer * takeFreeBuffer(int samples);
     void putReadyBuffer(int samples);
 
