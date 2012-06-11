@@ -349,7 +349,7 @@ namespace Valuable
 #ifdef MULTI_DOCUMENTER
       Doc & d = doc.back();
       XMLArchive archive;
-      ArchiveElement e = Serializer::serialize<T>(archive, m_orig);
+      ArchiveElement e = Serializer::serialize<T>(archive, orig());
       if(!e.isNull()) {
         d.orig_str = e.get();
       }
