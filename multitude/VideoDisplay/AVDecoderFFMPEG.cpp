@@ -300,6 +300,7 @@ namespace VideoPlayer2
       , running(true)
       , finished(false)
       , av()
+      , pauseTimestamp(Radiant::TimeStamp::getTime())
       , videoFilter()
       , audioFilter()
       , radiantTimestampToPts(std::numeric_limits<double>::quiet_NaN())
@@ -323,6 +324,7 @@ namespace VideoPlayer2
     SeekRequest seekRequest;
 
     AVDecoder::Options options;
+    Radiant::TimeStamp pauseTimestamp;
 
     struct FilterGraph
     {
@@ -993,7 +995,7 @@ namespace VideoPlayer2
               // However, if we have a filter that changes pts, this might not be right.
               if(Nimble::Math::isNAN(radiantTimestampToPts)) {
                 const Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
-                radiantTimestampToPts = dpts + loopOffset - now.secondsD() + 2.0/60.0;
+                radiantTimestampToPts = dpts + loopOffset - now.secondsD() + 4.0/60.0;
                 setTimestampToPts = true;
               }
               if(!running) return false;
@@ -1035,7 +1037,7 @@ namespace VideoPlayer2
         if(frame) break;
         if(Nimble::Math::isNAN(radiantTimestampToPts)) {
           const Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
-          radiantTimestampToPts = dpts + loopOffset - now.secondsD() + 2.0/60.0;
+          radiantTimestampToPts = dpts + loopOffset - now.secondsD() + 4.0/60.0;
           setTimestampToPts = true;
         }
         if(!running) return false;
@@ -1069,7 +1071,7 @@ namespace VideoPlayer2
 
     if(Nimble::Math::isNAN(radiantTimestampToPts) || setTimestampToPts) {
       const Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
-      radiantTimestampToPts = dpts + loopOffset - now.secondsD() + 2.0/60.0;
+      radiantTimestampToPts = dpts + loopOffset - now.secondsD() + 4.0/60.0;
     }
 
     return true;
@@ -1371,7 +1373,14 @@ namespace VideoPlayer2
 
   void AVDecoderFFMPEG::setPlayMode(AVDecoder::PlayMode mode)
   {
+    if(m_d->options.playMode == mode)
+      return;
+
     m_d->options.playMode = mode;
+    if(mode == Pause)
+      m_d->pauseTimestamp = Radiant::TimeStamp::getTime();
+    if(mode == Play)
+      m_d->radiantTimestampToPts -= m_d->pauseTimestamp.sinceSecondsD();
   }
 
   Timestamp AVDecoderFFMPEG::getTimestampAt(const Radiant::TimeStamp & ts) const
@@ -1381,6 +1390,9 @@ namespace VideoPlayer2
 
     if(Nimble::Math::isNAN(m_d->radiantTimestampToPts))
       return Timestamp();
+
+    if(m_d->options.playMode == Pause)
+      return Timestamp(m_d->pauseTimestamp.secondsD() + m_d->radiantTimestampToPts, m_d->seekGeneration);
 
     return Timestamp(ts.secondsD() + m_d->radiantTimestampToPts, m_d->seekGeneration);
   }
@@ -1536,6 +1548,7 @@ namespace VideoPlayer2
 
     auto & av = m_d->av;
 
+    m_d->pauseTimestamp == Radiant::TimeStamp::getTime();
     while(m_d->running) {
       m_d->decodedVideoFrames.setSize(m_d->options.videoBufferFrames);
 
