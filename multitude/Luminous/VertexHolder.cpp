@@ -27,7 +27,7 @@ namespace Luminous
   */
 
 #define VERTEX_ATTRIB_STEP(prog, paramName, paramRef, objRef) \
-  VertexAttribArrayStep step_##paramName (prog, #paramName, sizeof(paramRef) / 4, GL_FLOAT, GL_FALSE, sizeof(objRef), \
+  VertexAttribArrayStep step_##paramName (prog, #paramName, sizeof(objRef.paramRef) / 4, GL_FLOAT, GL_FALSE, sizeof(objRef), \
     offsetBytes(objRef.paramRef, objRef), func)
 
   void RectVertex::render(RenderContext &r, RenderPacket & rp)
