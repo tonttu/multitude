@@ -50,7 +50,9 @@ namespace
   public:
     LockFreeQueue();
 
-    void setSize(int items);
+    bool setSize(int items);
+    int size() const;
+
     T * takeFree();
     void put();
 
@@ -62,7 +64,9 @@ namespace
   private:
     std::array<T, N> m_data;
     QAtomicInt m_readyItems;
+    // index of the current queue head, "next ready item" (if m_readyItems > 0)
     int m_reader;
+    // index of the next free item (if m_readyItems < m_size)
     int m_writer;
     int m_size;
   };
@@ -75,9 +79,16 @@ namespace
   {}
 
   template <typename T, size_t N>
-  void LockFreeQueue<T, N>::setSize(int items)
+  bool LockFreeQueue<T, N>::setSize(int items)
   {
     m_size = std::min<int>(items, m_data.size());
+    return m_size == items;
+  }
+
+  template <typename T, size_t N>
+  int LockFreeQueue<T, N>::size() const
+  {
+    return m_size;
   }
 
   template <typename T, size_t N>
@@ -358,6 +369,7 @@ namespace VideoPlayer2
 
     bool decodeVideoPacket(double & dpts, double & nextDpts);
     bool decodeAudioPacket(double & dpts, double & nextDpts);
+    VideoFrameFFMPEG * getFreeFrame(bool setTimestampToPts, double & dpts);
 
     static int getBuffer(AVCodecContext * context, AVFrame * frame);
     ///static int regetBuffer(struct AVCodecContext * context, AVFrame * frame);
@@ -935,6 +947,35 @@ namespace VideoPlayer2
     return true;
   }
 
+  VideoFrameFFMPEG * AVDecoderFFMPEG::D::getFreeFrame(bool setTimestampToPts, double & dpts)
+  {
+    while(running) {
+      VideoFrameFFMPEG * frame = decodedVideoFrames.takeFree();
+      if(frame) return frame;
+      // Set this here, because another frame might be waiting for us
+      // However, if we have a filter that changes pts, this might not be right.
+      if(Nimble::Math::isNAN(radiantTimestampToPts)) {
+        const Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
+        radiantTimestampToPts = dpts + loopOffset - now.secondsD() + 4.0/60.0;
+        setTimestampToPts = true;
+      }
+      if(!running) break;
+      // if the video buffer is full, and audio buffer is almost empty,
+      // we need to resize the video buffer, otherwise we could starve.
+      // Growing the video buffer is safe, as long as the buffer size
+      // doesn't grow over the hard-limit (setSize checks that)
+      if(audioTransfer && audioTransfer->bufferStateSeconds() < options.audioBufferSeconds * 0.15f) {
+        if(decodedVideoFrames.setSize(decodedVideoFrames.size() + 1)) {
+          options.videoBufferFrames = decodedVideoFrames.size();
+          continue;
+        }
+      }
+
+      Radiant::Sleep::sleepMs(10);
+    }
+    return nullptr;
+  }
+
   bool AVDecoderFFMPEG::D::decodeVideoPacket(double & dpts, double & nextDpts)
   {
     const double prevDpts = dpts;
@@ -989,19 +1030,9 @@ namespace VideoPlayer2
           }
 
           if(output) {
-            for(;;) {
-              frame = decodedVideoFrames.takeFree();
-              if(frame) break;
-              // Set this here, because another frame might be waiting for us
-              // However, if we have a filter that changes pts, this might not be right.
-              if(Nimble::Math::isNAN(radiantTimestampToPts)) {
-                const Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
-                radiantTimestampToPts = dpts + loopOffset - now.secondsD() + 4.0/60.0;
-                setTimestampToPts = true;
-              }
-              if(!running) return false;
-              Radiant::Sleep::sleepMs(10);
-            }
+            frame = getFreeFrame(setTimestampToPts, dpts);
+            if(!frame)
+              return false;
 
             frame->bufferRef = output;
             frame->imageBuffer = nullptr;
@@ -1033,17 +1064,9 @@ namespace VideoPlayer2
         }
       }
     } else {
-      for(;;) {
-        frame = decodedVideoFrames.takeFree();
-        if(frame) break;
-        if(Nimble::Math::isNAN(radiantTimestampToPts)) {
-          const Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
-          radiantTimestampToPts = dpts + loopOffset - now.secondsD() + 4.0/60.0;
-          setTimestampToPts = true;
-        }
-        if(!running) return false;
-        Radiant::Sleep::sleepMs(10);
-      }
+      frame = getFreeFrame(setTimestampToPts, dpts);
+      if(!frame)
+        return false;
 
       frame->bufferRef = nullptr;
       frame->imageBuffer = buffer;
@@ -1455,7 +1478,7 @@ namespace VideoPlayer2
     }
 
     if(eof) {
-      *eof = m_d->finished && (!m_d->audioTransfer || m_d->audioTransfer->isBufferEmpty())
+      *eof = m_d->finished && (!m_d->audioTransfer || m_d->audioTransfer->bufferStateSeconds() <= 0.0f)
           && m_d->decodedVideoFrames.itemCount() <= 1;
     }
   }

@@ -220,9 +220,10 @@ namespace VideoPlayer2
     return m_d->pts;
   }
 
-  bool AudioTransfer::isBufferEmpty() const
+  float AudioTransfer::bufferStateSeconds() const
   {
-    return m_d->readyBuffers <= 0;
+    /// @todo shouldn't be hard-coded
+    return m_d->samplesInBuffers / 44100.0f;
   }
 
   DecodedAudioBuffer * AudioTransfer::takeFreeBuffer(int samples)
