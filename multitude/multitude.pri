@@ -244,7 +244,7 @@ win32 {
       LIB_VALUABLE = -lValuable$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_PATTERNS = -lPatterns$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}_d
-      !mobile:LIB_V8 = -lv8_d
+      !without-js:LIB_V8 = -lv8_d
 	}
 }
 
