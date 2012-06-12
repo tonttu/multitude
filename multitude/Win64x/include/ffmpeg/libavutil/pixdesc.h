@@ -102,7 +102,7 @@ typedef struct AVPixFmtDescriptor{
 /**
  * The array of all the pixel format descriptors.
  */
-extern const AVPixFmtDescriptor av_pix_fmt_descriptors[];
+extern __declspec(dllimport) const AVPixFmtDescriptor av_pix_fmt_descriptors[];
 
 /**
  * Read a line from an image, and write the values of the
