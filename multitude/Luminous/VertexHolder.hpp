@@ -176,7 +176,7 @@ namespace Luminous
     static void render(RenderContext &, RenderPacket &);
 
     Nimble::Matrix3 m_objectTransform;
-    Nimble::Vector2 m_location;
+    Nimble::Vector4 m_location; // Object & center location
     Nimble::Vector2 m_objCoord;
     Nimble::Vector2 m_texCoord;
     Nimble::Vector4 m_color;

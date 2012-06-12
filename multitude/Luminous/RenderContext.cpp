@@ -1079,9 +1079,9 @@ namespace Luminous
     }
   }
 
-  void RenderContext::drawArc(Nimble::Vector2f center, float radius,
+  void RenderContext::drawArc(Nimble::Vector2f center, float radius, float width,
                               float fromRadians, float toRadians,
-                              float width, const Luminous::Style & style)
+                              const Luminous::Style & style)
   {
     if(style.program()) {
       style.program()->bind();
@@ -1104,23 +1104,27 @@ namespace Luminous
     v.m_objectTransform = transform().transposed();
     v.m_arcParams.make(innderRelative, fromRadians, toRadians);
 
-    v.m_location = center - Nimble::Vector2(radius, radius);
+    Nimble::Vector2 & vloc = * (Nimble::Vector2*) & v.m_location;
+    v.m_location[2] = center.x;
+    v.m_location[3] = center.y;
+
+    vloc = Nimble::Vector2(-radius, -radius);
     v.m_texCoord = style.texCoords().low();
     v.m_objCoord.make(-1, -1);
 
     rp.addFirstVertex(v);
 
-    v.m_location = center + Nimble::Vector2(radius, -radius);
+    vloc = Nimble::Vector2(radius, -radius);
     v.m_texCoord = style.texCoords().highLow();
     v.m_objCoord.make(1, -1);
     rp.addVertex(v);
 
-    v.m_location = center + Nimble::Vector2(-radius, radius);
+    vloc = Nimble::Vector2(-radius, radius);
     v.m_texCoord = style.texCoords().lowHigh();
     v.m_objCoord.make(-1, 1);
     rp.addVertex(v);
 
-    v.m_location = center + Nimble::Vector2(radius, radius);
+    vloc = Nimble::Vector2(radius, radius);
     v.m_texCoord = style.texCoords().high();
     v.m_objCoord.make(1, 1);
     rp.addLastVertex(v);
