@@ -1081,27 +1081,50 @@ namespace Luminous
 
   void RenderContext::drawArc(Nimble::Vector2f center, float radius,
                               float fromRadians, float toRadians,
-                              float width, const Luminous::Style & fill)
+                              float width, const Luminous::Style & style)
   {
-    bindProgram(m_data->m_arc_shader.get());
+    if(style.program()) {
+      style.program()->bind();
+    }
+    else {
+      m_data->m_arc_shader->bind();
+    }
 
-    GLSLProgramObject * prog =  m_data->m_arc_shader.get();
+    RenderPacket & rp = * m_data->m_renderPacket;
+    rp.setProgram(&*m_data->m_arc_shader);
+    rp.setPacketRenderFunction(ArcVertex::render);
 
-    float dim = radius + width * 0.5f;
-    Nimble::Vector2 corners(dim, dim);
+    float w2 = width * 0.5f;
+    radius += w2;
+    float innderRelative = 1.0f - width / radius;
 
-    //3x3 modelview transform for 2D tranformations
-    prog->setUniformMatrix3("object_transform", this->transform());
+    ArcVertex v;
+    v.m_color = style.color();
+    v.m_useTexture = style.texturing();
+    v.m_objectTransform = transform().transposed();
+    v.m_arcParams.make(innderRelative, fromRadians, toRadians);
 
-    //4x4 projection transform
-    prog->setUniformMatrix4("view_transform", m_data->m_viewTransform);
+    v.m_location = center - Nimble::Vector2(radius, radius);
+    v.m_texCoord = style.texCoords().low();
+    v.m_objCoord.make(-1, -1);
 
-    prog->setUniformFloat("fs_fromRadians", fromRadians);
-    prog->setUniformFloat("fs_toRadians", toRadians);
-    prog->setUniformFloat("fs_thickness", (0.5f * width) / dim);
+    rp.addFirstVertex(v);
 
-    drawRect(Nimble::Rect(center - corners, center + corners), fill);
-    flush();
+    v.m_location = center + Nimble::Vector2(radius, -radius);
+    v.m_texCoord = style.texCoords().highLow();
+    v.m_objCoord.make(1, -1);
+    rp.addVertex(v);
+
+    v.m_location = center + Nimble::Vector2(-radius, radius);
+    v.m_texCoord = style.texCoords().lowHigh();
+    v.m_objCoord.make(-1, 1);
+    rp.addVertex(v);
+
+    v.m_location = center + Nimble::Vector2(radius, radius);
+    v.m_texCoord = style.texCoords().high();
+    v.m_objCoord.make(1, 1);
+    rp.addLastVertex(v);
+
   }
 
   void RenderContext::drawCircle(Nimble::Vector2f center, float radius, const Luminous::Style & style)
