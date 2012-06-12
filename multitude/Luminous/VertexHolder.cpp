@@ -108,11 +108,54 @@ namespace Luminous
     VERTEX_ATTRIB_STEP(prog, object_transform_r2, m_objectTransform[1], vr);
     VERTEX_ATTRIB_STEP(prog, object_transform_r3, m_objectTransform[2], vr);
 
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, GLsizei(rp.vertices().count<RectVertex>()));
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, GLsizei(rp.vertices().count<CircleVertex>()));
 
     rp.clear();
     rp.vbo().unbind(); // Should not really call this
     Utils::glCheck("CircleVertex::render # 3");
+  }
+
+  void ArcVertex::render(RenderContext &r, RenderPacket & rp)
+  {
+    if(! & rp)
+      return;
+
+    if(rp.empty())
+      return;
+
+    Utils::glCheck("ArcVertex::render # 1");
+
+    assert(rp.program() != 0);
+
+    ArcVertex & vr = * rp.vertexData<ArcVertex>();
+
+    GLSLProgramObject & prog = * rp.program();
+
+    prog.setUniformMatrix4("view_transform", r.viewTransform());
+
+    Utils::glCheck("ArcVertex::render # 2");
+
+    rp.vbo().bind();
+    rp.vbo().fill(rp.vertexData<ArcVertex>(), rp.vertices().bytes(), Luminous::VertexBuffer::DYNAMIC_DRAW);
+
+    const char * func = "ArcVertex::render"; // Needed by the macros below
+
+    VERTEX_ATTRIB_STEP(prog, location, m_location, vr);
+    VERTEX_ATTRIB_STEP(prog, color, m_color, vr);
+    VERTEX_ATTRIB_STEP(prog, tex_coord, m_texCoord, vr);
+    VERTEX_ATTRIB_STEP(prog, obj_coord, m_objCoord, vr);
+    VERTEX_ATTRIB_STEP(prog, use_tex, m_useTexture, vr);
+    VERTEX_ATTRIB_STEP(prog, arc_params, m_arcParams, vr);
+
+    VERTEX_ATTRIB_STEP(prog, object_transform_r1, m_objectTransform[0], vr);
+    VERTEX_ATTRIB_STEP(prog, object_transform_r2, m_objectTransform[1], vr);
+    VERTEX_ATTRIB_STEP(prog, object_transform_r3, m_objectTransform[2], vr);
+
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, GLsizei(rp.vertices().count<ArcVertex>()));
+
+    rp.clear();
+    rp.vbo().unbind(); // Should not really call this
+    Utils::glCheck("ArcVertex::render # 3");
   }
 
 }

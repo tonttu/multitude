@@ -168,6 +168,33 @@ namespace Luminous
   };
 
 
+  class ArcVertex
+  {
+  public:
+    ArcVertex() { memset(this, 0, sizeof (*this)); }
+
+    static void render(RenderContext &, RenderPacket &);
+
+    Nimble::Matrix3 m_objectTransform;
+    Nimble::Vector4 m_location; // Object & center location
+    Nimble::Vector2 m_objCoord;
+    Nimble::Vector2 m_texCoord;
+    Nimble::Vector4 m_color;
+    Nimble::Vector3 m_arcParams; // Inner radius, from radians, to radians
+    float           m_useTexture;
+
+    //to help debug
+    friend std::ostream& operator<<(std::ostream& s, ArcVertex& r)
+    {
+        s<<"[ m_location ="<<r.m_location
+         <<", m_texCoord="<<r.m_texCoord
+         <<", m_useTexture="<<r.m_useTexture
+         <<" ]"<<std::endl;
+        return s;
+    }
+  };
+
+
   }
 
 //@endcod
