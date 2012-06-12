@@ -54,6 +54,7 @@ HEADERS += IntrusivePtr.hpp
 HEADERS += ResourceLocator.hpp
 HEADERS += RingBuffer.hpp
 HEADERS += RingBufferImpl.hpp
+HEADERS += SafeBool.hpp
 HEADERS += Semaphore.hpp
 HEADERS += SerialPort.hpp
 HEADERS += Size2D.hpp
