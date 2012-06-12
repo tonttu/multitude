@@ -1415,9 +1415,9 @@ namespace VideoPlayer2
       avfilter_unref_buffer(*ref);
       m_d->consumedBufferRefs.next();
     }
-    m_d->close();
     if(isRunning())
       waitEnd();
+    m_d->close();
     delete m_d;
   }
 
