@@ -69,17 +69,23 @@ namespace VideoPlayer2
   public:
     enum SeekType
     {
-      None = 0,
-      Seconds,
-      Relative,
-      Bytes
+      SeekNone = 0,
+      SeekBySeconds,
+      SeekRelative,
+      SeekByBytes
     };
 
     enum SeekDirection
     {
-      Any = 0,
-      OnlyForward,
-      OnlyBackward
+      SeekAnyDirection = 0,
+      SeekOnlyForward,
+      SeekOnlyBackward
+    };
+
+    enum SeekFlags
+    {
+      SeekFlagsNone = 0,
+      SeekRealTime
     };
 
     enum PlayMode
@@ -90,8 +96,8 @@ namespace VideoPlayer2
 
     struct SeekRequest
     {
-      SeekRequest(double value = 0.0, SeekType type = SeekType::None,
-                  SeekDirection direction = SeekDirection::Any)
+      SeekRequest(double value = 0.0, SeekType type = SeekNone,
+                  SeekDirection direction = SeekAnyDirection)
         : value(value), type(type), direction(direction) {}
       double value;
       SeekType type;
@@ -259,11 +265,16 @@ namespace VideoPlayer2
     virtual PlayMode playMode() const = 0;
     virtual void setPlayMode(PlayMode mode) = 0;
     virtual void seek(const SeekRequest & req) = 0;
+    /// Special mode for low-latency seeking without buffering. This should be
+    /// used only with certain UI elements, where the seeking target
+    /// might change in real-time.
+    /// When in real-time seeking mode, the video acts like it's paused
+    virtual void setRealTimeSeeking(bool value) = 0;
 
     virtual Nimble::Vector2i videoSize() const = 0;
 
-    void seekRelative(double pos) { seek(SeekRequest(pos, SeekType::Relative, SeekDirection::Any)); }
-    void seek(double seconds) { seek(SeekRequest(seconds, SeekType::Seconds, SeekDirection::Any)); }
+    void seekRelative(double pos) { seek(SeekRequest(pos, SeekRelative, SeekAnyDirection)); }
+    void seek(double seconds) { seek(SeekRequest(seconds, SeekBySeconds, SeekAnyDirection)); }
 
     virtual void setLooping(bool doLoop) = 0;
 
@@ -272,7 +283,7 @@ namespace VideoPlayer2
 
     virtual Timestamp getTimestampAt(const Radiant::TimeStamp & ts) const = 0;
     virtual VideoFrame * getFrame(const Timestamp & ts) const = 0;
-    virtual void releaseOldVideoFrames(const Timestamp & ts) = 0;
+    virtual void releaseOldVideoFrames(const Timestamp & ts, bool * eof = nullptr) = 0;
 
     static std::unique_ptr<AVDecoder> create(const Options & options,
                                              const QString & backend = "");

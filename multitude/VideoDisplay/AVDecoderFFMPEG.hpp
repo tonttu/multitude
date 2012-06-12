@@ -17,6 +17,7 @@ namespace VideoPlayer2
     virtual void setPlayMode(PlayMode mode) OVERRIDE;
 
     virtual void seek(const SeekRequest & req) OVERRIDE;
+    virtual void setRealTimeSeeking(bool value) OVERRIDE;
 
     virtual Nimble::Vector2i videoSize() const OVERRIDE;
 
@@ -26,7 +27,7 @@ namespace VideoPlayer2
 
     virtual Timestamp getTimestampAt(const Radiant::TimeStamp & ts) const OVERRIDE;
     virtual VideoFrame * getFrame(const Timestamp & ts) const OVERRIDE;
-    virtual void releaseOldVideoFrames(const Timestamp & ts) OVERRIDE;
+    virtual void releaseOldVideoFrames(const Timestamp & ts, bool * eof = nullptr) OVERRIDE;
 
     virtual Nimble::Matrix4f yuvMatrix() const OVERRIDE;
 
