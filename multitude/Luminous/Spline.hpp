@@ -29,6 +29,7 @@ namespace Luminous {
     void clear();
 
     void erase(const Nimble::Rectangle & eraser, float time = 0.0f);
+    void erasePermanent(const Nimble::Rectangle & eraser);
 
     void render(Luminous::RenderContext & r, float time = 0.0f) const;
 
@@ -43,6 +44,8 @@ namespace Luminous {
 
     size_t controlPointCount() const;
     Nimble::Rect controlPointBounds() const;
+
+    bool isEmpty() const;
 
   private:
     friend LUMINOUS_API QDataStream & operator<<(QDataStream & out, const Spline & spline);

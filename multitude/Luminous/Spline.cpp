@@ -23,6 +23,7 @@ namespace
     }
 
     Nimble::Vector2   m_location;
+    /* valid time range when this point should be visible, [m_range.x, m_range.y) */
     Nimble::Vector2f  m_range;
     Nimble::Vector4ub m_color;
     float             m_width;
@@ -77,7 +78,7 @@ namespace Luminous {
 
     void addPoint(const Point & p);
     void endPath();
-    void erase(const Nimble::Rectangle &eraser, float time);
+    void erase(const Nimble::Rectangle &eraser, float time, bool permanent);
 
     Point interpolate(const Path & path, float index) const;
 
@@ -133,7 +134,7 @@ namespace Luminous {
     m_path = nullptr;
   }
 
-  void Spline::D::erase(const Nimble::Rectangle & eraser, float time)
+  void Spline::D::erase(const Nimble::Rectangle & eraser, float time, bool permanent)
   {
     if(!eraser.intersects(m_bounds))
       return;
@@ -145,11 +146,29 @@ namespace Luminous {
 
       std::vector<Point> & points = m_paths[i].points;
 
-      for(int j = 0; j < points.size(); ++j) {
-        Point & p = points[j];
-        if(p.m_range.x <= time && p.m_range.y > time && eraser.inside(p.m_location)) {
-          p.m_range.y = time - 0.0001f;
-          changed = true;
+      if(permanent) {
+        int validPoints = 0;
+        for(std::size_t j = 0; j < points.size(); ++j) {
+          Point & p = points[j];
+          if(p.m_range.y > 0.0f) {
+            if(eraser.inside(p.m_location)) {
+              p.m_range.y = 0;
+              changed = true;
+            } else ++validPoints;
+          }
+        }
+        if(validPoints < 2) {
+          std::swap(m_paths[i], m_paths.back());
+          m_paths.resize(m_paths.size()-1);
+          --i;
+        }
+      } else {
+        for(std::size_t j = 0; j < points.size(); ++j) {
+          Point & p = points[j];
+          if(p.m_range.x <= time && p.m_range.y > time && eraser.inside(p.m_location)) {
+            p.m_range.y = time;
+            changed = true;
+          }
         }
       }
     }
@@ -490,7 +509,13 @@ namespace Luminous {
   void Spline::erase(const Nimble::Rectangle & eraser, float time)
   {
     if(m_d)
-      m_d->erase(eraser, time);
+      m_d->erase(eraser, time, false);
+  }
+
+  void Spline::erasePermanent(const Nimble::Rectangle &eraser)
+  {
+    if(m_d)
+      m_d->erase(eraser, 0.0f, true);
   }
 
   void Spline::render(Luminous::RenderContext & r, float time) const
@@ -549,6 +574,11 @@ namespace Luminous {
   Nimble::Rect Spline::controlPointBounds() const
   {
     return m_d ? m_d->m_bounds : Nimble::Rect(0,0,0,0);
+  }
+
+  bool Spline::isEmpty() const
+  {
+    return m_d ? m_d->m_paths.empty() : true;
   }
 
   QDataStream & operator<<(QDataStream & out, const Spline & spline)
