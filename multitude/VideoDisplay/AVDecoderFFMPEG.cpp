@@ -50,19 +50,24 @@ namespace
   public:
     LockFreeQueue();
 
-    void setSize(int items);
+    bool setSize(int items);
+    int size() const;
+
     T * takeFree();
     void put();
 
     int itemCount() const;
 
     T * readyItem(int index = 0);
+    T * lastReadyItem();
     void next();
 
   private:
     std::array<T, N> m_data;
     QAtomicInt m_readyItems;
+    // index of the current queue head, "next ready item" (if m_readyItems > 0)
     int m_reader;
+    // index of the next free item (if m_readyItems < m_size)
     int m_writer;
     int m_size;
   };
@@ -75,9 +80,16 @@ namespace
   {}
 
   template <typename T, size_t N>
-  void LockFreeQueue<T, N>::setSize(int items)
+  bool LockFreeQueue<T, N>::setSize(int items)
   {
     m_size = std::min<int>(items, m_data.size());
+    return m_size == items;
+  }
+
+  template <typename T, size_t N>
+  int LockFreeQueue<T, N>::size() const
+  {
+    return m_size;
   }
 
   template <typename T, size_t N>
@@ -108,6 +120,13 @@ namespace
   {
     if(index >= m_readyItems) return nullptr;
     return & m_data[(m_reader + index) % N];
+  }
+
+  template <typename T, size_t N>
+  T * LockFreeQueue<T, N>::lastReadyItem()
+  {
+    if(m_readyItems < 1) return nullptr;
+    return & m_data[(m_reader + m_readyItems - 1) % N];
   }
 
   template <typename T, size_t N>
@@ -300,6 +319,7 @@ namespace VideoPlayer2
       , running(true)
       , finished(false)
       , av()
+      , realTimeSeeking(false)
       , pauseTimestamp(Radiant::TimeStamp::getTime())
       , videoFilter()
       , audioFilter()
@@ -321,6 +341,7 @@ namespace VideoPlayer2
 
     MemoryPool<DecodedImageBuffer, 80> imageBuffers;
 
+    bool realTimeSeeking;
     SeekRequest seekRequest;
 
     AVDecoder::Options options;
@@ -358,6 +379,8 @@ namespace VideoPlayer2
 
     bool decodeVideoPacket(double & dpts, double & nextDpts);
     bool decodeAudioPacket(double & dpts, double & nextDpts);
+    VideoFrameFFMPEG * getFreeFrame(bool setTimestampToPts, double & dpts);
+    void checkSeek(double & nextVideoDpts, double & videoDpts, double & nextAudioDpts);
 
     static int getBuffer(AVCodecContext * context, AVFrame * frame);
     ///static int regetBuffer(struct AVCodecContext * context, AVFrame * frame);
@@ -759,7 +782,10 @@ namespace VideoPlayer2
     }
 
     if(av.audioCodec) {
-      audioTransfer = new AudioTransfer(options.audioChannels, seekGeneration, options.playMode);
+      audioTransfer = new AudioTransfer(options.audioChannels);
+      audioTransfer->setSeekGeneration(seekGeneration);
+      audioTransfer->setPlayMode(options.playMode);
+
       static QAtomicInt counter;
       int value = counter.fetchAndAddRelease(1);
       audioTransfer->setId(QString("VideoPlayer2.AudioTransfer.%1").arg(value));
@@ -849,6 +875,8 @@ namespace VideoPlayer2
       bool ok = seekToBeginning();
       if(ok) {
         ++seekGeneration;
+        if(audioTransfer)
+          audioTransfer->setSeekGeneration(seekGeneration);
         radiantTimestampToPts = std::numeric_limits<double>::quiet_NaN();
       }
       return ok;
@@ -857,9 +885,9 @@ namespace VideoPlayer2
     if(!av.seekingSupported)
       return false;
 
-    bool seekByBytes = av.seekByBytes || seekRequest.type == SeekType::Bytes;
+    bool seekByBytes = av.seekByBytes || seekRequest.type == SeekByBytes;
 
-    if(seekRequest.type == SeekType::Bytes &&
+    if(seekRequest.type == SeekByBytes &&
        (av.formatContext->iformat->flags & AVFMT_NO_BYTE_SEEK)) {
       Radiant::error("%s Seek failed, media doesn't support byte seeking",
                      errorMsg.data());
@@ -868,10 +896,10 @@ namespace VideoPlayer2
 
     int64_t pos = 0;
     if(!seekByBytes) {
-      if(seekRequest.type == SeekType::Seconds) {
+      if(seekRequest.type == SeekBySeconds) {
         pos = seekRequest.value * AV_TIME_BASE;
       } else {
-        assert(seekRequest.type == SeekType::Relative);
+        assert(seekRequest.type == SeekRelative);
         if(av.formatContext->duration > 0) {
           pos = seekRequest.value * av.formatContext->duration;
         } else {
@@ -889,9 +917,9 @@ namespace VideoPlayer2
     }
 
     if(seekByBytes) {
-      if(seekRequest.type == SeekType::Bytes) {
+      if(seekRequest.type == SeekByBytes) {
         pos = seekRequest.value;
-      } else if(seekRequest.type == SeekType::Seconds) {
+      } else if(seekRequest.type == SeekBySeconds) {
         int64_t size = avio_size(av.formatContext->pb);
         if(av.formatContext->duration <= 0 || size <= 0) {
           Radiant::error("%s Seek failed, couldn't get the media duration/size",
@@ -902,7 +930,7 @@ namespace VideoPlayer2
         pos = size * seekRequest.value / av.duration;
 
       } else {
-        assert(seekRequest.type == SeekType::Relative);
+        assert(seekRequest.type == SeekRelative);
         int64_t size = avio_size(av.formatContext->pb);
         if(size <= 0) {
           Radiant::error("%s Seek failed, couldn't get the media size",
@@ -913,9 +941,9 @@ namespace VideoPlayer2
       }
     }
 
-    int64_t minTs = seekRequest.direction == SeekDirection::OnlyForward
+    int64_t minTs = seekRequest.direction == SeekOnlyForward
         ? pos : std::numeric_limits<int64_t>::min();
-    int64_t maxTs = seekRequest.direction == SeekDirection::OnlyBackward
+    int64_t maxTs = seekRequest.direction == SeekOnlyBackward
         ? pos : std::numeric_limits<int64_t>::max();
 
     int err = avformat_seek_file(av.formatContext, -1, minTs, pos, maxTs,
@@ -930,9 +958,40 @@ namespace VideoPlayer2
     if(av.videoCodecContext)
       avcodec_flush_buffers(av.videoCodecContext);
     ++seekGeneration;
+    if(audioTransfer)
+      audioTransfer->setSeekGeneration(seekGeneration);
     radiantTimestampToPts = std::numeric_limits<double>::quiet_NaN();
 
     return true;
+  }
+
+  VideoFrameFFMPEG * AVDecoderFFMPEG::D::getFreeFrame(bool setTimestampToPts, double & dpts)
+  {
+    while(running) {
+      VideoFrameFFMPEG * frame = decodedVideoFrames.takeFree();
+      if(frame) return frame;
+      // Set this here, because another frame might be waiting for us
+      // However, if we have a filter that changes pts, this might not be right.
+      if(Nimble::Math::isNAN(radiantTimestampToPts)) {
+        const Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
+        radiantTimestampToPts = dpts + loopOffset - now.secondsD() + 4.0/60.0;
+        setTimestampToPts = true;
+      }
+      if(!running) break;
+      // if the video buffer is full, and audio buffer is almost empty,
+      // we need to resize the video buffer, otherwise we could starve.
+      // Growing the video buffer is safe, as long as the buffer size
+      // doesn't grow over the hard-limit (setSize checks that)
+      if(audioTransfer && audioTransfer->bufferStateSeconds() < options.audioBufferSeconds * 0.15f) {
+        if(decodedVideoFrames.setSize(decodedVideoFrames.size() + 1)) {
+          options.videoBufferFrames = decodedVideoFrames.size();
+          continue;
+        }
+      }
+
+      Radiant::Sleep::sleepMs(10);
+    }
+    return nullptr;
   }
 
   bool AVDecoderFFMPEG::D::decodeVideoPacket(double & dpts, double & nextDpts)
@@ -989,19 +1048,9 @@ namespace VideoPlayer2
           }
 
           if(output) {
-            for(;;) {
-              frame = decodedVideoFrames.takeFree();
-              if(frame) break;
-              // Set this here, because another frame might be waiting for us
-              // However, if we have a filter that changes pts, this might not be right.
-              if(Nimble::Math::isNAN(radiantTimestampToPts)) {
-                const Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
-                radiantTimestampToPts = dpts + loopOffset - now.secondsD() + 4.0/60.0;
-                setTimestampToPts = true;
-              }
-              if(!running) return false;
-              Radiant::Sleep::sleepMs(10);
-            }
+            frame = getFreeFrame(setTimestampToPts, dpts);
+            if(!frame)
+              return false;
 
             frame->bufferRef = output;
             frame->imageBuffer = nullptr;
@@ -1033,17 +1082,9 @@ namespace VideoPlayer2
         }
       }
     } else {
-      for(;;) {
-        frame = decodedVideoFrames.takeFree();
-        if(frame) break;
-        if(Nimble::Math::isNAN(radiantTimestampToPts)) {
-          const Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
-          radiantTimestampToPts = dpts + loopOffset - now.secondsD() + 4.0/60.0;
-          setTimestampToPts = true;
-        }
-        if(!running) return false;
-        Radiant::Sleep::sleepMs(10);
-      }
+      frame = getFreeFrame(setTimestampToPts, dpts);
+      if(!frame)
+        return false;
 
       frame->bufferRef = nullptr;
       frame->imageBuffer = buffer;
@@ -1345,6 +1386,19 @@ namespace VideoPlayer2
     delete param;
   }
 
+  void AVDecoderFFMPEG::D::checkSeek(double & nextVideoDpts, double & videoDpts, double & nextAudioDpts)
+  {
+    if((seekRequest.type != SeekNone)) {
+      if(seek()) {
+        loopOffset = 0;
+        nextVideoDpts = std::numeric_limits<double>::quiet_NaN();
+        nextAudioDpts = std::numeric_limits<double>::quiet_NaN();
+        videoDpts = std::numeric_limits<double>::quiet_NaN();
+      }
+      seekRequest.type = SeekNone;
+    }
+  }
+
   AVDecoderFFMPEG::AVDecoderFFMPEG()
     : m_d(new D())
   {
@@ -1378,6 +1432,8 @@ namespace VideoPlayer2
       return;
 
     m_d->options.playMode = mode;
+    if(m_d->audioTransfer)
+      m_d->audioTransfer->setPlayMode(mode);
     if(mode == Pause)
       m_d->pauseTimestamp = Radiant::TimeStamp::getTime();
     if(mode == Play)
@@ -1386,8 +1442,18 @@ namespace VideoPlayer2
 
   Timestamp AVDecoderFFMPEG::getTimestampAt(const Radiant::TimeStamp & ts) const
   {
-    if(m_d->audioTransfer)
-      return m_d->audioTransfer->toPts(ts);
+    if(m_d->realTimeSeeking && m_d->av.videoCodec) {
+      VideoFrameFFMPEG * frame = m_d->decodedVideoFrames.lastReadyItem();
+      if(frame)
+        return Timestamp(frame->timestamp.pts + 0.0001, m_d->seekGeneration);
+    }
+
+    if(m_d->audioTransfer) {
+      Timestamp t = m_d->audioTransfer->toPts(ts);
+      if(t.seekGeneration < m_d->seekGeneration)
+        return Timestamp();
+      return t;
+    }
 
     if(Nimble::Math::isNAN(m_d->radiantTimestampToPts))
       return Timestamp();
@@ -1455,7 +1521,7 @@ namespace VideoPlayer2
     }
 
     if(eof) {
-      *eof = m_d->finished && (!m_d->audioTransfer || m_d->audioTransfer->isBufferEmpty())
+      *eof = m_d->finished && (!m_d->audioTransfer || m_d->audioTransfer->bufferStateSeconds() <= 0.0f)
           && m_d->decodedVideoFrames.itemCount() <= 1;
     }
   }
@@ -1520,6 +1586,13 @@ namespace VideoPlayer2
     m_d->seekRequest = req;
   }
 
+  void AVDecoderFFMPEG::setRealTimeSeeking(bool value)
+  {
+    m_d->realTimeSeeking = value;
+    if(m_d->audioTransfer)
+      m_d->audioTransfer->setSeeking(value);
+  }
+
   void AVDecoderFFMPEG::childLoop()
   {
     QByteArray errorMsg("AVDecoderFFMPEG::D::childLoop # " + m_d->options.src.toUtf8() + ":");
@@ -1550,6 +1623,7 @@ namespace VideoPlayer2
     auto & av = m_d->av;
 
     m_d->pauseTimestamp == Radiant::TimeStamp::getTime();
+    bool waitingFrame = false;
     while(m_d->running) {
       m_d->decodedVideoFrames.setSize(m_d->options.videoBufferFrames);
 
@@ -1562,14 +1636,15 @@ namespace VideoPlayer2
 
       int err = 0;
 
-      if((m_d->seekRequest.type != SeekType::None)) {
-        if(m_d->seek()) {
-          m_d->loopOffset = 0;
-          nextVideoDpts = std::numeric_limits<double>::quiet_NaN();
-          nextAudioDpts = std::numeric_limits<double>::quiet_NaN();
-          videoDpts = std::numeric_limits<double>::quiet_NaN();
+      if(!waitingFrame || !m_d->realTimeSeeking)
+        m_d->checkSeek(nextVideoDpts, videoDpts, nextAudioDpts);
+
+      if(m_d->running && m_d->realTimeSeeking && av.videoCodec) {
+        VideoFrameFFMPEG * frame = m_d->decodedVideoFrames.lastReadyItem();
+        if(frame && frame->timestamp.seekGeneration == m_d->seekGeneration) {
+          Radiant::Sleep::sleepMs(1);
+          continue;
         }
-        m_d->seekRequest.type = SeekType::None;
       }
 
       if(eof == EofState::Normal) {
@@ -1594,6 +1669,10 @@ namespace VideoPlayer2
 
       // We really are at the end of the stream and we have flushed all the packages
       if(eof == EofState::Eof) {
+        if(m_d->realTimeSeeking) {
+          Radiant::Sleep::sleepMs(1);
+          continue;
+        }
         if(m_d->options.loop) {
           m_d->seekToBeginning();
           eof = EofState::Normal;
@@ -1635,7 +1714,7 @@ namespace VideoPlayer2
       }
 
       av.frame->opaque = nullptr;
-      if(av.audioCodec && (
+      if(/*!m_d->realTimeSeeking &&*/ av.audioCodec && (
            (eof == EofState::Normal && av.packet.stream_index == av.audioStreamIndex) ||
            (eof == EofState::Flush && (av.audioCodec->capabilities & CODEC_CAP_DELAY)))) {
         if(eof == EofState::Flush) {
@@ -1659,6 +1738,8 @@ namespace VideoPlayer2
         else
           av.start = std::min(videoDpts, audioDpts);
       }
+
+      waitingFrame = m_d->realTimeSeeking && av.videoCodec && !gotFrames;
 
       // Free the packet that was allocated by av_read_frame
       av_free_packet(&av.packet);
