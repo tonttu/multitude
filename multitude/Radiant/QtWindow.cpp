@@ -152,8 +152,10 @@ namespace Radiant
 
 
     Qt::WindowFlags flags = 0;
-    if(hint.frameless)
+    if(hint.frameless) {
       flags = Qt::FramelessWindowHint;
+      ShowCursor(FALSE);
+    }
 
     QWidget * host = new QWidget(0,  flags);
 
