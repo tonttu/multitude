@@ -1066,10 +1066,13 @@ namespace VideoPlayer2
               frame->data[i] = output->data[i];
             }
 
-            if(output->pts != (int64_t) AV_NOPTS_VALUE) {
+            /// output->pts should be AV_NOPTS_VALUE if not defined,
+            /// but some filters just set it always to zero
+            if(output->pts != (int64_t) AV_NOPTS_VALUE && output->pts != 0) {
               pts = output->pts;
               dpts = av.videoTsToSecs * output->pts;
             }
+
             frame->imageSize = size;
             frame->timestamp = Timestamp(dpts + loopOffset, seekGeneration);
 
