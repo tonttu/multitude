@@ -1,7 +1,5 @@
 #include <Radiant/Platform.hpp>
 
-//#ifndef RADIANT_LINUX
-
 #include "QtWindow.hpp"
 #include "WindowEventHook.hpp"
 
@@ -47,6 +45,18 @@ namespace Radiant
 //      }
     }
 
+    virtual void showCursor()
+    {
+      m_lastAction = Radiant::TimeStamp::getTime();
+      setCursor( QCursor( Qt::ArrowCursor) );
+    }
+
+    virtual void hideCursor()
+    {
+      m_lastAction = Radiant::TimeStamp::getTime();
+      setCursor( QCursor( Qt::BlankCursor) );
+    }
+
   private:
     // Empty overrides for thread-safety
     virtual void paintEvent(QPaintEvent *) {}
@@ -83,21 +93,18 @@ namespace Radiant
     {
       if(m_window.eventHook())
         m_window.eventHook()->handleMouseEvent(*e);
-      showCursor();
     }
 
     virtual void mousePressEvent(QMouseEvent * e)
     {
       if(m_window.eventHook())
         m_window.eventHook()->handleMouseEvent(*e);
-      showCursor();
     }
 
     virtual void mouseReleaseEvent(QMouseEvent * e)
     {
       if(m_window.eventHook())
         m_window.eventHook()->handleMouseEvent(*e);
-      showCursor();
     }
 
     virtual void keyPressEvent(QKeyEvent * e)
@@ -111,15 +118,6 @@ namespace Radiant
     {
       if(m_window.eventHook())
         m_window.eventHook()->handleKeyboardEvent(Radiant::KeyEvent(*e));
-    }
-
-    virtual void showCursor()
-    {
-      m_lastAction = Radiant::TimeStamp::getTime();
-
-      if(QApplication::overrideCursor()) {
-        QApplication::restoreOverrideCursor();
-      }
     }
 
     QtWindow & m_window;
@@ -149,13 +147,9 @@ namespace Radiant
 
     */
 
-
-
     Qt::WindowFlags flags = 0;
-    if(hint.frameless) {
+    if(hint.frameless)
       flags = Qt::FramelessWindowHint;
-      ShowCursor(FALSE);
-    }
 
     QWidget * host = new QWidget(0,  flags);
 
@@ -173,6 +167,9 @@ namespace Radiant
       host->showFullScreen();
 
     m_mainWindow = new GLThreadWidget(host, *this, flags);
+
+    if (hint.frameless)
+      m_mainWindow->hideCursor();
 
     m_mainWindow->raise();
     m_mainWindow->show();
@@ -221,5 +218,3 @@ namespace Radiant
   }
 
 }
-
-//#endif
