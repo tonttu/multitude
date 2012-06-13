@@ -63,7 +63,6 @@ namespace Nimble
     if (last >= 1) m_tangents[last] = 0.5f * (point - m_points[last-1]);
     m_points.push_back(point);
     m_tangents.push_back(0.1f * (point - m_points[last]));
-    last++;
   }
 
   void Interpolating::remove(size_t ii) {
