@@ -366,6 +366,16 @@ namespace Valuable
     return deserialize(archive.root());
   }
 
+  bool Node::loadFromMemoryXML(const QByteArray & buffer)
+  {
+    XMLArchive archive;
+
+    if(!archive.readFromMem(buffer))
+      return false;
+
+    return deserialize(archive.root());
+  }
+
   ArchiveElement Node::serialize(Archive & archive) const
   {
     QString name = m_name.isEmpty() ? "Node" : m_name;
