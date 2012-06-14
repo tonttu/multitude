@@ -878,6 +878,8 @@ namespace VideoPlayer2
         if(audioTransfer)
           audioTransfer->setSeekGeneration(seekGeneration);
         radiantTimestampToPts = std::numeric_limits<double>::quiet_NaN();
+        if(options.playMode == Pause)
+          pauseTimestamp = Radiant::TimeStamp::getTime();
       }
       return ok;
     }
@@ -961,6 +963,8 @@ namespace VideoPlayer2
     if(audioTransfer)
       audioTransfer->setSeekGeneration(seekGeneration);
     radiantTimestampToPts = std::numeric_limits<double>::quiet_NaN();
+    if(options.playMode == Pause)
+      pauseTimestamp = Radiant::TimeStamp::getTime();
 
     return true;
   }
