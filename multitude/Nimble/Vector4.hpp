@@ -244,27 +244,25 @@ namespace Nimble {
     return (dot(v, u)/u.lengthSqr())*u;
   }
 
+  /// Serialize a 4D vector into a stream
+  template <class T>
+  inline std::ostream & operator<<(std::ostream & os, const Nimble::Vector4T<T> & t)
+  {
+    os << t.x << ' ' << t.y << ' ' << t.z << ' ' << t.w;
+    return os;
+  }
+
+  /// De-serialize a 4D vector from a stream
+  template <class T>
+  inline std::istream & operator>>(std::istream & is, Nimble::Vector4T<T> & t)
+  {
+    is >> t.x;
+    is >> t.y;
+    is >> t.z;
+    is >> t.w;
+    return is;
+  }
 } // namespace
-
-
-/// Serialize a 4D vector into a stream
-template <class T>
-inline std::ostream &operator<<(std::ostream &os, const Nimble::Vector4T<T> &t)
-{
-  os << t.x << ' ' << t.y << ' ' << t.z << ' ' << t.w;
-  return os;
-}
-
-/// De-serialize a 4D vector from a stream
-template <class T>
-inline std::istream &operator>>(std::istream &is, Nimble::Vector4T<T> &t)
-{
-  is >> t.x;
-  is >> t.y;
-  is >> t.z;
-  is >> t.w;
-  return is;
-}
 
 #ifdef __GCCXML__
 /// These are exported to JS
