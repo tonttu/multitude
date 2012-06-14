@@ -1004,6 +1004,7 @@ namespace VideoPlayer2
     dpts = std::numeric_limits<double>::quiet_NaN();
 
     int gotPicture = 0;
+    avcodec_get_frame_defaults(av.frame);
     int err = avcodec_decode_video2(av.videoCodecContext, av.frame, &gotPicture, &av.packet);
     if(err < 0) {
       avError(QString("AVDecoderFFMPEG::D::decodeVideoPacket # %1: Failed to decode a video frame").
@@ -1134,6 +1135,7 @@ namespace VideoPlayer2
 
     while(running && (packet.size > 0 || flush)) {
       int gotFrame = 0;
+      avcodec_get_frame_defaults(av.frame);
       int consumedBytes = avcodec_decode_audio4(av.audioCodecContext, av.frame,
                                                 &gotFrame, &packet);
       if(consumedBytes < 0) {
