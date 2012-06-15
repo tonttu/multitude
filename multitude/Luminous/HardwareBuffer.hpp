@@ -11,7 +11,7 @@ namespace Luminous
   public:
     LUMINOUS_API HardwareBuffer(RenderResource::Id id, RenderDriver & driver);
 
-    LUMINOUS_API void HardwareBuffer::setData(const char * data, size_t size);
+    LUMINOUS_API void setData(const char * data, size_t size);
 
     LUMINOUS_API size_t size() const;
     LUMINOUS_API const char * data() const;

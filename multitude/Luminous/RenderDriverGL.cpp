@@ -379,7 +379,7 @@ namespace Luminous
           }
           else {
             GLenum normalized = (attr.normalized ? GL_TRUE : GL_FALSE);
-            glVertexAttribPointer(location, attr.count, GLUtils::getDataType(attr.type), normalized, b.description->vertexSize(), (const GLvoid*)attr.offset);
+            glVertexAttribPointer(location, attr.count, GLUtils::getDataType(attr.type), normalized, b.description->vertexSize(), reinterpret_cast<GLvoid *>(attr.offset));
             glEnableVertexAttribArray(location);
             GLERROR("RenderDriverGL::Bind VertexAttributeBinding vertexAttribPointer");
           }
