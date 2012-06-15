@@ -140,6 +140,7 @@ namespace VideoPlayer2
       ///                "background-music.ogg"
       ///                "rtmp://live.example.com/stream"
       ///                "udp://127.0.0.1:1234"
+      ///                "image_sequence_%04.jpg"
       ///                "/dev/video0"      (video4linux2)
       ///                "/dev/video1394/0" (libdc1394)
       ///
