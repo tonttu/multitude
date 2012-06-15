@@ -45,17 +45,31 @@ namespace VideoPlayer2
   class VideoFrame
   {
   public:
-    VideoFrame() : imageSize(0, 0), imageBuffer(nullptr) {}
+    VideoFrame() : imageSize(0, 0), imageBuffer(nullptr), format(UNKNOWN), planes(0) {}
 
     Timestamp timestamp;
 
     Nimble::Vector2i imageSize;
 
-    std::array<Nimble::Vector2i, 3> planeSize;
-    std::array<int, 3> lineSize;
-    std::array<const uint8_t *, 3> data;
+    std::array<Nimble::Vector2i, 4> planeSize;
+    std::array<int, 4> lineSize;
+    std::array<const uint8_t *, 4> data;
 
     DecodedImageBuffer * imageBuffer;
+
+    enum Format
+    {
+      UNKNOWN,
+      GRAY,
+      GRAY_ALPHA,
+      RGB,
+      RGBA,
+      YUV,
+      YUVA
+    };
+    Format format;
+    int planes;
+
   private:
     VideoFrame(const VideoFrame &);
     VideoFrame(VideoFrame &&);

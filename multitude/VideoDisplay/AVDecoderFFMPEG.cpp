@@ -240,35 +240,46 @@ namespace
 
 
   // Supported video formats
+  // We support:
+  //   - all 8 bit planar YUV formats
+  //   - grayscale formats
+  // We don't support on purpose:
+  //   - packed YUV, rendering those is silly and slow
+  //   - any other RGB-style format except bgr24 and bgra, better convert it
+  //     here than in drivers / render thread - except with OpenGL ES.
+  //     And GL_ARB_texture_swizzle isn't supported in OS X
+  //   - palette formats
+  //   - 1 bit monowhite/monoblack
+  //   - accelerated formats like xvmc / va api / vdpau, they don't work with multi-threaded rendering
+  //   - nv12 / nv21 (first plane for Y, second plane for UV) - rendering would be slow and weird
   const PixelFormat s_pixFmts[] = {
     PIX_FMT_YUV420P,   ///< planar YUV 4:2:0, 12bpp, (1 Cr & Cb sample per 2x2 Y samples)
-    //PIX_FMT_RGB24,     ///< packed RGB 8:8:8, 24bpp, RGBRGB...
-    //PIX_FMT_BGR24,     ///< packed RGB 8:8:8, 24bpp, BGRBGR...
     PIX_FMT_YUV422P,   ///< planar YUV 4:2:2, 16bpp, (1 Cr & Cb sample per 2x1 Y samples)
     PIX_FMT_YUV444P,   ///< planar YUV 4:4:4, 24bpp, (1 Cr & Cb sample per 1x1 Y samples)
     PIX_FMT_YUV410P,   ///< planar YUV 4:1:0,  9bpp, (1 Cr & Cb sample per 4x4 Y samples)
     PIX_FMT_YUV411P,   ///< planar YUV 4:1:1, 12bpp, (1 Cr & Cb sample per 4x1 Y samples)
+    PIX_FMT_GRAY8,     ///<        Y        ,  8bpp
     PIX_FMT_YUVJ420P,  ///< planar YUV 4:2:0, 12bpp, full scale (JPEG), deprecated in favor of PIX_FMT_YUV420P and setting color_range
     PIX_FMT_YUVJ422P,  ///< planar YUV 4:2:2, 16bpp, full scale (JPEG), deprecated in favor of PIX_FMT_YUV422P and setting color_range
     PIX_FMT_YUVJ444P,  ///< planar YUV 4:4:4, 24bpp, full scale (JPEG), deprecated in favor of PIX_FMT_YUV444P and setting color_range
 
-    //PIX_FMT_ARGB,      ///< packed ARGB 8:8:8:8, 32bpp, ARGBARGB...
-    //PIX_FMT_RGBA,      ///< packed RGBA 8:8:8:8, 32bpp, RGBARGBA...
-    //PIX_FMT_ABGR,      ///< packed ABGR 8:8:8:8, 32bpp, ABGRABGR...
-    //PIX_FMT_BGRA,      ///< packed BGRA 8:8:8:8, 32bpp, BGRABGRA...
+#ifdef LUMINOUS_OPENGLES
+    PIX_FMT_RGB24,     ///< packed RGB 8:8:8, 24bpp, RGBRGB...
+    PIX_FMT_RGBA,      ///< packed RGBA 8:8:8:8, 32bpp, RGBARGBA...
+#else
+    PIX_FMT_BGR24,     ///< packed RGB 8:8:8, 24bpp, BGRBGR...
+    PIX_FMT_BGRA,      ///< packed BGRA 8:8:8:8, 32bpp, BGRABGRA...
+#endif
 
     PIX_FMT_YUV440P,   ///< planar YUV 4:4:0 (1 Cr & Cb sample per 1x2 Y samples)
     PIX_FMT_YUVJ440P,  ///< planar YUV 4:4:0 full scale (JPEG), deprecated in favor of PIX_FMT_YUV440P and setting color_range
     PIX_FMT_YUVA420P,  ///< planar YUV 4:2:0, 20bpp, (1 Cr & Cb sample per 2x2 Y & A samples)
 
-    //PIX_FMT_GRAY8A,    ///< 8bit gray, 8bit alpha
+    PIX_FMT_GRAY8A,    ///< 8bit gray, 8bit alpha
 
-    //PIX_FMT_0RGB=0x123+4,      ///< packed RGB 8:8:8, 32bpp, 0RGB0RGB...
-    //PIX_FMT_RGB0,      ///< packed RGB 8:8:8, 32bpp, RGB0RGB0...
-    //PIX_FMT_0BGR,      ///< packed BGR 8:8:8, 32bpp, 0BGR0BGR...
-    //PIX_FMT_BGR0,      ///< packed BGR 8:8:8, 32bpp, BGR0BGR0...
     PIX_FMT_YUVA444P,  ///< planar YUV 4:4:4 32bpp, (1 Cr & Cb sample per 1x1 Y & A samples)
     PIX_FMT_YUVA422P,  ///< planar YUV 4:2:2 24bpp, (1 Cr & Cb sample per 2x1 Y & A samples)
+
     PIX_FMT_NONE
   };
 }
@@ -388,6 +399,8 @@ namespace VideoPlayer2
     ///static int regetBuffer(struct AVCodecContext * context, AVFrame * frame);
     static void releaseBuffer(AVCodecContext * context, AVFrame * frame);
     static void releaseFilterBuffer(AVFilterBuffer * filterBuffer);
+    void setFormat(VideoFrameFFMPEG & frame, const AVPixFmtDescriptor & fmtDescriptor,
+                   Nimble::Vector2i size);
   };
 
   bool AVDecoderFFMPEG::D::initFilters(FilterGraph & filterGraph,
@@ -1000,6 +1013,46 @@ namespace VideoPlayer2
     return nullptr;
   }
 
+  void AVDecoderFFMPEG::D::setFormat(VideoFrameFFMPEG & frame, const AVPixFmtDescriptor & fmtDescriptor,
+                                     Nimble::Vector2i size)
+  {
+    // not exactly true for all formats, but it is true for all formats that we support
+    frame.planes = (fmtDescriptor.flags & PIX_FMT_PLANAR) ? fmtDescriptor.nb_components : 1;
+
+    if(fmtDescriptor.nb_components == 1)
+      frame.format = VideoFrame::GRAY;
+    else if(fmtDescriptor.nb_components == 2)
+      frame.format = VideoFrame::GRAY_ALPHA;
+    else if(fmtDescriptor.nb_components == 3 && (fmtDescriptor.flags & PIX_FMT_RGB))
+      frame.format = VideoFrame::RGB;
+    else if(fmtDescriptor.nb_components == 3)
+      frame.format = VideoFrame::YUV;
+    else if(fmtDescriptor.nb_components == 4 && (fmtDescriptor.flags & PIX_FMT_RGB))
+      frame.format = VideoFrame::RGBA;
+    else if(fmtDescriptor.nb_components == 4)
+      frame.format = VideoFrame::YUVA;
+    else {
+      frame.format = VideoFrame::UNKNOWN;
+      frame.planes = 0;
+    }
+
+    for(int i = 0; i < frame.planes; ++i) {
+      frame.planeSize[i] = size;
+      if((frame.format == VideoFrame::YUV || frame.format == VideoFrame::YUVA) && (i == 1 || i == 2)) {
+        frame.planeSize[i] = Nimble::Vector2i(
+              -((-size.x) >> fmtDescriptor.log2_chroma_w),
+              -((-size.y) >> fmtDescriptor.log2_chroma_h));
+      }
+      frame.lineSize[i] = 0;
+      frame.data[i] = nullptr;
+    }
+    for(int i = frame.planes; i < 4; ++i) {
+      frame.planeSize[i] = Nimble::Vector2i(0, 0);
+      frame.lineSize[i] = 0;
+      frame.data[i] = nullptr;
+    }
+  }
+
   bool AVDecoderFFMPEG::D::decodeVideoPacket(double & dpts, double & nextDpts)
   {
     const double prevDpts = dpts;
@@ -1072,12 +1125,8 @@ namespace VideoPlayer2
             frame->imageBuffer = nullptr;
 
             auto & fmtDescriptor = av_pix_fmt_descriptors[output->format];
-            const Nimble::Vector2i size(output->video->w, output->video->h);
-            for (int i = 0; i < 3; ++i) {
-              frame->planeSize[i] = i == 0 ? size
-                                           : Nimble::Vector2i(
-                                               -((-size.x) >> fmtDescriptor.log2_chroma_w),
-                                               -((-size.y) >> fmtDescriptor.log2_chroma_h));
+            setFormat(*frame, fmtDescriptor, Nimble::Vector2i(output->video->w, output->video->h));
+            for (int i = 0; i < frame->planes; ++i) {
               frame->lineSize[i] = output->linesize[i];
               frame->data[i] = output->data[i];
             }
@@ -1089,7 +1138,7 @@ namespace VideoPlayer2
               dpts = av.videoTsToSecs * output->pts;
             }
 
-            frame->imageSize = size;
+            frame->imageSize = Nimble::Vector2i(output->video->w, output->video->h);
             frame->timestamp = Timestamp(dpts + loopOffset, seekGeneration);
 
             decodedVideoFrames.put();
@@ -1110,11 +1159,8 @@ namespace VideoPlayer2
 
       auto & fmtDescriptor = av_pix_fmt_descriptors[av.frame->format];
       int bytes = 0;
-      for (int i = 0; i < 3; ++i) {
-        frame->planeSize[i] = i == 0 ? Nimble::Vector2i(av.frame->width, av.frame->height)
-                                     : Nimble::Vector2i(
-                                         -((-av.frame->width) >> fmtDescriptor.log2_chroma_w),
-                                         -((-av.frame->height) >> fmtDescriptor.log2_chroma_h));
+      setFormat(*frame, fmtDescriptor, Nimble::Vector2i(av.frame->width, av.frame->height));
+      for(int i = 0; i < frame->planes; ++i) {
         frame->lineSize[i] = av.frame->linesize[i];
         frame->data[i] = av.frame->data[i];
         bytes += frame->lineSize[i] * frame->planeSize[i].y;
@@ -1125,15 +1171,18 @@ namespace VideoPlayer2
         if(!buffer) {
           Radiant::error("AVDecoderFFMPEG::D::decodeVideoPacket # %s: Not enough ImageBuffers",
                          options.src.toUtf8().data());
+          for(int i = 0; i < frame->planes; ++i)
+            frame->data[i] = nullptr;
+          frame->planes = 0;
         } else {
           buffer->refcount = 1;
           frame->imageBuffer = buffer;
           buffer->data.resize(bytes);
-          for (int offset = 0, i = 0; i < 3; ++i) {
+          for(int offset = 0, i = 0; i < frame->planes; ++i) {
             uint8_t * dst = buffer->data.data() + offset;
             bytes = frame->lineSize[i] * frame->planeSize[i].y;
             offset += bytes;
-            memcpy(dst, frame->data[i], bytes);
+            memcpy(dst, av.frame->data[i], bytes);
             frame->data[i] = dst;
           }
         }
