@@ -50,8 +50,7 @@ namespace Luminous
     void setProgram(GLSLProgramObject * prog) { m_program = prog; }
 
     /// Returns a custom GLSLProgramObject for rendering
-    /** This function is hacked to be const to enable "const Style &" objects to be passed about. */
-    GLSLProgramObject * program() const { return ((Style *)this)->m_program; }
+    GLSLProgramObject * program() const { return m_program; }
   private:
 
     Nimble::Vector4 m_color;
