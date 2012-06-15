@@ -13,6 +13,6 @@ namespace Luminous
 
   RenderResource::~RenderResource()
   {
-    m_driver.removeResource( resourceId() );
+    m_driver.releaseResource( resourceId() );
   }
 }

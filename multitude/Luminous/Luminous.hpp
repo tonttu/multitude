@@ -138,23 +138,6 @@ namespace Luminous
     PT_Point,
   };
 
-  /// @note Only the write options are supported on OpenGL/ES
-  enum BufferUsage {
-    BU_Unknown,        // Undefined
-    // Defined once, used many times
-    BU_Static_Read,    // GPU->CPU
-    BU_Static_Write,   // CPU->GPU
-    BU_Static_Copy,    // GPU->GPU
-    // Defined repeatedly, used many times
-    BU_Dynamic_Read,   // GPU->CPU
-    BU_Dynamic_Write,  // CPU->GPU
-    BU_Dynamic_Copy,   // GPU->GPU
-    // Defined repeatedly, used a few times
-    BU_Stream_Read,    // GPU->CPU 
-    BU_Stream_Write,   // CPU->GPU
-    BU_Stream_Copy,    // GPU->GPU
-  };
-
   enum BufferType {
     BT_VertexBuffer,
     BT_IndexBuffer,
@@ -242,9 +225,10 @@ namespace Luminous
   class RenderDriver;
   // Resources
   class HardwareBuffer;
-  class ShaderConstantBlock;
   class ShaderProgram;
   class ShaderGLSL;
+  class Texture2;
+
   // Vertex data
   struct VertexAttribute;
   class VertexDescription;

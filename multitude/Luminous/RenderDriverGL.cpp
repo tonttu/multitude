@@ -2,8 +2,8 @@
 #include "Luminous/VertexAttributeBinding.hpp"
 #include "Luminous/VertexDescription.hpp"
 #include "Luminous/HardwareBuffer.hpp"
-#include "Luminous/ShaderConstantBlock.hpp"
 #include "Luminous/ShaderProgram.hpp"
+#include "Luminous/Texture2.hpp"
 #include "Luminous/GLUtils.hpp"
 #include "Luminous/Utils.hpp"   // glCheck
 
@@ -85,16 +85,44 @@ namespace Luminous
       m_threadResources[threadIndex].resourceList[id] = handle;
     }
 
+    void bindBuffer(unsigned int threadIndex, GLenum bufferTarget, const HardwareBuffer & buffer)
+    {
+      D::ResourceHandle bufferHandle = getOrCreateResource(threadIndex, buffer);
+
+      // Bind buffer
+      glBindBuffer(bufferTarget, bufferHandle.handle);
+      GLERROR("RenderDriverGL::Bind HardwareBuffer");
+
+      // Update if dirty
+      if (bufferHandle.generation < buffer.generation()) {
+        // Update or reallocate the resource
+        if (buffer.size() != bufferHandle.size) {
+          /// @todo use correct usage flags
+          glBufferData(bufferTarget, buffer.size(), buffer.data(), GL_DYNAMIC_DRAW);
+          GLERROR("RenderDriverGL::Bind HardwareBuffer reallocate");
+        }
+        else {
+          glBufferSubData(bufferTarget, 0, buffer.size(), buffer.data());
+          GLERROR("RenderDriverGL::Bind HardwareBuffer update");
+        }
+
+        // Update cache handle
+        bufferHandle.generation = buffer.generation();
+        bufferHandle.size = buffer.size();
+        updateResource(threadIndex, buffer.resourceId(), bufferHandle);
+      }
+    }
+
   private:
     GLuint createGLResource(ResourceType type)
     {
       GLuint resource;
       switch (type)
       {
-      case RT_VertexArray: glGenVertexArrays(1, &resource); return resource;
-      case RT_Buffer: glGenBuffers(1, &resource); return resource;
-      case RT_ShaderProgram: return glCreateProgram();
-      case RT_VertexShader: return glCreateShader(GL_VERTEX_SHADER);
+      case RT_VertexArray:    glGenVertexArrays(1, &resource); return resource;
+      case RT_Buffer:         glGenBuffers(1, &resource); return resource;
+      case RT_ShaderProgram:  return glCreateProgram();
+      case RT_VertexShader:   return glCreateShader(GL_VERTEX_SHADER);
       case RT_FragmentShader: return glCreateShader(GL_FRAGMENT_SHADER);
       case RT_GeometryShader: return glCreateShader(GL_GEOMETRY_SHADER_EXT);
       default:
@@ -131,17 +159,10 @@ namespace Luminous
     return std::shared_ptr<VertexAttributeBinding>(new VertexAttributeBinding(m_d->createId(), *this));
   }
 
-  std::shared_ptr<HardwareBuffer> RenderDriverGL::createHardwareBuffer(BufferType type)
+  std::shared_ptr<HardwareBuffer> RenderDriverGL::createHardwareBuffer()
   {
     /// @todo use make_shared once fully available
-    return std::shared_ptr<HardwareBuffer>(new HardwareBuffer(m_d->createId(), type, *this));
-  }
-
-  std::shared_ptr<ShaderConstantBlock> RenderDriverGL::createShaderConstantBlock()
-  {
-    /// @todo this should be done with createHardwareBuffer once ShaderConstantBlock has been redesigned
-    /// @todo use make_shared once fully available
-    return std::shared_ptr<ShaderConstantBlock>(new ShaderConstantBlock(m_d->createId(), *this));
+    return std::shared_ptr<HardwareBuffer>(new HardwareBuffer(m_d->createId(), *this));
   }
 
   std::shared_ptr<ShaderProgram> RenderDriverGL::createShaderProgram()
@@ -156,6 +177,42 @@ namespace Luminous
     return std::shared_ptr<ShaderGLSL>(new ShaderGLSL(m_d->createId(), type, *this));
   }
 
+  void RenderDriverGL::clear(ClearMask mask, const Radiant::Color & color, double depth, int stencil)
+  {
+    /// @todo check current target for availability of depth and stencil buffers?
+
+    GLbitfield glMask = 0;
+    // Clear color buffer
+    if (mask & CM_Color) {
+      glClearColor(color.red(), color.green(), color.blue(), color.alpha());
+      glMask |= GL_COLOR_BUFFER_BIT;
+    }
+    // Clear depth buffer
+    if (mask & CM_Depth) {
+      glClearDepth(depth);
+      glMask |= GL_DEPTH_BUFFER_BIT;
+    }
+    // Clear stencil buffer
+    if (mask & CM_Stencil) {
+      glClearStencil(stencil);
+      glMask |= GL_DEPTH_BUFFER_BIT;
+    }
+    glClear(glMask);
+  }
+
+  void RenderDriverGL::draw(PrimitiveType type, size_t offset, size_t primitives)
+  {
+    GLenum mode = GLUtils::getPrimitiveType(type);
+    glDrawArrays(mode, (GLint) offset, (GLsizei) primitives);
+  }
+
+  void RenderDriverGL::drawIndexed(PrimitiveType type, size_t offset, size_t primitives)
+  {
+    /// @todo allow other index types (unsigned byte, unsigned short and unsigned int)
+    GLenum mode = GLUtils::getPrimitiveType(type);
+    glDrawElements(mode, (GLsizei) primitives, GL_UNSIGNED_INT, (const GLvoid *)((sizeof(uint) * offset)));
+  }
+
   void RenderDriverGL::preFrame(unsigned int)
   {
   }
@@ -164,7 +221,41 @@ namespace Luminous
   {
   }
 
-  void RenderDriverGL::bind(unsigned int threadIndex, const ShaderProgram & program)
+#define SETUNIFORM(TYPE, FUNCTION) \
+  bool RenderDriverGL::setShaderConstant(unsigned int threadIndex, const QString & name, const TYPE & value) { \
+    GLint location = glGetUniformLocation(m_d->m_threadResources[threadIndex].currentProgram, name.toAscii().data()); \
+    if (location != -1) FUNCTION(location, value); \
+    return (location != -1); \
+  }
+#define SETUNIFORMVECTOR(TYPE, FUNCTION) \
+  bool RenderDriverGL::setShaderConstant(unsigned int threadIndex, const QString & name, const TYPE & value) { \
+    GLint location = glGetUniformLocation(m_d->m_threadResources[threadIndex].currentProgram, name.toAscii().data()); \
+    if (location != -1) FUNCTION(location, 1, value.data()); \
+    return (location != -1); \
+  }
+#define SETUNIFORMMATRIX(TYPE, FUNCTION) \
+  bool RenderDriverGL::setShaderConstant(unsigned int threadIndex, const QString & name, const TYPE & value) { \
+    GLint location = glGetUniformLocation(m_d->m_threadResources[threadIndex].currentProgram, name.toAscii().data()); \
+    if (location != -1) FUNCTION(location, 1, GL_TRUE, value.data()); \
+    return (location != -1); \
+  }
+
+  SETUNIFORM(int, glUniform1i);
+  SETUNIFORM(float, glUniform1f);
+  SETUNIFORMVECTOR(Nimble::Vector2i, glUniform2iv);
+  SETUNIFORMVECTOR(Nimble::Vector3i, glUniform3iv);
+  SETUNIFORMVECTOR(Nimble::Vector4i, glUniform4iv);
+  SETUNIFORMVECTOR(Nimble::Vector2f, glUniform2fv);
+  SETUNIFORMVECTOR(Nimble::Vector3f, glUniform3fv);
+  SETUNIFORMVECTOR(Nimble::Vector4f, glUniform4fv);
+  SETUNIFORMMATRIX(Nimble::Matrix2f, glUniformMatrix2fv);
+  SETUNIFORMMATRIX(Nimble::Matrix3f, glUniformMatrix3fv);
+  SETUNIFORMMATRIX(Nimble::Matrix4f, glUniformMatrix4fv);
+#undef SETUNIFORM
+#undef SETUNIFORMVECTOR
+#undef SETUNIFORMMATRIX
+
+  void RenderDriverGL::setShaderProgram(unsigned int threadIndex, const ShaderProgram & program)
   {
     m_d->m_threadResources[threadIndex].currentProgram = 0;
 
@@ -246,42 +337,28 @@ namespace Luminous
     GLERROR("RenderDriverGL::Bind Shaderprogram use");
   }
 
-  void RenderDriverGL::bind(unsigned int threadIndex, const HardwareBuffer & buffer)
+  void RenderDriverGL::setVertexBuffer(unsigned int threadIndex, const HardwareBuffer & buffer)
   {
-    D::ResourceHandle bufferHandle = m_d->getOrCreateResource(threadIndex, buffer);
-
-    // Bind buffer
-    GLenum bufferTarget = Luminous::GLUtils::getBufferType(buffer.type());
-    glBindBuffer(bufferTarget, bufferHandle.handle);
-    GLERROR("RenderDriverGL::Bind HardwareBuffer");
-
-    // Update if dirty
-    if (bufferHandle.generation < buffer.generation()) {
-      // Update or reallocate the resource
-      if (buffer.size() != bufferHandle.size) {
-        GLenum bufferUsage = Luminous::GLUtils::getBufferUsage(buffer.usage());
-        glBufferData(bufferTarget, buffer.size(), buffer.data(), bufferUsage);
-        GLERROR("RenderDriverGL::Bind HardwareBuffer reallocate");
-      }
-      else {
-        glBufferSubData(bufferTarget, 0, buffer.size(), buffer.data());
-        GLERROR("RenderDriverGL::Bind HardwareBuffer update");
-      }
-
-      // Update cache handle
-      bufferHandle.generation = buffer.generation();
-      bufferHandle.size = buffer.size();
-      m_d->updateResource(threadIndex, buffer.resourceId(), bufferHandle);
-    }
+    m_d->bindBuffer(threadIndex, GL_ARRAY_BUFFER, buffer);
   }
 
-  void RenderDriverGL::bind(unsigned int threadIndex, const VertexAttributeBinding & binding)
+  void RenderDriverGL::setIndexBuffer(unsigned int threadIndex, const HardwareBuffer & buffer)
+  {
+    m_d->bindBuffer(threadIndex, GL_ELEMENT_ARRAY_BUFFER, buffer);
+  }
+
+  void RenderDriverGL::setConstantBuffer(unsigned int threadIndex, const HardwareBuffer & buffer)
+  {
+    m_d->bindBuffer(threadIndex, GL_UNIFORM_BUFFER_EXT, buffer);
+  }
+
+  void RenderDriverGL::setVertexBinding(unsigned int threadIndex, const VertexAttributeBinding & binding)
   {
     D::ResourceHandle bindingHandle = m_d->getOrCreateResource(threadIndex, binding);
 
     if (bindingHandle.generation < binding.generation()) {
       // Recreate the binding
-      /// @todo I don't imagine these can really be updated, right?
+      /// @todo I don't imagine these can really be modified, right?
       glDeleteVertexArrays(1, &bindingHandle.handle);
       glGenVertexArrays(1, &bindingHandle.handle);
       glBindVertexArray(bindingHandle.handle);
@@ -291,7 +368,7 @@ namespace Luminous
       for (size_t i = 0; i < binding.bindingCount(); ++i) {
         VertexAttributeBinding::Binding b = binding.binding(i);
         // Attach buffer
-        bind(threadIndex, *b.buffer);
+        setVertexBuffer(threadIndex, *b.buffer);
         // Set buffer attributes
         for (size_t attrIndex = 0; attrIndex < b.description->attributeCount(); ++attrIndex) {
           VertexAttribute attr = b.description->attribute(attrIndex);
@@ -319,149 +396,21 @@ namespace Luminous
     }
   }
 
-  void RenderDriverGL::bind(unsigned int threadIndex, const ShaderConstantBlock & constants)
+  void RenderDriverGL::setTexture(unsigned int threadIndex, unsigned int textureUnit, const Texture2 & texture)
   {
-    D::ResourceHandle bufferHandle = m_d->getOrCreateResource(threadIndex, constants);
-    
-    // Bind buffer
-    glBindBuffer(GL_UNIFORM_BUFFER_EXT, bufferHandle.handle);
+    GLint texunits;
+    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &texunits);
+    Radiant::info("Max texture units: %d", texunits);
 
-    /// @note: Basically same code as buffer binding with few different arguments
-    // Update if dirty
-    if (bufferHandle.generation < constants.generation()) {
-      // Update or reallocate the resource
-      if (constants.size() != bufferHandle.size) {
-        /// @todo What should be the usage type for a uniform buffer? Should it be configurable like a normal buffer?
-        glBufferData(GL_UNIFORM_BUFFER_EXT, constants.size(), constants.data(), GL_DYNAMIC_DRAW);
-      }
-      else {
-        glBufferSubData(GL_UNIFORM_BUFFER_EXT, 0, constants.size(), constants.data());
-      }
+    D::ResourceHandle textureHandle = m_d->getOrCreateResource(threadIndex, texture);
 
-      // Update cache handle
-      bufferHandle.generation = constants.generation();
-      bufferHandle.size = constants.size();
-      m_d->updateResource(threadIndex, constants.resourceId(), bufferHandle);
+    if (textureHandle.generation < texture.generation()) {
+      glActiveTexture(GL_TEXTURE0 + textureUnit);
+      glBindTexture(GL_TEXTURE_2D, textureHandle.handle);
     }
   }
 
-  void RenderDriverGL::unbind(unsigned int, const HardwareBuffer & buffer)
-  {
-    /// @todo Should we verify it's a valid resource?
-    GLenum bufferTarget = Luminous::GLUtils::getBufferType(buffer.type());
-    glBindBuffer(bufferTarget, 0);
-  }
-
-  void RenderDriverGL::unbind(unsigned int, const VertexAttributeBinding &)
-  {
-    /// @todo Should we verify it's a valid resource?
-    glBindVertexArray(0);
-  }
-
-  void RenderDriverGL::unbind(unsigned int, const ShaderConstantBlock &)
-  {
-    /// @todo Should we verify it's a valid resource?
-    glBindBuffer(GL_UNIFORM_BUFFER_EXT, 0);
-  }
-
-  void RenderDriverGL::unbind(unsigned int, const ShaderProgram &)
-  {
-    /// @todo Should we verify it's a valid resource?
-    glUseProgram(0);
-  }
-
-  void RenderDriverGL::setViewport(unsigned int threadIndex, float x, float y, float width, float height)
-  {
-    (void) threadIndex;
-    (void) x;
-    (void) y;
-    (void) width;
-    (void) height;
-
-/*
-    const std::shared_ptr<RenderTarget> & target = m_d->m_threadResources[threadIndex].currentTarget;
-    GLint realX = target->width() * x;
-    GLint realY = target->height() * y;
-    GLsizei realWidth = target->width() * width;
-    GLsizei realHeight = target->height() * height;
-
-    glViewport(realX, realY, realWidth, realHeight);
-    glScissor(realX, realY, realWidth, realHeight);
-    glEnable(GL_SCISSOR_TEST);
-*/
-  }
-
-  void RenderDriverGL::clear(ClearMask mask, const Radiant::Color & color, double depth, int stencil)
-  {
-    /// @todo check current target for availability of depth and stencil buffers?
-
-    GLbitfield glMask = 0;
-    // Clear color buffer
-    if (mask & CM_Color) {
-      glClearColor(color.red(), color.green(), color.blue(), color.alpha());
-      glMask |= GL_COLOR_BUFFER_BIT;
-    }
-    // Clear depth buffer
-    if (mask & CM_Depth) {
-      glClearDepth(depth);
-      glMask |= GL_DEPTH_BUFFER_BIT;
-    }
-    // Clear stencil buffer
-    if (mask & CM_Stencil) {
-      glClearStencil(stencil);
-      glMask |= GL_DEPTH_BUFFER_BIT;
-    }
-    glClear(glMask);
-  }
-
-  void RenderDriverGL::draw(PrimitiveType type, size_t offset, size_t primitives)
-  {
-    GLenum mode = GLUtils::getPrimitiveType(type);
-    glDrawArrays(mode, (GLint) offset, (GLsizei) primitives);
-  }
-
-  void RenderDriverGL::drawIndexed(PrimitiveType type, size_t offset, size_t primitives)
-  {
-    /// @todo allow other index types (unsigned byte, unsigned short and unsigned int)
-    GLenum mode = GLUtils::getPrimitiveType(type);
-    glDrawElements(mode, (GLsizei) primitives, GL_UNSIGNED_INT, (const GLvoid *)((sizeof(uint) * offset)));
-  }
-
-#define SETUNIFORM(TYPE, FUNCTION) \
-  bool RenderDriverGL::setShaderConstant(unsigned int threadIndex, const QString & name, const TYPE & value) { \
-    GLint location = glGetUniformLocation(m_d->m_threadResources[threadIndex].currentProgram, name.toAscii().data()); \
-    if (location != -1) FUNCTION(location, value); \
-    return (location != -1); \
-  }
-#define SETUNIFORMVECTOR(TYPE, FUNCTION) \
-  bool RenderDriverGL::setShaderConstant(unsigned int threadIndex, const QString & name, const TYPE & value) { \
-    GLint location = glGetUniformLocation(m_d->m_threadResources[threadIndex].currentProgram, name.toAscii().data()); \
-    if (location != -1) FUNCTION(location, 1, value.data()); \
-    return (location != -1); \
-  }
-#define SETUNIFORMMATRIX(TYPE, FUNCTION) \
-  bool RenderDriverGL::setShaderConstant(unsigned int threadIndex, const QString & name, const TYPE & value) { \
-    GLint location = glGetUniformLocation(m_d->m_threadResources[threadIndex].currentProgram, name.toAscii().data()); \
-    if (location != -1) FUNCTION(location, 1, GL_TRUE, value.data()); \
-    return (location != -1); \
-  }
-
-  SETUNIFORM(int, glUniform1i);
-  SETUNIFORM(float, glUniform1f);
-  SETUNIFORMVECTOR(Nimble::Vector2i, glUniform2iv);
-  SETUNIFORMVECTOR(Nimble::Vector3i, glUniform3iv);
-  SETUNIFORMVECTOR(Nimble::Vector4i, glUniform4iv);
-  SETUNIFORMVECTOR(Nimble::Vector2f, glUniform2fv);
-  SETUNIFORMVECTOR(Nimble::Vector3f, glUniform3fv);
-  SETUNIFORMVECTOR(Nimble::Vector4f, glUniform4fv);
-  SETUNIFORMMATRIX(Nimble::Matrix2f, glUniformMatrix2fv);
-  SETUNIFORMMATRIX(Nimble::Matrix3f, glUniformMatrix3fv);
-  SETUNIFORMMATRIX(Nimble::Matrix4f, glUniformMatrix4fv);
-#undef SETUNIFORM
-#undef SETUNIFORMVECTOR
-#undef SETUNIFORMMATRIX
-
-  void RenderDriverGL::removeResource(RenderResource::Id)
+  void RenderDriverGL::releaseResource(RenderResource::Id)
   {
     /// @todo Queue resource for removal
   }

@@ -424,7 +424,7 @@ namespace Luminous
 
     unsigned int threadIndex() const;
 
-    //void bindTexture(const QString & name, int unit, std::shared_ptr<Luminous::Texture> texture);
+    void setTexture(const QString & name, std::shared_ptr<Luminous::Texture2> texture);
     void setVertexBinding(const std::shared_ptr<VertexAttributeBinding> & binding);
     void setShaderProgram(const std::shared_ptr<ShaderProgram> & program);
     template <typename T> bool setShaderConstant(const QString & name, const T & value);

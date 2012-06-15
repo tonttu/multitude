@@ -8,11 +8,6 @@ SOURCES += RenderDriver.cpp \
 HEADERS += RenderDriverGL.hpp
 SOURCES += RenderDriverGL.cpp
 
-# Render contexts
-HEADERS += RenderContext2.hpp
-HEADERS += RenderContextImmediate.hpp
-SOURCES += RenderContextImmediate.cpp
-
 # Render resources
 HEADERS += RenderResource.hpp
 SOURCES += RenderResource.cpp
@@ -20,8 +15,6 @@ HEADERS += HardwareBuffer.hpp
 SOURCES += HardwareBuffer.cpp
 HEADERS += VertexAttributeBinding.hpp
 SOURCES += VertexAttributeBinding.cpp
-HEADERS += ShaderConstantBlock.hpp
-SOURCES += ShaderConstantBlock.cpp
 HEADERS += ShaderProgram.hpp
 SOURCES += ShaderProgram.cpp
 HEADERS += Texture2.hpp
@@ -29,9 +22,6 @@ SOURCES += Texture2.cpp
 
 HEADERS += VertexDescription.hpp
 SOURCES += VertexDescription.cpp
-
-# Shaders
-HEADERS += ShaderConstant.hpp
 
 # Utility functions
 HEADERS += GLUtils.hpp

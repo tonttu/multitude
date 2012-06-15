@@ -18,40 +18,7 @@ namespace Luminous
       return GL_READ_WRITE;
     }
   }
-
-  GLenum GLUtils::getBufferUsage(BufferUsage usage)
-  {
-    switch (usage)
-    {
-    case BU_Static_Copy:   return GL_STATIC_COPY;
-    case BU_Static_Read:   return GL_STATIC_READ;
-    case BU_Static_Write:  return GL_STATIC_DRAW;
-    case BU_Dynamic_Copy:  return GL_DYNAMIC_COPY;
-    case BU_Dynamic_Read:  return GL_DYNAMIC_READ;
-    case BU_Dynamic_Write: return GL_DYNAMIC_DRAW;
-    case BU_Stream_Copy:   return GL_STREAM_COPY;
-    case BU_Stream_Read:   return GL_STREAM_READ;
-    case BU_Stream_Write:  return GL_STREAM_DRAW;
-    default:
-      Radiant::warning("GLUtils: Unknown usage option (%d)", usage);
-      assert(false);
-      return GL_DYNAMIC_DRAW;
-    }
-  }
-
-  GLenum GLUtils::getBufferType(BufferType type)
-  {
-    switch (type)
-    {
-    case BT_VertexBuffer: return GL_ARRAY_BUFFER;
-    case BT_IndexBuffer: return GL_ELEMENT_ARRAY_BUFFER;
-    case BT_ConstantBuffer: return GL_UNIFORM_BUFFER_EXT;
-    default:
-      Radiant::error("GLUtils: Unknown buffer type (%d)", type);
-      assert(false);
-      return GL_ARRAY_BUFFER;
-    }
-  }
+  
   /// Translate a PrimitiveType to its OpenGL equivalent
   GLenum GLUtils::getPrimitiveType(PrimitiveType type)
   {
@@ -68,7 +35,7 @@ namespace Luminous
       return GL_TRIANGLES;
     }
   }
-
+  
   GLenum GLUtils::getDataType(DataType type)
   {
     switch (type)

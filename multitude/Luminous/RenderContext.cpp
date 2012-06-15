@@ -16,8 +16,6 @@
 // Luminous v2
 #include "Luminous/VertexAttributeBinding.hpp"
 #include "Luminous/HardwareBuffer.hpp"
-#include "Luminous/ShaderConstant.hpp"
-#include "Luminous/ShaderConstantBlock.hpp"
 
 #include <Nimble/Matrix4.hpp>
 
@@ -1862,17 +1860,25 @@ namespace Luminous
   {
     glDisableVertexAttribArray(m_pos);
   }
+
   //////////////////////////////////////////////////////////////////////////
   // Luminousv2
+  void RenderContext::setTexture(const QString & name, std::shared_ptr<Luminous::Texture2> texture)
+  {
+  }
+
   void RenderContext::setVertexBinding(const std::shared_ptr<VertexAttributeBinding> & binding)
   {
     // Bind the VAO: Binds all the associated vertex buffers and sets the appropriate vertex attributes
-    m_data->m_driver.bind(threadIndex(), *binding);
+    m_data->m_driver.setVertexBinding(threadIndex(), *binding);
   }
 
   void RenderContext::setShaderProgram(const std::shared_ptr<ShaderProgram> & program)
   {
-    m_data->m_driver.bind(threadIndex(), *program);
+    m_data->m_driver.setShaderProgram(threadIndex(), *program);
+
+    // Try and bind the MultiTouch common parameters
+    /// @todo this could be a piece of code with a uniform block that's always included in the shader program
     m_data->m_driver.setShaderConstant(threadIndex(), "mt_projMatrix", m_data->m_viewTransform);
   }
 
@@ -1894,6 +1900,9 @@ namespace Luminous
   }
   SETSHADERCONSTANT(int);
   SETSHADERCONSTANT(float);
+  SETSHADERCONSTANT(Nimble::Vector2i);
+  SETSHADERCONSTANT(Nimble::Vector3i);
+  SETSHADERCONSTANT(Nimble::Vector4i);
   SETSHADERCONSTANT(Nimble::Vector2f);
   SETSHADERCONSTANT(Nimble::Vector3f);
   SETSHADERCONSTANT(Nimble::Vector4f);
@@ -1905,7 +1914,7 @@ namespace Luminous
   // Manual conversion: Radiant::Color > Nimble::Vector4f
   template<> LUMINOUS_API bool RenderContext::setShaderConstant(const QString & name, const Radiant::Color & value)
   {
-    return m_data->m_driver.setShaderConstant(threadIndex(), name, (Nimble::Vector4f)value);
+    return m_data->m_driver.setShaderConstant(threadIndex(), name, static_cast<Nimble::Vector4f>(value));
   }
 }
 

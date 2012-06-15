@@ -8,9 +8,8 @@ namespace Luminous
   class GLUtils {
   public:
     LUMINOUS_API static GLenum getBufferLockOptions(BufferLockOptions lock);
-    LUMINOUS_API static GLenum getBufferUsage(BufferUsage usage);
-    LUMINOUS_API static GLenum getBufferType(BufferType type);
     LUMINOUS_API static GLenum getPrimitiveType(PrimitiveType type);
+
     LUMINOUS_API static GLenum getDataType(DataType type);
     LUMINOUS_API static GLenum getShaderType(ShaderType type);
   };
