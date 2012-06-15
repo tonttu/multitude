@@ -36,7 +36,6 @@ namespace VideoPlayer2
   {
     DecodedImageBuffer() {}
     QAtomicInt refcount;
-    // std::vector<uint8_t, Radiant::aligned_allocator<float, 32>> data;
     std::vector<uint8_t, Radiant::aligned_allocator<uint8_t, 32>> data;
   private:
     DecodedImageBuffer(const DecodedImageBuffer &);
