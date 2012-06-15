@@ -45,16 +45,12 @@ namespace Radiant
 //      }
     }
 
-    virtual void showCursor()
+    virtual void showCursor(bool visible)
     {
-      m_lastAction = Radiant::TimeStamp::getTime();
-      setCursor( QCursor( Qt::ArrowCursor) );
-    }
-
-    virtual void hideCursor()
-    {
-      m_lastAction = Radiant::TimeStamp::getTime();
-      setCursor( QCursor( Qt::BlankCursor) );
+      if (visible)
+        setCursor( QCursor( Qt::ArrowCursor) );
+      else
+        setCursor( QCursor( Qt::BlankCursor) );
     }
 
   private:
@@ -168,9 +164,6 @@ namespace Radiant
 
     m_mainWindow = new GLThreadWidget(host, *this, flags);
 
-    if (hint.frameless)
-      m_mainWindow->hideCursor();
-
     m_mainWindow->raise();
     m_mainWindow->show();
     //    m_mainWindow->move(hint.x, hint.y);
@@ -217,4 +210,8 @@ namespace Radiant
     m_mainWindow->showNormal();
   }
 
+  void QtWindow::showCursor(bool visible)
+  {
+    m_mainWindow->showCursor(visible);
+  }
 }

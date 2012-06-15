@@ -32,6 +32,8 @@ namespace Radiant
     virtual void minimize();
     virtual void restore();
 
+    virtual void showCursor(bool visible);
+
   private:
     class D;
     D * m_d;

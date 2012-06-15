@@ -619,6 +619,11 @@ void CocoaWindow::restore()
   Radiant::error("CocoaWindow::restore # unimplemented");
 }
 
+void CocoaWindow::showCursor(bool visible)
+{
+  Radiant::error("CocoaWindow::showCursor # unimplemented");
+}
+
 }
 
 #endif

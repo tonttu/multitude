@@ -202,8 +202,6 @@ namespace Radiant
     Display* m_display;
     GLXWindow m_drawable;
 
-    Radiant::TimeStamp m_lastAction;
-
     X11GLContext * m_context;
     std::vector<bool> m_autoRepeats;
 
@@ -560,11 +558,6 @@ namespace Radiant
     // Set the window to receive KeyPress and KeyRelease events
     XSelectInput(m_d->m_display, m_d->m_drawable, X11_CHECK_EVENT_MASK);
 
-    /*if (!hint.showCursor)
-      showCursor(false);
-*/
-
-    m_d->m_lastAction = Radiant::TimeStamp::getTime();
     m_d->showCursor(false);
     // Allow the window to be deleted by the window manager
     // WM_DELETE_WINDOW = XInternAtom(m_display, "WM_DELETE_WINDOW", False);
@@ -593,21 +586,6 @@ namespace Radiant
   void XWindow::swapBuffers()
   {
     glXSwapBuffers(m_d->m_display, m_d->m_drawable);
-
-    float since = m_d->m_lastAction.sinceSecondsD();
-
-    // The cursor is hidden repeatedly for several frames in succession to make
-    // sure it is hidden
-    const float hideCursorUpperLimit = 7.f;
-    const float hideCursorLowerLimit = 5.f;
-
-    if(since < hideCursorUpperLimit) {
-      if(since > hideCursorLowerLimit)
-        m_d->showCursor(false);
-      else
-        m_d->showCursor(true);
-    }
-
   }
 
   void XWindow::poll()
@@ -628,9 +606,6 @@ namespace Radiant
       case KeyPress:
         if(hook)
           qApp->x11ProcessEvent(&event);
-
-        // Reset cursor hide counter
-        m_d->m_lastAction = Radiant::TimeStamp::getTime();
         break;
       case MotionNotify:
         {
@@ -638,9 +613,6 @@ namespace Radiant
             dispatchXMouseMoveEvent(hook, event.xmotion);
             //hook->handleMouseMove(event.xmotion.x, event.xmotion.y, event.xmotion.state);          
           }
-          // Reset cursor hide counter only if this event is not to be ignored
-          if(!m_d->m_ignoreNextMotionEvent)
-            m_d->m_lastAction = Radiant::TimeStamp::getTime();
           m_d->m_ignoreNextMotionEvent = false;
           break;
         }
@@ -659,9 +631,6 @@ namespace Radiant
         if(hook) {
           dispatchXMouseEvent(hook, event.xbutton);
         }
-
-        // Reset cursor hide counter
-        m_d->m_lastAction = Radiant::TimeStamp::getTime();
         break;
       case ConfigureNotify:
         /*std::cout << "ConfigureNotify: xy (" << event.xconfigure.x << ", " << event.xconfigure.y
@@ -731,6 +700,11 @@ namespace Radiant
     int (*handler)(Display*, XErrorEvent*) = XSetErrorHandler(ignoreErrorHandler);
     s_keyboardGrabber->grabKeyboard();
     XSetErrorHandler(handler);
+  }
+
+  void XWindow::showCursor(bool visible)
+  {
+    m_d->showCursor(visible);
   }
 }
 

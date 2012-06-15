@@ -42,6 +42,7 @@ namespace Radiant
 
     virtual void setEventHook(WindowEventHook * hook);
 
+    void showCursor(bool visible) OVERRIDE;
   private:
     class D;
     D * m_d;

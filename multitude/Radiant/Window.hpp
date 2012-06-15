@@ -70,6 +70,8 @@ namespace Radiant
     Nimble::Vector2i position() const { return m_pos; }
     void setPosition(Nimble::Vector2i pos) { m_pos = pos; }
 
+    virtual void showCursor(bool visible) = 0;
+
   private:
     ///@cond
     bool m_active;

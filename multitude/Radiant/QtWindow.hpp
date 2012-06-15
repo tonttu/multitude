@@ -26,9 +26,10 @@ namespace Radiant
     virtual void maximize();
     virtual void restore();
 
+    void showCursor(bool visible) OVERRIDE;
+
   private:
     GLThreadWidget * m_mainWindow;
-
   };
 
 }

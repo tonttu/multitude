@@ -47,7 +47,8 @@ namespace Radiant
     virtual void handleMouseEvent(const Radiant::MouseEvent & event) = 0;
     /// Handle resize events
     virtual void handleWindowMove(int x, int y, int width, int height) = 0;
-
+    /// Time since last keyboard or mouse activity
+    virtual double lastActivity() const = 0;
   };
 
 }
