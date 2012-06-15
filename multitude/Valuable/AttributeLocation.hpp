@@ -15,6 +15,7 @@ namespace Valuable
                         const Nimble::Vector2f & v = Nimble::Vector2f(0, 0),
                         bool transit = false)
       : AttributeVector<Nimble::Vector2f>(host, name, v, transit)
+      , m_src(0, 0)
     {
       for(int i = 0; i < Attribute::LAYER_COUNT; ++i)
         for(int j = 0; j < m_factors[i].Elements; ++j)
