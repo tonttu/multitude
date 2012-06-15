@@ -193,7 +193,7 @@ namespace Valuable
       }
     
     QDomElement & qde = m_wrapped->x;
-    qde.appendChild(qde.ownerDocument().createTextNode(s.toUtf8().data()));
+    qde.appendChild(qde.ownerDocument().createTextNode(s));
   }
 
   QString DOMElement::getTextContent() const
@@ -203,8 +203,7 @@ namespace Valuable
           return QString();
       }
 
-      QString tmp(m_wrapped->x.text().toUtf8().data());
-      return tmp;
+      return m_wrapped->x.text();
   }
 
   bool DOMElement::hasAttribute(const QString & name) const

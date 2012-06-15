@@ -369,7 +369,7 @@ namespace Valuable
         return false;
       }
       archive.setRoot(e);
-      return archive.writeToFile(filename.toUtf8().data());
+      return archive.writeToFile(filename);
     }
 
     /// Deserialize object from a XML file. Example usage:
@@ -383,7 +383,7 @@ namespace Valuable
     {
       XMLArchive archive;
 
-      if(!archive.readFromFile(filename.toUtf8().data()))
+      if(!archive.readFromFile(filename))
         return T();
 
       ArchiveElement e = archive.root();

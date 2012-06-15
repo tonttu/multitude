@@ -74,7 +74,7 @@ namespace Valuable
 
     virtual ArchiveElement serialize(Archive & archive) const OVERRIDE
     {
-      ArchiveElement elem = archive.createElement((name().isEmpty() ? type() : name()).toUtf8().data());
+      ArchiveElement elem = archive.createElement(name().isEmpty() ? type() : name());
       for(const_iterator it = m_container.begin(); it != m_container.end(); it++) {
         elem.add(Serializer::serialize(archive, *it));
       }

@@ -50,7 +50,7 @@ namespace Valuable
   QString AttributeString::asString(bool * const ok) const
   {
     if(ok) *ok = true;
-    return value().toUtf8().data();
+    return value();
   }
 
   bool AttributeString::set(const QString & v, Layer layer, ValueUnit)
