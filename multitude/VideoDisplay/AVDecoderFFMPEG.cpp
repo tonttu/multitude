@@ -312,6 +312,8 @@ namespace VideoPlayer2
       double duration;
       double start;
       Nimble::Vector2i videoSize;
+
+      bool dr1;
     };
 
     D()
@@ -695,10 +697,10 @@ namespace VideoPlayer2
         av.videoCodecContext->get_buffer = getBuffer;
         //videoCodecContext->reget_buffer = AVDecoderFFMPEG::D::regetBuffer;
         av.videoCodecContext->release_buffer = releaseBuffer;
+        av.dr1 = true;
       } else {
-        Radiant::error("%s TODO: support for codecs missing CODEC_CAP_DR1 feature is not implemented", errorMsg.data());
-        avformat_close_input(&av.formatContext);
-        return false;
+        Radiant::debug("%s Codec has no CODEC_CAP_DR1, need to copy the image data every frame", errorMsg.data());
+        av.dr1 = false;
       }
 
       bool pixelFormatSupported = false;
@@ -1026,14 +1028,19 @@ namespace VideoPlayer2
     VideoFrameFFMPEG * frame = 0;
     bool setTimestampToPts = false;
 
-    DecodedImageBuffer * buffer = static_cast<DecodedImageBuffer*>(av.frame->opaque);
-    buffer->refcount.ref();
+    DecodedImageBuffer * buffer = nullptr;
+    if(av.dr1 && av.frame->opaque) {
+      buffer = static_cast<DecodedImageBuffer*>(av.frame->opaque);
+      buffer->refcount.ref();
+    }
 
     if(videoFilter.graph) {
       AVFilterBufferRef * ref = avfilter_get_video_buffer_ref_from_frame(av.frame,
                                                                          AV_PERM_READ | AV_PERM_WRITE);
-      ref->buf->priv = new std::pair<AVDecoderFFMPEG::D *, DecodedImageBuffer *>(this, buffer);
-      ref->buf->free = releaseFilterBuffer;
+      if(buffer) {
+        ref->buf->priv = new std::pair<AVDecoderFFMPEG::D *, DecodedImageBuffer *>(this, buffer);
+        ref->buf->free = releaseFilterBuffer;
+      }
 
       int err = av_buffersrc_add_ref(videoFilter.bufferSourceContext, ref,
                                      AV_BUFFERSRC_FLAG_NO_CHECK_FORMAT |
@@ -1045,6 +1052,10 @@ namespace VideoPlayer2
       } else {
         while((err = avfilter_poll_frame(videoFilter.bufferSinkContext->inputs[0])) > 0) {
           AVFilterBufferRef * output = nullptr;
+          // we either use custom deleter (releaseFilterBuffer) or the
+          // default one with the actual data cleared
+          if(!buffer)
+            av.packet.data = nullptr;
           int err2 = av_buffersink_get_buffer_ref(videoFilter.bufferSinkContext, &output, 0);
           if(err2 < 0) {
             avError(QString("AVDecoderFFMPEG::D::decodeVideoPacket # %1: av_buffersink_get_buffer_ref failed").
@@ -1098,6 +1109,7 @@ namespace VideoPlayer2
       frame->imageBuffer = buffer;
 
       auto & fmtDescriptor = av_pix_fmt_descriptors[av.frame->format];
+      int bytes = 0;
       for (int i = 0; i < 3; ++i) {
         frame->planeSize[i] = i == 0 ? Nimble::Vector2i(av.frame->width, av.frame->height)
                                      : Nimble::Vector2i(
@@ -1105,6 +1117,26 @@ namespace VideoPlayer2
                                          -((-av.frame->height) >> fmtDescriptor.log2_chroma_h));
         frame->lineSize[i] = av.frame->linesize[i];
         frame->data[i] = av.frame->data[i];
+        bytes += frame->lineSize[i] * frame->planeSize[i].y;
+      }
+
+      if(!buffer) {
+        buffer = imageBuffers.get();
+        if(!buffer) {
+          Radiant::error("AVDecoderFFMPEG::D::decodeVideoPacket # %s: Not enough ImageBuffers",
+                         options.src.toUtf8().data());
+        } else {
+          buffer->refcount = 1;
+          frame->imageBuffer = buffer;
+          buffer->data.resize(bytes);
+          for (int offset = 0, i = 0; i < 3; ++i) {
+            uint8_t * dst = buffer->data.data() + offset;
+            bytes = frame->lineSize[i] * frame->planeSize[i].y;
+            offset += bytes;
+            memcpy(dst, frame->data[i], bytes);
+            frame->data[i] = dst;
+          }
+        }
       }
 
       frame->imageSize = Nimble::Vector2i(av.frame->width, av.frame->height);
