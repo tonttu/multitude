@@ -225,9 +225,11 @@ namespace Radiant
 
   QString FileUtils::findFile(const QString & filename, const QString & paths)
   {
-    foreach(QString str, paths.split(";", QString::SkipEmptyParts)) {
+    QStringList list = paths.split(";", QString::SkipEmptyParts);
+    /*needed to avoid bug(?) in foreach when there are duplicate values in list*/
+    list.removeDuplicates();
+    foreach(QString str, list) {
       QString fullPath = str + "/" + filename;
-
       if(fileReadable(fullPath))
         return fullPath;
     }
