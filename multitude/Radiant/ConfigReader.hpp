@@ -165,18 +165,9 @@ namespace Radiant {
 
     ChunkT & operator= (const ChunkT & copy)
     {
-      clear();
-
       clearFirst = copy.clearFirst;
-
-      /// @todo why doesn't this work?
-      //std::copy(copy.m_chunks->begin(), copy.m_chunks->end(), m_chunks->begin());
-
-      for(auto i = copy.m_chunks->begin(); i != copy.m_chunks->end(); ++i)
-        m_chunks->insert(*i);
-
-      for(auto i = copy.m_variants.begin(); i != copy.m_variants.end(); ++i)
-        m_variants.insert(*i);
+      *m_chunks = *copy.m_chunks;
+      m_variants = copy.m_variants;
 
       return *this;
     }
