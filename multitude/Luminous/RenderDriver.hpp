@@ -28,7 +28,8 @@ namespace Luminous
     LUMINOUS_API virtual std::shared_ptr<ShaderProgram> createShaderProgram() = 0;
     LUMINOUS_API virtual std::shared_ptr<ShaderGLSL> createShader(ShaderType type) = 0;
 
-    /// Clear the currently bound rendertarget
+    /// Targets
+    // LUMINOUS_API virtual void setTarget( RenderTarget & target);
     LUMINOUS_API virtual void clear(ClearMask mask, const Radiant::Color & color = Radiant::Color(0.f,0.f,0.f,1.f), double depth = 0, int stencil = 0) = 0;
 
     // Draw primitives
@@ -64,6 +65,9 @@ namespace Luminous
 
     // Texturing
     LUMINOUS_API virtual void setTexture(unsigned int threadIndex, unsigned int textureUnit, const Texture2 & texture) = 0;
+
+    //
+    LUMINOUS_API virtual void clearState(unsigned int threadIndex) = 0;
 
     // Factory
     LUMINOUS_API static std::shared_ptr<RenderDriver> createInstance(unsigned int renderThreads);

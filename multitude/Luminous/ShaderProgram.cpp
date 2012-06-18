@@ -11,9 +11,9 @@ namespace {
   {
     /// @note This looks a bit dumb since this is a one-to-one-mapping. They are very different types though.
     switch (type) {
-    case Luminous::ShaderType_VertexShader:   return Luminous::ResourceType_VertexShader;
-    case Luminous::ShaderType_FragmentShader: return Luminous::ResourceType_FragmentShader;
-    case Luminous::ShaderType_GeometryShader: return Luminous::ResourceType_GeometryShader;
+    case Luminous::ShaderType_Vertex:   return Luminous::ResourceType_VertexShader;
+    case Luminous::ShaderType_Fragment: return Luminous::ResourceType_FragmentShader;
+    case Luminous::ShaderType_Geometry: return Luminous::ResourceType_GeometryShader;
     default:
       assert(false);
       Radiant::error("Can't determine resource type: Unknown shader type %d", type);
@@ -100,12 +100,14 @@ namespace Luminous
   void ShaderProgram::addShader(const std::shared_ptr<ShaderGLSL> & shader)
   {
     m_d->shaders.push_back(shader);
+    invalidate();
   }
 
   void ShaderProgram::removeShader(const std::shared_ptr<ShaderGLSL> & shader)
   {
     D::ShaderList::iterator it = std::remove(m_d->shaders.begin(), m_d->shaders.end(), shader);
     m_d->shaders.erase(it, m_d->shaders.end());
+    invalidate();
   }
 
   size_t ShaderProgram::shaderCount() const

@@ -8,11 +8,10 @@ namespace Luminous
   class HardwareBuffer::D
   {
   public:
-    D() : size(0), data(nullptr), usage(BufferUsage_Dynamic), access(BufferAccess_Write) {}
+    D() : size(0), data(nullptr), usage(BufferUsage_Static_Write) {}
     size_t size;
     const char * data;
     BufferUsage usage;
-    BufferAccess access;
   };
 
   HardwareBuffer::HardwareBuffer(RenderResource::Id id, RenderDriver & driver)
@@ -21,12 +20,11 @@ namespace Luminous
   {
   }
 
-  void HardwareBuffer::setData(const char * data, size_t size, BufferUsage usage, BufferAccess access)
+  void HardwareBuffer::setData(const char * data, size_t size, BufferUsage usage)
   {
     m_d->data = data;
     m_d->size = size;
     m_d->usage = usage;
-    m_d->access = access;
 
     invalidate();
   }
@@ -39,5 +37,10 @@ namespace Luminous
   size_t HardwareBuffer::size() const
   {
     return m_d->size;
+  }
+
+  BufferUsage HardwareBuffer::usage() const
+  {
+    return m_d->usage;
   }
 }

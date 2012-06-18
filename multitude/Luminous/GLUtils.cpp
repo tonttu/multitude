@@ -4,21 +4,7 @@
 #include <cassert>
 
 namespace Luminous
-{
-  GLenum GLUtils::getBufferLockOptions(BufferLockOptions lock)
-  {
-    switch (lock)
-    {
-    case BufferLockOptions_Read:      return GL_READ_ONLY;
-    case BufferLockOptions_Write:     return GL_WRITE_ONLY;
-    case BufferLockOptions_ReadWrite: return GL_READ_WRITE;
-    default:
-      Radiant::warning("GLUtils: Unknown lock option (%d)", lock);
-      assert(false);
-      return GL_READ_WRITE;
-    }
-  }
-  
+{  
   /// Translate a PrimitiveType to its OpenGL equivalent
   GLenum GLUtils::getPrimitiveType(PrimitiveType type)
   {
@@ -59,13 +45,70 @@ namespace Luminous
   {
     switch (type)
     {
-    case ShaderType_VertexShader:   return GL_VERTEX_SHADER;
-    case ShaderType_FragmentShader: return GL_FRAGMENT_SHADER;
-    case ShaderType_GeometryShader: return GL_GEOMETRY_SHADER_EXT;
+    case ShaderType_Vertex:   return GL_VERTEX_SHADER;
+    case ShaderType_Fragment: return GL_FRAGMENT_SHADER;
+    case ShaderType_Geometry: return GL_GEOMETRY_SHADER_EXT;
     default:
       Radiant::error("GLUtils: cannot determine shader type (%d)", type);
       assert(false);
       return GL_VERTEX_SHADER;
+    }
+  }
+
+  GLenum GLUtils::getUsageFlags(const HardwareBuffer & buffer)
+  {
+    switch (buffer.usage())
+    {
+    case BufferUsage_Static_Write:  return GL_STATIC_DRAW;
+    case BufferUsage_Static_Read:   return GL_STATIC_READ;
+    case BufferUsage_Static_Copy:   return GL_STATIC_COPY;
+
+    case BufferUsage_Stream_Write:  return GL_STREAM_DRAW;
+    case BufferUsage_Stream_Read:   return GL_STREAM_READ;
+    case BufferUsage_Stream_Copy:   return GL_STREAM_COPY;
+
+    case BufferUsage_Dynamic_Write: return GL_DYNAMIC_DRAW;
+    case BufferUsage_Dynamic_Read:  return GL_DYNAMIC_READ;
+    case BufferUsage_Dynamic_Copy:  return GL_DYNAMIC_COPY;
+
+    default:
+      assert(false);
+      Radiant::error("GLUtils: Unknown buffer usage flag %d", buffer.usage());
+      return GL_STATIC_DRAW;
+    };
+  }
+
+  GLuint GLUtils::createResource(ResourceType type)
+  {
+    GLuint resource;
+    switch (type)
+    {
+    case ResourceType_VertexArray:    glGenVertexArrays(1, &resource); return resource;
+    case ResourceType_Buffer:         glGenBuffers(1, &resource); return resource;
+    case ResourceType_ShaderProgram:  return glCreateProgram();
+    case ResourceType_VertexShader:   return glCreateShader(GL_VERTEX_SHADER);
+    case ResourceType_FragmentShader: return glCreateShader(GL_FRAGMENT_SHADER);
+    case ResourceType_GeometryShader: return glCreateShader(GL_GEOMETRY_SHADER_EXT);
+    default:
+      Radiant::error("RenderDriverGL: Can't create GL resource: unknown type %d", type);
+      assert(false);
+      return 0;
+    }
+  }
+
+  void GLUtils::destroyResource(ResourceType type, GLuint resource)
+  {
+    switch (type)
+    {
+    case ResourceType_VertexArray:    glDeleteVertexArrays(1, &resource); break;
+    case ResourceType_Buffer:         glDeleteBuffers(1, &resource); break;
+    case ResourceType_ShaderProgram:  return glDeleteProgram(resource); break;
+    case ResourceType_VertexShader:   return glDeleteShader(resource); break;
+    case ResourceType_FragmentShader: return glDeleteShader(resource); break;
+    case ResourceType_GeometryShader: return glDeleteShader(resource); break;
+    default:
+      Radiant::error("RenderDriverGL: Can't destroy GL resource: unknown type %d", type);
+      assert(false);
     }
   }
 }

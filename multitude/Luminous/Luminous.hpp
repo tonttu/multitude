@@ -178,9 +178,9 @@ namespace Luminous
 
   enum ShaderType
   {
-    ShaderType_VertexShader,
-    ShaderType_FragmentShader,
-    ShaderType_GeometryShader,
+    ShaderType_Vertex,
+    ShaderType_Fragment,
+    ShaderType_Geometry,
   };
 
   /// Resource types
@@ -199,18 +199,19 @@ namespace Luminous
   /// Usage flags for HardwareBuffer objects
   enum BufferUsage
   {
-    BufferUsage_Stream,
-    BufferUsage_Static,    // 
-    BufferUsage_Dynamic,
-    BufferUsage_Copy,
+    BufferUsage_Static_Write,
+    BufferUsage_Stream_Write,
+    BufferUsage_Dynamic_Write,
+
+    BufferUsage_Static_Read,
+    BufferUsage_Stream_Read,
+    BufferUsage_Dynamic_Read,
+
+    BufferUsage_Static_Copy,
+    BufferUsage_Stream_Copy,
+    BufferUsage_Dynamic_Copy,
   };
 
-  /// CPU access permissions for HardwareBuffer objects
-  enum BufferAccess
-  {
-    BufferAccess_Read,
-    BufferAccess_Write,
-  };
   //////////////////////////////////////////////////////////////////////////
   // Utility functions
   /// @todo Luminous2 utilities, should rename once Luminous::Utils has been killed with fire

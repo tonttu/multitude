@@ -26,6 +26,37 @@
 
 namespace Luminous
 {
+  struct ShaderHandle
+  {
+    ShaderHandle() : handle(0), generation(0) {}
+
+    GLuint handle;
+    uint64_t generation;
+  };
+
+  struct ProgramHandle
+  {
+    ProgramHandle() : handle(0), generation(0) {}
+
+    GLuint handle;
+    uint64_t generation;
+
+    // List of attribute variables
+    struct Attribute
+    {
+      GLint location;
+      GLenum type;
+      GLint count;
+    };
+    typedef std::map<QString, Attribute> NameIndexList;
+    NameIndexList attributes;
+    NameIndexList uniforms;
+
+    // List of shaders linked to this program
+    typedef std::vector<RenderResource::Id> ShaderList;
+    ShaderList shaders;
+  };
+
   class RenderDriverGL::D
   {
   public:
@@ -39,18 +70,32 @@ namespace Luminous
       uint64_t generation;
       size_t size;
     };
+
     typedef std::map<RenderResource::Id, ResourceHandle> ResourceList;
+    typedef std::map<RenderResource::Id, ProgramHandle> ProgramList;
+    typedef std::map<RenderResource::Id, ShaderHandle> ShaderList;
 
     // Current state of a single thread
     struct ThreadState
     {
       ThreadState()
-        : currentProgram(0)
+      {
+        reset();
+      }
+
+      void reset()
       {
       }
 
-      GLuint currentProgram;      // Currently bound shader program
-      ResourceList resourceList;  // Active resources
+      typedef std::vector<GLuint> AttributeList;
+      AttributeList activeAttributes;
+
+      ProgramHandle currentProgram;      // Currently bound shader program
+
+      /// Resources
+      ProgramList programs;
+      ShaderList shaders;
+      ResourceList resources;
     };
 
   public:
@@ -67,14 +112,14 @@ namespace Luminous
     ResourceHandle getOrCreateResource(unsigned int threadIndex, const RenderResource & resource)
     {
       // See if we can find it in cache
-      ResourceList & res = m_threadResources[threadIndex].resourceList;
+      ResourceList & res = m_threadResources[threadIndex].resources;
       ResourceList::iterator it = res.find(resource.resourceId());
       if (it != res.end())
         return it->second;
 
       // No hit, create new resource
       ResourceHandle resourceHandle(resource.resourceType());
-      resourceHandle.handle = createGLResource(resource.resourceType());
+      resourceHandle.handle = GLUtils::createResource(resource.resourceType());
       // Update cache
       updateResource(threadIndex, resource.resourceId(), resourceHandle);
       return resourceHandle;
@@ -82,7 +127,7 @@ namespace Luminous
 
     void updateResource(unsigned int threadIndex, RenderResource::Id id, ResourceHandle handle)
     {
-      m_threadResources[threadIndex].resourceList[id] = handle;
+      m_threadResources[threadIndex].resources[id] = handle;
     }
 
     void bindBuffer(unsigned int threadIndex, GLenum bufferTarget, const HardwareBuffer & buffer)
@@ -97,8 +142,7 @@ namespace Luminous
       if (bufferHandle.generation < buffer.generation()) {
         // Update or reallocate the resource
         if (buffer.size() != bufferHandle.size) {
-          /// @todo use correct usage flags
-          glBufferData(bufferTarget, buffer.size(), buffer.data(), GL_DYNAMIC_DRAW);
+          glBufferData(bufferTarget, buffer.size(), buffer.data(), GLUtils::getUsageFlags(buffer));
           GLERROR("RenderDriverGL::Bind HardwareBuffer reallocate");
         }
         else {
@@ -110,25 +154,6 @@ namespace Luminous
         bufferHandle.generation = buffer.generation();
         bufferHandle.size = buffer.size();
         updateResource(threadIndex, buffer.resourceId(), bufferHandle);
-      }
-    }
-
-  private:
-    GLuint createGLResource(ResourceType type)
-    {
-      GLuint resource;
-      switch (type)
-      {
-      case ResourceType_VertexArray:    glGenVertexArrays(1, &resource); return resource;
-      case ResourceType_Buffer:         glGenBuffers(1, &resource); return resource;
-      case ResourceType_ShaderProgram:  return glCreateProgram();
-      case ResourceType_VertexShader:   return glCreateShader(GL_VERTEX_SHADER);
-      case ResourceType_FragmentShader: return glCreateShader(GL_FRAGMENT_SHADER);
-      case ResourceType_GeometryShader: return glCreateShader(GL_GEOMETRY_SHADER_EXT);
-      default:
-        Radiant::error("RenderDriverGL: Can't create GL resource: unknown type %d", type);
-        assert(false);
-        return 0;
       }
     }
 
@@ -223,21 +248,24 @@ namespace Luminous
 
 #define SETUNIFORM(TYPE, FUNCTION) \
   bool RenderDriverGL::setShaderConstant(unsigned int threadIndex, const QString & name, const TYPE & value) { \
-    GLint location = glGetUniformLocation(m_d->m_threadResources[threadIndex].currentProgram, name.toAscii().data()); \
-    if (location != -1) FUNCTION(location, value); \
-    return (location != -1); \
+    const auto & uniforms = m_d->m_threadResources[threadIndex].currentProgram.uniforms; \
+    auto it = uniforms.find(name); \
+    if (it != std::end(uniforms)) FUNCTION(it->second.location, value); \
+    return (it != std::end(uniforms)); \
   }
 #define SETUNIFORMVECTOR(TYPE, FUNCTION) \
   bool RenderDriverGL::setShaderConstant(unsigned int threadIndex, const QString & name, const TYPE & value) { \
-    GLint location = glGetUniformLocation(m_d->m_threadResources[threadIndex].currentProgram, name.toAscii().data()); \
-    if (location != -1) FUNCTION(location, 1, value.data()); \
-    return (location != -1); \
+    const auto & uniforms = m_d->m_threadResources[threadIndex].currentProgram.uniforms; \
+    auto it = uniforms.find(name); \
+    if (it != std::end(uniforms)) FUNCTION(it->second.location, 1, value.data()); \
+    return (it != std::end(uniforms)); \
   }
 #define SETUNIFORMMATRIX(TYPE, FUNCTION) \
   bool RenderDriverGL::setShaderConstant(unsigned int threadIndex, const QString & name, const TYPE & value) { \
-    GLint location = glGetUniformLocation(m_d->m_threadResources[threadIndex].currentProgram, name.toAscii().data()); \
-    if (location != -1) FUNCTION(location, 1, GL_TRUE, value.data()); \
-    return (location != -1); \
+    const auto & uniforms = m_d->m_threadResources[threadIndex].currentProgram.uniforms; \
+    auto it = uniforms.find(name); \
+    if (it != std::end(uniforms)) FUNCTION(it->second.location, 1, GL_TRUE, value.data()); \
+    return (it != std::end(uniforms)); \
   }
 
   SETUNIFORM(int, glUniform1i);
@@ -257,51 +285,59 @@ namespace Luminous
 
   void RenderDriverGL::setShaderProgram(unsigned int threadIndex, const ShaderProgram & program)
   {
-    m_d->m_threadResources[threadIndex].currentProgram = 0;
-
-    D::ResourceHandle programHandle = m_d->getOrCreateResource(threadIndex, program);
-
-    // Check if any of the shaders are dirty
-    bool needsRelink = false;
-
-    // Recreate if the program is dirty
-    if (programHandle.generation < program.generation()) {
-      needsRelink = true;
-
-      glDeleteProgram(programHandle.handle);
-      GLERROR("RenderDriverGL::Bind ShaderProgram delete");
-      programHandle.handle = glCreateProgram();
-      programHandle.generation = program.generation();
+    auto & programList = m_d->m_threadResources[threadIndex].programs;
+    auto it = programList.find(program.resourceId());
+    ProgramHandle programHandle;
+    if (it == std::end(programList)) {
+      /// New program: create it
+      programHandle.handle = GLUtils::createResource(program.resourceType());
+      programHandle.generation = 0;
     }
+    else
+      programHandle = it->second;
 
+    /// Tag if program needs relinking
+    bool needsRelinking = (programHandle.generation < program.generation());
+
+    // Check if any of our shaders are dirty
+    auto & shaderList = m_d->m_threadResources[threadIndex].shaders;
     for (size_t i = 0; i < program.shaderCount(); ++i) {
       const std::shared_ptr<ShaderGLSL> & shader = program.shader(i);
-      D::ResourceHandle shaderHandle = m_d->getOrCreateResource(threadIndex, *shader);
-      if (shaderHandle.generation < shader->generation()) {
-        needsRelink = true;
-        /// @todo Detach old shader? (if it exists)
-        //glDetachShader(programHandle.handle, shaderHandle.handle);
-        //GLERROR("RenderDriverGL::Bind ShaderProgram detach");
+      ShaderHandle shaderHandle;
 
-        // Recompile and link
+      // Find the correct shader
+      auto it = shaderList.find(shader->resourceId());
+      if (it == std::end(shaderList)) {
+        /// New shader: create it
+        shaderHandle.handle = GLUtils::createResource(shader->resourceType());
+        shaderHandle.generation = 0;
+        shaderList[shader->resourceId()] = shaderHandle;
+      }
+      else
+        shaderHandle = it->second;
+
+      /// Check if it needs updating
+      if (shaderHandle.generation < shader->generation()) {
+        // Set and compile source
         const QByteArray shaderData = shader->text().toAscii();
         const GLchar * text = shaderData.data();
         const GLint length = shaderData.size();
         glShaderSource(shaderHandle.handle, 1, &text, &length);
-        GLERROR("RenderDriverGL::Bind ShaderProgram source");
         glCompileShader(shaderHandle.handle);
-        GLERROR("RenderDriverGL::Bind ShaderProgram compile");
         GLint compiled = GL_FALSE;
         glGetShaderiv(shaderHandle.handle, GL_COMPILE_STATUS, &compiled);
         if (compiled == GL_TRUE) {
-          glAttachShader(programHandle.handle, shaderHandle.handle);
-          GLERROR("RenderDriverGL::Bind ShaderProgram attach");
           // All seems okay, update resource handle
           shaderHandle.generation = shader->generation();
-          m_d->updateResource(threadIndex, shader->resourceId(), shaderHandle);
+          shaderList[shader->resourceId()] = shaderHandle;
+
+          // Attach to the program
+          glAttachShader(programHandle.handle, shaderHandle.handle);
+          // Tag the program for relinking
+          needsRelinking = true;
         }
         else {
-          Radiant::error("Failed to compile shader %d (type %d)", shaderHandle.handle, shaderHandle.type);
+          Radiant::error("Failed to compile shader %d", shaderHandle.handle);
 
           // Dump info log
           GLsizei len;
@@ -314,12 +350,45 @@ namespace Luminous
         }
       }
     }
-    if (needsRelink) {
+
+    if (needsRelinking) {
       glLinkProgram(programHandle.handle);
       GLERROR("RenderDriverGL::Bind ShaderProgram link");
       // Check for linking errors
       GLint status;
       glGetProgramiv(programHandle.handle, GL_LINK_STATUS, &status);
+
+      /// Query for available attributes
+      {
+        GLint attrCount;
+        GLchar attrName[128];
+        glGetProgramiv(programHandle.handle, GL_ACTIVE_ATTRIBUTES, &attrCount);
+        // Get attribute locations
+        programHandle.attributes.clear();
+        ProgramHandle::Attribute attr;
+        for (int idx = 0; idx < attrCount; ++idx) {
+          glGetActiveAttrib(programHandle.handle, idx, 128, NULL, &attr.count, &attr.type, attrName);
+          // @note apparently the location isn't necessarily the same as the index, so we have to get both here
+          attr.location = glGetAttribLocation(programHandle.handle, attrName);
+          programHandle.attributes[attrName] = attr;
+        }
+      }
+
+      /// Query for available uniforms
+      {
+        GLint uniCount;
+        GLchar uniName[128];
+        glGetProgramiv(programHandle.handle, GL_ACTIVE_UNIFORMS, &uniCount);
+        programHandle.uniforms.clear();
+        ProgramHandle::Attribute uniform;
+        for (int idx = 0; idx < uniCount; ++idx) {
+          glGetActiveUniform(programHandle.handle, idx, 128, NULL, &uniform.count, &uniform.type, uniName);
+          // @note apparently the location isn't necessarily the same as the index, so we have to get both here
+          uniform.location = glGetUniformLocation(programHandle.handle, uniName);
+          programHandle.uniforms[uniName] = uniform;
+        }
+      }
+
       if (status == GL_FALSE) {
         Radiant::error("Failed to link shader program %d", programHandle.handle);
         GLsizei len;
@@ -330,9 +399,13 @@ namespace Luminous
         // Can't link: abort binding
         return;
       }
+
+      /// Update program handle
+      programHandle.generation = program.generation();
+      programList[program.resourceId()] = programHandle;
     }
 
-    m_d->m_threadResources[threadIndex].currentProgram = programHandle.handle;
+    m_d->m_threadResources[threadIndex].currentProgram = programHandle;
     glUseProgram(programHandle.handle);
     GLERROR("RenderDriverGL::Bind Shaderprogram use");
   }
@@ -358,9 +431,9 @@ namespace Luminous
 
     if (bindingHandle.generation < binding.generation()) {
       // Recreate the binding
-      /// @todo I don't imagine these can really be modified, right?
-      glDeleteVertexArrays(1, &bindingHandle.handle);
-      glGenVertexArrays(1, &bindingHandle.handle);
+      GLUtils::destroyResource(ResourceType_VertexArray, bindingHandle.handle);
+      bindingHandle.handle = GLUtils::createResource(ResourceType_VertexArray);
+      // Bind
       glBindVertexArray(bindingHandle.handle);
       GLERROR("RenderDriverGL::Bind VertexAttributeBinding recreate");
 
@@ -372,15 +445,23 @@ namespace Luminous
         // Set buffer attributes
         for (size_t attrIndex = 0; attrIndex < b.description->attributeCount(); ++attrIndex) {
           VertexAttribute attr = b.description->attribute(attrIndex);
-          /// @todo Should cache these locations
-          GLint location = glGetAttribLocation(m_d->m_threadResources[threadIndex].currentProgram, attr.name.toAscii().data());
-          if (location == -1) {
+
+          auto & attributes = m_d->m_threadResources[threadIndex].currentProgram.attributes;
+          auto location = attributes.find(attr.name);
+          if (location == std::end(attributes)) {
             Radiant::warning("Unable to bind vertex attribute %s", attr.name.toAscii().data());
           }
           else {
             GLenum normalized = (attr.normalized ? GL_TRUE : GL_FALSE);
-            glVertexAttribPointer(location, attr.count, GLUtils::getDataType(attr.type), normalized, b.description->vertexSize(), reinterpret_cast<GLvoid *>(attr.offset));
-            glEnableVertexAttribArray(location);
+            GLenum type = GLUtils::getDataType(attr.type);
+
+            /// @todo Warn if there's a type/count mismatch between the cached versions and what we're trying to do
+            glVertexAttribPointer(location->second.location, attr.count, type, normalized, b.description->vertexSize(), reinterpret_cast<GLvoid *>(attr.offset));
+            glEnableVertexAttribArray(location->second.location);
+
+            // Keep track of active attributes so we can disable them again when we're done
+            m_d->m_threadResources[threadIndex].activeAttributes.push_back(location->second.location);
+
             GLERROR("RenderDriverGL::Bind VertexAttributeBinding vertexAttribPointer");
           }
         }
@@ -408,6 +489,11 @@ namespace Luminous
       glActiveTexture(GL_TEXTURE0 + textureUnit);
       glBindTexture(GL_TEXTURE_2D, textureHandle.handle);
     }
+  }
+
+  void RenderDriverGL::clearState(unsigned int threadIndex)
+  {
+    //m_d->m_threadResources[threadIndex].reset();
   }
 
   void RenderDriverGL::releaseResource(RenderResource::Id)

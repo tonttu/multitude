@@ -1865,8 +1865,26 @@ namespace Luminous
 
   //////////////////////////////////////////////////////////////////////////
   // Luminousv2
+
+  /// Start collecting render commands
+  void RenderContext::beginCommands()
+  {
+  }
+
+  /// Finish collecting render commands
+  void RenderContext::endCommands()
+  {
+    /// Clear the state for the next set of commands
+/*
+    m_data->m_driver.clearState(threadIndex());
+
+    bindDefaultProgram();
+*/
+  }
+
   void RenderContext::setTexture(const QString & name, std::shared_ptr<Luminous::Texture2> texture)
   {
+
   }
 
   void RenderContext::setVertexBinding(const std::shared_ptr<VertexAttributeBinding> & binding)

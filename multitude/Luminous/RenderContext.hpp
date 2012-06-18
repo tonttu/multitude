@@ -143,7 +143,7 @@ namespace Luminous
     /// every frame before rendering.
     virtual void prepare();
 
-    /// Notifies the context that a frame has been renreded. This is called
+    /// Notifies the context that a frame has been rendered. This is called
     /// once after each frame.
     virtual void finish();
 
@@ -423,6 +423,11 @@ namespace Luminous
     //////////////////////////////////////////////////////////////////////////
 
     unsigned int threadIndex() const;
+
+    /// Begin a command list
+    void beginCommands();
+    /// End a command list
+    void endCommands();
 
     void setTexture(const QString & name, std::shared_ptr<Luminous::Texture2> texture);
     void setVertexBinding(const std::shared_ptr<VertexAttributeBinding> & binding);

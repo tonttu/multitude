@@ -45,6 +45,8 @@ namespace Luminous
     LUMINOUS_API virtual void setVertexBinding(unsigned int threadIndex, const VertexAttributeBinding & binding) OVERRIDE;
 
     LUMINOUS_API virtual void setTexture(unsigned int threadIndex, unsigned int textureUnit, const Texture2 & texture) OVERRIDE;
+
+    LUMINOUS_API virtual void clearState(unsigned int threadIndex) OVERRIDE;
   private:
     virtual void releaseResource(RenderResource::Id id) OVERRIDE;
   private:
