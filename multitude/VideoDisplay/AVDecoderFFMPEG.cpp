@@ -1712,7 +1712,7 @@ namespace VideoPlayer2
 
     auto & av = m_d->av;
 
-    m_d->pauseTimestamp == Radiant::TimeStamp::getTime();
+    m_d->pauseTimestamp = Radiant::TimeStamp::getTime();
     bool waitingFrame = false;
     while(m_d->running) {
       m_d->decodedVideoFrames.setSize(m_d->options.videoBufferFrames);
