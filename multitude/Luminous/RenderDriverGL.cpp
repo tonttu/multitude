@@ -32,7 +32,7 @@ namespace Luminous
     // Some types
     struct ResourceHandle
     {
-      ResourceHandle() : type(RT_Unknown), handle(0), generation(0) , size(0) {}
+      ResourceHandle() : type(ResourceType_Unknown), handle(0), generation(0) , size(0) {}
       ResourceHandle(ResourceType type) : type(type), handle(0), generation(0),  size(0) {}
       ResourceType type;
       GLuint handle;
@@ -119,12 +119,12 @@ namespace Luminous
       GLuint resource;
       switch (type)
       {
-      case RT_VertexArray:    glGenVertexArrays(1, &resource); return resource;
-      case RT_Buffer:         glGenBuffers(1, &resource); return resource;
-      case RT_ShaderProgram:  return glCreateProgram();
-      case RT_VertexShader:   return glCreateShader(GL_VERTEX_SHADER);
-      case RT_FragmentShader: return glCreateShader(GL_FRAGMENT_SHADER);
-      case RT_GeometryShader: return glCreateShader(GL_GEOMETRY_SHADER_EXT);
+      case ResourceType_VertexArray:    glGenVertexArrays(1, &resource); return resource;
+      case ResourceType_Buffer:         glGenBuffers(1, &resource); return resource;
+      case ResourceType_ShaderProgram:  return glCreateProgram();
+      case ResourceType_VertexShader:   return glCreateShader(GL_VERTEX_SHADER);
+      case ResourceType_FragmentShader: return glCreateShader(GL_FRAGMENT_SHADER);
+      case ResourceType_GeometryShader: return glCreateShader(GL_GEOMETRY_SHADER_EXT);
       default:
         Radiant::error("RenderDriverGL: Can't create GL resource: unknown type %d", type);
         assert(false);
@@ -183,17 +183,17 @@ namespace Luminous
 
     GLbitfield glMask = 0;
     // Clear color buffer
-    if (mask & CM_Color) {
+    if (mask & ClearMask_Color) {
       glClearColor(color.red(), color.green(), color.blue(), color.alpha());
       glMask |= GL_COLOR_BUFFER_BIT;
     }
     // Clear depth buffer
-    if (mask & CM_Depth) {
+    if (mask & ClearMask_Depth) {
       glClearDepth(depth);
       glMask |= GL_DEPTH_BUFFER_BIT;
     }
     // Clear stencil buffer
-    if (mask & CM_Stencil) {
+    if (mask & ClearMask_Stencil) {
       glClearStencil(stencil);
       glMask |= GL_DEPTH_BUFFER_BIT;
     }

@@ -9,7 +9,7 @@ namespace Luminous
   struct VertexAttribute
   {
     VertexAttribute()
-      : type(Luminous::DT_Float)
+      : type(Luminous::DataType_Float)
       , offset(0)
       , count(0)
       , normalized(false)

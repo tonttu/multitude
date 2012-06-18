@@ -9,15 +9,15 @@
 namespace {
   Luminous::ResourceType getResourceType(Luminous::ShaderType type)
   {
-    /// @note I agree this looks a bit dumb since this is a one-to-one-mapping. They are different types though.
+    /// @note This looks a bit dumb since this is a one-to-one-mapping. They are very different types though.
     switch (type) {
-    case Luminous::ST_VertexShader: return Luminous::RT_VertexShader;
-    case Luminous::ST_FragmentShader: return Luminous::RT_FragmentShader;
-    case Luminous::ST_GeometryShader: return Luminous::RT_GeometryShader;
+    case Luminous::ShaderType_VertexShader:   return Luminous::ResourceType_VertexShader;
+    case Luminous::ShaderType_FragmentShader: return Luminous::ResourceType_FragmentShader;
+    case Luminous::ShaderType_GeometryShader: return Luminous::ResourceType_GeometryShader;
     default:
       assert(false);
       Radiant::error("Can't determine resource type: Unknown shader type %d", type);
-      return Luminous::RT_VertexShader;
+      return Luminous::ResourceType_VertexShader;
     }
   }
 }
@@ -86,7 +86,7 @@ namespace Luminous
   };
 
   ShaderProgram::ShaderProgram(RenderResource::Id id, RenderDriver & driver)
-    : RenderResource(id, RT_ShaderProgram, driver)
+    : RenderResource(id, ResourceType_ShaderProgram, driver)
     , m_d(new ShaderProgram::D())
   {
 

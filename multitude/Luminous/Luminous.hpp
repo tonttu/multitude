@@ -131,85 +131,86 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////////
   enum PrimitiveType
   {
-    PT_Triangle,
-    PT_TriangleStrip,
-    PT_Line,
-    PT_LineStrip,
-    PT_Point,
+    PrimitiveType_Triangle,
+    PrimitiveType_TriangleStrip,
+    PrimitiveType_Line,
+    PrimitiveType_LineStrip,
+    PrimitiveType_Point,
   };
 
   enum BufferType {
-    BT_VertexBuffer,
-    BT_IndexBuffer,
-    BT_ConstantBuffer,
+    BufferType_VertexBuffer,
+    BufferType_IndexBuffer,
+    BufferType_ConstantBuffer,
   };
 
   enum DataType
   {
-    DT_Unknown,
-    DT_Byte,
-    DT_Short,
-    DT_Int,
-    DT_UnsignedByte,
-    DT_UnsignedShort,
-    DT_UnsignedInt,
-    DT_Float,
-    DT_Double
+    DataType_Unknown,
+    DataType_Byte,
+    DataType_Short,
+    DataType_Int,
+    DataType_UnsignedByte,
+    DataType_UnsignedShort,
+    DataType_UnsignedInt,
+    DataType_Float,
+    DataType_Double
   };
   
   enum BufferLockOptions {
-    BLO_Discard     = (1 << 0),
-    BLO_Read        = (1 << 1),
-    BLO_Write       = (1 << 2),
-    BLO_NoOverwrite = (1 << 3),
-    BLO_ReadWrite   = BLO_Read | BLO_Write,
+    BufferLockOptions_Discard     = (1 << 0),
+    BufferLockOptions_Read        = (1 << 1),
+    BufferLockOptions_Write       = (1 << 2),
+    BufferLockOptions_NoOverwrite = (1 << 3),
+    BufferLockOptions_ReadWrite   = BufferLockOptions_Read | BufferLockOptions_Write,
   };
 
   enum ClearMask
   {
-    CM_Color              = (1 << 0),
-    CM_Depth              = (1 << 1),
-    CM_Stencil            = (1 << 2),
-    CM_ColorDepth         = CM_Color | CM_Depth,
-    CM_ColorStencil       = CM_Color | CM_Stencil,
-    CM_DepthStencil       = CM_Depth | CM_Stencil,
-    CM_ColorDepthStencil  = CM_Color | CM_Depth | CM_Stencil,
+    ClearMask_Color              = (1 << 0),
+    ClearMask_Depth              = (1 << 1),
+    ClearMask_Stencil            = (1 << 2),
+    ClearMask_ColorDepth         = ClearMask_Color | ClearMask_Depth,
+    ClearMask_ColorStencil       = ClearMask_Color | ClearMask_Stencil,
+    ClearMask_DepthStencil       = ClearMask_Depth | ClearMask_Stencil,
+    ClearMask_ColorDepthStencil  = ClearMask_Color | ClearMask_Depth | ClearMask_Stencil,
   };
 
   enum ShaderType
   {
-    ST_VertexShader,
-    ST_FragmentShader,
-    ST_GeometryShader,
+    ShaderType_VertexShader,
+    ShaderType_FragmentShader,
+    ShaderType_GeometryShader,
   };
 
-  enum BlendFunction
-  {
-
-  };
-  enum BlendEquation
-  {
-
-  };
-
-  enum RenderBin
-  {
-    RB_Opaque,
-    RB_Transparent,
-  };
-
+  /// Resource types
   enum ResourceType {
-    RT_Unknown,
-    RT_VertexArray,
-    RT_ShaderProgram,
-    RT_VertexShader,
-    RT_FragmentShader,
-    RT_GeometryShader,
-    RT_Texture,
-    RT_TextureArray,
-    RT_Buffer,
+    ResourceType_Unknown,
+    ResourceType_VertexArray,
+    ResourceType_ShaderProgram,
+    ResourceType_VertexShader,
+    ResourceType_FragmentShader,
+    ResourceType_GeometryShader,
+    ResourceType_Texture,
+    ResourceType_TextureArray,
+    ResourceType_Buffer,
   };
 
+  /// Usage flags for HardwareBuffer objects
+  enum BufferUsage
+  {
+    BufferUsage_Stream,
+    BufferUsage_Static,    // 
+    BufferUsage_Dynamic,
+    BufferUsage_Copy,
+  };
+
+  /// CPU access permissions for HardwareBuffer objects
+  enum BufferAccess
+  {
+    BufferAccess_Read,
+    BufferAccess_Write,
+  };
   //////////////////////////////////////////////////////////////////////////
   // Utility functions
   /// @todo Luminous2 utilities, should rename once Luminous::Utils has been killed with fire
