@@ -392,7 +392,7 @@ namespace VideoPlayer2
 
     bool decodeVideoPacket(double & dpts, double & nextDpts);
     bool decodeAudioPacket(double & dpts, double & nextDpts);
-    VideoFrameFFMPEG * getFreeFrame(bool setTimestampToPts, double & dpts);
+    VideoFrameFFMPEG * getFreeFrame(bool & setTimestampToPts, double & dpts);
     void checkSeek(double & nextVideoDpts, double & videoDpts, double & nextAudioDpts);
 
     static int getBuffer(AVCodecContext * context, AVFrame * frame);
@@ -984,7 +984,7 @@ namespace VideoPlayer2
     return true;
   }
 
-  VideoFrameFFMPEG * AVDecoderFFMPEG::D::getFreeFrame(bool setTimestampToPts, double & dpts)
+  VideoFrameFFMPEG * AVDecoderFFMPEG::D::getFreeFrame(bool & setTimestampToPts, double & dpts)
   {
     while(running) {
       VideoFrameFFMPEG * frame = decodedVideoFrames.takeFree();
