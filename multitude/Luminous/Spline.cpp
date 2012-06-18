@@ -63,7 +63,7 @@ namespace Luminous {
       Nimble::Rectf bounds;
     };
 
-    D() : m_path(nullptr), m_redoLocation(), m_endTime(0), m_generation(0),m_mingap(2.0f), m_maxgap(3.0f) {}
+    D() : m_path(nullptr), m_redoLocation(), m_endTime(0), m_mingap(2.0f), m_maxgap(3.0f), m_generation(0) {}
 
     void clear()
     {
@@ -392,8 +392,8 @@ namespace Luminous {
   int Spline::D::undoRedo(int points)
   {
     int changes = 0;
-    if(m_redoLocation.pathIndex >= m_paths.size())
-      m_redoLocation.pathIndex = m_paths.size() - 1;
+    if(m_redoLocation.pathIndex >= int(m_paths.size()))
+      m_redoLocation.pathIndex = int(m_paths.size()) - 1;
     if(m_redoLocation.pathIndex < 0)
       return 0;
 
@@ -418,8 +418,8 @@ namespace Luminous {
 
     // redo
     while(points > 0) {
-      if(m_redoLocation.nextPointIndex >= m_paths[m_redoLocation.pathIndex].points.size()) {
-        if(m_redoLocation.pathIndex+2 >= m_paths.size())
+      if(m_redoLocation.nextPointIndex >= int(m_paths[m_redoLocation.pathIndex].points.size())) {
+        if(m_redoLocation.pathIndex+2 >= int(m_paths.size()))
           break;
         ++m_redoLocation.pathIndex;
         m_redoLocation.nextPointIndex = 0;

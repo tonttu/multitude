@@ -42,8 +42,6 @@ namespace Luminous
 
     assert(rp.program() != 0);
 
-    const int vsize = sizeof(RectVertex);
-
     RectVertex & vr = * rp.vertexData<RectVertex>();
 
     GLSLProgramObject & prog = * rp.program();

@@ -1102,31 +1102,33 @@ namespace Luminous
     v.m_objectTransform = transform().transposed();
     v.m_arcParams.make(innderRelative, fromRadians, toRadians);
 
-    Nimble::Vector2 & vloc = * (Nimble::Vector2*) & v.m_location;
     v.m_location[2] = center.x;
     v.m_location[3] = center.y;
 
-    vloc = Nimble::Vector2(-radius, -radius);
+    v.m_location[0] = -radius;
+    v.m_location[1] = -radius;
     v.m_texCoord = style.texCoords().low();
     v.m_objCoord.make(-1, -1);
 
     rp.addFirstVertex(v);
 
-    vloc = Nimble::Vector2(radius, -radius);
+    v.m_location[0] = radius;
+    v.m_location[1] = -radius;
     v.m_texCoord = style.texCoords().highLow();
     v.m_objCoord.make(1, -1);
     rp.addVertex(v);
 
-    vloc = Nimble::Vector2(-radius, radius);
+    v.m_location[0] = -radius;
+    v.m_location[1] = radius;
     v.m_texCoord = style.texCoords().lowHigh();
     v.m_objCoord.make(-1, 1);
     rp.addVertex(v);
 
-    vloc = Nimble::Vector2(radius, radius);
+    v.m_location[0] = radius;
+    v.m_location[1] = radius;
     v.m_texCoord = style.texCoords().high();
     v.m_objCoord.make(1, 1);
     rp.addLastVertex(v);
-
   }
 
   void RenderContext::drawCircle(Nimble::Vector2f center, float radius, const Luminous::Style & style)

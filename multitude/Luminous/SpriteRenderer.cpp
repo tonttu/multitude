@@ -28,8 +28,8 @@ namespace Luminous {
     : m_location(0,0)
     , m_velocity(1,0)
     , m_color(1, 1, 1, 1)
-    , m_size(10)
     , m_rotation(0.f)
+    , m_size(10)
   {}
 
   ///////////////////////////////////////////////////////////////////

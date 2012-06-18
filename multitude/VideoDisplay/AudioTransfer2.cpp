@@ -235,7 +235,7 @@ namespace VideoPlayer2
 
   DecodedAudioBuffer * AudioTransfer::takeFreeBuffer(int samples)
   {
-    if(m_d->readyBuffers >= m_d->decodedBuffers.size())
+    if(m_d->readyBuffers >= int(m_d->decodedBuffers.size()))
       return nullptr;
 
     if(m_d->samplesInBuffers > samples)

@@ -83,7 +83,7 @@ namespace {
       , m_isAutoRepeat(false)
       , m_autoRepeats(256) {}
 
-    virtual bool x11FilterEvent(QWidget * keywidget, XEvent * event)
+    virtual bool x11FilterEvent(QWidget *, XEvent * event)
     {
       KeySym keysym;
       bzero(&keysym, sizeof(keysym));

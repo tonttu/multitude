@@ -158,8 +158,8 @@ namespace Radiant {
 
     ChunkT(const ChunkT & copy)
       : clearFirst(copy.clearFirst)
-      , m_chunks(new std::multimap<QString, ChunkT<T> >(*copy.m_chunks))
       , m_variants(copy.m_variants)
+      , m_chunks(new std::multimap<QString, ChunkT<T> >(*copy.m_chunks))
     {
     }
 
