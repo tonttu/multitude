@@ -2,7 +2,8 @@ include(../multitude.pri)
 
 HEADERS += Archive.hpp \
     AttributeFrame.hpp \
-    AttributeLocation.hpp
+    AttributeLocation.hpp \
+    AttributeAlias.hpp
 HEADERS += AttributeFlags.hpp
 HEADERS += ChangeMap.hpp
 HEADERS += CmdParser.hpp
@@ -31,7 +32,8 @@ HEADERS += AttributeString.hpp
 HEADERS += AttributeVector.hpp
 HEADERS += XMLArchive.hpp
 
-SOURCES += Archive.cpp
+SOURCES += Archive.cpp \
+    AttributeAlias.cpp
 SOURCES += ChangeMap.cpp
 SOURCES += CmdParser.cpp
 SOURCES += ConfigDocument.cpp
