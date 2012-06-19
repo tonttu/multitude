@@ -1147,7 +1147,8 @@ namespace Radiant {
 
       Radiant::Guard g2(s_takenMutex);
       if(s_taken.find(m_cameraNum) != s_taken.end()) {
-        error("%s # Camera index %d is already taken", fname, (int) m_cameraNum);
+        error("%s # Camera index %d is already taken (firewire id = %llx)", fname, (int) m_cameraNum, (long long)m_euid);
+        //return false;
       }
 
       s_taken.insert(m_cameraNum);
