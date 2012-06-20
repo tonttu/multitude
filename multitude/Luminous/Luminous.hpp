@@ -139,9 +139,9 @@ namespace Luminous
   };
 
   enum BufferType {
-    BufferType_VertexBuffer,
-    BufferType_IndexBuffer,
-    BufferType_ConstantBuffer,
+    BufferType_Vertex,
+    BufferType_Index,
+    BufferType_Constant,
   };
 
   enum DataType
@@ -199,9 +199,9 @@ namespace Luminous
   /// Usage flags for HardwareBuffer objects
   enum BufferUsage
   {
-    BufferUsage_Static_Write,
-    BufferUsage_Stream_Write,
-    BufferUsage_Dynamic_Write,
+    BufferUsage_Static_Draw,
+    BufferUsage_Stream_Draw,
+    BufferUsage_Dynamic_Draw,
 
     BufferUsage_Static_Read,
     BufferUsage_Stream_Read,
@@ -223,6 +223,7 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////////
   /// Forward declarations
 
+  class PixelFormat;
   // 
   class RenderDriver;
   // Resources

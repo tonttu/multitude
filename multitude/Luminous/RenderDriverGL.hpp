@@ -17,6 +17,7 @@ namespace Luminous
     LUMINOUS_API virtual std::shared_ptr<HardwareBuffer> createHardwareBuffer() OVERRIDE;
     LUMINOUS_API virtual std::shared_ptr<ShaderProgram> createShaderProgram() OVERRIDE;
     LUMINOUS_API virtual std::shared_ptr<ShaderGLSL> createShader(ShaderType type) OVERRIDE;
+    LUMINOUS_API virtual std::shared_ptr<Texture2> createTexture() OVERRIDE;
 
     LUMINOUS_API virtual void clear(ClearMask mask, const Radiant::Color & color, double depth, int stencil) OVERRIDE;
     LUMINOUS_API virtual void draw(PrimitiveType type, size_t primitives, size_t offset) OVERRIDE;
@@ -43,7 +44,7 @@ namespace Luminous
     LUMINOUS_API virtual void setConstantBuffer(unsigned int threadIndex, const HardwareBuffer & buffer) OVERRIDE;
 
     LUMINOUS_API virtual void setVertexBinding(unsigned int threadIndex, const VertexAttributeBinding & binding) OVERRIDE;
-
+    
     LUMINOUS_API virtual void setTexture(unsigned int threadIndex, unsigned int textureUnit, const Texture2 & texture) OVERRIDE;
 
     LUMINOUS_API virtual void clearState(unsigned int threadIndex) OVERRIDE;

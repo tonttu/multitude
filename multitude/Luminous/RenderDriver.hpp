@@ -27,6 +27,7 @@ namespace Luminous
     LUMINOUS_API virtual std::shared_ptr<HardwareBuffer> createHardwareBuffer() = 0;
     LUMINOUS_API virtual std::shared_ptr<ShaderProgram> createShaderProgram() = 0;
     LUMINOUS_API virtual std::shared_ptr<ShaderGLSL> createShader(ShaderType type) = 0;
+    LUMINOUS_API virtual std::shared_ptr<Texture2> createTexture() = 0;
 
     /// Targets
     // LUMINOUS_API virtual void setTarget( RenderTarget & target);

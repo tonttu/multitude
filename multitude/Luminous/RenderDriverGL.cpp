@@ -5,6 +5,7 @@
 #include "Luminous/ShaderProgram.hpp"
 #include "Luminous/Texture2.hpp"
 #include "Luminous/GLUtils.hpp"
+#include "Luminous/PixelFormat.hpp"
 #include "Luminous/Utils.hpp"   // glCheck
 
 #include <Nimble/Matrix4.hpp>
@@ -26,10 +27,23 @@
 
 namespace Luminous
 {
+  //////////////////////////////////////////////////////////////////////////
+  /// Resource handles
+  struct BufferHandle
+  {
+    BufferHandle() : handle(0), generation(0), usage(BufferUsage_Static_Draw), size(0), uploaded(0) {}
+
+    GLuint handle;
+    uint64_t generation;
+    BufferUsage usage;
+
+    size_t size;      // Size (in bytes)
+    size_t uploaded;  // Uploaded bytes (for incremental upload)
+  };
+
   struct ShaderHandle
   {
     ShaderHandle() : handle(0), generation(0) {}
-
     GLuint handle;
     uint64_t generation;
   };
@@ -41,14 +55,13 @@ namespace Luminous
     GLuint handle;
     uint64_t generation;
 
-    // List of attribute variables
-    struct Attribute
-    {
+    struct Variable {
       GLint location;
       GLenum type;
       GLint count;
     };
-    typedef std::map<QString, Attribute> NameIndexList;
+    typedef std::map<QString, Variable> NameIndexList;
+    /// List of attributes and uniforms. These get queried once the shader is linked
     NameIndexList attributes;
     NameIndexList uniforms;
 
@@ -57,23 +70,36 @@ namespace Luminous
     ShaderList shaders;
   };
 
+  struct BindingHandle
+  {
+    BindingHandle() : handle(0), generation(0) {}
+    GLuint handle;
+    uint64_t generation;
+  };
+
+  struct TextureHandle
+  {
+    TextureHandle() : handle(0), generation(0), size(0), uploaded(0) {}
+    GLuint handle;
+    uint64_t generation;
+
+    size_t size;      // Total size (in bytes)
+    size_t uploaded;  // Bytes uploaded (for incremental uploading)
+  };
+
+  /// 8 GB/sec upload limit is the bandwidth of PCIe 16x 2.0 (since 2007)
+  static const int64_t upload_bytes_limit = 4 * 1024*1024*1024;
+
+  //////////////////////////////////////////////////////////////////////////
+  // RenderDriver implementation
   class RenderDriverGL::D
   {
   public:
-    // Some types
-    struct ResourceHandle
-    {
-      ResourceHandle() : type(ResourceType_Unknown), handle(0), generation(0) , size(0) {}
-      ResourceHandle(ResourceType type) : type(type), handle(0), generation(0),  size(0) {}
-      ResourceType type;
-      GLuint handle;
-      uint64_t generation;
-      size_t size;
-    };
-
-    typedef std::map<RenderResource::Id, ResourceHandle> ResourceList;
     typedef std::map<RenderResource::Id, ProgramHandle> ProgramList;
     typedef std::map<RenderResource::Id, ShaderHandle> ShaderList;
+    typedef std::map<RenderResource::Id, TextureHandle> TextureList;
+    typedef std::map<RenderResource::Id, BufferHandle> BufferList;
+    typedef std::map<RenderResource::Id, BindingHandle> BindingList;
 
     // Current state of a single thread
     struct ThreadState
@@ -95,7 +121,12 @@ namespace Luminous
       /// Resources
       ProgramList programs;
       ShaderList shaders;
-      ResourceList resources;
+      TextureList textures;
+      BufferList buffers;
+      BindingList bindings;
+
+      /// Upload limiter
+      int32_t uploadedBytes;
     };
 
   public:
@@ -109,39 +140,24 @@ namespace Luminous
       return resourceId++;
     }
 
-    ResourceHandle getOrCreateResource(unsigned int threadIndex, const RenderResource & resource)
-    {
-      // See if we can find it in cache
-      ResourceList & res = m_threadResources[threadIndex].resources;
-      ResourceList::iterator it = res.find(resource.resourceId());
-      if (it != res.end())
-        return it->second;
-
-      // No hit, create new resource
-      ResourceHandle resourceHandle(resource.resourceType());
-      resourceHandle.handle = GLUtils::createResource(resource.resourceType());
-      // Update cache
-      updateResource(threadIndex, resource.resourceId(), resourceHandle);
-      return resourceHandle;
-    }
-
-    void updateResource(unsigned int threadIndex, RenderResource::Id id, ResourceHandle handle)
-    {
-      m_threadResources[threadIndex].resources[id] = handle;
-    }
-
     void bindBuffer(unsigned int threadIndex, GLenum bufferTarget, const HardwareBuffer & buffer)
     {
-      D::ResourceHandle bufferHandle = getOrCreateResource(threadIndex, buffer);
+      auto & buffers = m_threadResources[threadIndex].buffers;
+      auto it = buffers.find(buffer.resourceId());
+      BufferHandle bufferHandle;
+      if (it == std::end(buffers))
+        bufferHandle.handle = GLUtils::createResource(ResourceType_Buffer);
+      else
+        bufferHandle = it->second;
 
-      // Bind buffer
       glBindBuffer(bufferTarget, bufferHandle.handle);
       GLERROR("RenderDriverGL::Bind HardwareBuffer");
-
+      
       // Update if dirty
       if (bufferHandle.generation < buffer.generation()) {
         // Update or reallocate the resource
-        if (buffer.size() != bufferHandle.size) {
+        /// @todo incremental upload
+        if (buffer.size() != bufferHandle.size || buffer.usage() != bufferHandle.usage) {
           glBufferData(bufferTarget, buffer.size(), buffer.data(), GLUtils::getUsageFlags(buffer));
           GLERROR("RenderDriverGL::Bind HardwareBuffer reallocate");
         }
@@ -153,12 +169,14 @@ namespace Luminous
         // Update cache handle
         bufferHandle.generation = buffer.generation();
         bufferHandle.size = buffer.size();
-        updateResource(threadIndex, buffer.resourceId(), bufferHandle);
+        bufferHandle.uploaded = buffer.size();
+        bufferHandle.usage = buffer.usage();
+        buffers[buffer.resourceId()] = bufferHandle;
       }
     }
 
   public:
-    RenderResource::Id resourceId;              // Next free available resource ID
+    RenderResource::Id resourceId;                // Next free available resource ID
     std::vector<ThreadState> m_threadResources;   // Thread resources
   };
 
@@ -202,6 +220,12 @@ namespace Luminous
     return std::shared_ptr<ShaderGLSL>(new ShaderGLSL(m_d->createId(), type, *this));
   }
 
+  std::shared_ptr<Texture2> RenderDriverGL::createTexture()
+  {
+    /// @todo use make_shared once fully available
+    return std::shared_ptr<Texture2>(new Texture2(m_d->createId(), *this));
+  }
+
   void RenderDriverGL::clear(ClearMask mask, const Radiant::Color & color, double depth, int stencil)
   {
     /// @todo check current target for availability of depth and stencil buffers?
@@ -238,8 +262,10 @@ namespace Luminous
     glDrawElements(mode, (GLsizei) primitives, GL_UNSIGNED_INT, (const GLvoid *)((sizeof(uint) * offset)));
   }
 
-  void RenderDriverGL::preFrame(unsigned int)
+  void RenderDriverGL::preFrame(unsigned int threadIndex)
   {
+    /// Reset counter for the upload-limiter
+    m_d->m_threadResources[threadIndex].uploadedBytes = 0;
   }
 
   void RenderDriverGL::postFrame(unsigned int)
@@ -365,7 +391,7 @@ namespace Luminous
         glGetProgramiv(programHandle.handle, GL_ACTIVE_ATTRIBUTES, &attrCount);
         // Get attribute locations
         programHandle.attributes.clear();
-        ProgramHandle::Attribute attr;
+        ProgramHandle::Variable attr;
         for (int idx = 0; idx < attrCount; ++idx) {
           glGetActiveAttrib(programHandle.handle, idx, 128, NULL, &attr.count, &attr.type, attrName);
           // @note apparently the location isn't necessarily the same as the index, so we have to get both here
@@ -380,7 +406,7 @@ namespace Luminous
         GLchar uniName[128];
         glGetProgramiv(programHandle.handle, GL_ACTIVE_UNIFORMS, &uniCount);
         programHandle.uniforms.clear();
-        ProgramHandle::Attribute uniform;
+        ProgramHandle::Variable uniform;
         for (int idx = 0; idx < uniCount; ++idx) {
           glGetActiveUniform(programHandle.handle, idx, 128, NULL, &uniform.count, &uniform.type, uniName);
           // @note apparently the location isn't necessarily the same as the index, so we have to get both here
@@ -427,7 +453,13 @@ namespace Luminous
 
   void RenderDriverGL::setVertexBinding(unsigned int threadIndex, const VertexAttributeBinding & binding)
   {
-    D::ResourceHandle bindingHandle = m_d->getOrCreateResource(threadIndex, binding);
+    auto & bindings = m_d->m_threadResources[threadIndex].bindings;
+    auto it = bindings.find(binding.resourceId());
+    BindingHandle bindingHandle;
+    if (it == std::end(bindings))
+      bindingHandle.handle = GLUtils::createResource(ResourceType_VertexArray);
+    else
+      bindingHandle = it->second;
 
     if (bindingHandle.generation < binding.generation()) {
       // Recreate the binding
@@ -442,7 +474,7 @@ namespace Luminous
         VertexAttributeBinding::Binding b = binding.binding(i);
         // Attach buffer
         setVertexBuffer(threadIndex, *b.buffer);
-        // Set buffer attributes
+        // Set buffer attributes from its bound VertexDescription
         for (size_t attrIndex = 0; attrIndex < b.description->attributeCount(); ++attrIndex) {
           VertexAttribute attr = b.description->attribute(attrIndex);
 
@@ -455,7 +487,7 @@ namespace Luminous
             GLenum normalized = (attr.normalized ? GL_TRUE : GL_FALSE);
             GLenum type = GLUtils::getDataType(attr.type);
 
-            /// @todo Warn if there's a type/count mismatch between the cached versions and what we're trying to do
+            /// @todo Warn if there's a type/count mismatch between the cached versions (in the ShaderHandle) and what we're trying to do
             glVertexAttribPointer(location->second.location, attr.count, type, normalized, b.description->vertexSize(), reinterpret_cast<GLvoid *>(attr.offset));
             glEnableVertexAttribArray(location->second.location);
 
@@ -468,7 +500,7 @@ namespace Luminous
 
         // Update cache
         bindingHandle.generation = binding.generation();
-        m_d->updateResource(threadIndex, binding.resourceId(), bindingHandle);
+        bindings[binding.resourceId()] = bindingHandle;
       }
     }
     else {
@@ -479,15 +511,84 @@ namespace Luminous
 
   void RenderDriverGL::setTexture(unsigned int threadIndex, unsigned int textureUnit, const Texture2 & texture)
   {
-    GLint texunits;
-    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &texunits);
-    Radiant::info("Max texture units: %d", texunits);
+    auto & textures = m_d->m_threadResources[threadIndex].textures;
+    auto it = textures.find(texture.resourceId());
+    TextureHandle textureHandle;
+    if (it == std::end(textures) )
+      textureHandle.handle = GLUtils::createResource(ResourceType_Texture);
+    else
+      textureHandle = it->second;
 
-    D::ResourceHandle textureHandle = m_d->getOrCreateResource(threadIndex, texture);
+    GLenum target;
+    if (texture.dimensions() == 1)      target = GL_TEXTURE_1D;
+    else if (texture.dimensions() == 2) target = GL_TEXTURE_2D;
+    else if (texture.dimensions() == 3) target = GL_TEXTURE_3D;
+
+    GLenum format;
+    if (texture.format().numChannels() == 1)      format = GL_RED;
+    else if (texture.format().numChannels() == 2) format = GL_RG;
+    else if (texture.format().numChannels() == 3) format = GL_RGB;
+    else if (texture.format().numChannels() == 4) format = GL_RGBA;
+
+    glActiveTexture(GL_TEXTURE0 + textureUnit);
+    glBindTexture(target, textureHandle.handle);
 
     if (textureHandle.generation < texture.generation()) {
-      glActiveTexture(GL_TEXTURE0 + textureUnit);
-      glBindTexture(GL_TEXTURE_2D, textureHandle.handle);
+      textureHandle.uploaded = 0;
+
+      if (texture.dimensions() == 1)      glTexImage1D(GL_TEXTURE_1D, 0, texture.format().layout(), texture.width(), 0, format , texture.format().type(), nullptr );
+      else if (texture.dimensions() == 2) glTexImage2D(GL_TEXTURE_2D, 0, texture.format().layout(), texture.width(), texture.height(), 0, format, texture.format().type(), nullptr );
+      else if (texture.dimensions() == 3) glTexImage3D(GL_TEXTURE_3D, 0, texture.format().layout(), texture.width(), texture.height(), texture.depth(), 0, format, texture.format().type(), nullptr );
+
+      /// @todo Get these from the texture settings
+      glTexParameteri(target,  GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(target,  GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+      textureHandle.size = texture.width() * texture.height() * texture.depth() * texture.format().bytesPerPixel();
+      textureHandle.uploaded = 0;
+
+      // Update handle cache
+      textureHandle.generation = texture.generation();
+      textures[texture.resourceId()] = textureHandle;
+    }
+
+    // Calculate bytes that still need uploading
+    int32_t toUpload = textureHandle.size - textureHandle.uploaded;
+    if (toUpload > 0) {
+      size_t uploaded;
+      
+      if (texture.dimensions() == 1) {
+        /// @todo incremental upload
+        glTexSubImage1D(GL_TEXTURE_1D, 0, 0, texture.width(), format, texture.format().type(), texture.data() );
+        uploaded = texture.width() * texture.format().bytesPerPixel();
+      }
+      else if (texture.dimensions() == 2) {
+        // See how much of the bytes we can upload in this frame
+        int64_t bytesFree = std::min<int64_t>(m_d->m_threadResources[threadIndex].uploadedBytes + toUpload, upload_bytes_limit) - m_d->m_threadResources[threadIndex].uploadedBytes;
+        // Number of scanlines to upload
+        const size_t scanLines = std::max<int32_t>(1, bytesFree / texture.width());
+        // Start line (where we left of)
+        const size_t startLine = textureHandle.uploaded / texture.width();
+
+        // Set proper alignment
+        int alignment = 8;
+        while (texture.width() % alignment)
+          alignment >>= 1;
+        glPixelStorei(GL_PACK_ALIGNMENT, alignment);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, startLine, texture.width(), scanLines, format,texture.format().type(), texture.data() + textureHandle.uploaded);
+        uploaded = scanLines * texture.width() * texture.format().bytesPerPixel();
+      }
+      else if (texture.dimensions() == 3) {
+        /// @todo incremental upload
+        glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, texture.width(), texture.height(), texture.depth(), format, texture.format().type(), texture.data() );
+        uploaded = texture.width() * texture.height() * texture.depth() * texture.format().bytesPerPixel();
+      }
+
+      // Update upload-limiter
+      m_d->m_threadResources[threadIndex].uploadedBytes += uploaded;
+      // Update handle
+      textureHandle.uploaded += uploaded;
+      textures[texture.resourceId()] = textureHandle;
     }
   }
 

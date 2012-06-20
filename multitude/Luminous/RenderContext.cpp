@@ -732,12 +732,16 @@ namespace Luminous
 
 
     Utils::glCheck("RenderContext::prepare # 2");
+
+    m_data->m_driver.preFrame( threadIndex() );
   }
 
   void RenderContext::finish()
   {
     flush();
     bindProgram(0);
+
+    m_data->m_driver.postFrame( threadIndex() );
   }
 
   void RenderContext::pushViewTransform()
@@ -1882,9 +1886,23 @@ namespace Luminous
 */
   }
 
-  void RenderContext::setTexture(const QString & name, std::shared_ptr<Luminous::Texture2> texture)
+  void RenderContext::setBuffer(BufferType type, const std::shared_ptr<Luminous::HardwareBuffer> & buffer)
   {
+    switch (type)
+    {
+    case BufferType_Vertex: m_data->m_driver.setVertexBuffer(threadIndex(), *buffer); break;
+    case BufferType_Index: m_data->m_driver.setIndexBuffer(threadIndex(), *buffer); break;
+    case BufferType_Constant: m_data->m_driver.setConstantBuffer(threadIndex(), *buffer); break;
+    default:
+      assert(false);
+      Radiant::error("RenderContext::setBuffer - Buffertype %d not implemented", type);
+    }
+  }
 
+  void RenderContext::setTexture(const QString & name, const std::shared_ptr<Luminous::Texture2> & texture)
+  {
+    m_data->m_driver.setTexture(threadIndex(), 1, *texture);
+    m_data->m_driver.setShaderConstant(threadIndex(), name, 1);
   }
 
   void RenderContext::setVertexBinding(const std::shared_ptr<VertexAttributeBinding> & binding)

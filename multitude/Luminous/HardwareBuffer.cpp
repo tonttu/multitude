@@ -8,7 +8,7 @@ namespace Luminous
   class HardwareBuffer::D
   {
   public:
-    D() : size(0), data(nullptr), usage(BufferUsage_Static_Write) {}
+    D() : size(0), data(nullptr), usage(BufferUsage_Static_Draw) {}
     size_t size;
     const char * data;
     BufferUsage usage;

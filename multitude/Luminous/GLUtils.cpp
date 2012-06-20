@@ -59,15 +59,15 @@ namespace Luminous
   {
     switch (buffer.usage())
     {
-    case BufferUsage_Static_Write:  return GL_STATIC_DRAW;
+    case BufferUsage_Static_Draw:  return GL_STATIC_DRAW;
     case BufferUsage_Static_Read:   return GL_STATIC_READ;
     case BufferUsage_Static_Copy:   return GL_STATIC_COPY;
 
-    case BufferUsage_Stream_Write:  return GL_STREAM_DRAW;
+    case BufferUsage_Stream_Draw:  return GL_STREAM_DRAW;
     case BufferUsage_Stream_Read:   return GL_STREAM_READ;
     case BufferUsage_Stream_Copy:   return GL_STREAM_COPY;
 
-    case BufferUsage_Dynamic_Write: return GL_DYNAMIC_DRAW;
+    case BufferUsage_Dynamic_Draw: return GL_DYNAMIC_DRAW;
     case BufferUsage_Dynamic_Read:  return GL_DYNAMIC_READ;
     case BufferUsage_Dynamic_Copy:  return GL_DYNAMIC_COPY;
 
@@ -89,6 +89,7 @@ namespace Luminous
     case ResourceType_VertexShader:   return glCreateShader(GL_VERTEX_SHADER);
     case ResourceType_FragmentShader: return glCreateShader(GL_FRAGMENT_SHADER);
     case ResourceType_GeometryShader: return glCreateShader(GL_GEOMETRY_SHADER_EXT);
+    case ResourceType_Texture:        glGenTextures(1, & resource); return resource;
     default:
       Radiant::error("RenderDriverGL: Can't create GL resource: unknown type %d", type);
       assert(false);
@@ -106,6 +107,7 @@ namespace Luminous
     case ResourceType_VertexShader:   return glDeleteShader(resource); break;
     case ResourceType_FragmentShader: return glDeleteShader(resource); break;
     case ResourceType_GeometryShader: return glDeleteShader(resource); break;
+    case ResourceType_Texture:        glDeleteTextures(1, & resource); break;
     default:
       Radiant::error("RenderDriverGL: Can't destroy GL resource: unknown type %d", type);
       assert(false);
