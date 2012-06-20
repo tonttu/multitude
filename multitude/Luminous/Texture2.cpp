@@ -14,8 +14,8 @@ namespace Luminous
     const char * data;
   };
 
-  Texture2::Texture2(RenderResource::Id id, RenderDriver & driver)
-    : RenderResource(id, ResourceType_Texture, driver)
+  Texture2::Texture2()
+    : RenderResource(ResourceType_Texture)
     , m_d(new Texture2::D())
   {
   }

@@ -1,18 +1,18 @@
 #include "Luminous/RenderResource.hpp"
+#include "Luminous/RenderManager.hpp"
 #include "Luminous/RenderDriver.hpp"
 
 namespace Luminous
 {
-  RenderResource::RenderResource(Id id, ResourceType type, RenderDriver & driver)
+  RenderResource::RenderResource(ResourceType type)
     : m_generation(0)
-    , m_id(id)
+    , m_id(RenderManager::instance().createResourceId())
     , m_type(type)
-    , m_driver(driver)
   {
   }
 
   RenderResource::~RenderResource()
   {
-    m_driver.releaseResource( resourceId() );
+    RenderManager::instance().driver().releaseResource( resourceId() );
   }
 }

@@ -12,13 +12,6 @@ namespace Luminous
     LUMINOUS_API RenderDriverGL(unsigned int threadCount);
     LUMINOUS_API ~RenderDriverGL();
 
-    LUMINOUS_API virtual std::shared_ptr<VertexDescription> createVertexDescription() OVERRIDE;
-    LUMINOUS_API virtual std::shared_ptr<VertexAttributeBinding> createVertexAttributeBinding() OVERRIDE;
-    LUMINOUS_API virtual std::shared_ptr<HardwareBuffer> createHardwareBuffer() OVERRIDE;
-    LUMINOUS_API virtual std::shared_ptr<ShaderProgram> createShaderProgram() OVERRIDE;
-    LUMINOUS_API virtual std::shared_ptr<ShaderGLSL> createShader(ShaderType type) OVERRIDE;
-    LUMINOUS_API virtual std::shared_ptr<Texture2> createTexture() OVERRIDE;
-
     LUMINOUS_API virtual void clear(ClearMask mask, const Radiant::Color & color, double depth, int stencil) OVERRIDE;
     LUMINOUS_API virtual void draw(PrimitiveType type, size_t primitives, size_t offset) OVERRIDE;
     LUMINOUS_API virtual void drawIndexed(PrimitiveType type, size_t primitives, size_t offset) OVERRIDE;

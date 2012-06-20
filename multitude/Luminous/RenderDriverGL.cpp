@@ -139,14 +139,8 @@ namespace Luminous
 
   public:
     D(unsigned int threadCount)
-      : resourceId(0)
-      , m_threadResources(threadCount)
+      : m_threadResources(threadCount)
     {}
-
-    RenderResource::Id createId()
-    {
-      return resourceId++;
-    }
 
     void bindBuffer(unsigned int threadIndex, GLenum bufferTarget, const HardwareBuffer & buffer)
     {
@@ -184,7 +178,6 @@ namespace Luminous
     }
 
   public:
-    RenderResource::Id resourceId;                // Next free available resource ID
     std::vector<ThreadState> m_threadResources;   // Thread resources
   };
 
@@ -198,42 +191,7 @@ namespace Luminous
   {
     delete m_d;
   }
-
-  std::shared_ptr<VertexDescription> RenderDriverGL::createVertexDescription()
-  {
-    return std::make_shared<VertexDescription>(m_d->createId(), *this);
-  }
-
-  std::shared_ptr<VertexAttributeBinding> RenderDriverGL::createVertexAttributeBinding()
-  {
-    /// @todo use make_shared once fully available
-    return std::shared_ptr<VertexAttributeBinding>(new VertexAttributeBinding(m_d->createId(), *this));
-  }
-
-  std::shared_ptr<HardwareBuffer> RenderDriverGL::createHardwareBuffer()
-  {
-    /// @todo use make_shared once fully available
-    return std::shared_ptr<HardwareBuffer>(new HardwareBuffer(m_d->createId(), *this));
-  }
-
-  std::shared_ptr<ShaderProgram> RenderDriverGL::createShaderProgram()
-  {
-    /// @todo use make_shared once fully available
-    return std::shared_ptr<ShaderProgram>(new ShaderProgram(m_d->createId(),*this));
-  }
-
-  std::shared_ptr<ShaderGLSL> RenderDriverGL::createShader(ShaderType type)
-  {
-    /// @todo use make_shared once fully available
-    return std::shared_ptr<ShaderGLSL>(new ShaderGLSL(m_d->createId(), type, *this));
-  }
-
-  std::shared_ptr<Texture2> RenderDriverGL::createTexture()
-  {
-    /// @todo use make_shared once fully available
-    return std::shared_ptr<Texture2>(new Texture2(m_d->createId(), *this));
-  }
-
+  
   void RenderDriverGL::clear(ClearMask mask, const Radiant::Color & color, double depth, int stencil)
   {
     /// @todo check current target for availability of depth and stencil buffers?

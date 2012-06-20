@@ -15,7 +15,7 @@ namespace Luminous
     };
     
   public:
-    Texture2(RenderResource::Id id, RenderDriver & driver);
+    LUMINOUS_API Texture2();
     LUMINOUS_API ~Texture2();
 
     LUMINOUS_API void setData(unsigned int width, const PixelFormat & format, const char * data);

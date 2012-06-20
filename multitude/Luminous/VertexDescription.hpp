@@ -14,7 +14,7 @@ namespace Luminous
   class VertexDescription : public RenderResource
   {
   public:
-    VertexDescription(Id id, RenderDriver & driver);
+    LUMINOUS_API VertexDescription();
 
     /// Add an attribute at the end
     template <typename AttrType> void addAttribute(const QString & attrName);

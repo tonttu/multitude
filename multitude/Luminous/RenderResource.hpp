@@ -13,7 +13,7 @@ namespace Luminous
   public:
     typedef uint64_t Id;
   public:
-    RenderResource(Id id, ResourceType type, RenderDriver & driver);
+    RenderResource(ResourceType type);
     virtual ~RenderResource();
 
     inline Id resourceId() const { return m_id; }
@@ -26,7 +26,6 @@ namespace Luminous
     uint64_t m_generation;
     Id m_id;
     ResourceType m_type;
-    RenderDriver & m_driver;
   };
 }
 #endif // LUMINOUS_RENDERRESOURCE_HPP

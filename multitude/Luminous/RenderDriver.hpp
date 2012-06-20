@@ -22,13 +22,6 @@ namespace Luminous
   public:
     virtual ~RenderDriver() {}
 
-    LUMINOUS_API virtual std::shared_ptr<VertexDescription> createVertexDescription() = 0;
-    LUMINOUS_API virtual std::shared_ptr<VertexAttributeBinding> createVertexAttributeBinding() = 0;
-    LUMINOUS_API virtual std::shared_ptr<HardwareBuffer> createHardwareBuffer() = 0;
-    LUMINOUS_API virtual std::shared_ptr<ShaderProgram> createShaderProgram() = 0;
-    LUMINOUS_API virtual std::shared_ptr<ShaderGLSL> createShader(ShaderType type) = 0;
-    LUMINOUS_API virtual std::shared_ptr<Texture2> createTexture() = 0;
-
     /// Targets
     // LUMINOUS_API virtual void setTarget( RenderTarget & target);
     LUMINOUS_API virtual void clear(ClearMask mask, const Radiant::Color & color = Radiant::Color(0.f,0.f,0.f,1.f), double depth = 0, int stencil = 0) = 0;

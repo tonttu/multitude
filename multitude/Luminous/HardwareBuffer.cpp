@@ -14,8 +14,8 @@ namespace Luminous
     BufferUsage usage;
   };
 
-  HardwareBuffer::HardwareBuffer(RenderResource::Id id, RenderDriver & driver)
-    : RenderResource(id, ResourceType_Buffer, driver)
+  HardwareBuffer::HardwareBuffer()
+    : RenderResource(ResourceType_Buffer)
     , m_d(new HardwareBuffer::D())
   {
   }

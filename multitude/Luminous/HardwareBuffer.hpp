@@ -9,7 +9,7 @@ namespace Luminous
   class HardwareBuffer : public RenderResource
   {
   public:
-    LUMINOUS_API HardwareBuffer(RenderResource::Id id, RenderDriver & driver);
+    LUMINOUS_API HardwareBuffer();
 
     LUMINOUS_API void setData(const char * data, size_t size, BufferUsage usage);
 

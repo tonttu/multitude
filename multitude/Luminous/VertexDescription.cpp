@@ -7,8 +7,8 @@
 
 namespace Luminous
 {
-  VertexDescription::VertexDescription(Id id, RenderDriver & driver)
-    : RenderResource(id, ResourceType_VertexDescription, driver)
+  VertexDescription::VertexDescription()
+    : RenderResource(ResourceType_VertexDescription)
   {
   }
 
