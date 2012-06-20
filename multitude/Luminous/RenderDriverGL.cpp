@@ -520,11 +520,9 @@ namespace Luminous
       bindings[binding.resourceId()] = bindingHandle;
     }
     else {
-      // Avoid redoing binding, since it can be pretty expensive
-      if (m_d->m_threadResources[threadIndex].currentBinding != & binding) {
-        glBindVertexArray(bindingHandle.handle);
-        GLERROR("RenderDriverGL::Bind VertexAttributeBinding bind");
-      }
+      /// @todo Avoid double binding, since it can be pretty expensive
+      glBindVertexArray(bindingHandle.handle);
+      GLERROR("RenderDriverGL::Bind VertexAttributeBinding bind");
 
       // Make sure we have up-to-date buffers
       for (size_t i = 0; i < binding.bindingCount(); ++i) {
