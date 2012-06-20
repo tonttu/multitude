@@ -429,7 +429,8 @@ namespace Luminous
     /// End a command list
     void endCommands();
 
-    void setTexture(const QString & name, std::shared_ptr<Luminous::Texture2> texture);
+    void setBuffer(BufferType type, const std::shared_ptr<Luminous::HardwareBuffer> & buffer);
+    void setTexture(const QString & name, const std::shared_ptr<Luminous::Texture2> & texture);
     void setVertexBinding(const std::shared_ptr<VertexAttributeBinding> & binding);
     void setShaderProgram(const std::shared_ptr<ShaderProgram> & program);
     template <typename T> bool setShaderConstant(const QString & name, const T & value);
