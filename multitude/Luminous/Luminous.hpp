@@ -187,6 +187,7 @@ namespace Luminous
   enum ResourceType {
     ResourceType_Unknown,
     ResourceType_VertexArray,
+    ResourceType_VertexDescription,
     ResourceType_ShaderProgram,
     ResourceType_VertexShader,
     ResourceType_FragmentShader,

@@ -2,6 +2,7 @@
 #define LUMINOUS_VERTEXDESCRIPTION_HPP
 
 #include "Luminous/Luminous.hpp"
+#include "Luminous/RenderResource.hpp"
 #include "Luminous/VertexAttribute.hpp"
 
 #include <QString>
@@ -10,9 +11,11 @@
 
 namespace Luminous
 {
-  class VertexDescription
+  class VertexDescription : public RenderResource
   {
   public:
+    VertexDescription(Id id, RenderDriver & driver);
+
     /// Add an attribute at the end
     template <typename AttrType> void addAttribute(const QString & attrName);
     /// Add an attribute at a specific offset
@@ -36,12 +39,6 @@ namespace Luminous
     std::vector<VertexAttribute> m_attributes;
   };
 
-  template <typename T> bool createAttribute(VertexAttribute & attr)
-  {
-    Radiant::error("VertexDescription: Unable to create attribute: unsupported type");
-    return false;
-  }
-
   template <typename AttrType> void VertexDescription::addAttribute(const QString & attrName, uint offset)
   {
     VertexAttribute attr;
@@ -49,6 +46,7 @@ namespace Luminous
       attr.name = attrName;
       attr.offset = offset;
       m_attributes.push_back(attr);
+      invalidate();
     }
   }
 

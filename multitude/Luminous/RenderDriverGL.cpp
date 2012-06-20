@@ -10,6 +10,7 @@
 
 #include <Nimble/Matrix4.hpp>
 #include <Radiant/RefPtr.hpp>
+#include <Radiant/Timer.hpp>
 
 #ifdef RADIANT_OSX
 #include <OpenGL/gl3.h>
@@ -41,13 +42,6 @@ namespace Luminous
     size_t uploaded;  // Uploaded bytes (for incremental upload)
   };
 
-  struct ShaderHandle
-  {
-    ShaderHandle() : handle(0), generation(0) {}
-    GLuint handle;
-    uint64_t generation;
-  };
-
   struct ProgramHandle
   {
     ProgramHandle() : handle(0), generation(0) {}
@@ -70,13 +64,6 @@ namespace Luminous
     ShaderList shaders;
   };
 
-  struct BindingHandle
-  {
-    BindingHandle() : handle(0), generation(0) {}
-    GLuint handle;
-    uint64_t generation;
-  };
-
   struct TextureHandle
   {
     TextureHandle() : handle(0), generation(0), size(0), uploaded(0) {}
@@ -86,6 +73,18 @@ namespace Luminous
     size_t size;      // Total size (in bytes)
     size_t uploaded;  // Bytes uploaded (for incremental uploading)
   };
+
+  // Generic handle
+  struct ResourceHandle
+  {
+    ResourceHandle() : handle(0), generation(0) {}
+    GLuint handle;
+    uint64_t generation;
+  };
+  typedef ResourceHandle ShaderHandle;
+  typedef ResourceHandle BindingHandle;
+  typedef ResourceHandle DescriptionHandle;
+
 
   /// 8 GB/sec upload limit is the bandwidth of PCIe 16x 2.0 (since 2007)
   static const int64_t upload_bytes_limit = 1024*1024*1024;
@@ -100,23 +99,28 @@ namespace Luminous
     typedef std::map<RenderResource::Id, TextureHandle> TextureList;
     typedef std::map<RenderResource::Id, BufferHandle> BufferList;
     typedef std::map<RenderResource::Id, BindingHandle> BindingList;
+    typedef std::map<RenderResource::Id, DescriptionHandle> DescriptionList;
 
     // Current state of a single thread
     struct ThreadState
     {
       ThreadState()
+        : currentProgram(nullptr)
       {
         reset();
       }
 
       void reset()
       {
+        uploadedBytes = 0;
+        frame = 0;
+        fps = 0.0;
       }
 
       typedef std::vector<GLuint> AttributeList;
       AttributeList activeAttributes;
 
-      ProgramHandle currentProgram;      // Currently bound shader program
+      const ProgramHandle * currentProgram;           // Currently bound shader program
 
       /// Resources
       ProgramList programs;
@@ -124,9 +128,13 @@ namespace Luminous
       TextureList textures;
       BufferList buffers;
       BindingList bindings;
+      DescriptionList descriptions;
 
-      /// Upload limiter
+      /// Render statistics
       int32_t uploadedBytes;
+      Radiant::Timer frameTimer;
+      uint64_t frame;
+      double fps;
     };
 
   public:
@@ -193,7 +201,7 @@ namespace Luminous
 
   std::shared_ptr<VertexDescription> RenderDriverGL::createVertexDescription()
   {
-    return std::make_shared<VertexDescription>();
+    return std::make_shared<VertexDescription>(m_d->createId(), *this);
   }
 
   std::shared_ptr<VertexAttributeBinding> RenderDriverGL::createVertexAttributeBinding()
@@ -266,29 +274,36 @@ namespace Luminous
   {
     /// Reset counter for the upload-limiter
     m_d->m_threadResources[threadIndex].uploadedBytes = 0;
+    m_d->m_threadResources[threadIndex].frameTimer.start();
   }
 
-  void RenderDriverGL::postFrame(unsigned int)
+  void RenderDriverGL::postFrame(unsigned int threadIndex)
   {
+    auto & r = m_d->m_threadResources[threadIndex];
+    double frameTime = r.frameTimer.time();
+
+    // Update statistics
+    r.frame++;
+    r.fps = 1.0 / frameTime;
   }
 
 #define SETUNIFORM(TYPE, FUNCTION) \
   bool RenderDriverGL::setShaderConstant(unsigned int threadIndex, const QString & name, const TYPE & value) { \
-    const auto & uniforms = m_d->m_threadResources[threadIndex].currentProgram.uniforms; \
+    const auto & uniforms = m_d->m_threadResources[threadIndex].currentProgram->uniforms; \
     auto it = uniforms.find(name); \
     if (it != std::end(uniforms)) FUNCTION(it->second.location, value); \
     return (it != std::end(uniforms)); \
   }
 #define SETUNIFORMVECTOR(TYPE, FUNCTION) \
   bool RenderDriverGL::setShaderConstant(unsigned int threadIndex, const QString & name, const TYPE & value) { \
-    const auto & uniforms = m_d->m_threadResources[threadIndex].currentProgram.uniforms; \
+    const auto & uniforms = m_d->m_threadResources[threadIndex].currentProgram->uniforms; \
     auto it = uniforms.find(name); \
     if (it != std::end(uniforms)) FUNCTION(it->second.location, 1, value.data()); \
     return (it != std::end(uniforms)); \
   }
 #define SETUNIFORMMATRIX(TYPE, FUNCTION) \
   bool RenderDriverGL::setShaderConstant(unsigned int threadIndex, const QString & name, const TYPE & value) { \
-    const auto & uniforms = m_d->m_threadResources[threadIndex].currentProgram.uniforms; \
+    const auto & uniforms = m_d->m_threadResources[threadIndex].currentProgram->uniforms; \
     auto it = uniforms.find(name); \
     if (it != std::end(uniforms)) FUNCTION(it->second.location, 1, GL_TRUE, value.data()); \
     return (it != std::end(uniforms)); \
@@ -431,7 +446,7 @@ namespace Luminous
       programList[program.resourceId()] = programHandle;
     }
 
-    m_d->m_threadResources[threadIndex].currentProgram = programHandle;
+    m_d->m_threadResources[threadIndex].currentProgram = &programList[program.resourceId()];
     glUseProgram(programHandle.handle);
     GLERROR("RenderDriverGL::Bind Shaderprogram use");
   }
@@ -451,6 +466,29 @@ namespace Luminous
     m_d->bindBuffer(threadIndex, GL_UNIFORM_BUFFER_EXT, buffer);
   }
 
+  void RenderDriverGL::setVertexDescription(unsigned int threadIndex, const VertexDescription & description)
+  {
+    // Set buffer attributes from its bound VertexDescription
+    for (size_t attrIndex = 0; attrIndex < description.attributeCount(); ++attrIndex) {
+      VertexAttribute attr = description.attribute(attrIndex);
+
+      auto & attributes = m_d->m_threadResources[threadIndex].currentProgram->attributes;
+      auto location = attributes.find(attr.name);
+      if (location == std::end(attributes)) {
+        Radiant::warning("Unable to bind vertex attribute %s", attr.name.toAscii().data());
+      }
+      else {
+        GLenum normalized = (attr.normalized ? GL_TRUE : GL_FALSE);
+        GLenum type = GLUtils::getDataType(attr.type);
+
+        /// @todo Warn if there's a type/count mismatch between the cached versions (in the ShaderHandle) and what we're trying to do
+        glVertexAttribPointer(location->second.location, attr.count, type, normalized, description.vertexSize(), reinterpret_cast<GLvoid *>(attr.offset));
+        glEnableVertexAttribArray(location->second.location);
+        GLERROR("RenderDriverGL::Bind VertexAttributeBinding vertexAttribPointer");
+      }
+    }
+  }
+
   void RenderDriverGL::setVertexBinding(unsigned int threadIndex, const VertexAttributeBinding & binding)
   {
     auto & bindings = m_d->m_threadResources[threadIndex].bindings;
@@ -461,6 +499,7 @@ namespace Luminous
     else
       bindingHandle = it->second;
 
+    /// @todo Recreate the VAO if the vertex description has changed
     if (bindingHandle.generation < binding.generation()) {
       // Recreate the binding
       GLUtils::destroyResource(ResourceType_VertexArray, bindingHandle.handle);
@@ -474,38 +513,24 @@ namespace Luminous
         VertexAttributeBinding::Binding b = binding.binding(i);
         // Attach buffer
         setVertexBuffer(threadIndex, *b.buffer);
-        // Set buffer attributes from its bound VertexDescription
-        for (size_t attrIndex = 0; attrIndex < b.description->attributeCount(); ++attrIndex) {
-          VertexAttribute attr = b.description->attribute(attrIndex);
-
-          auto & attributes = m_d->m_threadResources[threadIndex].currentProgram.attributes;
-          auto location = attributes.find(attr.name);
-          if (location == std::end(attributes)) {
-            Radiant::warning("Unable to bind vertex attribute %s", attr.name.toAscii().data());
-          }
-          else {
-            GLenum normalized = (attr.normalized ? GL_TRUE : GL_FALSE);
-            GLenum type = GLUtils::getDataType(attr.type);
-
-            /// @todo Warn if there's a type/count mismatch between the cached versions (in the ShaderHandle) and what we're trying to do
-            glVertexAttribPointer(location->second.location, attr.count, type, normalized, b.description->vertexSize(), reinterpret_cast<GLvoid *>(attr.offset));
-            glEnableVertexAttribArray(location->second.location);
-
-            // Keep track of active attributes so we can disable them again when we're done
-            m_d->m_threadResources[threadIndex].activeAttributes.push_back(location->second.location);
-
-            GLERROR("RenderDriverGL::Bind VertexAttributeBinding vertexAttribPointer");
-          }
-        }
-
-        // Update cache
-        bindingHandle.generation = binding.generation();
-        bindings[binding.resourceId()] = bindingHandle;
+        setVertexDescription(threadIndex, *b.description);
       }
+      // Update cache
+      bindingHandle.generation = binding.generation();
+      bindings[binding.resourceId()] = bindingHandle;
     }
     else {
-      glBindVertexArray(bindingHandle.handle);
-      GLERROR("RenderDriverGL::Bind VertexAttributeBinding bind");
+      // Avoid redoing binding, since it can be pretty expensive
+      if (m_d->m_threadResources[threadIndex].currentBinding != & binding) {
+        glBindVertexArray(bindingHandle.handle);
+        GLERROR("RenderDriverGL::Bind VertexAttributeBinding bind");
+      }
+
+      // Make sure we have up-to-date buffers
+      for (size_t i = 0; i < binding.bindingCount(); ++i) {
+        VertexAttributeBinding::Binding b = binding.binding(i);
+        setVertexBuffer(threadIndex, *b.buffer);
+      }
     }
   }
 

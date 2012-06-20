@@ -7,6 +7,11 @@
 
 namespace Luminous
 {
+  VertexDescription::VertexDescription(Id id, RenderDriver & driver)
+    : RenderResource(id, ResourceType_VertexDescription, driver)
+  {
+  }
+
   const VertexAttribute * VertexDescription::findAttribute(const QString & attrName) const
   {
     for (size_t i = 0; i < m_attributes.size(); ++i) {
@@ -21,6 +26,7 @@ namespace Luminous
     for (size_t i = 0; i < m_attributes.size(); ++i) {
       if (m_attributes[i].name == attrName) {
         m_attributes.erase(m_attributes.begin() + i);
+        invalidate();
         break;
       }
     }
