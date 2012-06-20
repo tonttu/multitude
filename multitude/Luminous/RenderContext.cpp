@@ -1730,6 +1730,7 @@ namespace Luminous
 
   void RenderContext::bindBuffer(GLenum type, GLuint id)
   {
+    /// @todo wtf is this? you can only bind one vertex buffer at a time and never any index buffers?
     if(type == GL_ARRAY_BUFFER) {
 
       if(m_data->m_vbo != id) {
