@@ -88,7 +88,7 @@ namespace Luminous
   };
 
   /// 8 GB/sec upload limit is the bandwidth of PCIe 16x 2.0 (since 2007)
-  static const int64_t upload_bytes_limit = 4 * 1024*1024*1024;
+  static const int64_t upload_bytes_limit = 1024*1024*1024;
 
   //////////////////////////////////////////////////////////////////////////
   // RenderDriver implementation
@@ -524,11 +524,12 @@ namespace Luminous
     else if (texture.dimensions() == 2) target = GL_TEXTURE_2D;
     else if (texture.dimensions() == 3) target = GL_TEXTURE_3D;
 
-    GLenum format;
-    if (texture.format().numChannels() == 1)      format = GL_RED;
-    else if (texture.format().numChannels() == 2) format = GL_RG;
-    else if (texture.format().numChannels() == 3) format = GL_RGB;
-    else if (texture.format().numChannels() == 4) format = GL_RGBA;
+    /// Specify the external format (number of channels)
+    GLenum extFormat;
+    if (texture.format().numChannels() == 1)      extFormat = GL_RED;
+    else if (texture.format().numChannels() == 2) extFormat = GL_RG;
+    else if (texture.format().numChannels() == 3) extFormat = GL_RGB;
+    else if (texture.format().numChannels() == 4) extFormat = GL_RGBA;
 
     glActiveTexture(GL_TEXTURE0 + textureUnit);
     glBindTexture(target, textureHandle.handle);
@@ -536,9 +537,9 @@ namespace Luminous
     if (textureHandle.generation < texture.generation()) {
       textureHandle.uploaded = 0;
 
-      if (texture.dimensions() == 1)      glTexImage1D(GL_TEXTURE_1D, 0, texture.format().layout(), texture.width(), 0, format , texture.format().type(), nullptr );
-      else if (texture.dimensions() == 2) glTexImage2D(GL_TEXTURE_2D, 0, texture.format().layout(), texture.width(), texture.height(), 0, format, texture.format().type(), nullptr );
-      else if (texture.dimensions() == 3) glTexImage3D(GL_TEXTURE_3D, 0, texture.format().layout(), texture.width(), texture.height(), texture.depth(), 0, format, texture.format().type(), nullptr );
+      if (texture.dimensions() == 1)      glTexImage1D(GL_TEXTURE_1D, 0, texture.format().layout(), texture.width(), 0, extFormat , texture.format().type(), nullptr );
+      else if (texture.dimensions() == 2) glTexImage2D(GL_TEXTURE_2D, 0, texture.format().layout(), texture.width(), texture.height(), 0, extFormat, texture.format().type(), nullptr );
+      else if (texture.dimensions() == 3) glTexImage3D(GL_TEXTURE_3D, 0, texture.format().layout(), texture.width(), texture.height(), texture.depth(), 0, extFormat, texture.format().type(), nullptr );
 
       /// @todo Get these from the texture settings
       glTexParameteri(target,  GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -557,30 +558,33 @@ namespace Luminous
     if (toUpload > 0) {
       size_t uploaded;
       
+      // Set proper alignment
+      int alignment = 8;
+      while (texture.width() % alignment)
+        alignment >>= 1;
+      glPixelStorei(GL_PACK_ALIGNMENT, alignment);
+
       if (texture.dimensions() == 1) {
         /// @todo incremental upload
-        glTexSubImage1D(GL_TEXTURE_1D, 0, 0, texture.width(), format, texture.format().type(), texture.data() );
+        glTexSubImage1D(GL_TEXTURE_1D, 0, 0, texture.width(), extFormat, texture.format().type(), texture.data() );
         uploaded = texture.width() * texture.format().bytesPerPixel();
       }
       else if (texture.dimensions() == 2) {
         // See how much of the bytes we can upload in this frame
         int64_t bytesFree = std::min<int64_t>(m_d->m_threadResources[threadIndex].uploadedBytes + toUpload, upload_bytes_limit) - m_d->m_threadResources[threadIndex].uploadedBytes;
-        // Number of scanlines to upload
-        const size_t scanLines = std::max<int32_t>(1, bytesFree / texture.width());
+        int64_t bytesPerScanline = texture.width() * texture.format().bytesPerPixel();
+        // Number of scanlines to upload (minimum of 1 so we always have progress)
+        const size_t scanLines = std::max<int32_t>(1, bytesFree / bytesPerScanline);
         // Start line (where we left of)
-        const size_t startLine = textureHandle.uploaded / texture.width();
+        const size_t startLine = textureHandle.uploaded / bytesPerScanline;
 
-        // Set proper alignment
-        int alignment = 8;
-        while (texture.width() % alignment)
-          alignment >>= 1;
-        glPixelStorei(GL_PACK_ALIGNMENT, alignment);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, startLine, texture.width(), scanLines, format,texture.format().type(), texture.data() + textureHandle.uploaded);
-        uploaded = scanLines * texture.width() * texture.format().bytesPerPixel();
+        // Upload data
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, startLine, texture.width(), scanLines, extFormat,texture.format().type(), texture.data() + textureHandle.uploaded);
+        uploaded = scanLines * bytesPerScanline;
       }
       else if (texture.dimensions() == 3) {
         /// @todo incremental upload
-        glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, texture.width(), texture.height(), texture.depth(), format, texture.format().type(), texture.data() );
+        glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, texture.width(), texture.height(), texture.depth(), extFormat, texture.format().type(), texture.data() );
         uploaded = texture.width() * texture.height() * texture.depth() * texture.format().bytesPerPixel();
       }
 
