@@ -9,6 +9,8 @@ HEADERS += RenderDriverGL.hpp
 SOURCES += RenderDriverGL.cpp
 
 # Render resources
+HEADERS += RenderManager.hpp
+SOURCES += RenderManager.cpp
 HEADERS += RenderResource.hpp
 SOURCES += RenderResource.cpp
 HEADERS += HardwareBuffer.hpp
