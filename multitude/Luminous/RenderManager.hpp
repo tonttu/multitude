@@ -30,7 +30,8 @@ namespace Luminous
     LUMINOUS_API RenderManager(Luminous::RenderDriver & driver);
     LUMINOUS_API ~RenderManager();
 
-    LUMINOUS_API RenderResource::Id createResourceId();
+    LUMINOUS_API RenderResource::Id createResource();
+    LUMINOUS_API void destroyResource(RenderResource::Id id);
     LUMINOUS_API RenderDriver & driver();
 
     LUMINOUS_API static RenderManager & instance();

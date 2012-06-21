@@ -130,6 +130,9 @@ namespace Luminous
       BindingList bindings;
       DescriptionList descriptions;
 
+      // Resources to be released
+      std::vector<RenderResource::Id> releaseQueue;
+
       /// Render statistics
       int32_t uploadedBytes;
       Radiant::Timer frameTimer;
@@ -230,9 +233,30 @@ namespace Luminous
 
   void RenderDriverGL::preFrame(unsigned int threadIndex)
   {
-    /// Reset counter for the upload-limiter
+    /// Reset statistics
     m_d->m_threadResources[threadIndex].uploadedBytes = 0;
     m_d->m_threadResources[threadIndex].frameTimer.start();
+
+#define RELEASE_ME(container, id) { \
+    auto iter = container.find(id); \
+    if (iter != std::end(container)) \
+      container.erase(iter); \
+    }
+
+    /// Clear out any released resources
+    auto & r = m_d->m_threadResources[threadIndex];
+    if (!r.releaseQueue.empty()) {
+      for (auto it = std::begin(r.releaseQueue); it != std::end(r.releaseQueue); ++it) {
+        RELEASE_ME(r.bindings, *it);
+        RELEASE_ME(r.buffers, *it);
+        RELEASE_ME(r.descriptions, *it);
+        RELEASE_ME(r.programs, *it);
+        RELEASE_ME(r.shaders, *it);
+        RELEASE_ME(r.textures, *it);
+      }
+      r.releaseQueue.clear();
+    }
+#undef RELEASE_ME
   }
 
   void RenderDriverGL::postFrame(unsigned int threadIndex)
@@ -482,7 +506,7 @@ namespace Luminous
       glBindVertexArray(bindingHandle.handle);
       GLERROR("RenderDriverGL::Bind VertexAttributeBinding bind");
 
-      // Make sure we have up-to-date buffers
+      // Make sure the buffers get updated if necessary
       for (size_t i = 0; i < binding.bindingCount(); ++i) {
         VertexAttributeBinding::Binding b = binding.binding(i);
         setVertexBuffer(threadIndex, *b.buffer);
@@ -582,9 +606,11 @@ namespace Luminous
     //m_d->m_threadResources[threadIndex].reset();
   }
 
-  void RenderDriverGL::releaseResource(RenderResource::Id)
+  void RenderDriverGL::releaseResource(RenderResource::Id id)
   {
-    /// @todo Queue resource for removal
+    /// @note This should only be called from the main thread
+    for (unsigned int thread = 0; thread < m_d->m_threadResources.size(); ++thread)
+      m_d->m_threadResources[thread].releaseQueue.push_back(id);
   }
 }
 

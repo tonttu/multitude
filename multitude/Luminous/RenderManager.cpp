@@ -51,9 +51,14 @@ namespace Luminous
     RenderManager::D::s_instance = 0;
   }
 
-  RenderResource::Id RenderManager::createResourceId()
+  RenderResource::Id RenderManager::createResource()
   {
     return m_d->resourceId++;
+  }
+
+  void RenderManager::destroyResource(RenderResource::Id id)
+  {
+    m_d->driver.releaseResource(id);
   }
 
   RenderDriver & RenderManager::driver()

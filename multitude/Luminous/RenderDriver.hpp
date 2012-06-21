@@ -68,8 +68,8 @@ namespace Luminous
     LUMINOUS_API static std::shared_ptr<RenderDriver> createInstance(unsigned int renderThreads);
 
   private:
-    // Not exported, should only be used by render resources
-    friend class RenderResource;
+    // Not exported, should only be used by the render manager
+    friend class RenderManager;
     virtual void releaseResource(RenderResource::Id id) = 0;
   };
 }
