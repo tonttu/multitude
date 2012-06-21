@@ -3,6 +3,12 @@
 
 #include <cassert>
 
+// Since we got rid of GLEW...
+#ifdef RADIANT_OSX
+#define glDeleteVertexArrays glDeleteVertexArraysAPPLE
+#define glGenVertexArrays glGenVertexArraysAPPLE
+#endif
+
 namespace Luminous
 {  
   /// Translate a PrimitiveType to its OpenGL equivalent
