@@ -4,6 +4,8 @@
 #include "Radiant/SafeBool.hpp"
 #include <cassert>
 
+#include <QAtomicInt>
+
 // #define INTRUSIVE_PTR_DEBUG
 #ifdef INTRUSIVE_PTR_DEBUG
 
@@ -44,6 +46,13 @@ namespace Radiant
   /// found anymore. Use this to be safe.
   typedef decltype(nullptr) nullptr_t;
 
+  struct IntrusivePtrCounter
+  {
+    IntrusivePtrCounter() : useCount(0), weakCount(1) {}
+    QAtomicInt useCount;
+    QAtomicInt weakCount;
+  };
+
   template <typename T>
   class IntrusivePtr : public SafeBool< IntrusivePtr<T> >
   {
@@ -52,11 +61,24 @@ namespace Radiant
 
     template <typename Y> friend class IntrusivePtr;
 
-    IntrusivePtr() : m_ptr(nullptr) {}
-    IntrusivePtr(T * ptr) : m_ptr(ptr)
+    IntrusivePtr() : m_ptr(nullptr), m_counter(nullptr) {}
+
+    IntrusivePtr(T * ptr) : m_ptr(ptr), m_counter(nullptr)
     {
       if(ptr) {
-        intrusive_ptr_add_ref(ptr);
+        m_counter = intrusivePtrGetCounter(*ptr);
+        m_counter->useCount.ref();
+        INTRUSIVE_PTR_DEBUG_ACQUIRE;
+      }
+    }
+
+    template <typename Y>
+    IntrusivePtr(Y * ptr, IntrusivePtrCounter * counter) : m_ptr(nullptr), m_counter(nullptr)
+    {
+      if(ptr) {
+        m_ptr = ptr;
+        m_counter = counter;
+        m_counter->useCount.ref();
         INTRUSIVE_PTR_DEBUG_ACQUIRE;
       }
     }
@@ -64,32 +86,36 @@ namespace Radiant
     // Need to have explicit version of this, since the template version isn't
     // user-defined copy constructor, and the default copy ctor for T would be
     // used instead of the template one
-    IntrusivePtr(const IntrusivePtr<T> & iptr) : m_ptr(iptr.m_ptr)
+    IntrusivePtr(const IntrusivePtr<T> & iptr) : m_ptr(iptr.m_ptr), m_counter(iptr.m_counter)
     {
-      if(m_ptr) {
-        intrusive_ptr_add_ref(m_ptr);
+      assert((m_ptr != nullptr) == (m_counter != nullptr));
+      if(m_counter) {
+        m_counter->useCount.ref();
         INTRUSIVE_PTR_DEBUG_ACQUIRE;
       }
     }
 
     template <typename Y>
-    IntrusivePtr(const IntrusivePtr<Y> & iptr) : m_ptr(iptr.m_ptr)
+    IntrusivePtr(const IntrusivePtr<Y> & iptr) : m_ptr(iptr.m_ptr), m_counter(iptr.m_counter)
     {
-      if(m_ptr) {
-        intrusive_ptr_add_ref(m_ptr);
+      assert((m_ptr != nullptr) == (m_counter != nullptr));
+      if(m_counter) {
+        m_counter->useCount.ref();
         INTRUSIVE_PTR_DEBUG_ACQUIRE;
       }
     }
 
-    IntrusivePtr(IntrusivePtr<T> && iptr) : m_ptr(iptr.m_ptr)
+    IntrusivePtr(IntrusivePtr<T> && iptr) : m_ptr(iptr.m_ptr), m_counter(iptr.m_counter)
     {
       iptr.m_ptr = nullptr;
+      iptr.m_counter = nullptr;
     }
 
     template <typename Y>
-    IntrusivePtr(IntrusivePtr<Y> && iptr) : m_ptr(iptr.m_ptr)
+    IntrusivePtr(IntrusivePtr<Y> && iptr) : m_ptr(iptr.m_ptr), m_counter(iptr.m_counter)
     {
       iptr.m_ptr = nullptr;
+      iptr.m_counter = nullptr;
     }
 
     virtual ~IntrusivePtr()
@@ -101,14 +127,14 @@ namespace Radiant
     IntrusivePtr<T> & operator= (const IntrusivePtr<Y> & iptr)
     {
       deref();
-      ref(iptr.m_ptr);
+      ref(iptr.m_ptr, iptr.m_counter);
       return *this;
     }
 
     IntrusivePtr<T> & operator= (const IntrusivePtr<T> & iptr)
     {
       deref();
-      ref(iptr.m_ptr);
+      ref(iptr.m_ptr, iptr.m_counter);
       return *this;
     }
 
@@ -116,7 +142,9 @@ namespace Radiant
     {
       deref();
       m_ptr = iptr.m_ptr;
+      m_counter = iptr.m_counter;
       iptr.m_ptr = nullptr;
+      iptr.m_counter = nullptr;
       return *this;
     }
 
@@ -125,27 +153,49 @@ namespace Radiant
     {
       deref();
       m_ptr = iptr.m_ptr;
+      m_counter = iptr.m_counter;
       iptr.m_ptr = nullptr;
+      iptr.m_counter = nullptr;
       return *this;
+    }
+
+    template <typename Y>
+    void reset(Y * ptr)
+    {
+      deref();
+      m_ptr = ptr;
+      if(ptr) {
+        m_counter = intrusivePtrGetCounter(*ptr);
+        m_counter->useCount.ref();
+        INTRUSIVE_PTR_DEBUG_ACQUIRE;
+      } else {
+        m_counter = nullptr;
+      }
+    }
+
+    void reset()
+    {
+      deref();
+      m_ptr = nullptr;
+      m_counter = nullptr;
     }
 
     IntrusivePtr<T> & operator= (T * ptr)
     {
-      deref();
-      ref(ptr);
+      reset(ptr);
       return *this;
     }
 
     template <typename Y>
     IntrusivePtr<Y> static_pointer_cast()
     {
-      return IntrusivePtr<Y>(static_cast<Y*>(m_ptr));
+      return IntrusivePtr<Y>(static_cast<Y*>(m_ptr), m_counter);
     }
 
     template<typename Y>
     IntrusivePtr<Y> dynamic_pointer_cast() const
     {
-      return IntrusivePtr<Y>(dynamic_cast<Y*>(m_ptr));
+      return IntrusivePtr<Y>(dynamic_cast<Y*>(m_ptr), m_counter);
     }
 
     T & operator* () const
@@ -195,17 +245,27 @@ namespace Radiant
   private:
     inline void deref()
     {
-      if(m_ptr) intrusive_ptr_release(m_ptr);
+      if(m_counter) {
+        if(!m_counter->useCount.deref()) {
+          intrusivePtrRelease(m_ptr);
+          if(!m_counter->weakCount.deref())
+            delete m_counter;
+        }
+      }
       INTRUSIVE_PTR_DEBUG_RELEASE;
     }
-    inline void ref(T * ptr)
+    inline void ref(T * ptr, IntrusivePtrCounter * counter)
     {
       m_ptr = ptr;
-      if(ptr) intrusive_ptr_add_ref(ptr);
+      m_counter = counter;
+      if(m_counter)
+        m_counter->useCount.ref();
       INTRUSIVE_PTR_DEBUG_ACQUIRE;
     }
 
+  private:
     T * m_ptr;
+    IntrusivePtrCounter * m_counter;
   };
 
   template <typename T, typename Y> inline bool operator== (const Y * lhs, const IntrusivePtr<T> & rhs) { return rhs == lhs; }
