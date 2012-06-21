@@ -68,6 +68,15 @@ namespace Radiant
     IntrusiveWeakPtr() : m_ptr(nullptr), m_counter(nullptr) {}
 
     template <typename Y>
+    explicit IntrusiveWeakPtr(Y * ptr) : m_ptr(ptr), m_counter(nullptr)
+    {
+      if(ptr) {
+        m_counter = intrusivePtrGetCounter(*ptr);
+        m_counter->weakCount.ref();
+      }
+    }
+
+    template <typename Y>
     IntrusiveWeakPtr(const IntrusivePtr<Y> & iptr);
 
     IntrusiveWeakPtr(const IntrusiveWeakPtr<T> & wptr) : m_ptr(wptr.m_ptr), m_counter(wptr.m_counter)
