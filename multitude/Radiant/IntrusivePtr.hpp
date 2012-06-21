@@ -152,8 +152,10 @@ namespace Radiant
       deref();
     }
 
-    template <typename Y = T>
+    template <typename Y>
     IntrusivePtr<Y> lock() const;
+
+    IntrusivePtr<T> lock() const;
 
     inline bool operator< (const IntrusiveWeakPtr<T> & rhs) const { return m_ptr < rhs.m_ptr; }
 
@@ -410,6 +412,12 @@ namespace Radiant
   template <typename T>
   template <typename Y>
   IntrusivePtr<Y> IntrusiveWeakPtr<T>::lock() const
+  {
+    return *this;
+  }
+
+  template <typename T>
+  IntrusivePtr<T> IntrusiveWeakPtr<T>::lock() const
   {
     return *this;
   }
