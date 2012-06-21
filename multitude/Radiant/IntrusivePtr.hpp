@@ -54,12 +54,120 @@ namespace Radiant
   };
 
   template <typename T>
+  class IntrusivePtr;
+
+  template <typename T>
+  class IntrusiveWeakPtr
+  {
+  public:
+    typedef T element_type;
+
+    template <typename Y> friend class IntrusivePtr;
+    template <typename Y> friend class IntrusiveWeakPtr;
+
+    IntrusiveWeakPtr() : m_ptr(nullptr), m_counter(nullptr) {}
+
+    template <typename Y>
+    IntrusiveWeakPtr(const IntrusivePtr<Y> & iptr);
+
+    IntrusiveWeakPtr(const IntrusiveWeakPtr<T> & wptr) : m_ptr(wptr.m_ptr), m_counter(wptr.m_counter)
+    {
+      if(m_counter)
+        m_counter->weakCount.ref();
+    }
+
+    template <typename Y>
+    IntrusiveWeakPtr(const IntrusiveWeakPtr<Y> & wptr) : m_ptr(wptr.m_ptr), m_counter(wptr.m_counter)
+    {
+      if(m_counter)
+        m_counter->weakCount.ref();
+    }
+
+    IntrusiveWeakPtr(IntrusiveWeakPtr<T> && wptr) : m_ptr(wptr.m_ptr), m_counter(wptr.m_counter)
+    {
+      wptr.m_ptr = nullptr;
+      wptr.m_counter = nullptr;
+    }
+
+    template <typename Y>
+    IntrusiveWeakPtr(IntrusiveWeakPtr<Y> && wptr) : m_ptr(wptr.m_ptr), m_counter(wptr.m_counter)
+    {
+      wptr.m_ptr = nullptr;
+      wptr.m_counter = nullptr;
+    }
+
+    IntrusiveWeakPtr & operator=(const IntrusiveWeakPtr<T> & wptr)
+    {
+      deref();
+      m_ptr = wptr.m_ptr;
+      m_counter = wptr.m_counter;
+      if(m_counter)
+        m_counter->weakCount.ref();
+      return *this;
+    }
+
+    template <typename Y>
+    IntrusiveWeakPtr & operator=(const IntrusiveWeakPtr<Y> & wptr)
+    {
+      deref();
+      m_ptr = wptr.m_ptr;
+      m_counter = wptr.m_counter;
+      if(m_counter)
+        m_counter->weakCount.ref();
+      return *this;
+    }
+
+    IntrusiveWeakPtr & operator=(IntrusiveWeakPtr<T> && wptr)
+    {
+      deref();
+      m_ptr = wptr.m_ptr;
+      m_counter = wptr.m_counter;
+      wptr.m_ptr = nullptr;
+      wptr.m_counter = nullptr;
+      return *this;
+    }
+
+    template <typename Y>
+    IntrusiveWeakPtr & operator=(IntrusiveWeakPtr<Y> && wptr)
+    {
+      deref();
+      m_ptr = wptr.m_ptr;
+      m_counter = wptr.m_counter;
+      wptr.m_ptr = nullptr;
+      wptr.m_counter = nullptr;
+      return *this;
+    }
+
+    ~IntrusiveWeakPtr()
+    {
+      deref();
+    }
+
+    template <typename Y = T>
+    IntrusivePtr<Y> lock() const;
+
+    inline bool operator< (const IntrusiveWeakPtr<T> & rhs) const { return m_ptr < rhs.m_ptr; }
+
+  private:
+    inline void deref()
+    {
+      if(m_counter && !m_counter->weakCount.deref())
+        delete m_counter;
+    }
+
+  private:
+    T * m_ptr;
+    IntrusivePtrCounter * m_counter;
+  };
+
+  template <typename T>
   class IntrusivePtr : public SafeBool< IntrusivePtr<T> >
   {
   public:
     typedef T element_type;
 
     template <typename Y> friend class IntrusivePtr;
+    template <typename Y> friend class IntrusiveWeakPtr;
 
     IntrusivePtr() : m_ptr(nullptr), m_counter(nullptr) {}
 
@@ -116,6 +224,20 @@ namespace Radiant
     {
       iptr.m_ptr = nullptr;
       iptr.m_counter = nullptr;
+    }
+
+    template <typename Y>
+    IntrusivePtr(const IntrusiveWeakPtr<Y> & wptr) : m_ptr(nullptr), m_counter(nullptr) {
+      if(wptr.m_counter) {
+        int count;
+        do {
+          count = wptr.m_counter->useCount;
+          if(count == 0)
+            return;
+        } while (!wptr.m_counter->useCount.testAndSetOrdered(count, count + 1));
+        m_ptr = wptr.m_ptr;
+        m_counter = wptr.m_counter;
+      }
     }
 
     virtual ~IntrusivePtr()
@@ -267,6 +389,21 @@ namespace Radiant
     T * m_ptr;
     IntrusivePtrCounter * m_counter;
   };
+
+  template <typename T>
+  template <typename Y>
+  IntrusiveWeakPtr<T>::IntrusiveWeakPtr(const IntrusivePtr<Y> & iptr) : m_ptr(iptr.m_ptr), m_counter(iptr.m_counter)
+  {
+    if(m_counter)
+      m_counter->weakCount.ref();
+  }
+
+  template <typename T>
+  template <typename Y>
+  IntrusivePtr<Y> IntrusiveWeakPtr<T>::lock() const
+  {
+    return *this;
+  }
 
   template <typename T, typename Y> inline bool operator== (const Y * lhs, const IntrusivePtr<T> & rhs) { return rhs == lhs; }
   template <typename T, typename Y> inline bool operator!= (const Y * lhs, const IntrusivePtr<T> & rhs) { return rhs != lhs; }
