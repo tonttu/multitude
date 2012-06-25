@@ -14,6 +14,7 @@ SOURCES += RenderManager.cpp
 HEADERS += RenderResource.hpp
 SOURCES += RenderResource.cpp
 HEADERS += HardwareBuffer.hpp
+HEADERS += HardwareBufferImpl.hpp
 SOURCES += HardwareBuffer.cpp
 HEADERS += VertexAttributeBinding.hpp
 SOURCES += VertexAttributeBinding.cpp
