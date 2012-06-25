@@ -10,13 +10,16 @@ namespace Luminous
   {
   public:
     LUMINOUS_API HardwareBuffer();
+    LUMINOUS_API ~HardwareBuffer();
 
     LUMINOUS_API void setData(const char * data, size_t size, BufferUsage usage);
 
     LUMINOUS_API size_t size() const;
     LUMINOUS_API const char * data() const;
     LUMINOUS_API BufferUsage usage() const;
+
   private:
+    friend class VertexAttributeBinding;
     class D;
     D * m_d;
   };

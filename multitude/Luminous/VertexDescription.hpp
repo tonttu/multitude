@@ -34,7 +34,6 @@ namespace Luminous
     LUMINOUS_API uint vertexSize() const;
   private:
     template <typename T> bool createAttribute(VertexAttribute & attr);
-
   private:
     std::vector<VertexAttribute> m_attributes;
   };

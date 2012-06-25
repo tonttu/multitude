@@ -13,8 +13,8 @@ namespace Luminous
   public:
     typedef uint64_t Id;
   public:
-    RenderResource(ResourceType type);
-    virtual ~RenderResource();
+    LUMINOUS_API RenderResource(ResourceType type);
+    LUMINOUS_API virtual ~RenderResource();
 
     inline Id resourceId() const { return m_id; }
     inline ResourceType resourceType() const { return m_type; }

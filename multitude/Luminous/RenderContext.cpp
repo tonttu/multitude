@@ -1603,22 +1603,7 @@ namespace Luminous
 
   void RenderContext::useCurrentBlendMode()
   {
-    //Radiant::info("RenderContext::useCurrentBlendMode # %s",
-    // blendFuncNames()[m_data->m_blendFunc]);
-
-    if(m_data->m_blendFunc == BLEND_NONE) {
-      glDisable(GL_BLEND);
-      return;
-    }
-
-    glEnable(GL_BLEND);
-
-    if(m_data->m_blendFunc == BLEND_USUAL)
-      Utils::glUsualBlend();
-    else if(m_data->m_blendFunc == BLEND_ADDITIVE)
-      Utils::glAdditiveBlend();
-    else if(m_data->m_blendFunc == BLEND_SUBTRACTIVE)
-      Utils::glSubtractiveBlend();
+    //m_data->m_driver->setBlendFunc(m_data->m_blendFunc);
   }
 
   const char ** RenderContext::blendFuncNames()
@@ -1871,59 +1856,50 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////////
   // Luminousv2
 
-  /// Start collecting render commands
-  void RenderContext::beginCommands()
-  {
-  }
-
-  /// Finish collecting render commands
-  void RenderContext::endCommands()
-  {
-    /// Clear the state for the next set of commands
-/*
-    m_data->m_driver.clearState(threadIndex());
-
-    bindDefaultProgram();
-*/
-  }
-
-  void RenderContext::setBuffer(BufferType type, const std::shared_ptr<Luminous::HardwareBuffer> & buffer)
+  void RenderContext::setBuffer(BufferType type, const Luminous::HardwareBuffer & buffer)
   {
     switch (type)
     {
-    case BufferType_Vertex: m_data->m_driver.setVertexBuffer(threadIndex(), *buffer); break;
-    case BufferType_Index: m_data->m_driver.setIndexBuffer(threadIndex(), *buffer); break;
-    case BufferType_Constant: m_data->m_driver.setConstantBuffer(threadIndex(), *buffer); break;
+    case BufferType_Vertex: m_data->m_driver.setVertexBuffer(threadIndex(), buffer); break;
+    case BufferType_Index: m_data->m_driver.setIndexBuffer(threadIndex(), buffer); break;
+    case BufferType_Constant: m_data->m_driver.setConstantBuffer(threadIndex(), buffer); break;
     default:
       assert(false);
       Radiant::error("RenderContext::setBuffer - Buffertype %d not implemented", type);
     }
   }
 
-  void RenderContext::setTexture(const QString & name, const std::shared_ptr<Luminous::Texture2> & texture)
+  void RenderContext::setTexture(const QString & name, const Luminous::Texture & texture)
   {
-    m_data->m_driver.setTexture(threadIndex(), 1, *texture);
-    m_data->m_driver.setShaderConstant(threadIndex(), name, 1);
+    /// @todo do some smart texture unit allocation management
+    setTexture(0, texture);
+    m_data->m_driver.setShaderUniform(threadIndex(), name, 0);
   }
 
-  void RenderContext::setVertexBinding(const std::shared_ptr<VertexAttributeBinding> & binding)
+  void RenderContext::setTexture(unsigned int textureUnit, const Luminous::Texture & texture)
+  {
+    m_data->m_driver.setTexture(threadIndex(), textureUnit, texture);
+  }
+
+  void RenderContext::setVertexBinding(const VertexAttributeBinding & binding)
   {
     // Bind the VAO: Binds all the associated vertex buffers and sets the appropriate vertex attributes
-    m_data->m_driver.setVertexBinding(threadIndex(), *binding);
+    m_data->m_driver.setVertexBinding(threadIndex(), binding);
   }
 
-  void RenderContext::setShaderProgram(const std::shared_ptr<ShaderProgram> & program)
+  void RenderContext::setShaderProgram(const ShaderProgram & program)
   {
-    m_data->m_driver.setShaderProgram(threadIndex(), *program);
-
-    // Try and bind the MultiTouch common parameters
-    /// @todo this could be a piece of code with a uniform block that's always included in the shader program
-    m_data->m_driver.setShaderConstant(threadIndex(), "mt_projMatrix", m_data->m_viewTransform);
+    m_data->m_driver.setShaderProgram(threadIndex(), program);
   }
 
-  void RenderContext::draw(PrimitiveType primType, unsigned int offset, unsigned int vertexCount)
+  void RenderContext::draw(PrimitiveType primType, unsigned int offset, unsigned int primitives)
   {
-    m_data->m_driver.draw(primType, offset, vertexCount);
+    m_data->m_driver.draw(primType, offset, primitives);
+  }
+
+  void RenderContext::drawIndexed(PrimitiveType primType, unsigned int offset, unsigned int primitives)
+  {
+    m_data->m_driver.drawIndexed(primType, offset, primitives);
   }
 
   unsigned int RenderContext::threadIndex() const
@@ -1932,28 +1908,28 @@ namespace Luminous
   }
 
   // Create all the setters for shader constants
-#define SETSHADERCONSTANT(TYPE) \
-  template<> LUMINOUS_API bool RenderContext::setShaderConstant(const QString & name, const TYPE & value) \
+#define SETSHADERUNIFORM(TYPE) \
+  template<> LUMINOUS_API bool RenderContext::setShaderUniform(const QString & name, const TYPE & value) \
   { \
-    return m_data->m_driver.setShaderConstant(threadIndex(), name, value); \
+    return m_data->m_driver.setShaderUniform(threadIndex(), name, value); \
   }
-  SETSHADERCONSTANT(int);
-  SETSHADERCONSTANT(float);
-  SETSHADERCONSTANT(Nimble::Vector2i);
-  SETSHADERCONSTANT(Nimble::Vector3i);
-  SETSHADERCONSTANT(Nimble::Vector4i);
-  SETSHADERCONSTANT(Nimble::Vector2f);
-  SETSHADERCONSTANT(Nimble::Vector3f);
-  SETSHADERCONSTANT(Nimble::Vector4f);
-  SETSHADERCONSTANT(Nimble::Matrix2f);
-  SETSHADERCONSTANT(Nimble::Matrix3f);
-  SETSHADERCONSTANT(Nimble::Matrix4f);
-#undef SETSHADERCONSTANT
+  SETSHADERUNIFORM(int);
+  SETSHADERUNIFORM(float);
+  SETSHADERUNIFORM(Nimble::Vector2i);
+  SETSHADERUNIFORM(Nimble::Vector3i);
+  SETSHADERUNIFORM(Nimble::Vector4i);
+  SETSHADERUNIFORM(Nimble::Vector2f);
+  SETSHADERUNIFORM(Nimble::Vector3f);
+  SETSHADERUNIFORM(Nimble::Vector4f);
+  SETSHADERUNIFORM(Nimble::Matrix2f);
+  SETSHADERUNIFORM(Nimble::Matrix3f);
+  SETSHADERUNIFORM(Nimble::Matrix4f);
+#undef SETSHADERUNIFORM
 
   // Manual conversion: Radiant::Color > Nimble::Vector4f
-  template<> LUMINOUS_API bool RenderContext::setShaderConstant(const QString & name, const Radiant::Color & value)
+  template<> LUMINOUS_API bool RenderContext::setShaderUniform(const QString & name, const Radiant::Color & value)
   {
-    return m_data->m_driver.setShaderConstant(threadIndex(), name, static_cast<Nimble::Vector4f>(value));
+    return m_data->m_driver.setShaderUniform(threadIndex(), name, static_cast<Nimble::Vector4f>(value));
   }
 }
 

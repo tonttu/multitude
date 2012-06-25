@@ -1,4 +1,6 @@
 #include "Luminous/VertexAttributeBinding.hpp"
+#include "Luminous/HardwareBuffer.hpp"
+#include "Luminous/VertexDescription.hpp"
 
 #include <algorithm>
 
@@ -11,7 +13,7 @@ namespace Luminous
     Bindings bindings;
   };
 
-  bool operator==(const VertexAttributeBinding::Binding & lhs, const std::shared_ptr<HardwareBuffer> & rhs) { return lhs.buffer == rhs; }
+  //bool operator==(const VertexAttributeBinding::Binding & lhs, const std::shared_ptr<HardwareBuffer> & rhs) { return lhs.buffer == rhs.resourceId(); }
 
   VertexAttributeBinding::VertexAttributeBinding()
     : RenderResource(ResourceType_VertexArray)
@@ -24,23 +26,20 @@ namespace Luminous
     delete m_d;
   }
 
-  void VertexAttributeBinding::addBinding(const std::shared_ptr<HardwareBuffer> & buffer, const std::shared_ptr<VertexDescription> & description)
+  void VertexAttributeBinding::addBinding(const HardwareBuffer & buffer, const VertexDescription & description)
   {
     // Add the binding if it doesn't already exist
-    D::Bindings::const_iterator it = std::find(m_d->bindings.begin(), m_d->bindings.end(), buffer);
+    D::Bindings::const_iterator it = std::find(m_d->bindings.begin(), m_d->bindings.end(), buffer.resourceId());
     if (it == m_d->bindings.end()) {
-      Binding binding;
-      binding.buffer = buffer;
-      binding.description = description;
+      Binding binding = { buffer.resourceId(), description.resourceId() };
       m_d->bindings.push_back(binding);
-      
       invalidate();
     }
   }
 
-  void VertexAttributeBinding::removeBinding(const std::shared_ptr<HardwareBuffer> & buffer)
+  void VertexAttributeBinding::removeBinding(const HardwareBuffer & buffer)
   {
-    D::Bindings::iterator it = std::find(m_d->bindings.begin(), m_d->bindings.end(), buffer);
+    D::Bindings::iterator it = std::find(m_d->bindings.begin(), m_d->bindings.end(), buffer.resourceId());
     if (it != m_d->bindings.end()) {
       m_d->bindings.erase( it );
       invalidate();

@@ -13,20 +13,20 @@ namespace Luminous
     LUMINOUS_API ~RenderDriverGL();
 
     LUMINOUS_API virtual void clear(ClearMask mask, const Radiant::Color & color, double depth, int stencil) OVERRIDE;
-    LUMINOUS_API virtual void draw(PrimitiveType type, size_t primitives, size_t offset) OVERRIDE;
-    LUMINOUS_API virtual void drawIndexed(PrimitiveType type, size_t primitives, size_t offset) OVERRIDE;
+    LUMINOUS_API virtual void draw(PrimitiveType type, unsigned int offset, unsigned int primitives) OVERRIDE;
+    LUMINOUS_API virtual void drawIndexed(PrimitiveType type, unsigned int offset, unsigned int primitives) OVERRIDE;
 
-    LUMINOUS_API virtual bool setShaderConstant(unsigned int threadIndex, const QString & name, const int & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderConstant(unsigned int threadIndex, const QString & name, const float & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Vector2i & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Vector3i & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Vector4i & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Vector2f & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Vector3f & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Vector4f & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Matrix2f & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Matrix3f & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Matrix4f & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const int & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const float & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Vector2i & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Vector3i & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Vector4i & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Vector2f & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Vector3f & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Vector4f & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Matrix2f & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Matrix3f & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Matrix4f & value) OVERRIDE;
     LUMINOUS_API virtual void setShaderProgram(unsigned int threadIndex, const ShaderProgram & shader) OVERRIDE;
 
     LUMINOUS_API virtual void preFrame(unsigned int threadIndex) OVERRIDE;
@@ -39,9 +39,19 @@ namespace Luminous
     LUMINOUS_API virtual void setVertexDescription(unsigned int threadIndex, const VertexDescription & description) OVERRIDE;
     LUMINOUS_API virtual void setVertexBinding(unsigned int threadIndex, const VertexAttributeBinding & binding) OVERRIDE;
     
-    LUMINOUS_API virtual void setTexture(unsigned int threadIndex, unsigned int textureUnit, const Texture2 & texture) OVERRIDE;
+    LUMINOUS_API virtual void setTexture(unsigned int threadIndex, unsigned int textureUnit, const Texture & texture) OVERRIDE;
 
     LUMINOUS_API virtual void clearState(unsigned int threadIndex) OVERRIDE;
+
+    /// @todo Add function wrapper(s) for:
+    /// * glLogicOp
+    /// * glBlendFunc, glBlendEquation
+    /// * glStencilFunc, glStencilMask, glStencilOp
+    /// * FBOs
+    /// * Reading framebuffer/target (see also FBOs)
+    /// * Uniform blocks
+    /// * glViewport / glScissor
+    /// * glMapBuffer/glMapBufferRange
   private:
     virtual void releaseResource(RenderResource::Id id) OVERRIDE;
   private:

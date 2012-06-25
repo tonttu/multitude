@@ -22,6 +22,7 @@ namespace Luminous
 
     LUMINOUS_API ShaderType type() const;
   private:
+    friend class ShaderProgram;
     class D;
     D * m_d;
   };
@@ -34,10 +35,10 @@ namespace Luminous
     LUMINOUS_API ShaderProgram();
     LUMINOUS_API ~ShaderProgram();
 
-    LUMINOUS_API void addShader(const std::shared_ptr<ShaderGLSL> & shader);
-    LUMINOUS_API void removeShader(const std::shared_ptr<ShaderGLSL> & shader);
+    LUMINOUS_API void addShader(const ShaderGLSL & shader);
+    LUMINOUS_API void removeShader(const ShaderGLSL & shader);
 
-    LUMINOUS_API const std::shared_ptr<ShaderGLSL> & shader(size_t index) const;
+    LUMINOUS_API const ShaderGLSL & shader(size_t index) const;
     LUMINOUS_API size_t shaderCount() const;
 
   private:

@@ -231,7 +231,7 @@ namespace Luminous
   class HardwareBuffer;
   class ShaderProgram;
   class ShaderGLSL;
-  class Texture2;
+  class Texture;
 
   // Vertex data
   struct VertexAttribute;

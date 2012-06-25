@@ -1,4 +1,5 @@
 #include "Luminous/RenderDriverGL.hpp"
+#include "Luminous/RenderManager.hpp"
 #include "Luminous/VertexAttributeBinding.hpp"
 #include "Luminous/VertexDescription.hpp"
 #include "Luminous/HardwareBuffer.hpp"
@@ -33,7 +34,8 @@ namespace Luminous
   struct BufferHandle
   {
     BufferHandle() : handle(0), generation(0), usage(BufferUsage_Static_Draw), size(0), uploaded(0) {}
-
+    
+    HardwareBuffer * buffer;
     GLuint handle;
     uint64_t generation;
     BufferUsage usage;
@@ -46,6 +48,7 @@ namespace Luminous
   {
     ProgramHandle() : handle(0), generation(0) {}
 
+	ShaderProgram * program;
     GLuint handle;
     uint64_t generation;
 
@@ -67,6 +70,7 @@ namespace Luminous
   struct TextureHandle
   {
     TextureHandle() : handle(0), generation(0), size(0), uploaded(0) {}
+	Texture * texture;
     GLuint handle;
     uint64_t generation;
 
@@ -75,15 +79,17 @@ namespace Luminous
   };
 
   // Generic handle
+  template <typename ResourceType>
   struct ResourceHandle
   {
-    ResourceHandle() : handle(0), generation(0) {}
+    ResourceHandle() : handle(0), generation(0), resource(0) {}
+    ResourceType * resource;
     GLuint handle;
     uint64_t generation;
   };
-  typedef ResourceHandle ShaderHandle;
-  typedef ResourceHandle BindingHandle;
-  typedef ResourceHandle DescriptionHandle;
+  typedef ResourceHandle<ShaderGLSL> ShaderHandle;
+  typedef ResourceHandle<VertexAttributeBinding> BindingHandle;
+  typedef ResourceHandle<VertexDescription> DescriptionHandle;
 
 
   /// 8 GB/sec upload limit is the bandwidth of PCIe 16x 2.0 (since 2007)
@@ -176,8 +182,8 @@ namespace Luminous
         bufferHandle.size = buffer.size();
         bufferHandle.uploaded = buffer.size();
         bufferHandle.usage = buffer.usage();
-        buffers[buffer.resourceId()] = bufferHandle;
       }
+      buffers[buffer.resourceId()] = bufferHandle;
     }
 
   public:
@@ -218,13 +224,13 @@ namespace Luminous
     glClear(glMask);
   }
 
-  void RenderDriverGL::draw(PrimitiveType type, size_t offset, size_t primitives)
+  void RenderDriverGL::draw(PrimitiveType type, unsigned int offset, unsigned int primitives)
   {
     GLenum mode = GLUtils::getPrimitiveType(type);
     glDrawArrays(mode, (GLint) offset, (GLsizei) primitives);
   }
 
-  void RenderDriverGL::drawIndexed(PrimitiveType type, size_t offset, size_t primitives)
+  void RenderDriverGL::drawIndexed(PrimitiveType type, unsigned int offset, unsigned int primitives)
   {
     /// @todo allow other index types (unsigned byte, unsigned short and unsigned int)
     GLenum mode = GLUtils::getPrimitiveType(type);
@@ -270,21 +276,21 @@ namespace Luminous
   }
 
 #define SETUNIFORM(TYPE, FUNCTION) \
-  bool RenderDriverGL::setShaderConstant(unsigned int threadIndex, const QString & name, const TYPE & value) { \
+  bool RenderDriverGL::setShaderUniform(unsigned int threadIndex, const QString & name, const TYPE & value) { \
     const auto & uniforms = m_d->m_threadResources[threadIndex].currentProgram->uniforms; \
     auto it = uniforms.find(name); \
     if (it != std::end(uniforms)) FUNCTION(it->second.location, value); \
     return (it != std::end(uniforms)); \
   }
 #define SETUNIFORMVECTOR(TYPE, FUNCTION) \
-  bool RenderDriverGL::setShaderConstant(unsigned int threadIndex, const QString & name, const TYPE & value) { \
+  bool RenderDriverGL::setShaderUniform(unsigned int threadIndex, const QString & name, const TYPE & value) { \
     const auto & uniforms = m_d->m_threadResources[threadIndex].currentProgram->uniforms; \
     auto it = uniforms.find(name); \
     if (it != std::end(uniforms)) FUNCTION(it->second.location, 1, value.data()); \
     return (it != std::end(uniforms)); \
   }
 #define SETUNIFORMMATRIX(TYPE, FUNCTION) \
-  bool RenderDriverGL::setShaderConstant(unsigned int threadIndex, const QString & name, const TYPE & value) { \
+  bool RenderDriverGL::setShaderUniform(unsigned int threadIndex, const QString & name, const TYPE & value) { \
     const auto & uniforms = m_d->m_threadResources[threadIndex].currentProgram->uniforms; \
     auto it = uniforms.find(name); \
     if (it != std::end(uniforms)) FUNCTION(it->second.location, 1, GL_TRUE, value.data()); \
@@ -325,24 +331,24 @@ namespace Luminous
     // Check if any of our shaders are dirty
     auto & shaderList = m_d->m_threadResources[threadIndex].shaders;
     for (size_t i = 0; i < program.shaderCount(); ++i) {
-      const std::shared_ptr<ShaderGLSL> & shader = program.shader(i);
+      auto & shader = program.shader(i);
       ShaderHandle shaderHandle;
 
       // Find the correct shader
-      auto it = shaderList.find(shader->resourceId());
+      auto it = shaderList.find(shader.resourceId());
       if (it == std::end(shaderList)) {
         /// New shader: create it
-        shaderHandle.handle = GLUtils::createResource(shader->resourceType());
+        shaderHandle.handle = GLUtils::createResource(shader.resourceType());
         shaderHandle.generation = 0;
-        shaderList[shader->resourceId()] = shaderHandle;
+        shaderList[shader.resourceId()] = shaderHandle;
       }
       else
         shaderHandle = it->second;
 
       /// Check if it needs updating
-      if (shaderHandle.generation < shader->generation()) {
+      if (shaderHandle.generation < shader.generation()) {
         // Set and compile source
-        const QByteArray shaderData = shader->text().toAscii();
+        const QByteArray shaderData = shader.text().toAscii();
         const GLchar * text = shaderData.data();
         const GLint length = shaderData.size();
         glShaderSource(shaderHandle.handle, 1, &text, &length);
@@ -351,8 +357,8 @@ namespace Luminous
         glGetShaderiv(shaderHandle.handle, GL_COMPILE_STATUS, &compiled);
         if (compiled == GL_TRUE) {
           // All seems okay, update resource handle
-          shaderHandle.generation = shader->generation();
-          shaderList[shader->resourceId()] = shaderHandle;
+          shaderHandle.generation = shader.generation();
+          shaderList[shader.resourceId()] = shaderHandle;
 
           // Attach to the program
           glAttachShader(programHandle.handle, shaderHandle.handle);
@@ -494,8 +500,11 @@ namespace Luminous
       for (size_t i = 0; i < binding.bindingCount(); ++i) {
         VertexAttributeBinding::Binding b = binding.binding(i);
         // Attach buffer
-        setVertexBuffer(threadIndex, *b.buffer);
-        setVertexDescription(threadIndex, *b.description);
+        auto * buffer = RenderManager::getBuffer(b.buffer);
+        auto * descr = RenderManager::getVertexDescription(b.description);
+        assert(buffer != nullptr && descr != nullptr);
+        setVertexBuffer(threadIndex, *buffer);
+        setVertexDescription(threadIndex, *descr);
       }
       // Update cache
       bindingHandle.generation = binding.generation();
@@ -509,12 +518,14 @@ namespace Luminous
       // Make sure the buffers get updated if necessary
       for (size_t i = 0; i < binding.bindingCount(); ++i) {
         VertexAttributeBinding::Binding b = binding.binding(i);
-        setVertexBuffer(threadIndex, *b.buffer);
+        auto * buffer = RenderManager::getBuffer(b.buffer);
+        assert(buffer != nullptr);
+        setVertexBuffer(threadIndex, *buffer);
       }
     }
   }
 
-  void RenderDriverGL::setTexture(unsigned int threadIndex, unsigned int textureUnit, const Texture2 & texture)
+  void RenderDriverGL::setTexture(unsigned int threadIndex, unsigned int textureUnit, const Texture & texture)
   {
     auto & textures = m_d->m_threadResources[threadIndex].textures;
     auto it = textures.find(texture.resourceId());

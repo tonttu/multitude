@@ -3,7 +3,7 @@
 
 namespace Luminous
 {
-  class Texture2::D
+  class Texture::D
   {
   public:
     uint8_t dimensions;
@@ -14,18 +14,18 @@ namespace Luminous
     const char * data;
   };
 
-  Texture2::Texture2()
+  Texture::Texture()
     : RenderResource(ResourceType_Texture)
-    , m_d(new Texture2::D())
+    , m_d(new Texture::D())
   {
   }
 
-  Texture2::~Texture2()
+  Texture::~Texture()
   {
     delete m_d;
   }
 
-  void Texture2::setData(unsigned int width, const PixelFormat & format, const char * data)
+  void Texture::setData(unsigned int width, const PixelFormat & format, const char * data)
   {
     m_d->dimensions = 1;
     m_d->width = width;
@@ -35,7 +35,7 @@ namespace Luminous
     invalidate();
   }
 
-  void Texture2::setData(unsigned int width, unsigned int height, const PixelFormat & format, const char * data)
+  void Texture::setData(unsigned int width, unsigned int height, const PixelFormat & format, const char * data)
   {
     m_d->dimensions = 2;
     m_d->width = width;
@@ -46,7 +46,7 @@ namespace Luminous
     invalidate();
   }
 
-  void Texture2::setData(unsigned int width, unsigned int height, unsigned int depth, const PixelFormat & format, const char * data)
+  void Texture::setData(unsigned int width, unsigned int height, unsigned int depth, const PixelFormat & format, const char * data)
   {
     m_d->dimensions = 3;
     m_d->width = width;
@@ -57,10 +57,10 @@ namespace Luminous
     invalidate();
   }
 
-  uint8_t Texture2::dimensions() const { return m_d->dimensions; }
-  unsigned int Texture2::width() const { return m_d->width; }
-  unsigned int Texture2::height() const { return m_d->height; }
-  unsigned int Texture2::depth() const { return m_d->depth; }
-  const PixelFormat & Texture2::format() const { return m_d->format; }
-  const char * Texture2::data() const { return m_d->data;}
+  uint8_t Texture::dimensions() const { return m_d->dimensions; }
+  unsigned int Texture::width() const { return m_d->width; }
+  unsigned int Texture::height() const { return m_d->height; }
+  unsigned int Texture::depth() const { return m_d->depth; }
+  const PixelFormat & Texture::format() const { return m_d->format; }
+  const char * Texture::data() const { return m_d->data;}
 }

@@ -6,7 +6,7 @@
 
 namespace Luminous
 {
-  class Texture2 : public RenderResource
+  class Texture : public RenderResource
   {
   public:
     enum Filter {
@@ -15,8 +15,8 @@ namespace Luminous
     };
     
   public:
-    LUMINOUS_API Texture2();
-    LUMINOUS_API ~Texture2();
+    LUMINOUS_API Texture();
+    LUMINOUS_API ~Texture();
 
     LUMINOUS_API void setData(unsigned int width, const PixelFormat & format, const char * data);
     LUMINOUS_API void setData(unsigned int width, unsigned int height, const PixelFormat & format, const char * data);

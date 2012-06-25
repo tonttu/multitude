@@ -24,24 +24,33 @@ namespace {
 
 namespace Luminous
 {
-  //////////////////////////////////////////////////////////////////////////
-  // ShaderGLSL
-  class ShaderGLSL::D {
+  class ShaderGLSL::D
+  {
   public:
-    D(ShaderType type)
-      : type(type)
+    struct Data
     {
+      ShaderGLSL * owner;
+      ShaderType type;
+      QString text;
+    };
+    typedef std::shared_ptr<ShaderGLSL::D::Data> DataPtr;
+
+  public:
+    D(ShaderGLSL * owner, ShaderType type)
+    {
+      data = std::make_shared<Data>();
+      data->owner = owner;
+      data->type = type;
     }
 
-  public:
-    ShaderType type;
-    QString text;
+    DataPtr data;
   };
 
-
+  //////////////////////////////////////////////////////////////////////////
+  // ShaderGLSL
   ShaderGLSL::ShaderGLSL(ShaderType type)
     : RenderResource(getResourceType(type))
-    , m_d(new ShaderGLSL::D(type))
+    , m_d(new ShaderGLSL::D(this, type))
   {
   }
 
@@ -52,7 +61,7 @@ namespace Luminous
 
   void ShaderGLSL::setText(const QString & text)
   {
-    m_d->text = text;
+    m_d->data->text = text;
     invalidate();
   }
 
@@ -63,25 +72,25 @@ namespace Luminous
       Radiant::warning("ShaderGLSL: Unable to open shader file %s", filename.toAscii().data());
       return;
     }
-    m_d->text = shaderFile.readAll();
+    m_d->data->text = shaderFile.readAll();
     invalidate();
   }
 
   const QString & ShaderGLSL::text() const
   {
-    return m_d->text;
+    return m_d->data->text;
   }
 
   ShaderType ShaderGLSL::type() const
   {
-    return m_d->type;
+    return m_d->data->type;
   }
 
   //////////////////////////////////////////////////////////////////////////
   // ShaderProgram
   class ShaderProgram::D {
   public:
-    typedef std::vector< std::shared_ptr<ShaderGLSL> > ShaderList;
+    typedef std::vector< std::shared_ptr<ShaderGLSL::D::Data> > ShaderList;
     ShaderList shaders;
   };
 
@@ -89,7 +98,6 @@ namespace Luminous
     : RenderResource(ResourceType_ShaderProgram)
     , m_d(new ShaderProgram::D())
   {
-
   }
 
   ShaderProgram::~ShaderProgram()
@@ -97,15 +105,18 @@ namespace Luminous
     delete m_d;
   }
 
-  void ShaderProgram::addShader(const std::shared_ptr<ShaderGLSL> & shader)
+  void ShaderProgram::addShader(const ShaderGLSL & shader)
   {
-    m_d->shaders.push_back(shader);
+    auto ShaderGLSLPtr = shader.m_d->data;
+    m_d->shaders.push_back(ShaderGLSLPtr);
     invalidate();
   }
 
-  void ShaderProgram::removeShader(const std::shared_ptr<ShaderGLSL> & shader)
+  void ShaderProgram::removeShader(const ShaderGLSL & shader)
   {
-    D::ShaderList::iterator it = std::remove(m_d->shaders.begin(), m_d->shaders.end(), shader);
+    auto ShaderGLSLPtr = shader.m_d->data;
+
+    D::ShaderList::iterator it = std::remove(m_d->shaders.begin(), m_d->shaders.end(), ShaderGLSLPtr);
     m_d->shaders.erase(it, m_d->shaders.end());
     invalidate();
   }
@@ -115,9 +126,9 @@ namespace Luminous
     return m_d->shaders.size();
   }
 
-  const std::shared_ptr<ShaderGLSL> & ShaderProgram::shader(size_t index) const
+  const ShaderGLSL & ShaderProgram::shader(size_t index) const
   {
     assert(index < shaderCount());
-    return m_d->shaders[index];
+    return *((m_d->shaders[index])->owner);
   }
 }

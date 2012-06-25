@@ -27,9 +27,9 @@ namespace Luminous
     LUMINOUS_API virtual void clear(ClearMask mask, const Radiant::Color & color = Radiant::Color(0.f,0.f,0.f,1.f), double depth = 0, int stencil = 0) = 0;
 
     // Draw primitives
-    LUMINOUS_API virtual void draw(PrimitiveType type, size_t primitives, size_t offset) = 0;
+    LUMINOUS_API virtual void draw(PrimitiveType type, unsigned int offset, unsigned int primitives) = 0;
     // Draw indexed primitives
-    LUMINOUS_API virtual void drawIndexed(PrimitiveType type, size_t primitives, size_t offset) = 0;
+    LUMINOUS_API virtual void drawIndexed(PrimitiveType type, unsigned int offset, unsigned int primitives) = 0;
 
     // Threaded calls
     LUMINOUS_API virtual void preFrame(unsigned int threadIndex) = 0;
@@ -37,17 +37,17 @@ namespace Luminous
 
     // Shaders
     /// @note Can't do this with templates since they're pure virtual and require different implementation per datatype
-    LUMINOUS_API virtual bool setShaderConstant(unsigned int threadIndex, const QString & name, const int & value) = 0;
-    LUMINOUS_API virtual bool setShaderConstant(unsigned int threadIndex, const QString & name, const float & value) = 0;
-    LUMINOUS_API virtual bool setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Vector2i & value) = 0;
-    LUMINOUS_API virtual bool setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Vector3i & value) = 0;
-    LUMINOUS_API virtual bool setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Vector4i & value) = 0;
-    LUMINOUS_API virtual bool setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Vector2f & value) = 0;
-    LUMINOUS_API virtual bool setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Vector3f & value) = 0;
-    LUMINOUS_API virtual bool setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Vector4f & value) = 0;
-    LUMINOUS_API virtual bool setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Matrix2f & value) = 0;
-    LUMINOUS_API virtual bool setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Matrix3f & value) = 0;
-    LUMINOUS_API virtual bool setShaderConstant(unsigned int threadIndex, const QString & name, const Nimble::Matrix4f & value) = 0;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const int & value) = 0;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const float & value) = 0;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Vector2i & value) = 0;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Vector3i & value) = 0;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Vector4i & value) = 0;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Vector2f & value) = 0;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Vector3f & value) = 0;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Vector4f & value) = 0;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Matrix2f & value) = 0;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Matrix3f & value) = 0;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Matrix4f & value) = 0;
     LUMINOUS_API virtual void setShaderProgram(unsigned int threadIndex, const ShaderProgram & shader) = 0;
 
     // Buffer objects
@@ -59,7 +59,7 @@ namespace Luminous
     LUMINOUS_API virtual void setVertexBinding(unsigned int threadIndex, const VertexAttributeBinding & binding) = 0;
 
     // Texturing
-    LUMINOUS_API virtual void setTexture(unsigned int threadIndex, unsigned int textureUnit, const Texture2 & texture) = 0;
+    LUMINOUS_API virtual void setTexture(unsigned int threadIndex, unsigned int textureUnit, const Texture & texture) = 0;
 
     //
     LUMINOUS_API virtual void clearState(unsigned int threadIndex) = 0;

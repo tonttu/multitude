@@ -30,11 +30,17 @@ namespace Luminous
     LUMINOUS_API RenderManager(Luminous::RenderDriver & driver);
     LUMINOUS_API ~RenderManager();
 
-    LUMINOUS_API RenderResource::Id createResource();
+    LUMINOUS_API RenderResource::Id createResource(RenderResource * resource);
     LUMINOUS_API void destroyResource(RenderResource::Id id);
     LUMINOUS_API RenderDriver & driver();
 
     LUMINOUS_API static RenderManager & instance();
+
+    /// @todo Should we add these resourceId -> resource accessor(s)?
+    /// - Can't derive proper type from the resource so we need per-type accessors
+    /// - Must return naked pointer since requested ID might not exist anymore (we don't have a weak_ptr/shared_ptr here)
+    LUMINOUS_API static HardwareBuffer * getBuffer( RenderResource::Id id );
+    LUMINOUS_API static VertexDescription * getVertexDescription( RenderResource::Id id );
   private:
     class D;
     D * m_d;

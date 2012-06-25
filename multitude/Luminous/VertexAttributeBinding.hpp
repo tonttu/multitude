@@ -3,8 +3,6 @@
 
 #include "Luminous/Luminous.hpp"
 #include "Luminous/RenderResource.hpp"
-#include "Luminous/HardwareBuffer.hpp"
-#include "Luminous/VertexDescription.hpp"
 
 #include <Radiant/RefPtr.hpp>
 #include <vector>
@@ -17,15 +15,17 @@ namespace Luminous
   public:
     struct Binding
     {
-      std::shared_ptr<HardwareBuffer> buffer;
-      std::shared_ptr<VertexDescription> description;
+      RenderResource::Id buffer;
+      RenderResource::Id description;
+      bool operator==(RenderResource::Id id) const { return buffer==id; }
     };
+
   public:
     LUMINOUS_API VertexAttributeBinding();
     LUMINOUS_API ~VertexAttributeBinding();
 
-    LUMINOUS_API void addBinding(const std::shared_ptr<HardwareBuffer> & buffer, const std::shared_ptr<VertexDescription> & description);
-    LUMINOUS_API void removeBinding(const std::shared_ptr<HardwareBuffer> & buffer);
+    LUMINOUS_API void addBinding(const HardwareBuffer & buffer, const VertexDescription & description);
+    LUMINOUS_API void removeBinding(const HardwareBuffer & buffer);
     LUMINOUS_API void clear();
 
     LUMINOUS_API size_t bindingCount() const;

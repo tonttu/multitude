@@ -15,9 +15,8 @@
 
 #include "RenderManager.hpp"
 #include "RenderDriver.hpp"
-#include "HardwareBuffer.hpp"
-#include "ShaderProgram.hpp"
-#include "Texture2.hpp"
+
+#include <map>
 
 namespace Luminous
 {
@@ -29,9 +28,12 @@ namespace Luminous
     {
     }
 
-    RenderResource::Id resourceId;
-    Luminous::RenderDriver & driver;
-    static RenderManager * s_instance;
+    typedef std::map<RenderResource::Id, RenderResource *> ResourceMap;
+    ResourceMap resourceMap;
+
+    RenderResource::Id resourceId;      // Next available resource ID
+    Luminous::RenderDriver & driver;    // Currently used driver
+    static RenderManager * s_instance;  // Singleton instance
   };
 
   RenderManager * RenderManager::D::s_instance = 0;
@@ -51,13 +53,16 @@ namespace Luminous
     RenderManager::D::s_instance = 0;
   }
 
-  RenderResource::Id RenderManager::createResource()
+  RenderResource::Id RenderManager::createResource(RenderResource * resource)
   {
-    return m_d->resourceId++;
+    auto id = m_d->resourceId++;
+    m_d->resourceMap[id] = resource;
+    return id;
   }
 
   void RenderManager::destroyResource(RenderResource::Id id)
   {
+    m_d->resourceMap.erase(id);
     m_d->driver.releaseResource(id);
   }
 
@@ -71,4 +76,20 @@ namespace Luminous
     assert(RenderManager::D::s_instance != 0);
     return *RenderManager::D::s_instance;
   }  
+
+  HardwareBuffer * RenderManager::getBuffer( RenderResource::Id id )
+  {
+    auto buffer = RenderManager::instance().m_d->resourceMap.find(id);
+    if (buffer != std::end(RenderManager::instance().m_d->resourceMap))
+      return reinterpret_cast<HardwareBuffer*>(buffer->second);
+    return nullptr;
+  }
+
+  VertexDescription * RenderManager::getVertexDescription( RenderResource::Id id )
+  {
+    auto descr = RenderManager::instance().m_d->resourceMap.find(id);
+    if (descr != std::end(RenderManager::instance().m_d->resourceMap))
+      return reinterpret_cast<VertexDescription*>(descr->second);
+    return nullptr;
+  }
 }

@@ -5,7 +5,6 @@
 #define LUMINOUS_RENDERCONTEXT_HPP
 
 #include <Luminous/Luminous.hpp>
-
 // <Luminousv2>
 #include <Luminous/RenderDriver.hpp>
 // </Luminousv2>
@@ -424,18 +423,15 @@ namespace Luminous
 
     unsigned int threadIndex() const;
 
-    /// Begin a command list
-    void beginCommands();
-    /// End a command list
-    void endCommands();
+    void setBuffer(BufferType type, const Luminous::HardwareBuffer & buffer);
+    void setTexture(const QString & name, const Luminous::Texture & texture);
+    void setTexture(unsigned int textureUnit, const Luminous::Texture & texture);
+    void setVertexBinding(const VertexAttributeBinding & binding);
+    void setShaderProgram(const ShaderProgram & program);
+    template <typename T> bool setShaderUniform(const QString & name, const T & value);
 
-    void setBuffer(BufferType type, const std::shared_ptr<Luminous::HardwareBuffer> & buffer);
-    void setTexture(const QString & name, const std::shared_ptr<Luminous::Texture2> & texture);
-    void setVertexBinding(const std::shared_ptr<VertexAttributeBinding> & binding);
-    void setShaderProgram(const std::shared_ptr<ShaderProgram> & program);
-    template <typename T> bool setShaderConstant(const QString & name, const T & value);
-
-    void draw(PrimitiveType primType, unsigned int offset, unsigned int vertexCount);
+    void draw(PrimitiveType primType, unsigned int offset, unsigned int primitives);
+    void drawIndexed(PrimitiveType primType, unsigned int offset, unsigned int primitives);
 
     //////////////////////////////////////////////////////////////////////////
     /// </Luminousv2>
