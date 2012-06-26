@@ -34,7 +34,7 @@ namespace Luminous
 
     LUMINOUS_API virtual void setVertexBuffer(unsigned int threadIndex, const HardwareBuffer & buffer) OVERRIDE;
     LUMINOUS_API virtual void setIndexBuffer(unsigned int threadIndex, const HardwareBuffer & buffer) OVERRIDE;
-    LUMINOUS_API virtual void setConstantBuffer(unsigned int threadIndex, const HardwareBuffer & buffer) OVERRIDE;
+    LUMINOUS_API virtual void setUniformBuffer(unsigned int threadIndex, const HardwareBuffer & buffer) OVERRIDE;
 
     LUMINOUS_API virtual void setVertexBinding(unsigned int threadIndex, const VertexAttributeBinding & binding) OVERRIDE;
     

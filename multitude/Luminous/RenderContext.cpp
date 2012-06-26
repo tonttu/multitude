@@ -1862,7 +1862,7 @@ namespace Luminous
     {
     case BufferType_Vertex: m_data->m_driver.setVertexBuffer(threadIndex(), buffer); break;
     case BufferType_Index: m_data->m_driver.setIndexBuffer(threadIndex(), buffer); break;
-    case BufferType_Constant: m_data->m_driver.setConstantBuffer(threadIndex(), buffer); break;
+    case BufferType_Constant: m_data->m_driver.setUniformBuffer(threadIndex(), buffer); break;
     default:
       assert(false);
       Radiant::error("RenderContext::setBuffer - Buffertype %d not implemented", type);

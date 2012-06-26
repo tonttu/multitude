@@ -109,10 +109,10 @@ namespace Luminous
     {
     case ResourceType_VertexArray:    glDeleteVertexArrays(1, &resource); break;
     case ResourceType_Buffer:         glDeleteBuffers(1, &resource); break;
-    case ResourceType_ShaderProgram:  return glDeleteProgram(resource); break;
-    case ResourceType_VertexShader:   return glDeleteShader(resource); break;
-    case ResourceType_FragmentShader: return glDeleteShader(resource); break;
-    case ResourceType_GeometryShader: return glDeleteShader(resource); break;
+    case ResourceType_ShaderProgram:  glDeleteProgram(resource); break;
+    case ResourceType_VertexShader:   glDeleteShader(resource); break;
+    case ResourceType_FragmentShader: glDeleteShader(resource); break;
+    case ResourceType_GeometryShader: glDeleteShader(resource); break;
     case ResourceType_Texture:        glDeleteTextures(1, & resource); break;
     default:
       Radiant::error("RenderDriverGL: Can't destroy GL resource: unknown type %d", type);

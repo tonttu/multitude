@@ -30,6 +30,15 @@
 namespace Luminous
 {
   //////////////////////////////////////////////////////////////////////////
+  // Configuration
+
+  /// PCIe bandwidth
+  /// PCIe 1.0 x16: 4GB/sec (2001)
+  /// PCIe 2.0 x16: 8GB/sec (2007)
+  /// PCIe 3.0 x16: 15.8GB/sec (2011)
+  static const int64_t upload_bytes_limit = ((uint64_t)4 << 30);
+
+  //////////////////////////////////////////////////////////////////////////
   /// Resource handles
   template <typename T>
   struct ResourceHandle
@@ -81,12 +90,6 @@ namespace Luminous
   typedef ResourceHandle<VertexAttributeBinding> BindingHandle;
   typedef ResourceHandle<VertexDescription> DescriptionHandle;
 
-  /// PCIe bandwidth
-  /// PCIe 1.0 x16: 4GB/sec (2001)
-  /// PCIe 2.0 x16: 8GB/sec (2007)
-  /// PCIe 3.0 x16: 15.8GB/sec (2011)
-  static const int64_t upload_bytes_limit = ((uint64_t)4 << 30);
-
   //////////////////////////////////////////////////////////////////////////
   // RenderDriver implementation
   class RenderDriverGL::D
@@ -104,6 +107,7 @@ namespace Luminous
     {
       ThreadState()
         : currentProgram(nullptr)
+        , currentBinding(0)
       {
         reset();
       }
@@ -118,7 +122,8 @@ namespace Luminous
       typedef std::vector<GLuint> AttributeList;
       AttributeList activeAttributes;
 
-      const ProgramHandle * currentProgram;           // Currently bound shader program
+      const ProgramHandle * currentProgram;  // Currently bound shader program
+      GLuint currentBinding;  // Currently bound vertex binding
 
       /// Resources
       ProgramList programs;
@@ -498,7 +503,7 @@ namespace Luminous
     m_d->bindBuffer(threadIndex, GL_ELEMENT_ARRAY_BUFFER, buffer);
   }
 
-  void RenderDriverGL::setConstantBuffer(unsigned int threadIndex, const HardwareBuffer & buffer)
+  void RenderDriverGL::setUniformBuffer(unsigned int threadIndex, const HardwareBuffer & buffer)
   {
     m_d->bindBuffer(threadIndex, GL_UNIFORM_BUFFER_EXT, buffer);
   }
@@ -533,8 +538,11 @@ namespace Luminous
     }
     else {
       /// @todo Avoid double binding, since it can be pretty expensive
-      glBindVertexArray(bindingHandle.handle);
-      GLERROR("RenderDriverGL::Bind VertexAttributeBinding bind");
+      if (m_d->m_threadResources[threadIndex].currentBinding != bindingHandle.handle) {
+        glBindVertexArray(bindingHandle.handle);
+        GLERROR("RenderDriverGL::Bind VertexAttributeBinding bind");
+        m_d->m_threadResources[threadIndex].currentBinding = bindingHandle.handle;
+      }
 
       // Make sure the buffers get updated if necessary
       for (size_t i = 0; i < binding.bindingCount(); ++i) {

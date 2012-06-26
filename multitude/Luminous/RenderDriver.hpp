@@ -22,8 +22,7 @@ namespace Luminous
   public:
     virtual ~RenderDriver() {}
 
-    /// Targets
-    // LUMINOUS_API virtual void setTarget( RenderTarget & target);
+    // Clear the current rendertarget
     LUMINOUS_API virtual void clear(ClearMask mask, const Radiant::Color & color = Radiant::Color(0.f,0.f,0.f,1.f), double depth = 0, int stencil = 0) = 0;
 
     // Draw primitives
@@ -31,8 +30,9 @@ namespace Luminous
     // Draw indexed primitives
     LUMINOUS_API virtual void drawIndexed(PrimitiveType type, unsigned int offset, unsigned int primitives) = 0;
 
-    // Threaded calls
+    // Called at the beginning of every frame
     LUMINOUS_API virtual void preFrame(unsigned int threadIndex) = 0;
+    // Called at the end of every frame
     LUMINOUS_API virtual void postFrame(unsigned int threadIndex) = 0;
 
     // Shaders
@@ -50,27 +50,32 @@ namespace Luminous
     LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Matrix4f & value) = 0;
     LUMINOUS_API virtual void setShaderProgram(unsigned int threadIndex, const ShaderProgram & shader) = 0;
 
-    // Buffer objects
+    // Bind a hardwarebuffer for use as a vertex buffer
     LUMINOUS_API virtual void setVertexBuffer(unsigned int threadIndex, const HardwareBuffer & buffer) = 0;
+    // Bind a hardwarebuffer for use as an index buffer
     LUMINOUS_API virtual void setIndexBuffer(unsigned int threadIndex, const HardwareBuffer & buffer) = 0;
-    LUMINOUS_API virtual void setConstantBuffer(unsigned int threadIndex, const HardwareBuffer & buffer) = 0;
+    // Bind a hardwarebuffer for use as a uniform buffer
+    LUMINOUS_API virtual void setUniformBuffer(unsigned int threadIndex, const HardwareBuffer & buffer) = 0;
 
+    // Setup the vertexbuffers and attributes
     LUMINOUS_API virtual void setVertexBinding(unsigned int threadIndex, const VertexAttributeBinding & binding) = 0;
 
     // Texturing
     LUMINOUS_API virtual void setTexture(unsigned int threadIndex, unsigned int textureUnit, const Texture & texture) = 0;
 
-    //
+    // Reset the renderstate to its default
     LUMINOUS_API virtual void clearState(unsigned int threadIndex) = 0;
 
+    // Enable/disable renderbuffers
     LUMINOUS_API virtual void setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer) = 0;
 
-    // Factory
+    // Driver factory
     LUMINOUS_API static std::shared_ptr<RenderDriver> createInstance(unsigned int renderThreads);
 
   private:
     // Not exported, should only be used by the render manager
     friend class RenderManager;
+    // Marks a resource as deleted, queuing it for removal on GPU
     virtual void releaseResource(RenderResource::Id id) = 0;
   };
 }
