@@ -424,11 +424,11 @@ namespace Luminous
     unsigned int threadIndex() const;
 
     void setBuffer(BufferType type, const Luminous::HardwareBuffer & buffer);
-    void setTexture(const QString & name, const Luminous::Texture & texture);
+    void setTexture(const char * name, const Luminous::Texture & texture);
     void setTexture(unsigned int textureUnit, const Luminous::Texture & texture);
     void setVertexBinding(const VertexAttributeBinding & binding);
     void setShaderProgram(const ShaderProgram & program);
-    template <typename T> bool setShaderUniform(const QString & name, const T & value);
+    template <typename T> bool setShaderUniform(const char * name, const T & value);
 
     void draw(PrimitiveType primType, unsigned int offset, unsigned int primitives);
     void drawIndexed(PrimitiveType primType, unsigned int offset, unsigned int primitives);

@@ -1869,10 +1869,10 @@ namespace Luminous
     }
   }
 
-  void RenderContext::setTexture(const QString & name, const Luminous::Texture & texture)
+  void RenderContext::setTexture(const char * name, const Luminous::Texture & texture)
   {
     /// @todo do some smart texture unit allocation management
-    setTexture(0, texture);
+    setTexture((unsigned int)0, texture);
     m_data->m_driver.setShaderUniform(threadIndex(), name, 0);
   }
 
@@ -1909,7 +1909,7 @@ namespace Luminous
 
   // Create all the setters for shader constants
 #define SETSHADERUNIFORM(TYPE) \
-  template<> LUMINOUS_API bool RenderContext::setShaderUniform(const QString & name, const TYPE & value) \
+  template<> LUMINOUS_API bool RenderContext::setShaderUniform(const char * name, const TYPE & value) \
   { \
     return m_data->m_driver.setShaderUniform(threadIndex(), name, value); \
   }
@@ -1927,7 +1927,7 @@ namespace Luminous
 #undef SETSHADERUNIFORM
 
   // Manual conversion: Radiant::Color > Nimble::Vector4f
-  template<> LUMINOUS_API bool RenderContext::setShaderUniform(const QString & name, const Radiant::Color & value)
+  template<> LUMINOUS_API bool RenderContext::setShaderUniform(const char * name, const Radiant::Color & value)
   {
     return m_data->m_driver.setShaderUniform(threadIndex(), name, static_cast<Nimble::Vector4f>(value));
   }

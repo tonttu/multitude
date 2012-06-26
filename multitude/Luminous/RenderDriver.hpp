@@ -37,17 +37,17 @@ namespace Luminous
 
     // Shaders
     /// @note Can't do this with templates since they're pure virtual and require different implementation per datatype
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const int & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const float & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Vector2i & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Vector3i & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Vector4i & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Vector2f & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Vector3f & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Vector4f & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Matrix2f & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Matrix3f & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const QString & name, const Nimble::Matrix4f & value) = 0;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const int & value) = 0;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const float & value) = 0;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const Nimble::Vector2i & value) = 0;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const Nimble::Vector3i & value) = 0;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const Nimble::Vector4i & value) = 0;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const Nimble::Vector2f & value) = 0;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const Nimble::Vector3f & value) = 0;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const Nimble::Vector4f & value) = 0;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const Nimble::Matrix2f & value) = 0;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const Nimble::Matrix3f & value) = 0;
+    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const Nimble::Matrix4f & value) = 0;
     LUMINOUS_API virtual void setShaderProgram(unsigned int threadIndex, const ShaderProgram & shader) = 0;
 
     // Bind a hardwarebuffer for use as a vertex buffer
