@@ -55,7 +55,6 @@ namespace Luminous
     LUMINOUS_API virtual void setIndexBuffer(unsigned int threadIndex, const HardwareBuffer & buffer) = 0;
     LUMINOUS_API virtual void setConstantBuffer(unsigned int threadIndex, const HardwareBuffer & buffer) = 0;
 
-    LUMINOUS_API virtual void setVertexDescription(unsigned int threadIndex, const VertexDescription & description) = 0;
     LUMINOUS_API virtual void setVertexBinding(unsigned int threadIndex, const VertexAttributeBinding & binding) = 0;
 
     // Texturing
@@ -63,6 +62,8 @@ namespace Luminous
 
     //
     LUMINOUS_API virtual void clearState(unsigned int threadIndex) = 0;
+
+    LUMINOUS_API virtual void setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer) = 0;
 
     // Factory
     LUMINOUS_API static std::shared_ptr<RenderDriver> createInstance(unsigned int renderThreads);

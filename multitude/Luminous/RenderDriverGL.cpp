@@ -31,27 +31,29 @@ namespace Luminous
 {
   //////////////////////////////////////////////////////////////////////////
   /// Resource handles
-  struct BufferHandle
+  template <typename T>
+  struct ResourceHandle
   {
-    BufferHandle() : handle(0), generation(0), usage(BufferUsage_Static_Draw), size(0), uploaded(0) {}
-    
-    HardwareBuffer * buffer;
+    ResourceHandle(const T * ptr = nullptr) : resource(ptr), handle(0), generation(0) { if (ptr) type = ptr->resourceType(); }
+    ResourceType type;
+    const T * resource;
+    Radiant::Timer lastUsed;
     GLuint handle;
     uint64_t generation;
-    BufferUsage usage;
-
-    size_t size;      // Size (in bytes)
-    size_t uploaded;  // Uploaded bytes (for incremental upload)
   };
 
-  struct ProgramHandle
+  struct BufferHandle : public ResourceHandle<HardwareBuffer>
   {
-    ProgramHandle() : handle(0), generation(0) {}
+    BufferHandle(const HardwareBuffer * ptr = nullptr) : ResourceHandle(ptr), usage(BufferUsage_Static_Draw), size(0), uploaded(0) {}
+    
+    BufferUsage usage;
+    size_t size;        // Size (in bytes)
+    size_t uploaded;    // Uploaded bytes (for incremental upload)
+  };
 
-	ShaderProgram * program;
-    GLuint handle;
-    uint64_t generation;
-
+  struct ProgramHandle : public ResourceHandle<ShaderProgram>
+  {
+    ProgramHandle(const ShaderProgram * ptr = nullptr) : ResourceHandle(ptr) {}
     struct Variable {
       GLint location;
       GLenum type;
@@ -67,33 +69,23 @@ namespace Luminous
     ShaderList shaders;
   };
 
-  struct TextureHandle
+  struct TextureHandle : public ResourceHandle<Texture>
   {
-    TextureHandle() : handle(0), generation(0), size(0), uploaded(0) {}
-	Texture * texture;
-    GLuint handle;
-    uint64_t generation;
-
+    TextureHandle(const Texture * ptr = nullptr) : ResourceHandle(ptr), size(0), uploaded(0) {}
     size_t size;      // Total size (in bytes)
     size_t uploaded;  // Bytes uploaded (for incremental uploading)
   };
 
   // Generic handle
-  template <typename ResourceType>
-  struct ResourceHandle
-  {
-    ResourceHandle() : handle(0), generation(0), resource(0) {}
-    ResourceType * resource;
-    GLuint handle;
-    uint64_t generation;
-  };
   typedef ResourceHandle<ShaderGLSL> ShaderHandle;
   typedef ResourceHandle<VertexAttributeBinding> BindingHandle;
   typedef ResourceHandle<VertexDescription> DescriptionHandle;
 
-
-  /// 8 GB/sec upload limit is the bandwidth of PCIe 16x 2.0 (since 2007)
-  static const int64_t upload_bytes_limit = 1024*1024*1024;
+  /// PCIe bandwidth
+  /// PCIe 1.0 x16: 4GB/sec (2001)
+  /// PCIe 2.0 x16: 8GB/sec (2007)
+  /// PCIe 3.0 x16: 15.8GB/sec (2011)
+  static const int64_t upload_bytes_limit = ((uint64_t)4 << 30);
 
   //////////////////////////////////////////////////////////////////////////
   // RenderDriver implementation
@@ -137,7 +129,8 @@ namespace Luminous
       DescriptionList descriptions;
 
       // Resources to be released
-      std::vector<RenderResource::Id> releaseQueue;
+      typedef std::vector<RenderResource::Id> ReleaseQueue;
+      ReleaseQueue releaseQueue;
 
       /// Render statistics
       int32_t uploadedBytes;
@@ -151,19 +144,59 @@ namespace Luminous
       : m_threadResources(threadCount)
     {}
 
+    void setVertexAttributes(unsigned int threadIndex, const VertexAttributeBinding & binding)
+    {
+      // Bind all vertex buffers
+      for (size_t i = 0; i < binding.bindingCount(); ++i) {
+        VertexAttributeBinding::Binding b = binding.binding(i);
+        // Attach buffer
+        auto * buffer = RenderManager::getBuffer(b.buffer);
+        auto * descr = RenderManager::getVertexDescription(b.description);
+        assert(buffer != nullptr && descr != nullptr);
+        bindBuffer(threadIndex, GL_ARRAY_BUFFER, *buffer);
+        setVertexDescription(threadIndex, *descr);
+      }
+    }
+
+    void setVertexDescription(unsigned int threadIndex, const VertexDescription & description)
+    {
+      // Set buffer attributes from its bound VertexDescription
+      for (size_t attrIndex = 0; attrIndex < description.attributeCount(); ++attrIndex) {
+        VertexAttribute attr = description.attribute(attrIndex);
+
+        auto & attributes = m_threadResources[threadIndex].currentProgram->attributes;
+        auto location = attributes.find(attr.name);
+        if (location == std::end(attributes)) {
+          Radiant::warning("Unable to bind vertex attribute %s", attr.name.toAscii().data());
+        }
+        else {
+          GLenum normalized = (attr.normalized ? GL_TRUE : GL_FALSE);
+          GLenum type = GLUtils::getDataType(attr.type);
+
+          /// @todo Warn if there's a type/count mismatch between the cached versions (in the ShaderHandle) and what we're trying to do
+          glVertexAttribPointer(location->second.location, attr.count, type, normalized, description.vertexSize(), reinterpret_cast<GLvoid *>(attr.offset));
+          glEnableVertexAttribArray(location->second.location);
+          GLERROR("RenderDriverGL::Bind VertexAttributeBinding vertexAttribPointer");
+        }
+      }
+    }
+
     void bindBuffer(unsigned int threadIndex, GLenum bufferTarget, const HardwareBuffer & buffer)
     {
       auto & buffers = m_threadResources[threadIndex].buffers;
       auto it = buffers.find(buffer.resourceId());
-      BufferHandle bufferHandle;
+      BufferHandle bufferHandle(&buffer);
       if (it == std::end(buffers))
         bufferHandle.handle = GLUtils::createResource(ResourceType_Buffer);
       else
         bufferHandle = it->second;
 
+      // Reset usage timer
+      bufferHandle.lastUsed.start();
+
       glBindBuffer(bufferTarget, bufferHandle.handle);
       GLERROR("RenderDriverGL::Bind HardwareBuffer");
-      
+
       // Update if dirty
       if (bufferHandle.generation < buffer.generation()) {
         // Update or reallocate the resource
@@ -183,7 +216,27 @@ namespace Luminous
         bufferHandle.uploaded = buffer.size();
         bufferHandle.usage = buffer.usage();
       }
+      // Update cache
       buffers[buffer.resourceId()] = bufferHandle;
+    }
+
+    // Utility function for resource cleanup
+    template <typename ContainerType>
+    void removeResource(ContainerType & container, const ThreadState::ReleaseQueue & releaseQueue)
+    {
+      auto it = std::begin(container);
+      while (it != std::end(container)) {
+        if (std::find( std::begin(releaseQueue), std::end(releaseQueue), it->first) != std::end(releaseQueue) ||  // First, check if resource has been deleted
+          it->second.resource->expiration() > 0 && it->second.lastUsed.time() > it->second.resource->expiration())      // If not, we can check if it has expired
+        {
+          // Release the GL resource
+          GLUtils::destroyResource(it->second.type, it->second.handle);
+          // Remove from container
+          it = container.erase(it);
+        }
+        else
+          it++;
+      }
     }
 
   public:
@@ -243,26 +296,16 @@ namespace Luminous
     m_d->m_threadResources[threadIndex].uploadedBytes = 0;
     m_d->m_threadResources[threadIndex].frameTimer.start();
 
-#define RELEASE_ME(container, id) { \
-    auto iter = container.find(id); \
-    if (iter != std::end(container)) \
-      container.erase(iter); \
-    }
+    auto & r = m_d->m_threadResources[threadIndex];
 
     /// Clear out any released resources
-    auto & r = m_d->m_threadResources[threadIndex];
-    if (!r.releaseQueue.empty()) {
-      for (auto it = std::begin(r.releaseQueue); it != std::end(r.releaseQueue); ++it) {
-        RELEASE_ME(r.bindings, *it);
-        RELEASE_ME(r.buffers, *it);
-        RELEASE_ME(r.descriptions, *it);
-        RELEASE_ME(r.programs, *it);
-        RELEASE_ME(r.shaders, *it);
-        RELEASE_ME(r.textures, *it);
-      }
-      r.releaseQueue.clear();
-    }
-#undef RELEASE_ME
+    m_d->removeResource(r.bindings, r.releaseQueue);
+    m_d->removeResource(r.buffers, r.releaseQueue);
+    m_d->removeResource(r.descriptions, r.releaseQueue);
+    m_d->removeResource(r.programs, r.releaseQueue);
+    m_d->removeResource(r.shaders, r.releaseQueue);
+    m_d->removeResource(r.textures, r.releaseQueue);
+    r.releaseQueue.clear();
   }
 
   void RenderDriverGL::postFrame(unsigned int threadIndex)
@@ -316,7 +359,7 @@ namespace Luminous
   {
     auto & programList = m_d->m_threadResources[threadIndex].programs;
     auto it = programList.find(program.resourceId());
-    ProgramHandle programHandle;
+    ProgramHandle programHandle(&program);
     if (it == std::end(programList)) {
       /// New program: create it
       programHandle.handle = GLUtils::createResource(program.resourceType());
@@ -325,6 +368,9 @@ namespace Luminous
     else
       programHandle = it->second;
 
+    // Reset usage timer
+    programHandle.lastUsed.start();
+
     /// Tag if program needs relinking
     bool needsRelinking = (programHandle.generation < program.generation());
 
@@ -332,7 +378,7 @@ namespace Luminous
     auto & shaderList = m_d->m_threadResources[threadIndex].shaders;
     for (size_t i = 0; i < program.shaderCount(); ++i) {
       auto & shader = program.shader(i);
-      ShaderHandle shaderHandle;
+      ShaderHandle shaderHandle(&shader);
 
       // Find the correct shader
       auto it = shaderList.find(shader.resourceId());
@@ -344,6 +390,9 @@ namespace Luminous
       }
       else
         shaderHandle = it->second;
+
+      // Reset usage timer
+      shaderHandle.lastUsed.start();
 
       /// Check if it needs updating
       if (shaderHandle.generation < shader.generation()) {
@@ -454,38 +503,18 @@ namespace Luminous
     m_d->bindBuffer(threadIndex, GL_UNIFORM_BUFFER_EXT, buffer);
   }
 
-  void RenderDriverGL::setVertexDescription(unsigned int threadIndex, const VertexDescription & description)
-  {
-    // Set buffer attributes from its bound VertexDescription
-    for (size_t attrIndex = 0; attrIndex < description.attributeCount(); ++attrIndex) {
-      VertexAttribute attr = description.attribute(attrIndex);
-
-      auto & attributes = m_d->m_threadResources[threadIndex].currentProgram->attributes;
-      auto location = attributes.find(attr.name);
-      if (location == std::end(attributes)) {
-        Radiant::warning("Unable to bind vertex attribute %s", attr.name.toAscii().data());
-      }
-      else {
-        GLenum normalized = (attr.normalized ? GL_TRUE : GL_FALSE);
-        GLenum type = GLUtils::getDataType(attr.type);
-
-        /// @todo Warn if there's a type/count mismatch between the cached versions (in the ShaderHandle) and what we're trying to do
-        glVertexAttribPointer(location->second.location, attr.count, type, normalized, description.vertexSize(), reinterpret_cast<GLvoid *>(attr.offset));
-        glEnableVertexAttribArray(location->second.location);
-        GLERROR("RenderDriverGL::Bind VertexAttributeBinding vertexAttribPointer");
-      }
-    }
-  }
-
   void RenderDriverGL::setVertexBinding(unsigned int threadIndex, const VertexAttributeBinding & binding)
   {
     auto & bindings = m_d->m_threadResources[threadIndex].bindings;
     auto it = bindings.find(binding.resourceId());
-    BindingHandle bindingHandle;
+    BindingHandle bindingHandle(&binding);
     if (it == std::end(bindings))
       bindingHandle.handle = GLUtils::createResource(ResourceType_VertexArray);
     else
       bindingHandle = it->second;
+
+    // Reset usage timer
+    bindingHandle.lastUsed.start();
 
     /// @todo Recreate the VAO if the vertex description has changed
     if (bindingHandle.generation < binding.generation()) {
@@ -496,16 +525,8 @@ namespace Luminous
       glBindVertexArray(bindingHandle.handle);
       GLERROR("RenderDriverGL::Bind VertexAttributeBinding recreate");
 
-      // Bind all vertex buffers
-      for (size_t i = 0; i < binding.bindingCount(); ++i) {
-        VertexAttributeBinding::Binding b = binding.binding(i);
-        // Attach buffer
-        auto * buffer = RenderManager::getBuffer(b.buffer);
-        auto * descr = RenderManager::getVertexDescription(b.description);
-        assert(buffer != nullptr && descr != nullptr);
-        setVertexBuffer(threadIndex, *buffer);
-        setVertexDescription(threadIndex, *descr);
-      }
+      m_d->setVertexAttributes(threadIndex, binding);
+
       // Update cache
       bindingHandle.generation = binding.generation();
       bindings[binding.resourceId()] = bindingHandle;
@@ -529,11 +550,14 @@ namespace Luminous
   {
     auto & textures = m_d->m_threadResources[threadIndex].textures;
     auto it = textures.find(texture.resourceId());
-    TextureHandle textureHandle;
+    TextureHandle textureHandle(&texture);
     if (it == std::end(textures) )
       textureHandle.handle = GLUtils::createResource(ResourceType_Texture);
     else
       textureHandle = it->second;
+
+    // Reset usage timer
+    textureHandle.lastUsed.start();
 
     GLenum target;
     if (texture.dimensions() == 1)      target = GL_TEXTURE_1D;
@@ -551,6 +575,7 @@ namespace Luminous
     glBindTexture(target, textureHandle.handle);
 
     if (textureHandle.generation < texture.generation()) {
+      // Start the uploading
       textureHandle.uploaded = 0;
 
       if (texture.dimensions() == 1)      glTexImage1D(GL_TEXTURE_1D, 0, texture.format().layout(), texture.width(), 0, extFormat , texture.format().type(), nullptr );
@@ -615,6 +640,32 @@ namespace Luminous
   void RenderDriverGL::clearState(unsigned int threadIndex)
   {
     //m_d->m_threadResources[threadIndex].reset();
+  }
+
+/*
+  void RenderDriverGL::setStencilFunc( StencilFunc func )
+  {
+  }
+
+  void RenderDriverGL::setBlendFunction( BlendFunc func )
+  {
+  }
+*/
+
+  void RenderDriverGL::setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer)
+  {
+    // Color buffers
+    GLboolean color = (colorBuffer ? GL_TRUE : GL_FALSE);
+    glColorMask( color, color, color, color);
+
+    // Depth buffer
+    GLboolean depth = (depthBuffer ? GL_TRUE : GL_FALSE);
+    glDepthMask(depth);
+
+    // Stencil buffer
+    /// @todo Should we only draw for front-facing?
+    GLuint stencil = (stencilBuffer ? 0xff : 0x00);
+    glStencilMaskSeparate(GL_FRONT_AND_BACK, stencil);
   }
 
   void RenderDriverGL::releaseResource(RenderResource::Id id)
