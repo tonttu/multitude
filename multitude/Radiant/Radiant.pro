@@ -8,6 +8,7 @@ HEADERS += XWindow.hpp
 HEADERS += QtWindow.hpp
 HEADERS += WindowEventHook.hpp
 HEADERS += Flags.hpp
+HEADERS += Buffer.hpp
 HEADERS += Mime.hpp
 HEADERS += Timer.hpp
 HEADERS += TimerW32.hpp
