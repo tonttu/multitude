@@ -10,14 +10,14 @@ namespace Luminous
   {
     enum Type
     {
-      Byte,
-      Short,
-      Int,
-      Float,
-      Double,
-      UnsignedByte,
-      UnsignedShort,
-      UnsignedInt,
+      Byte          = GL_BYTE,
+      Short         = GL_SHORT,
+      Int           = GL_INT,
+      Float         = GL_FLOAT,
+      Double        = GL_DOUBLE,
+      UnsignedByte  = GL_UNSIGNED_BYTE,
+      UnsignedShort = GL_UNSIGNED_SHORT,
+      UnsignedInt   = GL_UNSIGNED_INT,
     };
 
     VertexAttribute()

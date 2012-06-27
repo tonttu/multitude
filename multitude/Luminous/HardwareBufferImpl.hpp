@@ -13,6 +13,7 @@ namespace Luminous
   public:
     struct Data
     {
+      Data() : owner(nullptr), size(0), data(nullptr), usage(HardwareBuffer::StaticDraw) {}
       HardwareBuffer * owner;
       size_t size;
       const char * data;

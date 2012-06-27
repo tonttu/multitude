@@ -131,11 +131,11 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////////
   enum PrimitiveType
   {
-    PrimitiveType_Triangle,
-    PrimitiveType_TriangleStrip,
-    PrimitiveType_Line,
-    PrimitiveType_LineStrip,
-    PrimitiveType_Point,
+    PrimitiveType_Triangle      = GL_TRIANGLES,
+    PrimitiveType_TriangleStrip = GL_TRIANGLE_STRIP,
+    PrimitiveType_Line          = GL_LINES,
+    PrimitiveType_LineStrip     = GL_LINE_STRIP,
+    PrimitiveType_Point         = GL_POINTS,
   };
 
   enum ClearMask
@@ -159,7 +159,7 @@ namespace Luminous
   class HardwareBuffer;
   class ShaderProgram;
   class ShaderGLSL;
-  class ShaderUniform;
+  struct ShaderUniform;
   class Texture;
 
   // Vertex data
