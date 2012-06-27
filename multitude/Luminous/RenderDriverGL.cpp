@@ -4,8 +4,8 @@
 #include "Luminous/VertexDescription.hpp"
 #include "Luminous/HardwareBuffer.hpp"
 #include "Luminous/ShaderProgram.hpp"
+#include "Luminous/ShaderUniform.hpp"
 #include "Luminous/Texture2.hpp"
-#include "Luminous/GLUtils.hpp"
 #include "Luminous/PixelFormat.hpp"
 #include "Luminous/Utils.hpp"   // glCheck
 
@@ -27,6 +27,110 @@
 # define GLERROR(txt)
 #endif
 
+// Since we got rid of GLEW on OSX...
+#ifdef RADIANT_OSX
+#define glDeleteVertexArrays glDeleteVertexArraysAPPLE
+#define glGenVertexArrays glGenVertexArraysAPPLE
+#endif
+
+namespace
+{  
+  /// Translate a PrimitiveType to its OpenGL equivalent
+  GLenum getPrimitiveType(Luminous::PrimitiveType type)
+  {
+    switch (type)
+    {
+    case Luminous::PrimitiveType_Triangle:      return GL_TRIANGLES;
+    case Luminous::PrimitiveType_TriangleStrip: return GL_TRIANGLE_STRIP;
+    case Luminous::PrimitiveType_Line:          return GL_LINES;
+    case Luminous::PrimitiveType_LineStrip:     return GL_LINE_STRIP;;
+    case Luminous::PrimitiveType_Point:         return GL_POINT;
+    default:
+      Radiant::warning("RenderDriverGL: Unknown primitive type (%d)", type);
+      assert(false);
+      return GL_TRIANGLES;
+    }
+  }
+
+  GLenum getUsageFlags(const Luminous::HardwareBuffer::Usage & usage)
+  {
+    switch (usage)
+    {
+    case Luminous::HardwareBuffer::StaticDraw:  return GL_STATIC_DRAW;
+    case Luminous::HardwareBuffer::StaticRead:   return GL_STATIC_READ;
+    case Luminous::HardwareBuffer::StaticCopy:   return GL_STATIC_COPY;
+
+    case Luminous::HardwareBuffer::StreamDraw:  return GL_STREAM_DRAW;
+    case Luminous::HardwareBuffer::StreamRead:   return GL_STREAM_READ;
+    case Luminous::HardwareBuffer::StreamCopy:   return GL_STREAM_COPY;
+
+    case Luminous::HardwareBuffer::DynamicDraw: return GL_DYNAMIC_DRAW;
+    case Luminous::HardwareBuffer::DynamicRead:  return GL_DYNAMIC_READ;
+    case Luminous::HardwareBuffer::DynamicCopy:  return GL_DYNAMIC_COPY;
+
+    default:
+      assert(false);
+      Radiant::error("Unknown buffer usage flag %d", usage);
+      return GL_STATIC_DRAW;
+    };
+  }
+
+  GLuint createResource(Luminous::RenderResource::Type type)
+  {
+    GLuint resource;
+    switch (type)
+    {
+    case Luminous::RenderResource::VertexArray:    glGenVertexArrays(1, &resource); return resource;
+    case Luminous::RenderResource::Buffer:         glGenBuffers(1, &resource); return resource;
+    case Luminous::RenderResource::ShaderProgram:  return glCreateProgram();
+    case Luminous::RenderResource::VertexShader:   return glCreateShader(GL_VERTEX_SHADER);
+    case Luminous::RenderResource::FragmentShader: return glCreateShader(GL_FRAGMENT_SHADER);
+    case Luminous::RenderResource::GeometryShader: return glCreateShader(GL_GEOMETRY_SHADER_EXT);
+    case Luminous::RenderResource::Texture:        glGenTextures(1, & resource); return resource;
+    default:
+      Radiant::error("RenderDriverGL: Can't create GL resource: unknown type %d", type);
+      assert(false);
+      return 0;
+    }
+  }
+
+  void destroyResource(Luminous::RenderResource::Type type, GLuint resource)
+  {
+    switch (type)
+    {
+    case Luminous::RenderResource::VertexArray:    glDeleteVertexArrays(1, &resource); break;
+    case Luminous::RenderResource::Buffer:         glDeleteBuffers(1, &resource); break;
+    case Luminous::RenderResource::ShaderProgram:  glDeleteProgram(resource); break;
+    case Luminous::RenderResource::VertexShader:   glDeleteShader(resource); break;
+    case Luminous::RenderResource::FragmentShader: glDeleteShader(resource); break;
+    case Luminous::RenderResource::GeometryShader: glDeleteShader(resource); break;
+    case Luminous::RenderResource::Texture:        glDeleteTextures(1, & resource); break;
+    default:
+      Radiant::error("RenderDriverGL: Can't destroy GL resource: unknown type %d", type);
+      assert(false);
+    }
+  }
+
+  GLenum getAttributeType(const Luminous::VertexAttribute & attr)
+  {
+    switch (attr.type)
+    {
+    case Luminous::VertexAttribute::Byte: return GL_BYTE;
+    case Luminous::VertexAttribute::Short: return GL_SHORT;
+    case Luminous::VertexAttribute::Int: return GL_INT;
+    case Luminous::VertexAttribute::UnsignedByte: return GL_UNSIGNED_BYTE;
+    case Luminous::VertexAttribute::UnsignedShort: return GL_UNSIGNED_SHORT;
+    case Luminous::VertexAttribute::UnsignedInt: return GL_UNSIGNED_INT;
+    case Luminous::VertexAttribute::Float: return GL_FLOAT;
+    case Luminous::VertexAttribute::Double: return GL_DOUBLE;
+    default:
+      Radiant::error("Unknown VertexAttribute data type %d", attr.type);
+      assert(false);
+      return GL_FLOAT;
+    }
+  }
+}
+
 namespace Luminous
 {
   //////////////////////////////////////////////////////////////////////////
@@ -44,7 +148,7 @@ namespace Luminous
   struct ResourceHandle
   {
     ResourceHandle(const T * ptr = nullptr) : resource(ptr), handle(0), generation(0) { if (ptr) type = ptr->resourceType(); }
-    ResourceType type;
+    RenderResource::Type type;
     const T * resource;
     Radiant::Timer lastUsed;
     GLuint handle;
@@ -53,9 +157,9 @@ namespace Luminous
 
   struct BufferHandle : public ResourceHandle<HardwareBuffer>
   {
-    BufferHandle(const HardwareBuffer * ptr = nullptr) : ResourceHandle(ptr), usage(BufferUsage_Static_Draw), size(0), uploaded(0) {}
+    BufferHandle(const HardwareBuffer * ptr = nullptr) : ResourceHandle(ptr), usage(HardwareBuffer::StaticDraw), size(0), uploaded(0) {}
     
-    BufferUsage usage;
+    HardwareBuffer::Usage usage;
     size_t size;        // Size (in bytes)
     size_t uploaded;    // Uploaded bytes (for incremental upload)
   };
@@ -158,7 +262,7 @@ namespace Luminous
         }
         else {
           GLenum normalized = (attr.normalized ? GL_TRUE : GL_FALSE);
-          GLenum type = GLUtils::getDataType(attr.type);
+          GLenum type = getAttributeType(attr);
 
           glVertexAttribPointer(location, attr.count, type, normalized, description.vertexSize(), reinterpret_cast<GLvoid *>(attr.offset));
           GLERROR("RenderDriverGL::Bind VertexAttributeBinding glVertexAttribPointer");
@@ -174,7 +278,7 @@ namespace Luminous
       auto it = buffers.find(buffer.resourceId());
       BufferHandle bufferHandle(&buffer);
       if (it == std::end(buffers))
-        bufferHandle.handle = GLUtils::createResource(ResourceType_Buffer);
+        bufferHandle.handle = createResource(RenderResource::Buffer);
       else
         bufferHandle = it->second;
 
@@ -189,7 +293,7 @@ namespace Luminous
         // Update or reallocate the resource
         /// @todo incremental upload
         if (buffer.size() != bufferHandle.size || buffer.usage() != bufferHandle.usage) {
-          glBufferData(bufferTarget, buffer.size(), buffer.data(), GLUtils::getUsageFlags(buffer));
+          glBufferData(bufferTarget, buffer.size(), buffer.data(), buffer.usage());
           GLERROR("RenderDriverGL::bindBuffer glBufferData");
         }
         else {
@@ -217,7 +321,7 @@ namespace Luminous
           it->second.resource->expiration() > 0 && it->second.lastUsed.time() > it->second.resource->expiration())      // If not, we can check if it has expired
         {
           // Release the GL resource
-          GLUtils::destroyResource(it->second.type, it->second.handle);
+          destroyResource(it->second.type, it->second.handle);
           // Remove from container
           it = container.erase(it);
         }
@@ -266,7 +370,7 @@ namespace Luminous
 
   void RenderDriverGL::draw(PrimitiveType type, unsigned int offset, unsigned int primitives)
   {
-    GLenum mode = GLUtils::getPrimitiveType(type);
+    GLenum mode = getPrimitiveType(type);
     glDrawArrays(mode, (GLint) offset, (GLsizei) primitives);
     GLERROR("RenderDriverGL::draw glDrawArrays");
   }
@@ -274,7 +378,7 @@ namespace Luminous
   void RenderDriverGL::drawIndexed(PrimitiveType type, unsigned int offset, unsigned int primitives)
   {
     /// @todo allow other index types (unsigned byte, unsigned short and unsigned int)
-    GLenum mode = GLUtils::getPrimitiveType(type);
+    GLenum mode = getPrimitiveType(type);
     glDrawElements(mode, (GLsizei) primitives, GL_UNSIGNED_INT, (const GLvoid *)((sizeof(uint) * offset)));
     GLERROR("RenderDriverGL::draw glDrawElements");
   }
@@ -348,7 +452,7 @@ namespace Luminous
     ProgramHandle programHandle(&program);
     if (it == std::end(programList)) {
       /// New program: create it
-      programHandle.handle = GLUtils::createResource(program.resourceType());
+      programHandle.handle = createResource(program.resourceType());
       programHandle.generation = 0;
     }
     else
@@ -370,7 +474,7 @@ namespace Luminous
       auto it = shaderList.find(shader.resourceId());
       if (it == std::end(shaderList)) {
         /// New shader: create it
-        shaderHandle.handle = GLUtils::createResource(shader.resourceType());
+        shaderHandle.handle = createResource(shader.resourceType());
         shaderHandle.generation = 0;
         shaderList[shader.resourceId()] = shaderHandle;
       }
@@ -446,6 +550,38 @@ namespace Luminous
       glUseProgram(programHandle.handle);
       GLERROR("RenderDriverGL::setShaderProgram glUseProgram");
     }
+
+    // Set all shader uniforms attached to this shader
+    for (size_t i = 0; i < program.uniformCount(); ++i) {
+      ShaderUniform & uniform = program.uniform(i);
+
+      // Update location cache if necessary
+      if (uniform.index == -1)
+        uniform.index = glGetUniformLocation(programHandle.handle, uniform.name.toAscii().data());
+
+      // Set the uniform
+      switch (uniform.type)
+      {
+      case ShaderUniform::Int: glUniform1iv(uniform.index, 1, (const int*)uniform.value.data()); break;
+      case ShaderUniform::Int2: glUniform2iv(uniform.index, 1, (const int*)uniform.value.data()); break;
+      case ShaderUniform::Int3: glUniform3iv(uniform.index, 1, (const int*)uniform.value.data()); break;
+      case ShaderUniform::Int4: glUniform4iv(uniform.index, 1, (const int*)uniform.value.data()); break;
+      case ShaderUniform::UnsignedInt: glUniform1uiv(uniform.index, 1, (const unsigned int*)uniform.value.data()); break;
+      case ShaderUniform::UnsignedInt2: glUniform2uiv(uniform.index, 1, (const unsigned int*)uniform.value.data()); break;
+      case ShaderUniform::UnsignedInt3: glUniform3uiv(uniform.index, 1, (const unsigned int*)uniform.value.data()); break;
+      case ShaderUniform::UnsignedInt4: glUniform4uiv(uniform.index, 1, (const unsigned int*)uniform.value.data()); break;
+      case ShaderUniform::Float: glUniform1fv(uniform.index, 1, (const float*)uniform.value.data()); break;
+      case ShaderUniform::Float2: glUniform2fv(uniform.index, 1, (const float*)uniform.value.data()); break;
+      case ShaderUniform::Float3: glUniform3fv(uniform.index, 1, (const float*)uniform.value.data()); break;
+      case ShaderUniform::Float4: glUniform4fv(uniform.index, 1, (const float*)uniform.value.data()); break;
+      case ShaderUniform::Float2x2: glUniformMatrix2fv(uniform.index, 1, GL_TRUE, (const float*)uniform.value.data()); break;
+      case ShaderUniform::Float3x3: glUniformMatrix3fv(uniform.index, 1, GL_TRUE, (const float*)uniform.value.data()); break;
+      case ShaderUniform::Float4x4: glUniformMatrix4fv(uniform.index, 1, GL_TRUE, (const float*)uniform.value.data()); break;
+      default:
+        Radiant::error("RenderDriverGL: Unknown shader uniform type %d", uniform.type);
+        assert(false);
+      }
+    }
   }
 
   void RenderDriverGL::setVertexBuffer(unsigned int threadIndex, const HardwareBuffer & buffer)
@@ -469,7 +605,7 @@ namespace Luminous
     auto it = bindings.find(binding.resourceId());
     BindingHandle bindingHandle(&binding);
     if (it == std::end(bindings))
-      bindingHandle.handle = GLUtils::createResource(ResourceType_VertexArray);
+      bindingHandle.handle = createResource(RenderResource::VertexArray);
     else
       bindingHandle = it->second;
 
@@ -479,8 +615,8 @@ namespace Luminous
     /// @todo Recreate the VAO if the vertex description has changed
     if (bindingHandle.generation < binding.generation()) {
       // Recreate the binding
-      GLUtils::destroyResource(ResourceType_VertexArray, bindingHandle.handle);
-      bindingHandle.handle = GLUtils::createResource(ResourceType_VertexArray);
+      destroyResource(RenderResource::VertexArray, bindingHandle.handle);
+      bindingHandle.handle = createResource(RenderResource::VertexArray);
       // Bind
       glBindVertexArray(bindingHandle.handle);
       GLERROR("RenderDriverGL::setVertexBinding glBindVertexArray (recreate)");
@@ -514,7 +650,7 @@ namespace Luminous
     auto it = textures.find(texture.resourceId());
     TextureHandle textureHandle(&texture);
     if (it == std::end(textures) )
-      textureHandle.handle = GLUtils::createResource(ResourceType_Texture);
+      textureHandle.handle = createResource(RenderResource::Texture);
     else
       textureHandle = it->second;
 
@@ -583,7 +719,7 @@ namespace Luminous
         const size_t startLine = textureHandle.uploaded / bytesPerScanline;
 
         // Upload data
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, startLine, texture.width(), scanLines, extFormat,texture.format().type(), texture.data() + textureHandle.uploaded);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, startLine, texture.width(), scanLines, extFormat, texture.format().type(), texture.data() + textureHandle.uploaded);
         uploaded = scanLines * bytesPerScanline;
       }
       else if (texture.dimensions() == 3) {

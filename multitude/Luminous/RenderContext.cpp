@@ -1856,24 +1856,17 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////////
   // Luminousv2
 
-  void RenderContext::setBuffer(BufferType type, const Luminous::HardwareBuffer & buffer)
+  void RenderContext::setBuffer(HardwareBuffer::Type type, const Luminous::HardwareBuffer & buffer)
   {
     switch (type)
     {
-    case BufferType_Vertex: m_data->m_driver.setVertexBuffer(threadIndex(), buffer); break;
-    case BufferType_Index: m_data->m_driver.setIndexBuffer(threadIndex(), buffer); break;
-    case BufferType_Constant: m_data->m_driver.setUniformBuffer(threadIndex(), buffer); break;
+    case HardwareBuffer::Vertex: m_data->m_driver.setVertexBuffer(threadIndex(), buffer); break;
+    case HardwareBuffer::Index: m_data->m_driver.setIndexBuffer(threadIndex(), buffer); break;
+    case HardwareBuffer::Constant: m_data->m_driver.setUniformBuffer(threadIndex(), buffer); break;
     default:
       assert(false);
       Radiant::error("RenderContext::setBuffer - Buffertype %d not implemented", type);
     }
-  }
-
-  void RenderContext::setTexture(const char * name, const Luminous::Texture & texture)
-  {
-    /// @todo do some smart texture unit allocation management
-    setTexture((unsigned int)0, texture);
-    m_data->m_driver.setShaderUniform(threadIndex(), name, 0);
   }
 
   void RenderContext::setTexture(unsigned int textureUnit, const Luminous::Texture & texture)

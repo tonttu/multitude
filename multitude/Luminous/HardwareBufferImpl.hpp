@@ -16,7 +16,7 @@ namespace Luminous
       HardwareBuffer * owner;
       size_t size;
       const char * data;
-      BufferUsage usage;
+      HardwareBuffer::Usage usage;
     };
 
     typedef std::shared_ptr<Data> DataPtr;
@@ -27,7 +27,7 @@ namespace Luminous
       data->owner = owner;
       data->size = 0;
       data->data = nullptr;
-      data->usage = BufferUsage_Static_Draw;
+      data->usage = HardwareBuffer::StaticDraw;
     }
 
     DataPtr data;

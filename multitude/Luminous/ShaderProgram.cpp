@@ -1,4 +1,13 @@
 #include "Luminous/ShaderProgram.hpp"
+#include "Luminous/ShaderUniform.hpp"
+
+#include <Nimble/Vector2.hpp>
+#include <Nimble/Vector3.hpp>
+#include <Nimble/Vector4.hpp>
+#include <Nimble/Matrix2.hpp>
+#include <Nimble/Matrix3.hpp>
+#include <Nimble/Matrix4.hpp>
+#include <Radiant/Color.hpp>
 
 #include <QFile>
 
@@ -7,17 +16,17 @@
 #include <algorithm>
 
 namespace {
-  Luminous::ResourceType getResourceType(Luminous::ShaderType type)
+  Luminous::RenderResource::Type getResourceType(Luminous::ShaderGLSL::Type type)
   {
     /// @note This looks a bit dumb since this is a one-to-one-mapping. They are very different types though.
     switch (type) {
-    case Luminous::ShaderType_Vertex:   return Luminous::ResourceType_VertexShader;
-    case Luminous::ShaderType_Fragment: return Luminous::ResourceType_FragmentShader;
-    case Luminous::ShaderType_Geometry: return Luminous::ResourceType_GeometryShader;
+    case Luminous::ShaderGLSL::Vertex:   return Luminous::RenderResource::VertexShader;
+    case Luminous::ShaderGLSL::Fragment: return Luminous::RenderResource::FragmentShader;
+    case Luminous::ShaderGLSL::Geometry: return Luminous::RenderResource::GeometryShader;
     default:
       assert(false);
       Radiant::error("Can't determine resource type: Unknown shader type %d", type);
-      return Luminous::ResourceType_VertexShader;
+      return Luminous::RenderResource::VertexShader;
     }
   }
 }
@@ -30,13 +39,13 @@ namespace Luminous
     struct Data
     {
       ShaderGLSL * owner;
-      ShaderType type;
+      ShaderGLSL::Type type;
       QString text;
     };
     typedef std::shared_ptr<ShaderGLSL::D::Data> DataPtr;
 
   public:
-    D(ShaderGLSL * owner, ShaderType type)
+    D(ShaderGLSL * owner, ShaderGLSL::Type type)
     {
       data = std::make_shared<Data>();
       data->owner = owner;
@@ -48,7 +57,7 @@ namespace Luminous
 
   //////////////////////////////////////////////////////////////////////////
   // ShaderGLSL
-  ShaderGLSL::ShaderGLSL(ShaderType type)
+  ShaderGLSL::ShaderGLSL(Type type)
     : RenderResource(getResourceType(type))
     , m_d(new ShaderGLSL::D(this, type))
   {
@@ -81,7 +90,7 @@ namespace Luminous
     return m_d->data->text;
   }
 
-  ShaderType ShaderGLSL::type() const
+  ShaderGLSL::Type ShaderGLSL::type() const
   {
     return m_d->data->type;
   }
@@ -91,11 +100,13 @@ namespace Luminous
   class ShaderProgram::D {
   public:
     typedef std::vector< std::shared_ptr<ShaderGLSL::D::Data> > ShaderList;
+    typedef std::vector<ShaderUniform> UniformList;
     ShaderList shaders;
+    UniformList uniforms;
   };
 
   ShaderProgram::ShaderProgram()
-    : RenderResource(ResourceType_ShaderProgram)
+    : RenderResource(RenderResource::ShaderProgram)
     , m_d(new ShaderProgram::D())
   {
   }
@@ -130,5 +141,55 @@ namespace Luminous
   {
     assert(index < shaderCount());
     return *((m_d->shaders[index])->owner);
+  }
+
+#define ADDSHADERUNIFORM(TYPE, DATATYPE) \
+  template <> LUMINOUS_API void ShaderProgram::addShaderUniform(const QString & name, const TYPE & value) \
+  { \
+    ShaderUniform uniform; \
+    uniform.name = name; \
+    uniform.type = DATATYPE; \
+    uniform.index = -1; \
+    uniform.value.resize(sizeof(value)); \
+    std::copy((const char *)&value, (const char *)&value + sizeof(value), uniform.value.begin()); \
+    m_d->uniforms.push_back(uniform); \
+  }
+  
+  ADDSHADERUNIFORM(int, ShaderUniform::Int);
+  ADDSHADERUNIFORM(unsigned int, ShaderUniform::UnsignedInt);
+  ADDSHADERUNIFORM(float, ShaderUniform::Float);
+  ADDSHADERUNIFORM(Nimble::Vector2i, ShaderUniform::Int2);
+  ADDSHADERUNIFORM(Nimble::Vector3i, ShaderUniform::Int3);
+  ADDSHADERUNIFORM(Nimble::Vector4i, ShaderUniform::Int4);
+  ADDSHADERUNIFORM(Nimble::Vector2f, ShaderUniform::Float2);
+  ADDSHADERUNIFORM(Nimble::Vector3f, ShaderUniform::Float3);
+  ADDSHADERUNIFORM(Nimble::Vector4f, ShaderUniform::Float4);
+  ADDSHADERUNIFORM(Nimble::Matrix2f, ShaderUniform::Float2x2);
+  ADDSHADERUNIFORM(Nimble::Matrix3f, ShaderUniform::Float3x3);
+  ADDSHADERUNIFORM(Nimble::Matrix4f, ShaderUniform::Float4x4);
+
+  // Manual conversion: Radiant::Color > Nimble::Vector4f
+  template<> LUMINOUS_API void ShaderProgram::addShaderUniform(const QString & name, const Radiant::Color & value)
+  {
+    addShaderUniform<Nimble::Vector4f>(name, value);
+  }
+#undef ADDSHADERUNIFORM
+
+  void ShaderProgram::removeShaderUniform(const QString & name)
+  {
+    m_d->uniforms.erase(
+      std::remove_if(std::begin(m_d->uniforms), std::end(m_d->uniforms), [&](const ShaderUniform & u) { return u.name == name; }),
+      std::end(m_d->uniforms));
+  }
+
+  size_t ShaderProgram::uniformCount() const
+  {
+    return m_d->uniforms.size();
+  }
+
+  ShaderUniform & ShaderProgram::uniform(size_t index) const
+  {
+    assert(index <m_d->uniforms.size());
+    return m_d->uniforms[index];
   }
 }

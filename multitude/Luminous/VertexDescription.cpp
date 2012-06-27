@@ -8,7 +8,7 @@
 namespace Luminous
 {
   VertexDescription::VertexDescription()
-    : RenderResource(ResourceType_VertexDescription)
+    : RenderResource(RenderResource::VertexDescription)
   {
   }
 
@@ -51,25 +51,25 @@ namespace Luminous
     for (size_t i = 0; i < m_attributes.size(); ++i) {
       if (m_attributes[i].offset >= maxOffset) {
         maxOffset = m_attributes[i].offset;
-        size = m_attributes[i].offset + m_attributes[i].count * (uint)Luminous::Utils2::getDataSize(m_attributes[i].type);
+        size = m_attributes[i].offset + m_attributes[i].size;
       }
     }
     return size;
   }
 
   /// Specializations to create the vertex attributes
-  template <> LUMINOUS_API bool VertexDescription::createAttribute<char>(VertexAttribute & attr) { attr.type = DataType_Byte; attr.count = 1; return true; }
-  template <> LUMINOUS_API bool VertexDescription::createAttribute<short>(VertexAttribute & attr) { attr.type = DataType_Short; attr.count = 1; return true; }
-  template <> LUMINOUS_API bool VertexDescription::createAttribute<int>(VertexAttribute & attr) { attr.type = DataType_Int; attr.count = 1; return true; }
-  template <> LUMINOUS_API bool VertexDescription::createAttribute<float>(VertexAttribute & attr) { attr.type = DataType_Float; attr.count = 1; return true; }
-  template <> LUMINOUS_API bool VertexDescription::createAttribute<double>(VertexAttribute & attr) { attr.type = DataType_Double; attr.count = 1; return true; }
-  template <> LUMINOUS_API bool VertexDescription::createAttribute<Nimble::Vector2i>(VertexAttribute & attr) { attr.type = DataType_Int; attr.count = 2; return true; }
-  template <> LUMINOUS_API bool VertexDescription::createAttribute<Nimble::Vector3i>(VertexAttribute & attr) { attr.type = DataType_Int; attr.count = 3; return true; }
-  template <> LUMINOUS_API bool VertexDescription::createAttribute<Nimble::Vector4i>(VertexAttribute & attr) { attr.type = DataType_Int; attr.count = 4; return true; }
-  template <> LUMINOUS_API bool VertexDescription::createAttribute<Nimble::Vector2f>(VertexAttribute & attr) { attr.type = DataType_Float; attr.count = 2; return true; }
-  template <> LUMINOUS_API bool VertexDescription::createAttribute<Nimble::Vector3f>(VertexAttribute & attr) { attr.type = DataType_Float; attr.count = 3; return true; }
-  template <> LUMINOUS_API bool VertexDescription::createAttribute<Nimble::Vector4f>(VertexAttribute & attr) { attr.type = DataType_Float; attr.count = 4; return true; }
-  template <> LUMINOUS_API bool VertexDescription::createAttribute<Nimble::Vector2d>(VertexAttribute & attr) { attr.type = DataType_Double; attr.count = 2; return true; }
-  template <> LUMINOUS_API bool VertexDescription::createAttribute<Nimble::Vector3d>(VertexAttribute & attr) { attr.type = DataType_Double; attr.count = 3; return true; }
-  template <> LUMINOUS_API bool VertexDescription::createAttribute<Nimble::Vector4d>(VertexAttribute & attr) { attr.type = DataType_Double; attr.count = 4; return true; }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<char>(VertexAttribute & attr) { attr.type = VertexAttribute::Byte; attr.count = 1; attr.size = sizeof(char); }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<short>(VertexAttribute & attr) { attr.type = VertexAttribute::Short; attr.count = 1; attr.size = sizeof(short); }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<int>(VertexAttribute & attr) { attr.type = VertexAttribute::Int; attr.count = 1; attr.size = sizeof(int); }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<float>(VertexAttribute & attr) { attr.type = VertexAttribute::Float; attr.count = 1; attr.size = sizeof(float); }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<double>(VertexAttribute & attr) { attr.type = VertexAttribute::Double; attr.count = 1; attr.size = sizeof(double); }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector2i>(VertexAttribute & attr) { attr.type = VertexAttribute::Int; attr.count = 2; attr.size = sizeof(int)*2; }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector3i>(VertexAttribute & attr) { attr.type = VertexAttribute::Int; attr.count = 3; attr.size = sizeof(int)*3; }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector4i>(VertexAttribute & attr) { attr.type = VertexAttribute::Int; attr.count = 4; attr.size = sizeof(int)*4; }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector2f>(VertexAttribute & attr) { attr.type = VertexAttribute::Float; attr.count = 2; attr.size = sizeof(float)*2; }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector3f>(VertexAttribute & attr) { attr.type = VertexAttribute::Float; attr.count = 3; attr.size = sizeof(float)*3; }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector4f>(VertexAttribute & attr) { attr.type = VertexAttribute::Float; attr.count = 4; attr.size = sizeof(float)*4; }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector2d>(VertexAttribute & attr) { attr.type = VertexAttribute::Double; attr.count = 2; attr.size = sizeof(double)*2; }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector3d>(VertexAttribute & attr) { attr.type = VertexAttribute::Double; attr.count = 3; attr.size = sizeof(double)*3; }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector4d>(VertexAttribute & attr) { attr.type = VertexAttribute::Double; attr.count = 4; attr.size = sizeof(double)*4; }
 }

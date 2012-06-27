@@ -6,7 +6,7 @@
 namespace Luminous
 {
   HardwareBuffer::HardwareBuffer()
-    : RenderResource(ResourceType_Buffer)
+    : RenderResource(RenderResource::Buffer)
     , m_d(new HardwareBuffer::D(this))
   {
   }
@@ -17,7 +17,7 @@ namespace Luminous
     delete m_d;
   }
 
-  void HardwareBuffer::setData(const char * data, size_t size, BufferUsage usage)
+  void HardwareBuffer::setData(const char * data, size_t size, HardwareBuffer::Usage usage)
   {
     m_d->data->data = data;
     m_d->data->size = size;
@@ -36,7 +36,7 @@ namespace Luminous
     return m_d->data->size;
   }
 
-  BufferUsage HardwareBuffer::usage() const
+  HardwareBuffer::Usage HardwareBuffer::usage() const
   {
     return m_d->data->usage;
   }

@@ -24,8 +24,8 @@ namespace Luminous
     LUMINOUS_API VertexAttributeBinding();
     LUMINOUS_API ~VertexAttributeBinding();
 
-    LUMINOUS_API void addBinding(const HardwareBuffer & buffer, const VertexDescription & description);
-    LUMINOUS_API void removeBinding(const HardwareBuffer & buffer);
+    LUMINOUS_API void addBinding(const Luminous::HardwareBuffer & buffer, const Luminous::VertexDescription & description);
+    LUMINOUS_API void removeBinding(const Luminous::HardwareBuffer & buffer);
     LUMINOUS_API void clear();
 
     LUMINOUS_API size_t bindingCount() const;

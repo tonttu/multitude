@@ -4,7 +4,7 @@
 
 namespace Luminous
 {
-  RenderResource::RenderResource(ResourceType type)
+  RenderResource::RenderResource(Type type)
     : m_generation(0)
     , m_id(RenderManager::instance().createResource(this))
     , m_type(type)

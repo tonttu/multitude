@@ -24,11 +24,8 @@ HEADERS += Texture2.hpp
 SOURCES += Texture2.cpp
 
 HEADERS += VertexDescription.hpp
+HEADERS += VertexAttribute.hpp
 SOURCES += VertexDescription.cpp
-
-# Utility functions
-HEADERS += GLUtils.hpp
-SOURCES += GLUtils.cpp
 
 HEADERS += BGThread.hpp
 linux-*:HEADERS += XRandR.hpp

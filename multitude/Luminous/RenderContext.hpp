@@ -19,6 +19,7 @@
 #include <Luminous/VertexBuffer.hpp>
 #include <Luminous/GLSLProgramObject.hpp>
 #include <Luminous/FramebufferResource.hpp>
+#include <Luminous/HardwareBuffer.hpp>
 
 #include <Nimble/Rectangle.hpp>
 #include <Nimble/Vector2.hpp>
@@ -423,8 +424,7 @@ namespace Luminous
 
     unsigned int threadIndex() const;
 
-    void setBuffer(BufferType type, const Luminous::HardwareBuffer & buffer);
-    void setTexture(const char * name, const Luminous::Texture & texture);
+    void setBuffer(HardwareBuffer::Type type, const Luminous::HardwareBuffer & buffer);
     void setTexture(unsigned int textureUnit, const Luminous::Texture & texture);
     void setVertexBinding(const VertexAttributeBinding & binding);
     void setShaderProgram(const ShaderProgram & program);

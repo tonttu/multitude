@@ -15,7 +15,7 @@ namespace Luminous
   };
 
   Texture::Texture()
-    : RenderResource(ResourceType_Texture)
+    : RenderResource(RenderResource::Texture)
     , m_d(new Texture::D())
   {
   }

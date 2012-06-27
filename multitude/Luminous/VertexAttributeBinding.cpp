@@ -16,7 +16,7 @@ namespace Luminous
   //bool operator==(const VertexAttributeBinding::Binding & lhs, const std::shared_ptr<HardwareBuffer> & rhs) { return lhs.buffer == rhs.resourceId(); }
 
   VertexAttributeBinding::VertexAttributeBinding()
-    : RenderResource(ResourceType_VertexArray)
+    : RenderResource(RenderResource::VertexArray)
     , m_d(new VertexAttributeBinding::D())
   {
   }
@@ -26,7 +26,7 @@ namespace Luminous
     delete m_d;
   }
 
-  void VertexAttributeBinding::addBinding(const HardwareBuffer & buffer, const VertexDescription & description)
+  void VertexAttributeBinding::addBinding(const Luminous::HardwareBuffer & buffer, const Luminous::VertexDescription & description)
   {
     // Add the binding if it doesn't already exist
     D::Bindings::const_iterator it = std::find(m_d->bindings.begin(), m_d->bindings.end(), buffer.resourceId());
@@ -37,7 +37,7 @@ namespace Luminous
     }
   }
 
-  void VertexAttributeBinding::removeBinding(const HardwareBuffer & buffer)
+  void VertexAttributeBinding::removeBinding(const Luminous::HardwareBuffer & buffer)
   {
     D::Bindings::iterator it = std::find(m_d->bindings.begin(), m_d->bindings.end(), buffer.resourceId());
     if (it != m_d->bindings.end()) {

@@ -12,12 +12,25 @@ namespace Luminous
   {
   public:
     typedef uint64_t Id;
+
+    enum Type
+    {
+      VertexArray,
+      Buffer,
+      ShaderProgram,
+      VertexShader,
+      VertexDescription,
+      FragmentShader,
+      GeometryShader,
+      Texture,
+    };
+
   public:
-    LUMINOUS_API RenderResource(ResourceType type);
+    LUMINOUS_API RenderResource(Type type);
     LUMINOUS_API virtual ~RenderResource();
 
     inline Id resourceId() const { return m_id; }
-    inline ResourceType resourceType() const { return m_type; }
+    inline Type resourceType() const { return m_type; }
 
     inline void setGeneration(uint64_t generation) { m_generation = generation; }
     inline uint64_t generation() const { return m_generation; }
@@ -31,7 +44,7 @@ namespace Luminous
     uint64_t m_generation;
     Id m_id;
     unsigned int m_expiration;
-    ResourceType m_type;
+    Type m_type;
   };
 }
 #endif // LUMINOUS_RENDERRESOURCE_HPP

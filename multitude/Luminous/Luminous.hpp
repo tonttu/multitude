@@ -138,33 +138,6 @@ namespace Luminous
     PrimitiveType_Point,
   };
 
-  enum BufferType {
-    BufferType_Vertex,
-    BufferType_Index,
-    BufferType_Constant,
-  };
-
-  enum DataType
-  {
-    DataType_Unknown,
-    DataType_Byte,
-    DataType_Short,
-    DataType_Int,
-    DataType_UnsignedByte,
-    DataType_UnsignedShort,
-    DataType_UnsignedInt,
-    DataType_Float,
-    DataType_Double
-  };
-  
-  enum BufferLockOptions {
-    BufferLockOptions_Discard     = (1 << 0),
-    BufferLockOptions_Read        = (1 << 1),
-    BufferLockOptions_Write       = (1 << 2),
-    BufferLockOptions_NoOverwrite = (1 << 3),
-    BufferLockOptions_ReadWrite   = BufferLockOptions_Read | BufferLockOptions_Write,
-  };
-
   enum ClearMask
   {
     ClearMask_Color              = (1 << 0),
@@ -176,51 +149,6 @@ namespace Luminous
     ClearMask_ColorDepthStencil  = ClearMask_Color | ClearMask_Depth | ClearMask_Stencil,
   };
 
-  enum ShaderType
-  {
-    ShaderType_Vertex,
-    ShaderType_Fragment,
-    ShaderType_Geometry,
-  };
-
-  /// Resource types
-  enum ResourceType {
-    ResourceType_Unknown,
-    ResourceType_VertexArray,
-    ResourceType_VertexDescription,
-    ResourceType_ShaderProgram,
-    ResourceType_VertexShader,
-    ResourceType_FragmentShader,
-    ResourceType_GeometryShader,
-    ResourceType_Texture,
-    ResourceType_TextureArray,
-    ResourceType_Buffer,
-  };
-
-  /// Usage flags for HardwareBuffer objects
-  enum BufferUsage
-  {
-    BufferUsage_Static_Draw,
-    BufferUsage_Stream_Draw,
-    BufferUsage_Dynamic_Draw,
-
-    BufferUsage_Static_Read,
-    BufferUsage_Stream_Read,
-    BufferUsage_Dynamic_Read,
-
-    BufferUsage_Static_Copy,
-    BufferUsage_Stream_Copy,
-    BufferUsage_Dynamic_Copy,
-  };
-
-  //////////////////////////////////////////////////////////////////////////
-  // Utility functions
-  /// @todo Luminous2 utilities, should rename once Luminous::Utils has been killed with fire
-  namespace Utils2
-  {
-    LUMINOUS_API size_t getDataSize(DataType type);
-  }
-
   //////////////////////////////////////////////////////////////////////////
   /// Forward declarations
 
@@ -231,6 +159,7 @@ namespace Luminous
   class HardwareBuffer;
   class ShaderProgram;
   class ShaderGLSL;
+  class ShaderUniform;
   class Texture;
 
   // Vertex data

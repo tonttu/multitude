@@ -33,7 +33,7 @@ namespace Luminous
     /// Returns the total size of a vertex
     LUMINOUS_API uint vertexSize() const;
   private:
-    template <typename T> bool createAttribute(VertexAttribute & attr);
+    template <typename T> void createAttribute(VertexAttribute & attr);
   private:
     std::vector<VertexAttribute> m_attributes;
   };
@@ -41,12 +41,11 @@ namespace Luminous
   template <typename AttrType> void VertexDescription::addAttribute(const QString & attrName, uint offset)
   {
     VertexAttribute attr;
-    if (createAttribute<AttrType>(attr)) {
-      attr.name = attrName;
-      attr.offset = offset;
-      m_attributes.push_back(attr);
-      invalidate();
-    }
+    createAttribute<AttrType>(attr);
+    attr.name = attrName;
+    attr.offset = offset;
+    m_attributes.push_back(attr);
+    invalidate();
   }
 
   template <typename AttrType> void VertexDescription::addAttribute(const QString & attrName)

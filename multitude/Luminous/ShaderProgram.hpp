@@ -1,6 +1,7 @@
 #if !defined (LUMINOUS_SHADERPROGRAM_HPP)
 #define LUMINOUS_SHADERPROGRAM_HPP
 
+#include "Luminous/Luminous.hpp"
 #include "Luminous/RenderResource.hpp"
 #include <Radiant/RefPtr.hpp>
 
@@ -13,14 +14,22 @@ namespace Luminous
     : public RenderResource
   {
   public:
-    LUMINOUS_API ShaderGLSL(ShaderType type);
+    enum Type
+    {
+      Vertex,
+      Fragment,
+      Geometry,
+    };
+  public:
+    LUMINOUS_API ShaderGLSL(Type type);
     LUMINOUS_API ~ShaderGLSL();
 
     LUMINOUS_API void loadText(const QString & filename);
     LUMINOUS_API void setText(const QString & text);
     LUMINOUS_API const QString & text() const;
 
-    LUMINOUS_API ShaderType type() const;
+    LUMINOUS_API Type type() const;
+
   private:
     friend class ShaderProgram;
     class D;
@@ -40,6 +49,12 @@ namespace Luminous
 
     LUMINOUS_API const ShaderGLSL & shader(size_t index) const;
     LUMINOUS_API size_t shaderCount() const;
+
+    template <typename T> void addShaderUniform(const QString & name, const T & value);
+    void removeShaderUniform(const QString & name);
+
+    size_t uniformCount() const;
+    ShaderUniform & uniform(size_t index) const;
 
   private:
     class D;
