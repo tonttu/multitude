@@ -51,6 +51,7 @@
 // Test if we have override
 #   if !__has_feature(cxx_override_control)
 #     define NO_OVERRIDE
+#     define NO_FINAL
 #   endif
 // 
 // Detect GNU GCC/G++
@@ -60,9 +61,10 @@
 #   define DLLEXPORT __attribute__((visibility("default")))
 #   define DLLIMPORT __attribute__((visibility("default")))
 
-//  Override is a GCC4.7 and up feature when compiling code as c++0x/c++11
+//  Override and final are GCC4.7 and up features when compiling code as c++0x/c++11
 #   if !defined(RADIANT_CXX11) || ((__GNUC__ == 4 && __GNUC_MINOR__ < 7) || __GNUC__ < 4)
 #     define NO_OVERRIDE
+#     define NO_FINAL
 #   endif
 
 #   if !defined(RADIANT_CXX11)
@@ -74,6 +76,13 @@
 //
 #elif defined (_MSC_VER)
 #   define RADIANT_MSVC 1
+
+#   if _MSC_VER < 1600
+#     error "Unsupported compiler: Must have Visual Studio 2010 or newer"
+#   elif _MSC_VER == 1600
+#     define RADIANT_MSVC10 1
+#   endif
+
 #   define DLLEXPORT __declspec(dllexport)
 #   define DLLIMPORT __declspec(dllimport)
 
@@ -87,6 +96,15 @@
 #  define OVERRIDE
 #endif
 
+#if !defined(NO_FINAL) && !defined(__GCCXML__)
+#  if RADIANT_MSVC10
+#    define FINAL sealed
+#  else
+#    define FINAL final
+#  endif
+#else
+#  define FINAL
+#endif
 //
 // Detect OSX
 //
