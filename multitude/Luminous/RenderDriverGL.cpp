@@ -20,6 +20,7 @@
 #include <cassert>
 #include <map>
 #include <vector>
+#include <algorithm>
 
 #if RADIANT_DEBUG
 # define GLERROR(txt) Utils::glCheck(txt)
