@@ -342,25 +342,25 @@ namespace Luminous
           uniform.index = glGetUniformLocation(programHandle.handle, uniform.name.toAscii().data());
 
         // Set the uniform
-        switch (uniform.type)
+        switch (uniform.type())
         {
-        case ShaderUniform::Int: glUniform1iv(uniform.index, 1, (const int*)uniform.value.data()); break;
-        case ShaderUniform::Int2: glUniform2iv(uniform.index, 1, (const int*)uniform.value.data()); break;
-        case ShaderUniform::Int3: glUniform3iv(uniform.index, 1, (const int*)uniform.value.data()); break;
-        case ShaderUniform::Int4: glUniform4iv(uniform.index, 1, (const int*)uniform.value.data()); break;
-        case ShaderUniform::UnsignedInt: glUniform1uiv(uniform.index, 1, (const unsigned int*)uniform.value.data()); break;
-        case ShaderUniform::UnsignedInt2: glUniform2uiv(uniform.index, 1, (const unsigned int*)uniform.value.data()); break;
-        case ShaderUniform::UnsignedInt3: glUniform3uiv(uniform.index, 1, (const unsigned int*)uniform.value.data()); break;
-        case ShaderUniform::UnsignedInt4: glUniform4uiv(uniform.index, 1, (const unsigned int*)uniform.value.data()); break;
-        case ShaderUniform::Float: glUniform1fv(uniform.index, 1, (const float*)uniform.value.data()); break;
-        case ShaderUniform::Float2: glUniform2fv(uniform.index, 1, (const float*)uniform.value.data()); break;
-        case ShaderUniform::Float3: glUniform3fv(uniform.index, 1, (const float*)uniform.value.data()); break;
-        case ShaderUniform::Float4: glUniform4fv(uniform.index, 1, (const float*)uniform.value.data()); break;
-        case ShaderUniform::Float2x2: glUniformMatrix2fv(uniform.index, 1, GL_TRUE, (const float*)uniform.value.data()); break;
-        case ShaderUniform::Float3x3: glUniformMatrix3fv(uniform.index, 1, GL_TRUE, (const float*)uniform.value.data()); break;
-        case ShaderUniform::Float4x4: glUniformMatrix4fv(uniform.index, 1, GL_TRUE, (const float*)uniform.value.data()); break;
+        case ShaderUniform::Int: glUniform1iv(uniform.index, 1, (const int*)uniform.data()); break;
+        case ShaderUniform::Int2: glUniform2iv(uniform.index, 1, (const int*)uniform.data()); break;
+        case ShaderUniform::Int3: glUniform3iv(uniform.index, 1, (const int*)uniform.data()); break;
+        case ShaderUniform::Int4: glUniform4iv(uniform.index, 1, (const int*)uniform.data()); break;
+        case ShaderUniform::UnsignedInt: glUniform1uiv(uniform.index, 1, (const unsigned int*)uniform.data()); break;
+        case ShaderUniform::UnsignedInt2: glUniform2uiv(uniform.index, 1, (const unsigned int*)uniform.data()); break;
+        case ShaderUniform::UnsignedInt3: glUniform3uiv(uniform.index, 1, (const unsigned int*)uniform.data()); break;
+        case ShaderUniform::UnsignedInt4: glUniform4uiv(uniform.index, 1, (const unsigned int*)uniform.data()); break;
+        case ShaderUniform::Float: glUniform1fv(uniform.index, 1, (const float*)uniform.data()); break;
+        case ShaderUniform::Float2: glUniform2fv(uniform.index, 1, (const float*)uniform.data()); break;
+        case ShaderUniform::Float3: glUniform3fv(uniform.index, 1, (const float*)uniform.data()); break;
+        case ShaderUniform::Float4: glUniform4fv(uniform.index, 1, (const float*)uniform.data()); break;
+        case ShaderUniform::Float2x2: glUniformMatrix2fv(uniform.index, 1, GL_TRUE, (const float*)uniform.data()); break;
+        case ShaderUniform::Float3x3: glUniformMatrix3fv(uniform.index, 1, GL_TRUE, (const float*)uniform.data()); break;
+        case ShaderUniform::Float4x4: glUniformMatrix4fv(uniform.index, 1, GL_TRUE, (const float*)uniform.data()); break;
         default:
-          Radiant::error("RenderDriverGL: Unknown shader uniform type %d", uniform.type);
+          Radiant::error("RenderDriverGL: Unknown shader uniform type %d", uniform.type());
           assert(false);
         }
       }
@@ -593,6 +593,10 @@ namespace Luminous
 
   void RenderDriverGL::setVertexBinding(unsigned int threadIndex, const VertexAttributeBinding & binding)
   {
+#ifdef LUMINOUS_OPENGLES
+    // OpenGL ES doesn't have VAOs, so we'll just bind the buffers and attributes every time
+    m_d->setVertexAttributes(threadIndex, binding);
+#else
     auto & bindings = m_d->m_threadResources[threadIndex].bindings;
     auto it = bindings.find(binding.resourceId());
     GLERROR("RenderDriverGL::setVertexBinding");
@@ -637,6 +641,7 @@ namespace Luminous
         setVertexBuffer(threadIndex, *buf);
       }
     }
+#endif
   }
 
   void RenderDriverGL::setTexture(unsigned int threadIndex, unsigned int textureUnit, const Texture & texture)
