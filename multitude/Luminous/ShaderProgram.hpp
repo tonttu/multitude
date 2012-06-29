@@ -50,16 +50,16 @@ namespace Luminous
     LUMINOUS_API void addShader(const ShaderGLSL & shader);
     LUMINOUS_API void removeShader(const ShaderGLSL & shader);
 
-    LUMINOUS_API const ShaderGLSL & shader(size_t index) const;
+    LUMINOUS_API RenderResource::Id shader(size_t index) const;
     LUMINOUS_API size_t shaderCount() const;
 
     template <typename T> void addShaderUniform(const QString & name, const T & value);
     template <typename T> void addShaderUniform(const QString & name, T & value);
 
-    void removeShaderUniform(const QString & name);
+    LUMINOUS_API void removeShaderUniform(const QString & name);
 
-    size_t uniformCount() const;
-    ShaderUniform & uniform(size_t index) const;
+    LUMINOUS_API size_t uniformCount() const;
+    LUMINOUS_API ShaderUniform & uniform(size_t index) const;
 
   private:
     class D;

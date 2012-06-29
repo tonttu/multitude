@@ -210,8 +210,7 @@ namespace Luminous
       const ProgramHandle & programHandle = m_threadResources[threadIndex].programs[program.resourceId()];
 
       // Avoid re-applying the same shader
-      /// @todo Can re-enable this once the old render-pipe is fixed (or gone)
-      //if (m_threadResources[threadIndex].currentProgram != programHandle.handle) {
+      if (m_threadResources[threadIndex].currentProgram != programHandle.handle)
       {
         m_threadResources[threadIndex].currentProgram = programHandle.handle;
         glUseProgram(programHandle.handle);
@@ -251,19 +250,20 @@ namespace Luminous
 
       for (size_t i = 0; i < program.shaderCount(); ++i)
       {
-        const ShaderGLSL & shader = program.shader(i);
+        RenderResource::Id shaderId = program.shader(i);
+        ShaderGLSL * shader = RenderManager::getResource<ShaderGLSL>(shaderId);
 
         ShaderHandle * handle;
 
         // Find the correct shader
-        auto it = shaderList.find(shader.resourceId());
+        auto it = shaderList.find(shaderId);
         if (it == std::end(shaderList)) {
           /// New shader: create it
-          ShaderHandle shaderHandle(&shader);
-          shaderHandle.handle = createResource(shader.resourceType());
+          ShaderHandle shaderHandle(shader);
+          shaderHandle.handle = createResource(shader->resourceType());
           shaderHandle.generation = 0;
-          shaderList[shader.resourceId()] = shaderHandle;
-          handle = &shaderList[shader.resourceId()];
+          shaderList[shaderId] = shaderHandle;
+          handle = &shaderList[shaderId];
         }
         else
           handle = &(it->second);
@@ -272,9 +272,9 @@ namespace Luminous
         handle->lastUsed.start();
 
         /// Check if it needs updating
-        if (handle->generation < shader.generation()) {
+        if (handle->generation < shader->generation()) {
           // Set and compile source
-          const QByteArray shaderData = shader.text().toAscii();
+          const QByteArray shaderData = shader->text().toAscii();
           const GLchar * text = shaderData.data();
           const GLint length = shaderData.size();
           glShaderSource(handle->handle, 1, &text, &length);
@@ -284,7 +284,7 @@ namespace Luminous
           glGetShaderiv(handle->handle, GL_COMPILE_STATUS, &compiled);
           if (compiled == GL_TRUE) {
             // All seems okay, update resource handle
-            handle->generation = shader.generation();
+            handle->generation = shader->generation();
 
             // Attach to the program
             glAttachShader(programHandle.handle, handle->handle);
@@ -373,8 +373,8 @@ namespace Luminous
       for (size_t i = 0; i < binding.bindingCount(); ++i) {
         VertexAttributeBinding::Binding b = binding.binding(i);
         // Attach buffer
-        auto * buffer = RenderManager::getBuffer(b.buffer);
-        auto * descr = RenderManager::getVertexDescription(b.description);
+        auto * buffer = RenderManager::getResource<HardwareBuffer>(b.buffer);
+        auto * descr = RenderManager::getResource<VertexDescription>(b.description);
         assert(buffer != nullptr && descr != nullptr);
         bindBuffer(threadIndex, GL_ARRAY_BUFFER, *buffer);
         setVertexDescription(threadIndex, *descr);
@@ -515,18 +515,21 @@ namespace Luminous
 
 #define SETUNIFORM(TYPE, FUNCTION) \
   bool RenderDriverGL::setShaderUniform(unsigned int threadIndex, const char * name, const TYPE & value) { \
+    /* @todo These locations should be cached in the program handle for performance reasons */ \
     GLint location = glGetUniformLocation(m_d->m_threadResources[threadIndex].currentProgram, name); \
     if (location != -1) FUNCTION(location, value); \
     return (location != -1); \
   }
 #define SETUNIFORMVECTOR(TYPE, FUNCTION) \
   bool RenderDriverGL::setShaderUniform(unsigned int threadIndex, const char * name, const TYPE & value) { \
+    /* @todo These locations should be cached in the program handle for performance reasons */ \
     GLint location = glGetUniformLocation(m_d->m_threadResources[threadIndex].currentProgram, name); \
     if (location != -1) FUNCTION(location, 1, value.data()); \
     return (location != -1); \
   }
 #define SETUNIFORMMATRIX(TYPE, FUNCTION) \
   bool RenderDriverGL::setShaderUniform(unsigned int threadIndex, const char * name, const TYPE & value) { \
+    /* @todo These locations should be cached in the program handle for performance reasons */ \
     GLint location = glGetUniformLocation(m_d->m_threadResources[threadIndex].currentProgram, name); \
     if (location != -1) FUNCTION(location, 1, GL_TRUE, value.data()); \
     return (location != -1); \
@@ -570,6 +573,9 @@ namespace Luminous
   {
     m_d->resetStatistics(threadIndex);
     m_d->removeResources(threadIndex);
+
+    /// @todo currently the RenderContext invalidates this cache
+    m_d->m_threadResources[threadIndex].currentProgram = 0;
   }
 
   void RenderDriverGL::postFrame(unsigned int threadIndex)
@@ -614,6 +620,9 @@ namespace Luminous
       // Bind and setup all buffers/attributes
       glBindVertexArray(bindingHandle.handle);
       m_d->setVertexAttributes(threadIndex, binding);
+      const HardwareBuffer * index = RenderManager::getResource<HardwareBuffer>(binding.indexBuffer());
+      if (index != nullptr)
+        setIndexBuffer(threadIndex, *index);
     }
     else {
       // Existing resource
@@ -637,10 +646,13 @@ namespace Luminous
       // Check if any of the attached buffers need updating
       for (size_t i = 0; i < binding.bindingCount(); ++i) {
         auto & b = binding.binding(i);
-        const HardwareBuffer * buf = RenderManager::getBuffer(b.buffer);
+        const HardwareBuffer * buf = RenderManager::getResource<HardwareBuffer>(b.buffer);
         assert(buf);
         setVertexBuffer(threadIndex, *buf);
       }
+      const HardwareBuffer * indexBuf = RenderManager::getResource<HardwareBuffer>(binding.indexBuffer());
+      if (indexBuf)
+        setIndexBuffer(threadIndex, *indexBuf);
     }
 #endif
   }

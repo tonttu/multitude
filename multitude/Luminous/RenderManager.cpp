@@ -31,6 +31,15 @@ namespace Luminous
     typedef std::map<RenderResource::Id, RenderResource *> ResourceMap;
     ResourceMap resourceMap;
 
+    template <typename T>
+    T * getResource( RenderResource::Id id )
+    {
+      auto descr = resourceMap.find(id);
+      if (descr != std::end(resourceMap))
+        return reinterpret_cast<T*>(descr->second);
+      return nullptr;
+    }
+
     RenderResource::Id resourceId;      // Next available resource ID
     Luminous::RenderDriver & driver;    // Currently used driver
     static RenderManager * s_instance;  // Singleton instance
@@ -77,19 +86,11 @@ namespace Luminous
     return *RenderManager::D::s_instance;
   }  
 
-  HardwareBuffer * RenderManager::getBuffer( RenderResource::Id id )
-  {
-    auto buffer = RenderManager::instance().m_d->resourceMap.find(id);
-    if (buffer != std::end(RenderManager::instance().m_d->resourceMap))
-      return reinterpret_cast<HardwareBuffer*>(buffer->second);
-    return nullptr;
-  }
-
-  VertexDescription * RenderManager::getVertexDescription( RenderResource::Id id )
-  {
-    auto descr = RenderManager::instance().m_d->resourceMap.find(id);
-    if (descr != std::end(RenderManager::instance().m_d->resourceMap))
-      return reinterpret_cast<VertexDescription*>(descr->second);
-    return nullptr;
-  }
+  // Only specialize for valid types
+  template <> LUMINOUS_API HardwareBuffer * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<HardwareBuffer>(id); }
+  template <> LUMINOUS_API VertexAttributeBinding * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<VertexAttributeBinding>(id); }
+  template <> LUMINOUS_API VertexDescription * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<VertexDescription>(id); }
+  template <> LUMINOUS_API Texture * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<Texture>(id); }
+  template <> LUMINOUS_API ShaderProgram * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<ShaderProgram>(id); }
+  template <> LUMINOUS_API ShaderGLSL * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<ShaderGLSL>(id); }
 }

@@ -24,12 +24,14 @@ namespace Luminous
     LUMINOUS_API VertexAttributeBinding();
     LUMINOUS_API ~VertexAttributeBinding();
 
-    LUMINOUS_API void addBinding(const Luminous::HardwareBuffer & buffer, const Luminous::VertexDescription & description);
+    LUMINOUS_API void addBinding(const Luminous::HardwareBuffer & vertexBuffer, const Luminous::VertexDescription & description);
+    LUMINOUS_API void setIndexBuffer(const Luminous::HardwareBuffer & indexBuffer);
     LUMINOUS_API void removeBinding(const Luminous::HardwareBuffer & buffer);
     LUMINOUS_API void clear();
 
     LUMINOUS_API size_t bindingCount() const;
     LUMINOUS_API const Binding & binding(size_t index) const;
+    LUMINOUS_API RenderResource::Id indexBuffer() const;
   private:
     class D;
     D * m_d;

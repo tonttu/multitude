@@ -9,8 +9,10 @@ namespace Luminous
   class VertexAttributeBinding::D
   {
   public:
+    D() : indexBuffer(0) {}
     typedef std::vector< VertexAttributeBinding::Binding > Bindings;
     Bindings bindings;
+    RenderResource::Id indexBuffer;
   };
 
   //bool operator==(const VertexAttributeBinding::Binding & lhs, const std::shared_ptr<HardwareBuffer> & rhs) { return lhs.buffer == rhs.resourceId(); }
@@ -26,15 +28,20 @@ namespace Luminous
     delete m_d;
   }
 
-  void VertexAttributeBinding::addBinding(const Luminous::HardwareBuffer & buffer, const Luminous::VertexDescription & description)
+  void VertexAttributeBinding::addBinding(const Luminous::HardwareBuffer & vertexBuffer, const Luminous::VertexDescription & description)
   {
     // Add the binding if it doesn't already exist
-    D::Bindings::const_iterator it = std::find(m_d->bindings.begin(), m_d->bindings.end(), buffer.resourceId());
+    D::Bindings::const_iterator it = std::find(m_d->bindings.begin(), m_d->bindings.end(), vertexBuffer.resourceId());
     if (it == m_d->bindings.end()) {
-      Binding binding = { buffer.resourceId(), description.resourceId() };
+      Binding binding = { vertexBuffer.resourceId(), description.resourceId() };
       m_d->bindings.push_back(binding);
       invalidate();
     }
+  }
+
+  void VertexAttributeBinding::setIndexBuffer(const Luminous::HardwareBuffer & indexBuffer)
+  {
+    m_d->indexBuffer = indexBuffer.resourceId();
   }
 
   void VertexAttributeBinding::removeBinding(const Luminous::HardwareBuffer & buffer)
@@ -63,5 +70,10 @@ namespace Luminous
   {
     assert( index < bindingCount() );
     return m_d->bindings[index];
+  }
+
+  RenderResource::Id VertexAttributeBinding::indexBuffer() const
+  {
+    return m_d->indexBuffer;
   }
 }
