@@ -163,10 +163,11 @@ namespace Luminous
       ReleaseQueue releaseQueue;
 
       /// Render statistics
-      int32_t uploadedBytes;
-      Radiant::Timer frameTimer;
-      uint64_t frame;
-      double fps;
+      int32_t uploadedBytes;      // Uploaded bytes this frame
+      int32_t totalBytes;         // Total bytes currently in GPU memory for this thread
+      Radiant::Timer frameTimer;  // Time since begin of frame
+      uint64_t frame;             // Current frame number
+      double fps;                 // Frames per second
     };
 
   public:
@@ -574,8 +575,9 @@ namespace Luminous
     m_d->resetStatistics(threadIndex);
     m_d->removeResources(threadIndex);
 
-    /// @todo currently the RenderContext invalidates this cache
+    /// @todo Currently the RenderContext invalidates this cache every frame, even if it's not needed
     m_d->m_threadResources[threadIndex].currentProgram = 0;
+    m_d->m_threadResources[threadIndex].currentBinding = 0;
   }
 
   void RenderDriverGL::postFrame(unsigned int threadIndex)
@@ -601,8 +603,11 @@ namespace Luminous
   void RenderDriverGL::setVertexBinding(unsigned int threadIndex, const VertexAttributeBinding & binding)
   {
 #ifdef LUMINOUS_OPENGLES
-    // OpenGL ES doesn't have VAOs, so we'll just bind the buffers and attributes every time
+    // OpenGL ES doesn't have VAOs, so we'll just have to bind the buffers and attributes every time
     m_d->setVertexAttributes(threadIndex, binding);
+    auto * indexBuffer = RenderManager::getResource<HardwareBuffer>(binding.indexBuffer());
+    if (indexBuffer)
+      setIndexBuffer(threadIndex, *indexBuffer);
 #else
     auto & bindings = m_d->m_threadResources[threadIndex].bindings;
     auto it = bindings.find(binding.resourceId());
