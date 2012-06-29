@@ -8,7 +8,7 @@ namespace Luminous
   class HardwareBuffer::D
   {
   public:
-    D::D()
+    D()
       : size(0)
       , data(nullptr)
       , usage(HardwareBuffer::StaticDraw)
