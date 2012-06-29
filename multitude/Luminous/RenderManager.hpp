@@ -30,15 +30,13 @@ namespace Luminous
     LUMINOUS_API RenderManager(Luminous::RenderDriver & driver);
     LUMINOUS_API ~RenderManager();
 
-    LUMINOUS_API RenderResource::Id createResource(RenderResource * resource);
-    LUMINOUS_API void destroyResource(RenderResource::Id id);
-    LUMINOUS_API RenderDriver & driver();
+    LUMINOUS_API static RenderResource::Id createResource(RenderResource * resource);
+    LUMINOUS_API static void destroyResource(RenderResource::Id id);
+    LUMINOUS_API static RenderDriver & driver();
 
-    LUMINOUS_API static RenderManager & instance();
-
-    /// * Can't derive proper type from the resource id so we need per-type accessors
-    /// * Must return naked pointer since requested ID might not exist anymore (we don't have a weak_ptr/shared_ptr here)
     template <typename T> static T * getResource( RenderResource::Id id );
+  private:
+    LUMINOUS_API static RenderManager & instance();
   private:
     class D;
     D * m_d;

@@ -64,20 +64,20 @@ namespace Luminous
 
   RenderResource::Id RenderManager::createResource(RenderResource * resource)
   {
-    auto id = m_d->resourceId++;
-    m_d->resourceMap[id] = resource;
+    auto id = instance().m_d->resourceId++;
+    instance().m_d->resourceMap[id] = resource;
     return id;
   }
 
   void RenderManager::destroyResource(RenderResource::Id id)
   {
-    m_d->resourceMap.erase(id);
-    m_d->driver.releaseResource(id);
+    instance().m_d->resourceMap.erase(id);
+    instance().m_d->driver.releaseResource(id);
   }
 
   RenderDriver & RenderManager::driver()
   {
-    return m_d->driver;
+    return instance().m_d->driver;
   }
 
   RenderManager & RenderManager::instance()
