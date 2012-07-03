@@ -10,6 +10,7 @@ CONFIG += embed_manifest_exe
 
 # We need C++11 to compile
 !macx:*g++*:QMAKE_CXXFLAGS += -std=c++0x
+!macx:*clang*:QMAKE_CXXFLAGS += -std=c++11 -Qunused-arguments
 macx {
 	QMAKE_MACOSX_DEPLOYMENT_TARGET=10.7
 	QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++
@@ -268,15 +269,6 @@ CONFIG(release, debug|release) {
 }
 
 DEFINES += USING_V8_SHARED
-
-# Compiler detection
-c++11 {
-  !win32 {
-    message(Enabling C++11)
-    linux-*:QMAKE_CXXFLAGS += -std=c++0x
-    macx:QMAKE_CXXFLAGS += -std=c11
-  }
-}
 
 # Tommi's hack
 exists(/opt/local/libexec/llvm-3.2/bin/clang) {
