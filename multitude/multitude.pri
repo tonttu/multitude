@@ -33,7 +33,6 @@ mobile {
   message(Mobile device compilation)
   # For QString::toStdWString
   DEFINES += QT_STL=1
-  CONFIG += without-js
   CONFIG += render_es2
 }
 
@@ -95,7 +94,7 @@ LIB_RADIANT = -lRadiant$${CORNERSTONE_LIB_SUFFIX} $$LIB_FTD2XX
 LIB_VALUABLE = -lValuable$${CORNERSTONE_LIB_SUFFIX}
 LIB_PATTERNS = -lPatterns$${CORNERSTONE_LIB_SUFFIX}
 LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}
-!without-js:LIB_V8 = -lv8
+enable-js:LIB_V8 = -lv8
 
 #
 # Platform specific: Unix (OSX & linux)
@@ -245,7 +244,7 @@ win32 {
       LIB_VALUABLE = -lValuable$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_PATTERNS = -lPatterns$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}_d
-      !without-js:LIB_V8 = -lv8_d
+      enable-js:LIB_V8 = -lv8_d
 	}
 }
 

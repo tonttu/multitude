@@ -3,7 +3,7 @@ TEMPLATE = subdirs
 include(multitude.pri)
 include(Externals.pri)
 
-!without-js:SUBDIRS += v8
+enable-js:SUBDIRS += v8
 SUBDIRS += Patterns
 SUBDIRS += Nimble
 SUBDIRS += Radiant
