@@ -197,7 +197,12 @@ namespace Valuable
     return elem;
   }
 
-  Attribute * Attribute::getValue(const QString & )
+  Attribute * Attribute::getValue(const QString & name)
+  {
+    return Attribute::getAttribute(name);
+  }
+
+  Attribute * Attribute::getAttribute(const QString & )
   {
     return 0;
   }

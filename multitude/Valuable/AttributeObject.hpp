@@ -88,7 +88,7 @@ namespace Valuable
       Attributes that are stored inside Node objects.
 
       It is also possible to add listeners to values, so that if a
-      value is changed, then a call-back to soem other object is
+      value is changed, then a call-back to some other object is
       followed. The listener-API is a bit hard-core, but it has plenty
       of power when you need to track the state of other objects.
 
@@ -284,9 +284,11 @@ namespace Valuable
     static std::list<Doc> doc;
 #endif
 
-    /// Gets a ValueObject with the given name
-    /// @param name Value object name to search for
+    /// Gets an Attribute with the given name
+    /// @param name Attribute name to search for
     /// @return Null if no object can be found
+    virtual Attribute * getAttribute(const QString & name);
+    /// @deprecated This function will be removed in Cornerstone 2.1. Use getAttribute instead.
     virtual Attribute * getValue(const QString & name);
 
   protected:

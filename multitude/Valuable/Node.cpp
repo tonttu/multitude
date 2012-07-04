@@ -203,6 +203,11 @@ namespace Valuable
 
   Attribute * Node::getValue(const QString & name)
   {
+    return Node::getAttribute(name);
+  }
+
+  Attribute * Node::getAttribute(const QString & name)
+  {
     size_t slashIndex = name.indexOf('/');
 
     if(slashIndex == std::string::npos) {
@@ -225,10 +230,20 @@ namespace Valuable
 
   bool Node::addValue(Attribute * const value)
   {
-    return Node::addValue(value->name(), value);
+    return Node::addAttribute(value);
+  }
+
+  bool Node::addAttribute(Attribute * const attribute)
+  {
+    return Node::addAttribute(attribute->name(), attribute);
   }
 
   bool Node::addValue(const QString & cname, Attribute * const value)
+  {
+    return Node::addAttribute(cname, value);
+  }
+
+  bool Node::addAttribute(const QString & cname, Attribute * const value)
   {
     //    Radiant::trace("Node::addValue # adding %s", cname.c_str());
 
@@ -261,6 +276,11 @@ namespace Valuable
   }
 
   void Node::removeValue(Attribute * const value)
+  {
+    Node::removeAttribute(value);
+  }
+
+  void Node::removeAttribute(Attribute * const value)
   {
     const QString & cname = value->name();
 

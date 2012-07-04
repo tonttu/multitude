@@ -74,20 +74,30 @@ namespace Valuable
     Node(Node * host, const QString & name = "", bool transit = false);
     virtual ~Node();
 
-    /// Adds new Attribute to the lsit of values.
-    /// Copies the name of the attribute from the given value.
+    /// Adds a new Attribute to the list of attribute objects.
+    /// Copies the name of the attribute from the given object.
+    bool addAttribute(Attribute * const attribute);
+    /// @deprecated This function will be removed in Cornerstone 2.1. Use addAttribute instead.
     bool addValue(Attribute * const value);
 
-    /// Adds new Attribute to the list of values
+    /// Adds a new Attribute to the list of attribute objects.
+    bool addAttribute(const QString & name, Attribute * const attribute);
+    /// @deprecated This function will be removed in Cornerstone 2.1. Use addAttribute instead.
     bool addValue(const QString & name, Attribute * const value);
-    /// Gets a Attribute with the given name
-    /// @param name Value object name to search for
+
+    /// Gets an Attribute with the given name
+    /// @param name Attribute name to search for
     /// @return Null if no object can be found
+    virtual Attribute * getAttribute(const QString & name);
+    /// @deprecated This function will be removed in Cornerstone 2.1. Use getAttribute instead.
     virtual Attribute * getValue(const QString & name);
-    /// Removes a Attribute from the list of value.
+
+    /// Removes an Attribute from the list of attribute objects.
+    void removeAttribute(Attribute * const attribute);
+    /// @deprecated This function will be removed in Cornerstone 2.1. Use removeAttribute instead.
     void removeValue(Attribute * const value);
 
-    /// Clears all values of the given layer
+    /// Clears all Attribute values of the given layer
     /// @param layer layer to clear
     void clearValues(Layer layer);
 

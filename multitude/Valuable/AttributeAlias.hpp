@@ -64,8 +64,10 @@ namespace Valuable
     virtual bool shortcut() const;
 
     /// Gets an Attribute with the given name
-    /// @param name Value object name to search for
+    /// @param name Attribute name to search for
     /// @return Null if no object can be found
+    virtual Attribute * getAttribute(const QString & name);
+    /// @deprecated This function will be removed in Cornerstone 2.1. Use getAttribute instead.
     virtual Attribute * getValue(const QString & name);
 
   private:

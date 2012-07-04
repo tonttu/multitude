@@ -157,6 +157,11 @@ namespace Valuable
 
   Attribute * AttributeAlias::getValue(const QString & name)
   {
+    return AttributeAlias::getAttribute(name);
+  }
+
+  Attribute * AttributeAlias::getAttribute(const QString & name)
+  {
     if(!m_attribute)
       return nullptr;
     return m_attribute->getValue(name);
