@@ -1721,9 +1721,9 @@ namespace Luminous
       if(m_data->m_vbo != id) {
 
         m_data->m_vbo = id;
-        glBindBuffer(type, id);
       }
     }
+    glBindBuffer(type, id);
   }
 
   void RenderContext::bindProgram(GLSLProgramObject * program)

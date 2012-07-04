@@ -55,7 +55,7 @@ namespace Luminous
       friend class FBOHolder;
       friend class RenderContext;
 
-      FBOPackage(Luminous::RenderContext *res = 0) : m_fbo(res), m_rbo(res), m_tex(res), m_users(0) {}
+      FBOPackage(Luminous::RenderContext *res = 0) : GLResource(res), m_fbo(res), m_rbo(res), m_tex(res), m_users(0) {}
       virtual ~FBOPackage();
 
       void setSize(Nimble::Vector2i size);
