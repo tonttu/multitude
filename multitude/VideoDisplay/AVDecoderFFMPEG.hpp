@@ -5,6 +5,8 @@
 
 namespace VideoPlayer2
 {
+  VIDEODISPLAY_API void ffmpegInit();
+
   class AVDecoderFFMPEG : public AVDecoder
   {
   public:

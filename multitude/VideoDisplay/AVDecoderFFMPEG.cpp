@@ -192,24 +192,6 @@ namespace
     }
   }
 
-  void ffmpegInit()
-  {
-    MULTI_ONCE_BEGIN
-
-    av_log_set_callback(ffmpegLog);
-    avcodec_register_all();
-    avdevice_register_all();
-    av_register_all();
-    avformat_network_init();
-    avfilter_register_all();
-
-    int err = av_lockmgr_register(ffmpegLock);
-    if(err != 0)
-      Radiant::error("ffmpegInit # Failed to register new FFMPEG lock manager");
-
-    MULTI_ONCE_END
-  }
-
   typedef int (*QueryFormatsFunc)(AVFilterContext *);
   QueryFormatsFunc s_origQueryFormats = nullptr;
   int asinkQueryFormats(AVFilterContext * filterContext)
@@ -1838,5 +1820,23 @@ namespace VideoPlayer2
     eventSend("finished");
     m_d->finished = true;
     s_src = nullptr;
+  }
+
+  void ffmpegInit()
+  {
+    MULTI_ONCE_BEGIN
+
+    av_log_set_callback(ffmpegLog);
+    avcodec_register_all();
+    avdevice_register_all();
+    av_register_all();
+    avformat_network_init();
+    avfilter_register_all();
+
+    int err = av_lockmgr_register(ffmpegLock);
+    if(err != 0)
+      Radiant::error("ffmpegInit # Failed to register new FFMPEG lock manager");
+
+    MULTI_ONCE_END
   }
 }
