@@ -103,7 +103,7 @@ unix {
   VERSION = $${CORNERSTONE_VERSION}
 
   # Use ccache if available
-  system(which ccache &> /dev/null) {
+  system(which ccache > /dev/null 2>&1) {
     QMAKE_CXX=ccache $$QMAKE_CXX
     QMAKE_CC=ccache $$QMAKE_CC
   }
