@@ -32,7 +32,7 @@
   #if defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
     #include <tr1/memory>
     #define NEED_MAKE_SHARED
-  #elif defined(RADIANT_WINDOWS) && defined(_HAS_TR1)
+  #elif defined(RADIANT_WINDOWS)
     #include <memory>
   #else
     #include <boost/tr1/memory.hpp>

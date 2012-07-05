@@ -20,6 +20,7 @@
 #include <Luminous/Task.hpp>
 
 #include <Radiant/Condition.hpp>
+#include <Radiant/Functional.hpp>
 #include <Radiant/Mutex.hpp>
 #include <Radiant/Singleton.hpp>
 #include <Radiant/ThreadPool.hpp>

@@ -15,7 +15,7 @@
 #else
   #if defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
     #include <tr1/functional>
-  #elif defined(RADIANT_WINDOWS) && defined(_HAS_TR1)
+  #elif defined(RADIANT_WINDOWS)
     #include <functional>
   #else
     #include <boost/tr1/functional.hpp>
