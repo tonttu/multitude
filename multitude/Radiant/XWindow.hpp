@@ -35,6 +35,7 @@ namespace Radiant
     virtual void swapBuffers();
     virtual void makeCurrent();
 
+    virtual void init();
     virtual void deinit();
 
     virtual void minimize();

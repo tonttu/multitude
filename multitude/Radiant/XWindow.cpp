@@ -153,13 +153,15 @@ namespace Radiant
   class XWindow::D
   {
   public:
-    D(Window & win)
+    D(Window & win, const WindowConfig & hint, const char* caption)
       : m_window(win)
       , m_display(0)
       , m_drawable(0)
       , m_context(0)
       , m_autoRepeats(256)
       , m_ignoreNextMotionEvent(false)
+      , m_hint(hint)
+      , m_caption(caption)
     {}
 
     class X11GLContext
@@ -206,6 +208,9 @@ namespace Radiant
     std::vector<bool> m_autoRepeats;
 
     bool m_ignoreNextMotionEvent;
+
+    const WindowConfig m_hint;
+    const QString m_caption;
 
     void showCursor(bool show)
     {
@@ -423,10 +428,13 @@ namespace Radiant
   } MwmHintsLong;
 
   XWindow::XWindow(const WindowConfig & hint, const char* caption)
-      : m_d(new D(*this))
+      : m_d(new D(*this, hint, caption)) {}
+
+  void XWindow::init()
   {
     int (*handler)(Display*, XErrorEvent*) = XSetErrorHandler(errorHandler);
 
+    const auto & hint = m_d->m_hint;
     m_d->m_display = XOpenDisplay(hint.display.toUtf8().data());
     if(m_d->m_display == 0) {
       Radiant::error("XOpenDisplay failed for %s", hint.display.toUtf8().data());
@@ -539,11 +547,13 @@ namespace Radiant
     XResizeWindow(m_d->m_display, m_d->m_drawable, width(), height());
 
     // Set title
-    if(caption)
+    if(!m_d->m_caption.isEmpty())
     {
       XTextProperty textProp;
       memset(&textProp, 0, sizeof(textProp));
-      XStringListToTextProperty(const_cast<char **> (&caption), 1, &textProp);
+      QByteArray caption(m_d->m_caption.toUtf8());
+      char * data = caption.data();
+      XStringListToTextProperty(&data, 1, &textProp);
       XSetWMName(m_d->m_display, m_d->m_drawable, &textProp);
       XFree(textProp.value);
     }

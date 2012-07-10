@@ -61,6 +61,8 @@ namespace Radiant
     /// A pointer to the window event callback listener
     WindowEventHook * eventHook() const;
 
+    virtual void init() {}
+
     /// Virtual function for cleaning up window resources
     virtual void deinit() {}
 
