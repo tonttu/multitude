@@ -43,6 +43,7 @@ namespace Valuable
     virtual bool set(int v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN) OVERRIDE;
     virtual bool set(const QVariantList & v, QList<ValueUnit> units, Layer layer = MANUAL) OVERRIDE;
 
+    virtual int asInt(bool * ok) const OVERRIDE;
     virtual QString asString(bool * const ok = 0) const OVERRIDE;
   };
 

@@ -39,6 +39,12 @@ namespace Valuable
     if(ok) *this = (v != 0);
   }
 
+  int AttributeBool::asInt(bool * ok) const
+  {
+    if(ok) *ok = true;
+    return value();
+  }
+
   QString AttributeBool::asString(bool * const ok) const
   {
     if(ok) *ok = true;
