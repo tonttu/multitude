@@ -39,7 +39,7 @@ namespace Valuable
     if(ok) *this = (v != 0);
   }
 
-  int AttributeBool::asInt(bool * ok) const
+  int AttributeBool::asInt(bool * const ok) const
   {
     if(ok) *ok = true;
     return value();
