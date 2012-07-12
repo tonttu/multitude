@@ -26,10 +26,23 @@ namespace Luminous
   {
   }
 
-
   HardwareBuffer::~HardwareBuffer()
   {
     delete m_d;
+  }
+
+  HardwareBuffer::HardwareBuffer(HardwareBuffer && b)
+    : RenderResource(std::move(b))
+    , m_d(b.m_d)
+  {
+    b.m_d = nullptr;
+  }
+
+  HardwareBuffer & HardwareBuffer::operator=(HardwareBuffer && b)
+  {
+    RenderResource::operator=(std::move(b));
+    std::swap(m_d, b.m_d);
+    return *this;
   }
 
   void HardwareBuffer::setData(const char * data, size_t size, HardwareBuffer::Usage usage)

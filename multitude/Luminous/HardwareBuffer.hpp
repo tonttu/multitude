@@ -44,6 +44,9 @@ namespace Luminous
     LUMINOUS_API HardwareBuffer();
     LUMINOUS_API ~HardwareBuffer();
 
+    LUMINOUS_API HardwareBuffer(HardwareBuffer && b);
+    LUMINOUS_API HardwareBuffer & operator=(HardwareBuffer && b);
+
     LUMINOUS_API void setData(const char * data, size_t size, Usage usage);
 
     LUMINOUS_API size_t size() const;

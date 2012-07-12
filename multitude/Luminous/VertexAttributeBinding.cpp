@@ -26,6 +26,19 @@ namespace Luminous
     delete m_d;
   }
 
+  VertexAttributeBinding::VertexAttributeBinding(VertexAttributeBinding && b)
+    : RenderResource(RenderResource::VertexArray)
+    , m_d(b.m_d)
+  {
+    b.m_d = nullptr;
+  }
+
+  VertexAttributeBinding & VertexAttributeBinding::operator=(VertexAttributeBinding && b)
+  {
+    std::swap(m_d, b.m_d);
+    return *this;
+  }
+
   void VertexAttributeBinding::addBinding(const Luminous::HardwareBuffer & vertexBuffer, const Luminous::VertexDescription & description)
   {
     // Add the binding if it doesn't already exist

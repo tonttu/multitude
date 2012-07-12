@@ -29,6 +29,9 @@ namespace Luminous
     LUMINOUS_API RenderResource(Type type);
     LUMINOUS_API virtual ~RenderResource();
 
+    LUMINOUS_API RenderResource(RenderResource && rr);
+    LUMINOUS_API RenderResource & operator=(RenderResource && rr);
+
     inline Id resourceId() const { return m_id; }
     inline Type resourceType() const { return m_type; }
 

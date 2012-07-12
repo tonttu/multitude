@@ -73,6 +73,11 @@ namespace Luminous
     return id;
   }
 
+  void RenderManager::updateResource(RenderResource::Id id, RenderResource * resource)
+  {
+    instance().m_d->resourceMap[id] = resource;
+  }
+
   void RenderManager::destroyResource(RenderResource::Id id)
   {
     instance().m_d->resourceMap.erase(id);

@@ -34,6 +34,7 @@ namespace Luminous
     LUMINOUS_API void setDrivers(std::vector<Luminous::RenderDriver*> drivers);
 
     LUMINOUS_API static RenderResource::Id createResource(RenderResource * resource);
+    LUMINOUS_API static void updateResource(RenderResource::Id, RenderResource * resource);
     LUMINOUS_API static void destroyResource(RenderResource::Id id);
 
     template <typename T> static T * getResource( RenderResource::Id id );
