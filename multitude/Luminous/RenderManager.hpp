@@ -19,7 +19,8 @@
 #include "Export.hpp"
 #include <Luminous/Luminous.hpp>
 #include <Luminous/RenderResource.hpp>
-#include <Radiant/RefPtr.hpp>
+
+#include <vector>
 
 namespace Luminous
 {
@@ -27,12 +28,13 @@ namespace Luminous
   class RenderManager
   {
   public:
-    LUMINOUS_API RenderManager(Luminous::RenderDriver & driver);
+    LUMINOUS_API RenderManager();
     LUMINOUS_API ~RenderManager();
+
+    LUMINOUS_API void setDrivers(std::vector<Luminous::RenderDriver*> drivers);
 
     LUMINOUS_API static RenderResource::Id createResource(RenderResource * resource);
     LUMINOUS_API static void destroyResource(RenderResource::Id id);
-    LUMINOUS_API static RenderDriver & driver();
 
     template <typename T> static T * getResource( RenderResource::Id id );
   private:

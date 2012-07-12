@@ -41,7 +41,7 @@ namespace FireView {
   {
     Q_OBJECT;
   public:
-    CamView(unsigned int threadIndex, Luminous::RenderDriver & renderdriver, QWidget * parent);
+    CamView(Luminous::RenderDriver & renderdriver, QWidget * parent);
     virtual ~CamView();
 
     bool start(uint64_t euid64, Radiant::FrameRate fps, float customFps = 0.0f,

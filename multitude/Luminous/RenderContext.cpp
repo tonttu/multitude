@@ -188,7 +188,7 @@ namespace Luminous
   public:
     enum { MAX_TEXTURES = 64 };
 
-    Internal(unsigned int threadIndex, RenderDriver & renderDriver, const Luminous::MultiHead::Window * win)
+    Internal(RenderDriver & renderDriver, const Luminous::MultiHead::Window * win)
         : m_recursionLimit(DEFAULT_RECURSION_LIMIT)
         , m_recursionDepth(0)
         , m_renderPacket(0)
@@ -203,7 +203,6 @@ namespace Luminous
         , m_program(0)
         , m_vbo(0)
         , m_driver(renderDriver)
-        , m_threadIndex(threadIndex)
     {
       m_viewTransform.identity();
       m_viewTransformStack.push_back(m_viewTransform);
@@ -530,7 +529,6 @@ namespace Luminous
     std::shared_ptr<Texture2D> m_emptyTexture;
 
     Luminous::RenderDriver & m_driver;
-    unsigned int m_threadIndex;
   };
 
   void RenderContext::Internal::drawPolyLine(RenderContext& r, const Nimble::Vector2f * vertices, int n,
@@ -647,9 +645,9 @@ namespace Luminous
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
 
-  RenderContext::RenderContext(unsigned int threadIndex, Luminous::RenderDriver & driver, const Luminous::MultiHead::Window * win)
+  RenderContext::RenderContext(Luminous::RenderDriver & driver, const Luminous::MultiHead::Window * win)
       : Transformer(),
-      m_data(new Internal(threadIndex, driver, win))
+      m_data(new Internal(driver, win))
   {
     resetTransform();
     m_data->m_recursionDepth = 0;
@@ -733,7 +731,7 @@ namespace Luminous
 
     Utils::glCheck("RenderContext::prepare # 2");
 
-    m_data->m_driver.preFrame( threadIndex() );
+    m_data->m_driver.preFrame();
   }
 
   void RenderContext::finish()
@@ -741,7 +739,7 @@ namespace Luminous
     flush();
     bindProgram(0);
 
-    m_data->m_driver.postFrame( threadIndex() );
+    m_data->m_driver.postFrame();
   }
 
   void RenderContext::pushViewTransform()
@@ -1860,9 +1858,9 @@ namespace Luminous
   {
     switch (type)
     {
-    case HardwareBuffer::Vertex: m_data->m_driver.setVertexBuffer(threadIndex(), buffer); break;
-    case HardwareBuffer::Index: m_data->m_driver.setIndexBuffer(threadIndex(), buffer); break;
-    case HardwareBuffer::Constant: m_data->m_driver.setUniformBuffer(threadIndex(), buffer); break;
+    case HardwareBuffer::Vertex: m_data->m_driver.setVertexBuffer(buffer); break;
+    case HardwareBuffer::Index: m_data->m_driver.setIndexBuffer(buffer); break;
+    case HardwareBuffer::Constant: m_data->m_driver.setUniformBuffer(buffer); break;
     default:
       assert(false);
       Radiant::error("RenderContext::setBuffer - Buffertype %d not implemented", type);
@@ -1871,18 +1869,18 @@ namespace Luminous
 
   void RenderContext::setTexture(unsigned int textureUnit, const Luminous::Texture & texture)
   {
-    m_data->m_driver.setTexture(threadIndex(), textureUnit, texture);
+    m_data->m_driver.setTexture(textureUnit, texture);
   }
 
   void RenderContext::setVertexBinding(const VertexAttributeBinding & binding)
   {
     // Bind the VAO: Binds all the associated vertex buffers and sets the appropriate vertex attributes
-    m_data->m_driver.setVertexBinding(threadIndex(), binding);
+    m_data->m_driver.setVertexBinding(binding);
   }
 
   void RenderContext::setShaderProgram(const ShaderProgram & program)
   {
-    m_data->m_driver.setShaderProgram(threadIndex(), program);
+    m_data->m_driver.setShaderProgram(program);
   }
 
   void RenderContext::draw(PrimitiveType primType, unsigned int offset, unsigned int primitives)
@@ -1895,16 +1893,11 @@ namespace Luminous
     m_data->m_driver.drawIndexed(primType, offset, primitives);
   }
 
-  unsigned int RenderContext::threadIndex() const
-  {
-    return m_data->m_threadIndex;
-  }
-
   // Create all the setters for shader constants
 #define SETSHADERUNIFORM(TYPE) \
   template<> LUMINOUS_API bool RenderContext::setShaderUniform(const char * name, const TYPE & value) \
   { \
-    return m_data->m_driver.setShaderUniform(threadIndex(), name, value); \
+    return m_data->m_driver.setShaderUniform(name, value); \
   }
   SETSHADERUNIFORM(int);
   SETSHADERUNIFORM(float);
@@ -1922,7 +1915,7 @@ namespace Luminous
   // Manual conversion: Radiant::Color > Nimble::Vector4f
   template<> LUMINOUS_API bool RenderContext::setShaderUniform(const char * name, const Radiant::Color & value)
   {
-    return m_data->m_driver.setShaderUniform(threadIndex(), name, static_cast<Nimble::Vector4f>(value));
+    return m_data->m_driver.setShaderUniform(name, static_cast<Nimble::Vector4f>(value));
   }
 }
 

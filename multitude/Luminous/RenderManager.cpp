@@ -22,9 +22,8 @@ namespace Luminous
 {
   class RenderManager::D {
   public:
-    D(Luminous::RenderDriver & driver)
-      : driver(driver)
-      , resourceId(0)
+    D()
+      : resourceId(0)
     {
     }
 
@@ -41,14 +40,14 @@ namespace Luminous
     }
 
     RenderResource::Id resourceId;      // Next available resource ID
-    Luminous::RenderDriver & driver;    // Currently used driver
+    std::vector<Luminous::RenderDriver*> drivers; // Currently used drivers
     static RenderManager * s_instance;  // Singleton instance
   };
 
   RenderManager * RenderManager::D::s_instance = 0;
 
-  RenderManager::RenderManager(Luminous::RenderDriver & driver)
-    : m_d(new RenderManager::D(driver))
+  RenderManager::RenderManager()
+    : m_d(new RenderManager::D())
   {
     assert(RenderManager::D::s_instance == 0);
     RenderManager::D::s_instance = this;
@@ -62,6 +61,11 @@ namespace Luminous
     RenderManager::D::s_instance = 0;
   }
 
+  void RenderManager::setDrivers(std::vector<Luminous::RenderDriver*> drivers)
+  {
+    m_d->drivers = drivers;
+  }
+
   RenderResource::Id RenderManager::createResource(RenderResource * resource)
   {
     auto id = instance().m_d->resourceId++;
@@ -72,12 +76,11 @@ namespace Luminous
   void RenderManager::destroyResource(RenderResource::Id id)
   {
     instance().m_d->resourceMap.erase(id);
-    instance().m_d->driver.releaseResource(id);
-  }
-
-  RenderDriver & RenderManager::driver()
-  {
-    return instance().m_d->driver;
+    auto it = instance().m_d->drivers.begin(), end = instance().m_d->drivers.end();
+    while(it != end) {
+      (*it)->releaseResource(id);
+      ++it;
+    }
   }
 
   RenderManager & RenderManager::instance()

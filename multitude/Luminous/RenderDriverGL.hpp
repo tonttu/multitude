@@ -9,42 +9,42 @@ namespace Luminous
   class RenderDriverGL : public RenderDriver
   {
   public:
-    LUMINOUS_API RenderDriverGL(unsigned int threadCount);
+    LUMINOUS_API RenderDriverGL();
     LUMINOUS_API ~RenderDriverGL();
 
     LUMINOUS_API virtual void clear(ClearMask mask, const Radiant::Color & color, double depth, int stencil) OVERRIDE;
     LUMINOUS_API virtual void draw(PrimitiveType type, unsigned int offset, unsigned int primitives) OVERRIDE;
     LUMINOUS_API virtual void drawIndexed(PrimitiveType type, unsigned int offset, unsigned int primitives) OVERRIDE;
 
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const int & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const unsigned int & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const float & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const Nimble::Vector2i & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const Nimble::Vector3i & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const Nimble::Vector4i & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const Nimble::Vector2T<unsigned int> & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const Nimble::Vector3T<unsigned int> & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const Nimble::Vector4T<unsigned int> & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const Nimble::Vector2f & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const Nimble::Vector3f & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const Nimble::Vector4f & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const Nimble::Matrix2f & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const Nimble::Matrix3f & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(unsigned int threadIndex, const char * name, const Nimble::Matrix4f & value) OVERRIDE;
-    LUMINOUS_API virtual void setShaderProgram(unsigned int threadIndex, const ShaderProgram & shader) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(const char * name, const int & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(const char * name, const unsigned int & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(const char * name, const float & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector2i & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector3i & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector4i & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector2T<unsigned int> & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector3T<unsigned int> & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector4T<unsigned int> & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector2f & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector3f & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector4f & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Matrix2f & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Matrix3f & value) OVERRIDE;
+    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Matrix4f & value) OVERRIDE;
+    LUMINOUS_API virtual void setShaderProgram(const ShaderProgram & shader) OVERRIDE;
 
-    LUMINOUS_API virtual void preFrame(unsigned int threadIndex) OVERRIDE;
-    LUMINOUS_API virtual void postFrame(unsigned int threadIndex) OVERRIDE;
+    LUMINOUS_API virtual void preFrame() OVERRIDE;
+    LUMINOUS_API virtual void postFrame() OVERRIDE;
 
-    LUMINOUS_API virtual void setVertexBuffer(unsigned int threadIndex, const HardwareBuffer & buffer) OVERRIDE;
-    LUMINOUS_API virtual void setIndexBuffer(unsigned int threadIndex, const HardwareBuffer & buffer) OVERRIDE;
-    LUMINOUS_API virtual void setUniformBuffer(unsigned int threadIndex, const HardwareBuffer & buffer) OVERRIDE;
+    LUMINOUS_API virtual void setVertexBuffer(const HardwareBuffer & buffer) OVERRIDE;
+    LUMINOUS_API virtual void setIndexBuffer(const HardwareBuffer & buffer) OVERRIDE;
+    LUMINOUS_API virtual void setUniformBuffer(const HardwareBuffer & buffer) OVERRIDE;
 
-    LUMINOUS_API virtual void setVertexBinding(unsigned int threadIndex, const VertexAttributeBinding & binding) OVERRIDE;
+    LUMINOUS_API virtual void setVertexBinding(const VertexAttributeBinding & binding) OVERRIDE;
     
-    LUMINOUS_API virtual void setTexture(unsigned int threadIndex, unsigned int textureUnit, const Texture & texture) OVERRIDE;
+    LUMINOUS_API virtual void setTexture(unsigned int textureUnit, const Texture & texture) OVERRIDE;
 
-    LUMINOUS_API virtual void clearState(unsigned int threadIndex) OVERRIDE;
+    LUMINOUS_API virtual void clearState() OVERRIDE;
 
     LUMINOUS_API virtual void setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer) OVERRIDE;
 

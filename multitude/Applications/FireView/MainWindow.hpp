@@ -52,7 +52,7 @@ namespace FireView {
     bool  m_format7;
 
     std::set<QWidget *> m_displays;
-    std::shared_ptr<Luminous::RenderDriver> m_renderDriver;
+    std::vector<std::shared_ptr<Luminous::RenderDriver>> m_renderDrivers;
   };
 }
 

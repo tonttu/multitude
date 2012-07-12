@@ -122,7 +122,7 @@ namespace Luminous
     /// Constructs a new render context and associates the given resources to it
     /// @param resources OpenGL resource container to associate with the context
     /// @param window window to associate this context with
-    RenderContext(unsigned int threadIndex, Luminous::RenderDriver & driver, const Luminous::MultiHead::Window * window = 0);
+    RenderContext(Luminous::RenderDriver & driver, const Luminous::MultiHead::Window * window = 0);
     virtual ~RenderContext();
 
     /// Sets the associated window for this context
@@ -421,8 +421,6 @@ namespace Luminous
     //////////////////////////////////////////////////////////////////////////
     /// <Luminousv2>
     //////////////////////////////////////////////////////////////////////////
-
-    unsigned int threadIndex() const;
 
     void setBuffer(HardwareBuffer::Type type, const Luminous::HardwareBuffer & buffer);
     void setTexture(unsigned int textureUnit, const Luminous::Texture & texture);
