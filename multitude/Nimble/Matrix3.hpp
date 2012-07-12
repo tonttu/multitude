@@ -649,9 +649,9 @@ inline Nimble::Matrix3T<T> operator * (const Nimble::Matrix3T<T>& m1,
 
   for(int i = 0; i < 3; i++) {
     Nimble::Vector3T<T> t = m2.column(i);
-    res[0][i] = ::dot(m1.row(0),t);
-    res[1][i] = ::dot(m1.row(1),t);
-    res[2][i] = ::dot(m1.row(2),t);
+    res[0][i] = dot(m1.row(0),t);
+    res[1][i] = dot(m1.row(1),t);
+    res[2][i] = dot(m1.row(2),t);
   }
 
   return res;
@@ -664,7 +664,7 @@ inline Nimble::Vector3T<T> operator*(const Nimble::Matrix3T<K>& m1,
 {
   Nimble::Vector3T<T> res;
   for(int i = 0; i < 3; i++)
-    res[i] = ::dot(m1.row(i),m2);
+    res[i] = dot(m1.row(i),m2);
   return res;
 }
 
@@ -675,7 +675,7 @@ inline Nimble::Vector3T<T> operator*(const Nimble::Matrix3T<T>& m1,
 {
   Nimble::Vector3T<T> res;
   for(int i = 0; i < 3; i++)
-    res[i] = ::dot3(m1.row(i),m2);
+    res[i] = dot3(m1.row(i),m2);
   return res;
 }
 
@@ -687,7 +687,7 @@ inline Nimble::Vector3T<T> operator*(const Nimble::Vector3T<T>& m2,
 {
   Nimble::Vector3T<T> res;
   for(int i = 0; i < 3; i++)
-    res[i] = ::dot(m1.column(i),m2);
+    res[i] = dot(m1.column(i),m2);
   return res;
 }
 

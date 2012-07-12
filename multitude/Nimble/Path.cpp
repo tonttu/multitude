@@ -92,13 +92,13 @@ namespace {
     float maxDistSqr = 0;
     Segment segment = { points[beg], points[end] };
     Nimble::Vector2f u = segment.p1 - segment.p0;
-    float cu = Nimble::dot(u, u);
+    float cu = dot(u, u);
 
     // Find the point with the maximum distance to the segment
     for(int i = beg + 1; i < end; i++) {
       // Compute squared distance
       Nimble::Vector2f w = points[i] - segment.p0;
-      float cw = Nimble::dot(w, u);
+      float cw = dot(w, u);
 
       float dv2;
       if(cw <= 0) dv2 = (points[i] - segment.p0).lengthSqr();

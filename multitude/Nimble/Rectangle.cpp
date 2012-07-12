@@ -138,7 +138,7 @@ namespace Nimble
     box.m_origin = 0.5f * (a.center() + b.center());
 
     // Average the box axii (and negate if necessary)
-    if(Nimble::dot(a.m_axis0, b.m_axis0) >= 0.f) {
+    if(dot(a.m_axis0, b.m_axis0) >= 0.f) {
       box.m_axis0 = 0.5f * (a.m_axis0 + b.m_axis0);
       box.m_axis0.normalize();
     } else {

@@ -179,76 +179,76 @@ namespace Nimble {
       return t.length();
     }
   }
+
+  template <class T>
+  inline T abs(Nimble::Vector3T<T> t)
+  {
+    return t.length();
+  }
+
+  template <class K, class T>
+  inline T dot(const Nimble::Vector3T<K>& a, const Nimble::Vector3T<T>& b)
+  {
+    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+  }
+
+  template <class K, class T>
+  inline T dot2(const Nimble::Vector3T<K>& a, const Nimble::Vector2T<T>& b)
+  {
+    return a[0]*b[0] + a[1]*b[1];
+  }
+
+  template <class K, class T>
+  inline T dot3(const Nimble::Vector3T<K>& a, const Nimble::Vector2T<T>& b)
+  {
+    return a[0]*b[0] + a[1]*b[1] + a[2];
+  }
+
+  template <class T>
+  inline Nimble::Vector3T<T> cross(const Nimble::Vector3T<T>& a, const Nimble::Vector3T<T>& b)
+  {
+    Nimble::Vector3T<T> v((a[1]*b[2])-(a[2]*b[1]),
+        -(a[0]*b[2])+(a[2]*b[0]),
+        (a[0]*b[1])-(a[1]*b[0]));
+    return v;
+  }
+
+  template <class T>
+  inline std::ostream &operator<<(std::ostream &os, const Nimble::Vector3T<T> &t)
+  {
+    os << t.x << ' ' << t.y << ' ' << t.z;
+    return os;
+  }
+
+  template <class T>
+  inline std::istream &operator>>(std::istream &is, Nimble::Vector3T<T> &t)
+  {
+    is >> t.x;
+    is >> t.y;
+    is >> t.z;
+    return is;
+  }
+
+  template <>
+  inline std::ostream &operator<<(std::ostream &os, const Nimble::Vector3T<uint8_t> &t)
+  {
+    os << int(t.x) << ' ' << int(t.y) << ' ' << int(t.z);
+    return os;
+  }
+
+  template <>
+  inline std::istream &operator>>(std::istream &is, Nimble::Vector3T<uint8_t> &t)
+  {
+    int x, y, z;
+    is >> x >> y >> z;
+    t.x = x;
+    t.y = y;
+    t.z = z;
+    return is;
+  }
+
 } // namespace
 
-template <class T>
-inline T abs(Nimble::Vector3T<T> t)
-{
-  return t.length();
-}
-
-template <class K, class T>
-inline T dot(const Nimble::Vector3T<K>& a, const Nimble::Vector3T<T>& b)
-{
-  return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
-}
-
-template <class K, class T>
-inline T dot2(const Nimble::Vector3T<K>& a, const Nimble::Vector2T<T>& b)
-{
-  return a[0]*b[0] + a[1]*b[1];
-}
-
-template <class K, class T>
-inline T dot3(const Nimble::Vector3T<K>& a, const Nimble::Vector2T<T>& b)
-{
-  return a[0]*b[0] + a[1]*b[1] + a[2];
-}
-
-template <class T>
-inline Nimble::Vector3T<T> cross(const Nimble::Vector3T<T>& a, const Nimble::Vector3T<T>& b)
-{
-  Nimble::Vector3T<T> v((a[1]*b[2])-(a[2]*b[1]),
-               -(a[0]*b[2])+(a[2]*b[0]),
-               (a[0]*b[1])-(a[1]*b[0]));
-  return v;
-}
-
-template <class T>
-inline std::ostream &operator<<(std::ostream &os, const Nimble::Vector3T<T> &t)
-{
-  os << t.x << ' ' << t.y << ' ' << t.z;
-  return os;
-}
-
-template <class T>
-inline std::istream &operator>>(std::istream &is, Nimble::Vector3T<T> &t)
-{
-  is >> t.x;
-  is >> t.y;
-  is >> t.z;
-  return is;
-}
-
-template <>
-inline std::ostream &operator<<(std::ostream &os, const Nimble::Vector3T<uint8_t> &t)
-{
-  os << int(t.x) << ' ' << int(t.y) << ' ' << int(t.z);
-  return os;
-}
-
-template <>
-inline std::istream &operator>>(std::istream &is, Nimble::Vector3T<uint8_t> &t)
-{
-  int x, y, z;
-  is >> x >> y >> z;
-  t.x = x;
-  t.y = y;
-  t.z = z;
-  return is;
-}
-/// @todo never use 'using' in a header file!
-//using Nimble::operator *;
 
 #ifdef __GCCXML__
 /// These are exported to JS

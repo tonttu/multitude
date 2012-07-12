@@ -486,10 +486,10 @@ namespace Nimble {
     for(int i = 0; i < columns(); i++)
       {
     const Vector4T<T> t = column(i);
-    m[0][i] = ::dot(that[0],t);
-    m[1][i] = ::dot(that[1],t);
-    m[2][i] = ::dot(that[2],t);
-    m[3][i] = ::dot(that[3],t);
+    m[0][i] = dot(that[0],t);
+    m[1][i] = dot(that[1],t);
+    m[2][i] = dot(that[2],t);
+    m[3][i] = dot(that[3],t);
       }
     return *this;
   }

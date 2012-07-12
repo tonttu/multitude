@@ -32,17 +32,17 @@ namespace Nimble
   Plane::Plane(const Nimble::Vector3f & normal, const Nimble::Vector3f & point)
   : m_normal(normal)
   {
-    m_constant = ::dot(normal, point);
+    m_constant = dot(normal, point);
   }
 
   float Plane::distanceTo(const Nimble::Vector3f & point) const
   {
-    return ::dot(m_normal, point) - m_constant;
+    return dot(m_normal, point) - m_constant;
   }
 
   bool Plane::intersect(const Nimble::Vector3f & rayO, const Nimble::Vector3f & rayD, float & rayT) const
   {
-    float dotDN = ::dot(rayD, m_normal);
+    float dotDN = dot(rayD, m_normal);
     float dist = distanceTo(rayO);
 
     if(fabs(dotDN) > EPSILON) {
