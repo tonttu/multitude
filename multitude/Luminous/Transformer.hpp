@@ -17,15 +17,15 @@
 
 #include <Luminous/Export.hpp>
 
-#include <Nimble/Matrix3.hpp>
+#include <Nimble/Matrix4.hpp>
 
 #include <stack>
 #include <vector>
 
 namespace Luminous
 {
-  /** Geometrical 2D transformation stack. This class encapsulates 2D
-      transformation stack. The transformations are stored as 3x3
+  /** Geometrical 3D transformation stack. This class encapsulates 3D
+      transformation stack. The transformations are stored as 4x4
       matrices. */
   class LUMINOUS_API Transformer
   {
@@ -36,7 +36,9 @@ namespace Luminous
     virtual ~Transformer();
 
     /// Get the top matrix of the stack
-    const Nimble::Matrix3 & transform() const { return m_stack.top(); }
+    /// @todo rename to transform
+    const Nimble::Matrix4 & transform4() const { return m_stack.top(); }
+    Nimble::Matrix3 transform() const;
 
     /// Apply the current transformation matrix on a 2D vector.
     Nimble::Vector2 project(Nimble::Vector2) const;
@@ -51,9 +53,13 @@ namespace Luminous
 
     /// Multiply the top matrix from the left with the given matrix and push the
     /// result into the stack
+    void pushTransformLeftMul(const Nimble::Matrix4 & m);
+    /// @deprecated
     void pushTransformLeftMul(const Nimble::Matrix3 & m);
     /// Multiply the top matrix from the right with the given matrix and push
     /// the result into the stack
+    void pushTransformRightMul(const Nimble::Matrix4 & m);
+    /// @deprecated
     void pushTransformRightMul(const Nimble::Matrix3 & m);
     /// Push a new matrix to the stack, just copying the current top
     void pushTransform();
@@ -64,22 +70,24 @@ namespace Luminous
     ///  renderContext.setTransform(m);
     /// @endcode
     /// @param m matrix to push
+    void pushTransform(const Nimble::Matrix4 & m);
+    /// @deprecated
     void pushTransform(const Nimble::Matrix3 & m);
     /// Replaces the top matrix with the given matrix
     /// @param m matrix to set
-    void setTransform(const Nimble::Matrix3 & m);
+    void setTransform(const Nimble::Matrix4 & m);
 
     /// Multiply the top matrix from the left with the given matrix
     /// The end result is equivalent to:
     ///  @code renderContext.setTransform(m * renderContext.transform()); @endcode
     /// @param m matrix to multiply with
-    void leftMul(const Nimble::Matrix3 & m);
+    void leftMul(const Nimble::Matrix4 & m);
 
     /// Multiply the top matrix from the right with the given matrix
     /// The end result is equivalent to:
     /// @code renderContext.setTransform(renderContext.transform() * m); @endcode
     /// @param m matrix to multiply with
-    void rightMul(const Nimble::Matrix3 & m);
+    void rightMul(const Nimble::Matrix4 & m);
 
     /// Clears the stack so it only contains an identity matrix
     void resetTransform();
@@ -88,7 +96,7 @@ namespace Luminous
     virtual void beforeTransformChange();
 
     /// The transformation stack
-    std::stack<Nimble::Matrix3, std::vector<Nimble::Matrix3> > m_stack;
+    std::stack<Nimble::Matrix4, std::vector<Nimble::Matrix4>> m_stack;
   };
 }
 
