@@ -170,9 +170,4 @@ template<>
   */
 }
 
-#ifdef __GCCXML__
-/// These are exported to JS
-template class Valuable::AttributeIntT<int32_t>;
-#endif
-
 #endif

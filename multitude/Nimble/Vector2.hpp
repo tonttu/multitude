@@ -427,11 +427,4 @@ inline K &operator<<(K &os, const Nimble::Vector2T<T> &t)
   return os;
 }
 
-#ifdef __GCCXML__
-/// These are exported to JS
-template class Nimble::Vector2T<float>;
-template class Nimble::Vector2T<int>;
-template class Nimble::Vector2T<unsigned char>;
-#endif
-
 #endif

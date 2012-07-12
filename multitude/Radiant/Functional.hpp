@@ -10,8 +10,6 @@
 // try to detect C++11
 #if defined(RADIANT_CXX11)
   #include <functional>
-#elif defined(__GCCXML__)
-  #include <generator/gccxml_tr1.hpp>
 #else
   #if defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
     #include <tr1/functional>

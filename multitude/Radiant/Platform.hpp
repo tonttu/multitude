@@ -15,10 +15,6 @@
 #ifndef RADIANT_PLATFORM_HPP
 #define RADIANT_PLATFORM_HPP
 
-#ifdef __GCCXML__
-#  include <generator/gccxml_tr1.hpp>
-#endif
-
 // C++11 check
 #if __cplusplus > 199711L || defined(__GXX_EXPERIMENTAL_CXX0X__)
   #define RADIANT_CXX11 1
@@ -90,13 +86,13 @@
 #   pragma warning(disable:4251)
 #endif
 
-#if !defined(NO_OVERRIDE) && !defined(__GCCXML__)
+#if !defined(NO_OVERRIDE)
 #  define OVERRIDE override
 #else
 #  define OVERRIDE
 #endif
 
-#if !defined(NO_FINAL) && !defined(__GCCXML__)
+#if !defined(NO_FINAL)
 #  if RADIANT_MSVC10
 #    define FINAL sealed
 #  else
