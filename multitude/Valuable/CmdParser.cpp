@@ -18,6 +18,7 @@
 #include "Valuable/DOMDocument.hpp"
 #include "Valuable/DOMElement.hpp"
 #include "Valuable/Node.hpp"
+#include "Valuable/AttributeAlias.hpp"
 #include "Valuable/AttributeBool.hpp"
 
 #include <QStringList>
@@ -88,6 +89,11 @@ namespace Valuable
 
       Valuable::Attribute * obj = opts.getValue(name);
       if(obj) {
+        // check if we have an alias for an AttributeBool
+        Valuable::AttributeAlias * alias = dynamic_cast<Valuable::AttributeAlias*>(obj);
+        if(alias)
+          obj = alias->attribute();
+
         Valuable::AttributeBool * b = dynamic_cast<Valuable::AttributeBool*>(obj);
         if(b) {
           *b = true;
