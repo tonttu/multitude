@@ -4,6 +4,8 @@
 #include "Luminous/Luminous.hpp"
 #include "Luminous/RenderDriver.hpp"
 
+#include <Radiant/Flags.hpp>
+
 namespace Luminous
 {
   class RenderDriverGL : public RenderDriver
@@ -48,6 +50,10 @@ namespace Luminous
 
     LUMINOUS_API virtual void setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer) OVERRIDE;
 
+
+    LUMINOUS_API virtual void * mapBuffer(const HardwareBuffer & buffer, int offset, std::size_t length,
+                                          Radiant::FlagsT<HardwareBuffer::MapAccess> access) OVERRIDE;
+    LUMINOUS_API virtual void unmapBuffer(const HardwareBuffer & buffer) OVERRIDE;
     /// @todo Add function wrapper(s) for:
     /// * glLogicOp
     /// * glBlendFunc, glBlendEquation

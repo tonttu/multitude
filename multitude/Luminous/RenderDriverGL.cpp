@@ -129,9 +129,11 @@ namespace Luminous
 
   struct BufferMapping
   {
-    BufferMapping() : target(0), access(0), data(0) {}
+    BufferMapping() : target(0), access(0), offset(0), length(0), data(0) {}
     GLenum target;
     GLenum access;
+    int offset;
+    std::size_t length;
     void * data;
   };
 
@@ -858,7 +860,7 @@ namespace Luminous
     BufferMapping & map = m_d->m_bufferMaps[bufferHandle.handle];
 
     if(map.data) {
-      if(map.access == access.asInt())
+      if(map.access == access.asInt() && map.offset == offset && map.length == length)
         return map.data;
       m_d->bindBuffer(target, bufferHandle.handle);
       glUnmapBuffer(target);
@@ -868,7 +870,9 @@ namespace Luminous
     m_d->bindBuffer(target, bufferHandle.handle);
     map.access = access.asInt();
     map.target = target;
-    map.data = glMapBufferRange(map.target, offset, length, map.access);
+    map.offset = offset;
+    map.length = length;
+    map.data = glMapBufferRange(map.target, map.offset, map.length, map.access);
     GLERROR("RenderDriverGL::mapBuffer glMapBufferRange");
     return map.data;
   }
