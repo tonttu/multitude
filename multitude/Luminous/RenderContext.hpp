@@ -428,6 +428,14 @@ namespace Luminous
     void setShaderProgram(const ShaderProgram & program);
     template <typename T> bool setShaderUniform(const char * name, const T & value);
 
+    template <typename T>
+    T * mapBuffer(const HardwareBuffer & buffer, int offset, std::size_t length,
+                  Radiant::FlagsT<HardwareBuffer::MapAccess> access);
+
+    template <typename T>
+    inline T * mapBuffer(const HardwareBuffer & buffer,
+                         Radiant::FlagsT<HardwareBuffer::MapAccess> access);
+
     void draw(PrimitiveType primType, unsigned int offset, unsigned int primitives);
     void drawIndexed(PrimitiveType primType, unsigned int offset, unsigned int primitives);
 
@@ -472,6 +480,23 @@ namespace Luminous
     int m_pos;
   };
 
+  template <>
+  void * RenderContext::mapBuffer<void>(const HardwareBuffer & buffer, int offset, std::size_t length,
+                                        Radiant::FlagsT<HardwareBuffer::MapAccess> access);
+
+  template <typename T>
+  T * RenderContext::mapBuffer(const HardwareBuffer & buffer, int offset, std::size_t length,
+                               Radiant::FlagsT<HardwareBuffer::MapAccess> access)
+  {
+    return reinterpret_cast<T*>(mapBuffer<void>(buffer, offset, length, access));
+  }
+
+  template <typename T>
+  inline T * RenderContext::mapBuffer(const HardwareBuffer & buffer,
+                                      Radiant::FlagsT<HardwareBuffer::MapAccess> access)
+  {
+    return mapBuffer<T>(buffer, 0, buffer.size(), access);
+  }
 }
 
 #endif

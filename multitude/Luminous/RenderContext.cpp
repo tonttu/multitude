@@ -1421,6 +1421,13 @@ namespace Luminous
     return m4 * v4;
   }
 
+  template <>
+  void * RenderContext::mapBuffer<void>(const HardwareBuffer & buffer, int offset, std::size_t length,
+                                        Radiant::FlagsT<HardwareBuffer::MapAccess> access)
+  {
+    return m_data->m_driver.mapBuffer(buffer, offset, length, access);
+  }
+
   void RenderContext::drawRect(const Nimble::Rect & area, const Style & style)
   {
     if(style.program()) {
