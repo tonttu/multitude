@@ -22,6 +22,8 @@
 #include <vector>
 #include <algorithm>
 
+#include <QStringList>
+
 #if RADIANT_DEBUG
 # define GLERROR(txt) Utils::glCheck(txt)
 #else
@@ -96,6 +98,10 @@ namespace Luminous
     Radiant::Timer lastUsed;
     GLuint handle;
     uint64_t generation;
+
+    inline bool operator==(const ResourceHandle<T> & o) const { return handle == o.handle; }
+    inline bool operator!=(const ResourceHandle<T> & o) const { return handle != o.handle; }
+    inline bool operator<(const ResourceHandle<T> & o) const { return handle < o.handle; }
   };
 
   struct BufferHandle : public ResourceHandle<HardwareBuffer>
@@ -109,13 +115,19 @@ namespace Luminous
   
   struct TextureHandle : public ResourceHandle<Texture>
   {
-    TextureHandle(const Texture * ptr = nullptr) : ResourceHandle(ptr), size(0), uploaded(0) {}
+    TextureHandle(const Texture * ptr = nullptr) : ResourceHandle(ptr), target(0), size(0), uploaded(0) {}
+    GLenum target;
     size_t size;      // Total size (in bytes)
     size_t uploaded;  // Bytes uploaded (for incremental uploading)
   };
 
+  struct ProgramHandle : public ResourceHandle<ShaderProgram>
+  {
+    ProgramHandle(const ShaderProgram * ptr = nullptr) : ResourceHandle(ptr) {}
+    std::set<GLuint> shaders;
+  };
+
   // Generic handle
-  typedef ResourceHandle<ShaderProgram> ProgramHandle;
   typedef ResourceHandle<ShaderGLSL> ShaderHandle;
   typedef ResourceHandle<VertexAttributeBinding> BindingHandle;
   typedef ResourceHandle<VertexDescription> DescriptionHandle;
@@ -128,6 +140,7 @@ namespace Luminous
     D()
       : m_currentProgram(0)
       , m_currentBinding(0)
+      , m_currentBuffer(0)
       , m_uploadedBytes(0)
       , m_frame(0)
       , m_fps(0.0)
@@ -138,10 +151,11 @@ namespace Luminous
 
     GLuint m_currentProgram;  // Currently bound shader program
     GLuint m_currentBinding;  // Currently bound vertex binding
+    GLuint m_currentBuffer;   // Currently bound buffer object
 
-    typedef std::map<RenderResource::Id, ProgramHandle> ProgramList;
-    typedef std::map<RenderResource::Id, ShaderHandle> ShaderList;
-    typedef std::map<RenderResource::Id, TextureHandle> TextureList;
+    typedef std::map<RenderResource::Hash, ProgramHandle> ProgramList;
+    typedef std::map<RenderResource::Hash, ShaderHandle> ShaderList;
+    typedef std::map<RenderResource::Hash, TextureHandle> TextureList;
     typedef std::map<RenderResource::Id, BufferHandle> BufferList;
     typedef std::map<RenderResource::Id, BindingHandle> BindingList;
     typedef std::map<RenderResource::Id, DescriptionHandle> DescriptionList;
@@ -189,16 +203,14 @@ namespace Luminous
       removeResource(m_bindings, m_releaseQueue);
       removeResource(m_buffers, m_releaseQueue);
       removeResource(m_descriptions, m_releaseQueue);
-      removeResource(m_programs, m_releaseQueue);
-      removeResource(m_shaders, m_releaseQueue);
-      removeResource(m_textures, m_releaseQueue);
+      removeResource(m_programs);
+      removeResource(m_shaders);
+      removeResource(m_textures);
       m_releaseQueue.clear();
     }
 
-    void bindShaderProgram(const ShaderProgram & program)
+    void bindShaderProgram(const ProgramHandle & programHandle)
     {
-      const ProgramHandle & programHandle = m_programs[program.resourceId()];
-
       // Avoid re-applying the same shader
       if (m_currentProgram != programHandle.handle)
       {
@@ -208,19 +220,25 @@ namespace Luminous
       }
     }
 
+    void bindTexture(const TextureHandle & textureHandle, int textureUnit)
+    {
+      glActiveTexture(GL_TEXTURE0 + textureUnit);
+      glBindTexture(textureHandle.target, textureHandle.handle);
+      GLERROR("RenderDriverGL::D::bindTexture glBindTexture");
+    }
+
     bool updateShaderProgram(const ShaderProgram & program)
     {
-      auto & programList = m_programs;
-      auto it = programList.find(program.resourceId());
+      auto it = m_programs.find(program.hash());
       ProgramHandle * handle;
-      if (it == std::end(programList)) {
+      if (it == std::end(m_programs)) {
         /// New program: create it and add to cache
         ProgramHandle programHandle(&program);
         programHandle.handle = createResource(program.resourceType());
         programHandle.generation = 0;
-        programList[program.resourceId()] = programHandle;
+        m_programs[program.hash()] = programHandle;
 
-        handle = &programList[program.resourceId()];
+        handle = &m_programs[program.hash()];
       }
       else
         handle = &(it->second);
@@ -234,35 +252,26 @@ namespace Luminous
     bool updateShaders(const ShaderProgram & program)
     {
       bool needsRelinking = false;
-      auto & shaderList = m_shaders;
-      auto & programList = m_programs;
-      auto & programHandle = programList[ program.resourceId() ];
+      auto & programHandle = m_programs[ program.hash() ];
 
       for (size_t i = 0; i < program.shaderCount(); ++i)
       {
         RenderResource::Id shaderId = program.shader(i);
         ShaderGLSL * shader = RenderManager::getResource<ShaderGLSL>(shaderId);
+        const RenderResource::Hash shaderHash = shader->hash();
 
         ShaderHandle * handle;
 
         // Find the correct shader
-        auto it = shaderList.find(shaderId);
-        if (it == std::end(shaderList)) {
+        auto it = m_shaders.find(shaderHash);
+        if (it == std::end(m_shaders)) {
           /// New shader: create it
           ShaderHandle shaderHandle(shader);
           shaderHandle.handle = createResource(shader->resourceType());
           shaderHandle.generation = 0;
-          shaderList[shaderId] = shaderHandle;
-          handle = &shaderList[shaderId];
-        }
-        else
-          handle = &(it->second);
+          m_shaders[shaderHash] = shaderHandle;
+          handle = &m_shaders[shaderHash];
 
-        // Reset usage timer
-        handle->lastUsed.start();
-
-        /// Check if it needs updating
-        if (handle->generation < shader->generation()) {
           // Set and compile source
           const QByteArray shaderData = shader->text().toAscii();
           const GLchar * text = shaderData.data();
@@ -272,17 +281,8 @@ namespace Luminous
           GLERROR("RenderDriverGL::setShaderProgram glCompileShader");
           GLint compiled = GL_FALSE;
           glGetShaderiv(handle->handle, GL_COMPILE_STATUS, &compiled);
-          if (compiled == GL_TRUE) {
-            // All seems okay, update resource handle
-            handle->generation = shader->generation();
-
-            // Attach to the program
-            glAttachShader(programHandle.handle, handle->handle);
-            GLERROR("RenderDriverGL::setShaderProgram glAttachShader");
-            needsRelinking = true;
-          }
-          else {
-            Radiant::error("Failed to compile shader %d", handle->handle);
+          if (compiled != GL_TRUE) {
+            Radiant::error("Failed to compile shader %s", shader->filename().toUtf8().data());
 
             // Dump info log
             GLsizei len;
@@ -290,7 +290,22 @@ namespace Luminous
             std::vector<GLchar> log(len);
             glGetShaderInfoLog(handle->handle, len, &len, log.data());
             Radiant::error("%s", log.data());
+
+            continue;
           }
+        }
+        else
+          handle = &(it->second);
+
+        // Reset usage timer
+        handle->lastUsed.start();
+
+        if(programHandle.shaders.find(handle->handle) == programHandle.shaders.end()) {
+          programHandle.shaders.insert(handle->handle);
+          // Attach to the program
+          glAttachShader(programHandle.handle, handle->handle);
+          GLERROR("RenderDriverGL::setShaderProgram glAttachShader");
+          needsRelinking = true;
         }
       }
       return needsRelinking;
@@ -298,7 +313,7 @@ namespace Luminous
 
     void relinkShaderProgram(const ShaderProgram & program)
     {
-      auto & programHandle = m_programs[program.resourceId()];
+      auto & programHandle = m_programs[program.hash()];
       glLinkProgram(programHandle.handle);
       GLERROR("RenderDriverGL::setShaderProgram glLinkProgram");
       // Check for linking errors
@@ -306,7 +321,7 @@ namespace Luminous
       glGetProgramiv(programHandle.handle, GL_LINK_STATUS, &status);
 
       if (status == GL_FALSE) {
-        Radiant::error("Failed to link shader program %d", programHandle.handle);
+        Radiant::error("Failed to link shader program (shaders %s)", program.shaderFilenames().join(", ").toUtf8().data());
         GLsizei len;
         glGetProgramiv(programHandle.handle, GL_INFO_LOG_LENGTH, &len);
         std::vector<GLchar> log(len);
@@ -322,7 +337,7 @@ namespace Luminous
 
     void applyShaderUniforms(const ShaderProgram & program)
     {
-      auto & programHandle = m_programs[program.resourceId()];
+      auto & programHandle = m_programs[program.hash()];
 
       // Set all shader uniforms attached to this shader
       for (size_t i = 0; i < program.uniformCount(); ++i) {
@@ -356,6 +371,121 @@ namespace Luminous
         }
       }
     }
+
+    ProgramHandle & getLinkedShaderProgram(const ShaderProgram & program)
+    {
+      // Check if the program has changed (shaders have been added/removed)
+      bool needsRelinking = updateShaderProgram(program);
+      // Check if the shaders have changed (source change)
+      needsRelinking |= updateShaders(program);
+
+      if(needsRelinking)
+        relinkShaderProgram(program);
+
+      return m_programs[program.hash()];
+    }
+
+    TextureHandle & textureHandle(const Texture & texture, int textureUnit, bool alwaysBind = false)
+    {
+      TextureHandle & textureHandle = m_textures[texture.hash()];
+      bool newTexture = false;
+      if(textureHandle.handle == 0) {
+        textureHandle.resource = &texture;
+        textureHandle.handle = createResource(RenderResource::Texture);
+        newTexture = true;
+      }
+
+      // Reset usage timer
+      textureHandle.lastUsed.start();
+
+      /// Specify the external format (number of channels)
+      GLenum extFormat;
+      if (texture.format().numChannels() == 1)      extFormat = GL_RED;
+      else if (texture.format().numChannels() == 2) extFormat = GL_RG;
+      else if (texture.format().numChannels() == 3) extFormat = GL_RGB;
+      else if (texture.format().numChannels() == 4) extFormat = GL_RGBA;
+
+      bool bound = false;
+
+      if((/*texture.mode() == Texture::Streaming &&*/ textureHandle.generation < texture.generation())
+         || newTexture) {
+        // Start the uploading
+        textureHandle.uploaded = 0;
+
+        if (texture.dimensions() == 1)      textureHandle.target = GL_TEXTURE_1D;
+        else if (texture.dimensions() == 2) textureHandle.target = GL_TEXTURE_2D;
+        else if (texture.dimensions() == 3) textureHandle.target = GL_TEXTURE_3D;
+
+        bindTexture(textureHandle, textureUnit);
+        bound = true;
+
+        if (texture.dimensions() == 1)      glTexImage1D(GL_TEXTURE_1D, 0, texture.format().layout(), texture.width(), 0, extFormat , texture.format().type(), nullptr );
+        else if (texture.dimensions() == 2) glTexImage2D(GL_TEXTURE_2D, 0, texture.format().layout(), texture.width(), texture.height(), 0, extFormat, texture.format().type(), nullptr );
+        else if (texture.dimensions() == 3) glTexImage3D(GL_TEXTURE_3D, 0, texture.format().layout(), texture.width(), texture.height(), texture.depth(), 0, extFormat, texture.format().type(), nullptr );
+
+        /// @todo Get these from the texture settings
+        glTexParameteri(textureHandle.target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(textureHandle.target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        textureHandle.size = texture.width() * texture.height() * texture.depth() * texture.format().bytesPerPixel();
+        textureHandle.uploaded = 0;
+
+        // Update handle cache
+        textureHandle.generation = texture.generation();
+      }
+
+      if(!bound && alwaysBind) {
+        bindTexture(textureHandle, textureUnit);
+        bound = true;
+      }
+
+      // Calculate bytes that still need uploading
+      int32_t toUpload = textureHandle.size - textureHandle.uploaded;
+      if (toUpload > 0) {
+        size_t uploaded;
+
+        if(!bound)
+          bindTexture(textureHandle, textureUnit);
+
+        // Set proper alignment
+        int alignment = 8;
+        while (texture.width() % alignment)
+          alignment >>= 1;
+        glPixelStorei(GL_PACK_ALIGNMENT, alignment);
+
+        if (texture.dimensions() == 1) {
+          /// @todo incremental upload
+          glTexSubImage1D(GL_TEXTURE_1D, 0, 0, texture.width(), extFormat, texture.format().type(), texture.data() );
+          uploaded = texture.width() * texture.format().bytesPerPixel();
+        }
+        else if (texture.dimensions() == 2) {
+          // See how much of the bytes we can upload in this frame
+          int64_t bytesFree = std::min<int64_t>(m_uploadedBytes + toUpload, upload_bytes_limit) - m_uploadedBytes;
+          int64_t bytesPerScanline = texture.width() * texture.format().bytesPerPixel();
+          // Number of scanlines to upload (minimum of 1 so we always have progress)
+          const size_t scanLines = std::max<int32_t>(1, bytesFree / bytesPerScanline);
+          // Start line (where we left of)
+          const size_t startLine = textureHandle.uploaded / bytesPerScanline;
+
+          // Upload data
+          glTexSubImage2D(GL_TEXTURE_2D, 0, 0, startLine, texture.width(), scanLines, extFormat, texture.format().type(), texture.data() + textureHandle.uploaded);
+          uploaded = scanLines * bytesPerScanline;
+        }
+        else if (texture.dimensions() == 3) {
+          /// @todo incremental upload
+          glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, texture.width(), texture.height(), texture.depth(), extFormat, texture.format().type(), texture.data() );
+          uploaded = texture.width() * texture.height() * texture.depth() * texture.format().bytesPerPixel();
+        }
+
+        // Update upload-limiter
+        m_uploadedBytes += uploaded;
+        // Update handle
+        textureHandle.uploaded += uploaded;
+      }
+
+      return textureHandle;
+    }
+
 
     void setVertexAttributes(const VertexAttributeBinding & binding)
     {
@@ -391,12 +521,20 @@ namespace Luminous
       }
     }
 
-    void bindBuffer(GLenum bufferTarget, const HardwareBuffer & buffer)
+    inline void bindBuffer(GLenum bufferTarget, GLuint buffer)
     {
-      auto & buffers = m_buffers;
-      auto it = buffers.find(buffer.resourceId());
+      if(buffer == m_currentBuffer)
+        return;
+      m_currentBuffer = buffer;
+      glBindBuffer(bufferTarget, buffer);
+      GLERROR("RenderDriverGL::bindBuffer glBindBuffer");
+    }
+
+    BufferHandle & bindBuffer(GLenum bufferTarget, const HardwareBuffer & buffer)
+    {
+      auto it = m_buffers.find(buffer.resourceId());
       BufferHandle bufferHandle(&buffer);
-      if (it == std::end(buffers))
+      if (it == std::end(m_buffers))
         bufferHandle.handle = createResource(RenderResource::Buffer);
       else
         bufferHandle = it->second;
@@ -404,7 +542,7 @@ namespace Luminous
       // Reset usage timer
       bufferHandle.lastUsed.start();
 
-      glBindBuffer(bufferTarget, bufferHandle.handle);
+      bindBuffer(bufferTarget, bufferHandle.handle);
       GLERROR("RenderDriverGL::bindBuffer glBindBuffer");
 
       // Update if dirty
@@ -427,7 +565,9 @@ namespace Luminous
         bufferHandle.usage = buffer.usage();
       }
       // Update cache
-      buffers[buffer.resourceId()] = bufferHandle;
+      BufferHandle & handle = m_buffers[buffer.resourceId()];
+      handle = bufferHandle;
+      return handle;
     }
 
     // Utility function for resource cleanup
@@ -437,7 +577,7 @@ namespace Luminous
       auto it = std::begin(container);
       while (it != std::end(container)) {
         if (std::find( std::begin(releaseQueue), std::end(releaseQueue), it->first) != std::end(releaseQueue) ||  // First, check if resource has been deleted
-          it->second.resource->expiration() > 0 && it->second.lastUsed.time() > it->second.resource->expiration())      // If not, we can check if it has expired
+          (it->second.resource->expiration() > 0 && it->second.lastUsed.time() > it->second.resource->expiration()))      // If not, we can check if it has expired
         {
           // Release the GL resource
           destroyResource(it->second.type, it->second.handle);
@@ -446,6 +586,22 @@ namespace Luminous
         }
         else
           it++;
+      }
+    }
+
+    // Only cleans up expired resources
+    template <typename ContainerType>
+    void removeResource(ContainerType & container)
+    {
+      auto it = std::begin(container);
+      while(it != std::end(container)) {
+        const auto & handle = it->second;
+        if(handle.resource->expiration() > 0 && handle.lastUsed.time() > handle.resource->expiration()) {
+          // Release the GL resource
+          destroyResource(handle.type, handle.handle);
+          // Remove from container
+          it = container.erase(it);
+        } else ++it;
       }
     }
   };
@@ -542,15 +698,8 @@ namespace Luminous
 
   void RenderDriverGL::setShaderProgram(const ShaderProgram & program)
   {
-    // Check if the program has changed (shaders have been added/removed)
-    bool needsRelinking = m_d->updateShaderProgram(program);
-    // Check if the shaders have changed (source change)
-    needsRelinking |= m_d->updateShaders(program);
-
-    if (needsRelinking)
-      m_d->relinkShaderProgram(program);
-
-    m_d->bindShaderProgram(program);
+    auto & handle = m_d->getLinkedShaderProgram(program);
+    m_d->bindShaderProgram(handle);
     m_d->applyShaderUniforms(program);
   }
 
@@ -649,94 +798,7 @@ namespace Luminous
 
   void RenderDriverGL::setTexture(unsigned int textureUnit, const Texture & texture)
   {
-    auto & textures = m_d->m_textures;
-    auto it = textures.find(texture.resourceId());
-    TextureHandle textureHandle(&texture);
-    if (it == std::end(textures) )
-      textureHandle.handle = createResource(RenderResource::Texture);
-    else
-      textureHandle = it->second;
-
-    // Reset usage timer
-    textureHandle.lastUsed.start();
-
-    GLenum target;
-    if (texture.dimensions() == 1)      target = GL_TEXTURE_1D;
-    else if (texture.dimensions() == 2) target = GL_TEXTURE_2D;
-    else if (texture.dimensions() == 3) target = GL_TEXTURE_3D;
-
-    /// Specify the external format (number of channels)
-    GLenum extFormat;
-    if (texture.format().numChannels() == 1)      extFormat = GL_RED;
-    else if (texture.format().numChannels() == 2) extFormat = GL_RG;
-    else if (texture.format().numChannels() == 3) extFormat = GL_RGB;
-    else if (texture.format().numChannels() == 4) extFormat = GL_RGBA;
-
-    glActiveTexture(GL_TEXTURE0 + textureUnit);
-    glBindTexture(target, textureHandle.handle);
-    GLERROR("RenderDriverGL::setVertexBinding glBindTexture");
-
-    if (textureHandle.generation < texture.generation()) {
-      // Start the uploading
-      textureHandle.uploaded = 0;
-
-      if (texture.dimensions() == 1)      glTexImage1D(GL_TEXTURE_1D, 0, texture.format().layout(), texture.width(), 0, extFormat , texture.format().type(), nullptr );
-      else if (texture.dimensions() == 2) glTexImage2D(GL_TEXTURE_2D, 0, texture.format().layout(), texture.width(), texture.height(), 0, extFormat, texture.format().type(), nullptr );
-      else if (texture.dimensions() == 3) glTexImage3D(GL_TEXTURE_3D, 0, texture.format().layout(), texture.width(), texture.height(), texture.depth(), 0, extFormat, texture.format().type(), nullptr );
-
-      /// @todo Get these from the texture settings
-      glTexParameteri(target,  GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      glTexParameteri(target,  GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-      textureHandle.size = texture.width() * texture.height() * texture.depth() * texture.format().bytesPerPixel();
-      textureHandle.uploaded = 0;
-
-      // Update handle cache
-      textureHandle.generation = texture.generation();
-      textures[texture.resourceId()] = textureHandle;
-    }
-
-    // Calculate bytes that still need uploading
-    int32_t toUpload = textureHandle.size - textureHandle.uploaded;
-    if (toUpload > 0) {
-      size_t uploaded;
-      
-      // Set proper alignment
-      int alignment = 8;
-      while (texture.width() % alignment)
-        alignment >>= 1;
-      glPixelStorei(GL_PACK_ALIGNMENT, alignment);
-
-      if (texture.dimensions() == 1) {
-        /// @todo incremental upload
-        glTexSubImage1D(GL_TEXTURE_1D, 0, 0, texture.width(), extFormat, texture.format().type(), texture.data() );
-        uploaded = texture.width() * texture.format().bytesPerPixel();
-      }
-      else if (texture.dimensions() == 2) {
-        // See how much of the bytes we can upload in this frame
-        int64_t bytesFree = std::min<int64_t>(m_d->m_uploadedBytes + toUpload, upload_bytes_limit) - m_d->m_uploadedBytes;
-        int64_t bytesPerScanline = texture.width() * texture.format().bytesPerPixel();
-        // Number of scanlines to upload (minimum of 1 so we always have progress)
-        const size_t scanLines = std::max<int32_t>(1, bytesFree / bytesPerScanline);
-        // Start line (where we left of)
-        const size_t startLine = textureHandle.uploaded / bytesPerScanline;
-
-        // Upload data
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, startLine, texture.width(), scanLines, extFormat, texture.format().type(), texture.data() + textureHandle.uploaded);
-        uploaded = scanLines * bytesPerScanline;
-      }
-      else if (texture.dimensions() == 3) {
-        /// @todo incremental upload
-        glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, texture.width(), texture.height(), texture.depth(), extFormat, texture.format().type(), texture.data() );
-        uploaded = texture.width() * texture.height() * texture.depth() * texture.format().bytesPerPixel();
-      }
-
-      // Update upload-limiter
-      m_d->m_uploadedBytes += uploaded;
-      // Update handle
-      textureHandle.uploaded += uploaded;
-      textures[texture.resourceId()] = textureHandle;
-    }
+    TextureHandle & tex = m_d->textureHandle(texture, textureUnit, true);
   }
 
   void RenderDriverGL::clearState()
