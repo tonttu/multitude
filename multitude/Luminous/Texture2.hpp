@@ -22,6 +22,13 @@ namespace Luminous
     LUMINOUS_API void setData(unsigned int width, unsigned int height, const PixelFormat & format, const char * data);
     LUMINOUS_API void setData(unsigned int width, unsigned int height, unsigned int depth, const PixelFormat & format, const char * data);
 
+    /// @todo there should be a mode "shared" and "streaming"
+    ///       the current implementation is "shared"
+    ///       streaming means that data() shouldn't be used for hash, but some
+    ///       other external key. also with streaming textures, generation
+    ///       is used in the driver
+    LUMINOUS_API Hash hash() const;
+
     LUMINOUS_API uint8_t dimensions() const;
     LUMINOUS_API unsigned int width() const;
     LUMINOUS_API unsigned int height() const;

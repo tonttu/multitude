@@ -1,6 +1,8 @@
 #include "Luminous/Texture2.hpp"
 #include "Luminous/PixelFormat.hpp"
 
+#include <QCryptographicHash>
+
 namespace Luminous
 {
   class Texture::D
@@ -12,7 +14,22 @@ namespace Luminous
     unsigned int depth;
     PixelFormat format;
     const char * data;
+    RenderResource::Hash hash;
+  public:
+    void rehash();
   };
+
+  void Texture::D::rehash()
+  {
+    QCryptographicHash hasher(QCryptographicHash::Md5);
+    hasher.addData((const char*)&dimensions, sizeof(dimensions));
+    hasher.addData((const char*)&width, sizeof(width));
+    hasher.addData((const char*)&height, sizeof(height));
+    hasher.addData((const char*)&depth, sizeof(depth));
+    hasher.addData((const char*)&format, sizeof(format));
+    hasher.addData((const char*)&data, sizeof(data));
+    memcpy(&hash, hasher.result().data(), sizeof(hash));
+  }
 
   Texture::Texture()
     : RenderResource(RenderResource::Texture)
@@ -32,6 +49,7 @@ namespace Luminous
     m_d->height = m_d->depth = 1;
     m_d->format = format;
     m_d->data = data;
+    m_d->rehash();
     invalidate();
   }
 
@@ -43,6 +61,7 @@ namespace Luminous
     m_d->depth = 1;
     m_d->format = format;
     m_d->data = data;
+    m_d->rehash();
     invalidate();
   }
 
@@ -54,7 +73,13 @@ namespace Luminous
     m_d->depth = depth;
     m_d->format = format;
     m_d->data = data;
+    m_d->rehash();
     invalidate();
+  }
+
+  RenderResource::Hash Texture::hash() const
+  {
+    return m_d->hash;
   }
 
   uint8_t Texture::dimensions() const { return m_d->dimensions; }

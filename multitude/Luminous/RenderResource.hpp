@@ -11,6 +11,15 @@ namespace Luminous
   class RenderResource : public Patterns::NotCopyable
   {
   public:
+    struct Hash
+    {
+      uint64_t data[2];
+      inline bool operator<(const Hash & h) const
+      {
+        return data[0] == h.data[0] ? data[1] < h.data[1] : data[0] < h.data[0];
+      }
+    };
+
     typedef uint64_t Id;
 
     enum Type

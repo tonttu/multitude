@@ -32,6 +32,8 @@ namespace Luminous
 
     LUMINOUS_API Type type() const;
 
+    LUMINOUS_API Hash hash() const;
+
   private:
     friend class ShaderProgram;
     class D;
@@ -52,6 +54,8 @@ namespace Luminous
 
     LUMINOUS_API RenderResource::Id shader(size_t index) const;
     LUMINOUS_API size_t shaderCount() const;
+
+    LUMINOUS_API Hash hash() const;
 
     template <typename T> void addShaderUniform(const QString & name, const T & value);
     template <typename T> void addShaderUniform(const QString & name, T & value);

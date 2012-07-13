@@ -1,5 +1,6 @@
 #include "Luminous/ShaderProgram.hpp"
 #include "Luminous/ShaderUniform.hpp"
+#include "Luminous/RenderManager.hpp"
 
 #include <Nimble/Vector2.hpp>
 #include <Nimble/Vector3.hpp>
@@ -14,6 +15,7 @@
 #include <Valuable/AttributeMatrix.hpp>
 
 #include <QFile>
+#include <QCryptographicHash>
 
 #include <vector>
 #include <cassert>
@@ -42,6 +44,7 @@ namespace Luminous
   public:
     ShaderGLSL::Type type;
     QString text;
+    RenderResource::Hash hash;
   };
 
   //////////////////////////////////////////////////////////////////////////
@@ -60,6 +63,9 @@ namespace Luminous
   void ShaderGLSL::setText(const QString & text)
   {
     m_d->text = text;
+    QCryptographicHash hasher(QCryptographicHash::Md5);
+    hasher.addData(text.toUtf8());
+    memcpy(&m_d->hash, hasher.result().data(), sizeof(m_d->hash));
     invalidate();
   }
 
@@ -70,8 +76,7 @@ namespace Luminous
       Radiant::warning("ShaderGLSL: Unable to open shader file %s", filename.toAscii().data());
       return;
     }
-    m_d->text = shaderFile.readAll();
-    invalidate();
+    setText(shaderFile.readAll());
   }
 
   const QString & ShaderGLSL::text() const
@@ -84,14 +89,26 @@ namespace Luminous
     return m_d->type;
   }
 
+  RenderResource::Hash ShaderGLSL::hash() const
+  {
+    return m_d->hash;
+  }
+
   //////////////////////////////////////////////////////////////////////////
   // ShaderProgram
   class ShaderProgram::D {
   public:
+    D() : hashGeneration(0) {}
+
+  public:
+    // (resource, generation)
+    // typedef std::vector<std::pair<RenderResource::Id, uint64_t>> ShaderList;
     typedef std::vector< RenderResource::Id > ShaderList;
     typedef std::vector< std::shared_ptr<ShaderUniform> > UniformList;
     ShaderList shaders;
     UniformList uniforms;
+    uint64_t hashGeneration;
+    RenderResource::Hash hash;
   };
 
   ShaderProgram::ShaderProgram()
@@ -121,6 +138,26 @@ namespace Luminous
   size_t ShaderProgram::shaderCount() const
   {
     return m_d->shaders.size();
+  }
+
+  RenderResource::Hash ShaderProgram::hash() const
+  {
+    bool rehash = m_d->hashGeneration != generation();
+    if(!rehash) {
+      /// @todo iterate ShaderList and check generations.. or something similar
+    }
+    if(rehash) {
+      QCryptographicHash hasher(QCryptographicHash::Md5);
+      for(auto it = m_d->shaders.begin(); it != m_d->shaders.end(); ++it) {
+        ShaderGLSL * shader = RenderManager::getResource<ShaderGLSL>(*it);
+        assert(shader);
+        const Hash shaderHash = shader->hash();
+        hasher.addData((const char*)&shaderHash, sizeof(shaderHash));
+      }
+      memcpy(&m_d->hash, hasher.result().data(), sizeof(m_d->hash));
+      m_d->hashGeneration = generation();
+    }
+    return m_d->hash;
   }
 
   RenderResource::Id ShaderProgram::shader(size_t index) const
