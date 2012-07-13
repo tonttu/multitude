@@ -183,6 +183,17 @@ namespace Luminous
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
 
+  struct RenderContext::SharedBuffer
+  {
+    SharedBuffer() : offsetBytes(0) {}
+    HardwareBuffer buffer;
+    std::size_t offsetBytes;
+
+    /// @todo this is extremely stupid, make something smarter
+    /// [VertexDescription, IndexBuffer]
+    std::map<std::pair<RenderResource::Id, RenderResource::Id>, VertexAttributeBinding> bindings;
+  };
+
   class RenderContext::Internal
   {
   public:
@@ -529,6 +540,16 @@ namespace Luminous
     std::shared_ptr<Texture2D> m_emptyTexture;
 
     Luminous::RenderDriver & m_driver;
+
+    struct BufferPool
+    {
+      BufferPool() : index(0) {}
+      std::vector<SharedBuffer> buffers;
+      int index;
+    };
+
+    std::map<std::size_t, BufferPool> m_vertexBuffers;
+    BufferPool m_indexBuffers;
   };
 
   void RenderContext::Internal::drawPolyLine(RenderContext& r, const Nimble::Vector2f * vertices, int n,
@@ -1421,11 +1442,66 @@ namespace Luminous
     return m4 * v4;
   }
 
+  std::pair<void *, RenderContext::SharedBuffer *> RenderContext::sharedBuffer(std::size_t vertexSize, std::size_t maxVertexCount, bool index, unsigned int & offset)
+  {
+    Internal::BufferPool & pool = index ? m_data->m_indexBuffers : m_data->m_vertexBuffers[vertexSize];
+    const std::size_t requiredBytes = vertexSize * maxVertexCount;
+
+    SharedBuffer * buffer = nullptr;
+    std::size_t nextSize = 1 << 20;
+    for(int i = pool.index;; ++i) {
+      if(i >= pool.buffers.size()) {
+        pool.buffers.emplace_back();
+        buffer = &pool.buffers.back();
+        buffer->buffer.setData(nullptr, std::max(requiredBytes, nextSize), HardwareBuffer::StreamDraw);
+        break;
+      }
+
+      buffer = &pool.buffers[i];
+      if(buffer->buffer.size() - buffer->offsetBytes >= requiredBytes)
+        break;
+
+      nextSize = buffer->buffer.size() << 1;
+    }
+
+    char * data = mapBuffer<char>(buffer->buffer, HardwareBuffer::MapWrite);
+    data += buffer->offsetBytes;
+    offset = buffer->offsetBytes / vertexSize;
+    buffer->offsetBytes += requiredBytes;
+    return std::make_pair(data, buffer);
+  }
+
   template <>
   void * RenderContext::mapBuffer<void>(const HardwareBuffer & buffer, int offset, std::size_t length,
                                         Radiant::FlagsT<HardwareBuffer::MapAccess> access)
   {
     return m_data->m_driver.mapBuffer(buffer, offset, length, access);
+  }
+
+  template <typename Vertex>
+  std::tuple<Vertex*, unsigned int*> RenderContext::build(PrimitiveType ptype,
+                                                          int vertexCount, int indexCount,
+                                                          const VertexDescription & desc,
+                                                          RenderCommand & cmd)
+  {
+    cmd.primitiveType = ptype;
+    cmd.primitiveCount = indexCount;
+
+    SharedBuffer * ibuffer;
+    unsigned int * index;
+    std::tie(index, ibuffer) = sharedBuffer<unsigned int>(indexCount, true, cmd.indexOffset);
+
+    SharedBuffer * vbuffer;
+    Vertex * vertex;
+    std::tie(vertex, vbuffer) = sharedBuffer<Vertex>(vertexCount, false, cmd.vertexOffset);
+
+    cmd.binding = &vbuffer->bindings[std::make_pair(desc.resourceId(), ibuffer->buffer.resourceId())];
+    if(cmd.binding->bindingCount() == 0) {
+      cmd.binding->addBinding(vbuffer->buffer, desc);
+      cmd.binding->setIndexBuffer(ibuffer->buffer);
+    }
+
+    return std::make_tuple(vertex, index);
   }
 
   void RenderContext::drawRect(const Nimble::Rect & area, const Style & style)

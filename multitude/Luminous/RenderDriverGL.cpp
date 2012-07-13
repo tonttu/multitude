@@ -535,9 +535,10 @@ namespace Luminous
 
     inline void bindBuffer(GLenum bufferTarget, GLuint buffer)
     {
-      if(buffer == m_currentBuffer)
+      /// @todo doesn't take bufferTarget into account
+      /*if(buffer == m_currentBuffer)
         return;
-      m_currentBuffer = buffer;
+      m_currentBuffer = buffer;*/
       glBindBuffer(bufferTarget, buffer);
       GLERROR("RenderDriverGL::bindBuffer glBindBuffer");
     }

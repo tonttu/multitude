@@ -64,6 +64,31 @@ namespace Luminous
     char m_vertextype[256];
   };
 
+  struct RenderCommand
+  {
+    PrimitiveType primitiveType;
+    std::size_t primitiveCount;
+    unsigned int indexOffset;
+    unsigned int vertexOffset;
+
+    VertexAttributeBinding * binding;
+
+    /// @todo just a temporary hack before proper uniform setting is implemented
+    struct {
+      void set(const QByteArray & name, const Nimble::Matrix4 & m)
+      {
+        data[name] = m;
+      }
+      void set(const QByteArray & name, int v)
+      {
+        datai[name] = v;
+      }
+
+      std::map<QByteArray, Nimble::Matrix4> data;
+      std::map<QByteArray, int> datai;
+    } uniforms;
+  };
+
   class RenderPacket
   {
   public:

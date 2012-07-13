@@ -20,6 +20,7 @@
 #include <Luminous/GLSLProgramObject.hpp>
 #include <Luminous/FramebufferResource.hpp>
 #include <Luminous/HardwareBuffer.hpp>
+#include <Luminous/VertexHolder.hpp>
 
 #include <Nimble/Rectangle.hpp>
 #include <Nimble/Vector2.hpp>
@@ -439,6 +440,19 @@ namespace Luminous
     void draw(PrimitiveType primType, unsigned int offset, unsigned int primitives);
     void drawIndexed(PrimitiveType primType, unsigned int offset, unsigned int primitives);
 
+  private:
+    template <typename Vertex>
+    std::tuple<Vertex *, unsigned int*> build(Luminous::PrimitiveType ptype,
+                                              int vertexCount, int indexCount,
+                                              const VertexDescription &,
+                                              RenderCommand & cmd);
+
+    struct SharedBuffer;
+    template <typename T>
+    std::pair<T *, SharedBuffer *> sharedBuffer(std::size_t maxVertexCount, bool index, unsigned int & offset);
+
+    std::pair<void *, SharedBuffer *> sharedBuffer(std::size_t vertexSize, std::size_t maxVertexCount, bool index, unsigned int & offset);
+
     //////////////////////////////////////////////////////////////////////////
     /// </Luminousv2>
     //////////////////////////////////////////////////////////////////////////
@@ -496,6 +510,15 @@ namespace Luminous
                                       Radiant::FlagsT<HardwareBuffer::MapAccess> access)
   {
     return mapBuffer<T>(buffer, 0, buffer.size(), access);
+  }
+
+  template <typename T>
+  std::pair<T *, RenderContext::SharedBuffer *> RenderContext::sharedBuffer(std::size_t maxVertexCount, bool index, unsigned int & offset)
+  {
+    void * t;
+    SharedBuffer * buffer;
+    std::tie(t, buffer) = sharedBuffer(sizeof(T), maxVertexCount, index, offset);
+    return std::make_pair(reinterpret_cast<T*>(t), buffer);
   }
 }
 
