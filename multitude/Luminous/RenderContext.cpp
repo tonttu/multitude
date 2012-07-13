@@ -15,6 +15,7 @@
 
 // Luminous v2
 #include "Luminous/VertexAttributeBinding.hpp"
+#include "Luminous/VertexDescription.hpp"
 #include "Luminous/HardwareBuffer.hpp"
 
 #include <Nimble/Matrix4.hpp>
@@ -224,6 +225,9 @@ namespace Luminous
       m_verts.clear();
 
       bzero(m_textures, sizeof(m_textures));
+
+      m_baseShaderDesc.addAttribute<Nimble::Vector3f>("vertex_position");
+      m_baseShaderDesc.addAttribute<Nimble::Vector2>("vertex_uv");
     }
 
     ~Internal()
@@ -547,6 +551,8 @@ namespace Luminous
       std::vector<SharedBuffer> buffers;
       int index;
     };
+
+    VertexDescription m_baseShaderDesc;
 
     std::map<std::size_t, BufferPool> m_vertexBuffers;
     BufferPool m_indexBuffers;
@@ -1506,40 +1512,40 @@ namespace Luminous
 
   void RenderContext::drawRect(const Nimble::Rect & area, const Style & style)
   {
-    if(style.program()) {
-      style.program()->bind();
-    }
-    else {
-      m_data->m_basic_shader->bind();
-    }
+    RenderCommand cmd;
+    unsigned int * idx;
+    RectVertex2 * vertex;
 
-    RenderPacket & rp = * m_data->m_renderPacket;
-    rp.setProgram(m_data->m_program);
-    rp.setPacketRenderFunction(RectVertex::render);
+    std::tie(vertex, idx) = build<RectVertex2>(Luminous::PrimitiveType_TriangleStrip, 4, 4,
+                                               m_data->m_baseShaderDesc, cmd);
 
-    RectVertex va;
-    va.m_color = style.color();
-    va.m_useTexture = style.texturing();
-    va.m_objectTransform = transform().transposed();
+    const float r[] = { area.low().x, area.low().y, area.high().x, area.high().y };
+    vertex->location = Nimble::Vector3f(r[0], r[1], 0);
+    vertex->texCoord.make(0, 0);
+    ++vertex;
 
-    va.m_location = area.low();
-    va.m_texCoord = style.texCoords().low();
+    vertex->location = Nimble::Vector3f(r[2], r[1], 0);
+    vertex->texCoord.make(1, 0);
+    ++vertex;
 
-    rp.addFirstVertex(va);
+    vertex->location = Nimble::Vector3f(r[0], r[3], 0);
+    vertex->texCoord.make(0, 1);
+    ++vertex;
 
-    va.m_location = area.highLow();
-    va.m_texCoord = style.texCoords().highLow();
-    rp.addVertex(va);
+    vertex->location = Nimble::Vector3f(r[2], r[3], 0);
+    vertex->texCoord.make(1, 1);
+    ++vertex;
 
-    va.m_location = area.lowHigh();
-    va.m_texCoord = style.texCoords().lowHigh();
-    rp.addVertex(va);
+    *idx++ = 0;
+    *idx++ = 1;
+    *idx++ = 2;
+    *idx++ = 3;
 
-    va.m_location = area.high();
-    va.m_texCoord = style.texCoords().high();
-    rp.addLastVertex(va);
+    /// @todo just a temporary hack..
+    cmd.uniforms.set("projMatrix", viewTransform());
+    cmd.uniforms.set("modelMatrix", transform4());
 
-    flush();
+    m_data->m_driver.addRenderCommand(cmd, style);
   }
 
   void RenderContext::drawRectWithHole(const Nimble::Rect & area,
@@ -1829,6 +1835,15 @@ namespace Luminous
     bindProgram(&*m_data->m_basic_shader);
   }
 
+  void RenderContext::flush2()
+  {
+    m_data->m_driver.flush();
+    for(auto it = m_data->m_vertexBuffers.begin(); it != m_data->m_vertexBuffers.end(); ++it) {
+      it->second.index = 0;
+      for(auto it2 = it->second.buffers.begin(); it2 != it->second.buffers.end(); ++it2)
+        it2->offsetBytes = 0;
+    }
+  }
   void RenderContext::flush()
   {
     RenderPacket * rp = m_data->m_renderPacket;

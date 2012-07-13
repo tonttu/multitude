@@ -142,6 +142,23 @@ namespace Luminous
   typedef ResourceHandle<VertexAttributeBinding> BindingHandle;
   typedef ResourceHandle<VertexDescription> DescriptionHandle;
 
+
+  struct RenderState
+  {
+    Luminous::ProgramHandle program;
+    /// @todo should be handle
+    RenderResource::Id binding;
+    std::vector<TextureHandle> textures;
+    bool operator<(const RenderState & o) const
+    {
+      if(program != o.program)
+        return program < o.program;
+      if(binding != o.binding)
+        return binding < o.binding;
+      return textures < o.textures;
+    }
+  };
+
   //////////////////////////////////////////////////////////////////////////
   // RenderDriver implementation
   class RenderDriverGL::D
@@ -179,6 +196,9 @@ namespace Luminous
     BufferList m_buffers;
     BindingList m_bindings;
     DescriptionList m_descriptions;
+
+    std::map<RenderState, std::vector<Luminous::RenderCommand>> m_opaqueQueue;
+    std::vector<std::pair<RenderState, Luminous::RenderCommand>> m_transparentQueue;
 
     // Resources to be released
     typedef std::vector<RenderResource::Id> ReleaseQueue;
@@ -896,6 +916,63 @@ namespace Luminous
     glUnmapBuffer(mit->second.target);
 
     m_d->m_bufferMaps.erase(mit);
+  }
+
+  void RenderDriverGL::addRenderCommand(RenderCommand & cmd,
+                                        const Luminous::Style & style)
+  {
+    if(!style.fill.shader)
+      return;
+    RenderState state;
+
+    state.program = m_d->getLinkedShaderProgram(*style.fill.shader);
+    state.binding = cmd.binding->resourceId();
+    for(auto it = style.fill.tex.begin(); it != style.fill.tex.end(); ++it) {
+      GLuint unit = state.textures.size();
+      cmd.uniforms.set(it->first, unit);
+      TextureHandle & tex = m_d->textureHandle(*it->second, unit);
+      state.textures.push_back(tex);
+    }
+    m_d->m_opaqueQueue[state].push_back(cmd);
+  }
+
+  void RenderDriverGL::flush()
+  {
+    for(auto it = m_d->m_bufferMaps.begin(); it != m_d->m_bufferMaps.end(); ++it) {
+      const BufferMapping & b = it->second;
+      m_d->bindBuffer(b.target, it->first);
+      glUnmapBuffer(b.target);
+    }
+    m_d->m_bufferMaps.clear();
+
+    static int foo = 0;
+    if(foo++ % 60 == 0)
+      Radiant::info("%d state changes", m_d->m_opaqueQueue.size());
+
+    for(auto it = m_d->m_opaqueQueue.begin(); it != m_d->m_opaqueQueue.end(); ++it) {
+      const RenderState & state = it->first;
+
+      m_d->bindShaderProgram(state.program);
+
+      for(int t = 0; t < state.textures.size(); ++t)
+        m_d->bindTexture(state.textures[t], t);
+
+      setVertexBinding(*RenderManager::getResource<VertexAttributeBinding>(it->first.binding));
+      for(int i = 0, s = it->second.size(); i < s; ++i) {
+        const RenderCommand & cmd = it->second[i];
+        for(auto uit = cmd.uniforms.data.begin(); uit != cmd.uniforms.data.end(); ++uit)
+          setShaderUniform(uit->first.data(), uit->second);
+        for(auto uit = cmd.uniforms.datai.begin(); uit != cmd.uniforms.datai.end(); ++uit)
+          setShaderUniform(uit->first.data(), uit->second);
+        /// @todo GLES doesn't have this, need to add vertexOffset manually to all indices
+        glDrawElementsBaseVertex(cmd.primitiveType, cmd.primitiveCount, GL_UNSIGNED_INT, (GLvoid *)((sizeof(uint) * cmd.indexOffset)), cmd.vertexOffset);
+        GLERROR("RenderDriverGL::flush # glDrawElementsBaseVertex");
+      }
+    }
+    /*for(auto it = m_transparentQueue.begin(); it != m_transparentQueue.end(); ++it) {
+    }*/
+    m_d->m_opaqueQueue.clear();
+    m_d->m_transparentQueue.clear();
   }
 
   void RenderDriverGL::releaseResource(RenderResource::Id id)

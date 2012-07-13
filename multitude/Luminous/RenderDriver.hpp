@@ -3,11 +3,14 @@
 
 #include "Luminous/Luminous.hpp"
 #include "Luminous/RenderResource.hpp"
+#include "Luminous/VertexHolder.hpp"
+#include "Luminous/Style.hpp"
 #include "Luminous/HardwareBuffer.hpp"
 
 #include <Radiant/Color.hpp>
 #include <Radiant/RefPtr.hpp>
 #include <Radiant/Flags.hpp>
+
 #include <QString>
 
 #include <Nimble/Vector2.hpp>
@@ -78,6 +81,11 @@ namespace Luminous
     LUMINOUS_API virtual void * mapBuffer(const HardwareBuffer & buffer, int offset, std::size_t length,
                                           Radiant::FlagsT<HardwareBuffer::MapAccess> access) = 0;
     LUMINOUS_API virtual void unmapBuffer(const HardwareBuffer & buffer) = 0;
+
+    LUMINOUS_API virtual void addRenderCommand(RenderCommand & builder,
+                                               const Luminous::Style & style) = 0;
+
+    LUMINOUS_API virtual void flush() = 0;
 
     // Driver factory
     LUMINOUS_API static std::shared_ptr<RenderDriver> createInstance();

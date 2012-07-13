@@ -168,6 +168,14 @@ namespace Luminous
     }
   };
 
+  class RectVertex2
+  {
+  public:
+    Nimble::Vector3 location;
+    Nimble::Vector2 texCoord;
+    //Nimble::Vector4 color;
+  };
+
   class CircleVertex
   {
   public:

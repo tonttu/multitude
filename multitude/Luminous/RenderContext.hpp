@@ -417,6 +417,7 @@ namespace Luminous
     void bindDefaultProgram();
 
     void flush();
+    void flush2();
     void restart();
 
     //////////////////////////////////////////////////////////////////////////

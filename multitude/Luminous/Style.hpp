@@ -6,15 +6,29 @@
 #include <Nimble/Rect.hpp>
 #include <Nimble/Vector4.hpp>
 
+#include <Luminous/ShaderProgram.hpp>
+
 namespace Luminous
 {
   class GLSLProgramObject;
+
+  struct Fill
+  {
+    Fill() : color(1, 1, 1, 1), shader(nullptr) {}
+    /// @todo accessors
+    Nimble::Vector4f color;
+    Luminous::ShaderProgram * shader;
+    std::map<QByteArray, Luminous::Texture*> tex;
+  };
 
   /// Style object for giving rendering parameters to the RenderContext
   class Style
   {
   public:
     LUMINOUS_API Style();
+
+    /// @todo accessors
+    Fill fill;
 
     /// Returns the color of the object to be drawn
     const Nimble::Vector4 & color () const { return m_color; }

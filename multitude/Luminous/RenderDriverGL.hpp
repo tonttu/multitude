@@ -54,6 +54,12 @@ namespace Luminous
     LUMINOUS_API virtual void * mapBuffer(const HardwareBuffer & buffer, int offset, std::size_t length,
                                           Radiant::FlagsT<HardwareBuffer::MapAccess> access) OVERRIDE;
     LUMINOUS_API virtual void unmapBuffer(const HardwareBuffer & buffer) OVERRIDE;
+
+    LUMINOUS_API virtual void addRenderCommand(RenderCommand & cmd,
+                                               const Luminous::Style & style) OVERRIDE;
+
+    LUMINOUS_API virtual void flush() OVERRIDE;
+
     /// @todo Add function wrapper(s) for:
     /// * glLogicOp
     /// * glBlendFunc, glBlendEquation
