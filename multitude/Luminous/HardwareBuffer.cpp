@@ -12,12 +12,14 @@ namespace Luminous
       : size(0)
       , data(nullptr)
       , usage(HardwareBuffer::StaticDraw)
+      , type(HardwareBuffer::Unknown)
     {
     };
 
     size_t size;
     const char * data;
     HardwareBuffer::Usage usage;
+    HardwareBuffer::Type type;
   };
 
   HardwareBuffer::HardwareBuffer()
@@ -52,6 +54,16 @@ namespace Luminous
     m_d->usage = usage;
 
     invalidate();
+  }
+
+  void HardwareBuffer::setType(Type type)
+  {
+    m_d->type = type;
+  }
+
+  HardwareBuffer::Type HardwareBuffer::type() const
+  {
+    return m_d->type;
   }
 
   const char * HardwareBuffer::data() const

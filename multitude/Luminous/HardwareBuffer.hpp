@@ -4,6 +4,8 @@
 #include "Luminous/Luminous.hpp"
 #include "Luminous/RenderResource.hpp"
 
+#include <Radiant/Flags.hpp>
+
 namespace Luminous
 {
   class HardwareBuffer : public RenderResource
@@ -24,20 +26,23 @@ namespace Luminous
       DynamicCopy = GL_DYNAMIC_COPY,
     };
 
-    enum LockOptions
+    enum MapAccess
     {
-      BufferLockOptions_Discard     = (1 << 0),
-      BufferLockOptions_Read        = (1 << 1),
-      BufferLockOptions_Write       = (1 << 2),
-      BufferLockOptions_NoOverwrite = (1 << 3),
-      BufferLockOptions_ReadWrite   = BufferLockOptions_Read | BufferLockOptions_Write,
+      MapRead               = GL_MAP_READ_BIT,
+      MapWrite              = GL_MAP_WRITE_BIT,
+      MapReadWrite          = MapRead | MapWrite,
+      MapInvalidateRange    = GL_MAP_INVALIDATE_RANGE_BIT,
+      MapInvalidateBuffer   = GL_MAP_INVALIDATE_BUFFER_BIT,
+      MapFlushExplicit      = GL_MAP_FLUSH_EXPLICIT_BIT,
+      MapUnsynchronized     = GL_MAP_UNSYNCHRONIZED_BIT,
     };
 
     enum Type
     {
-      Vertex,
-      Index,
-      Constant,
+      Unknown  = 0,
+      Vertex   = GL_ARRAY_BUFFER,
+      Index    = GL_ELEMENT_ARRAY_BUFFER,
+      Constant = GL_UNIFORM_BUFFER,
     };
 
   public:
@@ -49,6 +54,9 @@ namespace Luminous
 
     LUMINOUS_API void setData(const char * data, size_t size, Usage usage);
 
+    LUMINOUS_API void setType(Type type);
+    LUMINOUS_API Type type() const;
+
     LUMINOUS_API size_t size() const;
     LUMINOUS_API const char * data() const;
     LUMINOUS_API Usage usage() const;
@@ -58,5 +66,6 @@ namespace Luminous
     class D;
     D * m_d;
   };
+  MULTI_FLAGS(HardwareBuffer::MapAccess)
 }
 #endif // LUMINOUS_HARDWAREBUFFER_HPP

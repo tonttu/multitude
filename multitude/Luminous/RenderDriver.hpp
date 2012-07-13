@@ -3,9 +3,11 @@
 
 #include "Luminous/Luminous.hpp"
 #include "Luminous/RenderResource.hpp"
+#include "Luminous/HardwareBuffer.hpp"
 
 #include <Radiant/Color.hpp>
 #include <Radiant/RefPtr.hpp>
+#include <Radiant/Flags.hpp>
 #include <QString>
 
 #include <Nimble/Vector2.hpp>
@@ -72,6 +74,10 @@ namespace Luminous
 
     // Enable/disable renderbuffers
     LUMINOUS_API virtual void setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer) = 0;
+
+    LUMINOUS_API virtual void * mapBuffer(const HardwareBuffer & buffer, int offset, std::size_t length,
+                                          Radiant::FlagsT<HardwareBuffer::MapAccess> access) = 0;
+    LUMINOUS_API virtual void unmapBuffer(const HardwareBuffer & buffer) = 0;
 
     // Driver factory
     LUMINOUS_API static std::shared_ptr<RenderDriver> createInstance();

@@ -127,6 +127,14 @@ namespace Luminous
     std::set<GLuint> shaders;
   };
 
+  struct BufferMapping
+  {
+    BufferMapping() : target(0), access(0), data(0) {}
+    GLenum target;
+    GLenum access;
+    void * data;
+  };
+
   // Generic handle
   typedef ResourceHandle<ShaderGLSL> ShaderHandle;
   typedef ResourceHandle<VertexAttributeBinding> BindingHandle;
@@ -152,6 +160,8 @@ namespace Luminous
     GLuint m_currentProgram;  // Currently bound shader program
     GLuint m_currentBinding;  // Currently bound vertex binding
     GLuint m_currentBuffer;   // Currently bound buffer object
+
+    std::map<GLuint, BufferMapping> m_bufferMaps;
 
     typedef std::map<RenderResource::Hash, ProgramHandle> ProgramList;
     typedef std::map<RenderResource::Hash, ShaderHandle> ShaderList;
@@ -530,23 +540,21 @@ namespace Luminous
       GLERROR("RenderDriverGL::bindBuffer glBindBuffer");
     }
 
-    BufferHandle & bindBuffer(GLenum bufferTarget, const HardwareBuffer & buffer)
+    BufferHandle & getBufferHandle(GLenum bufferTarget, const HardwareBuffer & buffer)
     {
-      auto it = m_buffers.find(buffer.resourceId());
-      BufferHandle bufferHandle(&buffer);
-      if (it == std::end(m_buffers))
+      BufferHandle & bufferHandle = m_buffers[buffer.resourceId()];
+      if(bufferHandle.handle == 0) {
         bufferHandle.handle = createResource(RenderResource::Buffer);
-      else
-        bufferHandle = it->second;
+        bufferHandle.resource = &buffer;
+      }
 
       // Reset usage timer
       bufferHandle.lastUsed.start();
 
-      bindBuffer(bufferTarget, bufferHandle.handle);
-      GLERROR("RenderDriverGL::bindBuffer glBindBuffer");
-
       // Update if dirty
       if (bufferHandle.generation < buffer.generation()) {
+        bindBuffer(bufferTarget, bufferHandle.handle);
+
         // Update or reallocate the resource
         /// @todo incremental upload
         if (buffer.size() != bufferHandle.size || buffer.usage() != bufferHandle.usage) {
@@ -564,10 +572,15 @@ namespace Luminous
         bufferHandle.uploaded = buffer.size();
         bufferHandle.usage = buffer.usage();
       }
-      // Update cache
-      BufferHandle & handle = m_buffers[buffer.resourceId()];
-      handle = bufferHandle;
-      return handle;
+
+      return bufferHandle;
+    }
+
+    BufferHandle & bindBuffer(GLenum bufferTarget, const HardwareBuffer & buffer)
+    {
+      BufferHandle & bufferHandle = getBufferHandle(bufferTarget, buffer);
+      bindBuffer(bufferTarget, bufferHandle.handle);
+      return bufferHandle;
     }
 
     // Utility function for resource cleanup
@@ -798,7 +811,7 @@ namespace Luminous
 
   void RenderDriverGL::setTexture(unsigned int textureUnit, const Texture & texture)
   {
-    TextureHandle & tex = m_d->textureHandle(texture, textureUnit, true);
+    m_d->textureHandle(texture, textureUnit, true);
   }
 
   void RenderDriverGL::clearState()
@@ -830,6 +843,54 @@ namespace Luminous
     /// @todo Should we only draw for front-facing?
     GLuint stencil = (stencilBuffer ? 0xff : 0x00);
     glStencilMaskSeparate(GL_FRONT_AND_BACK, stencil);
+  }
+
+  void * RenderDriverGL::mapBuffer(const HardwareBuffer & buffer, int offset, std::size_t length,
+                                   Radiant::FlagsT<HardwareBuffer::MapAccess> access)
+  {
+    // It doesn't really matter what target we use, but maybe we minimize state
+    // changes by using the correct one
+    GLenum target = buffer.type();
+    if(!target)
+      target = GL_ARRAY_BUFFER;
+
+    BufferHandle & bufferHandle = m_d->getBufferHandle(target, buffer);
+    BufferMapping & map = m_d->m_bufferMaps[bufferHandle.handle];
+
+    if(map.data) {
+      if(map.access == access.asInt())
+        return map.data;
+      m_d->bindBuffer(target, bufferHandle.handle);
+      glUnmapBuffer(target);
+      GLERROR("RenderDriverGL::mapBuffer glUnmapBuffer");
+    }
+
+    m_d->bindBuffer(target, bufferHandle.handle);
+    map.access = access.asInt();
+    map.target = target;
+    map.data = glMapBufferRange(map.target, offset, length, map.access);
+    GLERROR("RenderDriverGL::mapBuffer glMapBufferRange");
+    return map.data;
+  }
+
+  void RenderDriverGL::unmapBuffer(const HardwareBuffer & buffer)
+  {
+    auto it = m_d->m_buffers.find(buffer.resourceId());
+    if(it == m_d->m_buffers.end()) {
+      Radiant::warning("RenderDriverGL::unmapBuffer # Buffer %lu not bound", buffer.resourceId());
+      return;
+    }
+
+    auto mit = m_d->m_bufferMaps.find(it->second.handle);
+    if(mit == m_d->m_bufferMaps.end()) {
+      Radiant::warning("RenderDriverGL::unmapBuffer # Buffer %lu not mapped", buffer.resourceId());
+      return;
+    }
+
+    m_d->bindBuffer(mit->second.target, it->second.handle);
+    glUnmapBuffer(mit->second.target);
+
+    m_d->m_bufferMaps.erase(mit);
   }
 
   void RenderDriverGL::releaseResource(RenderResource::Id id)
