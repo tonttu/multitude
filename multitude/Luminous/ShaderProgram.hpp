@@ -30,6 +30,8 @@ namespace Luminous
     LUMINOUS_API void setText(const QString & text);
     LUMINOUS_API const QString & text() const;
 
+    LUMINOUS_API const QString & filename() const;
+
     LUMINOUS_API Type type() const;
 
     LUMINOUS_API Hash hash() const;
@@ -51,6 +53,8 @@ namespace Luminous
 
     LUMINOUS_API void addShader(const ShaderGLSL & shader);
     LUMINOUS_API void removeShader(const ShaderGLSL & shader);
+
+    LUMINOUS_API QStringList shaderFilenames() const;
 
     LUMINOUS_API RenderResource::Id shader(size_t index) const;
     LUMINOUS_API size_t shaderCount() const;

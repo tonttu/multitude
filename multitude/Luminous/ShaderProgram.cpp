@@ -16,6 +16,7 @@
 
 #include <QFile>
 #include <QCryptographicHash>
+#include <QStringList>
 
 #include <vector>
 #include <cassert>
@@ -45,6 +46,7 @@ namespace Luminous
     ShaderGLSL::Type type;
     QString text;
     RenderResource::Hash hash;
+    QString filename;
   };
 
   //////////////////////////////////////////////////////////////////////////
@@ -63,6 +65,7 @@ namespace Luminous
   void ShaderGLSL::setText(const QString & text)
   {
     m_d->text = text;
+    m_d->filename = QString();
     QCryptographicHash hasher(QCryptographicHash::Md5);
     hasher.addData(text.toUtf8());
     memcpy(&m_d->hash, hasher.result().data(), sizeof(m_d->hash));
@@ -77,11 +80,17 @@ namespace Luminous
       return;
     }
     setText(shaderFile.readAll());
+    m_d->filename = filename;
   }
 
   const QString & ShaderGLSL::text() const
   {
     return m_d->text;
+  }
+
+  const QString & ShaderGLSL::filename() const
+  {
+    return m_d->filename;
   }
 
   ShaderGLSL::Type ShaderGLSL::type() const
@@ -133,6 +142,17 @@ namespace Luminous
     auto it = std::remove(m_d->shaders.begin(), m_d->shaders.end(), shader.resourceId());
     m_d->shaders.erase(it, m_d->shaders.end());
     invalidate();
+  }
+
+  QStringList ShaderProgram::shaderFilenames() const
+  {
+    QStringList shaders;
+    for(auto it = m_d->shaders.begin(); it != m_d->shaders.end(); ++it) {
+      ShaderGLSL * shader = RenderManager::getResource<ShaderGLSL>(*it);
+      if(shader)
+        shaders << shader->filename();
+    }
+    return shaders;
   }
 
   size_t ShaderProgram::shaderCount() const
