@@ -6,6 +6,11 @@
 
 #include <Radiant/Flags.hpp>
 
+#ifdef RADIANT_OSX
+// Required for MapAccess enums (which nobody seems to use?)
+#include <OpenGL/gl3.h>
+#endif
+
 namespace Luminous
 {
   class HardwareBuffer : public RenderResource
