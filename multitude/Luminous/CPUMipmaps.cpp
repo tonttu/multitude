@@ -29,6 +29,7 @@
 
 #include <QFileInfo>
 #include <QCryptographicHash>
+#include <QDir>
 
 namespace {
   // after first resize modify the dimensions so that we can resize
@@ -604,19 +605,29 @@ namespace Luminous {
   {
     QFileInfo fi(src);
 
-    QString basePath = Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false);
+    static QString s_basePath;
+
+    MULTI_ONCE_BEGIN
+    QString basePath = Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false) + "/imagecache";
+    if(!QDir().mkpath(basePath)) {
+      basePath = QDir::tempPath() + "/cornerstone-imagecache";
+      QDir().mkpath(basePath);
+    }
+    s_basePath = basePath;
+    MULTI_ONCE_END
 
     // Compute MD5 from the absolute path
     QCryptographicHash hash(QCryptographicHash::Md5);
     hash.addData(fi.absoluteFilePath().toUtf8());
 
-    QString md5 = hash.result().toHex();
+    const QString md5 = hash.result().toHex();
 
     // Avoid putting all mipmaps into the same folder (because of OS performance)
-    QString prefix = md5.left(2);
-    QString postfix = level < 0 ? QString(".%1").arg(suffix) :
+    const QString prefix = md5.left(2);
+    const QString postfix = level < 0 ? QString(".%1").arg(suffix) :
         QString("_level%1.%2").arg(level, 2, 10, QLatin1Char('0')).arg(suffix);
-    QString fullPath = basePath + QString("/imagecache/%1/%2%3").arg(prefix).arg(md5).arg(postfix);
+
+    const QString fullPath = s_basePath + QString("/%1/%2%3").arg(prefix).arg(md5).arg(postfix);
 
     return fullPath;
   }
