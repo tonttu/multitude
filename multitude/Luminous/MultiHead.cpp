@@ -699,8 +699,7 @@ namespace Luminous {
     if(type == "window") {
       Window * win = new Window(this);
 
-      // Add as child & recurse
-      addValue(name, win);
+      //recurse
       win->deserialize(ce);
 
       addWindow(win);

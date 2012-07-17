@@ -348,6 +348,15 @@ namespace Luminous {
       /// Return the screen configuration that this Window belongs to
       const MultiHead * screen() const { return m_screen; }
 
+      void deleteAreas()
+      {
+        for(std::vector<std::shared_ptr<Area> >::iterator it = m_areas.begin(); it != m_areas.end(); ++it)
+        {
+          removeValue(it->get());
+        }
+        m_areas.clear();
+      }
+
     private:
       LUMINOUS_API virtual bool readElement(const Valuable::ArchiveElement & ce);
 
@@ -439,7 +448,11 @@ namespace Luminous {
       //this should remove listeners that refer to Areas within the windows
       m_hwColorCorrection.syncWith(0);
       for(std::vector<std::shared_ptr<Window> >::iterator it = m_windows.begin(); it != m_windows.end(); ++it)
+      {
+        //delete window's areas
+        it->get()->deleteAreas();
         removeValue(it->get());
+      }
       m_windows.clear();
     }
 
