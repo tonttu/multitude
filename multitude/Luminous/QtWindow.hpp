@@ -1,21 +1,22 @@
-#ifndef RADIANT_QTWINDOW_HPP
-#define RADIANT_QTWINDOW_HPP
+#ifndef LUMINOUS_QTWINDOW_HPP
+#define LUMINOUS_QTWINDOW_HPP
 
 #include "Export.hpp"
 #include "Window.hpp"
-#include "WindowConfig.hpp"
+#include "MultiHead.hpp"
 
-namespace Radiant
+namespace Luminous
 {
   class GLThreadWidget;
+
   /// A window class built on top of Qt
-  class RADIANT_API QtWindow : public Window
+  class LUMINOUS_API QtWindow : public Window
   {
   public:
     /// Constructs a new window
-    /// @param hint window configuration
-    /// @param caption window caption
-    QtWindow(const WindowConfig & hint = WindowConfig(0, 0, 640, 480, false, true, true, 0), const char * caption = 0);
+    /// @param window window configuration
+    /// @param windowTitle window title
+    QtWindow(const MultiHead::Window & window, const QString & windowTitle);
     ~QtWindow();
 
     virtual void poll();

@@ -1,12 +1,6 @@
 
 include(../multitude.pri)
 
-HEADERS += WindowConfig.hpp
-HEADERS += Window.hpp
-macx:HEADERS += CocoaWindow.hpp
-HEADERS += XWindow.hpp
-HEADERS += QtWindow.hpp
-HEADERS += WindowEventHook.hpp
 HEADERS += Flags.hpp
 HEADERS += Buffer.hpp
 HEADERS += Mime.hpp
@@ -84,11 +78,6 @@ HEADERS += VideoCameraCMU.hpp
 HEADERS += VideoCamera1394.hpp
 HEADERS += VideoCameraPTGrey.hpp
 
-SOURCES += WindowConfig.cpp
-SOURCES += Window.cpp
-macx:OBJECTIVE_SOURCES += CocoaWindow.mm
-SOURCES += XWindow.cpp
-SOURCES += QtWindow.cpp
 SOURCES += Mime.cpp
 SOURCES += CameraDriver.cpp
 SOURCES += SocketUtilPosix.cpp
@@ -161,7 +150,7 @@ unix {
   PKGCONFIG += libdc1394-2
   !mobile*:DEFINES += CAMERA_DRIVER_1394
   CONFIG += qt
-  QT = core network opengl gui
+  QT = core network gui
 }
 
 contains(WITH_FTD2XX,yes) {

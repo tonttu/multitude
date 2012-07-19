@@ -21,11 +21,11 @@
 
 #include <Nimble/Vector2.hpp>
 
-namespace Radiant
+namespace Luminous
 {
 
   /// Virtual base classes for OpenGL windows
-  class RADIANT_API Window
+  class LUMINOUS_API Window
   {
   public:
     /// Creates the base definitions for windows

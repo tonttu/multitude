@@ -1,119 +1,113 @@
 include(../multitude.pri)
 
-# Drivers
-HEADERS += RenderDriver.hpp \
-    Spline.hpp
-SOURCES += RenderDriver.cpp \
-    Spline.cpp
-HEADERS += RenderDriverGL.hpp
-SOURCES += RenderDriverGL.cpp
-
-# Render resources
-HEADERS += RenderManager.hpp
-SOURCES += RenderManager.cpp
-HEADERS += RenderResource.hpp
-SOURCES += RenderResource.cpp
-HEADERS += HardwareBuffer.hpp
-SOURCES += HardwareBuffer.cpp
-HEADERS += VertexAttributeBinding.hpp
-SOURCES += VertexAttributeBinding.cpp
-HEADERS += ShaderProgram.hpp
-SOURCES += ShaderProgram.cpp
-HEADERS += Texture2.hpp
-SOURCES += Texture2.cpp
-
-HEADERS += VertexDescription.hpp
-HEADERS += VertexAttribute.hpp
-SOURCES += VertexDescription.cpp
-
 HEADERS += BGThread.hpp
-linux-*:HEADERS += XRandR.hpp
-!macx:HEADERS += ScreenDetectorAMD.hpp
-HEADERS += ScreenDetector.hpp
-!macx:HEADERS += ScreenDetectorNV.hpp
-HEADERS += HardwareColorCorrection.hpp
-HEADERS += VM1.hpp
-HEADERS += VertexHolder.hpp
-HEADERS += Style.hpp
-HEADERS += DummyOpenGL.hpp
-HEADERS += FramebufferResource.hpp
+HEADERS += CocoaWindow.hpp
 HEADERS += CodecRegistry.hpp
 HEADERS += Collectable.hpp
+HEADERS += ColorCorrection.hpp
 HEADERS += ContextVariable.hpp
 HEADERS += CPUMipmaps.hpp
+HEADERS += DummyOpenGL.hpp
 HEADERS += EnableStep.hpp
 HEADERS += Error.hpp
 HEADERS += Export.hpp
 HEADERS += FramebufferObject.hpp
+HEADERS += FramebufferResource.hpp
 HEADERS += GarbageCollector.hpp
-
-
 HEADERS += GLKeyStone.hpp
 HEADERS += GLResource.hpp
 HEADERS += GLResources.hpp
 HEADERS += GLSLProgramObject.hpp
 HEADERS += GLSLShaderObject.hpp
-!mobile*:HEADERS += ImageCodecDDS.hpp
+HEADERS += HardwareBuffer.hpp
+HEADERS += HardwareColorCorrection.hpp
 HEADERS += ImageCodec.hpp
 HEADERS += ImageCodecTGA.hpp
 HEADERS += Image.hpp
 HEADERS += Luminous.hpp
 HEADERS += MatrixStep.hpp
-!mobile*:HEADERS += MipMapGenerator.hpp
 HEADERS += MultiHead.hpp
 HEADERS += PixelFormat.hpp
+HEADERS += QtWindow.hpp
 HEADERS += RenderContext.hpp
-
-#HEADERS += RenderTarget.hpp
+HEADERS += RenderDriverGL.hpp
+HEADERS += RenderDriver.hpp
+HEADERS += RenderManager.hpp
+HEADERS += RenderResource.hpp
+HEADERS += ScreenDetector.hpp
 HEADERS += Shader.hpp
-!mobile*:HEADERS += SpriteRenderer.hpp
+HEADERS += ShaderProgram.hpp
+HEADERS += Spline.hpp
+HEADERS += Style.hpp
 HEADERS += Task.hpp
+HEADERS += Texture2.hpp
 HEADERS += Texture.hpp
 HEADERS += Transformer.hpp
 HEADERS += Utils.hpp
+HEADERS += VertexAttributeBinding.hpp
+HEADERS += VertexAttribute.hpp
 HEADERS += VertexBuffer.hpp
 HEADERS += VertexBufferImpl.hpp
-
-SOURCES += Style.cpp
-SOURCES += VertexHolder.cpp
-SOURCES += BGThread.cpp
+HEADERS += VertexDescription.hpp
+HEADERS += VertexHolder.hpp
+HEADERS += VM1.hpp
+HEADERS += WindowEventHook.hpp
+HEADERS += Window.hpp
+linux-*:HEADERS += XRandR.hpp
 linux-*:SOURCES += XRandR.cpp
+!macx:HEADERS += ScreenDetectorAMD.hpp
+!macx:HEADERS += ScreenDetectorNV.hpp
+macx:OBJECTIVE_SOURCES += CocoaWindow.mm
 !macx:SOURCES += ScreenDetectorAMD.cpp
-SOURCES += ScreenDetector.cpp
 !macx:SOURCES += ScreenDetectorNV.cpp
-SOURCES += HardwareColorCorrection.cpp
-HEADERS += ColorCorrection.hpp
+!mobile*:HEADERS += ImageCodecDDS.hpp
+!mobile*:HEADERS += MipMapGenerator.hpp
+!mobile*:HEADERS += SpriteRenderer.hpp
+!mobile*:SOURCES += ImageCodecDDS.cpp
+!mobile*:SOURCES += ImageCodecTGA.cpp
+!mobile*:SOURCES += MipMapGenerator.cpp
+!mobile*:SOURCES += SpriteRenderer.cpp
+SOURCES += BGThread.cpp
 SOURCES += CodecRegistry.cpp
+SOURCES += ColorCorrection.cpp
 SOURCES += CPUMipmaps.cpp
 SOURCES += Error.cpp
 SOURCES += FramebufferObject.cpp
 SOURCES += FramebufferResource.cpp
 SOURCES += GarbageCollector.cpp
-
 SOURCES += GLKeyStone.cpp
 SOURCES += GLResource.cpp
 SOURCES += GLResources.cpp
 SOURCES += GLSLProgramObject.cpp
 SOURCES += GLSLShaderObject.cpp
-# TGA loader tries to create BGR & BGRA textures, which are not availale on OpenGL ES
-!mobile*:SOURCES += ImageCodecTGA.cpp
-!mobile*:SOURCES += ImageCodecDDS.cpp
+SOURCES += HardwareBuffer.cpp
+SOURCES += HardwareColorCorrection.cpp
 SOURCES += Image.cpp
 SOURCES += Luminous.cpp
-!mobile*:SOURCES += MipMapGenerator.cpp
 SOURCES += MultiHead.cpp
 SOURCES += PixelFormat.cpp
+SOURCES += QtWindow.cpp
 SOURCES += RenderContext.cpp
-#SOURCES += RenderTarget.cpp
+SOURCES += RenderDriver.cpp
+SOURCES += RenderDriverGL.cpp
+SOURCES += RenderManager.cpp
+SOURCES += RenderResource.cpp
+SOURCES += ScreenDetector.cpp
 SOURCES += Shader.cpp
-!mobile*:SOURCES += SpriteRenderer.cpp
+SOURCES += ShaderProgram.cpp
+SOURCES += Spline.cpp
+SOURCES += Style.cpp
 SOURCES += Task.cpp
+SOURCES += Texture2.cpp
 SOURCES += Texture.cpp
 SOURCES += Transformer.cpp
 SOURCES += Utils.cpp
+SOURCES += VertexAttributeBinding.cpp
 SOURCES += VertexBuffer.cpp
-SOURCES += ColorCorrection.cpp
+SOURCES += VertexDescription.cpp
+SOURCES += VertexHolder.cpp
 SOURCES += VM1.cpp
+SOURCES += Window.cpp
 
 # Link in Squish statically
 LIBS += $$LIB_SQUISH
@@ -167,7 +161,7 @@ INCLUDEPATH += ../Externals/adl_sdk
 DEFINES += LUMINOUS_EXPORT
 
 CONFIG += qt
-QT += gui
+QT += gui opengl
 # QT += svg
 
 include(../library.pri)

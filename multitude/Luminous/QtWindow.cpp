@@ -12,8 +12,9 @@
 #include <QApplication>
 #include <QGLWidget>
 #include <QMouseEvent>
+#include <QDesktopWidget>
 
-namespace Radiant
+namespace Luminous
 {
 
   class GLThreadWidget : public QGLWidget
@@ -124,7 +125,7 @@ namespace Radiant
   ////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////
 
-  QtWindow::QtWindow(const WindowConfig & hint, const char * caption)
+  QtWindow::QtWindow(const MultiHead::Window & window, const QString & windowTitle)
     : Window()
   {
     /* The code below opens a new OpenGL window at desired loation. Extra steps
@@ -144,36 +145,48 @@ namespace Radiant
     */
 
     Qt::WindowFlags flags = 0;
-    if(hint.frameless)
+    if(window.frameless())
       flags = Qt::FramelessWindowHint;
 
-    QWidget * host = new QWidget(0,  flags);
+    QWidget * parent = 0;
+#ifdef RADIANT_LINUX
+    QDesktopWidget * desktop = QApplication::desktop();
 
-    if(caption)
-      host->setWindowTitle(caption);
-    if(hint.iconify)
+    /// @todo this should be more graceful
+    const int xScreenNumber = window.screennumber();
+    assert(xScreenNumber <= desktop->screenCount());
+
+    parent = desktop->screen(xScreenNumber);
+#endif
+    QWidget * host = new QWidget(parent,  flags);
+
+    if(!windowTitle.isEmpty())
+      host->setWindowTitle(windowTitle);
+
+    if(window.screen()->iconify())
        host->setWindowState(Qt::WindowMinimized);
 
-    host->move(hint.x, hint.y);
+    host->move(window.location().x, window.location().y);
     host->raise();
     host->show();
-    host->resize(hint.width, hint.height);
+    host->resize(window.width(), window.height());
 
-    if(hint.fullscreen)
+    if(window.fullscreen())
       host->showFullScreen();
 
     m_mainWindow = new GLThreadWidget(host, *this, flags);
 
     m_mainWindow->raise();
     m_mainWindow->show();
-    //    m_mainWindow->move(hint.x, hint.y);
-    m_mainWindow->resize(hint.width, hint.height);
+    m_mainWindow->resize(window.width(), window.height());
     m_mainWindow->setFocus();
   }
 
   QtWindow::~QtWindow()
   {
-    m_mainWindow->deleteLater();
+    assert(m_mainWindow->parent());
+    m_mainWindow->parent()->deleteLater();
+    //m_mainWindow->deleteLater();
   }
 
   void QtWindow::poll()

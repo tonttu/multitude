@@ -2,7 +2,7 @@
 #define RADIANT_COCOAWINDOW_HPP
 
 #include "Window.hpp"
-#include "WindowConfig.hpp"
+#include "MultiHead.hpp"
 
 #include <Radiant/Trace.hpp>
 
@@ -12,7 +12,7 @@
 # error "CocoaWindow only works on OS X"
 #endif
 
-namespace Radiant
+namespace Luminous
 {
 
   /// A Cocoa OpenGL Window class
@@ -22,7 +22,7 @@ namespace Radiant
     /// Constructs a new window
     /// @param hint window configuration
     /// @param caption window caption
-    CocoaWindow(const WindowConfig & hint = WindowConfig(0, 0, 640, 480, false, true, true, 0));
+    CocoaWindow(const MultiHead::Window & window);
     ~CocoaWindow();
 
     virtual void poll();
