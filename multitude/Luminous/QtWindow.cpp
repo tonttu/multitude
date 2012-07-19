@@ -29,21 +29,6 @@ namespace Luminous
 
       // Make the widget receive mouse move events even if no buttons are pressed
       setMouseTracking(true);
-
-      m_lastAction = Radiant::TimeStamp::getTime();
-    }
-
-    virtual void swapBuffers()
-    {
-      QGLWidget::swapBuffers();
-
-      // float since = m_lastAction.sinceSecondsD();
-
-      /// @todo implement
-//      if(since < 6.0) {
-//        if(since > 5.0)
-//          ThreadedRendering::SimpleThreadedApplication::instance()->notifyHideCursor();
-//      }
     }
 
     virtual void showCursor(bool visible)
@@ -68,22 +53,6 @@ namespace Luminous
     {
       if(m_window.eventHook())
         m_window.eventHook()->handleWindowMove( e->pos().x(), e->pos().y(), size().width(), size().height() );
-    }
-
-    WindowEventHook::MouseButtonMask convertQtMouseButton(Qt::MouseButtons b)
-    {
-      WindowEventHook::MouseButtonMask mask = WindowEventHook::NoButton;
-
-      if(b & Qt::LeftButton)
-        mask = WindowEventHook::LeftButton;
-
-      if(b & Qt::MidButton)
-        mask = WindowEventHook::MiddleButton;
-
-      if(b & Qt::RightButton)
-        mask = WindowEventHook::RightButton;
-
-      return mask;
     }
 
     virtual void mouseMoveEvent(QMouseEvent * e)
@@ -118,8 +87,6 @@ namespace Luminous
     }
 
     QtWindow & m_window;
-
-    Radiant::TimeStamp m_lastAction;
   };
 
   ////////////////////////////////////////////////////////////
