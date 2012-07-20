@@ -137,6 +137,20 @@ namespace Luminous
       friend class TaskDeleter;
   };
 
+  /// This class executes the given function within BGThread.
+  class LUMINOUS_API FunctionTask : public Task
+  {
+    public:
+      /// Construct a new FunctionTask
+      /// @param func function to execute
+      FunctionTask(std::function<void ()> func);
+
+      virtual void doTask() OVERRIDE;
+
+  private:
+      std::function<void ()> m_func;
+  };
+
 }
 
 #endif
