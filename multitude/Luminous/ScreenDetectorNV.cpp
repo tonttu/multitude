@@ -31,9 +31,76 @@ namespace
 
 #if defined (RADIANT_LINUX)
 
+  Nimble::Recti getXineramaGeometry(Display* display, int screen, unsigned int display_mask, bool& ok)
+  {
+    char* ptr=0;
+    int posx = 0;
+    int posy = 0;
+    int dwidth = 0;
+    int dheight = 0;
+    if(ok = XNVCTRLQueryStringAttribute(display, screen, display_mask,
+                                NV_CTRL_STRING_XINERAMA_SCREEN_INFO, &ptr))
+    {
+      QString sinfo(ptr);
+      QRegExp x_re("x=(\\d+)");
+      QRegExp y_re("y=(\\d+)");
+      QRegExp w_re("width=(\\d+)");
+      QRegExp h_re("height=(\\d+)");
+
+      if(ok = ok && x_re.indexIn(sinfo)!=-1)
+      {
+        posx = x_re.cap(1).toInt();
+      }
+
+
+      if(ok = ok && y_re.indexIn(sinfo)!=-1)
+      {
+        posy = y_re.cap(1).toInt();
+      }
+
+      if(ok = ok && w_re.indexIn(sinfo)!=-1)
+      {
+        dwidth = w_re.cap(1).toInt();
+      }
+
+
+      if(ok = ok && h_re.indexIn(sinfo)!=-1)
+      {
+        dheight = h_re.cap(1).toInt();
+      }
+      if(ptr)
+        free(ptr);
+      Radiant::debug("xinerama screen info, for screen %d display=0X%x: x=%d y=%d w=%d h=%d\n", screen, display_mask, posx, posy, dwidth, dheight);
+    }
+
+    return Nimble::Recti(posx, posy, posx+ dwidth, posy + dheight);
+  }
+
+  Nimble::Recti getSeparateXorTwinViewGeometry(Display* display, int screen, unsigned int display_mask, bool& ok)
+  {
+    int len;
+    int* bdata=0;
+    int posx = 0;
+    int posy = 0;
+    int dwidth = 0;
+    int dheight = 0;
+    if(ok = XNVCTRLQueryBinaryData(display, screen,display_mask, NV_CTRL_BINARY_DATA_DISPLAY_VIEWPORT, (unsigned char **)&bdata, &len))
+    {
+      posx = bdata[0];
+      posy = bdata[1];
+      dwidth = bdata[2];
+      dheight = bdata[3];
+      if(bdata)
+        free(bdata);
+      Radiant::debug("NV_CTRL_BINARY_DATA_DISPLAY_VIEWPORT for screen %d and port 0X%x:  x=%d y=%d w=%d h=%d\n", screen, display_mask, posx, posy, dwidth, dheight);
+    }
+
+    return Nimble::Recti(posx, posy,  posx + dwidth,  posy + dheight);
+  }
+
   bool detectLinuxInternal(int screen, int logical_screen, Display * display, QList<Luminous::ScreenInfo> & results)
   {
-    int* bdata;
+    int* bdata = 0;
     int len;
     QStringList gpu_ids;
     QStringList gpu_names;
@@ -44,28 +111,7 @@ namespace
     bool twinview_on;
     int query;
     int display_mask = 0;
-
-    if (XNVCTRLQueryAttribute(display, screen, 0,
-                                    NV_CTRL_XINERAMA, &query))
-    {
-      xinerama_on = query == NV_CTRL_XINERAMA_ON;
-      Radiant::debug("screen %d xinerama is %d\n",screen, xinerama_on);
-    }
-    else
-    {
-      Radiant::error("couldn't query xinerama\n");
-      return false;
-    }
-
-    if (XNVCTRLQueryAttribute(display, screen, 0, NV_CTRL_TWINVIEW, &query))
-    {
-      twinview_on = query == NV_CTRL_TWINVIEW_ENABLED;
-      Radiant::debug("screen %d twinview is %d\n", screen, twinview_on);
-    }
-    else
-    {
-      Radiant::debug("couldnt query twinview\n");
-    }
+    bool ok = true;
 
     /*
       which display ports are enabled for this XScreen, usually just 1 but could be
@@ -75,10 +121,36 @@ namespace
 
     if(XNVCTRLQueryTargetAttribute(display, NV_CTRL_TARGET_TYPE_X_SCREEN, screen, 0,
       NV_CTRL_ENABLED_DISPLAYS, &display_mask) == False)
+    {
+      Radiant::error("couldn't get display mask from NV_CTRL_ENABLED_DISPLAYS\n");
       return false;
+    }
     Radiant::debug("display/port mask for screen %d = 0X%x\n", screen, display_mask);
 
-    if(XNVCTRLQueryBinaryData(display, screen,0, NV_CTRL_BINARY_DATA_GPUS_USED_BY_XSCREEN, (unsigned char **)&bdata, &len))
+    if (ok = ok && XNVCTRLQueryAttribute(display, screen, 0,
+                                    NV_CTRL_XINERAMA, &query))
+    {
+      xinerama_on = query == NV_CTRL_XINERAMA_ON;
+      Radiant::debug("screen %d xinerama is %d\n",screen, xinerama_on);
+    }
+    else
+    {
+      Radiant::error("couldn't query xinerama\n");
+    }
+
+    if (ok = ok && XNVCTRLQueryAttribute(display, screen, 0, NV_CTRL_TWINVIEW, &query))
+    {
+      twinview_on = query == NV_CTRL_TWINVIEW_ENABLED;
+      Radiant::debug("screen %d twinview is %d\n", screen, twinview_on);
+    }
+    else
+    {
+      Radiant::error("couldnt query twinview\n");
+    }
+
+
+
+    if(ok = ok && XNVCTRLQueryBinaryData(display, screen,0, NV_CTRL_BINARY_DATA_GPUS_USED_BY_XSCREEN, (unsigned char **)&bdata, &len))
     {
       int num = bdata[0];
       Radiant::debug("NV_CTRL_BINARY_DATA_GPUS_USED_BY_XSCREEN for screen %d :  #gpus=%d:\n", screen, num);
@@ -90,38 +162,50 @@ namespace
         if(XNVCTRLQueryTargetStringAttribute(display, NV_CTRL_TARGET_TYPE_GPU, bdata[i], 0,
           NV_CTRL_STRING_PRODUCT_NAME, &name)) {
             gpu_names<<QString(name);
-            XFree(name);
-            name = 0;
+            if(name)
+            {
+              free(name);
+              name = 0;
+            }
         }
         else
         {
           gpu_names<<"";
         }
       }
-      XFree(bdata);
+
+      if(bdata)
+      {
+        free(bdata);
+        bdata = 0;
+      }
     }
     else
     {
-        Radiant::debug("XNVCTRLQueryBinaryData(display, screen,0, NV_CTRL_BINARY_DATA_GPUS_USED_BY_XSCREEN, &bdata, &len)) failed\n");
+        Radiant::error("XNVCTRLQueryBinaryData(display, screen,0, NV_CTRL_BINARY_DATA_GPUS_USED_BY_XSCREEN, &bdata, &len)) failed\n");
     }
+
 
     //for all enabled display ports in screen
     for(int port = 0; port < 24; ++port)
     {
       int d = 1 << port;
       if((display_mask & d) == 0) continue;
-
-      int posx = 0;
-      int posy = 0;
-      int dwidth = 0;
-      int dheight = 0;
-
        //one screenInfo per enabled display port
       results.push_back(Luminous::ScreenInfo());
       Luminous::ScreenInfo& info = results.back();
 
-
-      /*
+      Nimble::Recti rect;
+      if(xinerama_on)
+      {
+        bool xok;
+        rect = getXineramaGeometry(display,screen,d, xok);
+        ok = xok&&ok;
+        if(!xok)
+        {
+          Radiant::error("couldn't query xinerama screen info");
+        }
+        /*
         nvidia-setting allows the creation of a Xinerama setup that has inside
         a number of Twinview XScreens along with a number of separate regular
         XScreens all packed together into one Xinerama logical XScreen.
@@ -129,80 +213,57 @@ namespace
         screens.
         NV_CTRL_STRING_XINERAMA_SCREEN_INFO property only works for normal
         Separate XScreens hidden by Xinerama not for TwinView screens hidden by
-        Xinerama.
-       */
-      if(xinerama_on && !twinview_on)
-      {
-        char* ptr;
-        if(XNVCTRLQueryStringAttribute(display, screen, d,
-                                    NV_CTRL_STRING_XINERAMA_SCREEN_INFO, &ptr))
+        Xinerama. When the screen has both Xinerama and TwinView flags
+        The size of the display is the one provided by XNVCTRLQueryBinaryData
+        and the position is the sum of the one provided by XNVCTRLQueryBinaryData
+        and the one provided by NV_CTRL_STRING_XINERAMA_SCREEN_INFO
+        */
+        if(twinview_on)
         {
-          QString sinfo(ptr);
-          QRegExp x_re("x=(\\d+)");
-          QRegExp y_re("y=(\\d+)");
-          QRegExp w_re("width=(\\d+)");
-          QRegExp h_re("height=(\\d+)");
-
-          if(x_re.indexIn(sinfo)!=-1)
+          bool tok = true;
+          Nimble::Recti twin_rect = getSeparateXorTwinViewGeometry(display,screen,d, tok);
+          ok = tok && ok;
+          if(!tok)
           {
-            posx = x_re.cap(1).toInt();
+            Radiant::error("couldn't query twinview screen info");
           }
-
-          if(y_re.indexIn(sinfo)!=-1)
-          {
-            posy = y_re.cap(1).toInt();
-          }
-
-          if(w_re.indexIn(sinfo)!=-1)
-          {
-            dwidth = w_re.cap(1).toInt();
-          }
-
-
-          if(h_re.indexIn(sinfo)!=-1)
-          {
-            dheight = h_re.cap(1).toInt();
-          }
-
-          Radiant::debug("xinerama screen info, for screen %d display=0X%x: x=%d y=%d w=%d h=%d\n", screen, d, posx, posy, dwidth, dheight);
+          int xine_offsetx = rect.low().x;
+          int xine_offsety = rect.low().y;
+          int twin_posx = twin_rect.low().x;
+          int twin_posy = twin_rect.low().y;
+          //twinview geometry + xinerama offset
+          rect = Nimble::Recti(xine_offsetx + twin_posx, xine_offsety + twin_posy, xine_offsetx + twin_rect.high().x, xine_offsety + twin_rect.high().y);
         }
-        else
-          Radiant::debug("couldn't query xinerama screen info");
       }
       /*
-        This applies to TwinView Screens (under xinerama or not) and regular separate XScreens (not Xinerama)
+        No Xinerama
+        This applies to regular TwinView Screens and regular separate XScreens
         */
       else
       {
-        if(XNVCTRLQueryBinaryData(display, screen,d, NV_CTRL_BINARY_DATA_DISPLAY_VIEWPORT, (unsigned char **)&bdata, &len))
+        bool sok;
+        rect = getSeparateXorTwinViewGeometry(display,screen,d, sok);
+        ok = sok && ok;
+        if(!sok)
         {
-          posx = bdata[0];
-          posy = bdata[1];
-          dwidth = bdata[2];
-          dheight = bdata[3];
-
-          Radiant::debug("NV_CTRL_BINARY_DATA_DISPLAY_VIEWPORT for screen %d and port 0X%x:  x=%d y=%d w=%d h=%d\n", screen, d, posx, posy, dwidth, dheight);
-          XFree(bdata);
-        }
-        else
-        {
-            Radiant::debug("XNVCTRLQueryBinaryData(... NV_CTRL_BINARY_DATA_DISPLAY_VIEWPORT...) failed\n");
-            return false;
+          Radiant::error("getSeparateXorTwinViewGeometry failed\n");
         }
       }
 
       //name of device (e.g. monitor, cell) connected to this display port (e.g. ViewSonic VX2260WM)
-      if(XNVCTRLQueryStringAttribute(display, screen, d,
+      if(ok = ok && XNVCTRLQueryStringAttribute(display, screen, d,
         NV_CTRL_STRING_DISPLAY_DEVICE_NAME, &name))
       {
-
         Radiant::debug("monitor name attached to screen %d display/port 0X%x = %s\n",screen, d, name);
         display_port_device_name = QString(name);
-          XFree(name);
+        if(name)
+        {
+          free(name);
           name = 0;
+        }
       }
-
-      info.setGeometry(Nimble::Recti(posx, posy, posx + dwidth, posy + dheight));
+      Radiant::debug("geometry for screen %d display 0x%x %d %d %d %d", screen, d, rect.low().x, rect.low().y,rect.width(), rect.height());
+      info.setGeometry(rect);
       info.setGpu(gpu_ids.join(","));
       info.setGpuName(gpu_names.join(","));
       info.setConnection(connectionName(port));
@@ -212,14 +273,13 @@ namespace
         info.setLogicalScreen(screen);
       info.setName(display_port_device_name);
     }
-    return true;
+    return ok;
   }
 
 
   bool detectLinux(int screen, QList<Luminous::ScreenInfo> & results)
   {
     Display * display = QX11Info::display();
-
     int event_base, error_base;
     if(XNVCTRLQueryExtension(display, &event_base, &error_base) == False)
       return false;
@@ -247,6 +307,7 @@ namespace
 
     if(xinerama_on)
     {
+      bool ok = true;
       /*
         When xinerama is enabled there are actually N xscreens that are hidden
         behind the "logical XScreen" that XLib's XScreenCount() reports and that
@@ -258,11 +319,11 @@ namespace
          XScreens, just one that contains two displays.
       */
       int screenCount = 0;
-      /*This property seems to enumerate all the screens including the ones
-         Xinerama might be hiding
+      /*This property enumerates all the screens Xinerama is hiding
        */
       if(XNVCTRLQueryTargetCount(display, NV_CTRL_TARGET_TYPE_X_SCREEN, &screenCount) == False)
         return false;
+
       Radiant::debug("number of xscreens according to *TargetCount(...NV_CTRL_TARGET_TYPE_X_SCREEN) %d\n", screenCount);
 
       /*
@@ -271,15 +332,14 @@ namespace
       for(int i = 0; i< screenCount; i++)
       {
           //i is the hidden XScreen, screen is our logical XScreen
-          if(!detectLinuxInternal(i, screen, display, results))
-            return false;
+          ok = ok && detectLinuxInternal(i, screen, display, results);
       }
+      return ok;
     }
     else
     {
       return detectLinuxInternal(screen, -1, display, results);
     }
-    return true;
   }
 #elif defined (RADIANT_WINDOWS)
   bool detectWindows(QList<Luminous::ScreenInfo> & results)
