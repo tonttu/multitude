@@ -18,6 +18,7 @@
 #include "Luminous.hpp"
 #include "CodecRegistry.hpp"
 #include "Utils.hpp"
+#include "Texture2.hpp"
 
 #include <Nimble/Math.hpp>
 
@@ -863,6 +864,66 @@ namespace Luminous
     t->m_generation = ++m_generation;
 
     return t;
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+
+  class ImageTex2::D
+  {
+  public:
+    std::shared_ptr<Luminous::Image> loadShared(const QString & filename);
+
+  public:
+    std::shared_ptr<Luminous::Image> m_image;
+    Luminous::Texture m_tex;
+  };
+
+  std::shared_ptr<Luminous::Image> ImageTex2::D::loadShared(const QString & filename)
+  {
+    // C++11 says: [stmt.dcl 4]
+    // If control enters the declaration concurrently while the variable is
+    // being initialized, the concurrent execution shall wait for completion
+    // of the initialization
+    static Radiant::Mutex s_mutex;
+    static std::map<QString, std::weak_ptr<Luminous::Image>> s_images;
+
+    Radiant::Guard g(s_mutex);
+
+    std::weak_ptr<Luminous::Image> & weak = s_images[filename];
+    std::shared_ptr<Luminous::Image> image = weak.lock();
+    if(image)
+      return image;
+
+    image = std::make_shared<Luminous::Image>();
+    image->read(filename.toUtf8().data());
+    weak = image;
+    return image;
+  }
+
+  ImageTex2::ImageTex2()
+    : m_d(new D())
+  {}
+
+  ImageTex2::~ImageTex2()
+  {
+    delete m_d;
+  }
+
+  bool ImageTex2::load(const QString & filename)
+  {
+    std::shared_ptr<Luminous::Image> image = m_d->loadShared(filename);
+    if(!image) return false;
+
+    m_d->m_image = std::move(image);
+    m_d->m_tex.setData(m_d->m_image->width(), m_d->m_image->height(), m_d->m_image->pixelFormat(),
+                    (const char *)m_d->m_image->data());
+    return true;
+  }
+
+  Texture & ImageTex2::tex()
+  {
+    return m_d->m_tex;
   }
 
   /////////////////////////////////////////////////////////////////////////////

@@ -262,6 +262,20 @@ namespace Luminous
     ImageTex * move();
   };
 
+  class ImageTex2
+  {
+  public:
+    LUMINOUS_API ImageTex2();
+    LUMINOUS_API ~ImageTex2();
+    LUMINOUS_API bool load(const QString & filename);
+    LUMINOUS_API Texture & tex();
+
+  private:
+    class D;
+    D * m_d;
+  };
+
+
 #ifndef LUMINOUS_OPENGLES
 
   /// A compressed image. Currently supports DXT format.
