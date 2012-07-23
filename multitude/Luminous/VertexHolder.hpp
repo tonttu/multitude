@@ -178,12 +178,7 @@ namespace Luminous
       Nimble::Vector3 location;
       Nimble::Vector2 texCoord;
     };
-    struct UniformBlock
-    {
-      Nimble::Matrix4f projMatrix;
-      Nimble::Matrix4f modelMatrix;
-      Nimble::Vector4 color;
-    };
+    typedef BasicShaderDescription::UniformBlock UniformBlock;
   };
 
   class CircleVertex

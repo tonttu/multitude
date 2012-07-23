@@ -340,10 +340,10 @@ namespace Luminous
         @param area The rectangle to drawn **/
     void drawTexRect(const Nimble::Rect & area, const float * rgba);
 
-    void drawStyledRect(Nimble::Vector2 size, const Luminous::Style & style);
+    void drawStyledRect(Nimble::Vector2 size, Style &style);
 
-    void drawRect(const QRectF & area, const Luminous::Style & fill);
-    void drawRect(const Nimble::Rect & area, const Luminous::Style & fill)
+    void drawRect(const QRectF & area, Style &fill);
+    void drawRect(const Nimble::Rect & area, Luminous::Style & fill)
     {
       drawRect(QRectF(area.low().x, area.low().y, area.width(), area.height()), fill);
     }
@@ -351,6 +351,7 @@ namespace Luminous
     void drawRectWithHole(const Nimble::Rect & area,
                           const Nimble::Rect & hole,
                           const Luminous::Style & fill);
+
     void drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2,
                   float width, const Luminous::Style & fill);
     void drawLineStrip(const Nimble::Vector2 * vertices, size_t npoints,

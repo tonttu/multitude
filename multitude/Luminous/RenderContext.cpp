@@ -229,8 +229,27 @@ namespace Luminous
 
       bzero(m_textures, sizeof(m_textures));
 
-      m_baseShaderDesc.addAttribute<Nimble::Vector3f>("vertex_position");
-      m_baseShaderDesc.addAttribute<Nimble::Vector2>("vertex_uv");
+      /// @todo ShaderProgram should own these
+      Luminous::ShaderGLSL * basicVertexShader = new Luminous::ShaderGLSL(ShaderGLSL::Vertex);
+      Luminous::ShaderGLSL * basicFragmentShader = new Luminous::ShaderGLSL(ShaderGLSL::Fragment);
+      basicVertexShader->loadText("Luminous/GLSL400/basic_shader.vs");
+      basicFragmentShader->loadText("Luminous/GLSL400/basic_shader.fs");
+      m_basicShader.addShader(*basicVertexShader);
+      m_basicShader.addShader(*basicFragmentShader);
+      Luminous::VertexDescription desc;
+      desc.addAttribute<Nimble::Vector3f>("vertex_position");
+      m_basicShader.setVertexDescription(desc);
+
+      Luminous::ShaderGLSL * texVertexShader = new Luminous::ShaderGLSL(ShaderGLSL::Vertex);
+      Luminous::ShaderGLSL * texFragmentShader = new Luminous::ShaderGLSL(ShaderGLSL::Fragment);
+      texVertexShader->loadText("Luminous/GLSL400/tex_shader.vs");
+      texFragmentShader->loadText("Luminous/GLSL400/tex_shader.fs");
+      m_texShader.addShader(*texVertexShader);
+      m_texShader.addShader(*texFragmentShader);
+      desc = Luminous::VertexDescription();
+      desc.addAttribute<Nimble::Vector3f>("vertex_position");
+      desc.addAttribute<Nimble::Vector2>("vertex_uv");
+      m_texShader.setVertexDescription(desc);
     }
 
     ~Internal()
@@ -558,6 +577,9 @@ namespace Luminous
     float m_automaticDepthDiff;
     int m_renderCalls;
 
+    ShaderProgram m_basicShader;
+    ShaderProgram m_texShader;
+
     Luminous::RenderDriver & m_driver;
 
     struct BufferPool
@@ -573,8 +595,6 @@ namespace Luminous
           it->reservedBytes = 0;
       }
     };
-
-    VertexDescription m_baseShaderDesc;
 
     // vertex/uniform struct size -> pool
     std::map<std::size_t, BufferPool> m_vertexBuffers;
@@ -1449,7 +1469,7 @@ namespace Luminous
     drawRect(Nimble::Rect(Nimble::Vector2(0,0), size), style);
   }
 
-  void RenderContext::drawStyledRect(Nimble::Vector2 size, const Luminous::Style & style)
+  void RenderContext::drawStyledRect(Nimble::Vector2 size, Luminous::Style & style)
   {
     drawRect(Nimble::Rect(Nimble::Vector2(0,0), size), style);
   }
@@ -1571,34 +1591,56 @@ namespace Luminous
     return builder;
   }
 
-  void RenderContext::drawRect(const QRectF & area, const Style & style)
+  void RenderContext::drawRect(const QRectF & area, Style & style)
   {
-    RenderBuilder<TexShaderDescription> b = render<TexShaderDescription>(Luminous::PrimitiveType_TriangleStrip, 4, 4, style);
+    BasicShaderDescription::UniformBlock * uniform;
+    unsigned int * idx;
+    if(style.fill.tex.empty()) {
+      if(!style.fill.shader)
+        style.fill.shader = &m_data->m_basicShader;
+      RenderBuilder<BasicShaderDescription> b = render<BasicShaderDescription>(Luminous::PrimitiveType_TriangleStrip, 4, 4, style);
+      idx = b.idx;
+      uniform = b.uniform;
 
-    b.vertex->location.make(area.left(), area.top(), b.depth);
-    b.vertex->texCoord.make(0, 0);
-    ++b.vertex;
+      b.vertex->location.make(area.left(), area.top(), b.depth);
+      ++b.vertex;
+      b.vertex->location.make(area.right(), area.top(), b.depth);
+      ++b.vertex;
+      b.vertex->location.make(area.left(), area.bottom(), b.depth);
+      ++b.vertex;
+      b.vertex->location.make(area.right(), area.bottom(), b.depth);
+      ++b.vertex;
+    } else {
+      if(!style.fill.shader)
+        style.fill.shader = &m_data->m_texShader;
+      RenderBuilder<TexShaderDescription> b = render<TexShaderDescription>(Luminous::PrimitiveType_TriangleStrip, 4, 4, style);
+      idx = b.idx;
+      uniform = b.uniform;
 
-    b.vertex->location.make(area.right(), area.top(), b.depth);
-    b.vertex->texCoord.make(1, 0);
-    ++b.vertex;
+      b.vertex->location.make(area.left(), area.top(), b.depth);
+      b.vertex->texCoord.make(0, 0);
+      ++b.vertex;
 
-    b.vertex->location.make(area.left(), area.bottom(), b.depth);
-    b.vertex->texCoord.make(0, 1);
-    ++b.vertex;
+      b.vertex->location.make(area.right(), area.top(), b.depth);
+      b.vertex->texCoord.make(1, 0);
+      ++b.vertex;
 
-    b.vertex->location.make(area.right(), area.bottom(), b.depth);
-    b.vertex->texCoord.make(1, 1);
-    ++b.vertex;
+      b.vertex->location.make(area.left(), area.bottom(), b.depth);
+      b.vertex->texCoord.make(0, 1);
+      ++b.vertex;
 
-    *b.idx++ = 0;
-    *b.idx++ = 1;
-    *b.idx++ = 2;
-    *b.idx++ = 3;
+      b.vertex->location.make(area.right(), area.bottom(), b.depth);
+      b.vertex->texCoord.make(1, 1);
+    }
 
-    b.uniform->projMatrix = viewTransform();
-    b.uniform->modelMatrix = transform4();
-    b.uniform->color = style.fill.color;
+    *idx++ = 0;
+    *idx++ = 1;
+    *idx++ = 2;
+    *idx++ = 3;
+
+    uniform->projMatrix = viewTransform();
+    uniform->modelMatrix = transform4();
+    uniform->color = style.fill.color;
   }
 
   void RenderContext::drawRectWithHole(const Nimble::Rect & area,

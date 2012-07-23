@@ -9,7 +9,10 @@
 #include <Nimble/Matrix2.hpp>
 #include <Nimble/Matrix3.hpp>
 #include <Nimble/Matrix4.hpp>
+
 #include <Radiant/Color.hpp>
+#include <Radiant/ResourceLocator.hpp>
+
 #include <Valuable/AttributeFloat.hpp>
 #include <Valuable/AttributeVector.hpp>
 #include <Valuable/AttributeColor.hpp>
@@ -73,8 +76,10 @@ namespace Luminous
     invalidate();
   }
 
-  void ShaderGLSL::loadText(const QString & filename)
+  void ShaderGLSL::loadText(const QString & rawFilename)
   {
+    /// @todo implement qt resource locator api
+    const QString filename = Radiant::ResourceLocator::instance().locate(rawFilename);
     QFile shaderFile(filename);
     if (!shaderFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
       Radiant::warning("ShaderGLSL: Unable to open shader file %s", filename.toAscii().data());
