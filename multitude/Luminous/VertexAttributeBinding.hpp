@@ -10,6 +10,7 @@
 
 namespace Luminous
 {
+  /// VAO
   class VertexAttributeBinding
     : public RenderResource
   {

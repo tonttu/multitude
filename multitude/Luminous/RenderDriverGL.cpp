@@ -142,26 +142,23 @@ namespace Luminous
 
   // Generic handle
   typedef ResourceHandle<ShaderGLSL> ShaderHandle;
-  typedef ResourceHandle<VertexAttributeBinding> BindingHandle;
+  typedef ResourceHandle<VertexAttributeBinding> VertexArrayHandle;
 
 
   struct RenderState
   {
     Luminous::ProgramHandle * program;
-    BindingHandle * binding;
+    VertexArrayHandle * vertexArray;
     BufferHandle * uniformBuffer;
-    BufferHandle * index;
     std::array<TextureHandle*, 8> textures;
     bool operator<(const RenderState & o) const
     {
       if(program != o.program)
         return program < o.program;
-      if(binding != o.binding)
-        return binding < o.binding;
+      if(vertexArray != o.vertexArray)
+        return vertexArray < o.vertexArray;
       if(uniformBuffer != o.uniformBuffer)
         return uniformBuffer < o.uniformBuffer;
-      if(index != o.index)
-        return index < o.index;
       for(std::size_t i = 0; i < textures.size(); ++i)
         if((!textures[i] || !o.textures[i]) || (textures[i] != o.textures[i]))
           return textures[i] < o.textures[i];
@@ -177,7 +174,7 @@ namespace Luminous
   public:
     D()
       : m_currentProgram(0)
-      , m_currentBinding(0)
+      , m_currentVertexArray(0)
       , m_currentBuffer(0)
       , m_uploadedBytes(0)
       , m_frame(0)
@@ -188,7 +185,7 @@ namespace Luminous
     AttributeList m_activeAttributes;
 
     GLuint m_currentProgram;  // Currently bound shader program
-    GLuint m_currentBinding;  // Currently bound vertex binding
+    GLuint m_currentVertexArray;      // Currently bound VertexArray
     GLuint m_currentBuffer;   // Currently bound buffer object
 
     std::map<GLuint, BufferMapping> m_bufferMaps;
@@ -197,14 +194,14 @@ namespace Luminous
     typedef std::map<RenderResource::Hash, ShaderHandle> ShaderList;
     typedef std::map<RenderResource::Hash, TextureHandle> TextureList;
     typedef std::map<RenderResource::Id, BufferHandle> BufferList;
-    typedef std::map<RenderResource::Id, BindingHandle> BindingList;
+    typedef std::map<RenderResource::Id, VertexArrayHandle> VertexArrayList;
 
     /// Resources
     ProgramList m_programs;
     ShaderList m_shaders;
     TextureList m_textures;
     BufferList m_buffers;
-    BindingList m_bindings;
+    VertexArrayList m_VertexArrays;
 
     RenderState m_state;
 
@@ -243,7 +240,7 @@ namespace Luminous
     /// Cleanup any queued-for-deletion or expired resources
     void removeResources()
     {
-      removeResource(m_bindings, m_releaseQueue);
+      removeResource(m_VertexArrays, m_releaseQueue);
       removeResource(m_buffers, m_releaseQueue);
       removeResource(m_programs);
       removeResource(m_shaders);
@@ -577,36 +574,36 @@ namespace Luminous
       }
     }
 
-    BindingHandle & getBindingHandle(const VertexAttributeBinding & binding, BufferHandle ** indexHandle,
-                                     const ProgramHandle * programHandle)
+    VertexArrayHandle & getVertexArrayHandle(const VertexAttributeBinding & binding, BufferHandle ** indexHandle,
+                             const ProgramHandle * programHandle)
     {
-      GLERROR("RenderDriverGL::getBindingHandle");
-      BindingHandle & bindingHandle = m_bindings[binding.resourceId()];
+      GLERROR("RenderDriverGL::getVertexArrayHandle");
+      VertexArrayHandle & vertexArrayHandle = m_VertexArrays[binding.resourceId()];
 
       bool update = false;
 
-      if(bindingHandle.handle == 0) {
+      if(vertexArrayHandle.handle == 0) {
         // New resource
-        bindingHandle.resource = &binding;
+        vertexArrayHandle.resource = &binding;
         update = true;
       }
       else {
         // Reset usage timer
-        bindingHandle.lastUsed.start();
+        vertexArrayHandle.lastUsed.start();
 
         // Check if we need to recreate
-        if(bindingHandle.generation < binding.generation()) {
-          destroyResource(RenderResource::VertexArray, bindingHandle.handle);
+        if(vertexArrayHandle.generation < binding.generation()) {
+          destroyResource(RenderResource::VertexArray, vertexArrayHandle.handle);
           update = true;
         }
       }
 
       if(update) {
-        bindingHandle.handle = createResource(RenderResource::VertexArray);
-        bindingHandle.generation = binding.generation();
+        vertexArrayHandle.handle = createResource(RenderResource::VertexArray);
+        vertexArrayHandle.generation = binding.generation();
 
         // Bind and setup all buffers/attributes
-        glBindVertexArray(bindingHandle.handle);
+        glBindVertexArray(vertexArrayHandle.handle);
         if(programHandle) bindShaderProgram(*programHandle);
         setVertexAttributes(binding);
 
@@ -623,17 +620,16 @@ namespace Luminous
           *indexHandle = &getBufferHandle(GL_ELEMENT_ARRAY_BUFFER, *index);
       }
 
-      return bindingHandle;
+      return vertexArrayHandle;
     }
 
-    void setVertexBinding(const BindingHandle & binding, const BufferHandle & indexBuffer)
+    void setVertexArray(const VertexArrayHandle & vertexArrayHandle)
     {
       // Bind
-      if (m_currentBinding != binding.handle) {
-        glBindVertexArray(binding.handle);
-        m_currentBinding = binding.handle;
+      if (m_currentVertexArray != vertexArrayHandle.handle) {
+        glBindVertexArray(vertexArrayHandle.handle);
+        m_currentVertexArray = vertexArrayHandle.handle;
       }
-      bindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.handle);
     }
 
     inline void bindBuffer(GLenum bufferTarget, GLuint buffer)
@@ -737,7 +733,7 @@ namespace Luminous
   {
     delete m_d;
   }
-  
+
   void RenderDriverGL::clear(ClearMask mask, const Radiant::Color & color, double depth, int stencil)
   {
     /// @todo check current target for availability of depth and stencil buffers?
@@ -830,7 +826,7 @@ namespace Luminous
 
     /// @todo Currently the RenderContext invalidates this cache every frame, even if it's not needed
     m_d->m_currentProgram = 0;
-    m_d->m_currentBinding = 0;
+    m_d->m_currentVertexArray = 0;
   }
 
   void RenderDriverGL::postFrame()
@@ -862,9 +858,8 @@ namespace Luminous
     if (indexBuffer)
       setIndexBuffer(*indexBuffer);
 #else
-    BufferHandle * indexHandle;
-    BindingHandle & bindingHandle = m_d->getBindingHandle(binding, &indexHandle, nullptr);
-    m_d->setVertexBinding(bindingHandle, *indexHandle);
+    VertexArrayHandle & vertexArrayHandle = m_d->getVertexArrayHandle(binding, nullptr, nullptr);
+    m_d->setVertexArray(vertexArrayHandle);
 #endif
   }
 
@@ -963,7 +958,7 @@ namespace Luminous
 
     auto & state = m_d->m_state;
     state.program = &m_d->getLinkedShaderProgram(*style.fill.shader);
-    state.binding = &m_d->getBindingHandle(binding, &state.index, state.program);
+    state.vertexArray = &m_d->getVertexArrayHandle(binding, nullptr, state.program);
     state.uniformBuffer = &m_d->getBufferHandle(GL_UNIFORM_BUFFER, uniformBuffer);
 
     int unit = 0;
@@ -1006,8 +1001,11 @@ namespace Luminous
     m_d->m_bufferMaps.clear();
 
     static int foo = 0;
-    if(foo++ % 60 == 0)
-      Radiant::info("%d state changes", m_d->m_opaqueQueue.size());
+    if(foo++ % 60 == 0) {
+      Radiant::info("%2d State changes, %2d Programs, %2d Shaders, %2d Textures, %2d Buffer Objects, %2d VertexArrays",
+                    m_d->m_opaqueQueue.size(), m_d->m_programs.size(), m_d->m_shaders.size(), m_d->m_textures.size(),
+                    m_d->m_buffers.size(), m_d->m_VertexArrays.size());
+    }
 
     glEnable(GL_DEPTH_TEST);
 
@@ -1027,8 +1025,8 @@ namespace Luminous
         else m_d->bindTexture(*state.textures[t], t);
       }
 
-      if(state.binding && state.index)
-        m_d->setVertexBinding(*state.binding, *state.index);
+      if(state.vertexArray)
+        m_d->setVertexArray(*state.vertexArray);
 
       GLint uniformHandle = state.uniformBuffer->handle;
       GLint uniformBlockIndex = 0;
