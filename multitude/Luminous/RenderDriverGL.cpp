@@ -124,6 +124,7 @@ namespace Luminous
   struct ProgramHandle : public ResourceHandle<ShaderProgram>
   {
     ProgramHandle(const ShaderProgram * ptr = nullptr) : ResourceHandle(ptr) {}
+    std::map<QByteArray, GLuint> textures;
     std::set<GLuint> shaders;
   };
 
@@ -140,22 +141,30 @@ namespace Luminous
   // Generic handle
   typedef ResourceHandle<ShaderGLSL> ShaderHandle;
   typedef ResourceHandle<VertexAttributeBinding> BindingHandle;
-  typedef ResourceHandle<VertexDescription> DescriptionHandle;
 
 
   struct RenderState
   {
-    Luminous::ProgramHandle program;
-    /// @todo should be handle
-    RenderResource::Id binding;
-    std::vector<TextureHandle> textures;
+    Luminous::ProgramHandle * program;
+    BindingHandle * binding;
+    BufferHandle * uniformBuffer;
+    BufferHandle * index;
+    std::array<TextureHandle*, 8> textures;
     bool operator<(const RenderState & o) const
     {
       if(program != o.program)
         return program < o.program;
       if(binding != o.binding)
         return binding < o.binding;
-      return textures < o.textures;
+      if(uniformBuffer != o.uniformBuffer)
+        return uniformBuffer < o.uniformBuffer;
+      if(index != o.index)
+        return index < o.index;
+      for(std::size_t i = 0; i < textures.size(); ++i)
+        if((!textures[i] || !o.textures[i]) || (textures[i] != o.textures[i]))
+          return textures[i] < o.textures[i];
+
+      return false;
     }
   };
 
@@ -187,7 +196,6 @@ namespace Luminous
     typedef std::map<RenderResource::Hash, TextureHandle> TextureList;
     typedef std::map<RenderResource::Id, BufferHandle> BufferList;
     typedef std::map<RenderResource::Id, BindingHandle> BindingList;
-    typedef std::map<RenderResource::Id, DescriptionHandle> DescriptionList;
 
     /// Resources
     ProgramList m_programs;
@@ -195,9 +203,10 @@ namespace Luminous
     TextureList m_textures;
     BufferList m_buffers;
     BindingList m_bindings;
-    DescriptionList m_descriptions;
 
-    std::map<RenderState, std::vector<Luminous::RenderCommand>> m_opaqueQueue;
+    RenderState m_state;
+
+    std::map<RenderState, std::pair<int, std::vector<Luminous::RenderCommand>>> m_opaqueQueue;
     std::vector<std::pair<RenderState, Luminous::RenderCommand>> m_transparentQueue;
 
     // Resources to be released
@@ -234,7 +243,6 @@ namespace Luminous
     {
       removeResource(m_bindings, m_releaseQueue);
       removeResource(m_buffers, m_releaseQueue);
-      removeResource(m_descriptions, m_releaseQueue);
       removeResource(m_programs);
       removeResource(m_shaders);
       removeResource(m_textures);
@@ -259,32 +267,9 @@ namespace Luminous
       GLERROR("RenderDriverGL::D::bindTexture glBindTexture");
     }
 
-    bool updateShaderProgram(const ShaderProgram & program)
-    {
-      auto it = m_programs.find(program.hash());
-      ProgramHandle * handle;
-      if (it == std::end(m_programs)) {
-        /// New program: create it and add to cache
-        ProgramHandle programHandle(&program);
-        programHandle.handle = createResource(program.resourceType());
-        programHandle.generation = 0;
-        m_programs[program.hash()] = programHandle;
-
-        handle = &m_programs[program.hash()];
-      }
-      else
-        handle = &(it->second);
-
-      // Reset usage timer
-      handle->lastUsed.start();
-
-      return handle->generation < program.generation();
-    }
-
-    bool updateShaders(const ShaderProgram & program)
+    bool updateShaders(const ShaderProgram & program, ProgramHandle & programHandle)
     {
       bool needsRelinking = false;
-      auto & programHandle = m_programs[ program.hash() ];
 
       for (size_t i = 0; i < program.shaderCount(); ++i)
       {
@@ -343,9 +328,8 @@ namespace Luminous
       return needsRelinking;
     }
 
-    void relinkShaderProgram(const ShaderProgram & program)
+    void relinkShaderProgram(const ShaderProgram & program, ProgramHandle & programHandle)
     {
-      auto & programHandle = m_programs[program.hash()];
       glLinkProgram(programHandle.handle);
       GLERROR("RenderDriverGL::setShaderProgram glLinkProgram");
       // Check for linking errors
@@ -406,15 +390,21 @@ namespace Luminous
 
     ProgramHandle & getLinkedShaderProgram(const ShaderProgram & program)
     {
-      // Check if the program has changed (shaders have been added/removed)
-      bool needsRelinking = updateShaderProgram(program);
-      // Check if the shaders have changed (source change)
-      needsRelinking |= updateShaders(program);
+      ProgramHandle & programHandle = m_programs[program.hash()];
+      if(programHandle.handle == 0) {
+        /// New program: create it and add to cache
+        programHandle.resource = &program;
+        programHandle.handle = createResource(program.resourceType());
+        programHandle.generation = 0;
 
-      if(needsRelinking)
-        relinkShaderProgram(program);
+        updateShaders(program, programHandle);
+        relinkShaderProgram(program, programHandle);
+      }
 
-      return m_programs[program.hash()];
+      // Reset usage timer
+      programHandle.lastUsed.start();
+
+      return programHandle;
     }
 
     TextureHandle & textureHandle(const Texture & texture, int textureUnit, bool alwaysBind = false)
@@ -526,10 +516,9 @@ namespace Luminous
         VertexAttributeBinding::Binding b = binding.binding(i);
         // Attach buffer
         auto * buffer = RenderManager::getResource<HardwareBuffer>(b.buffer);
-        auto * descr = RenderManager::getResource<VertexDescription>(b.description);
-        assert(buffer != nullptr && descr != nullptr);
+        assert(buffer != nullptr);
         bindBuffer(GL_ARRAY_BUFFER, *buffer);
-        setVertexDescription(*descr);
+        setVertexDescription(b.description);
       }
     }
 
@@ -551,6 +540,65 @@ namespace Luminous
           GLERROR("RenderDriverGL::Bind VertexAttributeBinding glEnableVertexAttribArray");
         }
       }
+    }
+
+    BindingHandle & getBindingHandle(const VertexAttributeBinding & binding, BufferHandle ** indexHandle,
+                                     const ProgramHandle * programHandle)
+    {
+      GLERROR("RenderDriverGL::getBindingHandle");
+      BindingHandle & bindingHandle = m_bindings[binding.resourceId()];
+
+      bool update = false;
+
+      if(bindingHandle.handle == 0) {
+        // New resource
+        bindingHandle.resource = &binding;
+        update = true;
+      }
+      else {
+        // Reset usage timer
+        bindingHandle.lastUsed.start();
+
+        // Check if we need to recreate
+        if(bindingHandle.generation < binding.generation()) {
+          destroyResource(RenderResource::VertexArray, bindingHandle.handle);
+          update = true;
+        }
+      }
+
+      if(update) {
+        bindingHandle.handle = createResource(RenderResource::VertexArray);
+        bindingHandle.generation = binding.generation();
+
+        // Bind and setup all buffers/attributes
+        glBindVertexArray(bindingHandle.handle);
+        if(programHandle) bindShaderProgram(*programHandle);
+        setVertexAttributes(binding);
+
+        const HardwareBuffer * index = RenderManager::getResource<HardwareBuffer>(binding.indexBuffer());
+        if (index != nullptr) {
+          BufferHandle & iHandle = getBufferHandle(GL_ELEMENT_ARRAY_BUFFER, *index);
+          bindBuffer(GL_ELEMENT_ARRAY_BUFFER, iHandle.handle);
+          if(indexHandle)
+            *indexHandle = &iHandle;
+        }
+      } else if(indexHandle) {
+        const HardwareBuffer * index = RenderManager::getResource<HardwareBuffer>(binding.indexBuffer());
+        if(index)
+          *indexHandle = &getBufferHandle(GL_ELEMENT_ARRAY_BUFFER, *index);
+      }
+
+      return bindingHandle;
+    }
+
+    void setVertexBinding(const BindingHandle & binding, const BufferHandle & indexBuffer)
+    {
+      // Bind
+      if (m_currentBinding != binding.handle) {
+        glBindVertexArray(binding.handle);
+        m_currentBinding = binding.handle;
+      }
+      bindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.handle);
     }
 
     inline void bindBuffer(GLenum bufferTarget, GLuint buffer)
@@ -779,56 +827,9 @@ namespace Luminous
     if (indexBuffer)
       setIndexBuffer(*indexBuffer);
 #else
-    auto & bindings = m_d->m_bindings;
-    auto it = bindings.find(binding.resourceId());
-    GLERROR("RenderDriverGL::setVertexBinding");
-
-    if (it == std::end(bindings)) {
-      // New resource
-      BindingHandle bindingHandle(&binding);
-      bindingHandle.handle = createResource(RenderResource::VertexArray);
-      bindingHandle.generation = binding.generation();
-      bindings[binding.resourceId()] = bindingHandle;
-
-      m_d->m_currentBinding = bindingHandle.handle;
-
-      // Bind and setup all buffers/attributes
-      glBindVertexArray(bindingHandle.handle);
-      m_d->setVertexAttributes(binding);
-      const HardwareBuffer * index = RenderManager::getResource<HardwareBuffer>(binding.indexBuffer());
-      if (index != nullptr)
-        setIndexBuffer(*index);
-    }
-    else {
-      // Existing resource
-      BindingHandle & handle = it->second;
-
-      // Reset usage timer
-      handle.lastUsed.start();
-
-      // Check if we need to recreate
-      if (handle.generation < binding.generation()) {
-        destroyResource(RenderResource::VertexArray, handle.handle);
-        handle.handle = createResource(RenderResource::VertexArray);
-        handle.generation = binding.generation();
-      }
-
-      // Bind
-      if (m_d->m_currentBinding != it->second.handle) {
-        glBindVertexArray(handle.handle);
-        m_d->m_currentBinding = handle.handle;
-      }
-      // Check if any of the attached buffers need updating
-      for (size_t i = 0; i < binding.bindingCount(); ++i) {
-        auto & b = binding.binding(i);
-        const HardwareBuffer * buf = RenderManager::getResource<HardwareBuffer>(b.buffer);
-        assert(buf);
-        setVertexBuffer(*buf);
-      }
-      const HardwareBuffer * indexBuf = RenderManager::getResource<HardwareBuffer>(binding.indexBuffer());
-      if (indexBuf)
-        setIndexBuffer(*indexBuf);
-    }
+    BufferHandle * indexHandle;
+    BindingHandle & bindingHandle = m_d->getBindingHandle(binding, &indexHandle, nullptr);
+    m_d->setVertexBinding(bindingHandle, *indexHandle);
 #endif
   }
 
@@ -918,22 +919,46 @@ namespace Luminous
     m_d->m_bufferMaps.erase(mit);
   }
 
-  void RenderDriverGL::addRenderCommand(RenderCommand & cmd,
-                                        const Luminous::Style & style)
+  RenderCommand & RenderDriverGL::createRenderCommand(VertexAttributeBinding & binding,
+                                                      HardwareBuffer & uniformBuffer,
+                                                      const Luminous::Style & style)
   {
-    if(!style.fill.shader)
-      return;
-    RenderState state;
+    assert(style.fill.shader);
+    m_d->m_currentProgram = 0;
 
-    state.program = m_d->getLinkedShaderProgram(*style.fill.shader);
-    state.binding = cmd.binding->resourceId();
+    auto & state = m_d->m_state;
+    state.program = &m_d->getLinkedShaderProgram(*style.fill.shader);
+    state.binding = &m_d->getBindingHandle(binding, &state.index, state.program);
+    state.uniformBuffer = &m_d->getBufferHandle(GL_UNIFORM_BUFFER, uniformBuffer);
+
+    int unit = 0;
     for(auto it = style.fill.tex.begin(); it != style.fill.tex.end(); ++it) {
-      GLuint unit = state.textures.size();
-      cmd.uniforms.set(it->first, unit);
       TextureHandle & tex = m_d->textureHandle(*it->second, unit);
-      state.textures.push_back(tex);
+      state.textures[unit++] = &tex;
     }
-    m_d->m_opaqueQueue[state].push_back(cmd);
+    state.textures[unit] = nullptr;
+
+    std::pair<int, std::vector<Luminous::RenderCommand>> & pair = m_d->m_opaqueQueue[state];
+    if(pair.first >= pair.second.size())
+      pair.second.push_back(RenderCommand());
+
+    RenderCommand & cmd = pair.second[pair.first++];
+
+    unit = 0;
+    int slot = 0; // one day this will be different from unit
+    for(auto it = style.fill.tex.begin(); it != style.fill.tex.end(); ++it, ++unit, ++slot) {
+      auto texit = state.program->textures.find(it->first);
+      if(texit == state.program->textures.end()) {
+        GLint loc = glGetUniformLocation(state.program->handle, it->first.data());
+        state.program->textures[it->first] = loc;
+        cmd.samplers[slot] = std::make_pair(loc, unit);
+      } else {
+        cmd.samplers[slot] = std::make_pair(texit->second, unit);
+      }
+    }
+    cmd.samplers[slot].first = -1;
+
+    return cmd;
   }
 
   void RenderDriverGL::flush()
@@ -949,29 +974,51 @@ namespace Luminous
     if(foo++ % 60 == 0)
       Radiant::info("%d state changes", m_d->m_opaqueQueue.size());
 
-    for(auto it = m_d->m_opaqueQueue.begin(); it != m_d->m_opaqueQueue.end(); ++it) {
+    glEnable(GL_DEPTH_TEST);
+
+    for(auto it = m_d->m_opaqueQueue.begin(); it != m_d->m_opaqueQueue.end();) {
       const RenderState & state = it->first;
+      std::pair<int, std::vector<Luminous::RenderCommand>> & opaque = it->second;
 
-      m_d->bindShaderProgram(state.program);
+      if(opaque.first == 0) {
+        it = m_d->m_opaqueQueue.erase(it);
+        continue;
+      }
 
-      for(int t = 0; t < state.textures.size(); ++t)
-        m_d->bindTexture(state.textures[t], t);
+      m_d->bindShaderProgram(*state.program);
 
-      setVertexBinding(*RenderManager::getResource<VertexAttributeBinding>(it->first.binding));
-      for(int i = 0, s = it->second.size(); i < s; ++i) {
-        const RenderCommand & cmd = it->second[i];
-        for(auto uit = cmd.uniforms.data.begin(); uit != cmd.uniforms.data.end(); ++uit)
-          setShaderUniform(uit->first.data(), uit->second);
-        for(auto uit = cmd.uniforms.datai.begin(); uit != cmd.uniforms.datai.end(); ++uit)
-          setShaderUniform(uit->first.data(), uit->second);
-        /// @todo GLES doesn't have this, need to add vertexOffset manually to all indices
-        glDrawElementsBaseVertex(cmd.primitiveType, cmd.primitiveCount, GL_UNSIGNED_INT, (GLvoid *)((sizeof(uint) * cmd.indexOffset)), cmd.vertexOffset);
+      for(int t = 0; t < state.textures.size(); ++t) {
+        if(!state.textures[t]) break;
+        else m_d->bindTexture(*state.textures[t], t);
+      }
+
+      if(state.binding && state.index)
+        m_d->setVertexBinding(*state.binding, *state.index);
+
+      GLint uniformHandle = state.uniformBuffer->handle;
+      GLint uniformBlockIndex = 0;
+
+      for(int i = 0, s = opaque.first; i < s; ++i) {
+        const RenderCommand & cmd = opaque.second[i];
+
+        for(auto uit = cmd.samplers.begin(); uit != cmd.samplers.end(); ++uit) {
+          if(uit->first < 0) break;
+          glUniform1i(uit->first, uit->second);
+        }
+
+        glBindBufferRange(GL_UNIFORM_BUFFER, uniformBlockIndex, uniformHandle,
+                          cmd.uniformOffsetBytes, cmd.uniformSizeBytes);
+        GLERROR("RenderDriverGL::flush # glBindBufferRange");
+
+        glDrawElementsBaseVertex(cmd.primitiveType, cmd.primitiveCount, GL_UNSIGNED_INT,
+                                 (GLvoid *)((sizeof(uint) * cmd.indexOffset)), cmd.vertexOffset);
         GLERROR("RenderDriverGL::flush # glDrawElementsBaseVertex");
       }
+      opaque.first = 0;
+      ++it;
     }
     /*for(auto it = m_transparentQueue.begin(); it != m_transparentQueue.end(); ++it) {
     }*/
-    m_d->m_opaqueQueue.clear();
     m_d->m_transparentQueue.clear();
   }
 

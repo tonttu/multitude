@@ -2,7 +2,6 @@
 #define LUMINOUS_VERTEXDESCRIPTION_HPP
 
 #include "Luminous/Luminous.hpp"
-#include "Luminous/RenderResource.hpp"
 #include "Luminous/VertexAttribute.hpp"
 
 #include <QString>
@@ -11,7 +10,7 @@
 
 namespace Luminous
 {
-  class VertexDescription : public RenderResource
+  class VertexDescription
   {
   public:
     LUMINOUS_API VertexDescription();
@@ -45,7 +44,6 @@ namespace Luminous
     attr.name = attrName;
     attr.offset = offset;
     m_attributes.push_back(attr);
-    invalidate();
   }
 
   template <typename AttrType> void VertexDescription::addAttribute(const QString & attrName)

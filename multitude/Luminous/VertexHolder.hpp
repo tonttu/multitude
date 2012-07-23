@@ -10,6 +10,7 @@
 #include <Radiant/Trace.hpp>
 
 #include <functional>
+#include <array>
 
 //@cond
 namespace Luminous
@@ -71,22 +72,10 @@ namespace Luminous
     unsigned int indexOffset;
     unsigned int vertexOffset;
 
-    VertexAttributeBinding * binding;
+    unsigned int uniformSizeBytes;
+    unsigned int uniformOffsetBytes;
 
-    /// @todo just a temporary hack before proper uniform setting is implemented
-    struct {
-      void set(const QByteArray & name, const Nimble::Matrix4 & m)
-      {
-        data[name] = m;
-      }
-      void set(const QByteArray & name, int v)
-      {
-        datai[name] = v;
-      }
-
-      std::map<QByteArray, Nimble::Matrix4> data;
-      std::map<QByteArray, int> datai;
-    } uniforms;
+    std::array<std::pair<int, int>, 8> samplers;
   };
 
   class RenderPacket
@@ -168,12 +157,19 @@ namespace Luminous
     }
   };
 
-  class RectVertex2
+  struct BasicShaderDescription
   {
-  public:
-    Nimble::Vector3 location;
-    Nimble::Vector2 texCoord;
-    //Nimble::Vector4 color;
+    struct Vertex
+    {
+      Nimble::Vector3 location;
+      Nimble::Vector2 texCoord;
+    };
+    struct UniformBlock
+    {
+      Nimble::Matrix4f projMatrix;
+      Nimble::Matrix4f modelMatrix;
+      Nimble::Vector4 color;
+    };
   };
 
   class CircleVertex

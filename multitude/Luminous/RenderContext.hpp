@@ -442,17 +442,27 @@ namespace Luminous
     void drawIndexed(PrimitiveType primType, unsigned int offset, unsigned int primitives);
 
   private:
-    template <typename Vertex>
-    std::tuple<Vertex *, unsigned int*> build(Luminous::PrimitiveType ptype,
-                                              int vertexCount, int indexCount,
-                                              const VertexDescription &,
-                                              RenderCommand & cmd);
+    RenderCommand & createRenderCommand(int indexCount, int vertexCount,
+                                        std::size_t vertexSize, std::size_t uniformSize,
+                                        unsigned *& mappedIndexBuffer,
+                                        void *& mappedVertexBuffer,
+                                        void *& mappedUniformBuffer,
+                                        const Style & style);
+
+    template <typename Vertex, typename Uniform>
+    RenderCommand & createRenderCommand(int indexCount, int vertexCount,
+                                        unsigned *& mappedIndexBuffer,
+                                        Vertex *& mappedVertexBuffer,
+                                        Uniform *& mappedUniformBuffer,
+                                        const Style & style);
 
     struct SharedBuffer;
     template <typename T>
-    std::pair<T *, SharedBuffer *> sharedBuffer(std::size_t maxVertexCount, bool index, unsigned int & offset);
+    std::pair<T *, SharedBuffer *> sharedBuffer(
+        std::size_t maxVertexCount, HardwareBuffer::Type type, unsigned int & offset);
 
-    std::pair<void *, SharedBuffer *> sharedBuffer(std::size_t vertexSize, std::size_t maxVertexCount, bool index, unsigned int & offset);
+    std::pair<void *, SharedBuffer *> sharedBuffer(
+        std::size_t vertexSize, std::size_t maxVertexCount, HardwareBuffer::Type type, unsigned int & offset);
 
     //////////////////////////////////////////////////////////////////////////
     /// </Luminousv2>
@@ -513,12 +523,27 @@ namespace Luminous
     return mapBuffer<T>(buffer, 0, buffer.size(), access);
   }
 
+  template <typename Vertex, typename Uniform>
+  RenderCommand & RenderContext::createRenderCommand(int indexCount, int vertexCount,
+                                                     unsigned *& mappedIndexBuffer,
+                                                     Vertex *& mappedVertexBuffer,
+                                                     Uniform *& mappedUniformBuffer,
+                                                     const Style & style)
+  {
+    return createRenderCommand(indexCount, vertexCount,
+                               sizeof(Vertex), sizeof(Uniform),
+                               mappedIndexBuffer, reinterpret_cast<void *&>(mappedVertexBuffer),
+                               reinterpret_cast<void *&>(mappedUniformBuffer),
+                               style);
+  }
+
   template <typename T>
-  std::pair<T *, RenderContext::SharedBuffer *> RenderContext::sharedBuffer(std::size_t maxVertexCount, bool index, unsigned int & offset)
+  std::pair<T *, RenderContext::SharedBuffer *> RenderContext::sharedBuffer(
+      std::size_t maxVertexCount, HardwareBuffer::Type type, unsigned int & offset)
   {
     void * t;
     SharedBuffer * buffer;
-    std::tie(t, buffer) = sharedBuffer(sizeof(T), maxVertexCount, index, offset);
+    std::tie(t, buffer) = sharedBuffer(sizeof(T), maxVertexCount, type, offset);
     return std::make_pair(reinterpret_cast<T*>(t), buffer);
   }
 }

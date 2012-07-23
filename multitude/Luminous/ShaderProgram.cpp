@@ -1,6 +1,7 @@
 #include "Luminous/ShaderProgram.hpp"
 #include "Luminous/ShaderUniform.hpp"
 #include "Luminous/RenderManager.hpp"
+#include "Luminous/VertexDescription.hpp"
 
 #include <Nimble/Vector2.hpp>
 #include <Nimble/Vector3.hpp>
@@ -116,6 +117,7 @@ namespace Luminous
     typedef std::vector< std::shared_ptr<ShaderUniform> > UniformList;
     ShaderList shaders;
     UniformList uniforms;
+    VertexDescription vertexDescription;
     uint64_t hashGeneration;
     RenderResource::Hash hash;
   };
@@ -174,6 +176,7 @@ namespace Luminous
         const Hash shaderHash = shader->hash();
         hasher.addData((const char*)&shaderHash, sizeof(shaderHash));
       }
+      /// @todo hash vertex/uniform descriptions
       memcpy(&m_d->hash, hasher.result().data(), sizeof(m_d->hash));
       m_d->hashGeneration = generation();
     }
@@ -251,4 +254,16 @@ namespace Luminous
     assert(index <m_d->uniforms.size());
     return *m_d->uniforms[index];
   }
+
+  const VertexDescription & ShaderProgram::vertexDescription() const
+  {
+    return m_d->vertexDescription;
+  }
+
+  void ShaderProgram::setVertexDescription(const VertexDescription & description)
+  {
+    m_d->vertexDescription = description;
+    /// @todo invalidate?
+  }
+
 }

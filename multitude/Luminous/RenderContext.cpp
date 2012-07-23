@@ -186,13 +186,13 @@ namespace Luminous
 
   struct RenderContext::SharedBuffer
   {
-    SharedBuffer() : offsetBytes(0) {}
+    SharedBuffer(HardwareBuffer::Type type) : buffer(type), reservedBytes(0) {}
     HardwareBuffer buffer;
-    std::size_t offsetBytes;
+    std::size_t reservedBytes;
 
     /// @todo this is extremely stupid, make something smarter
-    /// [VertexDescription, IndexBuffer]
-    std::map<std::pair<RenderResource::Id, RenderResource::Id>, VertexAttributeBinding> bindings;
+    /// [Shader, IndexBuffer]
+    std::map<std::pair<RenderResource::Hash, RenderResource::Id>, VertexAttributeBinding> bindings;
   };
 
   class RenderContext::Internal
@@ -214,6 +214,7 @@ namespace Luminous
         , m_blendFunc(RenderContext::BLEND_USUAL)
         , m_program(0)
         , m_vbo(0)
+        , m_uniformBufferOffsetAlignment(0)
         , m_driver(renderDriver)
     {
       m_viewTransform.identity();
@@ -342,6 +343,13 @@ namespace Luminous
 
         m_emptyTexture.reset(Texture2D::fromBytes(GL_RGB, 32, 32, 0,
                                                   Luminous::PixelFormat::rgbUByte(), false));
+
+        glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &m_uniformBufferOffsetAlignment);
+        if(m_uniformBufferOffsetAlignment < 1) {
+          Radiant::error("RenderContext::Internal # Couldn't get GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, assuming 256");
+          m_uniformBufferOffsetAlignment = 256;
+        }
+
         info("RenderContext::Internal # init ok");
       }
 
@@ -543,18 +551,29 @@ namespace Luminous
     GLuint              m_vbo;
     std::shared_ptr<Texture2D> m_emptyTexture;
 
+    int m_uniformBufferOffsetAlignment;
+
     Luminous::RenderDriver & m_driver;
 
     struct BufferPool
     {
-      BufferPool() : index(0) {}
+      BufferPool() : currentIndex(0) {}
       std::vector<SharedBuffer> buffers;
-      int index;
+      int currentIndex;
+
+      void flush()
+      {
+        currentIndex = 0;
+        for(auto it = buffers.begin(); it != buffers.end(); ++it)
+          it->reservedBytes = 0;
+      }
     };
 
     VertexDescription m_baseShaderDesc;
 
+    // vertex/uniform struct size -> pool
     std::map<std::size_t, BufferPool> m_vertexBuffers;
+    std::map<std::size_t, BufferPool> m_uniformBuffers;
     BufferPool m_indexBuffers;
   };
 
@@ -1448,32 +1467,39 @@ namespace Luminous
     return m4 * v4;
   }
 
-  std::pair<void *, RenderContext::SharedBuffer *> RenderContext::sharedBuffer(std::size_t vertexSize, std::size_t maxVertexCount, bool index, unsigned int & offset)
+  std::pair<void *, RenderContext::SharedBuffer *> RenderContext::sharedBuffer(
+      std::size_t vertexSize, std::size_t maxVertexCount, HardwareBuffer::Type type, unsigned int & offset)
   {
-    Internal::BufferPool & pool = index ? m_data->m_indexBuffers : m_data->m_vertexBuffers[vertexSize];
+    Internal::BufferPool & pool = type == HardwareBuffer::Index
+        ? m_data->m_indexBuffers
+        : type == HardwareBuffer::Vertex
+          ? m_data->m_vertexBuffers[vertexSize]
+          : m_data->m_uniformBuffers[vertexSize];
+
     const std::size_t requiredBytes = vertexSize * maxVertexCount;
 
     SharedBuffer * buffer = nullptr;
     std::size_t nextSize = 1 << 20;
-    for(int i = pool.index;; ++i) {
-      if(i >= pool.buffers.size()) {
-        pool.buffers.emplace_back();
+    for(;;) {
+      if(pool.currentIndex >= pool.buffers.size()) {
+        pool.buffers.emplace_back(type);
         buffer = &pool.buffers.back();
         buffer->buffer.setData(nullptr, std::max(requiredBytes, nextSize), HardwareBuffer::StreamDraw);
         break;
       }
 
-      buffer = &pool.buffers[i];
-      if(buffer->buffer.size() - buffer->offsetBytes >= requiredBytes)
+      buffer = &pool.buffers[pool.currentIndex];
+      if(buffer->buffer.size() - buffer->reservedBytes >= requiredBytes)
         break;
 
       nextSize = buffer->buffer.size() << 1;
+      ++pool.currentIndex;
     }
 
     char * data = mapBuffer<char>(buffer->buffer, HardwareBuffer::MapWrite);
-    data += buffer->offsetBytes;
-    offset = buffer->offsetBytes / vertexSize;
-    buffer->offsetBytes += requiredBytes;
+    data += buffer->reservedBytes;
+    offset = buffer->reservedBytes / vertexSize;
+    buffer->reservedBytes += requiredBytes;
     return std::make_pair(data, buffer);
   }
 
@@ -1484,40 +1510,52 @@ namespace Luminous
     return m_data->m_driver.mapBuffer(buffer, offset, length, access);
   }
 
-  template <typename Vertex>
-  std::tuple<Vertex*, unsigned int*> RenderContext::build(PrimitiveType ptype,
-                                                          int vertexCount, int indexCount,
-                                                          const VertexDescription & desc,
-                                                          RenderCommand & cmd)
+  RenderCommand & RenderContext::createRenderCommand(int indexCount, int vertexCount,
+                                                     std::size_t vertexSize, std::size_t uniformSize,
+                                                     unsigned *& mappedIndexBuffer,
+                                                     void *& mappedVertexBuffer,
+                                                     void *& mappedUniformBuffer,
+                                                     const Style & style)
   {
-    cmd.primitiveType = ptype;
-    cmd.primitiveCount = indexCount;
+    unsigned int indexOffset, vertexOffset, uniformOffset;
+
+    // Align uniforms as required by OpenGL
+    uniformSize = Nimble::Math::Ceil(uniformSize / float(m_data->m_uniformBufferOffsetAlignment)) *
+        m_data->m_uniformBufferOffsetAlignment;
 
     SharedBuffer * ibuffer;
-    unsigned int * index;
-    std::tie(index, ibuffer) = sharedBuffer<unsigned int>(indexCount, true, cmd.indexOffset);
+    std::tie(mappedIndexBuffer, ibuffer) = sharedBuffer<unsigned int>(indexCount, HardwareBuffer::Index, indexOffset);
 
     SharedBuffer * vbuffer;
-    Vertex * vertex;
-    std::tie(vertex, vbuffer) = sharedBuffer<Vertex>(vertexCount, false, cmd.vertexOffset);
+    std::tie(mappedVertexBuffer, vbuffer) = sharedBuffer(vertexSize, vertexCount, HardwareBuffer::Vertex, vertexOffset);
 
-    cmd.binding = &vbuffer->bindings[std::make_pair(desc.resourceId(), ibuffer->buffer.resourceId())];
-    if(cmd.binding->bindingCount() == 0) {
-      cmd.binding->addBinding(vbuffer->buffer, desc);
-      cmd.binding->setIndexBuffer(ibuffer->buffer);
+    SharedBuffer * ubuffer;
+    std::tie(mappedUniformBuffer, ubuffer) = sharedBuffer(uniformSize, 1, HardwareBuffer::Uniform, uniformOffset);
+
+    VertexAttributeBinding * binding = &vbuffer->bindings[std::make_pair(style.fill.shader->hash(), ibuffer->buffer.resourceId())];
+    if(binding->bindingCount() == 0) {
+      binding->addBinding(vbuffer->buffer, style.fill.shader->vertexDescription());
+      binding->setIndexBuffer(ibuffer->buffer);
     }
 
-    return std::make_tuple(vertex, index);
+    RenderCommand & cmd = m_data->m_driver.createRenderCommand(*binding, ubuffer->buffer, style);
+    cmd.primitiveCount = indexCount;
+    cmd.indexOffset = indexOffset;
+    cmd.vertexOffset = vertexOffset;
+    cmd.uniformOffsetBytes = uniformOffset * uniformSize;
+    cmd.uniformSizeBytes = uniformSize;
+
+    return cmd;
   }
 
   void RenderContext::drawRect(const Nimble::Rect & area, const Style & style)
   {
-    RenderCommand cmd;
     unsigned int * idx;
-    RectVertex2 * vertex;
+    BasicShaderDescription::UniformBlock * uniform = 0;
+    BasicShaderDescription::Vertex * vertex;
 
-    std::tie(vertex, idx) = build<RectVertex2>(Luminous::PrimitiveType_TriangleStrip, 4, 4,
-                                               m_data->m_baseShaderDesc, cmd);
+    RenderCommand & cmd = createRenderCommand(4, 4, idx, vertex, uniform, style);
+    cmd.primitiveType = Luminous::PrimitiveType_TriangleStrip;
 
     const float r[] = { area.low().x, area.low().y, area.high().x, area.high().y };
     vertex->location = Nimble::Vector3f(r[0], r[1], 0);
@@ -1542,10 +1580,10 @@ namespace Luminous
     *idx++ = 3;
 
     /// @todo just a temporary hack..
-    cmd.uniforms.set("projMatrix", viewTransform());
-    cmd.uniforms.set("modelMatrix", transform4());
 
-    m_data->m_driver.addRenderCommand(cmd, style);
+      uniform->projMatrix = viewTransform();
+      uniform->modelMatrix = transform4();
+      uniform->color = style.fill.color;
   }
 
   void RenderContext::drawRectWithHole(const Nimble::Rect & area,
@@ -1838,11 +1876,12 @@ namespace Luminous
   void RenderContext::flush2()
   {
     m_data->m_driver.flush();
-    for(auto it = m_data->m_vertexBuffers.begin(); it != m_data->m_vertexBuffers.end(); ++it) {
-      it->second.index = 0;
-      for(auto it2 = it->second.buffers.begin(); it2 != it->second.buffers.end(); ++it2)
-        it2->offsetBytes = 0;
-    }
+
+    m_data->m_indexBuffers.flush();
+    for(auto it = m_data->m_vertexBuffers.begin(); it != m_data->m_vertexBuffers.end(); ++it)
+      it->second.flush();
+    for(auto it = m_data->m_uniformBuffers.begin(); it != m_data->m_uniformBuffers.end(); ++it)
+      it->second.flush();
   }
   void RenderContext::flush()
   {
@@ -1958,7 +1997,7 @@ namespace Luminous
     {
     case HardwareBuffer::Vertex: m_data->m_driver.setVertexBuffer(buffer); break;
     case HardwareBuffer::Index: m_data->m_driver.setIndexBuffer(buffer); break;
-    case HardwareBuffer::Constant: m_data->m_driver.setUniformBuffer(buffer); break;
+    case HardwareBuffer::Uniform: m_data->m_driver.setUniformBuffer(buffer); break;
     default:
       assert(false);
       Radiant::error("RenderContext::setBuffer - Buffertype %d not implemented", type);

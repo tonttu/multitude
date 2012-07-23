@@ -47,11 +47,11 @@ namespace Luminous
       Unknown  = 0,
       Vertex   = GL_ARRAY_BUFFER,
       Index    = GL_ELEMENT_ARRAY_BUFFER,
-      Constant = GL_UNIFORM_BUFFER,
+      Uniform  = GL_UNIFORM_BUFFER,
     };
 
   public:
-    LUMINOUS_API HardwareBuffer();
+    LUMINOUS_API HardwareBuffer(Type type = Unknown);
     LUMINOUS_API ~HardwareBuffer();
 
     LUMINOUS_API HardwareBuffer(HardwareBuffer && b);

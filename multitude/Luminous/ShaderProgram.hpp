@@ -69,6 +69,9 @@ namespace Luminous
     LUMINOUS_API size_t uniformCount() const;
     LUMINOUS_API ShaderUniform & uniform(size_t index) const;
 
+    LUMINOUS_API const VertexDescription & vertexDescription() const;
+    LUMINOUS_API void setVertexDescription(const VertexDescription & description);
+
   private:
     class D;
     D * m_d;

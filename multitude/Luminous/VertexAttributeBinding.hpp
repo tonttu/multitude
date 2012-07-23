@@ -3,6 +3,7 @@
 
 #include "Luminous/Luminous.hpp"
 #include "Luminous/RenderResource.hpp"
+#include "Luminous/VertexDescription.hpp"
 
 #include <Radiant/RefPtr.hpp>
 #include <vector>
@@ -16,7 +17,7 @@ namespace Luminous
     struct Binding
     {
       RenderResource::Id buffer;
-      RenderResource::Id description;
+      Luminous::VertexDescription description;
       bool operator==(RenderResource::Id id) const { return buffer==id; }
     };
 

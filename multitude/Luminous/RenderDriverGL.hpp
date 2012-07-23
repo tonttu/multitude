@@ -55,8 +55,9 @@ namespace Luminous
                                           Radiant::FlagsT<HardwareBuffer::MapAccess> access) OVERRIDE;
     LUMINOUS_API virtual void unmapBuffer(const HardwareBuffer & buffer) OVERRIDE;
 
-    LUMINOUS_API virtual void addRenderCommand(RenderCommand & cmd,
-                                               const Luminous::Style & style) OVERRIDE;
+    LUMINOUS_API virtual RenderCommand & createRenderCommand(VertexAttributeBinding & binding,
+                                                             HardwareBuffer & uniformBuffer,
+                                                             const Luminous::Style & style) OVERRIDE;
 
     LUMINOUS_API virtual void flush() OVERRIDE;
 

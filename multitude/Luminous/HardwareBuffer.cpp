@@ -8,13 +8,13 @@ namespace Luminous
   class HardwareBuffer::D
   {
   public:
-    D()
+    D(Type t)
       : size(0)
       , data(nullptr)
       , usage(HardwareBuffer::StaticDraw)
-      , type(HardwareBuffer::Unknown)
+      , type(t)
     {
-    };
+    }
 
     size_t size;
     const char * data;
@@ -22,9 +22,9 @@ namespace Luminous
     HardwareBuffer::Type type;
   };
 
-  HardwareBuffer::HardwareBuffer()
+  HardwareBuffer::HardwareBuffer(Type type)
     : RenderResource(RenderResource::Buffer)
-    , m_d(new HardwareBuffer::D())
+    , m_d(new HardwareBuffer::D(type))
   {
   }
 

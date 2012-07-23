@@ -44,7 +44,9 @@ namespace Luminous
     // Add the binding if it doesn't already exist
     D::Bindings::const_iterator it = std::find(m_d->bindings.begin(), m_d->bindings.end(), vertexBuffer.resourceId());
     if (it == m_d->bindings.end()) {
-      Binding binding = { vertexBuffer.resourceId(), description.resourceId() };
+      Binding binding;
+      binding.buffer = vertexBuffer.resourceId();
+      binding.description = description;
       m_d->bindings.push_back(binding);
       invalidate();
     }

@@ -8,7 +8,6 @@
 namespace Luminous
 {
   VertexDescription::VertexDescription()
-    : RenderResource(RenderResource::VertexDescription)
   {
   }
 
@@ -26,7 +25,6 @@ namespace Luminous
     for (size_t i = 0; i < m_attributes.size(); ++i) {
       if (m_attributes[i].name == attrName) {
         m_attributes.erase(m_attributes.begin() + i);
-        invalidate();
         break;
       }
     }
