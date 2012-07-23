@@ -44,4 +44,19 @@ namespace Luminous
     // Radiant::trace("Task::finished # %s", typeid(*this).name());
   }
 
+  //////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////
+
+  FunctionTask::FunctionTask(std::function<void ()> func)
+    : m_func(func)
+  {}
+
+  void FunctionTask::doTask()
+  {
+    m_state = RUNNING;
+
+    m_func();
+
+    setFinished();
+  }
 }

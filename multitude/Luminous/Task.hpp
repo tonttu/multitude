@@ -22,6 +22,8 @@
 #include <Radiant/MemCheck.hpp>
 #include <Radiant/TimeStamp.hpp>
 
+#include <functional>
+
 namespace Radiant {
   class Mutex;
 }
@@ -135,6 +137,20 @@ namespace Luminous
 
       friend class BGThread;
       friend class TaskDeleter;
+  };
+
+  /// This class executes the given function within BGThread.
+  class LUMINOUS_API FunctionTask : public Task
+  {
+    public:
+      /// Construct a new FunctionTask
+      /// @param func function to execute
+      FunctionTask(std::function<void ()> func);
+
+      virtual void doTask() OVERRIDE;
+
+  private:
+      std::function<void ()> m_func;
   };
 
 }

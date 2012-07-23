@@ -64,8 +64,7 @@ namespace Luminous {
     areas can share the same OpenGL context, as one window can
     have may areas inside it.*/
     /// @todo rename to ViewPort?
-    class LUMINOUS_API Area : public Valuable::Node,
-    public Collectable
+    class LUMINOUS_API Area : public Valuable::Node, public Collectable
     {
       MEMCHECKED_USING(Collectable);
     public:
@@ -289,7 +288,7 @@ namespace Luminous {
       LUMINOUS_API void setSeam(float seam);
 
       /// Adds an area to the window
-      void addArea(Area * a) { m_areas.push_back(std::shared_ptr<Area>(a)); }
+      void addArea(Area * a) { m_areas.push_back(std::shared_ptr<Area>(a)); addValue(a); }
 
       /// Location of the window on the computer display
       const Vector2i & location() const { return m_location.asVector(); }
@@ -348,6 +347,15 @@ namespace Luminous {
 
       /// Return the screen configuration that this Window belongs to
       const MultiHead * screen() const { return m_screen; }
+
+      void deleteAreas()
+      {
+        for(std::vector<std::shared_ptr<Area> >::iterator it = m_areas.begin(); it != m_areas.end(); ++it)
+        {
+          removeValue(it->get());
+        }
+        m_areas.clear();
+      }
 
     private:
       LUMINOUS_API virtual bool readElement(const Valuable::ArchiveElement & ce);
@@ -433,6 +441,19 @@ namespace Luminous {
     HardwareColorCorrection & hwColorCorrection()
     {
       return m_hwColorCorrection;
+    }
+
+    void deleteWindows()
+    {
+      //this should remove listeners that refer to Areas within the windows
+      m_hwColorCorrection.syncWith(0);
+      for(std::vector<std::shared_ptr<Window> >::iterator it = m_windows.begin(); it != m_windows.end(); ++it)
+      {
+        //delete window's areas
+        it->get()->deleteAreas();
+        removeValue(it->get());
+      }
+      m_windows.clear();
     }
 
     /// @todo This should be in configuration file, and the accessor probably

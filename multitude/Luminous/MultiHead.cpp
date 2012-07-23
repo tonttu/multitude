@@ -681,6 +681,7 @@ namespace Luminous {
 
   void MultiHead::addWindow(Window * w)
   {
+    addValue(w);
     m_windows.push_back(std::shared_ptr<Window>(w));
     if(m_windows.size() == 1 && w->areaCount() == 1) {
       m_hwColorCorrection.syncWith(&w->area(0).colorCorrection());
@@ -698,8 +699,7 @@ namespace Luminous {
     if(type == "window") {
       Window * win = new Window(this);
 
-      // Add as child & recurse
-      addValue(name, win);
+      //recurse
       win->deserialize(ce);
 
       addWindow(win);

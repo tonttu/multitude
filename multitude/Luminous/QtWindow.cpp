@@ -12,8 +12,9 @@
 #include <QApplication>
 #include <QGLWidget>
 #include <QMouseEvent>
+#include <QDesktopWidget>
 
-namespace Radiant
+namespace Luminous
 {
 
   class GLThreadWidget : public QGLWidget
@@ -28,21 +29,6 @@ namespace Radiant
 
       // Make the widget receive mouse move events even if no buttons are pressed
       setMouseTracking(true);
-
-      m_lastAction = Radiant::TimeStamp::getTime();
-    }
-
-    virtual void swapBuffers()
-    {
-      QGLWidget::swapBuffers();
-
-      // float since = m_lastAction.sinceSecondsD();
-
-      /// @todo implement
-//      if(since < 6.0) {
-//        if(since > 5.0)
-//          ThreadedRendering::SimpleThreadedApplication::instance()->notifyHideCursor();
-//      }
     }
 
     virtual void showCursor(bool visible)
@@ -67,22 +53,6 @@ namespace Radiant
     {
       if(m_window.eventHook())
         m_window.eventHook()->handleWindowMove( e->pos().x(), e->pos().y(), size().width(), size().height() );
-    }
-
-    WindowEventHook::MouseButtonMask convertQtMouseButton(Qt::MouseButtons b)
-    {
-      WindowEventHook::MouseButtonMask mask = WindowEventHook::NoButton;
-
-      if(b & Qt::LeftButton)
-        mask = WindowEventHook::LeftButton;
-
-      if(b & Qt::MidButton)
-        mask = WindowEventHook::MiddleButton;
-
-      if(b & Qt::RightButton)
-        mask = WindowEventHook::RightButton;
-
-      return mask;
     }
 
     virtual void mouseMoveEvent(QMouseEvent * e)
@@ -117,15 +87,35 @@ namespace Radiant
     }
 
     QtWindow & m_window;
-
-    Radiant::TimeStamp m_lastAction;
   };
 
   ////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////
 
-  QtWindow::QtWindow(const WindowConfig & hint, const char * caption)
+  class QtWindow::D
+  {
+  public:
+    D()
+      : m_hostWidget(0)
+      , m_mainWindow(0)
+    {}
+
+    ~D()
+    {
+      delete m_hostWidget;
+    }
+
+    // Host widget is a container for our actual window (m_mainWindow)
+    QWidget * m_hostWidget;
+    GLThreadWidget * m_mainWindow;
+  };
+
+  ////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////
+
+  QtWindow::QtWindow(const MultiHead::Window & window, const QString & windowTitle)
     : Window()
+    , m_d(new D())
   {
     /* The code below opens a new OpenGL window at desired loation. Extra steps
        are taken to ensure that the window creation happens so that:
@@ -144,36 +134,50 @@ namespace Radiant
     */
 
     Qt::WindowFlags flags = 0;
-    if(hint.frameless)
+    if(window.frameless())
       flags = Qt::FramelessWindowHint;
 
-    QWidget * host = new QWidget(0,  flags);
+    QWidget * parent = 0;
 
-    if(caption)
-      host->setWindowTitle(caption);
-    if(hint.iconify)
-       host->setWindowState(Qt::WindowMinimized);
 
-    host->move(hint.x, hint.y);
-    host->raise();
-    host->show();
-    host->resize(hint.width, hint.height);
+#ifdef RADIANT_LINUX
+    // Handle multiple XScreens
+    QDesktopWidget * desktop = QApplication::desktop();
 
-    if(hint.fullscreen)
-      host->showFullScreen();
+    /// @todo this should be more graceful, what if the requested screen number doesn't exist?
+    const int xScreenNumber = window.screennumber();
+    assert(xScreenNumber <= desktop->screenCount());
 
-    m_mainWindow = new GLThreadWidget(host, *this, flags);
+    parent = desktop->screen(xScreenNumber);
+#endif
 
-    m_mainWindow->raise();
-    m_mainWindow->show();
-    //    m_mainWindow->move(hint.x, hint.y);
-    m_mainWindow->resize(hint.width, hint.height);
-    m_mainWindow->setFocus();
+    m_d->m_hostWidget = new QWidget(parent,  flags);
+
+    if(!windowTitle.isEmpty())
+      m_d->m_hostWidget->setWindowTitle(windowTitle);
+
+    if(window.screen()->iconify())
+       m_d->m_hostWidget->setWindowState(Qt::WindowMinimized);
+
+    m_d->m_hostWidget->move(window.location().x, window.location().y);
+    m_d->m_hostWidget->raise();
+    m_d->m_hostWidget->show();
+    m_d->m_hostWidget->resize(window.width(), window.height());
+
+    if(window.fullscreen())
+      m_d->m_hostWidget->showFullScreen();
+
+    m_d->m_mainWindow = new GLThreadWidget(m_d->m_hostWidget, *this, flags);
+
+    m_d->m_mainWindow->raise();
+    m_d->m_mainWindow->show();
+    m_d->m_mainWindow->resize(window.width(), window.height());
+    m_d->m_mainWindow->setFocus();
   }
 
   QtWindow::~QtWindow()
   {
-    m_mainWindow->deleteLater();
+    delete m_d;
   }
 
   void QtWindow::poll()
@@ -184,7 +188,7 @@ namespace Radiant
   void QtWindow::makeCurrent()
   {
     for(int i = 0; i < 100; ++i) {
-      m_mainWindow->makeCurrent();
+      m_d->m_mainWindow->makeCurrent();
       if(glGetError() == GL_NO_ERROR) break;
       Radiant::Sleep::sleepMs(10);
     }
@@ -192,26 +196,27 @@ namespace Radiant
 
   void QtWindow::swapBuffers()
   {
-    m_mainWindow->swapBuffers();
+    m_d->m_mainWindow->swapBuffers();
   }
 
   void QtWindow::minimize()
   {
-    m_mainWindow->showMinimized();
+    m_d->m_mainWindow->showMinimized();
   }
 
   void QtWindow::maximize()
   {
-    m_mainWindow->showMaximized();
+    m_d->m_mainWindow->showMaximized();
   }
 
   void QtWindow::restore()
   {
-    m_mainWindow->showNormal();
+    m_d->m_mainWindow->showNormal();
   }
 
   void QtWindow::showCursor(bool visible)
   {
-    m_mainWindow->showCursor(visible);
+    m_d->m_mainWindow->showCursor(visible);
   }
+
 }

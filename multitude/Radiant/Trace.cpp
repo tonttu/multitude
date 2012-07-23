@@ -305,11 +305,7 @@ namespace Radiant {
     g_output(FATAL, 0, msg, args);
     va_end(args);
 
-#ifdef RADIANT_IOS
-    // Make debugger catch this
-    int * bad = 0;
-    *bad = 123;
-#endif
+    abort();
 
     exit(EXIT_FAILURE);
   }

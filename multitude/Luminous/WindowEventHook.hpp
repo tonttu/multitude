@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef WINDOWEVENTHOOK_HPP
-#define WINDOWEVENTHOOK_HPP
+#ifndef LUMINOUS_WINDOWEVENTHOOK_HPP
+#define LUMINOUS_WINDOWEVENTHOOK_HPP
 
 namespace Radiant
 {
@@ -22,7 +22,7 @@ namespace Radiant
   class MouseEvent;
 }
 
-namespace Radiant
+namespace Luminous
 {
 
   /// Class for getting window events

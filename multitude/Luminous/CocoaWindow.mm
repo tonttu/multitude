@@ -17,13 +17,13 @@
 
   NSOpenGLContext * context;
 
-  Radiant::CocoaWindow * m_window;
+  Luminous::CocoaWindow * m_window;
   int m_antiAliasing;
 }
 
 - (id) initWithFrame:(NSRect)frame
 colorBits:(int)numColorBits depthBits:(int)numDepthBits fullscreen:(bool)runFullScreen
-m_window:(Radiant::CocoaWindow *)parent m_antiAliasing:(int)antiAliasing;
+m_window:(Luminous::CocoaWindow *)parent m_antiAliasing:(int)antiAliasing;
 
 - (void) dealloc;
 
@@ -52,7 +52,7 @@ m_window:(Radiant::CocoaWindow *)parent m_antiAliasing:(int)antiAliasing;
 
 - (id) initWithFrame:(NSRect)frame
 colorBits:(int)numColorBits depthBits:(int)numDepthBits fullscreen:(bool)runFullScreen
-m_window:(Radiant::CocoaWindow *)parent  m_antiAliasing:(int)antiAliasing
+m_window:(Luminous::CocoaWindow *)parent  m_antiAliasing:(int)antiAliasing
 {
 NSOpenGLPixelFormat *pixelFormat;
 
@@ -110,6 +110,9 @@ return self;
 
   int index = 0;
 
+  // Enable OpenGL 3.2 Core (Cornerstone needs fixing before this is possible)
+  //attributes[ index++ ] = NSOpenGLPFAOpenGLProfile;
+  //attributes[ index++ ] = NSOpenGLProfileVersion3_2Core;
   attributes[ index++ ] = NSOpenGLPFADoubleBuffer;
   attributes[ index++ ] = NSOpenGLPFAAccelerated;
   attributes[ index++ ] = NSOpenGLPFAColorSize;
@@ -139,7 +142,7 @@ return self;
 
 - (void) keyDown:(NSEvent *)theEvent
 {
-  Radiant::WindowEventHook * hook = m_window->eventHook();
+  Luminous::WindowEventHook * hook = m_window->eventHook();
   if(!hook) {
     Radiant::error("Cannot obtain WindowEventHook");
     return;
@@ -182,7 +185,7 @@ return self;
 
 -(void) keyUp:(NSEvent *)theEvent
 {
-  Radiant::WindowEventHook * hook = m_window->eventHook();
+  Luminous::WindowEventHook * hook = m_window->eventHook();
   if(!hook) {
     Radiant::error("Cannot obtain WindowEventHook");
     return;
@@ -212,14 +215,14 @@ return self;
 
 -(void) mouseDown:(NSEvent *)theEvent
 {
-  Radiant::WindowEventHook * hook = m_window->eventHook();
+  Luminous::WindowEventHook * hook = m_window->eventHook();
   if(!hook) {
     Radiant::error("Cannot obtain WindowEventHook");
     return;
   }
 
   int button =
-      Radiant::WindowEventHook::NoButton;
+      Luminous::WindowEventHook::NoButton;
 
   int buttonNumber = [theEvent buttonNumber];
 
@@ -247,14 +250,14 @@ return self;
 
 -(void) mouseUp:(NSEvent *)theEvent
 {
-  Radiant::WindowEventHook * hook = m_window->eventHook();
+  Luminous::WindowEventHook * hook = m_window->eventHook();
   if(!hook) {
     Radiant::error("Cannot obtain WindowEventHook");
     return;
   }
 
   int button =
-      Radiant::WindowEventHook::NoButton;
+      Luminous::WindowEventHook::NoButton;
 
   int buttonNumber = [theEvent buttonNumber];
 
@@ -283,20 +286,20 @@ return self;
 
 -(void) rightMouseDown:(NSEvent *)theEvent
 {
-  Radiant::WindowEventHook * hook = m_window->eventHook();
+  Luminous::WindowEventHook * hook = m_window->eventHook();
   if(!hook) {
     Radiant::error("Cannot obtain WindowEventHook");
     return;
   }
 
 
-  Radiant::WindowEventHook::MouseButtonMask button =
-      Radiant::WindowEventHook::NoButton;
+  Luminous::WindowEventHook::MouseButtonMask button =
+      Luminous::WindowEventHook::NoButton;
 
   int buttonNumber = [theEvent buttonNumber];
 
   if(buttonNumber == 1)
-    button = Radiant::WindowEventHook::RightButton;
+    button = Luminous::WindowEventHook::RightButton;
 
   NSPoint location;
   location = [theEvent locationInWindow];
@@ -318,20 +321,20 @@ return self;
 
 -(void) rightMouseUp:(NSEvent *)theEvent
 {
-  Radiant::WindowEventHook * hook = m_window->eventHook();
+  Luminous::WindowEventHook * hook = m_window->eventHook();
   if(!hook) {
     Radiant::error("Cannot obtain WindowEventHook");
     return;
   }
 
 
-  Radiant::WindowEventHook::MouseButtonMask button =
-      Radiant::WindowEventHook::NoButton;
+  Luminous::WindowEventHook::MouseButtonMask button =
+      Luminous::WindowEventHook::NoButton;
 
   int buttonNumber = [theEvent buttonNumber];
 
   if(buttonNumber == 1)
-    button = Radiant::WindowEventHook::RightButton;
+    button = Luminous::WindowEventHook::RightButton;
 
   NSPoint location;
   location = [theEvent locationInWindow];
@@ -355,7 +358,7 @@ return self;
 
 -(void) mouseDragged:(NSEvent *)theEvent
 {
-  Radiant::WindowEventHook * hook = m_window->eventHook();
+  Luminous::WindowEventHook * hook = m_window->eventHook();
   if(!hook) {
     Radiant::error("Cannot obtain WindowEventHook");
     return;
@@ -389,20 +392,20 @@ return self;
 
   (void) theEvent;
 
-  Radiant::WindowEventHook * hook = m_window->eventHook();
+  Luminous::WindowEventHook * hook = m_window->eventHook();
   if(!hook) {
     Radiant::error("Cannot obtain WindowEventHook");
     return;
   }
 
-  Radiant::WindowEventHook::MouseButtonMask button =
-      Radiant::WindowEventHook::NoButton;
+  Luminous::WindowEventHook::MouseButtonMask button =
+      Luminous::WindowEventHook::NoButton;
 
   float delta = [theEvent scrollingDeltaY];
 
   if( delta > 0.0 )
-    button = Radiant::WindowEventHook::WheelForward;
-  else button = Radiant::WindowEventHook::WheelBackward;
+    button = Luminous::WindowEventHook::WheelForward;
+  else button = Luminous::WindowEventHook::WheelBackward;
 
   NSPoint loc;
   loc = [theEvent locationInWindow];
@@ -452,13 +455,13 @@ return self;
 
   CocoaView *glView;
 
-  Radiant::CocoaWindow * m_window;
+  Luminous::CocoaWindow * m_window;
 
-  const Radiant::WindowConfig * m_hint;
+  const Luminous::MultiHead::Window * m_hint;
 
 }
-- (Controller *) initialize:(Radiant::CocoaWindow *)parent
-                           :(const Radiant::WindowConfig &)hint;
+- (Controller *) initialize:(Luminous::CocoaWindow *)parent
+                           :(const Luminous::MultiHead::Window &)hint;
 
 - (void) dealloc;
 
@@ -473,8 +476,8 @@ return self;
 
 @implementation Controller
 
-- (Controller *) initialize:(Radiant::CocoaWindow *)parent
-                           :(const Radiant::WindowConfig &)hint
+- (Controller *) initialize:(Luminous::CocoaWindow *)parent
+                           :(const Luminous::MultiHead::Window &)hint
 {
 
   m_window = parent;
@@ -497,22 +500,26 @@ return self;
 
 - (void) newWindow
 {
-  int display = m_hint->display.toUtf8().data()[1] - '0'; // first number after colon
+  /// @todo is this correct? Do we want to use the display number or screen number?
+  int display = m_hint->displaynumber();
+  // If display is -1 (undefined), just use the first display
+  if(display < 0)
+    display = 0;
 
   unsigned int styleMask = 0;
 
-  if(m_hint->frameless)
+  if(m_hint->frameless())
     styleMask |= NSBorderlessWindowMask;
-  else if(!m_hint->fullscreen)
+  else if(!m_hint->fullscreen())
     styleMask |= NSTitledWindowMask;
 
   NSScreen * screen = [[NSScreen screens] objectAtIndex:display];
   NSRect displayRect = [screen frame];
 
-  displayRect.origin.x = m_hint->x;
-  displayRect.origin.y = displayRect.size.height - m_hint->y - m_hint->height;
-  displayRect.size.width = m_hint->width;
-  displayRect.size.height = m_hint->height;
+  displayRect.origin.x = m_hint->location().x;
+  displayRect.origin.y = displayRect.size.height - m_hint->location().y - m_hint->height();
+  displayRect.size.width = m_hint->width();
+  displayRect.size.height = m_hint->height();
   glWindow = [[CocoaWindow alloc] initWithContentRect: displayRect styleMask:styleMask backing:NSBackingStoreBuffered defer:NO];
 
   [glWindow setHasShadow:NO];
@@ -520,8 +527,8 @@ return self;
   [glWindow setAcceptsMouseMovedEvents:YES];
 
   glView = [ [CocoaView alloc] initWithFrame:[glWindow frame]
-      colorBits:8 depthBits:8 fullscreen:m_hint->fullscreen
-      m_window:m_window m_antiAliasing:m_hint->m_antiAliasing];
+      colorBits:8 depthBits:8 fullscreen:m_hint->fullscreen()
+      m_window:m_window m_antiAliasing:m_hint->antiAliasingSamples()];
 
   if(glView != nil)
   {
@@ -533,7 +540,7 @@ return self;
   }
 
   // fullscreen button
-  if(!m_hint->fullscreen)
+  if(!m_hint->fullscreen())
     [glWindow setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
   else {
     [glWindow setLevel:CGShieldingWindowLevel()]; //go on top of everything if fullscreen
@@ -557,13 +564,13 @@ return self;
 @end
 
 
-namespace Radiant
+namespace Luminous
 {
 
 
 class CocoaWindow::D {
 public:
-  D(CocoaWindow * window, const WindowConfig & hint) : m_window(window) {
+  D(CocoaWindow * window, const MultiHead::Window & hint) : m_window(window) {
 
     [NSApp activateIgnoringOtherApps:YES]; // get keyboard focus
     controller = [[Controller alloc] initialize:m_window:hint ];
@@ -580,7 +587,7 @@ public:
 
 };
 
-CocoaWindow::CocoaWindow(const WindowConfig & hint)
+CocoaWindow::CocoaWindow(const MultiHead::Window & hint)
   : m_d(new D(this, hint))
 {
 }

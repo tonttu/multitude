@@ -17,7 +17,7 @@
 
 #include <string.h>
 
-namespace Radiant
+namespace Luminous
 {
 
   Window::Window() : 
