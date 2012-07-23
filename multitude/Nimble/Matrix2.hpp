@@ -216,28 +216,27 @@ namespace Nimble {
     return Matrix2T<T>(m1[0] - m2[0], m1[1] - m2[1]);
   }
 
+  template <class K, class T>
+  inline K &operator<<(K &os, const Nimble::Matrix2T<T> &t)
+  {
+    os << t[0].x << ' ' << t[0].y << " ; " << t[1].x << ' ' << t[1].y;
+    return os;
+  }
+
+  template <class T>
+  inline Nimble::Matrix2T<T> mulColByRowVector
+  (const Nimble::Vector2T<T>& v1, const Nimble::Vector2T<T>& v2)
+  {
+    return Nimble::Matrix2T<T>(v1.x * v2.x, v1.y * v2.x,
+                               v1.x * v2.y, v1.y * v2.y);
+  }
+
   /// 2x2 matrix of floats
   typedef Matrix2T<float> Matrix2;
   /// 2x2 matrix of floats
   typedef Matrix2T<float> Matrix2f;
   /// 2x2 matrix of doubles
   typedef Matrix2T<double> Matrix2d;
-}
-
-template <class K, class T>
-inline K &operator<<(K &os, const Nimble::Matrix2T<T> &t)
-{
-  os << t[0].x << ' ' << t[0].y << " ; " << t[1].x << ' ' << t[1].y;
-  return os;
-}
-
-
-template <class T>
-inline Nimble::Matrix2T<T> mulColByRowVector
-(const Nimble::Vector2T<T>& v1, const Nimble::Vector2T<T>& v2)
-{
-  return Nimble::Matrix2T<T>(v1.x * v2.x, v1.y * v2.x,
-                             v1.x * v2.y, v1.y * v2.y);
 }
 
 

@@ -802,8 +802,6 @@ inline Vector2T<T> Matrix3T<T>::project(const T & x, const T & y) const
   return Vector2T<T>(p.x / p.z, p.y / p.z);
 }
 
-} // namespace
-
 template <class T>
 inline std::ostream& operator<<(std::ostream& os, const Nimble::Matrix3T<T>& m)
 {
@@ -811,9 +809,6 @@ inline std::ostream& operator<<(std::ostream& os, const Nimble::Matrix3T<T>& m)
   return os;
 }
 
-using Nimble::operator *;
-using Nimble::operator /;
-using Nimble::operator <<;
-using Nimble::operator >>;
+} // namespace
 
 #endif

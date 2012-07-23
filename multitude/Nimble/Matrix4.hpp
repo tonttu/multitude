@@ -175,8 +175,6 @@ namespace Nimble {
     /// @return projected 3D vector
     inline Vector3T<T> project(const Vector4T<T> & v) const
     {
-      /// This is needed because there is an another operator* in Nimble-namespace in Vector3.hpp
-      using ::operator*;
       Nimble::Vector4T<T> p = *this * v;
       return Nimble::Vector3T<T>(p.x / p.w, p.y / p.w, p.z / p.w);
     }
@@ -200,8 +198,6 @@ namespace Nimble {
     /// @return New projection matrix
     static Matrix4T<T> simpleProjection(T width, T height, T fovy = Math::PI*0.5)
     {
-      using ::operator*;
-
       // Camera distance to the center widget center point (assuming it's resting).
       T dist = height * T(.5) / Nimble::Math::Tan(fovy * T(.5));
       T aspect = width/height;
@@ -669,14 +665,15 @@ namespace Nimble {
     return res;
   }
 
+  template <class T>
+  inline std::ostream& operator<<(std::ostream& os, const Matrix4T<T>& m)
+  {
+    os << m[0] << std::endl << m[1] << std::endl << m[2] << std::endl << m[3] << std::endl;
+    return os;
+  }
 } // namespace Nimble
 
-template <class T>
-inline std::ostream& operator<<(std::ostream& os, const Nimble::Matrix4T<T>& m)
-{
-  os << m[0] << std::endl << m[1] << std::endl << m[2] << std::endl << m[3] << std::endl;
-  return os;
-}
+
 
 #endif
 

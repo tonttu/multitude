@@ -417,14 +417,14 @@ namespace Nimble {
     // Return true only if point of intersection is on both lines
     return(t1 >= 0.0f && t1 <= 1.0f && t2 >= 0.0f && t2 <= 1.0f);
   }
+
+  template <class K, class T>
+  inline K &operator<<(K &os, const Nimble::Vector2T<T> &t)
+  {
+    os << t.x << ' ' << t.y;
+    return os;
+  }
+
 } // namespace
-
-
-template <class K, class T>
-inline K &operator<<(K &os, const Nimble::Vector2T<T> &t)
-{
-  os << t.x << ' ' << t.y;
-  return os;
-}
 
 #endif
