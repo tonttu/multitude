@@ -80,6 +80,9 @@ namespace Luminous
 
   void RenderManager::destroyResource(RenderResource::Id id)
   {
+    /// @todo Make this thread-safe
+    /* Widgets can be destroyed in any thread, which can trigger this function call
+       from any thread. */
     instance().m_d->resourceMap.erase(id);
     auto it = instance().m_d->drivers.begin(), end = instance().m_d->drivers.end();
     while(it != end) {
