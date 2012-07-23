@@ -92,8 +92,30 @@ namespace Luminous
   ////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////
 
+  class QtWindow::D
+  {
+  public:
+    D()
+      : m_hostWidget(0)
+      , m_mainWindow(0)
+    {}
+
+    ~D()
+    {
+      delete m_hostWidget;
+    }
+
+    // Host widget is a container for our actual window (m_mainWindow)
+    QWidget * m_hostWidget;
+    GLThreadWidget * m_mainWindow;
+  };
+
+  ////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////
+
   QtWindow::QtWindow(const MultiHead::Window & window, const QString & windowTitle)
     : Window()
+    , m_d(new D())
   {
     /* The code below opens a new OpenGL window at desired loation. Extra steps
        are taken to ensure that the window creation happens so that:
@@ -116,44 +138,46 @@ namespace Luminous
       flags = Qt::FramelessWindowHint;
 
     QWidget * parent = 0;
+
+
 #ifdef RADIANT_LINUX
+    // Handle multiple XScreens
     QDesktopWidget * desktop = QApplication::desktop();
 
-    /// @todo this should be more graceful
+    /// @todo this should be more graceful, what if the requested screen number doesn't exist?
     const int xScreenNumber = window.screennumber();
     assert(xScreenNumber <= desktop->screenCount());
 
     parent = desktop->screen(xScreenNumber);
 #endif
-    QWidget * host = new QWidget(parent,  flags);
+
+    m_d->m_hostWidget = new QWidget(parent,  flags);
 
     if(!windowTitle.isEmpty())
-      host->setWindowTitle(windowTitle);
+      m_d->m_hostWidget->setWindowTitle(windowTitle);
 
     if(window.screen()->iconify())
-       host->setWindowState(Qt::WindowMinimized);
+       m_d->m_hostWidget->setWindowState(Qt::WindowMinimized);
 
-    host->move(window.location().x, window.location().y);
-    host->raise();
-    host->show();
-    host->resize(window.width(), window.height());
+    m_d->m_hostWidget->move(window.location().x, window.location().y);
+    m_d->m_hostWidget->raise();
+    m_d->m_hostWidget->show();
+    m_d->m_hostWidget->resize(window.width(), window.height());
 
     if(window.fullscreen())
-      host->showFullScreen();
+      m_d->m_hostWidget->showFullScreen();
 
-    m_mainWindow = new GLThreadWidget(host, *this, flags);
+    m_d->m_mainWindow = new GLThreadWidget(m_d->m_hostWidget, *this, flags);
 
-    m_mainWindow->raise();
-    m_mainWindow->show();
-    m_mainWindow->resize(window.width(), window.height());
-    m_mainWindow->setFocus();
+    m_d->m_mainWindow->raise();
+    m_d->m_mainWindow->show();
+    m_d->m_mainWindow->resize(window.width(), window.height());
+    m_d->m_mainWindow->setFocus();
   }
 
   QtWindow::~QtWindow()
   {
-    assert(m_mainWindow->parent());
-    m_mainWindow->parent()->deleteLater();
-    //m_mainWindow->deleteLater();
+    delete m_d;
   }
 
   void QtWindow::poll()
@@ -164,7 +188,7 @@ namespace Luminous
   void QtWindow::makeCurrent()
   {
     for(int i = 0; i < 100; ++i) {
-      m_mainWindow->makeCurrent();
+      m_d->m_mainWindow->makeCurrent();
       if(glGetError() == GL_NO_ERROR) break;
       Radiant::Sleep::sleepMs(10);
     }
@@ -172,26 +196,27 @@ namespace Luminous
 
   void QtWindow::swapBuffers()
   {
-    m_mainWindow->swapBuffers();
+    m_d->m_mainWindow->swapBuffers();
   }
 
   void QtWindow::minimize()
   {
-    m_mainWindow->showMinimized();
+    m_d->m_mainWindow->showMinimized();
   }
 
   void QtWindow::maximize()
   {
-    m_mainWindow->showMaximized();
+    m_d->m_mainWindow->showMaximized();
   }
 
   void QtWindow::restore()
   {
-    m_mainWindow->showNormal();
+    m_d->m_mainWindow->showNormal();
   }
 
   void QtWindow::showCursor(bool visible)
   {
-    m_mainWindow->showCursor(visible);
+    m_d->m_mainWindow->showCursor(visible);
   }
+
 }

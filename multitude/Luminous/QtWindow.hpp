@@ -7,8 +7,6 @@
 
 namespace Luminous
 {
-  class GLThreadWidget;
-
   /// A window class built on top of Qt
   class LUMINOUS_API QtWindow : public Window
   {
@@ -30,7 +28,8 @@ namespace Luminous
     void showCursor(bool visible) OVERRIDE;
 
   private:
-    GLThreadWidget * m_mainWindow;
+    class D;
+    D * m_d;
   };
 
 }
