@@ -4,6 +4,8 @@
 #include "Luminous/Luminous.hpp"
 #include "Patterns/NotCopyable.hpp"
 
+#include <unordered_map>
+
 #include <stdint.h>
 
 namespace Luminous
@@ -18,6 +20,10 @@ namespace Luminous
       {
         return data[0] == h.data[0] ? data[1] < h.data[1] : data[0] < h.data[0];
       }
+      inline bool operator==(const Hash & h) const
+      {
+        return data[0] == h.data[0] && data[1] == h.data[1];
+      }
     };
 
     typedef uint64_t Id;
@@ -28,7 +34,6 @@ namespace Luminous
       Buffer,
       ShaderProgram,
       VertexShader,
-      VertexDescription,
       FragmentShader,
       GeometryShader,
       Texture,
@@ -59,4 +64,17 @@ namespace Luminous
     Type m_type;
   };
 }
+
+namespace std
+{
+  template<> struct hash<Luminous::RenderResource::Hash>
+  {
+    inline size_t operator()(const Luminous::RenderResource::Hash & hash) const
+    {
+      std::hash<uint64_t> hasher;
+      return hasher(hash.data[0]) ^ hasher(hash.data[1]);
+    }
+  };
+}
+
 #endif // LUMINOUS_RENDERRESOURCE_HPP
