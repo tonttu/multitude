@@ -447,14 +447,14 @@ namespace Luminous
                                         unsigned *& mappedIndexBuffer,
                                         void *& mappedVertexBuffer,
                                         void *& mappedUniformBuffer,
-                                        const Style & style);
+                                        float & depth, const Style & style);
 
     template <typename Vertex, typename Uniform>
     RenderCommand & createRenderCommand(int indexCount, int vertexCount,
                                         unsigned *& mappedIndexBuffer,
                                         Vertex *& mappedVertexBuffer,
                                         Uniform *& mappedUniformBuffer,
-                                        const Style & style);
+                                        float & depth, const Style & style);
 
     struct SharedBuffer;
     template <typename T>
@@ -528,13 +528,14 @@ namespace Luminous
                                                      unsigned *& mappedIndexBuffer,
                                                      Vertex *& mappedVertexBuffer,
                                                      Uniform *& mappedUniformBuffer,
+                                                     float & depth,
                                                      const Style & style)
   {
     return createRenderCommand(indexCount, vertexCount,
                                sizeof(Vertex), sizeof(Uniform),
                                mappedIndexBuffer, reinterpret_cast<void *&>(mappedVertexBuffer),
                                reinterpret_cast<void *&>(mappedUniformBuffer),
-                               style);
+                               depth, style);
   }
 
   template <typename T>

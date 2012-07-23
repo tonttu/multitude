@@ -215,6 +215,8 @@ namespace Luminous
         , m_program(0)
         , m_vbo(0)
         , m_uniformBufferOffsetAlignment(0)
+        , m_automaticDepthDiff(-1.0f/100000.0f)
+        , m_renderCalls(0)
         , m_driver(renderDriver)
     {
       m_viewTransform.identity();
@@ -553,6 +555,9 @@ namespace Luminous
 
     int m_uniformBufferOffsetAlignment;
 
+    float m_automaticDepthDiff;
+    int m_renderCalls;
+
     Luminous::RenderDriver & m_driver;
 
     struct BufferPool
@@ -786,6 +791,10 @@ namespace Luminous
     bindProgram(0);
 
     m_data->m_driver.postFrame();
+
+    /// @todo how do we generate this properly? Should we somehow linearize the depth buffer?
+    m_data->m_automaticDepthDiff = -1.0f / std::max(m_data->m_renderCalls, 100000);
+    m_data->m_renderCalls = 0;
   }
 
   void RenderContext::pushViewTransform()
@@ -1515,6 +1524,7 @@ namespace Luminous
                                                      unsigned *& mappedIndexBuffer,
                                                      void *& mappedVertexBuffer,
                                                      void *& mappedUniformBuffer,
+                                                     float & depth,
                                                      const Style & style)
   {
     unsigned int indexOffset, vertexOffset, uniformOffset;
@@ -1545,6 +1555,9 @@ namespace Luminous
     cmd.uniformOffsetBytes = uniformOffset * uniformSize;
     cmd.uniformSizeBytes = uniformSize;
 
+    depth = 1.0f + m_data->m_automaticDepthDiff * m_data->m_renderCalls;
+    ++m_data->m_renderCalls;
+
     return cmd;
   }
 
@@ -1554,23 +1567,24 @@ namespace Luminous
     BasicShaderDescription::UniformBlock * uniform = 0;
     BasicShaderDescription::Vertex * vertex;
 
-    RenderCommand & cmd = createRenderCommand(4, 4, idx, vertex, uniform, style);
+    float depth;
+    RenderCommand & cmd = createRenderCommand(4, 4, idx, vertex, uniform, depth, style);
     cmd.primitiveType = Luminous::PrimitiveType_TriangleStrip;
 
     const float r[] = { area.low().x, area.low().y, area.high().x, area.high().y };
-    vertex->location = Nimble::Vector3f(r[0], r[1], 0);
+    vertex->location = Nimble::Vector3f(r[0], r[1], depth);
     vertex->texCoord.make(0, 0);
     ++vertex;
 
-    vertex->location = Nimble::Vector3f(r[2], r[1], 0);
+    vertex->location = Nimble::Vector3f(r[2], r[1], depth);
     vertex->texCoord.make(1, 0);
     ++vertex;
 
-    vertex->location = Nimble::Vector3f(r[0], r[3], 0);
+    vertex->location = Nimble::Vector3f(r[0], r[3], depth);
     vertex->texCoord.make(0, 1);
     ++vertex;
 
-    vertex->location = Nimble::Vector3f(r[2], r[3], 0);
+    vertex->location = Nimble::Vector3f(r[2], r[3], depth);
     vertex->texCoord.make(1, 1);
     ++vertex;
 
@@ -1579,11 +1593,9 @@ namespace Luminous
     *idx++ = 2;
     *idx++ = 3;
 
-    /// @todo just a temporary hack..
-
-      uniform->projMatrix = viewTransform();
-      uniform->modelMatrix = transform4();
-      uniform->color = style.fill.color;
+    uniform->projMatrix = viewTransform();
+    uniform->modelMatrix = transform4();
+    uniform->color = style.fill.color;
   }
 
   void RenderContext::drawRectWithHole(const Nimble::Rect & area,

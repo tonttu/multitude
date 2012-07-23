@@ -98,7 +98,7 @@ namespace Luminous {
          */
     Nimble::Matrix4 m = Nimble::Matrix4::ortho3D(b.low().x, b.high().x,
                                                  b.high().y, b.low().y,
-                                                 -1000.0f, 1000.0f);
+                                                 -1.0f, 1.0f);
     // Radiant::info("Matrix = %s", Radiant::FixedStr256(m, 5).str());
 
     Nimble::Matrix4 km = m_keyStone.matrix();
