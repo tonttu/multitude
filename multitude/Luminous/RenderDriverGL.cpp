@@ -126,6 +126,8 @@ namespace Luminous
     ProgramHandle(const ShaderProgram * ptr = nullptr) : ResourceHandle(ptr) {}
     std::map<QByteArray, GLuint> textures;
     std::set<GLuint> shaders;
+
+    UniformDescription baseDescription;
   };
 
   struct BufferMapping
@@ -388,6 +390,38 @@ namespace Luminous
       }
     }
 
+    UniformDescription uniformDescription(const ProgramHandle & programHandle, const QByteArray & blockName)
+    {
+      /// @todo error checking/handling
+
+      UniformDescription desc;
+
+      GLuint blockIndex = glGetUniformBlockIndex(programHandle.handle, blockName.data());
+      if(blockIndex < 0)
+        return desc;
+
+      int uniformCount = 0;
+      glGetProgramiv(programHandle.handle, GL_ACTIVE_UNIFORMS, &uniformCount);
+
+      for(GLuint uniformIndex = 0; uniformIndex < uniformCount; ++uniformIndex) {
+        GLint nameLength = 0, size, blockIndex = 0, offset = 0;
+        glGetActiveUniformsiv(programHandle.handle, 1, &uniformIndex, GL_UNIFORM_NAME_LENGTH, &nameLength);
+        glGetActiveUniformsiv(programHandle.handle, 1, &uniformIndex, GL_UNIFORM_SIZE, &size);
+        glGetActiveUniformsiv(programHandle.handle, 1, &uniformIndex, GL_UNIFORM_BLOCK_INDEX, &blockIndex);
+        glGetActiveUniformsiv(programHandle.handle, 1, &uniformIndex, GL_UNIFORM_OFFSET, &offset);
+
+        if(blockIndex == GLint(blockIndex) && nameLength > 0 && offset >= 0) {
+          QByteArray ba(nameLength, '0');
+          GLsizei len = 0;
+          glGetActiveUniformName(programHandle.handle, uniformIndex, ba.size(), &len, ba.data());
+          ba.resize(len);
+          desc.addAttribute(ba, offset, size);
+        }
+      }
+
+      return desc;
+    }
+
     ProgramHandle & getLinkedShaderProgram(const ShaderProgram & program)
     {
       ProgramHandle & programHandle = m_programs[program.hash()];
@@ -399,6 +433,7 @@ namespace Luminous
 
         updateShaders(program, programHandle);
         relinkShaderProgram(program, programHandle);
+        programHandle.baseDescription = uniformDescription(programHandle, "BaseBlock");
       }
 
       // Reset usage timer

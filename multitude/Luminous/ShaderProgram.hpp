@@ -3,6 +3,7 @@
 
 #include "Luminous/Luminous.hpp"
 #include "Luminous/RenderResource.hpp"
+#include "Luminous/UniformDescription.hpp"
 
 #include <Valuable/Node.hpp>
 #include <Radiant/RefPtr.hpp>
@@ -71,6 +72,9 @@ namespace Luminous
 
     LUMINOUS_API const VertexDescription & vertexDescription() const;
     LUMINOUS_API void setVertexDescription(const VertexDescription & description);
+
+    LUMINOUS_API const UniformDescription & uniformDescription() const;
+    LUMINOUS_API void setUniformDescription(const UniformDescription & description);
 
   private:
     class D;

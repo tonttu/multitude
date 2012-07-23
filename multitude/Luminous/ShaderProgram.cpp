@@ -118,6 +118,7 @@ namespace Luminous
     ShaderList shaders;
     UniformList uniforms;
     VertexDescription vertexDescription;
+    UniformDescription uniformDescription;
     uint64_t hashGeneration;
     RenderResource::Hash hash;
   };
@@ -266,4 +267,14 @@ namespace Luminous
     /// @todo invalidate?
   }
 
+  const UniformDescription & ShaderProgram::uniformDescription() const
+  {
+    return m_d->uniformDescription;
+  }
+
+  void ShaderProgram::setUniformDescription(const UniformDescription & description)
+  {
+    m_d->uniformDescription = description;
+    /// @todo invalidate?
+  }
 }

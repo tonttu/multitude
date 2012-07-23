@@ -2,9 +2,11 @@ include(../multitude.pri)
 
 # Drivers
 HEADERS += RenderDriver.hpp \
-    Spline.hpp
+    Spline.hpp \
+    UniformDescription.hpp
 SOURCES += RenderDriver.cpp \
-    Spline.cpp
+    Spline.cpp \
+    UniformDescription.cpp
 HEADERS += RenderDriverGL.hpp
 SOURCES += RenderDriverGL.cpp
 
