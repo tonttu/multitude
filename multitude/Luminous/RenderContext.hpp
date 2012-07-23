@@ -28,6 +28,8 @@
 
 #include <Radiant/Defines.hpp>
 
+#include <QRectF>
+
 namespace Luminous
 {
   class Texture2D;
@@ -340,7 +342,12 @@ namespace Luminous
 
     void drawStyledRect(Nimble::Vector2 size, const Luminous::Style & style);
 
-    void drawRect(const Nimble::Rect & area, const Luminous::Style & fill);
+    void drawRect(const QRectF & area, const Luminous::Style & fill);
+    void drawRect(const Nimble::Rect & area, const Luminous::Style & fill)
+    {
+      drawRect(QRectF(area.low().x, area.low().y, area.width(), area.height()), fill);
+    }
+
     void drawRectWithHole(const Nimble::Rect & area,
                           const Nimble::Rect & hole,
                           const Luminous::Style & fill);
@@ -463,6 +470,19 @@ namespace Luminous
 
     std::pair<void *, SharedBuffer *> sharedBuffer(
         std::size_t vertexSize, std::size_t maxVertexCount, HardwareBuffer::Type type, unsigned int & offset);
+
+    template <typename Desc>
+    struct RenderBuilder
+    {
+      unsigned int * idx;
+      typename Desc::UniformBlock * uniform;
+      typename Desc::Vertex * vertex;
+
+      float depth;
+    };
+
+    template <typename Desc>
+    RenderBuilder<Desc> render(Luminous::PrimitiveType type, int indexCount, int vertexCount, const Style & style);
 
     //////////////////////////////////////////////////////////////////////////
     /// </Luminousv2>

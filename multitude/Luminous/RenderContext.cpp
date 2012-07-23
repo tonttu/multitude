@@ -1561,41 +1561,44 @@ namespace Luminous
     return cmd;
   }
 
-  void RenderContext::drawRect(const Nimble::Rect & area, const Style & style)
+  template <typename Desc>
+  RenderContext::RenderBuilder<Desc> RenderContext::render(Luminous::PrimitiveType type, int indexCount, int vertexCount, const Style & style)
   {
-    unsigned int * idx;
-    BasicShaderDescription::UniformBlock * uniform = 0;
-    BasicShaderDescription::Vertex * vertex;
+    RenderBuilder<Desc> builder;
+    RenderCommand & cmd = createRenderCommand(indexCount, vertexCount, builder.idx,
+                                              builder.vertex, builder.uniform, builder.depth, style);
+    cmd.primitiveType = type;
+    return builder;
+  }
 
-    float depth;
-    RenderCommand & cmd = createRenderCommand(4, 4, idx, vertex, uniform, depth, style);
-    cmd.primitiveType = Luminous::PrimitiveType_TriangleStrip;
+  void RenderContext::drawRect(const QRectF & area, const Style & style)
+  {
+    RenderBuilder<TexShaderDescription> b = render<TexShaderDescription>(Luminous::PrimitiveType_TriangleStrip, 4, 4, style);
 
-    const float r[] = { area.low().x, area.low().y, area.high().x, area.high().y };
-    vertex->location = Nimble::Vector3f(r[0], r[1], depth);
-    vertex->texCoord.make(0, 0);
-    ++vertex;
+    b.vertex->location.make(area.left(), area.top(), b.depth);
+    b.vertex->texCoord.make(0, 0);
+    ++b.vertex;
 
-    vertex->location = Nimble::Vector3f(r[2], r[1], depth);
-    vertex->texCoord.make(1, 0);
-    ++vertex;
+    b.vertex->location.make(area.right(), area.top(), b.depth);
+    b.vertex->texCoord.make(1, 0);
+    ++b.vertex;
 
-    vertex->location = Nimble::Vector3f(r[0], r[3], depth);
-    vertex->texCoord.make(0, 1);
-    ++vertex;
+    b.vertex->location.make(area.left(), area.bottom(), b.depth);
+    b.vertex->texCoord.make(0, 1);
+    ++b.vertex;
 
-    vertex->location = Nimble::Vector3f(r[2], r[3], depth);
-    vertex->texCoord.make(1, 1);
-    ++vertex;
+    b.vertex->location.make(area.right(), area.bottom(), b.depth);
+    b.vertex->texCoord.make(1, 1);
+    ++b.vertex;
 
-    *idx++ = 0;
-    *idx++ = 1;
-    *idx++ = 2;
-    *idx++ = 3;
+    *b.idx++ = 0;
+    *b.idx++ = 1;
+    *b.idx++ = 2;
+    *b.idx++ = 3;
 
-    uniform->projMatrix = viewTransform();
-    uniform->modelMatrix = transform4();
-    uniform->color = style.fill.color;
+    b.uniform->projMatrix = viewTransform();
+    b.uniform->modelMatrix = transform4();
+    b.uniform->color = style.fill.color;
   }
 
   void RenderContext::drawRectWithHole(const Nimble::Rect & area,

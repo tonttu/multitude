@@ -162,6 +162,20 @@ namespace Luminous
     struct Vertex
     {
       Nimble::Vector3 location;
+    };
+    struct UniformBlock
+    {
+      Nimble::Matrix4f projMatrix;
+      Nimble::Matrix4f modelMatrix;
+      Nimble::Vector4 color;
+    };
+  };
+
+  struct TexShaderDescription
+  {
+    struct Vertex
+    {
+      Nimble::Vector3 location;
       Nimble::Vector2 texCoord;
     };
     struct UniformBlock
