@@ -22,6 +22,8 @@
 #include <Radiant/MemCheck.hpp>
 #include <Radiant/TimeStamp.hpp>
 
+#include <functional>
+
 namespace Radiant {
   class Mutex;
 }
