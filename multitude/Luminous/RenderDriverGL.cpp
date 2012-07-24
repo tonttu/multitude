@@ -252,6 +252,13 @@ namespace Luminous
     {
       const double frameTime = m_frameTimer.time();
 
+      /*
+      static FILE * dbg = 0;
+      if(!dbg) dbg = fopen("stats", "w");
+      fprintf(dbg, "%lf\n", frameTime * 1000.0);
+      fflush(dbg);
+      */
+
       m_frame++;
       m_fps = 1.0 / frameTime;
     }
@@ -1025,7 +1032,8 @@ namespace Luminous
                                                       const Luminous::Style & style)
   {
     assert(style.fill.shader);
-    m_d->m_currentProgram = 0;
+
+    bool translucent = style.fill.shader->translucent();
 
     auto & state = m_d->m_state;
     state.program = &m_d->getLinkedShaderProgram(*style.fill.shader);
@@ -1034,16 +1042,28 @@ namespace Luminous
 
     int unit = 0;
     for(auto it = style.fill.tex.begin(); it != style.fill.tex.end(); ++it) {
+      translucent |= it->second->translucent();
       TextureHandle & tex = m_d->textureHandle(*it->second, unit);
       state.textures[unit++] = &tex;
     }
     state.textures[unit] = nullptr;
 
-    OpaqueRenderQueue & queue = m_d->m_opaqueQueue[state];
-    if(queue.usedSize >= queue.queue.size())
-      queue.queue.push_back(RenderCommand());
+    translucent = style.fill.translucent == Fill::Translucent ||
+        ((style.fill.translucent == Fill::Auto) && (translucent || style.fill.color.w < 0.99999999f));
 
-    RenderCommand & cmd = queue.queue[queue.usedSize++];
+    RenderCommand * cmd;
+    if(translucent) {
+      if(m_d->m_translucentQueue.usedSize >= m_d->m_translucentQueue.queue.size())
+        m_d->m_translucentQueue.queue.resize(m_d->m_translucentQueue.queue.size()+1);
+      auto & pair = m_d->m_translucentQueue.queue[m_d->m_translucentQueue.usedSize++];
+      pair.first = state;
+      cmd = &pair.second;
+    } else {
+      OpaqueRenderQueue & queue = m_d->m_opaqueQueue[state];
+      if(queue.usedSize >= queue.queue.size())
+        queue.queue.push_back(RenderCommand());
+      cmd = &queue.queue[queue.usedSize++];
+    }
 
     unit = 0;
     int slot = 0; // one day this will be different from unit
@@ -1052,14 +1072,14 @@ namespace Luminous
       if(texit == state.program->textures.end()) {
         GLint loc = glGetUniformLocation(state.program->handle, it->first.data());
         state.program->textures[it->first] = loc;
-        cmd.samplers[slot] = std::make_pair(loc, unit);
+        cmd->samplers[slot] = std::make_pair(loc, unit);
       } else {
-        cmd.samplers[slot] = std::make_pair(texit->second, unit);
+        cmd->samplers[slot] = std::make_pair(texit->second, unit);
       }
     }
-    cmd.samplers[slot].first = -1;
+    cmd->samplers[slot].first = -1;
 
-    return cmd;
+    return *cmd;
   }
 
   void RenderDriverGL::flush()
@@ -1074,7 +1094,8 @@ namespace Luminous
     static int foo = 0;
     if(foo++ % 60 == 0) {
       Radiant::info("%2d State changes, %2d Programs, %2d Shaders, %2d Textures, %2d Buffer Objects, %2d VertexArrays",
-                    m_d->m_opaqueQueue.size(), m_d->m_programs.size(), m_d->m_shaders.size(), m_d->m_textures.size(),
+                    m_d->m_opaqueQueue.size() + m_d->m_translucentQueue.queue.size(),
+                    m_d->m_programs.size(), m_d->m_shaders.size(), m_d->m_textures.size(),
                     m_d->m_buffers.size(), m_d->m_VertexArrays.size());
     }
 

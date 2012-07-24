@@ -35,6 +35,10 @@ namespace Luminous
     LUMINOUS_API unsigned int depth() const;
     LUMINOUS_API const PixelFormat & format() const;
     LUMINOUS_API const char * data() const;
+
+    LUMINOUS_API bool translucent() const;
+    LUMINOUS_API void setTranslucency(bool translucency);
+
   private:
     class D;
     D * m_d;

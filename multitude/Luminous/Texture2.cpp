@@ -14,6 +14,7 @@ namespace Luminous
     unsigned int depth;
     PixelFormat format;
     const char * data;
+    bool translucent;
     RenderResource::Hash hash;
   public:
     void rehash();
@@ -88,4 +89,14 @@ namespace Luminous
   unsigned int Texture::depth() const { return m_d->depth; }
   const PixelFormat & Texture::format() const { return m_d->format; }
   const char * Texture::data() const { return m_d->data;}
+
+  bool Texture::translucent() const
+  {
+    return m_d->translucent;
+  }
+
+  void Texture::setTranslucency(bool translucency)
+  {
+    m_d->translucent = translucency;
+  }
 }

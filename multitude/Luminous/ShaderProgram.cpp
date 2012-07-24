@@ -113,7 +113,7 @@ namespace Luminous
   // ShaderProgram
   class ShaderProgram::D {
   public:
-    D() : hashGeneration(0) {}
+    D() : hashGeneration(0), translucent(false) {}
 
   public:
     // (resource, generation)
@@ -126,6 +126,7 @@ namespace Luminous
     UniformDescription uniformDescription;
     uint64_t hashGeneration;
     RenderResource::Hash hash;
+    bool translucent;
   };
 
   ShaderProgram::ShaderProgram()
@@ -281,5 +282,15 @@ namespace Luminous
   {
     m_d->uniformDescription = description;
     /// @todo invalidate?
+  }
+
+  bool ShaderProgram::translucent() const
+  {
+    return m_d->translucent;
+  }
+
+  void ShaderProgram::setTranslucency(bool translucency)
+  {
+    m_d->translucent = translucency;
   }
 }

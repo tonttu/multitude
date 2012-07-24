@@ -76,6 +76,9 @@ namespace Luminous
     LUMINOUS_API const UniformDescription & uniformDescription() const;
     LUMINOUS_API void setUniformDescription(const UniformDescription & description);
 
+    LUMINOUS_API bool translucent() const;
+    LUMINOUS_API void setTranslucency(bool translucency);
+
   private:
     class D;
     D * m_d;

@@ -14,11 +14,19 @@ namespace Luminous
 
   struct Fill
   {
-    Fill() : color(1, 1, 1, 1), shader(nullptr) {}
+    enum Translucency
+    {
+      Translucent,
+      Opaque,
+      Auto
+    };
+
+    Fill() : color(1, 1, 1, 1), shader(nullptr), translucent(Auto) {}
     /// @todo accessors
     Nimble::Vector4f color;
     Luminous::ShaderProgram * shader;
     std::map<QByteArray, Luminous::Texture*> tex;
+    Translucency translucent;
   };
 
   /// Style object for giving rendering parameters to the RenderContext
