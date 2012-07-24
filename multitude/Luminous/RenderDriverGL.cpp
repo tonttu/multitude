@@ -1123,7 +1123,7 @@ namespace Luminous
       opaque.usedSize = 0;
     }
 
-    for(auto it = m_d->m_translucentQueue.queue.begin(), end = m_d->m_translucentQueue.queue.end(); it != end; ++it) {
+    for(auto it = m_d->m_translucentQueue.queue.begin(), end = it + m_d->m_translucentQueue.usedSize; it != end; ++it) {
       const RenderState & state = it->first;
       const RenderCommand & cmd = it->second;
 

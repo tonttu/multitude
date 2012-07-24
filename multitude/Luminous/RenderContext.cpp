@@ -1575,7 +1575,7 @@ namespace Luminous
     cmd.uniformOffsetBytes = uniformOffset * uniformSize;
     cmd.uniformSizeBytes = uniformSize;
 
-    depth = 1.0f + m_data->m_automaticDepthDiff * m_data->m_renderCalls;
+    depth = 0.99999f + m_data->m_automaticDepthDiff * m_data->m_renderCalls;
     ++m_data->m_renderCalls;
 
     return cmd;
