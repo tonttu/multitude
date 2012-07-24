@@ -167,6 +167,25 @@ namespace Luminous
     }
   };
 
+  struct OpaqueRenderQueue
+  {
+    OpaqueRenderQueue() : frame(0), usedSize(0) {}
+
+    int frame;
+    std::size_t usedSize;
+    std::vector<RenderCommand> queue;
+  };
+
+  struct TranslucentRenderQueue
+  {
+    typedef std::vector<std::pair<RenderState, RenderCommand>> Queue;
+    TranslucentRenderQueue() : frame(0), usedSize(0) {}
+
+    int frame;
+    std::size_t usedSize;
+    Queue queue;
+  };
+
   //////////////////////////////////////////////////////////////////////////
   // RenderDriver implementation
   class RenderDriverGL::D
@@ -205,8 +224,8 @@ namespace Luminous
 
     RenderState m_state;
 
-    std::map<RenderState, std::pair<int, std::vector<Luminous::RenderCommand>>> m_opaqueQueue;
-    std::vector<std::pair<RenderState, Luminous::RenderCommand>> m_transparentQueue;
+    std::map<RenderState, OpaqueRenderQueue> m_opaqueQueue;
+    TranslucentRenderQueue m_translucentQueue;
 
     // Resources to be released
     typedef std::vector<RenderResource::Id> ReleaseQueue;
@@ -394,13 +413,13 @@ namespace Luminous
       UniformDescription desc;
 
       GLuint blockIndex = glGetUniformBlockIndex(programHandle.handle, blockName.data());
-      if(blockIndex < 0)
+      if(blockIndex == GL_INVALID_INDEX)
         return desc;
 
       int uniformCount = 0;
       glGetProgramiv(programHandle.handle, GL_ACTIVE_UNIFORMS, &uniformCount);
 
-      for(GLuint uniformIndex = 0; uniformIndex < uniformCount; ++uniformIndex) {
+      for(GLuint uniformIndex = 0, c = uniformCount; uniformIndex < c; ++uniformIndex) {
         GLint nameLength = 0, size, blockIndex = 0, offset = 0;
         glGetActiveUniformsiv(programHandle.handle, 1, &uniformIndex, GL_UNIFORM_NAME_LENGTH, &nameLength);
         glGetActiveUniformsiv(programHandle.handle, 1, &uniformIndex, GL_UNIFORM_SIZE, &size);
@@ -685,6 +704,35 @@ namespace Luminous
       return bufferHandle;
     }
 
+    void setState(const RenderState & state)
+    {
+      bindShaderProgram(*state.program);
+
+      for(std::size_t t = 0; t < state.textures.size(); ++t) {
+        if(!state.textures[t]) break;
+        else bindTexture(*state.textures[t], t);
+      }
+
+      if(state.vertexArray)
+        setVertexArray(*state.vertexArray);
+    }
+
+    void render(const RenderCommand & cmd, GLint uniformHandle, GLint uniformBlockIndex)
+    {
+      for(auto uit = cmd.samplers.begin(); uit != cmd.samplers.end(); ++uit) {
+        if(uit->first < 0) break;
+        glUniform1i(uit->first, uit->second);
+      }
+
+      glBindBufferRange(GL_UNIFORM_BUFFER, uniformBlockIndex, uniformHandle,
+                        cmd.uniformOffsetBytes, cmd.uniformSizeBytes);
+      GLERROR("RenderDriverGL::flush # glBindBufferRange");
+
+      glDrawElementsBaseVertex(cmd.primitiveType, cmd.primitiveCount, GL_UNSIGNED_INT,
+                               (GLvoid *)((sizeof(uint) * cmd.indexOffset)), cmd.vertexOffset);
+      GLERROR("RenderDriverGL::flush # glDrawElementsBaseVertex");
+    }
+
     // Utility function for resource cleanup
     template <typename ContainerType>
     void removeResource(ContainerType & container, const ReleaseQueue & releaseQueue)
@@ -832,6 +880,29 @@ namespace Luminous
   void RenderDriverGL::postFrame()
   {
     m_d->updateStatistics();
+
+    // No need to run this every frame
+    if((m_d->m_frame & 0x1f) != 0x1f)
+      return;
+
+    const int frameLimit = 60;
+    const int lastFrame = m_d->m_frame - frameLimit;
+
+    if(m_d->m_translucentQueue.usedSize > 0) {
+      Radiant::error("RenderDriverGL::postFrame # m_translucentQueue is not empty - forgot to call flush?");
+      m_d->m_translucentQueue.usedSize = 0;
+    }
+
+    if(m_d->m_translucentQueue.frame < lastFrame) {
+      TranslucentRenderQueue::Queue tmp;
+      std::swap(m_d->m_translucentQueue.queue, tmp);
+    }
+
+    for(auto it = m_d->m_opaqueQueue.begin(), end = m_d->m_opaqueQueue.end(); it != end;) {
+      if(it->second.frame < lastFrame) {
+        it = m_d->m_opaqueQueue.erase(it);
+      } else ++it;
+    }
   }
 
   void RenderDriverGL::setVertexBuffer(const HardwareBuffer & buffer)
@@ -968,11 +1039,11 @@ namespace Luminous
     }
     state.textures[unit] = nullptr;
 
-    std::pair<int, std::vector<Luminous::RenderCommand>> & pair = m_d->m_opaqueQueue[state];
-    if(pair.first >= pair.second.size())
-      pair.second.push_back(RenderCommand());
+    OpaqueRenderQueue & queue = m_d->m_opaqueQueue[state];
+    if(queue.usedSize >= queue.queue.size())
+      queue.queue.push_back(RenderCommand());
 
-    RenderCommand & cmd = pair.second[pair.first++];
+    RenderCommand & cmd = queue.queue[queue.usedSize++];
 
     unit = 0;
     int slot = 0; // one day this will be different from unit
@@ -1009,50 +1080,40 @@ namespace Luminous
 
     glEnable(GL_DEPTH_TEST);
 
-    for(auto it = m_d->m_opaqueQueue.begin(); it != m_d->m_opaqueQueue.end();) {
+    for(auto it = m_d->m_opaqueQueue.begin(), end = m_d->m_opaqueQueue.end(); it != end; ++it) {
       const RenderState & state = it->first;
-      std::pair<int, std::vector<Luminous::RenderCommand>> & opaque = it->second;
+      OpaqueRenderQueue & opaque = it->second;
 
-      if(opaque.first == 0) {
-        it = m_d->m_opaqueQueue.erase(it);
+      if(opaque.usedSize == 0)
         continue;
-      }
 
-      m_d->bindShaderProgram(*state.program);
-
-      for(int t = 0; t < state.textures.size(); ++t) {
-        if(!state.textures[t]) break;
-        else m_d->bindTexture(*state.textures[t], t);
-      }
-
-      if(state.vertexArray)
-        m_d->setVertexArray(*state.vertexArray);
+      m_d->setState(state);
 
       GLint uniformHandle = state.uniformBuffer->handle;
       GLint uniformBlockIndex = 0;
 
-      for(int i = 0, s = opaque.first; i < s; ++i) {
-        const RenderCommand & cmd = opaque.second[i];
-
-        for(auto uit = cmd.samplers.begin(); uit != cmd.samplers.end(); ++uit) {
-          if(uit->first < 0) break;
-          glUniform1i(uit->first, uit->second);
-        }
-
-        glBindBufferRange(GL_UNIFORM_BUFFER, uniformBlockIndex, uniformHandle,
-                          cmd.uniformOffsetBytes, cmd.uniformSizeBytes);
-        GLERROR("RenderDriverGL::flush # glBindBufferRange");
-
-        glDrawElementsBaseVertex(cmd.primitiveType, cmd.primitiveCount, GL_UNSIGNED_INT,
-                                 (GLvoid *)((sizeof(uint) * cmd.indexOffset)), cmd.vertexOffset);
-        GLERROR("RenderDriverGL::flush # glDrawElementsBaseVertex");
+      for(int i = 0, s = opaque.usedSize; i < s; ++i) {
+        m_d->render(opaque.queue[i], uniformHandle, uniformBlockIndex);
       }
-      opaque.first = 0;
-      ++it;
+
+      if(opaque.usedSize * 10 > opaque.queue.capacity())
+        opaque.frame = m_d->m_frame;
+
+      opaque.usedSize = 0;
     }
-    /*for(auto it = m_transparentQueue.begin(); it != m_transparentQueue.end(); ++it) {
-    }*/
-    m_d->m_transparentQueue.clear();
+
+    for(auto it = m_d->m_translucentQueue.queue.begin(), end = m_d->m_translucentQueue.queue.end(); it != end; ++it) {
+      const RenderState & state = it->first;
+      const RenderCommand & cmd = it->second;
+
+      m_d->setState(state);
+      m_d->render(cmd, state.uniformBuffer->handle, 0);
+    }
+
+    if(m_d->m_translucentQueue.usedSize * 10 > m_d->m_translucentQueue.queue.capacity())
+      m_d->m_translucentQueue.frame = m_d->m_frame;
+
+    m_d->m_translucentQueue.usedSize = 0;
   }
 
   void RenderDriverGL::releaseResource(RenderResource::Id id)
