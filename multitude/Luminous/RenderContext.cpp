@@ -1602,14 +1602,10 @@ namespace Luminous
       idx = b.idx;
       uniform = b.uniform;
 
-      b.vertex->location.make(area.left(), area.top(), b.depth);
-      ++b.vertex;
-      b.vertex->location.make(area.right(), area.top(), b.depth);
-      ++b.vertex;
-      b.vertex->location.make(area.left(), area.bottom(), b.depth);
-      ++b.vertex;
+      b.vertex++->location.make(area.left(), area.top(), b.depth);
+      b.vertex++->location.make(area.right(), area.top(), b.depth);
+      b.vertex++->location.make(area.left(), area.bottom(), b.depth);
       b.vertex->location.make(area.right(), area.bottom(), b.depth);
-      ++b.vertex;
     } else {
       if(!style.fill.shader)
         style.fill.shader = &m_data->m_texShader;
@@ -1645,51 +1641,34 @@ namespace Luminous
 
   void RenderContext::drawRectWithHole(const Nimble::Rect & area,
                                        const Nimble::Rect & hole,
-                                       const Luminous::Style & style)
+                                       Luminous::Style & style)
   {
-    if(style.program()) {
-      style.program()->bind();
-    }
-    else {
-      m_data->m_basic_shader->bind();
-    }
+    if(!style.fill.shader)
+      style.fill.shader = &m_data->m_basicShader;
 
-    RenderPacket & rp = * m_data->m_renderPacket;
+    RenderBuilder<BasicShaderDescription> b = render<BasicShaderDescription>(
+          Luminous::PrimitiveType_TriangleStrip, 10, 8, style);
 
-    rp.setProgram(m_data->m_program);
-    rp.setPacketRenderFunction(RectVertex::render);
+    b.vertex++->location.make(area.low().x, area.low().y, b.depth);
+    b.vertex++->location.make(hole.low().x, hole.low().y, b.depth);
 
-    RectVertex va;
+    b.vertex++->location.make(area.highLow().x, area.highLow().y, b.depth);
+    b.vertex++->location.make(hole.highLow().x, hole.highLow().y, b.depth);
 
-    va.m_color = style.color();
-    va.m_useTexture = false;
-    va.m_location = area.low();
-    va.m_objectTransform = transform().transposed();
+    b.vertex++->location.make(area.high().x, area.high().y, b.depth);
+    b.vertex++->location.make(hole.high().x, hole.high().y, b.depth);
 
-    rp.addFirstVertex(va);
+    b.vertex++->location.make(area.lowHigh().x, area.lowHigh().y, b.depth);
+    b.vertex++->location.make(hole.lowHigh().x, hole.lowHigh().y, b.depth);
 
-    va.m_location = hole.low();
-    rp.addVertex(va);
+    for(int i = 0; i < 8; ++i)
+      *b.idx++ = i;
+    *b.idx++ = 0;
+    *b.idx++ = 1;
 
-    va.m_location = area.highLow();
-    rp.addVertex(va);
-    va.m_location = hole.highLow();
-    rp.addVertex(va);
-
-    va.m_location = area.high();
-    rp.addVertex(va);
-    va.m_location = hole.high();
-    rp.addVertex(va);
-
-    va.m_location = area.lowHigh();
-    rp.addVertex(va);
-    va.m_location = hole.lowHigh();
-    rp.addVertex(va);
-
-    va.m_location = area.low();
-    rp.addVertex(va);
-    va.m_location = hole.low();
-    rp.addLastVertex(va);
+    b.uniform->projMatrix = viewTransform();
+    b.uniform->modelMatrix = transform4();
+    b.uniform->color = style.fill.color;
   }
 
   void RenderContext::drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2,

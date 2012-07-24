@@ -350,7 +350,7 @@ namespace Luminous
 
     void drawRectWithHole(const Nimble::Rect & area,
                           const Nimble::Rect & hole,
-                          const Luminous::Style & fill);
+                          Luminous::Style & fill);
 
     void drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2,
                   float width, const Luminous::Style & fill);
