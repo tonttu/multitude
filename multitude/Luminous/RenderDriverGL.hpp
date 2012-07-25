@@ -11,7 +11,7 @@ namespace Luminous
   class RenderDriverGL : public RenderDriver
   {
   public:
-    LUMINOUS_API RenderDriverGL();
+    LUMINOUS_API RenderDriverGL(unsigned int threadIndex);
     LUMINOUS_API ~RenderDriverGL();
 
     LUMINOUS_API virtual void clear(ClearMask mask, const Radiant::Color & color, double depth, int stencil) OVERRIDE;

@@ -89,7 +89,7 @@ namespace Luminous
     LUMINOUS_API virtual void flush() = 0;
 
     // Driver factory
-    LUMINOUS_API static std::shared_ptr<RenderDriver> createInstance();
+    LUMINOUS_API static std::shared_ptr<RenderDriver> createInstance(unsigned int threadIndex);
 
   private:
     // Not exported, should only be used by the render manager

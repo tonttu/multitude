@@ -191,11 +191,12 @@ namespace Luminous
   class RenderDriverGL::D
   {
   public:
-    D()
+    D(unsigned int threadIndex)
       : m_currentProgram(0)
       , m_currentVertexArray(0)
       , m_currentBuffer(0)
       , m_uploadedBytes(0)
+      , m_threadIndex(threadIndex)
       , m_frame(0)
       , m_fps(0.0)
     {}
@@ -230,6 +231,8 @@ namespace Luminous
     // Resources to be released
     typedef std::vector<RenderResource::Id> ReleaseQueue;
     ReleaseQueue m_releaseQueue;
+
+    unsigned int m_threadIndex;
 
     /// Render statistics
     int32_t m_uploadedBytes;      // Uploaded bytes this frame
@@ -779,8 +782,8 @@ namespace Luminous
 
   //////////////////////////////////////////////////////////////////////////
   //
-  RenderDriverGL::RenderDriverGL()
-    : m_d(new RenderDriverGL::D())
+  RenderDriverGL::RenderDriverGL(unsigned int threadIndex)
+    : m_d(new RenderDriverGL::D(threadIndex))
   {
   }
 

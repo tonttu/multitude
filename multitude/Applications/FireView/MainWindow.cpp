@@ -109,7 +109,7 @@ namespace FireView {
 
         QMenuBar * mb = new QMenuBar(base);
         QMenu * menu = new QMenu(mb);
-        auto renderDriver = Luminous::RenderDriver::createInstance();
+        auto renderDriver = Luminous::RenderDriver::createInstance(m_renderDrivers.size());
         m_renderDrivers.push_back(renderDriver);
         CamView * cv = new CamView(*renderDriver, base);
 
