@@ -1918,6 +1918,8 @@ namespace Luminous
       it->second.flush();
     for(auto it = m_data->m_uniformBuffers.begin(); it != m_data->m_uniformBuffers.end(); ++it)
       it->second.flush();
+
+    RenderResource::increaseGlobalGeneration();
   }
   void RenderContext::flush()
   {

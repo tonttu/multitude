@@ -49,16 +49,21 @@ namespace Luminous
     inline Id resourceId() const { return m_id; }
     inline Type resourceType() const { return m_type; }
 
-    inline void setGeneration(uint64_t generation) { m_generation = generation; }
-    inline uint64_t generation() const { return m_generation; }
-    inline void invalidate() { m_generation++; }
+    inline int generation() const { return m_generation; }
+    inline void invalidate() { m_generation = s_generation; }
 
     // Set resource expiration time. The resource will be released after it has not been used for this period
     inline void setExpiration(unsigned int seconds) { m_expiration = seconds; }
     // Returns resource expiration time
     inline unsigned int expiration() const { return m_expiration; }
+
+    /// @todo bad name, this is almost like frame number, but actually 'flush number'
+    static inline void increaseGlobalGeneration() { ++s_generation; }
+
   private:
-    uint64_t m_generation;
+    static int s_generation;
+
+    int m_generation;
     Id m_id;
     unsigned int m_expiration;
     Type m_type;
