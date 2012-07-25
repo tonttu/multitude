@@ -481,13 +481,6 @@ namespace Luminous
       // Reset usage timer
       textureHandle.lastUsed.start();
 
-      /// Specify the external format (number of channels)
-      GLenum extFormat;
-      if (texture.format().numChannels() == 1)      extFormat = GL_RED;
-      else if (texture.format().numChannels() == 2) extFormat = GL_RG;
-      else if (texture.format().numChannels() == 3) extFormat = GL_RGB;
-      else if (texture.format().numChannels() == 4) extFormat = GL_RGBA;
-
       bool bound = false;
 
       if((/*texture.mode() == Texture::Streaming &&*/ textureHandle.generation < texture.generation()) ||
@@ -499,9 +492,18 @@ namespace Luminous
         bindTexture(textureHandle, textureUnit);
         bound = true;
 
-        if (texture.dimensions() == 1)      glTexImage1D(GL_TEXTURE_1D, 0, texture.format().layout(), texture.width(), 0, extFormat , texture.format().type(), nullptr );
-        else if (texture.dimensions() == 2) glTexImage2D(GL_TEXTURE_2D, 0, texture.format().layout(), texture.width(), texture.height(), 0, extFormat, texture.format().type(), nullptr );
-        else if (texture.dimensions() == 3) glTexImage3D(GL_TEXTURE_3D, 0, texture.format().layout(), texture.width(), texture.height(), texture.depth(), 0, extFormat, texture.format().type(), nullptr );
+        /// Specify the internal format (number of channels or explicitly requested format)
+        GLenum intFormat = texture.internalFormat();
+        if(intFormat == 0) {
+          if (texture.dataFormat().numChannels() == 1)      intFormat = GL_RED;
+          else if (texture.dataFormat().numChannels() == 2) intFormat = GL_RG;
+          else if (texture.dataFormat().numChannels() == 3) intFormat = GL_RGB;
+          else intFormat = GL_RGBA;
+        }
+
+        if (texture.dimensions() == 1)      glTexImage1D(GL_TEXTURE_1D, 0, intFormat, texture.width(), 0, texture.dataFormat().layout(), texture.dataFormat().type(), nullptr );
+        else if (texture.dimensions() == 2) glTexImage2D(GL_TEXTURE_2D, 0, intFormat, texture.width(), texture.height(), 0, texture.dataFormat().layout(), texture.dataFormat().type(), nullptr );
+        else if (texture.dimensions() == 3) glTexImage3D(GL_TEXTURE_3D, 0, intFormat, texture.width(), texture.height(), texture.depth(), 0, texture.dataFormat().layout(), texture.dataFormat().type(), nullptr );
 
         /// @todo Get these from the texture settings
         glTexParameteri(textureHandle.target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -533,8 +535,8 @@ namespace Luminous
 
         if (texture.dimensions() == 1) {
           /// @todo incremental upload
-          glTexSubImage1D(GL_TEXTURE_1D, 0, 0, texture.width(), extFormat, texture.format().type(), texture.data() );
-          uploaded = texture.width() * texture.format().bytesPerPixel();
+          glTexSubImage1D(GL_TEXTURE_1D, 0, 0, texture.width(), texture.dataFormat().layout(), texture.dataFormat().type(), texture.data());
+          uploaded = texture.width() * texture.dataFormat().bytesPerPixel();
         }
         else if (texture.dimensions() == 2) {
           // See how much of the bytes we can upload in this frame
@@ -543,16 +545,16 @@ namespace Luminous
           glPixelStorei(GL_UNPACK_ROW_LENGTH, texture.width());
 
           foreach(const QRect & rect, textureHandle.dirtyRegion.rects()) {
-            const int bytesPerScanline = rect.width() * texture.format().bytesPerPixel();
+            const int bytesPerScanline = rect.width() * texture.dataFormat().bytesPerPixel();
             // Number of scanlines to upload
             const size_t scanLines = std::min<int32_t>(rect.height(), bytesFree / bytesPerScanline);
 
             auto data = texture.data() + (rect.left() + rect.top() * texture.width()) *
-                texture.format().bytesPerPixel();
+                texture.dataFormat().bytesPerPixel();
 
             // Upload data
-            glTexSubImage2D(GL_TEXTURE_2D, 0, rect.left(), rect.top(), rect.width(),
-                            scanLines, extFormat, texture.format().type(), data);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, rect.left(), rect.top(), rect.width(), scanLines,
+                            texture.dataFormat().layout(), texture.dataFormat().type(), data);
             uploaded += bytesPerScanline * scanLines;
 
             if(scanLines != rect.height()) {
@@ -567,8 +569,9 @@ namespace Luminous
         }
         else if (texture.dimensions() == 3) {
           /// @todo incremental upload
-          glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, texture.width(), texture.height(), texture.depth(), extFormat, texture.format().type(), texture.data() );
-          uploaded = texture.width() * texture.height() * texture.depth() * texture.format().bytesPerPixel();
+          glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, texture.width(), texture.height(), texture.depth(),
+                          texture.dataFormat().layout(), texture.dataFormat().type(), texture.data());
+          uploaded = texture.width() * texture.height() * texture.depth() * texture.dataFormat().bytesPerPixel();
         }
 
         // Update upload-limiter

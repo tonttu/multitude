@@ -20,9 +20,15 @@ namespace Luminous
     LUMINOUS_API Texture();
     LUMINOUS_API ~Texture();
 
-    LUMINOUS_API void setData(unsigned int width, const PixelFormat & format, const char * data);
-    LUMINOUS_API void setData(unsigned int width, unsigned int height, const PixelFormat & format, const char * data);
-    LUMINOUS_API void setData(unsigned int width, unsigned int height, unsigned int depth, const PixelFormat & format, const char * data);
+    /// @todo should we have our own enum for these?
+    ///       PixelFormat doesn't have for example sized internal formats
+    /// @param format 0 == automatic (default) or OpenGL internal format enum
+    LUMINOUS_API void setInternalFormat(int format);
+    LUMINOUS_API int internalFormat() const;
+
+    LUMINOUS_API void setData(unsigned int width, const PixelFormat & dataFormat, const char * data);
+    LUMINOUS_API void setData(unsigned int width, unsigned int height, const PixelFormat & dataFormat, const char * data);
+    LUMINOUS_API void setData(unsigned int width, unsigned int height, unsigned int depth, const PixelFormat & dataFormat, const char * data);
 
     /// @todo there should be a mode "shared" and "streaming"
     ///       the current implementation is "shared"
@@ -37,7 +43,7 @@ namespace Luminous
     LUMINOUS_API unsigned int width() const;
     LUMINOUS_API unsigned int height() const;
     LUMINOUS_API unsigned int depth() const;
-    LUMINOUS_API const PixelFormat & format() const;
+    LUMINOUS_API const PixelFormat & dataFormat() const;
     LUMINOUS_API const char * data() const;
 
     LUMINOUS_API QRegion dirtyRegion(unsigned int threadIndex) const;
