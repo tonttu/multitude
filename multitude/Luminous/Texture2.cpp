@@ -28,6 +28,8 @@ namespace Luminous
     const void * data;
     bool translucent;
 
+    unsigned int lineSizePixels;
+
     bool needRehash;
     RenderResource::Hash hash;
 
@@ -144,6 +146,16 @@ namespace Luminous
       m_d->useExternalKey = false;
       m_d->needRehash = true;
     }
+  }
+
+  void Texture::setLineSizePixels(std::size_t size)
+  {
+    m_d->lineSizePixels = size;
+  }
+
+  unsigned int Texture::lineSizePixels() const
+  {
+    return m_d->lineSizePixels == 0 ? m_d->width : m_d->lineSizePixels;
   }
 
   bool Texture::isValid() const

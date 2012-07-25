@@ -40,6 +40,11 @@ namespace Luminous
     LUMINOUS_API intptr_t externalKey() const;
     LUMINOUS_API void setExternalKey(intptr_t key);
     LUMINOUS_API void clearExternalKey();
+
+    /// 0 == use width
+    LUMINOUS_API void setLineSizePixels(std::size_t size);
+    LUMINOUS_API unsigned int lineSizePixels() const;
+
     LUMINOUS_API bool isValid() const;
 
     LUMINOUS_API uint8_t dimensions() const;

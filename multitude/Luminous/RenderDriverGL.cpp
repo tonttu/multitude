@@ -530,6 +530,7 @@ namespace Luminous
         while (texture.width() % alignment)
           alignment >>= 1;
         glPixelStorei(GL_PACK_ALIGNMENT, alignment);
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, texture.lineSizePixels());
 
         int uploaded = 0;
 
@@ -541,8 +542,6 @@ namespace Luminous
         else if (texture.dimensions() == 2) {
           // See how much of the bytes we can upload in this frame
           int64_t bytesFree = upload_bytes_limit - m_uploadedBytes;
-
-          glPixelStorei(GL_UNPACK_ROW_LENGTH, texture.width());
 
           foreach(const QRect & rect, textureHandle.dirtyRegion.rects()) {
             const int bytesPerScanline = rect.width() * texture.dataFormat().bytesPerPixel();
@@ -564,8 +563,6 @@ namespace Luminous
               textureHandle.dirtyRegion -= rect;
             }
           }
-
-          glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
         }
         else if (texture.dimensions() == 3) {
           /// @todo incremental upload
