@@ -26,9 +26,9 @@ namespace Luminous
     LUMINOUS_API void setInternalFormat(int format);
     LUMINOUS_API int internalFormat() const;
 
-    LUMINOUS_API void setData(unsigned int width, const PixelFormat & dataFormat, const char * data);
-    LUMINOUS_API void setData(unsigned int width, unsigned int height, const PixelFormat & dataFormat, const char * data);
-    LUMINOUS_API void setData(unsigned int width, unsigned int height, unsigned int depth, const PixelFormat & dataFormat, const char * data);
+    LUMINOUS_API void setData(unsigned int width, const PixelFormat & dataFormat, const void * data);
+    LUMINOUS_API void setData(unsigned int width, unsigned int height, const PixelFormat & dataFormat, const void * data);
+    LUMINOUS_API void setData(unsigned int width, unsigned int height, unsigned int depth, const PixelFormat & dataFormat, const void * data);
 
     /// @todo there should be a mode "shared" and "streaming"
     ///       the current implementation is "shared"
@@ -44,7 +44,7 @@ namespace Luminous
     LUMINOUS_API unsigned int height() const;
     LUMINOUS_API unsigned int depth() const;
     LUMINOUS_API const PixelFormat & dataFormat() const;
-    LUMINOUS_API const char * data() const;
+    LUMINOUS_API const void * data() const;
 
     LUMINOUS_API QRegion dirtyRegion(unsigned int threadIndex) const;
     LUMINOUS_API QRegion takeDirtyRegion(unsigned int threadIndex) const;

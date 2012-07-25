@@ -15,7 +15,7 @@ namespace Luminous
     unsigned int depth;
     PixelFormat dataFormat;
     int internalFormat;
-    const char * data;
+    const void * data;
     bool translucent;
     RenderResource::Hash hash;
 
@@ -59,7 +59,7 @@ namespace Luminous
     return m_d->internalFormat;
   }
 
-  void Texture::setData(unsigned int width, const PixelFormat & dataFormat, const char * data)
+  void Texture::setData(unsigned int width, const PixelFormat & dataFormat, const void * data)
   {
     m_d->dimensions = 1;
     m_d->width = width;
@@ -70,7 +70,7 @@ namespace Luminous
     invalidate();
   }
 
-  void Texture::setData(unsigned int width, unsigned int height, const PixelFormat & dataFormat, const char * data)
+  void Texture::setData(unsigned int width, unsigned int height, const PixelFormat & dataFormat, const void * data)
   {
     m_d->dimensions = 2;
     m_d->width = width;
@@ -82,7 +82,7 @@ namespace Luminous
     invalidate();
   }
 
-  void Texture::setData(unsigned int width, unsigned int height, unsigned int depth, const PixelFormat & dataFormat, const char * data)
+  void Texture::setData(unsigned int width, unsigned int height, unsigned int depth, const PixelFormat & dataFormat, const void * data)
   {
     m_d->dimensions = 3;
     m_d->width = width;
@@ -109,7 +109,7 @@ namespace Luminous
   unsigned int Texture::height() const { return m_d->height; }
   unsigned int Texture::depth() const { return m_d->depth; }
   const PixelFormat & Texture::dataFormat() const { return m_d->dataFormat; }
-  const char * Texture::data() const { return m_d->data;}
+  const void * Texture::data() const { return m_d->data;}
 
   QRegion Texture::dirtyRegion(unsigned int threadIndex) const
   {
