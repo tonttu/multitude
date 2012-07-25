@@ -4,6 +4,16 @@
 
 #include <QCryptographicHash>
 
+namespace
+{
+  template <typename T, typename Y>
+  inline void set(bool & changed, T & target, const Y & src)
+  {
+    changed = changed || target != src;
+    target = src;
+  }
+}
+
 namespace Luminous
 {
   class Texture::D
@@ -17,15 +27,22 @@ namespace Luminous
     int internalFormat;
     const void * data;
     bool translucent;
+
+    bool needRehash;
     RenderResource::Hash hash;
 
+    intptr_t externalKey;
+    bool useExternalKey;
+
     ContextArrayT<QRegion> dirtyRegions;
+
   public:
     void rehash();
   };
 
   void Texture::D::rehash()
   {
+    needRehash = false;
     QCryptographicHash hasher(QCryptographicHash::Md5);
     hasher.addData((const char*)&dimensions, sizeof(dimensions));
     hasher.addData((const char*)&width, sizeof(width));
@@ -33,7 +50,10 @@ namespace Luminous
     hasher.addData((const char*)&depth, sizeof(depth));
     hasher.addData((const char*)&dataFormat, sizeof(dataFormat));
     hasher.addData((const char*)&internalFormat, sizeof(internalFormat));
-    hasher.addData((const char*)&data, sizeof(data));
+    if(useExternalKey)
+      hasher.addData((const char*)&externalKey, sizeof(externalKey));
+    else
+      hasher.addData((const char*)&data, sizeof(data));
     memcpy(&hash, hasher.result().data(), sizeof(hash));
   }
 
@@ -41,6 +61,7 @@ namespace Luminous
     : RenderResource(RenderResource::Texture)
     , m_d(new Texture::D())
   {
+    m_d->needRehash = true;
   }
 
   Texture::~Texture()
@@ -61,42 +82,68 @@ namespace Luminous
 
   void Texture::setData(unsigned int width, const PixelFormat & dataFormat, const void * data)
   {
-    m_d->dimensions = 1;
-    m_d->width = width;
-    m_d->height = m_d->depth = 1;
-    m_d->dataFormat = dataFormat;
-    m_d->data = data;
-    m_d->rehash();
+    set(m_d->needRehash, m_d->dimensions, 1);
+    set(m_d->needRehash, m_d->width, width);
+    set(m_d->needRehash, m_d->height, 1);
+    set(m_d->needRehash, m_d->depth, 1);
+    set(m_d->needRehash, m_d->dataFormat, dataFormat);
+    set(m_d->needRehash, m_d->data, data);
     invalidate();
   }
 
   void Texture::setData(unsigned int width, unsigned int height, const PixelFormat & dataFormat, const void * data)
   {
-    m_d->dimensions = 2;
-    m_d->width = width;
-    m_d->height = height;
-    m_d->depth = 1;
-    m_d->dataFormat = dataFormat;
-    m_d->data = data;
-    m_d->rehash();
+    set(m_d->needRehash, m_d->dimensions, 2);
+    set(m_d->needRehash, m_d->width, width);
+    set(m_d->needRehash, m_d->height, height);
+    set(m_d->needRehash, m_d->depth, 1);
+    set(m_d->needRehash, m_d->dataFormat, dataFormat);
+    set(m_d->needRehash, m_d->data, data);
     invalidate();
   }
 
   void Texture::setData(unsigned int width, unsigned int height, unsigned int depth, const PixelFormat & dataFormat, const void * data)
   {
-    m_d->dimensions = 3;
-    m_d->width = width;
-    m_d->height = height;
-    m_d->depth = depth;
-    m_d->dataFormat = dataFormat;
-    m_d->data = data;
+    set(m_d->needRehash, m_d->dimensions, 3);
+    set(m_d->needRehash, m_d->width, width);
+    set(m_d->needRehash, m_d->height, height);
+    set(m_d->needRehash, m_d->depth, depth);
+    set(m_d->needRehash, m_d->dataFormat, dataFormat);
+    set(m_d->needRehash, m_d->data, data);
     m_d->rehash();
     invalidate();
   }
 
   RenderResource::Hash Texture::hash() const
   {
+    if(m_d->needRehash)
+      m_d->rehash();
+
     return m_d->hash;
+  }
+
+  intptr_t Texture::externalKey() const
+  {
+    return m_d->externalKey;
+  }
+
+  void Texture::setExternalKey(intptr_t key)
+  {
+    if(m_d->useExternalKey) {
+      set(m_d->needRehash, m_d->externalKey, key);
+    } else {
+      m_d->useExternalKey = true;
+      m_d->externalKey = key;
+      m_d->needRehash = true;
+    }
+  }
+
+  void Texture::clearExternalKey()
+  {
+    if(!m_d->useExternalKey) {
+      m_d->useExternalKey = false;
+      m_d->needRehash = true;
+    }
   }
 
   bool Texture::isValid() const

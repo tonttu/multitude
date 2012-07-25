@@ -37,6 +37,9 @@ namespace Luminous
     ///       is used in the driver
     LUMINOUS_API Hash hash() const;
 
+    LUMINOUS_API intptr_t externalKey() const;
+    LUMINOUS_API void setExternalKey(intptr_t key);
+    LUMINOUS_API void clearExternalKey();
     LUMINOUS_API bool isValid() const;
 
     LUMINOUS_API uint8_t dimensions() const;
