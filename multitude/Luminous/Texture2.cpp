@@ -125,8 +125,9 @@ namespace Luminous
 
   void Texture::addDirtyRect(const QRect & rect)
   {
+    auto intersected = rect.intersected(QRect(0, 0, width(), height()));
     for(unsigned int i = 0; i < m_d->dirtyRegions.size(); ++i)
-      m_d->dirtyRegions[i] += rect;
+      m_d->dirtyRegions[i] += intersected;
   }
 
   bool Texture::translucent() const
