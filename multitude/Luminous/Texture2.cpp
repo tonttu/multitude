@@ -86,6 +86,11 @@ namespace Luminous
     return m_d->hash;
   }
 
+  bool Texture::isValid() const
+  {
+    return m_d->dimensions >= 1 && m_d->dimensions <= 4;
+  }
+
   uint8_t Texture::dimensions() const { return m_d->dimensions; }
   unsigned int Texture::width() const { return m_d->width; }
   unsigned int Texture::height() const { return m_d->height; }

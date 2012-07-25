@@ -1054,6 +1054,9 @@ namespace Luminous
 
     int unit = 0;
     for(auto it = style.fill.tex.begin(); it != style.fill.tex.end(); ++it) {
+      if(!it->second->isValid())
+        continue;
+
       translucent |= it->second->translucent();
       TextureHandle & tex = m_d->textureHandle(*it->second, unit);
       state.textures[unit++] = &tex;

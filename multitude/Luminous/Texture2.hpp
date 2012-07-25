@@ -31,6 +31,8 @@ namespace Luminous
     ///       is used in the driver
     LUMINOUS_API Hash hash() const;
 
+    LUMINOUS_API bool isValid() const;
+
     LUMINOUS_API uint8_t dimensions() const;
     LUMINOUS_API unsigned int width() const;
     LUMINOUS_API unsigned int height() const;
