@@ -2,6 +2,7 @@
  */
 
 #include "RenderContext.hpp"
+#include "RenderContextImpl.hpp"
 
 // #include "Dum"
 #include "Error.hpp"
@@ -1581,94 +1582,20 @@ namespace Luminous
     return cmd;
   }
 
-  template <typename Desc>
-  RenderContext::RenderBuilder<Desc> RenderContext::render(Luminous::PrimitiveType type, int indexCount, int vertexCount, const Style & style)
-  {
-    RenderBuilder<Desc> builder;
-    RenderCommand & cmd = createRenderCommand(indexCount, vertexCount, builder.idx,
-                                              builder.vertex, builder.uniform, builder.depth, style);
-    cmd.primitiveType = type;
-    return builder;
-  }
-
   void RenderContext::drawRect(const QRectF & area, Style & style)
   {
-    BasicShaderDescription::UniformBlock * uniform;
-    unsigned int * idx;
     if(style.fill.tex.empty()) {
-      if(!style.fill.shader)
-        style.fill.shader = &m_data->m_basicShader;
-      RenderBuilder<BasicShaderDescription> b = render<BasicShaderDescription>(Luminous::PrimitiveType_TriangleStrip, 4, 4, style);
-      idx = b.idx;
-      uniform = b.uniform;
-
-      b.vertex++->location.make(area.left(), area.top(), b.depth);
-      b.vertex++->location.make(area.right(), area.top(), b.depth);
-      b.vertex++->location.make(area.left(), area.bottom(), b.depth);
-      b.vertex->location.make(area.right(), area.bottom(), b.depth);
+      drawRectT<BasicVertex, BasicUniformBlock>(area, style);
     } else {
-      if(!style.fill.shader)
-        style.fill.shader = &m_data->m_texShader;
-      RenderBuilder<TexShaderDescription> b = render<TexShaderDescription>(Luminous::PrimitiveType_TriangleStrip, 4, 4, style);
-      idx = b.idx;
-      uniform = b.uniform;
-
-      b.vertex->location.make(area.left(), area.top(), b.depth);
-      b.vertex->texCoord.make(0, 0);
-      ++b.vertex;
-
-      b.vertex->location.make(area.right(), area.top(), b.depth);
-      b.vertex->texCoord.make(1, 0);
-      ++b.vertex;
-
-      b.vertex->location.make(area.left(), area.bottom(), b.depth);
-      b.vertex->texCoord.make(0, 1);
-      ++b.vertex;
-
-      b.vertex->location.make(area.right(), area.bottom(), b.depth);
-      b.vertex->texCoord.make(1, 1);
+      drawTexRectT<BasicVertexUV, BasicUniformBlock>(area, style);
     }
-
-    *idx++ = 0;
-    *idx++ = 1;
-    *idx++ = 2;
-    *idx++ = 3;
-
-    uniform->projMatrix = viewTransform();
-    uniform->modelMatrix = transform4();
-    uniform->color = style.fill.color;
   }
 
   void RenderContext::drawRectWithHole(const Nimble::Rect & area,
                                        const Nimble::Rect & hole,
                                        Luminous::Style & style)
   {
-    if(!style.fill.shader)
-      style.fill.shader = &m_data->m_basicShader;
-
-    RenderBuilder<BasicShaderDescription> b = render<BasicShaderDescription>(
-          Luminous::PrimitiveType_TriangleStrip, 10, 8, style);
-
-    b.vertex++->location.make(area.low().x, area.low().y, b.depth);
-    b.vertex++->location.make(hole.low().x, hole.low().y, b.depth);
-
-    b.vertex++->location.make(area.highLow().x, area.highLow().y, b.depth);
-    b.vertex++->location.make(hole.highLow().x, hole.highLow().y, b.depth);
-
-    b.vertex++->location.make(area.high().x, area.high().y, b.depth);
-    b.vertex++->location.make(hole.high().x, hole.high().y, b.depth);
-
-    b.vertex++->location.make(area.lowHigh().x, area.lowHigh().y, b.depth);
-    b.vertex++->location.make(hole.lowHigh().x, hole.lowHigh().y, b.depth);
-
-    for(int i = 0; i < 8; ++i)
-      *b.idx++ = i;
-    *b.idx++ = 0;
-    *b.idx++ = 1;
-
-    b.uniform->projMatrix = viewTransform();
-    b.uniform->modelMatrix = transform4();
-    b.uniform->color = style.fill.color;
+    drawRectWithHoleT<BasicVertex, BasicUniformBlock>(area.toQRectF(), hole.toQRectF(), style);
   }
 
   void RenderContext::drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2,
@@ -2091,6 +2018,16 @@ namespace Luminous
   template<> LUMINOUS_API bool RenderContext::setShaderUniform(const char * name, const Radiant::Color & value)
   {
     return m_data->m_driver.setShaderUniform(name, static_cast<Nimble::Vector4f>(value));
+  }
+
+  ShaderProgram & RenderContext::basicShader()
+  {
+    return m_data->m_basicShader;
+  }
+
+  ShaderProgram & RenderContext::texShader()
+  {
+    return m_data->m_texShader;
   }
 }
 

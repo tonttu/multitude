@@ -111,6 +111,16 @@ namespace Luminous
       Nimble::Vector2 m_texUV;
     };
 
+    template <typename Vertex, typename UniformBlock>
+    struct RenderBuilder
+    {
+      unsigned int * idx;
+      UniformBlock * uniform;
+      Vertex * vertex;
+
+      float depth;
+    };
+
     enum {
       FBO_EXACT_SIZE = 0x1,
       /* these are just some big enough number, exact size is smaller */
@@ -348,6 +358,15 @@ namespace Luminous
       drawRect(QRectF(area.low().x, area.low().y, area.width(), area.height()), fill);
     }
 
+    template <typename Vertex, typename UniformBlock>
+    RenderBuilder<Vertex, UniformBlock> drawRectT(const QRectF & area, Style & style);
+
+    template <typename Vertex, typename UniformBlock>
+    RenderBuilder<Vertex, UniformBlock> drawTexRectT(const QRectF & area, Style & style);
+
+    template <typename Vertex, typename UniformBlock>
+    RenderBuilder<Vertex, UniformBlock> drawRectWithHoleT(const QRectF & area, const QRectF & hole, Luminous::Style & style);
+
     void drawRectWithHole(const Nimble::Rect & area,
                           const Nimble::Rect & hole,
                           Luminous::Style & fill);
@@ -457,11 +476,11 @@ namespace Luminous
                                         void *& mappedUniformBuffer,
                                         float & depth, const Style & style);
 
-    template <typename Vertex, typename Uniform>
+    template <typename Vertex, typename UniformBlock>
     RenderCommand & createRenderCommand(int indexCount, int vertexCount,
                                         unsigned *& mappedIndexBuffer,
                                         Vertex *& mappedVertexBuffer,
-                                        Uniform *& mappedUniformBuffer,
+                                        UniformBlock *& mappedUniformBuffer,
                                         float & depth, const Style & style);
 
     struct SharedBuffer;
@@ -472,18 +491,11 @@ namespace Luminous
     std::pair<void *, SharedBuffer *> sharedBuffer(
         std::size_t vertexSize, std::size_t maxVertexCount, HardwareBuffer::Type type, unsigned int & offset);
 
-    template <typename Desc>
-    struct RenderBuilder
-    {
-      unsigned int * idx;
-      typename Desc::UniformBlock * uniform;
-      typename Desc::Vertex * vertex;
+    template <typename Vertex, typename UniformBlock>
+    RenderBuilder<Vertex, UniformBlock> render(Luminous::PrimitiveType type, int indexCount, int vertexCount, const Style & style);
 
-      float depth;
-    };
-
-    template <typename Desc>
-    RenderBuilder<Desc> render(Luminous::PrimitiveType type, int indexCount, int vertexCount, const Style & style);
+    ShaderProgram & basicShader();
+    ShaderProgram & texShader();
 
     //////////////////////////////////////////////////////////////////////////
     /// </Luminousv2>

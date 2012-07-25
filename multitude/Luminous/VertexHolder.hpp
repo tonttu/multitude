@@ -157,28 +157,22 @@ namespace Luminous
     }
   };
 
-  struct BasicShaderDescription
+  struct BasicVertex
   {
-    struct Vertex
-    {
-      Nimble::Vector3 location;
-    };
-    struct UniformBlock
-    {
-      Nimble::Matrix4f projMatrix;
-      Nimble::Matrix4f modelMatrix;
-      Nimble::Vector4 color;
-    };
+    Nimble::Vector3f location;
   };
 
-  struct TexShaderDescription
+  struct BasicVertexUV
   {
-    struct Vertex
-    {
-      Nimble::Vector3 location;
-      Nimble::Vector2 texCoord;
-    };
-    typedef BasicShaderDescription::UniformBlock UniformBlock;
+    Nimble::Vector3f location;
+    Nimble::Vector2f texCoord;
+  };
+
+  struct BasicUniformBlock
+  {
+    Nimble::Matrix4f projMatrix;
+    Nimble::Matrix4f modelMatrix;
+    Nimble::Vector4f color;
   };
 
   class CircleVertex

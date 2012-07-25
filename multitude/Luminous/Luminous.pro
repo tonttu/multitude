@@ -31,6 +31,7 @@ HEADERS += MultiHead.hpp
 HEADERS += PixelFormat.hpp
 HEADERS += QtWindow.hpp
 HEADERS += RenderContext.hpp
+HEADERS += RenderContextImpl.hpp
 HEADERS += RenderDriverGL.hpp
 HEADERS += RenderDriver.hpp
 HEADERS += RenderManager.hpp
