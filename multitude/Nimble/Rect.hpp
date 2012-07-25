@@ -19,6 +19,9 @@
 #include "Matrix3.hpp"
 #include "Vector2.hpp"
 
+#include <QRect>
+#include <QRectF>
+
 namespace Nimble {
 
   /// An axis-aligned rectangle.
@@ -209,6 +212,19 @@ namespace Nimble {
     const T * data() const { return m_low.data(); }
     /// Returns a pointer to the rectangle corner data
     T * data() { return m_low.data(); }
+
+    QRectF toQRectF() const
+    {
+      return QRectF(float(m_low.x), float(m_low.y), float(width()), float(height()));
+    }
+
+    /// @todo add some enable_if magic?
+    /// typename std::enable_if<std::is_integral<T>::value, QRect>::type toQRect() const
+    /// doesn't work but maybe something similar
+    QRect toQRect() const
+    {
+      return QRect(int(m_low.x), int(m_low.y), int(width()), int(height()));
+    }
 
   private:
     Vector2T<T> m_low, m_high;
