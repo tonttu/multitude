@@ -5,6 +5,7 @@ HEADERS += CocoaWindow.hpp
 HEADERS += CodecRegistry.hpp
 HEADERS += Collectable.hpp
 HEADERS += ColorCorrection.hpp
+HEADERS += ContextArray.hpp
 HEADERS += ContextVariable.hpp
 HEADERS += CPUMipmaps.hpp
 HEADERS += DummyOpenGL.hpp

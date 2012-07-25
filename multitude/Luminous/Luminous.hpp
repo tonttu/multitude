@@ -155,6 +155,7 @@ namespace Luminous
   class PixelFormat;
   // 
   class RenderDriver;
+  class ContextArray;
   struct RenderCommand;
   // Resources
   class HardwareBuffer;

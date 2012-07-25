@@ -37,6 +37,10 @@ namespace Luminous
     LUMINOUS_API static void updateResource(RenderResource::Id, RenderResource * resource);
     LUMINOUS_API static void destroyResource(RenderResource::Id id);
 
+    LUMINOUS_API static void addContextArray(ContextArray * contextArray);
+    LUMINOUS_API static void removeContextArray(ContextArray * contextArray);
+    LUMINOUS_API static unsigned int driverCount();
+
     template <typename T> static T * getResource( RenderResource::Id id );
   private:
     LUMINOUS_API static RenderManager & instance();

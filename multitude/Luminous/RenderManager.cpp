@@ -16,6 +16,8 @@
 #include "RenderManager.hpp"
 #include "RenderDriver.hpp"
 
+#include "ContextArray.hpp"
+
 #include <map>
 
 namespace Luminous
@@ -41,6 +43,8 @@ namespace Luminous
 
     RenderResource::Id resourceId;      // Next available resource ID
     std::vector<Luminous::RenderDriver*> drivers; // Currently used drivers
+    Radiant::Mutex contextArraysMutex;
+    std::set<ContextArray*> contextArrays;
     static RenderManager * s_instance;  // Singleton instance
   };
 
@@ -64,6 +68,9 @@ namespace Luminous
   void RenderManager::setDrivers(std::vector<Luminous::RenderDriver*> drivers)
   {
     m_d->drivers = drivers;
+    Radiant::Guard g(m_d->contextArraysMutex);
+    for(auto it = m_d->contextArrays.begin(), end = m_d->contextArrays.end(); it != end; ++it)
+      (*it)->resize(drivers.size());
   }
 
   RenderResource::Id RenderManager::createResource(RenderResource * resource)
@@ -89,6 +96,26 @@ namespace Luminous
       (*it)->releaseResource(id);
       ++it;
     }
+  }
+
+  void RenderManager::addContextArray(ContextArray * contextArray)
+  {
+    auto & d = *instance().m_d;
+    Radiant::Guard g(d.contextArraysMutex);
+    d.contextArrays.insert(contextArray);
+  }
+
+  void RenderManager::removeContextArray(ContextArray * contextArray)
+  {
+    auto & d = *instance().m_d;
+    Radiant::Guard g(d.contextArraysMutex);
+    d.contextArrays.erase(contextArray);
+  }
+
+  unsigned int RenderManager::driverCount()
+  {
+    auto & d = *instance().m_d;
+    return d.drivers.size();
   }
 
   RenderManager & RenderManager::instance()
