@@ -1,5 +1,6 @@
 #include "Luminous/Texture2.hpp"
 #include "Luminous/PixelFormat.hpp"
+#include "Luminous/ContextArray.hpp"
 
 #include <QCryptographicHash>
 
@@ -16,6 +17,8 @@ namespace Luminous
     const char * data;
     bool translucent;
     RenderResource::Hash hash;
+
+    ContextArrayT<QRegion> dirtyRegions;
   public:
     void rehash();
   };
@@ -89,6 +92,24 @@ namespace Luminous
   unsigned int Texture::depth() const { return m_d->depth; }
   const PixelFormat & Texture::format() const { return m_d->format; }
   const char * Texture::data() const { return m_d->data;}
+
+  QRegion Texture::dirtyRegion(unsigned int threadIndex) const
+  {
+    return m_d->dirtyRegions[threadIndex];
+  }
+
+  QRegion Texture::takeDirtyRegion(unsigned int threadIndex) const
+  {
+    QRegion r = m_d->dirtyRegions[threadIndex];
+    m_d->dirtyRegions[threadIndex] = QRegion();
+    return r;
+  }
+
+  void Texture::addDirtyRect(const QRect & rect)
+  {
+    for(unsigned int i = 0; i < m_d->dirtyRegions.size(); ++i)
+      m_d->dirtyRegions[i] += rect;
+  }
 
   bool Texture::translucent() const
   {

@@ -23,6 +23,7 @@
 #include <algorithm>
 
 #include <QStringList>
+#include <QVector>
 
 #if RADIANT_DEBUG
 # define GLERROR(txt) Utils::glCheck(txt)
@@ -115,10 +116,9 @@ namespace Luminous
   
   struct TextureHandle : public ResourceHandle<Texture>
   {
-    TextureHandle(const Texture * ptr = nullptr) : ResourceHandle(ptr), target(0), size(0), uploaded(0) {}
+    TextureHandle(const Texture * ptr = nullptr) : ResourceHandle(ptr), target(0) {}
     GLenum target;
-    size_t size;      // Total size (in bytes)
-    size_t uploaded;  // Bytes uploaded (for incremental uploading)
+    QRegion dirtyRegion;
   };
 
   struct ProgramHandle : public ResourceHandle<ShaderProgram>
@@ -490,11 +490,8 @@ namespace Luminous
 
       bool bound = false;
 
-      if((/*texture.mode() == Texture::Streaming &&*/ textureHandle.generation < texture.generation())
-         || newTexture) {
-        // Start the uploading
-        textureHandle.uploaded = 0;
-
+      if((/*texture.mode() == Texture::Streaming &&*/ textureHandle.generation < texture.generation()) ||
+         newTexture) {
         if (texture.dimensions() == 1)      textureHandle.target = GL_TEXTURE_1D;
         else if (texture.dimensions() == 2) textureHandle.target = GL_TEXTURE_2D;
         else if (texture.dimensions() == 3) textureHandle.target = GL_TEXTURE_3D;
@@ -510,23 +507,19 @@ namespace Luminous
         glTexParameteri(textureHandle.target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(textureHandle.target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        textureHandle.size = texture.width() * texture.height() * texture.depth() * texture.format().bytesPerPixel();
-        textureHandle.uploaded = 0;
-
         // Update handle cache
         textureHandle.generation = texture.generation();
+        textureHandle.dirtyRegion = QRegion(0, 0, texture.width(), texture.height());
       }
+      textureHandle.dirtyRegion += texture.takeDirtyRegion(m_threadIndex);
 
       if(!bound && alwaysBind) {
         bindTexture(textureHandle, textureUnit);
         bound = true;
       }
 
-      // Calculate bytes that still need uploading
-      int32_t toUpload = textureHandle.size - textureHandle.uploaded;
-      if (toUpload > 0) {
-        size_t uploaded;
-
+      /// @todo 1D / 3D textures don't work atm
+      if(!textureHandle.dirtyRegion.isEmpty()) {
         if(!bound)
           bindTexture(textureHandle, textureUnit);
 
@@ -536,6 +529,8 @@ namespace Luminous
           alignment >>= 1;
         glPixelStorei(GL_PACK_ALIGNMENT, alignment);
 
+        int uploaded = 0;
+
         if (texture.dimensions() == 1) {
           /// @todo incremental upload
           glTexSubImage1D(GL_TEXTURE_1D, 0, 0, texture.width(), extFormat, texture.format().type(), texture.data() );
@@ -543,16 +538,32 @@ namespace Luminous
         }
         else if (texture.dimensions() == 2) {
           // See how much of the bytes we can upload in this frame
-          int64_t bytesFree = std::min<int64_t>(m_uploadedBytes + toUpload, upload_bytes_limit) - m_uploadedBytes;
-          int64_t bytesPerScanline = texture.width() * texture.format().bytesPerPixel();
-          // Number of scanlines to upload (minimum of 1 so we always have progress)
-          const size_t scanLines = std::max<int32_t>(1, bytesFree / bytesPerScanline);
-          // Start line (where we left of)
-          const size_t startLine = textureHandle.uploaded / bytesPerScanline;
+          int64_t bytesFree = upload_bytes_limit - m_uploadedBytes;
 
-          // Upload data
-          glTexSubImage2D(GL_TEXTURE_2D, 0, 0, startLine, texture.width(), scanLines, extFormat, texture.format().type(), texture.data() + textureHandle.uploaded);
-          uploaded = scanLines * bytesPerScanline;
+          glPixelStorei(GL_UNPACK_ROW_LENGTH, texture.width());
+
+          foreach(const QRect & rect, textureHandle.dirtyRegion.rects()) {
+            const int bytesPerScanline = rect.width() * texture.format().bytesPerPixel();
+            // Number of scanlines to upload
+            const size_t scanLines = std::min<int32_t>(rect.height(), bytesFree / bytesPerScanline);
+
+            auto data = texture.data() + (rect.left() + rect.top() * texture.width()) *
+                texture.format().bytesPerPixel();
+
+            // Upload data
+            glTexSubImage2D(GL_TEXTURE_2D, 0, rect.left(), rect.top(), rect.width(),
+                            scanLines, extFormat, texture.format().type(), data);
+            uploaded += bytesPerScanline * scanLines;
+
+            if(scanLines != rect.height()) {
+              textureHandle.dirtyRegion -= QRegion(rect.left(), rect.top(), rect.width(), scanLines);
+              break;
+            } else {
+              textureHandle.dirtyRegion -= rect;
+            }
+          }
+
+          glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
         }
         else if (texture.dimensions() == 3) {
           /// @todo incremental upload
@@ -562,8 +573,6 @@ namespace Luminous
 
         // Update upload-limiter
         m_uploadedBytes += uploaded;
-        // Update handle
-        textureHandle.uploaded += uploaded;
       }
 
       return textureHandle;

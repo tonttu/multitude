@@ -4,6 +4,8 @@
 #include "Luminous/Luminous.hpp"
 #include "Luminous/RenderResource.hpp"
 
+#include <QRegion>
+
 namespace Luminous
 {
   class Texture : public RenderResource
@@ -35,6 +37,10 @@ namespace Luminous
     LUMINOUS_API unsigned int depth() const;
     LUMINOUS_API const PixelFormat & format() const;
     LUMINOUS_API const char * data() const;
+
+    LUMINOUS_API QRegion dirtyRegion(unsigned int threadIndex) const;
+    LUMINOUS_API QRegion takeDirtyRegion(unsigned int threadIndex) const;
+    LUMINOUS_API void addDirtyRect(const QRect & rect);
 
     LUMINOUS_API bool translucent() const;
     LUMINOUS_API void setTranslucency(bool translucency);
