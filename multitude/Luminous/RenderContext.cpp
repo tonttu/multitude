@@ -27,6 +27,7 @@
 #include <Radiant/Thread.hpp>
 
 #include <strings.h>
+#include <tuple>
 
 #define DEFAULT_RECURSION_LIMIT 8
 #define SHADER(str) #str

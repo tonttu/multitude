@@ -169,7 +169,7 @@ win32 {
 }
 linux-*:LIBS += -lXNVCtrl -lXrandr
 
-INCLUDEPATH += ../Externals/adl_sdk
+INCLUDEPATH += ../3rdparty/adl_sdk
 
 DEFINES += LUMINOUS_EXPORT
 
