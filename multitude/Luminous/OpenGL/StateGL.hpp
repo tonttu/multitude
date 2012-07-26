@@ -1,9 +1,10 @@
 #ifndef LUMINOUS_STATEGL_HPP
 #define LUMINOUS_STATEGL_HPP
 
-#include "Luminous.hpp"
+#include "../Luminous.hpp"
 
 #include <algorithm>
+#include <stdint.h>
 
 namespace Luminous
 {

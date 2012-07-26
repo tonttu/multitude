@@ -162,6 +162,19 @@ namespace Luminous
   {
   }
 
+  LUMINOUS_API Program & Program::operator=( Program && prog )
+  {
+    std::swap(m_d, prog.m_d);
+    return *this;
+  }
+
+  LUMINOUS_API Program::Program( Program && prog )
+    : RenderResource(std::move(prog))
+    , m_d(prog.m_d)
+  {
+    prog.m_d = nullptr;
+  }
+
   Program::~Program()
   {
     delete m_d;
@@ -328,4 +341,5 @@ namespace Luminous
   {
     m_d->translucent = translucency;
   }
+
 }

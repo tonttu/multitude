@@ -81,6 +81,7 @@ namespace Luminous
   Texture & Texture::operator=(Texture && tex)
   {
     std::swap(m_d, tex.m_d);
+    return *this;
   }
 
   void Texture::setInternalFormat(int format)

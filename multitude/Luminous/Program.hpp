@@ -58,6 +58,9 @@ namespace Luminous
     LUMINOUS_API Program();
     LUMINOUS_API ~Program();
 
+    LUMINOUS_API Program(Program && prog);
+    LUMINOUS_API Program & operator=(Program && prog);
+
     LUMINOUS_API ShaderGLSL & addShader(const QByteArray & code, ShaderGLSL::Type type);
     LUMINOUS_API ShaderGLSL & loadShader(const QString & filename, ShaderGLSL::Type type);
 

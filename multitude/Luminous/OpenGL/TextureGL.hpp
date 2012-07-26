@@ -1,7 +1,7 @@
 #ifndef LUMINOUS_TEXTUREGL_HPP
 #define LUMINOUS_TEXTUREGL_HPP
 
-#include "OpenGL/ResourceHandleGL.hpp"
+#include "ResourceHandleGL.hpp"
 
 #include <QRegion>
 

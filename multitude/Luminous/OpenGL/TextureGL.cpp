@@ -1,6 +1,6 @@
 #include "TextureGL.hpp"
-#include "Texture2.hpp"
-#include "PixelFormat.hpp"
+#include "../Texture2.hpp"
+#include "../PixelFormat.hpp"
 
 #include <QVector>
 
@@ -111,7 +111,7 @@ namespace Luminous
           // Number of scanlines to upload
           const size_t scanLines = std::min<int32_t>(rect.height(), bytesFree / bytesPerScanline);
 
-          auto data = texture.data() + (rect.left() + rect.top() * texture.width()) *
+          auto data = static_cast<const char *>(texture.data()) + (rect.left() + rect.top() * texture.width()) *
               texture.dataFormat().bytesPerPixel();
 
           // Upload data

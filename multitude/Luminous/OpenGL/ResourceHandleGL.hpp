@@ -1,7 +1,7 @@
 #ifndef LUMINOUS_RESOURCE_HANDLEGL_HPP
 #define LUMINOUS_RESOURCE_HANDLEGL_HPP
 
-#include "OpenGL/StateGL.hpp"
+#include "StateGL.hpp"
 
 #include <Radiant/Timer.hpp>
 

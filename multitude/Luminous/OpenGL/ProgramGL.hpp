@@ -1,9 +1,10 @@
 #ifndef LUMINOUS_PROGRAMGL_HPP
 #define LUMINOUS_PROGRAMGL_HPP
 
-#include "OpenGL/ResourceHandleGL.hpp"
+#include "ResourceHandleGL.hpp"
 
 #include <map>
+#include <vector>
 
 class QByteArray;
 
