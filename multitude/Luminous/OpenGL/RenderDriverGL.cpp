@@ -1,4 +1,5 @@
 #include "Luminous/OpenGL/RenderDriverGL.hpp"
+#include "Luminous/OpenGL/StateGL.hpp"
 #include "Luminous/RenderManager.hpp"
 #include "Luminous/VertexArray.hpp"
 #include "Luminous/VertexDescription.hpp"
@@ -192,9 +193,7 @@ namespace Luminous
   {
   public:
     D(unsigned int threadIndex)
-      : m_currentProgram(0)
-      , m_currentVertexArray(0)
-      , m_currentBuffer(0)
+      : m_currentBuffer(0)
       , m_uploadedBytes(0)
       , m_threadIndex(threadIndex)
       , m_frame(0)
@@ -204,8 +203,7 @@ namespace Luminous
     typedef std::vector<GLuint> AttributeList;
     AttributeList m_activeAttributes;
 
-    GLuint m_currentProgram;  // Currently bound shader program
-    GLuint m_currentVertexArray;      // Currently bound VertexArray
+    StateGL m_stateGl;
     GLuint m_currentBuffer;   // Currently bound buffer object
 
     std::map<GLuint, BufferMapping> m_bufferMaps;
@@ -280,9 +278,7 @@ namespace Luminous
     void bindShaderProgram(const ProgramHandle & programHandle)
     {
       // Avoid re-applying the same shader
-      if (m_currentProgram != programHandle.handle)
-      {
-        m_currentProgram = programHandle.handle;
+      if(m_stateGl.setProgram(programHandle.handle)) {
         glUseProgram(programHandle.handle);
         GLERROR("RenderDriverGL::setShaderProgram glUseProgram");
       }
@@ -597,7 +593,7 @@ namespace Luminous
       // Set buffer attributes from its bound VertexDescription
       for (size_t attrIndex = 0; attrIndex < description.attributeCount(); ++attrIndex) {
         VertexAttribute attr = description.attribute(attrIndex);
-        GLint location = glGetAttribLocation(m_currentProgram, attr.name.toAscii().data());
+        GLint location = glGetAttribLocation(m_stateGl.program(), attr.name.toAscii().data());
         if (location == -1) {
           Radiant::warning("Unable to bind vertex attribute %s", attr.name.toAscii().data());
         }
@@ -664,9 +660,8 @@ namespace Luminous
     void setVertexArray(const VertexArrayHandle & vertexArrayHandle)
     {
       // Bind
-      if (m_currentVertexArray != vertexArrayHandle.handle) {
+      if(m_stateGl.setVertexArray(vertexArrayHandle.handle)) {
         glBindVertexArray(vertexArrayHandle.handle);
-        m_currentVertexArray = vertexArrayHandle.handle;
       }
     }
 
@@ -840,21 +835,21 @@ namespace Luminous
 #define SETUNIFORM(TYPE, FUNCTION) \
   bool RenderDriverGL::setShaderUniform(const char * name, const TYPE & value) { \
     /* @todo These locations should be cached in the program handle for performance reasons */ \
-    GLint location = glGetUniformLocation(m_d->m_currentProgram, name); \
+    GLint location = glGetUniformLocation(m_d->m_stateGl.program(), name); \
     if (location != -1) FUNCTION(location, value); \
     return (location != -1); \
   }
 #define SETUNIFORMVECTOR(TYPE, FUNCTION) \
   bool RenderDriverGL::setShaderUniform(const char * name, const TYPE & value) { \
     /* @todo These locations should be cached in the program handle for performance reasons */ \
-    GLint location = glGetUniformLocation(m_d->m_currentProgram, name); \
+    GLint location = glGetUniformLocation(m_d->m_stateGl.program(), name); \
     if (location != -1) FUNCTION(location, 1, value.data()); \
     return (location != -1); \
   }
 #define SETUNIFORMMATRIX(TYPE, FUNCTION) \
   bool RenderDriverGL::setShaderUniform(const char * name, const TYPE & value) { \
     /* @todo These locations should be cached in the program handle for performance reasons */ \
-    GLint location = glGetUniformLocation(m_d->m_currentProgram, name); \
+    GLint location = glGetUniformLocation(m_d->m_stateGl.program(), name); \
     if (location != -1) FUNCTION(location, 1, GL_TRUE, value.data()); \
     return (location != -1); \
   }
@@ -892,8 +887,8 @@ namespace Luminous
     m_d->removeResources();
 
     /// @todo Currently the RenderContext invalidates this cache every frame, even if it's not needed
-    m_d->m_currentProgram = 0;
-    m_d->m_currentVertexArray = 0;
+    m_d->m_stateGl.setProgram(0);
+    m_d->m_stateGl.setVertexArray(0);
   }
 
   void RenderDriverGL::postFrame()

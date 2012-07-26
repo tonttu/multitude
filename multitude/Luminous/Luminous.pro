@@ -1,5 +1,6 @@
 include(../multitude.pri)
 
+HEADERS += OpenGL/StateGL.hpp
 HEADERS += OpenGL/RenderDriverGL.hpp
 
 HEADERS += BGThread.hpp
