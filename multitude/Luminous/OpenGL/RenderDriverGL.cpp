@@ -2,6 +2,7 @@
 #include "Luminous/OpenGL/RenderDriverGL.hpp"
 #include "Luminous/OpenGL/StateGL.hpp"
 #include "Luminous/OpenGL/TextureGL.hpp"
+#include "Luminous/OpenGL/VertexArrayGL.hpp"
 #include "Luminous/RenderManager.hpp"
 #include "Luminous/VertexArray.hpp"
 #include "Luminous/VertexDescription.hpp"
@@ -48,8 +49,6 @@ namespace
     GLuint resource;
     switch (type)
     {
-    case Luminous::RenderResource::VertexArray:    glGenVertexArrays(1, &resource); return resource;
-    case Luminous::RenderResource::Buffer:         glGenBuffers(1, &resource); return resource;
     default:
       Radiant::error("RenderDriverGL: Can't create GL resource: unknown type %d", type);
       assert(false);
@@ -61,8 +60,6 @@ namespace
   {
     switch (type)
     {
-    case Luminous::RenderResource::VertexArray:    glDeleteVertexArrays(1, &resource); break;
-    case Luminous::RenderResource::Buffer:         glDeleteBuffers(1, &resource); break;
     default:
       Radiant::error("RenderDriverGL: Can't destroy GL resource: unknown type %d", type);
       assert(false);
@@ -88,33 +85,11 @@ namespace Luminous
     inline bool operator<(const ResourceHandle<T> & o) const { return handle < o.handle; }
   };
 
-  struct BufferHandle : public ResourceHandle<Buffer>
-  {
-    BufferHandle(const Buffer * ptr = nullptr) : ResourceHandle(ptr), usage(Buffer::StaticDraw), size(0), uploaded(0) {}
-    
-    Buffer::Usage usage;
-    size_t size;        // Size (in bytes)
-    size_t uploaded;    // Uploaded bytes (for incremental upload)
-  };
-
-  struct BufferMapping
-  {
-    BufferMapping() : target(0), access(0), offset(0), length(0), data(0) {}
-    GLenum target;
-    GLenum access;
-    int offset;
-    std::size_t length;
-    void * data;
-  };
-
-  typedef ResourceHandle<VertexArray> VertexArrayHandle;
-
-
   struct RenderState
   {
     Luminous::ProgramGL * program;
-    VertexArrayHandle * vertexArray;
-    BufferHandle * uniformBuffer;
+    VertexArrayGL * vertexArray;
+    BufferGL * uniformBuffer;
     std::array<TextureGL*, 8> textures;
     bool operator<(const RenderState & o) const
     {
@@ -156,8 +131,8 @@ namespace Luminous
   class RenderDriverGL::D
   {
   public:
-    D(unsigned int threadIndex)
-      : m_stateGl(threadIndex)
+    D(unsigned int threadIndex, RenderDriverGL & driver)
+      : m_stateGl(threadIndex, driver)
       , m_currentBuffer(0)
       , m_threadIndex(threadIndex)
       , m_frame(0)
@@ -170,12 +145,10 @@ namespace Luminous
     StateGL m_stateGl;
     GLuint m_currentBuffer;   // Currently bound buffer object
 
-    std::map<GLuint, BufferMapping> m_bufferMaps;
-
     typedef std::map<RenderResource::Hash, ProgramGL> ProgramList;
     typedef std::map<RenderResource::Hash, TextureGL> TextureList;
-    typedef std::map<RenderResource::Id, BufferHandle> BufferList;
-    typedef std::map<RenderResource::Id, VertexArrayHandle> VertexArrayList;
+    typedef std::map<RenderResource::Id, BufferGL> BufferList;
+    typedef std::map<RenderResource::Id, VertexArrayGL> VertexArrayList;
 
     /// Resources, different maps for each type because it eliminates the need
     /// for dynamic_cast or similar, and also makes resource sharing possible
@@ -183,7 +156,7 @@ namespace Luminous
     ProgramList m_programs;
     TextureList m_textures;
     BufferList m_buffers;
-    VertexArrayList m_VertexArrays;
+    VertexArrayList m_vertexArrays;
 
     RenderState m_state;
 
@@ -239,150 +212,6 @@ namespace Luminous
       m_releaseQueue.clear();
     }
 
-
-    void setVertexAttributes(const VertexArray & binding)
-    {
-      // Bind all vertex buffers
-      for (size_t i = 0; i < binding.bindingCount(); ++i) {
-        VertexArray::Binding b = binding.binding(i);
-        // Attach buffer
-        auto * buffer = RenderManager::getResource<Buffer>(b.buffer);
-        assert(buffer != nullptr);
-        bindBuffer(GL_ARRAY_BUFFER, *buffer);
-        setVertexDescription(b.description);
-      }
-    }
-
-    void setVertexDescription(const VertexDescription & description)
-    {
-      // Set buffer attributes from its bound VertexDescription
-      for (size_t attrIndex = 0; attrIndex < description.attributeCount(); ++attrIndex) {
-        VertexAttribute attr = description.attribute(attrIndex);
-        GLint location = glGetAttribLocation(m_stateGl.program(), attr.name.toAscii().data());
-        if (location == -1) {
-          Radiant::warning("Unable to bind vertex attribute %s", attr.name.toAscii().data());
-        }
-        else {
-          GLenum normalized = (attr.normalized ? GL_TRUE : GL_FALSE);
-
-          glVertexAttribPointer(location, attr.count, attr.type, normalized, description.vertexSize(), reinterpret_cast<GLvoid *>(attr.offset));
-          GLERROR("RenderDriverGL::Bind VertexArray glVertexAttribPointer");
-          glEnableVertexAttribArray(location);
-          GLERROR("RenderDriverGL::Bind VertexArray glEnableVertexAttribArray");
-        }
-      }
-    }
-
-    VertexArrayHandle & getVertexArrayHandle(const VertexArray & binding, BufferHandle ** indexHandle,
-                                             ProgramGL * program)
-    {
-      GLERROR("RenderDriverGL::getVertexArrayHandle");
-      VertexArrayHandle & vertexArrayHandle = m_VertexArrays[binding.resourceId()];
-
-      bool update = false;
-
-      if(vertexArrayHandle.handle == 0) {
-        // New resource
-        vertexArrayHandle.resource = &binding;
-        update = true;
-      }
-      else {
-        // Reset usage timer
-        vertexArrayHandle.lastUsed.start();
-
-        // Check if we need to recreate
-        if(vertexArrayHandle.generation < binding.generation()) {
-          destroyResource(RenderResource::VertexArray, vertexArrayHandle.handle);
-          update = true;
-        }
-      }
-
-      if(update) {
-        vertexArrayHandle.handle = createResource(RenderResource::VertexArray);
-        vertexArrayHandle.generation = binding.generation();
-
-        // Bind and setup all buffers/attributes
-        glBindVertexArray(vertexArrayHandle.handle);
-        if(program) program->bind();
-        setVertexAttributes(binding);
-
-        const Buffer * index = RenderManager::getResource<Buffer>(binding.indexBuffer());
-        if (index != nullptr) {
-          BufferHandle & iHandle = getBufferHandle(GL_ELEMENT_ARRAY_BUFFER, *index);
-          bindBuffer(GL_ELEMENT_ARRAY_BUFFER, iHandle.handle);
-          if(indexHandle)
-            *indexHandle = &iHandle;
-        }
-      } else if(indexHandle) {
-        const Buffer * index = RenderManager::getResource<Buffer>(binding.indexBuffer());
-        if(index)
-          *indexHandle = &getBufferHandle(GL_ELEMENT_ARRAY_BUFFER, *index);
-      }
-
-      return vertexArrayHandle;
-    }
-
-    void setVertexArray(const VertexArrayHandle & vertexArrayHandle)
-    {
-      // Bind
-      if(m_stateGl.setVertexArray(vertexArrayHandle.handle)) {
-        glBindVertexArray(vertexArrayHandle.handle);
-      }
-    }
-
-    inline void bindBuffer(GLenum bufferTarget, GLuint buffer)
-    {
-      /// @todo doesn't take bufferTarget into account
-      /*if(buffer == m_currentBuffer)
-        return;
-      m_currentBuffer = buffer;*/
-      glBindBuffer(bufferTarget, buffer);
-      GLERROR("RenderDriverGL::bindBuffer glBindBuffer");
-    }
-
-    BufferHandle & getBufferHandle(GLenum bufferTarget, const Buffer & buffer)
-    {
-      BufferHandle & bufferHandle = m_buffers[buffer.resourceId()];
-      if(bufferHandle.handle == 0) {
-        bufferHandle.handle = createResource(RenderResource::Buffer);
-        bufferHandle.resource = &buffer;
-      }
-
-      // Reset usage timer
-      bufferHandle.lastUsed.start();
-
-      // Update if dirty
-      if (bufferHandle.generation < buffer.generation()) {
-        bindBuffer(bufferTarget, bufferHandle.handle);
-
-        // Update or reallocate the resource
-        /// @todo incremental upload
-        if (buffer.size() != bufferHandle.size || buffer.usage() != bufferHandle.usage) {
-          glBufferData(bufferTarget, buffer.size(), buffer.data(), buffer.usage());
-          GLERROR("RenderDriverGL::bindBuffer glBufferData");
-        }
-        else {
-          glBufferSubData(bufferTarget, 0, buffer.size(), buffer.data());
-          GLERROR("RenderDriverGL::bindBuffer glBufferSubData");
-        }
-
-        // Update cache handle
-        bufferHandle.generation = buffer.generation();
-        bufferHandle.size = buffer.size();
-        bufferHandle.uploaded = buffer.size();
-        bufferHandle.usage = buffer.usage();
-      }
-
-      return bufferHandle;
-    }
-
-    BufferHandle & bindBuffer(GLenum bufferTarget, const Buffer & buffer)
-    {
-      BufferHandle & bufferHandle = getBufferHandle(bufferTarget, buffer);
-      bindBuffer(bufferTarget, bufferHandle.handle);
-      return bufferHandle;
-    }
-
     void setState(const RenderState & state)
     {
       state.program->bind();
@@ -393,7 +222,7 @@ namespace Luminous
       }
 
       if(state.vertexArray)
-        setVertexArray(*state.vertexArray);
+        state.vertexArray->bind();
     }
 
     void render(const RenderCommand & cmd, GLint uniformHandle, GLint uniformBlockIndex)
@@ -466,7 +295,7 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////////
   //
   RenderDriverGL::RenderDriverGL(unsigned int threadIndex)
-    : m_d(new RenderDriverGL::D(threadIndex))
+    : m_d(new RenderDriverGL::D(threadIndex, *this))
   {
   }
 
@@ -598,31 +427,23 @@ namespace Luminous
 
   void RenderDriverGL::setVertexBuffer(const Buffer & buffer)
   {
-    m_d->bindBuffer(GL_ARRAY_BUFFER, buffer);
+    assert(buffer.type() == Buffer::Vertex);
+    auto & bufferGL = handle(buffer);
+    bufferGL.bind();
   }
 
   void RenderDriverGL::setIndexBuffer(const Buffer & buffer)
   {
-    m_d->bindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
+    assert(buffer.type() == Buffer::Index);
+    auto & bufferGL = handle(buffer);
+    bufferGL.bind();
   }
 
   void RenderDriverGL::setUniformBuffer(const Buffer & buffer)
   {
-    m_d->bindBuffer(GL_UNIFORM_BUFFER_EXT, buffer);
-  }
-
-  void RenderDriverGL::setVertexBinding(const VertexArray & binding)
-  {
-#ifdef LUMINOUS_OPENGLES
-    // OpenGL ES doesn't have VAOs, so we'll just have to bind the buffers and attributes every time
-    m_d->setVertexAttributes(binding);
-    auto * indexBuffer = RenderManager::getResource<Buffer>(binding.indexBuffer());
-    if (indexBuffer)
-      setIndexBuffer(*indexBuffer);
-#else
-    VertexArrayHandle & vertexArrayHandle = m_d->getVertexArrayHandle(binding, nullptr, nullptr);
-    m_d->setVertexArray(vertexArrayHandle);
-#endif
+    assert(buffer.type() == Buffer::Uniform);
+    auto & bufferGL = handle(buffer);
+    bufferGL.bind();
   }
 
   ProgramGL & RenderDriverGL::handle(const Program & program)
@@ -688,51 +509,16 @@ namespace Luminous
   void * RenderDriverGL::mapBuffer(const Buffer & buffer, int offset, std::size_t length,
                                    Radiant::FlagsT<Buffer::MapAccess> access)
   {
-    // It doesn't really matter what target we use, but maybe we minimize state
-    // changes by using the correct one
-    GLenum target = buffer.type();
-    if(!target)
-      target = GL_ARRAY_BUFFER;
+    BufferGL & bufferGL = handle(buffer);
 
-    BufferHandle & bufferHandle = m_d->getBufferHandle(target, buffer);
-    BufferMapping & map = m_d->m_bufferMaps[bufferHandle.handle];
-
-    if(map.data) {
-      if(map.access == access.asInt() && map.offset == offset && map.length == length)
-        return map.data;
-      m_d->bindBuffer(target, bufferHandle.handle);
-      glUnmapBuffer(target);
-      GLERROR("RenderDriverGL::mapBuffer glUnmapBuffer");
-    }
-
-    m_d->bindBuffer(target, bufferHandle.handle);
-    map.access = access.asInt();
-    map.target = target;
-    map.offset = offset;
-    map.length = length;
-    map.data = glMapBufferRange(map.target, map.offset, map.length, map.access);
-    GLERROR("RenderDriverGL::mapBuffer glMapBufferRange");
-    return map.data;
+    return bufferGL.map(offset, length, access);
   }
 
   void RenderDriverGL::unmapBuffer(const Buffer & buffer)
   {
-    auto it = m_d->m_buffers.find(buffer.resourceId());
-    if(it == m_d->m_buffers.end()) {
-      Radiant::warning("RenderDriverGL::unmapBuffer # Buffer %lu not bound", buffer.resourceId());
-      return;
-    }
+    BufferGL & bufferGL = handle(buffer);
 
-    auto mit = m_d->m_bufferMaps.find(it->second.handle);
-    if(mit == m_d->m_bufferMaps.end()) {
-      Radiant::warning("RenderDriverGL::unmapBuffer # Buffer %lu not mapped", buffer.resourceId());
-      return;
-    }
-
-    m_d->bindBuffer(mit->second.target, it->second.handle);
-    glUnmapBuffer(mit->second.target);
-
-    m_d->m_bufferMaps.erase(mit);
+    bufferGL.unmap();
   }
 
   RenderCommand & RenderDriverGL::createRenderCommand(VertexArray & binding,
@@ -746,8 +532,8 @@ namespace Luminous
     auto & state = m_d->m_state;
     state.program = &handle(*style.fill.shader);
     state.program->link(*style.fill.shader);
-    state.vertexArray = &m_d->getVertexArrayHandle(binding, nullptr, state.program);
-    state.uniformBuffer = &m_d->getBufferHandle(GL_UNIFORM_BUFFER, uniformBuffer);
+    state.vertexArray = &handle(binding);
+    state.uniformBuffer = &handle(uniformBuffer);
 
     int unit = 0;
     for(auto it = style.fill.tex.begin(); it != style.fill.tex.end(); ++it) {
@@ -790,12 +576,13 @@ namespace Luminous
 
   void RenderDriverGL::flush()
   {
-    for(auto it = m_d->m_bufferMaps.begin(); it != m_d->m_bufferMaps.end(); ++it) {
-      const BufferMapping & b = it->second;
-      m_d->bindBuffer(b.target, it->first);
+
+    for(auto it = m_d->m_stateGl.bufferMaps().begin(); it != m_d->m_stateGl.bufferMaps().end(); ++it) {
+      const BufferMapping & b = it->second;      
+      glBindBuffer(b.target, it->first);
       glUnmapBuffer(b.target);
     }
-    m_d->m_bufferMaps.clear();
+    m_d->m_stateGl.bufferMaps().clear();
 
     /*static int foo = 0;
     if(foo++ % 60 == 0) {
@@ -816,7 +603,7 @@ namespace Luminous
 
       m_d->setState(state);
 
-      GLint uniformHandle = state.uniformBuffer->handle;
+      GLint uniformHandle = state.uniformBuffer->handle();
       GLint uniformBlockIndex = 0;
 
       for(int i = 0, s = opaque.usedSize; i < s; ++i) {
@@ -834,7 +621,7 @@ namespace Luminous
       const RenderCommand & cmd = it->second;
 
       m_d->setState(state);
-      m_d->render(cmd, state.uniformBuffer->handle, 0);
+      m_d->render(cmd, state.uniformBuffer->handle(), 0);
     }
 
     if(m_d->m_translucentQueue.usedSize * 10 > m_d->m_translucentQueue.queue.capacity())
@@ -848,6 +635,48 @@ namespace Luminous
     /// @note This should only be called from the main thread
     m_d->m_releaseQueue.push_back(id);
   }
+
+  BufferGL & RenderDriverGL::handle(const Buffer & buffer)
+  {
+    auto it = m_d->m_buffers.find(buffer.resourceId());
+    if(it == m_d->m_buffers.end()) {
+      // libstdc++ doesn't have this yet
+      //it = m_d->m_textures.emplace(buffer.resourceId(), m_d->m_stateGl).first;
+      it = m_d->m_buffers.insert(std::make_pair(buffer.resourceId(), BufferGL(m_d->m_stateGl))).first;
+      it->second.setExpirationSeconds(buffer.expiration());
+    }
+
+    return it->second;
+  }
+
+  VertexArrayGL & RenderDriverGL::handle(const VertexArray & vertexArray)
+  {
+    auto it = m_d->m_vertexArrays.find(vertexArray.resourceId());
+    if(it == m_d->m_vertexArrays.end()) {
+
+      it = m_d->m_vertexArrays.insert(std::make_pair(vertexArray.resourceId(), VertexArrayGL(m_d->m_stateGl))).first;
+      it->second.setExpirationSeconds(vertexArray.expiration());
+      it->second.upload(vertexArray);
+    }
+
+    VertexArrayGL & vertexArrayGL = it->second;
+
+    vertexArrayGL.touch();
+
+    /// @todo should this be done somewhere else? Should the old VertexArrayGL be destroyed?
+    if(vertexArrayGL.generation() < vertexArray.generation())
+      vertexArrayGL.upload(vertexArray);
+
+    return vertexArrayGL;
+  }
+
+  void RenderDriverGL::setVertexBinding(const VertexArray &binding)
+  {
+    auto & vertexArrayGL = handle(binding);
+
+    vertexArrayGL.bind();
+  }
+
 }
 
 #undef GLERROR

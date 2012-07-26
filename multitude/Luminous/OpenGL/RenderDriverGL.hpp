@@ -3,6 +3,8 @@
 
 #include "Luminous/Luminous.hpp"
 #include "Luminous/RenderDriver.hpp"
+#include "Luminous/OpenGL/BufferGL.hpp"
+#include "Luminous/OpenGL/VertexArrayGL.hpp"
 
 #include <Radiant/Flags.hpp>
 
@@ -63,6 +65,8 @@ namespace Luminous
 
     LUMINOUS_API ProgramGL & handle(const Program & program);
     LUMINOUS_API TextureGL & handle(const Texture & texture);
+    LUMINOUS_API BufferGL & handle(const Buffer & buffer);
+    LUMINOUS_API VertexArrayGL & handle(const VertexArray & vertexArray);
 
     /// @todo Add function wrapper(s) for:
     /// * glLogicOp

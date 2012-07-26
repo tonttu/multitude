@@ -3,17 +3,30 @@
 
 #include "Luminous.hpp"
 
+#include <map>
 #include <algorithm>
 
 namespace Luminous
 {
+  class RenderDriverGL;
+
+  struct BufferMapping
+  {
+    BufferMapping() : target(0), access(0), offset(0), length(0), data(0) {}
+    GLenum target;
+    GLenum access;
+    int offset;
+    std::size_t length;
+    void * data;
+  };
+
   /// Keeps track of current OpenGL state, one instance is shared between all *GL
   /// -classes in the same context
   /// None of these functions actually modify any OpenGL state
   class StateGL
   {
   public:
-    inline StateGL(unsigned int threadIndex);
+    inline StateGL(unsigned int threadIndex, RenderDriverGL & driver);
 
     /// Sets the current program object
     /// @return true if current program was changed
@@ -29,6 +42,10 @@ namespace Luminous
     inline void consumeUploadBytes(int64_t bytes);
     inline void clearUploadedBytes();
 
+    inline std::map<GLuint, BufferMapping> & bufferMaps();
+
+    inline RenderDriverGL & driver() { return m_driver; }
+
   private:
     /// Currently bound shader program
     GLuint m_currentProgram;
@@ -40,15 +57,20 @@ namespace Luminous
 
     /// Uploaded bytes this frame
     int64_t m_uploadedBytes;
+
+    std::map<GLuint, BufferMapping> m_bufferMaps;
+
+    RenderDriverGL & m_driver;
   };
 
   /////////////////////////////////////////////////////////////////////////////
 
-  StateGL::StateGL(unsigned int threadIndex)
+  StateGL::StateGL(unsigned int threadIndex, RenderDriverGL &driver)
     : m_currentProgram(0)
     , m_currentVertexArray(0)
     , m_threadIndex(threadIndex)
     , m_uploadedBytes(0)
+    , m_driver(driver)
   {}
 
   bool StateGL::setProgram(GLuint handle)
@@ -99,5 +121,11 @@ namespace Luminous
   void StateGL::clearUploadedBytes()
   {
   }
+
+  std::map<GLuint, BufferMapping> & StateGL::bufferMaps()
+  {
+    return m_bufferMaps;
+  }
+
 }
 #endif // LUMINOUS_STATEGL_HPP
