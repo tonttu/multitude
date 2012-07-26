@@ -72,7 +72,8 @@ namespace Luminous
   }
 
   Texture::Texture(Texture && tex)
-    : m_d(tex.m_d)
+    : RenderResource(std::move(tex))
+    , m_d(tex.m_d)
   {
     tex.m_d = nullptr;
   }

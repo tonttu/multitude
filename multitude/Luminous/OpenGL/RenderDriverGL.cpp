@@ -797,13 +797,13 @@ namespace Luminous
     }
     m_d->m_bufferMaps.clear();
 
-    static int foo = 0;
+    /*static int foo = 0;
     if(foo++ % 60 == 0) {
       Radiant::info("%2d State changes, %2d Programs, %2d Shaders, %2d Textures, %2d Buffer Objects, %2d VertexArrays",
                     m_d->m_opaqueQueue.size() + m_d->m_translucentQueue.queue.size(),
                     m_d->m_programs.size(), m_d->m_shaders.size(), m_d->m_textures.size(),
                     m_d->m_buffers.size(), m_d->m_VertexArrays.size());
-    }
+    }*/
 
     glEnable(GL_DEPTH_TEST);
 
