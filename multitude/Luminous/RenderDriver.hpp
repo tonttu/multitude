@@ -69,6 +69,9 @@ namespace Luminous
     // Setup the vertexbuffers and attributes
     LUMINOUS_API virtual void setVertexBinding(const VertexArray & binding) = 0;
 
+    // Texturing
+    LUMINOUS_API virtual void setTexture(unsigned int textureUnit, const Texture & texture) = 0;
+
     // Reset the renderstate to its default
     LUMINOUS_API virtual void clearState() = 0;
 

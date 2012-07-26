@@ -841,6 +841,11 @@ namespace Luminous
     return it->second;
   }
 
+  void RenderDriverGL::setTexture(unsigned int textureUnit, const Texture & texture)
+  {
+    handle(texture).upload(texture, textureUnit, true);
+  }
+
   void RenderDriverGL::clearState()
   {
     //m_d->reset();
