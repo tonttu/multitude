@@ -20,6 +20,9 @@ namespace Luminous
     LUMINOUS_API Texture();
     LUMINOUS_API ~Texture();
 
+    LUMINOUS_API Texture(Texture && tex);
+    LUMINOUS_API Texture & operator=(Texture && tex);
+
     /// @todo should we have our own enum for these?
     ///       PixelFormat doesn't have for example sized internal formats
     /// @param format 0 == automatic (default) or OpenGL internal format enum

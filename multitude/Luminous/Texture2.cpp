@@ -71,6 +71,17 @@ namespace Luminous
     delete m_d;
   }
 
+  Texture::Texture(Texture && tex)
+    : m_d(tex.m_d)
+  {
+    tex.m_d = nullptr;
+  }
+
+  Texture & Texture::operator=(Texture && tex)
+  {
+    std::swap(m_d, tex.m_d);
+  }
+
   void Texture::setInternalFormat(int format)
   {
     m_d->internalFormat = format;
