@@ -158,7 +158,7 @@ namespace Luminous
   class ContextArray;
   struct RenderCommand;
   // Resources
-  class HardwareBuffer;
+  class Buffer;
   class ShaderProgram;
   class ShaderGLSL;
   struct ShaderUniform;

@@ -17,7 +17,7 @@
 // Luminous v2
 #include "Luminous/VertexAttributeBinding.hpp"
 #include "Luminous/VertexDescription.hpp"
-#include "Luminous/HardwareBuffer.hpp"
+#include "Luminous/Buffer.hpp"
 
 #include <Nimble/Matrix4.hpp>
 
@@ -187,8 +187,8 @@ namespace Luminous
 
   struct RenderContext::SharedBuffer
   {
-    SharedBuffer(HardwareBuffer::Type type) : buffer(type), reservedBytes(0) {}
-    HardwareBuffer buffer;
+    SharedBuffer(Buffer::Type type) : buffer(type), reservedBytes(0) {}
+    Buffer buffer;
     std::size_t reservedBytes;
 
     /// @todo this is extremely stupid, make something smarter
@@ -1498,11 +1498,11 @@ namespace Luminous
   }
 
   std::pair<void *, RenderContext::SharedBuffer *> RenderContext::sharedBuffer(
-      std::size_t vertexSize, std::size_t maxVertexCount, HardwareBuffer::Type type, unsigned int & offset)
+      std::size_t vertexSize, std::size_t maxVertexCount, Buffer::Type type, unsigned int & offset)
   {
-    Internal::BufferPool & pool = type == HardwareBuffer::Index
+    Internal::BufferPool & pool = type == Buffer::Index
         ? m_data->m_indexBuffers
-        : type == HardwareBuffer::Vertex
+        : type == Buffer::Vertex
           ? m_data->m_vertexBuffers[vertexSize]
           : m_data->m_uniformBuffers[vertexSize];
 
@@ -1514,7 +1514,7 @@ namespace Luminous
       if(pool.currentIndex >= pool.buffers.size()) {
         pool.buffers.emplace_back(type);
         buffer = &pool.buffers.back();
-        buffer->buffer.setData(nullptr, std::max(requiredBytes, nextSize), HardwareBuffer::StreamDraw);
+        buffer->buffer.setData(nullptr, std::max(requiredBytes, nextSize), Buffer::StreamDraw);
         break;
       }
 
@@ -1526,7 +1526,7 @@ namespace Luminous
       ++pool.currentIndex;
     }
 
-    char * data = mapBuffer<char>(buffer->buffer, HardwareBuffer::MapWrite);
+    char * data = mapBuffer<char>(buffer->buffer, Buffer::MapWrite);
     data += buffer->reservedBytes;
     offset = buffer->reservedBytes / vertexSize;
     buffer->reservedBytes += requiredBytes;
@@ -1534,8 +1534,8 @@ namespace Luminous
   }
 
   template <>
-  void * RenderContext::mapBuffer<void>(const HardwareBuffer & buffer, int offset, std::size_t length,
-                                        Radiant::FlagsT<HardwareBuffer::MapAccess> access)
+  void * RenderContext::mapBuffer<void>(const Buffer & buffer, int offset, std::size_t length,
+                                        Radiant::FlagsT<Buffer::MapAccess> access)
   {
     return m_data->m_driver.mapBuffer(buffer, offset, length, access);
   }
@@ -1555,13 +1555,13 @@ namespace Luminous
         m_data->m_uniformBufferOffsetAlignment;
 
     SharedBuffer * ibuffer;
-    std::tie(mappedIndexBuffer, ibuffer) = sharedBuffer<unsigned int>(indexCount, HardwareBuffer::Index, indexOffset);
+    std::tie(mappedIndexBuffer, ibuffer) = sharedBuffer<unsigned int>(indexCount, Buffer::Index, indexOffset);
 
     SharedBuffer * vbuffer;
-    std::tie(mappedVertexBuffer, vbuffer) = sharedBuffer(vertexSize, vertexCount, HardwareBuffer::Vertex, vertexOffset);
+    std::tie(mappedVertexBuffer, vbuffer) = sharedBuffer(vertexSize, vertexCount, Buffer::Vertex, vertexOffset);
 
     SharedBuffer * ubuffer;
-    std::tie(mappedUniformBuffer, ubuffer) = sharedBuffer(uniformSize, 1, HardwareBuffer::Uniform, uniformOffset);
+    std::tie(mappedUniformBuffer, ubuffer) = sharedBuffer(uniformSize, 1, Buffer::Uniform, uniformOffset);
 
     VertexAttributeBinding * binding = &vbuffer->bindings[std::make_pair(style.fill.shader->hash(), ibuffer->buffer.resourceId())];
     if(binding->bindingCount() == 0) {
@@ -1956,13 +1956,13 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////////
   // Luminousv2
 
-  void RenderContext::setBuffer(HardwareBuffer::Type type, const Luminous::HardwareBuffer & buffer)
+  void RenderContext::setBuffer(Buffer::Type type, const Luminous::Buffer & buffer)
   {
     switch (type)
     {
-    case HardwareBuffer::Vertex: m_data->m_driver.setVertexBuffer(buffer); break;
-    case HardwareBuffer::Index: m_data->m_driver.setIndexBuffer(buffer); break;
-    case HardwareBuffer::Uniform: m_data->m_driver.setUniformBuffer(buffer); break;
+    case Buffer::Vertex: m_data->m_driver.setVertexBuffer(buffer); break;
+    case Buffer::Index: m_data->m_driver.setIndexBuffer(buffer); break;
+    case Buffer::Uniform: m_data->m_driver.setUniformBuffer(buffer); break;
     default:
       assert(false);
       Radiant::error("RenderContext::setBuffer - Buffertype %d not implemented", type);

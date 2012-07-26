@@ -38,9 +38,9 @@ namespace Luminous
     LUMINOUS_API virtual void preFrame() OVERRIDE;
     LUMINOUS_API virtual void postFrame() OVERRIDE;
 
-    LUMINOUS_API virtual void setVertexBuffer(const HardwareBuffer & buffer) OVERRIDE;
-    LUMINOUS_API virtual void setIndexBuffer(const HardwareBuffer & buffer) OVERRIDE;
-    LUMINOUS_API virtual void setUniformBuffer(const HardwareBuffer & buffer) OVERRIDE;
+    LUMINOUS_API virtual void setVertexBuffer(const Buffer & buffer) OVERRIDE;
+    LUMINOUS_API virtual void setIndexBuffer(const Buffer & buffer) OVERRIDE;
+    LUMINOUS_API virtual void setUniformBuffer(const Buffer & buffer) OVERRIDE;
 
     LUMINOUS_API virtual void setVertexBinding(const VertexAttributeBinding & binding) OVERRIDE;
     
@@ -51,12 +51,12 @@ namespace Luminous
     LUMINOUS_API virtual void setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer) OVERRIDE;
 
 
-    LUMINOUS_API virtual void * mapBuffer(const HardwareBuffer & buffer, int offset, std::size_t length,
-                                          Radiant::FlagsT<HardwareBuffer::MapAccess> access) OVERRIDE;
-    LUMINOUS_API virtual void unmapBuffer(const HardwareBuffer & buffer) OVERRIDE;
+    LUMINOUS_API virtual void * mapBuffer(const Buffer & buffer, int offset, std::size_t length,
+                                          Radiant::FlagsT<Buffer::MapAccess> access) OVERRIDE;
+    LUMINOUS_API virtual void unmapBuffer(const Buffer & buffer) OVERRIDE;
 
     LUMINOUS_API virtual RenderCommand & createRenderCommand(VertexAttributeBinding & binding,
-                                                             HardwareBuffer & uniformBuffer,
+                                                             Buffer & uniformBuffer,
                                                              const Luminous::Style & style) OVERRIDE;
 
     LUMINOUS_API virtual void flush() OVERRIDE;

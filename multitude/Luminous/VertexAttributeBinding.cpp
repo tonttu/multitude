@@ -1,5 +1,5 @@
 #include "Luminous/VertexAttributeBinding.hpp"
-#include "Luminous/HardwareBuffer.hpp"
+#include "Luminous/Buffer.hpp"
 #include "Luminous/VertexDescription.hpp"
 
 #include <algorithm>
@@ -39,7 +39,7 @@ namespace Luminous
     return *this;
   }
 
-  void VertexAttributeBinding::addBinding(const Luminous::HardwareBuffer & vertexBuffer, const Luminous::VertexDescription & description)
+  void VertexAttributeBinding::addBinding(const Luminous::Buffer & vertexBuffer, const Luminous::VertexDescription & description)
   {
     // Add the binding if it doesn't already exist
     D::Bindings::const_iterator it = std::find(m_d->bindings.begin(), m_d->bindings.end(), vertexBuffer.resourceId());
@@ -52,12 +52,12 @@ namespace Luminous
     }
   }
 
-  void VertexAttributeBinding::setIndexBuffer(const Luminous::HardwareBuffer & indexBuffer)
+  void VertexAttributeBinding::setIndexBuffer(const Luminous::Buffer & indexBuffer)
   {
     m_d->indexBuffer = indexBuffer.resourceId();
   }
 
-  void VertexAttributeBinding::removeBinding(const Luminous::HardwareBuffer & buffer)
+  void VertexAttributeBinding::removeBinding(const Luminous::Buffer & buffer)
   {
     D::Bindings::iterator it = std::find(m_d->bindings.begin(), m_d->bindings.end(), buffer.resourceId());
     if (it != m_d->bindings.end()) {

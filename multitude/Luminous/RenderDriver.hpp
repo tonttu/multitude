@@ -5,7 +5,7 @@
 #include "Luminous/RenderResource.hpp"
 #include "Luminous/VertexHolder.hpp"
 #include "Luminous/Style.hpp"
-#include "Luminous/HardwareBuffer.hpp"
+#include "Luminous/Buffer.hpp"
 
 #include <Radiant/Color.hpp>
 #include <Radiant/RefPtr.hpp>
@@ -60,11 +60,11 @@ namespace Luminous
     LUMINOUS_API virtual void setShaderProgram(const ShaderProgram & shader) = 0;
 
     // Bind a hardwarebuffer for use as a vertex buffer
-    LUMINOUS_API virtual void setVertexBuffer(const HardwareBuffer & buffer) = 0;
+    LUMINOUS_API virtual void setVertexBuffer(const Buffer & buffer) = 0;
     // Bind a hardwarebuffer for use as an index buffer
-    LUMINOUS_API virtual void setIndexBuffer(const HardwareBuffer & buffer) = 0;
+    LUMINOUS_API virtual void setIndexBuffer(const Buffer & buffer) = 0;
     // Bind a hardwarebuffer for use as a uniform buffer
-    LUMINOUS_API virtual void setUniformBuffer(const HardwareBuffer & buffer) = 0;
+    LUMINOUS_API virtual void setUniformBuffer(const Buffer & buffer) = 0;
 
     // Setup the vertexbuffers and attributes
     LUMINOUS_API virtual void setVertexBinding(const VertexAttributeBinding & binding) = 0;
@@ -78,12 +78,12 @@ namespace Luminous
     // Enable/disable renderbuffers
     LUMINOUS_API virtual void setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer) = 0;
 
-    LUMINOUS_API virtual void * mapBuffer(const HardwareBuffer & buffer, int offset, std::size_t length,
-                                          Radiant::FlagsT<HardwareBuffer::MapAccess> access) = 0;
-    LUMINOUS_API virtual void unmapBuffer(const HardwareBuffer & buffer) = 0;
+    LUMINOUS_API virtual void * mapBuffer(const Buffer & buffer, int offset, std::size_t length,
+                                          Radiant::FlagsT<Buffer::MapAccess> access) = 0;
+    LUMINOUS_API virtual void unmapBuffer(const Buffer & buffer) = 0;
 
     LUMINOUS_API virtual RenderCommand & createRenderCommand(VertexAttributeBinding & binding,
-                                                             HardwareBuffer & uniformBuffer,
+                                                             Buffer & uniformBuffer,
                                                              const Luminous::Style & style) = 0;
 
     LUMINOUS_API virtual void flush() = 0;

@@ -125,7 +125,7 @@ namespace Luminous
   }  
 
   // Only specialize for valid types
-  template <> LUMINOUS_API HardwareBuffer * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<HardwareBuffer>(id); }
+  template <> LUMINOUS_API Buffer * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<Buffer>(id); }
   template <> LUMINOUS_API VertexAttributeBinding * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<VertexAttributeBinding>(id); }
   template <> LUMINOUS_API VertexDescription * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<VertexDescription>(id); }
   template <> LUMINOUS_API Texture * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<Texture>(id); }

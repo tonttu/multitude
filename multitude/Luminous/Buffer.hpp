@@ -1,5 +1,5 @@
-#if !defined (LUMINOUS_HARDWAREBUFFER_HPP)
-#define LUMINOUS_HARDWAREBUFFER_HPP
+#if !defined (LUMINOUS_BUFFER_HPP)
+#define LUMINOUS_BUFFER_HPP
 
 #include "Luminous/Luminous.hpp"
 #include "Luminous/RenderResource.hpp"
@@ -13,7 +13,7 @@
 
 namespace Luminous
 {
-  class HardwareBuffer : public RenderResource
+  class Buffer : public RenderResource
   {
   public:
     enum Usage
@@ -51,11 +51,11 @@ namespace Luminous
     };
 
   public:
-    LUMINOUS_API HardwareBuffer(Type type = Unknown);
-    LUMINOUS_API ~HardwareBuffer();
+    LUMINOUS_API Buffer(Type type = Unknown);
+    LUMINOUS_API ~Buffer();
 
-    LUMINOUS_API HardwareBuffer(HardwareBuffer && b);
-    LUMINOUS_API HardwareBuffer & operator=(HardwareBuffer && b);
+    LUMINOUS_API Buffer(Buffer && b);
+    LUMINOUS_API Buffer & operator=(Buffer && b);
 
     LUMINOUS_API void setData(const char * data, size_t size, Usage usage);
 
@@ -71,6 +71,6 @@ namespace Luminous
     class D;
     D * m_d;
   };
-  MULTI_FLAGS(HardwareBuffer::MapAccess)
+  MULTI_FLAGS(Buffer::MapAccess)
 }
-#endif // LUMINOUS_HARDWAREBUFFER_HPP
+#endif // LUMINOUS_BUFFER_HPP

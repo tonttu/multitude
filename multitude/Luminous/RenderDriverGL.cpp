@@ -2,7 +2,7 @@
 #include "Luminous/RenderManager.hpp"
 #include "Luminous/VertexAttributeBinding.hpp"
 #include "Luminous/VertexDescription.hpp"
-#include "Luminous/HardwareBuffer.hpp"
+#include "Luminous/Buffer.hpp"
 #include "Luminous/ShaderProgram.hpp"
 #include "Luminous/ShaderUniform.hpp"
 #include "Luminous/Texture2.hpp"
@@ -105,11 +105,11 @@ namespace Luminous
     inline bool operator<(const ResourceHandle<T> & o) const { return handle < o.handle; }
   };
 
-  struct BufferHandle : public ResourceHandle<HardwareBuffer>
+  struct BufferHandle : public ResourceHandle<Buffer>
   {
-    BufferHandle(const HardwareBuffer * ptr = nullptr) : ResourceHandle(ptr), usage(HardwareBuffer::StaticDraw), size(0), uploaded(0) {}
+    BufferHandle(const Buffer * ptr = nullptr) : ResourceHandle(ptr), usage(Buffer::StaticDraw), size(0), uploaded(0) {}
     
-    HardwareBuffer::Usage usage;
+    Buffer::Usage usage;
     size_t size;        // Size (in bytes)
     size_t uploaded;    // Uploaded bytes (for incremental upload)
   };
@@ -585,7 +585,7 @@ namespace Luminous
       for (size_t i = 0; i < binding.bindingCount(); ++i) {
         VertexAttributeBinding::Binding b = binding.binding(i);
         // Attach buffer
-        auto * buffer = RenderManager::getResource<HardwareBuffer>(b.buffer);
+        auto * buffer = RenderManager::getResource<Buffer>(b.buffer);
         assert(buffer != nullptr);
         bindBuffer(GL_ARRAY_BUFFER, *buffer);
         setVertexDescription(b.description);
@@ -645,7 +645,7 @@ namespace Luminous
         if(programHandle) bindShaderProgram(*programHandle);
         setVertexAttributes(binding);
 
-        const HardwareBuffer * index = RenderManager::getResource<HardwareBuffer>(binding.indexBuffer());
+        const Buffer * index = RenderManager::getResource<Buffer>(binding.indexBuffer());
         if (index != nullptr) {
           BufferHandle & iHandle = getBufferHandle(GL_ELEMENT_ARRAY_BUFFER, *index);
           bindBuffer(GL_ELEMENT_ARRAY_BUFFER, iHandle.handle);
@@ -653,7 +653,7 @@ namespace Luminous
             *indexHandle = &iHandle;
         }
       } else if(indexHandle) {
-        const HardwareBuffer * index = RenderManager::getResource<HardwareBuffer>(binding.indexBuffer());
+        const Buffer * index = RenderManager::getResource<Buffer>(binding.indexBuffer());
         if(index)
           *indexHandle = &getBufferHandle(GL_ELEMENT_ARRAY_BUFFER, *index);
       }
@@ -680,7 +680,7 @@ namespace Luminous
       GLERROR("RenderDriverGL::bindBuffer glBindBuffer");
     }
 
-    BufferHandle & getBufferHandle(GLenum bufferTarget, const HardwareBuffer & buffer)
+    BufferHandle & getBufferHandle(GLenum bufferTarget, const Buffer & buffer)
     {
       BufferHandle & bufferHandle = m_buffers[buffer.resourceId()];
       if(bufferHandle.handle == 0) {
@@ -716,7 +716,7 @@ namespace Luminous
       return bufferHandle;
     }
 
-    BufferHandle & bindBuffer(GLenum bufferTarget, const HardwareBuffer & buffer)
+    BufferHandle & bindBuffer(GLenum bufferTarget, const Buffer & buffer)
     {
       BufferHandle & bufferHandle = getBufferHandle(bufferTarget, buffer);
       bindBuffer(bufferTarget, bufferHandle.handle);
@@ -924,17 +924,17 @@ namespace Luminous
     }
   }
 
-  void RenderDriverGL::setVertexBuffer(const HardwareBuffer & buffer)
+  void RenderDriverGL::setVertexBuffer(const Buffer & buffer)
   {
     m_d->bindBuffer(GL_ARRAY_BUFFER, buffer);
   }
 
-  void RenderDriverGL::setIndexBuffer(const HardwareBuffer & buffer)
+  void RenderDriverGL::setIndexBuffer(const Buffer & buffer)
   {
     m_d->bindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
   }
 
-  void RenderDriverGL::setUniformBuffer(const HardwareBuffer & buffer)
+  void RenderDriverGL::setUniformBuffer(const Buffer & buffer)
   {
     m_d->bindBuffer(GL_UNIFORM_BUFFER_EXT, buffer);
   }
@@ -944,7 +944,7 @@ namespace Luminous
 #ifdef LUMINOUS_OPENGLES
     // OpenGL ES doesn't have VAOs, so we'll just have to bind the buffers and attributes every time
     m_d->setVertexAttributes(binding);
-    auto * indexBuffer = RenderManager::getResource<HardwareBuffer>(binding.indexBuffer());
+    auto * indexBuffer = RenderManager::getResource<Buffer>(binding.indexBuffer());
     if (indexBuffer)
       setIndexBuffer(*indexBuffer);
 #else
@@ -989,8 +989,8 @@ namespace Luminous
     glStencilMaskSeparate(GL_FRONT_AND_BACK, stencil);
   }
 
-  void * RenderDriverGL::mapBuffer(const HardwareBuffer & buffer, int offset, std::size_t length,
-                                   Radiant::FlagsT<HardwareBuffer::MapAccess> access)
+  void * RenderDriverGL::mapBuffer(const Buffer & buffer, int offset, std::size_t length,
+                                   Radiant::FlagsT<Buffer::MapAccess> access)
   {
     // It doesn't really matter what target we use, but maybe we minimize state
     // changes by using the correct one
@@ -1019,7 +1019,7 @@ namespace Luminous
     return map.data;
   }
 
-  void RenderDriverGL::unmapBuffer(const HardwareBuffer & buffer)
+  void RenderDriverGL::unmapBuffer(const Buffer & buffer)
   {
     auto it = m_d->m_buffers.find(buffer.resourceId());
     if(it == m_d->m_buffers.end()) {
@@ -1040,7 +1040,7 @@ namespace Luminous
   }
 
   RenderCommand & RenderDriverGL::createRenderCommand(VertexAttributeBinding & binding,
-                                                      HardwareBuffer & uniformBuffer,
+                                                      Buffer & uniformBuffer,
                                                       const Luminous::Style & style)
   {
     assert(style.fill.shader);

@@ -19,7 +19,7 @@
 #include <Luminous/VertexBuffer.hpp>
 #include <Luminous/GLSLProgramObject.hpp>
 #include <Luminous/FramebufferResource.hpp>
-#include <Luminous/HardwareBuffer.hpp>
+#include <Luminous/Buffer.hpp>
 #include <Luminous/VertexHolder.hpp>
 
 #include <Nimble/Rectangle.hpp>
@@ -451,19 +451,19 @@ namespace Luminous
     /// <Luminousv2>
     //////////////////////////////////////////////////////////////////////////
 
-    void setBuffer(HardwareBuffer::Type type, const Luminous::HardwareBuffer & buffer);
+    void setBuffer(Buffer::Type type, const Luminous::Buffer & buffer);
     void setTexture(unsigned int textureUnit, const Luminous::Texture & texture);
     void setVertexBinding(const VertexAttributeBinding & binding);
     void setShaderProgram(const ShaderProgram & program);
     template <typename T> bool setShaderUniform(const char * name, const T & value);
 
     template <typename T>
-    T * mapBuffer(const HardwareBuffer & buffer, int offset, std::size_t length,
-                  Radiant::FlagsT<HardwareBuffer::MapAccess> access);
+    T * mapBuffer(const Buffer & buffer, int offset, std::size_t length,
+                  Radiant::FlagsT<Buffer::MapAccess> access);
 
     template <typename T>
-    inline T * mapBuffer(const HardwareBuffer & buffer,
-                         Radiant::FlagsT<HardwareBuffer::MapAccess> access);
+    inline T * mapBuffer(const Buffer & buffer,
+                         Radiant::FlagsT<Buffer::MapAccess> access);
 
     void draw(PrimitiveType primType, unsigned int offset, unsigned int primitives);
     void drawIndexed(PrimitiveType primType, unsigned int offset, unsigned int primitives);
@@ -486,10 +486,10 @@ namespace Luminous
     struct SharedBuffer;
     template <typename T>
     std::pair<T *, SharedBuffer *> sharedBuffer(
-        std::size_t maxVertexCount, HardwareBuffer::Type type, unsigned int & offset);
+        std::size_t maxVertexCount, Buffer::Type type, unsigned int & offset);
 
     std::pair<void *, SharedBuffer *> sharedBuffer(
-        std::size_t vertexSize, std::size_t maxVertexCount, HardwareBuffer::Type type, unsigned int & offset);
+        std::size_t vertexSize, std::size_t maxVertexCount, Buffer::Type type, unsigned int & offset);
 
     template <typename Vertex, typename UniformBlock>
     RenderBuilder<Vertex, UniformBlock> render(Luminous::PrimitiveType type, int indexCount, int vertexCount, const Style & style);
@@ -539,19 +539,19 @@ namespace Luminous
   };
 
   template <>
-  void * RenderContext::mapBuffer<void>(const HardwareBuffer & buffer, int offset, std::size_t length,
-                                        Radiant::FlagsT<HardwareBuffer::MapAccess> access);
+  void * RenderContext::mapBuffer<void>(const Buffer & buffer, int offset, std::size_t length,
+                                        Radiant::FlagsT<Buffer::MapAccess> access);
 
   template <typename T>
-  T * RenderContext::mapBuffer(const HardwareBuffer & buffer, int offset, std::size_t length,
-                               Radiant::FlagsT<HardwareBuffer::MapAccess> access)
+  T * RenderContext::mapBuffer(const Buffer & buffer, int offset, std::size_t length,
+                               Radiant::FlagsT<Buffer::MapAccess> access)
   {
     return reinterpret_cast<T*>(mapBuffer<void>(buffer, offset, length, access));
   }
 
   template <typename T>
-  inline T * RenderContext::mapBuffer(const HardwareBuffer & buffer,
-                                      Radiant::FlagsT<HardwareBuffer::MapAccess> access)
+  inline T * RenderContext::mapBuffer(const Buffer & buffer,
+                                      Radiant::FlagsT<Buffer::MapAccess> access)
   {
     return mapBuffer<T>(buffer, 0, buffer.size(), access);
   }
@@ -573,7 +573,7 @@ namespace Luminous
 
   template <typename T>
   std::pair<T *, RenderContext::SharedBuffer *> RenderContext::sharedBuffer(
-      std::size_t maxVertexCount, HardwareBuffer::Type type, unsigned int & offset)
+      std::size_t maxVertexCount, Buffer::Type type, unsigned int & offset)
   {
     void * t;
     SharedBuffer * buffer;
