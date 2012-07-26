@@ -81,6 +81,23 @@ namespace Luminous
     m_handle = glCreateProgram();
   }
 
+  ProgramGL::ProgramGL(ProgramGL && program)
+    : ResourceHandleGL(std::move(program))
+    , m_shaders(std::move(program.m_shaders))
+    , m_samplers(std::move(program.m_samplers))
+    , m_linked(program.m_linked)
+  {
+  }
+
+  ProgramGL & ProgramGL::operator=(ProgramGL && program)
+  {
+    ResourceHandleGL::operator=(std::move(program));
+    std::swap(m_shaders, program.m_shaders);
+    std::swap(m_samplers, program.m_samplers);
+    std::swap(m_linked, program.m_linked);
+    return *this;
+  }
+
   ProgramGL::~ProgramGL()
   {
     if(m_handle)
@@ -112,11 +129,11 @@ namespace Luminous
 
     /// @todo we should have ShaderGL sharing through driver, for now they aren't shared
     m_shaders.clear();
-    m_shaders.resize(program.shaderCount());
 
     for(std::size_t i = 0; i < program.shaderCount(); ++i) {
       ShaderGLSL & shader = program.shader(i);
-      ShaderGL & shadergl = m_shaders[i];
+      m_shaders.push_back(std::move(ShaderGL()));
+      ShaderGL & shadergl = m_shaders.back();
       shadergl.compile(shader);
 
       // Attach to the program

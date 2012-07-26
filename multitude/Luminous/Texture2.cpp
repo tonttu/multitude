@@ -80,6 +80,7 @@ namespace Luminous
 
   Texture & Texture::operator=(Texture && tex)
   {
+    RenderResource::operator=(std::move(tex));
     std::swap(m_d, tex.m_d);
   }
 

@@ -27,8 +27,11 @@ namespace Luminous
     GLuint m_handle;
 
   private:
-    ShaderGL(const ShaderGL &);
-    ShaderGL & operator=(const ShaderGL &);
+    // With new enough compiler (GCC 4.7) using just private copy
+    // ctor/assignment don't work as expected, you need to use = delete,
+    // but then again, that doesn't work in msvc2010.
+    /*ShaderGL(const ShaderGL &) = delete;
+    ShaderGL & operator=(const ShaderGL &) = delete;*/
   };
 
   class ProgramGL : public ResourceHandleGL
@@ -36,6 +39,9 @@ namespace Luminous
   public:
     ProgramGL(StateGL & state);
     ~ProgramGL();
+
+    ProgramGL(ProgramGL && program);
+    ProgramGL & operator=(ProgramGL && program);
 
     void bind();
     void bind(const Program & program);

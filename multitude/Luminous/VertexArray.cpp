@@ -27,7 +27,7 @@ namespace Luminous
   }
 
   VertexArray::VertexArray(VertexArray && b)
-    : RenderResource(RenderResource::VertexArray)
+    : RenderResource(std::move(b))
     , m_d(b.m_d)
   {
     b.m_d = nullptr;
@@ -35,6 +35,7 @@ namespace Luminous
 
   VertexArray & VertexArray::operator=(VertexArray && b)
   {
+    RenderResource::operator=(std::move(b));
     std::swap(m_d, b.m_d);
     return *this;
   }

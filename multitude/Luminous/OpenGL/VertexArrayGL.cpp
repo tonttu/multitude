@@ -30,6 +30,7 @@ namespace Luminous
   VertexArrayGL & VertexArrayGL::operator=(VertexArrayGL && t)
   {
     ResourceHandleGL::operator=(std::move(t));
+    m_generation = t.m_generation;
     return *this;
   }
 

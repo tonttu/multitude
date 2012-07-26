@@ -97,9 +97,7 @@ namespace Luminous
 
   ShaderGLSL & ShaderGLSL::operator=(ShaderGLSL && s)
   {
-    delete m_d;
-    m_d = s.m_d;
-    s.m_d = nullptr;
+    std::swap(m_d, s.m_d);
     return *this;
   }
 
