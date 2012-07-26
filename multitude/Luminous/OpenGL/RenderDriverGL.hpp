@@ -61,6 +61,7 @@ namespace Luminous
 
     LUMINOUS_API virtual void flush() OVERRIDE;
 
+    LUMINOUS_API ProgramGL & handle(const Program & program);
     LUMINOUS_API TextureGL & handle(const Texture & texture);
 
     /// @todo Add function wrapper(s) for:

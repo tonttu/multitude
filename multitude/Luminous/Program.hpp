@@ -14,7 +14,6 @@ namespace Luminous
 {
   /// A single shader (vertex, fragment, etc)
   class ShaderGLSL
-    : public RenderResource
   {
   public:
     enum Type
@@ -27,18 +26,25 @@ namespace Luminous
     LUMINOUS_API ShaderGLSL(Type type);
     LUMINOUS_API ~ShaderGLSL();
 
+    LUMINOUS_API ShaderGLSL(ShaderGLSL &&);
+    LUMINOUS_API ShaderGLSL & operator=(ShaderGLSL &&);
+
     LUMINOUS_API void loadText(const QString & filename);
-    LUMINOUS_API void setText(const QString & text);
-    LUMINOUS_API const QString & text() const;
+    LUMINOUS_API void setText(const QByteArray & text);
+    LUMINOUS_API const QByteArray & text() const;
 
     LUMINOUS_API const QString & filename() const;
 
     LUMINOUS_API Type type() const;
 
-    LUMINOUS_API Hash hash() const;
+    LUMINOUS_API RenderResource::Hash hash() const;
 
   private:
-    friend class Program;
+    ShaderGLSL(const ShaderGLSL &);
+    ShaderGLSL & operator=(const ShaderGLSL &);
+
+    /*
+    friend class Program;*/
     class D;
     D * m_d;
   };
@@ -52,12 +58,14 @@ namespace Luminous
     LUMINOUS_API Program();
     LUMINOUS_API ~Program();
 
-    LUMINOUS_API void addShader(const ShaderGLSL & shader);
+    LUMINOUS_API ShaderGLSL & addShader(const QByteArray & code, ShaderGLSL::Type type);
+    LUMINOUS_API ShaderGLSL & loadShader(const QString & filename, ShaderGLSL::Type type);
+
     LUMINOUS_API void removeShader(const ShaderGLSL & shader);
 
     LUMINOUS_API QStringList shaderFilenames() const;
 
-    LUMINOUS_API RenderResource::Id shader(size_t index) const;
+    LUMINOUS_API ShaderGLSL & shader(size_t index) const;
     LUMINOUS_API size_t shaderCount() const;
 
     LUMINOUS_API Hash hash() const;

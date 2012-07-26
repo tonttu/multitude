@@ -33,9 +33,6 @@ namespace Luminous
       VertexArray,
       Buffer,
       Program,
-      VertexShader,
-      FragmentShader,
-      GeometryShader,
       Texture,
     };
 

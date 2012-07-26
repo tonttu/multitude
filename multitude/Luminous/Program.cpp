@@ -26,19 +26,43 @@
 #include <cassert>
 #include <algorithm>
 
-namespace {
-  Luminous::RenderResource::Type getResourceType(Luminous::ShaderGLSL::Type type)
+namespace
+{
+  struct ShaderCode
   {
-    /// @note This looks a bit dumb since this is a one-to-one-mapping. They are very different types though.
-    switch (type) {
-    case Luminous::ShaderGLSL::Vertex:   return Luminous::RenderResource::VertexShader;
-    case Luminous::ShaderGLSL::Fragment: return Luminous::RenderResource::FragmentShader;
-    case Luminous::ShaderGLSL::Geometry: return Luminous::RenderResource::GeometryShader;
-    default:
-      assert(false);
-      Radiant::error("Can't determine resource type: Unknown shader type %d", type);
-      return Luminous::RenderResource::VertexShader;
+    QByteArray text;
+    Luminous::RenderResource::Hash hash;
+  };
+
+  static Radiant::Mutex s_shaderCacheMutex;
+  static std::map<QString, std::weak_ptr<ShaderCode>> s_shaderCache;
+
+  static std::shared_ptr<ShaderCode> loadFromText(const QByteArray & text)
+  {
+    std::shared_ptr<ShaderCode> code = std::make_shared<ShaderCode>();
+    code->text = text;
+    QCryptographicHash hasher(QCryptographicHash::Md5);
+    hasher.addData(text);
+    memcpy(&code->hash, hasher.result().data(), sizeof(code->hash));
+    return code;
+  }
+
+  static std::shared_ptr<ShaderCode> loadFromFile(const QString & filename)
+  {
+    Radiant::Guard g(s_shaderCacheMutex);
+    std::weak_ptr<ShaderCode> & weak = s_shaderCache[filename];
+    std::shared_ptr<ShaderCode> ptr = weak.lock();
+    if(ptr)
+      return ptr;
+
+    QFile shaderFile(filename);
+    if(!shaderFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+      Radiant::warning("ShaderGLSL: Unable to open shader file %s", filename.toAscii().data());
+      return ptr;
     }
+    ptr = loadFromText(shaderFile.readAll());
+    weak = ptr;
+    return ptr;
   }
 }
 
@@ -48,17 +72,16 @@ namespace Luminous
   {
   public:
     ShaderGLSL::Type type;
-    QString text;
-    RenderResource::Hash hash;
     QString filename;
+    std::shared_ptr<ShaderCode> code;
   };
 
   //////////////////////////////////////////////////////////////////////////
   // ShaderGLSL
   ShaderGLSL::ShaderGLSL(Type type)
-    : RenderResource(getResourceType(type))
-    , m_d(new ShaderGLSL::D())
+    : m_d(new ShaderGLSL::D())
   {
+    m_d->type = type;
   }
 
   ShaderGLSL::~ShaderGLSL()
@@ -66,32 +89,38 @@ namespace Luminous
     delete m_d;
   }
 
-  void ShaderGLSL::setText(const QString & text)
+  ShaderGLSL::ShaderGLSL(ShaderGLSL && s)
+    : m_d(s.m_d)
   {
-    m_d->text = text;
+    s.m_d = nullptr;
+  }
+
+  ShaderGLSL & ShaderGLSL::operator=(ShaderGLSL && s)
+  {
+    delete m_d;
+    m_d = s.m_d;
+    s.m_d = nullptr;
+    return *this;
+  }
+
+  void ShaderGLSL::setText(const QByteArray & text)
+  {
+    m_d->code = loadFromText(text);
     m_d->filename = QString();
-    QCryptographicHash hasher(QCryptographicHash::Md5);
-    hasher.addData(text.toUtf8());
-    memcpy(&m_d->hash, hasher.result().data(), sizeof(m_d->hash));
-    invalidate();
   }
 
   void ShaderGLSL::loadText(const QString & rawFilename)
   {
     /// @todo implement qt resource locator api
     const QString filename = Radiant::ResourceLocator::instance().locate(rawFilename);
-    QFile shaderFile(filename);
-    if (!shaderFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-      Radiant::warning("ShaderGLSL: Unable to open shader file %s", filename.toAscii().data());
-      return;
-    }
-    setText(shaderFile.readAll());
+    m_d->code = loadFromFile(filename);
     m_d->filename = filename;
   }
 
-  const QString & ShaderGLSL::text() const
+  const QByteArray & ShaderGLSL::text() const
   {
-    return m_d->text;
+    static QByteArray s_null;
+    return m_d->code ? m_d->code->text : s_null;
   }
 
   const QString & ShaderGLSL::filename() const
@@ -106,27 +135,25 @@ namespace Luminous
 
   RenderResource::Hash ShaderGLSL::hash() const
   {
-    return m_d->hash;
+    return m_d->code ? m_d->code->hash : RenderResource::Hash();
   }
 
   //////////////////////////////////////////////////////////////////////////
   // Program
   class Program::D {
   public:
-    D() : hashGeneration(0), translucent(false) {}
+    D() : translucent(false), needRehash(false) {}
 
   public:
-    // (resource, generation)
-    // typedef std::vector<std::pair<RenderResource::Id, uint64_t>> ShaderList;
-    typedef std::vector< RenderResource::Id > ShaderList;
+    typedef std::vector<std::unique_ptr<ShaderGLSL>> ShaderList;
     typedef std::vector< std::shared_ptr<ShaderUniform> > UniformList;
     ShaderList shaders;
     UniformList uniforms;
     VertexDescription vertexDescription;
     UniformDescription uniformDescription;
-    uint64_t hashGeneration;
     RenderResource::Hash hash;
     bool translucent;
+    bool needRehash;
   };
 
   Program::Program()
@@ -140,26 +167,37 @@ namespace Luminous
     delete m_d;
   }
 
-  void Program::addShader(const ShaderGLSL & shader)
+  ShaderGLSL & Program::addShader(const QByteArray & code, ShaderGLSL::Type type)
   {
-    m_d->shaders.push_back(shader.resourceId());
-    invalidate();
+    auto shader = new ShaderGLSL(type);
+    m_d->shaders.emplace_back(shader);
+    shader->setText(code);
+    m_d->needRehash = true;
+    return *shader;
+  }
+
+  ShaderGLSL & Program::loadShader(const QString & filename, ShaderGLSL::Type type)
+  {
+    auto shader = new ShaderGLSL(type);
+    m_d->shaders.emplace_back(shader);
+    shader->loadText(filename);
+    m_d->needRehash = true;
+    return *shader;
   }
 
   void Program::removeShader(const ShaderGLSL & shader)
   {
-    auto it = std::remove(m_d->shaders.begin(), m_d->shaders.end(), shader.resourceId());
+    auto it = std::remove_if(m_d->shaders.begin(), m_d->shaders.end(), [&](const std::unique_ptr<ShaderGLSL> & s) {
+      return s.get() == &shader; });
     m_d->shaders.erase(it, m_d->shaders.end());
-    invalidate();
+    m_d->needRehash = true;
   }
 
   QStringList Program::shaderFilenames() const
   {
     QStringList shaders;
     for(auto it = m_d->shaders.begin(); it != m_d->shaders.end(); ++it) {
-      ShaderGLSL * shader = RenderManager::getResource<ShaderGLSL>(*it);
-      if(shader)
-        shaders << shader->filename();
+      shaders << (*it)->filename();
     }
     return shaders;
   }
@@ -171,29 +209,26 @@ namespace Luminous
 
   RenderResource::Hash Program::hash() const
   {
-    bool rehash = m_d->hashGeneration != generation();
-    if(!rehash) {
+    if(!m_d->needRehash) {
       /// @todo iterate ShaderList and check generations.. or something similar
     }
-    if(rehash) {
+    if(m_d->needRehash) {
       QCryptographicHash hasher(QCryptographicHash::Md5);
       for(auto it = m_d->shaders.begin(); it != m_d->shaders.end(); ++it) {
-        ShaderGLSL * shader = RenderManager::getResource<ShaderGLSL>(*it);
-        assert(shader);
-        const Hash shaderHash = shader->hash();
+        const Hash shaderHash = (*it)->hash();
         hasher.addData((const char*)&shaderHash, sizeof(shaderHash));
       }
       /// @todo hash vertex/uniform descriptions
       memcpy(&m_d->hash, hasher.result().data(), sizeof(m_d->hash));
-      m_d->hashGeneration = generation();
+      m_d->needRehash = false;
     }
     return m_d->hash;
   }
 
-  RenderResource::Id Program::shader(size_t index) const
+  ShaderGLSL & Program::shader(size_t index) const
   {
     assert(index < shaderCount());
-    return m_d->shaders[index];
+    return *m_d->shaders[index];
   }
 
 #define ADDSHADERUNIFORMCONST(TYPE) \

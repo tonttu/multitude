@@ -160,6 +160,7 @@ namespace Luminous
   // Resources
   class Buffer;
   class Program;
+  class ProgramGL;
   class ShaderGLSL;
   struct ShaderUniform;
   class Texture;

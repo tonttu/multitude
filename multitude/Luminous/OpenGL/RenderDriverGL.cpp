@@ -1,3 +1,4 @@
+#include "Luminous/OpenGL/ProgramGL.hpp"
 #include "Luminous/OpenGL/RenderDriverGL.hpp"
 #include "Luminous/OpenGL/StateGL.hpp"
 #include "Luminous/OpenGL/TextureGL.hpp"
@@ -49,10 +50,6 @@ namespace
     {
     case Luminous::RenderResource::VertexArray:    glGenVertexArrays(1, &resource); return resource;
     case Luminous::RenderResource::Buffer:         glGenBuffers(1, &resource); return resource;
-    case Luminous::RenderResource::Program:  return glCreateProgram();
-    case Luminous::RenderResource::VertexShader:   return glCreateShader(GL_VERTEX_SHADER);
-    case Luminous::RenderResource::FragmentShader: return glCreateShader(GL_FRAGMENT_SHADER);
-    case Luminous::RenderResource::GeometryShader: return glCreateShader(GL_GEOMETRY_SHADER_EXT);
     default:
       Radiant::error("RenderDriverGL: Can't create GL resource: unknown type %d", type);
       assert(false);
@@ -66,10 +63,6 @@ namespace
     {
     case Luminous::RenderResource::VertexArray:    glDeleteVertexArrays(1, &resource); break;
     case Luminous::RenderResource::Buffer:         glDeleteBuffers(1, &resource); break;
-    case Luminous::RenderResource::Program:  glDeleteProgram(resource); break;
-    case Luminous::RenderResource::VertexShader:   glDeleteShader(resource); break;
-    case Luminous::RenderResource::FragmentShader: glDeleteShader(resource); break;
-    case Luminous::RenderResource::GeometryShader: glDeleteShader(resource); break;
     default:
       Radiant::error("RenderDriverGL: Can't destroy GL resource: unknown type %d", type);
       assert(false);
@@ -104,15 +97,6 @@ namespace Luminous
     size_t uploaded;    // Uploaded bytes (for incremental upload)
   };
 
-  struct ProgramHandle : public ResourceHandle<Program>
-  {
-    ProgramHandle(const Program * ptr = nullptr) : ResourceHandle(ptr) {}
-    std::map<QByteArray, GLuint> textures;
-    std::set<GLuint> shaders;
-
-    UniformDescription baseDescription;
-  };
-
   struct BufferMapping
   {
     BufferMapping() : target(0), access(0), offset(0), length(0), data(0) {}
@@ -123,14 +107,12 @@ namespace Luminous
     void * data;
   };
 
-  // Generic handle
-  typedef ResourceHandle<ShaderGLSL> ShaderHandle;
   typedef ResourceHandle<VertexArray> VertexArrayHandle;
 
 
   struct RenderState
   {
-    Luminous::ProgramHandle * program;
+    Luminous::ProgramGL * program;
     VertexArrayHandle * vertexArray;
     BufferHandle * uniformBuffer;
     std::array<TextureGL*, 8> textures;
@@ -190,8 +172,7 @@ namespace Luminous
 
     std::map<GLuint, BufferMapping> m_bufferMaps;
 
-    typedef std::map<RenderResource::Hash, ProgramHandle> ProgramList;
-    typedef std::map<RenderResource::Hash, ShaderHandle> ShaderList;
+    typedef std::map<RenderResource::Hash, ProgramGL> ProgramList;
     typedef std::map<RenderResource::Hash, TextureGL> TextureList;
     typedef std::map<RenderResource::Id, BufferHandle> BufferList;
     typedef std::map<RenderResource::Id, VertexArrayHandle> VertexArrayList;
@@ -200,7 +181,6 @@ namespace Luminous
     /// for dynamic_cast or similar, and also makes resource sharing possible
     /// for only specific resource types
     ProgramList m_programs;
-    ShaderList m_shaders;
     TextureList m_textures;
     BufferList m_buffers;
     VertexArrayList m_VertexArrays;
@@ -253,193 +233,12 @@ namespace Luminous
       /// @todo re-enable when everything is ResourceHandleGL
       /*removeResource(m_VertexArrays, m_releaseQueue);
       removeResource(m_buffers, m_releaseQueue);
-      removeResource(m_programs);
       removeResource(m_shaders);*/
+      removeResource(m_programs);
       removeResource(m_textures);
       m_releaseQueue.clear();
     }
 
-    void bindShaderProgram(const ProgramHandle & programHandle)
-    {
-      // Avoid re-applying the same shader
-      if(m_stateGl.setProgram(programHandle.handle)) {
-        glUseProgram(programHandle.handle);
-        GLERROR("RenderDriverGL::setShaderProgram glUseProgram");
-      }
-    }
-
-    bool updateShaders(const Program & program, ProgramHandle & programHandle)
-    {
-      bool needsRelinking = false;
-
-      for (size_t i = 0; i < program.shaderCount(); ++i)
-      {
-        RenderResource::Id shaderId = program.shader(i);
-        ShaderGLSL * shader = RenderManager::getResource<ShaderGLSL>(shaderId);
-        const RenderResource::Hash shaderHash = shader->hash();
-
-        ShaderHandle * handle;
-
-        // Find the correct shader
-        auto it = m_shaders.find(shaderHash);
-        if (it == std::end(m_shaders)) {
-          /// New shader: create it
-          ShaderHandle shaderHandle(shader);
-          shaderHandle.handle = createResource(shader->resourceType());
-          shaderHandle.generation = 0;
-          m_shaders[shaderHash] = shaderHandle;
-          handle = &m_shaders[shaderHash];
-
-          // Set and compile source
-          const QByteArray shaderData = shader->text().toAscii();
-          const GLchar * text = shaderData.data();
-          const GLint length = shaderData.size();
-          glShaderSource(handle->handle, 1, &text, &length);
-          glCompileShader(handle->handle);
-          GLERROR("RenderDriverGL::setShaderProgram glCompileShader");
-          GLint compiled = GL_FALSE;
-          glGetShaderiv(handle->handle, GL_COMPILE_STATUS, &compiled);
-          if (compiled != GL_TRUE) {
-            Radiant::error("Failed to compile shader %s", shader->filename().toUtf8().data());
-
-            // Dump info log
-            GLsizei len;
-            glGetShaderiv(handle->handle, GL_INFO_LOG_LENGTH, &len);
-            std::vector<GLchar> log(len);
-            glGetShaderInfoLog(handle->handle, len, &len, log.data());
-            Radiant::error("%s", log.data());
-
-            continue;
-          }
-        }
-        else
-          handle = &(it->second);
-
-        // Reset usage timer
-        handle->lastUsed.start();
-
-        if(programHandle.shaders.find(handle->handle) == programHandle.shaders.end()) {
-          programHandle.shaders.insert(handle->handle);
-          // Attach to the program
-          glAttachShader(programHandle.handle, handle->handle);
-          GLERROR("RenderDriverGL::setShaderProgram glAttachShader");
-          needsRelinking = true;
-        }
-      }
-      return needsRelinking;
-    }
-
-    void relinkShaderProgram(const Program & program, ProgramHandle & programHandle)
-    {
-      glLinkProgram(programHandle.handle);
-      GLERROR("RenderDriverGL::setShaderProgram glLinkProgram");
-      // Check for linking errors
-      GLint status;
-      glGetProgramiv(programHandle.handle, GL_LINK_STATUS, &status);
-
-      if (status == GL_FALSE) {
-        Radiant::error("Failed to link shader program (shaders %s)", program.shaderFilenames().join(", ").toUtf8().data());
-        GLsizei len;
-        glGetProgramiv(programHandle.handle, GL_INFO_LOG_LENGTH, &len);
-        std::vector<GLchar> log(len);
-        glGetProgramInfoLog(programHandle.handle, len, &len, log.data());
-        Radiant::error("%s", log.data());
-        // Can't link: abort binding
-        return;
-      }
-
-      // Update handle generation
-      programHandle.generation = program.generation();
-    }
-
-    void applyShaderUniforms(const Program & program)
-    {
-      auto & programHandle = m_programs[program.hash()];
-
-      // Set all shader uniforms attached to this shader
-      for (size_t i = 0; i < program.uniformCount(); ++i) {
-        ShaderUniform & uniform = program.uniform(i);
-
-        // Update location cache if necessary
-        if (uniform.index == -1)
-          uniform.index = glGetUniformLocation(programHandle.handle, uniform.name.toAscii().data());
-
-        // Set the uniform
-        switch (uniform.type())
-        {
-        case ShaderUniform::Int: glUniform1iv(uniform.index, 1, (const int*)uniform.data()); break;
-        case ShaderUniform::Int2: glUniform2iv(uniform.index, 1, (const int*)uniform.data()); break;
-        case ShaderUniform::Int3: glUniform3iv(uniform.index, 1, (const int*)uniform.data()); break;
-        case ShaderUniform::Int4: glUniform4iv(uniform.index, 1, (const int*)uniform.data()); break;
-        case ShaderUniform::UnsignedInt: glUniform1uiv(uniform.index, 1, (const unsigned int*)uniform.data()); break;
-        case ShaderUniform::UnsignedInt2: glUniform2uiv(uniform.index, 1, (const unsigned int*)uniform.data()); break;
-        case ShaderUniform::UnsignedInt3: glUniform3uiv(uniform.index, 1, (const unsigned int*)uniform.data()); break;
-        case ShaderUniform::UnsignedInt4: glUniform4uiv(uniform.index, 1, (const unsigned int*)uniform.data()); break;
-        case ShaderUniform::Float: glUniform1fv(uniform.index, 1, (const float*)uniform.data()); break;
-        case ShaderUniform::Float2: glUniform2fv(uniform.index, 1, (const float*)uniform.data()); break;
-        case ShaderUniform::Float3: glUniform3fv(uniform.index, 1, (const float*)uniform.data()); break;
-        case ShaderUniform::Float4: glUniform4fv(uniform.index, 1, (const float*)uniform.data()); break;
-        case ShaderUniform::Float2x2: glUniformMatrix2fv(uniform.index, 1, GL_TRUE, (const float*)uniform.data()); break;
-        case ShaderUniform::Float3x3: glUniformMatrix3fv(uniform.index, 1, GL_TRUE, (const float*)uniform.data()); break;
-        case ShaderUniform::Float4x4: glUniformMatrix4fv(uniform.index, 1, GL_TRUE, (const float*)uniform.data()); break;
-        default:
-          Radiant::error("RenderDriverGL: Unknown shader uniform type %d", uniform.type());
-          assert(false);
-        }
-      }
-    }
-
-    UniformDescription uniformDescription(const ProgramHandle & programHandle, const QByteArray & blockName)
-    {
-      /// @todo error checking/handling
-
-      UniformDescription desc;
-
-      GLuint blockIndex = glGetUniformBlockIndex(programHandle.handle, blockName.data());
-      if(blockIndex == GL_INVALID_INDEX)
-        return desc;
-
-      int uniformCount = 0;
-      glGetProgramiv(programHandle.handle, GL_ACTIVE_UNIFORMS, &uniformCount);
-
-      for(GLuint uniformIndex = 0, c = uniformCount; uniformIndex < c; ++uniformIndex) {
-        GLint nameLength = 0, size, blockIndex = 0, offset = 0;
-        glGetActiveUniformsiv(programHandle.handle, 1, &uniformIndex, GL_UNIFORM_NAME_LENGTH, &nameLength);
-        glGetActiveUniformsiv(programHandle.handle, 1, &uniformIndex, GL_UNIFORM_SIZE, &size);
-        glGetActiveUniformsiv(programHandle.handle, 1, &uniformIndex, GL_UNIFORM_BLOCK_INDEX, &blockIndex);
-        glGetActiveUniformsiv(programHandle.handle, 1, &uniformIndex, GL_UNIFORM_OFFSET, &offset);
-
-        if(blockIndex == GLint(blockIndex) && nameLength > 0 && offset >= 0) {
-          QByteArray ba(nameLength, '0');
-          GLsizei len = 0;
-          glGetActiveUniformName(programHandle.handle, uniformIndex, ba.size(), &len, ba.data());
-          ba.resize(len);
-          desc.addAttribute(ba, offset, size);
-        }
-      }
-
-      return desc;
-    }
-
-    ProgramHandle & getLinkedShaderProgram(const Program & program)
-    {
-      ProgramHandle & programHandle = m_programs[program.hash()];
-      if(programHandle.handle == 0) {
-        /// New program: create it and add to cache
-        programHandle.resource = &program;
-        programHandle.handle = createResource(program.resourceType());
-        programHandle.generation = 0;
-
-        updateShaders(program, programHandle);
-        relinkShaderProgram(program, programHandle);
-        programHandle.baseDescription = uniformDescription(programHandle, "BaseBlock");
-      }
-
-      // Reset usage timer
-      programHandle.lastUsed.start();
-
-      return programHandle;
-    }
 
     void setVertexAttributes(const VertexArray & binding)
     {
@@ -475,7 +274,7 @@ namespace Luminous
     }
 
     VertexArrayHandle & getVertexArrayHandle(const VertexArray & binding, BufferHandle ** indexHandle,
-                             const ProgramHandle * programHandle)
+                                             ProgramGL * program)
     {
       GLERROR("RenderDriverGL::getVertexArrayHandle");
       VertexArrayHandle & vertexArrayHandle = m_VertexArrays[binding.resourceId()];
@@ -504,7 +303,7 @@ namespace Luminous
 
         // Bind and setup all buffers/attributes
         glBindVertexArray(vertexArrayHandle.handle);
-        if(programHandle) bindShaderProgram(*programHandle);
+        if(program) program->bind();
         setVertexAttributes(binding);
 
         const Buffer * index = RenderManager::getResource<Buffer>(binding.indexBuffer());
@@ -586,7 +385,7 @@ namespace Luminous
 
     void setState(const RenderState & state)
     {
-      bindShaderProgram(*state.program);
+      state.program->bind();
 
       for(std::size_t t = 0; t < state.textures.size(); ++t) {
         if(!state.textures[t]) break;
@@ -755,11 +554,9 @@ namespace Luminous
 
   void RenderDriverGL::setShaderProgram(const Program & program)
   {
-    auto & handle = m_d->getLinkedShaderProgram(program);
-    m_d->bindShaderProgram(handle);
-    m_d->applyShaderUniforms(program);
+    handle(program).bind(program);
+    /// @todo apply uniforms
   }
-
 
   void RenderDriverGL::preFrame()
   {
@@ -826,6 +623,17 @@ namespace Luminous
     VertexArrayHandle & vertexArrayHandle = m_d->getVertexArrayHandle(binding, nullptr, nullptr);
     m_d->setVertexArray(vertexArrayHandle);
 #endif
+  }
+
+  ProgramGL & RenderDriverGL::handle(const Program & program)
+  {
+    auto it = m_d->m_programs.find(program.hash());
+    if(it == m_d->m_programs.end()) {
+      it = m_d->m_programs.insert(std::make_pair(program.hash(), ProgramGL(m_d->m_stateGl))).first;
+      it->second.setExpirationSeconds(program.expiration());
+    }
+
+    return it->second;
   }
 
   TextureGL & RenderDriverGL::handle(const Texture & texture)
@@ -936,7 +744,8 @@ namespace Luminous
     bool translucent = style.fill.shader->translucent();
 
     auto & state = m_d->m_state;
-    state.program = &m_d->getLinkedShaderProgram(*style.fill.shader);
+    state.program = &handle(*style.fill.shader);
+    state.program->link(*style.fill.shader);
     state.vertexArray = &m_d->getVertexArrayHandle(binding, nullptr, state.program);
     state.uniformBuffer = &m_d->getBufferHandle(GL_UNIFORM_BUFFER, uniformBuffer);
 
@@ -972,14 +781,7 @@ namespace Luminous
     unit = 0;
     int slot = 0; // one day this will be different from unit
     for(auto it = style.fill.tex.begin(); it != style.fill.tex.end(); ++it, ++unit, ++slot) {
-      auto texit = state.program->textures.find(it->first);
-      if(texit == state.program->textures.end()) {
-        GLint loc = glGetUniformLocation(state.program->handle, it->first.data());
-        state.program->textures[it->first] = loc;
-        cmd->samplers[slot] = std::make_pair(loc, unit);
-      } else {
-        cmd->samplers[slot] = std::make_pair(texit->second, unit);
-      }
+      cmd->samplers[slot] = std::make_pair(state.program->samplerLocation(it->first), unit);
     }
     cmd->samplers[slot].first = -1;
 

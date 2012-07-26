@@ -232,23 +232,14 @@ namespace Luminous
 
       bzero(m_textures, sizeof(m_textures));
 
-      /// @todo Program should own these
-      Luminous::ShaderGLSL * basicVertexShader = new Luminous::ShaderGLSL(ShaderGLSL::Vertex);
-      Luminous::ShaderGLSL * basicFragmentShader = new Luminous::ShaderGLSL(ShaderGLSL::Fragment);
-      basicVertexShader->loadText("Luminous/GLSL400/basic_shader.vs");
-      basicFragmentShader->loadText("Luminous/GLSL400/basic_shader.fs");
-      m_basicShader.addShader(*basicVertexShader);
-      m_basicShader.addShader(*basicFragmentShader);
+      m_basicShader.loadShader("Luminous/GLSL400/basic_shader.vs", ShaderGLSL::Vertex);
+      m_basicShader.loadShader("Luminous/GLSL400/basic_shader.fs", ShaderGLSL::Fragment);
       Luminous::VertexDescription desc;
       desc.addAttribute<Nimble::Vector3f>("vertex_position");
       m_basicShader.setVertexDescription(desc);
 
-      Luminous::ShaderGLSL * texVertexShader = new Luminous::ShaderGLSL(ShaderGLSL::Vertex);
-      Luminous::ShaderGLSL * texFragmentShader = new Luminous::ShaderGLSL(ShaderGLSL::Fragment);
-      texVertexShader->loadText("Luminous/GLSL400/tex_shader.vs");
-      texFragmentShader->loadText("Luminous/GLSL400/tex_shader.fs");
-      m_texShader.addShader(*texVertexShader);
-      m_texShader.addShader(*texFragmentShader);
+      m_texShader.loadShader("Luminous/GLSL400/tex_shader.vs", ShaderGLSL::Vertex);
+      m_texShader.loadShader("Luminous/GLSL400/tex_shader.fs", ShaderGLSL::Fragment);
       desc = Luminous::VertexDescription();
       desc.addAttribute<Nimble::Vector3f>("vertex_position");
       desc.addAttribute<Nimble::Vector2>("vertex_uv");
