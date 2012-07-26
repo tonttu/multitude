@@ -1,6 +1,6 @@
 #include "Luminous/RenderDriverGL.hpp"
 #include "Luminous/RenderManager.hpp"
-#include "Luminous/VertexAttributeBinding.hpp"
+#include "Luminous/VertexArray.hpp"
 #include "Luminous/VertexDescription.hpp"
 #include "Luminous/Buffer.hpp"
 #include "Luminous/Program.hpp"
@@ -142,7 +142,7 @@ namespace Luminous
 
   // Generic handle
   typedef ResourceHandle<ShaderGLSL> ShaderHandle;
-  typedef ResourceHandle<VertexAttributeBinding> VertexArrayHandle;
+  typedef ResourceHandle<VertexArray> VertexArrayHandle;
 
 
   struct RenderState
@@ -579,11 +579,11 @@ namespace Luminous
     }
 
 
-    void setVertexAttributes(const VertexAttributeBinding & binding)
+    void setVertexAttributes(const VertexArray & binding)
     {
       // Bind all vertex buffers
       for (size_t i = 0; i < binding.bindingCount(); ++i) {
-        VertexAttributeBinding::Binding b = binding.binding(i);
+        VertexArray::Binding b = binding.binding(i);
         // Attach buffer
         auto * buffer = RenderManager::getResource<Buffer>(b.buffer);
         assert(buffer != nullptr);
@@ -605,14 +605,14 @@ namespace Luminous
           GLenum normalized = (attr.normalized ? GL_TRUE : GL_FALSE);
 
           glVertexAttribPointer(location, attr.count, attr.type, normalized, description.vertexSize(), reinterpret_cast<GLvoid *>(attr.offset));
-          GLERROR("RenderDriverGL::Bind VertexAttributeBinding glVertexAttribPointer");
+          GLERROR("RenderDriverGL::Bind VertexArray glVertexAttribPointer");
           glEnableVertexAttribArray(location);
-          GLERROR("RenderDriverGL::Bind VertexAttributeBinding glEnableVertexAttribArray");
+          GLERROR("RenderDriverGL::Bind VertexArray glEnableVertexAttribArray");
         }
       }
     }
 
-    VertexArrayHandle & getVertexArrayHandle(const VertexAttributeBinding & binding, BufferHandle ** indexHandle,
+    VertexArrayHandle & getVertexArrayHandle(const VertexArray & binding, BufferHandle ** indexHandle,
                              const ProgramHandle * programHandle)
     {
       GLERROR("RenderDriverGL::getVertexArrayHandle");
@@ -939,7 +939,7 @@ namespace Luminous
     m_d->bindBuffer(GL_UNIFORM_BUFFER_EXT, buffer);
   }
 
-  void RenderDriverGL::setVertexBinding(const VertexAttributeBinding & binding)
+  void RenderDriverGL::setVertexBinding(const VertexArray & binding)
   {
 #ifdef LUMINOUS_OPENGLES
     // OpenGL ES doesn't have VAOs, so we'll just have to bind the buffers and attributes every time
@@ -1039,7 +1039,7 @@ namespace Luminous
     m_d->m_bufferMaps.erase(mit);
   }
 
-  RenderCommand & RenderDriverGL::createRenderCommand(VertexAttributeBinding & binding,
+  RenderCommand & RenderDriverGL::createRenderCommand(VertexArray & binding,
                                                       Buffer & uniformBuffer,
                                                       const Luminous::Style & style)
   {

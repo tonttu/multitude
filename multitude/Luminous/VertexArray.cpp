@@ -1,4 +1,4 @@
-#include "Luminous/VertexAttributeBinding.hpp"
+#include "Luminous/VertexArray.hpp"
 #include "Luminous/Buffer.hpp"
 #include "Luminous/VertexDescription.hpp"
 
@@ -6,40 +6,40 @@
 
 namespace Luminous
 {
-  class VertexAttributeBinding::D
+  class VertexArray::D
   {
   public:
     D() : indexBuffer(0) {}
-    typedef std::vector< VertexAttributeBinding::Binding > Bindings;
+    typedef std::vector< VertexArray::Binding > Bindings;
     Bindings bindings;
     RenderResource::Id indexBuffer;
   };
 
-  VertexAttributeBinding::VertexAttributeBinding()
+  VertexArray::VertexArray()
     : RenderResource(RenderResource::VertexArray)
-    , m_d(new VertexAttributeBinding::D())
+    , m_d(new VertexArray::D())
   {
   }
 
-  VertexAttributeBinding::~VertexAttributeBinding()
+  VertexArray::~VertexArray()
   {
     delete m_d;
   }
 
-  VertexAttributeBinding::VertexAttributeBinding(VertexAttributeBinding && b)
+  VertexArray::VertexArray(VertexArray && b)
     : RenderResource(RenderResource::VertexArray)
     , m_d(b.m_d)
   {
     b.m_d = nullptr;
   }
 
-  VertexAttributeBinding & VertexAttributeBinding::operator=(VertexAttributeBinding && b)
+  VertexArray & VertexArray::operator=(VertexArray && b)
   {
     std::swap(m_d, b.m_d);
     return *this;
   }
 
-  void VertexAttributeBinding::addBinding(const Luminous::Buffer & vertexBuffer, const Luminous::VertexDescription & description)
+  void VertexArray::addBinding(const Luminous::Buffer & vertexBuffer, const Luminous::VertexDescription & description)
   {
     // Add the binding if it doesn't already exist
     D::Bindings::const_iterator it = std::find(m_d->bindings.begin(), m_d->bindings.end(), vertexBuffer.resourceId());
@@ -52,12 +52,12 @@ namespace Luminous
     }
   }
 
-  void VertexAttributeBinding::setIndexBuffer(const Luminous::Buffer & indexBuffer)
+  void VertexArray::setIndexBuffer(const Luminous::Buffer & indexBuffer)
   {
     m_d->indexBuffer = indexBuffer.resourceId();
   }
 
-  void VertexAttributeBinding::removeBinding(const Luminous::Buffer & buffer)
+  void VertexArray::removeBinding(const Luminous::Buffer & buffer)
   {
     D::Bindings::iterator it = std::find(m_d->bindings.begin(), m_d->bindings.end(), buffer.resourceId());
     if (it != m_d->bindings.end()) {
@@ -66,7 +66,7 @@ namespace Luminous
     }
   }
 
-  void VertexAttributeBinding::clear()
+  void VertexArray::clear()
   {
     if (!m_d->bindings.empty()) {
       m_d->bindings.clear();
@@ -74,18 +74,18 @@ namespace Luminous
     }
   }
 
-  size_t VertexAttributeBinding::bindingCount() const
+  size_t VertexArray::bindingCount() const
   {
     return m_d->bindings.size();
   }
 
-  const VertexAttributeBinding::Binding & VertexAttributeBinding::binding(size_t index) const
+  const VertexArray::Binding & VertexArray::binding(size_t index) const
   {
     assert( index < bindingCount() );
     return m_d->bindings[index];
   }
 
-  RenderResource::Id VertexAttributeBinding::indexBuffer() const
+  RenderResource::Id VertexArray::indexBuffer() const
   {
     return m_d->indexBuffer;
   }

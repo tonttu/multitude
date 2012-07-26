@@ -15,7 +15,7 @@
 #include "GLSLProgramObject.hpp"
 
 // Luminous v2
-#include "Luminous/VertexAttributeBinding.hpp"
+#include "Luminous/VertexArray.hpp"
 #include "Luminous/VertexDescription.hpp"
 #include "Luminous/Buffer.hpp"
 
@@ -193,7 +193,7 @@ namespace Luminous
 
     /// @todo this is extremely stupid, make something smarter
     /// [Shader, IndexBuffer]
-    std::map<std::pair<RenderResource::Hash, RenderResource::Id>, VertexAttributeBinding> bindings;
+    std::map<std::pair<RenderResource::Hash, RenderResource::Id>, VertexArray> bindings;
   };
 
   class RenderContext::Internal
@@ -1563,7 +1563,7 @@ namespace Luminous
     SharedBuffer * ubuffer;
     std::tie(mappedUniformBuffer, ubuffer) = sharedBuffer(uniformSize, 1, Buffer::Uniform, uniformOffset);
 
-    VertexAttributeBinding * binding = &vbuffer->bindings[std::make_pair(style.fill.shader->hash(), ibuffer->buffer.resourceId())];
+    VertexArray * binding = &vbuffer->bindings[std::make_pair(style.fill.shader->hash(), ibuffer->buffer.resourceId())];
     if(binding->bindingCount() == 0) {
       binding->addBinding(vbuffer->buffer, style.fill.shader->vertexDescription());
       binding->setIndexBuffer(ibuffer->buffer);
@@ -1974,7 +1974,7 @@ namespace Luminous
     m_data->m_driver.setTexture(textureUnit, texture);
   }
 
-  void RenderContext::setVertexBinding(const VertexAttributeBinding & binding)
+  void RenderContext::setVertexBinding(const VertexArray & binding)
   {
     // Bind the VAO: Binds all the associated vertex buffers and sets the appropriate vertex attributes
     m_data->m_driver.setVertexBinding(binding);

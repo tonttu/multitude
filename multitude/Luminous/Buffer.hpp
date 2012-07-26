@@ -67,7 +67,7 @@ namespace Luminous
     LUMINOUS_API Usage usage() const;
 
   private:
-    friend class VertexAttributeBinding;
+    friend class VertexArray;
     class D;
     D * m_d;
   };

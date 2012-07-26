@@ -1,5 +1,5 @@
-#if !defined (LUMINOUS_VERTEXATTRIBUTEBINDING_HPP)
-#define LUMINOUS_VERTEXATTRIBUTEBINDING_HPP
+#if !defined (LUMINOUS_VERTEX_ARRAY_HPP)
+#define LUMINOUS_VERTEX_ARRAY_HPP
 
 #include "Luminous/Luminous.hpp"
 #include "Luminous/RenderResource.hpp"
@@ -11,7 +11,7 @@
 namespace Luminous
 {
   /// VAO
-  class VertexAttributeBinding
+  class VertexArray
     : public RenderResource
   {
   public:
@@ -23,11 +23,11 @@ namespace Luminous
     };
 
   public:
-    LUMINOUS_API VertexAttributeBinding();
-    LUMINOUS_API ~VertexAttributeBinding();
+    LUMINOUS_API VertexArray();
+    LUMINOUS_API ~VertexArray();
 
-    LUMINOUS_API VertexAttributeBinding(VertexAttributeBinding && b);
-    LUMINOUS_API VertexAttributeBinding & operator=(VertexAttributeBinding && b);
+    LUMINOUS_API VertexArray(VertexArray && b);
+    LUMINOUS_API VertexArray & operator=(VertexArray && b);
 
     LUMINOUS_API void addBinding(const Luminous::Buffer & vertexBuffer, const Luminous::VertexDescription & description);
     LUMINOUS_API void setIndexBuffer(const Luminous::Buffer & indexBuffer);
@@ -43,4 +43,4 @@ namespace Luminous
   };
 }
 
-#endif // LUMINOUS_VERTEXATTRIBUTEBINDING_HPP
+#endif // LUMINOUS_VERTEX_ARRAY_HPP

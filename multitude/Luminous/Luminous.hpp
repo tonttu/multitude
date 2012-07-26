@@ -167,7 +167,7 @@ namespace Luminous
   // Vertex data
   struct VertexAttribute;
   class VertexDescription;
-  class VertexAttributeBinding;
+  class VertexArray;
 }
 
 #endif
