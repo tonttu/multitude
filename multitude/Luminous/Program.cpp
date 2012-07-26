@@ -1,4 +1,4 @@
-#include "Luminous/ShaderProgram.hpp"
+#include "Luminous/Program.hpp"
 #include "Luminous/ShaderUniform.hpp"
 #include "Luminous/RenderManager.hpp"
 #include "Luminous/VertexDescription.hpp"
@@ -110,8 +110,8 @@ namespace Luminous
   }
 
   //////////////////////////////////////////////////////////////////////////
-  // ShaderProgram
-  class ShaderProgram::D {
+  // Program
+  class Program::D {
   public:
     D() : hashGeneration(0), translucent(false) {}
 
@@ -129,31 +129,31 @@ namespace Luminous
     bool translucent;
   };
 
-  ShaderProgram::ShaderProgram()
-    : RenderResource(RenderResource::ShaderProgram)
-    , m_d(new ShaderProgram::D())
+  Program::Program()
+    : RenderResource(RenderResource::Program)
+    , m_d(new Program::D())
   {
   }
 
-  ShaderProgram::~ShaderProgram()
+  Program::~Program()
   {
     delete m_d;
   }
 
-  void ShaderProgram::addShader(const ShaderGLSL & shader)
+  void Program::addShader(const ShaderGLSL & shader)
   {
     m_d->shaders.push_back(shader.resourceId());
     invalidate();
   }
 
-  void ShaderProgram::removeShader(const ShaderGLSL & shader)
+  void Program::removeShader(const ShaderGLSL & shader)
   {
     auto it = std::remove(m_d->shaders.begin(), m_d->shaders.end(), shader.resourceId());
     m_d->shaders.erase(it, m_d->shaders.end());
     invalidate();
   }
 
-  QStringList ShaderProgram::shaderFilenames() const
+  QStringList Program::shaderFilenames() const
   {
     QStringList shaders;
     for(auto it = m_d->shaders.begin(); it != m_d->shaders.end(); ++it) {
@@ -164,12 +164,12 @@ namespace Luminous
     return shaders;
   }
 
-  size_t ShaderProgram::shaderCount() const
+  size_t Program::shaderCount() const
   {
     return m_d->shaders.size();
   }
 
-  RenderResource::Hash ShaderProgram::hash() const
+  RenderResource::Hash Program::hash() const
   {
     bool rehash = m_d->hashGeneration != generation();
     if(!rehash) {
@@ -190,21 +190,21 @@ namespace Luminous
     return m_d->hash;
   }
 
-  RenderResource::Id ShaderProgram::shader(size_t index) const
+  RenderResource::Id Program::shader(size_t index) const
   {
     assert(index < shaderCount());
     return m_d->shaders[index];
   }
 
 #define ADDSHADERUNIFORMCONST(TYPE) \
-  template <> LUMINOUS_API void ShaderProgram::addShaderUniform(const QString & name, const TYPE & value) \
+  template <> LUMINOUS_API void Program::addShaderUniform(const QString & name, const TYPE & value) \
   { \
     std::shared_ptr<ShaderUniform> uniform(new ShaderUniformT<TYPE>(name, value)); \
     m_d->uniforms.push_back(uniform); \
   }
 
 #define ADDSHADERUNIFORMATTR(ATTRTYPE) \
-  template <> LUMINOUS_API void ShaderProgram::addShaderUniform(const QString & name, ATTRTYPE & value) \
+  template <> LUMINOUS_API void Program::addShaderUniform(const QString & name, ATTRTYPE & value) \
   { \
     std::shared_ptr<ShaderUniform> uniform(new ShaderUniformT<ATTRTYPE>(name, value)); \
     m_d->uniforms.push_back(uniform); \
@@ -244,52 +244,52 @@ namespace Luminous
 #undef ADDSHADERUNIFORMCONST
 #undef ADDSHADERUNIFORMATTR
 
-  void ShaderProgram::removeShaderUniform(const QString & name)
+  void Program::removeShaderUniform(const QString & name)
   {
     m_d->uniforms.erase(
       std::remove_if(std::begin(m_d->uniforms), std::end(m_d->uniforms), [&](const std::shared_ptr<ShaderUniform> & u) { return u->name == name; }),
       std::end(m_d->uniforms));
   }
 
-  size_t ShaderProgram::uniformCount() const
+  size_t Program::uniformCount() const
   {
     return m_d->uniforms.size();
   }
 
-  ShaderUniform & ShaderProgram::uniform(size_t index) const
+  ShaderUniform & Program::uniform(size_t index) const
   {
     assert(index <m_d->uniforms.size());
     return *m_d->uniforms[index];
   }
 
-  const VertexDescription & ShaderProgram::vertexDescription() const
+  const VertexDescription & Program::vertexDescription() const
   {
     return m_d->vertexDescription;
   }
 
-  void ShaderProgram::setVertexDescription(const VertexDescription & description)
+  void Program::setVertexDescription(const VertexDescription & description)
   {
     m_d->vertexDescription = description;
     /// @todo invalidate?
   }
 
-  const UniformDescription & ShaderProgram::uniformDescription() const
+  const UniformDescription & Program::uniformDescription() const
   {
     return m_d->uniformDescription;
   }
 
-  void ShaderProgram::setUniformDescription(const UniformDescription & description)
+  void Program::setUniformDescription(const UniformDescription & description)
   {
     m_d->uniformDescription = description;
     /// @todo invalidate?
   }
 
-  bool ShaderProgram::translucent() const
+  bool Program::translucent() const
   {
     return m_d->translucent;
   }
 
-  void ShaderProgram::setTranslucency(bool translucency)
+  void Program::setTranslucency(bool translucency)
   {
     m_d->translucent = translucency;
   }

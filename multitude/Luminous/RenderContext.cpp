@@ -230,7 +230,7 @@ namespace Luminous
 
       bzero(m_textures, sizeof(m_textures));
 
-      /// @todo ShaderProgram should own these
+      /// @todo Program should own these
       Luminous::ShaderGLSL * basicVertexShader = new Luminous::ShaderGLSL(ShaderGLSL::Vertex);
       Luminous::ShaderGLSL * basicFragmentShader = new Luminous::ShaderGLSL(ShaderGLSL::Fragment);
       basicVertexShader->loadText("Luminous/GLSL400/basic_shader.vs");
@@ -578,8 +578,8 @@ namespace Luminous
     float m_automaticDepthDiff;
     int m_renderCalls;
 
-    ShaderProgram m_basicShader;
-    ShaderProgram m_texShader;
+    Program m_basicShader;
+    Program m_texShader;
 
     Luminous::RenderDriver & m_driver;
 
@@ -1980,7 +1980,7 @@ namespace Luminous
     m_data->m_driver.setVertexBinding(binding);
   }
 
-  void RenderContext::setShaderProgram(const ShaderProgram & program)
+  void RenderContext::setShaderProgram(const Program & program)
   {
     m_data->m_driver.setShaderProgram(program);
   }
@@ -2020,12 +2020,12 @@ namespace Luminous
     return m_data->m_driver.setShaderUniform(name, static_cast<Nimble::Vector4f>(value));
   }
 
-  ShaderProgram & RenderContext::basicShader()
+  Program & RenderContext::basicShader()
   {
     return m_data->m_basicShader;
   }
 
-  ShaderProgram & RenderContext::texShader()
+  Program & RenderContext::texShader()
   {
     return m_data->m_texShader;
   }

@@ -32,7 +32,7 @@ namespace Luminous
     {
       VertexArray,
       Buffer,
-      ShaderProgram,
+      Program,
       VertexShader,
       FragmentShader,
       GeometryShader,

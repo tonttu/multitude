@@ -6,7 +6,7 @@
 #include <Nimble/Rect.hpp>
 #include <Nimble/Vector4.hpp>
 
-#include <Luminous/ShaderProgram.hpp>
+#include <Luminous/Program.hpp>
 
 namespace Luminous
 {
@@ -24,7 +24,7 @@ namespace Luminous
     Fill() : color(1, 1, 1, 1), shader(nullptr), translucent(Auto) {}
     /// @todo accessors
     Nimble::Vector4f color;
-    Luminous::ShaderProgram * shader;
+    Luminous::Program * shader;
     std::map<QByteArray, Luminous::Texture*> tex;
     Translucency translucent;
   };

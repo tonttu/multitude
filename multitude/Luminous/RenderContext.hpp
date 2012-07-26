@@ -454,7 +454,7 @@ namespace Luminous
     void setBuffer(Buffer::Type type, const Luminous::Buffer & buffer);
     void setTexture(unsigned int textureUnit, const Luminous::Texture & texture);
     void setVertexBinding(const VertexAttributeBinding & binding);
-    void setShaderProgram(const ShaderProgram & program);
+    void setShaderProgram(const Program & program);
     template <typename T> bool setShaderUniform(const char * name, const T & value);
 
     template <typename T>
@@ -494,8 +494,8 @@ namespace Luminous
     template <typename Vertex, typename UniformBlock>
     RenderBuilder<Vertex, UniformBlock> render(Luminous::PrimitiveType type, int indexCount, int vertexCount, const Style & style);
 
-    ShaderProgram & basicShader();
-    ShaderProgram & texShader();
+    Program & basicShader();
+    Program & texShader();
 
     //////////////////////////////////////////////////////////////////////////
     /// </Luminousv2>

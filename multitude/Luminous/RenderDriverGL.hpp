@@ -33,7 +33,7 @@ namespace Luminous
     LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Matrix2f & value) OVERRIDE;
     LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Matrix3f & value) OVERRIDE;
     LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Matrix4f & value) OVERRIDE;
-    LUMINOUS_API virtual void setShaderProgram(const ShaderProgram & shader) OVERRIDE;
+    LUMINOUS_API virtual void setShaderProgram(const Program & shader) OVERRIDE;
 
     LUMINOUS_API virtual void preFrame() OVERRIDE;
     LUMINOUS_API virtual void postFrame() OVERRIDE;

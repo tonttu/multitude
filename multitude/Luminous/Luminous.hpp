@@ -159,7 +159,7 @@ namespace Luminous
   struct RenderCommand;
   // Resources
   class Buffer;
-  class ShaderProgram;
+  class Program;
   class ShaderGLSL;
   struct ShaderUniform;
   class Texture;

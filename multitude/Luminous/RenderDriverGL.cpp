@@ -3,7 +3,7 @@
 #include "Luminous/VertexAttributeBinding.hpp"
 #include "Luminous/VertexDescription.hpp"
 #include "Luminous/Buffer.hpp"
-#include "Luminous/ShaderProgram.hpp"
+#include "Luminous/Program.hpp"
 #include "Luminous/ShaderUniform.hpp"
 #include "Luminous/Texture2.hpp"
 #include "Luminous/PixelFormat.hpp"
@@ -47,7 +47,7 @@ namespace
     {
     case Luminous::RenderResource::VertexArray:    glGenVertexArrays(1, &resource); return resource;
     case Luminous::RenderResource::Buffer:         glGenBuffers(1, &resource); return resource;
-    case Luminous::RenderResource::ShaderProgram:  return glCreateProgram();
+    case Luminous::RenderResource::Program:  return glCreateProgram();
     case Luminous::RenderResource::VertexShader:   return glCreateShader(GL_VERTEX_SHADER);
     case Luminous::RenderResource::FragmentShader: return glCreateShader(GL_FRAGMENT_SHADER);
     case Luminous::RenderResource::GeometryShader: return glCreateShader(GL_GEOMETRY_SHADER_EXT);
@@ -65,7 +65,7 @@ namespace
     {
     case Luminous::RenderResource::VertexArray:    glDeleteVertexArrays(1, &resource); break;
     case Luminous::RenderResource::Buffer:         glDeleteBuffers(1, &resource); break;
-    case Luminous::RenderResource::ShaderProgram:  glDeleteProgram(resource); break;
+    case Luminous::RenderResource::Program:  glDeleteProgram(resource); break;
     case Luminous::RenderResource::VertexShader:   glDeleteShader(resource); break;
     case Luminous::RenderResource::FragmentShader: glDeleteShader(resource); break;
     case Luminous::RenderResource::GeometryShader: glDeleteShader(resource); break;
@@ -121,9 +121,9 @@ namespace Luminous
     QRegion dirtyRegion;
   };
 
-  struct ProgramHandle : public ResourceHandle<ShaderProgram>
+  struct ProgramHandle : public ResourceHandle<Program>
   {
-    ProgramHandle(const ShaderProgram * ptr = nullptr) : ResourceHandle(ptr) {}
+    ProgramHandle(const Program * ptr = nullptr) : ResourceHandle(ptr) {}
     std::map<QByteArray, GLuint> textures;
     std::set<GLuint> shaders;
 
@@ -295,7 +295,7 @@ namespace Luminous
       GLERROR("RenderDriverGL::D::bindTexture glBindTexture");
     }
 
-    bool updateShaders(const ShaderProgram & program, ProgramHandle & programHandle)
+    bool updateShaders(const Program & program, ProgramHandle & programHandle)
     {
       bool needsRelinking = false;
 
@@ -356,7 +356,7 @@ namespace Luminous
       return needsRelinking;
     }
 
-    void relinkShaderProgram(const ShaderProgram & program, ProgramHandle & programHandle)
+    void relinkShaderProgram(const Program & program, ProgramHandle & programHandle)
     {
       glLinkProgram(programHandle.handle);
       GLERROR("RenderDriverGL::setShaderProgram glLinkProgram");
@@ -379,7 +379,7 @@ namespace Luminous
       programHandle.generation = program.generation();
     }
 
-    void applyShaderUniforms(const ShaderProgram & program)
+    void applyShaderUniforms(const Program & program)
     {
       auto & programHandle = m_programs[program.hash()];
 
@@ -448,7 +448,7 @@ namespace Luminous
       return desc;
     }
 
-    ProgramHandle & getLinkedShaderProgram(const ShaderProgram & program)
+    ProgramHandle & getLinkedShaderProgram(const Program & program)
     {
       ProgramHandle & programHandle = m_programs[program.hash()];
       if(programHandle.handle == 0) {
@@ -878,7 +878,7 @@ namespace Luminous
 #undef SETUNIFORMVECTOR
 #undef SETUNIFORMMATRIX
 
-  void RenderDriverGL::setShaderProgram(const ShaderProgram & program)
+  void RenderDriverGL::setShaderProgram(const Program & program)
   {
     auto & handle = m_d->getLinkedShaderProgram(program);
     m_d->bindShaderProgram(handle);

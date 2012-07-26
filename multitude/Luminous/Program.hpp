@@ -1,5 +1,5 @@
-#if !defined (LUMINOUS_SHADERPROGRAM_HPP)
-#define LUMINOUS_SHADERPROGRAM_HPP
+#if !defined (LUMINOUS_PROGRAM_HPP)
+#define LUMINOUS_PROGRAM_HPP
 
 #include "Luminous/Luminous.hpp"
 #include "Luminous/RenderResource.hpp"
@@ -38,19 +38,19 @@ namespace Luminous
     LUMINOUS_API Hash hash() const;
 
   private:
-    friend class ShaderProgram;
+    friend class Program;
     class D;
     D * m_d;
   };
 
   /// A shader program, combining multiple ShaderGLSL objects into one runnable program
-  class ShaderProgram
+  class Program
     : public RenderResource
     , public Valuable::Node
   {
   public:
-    LUMINOUS_API ShaderProgram();
-    LUMINOUS_API ~ShaderProgram();
+    LUMINOUS_API Program();
+    LUMINOUS_API ~Program();
 
     LUMINOUS_API void addShader(const ShaderGLSL & shader);
     LUMINOUS_API void removeShader(const ShaderGLSL & shader);
@@ -84,4 +84,4 @@ namespace Luminous
     D * m_d;
   };
 }
-#endif // LUMINOUS_SHADERPROGRAM_HPP
+#endif // LUMINOUS_PROGRAM_HPP
