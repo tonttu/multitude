@@ -44,8 +44,6 @@ namespace Luminous
 
     LUMINOUS_API virtual void setVertexBinding(const VertexArray & binding) OVERRIDE;
     
-    LUMINOUS_API virtual void setTexture(unsigned int textureUnit, const Texture & texture) OVERRIDE;
-
     LUMINOUS_API virtual void clearState() OVERRIDE;
 
     LUMINOUS_API virtual void setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer) OVERRIDE;
@@ -60,6 +58,8 @@ namespace Luminous
                                                              const Luminous::Style & style) OVERRIDE;
 
     LUMINOUS_API virtual void flush() OVERRIDE;
+
+    LUMINOUS_API TextureGL & handle(const Texture & texture);
 
     /// @todo Add function wrapper(s) for:
     /// * glLogicOp

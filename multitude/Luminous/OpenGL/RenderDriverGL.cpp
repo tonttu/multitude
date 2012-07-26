@@ -1,5 +1,6 @@
 #include "Luminous/OpenGL/RenderDriverGL.hpp"
 #include "Luminous/OpenGL/StateGL.hpp"
+#include "Luminous/OpenGL/TextureGL.hpp"
 #include "Luminous/RenderManager.hpp"
 #include "Luminous/VertexArray.hpp"
 #include "Luminous/VertexDescription.hpp"
@@ -52,7 +53,6 @@ namespace
     case Luminous::RenderResource::VertexShader:   return glCreateShader(GL_VERTEX_SHADER);
     case Luminous::RenderResource::FragmentShader: return glCreateShader(GL_FRAGMENT_SHADER);
     case Luminous::RenderResource::GeometryShader: return glCreateShader(GL_GEOMETRY_SHADER_EXT);
-    case Luminous::RenderResource::Texture:        glGenTextures(1, & resource); return resource;
     default:
       Radiant::error("RenderDriverGL: Can't create GL resource: unknown type %d", type);
       assert(false);
@@ -70,7 +70,6 @@ namespace
     case Luminous::RenderResource::VertexShader:   glDeleteShader(resource); break;
     case Luminous::RenderResource::FragmentShader: glDeleteShader(resource); break;
     case Luminous::RenderResource::GeometryShader: glDeleteShader(resource); break;
-    case Luminous::RenderResource::Texture:        glDeleteTextures(1, & resource); break;
     default:
       Radiant::error("RenderDriverGL: Can't destroy GL resource: unknown type %d", type);
       assert(false);
@@ -80,16 +79,6 @@ namespace
 
 namespace Luminous
 {
-  //////////////////////////////////////////////////////////////////////////
-  // Configuration
-
-  /// PCIe bandwidth
-  /// PCIe 1.0 x16: 4GB/sec (2001)
-  /// PCIe 2.0 x16: 8GB/sec (2007)
-  /// PCIe 3.0 x16: 15.8GB/sec (2011)
-  static const int64_t upload_bytes_limit = ((uint64_t)4 << 30);
-
-  //////////////////////////////////////////////////////////////////////////
   /// Resource handles
   template <typename T>
   struct ResourceHandle
@@ -113,13 +102,6 @@ namespace Luminous
     Buffer::Usage usage;
     size_t size;        // Size (in bytes)
     size_t uploaded;    // Uploaded bytes (for incremental upload)
-  };
-  
-  struct TextureHandle : public ResourceHandle<Texture>
-  {
-    TextureHandle(const Texture * ptr = nullptr) : ResourceHandle(ptr), target(0) {}
-    GLenum target;
-    QRegion dirtyRegion;
   };
 
   struct ProgramHandle : public ResourceHandle<Program>
@@ -151,7 +133,7 @@ namespace Luminous
     Luminous::ProgramHandle * program;
     VertexArrayHandle * vertexArray;
     BufferHandle * uniformBuffer;
-    std::array<TextureHandle*, 8> textures;
+    std::array<TextureGL*, 8> textures;
     bool operator<(const RenderState & o) const
     {
       if(program != o.program)
@@ -193,8 +175,8 @@ namespace Luminous
   {
   public:
     D(unsigned int threadIndex)
-      : m_currentBuffer(0)
-      , m_uploadedBytes(0)
+      : m_stateGl(threadIndex)
+      , m_currentBuffer(0)
       , m_threadIndex(threadIndex)
       , m_frame(0)
       , m_fps(0.0)
@@ -210,11 +192,13 @@ namespace Luminous
 
     typedef std::map<RenderResource::Hash, ProgramHandle> ProgramList;
     typedef std::map<RenderResource::Hash, ShaderHandle> ShaderList;
-    typedef std::map<RenderResource::Hash, TextureHandle> TextureList;
+    typedef std::map<RenderResource::Hash, TextureGL> TextureList;
     typedef std::map<RenderResource::Id, BufferHandle> BufferList;
     typedef std::map<RenderResource::Id, VertexArrayHandle> VertexArrayList;
 
-    /// Resources
+    /// Resources, different maps for each type because it eliminates the need
+    /// for dynamic_cast or similar, and also makes resource sharing possible
+    /// for only specific resource types
     ProgramList m_programs;
     ShaderList m_shaders;
     TextureList m_textures;
@@ -233,7 +217,6 @@ namespace Luminous
     unsigned int m_threadIndex;
 
     /// Render statistics
-    int32_t m_uploadedBytes;      // Uploaded bytes this frame
     int32_t m_totalBytes;         // Total bytes currently in GPU memory for this thread
     Radiant::Timer m_frameTimer;  // Time since begin of frame
     uint64_t m_frame;             // Current frame number
@@ -244,7 +227,7 @@ namespace Luminous
     /// Reset thread statistics
     void resetStatistics()
     {
-      m_uploadedBytes = 0;
+      m_stateGl.clearUploadedBytes();
       m_frameTimer.start();
     }
 
@@ -267,10 +250,11 @@ namespace Luminous
     /// Cleanup any queued-for-deletion or expired resources
     void removeResources()
     {
-      removeResource(m_VertexArrays, m_releaseQueue);
+      /// @todo re-enable when everything is ResourceHandleGL
+      /*removeResource(m_VertexArrays, m_releaseQueue);
       removeResource(m_buffers, m_releaseQueue);
       removeResource(m_programs);
-      removeResource(m_shaders);
+      removeResource(m_shaders);*/
       removeResource(m_textures);
       m_releaseQueue.clear();
     }
@@ -282,13 +266,6 @@ namespace Luminous
         glUseProgram(programHandle.handle);
         GLERROR("RenderDriverGL::setShaderProgram glUseProgram");
       }
-    }
-
-    void bindTexture(const TextureHandle & textureHandle, int textureUnit)
-    {
-      glActiveTexture(GL_TEXTURE0 + textureUnit);
-      glBindTexture(textureHandle.target, textureHandle.handle);
-      GLERROR("RenderDriverGL::D::bindTexture glBindTexture");
     }
 
     bool updateShaders(const Program & program, ProgramHandle & programHandle)
@@ -464,117 +441,6 @@ namespace Luminous
       return programHandle;
     }
 
-    TextureHandle & textureHandle(const Texture & texture, int textureUnit, bool alwaysBind = false)
-    {
-      TextureHandle & textureHandle = m_textures[texture.hash()];
-      bool newTexture = false;
-      if(textureHandle.handle == 0) {
-        textureHandle.resource = &texture;
-        textureHandle.handle = createResource(RenderResource::Texture);
-        newTexture = true;
-      }
-
-      // Reset usage timer
-      textureHandle.lastUsed.start();
-
-      bool bound = false;
-
-      if((/*texture.mode() == Texture::Streaming &&*/ textureHandle.generation < texture.generation()) ||
-         newTexture) {
-        if (texture.dimensions() == 1)      textureHandle.target = GL_TEXTURE_1D;
-        else if (texture.dimensions() == 2) textureHandle.target = GL_TEXTURE_2D;
-        else if (texture.dimensions() == 3) textureHandle.target = GL_TEXTURE_3D;
-
-        bindTexture(textureHandle, textureUnit);
-        bound = true;
-
-        /// Specify the internal format (number of channels or explicitly requested format)
-        GLenum intFormat = texture.internalFormat();
-        if(intFormat == 0) {
-          if (texture.dataFormat().numChannels() == 1)      intFormat = GL_RED;
-          else if (texture.dataFormat().numChannels() == 2) intFormat = GL_RG;
-          else if (texture.dataFormat().numChannels() == 3) intFormat = GL_RGB;
-          else intFormat = GL_RGBA;
-        }
-
-        if (texture.dimensions() == 1)      glTexImage1D(GL_TEXTURE_1D, 0, intFormat, texture.width(), 0, texture.dataFormat().layout(), texture.dataFormat().type(), nullptr );
-        else if (texture.dimensions() == 2) glTexImage2D(GL_TEXTURE_2D, 0, intFormat, texture.width(), texture.height(), 0, texture.dataFormat().layout(), texture.dataFormat().type(), nullptr );
-        else if (texture.dimensions() == 3) glTexImage3D(GL_TEXTURE_3D, 0, intFormat, texture.width(), texture.height(), texture.depth(), 0, texture.dataFormat().layout(), texture.dataFormat().type(), nullptr );
-
-        /// @todo Get these from the texture settings
-        glTexParameteri(textureHandle.target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(textureHandle.target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        // Update handle cache
-        textureHandle.generation = texture.generation();
-        textureHandle.dirtyRegion = QRegion(0, 0, texture.width(), texture.height());
-      }
-      textureHandle.dirtyRegion += texture.takeDirtyRegion(m_threadIndex);
-
-      if(!bound && alwaysBind) {
-        bindTexture(textureHandle, textureUnit);
-        bound = true;
-      }
-
-      /// @todo 1D / 3D textures don't work atm
-      if(!textureHandle.dirtyRegion.isEmpty()) {
-        if(!bound)
-          bindTexture(textureHandle, textureUnit);
-
-        // Set proper alignment
-        int alignment = 8;
-        while (texture.width() % alignment)
-          alignment >>= 1;
-        glPixelStorei(GL_PACK_ALIGNMENT, alignment);
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, texture.lineSizePixels());
-
-        int uploaded = 0;
-
-        if (texture.dimensions() == 1) {
-          /// @todo incremental upload
-          glTexSubImage1D(GL_TEXTURE_1D, 0, 0, texture.width(), texture.dataFormat().layout(), texture.dataFormat().type(), texture.data());
-          uploaded = texture.width() * texture.dataFormat().bytesPerPixel();
-        }
-        else if (texture.dimensions() == 2) {
-          // See how much of the bytes we can upload in this frame
-          int64_t bytesFree = upload_bytes_limit - m_uploadedBytes;
-
-          foreach(const QRect & rect, textureHandle.dirtyRegion.rects()) {
-            const int bytesPerScanline = rect.width() * texture.dataFormat().bytesPerPixel();
-            // Number of scanlines to upload
-            const size_t scanLines = std::min<int32_t>(rect.height(), bytesFree / bytesPerScanline);
-
-            auto data = texture.data() + (rect.left() + rect.top() * texture.width()) *
-                texture.dataFormat().bytesPerPixel();
-
-            // Upload data
-            glTexSubImage2D(GL_TEXTURE_2D, 0, rect.left(), rect.top(), rect.width(), scanLines,
-                            texture.dataFormat().layout(), texture.dataFormat().type(), data);
-            uploaded += bytesPerScanline * scanLines;
-
-            if(scanLines != rect.height()) {
-              textureHandle.dirtyRegion -= QRegion(rect.left(), rect.top(), rect.width(), scanLines);
-              break;
-            } else {
-              textureHandle.dirtyRegion -= rect;
-            }
-          }
-        }
-        else if (texture.dimensions() == 3) {
-          /// @todo incremental upload
-          glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, texture.width(), texture.height(), texture.depth(),
-                          texture.dataFormat().layout(), texture.dataFormat().type(), texture.data());
-          uploaded = texture.width() * texture.height() * texture.depth() * texture.dataFormat().bytesPerPixel();
-        }
-
-        // Update upload-limiter
-        m_uploadedBytes += uploaded;
-      }
-
-      return textureHandle;
-    }
-
-
     void setVertexAttributes(const VertexArray & binding)
     {
       // Bind all vertex buffers
@@ -724,7 +590,7 @@ namespace Luminous
 
       for(std::size_t t = 0; t < state.textures.size(); ++t) {
         if(!state.textures[t]) break;
-        else bindTexture(*state.textures[t], t);
+        else state.textures[t]->bind(t);
       }
 
       if(state.vertexArray)
@@ -748,7 +614,7 @@ namespace Luminous
     }
 
     // Utility function for resource cleanup
-    template <typename ContainerType>
+    /*template <typename ContainerType>
     void removeResource(ContainerType & container, const ReleaseQueue & releaseQueue)
     {
       auto it = std::begin(container);
@@ -780,7 +646,21 @@ namespace Luminous
           it = container.erase(it);
         } else ++it;
       }
+    }*/
+
+    template <typename ContainerType>
+    void removeResource(ContainerType & container)
+    {
+      auto it = std::begin(container);
+      while(it != std::end(container)) {
+        const auto & handle = it->second;
+        if(handle.expired()) {
+          // Remove from container
+          it = container.erase(it);
+        } else ++it;
+      }
     }
+
   };
 
 
@@ -948,9 +828,17 @@ namespace Luminous
 #endif
   }
 
-  void RenderDriverGL::setTexture(unsigned int textureUnit, const Texture & texture)
+  TextureGL & RenderDriverGL::handle(const Texture & texture)
   {
-    m_d->textureHandle(texture, textureUnit, true);
+    auto it = m_d->m_textures.find(texture.hash());
+    if(it == m_d->m_textures.end()) {
+      // libstdc++ doesn't have this yet
+      //it = m_d->m_textures.emplace(texture.hash(), m_d->m_stateGl).first;
+      it = m_d->m_textures.insert(std::make_pair(texture.hash(), TextureGL(m_d->m_stateGl))).first;
+      it->second.setExpirationSeconds(texture.expiration());
+    }
+
+    return it->second;
   }
 
   void RenderDriverGL::clearState()
@@ -1053,7 +941,8 @@ namespace Luminous
         continue;
 
       translucent |= it->second->translucent();
-      TextureHandle & tex = m_d->textureHandle(*it->second, unit);
+      TextureGL & tex = handle(*it->second);
+      tex.upload(*it->second, unit, false);
       state.textures[unit++] = &tex;
     }
     state.textures[unit] = nullptr;

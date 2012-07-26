@@ -18,6 +18,7 @@
 #include "Luminous/VertexArray.hpp"
 #include "Luminous/VertexDescription.hpp"
 #include "Luminous/Buffer.hpp"
+#include "Luminous/OpenGL/RenderDriverGL.hpp"
 
 #include <Nimble/Matrix4.hpp>
 
@@ -219,6 +220,7 @@ namespace Luminous
         , m_automaticDepthDiff(-1.0f/100000.0f)
         , m_renderCalls(0)
         , m_driver(renderDriver)
+        , m_driverGL(dynamic_cast<RenderDriverGL*>(&renderDriver))
     {
       m_viewTransform.identity();
       m_viewTransformStack.push_back(m_viewTransform);
@@ -582,6 +584,7 @@ namespace Luminous
     Program m_texShader;
 
     Luminous::RenderDriver & m_driver;
+    Luminous::RenderDriverGL * m_driverGL;
 
     struct BufferPool
     {
@@ -1969,11 +1972,6 @@ namespace Luminous
     }
   }
 
-  void RenderContext::setTexture(unsigned int textureUnit, const Luminous::Texture & texture)
-  {
-    m_data->m_driver.setTexture(textureUnit, texture);
-  }
-
   void RenderContext::setVertexBinding(const VertexArray & binding)
   {
     // Bind the VAO: Binds all the associated vertex buffers and sets the appropriate vertex attributes
@@ -2029,5 +2027,10 @@ namespace Luminous
   {
     return m_data->m_texShader;
   }
-}
 
+  TextureGL & RenderContext::handle(Texture & texture)
+  {
+    assert(m_data->m_driverGL);
+    return m_data->m_driverGL->handle(texture);
+  }
+}

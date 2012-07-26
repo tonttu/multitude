@@ -1,7 +1,9 @@
 include(../multitude.pri)
 
-HEADERS += OpenGL/StateGL.hpp
 HEADERS += OpenGL/RenderDriverGL.hpp
+HEADERS += OpenGL/ResourceHandleGL.hpp
+HEADERS += OpenGL/StateGL.hpp
+HEADERS += OpenGL/TextureGL.hpp
 
 HEADERS += BGThread.hpp
 HEADERS += CocoaWindow.hpp
@@ -74,6 +76,7 @@ macx:OBJECTIVE_SOURCES += CocoaWindow.mm
 !mobile*:SOURCES += SpriteRenderer.cpp
 
 SOURCES += OpenGL/RenderDriverGL.cpp
+SOURCES += OpenGL/TextureGL.cpp
 
 SOURCES += BGThread.cpp
 SOURCES += CodecRegistry.cpp
