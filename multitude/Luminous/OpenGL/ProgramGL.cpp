@@ -1,4 +1,4 @@
-#include "OpenGL/ProgramGL.hpp"
+#include "ProgramGL.hpp"
 
 #include "Program.hpp"
 
