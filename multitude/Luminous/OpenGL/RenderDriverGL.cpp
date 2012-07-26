@@ -1,4 +1,4 @@
-#include "Luminous/RenderDriverGL.hpp"
+#include "Luminous/OpenGL/RenderDriverGL.hpp"
 #include "Luminous/RenderManager.hpp"
 #include "Luminous/VertexArray.hpp"
 #include "Luminous/VertexDescription.hpp"

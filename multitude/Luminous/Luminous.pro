@@ -1,5 +1,7 @@
 include(../multitude.pri)
 
+HEADERS += OpenGL/RenderDriverGL.hpp
+
 HEADERS += BGThread.hpp
 HEADERS += CocoaWindow.hpp
 HEADERS += CodecRegistry.hpp
@@ -32,7 +34,6 @@ HEADERS += PixelFormat.hpp
 HEADERS += QtWindow.hpp
 HEADERS += RenderContext.hpp
 HEADERS += RenderContextImpl.hpp
-HEADERS += RenderDriverGL.hpp
 HEADERS += RenderDriver.hpp
 HEADERS += RenderManager.hpp
 HEADERS += RenderResource.hpp
@@ -70,6 +71,9 @@ macx:OBJECTIVE_SOURCES += CocoaWindow.mm
 !mobile*:SOURCES += ImageCodecTGA.cpp
 !mobile*:SOURCES += MipMapGenerator.cpp
 !mobile*:SOURCES += SpriteRenderer.cpp
+
+SOURCES += OpenGL/RenderDriverGL.cpp
+
 SOURCES += BGThread.cpp
 SOURCES += CodecRegistry.cpp
 SOURCES += ColorCorrection.cpp
@@ -92,7 +96,6 @@ SOURCES += PixelFormat.cpp
 SOURCES += QtWindow.cpp
 SOURCES += RenderContext.cpp
 SOURCES += RenderDriver.cpp
-SOURCES += RenderDriverGL.cpp
 SOURCES += RenderManager.cpp
 SOURCES += RenderResource.cpp
 SOURCES += ScreenDetector.cpp
