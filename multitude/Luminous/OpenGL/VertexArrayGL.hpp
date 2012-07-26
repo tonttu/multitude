@@ -18,7 +18,7 @@ namespace Luminous
 
     void bind();
 
-    void upload(const VertexArray & vertexArray);
+    void upload(const VertexArray & vertexArray, ProgramGL * program);
 
     int generation() const { return m_generation; }
 

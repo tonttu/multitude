@@ -9,7 +9,7 @@ namespace Luminous
   class BufferGL : public ResourceHandleGL
   {
   public:
-    BufferGL(StateGL & state);
+    BufferGL(StateGL & state, const Buffer & buffer);
     ~BufferGL();
 
     BufferGL(BufferGL && t);
@@ -24,9 +24,13 @@ namespace Luminous
     /// @todo hack, remove
     GLuint handle() const { return m_handle; }
 
-private:
+  private:
+    void allocate();
+
+  private:
     Buffer::Usage m_usage;
     size_t m_size;        // Size (in bytes)
+    size_t m_allocatedSize;
     size_t m_uploaded;    // Uploaded bytes (for incremental upload)
     GLenum m_target;
     int m_generation;

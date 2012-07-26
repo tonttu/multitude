@@ -29,12 +29,6 @@
 #include <QStringList>
 #include <QVector>
 
-#if RADIANT_DEBUG
-# define GLERROR(txt) Utils::glCheck(txt)
-#else
-# define GLERROR(txt)
-#endif
-
 // Since we got rid of GLEW on OSX...
 #ifdef RADIANT_OSX
 #define glDeleteVertexArrays glDeleteVertexArraysAPPLE
@@ -532,7 +526,7 @@ namespace Luminous
     auto & state = m_d->m_state;
     state.program = &handle(*style.fill.shader);
     state.program->link(*style.fill.shader);
-    state.vertexArray = &handle(binding);
+    state.vertexArray = &handle(binding, state.program);
     state.uniformBuffer = &handle(uniformBuffer);
 
     int unit = 0;
@@ -642,21 +636,21 @@ namespace Luminous
     if(it == m_d->m_buffers.end()) {
       // libstdc++ doesn't have this yet
       //it = m_d->m_textures.emplace(buffer.resourceId(), m_d->m_stateGl).first;
-      it = m_d->m_buffers.insert(std::make_pair(buffer.resourceId(), BufferGL(m_d->m_stateGl))).first;
+      it = m_d->m_buffers.insert(std::make_pair(buffer.resourceId(), BufferGL(m_d->m_stateGl, buffer))).first;
       it->second.setExpirationSeconds(buffer.expiration());
     }
 
     return it->second;
   }
 
-  VertexArrayGL & RenderDriverGL::handle(const VertexArray & vertexArray)
+  VertexArrayGL & RenderDriverGL::handle(const VertexArray & vertexArray, ProgramGL * program)
   {
     auto it = m_d->m_vertexArrays.find(vertexArray.resourceId());
     if(it == m_d->m_vertexArrays.end()) {
 
       it = m_d->m_vertexArrays.insert(std::make_pair(vertexArray.resourceId(), VertexArrayGL(m_d->m_stateGl))).first;
       it->second.setExpirationSeconds(vertexArray.expiration());
-      it->second.upload(vertexArray);
+      it->second.upload(vertexArray, program);
     }
 
     VertexArrayGL & vertexArrayGL = it->second;
@@ -665,7 +659,7 @@ namespace Luminous
 
     /// @todo should this be done somewhere else? Should the old VertexArrayGL be destroyed?
     if(vertexArrayGL.generation() < vertexArray.generation())
-      vertexArrayGL.upload(vertexArray);
+      vertexArrayGL.upload(vertexArray, program);
 
     return vertexArrayGL;
   }

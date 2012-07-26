@@ -3,6 +3,7 @@
 #include "BufferGL.hpp"
 #include "RenderManager.hpp"
 #include "RenderDriverGL.hpp"
+#include "ProgramGL.hpp"
 
 #include <QVector>
 
@@ -36,18 +37,20 @@ namespace Luminous
 
   void VertexArrayGL::bind()
   {
-    if(m_state.setVertexArray(m_handle))
+    if(m_state.setVertexArray(m_handle)) {
       glBindVertexArray(m_handle);
+      GLERROR("VertexArrayGL::bind # glBindVertexArray");
+    }
   }
 
-  void VertexArrayGL::upload(const VertexArray &vertexArray)
+  void VertexArrayGL::upload(const VertexArray & vertexArray, ProgramGL * program)
   {
     m_generation = vertexArray.generation();
 
     // Bind and setup all buffers/attributes
-    glBindVertexArray(m_handle);
+    bind();
 
-    //if(programHandle) bindShaderProgram(*programHandle);
+    if(program) program->bind();
 
     setVertexAttributes(vertexArray);
 
@@ -94,8 +97,10 @@ namespace Luminous
         GLenum normalized = (attr.normalized ? GL_TRUE : GL_FALSE);
 
         glVertexAttribPointer(location, attr.count, attr.type, normalized, description.vertexSize(), reinterpret_cast<GLvoid *>(attr.offset));
+        GLERROR("VertexArrayGL::setVertexDescription # glVertexAttribPointer");
 
         glEnableVertexAttribArray(location);
+        GLERROR("VertexArrayGL::setVertexDescription # glEnableVertexAttribArray");
       }
     }
   }
