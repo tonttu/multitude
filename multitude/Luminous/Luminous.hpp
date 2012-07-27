@@ -20,6 +20,20 @@
 #include <Radiant/Platform.hpp>
 #include <Radiant/Trace.hpp>
 
+#if defined(RADIANT_OSX)
+#   include <OpenGL/gl3.h>
+#   include <OpenGL/gl3ext.h>
+#   include <OpenGL/glu.h>
+#   define MULTI_WITHOUT_GLEW 1
+#   define LUMINOUS_OPENGL_FULL
+#   define LUMINOUS_IN_FULL_OPENGL(x) x
+#else
+#   include <GL/glew.h>
+#   include <GL/gl.h>
+#endif
+
+/// @todo why all this crap?
+/*
 #ifdef RADIANT_OSX
 // We do not use GLEW on OSX
 #define MULTI_WITHOUT_GLEW 1
@@ -94,6 +108,8 @@
 # define GL_FRAMEBUFFER_UNSUPPORTED_EXT GL_FRAMEBUFFER_UNSUPPORTED
 
 #endif
+
+*/
 
 #define debugLuminous(...) (Radiant::trace("Luminous", Radiant::DEBUG, __VA_ARGS__))
 /// Luminous is a library of C++ classes for computer graphics, using OpenGL.

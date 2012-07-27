@@ -118,7 +118,7 @@ private:
       count++;
 
       saver.fromData(im->m_planes[0].m_data, im->m_width, im->m_height,
-                     Luminous::PixelFormat::luminanceUByte());
+                     Luminous::PixelFormat::redUByte());
 
       if(count % 100 == 0) {
         Radiant::info("Capture %d frames from camera %llx",

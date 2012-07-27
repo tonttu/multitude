@@ -4,10 +4,11 @@
 #include "ResourceHandleGL.hpp"
 #include "Luminous/VertexDescription.hpp"
 
+#include <vector>
 #include <map>
 #include <vector>
 
-class QByteArray;
+#include <QByteArray>
 
 namespace Luminous
 {

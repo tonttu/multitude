@@ -109,7 +109,7 @@ namespace Luminous
         info.pf = PixelFormat(PixelFormat::LAYOUT_BGR, PixelFormat::TYPE_UBYTE);
         break;
       case 1:
-        info.pf = PixelFormat(PixelFormat::LAYOUT_LUMINANCE, PixelFormat::TYPE_UBYTE);
+        info.pf = PixelFormat(PixelFormat::LAYOUT_RED, PixelFormat::TYPE_UBYTE);
         break;
       default:
         Radiant::error("Image::readTGAHeader # unsupported bit depth (%d)", header.bpp);
@@ -158,7 +158,7 @@ namespace Luminous
         pf = PixelFormat(PixelFormat::LAYOUT_BGR, PixelFormat::TYPE_UBYTE);
         break;
       case 1:
-        pf = PixelFormat(PixelFormat::LAYOUT_LUMINANCE, PixelFormat::TYPE_UBYTE);
+        pf = PixelFormat(PixelFormat::LAYOUT_RED, PixelFormat::TYPE_UBYTE);
         break;
       default:
         Radiant::error("ImageCodecTGA::read # unsupported bit depth (%d)", header.bpp);
@@ -265,7 +265,7 @@ namespace Luminous
       case PixelFormat::LAYOUT_BGRA:
         header.imageType = 2;
         break;
-      case PixelFormat::LAYOUT_LUMINANCE:
+      case PixelFormat::LAYOUT_RED:
         header.imageType = 3;
         break;
       default:

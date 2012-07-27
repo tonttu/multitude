@@ -207,7 +207,7 @@ namespace Luminous
         dest += 4;
       }
     }
-    else if(image.pixelFormat() == PixelFormat::luminanceUByte()) {
+    else if(image.pixelFormat() == PixelFormat::redUByte()) {
 
       qi = QImage(image.width(), image.height(),
                   QImage::Format_RGB32);

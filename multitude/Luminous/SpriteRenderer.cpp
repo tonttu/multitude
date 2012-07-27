@@ -97,7 +97,7 @@ namespace Luminous {
         }
       }
 
-      m_texture.fromData( & blob[0], dim, dim, Luminous::PixelFormat::luminanceAlphaUByte());
+      m_texture.fromData( & blob[0], dim, dim, Luminous::PixelFormat::redGreenUByte());
     }
     Luminous::ImageTex m_texture;
     std::vector<SpriteRenderer::Sprite> m_sprites;
@@ -199,9 +199,9 @@ namespace Luminous {
       return;
 
     if(!prog->isLinked()) {
-      prog->setProgramParameter(GL_GEOMETRY_INPUT_TYPE_EXT, GL_POINTS);
-      prog->setProgramParameter(GL_GEOMETRY_OUTPUT_TYPE_EXT, GL_TRIANGLE_STRIP);
-      prog->setProgramParameter(GL_GEOMETRY_VERTICES_OUT_EXT, 4);
+      prog->setProgramParameter(GL_GEOMETRY_INPUT_TYPE, GL_POINTS);
+      prog->setProgramParameter(GL_GEOMETRY_OUTPUT_TYPE, GL_TRIANGLE_STRIP);
+      prog->setProgramParameter(GL_GEOMETRY_VERTICES_OUT, 4);
 
       if(!prog->link()) {
         error("When linking program: %s", prog->linkerLog());

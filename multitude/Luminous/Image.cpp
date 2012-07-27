@@ -345,7 +345,7 @@ namespace Luminous
     int h = sh / 2;
 
     if(source.pixelFormat() == PixelFormat::alphaUByte() ||
-       source.pixelFormat() == PixelFormat::luminanceUByte()) {
+       source.pixelFormat() == PixelFormat::redUByte()) {
 
       allocate(w, h, source.pixelFormat());
 
@@ -514,7 +514,7 @@ namespace Luminous
   bool Image::hasAlpha() const
   {
     return (m_pixelFormat.layout() == PixelFormat::LAYOUT_ALPHA) ||
-        (m_pixelFormat.layout() == PixelFormat::LAYOUT_LUMINANCE_ALPHA) ||
+        (m_pixelFormat.layout() == PixelFormat::LAYOUT_RED_GREEN) ||
         (m_pixelFormat.layout() == PixelFormat::LAYOUT_RGBA);
   }
 
@@ -777,7 +777,7 @@ namespace Luminous
     const float s = 1.0f / 255.0f;
 
     // I guess alpha is special case
-    if(m_pixelFormat == PixelFormat::alphaUByte() || m_pixelFormat == PixelFormat::luminanceUByte())
+    if(m_pixelFormat == PixelFormat::alphaUByte() || m_pixelFormat == PixelFormat::redUByte())
       return Nimble::Vector4(1, 1, 1, px[0] * s);
     else if(m_pixelFormat.numChannels() == 3)
       return Nimble::Vector4(px[0] * s, px[1] * s, px[2] * s, 1);
@@ -799,7 +799,7 @@ namespace Luminous
     px += pixelFormat().bytesPerPixel() * x;
 
 
-    if(m_pixelFormat == PixelFormat::alphaUByte() || m_pixelFormat == PixelFormat::luminanceUByte()) {
+    if(m_pixelFormat == PixelFormat::alphaUByte() || m_pixelFormat == PixelFormat::redUByte()) {
         px[0] = pixel.w * 255;
     } else if(pixelFormat().numChannels() == 3) {
         px[0] = pixel.x * 255;

@@ -65,7 +65,6 @@ namespace Luminous
     switch(m_layout) {
 #ifndef LUMINOUS_OPENGLES
 
-      case LAYOUT_COLOR_INDEX:
       case LAYOUT_STENCIL_INDEX:
       case LAYOUT_DEPTH_COMPONENT:
       case LAYOUT_RED:
@@ -74,10 +73,9 @@ namespace Luminous
 #endif // LUMINOUS_OPENGLES
 
       case LAYOUT_ALPHA:
-      case LAYOUT_LUMINANCE:
         return 1;
         break;
-      case LAYOUT_LUMINANCE_ALPHA:
+      case LAYOUT_RED_GREEN:
         return 2;
         break;
       case LAYOUT_RGB:
@@ -160,9 +158,7 @@ namespace Luminous
     {
 #ifndef LUMINOUS_OPENGLES
 
-    case PixelFormat::LAYOUT_COLOR_INDEX:
-      return "LAYOUT_COLOR_INDEX";
-    case PixelFormat::LAYOUT_STENCIL_INDEX:
+   case PixelFormat::LAYOUT_STENCIL_INDEX:
       return "LAYOUT_STENCIL_INDEX";
     case PixelFormat::LAYOUT_DEPTH_COMPONENT:
       return "LAYOUT_DEPTH_COMPONENT";
@@ -187,10 +183,8 @@ namespace Luminous
         return "LAYOUT_RGB";
       case PixelFormat::LAYOUT_RGBA:
         return "LAYOUT_RGBA";
-      case PixelFormat::LAYOUT_LUMINANCE:
-        return "LAYOUT_LUMINANCE";
-      case PixelFormat::LAYOUT_LUMINANCE_ALPHA:
-        return "LAYOUT_LUMINANCE_ALPHA";
+      case PixelFormat::LAYOUT_RED_GREEN:
+        return "LAYOUT_RED_GREEN";
       default:
         return "Invalid value (should never happen)";
 

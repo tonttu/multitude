@@ -18,6 +18,7 @@
 #define LUMINOUS_UTILS_HPP
 
 #include <Luminous/Luminous.hpp>
+#include <Luminous/DummyOpenGL.hpp>
 
 #include <Nimble/Rect.hpp>
 #include <Nimble/Matrix3.hpp>

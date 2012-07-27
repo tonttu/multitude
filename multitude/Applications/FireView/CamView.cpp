@@ -23,6 +23,7 @@
 
 #include <Luminous/Utils.hpp>
 #include <Luminous/PixelFormat.hpp>
+#include <Luminous/DummyOpenGL.hpp>
 
 #include <Radiant/ImageConversion.hpp>
 #include <Radiant/StringUtils.hpp>
@@ -632,7 +633,7 @@ namespace FireView {
 
         if((m_tex->width()  != frame.width()) || (m_tex->height() != frame.height())) {
 
-          m_tex->loadBytes(GL_LUMINANCE, frame.width(), frame.height(), frame.m_planes[0].m_data, PixelFormat(PixelFormat::LAYOUT_LUMINANCE, PixelFormat::TYPE_UBYTE), false);
+          m_tex->loadBytes(GL_RED, frame.width(), frame.height(), frame.m_planes[0].m_data, Luminous::PixelFormat::redUByte(), false);
 
         }
         else {

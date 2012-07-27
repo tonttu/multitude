@@ -11,6 +11,12 @@
 
 namespace Luminous
 {
+    /// @todo This class should be refactored. Many of the formats are
+    /// "platform specific" ie. don't work in ES. Would it make sense to split
+    /// this into two? One class to describe the CPU (external) format which is
+    /// platform independent and use the OpenGL enums directly for internal
+    /// format. The internal format could be hidden inside the RenderDriver.
+
   /// Describes the pixel format of an image
   /** This class tells what type values there are in the pixels, and
       how they are aligned. It is implemented in a way that makes it
@@ -56,11 +62,9 @@ namespace Luminous
       LAYOUT_ALPHA                = GL_ALPHA,
       LAYOUT_RGB                  = GL_RGB,
       LAYOUT_RGBA                 = GL_RGBA,
-      LAYOUT_LUMINANCE            = GL_LUMINANCE,
-      LAYOUT_LUMINANCE_ALPHA      = GL_LUMINANCE_ALPHA,
+      LAYOUT_RED_GREEN            = GL_RG,
 
 #ifndef LUMINOUS_OPENGLES
-      LAYOUT_COLOR_INDEX          = GL_COLOR_INDEX,
       LAYOUT_STENCIL_INDEX        = GL_STENCIL_INDEX,
       LAYOUT_DEPTH_COMPONENT      = GL_DEPTH_COMPONENT,
       LAYOUT_RED                  = GL_RED,
@@ -69,8 +73,7 @@ namespace Luminous
       LAYOUT_BGR                  = GL_BGR,
       LAYOUT_BGRA                 = GL_BGRA,
 #endif // LUMINOUS_OPENGLES
-
-                                  };
+    };
 
     /// Constructs a copy
     /// @param pf pixel format to copy
@@ -116,11 +119,11 @@ namespace Luminous
     { return PixelFormat(LAYOUT_BGRA, TYPE_UBYTE); }
 
     /// Constructs a floating-point luminance pixel format
-    static PixelFormat luminanceFloat()
-    { return PixelFormat(LAYOUT_LUMINANCE, TYPE_FLOAT); }
+    static PixelFormat redFloat()
+    { return PixelFormat(LAYOUT_RED, TYPE_FLOAT); }
     /// Constructs a floating-point luminance-alpha pixel format
-    static PixelFormat luminanceAlphaFloat()
-    { return PixelFormat(LAYOUT_LUMINANCE_ALPHA, TYPE_FLOAT); }
+    static PixelFormat redGreenFloat()
+    { return PixelFormat(LAYOUT_RED_GREEN, TYPE_FLOAT); }
 #endif
 
     /// Constructs an 8-bit alpha-only pixel format
@@ -129,12 +132,12 @@ namespace Luminous
     { return PixelFormat(LAYOUT_ALPHA, TYPE_UBYTE); }
     /// Constructs an 8-bit luminance (grayscale) pixel format
     /// @return new pixel format
-    static PixelFormat luminanceUByte()
-    { return PixelFormat(LAYOUT_LUMINANCE, TYPE_UBYTE); }
+    static PixelFormat redUByte()
+    { return PixelFormat(LAYOUT_RED, TYPE_UBYTE); }
     /// Constructs an 8-bit luminance-alpha pixel format
     /// @return new pixel format
-    static PixelFormat luminanceAlphaUByte()
-    { return PixelFormat(LAYOUT_LUMINANCE_ALPHA, TYPE_UBYTE); }
+    static PixelFormat redGreenUByte()
+    { return PixelFormat(LAYOUT_RED_GREEN, TYPE_UBYTE); }
 
     /// Compare if two pixel formats are the same
     inline bool operator == (const PixelFormat & that) const
