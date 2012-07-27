@@ -452,7 +452,7 @@ namespace Luminous
     //////////////////////////////////////////////////////////////////////////
 
     void setBuffer(Buffer::Type type, const Luminous::Buffer & buffer);
-    void setVertexBinding(const VertexArray & binding);
+    void setVertexArray(const VertexArray & vertexArray);
     void setShaderProgram(const Program & program);
     template <typename T> bool setShaderUniform(const char * name, const T & value);
 

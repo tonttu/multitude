@@ -67,7 +67,7 @@ namespace Luminous
     LUMINOUS_API virtual void setUniformBuffer(const Buffer & buffer) = 0;
 
     // Setup the vertexbuffers and attributes
-    LUMINOUS_API virtual void setVertexBinding(const VertexArray & binding) = 0;
+    LUMINOUS_API virtual void setVertexArray(const VertexArray & vertexArray) = 0;
 
     // Texturing
     LUMINOUS_API virtual void setTexture(unsigned int textureUnit, const Texture & texture) = 0;
@@ -82,7 +82,7 @@ namespace Luminous
                                           Radiant::FlagsT<Buffer::MapAccess> access) = 0;
     LUMINOUS_API virtual void unmapBuffer(const Buffer & buffer) = 0;
 
-    LUMINOUS_API virtual RenderCommand & createRenderCommand(VertexArray & binding,
+    LUMINOUS_API virtual RenderCommand & createRenderCommand(VertexArray & vertexArray,
                                                              Buffer & uniformBuffer,
                                                              const Luminous::Style & style) = 0;
 

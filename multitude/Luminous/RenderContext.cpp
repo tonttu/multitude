@@ -1558,13 +1558,13 @@ namespace Luminous
     SharedBuffer * ubuffer;
     std::tie(mappedUniformBuffer, ubuffer) = sharedBuffer(uniformSize, 1, Buffer::Uniform, uniformOffset);
 
-    VertexArray * binding = &vbuffer->bindings[std::make_pair(style.fill.shader->hash(), ibuffer->buffer.resourceId())];
-    if(binding->bindingCount() == 0) {
-      binding->addBinding(vbuffer->buffer, style.fill.shader->vertexDescription());
-      binding->setIndexBuffer(ibuffer->buffer);
+    VertexArray * vertexArray = &vbuffer->bindings[std::make_pair(style.fill.shader->hash(), ibuffer->buffer.resourceId())];
+    if(vertexArray->bindingCount() == 0) {
+      vertexArray->addBinding(vbuffer->buffer, style.fill.shader->vertexDescription());
+      vertexArray->setIndexBuffer(ibuffer->buffer);
     }
 
-    RenderCommand & cmd = m_data->m_driver.createRenderCommand(*binding, ubuffer->buffer, style);
+    RenderCommand & cmd = m_data->m_driver.createRenderCommand(*vertexArray, ubuffer->buffer, style);
     cmd.primitiveCount = indexCount;
     cmd.indexOffset = indexOffset;
     cmd.vertexOffset = vertexOffset;
@@ -1964,10 +1964,10 @@ namespace Luminous
     }
   }
 
-  void RenderContext::setVertexBinding(const VertexArray & binding)
+  void RenderContext::setVertexArray(const VertexArray & vertexArray)
   {
     // Bind the VAO: Binds all the associated vertex buffers and sets the appropriate vertex attributes
-    m_data->m_driver.setVertexBinding(binding);
+    m_data->m_driver.setVertexArray(vertexArray);
   }
 
   void RenderContext::setShaderProgram(const Program & program)

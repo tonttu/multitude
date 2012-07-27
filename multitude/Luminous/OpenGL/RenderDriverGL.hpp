@@ -44,7 +44,7 @@ namespace Luminous
     LUMINOUS_API virtual void setIndexBuffer(const Buffer & buffer) OVERRIDE;
     LUMINOUS_API virtual void setUniformBuffer(const Buffer & buffer) OVERRIDE;
 
-    LUMINOUS_API virtual void setVertexBinding(const VertexArray & binding) OVERRIDE;
+    LUMINOUS_API virtual void setVertexArray(const VertexArray & vertexArray) OVERRIDE;
 
     LUMINOUS_API virtual void setTexture(unsigned int textureUnit, const Texture & texture) OVERRIDE;
 
@@ -57,7 +57,7 @@ namespace Luminous
                                           Radiant::FlagsT<Buffer::MapAccess> access) OVERRIDE;
     LUMINOUS_API virtual void unmapBuffer(const Buffer & buffer) OVERRIDE;
 
-    LUMINOUS_API virtual RenderCommand & createRenderCommand(VertexArray & binding,
+    LUMINOUS_API virtual RenderCommand & createRenderCommand(VertexArray & vertexArray,
                                                              Buffer & uniformBuffer,
                                                              const Luminous::Style & style) OVERRIDE;
 

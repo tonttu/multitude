@@ -29,56 +29,8 @@
 #include <QStringList>
 #include <QVector>
 
-// Since we got rid of GLEW on OSX...
-#ifdef RADIANT_OSX
-#define glDeleteVertexArrays glDeleteVertexArraysAPPLE
-#define glGenVertexArrays glGenVertexArraysAPPLE
-#endif
-
-// Utility functions
-namespace
-{
-  GLuint createResource(Luminous::RenderResource::Type type)
-  {
-    GLuint resource;
-    switch (type)
-    {
-    default:
-      Radiant::error("RenderDriverGL: Can't create GL resource: unknown type %d", type);
-      assert(false);
-      return 0;
-    }
-  }
-
-  void destroyResource(Luminous::RenderResource::Type type, GLuint resource)
-  {
-    switch (type)
-    {
-    default:
-      Radiant::error("RenderDriverGL: Can't destroy GL resource: unknown type %d", type);
-      assert(false);
-    }
-  }
-}
-
 namespace Luminous
 {
-  /// Resource handles
-  template <typename T>
-  struct ResourceHandle
-  {
-    ResourceHandle(const T * ptr = nullptr) : resource(ptr), handle(0), generation(0) { if (ptr) type = ptr->resourceType(); }
-    RenderResource::Type type;
-    const T * resource;
-    Radiant::Timer lastUsed;
-    GLuint handle;
-    uint64_t generation;
-
-    inline bool operator==(const ResourceHandle<T> & o) const { return handle == o.handle; }
-    inline bool operator!=(const ResourceHandle<T> & o) const { return handle != o.handle; }
-    inline bool operator<(const ResourceHandle<T> & o) const { return handle < o.handle; }
-  };
-
   struct RenderState
   {
     Luminous::ProgramGL * program;
@@ -126,7 +78,7 @@ namespace Luminous
   {
   public:
     D(unsigned int threadIndex, RenderDriverGL & driver)
-      : m_stateGl(threadIndex, driver)
+      : m_stateGL(threadIndex, driver)
       , m_currentBuffer(0)
       , m_threadIndex(threadIndex)
       , m_frame(0)
@@ -136,7 +88,7 @@ namespace Luminous
     typedef std::vector<GLuint> AttributeList;
     AttributeList m_activeAttributes;
 
-    StateGL m_stateGl;
+    StateGL m_stateGL;
     GLuint m_currentBuffer;   // Currently bound buffer object
 
     typedef std::map<RenderResource::Hash, ProgramGL> ProgramList;
@@ -172,119 +124,116 @@ namespace Luminous
   public:
 
     /// Reset thread statistics
-    void resetStatistics()
-    {
-      m_stateGl.clearUploadedBytes();
-      m_frameTimer.start();
-    }
+    void resetStatistics();
 
     /// Update render statistics
-    void updateStatistics()
-    {
-      const double frameTime = m_frameTimer.time();
+    void updateStatistics();
 
-      /*
+    /// Cleanup any queued-for-deletion or expired resources
+    void removeResources();
+
+    void setState(const RenderState & state);
+
+    void render(const RenderCommand & cmd, GLint uniformHandle, GLint uniformBlockIndex);
+
+    // Utility function for resource cleanup
+    template <typename ContainerType>
+    void removeResource(ContainerType & container, const ReleaseQueue & releaseQueue);
+
+    template <typename ContainerType>
+    void removeResource(ContainerType & container);
+  };
+
+  /////////////////////////////////////////////////////////////////////////////
+
+  void RenderDriverGL::D::resetStatistics()
+  {
+    m_stateGL.clearUploadedBytes();
+    m_frameTimer.start();
+  }
+
+  void RenderDriverGL::D::updateStatistics()
+  {
+    const double frameTime = m_frameTimer.time();
+
+    /*
       static FILE * dbg = 0;
       if(!dbg) dbg = fopen("stats", "w");
       fprintf(dbg, "%lf\n", frameTime * 1000.0);
       fflush(dbg);
       */
 
-      m_frame++;
-      m_fps = 1.0 / frameTime;
+    m_frame++;
+    m_fps = 1.0 / frameTime;
+  }
+
+  /// Cleanup any queued-for-deletion or expired resources
+  void RenderDriverGL::D::removeResources()
+  {
+    removeResource(m_vertexArrays, m_releaseQueue);
+    removeResource(m_buffers, m_releaseQueue);
+    removeResource(m_programs);
+    removeResource(m_textures);
+    m_releaseQueue.clear();
+  }
+
+  void RenderDriverGL::D::setState(const RenderState & state)
+  {
+    state.program->bind();
+
+    for(std::size_t t = 0; t < state.textures.size(); ++t) {
+      if(!state.textures[t]) break;
+      else state.textures[t]->bind(t);
     }
 
-    /// Cleanup any queued-for-deletion or expired resources
-    void removeResources()
-    {
-      /// @todo re-enable when everything is ResourceHandleGL
-      /*removeResource(m_VertexArrays, m_releaseQueue);
-      removeResource(m_buffers, m_releaseQueue);
-      removeResource(m_shaders);*/
-      removeResource(m_programs);
-      removeResource(m_textures);
-      m_releaseQueue.clear();
+    if(state.vertexArray)
+      state.vertexArray->bind();
+  }
+
+  void RenderDriverGL::D::render(const RenderCommand & cmd, GLint uniformHandle, GLint uniformBlockIndex)
+  {
+    for(auto uit = cmd.samplers.begin(); uit != cmd.samplers.end(); ++uit) {
+      if(uit->first < 0) break;
+      glUniform1i(uit->first, uit->second);
     }
 
-    void setState(const RenderState & state)
-    {
-      state.program->bind();
+    glBindBufferRange(GL_UNIFORM_BUFFER, uniformBlockIndex, uniformHandle,
+                      cmd.uniformOffsetBytes, cmd.uniformSizeBytes);
+    GLERROR("RenderDriverGL::flush # glBindBufferRange");
 
-      for(std::size_t t = 0; t < state.textures.size(); ++t) {
-        if(!state.textures[t]) break;
-        else state.textures[t]->bind(t);
-      }
+    glDrawElementsBaseVertex(cmd.primitiveType, cmd.primitiveCount, GL_UNSIGNED_INT,
+                             (GLvoid *)((sizeof(uint) * cmd.indexOffset)), cmd.vertexOffset);
+    GLERROR("RenderDriverGL::flush # glDrawElementsBaseVertex");
+  }
 
-      if(state.vertexArray)
-        state.vertexArray->bind();
+  template <typename ContainerType>
+  void RenderDriverGL::D::removeResource(ContainerType & container, const ReleaseQueue & releaseQueue)
+  {
+    auto it = std::begin(container);
+    while (it != std::end(container)) {
+      const auto & handle = it->second;
+      // First, check if resource has been deleted
+      // If not, we can check if it has expired
+      if(std::find( std::begin(releaseQueue), std::end(releaseQueue), it->first) !=
+         std::end(releaseQueue) || handle.expired()) {
+        // Remove from container
+        it = container.erase(it);
+      } else ++it;
     }
+  }
 
-    void render(const RenderCommand & cmd, GLint uniformHandle, GLint uniformBlockIndex)
-    {
-      for(auto uit = cmd.samplers.begin(); uit != cmd.samplers.end(); ++uit) {
-        if(uit->first < 0) break;
-        glUniform1i(uit->first, uit->second);
-      }
-
-      glBindBufferRange(GL_UNIFORM_BUFFER, uniformBlockIndex, uniformHandle,
-                        cmd.uniformOffsetBytes, cmd.uniformSizeBytes);
-      GLERROR("RenderDriverGL::flush # glBindBufferRange");
-
-      glDrawElementsBaseVertex(cmd.primitiveType, cmd.primitiveCount, GL_UNSIGNED_INT,
-                               (GLvoid *)((sizeof(uint) * cmd.indexOffset)), cmd.vertexOffset);
-      GLERROR("RenderDriverGL::flush # glDrawElementsBaseVertex");
+  template <typename ContainerType>
+  void RenderDriverGL::D::removeResource(ContainerType & container)
+  {
+    auto it = std::begin(container);
+    while(it != std::end(container)) {
+      const auto & handle = it->second;
+      if(handle.expired()) {
+        // Remove from container
+        it = container.erase(it);
+      } else ++it;
     }
-
-    // Utility function for resource cleanup
-    /*template <typename ContainerType>
-    void removeResource(ContainerType & container, const ReleaseQueue & releaseQueue)
-    {
-      auto it = std::begin(container);
-      while (it != std::end(container)) {
-        if (std::find( std::begin(releaseQueue), std::end(releaseQueue), it->first) != std::end(releaseQueue) ||  // First, check if resource has been deleted
-          (it->second.resource->expiration() > 0 && it->second.lastUsed.time() > it->second.resource->expiration()))      // If not, we can check if it has expired
-        {
-          // Release the GL resource
-          destroyResource(it->second.type, it->second.handle);
-          // Remove from container
-          it = container.erase(it);
-        }
-        else
-          it++;
-      }
-    }
-
-    // Only cleans up expired resources
-    template <typename ContainerType>
-    void removeResource(ContainerType & container)
-    {
-      auto it = std::begin(container);
-      while(it != std::end(container)) {
-        const auto & handle = it->second;
-        if(handle.resource->expiration() > 0 && handle.lastUsed.time() > handle.resource->expiration()) {
-          // Release the GL resource
-          destroyResource(handle.type, handle.handle);
-          // Remove from container
-          it = container.erase(it);
-        } else ++it;
-      }
-    }*/
-
-    template <typename ContainerType>
-    void removeResource(ContainerType & container)
-    {
-      auto it = std::begin(container);
-      while(it != std::end(container)) {
-        const auto & handle = it->second;
-        if(handle.expired()) {
-          // Remove from container
-          it = container.erase(it);
-        } else ++it;
-      }
-    }
-
-  };
-
+  }
 
   //////////////////////////////////////////////////////////////////////////
   //
@@ -337,21 +286,21 @@ namespace Luminous
 #define SETUNIFORM(TYPE, FUNCTION) \
   bool RenderDriverGL::setShaderUniform(const char * name, const TYPE & value) { \
     /* @todo These locations should be cached in the program handle for performance reasons */ \
-    GLint location = glGetUniformLocation(m_d->m_stateGl.program(), name); \
+    GLint location = glGetUniformLocation(m_d->m_stateGL.program(), name); \
     if (location != -1) FUNCTION(location, value); \
     return (location != -1); \
   }
 #define SETUNIFORMVECTOR(TYPE, FUNCTION) \
   bool RenderDriverGL::setShaderUniform(const char * name, const TYPE & value) { \
     /* @todo These locations should be cached in the program handle for performance reasons */ \
-    GLint location = glGetUniformLocation(m_d->m_stateGl.program(), name); \
+    GLint location = glGetUniformLocation(m_d->m_stateGL.program(), name); \
     if (location != -1) FUNCTION(location, 1, value.data()); \
     return (location != -1); \
   }
 #define SETUNIFORMMATRIX(TYPE, FUNCTION) \
   bool RenderDriverGL::setShaderUniform(const char * name, const TYPE & value) { \
     /* @todo These locations should be cached in the program handle for performance reasons */ \
-    GLint location = glGetUniformLocation(m_d->m_stateGl.program(), name); \
+    GLint location = glGetUniformLocation(m_d->m_stateGL.program(), name); \
     if (location != -1) FUNCTION(location, 1, GL_TRUE, value.data()); \
     return (location != -1); \
   }
@@ -387,8 +336,8 @@ namespace Luminous
     m_d->removeResources();
 
     /// @todo Currently the RenderContext invalidates this cache every frame, even if it's not needed
-    m_d->m_stateGl.setProgram(0);
-    m_d->m_stateGl.setVertexArray(0);
+    m_d->m_stateGL.setProgram(0);
+    m_d->m_stateGL.setVertexArray(0);
   }
 
   void RenderDriverGL::postFrame()
@@ -401,6 +350,8 @@ namespace Luminous
 
     const int frameLimit = 60;
     const int lastFrame = m_d->m_frame - frameLimit;
+
+    // Drop unused or queues (also queues that have way too much memory allocated than needed)
 
     if(m_d->m_translucentQueue.usedSize > 0) {
       Radiant::error("RenderDriverGL::postFrame # m_translucentQueue is not empty - forgot to call flush?");
@@ -444,7 +395,7 @@ namespace Luminous
   {
     auto it = m_d->m_programs.find(program.hash());
     if(it == m_d->m_programs.end()) {
-      it = m_d->m_programs.insert(std::make_pair(program.hash(), ProgramGL(m_d->m_stateGl))).first;
+      it = m_d->m_programs.insert(std::make_pair(program.hash(), ProgramGL(m_d->m_stateGL))).first;
       it->second.setExpirationSeconds(program.expiration());
     }
 
@@ -456,8 +407,8 @@ namespace Luminous
     auto it = m_d->m_textures.find(texture.hash());
     if(it == m_d->m_textures.end()) {
       // libstdc++ doesn't have this yet
-      //it = m_d->m_textures.emplace(texture.hash(), m_d->m_stateGl).first;
-      it = m_d->m_textures.insert(std::make_pair(texture.hash(), TextureGL(m_d->m_stateGl))).first;
+      //it = m_d->m_textures.emplace(texture.hash(), m_d->m_stateGL).first;
+      it = m_d->m_textures.insert(std::make_pair(texture.hash(), TextureGL(m_d->m_stateGL))).first;
       it->second.setExpirationSeconds(texture.expiration());
     }
 
@@ -515,7 +466,7 @@ namespace Luminous
     bufferGL.unmap();
   }
 
-  RenderCommand & RenderDriverGL::createRenderCommand(VertexArray & binding,
+  RenderCommand & RenderDriverGL::createRenderCommand(VertexArray & vertexArray,
                                                       Buffer & uniformBuffer,
                                                       const Luminous::Style & style)
   {
@@ -526,7 +477,7 @@ namespace Luminous
     auto & state = m_d->m_state;
     state.program = &handle(*style.fill.shader);
     state.program->link(*style.fill.shader);
-    state.vertexArray = &handle(binding, state.program);
+    state.vertexArray = &handle(vertexArray, state.program);
     state.uniformBuffer = &handle(uniformBuffer);
 
     int unit = 0;
@@ -571,12 +522,12 @@ namespace Luminous
   void RenderDriverGL::flush()
   {
 
-    for(auto it = m_d->m_stateGl.bufferMaps().begin(); it != m_d->m_stateGl.bufferMaps().end(); ++it) {
+    for(auto it = m_d->m_stateGL.bufferMaps().begin(); it != m_d->m_stateGL.bufferMaps().end(); ++it) {
       const BufferMapping & b = it->second;      
       glBindBuffer(b.target, it->first);
       glUnmapBuffer(b.target);
     }
-    m_d->m_stateGl.bufferMaps().clear();
+    m_d->m_stateGL.bufferMaps().clear();
 
     /*static int foo = 0;
     if(foo++ % 60 == 0) {
@@ -635,8 +586,8 @@ namespace Luminous
     auto it = m_d->m_buffers.find(buffer.resourceId());
     if(it == m_d->m_buffers.end()) {
       // libstdc++ doesn't have this yet
-      //it = m_d->m_textures.emplace(buffer.resourceId(), m_d->m_stateGl).first;
-      it = m_d->m_buffers.insert(std::make_pair(buffer.resourceId(), BufferGL(m_d->m_stateGl, buffer))).first;
+      //it = m_d->m_textures.emplace(buffer.resourceId(), m_d->m_stateGL).first;
+      it = m_d->m_buffers.insert(std::make_pair(buffer.resourceId(), BufferGL(m_d->m_stateGL, buffer))).first;
       it->second.setExpirationSeconds(buffer.expiration());
     }
 
@@ -648,7 +599,7 @@ namespace Luminous
     auto it = m_d->m_vertexArrays.find(vertexArray.resourceId());
     if(it == m_d->m_vertexArrays.end()) {
 
-      it = m_d->m_vertexArrays.insert(std::make_pair(vertexArray.resourceId(), VertexArrayGL(m_d->m_stateGl))).first;
+      it = m_d->m_vertexArrays.insert(std::make_pair(vertexArray.resourceId(), VertexArrayGL(m_d->m_stateGL))).first;
       it->second.setExpirationSeconds(vertexArray.expiration());
       it->second.upload(vertexArray, program);
     }
@@ -664,9 +615,9 @@ namespace Luminous
     return vertexArrayGL;
   }
 
-  void RenderDriverGL::setVertexBinding(const VertexArray &binding)
+  void RenderDriverGL::setVertexArray(const VertexArray & vertexArray)
   {
-    auto & vertexArrayGL = handle(binding);
+    auto & vertexArrayGL = handle(vertexArray);
 
     vertexArrayGL.bind();
   }
