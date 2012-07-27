@@ -604,7 +604,7 @@ namespace Luminous
       GLint uniformHandle = state.uniformBuffer->handle();
       GLint uniformBlockIndex = 0;
 
-      for(int i = 0, s = opaque.usedSize; i < s; ++i) {
+      for(int i = opaque.usedSize - 1; i >= 0; --i) {
         m_d->render(opaque.queue[i], uniformHandle, uniformBlockIndex);
       }
 
