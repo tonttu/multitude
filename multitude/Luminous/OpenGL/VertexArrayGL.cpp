@@ -7,12 +7,6 @@
 
 #include <QVector>
 
-// Since we got rid of GLEW on OSX...
-#ifdef RADIANT_OSX
-#define glDeleteVertexArrays glDeleteVertexArraysAPPLE
-#define glGenVertexArrays glGenVertexArraysAPPLE
-#endif
-
 namespace Luminous
 {
   VertexArrayGL::VertexArrayGL(StateGL & state)

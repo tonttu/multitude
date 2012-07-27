@@ -38,7 +38,7 @@ namespace Luminous
     if(rp.empty())
       return;
 
-    Utils::glCheck("RectVertex::render # 1");
+    //Utils::glCheck("RectVertex::render # 1");
 
     assert(rp.program() != 0);
 
@@ -48,7 +48,7 @@ namespace Luminous
 
     prog.setUniformMatrix4("view_transform", r.viewTransform());
 
-    Utils::glCheck("RectVertex::render # 2");
+    //Utils::glCheck("RectVertex::render # 2");
 
     rp.vbo().bind();
     rp.vbo().fill(rp.vertexData<RectVertex>(), rp.vertices().bytes(), Luminous::VertexBuffer::DYNAMIC_DRAW);
@@ -68,7 +68,7 @@ namespace Luminous
 
     rp.clear();
     rp.vbo().unbind(); // Should not really need call this
-    Utils::glCheck("RectVertex::render # 3");
+    //Utils::glCheck("RectVertex::render # 3");
   }
 
   void CircleVertex::render(RenderContext &r, RenderPacket & rp)
@@ -79,7 +79,7 @@ namespace Luminous
     if(rp.empty())
       return;
 
-    Utils::glCheck("CircleVertex::render # 1");
+    //Utils::glCheck("CircleVertex::render # 1");
 
     assert(rp.program() != 0);
 
@@ -89,7 +89,7 @@ namespace Luminous
 
     prog.setUniformMatrix4("view_transform", r.viewTransform());
 
-    Utils::glCheck("CircleVertex::render # 2");
+    //Utils::glCheck("CircleVertex::render # 2");
 
     rp.vbo().bind();
     rp.vbo().fill(rp.vertexData<CircleVertex>(), rp.vertices().bytes(), Luminous::VertexBuffer::DYNAMIC_DRAW);
@@ -110,7 +110,7 @@ namespace Luminous
 
     rp.clear();
     rp.vbo().unbind(); // Should not really call this
-    Utils::glCheck("CircleVertex::render # 3");
+    //Utils::glCheck("CircleVertex::render # 3");
   }
 
   void ArcVertex::render(RenderContext &r, RenderPacket & rp)
@@ -121,7 +121,7 @@ namespace Luminous
     if(rp.empty())
       return;
 
-    Utils::glCheck("ArcVertex::render # 1");
+//    Utils::glCheck("ArcVertex::render # 1");
 
     assert(rp.program() != 0);
 
@@ -131,7 +131,7 @@ namespace Luminous
 
     prog.setUniformMatrix4("view_transform", r.viewTransform());
 
-    Utils::glCheck("ArcVertex::render # 2");
+//    Utils::glCheck("ArcVertex::render # 2");
 
     rp.vbo().bind();
     rp.vbo().fill(rp.vertexData<ArcVertex>(), rp.vertices().bytes(), Luminous::VertexBuffer::DYNAMIC_DRAW);
@@ -153,7 +153,7 @@ namespace Luminous
 
     rp.clear();
     rp.vbo().unbind(); // Should not really call this
-    Utils::glCheck("ArcVertex::render # 3");
+//    Utils::glCheck("ArcVertex::render # 3");
   }
 
 }

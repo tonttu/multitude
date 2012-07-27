@@ -2,8 +2,8 @@
  */
 
 #include "GLSLProgramObject.hpp"
-
 #include "RenderContext.hpp"
+#include "DummyOpenGL.hpp"
 
 #include <Radiant/FileUtils.hpp>
 #include <Radiant/Trace.hpp>
@@ -283,7 +283,7 @@ namespace Luminous
 
   void GLSLProgramObject::setProgramParameter(GLenum pname, GLint value)
   {
-    glProgramParameteriEXT(handle(), pname, value);
+    glProgramParameteri(handle(), pname, value);
   }
 #endif // LUMINOUS_OPENGLES
 

@@ -267,8 +267,8 @@ namespace VideoDisplay {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
-        Luminous::Utils::glCheck
-            ("ShowGL::YUVProgram::doTextures # glTexImage2D");
+//        Luminous::Utils::glCheck
+//            ("ShowGL::YUVProgram::doTextures # glTexImage2D");
 
       }
 
@@ -291,8 +291,8 @@ namespace VideoDisplay {
                         GL_LUMINANCE, GL_UNSIGNED_BYTE,
                         img->m_planes[i].m_data);
 
-      Luminous::Utils::glCheck
-          ("ShowGL::YUVProgram::doTextures # glTexSubImage2D");
+//      Luminous::Utils::glCheck
+//          ("ShowGL::YUVProgram::doTextures # glTexSubImage2D");
     }
   }
   /////////////////////////////////////////////////////////////////////////////
@@ -672,7 +672,7 @@ namespace VideoDisplay {
       }
     }
 
-    Luminous::Utils::glCheck("ShowGL::render # half");
+//    Luminous::Utils::glCheck("ShowGL::render # half");
 
     glEnable(GL_BLEND);
 
@@ -738,7 +738,7 @@ namespace VideoDisplay {
 
     // info("The video frame is %d", m_videoFrame);
 
-    Luminous::Utils::glCheck("ShowGL::render");
+//    Luminous::Utils::glCheck("ShowGL::render");
     debugVideoDisplay("ShowGL::render # EXIT");
   }
 

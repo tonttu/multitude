@@ -43,7 +43,8 @@
 namespace Luminous
 {
   using namespace Radiant;
-#ifdef LUMINOUS_OPENGLES
+
+  /// @todo these are related to DummyOpenGL and should not be here!
   void dumymWarn(const char * funcname, const char * file, int line)
   {
     Radiant::error("Unimplemented OpenGL call: %s in %s:%d", funcname, file, line);
@@ -53,8 +54,6 @@ namespace Luminous
     Radiant::error("Unimplemented OpenGL call: %s:%d", file, line);
     return 0;
   }
-
-#endif
 
   bool initLuminous(bool initOpenGL)
   {

@@ -15,6 +15,7 @@
 
 #include <Luminous/Utils.hpp>
 #include <Luminous/MatrixStep.hpp>
+#include <Luminous/DummyOpenGL.hpp>
 
 #include <Radiant/Trace.hpp>
 
@@ -37,246 +38,246 @@ namespace Luminous {
 
   using namespace Nimble;
 
-#ifndef LUMINOUS_OPENGLES
+//#ifndef LUMINOUS_OPENGLES
 
-  void Utils::blendCenterSeamHorizontal(int w, int h,
-                    int seamWidth,
-                    bool withGrid)
-  {
-    assert(seamWidth > 1); // NVidia bug...
-    /* printf("Utils::blendCenterSeamHorizontal %d\n", seamWidth);
-       fflush(0); */
+//  void Utils::blendCenterSeamHorizontal(int w, int h,
+//                    int seamWidth,
+//                    bool withGrid)
+//  {
+//    assert(seamWidth > 1); // NVidia bug...
+//    /* printf("Utils::blendCenterSeamHorizontal %d\n", seamWidth);
+//       fflush(0); */
 
-    glViewport (0, 0, w, h);
+//    glViewport (0, 0, w, h);
 
-    glDisable(GL_LIGHTING);
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_TEXTURE_2D);
-    // glUseProgram(0);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
-    glShadeModel(GL_SMOOTH);
+//    glDisable(GL_LIGHTING);
+//    glDisable(GL_CULL_FACE);
+//    glDisable(GL_TEXTURE_2D);
+//    // glUseProgram(0);
+//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//    glEnable(GL_BLEND);
+//    glShadeModel(GL_SMOOTH);
 
-    int i;
-    int center = w / 2;
-    int left = center - seamWidth;
-    int right = center + seamWidth;
+//    int i;
+//    int center = w / 2;
+//    int left = center - seamWidth;
+//    int right = center + seamWidth;
 
-    glMatrixMode (GL_MODELVIEW);
-    glLoadIdentity();
-    gluOrtho2D(0, w, h, 0);
+//    glMatrixMode (GL_MODELVIEW);
+//    glLoadIdentity();
+//    gluOrtho2D(0, w, h, 0);
 
-    glRasterPos2i(center, h);
-    glCopyPixels(left, 0, center, h, GL_COLOR);
+//    glRasterPos2i(center, h);
+//    glCopyPixels(left, 0, center, h, GL_COLOR);
 
-    glBegin(GL_QUAD_STRIP);
+//    glBegin(GL_QUAD_STRIP);
 
-    float p = 2.2f;
+//    float p = 2.2f;
 
-    for(i = 0; i < 5; i++) {
-      float rel = i / (float)5;
-      float x = left + seamWidth * rel;
-      glColor4f(0.0f, 0.0f, 0.0f, powf(rel, p));
-      glVertex2f(x, 0.0f);
-      glVertex2f(x, float(h));
-    }
+//    for(i = 0; i < 5; i++) {
+//      float rel = i / (float)5;
+//      float x = left + seamWidth * rel;
+//      glColor4f(0.0f, 0.0f, 0.0f, powf(rel, p));
+//      glVertex2f(x, 0.0f);
+//      glVertex2f(x, float(h));
+//    }
 
-    glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
-    glVertex2i(center, 0);
-    glVertex2i(center, h);
+//    glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+//    glVertex2i(center, 0);
+//    glVertex2i(center, h);
 
-    for(i = 1; i <= 5; i++) {
-      float rel = i / (float)5;
-      float x = center + seamWidth * rel;
-      glColor4f(0.0f, 0.0f, 0.0f, powf(1.0f - rel, p));
-      glVertex2f(x, 0.0f);
-      glVertex2f(x, float(h));
-    }
+//    for(i = 1; i <= 5; i++) {
+//      float rel = i / (float)5;
+//      float x = center + seamWidth * rel;
+//      glColor4f(0.0f, 0.0f, 0.0f, powf(1.0f - rel, p));
+//      glVertex2f(x, 0.0f);
+//      glVertex2f(x, float(h));
+//    }
 
-    /* glColor4f(0.0f, 0.0f, 0.0f, 0.0f);
-       glVertex2i(right, 0);
-       glVertex2i(right, h);
-    */
+//    /* glColor4f(0.0f, 0.0f, 0.0f, 0.0f);
+//       glVertex2i(right, 0);
+//       glVertex2i(right, h);
+//    */
 
-    glEnd();
+//    glEnd();
 
-    // glFlush();
+//    // glFlush();
 
-    /* glBlendEquation(GL_ADD);
-       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    */
+//    /* glBlendEquation(GL_ADD);
+//       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//    */
 
-    if(!withGrid)
-      return;
+//    if(!withGrid)
+//      return;
 
-    glLineWidth(3);
+//    glLineWidth(3);
 
-    glBegin(GL_LINES);
+//    glBegin(GL_LINES);
 
-    int n = 10;
-    float first = 1.5f;
-    float last = center - 1.5f;
-    float ampl = last - first;
+//    int n = 10;
+//    float first = 1.5f;
+//    float last = center - 1.5f;
+//    float ampl = last - first;
 
-    for(i = 0; i <= n; i++) {
-      float x = first + ampl * i / (float)n;
-      glColor3f(1.0f, 0.0f, 0.0f);
-      glVertex2f(x, 0);
-      glVertex2f(x, float(h));
+//    for(i = 0; i <= n; i++) {
+//      float x = first + ampl * i / (float)n;
+//      glColor3f(1.0f, 0.0f, 0.0f);
+//      glVertex2f(x, 0);
+//      glVertex2f(x, float(h));
 
-      x += center;
-      glColor3f(0.0f, 1.0f, 0.0f);
-      glVertex2f(x, 0.0f);
-      glVertex2f(x, float(h));
-    }
+//      x += center;
+//      glColor3f(0.0f, 1.0f, 0.0f);
+//      glVertex2f(x, 0.0f);
+//      glVertex2f(x, float(h));
+//    }
 
-    last = float(h) - 1.5f;
-    ampl = last - first;
+//    last = float(h) - 1.5f;
+//    ampl = last - first;
 
 
-    glColor3f(1.0f, 0.0f, 0.0f);
-    glVertex2f(float(left), 0.0f);
-    glVertex2f(float(left), float(h));
+//    glColor3f(1.0f, 0.0f, 0.0f);
+//    glVertex2f(float(left), 0.0f);
+//    glVertex2f(float(left), float(h));
 
-    glColor3f(0.0f, 1.0f, 0.0f);
-    glVertex2f(float(right), 0.0f);
-    glVertex2f(float(right), float(h));
+//    glColor3f(0.0f, 1.0f, 0.0f);
+//    glVertex2f(float(right), 0.0f);
+//    glVertex2f(float(right), float(h));
 
-    for(i = 0; i <= n; i++) {
-      float y = first + ampl * i / (float) n;
-      glColor3f(1.0f, 0.0f, 0.0f);
-      glVertex2f(0.0f, y);
-      glVertex2f(float(center), y);
+//    for(i = 0; i <= n; i++) {
+//      float y = first + ampl * i / (float) n;
+//      glColor3f(1.0f, 0.0f, 0.0f);
+//      glVertex2f(0.0f, y);
+//      glVertex2f(float(center), y);
 
-      glColor3f(0.0f, 1.0f, 0.0f);
-      glVertex2f(float(center), y);
-      glVertex2f(float(w), y);
-    }
+//      glColor3f(0.0f, 1.0f, 0.0f);
+//      glVertex2f(float(center), y);
+//      glVertex2f(float(w), y);
+//    }
 
-    glEnd();
-  }
+//    glEnd();
+//  }
 
-  void Utils::fadeEdge(float w, float h, float seam,
-               float gamma, Edge e, bool withGrid)
-  {
-    glDisable(GL_LIGHTING);
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_TEXTURE_2D);
-    // glUseProgram(0);
-    glUsualBlend();
-    glEnable(GL_BLEND);
-    glShadeModel(GL_SMOOTH);
+//  void Utils::fadeEdge(float w, float h, float seam,
+//               float gamma, Edge e, bool withGrid)
+//  {
+//    glDisable(GL_LIGHTING);
+//    glDisable(GL_CULL_FACE);
+//    glDisable(GL_TEXTURE_2D);
+//    // glUseProgram(0);
+//    glUsualBlend();
+//    glEnable(GL_BLEND);
+//    glShadeModel(GL_SMOOTH);
 
-    MatrixStep ms;
+//    MatrixStep ms;
 
-    bool horiz = true;
+//    bool horiz = true;
 
-    if(e == RIGHT) // The default
-      ;
-    else if(e == LEFT) {
-      glScalef(-1, 1, 1);
-      glTranslatef(-w, 0, 0);
-    }
-    else {
-      horiz = false;
+//    if(e == RIGHT) // The default
+//      ;
+//    else if(e == LEFT) {
+//      glScalef(-1, 1, 1);
+//      glTranslatef(-w, 0, 0);
+//    }
+//    else {
+//      horiz = false;
 
-      if(e == BOTTOM) {
-    glScalef(1, -1, 1);
-    glTranslatef(0, -h, 0);
-      }
-    }
+//      if(e == BOTTOM) {
+//    glScalef(1, -1, 1);
+//    glTranslatef(0, -h, 0);
+//      }
+//    }
 
-    int i, n = 16;
-    float left = w - seam;
-    float top = h - seam;
+//    int i, n = 16;
+//    float left = w - seam;
+//    float top = h - seam;
 
-    glBegin(GL_QUAD_STRIP);
+//    glBegin(GL_QUAD_STRIP);
 
-    // glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+//    // glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
 
-    if(horiz) {
+//    if(horiz) {
 
-      float hextra = h * 0.5f;
+//      float hextra = h * 0.5f;
 
-      for(i = 0; i <= n; i++) {
+//      for(i = 0; i <= n; i++) {
 
-    float rel = i / (float) n;
-    float x = left + seam * rel * 1 + 0.00001;
+//    float rel = i / (float) n;
+//    float x = left + seam * rel * 1 + 0.00001;
 
-    glColor4f(0.0f, 0.0f, 0.0f, powf(rel, gamma));
-    glVertex2f(x, -hextra);
-    glVertex2f(x, h + hextra);
-      }
-    }
-    else {
-      float wextra = w * 0.5f;
+//    glColor4f(0.0f, 0.0f, 0.0f, powf(rel, gamma));
+//    glVertex2f(x, -hextra);
+//    glVertex2f(x, h + hextra);
+//      }
+//    }
+//    else {
+//      float wextra = w * 0.5f;
 
-      for(i = 0; i <= n; i++) {
+//      for(i = 0; i <= n; i++) {
 
-    float rel = i / (float) n;
-    float y = top + seam * rel * 1.0 + 0.00001f;
+//    float rel = i / (float) n;
+//    float y = top + seam * rel * 1.0 + 0.00001f;
 
-    glColor4f(0.0f, 0.0f, 0.0f, powf(rel, gamma));
-    glVertex2f(-wextra, y);
-    glVertex2f(w + wextra, y);
+//    glColor4f(0.0f, 0.0f, 0.0f, powf(rel, gamma));
+//    glVertex2f(-wextra, y);
+//    glVertex2f(w + wextra, y);
 
-      }
-    }
+//      }
+//    }
 
-    glEnd();
+//    glEnd();
 
-    if(!withGrid)
-      return;
+//    if(!withGrid)
+//      return;
 
-    glLineWidth(3);
+//    glLineWidth(3);
 
-    static const Vector3 colors[4] = {
-      Vector3(1, 0, 0),
-      Vector3(0, 1, 0),
-      Vector3(0, 0, 1),
-      Vector3(0.5, 0.5, 0)
-    };
+//    static const Vector3 colors[4] = {
+//      Vector3(1, 0, 0),
+//      Vector3(0, 1, 0),
+//      Vector3(0, 0, 1),
+//      Vector3(0.5, 0.5, 0)
+//    };
 
-    glColor3fv(colors[(int) e].data());
-    glBegin(GL_LINES);
+//    glColor3fv(colors[(int) e].data());
+//    glBegin(GL_LINES);
 
-    n = 10;
-    float first = 1.5f;
-    float last = w - 1.5f;
-    float ampl = last - first;
+//    n = 10;
+//    float first = 1.5f;
+//    float last = w - 1.5f;
+//    float ampl = last - first;
 
-    for(i = 0; i <= n; i++) {
-      float x = first + ampl * i / (float)n;
-      glVertex2f(x, 0.0f);
-      glVertex2f(x, h);
-    }
+//    for(i = 0; i <= n; i++) {
+//      float x = first + ampl * i / (float)n;
+//      glVertex2f(x, 0.0f);
+//      glVertex2f(x, h);
+//    }
 
-    last = h - 1.5f;
-    ampl = last - first;
+//    last = h - 1.5f;
+//    ampl = last - first;
 
-    glVertex2f(left, 0);
-    glVertex2f(left, h);
+//    glVertex2f(left, 0);
+//    glVertex2f(left, h);
 
-    for(i = 0; i <= n; i++) {
-      float y = first + ampl * i / (float)n;
-      glVertex2f(0.0f, y);
-      glVertex2f(w, y);
-    }
+//    for(i = 0; i <= n; i++) {
+//      float y = first + ampl * i / (float)n;
+//      glVertex2f(0.0f, y);
+//      glVertex2f(w, y);
+//    }
 
-    glVertex2f(0.0f, 0.0f);
-    glVertex2f(w, h);
+//    glVertex2f(0.0f, 0.0f);
+//    glVertex2f(w, h);
 
-    glVertex2f(w, 0.0f);
-    glVertex2f(0.0f, h);
+//    glVertex2f(w, 0.0f);
+//    glVertex2f(0.0f, h);
 
-    glColor3f(0.0f, 0.0f, 0.0f);
+//    glColor3f(0.0f, 0.0f, 0.0f);
 
-    glVertex2f(left + seam * 0.5f, 0.0f);
-    glVertex2f(left + seam * 0.5f, h);
+//    glVertex2f(left + seam * 0.5f, 0.0f);
+//    glVertex2f(left + seam * 0.5f, h);
 
-    glEnd();
-  }
-#endif // LUMINOUS_OPENGLES
+//    glEnd();
+//  }
+//#endif // LUMINOUS_OPENGLES
 
   void Utils::glTexRect(float x1, float y1, float x2, float y2)
   {
@@ -1667,34 +1668,34 @@ namespace Luminous {
     glColor3f(level, level, level);
   }
 
-  bool Utils::glCheck(const char * msg)
-  {
-#ifdef RADIANT_RELEASE
-	return true;
-#endif
-    bool result = true;
-    GLenum e, e2 = GL_NO_ERROR;
+//  bool Utils::glCheck(const char * msg)
+//  {
+//#ifdef RADIANT_RELEASE
+//	return true;
+//#endif
+//    bool result = true;
+//    GLenum e, e2 = GL_NO_ERROR;
 
-    while((e = glGetError()) != GL_NO_ERROR) {
-#ifndef LUMINOUS_OPENGLES
-      // If glGetError ever returns the same error twice, it's broken somehow.
-      // This happens when called without GL context etc.
-      if(e == e2) {
-        Radiant::error("%s # glGetError called with broken GL context (%s)", msg, gluErrorString(e));
-        return false;
-      }
-      Radiant::error("%s # GL ERROR %s", msg, gluErrorString(e));
-      /*int *bad = 0;
-      *bad = 123;*/
-#else
-      Radiant::error("%s # GL ERROR %d", msg, (int) e);
-#endif
-      result = false;
-      e2 = e;
-    }
+//    while((e = glGetError()) != GL_NO_ERROR) {
+//#ifndef LUMINOUS_OPENGLES
+//      // If glGetError ever returns the same error twice, it's broken somehow.
+//      // This happens when called without GL context etc.
+//      if(e == e2) {
+//        Radiant::error("%s # glGetError called with broken GL context (%s)", msg, gluErrorString(e));
+//        return false;
+//      }
+//      Radiant::error("%s # GL ERROR %s", msg, gluErrorString(e));
+//      /*int *bad = 0;
+//      *bad = 123;*/
+//#else
+//      Radiant::error("%s # GL ERROR %d", msg, (int) e);
+//#endif
+//      result = false;
+//      e2 = e;
+//    }
 
-    return result;
-  }
+//    return result;
+//  }
 
   void Utils::glCircularHalo(float x, float y, float inside, float outside,
                  float radians1,

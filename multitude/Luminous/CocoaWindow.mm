@@ -1,6 +1,3 @@
-
-
-#define RADIANT_OBJECTIVE_C 1
 #include "Radiant/KeyEvent.hpp"
 
 #if defined(RADIANT_OSX_LION) || defined(RADIANT_OSX_MOUNTAIN_LION)

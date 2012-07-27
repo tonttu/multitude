@@ -1,6 +1,7 @@
 #ifndef LUMINOUS_DUMMYOPENGL_HPP
 #define LUMINOUS_DUMMYOPENGL_HPP
 
+#include "Export.hpp"
 #include <Radiant/Platform.hpp>
 
 #if 1
@@ -14,8 +15,8 @@
 
 namespace Luminous
 {
-  void dumymWarn(const char * funcname, const char * file, int line);
-  int dummyEnum(const char * file, int line);
+  LUMINOUS_API void dumymWarn(const char * funcname, const char * file, int line);
+  LUMINOUS_API int dummyEnum(const char * file, int line);
 }
 
 #define DUMMY_OPENGL_E(enu) Luminous::dummyEnum(__FILE__, __LINE__)
@@ -83,6 +84,10 @@ DUMMY_OPENGL_0(glEnd);
 
 #define glVertex2f(a,b) DUMMY_OPENGL_M(glVertex2f)
 #define glVertex2fv(a) DUMMY_OPENGL_M(glVertex2fv)
+#define glVertex2iv(a) DUMMY_OPENGL_M(glVertex2iv)
+
+#define glVertex3f(a,b,c) DUMMY_OPENGL_M(glVertex3f)
+#define glVertex3fv(a) DUMMY_OPENGL_M(glVertex3fv)
 
 #define glVertex4f(a,b,c,d) DUMMY_OPENGL_M(glVertex4f)
 #define glVertex4fv(a) DUMMY_OPENGL_M(glVertex4fv)
@@ -92,9 +97,34 @@ DUMMY_OPENGL_0(glEnd);
 
 #define glColor4f(a,b,c,d) DUMMY_OPENGL_M(glColor4f)
 #define glColor4fv(a) DUMMY_OPENGL_M(glColor4fv)
+#define glColor4ub(a,b,c,d) DUMMY_OPENGL_M(glColor4ub)
 
 #define glColor3f(a,b,c) DUMMY_OPENGL_M(glColor3f)
 #define glColor3fv(a) DUMMY_OPENGL_M(glColor3fv)
+
+#define glOrtho(a,b,c,d,e,f) DUMMY_OPENGL_M(glOrtho)
+
+#define glProgramParameteri(a,b,c) DUMMY_OPENGL_M(glProgramParameteri)
+
+#define glLoadMatrixf(a) DUMMY_OPENGL_M(glLoadMatrixf)
+#define gluOrtho2D(a,b,c,d) DUMMY_OPENGL_M(gluOrtho2D)
+
+#define gluBuild1DMipmaps(a,b,c,d,e,f) DUMMY_OPENGL_M(gluBuild1DMipmaps)
+#define gluBuild2DMipmaps(a,b,c,d,e,f,g) DUMMY_OPENGL_M(gluBuild2DMipmaps)
+
+#define glRectf(a,b,c,d) DUMMY_OPENGL_M(glRectf)
+#define glRecti(a,b,c,d) DUMMY_OPENGL_M(glRecti)
+#define glRectfv(a,b) DUMMY_OPENGL_M(glRectfv)
+
+#define gluLookAt(a,b,c,d,e,f,g,h,i) DUMMY_OPENGL_M(gluLookAt)
+
+#define glNormal3f(a,b,c) DUMMY_OPENGL_M(glNormal3f)
+#define glNormal3fv(a) DUMMY_OPENGL_M(glNormal3fv)
+
+#define glRotatef(a,b,c,d) DUMMY_OPENGL_M(glRotatef)
+
+#define glMultiTexCoord2fARB(a,b,c) DUMMY_OPENGL_M(glMultiTexCoord2fARB)
+#define glMultiTexCoord3fARB(a,b,c,d) DUMMY_OPENGL_M(glMultiTexCoord3fARB)
 
   /*
   inline glMultTransposeMatrixf(float * data)

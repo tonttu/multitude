@@ -21,6 +21,7 @@
 
 #include "Export.hpp"
 #include "Luminous.hpp"
+#include "DummyOpenGL.hpp"
 
 namespace Luminous {
 

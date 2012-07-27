@@ -305,7 +305,7 @@ namespace Poetic
     Luminous::GLSLProgramObject * shader = m_fontShader->bind();
     // info("GPUTextureFont::internalRender # out");
 
-    Luminous::Utils::glCheck("GPUTextureFont::internalRender");
+//    Luminous::Utils::glCheck("GPUTextureFont::internalRender");
 
     shader->setUniformInt("fontTexture", 0);
 
@@ -376,7 +376,7 @@ namespace Poetic
 
 #endif
 
-    Luminous::Utils::glCheck("GPUTextureFont::internalRender # EXIT");
+//    Luminous::Utils::glCheck("GPUTextureFont::internalRender # EXIT");
 
   }
 

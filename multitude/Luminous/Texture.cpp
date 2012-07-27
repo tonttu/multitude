@@ -11,7 +11,7 @@
 #include <iostream>
 #include <cstring>
 
-#include "Error.hpp"
+#include "OpenGL/Error.hpp"
 
 #include <Radiant/Trace.hpp>
 #include <Radiant/Platform.hpp>
@@ -126,8 +126,7 @@ namespace Luminous
 
     // Estimate something, try to be conservative
     switch(m_internalFormat) {
-    case GL_LUMINANCE:
-    LUMINOUS_IN_FULL_OPENGL(case GL_INTENSITY:)
+    case GL_RED:
       used *= 1;
       break;
     case GL_RGB:
@@ -196,14 +195,15 @@ namespace Luminous
                             bool buildMipmaps)
   {
     // Check dimensions
-    if(!GL_ARB_texture_non_power_of_two) {
-      bool isPowerOfTwo = !((h - 1) & h);
+/// @todo surely this is not an issue in 2012 anymore?
+//    if(!GL_ARB_texture_non_power_of_two) {
+//      bool isPowerOfTwo = !((h - 1) & h);
 
-      if(!isPowerOfTwo) {
-        error("ERROR: non-power-of-two textures are not supported");
-        return false;
-      }
-    }
+//      if(!isPowerOfTwo) {
+//        error("ERROR: non-power-of-two textures are not supported");
+//        return false;
+//      }
+//    }
 
     // Reset byte consumption
     m_consumed = 0;
@@ -314,18 +314,18 @@ namespace Luminous
                             const PixelFormat& srcFormat,
                             bool buildMipmaps)
   {
-#ifndef LUMINOUS_OPENGLES
-    // Check dimensions
-    if(!GL_ARB_texture_non_power_of_two) {
-      bool isPowerOfTwo1 = !((w - 1) & w);
-      bool isPowerOfTwo2 = !((h - 1) & h);
+//#ifndef LUMINOUS_OPENGLES
+//    // Check dimensions
+//    if(!GL_ARB_texture_non_power_of_two) {
+//      bool isPowerOfTwo1 = !((w - 1) & w);
+//      bool isPowerOfTwo2 = !((h - 1) & h);
 
-      if(!(isPowerOfTwo1 && isPowerOfTwo2)) {
-        error("ERROR: non-power-of-two textures are not supported");
-        return false;
-      }
-    }
-#endif // LUMINOUS_OPENGLES
+//      if(!(isPowerOfTwo1 && isPowerOfTwo2)) {
+//        error("ERROR: non-power-of-two textures are not supported");
+//        return false;
+//      }
+//    }
+//#endif // LUMINOUS_OPENGLES
 
     // If no data is specified, we just allocate the texture memory and reset
     // m_uploadedLines. Otherwise we mark the lines loaded.
@@ -367,15 +367,15 @@ namespace Luminous
     if(buildMipmaps) {
 #ifndef LUMINOUS_OPENGLES
 
-      assert(Utils::glCheck("Texture2D::loadBytes # 1"));
+      //assert(Utils::glCheck("Texture2D::loadBytes # 1"));
 
       glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
 
-      assert(Utils::glCheck("Texture2D::loadBytes # 2"));
+      //assert(Utils::glCheck("Texture2D::loadBytes # 2"));
 
       gluBuild2DMipmaps(GL_TEXTURE_2D, internalFormat,
                         w, h, srcFormat.layout(), srcFormat.type(), data);
-      assert(Utils::glCheck("Texture2D::loadBytes # 3"));
+      //assert(Utils::glCheck("Texture2D::loadBytes # 3"));
 
 #endif // LUMINOUS_OPENGLES
 
@@ -387,7 +387,7 @@ namespace Luminous
 
       glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
 
-      assert(Utils::glCheck("Texture2D::loadBytes # 4"));
+      //assert(Utils::glCheck("Texture2D::loadBytes # 4"));
 
       GLint width = w;
 #ifndef LUMINOUS_OPENGLES
@@ -399,11 +399,11 @@ namespace Luminous
         glTexImage2D(GL_PROXY_TEXTURE_2D, 0, internalFormat, w, h, 0,
                      srcFormat.layout(), srcFormat.type(), 0);
 
-        assert(Utils::glCheck("Texture2D::loadBytes # 5"));
+        //assert(Utils::glCheck("Texture2D::loadBytes # 5"));
 
         glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
 
-        assert(Utils::glCheck("Texture2D::loadBytes # 6"));
+        //assert(Utils::glCheck("Texture2D::loadBytes # 6"));
 
         if(width == 0) {
           Luminous::glErrorToString(__FILE__, __LINE__);
@@ -412,7 +412,7 @@ namespace Luminous
 
           glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
-          assert(Utils::glCheck("Texture2D::loadBytes # 7"));
+          //assert(Utils::glCheck("Texture2D::loadBytes # 7"));
 
           return false;
         }
@@ -422,12 +422,12 @@ namespace Luminous
       /* This seems to be faster on Linux and OS X at least. */
       glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0, srcFormat.layout(), srcFormat.type(), 0);
 
-      assert(Utils::glCheck("Texture2D::loadBytes # 8"));
+      //assert(Utils::glCheck("Texture2D::loadBytes # 8"));
 
       if(data)
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, srcFormat.layout(), srcFormat.type(), data);
 
-      assert(Utils::glCheck("Texture2D::loadBytes # 9"));
+      //assert(Utils::glCheck("Texture2D::loadBytes # 9"));
     }
 
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -455,14 +455,14 @@ namespace Luminous
     long & available = UploadLimiter::available();
     available -= consumesBytes();
 
-    assert(Utils::glCheck("Texture2D::loadBytes # end"));
+    //assert(Utils::glCheck("Texture2D::loadBytes # end"));
 
     return true;
   }
 
   void Texture2D::loadSubBytes(int x, int y, int w, int h, const void * data, const Luminous::PixelFormat & srcFormat)
   {
-    assert(Utils::glCheck("Texture2D::loadSubBytes # start") == true);
+    //assert(Utils::glCheck("Texture2D::loadSubBytes # start") == true);
 
     bind();
 
@@ -484,27 +484,27 @@ namespace Luminous
 
       glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
 
-      assert(Utils::glCheck("Texture2D::loadSubBytes # 1") == true);
+      //assert(Utils::glCheck("Texture2D::loadSubBytes # 1") == true);
 
 // #ifndef LUMINOUS_OPENGLES
 
       glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, w, h, srcFormat.layout(), srcFormat.type(), data);
 
-      assert(Utils::glCheck("Texture2D::loadSubBytes # 2") == true);
+      //assert(Utils::glCheck("Texture2D::loadSubBytes # 2") == true);
 
-    Utils::glCheck("Texture2D::loadLines # Dummy TRI");
+    //Utils::glCheck("Texture2D::loadLines # Dummy TRI");
 //#endif // LUMINOUS_OPENGLES
       if (alignment > 4)
         glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
-      assert(Utils::glCheck("Texture2D::loadSubBytes # 3") == true);
+      //assert(Utils::glCheck("Texture2D::loadSubBytes # 3") == true);
 
       // Update upload limits
       long & available = UploadLimiter::available();
       available -= w * h * srcFormat.bytesPerPixel();
     }
 
-    assert(Utils::glCheck("Texture2D::loadSubBytes # end") == true);
+    //assert(Utils::glCheck("Texture2D::loadSubBytes # end") == true);
   }
 
   Texture2D* Texture2D::fromImage
@@ -527,19 +527,19 @@ namespace Luminous
                                   const PixelFormat& srcFormat,
                                   bool buildMipmaps, RenderContext * context)
   {
-#ifndef LUMINOUS_OPENGLES
+//#ifndef LUMINOUS_OPENGLES
 
-    // Check dimensions
-    if(!GL_ARB_texture_non_power_of_two) {
-      bool isPowerOfTwo1 = !((w - 1) & w);
-      bool isPowerOfTwo2 = !((h - 1) & h);
+//    // Check dimensions
+//    if(!GL_ARB_texture_non_power_of_two) {
+//      bool isPowerOfTwo1 = !((w - 1) & w);
+//      bool isPowerOfTwo2 = !((h - 1) & h);
 
-      if(!(isPowerOfTwo1 && isPowerOfTwo2)) {
-        error("ERROR: non-power-of-two textures are not supported");
-        return 0;
-      }
-    }
-#endif // LUMINOUS_OPENGLES
+//      if(!(isPowerOfTwo1 && isPowerOfTwo2)) {
+//        error("ERROR: non-power-of-two textures are not supported");
+//        return 0;
+//      }
+//    }
+//#endif // LUMINOUS_OPENGLES
 
 
     Texture2D* tex = new Texture2D(context);
@@ -552,7 +552,7 @@ namespace Luminous
 
   bool Texture2D::progressiveUpload(Luminous::RenderContext * resources, GLenum textureUnit, const Image & srcImage)
   {
-    Utils::glCheck("Texture2D::progressiveUpload # begin");
+    //Utils::glCheck("Texture2D::progressiveUpload # begin");
 
     // Do nothing if already uploaded
     if(m_uploadedLines == size_t(height()))
@@ -600,7 +600,7 @@ namespace Luminous
 
     //Radiant::warning("ImageTex::progressiveUpload # lines to finish: %ld, line bytes: %ld, available bandwidth %ld, line budget: %ld", linesToFinish, lineBytes, available, lineBudget);
 
-    assert(Utils::glCheck("Texture2D::progressiveUpload # upload beg") == true);
+    //assert(Utils::glCheck("Texture2D::progressiveUpload # upload beg") == true);
 
     size_t linesToUpload = std::min(linesToFinish, lineBudget);
 
@@ -617,7 +617,7 @@ namespace Luminous
 
     //Radiant::warning("Texture2D::progressiveUpload # uploaded %ld lines", linesToUpload);
 
-    assert(Utils::glCheck("Texture2D::progressiveUpload # end") == true);
+    //assert(Utils::glCheck("Texture2D::progressiveUpload # end") == true);
 
     return (m_uploadedLines == size_t(height()));
   }

@@ -252,7 +252,7 @@ namespace Luminous {
 
   GLSLProgramObject * Shader::bind() const
   {
-    Luminous::Utils::glCheck("Shader::bind # Before entry");
+    //Luminous::Utils::glCheck("Shader::bind # Before entry");
 
     GLSLProgramObject * prog = program();
 
@@ -276,7 +276,7 @@ namespace Luminous {
 
     }
 
-    Luminous::Utils::glCheck("Shader::bind # Before bind");
+    //Luminous::Utils::glCheck("Shader::bind # Before bind");
 
     prog->bind();
 
@@ -313,7 +313,7 @@ namespace Luminous {
 
 #ifndef LUMINOUS_OPENGLES
       if(!m_self->m_geometryShader.isEmpty())
-        ok = ok && prog.loadString(GL_GEOMETRY_SHADER_EXT,
+        ok = ok && prog.loadString(GL_GEOMETRY_SHADER,
                                    m_self->m_geometryShader.toUtf8().data());
 #endif // LUMINOUS_OPENGLES
 

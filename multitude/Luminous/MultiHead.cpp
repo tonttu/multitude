@@ -22,6 +22,7 @@
 #include "Shader.hpp"
 #include "Texture.hpp"
 #include "PixelFormat.hpp"
+#include "DummyOpenGL.hpp"
 
 #include <Nimble/Matrix4.hpp>
 

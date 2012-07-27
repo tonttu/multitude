@@ -227,9 +227,9 @@ namespace Luminous {
     static void glGrayf(float level);
     static inline void glWhite() { glGrayf(1.0f); }
 
-    /** Check that there are no OpenGL errors. If there has been an
-    error, then the error is printed along with msg. */
-    static bool glCheck(const char * msg);
+//    /** Check that there are no OpenGL errors. If there has been an
+//    error, then the error is printed along with msg. */
+//    static bool glCheck(const char * msg);
 
     static void glCircularHalo(float x, float y, float inside, float outside,
                    float radians1,

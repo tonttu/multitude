@@ -5,7 +5,7 @@
 #include "RenderContextImpl.hpp"
 
 // #include "Dum"
-#include "Error.hpp"
+#include "OpenGL/Error.hpp"
 #include "Texture.hpp"
 #include "FramebufferObject.hpp"
 //#include "RenderTarget.hpp"
@@ -802,7 +802,7 @@ namespace Luminous
 
   void RenderContext::prepare()
   {
-    Utils::glCheck("RenderContext::prepare # 1");
+    //Utils::glCheck("RenderContext::prepare # 1");
 
     resetTransform();
     m_data->initialize();
@@ -815,7 +815,7 @@ namespace Luminous
     restart();
 
 
-    Utils::glCheck("RenderContext::prepare # 2");
+    //Utils::glCheck("RenderContext::prepare # 2");
 
     m_data->m_driver.preFrame();
   }
@@ -1798,7 +1798,7 @@ namespace Luminous
   void RenderContext::bindTexture(GLenum textureType, GLenum textureUnit,
                                     GLuint textureId)
   {
-    Utils::glCheck("RenderContext::bindTexture # 1");
+    //Utils::glCheck("RenderContext::bindTexture # 1");
 
     unsigned textureIndex = textureUnit - GL_TEXTURE0;
 
@@ -1817,7 +1817,7 @@ namespace Luminous
     glActiveTexture(textureUnit);
     glBindTexture(textureType, textureId);
 
-    Utils::glCheck("RenderContext::bindTexture # 2");
+    //Utils::glCheck("RenderContext::bindTexture # 2");
   }
 
   void RenderContext::bindBuffer(GLenum type, GLuint id)
@@ -1836,7 +1836,7 @@ namespace Luminous
   void RenderContext::bindProgram(GLSLProgramObject * program)
   {
     // Radiant::info("RenderContext::bindProgram # %p", program);
-    Utils::glCheck("RenderContext::bindProgram # 1");
+    //Utils::glCheck("RenderContext::bindProgram # 1");
 
     if(m_data->m_program != program) {
       flush();
@@ -1847,7 +1847,7 @@ namespace Luminous
       m_data->m_program = program;
     }
 
-    Utils::glCheck("RenderContext::bindProgram # 2");
+    //Utils::glCheck("RenderContext::bindProgram # 2");
   }
 
   void RenderContext::bindDefaultProgram()

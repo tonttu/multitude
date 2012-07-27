@@ -396,7 +396,7 @@ namespace Luminous {
     if(img->isFullyLoadedToGPU()) {
       si.bound = bestAvailable;
       img->bind(resources, textureUnit, false);
-      Luminous::Utils::glCheck("GPUMipmaps::bind # 1");
+      //Luminous::Utils::glCheck("GPUMipmaps::bind # 1");
       return true;
     }
 

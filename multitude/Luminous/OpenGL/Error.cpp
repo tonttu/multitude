@@ -13,28 +13,47 @@
  *
  */
 
-#include <Luminous/Error.hpp>
+#include "Error.hpp"
 
 #include <Radiant/Trace.hpp>
+#include <Radiant/Mutex.hpp>
+
+#include <QMap>
+
+// OS X (Core 3.2) doesn't have these
+#if defined(RADIANT_OSX)
+#  define GL_STACK_OVERFLOW 0x0503
+#  define GL_STACK_UNDERFLOW 0x504
+#  define GL_TABLE_TOO_LARGE 0x8031
+#endif
 
 namespace Luminous
 {
 
-  void glErrorToString(const QString & msg, int line)
-  {
+void glErrorToString(const QString & msg, int line)
+{
+    static QMap<GLuint, QString> errors;
+
+    MULTI_ONCE_BEGIN {
+
+        errors.insert(GL_NO_ERROR, "no error");
+        errors.insert(GL_INVALID_ENUM, "invalid enumerant");
+        errors.insert(GL_INVALID_VALUE, "invalid value");
+        errors.insert(GL_INVALID_OPERATION, "invalid operation");
+        errors.insert(GL_STACK_OVERFLOW, "stack overflow");
+        errors.insert(GL_STACK_UNDERFLOW, "stack underflow");
+        errors.insert(GL_OUT_OF_MEMORY, "out of memory");
+        errors.insert(GL_TABLE_TOO_LARGE, "table too large");
+        errors.insert(GL_INVALID_FRAMEBUFFER_OPERATION, "invalid framebuffer operation");
+
+    } MULTI_ONCE_END
+
     GLenum err;
-
     while((err = glGetError()) != GL_NO_ERROR) {
-#ifdef LUMINOUS_OPENGLES
-      Radiant::error("OpenGLES : %s:%d", msg.toUtf8().data(), line);
-#else
-      const char * glErrMsg = (const char*)gluErrorString(err);
-
-      Radiant::error("%s:%d: %s", msg.toUtf8().data(), line, glErrMsg);
-#endif
+        Radiant::error("%s:%d: %s", msg.toUtf8().data(), line, errors.value(err).toUtf8().data());
     };
-  }
-
+}
+/*
   const char * glInternalFormatToString(GLint format)
   {
     switch(format) {
@@ -193,5 +212,5 @@ namespace Luminous
         return "Invalid format";
     }
   }
-
+*/
 }

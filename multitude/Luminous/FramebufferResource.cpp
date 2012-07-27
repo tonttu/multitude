@@ -14,7 +14,7 @@
  */
 
 #include <Luminous/FramebufferResource.hpp>
-#include <Luminous/Error.hpp>
+#include <Luminous/OpenGL/Error.hpp>
 
 namespace Luminous
 {

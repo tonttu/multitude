@@ -23,7 +23,8 @@
 #if defined(RADIANT_OSX)
 #   include <OpenGL/gl3.h>
 #   include <OpenGL/gl3ext.h>
-#   include <OpenGL/glu.h>
+// Can't include glu.h because it will include old gl.h
+//#   include <OpenGL/glu.h>
 #   define MULTI_WITHOUT_GLEW 1
 #   define LUMINOUS_OPENGL_FULL
 #   define LUMINOUS_IN_FULL_OPENGL(x) x

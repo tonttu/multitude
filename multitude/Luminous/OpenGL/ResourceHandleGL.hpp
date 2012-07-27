@@ -2,15 +2,14 @@
 #define LUMINOUS_RESOURCE_HANDLEGL_HPP
 
 #include "StateGL.hpp"
+#include "OpenGL/Error.hpp"
 
 #include <Radiant/Timer.hpp>
-
-#include "Luminous/Utils.hpp"
 
 #if RADIANT_DEBUG
 # define GLERROR_TOSTR2(num) #num
 # define GLERROR_TOSTR(num) GLERROR_TOSTR2(num)
-# define GLERROR(txt) Utils::glCheck(__FILE__ ":" GLERROR_TOSTR(__LINE__) ": " txt)
+# define GLERROR(txt) Luminous::glErrorToString(__FILE__ ":" GLERROR_TOSTR(__LINE__) ": " txt, __LINE__)
 #else
 # define GLERROR(txt)
 #endif
