@@ -643,7 +643,7 @@ namespace VideoDisplay {
 
     debugVideoDisplay("ShowGL::render # %p f = %p", this, m_frame);
 
-    Luminous::Utils::glCheck("ShowGL::render # entry");
+    //Luminous::Utils::glCheck("ShowGL::render # entry");
 
     if(m_frame) {
 
