@@ -107,7 +107,7 @@ namespace Luminous
     invalidate();
   }
 
-  void Texture::setData(unsigned int width, unsigned int height, const PixelFormat & dataFormat, const void * data)
+  void Texture::setData(unsigned int width, unsigned int height, const PixelFormat & dataFormat, const void * data, bool setDirty)
   {
     set(m_d->needRehash, m_d->dimensions, 2);
     set(m_d->needRehash, m_d->width, width);
@@ -115,6 +115,11 @@ namespace Luminous
     set(m_d->needRehash, m_d->depth, 1);
     set(m_d->needRehash, m_d->dataFormat, dataFormat);
     set(m_d->needRehash, m_d->data, data);
+    if(setDirty) {
+      QRegion r(0, 0, width, height);
+      for(unsigned int i = 0; i < m_d->dirtyRegions.size(); ++i)
+        m_d->dirtyRegions[i] = r;
+    }
     invalidate();
   }
 
