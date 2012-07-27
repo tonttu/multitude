@@ -25,6 +25,7 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+#include <tuple>
 
 #include <QStringList>
 #include <QVector>
@@ -109,6 +110,7 @@ namespace Luminous
 
     RenderState m_state;
 
+    // key is <vertex buffer id, index buffer id, shader>
     std::map<std::tuple<RenderResource::Id, RenderResource::Id, ProgramGL*>, VertexArray> m_vertexArrayCache;
 
     std::map<RenderState, OpaqueRenderQueue> m_opaqueQueue;

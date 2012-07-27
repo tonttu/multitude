@@ -1,7 +1,7 @@
 #include "VertexArrayGL.hpp"
-#include "VertexArray.hpp"
+#include "Luminous/VertexArray.hpp"
 #include "BufferGL.hpp"
-#include "RenderManager.hpp"
+#include "Luminous/RenderManager.hpp"
 #include "RenderDriverGL.hpp"
 #include "ProgramGL.hpp"
 
