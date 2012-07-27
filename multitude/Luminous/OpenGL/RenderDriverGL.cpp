@@ -78,7 +78,8 @@ namespace Luminous
   {
   public:
     D(unsigned int threadIndex, RenderDriverGL & driver)
-      : m_stateGL(threadIndex, driver)
+      : m_driver(driver)
+      , m_stateGL(threadIndex, driver)
       , m_currentBuffer(0)
       , m_threadIndex(threadIndex)
       , m_frame(0)
@@ -87,6 +88,8 @@ namespace Luminous
 
     typedef std::vector<GLuint> AttributeList;
     AttributeList m_activeAttributes;
+
+    RenderDriverGL & m_driver;
 
     StateGL m_stateGL;
     GLuint m_currentBuffer;   // Currently bound buffer object
@@ -105,6 +108,8 @@ namespace Luminous
     VertexArrayList m_vertexArrays;
 
     RenderState m_state;
+
+    std::map<std::tuple<RenderResource::Id, RenderResource::Id, ProgramGL*>, VertexArray> m_vertexArrayCache;
 
     std::map<RenderState, OpaqueRenderQueue> m_opaqueQueue;
     TranslucentRenderQueue m_translucentQueue;
@@ -135,6 +140,10 @@ namespace Luminous
     void setState(const RenderState & state);
 
     void render(const RenderCommand & cmd, GLint uniformHandle, GLint uniformBlockIndex);
+
+    RenderCommand & createRenderCommand(VertexArray & vertexArray,
+                                        Buffer & uniformBuffer,
+                                        const Luminous::Style & style);
 
     // Utility function for resource cleanup
     template <typename ContainerType>
@@ -204,6 +213,55 @@ namespace Luminous
     glDrawElementsBaseVertex(cmd.primitiveType, cmd.primitiveCount, GL_UNSIGNED_INT,
                              (GLvoid *)((sizeof(uint) * cmd.indexOffset)), cmd.vertexOffset);
     GLERROR("RenderDriverGL::flush # glDrawElementsBaseVertex");
+  }
+
+  /// This function assumes that m_state.program is already set
+  RenderCommand & RenderDriverGL::D::createRenderCommand(VertexArray & vertexArray,
+                                                         Buffer & uniformBuffer,
+                                                         const Luminous::Style & style)
+  {
+    bool translucent = style.fill.shader->translucent();
+
+    m_state.vertexArray = &m_driver.handle(vertexArray, m_state.program);
+    m_state.uniformBuffer = &m_driver.handle(uniformBuffer);
+
+    int unit = 0;
+    for(auto it = style.fill.tex.begin(); it != style.fill.tex.end(); ++it) {
+      if(!it->second->isValid())
+        continue;
+
+      translucent |= it->second->translucent();
+      TextureGL & tex = m_driver.handle(*it->second);
+      tex.upload(*it->second, unit, false);
+      m_state.textures[unit++] = &tex;
+    }
+    m_state.textures[unit] = nullptr;
+
+    translucent = style.fill.translucent == Fill::Translucent ||
+        ((style.fill.translucent == Fill::Auto) && (translucent || style.fill.color.w < 0.99999999f));
+
+    RenderCommand * cmd;
+    if(translucent) {
+      if(m_translucentQueue.usedSize >= m_translucentQueue.queue.size())
+        m_translucentQueue.queue.resize(m_translucentQueue.queue.size()+1);
+      auto & pair = m_translucentQueue.queue[m_translucentQueue.usedSize++];
+      pair.first = m_state;
+      cmd = &pair.second;
+    } else {
+      OpaqueRenderQueue & queue = m_opaqueQueue[m_state];
+      if(queue.usedSize >= queue.queue.size())
+        queue.queue.push_back(RenderCommand());
+      cmd = &queue.queue[queue.usedSize++];
+    }
+
+    unit = 0;
+    int slot = 0; // one day this will be different from unit
+    for(auto it = style.fill.tex.begin(); it != style.fill.tex.end(); ++it, ++unit, ++slot) {
+      cmd->samplers[slot] = std::make_pair(m_state.program->samplerLocation(it->first), unit);
+    }
+    cmd->samplers[slot].first = -1;
+
+    return *cmd;
   }
 
   template <typename ContainerType>
@@ -466,57 +524,33 @@ namespace Luminous
     bufferGL.unmap();
   }
 
+  RenderCommand & RenderDriverGL::createRenderCommand(Buffer & vertexBuffer,
+                                                      Buffer & indexBuffer,
+                                                      Buffer & uniformBuffer,
+                                                      const Luminous::Style & style)
+  {
+    m_d->m_state.program = &handle(*style.fill.shader);
+    m_d->m_state.program->link(*style.fill.shader);
+
+    const auto key = std::make_tuple(vertexBuffer.resourceId(), indexBuffer.resourceId(), m_d->m_state.program);
+    VertexArray & vertexArray = m_d->m_vertexArrayCache[key];
+    if(vertexArray.bindingCount() == 0) {
+      vertexArray.addBinding(vertexBuffer, style.fill.shader->vertexDescription());
+      vertexArray.setIndexBuffer(indexBuffer);
+    }
+
+    return m_d->createRenderCommand(vertexArray, uniformBuffer, style);
+  }
+
   RenderCommand & RenderDriverGL::createRenderCommand(VertexArray & vertexArray,
                                                       Buffer & uniformBuffer,
                                                       const Luminous::Style & style)
   {
-    assert(style.fill.shader);
-
-    bool translucent = style.fill.shader->translucent();
-
-    auto & state = m_d->m_state;
+    RenderState & state = m_d->m_state;
     state.program = &handle(*style.fill.shader);
     state.program->link(*style.fill.shader);
-    state.vertexArray = &handle(vertexArray, state.program);
-    state.uniformBuffer = &handle(uniformBuffer);
 
-    int unit = 0;
-    for(auto it = style.fill.tex.begin(); it != style.fill.tex.end(); ++it) {
-      if(!it->second->isValid())
-        continue;
-
-      translucent |= it->second->translucent();
-      TextureGL & tex = handle(*it->second);
-      tex.upload(*it->second, unit, false);
-      state.textures[unit++] = &tex;
-    }
-    state.textures[unit] = nullptr;
-
-    translucent = style.fill.translucent == Fill::Translucent ||
-        ((style.fill.translucent == Fill::Auto) && (translucent || style.fill.color.w < 0.99999999f));
-
-    RenderCommand * cmd;
-    if(translucent) {
-      if(m_d->m_translucentQueue.usedSize >= m_d->m_translucentQueue.queue.size())
-        m_d->m_translucentQueue.queue.resize(m_d->m_translucentQueue.queue.size()+1);
-      auto & pair = m_d->m_translucentQueue.queue[m_d->m_translucentQueue.usedSize++];
-      pair.first = state;
-      cmd = &pair.second;
-    } else {
-      OpaqueRenderQueue & queue = m_d->m_opaqueQueue[state];
-      if(queue.usedSize >= queue.queue.size())
-        queue.queue.push_back(RenderCommand());
-      cmd = &queue.queue[queue.usedSize++];
-    }
-
-    unit = 0;
-    int slot = 0; // one day this will be different from unit
-    for(auto it = style.fill.tex.begin(); it != style.fill.tex.end(); ++it, ++unit, ++slot) {
-      cmd->samplers[slot] = std::make_pair(state.program->samplerLocation(it->first), unit);
-    }
-    cmd->samplers[slot].first = -1;
-
-    return *cmd;
+    return m_d->createRenderCommand(vertexArray, uniformBuffer, style);
   }
 
   void RenderDriverGL::flush()

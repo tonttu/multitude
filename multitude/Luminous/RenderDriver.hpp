@@ -82,6 +82,11 @@ namespace Luminous
                                           Radiant::FlagsT<Buffer::MapAccess> access) = 0;
     LUMINOUS_API virtual void unmapBuffer(const Buffer & buffer) = 0;
 
+    LUMINOUS_API virtual RenderCommand & createRenderCommand(Buffer & vertexBuffer,
+                                                             Buffer & indexBuffer,
+                                                             Buffer & uniformBuffer,
+                                                             const Luminous::Style & style) = 0;
+
     LUMINOUS_API virtual RenderCommand & createRenderCommand(VertexArray & vertexArray,
                                                              Buffer & uniformBuffer,
                                                              const Luminous::Style & style) = 0;

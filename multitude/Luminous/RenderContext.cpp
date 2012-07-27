@@ -192,10 +192,6 @@ namespace Luminous
     SharedBuffer(Buffer::Type type) : buffer(type), reservedBytes(0) {}
     Buffer buffer;
     std::size_t reservedBytes;
-
-    /// @todo this is extremely stupid, make something smarter
-    /// [Shader, IndexBuffer]
-    std::map<std::pair<RenderResource::Hash, RenderResource::Id>, VertexArray> bindings;
   };
 
   class RenderContext::Internal
@@ -1559,13 +1555,8 @@ namespace Luminous
     SharedBuffer * ubuffer;
     std::tie(mappedUniformBuffer, ubuffer) = sharedBuffer(uniformSize, 1, Buffer::Uniform, uniformOffset);
 
-    VertexArray * vertexArray = &vbuffer->bindings[std::make_pair(style.fill.shader->hash(), ibuffer->buffer.resourceId())];
-    if(vertexArray->bindingCount() == 0) {
-      vertexArray->addBinding(vbuffer->buffer, style.fill.shader->vertexDescription());
-      vertexArray->setIndexBuffer(ibuffer->buffer);
-    }
-
-    RenderCommand & cmd = m_data->m_driver.createRenderCommand(*vertexArray, ubuffer->buffer, style);
+    RenderCommand & cmd = m_data->m_driver.createRenderCommand(
+          vbuffer->buffer, ibuffer->buffer, ubuffer->buffer, style);
     cmd.primitiveCount = indexCount;
     cmd.indexOffset = indexOffset;
     cmd.vertexOffset = vertexOffset;
