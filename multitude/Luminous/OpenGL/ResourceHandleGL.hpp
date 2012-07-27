@@ -2,7 +2,7 @@
 #define LUMINOUS_RESOURCE_HANDLEGL_HPP
 
 #include "StateGL.hpp"
-#include "OpenGL/Error.hpp"
+#include "Error.hpp"
 
 #include <Radiant/Timer.hpp>
 

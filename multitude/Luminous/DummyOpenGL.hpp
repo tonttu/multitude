@@ -4,7 +4,7 @@
 #include "Export.hpp"
 #include <Radiant/Platform.hpp>
 
-#if 1
+#if defined(RADIANT_OSX)
 
 /* Dummy implementations of various OpenGL functions/macros which are present in
    full OpenGL, but not in OpenGL ES 2.0.
