@@ -548,13 +548,18 @@ namespace Luminous
     }
 
     const auto key = std::make_tuple(vertexBuffer.resourceId(), indexBuffer.resourceId(), state.program);
-    VertexArray & vertexArray = m_d->m_vertexArrayCache[key];
-    if(vertexArray.bindingCount() == 0) {
+    // There seems bug in VC++2010 tuple/map implementation, see
+    // http://stackoverflow.com/questions/3254427/c0x-are-tuples-of-tuples-allowed
+    // VertexArray & vertexArray = m_d->m_vertexArrayCache[key];
+    auto it = m_d->m_vertexArrayCache.find(key);
+    if(it == m_d->m_vertexArrayCache.end()) {
+      VertexArray vertexArray;
       vertexArray.addBinding(vertexBuffer, state.program->vertexDescription());
       vertexArray.setIndexBuffer(indexBuffer);
+      it = m_d->m_vertexArrayCache.insert(std::make_pair(key, std::move(vertexArray))).first;
     }
 
-    return m_d->createRenderCommand(translucent, vertexArray, uniformBuffer, style);
+    return m_d->createRenderCommand(translucent, it->second, uniformBuffer, style);
   }
 
   RenderCommand & RenderDriverGL::createRenderCommand(VertexArray & vertexArray,

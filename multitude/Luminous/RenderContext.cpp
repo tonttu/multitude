@@ -190,6 +190,17 @@ namespace Luminous
   struct RenderContext::SharedBuffer
   {
     SharedBuffer(Buffer::Type type) : buffer(type), reservedBytes(0) {}
+    SharedBuffer(SharedBuffer && shared)
+      : buffer(std::move(shared.buffer)),
+        reservedBytes(shared.reservedBytes)
+    {}
+    SharedBuffer & operator=(SharedBuffer && shared)
+    {
+      buffer = std::move(shared.buffer);
+      reservedBytes = shared.reservedBytes;
+      return *this;
+    }
+
     Buffer buffer;
     std::size_t reservedBytes;
   };
@@ -579,6 +590,18 @@ namespace Luminous
       BufferPool() : currentIndex(0) {}
       std::vector<SharedBuffer> buffers;
       int currentIndex;
+
+      BufferPool(BufferPool && pool)
+        : buffers(std::move(pool.buffers))
+        , currentIndex(pool.currentIndex)
+      {}
+
+      BufferPool & operator=(BufferPool && pool)
+      {
+        buffers = std::move(pool.buffers);
+        currentIndex = pool.currentIndex;
+        return *this;
+      }
 
       void flush()
       {
