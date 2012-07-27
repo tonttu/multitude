@@ -3,6 +3,8 @@
 
 #include "Luminous/Luminous.hpp"
 #include "Luminous/RenderDriver.hpp"
+#include "Luminous/OpenGL/BufferGL.hpp"
+#include "Luminous/OpenGL/VertexArrayGL.hpp"
 
 #include <Radiant/Flags.hpp>
 
@@ -42,7 +44,7 @@ namespace Luminous
     LUMINOUS_API virtual void setIndexBuffer(const Buffer & buffer) OVERRIDE;
     LUMINOUS_API virtual void setUniformBuffer(const Buffer & buffer) OVERRIDE;
 
-    LUMINOUS_API virtual void setVertexBinding(const VertexArray & binding) OVERRIDE;
+    LUMINOUS_API virtual void setVertexArray(const VertexArray & vertexArray) OVERRIDE;
 
     LUMINOUS_API virtual void setTexture(unsigned int textureUnit, const Texture & texture) OVERRIDE;
 
@@ -55,7 +57,7 @@ namespace Luminous
                                           Radiant::FlagsT<Buffer::MapAccess> access) OVERRIDE;
     LUMINOUS_API virtual void unmapBuffer(const Buffer & buffer) OVERRIDE;
 
-    LUMINOUS_API virtual RenderCommand & createRenderCommand(VertexArray & binding,
+    LUMINOUS_API virtual RenderCommand & createRenderCommand(VertexArray & vertexArray,
                                                              Buffer & uniformBuffer,
                                                              const Luminous::Style & style) OVERRIDE;
 
@@ -63,6 +65,8 @@ namespace Luminous
 
     LUMINOUS_API ProgramGL & handle(const Program & program);
     LUMINOUS_API TextureGL & handle(const Texture & texture);
+    LUMINOUS_API BufferGL & handle(const Buffer & buffer);
+    LUMINOUS_API VertexArrayGL & handle(const VertexArray & vertexArray, ProgramGL * program = nullptr);
 
     /// @todo Add function wrapper(s) for:
     /// * glLogicOp

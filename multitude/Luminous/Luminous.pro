@@ -5,6 +5,8 @@ HEADERS += OpenGL/RenderDriverGL.hpp
 HEADERS += OpenGL/ResourceHandleGL.hpp
 HEADERS += OpenGL/StateGL.hpp
 HEADERS += OpenGL/TextureGL.hpp
+HEADERS += OpenGL/VertexArrayGL.hpp
+HEADERS += OpenGL/BufferGL.hpp
 
 HEADERS += BGThread.hpp
 HEADERS += CocoaWindow.hpp
@@ -79,6 +81,8 @@ macx:OBJECTIVE_SOURCES += CocoaWindow.mm
 SOURCES += OpenGL/ProgramGL.cpp
 SOURCES += OpenGL/RenderDriverGL.cpp
 SOURCES += OpenGL/TextureGL.cpp
+SOURCES += OpenGL/VertexArrayGL.cpp
+SOURCES += OpenGL/BufferGL.cpp
 
 SOURCES += BGThread.cpp
 SOURCES += CodecRegistry.cpp

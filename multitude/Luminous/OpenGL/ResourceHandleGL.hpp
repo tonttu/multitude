@@ -5,6 +5,16 @@
 
 #include <Radiant/Timer.hpp>
 
+#include "Utils.hpp"
+
+#if RADIANT_DEBUG
+# define GLERROR_TOSTR2(num) #num
+# define GLERROR_TOSTR(num) GLERROR_TOSTR2(num)
+# define GLERROR(txt) Utils::glCheck(__FILE__ ":" GLERROR_TOSTR(__LINE__) ": " txt)
+#else
+# define GLERROR(txt)
+#endif
+
 namespace Luminous
 {
   class ResourceHandleGL
