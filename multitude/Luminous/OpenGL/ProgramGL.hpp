@@ -38,6 +38,9 @@ namespace Luminous
     ProgramGL(StateGL & state);
     ~ProgramGL();
 
+    //ProgramGL(ProgramGL && prog);
+    //ProgramGL & operator=(ProgramGL && prog);
+
     void bind();
     void bind(const Program & program);
     void link(const Program & program);

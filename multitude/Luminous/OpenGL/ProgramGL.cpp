@@ -80,6 +80,23 @@ namespace Luminous
   {
     m_handle = glCreateProgram();
   }
+  /*
+  ProgramGL::ProgramGL( ProgramGL && prog )
+    : ResourceHandleGL(std::move(prog))
+    , m_shaders(prog.m_shaders)
+    , m_samplers(prog.m_samplers)
+    , m_linked(prog.m_linked)
+  {
+    
+  }
+
+
+  ProgramGL & ProgramGL::operator=( ProgramGL && prog )
+  {
+    //m_shaders = prog.m_shaders;
+    return *this;
+  }
+  */
 
   ProgramGL::~ProgramGL()
   {
