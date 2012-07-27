@@ -24,7 +24,7 @@ vivid {
 
 #exists(Examples/Examples.pro):SUBDIRS += Examples
 !mobile*{
-  SUBDIRS += Applications
+#  SUBDIRS += Applications
 }
 
 CONFIG += ordered
