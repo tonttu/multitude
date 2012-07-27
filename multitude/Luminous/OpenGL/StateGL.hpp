@@ -1,7 +1,7 @@
 #ifndef LUMINOUS_STATEGL_HPP
 #define LUMINOUS_STATEGL_HPP
 
-#include "../Luminous.hpp"
+#include "Luminous/Luminous.hpp"
 
 #include <map>
 #include <algorithm>

@@ -1,7 +1,7 @@
 #ifndef LUMINOUS_BUFFERGL_HPP
 #define LUMINOUS_BUFFERGL_HPP
 
-#include "OpenGL/ResourceHandleGL.hpp"
+#include "ResourceHandleGL.hpp"
 #include "Luminous/Buffer.hpp"
 
 namespace Luminous

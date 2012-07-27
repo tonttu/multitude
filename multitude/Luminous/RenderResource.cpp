@@ -2,6 +2,8 @@
 #include "Luminous/RenderManager.hpp"
 #include "Luminous/RenderDriver.hpp"
 
+#include <type_traits>
+
 namespace Luminous
 {
   int RenderResource::s_generation = 1;
@@ -29,6 +31,13 @@ namespace Luminous
     rr.m_id = Id(-1);
     RenderManager::updateResource(m_id, this);
   }
+
+  /*
+  LUMINOUS_API RenderResource::RenderResource( RenderResource & res )
+  {
+    static_assert(, "copy error");
+  }
+  */
 
   RenderResource & RenderResource::operator=(RenderResource && rr)
   {

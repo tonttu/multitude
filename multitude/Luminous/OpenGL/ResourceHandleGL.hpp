@@ -5,7 +5,7 @@
 
 #include <Radiant/Timer.hpp>
 
-#include "Utils.hpp"
+#include "Luminous/Utils.hpp"
 
 #if RADIANT_DEBUG
 # define GLERROR_TOSTR2(num) #num

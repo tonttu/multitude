@@ -1,7 +1,7 @@
 #ifndef LUMINOUS_VERTEXARRAYGL_HPP
 #define LUMINOUS_VERTEXARRAYGL_HPP
 
-#include "OpenGL/ResourceHandleGL.hpp"
+#include "ResourceHandleGL.hpp"
 
 #include <QRegion>
 

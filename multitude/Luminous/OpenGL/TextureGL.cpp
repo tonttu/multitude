@@ -1,6 +1,6 @@
 #include "TextureGL.hpp"
-#include "../Texture2.hpp"
-#include "../PixelFormat.hpp"
+#include "Luminous/Texture2.hpp"
+#include "Luminous/PixelFormat.hpp"
 
 #include <QVector>
 

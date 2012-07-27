@@ -1,6 +1,6 @@
 #include "ProgramGL.hpp"
 
-#include "../Program.hpp"
+#include "Luminous/Program.hpp"
 
 #include <QByteArray>
 #include <QStringList>
