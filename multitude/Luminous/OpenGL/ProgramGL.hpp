@@ -2,6 +2,7 @@
 #define LUMINOUS_PROGRAMGL_HPP
 
 #include "ResourceHandleGL.hpp"
+#include "Luminous/VertexDescription.hpp"
 
 #include <map>
 #include <vector>
@@ -38,7 +39,7 @@ namespace Luminous
   class ProgramGL : public ResourceHandleGL
   {
   public:
-    ProgramGL(StateGL & state);
+    ProgramGL(StateGL & state, const Program & program);
     ~ProgramGL();
 
     ProgramGL(ProgramGL && program);
@@ -50,9 +51,12 @@ namespace Luminous
 
     int samplerLocation(const QByteArray & name);
 
+    const VertexDescription & vertexDescription() const { return m_vertexDescription; }
+
   private:
     std::vector<ShaderGL> m_shaders;
     std::map<QByteArray, int> m_samplers;
+    VertexDescription m_vertexDescription;
     bool m_linked;
     // UniformDescription m_baseDescription
   };

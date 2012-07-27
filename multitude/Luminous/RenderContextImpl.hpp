@@ -17,8 +17,8 @@ namespace Luminous
   RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::drawRectT(
       const QRectF & area, Style & style)
   {
-    if(!style.fill.shader)
-      style.fill.shader = &basicShader();
+    if(!style.fillProgramGL() && !style.fillProgram())
+      style.setFillProgram(basicShader());
     RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(Luminous::PrimitiveType_TriangleStrip, 4, 4, style);
     auto v = b.vertex;
     auto idx = b.idx;
@@ -35,7 +35,7 @@ namespace Luminous
 
     b.uniform->projMatrix = viewTransform();
     b.uniform->modelMatrix = transform4();
-    b.uniform->color = style.fill.color;
+    b.uniform->color = style.fillColor();
 
     return b;
   }
@@ -44,8 +44,8 @@ namespace Luminous
   RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::drawTexRectT(
       const QRectF & area, Style & style)
   {
-    if(!style.fill.shader)
-      style.fill.shader = &texShader();
+    if(!style.fillProgramGL() && !style.fillProgram())
+      style.setFillProgram(texShader());
     RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(Luminous::PrimitiveType_TriangleStrip, 4, 4, style);
     auto v = b.vertex;
     auto idx = b.idx;
@@ -69,7 +69,7 @@ namespace Luminous
 
     b.uniform->projMatrix = viewTransform();
     b.uniform->modelMatrix = transform4();
-    b.uniform->color = style.fill.color;
+    b.uniform->color = style.fillColor();
 
     return b;
   }
@@ -78,8 +78,8 @@ namespace Luminous
   RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::drawRectWithHoleT(
       const QRectF & area, const QRectF & hole, Luminous::Style & style)
   {
-    if(!style.fill.shader)
-      style.fill.shader = &basicShader();
+    if(!style.fillProgramGL() && !style.fillProgram())
+      style.setFillProgram(basicShader());
 
     RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(
           Luminous::PrimitiveType_TriangleStrip, 10, 8, style);
@@ -105,7 +105,7 @@ namespace Luminous
 
     b.uniform->projMatrix = viewTransform();
     b.uniform->modelMatrix = transform4();
-    b.uniform->color = style.fill.color;
+    b.uniform->color = style.fillColor();
 
     return b;
   }

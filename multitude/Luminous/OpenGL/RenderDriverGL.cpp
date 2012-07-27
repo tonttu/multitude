@@ -141,7 +141,8 @@ namespace Luminous
 
     void render(const RenderCommand & cmd, GLint uniformHandle, GLint uniformBlockIndex);
 
-    RenderCommand & createRenderCommand(VertexArray & vertexArray,
+    RenderCommand & createRenderCommand(bool translucent,
+                                        VertexArray & vertexArray,
                                         Buffer & uniformBuffer,
                                         const Luminous::Style & style);
 
@@ -216,29 +217,34 @@ namespace Luminous
   }
 
   /// This function assumes that m_state.program is already set
-  RenderCommand & RenderDriverGL::D::createRenderCommand(VertexArray & vertexArray,
+  RenderCommand & RenderDriverGL::D::createRenderCommand(bool translucent,
+                                                         VertexArray & vertexArray,
                                                          Buffer & uniformBuffer,
                                                          const Luminous::Style & style)
   {
-    bool translucent = style.fill.shader->translucent();
-
     m_state.vertexArray = &m_driver.handle(vertexArray, m_state.program);
     m_state.uniformBuffer = &m_driver.handle(uniformBuffer);
 
     int unit = 0;
-    for(auto it = style.fill.tex.begin(); it != style.fill.tex.end(); ++it) {
-      if(!it->second->isValid())
-        continue;
+    for(auto it = style.fill().textures().begin(), end = style.fill().textures().end(); it != end; ++it) {
+      TextureGL * textureGL;
+      if(it->second.textureGL) {
+         textureGL = it->second.textureGL;
+      } else {
+        Texture & texture = *it->second.texture;
+        if(!texture.isValid())
+          continue;
 
-      translucent |= it->second->translucent();
-      TextureGL & tex = m_driver.handle(*it->second);
-      tex.upload(*it->second, unit, false);
-      m_state.textures[unit++] = &tex;
+        translucent |= texture.translucent();
+        textureGL = &m_driver.handle(texture);
+        textureGL->upload(texture, unit, false);
+      }
+      m_state.textures[unit++] = textureGL;
     }
     m_state.textures[unit] = nullptr;
 
-    translucent = style.fill.translucent == Fill::Translucent ||
-        ((style.fill.translucent == Fill::Auto) && (translucent || style.fill.color.w < 0.99999999f));
+    translucent = style.translucency() == Style::Translucent ||
+        ((style.translucency() == Style::Auto) && (translucent || style.fillColor().w < 0.99999999f));
 
     RenderCommand * cmd;
     if(translucent) {
@@ -256,7 +262,7 @@ namespace Luminous
 
     unit = 0;
     int slot = 0; // one day this will be different from unit
-    for(auto it = style.fill.tex.begin(); it != style.fill.tex.end(); ++it, ++unit, ++slot) {
+    for(auto it = style.fill().textures().begin(), end = style.fill().textures().end(); it != end; ++it, ++unit, ++slot) {
       cmd->samplers[slot] = std::make_pair(m_state.program->samplerLocation(it->first), unit);
     }
     cmd->samplers[slot].first = -1;
@@ -453,7 +459,7 @@ namespace Luminous
   {
     auto it = m_d->m_programs.find(program.hash());
     if(it == m_d->m_programs.end()) {
-      it = m_d->m_programs.insert(std::make_pair(program.hash(), ProgramGL(m_d->m_stateGL))).first;
+      it = m_d->m_programs.insert(std::make_pair(program.hash(), ProgramGL(m_d->m_stateGL, program))).first;
       it->second.setExpirationSeconds(program.expiration());
     }
 
@@ -529,28 +535,41 @@ namespace Luminous
                                                       Buffer & uniformBuffer,
                                                       const Luminous::Style & style)
   {
-    m_d->m_state.program = &handle(*style.fill.shader);
-    m_d->m_state.program->link(*style.fill.shader);
+    bool translucent = false;
+    auto & state = m_d->m_state;
+    state.program = style.fillProgramGL();
+    if(!state.program) {
+      Program & prog = *style.fillProgram();
+      state.program = &handle(prog);
+      state.program->link(prog);
+      translucent = prog.translucent();
+    }
 
-    const auto key = std::make_tuple(vertexBuffer.resourceId(), indexBuffer.resourceId(), m_d->m_state.program);
+    const auto key = std::make_tuple(vertexBuffer.resourceId(), indexBuffer.resourceId(), state.program);
     VertexArray & vertexArray = m_d->m_vertexArrayCache[key];
     if(vertexArray.bindingCount() == 0) {
-      vertexArray.addBinding(vertexBuffer, style.fill.shader->vertexDescription());
+      vertexArray.addBinding(vertexBuffer, state.program->vertexDescription());
       vertexArray.setIndexBuffer(indexBuffer);
     }
 
-    return m_d->createRenderCommand(vertexArray, uniformBuffer, style);
+    return m_d->createRenderCommand(translucent, vertexArray, uniformBuffer, style);
   }
 
   RenderCommand & RenderDriverGL::createRenderCommand(VertexArray & vertexArray,
                                                       Buffer & uniformBuffer,
                                                       const Luminous::Style & style)
   {
-    RenderState & state = m_d->m_state;
-    state.program = &handle(*style.fill.shader);
-    state.program->link(*style.fill.shader);
+    bool translucent = false;
+    auto & state = m_d->m_state;
+    state.program = style.fillProgramGL();
+    if(!state.program) {
+      Program & prog = *style.fillProgram();
+      state.program = &handle(prog);
+      state.program->link(prog);
+      translucent = prog.translucent();
+    }
 
-    return m_d->createRenderCommand(vertexArray, uniformBuffer, style);
+    return m_d->createRenderCommand(translucent, vertexArray, uniformBuffer, style);
   }
 
   void RenderDriverGL::flush()

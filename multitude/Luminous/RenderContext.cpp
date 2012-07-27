@@ -1150,6 +1150,8 @@ namespace Luminous
                               float fromRadians, float toRadians,
                               const Luminous::Style & style)
   {
+    /// @todo
+#if 0
     if(style.program()) {
       style.program()->bind();
     }
@@ -1198,10 +1200,13 @@ namespace Luminous
     v.m_texCoord = style.texCoords().high();
     v.m_objCoord.make(1, 1);
     rp.addLastVertex(v);
+#endif
   }
 
   void RenderContext::drawCircle(Nimble::Vector2f center, float radius, const Luminous::Style & style)
   {
+    /// @todo
+#if 0
     flush();
     m_data->m_circle_shader->bind();
 
@@ -1235,6 +1240,7 @@ namespace Luminous
     va.m_objCoord.make(1, 1);
     rp.addLastVertex(va);
     flush();
+#endif
   }
 
   void RenderContext::drawWedge(Nimble::Vector2f center, float radius1,
@@ -1455,15 +1461,15 @@ namespace Luminous
                                   const Nimble::Rect & texUV)
   {
     Style style;
-    style.setColor(rgba[0], rgba[1], rgba[2], rgba[3]);
+    style.setFillColor(rgba[0], rgba[1], rgba[2], rgba[3]);
     style.setTexturing(1);
     style.setTexCoords(texUV);
-    drawRect(Nimble::Rect(Nimble::Vector2(0,0), size), style);
+    drawRect(QRectF(0, 0, size.x, size.y), style);
   }
 
   void RenderContext::drawStyledRect(Nimble::Vector2 size, Luminous::Style & style)
   {
-    drawRect(Nimble::Rect(Nimble::Vector2(0,0), size), style);
+    drawRect(QRectF(0, 0, size.x, size.y), style);
   }
 
   void RenderContext::drawTexRect(Nimble::Vector2 size, const float * rgba,
@@ -1571,7 +1577,7 @@ namespace Luminous
 
   void RenderContext::drawRect(const QRectF & area, Style & style)
   {
-    if(style.fill.tex.empty()) {
+    if(style.fill().textures().empty()) {
       drawRectT<BasicVertex, BasicUniformBlock>(area, style);
     } else {
       drawTexRectT<BasicVertexUV, BasicUniformBlock>(area, style);
@@ -1635,6 +1641,8 @@ namespace Luminous
 
   void RenderContext::drawQuad(const Nimble::Vector2 * corners, const Luminous::Style & style)
   {
+    /// @todo
+#if 0
     m_data->m_basic_shader->bind();
 
     RenderPacket & rp = * m_data->m_renderPacket;
@@ -1662,6 +1670,7 @@ namespace Luminous
     va.m_location = corners[2];
     va.m_texCoord = style.texCoords().highLow();
     rp.addLastVertex(va);
+#endif
   }
 
   Nimble::Vector2 RenderContext::contextSize() const

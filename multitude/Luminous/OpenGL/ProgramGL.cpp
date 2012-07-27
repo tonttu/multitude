@@ -74,9 +74,10 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  ProgramGL::ProgramGL(StateGL & state)
+  ProgramGL::ProgramGL(StateGL & state, const Program & program)
     : ResourceHandleGL(state)
     , m_linked(false)
+    , m_vertexDescription(program.vertexDescription())
   {
     m_handle = glCreateProgram();
   }
@@ -174,6 +175,7 @@ namespace Luminous
     } else {
       // m_baseDescription = uniformDescription(programHandle, "BaseBlock");
     }
+    m_vertexDescription = program.vertexDescription();
     m_linked = true;
   }
 
