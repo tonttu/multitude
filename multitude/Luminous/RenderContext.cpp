@@ -345,21 +345,21 @@ namespace Luminous
             GLSLProgramObject::fromFiles(locateStandardShader("basic_tex.vs").toUtf8().data(),
                                          locateStandardShader("basic_tex.fs").toUtf8().data());
         if(!basic)
-          fatal("Could not load basic shader for rendering");
+          warning("Could not load basic shader for rendering");
         m_basic_shader.reset(basic);
 
         GLSLProgramObject * arc =
             GLSLProgramObject::fromFiles(locateStandardShader("arc_tex.vs").toUtf8().data(),
                                          locateStandardShader("arc_tex.fs").toUtf8().data());
         if(!arc)
-          fatal("Could not load arc shader for rendering");
+          warning("Could not load arc shader for rendering");
         m_arc_shader.reset(arc);
 
         GLSLProgramObject * circle =
             GLSLProgramObject::fromFiles(locateStandardShader("circle_tex.vs").toUtf8().data(),
                                          locateStandardShader("circle_tex.fs").toUtf8().data());
         if(!circle)
-          fatal("Could not load circle shader for rendering");
+          warning("Could not load circle shader for rendering");
         m_circle_shader.reset(circle);
 
         m_viewFBO.reset(new Luminous::Framebuffer());

@@ -30,6 +30,7 @@
 #endif
 
 /// @todo why all this crap?
+#define LUMINOUS_OPENGL_FULL
 #define LUMINOUS_IN_FULL_OPENGL(x) x
 /*
 #ifdef RADIANT_OSX

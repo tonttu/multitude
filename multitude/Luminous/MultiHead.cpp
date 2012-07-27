@@ -155,7 +155,7 @@ namespace Luminous {
     std::cout << "Matrices:\n" << m << km << r.viewTransform() << "\n"
               << tmp << "\n";
               */
-#ifdef LUMINOUS_OPENGL_FULL
+#if 0 && defined(LUMINOUS_OPENGL_FULL)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
@@ -179,7 +179,7 @@ namespace Luminous {
 
   void MultiHead::Area::cleanEdges() const
   {
-#ifdef LUMINOUS_OPENGL_FULL
+#if 0 && defined(LUMINOUS_OPENGL_FULL)
     glViewport(m_location[0], m_location[1], m_size[0], m_size[1]);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();

@@ -332,8 +332,8 @@ namespace Luminous
         fs->setSource(code.data());
 
         if(!fs->compile()) {
-          error("GLSLProgramObject::fromFiles # fragment shader "
-                "compile error:%s", fs->compilerLog());
+          error("GLSLProgramObject::fromFiles # fragment shader %s "
+                "compile error:%s", fsFile, fs->compilerLog());
           delete vs;
           delete fs;
           return 0;
