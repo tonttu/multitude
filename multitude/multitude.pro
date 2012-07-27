@@ -3,6 +3,7 @@ TEMPLATE = subdirs
 include(multitude.pri)
 include(Externals.pri)
 
+SUBDIRS += 3rdparty/glew
 enable-js:SUBDIRS += v8
 SUBDIRS += Patterns
 SUBDIRS += Nimble

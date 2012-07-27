@@ -213,15 +213,17 @@ win32 {
       WINPORT_INCLUDE = $$PWD\\Win64x\\include
       INCLUDEPATH += $$PWD\\Win64x\\include
       INCLUDEPATH += $$PWD/../multitude/Win64x/include/ffmpeg
-      QMAKE_LIBDIR += $$PWD\\Win64x\\lib64
-      LIB_GLEW = -lglew64
+      QMAKE_LIBDIR += $$PWD/Win64x/lib64
     } else {
       WINPORT_INCLUDE = $$PWD\\Win32x\\include
       INCLUDEPATH += $$PWD\\Win32x\\include
       INCLUDEPATH += $$PWD/../multitude/Win32x/include/ffmpeg
       QMAKE_LIBDIR += $$PWD\\Win32x\\lib32
-      LIB_GLEW = -lglew32
     }
+
+    DEFINES += GLEW_STATIC
+    INCLUDEPATH += $$PWD/../multitude/3rdparty/glew/glew-1.8.0/include
+    LIB_GLEW = -lglew
 
     LIB_PREFIX =
     SHARED_LIB_SUFFIX = dll
