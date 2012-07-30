@@ -2,18 +2,6 @@
 #include "Luminous/PixelFormat.hpp"
 #include "Luminous/ContextArray.hpp"
 
-#include <QCryptographicHash>
-
-namespace
-{
-  template <typename T, typename Y>
-  inline void set(bool & changed, T & target, const Y & src)
-  {
-    changed = changed || target != src;
-    target = src;
-  }
-}
-
 namespace Luminous
 {
   class Texture::D
@@ -30,40 +18,16 @@ namespace Luminous
 
     unsigned int lineSizePixels;
 
-    bool needRehash;
-    RenderResource::Hash hash;
-
-    intptr_t externalKey;
-    bool useExternalKey;
-
     ContextArrayT<QRegion> dirtyRegions;
 
   public:
     void rehash();
   };
 
-  void Texture::D::rehash()
-  {
-    needRehash = false;
-    QCryptographicHash hasher(QCryptographicHash::Md5);
-    hasher.addData((const char*)&dimensions, sizeof(dimensions));
-    hasher.addData((const char*)&width, sizeof(width));
-    hasher.addData((const char*)&height, sizeof(height));
-    hasher.addData((const char*)&depth, sizeof(depth));
-    hasher.addData((const char*)&dataFormat, sizeof(dataFormat));
-    hasher.addData((const char*)&internalFormat, sizeof(internalFormat));
-    if(useExternalKey)
-      hasher.addData((const char*)&externalKey, sizeof(externalKey));
-    else
-      hasher.addData((const char*)&data, sizeof(data));
-    memcpy(&hash, hasher.result().data(), sizeof(hash));
-  }
-
   Texture::Texture()
     : RenderResource(RenderResource::Texture)
     , m_d(new Texture::D())
   {
-    m_d->needRehash = true;
   }
 
   Texture::~Texture()
@@ -87,8 +51,10 @@ namespace Luminous
 
   void Texture::setInternalFormat(int format)
   {
+    if(m_d->internalFormat == format)
+      return;
     m_d->internalFormat = format;
-    m_d->rehash();
+    invalidate();
   }
 
   int Texture::internalFormat() const
@@ -98,78 +64,45 @@ namespace Luminous
 
   void Texture::setData(unsigned int width, const PixelFormat & dataFormat, const void * data)
   {
-    set(m_d->needRehash, m_d->dimensions, 1);
-    set(m_d->needRehash, m_d->width, width);
-    set(m_d->needRehash, m_d->height, 1);
-    set(m_d->needRehash, m_d->depth, 1);
-    set(m_d->needRehash, m_d->dataFormat, dataFormat);
-    set(m_d->needRehash, m_d->data, data);
+    m_d->dimensions = 1;
+    m_d->width = width;
+    m_d->height = 1;
+    m_d->depth = 1;
+    m_d->dataFormat = dataFormat;
+    m_d->data = data;
     invalidate();
   }
 
-  void Texture::setData(unsigned int width, unsigned int height, const PixelFormat & dataFormat, const void * data, bool setDirty)
+  void Texture::setData(unsigned int width, unsigned int height, const PixelFormat & dataFormat, const void * data)
   {
-    set(m_d->needRehash, m_d->dimensions, 2);
-    set(m_d->needRehash, m_d->width, width);
-    set(m_d->needRehash, m_d->height, height);
-    set(m_d->needRehash, m_d->depth, 1);
-    set(m_d->needRehash, m_d->dataFormat, dataFormat);
-    set(m_d->needRehash, m_d->data, data);
-    if(setDirty) {
-      QRegion r(0, 0, width, height);
-      for(unsigned int i = 0; i < m_d->dirtyRegions.size(); ++i)
-        m_d->dirtyRegions[i] = r;
-    }
+    m_d->dimensions = 2;
+    m_d->width = width;
+    m_d->height = height;
+    m_d->depth = 1;
+    m_d->dataFormat = dataFormat;
+    m_d->data = data;
+    for(unsigned int i = 0; i < m_d->dirtyRegions.size(); ++i)
+      m_d->dirtyRegions[i] = QRegion();
     invalidate();
   }
 
   void Texture::setData(unsigned int width, unsigned int height, unsigned int depth, const PixelFormat & dataFormat, const void * data)
   {
-    set(m_d->needRehash, m_d->dimensions, 3);
-    set(m_d->needRehash, m_d->width, width);
-    set(m_d->needRehash, m_d->height, height);
-    set(m_d->needRehash, m_d->depth, depth);
-    set(m_d->needRehash, m_d->dataFormat, dataFormat);
-    set(m_d->needRehash, m_d->data, data);
-    m_d->rehash();
+    m_d->dimensions = 3;
+    m_d->width = width;
+    m_d->height = height;
+    m_d->depth = depth;
+    m_d->dataFormat = dataFormat;
+    m_d->data = data;
     invalidate();
-  }
-
-  RenderResource::Hash Texture::hash() const
-  {
-    if(m_d->needRehash)
-      m_d->rehash();
-
-    return m_d->hash;
-  }
-
-  intptr_t Texture::externalKey() const
-  {
-    return m_d->externalKey;
-  }
-
-  void Texture::setExternalKey(intptr_t key)
-  {
-    if(m_d->useExternalKey) {
-      set(m_d->needRehash, m_d->externalKey, key);
-    } else {
-      m_d->useExternalKey = true;
-      m_d->externalKey = key;
-      m_d->needRehash = true;
-    }
-  }
-
-  void Texture::clearExternalKey()
-  {
-    if(!m_d->useExternalKey) {
-      m_d->useExternalKey = false;
-      m_d->needRehash = true;
-    }
   }
 
   void Texture::setLineSizePixels(std::size_t size)
   {
+    if(m_d->lineSizePixels == size)
+      return;
     m_d->lineSizePixels = size;
+    invalidate();
   }
 
   unsigned int Texture::lineSizePixels() const
@@ -196,8 +129,8 @@ namespace Luminous
 
   QRegion Texture::takeDirtyRegion(unsigned int threadIndex) const
   {
-    QRegion r = m_d->dirtyRegions[threadIndex];
-    m_d->dirtyRegions[threadIndex] = QRegion();
+    QRegion r;
+    std::swap(r, m_d->dirtyRegions[threadIndex]);
     return r;
   }
 
@@ -215,6 +148,7 @@ namespace Luminous
 
   void Texture::setTranslucency(bool translucency)
   {
+    /// This is only used for batch rendering sorting optimization, no need to invalidate()
     m_d->translucent = translucency;
   }
 }

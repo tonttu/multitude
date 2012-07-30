@@ -96,7 +96,7 @@ namespace Luminous
     GLuint m_currentBuffer;   // Currently bound buffer object
 
     typedef std::map<RenderResource::Hash, ProgramGL> ProgramList;
-    typedef std::map<RenderResource::Hash, TextureGL> TextureList;
+    typedef std::map<RenderResource::Id, TextureGL> TextureList;
     typedef std::map<RenderResource::Id, BufferGL> BufferList;
     typedef std::map<RenderResource::Id, VertexArrayGL> VertexArrayList;
 
@@ -184,8 +184,8 @@ namespace Luminous
   {
     removeResource(m_vertexArrays, m_releaseQueue);
     removeResource(m_buffers, m_releaseQueue);
+    removeResource(m_textures, m_releaseQueue);
     removeResource(m_programs);
-    removeResource(m_textures);
     m_releaseQueue.clear();
   }
 
@@ -470,11 +470,11 @@ namespace Luminous
 
   TextureGL & RenderDriverGL::handle(const Texture & texture)
   {
-    auto it = m_d->m_textures.find(texture.hash());
+    auto it = m_d->m_textures.find(texture.resourceId());
     if(it == m_d->m_textures.end()) {
       // libstdc++ doesn't have this yet
       //it = m_d->m_textures.emplace(texture.hash(), m_d->m_stateGL).first;
-      it = m_d->m_textures.insert(std::make_pair(texture.hash(), TextureGL(m_d->m_stateGL))).first;
+      it = m_d->m_textures.insert(std::make_pair(texture.resourceId(), TextureGL(m_d->m_stateGL))).first;
       it->second.setExpirationSeconds(texture.expiration());
     }
 

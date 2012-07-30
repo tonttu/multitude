@@ -8,6 +8,8 @@ namespace Luminous
 {
   TextureGL::TextureGL(StateGL & state)
     : ResourceHandleGL(state)
+    , m_generation(0)
+    , m_internalFormat(0)
     , m_target(0)
   {
     glGenTextures(1, &m_handle);
@@ -21,6 +23,8 @@ namespace Luminous
 
   TextureGL::TextureGL(TextureGL && t)
     : ResourceHandleGL(std::move(t))
+    , m_generation(t.m_generation)
+    , m_internalFormat(t.m_internalFormat)
     , m_target(t.m_target)
     , m_dirtyRegion(t.m_dirtyRegion)
   {
@@ -30,6 +34,8 @@ namespace Luminous
   {
     ResourceHandleGL::operator=(std::move(t));
     m_target = t.m_target;
+    m_generation = t.m_generation;
+    m_internalFormat = t.m_internalFormat;
     m_dirtyRegion = t.m_dirtyRegion;
     return *this;
   }
@@ -40,6 +46,22 @@ namespace Luminous
     touch();
 
     bool bound = false;
+
+    if(m_generation != texture.generation()) {
+      m_generation = texture.generation();
+
+      bool recreate = (texture.dimensions() == 1 && m_target != GL_TEXTURE_1D) ||
+          (texture.dimensions() == 2 && m_target != GL_TEXTURE_2D) ||
+          (texture.dimensions() == 3 && m_target != GL_TEXTURE_3D);
+
+      recreate = recreate || (m_internalFormat != texture.internalFormat());
+
+      if(recreate) {
+        m_target = 0;
+      } else {
+        m_dirtyRegion = QRegion(0, 0, texture.width(), texture.height());
+      }
+    }
 
     if(m_target == 0) {
       if (texture.dimensions() == 1)      m_target = GL_TEXTURE_1D;

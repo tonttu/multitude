@@ -23,6 +23,8 @@ namespace Luminous
     inline void bind(int textureUnit);
 
   private:
+    int m_generation;
+    int m_internalFormat;
     GLenum m_target;
     QRegion m_dirtyRegion;
   };

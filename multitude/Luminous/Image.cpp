@@ -872,31 +872,33 @@ namespace Luminous
   class ImageTex2::D
   {
   public:
-    std::shared_ptr<Luminous::Image> loadShared(const QString & filename);
+    typedef std::pair<Luminous::Image, Luminous::Texture> ImgTex;
+    std::shared_ptr<ImgTex> loadShared(const QString & filename);
 
   public:
-    std::shared_ptr<Luminous::Image> m_image;
-    Luminous::Texture m_tex;
+    std::shared_ptr<ImgTex> m_image;
   };
 
-  std::shared_ptr<Luminous::Image> ImageTex2::D::loadShared(const QString & filename)
+  std::shared_ptr<ImageTex2::D::ImgTex> ImageTex2::D::loadShared(const QString & filename)
   {
     // C++11 says: [stmt.dcl 4]
     // If control enters the declaration concurrently while the variable is
     // being initialized, the concurrent execution shall wait for completion
     // of the initialization
     static Radiant::Mutex s_mutex;
-    static std::map<QString, std::weak_ptr<Luminous::Image>> s_images;
+    static std::map<QString, std::weak_ptr<ImgTex>> s_images;
 
     Radiant::Guard g(s_mutex);
 
-    std::weak_ptr<Luminous::Image> & weak = s_images[filename];
-    std::shared_ptr<Luminous::Image> image = weak.lock();
+    std::weak_ptr<ImgTex> & weak = s_images[filename];
+    std::shared_ptr<ImgTex> image = weak.lock();
     if(image)
       return image;
 
-    image = std::make_shared<Luminous::Image>();
-    image->read(filename.toUtf8().data());
+    image = std::make_shared<ImgTex>();
+    image->first.read(filename.toUtf8().data());
+    image->second.setData(image->first.width(), image->first.height(),
+                          image->first.pixelFormat(), image->first.data());
     weak = image;
     return image;
   }
@@ -912,18 +914,16 @@ namespace Luminous
 
   bool ImageTex2::load(const QString & filename)
   {
-    std::shared_ptr<Luminous::Image> image = m_d->loadShared(filename);
+    std::shared_ptr<ImageTex2::D::ImgTex> image = m_d->loadShared(filename);
     if(!image) return false;
 
     m_d->m_image = std::move(image);
-    m_d->m_tex.setData(m_d->m_image->width(), m_d->m_image->height(), m_d->m_image->pixelFormat(),
-                    (const char *)m_d->m_image->data());
     return true;
   }
 
   Texture & ImageTex2::tex()
   {
-    return m_d->m_tex;
+    return m_d->m_image->second;
   }
 
   /////////////////////////////////////////////////////////////////////////////
