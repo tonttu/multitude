@@ -1,6 +1,6 @@
 TEMPLATE = subdirs
 
-SUBDIRS += glew_static
+SUBDIRS += glew_shared
 
 
 

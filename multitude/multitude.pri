@@ -221,7 +221,7 @@ win32 {
       QMAKE_LIBDIR += $$PWD\\Win32x\\lib32
     }
 
-    DEFINES += GLEW_STATIC
+    # DEFINES += GLEW_STATIC
     INCLUDEPATH += $$PWD/../multitude/3rdparty/glew/glew-1.8.0/include
     LIB_GLEW = -lglew
 
