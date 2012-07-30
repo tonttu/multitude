@@ -1659,7 +1659,7 @@ namespace Luminous
   void RenderContext::drawLineStrip(const std::vector<Nimble::Vector2> & vertices,
                                     float width, const Luminous::Style & fill)
   {
-    drawLineStrip( & vertices[0], vertices.size(), width, fill);
+    drawLineStrip( vertices.data(), vertices.size(), width, fill);
   }
 
   void RenderContext::drawQuad(const Nimble::Vector2 * corners, const Luminous::Style & style)
