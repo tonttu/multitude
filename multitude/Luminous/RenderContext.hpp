@@ -199,60 +199,27 @@ namespace Luminous
                               float scaling, uint32_t flags = 0);
     /// @endcond
 
-    // Render functions:
-
-    /** Draw a rectangle outline with given thickness and color.
-    @param rect rectangle to draw
-    @param thickness thickness of the outline
-    @param rgba color of the outline */
-    void drawLineRect(const Nimble::Rectf & rect, float thickness, const float * rgba);
-    /** Draws a solid, anti-aliased rectangle, with given color. If textures are active,
-        the rectangle is filled with the current texture modulated by the given color.
-    @param rect rectangle to draw
-    @param rgba fill color */
-    void drawRect(const Nimble::Rectf & rect, const float * rgba);
-
-    /** Draws a solid, antialiased circle
-        @param center Center of the circle
-
-        @param radius Radius of the circle
-
-        @param rgba The color of the circle in RGBA format
-
-        @param segments Number of segments used in the circle. Deprecated, specifying segments will actually slow rendering.
-    */
-    void drawCircle(Nimble::Vector2f center, float radius,
-                    const float * rgba, int segments = -1);
+    // Render utility functions:
 
     /** Draws an arc
       @param center center of the arc
       @param radius radius of the arc
+      @param width width of the arc
       @param fromRadians start angle in radians
       @param toRadians end angle in radians
-      @param width width of the arc
-      @param blendWidth width of the blending region
-      @param rgba color of the arc in RGBA format
-      @param segments number of segments to use
-      */
-    void drawArc(Nimble::Vector2f center, float radius, float fromRadians, float toRadians, float width, float blendWidth, const float * rgba, int segments);
-
-    /** Draws an arc
-      @param center center of the arc
-      @param radius radius of the arc
-      @param fromRadians start angle in radians
-      @param toRadians end angle in radians
-      @param width width of the arc
       @param fill color and other parameters for the arc
+      @param lineSegments number of steps
       */
-    void drawArc(Nimble::Vector2f center, float radius, float fromRadians, float toRadians,
-                 float width, const Luminous::Style & fill);
+    void drawArc(Nimble::Vector2f center, float radius, float width, float fromRadians, float toRadians, Luminous::Style & fill, unsigned int lineSegments = 0);
 
     /** Draws a circle
-      @param center center of the arc
-      @param radius radius of the arc
+      @param center center of the circle
+      @param radius radius of the circle
+      @param width width of the circle
       @param fill color and other parameters for the circle
+      @param lineSegments number of steps
       */
-    void drawCircle(Nimble::Vector2f center, float radius, const Luminous::Style & fill);
+    void drawCircle(Nimble::Vector2f center, float radius, float width, Luminous::Style & fill, unsigned int lineSegments = 0);
 
     /** Draws a cut sector in a circle or a wedge.
       @param center center of the circle
@@ -265,120 +232,45 @@ namespace Luminous
       @param rgba color of the wedge
       @param segments number of segments to use
       */
-    void drawWedge(Nimble::Vector2f center, float radius1, float radius2, float fromRadians, float toRadians, float width, float blendWidth, const float * rgba, int segments);
-
-    /** Draws a line that contains multiple segments.
-
-        @param vertices Pointer to the line vertices
-
-        @param n Number of vertices
-
-        @param width Width of the line
-
-        @param rgba The line color in RGBA format
-     */
-    void drawPolyLine(const Nimble::Vector2f * vertices, int n,
-                      float width, const float * rgba);
-
-    /** Draws a line between two points.
-
-        @param p1 The first point
-        @param p2 The second point
-
-        @param width Width of the line
-
-        @param rgba The line color in RGBA format
-    */
-
-    void drawLine(Nimble::Vector2f p1, Nimble::Vector2f p2,
-                  float width, const float * rgba);
-
-    /** Draw a cubic bzier curve
-        @param controlPoints array of 4 control points
-        @param width width of the curve
-        @param rgba array of 4 color components
-    */
-    void drawCurve(Nimble::Vector2* controlPoints, float width, const float * rgba=0);
-
-    /** Draws a spline.
-      @param spline spline to draw
-      @param width width of the spline
-      @param rgba color of the spline
-      @param step step to use when evaluating the spline
-    */
-    void drawSpline(Nimble::Interpolating & spline, float width, const float * rgba=0, float step=1.0f);
-    /** Draw a textured rectangle with given color.
-
-        @param size The size of the rectangle to be drawn.
-        @param rgba The color in RGBA format. If the argument is null,
-        then it will be ignored.
-    */
-    void drawTexRect(Nimble::Vector2 size, const float * rgba);
-    /** @copybrief drawTexRect
-
-        @param size The size of the rectangle to be drawn.
-        @param rgba The color in RGBA format. If the argument is null,
-               then it will be ignored.
-        @param texUV The maximum texture coordinate values **/
-    void drawTexRect(Nimble::Vector2 size, const float * rgba,
-                     const Nimble::Rect & texUV);
-    /** @copybrief drawTexRect
-    @param area The rectangle to draw.
-    @param rgba The color in RGBA format. If the argument is null,
-           then it will be ignored.
-    @param texUV The maximum texture coordinate values **/
-    void drawTexRect(const Nimble::Rect & area, const float * rgba,
-                     const Nimble::Rect & texUV);
-    /** @copybrief drawTexRect
-    @param area The rectangle to draw.
-    @param rgba The color in RGBA format. If the argument is null,
-           then it will be ignored.
-    @param texUV Array of texture coordinates for multitexturing.
-    @param uvCount The number of texture coordinates to fill.**/
-    void drawTexRect(const Nimble::Rect & area, const float * rgba,
-                     const Nimble::Rect * texUV, int uvCount);
-    /** @copybrief drawTexRect
-        @param size The size of the rectangle to be drawn.
-        @param rgba The color in RGBA format. If the argument is null,
-               then it will be ignored.
-        @param texUV The maximum texture coordinate values **/
-    void drawTexRect(Nimble::Vector2 size, const float * rgba,
-                     Nimble::Vector2 texUV);
-    /** @copybrief drawTexRect
-        @param rgba The color in RGBA format. If the argument is null,
-               then it will be ignored.
-        @param area The rectangle to drawn **/
-    void drawTexRect(const Nimble::Rect & area, const float * rgba);
-
-    void drawStyledRect(Nimble::Vector2 size, Style &style);
+    void drawWedge(const Nimble::Vector2f & center, float radius1, float radius2, float fromRadians, float toRadians, float width, Style & style, int segments);
 
     void drawRect(const QRectF & area, Style &fill);
-    void drawRect(const Nimble::Rect & area, Luminous::Style & fill)
-    {
-      drawRect(QRectF(area.low().x, area.low().y, area.width(), area.height()), fill);
-    }
+    void drawRect(const Nimble::Rect & area, Luminous::Style & fill);
+
+    //////////////////////////////////////////////////////////////////////////
+    /// DEPRECATED FUNCTIONS
+    /// @todo remove or replace with Styled-equivalent
+    //////////////////////////////////////////////////////////////////////////
+    void drawCurve(Nimble::Vector2*, float, const float * = 0) {}
+    void drawSpline(Nimble::Interpolating &, float /*width*/, const float * = 0, float = 1.0f) {}
+    void drawLine(const Nimble::Vector2f & /*p1*/, const Nimble::Vector2f & /*p2*/, float /*width*/, float * /*rgba*/) {}
+    void drawCircle(Nimble::Vector2f /*center*/, float /*radius*/, const float * /*rgba*/, int /*segments*/ = 0)  {}
+    void drawRect(const Nimble::Rectf & /*rect*/, const float * /*rgba*/) {}
+    void drawLineRect(const Nimble::Rectf & /*rect*/, float /*width*/, const float * /*rgba*/) {}
+    void drawTexRect(const Nimble::Rectf & /*rect*/, float * /*rgba*/) {}
+
+    //////////////////////////////////////////////////////////////////////////
+    // Implementation
+    template <typename Vertex, typename UniformBlock>
+    RenderBuilder<Vertex, UniformBlock> drawTriStripT(const Nimble::Vector2f * vertices, unsigned int vertexCount, Style & style);
 
     template <typename Vertex, typename UniformBlock>
-    RenderBuilder<Vertex, UniformBlock> drawRectT(const QRectF & area, Style & style);
+    RenderBuilder<Vertex, UniformBlock> drawTexTriStripT(const Nimble::Vector2f * vertices, const Nimble::Vector2f * uvs, unsigned int vertexCount, Style & style);    
 
     template <typename Vertex, typename UniformBlock>
-    RenderBuilder<Vertex, UniformBlock> drawTexRectT(const QRectF & area, Style & style);
-
-    template <typename Vertex, typename UniformBlock>
-    RenderBuilder<Vertex, UniformBlock> drawRectWithHoleT(const QRectF & area, const QRectF & hole, Luminous::Style & style);
+    RenderContext::RenderBuilder<Vertex, UniformBlock> drawLineStripT(const Nimble::Vector2f * vertices, unsigned int vertexCount, float width, Style & style);
 
     void drawRectWithHole(const Nimble::Rect & area,
                           const Nimble::Rect & hole,
                           Luminous::Style & fill);
 
     void drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2,
-                  float width, const Luminous::Style & fill);
+                        float width, Luminous::Style & fill);
     void drawLineStrip(const Nimble::Vector2 * vertices, size_t npoints,
-                       float width, const Luminous::Style & fill);
+                        float width, Luminous::Style & fill);
     void drawLineStrip(const std::vector<Nimble::Vector2> & vertices,
-                       float width, const Luminous::Style & fill);
-    void drawQuad(const Nimble::Vector2 * corners, const Luminous::Style & fill);
-
+                        float width, Luminous::Style & fill);
+    void drawQuad(const Nimble::Vector2f * corners, Luminous::Style & fill);
 
 
     /// Sets the current blend function, and enables blending
@@ -517,7 +409,12 @@ namespace Luminous
   class CustomOpenGL : Patterns::NotCopyable
   {
   public:
-    CustomOpenGL(RenderContext & r) : m_r(r) { r.flush2(); /*r.flush(); glUseProgram(0); glDisable(GL_TEXTURE_2D);*/ }
+    CustomOpenGL(RenderContext & r) : m_r(r)
+    {
+      r.flush2();
+      r.bindProgram(0);
+      // glDisable(GL_TEXTURE_2D);
+    }
     ~CustomOpenGL() { /*m_r.restart();*/ }
   private:
     RenderContext & m_r;

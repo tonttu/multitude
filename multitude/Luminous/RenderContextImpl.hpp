@@ -12,96 +12,66 @@ namespace Luminous
     cmd.primitiveType = type;
     return builder;
   }
-
+ 
   template <typename Vertex, typename UniformBlock>
-  RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::drawRectT(
-      const QRectF & area, Style & style)
+  RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::drawLineStripT(
+    const Nimble::Vector2f * vertices, unsigned int vertexCount, float width, Style & style)
   {
     if(!style.fillProgramGL() && !style.fillProgram())
       style.setFillProgram(basicShader());
-    RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(Luminous::PrimitiveType_TriangleStrip, 4, 4, style);
+    RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(Luminous::PrimitiveType_LineStrip, vertexCount, vertexCount, style);
     auto v = b.vertex;
     auto idx = b.idx;
 
-    v++->location.make(area.left(), area.top(), b.depth);
-    v++->location.make(area.right(), area.top(), b.depth);
-    v++->location.make(area.left(), area.bottom(), b.depth);
-    v->location.make(area.right(), area.bottom(), b.depth);
-
-    *idx++ = 0;
-    *idx++ = 1;
-    *idx++ = 2;
-    *idx = 3;
-
-    b.uniform->projMatrix = viewTransform();
-    b.uniform->modelMatrix = transform4();
-    b.uniform->color = style.fillColor();
-
-    return b;
-  }
-
-  template <typename Vertex, typename UniformBlock>
-  RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::drawTexRectT(
-      const QRectF & area, Style & style)
-  {
-    if(!style.fillProgramGL() && !style.fillProgram())
-      style.setFillProgram(texShader());
-    RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(Luminous::PrimitiveType_TriangleStrip, 4, 4, style);
-    auto v = b.vertex;
-    auto idx = b.idx;
-
-    v->location.make(area.left(), area.top(), b.depth);
-    v++->texCoord.make(0, 0);
-
-    v->location.make(area.right(), area.top(), b.depth);
-    v++->texCoord.make(1, 0);
-
-    v->location.make(area.left(), area.bottom(), b.depth);
-    v++->texCoord.make(0, 1);
-
-    v->location.make(area.right(), area.bottom(), b.depth);
-    v->texCoord.make(1, 1);
-
-    *idx++ = 0;
-    *idx++ = 1;
-    *idx++ = 2;
-    *idx = 3;
-
-    b.uniform->projMatrix = viewTransform();
-    b.uniform->modelMatrix = transform4();
-    b.uniform->color = style.fillColor();
-
-    return b;
-  }
-
-  template <typename Vertex, typename UniformBlock>
-  RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::drawRectWithHoleT(
-      const QRectF & area, const QRectF & hole, Luminous::Style & style)
-  {
-    if(!style.fillProgramGL() && !style.fillProgram())
-      style.setFillProgram(basicShader());
-
-    RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(
-          Luminous::PrimitiveType_TriangleStrip, 10, 8, style);
-    auto v = b.vertex;
-    auto idx = b.idx;
-
-    v++->location.make(area.left(), area.top(), b.depth);
-    v++->location.make(hole.left(), hole.top(), b.depth);
-
-    v++->location.make(area.right(), area.top(), b.depth);
-    v++->location.make(hole.right(), hole.top(), b.depth);
-
-    v++->location.make(area.right(), area.bottom(), b.depth);
-    v++->location.make(hole.right(), hole.bottom(), b.depth);
-
-    v++->location.make(area.left(), area.bottom(), b.depth);
-    v->location.make(hole.left(), hole.bottom(), b.depth);
-
-    for(int i = 0; i < 8; ++i)
+    for (unsigned int i = 0; i < vertexCount; ++i) {
+      v++->location.make(vertices[i].x, vertices[i].y, b.depth);
       *idx++ = i;
-    *idx++ = 0;
-    *idx++ = 1;
+    }
+
+    b.uniform->projMatrix = viewTransform();
+    b.uniform->modelMatrix = transform4();
+    b.uniform->color = style.fillColor();
+
+    return b;
+  }
+  
+  template <typename Vertex, typename UniformBlock>
+  RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::drawTriStripT(
+    const Nimble::Vector2f * vertices, unsigned int vertexCount, Style & style)
+  {
+    if(!style.fillProgramGL() && !style.fillProgram())
+      style.setFillProgram(basicShader());
+    RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(Luminous::PrimitiveType_TriangleStrip, vertexCount, vertexCount, style);
+    auto v = b.vertex;
+    auto idx = b.idx;
+
+    for (unsigned int i = 0; i < vertexCount; ++i) {
+      v++->location.make(vertices[i].x, vertices[i].y, b.depth);
+      *idx++ = i;
+    }
+
+    b.uniform->projMatrix = viewTransform();
+    b.uniform->modelMatrix = transform4();
+    b.uniform->color = style.fillColor();
+
+    return b;
+  }
+
+  template <typename Vertex, typename UniformBlock>
+  RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::drawTexTriStripT(
+    const Nimble::Vector2f * vertices, const Nimble::Vector2f * uvs, unsigned int vertexCount, Style & style)
+  {
+    if(!style.fillProgramGL() && !style.fillProgram())
+      style.setFillProgram(basicShader());
+    RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(Luminous::PrimitiveType_TriangleStrip, vertexCount, vertexCount, style);
+    auto v = b.vertex;
+    auto idx = b.idx;
+
+    for (unsigned int i = 0; i < vertexCount; ++i) {
+      v->location.make(vertices[i].x, vertices[i].y, b.depth);
+      v++->texCoord = uvs[i];
+      *idx++ = i;
+    }
 
     b.uniform->projMatrix = viewTransform();
     b.uniform->modelMatrix = transform4();

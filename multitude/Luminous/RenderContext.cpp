@@ -28,6 +28,7 @@
 
 #include <strings.h>
 #include <tuple>
+#include <vector>
 
 #define DEFAULT_RECURSION_LIMIT 8
 #define SHADER(str) #str
@@ -1076,6 +1077,7 @@ namespace Luminous
     return ret;
   }
 
+  /*
   void RenderContext::drawLineRect(const Nimble::Rectf & r,
                                    float thickness, const float * rgba)
   {
@@ -1092,188 +1094,53 @@ namespace Luminous
 
   void RenderContext::drawRect(const Nimble::Rectf & rect, const float * rgba)
   {
-    Utils::glTexRectAA(rect.size(),
-                       transform() * Matrix3::translate2D(rect.low()), rgba);
+    const Nimble::Vector2f corners[] = { rect.low(), rect.highLow(), rect.high(), rect.lowHigh() };
+    Style s;
+    s.setFillColor(rgba[0],rgba[1],rgba[2],rgba[3]);
+    drawQuad(corners, s);
   }
 
-
-  void RenderContext::drawCircle(Nimble::Vector2f center, float radius,
-                                 const float * rgba, int segments) {
-    if (segments < 0) {
-      drawCircleImpl(center, radius, rgba);
-    } else {
-      drawCircleWithSegments(center, radius, rgba, segments);
-    }
-  }
-
-  void RenderContext::drawArc(Nimble::Vector2f center, float radius,
-                              float fromRadians, float toRadians,
-                              float width, float blendWidth, const float * color,
-                              int linesegments)
+  void RenderContext::drawCircle(Nimble::Vector2f center, float radius, const float * rgba, int segments)
   {
-    width *= 0.5f;
-
-    float delta = (toRadians - fromRadians) / linesegments;
-
-    float tanFactor = tan(delta);
-    float radFactor = 1.f - cos(delta);
-
-    float r = color[0];
-    float g = color[1];
-    float b = color[2];
-    float a = color[3];
-
-    float radii[4] = {
-      radius - width - blendWidth, radius - width,
-      radius + width, radius + width + blendWidth
-    };
-
-    Nimble::Vector2 p[4];
-    for(int k = 0; k < 4; k++)
-      p[k] = center + radii[k] * Nimble::Vector2f(cos(fromRadians), sin(fromRadians));
-
-    for(size_t i = 0; i < (size_t) linesegments; i++) {
-
-      Nimble::Vector2 v[4];
-
-      for(int k = 0; k < 4; k++) {
-        v[k] = p[k];
-
-        Nimble::Vector2f t(-(p[k].y - center.y), p[k].x - center.x);
-        p[k] += tanFactor * t;
-        Nimble::Vector2f r = center - p[k];
-        p[k] += radFactor * r;
-      }
-
-      glBegin(GL_QUAD_STRIP);
-
-      glColor4f(r, g, b, 0.f);
-
-      glVertex2fv(transform().project(v[0]).data());
-      glVertex2fv(transform().project(p[0]).data());
-
-      glColor4f(r, g, b, a);
-
-      glVertex2fv(transform().project(v[1]).data());
-      glVertex2fv(transform().project(p[1]).data());
-
-      glVertex2fv(transform().project(v[2]).data());
-      glVertex2fv(transform().project(p[2]).data());
-
-      glColor4f(r, g, b, 0.f);
-
-      glVertex2fv(transform().project(v[3]).data());
-      glVertex2fv(transform().project(p[3]).data());
-
-      glEnd();
-    }
+    Luminous::Style s;
+    s.setFillColor(rgba[0], rgba[1], rgba[2], rgba[3]);
+    drawCircle(center, radius, 1.f, s, segments);
   }
+  */
 
   void RenderContext::drawArc(Nimble::Vector2f center, float radius, float width,
-                              float fromRadians, float toRadians,
-                              const Luminous::Style & style)
+                              float fromRadians, float toRadians, Luminous::Style & style, unsigned int linesegments)
   {
-    /// @todo
-#if 0
-    if(style.program()) {
-      style.program()->bind();
+    std::vector<Nimble::Vector2f> vertices;
+    /// @todo Should probably implement this as a drawCurve call
+
+    float step = (toRadians - fromRadians) / linesegments;
+
+    float angle = fromRadians;
+    for (unsigned int i = 0; i <= linesegments; ++i) {
+      Nimble::Vector2f c(std::cos(angle), std::sin(angle));
+      vertices.push_back( center + c * radius );
+      vertices.push_back( center + c * (radius + width) );
+      angle += step;
     }
-    else {
-      m_data->m_arc_shader->bind();
-    }
 
-    RenderPacket & rp = * m_data->m_renderPacket;
-    rp.setProgram(&*m_data->m_arc_shader);
-    rp.setPacketRenderFunction(ArcVertex::render);
-
-    float w2 = width * 0.5f;
-    radius += w2;
-    float innderRelative = 1.0f - width / radius;
-
-    ArcVertex v;
-    v.m_color = style.color();
-    v.m_useTexture = style.texturing();
-    v.m_objectTransform = transform().transposed();
-    v.m_arcParams.make(innderRelative, fromRadians, toRadians);
-
-    v.m_location[2] = center.x;
-    v.m_location[3] = center.y;
-
-    v.m_location[0] = -radius;
-    v.m_location[1] = -radius;
-    v.m_texCoord = style.texCoords().low();
-    v.m_objCoord.make(-1, -1);
-
-    rp.addFirstVertex(v);
-
-    v.m_location[0] = radius;
-    v.m_location[1] = -radius;
-    v.m_texCoord = style.texCoords().highLow();
-    v.m_objCoord.make(1, -1);
-    rp.addVertex(v);
-
-    v.m_location[0] = -radius;
-    v.m_location[1] = radius;
-    v.m_texCoord = style.texCoords().lowHigh();
-    v.m_objCoord.make(-1, 1);
-    rp.addVertex(v);
-
-    v.m_location[0] = radius;
-    v.m_location[1] = radius;
-    v.m_texCoord = style.texCoords().high();
-    v.m_objCoord.make(1, 1);
-    rp.addLastVertex(v);
-#endif
+    drawTriStripT<BasicVertex, BasicUniformBlock>(vertices.data(), vertices.size(), style);
   }
 
-  void RenderContext::drawCircle(Nimble::Vector2f center, float radius, const Luminous::Style & style)
+  void RenderContext::drawCircle(Nimble::Vector2f center, float radius, float width, Luminous::Style & style, unsigned int linesegments)
   {
-    /// @todo
-#if 0
-    flush();
-    m_data->m_circle_shader->bind();
-
-    RenderPacket & rp = * m_data->m_renderPacket;
-    rp.setProgram(&*m_data->m_circle_shader);
-    rp.setPacketRenderFunction(CircleVertex::render);
-
-    CircleVertex va;
-    va.m_color = style.color();
-    va.m_useTexture = style.texturing();
-    va.m_objectTransform = transform().transposed();
-
-    va.m_location = center - Nimble::Vector2(radius, radius);
-    va.m_texCoord = style.texCoords().low();
-    va.m_objCoord.make(0, 0);
-
-    rp.addFirstVertex(va);
-
-    va.m_location = center + Nimble::Vector2(radius, -radius);
-    va.m_texCoord = style.texCoords().highLow();
-    va.m_objCoord.make(1, 0);
-    rp.addVertex(va);
-
-    va.m_location = center + Nimble::Vector2(-radius, radius);
-    va.m_texCoord = style.texCoords().lowHigh();
-    va.m_objCoord.make(0, 1);
-    rp.addVertex(va);
-
-    va.m_location = center + Nimble::Vector2(radius, radius);
-    va.m_texCoord = style.texCoords().high();
-    va.m_objCoord.make(1, 1);
-    rp.addLastVertex(va);
-    flush();
-#endif
+    // A circle is just a 2PI arc
+    drawArc(center, radius, width, 0.f, Nimble::Math::TWO_PI, style, linesegments);
   }
 
-  void RenderContext::drawWedge(Nimble::Vector2f center, float radius1,
+  void RenderContext::drawWedge(const Nimble::Vector2f & center, float radius1,
                                 float radius2, float fromRadians, float toRadians,
-                                float width, float blendWidth, const float *rgba,
+                                float width, Style & style,
                                 int segments)
   {
     // Draw two arcs
-    drawArc(center, radius1, fromRadians, toRadians, width, blendWidth, rgba, segments);
-    drawArc(center, radius2, fromRadians, toRadians, width, blendWidth, rgba, segments);
+    drawArc(center, radius1, fromRadians, toRadians, width, style, segments);
+    drawArc(center, radius2, fromRadians, toRadians, width, style, segments);
 
     // Draw sector edges
     /// @todo these look a bit crappy as the blending doesn't match the arcs properly
@@ -1287,46 +1154,16 @@ namespace Luminous
     Nimble::Vector2f p3 =
         center + radius2 * Nimble::Vector2f(cos(toRadians), sin(toRadians));
 
-    drawLine(p0, p1, width, rgba);
-    drawLine(p2, p3, width, rgba);
+    drawLine(p0, p1, width, style);
+    drawLine(p2, p3, width, style);
   }
-
-  void RenderContext::drawCircleImpl(Nimble::Vector2f center, float radius,
-                                 const float * rgba) {
-    m_data->drawCircle(*this, center, radius, rgba);
-  }
-
+  
   void RenderContext::addRenderCounter()
   {
     m_data->m_renderCount++;
   }
-
-  void RenderContext::drawCircleWithSegments(Nimble::Vector2f center, float radius,
-                                 const float * rgba, int segments)
-  {
-    if(segments < 0) {
-      float realRad = radius * transform().extractScale();
-      segments = Math::Clamp((int) realRad * 2, 6, 60);
-    }
-
-    Nimble::Matrix3 m(transform() * Nimble::Matrix3::translate2D(center));
-
-    Utils::glSolidSoftCircle(m, radius, 1.0f, segments, rgba);
-  }
-
-  void RenderContext::drawPolyLine(const Nimble::Vector2f * vertices, int n,
-                                   float width, const float * rgba)
-  {
-    m_data->drawPolyLine(*this, vertices, n, width, rgba);
-  }
-
-  void RenderContext::drawLine(Nimble::Vector2f p1, Nimble::Vector2f p2,
-                               float width, const float * rgba)
-  {
-    Nimble::Vector2f vs[2] = { p1, p2 };
-    drawPolyLine(vs, 2, width, rgba);
-  }
-
+ 
+  /*
   void RenderContext::drawCurve(Vector2* controlPoints, float width, const float * rgba) {
 
     struct Subdivider {
@@ -1359,7 +1196,9 @@ namespace Luminous
     sub.subdivide( controlPoints[0], controlPoints[1], controlPoints[2], controlPoints[3] );
     points.push_back(controlPoints[3]);
 
-    drawPolyLine(&points[0], (int) points.size(), width, rgba);
+    Style s;
+    s.setFillColor(rgba[0], rgba[1], rgba[2], rgba[3]);
+    drawLineStrip(points.data(), (int) points.size(), width, s);
   }
 
   void RenderContext::drawSpline(Nimble::Interpolating & s,
@@ -1389,124 +1228,12 @@ namespace Luminous
       }
       points.push_back(point);
     }
-    drawPolyLine(&points[0], (int) points.size(), width, rgba);
-  }
 
-
-  void RenderContext::drawTexRect(const Nimble::Rect & area, const float * rgba,
-                                  const Nimble::Rect & texUV)
-  {
-    const Nimble::Matrix3 & m = transform();
-
-    Nimble::Vector2 v[] = {
-      m.project(area.low()),
-      m.project(area.highLow()),
-      m.project(area.high()),
-      m.project(area.lowHigh())
-    };
-
-    if(rgba)
-      glColor4fv(rgba);
-
-    const Vector2 & low = texUV.low();
-    const Vector2 & high = texUV.high();
-
-    const GLfloat texCoords[] = {
-      low.x, low.y,
-      high.x, low.y,
-      high.x, high.y,
-      low.x, high.y
-    };
-
-#if 1
-    // This fails when some other OpenGL features are used (FBOs, VBOs)
-    glEnable(GL_VERTEX_ARRAY);
-    glEnable(GL_TEXTURE_COORD_ARRAY);
-
-    glTexCoordPointer(2, GL_FLOAT, 0, texCoords);
-    glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat*>(v));
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-    glDisable(GL_VERTEX_ARRAY);
-    glDisable(GL_TEXTURE_COORD_ARRAY);
-#else
-    glBegin(GL_QUADS);
-
-    for(int i = 0; i < 4; i++) {
-      glTexCoord2fv(&texCoords[i * 2]);
-      glVertex2fv(v[i].data());
-    }
-
-    glEnd();
-#endif
-  }
-
-
-  void RenderContext::drawTexRect(const Nimble::Rect & area, const float * rgba,
-                                  const Nimble::Rect * texUV, int uvCount)
-  {
-    if(rgba)
-      glColor4fv(rgba);
-
-    const Nimble::Matrix3 & m = transform();
-
-    glBegin(GL_QUADS);
-
-    for(int i = 0; i < uvCount; i++) {
-      glMultiTexCoord2fv(GL_TEXTURE0 + i, texUV[i].low().data());
-    }
-    glVertex2fv(m.project(area.low()).data());
-
-    for(int i = 0; i < uvCount; i++) {
-      glMultiTexCoord2fv(GL_TEXTURE0 + i, texUV[i].highLow().data());
-    }
-    glVertex2fv(m.project(area.highLow()).data());
-
-    for(int i = 0; i < uvCount; i++) {
-      glMultiTexCoord2fv(GL_TEXTURE0 + i, texUV[i].high().data());
-    }
-    glVertex2fv(m.project(area.high()).data());
-
-    for(int i = 0; i < uvCount; i++) {
-      glMultiTexCoord2fv(GL_TEXTURE0 + i, texUV[i].lowHigh().data());
-    }
-    glVertex2fv(m.project(area.lowHigh()).data());
-
-    glEnd();
-  }
-
-  void RenderContext::drawTexRect(Nimble::Vector2 size, const float * rgba)
-  {
-    drawTexRect(size, rgba, Nimble::Rect(0, 0, 1, 1));
-  }
-
-  void RenderContext::drawTexRect(Nimble::Vector2 size, const float * rgba,
-                                  const Nimble::Rect & texUV)
-  {
     Style style;
     style.setFillColor(rgba[0], rgba[1], rgba[2], rgba[3]);
-    style.setTexturing(1);
-    style.setTexCoords(texUV);
-    drawRect(QRectF(0, 0, size.x, size.y), style);
+    drawLineStrip(points.data(), (int) points.size(), width, style);
   }
-
-  void RenderContext::drawStyledRect(Nimble::Vector2 size, Luminous::Style & style)
-  {
-    drawRect(QRectF(0, 0, size.x, size.y), style);
-  }
-
-  void RenderContext::drawTexRect(Nimble::Vector2 size, const float * rgba,
-                                  Nimble::Vector2 texUV)
-  {
-    drawTexRect(size, rgba, Rect(Vector2(0,0), texUV));
-  }
-
-  void RenderContext::drawTexRect(const Nimble::Rect & area, const float * rgba)
-  {
-    pushTransformRightMul(Nimble::Matrix3::translate2D(area.low()));
-    drawTexRect(area.span(), rgba);
-    popTransform();
-  }
+  */
 
   Nimble::Vector4 proj(const Nimble::Matrix4 & m4, const Nimble::Matrix3 & m3,
                        Nimble::Vector2 v)
@@ -1598,24 +1325,41 @@ namespace Luminous
     return cmd;
   }
 
+  void RenderContext::drawRect(const Nimble::Rectf & area, Style & style)
+  {
+    const Nimble::Vector2f corners[] = { area.low(), area.highLow(), area.lowHigh(), area.high() };
+
+    if(style.fill().textures().empty()) {
+      drawTriStripT<BasicVertex, BasicUniformBlock>(corners, 4, style);
+    }
+    else
+    {
+      static const Nimble::Vector2f uvs[] = { Nimble::Vector2f(0,0), Nimble::Vector2f(1,0), Nimble::Vector2f(0,1), Nimble::Vector2f(1,1) };
+      drawTexTriStripT<BasicVertexUV, BasicUniformBlock>(corners, uvs, 4, style);
+    }
+  }
+
   void RenderContext::drawRect(const QRectF & area, Style & style)
   {
-    if(style.fill().textures().empty()) {
-      drawRectT<BasicVertex, BasicUniformBlock>(area, style);
-    } else {
-      drawTexRectT<BasicVertexUV, BasicUniformBlock>(area, style);
-    }
+    drawRect(Nimble::Rectf(area.left(), area.top(), area.right(), area.bottom()), style);
   }
 
   void RenderContext::drawRectWithHole(const Nimble::Rect & area,
                                        const Nimble::Rect & hole,
                                        Luminous::Style & style)
   {
-    drawRectWithHoleT<BasicVertex, BasicUniformBlock>(area.toQRectF(), hole.toQRectF(), style);
+    const Nimble::Vector2f vertices[] = {
+      hole.low(), area.low(),
+      hole.highLow(), area.highLow(),
+      hole.high(), area.high(),
+      hole.lowHigh(), area.lowHigh(),
+      hole.low(), area.low()
+    };
+    drawTriStripT<BasicVertex, BasicUniformBlock>(vertices, 10, style);
   }
 
   void RenderContext::drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2,
-                               float width, const Luminous::Style & fill)
+                               float width, Luminous::Style & fill)
   {
     Nimble::Vector2 dir = p2 - p1;
     float l = dir.length();
@@ -1626,74 +1370,39 @@ namespace Luminous
 
     Nimble::Vector2 perp = dir.perpendicular() * (width * 0.500001f);
 
-    Nimble::Vector2 corners[4] = {
-      p1 + perp,
+    const Nimble::Vector2 corners[4] = {
       p1 - perp,
       p2 - perp,
-      p2 + perp
+      p2 + perp,
+      p1 + perp
     };
 
     drawQuad(corners, fill);
   }
 
   void RenderContext::drawLineStrip(const Nimble::Vector2 * vertices, size_t npoints,
-                                    float width, const Luminous::Style & fill)
+                                    float width, Luminous::Style & fill)
   {
-    /* This is a very brutal line-strip implementation, that would need to be fixed. */
-
-    if(npoints < 2)
-      return;
-
-    npoints--;
-
-    // Nimble::Vector2 prevdir = vertices[1] - vertices[0];
-    // prevdir.normalize();
-
-    for(size_t i = 0; i < npoints; i++) {
-      drawLine(vertices[i], vertices[i+1], width, fill);
-      // Nimble::Vector2 dir = vertices[i+1] - vertices[1];
-    }
+    drawLineStripT<BasicVertex, BasicUniformBlock>(vertices, npoints, width, fill);
   }
 
 
   void RenderContext::drawLineStrip(const std::vector<Nimble::Vector2> & vertices,
-                                    float width, const Luminous::Style & fill)
+                                    float width, Luminous::Style & fill)
   {
-    drawLineStrip( vertices.data(), vertices.size(), width, fill);
+    drawLineStripT<BasicVertex, BasicUniformBlock>( vertices.data(), vertices.size(), width, fill);
   }
 
-  void RenderContext::drawQuad(const Nimble::Vector2 * corners, const Luminous::Style & style)
+  void RenderContext::drawQuad(const Nimble::Vector2f * corners, Luminous::Style & style)
   {
-    /// @todo
-#if 0
-    m_data->m_basic_shader->bind();
-
-    RenderPacket & rp = * m_data->m_renderPacket;
-    rp.setProgram(m_data->m_basic_shader.get());
-    rp.setPacketRenderFunction(RectVertex::render);
-
-    RectVertex va;
-    va.m_color = style.color();
-    va.m_useTexture = style.texturing();
-    va.m_objectTransform = transform().transposed();
-
-    va.m_location = corners[0];
-    va.m_texCoord = style.texCoords().lowHigh();
-
-    rp.addFirstVertex(va);
-
-    va.m_location = corners[1];
-    va.m_texCoord = style.texCoords().high();
-    rp.addVertex(va);
-
-    va.m_location = corners[3];
-    va.m_texCoord = style.texCoords().low();
-    rp.addVertex(va);
-
-    va.m_location = corners[2];
-    va.m_texCoord = style.texCoords().highLow();
-    rp.addLastVertex(va);
-#endif
+    const Nimble::Vector2f vertices[] = { corners[0], corners[1], corners[3], corners[2] };
+    if(style.fill().textures().empty()) {
+      drawTriStripT<BasicVertex, BasicUniformBlock>(vertices, 4, style);
+    }
+    else {
+      const Nimble::Vector2f uvs[] = { Nimble::Vector2f(0,0), Nimble::Vector2f(1,0), Nimble::Vector2f(0,1), Nimble::Vector2f(1,1) };
+      drawTexTriStripT<BasicVertexUV, BasicUniformBlock>(vertices, uvs, 4, style);
+    }
   }
 
   Nimble::Vector2 RenderContext::contextSize() const
