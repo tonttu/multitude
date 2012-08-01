@@ -64,7 +64,7 @@ namespace Luminous
   {
     if(!style.fillProgramGL() && !style.fillProgram())
       style.setFillProgram(basicShader());
-    RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(Luminous::PrimitiveType_TriangleStrip, vertexCount, vertexCount, 0.f, style);
+    RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(Luminous::PrimitiveType_TriangleStrip, vertexCount, vertexCount, 1.f, style);
     auto v = b.vertex;
     auto idx = b.idx;
 
@@ -86,7 +86,7 @@ namespace Luminous
   {
     if(!style.fillProgramGL() && !style.fillProgram())
       style.setFillProgram(texShader());
-    RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(Luminous::PrimitiveType_TriangleStrip, vertexCount, vertexCount, 0.f, style);
+    RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(Luminous::PrimitiveType_TriangleStrip, vertexCount, vertexCount, 1.f, style);
     auto v = b.vertex;
     auto idx = b.idx;
 

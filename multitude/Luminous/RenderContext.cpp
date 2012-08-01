@@ -873,20 +873,21 @@ namespace Luminous
   void RenderContext::drawArc(Nimble::Vector2f center, float radius, float width,
                               float fromRadians, float toRadians, Luminous::Style & style, unsigned int linesegments)
   {
+    if (linesegments == 0) {
+      /// @todo Automagically determine the proper number of linesegments
+      linesegments = 32;
+    }
     std::vector<Nimble::Vector2f> vertices;
-    /// @todo Should probably implement this as a drawCurve call
-
     float step = (toRadians - fromRadians) / linesegments;
 
     float angle = fromRadians;
     for (unsigned int i = 0; i <= linesegments; ++i) {
       Nimble::Vector2f c(std::cos(angle), std::sin(angle));
       vertices.push_back( center + c * radius );
-      vertices.push_back( center + c * (radius + width) );
       angle += step;
     }
 
-    drawTriStripT<BasicVertex, BasicUniformBlock>(vertices.data(), vertices.size(), style);
+    drawLineStripT<BasicVertex, BasicUniformBlock>(vertices.data(), vertices.size(), width, style);
   }
 
   void RenderContext::drawCircle(Nimble::Vector2f center, float radius, float width, Luminous::Style & style, unsigned int linesegments)

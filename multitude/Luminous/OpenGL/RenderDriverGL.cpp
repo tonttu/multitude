@@ -213,11 +213,15 @@ namespace Luminous
                       cmd.uniformOffsetBytes, cmd.uniformSizeBytes);
     GLERROR("RenderDriverGL::flush # glBindBufferRange");
 
-    if (cmd.primitiveType == Luminous::PrimitiveType_Line || cmd.primitiveType == Luminous::PrimitiveType_LineStrip)
+    if (cmd.primitiveType == Luminous::PrimitiveType_Line || cmd.primitiveType == Luminous::PrimitiveType_LineStrip) {
       glLineWidth(cmd.primitiveSize);
+      GLERROR("RenderDriverGL::flush # glLineWidth");
+    }
 
-    if (cmd.primitiveType == Luminous::PrimitiveType_Point)
+    if (cmd.primitiveType == Luminous::PrimitiveType_Point) {
       glPointSize(cmd.primitiveSize);
+      GLERROR("RenderDriverGL::flush # glPointSize");
+    }
 
     glDrawElementsBaseVertex(cmd.primitiveType, cmd.primitiveCount, GL_UNSIGNED_INT,
                              (GLvoid *)((sizeof(uint) * cmd.indexOffset)), cmd.vertexOffset);
