@@ -4,11 +4,9 @@
 #include "RenderContext.hpp"
 #include "RenderContextImpl.hpp"
 
-// #include "Dum"
 #include "OpenGL/Error.hpp"
 #include "Texture.hpp"
 #include "FramebufferObject.hpp"
-//#include "RenderTarget.hpp"
 
 #include "Utils.hpp"
 #include "VertexHolder.hpp"
@@ -35,7 +33,6 @@
 
 namespace Luminous
 {
-
   using namespace Nimble;
   using namespace Radiant;
 
@@ -239,7 +236,7 @@ namespace Luminous
       m_verts.resize(10000);
       m_verts.clear();
 
-      bzero(m_textures, sizeof(m_textures));
+      memset(m_textures, 0, sizeof(m_textures));
 
       m_basicShader.loadShader("Luminous/GLSL400/basic_shader.vs", ShaderGLSL::Vertex);
       m_basicShader.loadShader("Luminous/GLSL400/basic_shader.fs", ShaderGLSL::Fragment);
@@ -278,69 +275,6 @@ namespace Luminous
 
       if(!m_initialized) {
         m_initialized = true;
-#ifndef LUMINOUS_OPENGLES
-        const char * circ_vert_shader = ""\
-            "uniform mat4 matrix;"\
-            "varying vec2 pos;"\
-            "void main(void) {"\
-            "  pos = gl_Vertex.xy; "\
-            "  mat4 transform = gl_ProjectionMatrix * matrix;"\
-            "  gl_Position = transform * gl_Vertex;"\
-            "  gl_ClipVertex = gl_ModelViewMatrix * matrix * gl_Vertex;"
-            "  gl_FrontColor = gl_Color;"\
-            "}";
-        const char * circ_frag_shader = ""\
-            "varying vec2 pos;"\
-            "uniform float border_start;"\
-            "void main(void) {"\
-            "  float r = length(pos);"\
-            "  gl_FragColor = gl_Color;"\
-            "  gl_FragColor.w *= smoothstep(1.00, border_start, r);"\
-            "}";
-
-        m_circle_shader_old.reset(new GLSLProgramObject());
-        m_circle_shader_old->loadStrings(circ_vert_shader, circ_frag_shader);
-
-        m_polyline_shader.reset(new GLSLProgramObject());
-        const char * polyline_frag = SHADER(
-            varying vec2 p1;
-            varying vec2 p2;
-            varying vec2 vertexcoord;
-            uniform float width;
-            void main() {
-              gl_FragColor = gl_Color;
-              vec2 pp = p2-p1;
-              float t = ((vertexcoord.x-p1.x)*(p2.x-p1.x)+(vertexcoord.y-p1.y)*(p2.y-p1.y))/dot(pp,pp);
-              t = clamp(t, 0.0, 1.0);
-              vec2 point_on_line = p1+t*(p2-p1);
-              float dist = length(vertexcoord-point_on_line);
-              gl_FragColor.w *= clamp(width-dist, 0.0, 1.0);
-            }
-          );
-
-          const char * polyline_vert = SHADER(
-              attribute vec2 coord;
-              attribute vec2 coord2;
-              uniform float width;
-              varying vec2 p1;
-              varying vec2 p2;
-              varying vec2 vertexcoord;
-              void main() {
-                p1 = coord;
-                p2 = coord2;
-                vertexcoord = gl_Vertex.xy;
-                gl_Position = gl_ProjectionMatrix * gl_Vertex;
-                gl_ClipVertex = gl_ModelViewMatrix * gl_Vertex;
-                gl_FrontColor = gl_Color;
-              }
-            );
-        m_polyline_shader->loadStrings(polyline_vert, polyline_frag);
-#endif
-
-        /*
-        Radiant::ResourceLocator::instance().addPath
-            ("/Users/tommi/cornerstone/share/MultiTouch/");
-            */
 
         GLSLProgramObject * basic =
             GLSLProgramObject::fromFiles(locateStandardShader("basic_tex.vs").toUtf8().data(),
@@ -348,20 +282,6 @@ namespace Luminous
         if(!basic)
           warning("Could not load basic shader for rendering");
         m_basic_shader.reset(basic);
-
-        GLSLProgramObject * arc =
-            GLSLProgramObject::fromFiles(locateStandardShader("arc_tex.vs").toUtf8().data(),
-                                         locateStandardShader("arc_tex.fs").toUtf8().data());
-        if(!arc)
-          warning("Could not load arc shader for rendering");
-        m_arc_shader.reset(arc);
-
-        GLSLProgramObject * circle =
-            GLSLProgramObject::fromFiles(locateStandardShader("circle_tex.vs").toUtf8().data(),
-                                         locateStandardShader("circle_tex.fs").toUtf8().data());
-        if(!circle)
-          warning("Could not load circle shader for rendering");
-        m_circle_shader.reset(circle);
 
         m_viewFBO.reset(new Luminous::Framebuffer());
 
@@ -377,7 +297,7 @@ namespace Luminous
         info("RenderContext::Internal # init ok");
       }
 
-      bzero(m_textures, sizeof(m_textures));
+      memset(m_textures, 0, sizeof(m_textures));
       m_program = 0;
 
       if(!m_renderPacket)
@@ -398,50 +318,7 @@ namespace Luminous
       /// @todo why not zero vector?
       return Nimble::Vector2f(10, 10);
     }
-
-    void drawCircle(RenderContext & r, Nimble::Vector2f center, float radius,
-                                   const float * rgba) {
-
-      const Matrix3f& m = r.transform();
-      const float tx = center.x;
-      const float ty = center.y;
-
-      static const GLfloat rect_vertices[] = {
-        -1.0, -1.0,
-        1.0, -1.0,
-        1.0, 1.0,
-        -1.0, 1.0
-      };
-
-      // translate(tx, ty) & scale(radius)
-      Matrix4f t(m[0][0]*radius, m[0][1]*radius, 0, m[0][2] + m[0][1]*ty+m[0][0]*tx,
-                 m[1][0]*radius, m[1][1]*radius, 0, m[1][2] + m[1][1]*ty+m[1][0]*tx,
-                 0         , 0         , 1, 0,
-                 m[2][0]*radius, m[2][1]*radius, 0, m[2][2]  + m[2][1]*ty+m[2][0]*tx);
-
-      if(rgba)
-        glColor4fv(rgba);
-
-      m_circle_shader_old->bind();
-
-      // uniform scaling assumed, should work fine with "reasonable" non-uniform scaling
-      float totalRadius = m.extractScale() * radius;
-      float border = Nimble::Math::Min(1.0f, totalRadius-2.0f);
-      m_circle_shader_old->setUniformFloat("border_start", (totalRadius-border)/totalRadius);
-      GLint matrixLoc = m_circle_shader_old->getUniformLoc("matrix");
-      glUniformMatrix4fv(matrixLoc, 1, GL_TRUE, t.data());
-
-      // using a VBO with 4 vertices is actually slower than this
-      glEnableClientState(GL_VERTEX_ARRAY);
-      glVertexPointer(2, GL_FLOAT, 0, rect_vertices);
-      glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-      glDisableClientState(GL_VERTEX_ARRAY);
-      m_circle_shader_old->unbind();
-    }
-
-    void drawPolyLine(RenderContext& r, const Nimble::Vector2f * vertices, int n,
-                      float width, const float * rgba);
-
+    
     void pushViewStack()
     {
       int w = m_window->size().x;
@@ -536,11 +413,7 @@ namespace Luminous
     unsigned long m_renderCount;
     unsigned long m_frameCount;
 
-    std::shared_ptr<Luminous::GLSLProgramObject> m_circle_shader_old;
-    std::shared_ptr<Luminous::GLSLProgramObject> m_polyline_shader;
     std::shared_ptr<Luminous::GLSLProgramObject> m_basic_shader;
-    std::shared_ptr<Luminous::GLSLProgramObject> m_arc_shader;
-    std::shared_ptr<Luminous::GLSLProgramObject> m_circle_shader;
 
     const Luminous::MultiHead::Area * m_area;
     const Luminous::MultiHead::Window * m_window;
@@ -617,118 +490,7 @@ namespace Luminous
     std::map<std::size_t, BufferPool> m_uniformBuffers;
     BufferPool m_indexBuffers;
   };
-
-  void RenderContext::Internal::drawPolyLine(RenderContext& r, const Nimble::Vector2f * vertices, int n,
-                                             float width, const float * rgba)
-  {
-    if(n < 2)
-      return;
-
-    width *= r.scale() * 0.5f;
-    width += 1; // for antialiasing
-
-    const Matrix3 & m = r.transform();
-    Vector2f cprev;
-    Vector2f cnow = m.project(vertices[0]);
-    Vector2f cnext;
-    Vector2f avg;
-    Vector2f dirNext;
-    Vector2f dirPrev;
-
-    int nextIdx = 1;
-    while ((vertices[nextIdx]-cnow).lengthSqr() < 9.0f && nextIdx < n-1) {
-      nextIdx++;
-    }
-
-    cnext = m.project(vertices[nextIdx]);
-    dirNext = cnext - cnow;
-    dirNext.normalize();
-    avg = dirNext.perpendicular();
-
-    if (avg.length() < 1e-5) {
-      avg.make(1,0);
-    } else {
-      avg.normalize();
-    }
-    avg *= width;
-
-    m_verts.clear();
-    m_verts.push_back(cnow + avg);
-    m_verts.push_back(cnow - avg);
-
-    m_attribs.clear();
-
-    m_attribs.push_back(cnow);
-    m_attribs.push_back(cnow);
-    m_attribs.push_back(cnow);
-    m_attribs.push_back(cnow);
-
-    for (int i = nextIdx; i < n; ) {
-      nextIdx = i+1;
-      cprev = cnow;
-      cnow = cnext;
-
-      // at least 3 pixels gap between vertices
-      while (nextIdx < n-1 && (vertices[nextIdx]-cnow).lengthSqr() < 9.0f) {
-        nextIdx++;
-      }
-      if (nextIdx > n-1) {
-        cnext = 2.0f*cnow - cprev;
-      } else {
-        cnext = m.project(vertices[nextIdx]);
-      }
-
-      dirPrev = dirNext;
-      dirNext = cnext - cnow;
-
-      if (dirNext.length() < 1e-5f) {
-        dirNext = dirPrev;
-      } else {
-        dirNext.normalize();
-      }
-
-      avg = (dirPrev + dirNext).perpendicular();
-      avg.normalize();
-
-      float dp = Math::Clamp(dot(avg, dirPrev.perpendicular()), 1e-2f, 1.0f);
-      avg /= dp;
-      avg *= width;
-      m_verts.push_back(cnow-avg);
-      m_verts.push_back(cnow+avg);
-
-      m_verts.push_back(cnow+avg);
-      m_verts.push_back(cnow-avg);
-
-      m_attribs.push_back(cnow);
-      m_attribs.push_back(cnow);
-      m_attribs.push_back(cnow);
-      m_attribs.push_back(cnow);
-
-      i = nextIdx;
-    }
-
-    GLuint loc = m_polyline_shader->getAttribLoc("coord");
-    glEnableVertexAttribArray(loc);
-    GLuint loc2 = m_polyline_shader->getAttribLoc("coord2");
-    glEnableVertexAttribArray(loc2);
-
-    m_polyline_shader->bind();
-    m_polyline_shader->setUniformFloat("width", width);
-
-    glColor4fv(rgba);
-    glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat *>(&m_verts[0]));
-    glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&m_attribs[0]));
-    glVertexAttribPointer(loc2, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&m_attribs[4]));
-    glEnableClientState(GL_VERTEX_ARRAY);
-
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, (GLsizei) m_verts.size());
-
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableVertexAttribArray(loc);
-    glDisableVertexAttribArray(loc2);
-    m_polyline_shader->unbind();
-  }
-
+  
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
 
@@ -1362,12 +1124,13 @@ namespace Luminous
                                float width, Luminous::Style & fill)
   {
     Nimble::Vector2 dir = p2 - p1;
+
+    // Don't draw zero-length lines
     float l = dir.length();
-    if(l < 1.0e-6f)
+    if(l < std::numeric_limits<float>::epsilon())
       return;
 
     dir /= l;
-
     Nimble::Vector2 perp = dir.perpendicular() * (width * 0.500001f);
 
     const Nimble::Vector2 corners[4] = {
@@ -1380,17 +1143,38 @@ namespace Luminous
     drawQuad(corners, fill);
   }
 
-  void RenderContext::drawLineStrip(const Nimble::Vector2 * vertices, size_t npoints,
-                                    float width, Luminous::Style & fill)
+  void RenderContext::drawPolyLine(const Nimble::Vector2 * points, unsigned int numPoints,
+    float width, Luminous::Style & style)
   {
-    drawLineStripT<BasicVertex, BasicUniformBlock>(vertices, npoints, width, fill);
+    std::vector<Nimble::Vector2f> vertices;
+
+    Nimble::Vector2 perp;
+    for (unsigned int i = 0; i < numPoints - 1; ++i) {
+      Nimble::Vector2 dir = points[i+1] - points[i];
+
+      // Skip if the points are too close together
+      float l = dir.length();
+      if(l < std::numeric_limits<float>::epsilon())
+        continue;
+      
+      dir /= l;
+      perp = dir.perpendicular() * (width * 0.500001f);
+
+      vertices.push_back(Nimble::Vector2f( points[i] + perp) );
+      vertices.push_back(Nimble::Vector2f( points[i] - perp) );
+    }
+
+    // Add the last point
+    vertices.push_back(Nimble::Vector2f( points[numPoints-1] + perp) );
+    vertices.push_back(Nimble::Vector2f( points[numPoints-1] - perp) );
+
+    drawTriStripT<BasicVertex, BasicUniformBlock>(vertices.data(), vertices.size(), style);
   }
 
-
-  void RenderContext::drawLineStrip(const std::vector<Nimble::Vector2> & vertices,
-                                    float width, Luminous::Style & fill)
+  void RenderContext::drawLineStrip(const Nimble::Vector2 * vertices, size_t npoints,
+                                    Luminous::Style & fill)
   {
-    drawLineStripT<BasicVertex, BasicUniformBlock>( vertices.data(), vertices.size(), width, fill);
+    drawLineStripT<BasicVertex, BasicUniformBlock>(vertices, npoints, fill);
   }
 
   void RenderContext::drawQuad(const Nimble::Vector2f * corners, Luminous::Style & style)

@@ -258,7 +258,7 @@ namespace Luminous
     RenderBuilder<Vertex, UniformBlock> drawTexTriStripT(const Nimble::Vector2f * vertices, const Nimble::Vector2f * uvs, unsigned int vertexCount, Style & style);    
 
     template <typename Vertex, typename UniformBlock>
-    RenderContext::RenderBuilder<Vertex, UniformBlock> drawLineStripT(const Nimble::Vector2f * vertices, unsigned int vertexCount, float width, Style & style);
+    RenderContext::RenderBuilder<Vertex, UniformBlock> drawLineStripT(const Nimble::Vector2f * vertices, unsigned int vertexCount, Style & style);
 
     void drawRectWithHole(const Nimble::Rect & area,
                           const Nimble::Rect & hole,
@@ -266,10 +266,10 @@ namespace Luminous
 
     void drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2,
                         float width, Luminous::Style & fill);
+    void drawPolyLine(const Nimble::Vector2 * vertices, unsigned int numVertices,
+                        float width, Luminous::Style & fill);
     void drawLineStrip(const Nimble::Vector2 * vertices, size_t npoints,
-                        float width, Luminous::Style & fill);
-    void drawLineStrip(const std::vector<Nimble::Vector2> & vertices,
-                        float width, Luminous::Style & fill);
+                        Luminous::Style & fill);
     void drawQuad(const Nimble::Vector2f * corners, Luminous::Style & fill);
 
 

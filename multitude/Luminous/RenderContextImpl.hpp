@@ -15,7 +15,7 @@ namespace Luminous
  
   template <typename Vertex, typename UniformBlock>
   RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::drawLineStripT(
-    const Nimble::Vector2f * vertices, unsigned int vertexCount, float width, Style & style)
+    const Nimble::Vector2f * vertices, unsigned int vertexCount, Style & style)
   {
     if(!style.fillProgramGL() && !style.fillProgram())
       style.setFillProgram(basicShader());
@@ -62,7 +62,7 @@ namespace Luminous
     const Nimble::Vector2f * vertices, const Nimble::Vector2f * uvs, unsigned int vertexCount, Style & style)
   {
     if(!style.fillProgramGL() && !style.fillProgram())
-      style.setFillProgram(basicShader());
+      style.setFillProgram(texShader());
     RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(Luminous::PrimitiveType_TriangleStrip, vertexCount, vertexCount, style);
     auto v = b.vertex;
     auto idx = b.idx;
