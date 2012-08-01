@@ -177,6 +177,7 @@ namespace Luminous
     ImageInfo m_compressedMipmapInfo;
 
     std::shared_ptr<PingTask> m_ping;
+    std::shared_ptr<MipMapGenerator> m_mipmapGenerator;
 
     QString m_mipmapFormat;
 
@@ -324,7 +325,6 @@ namespace Luminous
       m_mipmap.m_useCompressedMipmaps = false;
     }
 
-    Luminous::MipMapGenerator * gen = 0;
     if(m_mipmap.m_useCompressedMipmaps) {
       m_mipmap.m_compressedMipmapFile = Luminous::Mipmap::cacheFileName(m_mipmap.m_filenameAbs, -1, "dds");
       QFileInfo compressedMipmap(m_mipmap.m_compressedMipmapFile);
@@ -338,9 +338,9 @@ namespace Luminous
           compressedMipmapTs = QDateTime();
       }
       if(!compressedMipmapTs.isValid()) {
-        gen = new MipMapGenerator(m_mipmap.m_filenameAbs, m_mipmap.m_compressedMipmapFile);
+        m_mipmap.m_mipmapGenerator.reset(new MipMapGenerator(m_mipmap.m_filenameAbs, m_mipmap.m_compressedMipmapFile));
         auto ptr = m_mipmap.m_mipmap.shared_from_this();
-        gen->setListener([=] (const ImageInfo & imginfo) { ptr->mipmapReady(imginfo); } );
+        m_mipmap.m_mipmapGenerator->setListener([=] (const ImageInfo & imginfo) { ptr->mipmapReady(imginfo); } );
       }
     }
     else
@@ -365,8 +365,8 @@ namespace Luminous
     m_mipmap.m_levels.resize(m_mipmap.m_maxLevel+1);
 
 #ifndef LUMINOUS_OPENGLES
-    if(gen) {
-      Luminous::BGThread::instance()->addTask(gen);
+    if(m_mipmap.m_mipmapGenerator) {
+      Luminous::BGThread::instance()->addTask(m_mipmap.m_mipmapGenerator);
     } else
 #endif // LUMINOUS_OPENGLES
     {
@@ -464,10 +464,22 @@ namespace Luminous
     delete m_d;
   }
 
-  Texture * Mipmap::texture(unsigned int requestedLevel, unsigned int * returnedLevel)
+  Texture * Mipmap::texture(unsigned int requestedLevel, unsigned int * returnedLevel, int priorityChange)
   {
-    if(!m_d->m_ready)
+    if(!m_d->m_ready) {
+      if(priorityChange > 0) {
+        auto ping = m_d->m_ping;
+        auto gen = m_d->m_mipmapGenerator;
+
+        int newPriority = Task::PRIORITY_HIGH + 2 + priorityChange;
+        if(ping && newPriority != ping->priority())
+          BGThread::instance()->reschedule(ping, newPriority);
+
+        if(gen && newPriority != gen->priority())
+          BGThread::instance()->reschedule(gen, newPriority);
+      }
       return nullptr;
+    }
 
     int time = frameTime();
 
@@ -502,15 +514,18 @@ namespace Luminous
             if(now == Loading) {
               if(m_d->m_useCompressedMipmaps) {
                 BGThread::instance()->addTask(std::make_shared<LoadCompressedImageTask>(
-                                                shared_from_this(), imageTex, m_d->m_loadingPriority,
+                                                shared_from_this(), imageTex,
+                                                m_d->m_loadingPriority + priorityChange,
                                                 m_d->m_compressedMipmapFile, level));
               } else if(m_d->m_sourceInfo.pf.compression() != PixelFormat::COMPRESSION_NONE) {
                 BGThread::instance()->addTask(std::make_shared<LoadCompressedImageTask>(
-                                                shared_from_this(), imageTex, m_d->m_loadingPriority,
+                                                shared_from_this(), imageTex,
+                                                m_d->m_loadingPriority + priorityChange,
                                                 m_d->m_filenameAbs, level));
               } else {
                 BGThread::instance()->addTask(std::make_shared<LoadImageTask>(
-                                                shared_from_this(), imageTex, m_d->m_loadingPriority,
+                                                shared_from_this(), imageTex,
+                                                m_d->m_loadingPriority + priorityChange,
                                                 m_d->m_filenameAbs, level));
               }
               break;
@@ -628,6 +643,7 @@ namespace Luminous
   {
     m_d->m_compressedMipmapInfo = imginfo;
     m_d->m_ready = true;
+    m_d->m_mipmapGenerator.reset();
     // preload the maximum level mipmap image
     texture(m_d->m_maxLevel);
   }
