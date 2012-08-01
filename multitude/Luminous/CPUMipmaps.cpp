@@ -285,8 +285,9 @@ namespace Luminous {
       }
       if(m_compressedMipmaps && (ts < m_fileModified ||
                                  !Luminous::Image::ping(m_compFilename.toUtf8().data(), m_info))) {
-        gen = new MipMapGenerator(filename);
-        gen->setListener(shared_from_this());
+        gen = new MipMapGenerator(filename, m_compFilename);
+        auto self = shared_from_this();
+        gen->setListener([=] (const ImageInfo & info) { self->mipmapsReady(info); } );
       }
     }
 #endif // LUMINOUS_OPENGLES

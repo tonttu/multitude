@@ -185,6 +185,10 @@ namespace Luminous
   struct VertexAttribute;
   class VertexDescription;
   class VertexArray;
+
+  class Image;
+  class ImageInfo;
+  class CompressedImage;
 }
 
 #endif

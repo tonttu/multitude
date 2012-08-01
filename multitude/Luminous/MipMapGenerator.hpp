@@ -30,7 +30,7 @@
 
 namespace Luminous {
   class Image;
-  class CPUMipmaps;
+  class ImageInfo;
 
   /// Task that generates mipmaps to global imagecache for source image.
   /// Will only create DDS/DXT mipmaps. CPUMipmaps uses this class if compressed
@@ -41,21 +41,21 @@ namespace Luminous {
     /// Generates a new task for new image. Mipmaps will be saved with one of
     /// the DXT image formats, depending on the source image format.
     /// @param src The filename of the original image, for example a PNG file
-    MipMapGenerator(const QString & src);
+    MipMapGenerator(const QString & src, const QString & target);
 
     /// Generates a new task for new image with explicit mipmap pixelformat.
     /// @param src The filename of the original image, for example a PNG file
     /// @param mipmapFormat The mipmap output format. Only DXT compressed formats are supported.
-    MipMapGenerator(const QString & src, const PixelFormat & mipmapFormat);
+    MipMapGenerator(const QString & src, const QString & target,
+                    const PixelFormat & mipmapFormat);
 
     /// Run the task. Generate the mipmap file and inform the listener when the
     /// task is ready.
     virtual void doTask();
 
-    /// Set a listener to this task. Listener is informed by mipmapsReady()-call
-    /// when the mipmaps are ready.
-    /// @param mipmaps mipmaps listening for the event
-    void setListener(std::shared_ptr<CPUMipmaps> mipmaps) { m_listener = mipmaps; }
+    /// Set a listener to this task. Listener is called when the mipmaps are ready.
+    /// @param func the listener
+    void setListener(std::function<void (const ImageInfo &)> func);
 
     /// Chooses automatically the best pixel format for source image
     /// @param img The image whose ideal mipmap format we are deducing.
@@ -66,12 +66,13 @@ namespace Luminous {
     void resize(const Image & img, const int level);
 
     const QString m_src;
+    QString m_target;
     PixelFormat m_mipmapFormat;
 
     std::vector<unsigned char> m_outBuffer;
     unsigned char * m_out;
 
-    std::shared_ptr<CPUMipmaps> m_listener;
+    std::function<void (const ImageInfo &)> m_listener;
 
     int m_flags;
   };

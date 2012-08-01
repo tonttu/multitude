@@ -15,7 +15,6 @@
 
 #include "MipMapGenerator.hpp"
 #include "Image.hpp"
-#include "CPUMipmaps.hpp"
 #include "ImageCodecDDS.hpp"
 #include "Squish/squish.h"
 
@@ -23,18 +22,22 @@
 
 namespace Luminous {
 
-  MipMapGenerator::MipMapGenerator(const QString & src)
+  MipMapGenerator::MipMapGenerator(const QString & src,
+                                   const QString & target)
     : Task((PRIORITY_NORMAL + PRIORITY_LOW) / 2),
       m_src(src),
+      m_target(target),
       m_out(0),
       m_flags(0)
   {
   }
 
   MipMapGenerator::MipMapGenerator(const QString & src,
+                                   const QString & target,
                                    const PixelFormat & mipmapFormat)
     : Task((PRIORITY_NORMAL + PRIORITY_LOW) / 2),
       m_src(src),
+      m_target(target),
       m_mipmapFormat(mipmapFormat),
       m_out(0),
       m_flags(0)
@@ -97,9 +100,8 @@ namespace Luminous {
 
     resize(img, 0);
 
-    const QString filename = CPUMipmaps::cacheFileName(m_src, -1, "dds");
     ImageCodecDDS dds;
-    dds.writeMipmaps(filename, m_mipmapFormat.compression(),
+    dds.writeMipmaps(m_target, m_mipmapFormat.compression(),
                      img.size(), mipmaps, m_outBuffer);
     if(m_listener) {
       ImageInfo info;
@@ -107,8 +109,13 @@ namespace Luminous {
       info.width = img.height();
       info.mipmaps = mipmaps;
       info.pf = m_mipmapFormat;
-      m_listener->mipmapsReady(info);
+      m_listener(info);
     }
+  }
+
+  void MipMapGenerator::setListener(std::function<void (const ImageInfo &)> func)
+  {
+    m_listener = func;
   }
 
   void MipMapGenerator::resize(const Image & img, const int level)
