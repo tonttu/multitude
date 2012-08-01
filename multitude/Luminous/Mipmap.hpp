@@ -21,7 +21,7 @@ namespace Luminous
     /// Gets the texture mipmap.
     /// @param level The mipmap level
     /// @return Pointer to the texture or null if image if mipmap level isn't loaded yet
-    LUMINOUS_API Texture * texture(unsigned int level = 0);
+    LUMINOUS_API Texture * texture(unsigned int level = 0, unsigned int * returnedLevel = nullptr);
 
 #if 0
     LUMINOUS_API Image * image(unsigned int level = 0) const;

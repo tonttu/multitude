@@ -404,7 +404,7 @@ namespace Luminous
     delete m_d;
   }
 
-  Texture * Mipmap::texture(unsigned int requestedLevel)
+  Texture * Mipmap::texture(unsigned int requestedLevel, unsigned int * returnedLevel)
   {
     if(!m_d->m_ready)
       return nullptr;
@@ -423,8 +423,11 @@ namespace Luminous
         int now = std::max(2, time);
         int old = imageTex.lastUsed;
         while(true) {
-          if(now == old)
+          if(now == old) {
+            if(returnedLevel)
+              *returnedLevel = level;
             return &imageTex.texture;
+          }
 
           if(old == Loading)
             break;
@@ -453,6 +456,8 @@ namespace Luminous
               }
               break;
             }
+            if(returnedLevel)
+              *returnedLevel = level;
             return &imageTex.texture;
           } else {
             old = imageTex.lastUsed;
