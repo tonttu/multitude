@@ -187,7 +187,7 @@ namespace Luminous
   class VertexArray;
 
   class Image;
-  class ImageInfo;
+  struct ImageInfo;
   class CompressedImage;
 }
 

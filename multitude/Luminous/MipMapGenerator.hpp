@@ -30,37 +30,37 @@
 
 namespace Luminous {
   class Image;
-  class ImageInfo;
+  struct ImageInfo;
 
   /// Task that generates mipmaps to global imagecache for source image.
   /// Will only create DDS/DXT mipmaps. CPUMipmaps uses this class if compressed
   /// mipmaps are requested, there is usually no need to use this class directly.
-  class LUMINOUS_API MipMapGenerator : public Task
+  class MipMapGenerator : public Task
   {
   public:
     /// Generates a new task for new image. Mipmaps will be saved with one of
     /// the DXT image formats, depending on the source image format.
     /// @param src The filename of the original image, for example a PNG file
-    MipMapGenerator(const QString & src, const QString & target);
+    LUMINOUS_API MipMapGenerator(const QString & src, const QString & target);
 
     /// Generates a new task for new image with explicit mipmap pixelformat.
     /// @param src The filename of the original image, for example a PNG file
     /// @param mipmapFormat The mipmap output format. Only DXT compressed formats are supported.
-    MipMapGenerator(const QString & src, const QString & target,
+    LUMINOUS_API MipMapGenerator(const QString & src, const QString & target,
                     const PixelFormat & mipmapFormat);
 
     /// Run the task. Generate the mipmap file and inform the listener when the
     /// task is ready.
-    virtual void doTask();
+    LUMINOUS_API virtual void doTask();
 
     /// Set a listener to this task. Listener is called when the mipmaps are ready.
     /// @param func the listener
-    void setListener(std::function<void (const ImageInfo &)> func);
+    LUMINOUS_API void setListener(std::function<void (const ImageInfo &)> func);
 
     /// Chooses automatically the best pixel format for source image
     /// @param img The image whose ideal mipmap format we are deducing.
     /// @return ideal pixel format
-    static PixelFormat chooseMipmapFormat(const Image & img);
+    LUMINOUS_API static PixelFormat chooseMipmapFormat(const Image & img);
 
   private:
     void resize(const Image & img, const int level);
