@@ -44,6 +44,10 @@ namespace Luminous {
   {
   }
 
+  MipMapGenerator::~MipMapGenerator()
+  {
+  }
+
   void MipMapGenerator::doTask()
   {
     setFinished();

@@ -49,6 +49,8 @@ namespace Luminous {
     LUMINOUS_API MipMapGenerator(const QString & src, const QString & target,
                     const PixelFormat & mipmapFormat);
 
+    LUMINOUS_API virtual ~MipMapGenerator();
+
     /// Run the task. Generate the mipmap file and inform the listener when the
     /// task is ready.
     LUMINOUS_API virtual void doTask();
