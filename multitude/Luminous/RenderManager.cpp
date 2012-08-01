@@ -33,6 +33,7 @@ namespace Luminous
 
     typedef std::map<RenderResource::Id, RenderResource *> ResourceMap;
     ResourceMap resourceMap;
+    Radiant::Mutex resourceMapMutex;
 
     template <typename T>
     T * getResource( RenderResource::Id id )
@@ -79,6 +80,7 @@ namespace Luminous
 
   RenderResource::Id RenderManager::createResource(RenderResource * resource)
   {
+    Radiant::Guard g(instance().m_d->resourceMapMutex);
     auto id = instance().m_d->resourceId++;
     instance().m_d->resourceMap[id] = resource;
     return id;
@@ -86,14 +88,15 @@ namespace Luminous
 
   void RenderManager::updateResource(RenderResource::Id id, RenderResource * resource)
   {
+    Radiant::Guard g(instance().m_d->resourceMapMutex);
     instance().m_d->resourceMap[id] = resource;
   }
 
   void RenderManager::destroyResource(RenderResource::Id id)
   {
-    /// @todo Make this thread-safe
     /* Widgets can be destroyed in any thread, which can trigger this function call
        from any thread. */
+    Radiant::Guard g(instance().m_d->resourceMapMutex);
     instance().m_d->resourceMap.erase(id);
     auto it = instance().m_d->drivers.begin(), end = instance().m_d->drivers.end();
     while(it != end) {
