@@ -41,6 +41,12 @@ namespace Luminous
     LUMINOUS_API static void removeContextArray(ContextArray * contextArray);
     LUMINOUS_API static unsigned int driverCount();
 
+    /// Current frame time, in tenths of a second since the application was started
+    /// This needs to be integer and 32 bit to fit to atomic int, so 0.1s is a nice
+    /// precision.
+    LUMINOUS_API static int frameTime();
+    LUMINOUS_API static void updateFrameTime();
+
     template <typename T> static T * getResource( RenderResource::Id id );
   private:
     LUMINOUS_API static RenderManager & instance();

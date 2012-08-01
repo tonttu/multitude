@@ -33,6 +33,8 @@ namespace Luminous
     LUMINOUS_API void setData(unsigned int width, unsigned int height, const PixelFormat & dataFormat, const void * data);
     LUMINOUS_API void setData(unsigned int width, unsigned int height, unsigned int depth, const PixelFormat & dataFormat, const void * data);
 
+    LUMINOUS_API void reset();
+
     LUMINOUS_API std::size_t dataSize() const;
 
     /// 0 == use width

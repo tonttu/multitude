@@ -97,6 +97,16 @@ namespace Luminous
     invalidate();
   }
 
+  void Texture::reset()
+  {
+    m_d->dimensions = 0;
+    m_d->width = 0;
+    m_d->height = 0;
+    m_d->depth = 0;
+    m_d->dataFormat = PixelFormat();
+    m_d->data = nullptr;
+  }
+
   std::size_t Texture::dataSize() const
   {
     auto comp = m_d->dataFormat.compression();

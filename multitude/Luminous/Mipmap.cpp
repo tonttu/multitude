@@ -4,6 +4,7 @@
 #include "Luminous/Texture2.hpp"
 #include "Luminous/BGThread.hpp"
 #include "Luminous/MipMapGenerator.hpp"
+#include "Luminous/RenderManager.hpp"
 
 #include <Radiant/PlatformUtils.hpp>
 
@@ -16,10 +17,20 @@
 
 namespace
 {
+  typedef std::map<QPair<QByteArray, bool>, std::weak_ptr<Luminous::Mipmap>> MipmapStore;
+  MipmapStore s_mipmapStore;
+  Radiant::Mutex s_mipmapStoreMutex;
+
   enum {
     New = 0,
     Loading = 1
   };
+
+  int frameTime()
+  {
+    /// 0 and 1 are reserved
+    return 2 + Luminous::RenderManager::frameTime();
+  }
 
   struct ImageTex3
   {
@@ -75,11 +86,6 @@ namespace
     virtual void doTask() OVERRIDE;
   };
 
-  class MipmapReleaseTask : public Luminous::Task
-  {
-  public:
-  };
-
   LoadImageTask::LoadImageTask(Luminous::MipmapPtr mipmap, ImageTex3 & tex,
                                Luminous::Priority priority, const QString & filename, int level)
     : Task(priority)
@@ -107,8 +113,7 @@ namespace
     } else {
       m_tex.texture.setData(im->width(), im->height(), im->compression(), im->data());
       m_tex.cimage = std::move(im);
-      int time = 100; /// @todo
-      int now = std::max(2, time);
+      int now = frameTime();
       m_tex.lastUsed.testAndSetOrdered(Loading, now);
     }
     setFinished();
@@ -134,6 +139,15 @@ namespace Luminous
     bool m_preferCompressedMipmaps;
     Mipmap::D & m_mipmap;
     QSemaphore m_users;
+  };
+
+  class MipmapReleaseTask : public Luminous::Task
+  {
+  public:
+    MipmapReleaseTask();
+
+  protected:
+    virtual void doTask() OVERRIDE;
   };
 
   class Mipmap::D
@@ -168,6 +182,8 @@ namespace Luminous
 
     std::vector<ImageTex3> m_levels;
 
+    float m_expireSeconds;
+
     bool m_ready;
   };
 }
@@ -185,9 +201,6 @@ namespace
   const unsigned int s_smallestImage = 32;
 
   bool s_dxtSupported = true;
-
-  std::map<QPair<QByteArray, bool>, std::weak_ptr<Luminous::Mipmap>> s_mipmapStore;
-  Radiant::Mutex s_mipmapStoreMutex;
 
   Luminous::ImageInfo fromMap(const QVariantMap & map)
   {
@@ -364,6 +377,50 @@ namespace Luminous
 
     return true;
   }
+
+  ///////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
+
+  MipmapReleaseTask::MipmapReleaseTask()
+  {
+    scheduleFromNowSecs(5.0);
+  }
+
+  void MipmapReleaseTask::doTask()
+  {
+    Radiant::Guard g(s_mipmapStoreMutex);
+    const int now = frameTime();
+    for(MipmapStore::iterator it = s_mipmapStore.begin(); it != s_mipmapStore.end();) {
+      Luminous::MipmapPtr ptr = it->second.lock();
+      if(ptr) {
+        if(ptr->m_d->m_ready) {
+          const int expire = ptr->m_d->m_expireSeconds * 10;
+          std::vector<ImageTex3> & levels = ptr->m_d->m_levels;
+          // do not expire the last mipmap level (smallest image)
+          for(int level = 0, s = levels.size() - 1; level < s; ++level) {
+            ImageTex3 & imageTex = levels[level];
+            int lastUsed = imageTex.lastUsed;
+            if(lastUsed > Loading && now > lastUsed + expire &&
+               imageTex.lastUsed.testAndSetOrdered(lastUsed, Loading)) {
+              imageTex.texture.reset();
+              imageTex.cimage.reset();
+              imageTex.image.reset();
+              imageTex.lastUsed = New;
+            }
+          }
+        }
+        ++it;
+      } else {
+        it = s_mipmapStore.erase(it);
+      }
+
+      // Do not reserve the store, other might want to access to it also
+      s_mipmapStoreMutex.unlock();
+      s_mipmapStoreMutex.lock();
+    }
+
+    scheduleFromNowSecs(5.0);
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -380,8 +437,11 @@ namespace Luminous
     , m_useCompressedMipmaps(false)
     , m_loadingPriority(Task::PRIORITY_NORMAL)
     , m_mipmapFormat("png")
+    , m_expireSeconds(3.0f)
     , m_ready(false)
-  {}
+  {
+    MULTI_ONCE(BGThread::instance()->addTask(new MipmapReleaseTask()););
+  }
 
   Mipmap::D::~D()
   {
@@ -409,8 +469,7 @@ namespace Luminous
     if(!m_d->m_ready)
       return nullptr;
 
-    /// @todo get this from somewhere
-    int time = 100;
+    int time = frameTime();
 
     int req = std::min<int>(requestedLevel, m_d->m_maxLevel);
     for(int level = req, diff = -1; level <= m_d->m_maxLevel; level += diff) {
@@ -420,7 +479,7 @@ namespace Luminous
       } else {
         ImageTex3 & imageTex = m_d->m_levels[level];
 
-        int now = std::max(2, time);
+        int now = time;
         int old = imageTex.lastUsed;
         while(true) {
           if(now == old) {

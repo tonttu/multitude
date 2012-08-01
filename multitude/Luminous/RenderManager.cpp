@@ -15,8 +15,9 @@
 
 #include "RenderManager.hpp"
 #include "RenderDriver.hpp"
-
 #include "ContextArray.hpp"
+
+#include <Radiant/Timer.hpp>
 
 #include <map>
 
@@ -26,6 +27,7 @@ namespace Luminous
   public:
     D()
       : resourceId(0)
+      , frameTime(0)
     {
     }
 
@@ -44,6 +46,8 @@ namespace Luminous
     RenderResource::Id resourceId;      // Next available resource ID
     std::vector<Luminous::RenderDriver*> drivers; // Currently used drivers
     Radiant::Mutex contextArraysMutex;
+    Radiant::Timer timer;
+    int frameTime;
     std::set<ContextArray*> contextArrays;
     static RenderManager * s_instance;  // Singleton instance
   };
@@ -116,6 +120,17 @@ namespace Luminous
   {
     auto & d = *instance().m_d;
     return d.drivers.size();
+  }
+
+  int RenderManager::frameTime()
+  {
+    return instance().m_d->frameTime;
+  }
+
+  void RenderManager::updateFrameTime()
+  {
+    auto & d = *instance().m_d;
+    d.frameTime = d.timer.time() * 10;
   }
 
   RenderManager & RenderManager::instance()
