@@ -87,7 +87,7 @@ namespace Luminous
     const unsigned char * data() const { return & m_data[0]; }
 
     /// Check if a file is readable, and returns its core information
-    static bool ping(const char * filename, ImageInfo & info);
+    static bool ping(const QString & filename, ImageInfo & info);
 
     /** Read a file to this Image object.
     @param filename name of the file to read from

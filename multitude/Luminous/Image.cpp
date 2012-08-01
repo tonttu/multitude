@@ -706,13 +706,13 @@ namespace Luminous
     changed();
   }
 
-  bool Image::ping(const char * filename, ImageInfo & info)
+  bool Image::ping(const QString & filename, ImageInfo & info)
   {
     bool result = false;
 
-    FILE * file = fopen(filename, "rb");
+    FILE * file = fopen(filename.toUtf8().data(), "rb");
     if(!file) {
-      Radiant::error("Image::ping # failed to open file '%s' for reading.", filename);
+      Radiant::error("Image::ping # failed to open file '%s' for reading.", filename.toUtf8().data());
       return result;
     }
 
@@ -720,7 +720,7 @@ namespace Luminous
     if(codec) {
       result = codec->ping(info, file);
     } else {
-        Radiant::error("No suitable image codec found for '%s'", filename);
+        Radiant::error("No suitable image codec found for '%s'", filename.toUtf8().data());
     }
 
     fclose(file);
