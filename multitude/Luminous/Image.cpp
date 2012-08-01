@@ -46,8 +46,67 @@
 #include <strings.h>	// strcasecmp()
 #endif
 
+#include <QFileInfo>
+#include <QSettings>
+#include <QDateTime>
+
 using namespace std;
 using namespace Radiant;
+
+namespace
+{
+  bool fromMap(const QVariantMap & map, Luminous::ImageInfo & info)
+  {
+    info.width = map.value("width").toInt();
+    info.height = map.value("height").toInt();
+    info.mipmaps = map.value("mipmaps").toInt();
+    if(map.contains("pf.compression")) {
+      info.pf = Luminous::PixelFormat::Compression(map.value("pf.compression").toInt());
+    } else {
+      info.pf = Luminous::PixelFormat(
+            Luminous::PixelFormat::ChannelLayout(map.value("pf.layout").toInt()),
+            Luminous::PixelFormat::ChannelType(map.value("pf.type").toInt()));
+    }
+    return true;
+  }
+
+  QVariantMap toMap(const Luminous::ImageInfo & info)
+  {
+    QVariantMap map;
+    map["width"] = info.width;
+    map["height"] = info.height;
+    map["mipmaps"] = info.mipmaps;
+    if(info.pf.compression() != Luminous::PixelFormat::COMPRESSION_NONE) {
+      map["pf.compression"] = info.pf.compression();
+    } else {
+      map["pf.layout"] = info.pf.layout();
+      map["pf.type"] = info.pf.type();
+    }
+    return map;
+  }
+
+  bool doPing(const QString & filename, Luminous::ImageInfo & info)
+  {
+    bool result = false;
+
+    FILE * file = fopen(filename.toUtf8().data(), "rb");
+    if(!file) {
+      Radiant::error("Image::ping # failed to open file '%s' for reading.", filename.toUtf8().data());
+      return result;
+    }
+
+    Luminous::ImageCodec * codec = Luminous::Image::codecs()->getCodec(filename, file);
+    if(codec) {
+      result = codec->ping(info, file);
+    } else {
+      Radiant::error("No suitable image codec found for '%s'", filename.toUtf8().data());
+    }
+
+    fclose(file);
+
+    return result;
+  }
+}
 
 namespace Luminous
 {
@@ -708,26 +767,27 @@ namespace Luminous
 
   bool Image::ping(const QString & filename, ImageInfo & info)
   {
-    bool result = false;
-
-    FILE * file = fopen(filename.toUtf8().data(), "rb");
-    if(!file) {
-      Radiant::error("Image::ping # failed to open file '%s' for reading.", filename.toUtf8().data());
-      return result;
+    QFileInfo fi(filename);
+    const QString & absFilename = fi.absoluteFilePath();
+    if(absFilename.isEmpty()) {
+      Radiant::error("Image::ping # File '%s' not found", filename.toUtf8().data());
+      return false;
     }
 
-    ImageCodec * codec = codecs()->getCodec(filename, file);
-    if(codec) {
-      result = codec->ping(info, file);
-    } else {
-        Radiant::error("No suitable image codec found for '%s'", filename.toUtf8().data());
+    QSettings settings("MultiTouch", "ImageInfo");
+    QVariantMap map = settings.value(absFilename).toMap();
+
+    if(!map.isEmpty()) {
+      QDateTime cacheModified = map.value("lastModified").toDateTime();
+      if(cacheModified.isValid() && cacheModified >= fi.lastModified())
+        return fromMap(map, info);
     }
 
-    fclose(file);
-
-    return result;
+    bool ok = doPing(absFilename, info);
+    if(ok)
+      settings.setValue(absFilename, toMap(info));
+    return ok;
   }
-
 
   unsigned char Image::pixelAlpha(Nimble::Vector2 relativeCoord) const
   {

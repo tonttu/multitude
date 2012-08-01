@@ -200,64 +200,15 @@ namespace
   const unsigned int s_defaultSaveSize1 = 64;
   const unsigned int s_defaultSaveSize2 = 512;
   const unsigned int s_smallestImage = 32;
+  const Luminous::Priority s_defaultPingPriority = Luminous::Task::PRIORITY_HIGH + 2;
 
   bool s_dxtSupported = true;
-
-  Luminous::ImageInfo fromMap(const QVariantMap & map)
-  {
-    Luminous::ImageInfo img;
-    img.width = map.value("width").toInt();
-    img.height = map.value("height").toInt();
-    img.mipmaps = map.value("mipmaps").toInt();
-    if(map.contains("pf.compression")) {
-      img.pf = Luminous::PixelFormat::Compression(map.value("pf.compression").toInt());
-    } else {
-      img.pf = Luminous::PixelFormat(
-            Luminous::PixelFormat::ChannelLayout(map.value("pf.layout").toInt()),
-            Luminous::PixelFormat::ChannelType(map.value("pf.type").toInt()));
-    }
-    return img;
-  }
-
-  QVariantMap toMap(const Luminous::ImageInfo & info)
-  {
-    QVariantMap map;
-    map["width"] = info.width;
-    map["height"] = info.height;
-    map["mipmaps"] = info.mipmaps;
-    if(info.pf.compression() != Luminous::PixelFormat::COMPRESSION_NONE) {
-      map["pf.compression"] = info.pf.compression();
-    } else {
-      map["pf.layout"] = info.pf.layout();
-      map["pf.type"] = info.pf.type();
-    }
-    return map;
-  }
-
-  Luminous::ImageInfo pingImage(const QString & absFilename, const QDateTime & fileModified)
-  {
-    if(absFilename.isEmpty()) return Luminous::ImageInfo();
-
-    QSettings settings("MultiTouch", "ImageInfo");
-    QVariantMap map = settings.value(absFilename).toMap();
-
-    if(!map.isEmpty()) {
-      QDateTime cacheModified = map.value("lastModified").toDateTime();
-      if(cacheModified.isValid() && cacheModified >= fileModified)
-        return fromMap(map);
-    }
-
-    Luminous::ImageInfo info;
-    if(Luminous::Image::ping(absFilename, info))
-      settings.setValue(absFilename, toMap(info));
-    return info;
-  }
 }
 
 namespace Luminous
 {
   PingTask::PingTask(Mipmap::D & mipmap, bool compressedMipmaps)
-    : Task(PRIORITY_HIGH+2)
+    : Task(s_defaultPingPriority)
     , m_preferCompressedMipmaps(compressedMipmaps)
     , m_mipmap(mipmap)
     , m_users(1)
@@ -293,9 +244,8 @@ namespace Luminous
     QFileInfo fi(m_mipmap.m_filenameAbs);
     QDateTime lastModified = fi.lastModified();
     m_mipmap.m_fileModified = lastModified;
-    m_mipmap.m_sourceInfo = pingImage(m_mipmap.m_filenameAbs, lastModified);
 
-    if(m_mipmap.m_sourceInfo.width <= 0) {
+    if(!Luminous::Image::ping(m_mipmap.m_filenameAbs, m_mipmap.m_sourceInfo)) {
       Radiant::error("PingTask::doPing # failed to query image size for %s",
                      m_mipmap.m_filenameAbs.toUtf8().data());
       return false;
@@ -333,8 +283,7 @@ namespace Luminous
         compressedMipmapTs = compressedMipmap.lastModified();
 
       if(compressedMipmapTs.isValid() && compressedMipmapTs < m_mipmap.m_fileModified) {
-        m_mipmap.m_compressedMipmapInfo = pingImage(m_mipmap.m_compressedMipmapFile, compressedMipmapTs);
-        if(m_mipmap.m_compressedMipmapInfo.width <= 0)
+        if(!Luminous::Image::ping(m_mipmap.m_compressedMipmapFile, m_mipmap.m_compressedMipmapInfo))
           compressedMipmapTs = QDateTime();
       }
       if(!compressedMipmapTs.isValid()) {
@@ -471,7 +420,7 @@ namespace Luminous
         auto ping = m_d->m_ping;
         auto gen = m_d->m_mipmapGenerator;
 
-        int newPriority = Task::PRIORITY_HIGH + 2 + priorityChange;
+        int newPriority = s_defaultPingPriority + priorityChange;
         if(ping && newPriority != ping->priority())
           BGThread::instance()->reschedule(ping, newPriority);
 
