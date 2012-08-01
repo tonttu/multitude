@@ -69,6 +69,7 @@ namespace Luminous
   {
     PrimitiveType primitiveType;
     std::size_t primitiveCount;
+    float primitiveSize;    // Used for points and lines
     unsigned int indexOffset;
     unsigned int vertexOffset;
 

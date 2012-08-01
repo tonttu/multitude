@@ -73,7 +73,7 @@ namespace Luminous
     };
 
   public:
-    Style() : m_translucency(Auto), m_texCoords(0, 0, 1, 1), m_texturing(0) {}
+    Style() : m_translucency(Auto), m_primitiveSize(1.f), m_texCoords(0, 0, 1, 1), m_texturing(0) {}
 
     Fill & fill() { return m_fill; }
     const Fill & fill() const { return m_fill; }
@@ -84,6 +84,11 @@ namespace Luminous
     void setFillColor(const Nimble::Vector4 & c) { m_fill.m_color = c; }
     /// Sets the color of the object to be drawn
     void setFillColor(float r, float g, float b, float a) { m_fill.m_color.make(r, g, b, a); }
+
+    /// Returns the primitive size (for lines and points)
+    float primitiveSize() const { return m_primitiveSize; }
+    /// Sets the primitive size (for lines and points)
+    void setPrimitiveSize(float size) { m_primitiveSize = size; }
 
     Luminous::Program * fillProgram() const { return m_fill.m_program; }
     void setFillProgram(Luminous::Program & program) { m_fill.m_program = &program; }
@@ -99,7 +104,6 @@ namespace Luminous
 
     void setTranslucency(Translucency translucency) { m_translucency = translucency; }
     Translucency translucency() const { return m_translucency; }
-
 
     /// Returns the texture coordinates to use
     const Nimble::Rect & texCoords () const { return m_texCoords; }
@@ -125,6 +129,7 @@ namespace Luminous
   private:
     Fill m_fill;
     Translucency m_translucency;
+    float m_primitiveSize;
 
     Nimble::Rect m_texCoords;
     float m_texturing;

@@ -1076,6 +1076,7 @@ namespace Luminous
     RenderCommand & cmd = m_data->m_driver.createRenderCommand(
           vbuffer->buffer, ibuffer->buffer, ubuffer->buffer, style);
     cmd.primitiveCount = indexCount;
+    cmd.primitiveSize = style.primitiveSize();
     cmd.indexOffset = indexOffset;
     cmd.vertexOffset = vertexOffset;
     cmd.uniformOffsetBytes = uniformOffset * uniformSize;
