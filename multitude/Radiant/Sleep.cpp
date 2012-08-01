@@ -60,7 +60,7 @@ namespace Radiant {
     double target = m_initial.startTime() + (us * 0.000001);
     Timer now;
 
-    if(now < target) {
+    if(now.startTime() < target) {
       double secs = target - now.startTime();
       Sleep::sleepUs(secs * 1000000.0);
     }

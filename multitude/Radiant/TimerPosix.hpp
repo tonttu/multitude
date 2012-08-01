@@ -46,8 +46,7 @@ namespace Radiant
     /// Operators
     inline double operator-(const Timer & rhs) const;
 
-    /// Returns the time of the last start() call. Equivalent to calling startTime();
-    /// @return the start time in seconds
+    /// @return current time in seconds (equivalent to calling time())
     inline operator double() const;
   private:
     struct timeval m_startTime;
@@ -96,7 +95,7 @@ namespace Radiant
 
   Timer::operator double() const
   {
-    return startTime();
+    return time();
   }
 }
 
