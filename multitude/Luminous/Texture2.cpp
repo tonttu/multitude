@@ -97,6 +97,33 @@ namespace Luminous
     invalidate();
   }
 
+  std::size_t Texture::dataSize() const
+  {
+    auto comp = m_d->dataFormat.compression();
+    if(comp == PixelFormat::COMPRESSION_NONE)
+      return m_d->dataFormat.bytesPerPixel() * lineSizePixels() * height();
+
+    // align to 4
+    int w = width(), h = height();
+    w += (4 - (w & 3)) & 3;
+    h += (4 - (h & 3)) & 3;
+
+    switch(comp) {
+    case PixelFormat::COMPRESSED_RGB_DXT1:
+    case PixelFormat::COMPRESSED_RGBA_DXT1:
+      return w * h / 2;
+
+    //case PixelFormat::COMPRESSED_RGBA_DXT2:
+    case PixelFormat::COMPRESSED_RGBA_DXT3:
+    //case PixelFormat::COMPRESSED_RGBA_DXT4:
+    case PixelFormat::COMPRESSED_RGBA_DXT5:
+      return w * h;
+
+    default:
+      return 0;
+    }
+  }
+
   void Texture::setLineSizePixels(std::size_t size)
   {
     if(m_d->lineSizePixels == size)

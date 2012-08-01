@@ -42,10 +42,14 @@ namespace Luminous
 
   void TextureGL::upload(const Texture & texture, int textureUnit, bool alwaysBind)
   {
+    GLERROR("TextureGL::upload");
+
     // Reset usage timer
     touch();
 
     bool bound = false;
+
+    const bool compressedFormat = texture.dataFormat().compression() != PixelFormat::COMPRESSION_NONE;
 
     if(m_generation != texture.generation()) {
       m_generation = texture.generation();
@@ -63,7 +67,12 @@ namespace Luminous
       }
     }
 
+    m_dirtyRegion += texture.takeDirtyRegion(m_state.threadIndex());
+
     if(m_target == 0) {
+      // Mark the whole texture dirty
+      m_dirtyRegion = QRegion(0, 0, texture.width(), texture.height());
+
       if (texture.dimensions() == 1)      m_target = GL_TEXTURE_1D;
       else if (texture.dimensions() == 2) m_target = GL_TEXTURE_2D;
       else if (texture.dimensions() == 3) m_target = GL_TEXTURE_3D;
@@ -74,31 +83,38 @@ namespace Luminous
       /// Specify the internal format (number of channels or explicitly requested format)
       GLenum intFormat = texture.internalFormat();
       if(intFormat == 0) {
-        if (texture.dataFormat().numChannels() == 1)      intFormat = GL_RED;
-        else if (texture.dataFormat().numChannels() == 2) intFormat = GL_RG;
-        else if (texture.dataFormat().numChannels() == 3) intFormat = GL_RGB;
-        else intFormat = GL_RGBA;
+        if(compressedFormat) {
+          intFormat = texture.dataFormat().compression();
+        } else {
+          if (texture.dataFormat().numChannels() == 1)      intFormat = GL_RED;
+          else if (texture.dataFormat().numChannels() == 2) intFormat = GL_RG;
+          else if (texture.dataFormat().numChannels() == 3) intFormat = GL_RGB;
+          else intFormat = GL_RGBA;
+        }
       }
 
-      if(texture.dimensions() == 1) {
-        glTexImage1D(GL_TEXTURE_1D, 0, intFormat, texture.width(), 0,
-                     texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
-      } else if(texture.dimensions() == 2) {
-        glTexImage2D(GL_TEXTURE_2D, 0, intFormat, texture.width(), texture.height(), 0,
-                     texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
-      } else if(texture.dimensions() == 3) {
-        glTexImage3D(GL_TEXTURE_3D, 0, intFormat, texture.width(), texture.height(), texture.depth(),
-                     0, texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
+      if(compressedFormat) {
+        glCompressedTexImage2D(GL_TEXTURE_2D, 0, intFormat, texture.width(),
+                               texture.height(), 0, texture.dataSize(), texture.data());
+        GLERROR("TextureGL::upload # glCompressedTexImage2D");
+        m_dirtyRegion = QRegion();
+      } else {
+        if(texture.dimensions() == 1) {
+          glTexImage1D(GL_TEXTURE_1D, 0, intFormat, texture.width(), 0,
+                       texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
+        } else if(texture.dimensions() == 2) {
+          glTexImage2D(GL_TEXTURE_2D, 0, intFormat, texture.width(), texture.height(), 0,
+                       texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
+        } else if(texture.dimensions() == 3) {
+          glTexImage3D(GL_TEXTURE_3D, 0, intFormat, texture.width(), texture.height(), texture.depth(),
+                       0, texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
+        }
       }
 
       /// @todo Get these from the texture settings
       glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
       glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-      // Mark the whole texture dirty
-      m_dirtyRegion = QRegion(0, 0, texture.width(), texture.height());
     }
-    m_dirtyRegion += texture.takeDirtyRegion(m_state.threadIndex());
 
     if(!bound && alwaysBind) {
       bind(textureUnit);
@@ -128,25 +144,33 @@ namespace Luminous
         // See how much of the bytes we can upload in this frame
         int64_t bytesFree = m_state.availableUploadBytes();
 
-        foreach(const QRect & rect, m_dirtyRegion.rects()) {
-          const int bytesPerScanline = rect.width() * texture.dataFormat().bytesPerPixel();
-          // Number of scanlines to upload
-          const size_t scanLines = std::min<int32_t>(rect.height(), bytesFree / bytesPerScanline);
+        /// @todo glCompressedTexImage2D, probably needs some alignment
+        if(compressedFormat) {
+          uploaded = texture.dataSize();
+          glCompressedTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture.width(), texture.height(),
+                                    texture.dataFormat().compression(), uploaded, texture.data());
+          m_dirtyRegion = QRegion();
+        } else {
+          foreach(const QRect & rect, m_dirtyRegion.rects()) {
+            const int bytesPerScanline = rect.width() * texture.dataFormat().bytesPerPixel();
+            // Number of scanlines to upload
+            const size_t scanLines = std::min<int32_t>(rect.height(), bytesFree / bytesPerScanline);
 
-          auto data = static_cast<const char *>(texture.data()) + (rect.left() + rect.top() * texture.width()) *
-              texture.dataFormat().bytesPerPixel();
+            auto data = static_cast<const char *>(texture.data()) + (rect.left() + rect.top() * texture.width()) *
+                texture.dataFormat().bytesPerPixel();
 
-          // Upload data
-          glTexSubImage2D(GL_TEXTURE_2D, 0, rect.left(), rect.top(), rect.width(), scanLines,
-                          texture.dataFormat().layout(), texture.dataFormat().type(), data);
-          uploaded += bytesPerScanline * scanLines;
-          bytesFree -= uploaded;
+            // Upload data
+            glTexSubImage2D(GL_TEXTURE_2D, 0, rect.left(), rect.top(), rect.width(), scanLines,
+                            texture.dataFormat().layout(), texture.dataFormat().type(), data);
+            uploaded += bytesPerScanline * scanLines;
+            bytesFree -= uploaded;
 
-          if(scanLines != rect.height()) {
-            m_dirtyRegion -= QRegion(rect.left(), rect.top(), rect.width(), scanLines);
-            break;
-          } else {
-            m_dirtyRegion -= rect;
+            if(scanLines != rect.height()) {
+              m_dirtyRegion -= QRegion(rect.left(), rect.top(), rect.width(), scanLines);
+              break;
+            } else {
+              m_dirtyRegion -= rect;
+            }
           }
         }
       }
