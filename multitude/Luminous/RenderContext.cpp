@@ -1076,7 +1076,6 @@ namespace Luminous
     RenderCommand & cmd = m_data->m_driver.createRenderCommand(
           vbuffer->buffer, ibuffer->buffer, ubuffer->buffer, style);
     cmd.primitiveCount = indexCount;
-    cmd.primitiveSize = style.primitiveSize();
     cmd.indexOffset = indexOffset;
     cmd.vertexOffset = vertexOffset;
     cmd.uniformOffsetBytes = uniformOffset * uniformSize;
@@ -1088,6 +1087,10 @@ namespace Luminous
     return cmd;
   }
 
+  /// Drawing utility commands
+  //////////////////////////////////////////////////////////////////////////
+
+  //
   void RenderContext::drawRect(const Nimble::Rectf & area, Style & style)
   {
     const Nimble::Vector2f corners[] = { area.low(), area.highLow(), area.lowHigh(), area.high() };
@@ -1095,18 +1098,19 @@ namespace Luminous
     if(style.fill().textures().empty()) {
       drawTriStripT<BasicVertex, BasicUniformBlock>(corners, 4, style);
     }
-    else
-    {
+    else {
       static const Nimble::Vector2f uvs[] = { Nimble::Vector2f(0,0), Nimble::Vector2f(1,0), Nimble::Vector2f(0,1), Nimble::Vector2f(1,1) };
       drawTexTriStripT<BasicVertexUV, BasicUniformBlock>(corners, uvs, 4, style);
     }
   }
 
+  //
   void RenderContext::drawRect(const QRectF & area, Style & style)
   {
     drawRect(Nimble::Rectf(area.left(), area.top(), area.right(), area.bottom()), style);
   }
 
+  //
   void RenderContext::drawRectWithHole(const Nimble::Rect & area,
                                        const Nimble::Rect & hole,
                                        Luminous::Style & style)
@@ -1121,61 +1125,24 @@ namespace Luminous
     drawTriStripT<BasicVertex, BasicUniformBlock>(vertices, 10, style);
   }
 
+  //
   void RenderContext::drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2,
-                               float width, Luminous::Style & fill)
+                               float width, Luminous::Style & style)
   {
-    Nimble::Vector2 dir = p2 - p1;
-
-    // Don't draw zero-length lines
-    float l = dir.length();
-    if(l < std::numeric_limits<float>::epsilon())
-      return;
-
-    dir /= l;
-    Nimble::Vector2 perp = dir.perpendicular() * (width * 0.500001f);
-
-    const Nimble::Vector2 corners[4] = {
-      p1 - perp,
-      p2 - perp,
-      p2 + perp,
-      p1 + perp
-    };
-
-    drawQuad(corners, fill);
+    /// @todo if we decide that lines can be textures we need to use drawQuad here
+    const Nimble::Vector2f vertices[] = { p1, p2 };
+    drawLineStripT<BasicVertex, BasicUniformBlock>(vertices, 2, width, style);
   }
 
-  void RenderContext::drawPolyLine(const Nimble::Vector2 * points, unsigned int numPoints,
-    float width, Luminous::Style & style)
+  //
+  void RenderContext::drawPolyLine(const Nimble::Vector2 * points, unsigned int numPoints, float width, Luminous::Style & style)
   {
-    std::vector<Nimble::Vector2f> vertices;
-
-    Nimble::Vector2 perp;
-    for (unsigned int i = 0; i < numPoints - 1; ++i) {
-      Nimble::Vector2 dir = points[i+1] - points[i];
-
-      // Skip if the points are too close together
-      float l = dir.length();
-      if(l < std::numeric_limits<float>::epsilon())
-        continue;
-      
-      dir /= l;
-      perp = dir.perpendicular() * (width * 0.500001f);
-
-      vertices.push_back(Nimble::Vector2f( points[i] + perp) );
-      vertices.push_back(Nimble::Vector2f( points[i] - perp) );
-    }
-
-    // Add the last point
-    vertices.push_back(Nimble::Vector2f( points[numPoints-1] + perp) );
-    vertices.push_back(Nimble::Vector2f( points[numPoints-1] - perp) );
-
-    drawTriStripT<BasicVertex, BasicUniformBlock>(vertices.data(), vertices.size(), style);
+    drawLineStripT<BasicVertex, BasicUniformBlock>(points, numPoints, width, style);
   }
 
-  void RenderContext::drawLineStrip(const Nimble::Vector2 * vertices, size_t npoints,
-                                    Luminous::Style & fill)
+  void RenderContext::drawPoints(const Nimble::Vector2f * points, size_t numPoints, float size, Luminous::Style & style)
   {
-    drawLineStripT<BasicVertex, BasicUniformBlock>(vertices, npoints, fill);
+    drawPointsT<BasicVertex, BasicUniformBlock>(points, numPoints, size, style);
   }
 
   void RenderContext::drawQuad(const Nimble::Vector2f * corners, Luminous::Style & style)
@@ -1189,6 +1156,10 @@ namespace Luminous
       drawTexTriStripT<BasicVertexUV, BasicUniformBlock>(vertices, uvs, 4, style);
     }
   }
+
+
+
+
 
   Nimble::Vector2 RenderContext::contextSize() const
   {

@@ -213,7 +213,7 @@ namespace Luminous
                       cmd.uniformOffsetBytes, cmd.uniformSizeBytes);
     GLERROR("RenderDriverGL::flush # glBindBufferRange");
 
-    if (cmd.primitiveType == Luminous::PrimitiveType_Line || cmd.primitiveType == Luminous::PrimitiveType_Line)
+    if (cmd.primitiveType == Luminous::PrimitiveType_Line || cmd.primitiveType == Luminous::PrimitiveType_LineStrip)
       glLineWidth(cmd.primitiveSize);
 
     if (cmd.primitiveType == Luminous::PrimitiveType_Point)

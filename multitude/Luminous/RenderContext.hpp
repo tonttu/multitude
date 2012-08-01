@@ -258,20 +258,16 @@ namespace Luminous
     RenderBuilder<Vertex, UniformBlock> drawTexTriStripT(const Nimble::Vector2f * vertices, const Nimble::Vector2f * uvs, unsigned int vertexCount, Style & style);    
 
     template <typename Vertex, typename UniformBlock>
-    RenderContext::RenderBuilder<Vertex, UniformBlock> drawLineStripT(const Nimble::Vector2f * vertices, unsigned int vertexCount, Style & style);
+    RenderBuilder<Vertex, UniformBlock> drawPointsT(const Nimble::Vector2f * vertices, unsigned int vertexCount, float size, Style & style);
 
-    void drawRectWithHole(const Nimble::Rect & area,
-                          const Nimble::Rect & hole,
-                          Luminous::Style & fill);
+    template <typename Vertex, typename UniformBlock>
+    RenderContext::RenderBuilder<Vertex, UniformBlock> drawLineStripT(const Nimble::Vector2f * vertices, unsigned int vertexCount, float width, Style & style);
 
-    void drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2,
-                        float width, Luminous::Style & fill);
-    void drawPolyLine(const Nimble::Vector2 * vertices, unsigned int numVertices,
-                        float width, Luminous::Style & fill);
-    void drawLineStrip(const Nimble::Vector2 * vertices, size_t npoints,
-                        Luminous::Style & fill);
+    void drawRectWithHole(const Nimble::Rect & area, const Nimble::Rect & hole, Luminous::Style & fill);
+    void drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2, float width, Luminous::Style & style);
+    void drawPolyLine(const Nimble::Vector2 * vertices, unsigned int numVertices, float width, Luminous::Style & style);
+    void drawPoints(const Nimble::Vector2f * points, size_t numPoints, float size, Luminous::Style & style);
     void drawQuad(const Nimble::Vector2f * corners, Luminous::Style & fill);
-
 
     /// Sets the current blend function, and enables blending
     /** If the function is BLEND_NONE, then blending is disabled.
@@ -383,7 +379,7 @@ namespace Luminous
         std::size_t vertexSize, std::size_t maxVertexCount, Buffer::Type type, unsigned int & offset);
 
     template <typename Vertex, typename UniformBlock>
-    RenderBuilder<Vertex, UniformBlock> render(Luminous::PrimitiveType type, int indexCount, int vertexCount, const Style & style);
+    RenderBuilder<Vertex, UniformBlock> render(Luminous::PrimitiveType type, int indexCount, int vertexCount, float primitiveSize, const Style & style);
 
     TextureGL & handle(Texture & texture);
 
