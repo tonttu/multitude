@@ -182,7 +182,8 @@ namespace Luminous
 
     float m_expireSeconds;
 
-    bool m_ready;
+    Valuable::AttributeBool m_ready;
+    bool m_valid;
   };
 }
 
@@ -298,12 +299,16 @@ namespace Luminous
     if(!Luminous::Image::ping(m_mipmap.m_filenameAbs, m_mipmap.m_sourceInfo)) {
       Radiant::error("PingTask::doPing # failed to query image size for %s",
                      m_mipmap.m_filenameAbs.toUtf8().data());
+      m_mipmap.m_valid = false;
+      m_mipmap.m_ready = true;
       return false;
     }
 
     if(!s_dxtSupported && m_mipmap.m_sourceInfo.pf.compression() != Luminous::PixelFormat::COMPRESSION_NONE) {
       Radiant::error("PingTask::doPing # Image %s has unsupported format",
                      m_mipmap.m_filenameAbs.toUtf8().data());
+      m_mipmap.m_valid = false;
+      m_mipmap.m_ready = true;
       return false;
     }
 
@@ -369,6 +374,7 @@ namespace Luminous
     } else
 #endif // LUMINOUS_OPENGLES
     {
+      m_mipmap.m_valid = true;
       m_mipmap.m_ready = true;
       // preload the maximum level mipmap image
       m_mipmap.m_mipmap.texture(m_mipmap.m_maxLevel);
@@ -434,7 +440,8 @@ namespace Luminous
     , m_loadingPriority(Task::PRIORITY_NORMAL)
     , m_mipmapFormat("png")
     , m_expireSeconds(3.0f)
-    , m_ready(false)
+    , m_ready(nullptr, "", false)
+    , m_valid(false)
   {
     MULTI_ONCE(BGThread::instance()->addTask(new MipmapReleaseTask()););
   }
@@ -454,7 +461,10 @@ namespace Luminous
 
   Mipmap::Mipmap(const QString & filenameAbs)
     : m_d(new D(*this, filenameAbs))
-  {}
+  {
+    eventAddOut("ready");
+    m_d->m_ready.addListener([&] { if(m_d->m_ready) eventSend("ready"); });
+  }
 
   Mipmap::~Mipmap()
   {
@@ -464,6 +474,9 @@ namespace Luminous
   Texture * Mipmap::texture(unsigned int requestedLevel, unsigned int * returnedLevel, int priorityChange)
   {
     if(!m_d->m_ready) {
+      if(!m_d->m_valid)
+        return nullptr;
+
       if(priorityChange > 0) {
         auto ping = m_d->m_ping;
         auto gen = m_d->m_mipmapGenerator;
@@ -477,6 +490,8 @@ namespace Luminous
       }
       return nullptr;
     }
+    if(!m_d->m_valid)
+      return nullptr;
 
     int time = frameTime();
 
@@ -607,6 +622,16 @@ namespace Luminous
     return m_d->m_nativeSize;
   }
 
+  bool Mipmap::isReady() const
+  {
+    return m_d->m_ready;
+  }
+
+  bool Mipmap::isValid() const
+  {
+    return m_d->m_valid;
+  }
+
   void Mipmap::setLoadingPriority(Priority priority)
   {
     m_d->m_loadingPriority = priority;
@@ -640,6 +665,8 @@ namespace Luminous
   {
     m_d->m_compressedMipmapInfo = imginfo;
     m_d->m_ready = true;
+    m_d->m_valid = true;
+
     m_d->m_mipmapGenerator.reset();
     // preload the maximum level mipmap image
     texture(m_d->m_maxLevel);

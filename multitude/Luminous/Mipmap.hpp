@@ -7,12 +7,14 @@
 #include <Nimble/Vector2.hpp>
 #include <Nimble/Matrix4.hpp>
 
+#include <Valuable/Node.hpp>
+
 #include <QString>
 #include <QFuture>
 
 namespace Luminous
 {
-  class Mipmap : public Patterns::NotCopyable,
+  class Mipmap : public Valuable::Node,
                  public std::enable_shared_from_this<Mipmap>
   {
   public:
@@ -44,6 +46,12 @@ namespace Luminous
 
     /** @return Returns the native size of the image, in pixels. */
     LUMINOUS_API const Nimble::Vector2i & nativeSize() const;
+
+    /// Mipmap is not ready, if it still has PingTask running/waiting
+    /// After the mipmap is ready, nativeSize() returns the correct size
+    LUMINOUS_API bool isReady() const;
+
+    LUMINOUS_API bool isValid() const;
 
     /// Sets the loading priority for this set of mipmaps
     /// @param priority new priority
