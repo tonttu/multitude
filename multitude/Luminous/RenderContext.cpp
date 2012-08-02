@@ -472,8 +472,10 @@ namespace Luminous
       {
         currentIndex = 0;
         for(auto it = buffers.begin(); it != buffers.end(); ++it) {
-          ctx.unmapBuffer(it->buffer, 0, it->reservedBytes);
-          it->reservedBytes = 0;
+          if (it->reservedBytes > 0) {
+            ctx.unmapBuffer(it->buffer, 0, it->reservedBytes);
+            it->reservedBytes = 0;
+          }
         }
       }
     };
