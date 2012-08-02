@@ -24,7 +24,7 @@ namespace Luminous
     };
 
   public:
-    Fill() : m_color(1, 1, 1, 1), m_programGL(nullptr), m_program(nullptr) {}
+    Fill() : m_color(1.f, 1.f, 1.f, 1.f), m_programGL(nullptr), m_program(nullptr) {}
 
     const Nimble::Vector4 & color() const { return m_color; }
     void setColor(const Nimble::Vector4f & c) { m_color = c; }
