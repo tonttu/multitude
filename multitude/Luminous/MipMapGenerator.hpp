@@ -23,14 +23,13 @@
 #include "Export.hpp"
 #include "Task.hpp"
 #include "PixelFormat.hpp"
+#include "Image.hpp"
 
 #include <Radiant/RefPtr.hpp>
 
 #include <vector>
 
 namespace Luminous {
-  class Image;
-  struct ImageInfo;
 
   /// Task that generates mipmaps to global imagecache for source image.
   /// Will only create DDS/DXT mipmaps. CPUMipmaps uses this class if compressed
