@@ -21,45 +21,59 @@ namespace
   MipmapStore s_mipmapStore;
   Radiant::Mutex s_mipmapStoreMutex;
 
-  enum {
+  // after first resize modify the dimensions so that we can resize
+  // 5 times with quarterSize
+  const unsigned int s_resizes = 5;
+  // default save sizes
+  const unsigned int s_defaultSaveSize1 = 64;
+  const unsigned int s_defaultSaveSize2 = 512;
+  const unsigned int s_smallestImage = 32;
+  const Luminous::Priority s_defaultPingPriority = Luminous::Task::PRIORITY_HIGH + 2;
+
+  bool s_dxtSupported = true;
+
+  /// Special time values in ImageTex3::lastUsed
+  enum LoadState {
     New = 0,
     Loading = 1
   };
 
-  int frameTime()
-  {
-    /// 0 and 1 are reserved
-    return 2 + Luminous::RenderManager::frameTime();
-  }
+  /// Current time, unit is the same as in RenderManager::frameTime.
+  /// This file excludes LoadState times.
+  /// See also ImageTex3::lastUsed
+  inline int frameTime();
 
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+
+  /// One mipmap level, Mipmap has a vector of these. By default objects are
+  /// "empty", meaning that the texture is invalid (!isValid()) and images
+  /// are null. LoadTasks will load this when needed, and MipmapReleaseTask
+  /// will expire these (set to empty state)
   struct ImageTex3
   {
-    ImageTex3() : image(nullptr) {}
+    ImageTex3() {}
 
     ImageTex3(ImageTex3 && t);
     ImageTex3 & operator=(ImageTex3 && t);
 
+    /// Only one of the image types is defined at once
     std::unique_ptr<Luminous::CompressedImage> cimage;
     std::unique_ptr<Luminous::Image> image;
+
     Luminous::Texture texture;
+
+    /// Either LoadState enum value, or time when this class was last used.
+    /// These need to be in the same atomic int, or alternatively we could do
+    /// this nicer by using separate enum and timestamp, but this way we have
+    /// fast lockless synchronization between all threads
     QAtomicInt lastUsed;
   };
 
-  ImageTex3::ImageTex3(ImageTex3 && t)
-    : image(std::move(t.image))
-    , texture(std::move(t.texture))
-    , lastUsed(t.lastUsed)
-  {
-  }
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
 
-  ImageTex3 & ImageTex3::operator=(ImageTex3 && t)
-  {
-    image = std::move(t.image);
-    texture = std::move(t.texture);
-    lastUsed = t.lastUsed;
-    return *this;
-  }
-
+  /// Loads uncompressed mipmaps from file to ImageTex3 / create them if necessary
   class LoadImageTask : public Luminous::Task
   {
   public:
@@ -76,6 +90,10 @@ namespace
     int m_level;
   };
 
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+
+  /// Loads existing compressed mipmaps from file to ImageTex3
   class LoadCompressedImageTask : public LoadImageTask
   {
   public:
@@ -85,39 +103,6 @@ namespace
   protected:
     virtual void doTask() OVERRIDE;
   };
-
-  LoadImageTask::LoadImageTask(Luminous::MipmapPtr mipmap, ImageTex3 & tex,
-                               Luminous::Priority priority, const QString & filename, int level)
-    : Task(priority)
-    , m_mipmap(mipmap)
-    , m_tex(tex)
-    , m_filename(filename)
-    , m_level(level)
-  {}
-
-  LoadCompressedImageTask::LoadCompressedImageTask(
-      Luminous::MipmapPtr mipmap, ImageTex3 & tex, Luminous::Priority priority,
-      const QString & filename, int level)
-    : LoadImageTask(mipmap, tex, priority, filename, level)
-  {}
-
-  void LoadImageTask::doTask()
-  {
-  }
-
-  void LoadCompressedImageTask::doTask()
-  {
-    std::unique_ptr<Luminous::CompressedImage> im(new Luminous::CompressedImage);
-    if(!im->read(m_filename, m_level)) {
-      Radiant::error("LoadCompressedImageTask::doTask # Could not read %s level %d", m_filename.toUtf8().data(), m_level);
-    } else {
-      m_tex.texture.setData(im->width(), im->height(), im->compression(), im->data());
-      m_tex.cimage = std::move(im);
-      int now = frameTime();
-      m_tex.lastUsed.testAndSetOrdered(Loading, now);
-    }
-    setFinished();
-  }
 }
 
 namespace Luminous
@@ -141,6 +126,15 @@ namespace Luminous
     QSemaphore m_users;
   };
 
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+
+  /// Iterates all mipmaps and their mipmap levels and expires unused images.
+  /// This one task takes care of the whole expiration process for all images.
+  /// It locks s_mipmapStoreMutex for a really short period at a time, so it
+  /// doesn't slow down the application if the main thread is creating new
+  /// Mipmap instances. The expiration checking is atomic operation without
+  /// need to lock anything, so this will have no impact on rendering threads.
   class MipmapReleaseTask : public Luminous::Task
   {
   public:
@@ -149,6 +143,9 @@ namespace Luminous
   protected:
     virtual void doTask() OVERRIDE;
   };
+
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
 
   class Mipmap::D
   {
@@ -191,18 +188,71 @@ namespace Luminous
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
+
 namespace
 {
-  // after first resize modify the dimensions so that we can resize
-  // 5 times with quarterSize
-  const unsigned int s_resizes = 5;
-  // default save sizes
-  const unsigned int s_defaultSaveSize1 = 64;
-  const unsigned int s_defaultSaveSize2 = 512;
-  const unsigned int s_smallestImage = 32;
-  const Luminous::Priority s_defaultPingPriority = Luminous::Task::PRIORITY_HIGH + 2;
+  int frameTime()
+  {
+    /// 0 and 1 are reserved
+    return 2 + Luminous::RenderManager::frameTime();
+  }
 
-  bool s_dxtSupported = true;
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+
+  ImageTex3::ImageTex3(ImageTex3 && t)
+    : image(std::move(t.image))
+    , texture(std::move(t.texture))
+    , lastUsed(t.lastUsed)
+  {
+  }
+
+  ImageTex3 & ImageTex3::operator=(ImageTex3 && t)
+  {
+    image = std::move(t.image);
+    texture = std::move(t.texture);
+    lastUsed = t.lastUsed;
+    return *this;
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+
+  LoadImageTask::LoadImageTask(Luminous::MipmapPtr mipmap, ImageTex3 & tex,
+                               Luminous::Priority priority, const QString & filename, int level)
+    : Task(priority)
+    , m_mipmap(mipmap)
+    , m_tex(tex)
+    , m_filename(filename)
+    , m_level(level)
+  {}
+
+  void LoadImageTask::doTask()
+  {
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+
+  LoadCompressedImageTask::LoadCompressedImageTask(
+      Luminous::MipmapPtr mipmap, ImageTex3 & tex, Luminous::Priority priority,
+      const QString & filename, int level)
+    : LoadImageTask(mipmap, tex, priority, filename, level)
+  {}
+
+  void LoadCompressedImageTask::doTask()
+  {
+    std::unique_ptr<Luminous::CompressedImage> im(new Luminous::CompressedImage);
+    if(!im->read(m_filename, m_level)) {
+      Radiant::error("LoadCompressedImageTask::doTask # Could not read %s level %d", m_filename.toUtf8().data(), m_level);
+    } else {
+      m_tex.texture.setData(im->width(), im->height(), im->compression(), im->data());
+      m_tex.cimage = std::move(im);
+      int now = frameTime();
+      m_tex.lastUsed.testAndSetOrdered(Loading, now);
+    }
+    setFinished();
+  }
 }
 
 namespace Luminous
@@ -370,13 +420,10 @@ namespace Luminous
 
     scheduleFromNowSecs(5.0);
   }
-}
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
 
-namespace Luminous
-{
   Mipmap::D::D(Mipmap & mipmap, const QString & filenameAbs)
     : m_mipmap(mipmap)
     , m_filenameAbs(filenameAbs)
@@ -402,6 +449,7 @@ namespace Luminous
     }
   }
 
+  /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
   Mipmap::Mipmap(const QString & filenameAbs)
