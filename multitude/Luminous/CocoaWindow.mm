@@ -108,8 +108,8 @@ return self;
   int index = 0;
 
   // Enable OpenGL 3.2 Core (Cornerstone needs fixing before this is possible)
-  //attributes[ index++ ] = NSOpenGLPFAOpenGLProfile;
-  //attributes[ index++ ] = NSOpenGLProfileVersion3_2Core;
+  attributes[ index++ ] = NSOpenGLPFAOpenGLProfile;
+  attributes[ index++ ] = NSOpenGLProfileVersion3_2Core;
   attributes[ index++ ] = NSOpenGLPFADoubleBuffer;
   attributes[ index++ ] = NSOpenGLPFAAccelerated;
   attributes[ index++ ] = NSOpenGLPFAColorSize;
