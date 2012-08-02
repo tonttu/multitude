@@ -625,7 +625,11 @@ void CocoaWindow::restore()
 
 void CocoaWindow::showCursor(bool visible)
 {
-  Radiant::error("CocoaWindow::showCursor # unimplemented");
+    if(visible)
+        [NSCursor unhide];
+    else
+        [NSCursor hide];
+  //Radiant::error("CocoaWindow::showCursor # unimplemented");
 }
 
 }
