@@ -238,14 +238,14 @@ namespace Luminous
 
       memset(m_textures, 0, sizeof(m_textures));
 
-      m_basicShader.loadShader("Luminous/GLSL400/basic_shader.vs", ShaderGLSL::Vertex);
-      m_basicShader.loadShader("Luminous/GLSL400/basic_shader.fs", ShaderGLSL::Fragment);
+      m_basicShader.loadShader("Luminous/GLSL150/basic.vs", ShaderGLSL::Vertex);
+      m_basicShader.loadShader("Luminous/GLSL150/basic.fs", ShaderGLSL::Fragment);
       Luminous::VertexDescription desc;
       desc.addAttribute<Nimble::Vector3f>("vertex_position");
       m_basicShader.setVertexDescription(desc);
 
-      m_texShader.loadShader("Luminous/GLSL400/tex_shader.vs", ShaderGLSL::Vertex);
-      m_texShader.loadShader("Luminous/GLSL400/tex_shader.fs", ShaderGLSL::Fragment);
+      m_texShader.loadShader("Luminous/GLSL150/tex.vs", ShaderGLSL::Vertex);
+      m_texShader.loadShader("Luminous/GLSL150/tex.fs", ShaderGLSL::Fragment);
       desc = Luminous::VertexDescription();
       desc.addAttribute<Nimble::Vector3f>("vertex_position");
       desc.addAttribute<Nimble::Vector2>("vertex_uv");
