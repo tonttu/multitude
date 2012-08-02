@@ -524,7 +524,7 @@ return self;
   [glWindow setAcceptsMouseMovedEvents:YES];
 
   glView = [ [CocoaView alloc] initWithFrame:[glWindow frame]
-      colorBits:8 depthBits:8 fullscreen:m_hint->fullscreen()
+      colorBits:8 depthBits:24 fullscreen:m_hint->fullscreen()
       m_window:m_window m_antiAliasing:m_hint->antiAliasingSamples()];
 
   if(glView != nil)
