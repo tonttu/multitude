@@ -3,7 +3,7 @@ project ("Luminous")
   defines {"LUMINOUS_EXPORT"}
   files  { "**.hpp", "**.cpp" }
   includedirs { "." }
-  includedirs { "../Externals/adl_sdk" }
+  includedirs { "../3rdparty/adl_sdk" }
 
   links{"Radiant","Valuable","Nimble","Patterns", "Squish"}
   links{QtSvg}
