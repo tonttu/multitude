@@ -49,7 +49,7 @@ namespace Valuable
       classes, Node simply maintains a list of children.
   */
   /// @todo Examples
-  class VALUABLE_API Node : public Attribute
+  class VALUABLE_API Node : public Attribute, public Patterns::NotCopyable
   {
   public:
     /// Universally unique identifier type
@@ -73,6 +73,9 @@ namespace Valuable
     */
     Node(Node * host, const QString & name = "", bool transit = false);
     virtual ~Node();
+
+    Node(Node && node);
+    Node & operator=(Node && node);
 
     /// Adds a new Attribute to the list of attribute objects.
     /// Copies the name of the attribute from the given object.

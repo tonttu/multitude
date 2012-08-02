@@ -65,8 +65,7 @@ namespace Valuable
   }
 
   Attribute::Attribute(const Attribute & o)
-    : NotCopyable()
-    , m_host(0)
+    : m_host(0)
     , m_changed(false)
     , m_listenersId(0)
   {

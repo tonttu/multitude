@@ -201,6 +201,37 @@ namespace Valuable
       delete m_values.begin()->second;
   }
 
+  Node::Node(Node && node)
+    : Attribute(std::move(*this))
+    , m_sender(std::move(node.m_sender))
+    , m_values(std::move(node.m_values))
+    , m_elisteners(std::move(node.m_elisteners))
+    , m_eventSources(std::move(node.m_eventSources))
+    , m_eventsEnabled(std::move(node.m_eventsEnabled))
+    , m_valueListening(std::move(node.m_valueListening))
+    , m_id(std::move(node.m_id))
+    , m_frame(std::move(node.m_frame))
+    , m_eventSendNames(std::move(node.m_eventSendNames))
+    , m_eventListenNames(std::move(node.m_eventListenNames))
+  {
+  }
+
+  Node & Node::operator=(Node && node)
+  {
+    Attribute::operator=(std::move(*this));
+    m_sender = std::move(node.m_sender);
+    m_values = std::move(node.m_values);
+    m_elisteners = std::move(node.m_elisteners);
+    m_eventSources = std::move(node.m_eventSources);
+    m_eventsEnabled = std::move(node.m_eventsEnabled);
+    m_valueListening = std::move(node.m_valueListening);
+    m_id = std::move(node.m_id);
+    m_frame = std::move(node.m_frame);
+    m_eventSendNames = std::move(node.m_eventSendNames);
+    m_eventListenNames = std::move(node.m_eventListenNames);
+    return *this;
+  }
+
   Attribute * Node::getValue(const QString & name)
   {
     return Node::getAttribute(name);
