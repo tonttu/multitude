@@ -535,11 +535,11 @@ namespace Luminous
     return bufferGL.map(offset, length, access);
   }
 
-  void RenderDriverGL::unmapBuffer(const Buffer & buffer)
+  void RenderDriverGL::unmapBuffer(const Buffer & buffer, int offset, std::size_t length)
   {
     BufferGL & bufferGL = handle(buffer);
 
-    bufferGL.unmap();
+    bufferGL.unmap(offset, length);
   }
 
   RenderCommand & RenderDriverGL::createRenderCommand(Buffer & vertexBuffer,

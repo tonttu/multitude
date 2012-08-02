@@ -80,7 +80,8 @@ namespace Luminous
 
     LUMINOUS_API virtual void * mapBuffer(const Buffer & buffer, int offset, std::size_t length,
                                           Radiant::FlagsT<Buffer::MapAccess> access) = 0;
-    LUMINOUS_API virtual void unmapBuffer(const Buffer & buffer) = 0;
+    LUMINOUS_API virtual void unmapBuffer(const Buffer & buffer, int offset = 0,
+                                          std::size_t length = std::size_t(-1)) = 0;
 
     LUMINOUS_API virtual RenderCommand & createRenderCommand(Buffer & vertexBuffer,
                                                              Buffer & indexBuffer,

@@ -349,6 +349,8 @@ namespace Luminous
     inline T * mapBuffer(const Buffer & buffer,
                          Radiant::FlagsT<Buffer::MapAccess> access);
 
+    void unmapBuffer(const Buffer & buffer, int offset = 0, std::size_t length = std::size_t(-1));
+
     void draw(PrimitiveType primType, unsigned int offset, unsigned int primitives);
     void drawIndexed(PrimitiveType primType, unsigned int offset, unsigned int primitives);
 

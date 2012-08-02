@@ -114,7 +114,7 @@ namespace Luminous
     return mappings.data;
   }
 
-  void BufferGL::unmap()
+  void BufferGL::unmap(int offset, std::size_t length)
   {
     auto it = m_state.bufferMaps().find(m_handle);
     if(it == m_state.bufferMaps().end()) {
@@ -123,6 +123,11 @@ namespace Luminous
     }
 
     bind();
+
+    if(length != std::size_t(-1) && (it->second.access & GL_MAP_FLUSH_EXPLICIT_BIT)) {
+      glFlushMappedBufferRange(m_target, offset, length);
+      GLERROR("BufferGL::unmap # glFlushMappedBufferRange");
+    }
 
     glUnmapBuffer(m_target);
     GLERROR("BufferGL::unmap # glUnmapBuffer");

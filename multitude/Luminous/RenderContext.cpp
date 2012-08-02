@@ -468,11 +468,13 @@ namespace Luminous
         return *this;
       }
 
-      void flush()
+      void flush(RenderContext & ctx)
       {
         currentIndex = 0;
-        for(auto it = buffers.begin(); it != buffers.end(); ++it)
+        for(auto it = buffers.begin(); it != buffers.end(); ++it) {
+          ctx.unmapBuffer(it->buffer, 0, it->reservedBytes);
           it->reservedBytes = 0;
+        }
       }
     };
 
@@ -995,7 +997,8 @@ namespace Luminous
       ++pool.currentIndex;
     }
 
-    char * data = mapBuffer<char>(buffer->buffer, Buffer::MapWrite);
+    char * data = mapBuffer<char>(buffer->buffer, Buffer::MapWrite |
+                                  Buffer::MapInvalidateRange | Buffer::MapFlushExplicit);
     assert(data);
     data += buffer->reservedBytes;
     offset = buffer->reservedBytes / vertexSize;
@@ -1008,6 +1011,11 @@ namespace Luminous
                                         Radiant::FlagsT<Buffer::MapAccess> access)
   {
     return m_data->m_driver.mapBuffer(buffer, offset, length, access);
+  }
+
+  void RenderContext::unmapBuffer(const Buffer & buffer, int offset, std::size_t length)
+  {
+    m_data->m_driver.unmapBuffer(buffer, offset, length);
   }
 
   RenderCommand & RenderContext::createRenderCommand(int indexCount, int vertexCount,
@@ -1277,16 +1285,16 @@ namespace Luminous
 
   void RenderContext::flush2()
   {
-    m_data->m_driver.flush();
+    m_data->m_indexBuffers.flush(*this);
 
-    m_data->m_indexBuffers.flush();
     for(auto it = m_data->m_vertexBuffers.begin(); it != m_data->m_vertexBuffers.end(); ++it)
-      it->second.flush();
+      it->second.flush(*this);
     for(auto it = m_data->m_uniformBuffers.begin(); it != m_data->m_uniformBuffers.end(); ++it)
-      it->second.flush();
+      it->second.flush(*this);
 
-    RenderResource::increaseGlobalGeneration();
+    m_data->m_driver.flush();
   }
+
   void RenderContext::flush()
   {
     RenderPacket * rp = m_data->m_renderPacket;
