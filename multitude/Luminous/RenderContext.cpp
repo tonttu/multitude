@@ -276,13 +276,6 @@ namespace Luminous
       if(!m_initialized) {
         m_initialized = true;
 
-        GLSLProgramObject * basic =
-            GLSLProgramObject::fromFiles(locateStandardShader("basic_tex.vs").toUtf8().data(),
-                                         locateStandardShader("basic_tex.fs").toUtf8().data());
-        if(!basic)
-          warning("Could not load basic shader for rendering");
-        m_basic_shader.reset(basic);
-
         m_viewFBO.reset(new Luminous::Framebuffer());
 
         m_emptyTexture.reset(Texture2D::fromBytes(GL_RGB, 32, 32, 0,
@@ -413,8 +406,6 @@ namespace Luminous
     unsigned long m_renderCount;
     unsigned long m_frameCount;
 
-    std::shared_ptr<Luminous::GLSLProgramObject> m_basic_shader;
-
     const Luminous::MultiHead::Area * m_area;
     const Luminous::MultiHead::Window * m_window;
     /// fbo for views
@@ -529,38 +520,6 @@ namespace Luminous
   const Luminous::MultiHead::Area * RenderContext::area() const
   {
     return m_data->m_area;
-  }
-
-  QString RenderContext::locateStandardShader(const QString & filename)
-  {
-    QString pathname;
-#ifdef LUMINOUS_OPENGL_FULL
-
-    const char * shaderpath = getenv("CORNERSTONE_CUSTOM_SHADER_PATH");
-
-#ifdef RADIANT_OSX
-    /* OSX has broken shaders, so lets just go with custom shaders by default. */
-    if(!shaderpath)
-      shaderpath = "../MultiTouch/GL21OSXShaders/";
-#endif
-
-    if(shaderpath) {
-      QString tmp(shaderpath);
-      tmp += filename;
-      tmp = Radiant::ResourceLocator::instance().locate(tmp);
-      if(!tmp.isEmpty()) {
-        return tmp;
-      }
-    }
-
-    // pathname = "../MultiTouch/GL20Shaders/";
-    pathname = "../MultiTouch/ES20Shaders/";
-#else
-    pathname = "../MultiTouch/ES20Shaders/";
-#endif
-    pathname += filename;
-
-    return Radiant::ResourceLocator::instance().locate(pathname);
   }
 
   void RenderContext::prepare()
@@ -1316,11 +1275,6 @@ namespace Luminous
     //Utils::glCheck("RenderContext::bindProgram # 2");
   }
 
-  void RenderContext::bindDefaultProgram()
-  {
-    bindProgram(&*m_data->m_basic_shader);
-  }
-
   void RenderContext::flush2()
   {
     m_data->m_driver.flush();
@@ -1356,7 +1310,6 @@ namespace Luminous
   void RenderContext::restart()
   {
     m_data->m_program = 0;
-    m_data->m_basic_shader->bind();
     m_data->m_vbo = 0;
 
     memset(m_data->m_textures, 0, sizeof(m_data->m_textures));

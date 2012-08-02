@@ -315,8 +315,8 @@ namespace Luminous
         vs->setSource(code.data());
 
         if(!vs->compile()) {
-          error("GLSLProgramObject::fromFiles # vertex shader compile error: %s",
-                vs->compilerLog());
+          error("GLSLProgramObject::fromFiles # vertex shader %s compile error: %s",
+                vsFile, vs->compilerLog());
           delete vs;
           return 0;
         }

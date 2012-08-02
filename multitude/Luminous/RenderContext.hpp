@@ -150,8 +150,6 @@ namespace Luminous
     /// @todo make deprecated
     Luminous::RenderContext * resources() { return this; }
 
-    static QString locateStandardShader(const QString & filename);
-
     /// Prepares the context for rendering a frame. This is called once for
     /// every frame before rendering.
     virtual void prepare();
@@ -329,7 +327,6 @@ namespace Luminous
     void bindBuffer(GLenum type, GLuint id);
     /// Bind GLSL program object
     void bindProgram(GLSLProgramObject * program);
-    void bindDefaultProgram();
 
     void flush();
     void flush2();

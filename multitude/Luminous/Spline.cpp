@@ -451,11 +451,12 @@ namespace Luminous {
       static Radiant::Mutex mutex;
       Radiant::Guard g(mutex);
 
+      /// @todo fix for new render pipe
       if(!s_shader.isDefined()) {
-        QString fspath = RenderContext::locateStandardShader("spline.fs");
-        QString vspath = RenderContext::locateStandardShader("spline.vs");
-        s_shader.loadFragmentShader(fspath);
-        s_shader.loadVertexShader(vspath);
+        //QString fspath = RenderContext::locateStandardShader("spline.fs");
+        //QString vspath = RenderContext::locateStandardShader("spline.vs");
+        //s_shader.loadFragmentShader(fspath);
+        //s_shader.loadVertexShader(vspath);
 
         assert(s_shader.isDefined());
       }
