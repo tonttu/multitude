@@ -11,9 +11,20 @@ namespace Luminous
                                               builder.vertex, builder.uniform, builder.depth, style);
     cmd.primitiveType = type;
     cmd.primitiveSize = primitiveSize;
+
+    /// Using "layout(row_major)" on AMD only specifies the row-major -layout
+    /// to the first matrix in the uniform block. That is why we don't use that
+    /// feature at all. For GLES this also makes things easier.
+    /// This happens at least on Ubuntu 12.04, AMD drivers 12-6, OpenGL 4.2.11733
+    builder.uniform->projMatrix = viewTransform();
+    builder.uniform->projMatrix.transpose();
+    builder.uniform->modelMatrix = transform4();
+    builder.uniform->modelMatrix.transpose();
+    builder.uniform->color = style.fillColor();
+
     return builder;
   }
- 
+
   template <typename Vertex, typename UniformBlock>
   RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::drawPointsT(
     const Nimble::Vector2f * vertices, unsigned int vertexCount, float size, Style & style)
@@ -28,10 +39,6 @@ namespace Luminous
       v++->location.make(vertices[i].x, vertices[i].y, b.depth);
       *idx++ = i;
     }
-
-    b.uniform->projMatrix = viewTransform();
-    b.uniform->modelMatrix = transform4();
-    b.uniform->color = style.fillColor();
 
     return b;
   }
@@ -51,10 +58,6 @@ namespace Luminous
       *idx++ = i;
     }
 
-    b.uniform->projMatrix = viewTransform();
-    b.uniform->modelMatrix = transform4();
-    b.uniform->color = style.fillColor();
-
     return b;
   }
   
@@ -72,10 +75,6 @@ namespace Luminous
       v++->location.make(vertices[i].x, vertices[i].y, b.depth);
       *idx++ = i;
     }
-
-    b.uniform->projMatrix = viewTransform();
-    b.uniform->modelMatrix = transform4();
-    b.uniform->color = style.fillColor();
 
     return b;
   }
@@ -95,10 +94,6 @@ namespace Luminous
       v++->texCoord = uvs[i];
       *idx++ = i;
     }
-
-    b.uniform->projMatrix = viewTransform();
-    b.uniform->modelMatrix = transform4();
-    b.uniform->color = style.fillColor();
 
     return b;
   }
