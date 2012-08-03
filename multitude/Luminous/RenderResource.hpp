@@ -34,6 +34,8 @@ namespace Luminous
       Buffer,
       Program,
       Texture,
+      RenderBuffer,
+      FrameBuffer
     };
 
   public:

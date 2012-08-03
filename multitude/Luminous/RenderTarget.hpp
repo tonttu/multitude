@@ -1,69 +1,52 @@
 #ifndef LUMINOUS_RENDER_TARGET_HPP
 #define LUMINOUS_RENDER_TARGET_HPP
 
-#include "FramebufferResource.hpp"
+#include "Export.hpp"
+#include "RenderResource.hpp"
+#include "Texture2.hpp"
 
-#include <Radiant/RefPtr.hpp>
+#include <Nimble/Vector2.hpp>
 
-#include <Nimble/Rect.hpp>
-
-#include <map>
-#include <stack>
-
-// Not used yet
-/// @cond
+#include <QSize>
 
 namespace Luminous
 {
-  class RenderTargetObject;
-  class RenderContext;
 
-  /// Simple render-to-texture provider meant to replace RenderContext::getTemporaryFBO() functionality.
-  /// Only supports single draw buffer currently
-  class RenderTargetManager
+  class RenderBuffer : public RenderResource
   {
   public:
-    RenderTargetManager(Luminous::RenderContext & rc);
+    RenderBuffer();
+    ~RenderBuffer();
 
-    RenderTargetObject pushRenderTarget(Nimble::Vector2 size, float scale);
-    Luminous::Texture2D & popRenderTarget(RenderTargetObject & trt);
+    void storageFormat(const QSize & size, GLenum format);
 
   private:
-    struct RenderTargetState {
-      bool inUse;
-      FramebufferResource resource;
-    };
-
-    std::shared_ptr<RenderTargetState> allocateNewTexture(size_t extent);
-    std::shared_ptr<RenderTargetState> findAvailableTexture(size_t extent);
-
-    typedef std::multimap<size_t, std::shared_ptr<RenderTargetState> > Textures;
-
-    Textures m_textures;
-
-    typedef std::stack<std::shared_ptr<RenderTargetState> > RenderTargetStack;
-
-    RenderTargetStack m_stack;
-    Luminous::RenderContext & m_context;
-
-    friend class RenderTargetObject;
+    class D;
+    D * m_d;
   };
 
-  //////////
-  //////////
+  ////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////
 
-  class RenderTargetObject
+  class RenderTarget : public RenderResource
   {
   public:
-    RenderTargetObject(std::shared_ptr<RenderTargetManager::RenderTargetState> holder);
-    ~RenderTargetObject();
+    RenderTarget();
+    ~RenderTarget();
+
+    void setSize(Nimble::Vector2i size);
+
+    void attach(GLenum attachment, Luminous::Texture & texture);
+    void attach(GLenum attachment, Luminous::RenderBuffer & buffer);
+
+    Luminous::Texture * texture(GLenum attachment);
+    Luminous::RenderBuffer * renderBuffer(GLenum attachment);
 
   private:
-    std::shared_ptr<RenderTargetManager::RenderTargetState> m_holder;
+    class D;
+    D * m_d;
   };
 
 }
-
-/// @endcond
 
 #endif
