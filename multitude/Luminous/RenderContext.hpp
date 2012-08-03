@@ -21,6 +21,7 @@
 #include <Luminous/FramebufferResource.hpp>
 #include <Luminous/Buffer.hpp>
 #include <Luminous/VertexHolder.hpp>
+#include "RenderTarget.hpp"
 
 #include <Nimble/Rectangle.hpp>
 #include <Nimble/Vector2.hpp>
@@ -233,6 +234,9 @@ namespace Luminous
 
     void drawRect(const QRectF & area, Style &style);
     void drawRect(const Nimble::Rect & area, Luminous::Style & style);
+
+    RenderTargetGuard pushRenderTarget(RenderTarget & target);
+    void popRenderTarget();
 
     //////////////////////////////////////////////////////////////////////////
     /// DEPRECATED FUNCTIONS

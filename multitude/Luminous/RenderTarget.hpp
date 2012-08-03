@@ -20,6 +20,9 @@ namespace Luminous
 
     void storageFormat(const QSize & size, GLenum format);
 
+    const QSize & size() const;
+    GLenum format() const;
+
   private:
     class D;
     D * m_d;
@@ -34,7 +37,8 @@ namespace Luminous
     RenderTarget();
     ~RenderTarget();
 
-    void setSize(Nimble::Vector2i size);
+    const QSize & size() const;
+    void setSize(const QSize & size);
 
     void attach(GLenum attachment, Luminous::Texture & texture);
     void attach(GLenum attachment, Luminous::RenderBuffer & buffer);
@@ -47,6 +51,20 @@ namespace Luminous
     D * m_d;
   };
 
+  ////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////
+
+  class RenderContext;
+
+  class RenderTargetGuard
+  {
+  public:
+    RenderTargetGuard(RenderContext & r);
+    ~RenderTargetGuard();
+
+  private:
+    RenderContext & m_renderContext;
+  };
 }
 
 #endif

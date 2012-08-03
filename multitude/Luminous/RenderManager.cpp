@@ -148,5 +148,7 @@ namespace Luminous
   template <> LUMINOUS_API VertexDescription * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<VertexDescription>(id); }
   template <> LUMINOUS_API Texture * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<Texture>(id); }
   template <> LUMINOUS_API Program * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<Program>(id); }
-  template <> LUMINOUS_API ShaderGLSL * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<ShaderGLSL>(id); }
+  template <> LUMINOUS_API ShaderGLSL * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<ShaderGLSL>(id); }  
+  template <> LUMINOUS_API RenderBuffer * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<RenderBuffer>(id); }
+  template <> LUMINOUS_API RenderTarget * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<RenderTarget>(id); }
 }

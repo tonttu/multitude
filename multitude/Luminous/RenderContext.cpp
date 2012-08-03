@@ -1543,4 +1543,16 @@ namespace Luminous
     assert(m_data->m_driverGL);
     return m_data->m_driverGL->handle(texture);
   }
+
+  RenderTargetGuard RenderContext::pushRenderTarget(RenderTarget &target)
+  {
+    /// @todo implement
+    return RenderTargetGuard(*this);
+  }
+
+  void RenderContext::popRenderTarget()
+  {
+    /// @todo implement
+  }
+
 }

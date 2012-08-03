@@ -6,6 +6,7 @@
 #include "Luminous/VertexHolder.hpp"
 #include "Luminous/Style.hpp"
 #include "Luminous/Buffer.hpp"
+#include "Luminous/RenderTarget.hpp"
 
 #include <Radiant/Color.hpp>
 #include <Radiant/RefPtr.hpp>
