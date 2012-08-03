@@ -138,10 +138,9 @@ namespace Luminous
     RenderContext(Luminous::RenderDriver & driver, const Luminous::MultiHead::Window * window = 0);
     virtual ~RenderContext();
 
-    /// Sets the associated window for this context
-    /// @param window window to associate
-    void setWindow(const Luminous::MultiHead::Window * window,
-                   const Luminous::MultiHead::Area * area);
+    /// Sets the associated area for this context
+    /// @param area area to associate
+    void setArea(const Luminous::MultiHead::Area * area);
 
     const Luminous::MultiHead::Window * window() const;
     const Luminous::MultiHead::Area * area() const;
@@ -205,19 +204,19 @@ namespace Luminous
       @param width width of the arc
       @param fromRadians start angle in radians
       @param toRadians end angle in radians
-      @param fill color and other parameters for the arc
+      @param style color and other parameters for the arc
       @param lineSegments number of steps
       */
-    void drawArc(Nimble::Vector2f center, float radius, float width, float fromRadians, float toRadians, Luminous::Style & fill, unsigned int lineSegments = 0);
+    void drawArc(Nimble::Vector2f center, float radius, float width, float fromRadians, float toRadians, Luminous::Style & style, unsigned int lineSegments = 0);
 
     /** Draws a circle
       @param center center of the circle
       @param radius radius of the circle
       @param width width of the circle
-      @param fill color and other parameters for the circle
+      @param style color and other parameters for the circle
       @param lineSegments number of steps
       */
-    void drawCircle(Nimble::Vector2f center, float radius, float width, Luminous::Style & fill, unsigned int lineSegments = 0);
+    void drawCircle(Nimble::Vector2f center, float radius, Luminous::Style & style, unsigned int lineSegments = 0);
 
     /** Draws a cut sector in a circle or a wedge.
       @param center center of the circle
@@ -232,8 +231,8 @@ namespace Luminous
       */
     void drawWedge(const Nimble::Vector2f & center, float radius1, float radius2, float fromRadians, float toRadians, float width, Style & style, int segments);
 
-    void drawRect(const QRectF & area, Style &fill);
-    void drawRect(const Nimble::Rect & area, Luminous::Style & fill);
+    void drawRect(const QRectF & area, Style &style);
+    void drawRect(const Nimble::Rect & area, Luminous::Style & style);
 
     //////////////////////////////////////////////////////////////////////////
     /// DEPRECATED FUNCTIONS
@@ -250,22 +249,16 @@ namespace Luminous
     //////////////////////////////////////////////////////////////////////////
     // Implementation
     template <typename Vertex, typename UniformBlock>
-    RenderBuilder<Vertex, UniformBlock> drawTriStripT(const Nimble::Vector2f * vertices, unsigned int vertexCount, Style & style);
+    RenderBuilder<Vertex, UniformBlock> drawPrimitiveT(Luminous::PrimitiveType primType, const Nimble::Vector2f * vertices, unsigned int vertexCount, const Radiant::Color & color, Style & style, float width = 1.f);
 
     template <typename Vertex, typename UniformBlock>
-    RenderBuilder<Vertex, UniformBlock> drawTexTriStripT(const Nimble::Vector2f * vertices, const Nimble::Vector2f * uvs, unsigned int vertexCount, Style & style);    
+    RenderBuilder<Vertex, UniformBlock> drawTexPrimitiveT(Luminous::PrimitiveType primType, const Nimble::Vector2f * vertices, const Nimble::Vector2f * uvs, unsigned int vertexCount, const Radiant::Color & color, Style & style, float width = 1.f);    
 
-    template <typename Vertex, typename UniformBlock>
-    RenderBuilder<Vertex, UniformBlock> drawPointsT(const Nimble::Vector2f * vertices, unsigned int vertexCount, float size, Style & style);
-
-    template <typename Vertex, typename UniformBlock>
-    RenderContext::RenderBuilder<Vertex, UniformBlock> drawLineStripT(const Nimble::Vector2f * vertices, unsigned int vertexCount, float width, Style & style);
-
-    void drawRectWithHole(const Nimble::Rect & area, const Nimble::Rect & hole, Luminous::Style & fill);
+    void drawRectWithHole(const Nimble::Rect & area, const Nimble::Rect & hole, Luminous::Style & style);
     void drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2, float width, Luminous::Style & style);
     void drawPolyLine(const Nimble::Vector2 * vertices, unsigned int numVertices, float width, Luminous::Style & style);
     void drawPoints(const Nimble::Vector2f * points, size_t numPoints, float size, Luminous::Style & style);
-    void drawQuad(const Nimble::Vector2f * corners, Luminous::Style & fill);
+    void drawQuad(const Nimble::Vector2f * corners, Luminous::Style & style);
 
     /// Sets the current blend function, and enables blending
     /** If the function is BLEND_NONE, then blending is disabled.
@@ -378,7 +371,7 @@ namespace Luminous
         std::size_t vertexSize, std::size_t maxVertexCount, Buffer::Type type, unsigned int & offset);
 
     template <typename Vertex, typename UniformBlock>
-    RenderBuilder<Vertex, UniformBlock> render(Luminous::PrimitiveType type, int indexCount, int vertexCount, float primitiveSize, const Style & style);
+    RenderBuilder<Vertex, UniformBlock> render(Luminous::PrimitiveType type, int indexCount, int vertexCount, float primitiveSize, const Radiant::Color & color, const Style & style);
 
     TextureGL & handle(Texture & texture);
 

@@ -12,6 +12,21 @@ namespace Luminous
 {
   class GLSLProgramObject;
 
+  class Stroke
+  {
+  public:
+    Stroke() : m_color(0.f, 0.f, 0.f, 0.f), m_width(0.f) {}
+
+    void setWidth(float width) { m_width = width; }
+    float width() const { return m_width; }
+
+    void setColor(const Radiant::Color & color) { m_color = color; }
+    const Radiant::Color & color() const { return m_color; }
+  private:
+    Radiant::Color m_color;
+    float m_width;
+  };
+
   class Fill
   {
   public:
@@ -26,8 +41,8 @@ namespace Luminous
   public:
     Fill() : m_color(1.f, 1.f, 1.f, 1.f), m_programGL(nullptr), m_program(nullptr) {}
 
-    const Nimble::Vector4 & color() const { return m_color; }
-    void setColor(const Nimble::Vector4f & c) { m_color = c; }
+    const Radiant::Color & color() const { return m_color; }
+    void setColor(const Radiant::Color & c) { m_color = c; }
 
     Luminous::Program * program() const { return m_program; }
     void setProgram(Luminous::Program & program) { m_program = &program; }
@@ -73,24 +88,34 @@ namespace Luminous
     };
 
   public:
-    Style() : m_translucency(Auto), m_texCoords(0, 0, 1, 1), m_texturing(0) {}
+    Style() : m_translucency(Auto) {}
+
+    Stroke & stroke() { return m_stroke; }
+    const Stroke & stroke() const { return m_stroke; }
 
     Fill & fill() { return m_fill; }
     const Fill & fill() const { return m_fill; }
 
     /// Returns the color of the object to be drawn
-    const Radiant::Color & fillColor () const { return m_fill.m_color; }
+    const Radiant::Color & fillColor() const { return m_fill.color(); }
     /// Sets the color of the object to be drawn
-    void setFillColor(const Nimble::Vector4 & c) { m_fill.m_color = c; }
+    void setFillColor(const Nimble::Vector4 & c) { m_fill.setColor(c); }
     /// Sets the color of the object to be drawn
-    void setFillColor(float r, float g, float b, float a) { m_fill.m_color.make(r, g, b, a); }
+    void setFillColor(float r, float g, float b, float a) { m_fill.setColor(Radiant::Color(r, g, b, a)); }
 
-    Luminous::Program * fillProgram() const { return m_fill.m_program; }
-    void setFillProgram(Luminous::Program & program) { m_fill.m_program = &program; }
-    void setDefaultFillProgram() { m_fill.m_program = nullptr; m_fill.m_programGL = nullptr; }
+    Luminous::Program * fillProgram() const { return m_fill.program(); }
+    void setFillProgram(Luminous::Program & program) { m_fill.setProgram(program); }
+    void setDefaultFillProgram() { m_fill.setDefaultProgram(); }
 
-    Luminous::ProgramGL * fillProgramGL() const { return m_fill.m_programGL; }
-    void setFillProgram(Luminous::ProgramGL & program) { m_fill.m_programGL = &program; }
+    void setStrokeColor(float r, float g, float b, float a) { m_stroke.setColor(Radiant::Color(r, g, b, a)); }
+    void setStrokeColor(const Radiant::Color & color) { m_stroke.setColor(color); }
+    const Radiant::Color & strokeColor() const { return m_stroke.color(); }
+
+    void setStrokeWidth(float width) { m_stroke.setWidth(width); }
+    float strokeWidth() const { return m_stroke.width(); }
+
+    Luminous::ProgramGL * fillProgramGL() const { return m_fill.programGL(); }
+    void setFillProgram(Luminous::ProgramGL & program) { m_fill.setProgram(program); }
 
     void setTexture(Luminous::Texture & texture) { m_fill.setTexture(texture); }
     void setTexture(Luminous::TextureGL & texture) { m_fill.setTexture(texture); }
@@ -100,33 +125,10 @@ namespace Luminous
     void setTranslucency(Translucency translucency) { m_translucency = translucency; }
     Translucency translucency() const { return m_translucency; }
 
-    /// Returns the texture coordinates to use
-    const Nimble::Rect & texCoords () const { return m_texCoords; }
-    /// Sets the texture coordinates to be use
-    void setTexCoords(const Nimble::Rect &tc) { m_texCoords = tc; }
-
-    /// Control the amount of texturing
-    /** @param texturing Variable control of the texture weight. 1 gives full weight to the texture
-        while zero make non-textured objects. */
-    void setTexturing(float texturing) { m_texturing = texturing; }
-    /// Returns the amount of texturing
-    float texturing() const { return m_texturing; }
-
-    /// Flips the y-coordinates used for texturing
-    /** This function is handy if you find that your image is upside-down. */
-    void flipTextureYCoordinates()
-    {
-      float tmp = m_texCoords.low().y;
-      m_texCoords.low().y = m_texCoords.high().y;
-      m_texCoords.high().y = tmp;
-    }
-
   private:
     Fill m_fill;
+    Stroke m_stroke;
     Translucency m_translucency;
-
-    Nimble::Rect m_texCoords;
-    float m_texturing;
   };
 
   /////////////////////////////////////////////////////////////////////////////
