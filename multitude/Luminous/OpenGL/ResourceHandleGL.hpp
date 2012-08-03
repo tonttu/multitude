@@ -28,6 +28,8 @@ namespace Luminous
 
     inline void setExpirationSeconds(unsigned int secs);
 
+    GLuint handle() const { return m_handle; }
+
   protected:
     StateGL & m_state;
     GLuint m_handle;

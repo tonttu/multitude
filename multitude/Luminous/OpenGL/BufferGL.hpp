@@ -21,9 +21,6 @@ namespace Luminous
     void * map(int offset, std::size_t length, Radiant::FlagsT<Buffer::MapAccess> access);
     void unmap(int offset = 0, std::size_t length = std::size_t(-1));
 
-    /// @todo hack, remove
-    GLuint handle() const { return m_handle; }
-
   private:
     void allocate();
 
