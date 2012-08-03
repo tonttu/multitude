@@ -14,7 +14,7 @@
 
 namespace Radiant {
 
-  Mutex s_onceMutex;
+  Mutex s_onceMutex(true);
 
   // static bool mutexDebug = false;
 
