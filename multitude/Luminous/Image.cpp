@@ -597,7 +597,7 @@ namespace Luminous
       return false;
     }
 
-    ImageCodec * codec = codecs()->getCodec(filename, file);
+    auto codec = codecs()->getCodec(filename, file);
     if(codec) {
       result = codec->read(*this, file);
       // m_dataReady = result;
@@ -626,7 +626,7 @@ namespace Luminous
       return false;
     }
 
-    ImageCodec * codec = codecs()->getCodec(filename);
+    auto codec = codecs()->getCodec(filename);
     if(codec) {
       ret = codec->write(*this, file);
     } else {
@@ -716,7 +716,7 @@ namespace Luminous
       return result;
     }
 
-    Luminous::ImageCodec * codec = Luminous::Image::codecs()->getCodec(filename, file);
+    auto codec = Luminous::Image::codecs()->getCodec(filename, file);
     if(codec) {
       result = codec->ping(info, file);
     } else {
@@ -923,7 +923,7 @@ namespace Luminous
       return false;
     }
 
-    ImageCodec * codec = Image::codecs()->getCodec(filename, file);
+    auto codec = Image::codecs()->getCodec(filename, file);
     if(codec) {
       result = codec->read(*this, file, level);
     } else {

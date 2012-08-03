@@ -126,12 +126,7 @@ namespace Luminous
 
   void initDefaultImageCodecs()
   {
-    static bool done = false;
-
-    if(done)
-      return;
-
-    done = true;
+    MULTI_ONCE_BEGIN
 
 #ifdef WIN32
     // Make sure Qt plugins are found
@@ -148,8 +143,6 @@ namespace Luminous
     QCoreApplication::addLibraryPath(pluginPath.c_str());
 #endif
 
-#if defined(USE_QT45)
-    // Debug output supported image formats
     {
       debugLuminous("Qt image support (read):");
       QList<QByteArray> formats = QImageReader::supportedImageFormats ();
@@ -171,26 +164,19 @@ namespace Luminous
     QList<QByteArray> formats = QImageWriter::supportedImageFormats ();
     for(QList<QByteArray>::iterator it = formats.begin(); it != formats.end(); it++) {
       QByteArray & format = (*it);
-      Image::codecs()->registerCodec(new ImageCodecQT(format.data()));
+      Image::codecs()->registerCodec(std::make_shared<ImageCodecQT>(format.data()));
     }
-    Image::codecs()->registerCodec(new ImageCodecQT("jpg"));
-# if !defined(RADIANT_IOS)
+
+    Image::codecs()->registerCodec(std::make_shared<ImageCodecQT>("jpg"));
+
+#if !defined(RADIANT_IOS)
     // Image::codecs()->registerCodec(new ImageCodecSVG());
-    Image::codecs()->registerCodec(new ImageCodecSVG());
-  Image::codecs()->registerCodec(new ImageCodecDDS());
-# endif
-
+    Image::codecs()->registerCodec(std::make_shared<ImageCodecSVG>());
+    Image::codecs()->registerCodec(std::make_shared<ImageCodecDDS>());
 #endif
-// #else
-// Register built-in image codecs
-    //Image::codecs()->registerCodec(new ImageCodecJPEG());
-    //Image::codecs()->registerCodec(new ImageCodecPNG());
 
-    /* TGA has to be last, because its ping may return true even if
-       the file has other type. */
-
-    LUMINOUS_IN_FULL_OPENGL(Image::codecs()->registerCodec(new ImageCodecTGA()));
-
+    Image::codecs()->registerCodec(std::make_shared<ImageCodecTGA>());
+MULTI_ONCE_END
   }
 
 }
