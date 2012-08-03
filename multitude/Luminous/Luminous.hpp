@@ -148,6 +148,7 @@ namespace Luminous
   {
     PrimitiveType_Triangle      = GL_TRIANGLES,
     PrimitiveType_TriangleStrip = GL_TRIANGLE_STRIP,
+    PrimitiveType_TriangleFan   = GL_TRIANGLE_FAN,
     PrimitiveType_Line          = GL_LINES,
     PrimitiveType_LineStrip     = GL_LINE_STRIP,
     PrimitiveType_Point         = GL_POINTS,

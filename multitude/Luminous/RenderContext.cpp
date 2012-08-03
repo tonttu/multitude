@@ -855,12 +855,38 @@ namespace Luminous
 
   void RenderContext::drawCircle(Nimble::Vector2f center, float radius, Luminous::Style & style, unsigned int linesegments)
   {
-    std::vector<Nimble::Vector2f> vertices(linesegments);
-    /// @todo draw the circle (0..2PI pie?)
+    if (linesegments == 0) {
+      /// @todo Automagically determine the proper number of linesegments
+      linesegments = 32;
+    }
+    std::vector<Nimble::Vector2f> vertices(linesegments + 2);
+    float step = Nimble::Math::TWO_PI / linesegments;
 
-    // Draw the outline
+    // Center is the first vertex in a fan
+    vertices[0] = center;
+
+    // Add the rest of the fan vertices
+    float angle = 0.f;
+    for (unsigned int i = 0; i <= linesegments; ++i) {
+      Nimble::Vector2f c(std::cos(angle), std::sin(angle));
+      vertices[1 + i] = center + c * radius;
+      angle += step;
+    }
+
+    //vertices[linesegments+1] = vertices[1];
+
+    if (style.fill().textures().empty())
+      drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleFan, vertices.data(), vertices.size(), style.fillColor(), style);
+    else
+    {
+      /// @todo generate UVs
+      std::vector<Nimble::Vector2f> uvs;
+      drawTexPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PrimitiveType_TriangleFan, vertices.data(), uvs.data(), vertices.size(), style.fillColor(), style);
+    }
+
+    // Draw stroke
     if (style.strokeWidth() > 0.f)
-      drawArc(center, radius, style.strokeWidth(), 0.f, Nimble::Math::TWO_PI, style, linesegments);
+      drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, &vertices[1], linesegments+1, style.strokeColor(), style, style.strokeWidth());
   }
 
   void RenderContext::drawWedge(const Nimble::Vector2f & center, float radius1,
