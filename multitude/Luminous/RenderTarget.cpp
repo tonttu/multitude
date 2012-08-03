@@ -71,11 +71,13 @@ namespace Luminous
 
   Luminous::Texture * RenderTarget::texture(GLenum attachment)
   {
-
+    return 0;
   }
 
   Luminous::RenderBuffer * RenderTarget::renderBuffer(GLenum attachment)
   {
 
+    return 0;
   }
+
 }
