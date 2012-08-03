@@ -102,12 +102,15 @@ namespace Luminous
         if(texture.dimensions() == 1) {
           glTexImage1D(GL_TEXTURE_1D, 0, intFormat, texture.width(), 0,
                        texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
+          GLERROR("TextureGL::upload # glTexImage1D");
         } else if(texture.dimensions() == 2) {
           glTexImage2D(GL_TEXTURE_2D, 0, intFormat, texture.width(), texture.height(), 0,
                        texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
+          GLERROR("TextureGL::upload # glTexImage2D");
         } else if(texture.dimensions() == 3) {
           glTexImage3D(GL_TEXTURE_3D, 0, intFormat, texture.width(), texture.height(), texture.depth(),
                        0, texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
+          GLERROR("TextureGL::upload # glTexImage3D");
         }
       }
 

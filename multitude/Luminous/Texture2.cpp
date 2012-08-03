@@ -7,6 +7,21 @@ namespace Luminous
   class Texture::D
   {
   public:
+    /// Visual Studio 2010 doesn't null-initialize these (even though even the C++98 specs says it should *grmbl*)
+    D() 
+      : dimensions()
+      , width()
+      , height()
+      , depth()
+      , dataFormat()
+      , internalFormat()
+      , data()
+      , translucent()
+      , lineSizePixels()
+      , dirtyRegions()
+    {
+
+    }
     uint8_t dimensions;
     unsigned int width;
     unsigned int height;
