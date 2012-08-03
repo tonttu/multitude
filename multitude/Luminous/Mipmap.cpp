@@ -68,6 +68,11 @@ namespace
     /// this nicer by using separate enum and timestamp, but this way we have
     /// fast lockless synchronization between all threads
     QAtomicInt lastUsed;
+
+    /// During expiration, this will be 1. If you are doing something with this
+    /// ImageTex3 without updating lastUsed, you can lock the ImageTex3 from
+    /// being deleted by setting locked to 1 from 0.
+    QAtomicInt locked;
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -405,12 +410,16 @@ namespace Luminous
           for(int level = 0, s = levels.size() - 1; level < s; ++level) {
             ImageTex3 & imageTex = levels[level];
             int lastUsed = imageTex.lastUsed;
-            if(lastUsed > Loading && now > lastUsed + expire &&
-               imageTex.lastUsed.testAndSetOrdered(lastUsed, Loading)) {
-              imageTex.texture.reset();
-              imageTex.cimage.reset();
-              imageTex.image.reset();
-              imageTex.lastUsed = New;
+            if(lastUsed > Loading && now > lastUsed + expire) {
+              if(imageTex.locked.testAndSetOrdered(0, 1)) {
+                if(imageTex.lastUsed.testAndSetOrdered(lastUsed, Loading)) {
+                  imageTex.texture.reset();
+                  imageTex.cimage.reset();
+                  imageTex.image.reset();
+                  imageTex.lastUsed = New;
+                }
+                imageTex.locked = 0;
+              }
             }
           }
         }
@@ -630,6 +639,59 @@ namespace Luminous
   bool Mipmap::isValid() const
   {
     return m_d->m_valid;
+  }
+
+  bool Mipmap::hasAlpha() const
+  {
+    return m_d->m_sourceInfo.pf.hasAlpha();
+  }
+
+  float Mipmap::pixelAlpha(Nimble::Vector2 relLoc)
+  {
+    if(!m_d->m_ready || !m_d->m_valid) return 1.0f;
+
+    int time = frameTime();
+    for(int level = 0; level <= m_d->m_maxLevel; ) {
+      ImageTex3 & imageTex = m_d->m_levels[level];
+      int old = imageTex.lastUsed;
+      if(old == New || old == Loading) {
+        ++level;
+        continue;
+      }
+
+      // We try to reserve the imagetex for us, so that it won't be deleted at
+      // the same time. If that fails, we are then forced to atomically update
+      // lastUsed to current time. In practise that means that there is no
+      // waiting in this function, but it's still perfectly thread-safe.
+      bool locked = imageTex.locked.testAndSetOrdered(0, 1);
+
+#ifndef LUMINOUS_OPENGLES
+      if(imageTex.cimage) {
+        if(locked || old == time || imageTex.lastUsed.testAndSetOrdered(old, time)) {
+          Nimble::Vector2i pixel(relLoc.x * imageTex.cimage->width(), relLoc.y * imageTex.cimage->height());
+          float v = imageTex.cimage->readAlpha(pixel);
+          if(locked) imageTex.locked = 0;
+          return v;
+        } else {
+          // try again
+          continue;
+        }
+      }
+#endif // LUMINOUS_OPENGLES
+
+      if(imageTex.image) {
+        if(locked || old == time || imageTex.lastUsed.testAndSetOrdered(old, time)) {
+          Nimble::Vector2i pixel(relLoc.x * imageTex.image->width(), relLoc.y * imageTex.image->height());
+          float v = imageTex.image->safePixel(pixel.x, pixel.y).w;
+          if(locked) imageTex.locked = 0;
+          return v;
+        } else {
+          continue;
+        }
+      }
+    }
+
+    return 1.0f;
   }
 
   void Mipmap::setLoadingPriority(Priority priority)

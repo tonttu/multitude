@@ -121,6 +121,31 @@ namespace Luminous
     }
   }
 
+  bool PixelFormat::hasAlpha() const
+  {
+#ifndef LUMINOUS_OPENGLES
+    switch(m_compression) {
+    case COMPRESSED_RGBA_DXT1:
+    case COMPRESSED_RGBA_DXT3:
+    case COMPRESSED_RGBA_DXT5:
+      return true;
+
+    default:
+      break;
+    }
+#endif // LUMINOUS_OPENGLES
+
+    switch(m_layout) {
+    case LAYOUT_ALPHA:
+    case LAYOUT_RGBA:
+      LUMINOUS_IN_FULL_OPENGL(case LAYOUT_BGRA:)
+          return true;
+
+    default:
+      return false;
+    }
+  }
+
   static QString typeToString(PixelFormat::ChannelType type)
   {
     switch(type)

@@ -53,6 +53,12 @@ namespace Luminous
 
     LUMINOUS_API bool isValid() const;
 
+    /// @return Returns true if the images have alpha channel
+    LUMINOUS_API bool hasAlpha() const;
+
+    /// Not finished
+    LUMINOUS_API float pixelAlpha(Nimble::Vector2 relLoc);
+
     /// Sets the loading priority for this set of mipmaps
     /// @param priority new priority
     LUMINOUS_API void setLoadingPriority(Priority priority);

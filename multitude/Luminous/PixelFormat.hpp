@@ -98,6 +98,8 @@ namespace Luminous
     /// Returns the number of bytes in a single pixel
     int bytesPerPixel() const;
 
+    bool hasAlpha() const;
+
     /// Constructs an 8-bit RGB pixel format
     /// @return new pixel format
     static PixelFormat rgbUByte()
