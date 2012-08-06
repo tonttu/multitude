@@ -29,7 +29,7 @@ namespace Luminous
     virtual ~RenderDriver() {}
 
     // Clear the current rendertarget
-    LUMINOUS_API virtual void clear(ClearMask mask, const Radiant::Color & color = Radiant::Color(0.f,0.f,0.f,1.f), double depth = 0, int stencil = 0) = 0;
+    LUMINOUS_API virtual void clear(ClearMask mask, const Radiant::Color & color, double depth, int stencil) = 0;
 
     // Draw primitives
     LUMINOUS_API virtual void draw(PrimitiveType type, unsigned int offset, unsigned int primitives) = 0;

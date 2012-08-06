@@ -351,6 +351,7 @@ namespace Luminous
     void draw(PrimitiveType primType, unsigned int offset, unsigned int primitives);
     void drawIndexed(PrimitiveType primType, unsigned int offset, unsigned int primitives);
 
+    void clear(ClearMask mask, const Radiant::Color & color = Radiant::Color(0,0,0,0), double depth = 1.0, int stencil = 0);
   private:
     RenderCommand & createRenderCommand(int indexCount, int vertexCount,
                                         std::size_t vertexSize, std::size_t uniformSize,

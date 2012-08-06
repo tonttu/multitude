@@ -1503,6 +1503,11 @@ namespace Luminous
     m_data->m_driver.drawIndexed(primType, offset, primitives);
   }
 
+  void RenderContext::clear(ClearMask mask, const Radiant::Color & color, double depth, int stencil)
+  {
+    m_data->m_driver.clear(mask, color, depth, stencil);
+  }
+
   // Create all the setters for shader constants
 #define SETSHADERUNIFORM(TYPE) \
   template<> LUMINOUS_API bool RenderContext::setShaderUniform(const char * name, const TYPE & value) \

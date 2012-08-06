@@ -3,6 +3,7 @@
 #include "Luminous/OpenGL/StateGL.hpp"
 #include "Luminous/OpenGL/TextureGL.hpp"
 #include "Luminous/OpenGL/VertexArrayGL.hpp"
+#include "Luminous/OpenGL/ResourceHandleGL.hpp"
 #include "Luminous/RenderManager.hpp"
 #include "Luminous/VertexArray.hpp"
 #include "Luminous/VertexDescription.hpp"
@@ -344,6 +345,7 @@ namespace Luminous
       glMask |= GL_DEPTH_BUFFER_BIT;
     }
     glClear(glMask);
+    GLERROR("RenderDriverGL::clear glClear");
   }
 
   void RenderDriverGL::draw(PrimitiveType type, unsigned int offset, unsigned int primitives)
