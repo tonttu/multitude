@@ -10,7 +10,7 @@
 
 namespace Luminous
 {
-  class RenderResource : public Patterns::NotCopyable
+  class LUMINOUS_API RenderResource : public Patterns::NotCopyable
   {
   public:
     struct Hash
@@ -39,13 +39,13 @@ namespace Luminous
     };
 
   public:
-    LUMINOUS_API RenderResource(Type type);
-    LUMINOUS_API virtual ~RenderResource();
+    RenderResource(Type type);
+    virtual ~RenderResource();
 
-    //LUMINOUS_API RenderResource(RenderResource & res);
+    //RenderResource(RenderResource & res);
 
-    LUMINOUS_API RenderResource(RenderResource && rr);
-    LUMINOUS_API RenderResource & operator=(RenderResource && rr);
+    RenderResource(RenderResource && rr);
+    RenderResource & operator=(RenderResource && rr);
 
     inline Id resourceId() const { return m_id; }
     inline Type resourceType() const { return m_type; }

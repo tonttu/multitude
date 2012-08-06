@@ -1,4 +1,7 @@
 #include "RenderTargetGL.hpp"
+#include "RenderDriverGL.hpp"
+
+#include <Luminous/RenderTarget.hpp>
 
 #include <Radiant/Mutex.hpp>
 
@@ -11,28 +14,40 @@ namespace Luminous
     : ResourceHandleGL(state)
   {
     glGenRenderbuffers(1, &m_handle);
+    GLERROR("RenderBufferGL::RenderBufferGL # glGenRenderbuffers");
   }
 
   RenderBufferGL::~RenderBufferGL()
   {
     if(m_handle)
       glDeleteRenderbuffers(1, &m_handle);
+    GLERROR("RenderBufferGL::~RenderBufferGL # glDeleteRenderbuffers");
   }
-
 
   void RenderBufferGL::bind()
   {
     glBindRenderbuffer(GL_RENDERBUFFER, m_handle);
+    GLERROR("RenderBufferGL::bind # glBindRenderbuffer");
   }
 
   void RenderBufferGL::unbind()
   {
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    GLERROR("RenderBufferGL::unbind # glBindRenderbuffer");
   }
 
   void RenderBufferGL::storageFormat(const QSize &size, GLenum format, int samples)
   {
+    GLERROR("RenderBufferGL::storageFormat # zoo");
+
     glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, format, size.width(), size.height());
+    GLERROR("RenderBufferGL::storageFormat # glRenderbufferStorageMultisample");
+  }
+
+  void RenderBufferGL::sync(const RenderBuffer &buffer)
+  {
+    bind();
+    storageFormat(buffer.size(), buffer.format(), buffer.samples());
   }
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -40,38 +55,64 @@ namespace Luminous
 
   RenderTargetGL::RenderTargetGL(StateGL &state)
     : ResourceHandleGL(state)
+    , m_type(RenderTarget::INVALID)
   {
     glGenFramebuffers(1, &m_handle);
+    GLERROR("RenderTargetGL::RenderTargetGL # glGenFramebuffers");
   }
 
   RenderTargetGL::~RenderTargetGL()
   {
     glDeleteFramebuffers(1, &m_handle);
+    GLERROR("RenderTargetGL::~RenderTargetGL # glDeleteFramebuffers");
   }
 
   void RenderTargetGL::bind()
   {
-    glBindFramebuffer(GL_FRAMEBUFFER, m_handle);
+    assert(m_type != RenderTarget::INVALID);
+
+    if(m_type == RenderTarget::WINDOW)
+      unbind();
+    else if(m_state.setFramebuffer(m_handle)) {
+      glBindFramebuffer(GL_FRAMEBUFFER, m_handle);
+      GLERROR("RenderTargetGL::bind # glBindFramebuffer");
+    }
+
+    /// @todo should this be configurable?
+    assert(m_size.isValid());
+    glViewport(0, 0, m_size.width(), m_size.height());
+    GLERROR("RenderTargetGL::bind # glViewport");
   }
 
   void RenderTargetGL::unbind()
   {
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    if(m_state.setFramebuffer(0))
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    GLERROR("RenderTargetGL::unbind # glBindFramebuffer");
   }
 
   void RenderTargetGL::attach(GLenum attachment, RenderBufferGL &renderBuffer)
   {
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, renderBuffer.handle());
+    GLERROR("RenderTargetGL::attach # glFramebufferRenderbuffer");
   }
 
   void RenderTargetGL::attach(GLenum attachment, TextureGL &texture)
   {
+    GLERROR("RenderTargetGL::attach # foo");
+
+    texture.bind(0);
+    GLERROR("RenderTargetGL::attach # mmoo");
+
     glFramebufferTexture(GL_FRAMEBUFFER, attachment, texture.handle(), 0);
+    GLERROR("RenderTargetGL::attach # glFramebufferTexture");
   }
 
   void RenderTargetGL::detach(GLenum attachment)
   {
+    /// @todo what about textures?
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, 0);
+    GLERROR("RenderTargetGL::deattach # glFramebufferRenderbuffer");
   }
 
   bool RenderTargetGL::check()
@@ -92,6 +133,7 @@ namespace Luminous
     } MULTI_ONCE_END
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    GLERROR("RenderTargetGL::check # glCheckFramebufferStatus");
 
     if(status == GL_FRAMEBUFFER_COMPLETE)
       return true;
@@ -100,4 +142,22 @@ namespace Luminous
 
     return false;
   }
+
+  void RenderTargetGL::sync(const RenderTarget &target)
+  {
+    m_type = target.targetType();
+    m_size = target.size();
+
+    bind();
+
+    auto texAttachments = target.textureAttachments();
+    auto bufAttachments = target.renderBufferAttachments();
+
+    foreach(GLenum attachment, texAttachments)
+      attach(attachment, m_state.driver().handle(*target.texture(attachment)));
+
+    foreach(GLenum attachment, bufAttachments)
+      attach(attachment, m_state.driver().handle(*target.renderBuffer(attachment)));
+  }
+
 }

@@ -13,7 +13,8 @@ namespace Luminous
       , width()
       , height()
       , depth()
-      , dataFormat()
+      // This is set to a valid format to avoid errors even if no data is specified for the texture
+      , dataFormat(PixelFormat::rgbUByte())
       , internalFormat()
       , data()
       , translucent()

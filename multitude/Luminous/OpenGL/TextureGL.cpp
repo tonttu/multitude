@@ -124,6 +124,10 @@ namespace Luminous
       bound = true;
     }
 
+    /// @todo should we touch the dirty region if data is null?
+    if(!texture.data())
+      return;
+
     /// @todo 1D / 3D textures don't work atm
     if(!m_dirtyRegion.isEmpty()) {
       if(!bound)

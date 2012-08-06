@@ -12,16 +12,20 @@
 namespace Luminous
 {
 
-  class RenderBuffer : public RenderResource
+  class LUMINOUS_API RenderBuffer : public RenderResource
   {
   public:
     RenderBuffer();
     ~RenderBuffer();
 
-    void storageFormat(const QSize & size, GLenum format);
+    RenderBuffer(RenderBuffer && rb);
+    RenderBuffer & operator=(RenderBuffer && rb);
+
+    void storageFormat(const QSize & size, GLenum format, int samples);
 
     const QSize & size() const;
     GLenum format() const;
+    int samples() const;
 
   private:
     class D;
@@ -31,11 +35,21 @@ namespace Luminous
   ////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////
 
-  class RenderTarget : public RenderResource
+  class LUMINOUS_API RenderTarget : public RenderResource
   {
   public:
-    RenderTarget();
+    enum RenderTargetType
+    {
+        INVALID
+      , WINDOW
+      , NORMAL
+    };
+
+    RenderTarget(RenderTargetType type = NORMAL);
     ~RenderTarget();
+
+    RenderTarget(RenderTarget && rt);
+    RenderTarget & operator=(RenderTarget && rt);
 
     const QSize & size() const;
     void setSize(const QSize & size);
@@ -43,8 +57,13 @@ namespace Luminous
     void attach(GLenum attachment, Luminous::Texture & texture);
     void attach(GLenum attachment, Luminous::RenderBuffer & buffer);
 
-    Luminous::Texture * texture(GLenum attachment);
-    Luminous::RenderBuffer * renderBuffer(GLenum attachment);
+    Luminous::Texture * texture(GLenum attachment) const;
+    Luminous::RenderBuffer * renderBuffer(GLenum attachment) const;
+
+    QList<GLenum> textureAttachments() const;
+    QList<GLenum> renderBufferAttachments() const;
+
+    RenderTargetType targetType() const;
 
   private:
     class D;
@@ -56,7 +75,7 @@ namespace Luminous
 
   class RenderContext;
 
-  class RenderTargetGuard
+  class LUMINOUS_API RenderTargetGuard
   {
   public:
     RenderTargetGuard(RenderContext & r);

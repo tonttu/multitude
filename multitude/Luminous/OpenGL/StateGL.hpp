@@ -47,6 +47,9 @@ namespace Luminous
 
     inline RenderDriverGL & driver() { return m_driver; }
 
+    inline bool setFramebuffer(GLuint handle);
+    inline GLuint framebuffer() const;
+
   private:
     /// Currently bound shader program
     GLuint m_currentProgram;
@@ -62,6 +65,8 @@ namespace Luminous
     std::map<GLuint, BufferMapping> m_bufferMaps;
 
     RenderDriverGL & m_driver;
+
+    GLuint m_currentFrameBuffer;
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -72,6 +77,7 @@ namespace Luminous
     , m_threadIndex(threadIndex)
     , m_uploadedBytes(0)
     , m_driver(driver)
+    , m_currentFrameBuffer(0)
   {}
 
   bool StateGL::setProgram(GLuint handle)
@@ -126,6 +132,18 @@ namespace Luminous
   std::map<GLuint, BufferMapping> & StateGL::bufferMaps()
   {
     return m_bufferMaps;
+  }
+
+  bool StateGL::setFramebuffer(GLuint handle)
+  {
+    const bool changed = (m_currentFrameBuffer != handle);
+    m_currentFrameBuffer = handle;
+    return changed;
+  }
+
+  GLuint StateGL::framebuffer() const
+  {
+    return m_currentFrameBuffer;
   }
 
 }

@@ -226,7 +226,12 @@ namespace Luminous
         , m_renderCalls(0)
         , m_driver(renderDriver)
         , m_driverGL(dynamic_cast<RenderDriverGL*>(&renderDriver))
+        , m_defaultRenderTarget(RenderTarget::WINDOW)
     {
+      // Initialize default render target size
+      assert(win);
+      m_defaultRenderTarget.setSize(QSize(win->size().x, win->size().y));
+
       m_viewTransform.identity();
       m_viewTransformStack.push_back(m_viewTransform);
       m_attribs.resize(10000);
@@ -310,7 +315,7 @@ namespace Luminous
       /// @todo why not zero vector?
       return Nimble::Vector2f(10, 10);
     }
-    
+
     void pushViewStack()
     {
       int w = m_window->size().x;
@@ -483,8 +488,11 @@ namespace Luminous
     std::map<std::size_t, BufferPool> m_vertexBuffers;
     std::map<std::size_t, BufferPool> m_uniformBuffers;
     BufferPool m_indexBuffers;
+
+    // Default window framebuffer
+    RenderTarget m_defaultRenderTarget;
   };
-  
+
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
 
@@ -512,7 +520,7 @@ namespace Luminous
   {
     m_data->m_area = area;
     m_data->m_window = area->window();
-    
+
   }
 
   const Luminous::MultiHead::Window * RenderContext::window() const
@@ -527,20 +535,18 @@ namespace Luminous
 
   void RenderContext::prepare()
   {
-    //Utils::glCheck("RenderContext::prepare # 1");
+    // Push the default render target. Don't use the RenderContext API to avoid
+    // the guard.
+    m_data->m_driverGL->pushRenderTarget(m_data->m_defaultRenderTarget);
 
     resetTransform();
     m_data->initialize();
-
 
     // Make sure the clip stack is empty
     while(!m_data->m_clipStack.empty())
       m_data->m_clipStack.pop_back();
 
     restart();
-
-
-    //Utils::glCheck("RenderContext::prepare # 2");
 
     m_data->m_driver.preFrame();
   }
@@ -555,6 +561,9 @@ namespace Luminous
     /// @todo how do we generate this properly? Should we somehow linearize the depth buffer?
     m_data->m_automaticDepthDiff = -1.0f / std::max(m_data->m_renderCalls, 100000);
     m_data->m_renderCalls = 0;
+
+    // Pop the default target
+    m_data->m_driverGL->popRenderTarget();
   }
 
   void RenderContext::pushViewTransform()
@@ -881,12 +890,12 @@ namespace Luminous
     drawLine(p0, p1, width, style);
     drawLine(p2, p3, width, style);
   }
-  
+
   void RenderContext::addRenderCounter()
   {
     m_data->m_renderCount++;
   }
- 
+
   /*
   void RenderContext::drawCurve(Vector2* controlPoints, float width, const float * rgba) {
 
@@ -1495,13 +1504,14 @@ namespace Luminous
 
   RenderTargetGuard RenderContext::pushRenderTarget(RenderTarget &target)
   {
-    /// @todo implement
+    m_data->m_driverGL->pushRenderTarget(target);
+
     return RenderTargetGuard(*this);
   }
 
   void RenderContext::popRenderTarget()
   {
-    /// @todo implement
+    m_data->m_driverGL->popRenderTarget();
   }
 
 }

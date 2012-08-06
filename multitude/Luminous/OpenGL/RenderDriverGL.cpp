@@ -27,6 +27,8 @@
 #include <vector>
 #include <algorithm>
 #include <tuple>
+#include <queue>
+#include <stack>
 
 #include <QStringList>
 #include <QVector>
@@ -39,6 +41,7 @@ namespace Luminous
     VertexArrayGL * vertexArray;
     BufferGL * uniformBuffer;
     std::array<TextureGL*, 8> textures;
+
     bool operator<(const RenderState & o) const
     {
       if(program != o.program)
@@ -55,7 +58,7 @@ namespace Luminous
     }
   };
 
-  struct OpaqueRenderQueue
+  struct OpaqueRenderQueue// : public Patterns::NotCopyable
   {
     OpaqueRenderQueue() : frame(0), usedSize(0) {}
 
@@ -66,12 +69,20 @@ namespace Luminous
 
   struct TranslucentRenderQueue
   {
-    typedef std::vector<std::pair<RenderState, RenderCommand>> Queue;
+    typedef std::vector<std::pair<RenderState, RenderCommand> > Queue;
     TranslucentRenderQueue() : frame(0), usedSize(0) {}
 
     int frame;
     std::size_t usedSize;
     Queue queue;
+  };
+
+  // Render queues grouped by render target
+  struct RenderQueues
+  {
+    RenderTargetGL * renderTarget;
+    std::map<RenderState, OpaqueRenderQueue> opaqueQueue;
+    TranslucentRenderQueue translucentQueue;
   };
 
   //////////////////////////////////////////////////////////////////////////
@@ -100,6 +111,8 @@ namespace Luminous
     typedef std::map<RenderResource::Id, TextureGL> TextureList;
     typedef std::map<RenderResource::Id, BufferGL> BufferList;
     typedef std::map<RenderResource::Id, VertexArrayGL> VertexArrayList;
+    typedef std::map<RenderResource::Id, RenderBufferGL> RenderBufferList;
+    typedef std::map<RenderResource::Id, RenderTargetGL> RenderTargetList;
 
     /// Resources, different maps for each type because it eliminates the need
     /// for dynamic_cast or similar, and also makes resource sharing possible
@@ -108,14 +121,22 @@ namespace Luminous
     TextureList m_textures;
     BufferList m_buffers;
     VertexArrayList m_vertexArrays;
+    RenderBufferList m_renderBuffers;
+    RenderTargetList m_renderTargets;
 
     RenderState m_state;
 
     // key is <vertex buffer id, index buffer id, shader>
     std::map<std::tuple<RenderResource::Id, RenderResource::Id, ProgramGL*>, VertexArray> m_vertexArrayCache;
 
-    std::map<RenderState, OpaqueRenderQueue> m_opaqueQueue;
-    TranslucentRenderQueue m_translucentQueue;
+    // Stack of render targets and their respective render queues
+    std::stack<RenderQueues, std::vector<RenderQueues> > m_renderTargetStack;
+    // Master rendering queue where commands get added as render targets are popped
+    std::queue<RenderQueues> m_masterRenderQueue;
+
+    // Pool of render queues to avoid re-allocation with key being RenderTargetGL pointer.
+    typedef std::map<void*, RenderQueues> RendererQueuePool;
+    RendererQueuePool m_renderQueuePool;
 
     // Resources to be released
     typedef std::vector<RenderResource::Id> ReleaseQueue;
@@ -155,6 +176,8 @@ namespace Luminous
 
     template <typename ContainerType>
     void removeResource(ContainerType & container);
+
+    RenderQueues & currentRenderTargetItem() { assert(!m_renderTargetStack.empty()); return m_renderTargetStack.top(); }
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -187,6 +210,8 @@ namespace Luminous
     removeResource(m_buffers, m_releaseQueue);
     removeResource(m_textures, m_releaseQueue);
     removeResource(m_programs);
+    removeResource(m_renderBuffers, m_releaseQueue);
+    removeResource(m_renderTargets, m_releaseQueue);
     m_releaseQueue.clear();
   }
 
@@ -259,15 +284,18 @@ namespace Luminous
     translucent = style.translucency() == Style::Translucent ||
         ((style.translucency() == Style::Auto) && (translucent || style.fillColor().w < 0.99999999f));
 
+    RenderQueues & rt = currentRenderTargetItem();
+
     RenderCommand * cmd;
     if(translucent) {
-      if(m_translucentQueue.usedSize >= m_translucentQueue.queue.size())
-        m_translucentQueue.queue.resize(m_translucentQueue.queue.size()+1);
-      auto & pair = m_translucentQueue.queue[m_translucentQueue.usedSize++];
+      TranslucentRenderQueue & translucentQueue = rt.translucentQueue;
+      if(translucentQueue.usedSize >= translucentQueue.queue.size())
+        translucentQueue.queue.resize(translucentQueue.queue.size()+1);
+      auto & pair = translucentQueue.queue[translucentQueue.usedSize++];
       pair.first = m_state;
       cmd = &pair.second;
     } else {
-      OpaqueRenderQueue & queue = m_opaqueQueue[m_state];
+      OpaqueRenderQueue & queue = rt.opaqueQueue[m_state];
       if(queue.usedSize >= queue.queue.size())
         queue.queue.push_back(RenderCommand());
       cmd = &queue.queue[queue.usedSize++];
@@ -431,20 +459,24 @@ namespace Luminous
 
     // Drop unused or queues (also queues that have way too much memory allocated than needed)
 
-    if(m_d->m_translucentQueue.usedSize > 0) {
-      Radiant::error("RenderDriverGL::postFrame # m_translucentQueue is not empty - forgot to call flush?");
-      m_d->m_translucentQueue.usedSize = 0;
-    }
+    for(auto i = m_d->m_renderQueuePool.begin(); i != m_d->m_renderQueuePool.end(); ++i) {
+      RenderQueues & queues = i->second;
 
-    if(m_d->m_translucentQueue.frame < lastFrame) {
-      TranslucentRenderQueue::Queue tmp;
-      std::swap(m_d->m_translucentQueue.queue, tmp);
-    }
+      if(queues.translucentQueue.usedSize > 0) {
+        Radiant::error("RenderDriverGL::postFrame # translucent queue is not empty - forgot to call flush?");
+        queues.translucentQueue.usedSize = 0;
+      }
 
-    for(auto it = m_d->m_opaqueQueue.begin(), end = m_d->m_opaqueQueue.end(); it != end;) {
-      if(it->second.frame < lastFrame) {
-        it = m_d->m_opaqueQueue.erase(it);
-      } else ++it;
+      if(queues.translucentQueue.frame < lastFrame) {
+        TranslucentRenderQueue::Queue tmp;
+        std::swap(queues.translucentQueue.queue, tmp);
+      }
+
+      for(auto it = queues.opaqueQueue.begin(), end = queues.opaqueQueue.end(); it != end;) {
+        if(it->second.frame < lastFrame) {
+          it = queues.opaqueQueue.erase(it);
+        } else ++it;
+      }
     }
   }
 
@@ -489,6 +521,9 @@ namespace Luminous
       it = m_d->m_textures.insert(std::make_pair(texture.resourceId(), TextureGL(m_d->m_stateGL))).first;
       it->second.setExpirationSeconds(texture.expiration());
     }
+
+    /// @todo avoid bind somehow?
+    it->second.upload(texture, 0, false);
 
     return it->second;
   }
@@ -611,41 +646,53 @@ namespace Luminous
 
     glEnable(GL_DEPTH_TEST);
 
-    for(auto it = m_d->m_opaqueQueue.begin(), end = m_d->m_opaqueQueue.end(); it != end; ++it) {
-      const RenderState & state = it->first;
-      OpaqueRenderQueue & opaque = it->second;
+    // Iterate over our master render queue binding framebuffers as needed
+    while(!m_d->m_masterRenderQueue.empty()) {
 
-      if(opaque.usedSize == 0)
-        continue;
+      RenderQueues & queues = m_d->m_masterRenderQueue.front();
 
-      m_d->setState(state);
+      queues.renderTarget->bind();
 
-      GLint uniformHandle = state.uniformBuffer->handle();
-      GLint uniformBlockIndex = 0;
+      for(auto it = queues.opaqueQueue.begin(), end = queues.opaqueQueue.end(); it != end; ++it) {
+        const RenderState & state = it->first;
+        OpaqueRenderQueue & opaque = it->second;
 
-      for(int i = opaque.usedSize - 1; i >= 0; --i) {
-        m_d->render(opaque.queue[i], uniformHandle, uniformBlockIndex);
+        if(opaque.usedSize == 0)
+          continue;
+
+        m_d->setState(state);
+
+        GLint uniformHandle = state.uniformBuffer->handle();
+        GLint uniformBlockIndex = 0;
+
+        for(int i = opaque.usedSize - 1; i >= 0; --i) {
+          m_d->render(opaque.queue[i], uniformHandle, uniformBlockIndex);
+        }
+
+        if(opaque.usedSize * 10 > opaque.queue.capacity())
+          opaque.frame = m_d->m_frame;
+
+        opaque.usedSize = 0;
       }
 
-      if(opaque.usedSize * 10 > opaque.queue.capacity())
-        opaque.frame = m_d->m_frame;
+      auto it = queues.translucentQueue.queue.begin();
+      for(auto end = it + queues.translucentQueue.usedSize; it != end; ++it) {
+        const RenderState & state = it->first;
+        const RenderCommand & cmd = it->second;
 
-      opaque.usedSize = 0;
+        m_d->setState(state);
+        m_d->render(cmd, state.uniformBuffer->handle(), 0);
+      }
+
+      if(queues.translucentQueue.usedSize * 10 > queues.translucentQueue.queue.capacity())
+        queues.translucentQueue.frame = m_d->m_frame;
+
+      queues.translucentQueue.usedSize = 0;
+
+      // Move the queues back to pool
+      m_d->m_renderQueuePool.insert(std::make_pair(queues.renderTarget, std::move(queues)));
+      m_d->m_masterRenderQueue.pop();
     }
-
-    auto it = m_d->m_translucentQueue.queue.begin();
-    for(auto end = it + m_d->m_translucentQueue.usedSize; it != end; ++it) {
-      const RenderState & state = it->first;
-      const RenderCommand & cmd = it->second;
-
-      m_d->setState(state);
-      m_d->render(cmd, state.uniformBuffer->handle(), 0);
-    }
-
-    if(m_d->m_translucentQueue.usedSize * 10 > m_d->m_translucentQueue.queue.capacity())
-      m_d->m_translucentQueue.frame = m_d->m_frame;
-
-    m_d->m_translucentQueue.usedSize = 0;
   }
 
   void RenderDriverGL::releaseResource(RenderResource::Id id)
@@ -693,6 +740,64 @@ namespace Luminous
     auto & vertexArrayGL = handle(vertexArray);
 
     vertexArrayGL.bind();
+  }
+
+  RenderBufferGL & RenderDriverGL::handle(const RenderBuffer &buffer)
+  {
+    auto it = m_d->m_renderBuffers.find(buffer.resourceId());
+    if(it == m_d->m_renderBuffers.end()) {
+      it = m_d->m_renderBuffers.insert(std::make_pair(buffer.resourceId(), RenderBufferGL(m_d->m_stateGL))).first;
+      it->second.setExpirationSeconds(buffer.expiration());
+    }
+
+    // Update OpenGL state
+    it->second.sync(buffer);
+
+    return it->second;
+  }
+
+  RenderTargetGL & RenderDriverGL::handle(const RenderTarget &target)
+  {
+    auto it = m_d->m_renderTargets.find(target.resourceId());
+    if(it == m_d->m_renderTargets.end()) {
+      it = m_d->m_renderTargets.insert(std::make_pair(target.resourceId(), RenderTargetGL(m_d->m_stateGL))).first;
+      it->second.setExpirationSeconds(target.expiration());
+    }
+
+    // Update the OpenGL state
+    it->second.sync(target);
+
+    return it->second;
+  }
+
+  void RenderDriverGL::pushRenderTarget(const RenderTarget &target)
+  {
+    RenderTargetGL & rtGL = handle(target);
+    auto poolKey = &rtGL;
+
+    // Try to allocate from the queue pool
+    auto it = m_d->m_renderQueuePool.find(poolKey);
+
+    if(it != m_d->m_renderQueuePool.end()) {
+      //Radiant::warning("RenderDriverGL::pushRenderTarget # pool new queue (%p)", poolKey);
+      m_d->m_renderTargetStack.push(std::move(it->second));
+      m_d->m_renderQueuePool.erase(it);
+    } else {
+      // Not in pool, just allocate new
+      //Radiant::warning("RenderDriverGL::pushRenderTarget # allocate new queues (%p)", poolKey);
+      RenderQueues queues;
+      queues.renderTarget = poolKey;
+      m_d->m_renderTargetStack.push(queues);
+    }
+  }
+
+  void RenderDriverGL::popRenderTarget()
+  {
+    assert(!m_d->m_renderTargetStack.empty());
+
+    // Move the queues from stack to the master queue
+    m_d->m_masterRenderQueue.push(m_d->m_renderTargetStack.top());
+    m_d->m_renderTargetStack.pop();
   }
 
 }

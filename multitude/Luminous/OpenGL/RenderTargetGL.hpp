@@ -3,6 +3,7 @@
 
 #include "ResourceHandleGL.hpp"
 #include "TextureGL.hpp"
+#include "RenderTarget.hpp"
 
 #include <QSize>
 
@@ -15,13 +16,12 @@ namespace Luminous
     RenderBufferGL(StateGL & state);
     ~RenderBufferGL();
 
+    void sync(const RenderBuffer & buffer);
+
     void storageFormat(const QSize & size, GLenum format, int samples);
 
     void bind();
     void unbind();
-
-  private:
-
   };
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -33,6 +33,8 @@ namespace Luminous
     RenderTargetGL(StateGL & state);
     ~RenderTargetGL();
 
+    void sync(const RenderTarget & target);
+
     void attach(GLenum attachment, RenderBufferGL & renderBuffer);
     void attach(GLenum attachment, TextureGL & texture);
 
@@ -42,6 +44,10 @@ namespace Luminous
     void unbind();
 
     bool check();
+
+  private:
+    RenderTarget::RenderTargetType m_type;
+    QSize m_size;
   };
 
 }

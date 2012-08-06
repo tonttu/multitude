@@ -5,6 +5,7 @@
 #include "Luminous/RenderDriver.hpp"
 #include "Luminous/OpenGL/BufferGL.hpp"
 #include "Luminous/OpenGL/VertexArrayGL.hpp"
+#include "Luminous/OpenGL/RenderTargetGL.hpp"
 
 #include <Radiant/Flags.hpp>
 
@@ -52,6 +53,8 @@ namespace Luminous
 
     LUMINOUS_API virtual void setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer) OVERRIDE;
 
+    //////////
+    ////////// "Unused" -^
 
     LUMINOUS_API virtual void * mapBuffer(const Buffer & buffer, int offset, std::size_t length,
                                           Radiant::FlagsT<Buffer::MapAccess> access) OVERRIDE;
@@ -73,6 +76,11 @@ namespace Luminous
     LUMINOUS_API TextureGL & handle(const Texture & texture);
     LUMINOUS_API BufferGL & handle(const Buffer & buffer);
     LUMINOUS_API VertexArrayGL & handle(const VertexArray & vertexArray, ProgramGL * program = nullptr);
+    LUMINOUS_API RenderBufferGL & handle(const RenderBuffer & buffer);
+    LUMINOUS_API RenderTargetGL & handle(const RenderTarget & target);
+
+    LUMINOUS_API void pushRenderTarget(const RenderTarget & target);
+    LUMINOUS_API void popRenderTarget();
 
     /// @todo Add function wrapper(s) for:
     /// * glLogicOp
