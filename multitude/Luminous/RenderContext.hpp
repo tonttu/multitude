@@ -472,4 +472,6 @@ namespace Luminous
   }
 }
 
+#include <Luminous/RenderContextImpl.hpp>
+
 #endif

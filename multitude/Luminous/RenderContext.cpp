@@ -2,7 +2,6 @@
  */
 
 #include "RenderContext.hpp"
-#include "RenderContextImpl.hpp"
 
 #include "OpenGL/Error.hpp"
 #include "Texture.hpp"
@@ -801,37 +800,6 @@ namespace Luminous
 
     return ret;
   }
-
-  /*
-  void RenderContext::drawLineRect(const Nimble::Rectf & r,
-                                   float thickness, const float * rgba)
-  {
-    thickness *= 0.5f;
-
-    Vector2 v1(thickness, thickness);
-
-    Nimble::Rectf inside(r.low() + v1, r.high() - v1);
-    Nimble::Rectf outside(r.low() - v1, r.high() + v1);
-
-    Utils::glRectWithHoleAA(outside, inside, transform(), rgba);
-  }
-
-
-  void RenderContext::drawRect(const Nimble::Rectf & rect, const float * rgba)
-  {
-    const Nimble::Vector2f corners[] = { rect.low(), rect.highLow(), rect.high(), rect.lowHigh() };
-    Style s;
-    s.setFillColor(rgba[0],rgba[1],rgba[2],rgba[3]);
-    drawQuad(corners, s);
-  }
-
-  void RenderContext::drawCircle(Nimble::Vector2f center, float radius, const float * rgba, int segments)
-  {
-    Luminous::Style s;
-    s.setFillColor(rgba[0], rgba[1], rgba[2], rgba[3]);
-    drawCircle(center, radius, 1.f, s, segments);
-  }
-  */
 
   void RenderContext::drawArc(Nimble::Vector2f center, float radius, float width,
                               float fromRadians, float toRadians, Luminous::Style & style, unsigned int linesegments)
