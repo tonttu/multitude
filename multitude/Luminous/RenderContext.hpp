@@ -262,6 +262,7 @@ namespace Luminous
     void drawPolyLine(const Nimble::Vector2 * vertices, unsigned int numVertices, float width, Luminous::Style & style);
     void drawPoints(const Nimble::Vector2f * points, size_t numPoints, float size, Luminous::Style & style);
     void drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, Style &style);
+    void drawRect(const Nimble::Rectf & rect, Style & style);
 
     /// Sets the current blend function, and enables blending
     /** If the function is BLEND_NONE, then blending is disabled.

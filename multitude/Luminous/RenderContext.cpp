@@ -1070,7 +1070,12 @@ namespace Luminous
   //
   void RenderContext::drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, Style & style)
   {
-    const Nimble::Vector2f corners[] = { min, Nimble::Vector2f(max.x, min.y), Nimble::Vector2f(min.x, max.y), max, min };
+    drawRect(Nimble::Rect(min, max), style);
+  }
+
+  void RenderContext::drawRect(const Nimble::Rectf & rect, Style & style)
+  {
+    const Nimble::Vector2f corners[] = { rect.low(), rect.highLow(), rect.lowHigh(), rect.high() };
 
     if(style.fill().textures().empty()) {
       drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, corners, 4, style.fillColor(), style);
@@ -1082,7 +1087,9 @@ namespace Luminous
 
     // Draw the outline
     if (style.strokeWidth() > 0.f) {
-      const Nimble::Vector2f outline[] = { min, Nimble::Vector2f(max.x, min.y), max, Nimble::Vector2f(min.x, max.y), min };
+
+      const Nimble::Vector2f outline[] = { rect.low(), rect.highLow(), rect.high(), rect.lowHigh(), rect.low() };
+
       drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, outline, 5, style.strokeColor(), style, style.strokeWidth());
     }
   }
