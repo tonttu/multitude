@@ -48,15 +48,10 @@ namespace Nimble {
     /// Returns true if the rectangle is empty
     inline bool isEmpty() const { return m_low.x > m_high.x || m_low.y > m_high.y; }
 
-    /// Constructs a rectangle and initializes both corners to the given point
-    inline RectT(const Vector2T<T> & lowHigh)
-      : m_low(lowHigh), m_high(lowHigh) {}
-    /// Constructs a rectangle and initializes both corners to the given point
-    inline RectT(const Vector2T<T> * lowHigh)
-      : m_low(*lowHigh), m_high(*lowHigh) {}
     /// Constructs a rectangle and initializes it to the given points
     inline RectT(const Vector2T<T> & low, const Vector2T<T> & high)
       : m_low(low), m_high(high) {}
+
     /// Constructs a rectangle and initializes it to the given points
     inline RectT(T xlow, T ylow, T xhigh, T yhigh)
       : m_low(xlow, ylow), m_high(xhigh, yhigh) {}
@@ -234,7 +229,7 @@ namespace Nimble {
       inline void RectT<T>::expand(const Vector2T<T> &v)
   {
     if(isEmpty()) {
-      *this = RectT<T>(v);
+      *this = RectT<T>(v, v);
     } else {
 
       if(v[0] < m_low[0]) m_low[0] = v[0];

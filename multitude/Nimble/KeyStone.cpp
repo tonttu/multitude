@@ -427,7 +427,7 @@ namespace Nimble {
       };
 
       int i;
-      Rect b2(tests[0]);
+      Rect b2(tests[0], tests[0]);
 
       for(i = 1; i < 4; i++)
         b2.expand(tests[i]);
