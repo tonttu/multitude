@@ -1091,9 +1091,9 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////////
 
   //
-  void RenderContext::drawRect(const Nimble::Rectf & area, Style & style)
+  void RenderContext::drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, Style & style)
   {
-    const Nimble::Vector2f corners[] = { area.low(), area.highLow(), area.lowHigh(), area.high(), area.low() };
+    const Nimble::Vector2f corners[] = { min, Nimble::Vector2f(max.x, min.y), Nimble::Vector2f(min.x, max.y), max, min };
 
     if(style.fill().textures().empty()) {
       drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, corners, 4, style.fillColor(), style);
@@ -1104,14 +1104,10 @@ namespace Luminous
     }
 
     // Draw the outline
-    if (style.strokeWidth() > 0.f)
-      drawPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, corners, 5, style.strokeColor(), style, style.strokeWidth());
-  }
-
-  //
-  void RenderContext::drawRect(const QRectF & area, Style & style)
-  {
-    drawRect(Nimble::Rectf(area.left(), area.top(), area.right(), area.bottom()), style);
+    if (style.strokeWidth() > 0.f) {
+      const Nimble::Vector2f outline[] = { min, Nimble::Vector2f(max.x, min.y), max, Nimble::Vector2f(min.x, max.y), min };
+      drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, outline, 5, style.strokeColor(), style, style.strokeWidth());
+    }
   }
 
   //
@@ -1155,7 +1151,7 @@ namespace Luminous
   void RenderContext::drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2,
                                float width, Luminous::Style & style)
   {
-    /// @todo if we decide that lines can be textures we need to use drawQuad here
+    /// @todo if we decide that lines can be textures we need to use trianglestrip here
     const Nimble::Vector2f vertices[] = { p1, p2 };
     drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, vertices, 2, style.fillColor(), style, width);
 
@@ -1175,26 +1171,6 @@ namespace Luminous
     drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_Point, points, numPoints, style.fillColor(), style, size);
     /// @todo stroked points
   }
-
-  void RenderContext::drawQuad(const Nimble::Vector2f * corners, Luminous::Style & style)
-  {
-    const Nimble::Vector2f vertices[] = { corners[0], corners[1], corners[3], corners[2] };
-    if(style.fill().textures().empty()) {
-      drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, vertices, 4, style.fillColor(), style);
-    }
-    else {
-      const Nimble::Vector2f uvs[] = { Nimble::Vector2f(0,0), Nimble::Vector2f(1,0), Nimble::Vector2f(0,1), Nimble::Vector2f(1,1) };
-      drawTexPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, vertices, uvs, 4, style.fillColor(), style);
-    }
-    if (style.strokeWidth() > 0.f) {
-      const Nimble::Vector2f stroke[] = { corners[0], corners[1], corners[2], corners[3], corners[0] };
-      drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, vertices, 5, style.strokeColor(), style, style.strokeWidth());
-    }
-  }
-
-
-
-
 
   Nimble::Vector2 RenderContext::contextSize() const
   {

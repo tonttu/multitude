@@ -232,8 +232,7 @@ namespace Luminous
       */
     void drawWedge(const Nimble::Vector2f & center, float radius1, float radius2, float fromRadians, float toRadians, float width, Style & style, int segments);
 
-    void drawRect(const QRectF & area, Style &style);
-    void drawRect(const Nimble::Rect & area, Luminous::Style & style);
+
 
     RenderTargetGuard pushRenderTarget(RenderTarget & target);
     void popRenderTarget();
@@ -262,7 +261,7 @@ namespace Luminous
     void drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2, float width, Luminous::Style & style);
     void drawPolyLine(const Nimble::Vector2 * vertices, unsigned int numVertices, float width, Luminous::Style & style);
     void drawPoints(const Nimble::Vector2f * points, size_t numPoints, float size, Luminous::Style & style);
-    void drawQuad(const Nimble::Vector2f * corners, Luminous::Style & style);
+    void drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, Style &style);
 
     /// Sets the current blend function, and enables blending
     /** If the function is BLEND_NONE, then blending is disabled.
