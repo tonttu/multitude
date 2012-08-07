@@ -3,7 +3,7 @@
 
 #include "ResourceHandleGL.hpp"
 #include "TextureGL.hpp"
-#include "RenderTarget.hpp"
+#include "Luminous/RenderTarget.hpp"
 
 #include <QSize>
 
