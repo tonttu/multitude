@@ -1509,16 +1509,40 @@ namespace Luminous
     return m_data->m_driverGL->handle(texture);
   }
 
+  /// @todo hack, fix with stack
+  static int g_foo = 0;
+
   RenderTargetGuard RenderContext::pushRenderTarget(RenderTarget &target)
   {
+    Radiant::warning("RenderContext::pushRenderTarget # render calls %d", m_data->m_renderCalls);
+
     m_data->m_driverGL->pushRenderTarget(target);
+
+    // Push new projection matrix
+//    pushViewTransform();
+//    setViewTransform(Nimble::Matrix4::ortho3D(0.f, target.size().width(), target.size().height(), 0.f, -1000.f, 1000.f));
+
+    // Reset transformation matrix to identity
+//    pushTransform();
+//    setTransform(Nimble::Matrix4::IDENTITY);
+
+    /// @todo this must be a stack
+    g_foo = m_data->m_renderCalls;
+    m_data->m_renderCalls = 0;
 
     return RenderTargetGuard(*this);
   }
 
   void RenderContext::popRenderTarget()
   {
+    // Restore the matrix stack
+//    popTransform();
+//    popViewTransform();
+
+    m_data->m_renderCalls = g_foo;
     m_data->m_driverGL->popRenderTarget();
+
+    Radiant::warning("RenderContext::popRenderTarget # render calls %d", m_data->m_renderCalls);
   }
 
 }

@@ -153,11 +153,15 @@ namespace Luminous
     auto texAttachments = target.textureAttachments();
     auto bufAttachments = target.renderBufferAttachments();
 
+    /// @todo should also detach removed attachments
+
     foreach(GLenum attachment, texAttachments)
       attach(attachment, m_state.driver().handle(*target.texture(attachment)));
 
     foreach(GLenum attachment, bufAttachments)
       attach(attachment, m_state.driver().handle(*target.renderBuffer(attachment)));
+
+    check();
   }
 
 }
