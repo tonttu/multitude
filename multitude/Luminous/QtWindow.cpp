@@ -20,8 +20,8 @@ namespace Luminous
   class GLThreadWidget : public QGLWidget
   {
   public:
-    GLThreadWidget(QWidget * host, QtWindow & window, Qt::WindowFlags flags)
-      : QGLWidget(host, 0, flags),
+    GLThreadWidget(const QGLFormat & format, QWidget * host, QtWindow & window, Qt::WindowFlags flags)
+      : QGLWidget(format, host, 0, flags),
       m_window(window)
     {
       // Needed for key events on Windows
@@ -167,7 +167,10 @@ namespace Luminous
     if(window.fullscreen())
       m_d->m_hostWidget->showFullScreen();
 
-    m_d->m_mainWindow = new GLThreadWidget(m_d->m_hostWidget, *this, flags);
+    QGLFormat format = QGLFormat::defaultFormat();
+    format.setSamples(window.antiAliasingSamples());
+
+    m_d->m_mainWindow = new GLThreadWidget(format, m_d->m_hostWidget, *this, flags);
 
     m_d->m_mainWindow->raise();
     m_d->m_mainWindow->show();
