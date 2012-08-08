@@ -366,7 +366,7 @@ namespace Luminous {
 
     assert(prog != nullptr);
 
-    prog->setUniformMatrix4("view_transform", r.viewTransform());
+    prog->setUniformMatrix4("view_transform", r.viewTransform().transform4());
     prog->setUniformMatrix3("object_transform", r.transform());
     prog->setUniformFloat("time", time);
 

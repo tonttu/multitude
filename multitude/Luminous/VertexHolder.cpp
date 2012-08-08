@@ -46,7 +46,7 @@ namespace Luminous
 
     GLSLProgramObject & prog = * rp.program();
 
-    prog.setUniformMatrix4("view_transform", r.viewTransform());
+    prog.setUniformMatrix4("view_transform", r.viewTransform().transform4());
 
     //Utils::glCheck("RectVertex::render # 2");
 
@@ -87,7 +87,7 @@ namespace Luminous
 
     GLSLProgramObject & prog = * rp.program();
 
-    prog.setUniformMatrix4("view_transform", r.viewTransform());
+    prog.setUniformMatrix4("view_transform", r.viewTransform().transform4());
 
     //Utils::glCheck("CircleVertex::render # 2");
 
@@ -129,7 +129,7 @@ namespace Luminous
 
     GLSLProgramObject & prog = * rp.program();
 
-    prog.setUniformMatrix4("view_transform", r.viewTransform());
+    prog.setUniformMatrix4("view_transform", r.viewTransform().transform4());
 
 //    Utils::glCheck("ArcVertex::render # 2");
 

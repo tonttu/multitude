@@ -77,8 +77,8 @@ namespace Luminous
     // Save and setup viewport to match the FBO
     glViewport(0, 0, m_tex.width(), m_tex.height());
     // error("RenderContext::FBOPackage::activate # unimplemented");
-    r.pushViewTransform();
-    r.setViewTransform(Nimble::Matrix4::ortho3D(0, m_tex.width(), 0, m_tex.height(), -1, 1));
+    r.viewTransform().pushTransform();
+    r.viewTransform().setTransform(Nimble::Matrix4::ortho3D(0, m_tex.width(), 0, m_tex.height(), -1, 1));
     /*
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -107,7 +107,7 @@ namespace Luminous
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
     */
-    r.popViewTransform();
+    r.viewTransform().popTransform();
     Luminous::glErrorToString(__FILE__, __LINE__);
   }
 
@@ -232,8 +232,6 @@ namespace Luminous
       assert(win);
       m_defaultRenderTarget.setSize(QSize(win->size().x, win->size().y));
 
-      m_viewTransform.identity();
-      m_viewTransformStack.push_back(m_viewTransform);
       m_attribs.resize(10000);
       m_attribs.clear();
 
@@ -422,9 +420,7 @@ namespace Luminous
     std::vector<Nimble::Vector2> m_texcoords;
     std::vector<Nimble::Vector4> m_colors;
 
-    std::vector<Nimble::Matrix4> m_viewTransformStack;
-
-    Nimble::Matrix4 m_viewTransform;
+    Transformer m_viewTransformer;
 
     GLSLProgramObject * m_boundProgram;
 
@@ -566,42 +562,15 @@ namespace Luminous
     m_data->m_driverGL->popRenderTarget();
   }
 
-  void RenderContext::pushViewTransform()
+  Transformer & RenderContext::viewTransform()
   {
-    m_data->m_viewTransformStack.push_back(m_data->m_viewTransform);
-    if(m_data->m_viewTransformStack.size() > 200) {
-      error("RenderContext::pushViewTransform # stack extremely deep (%d)",
-            (int) m_data->m_viewTransformStack.size());
-    }
+    return m_data->m_viewTransformer;
   }
 
-  void RenderContext::popViewTransform()
+  const Transformer & RenderContext::viewTransform() const
   {
-    if(!m_data->m_viewTransformStack.empty()) {
-      flush();
-      if(!m_data->m_viewTransformStack.empty()) {
-        m_data->m_viewTransform = m_data->m_viewTransformStack.back();
-        m_data->m_viewTransformStack.pop_back();
-      }
-    }
-    else {
-      error("RenderContext::popViewTransform # Stack empty");
-    }
+    return m_data->m_viewTransformer;
   }
-
-  void RenderContext::setViewTransform(const Nimble::Matrix4 & m)
-  {
-    // Radiant::info("NEW View matrix = %s", Radiant::FixedStr256(m, 5).str());
-    flush();
-
-    m_data->m_viewTransform = m;
-  }
-
-  const Nimble::Matrix4 & RenderContext::viewTransform() const
-  {
-    return m_data->m_viewTransform;
-  }
-
 
   void RenderContext::setRecursionLimit(size_t limit)
   {
@@ -792,8 +761,9 @@ namespace Luminous
     glLoadIdentity();
     glOrthof(0, minimumsize.x, 0, minimumsize.y, -1, 1);
     */
-    pushViewTransform();
-    setViewTransform(Nimble::Matrix4::ortho3D(0, minimumsize.x, 0, minimumsize.y, -1, 1));
+    viewTransform().pushTransform();
+    viewTransform().setTransform(Nimble::Matrix4::ortho3D(0, minimumsize.x, 0, minimumsize.y, -1, 1));
+
     m_data->pushFBO(ret.m_package);
 
     // Lets adjust the matrix stack to take into account the new

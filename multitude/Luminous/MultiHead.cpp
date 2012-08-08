@@ -133,10 +133,10 @@ namespace Luminous {
     // r.setViewTransform(x2 * x1 * km * x4 * x3 * m);
     // r.setViewTransform(x2 * x1 * km * x4 * x3 * m);
     if(m_method == METHOD_MATRIX_TRICK) {
-      r.setViewTransform(x2 * x1 * km * x4 * x3 * m);
+      r.viewTransform().setTransform(x2 * x1 * km * x4 * x3 * m);
     }
     else {
-      r.setViewTransform(m);
+      r.setTransform(m);
     }
 
     // r.setViewTransform(m);

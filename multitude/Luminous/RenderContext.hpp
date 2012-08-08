@@ -158,10 +158,9 @@ namespace Luminous
     /// once after each frame.
     virtual void finish();
 
-    void pushViewTransform();
-    void popViewTransform();
-    void setViewTransform(const Nimble::Matrix4 &);
-    const Nimble::Matrix4 & viewTransform() const;
+    Transformer & viewTransform();
+    const Transformer & viewTransform() const;
+
     /// Sets the rendering recursion limit for the context. This is relevant
     /// for ViewWidgets which can cause recursive rendering of the scene.
     /// @param limit recursion depth limit
