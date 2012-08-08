@@ -266,6 +266,7 @@ namespace Luminous
         header.imageType = 2;
         break;
       case PixelFormat::LAYOUT_RED:
+      case PixelFormat::LAYOUT_ALPHA:
         header.imageType = 3;
         break;
       default:

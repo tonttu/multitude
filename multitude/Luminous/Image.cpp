@@ -798,7 +798,9 @@ namespace Luminous
     px += pixelFormat().bytesPerPixel() * x;
 
 
-    if(m_pixelFormat == PixelFormat::alphaUByte() || m_pixelFormat == PixelFormat::redUByte()) {
+    if(m_pixelFormat == PixelFormat::redUByte()) {
+        px[0] = pixel.x * 255;
+    } else if(m_pixelFormat == PixelFormat::alphaUByte()) {
         px[0] = pixel.w * 255;
     } else if(pixelFormat().numChannels() == 3) {
         px[0] = pixel.x * 255;
