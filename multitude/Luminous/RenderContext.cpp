@@ -502,10 +502,6 @@ namespace Luminous
   {
     resetTransform();
     m_data->m_recursionDepth = 0;
-
-    // Make sure the clip stack is empty
-    while(!m_data->m_clipStack.empty())
-      m_data->m_clipStack.pop_back();
   }
 
   RenderContext::~RenderContext()
@@ -1495,6 +1491,8 @@ namespace Luminous
 
   void RenderContext::beginFrame()
   {
+    assert(stackSize() == 1);
+
     // Push the default render target. Don't use the RenderContext API to avoid
     // the guard.
     m_data->m_driverGL->pushRenderTarget(m_data->m_defaultRenderTarget);
@@ -1516,16 +1514,21 @@ namespace Luminous
 
     // Pop the default target
     m_data->m_driverGL->popRenderTarget();
+
+    assert(stackSize() == 1);
   }
 
   void RenderContext::beginArea()
   {
+    assert(stackSize() == 1);
     assert(transform4() == Nimble::Matrix4::IDENTITY);
     assert(clipStack().empty());
   }
 
   void RenderContext::endArea()
   {
+    assert(stackSize() == 1);
+    assert(transform4() == Nimble::Matrix4::IDENTITY);
   }
 
   bool RenderContext::initialize()

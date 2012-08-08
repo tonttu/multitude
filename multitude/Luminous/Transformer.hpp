@@ -92,6 +92,10 @@ namespace Luminous
     /// Clears the stack so it only contains an identity matrix
     void resetTransform();
 
+    /// Get the size of the transform stack
+    /// @return size of the stack
+    size_t stackSize() const { return m_stack.size(); }
+
   protected:
     virtual void beforeTransformChange();
 
