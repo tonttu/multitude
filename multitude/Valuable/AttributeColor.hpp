@@ -43,6 +43,9 @@ namespace Valuable
     const char * type() const OVERRIDE { return "color"; }
     
     /// Converts the value object to color
+    inline operator Radiant::Color () const { return asColor(); }
+
+    /// Converts the value object to color
     Radiant::Color asColor() const { return asVector(); }
     
     /// Returns the red comoponent of the color (0-1).
