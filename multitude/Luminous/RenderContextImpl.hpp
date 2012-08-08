@@ -4,11 +4,17 @@
 namespace Luminous
 {
   template <typename Vertex, typename UniformBlock>
-  RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::render(Luminous::PrimitiveType type, int indexCount, int vertexCount, float primitiveSize, const Radiant::Color & color, const Style & style)
+  RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::render(
+    bool translucent,
+    Luminous::PrimitiveType type, int indexCount, int vertexCount, float primitiveSize,
+    const Luminous::Program & program, const std::map<QByteArray, Texture *> & textures, const Radiant::Color & color)
   {
     RenderBuilder<Vertex, UniformBlock> builder;
-    RenderCommand & cmd = createRenderCommand(indexCount, vertexCount, builder.idx,
-                                              builder.vertex, builder.uniform, builder.depth, style);
+    RenderCommand & cmd = createRenderCommand(translucent,
+                                              indexCount, vertexCount,
+                                              builder.idx, builder.vertex, builder.uniform,
+                                              builder.depth,
+                                              program, textures);
     cmd.primitiveType = type;
     cmd.primitiveSize = primitiveSize;
 
@@ -27,11 +33,18 @@ namespace Luminous
     
   template <typename Vertex, typename UniformBlock>
   RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::drawPrimitiveT(
-    Luminous::PrimitiveType primType, const Nimble::Vector2f * vertices, unsigned int vertexCount, const Radiant::Color & color, Style & style, float width)
+    Luminous::PrimitiveType primType, const Nimble::Vector2f * vertices, unsigned int vertexCount,
+    const Program & shader, const Radiant::Color & color, float width)
   {
-    if(!style.fillProgramGL() && !style.fillProgram())
-      style.setFillProgram(basicShader());
-    RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(primType, vertexCount, vertexCount, width, color, style);
+    /// @todo Should we be able to overrule this with Style::Translucent
+    bool translucent =
+      shader.translucent() |
+      (color.w < 0.99999999f);
+
+    /// @todo temporary dummy to avoid separate render() function
+    const std::map<QByteArray, Texture *> textures;
+
+    RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(translucent, primType, vertexCount, vertexCount, width, shader, textures, color);
     auto v = b.vertex;
     auto idx = b.idx;
 
@@ -45,11 +58,15 @@ namespace Luminous
 
   template <typename Vertex, typename UniformBlock>
   RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::drawTexPrimitiveT(
-    Luminous::PrimitiveType primType, const Nimble::Vector2f * vertices, const Nimble::Vector2f * uvs, unsigned int vertexCount, const Radiant::Color & color, Style & style, float width)
+    Luminous::PrimitiveType primType, const Nimble::Vector2f * vertices, const Nimble::Vector2f * uvs, unsigned int vertexCount,
+    const Program & shader, const std::map<QByteArray, Texture *> & textures, const Radiant::Color & color, float width)
   {
-    if(!style.fillProgramGL() && !style.fillProgram())
-      style.setFillProgram(texShader());
-    RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(primType, vertexCount, vertexCount, width, color, style);
+    /// @todo Should we be able to overrule this with Style::Translucent
+    bool translucent =
+      shader.translucent() |
+      (color.w < 0.99999999f);
+
+    RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(translucent, primType, vertexCount, vertexCount, width, shader, textures, color);
     auto v = b.vertex;
     auto idx = b.idx;
 

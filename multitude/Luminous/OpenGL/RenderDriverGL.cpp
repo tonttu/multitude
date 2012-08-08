@@ -168,7 +168,7 @@ namespace Luminous
     RenderCommand & createRenderCommand(bool translucent,
                                         VertexArray & vertexArray,
                                         Buffer & uniformBuffer,
-                                        const Luminous::Style & style);
+                                        const std::map<QByteArray,Texture *> & textures);
 
     // Utility function for resource cleanup
     template <typename ContainerType>
@@ -258,31 +258,26 @@ namespace Luminous
   RenderCommand & RenderDriverGL::D::createRenderCommand(bool translucent,
                                                          VertexArray & vertexArray,
                                                          Buffer & uniformBuffer,
-                                                         const Luminous::Style & style)
+                                                         const std::map<QByteArray,Texture *> & textures)
   {
     m_state.vertexArray = &m_driver.handle(vertexArray, m_state.program);
     m_state.uniformBuffer = &m_driver.handle(uniformBuffer);
 
     int unit = 0;
-    for(auto it = style.fill().textures().begin(), end = style.fill().textures().end(); it != end; ++it) {
-      TextureGL * textureGL;
-      if(it->second.textureGL) {
-         textureGL = it->second.textureGL;
-      } else {
-        Texture & texture = *it->second.texture;
-        if(!texture.isValid())
-          continue;
+    for(auto it = std::begin(textures), end = std::end(textures); it != end; ++it) {
+      Texture * texture = it->second;
+      if(!texture->isValid())
+        continue;
 
-        translucent |= texture.translucent();
-        textureGL = &m_driver.handle(texture);
-        textureGL->upload(texture, unit, false);
-      }
+      TextureGL * textureGL;
+
+      translucent |= texture->translucent();
+      textureGL = &m_driver.handle(*texture);
+      textureGL->upload(*texture, unit, false);
+
       m_state.textures[unit++] = textureGL;
     }
     m_state.textures[unit] = nullptr;
-
-    translucent = style.translucency() == Style::Translucent ||
-        ((style.translucency() == Style::Auto) && (translucent || style.fillColor().w < 0.99999999f));
 
     RenderQueues & rt = currentRenderTargetItem();
 
@@ -303,7 +298,7 @@ namespace Luminous
 
     unit = 0;
     int slot = 0; // one day this will be different from unit
-    for(auto it = style.fill().textures().begin(), end = style.fill().textures().end(); it != end; ++it, ++unit, ++slot) {
+    for(auto it = std::begin(textures), end = std::end(textures); it != end; ++it, ++unit, ++slot) {
       cmd->samplers[slot] = std::make_pair(m_state.program->samplerLocation(it->first), unit);
     }
     cmd->samplers[slot].first = -1;
@@ -588,20 +583,17 @@ namespace Luminous
     bufferGL.unmap(offset, length);
   }
 
-  RenderCommand & RenderDriverGL::createRenderCommand(Buffer & vertexBuffer,
+  RenderCommand & RenderDriverGL::createRenderCommand(bool translucent,
+                                                      Buffer & vertexBuffer,
                                                       Buffer & indexBuffer,
                                                       Buffer & uniformBuffer,
-                                                      const Luminous::Style & style)
+                                                      const Luminous::Program & shader,
+                                                      const std::map<QByteArray, Texture *> & textures)
   {
-    bool translucent = false;
-    auto & state = m_d->m_state;
-    state.program = style.fillProgramGL();
-    if(!state.program) {
-      Program & prog = *style.fillProgram();
-      state.program = &handle(prog);
-      state.program->link(prog);
-      translucent = prog.translucent();
-    }
+    auto & state = m_d->m_state;    
+    state.program = &handle(shader);
+    state.program->link(shader);
+    translucent = shader.translucent();
 
     const auto key = std::make_tuple(vertexBuffer.resourceId(), indexBuffer.resourceId(), state.program);
     // There seems bug in VC++2010 tuple/map implementation, see
@@ -615,24 +607,21 @@ namespace Luminous
       it = m_d->m_vertexArrayCache.insert(std::make_pair(key, std::move(vertexArray))).first;
     }
 
-    return m_d->createRenderCommand(translucent, it->second, uniformBuffer, style);
+    return m_d->createRenderCommand(translucent, it->second, uniformBuffer,textures);
   }
 
-  RenderCommand & RenderDriverGL::createRenderCommand(VertexArray & vertexArray,
+  RenderCommand & RenderDriverGL::createRenderCommand(bool translucent,
+                                                      VertexArray & vertexArray,
                                                       Buffer & uniformBuffer,
-                                                      const Luminous::Style & style)
+                                                      const Luminous::Program & shader,
+                                                      const std::map<QByteArray, Texture *> & textures)
   {
-    bool translucent = false;
     auto & state = m_d->m_state;
-    state.program = style.fillProgramGL();
-    if(!state.program) {
-      Program & prog = *style.fillProgram();
-      state.program = &handle(prog);
-      state.program->link(prog);
-      translucent = prog.translucent();
-    }
+    state.program = &handle(shader);
+    state.program->link(shader);
+    translucent = shader.translucent();
 
-    return m_d->createRenderCommand(translucent, vertexArray, uniformBuffer, style);
+    return m_d->createRenderCommand(translucent, vertexArray, uniformBuffer, textures);
   }
 
   void RenderDriverGL::flush()

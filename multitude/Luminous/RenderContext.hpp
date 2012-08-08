@@ -213,7 +213,7 @@ namespace Luminous
       @param style color and other parameters for the arc
       @param lineSegments number of steps
       */
-    void drawArc(Nimble::Vector2f center, float radius, float width, float fromRadians, float toRadians, Luminous::Style & style, unsigned int lineSegments = 0);
+    void drawArc(Nimble::Vector2f center, float radius, float fromRadians, float toRadians, Luminous::Style & style, unsigned int lineSegments = 0);
 
     /** Draws a circle
       @param center center of the circle
@@ -235,7 +235,7 @@ namespace Luminous
       @param rgba color of the wedge
       @param segments number of segments to use
       */
-    void drawWedge(const Nimble::Vector2f & center, float radius1, float radius2, float fromRadians, float toRadians, float width, Style & style, int segments);
+    void drawWedge(const Nimble::Vector2f & center, float radius1, float radius2, float fromRadians, float toRadians, Style & style, int segments);
 
 
 
@@ -257,17 +257,19 @@ namespace Luminous
     //////////////////////////////////////////////////////////////////////////
     // Implementation
     template <typename Vertex, typename UniformBlock>
-    RenderBuilder<Vertex, UniformBlock> drawPrimitiveT(Luminous::PrimitiveType primType, const Nimble::Vector2f * vertices, unsigned int vertexCount, const Radiant::Color & color, Style & style, float width = 1.f);
+    RenderBuilder<Vertex, UniformBlock> drawPrimitiveT(Luminous::PrimitiveType primType, const Nimble::Vector2f * vertices, unsigned int vertexCount,
+      const Luminous::Program & shader, const Radiant::Color & color, float width = 1.f);
 
     template <typename Vertex, typename UniformBlock>
-    RenderBuilder<Vertex, UniformBlock> drawTexPrimitiveT(Luminous::PrimitiveType primType, const Nimble::Vector2f * vertices, const Nimble::Vector2f * uvs, unsigned int vertexCount, const Radiant::Color & color, Style & style, float width = 1.f);    
+    RenderBuilder<Vertex, UniformBlock> drawTexPrimitiveT(Luminous::PrimitiveType primType, const Nimble::Vector2f * vertices, const Nimble::Vector2f * uvs, unsigned int vertexCount,
+      const Luminous::Program & shader, const std::map<QByteArray, Texture *> & textures, const Radiant::Color & color, float width = 1.f);
 
-    void drawRectWithHole(const Nimble::Rect & area, const Nimble::Rect & hole, Luminous::Style & style);
-    void drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2, float width, Luminous::Style & style);
-    void drawPolyLine(const Nimble::Vector2 * vertices, unsigned int numVertices, float width, Luminous::Style & style);
-    void drawPoints(const Nimble::Vector2f * points, size_t numPoints, float size, Luminous::Style & style);
-    void drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, Style &style);
-    void drawRect(const Nimble::Rectf & rect, Style & style);
+    void drawRectWithHole(const Nimble::Rect & area, const Nimble::Rect & hole, const Luminous::Style & style);
+    void drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2, const Luminous::Style & style);
+    void drawPolyLine(const Nimble::Vector2 * vertices, unsigned int numVertices, const Luminous::Style & style);
+    void drawPoints(const Nimble::Vector2f * points, size_t numPoints, const Luminous::Style & style);
+    void drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, const Style &style);
+    void drawRect(const Nimble::Rectf & rect, const Style & style);
 
     /// Sets the current blend function, and enables blending
     /** If the function is BLEND_NONE, then blending is disabled.
@@ -358,19 +360,25 @@ namespace Luminous
 
     void clear(ClearMask mask, const Radiant::Color & color = Radiant::Color(0,0,0,0), double depth = 1.0, int stencil = 0);
   private:
-    RenderCommand & createRenderCommand(int indexCount, int vertexCount,
+    RenderCommand & createRenderCommand(bool translucent,
+                                        int indexCount, int vertexCount,
                                         std::size_t vertexSize, std::size_t uniformSize,
                                         unsigned *& mappedIndexBuffer,
                                         void *& mappedVertexBuffer,
                                         void *& mappedUniformBuffer,
-                                        float & depth, const Style & style);
+                                        float & depth,
+                                        const Program & program,
+                                        const std::map<QByteArray, Texture *> & textures);
 
     template <typename Vertex, typename UniformBlock>
-    RenderCommand & createRenderCommand(int indexCount, int vertexCount,
+    RenderCommand & createRenderCommand(bool translucent,
+                                        int indexCount, int vertexCount,
                                         unsigned *& mappedIndexBuffer,
                                         Vertex *& mappedVertexBuffer,
                                         UniformBlock *& mappedUniformBuffer,
-                                        float & depth, const Style & style);
+                                        float & depth,
+                                        const Program & program,
+                                        const std::map<QByteArray, Texture *> & textures);
 
     struct SharedBuffer;
     template <typename T>
@@ -381,7 +389,9 @@ namespace Luminous
         std::size_t vertexSize, std::size_t maxVertexCount, Buffer::Type type, unsigned int & offset);
 
     template <typename Vertex, typename UniformBlock>
-    RenderBuilder<Vertex, UniformBlock> render(Luminous::PrimitiveType type, int indexCount, int vertexCount, float primitiveSize, const Radiant::Color & color, const Style & style);
+    RenderBuilder<Vertex, UniformBlock> render( bool translucent,
+                                                Luminous::PrimitiveType type, int indexCount, int vertexCount, float primitiveSize,
+                                                const Luminous::Program & program, const std::map<QByteArray, Texture *> & textures, const Radiant::Color & color);
 
     TextureGL & handle(Texture & texture);
 
@@ -453,18 +463,21 @@ namespace Luminous
   }
 
   template <typename Vertex, typename Uniform>
-  RenderCommand & RenderContext::createRenderCommand(int indexCount, int vertexCount,
+  RenderCommand & RenderContext::createRenderCommand(bool translucent,
+                                                     int indexCount, int vertexCount,
                                                      unsigned *& mappedIndexBuffer,
                                                      Vertex *& mappedVertexBuffer,
                                                      Uniform *& mappedUniformBuffer,
                                                      float & depth,
-                                                     const Style & style)
+                                                     const Program & program,
+                                                     const std::map<QByteArray, Texture *> & textures)
   {
-    return createRenderCommand(indexCount, vertexCount,
+    return createRenderCommand(translucent,
+                               indexCount, vertexCount,
                                sizeof(Vertex), sizeof(Uniform),
                                mappedIndexBuffer, reinterpret_cast<void *&>(mappedVertexBuffer),
                                reinterpret_cast<void *&>(mappedUniformBuffer),
-                               depth, style);
+                               depth, program, textures);
   }
 
   template <typename T>

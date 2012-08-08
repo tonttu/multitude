@@ -84,14 +84,18 @@ namespace Luminous
     LUMINOUS_API virtual void unmapBuffer(const Buffer & buffer, int offset = 0,
                                           std::size_t length = std::size_t(-1)) = 0;
 
-    LUMINOUS_API virtual RenderCommand & createRenderCommand(Buffer & vertexBuffer,
+    LUMINOUS_API virtual RenderCommand & createRenderCommand(bool translucent,
+                                                             Buffer & vertexBuffer,
                                                              Buffer & indexBuffer,
                                                              Buffer & uniformBuffer,
-                                                             const Luminous::Style & style) = 0;
+                                                             const Luminous::Program & shader,
+                                                             const std::map<QByteArray, Texture *> & textures) = 0;
 
-    LUMINOUS_API virtual RenderCommand & createRenderCommand(VertexArray & vertexArray,
+    LUMINOUS_API virtual RenderCommand & createRenderCommand(bool translucent,
+                                                             VertexArray & vertexArray,
                                                              Buffer & uniformBuffer,
-                                                             const Luminous::Style & style) = 0;
+                                                             const Luminous::Program & shader,
+                                                             const std::map<QByteArray, Texture *> & textures) = 0;
 
     LUMINOUS_API virtual void flush() = 0;
 

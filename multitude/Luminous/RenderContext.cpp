@@ -749,7 +749,7 @@ namespace Luminous
     return ret;
   }
 
-  void RenderContext::drawArc(Nimble::Vector2f center, float radius, float width,
+  void RenderContext::drawArc(Nimble::Vector2f center, float radius,
                               float fromRadians, float toRadians, Luminous::Style & style, unsigned int linesegments)
   {
     if (linesegments == 0) {
@@ -766,7 +766,9 @@ namespace Luminous
       angle += step;
     }
 
-    drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, vertices.data(), vertices.size(), style.fillColor(), style, width);
+    const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
+    drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, vertices.data(), vertices.size(), 
+      program, style.strokeColor(), style.strokeWidth());
   }
 
   void RenderContext::drawCircle(Nimble::Vector2f center, float radius, Luminous::Style & style, unsigned int linesegments)
@@ -775,6 +777,7 @@ namespace Luminous
       /// @todo Automagically determine the proper number of linesegments
       linesegments = 32;
     }
+
     std::vector<Nimble::Vector2f> vertices(linesegments + 2);
     float step = Nimble::Math::TWO_PI / linesegments;
 
@@ -791,28 +794,38 @@ namespace Luminous
 
     //vertices[linesegments+1] = vertices[1];
 
-    if (style.fill().textures().empty())
-      drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleFan, vertices.data(), vertices.size(), style.fillColor(), style);
-    else
-    {
-      /// @todo generate UVs
-      std::vector<Nimble::Vector2f> uvs;
-      drawTexPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PrimitiveType_TriangleFan, vertices.data(), uvs.data(), vertices.size(), style.fillColor(), style);
+    // Draw fill
+    if (style.fillColor().w > 0.f) {
+      if (style.fill().textures().empty()) {
+        const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
+        drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleFan, vertices.data(), vertices.size(), program, style.fillColor());
+      } else
+      {
+        const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
+        /// @todo generate UVs
+        std::vector<Nimble::Vector2f> uvs;
+        drawTexPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PrimitiveType_TriangleFan, vertices.data(), uvs.data(), vertices.size(),
+          program, style.fill().textures(), style.fillColor());
+      }
     }
 
     // Draw stroke
-    if (style.strokeWidth() > 0.f)
-      drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, &vertices[1], linesegments+1, style.strokeColor(), style, style.strokeWidth());
+    if (style.strokeWidth() > 0.f) {
+      const Program & program = (style.strokeProgram() ? *style.strokeProgram() : texShader());
+      drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, &vertices[1], linesegments+1, program, style.strokeColor(), style.strokeWidth());
+    }
   }
 
   void RenderContext::drawWedge(const Nimble::Vector2f & center, float radius1,
                                 float radius2, float fromRadians, float toRadians,
-                                float width, Style & style,
+                                Style & style,
                                 int segments)
   {
+    // @todo Create fill geometry
+
     // Draw two arcs
-    drawArc(center, radius1, fromRadians, toRadians, width, style, segments);
-    drawArc(center, radius2, fromRadians, toRadians, width, style, segments);
+    drawArc(center, radius1, fromRadians, toRadians, style, segments);
+    drawArc(center, radius2, fromRadians, toRadians, style, segments);
 
     // Draw sector edges
     /// @todo these look a bit crappy as the blending doesn't match the arcs properly
@@ -826,8 +839,8 @@ namespace Luminous
     Nimble::Vector2f p3 =
         center + radius2 * Nimble::Vector2f(cos(toRadians), sin(toRadians));
 
-    drawLine(p0, p1, width, style);
-    drawLine(p2, p3, width, style);
+    drawLine(p0, p1, style);
+    drawLine(p2, p3, style);
   }
 
   void RenderContext::addRenderCounter()
@@ -966,13 +979,15 @@ namespace Luminous
     m_data->m_driver.unmapBuffer(buffer, offset, length);
   }
 
-  RenderCommand & RenderContext::createRenderCommand(int indexCount, int vertexCount,
+  RenderCommand & RenderContext::createRenderCommand(bool translucent,
+                                                     int indexCount, int vertexCount,
                                                      std::size_t vertexSize, std::size_t uniformSize,
                                                      unsigned *& mappedIndexBuffer,
                                                      void *& mappedVertexBuffer,
                                                      void *& mappedUniformBuffer,
                                                      float & depth,
-                                                     const Style & style)
+                                                     const Program & shader,
+                                                     const std::map<QByteArray,Texture *> & textures)
   {
     unsigned int indexOffset, vertexOffset, uniformOffset;
 
@@ -990,7 +1005,7 @@ namespace Luminous
     std::tie(mappedUniformBuffer, ubuffer) = sharedBuffer(uniformSize, 1, Buffer::Uniform, uniformOffset);
 
     RenderCommand & cmd = m_data->m_driver.createRenderCommand(
-          vbuffer->buffer, ibuffer->buffer, ubuffer->buffer, style);
+          translucent, vbuffer->buffer, ibuffer->buffer, ubuffer->buffer, shader, textures);
     cmd.primitiveCount = indexCount;
     cmd.indexOffset = indexOffset;
     cmd.vertexOffset = vertexOffset;
@@ -1007,36 +1022,39 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////////
 
   //
-  void RenderContext::drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, Style & style)
+  void RenderContext::drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, const Style & style)
   {
     drawRect(Nimble::Rect(min, max), style);
   }
 
-  void RenderContext::drawRect(const Nimble::Rectf & rect, Style & style)
+  void RenderContext::drawRect(const Nimble::Rectf & rect, const Style & style)
   {
     const Nimble::Vector2f corners[] = { rect.low(), rect.highLow(), rect.lowHigh(), rect.high() };
 
-    if(style.fill().textures().empty()) {
-      drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, corners, 4, style.fillColor(), style);
-    }
-    else {
-      static const Nimble::Vector2f uvs[] = { Nimble::Vector2f(0,0), Nimble::Vector2f(1,0), Nimble::Vector2f(0,1), Nimble::Vector2f(1,1) };
-      drawTexPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, corners, uvs, 4, style.fillColor(), style);
+    if (style.fillColor().w > 0.f) {
+      if(style.fill().textures().empty()) {
+        const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
+        drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, corners, 4, program, style.fillColor());
+      }
+      else {
+        const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
+        static const Nimble::Vector2f uvs[] = { Nimble::Vector2f(0,0), Nimble::Vector2f(1,0), Nimble::Vector2f(0,1), Nimble::Vector2f(1,1) };
+        drawTexPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, corners, uvs, 4, program, style.fill().textures(), style.fillColor());
+      }
     }
 
     // Draw the outline
-    if (style.strokeWidth() > 0.f) {
-
+    if (style.strokeWidth() > 0.f && style.strokeColor().w > 0.f) {
       const Nimble::Vector2f outline[] = { rect.low(), rect.highLow(), rect.high(), rect.lowHigh(), rect.low() };
-
-      drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, outline, 5, style.strokeColor(), style, style.strokeWidth());
+      const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
+      drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, outline, 5, program, style.strokeColor(), style.strokeWidth());
     }
   }
 
   //
   void RenderContext::drawRectWithHole(const Nimble::Rect & area,
                                        const Nimble::Rect & hole,
-                                       Luminous::Style & style)
+                                       const Luminous::Style & style)
   {
     const Nimble::Vector2f vertices[] = {
       hole.low(), area.low(),
@@ -1046,53 +1064,54 @@ namespace Luminous
       hole.low(), area.low()
     };
 
-    if (style.fill().textures().empty())
-      drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, vertices, 10, style.fillColor(), style);
-    else
-    {
-      /// @todo calculate correct UVs for the inside ring
-      const Nimble::Vector2f uvs[] = {
-        Nimble::Vector2f(0,0), Nimble::Vector2f(0,0),
-        Nimble::Vector2f(0,0), Nimble::Vector2f(1,0),
-        Nimble::Vector2f(0,0), Nimble::Vector2f(1,1),
-        Nimble::Vector2f(0,0), Nimble::Vector2f(0,1),
-        Nimble::Vector2f(0,0), Nimble::Vector2f(0,0),
-      };
-      drawTexPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, vertices, uvs, 10, style.fillColor(), style);
+    if (style.fillColor().w > 0.f) {
+      if (style.fill().textures().empty()) {
+        const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
+        drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, vertices, 10, program, style.fillColor());
+      } else
+      {
+        /// @todo calculate correct UVs for the inside ring
+        const Nimble::Vector2f uvs[] = {
+          Nimble::Vector2f(0,0), Nimble::Vector2f(0,0),
+          Nimble::Vector2f(0,0), Nimble::Vector2f(1,0),
+          Nimble::Vector2f(0,0), Nimble::Vector2f(1,1),
+          Nimble::Vector2f(0,0), Nimble::Vector2f(0,1),
+          Nimble::Vector2f(0,0), Nimble::Vector2f(0,0),
+        };
+        const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
+        drawTexPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, vertices, uvs, 10, program, style.fill().textures(), style.fillColor());
+      }
     }
 
     // Draw the stroke
-    if (style.strokeWidth() > 0.f) {
+    if (style.strokeWidth() > 0.f && style.strokeColor().w > 0.f) {
+      const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
       const Nimble::Vector2f innerStroke[] = { hole.low(), hole.highLow(), hole.high(), hole.lowHigh(), hole.low() };
       const Nimble::Vector2f outerStroke[] = { hole.low(), hole.highLow(), hole.high(), hole.lowHigh(), hole.low() };
-      drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, innerStroke, 5, style.strokeColor(), style, style.strokeWidth());
-      drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, outerStroke, 5, style.strokeColor(), style, style.strokeWidth());
+      drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, innerStroke, 5, program, style.strokeColor(), style.strokeWidth());
+      drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, outerStroke, 5, program, style.strokeColor(), style.strokeWidth());
     }
   }
 
   //
-  void RenderContext::drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2,
-                               float width, Luminous::Style & style)
+  void RenderContext::drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2, const Luminous::Style & style)
   {
-    /// @todo if we decide that lines can be textures we need to use trianglestrip here
     const Nimble::Vector2f vertices[] = { p1, p2 };
-    drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, vertices, 2, style.fillColor(), style, width);
-
-    /// @todo stroked lines?
+    const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
+    drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, vertices, 2, program, style.strokeColor(), style.strokeWidth());
   }
 
   //
-  void RenderContext::drawPolyLine(const Nimble::Vector2 * points, unsigned int numPoints, float width, Luminous::Style & style)
+  void RenderContext::drawPolyLine(const Nimble::Vector2 * points, unsigned int numPoints, const Luminous::Style & style)
   {
-    drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, points, numPoints, style.fillColor(), style, width);
-
-    /// @todo stroked lines?
+    const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
+    drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, points, numPoints, program, style.strokeColor(), style.strokeWidth());
   }
 
-  void RenderContext::drawPoints(const Nimble::Vector2f * points, size_t numPoints, float size, Luminous::Style & style)
+  void RenderContext::drawPoints(const Nimble::Vector2f * points, size_t numPoints, const Luminous::Style & style)
   {
-    drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_Point, points, numPoints, style.fillColor(), style, size);
-    /// @todo stroked points
+    const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
+    drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_Point, points, numPoints, program, style.strokeColor(), style.strokeWidth());
   }
 
   Nimble::Vector2 RenderContext::contextSize() const
