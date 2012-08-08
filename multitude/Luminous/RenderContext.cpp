@@ -780,7 +780,7 @@ namespace Luminous
       program, style.strokeColor(), style.strokeWidth());
   }
 
-  void RenderContext::drawCircle(Nimble::Vector2f center, float radius, Luminous::Style & style, unsigned int linesegments)
+  void RenderContext::drawCircle(Nimble::Vector2f center, float radius, Luminous::Style & style, unsigned int linesegments, float fromRadians, float toRadians)
   {
     if (linesegments == 0) {
       /// @todo Automagically determine the proper number of linesegments
@@ -788,13 +788,13 @@ namespace Luminous
     }
 
     std::vector<Nimble::Vector2f> vertices(linesegments + 2);
-    float step = Nimble::Math::TWO_PI / linesegments;
+    float step = (toRadians - fromRadians) / linesegments;
 
     // Center is the first vertex in a fan
     vertices[0] = center;
 
     // Add the rest of the fan vertices
-    float angle = 0.f;
+    float angle = fromRadians;
     for (unsigned int i = 0; i <= linesegments; ++i) {
       Nimble::Vector2f c(std::cos(angle), std::sin(angle));
       vertices[1 + i] = center + c * radius;
@@ -808,8 +808,7 @@ namespace Luminous
       if (style.fill().textures().empty()) {
         const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
         drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleFan, vertices.data(), vertices.size(), program, style.fillColor());
-      } else
-      {
+      } else {
         const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
         /// @todo generate UVs
         std::vector<Nimble::Vector2f> uvs;
@@ -820,9 +819,102 @@ namespace Luminous
 
     // Draw stroke
     if (style.strokeWidth() > 0.f) {
-      const Program & program = (style.strokeProgram() ? *style.strokeProgram() : texShader());
+      const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
       drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, &vertices[1], linesegments+1, program, style.strokeColor(), style.strokeWidth());
     }
+  }
+
+  void RenderContext::drawDonut(Nimble::Vector2f center,
+                                float majorAxisLength,
+                                float minorAxisLength,
+                                float width,
+                                const Luminous::Style & style,
+                                unsigned int linesegments,
+                                float fromRadians, float toRadians)
+  {
+
+    if(linesegments == 0) {
+      linesegments = 32;
+    }
+
+    bool stroke = style.strokeWidth() > 0.0f;
+    bool needInnerStroke = std::min(majorAxisLength, minorAxisLength) - width > 0.0f;
+
+    majorAxisLength -= style.strokeWidth();
+    minorAxisLength -= style.strokeWidth();
+
+    std::vector<Nimble::Vector2f> vertices(linesegments * 2);
+    std::vector<Nimble::Vector2f> innerStroke, outerStroke;
+
+    if(stroke) {
+      innerStroke.resize(linesegments);
+      outerStroke.resize(linesegments);
+    }
+
+    const float step = (toRadians - fromRadians) / (linesegments-1);
+
+    float angle = fromRadians;
+
+    float r = 0.5f * width;
+    float m1 = majorAxisLength - r;
+    float m2 = minorAxisLength - r;
+
+    float strokeRatio = (r + 0.5f*style.strokeWidth()) / r;
+
+    for (unsigned int i = 0; i < linesegments; ++i) {
+      Nimble::Vector2f p = Nimble::Vector2(std::cos(angle), std::sin(angle));
+      Nimble::Vector2f normal = Nimble::Vector2(-m1*p.y, m2*p.x).perpendicular().normalize(r);
+
+      p.x *= m1;
+      p.y *= m2;
+      p += center;
+
+      Nimble::Vector2 in = p + normal;
+      Nimble::Vector2 out = p - normal;
+
+      if(stroke) {
+        if(needInnerStroke)
+          innerStroke[i] = p + strokeRatio*normal;
+
+        outerStroke[i] = p - strokeRatio*normal;
+      }
+
+      vertices[2*i] = in;
+      vertices[2*i+1] = out;
+
+      angle += step;
+    }
+
+    if (style.fill().textures().empty()) {
+      const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
+
+      drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, vertices.data(), vertices.size(), program, style.fillColor());
+
+    } else {
+      float r = Nimble::Math::Max(majorAxisLength, minorAxisLength);
+
+      Nimble::Vector2 low = center - Nimble::Vector2(r, r);
+      float iSpan = 1.0f/(2.0f*r);
+
+      std::vector<Nimble::Vector2f> uvs(linesegments*2);
+
+      for(unsigned int i=0; i < vertices.size(); ++i) {
+        uvs[i] = iSpan * (vertices[i]-low);
+      }
+
+      const Program & program = (style.strokeProgram() ? *style.strokeProgram() : texShader());
+      drawTexPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, vertices.data(), uvs.data(), vertices.size(),
+                                                          program, style.fill().textures(), style.fillColor());
+    }
+
+    if(stroke) {
+      const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
+
+      if(needInnerStroke)
+        drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, &innerStroke[0], linesegments, program, style.strokeColor(), style.strokeWidth());
+      drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, &outerStroke[0], linesegments, program, style.strokeColor(), style.strokeWidth());
+    }
+
   }
 
   void RenderContext::drawWedge(const Nimble::Vector2f & center, float radius1,
@@ -837,7 +929,7 @@ namespace Luminous
     drawArc(center, radius2, fromRadians, toRadians, style, segments);
 
     // Draw sector edges
-    /// @todo these look a bit crappy as the blending doesn't match the arcs properly
+    /// @todo these look a bit crappy as the blending doesn't match  the arcs properly
     Nimble::Vector2f p0 =
         center + radius1 * Nimble::Vector2f(cos(fromRadians), sin(fromRadians));
     Nimble::Vector2f p1 =
@@ -1038,6 +1130,11 @@ namespace Luminous
 
   void RenderContext::drawRect(const Nimble::Rectf & rect, const Style & style)
   {
+    drawRect(rect, Nimble::Rect(0, 0, 1, 1), style);
+  }
+
+  void RenderContext::drawRect(const Nimble::Rectf & rect, const Nimble::Rectf & uvs, const Style & style)
+  {
     const Nimble::Vector2f corners[] = { rect.low(), rect.highLow(), rect.lowHigh(), rect.high() };
 
     if (style.fillColor().w > 0.f) {
@@ -1047,8 +1144,8 @@ namespace Luminous
       }
       else {
         const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
-        static const Nimble::Vector2f uvs[] = { Nimble::Vector2f(0,0), Nimble::Vector2f(1,0), Nimble::Vector2f(0,1), Nimble::Vector2f(1,1) };
-        drawTexPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, corners, uvs, 4, program, style.fill().textures(), style.fillColor());
+        const Nimble::Vector2f uv[] = { uvs.low(), uvs.highLow(), uvs.lowHigh(), uvs.high() };
+        drawTexPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, corners, uv, 4, program, style.fill().textures(), style.fillColor());
       }
     }
 

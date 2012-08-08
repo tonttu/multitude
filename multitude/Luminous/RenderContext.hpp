@@ -225,7 +225,25 @@ namespace Luminous
       @param style color and other parameters for the circle
       @param lineSegments number of steps
       */
-    void drawCircle(Nimble::Vector2f center, float radius, Luminous::Style & style, unsigned int lineSegments = 0);
+    void drawCircle(Nimble::Vector2f center, float radius, Luminous::Style & style, unsigned int lineSegments = 0, float fromRadians=0, float toRadians=Nimble::Math::TWO_PI);
+
+    /** Draws a constant width donut.
+      @param center center of the donut
+      @param majorAxisLength length of the major axis
+      @param minorAxisLength length of the minor axis
+      @param width width of the donut
+      @param style color and other parameters for the donut
+      @param linesegments number of steps to use
+      @param fromRadians
+      @param toRadians
+     */
+    void drawDonut(Nimble::Vector2f center,
+                   float majorAxisLength,
+                   float minorAxisLength,
+                   float width,
+                   const Luminous::Style & style,
+                   unsigned int linesegments = 0,
+                   float fromRadians=0, float toRadians=Nimble::Math::TWO_PI);
 
     /** Draws a cut sector in a circle or a wedge.
       @param center center of the circle
@@ -273,11 +291,12 @@ namespace Luminous
     void drawPoints(const Nimble::Vector2f * points, size_t numPoints, const Luminous::Style & style);
     void drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, const Style &style);
     void drawRect(const Nimble::Rectf & rect, const Style & style);
+    void drawRect(const Nimble::Rectf & rect, const Nimble::Rectf & uvs, const Style & style);
 
     /// Sets the current blend function, and enables blending
     /** If the function is BLEND_NONE, then blending is disabled.
     @param f blend function */
-    void setBlendFunc(BlendFunc f);
+    MULTI_ATTR_DEPRECATED("Deprecated", void setBlendFunc(BlendFunc f));
     /// Enables the current blend mode defined with setBlendFunc
     void useCurrentBlendMode();
 
