@@ -1189,40 +1189,21 @@ namespace Luminous
     popTransform();
   }
 
-  // Doesn't work under windows where pthread_t (id_t) is a struct
-  //typedef std::map<Thread::id_t, RenderContext *> ResourceMap;
-  class TGLRes
-  {
-  public:
-    TGLRes() : m_context(0) {}
-    RenderContext       * m_context;
-  };
-
-  typedef std::map<Radiant::Thread::id_t, TGLRes> ResourceMap;
-
-  static ResourceMap __resources;
-  static Mutex __mutex;
+  static RADIANT_TLS(RenderContext *) t_threadContext;
 
   void RenderContext::setThreadContext(RenderContext * rsc)
   {
-    Guard g(__mutex);
-    TGLRes tmp;
-    tmp.m_context = rsc;
-    __resources[Radiant::Thread::myThreadId()] = tmp;
+    t_threadContext = rsc;
   }
 
   RenderContext * RenderContext::getThreadContext()
   {
-    Guard g(__mutex);
-
-    ResourceMap::iterator it = __resources.find(Radiant::Thread::myThreadId());
-
-    if(it == __resources.end()) {
+    if(!t_threadContext) {
       debug("No OpenGL resources for current thread");
-      return 0;
+      return nullptr;
     }
 
-    return (*it).second.m_context;
+    return t_threadContext;
   }
 
   void RenderContext::bindTexture(GLenum textureType, GLenum textureUnit,
