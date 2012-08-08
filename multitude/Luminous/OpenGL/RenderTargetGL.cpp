@@ -17,6 +17,11 @@ namespace Luminous
     GLERROR("RenderBufferGL::RenderBufferGL # glGenRenderbuffers");
   }
 
+  RenderBufferGL::RenderBufferGL(RenderBufferGL && buffer)
+    : ResourceHandleGL(std::move(buffer))
+  {
+  }
+
   RenderBufferGL::~RenderBufferGL()
   {
     if(m_handle)
@@ -59,6 +64,12 @@ namespace Luminous
   {
     glGenFramebuffers(1, &m_handle);
     GLERROR("RenderTargetGL::RenderTargetGL # glGenFramebuffers");
+  }
+
+  RenderTargetGL::RenderTargetGL(RenderTargetGL && target)
+    : ResourceHandleGL(std::move(target))
+    , m_type(std::move(target.m_type))
+  {
   }
 
   RenderTargetGL::~RenderTargetGL()

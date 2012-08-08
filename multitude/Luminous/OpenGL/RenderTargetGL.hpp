@@ -14,6 +14,7 @@ namespace Luminous
   {
   public:
     RenderBufferGL(StateGL & state);
+    RenderBufferGL(RenderBufferGL && buffer);
     ~RenderBufferGL();
 
     void sync(const RenderBuffer & buffer);
@@ -31,6 +32,8 @@ namespace Luminous
   {
   public:
     RenderTargetGL(StateGL & state);
+    RenderTargetGL(RenderTargetGL && target);
+
     ~RenderTargetGL();
 
     void sync(const RenderTarget & target);
