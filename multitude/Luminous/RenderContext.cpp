@@ -516,7 +516,6 @@ namespace Luminous
   {
     m_data->m_area = area;
     m_data->m_window = area->window();
-
   }
 
   const Luminous::MultiHead::Window * RenderContext::window() const
@@ -527,39 +526,6 @@ namespace Luminous
   const Luminous::MultiHead::Area * RenderContext::area() const
   {
     return m_data->m_area;
-  }
-
-  void RenderContext::prepare()
-  {
-    // Push the default render target. Don't use the RenderContext API to avoid
-    // the guard.
-    m_data->m_driverGL->pushRenderTarget(m_data->m_defaultRenderTarget);
-
-    resetTransform();
-    m_data->initialize();
-
-    // Make sure the clip stack is empty
-    while(!m_data->m_clipStack.empty())
-      m_data->m_clipStack.pop_back();
-
-    restart();
-
-    m_data->m_driver.preFrame();
-  }
-
-  void RenderContext::finish()
-  {
-    flush();
-    bindProgram(0);
-
-    m_data->m_driver.postFrame();
-
-    /// @todo how do we generate this properly? Should we somehow linearize the depth buffer?
-    m_data->m_automaticDepthDiff = -1.0f / std::max(m_data->m_renderCalls, 100000);
-    m_data->m_renderCalls = 0;
-
-    // Pop the default target
-    m_data->m_driverGL->popRenderTarget();
   }
 
   Transformer & RenderContext::viewTransform()
@@ -1318,7 +1284,10 @@ namespace Luminous
   void RenderContext::pushViewport(const Nimble::Recti &viewport)
   {
     m_data->m_viewportStack.push(viewport);
+
     glViewport(viewport.low().x, viewport.low().y, viewport.width(), viewport.height());
+
+    glScissor(viewport.low().x, viewport.low().y, viewport.width(), viewport.height());
   }
 
   void RenderContext::popViewport()
@@ -1495,5 +1464,59 @@ namespace Luminous
 
     Radiant::warning("RenderContext::popRenderTarget # render calls %d", m_data->m_renderCalls);
   }
+
+  void RenderContext::beginFrame()
+  {
+    // Push the default render target. Don't use the RenderContext API to avoid
+    // the guard.
+    m_data->m_driverGL->pushRenderTarget(m_data->m_defaultRenderTarget);
+
+    m_data->m_driver.preFrame();
+  }
+
+  void RenderContext::endFrame()
+  {
+    flush2();
+
+    m_data->m_driver.postFrame();
+
+    /// @todo how do we generate this properly? Should we somehow linearize the depth buffer?
+    m_data->m_automaticDepthDiff = -1.0f / std::max(m_data->m_renderCalls, 100000);
+    m_data->m_renderCalls = 0;
+
+    // Pop the default target
+    m_data->m_driverGL->popRenderTarget();
+  }
+
+  void RenderContext::beginArea()
+  {
+    assert(transform4() == Nimble::Matrix4::IDENTITY);
+    assert(clipStack().empty());
+  }
+
+  void RenderContext::endArea()
+  {
+  }
+
+  bool RenderContext::initialize()
+  {
+    m_data->initialize();
+
+    return true;
+  }
+
+//  void RenderContext::prepare()
+//  {
+//    resetTransform();
+//    m_data->initialize();
+
+//    // Make sure the clip stack is empty
+//    while(!m_data->m_clipStack.empty())
+//      m_data->m_clipStack.pop_back();
+
+//    restart();
+
+//    m_data->m_driver.preFrame();
+//  }
 
 }

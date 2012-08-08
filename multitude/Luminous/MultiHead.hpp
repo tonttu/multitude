@@ -117,7 +117,7 @@ namespace Luminous {
       float maxSeam() { return m_seams.asVector().maximum(); }
 
       /// Applies an orthogonal projection to OpenGL defined by the graphics geometry of the area
-      void applyViewportAndTransform(Luminous::RenderContext &) const;
+      //void applyViewportAndViewTransform(Luminous::RenderContext &) const;
       /// Blends the edges defined by seams
       void cleanEdges() const;
 
@@ -191,8 +191,9 @@ namespace Luminous {
       /// Converts centimeters to pixels
       float cmToPixels(float cm) { return cm / m_pixelSizeCm; }
 
-      /// Returns the view transform matrix
-      Nimble::Matrix3 viewTransform() const;
+      /// Get the view transformation (projection) matrix defined by the area
+      /// @return view transformation defined by the area
+      Nimble::Matrix4 viewTransform() const;
 
       /// Swaps the width and height of the graphics size
       void swapGraphicsWidthHeight()
@@ -214,7 +215,12 @@ namespace Luminous {
         return m_colorCorrection;
       }
 
-    private:
+      /// Get the viewport defined by the area in window coordinates.
+      /// @return the viewport defined by the area
+      Nimble::Recti viewport() const
+      {
+        return Nimble::Recti(m_location[0], m_location[1], m_size[0], m_size[1]);
+      }
 
       enum {
         /* Render to the screen, using straight coordinates. Then
@@ -224,6 +230,7 @@ namespace Luminous {
        performance, but a bit tricky for ripple effects etc. */
         METHOD_MATRIX_TRICK
       };
+    private:
 
       void updateBBox();
 

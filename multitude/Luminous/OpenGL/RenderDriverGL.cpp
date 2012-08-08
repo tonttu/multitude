@@ -535,7 +535,16 @@ namespace Luminous
 
   void RenderDriverGL::clearState()
   {
-    //m_d->reset();
+    // Use depth test by default
+    glEnable(GL_DEPTH_TEST);
+
+    // Default blending mode
+    glEnable(GL_BLEND);
+    glBlendEquation(GL_FUNC_ADD);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // Enable scissor test
+    glEnable(GL_SCISSOR_TEST);
   }
 
 /*
@@ -644,7 +653,8 @@ namespace Luminous
                     m_d->m_buffers.size(), m_d->m_VertexArrays.size());
     }*/
 
-    glEnable(GL_DEPTH_TEST);
+    // Reset the OpenGL state to default
+    clearState();
 
     // Iterate over our master render queue binding framebuffers as needed
     while(!m_d->m_masterRenderQueue.empty()) {

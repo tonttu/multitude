@@ -146,17 +146,23 @@ namespace Luminous
     const Luminous::MultiHead::Window * window() const;
     const Luminous::MultiHead::Area * area() const;
 
+    bool initialize();
+
     /// Returns the resources of this context
     /// @todo make deprecated
     Luminous::RenderContext * resources() { return this; }
 
-    /// Prepares the context for rendering a frame. This is called once for
-    /// every frame before rendering.
-    virtual void prepare();
+    /// Called once for every frame before rendering.
+    void beginFrame();
+    /// Called once for every frame after rendering.
+    void endFrame();
 
-    /// Notifies the context that a frame has been rendered. This is called
-    /// once after each frame.
-    virtual void finish();
+    /// Called once for every area before rendering anything in it. Can be
+    /// called multiple times per frame depending on configuration.
+    void beginArea();
+    /// Called once for every area after rendering it. Can be
+    /// called multiple times per frame depending on configuration.
+    void endArea();
 
     Transformer & viewTransform();
     const Transformer & viewTransform() const;

@@ -85,101 +85,10 @@ namespace Luminous {
     return ok;
   }
 
-  void MultiHead::Area::applyViewportAndTransform(Luminous::RenderContext & r) const
-  {
-    /* info("MultiHead::Area::applyGlState # %d %d %d %d",
-       m_location[0], m_location[1], m_size[0], m_size[1]);
-    */
-    glViewport(m_location[0], m_location[1], m_size[0], m_size[1]);
-    Nimble::Rect b = graphicsBounds();
-
-    /*info("MultiHead::Area::applyViewportAndTransform # %f %f %f %f",
-         b.low().x, b.high().x,
-         b.high().y, b.low().y);
-         */
-    Nimble::Matrix4 m = Nimble::Matrix4::ortho3D(b.low().x, b.high().x,
-                                                 b.high().y, b.low().y,
-                                                 -1.0f, 1.0f);
-    // Radiant::info("Matrix = %s", Radiant::FixedStr256(m, 5).str());
-
-    Nimble::Matrix4 km = m_keyStone.matrix();
-
-    Nimble::Matrix4 x1 = Nimble::Matrix4::scale3D(Nimble::Vector3(2, 2, 2));
-
-    Nimble::Matrix4 x2 = Nimble::Matrix4::translate3D(Nimble::Vector3(-1, -1, 0));
-
-    Nimble::Matrix4 x3 = Nimble::Matrix4::translate3D(Nimble::Vector3(1, 1, 0));
-    Nimble::Matrix4 x4 = Nimble::Matrix4::scale3D(Nimble::Vector3(.5f, .5f, .5f));
-
-    /*
-#if 1
-    Nimble::Matrix4 t1 = Nimble::Matrix4::scale3D(Nimble::Vector3(2, 2, 2)) *
-        Nimble::Matrix4::translate3D(Nimble::Vector3(-1, -1, -1));
-
-    Nimble::Matrix4 t2 = Nimble::Matrix4::translate3D(Nimble::Vector3(1, 1, 1)) *
-        Nimble::Matrix4::scale3D(Nimble::Vector3(.5f, .5f, .5f));
-#else
-    Nimble::Matrix4 t1 =
-        Nimble::Matrix4::translate3D(Nimble::Vector3(-1, -1, -1)) *
-        Nimble::Matrix4::scale3D(Nimble::Vector3(2, 2, 2));
-
-    Nimble::Matrix4 t2 =
-        Nimble::Matrix4::scale3D(Nimble::Vector3(.5f, .5f, .5f)) *
-        Nimble::Matrix4::translate3D(Nimble::Vector3(1, 1, 1));
-#endif
-*/
-    // r.setViewTransform(m * t2 * km * t1);
-    // r.setViewTransform(x3 * x4 * km * x1 * x2 * m);
-    // r.setViewTransform(x2 * x1 * km * x4 * x3 * m);
-    // r.setViewTransform(x2 * x1 * km * x4 * x3 * m);
-    if(m_method == METHOD_MATRIX_TRICK) {
-      r.viewTransform().setTransform(x2 * x1 * km * x4 * x3 * m);
-    }
-    else {
-      r.setTransform(m);
-    }
-
-    // r.setViewTransform(m);
-
-    // Nimble::Vector4 tmp(b.high().x, b.high().y, 0, 1);
-    // Nimble::Vector4 tmp(0, 0, 0, 1);
-    // tmp = r.viewTransform() * tmp;
-
-    /*Nimble::Vector4 tmp(-1, -1, 0, 1);
-    tmp = x2 * x1 * km * x4 * x3 * tmp;
-    */
-    /*Nimble::Vector4 tmp(650, 380, 0, 1);
-    tmp = m * tmp;
-    */
-    /*
-    std::cout << "Matrices:\n" << m << km << r.viewTransform() << "\n"
-              << tmp << "\n";
-              */
-#if 0 && defined(LUMINOUS_OPENGL_FULL)
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    if(m_method == METHOD_MATRIX_TRICK) {
-      // m_keyStone.applyGlState();
-      glLoadMatrixf(r.viewTransform().transposed().data());
-    }
-    else {
-      Radiant::error("METHOD_TEXTURE_READBACK currently unsupported");
-      glOrtho(m_graphicsLocation[0] - m_seams[0],
-              m_graphicsLocation[0] + m_graphicsSize[0] + m_seams[1],
-              m_graphicsLocation[1] + m_graphicsSize[1] + m_seams[2],
-              m_graphicsLocation[1] - m_seams[3], -1e3, 1e3);
-    }
-    glPushMatrix(); // Recovered in cleanEdges
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-#endif
-  }
-
   void MultiHead::Area::cleanEdges() const
   {
-#if 0 && defined(LUMINOUS_OPENGL_FULL)
+/// @todo this function should still work (the Cornerstone color calibration must work in 2.0)
+#if 0
     glViewport(m_location[0], m_location[1], m_size[0], m_size[1]);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -311,8 +220,7 @@ namespace Luminous {
 
     if(m_method != METHOD_TEXTURE_READBACK)
       m_keyStone.cleanExterior();
-#endif // LUMINOUS_OPENGL_FULL
-
+#endif
   }
 
   Nimble::Vector2f MultiHead::Area::windowToGraphics
@@ -368,20 +276,28 @@ namespace Luminous {
     return loc;
   }
 
-  Nimble::Matrix3 MultiHead::Area::viewTransform() const
+  Nimble::Matrix4 MultiHead::Area::viewTransform() const
   {
-    Nimble::Vector2 gs = m_graphicsBounds.size();
+    Nimble::Rect b = graphicsBounds();
 
-    float yscale = gs.y / m_size.asVector().y;
-    float xscale = gs.x / m_size.asVector().x;
+    Nimble::Matrix4 m = Nimble::Matrix4::ortho3D(b.low().x, b.high().x,
+                                                 b.high().y, b.low().y,
+                                                 -1.0f, 1.0f);
 
-    Nimble::Vector2 tl = m_graphicsBounds.low();
+    if(m_method == METHOD_MATRIX_TRICK) {
+      Nimble::Matrix4 km = m_keyStone.matrix();
 
-    Nimble::Matrix3 t1 = Nimble::Matrix3::translate2D(-tl);
-    Nimble::Matrix3 t2 = Nimble::Matrix3::translate2D(tl);
-    Nimble::Matrix3 s = Nimble::Matrix3::scale2D(xscale, yscale);
+      Nimble::Matrix4 x1 = Nimble::Matrix4::scale3D(Nimble::Vector3(2, 2, 2));
 
-    return t2 * s * t1;
+      Nimble::Matrix4 x2 = Nimble::Matrix4::translate3D(Nimble::Vector3(-1, -1, 0));
+
+      Nimble::Matrix4 x3 = Nimble::Matrix4::translate3D(Nimble::Vector3(1, 1, 0));
+      Nimble::Matrix4 x4 = Nimble::Matrix4::scale3D(Nimble::Vector3(.5f, .5f, .5f));
+
+      return x2 * x1 * km * x4 * x3 * m;
+    } else {
+      return m;
+    }
   }
 
   void MultiHead::Area::updateBBox()
