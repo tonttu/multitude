@@ -22,7 +22,7 @@ namespace Luminous
     /// to the first matrix in the uniform block. That is why we don't use that
     /// feature at all. For GLES this also makes things easier.
     /// This happens at least on Ubuntu 12.04, AMD drivers 12-6, OpenGL 4.2.11733
-    builder.uniform->projMatrix = viewTransform().transform4();
+    builder.uniform->projMatrix = viewTransform();
     builder.uniform->projMatrix.transpose();
     builder.uniform->modelMatrix = transform4();
     builder.uniform->modelMatrix.transpose();

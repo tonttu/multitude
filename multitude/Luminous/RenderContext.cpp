@@ -77,8 +77,7 @@ namespace Luminous
     // Save and setup viewport to match the FBO
     glViewport(0, 0, m_tex.width(), m_tex.height());
     // error("RenderContext::FBOPackage::activate # unimplemented");
-    r.viewTransform().pushTransform();
-    r.viewTransform().setTransform(Nimble::Matrix4::ortho3D(0, m_tex.width(), 0, m_tex.height(), -1, 1));
+    r.pushViewTransform(Nimble::Matrix4::ortho3D(0, m_tex.width(), 0, m_tex.height(), -1, 1));
     /*
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -107,7 +106,7 @@ namespace Luminous
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
     */
-    r.viewTransform().popTransform();
+    r.popViewTransform();
     Luminous::glErrorToString(__FILE__, __LINE__);
   }
 
@@ -226,6 +225,7 @@ namespace Luminous
         , m_driver(renderDriver)
         , m_driverGL(dynamic_cast<RenderDriverGL*>(&renderDriver))
         , m_defaultRenderTarget(RenderTarget::WINDOW)
+        , m_currentRenderTarget(0)
     {
       // Reset render call count
       m_renderCalls.push(0);
@@ -490,6 +490,7 @@ namespace Luminous
 
     // Default window framebuffer
     RenderTarget m_defaultRenderTarget;
+    RenderTarget * m_currentRenderTarget;
   };
 
   ///////////////////////////////////////////////////////////////////
@@ -531,14 +532,27 @@ namespace Luminous
     return m_data->m_area;
   }
 
-  Transformer & RenderContext::viewTransform()
+  void RenderContext::pushViewTransform(const Nimble::Matrix4 & m)
   {
-    return m_data->m_viewTransformer;
+    m_data->m_viewTransformer.pushTransform();
+    m_data->m_viewTransformer.setTransform(m);
   }
 
-  const Transformer & RenderContext::viewTransform() const
+  void RenderContext::popViewTransform()
   {
-    return m_data->m_viewTransformer;
+    m_data->m_viewTransformer.popTransform();
+  }
+
+  const Nimble::Matrix4 & RenderContext::viewTransform() const
+  {
+    return m_data->m_viewTransformer.transform4();
+  }
+
+  const RenderTarget & RenderContext::currentRenderTarget() const
+  {
+    assert(m_data->m_currentRenderTarget);
+
+    return *m_data->m_currentRenderTarget;
   }
 
   void RenderContext::setRecursionLimit(size_t limit)
@@ -730,8 +744,7 @@ namespace Luminous
     glLoadIdentity();
     glOrthof(0, minimumsize.x, 0, minimumsize.y, -1, 1);
     */
-    viewTransform().pushTransform();
-    viewTransform().setTransform(Nimble::Matrix4::ortho3D(0, minimumsize.x, 0, minimumsize.y, -1, 1));
+    pushViewTransform(Nimble::Matrix4::ortho3D(0, minimumsize.x, 0, minimumsize.y, -1, 1));
 
     m_data->pushFBO(ret.m_package);
 
@@ -1455,13 +1468,14 @@ namespace Luminous
   {
     m_data->m_driverGL->pushRenderTarget(target);
 
+    m_data->m_currentRenderTarget = &target;
+
     // Push new projection matrix
-//    pushViewTransform();
-//    setViewTransform(Nimble::Matrix4::ortho3D(0.f, target.size().width(), target.size().height(), 0.f, -1000.f, 1000.f));
+    pushViewTransform(Nimble::Matrix4::ortho3D(0.f, target.size().width(), target.size().height(), 0.f, -1.f, 1.f));
 
     // Reset transformation matrix to identity
-//    pushTransform();
-//    setTransform(Nimble::Matrix4::IDENTITY);
+    pushTransform();
+    setTransform(Nimble::Matrix4::IDENTITY);
 
     // Reset the render call count for this target
     m_data->m_renderCalls.push(0);
@@ -1472,8 +1486,8 @@ namespace Luminous
   void RenderContext::popRenderTarget()
   {
     // Restore the matrix stack
-//    popTransform();
-//    popViewTransform();
+    popTransform();
+    popViewTransform();
 
     m_data->m_renderCalls.pop();
     m_data->m_driverGL->popRenderTarget();
@@ -1484,6 +1498,7 @@ namespace Luminous
     // Push the default render target. Don't use the RenderContext API to avoid
     // the guard.
     m_data->m_driverGL->pushRenderTarget(m_data->m_defaultRenderTarget);
+    m_data->m_currentRenderTarget = &m_data->m_defaultRenderTarget;
 
     m_data->m_driver.preFrame();
   }

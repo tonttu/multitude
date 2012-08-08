@@ -132,7 +132,7 @@ namespace Luminous
     // Stack of render targets and their respective render queues
     std::stack<RenderQueues, std::vector<RenderQueues> > m_renderTargetStack;
     // Master rendering queue where commands get added as render targets are popped
-    std::queue<RenderQueues> m_masterRenderQueue;
+    std::deque<RenderQueues> m_masterRenderQueue;
 
     // Pool of render queues to avoid re-allocation with key being RenderTargetGL pointer.
     typedef std::map<void*, RenderQueues> RendererQueuePool;
@@ -648,7 +648,7 @@ namespace Luminous
     // Iterate over our master render queue binding framebuffers as needed
     while(!m_d->m_masterRenderQueue.empty()) {
 
-      RenderQueues & queues = m_d->m_masterRenderQueue.front();
+      RenderQueues & queues = m_d->m_masterRenderQueue.back();
 
       queues.renderTarget->bind();
 
@@ -690,7 +690,7 @@ namespace Luminous
 
       // Move the queues back to pool
       m_d->m_renderQueuePool.insert(std::make_pair(queues.renderTarget, std::move(queues)));
-      m_d->m_masterRenderQueue.pop();
+      m_d->m_masterRenderQueue.pop_back();
     }
   }
 
@@ -778,12 +778,10 @@ namespace Luminous
     auto it = m_d->m_renderQueuePool.find(poolKey);
 
     if(it != m_d->m_renderQueuePool.end()) {
-      //Radiant::warning("RenderDriverGL::pushRenderTarget # pool new queue (%p)", poolKey);
       m_d->m_renderTargetStack.push(std::move(it->second));
       m_d->m_renderQueuePool.erase(it);
     } else {
       // Not in pool, just allocate new
-      //Radiant::warning("RenderDriverGL::pushRenderTarget # allocate new queues (%p)", poolKey);
       RenderQueues queues;
       queues.renderTarget = poolKey;
       m_d->m_renderTargetStack.push(queues);
@@ -794,8 +792,8 @@ namespace Luminous
   {
     assert(!m_d->m_renderTargetStack.empty());
 
-    // Move the queues from stack to the master queue
-    m_d->m_masterRenderQueue.push(m_d->m_renderTargetStack.top());
+    // Move the render target queues from stack to the end of the master queue
+    m_d->m_masterRenderQueue.push_back(m_d->m_renderTargetStack.top());
     m_d->m_renderTargetStack.pop();
   }
 

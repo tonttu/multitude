@@ -164,8 +164,11 @@ namespace Luminous
     /// called multiple times per frame depending on configuration.
     void endArea();
 
-    Transformer & viewTransform();
-    const Transformer & viewTransform() const;
+    const Nimble::Matrix4 & viewTransform() const;
+    void pushViewTransform(const Nimble::Matrix4 & m);
+    void popViewTransform();
+
+    const RenderTarget & currentRenderTarget() const;
 
     /// Sets the rendering recursion limit for the context. This is relevant
     /// for ViewWidgets which can cause recursive rendering of the scene.
