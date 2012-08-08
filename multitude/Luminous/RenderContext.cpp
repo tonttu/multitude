@@ -223,11 +223,13 @@ namespace Luminous
         , m_vbo(0)
         , m_uniformBufferOffsetAlignment(0)
         , m_automaticDepthDiff(-1.0f/100000.0f)
-        , m_renderCalls(0)
         , m_driver(renderDriver)
         , m_driverGL(dynamic_cast<RenderDriverGL*>(&renderDriver))
         , m_defaultRenderTarget(RenderTarget::WINDOW)
     {
+      // Reset render call count
+      m_renderCalls.push(0);
+
       // Initialize default render target size
       assert(win);
       m_defaultRenderTarget.setSize(QSize(win->size().x, win->size().y));
@@ -442,7 +444,8 @@ namespace Luminous
     int m_uniformBufferOffsetAlignment;
 
     float m_automaticDepthDiff;
-    int m_renderCalls;
+    // Stack of render call counts
+    std::stack<int> m_renderCalls;
 
     Program m_basicShader;
     Program m_texShader;
@@ -994,8 +997,8 @@ namespace Luminous
     cmd.uniformOffsetBytes = uniformOffset * uniformSize;
     cmd.uniformSizeBytes = uniformSize;
 
-    depth = 0.99999f + m_data->m_automaticDepthDiff * m_data->m_renderCalls;
-    ++m_data->m_renderCalls;
+    depth = 0.99999f + m_data->m_automaticDepthDiff * m_data->m_renderCalls.top();
+    ++(m_data->m_renderCalls.top());
 
     return cmd;
   }
@@ -1429,13 +1432,8 @@ namespace Luminous
     return m_data->m_driverGL->handle(texture);
   }
 
-  /// @todo hack, fix with stack
-  static int g_foo = 0;
-
   RenderTargetGuard RenderContext::pushRenderTarget(RenderTarget &target)
   {
-    Radiant::warning("RenderContext::pushRenderTarget # render calls %d", m_data->m_renderCalls);
-
     m_data->m_driverGL->pushRenderTarget(target);
 
     // Push new projection matrix
@@ -1446,9 +1444,8 @@ namespace Luminous
 //    pushTransform();
 //    setTransform(Nimble::Matrix4::IDENTITY);
 
-    /// @todo this must be a stack
-    g_foo = m_data->m_renderCalls;
-    m_data->m_renderCalls = 0;
+    // Reset the render call count for this target
+    m_data->m_renderCalls.push(0);
 
     return RenderTargetGuard(*this);
   }
@@ -1459,10 +1456,8 @@ namespace Luminous
 //    popTransform();
 //    popViewTransform();
 
-    m_data->m_renderCalls = g_foo;
+    m_data->m_renderCalls.pop();
     m_data->m_driverGL->popRenderTarget();
-
-    Radiant::warning("RenderContext::popRenderTarget # render calls %d", m_data->m_renderCalls);
   }
 
   void RenderContext::beginFrame()
@@ -1481,8 +1476,9 @@ namespace Luminous
     m_data->m_driver.postFrame();
 
     /// @todo how do we generate this properly? Should we somehow linearize the depth buffer?
-    m_data->m_automaticDepthDiff = -1.0f / std::max(m_data->m_renderCalls, 100000);
-    m_data->m_renderCalls = 0;
+    m_data->m_automaticDepthDiff = -1.0f / std::max(m_data->m_renderCalls.top(), 100000);
+    assert(m_data->m_renderCalls.size() == 1);
+    m_data->m_renderCalls.top() = 0;
 
     // Pop the default target
     m_data->m_driverGL->popRenderTarget();
@@ -1504,19 +1500,5 @@ namespace Luminous
 
     return true;
   }
-
-//  void RenderContext::prepare()
-//  {
-//    resetTransform();
-//    m_data->initialize();
-
-//    // Make sure the clip stack is empty
-//    while(!m_data->m_clipStack.empty())
-//      m_data->m_clipStack.pop_back();
-
-//    restart();
-
-//    m_data->m_driver.preFrame();
-//  }
 
 }
