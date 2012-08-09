@@ -593,7 +593,6 @@ namespace Luminous
     auto & state = m_d->m_state;    
     state.program = &handle(shader);
     state.program->link(shader);
-    translucent = shader.translucent();
 
     const auto key = std::make_tuple(vertexBuffer.resourceId(), indexBuffer.resourceId(), state.program);
     // There seems bug in VC++2010 tuple/map implementation, see
@@ -619,7 +618,6 @@ namespace Luminous
     auto & state = m_d->m_state;
     state.program = &handle(shader);
     state.program->link(shader);
-    translucent = shader.translucent();
 
     return m_d->createRenderCommand(translucent, vertexArray, uniformBuffer, textures);
   }
