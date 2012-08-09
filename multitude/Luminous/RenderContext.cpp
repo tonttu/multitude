@@ -209,7 +209,6 @@ namespace Luminous
     Internal(RenderDriver & renderDriver, const Luminous::MultiHead::Window * win)
         : m_recursionLimit(DEFAULT_RECURSION_LIMIT)
         , m_recursionDepth(0)
-        , m_renderPacket(0)
         , m_renderCount(0)
         , m_frameCount(0)
         , m_area(0)
@@ -258,7 +257,6 @@ namespace Luminous
 
     ~Internal()
     {
-      delete m_renderPacket;
     }
 
     void pushFBO(std::shared_ptr<RenderContext::FBOPackage> fbo)
@@ -296,9 +294,6 @@ namespace Luminous
 
       memset(m_textures, 0, sizeof(m_textures));
       m_program = 0;
-
-      if(!m_renderPacket)
-        m_renderPacket = new RenderPacket();
 
       while(!m_drawBufferStack.empty())
         m_drawBufferStack.pop();
@@ -404,8 +399,6 @@ namespace Luminous
 
     std::vector<Vertex> m_vertices;
     */
-
-    RenderPacket * m_renderPacket;
 
     unsigned long m_renderCount;
     unsigned long m_frameCount;
@@ -661,103 +654,6 @@ namespace Luminous
       buf.m_fbo->attach();
 
     glDrawBuffer(buf.m_dest);
-  }
-
-
-  RenderContext::FBOHolder RenderContext::getTemporaryFBO
-      (Nimble::Vector2f basicsize, float scaling, uint32_t flags)
-  {
-    Nimble::Vector2f r = basicsize * scaling;
-
-    Nimble::Vector2i minimumsize(r.x, r.y);
-
-    /* First we try to find a reasonable available FBO, that is not more than
-       100% too large.
-    */
-
-    long maxpixels = 2 * minimumsize.x * minimumsize.y;
-
-    FBOHolder ret;
-    std::shared_ptr<FBOPackage> fbo;
-
-    for(Internal::FBOPackages::iterator it = m_data->m_fbos.begin();
-    it != m_data->m_fbos.end(); it++) {
-      fbo = *it;
-
-      if(flags & FBO_EXACT_SIZE) {
-        if(fbo->userCount() ||
-           fbo->m_tex.width() != minimumsize.x ||
-           fbo->m_tex.height() != minimumsize.y)
-          continue;
-      }
-      else if(fbo->userCount() ||
-              fbo->m_tex.width() < minimumsize.x ||
-              fbo->m_tex.height() < minimumsize.y ||
-              fbo->m_tex.pixelCount() > maxpixels)
-        continue;
-
-      ret = FBOHolder(this, fbo);
-      break;
-    }
-
-    if(!ret.m_package) {
-      // Nothing available, we need to create a new FBOPackage
-      // info("Creating a new FBOPackage");
-      fbo.reset(new FBOPackage());
-      Vector2i useSize = minimumsize;
-      if(!(flags & FBO_EXACT_SIZE))
-        useSize += minimumsize / 4;
-      fbo->setSize(useSize);
-      m_data->m_fbos.push_back(std::shared_ptr<FBOPackage>(fbo));
-
-      ret = FBOHolder(this, fbo);
-    }
-
-    /* We now have a valid FBO, next job is to set it up for rendering.
-    */
-
-    glPushAttrib(GL_TRANSFORM_BIT | GL_VIEWPORT_BIT);
-
-    for(int i = 0; i < 6; i++)
-      glDisable(GL_CLIP_PLANE0 + i);
-
-    ret.m_package->attach();
-
-    // Draw into color attachment 0
-    pushDrawBuffer(Luminous::COLOR0, &*ret.m_package);
-
-    // Save and setup viewport to match the FBO
-    glViewport(0, 0, fbo->m_tex.width(), fbo->m_tex.height());
-    glClearColor(0, 0, 0, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glViewport(0, 0, minimumsize.x, minimumsize.y);
-
-    // Save matrix stack
-    /*
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrthof(0, minimumsize.x, 0, minimumsize.y, -1, 1);
-    */
-    pushViewTransform(Nimble::Matrix4::ortho3D(0, minimumsize.x, 0, minimumsize.y, -1, 1));
-
-    m_data->pushFBO(ret.m_package);
-
-    // Lets adjust the matrix stack to take into account the new
-    // reality:
-    pushTransform(Nimble::Matrix3::scale2D(
-        minimumsize.x / basicsize.x,
-        minimumsize.y / basicsize.y));
-
-    ret.m_texUV.make(minimumsize.x / (float) fbo->m_tex.width(),
-                     minimumsize.y / (float) fbo->m_tex.height());
-
-    // info("texuv = %f %f", ret.m_texUV.x, ret.m_texUV.y);
-
-    return ret;
   }
 
   void RenderContext::drawArc(Nimble::Vector2f center, float radius,
@@ -1373,22 +1269,6 @@ namespace Luminous
 
   void RenderContext::flush()
   {
-    RenderPacket * rp = m_data->m_renderPacket;
-
-    if(!rp)
-      return;
-
-    if(rp->empty())
-      return;
-
-    RenderPacket::RenderFunction rf = rp->renderFunction();
-
-    assert(rf != 0);
-
-    (*rf)(*this, *rp);
-
-    rp->setPacketRenderFunction(0);
-    rp->setProgram(0);
   }
 
   void RenderContext::restart()

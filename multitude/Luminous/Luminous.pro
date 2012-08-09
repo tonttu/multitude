@@ -130,7 +130,6 @@ SOURCES += Utils.cpp
 SOURCES += VertexArray.cpp
 SOURCES += VertexBuffer.cpp
 SOURCES += VertexDescription.cpp
-SOURCES += VertexHolder.cpp
 SOURCES += VM1.cpp
 SOURCES += Window.cpp
 

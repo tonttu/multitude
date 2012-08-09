@@ -209,15 +209,7 @@ namespace Luminous
     /// @cond
     void pushDrawBuffer(GLenum dest, FBOPackage * );
     void popDrawBuffer();
-
-    // Returns the visible area (bottom of the clip stack).
-    // @todo does not return anything useful
-    //const Nimble::Rectangle & visibleArea() const;
-
-    FBOHolder getTemporaryFBO(Nimble::Vector2 basicsize,
-                              float scaling, uint32_t flags = 0);
-    /// @endcond
-
+    
     // Render utility functions:
 
     /** Draws an arc
@@ -325,8 +317,8 @@ namespace Luminous
     static const char ** blendFuncNames();
 
     /// Adds the render counter by one
-    /** The render counter is used to track how many objects have been rendered since the coutner was
-        last reset. Thsi can be useful for checking that object culling works as intended. */
+    /** The render counter is used to track how many objects have been rendered since the counter was
+        last reset. This can be useful for checking that object culling works as intended. */
     void addRenderCounter();
 
     /** Returns the size of the window of this #RenderContext object.
