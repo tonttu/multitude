@@ -143,6 +143,9 @@ namespace Luminous
     }
 
     changed();
+
+    if(m_texture)
+      m_texture->addDirtyRect(QRect(0, 0, width(), height()));
   }
 
   void Image::minify(const Image &src, int w, int h)
@@ -183,6 +186,9 @@ namespace Luminous
         setPixel(x0, y0, Nimble::Vector4(colorSum.x, colorSum.y, colorSum.z, alphaSum));
       }
     }
+
+    if(m_texture)
+      m_texture->setData(width(), height(), pixelFormat(), m_data);
   }
 
   bool Image::copyResample(const Image & source, int w, int h)
@@ -326,6 +332,9 @@ namespace Luminous
 
       //write("some-with-a.png");
 
+      if(m_texture)
+        m_texture->setData(width(), height(), pixelFormat(), m_data);
+
       return true;
     }
 
@@ -375,6 +384,9 @@ namespace Luminous
 
       }
 
+      if(m_texture)
+        m_texture->setData(width(), height(), pixelFormat(), m_data);
+
       return true;
     }
     else if(source.pixelFormat() == PixelFormat::rgbUByte()) {
@@ -409,6 +421,9 @@ namespace Luminous
           l1 += 3;
         }
       }
+
+      if(m_texture)
+        m_texture->setData(width(), height(), pixelFormat(), m_data);
 
       return true;
     }
@@ -459,10 +474,14 @@ namespace Luminous
         }
       }
 
+      if(m_texture)
+        m_texture->setData(width(), height(), pixelFormat(), m_data);
+
       return true;
     }
 
     Radiant::error("Image::quarterSize # unsupported pixel format");
+
     return false;
   }
 
@@ -486,6 +505,9 @@ namespace Luminous
 
       m_width -= n;
 
+      if(m_texture)
+        m_texture->setData(width(), height(), pixelFormat(), m_data);
+
       return true;
     }
 
@@ -501,6 +523,9 @@ namespace Luminous
       m_height -= n;
 
     changed();
+
+    if(m_texture)
+      m_texture->setData(width(), height(), pixelFormat(), m_data);
   }
 
   void Image::forgetLastLine()
@@ -508,6 +533,9 @@ namespace Luminous
     if(m_height) {
       m_height--;
       changed();
+
+      if(m_texture)
+        m_texture->setData(width(), height(), pixelFormat(), m_data);
     }
   }
 
@@ -525,9 +553,7 @@ namespace Luminous
 
     forgetLastPixels(xlose);
     forgetLastLines(ylose);
-
   }
-
 
   Image& Image::operator = (const Image& img)
                            {
@@ -537,6 +563,9 @@ namespace Luminous
     memcpy(m_data, img.m_data, bytes);
 
     changed();
+
+    if(m_texture)
+      m_texture->setData(width(), height(), pixelFormat(), m_data);
 
     return *this;
   }
@@ -566,6 +595,9 @@ namespace Luminous
     }
 
     changed();
+
+    if(m_texture)
+      m_texture->setData(m_width, m_height, pixelFormat(), m_data);
   }
   /*
   // Guess the filetype from the extension
@@ -611,10 +643,13 @@ namespace Luminous
 
     // m_ready = true;
 
+    if(m_texture)
+      m_texture->setData(width(), height(), pixelFormat(), m_data);
+
     return result;
   }
 
-  bool Image::write(const char* filename)
+  bool Image::write(const char* filename) const
   {
     initDefaultImageCodecs();
 
@@ -654,6 +689,9 @@ namespace Luminous
       memcpy( & m_data[0], bytes, nbytes);
 
     changed();
+
+    if(m_texture)
+      m_texture->setData(width, height, format, m_data);
   }
 
   bool Image::setPixelFormat(const PixelFormat & format)
@@ -691,6 +729,10 @@ namespace Luminous
     }
 
     if(src != m_data) delete [] src;
+
+    if(m_texture)
+      m_texture->setData(width(), height(), format, m_data);
+
     return true;
   }
 
@@ -704,6 +746,8 @@ namespace Luminous
     m_pixelFormat = PixelFormat(PixelFormat::LAYOUT_UNKNOWN,
                                 PixelFormat::TYPE_UNKNOWN);
     changed();
+
+    m_texture.reset();
   }
 
   bool Image::ping(const QString & filename, ImageInfo & info)
@@ -747,6 +791,9 @@ namespace Luminous
     size_t byteCount = pixelFormat().bytesPerPixel() * width() * height();
     memset(data(), 0, byteCount);
     changed();
+
+    if(m_texture)
+      m_texture->addDirtyRect(QRect(0, 0, width(), height()));
   }
 
   Nimble::Vector4 Image::safePixel(int x, int y) const
@@ -815,6 +862,19 @@ namespace Luminous
       Radiant::error("Image::setPixel # unsupported pixel format");
       assert(0);
     }
+
+    if(m_texture)
+      m_texture->addDirtyRect(QRect(x, y, 1, 1));
+  }
+
+  Texture & Image::texture()
+  {
+    if(!m_texture) {
+      m_texture.reset(new Texture());
+      m_texture->setData(width(), height(), pixelFormat(), m_data);
+    }
+
+    return *m_texture.get();
   }
 
   ////////////////////////////////////////////////////////////

@@ -96,7 +96,7 @@ namespace Luminous
     /** Write this Image to a file.
     @param filename name of the file to write to
     @return true if the image was successfully written*/
-    bool write(const char * filename);
+    bool write(const char * filename) const;
 
     /** Create an image object from data provided by the user.
     @param bytes pointer to image data
@@ -193,6 +193,10 @@ namespace Luminous
     generation count*/
     size_t generation() const { return m_generation; }
 
+    /// Get a texture object based on the image
+    /// @return texture matching the image
+    Luminous::Texture & texture();
+
   protected:
 
     /// Width of the image in pixels
@@ -202,21 +206,26 @@ namespace Luminous
     /// Pixel format of the image data
     PixelFormat m_pixelFormat;
     /// Pointer to the raw image data
+    /// @todo change to QByteArray to get copy-on-write
     unsigned char* m_data;
     /// Generation count of the image used to indicate changes in the image
     /// data to determine when associated textures should be updated.
     size_t m_generation;
+
+  private:
+    std::unique_ptr<Texture> m_texture;
   };
 
   /** ImageTex is a utility class for rendering images.
 
   ImageTex provides an easy way to create OpenGL textures from image files in a
   way that handles multiple rendering contexts transparently.
+  @deprecated This class will be removed in Cornerstone 2.1. Use Luminous::Image::texture() instead.
   */
   class LUMINOUS_API ImageTex : public Luminous::Image, public Luminous::ContextVariableT<Luminous::Texture2D>
   {
   public:
-    ImageTex();
+    MULTI_ATTR_DEPRECATED("This class is obsolete. Use Image::texture() instead.", ImageTex());
 
     /** Binds a texture representing this image to the current OpenGL context.
 
