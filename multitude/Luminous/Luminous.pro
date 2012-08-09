@@ -9,6 +9,7 @@ HEADERS += OpenGL/VertexArrayGL.hpp
 HEADERS += OpenGL/BufferGL.hpp
 HEADERS += OpenGL/Error.hpp
 HEADERS += OpenGL/RenderTargetGL.hpp
+HEADERS += OpenGL/PipelineCommand.hpp
 
 HEADERS += BGThread.hpp
 HEADERS += CocoaWindow.hpp
@@ -88,6 +89,7 @@ SOURCES += OpenGL/VertexArrayGL.cpp
 SOURCES += OpenGL/BufferGL.cpp
 SOURCES += OpenGL/Error.cpp
 SOURCES += OpenGL/RenderTargetGL.cpp
+SOURCES += OpenGL/PipelineCommand.cpp
 
 SOURCES += BGThread.cpp
 SOURCES += CodecRegistry.cpp

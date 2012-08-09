@@ -12,7 +12,7 @@
 #include "Luminous/ShaderUniform.hpp"
 #include "Luminous/Texture2.hpp"
 #include "Luminous/PixelFormat.hpp"
-#include "Luminous/Utils.hpp"   // glCheck
+#include "PipelineCommand.hpp"
 
 #include <Nimble/Matrix4.hpp>
 #include <Radiant/RefPtr.hpp>
@@ -77,10 +77,33 @@ namespace Luminous
     Queue queue;
   };
 
-  // Render queues grouped by render target
-  struct RenderQueues
+
+  // A segment of the master render queue. A segment contains two separate
+  // command queues, one for opaque draw calls and one for translucent draw
+  // calls. The translucent draw calls are never re-ordered in order to
+  // guarantee correct output. The opaque queue can be re-ordered to maximize
+  // performance by minimizing state-changes etc. The segments themselves are
+  // never re-ordered to guarantee correct output.
+  struct RenderQueueSegment
   {
-    RenderTargetGL * renderTarget;
+    RenderQueueSegment()
+    {}
+
+    RenderQueueSegment(RenderQueueSegment && o)
+      : pipelineCommand(o.pipelineCommand)
+      , opaqueQueue(o.opaqueQueue)
+      , translucentQueue(o.translucentQueue)
+    {
+      o.pipelineCommand = 0;
+    }
+
+    ~RenderQueueSegment()
+    {
+      delete pipelineCommand;
+    }
+
+    //RenderTargetGL * renderTarget;
+    PipelineCommand * pipelineCommand;
     std::map<RenderState, OpaqueRenderQueue> opaqueQueue;
     TranslucentRenderQueue translucentQueue;
   };
@@ -129,14 +152,10 @@ namespace Luminous
     // key is <vertex buffer id, index buffer id, shader>
     std::map<std::tuple<RenderResource::Id, RenderResource::Id, ProgramGL*>, VertexArray> m_vertexArrayCache;
 
-    // Stack of render targets and their respective render queues
-    std::stack<RenderQueues, std::vector<RenderQueues> > m_renderTargetStack;
-    // Master rendering queue where commands get added as render targets are popped
-    std::deque<RenderQueues> m_masterRenderQueue;
-
-    // Pool of render queues to avoid re-allocation with key being RenderTargetGL pointer.
-    typedef std::map<void*, RenderQueues> RendererQueuePool;
-    RendererQueuePool m_renderQueuePool;
+    // Stack of active render targets
+    std::stack<RenderTargetGL*, std::vector<RenderTargetGL*> > m_rtStack;
+    // Master rendering queue that consists of segments of rendering commands
+    std::deque<RenderQueueSegment> m_masterRenderQueue;
 
     // Resources to be released
     typedef std::vector<RenderResource::Id> ReleaseQueue;
@@ -177,7 +196,21 @@ namespace Luminous
     template <typename ContainerType>
     void removeResource(ContainerType & container);
 
-    RenderQueues & currentRenderTargetItem() { assert(!m_renderTargetStack.empty()); return m_renderTargetStack.top(); }
+    /// Get the current render queue segment where draw calls are to be added
+    //RenderQueueSegment & currentRenderQueueSegment() { assert(!m_renderTargetStack.empty()); return m_renderTargetStack.top(); }
+    RenderQueueSegment & currentRenderQueueSegment() { assert(!m_masterRenderQueue.empty()); return m_masterRenderQueue.back(); }
+
+    /// Allocate a new render queue segment defined by the given pipeline command
+    void newRenderQueueSegment(PipelineCommand * cmd)
+    {
+      /// @todo use a pool allocator to improve performance
+
+      RenderQueueSegment queues;
+      queues.pipelineCommand = cmd;
+      //m_renderTargetStack.push(std::move(queues));
+      m_masterRenderQueue.push_back(std::move(queues));
+    }
+
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -279,7 +312,7 @@ namespace Luminous
     }
     m_state.textures[unit] = nullptr;
 
-    RenderQueues & rt = currentRenderTargetItem();
+    RenderQueueSegment & rt = currentRenderQueueSegment();
 
     RenderCommand * cmd;
     if(translucent) {
@@ -349,26 +382,7 @@ namespace Luminous
 
   void RenderDriverGL::clear(ClearMask mask, const Radiant::Color & color, double depth, int stencil)
   {
-    /// @todo check current target for availability of depth and stencil buffers?
-
-    GLbitfield glMask = 0;
-    // Clear color buffer
-    if (mask & ClearMask_Color) {
-      glClearColor(color.red(), color.green(), color.blue(), color.alpha());
-      glMask |= GL_COLOR_BUFFER_BIT;
-    }
-    // Clear depth buffer
-    if (mask & ClearMask_Depth) {
-      glClearDepth(depth);
-      glMask |= GL_DEPTH_BUFFER_BIT;
-    }
-    // Clear stencil buffer
-    if (mask & ClearMask_Stencil) {
-      glClearStencil(stencil);
-      glMask |= GL_DEPTH_BUFFER_BIT;
-    }
-    glClear(glMask);
-    GLERROR("RenderDriverGL::clear glClear");
+    m_d->newRenderQueueSegment(new CommandClearGL(mask, color, depth, stencil));
   }
 
   void RenderDriverGL::draw(PrimitiveType type, unsigned int offset, unsigned int primitives)
@@ -448,31 +462,6 @@ namespace Luminous
     // No need to run this every frame
     if((m_d->m_frame & 0x1f) != 0x1f)
       return;
-
-    const int frameLimit = 60;
-    const int lastFrame = m_d->m_frame - frameLimit;
-
-    // Drop unused or queues (also queues that have way too much memory allocated than needed)
-
-    for(auto i = m_d->m_renderQueuePool.begin(); i != m_d->m_renderQueuePool.end(); ++i) {
-      RenderQueues & queues = i->second;
-
-      if(queues.translucentQueue.usedSize > 0) {
-        Radiant::error("RenderDriverGL::postFrame # translucent queue is not empty - forgot to call flush?");
-        queues.translucentQueue.usedSize = 0;
-      }
-
-      if(queues.translucentQueue.frame < lastFrame) {
-        TranslucentRenderQueue::Queue tmp;
-        std::swap(queues.translucentQueue.queue, tmp);
-      }
-
-      for(auto it = queues.opaqueQueue.begin(), end = queues.opaqueQueue.end(); it != end;) {
-        if(it->second.frame < lastFrame) {
-          it = queues.opaqueQueue.erase(it);
-        } else ++it;
-      }
-    }
   }
 
   void RenderDriverGL::setVertexBuffer(const Buffer & buffer)
@@ -590,7 +579,7 @@ namespace Luminous
                                                       const Luminous::Program & shader,
                                                       const std::map<QByteArray, Texture *> & textures)
   {
-    auto & state = m_d->m_state;    
+    auto & state = m_d->m_state;
     state.program = &handle(shader);
     state.program->link(shader);
 
@@ -624,9 +613,8 @@ namespace Luminous
 
   void RenderDriverGL::flush()
   {
-
     for(auto it = m_d->m_stateGL.bufferMaps().begin(); it != m_d->m_stateGL.bufferMaps().end(); ++it) {
-      const BufferMapping & b = it->second;      
+      const BufferMapping & b = it->second;
       glBindBuffer(b.target, it->first);
       glUnmapBuffer(b.target);
     }
@@ -643,12 +631,15 @@ namespace Luminous
     // Reset the OpenGL state to default
     clearState();
 
-    // Iterate over our master render queue binding framebuffers as needed
+    // Iterate over the segments of the master render queue executing the
+    // stored render commands
     while(!m_d->m_masterRenderQueue.empty()) {
 
-      RenderQueues & queues = m_d->m_masterRenderQueue.back();
+      RenderQueueSegment & queues = m_d->m_masterRenderQueue.front();
 
-      queues.renderTarget->bind();
+      // Execute the pipeline command that defines this segment
+      assert(queues.pipelineCommand);
+      queues.pipelineCommand->execute();
 
       for(auto it = queues.opaqueQueue.begin(), end = queues.opaqueQueue.end(); it != end; ++it) {
         const RenderState & state = it->first;
@@ -686,9 +677,8 @@ namespace Luminous
 
       queues.translucentQueue.usedSize = 0;
 
-      // Move the queues back to pool
-      m_d->m_renderQueuePool.insert(std::make_pair(queues.renderTarget, std::move(queues)));
-      m_d->m_masterRenderQueue.pop_back();
+      // Remove the processed segment from the master queue
+      m_d->m_masterRenderQueue.pop_front();
     }
   }
 
@@ -762,6 +752,7 @@ namespace Luminous
     }
 
     // Update the OpenGL state
+    /// @todo use generation to remove unneeded state changes?
     it->second.sync(target);
 
     return it->second;
@@ -770,29 +761,30 @@ namespace Luminous
   void RenderDriverGL::pushRenderTarget(const RenderTarget &target)
   {
     RenderTargetGL & rtGL = handle(target);
-    auto poolKey = &rtGL;
 
-    // Try to allocate from the queue pool
-    auto it = m_d->m_renderQueuePool.find(poolKey);
+    m_d->m_rtStack.push(&rtGL);
 
-    if(it != m_d->m_renderQueuePool.end()) {
-      m_d->m_renderTargetStack.push(std::move(it->second));
-      m_d->m_renderQueuePool.erase(it);
-    } else {
-      // Not in pool, just allocate new
-      RenderQueues queues;
-      queues.renderTarget = poolKey;
-      m_d->m_renderTargetStack.push(queues);
-    }
+    auto cmd = new CommandChangeRenderTargetGL(rtGL);
+
+    m_d->newRenderQueueSegment(cmd);
   }
 
   void RenderDriverGL::popRenderTarget()
   {
-    assert(!m_d->m_renderTargetStack.empty());
+    assert(!m_d->m_rtStack.empty());
 
-    // Move the render target queues from stack to the end of the master queue
-    m_d->m_masterRenderQueue.push_back(m_d->m_renderTargetStack.top());
-    m_d->m_renderTargetStack.pop();
+    m_d->m_rtStack.pop();
+
+    // We might have emptied the stack if this was the default render target
+    // popped from endFrame(). In that case, just don't activate a new target.
+    if(!m_d->m_rtStack.empty()) {
+
+      auto rt = m_d->m_rtStack.top();
+
+      auto cmd = new CommandChangeRenderTargetGL(*rt);
+
+      m_d->newRenderQueueSegment(cmd);
+    }
   }
 
 }
