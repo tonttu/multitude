@@ -36,10 +36,23 @@ namespace Luminous
   class Texture2D;
   class GLSLProgramObject;
 
+
+
   /// RenderContext contains the current rendering state.
   class LUMINOUS_API RenderContext : public Transformer, public GLResources
   {
   public:
+
+    class OpacityGuard : public Patterns::NotCopyable
+    {
+    public:
+      OpacityGuard(RenderContext & r) : m_rc(&r) {}
+      OpacityGuard(OpacityGuard && o) : m_rc(o.m_rc) { o.m_rc = nullptr; }
+      ~OpacityGuard() { m_rc->popOpacity(); }
+
+    private:
+      RenderContext * m_rc;
+    };
 
     /// Blending function type
     enum BlendFunc {
@@ -258,7 +271,15 @@ namespace Luminous
       */
     void drawWedge(const Nimble::Vector2f & center, float radius1, float radius2, float fromRadians, float toRadians, Style & style, int segments);
 
-
+    /// Push the given opacity to render context. The resulting opacity will be
+    /// the current opacity multiplied by the given value.
+    /// @param opacity opacity to push
+    OpacityGuard pushOpacity(float opacity);
+    /// Pop the current opacity from the stack
+    void popOpacity();
+    /// Get the current opacity
+    /// @return the current opacity
+    float opacity() const;
 
     RenderTargetGuard pushRenderTarget(RenderTarget & target);
     void popRenderTarget();

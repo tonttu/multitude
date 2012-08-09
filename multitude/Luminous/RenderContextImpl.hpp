@@ -27,6 +27,8 @@ namespace Luminous
     builder.uniform->modelMatrix = transform4();
     builder.uniform->modelMatrix.transpose();
     builder.uniform->color = color;
+    // Apply opacity
+    builder.uniform->color.w *= opacity();
 
     return builder;
   }

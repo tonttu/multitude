@@ -491,6 +491,8 @@ namespace Luminous
     // Default window framebuffer
     RenderTarget m_defaultRenderTarget;
     RenderTarget * m_currentRenderTarget;
+
+    std::stack<float> m_opacityStack;
   };
 
   ///////////////////////////////////////////////////////////////////
@@ -1597,6 +1599,10 @@ namespace Luminous
     m_data->m_driverGL->pushRenderTarget(m_data->m_defaultRenderTarget);
     m_data->m_currentRenderTarget = &m_data->m_defaultRenderTarget;
 
+    // Push default opacity
+    assert(m_data->m_opacityStack.empty());
+    m_data->m_opacityStack.push(1.f);
+
     m_data->m_driver.preFrame();
   }
 
@@ -1610,6 +1616,10 @@ namespace Luminous
     m_data->m_automaticDepthDiff = -1.0f / std::max(m_data->m_renderCalls.top(), 100000);
     assert(m_data->m_renderCalls.size() == 1);
     m_data->m_renderCalls.top() = 0;
+
+    // Pop opacity
+    assert(m_data->m_opacityStack.size() == 1);
+    m_data->m_opacityStack.pop();
 
     // Pop the default target
     m_data->m_driverGL->popRenderTarget();
@@ -1635,6 +1645,30 @@ namespace Luminous
     m_data->initialize();
 
     return true;
+  }
+
+  RenderContext::OpacityGuard RenderContext::pushOpacity(float opacity)
+  {
+    auto value = 1.f;
+
+    if(!m_data->m_opacityStack.empty())
+      value = m_data->m_opacityStack.top();
+
+    m_data->m_opacityStack.push(value * opacity);
+
+    return OpacityGuard(*this);
+  }
+
+  void RenderContext::popOpacity()
+  {
+    assert(!m_data->m_opacityStack.empty());
+    m_data->m_opacityStack.pop();
+  }
+
+  float RenderContext::opacity() const
+  {
+    assert(!m_data->m_opacityStack.empty());
+    return m_data->m_opacityStack.top();
   }
 
 }
