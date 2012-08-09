@@ -12,8 +12,17 @@ namespace Luminous
   {
   public:
     enum Filter {
-      Filter_Nearest,
-      Filter_Linear,
+      Filter_Nearest = GL_NEAREST,
+      Filter_Linear = GL_LINEAR
+    };
+
+    enum SwizzleTarget {
+      Target_Red = GL_RED,
+      Target_Green = GL_GREEN,
+      Target_Blue = GL_BLUE,
+      Target_Alpha = GL_ALPHA,
+      Target_Constant_One = GL_ONE,
+      Target_Constant_Zero = GL_ZERO
     };
     
   public:
@@ -56,6 +65,15 @@ namespace Luminous
 
     LUMINOUS_API bool translucent() const;
     LUMINOUS_API void setTranslucency(bool translucency);
+
+    LUMINOUS_API void setSwizzle(unsigned channel, SwizzleTarget target);
+    LUMINOUS_API SwizzleTarget getSwizzle(unsigned channel) const;
+
+    LUMINOUS_API Filter getMinFilter() const;
+    LUMINOUS_API void setMinFilter(Filter filter);
+
+    LUMINOUS_API Filter getMagFilter() const;
+    LUMINOUS_API void setMagFilter(Filter filter);
 
   private:
     class D;
