@@ -885,26 +885,28 @@ namespace Luminous
       angle += step;
     }
 
-    if (style.fill().textures().empty()) {
-      const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
+    if (style.fillColor().w > 0.f) {
+      if (style.fill().textures().empty()) {
+        const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
 
-      drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, vertices.data(), vertices.size(), program, style.fillColor());
+        drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, vertices.data(), vertices.size(), program, style.fillColor());
 
-    } else {
-      float r = Nimble::Math::Max(majorAxisLength, minorAxisLength);
+      } else {
+        float r = Nimble::Math::Max(majorAxisLength, minorAxisLength);
 
-      Nimble::Vector2 low = center - Nimble::Vector2(r, r);
-      float iSpan = 1.0f/(2.0f*r);
+        Nimble::Vector2 low = center - Nimble::Vector2(r, r);
+        float iSpan = 1.0f/(2.0f*r);
 
-      std::vector<Nimble::Vector2f> uvs(linesegments*2);
+        std::vector<Nimble::Vector2f> uvs(linesegments*2);
 
-      for(unsigned int i=0; i < vertices.size(); ++i) {
-        uvs[i] = iSpan * (vertices[i]-low);
+        for(unsigned int i=0; i < vertices.size(); ++i) {
+          uvs[i] = iSpan * (vertices[i]-low);
+        }
+
+        const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
+        drawTexPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, vertices.data(), uvs.data(), vertices.size(),
+          program, style.fill().textures(), style.fillColor());
       }
-
-      const Program & program = (style.strokeProgram() ? *style.strokeProgram() : texShader());
-      drawTexPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, vertices.data(), uvs.data(), vertices.size(),
-                                                          program, style.fill().textures(), style.fillColor());
     }
 
     if(stroke) {
