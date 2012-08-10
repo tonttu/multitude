@@ -41,8 +41,8 @@ namespace Luminous
     const Radiant::Color & color() const { return m_color; }
     void setColor(const Radiant::Color & c) { m_color = c; }
 
-    Luminous::Program * program() const { return m_program; }
-    void setProgram(Luminous::Program & program) { m_program = &program; }
+    const Luminous::Program * program() const { return m_program; }
+    void setProgram(const Luminous::Program & program) { m_program = &program; }
     void setDefaultProgram() { m_program = nullptr; }
 
     inline Luminous::Texture * texture(const QByteArray & name);
@@ -56,7 +56,7 @@ namespace Luminous
 
   private:
     Radiant::Color m_color;
-    Luminous::Program * m_program;
+    const Luminous::Program * m_program;
 
     /// @todo We could have our own map class that could store n bytes of data
     ///       to pre-allocated buffer, and then convert to std::map if it runs
@@ -94,8 +94,8 @@ namespace Luminous
     /// Sets the color of the object to be drawn
     void setFillColor(float r, float g, float b, float a) { m_fill.setColor(Radiant::Color(r, g, b, a)); }
 
-    Luminous::Program * fillProgram() const { return m_fill.program(); }
-    void setFillProgram(Luminous::Program & program) { m_fill.setProgram(program); }
+    const Luminous::Program * fillProgram() const { return m_fill.program(); }
+    void setFillProgram(const Luminous::Program & program) { m_fill.setProgram(program); }
     void setDefaultFillProgram() { m_fill.setDefaultProgram(); }
 
     Luminous::Program * strokeProgram() const { return m_stroke.program(); }

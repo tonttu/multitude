@@ -91,7 +91,8 @@ namespace Luminous {
     /// Returns the number of allocated sprites
     size_t spriteCount() const;
     /// A pointer to the sprites
-    Sprite * sprites();
+    const Sprite *sprites() const;
+    Sprite *sprites();
 
     /// The container type where the sprites are stored
     typedef std::vector<Sprite> SpriteVector;
@@ -100,9 +101,9 @@ namespace Luminous {
     SpriteVector & spriteVector();
 
     /// Uploads the current sprites to the GPU
-    void uploadSpritesToGPU(Luminous::RenderContext & r);
+    void uploadSpritesToGPU(Luminous::RenderContext & r) const;
     /// Renders the sprites
-    void renderSprites(Luminous::RenderContext & r);
+    void renderSprites(Luminous::RenderContext & r) const;
     /// Sets the texture that is used in the rendering process
     void setTexture(const Luminous::Image &);
     /// Create a blurry texture

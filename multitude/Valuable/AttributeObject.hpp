@@ -287,9 +287,9 @@ namespace Valuable
     /// Gets an Attribute with the given name
     /// @param name Attribute name to search for
     /// @return Null if no object can be found
-    virtual Attribute * getAttribute(const QString & name);
+    virtual Attribute * getAttribute(const QString & name) const;
     /// @deprecated This function will be removed in Cornerstone 2.1. Use getAttribute instead.
-    virtual Attribute * getValue(const QString & name);
+    virtual Attribute * getValue(const QString & name) const;
 
   protected:
 

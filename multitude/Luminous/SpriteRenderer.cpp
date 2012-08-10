@@ -167,6 +167,11 @@ namespace Luminous {
     return m_data->m_sprites.size();
   }
 
+  const SpriteRenderer::Sprite * SpriteRenderer::sprites() const
+  {
+    return m_data->m_sprites.empty() ? 0 : & m_data->m_sprites[0];
+  }
+
   SpriteRenderer::Sprite * SpriteRenderer::sprites()
   {
     return m_data->m_sprites.empty() ? 0 : & m_data->m_sprites[0];
@@ -177,14 +182,14 @@ namespace Luminous {
     return m_data->m_sprites;
   }
 
-  void SpriteRenderer::uploadSpritesToGPU(Luminous::RenderContext & r)
+  void SpriteRenderer::uploadSpritesToGPU(Luminous::RenderContext & r) const
   {
     GPUData & gld = m_data->m_gpuData.ref(r.resources());
 
     gld.m_vbo.fill(sprites(), spriteCount() * sizeof(Sprite), Luminous::VertexBuffer::DYNAMIC_DRAW);
   }
 
-  void SpriteRenderer::renderSprites(Luminous::RenderContext & r)
+  void SpriteRenderer::renderSprites(Luminous::RenderContext & r) const
   {
     Luminous::CustomOpenGL cgl(r);
 

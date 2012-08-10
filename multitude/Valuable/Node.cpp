@@ -232,17 +232,17 @@ namespace Valuable
     return *this;
   }
 
-  Attribute * Node::getValue(const QString & name)
+  Attribute * Node::getValue(const QString & name) const
   {
     return Node::getAttribute(name);
   }
 
-  Attribute * Node::getAttribute(const QString & name)
+  Attribute * Node::getAttribute(const QString & name) const
   {
     size_t slashIndex = name.indexOf('/');
 
     if(slashIndex == std::string::npos) {
-      container::iterator it = m_values.find(name);
+      container::const_iterator it = m_values.find(name);
 
       return it == m_values.end() ? 0 : it->second;
     }
@@ -250,7 +250,7 @@ namespace Valuable
       const QString part1 = name.left(slashIndex);
       const QString part2 = name.mid(slashIndex + 1);
 
-      Attribute * attribute = getValue(part1);
+      const Attribute * attribute = getValue(part1);
       if(attribute) {
         return attribute->getValue(part2);
       }
