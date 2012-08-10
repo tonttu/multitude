@@ -21,7 +21,8 @@
 #include <Luminous/FramebufferResource.hpp>
 #include <Luminous/Buffer.hpp>
 #include <Luminous/VertexHolder.hpp>
-#include "RenderTarget.hpp"
+#include "OpenGL/RenderTargetGL.hpp"
+#include "OpenGL/BufferGL.hpp"
 
 #include <Nimble/Rectangle.hpp>
 #include <Nimble/Vector2.hpp>
@@ -273,7 +274,7 @@ namespace Luminous
     /// @return the current opacity
     float opacity() const;
 
-    RenderTargetGuard pushRenderTarget(RenderTarget & target);
+    RenderTargetGuard pushRenderTarget(const RenderTarget & target);
     void popRenderTarget();
 
     //////////////////////////////////////////////////////////////////////////
@@ -296,7 +297,7 @@ namespace Luminous
 
     template <typename Vertex, typename UniformBlock>
     RenderBuilder<Vertex, UniformBlock> drawTexPrimitiveT(Luminous::PrimitiveType primType, const Nimble::Vector2f * vertices, const Nimble::Vector2f * uvs, unsigned int vertexCount,
-      const Luminous::Program & shader, const std::map<QByteArray, Texture *> & textures, const Radiant::Color & color, float width = 1.f);
+      const Luminous::Program & shader, const std::map<QByteArray, const Texture *> & textures, const Radiant::Color & color, float width = 1.f);
 
     void drawRectWithHole(const Nimble::Rect & area, const Nimble::Rect & hole, const Luminous::Style & style);
     void drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2, const Luminous::Style & style);
@@ -398,15 +399,14 @@ namespace Luminous
     template <typename Vertex, typename UniformBlock>
     RenderBuilder<Vertex, UniformBlock> render( bool translucent,
                                                 Luminous::PrimitiveType type, int indexCount, int vertexCount, float primitiveSize,
-                                                const Luminous::Program & program, const std::map<QByteArray, Texture *> & textures);
+                                                const Luminous::Program & program, const std::map<QByteArray, const Texture *> & textures);
 
-    TextureGL & handle(Texture & texture);
-    ProgramGL & handle(Program & program);
-    BufferGL & handle(Buffer & buffer);
-    VertexArrayGL & handle(VertexArray & vertexarray);
+    ProgramGL & handle(const Program & program);
+    TextureGL & handle(const Texture & texture);
+    RenderTargetGL & handle(const RenderTarget & target);
+    BufferGL & handle(const Buffer & buffer);
+    VertexArrayGL & handle(const VertexArray & vertexarray);
 
-    Program & basicShader();
-    Program & texShader();
   private:
     RenderCommand & createRenderCommand(bool translucent,
                                         int indexCount, int vertexCount,
@@ -416,7 +416,7 @@ namespace Luminous
                                         void *& mappedUniformBuffer,
                                         float & depth,
                                         const Program & program,
-                                        const std::map<QByteArray, Texture *> & textures);
+                                        const std::map<QByteArray, const Texture *> & textures);
 
     template <typename Vertex, typename UniformBlock>
     RenderCommand & createRenderCommand(bool translucent,
@@ -426,7 +426,7 @@ namespace Luminous
                                         UniformBlock *& mappedUniformBuffer,
                                         float & depth,
                                         const Program & program,
-                                        const std::map<QByteArray, Texture *> & textures);
+                                        const std::map<QByteArray, const Texture *> & textures);
 
     struct SharedBuffer;
     template <typename T>
@@ -508,7 +508,7 @@ namespace Luminous
                                                      Uniform *& mappedUniformBuffer,
                                                      float & depth,
                                                      const Program & program,
-                                                     const std::map<QByteArray, Texture *> & textures)
+                                                     const std::map<QByteArray, const Texture *> & textures)
   {
     return createRenderCommand(translucent,
                                indexCount, vertexCount,

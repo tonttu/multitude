@@ -483,7 +483,7 @@ namespace Luminous
 
     // Default window framebuffer
     RenderTarget m_defaultRenderTarget;
-    RenderTarget * m_currentRenderTarget;
+    const RenderTarget * m_currentRenderTarget;
 
     std::stack<float> m_opacityStack;
   };
@@ -988,7 +988,7 @@ namespace Luminous
                                                      void *& mappedUniformBuffer,
                                                      float & depth,
                                                      const Program & shader,
-                                                     const std::map<QByteArray,Texture *> & textures)
+                                                     const std::map<QByteArray,const Texture *> & textures)
   {
     unsigned int indexOffset, vertexOffset, uniformOffset;
 
@@ -1435,31 +1435,31 @@ namespace Luminous
     return m_data->m_texShader;
   }
 
-  TextureGL & RenderContext::handle(Texture & texture)
+  TextureGL & RenderContext::handle(const Texture & texture)
   {
     assert(m_data->m_driverGL);
     return m_data->m_driverGL->handle(texture);
   }
 
-  ProgramGL & RenderContext::handle(Program & program)
-  {
-    assert(m_data->m_driverGL);
-    return m_data->m_driverGL->handle(program);
-  }
-  
-  BufferGL & RenderContext::handle(Buffer & buffer)
+  BufferGL & RenderContext::handle(const Buffer & buffer)
   {
     assert(m_data->m_driverGL);
     return m_data->m_driverGL->handle(buffer);
   }
 
-  VertexArrayGL & RenderContext::handle(VertexArray & array)
+  RenderTargetGL & RenderContext::handle(const RenderTarget & target)
   {
     assert(m_data->m_driverGL);
-    return m_data->m_driverGL->handle(array);
+    return m_data->m_driverGL->handle(target);
   }
 
-  RenderTargetGuard RenderContext::pushRenderTarget(RenderTarget &target)
+  ProgramGL & RenderContext::handle(const Program & program)
+  {
+    assert(m_data->m_driverGL);
+    return m_data->m_driverGL->handle(program);
+  }
+
+  RenderTargetGuard RenderContext::pushRenderTarget(const RenderTarget &target)
   {
     m_data->m_driverGL->pushRenderTarget(target);
 

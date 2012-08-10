@@ -7,7 +7,7 @@ namespace Luminous
   RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::render(
     bool translucent,
     Luminous::PrimitiveType type, int indexCount, int vertexCount, float primitiveSize,
-    const Luminous::Program & program, const std::map<QByteArray, Texture *> & textures)
+    const Luminous::Program & program, const std::map<QByteArray, const Texture *> & textures)
   {
     RenderBuilder<Vertex, UniformBlock> builder;
     RenderCommand & cmd = createRenderCommand(translucent,
@@ -41,7 +41,7 @@ namespace Luminous
       (color.w < 0.99999999f);
 
     /// @todo temporary dummy to avoid separate render() function
-    const std::map<QByteArray, Texture *> textures;
+    const std::map<QByteArray, const Texture *> textures;
 
     RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(translucent, primType, vertexCount, vertexCount, width, shader, textures);
     auto v = b.vertex;
@@ -63,7 +63,7 @@ namespace Luminous
   template <typename Vertex, typename UniformBlock>
   RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::drawTexPrimitiveT(
     Luminous::PrimitiveType primType, const Nimble::Vector2f * vertices, const Nimble::Vector2f * uvs, unsigned int vertexCount,
-    const Program & shader, const std::map<QByteArray, Texture *> & textures, const Radiant::Color & color, float width)
+    const Program & shader, const std::map<QByteArray, const Texture *> & textures, const Radiant::Color & color, float width)
   {
     /// @todo Should we be able to overrule this with Style::Translucent
     bool translucent =

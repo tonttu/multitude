@@ -66,13 +66,13 @@ namespace Luminous
                                                              Buffer & indexBuffer,
                                                              Buffer & uniformBuffer,
                                                              const Luminous::Program & shader,
-                                                             const std::map<QByteArray, Texture *> & textures) OVERRIDE;
+                                                             const std::map<QByteArray, const Texture *> & textures) OVERRIDE;
 
     LUMINOUS_API virtual RenderCommand & createRenderCommand(bool translucent,
                                                              VertexArray & vertexArray,
                                                              Buffer & uniformBuffer,
                                                              const Luminous::Program & shader,
-                                                             const std::map<QByteArray, Texture *> & textures) OVERRIDE;
+                                                             const std::map<QByteArray, const Texture *> & textures) OVERRIDE;
 
     LUMINOUS_API virtual void flush() OVERRIDE;
 

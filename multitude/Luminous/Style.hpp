@@ -45,14 +45,14 @@ namespace Luminous
     void setProgram(const Luminous::Program & program) { m_program = &program; }
     void setDefaultProgram() { m_program = nullptr; }
 
-    inline Luminous::Texture * texture(const QByteArray & name);
+    inline const Luminous::Texture * texture(const QByteArray & name);
     inline Luminous::TextureGL * textureGL(const QByteArray & name);
-    inline void findTexture(const QByteArray & name, Luminous::Texture *& texture);
+    inline void findTexture(const QByteArray & name, const Texture *&texture);
 
-    inline void setTexture(Luminous::Texture & texture) { setTexture("tex", texture); }
-    inline void setTexture(const QByteArray & name, Luminous::Texture & texture);
+    inline void setTexture(const Luminous::Texture & texture) { setTexture("tex", texture); }
+    inline void setTexture(const QByteArray & name, const Texture &texture);
 
-    const std::map<QByteArray, Texture *> & textures() const { return m_textures; }
+    const std::map<QByteArray, const Texture *> & textures() const { return m_textures; }
 
   private:
     Radiant::Color m_color;
@@ -62,7 +62,7 @@ namespace Luminous
     ///       to pre-allocated buffer, and then convert to std::map if it runs
     ///       out of space. Since it would have only couple of values normally,
     ///       it could be just an array of pairs with unique keys
-    std::map<QByteArray, Texture *> m_textures;
+    std::map<QByteArray, const Texture *> m_textures;
 
     friend class Style;
   };
@@ -110,7 +110,7 @@ namespace Luminous
     float strokeWidth() const { return m_stroke.width(); }
 
     void setTexture(Luminous::Texture & texture) { m_fill.setTexture(texture); }
-    void setTexture(const QByteArray & name, Luminous::Texture & texture) { m_fill.setTexture(name, texture); }
+    void setTexture(const QByteArray & name, const Luminous::Texture & texture) { m_fill.setTexture(name, texture); }
 
     void setTranslucency(Translucency translucency) { m_translucency = translucency; }
     Translucency translucency() const { return m_translucency; }
@@ -123,13 +123,13 @@ namespace Luminous
 
   /////////////////////////////////////////////////////////////////////////////
 
-  Luminous::Texture * Fill::texture(const QByteArray & name)
+  const Texture *Fill::texture(const QByteArray & name)
   {
     auto it = m_textures.find(name);
     return it == m_textures.end() ? nullptr : it->second;
   }
 
-  void Fill::findTexture(const QByteArray & name, Luminous::Texture *& texture)
+  void Fill::findTexture(const QByteArray & name, const Luminous::Texture *& texture)
   {
     auto it = m_textures.find(name);
     if(it == m_textures.end()) {
@@ -139,7 +139,7 @@ namespace Luminous
     }
   }
 
-  void Fill::setTexture(const QByteArray & name, Luminous::Texture & texture)
+  void Fill::setTexture(const QByteArray & name, const Luminous::Texture & texture)
   {
     m_textures[name] = &texture;
   }

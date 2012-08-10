@@ -187,7 +187,7 @@ namespace Luminous
     RenderCommand & createRenderCommand(bool translucent,
                                         VertexArray & vertexArray,
                                         Buffer & uniformBuffer,
-                                        const std::map<QByteArray,Texture *> & textures);
+                                        const std::map<QByteArray,const Texture *> & textures);
 
     // Utility function for resource cleanup
     template <typename ContainerType>
@@ -315,14 +315,14 @@ namespace Luminous
   RenderCommand & RenderDriverGL::D::createRenderCommand(bool translucent,
                                                          VertexArray & vertexArray,
                                                          Buffer & uniformBuffer,
-                                                         const std::map<QByteArray,Texture *> & textures)
+                                                         const std::map<QByteArray,const Texture *> & textures)
   {
     m_state.vertexArray = &m_driver.handle(vertexArray, m_state.program);
     m_state.uniformBuffer = &m_driver.handle(uniformBuffer);
 
     int unit = 0;
     for(auto it = std::begin(textures), end = std::end(textures); it != end; ++it) {
-      Texture * texture = it->second;
+      const Texture * texture = it->second;
       if(!texture->isValid())
         continue;
 
@@ -601,7 +601,7 @@ namespace Luminous
                                                       Buffer & indexBuffer,
                                                       Buffer & uniformBuffer,
                                                       const Luminous::Program & shader,
-                                                      const std::map<QByteArray, Texture *> & textures)
+                                                      const std::map<QByteArray, const Texture *> &textures)
   {
     auto & state = m_d->m_state;
     state.program = &handle(shader);
@@ -626,7 +626,7 @@ namespace Luminous
                                                       VertexArray & vertexArray,
                                                       Buffer & uniformBuffer,
                                                       const Luminous::Program & shader,
-                                                      const std::map<QByteArray, Texture *> & textures)
+                                                      const std::map<QByteArray, const Texture *> &textures)
   {
     auto & state = m_d->m_state;
     state.program = &handle(shader);
