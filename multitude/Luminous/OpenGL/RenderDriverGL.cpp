@@ -211,6 +211,30 @@ namespace Luminous
       m_masterRenderQueue.push_back(std::move(queues));
     }
 
+    void debugOutputStats()
+    {
+      static int foo = 0;
+      if(foo++ % 60 == 0) {
+
+        int segments = m_masterRenderQueue.size();
+        int stateChanges = 0;
+        int programs = m_programs.size();
+        int textures = m_textures.size();
+        int buffers = m_buffers.size();
+        int vertexArrays = m_vertexArrays.size();
+
+        for(auto i = m_masterRenderQueue.begin(); i != m_masterRenderQueue.end(); ++i) {
+          const RenderQueueSegment & segment = *i;
+          stateChanges += segment.opaqueQueue.size() + segment.translucentQueue.queue.size();
+        }
+
+        Radiant::info("Render stats: %2d Segments, %2d State changes, %2d Programs, %2d Textures, %2d Buffer Objects, %2d VertexArrays",
+                      segments, stateChanges, programs, textures, buffers, vertexArrays);
+
+
+      }
+    }
+
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -620,13 +644,8 @@ namespace Luminous
     }
     m_d->m_stateGL.bufferMaps().clear();
 
-    /*static int foo = 0;
-    if(foo++ % 60 == 0) {
-      Radiant::info("%2d State changes, %2d Programs, %2d Shaders, %2d Textures, %2d Buffer Objects, %2d VertexArrays",
-                    m_d->m_opaqueQueue.size() + m_d->m_translucentQueue.queue.size(),
-                    m_d->m_programs.size(), m_d->m_shaders.size(), m_d->m_textures.size(),
-                    m_d->m_buffers.size(), m_d->m_VertexArrays.size());
-    }*/
+    // Debug: output some render stats
+    //m_d->debugOutputStats();
 
     // Reset the OpenGL state to default
     clearState();
