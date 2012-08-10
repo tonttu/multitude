@@ -1425,12 +1425,12 @@ namespace Luminous
     return m_data->m_driver.setShaderUniform(name, static_cast<Nimble::Vector4f>(value));
   }
 
-  Program & RenderContext::basicShader()
+  const Program & RenderContext::basicShader() const
   {
     return m_data->m_basicShader;
   }
 
-  Program & RenderContext::texShader()
+  const Program & RenderContext::texShader() const
   {
     return m_data->m_texShader;
   }

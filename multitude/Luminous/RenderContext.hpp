@@ -407,6 +407,9 @@ namespace Luminous
     BufferGL & handle(const Buffer & buffer);
     VertexArrayGL & handle(const VertexArray & vertexarray);
 
+    const Program & basicShader() const;
+    const Program & texShader() const;
+
   private:
     RenderCommand & createRenderCommand(bool translucent,
                                         int indexCount, int vertexCount,
