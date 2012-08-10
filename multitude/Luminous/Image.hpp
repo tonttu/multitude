@@ -195,7 +195,7 @@ namespace Luminous
 
     /// Get a texture object based on the image
     /// @return texture matching the image
-    Luminous::Texture & texture();
+    Luminous::Texture & texture() const;
 
   protected:
 
@@ -213,7 +213,7 @@ namespace Luminous
     size_t m_generation;
 
   private:
-    std::unique_ptr<Texture> m_texture;
+    mutable std::unique_ptr<Texture> m_texture;
   };
 
   /** ImageTex is a utility class for rendering images.

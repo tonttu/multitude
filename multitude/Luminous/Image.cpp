@@ -867,7 +867,7 @@ namespace Luminous
       m_texture->addDirtyRect(QRect(x, y, 1, 1));
   }
 
-  Texture & Image::texture()
+  Texture & Image::texture() const
   {
     if(!m_texture) {
       m_texture.reset(new Texture());
