@@ -7,7 +7,7 @@ namespace Luminous
   RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::render(
     bool translucent,
     Luminous::PrimitiveType type, int indexCount, int vertexCount, float primitiveSize,
-    const Luminous::Program & program, const std::map<QByteArray, Texture *> & textures, const Radiant::Color & color)
+    const Luminous::Program & program, const std::map<QByteArray, Texture *> & textures)
   {
     RenderBuilder<Vertex, UniformBlock> builder;
     RenderCommand & cmd = createRenderCommand(translucent,
@@ -26,9 +26,6 @@ namespace Luminous
     builder.uniform->projMatrix.transpose();
     builder.uniform->modelMatrix = transform4();
     builder.uniform->modelMatrix.transpose();
-    builder.uniform->color = color;
-    // Apply opacity
-    builder.uniform->color.w *= opacity();
 
     return builder;
   }
@@ -46,7 +43,7 @@ namespace Luminous
     /// @todo temporary dummy to avoid separate render() function
     const std::map<QByteArray, Texture *> textures;
 
-    RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(translucent, primType, vertexCount, vertexCount, width, shader, textures, color);
+    RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(translucent, primType, vertexCount, vertexCount, width, shader, textures);
     auto v = b.vertex;
     auto idx = b.idx;
 
@@ -54,6 +51,11 @@ namespace Luminous
       v++->location.make(vertices[i].x, vertices[i].y, b.depth);
       *idx++ = i;
     }
+
+    // Set the color
+    b.uniform->color = color;
+    // Apply opacity
+    b.uniform->color.w *= opacity();
 
     return b;
   }
@@ -68,7 +70,7 @@ namespace Luminous
       shader.translucent() |
       (color.w < 0.99999999f);
 
-    RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(translucent, primType, vertexCount, vertexCount, width, shader, textures, color);
+    RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(translucent, primType, vertexCount, vertexCount, width, shader, textures);
     auto v = b.vertex;
     auto idx = b.idx;
 
@@ -77,6 +79,11 @@ namespace Luminous
       v++->texCoord = uvs[i];
       *idx++ = i;
     }
+
+    // Set the color
+    b.uniform->color = color;
+    // Apply opacity
+    b.uniform->color.w *= opacity();
 
     return b;
   }

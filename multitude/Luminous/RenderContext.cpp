@@ -1441,6 +1441,24 @@ namespace Luminous
     return m_data->m_driverGL->handle(texture);
   }
 
+  ProgramGL & RenderContext::handle(Program & program)
+  {
+    assert(m_data->m_driverGL);
+    return m_data->m_driverGL->handle(program);
+  }
+  
+  BufferGL & RenderContext::handle(Buffer & buffer)
+  {
+    assert(m_data->m_driverGL);
+    return m_data->m_driverGL->handle(buffer);
+  }
+
+  VertexArrayGL & RenderContext::handle(VertexArray & array)
+  {
+    assert(m_data->m_driverGL);
+    return m_data->m_driverGL->handle(array);
+  }
+
   RenderTargetGuard RenderContext::pushRenderTarget(RenderTarget &target)
   {
     m_data->m_driverGL->pushRenderTarget(target);

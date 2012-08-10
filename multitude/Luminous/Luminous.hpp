@@ -175,6 +175,7 @@ namespace Luminous
   struct RenderCommand;
   // Resources
   class Buffer;
+  class BufferGL;
   class Program;
   class ProgramGL;
   class ShaderGLSL;
@@ -186,6 +187,7 @@ namespace Luminous
   struct VertexAttribute;
   class VertexDescription;
   class VertexArray;
+  class VertexArrayGL;
 
   class Image;
   struct ImageInfo;

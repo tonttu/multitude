@@ -394,6 +394,19 @@ namespace Luminous
     void drawIndexed(PrimitiveType primType, unsigned int offset, unsigned int primitives);
 
     void clear(ClearMask mask, const Radiant::Color & color = Radiant::Color(0,0,0,0), double depth = 1.0, int stencil = 0);
+
+    template <typename Vertex, typename UniformBlock>
+    RenderBuilder<Vertex, UniformBlock> render( bool translucent,
+                                                Luminous::PrimitiveType type, int indexCount, int vertexCount, float primitiveSize,
+                                                const Luminous::Program & program, const std::map<QByteArray, Texture *> & textures);
+
+    TextureGL & handle(Texture & texture);
+    ProgramGL & handle(Program & program);
+    BufferGL & handle(Buffer & buffer);
+    VertexArrayGL & handle(VertexArray & vertexarray);
+
+    Program & basicShader();
+    Program & texShader();
   private:
     RenderCommand & createRenderCommand(bool translucent,
                                         int indexCount, int vertexCount,
@@ -422,16 +435,6 @@ namespace Luminous
 
     std::pair<void *, SharedBuffer *> sharedBuffer(
         std::size_t vertexSize, std::size_t maxVertexCount, Buffer::Type type, unsigned int & offset);
-
-    template <typename Vertex, typename UniformBlock>
-    RenderBuilder<Vertex, UniformBlock> render( bool translucent,
-                                                Luminous::PrimitiveType type, int indexCount, int vertexCount, float primitiveSize,
-                                                const Luminous::Program & program, const std::map<QByteArray, Texture *> & textures, const Radiant::Color & color);
-
-    TextureGL & handle(Texture & texture);
-
-    Program & basicShader();
-    Program & texShader();
 
     //////////////////////////////////////////////////////////////////////////
     /// </Luminousv2>
