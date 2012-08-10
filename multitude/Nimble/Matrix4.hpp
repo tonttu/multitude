@@ -143,6 +143,17 @@ namespace Nimble {
     /// Returns a pointer to the first element
     const T * data() const { return m[0].data(); }
 
+    /// Gets the given matrix element
+    T                  get(int r, int c) const{ return m[r][c]; }
+
+
+    /// Get the 3x3 upper-left matrix
+    inline Matrix3T<T> upperLeft() const {
+      return Matrix3T<T>(get(0, 0), get(0, 1), get(0, 2),
+                         get(1, 0), get(1, 1), get(1, 2),
+                         get(2, 0), get(2, 1), get(2, 2));
+    }
+
         /// Returns an orthonormalized version of this matrix.
         /// @todo could improve numerical stability easily etc.
         /// @return Normalized matrix
