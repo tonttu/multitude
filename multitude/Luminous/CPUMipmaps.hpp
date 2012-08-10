@@ -51,6 +51,7 @@ namespace Luminous {
       quarter size image, etc.
   */
   /// @todo examples
+  /// @deprecated use Luminous::Mipmap instead
   class LUMINOUS_API CPUMipmaps : public Luminous::Collectable, public Luminous::Task,
                                   public std::enable_shared_from_this<CPUMipmaps>
   {
@@ -72,7 +73,7 @@ namespace Luminous {
       int bound;
     };
 
-    CPUMipmaps();
+    MULTI_ATTR_DEPRECATED("CPUMipmaps is deprecated. Use Luminous::Mipmap instead.", CPUMipmaps());
     virtual ~CPUMipmaps();
 
     /** Calculates the best-looking mipmap-level for rendering the image with given size.
