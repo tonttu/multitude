@@ -47,6 +47,7 @@ namespace Luminous
       m_numid = nid;
     }
     int numId() const {return m_numid;}
+    QString displayGroup() const {return gpu()+"-"+QString("%1").arg(logicalScreen());}
 
   private:
     QString m_name;
