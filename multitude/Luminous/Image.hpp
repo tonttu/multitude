@@ -147,9 +147,9 @@ namespace Luminous
     void forgetLastLines(int n);
     /** Removes the last line from the image. */
     void forgetLastLine();
-    /** Checks that the image dimensions are efasible for a texture. In practice
+    /** Checks that the image dimensions are feasible for a texture. In practice
         this functions removes pixels from the right and bottom, to make the
-        width and height mutiples of two.
+        width and height multiples of two.
     */
     void makeValidTexture();
     /** Returns true if the image has an alpha channel.
