@@ -16,10 +16,10 @@ namespace Luminous
     // Iterate all pixels in the target image
     for (int ty = 0; ty < theight; ++ty) {
       unsigned char * line = target.line(ty);
-      const int sy = std::round(scale.y * ty);
+      const int sy = Nimble::Math::Round(scale.y * ty);
 
       for (int tx = 0; tx < twidth; ++tx) {
-        const int sx = std::round(scale.x * tx);
+        const int sx = Nimble::Math::Round(scale.x * tx);
 
         // is this pixel "inside"
         const bool pixelIn = src.line(sy)[sx] > 0x7f;
