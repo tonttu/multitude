@@ -294,6 +294,9 @@ namespace Luminous
 
     glBindBufferRange(GL_UNIFORM_BUFFER, uniformBlockIndex, uniformHandle,
                       cmd.uniformOffsetBytes, cmd.uniformSizeBytes);
+
+    //Radiant::warning("RenderDriverGL::D::render # OFFSET %d SIZE: %d", cmd.uniformOffsetBytes, cmd.uniformSizeBytes);
+
     GLERROR("RenderDriverGL::flush # glBindBufferRange");
 
     if (cmd.primitiveType == Luminous::PrimitiveType_Line || cmd.primitiveType == Luminous::PrimitiveType_LineStrip) {
