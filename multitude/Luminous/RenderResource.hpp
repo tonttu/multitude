@@ -61,8 +61,8 @@ namespace Luminous
   private:
     int m_generation;
     Id m_id;
-    unsigned int m_expiration;
     Type m_type;
+    unsigned int m_expiration;
   };
 }
 
