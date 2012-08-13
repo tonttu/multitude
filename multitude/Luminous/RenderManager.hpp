@@ -48,7 +48,7 @@ namespace Luminous
     template <typename T> static T * getResource( RenderResource::Id id );
 
   private:
-    LUMINOUS_API RenderManager();
+    RenderManager() = delete;
   };
 }
 
