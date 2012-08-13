@@ -279,6 +279,8 @@ namespace Luminous
     header.heightLo = static_cast<unsigned char> (image.height() & 0x00FF);
     header.heightHi = static_cast<unsigned char> ((image.height() >> 8) & 0xFF);
     header.bpp = static_cast<unsigned char> (image.pixelFormat().numChannels() << 3);
+    /// flip y
+    header.descriptor |= (1 << 5);
 
     // Write header
     fwrite(&header, sizeof(TGAHeader), 1, file);

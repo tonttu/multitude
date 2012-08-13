@@ -161,6 +161,10 @@ namespace Luminous
       }
     }
 
+    /// ImageCodecTGA supports some pixel formats that Qt doesn't support, like
+    /// Luminuos::PixelFormat::redUByte(). Give this codec a priority
+    Image::codecs()->registerCodec(std::make_shared<ImageCodecTGA>());
+
     QList<QByteArray> formats = QImageWriter::supportedImageFormats ();
     for(QList<QByteArray>::iterator it = formats.begin(); it != formats.end(); it++) {
       QByteArray & format = (*it);
@@ -175,7 +179,6 @@ namespace Luminous
     Image::codecs()->registerCodec(std::make_shared<ImageCodecDDS>());
 #endif
 
-    Image::codecs()->registerCodec(std::make_shared<ImageCodecTGA>());
 MULTI_ONCE_END
   }
 
