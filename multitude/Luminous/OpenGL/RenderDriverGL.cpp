@@ -12,6 +12,9 @@
 #include "Luminous/ShaderUniform.hpp"
 #include "Luminous/Texture2.hpp"
 #include "Luminous/PixelFormat.hpp"
+#include "Luminous/BlendMode.hpp"
+#include "Luminous/DepthMode.hpp"
+#include "Luminous/StencilMode.hpp"
 #include "PipelineCommand.hpp"
 
 #include <Nimble/Matrix4.hpp>
@@ -309,6 +312,10 @@ namespace Luminous
       GLERROR("RenderDriverGL::flush # glPointSize");
     }
 
+    m_driver.setBlendMode(cmd.blendMode);
+    m_driver.setDepthMode(cmd.depthMode);
+    m_driver.setStencilMode(cmd.stencilMode);
+
     glDrawElementsBaseVertex(cmd.primitiveType, cmd.primitiveCount, GL_UNSIGNED_INT,
                              (GLvoid *)((sizeof(uint) * cmd.indexOffset)), cmd.vertexOffset);
     GLERROR("RenderDriverGL::flush # glDrawElementsBaseVertex");
@@ -546,27 +553,43 @@ namespace Luminous
 
   void RenderDriverGL::clearState()
   {
-    // Use depth test by default
-    glEnable(GL_DEPTH_TEST);
-
-    // Default blending mode
-    glEnable(GL_BLEND);
-    glBlendEquation(GL_FUNC_ADD);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // Default modes
+    setBlendMode(Luminous::BlendMode::Default());
+    setDepthMode(Luminous::DepthMode::Default());
+    setStencilMode(Luminous::StencilMode::Default());
 
     // Enable scissor test
     glEnable(GL_SCISSOR_TEST);
   }
 
-/*
-  void RenderDriverGL::setStencilFunc( StencilFunc func )
+  void RenderDriverGL::setBlendMode( const BlendMode & mode )
   {
+    glEnable(GL_BLEND);
+    glBlendColor(mode.constantColor().red(), mode.constantColor().green(), mode.constantColor().blue(), mode.constantColor().alpha() );
+    GLERROR("RenderDriverGL::setBlendMode # glBlendColor");
+    glBlendEquation(mode.equation());
+    GLERROR("RenderDriverGL::setBlendMode # glBlendEquation");
+    glBlendFunc(mode.sourceFunction(), mode.destFunction());
+    GLERROR("RenderDriverGL::setBlendMode # glBlendFunc");
   }
 
-  void RenderDriverGL::setBlendFunction( BlendFunc func )
+  void RenderDriverGL::setDepthMode(const DepthMode & mode)
   {
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(mode.function());
+    GLERROR("RenderDriverGL::setDepthMode # glDepthFunc");
+    glDepthRange(mode.range().low(), mode.range().high());
+    GLERROR("RenderDriverGL::setDepthMode # glDepthRange");
   }
-*/
+
+  void RenderDriverGL::setStencilMode( const StencilMode & mode )
+  {
+    glEnable(GL_STENCIL_TEST);
+    glStencilFunc(mode.function(), mode.refValue(), mode.maskValue());
+    GLERROR("RenderDriverGL::setStencilMode # glStencilFunc");
+    glStencilOp(mode.stencilFailOperation(), mode.depthFailOperation(), mode.passOperation());
+    GLERROR("RenderDriverGL::setStencilMode # glStencilOp");
+  }
 
   void RenderDriverGL::setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer)
   {

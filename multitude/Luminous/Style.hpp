@@ -7,6 +7,9 @@
 #include <Nimble/Vector4.hpp>
 
 #include <Luminous/Program.hpp>
+#include <Luminous/BlendMode.hpp>
+#include <Luminous/DepthMode.hpp>
+#include <Luminous/StencilMode.hpp>
 
 namespace Luminous
 {
@@ -58,10 +61,6 @@ namespace Luminous
     Radiant::Color m_color;
     const Luminous::Program * m_program;
 
-    /// @todo We could have our own map class that could store n bytes of data
-    ///       to pre-allocated buffer, and then convert to std::map if it runs
-    ///       out of space. Since it would have only couple of values normally,
-    ///       it could be just an array of pairs with unique keys
     std::map<QByteArray, const Texture *> m_textures;
 
     friend class Style;
@@ -71,15 +70,7 @@ namespace Luminous
   class Style
   {
   public:
-    enum Translucency
-    {
-      Translucent,
-      Opaque,
-      Auto
-    };
-
-  public:
-    Style() : m_translucency(Auto) {}
+    Style() {}
 
     Stroke & stroke() { return m_stroke; }
     const Stroke & stroke() const { return m_stroke; }
@@ -101,7 +92,7 @@ namespace Luminous
     Luminous::Program * strokeProgram() const { return m_stroke.program(); }
     void setStrokeProgram(Luminous::Program & program) { m_stroke.setProgram(program); }
     void setDefaultStrokeProgram() { m_stroke.setDefaultProgram(); }
-    
+
     void setStrokeColor(float r, float g, float b, float a) { m_stroke.setColor(Radiant::Color(r, g, b, a)); }
     void setStrokeColor(const Radiant::Color & color) { m_stroke.setColor(color); }
     const Radiant::Color & strokeColor() const { return m_stroke.color(); }
@@ -112,13 +103,21 @@ namespace Luminous
     void setTexture(Luminous::Texture & texture) { m_fill.setTexture(texture); }
     void setTexture(const QByteArray & name, const Luminous::Texture & texture) { m_fill.setTexture(name, texture); }
 
-    void setTranslucency(Translucency translucency) { m_translucency = translucency; }
-    Translucency translucency() const { return m_translucency; }
+    void setBlendMode(const BlendMode & mode) { m_blendMode = mode; }
+    const BlendMode & blendMode() const { return m_blendMode; }
 
+    void setDepthMode(const DepthMode & mode) { m_depthMode = mode; }
+    const DepthMode & depthMode() const { return m_depthMode; }
+
+    void setStencilMode(const StencilMode & mode) { m_stencilMode = mode; }
+    const StencilMode & stencilMode() const { return m_stencilMode; }
   private:
     Fill m_fill;
     Stroke m_stroke;
-    Translucency m_translucency;
+
+    BlendMode m_blendMode;
+    DepthMode m_depthMode;
+    StencilMode m_stencilMode;
   };
 
   /////////////////////////////////////////////////////////////////////////////

@@ -99,6 +99,10 @@ namespace Luminous
 
     LUMINOUS_API virtual void flush() = 0;
 
+    LUMINOUS_API virtual void setBlendMode(const BlendMode & mode) = 0;
+    LUMINOUS_API virtual void setDepthMode(const DepthMode & mode) = 0;
+    LUMINOUS_API virtual void setStencilMode(const StencilMode & mode) = 0;
+
     // Driver factory
     LUMINOUS_API static std::shared_ptr<RenderDriver> createInstance(unsigned int threadIndex);
 

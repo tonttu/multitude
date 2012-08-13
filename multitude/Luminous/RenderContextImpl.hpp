@@ -27,13 +27,15 @@ namespace Luminous
     builder.uniform->modelMatrix = transform4();
     builder.uniform->modelMatrix.transpose();
 
+    builder.command = &cmd;
+
     return builder;
   }
     
   template <typename Vertex, typename UniformBlock>
   RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::drawPrimitiveT(
     Luminous::PrimitiveType primType, const Nimble::Vector2f * vertices, unsigned int vertexCount,
-    const Program & shader, const Radiant::Color & color, float width)
+    const Program & shader, const Radiant::Color & color, float width, const Luminous::Style & style)
   {
     /// @todo Should we be able to overrule this with Style::Translucent
     bool translucent =
@@ -57,13 +59,18 @@ namespace Luminous
     // Apply opacity
     b.uniform->color.w *= opacity();
 
+    // Set draw modes
+    b.command->blendMode = style.blendMode();
+    b.command->depthMode = style.depthMode();
+    b.command->stencilMode = style.stencilMode();
+
     return b;
   }
 
   template <typename Vertex, typename UniformBlock>
   RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::drawTexPrimitiveT(
     Luminous::PrimitiveType primType, const Nimble::Vector2f * vertices, const Nimble::Vector2f * uvs, unsigned int vertexCount,
-    const Program & shader, const std::map<QByteArray, const Texture *> & textures, const Radiant::Color & color, float width)
+    const Program & shader, const std::map<QByteArray, const Texture *> & textures, const Radiant::Color & color, float width, const Luminous::Style & style)
   {
     /// @todo Should we be able to overrule this with Style::Translucent
     bool translucent =
@@ -84,6 +91,11 @@ namespace Luminous
     b.uniform->color = color;
     // Apply opacity
     b.uniform->color.w *= opacity();
+
+    // Set draw modes
+    b.command->blendMode = style.blendMode();
+    b.command->depthMode = style.depthMode();
+    b.command->stencilMode = style.stencilMode();
 
     return b;
   }

@@ -7,6 +7,9 @@
 #include "Nimble/Matrix4.hpp"
 
 #include "Luminous/Luminous.hpp"
+#include "Luminous/BlendMode.hpp"
+#include "Luminous/DepthMode.hpp"
+#include "Luminous/StencilMode.hpp"
 
 #include <array>
 #include <utility>
@@ -18,7 +21,12 @@ namespace Luminous
   {
     PrimitiveType primitiveType;
     std::size_t primitiveCount;
+
     float primitiveSize;    // Used for points and lines
+    BlendMode blendMode;
+    DepthMode depthMode;
+    StencilMode stencilMode;
+
     unsigned int indexOffset;
     unsigned int vertexOffset;
 

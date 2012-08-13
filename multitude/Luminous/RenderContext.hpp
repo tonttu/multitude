@@ -55,14 +55,6 @@ namespace Luminous
       RenderContext * m_rc;
     };
 
-    /// Blending function type
-    enum BlendFunc {
-      BLEND_USUAL,
-      BLEND_NONE,
-      BLEND_ADDITIVE,
-      BLEND_SUBTRACTIVE
-    };
-
 /// @cond
 
     class FBOPackage;
@@ -132,7 +124,7 @@ namespace Luminous
       unsigned int * idx;
       UniformBlock * uniform;
       Vertex * vertex;
-
+      RenderCommand * command;
       float depth;
     };
 
@@ -293,11 +285,11 @@ namespace Luminous
     // Implementation
     template <typename Vertex, typename UniformBlock>
     RenderBuilder<Vertex, UniformBlock> drawPrimitiveT(Luminous::PrimitiveType primType, const Nimble::Vector2f * vertices, unsigned int vertexCount,
-      const Luminous::Program & shader, const Radiant::Color & color, float width = 1.f);
+      const Luminous::Program & shader, const Radiant::Color & color, float width, const Luminous::Style & style);
 
     template <typename Vertex, typename UniformBlock>
     RenderBuilder<Vertex, UniformBlock> drawTexPrimitiveT(Luminous::PrimitiveType primType, const Nimble::Vector2f * vertices, const Nimble::Vector2f * uvs, unsigned int vertexCount,
-      const Luminous::Program & shader, const std::map<QByteArray, const Texture *> & textures, const Radiant::Color & color, float width = 1.f);
+      const Luminous::Program & shader, const std::map<QByteArray, const Texture *> & textures, const Radiant::Color & color, float width, const Luminous::Style & style);
 
     void drawRectWithHole(const Nimble::Rect & area, const Nimble::Rect & hole, const Luminous::Style & style);
     void drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2, const Luminous::Style & style);
@@ -306,16 +298,6 @@ namespace Luminous
     void drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, const Style &style);
     void drawRect(const Nimble::Rectf & rect, const Style & style);
     void drawRect(const Nimble::Rectf & rect, const Nimble::Rectf & uvs, const Style & style);
-
-    /// Sets the current blend function, and enables blending
-    /** If the function is BLEND_NONE, then blending is disabled.
-    @param f blend function */
-    MULTI_ATTR_DEPRECATED("Deprecated", void setBlendFunc(BlendFunc f));
-    /// Enables the current blend mode defined with setBlendFunc
-    void useCurrentBlendMode();
-
-    /// Returns a pointer to an array of human-readable blending mode strings
-    static const char ** blendFuncNames();
 
     /// Adds the render counter by one
     /** The render counter is used to track how many objects have been rendered since the counter was

@@ -91,6 +91,13 @@ SOURCES += OpenGL/Error.cpp
 SOURCES += OpenGL/RenderTargetGL.cpp
 SOURCES += OpenGL/PipelineCommand.cpp
 
+HEADERS += BlendMode.hpp
+SOURCES += BlendMode.cpp
+HEADERS += DepthMode.hpp
+SOURCES += DepthMode.cpp
+HEADERS += StencilMode.hpp
+SOURCES += BlendMode.cpp
+
 SOURCES += BGThread.cpp
 SOURCES += CodecRegistry.cpp
 SOURCES += ColorCorrection.cpp

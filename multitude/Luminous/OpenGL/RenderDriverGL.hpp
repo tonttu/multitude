@@ -88,13 +88,14 @@ namespace Luminous
 
     /// @todo Add function wrapper(s) for:
     /// * glLogicOp
-    /// * glBlendFunc, glBlendEquation
-    /// * glStencilFunc, glStencilMask, glStencilOp
-    /// * FBOs
-    /// * Reading framebuffer/target (see also FBOs)
+    /// * FBOs    /// * Reading framebuffer/target (see also FBOs)
     /// * Uniform blocks
     /// * glViewport / glScissor
     /// * glMapBuffer/glMapBufferRange
+    LUMINOUS_API virtual void setBlendMode(const BlendMode & mode) OVERRIDE;
+    LUMINOUS_API virtual void setDepthMode(const DepthMode & mode) OVERRIDE;
+    LUMINOUS_API virtual void setStencilMode(const StencilMode & mode) OVERRIDE;
+
   private:
     virtual void releaseResource(RenderResource::Id id) OVERRIDE;
   private:

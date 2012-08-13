@@ -192,6 +192,10 @@ namespace Luminous
   class Image;
   struct ImageInfo;
   class CompressedImage;
+
+  class BlendMode;
+  class DepthMode;
+  class StencilMode;
 }
 
 #endif
