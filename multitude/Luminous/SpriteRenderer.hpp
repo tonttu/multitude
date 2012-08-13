@@ -66,21 +66,27 @@ namespace Luminous {
   public:
 
     /// Individual sprite
-    class LUMINOUS_API Sprite
+    struct Sprite
     {
-    public:
-      Sprite();
-      /// The location of the sprite
-      Nimble::Vector2 m_location;
+      Sprite::Sprite()
+        : location(0,0,0)
+        , velocity(0,0)
+        , color(1.f, 1.f, 1.f, 1.f)
+        , rotation(0.f)
+        , size(10.f)
+      {}
+
+      // Location of the sprite
+      Nimble::Vector3f location;
       /// The velocity of the sprite
       /** The velocity information is used to implement motion blur/stretching. */
-      Nimble::Vector2 m_velocity;
+      Nimble::Vector2f velocity;
       /// The color of the sprite
-      Nimble::Vector4 m_color;
+      Nimble::Vector4f color;
       /// The rotation of the sprite
-      float m_rotation;
+      float rotation;
       /// The size (diameter) of the particle.
-      float m_size;
+      float size;
     };
 
     SpriteRenderer();
@@ -88,24 +94,24 @@ namespace Luminous {
 
     /// Resize the sprite buffer
     void resize(size_t n);
+
     /// Returns the number of allocated sprites
     size_t spriteCount() const;
-    /// A pointer to the sprites
-    const Sprite *sprites() const;
-    Sprite *sprites();
 
     /// The container type where the sprites are stored
     typedef std::vector<Sprite> SpriteVector;
 
     /// Return the vector containing the sprites
-    SpriteVector & spriteVector();
+    SpriteVector & sprites();
 
-    /// Uploads the current sprites to the GPU
-    void uploadSpritesToGPU(Luminous::RenderContext & r) const;
     /// Renders the sprites
-    void renderSprites(Luminous::RenderContext & r) const;
+    void render(Luminous::RenderContext & r) const;
+
     /// Sets the texture that is used in the rendering process
-    void setTexture(const Luminous::Image &);
+    void setImage(const Luminous::Image & image);
+
+    const Luminous::Image & image() const;
+
     /// Create a blurry texture
     /// Creates a basic square texture with radial gradient pattern
     /// @param dim texture dimensions
@@ -116,17 +122,21 @@ namespace Luminous {
                             float haloweight = 0.75f, float halodescent = 1.0f);
 
     /// Selects the blending function used for the sprites
-    void setBlendFunc(Luminous::RenderContext::BlendFunc f);
+    void setBlendMode(const Luminous::BlendMode & mode);
+
+    const BlendMode & blendMode() const;
+
     /// Sets the velocity scaling factor
     /** @param velscale The scaling factor to be used for stretching sprites along the
         velocity vector during rendering. Value zero inhibits the velocity stretching. Default value
         is zero. */
     void setVelocityScale(float velscale);
+
+    float velocityScale() const;
   private:
 
-    class GPUData;
-    class Internal;
-    Internal * m_data;
+    class D;
+    D * m_d;
   };
 
 }

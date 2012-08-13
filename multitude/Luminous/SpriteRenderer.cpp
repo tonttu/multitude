@@ -16,263 +16,181 @@
 #include "SpriteRenderer.hpp"
 
 #include <Luminous/Image.hpp>
-#include <Luminous/Shader.hpp>
+#include <Luminous/Program.hpp>
+#include <Luminous/VertexDescription.hpp>
 
 #include <Radiant/ResourceLocator.hpp>
 
 namespace Luminous {
 
-  using namespace Radiant;
-
-  SpriteRenderer::Sprite::Sprite()
-    : m_location(0,0)
-    , m_velocity(1,0)
-    , m_color(1, 1, 1, 1)
-    , m_rotation(0.f)
-    , m_size(10)
-  {}
-
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
 
-  class SpriteRenderer::GPUData : public Luminous::GLResource
+  class SpriteRenderer::D
   {
   public:
-    GPUData(Luminous::RenderContext * res)
-      : m_vbo(res)
-    {}
+    struct SpriteUniform
+    {
+      Nimble::Matrix4f projMatrix;
+      Nimble::Matrix4f modelMatrix;
+      float velocityScale;
+    };
 
-    Luminous::VertexBuffer m_vbo;
-  };
-
-  ///////////////////////////////////////////////////////////////////
-  ///////////////////////////////////////////////////////////////////
-  ///////////////////////////////////////////////////////////////////
-
-  class SpriteRenderer::Internal
-  {
-  public:
-
-    Internal()
-      : m_blendFunc(Luminous::RenderContext::BLEND_ADDITIVE)
+    D()
+      : m_blendMode(Luminous::BlendMode::Default())
       , m_velocityScale(0.0f)
     {
       // Build a texture that will be used in this widget
-      /* Maybe different widgets should share the texture to save a bit of resources.
-       We can do this optimization later.
-    */
+      /// @todo Share default texture between instances of the renderer
       createFuzzyTexture(64, 0.5f, 0.5f, 0.5f);
     }
-
 
     void createFuzzyTexture(int dim, float centerDotSize,
                             float haloweight, float halodescent)
     {
-      std::vector<uint8_t> blob;
-      blob.resize(dim * dim * 2);
-
-      uint8_t * ptr = & blob[0];
+      m_image.allocate(dim, dim, Luminous::PixelFormat::redUByte());
 
       Nimble::Vector2 center(dim * 0.5f, dim * 0.5f);
       float invscale = 1.0f / center.x;
 
       haloweight = Nimble::Math::Clamp(haloweight * 255.5f, 0.0f, 255.1f);
 
+      Nimble::Vector4f pixel(0,0,0,0);
+
       for(int y = 0; y < dim; y++) {
         for(int x = 0; x < dim; x++) {
           float d = (Nimble::Vector2(x, y) - center).length() * invscale;
-          *ptr++ = 255;
           if(d >= 1.0f) {
-            *ptr = 0;
+            pixel.x = 0.f;
           }
           else {
             if(d < centerDotSize)
-              *ptr = 255;
+              pixel.x = 1.f;
             else
-              *ptr = (uint8_t) (haloweight *
-                                powf((cosf(d * Nimble::Math::PI) * 0.5f + 0.5f), halodescent));
+              pixel.x = ((haloweight *
+                powf((cosf(d * Nimble::Math::PI) * 0.5f + 0.5f), halodescent))) / 255.f;
           }
-          ptr++;
+          m_image.setPixel(x,y, pixel);
         }
       }
-
-      m_texture.fromData( & blob[0], dim, dim, Luminous::PixelFormat::redGreenUByte());
+      m_texture["tex"] = &m_image.texture();
     }
-    Luminous::ImageTex m_texture;
-    std::vector<SpriteRenderer::Sprite> m_sprites;
 
-    Luminous::Shader m_shader;
+    std::map<QByteArray, const Texture *> m_texture;
+    Luminous::Image m_image;
 
-    Luminous::ContextVariableT<SpriteRenderer::GPUData> m_gpuData;
-    Luminous::RenderContext::BlendFunc m_blendFunc;
+    SpriteRenderer::SpriteVector m_sprites;
+
+    Luminous::Program m_program;
+    Luminous::VertexDescription m_vdescr;
+    Luminous::Buffer m_vbo;
+
+    Luminous::BlendMode m_blendMode;
     float m_velocityScale;
   };
-
-  /*
-  class VertexAttribArrayStep : public Patterns::NotCopyable
-  {
-  public:
-    VertexAttribArrayStep(int pos, int elems, GLenum type, size_t stride,
-                          size_t offset)
-                            : m_pos(pos)
-    {
-      glEnableVertexAttribArray(pos);
-      glVertexAttribPointer(pos, elems, type, GL_FALSE,
-                            (GLsizei) stride, ((GLubyte *) 0) + offset);
-    }
-
-    ~VertexAttribArrayStep ()
-    {
-      glDisableVertexAttribArray(m_pos);
-    }
-
-  private:
-    int m_pos;
-  };
-  */
-
+  
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
-
 
   SpriteRenderer::SpriteRenderer()
-    : m_data(new Internal())
+    : m_d(new D())
   {
-    QString shaderPath = Radiant::ResourceLocator::instance().locate("SpriteRenderer/Shaders");
+    QString shaderPath = Radiant::ResourceLocator::instance().locate("Luminous/GLSL150");
 
     if(shaderPath.isEmpty()) {
-      error("SpriteRenderer::SpriteRenderer # Could not locate shaders");
+      Radiant::error("SpriteRenderer::SpriteRenderer # Could not locate shaders");
     }
     else {
-      m_data->m_shader.loadFragmentShader(shaderPath + "/sprites.fs");
-      m_data->m_shader.loadVertexShader(shaderPath + "/sprites.vs");
-      m_data->m_shader.loadGeometryShader(shaderPath + "/sprites.gs");
+      m_d->m_program.loadShader(shaderPath + "/sprites.fs", Luminous::ShaderGLSL::Fragment);
+      m_d->m_program.loadShader(shaderPath + "/sprites.vs", Luminous::ShaderGLSL::Vertex);
+      m_d->m_program.loadShader(shaderPath + "/sprites.gs", Luminous::ShaderGLSL::Geometry);
+
+      m_d->m_vdescr.addAttribute<Nimble::Vector3f>("vertex_position");
+      m_d->m_vdescr.addAttribute<Nimble::Vector2f>("vertex_velocity");
+      m_d->m_vdescr.addAttribute<Nimble::Vector4f>("vertex_color");
+      m_d->m_vdescr.addAttribute<float>("vertex_rotation");
+      m_d->m_vdescr.addAttribute<float>("vertex_size");
+      m_d->m_program.setVertexDescription(m_d->m_vdescr);
     }
   }
 
   SpriteRenderer::~SpriteRenderer()
   {
-    delete m_data;
+    delete m_d;
   }
 
   void SpriteRenderer::resize(size_t n)
   {
-    m_data->m_sprites.resize(n);
+    m_d->m_sprites.resize(n);
   }
 
   size_t SpriteRenderer::spriteCount() const
   {
-    return m_data->m_sprites.size();
+    return m_d->m_sprites.size();
   }
 
-  const SpriteRenderer::Sprite * SpriteRenderer::sprites() const
+  SpriteRenderer::SpriteVector & SpriteRenderer::sprites()
   {
-    return m_data->m_sprites.empty() ? 0 : & m_data->m_sprites[0];
+    return m_d->m_sprites;
   }
-
-  SpriteRenderer::Sprite * SpriteRenderer::sprites()
+  
+  void SpriteRenderer::render(Luminous::RenderContext & rc) const
   {
-    return m_data->m_sprites.empty() ? 0 : & m_data->m_sprites[0];
-  }
+    /// @todo If this gets too slow we can always convert this to use a persistent vertex buffer instead of always creating this anew
+    bool translucent = true;
 
-  SpriteRenderer::SpriteVector & SpriteRenderer::spriteVector()
-  {
-    return m_data->m_sprites;
-  }
+    auto b = rc.render<Sprite, D::SpriteUniform>(translucent, Luminous::PrimitiveType_Point, spriteCount(), spriteCount(), 1.f,
+    m_d->m_program, m_d->m_texture);
 
-  void SpriteRenderer::uploadSpritesToGPU(Luminous::RenderContext & r) const
-  {
-    GPUData & gld = m_data->m_gpuData.ref(r.resources());
+    b.uniform->velocityScale = 1.f;
 
-    gld.m_vbo.fill(sprites(), spriteCount() * sizeof(Sprite), Luminous::VertexBuffer::DYNAMIC_DRAW);
-  }
+    b.command->blendMode = m_d->m_blendMode;
 
-  void SpriteRenderer::renderSprites(Luminous::RenderContext & r) const
-  {
-    Luminous::CustomOpenGL cgl(r);
+    auto v = b.vertex;
+    auto idx = b.idx;
 
-    GPUData & gld = m_data->m_gpuData.ref(r.resources());
-
-    if(!gld.m_vbo.filled())
-      return; // Nothing to render
-
-    Luminous::GLSLProgramObject * prog = m_data->m_shader.program();
-
-    if(!prog)
-      return;
-
-    if(!prog->isLinked()) {
-      prog->setProgramParameter(GL_GEOMETRY_INPUT_TYPE, GL_POINTS);
-      prog->setProgramParameter(GL_GEOMETRY_OUTPUT_TYPE, GL_TRIANGLE_STRIP);
-      prog->setProgramParameter(GL_GEOMETRY_VERTICES_OUT, 4);
-
-      if(!prog->link()) {
-        error("When linking program: %s", prog->linkerLog());
-        return;
-      }
+    for (auto i = 0; i < spriteCount(); ++i) {
+      // Copy sprite data
+      *v = m_d->m_sprites[i];
+      // Path depth
+      v->location = Nimble::Vector3f(v->location.x, v->location.y, b.depth);
+      v++;
+      // Create the index
+      *idx++ = i;
     }
-
-    m_data->m_texture.bind(r.resources());
-
-    // Set the GLSL program parameters
-    prog->bind();
-
-    prog->setUniformFloat("velocityscale", m_data->m_velocityScale * 0.05f);
-    prog->setUniformMatrix3("modelmatrix2d", r.transform());
-
-    gld.m_vbo.bind();
-
-    int lpos = prog->getAttribLoc("location");
-    int vpos = prog->getAttribLoc("velocity");
-    int cpos = prog->getAttribLoc("color");
-    int spos = prog->getAttribLoc("size");
-    int rpos = prog->getAttribLoc("rotation");
-
-    r.setBlendFunc(m_data->m_blendFunc);
-    r.useCurrentBlendMode();
-
-    {
-      Sprite tmp;
-
-      VertexAttribArrayStep sl(lpos, 2, GL_FLOAT, GL_FALSE, sizeof(Sprite), offsetBytes(tmp.m_location, tmp));
-      VertexAttribArrayStep sv(vpos, 2, GL_FLOAT, GL_FALSE, sizeof(Sprite), offsetBytes(tmp.m_velocity, tmp));
-      VertexAttribArrayStep sc(cpos, 4, GL_FLOAT, GL_FALSE, sizeof(Sprite), offsetBytes(tmp.m_color, tmp));
-      VertexAttribArrayStep ss(spos, 1, GL_FLOAT, GL_FALSE, sizeof(Sprite), offsetBytes(tmp.m_size, tmp));
-      VertexAttribArrayStep rs(rpos, 1, GL_FLOAT, GL_FALSE, sizeof(Sprite), offsetBytes(tmp.m_rotation, tmp));
-
-      size_t n = gld.m_vbo.filled() / sizeof(Sprite);
-
-      glDrawArrays(GL_POINTS, 0, (GLsizei) n);
-
-      // info("%d sprites rendered", (int) n);
-    }
-
-    gld.m_vbo.unbind();
-
-    prog->unbind();
-    r.setBlendFunc(Luminous::RenderContext::BLEND_USUAL);
   }
 
-  void SpriteRenderer::setTexture(const Luminous::Image & image)
+  void SpriteRenderer::setImage(const Luminous::Image & image)
   {
-    m_data->m_texture = image;
+    m_d->m_image = image;
+    m_d->m_texture["tex"] = &m_d->m_image.texture();
   }
 
   void SpriteRenderer::createFuzzyTexture(int dim, float centerDotSize,
                                           float haloweight, float halodescent)
   {
-    m_data->createFuzzyTexture(dim, centerDotSize, haloweight, halodescent);
+    m_d->createFuzzyTexture(dim, centerDotSize, haloweight, halodescent);
   }
 
-  void SpriteRenderer::setBlendFunc(Luminous::RenderContext::BlendFunc f)
+  void SpriteRenderer::setBlendMode(const Luminous::BlendMode & mode)
   {
-    m_data->m_blendFunc = f;
+    m_d->m_blendMode = mode;
+  }
+
+  const Luminous::BlendMode & SpriteRenderer::blendMode() const
+  {
+    return m_d->m_blendMode;
   }
 
   void SpriteRenderer::setVelocityScale(float velscale)
   {
-    m_data->m_velocityScale = velscale;
+    m_d->m_velocityScale = velscale;
+  }
+
+  float SpriteRenderer::velocityScale() const
+  {
+    return m_d->m_velocityScale;
   }
 }
