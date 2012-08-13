@@ -41,6 +41,9 @@ namespace Luminous
     LUMINOUS_API virtual void preFrame() OVERRIDE;
     LUMINOUS_API virtual void postFrame() OVERRIDE;
 
+    LUMINOUS_API virtual bool initialize() OVERRIDE;
+    LUMINOUS_API virtual void deInitialize() OVERRIDE;
+
     LUMINOUS_API virtual void setVertexBuffer(const Buffer & buffer) OVERRIDE;
     LUMINOUS_API virtual void setIndexBuffer(const Buffer & buffer) OVERRIDE;
     LUMINOUS_API virtual void setUniformBuffer(const Buffer & buffer) OVERRIDE;

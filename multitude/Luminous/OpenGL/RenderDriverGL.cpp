@@ -498,6 +498,29 @@ namespace Luminous
       return;
   }
 
+  bool RenderDriverGL::initialize()
+  {
+    return true;
+  }
+
+  void RenderDriverGL::deInitialize()
+  {
+    m_d->m_programs.clear();
+    m_d->m_textures.clear();
+    m_d->m_buffers.clear();
+    m_d->m_vertexArrays.clear();
+    m_d->m_renderBuffers.clear();
+    m_d->m_renderTargets.clear();
+
+    m_d->m_vertexArrayCache.clear();
+
+    while(!m_d->m_rtStack.empty())
+      m_d->m_rtStack.pop();
+
+    m_d->m_masterRenderQueue.clear();
+  }
+
+
   void RenderDriverGL::setVertexBuffer(const Buffer & buffer)
   {
     assert(buffer.type() == Buffer::Vertex);

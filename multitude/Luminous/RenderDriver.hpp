@@ -41,6 +41,11 @@ namespace Luminous
     // Called at the end of every frame
     LUMINOUS_API virtual void postFrame() = 0;
 
+    // Called when the rendering thread starts
+    LUMINOUS_API virtual bool initialize() = 0;
+    // Called when the rendering thread stops
+    LUMINOUS_API virtual void deInitialize() = 0;
+
     // Shaders
     /// @note Can't do this with templates since they're pure virtual and require different implementation per datatype
     LUMINOUS_API virtual bool setShaderUniform(const char * name, const int & value) = 0;
