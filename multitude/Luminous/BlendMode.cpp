@@ -4,27 +4,27 @@ namespace Luminous
 {
   BlendMode::BlendMode()
     : m_color(0,0,0,0)
-    , m_equation(Equation::Add)
-    , m_srcFunction(Function::One)
-    , m_dstFunction(Function::Zero)
+    , m_equation(Add)
+    , m_srcFunction(SourceAlpha)
+    , m_dstFunction(OneMinusSourceAlpha)
   {
   }
 
   BlendMode BlendMode::Additive()
   {
     BlendMode mode;
-    mode.setSourceFunction(Function::SourceAlpha);
-    mode.setDestFunction(Function::One);
-    mode.setEquation(Equation::Add);
+    mode.setSourceFunction(SourceAlpha);
+    mode.setDestFunction(One);
+    mode.setEquation(Add);
     return mode;
   }
 
   BlendMode BlendMode::Subtractive()
   {
     BlendMode mode;
-    mode.setSourceFunction(Function::SourceAlpha);
-    mode.setDestFunction(Function::OneMinusSourceAlpha);
-    mode.setEquation(Equation::ReverseSubtract);
+    mode.setSourceFunction(SourceAlpha);
+    mode.setDestFunction(OneMinusSourceAlpha);
+    mode.setEquation(ReverseSubtract);
     return mode;
   }
 }
