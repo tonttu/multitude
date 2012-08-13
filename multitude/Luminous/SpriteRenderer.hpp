@@ -68,7 +68,7 @@ namespace Luminous {
     /// Individual sprite
     struct Sprite
     {
-      Sprite::Sprite()
+      Sprite()
         : location(0,0,0)
         , velocity(0,0)
         , color(1.f, 1.f, 1.f, 1.f)
