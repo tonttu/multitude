@@ -60,10 +60,7 @@ namespace Luminous
   struct TextureAtlasItem
   {
     TextureAtlasItem() : m_atlas(nullptr) {}
-    ~TextureAtlasItem() { abort(); }
-
-    TextureAtlasItem(TextureAtlasItem &&) = delete;
-    TextureAtlasItem & operator=(TextureAtlasItem &&) = delete;
+    ~TextureAtlasItem() { }
 
     TextureAtlas * m_atlas;
     TextureAtlas::NodePtr m_node;
@@ -79,7 +76,7 @@ namespace Luminous
   {
   public:
     TextureAtlasGroup(const Luminous::PixelFormat & pixelFormat);
-    ~TextureAtlasGroup() { abort(); }
+    ~TextureAtlasGroup() { }
 
     Item & insert(Nimble::Vector2i size);
 
