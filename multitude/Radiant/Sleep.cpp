@@ -34,7 +34,12 @@ namespace Radiant {
 
   void Sleep::sleepMs(uint32_t msecs)
   {
-    sleepUs(msecs * 1000);
+    while(msecs > 1000) {
+      sleepS(1);
+      msecs -= 1000;
+    }
+    if(msecs)
+      sleepUs(msecs * 1000);
   }
 
   void Sleep::sleepUs(uint32_t usecs)
