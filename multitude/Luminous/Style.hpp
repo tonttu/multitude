@@ -11,6 +11,8 @@
 #include <Luminous/DepthMode.hpp>
 #include <Luminous/StencilMode.hpp>
 
+#include <QFont>
+
 namespace Luminous
 {
   class GLSLProgramObject;
@@ -111,6 +113,10 @@ namespace Luminous
 
     void setStencilMode(const StencilMode & mode) { m_stencilMode = mode; }
     const StencilMode & stencilMode() const { return m_stencilMode; }
+
+    QFont & font() { return m_font; }
+    const QFont & font() const { return m_font; }
+
   private:
     Fill m_fill;
     Stroke m_stroke;
@@ -118,6 +124,7 @@ namespace Luminous
     BlendMode m_blendMode;
     DepthMode m_depthMode;
     StencilMode m_stencilMode;
+    QFont m_font;
   };
 
   /////////////////////////////////////////////////////////////////////////////

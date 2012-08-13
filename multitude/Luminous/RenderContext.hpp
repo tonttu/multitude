@@ -298,6 +298,7 @@ namespace Luminous
     void drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, const Style &style);
     void drawRect(const Nimble::Rectf & rect, const Style & style);
     void drawRect(const Nimble::Rectf & rect, const Nimble::Rectf & uvs, const Style & style);
+    void drawText(const QString & text, const Nimble::Rectf & rect, const Style & style);
 
     /// Adds the render counter by one
     /** The render counter is used to track how many objects have been rendered since the counter was
@@ -391,6 +392,7 @@ namespace Luminous
 
     const Program & basicShader() const;
     const Program & texShader() const;
+    const Program & fontShader() const;
 
   private:
     RenderCommand & createRenderCommand(bool translucent,

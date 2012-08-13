@@ -16,6 +16,7 @@
 #include "Luminous/VertexDescription.hpp"
 #include "Luminous/Buffer.hpp"
 #include "Luminous/OpenGL/RenderDriverGL.hpp"
+#include "Luminous/TextLayout.hpp"
 
 #include <Nimble/Matrix4.hpp>
 
@@ -252,6 +253,13 @@ namespace Luminous
       desc.addAttribute<Nimble::Vector3f>("vertex_position");
       desc.addAttribute<Nimble::Vector2>("vertex_uv");
       m_texShader.setVertexDescription(desc);
+
+      m_fontShader.loadShader("Luminous/GLSL150/distance_field.vs", ShaderGLSL::Vertex);
+      m_fontShader.loadShader("Luminous/GLSL150/distance_field.fs", ShaderGLSL::Fragment);
+      desc = Luminous::VertexDescription();
+      desc.addAttribute<Nimble::Vector3f>("vertex_position");
+      desc.addAttribute<Nimble::Vector2>("vertex_uv");
+      m_fontShader.setVertexDescription(desc);
     }
 
     ~Internal()
@@ -439,6 +447,7 @@ namespace Luminous
 
     Program m_basicShader;
     Program m_texShader;
+    Program m_fontShader;
 
     Luminous::RenderDriver & m_driver;
     Luminous::RenderDriverGL * m_driverGL;
@@ -1116,6 +1125,53 @@ namespace Luminous
     drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_Point, points, numPoints, program, style.strokeColor(), style.strokeWidth(), style);
   }
 
+  void RenderContext::drawText(const QString & text, const Nimble::Rectf & rect, const Style & style)
+  {
+    const int maxGlyphsPerCmd = 1000;
+    const TextLayout & layout = TextLayout::layout(text, rect.size(), style.font(), true);
+
+    std::map<QByteArray, const Texture *> textures = style.fill().textures();
+
+    for (int g = 0; g < layout.groupCount(); ++g) {
+      textures["tex"] = layout.texture(g);
+
+      auto & items = layout.items(g);
+
+      for (int i = 0; i < items.size();) {
+        const int count = std::min<int>(items.size() - i, maxGlyphsPerCmd);
+
+        auto b = render<BasicVertexUV, FontUniformBlock>(
+              true, PrimitiveType_TriangleStrip, count*6 - 2, count*4, 1, fontShader(), textures);
+        b.uniform->color = style.fillColor();
+        b.command->blendMode = style.blendMode();
+        b.command->depthMode = style.depthMode();
+        b.command->stencilMode = style.stencilMode();
+
+        int index = 0;
+
+        for (const int m = count + i; i < m; ++i) {
+          auto & item = items[i];
+          std::copy(item.vertices.begin(), item.vertices.end(), b.vertex);
+          for (int v = 0; v < 4; ++v)
+            b.vertex->location.z = b.depth;
+          b.vertex += 4;
+
+          // first vertex twice
+          if (i != 0)
+            *b.idx++ = index;
+          *b.idx++ = index++;
+          *b.idx++ = index++;
+          *b.idx++ = index++;
+
+          // last vertex twice
+          *b.idx++ = index;
+          if (i != m - 1)
+            *b.idx++ = index++;
+        }
+      }
+    }
+  }
+
   Nimble::Vector2 RenderContext::contextSize() const
   {
     return m_data->contextSize();
@@ -1405,6 +1461,11 @@ namespace Luminous
   const Program & RenderContext::texShader() const
   {
     return m_data->m_texShader;
+  }
+
+  const Program & RenderContext::fontShader() const
+  {
+    return m_data->m_fontShader;
   }
 
   TextureGL & RenderContext::handle(const Texture & texture)

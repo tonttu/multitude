@@ -53,6 +53,10 @@ namespace Luminous
     Nimble::Matrix4f modelMatrix;
     Nimble::Vector4f color;
   };
+
+  struct FontUniformBlock : public BasicUniformBlock
+  {
+  };
 }
 
 //@endcod
