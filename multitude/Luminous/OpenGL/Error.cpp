@@ -48,9 +48,16 @@ void glErrorToString(const QString & msg, int line)
 
     } MULTI_ONCE_END
 
-    GLenum err;
+    GLenum err, err2 = GL_NO_ERROR;
     while((err = glGetError()) != GL_NO_ERROR) {
-        Radiant::error("%s:%d: %s", msg.toUtf8().data(), line, errors.value(err).toUtf8().data());
+      // If glGetError ever returns the same error twice, it's broken somehow.
+      // This happens when called without GL context etc.
+      if (err == err2) {
+        Radiant::error("%s # glGetError called with broken OpenGL context", msg.toUtf8().data());
+        return;
+      }
+      err2 = err;
+      Radiant::error("%s:%d: %s", msg.toUtf8().data(), line, errors.value(err).toUtf8().data());
     };
 }
 /*
