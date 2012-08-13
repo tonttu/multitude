@@ -96,7 +96,7 @@ SOURCES += BlendMode.cpp
 HEADERS += DepthMode.hpp
 SOURCES += DepthMode.cpp
 HEADERS += StencilMode.hpp
-SOURCES += BlendMode.cpp
+SOURCES += StencilMode.cpp
 
 SOURCES += BGThread.cpp
 SOURCES += CodecRegistry.cpp
