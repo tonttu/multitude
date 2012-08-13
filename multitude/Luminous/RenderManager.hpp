@@ -28,10 +28,8 @@ namespace Luminous
   class RenderManager
   {
   public:
-    LUMINOUS_API RenderManager();
-    LUMINOUS_API ~RenderManager();
 
-    LUMINOUS_API void setDrivers(std::vector<Luminous::RenderDriver*> drivers);
+    LUMINOUS_API static void setDrivers(std::vector<Luminous::RenderDriver*> drivers);
 
     LUMINOUS_API static RenderResource::Id createResource(RenderResource * resource);
     LUMINOUS_API static void updateResource(RenderResource::Id, RenderResource * resource);
@@ -48,11 +46,9 @@ namespace Luminous
     LUMINOUS_API static void updateFrameTime();
 
     template <typename T> static T * getResource( RenderResource::Id id );
+
   private:
-    LUMINOUS_API static RenderManager & instance();
-  private:
-    class D;
-    D * m_d;
+    LUMINOUS_API RenderManager();
   };
 }
 

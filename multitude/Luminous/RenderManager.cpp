@@ -21,84 +21,62 @@
 
 #include <map>
 
+
+
 namespace Luminous
 {
-  class RenderManager::D {
-  public:
-    D()
-      : resourceId(0)
-      , frameTime(0)
-    {
-    }
+  typedef std::map<RenderResource::Id, RenderResource *> ResourceMap;
 
-    typedef std::map<RenderResource::Id, RenderResource *> ResourceMap;
-    ResourceMap resourceMap;
-    Radiant::Mutex resourceMapMutex;
+  namespace {
+    ResourceMap s_resourceMap;
+    Radiant::Mutex s_resourceMapMutex;
 
-    template <typename T>
-    T * getResource( RenderResource::Id id )
-    {
-      auto descr = resourceMap.find(id);
-      if (descr != std::end(resourceMap))
-        return reinterpret_cast<T*>(descr->second);
-      return nullptr;
-    }
-
-    RenderResource::Id resourceId;      // Next available resource ID
-    std::vector<Luminous::RenderDriver*> drivers; // Currently used drivers
-    Radiant::Mutex contextArraysMutex;
-    Radiant::Timer timer;
-    int frameTime;
-    std::set<ContextArray*> contextArrays;
-    static RenderManager * s_instance;  // Singleton instance
-  };
-
-  RenderManager * RenderManager::D::s_instance = 0;
-
-  RenderManager::RenderManager()
-    : m_d(new RenderManager::D())
-  {
-    assert(RenderManager::D::s_instance == 0);
-    RenderManager::D::s_instance = this;
+    RenderResource::Id s_resourceId = 0;      // Next available resource ID
+    std::vector<Luminous::RenderDriver*> s_drivers; // Currently used drivers
+    Radiant::Mutex s_contextArraysMutex;
+    Radiant::Timer s_timer;
+    int s_frameTime = 0;
+    std::set<ContextArray*> s_contextArrays;
   }
 
-  RenderManager::~RenderManager()
+  template <typename T>
+  T * getResource( RenderResource::Id id )
   {
-    assert(RenderManager::D::s_instance != 0);
-    delete m_d;
-
-    RenderManager::D::s_instance = 0;
+    auto descr = s_resourceMap.find(id);
+    if (descr != std::end(s_resourceMap))
+      return reinterpret_cast<T*>(descr->second);
+    return nullptr;
   }
 
   void RenderManager::setDrivers(std::vector<Luminous::RenderDriver*> drivers)
   {
-    m_d->drivers = drivers;
-    Radiant::Guard g(m_d->contextArraysMutex);
-    for(auto it = m_d->contextArrays.begin(), end = m_d->contextArrays.end(); it != end; ++it)
-      (*it)->resize(drivers.size());
+    s_drivers = drivers;
+    Radiant::Guard g(s_contextArraysMutex);
+    for(auto it = s_contextArrays.begin(), end = s_contextArrays.end(); it != end; ++it)
+      (*it)->resize(s_drivers.size());
   }
 
   RenderResource::Id RenderManager::createResource(RenderResource * resource)
   {
-    Radiant::Guard g(instance().m_d->resourceMapMutex);
-    auto id = instance().m_d->resourceId++;
-    instance().m_d->resourceMap[id] = resource;
+    Radiant::Guard g(s_resourceMapMutex);
+    auto id = s_resourceId++;
+    s_resourceMap[id] = resource;
     return id;
   }
 
   void RenderManager::updateResource(RenderResource::Id id, RenderResource * resource)
   {
-    Radiant::Guard g(instance().m_d->resourceMapMutex);
-    instance().m_d->resourceMap[id] = resource;
+    Radiant::Guard g(s_resourceMapMutex);
+    s_resourceMap[id] = resource;
   }
 
   void RenderManager::destroyResource(RenderResource::Id id)
   {
     /* Widgets can be destroyed in any thread, which can trigger this function call
        from any thread. */
-    Radiant::Guard g(instance().m_d->resourceMapMutex);
-    instance().m_d->resourceMap.erase(id);
-    auto it = instance().m_d->drivers.begin(), end = instance().m_d->drivers.end();
+    Radiant::Guard g(s_resourceMapMutex);
+    s_resourceMap.erase(id);
+    auto it = s_drivers.begin(), end = s_drivers.end();
     while(it != end) {
       (*it)->releaseResource(id);
       ++it;
@@ -107,48 +85,38 @@ namespace Luminous
 
   void RenderManager::addContextArray(ContextArray * contextArray)
   {
-    auto & d = *instance().m_d;
-    Radiant::Guard g(d.contextArraysMutex);
-    d.contextArrays.insert(contextArray);
+    Radiant::Guard g(s_contextArraysMutex);
+    s_contextArrays.insert(contextArray);
   }
 
   void RenderManager::removeContextArray(ContextArray * contextArray)
   {
-    auto & d = *instance().m_d;
-    Radiant::Guard g(d.contextArraysMutex);
-    d.contextArrays.erase(contextArray);
+    Radiant::Guard g(s_contextArraysMutex);
+    s_contextArrays.erase(contextArray);
   }
 
   unsigned int RenderManager::driverCount()
   {
-    auto & d = *instance().m_d;
-    return d.drivers.size();
+    return s_drivers.size();
   }
 
   int RenderManager::frameTime()
   {
-    return instance().m_d->frameTime;
+    return s_frameTime;
   }
 
   void RenderManager::updateFrameTime()
   {
-    auto & d = *instance().m_d;
-    d.frameTime = d.timer.time() * 10;
+    s_frameTime = s_timer.time() * 10;
   }
 
-  RenderManager & RenderManager::instance()
-  {
-    assert(RenderManager::D::s_instance != 0);
-    return *RenderManager::D::s_instance;
-  }  
-
   // Only specialize for valid types
-  template <> LUMINOUS_API Buffer * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<Buffer>(id); }
-  template <> LUMINOUS_API VertexArray * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<VertexArray>(id); }
-  template <> LUMINOUS_API VertexDescription * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<VertexDescription>(id); }
-  template <> LUMINOUS_API Texture * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<Texture>(id); }
-  template <> LUMINOUS_API Program * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<Program>(id); }
-  template <> LUMINOUS_API ShaderGLSL * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<ShaderGLSL>(id); }  
-  template <> LUMINOUS_API RenderBuffer * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<RenderBuffer>(id); }
-  template <> LUMINOUS_API RenderTarget * RenderManager::getResource( RenderResource::Id id ) { return RenderManager::instance().m_d->getResource<RenderTarget>(id); }
+  template <> LUMINOUS_API Buffer * RenderManager::getResource( RenderResource::Id id ) { return Luminous::getResource<Buffer>(id); }
+  template <> LUMINOUS_API VertexArray * RenderManager::getResource( RenderResource::Id id ) { return Luminous::getResource<VertexArray>(id); }
+  template <> LUMINOUS_API VertexDescription * RenderManager::getResource( RenderResource::Id id ) { return Luminous::getResource<VertexDescription>(id); }
+  template <> LUMINOUS_API Texture * RenderManager::getResource( RenderResource::Id id ) { return Luminous::getResource<Texture>(id); }
+  template <> LUMINOUS_API Program * RenderManager::getResource( RenderResource::Id id ) { return Luminous::getResource<Program>(id); }
+  template <> LUMINOUS_API ShaderGLSL * RenderManager::getResource( RenderResource::Id id ) { return Luminous::getResource<ShaderGLSL>(id); }
+  template <> LUMINOUS_API RenderBuffer * RenderManager::getResource( RenderResource::Id id ) { return Luminous::getResource<RenderBuffer>(id); }
+  template <> LUMINOUS_API RenderTarget * RenderManager::getResource( RenderResource::Id id ) { return Luminous::getResource<RenderTarget>(id); }
 }
