@@ -4,12 +4,12 @@
 #ifndef RADIANT_TIMESTAMP_HPP
 #define RADIANT_TIMESTAMP_HPP
 
-#include <Radiant/Export.hpp>
+#include "Export.hpp"
+#include "Defines.hpp"
 
 #include <stdint.h>
 #include <stdio.h>
 #include <QString>
-
 
 namespace Radiant {
 
@@ -31,7 +31,7 @@ namespace Radiant {
      This design is basically copy of the OSC timing system.
   */
 
-  /// @todo remove suffix from create* functions, Documentation
+  /// @todo Documentation
   class RADIANT_API TimeStamp
   {
   public:
@@ -44,16 +44,17 @@ namespace Radiant {
     };
 
     /// The number of ticks that take place during one second
-    static type ticksPerSecond() { return FRACTIONS_PER_SECOND; }
+    static TimeStamp ticksPerSecond() { return TimeStamp(FRACTIONS_PER_SECOND); }
     /// The number of ticks that take place during one minute
-    static type ticksPerMinute() { return 1006632960; }
+    static TimeStamp ticksPerMinute() { return TimeStamp(1006632960); }
     /// The number of ticks that take place during one hour
-    static type ticksPerHour()   { return 60397977600ll; }
+    static TimeStamp ticksPerHour()   { return TimeStamp(60397977600ll); }
     /// The number of ticks that take place during one day
-    static type ticksPerDay()    { return 1449551462400ll; }
+    static TimeStamp ticksPerDay()    { return TimeStamp(1449551462400ll); }
 
     /// Constructs a timestamp
-    TimeStamp(type val = 0) : m_val(val) {}
+    TimeStamp() : m_val(0) {}
+    explicit TimeStamp(type val) : m_val(val) {}
     ~TimeStamp() {}
 
     /// Returns a reference to the current timestamp native value
@@ -62,32 +63,49 @@ namespace Radiant {
     const type & value() const { return m_val; }
 
     /// Sets the timestamp to s seconds.
-    void setSecondsD(double s)
-    { m_val = (type) (s * FRACTIONS_PER_SECOND); }
+    /// @param s number of seconds
+    template<typename T>
+    void setSeconds(T s)
+    {
+      static_assert(std::is_arithmetic<T>::value, "TimeStamp::setSeconds only works with arithmetic types");
+      m_val = static_cast<type>(s * FRACTIONS_PER_SECOND);
+    }
 
-    /// Sets the timestamp to s seconds.
-    void setSecondsI(type s)
-    { m_val = (s * FRACTIONS_PER_SECOND); }
+    /// Create a TimeStamp with the given number of seconds
+    /// @param s number of seconds
+    template<typename T>
+    static TimeStamp createSeconds(T s)
+    {
+      static_assert(std::is_arithmetic<T>::value, "TimeStamp::createSeconds only works with arithmetic types");
+      return TimeStamp(static_cast<type> (s * FRACTIONS_PER_SECOND));
+    }
 
-    /// Create a time-stamp with a given number of seconds.
-    static TimeStamp createSecondsD(double s)
-    { return (type) (s * FRACTIONS_PER_SECOND); }
-
-    /// Create a time-stamp with a given number of seconds.
-    static TimeStamp createSecondsI(type s)
-    { return (s << 24); }
+    /// Create a TimeStamp with the given number of minutes
+    /// @param s number of minutes
+    template<typename T>
+    static TimeStamp createMinutes(T s)
+    {
+      static_assert(std::is_arithmetic<T>::value, "TimeStamp::createMinutes only works with arithmetic types");
+      return TimeStamp(static_cast<type>(s * ticksPerMinute().value()));
+    }
 
     /// Create a time-stamp with a given number of hours.
-    static TimeStamp createHoursD(double hours)
-    { return (type) (hours * ticksPerHour()); }
+    /// @param hours number of hours
+    template<typename T>
+    static TimeStamp createHours(T hours)
+    {
+      static_assert(std::is_arithmetic<T>::value, "TimeStamp::createHours only works with arithmetic types");
+      return TimeStamp(static_cast<type>(hours * ticksPerHour().value()));
+    }
 
     /// Create a time-stamp with a given number of days.
-    static TimeStamp createDaysD(double days)
-    { return (type) (days * ticksPerDay()); }
-
-    /// Create a time-stamp with a given number of days.
-    static TimeStamp createDaysI(type days)
-    { return (type) (days * ticksPerDay()); }
+    /// @param days number of days
+    template<typename T>
+    static TimeStamp createDays(T days)
+    {
+      static_assert(std::is_arithmetic<T>::value, "TimeStamp::createDays only works with arithmetic types");
+      return TimeStamp(static_cast<type> (days * ticksPerDay().value()));
+    }
 
     /// Creates a time-stamp consisting of days, hours, minutes, and seconds.
     /// @param days number of days
@@ -98,9 +116,9 @@ namespace Radiant {
     static TimeStamp createDHMS(int days, int hours, int minutes, int seconds)
     {
       type tmp = ((type) seconds) << 24;
-      tmp += ticksPerMinute() * (type) minutes;
-      tmp += ticksPerHour() * (type) hours;
-      return tmp + ticksPerDay() * (type) days;
+      tmp += ticksPerMinute().value() * (type) minutes;
+      tmp += ticksPerHour().value() * (type) hours;
+      return TimeStamp(tmp + ticksPerDay().value() * (type) days);
     }
 
     /** Creates a timestamp from date string */
@@ -120,13 +138,13 @@ namespace Radiant {
                     const char * timedelim);
 
     /// Returns the number of complete days this timestamp spans
-    int64_t days() const { return m_val / ticksPerDay(); }
+    int64_t days() const { return m_val / ticksPerDay().value(); }
     /// Returns the number of complete hours this timestamp spans
-    int64_t hours() const { return m_val / ticksPerHour(); }
+    int64_t hours() const { return m_val / ticksPerHour().value(); }
     /// Returns the number of complete hours this timestamp spans
-    int64_t minutes() const { return m_val / ticksPerMinute(); }
+    int64_t minutes() const { return m_val / ticksPerMinute().value(); }
     /// Returns the number of days (including fractions of a day) this timestamp spans
-    double  daysD() const { return m_val / (double) ticksPerDay(); }
+    double  daysD() const { return m_val / (double) ticksPerDay().value(); }
     /// Returns the number of full seconds that this time-stamp includes
     int64_t seconds() const { return m_val >> 24; }
     /// Returns the fractions of second that this timestamp includes.
@@ -152,27 +170,38 @@ namespace Radiant {
     /// Returns the amount of time passed since this timestamp.
     /// Computes the difference between getTime and this time-stamp
     /// @return amount of time passed since this time-stamp
-    TimeStamp since() const { return getTime() - *this; }
+    TimeStamp since() const { return TimeStamp(currentTime().m_val - this->m_val); }
 
     /// Returns the number of seconds passed since this timestamp.
     /// @return seconds passed since this time-stamp
     double sinceSecondsD() const { return since().secondsD(); }
 
-    /// Automatic cast operator that converts the time-stamp object to int64_t
-    inline operator type & () { return m_val; }
-    /// Automatic const-cast operator that converts the time-stamp object to int64_t
-    inline operator const type & () const { return m_val; }
+    /// @copydoc currentTime()
+    /// @deprecated this function will be removed in Cornerstone 2.1. Use Radiant::TimeStamp::currentTime() instead.
+    MULTI_ATTR_DEPRECATED("Use TimeStamp::currentTime()", static TimeStamp getTime());
 
     /// Returns the current time value, by looking at the wall clock
     /// @return current time
-    static type getTime();
+    static TimeStamp currentTime();
 
     /// Converts the time-stamp to a string
     /// @return time-stamp as string
     QString asString() const;
-    /// Copies the current tame value into this object.
-    /// @see getTime()
-    inline void getCurrent() { *this = getTime(); }
+
+    TimeStamp operator+(const TimeStamp & o) const { return TimeStamp(m_val + o.m_val); }
+    TimeStamp operator-(const TimeStamp & o) const { return TimeStamp(m_val - o.m_val); }
+
+    TimeStamp & operator+=(const TimeStamp & o) { m_val += o.m_val; return *this; }
+    TimeStamp & operator-=(const TimeStamp & o) { m_val -= o.m_val; return *this; }
+
+    bool operator<=(const TimeStamp & o) const { return m_val <= o.m_val; }
+    bool operator>=(const TimeStamp & o) const { return m_val >= o.m_val; }
+
+    bool operator<(const TimeStamp & o) const { return m_val < o.m_val; }
+    bool operator>(const TimeStamp & o) const { return m_val > o.m_val; }
+
+    bool operator==(const TimeStamp & o) const { return m_val == o.m_val; }
+    bool operator!=(const TimeStamp & o) const { return m_val != o.m_val; }
 
   private:
     type m_val;

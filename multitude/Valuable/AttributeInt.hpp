@@ -30,7 +30,7 @@ namespace Valuable
   /** The actual value objects are created by using AttributeIntT<int>
       etc.
 
-      @see AttributeInt, AttributeTimeStamp */
+      @see AttributeInt*/
 
   template<class T>
   class AttributeIntT : public AttributeNumeric<T>
@@ -148,9 +148,6 @@ namespace Valuable
   /// 64-bit unsigned integer value object.
   typedef AttributeIntT<uint64_t> AttributeUInt64;
 
-  /// Time-stamp value object.
-  typedef AttributeIntT<Radiant::TimeStamp> AttributeTimeStamp;
-
   template<class T>
   bool AttributeIntT<T>::deserialize(const ArchiveElement & e)
   {
@@ -158,16 +155,7 @@ namespace Valuable
     
     return true;
   }
-  /*
-template<>
-  bool AttributeIntT<Radiant::TimeStamp>::deserialize(const ArchiveElement & )
-  {
-    Radiant::error("AttributeIntT<Radiant::TimeStamp>::deserialize # not implemented!");
-    return false;
-  }
 
-  Default implementation is fine also for TimeStamps.
-  */
 }
 
 #endif

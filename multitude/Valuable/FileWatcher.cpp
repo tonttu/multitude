@@ -45,13 +45,13 @@ void FileWatcher::add(QString filename)
 void FileWatcher::update()
 {
   if(!m_queue.isEmpty()) {
-    Radiant::TimeStamp ts = Radiant::TimeStamp::getTime();
-    Radiant::TimeStamp diff = Radiant::TimeStamp::createSecondsD(0.3);
+    Radiant::TimeStamp ts = Radiant::TimeStamp::currentTime();
+    Radiant::TimeStamp diff = Radiant::TimeStamp::createSeconds(0.3);
     for(QSet<QString>::iterator it = m_queue.begin(); it != m_queue.end();) {
       QMap<QString, Radiant::TimeStamp>::iterator it2 = m_files.find(*it);
       if(it2 == m_files.end()) {
         it = m_queue.erase(it);
-      } else if(*it2 + diff < ts) {
+      } else if(it2->value() + diff.value() < ts.value()) {
         Radiant::info("Changed %s", it->toUtf8().data());
         Radiant::BinaryData bd;
         bd.writeString(*it);
@@ -62,7 +62,7 @@ void FileWatcher::update()
   }
   for(QMap<QString, Radiant::TimeStamp>::iterator it = m_files.begin(); it != m_files.end(); ++it) {
     Radiant::TimeStamp ts = Radiant::FileUtils::lastModified(it.key());
-    if(ts > *it) {
+    if(ts.value() > it->value()) {
       *it = ts;
       Radiant::info("Putting %s to queue", it.key().toUtf8().data());
       m_queue << it.key();

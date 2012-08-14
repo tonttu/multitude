@@ -115,7 +115,7 @@ namespace Luminous
 
     /// Get the number of tasks that should be running right now but are not
     /// yet processed. This function is slow: O(N), needs a mutex lock and
-    /// calls TimeStamp::getTime().
+    /// calls TimeStamp::currentTime().
     unsigned int overdueTasks() const;
 
     /// Dump information about the tasks at hand

@@ -105,7 +105,7 @@ namespace Radiant {
     /// The timestamp uses Radiant::TimeStamp internal structure (40+24
     /// bit fixed-point value).
     /// @param v time-stamp to write
-    void writeTimeStamp(int64_t v);
+    void writeTimeStamp(TimeStamp v);
 
     /// Write a null-terminated string to the buffer
     void writeString(const char *);
@@ -149,7 +149,7 @@ namespace Radiant {
     /// The timestamp uses Radiant::TimeStamp internal structure (40+24
     /// bit fixed-point value).
     /// @param v time-stamp to write
-    inline void write(const Radiant::TimeStamp & ts) { writeTimeStamp(ts.value()); }
+    inline void write(const Radiant::TimeStamp & ts) { writeTimeStamp(ts); }
 
     /// Write a null-terminated string to the buffer
     inline void write(const char * str) { writeString(str); }
@@ -196,7 +196,7 @@ namespace Radiant {
     /// @copydoc readFloat32
     int64_t readInt64(bool * ok = 0);
     /// @copydoc readFloat32
-    int64_t readTimeStamp(bool * ok = 0);
+    TimeStamp readTimeStamp(bool * ok = 0);
 
     /// Read a null-terminated string from the buffer
     /// @param[out] str string buffer to write to

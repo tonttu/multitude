@@ -315,7 +315,7 @@ namespace VideoPlayer2
       , finished(false)
       , av()
       , realTimeSeeking(false)
-      , pauseTimestamp(Radiant::TimeStamp::getTime())
+      , pauseTimestamp(Radiant::TimeStamp::currentTime())
       , videoFilter()
       , audioFilter()
       , radiantTimestampToPts(std::numeric_limits<double>::quiet_NaN())
@@ -876,7 +876,7 @@ namespace VideoPlayer2
           audioTransfer->setSeekGeneration(seekGeneration);
         radiantTimestampToPts = std::numeric_limits<double>::quiet_NaN();
         if(options.playMode == Pause)
-          pauseTimestamp = Radiant::TimeStamp::getTime();
+          pauseTimestamp = Radiant::TimeStamp::currentTime();
       }
       return ok;
     }
@@ -961,7 +961,7 @@ namespace VideoPlayer2
       audioTransfer->setSeekGeneration(seekGeneration);
     radiantTimestampToPts = std::numeric_limits<double>::quiet_NaN();
     if(options.playMode == Pause)
-      pauseTimestamp = Radiant::TimeStamp::getTime();
+      pauseTimestamp = Radiant::TimeStamp::currentTime();
 
     return true;
   }
@@ -974,7 +974,7 @@ namespace VideoPlayer2
       // Set this here, because another frame might be waiting for us
       // However, if we have a filter that changes pts, this might not be right.
       if(Nimble::Math::isNAN(radiantTimestampToPts)) {
-        const Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
+        const Radiant::TimeStamp now = Radiant::TimeStamp::currentTime();
         radiantTimestampToPts = dpts + loopOffset - now.secondsD() + 4.0/60.0;
         setTimestampToPts = true;
       }
@@ -1183,7 +1183,7 @@ namespace VideoPlayer2
     }
 
     if(Nimble::Math::isNAN(radiantTimestampToPts) || setTimestampToPts) {
-      const Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
+      const Radiant::TimeStamp now = Radiant::TimeStamp::currentTime();
       radiantTimestampToPts = dpts + loopOffset - now.secondsD() + 4.0/60.0;
     }
 
@@ -1507,7 +1507,7 @@ namespace VideoPlayer2
     if(m_d->audioTransfer)
       m_d->audioTransfer->setPlayMode(mode);
     if(mode == Pause)
-      m_d->pauseTimestamp = Radiant::TimeStamp::getTime();
+      m_d->pauseTimestamp = Radiant::TimeStamp::currentTime();
     if(mode == Play)
       m_d->radiantTimestampToPts -= m_d->pauseTimestamp.sinceSecondsD();
   }
@@ -1694,7 +1694,7 @@ namespace VideoPlayer2
 
     auto & av = m_d->av;
 
-    m_d->pauseTimestamp = Radiant::TimeStamp::getTime();
+    m_d->pauseTimestamp = Radiant::TimeStamp::currentTime();
     bool waitingFrame = false;
     while(m_d->running) {
       m_d->decodedVideoFrames.setSize(m_d->options.videoBufferFrames);

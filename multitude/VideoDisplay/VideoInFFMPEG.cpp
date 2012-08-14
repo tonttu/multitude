@@ -53,7 +53,7 @@ namespace VideoDisplay {
     if(it == s_firstFrameCache.end())
       return 0;
 
-    (*it).second.m_used = Radiant::TimeStamp::getTime();
+    (*it).second.m_used = Radiant::TimeStamp::currentTime();
 
     return & (*it).second;
   }
@@ -228,7 +228,7 @@ namespace VideoDisplay {
       vi2.m_firstFrame.allocateMemory(*img);
       vi2.m_firstFrame.copyData(*img);
       vi2.m_channels = m_channels;
-      vi2.m_used = Radiant::TimeStamp::getTime();
+      vi2.m_used = Radiant::TimeStamp::currentTime();
       vi2.m_firstFrameTime = video.frameTime();
 
       m_firstFrameTime = video.frameTime();

@@ -180,7 +180,7 @@ namespace Radiant {
 
     vsnprintf(buffer, size, msg, args);
 
-    Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
+    Radiant::TimeStamp now = Radiant::TimeStamp::currentTime();
 
     {
       Guard lock(g_mutex);

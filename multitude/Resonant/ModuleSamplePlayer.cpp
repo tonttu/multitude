@@ -472,7 +472,7 @@ namespace Resonant {
   void ModuleSamplePlayer::process(float ** , float ** out, int n, const CallbackTime &)
   {
     size_t i;
-    m_time = Radiant::TimeStamp::getTime();
+    m_time = Radiant::TimeStamp::currentTime();
 
     // First zero the outputs
     for(i = 0; i < m_channels; i++)
@@ -568,8 +568,8 @@ namespace Resonant {
 
 
       // Start everything in 7 seconds
-      Radiant::TimeStamp startTime = Radiant::TimeStamp::getTime() +
-                                     Radiant::TimeStamp::createSecondsD(delay);
+      Radiant::TimeStamp startTime = Radiant::TimeStamp::currentTime() +
+                                     Radiant::TimeStamp::createSeconds(delay);
 
       for(int c = 0; c < fillchannels; c++) {
         playSample(file.toUtf8().data(), gain, 1.0f, (c+i) % channels(), c % info.channels, true, startTime);

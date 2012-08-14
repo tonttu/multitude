@@ -266,7 +266,7 @@ namespace Luminous {
         m_state = WAITING;
         m_image.reset();
         LUMINOUS_IN_FULL_OPENGL(m_compressedImage.reset());
-        m_lastUsed = 0;
+        m_lastUsed = Radiant::TimeStamp(0);
       }
 
       void dropFromGPU()
@@ -295,7 +295,7 @@ namespace Luminous {
 
     QString m_filename;
     QString m_compFilename;
-    unsigned long int m_fileModified;
+    Radiant::TimeStamp m_fileModified;
 
     Radiant::Mutex m_stackMutex;
 

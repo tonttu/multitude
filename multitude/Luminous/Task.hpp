@@ -102,12 +102,12 @@ namespace Luminous
       void schedule(Radiant::TimeStamp ts) { m_scheduled = ts; }
       /// Schedule the next execution time for this task
       void scheduleFromNow(Radiant::TimeStamp wait)
-      { m_scheduled = Radiant::TimeStamp::getTime() + wait; }
+      { m_scheduled = Radiant::TimeStamp::currentTime() + wait; }
       /// @copybrief scheduleFromNow
       /// @param seconds number of seconds before next execution
       void scheduleFromNowSecs(double seconds)
-      { m_scheduled = Radiant::TimeStamp::getTime() +
-          Radiant::TimeStamp::createSecondsD(seconds); }
+      { m_scheduled = Radiant::TimeStamp::currentTime() +
+          Radiant::TimeStamp::createSeconds(seconds); }
 
       /// Marks the task as finished, so it will be removed.
       void setFinished() { setState(DONE); }

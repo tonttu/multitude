@@ -276,18 +276,18 @@ namespace Radiant
   }
 
   /// @todo why is the return value not a TimeStamp?
-  unsigned long int FileUtils::lastModified(const QString & filePath)
+  Radiant::TimeStamp FileUtils::lastModified(const QString & filePath)
   {
     QFileInfo fi(filePath);
 
     if(!fi.exists()) {
       Radiant::error("FileUtils::lastModified # file (%s) does not exist", filePath.toUtf8().data());
-      return 0;
+      return Radiant::TimeStamp(0);
     }
 
     QDateTime newer = std::max(fi.created(), fi.lastModified());
 
-    return newer.toTime_t();
+    return TimeStamp(newer.toTime_t());
   }
 
   void FileUtils::indent(FILE * f, int levels)

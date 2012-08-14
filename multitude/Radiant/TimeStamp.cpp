@@ -91,7 +91,7 @@ namespace Radiant {
 				  bool yearfirst)
   {
     if(!date)
-      return 0;
+      return TimeStamp(0);
 
     QStringList segments = QString::fromUtf8(date).split(delim);
 
@@ -130,14 +130,14 @@ namespace Radiant {
 
     //trace("tval as ctime = %s (%d %d %d)", ctime( & tval), year, month, day);
 
-    return TimeStamp(tval * ticksPerSecond());
+    return TimeStamp(tval * ticksPerSecond().value());
   }
 
   TimeStamp TimeStamp::createTime(const char * time,
 				  const char * delim)
   {
     if(!time)
-      return 0;
+      return TimeStamp(0);
 
     QStringList segments = QString::fromUtf8(time).split(delim);
     
@@ -167,14 +167,19 @@ namespace Radiant {
     return createDate(date, delim, yearfirst) + createTime(time, timedelim);
   }
 
-  TimeStamp::type TimeStamp::getTime()
+  TimeStamp TimeStamp::currentTime()
   {
-	  struct timeval tv;
-	  gettimeofday(& tv, 0);
-	  int64_t tmp = tv.tv_sec;
-	  tmp <<= 24;
-	  tmp |= (int64_t) (tv.tv_usec * (FRACTIONS_PER_SECOND * 0.000001));
-	  return tmp;
+    struct timeval tv;
+    gettimeofday(& tv, 0);
+    int64_t tmp = tv.tv_sec;
+    tmp <<= 24;
+    tmp |= (int64_t) (tv.tv_usec * (FRACTIONS_PER_SECOND * 0.000001));
+    return TimeStamp(tmp);
+  }
+
+  TimeStamp TimeStamp::getTime()
+  {
+    return currentTime();
   }
 
   QString TimeStamp::asString() const {

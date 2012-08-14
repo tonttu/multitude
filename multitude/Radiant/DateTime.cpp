@@ -63,7 +63,7 @@ namespace Radiant {
     m_second   = tms.tm_sec;
     m_summerTime = (tms.tm_isdst == 0) ? false : true;
 
-    TimeStamp fract = t.fractions();
+    TimeStamp fract = TimeStamp(t.fractions());
     m_microsecond = fract.secondsD() * 1000000.0;
   }
 
@@ -186,7 +186,7 @@ namespace Radiant {
 
     //trace("tval as ctime = %s (%d %d %d)", ctime( & tval), year, month, day);
 
-    return TimeStamp(tval * TimeStamp::ticksPerSecond());
+    return TimeStamp(tval * TimeStamp::ticksPerSecond().value());
   }
 
   void DateTime::print(char * buf, bool isotime)

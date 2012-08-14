@@ -266,31 +266,31 @@ namespace Resonant {
     if(streams > 1 || time.outputBufferDacTime == 0) {
       latency = 0.030;
       /// @todo shouldn't hardcode 44100
-      if(m_syncinfo.baseTime == 0 /*|| m_syncinfo.framesProcessed > 44100 * 5*/ ||
+      if(m_syncinfo.baseTime == Radiant::TimeStamp(0) /*|| m_syncinfo.framesProcessed > 44100 * 5*/ ||
          outputError) {
-        m_syncinfo.baseTime = Radiant::TimeStamp(Radiant::TimeStamp::getTime()) +
-            Radiant::TimeStamp::createSecondsD(latency);
+        m_syncinfo.baseTime = Radiant::TimeStamp(Radiant::TimeStamp::currentTime()) +
+            Radiant::TimeStamp::createSeconds(latency);
         outputTime = m_syncinfo.baseTime;
         m_syncinfo.framesProcessed = 0;
       } else {
-        outputTime = m_syncinfo.baseTime + Radiant::TimeStamp::createSecondsD(
+        outputTime = m_syncinfo.baseTime + Radiant::TimeStamp::createSeconds(
               m_syncinfo.framesProcessed / 44100.0);
       }
     } else {
       latency = time.outputBufferDacTime - time.currentTime;
-      if(m_syncinfo.baseTime == 0 || m_syncinfo.framesProcessed > 44100 * 60 ||
+      if(m_syncinfo.baseTime == Radiant::TimeStamp(0) || m_syncinfo.framesProcessed > 44100 * 60 ||
          outputError) {
-        m_syncinfo.baseTime = Radiant::TimeStamp(Radiant::TimeStamp::getTime()) +
-            Radiant::TimeStamp::createSecondsD(latency - time.outputBufferDacTime);
+        m_syncinfo.baseTime = Radiant::TimeStamp(Radiant::TimeStamp::currentTime()) +
+            Radiant::TimeStamp::createSeconds(latency - time.outputBufferDacTime);
         m_syncinfo.framesProcessed = 0;
       }
       outputTime = m_syncinfo.baseTime + Radiant::TimeStamp::
-          createSecondsD(time.outputBufferDacTime);
+          createSeconds(time.outputBufferDacTime);
     }
     m_syncinfo.framesProcessed += framesPerBuffer;
 
-    // Radiant::info("Latency: %.2lf ms, Diff from getTime: %.2lf ms",
-    //               latency*1000.0, (Radiant::TimeStamp(Radiant::TimeStamp::getTime()).secondsD()-outputTime.secondsD()+latency)*1000.0);
+    // Radiant::info("Latency: %.2lf ms, Diff from currentTime: %.2lf ms",
+    //               latency*1000.0, (Radiant::TimeStamp(Radiant::TimeStamp::currentTime()).secondsD()-outputTime.secondsD()+latency)*1000.0);
 
     /// Here we assume that every stream (== audio device) is running in its
     /// own separate thread, that is, this callback is called from multiple

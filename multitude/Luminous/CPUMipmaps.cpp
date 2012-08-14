@@ -83,8 +83,8 @@ namespace Luminous {
     Radiant::Guard g(s_storeMutex);
 
     // Check the timestamp
-    unsigned long lastMod = Radiant::FileUtils::lastModified(filename);
-    const std::pair<QString, unsigned long> key = std::make_pair(filename, lastMod);
+    Radiant::TimeStamp lastMod = Radiant::FileUtils::lastModified(filename);
+    const std::pair<QString, unsigned long> key = std::make_pair(filename, lastMod.value());
 
     /// @todo filename should be resolved (with ResourceLocator) absolute path
     std::weak_ptr<CPUMipmaps> & mipmap_weak = s_mipmaps[key];
@@ -103,8 +103,8 @@ namespace Luminous {
     // store new weak pointer
     mipmap_weak = mipmap_shared;
 
-    debugLuminous("CPUMipmaps::acquire # Created new for [%s %ld] (%ld links)",
-                  filename.toUtf8().data(), lastMod, s_mipmaps[key].use_count());
+//    debugLuminous("CPUMipmaps::acquire # Created new for [%s %ld] (%ld links)",
+//                  filename.toUtf8().data(), lastMod, s_mipmaps[key].use_count());
 
     return mipmap_shared;
   }
@@ -223,7 +223,7 @@ namespace Luminous {
   {
     assert(i < m_stack.size());
     /// assert(is locked)
-    m_stack[i].m_lastUsed = Radiant::TimeStamp::getTime();
+    m_stack[i].m_lastUsed = Radiant::TimeStamp::currentTime();
   }
 
   bool CPUMipmaps::isReady()
@@ -266,11 +266,11 @@ namespace Luminous {
     if(m_compressedMipmaps) {
       m_compFilename = cacheFileName(filename, -1, "dds");
 
-      unsigned long int ts = 0;
+      Radiant::TimeStamp ts(0);
       if(QFile::exists(m_compFilename))
         ts = FileUtils::lastModified(m_compFilename);
 
-      if(ts == 0) {
+      if(ts == Radiant::TimeStamp(0)) {
         // Cache file does not exist. Check if we want to generate mipmaps for
         // this file, or does it have those already
         if(!Luminous::Image::ping(filename, m_info)) {
@@ -555,7 +555,7 @@ namespace Luminous {
         if(item.m_state == WAITING) {
           StackMap stack;
 #ifdef CPUMIPMAPS_PROFILING
-          Radiant::TimeStamp ts(Radiant::TimeStamp::getTime());
+          Radiant::TimeStamp ts(Radiant::TimeStamp::currentTime());
 #endif
           recursiveLoad(stack, i);
 #ifdef CPUMIPMAPS_PROFILING
@@ -646,7 +646,7 @@ namespace Luminous {
     CPUItem & item = stack[level];
     if(item.m_state == READY)
       return;
-    item.m_lastUsed = Radiant::TimeStamp::getTime();
+    item.m_lastUsed = Radiant::TimeStamp::currentTime();
 
 #ifndef LUMINOUS_OPENGLES
     if(m_info.pf.compression()) {
@@ -765,8 +765,8 @@ namespace Luminous {
 
   void CPUMipmaps::reschedule(double delay, bool allowLater)
   {
-    Radiant::TimeStamp next = Radiant::TimeStamp::getTime() +
-                              Radiant::TimeStamp::createSecondsD(delay);
+    Radiant::TimeStamp next = Radiant::TimeStamp::currentTime() +
+                              Radiant::TimeStamp::createSeconds(delay);
     if(allowLater || next < scheduled())
       schedule(next);
   }

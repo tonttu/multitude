@@ -101,7 +101,7 @@ namespace VideoDisplay {
     // Radiant::trace("Got time: %d %d %d %d", h, m, s, ms);
 
     time = Radiant::TimeStamp::createDHMS(0, h, m, s) + 
-      Radiant::TimeStamp::createSecondsD(ms * 0.001);
+      Radiant::TimeStamp::createSeconds(ms * 0.001);
 
     return h >= 0;
   }

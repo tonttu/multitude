@@ -110,11 +110,11 @@ namespace Radiant {
     getRef<int64_t>() = v;
   }
 
-  void BinaryData::writeTimeStamp(int64_t v)
+  void BinaryData::writeTimeStamp(Radiant::TimeStamp v)
   {
     ensure(sizeof(int32_t) + sizeof(int64_t));
     getRef<int32_t>() = TS_MARKER;
-    getRef<int64_t>() = v;
+    getRef<int64_t>() = v.value();
   }
 
   void BinaryData::writeString(const char * s)
@@ -379,20 +379,20 @@ namespace Radiant {
     return 0;
   }
 
-  int64_t BinaryData::readTimeStamp(bool * ok)
+  TimeStamp BinaryData::readTimeStamp(bool * ok)
   {
     if(ok)
       *ok = true;
 
     if(!available(4)) {
       if(ok) * ok = false;
-      return 0;
+      return TimeStamp(0);
     }
 
     int32_t marker = getRef<int32_t>();
 
     if(marker == TS_MARKER && available(8))
-      return getRef<int64_t>();
+      return TimeStamp(getRef<int64_t>());
     else if (marker == STRING_MARKER && available(10)) {
       const char * source = & m_buf[m_current];
       DateTime dt;
@@ -411,7 +411,7 @@ namespace Radiant {
       *ok = false;
 
     skipParameter(marker);
-    return 0;
+    return TimeStamp(0);
   }
 
   bool BinaryData::readString(char * str, size_t maxbytes)

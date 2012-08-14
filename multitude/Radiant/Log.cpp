@@ -85,7 +85,7 @@ namespace Radiant {
     class Item
     {
     public:
-      Item(const char * str) : m_str(str), m_time(TimeStamp::getTime()) {}
+      Item(const char * str) : m_str(str), m_time(TimeStamp::currentTime()) {}
       QString m_str;
       TimeStamp   m_time;
     };
@@ -125,7 +125,7 @@ namespace Radiant {
   {
     makeThread();
 
-    DateTime dt(TimeStamp::getTime());
+    DateTime dt(TimeStamp::currentTime());
     char buf[128], buf2[128];
     dt.print(buf2);
     sprintf(buf, "%s-%s-log.txt", prefix, buf2);

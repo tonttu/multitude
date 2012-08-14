@@ -153,13 +153,13 @@ namespace Luminous
   {
     Radiant::Guard guard(m_mutexWait);
 
-    const Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
+    const Radiant::TimeStamp now = Radiant::TimeStamp::currentTime();
     unsigned int counter = 0;
 
     for(container::const_iterator it = m_taskQueue.begin(), end = m_taskQueue.end();
         it != end; ++it) {
       Radiant::TimeStamp tmp = it->second->scheduled() - now;
-      if(tmp <= 0) ++counter;
+      if(tmp <= Radiant::TimeStamp(0)) ++counter;
     }
 
     return counter;
@@ -222,19 +222,19 @@ namespace Luminous
   std::shared_ptr<Task> BGThread::pickNextTask()
   {
     while(running()) {
-      Radiant::TimeStamp wait = std::numeric_limits<Radiant::TimeStamp::type>::max();
+      Radiant::TimeStamp wait = Radiant::TimeStamp(std::numeric_limits<Radiant::TimeStamp::type>::max());
 
       Radiant::Guard guard(m_mutexWait);
 
       container::iterator nextTask = m_taskQueue.end();
-      const Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
+      const Radiant::TimeStamp now = Radiant::TimeStamp::currentTime();
 
       for(container::iterator it = m_taskQueue.begin(); it != m_taskQueue.end(); it++) {
         std::shared_ptr<Task> task = it->second;
         Radiant::TimeStamp next = task->scheduled() - now;
 
         // Should the task be run now?
-        if(next <= 0) {
+        if(next <= Radiant::TimeStamp(0)) {
           m_taskQueue.erase(it);
           return task;
         } else if(next < wait && m_reserved.find(task) == m_reserved.end()) {

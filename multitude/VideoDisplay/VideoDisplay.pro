@@ -1,17 +1,17 @@
 include(../multitude.pri)
 
-HEADERS += AudioTransfer.hpp
+#HEADERS += AudioTransfer.hpp
 HEADERS += Export.hpp
 #HEADERS += ShowGL.hpp
 HEADERS += SubTitles.hpp
 HEADERS += VideoDisplay.hpp
 HEADERS += VideoInFFMPEG.hpp
-HEADERS += VideoIn.hpp
+#HEADERS += VideoIn.hpp
 
-SOURCES += AudioTransfer.cpp
+#SOURCES += AudioTransfer.cpp
 #SOURCES += ShowGL.cpp
 SOURCES += SubTitles.cpp
-SOURCES += VideoIn.cpp
+#SOURCES += VideoIn.cpp
 SOURCES += VideoInFFMPEG.cpp
 
 # New video player

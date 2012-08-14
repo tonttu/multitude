@@ -40,7 +40,7 @@ namespace Radiant
       m_data.resize(Nimble::Math::Max(10, int(history*120)));
     }
 
-    void add(const T & t, Radiant::TimeStamp ts = Radiant::TimeStamp::getTime())
+    void add(const T & t, Radiant::TimeStamp ts = Radiant::TimeStamp::currentTime())
     {
       m_pos = (m_pos+1) % m_data.size();
       if(ts - m_data[m_pos].ts < m_history) {
@@ -63,7 +63,7 @@ namespace Radiant
     }
 
     /// Compute the average of the history values
-    T avg(Radiant::TimeStamp ts = Radiant::TimeStamp::getTime()) const
+    T avg(Radiant::TimeStamp ts = Radiant::TimeStamp::currentTime()) const
     {
       if(m_pos < 0 || m_data.empty()) return T();
       T avg = m_data[m_pos].value;

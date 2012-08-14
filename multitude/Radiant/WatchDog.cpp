@@ -125,7 +125,7 @@ namespace Radiant {
           // If there isn't any fancy core naming rule,
           // put the core in /tmp/core-timestamp directory
           if(strcmp(buffer, "core") == 0) {
-            DateTime dt(TimeStamp::getTime());
+            DateTime dt(TimeStamp::currentTime());
             char filename[255];
             sprintf(filename, "/tmp/core-%d.%04d-%02d-%02d", getpid(), dt.year(), dt.month()+1, dt.monthDay()+1);
             mkdir(filename, 0700);

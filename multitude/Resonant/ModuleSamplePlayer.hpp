@@ -104,7 +104,7 @@ namespace Resonant {
                     int targetChannel,
                     int sampleChannel,
                     bool loop = false,
-                    Radiant::TimeStamp time = 0);
+                    Radiant::TimeStamp time = Radiant::TimeStamp(0));
 
     /** Sets the master gain */
     void setMasterGain(float gain) { m_masterGain = gain; }

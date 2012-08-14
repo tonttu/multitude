@@ -688,7 +688,7 @@ namespace Valuable
   Node::Uuid Node::generateId()
   {
     Radiant::Guard g(s_generateIdMutex);
-    static Uuid s_id = static_cast<Uuid>(Radiant::TimeStamp::getTime());
+    static Uuid s_id = static_cast<Uuid>(Radiant::TimeStamp::currentTime().value());
     return s_id++;
   }
 

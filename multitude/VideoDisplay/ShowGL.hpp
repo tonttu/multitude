@@ -244,7 +244,7 @@ namespace VideoDisplay {
     /// Returns the current playback position of the video
     Radiant::TimeStamp position() const { return m_position; }
     /// The relative playback position of the current video
-    double relativePosition() const { return position() / (double) duration(); }
+    double relativePosition() const { return position().value() / (double) duration().value(); }
 
     /// Seek to given position. Due to limitations of underlying seek
     /// algorithms, this method is usually not exact.
