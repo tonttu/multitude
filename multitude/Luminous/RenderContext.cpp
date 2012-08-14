@@ -1125,12 +1125,13 @@ namespace Luminous
     drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_Point, points, numPoints, program, style.strokeColor(), style.strokeWidth(), style);
   }
 
-  void RenderContext::drawText(const QString & text, const Nimble::Rectf & rect, const Style & style)
+  void RenderContext::drawText(const TextLayout & layout, const Nimble::Vector2f & location, const Style & style)
   {
     const int maxGlyphsPerCmd = 1000;
-    const TextLayout & layout = TextLayout::layout(text, rect.size(), style.font(), true);
 
     std::map<QByteArray, const Texture *> textures = style.fill().textures();
+    DepthMode d;
+    d.setFunction(DepthMode::LessEqual);
 
     for (int g = 0; g < layout.groupCount(); ++g) {
       textures["tex"] = layout.texture(g);
@@ -1144,7 +1145,7 @@ namespace Luminous
               true, PrimitiveType_TriangleStrip, count*6 - 2, count*4, 1, fontShader(), textures);
         b.uniform->color = style.fillColor();
         b.command->blendMode = style.blendMode();
-        b.command->depthMode = style.depthMode();
+        b.command->depthMode = d;
         b.command->stencilMode = style.stencilMode();
 
         int index = 0;
@@ -1169,6 +1170,17 @@ namespace Luminous
             *b.idx++ = index++;
         }
       }
+    }
+  }
+
+  void RenderContext::drawText(const QString & text, const Nimble::Rectf & rect, const Style & style, bool useCache)
+  {
+    if (useCache) {
+      const TextLayout & layout = TextLayout::cachedLayout(text, rect.size(), style.font());
+      drawText(layout, rect.low(), style);
+    } else {
+      TextLayout layout(text, rect.size(), style.font());
+      drawText(layout, rect.low(), style);
     }
   }
 

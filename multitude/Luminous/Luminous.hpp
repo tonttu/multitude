@@ -182,6 +182,7 @@ namespace Luminous
   struct ShaderUniform;
   class Texture;
   class TextureGL;
+  class TextLayout;
 
   // Vertex data
   struct VertexAttribute;

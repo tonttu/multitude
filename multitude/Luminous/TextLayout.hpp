@@ -65,6 +65,7 @@ namespace Luminous {
     };
 
   public:
+    LUMINOUS_API TextLayout(const QString & text, const Nimble::Vector2f & size, QFont font);
     LUMINOUS_API ~TextLayout();
 
     LUMINOUS_API int groupCount() const;
@@ -73,10 +74,7 @@ namespace Luminous {
 
     LUMINOUS_API bool isComplete() const;
 
-    LUMINOUS_API static const TextLayout & layout(const QString & text, const Nimble::Vector2f & size, QFont font, bool useCache);
-
-  private:
-    TextLayout(const QString & text, const Nimble::Vector2f & size, const QFont & font);
+    LUMINOUS_API static const TextLayout & cachedLayout(const QString & text, const Nimble::Vector2f & size, const QFont & font);
 
   private:
     class D;

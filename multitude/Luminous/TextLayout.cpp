@@ -576,16 +576,15 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  TextLayout::TextLayout(const QString & text, const Nimble::Vector2f & size, const QFont & font)
-    : m_d(new D(text, size, font))
-  {
-    assert(!font.kerning());
-  }
-
-  /// @todo should actually use "useCache"-variable
-  const TextLayout & TextLayout::layout(const QString & text, const Nimble::Vector2f & size, QFont font, bool useCache)
+  TextLayout::TextLayout(const QString & text, const Nimble::Vector2f & size, QFont font)
   {
     font.setKerning(false);
+    m_d = new D(text, size, font);
+    m_d->regenerate();
+  }
+
+  const TextLayout & TextLayout::cachedLayout(const QString & text, const Nimble::Vector2f & size, const QFont & font)
+  {
     TextLayout * layout;
 
     {
@@ -594,6 +593,7 @@ namespace Luminous
       std::unique_ptr<TextLayout> & ptr = s_layoutCache[std::make_tuple(text, size.cast<int>(), font)];
       if (!ptr) {
         ptr.reset(new TextLayout(text, size, font));
+        return *ptr;
       }
       layout = ptr.get();
     }
