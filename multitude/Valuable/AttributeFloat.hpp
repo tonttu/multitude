@@ -88,7 +88,7 @@ namespace Valuable
 
       virtual bool deserialize(const ArchiveElement & element) OVERRIDE
       {
-        *this = element.get().toFloat();
+        *this = static_cast<T>(element.get().toDouble());
         return true;
       }
 
@@ -117,7 +117,7 @@ namespace Valuable
       virtual void processMessage(const QString &, Radiant::BinaryData & data) OVERRIDE
       {
         bool ok = true;
-        float v = data.read<T>( & ok);
+        T v = data.read<T>( & ok);
 
         if(ok)
           *this = v;
