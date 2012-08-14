@@ -5,6 +5,7 @@
 #include "Image.hpp"
 #include "DistanceFieldGenerator.hpp"
 
+#include <Radiant/PlatformUtils.hpp>
 #include <Radiant/Mutex.hpp>
 
 #include <tuple>
@@ -14,6 +15,9 @@
 #include <QFontMetricsF>
 #include <QTextLayout>
 #include <QPainter>
+#include <QSettings>
+#include <QFileInfo>
+#include <QDir>
 
 namespace std
 {
@@ -36,12 +40,40 @@ namespace
   std::map<QString, std::unique_ptr<Luminous::FontCache>> s_fontCache;
   Radiant::Mutex s_fontCacheMutex;
 
-  Luminous::TextureAtlasGroup<Luminous::FontCache::Glyph> m_atlas(Luminous::PixelFormat::redUByte());
+  Luminous::TextureAtlasGroup<Luminous::FontCache::Glyph> s_atlas(Luminous::PixelFormat::redUByte());
   Radiant::Mutex s_atlasMutex;
 
   const int s_distanceFieldPixelSize = 160;
   const int s_maxHiresSize = 2048;
   const float s_padding = 1/16.0f;
+
+  // space character etc
+  static Luminous::FontCache::Glyph s_emptyGlyph;
+
+  QString makeKey(const QRawFont & rawFont)
+  {
+    return QString("%3!%4!%1!%2").arg(rawFont.weight()).
+        arg(rawFont.style()).arg(rawFont.familyName(), rawFont.styleName());
+  }
+
+  QString cacheFileName(QString fontKey, quint32 glyphIndex)
+  {
+    static QString s_basePath;
+
+    MULTI_ONCE {
+      QString basePath = Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false) + "/fontcache";
+      if(!QDir().mkpath(basePath)) {
+        basePath = QDir::tempPath() + "/cornerstone-fontcache";
+        QDir().mkpath(basePath);
+      }
+      s_basePath = basePath;
+    }
+
+    const QString path = s_basePath + "/" + fontKey.replace('/', '_');
+    QDir().mkdir(path);
+
+    return QString("%1/%2.tga").arg(path).arg(glyphIndex);
+  }
 }
 
 namespace Luminous
@@ -55,11 +87,25 @@ namespace Luminous
     virtual void doTask() OVERRIDE;
 
   private:
-    Glyph * generateGlyph(QPainter & painter, const QRawFont & rawFont, quint32 glyphIndex);
+    Glyph * generateGlyph(quint32 glyphIndex);
+    Glyph * getGlyph(quint32 glyphIndex);
+    Glyph * makeGlyph(const Image & img);
+    void loadFileCache();
+
+    QPainter & createPainter();
+    QRawFont & createRawFont();
 
   private:
     FontCache::D & m_cache;
     Luminous::Image m_src;
+    const QString m_fontKey;
+    /// These need to be created in the correct thread, and if all glyphs are
+    /// found in file cache, these aren't created at all
+    std::unique_ptr<QPainter> m_painter;
+    std::unique_ptr<QImage> m_painterImg;
+    /// @todo QRawFont isn't thread-safe, so we make our own copy.
+    ///       However, it's unclear if even the copy constructor is thread-safe / reentrant
+    std::unique_ptr<QRawFont> m_rawFont;
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -71,6 +117,19 @@ namespace Luminous
     D(const QRawFont & rawFont);
 
   public:
+    struct FileCacheItem
+    {
+      FileCacheItem() {}
+      FileCacheItem(const QString & src, const QRectF & rect)
+        : src(src), rect(rect) {}
+
+      /// Filename (TGA)
+      QString src;
+      /// Glyph::m_location, Glyph::m_size
+      QRectF rect;
+    };
+
+  public:
     QRawFont m_rawFont;
 
     /// This locks m_cache, m_request, and m_taskRunning
@@ -79,6 +138,9 @@ namespace Luminous
     std::map<quint32, Glyph*> m_cache;
     std::set<quint32> m_request;
     bool m_taskCreated;
+
+    bool m_fileCacheLoaded;
+    std::map<quint32, FileCacheItem> m_fileCache;
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -86,32 +148,21 @@ namespace Luminous
 
   FontCache::FontGenerator::FontGenerator(FontCache::D & cache)
     : m_cache(cache)
+    , m_fontKey(makeKey(cache.m_rawFont))
   {
   }
 
   void FontCache::FontGenerator::doTask()
   {
-    QImage img(s_maxHiresSize, s_maxHiresSize, QImage::Format_ARGB32_Premultiplied);
-    QPainter painter(&img);
-
-    painter.setRenderHint(QPainter::Antialiasing, true);
-    painter.setRenderHint(QPainter::TextAntialiasing, true);
-    painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(QBrush(Qt::black));
-
-    m_src.allocate(s_maxHiresSize, s_maxHiresSize, Luminous::PixelFormat::alphaUByte());
-
-    /// @todo QRawFont isn't thread-safe, so we make our own copy.
-    ///       However, it's unclear if even the copy constructor is thread-safe / reentrant
-    const QRawFont rawFont = m_cache.m_rawFont;
+    if (!m_cache.m_fileCacheLoaded)
+      loadFileCache();
 
     quint32 request = 0;
     bool first = true;
     while (true) {
       Glyph * ready = nullptr;
       if (!first)
-        ready = generateGlyph(painter, rawFont, request);
+        ready = getGlyph(request);
 
       Radiant::Guard g(m_cache.m_cacheMutex);
       if (ready) {
@@ -122,21 +173,34 @@ namespace Luminous
       if (m_cache.m_request.empty()) {
         m_cache.m_taskCreated = false;
         setFinished();
-        return;
+        break;
       } else {
         request = *m_cache.m_request.begin();
         first = false;
       }
     }
+
+    // delete these in this thread
+    m_painter.reset();
+    m_painterImg.reset();
+    m_rawFont.reset();
   }
 
-  FontCache::Glyph * FontCache::FontGenerator::generateGlyph(QPainter & painter, const QRawFont & rawFont,
-                                               quint32 glyphIndex)
+  FontCache::Glyph * FontCache::FontGenerator::generateGlyph(quint32 glyphIndex)
   {
+    QPainter & painter = createPainter();
+    QRawFont & rawFont = createRawFont();
+
     QPainterPath path = rawFont.pathForGlyph(glyphIndex);
     if (path.isEmpty()) {
-      // space character etc
-      static FontCache::Glyph s_emptyGlyph;
+      QSettings settings("MultiTouch", "GlyphCache");
+
+      settings.beginGroup(m_fontKey);
+      settings.beginGroup(QString::number(glyphIndex));
+      settings.setValue("rect", QRectF());
+      settings.endGroup();
+      settings.endGroup();
+
       return &s_emptyGlyph;
     }
 
@@ -182,41 +246,32 @@ namespace Luminous
         to[x] = qAlpha(from[x]);
     }
 
-    Glyph * glyph;
-    {
-      Radiant::Guard g(s_atlasMutex);
-      glyph = &m_atlas.insert(sdfSize);
-    }
-
     Image sdf;
     sdf.allocate(sdfSize.x, sdfSize.y, Luminous::PixelFormat::redUByte());
     DistanceFieldGenerator::generate(m_src, srcSize, sdf, hiresSize / 12);
 
-    Image & target = glyph->m_atlas->image();
-    for (int y = 0; y < sdfSize.y; ++y) {
-      unsigned char * from = sdf.line(y);
-      if (glyph->m_node->m_rotated) {
-        for (int x = 0; x < sdfSize.x; ++x) {
-          target.setPixel(glyph->m_node->m_location.x+y, glyph->m_node->m_location.y+x,
-                          Nimble::Vector4f(from[x] / 255.0f, 0, 0, 0));
-        }
-      } else {
-        unsigned char * to = target.line(glyph->m_node->m_location.y+y) + glyph->m_node->m_location.x;
-        std::copy(from, from + sdfSize.x, to);
-      }
-    }
-
+    FontCache::Glyph * glyph = makeGlyph(sdf);
     glyph->setSize(Nimble::Vector2f(2.0f * s_padding * glyphSize + br.width(),
                                     2.0f * s_padding * glyphSize + br.height()));
-
     glyph->setLocation(Nimble::Vector2f(br.left() - s_padding * glyphSize,
                                         br.top() - s_padding * glyphSize));
 
-    Texture & texture = glyph->m_atlas->texture();
-    {
-      Radiant::Guard g(glyph->m_atlas->textureMutex());
-      texture.addDirtyRect(QRect(glyph->m_node->m_location.x, glyph->m_node->m_location.y,
-                                 glyph->m_node->m_size.x, glyph->m_node->m_size.y));
+
+    const QString file = cacheFileName(m_fontKey, glyphIndex);
+
+    if (sdf.write(file.toUtf8().data())) {
+      FontCache::D::FileCacheItem item(file, QRectF(glyph->location().x, glyph->location().y,
+                                     glyph->size().x, glyph->size().y));
+      m_cache.m_fileCache[glyphIndex] = item;
+
+      QSettings settings("MultiTouch", "GlyphCache");
+
+      settings.beginGroup(m_fontKey);
+      settings.beginGroup(QString::number(glyphIndex));
+      settings.setValue("rect", item.rect);
+      settings.setValue("src", file);
+      settings.endGroup();
+      settings.endGroup();
     }
 
     /*
@@ -240,12 +295,110 @@ namespace Luminous
     return glyph;
   }
 
+  FontCache::Glyph * FontCache::FontGenerator::getGlyph(quint32 glyphIndex)
+  {
+    auto it = m_cache.m_fileCache.find(glyphIndex);
+    if (it != m_cache.m_fileCache.end()) {
+      const FontCache::D::FileCacheItem & item = it->second;
+      if (item.rect.isEmpty())
+        return &s_emptyGlyph;
+
+      Luminous::Image img;
+      if (img.read(item.src.toUtf8().data())) {
+        FontCache::Glyph * glyph = makeGlyph(img);
+        glyph->setLocation(Nimble::Vector2f(item.rect.left(), item.rect.top()));
+        glyph->setSize(Nimble::Vector2f(item.rect.width(), item.rect.height()));
+        return glyph;
+      }
+    }
+    return generateGlyph(glyphIndex);
+  }
+
+  FontCache::Glyph * FontCache::FontGenerator::makeGlyph(const Image & img)
+  {
+    Glyph * glyph;
+    {
+      Radiant::Guard g(s_atlasMutex);
+      glyph = &s_atlas.insert(img.size());
+    }
+
+    Image & target = glyph->m_atlas->image();
+    for (int y = 0; y < img.height(); ++y) {
+      const unsigned char * from = img.line(y);
+      if (glyph->m_node->m_rotated) {
+        for (int x = 0; x < img.width(); ++x) {
+          target.setPixel(glyph->m_node->m_location.x+y, glyph->m_node->m_location.y+x,
+                          Nimble::Vector4f(from[x] / 255.0f, 0, 0, 0));
+        }
+      } else {
+        unsigned char * to = target.line(glyph->m_node->m_location.y+y) + glyph->m_node->m_location.x;
+        std::copy(from, from + img.width(), to);
+      }
+    }
+
+    Texture & texture = glyph->m_atlas->texture();
+    {
+      Radiant::Guard g(glyph->m_atlas->textureMutex());
+      texture.addDirtyRect(QRect(glyph->m_node->m_location.x, glyph->m_node->m_location.y,
+                                 glyph->m_node->m_size.x, glyph->m_node->m_size.y));
+    }
+
+    return glyph;
+  }
+
+  void FontCache::FontGenerator::loadFileCache()
+  {
+    QSettings settings("MultiTouch", "GlyphCache");
+
+    settings.beginGroup(m_fontKey);
+
+    foreach (const QString & index, settings.childGroups()) {
+      settings.beginGroup(index);
+      const quint32 glyphIndex = index.toUInt();
+      const QRectF r = settings.value("rect").toRectF();
+      const QString src = settings.value("src").toString();
+      m_cache.m_fileCache[glyphIndex] = FontCache::D::FileCacheItem(src, r);
+      settings.endGroup();
+    }
+    settings.endGroup();
+    m_cache.m_fileCacheLoaded = true;
+  }
+
+  QPainter & FontCache::FontGenerator::createPainter()
+  {
+    if (m_painter)
+      return *m_painter;
+
+    m_painterImg.reset(new QImage(s_maxHiresSize, s_maxHiresSize, QImage::Format_ARGB32_Premultiplied));
+    m_painter.reset(new QPainter(m_painterImg.get()));
+
+    m_painter->setRenderHint(QPainter::Antialiasing, true);
+    m_painter->setRenderHint(QPainter::TextAntialiasing, true);
+    m_painter->setRenderHint(QPainter::HighQualityAntialiasing, true);
+    m_painter->setPen(Qt::NoPen);
+    m_painter->setBrush(QBrush(Qt::black));
+
+    m_src.allocate(s_maxHiresSize, s_maxHiresSize, Luminous::PixelFormat::alphaUByte());
+
+    return *m_painter;
+  }
+
+  QRawFont & FontCache::FontGenerator::createRawFont()
+  {
+    if (m_rawFont)
+      return *m_rawFont;
+
+    m_rawFont.reset(new QRawFont(m_cache.m_rawFont));
+    return *m_rawFont;
+  }
+
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
   FontCache::D::D(const QRawFont & rawFont)
     : m_rawFont(rawFont)
     , m_taskCreated(false)
+    , m_fileCacheLoaded(false)
   {
     m_rawFont.setPixelSize(s_distanceFieldPixelSize);
   }
@@ -257,8 +410,7 @@ namespace Luminous
   {
     /// QRawFont doesn't work as a key, since it doesn't have operator== that works as expected.
     /// Also the pixelSize shouldn't matter
-    const QString fontKey = QString("%3\n%4\n%1\n%2").arg(rawFont.weight()).
-        arg(rawFont.style()).arg(rawFont.familyName(), rawFont.styleName());
+    const QString fontKey = makeKey(rawFont);
 
     Radiant::Guard g(s_fontCacheMutex);
     std::unique_ptr<Luminous::FontCache> & ptr = s_fontCache[fontKey];
