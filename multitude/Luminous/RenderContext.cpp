@@ -1154,8 +1154,7 @@ namespace Luminous
           auto & item = items[i];
           std::copy(item.vertices.begin(), item.vertices.end(), b.vertex);
           for (int v = 0; v < 4; ++v)
-            b.vertex->location.z = b.depth;
-          b.vertex += 4;
+            b.vertex++->location.z = b.depth;
 
           // first vertex twice
           if (i != 0)
