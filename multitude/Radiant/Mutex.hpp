@@ -187,8 +187,8 @@ namespace Radiant {
 #define MULTI_ONCE                                                \
   static QAtomicInt s_multi_once = 0;                             \
   if (!s_multi_once)                                              \
-    for (Radiant::Guard g(Radiant::s_onceMutex); !s_multi_once;   \
-         s_multi_once = 1)
+    for (Radiant::Guard multi_once_guard_(Radiant::s_onceMutex);  \
+         !s_multi_once; s_multi_once = 1)
 
 
 #endif
