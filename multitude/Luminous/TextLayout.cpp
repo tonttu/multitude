@@ -40,7 +40,7 @@ namespace
   Radiant::Mutex s_atlasMutex;
 
   const int s_distanceFieldPixelSize = 160;
-  const int s_hiresSize = 2048;
+  const int s_maxHiresSize = 2048;
   const float s_padding = 1/16.0f;
 }
 
@@ -91,7 +91,7 @@ namespace Luminous
 
   void FontCache::FontGenerator::doTask()
   {
-    QImage img(s_hiresSize, s_hiresSize, QImage::Format_ARGB32_Premultiplied);
+    QImage img(s_maxHiresSize, s_maxHiresSize, QImage::Format_ARGB32_Premultiplied);
     QPainter painter(&img);
 
     painter.setRenderHint(QPainter::Antialiasing, true);
@@ -100,7 +100,7 @@ namespace Luminous
     painter.setPen(Qt::NoPen);
     painter.setBrush(QBrush(Qt::black));
 
-    m_src.allocate(s_hiresSize, s_hiresSize, Luminous::PixelFormat::alphaUByte());
+    m_src.allocate(s_maxHiresSize, s_maxHiresSize, Luminous::PixelFormat::alphaUByte());
 
     /// @todo QRawFont isn't thread-safe, so we make our own copy.
     ///       However, it's unclear if even the copy constructor is thread-safe / reentrant
@@ -144,10 +144,11 @@ namespace Luminous
 
     const float glyphSize = std::max(br.width(), br.height());
     const float distanceFieldSize = std::min<float>(s_distanceFieldPixelSize, glyphSize * (1.0f + s_padding * 2.0f));
-    const float hiresPadding = s_padding * s_hiresSize;
+    const float hiresSize = std::min<float>(s_maxHiresSize, distanceFieldSize / s_distanceFieldPixelSize * s_maxHiresSize);
+    const float hiresPadding = s_padding * hiresSize;
     const float dfPadding = s_padding * distanceFieldSize;
 
-    const float hiresContentSize = (1.0 - s_padding * 2.0) * s_hiresSize;
+    const float hiresContentSize = (1.0 - s_padding * 2.0) * hiresSize;
     const float dfContentSize = (1.0 - s_padding * 2.0) * distanceFieldSize;
 
     const float hiresScale = hiresContentSize / glyphSize;
@@ -174,10 +175,10 @@ namespace Luminous
     img.fill(Qt::transparent);
     painter.drawPath(path);
 
-    for (int y = 0; y < s_hiresSize; ++y) {
+    for (int y = 0; y < s_maxHiresSize; ++y) {
       const QRgb * from = reinterpret_cast<const QRgb*>(img.constScanLine(y));
       unsigned char * to = m_src.line(y);
-      for (int x = 0; x < s_hiresSize; ++x)
+      for (int x = 0; x < s_maxHiresSize; ++x)
         to[x] = qAlpha(from[x]);
     }
 
@@ -189,7 +190,7 @@ namespace Luminous
 
     Image sdf;
     sdf.allocate(sdfSize.x, sdfSize.y, Luminous::PixelFormat::redUByte());
-    DistanceFieldGenerator::generate(m_src, srcSize, sdf, s_hiresSize / 12);
+    DistanceFieldGenerator::generate(m_src, srcSize, sdf, hiresSize / 12);
 
     Image & target = glyph->m_atlas->image();
     for (int y = 0; y < sdfSize.y; ++y) {
