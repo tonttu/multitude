@@ -1542,16 +1542,17 @@ namespace Luminous
   {
     assert(stackSize() == 1);
 
+    m_data->m_driver.preFrame();
+
     // Push the default render target. Don't use the RenderContext API to avoid
     // the guard.
+    assert(m_data->m_defaultRenderTarget.targetType() != RenderTarget::INVALID);
     m_data->m_driverGL->pushRenderTarget(m_data->m_defaultRenderTarget);
     m_data->m_currentRenderTarget = &m_data->m_defaultRenderTarget;
 
     // Push default opacity
     assert(m_data->m_opacityStack.empty());
     m_data->m_opacityStack.push(1.f);
-
-    m_data->m_driver.preFrame();
   }
 
   void RenderContext::endFrame()

@@ -41,6 +41,8 @@ namespace Luminous
     /// @todo add active texture unit to StateGL
     glActiveTexture(GL_TEXTURE0 + textureUnit);
     glBindTexture(m_target, m_handle);
+
+    touch();
   }
 }
 

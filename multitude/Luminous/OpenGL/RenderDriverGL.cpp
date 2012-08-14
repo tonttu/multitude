@@ -507,6 +507,9 @@ namespace Luminous
     /// @todo Currently the RenderContext invalidates this cache every frame, even if it's not needed
     m_d->m_stateGL.setProgram(0);
     m_d->m_stateGL.setVertexArray(0);
+
+    // Update the frame time in current state
+    m_d->m_stateGL.setFrameTime(Radiant::TimeStamp::currentTime());
   }
 
   void RenderDriverGL::postFrame()

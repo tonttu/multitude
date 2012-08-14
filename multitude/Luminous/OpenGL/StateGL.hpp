@@ -3,6 +3,8 @@
 
 #include "Luminous/Luminous.hpp"
 
+#include <Radiant/TimeStamp.hpp>
+
 #include <map>
 #include <algorithm>
 #include <stdint.h>
@@ -50,6 +52,9 @@ namespace Luminous
     inline bool setFramebuffer(GLuint handle);
     inline GLuint framebuffer() const;
 
+    void setFrameTime(Radiant::TimeStamp t) { m_frameTime = t; }
+    Radiant::TimeStamp frameTime() const { return m_frameTime; }
+
   private:
     /// Currently bound shader program
     GLuint m_currentProgram;
@@ -67,6 +72,8 @@ namespace Luminous
     RenderDriverGL & m_driver;
 
     GLuint m_currentFrameBuffer;
+
+    Radiant::TimeStamp m_frameTime;
   };
 
   /////////////////////////////////////////////////////////////////////////////

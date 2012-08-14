@@ -44,6 +44,8 @@ namespace Luminous
   {
     glBindBuffer(m_target, m_handle);
     GLERROR("BufferGL::bind # glBindBuffer");
+
+    touch();
   }
 
   void BufferGL::upload(Buffer & buffer)
@@ -78,6 +80,8 @@ namespace Luminous
     assert(m_target == Buffer::Vertex ||
            m_target == Buffer::Index ||
            m_target == Buffer::Uniform);
+
+    touch();
 
     BufferMapping & mappings = m_state.bufferMaps()[m_handle];
 
@@ -116,6 +120,8 @@ namespace Luminous
 
   void BufferGL::unmap(int offset, std::size_t length)
   {
+    touch();
+
     auto it = m_state.bufferMaps().find(m_handle);
     if(it == m_state.bufferMaps().end()) {
       Radiant::warning("BufferGL::unmap # buffer not mapped");
@@ -137,6 +143,8 @@ namespace Luminous
 
   void BufferGL::allocate()
   {
+    touch();
+
     glBufferData(m_target, m_size, nullptr, m_usage);
     GLERROR("BufferGL::allocate # glBufferData");
     m_allocatedSize = m_size;

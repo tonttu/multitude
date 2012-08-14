@@ -33,6 +33,8 @@ namespace Luminous
   {
     glBindRenderbuffer(GL_RENDERBUFFER, m_handle);
     GLERROR("RenderBufferGL::bind # glBindRenderbuffer");
+
+    touch();
   }
 
   void RenderBufferGL::unbind()
@@ -47,6 +49,8 @@ namespace Luminous
 
     glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, format, size.width(), size.height());
     GLERROR("RenderBufferGL::storageFormat # glRenderbufferStorageMultisample");
+
+    touch();
   }
 
   void RenderBufferGL::sync(const RenderBuffer &buffer)
@@ -94,6 +98,8 @@ namespace Luminous
     assert(m_size.isValid());
     glViewport(0, 0, m_size.width(), m_size.height());
     GLERROR("RenderTargetGL::bind # glViewport");
+
+    touch();
   }
 
   void RenderTargetGL::unbind()

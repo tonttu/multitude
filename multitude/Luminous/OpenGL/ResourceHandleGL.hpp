@@ -4,7 +4,7 @@
 #include "StateGL.hpp"
 #include "Error.hpp"
 
-#include <Radiant/Timer.hpp>
+#include <Radiant/TimeStamp.hpp>
 
 #if RADIANT_DEBUG
 # define GLERROR_TOSTR2(num) #num
@@ -35,9 +35,7 @@ namespace Luminous
     GLuint m_handle;
 
   private:
-    /// @todo isn't this a bit overkill, maybe just use a frame number,
-    ///       could put the current frame number to StateGL?
-    Radiant::Timer m_lastUsed;
+    Radiant::TimeStamp m_lastUsed;
     unsigned int m_expirationSeconds;
 
   private:
@@ -50,6 +48,7 @@ namespace Luminous
   ResourceHandleGL::ResourceHandleGL(StateGL & state)
     : m_state(state)
     , m_handle(0)
+    , m_lastUsed(state.frameTime())
   {}
 
   ResourceHandleGL::ResourceHandleGL(ResourceHandleGL && r)
@@ -71,12 +70,17 @@ namespace Luminous
 
   void ResourceHandleGL::touch()
   {
-    m_lastUsed.start();
+    m_lastUsed = m_state.frameTime();
   }
 
   bool ResourceHandleGL::expired() const
   {
-    return m_expirationSeconds > 0 && m_lastUsed.time() > m_expirationSeconds;
+    if(m_expirationSeconds > 0) {
+      auto elapsedSeconds = (m_state.frameTime() - m_lastUsed).seconds();
+      return elapsedSeconds > m_expirationSeconds;
+    }
+
+    return false;
   }
 
   void ResourceHandleGL::setExpirationSeconds(unsigned int secs)

@@ -41,6 +41,8 @@ namespace Luminous
       glBindVertexArray(m_handle);
       GLERROR("VertexArrayGL::bind # glBindVertexArray");
     }
+
+    touch();
   }
 
   void VertexArrayGL::upload(const VertexArray & vertexArray, ProgramGL * program)
