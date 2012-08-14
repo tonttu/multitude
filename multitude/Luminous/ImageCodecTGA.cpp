@@ -165,7 +165,7 @@ namespace Luminous
         return false;
     };
 
-    Radiant::trace(Radiant::INFO, "W %d H %d", width, height);
+    // Radiant::trace(Radiant::INFO, "W %d H %d", width, height);
 
     // Allocate memory
     image.allocate(width, height, pf);
