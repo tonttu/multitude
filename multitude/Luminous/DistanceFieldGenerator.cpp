@@ -50,10 +50,12 @@ retry:
           k++;
 
 
-        if(function[q] == 0)
+        if(function[q] == 0) {
           output[index] = 0;
-        else // height of lower envelope at locs[k]
-          output[index] = std::pow(q-locs[k], 2) + function[locs[k]];
+        } else { // height of lower envelope at locs[k]
+          int t = q-locs[k];
+          output[index] = t*t + function[locs[k]];
+        }
 
         index += output_stride;
       }
