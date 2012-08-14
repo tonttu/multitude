@@ -128,7 +128,7 @@ namespace Valuable
     virtual void processMessage(const QString & /*id*/, Radiant::BinaryData & data) OVERRIDE
     {
       bool ok = true;
-      int32_t v = data.read<T>( & ok);
+      T v = data.read<T>( & ok);
 
       if(ok)
         *this = v;
