@@ -135,7 +135,7 @@ namespace Luminous
 
     typedef std::map<RenderResource::Hash, ProgramGL> ProgramList;
     typedef std::map<RenderResource::Id, TextureGL> TextureList;
-    typedef std::map<RenderResource::Id, BufferGL> BufferList;
+    typedef std::map<RenderResource::Id, std::shared_ptr<BufferGL> > BufferList;
     typedef std::map<RenderResource::Id, VertexArrayGL> VertexArrayList;
     typedef std::map<RenderResource::Id, RenderBufferGL> RenderBufferList;
     typedef std::map<RenderResource::Id, RenderTargetGL> RenderTargetList;
@@ -198,6 +198,8 @@ namespace Luminous
 
     template <typename ContainerType>
     void removeResource(ContainerType & container);
+
+    void removeBufferResource(BufferList & buffers, const ReleaseQueue & releaseQueue);
 
     /// Get the current render queue segment where draw calls are to be added
     //RenderQueueSegment & currentRenderQueueSegment() { assert(!m_renderTargetStack.empty()); return m_renderTargetStack.top(); }
@@ -267,7 +269,7 @@ namespace Luminous
   void RenderDriverGL::D::removeResources()
   {
     removeResource(m_vertexArrays, m_releaseQueue);
-    removeResource(m_buffers, m_releaseQueue);
+    removeBufferResource(m_buffers, m_releaseQueue);
     removeResource(m_textures, m_releaseQueue);
     removeResource(m_programs);
     removeResource(m_renderBuffers, m_releaseQueue);
@@ -398,6 +400,24 @@ namespace Luminous
       if(handle.expired()) {
         // Remove from container
         it = container.erase(it);
+      } else ++it;
+    }
+  }
+
+  void RenderDriverGL::D::removeBufferResource(BufferList &buffers, const ReleaseQueue & releaseQueue)
+  {
+    auto it = std::begin(buffers);
+    while (it != std::end(buffers)) {
+      std::shared_ptr<BufferGL> & buffer = it->second;
+
+      // Check if we have the only copy of the buffer (no VertexArrayGLs
+      // reference it) and it has expired.
+      const bool remove = (buffer.unique() && buffer->expired());
+
+      if(std::find( std::begin(releaseQueue), std::end(releaseQueue), it->first) !=
+         std::end(releaseQueue) || remove) {
+        // Remove from container
+        it = buffers.erase(it);
       } else ++it;
     }
   }
@@ -762,9 +782,18 @@ namespace Luminous
     if(it == m_d->m_buffers.end()) {
       // libstdc++ doesn't have this yet
       //it = m_d->m_textures.emplace(buffer.resourceId(), m_d->m_stateGL).first;
-      it = m_d->m_buffers.insert(std::make_pair(buffer.resourceId(), BufferGL(m_d->m_stateGL, buffer))).first;
-      it->second.setExpirationSeconds(buffer.expiration());
+      it = m_d->m_buffers.insert(std::make_pair(buffer.resourceId(), std::make_shared<BufferGL>(m_d->m_stateGL, buffer))).first;
+      it->second->setExpirationSeconds(buffer.expiration());
     }
+
+    return *it->second;
+  }
+
+  std::shared_ptr<BufferGL> RenderDriverGL::bufferPtr(const Buffer & buffer)
+  {
+    // Never creates resources, only used internally
+    auto it = m_d->m_buffers.find(buffer.resourceId());
+    assert(it != m_d->m_buffers.end());
 
     return it->second;
   }

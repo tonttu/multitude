@@ -50,7 +50,12 @@ namespace Luminous
     // Bind and setup all buffers/attributes
     bind();
 
-    if(program) program->bind();
+    if(program)
+      program->bind();
+
+    // Clear the associated buffers. Nothing will be released, as the driver
+    // owns a copy of them, too.
+    m_associatedBuffers.clear();
 
     setVertexAttributes(vertexArray);
 
@@ -60,6 +65,8 @@ namespace Luminous
       assert(index->type() == GL_ELEMENT_ARRAY_BUFFER);
       auto & bufferGL = m_state.driver().handle(*index);
       bufferGL.bind();
+
+      m_associatedBuffers.insert(m_state.driver().bufferPtr(*index));
     }
   }
 
@@ -77,6 +84,8 @@ namespace Luminous
       bufferGL.bind();
 
       setVertexDescription(b.description);
+
+      m_associatedBuffers.insert(m_state.driver().bufferPtr(*buffer));
     }
   }
 

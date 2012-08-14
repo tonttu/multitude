@@ -5,6 +5,9 @@
 
 #include <QRegion>
 
+#include <set>
+#include <memory>
+
 namespace Luminous
 {
   class VertexArrayGL : public ResourceHandleGL
@@ -27,6 +30,8 @@ namespace Luminous
     void setVertexDescription(const VertexDescription & description);
 
     int m_generation;
+
+    std::set<std::shared_ptr<BufferGL> > m_associatedBuffers;
   };
 }
 
