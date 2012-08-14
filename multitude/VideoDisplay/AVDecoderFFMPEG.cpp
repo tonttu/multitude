@@ -1824,19 +1824,17 @@ namespace VideoPlayer2
 
   void ffmpegInit()
   {
-    MULTI_ONCE_BEGIN
+    MULTI_ONCE {
+      av_log_set_callback(ffmpegLog);
+      avcodec_register_all();
+      avdevice_register_all();
+      av_register_all();
+      avformat_network_init();
+      avfilter_register_all();
 
-    av_log_set_callback(ffmpegLog);
-    avcodec_register_all();
-    avdevice_register_all();
-    av_register_all();
-    avformat_network_init();
-    avfilter_register_all();
-
-    int err = av_lockmgr_register(ffmpegLock);
-    if(err != 0)
-      Radiant::error("ffmpegInit # Failed to register new FFMPEG lock manager");
-
-    MULTI_ONCE_END
+      int err = av_lockmgr_register(ffmpegLock);
+      if(err != 0)
+        Radiant::error("ffmpegInit # Failed to register new FFMPEG lock manager");
+    }
   }
 }

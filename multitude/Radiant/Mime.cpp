@@ -24,7 +24,7 @@ namespace Radiant
 
   void MimeManager::initialize()
   {
-    MULTI_ONCE_BEGIN {
+    MULTI_ONCE {
       const QString filename = Radiant::ResourceLocator::instance().locate("Mime/mime.types");
       if (filename.isEmpty()) {
         Radiant::error("FileLoader : Could not find mime.types");
@@ -61,7 +61,7 @@ namespace Radiant
           s_sharedExtensions.insert(std::make_pair(extensions[i], mimeType));
         }
       }
-    } MULTI_ONCE_END
+    }
   }
 
   MimeManager::MimeManager() {

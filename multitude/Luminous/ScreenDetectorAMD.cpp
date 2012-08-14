@@ -412,7 +412,7 @@ namespace Luminous
 
   bool ScreenDetectorAMD::detect(int screen, QList<ScreenInfo> & results)
   {
-    MULTI_ONCE(adlAvailable = initADL(););
+    MULTI_ONCE { adlAvailable = initADL(); }
     if (!adlAvailable)
       return false;
 

@@ -74,7 +74,7 @@ namespace {
 
   void initDc()
   {
-    MULTI_ONCE(s_dc = dc1394_new(););
+    MULTI_ONCE { s_dc = dc1394_new(); }
   }
 }
 
@@ -1109,13 +1109,13 @@ namespace Radiant {
     debugRadiant("%s # Running OS X, no FireWire bus reset", fname);
 #else
     // Clean up in the first start:
-    MULTI_ONCE_BEGIN {
+    MULTI_ONCE {
      Radiant::Guard g(s_infosMutex);
      for(int c = 0; c < (int) s_infos.size(); c++) {
       dc1394_reset_bus(s_infos[c]); // no resetting bus for OSX
       Sleep::sleepMs(100);
      }
-    } MULTI_ONCE_END
+    }
 #endif
 
     // Now seek the camera we are interested in:

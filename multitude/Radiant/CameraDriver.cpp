@@ -73,10 +73,10 @@ namespace Radiant
   CameraDriver * CameraDriverFactory::getCameraDriver(const QString & driverName)
   {
     // If the user has not registered any drivers, we register the defaults here once
-    MULTI_ONCE_BEGIN
-    assert(m_drivers.empty());
+    MULTI_ONCE {
+      assert(m_drivers.empty());
 #ifdef CAMERA_DRIVER_CMU
-    registerDriver(new CameraDriverCMU());
+      registerDriver(new CameraDriverCMU());
 #endif
 
 #ifdef CAMERA_DRIVER_PGR
@@ -84,9 +84,9 @@ namespace Radiant
 #endif
 
 #ifdef CAMERA_DRIVER_1394
-    registerDriver(new CameraDriver1394());
+      registerDriver(new CameraDriver1394());
 #endif
-    MULTI_ONCE_END
+    }
 
     DriverMap::iterator it = m_drivers.find(driverName);
     if(it != m_drivers.end())

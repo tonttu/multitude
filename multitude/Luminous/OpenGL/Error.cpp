@@ -34,7 +34,7 @@ void glErrorToString(const QString & msg, int line)
 {
     static QMap<GLuint, QString> errors;
 
-    MULTI_ONCE_BEGIN {
+    MULTI_ONCE {
 
         errors.insert(GL_NO_ERROR, "no error");
         errors.insert(GL_INVALID_ENUM, "invalid enumerant");
@@ -46,7 +46,7 @@ void glErrorToString(const QString & msg, int line)
         errors.insert(GL_TABLE_TOO_LARGE, "table too large");
         errors.insert(GL_INVALID_FRAMEBUFFER_OPERATION, "invalid framebuffer operation");
 
-    } MULTI_ONCE_END
+    }
 
     GLenum err, err2 = GL_NO_ERROR;
     while((err = glGetError()) != GL_NO_ERROR) {

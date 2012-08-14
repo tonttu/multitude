@@ -452,7 +452,7 @@ namespace Luminous
     , m_ready(nullptr, "", false)
     , m_valid(false)
   {
-    MULTI_ONCE(BGThread::instance()->addTask(new MipmapReleaseTask()););
+    MULTI_ONCE { BGThread::instance()->addTask(new MipmapReleaseTask()); }
   }
 
   Mipmap::D::~D()
@@ -767,14 +767,14 @@ namespace Luminous
 
     static QString s_basePath;
 
-    MULTI_ONCE_BEGIN
-    QString basePath = Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false) + "/imagecache";
-    if(!QDir().mkpath(basePath)) {
-      basePath = QDir::tempPath() + "/cornerstone-imagecache";
-      QDir().mkpath(basePath);
+    MULTI_ONCE {
+      QString basePath = Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false) + "/imagecache";
+      if(!QDir().mkpath(basePath)) {
+        basePath = QDir::tempPath() + "/cornerstone-imagecache";
+        QDir().mkpath(basePath);
+      }
+      s_basePath = basePath;
     }
-    s_basePath = basePath;
-    MULTI_ONCE_END
 
     // Compute MD5 from the absolute path
     QCryptographicHash hash(QCryptographicHash::Md5);
