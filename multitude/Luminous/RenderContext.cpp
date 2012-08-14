@@ -1133,6 +1133,9 @@ namespace Luminous
     DepthMode d;
     d.setFunction(DepthMode::LessEqual);
 
+    Nimble::Matrix4f m;
+    m.identity();
+
     for (int g = 0; g < layout.groupCount(); ++g) {
       textures["tex"] = layout.texture(g);
 
@@ -1148,13 +1151,16 @@ namespace Luminous
         b.command->depthMode = d;
         b.command->stencilMode = style.stencilMode();
 
+        m.setTranslation(Nimble::Vector3f(location.x, location.y, b.depth));
+        b.uniform->modelMatrix = transform4() * m;
+        b.uniform->modelMatrix.transpose();
+
         int index = 0;
 
         for (const int m = count + i; i < m; ++i) {
           auto & item = items[i];
           std::copy(item.vertices.begin(), item.vertices.end(), b.vertex);
-          for (int v = 0; v < 4; ++v)
-            b.vertex++->location.z = b.depth;
+          b.vertex += 4;
 
           // first vertex twice
           if (i != 0)

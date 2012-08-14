@@ -525,7 +525,6 @@ namespace Luminous
       const QRawFont & font = glyphRun.rawFont();
       const QVector<quint32> & glyphs = glyphRun.glyphIndexes();
       const QVector<QPointF> & positions = glyphRun.positions();
-      const QVector<QPointF> & advances = font.advancesForGlyphIndexes(glyphs);
 
       FontCache & cache = FontCache::acquire(font);
 
