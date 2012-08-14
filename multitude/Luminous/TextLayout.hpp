@@ -11,6 +11,7 @@
 #include <array>
 
 class QRawFont;
+class QGlyphRun;
 
 namespace Luminous {
   
@@ -65,7 +66,6 @@ namespace Luminous {
     };
 
   public:
-    LUMINOUS_API TextLayout(const QString & text, const Nimble::Vector2f & size, QFont font);
     LUMINOUS_API ~TextLayout();
 
     LUMINOUS_API int groupCount() const;
@@ -74,13 +74,37 @@ namespace Luminous {
 
     LUMINOUS_API bool isComplete() const;
 
-    LUMINOUS_API static const TextLayout & cachedLayout(const QString & text, const Nimble::Vector2f & size, const QFont & font);
+  protected:
+    LUMINOUS_API TextLayout(const Nimble::Vector2f & size);
+
+    LUMINOUS_API void setComplete(bool v);
+    LUMINOUS_API void clearGlyphs();
+    LUMINOUS_API bool generateGlyphs(const Nimble::Vector2f & location,
+                                     const QGlyphRun & glyphRun);
 
   private:
     class D;
     D * m_d;
   };
-  
+
+  /// Plain text, one font, inside rectangle (0,0) -> size
+  class SimpleTextLayout : public TextLayout
+  {
+  public:
+    LUMINOUS_API SimpleTextLayout(const QString & text, const Nimble::Vector2f & size, QFont font);
+    LUMINOUS_API ~SimpleTextLayout();
+
+    LUMINOUS_API static const SimpleTextLayout & cachedLayout(const QString & text,
+                                                              const Nimble::Vector2f & size,
+                                                              const QFont & font);
+
+  protected:
+    LUMINOUS_API void regenerate();
+
+  private:
+    class D;
+    D * m_d;
+  };
 } // namespace Luminous
 
 #endif // LUMINOUS_TEXTLAYOUT_HPP

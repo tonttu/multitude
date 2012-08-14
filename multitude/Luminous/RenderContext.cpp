@@ -1181,10 +1181,10 @@ namespace Luminous
   void RenderContext::drawText(const QString & text, const Nimble::Rectf & rect, const Style & style, bool useCache)
   {
     if (useCache) {
-      const TextLayout & layout = TextLayout::cachedLayout(text, rect.size(), style.font());
+      const SimpleTextLayout & layout = SimpleTextLayout::cachedLayout(text, rect.size(), style.font());
       drawText(layout, rect.low(), style);
     } else {
-      TextLayout layout(text, rect.size(), style.font());
+      SimpleTextLayout layout(text, rect.size(), style.font());
       drawText(layout, rect.low(), style);
     }
   }

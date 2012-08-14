@@ -34,7 +34,7 @@ namespace std
 
 namespace
 {
-  std::unordered_map<std::tuple<QString, Nimble::Vector2i, QFont>, std::unique_ptr<Luminous::TextLayout>> s_layoutCache;
+  std::unordered_map<std::tuple<QString, Nimble::Vector2i, QFont>, std::unique_ptr<Luminous::SimpleTextLayout>> s_layoutCache;
   Radiant::Mutex s_layoutCacheMutex;
 
   std::map<QString, std::unique_ptr<Luminous::FontCache>> s_fontCache;
@@ -457,17 +457,15 @@ namespace Luminous
     };
 
   public:
-    D(const QString & text, const Nimble::Vector2f & size, const QFont & font);
+    D(const Nimble::Vector2f & size);
 
-    void layout();
-    void regenerate();
+    bool generate(const Nimble::Vector2f & location, const QGlyphRun & glyphRun);
 
-  private:
+  protected:
     Group & findGroup(Texture & texture);
 
   public:
     const Nimble::Vector2f m_size;
-    QTextLayout m_layout;
     bool m_complete;
 
     std::map<RenderResource::Id, int> m_groupCache;
@@ -477,23 +475,98 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  TextLayout::D::D(const QString & text, const Nimble::Vector2f & size, const QFont & font)
+  class SimpleTextLayout::D
+  {
+  public:
+    D(const QString & text, const QFont & font);
+
+    void layout(const Nimble::Vector2f & size);
+
+  public:
+    QTextLayout m_layout;
+  };
+
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+
+  TextLayout::D::D(const Nimble::Vector2f & size)
     : m_size(size)
-    , m_layout(text, font)
     , m_complete(false)
   {
-    layout();
     /*QImage img(m_layout.boundingRect().width(), m_layout.boundingRect().height(), QImage::Format_ARGB32_Premultiplied);
     QPainter p(&img);
     m_layout.draw(&p, QPointF(0, 0));
     img.save("/tmp/qlayout.png");*/
   }
 
-  void TextLayout::D::layout()
+  /// @todo what should be thread-safe?
+  bool TextLayout::D::generate(const Nimble::Vector2f & layoutLocation,
+                               const QGlyphRun & glyphRun)
+  {
+    bool missingGlyphs = false;
+
+    const QRawFont & font = glyphRun.rawFont();
+    const QVector<quint32> & glyphs = glyphRun.glyphIndexes();
+    const QVector<QPointF> & positions = glyphRun.positions();
+
+    FontCache & cache = FontCache::acquire(font);
+
+    for (int i = 0; i < glyphs.size(); ++i) {
+      const quint32 glyph = glyphs[i];
+
+      FontCache::Glyph * glyphCache = cache.glyph(glyph);
+      if (glyphCache) {
+        if (glyphCache->isEmpty())
+          continue;
+
+        const float scale = float(font.pixelSize()) / s_distanceFieldPixelSize;
+        const Nimble::Vector2f location = Nimble::Vector2f(positions[i].x(), positions[i].y()) +
+            layoutLocation + glyphCache->location() * scale;
+        const Nimble::Vector2f & size = glyphCache->size() * scale;
+
+        Group & g = findGroup(glyphCache->texture());
+
+        TextLayout::Item item;
+        item.vertices[0].location.make(location.x, location.y, 0);
+        item.vertices[1].location.make(location.x+size.x, location.y, 0);
+        item.vertices[2].location.make(location.x, location.y+size.y, 0);
+        item.vertices[3].location.make(location.x+size.x, location.y+size.y, 0);
+        for (int j = 0; j < 4; ++j)
+          item.vertices[j].texCoord = glyphCache->uv()[j];
+
+        g.items.push_back(item);
+      } else {
+        missingGlyphs = true;
+      }
+    }
+
+    return missingGlyphs;
+  }
+
+  TextLayout::D::Group & TextLayout::D::findGroup(Texture & texture)
+  {
+    auto it = m_groupCache.find(texture.resourceId());
+    if (it != m_groupCache.end()) {
+      return m_groups[it->second];
+    }
+    m_groupCache.insert(std::make_pair(texture.resourceId(), m_groups.size()));
+    m_groups.emplace_back(texture);
+    return m_groups.back();
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+
+  SimpleTextLayout::D::D(const QString & text, const QFont & font)
+    : m_layout(text, font)
+  {
+  }
+
+  void SimpleTextLayout::D::layout(const Nimble::Vector2f & size)
   {
     assert(!m_layout.font().kerning());
     QFontMetricsF fontMetrics(m_layout.font());
-    const float lineWidth = m_size.x;
+    const float lineWidth = size.x;
     const float leading = fontMetrics.leading();
 
     float y = 0;
@@ -511,98 +584,12 @@ namespace Luminous
     m_layout.endLayout();
   }
 
-  /// @todo what should be thread-safe?
-  void TextLayout::D::regenerate()
-  {
-    const Nimble::Vector2f layoutLocation(m_layout.position().x(), m_layout.position().y());
-    bool missingGlyphs = false;
-
-    m_groupCache.clear();
-    m_groups.clear();
-
-    /// @todo in Qt 5.0, we should use individual lines or give range to glyphRuns
-    foreach (const QGlyphRun & glyphRun, m_layout.glyphRuns()) {
-      const QRawFont & font = glyphRun.rawFont();
-      const QVector<quint32> & glyphs = glyphRun.glyphIndexes();
-      const QVector<QPointF> & positions = glyphRun.positions();
-
-      FontCache & cache = FontCache::acquire(font);
-
-      for (int i = 0; i < glyphs.size(); ++i) {
-        const quint32 glyph = glyphs[i];
-
-        FontCache::Glyph * glyphCache = cache.glyph(glyph);
-        if (glyphCache) {
-          if (glyphCache->isEmpty())
-            continue;
-
-          const float scale = float(font.pixelSize()) / s_distanceFieldPixelSize;
-          const Nimble::Vector2f location = Nimble::Vector2f(positions[i].x(), positions[i].y()) +
-              layoutLocation + glyphCache->location() * scale;
-          const Nimble::Vector2f & size = glyphCache->size() * scale;
-
-          Group & g = findGroup(glyphCache->texture());
-
-          TextLayout::Item item;
-          item.vertices[0].location.make(location.x, location.y, 0);
-          item.vertices[1].location.make(location.x+size.x, location.y, 0);
-          item.vertices[2].location.make(location.x, location.y+size.y, 0);
-          item.vertices[3].location.make(location.x+size.x, location.y+size.y, 0);
-          for (int j = 0; j < 4; ++j)
-            item.vertices[j].texCoord = glyphCache->uv()[j];
-
-          g.items.push_back(item);
-        } else {
-          missingGlyphs = true;
-        }
-      }
-    }
-
-    m_complete = !missingGlyphs;
-  }
-
-  TextLayout::D::Group & TextLayout::D::findGroup(Texture & texture)
-  {
-    auto it = m_groupCache.find(texture.resourceId());
-    if (it != m_groupCache.end()) {
-      return m_groups[it->second];
-    }
-    m_groupCache.insert(std::make_pair(texture.resourceId(), m_groups.size()));
-    m_groups.emplace_back(texture);
-    return m_groups.back();
-  }
-
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  TextLayout::TextLayout(const QString & text, const Nimble::Vector2f & size, QFont font)
-  {
-    font.setKerning(false);
-    m_d = new D(text, size, font);
-    m_d->regenerate();
-  }
-
-  const TextLayout & TextLayout::cachedLayout(const QString & text, const Nimble::Vector2f & size, const QFont & font)
-  {
-    TextLayout * layout;
-
-    {
-      /// @todo someone should also delete old layouts..
-      Radiant::Guard g(s_layoutCacheMutex);
-      std::unique_ptr<TextLayout> & ptr = s_layoutCache[std::make_tuple(text, size.cast<int>(), font)];
-      if (!ptr) {
-        ptr.reset(new TextLayout(text, size, font));
-        return *ptr;
-      }
-      layout = ptr.get();
-    }
-
-    if (!layout->isComplete()) {
-      layout->m_d->regenerate();
-    }
-
-    return *layout;
-  }
+  TextLayout::TextLayout(const Nimble::Vector2f & size)
+    : m_d(new D(size))
+  {}
 
   TextLayout::~TextLayout()
   {
@@ -628,5 +615,78 @@ namespace Luminous
   {
     return m_d->m_complete;
   }
+
+  void TextLayout::setComplete(bool v)
+  {
+    m_d->m_complete = v;
+  }
+
+  void TextLayout::clearGlyphs()
+  {
+    m_d->m_groupCache.clear();
+    m_d->m_groups.clear();
+  }
+
+  bool TextLayout::generateGlyphs(const Nimble::Vector2f & location,
+                                  const QGlyphRun & glyphRun)
+  {
+    return m_d->generate(location, glyphRun);
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+
+  SimpleTextLayout::SimpleTextLayout(const QString & text, const Nimble::Vector2f & size, QFont font)
+    : TextLayout(size)
+  {
+    font.setKerning(false);
+    m_d = new D(text, font);
+    m_d->layout(size);
+    regenerate();
+  }
+
+  SimpleTextLayout::~SimpleTextLayout()
+  {
+    delete m_d;
+  }
+
+  const SimpleTextLayout & SimpleTextLayout::cachedLayout(const QString & text,
+                                                          const Nimble::Vector2f & size,
+                                                          const QFont & font)
+  {
+    SimpleTextLayout * layout;
+
+    {
+      /// @todo someone should also delete old layouts..
+      Radiant::Guard g(s_layoutCacheMutex);
+      std::unique_ptr<SimpleTextLayout> & ptr = s_layoutCache[std::make_tuple(text, size.cast<int>(), font)];
+      if (!ptr) {
+        ptr.reset(new SimpleTextLayout(text, size, font));
+        return *ptr;
+      }
+      layout = ptr.get();
+    }
+
+    if (!layout->isComplete()) {
+      layout->regenerate();
+    }
+
+    return *layout;
+  }
+
+  void SimpleTextLayout::regenerate()
+  {
+    const Nimble::Vector2f layoutLocation(m_d->m_layout.position().x(), m_d->m_layout.position().y());
+    bool missingGlyphs = false;
+
+    clearGlyphs();
+
+    foreach (const QGlyphRun & glyphRun, m_d->m_layout.glyphRuns())
+      missingGlyphs |= generateGlyphs(layoutLocation, glyphRun);
+
+    setComplete(!missingGlyphs);
+  }
+
+
 
 } // namespace Luminous
