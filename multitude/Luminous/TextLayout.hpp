@@ -12,6 +12,7 @@
 
 class QRawFont;
 class QGlyphRun;
+class QTextDocument;
 
 namespace Luminous {
   
@@ -66,13 +67,15 @@ namespace Luminous {
     };
 
   public:
-    LUMINOUS_API ~TextLayout();
+    LUMINOUS_API virtual ~TextLayout();
 
     LUMINOUS_API int groupCount() const;
     LUMINOUS_API Texture * texture(int groupIndex) const;
     LUMINOUS_API const std::vector<Item> & items(int groupIndex) const;
 
     LUMINOUS_API bool isComplete() const;
+
+    LUMINOUS_API Nimble::Vector2f size() const;
 
   protected:
     LUMINOUS_API TextLayout(const Nimble::Vector2f & size);
@@ -92,13 +95,27 @@ namespace Luminous {
   {
   public:
     LUMINOUS_API SimpleTextLayout(const QString & text, const Nimble::Vector2f & size, QFont font);
-    LUMINOUS_API ~SimpleTextLayout();
+    LUMINOUS_API virtual ~SimpleTextLayout();
 
     LUMINOUS_API static const SimpleTextLayout & cachedLayout(const QString & text,
                                                               const Nimble::Vector2f & size,
                                                               const QFont & font);
 
   protected:
+    LUMINOUS_API void regenerate();
+
+  private:
+    class D;
+    D * m_d;
+  };
+
+  /// Rich text document layout
+  class TextDocumentLayout : public TextLayout
+  {
+  public:
+    LUMINOUS_API TextDocumentLayout(QTextDocument & doc, const Nimble::Vector2f & size);
+    LUMINOUS_API virtual ~TextDocumentLayout();
+
     LUMINOUS_API void regenerate();
 
   private:

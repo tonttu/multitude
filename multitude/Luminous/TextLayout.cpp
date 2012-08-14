@@ -18,6 +18,9 @@
 #include <QSettings>
 #include <QFileInfo>
 #include <QDir>
+#include <QTextBlock>
+#include <QTextDocument>
+#include <QAbstractTextDocumentLayout>
 
 namespace std
 {
@@ -489,6 +492,20 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
+  class TextDocumentLayout::D
+  {
+  public:
+    D(QTextDocument & doc);
+
+    void disableKerning();
+
+  public:
+    QTextDocument & m_doc;
+  };
+
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+
   TextLayout::D::D(const Nimble::Vector2f & size)
     : m_size(size)
     , m_complete(false)
@@ -587,6 +604,34 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
+  TextDocumentLayout::D::D(QTextDocument & doc)
+    : m_doc(doc)
+  {}
+
+  void TextDocumentLayout::D::disableKerning()
+  {
+    QTextCursor cursor(&m_doc);
+    for (QTextBlock block = m_doc.begin(); block.isValid(); block = block.next()) {
+      for (auto it = block.begin(); it != block.end(); ++it) {
+        QTextFragment fragment = it.fragment();
+        if (!fragment.isValid())
+          continue;
+
+        QTextCharFormat fmt = fragment.charFormat();
+        QFont font = fmt.font();
+        font.setKerning(false);
+        fmt.setFont(font);
+
+        cursor.setPosition(fragment.position());
+        cursor.setPosition(fragment.position() + fragment.length(), QTextCursor::KeepAnchor);
+        cursor.setCharFormat(fmt);
+      }
+    }
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+
   TextLayout::TextLayout(const Nimble::Vector2f & size)
     : m_d(new D(size))
   {}
@@ -614,6 +659,11 @@ namespace Luminous
   bool TextLayout::isComplete() const
   {
     return m_d->m_complete;
+  }
+
+  Nimble::Vector2f TextLayout::size() const
+  {
+    return m_d->m_size;
   }
 
   void TextLayout::setComplete(bool v)
@@ -687,6 +737,41 @@ namespace Luminous
     setComplete(!missingGlyphs);
   }
 
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
 
+  TextDocumentLayout::TextDocumentLayout(QTextDocument & doc, const Nimble::Vector2f & size)
+    : TextLayout(size)
+    , m_d(new D(doc))
+  {
+    regenerate();
+  }
+
+  TextDocumentLayout::~TextDocumentLayout()
+  {
+    delete m_d;
+  }
+
+  void TextDocumentLayout::regenerate()
+  {
+    // trigger relayout in Qt
+    m_d->m_doc.setTextWidth(size().x);
+    m_d->m_doc.documentLayout()->documentSize();
+    m_d->disableKerning();
+
+    clearGlyphs();
+
+    QTextCursor cursor(&m_d->m_doc);
+    bool missingGlyphs = false;
+
+    for (QTextBlock block = m_d->m_doc.begin(); block.isValid(); block = block.next()) {
+      QTextLayout * layout = block.layout();
+      const Nimble::Vector2f layoutLocation(layout->position().x(), layout->position().y());
+      foreach (const QGlyphRun & glyphRun, layout->glyphRuns())
+        missingGlyphs |= generateGlyphs(layoutLocation, glyphRun);
+    }
+
+    setComplete(!missingGlyphs);
+  }
 
 } // namespace Luminous
