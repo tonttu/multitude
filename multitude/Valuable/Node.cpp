@@ -517,7 +517,7 @@ namespace Valuable
     vp.m_type = listenerType;
 
     if(!m_eventSendNames.contains(from)) {
-      warning("Node::eventAddListener # Adding listener to unexistent event '%s'", from.toUtf8().data());
+      warning("Node::eventAddListener # Adding listener to nonexistent event '%s'", from.toUtf8().data());
     }
 
     if(!obj->m_eventListenNames.contains(to)) {
@@ -551,7 +551,7 @@ namespace Valuable
     vp.m_to = to;
 
     if(!m_eventSendNames.contains(from)) {
-      warning("Node::eventAddListener # Adding listener to unexistent event '%s'", from.toUtf8().data());
+      warning("Node::eventAddListener # Adding listener to nonexistent event '%s'", from.toUtf8().data());
     }
 
     if(defaultData)
@@ -576,7 +576,7 @@ namespace Valuable
     vp.m_type = listenerType;
 
     if(!m_eventSendNames.contains(from)) {
-      warning("Node::eventAddListener # Adding listener to unexistent event '%s'", from.toUtf8().data());
+      warning("Node::eventAddListener # Adding listener to nonexistent event '%s'", from.toUtf8().data());
     }
 
     // No duplicate check, since there is no way to compare std::function objects
@@ -592,7 +592,7 @@ namespace Valuable
     vp.m_type = listenerType;
 
     if(!m_eventSendNames.contains(from)) {
-      warning("Node::eventAddListenerBd # Adding listener to unexistent event '%s'", from.toUtf8().data());
+      warning("Node::eventAddListenerBd # Adding listener to nonexistent event '%s'", from.toUtf8().data());
     }
 
     // No duplicate check, since there is no way to compare std::function objects
