@@ -103,7 +103,7 @@ namespace Luminous
     void setStrokeWidth(float width) { m_stroke.setWidth(width); }
     float strokeWidth() const { return m_stroke.width(); }
 
-    void setTexture(Luminous::Texture & texture) { m_fill.setTexture(texture); }
+    void setTexture(const Luminous::Texture & texture) { m_fill.setTexture(texture); }
     void setTexture(const QByteArray & name, const Luminous::Texture & texture) { m_fill.setTexture(name, texture); }
 
     void setBlendMode(const BlendMode & mode) { m_blendMode = mode; }
