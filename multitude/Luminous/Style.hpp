@@ -12,6 +12,7 @@
 #include <Luminous/StencilMode.hpp>
 
 #include <QFont>
+#include <QTextOption>
 
 namespace Luminous
 {
@@ -117,6 +118,9 @@ namespace Luminous
     QFont & font() { return m_font; }
     const QFont & font() const { return m_font; }
 
+    QTextOption & textOption() { return m_textOption; }
+    const QTextOption & textOption() const { return m_textOption; }
+
   private:
     Fill m_fill;
     Stroke m_stroke;
@@ -125,6 +129,7 @@ namespace Luminous
     DepthMode m_depthMode;
     StencilMode m_stencilMode;
     QFont m_font;
+    QTextOption m_textOption;
   };
 
   /////////////////////////////////////////////////////////////////////////////

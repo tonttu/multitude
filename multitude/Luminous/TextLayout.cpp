@@ -24,20 +24,32 @@
 
 namespace std
 {
-  template<> struct hash<std::tuple<QString, Nimble::Vector2i, QFont>>
+  template<> struct hash<std::tuple<QString, Nimble::Vector2i, QFont, QTextOption>>
   {
-    inline size_t operator()(const std::tuple<QString, Nimble::Vector2i, QFont> & tuple) const
+    inline size_t operator()(const std::tuple<QString, Nimble::Vector2i, QFont, QTextOption> & tuple) const
     {
       std::hash<uint> hasher;
       return qHash(std::get<0>(tuple)) ^ hasher(std::get<1>(tuple).x) ^
-          hasher(std::get<1>(tuple).y) ^ qHash(std::get<2>(tuple).key());
+          hasher(std::get<1>(tuple).y) ^ qHash(std::get<2>(tuple).key()) ^
+          hasher(std::get<3>(tuple).alignment());
     }
   };
 }
 
+bool operator==(const QTextOption & o1, const QTextOption & o2)
+{
+  return int(o1.alignment()) == int(o2.alignment()) &&
+      o1.flags() == o2.flags() &&
+      o1.tabStop() == o2.tabStop() &&
+      o1.tabs() == o2.tabs() &&
+      o1.textDirection() == o2.textDirection() &&
+      o1.useDesignMetrics() == o2.useDesignMetrics() &&
+      o1.wrapMode() == o2.wrapMode();
+}
+
 namespace
 {
-  std::unordered_map<std::tuple<QString, Nimble::Vector2i, QFont>, std::unique_ptr<Luminous::SimpleTextLayout>> s_layoutCache;
+  std::unordered_map<std::tuple<QString, Nimble::Vector2i, QFont, QTextOption>, std::unique_ptr<Luminous::SimpleTextLayout>> s_layoutCache;
   Radiant::Mutex s_layoutCacheMutex;
 
   std::map<QString, std::unique_ptr<Luminous::FontCache>> s_fontCache;
@@ -468,8 +480,13 @@ namespace Luminous
     Group & findGroup(Texture & texture);
 
   public:
-    const Nimble::Vector2f m_size;
-    bool m_complete;
+    Nimble::Vector2f m_maximumSize;
+    Nimble::Vector2f m_renderLocation;
+    Nimble::Rectf m_boundingBox;
+    /// Set to false if we need to do layout again
+    bool m_layoutReady;
+    /// Do we have all glyphs == no need to call regenerate()
+    bool m_glyphsReady;
 
     std::map<RenderResource::Id, int> m_groupCache;
     std::vector<Group> m_groups;
@@ -481,7 +498,7 @@ namespace Luminous
   class SimpleTextLayout::D
   {
   public:
-    D(const QString & text, const QFont & font);
+    D(const QString & text, const QFont & font, const QTextOption & option);
 
     void layout(const Nimble::Vector2f & size);
 
@@ -495,20 +512,22 @@ namespace Luminous
   class TextDocumentLayout::D
   {
   public:
-    D(QTextDocument & doc);
+    D();
 
     void disableKerning();
 
   public:
-    QTextDocument & m_doc;
+    QTextDocument m_doc;
   };
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  TextLayout::D::D(const Nimble::Vector2f & size)
-    : m_size(size)
-    , m_complete(false)
+  TextLayout::D::D(const Nimble::Vector2f & maximumSize)
+    : m_maximumSize(maximumSize)
+    , m_renderLocation(0, 0)
+    , m_layoutReady(false)
+    , m_glyphsReady(false)
   {
     /*QImage img(m_layout.boundingRect().width(), m_layout.boundingRect().height(), QImage::Format_ARGB32_Premultiplied);
     QPainter p(&img);
@@ -574,9 +593,11 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  SimpleTextLayout::D::D(const QString & text, const QFont & font)
+  SimpleTextLayout::D::D(const QString & text, const QFont & font,
+                         const QTextOption & option)
     : m_layout(text, font)
   {
+    m_layout.setTextOption(option);
   }
 
   void SimpleTextLayout::D::layout(const Nimble::Vector2f & size)
@@ -604,8 +625,7 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  TextDocumentLayout::D::D(QTextDocument & doc)
-    : m_doc(doc)
+  TextDocumentLayout::D::D()
   {}
 
   void TextDocumentLayout::D::disableKerning()
@@ -632,8 +652,8 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  TextLayout::TextLayout(const Nimble::Vector2f & size)
-    : m_d(new D(size))
+  TextLayout::TextLayout(const Nimble::Vector2f & maximumSize)
+    : m_d(new D(maximumSize))
   {}
 
   TextLayout::~TextLayout()
@@ -658,23 +678,66 @@ namespace Luminous
 
   bool TextLayout::isComplete() const
   {
-    return m_d->m_complete;
+    return m_d->m_glyphsReady && m_d->m_layoutReady;
   }
 
-  Nimble::Vector2f TextLayout::size() const
+  void TextLayout::invalidate()
   {
-    return m_d->m_size;
+    m_d->m_layoutReady = false;
   }
 
-  void TextLayout::setComplete(bool v)
+  void TextLayout::setMaximumSize(const Nimble::Vector2f & size)
   {
-    m_d->m_complete = v;
+    m_d->m_maximumSize = size;
+    m_d->m_layoutReady = false;
+    m_d->m_glyphsReady = false;
+  }
+
+  Nimble::Vector2f TextLayout::maximumSize() const
+  {
+    return m_d->m_maximumSize;
+  }
+
+  Nimble::Rectf TextLayout::boundingBox() const
+  {
+    return m_d->m_boundingBox;
+  }
+
+  const Nimble::Vector2f & TextLayout::renderLocation() const
+  {
+    return m_d->m_renderLocation;
+  }
+
+  void TextLayout::setRenderLocation(const Nimble::Vector2f & location)
+  {
+    m_d->m_renderLocation = location;
+  }
+
+  void TextLayout::setBoundingBox(const Nimble::Rectf & bb)
+  {
+    m_d->m_boundingBox = bb;
+  }
+
+  void TextLayout::setLayoutReady(bool v)
+  {
+    m_d->m_layoutReady = v;
+  }
+
+  bool TextLayout::layoutReady() const
+  {
+    return m_d->m_layoutReady;
+  }
+
+  void TextLayout::setGlyphsReady(bool v)
+  {
+    m_d->m_glyphsReady = v;
   }
 
   void TextLayout::clearGlyphs()
   {
     m_d->m_groupCache.clear();
     m_d->m_groups.clear();
+    m_d->m_glyphsReady = false;
   }
 
   bool TextLayout::generateGlyphs(const Nimble::Vector2f & location,
@@ -686,13 +749,13 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  SimpleTextLayout::SimpleTextLayout(const QString & text, const Nimble::Vector2f & size, QFont font)
-    : TextLayout(size)
+  SimpleTextLayout::SimpleTextLayout(const QString & text, const Nimble::Vector2f & maximumSize,
+                                     const QFont & font, const QTextOption & textOption)
+    : TextLayout(maximumSize)
   {
-    font.setKerning(false);
-    m_d = new D(text, font);
-    m_d->layout(size);
-    regenerate();
+    QFont f(font);
+    f.setKerning(false);
+    m_d = new D(text, f, textOption);
   }
 
   SimpleTextLayout::~SimpleTextLayout()
@@ -702,49 +765,62 @@ namespace Luminous
 
   const SimpleTextLayout & SimpleTextLayout::cachedLayout(const QString & text,
                                                           const Nimble::Vector2f & size,
-                                                          const QFont & font)
+                                                          const QFont & font,
+                                                          const QTextOption & option)
   {
     SimpleTextLayout * layout;
 
     {
       /// @todo someone should also delete old layouts..
       Radiant::Guard g(s_layoutCacheMutex);
-      std::unique_ptr<SimpleTextLayout> & ptr = s_layoutCache[std::make_tuple(text, size.cast<int>(), font)];
-      if (!ptr) {
-        ptr.reset(new SimpleTextLayout(text, size, font));
-        return *ptr;
-      }
+      std::unique_ptr<SimpleTextLayout> & ptr = s_layoutCache[std::make_tuple(text, size.cast<int>(), font, option)];
+      if (!ptr)
+        ptr.reset(new SimpleTextLayout(text, size, font, option));
       layout = ptr.get();
     }
 
-    if (!layout->isComplete()) {
-      layout->regenerate();
-    }
+    layout->generate();
 
     return *layout;
   }
 
-  void SimpleTextLayout::regenerate()
+  void SimpleTextLayout::generate()
   {
+    if (!layoutReady()) {
+      m_d->layout(maximumSize());
+      setBoundingBox(m_d->m_layout.boundingRect());
+      auto align = m_d->m_layout.textOption().alignment();
+      /// @todo how about clipping?
+      if (align & Qt::AlignBottom) {
+        setRenderLocation(Nimble::Vector2f(0, maximumSize().y - boundingBox().height()));
+      } else if (align & Qt::AlignVCenter) {
+        setRenderLocation(Nimble::Vector2f(0, 0.5f * (maximumSize().y - boundingBox().height())));
+      } else {
+        setRenderLocation(Nimble::Vector2f(0, 0));
+      }
+      setLayoutReady(true);
+      clearGlyphs();
+    }
+
+    if (isComplete())
+      return;
+
     const Nimble::Vector2f layoutLocation(m_d->m_layout.position().x(), m_d->m_layout.position().y());
     bool missingGlyphs = false;
-
-    clearGlyphs();
 
     foreach (const QGlyphRun & glyphRun, m_d->m_layout.glyphRuns())
       missingGlyphs |= generateGlyphs(layoutLocation, glyphRun);
 
-    setComplete(!missingGlyphs);
+    setGlyphsReady(!missingGlyphs);
   }
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  TextDocumentLayout::TextDocumentLayout(QTextDocument & doc, const Nimble::Vector2f & size)
+  TextDocumentLayout::TextDocumentLayout(const Nimble::Vector2f & size)
     : TextLayout(size)
-    , m_d(new D(doc))
+    , m_d(new D())
   {
-    regenerate();
   }
 
   TextDocumentLayout::~TextDocumentLayout()
@@ -752,16 +828,22 @@ namespace Luminous
     delete m_d;
   }
 
-  void TextDocumentLayout::regenerate()
+  void TextDocumentLayout::generate()
   {
-    // trigger relayout in Qt
-    m_d->m_doc.setTextWidth(size().x);
-    m_d->m_doc.documentLayout()->documentSize();
-    m_d->disableKerning();
+    if (!layoutReady()) {
+      // trigger relayout in Qt
+      m_d->disableKerning();
+      m_d->m_doc.setTextWidth(maximumSize().x);
+      QSizeF size = m_d->m_doc.documentLayout()->documentSize();
+      setBoundingBox(Nimble::Rectf(0, 0, size.width(), size.height()));
 
-    clearGlyphs();
+      setLayoutReady(true);
+      clearGlyphs();
+    }
 
-    QTextCursor cursor(&m_d->m_doc);
+    if (isComplete())
+      return;
+
     bool missingGlyphs = false;
 
     for (QTextBlock block = m_d->m_doc.begin(); block.isValid(); block = block.next()) {
@@ -771,7 +853,17 @@ namespace Luminous
         missingGlyphs |= generateGlyphs(layoutLocation, glyphRun);
     }
 
-    setComplete(!missingGlyphs);
+    setGlyphsReady(!missingGlyphs);
+  }
+
+  QTextDocument & TextDocumentLayout::document()
+  {
+    return m_d->m_doc;
+  }
+
+  const QTextDocument & TextDocumentLayout::document() const
+  {
+    return m_d->m_doc;
   }
 
 } // namespace Luminous

@@ -6,13 +6,14 @@
 
 #include <Nimble/Vector2.hpp>
 
-#include <QFont>
-
 #include <array>
 
 class QRawFont;
 class QGlyphRun;
 class QTextDocument;
+class QTextOption;
+class QFont;
+class QTextLayout;
 
 namespace Luminous {
   
@@ -74,13 +75,25 @@ namespace Luminous {
     LUMINOUS_API const std::vector<Item> & items(int groupIndex) const;
 
     LUMINOUS_API bool isComplete() const;
+    LUMINOUS_API virtual void generate() = 0;
 
-    LUMINOUS_API Nimble::Vector2f size() const;
+    LUMINOUS_API void invalidate();
+
+    LUMINOUS_API virtual void setMaximumSize(const Nimble::Vector2f & size);
+    LUMINOUS_API Nimble::Vector2f maximumSize() const;
+
+    LUMINOUS_API Nimble::Rectf boundingBox() const;
+
+    LUMINOUS_API const Nimble::Vector2f & renderLocation() const;
 
   protected:
-    LUMINOUS_API TextLayout(const Nimble::Vector2f & size);
+    LUMINOUS_API TextLayout(const Nimble::Vector2f & maximumSize);
 
-    LUMINOUS_API void setComplete(bool v);
+    LUMINOUS_API void setRenderLocation(const Nimble::Vector2f & location);
+    LUMINOUS_API void setBoundingBox(const Nimble::Rectf & bb);
+    LUMINOUS_API void setLayoutReady(bool v);
+    LUMINOUS_API bool layoutReady() const;
+    LUMINOUS_API void setGlyphsReady(bool v);
     LUMINOUS_API void clearGlyphs();
     LUMINOUS_API bool generateGlyphs(const Nimble::Vector2f & location,
                                      const QGlyphRun & glyphRun);
@@ -90,19 +103,24 @@ namespace Luminous {
     D * m_d;
   };
 
-  /// Plain text, one font, inside rectangle (0,0) -> size
+  /// Plain text, usually one font, inside rectangle (0,0) -> size
   class SimpleTextLayout : public TextLayout
   {
   public:
-    LUMINOUS_API SimpleTextLayout(const QString & text, const Nimble::Vector2f & size, QFont font);
+    LUMINOUS_API SimpleTextLayout(const QString & text, const Nimble::Vector2f & maximumSize,
+                                  const QFont & font, const QTextOption & textOption);
     LUMINOUS_API virtual ~SimpleTextLayout();
+
+    /// If the QTextLayout is modified, it's required to call invalidate() manually
+    LUMINOUS_API QTextLayout & layout();
+    LUMINOUS_API const QTextLayout & layout() const;
 
     LUMINOUS_API static const SimpleTextLayout & cachedLayout(const QString & text,
                                                               const Nimble::Vector2f & size,
-                                                              const QFont & font);
+                                                              const QFont & font,
+                                                              const QTextOption & option);
 
-  protected:
-    LUMINOUS_API void regenerate();
+    LUMINOUS_API virtual void generate() OVERRIDE;
 
   private:
     class D;
@@ -113,10 +131,13 @@ namespace Luminous {
   class TextDocumentLayout : public TextLayout
   {
   public:
-    LUMINOUS_API TextDocumentLayout(QTextDocument & doc, const Nimble::Vector2f & size);
+    LUMINOUS_API TextDocumentLayout(const Nimble::Vector2f & size);
     LUMINOUS_API virtual ~TextDocumentLayout();
 
-    LUMINOUS_API void regenerate();
+    LUMINOUS_API virtual void generate() OVERRIDE;
+
+    LUMINOUS_API QTextDocument & document();
+    LUMINOUS_API const QTextDocument & document() const;
 
   private:
     class D;

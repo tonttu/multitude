@@ -1136,6 +1136,8 @@ namespace Luminous
     Nimble::Matrix4f m;
     m.identity();
 
+    Nimble::Vector2f renderLocation = layout.renderLocation();
+
     for (int g = 0; g < layout.groupCount(); ++g) {
       textures["tex"] = layout.texture(g);
 
@@ -1151,7 +1153,7 @@ namespace Luminous
         b.command->depthMode = d;
         b.command->stencilMode = style.stencilMode();
 
-        m.setTranslation(Nimble::Vector3f(location.x, location.y, b.depth));
+        m.setTranslation(Nimble::Vector3f(renderLocation.x + location.x, renderLocation.y + location.y, b.depth));
         b.uniform->modelMatrix = transform4() * m;
         b.uniform->modelMatrix.transpose();
 
@@ -1181,10 +1183,11 @@ namespace Luminous
   void RenderContext::drawText(const QString & text, const Nimble::Rectf & rect, const Style & style, bool useCache)
   {
     if (useCache) {
-      const SimpleTextLayout & layout = SimpleTextLayout::cachedLayout(text, rect.size(), style.font());
+      const SimpleTextLayout & layout = SimpleTextLayout::cachedLayout(text, rect.size(), style.font(), style.textOption());
       drawText(layout, rect.low(), style);
     } else {
-      SimpleTextLayout layout(text, rect.size(), style.font());
+      SimpleTextLayout layout(text, rect.size(), style.font(), style.textOption());
+      layout.generate();
       drawText(layout, rect.low(), style);
     }
   }
