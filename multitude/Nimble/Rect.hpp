@@ -48,6 +48,16 @@ namespace Nimble {
     /// Returns true if the rectangle is empty
     inline bool isEmpty() const { return m_low.x > m_high.x || m_low.y > m_high.y; }
 
+    /// Convert QRectF to Nimble::RectT
+    inline RectT(const QRectF & qrect)
+      : m_low(qrect.left(), qrect.top()), m_high(qrect.right(), qrect.bottom()) {}
+
+    /// Convert QRect to Nimble::RectT
+    inline RectT(const QRect & qrect)
+      : m_low(qrect.left(), qrect.top()),
+        // QRect::right()/bottom() would return wrong value (left() + width() - 1)
+        m_high(qrect.left()+qrect.width(), qrect.bottom()+qrect.height()) {}
+
     /// Constructs a rectangle and initializes it to the given points
     inline RectT(const Vector2T<T> & low, const Vector2T<T> & high)
       : m_low(low), m_high(high) {}
