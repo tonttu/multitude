@@ -1,16 +1,15 @@
-#include "Spline.hpp"
-
-#include "ContextVariable.hpp"
-#include "RenderContext.hpp"
-#include "Shader.hpp"
-#include "VertexBuffer.hpp"
+#include "Luminous/Spline.hpp"
+#include "Luminous/RenderContext.hpp"
+#include "Luminous/Program.hpp"
+#include "Luminous/VertexDescription.hpp"
 
 #include <Nimble/Splines.hpp>
+#include <Nimble/Vector2.hpp>
+#include <Nimble/Vector3.hpp>
+#include <Nimble/Vector4.hpp>
 
 namespace
 {
-  static Luminous::Shader s_shader;
-
   class Point
   {
   public:
@@ -25,26 +24,29 @@ namespace
     Nimble::Vector2   m_location;
     /* valid time range when this point should be visible, [m_range.x, m_range.y) */
     Nimble::Vector2f  m_range;
-    Nimble::Vector4ub m_color;
+    Radiant::Color    m_color;
     float             m_width;
   };
 
   class Vertex
   {
   public:
-
     Vertex()
-      : m_location(0, 0)
-      , m_range(0, 10000)
-      , m_color(0, 0, 0, 0)
+      : location(0, 0, 0)
+      , range(0, 10000)
+      , color(0, 0, 0, 0)
     {
     }
 
-    Nimble::Vector2 m_location;
-    Nimble::Vector2f m_range;
-    Nimble::Vector4ub m_color;
+    Nimble::Vector3f location;
+    Nimble::Vector2f range;
+    Nimble::Vector4f color;
   };
 
+  struct UniformBlock : public Luminous::BasicUniformBlock
+  {
+    float time;
+  };
 }
 
   ///////////////////////////////////////////////////////////////////
@@ -63,7 +65,23 @@ namespace Luminous {
       Nimble::Rectf bounds;
     };
 
-    D() : m_path(nullptr), m_redoLocation(), m_endTime(0), m_mingap(2.0f), m_maxgap(3.0f), m_generation(0) {}
+    D()
+      : m_path(nullptr)
+      , m_redoLocation()
+      , m_endTime(0)
+      , m_mingap(2.0f)
+      , m_maxgap(3.0f)
+      , m_generation(0)
+    {
+      /// @todo should share these among instances of the spline   
+      m_shader.loadShader("Luminous/GLSL150/spline.fs", Luminous::ShaderGLSL::Fragment);
+      m_shader.loadShader("Luminous/GLSL150/spline.vs", Luminous::ShaderGLSL::Vertex);
+
+      m_descr.addAttribute<Nimble::Vector2f>("vertex_position");
+      m_descr.addAttribute<Nimble::Vector2f>("vertex_range");
+      m_descr.addAttribute<Nimble::Vector4f>("vertex_color");
+      m_shader.setVertexDescription(m_descr);
+    }
 
     void clear()
     {
@@ -105,9 +123,11 @@ namespace Luminous {
     float m_maxgap;
 
     Nimble::Rect m_bounds;
-
-    ContextVariableT<VertexBuffer> m_vbo;
+    
     std::size_t m_generation;
+
+    Luminous::VertexDescription m_descr;
+    Luminous::Program m_shader;
   };
 
   void Spline::D::addPoint(const Point & p)
@@ -199,7 +219,7 @@ namespace Luminous {
     float w1 = 1.0f - w2;
 
     res.m_width = p1.m_width * w1 + p2.m_width * w2;
-    res.m_color = (p1.m_color.cast<float>() * w1 + p2.m_color.cast<float>() * w2).cast<unsigned char>();
+    res.m_color = p1.m_color * w1 + p2.m_color * w2;
     res.m_range = p1.m_range * w1 + p2.m_range * w2;
     res.m_location = p1.m_location * w1 + p2.m_location * w2;
 
@@ -276,9 +296,9 @@ namespace Luminous {
     avg *= points[0].m_width * 0.5f;
 
     Vertex v;
-    v.m_color = points[0].m_color;
-    v.m_location = cnow - avg;
-    v.m_range = points[0].m_range;
+    v.color = points[0].m_color;
+    v.location = Nimble::Vector3f(cnow - avg, 0.f);
+    v.range = points[0].m_range;
 
     if(!m_vertices.empty()) {
       // degenerated triangle
@@ -288,7 +308,7 @@ namespace Luminous {
 
     m_vertices.push_back(v);
 
-    v.m_location = cnow + avg;
+    v.location = Nimble::Vector3f(cnow + avg, 0.f);
     m_vertices.push_back(v);
 
     for (int i = 1; i < n; ++i) {
@@ -319,74 +339,60 @@ namespace Luminous {
       avg /= dp;
       avg *= p.m_width * 0.5f;
 
-      v.m_range = p.m_range;
-      v.m_color = p.m_color;
+      v.range = p.m_range;
+      v.color = p.m_color;
 
-      v.m_location = cnow - avg;
+      v.location = Nimble::Vector3f(cnow - avg, 0.f);
       m_vertices.push_back(v);
 
-      v.m_location = cnow + avg;
+      v.location = Nimble::Vector3f(cnow + avg, 0.f);
       m_vertices.push_back(v);
 
       /// Doesn't really need the index on every vertex, lets do it every 50 vertex
       /// (m_vertices should be always even here)
       if(m_vertices.size() % 50 == 0) {
-        m_index[v.m_range.x] = m_vertices.size();
+        m_index[v.range.x] = m_vertices.size();
       }
     }
 
-    m_index[v.m_range.x] = m_vertices.size();
+    m_index[v.range.x] = m_vertices.size();
   }
 
   void Spline::D::render(Luminous::RenderContext & r, float time) const
   {
+    // Nothing to render
     if(m_vertices.empty())
       return;
 
+    /// @todo Currently quite inefficient since it recreates the buffer all the time
     auto it = m_index.lower_bound(time);
     // Check if there even are any vertices ready at this time
     if(it == m_index.begin() && it->first > time)
       return;
 
-    const std::size_t vertices = it == m_index.end() ? m_vertices.size() : it->second;
-    assert(vertices > 0);
+    const std::size_t vertices = (it == m_index.end() ? m_vertices.size() : it->second);
 
-    r.flush();
+    /// @todo Should we be able to overrule this with Style::Translucent
+    /// @todo Guess this depends on all the vertex colors
+    bool translucent =
+      m_shader.translucent();
 
-    VertexBuffer & vbo = m_vbo.ref(&r);
-    vbo.bind();
+    /// @todo temporary dummy to avoid separate render() function
+    const std::map<QByteArray, const Texture *> textures;
+    auto b = r.render<Vertex, UniformBlock>(translucent, Luminous::PrimitiveType_TriangleStrip, vertices, vertices, 1.f, m_shader, textures);
+    auto v = b.vertex;
+    auto idx = b.idx;
 
-    if(vbo.generation() != m_generation) {
-      // Load new vertex data to the GPU
-      vbo.fill(m_vertices.data(), m_vertices.size() * sizeof(Vertex), VertexBuffer::STATIC_DRAW);
-      vbo.setGeneration(m_generation);
+    for (unsigned int i = 0; i < vertices; ++i) {
+      // Copy vertex data
+      *v = m_vertices[i];
+      // Patch the depth value
+      v->location.z = b.depth;
+      v++;
+      *idx++ = i;
     }
 
-    GLSLProgramObject * prog = s_shader.bind();
-
-    assert(prog != nullptr);
-
-    prog->setUniformMatrix4("view_transform", r.viewTransform());
-    prog->setUniformMatrix3("object_transform", r.transform());
-    prog->setUniformFloat("time", time);
-
-    int aloc = prog->getAttribLoc("location");
-    int acol = prog->getAttribLoc("color");
-    int aran = prog->getAttribLoc("range");
-
-    assert(aloc >= 0 && acol >= 0 && aran >= 0);
-
-    Vertex vr;
-    const int vsize = sizeof(vr);
-
-    VertexAttribArrayStep ls(aloc, 2, GL_FLOAT, GL_FALSE, vsize, offsetBytes(vr.m_location, vr));
-    VertexAttribArrayStep ts(aran, 2, GL_FLOAT, false, vsize, offsetBytes(vr.m_range, vr));
-    VertexAttribArrayStep cs(acol, 4, GL_UNSIGNED_BYTE, GL_TRUE, vsize, offsetBytes(vr.m_color, vr));
-
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, GLsizei(vertices));
-
-    vbo.unbind();
-    // Radiant::info("Spline::D::render # %d / %d", vertices, (int) m_vertices.size());
+    b.uniform->time = time;
   }
 
   int Spline::D::undoRedo(int points)
@@ -444,23 +450,8 @@ namespace Luminous {
 
 
   Spline::Spline()
-    : m_d(nullptr)
+    : m_d(new Spline::D)
   {
-    {
-      // Load the shader for rendering
-      static Radiant::Mutex mutex;
-      Radiant::Guard g(mutex);
-
-      /// @todo fix for new render pipe
-      if(!s_shader.isDefined()) {
-        //QString fspath = RenderContext::locateStandardShader("spline.fs");
-        //QString vspath = RenderContext::locateStandardShader("spline.vs");
-        //s_shader.loadFragmentShader(fspath);
-        //s_shader.loadVertexShader(vspath);
-
-        assert(s_shader.isDefined());
-      }
-    }
   }
 
   Spline::~Spline()
@@ -468,16 +459,15 @@ namespace Luminous {
     delete m_d;
   }
 
-  Spline::Spline(Spline && spline) : m_d(spline.m_d)
+  Spline::Spline(Spline && spline)
+    : m_d(std::move(spline.m_d))
   {
-    spline.m_d = nullptr;
   }
 
   Spline & Spline::operator=(Spline && spline)
   {
     delete m_d;
-    m_d = spline.m_d;
-    spline.m_d = nullptr;
+    m_d = std::move(spline.m_d);
     return *this;
   }
 
@@ -515,34 +505,28 @@ namespace Luminous {
 
   void Spline::erasePermanent(const Nimble::Rectangle &eraser)
   {
-    if(m_d)
-      m_d->erase(eraser, 0.0f, true);
+    m_d->erase(eraser, 0.0f, true);
   }
 
   void Spline::render(Luminous::RenderContext & r, float time) const
   {
-    if(m_d)
-      m_d->render(r, time);
+    m_d->render(r, time);
   }
 
   void Spline::setCalculationParameters(float mingap, float maxgap)
   {
-    if(!m_d)
-      m_d = new D();
-
     m_d->m_mingap = mingap;
     m_d->m_maxgap = maxgap;
   }
 
   void Spline::recalculate()
   {
-    if(m_d)
-      m_d->recalculate();
+    m_d->recalculate();
   }
 
   float Spline::beginTime() const
   {
-    if(m_d && !m_d->m_paths.empty()) {
+    if(!m_d->m_paths.empty()) {
       std::vector<Point> & points = m_d->m_paths[0].points;
       if(!points.empty())
         return points[0].m_range.x;
@@ -552,12 +536,12 @@ namespace Luminous {
 
   float Spline::endTime() const
   {
-    return m_d ? m_d->m_endTime : 0;
+    return m_d->m_endTime;
   }
 
   int Spline::undoRedo(int points)
   {
-    int changes = m_d ? m_d->undoRedo(points) : 0;
+    int changes = m_d->undoRedo(points);
     if(changes > 0)
       recalculate();
     return changes;
@@ -565,8 +549,6 @@ namespace Luminous {
 
   size_t Spline::controlPointCount() const
   {
-    if(!m_d)
-      return 0;
     if(!m_d->m_path)
       return 0;
     return m_d->m_path->points.size();
@@ -574,18 +556,16 @@ namespace Luminous {
 
   Nimble::Rect Spline::controlPointBounds() const
   {
-    return m_d ? m_d->m_bounds : Nimble::Rect(0,0,0,0);
+    return m_d->m_bounds;
   }
 
   bool Spline::isEmpty() const
   {
-    return m_d ? m_d->m_paths.empty() : true;
+    return m_d->m_paths.empty();
   }
 
   QDataStream & operator<<(QDataStream & out, const Spline & spline)
   {
-    if(!spline.m_d) return out;
-
     const qint64 hdr = 0;
     const qint64 paths = spline.m_d->m_paths.size();
     out << hdr << paths;
@@ -602,8 +582,6 @@ namespace Luminous {
   QDataStream & operator>>(QDataStream & in, Spline & spline)
   {
     spline.clear();
-    if(!spline.m_d)
-      spline.m_d = new Spline::D();
     qint64 hdr = 0;
     qint64 paths = 0;
     in >> hdr >> paths;
