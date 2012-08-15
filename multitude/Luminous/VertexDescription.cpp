@@ -61,6 +61,9 @@ namespace Luminous
   template <> LUMINOUS_API void VertexDescription::createAttribute<int>(VertexAttribute & attr) { attr.type = VertexAttribute::Int; attr.count = 1; attr.size = sizeof(int); }
   template <> LUMINOUS_API void VertexDescription::createAttribute<float>(VertexAttribute & attr) { attr.type = VertexAttribute::Float; attr.count = 1; attr.size = sizeof(float); }
   template <> LUMINOUS_API void VertexDescription::createAttribute<double>(VertexAttribute & attr) { attr.type = VertexAttribute::Double; attr.count = 1; attr.size = sizeof(double); }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<unsigned char>(VertexAttribute & attr) { attr.type = VertexAttribute::UnsignedByte; attr.count = 1; attr.size = sizeof(unsigned char); }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<unsigned short>(VertexAttribute & attr) { attr.type = VertexAttribute::UnsignedShort; attr.count = 1; attr.size = sizeof(unsigned short); }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<unsigned int>(VertexAttribute & attr) { attr.type = VertexAttribute::UnsignedInt; attr.count = 1; attr.size = sizeof(unsigned int); }
   template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector2i>(VertexAttribute & attr) { attr.type = VertexAttribute::Int; attr.count = 2; attr.size = sizeof(int)*2; }
   template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector3i>(VertexAttribute & attr) { attr.type = VertexAttribute::Int; attr.count = 3; attr.size = sizeof(int)*3; }
   template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector4i>(VertexAttribute & attr) { attr.type = VertexAttribute::Int; attr.count = 4; attr.size = sizeof(int)*4; }
@@ -70,4 +73,13 @@ namespace Luminous
   template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector2d>(VertexAttribute & attr) { attr.type = VertexAttribute::Double; attr.count = 2; attr.size = sizeof(double)*2; }
   template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector3d>(VertexAttribute & attr) { attr.type = VertexAttribute::Double; attr.count = 3; attr.size = sizeof(double)*3; }
   template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector4d>(VertexAttribute & attr) { attr.type = VertexAttribute::Double; attr.count = 4; attr.size = sizeof(double)*4; }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector2T<unsigned char>>(VertexAttribute & attr) { attr.type = VertexAttribute::UnsignedByte; attr.count = 2; attr.size = sizeof(unsigned char)*2; }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector3T<unsigned char>>(VertexAttribute & attr) { attr.type = VertexAttribute::UnsignedByte; attr.count = 3; attr.size = sizeof(unsigned char)*3; }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector4T<unsigned char>>(VertexAttribute & attr) { attr.type = VertexAttribute::UnsignedByte; attr.count = 4; attr.size = sizeof(unsigned char)*4; }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector2T<unsigned short>>(VertexAttribute & attr) { attr.type = VertexAttribute::UnsignedShort; attr.count = 2; attr.size = sizeof(unsigned short)*2; }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector3T<unsigned short>>(VertexAttribute & attr) { attr.type = VertexAttribute::UnsignedShort; attr.count = 3; attr.size = sizeof(unsigned short)*3; }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector4T<unsigned short>>(VertexAttribute & attr) { attr.type = VertexAttribute::UnsignedShort; attr.count = 4; attr.size = sizeof(unsigned short)*4; }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector2T<unsigned int>>(VertexAttribute & attr) { attr.type = VertexAttribute::UnsignedInt; attr.count = 2; attr.size = sizeof(unsigned int)*2; }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector3T<unsigned int>>(VertexAttribute & attr) { attr.type = VertexAttribute::UnsignedInt; attr.count = 3; attr.size = sizeof(unsigned int)*3; }
+  template <> LUMINOUS_API void VertexDescription::createAttribute<Nimble::Vector4T<unsigned int>>(VertexAttribute & attr) { attr.type = VertexAttribute::UnsignedInt; attr.count = 4; attr.size = sizeof(unsigned int)*4; }
 }
