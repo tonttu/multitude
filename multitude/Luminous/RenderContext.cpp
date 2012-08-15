@@ -1159,13 +1159,14 @@ namespace Luminous
 
         int index = 0;
 
+        const int first = i;
         for (const int m = count + i; i < m; ++i) {
           auto & item = items[i];
           std::copy(item.vertices.begin(), item.vertices.end(), b.vertex);
           b.vertex += 4;
 
           // first vertex twice
-          if (i != 0)
+          if (i != first)
             *b.idx++ = index;
           *b.idx++ = index++;
           *b.idx++ = index++;
