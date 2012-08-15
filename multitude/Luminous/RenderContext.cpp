@@ -1180,9 +1180,10 @@ namespace Luminous
     }
   }
 
-  void RenderContext::drawText(const QString & text, const Nimble::Rectf & rect, const Style & style, bool useCache)
+  void RenderContext::drawText(const QString & text, const Nimble::Rectf & rect,
+                               const Style & style, TextFlags flags)
   {
-    if (useCache) {
+    if (flags == TextStatic) {
       const SimpleTextLayout & layout = SimpleTextLayout::cachedLayout(text, rect.size(), style.font(), style.textOption());
       drawText(layout, rect.low(), style);
     } else {
