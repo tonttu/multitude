@@ -455,22 +455,6 @@ namespace Luminous
     RenderContext & m_r;
   };
 
-  class VertexAttribArrayStep : public Patterns::NotCopyable
-  {
-  public:
-    VertexAttribArrayStep(int pos, int elems, GLenum type, GLboolean normalized, size_t stride,
-                          size_t offset);
-
-    VertexAttribArrayStep(GLSLProgramObject & prog, const char * attribname,
-                          int elems, GLenum type, GLboolean normalized, size_t stride,
-                          size_t offset, const char * userstr = 0);
-
-    ~VertexAttribArrayStep ();
-
-  private:
-    int m_pos;
-  };
-
   template <>
   void * RenderContext::mapBuffer<void>(const Buffer & buffer, int offset, std::size_t length,
                                         Radiant::FlagsT<Buffer::MapAccess> access);

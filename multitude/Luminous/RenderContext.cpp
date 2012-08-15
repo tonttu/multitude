@@ -1362,47 +1362,6 @@ namespace Luminous
     return m_data->m_viewportStack.top();
   }
 
-
-  VertexAttribArrayStep::VertexAttribArrayStep(int pos, int elems, GLenum type, GLboolean normalized, size_t stride,
-                        size_t offset)
-                          : m_pos(pos)
-  {
-    if(pos >= 0)
-    {
-      glEnableVertexAttribArray(pos);
-      glVertexAttribPointer(pos, elems, type, normalized,
-                            (GLsizei)stride, (char*)0 + offset);
-    }
-    else
-    {
-      Radiant::warning("Luminous::VertexAttribArrayStep: trying to enable an attribute array with invalid index\n");
-    }
-  }
-
-  VertexAttribArrayStep::VertexAttribArrayStep(GLSLProgramObject & prog, const char * attribname,
-                                               int elems, GLenum type, GLboolean normalized, size_t stride,
-                                               size_t offset, const char * userstr)
-    : m_pos(prog.getAttribLoc(attribname))
-  {
-    if(m_pos >= 0)
-    {
-      glEnableVertexAttribArray(m_pos);
-      glVertexAttribPointer(m_pos, elems, type, normalized,
-                            (GLsizei)stride, (char*)0 + offset);
-    }
-    else
-    {
-      Radiant::warning("Luminous::VertexAttribArrayStep: trying to enable an attribute "
-                       "array with invalid name \"%s\", in \"%s\", from \"%s\"",
-                       attribname, prog.label().toLocal8Bit().data(), userstr);
-    }
-  }
-
-  VertexAttribArrayStep::~VertexAttribArrayStep ()
-  {
-    glDisableVertexAttribArray(m_pos);
-  }
-
   //////////////////////////////////////////////////////////////////////////
   // Luminousv2
 
