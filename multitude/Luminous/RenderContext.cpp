@@ -1107,6 +1107,7 @@ namespace Luminous
   //
   void RenderContext::drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2, const Luminous::Style & style)
   {
+    assert(style.strokeWidth() > 0.f);
     const Nimble::Vector2f vertices[] = { p1, p2 };
     const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
     drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, vertices, 2, program, style.strokeColor(), style.strokeWidth(), style);
@@ -1115,6 +1116,7 @@ namespace Luminous
   //
   void RenderContext::drawPolyLine(const Nimble::Vector2 * points, unsigned int numPoints, const Luminous::Style & style)
   {
+    assert(style.strokeWidth() > 0.f);
     const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
     drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, points, numPoints, program, style.strokeColor(), style.strokeWidth(), style);
   }
