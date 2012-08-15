@@ -95,6 +95,10 @@ namespace Nimble {
       /// @param m transformation matrix
       void transform(const Nimble::Matrix3 & m);
 
+      /// Get the axis-aligned bounding box of this rectangle.
+      /// @return axis-aligned bounding box
+      Nimble::Rect boundingBox() const;
+
     private:
       Nimble::Vector2f m_origin;
       Nimble::Vector2f m_axis0;

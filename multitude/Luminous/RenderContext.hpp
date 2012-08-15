@@ -195,13 +195,16 @@ namespace Luminous
     /// Returns current recursion depth
     size_t recursionDepth() const;
 
+    /// Save the current clipping stack and start with a empty one
+    void pushClipStack();
+
+    /// Restores the previously saved clipping stack
+    void popClipStack();
+
     /// Pushes a clipping rectangle to the context
     void pushClipRect(const Nimble::Rectangle & r);
     /// Pops a clipping rectangle from the context
     void popClipRect();
-
-    /// Returns the clipping rectangle stack
-    const std::vector<Nimble::Rectangle> & clipStack() const;
 
     /// Checks if the given rectangle is visible (not clipped).
     bool isVisible(const Nimble::Rectangle & area);

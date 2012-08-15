@@ -11,6 +11,8 @@
 #include "VertexHolder.hpp"
 #include "GLSLProgramObject.hpp"
 
+#include <Nimble/ClipStack.hpp>
+
 // Luminous v2
 #include "Luminous/VertexArray.hpp"
 #include "Luminous/VertexDescription.hpp"
@@ -373,7 +375,7 @@ namespace Luminous
     size_t m_recursionLimit;
     size_t m_recursionDepth;
 
-    std::vector<Nimble::Rectangle> m_clipStack;
+    std::stack<Nimble::ClipStack> m_clipStacks;
 
     typedef std::list<std::shared_ptr<RenderContext::FBOPackage> > FBOPackages;
 
@@ -572,62 +574,40 @@ namespace Luminous
     return m_data->m_recursionDepth;
   }
 
+
+  /// Save the current clipping stack and start with a empty one
+  void RenderContext::pushClipStack()
+  {
+    m_data->m_clipStacks.push(Nimble::ClipStack());
+  }
+
+  /// Restores the previously saved clipping stack
+  void RenderContext::popClipStack()
+  {
+    assert(!m_data->m_clipStacks.empty());
+    m_data->m_clipStacks.pop();
+  }
+
   void RenderContext::pushClipRect(const Nimble::Rectangle & r)
   {
 //      Radiant::info("RenderContext::pushClipRect # (%f,%f) (%f,%f)", r.center().x, r.center().y, r.size().x, r.size().y);
-
-    m_data->m_clipStack.push_back(r);
+    assert(!m_data->m_clipStacks.empty());
+    m_data->m_clipStacks.top().push(r);
   }
 
   void RenderContext::popClipRect()
   {
-    m_data->m_clipStack.pop_back();
-  }
-
-  const std::vector<Nimble::Rectangle> & RenderContext::clipStack() const
-  {
-    return m_data->m_clipStack;
+    assert(!m_data->m_clipStacks.empty());
+    m_data->m_clipStacks.top().pop();
   }
 
   bool RenderContext::isVisible(const Nimble::Rectangle & area)
   {
-    // Radiant::info("RenderContext::isVisible # area (%f,%f) (%f,%f)",
-    // area.center().x, area.center().y, area.size().x, area.size().y);
+    if(m_data->m_clipStacks.empty())
+      return true;
 
-      if(m_data->m_clipStack.empty()) {
-        debugLuminous("\tclip stack is empty");
-        return true;
-      } else {
-
-          /* Since we have no proper clipping algorithm, we compare against
-             every clip rectangle in the stack*/
-          bool inside = true;
-
-          // Why does const_reverse_iterator not work on OSX :(
-          for(std::vector<Nimble::Rectangle>::reverse_iterator it =
-              m_data->m_clipStack.rbegin(); it != m_data->m_clipStack.rend(); it++) {
-            inside &= (*it).intersects(area);
-          }
-
-          /*
-          const Nimble::Rectangle & clipArea = m_data->m_clipStack.top();
-
-          bool inside = m_data->m_clipStack.top().intersects(area);
-
-          Radiant::info("\tclip area (%f,%f) (%f,%f) : inside %d",
-          clipArea.center().x, clipArea.center().y, clipArea.size().x,
-          clipArea.size().y, inside);
-          */
-
-          return inside;
-      }
+    return m_data->m_clipStacks.top().isVisible(area);
   }
-/*
-  const Nimble::Rectangle & RenderContext::visibleArea() const
-  {
-    return m_data->m_clipStack.back();
-  }
-*/
 
   void RenderContext::pushDrawBuffer(GLenum dest, FBOPackage * fbo)
   {
@@ -680,7 +660,7 @@ namespace Luminous
     }
 
     const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
-    drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, vertices.data(), vertices.size(), 
+    drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, vertices.data(), vertices.size(),
       program, style.strokeColor(), style.strokeWidth(), style);
   }
 
@@ -1200,7 +1180,7 @@ namespace Luminous
   {
     return m_data->contextSize();
   }
-  
+
   void RenderContext::pushViewStack()
   {
     m_data->pushViewStack();
@@ -1506,6 +1486,8 @@ namespace Luminous
 
   void RenderContext::beginFrame()
   {
+    pushClipStack();
+
     assert(stackSize() == 1);
 
     m_data->m_driver.preFrame();
@@ -1540,13 +1522,16 @@ namespace Luminous
     m_data->m_driverGL->popRenderTarget();
 
     assert(stackSize() == 1);
+
+    assert(m_data->m_clipStacks.size() == 1);
+
+    popClipStack();
   }
 
   void RenderContext::beginArea()
   {
     assert(stackSize() == 1);
     assert(transform4() == Nimble::Matrix4::IDENTITY);
-    assert(clipStack().empty());
   }
 
   void RenderContext::endArea()
