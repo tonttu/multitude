@@ -1482,7 +1482,7 @@ namespace Luminous
     m_data->m_currentRenderTarget = &target;
 
     // Push new projection matrix
-    pushViewTransform(Nimble::Matrix4::ortho3D(0.f, target.size().width(), target.size().height(), 0.f, -1.f, 1.f));
+    pushViewTransform(Nimble::Matrix4::ortho3D(0.f, target.size().width(), 0.f, target.size().height(), -1.f, 1.f));
 
     // Reset transformation matrix to identity
     pushTransform();
