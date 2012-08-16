@@ -77,7 +77,7 @@ namespace Luminous {
       m_shader.loadShader("Luminous/GLSL150/spline.fs", Luminous::ShaderGLSL::Fragment);
       m_shader.loadShader("Luminous/GLSL150/spline.vs", Luminous::ShaderGLSL::Vertex);
 
-      m_descr.addAttribute<Nimble::Vector2f>("vertex_position");
+      m_descr.addAttribute<Nimble::Vector3f>("vertex_position");
       m_descr.addAttribute<Nimble::Vector2f>("vertex_range");
       m_descr.addAttribute<Nimble::Vector4f>("vertex_color");
       m_shader.setVertexDescription(m_descr);
