@@ -12,6 +12,9 @@ HEADERS += OpenGL/Error.hpp
 HEADERS += OpenGL/RenderTargetGL.hpp
 HEADERS += OpenGL/PipelineCommand.hpp
 
+HEADERS += Text/FontCache.hpp
+HEADERS += Text/RichTextLayout.hpp
+HEADERS += Text/SimpleTextLayout.hpp
 HEADERS += Text/TextLayout.hpp
 
 HEADERS += BGThread.hpp
@@ -97,6 +100,9 @@ SOURCES += OpenGL/Error.cpp
 SOURCES += OpenGL/RenderTargetGL.cpp
 SOURCES += OpenGL/PipelineCommand.cpp
 
+SOURCES += Text/FontCache.cpp
+SOURCES += Text/RichTextLayout.cpp
+SOURCES += Text/SimpleTextLayout.cpp
 SOURCES += Text/TextLayout.cpp
 
 HEADERS += BlendMode.hpp
