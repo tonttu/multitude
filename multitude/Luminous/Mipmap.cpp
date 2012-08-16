@@ -6,7 +6,9 @@
 #include "Luminous/MipMapGenerator.hpp"
 #include "Luminous/RenderManager.hpp"
 
+#include <Radiant/FileUtils.hpp>
 #include <Radiant/PlatformUtils.hpp>
+#include <Radiant/Sleep.hpp>
 
 #include <QFileInfo>
 #include <QCryptographicHash>
@@ -27,6 +29,7 @@ namespace
   // default save sizes
   const unsigned int s_defaultSaveSize1 = 64;
   const unsigned int s_defaultSaveSize2 = 512;
+  const unsigned int s_defaultSaveSize3 = 2048;
   const unsigned int s_smallestImage = 32;
   const Luminous::Priority s_defaultPingPriority = Luminous::Task::PRIORITY_HIGH + 2;
 
@@ -34,8 +37,10 @@ namespace
 
   /// Special time values in ImageTex3::lastUsed
   enum LoadState {
-    New = 0,
-    Loading = 1
+    New,
+    Loading,
+    LoadError,
+    StateCount
   };
 
   /// Current time, unit is the same as in RenderManager::frameTime.
@@ -78,19 +83,54 @@ namespace
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
+  int frameTime()
+  {
+    /// first ones are reserved
+    return StateCount + Luminous::RenderManager::frameTime();
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+
+  ImageTex3::ImageTex3(ImageTex3 && t)
+    : image(std::move(t.image))
+    , texture(std::move(t.texture))
+    , lastUsed(t.lastUsed)
+  {
+  }
+
+  ImageTex3 & ImageTex3::operator=(ImageTex3 && t)
+  {
+    image = std::move(t.image);
+    texture = std::move(t.texture);
+    lastUsed = t.lastUsed;
+    return *this;
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+namespace Luminous
+{
   /// Loads uncompressed mipmaps from file to ImageTex3 / create them if necessary
   class LoadImageTask : public Luminous::Task
   {
   public:
-    LoadImageTask(Luminous::MipmapPtr mipmap, ImageTex3 & tex,
-                  Luminous::Priority priority, const QString & filename, int level);
+    LoadImageTask(Luminous::MipmapPtr mipmap, Luminous::Priority priority,
+                  const QString & filename, int level);
 
   protected:
     virtual void doTask() OVERRIDE;
 
+  private:
+    bool recursiveLoad(int level);
+    bool recursiveLoad(ImageTex3 & imageTex, int level);
+    void lock(int);
+    void unlock(int);
+
   protected:
     Luminous::MipmapPtr m_mipmap;
-    ImageTex3 & m_tex;
     const QString & m_filename;
     int m_level;
   };
@@ -107,11 +147,14 @@ namespace
 
   protected:
     virtual void doTask() OVERRIDE;
-  };
-}
 
-namespace Luminous
-{
+  private:
+    ImageTex3 & m_tex;
+  };
+
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+
   class PingTask : public Luminous::Task
   {
   public:
@@ -190,51 +233,149 @@ namespace Luminous
     Valuable::AttributeBool m_ready;
     bool m_valid;
   };
-}
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-namespace
-{
-  int frameTime()
-  {
-    /// 0 and 1 are reserved
-    return 2 + Luminous::RenderManager::frameTime();
-  }
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  ImageTex3::ImageTex3(ImageTex3 && t)
-    : image(std::move(t.image))
-    , texture(std::move(t.texture))
-    , lastUsed(t.lastUsed)
-  {
-  }
-
-  ImageTex3 & ImageTex3::operator=(ImageTex3 && t)
-  {
-    image = std::move(t.image);
-    texture = std::move(t.texture);
-    lastUsed = t.lastUsed;
-    return *this;
-  }
-
-  /////////////////////////////////////////////////////////////////////////////
-  /////////////////////////////////////////////////////////////////////////////
-
-  LoadImageTask::LoadImageTask(Luminous::MipmapPtr mipmap, ImageTex3 & tex,
-                               Luminous::Priority priority, const QString & filename, int level)
+  LoadImageTask::LoadImageTask(Luminous::MipmapPtr mipmap, Luminous::Priority priority,
+                               const QString & filename, int level)
     : Task(priority)
     , m_mipmap(mipmap)
-    , m_tex(tex)
     , m_filename(filename)
     , m_level(level)
   {}
 
   void LoadImageTask::doTask()
   {
+    lock(m_level);
+    recursiveLoad(m_level);
+    unlock(m_level);
+    setFinished();
+  }
+
+  void LoadImageTask::lock(int level)
+  {
+    ImageTex3 & imageTex = m_mipmap->m_d->m_levels[level];
+
+    /// If this fails, then another task is just creating a mipmap for this level,
+    /// or MipmapReleaseTask is releasing it
+    int i = 0;
+    while (!imageTex.locked.testAndSetOrdered(0, 1))
+      Radiant::Sleep::sleepMs(std::min(20, ++i));
+  }
+
+  void LoadImageTask::unlock(int level)
+  {
+    ImageTex3 & imageTex = m_mipmap->m_d->m_levels[level];
+    imageTex.locked = 0;
+  }
+
+  bool LoadImageTask::recursiveLoad(int level)
+  {
+    ImageTex3 & imageTex = m_mipmap->m_d->m_levels[level];
+
+    int lastUsed = imageTex.lastUsed;
+    if (lastUsed == LoadError) {
+      return false;
+    }
+
+    if (lastUsed >= StateCount) {
+      return true;
+    }
+
+    bool ok = recursiveLoad(imageTex, level);
+    if (ok) {
+      /// @todo use Image::texture
+      imageTex.texture.setData(imageTex.image->width(), imageTex.image->height(),
+                               imageTex.image->pixelFormat(), imageTex.image->data());
+      imageTex.texture.setLineSizePixels(0);
+      imageTex.lastUsed = frameTime();
+    } else {
+      imageTex.image.reset();
+      imageTex.lastUsed = LoadError;
+    }
+    return ok;
+  }
+
+  bool LoadImageTask::recursiveLoad(ImageTex3 & imageTex, int level)
+  {
+    if (level == 0) {
+      // Load original
+      if (!imageTex.image)
+        imageTex.image.reset(new Image());
+
+      if (!imageTex.image->read(m_filename.toUtf8().data())) {
+        Radiant::error("LoadImageTask::recursiveLoad # Could not read %s", m_filename.toUtf8().data());
+        return false;
+      } else {
+        return true;
+      }
+    }
+
+    // Could the mipmap be already saved on disk?
+    if (m_mipmap->m_d->m_shouldSave.find(level) != m_mipmap->m_d->m_shouldSave.end()) {
+
+      // Try loading a pre-generated smaller-scale mipmap
+      const QString filename = Mipmap::cacheFileName(m_filename, level);
+
+      const Radiant::TimeStamp origTs = Radiant::FileUtils::lastModified(m_filename);
+      if (origTs > Radiant::TimeStamp(0) && Radiant::FileUtils::fileReadable(filename) &&
+          Radiant::FileUtils::lastModified(filename) > origTs) {
+
+        if (!imageTex.image)
+          imageTex.image.reset(new Image());
+
+        if (!imageTex.image->read(filename.toUtf8().data())) {
+          Radiant::error("LoadImageTask::recursiveLoad # Could not read %s", filename.toUtf8().data());
+        } else if (m_mipmap->mipmapSize(level) != imageTex.image->size()) {
+          // unexpected size (corrupted or just old image)
+          Radiant::error("LoadImageTask::recursiveLoad # Cache image '%s'' size was (%d, %d), expected (%d, %d)",
+                filename.toUtf8().data(), imageTex.image->width(), imageTex.image->height(),
+                         m_mipmap->mipmapSize(level).x, m_mipmap->mipmapSize(level).y);
+        } else {
+          return true;
+        }
+      }
+    }
+
+
+    {
+      lock(level - 1);
+
+      // Load the bigger image from lower level, and scale down from that:
+      if (!recursiveLoad(level - 1)) {
+        unlock(level - 1);
+        return false;
+      }
+
+      Image & imsrc = *m_mipmap->m_d->m_levels[level - 1].image;
+
+      // Scale down from bigger mipmap
+      if (!imageTex.image)
+        imageTex.image.reset(new Image());
+
+      Nimble::Vector2i ss = imsrc.size();
+      Nimble::Vector2i is = m_mipmap->mipmapSize(level);
+
+      if (is * 2 == ss) {
+        if (!imageTex.image->quarterSize(imsrc)) {
+          Radiant::error("LoadImageTask::recursiveLoad # failed to resize image");
+          unlock(level - 1);
+          return false;
+        }
+      } else {
+        imageTex.image->minify(imsrc, is.x, is.y);
+      }
+      unlock(level - 1);
+    }
+
+    if (m_mipmap->m_d->m_shouldSave.find(level) != m_mipmap->m_d->m_shouldSave.end()) {
+      const QString filename = Mipmap::cacheFileName(m_filename, level);
+      QDir().mkpath(Radiant::FileUtils::path(filename));
+      imageTex.image->write(filename.toUtf8().data());
+    }
+
+    return true;
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -243,7 +384,8 @@ namespace
   LoadCompressedImageTask::LoadCompressedImageTask(
       Luminous::MipmapPtr mipmap, ImageTex3 & tex, Luminous::Priority priority,
       const QString & filename, int level)
-    : LoadImageTask(mipmap, tex, priority, filename, level)
+    : LoadImageTask(mipmap, priority, filename, level)
+    , m_tex(tex)
   {}
 
   void LoadCompressedImageTask::doTask()
@@ -259,10 +401,10 @@ namespace
     }
     setFinished();
   }
-}
 
-namespace Luminous
-{
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+
   PingTask::PingTask(Mipmap::D & mipmap, bool compressedMipmaps)
     : Task(s_defaultPingPriority)
     , m_preferCompressedMipmaps(compressedMipmaps)
@@ -364,9 +506,13 @@ namespace Luminous
       // m_maxLevel, m_firstLevelSize and m_nativeSize have to be set before running level()
       m_mipmap.m_maxLevel = m_mipmap.m_mipmap.level(Nimble::Vector2f(s_smallestImage, s_smallestImage));
 
+/*      for (int i = 1; i <= m_mipmap.m_mipmap.level(Nimble::Vector2f(s_smallestImage, s_smallestImage)); ++i)
+        m_mipmap.m_shouldSave.insert(i);*/
+
       m_mipmap.m_shouldSave.insert(m_mipmap.m_mipmap.level(Nimble::Vector2f(s_smallestImage, s_smallestImage)));
       m_mipmap.m_shouldSave.insert(m_mipmap.m_mipmap.level(Nimble::Vector2f(s_defaultSaveSize1, s_defaultSaveSize1)));
       m_mipmap.m_shouldSave.insert(m_mipmap.m_mipmap.level(Nimble::Vector2f(s_defaultSaveSize2, s_defaultSaveSize2)));
+      m_mipmap.m_shouldSave.insert(m_mipmap.m_mipmap.level(Nimble::Vector2f(s_defaultSaveSize3, s_defaultSaveSize3)));
       // Don't save the original image as mipmap
       m_mipmap.m_shouldSave.erase(0);
     }
@@ -521,7 +667,7 @@ namespace Luminous
             return &imageTex.texture;
           }
 
-          if(old == Loading)
+          if(old == Loading || old == LoadError)
             break;
 
           // Only start loading new images if this is the correct level
@@ -545,7 +691,7 @@ namespace Luminous
                                                 m_d->m_filenameAbs, level));
               } else {
                 BGThread::instance()->addTask(std::make_shared<LoadImageTask>(
-                                                shared_from_this(), imageTex,
+                                                shared_from_this(),
                                                 m_d->m_loadingPriority + priorityChange,
                                                 m_d->m_filenameAbs, level));
               }
@@ -654,7 +800,7 @@ namespace Luminous
     for(int level = 0; level <= m_d->m_maxLevel; ) {
       ImageTex3 & imageTex = m_d->m_levels[level];
       int old = imageTex.lastUsed;
-      if(old == New || old == Loading) {
+      if(old == New || old == Loading || old == LoadError) {
         ++level;
         continue;
       }
