@@ -197,7 +197,8 @@ namespace Luminous
       Radiant::Sleep::sleepMs(10);
     }
 
-    AdaptiveVSync::enable();
+    // Disabled as now drivers seem to support this
+    //AdaptiveVSync::enable();
   }
 
   void QtWindow::swapBuffers()
