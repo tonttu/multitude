@@ -509,7 +509,7 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  class TextDocumentLayout::D
+  class RichTextLayout::D
   {
   public:
     D();
@@ -625,10 +625,10 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  TextDocumentLayout::D::D()
+  RichTextLayout::D::D()
   {}
 
-  void TextDocumentLayout::D::disableKerning()
+  void RichTextLayout::D::disableKerning()
   {
     QTextCursor cursor(&m_doc);
     for (QTextBlock block = m_doc.begin(); block.isValid(); block = block.next()) {
@@ -817,18 +817,18 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  TextDocumentLayout::TextDocumentLayout(const Nimble::Vector2f & size)
+  RichTextLayout::RichTextLayout(const Nimble::Vector2f & size)
     : TextLayout(size)
     , m_d(new D())
   {
   }
 
-  TextDocumentLayout::~TextDocumentLayout()
+  RichTextLayout::~RichTextLayout()
   {
     delete m_d;
   }
 
-  void TextDocumentLayout::generate()
+  void RichTextLayout::generate()
   {
     if (!layoutReady()) {
       // trigger relayout in Qt
@@ -856,12 +856,12 @@ namespace Luminous
     setGlyphsReady(!missingGlyphs);
   }
 
-  QTextDocument & TextDocumentLayout::document()
+  QTextDocument & RichTextLayout::document()
   {
     return m_d->m_doc;
   }
 
-  const QTextDocument & TextDocumentLayout::document() const
+  const QTextDocument & RichTextLayout::document() const
   {
     return m_d->m_doc;
   }

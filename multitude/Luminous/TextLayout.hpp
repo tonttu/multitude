@@ -128,11 +128,11 @@ namespace Luminous {
   };
 
   /// Rich text document layout
-  class TextDocumentLayout : public TextLayout
+  class RichTextLayout : public TextLayout
   {
   public:
-    LUMINOUS_API TextDocumentLayout(const Nimble::Vector2f & size);
-    LUMINOUS_API virtual ~TextDocumentLayout();
+    LUMINOUS_API RichTextLayout(const Nimble::Vector2f & size);
+    LUMINOUS_API virtual ~RichTextLayout();
 
     LUMINOUS_API virtual void generate() OVERRIDE;
 
