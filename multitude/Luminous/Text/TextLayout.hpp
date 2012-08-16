@@ -1,8 +1,8 @@
 #ifndef LUMINOUS_TEXTLAYOUT_HPP
 #define LUMINOUS_TEXTLAYOUT_HPP
 
-#include "VertexHolder.hpp"
-#include "TextureAtlas.hpp"
+#include <Luminous/VertexHolder.hpp>
+#include <Luminous/TextureAtlas.hpp>
 
 #include <Nimble/Vector2.hpp>
 

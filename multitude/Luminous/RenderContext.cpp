@@ -18,7 +18,7 @@
 #include "Luminous/VertexDescription.hpp"
 #include "Luminous/Buffer.hpp"
 #include "Luminous/OpenGL/RenderDriverGL.hpp"
-#include "Luminous/TextLayout.hpp"
+#include "Luminous/Text/TextLayout.hpp"
 
 #include <Nimble/Matrix4.hpp>
 

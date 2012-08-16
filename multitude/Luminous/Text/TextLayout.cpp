@@ -1,9 +1,10 @@
 #include "TextLayout.hpp"
-#include "RenderResource.hpp"
-#include "Texture2.hpp"
-#include "BGThread.hpp"
-#include "Image.hpp"
-#include "DistanceFieldGenerator.hpp"
+
+#include <Luminous/RenderResource.hpp>
+#include <Luminous/Texture2.hpp>
+#include <Luminous/BGThread.hpp>
+#include <Luminous/Image.hpp>
+#include <Luminous/DistanceFieldGenerator.hpp>
 
 #include <Radiant/PlatformUtils.hpp>
 #include <Radiant/Mutex.hpp>

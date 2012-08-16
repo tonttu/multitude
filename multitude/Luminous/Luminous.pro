@@ -12,6 +12,8 @@ HEADERS += OpenGL/Error.hpp
 HEADERS += OpenGL/RenderTargetGL.hpp
 HEADERS += OpenGL/PipelineCommand.hpp
 
+HEADERS += Text/TextLayout.hpp
+
 HEADERS += BGThread.hpp
 HEADERS += CocoaWindow.hpp
 HEADERS += CodecRegistry.hpp
@@ -55,7 +57,6 @@ HEADERS += Program.hpp
 HEADERS += Spline.hpp
 HEADERS += Style.hpp
 HEADERS += Task.hpp
-HEADERS += TextLayout.hpp
 HEADERS += Texture2.hpp
 HEADERS += Texture.hpp
 HEADERS += TextureAtlas.hpp
@@ -96,6 +97,8 @@ SOURCES += OpenGL/Error.cpp
 SOURCES += OpenGL/RenderTargetGL.cpp
 SOURCES += OpenGL/PipelineCommand.cpp
 
+SOURCES += Text/TextLayout.cpp
+
 HEADERS += BlendMode.hpp
 SOURCES += BlendMode.cpp
 HEADERS += DepthMode.hpp
@@ -135,7 +138,6 @@ SOURCES += Program.cpp
 SOURCES += Spline.cpp
 SOURCES += Style.cpp
 SOURCES += Task.cpp
-SOURCES += TextLayout.cpp
 SOURCES += Texture2.cpp
 SOURCES += Texture.cpp
 SOURCES += TextureAtlas.cpp
