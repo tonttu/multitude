@@ -380,17 +380,12 @@ namespace Luminous {
     /// @todo temporary dummy to avoid separate render() function
     const std::map<QByteArray, const Texture *> textures;
     auto b = r.render<Vertex, UniformBlock>(translucent, Luminous::PrimitiveType_TriangleStrip, vertices, vertices, 1.f, m_shader, textures);
-    auto v = b.vertex;
     auto idx = b.idx;
 
-    for (unsigned int i = 0; i < vertices; ++i) {
-      // Copy vertex data
-      *v = m_vertices[i];
-      // Patch the depth value
-      v->location.z = b.depth;
-      v++;
+    std::copy(m_vertices.begin(), m_vertices.end(), b.vertex);
+    /// @todo Should use non-indexed drawing for this
+    for (unsigned int i = 0; i < vertices; ++i)
       *idx++ = i;
-    }
 
     b.uniform->time = time;
   }

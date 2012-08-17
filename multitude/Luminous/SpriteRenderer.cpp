@@ -151,15 +151,12 @@ namespace Luminous {
     auto v = b.vertex;
     auto idx = b.idx;
 
-    for (auto i = 0; i < spriteCount(); ++i) {
-      // Copy sprite data
-      *v = m_d->m_sprites[i];
-      // Path depth
-      v->location = Nimble::Vector3f(v->location.x, v->location.y, b.depth);
-      v++;
-      // Create the index
+    // Copy vertex data
+    std::copy(m_d->m_sprites.begin(), m_d->m_sprites.end(), v);
+
+    /// @todo Should use non-indexed drawing for this
+    for (auto i = 0; i < spriteCount(); ++i)
       *idx++ = i;
-    }
   }
 
   void SpriteRenderer::setImage(const Luminous::Image & image)
