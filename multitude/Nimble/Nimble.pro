@@ -22,6 +22,7 @@ HEADERS += Random.hpp
 HEADERS += Range.hpp
 HEADERS += Rectangle.hpp
 HEADERS += Rect.hpp
+HEADERS += Size.hpp
 HEADERS += Splines.hpp
 HEADERS += Vector2.hpp
 HEADERS += Vector3.hpp
