@@ -179,7 +179,7 @@ namespace Valuable
       if(Container::m_clearOnDeserialize) Container::m_container.clear();
       for(ArchiveElement::Iterator it = element.children(); it; ++it) {
         typename Container::value_type p = Serializer::deserialize<typename Container::value_type>(*it);
-        Container::m_container[p.first] = p.second;
+        Container::m_container[p.first] = std::move(p.second);
       }
       return true;
     }
