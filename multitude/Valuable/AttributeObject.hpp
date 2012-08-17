@@ -291,6 +291,10 @@ namespace Valuable
     /// @deprecated This function will be removed in Cornerstone 2.1. Use getAttribute instead.
     virtual Attribute * getValue(const QString & name) const;
 
+    /// Sets the current MANUAL attribute value as the default (ORIGINAL) value
+    /// and clears the MANUAL value.
+    virtual void setAsDefaults() {}
+
   protected:
 
     /// Invokes the change valueChanged function of all listeners
@@ -413,6 +417,13 @@ namespace Valuable
         if(m_values[l] != m_values[layout])
           this->emitChange();
       }
+    }
+
+    virtual void setAsDefaults() OVERRIDE
+    {
+      const T current = value(MANUAL);
+      clearValue(MANUAL);
+      setValue(current, ORIGINAL);
     }
 
   protected:

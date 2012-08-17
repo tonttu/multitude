@@ -885,4 +885,10 @@ namespace Valuable
       i->second->clearValue(layer);
   }
 
+  void Node::setAsDefaults()
+  {
+    for(auto i = m_values.begin(); i != m_values.end(); ++i)
+      i->second->setAsDefaults();
+  }
+
 }

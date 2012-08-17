@@ -392,6 +392,9 @@ namespace Valuable
 
     /// The sender of the event, can be read in processMessage()
     Node * sender() { return m_sender; }
+
+    virtual void setAsDefaults() OVERRIDE;
+
   private:
 
     Node * m_sender;
