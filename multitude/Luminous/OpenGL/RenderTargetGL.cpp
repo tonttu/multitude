@@ -135,6 +135,8 @@ namespace Luminous
 
   bool RenderTargetGL::check()
   {
+    // Only do actual checking in debug mode since this apparently slows things down quite a bit (10% in twinkle)
+#if RADIANT_DEBUG
     static QMap<GLuint, QString> errors;
 
     MULTI_ONCE {
@@ -159,6 +161,9 @@ namespace Luminous
     Radiant::warning("RenderTargetGL::check # %s", errors.value(status).toUtf8().data());
 
     return false;
+#else
+    return true;
+#endif
   }
 
   void RenderTargetGL::sync(const RenderTarget &target)
