@@ -18,6 +18,7 @@
 
 #include "Matrix3.hpp"
 #include "Vector2.hpp"
+#include "Frame4.hpp"
 
 #include <QRect>
 #include <QRectF>
@@ -94,6 +95,8 @@ namespace Nimble {
     inline void expand(const Vector2T<T> &v, T radius);
     /// Expands this rectangle to include the argument rectangle
     inline void expand(const RectT &b);
+    /// Expands this rectangle with the argument frame
+    inline void expand(const Frame4f & b);
     /// Contracts the rectangle by v
     inline void smaller(const T & v)
     { m_low.x += v; m_low.y += v; m_high.x -= v; m_high.y -= v; }
@@ -273,6 +276,13 @@ namespace Nimble {
 
     if(b.m_high[0] > m_high[0]) m_high[0] = b.m_high[0];
     if(b.m_high[1] > m_high[1]) m_high[1] = b.m_high[1];
+  }
+
+  template <class T>
+  void RectT<T>::expand(const Frame4f & b)
+  {
+    m_low -= b.leftTop();
+    m_high += b.rightBottom();
   }
 
   template <class T>
