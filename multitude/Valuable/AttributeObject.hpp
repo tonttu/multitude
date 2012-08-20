@@ -102,9 +102,9 @@ namespace Valuable
   {
   public:
     enum Layer {
-      ORIGINAL = 0,
+      DEFAULT = 0,
       STYLE,
-      MANUAL,
+      USER,
       STYLE_IMPORTANT,
 
       LAYER_COUNT
@@ -223,19 +223,19 @@ namespace Valuable
     virtual QString asString(bool * const ok = 0) const;
 
     /// Sets the value of the object
-    virtual bool set(float v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN);
+    virtual bool set(float v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN);
     /// Sets the value of the object
-    virtual bool set(int v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN);
+    virtual bool set(int v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN);
     /// Sets the value of the object
-    virtual bool set(const QString & v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN);
+    virtual bool set(const QString & v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN);
     /// Sets the value of the object
-    virtual bool set(const Nimble::Vector2f & v, Layer layer = MANUAL, QList<ValueUnit> units = QList<ValueUnit>());
+    virtual bool set(const Nimble::Vector2f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>());
     /// Sets the value of the object
-    virtual bool set(const Nimble::Vector3f & v, Layer layer = MANUAL, QList<ValueUnit> units = QList<ValueUnit>());
+    virtual bool set(const Nimble::Vector3f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>());
     /// Sets the value of the object
-    virtual bool set(const Nimble::Vector4f & v, Layer layer = MANUAL, QList<ValueUnit> units = QList<ValueUnit>());
+    virtual bool set(const Nimble::Vector4f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>());
     /// Sets the value of the object
-    virtual bool set(const StyleValue & value, Layer layer = MANUAL);
+    virtual bool set(const StyleValue & value, Layer layer = USER);
 
     /// Get the type id of the type
     virtual const char * type() const = 0;
@@ -265,7 +265,7 @@ namespace Valuable
     void removeListener(Node * listener, int role = ALL_ROLES);
     void removeListener(long id);
 
-    /// Returns true if the current value of the object is different from the original value.
+    /// Returns true if the current value of the object is different from the default value.
     virtual bool isChanged() const;
 
     virtual void clearValue(Layer layout);
@@ -276,7 +276,7 @@ namespace Valuable
     struct Doc
     {
       QString class_name;
-      QString orig_str;
+      QString default_str;
       Node * obj;
       Attribute * vo;
     };
@@ -291,8 +291,8 @@ namespace Valuable
     /// @deprecated This function will be removed in Cornerstone 2.1. Use getAttribute instead.
     virtual Attribute * getValue(const QString & name) const;
 
-    /// Sets the current MANUAL attribute value as the default (ORIGINAL) value
-    /// and clears the MANUAL value.
+    /// Sets the current USER attribute value as the default value
+    /// and clears the USER value.
     virtual void setAsDefaults() {}
 
   protected:
@@ -339,36 +339,36 @@ namespace Valuable
   template <typename T> class AttributeT : public Attribute
   {
   public:
-    /// Creates a new AttributeT and stores the original and current value as a separate variables.
+    /// Creates a new AttributeT and stores the default and current value as a separate variables.
     /// @param host host object
     /// @param name name of the value
-    /// @param v the default/original value of the object
+    /// @param v the default value of the object
     /// @param transit ignored
     AttributeT(Node * host, const QString & name, const T & v = T(), bool transit = false)
       : Attribute(host, name, transit),
-      m_current(ORIGINAL),
+      m_current(DEFAULT),
       m_values(),
       m_valueSet()
     {
-      m_values[ORIGINAL] = v;
-      m_valueSet[ORIGINAL] = true;
+      m_values[DEFAULT] = v;
+      m_valueSet[DEFAULT] = true;
 #ifdef MULTI_DOCUMENTER
       Doc & d = doc.back();
       XMLArchive archive;
-      ArchiveElement e = Serializer::serialize<T>(archive, orig());
+      ArchiveElement e = Serializer::serialize<T>(archive, defaultValue());
       if(!e.isNull()) {
-        d.orig_str = e.get();
+        d.default_str = e.get();
       }
 #endif
     }
 
     AttributeT()
       : Attribute(),
-      m_current(ORIGINAL),
+      m_current(DEFAULT),
       m_values(),
       m_valueSet()
     {
-      m_valueSet[ORIGINAL] = true;
+      m_valueSet[DEFAULT] = true;
     }
 
     virtual ~AttributeT() {}
@@ -381,14 +381,14 @@ namespace Valuable
     /// Use the arrow operator to access fields inside the wrapped object.
     inline const T * operator->() const { return &value(); }
 
-    /// The original value (the value given in constructor) of the Attribute.
-    inline const T & orig() const { return m_values[ORIGINAL]; }
+    /// The default value (the value given in constructor) of the Attribute.
+    inline const T & defaultValue() const { return m_values[DEFAULT]; }
 
     inline const T & value(Layer layer) const { return m_values[layer]; }
 
     inline const T & value() const { return m_values[m_current]; }
 
-    inline void setValue(const T & t, Layer layer = MANUAL)
+    inline void setValue(const T & t, Layer layer = USER)
     {
       bool top = layer >= m_current;
       bool sendSignal = top && value() != t;
@@ -405,12 +405,12 @@ namespace Valuable
       return *this;
     }
 
-    virtual void clearValue(Layer layout = MANUAL)
+    virtual void clearValue(Layer layout = USER)
     {
-      assert(layout > ORIGINAL);
+      assert(layout > DEFAULT);
       m_valueSet[layout] = false;
       if(m_current == layout) {
-        assert(m_valueSet[ORIGINAL]);
+        assert(m_valueSet[DEFAULT]);
         int l = int(layout) - 1;
         while(!m_valueSet[l]) --l;
         m_current = l;
@@ -421,11 +421,11 @@ namespace Valuable
 
     virtual void setAsDefaults() OVERRIDE
     {
-      if (!m_valueSet[MANUAL])
+      if (!m_valueSet[USER])
         return;
-      const T current = value(MANUAL);
-      clearValue(MANUAL);
-      setValue(current, ORIGINAL);
+      const T current = value(USER);
+      clearValue(USER);
+      setValue(current, DEFAULT);
     }
 
   protected:

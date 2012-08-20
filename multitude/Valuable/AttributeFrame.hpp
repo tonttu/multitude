@@ -41,7 +41,7 @@ namespace Valuable
 
     /// @todo This should be fixed properly, but it's not important and just
     ///       fills the compiler output with the same warning
-    virtual bool set(float v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN) OVERRIDE
+    virtual bool set(float v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE
     {
       const Nimble::Frame4f f(v, v, v, v);
       if(unit == VU_PERCENTAGE) {
@@ -55,7 +55,7 @@ namespace Valuable
       return true;
     }
 
-    virtual bool set(int v, Layer layer = MANUAL, ValueUnit = VU_UNKNOWN) OVERRIDE
+    virtual bool set(int v, Layer layer = USER, ValueUnit = VU_UNKNOWN) OVERRIDE
     {
       for(int j = 0; j < m_factors[layer].Elements; ++j)
         m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
@@ -63,7 +63,7 @@ namespace Valuable
       return true;
     }
 
-    virtual bool set(const Nimble::Vector2f & v, Layer layer = MANUAL, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
+    virtual bool set(const Nimble::Vector2f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
     {
       Nimble::Frame4f f(v.x, v.y, v.x, v.y);
       if(units.size() == 2) {
@@ -83,7 +83,7 @@ namespace Valuable
       return true;
     }
 
-    virtual bool set(const Nimble::Vector3f & v, Layer layer = MANUAL, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
+    virtual bool set(const Nimble::Vector3f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
     {
       Nimble::Frame4f f(v.x, v.y, v.z, v.x);
       if(units.size() == 3) {
@@ -103,7 +103,7 @@ namespace Valuable
       return true;
     }
 
-    virtual bool set(const Nimble::Vector4f & v, Layer layer = MANUAL, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
+    virtual bool set(const Nimble::Vector4f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
     {
       Nimble::Frame4f f(v);
       if(units.size() == 4) {
@@ -126,7 +126,7 @@ namespace Valuable
     void setSrc(float src)
     {
       m_src = src;
-      for(Attribute::Layer l = Attribute::ORIGINAL; l < Attribute::LAYER_COUNT;
+      for(Attribute::Layer l = Attribute::DEFAULT; l < Attribute::LAYER_COUNT;
           l = Attribute::Layer(l + 1)) {
         if(!m_valueSet[l]) continue;
         int count = 0;

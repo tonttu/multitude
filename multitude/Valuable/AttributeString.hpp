@@ -68,7 +68,7 @@ namespace Valuable
     /// Returns the value as string
     virtual QString asString(bool * const ok = 0) const OVERRIDE;
 
-    virtual bool set(const QString & v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN) OVERRIDE;
+    virtual bool set(const QString & v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE;
 
     virtual const char * type() const OVERRIDE { return VO_TYPE_STRING; }
 

@@ -71,10 +71,10 @@ namespace Valuable
     /// Prefix increment
     AttributeIntT<T> & operator ++ ()
     {
-      if(m_current != Base::MANUAL) {
-        m_values[Base::MANUAL] = m_values[m_current];
-        m_valueSet[Base::MANUAL] = true;
-        m_current = Base::MANUAL;
+      if(m_current != Base::USER) {
+        m_values[Base::USER] = m_values[m_current];
+        m_valueSet[Base::USER] = true;
+        m_current = Base::USER;
       }
       ++m_values[m_current];
       this->emitChange();
@@ -84,10 +84,10 @@ namespace Valuable
     /// Prefix decrement
     AttributeIntT<T> & operator -- ()
     {
-      if(m_current != Base::MANUAL) {
-        m_values[Base::MANUAL] = m_values[m_current];
-        m_valueSet[Base::MANUAL] = true;
-        m_current = Base::MANUAL;
+      if(m_current != Base::USER) {
+        m_values[Base::USER] = m_values[m_current];
+        m_valueSet[Base::USER] = true;
+        m_current = Base::USER;
       }
       --m_values[m_current];
       this->emitChange();
@@ -100,14 +100,14 @@ namespace Valuable
     AttributeIntT<T> & operator >>= (int i) { *this = value() >> i; return *this; }
 
     /// Sets the numeric value
-    inline virtual bool set(int v, Attribute::Layer layer = Attribute::MANUAL,
+    inline virtual bool set(int v, Attribute::Layer layer = Attribute::USER,
                             Attribute::ValueUnit = Attribute::VU_UNKNOWN)
     {
       this->setValue(v, layer);
       return true;
     }
     /// @copydoc set
-    inline virtual bool set(float v, Attribute::Layer layer = Attribute::MANUAL,
+    inline virtual bool set(float v, Attribute::Layer layer = Attribute::USER,
                             Attribute::ValueUnit = Attribute::VU_UNKNOWN)
     {
       this->setValue(Nimble::Math::Round(v), layer);

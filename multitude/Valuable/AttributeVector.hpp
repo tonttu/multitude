@@ -85,7 +85,7 @@ namespace Valuable
       // In some cases this is a override function, but not always
       /// @todo This should be fixed properly, but it's not important and just
       ///       fills the compiler output with the same warning
-      virtual bool set(const VectorType & v, Attribute::Layer layer = Attribute::MANUAL,
+      virtual bool set(const VectorType & v, Attribute::Layer layer = Attribute::USER,
                                     QList<Attribute::ValueUnit> units = QList<Attribute::ValueUnit>());
 
       /// Returns the internal vector object as a constant reference.

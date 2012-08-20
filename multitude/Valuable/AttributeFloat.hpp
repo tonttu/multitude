@@ -64,7 +64,7 @@ namespace Valuable
       AttributeFloatT<T> & operator /= (T i) { *this = value() / i; return *this; }
 
       /// Sets the numeric value
-      inline virtual bool set(int v, Attribute::Layer layer = Attribute::MANUAL,
+      inline virtual bool set(int v, Attribute::Layer layer = Attribute::USER,
                               Attribute::ValueUnit = Attribute::VU_UNKNOWN)
       {
         m_factors[layer] = std::numeric_limits<float>::quiet_NaN();
@@ -72,7 +72,7 @@ namespace Valuable
         return true;
       }
       /// @copydoc set
-      inline virtual bool set(float v, Attribute::Layer layer = Attribute::MANUAL,
+      inline virtual bool set(float v, Attribute::Layer layer = Attribute::USER,
                               Attribute::ValueUnit unit = Attribute::VU_UNKNOWN)
       {
         if(unit == Attribute::VU_PERCENTAGE) {
@@ -95,7 +95,7 @@ namespace Valuable
       void setSrc(float src)
       {
         m_src = src;
-        for(Attribute::Layer l = Attribute::ORIGINAL; l < Attribute::LAYER_COUNT;
+        for(Attribute::Layer l = Attribute::DEFAULT; l < Attribute::LAYER_COUNT;
             l = Attribute::Layer(l + 1)) {
           if(!this->m_valueSet[l]) continue;
           if(!Nimble::Math::isNAN(m_factors[l]))
@@ -103,12 +103,12 @@ namespace Valuable
         }
       }
 
-      void setPercentage(float factor, Attribute::Layer layer = Attribute::MANUAL)
+      void setPercentage(float factor, Attribute::Layer layer = Attribute::USER)
       {
         m_factors[layer] = factor;
       }
 
-      virtual void clearValue(Attribute::Layer layer = Attribute::MANUAL) OVERRIDE
+      virtual void clearValue(Attribute::Layer layer = Attribute::USER) OVERRIDE
       {
         m_factors[layer] = std::numeric_limits<float>::quiet_NaN();
         Base::clearValue(layer);

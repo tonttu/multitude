@@ -149,8 +149,8 @@ namespace Valuable {
                Flags v = Flags(), bool transit = false)
       : Attribute(parent, name, transit)
     {
-      m_masks[ORIGINAL] = ~Flags();
-      m_values[ORIGINAL] = v;
+      m_masks[DEFAULT] = ~Flags();
+      m_values[DEFAULT] = v;
       m_cache = v;
 
       if(parent && names) {
@@ -160,7 +160,7 @@ namespace Valuable {
       }
     }
 
-    AttributeFlagsT & operator=(const Flags & b) { setValue(b, MANUAL); return *this; }
+    AttributeFlagsT & operator=(const Flags & b) { setValue(b, USER); return *this; }
 
     bool operator==(const Flags & b) const { return value() == b; }
     bool operator!=(const Flags & b) const { return value() != b; }
@@ -172,9 +172,9 @@ namespace Valuable {
     Flags operator|(const Flags & b) const { return value() | b; }
     Flags operator^(const Flags & b) const { return value() ^ b; }
 
-    AttributeFlagsT & operator&=(const Flags & b) { setValue(value() & b, MANUAL); return *this; }
-    AttributeFlagsT & operator|=(const Flags & b) { setValue(value() & b, MANUAL); return *this; }
-    AttributeFlagsT & operator^=(const Flags & b) { setValue(value() & b, MANUAL); return *this; }
+    AttributeFlagsT & operator&=(const Flags & b) { setValue(value() & b, USER); return *this; }
+    AttributeFlagsT & operator|=(const Flags & b) { setValue(value() & b, USER); return *this; }
+    AttributeFlagsT & operator^=(const Flags & b) { setValue(value() & b, USER); return *this; }
 
     operator Flags() const { return m_cache; }
 
@@ -187,7 +187,7 @@ namespace Valuable {
       return m_cache;
     }
 
-    void setFlags(const Flags & f, bool state = true, Layer layer = MANUAL)
+    void setFlags(const Flags & f, bool state = true, Layer layer = USER)
     {
       if(state) m_values[layer] |= f;
       else m_values[layer] &= ~f;
@@ -240,7 +240,7 @@ namespace Valuable {
       bool ok = true;
       uint32_t v = uint32_t(data.readInt32(&ok));
 
-      if(ok) setValue(Flags::fromInt(v), MANUAL);
+      if(ok) setValue(Flags::fromInt(v), USER);
     }
 
     virtual bool set(int v, Layer layer, ValueUnit /*unit*/ = VU_UNKNOWN) OVERRIDE
@@ -250,7 +250,7 @@ namespace Valuable {
       return true;
     }
 
-    virtual bool set(const QVariantList & v, QList<ValueUnit> units, Layer layer = MANUAL) OVERRIDE
+    virtual bool set(const QVariantList & v, QList<ValueUnit> units, Layer layer = USER) OVERRIDE
     {
       foreach(const ValueUnit & vu, units)
         if(vu != VU_UNKNOWN) return false;

@@ -30,19 +30,19 @@ namespace Valuable
     virtual QString asString(bool * const ok = 0) const;
 
     /// Sets the value of the target object
-    virtual bool set(float v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN);
+    virtual bool set(float v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN);
     /// Sets the value of the target object
-    virtual bool set(int v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN);
+    virtual bool set(int v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN);
     /// Sets the value of the target object
-    virtual bool set(const QString & v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN);
+    virtual bool set(const QString & v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN);
     /// Sets the value of the target object
-    virtual bool set(const Nimble::Vector2f & v, Layer layer = MANUAL, QList<ValueUnit> units = QList<ValueUnit>());
+    virtual bool set(const Nimble::Vector2f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>());
     /// Sets the value of the target object
-    virtual bool set(const Nimble::Vector3f & v, Layer layer = MANUAL, QList<ValueUnit> units = QList<ValueUnit>());
+    virtual bool set(const Nimble::Vector3f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>());
     /// Sets the value of the target object
-    virtual bool set(const Nimble::Vector4f & v, Layer layer = MANUAL, QList<ValueUnit> units = QList<ValueUnit>());
+    virtual bool set(const Nimble::Vector4f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>());
     /// Sets the value of the target object
-    virtual bool set(const StyleValue & v, Layer layer = MANUAL);
+    virtual bool set(const StyleValue & v, Layer layer = USER);
 
     virtual ArchiveElement serialize(Archive & archive) const;
     virtual bool deserialize(const ArchiveElement & element);
