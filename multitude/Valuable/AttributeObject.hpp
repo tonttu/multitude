@@ -421,6 +421,8 @@ namespace Valuable
 
     virtual void setAsDefaults() OVERRIDE
     {
+      if (!m_valueSet[MANUAL])
+        return;
       const T current = value(MANUAL);
       clearValue(MANUAL);
       setValue(current, ORIGINAL);
