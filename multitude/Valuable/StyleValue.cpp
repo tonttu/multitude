@@ -103,7 +103,7 @@ namespace Valuable
     return m_units[idx];
   }
 
-  void StyleValue::append(const StyleValue & v)
+  void StyleValue::append(const StyleValue & v, Separator sep)
   {
     assert(v.size() == 1);
     const QVariant & v1 = v.m_values[0];
@@ -114,6 +114,7 @@ namespace Valuable
     }
     m_values << v1;
     m_units << v.m_units[0];
+    m_separators << sep;
   }
 
   int StyleValue::size() const

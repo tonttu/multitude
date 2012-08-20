@@ -29,6 +29,14 @@ namespace Valuable
   class VALUABLE_API StyleValue
   {
   public:
+    enum Separator
+    {
+      WhiteSpace,
+      Comma,
+      Slash
+    };
+
+  public:
     StyleValue(float v, Attribute::ValueUnit unit = Attribute::VU_UNKNOWN);
     StyleValue(int v);
     StyleValue(QVariant v);
@@ -43,7 +51,7 @@ namespace Valuable
 
     Attribute::ValueUnit unit(int idx = 0) const;
 
-    void append(const StyleValue & v);
+    void append(const StyleValue & v, Separator sep);
 
     /// Size of this vector
     int size() const;
@@ -59,14 +67,16 @@ namespace Valuable
     /// @param idx 0 <= idx < size()
     StyleValue operator[](int idx) const;
 
-    QVariantList values() const { return m_values; }
-    QList<Attribute::ValueUnit> units() const { return m_units; }
+    const QVariantList & values() const { return m_values; }
+    const QList<Attribute::ValueUnit> & units() const { return m_units; }
+    const QList<Separator> & separators() const { return m_separators; }
 
   private:
     bool m_uniform;
     /// QVariants in the list can be ints, floats, strings and colors
     QVariantList m_values;
     QList<Attribute::ValueUnit> m_units;
+    QList<Separator> m_separators;
   };
 
 }
