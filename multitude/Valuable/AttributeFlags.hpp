@@ -250,9 +250,9 @@ namespace Valuable {
       return true;
     }
 
-    virtual bool set(const QVariantList & v, QList<ValueUnit> units, Layer layer = USER) OVERRIDE
+    virtual bool set(const StyleValue & v, Layer layer = USER) OVERRIDE
     {
-      foreach(const ValueUnit & vu, units)
+      foreach(const ValueUnit & vu, v.units())
         if(vu != VU_UNKNOWN) return false;
 
       QMap<QByteArray, Flags> all;
@@ -260,7 +260,7 @@ namespace Valuable {
         all[alias->name().toUtf8()] = alias->flags();
 
       Flags newValue;
-      foreach(const QVariant & var, v) {
+      foreach(const QVariant & var, v.values()) {
         if(var.type() != QVariant::ByteArray) return false;
         typename QMap<QByteArray, Flags>::iterator it = all.find(var.toByteArray());
         if(it == all.end()) return false;
