@@ -2,8 +2,6 @@
 #include "RenderContext.hpp"
 #include "RenderManager.hpp"
 
-#include <QSize>
-
 namespace Luminous
 {
   class RenderBuffer::D
@@ -14,7 +12,7 @@ namespace Luminous
       , m_samples(0)
     {}
 
-    QSize m_size;
+    Nimble::Size m_size;
     GLenum m_format;
     int m_samples;
   };
@@ -47,14 +45,14 @@ namespace Luminous
     return *this;
   }
 
-  void RenderBuffer::storageFormat(const QSize &size, GLenum format, int samples)
+  void RenderBuffer::storageFormat(const Nimble::Size &size, GLenum format, int samples)
   {
     m_d->m_size = size;
     m_d->m_format = format;
     m_d->m_samples = samples;
   }
 
-  const QSize & RenderBuffer::size() const
+  const Nimble::Size &RenderBuffer::size() const
   {
     return m_d->m_size;
   }
@@ -76,7 +74,7 @@ namespace Luminous
   {
   public:
     RenderTargetType m_targetType;
-    QSize m_size;
+    Nimble::Size m_size;
     QMap<GLenum, RenderResource::Id> m_textureAttachments;
     QMap<GLenum, RenderResource::Id> m_renderBufferAttachments;
 
@@ -122,12 +120,12 @@ namespace Luminous
     return *this;
   }
 
-  const QSize & RenderTarget::size() const
+  const Nimble::Size &RenderTarget::size() const
   {
     return m_d->m_size;
   }
 
-  void RenderTarget::setSize(const QSize &size)
+  void RenderTarget::setSize(const Nimble::Size &size)
   {
     m_d->m_size= size;
 

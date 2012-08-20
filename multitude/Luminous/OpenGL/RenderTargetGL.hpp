@@ -19,7 +19,7 @@ namespace Luminous
 
     void sync(const RenderBuffer & buffer);
 
-    void storageFormat(const QSize & size, GLenum format, int samples);
+    void storageFormat(const Nimble::Size &size, GLenum format, int samples);
 
     void bind();
     void unbind();
@@ -50,7 +50,7 @@ namespace Luminous
 
   private:
     RenderTarget::RenderTargetType m_type;
-    QSize m_size;
+    Nimble::Size m_size;
   };
 
 }

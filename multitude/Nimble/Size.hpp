@@ -1,17 +1,16 @@
 #ifndef NIMBLE_SIZE_HPP
 #define NIMBLE_SIZE_HPP
 
-#include "Export.hpp"
-
 #include <QSize>
 
 #include <algorithm>
+#include <type_traits>
 
 namespace Nimble {
   
   /// This class defines the size of a two-dimensional object using integer point precision.
   template<typename T>
-  class NIMBLE_API SizeT
+  class SizeT
   {
   public:
     /// Constructs a size with invalid width and height (i.e. isValid() returns false)
@@ -50,6 +49,20 @@ namespace Nimble {
 
     void transpose();
 //    SizeT transposed() const;
+
+    SizeT<T> & operator+=(const SizeT<T> & s);
+    SizeT<T> & operator-=(const SizeT<T> & s);
+
+    template<typename U>
+    SizeT<T> & operator*=(U c);
+    template<typename U>
+    SizeT<T> & operator/=(U c);
+
+    SizeT<T> & operator+(const SizeT<T> & o) const;
+    SizeT<T> & operator-(const SizeT<T> & o) const;
+
+    bool operator==(const SizeT<T> & o) const;
+    bool operator!=(const SizeT<T> & o) const;
 
   private:
     T m_width;
@@ -151,6 +164,57 @@ namespace Nimble {
   {
     std::swap(m_width, m_height);
   }
+
+  template<typename T>
+  SizeT<T> & SizeT<T>::operator+=(const SizeT<T> & s)
+  {
+    m_width += s.m_width;
+    m_height += s.m_height;
+    return *this;
+  }
+
+  template<typename T>
+  SizeT<T> & SizeT<T>::operator-=(const SizeT<T> & s)
+  {
+    m_width -= s.m_width;
+    m_height -= s.m_height;
+    return *this;
+  }
+
+  template<typename T, typename U>
+  SizeT<T> & SizeT<T>::operator*=(U c)
+  {
+    static_assert(std::is_arithmetic<U>::value, "scaling Size is only defined for arithmetic types");
+
+    m_width *= c;
+    m_height *= c;
+    return *this;
+  }
+
+  template<typename T, typename U>
+  SizeT<T> & SizeT<T>::operator/=(U c)
+  {
+    static_assert(std::is_arithmetic<U>::value, "scaling Size is only defined for arithmetic types");
+
+    m_width /= c;
+    m_height /= c;
+    return *this;
+  }
+
+  template<typename T>
+  bool SizeT<T>::operator==(const SizeT<T> & o) const
+  {
+    return m_width == o.m_width && m_height == o.m_height;
+  }
+
+  template<typename T>
+  bool SizeT<T>::operator!=(const SizeT<T> & o) const
+  {
+    return !(*this == o);
+  }
+
+  typedef SizeT<int> Size;
+  typedef SizeT<float> SizeF;
   
 } // namespace Nimble
 

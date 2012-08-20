@@ -43,7 +43,7 @@ namespace Luminous
     GLERROR("RenderBufferGL::unbind # glBindRenderbuffer");
   }
 
-  void RenderBufferGL::storageFormat(const QSize &size, GLenum format, int samples)
+  void RenderBufferGL::storageFormat(const Nimble::Size &size, GLenum format, int samples)
   {
     GLERROR("RenderBufferGL::storageFormat # zoo");
 

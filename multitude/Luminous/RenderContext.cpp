@@ -233,7 +233,7 @@ namespace Luminous
 
       // Initialize default render target size
       assert(win);
-      m_defaultRenderTarget.setSize(QSize(win->size().x, win->size().y));
+      m_defaultRenderTarget.setSize(Nimble::Size(win->size().x, win->size().y));
 
       m_attribs.resize(10000);
       m_attribs.clear();

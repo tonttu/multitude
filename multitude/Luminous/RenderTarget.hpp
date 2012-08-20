@@ -6,8 +6,7 @@
 #include "Texture2.hpp"
 
 #include <Nimble/Vector2.hpp>
-
-#include <QSize>
+#include <Nimble/Size.hpp>
 
 namespace Luminous
 {
@@ -21,9 +20,9 @@ namespace Luminous
     RenderBuffer(RenderBuffer && rb);
     RenderBuffer & operator=(RenderBuffer && rb);
 
-    void storageFormat(const QSize & size, GLenum format, int samples);
+    void storageFormat(const Nimble::Size &size, GLenum format, int samples);
 
-    const QSize & size() const;
+    const Nimble::Size & size() const;
     GLenum format() const;
     int samples() const;
 
@@ -51,8 +50,8 @@ namespace Luminous
     RenderTarget(RenderTarget && rt);
     RenderTarget & operator=(RenderTarget && rt);
 
-    const QSize & size() const;
-    void setSize(const QSize & size);
+    const Nimble::Size & size() const;
+    void setSize(const Nimble::Size &size);
 
     void attach(GLenum attachment, Luminous::Texture & texture);
     void attach(GLenum attachment, Luminous::RenderBuffer & buffer);
