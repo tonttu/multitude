@@ -360,9 +360,9 @@ namespace Valuable
     return false;
   }
 
-  bool Attribute::set(const QVariantList &, QList<ValueUnit>, Layer)
+  bool Attribute::set(const StyleValue &, Layer)
   {
-    Radiant::error("Attribute::set(QVariantList) # %s: conversion not available",
+    Radiant::error("Attribute::set(StyleValue) # %s: conversion not available",
                    m_name.toUtf8().data());
     return false;
   }

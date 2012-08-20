@@ -1,5 +1,7 @@
 #include "AttributeStringList.hpp"
 
+#include "StyleValue.hpp"
+
 namespace Valuable
 {
   AttributeStringList::AttributeStringList()
@@ -24,16 +26,15 @@ namespace Valuable
     return true;
   }
 
-  bool AttributeStringList::set(const QVariantList & v, QList<Attribute::ValueUnit> unit,
-                                Attribute::Layer layer)
+  bool AttributeStringList::set(const StyleValue & v, Attribute::Layer layer)
   {
-    foreach (auto u, unit)
+    foreach (auto u, v.units())
       if (u != VU_UNKNOWN)
         return false;
 
     QStringList lst;
     lst.reserve(v.size());
-    foreach (const QVariant & var, v)
+    foreach (const QVariant & var, v.values())
       lst << var.toString();
     setValue(lst, layer);
     return true;

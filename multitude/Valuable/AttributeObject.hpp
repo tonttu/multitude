@@ -21,7 +21,7 @@
 
 #include <QString>
 #include <QList>
-#include <QVariantList>
+#include <QMap>
 
 // new behavior: elements of array 'array' will be default initialized
 #if RADIANT_WINDOWS
@@ -52,7 +52,7 @@ namespace Valuable
   class Node;
   //class DOMElement;
   class DOMDocument;
-
+  class StyleValue;
 
   /// The base class for all serializable objects.
   class VALUABLE_API Serializable
@@ -235,7 +235,7 @@ namespace Valuable
     /// Sets the value of the object
     virtual bool set(const Nimble::Vector4f & v, Layer layer = MANUAL, QList<ValueUnit> units = QList<ValueUnit>());
     /// Sets the value of the object
-    virtual bool set(const QVariantList & v, QList<ValueUnit> unit, Layer layer = MANUAL);
+    virtual bool set(const StyleValue & value, Layer layer = MANUAL);
 
     /// Get the type id of the type
     virtual const char * type() const = 0;

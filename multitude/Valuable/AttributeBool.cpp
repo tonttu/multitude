@@ -15,7 +15,9 @@
 
 #include "AttributeBool.hpp"
 #include "DOMElement.hpp"
-#include "Radiant/StringUtils.hpp"
+#include "StyleValue.hpp"
+
+#include <Radiant/StringUtils.hpp>
 
 namespace Valuable
 {
@@ -57,10 +59,10 @@ namespace Valuable
     return true;
   }
 
-  bool AttributeBool::set(const QVariantList & v, QList<ValueUnit> units, Layer layer)
+  bool AttributeBool::set(const StyleValue & v, Layer layer)
   {
-    if(v.size() == 1 && units[0] == VU_UNKNOWN && v[0].type() == QVariant::ByteArray) {
-      QByteArray ba = v[0].toByteArray().toLower();
+    if(v.size() == 1 && v.units()[0] == VU_UNKNOWN && v.values()[0].type() == QVariant::ByteArray) {
+      QByteArray ba = v.values()[0].toByteArray().toLower();
       if(ba == "true") setValue(true, layer);
       else if(ba == "false") setValue(false, layer);
       else return false;

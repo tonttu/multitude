@@ -42,7 +42,7 @@ namespace Valuable
     /// Sets the value of the target object
     virtual bool set(const Nimble::Vector4f & v, Layer layer = MANUAL, QList<ValueUnit> units = QList<ValueUnit>());
     /// Sets the value of the target object
-    virtual bool set(const QVariantList & v, QList<ValueUnit> unit, Layer layer = MANUAL);
+    virtual bool set(const StyleValue & v, Layer layer = MANUAL);
 
     virtual ArchiveElement serialize(Archive & archive) const;
     virtual bool deserialize(const ArchiveElement & element);

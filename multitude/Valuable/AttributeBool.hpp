@@ -41,7 +41,7 @@ namespace Valuable
 
     /// Boolean values can be set as integers in CSS files
     virtual bool set(int v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN) OVERRIDE;
-    virtual bool set(const QVariantList & v, QList<ValueUnit> units, Layer layer = MANUAL) OVERRIDE;
+    virtual bool set(const StyleValue & v, Layer layer = MANUAL) OVERRIDE;
 
     virtual int asInt(bool * const ok) const OVERRIDE;
     virtual QString asString(bool * const ok = 0) const OVERRIDE;

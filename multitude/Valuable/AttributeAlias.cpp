@@ -89,11 +89,11 @@ namespace Valuable
     return m_attribute->set(v, layer, units);
   }
 
-  bool AttributeAlias::set(const QVariantList & v, QList<Attribute::ValueUnit> unit, Attribute::Layer layer)
+  bool AttributeAlias::set(const StyleValue & v, Attribute::Layer layer)
   {
     if(!m_attribute)
       return false;
-    return m_attribute->set(v, unit, layer);
+    return m_attribute->set(v, layer);
   }
 
   ArchiveElement AttributeAlias::serialize(Archive & archive) const

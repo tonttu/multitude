@@ -23,7 +23,7 @@ namespace Valuable
     virtual QString asString(bool * const ok = 0) const OVERRIDE;
 
     virtual bool set(const QString & v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN) OVERRIDE;
-    virtual bool set(const QVariantList & v, QList<ValueUnit> unit, Layer layer = MANUAL) OVERRIDE;
+    virtual bool set(const StyleValue & v, Layer layer = MANUAL) OVERRIDE;
 
     virtual const char * type() const OVERRIDE { return "stringlist"; }
 

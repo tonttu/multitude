@@ -53,10 +53,10 @@ namespace Valuable {
       return true;
     }
 
-    bool set(const QVariantList & v, QList<ValueUnit> unit, Layer layer) OVERRIDE
+    bool set(const StyleValue & v, Layer layer) OVERRIDE
     {
-      if(v.size() != 1 || unit[0] != VU_UNKNOWN) return false;
-      QString p = v[0].toString().toLower();
+      if(v.size() != 1 || v.units()[0] != VU_UNKNOWN) return false;
+      QString p = v.values()[0].toString().toLower();
       bool on = p == "true" || p == "on" || p == "yes";
       if(on || p == "false" || p == "off" || p == "no") {
         m_master.setFlags(m_flags, on, layer);
