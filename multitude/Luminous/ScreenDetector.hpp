@@ -14,7 +14,7 @@ namespace Luminous
   class ScreenInfo
   {
   public:
-    ScreenInfo() : m_logicalScreen(0),m_numid(0) {}
+    ScreenInfo() : m_logicalScreen(0),m_numid(-1) {}
 
     /// For example "GPU-0.DFP-3"
     QString id() const { return m_gpu + "." + m_connection; }
