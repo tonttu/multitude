@@ -53,10 +53,11 @@ namespace Nimble {
     SizeT<T> & operator+=(const SizeT<T> & s);
     SizeT<T> & operator-=(const SizeT<T> & s);
 
-    template<typename U>
-    SizeT<T> & operator*=(U c);
-    template<typename U>
-    SizeT<T> & operator/=(U c);
+    /// @todo fix these. for some reason forward declaration doesn't match the definition
+//    template<typename U>
+//    SizeT<T> & operator*=(U c);
+//    template<typename U>
+//    SizeT<T> & operator/=(U c);
 
     SizeT<T> & operator+(const SizeT<T> & o) const;
     SizeT<T> & operator-(const SizeT<T> & o) const;
@@ -181,25 +182,25 @@ namespace Nimble {
     return *this;
   }
 
-  template<typename T, typename U>
-  SizeT<T> & SizeT<T>::operator*=(U c)
-  {
-    static_assert(std::is_arithmetic<U>::value, "scaling Size is only defined for arithmetic types");
+//  template<typename T, typename U>
+//  SizeT<T> & SizeT<T>::operator*=(U c)
+//  {
+//    static_assert(std::is_arithmetic<U>::value, "scaling Size is only defined for arithmetic types");
 
-    m_width *= c;
-    m_height *= c;
-    return *this;
-  }
+//    m_width *= c;
+//    m_height *= c;
+//    return *this;
+//  }
 
-  template<typename T, typename U>
-  SizeT<T> & SizeT<T>::operator/=(U c)
-  {
-    static_assert(std::is_arithmetic<U>::value, "scaling Size is only defined for arithmetic types");
+//  template<typename T, typename U>
+//  SizeT<T> & SizeT<T>::operator/=(U c)
+//  {
+//    static_assert(std::is_arithmetic<U>::value, "scaling Size is only defined for arithmetic types");
 
-    m_width /= c;
-    m_height /= c;
-    return *this;
-  }
+//    m_width /= c;
+//    m_height /= c;
+//    return *this;
+//  }
 
   template<typename T>
   bool SizeT<T>::operator==(const SizeT<T> & o) const
