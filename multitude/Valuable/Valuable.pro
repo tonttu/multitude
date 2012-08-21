@@ -34,6 +34,8 @@ HEADERS += AttributeRect.hpp
 HEADERS += AttributeString.hpp
 HEADERS += AttributeVector.hpp
 HEADERS += XMLArchive.hpp
+# Hack for Moc
+HEADERS += FileWatcher.cpp
 
 SOURCES += Archive.cpp \
     AttributeAlias.cpp \

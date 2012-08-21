@@ -18,28 +18,32 @@
 
 #include "Node.hpp"
 
-#include <Radiant/TimeStamp.hpp>
-
 #include <QString>
-#include <QMap>
-#include <QSet>
+#include <QStringList>
 
 namespace Valuable
 {
 
+  /// FileWatcher provides an interface for monitoring files and directories
+  /// for modifications.
   class VALUABLE_API FileWatcher : public Node
   {
   public:
-    void add(QString filename);
-    void update();
+    FileWatcher();
+    ~FileWatcher();
 
-    static FileWatcher & instance();
+    void addPath(const QString & relativePath);
+    void addPaths(const QStringList & paths);
+
+    QStringList directories() const;
+    QStringList files() const;
+
+    void removePath(const QString & path);
+    void removePaths(const QStringList & paths);
 
   private:
-    /// @todo do not use polling, use QFileWatcher instead
-    QMap<QString, Radiant::TimeStamp> m_files;
-    QSet<QString> m_queue;
-    FileWatcher();
+    class D;
+    D * m_d;
   };
 }
 
