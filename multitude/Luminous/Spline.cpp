@@ -171,7 +171,7 @@ namespace Luminous {
         for(std::size_t j = 0; j < points.size(); ++j) {
           Point & p = points[j];
           if(p.m_range.y > 0.0f) {
-            if(eraser.inside(p.m_location)) {
+            if(eraser.isInside(p.m_location)) {
               p.m_range.y = 0;
               changed = true;
             } else ++validPoints;
@@ -185,7 +185,7 @@ namespace Luminous {
       } else {
         for(std::size_t j = 0; j < points.size(); ++j) {
           Point & p = points[j];
-          if(p.m_range.x <= time && p.m_range.y > time && eraser.inside(p.m_location)) {
+          if(p.m_range.x <= time && p.m_range.y > time && eraser.isInside(p.m_location)) {
             p.m_range.y = time;
             changed = true;
           }

@@ -18,6 +18,7 @@ namespace Nimble
     ClipStack & pop();
 
     bool isVisible(const Nimble::Rectangle & r) const;
+    bool isVisible(const Nimble::Vector2 & p) const;
 
   private:
     class D;

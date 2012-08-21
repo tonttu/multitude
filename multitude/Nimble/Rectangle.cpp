@@ -57,7 +57,7 @@ namespace Nimble
     m_extent1 = rect.height() * 0.5f;
   }
 
-  bool Rectangle::inside(Nimble::Vector2f p) const
+  bool Rectangle::isInside(Nimble::Vector2f p) const
   {
     p -= m_origin;
 
@@ -67,7 +67,7 @@ namespace Nimble
     return (0 <= u && u <= m_extent0) && (0 <= v && v <= m_extent1);
   }
 
-  bool Rectangle::inside(const Nimble::Rectangle & r) const
+  bool Rectangle::isInside(const Nimble::Rectangle & r) const
   {
     // rectangle is inside if all points are inside
     std::vector<Nimble::Vector2f> corners;
@@ -76,7 +76,7 @@ namespace Nimble
     assert(corners.size() == 4);
 
     for(int i = 0; i < 4; ++i)
-      if(!inside(corners[i])) return false;
+      if(!isInside(corners[i])) return false;
     return true;
   }
 

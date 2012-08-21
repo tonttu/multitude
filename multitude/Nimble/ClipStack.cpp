@@ -93,4 +93,22 @@ bool ClipStack::isVisible(const Rectangle &r) const
   return true;
 }
 
+bool ClipStack::isVisible(const Nimble::Vector2 & p) const
+{
+  if(m_d->m_stack.empty())
+    return true;
+
+  for(D::Stack::reverse_iterator it = m_d->m_stack.rbegin(); it != m_d->m_stack.rend(); ++it) {
+    if(!it->m_compoundedBoundingBox.contains(p))
+      return false;
+
+    const D::StackItem & si = *it;
+
+    if(!si.m_rectangle.isInside(p))
+      return false;
+  }
+
+  return true;
+}
+
 }

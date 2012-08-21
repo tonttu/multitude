@@ -52,12 +52,12 @@ namespace Nimble {
       /// Test if a point is inside the rectangle
       /// @param p point to test
       /// @return true if p is inside or on the rectangle
-      bool inside(Nimble::Vector2f p) const;
+      bool isInside(Nimble::Vector2f p) const;
 
       /// Test if an another rectangle is fully inside this rectangle
       /// @param r rectangle to test
       /// @return true if r is fully inside or on the rectangle
-      bool inside(const Nimble::Rectangle & r) const;
+      bool isInside(const Nimble::Rectangle & r) const;
 
       /// Test if two rectangles intersect
       /// @param r rectangle to test
