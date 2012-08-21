@@ -48,6 +48,11 @@ namespace Luminous
     }
     int numId() const {return m_numid;}
     QString displayGroup() const {return gpu()+"-"+QString("%1").arg(logicalScreen());}
+    bool isMTDevice()
+    {
+      //TODO check if name matches the name of  any MT device
+      return true;
+    }
 
   private:
     QString m_name;
