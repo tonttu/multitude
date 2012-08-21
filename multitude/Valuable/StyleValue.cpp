@@ -115,8 +115,7 @@ namespace Valuable
     const QVariant & v1 = v.m_values[0];
     if(m_uniform) {
       const QVariant & v2 = m_values.last();
-      /// @todo should not allow implicit type casting between numeric and string values
-      m_uniform = v2.canConvert(v1.type());
+      m_uniform = v2.canConvert(v1.type()) && (isNumber(m_values.size() - 1) == v.isNumber());
     }
     m_values << v1;
     m_units << v.m_units[0];
