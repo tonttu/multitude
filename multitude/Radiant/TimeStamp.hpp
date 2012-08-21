@@ -71,6 +71,15 @@ namespace Radiant {
       m_val = static_cast<type>(s * FRACTIONS_PER_SECOND);
     }
 
+    /// Create a TimeStamp with the given number of milliseconds
+    /// @param s number of milliseconds
+    template<typename T>
+    static TimeStamp createMilliSeconds(T s)
+    {
+      static_assert(std::is_arithmetic<T>::value, "TimeStamp::createSeconds only works with arithmetic types");
+      return TimeStamp(static_cast<type> (s * FRACTIONS_PER_SECOND / 1000));
+    }
+
     /// Create a TimeStamp with the given number of seconds
     /// @param s number of seconds
     template<typename T>
@@ -147,6 +156,8 @@ namespace Radiant {
     double  daysD() const { return m_val / (double) ticksPerDay().value(); }
     /// Returns the number of full seconds that this time-stamp includes
     int64_t seconds() const { return m_val >> 24; }
+    /// Returns the number of full milliseconds that this time-stamp includes
+    int64_t milliseconds() const { return seconds() / 1000; }
     /// Returns the fractions of second that this timestamp includes.
     int64_t fractions() const { return m_val & 0xFFFFFF; }
     /// Returns the number of seconds in this time-stamp, as floating point number
