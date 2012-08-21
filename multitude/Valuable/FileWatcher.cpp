@@ -19,7 +19,6 @@
 
 #include <QFileInfo>
 #include <QFileSystemWatcher>
-#include <QDebug>
 #include <QMap>
 #include <QSet>
 #include <QDir>
@@ -137,7 +136,6 @@ namespace Valuable
 
     void directoryChanged(const QString & relativePath)
     {
-      Radiant::warning("FileWatcher::directoryChanged(%s)", relativePath.toUtf8().data());
       const QString path = QFileInfo(relativePath).absoluteFilePath();
 
       QSet<QString> add, rm;
@@ -146,13 +144,11 @@ namespace Valuable
 
       // File creation events are never delayed
       foreach(QString filename, add) {
-        //qDebug() << "DEBUG: file-created " << path + "/" + filename;
 
         if(isDelayed(filename)) {
           // There is a delayed event already, merge the events to single changed event
           delayEvent(filename, ChangeEvent::MODIFY);
         } else {
-          qDebug() << "file-created " << filename;
           m_host.eventSend("file-created", filename);
         }
       }
@@ -161,13 +157,10 @@ namespace Valuable
       foreach(QString filename, rm) {
         delayEvent(filename, ChangeEvent::DELETE);
       }
-
-      //m_host.eventSend("directory-changed", path);
     }
 
     void fileChanged(const QString & relativePath)
     {
-      Radiant::warning("FileWatcher::fileChanged(%s)", relativePath.toUtf8().data());
       const QString path = QFileInfo(relativePath).absoluteFilePath();
 
       // We can't assume that directory changed preceeds file changed event, so
@@ -177,8 +170,6 @@ namespace Valuable
 
     void sendDelayedEvents()
     {
-      Radiant::warning("FileWatcher::sendDelayedEvents");
-
       Radiant::TimeStamp min(std::numeric_limits<Radiant::TimeStamp::type>::max());
       Radiant::TimeStamp now = Radiant::TimeStamp::currentTime();
 
@@ -189,7 +180,6 @@ namespace Valuable
 
         if(e.m_scheduled < now) {
 
-          qDebug() << e.typeAsString() << " " << path;
           m_host.eventSend(e.typeAsString(), path);
           i = m_delayedEvents.erase(i);
 
