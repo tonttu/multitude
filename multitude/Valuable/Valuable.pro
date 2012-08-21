@@ -5,7 +5,8 @@ HEADERS += Archive.hpp \
     AttributeLocation.hpp \
     AttributeAlias.hpp \
     AttributeTimeStamp.hpp \
-    AttributeStringList.hpp
+    AttributeStringList.hpp \
+    AttributeStyleValue.hpp
 HEADERS += AttributeFlags.hpp
 HEADERS += ChangeMap.hpp
 HEADERS += CmdParser.hpp

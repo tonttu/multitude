@@ -25,22 +25,28 @@
 namespace Valuable
 {
 
+  StyleValue::StyleValue() : m_uniform(true)
+  {}
+
   StyleValue::StyleValue(float v, Attribute::ValueUnit unit) : m_uniform(true)
   {
     m_values << v;
     m_units << unit;
+    m_separators << WhiteSpace;
   }
 
   StyleValue::StyleValue(int v) : m_uniform(true)
   {
     m_values << v;
     m_units << Attribute::VU_UNKNOWN;
+    m_separators << WhiteSpace;
   }
 
   StyleValue::StyleValue(QVariant v) : m_uniform(true)
   {
     m_values << v;
     m_units << Attribute::VU_UNKNOWN;
+    m_separators << WhiteSpace;
   }
 
   StyleValue::~StyleValue()
@@ -177,5 +183,30 @@ namespace Valuable
     StyleValue v(m_values[idx]);
     v.m_units[0] = m_units[idx];
     return v;
+  }
+
+  bool StyleValue::operator==(const StyleValue & v) const
+  {
+    return m_uniform == v.m_uniform &&
+        m_values == v.m_values &&
+        m_units == v.m_units &&
+        m_separators == v.m_separators;
+  }
+
+  QList<StyleValue::Group> StyleValue::groups(Separator sep) const
+  {
+    QList<Group> all;
+    for (int i = 0; i < m_values.size(); ++i) {
+      if (i == 0 || m_separators[i] == sep) {
+        Group g;
+        g.units << m_units[i];
+        g.values << m_values[i];
+        all << g;
+      } else {
+        all.back().units << m_units[i];
+        all.back().values << m_values[i];
+      }
+    }
+    return all;
   }
 }

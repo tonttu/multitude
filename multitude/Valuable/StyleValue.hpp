@@ -36,7 +36,14 @@ namespace Valuable
       Slash
     };
 
+    struct Group
+    {
+      QVariantList values;
+      QList<Attribute::ValueUnit> units;
+    };
+
   public:
+    StyleValue();
     StyleValue(float v, Attribute::ValueUnit unit = Attribute::VU_UNKNOWN);
     StyleValue(int v);
     StyleValue(QVariant v);
@@ -70,6 +77,11 @@ namespace Valuable
     const QVariantList & values() const { return m_values; }
     const QList<Attribute::ValueUnit> & units() const { return m_units; }
     const QList<Separator> & separators() const { return m_separators; }
+
+    inline bool operator!=(const StyleValue & v) const { return !operator==(v); }
+    bool operator==(const StyleValue & v) const;
+
+    QList<Group> groups(Separator sep) const;
 
   private:
     bool m_uniform;
