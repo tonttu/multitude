@@ -157,7 +157,14 @@ namespace Radiant
 
     IntrusivePtr<T> lock() const;
 
-    inline bool operator< (const IntrusiveWeakPtr<T> & rhs) const { return m_ptr < rhs.m_ptr; }
+    template <typename Y>
+    inline bool operator< (const IntrusiveWeakPtr<Y> & rhs) const { return m_counter < rhs.m_counter; }
+
+    template <typename Y>
+    inline bool operator==(const IntrusiveWeakPtr<Y> & rhs) const { return m_counter == rhs.m_counter; }
+
+    template <typename Y>
+    inline bool operator!=(const IntrusiveWeakPtr<Y> & rhs) const { return m_counter != rhs.m_counter; }
 
   private:
     inline void deref()
@@ -360,6 +367,14 @@ namespace Radiant
     template <typename Y>
     inline bool operator!=(const IntrusivePtr<Y> & rhs) const { return m_ptr != rhs.m_ptr; }
 
+    /// Compares counters instead of pointers, since the m_ptr in weak ptr
+    /// might be old dangling / reallocated pointer
+    template <typename Y>
+    inline bool operator==(const IntrusiveWeakPtr<Y> & rhs) const { return m_counter == rhs.m_counter; }
+
+    template <typename Y>
+    inline bool operator!=(const IntrusiveWeakPtr<Y> & rhs) const { return m_counter != rhs.m_counter; }
+
     template <typename Y>
     inline bool operator== (const Y * rhs) const { return m_ptr == rhs; }
 
@@ -427,6 +442,8 @@ namespace Radiant
   template <typename T, typename Y> inline bool operator< (const T * lhs, const IntrusivePtr<Y> & rhs) { return !(rhs == lhs || rhs < lhs); }
   template <typename T> inline bool operator== (nullptr_t, const IntrusivePtr<T> & rhs) { return rhs == nullptr; }
   template <typename T> inline bool operator!= (nullptr_t, const IntrusivePtr<T> & rhs) { return rhs != nullptr; }
+  template <typename T, typename Y> inline bool operator== (const IntrusiveWeakPtr<T> & lhs, const IntrusivePtr<Y> & rhs) { return rhs == lhs; }
+  template <typename T, typename Y> inline bool operator!= (const IntrusiveWeakPtr<T> & lhs, const IntrusivePtr<Y> & rhs) { return rhs != lhs; }
 }
 
 #endif // RADIANT_INTRUSIVEPTR_HPP
