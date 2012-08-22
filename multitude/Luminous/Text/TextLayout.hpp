@@ -1,7 +1,7 @@
 #ifndef LUMINOUS_TEXTLAYOUT_HPP
 #define LUMINOUS_TEXTLAYOUT_HPP
 
-#include <Luminous/VertexHolder.hpp>
+#include <Luminous/RenderCommand.hpp>
 
 #include <Nimble/Rect.hpp>
 

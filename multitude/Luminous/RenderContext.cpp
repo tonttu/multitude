@@ -8,7 +8,7 @@
 #include "FramebufferObject.hpp"
 
 #include "Utils.hpp"
-#include "VertexHolder.hpp"
+#include "RenderCommand.hpp"
 #include "GLSLProgramObject.hpp"
 
 #include <Nimble/ClipStack.hpp>

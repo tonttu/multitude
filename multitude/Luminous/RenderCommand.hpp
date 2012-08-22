@@ -1,5 +1,5 @@
-#ifndef LUMINOUS_VERTEXHOLDER_HPP
-#define LUMINOUS_VERTEXHOLDER_HPP
+#ifndef LUMINOUS_RENDERCOMMAND_HPP
+#define LUMINOUS_RENDERCOMMAND_HPP
 
 #include "Nimble/Vector2.hpp"
 #include "Nimble/Vector3.hpp"
@@ -60,4 +60,4 @@ namespace Luminous
 }
 
 //@endcod
-#endif // VERTEXHOLDER_HPP
+#endif // LUMINOUS_RENDERCOMMAND_HPP

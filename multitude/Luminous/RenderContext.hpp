@@ -20,7 +20,7 @@
 #include <Luminous/GLSLProgramObject.hpp>
 #include <Luminous/FramebufferResource.hpp>
 #include <Luminous/Buffer.hpp>
-#include <Luminous/VertexHolder.hpp>
+#include <Luminous/RenderCommand.hpp>
 #include "OpenGL/RenderTargetGL.hpp"
 #include "OpenGL/BufferGL.hpp"
 
