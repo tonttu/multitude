@@ -50,13 +50,17 @@ namespace Luminous
     void bind(const Program & program);
     void link(const Program & program);
 
-    int samplerLocation(const QByteArray & name);
+    int attributeLocation(const QByteArray & name);
+    int uniformLocation(const QByteArray & name);
+    int uniformBlockLocation(const QByteArray & blockname);
 
     const VertexDescription & vertexDescription() const { return m_vertexDescription; }
 
   private:
     std::vector<ShaderGL> m_shaders;
-    std::map<QByteArray, int> m_samplers;
+    std::map<QByteArray, int> m_attributes;
+    std::map<QByteArray, int> m_uniforms;
+    std::map<QByteArray, int> m_uniformBlocks;
     VertexDescription m_vertexDescription;
     bool m_linked;
     // UniformDescription m_baseDescription

@@ -187,7 +187,9 @@ namespace Luminous
 
     void render(const RenderCommand & cmd, GLint uniformHandle, GLint uniformBlockIndex);
 
+
     RenderCommand & createRenderCommand(bool translucent,
+                                        const Program & shader,
                                         VertexArray & vertexArray,
                                         Buffer & uniformBuffer,
                                         const std::map<QByteArray,const Texture *> & textures);
@@ -322,13 +324,15 @@ namespace Luminous
                              (GLvoid *)((sizeof(uint) * cmd.indexOffset)), cmd.vertexOffset);
     GLERROR("RenderDriverGL::flush # glDrawElementsBaseVertex");
   }
-
-  /// This function assumes that m_state.program is already set
+  
   RenderCommand & RenderDriverGL::D::createRenderCommand(bool translucent,
+                                                         const Program & shader,
                                                          VertexArray & vertexArray,
                                                          Buffer & uniformBuffer,
                                                          const std::map<QByteArray,const Texture *> & textures)
   {
+    m_state.program = &m_driver.handle(shader);
+    m_state.program->link(shader);
     m_state.vertexArray = &m_driver.handle(vertexArray, m_state.program);
     m_state.uniformBuffer = &m_driver.handle(uniformBuffer);
 
@@ -368,7 +372,7 @@ namespace Luminous
     unit = 0;
     int slot = 0; // one day this will be different from unit
     for(auto it = std::begin(textures), end = std::end(textures); it != end; ++it, ++unit, ++slot) {
-      cmd->samplers[slot] = std::make_pair(m_state.program->samplerLocation(it->first), unit);
+      cmd->samplers[slot] = std::make_pair(m_state.program->uniformLocation(it->first), unit);
     }
     cmd->samplers[slot].first = -1;
 
@@ -675,23 +679,19 @@ namespace Luminous
                                                       const Luminous::Program & shader,
                                                       const std::map<QByteArray, const Texture *> &textures)
   {
-    auto & state = m_d->m_state;
-    state.program = &handle(shader);
-    state.program->link(shader);
-
-    const auto key = std::make_tuple(vertexBuffer.resourceId(), indexBuffer.resourceId(), state.program);
+    const auto key = std::make_tuple(vertexBuffer.resourceId(), indexBuffer.resourceId(), &handle(shader));
     // There seems bug in VC++2010 tuple/map implementation, see
     // http://stackoverflow.com/questions/3254427/c0x-are-tuples-of-tuples-allowed
     // VertexArray & vertexArray = m_d->m_vertexArrayCache[key];
     auto it = m_d->m_vertexArrayCache.find(key);
     if(it == m_d->m_vertexArrayCache.end()) {
       VertexArray vertexArray;
-      vertexArray.addBinding(vertexBuffer, state.program->vertexDescription());
+      vertexArray.addBinding(vertexBuffer, shader.vertexDescription());
       vertexArray.setIndexBuffer(indexBuffer);
       it = m_d->m_vertexArrayCache.insert(std::make_pair(key, std::move(vertexArray))).first;
     }
 
-    return m_d->createRenderCommand(translucent, it->second, uniformBuffer,textures);
+    return m_d->createRenderCommand(translucent, shader, it->second, uniformBuffer, textures);
   }
 
   RenderCommand & RenderDriverGL::createRenderCommand(bool translucent,
@@ -700,11 +700,7 @@ namespace Luminous
                                                       const Luminous::Program & shader,
                                                       const std::map<QByteArray, const Texture *> &textures)
   {
-    auto & state = m_d->m_state;
-    state.program = &handle(shader);
-    state.program->link(shader);
-
-    return m_d->createRenderCommand(translucent, vertexArray, uniformBuffer, textures);
+    return m_d->createRenderCommand(translucent, shader, vertexArray, uniformBuffer, textures);
   }
 
   void RenderDriverGL::flush()

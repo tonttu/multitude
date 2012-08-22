@@ -81,28 +81,13 @@ namespace Luminous
   {
     m_handle = glCreateProgram();
   }
-  /*
-  ProgramGL::ProgramGL( ProgramGL && prog )
-    : ResourceHandleGL(std::move(prog))
-    , m_shaders(prog.m_shaders)
-    , m_samplers(prog.m_samplers)
-    , m_linked(prog.m_linked)
-  {
-    
-  }
-
-
-  ProgramGL & ProgramGL::operator=( ProgramGL && prog )
-  {
-    //m_shaders = prog.m_shaders;
-    return *this;
-  }
-  */
 
   ProgramGL::ProgramGL(ProgramGL && program)
     : ResourceHandleGL(std::move(program))
     , m_shaders(std::move(program.m_shaders))
-    , m_samplers(std::move(program.m_samplers))
+    , m_attributes(std::move(program.m_attributes))
+    , m_uniforms(std::move(program.m_uniforms))
+    , m_uniformBlocks(std::move(program.m_uniformBlocks))
     , m_linked(program.m_linked)
   {
   }
@@ -111,7 +96,9 @@ namespace Luminous
   {
     ResourceHandleGL::operator=(std::move(program));
     std::swap(m_shaders, program.m_shaders);
-    std::swap(m_samplers, program.m_samplers);
+    std::swap(m_attributes, program.m_attributes);
+    std::swap(m_uniforms, program.m_uniforms);
+    std::swap(m_uniformBlocks, program.m_uniformBlocks);
     std::swap(m_linked, program.m_linked);
     return *this;
   }
@@ -173,18 +160,46 @@ namespace Luminous
       glGetProgramInfoLog(m_handle, len, &len, log.data());
       Radiant::error("%s", log.data());
     } else {
+      // Clear the location caches
+      m_attributes.clear();
+      m_uniformBlocks.clear();
+      m_uniforms.clear();
       // m_baseDescription = uniformDescription(programHandle, "BaseBlock");
     }
     m_vertexDescription = program.vertexDescription();
     m_linked = true;
   }
 
-  int ProgramGL::samplerLocation(const QByteArray & name)
+  int ProgramGL::attributeLocation(const QByteArray & name)
   {
-    auto it = m_samplers.find(name);
-    if(it == m_samplers.end()) {
+    auto it = m_attributes.find(name);
+    if(it == m_attributes.end()) {
+      GLint loc = glGetAttribLocation(m_handle, name.data());
+      m_attributes[name] = loc;
+      return loc;
+    } else {
+      return it->second;
+    }
+  }
+
+  int ProgramGL::uniformLocation(const QByteArray & name)
+  {
+    auto it = m_uniforms.find(name);
+    if(it == m_uniforms.end()) {
       GLint loc = glGetUniformLocation(m_handle, name.data());
-      m_samplers[name] = loc;
+      m_uniforms[name] = loc;
+      return loc;
+    } else {
+      return it->second;
+    }
+  }
+
+  int ProgramGL::uniformBlockLocation(const QByteArray & name)
+  {
+    auto it = m_uniformBlocks.find(name);
+    if(it == m_uniformBlocks.end()) {
+      GLint loc = glGetUniformBlockIndex (m_handle, name.data());
+      m_uniformBlocks[name] = loc;
       return loc;
     } else {
       return it->second;
