@@ -109,7 +109,7 @@ namespace Valuable
     return "/" + m_name;
   }
 
-  void Attribute::processMessage(const QString &, Radiant::BinaryData & )
+  void Attribute::processMessage(const QByteArray &, Radiant::BinaryData & )
   {
     Radiant::error("Attribute::processMessage # Unimplemented for %s",
                    typeid(*this).name());

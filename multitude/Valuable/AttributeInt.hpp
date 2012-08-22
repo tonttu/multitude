@@ -125,7 +125,7 @@ namespace Valuable
 
     virtual const char * type() const OVERRIDE { return VO_TYPE_INT; }
 
-    virtual void processMessage(const QString & /*id*/, Radiant::BinaryData & data) OVERRIDE
+    virtual void processMessage(const QByteArray & /*id*/, Radiant::BinaryData & data) OVERRIDE
     {
       bool ok = true;
       T v = data.read<T>( & ok);

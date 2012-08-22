@@ -34,7 +34,7 @@ namespace Valuable
   {}
 
 
-  void AttributeEnum::processMessage(const QString & , Radiant::BinaryData & data)
+  void AttributeEnum::processMessage(const QByteArray & , Radiant::BinaryData & data)
   {
     QString str;
     data.readString(str);

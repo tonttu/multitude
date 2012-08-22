@@ -14,7 +14,7 @@ namespace Valuable
     virtual ~AttributeAlias();
 
     /// Calls the target processMessage-function
-    virtual void processMessage(const QString & id, Radiant::BinaryData & data);
+    virtual void processMessage(const QByteArray & id, Radiant::BinaryData & data);
 
     /// Converts the target object to a floating point number
     /// @param ok If non-null, *ok is set to true/false on success/error

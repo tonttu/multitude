@@ -14,7 +14,7 @@ namespace Valuable
     setAttribute(nullptr);
   }
 
-  void AttributeAlias::processMessage(const QString & id, Radiant::BinaryData & data)
+  void AttributeAlias::processMessage(const QByteArray & id, Radiant::BinaryData & data)
   {
     if(m_attribute)
       m_attribute->processMessage(id, data);

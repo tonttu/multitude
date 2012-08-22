@@ -175,7 +175,7 @@ namespace Valuable
         either process the message, or call the function of the parent class.
 
         \code
-        void MyClass::processMessage(const QString & type, Radiant::BinaryData & data)
+        void MyClass::processMessage(const QByteArray & type, Radiant::BinaryData & data)
         {
           if(type == "jump")
             doJump();
@@ -195,7 +195,7 @@ namespace Valuable
         @param data Binary blob that contains the argument data in easily parseable format.
 
     */
-    virtual void processMessage(const QString &id, Radiant::BinaryData &data);
+    virtual void processMessage(const QByteArray &id, Radiant::BinaryData &data);
     /// Utility function for sending string message to the object
     void processMessageString(const char * id, const char * str);
     /// Utility function for sending a float message to the object

@@ -44,7 +44,7 @@ namespace Resonant {
     virtual ~ModuleSamplePlayer();
 
     virtual bool prepare(int & channelsIn, int & channelsOut);
-    virtual void processMessage(const QString & address, Radiant::BinaryData &) OVERRIDE;
+    virtual void processMessage(const QByteArray & address, Radiant::BinaryData &) OVERRIDE;
     virtual void process(float ** in, float ** out, int n, const Resonant::CallbackTime &);
 
     /** Adds a few voices that will play an ambient sound background.

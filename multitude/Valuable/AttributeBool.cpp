@@ -34,7 +34,7 @@ namespace Valuable
     return true;
   }
 
-  void AttributeBool::processMessage(const QString &, Radiant::BinaryData & data)
+  void AttributeBool::processMessage(const QByteArray &, Radiant::BinaryData & data)
   {
     bool ok = true;
     int32_t v = data.readInt32(&ok);

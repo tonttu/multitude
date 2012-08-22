@@ -414,7 +414,7 @@ namespace Resonant {
     return true;
   }
 
-  void ModuleSamplePlayer::processMessage(const QString & id, Radiant::BinaryData & data)
+  void ModuleSamplePlayer::processMessage(const QByteArray & id, Radiant::BinaryData & data)
   {
     const int bufsize = 256;
     char buf[bufsize];
@@ -462,10 +462,10 @@ namespace Resonant {
       m_channels = data.readInt32( & ok);
     }
     else
-      error("ModuleSamplePlayer::control # Unknown message \"%s\"", id.toUtf8().data());
+      error("ModuleSamplePlayer::control # Unknown message \"%s\"", id.data());
 
     if(!ok) {
-      error("ModuleSamplePlayer::control # When processing \"%s\"", id.toUtf8().data());
+      error("ModuleSamplePlayer::control # When processing \"%s\"", id.data());
     }
   }
 

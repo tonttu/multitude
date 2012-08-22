@@ -36,7 +36,7 @@ namespace Valuable
     bool deserialize(const ArchiveElement & element) OVERRIDE;
 
     /// @cond
-    virtual void processMessage(const QString &, Radiant::BinaryData & data) OVERRIDE;
+    virtual void processMessage(const QByteArray &, Radiant::BinaryData & data) OVERRIDE;
     /// @endcond
 
     /// Boolean values can be set as integers in CSS files

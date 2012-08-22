@@ -12,7 +12,7 @@ namespace Luminous
       eventAddIn("sync");
     }
 
-    void processMessage(const QString & type, Radiant::BinaryData & data)
+    void processMessage(const QByteArray & type, Radiant::BinaryData & data)
     {
       if(type == "sync") doSync();
       else Node::processMessage(type, data);

@@ -76,10 +76,10 @@ namespace Resonant {
     return true;
   }
 
-  void ModulePanner::processMessage(const QString & id,
+  void ModulePanner::processMessage(const QByteArray & id,
                                     Radiant::BinaryData & data)
   {
-    debugResonant("ModulePanner::control # %s", id.toUtf8().data());
+    debugResonant("ModulePanner::control # %s", id.data());
 
     bool ok = true;
 
@@ -110,7 +110,7 @@ namespace Resonant {
       }
     }
     else {
-      error("ModulePanner::control # Unknown command %s", id.toUtf8().data());
+      error("ModulePanner::control # Unknown command %s", id.data());
     }
   }
 

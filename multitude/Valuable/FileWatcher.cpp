@@ -42,7 +42,7 @@ namespace {
       , m_scheduled(Radiant::TimeStamp::currentTime() + Radiant::TimeStamp::createMilliSeconds(CHANGE_EVENT_DELAY))
     {}
 
-    QString typeAsString() const
+    QByteArray typeAsString() const
     {
       if(m_type == CREATE)
         return "file-created";

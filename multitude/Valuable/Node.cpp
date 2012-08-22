@@ -48,7 +48,7 @@ namespace
     {}
 
     QueueItem(Valuable::Node * sender_, Valuable::Node * target_,
-              const QString & to_, const Radiant::BinaryData & data_)
+              const QByteArray & to_, const Radiant::BinaryData & data_)
       : sender(sender_)
       , func()
       , func2()
@@ -61,7 +61,7 @@ namespace
     Valuable::Node::ListenerFunc func;
     Valuable::Node::ListenerFunc2 func2;
     Valuable::Node * target;
-    const QString to;
+    const QByteArray to;
     Radiant::BinaryData data;
   };
 
@@ -71,7 +71,7 @@ namespace
   QSet<void *> s_queueOnce;
 
   void queueEvent(Valuable::Node * sender, Valuable::Node * target,
-                  const QString & to, const Radiant::BinaryData & data,
+                  const QByteArray & to, const Radiant::BinaryData & data,
                   void * once)
   {
     // make the new item before locking
@@ -503,8 +503,8 @@ namespace Valuable
     Radiant::trace(Radiant::DEBUG, "}");
   }
 
-  void Node::eventAddListener(const QString & from,
-                              const QString & to,
+  void Node::eventAddListener(const QByteArray & from,
+                              const QByteArray & to,
                               Valuable::Node * obj,
                               ListenerType listenerType,
                               const Radiant::BinaryData * defaultData)
@@ -517,13 +517,13 @@ namespace Valuable
     vp.m_type = listenerType;
 
     if(!m_eventSendNames.contains(from)) {
-      warning("Node::eventAddListener # Adding listener to nonexistent event '%s'", from.toUtf8().data());
+      warning("Node::eventAddListener # Adding listener to nonexistent event '%s'", from.data());
     }
 
     if(!obj->m_eventListenNames.contains(to)) {
       const QString & klass = Radiant::StringUtils::demangle(typeid(*obj).name());
       warning("Node::eventAddListener # %s (%s %p) doesn't accept event '%s'",
-              klass.toUtf8().data(), obj->name().toUtf8().data(), obj, to.toUtf8().data());
+              klass.toUtf8().data(), obj->name().toUtf8().data(), obj, to.data());
     }
 
     if(defaultData)
@@ -532,7 +532,7 @@ namespace Valuable
     if(std::find(m_elisteners.begin(), m_elisteners.end(), vp) !=
        m_elisteners.end())
       debugValuable("Widget::eventAddListener # Already got item %s -> %s (%p)",
-            from.toUtf8().data(), to.toUtf8().data(), obj);
+            from.data(), to.data(), obj);
     else {
       m_elisteners.push_back(vp);
       obj->eventAddSource(this);
@@ -567,7 +567,7 @@ namespace Valuable
   }
 #endif
 
-  void Node::eventAddListener(const QString & from, ListenerFunc func,
+  void Node::eventAddListener(const QByteArray & from, ListenerFunc func,
                               ListenerType listenerType)
   {
     ValuePass vp;
@@ -576,14 +576,14 @@ namespace Valuable
     vp.m_type = listenerType;
 
     if(!m_eventSendNames.contains(from)) {
-      warning("Node::eventAddListener # Adding listener to nonexistent event '%s'", from.toUtf8().data());
+      warning("Node::eventAddListener # Adding listener to nonexistent event '%s'", from.data());
     }
 
     // No duplicate check, since there is no way to compare std::function objects
     m_elisteners.push_back(vp);
   }
 
-  void Node::eventAddListenerBd(const QString & from, ListenerFunc2 func,
+  void Node::eventAddListenerBd(const QByteArray & from, ListenerFunc2 func,
                                 ListenerType listenerType)
   {
     ValuePass vp;
@@ -592,7 +592,7 @@ namespace Valuable
     vp.m_type = listenerType;
 
     if(!m_eventSendNames.contains(from)) {
-      warning("Node::eventAddListenerBd # Adding listener to nonexistent event '%s'", from.toUtf8().data());
+      warning("Node::eventAddListenerBd # Adding listener to nonexistent event '%s'", from.data());
     }
 
     // No duplicate check, since there is no way to compare std::function objects
@@ -655,7 +655,7 @@ namespace Valuable
       m_eventSources.erase(it);
   }
 
-  void Node::processMessage(const QString & id, Radiant::BinaryData & data)
+  void Node::processMessage(const QByteArray & id, Radiant::BinaryData & data)
   {
     // info("Node::processMessage # %s %s", typeid(*this).name(), id);
 
@@ -677,7 +677,7 @@ namespace Valuable
       } else {
         const QString klass = Radiant::StringUtils::demangle(typeid(*this).name());
         warning("Node::processMessage # %s (%s %p): unhandled event '%s'",
-                klass.toUtf8().data(), name().toUtf8().data(), this, id.toUtf8().data());
+                klass.toUtf8().data(), name().toUtf8().data(), this, id.data());
       }
     }
   }
@@ -772,13 +772,13 @@ namespace Valuable
     return false;
   }
 
-  void Node::eventSend(const QString & id, Radiant::BinaryData & bd)
+  void Node::eventSend(const QByteArray & id, Radiant::BinaryData & bd)
   {
     if(!m_eventsEnabled)
       return;
 
     if(!m_eventSendNames.contains(id)) {
-      error("Node::eventSend # Sending unknown event '%s'", id.toUtf8().data());
+      error("Node::eventSend # Sending unknown event '%s'", id.data());
     }
 
     m_frame++;
@@ -843,7 +843,7 @@ namespace Valuable
     }
   }
 
-  void Node::eventSend(const QString & id)
+  void Node::eventSend(const QByteArray & id)
   {
     Radiant::BinaryData tmp;
     eventSend(id, tmp);

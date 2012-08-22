@@ -221,13 +221,13 @@ namespace Valuable
 
     */
     /// @todo the raw pointer in these should be fixed!
-    void eventAddListener(const QString & from,
-                          const QString & to,
+    void eventAddListener(const QByteArray & from,
+                          const QByteArray & to,
                           Valuable::Node * obj,
                           ListenerType listenerType,
                           const Radiant::BinaryData * defaultData = 0);
-    void eventAddListener(const QString & from,
-                          const QString & to,
+    void eventAddListener(const QByteArray & from,
+                          const QByteArray & to,
                           Valuable::Node * obj,
                           const Radiant::BinaryData * defaultData = 0)
     {
@@ -247,10 +247,10 @@ namespace Valuable
     }
 #endif
 
-    void eventAddListener(const QString & from, ListenerFunc func,
+    void eventAddListener(const QByteArray & from, ListenerFunc func,
                           ListenerType listenerType = DIRECT);
 
-    void eventAddListenerBd(const QString & from, ListenerFunc2 func,
+    void eventAddListenerBd(const QByteArray & from, ListenerFunc2 func,
                             ListenerType listenerType = DIRECT);
 
     /** Removes event listeners from this object.
@@ -299,7 +299,7 @@ namespace Valuable
     void eventPassingEnable(bool enable) { m_eventsEnabled = enable; }
 
     /// @cond
-    virtual void processMessage(const QString & type, Radiant::BinaryData & data);
+    virtual void processMessage(const QByteArray & type, Radiant::BinaryData & data);
 
     /// @endcond
 
@@ -335,11 +335,11 @@ namespace Valuable
   protected:
 
     /// Sends an event to all listeners on this object
-    void eventSend(const QString & id, Radiant::BinaryData &);
-    void eventSend(const QString & id);
+    void eventSend(const QByteArray & id, Radiant::BinaryData &);
+    void eventSend(const QByteArray & id);
 
     template <typename P1>
-    void eventSend(const QString & id, const P1 & p1)
+    void eventSend(const QByteArray & id, const P1 & p1)
     {
       Radiant::BinaryData bd;
       bd.write(p1);
@@ -347,7 +347,7 @@ namespace Valuable
     }
 
     template <typename P1, typename P2>
-    void eventSend(const QString & id, const P1 & p1, const P2 & p2)
+    void eventSend(const QByteArray & id, const P1 & p1, const P2 & p2)
     {
       Radiant::BinaryData bd;
       bd.write(p1);
@@ -356,7 +356,7 @@ namespace Valuable
     }
 
     template <typename P1, typename P2, typename P3>
-    void eventSend(const QString & id, const P1 & p1, const P2 & p2, const P3 & p3)
+    void eventSend(const QByteArray & id, const P1 & p1, const P2 & p2, const P3 & p3)
     {
       Radiant::BinaryData bd;
       bd.write(p1);
@@ -366,7 +366,7 @@ namespace Valuable
     }
 
     template <typename P1, typename P2, typename P3, typename P4>
-    void eventSend(const QString & id, const P1 & p1, const P2 & p2, const P3 & p3, const P4 & p4)
+    void eventSend(const QByteArray & id, const P1 & p1, const P2 & p2, const P3 & p3, const P4 & p4)
     {
       Radiant::BinaryData bd;
       bd.write(p1);
@@ -377,7 +377,7 @@ namespace Valuable
     }
 
     template <typename P1, typename P2, typename P3, typename P4, typename P5>
-    void eventSend(const QString & id, const P1 & p1, const P2 & p2, const P3 & p3, const P4 & p4, const P5 & p5)
+    void eventSend(const QByteArray & id, const P1 & p1, const P2 & p2, const P3 & p3, const P4 & p4, const P5 & p5)
     {
       Radiant::BinaryData bd;
       bd.write(p1);
@@ -418,8 +418,8 @@ namespace Valuable
       v8::Persistent<v8::Function> m_funcv8;
 #endif
       Radiant::BinaryData   m_defaultData;
-      QString m_from;
-      QString m_to;
+      QByteArray m_from;
+      QByteArray m_to;
       int         m_frame;
       ListenerType m_type;
     };

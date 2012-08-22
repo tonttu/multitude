@@ -76,7 +76,7 @@ namespace Valuable
       const ElementType * data() const
       { return value().data(); }
 
-      virtual void processMessage(const QString & id, Radiant::BinaryData & data) OVERRIDE;
+      virtual void processMessage(const QByteArray & id, Radiant::BinaryData & data) OVERRIDE;
       virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
 
       virtual const char * type() const OVERRIDE;
@@ -162,7 +162,7 @@ namespace Valuable
   {}
 
   template <class T>
-  void AttributeVector<T>::processMessage(const QString & id,
+  void AttributeVector<T>::processMessage(const QByteArray & id,
     Radiant::BinaryData & data)
   {
     /// @todo this isn't how processMessage should be used

@@ -75,7 +75,7 @@ namespace Resonant {
     return true;
   }
 
-  void ModuleOutCollect::processMessage(const QString & id, Radiant::BinaryData & control)
+  void ModuleOutCollect::processMessage(const QByteArray & id, Radiant::BinaryData & control)
   {
     bool ok = true;
     Move tmp;
@@ -104,7 +104,7 @@ namespace Resonant {
       tmp.from = control.readInt32( & ok);
       tmp.to   = control.readInt32( & ok);
 
-      debugResonant("ModuleOutCollect::control # %s", id.toUtf8().data());
+      debugResonant("ModuleOutCollect::control # %s", id.data());
 
       if(!ok) {
         error("ModuleOutCollect::control # Could not parse control # %s",
@@ -127,7 +127,7 @@ namespace Resonant {
                 tmp.sourceId.toUtf8().data(), tmp.from, tmp.to);
       }
       else {
-        error("ModuleOutCollect::control # No param \"%s\"", id.toUtf8().data());
+        error("ModuleOutCollect::control # No param \"%s\"", id.data());
       }
     }
   }
