@@ -12,7 +12,7 @@ namespace Luminous
   public:
     D();
 
-    void disableKerning();
+    void disableHinting();
 
   public:
     QTextDocument m_doc;
@@ -24,7 +24,7 @@ namespace Luminous
   RichTextLayout::D::D()
   {}
 
-  void RichTextLayout::D::disableKerning()
+  void RichTextLayout::D::disableHinting()
   {
     QTextCursor cursor(&m_doc);
     for (QTextBlock block = m_doc.begin(); block.isValid(); block = block.next()) {
@@ -35,7 +35,7 @@ namespace Luminous
 
         QTextCharFormat fmt = fragment.charFormat();
         QFont font = fmt.font();
-        font.setKerning(false);
+        font.setHintingPreference(QFont::PreferNoHinting);
         fmt.setFont(font);
 
         cursor.setPosition(fragment.position());
@@ -63,7 +63,7 @@ namespace Luminous
   {
     if (!layoutReady()) {
       // trigger relayout in Qt
-      m_d->disableKerning();
+      m_d->disableHinting();
       m_d->m_doc.setTextWidth(maximumSize().x);
       QSizeF size = m_d->m_doc.documentLayout()->documentSize();
       setBoundingBox(Nimble::Rectf(0, 0, size.width(), size.height()));

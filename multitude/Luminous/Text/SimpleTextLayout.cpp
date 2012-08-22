@@ -65,7 +65,7 @@ namespace Luminous
 
   void SimpleTextLayout::D::layout(const Nimble::Vector2f & size)
   {
-    assert(!m_layout.font().kerning());
+    assert(m_layout.font().hintingPreference() == QFont::PreferNoHinting);
     QFontMetricsF fontMetrics(m_layout.font());
     const float lineWidth = size.x;
     const float leading = fontMetrics.leading();
@@ -93,7 +93,7 @@ namespace Luminous
     : TextLayout(maximumSize)
   {
     QFont f(font);
-    f.setKerning(false);
+    f.setHintingPreference(QFont::PreferNoHinting);
     m_d = new D(text, f, textOption);
   }
 
