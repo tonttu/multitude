@@ -219,7 +219,7 @@ namespace Luminous {
       /// @return the viewport defined by the area
       Nimble::Recti viewport() const
       {
-        return Nimble::Recti(m_location[0], m_location[1], m_size[0], m_size[1]);
+        return Nimble::Recti(m_location[0], m_location[1], m_location[0]+m_size[0], m_location[1]+m_size[1]);
       }
 
       enum {

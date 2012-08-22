@@ -93,12 +93,6 @@ namespace Luminous
       GLERROR("RenderTargetGL::bind # glBindFramebuffer");
     }
 
-    /// @todo should this be configurable?
-    /// @todo this should be done by render context, not this class
-    assert(m_size.isValid());
-    glViewport(0, 0, m_size.width(), m_size.height());
-    GLERROR("RenderTargetGL::bind # glViewport");
-
     touch();
   }
 
