@@ -388,6 +388,8 @@ namespace Valuable
 
     inline const T & value() const { return m_values[m_current]; }
 
+    Layer currentLayer() const { return m_current; }
+
     inline void setValue(const T & t, Layer layer = USER)
     {
       bool top = layer >= m_current;
@@ -413,7 +415,7 @@ namespace Valuable
         assert(m_valueSet[DEFAULT]);
         int l = int(layout) - 1;
         while(!m_valueSet[l]) --l;
-        m_current = l;
+        m_current = Layer(l);
         if(m_values[l] != m_values[layout])
           this->emitChange();
       }
@@ -429,7 +431,7 @@ namespace Valuable
     }
 
   protected:
-    int m_current;
+    Layer m_current;
     T m_values[LAYER_COUNT];
     bool m_valueSet[LAYER_COUNT];
   };
