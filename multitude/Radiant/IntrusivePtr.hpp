@@ -166,6 +166,13 @@ namespace Radiant
     template <typename Y>
     inline bool operator!=(const IntrusiveWeakPtr<Y> & rhs) const { return m_counter != rhs.m_counter; }
 
+    void reset()
+    {
+      deref();
+      m_ptr = nullptr;
+      m_counter = nullptr;
+    }
+
   private:
     inline void deref()
     {
