@@ -39,7 +39,7 @@ namespace Valuable
       return ok;
     }
 
-    virtual QString asString(bool * ok) const OVERRIDE
+    virtual QString asString(bool * const ok) const OVERRIDE
     {
       if(ok) *ok = true;
 

@@ -237,7 +237,20 @@ win32 {
     DDK_PATH="C:\\WinDDK\\7600.16385.1"
 
     LIB_OPENGL = -lopengl32 -lglu32
-    QMAKE_CXXFLAGS += -D_CRT_SECURE_NO_WARNINGS -wd4244 -wd4251 -wd4355
+    # Make VS a bit less spammy
+    QMAKE_CXXFLAGS += -D_SCL_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS
+    # conversion from 'size_t' to 'type', possible loss of data
+    QMAKE_CXXFLAGS += -wd4267
+    # conversion from 'type1' to 'type2', possible lost of data
+    QMAKE_CXXFLAGS += -wd4244
+    # class 'type' needs to have dll-interface to be used by clients of class 'type2'
+    QMAKE_CXXFLAGS += -wd4251
+    # this used in base member initializer list
+    QMAKE_CXXFLAGS += -wd4355
+    # Truncation from double to float
+    QMAKE_CXXFLAGS += -wd4305
+    # Signed/unsigned mismatch
+    QMAKE_CXXFLAGS += -wd4018
 
     # These libs have an extra extension for debug builds
     build_pass:CONFIG(debug,debug|release) {
