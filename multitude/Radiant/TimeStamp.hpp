@@ -40,7 +40,8 @@ namespace Radiant {
     typedef int64_t type;
 
     enum {
-      FRACTIONS_PER_SECOND = 0x1000000
+        FRACTIONS_PER_SECOND = 0x1000000
+      , USELESS_MAX = 0x7FFFFFFFFFFFFFFF
     };
 
     /// The number of ticks that take place during one second
@@ -73,20 +74,36 @@ namespace Radiant {
 
     /// Create a TimeStamp with the given number of milliseconds
     /// @param s number of milliseconds
-    template<typename T>
-    static TimeStamp createMilliSeconds(T s)
+    template<class T>
+    static TimeStamp createMilliSeconds(T s, typename std::enable_if<std::is_integral<T>::value>::type* = 0)
     {
-      static_assert(std::is_arithmetic<T>::value, "TimeStamp::createSeconds only works with arithmetic types");
-      return TimeStamp(static_cast<type> ((s * FRACTIONS_PER_SECOND) / 1000));
+      type secs = s / 1000;
+      type millis = s % 1000;
+      return TimeStamp(FRACTIONS_PER_SECOND * secs + (millis * FRACTIONS_PER_SECOND) / 1000);
+    }
+
+    template<class T>
+    static TimeStamp createMilliSeconds(T s, typename std::enable_if<std::is_floating_point<T>::value>::type* = 0)
+    {
+      type integral = static_cast<type>(s);
+      double fract = s - integral;
+      return createMilliSeconds(integral) + TimeStamp((fract * FRACTIONS_PER_SECOND) / 1000);
     }
 
     /// Create a TimeStamp with the given number of seconds
     /// @param s number of seconds
-    template<typename T>
-    static TimeStamp createSeconds(T s)
+    template<class T>
+    static TimeStamp createSeconds(T s, typename std::enable_if<std::is_integral<T>::value>::type* = 0)
     {
-      static_assert(std::is_arithmetic<T>::value, "TimeStamp::createSeconds only works with arithmetic types");
-      return TimeStamp(static_cast<type> (s * FRACTIONS_PER_SECOND));
+      return TimeStamp(static_cast<type>(s) * FRACTIONS_PER_SECOND);
+    }
+
+    template<class T>
+    static TimeStamp createSeconds(T s, typename std::enable_if<std::is_floating_point<T>::value>::type* = 0)
+    {
+      type integral = static_cast<type>(s);
+      double fract = s - integral;
+      return TimeStamp((integral * FRACTIONS_PER_SECOND) + (fract * FRACTIONS_PER_SECOND));
     }
 
     /// Create a TimeStamp with the given number of minutes
@@ -157,7 +174,13 @@ namespace Radiant {
     /// Returns the number of full seconds that this time-stamp includes
     int64_t seconds() const { return m_val >> 24; }
     /// Returns the number of full milliseconds that this time-stamp includes
-    int64_t milliseconds() const { return ((1000*m_val) / FRACTIONS_PER_SECOND); }
+    int64_t milliseconds() const
+    {
+      type sec = m_val / FRACTIONS_PER_SECOND;
+      type fract = m_val % FRACTIONS_PER_SECOND;
+
+      return (1000 * sec) + ((1000 * fract) / FRACTIONS_PER_SECOND);
+    }
 
     /// Returns the fractions of second that this timestamp includes.
     int64_t fractions() const { return m_val & 0xFFFFFF; }
