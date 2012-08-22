@@ -103,9 +103,15 @@ unix {
   VERSION = $${CORNERSTONE_VERSION}
 
   # Use ccache if available
+
   system(which ccache > /dev/null 2>&1) {
     QMAKE_CXX=ccache $$QMAKE_CXX
     QMAKE_CC=ccache $$QMAKE_CC
+  }
+  exists(/opt/local/bin/ccache) {
+    # For Macports + QtCreator users:
+    QMAKE_CXX=/opt/local/bin/ccache $$QMAKE_CXX
+    QMAKE_CC=/opt/local/bin/ccache $$QMAKE_CC
   }
 
   exists(/opt/multitouch):INCLUDEPATH+=/opt/multitouch/include
