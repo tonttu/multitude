@@ -77,7 +77,7 @@ namespace Radiant {
     static TimeStamp createMilliSeconds(T s)
     {
       static_assert(std::is_arithmetic<T>::value, "TimeStamp::createSeconds only works with arithmetic types");
-      return TimeStamp(static_cast<type> (s * FRACTIONS_PER_SECOND / 1000));
+      return TimeStamp(static_cast<type> ((s * FRACTIONS_PER_SECOND) / 1000));
     }
 
     /// Create a TimeStamp with the given number of seconds
@@ -157,7 +157,8 @@ namespace Radiant {
     /// Returns the number of full seconds that this time-stamp includes
     int64_t seconds() const { return m_val >> 24; }
     /// Returns the number of full milliseconds that this time-stamp includes
-    int64_t milliseconds() const { return seconds() / 1000; }
+    int64_t milliseconds() const { return ((1000*m_val) / FRACTIONS_PER_SECOND); }
+
     /// Returns the fractions of second that this timestamp includes.
     int64_t fractions() const { return m_val & 0xFFFFFF; }
     /// Returns the number of seconds in this time-stamp, as floating point number
