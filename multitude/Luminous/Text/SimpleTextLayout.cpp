@@ -144,6 +144,8 @@ namespace Luminous
     if (isComplete())
       return;
 
+    clearGlyphs();
+
     const Nimble::Vector2f layoutLocation(m_d->m_layout.position().x(), m_d->m_layout.position().y());
     bool missingGlyphs = false;
 

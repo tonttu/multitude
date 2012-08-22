@@ -61,7 +61,9 @@ namespace Luminous
     FontGenerator(FontCache::D & cache);
 
   protected:
+    virtual void initialize() OVERRIDE;
     virtual void doTask() OVERRIDE;
+    virtual void finished() OVERRIDE;
 
   private:
     Glyph * generateGlyph(quint32 glyphIndex);
@@ -129,34 +131,40 @@ namespace Luminous
   {
   }
 
-  void FontCache::FontGenerator::doTask()
+  void FontCache::FontGenerator::initialize()
   {
     if (!m_cache.m_fileCacheLoaded)
       loadFileCache();
+  }
 
+  void FontCache::FontGenerator::doTask()
+  {
     quint32 request = 0;
-    bool first = true;
-    while (true) {
-      Glyph * ready = nullptr;
-      if (!first)
-        ready = getGlyph(request);
-
+    {
       Radiant::Guard g(m_cache.m_cacheMutex);
-      if (ready) {
-        m_cache.m_request.erase(request);
-        m_cache.m_cache.insert(std::make_pair(request, ready));
-      }
-
       if (m_cache.m_request.empty()) {
         m_cache.m_taskCreated = false;
         setFinished();
-        break;
-      } else {
-        request = *m_cache.m_request.begin();
-        first = false;
+        return;
       }
+
+      request = *m_cache.m_request.begin();
     }
 
+    Glyph * glyph = getGlyph(request);
+
+    Radiant::Guard g(m_cache.m_cacheMutex);
+    m_cache.m_request.erase(request);
+    m_cache.m_cache.insert(std::make_pair(request, glyph));
+
+    if (m_cache.m_request.empty()) {
+      m_cache.m_taskCreated = false;
+      setFinished();
+    }
+  }
+
+  void FontCache::FontGenerator::finished()
+  {
     // delete these in this thread
     m_painter.reset();
     m_painterImg.reset();
