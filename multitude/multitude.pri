@@ -272,7 +272,7 @@ CONFIG(release, debug|release) {
 DEFINES += USING_V8_SHARED
 
 # Tommi's hack
-exists(/opt/local/libexec/llvm-3.2/bin/clang) {
+exists(/opt/local/libexec/llvm-3.2/bin/clang_not) {
   # This section overrides g++, and selects clang instead. Warning flags are modified to
   # reduce the error spam. Without these we get a constant stream of warnings for
   # each Q_OBJECT macro (which is many).
