@@ -35,6 +35,7 @@ namespace Luminous {
       Nimble::Matrix4f projMatrix;
       Nimble::Matrix4f modelMatrix;
       float velocityScale;
+      float depth;
     };
 
     D()
@@ -87,6 +88,7 @@ namespace Luminous {
     Luminous::Buffer m_vbo;
 
     Luminous::BlendMode m_blendMode;
+    Luminous::DepthMode m_depthMode;
     float m_velocityScale;
   };
   
@@ -107,13 +109,15 @@ namespace Luminous {
       m_d->m_program.loadShader(shaderPath + "/sprites.vs", Luminous::ShaderGLSL::Vertex);
       m_d->m_program.loadShader(shaderPath + "/sprites.gs", Luminous::ShaderGLSL::Geometry);
 
-      m_d->m_vdescr.addAttribute<Nimble::Vector3f>("vertex_position");
+      m_d->m_vdescr.addAttribute<Nimble::Vector2f>("vertex_position");
       m_d->m_vdescr.addAttribute<Nimble::Vector2f>("vertex_velocity");
       m_d->m_vdescr.addAttribute<Nimble::Vector4f>("vertex_color");
       m_d->m_vdescr.addAttribute<float>("vertex_rotation");
       m_d->m_vdescr.addAttribute<float>("vertex_size");
       m_d->m_program.setVertexDescription(m_d->m_vdescr);
     }
+
+    m_d->m_depthMode.setFunction(DepthMode::LessEqual);
   }
 
   SpriteRenderer::~SpriteRenderer()
@@ -141,22 +145,18 @@ namespace Luminous {
     /// @todo If this gets too slow we can always convert this to use a persistent vertex buffer instead of always creating this anew
     bool translucent = true;
 
-    auto b = rc.render<Sprite, D::SpriteUniform>(translucent, Luminous::PrimitiveType_Point, spriteCount(), spriteCount(), 1.f,
+    auto b = rc.render<Sprite, D::SpriteUniform>(translucent, Luminous::PrimitiveType_Point, 0, spriteCount(), 1.f,
     m_d->m_program, m_d->m_texture);
 
-    b.uniform->velocityScale = 1.f;
+    b.uniform->velocityScale = m_d->m_velocityScale;
+    b.uniform->depth = b.depth;
 
     b.command->blendMode = m_d->m_blendMode;
-
+    b.command->depthMode = m_d->m_depthMode;
     auto v = b.vertex;
-    auto idx = b.idx;
 
     // Copy vertex data
     std::copy(m_d->m_sprites.begin(), m_d->m_sprites.end(), v);
-
-    /// @todo Should use non-indexed drawing for this
-    for (auto i = 0; i < spriteCount(); ++i)
-      *idx++ = i;
   }
 
   void SpriteRenderer::setImage(const Luminous::Image & image)

@@ -69,7 +69,7 @@ namespace Luminous {
     struct Sprite
     {
       Sprite()
-        : location(0,0,0)
+        : location(0,0)
         , velocity(0,0)
         , color(1.f, 1.f, 1.f, 1.f)
         , rotation(0.f)
@@ -77,7 +77,7 @@ namespace Luminous {
       {}
 
       // Location of the sprite
-      Nimble::Vector3f location;
+      Nimble::Vector2f location;
       /// The velocity of the sprite
       /** The velocity information is used to implement motion blur/stretching. */
       Nimble::Vector2f velocity;
