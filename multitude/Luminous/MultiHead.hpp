@@ -364,6 +364,13 @@ namespace Luminous {
         m_areas.clear();
       }
 
+      Nimble::Recti getRect() {
+        return Nimble::Recti(location().x,
+                             location().y,
+                             location().x + width(),
+                             location().y + height());
+      }
+
     private:
       LUMINOUS_API virtual bool readElement(const Valuable::ArchiveElement & ce);
 

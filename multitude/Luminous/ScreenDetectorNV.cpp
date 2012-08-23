@@ -272,6 +272,8 @@ namespace
       else
         info.setLogicalScreen(screen);
       info.setName(display_port_device_name);
+      Radiant::info("la mierdas %d", results.size());
+      info.setNumId(results.size());
     }
     return ok;
   }
