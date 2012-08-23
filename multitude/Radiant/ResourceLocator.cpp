@@ -24,9 +24,9 @@
 
 #if defined(RADIANT_WINDOWS)
 # define stat     _stat
-# define S_ISDIR  _S_ISDIR
+# define S_ISDIR(mode)  (((mode) & S_IFMT) == S_IFDIR)
+# define S_ISREG(mode)  (((mode) & S_IFMT) == S_IFREG)
 # define S_IWRITE _S_IWRITE
-# define S_ISREG  _S_ISREG
 #endif
 
 namespace {
