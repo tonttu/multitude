@@ -39,9 +39,8 @@ namespace Radiant {
     /// The internal, signed 64-bit integer type
     typedef int64_t type;
 
-    enum {
+    enum : int64_t {
         FRACTIONS_PER_SECOND = 0x1000000
-      , USELESS_MAX = 0x7FFFFFFFFFFFFFFF
     };
 
     /// The number of ticks that take place during one second
