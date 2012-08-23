@@ -173,12 +173,12 @@ namespace Valuable
       Radiant::TimeStamp min(std::numeric_limits<Radiant::TimeStamp::type>::max());
       Radiant::TimeStamp now = Radiant::TimeStamp::currentTime();
 
-      for(auto i = m_delayedEvents.begin(); i != m_delayedEvents.end(); ++i) {
+      for(auto i = m_delayedEvents.begin(); i != m_delayedEvents.end();) {
 
         const QString & path = i.key();
         const ChangeEvent & e = i.value();
 
-        if(e.m_scheduled < now) {
+        if(e.m_scheduled <= now) {
 
           m_host.eventSend(e.typeAsString(), path);
           i = m_delayedEvents.erase(i);
@@ -192,7 +192,7 @@ namespace Valuable
       // Rescedule to the next event
       if(!m_delayedEvents.isEmpty()) {
         int millis = (min - now).milliseconds();
-        assert(millis > 0);
+        assert(millis >= 0);
         m_delayTimer.singleShot(millis, this, SLOT(sendDelayedEvents()));
       }
     }
