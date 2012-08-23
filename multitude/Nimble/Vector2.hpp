@@ -49,11 +49,11 @@ namespace Nimble {
     inline Vector2T (T cx, T cy) : x(cx), y(cy) {}
 
     /// Fill the vector with zeroes
-    inline Vector2T&	clear		(void)					{ x = (T)(0); y = (T)(0); return *this; }
+    inline void clear		(void)					{ x = (T)(0); y = (T)(0); }
     /// Set the vector to given values
-    inline Vector2T&	make		(T cx, T cy)		{ x = cx; y = cy; return *this; }
+    inline Vector2T<T> &	make		(T cx, T cy)		{ x = cx; y = cy; return *this; }
     /// Set both components to the given value
-    inline Vector2T&	make		(T xy)					{ x = (xy); y = (xy); return *this; }
+    inline Vector2T<T> &	make		(T xy)					{ x = (xy); y = (xy); return *this; }
     /// Returns a pointer to the first element
     inline  T *         data() { return &x; }
     /// Returns a pointer to the first element

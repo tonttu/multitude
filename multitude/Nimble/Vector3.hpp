@@ -34,7 +34,9 @@ namespace Nimble {
     /// Constructs a vector using a 2d vector and a scalar component
     inline Vector3T(const Vector2T<T>& v, T az)		   { x = v.x;	y = v.y; z = az; }
     /// Fills the vector with zeroes
-    inline Vector3T&	clear		(void)				   { x = (T)(0);  y = (T)(0); z = (T)(0); return *this;	}
+    inline void	clear		(void)				   { x = (T)(0);  y = (T)(0); z = (T)(0); }
+    /// Sets the vector to given values
+    inline Vector3T&	make		(const Vector2T<T>& v, T cz)  { x = v.x; y = v.y; z = (cz); return *this; }
     /// Sets the vector to given values
     inline Vector3T&	make		(T cx, T cy, T cz)  { x = (cx); y = (cy); z = (cz); return *this; }
     /// Fills the vector with given value

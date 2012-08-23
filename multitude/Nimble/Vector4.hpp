@@ -48,9 +48,13 @@ namespace Nimble {
 
     inline Vector4T	() {}
     /// Constructs a vector and initializes it with the given values
+    inline Vector4T (const Vector2T<T> & v, T cz, T cw) : x(v.x), y(v.y), z(cz), w(cw) {}
+    /// Constructs a vector and initializes it with the given values
+    inline Vector4T (const Vector3T<T> & v, T cw) : x(v.x), y(v.y), z(v.z), w(cw) {}
+    /// Constructs a vector and initializes it with the given values
     inline Vector4T (T cx, T cy, T cz, T cw) : x(cx), y(cy), z(cz), w(cw) {}
     /// Fills the vector with zeroes
-    inline Vector4T&	clear(void)                                    { x = (T)(0);  y = (T)(0); z = (T)(0); w = (T)(0); return *this;	}
+    inline void	clear(void)                                    { x = (T)(0);  y = (T)(0); z = (T)(0); w = (T)(0);	}
 
     /// Compares if two vectors are equal
     inline bool operator==  (const Vector4T& src) const
@@ -100,7 +104,13 @@ namespace Nimble {
     inline T&		operator[]	(int i)			       { return ((T*)this)[i]; }
 
     /// Sets the vector to given values
-    inline void 	        make(T cx, T cy, T cz, T cw)                   { x = cx; y = cy; z = cz; w = cw; }
+    inline Nimble::Vector4T<T> & make(const Vector2T<T> & v, T cz, T cw)                   { x = v.x; y = v.y; z = cz; w = cw; return *this; }
+
+    /// Sets the vector to given values
+    inline Nimble::Vector4T<T> & make(const Vector3T<T> & v, T cw)                   { x = v.x; y = v.y; z = v.z; w = cw; return *this; }
+
+    /// Sets the vector to given values
+    inline Nimble::Vector4T<T> & make(T cx, T cy, T cz, T cw)                   { x = cx; y = cy; z = cz; w = cw; return *this; }
 
     /// Returns a pointer to the first component
     inline T *           data() { return &x; }
