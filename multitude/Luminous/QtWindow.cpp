@@ -42,46 +42,52 @@ namespace Luminous
 
   private:
     // Empty overrides for thread-safety
-    virtual void paintEvent(QPaintEvent *) {}
+    virtual void paintEvent(QPaintEvent *) OVERRIDE {}
 
-    void resizeEvent ( QResizeEvent * e )
+    virtual void resizeEvent ( QResizeEvent * e ) OVERRIDE
     {
       if(m_window.eventHook())
         m_window.eventHook()->handleWindowMove( pos().x(), pos().y(), e->size().width(), e->size().height() );
     }
 
-    void moveEvent ( QMoveEvent * e )
+    virtual void moveEvent ( QMoveEvent * e ) OVERRIDE
     {
       if(m_window.eventHook())
         m_window.eventHook()->handleWindowMove( e->pos().x(), e->pos().y(), size().width(), size().height() );
     }
 
-    virtual void mouseMoveEvent(QMouseEvent * e)
+    virtual void mouseMoveEvent(QMouseEvent * e) OVERRIDE
     {
       if(m_window.eventHook())
         m_window.eventHook()->handleMouseEvent(*e);
     }
 
-    virtual void mousePressEvent(QMouseEvent * e)
+    virtual void mousePressEvent(QMouseEvent * e) OVERRIDE
     {
       if(m_window.eventHook())
         m_window.eventHook()->handleMouseEvent(*e);
     }
 
-    virtual void mouseReleaseEvent(QMouseEvent * e)
+    virtual void mouseReleaseEvent(QMouseEvent * e) OVERRIDE
     {
       if(m_window.eventHook())
         m_window.eventHook()->handleMouseEvent(*e);
     }
 
-    virtual void keyPressEvent(QKeyEvent * e)
+    virtual void wheelEvent(QWheelEvent *e) OVERRIDE
+    {
+      if(m_window.eventHook())
+        m_window.eventHook()->handleMouseEvent(Radiant::MouseEvent(*e));
+    }
+
+    virtual void keyPressEvent(QKeyEvent * e) OVERRIDE
     {
       // All done if there's no hooks installed
       if(m_window.eventHook())
         m_window.eventHook()->handleKeyboardEvent(Radiant::KeyEvent(*e));
     }
 
-    virtual void keyReleaseEvent(QKeyEvent * e)
+    virtual void keyReleaseEvent(QKeyEvent * e) OVERRIDE
     {
       if(m_window.eventHook())
         m_window.eventHook()->handleKeyboardEvent(Radiant::KeyEvent(*e));

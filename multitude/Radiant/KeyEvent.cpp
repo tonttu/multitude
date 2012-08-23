@@ -92,6 +92,7 @@ namespace Radiant
     Qt::MouseButton button;
     Qt::MouseButtons buttons;
     Qt::KeyboardModifiers modifiers;
+    int delta;
   };
 
   MouseEvent::MouseEvent(const QMouseEvent & event)
@@ -102,10 +103,22 @@ namespace Radiant
     m_d->button = event.button();
     m_d->buttons = event.buttons();
     m_d->modifiers = event.modifiers();
+    m_d->delta = 0;
+  }
+
+  MouseEvent::MouseEvent(const QWheelEvent & event)
+    : m_d(new D())
+  {
+    m_d->type = event.type();
+    m_d->location = Nimble::Vector2f(event.pos().x(), event.pos().y());
+    m_d->button = Qt::NoButton;
+    m_d->buttons = event.buttons();
+    m_d->modifiers = event.modifiers();
+    m_d->delta = event.delta();
   }
 
   MouseEvent::MouseEvent(QEvent::Type type, const Nimble::Vector2f & location, Qt::MouseButton button,
-              Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers)
+    Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers)
     : m_d(new D())
   {
     m_d->type = type;
@@ -113,6 +126,7 @@ namespace Radiant
     m_d->button = button;
     m_d->buttons = buttons;
     m_d->modifiers = modifiers;
+    m_d->delta = 0;
   }
 
   MouseEvent::MouseEvent(const MouseEvent & ev)
@@ -139,6 +153,11 @@ namespace Radiant
   void MouseEvent::setLocation(const Nimble::Vector2f & location)
   {
     m_d->location = location;
+  }
+
+  int MouseEvent::delta() const
+  {
+    return m_d->delta;
   }
 
   QEvent::Type MouseEvent::type() const

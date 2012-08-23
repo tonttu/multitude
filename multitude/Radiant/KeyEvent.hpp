@@ -21,6 +21,7 @@
 #include <Nimble/Vector2.hpp>
 
 #include <QEvent>
+#include <QWheelEvent>
 #include <QString>
 
 class QKeyEvent;
@@ -91,6 +92,7 @@ namespace Radiant
   {
   public:
     MouseEvent(const QMouseEvent & event);
+    MouseEvent(const QWheelEvent & event);
     MouseEvent(QEvent::Type type, const Nimble::Vector2f & location, Qt::MouseButton button,
                 Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers);
 
@@ -105,6 +107,8 @@ namespace Radiant
     Nimble::Vector2f location() const;
     void setLocation(const Nimble::Vector2f & location);
 
+    int delta() const;
+
     /// @todo should use our own enums
     QEvent::Type type() const;
 
@@ -112,7 +116,6 @@ namespace Radiant
     Qt::MouseButtons buttons() const;
 
     Qt::KeyboardModifiers modifiers() const;
-
   private:
     class D;
     D * m_d;
