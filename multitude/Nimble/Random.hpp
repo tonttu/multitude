@@ -148,7 +148,7 @@ namespace Nimble {
       return Nimble::Vector2f(cosf(a) * radius, sinf(a) * radius);
     }
 
-    /// Random 2d vector on a unit circle
+    /// Random 2d vector on or inside a unit circle
     inline Nimble::Vector2f randVecInCircle(float radius = 1.0f)
     {
       while(true) {
