@@ -25,7 +25,7 @@
 #include "PixelFormat.hpp"
 #include "Image.hpp"
 
-#include <Radiant/RefPtr.hpp>
+#include <memory>
 
 #include <vector>
 

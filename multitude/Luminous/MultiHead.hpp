@@ -26,7 +26,7 @@
 #include <Nimble/Rect.hpp>
 #include <Nimble/Vector4.hpp>
 
-#include <Radiant/RefPtr.hpp>
+#include <memory>
 
 #include <Valuable/AttributeString.hpp>
 #include <Valuable/AttributeFloat.hpp>

@@ -3,7 +3,7 @@
 
 #include "Export.hpp"
 
-#include <Radiant/RefPtr.hpp>
+#include <memory>
 
 #include <Nimble/Matrix4.hpp>
 

@@ -16,7 +16,7 @@
 #ifndef VALUABLE_DOM_DOCUMENT_HPP
 #define VALUABLE_DOM_DOCUMENT_HPP
 
-#include <Radiant/RefPtr.hpp>
+#include <memory>
 
 #include <Valuable/Export.hpp>
 

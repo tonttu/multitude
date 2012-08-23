@@ -18,7 +18,7 @@
 #include "PipelineCommand.hpp"
 
 #include <Nimble/Matrix4.hpp>
-#include <Radiant/RefPtr.hpp>
+#include <memory>
 #include <Radiant/Timer.hpp>
 
 #ifdef RADIANT_OSX

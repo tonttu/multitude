@@ -13,7 +13,7 @@
 #include <Radiant/VideoImage.hpp>
 #include <Radiant/IODefs.hpp>
 #include <Radiant/Mutex.hpp>
-#include <Radiant/RefPtr.hpp>
+#include <memory>
 #include <Radiant/Thread.hpp>
 #include <Radiant/TimeStamp.hpp>
 

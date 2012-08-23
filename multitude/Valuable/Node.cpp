@@ -22,7 +22,7 @@
 #include <Radiant/Mutex.hpp>
 #include <Radiant/TimeStamp.hpp>
 #include <Radiant/Trace.hpp>
-#include <Radiant/RefPtr.hpp>
+#include <memory>
 
 #include <algorithm>
 #include <typeinfo>

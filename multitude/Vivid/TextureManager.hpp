@@ -1,7 +1,7 @@
 #ifndef VIVID_TEXTUREMANAGER_HPP
 #define VIVID_TEXTUREMANAGER_HPP
 
-#include <Radiant/RefPtr.hpp>
+#include <memory>
 #include <Radiant/Singleton.hpp>
 
 #include <map>

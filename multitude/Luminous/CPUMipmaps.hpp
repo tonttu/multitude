@@ -23,7 +23,7 @@
 
 #include <Nimble/Matrix3.hpp>
 
-#include <Radiant/RefPtr.hpp>
+#include <memory>
 
 #include <limits>
 

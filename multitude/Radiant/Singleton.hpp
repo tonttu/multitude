@@ -18,7 +18,7 @@
 
 #include "Export.hpp"
 #include "Mutex.hpp"
-#include "RefPtr.hpp"
+#include <memory>
 
 /*!
     @page singleton Radiant::Singleton<T>

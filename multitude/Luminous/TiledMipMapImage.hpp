@@ -23,7 +23,7 @@
 #include <Luminous/Texture.hpp>
 
 #include <Nimble/Rect.hpp>
-#include <Radiant/RefPtr.hpp>
+#include <memory>
 
 namespace Luminous
 {

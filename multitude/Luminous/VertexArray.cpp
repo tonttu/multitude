@@ -3,6 +3,7 @@
 #include "Luminous/VertexDescription.hpp"
 
 #include <algorithm>
+#include <cassert>
 
 namespace Luminous
 {

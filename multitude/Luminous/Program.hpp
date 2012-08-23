@@ -6,7 +6,7 @@
 #include "Luminous/UniformDescription.hpp"
 
 #include <Valuable/Node.hpp>
-#include <Radiant/RefPtr.hpp>
+#include <memory>
 
 #include <QString>
 

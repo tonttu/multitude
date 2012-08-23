@@ -9,7 +9,7 @@
 #include "Luminous/RenderTarget.hpp"
 
 #include <Radiant/Color.hpp>
-#include <Radiant/RefPtr.hpp>
+#include <memory>
 #include <Radiant/Flags.hpp>
 
 #include <QString>

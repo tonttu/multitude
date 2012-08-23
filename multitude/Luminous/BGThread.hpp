@@ -24,7 +24,7 @@
 #include <Radiant/Mutex.hpp>
 #include <Radiant/Singleton.hpp>
 #include <Radiant/ThreadPool.hpp>
-#include <Radiant/RefPtr.hpp>
+#include <memory>
 
 #include <list>
 #include <map>

@@ -21,7 +21,7 @@
 #include <Nimble/Math.hpp>
 #include <Nimble/Vector2.hpp>
 
-#include <Radiant/RefPtr.hpp>
+#include <memory>
 
 /* After that we include system headers, first the more custom stuff
    (Qt, FTGL, libcd1394) and then the bulk stuff (stdio, stdlib,

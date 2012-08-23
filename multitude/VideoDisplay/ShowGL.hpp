@@ -29,7 +29,7 @@
 #include <Nimble/Matrix3.hpp>
 
 #include <Radiant/Color.hpp>
-#include <Radiant/RefPtr.hpp>
+#include <memory>
 #include <Radiant/TimeStamp.hpp>
 #include <Radiant/VideoImage.hpp>
 #include <Radiant/VideoInput.hpp>

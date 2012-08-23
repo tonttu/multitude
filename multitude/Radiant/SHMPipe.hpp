@@ -21,7 +21,7 @@
 #include "BinaryData.hpp"
 #include "Export.hpp"
 #include "MemCheck.hpp"
-#include "RefPtr.hpp"
+#include <memory>
 
 #ifdef WIN32
 # define NOMINMAX

@@ -4,7 +4,7 @@
 #ifndef RESONANT_MODULE_SAMPLE_PLAYER_HPP
 #define RESONANT_MODULE_SAMPLE_PLAYER_HPP
 
-#include <Radiant/RefPtr.hpp>
+#include <memory>
 #include <Radiant/Thread.hpp>
 #include <Radiant/TimeStamp.hpp>
 #include <Radiant/Condition.hpp>

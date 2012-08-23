@@ -24,7 +24,7 @@
 #include <Nimble/Vector2.hpp>
 
 #include <Radiant/RefObj.hpp>
-#include <Radiant/RefPtr.hpp>
+#include <memory>
 
 #include <Valuable/AttributeFloat.hpp>
 #include <Valuable/AttributeVector.hpp>

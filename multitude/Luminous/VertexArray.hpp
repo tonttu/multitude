@@ -5,7 +5,7 @@
 #include "Luminous/RenderResource.hpp"
 #include "Luminous/VertexDescription.hpp"
 
-#include <Radiant/RefPtr.hpp>
+#include <memory>
 #include <vector>
 
 namespace Luminous
