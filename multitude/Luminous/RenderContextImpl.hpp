@@ -34,7 +34,7 @@ namespace Luminous
     
   template <typename Vertex, typename UniformBlock>
   RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::drawPrimitiveT(
-    Luminous::PrimitiveType primType, const Nimble::Vector2f * vertices, unsigned int vertexCount,
+    Luminous::PrimitiveType primType, unsigned int indexCount, unsigned int vertexCount,
     const Program & shader, const Radiant::Color & color, float width, const Luminous::Style & style)
   {
     /// @todo Should we be able to overrule this with Style::Translucent
@@ -42,50 +42,7 @@ namespace Luminous
       shader.translucent() |
       (color.w < 0.99999999f);
 
-    /// @todo temporary dummy to avoid separate render() function
-    const std::map<QByteArray, const Texture *> textures;
-
-    RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(translucent, primType, vertexCount, vertexCount, width, shader, textures);
-    auto v = b.vertex;
-    auto idx = b.idx;
-
-    for (unsigned int i = 0; i < vertexCount; ++i) {
-      v++->location.make(vertices[i].x, vertices[i].y, b.depth);
-      *idx++ = i;
-    }
-
-    // Set the color
-    b.uniform->color = color;
-    // Apply opacity
-    b.uniform->color.w *= opacity();
-
-    // Set draw modes
-    b.command->blendMode = style.blendMode();
-    b.command->depthMode = style.depthMode();
-    b.command->stencilMode = style.stencilMode();
-
-    return b;
-  }
-
-  template <typename Vertex, typename UniformBlock>
-  RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::drawTexPrimitiveT(
-    Luminous::PrimitiveType primType, const Nimble::Vector2f * vertices, const Nimble::Vector2f * uvs, unsigned int vertexCount,
-    const Program & shader, const std::map<QByteArray, const Texture *> & textures, const Radiant::Color & color, float width, const Luminous::Style & style)
-  {
-    /// @todo Should we be able to overrule this with Style::Translucent
-    bool translucent =
-      shader.translucent() |
-      (color.w < 0.99999999f);
-
-    RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(translucent, primType, vertexCount, vertexCount, width, shader, textures);
-    auto v = b.vertex;
-    auto idx = b.idx;
-
-    for (unsigned int i = 0; i < vertexCount; ++i) {
-      v->location.make(vertices[i].x, vertices[i].y, b.depth);
-      v++->texCoord = uvs[i];
-      *idx++ = i;
-    }
+    RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(translucent, primType, indexCount, vertexCount, width, shader, style.fill().textures());
 
     // Set the color
     b.uniform->color = color;

@@ -224,7 +224,7 @@ namespace Luminous
       @param style color and other parameters for the arc
       @param lineSegments number of steps
       */
-    void drawArc(Nimble::Vector2f center, float radius, float fromRadians, float toRadians, Luminous::Style & style, unsigned int lineSegments = 0);
+    void drawArc(const Nimble::Vector2f & center, float radius, float fromRadians, float toRadians, Luminous::Style & style, unsigned int lineSegments = 0);
 
     /** Draws a circle
       @param center center of the circle
@@ -233,7 +233,7 @@ namespace Luminous
       @param style color and other parameters for the circle
       @param lineSegments number of steps
       */
-    void drawCircle(Nimble::Vector2f center, float radius, Luminous::Style & style, unsigned int lineSegments = 0, float fromRadians=0, float toRadians=Nimble::Math::TWO_PI);
+    void drawCircle(const Nimble::Vector2f & center, float radius, Luminous::Style & style, unsigned int lineSegments = 0, float fromRadians=0, float toRadians=Nimble::Math::TWO_PI);
 
     /** Draws a constant width donut.
       @param center center of the donut
@@ -245,7 +245,7 @@ namespace Luminous
       @param fromRadians
       @param toRadians
      */
-    void drawDonut(Nimble::Vector2f center,
+    void drawDonut(const Nimble::Vector2f & center,
                    float majorAxisLength,
                    float minorAxisLength,
                    float width,
@@ -283,27 +283,20 @@ namespace Luminous
     /// DEPRECATED FUNCTIONS
     /// @todo remove or replace with Styled-equivalent
     //////////////////////////////////////////////////////////////////////////
-    void drawCurve(Nimble::Vector2*, float, const float * = 0) {}
-    void drawSpline(Nimble::Interpolating &, float /*width*/, const float * = 0, float = 1.0f) {}
     void drawLine(const Nimble::Vector2f & /*p1*/, const Nimble::Vector2f & /*p2*/, float /*width*/, float * /*rgba*/) {}
     void drawCircle(Nimble::Vector2f /*center*/, float /*radius*/, const float * /*rgba*/, int /*segments*/ = 0)  {}
     void drawRect(const Nimble::Rectf & /*rect*/, const float * /*rgba*/) {}
-    void drawLineRect(const Nimble::Rectf & /*rect*/, float /*width*/, const float * /*rgba*/) {}
     void drawTexRect(const Nimble::Rectf & /*rect*/, float * /*rgba*/) {}
 
     //////////////////////////////////////////////////////////////////////////
     // Implementation
     template <typename Vertex, typename UniformBlock>
-    RenderBuilder<Vertex, UniformBlock> drawPrimitiveT(Luminous::PrimitiveType primType, const Nimble::Vector2f * vertices, unsigned int vertexCount,
+    RenderBuilder<Vertex, UniformBlock> drawPrimitiveT(Luminous::PrimitiveType primType, unsigned int indexCount, unsigned int vertexCount,
       const Luminous::Program & shader, const Radiant::Color & color, float width, const Luminous::Style & style);
 
-    template <typename Vertex, typename UniformBlock>
-    RenderBuilder<Vertex, UniformBlock> drawTexPrimitiveT(Luminous::PrimitiveType primType, const Nimble::Vector2f * vertices, const Nimble::Vector2f * uvs, unsigned int vertexCount,
-      const Luminous::Program & shader, const std::map<QByteArray, const Texture *> & textures, const Radiant::Color & color, float width, const Luminous::Style & style);
-
-    void drawRectWithHole(const Nimble::Rect & area, const Nimble::Rect & hole, const Luminous::Style & style);
-    void drawLine(const Nimble::Vector2 & p1, const Nimble::Vector2 & p2, const Luminous::Style & style);
-    void drawPolyLine(const Nimble::Vector2 * vertices, unsigned int numVertices, const Luminous::Style & style);
+    void drawRectWithHole(const Nimble::Rectf & area, const Nimble::Rect & hole, const Luminous::Style & style);
+    void drawLine(const Nimble::Vector2f & p1, const Nimble::Vector2f & p2, const Luminous::Style & style);
+    void drawPolyLine(const Nimble::Vector2f * vertices, unsigned int numVertices, const Luminous::Style & style);
     void drawPoints(const Nimble::Vector2f * points, size_t numPoints, const Luminous::Style & style);
     void drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, const Style &style);
     void drawRect(const Nimble::Rectf & rect, const Style & style);
@@ -345,24 +338,19 @@ namespace Luminous
     /// @return the viewport from the top of the viewport stack
     const Nimble::Recti & currentViewport() const;
 
-
     static void setThreadContext(RenderContext * rsc);
 
     /// Returns the RenderContext for the calling thread
     /// @todo not really implemented on Windows
     static RenderContext * getThreadContext();
 
-    /// Returns the RenderContext for the calling thread
-    /// @todo not really implemented on Windows
-    /// @todo not really implemented on anything?
-    /// static RenderContext * GLSLreadContext();
+    /// @todo REMOVE US
+    void bindTexture(GLenum, GLenum, GLuint ) {}
+    void bindBuffer(GLenum, GLuint) {}
+    void bindProgram(GLSLProgramObject *) {}
+    void flush() {}
 
-    void bindTexture(GLenum textureType, GLenum textureUnit, GLuint textureId);
-    void bindBuffer(GLenum type, GLuint id);
-    /// Bind GLSL program object
-    void bindProgram(GLSLProgramObject * program);
 
-    void flush();
     void flush2();
     void restart();
 

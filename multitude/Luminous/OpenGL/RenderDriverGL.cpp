@@ -152,9 +152,6 @@ namespace Luminous
 
     RenderState m_state;
 
-    // key is <vertex buffer id, index buffer id, shader>
-    std::map<std::tuple<RenderResource::Id, RenderResource::Id, ProgramGL*>, VertexArray> m_vertexArrayCache;
-
     // Stack of active render targets
     std::stack<RenderTargetGL*, std::vector<RenderTargetGL*> > m_rtStack;
     // Master rendering queue that consists of segments of rendering commands
@@ -320,8 +317,16 @@ namespace Luminous
     m_driver.setDepthMode(cmd.depthMode);
     m_driver.setStencilMode(cmd.stencilMode);
 
-    glDrawElementsBaseVertex(cmd.primitiveType, cmd.primitiveCount, GL_UNSIGNED_INT,
-                             (GLvoid *)((sizeof(uint) * cmd.indexOffset)), cmd.vertexOffset);
+    if (cmd.indexed) {
+      // Draw using the index buffer
+      glDrawElementsBaseVertex(cmd.primitiveType, cmd.primitiveCount, GL_UNSIGNED_INT,
+                               (GLvoid *)((sizeof(uint) * cmd.indexOffset)), cmd.vertexOffset);
+    }
+    else {
+      // Draw non-indexed
+      glDrawArrays(cmd.primitiveType, cmd.vertexOffset, cmd.primitiveCount);
+    }
+
     GLERROR("RenderDriverGL::flush # glDrawElementsBaseVertex");
   }
   
@@ -539,8 +544,6 @@ namespace Luminous
     m_d->m_renderBuffers.clear();
     m_d->m_renderTargets.clear();
 
-    m_d->m_vertexArrayCache.clear();
-
     while(!m_d->m_rtStack.empty())
       m_d->m_rtStack.pop();
 
@@ -670,28 +673,6 @@ namespace Luminous
     BufferGL & bufferGL = handle(buffer);
 
     bufferGL.unmap(offset, length);
-  }
-
-  RenderCommand & RenderDriverGL::createRenderCommand(bool translucent,
-                                                      Buffer & vertexBuffer,
-                                                      Buffer & indexBuffer,
-                                                      Buffer & uniformBuffer,
-                                                      const Luminous::Program & shader,
-                                                      const std::map<QByteArray, const Texture *> &textures)
-  {
-    const auto key = std::make_tuple(vertexBuffer.resourceId(), indexBuffer.resourceId(), &handle(shader));
-    // There seems bug in VC++2010 tuple/map implementation, see
-    // http://stackoverflow.com/questions/3254427/c0x-are-tuples-of-tuples-allowed
-    // VertexArray & vertexArray = m_d->m_vertexArrayCache[key];
-    auto it = m_d->m_vertexArrayCache.find(key);
-    if(it == m_d->m_vertexArrayCache.end()) {
-      VertexArray vertexArray;
-      vertexArray.addBinding(vertexBuffer, shader.vertexDescription());
-      vertexArray.setIndexBuffer(indexBuffer);
-      it = m_d->m_vertexArrayCache.insert(std::make_pair(key, std::move(vertexArray))).first;
-    }
-
-    return m_d->createRenderCommand(translucent, shader, it->second, uniformBuffer, textures);
   }
 
   RenderCommand & RenderDriverGL::createRenderCommand(bool translucent,

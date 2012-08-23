@@ -90,13 +90,6 @@ namespace Luminous
                                           std::size_t length = std::size_t(-1)) = 0;
 
     LUMINOUS_API virtual RenderCommand & createRenderCommand(bool translucent,
-                                                             Buffer & vertexBuffer,
-                                                             Buffer & indexBuffer,
-                                                             Buffer & uniformBuffer,
-                                                             const Luminous::Program & shader,
-                                                             const std::map<QByteArray, const Texture *> & textures) = 0;
-
-    LUMINOUS_API virtual RenderCommand & createRenderCommand(bool translucent,
                                                              VertexArray & vertexArray,
                                                              Buffer & uniformBuffer,
                                                              const Luminous::Program & shader,

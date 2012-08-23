@@ -27,6 +27,7 @@ namespace Luminous
     DepthMode depthMode;
     StencilMode stencilMode;
 
+    bool indexed;
     unsigned int indexOffset;
     unsigned int vertexOffset;
 
