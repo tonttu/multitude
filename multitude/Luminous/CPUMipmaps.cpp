@@ -262,7 +262,7 @@ namespace Luminous {
 
 #ifndef LUMINOUS_OPENGLES
 
-    MipMapGenerator * gen = 0;
+    std::shared_ptr<MipMapGenerator> gen;
     if(m_compressedMipmaps) {
       m_compFilename = cacheFileName(filename, -1, "dds");
 
@@ -286,7 +286,7 @@ namespace Luminous {
       }
       if(m_compressedMipmaps && (ts < m_fileModified ||
                                  !Luminous::Image::ping(m_compFilename.toUtf8().data(), m_info))) {
-        gen = new MipMapGenerator(filename, m_compFilename);
+        gen.reset(new MipMapGenerator(filename, m_compFilename));
         auto self = shared_from_this();
         gen->setListener([=] (const ImageInfo & info) { self->mipmapsReady(info); } );
       }

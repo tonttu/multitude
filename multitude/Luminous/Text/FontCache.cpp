@@ -414,7 +414,7 @@ namespace Luminous
     m_d->m_request.insert(glyph);
     if (!m_d->m_taskCreated) {
       m_d->m_taskCreated = true;
-      Luminous::BGThread::instance()->addTask(new FontGenerator(*m_d));
+      Luminous::BGThread::instance()->addTask(std::make_shared<FontGenerator>(*m_d));
     }
     return nullptr;
   }

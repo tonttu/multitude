@@ -598,7 +598,7 @@ namespace Luminous
     , m_ready(nullptr, "", false)
     , m_valid(false)
   {
-    MULTI_ONCE { BGThread::instance()->addTask(new MipmapReleaseTask()); }
+    MULTI_ONCE { BGThread::instance()->addTask(std::make_shared<MipmapReleaseTask>()); }
   }
 
   Mipmap::D::~D()

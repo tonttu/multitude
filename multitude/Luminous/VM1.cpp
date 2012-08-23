@@ -131,7 +131,7 @@ namespace Luminous
     bool createTask = m_data.isEmpty();
     m_data = ba;
     if(createTask)
-      Luminous::BGThread::instance()->addTask(new BGWriter(*this));
+      Luminous::BGThread::instance()->addTask(std::make_shared<BGWriter>(*this));
   }
 
   QString VM1::info()

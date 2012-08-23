@@ -65,6 +65,8 @@ namespace Luminous
   {
     MEMCHECKED
   public:
+      virtual ~Task();
+
     /// Standard priorities for tasks
     enum {
       PRIORITY_LOW = 1,
@@ -133,10 +135,7 @@ namespace Luminous
       /// The background thread where this task is executed
       BGThread * m_host;
 
-      virtual ~Task();
-
       friend class BGThread;
-      friend class TaskDeleter;
   };
 
   /// This class executes the given function within BGThread.

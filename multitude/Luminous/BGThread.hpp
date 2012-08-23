@@ -71,15 +71,6 @@ namespace Luminous
     */
     virtual void addTask(std::shared_ptr<Task> task);
 
-    /// Add a task to be executed
-    /** The task is the property of the BGThread, which will delete the object when its
-        operation is finished and the pointer's reference count goes to zero.
-
-        @param task The task that needs to be added.
-        @return shared pointer to the task object
-    */
-    virtual std::shared_ptr<Task> addTask(Task * task);
-
     /// Remove the task from the BGThread
     /** Generally you should not use this function. If you want to
         remove/delete a task, you set its state to finished

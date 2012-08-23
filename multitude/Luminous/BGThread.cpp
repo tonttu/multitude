@@ -29,16 +29,6 @@
 namespace Luminous
 {
 
-  // Helper to get around the fact that Task destructor is protected.
-  class TaskDeleter
-  {
-  public:
-    void operator()(Task* p)
-    {
-      delete p;
-    }
-  };
-
   BGThread::BGThread()
     : m_idle(0)
   {
@@ -48,16 +38,6 @@ namespace Luminous
   {
     Radiant::info("Waiting for all background threads to finish...");
     stop();
-  }
-
-  std::shared_ptr<Task> BGThread::addTask(Task * task)
-  {
-    // Have to use custom deleter because Task destructor is protected
-    std::shared_ptr<Task> ptr(task, TaskDeleter());
-
-    addTask(ptr);
-
-    return ptr;
   }
 
   void BGThread::addTask(std::shared_ptr<Task> task)
