@@ -43,7 +43,7 @@ namespace Nimble {
   {
   public:
     /// Constructs a new random number generator with the given seed value
-    RandomUniform(uint32_t val = 0) { m_rand.seed(val); }
+    RandomUniform(uint32_t val = 0) : m_rand(val) { }
     ~RandomUniform() {}
 
     /// Random numbers between 0 and 1
