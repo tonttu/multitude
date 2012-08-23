@@ -43,7 +43,10 @@ namespace Nimble {
   {
   public:
     /// Constructs a new random number generator with the given seed value
-    RandomUniform(uint32_t val = 0) : m_rand((unsigned long)val) { }
+    RandomUniform(unsigned long val = std::mt19937::default_seed) : m_rand(val)
+    {
+    }
+
     ~RandomUniform() {}
 
     /// Random numbers between 0 and 1
@@ -133,7 +136,7 @@ namespace Nimble {
     /// @return Generated random number
     inline uint32_t randN24(uint32_t range)
     {
-      return m_dist(m_rand);
+      return rand24() % range;
     }
 
     /// Random 2d vector inside a rectangle
