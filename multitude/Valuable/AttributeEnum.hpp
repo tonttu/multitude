@@ -16,37 +16,134 @@
 #ifndef VALUABLE_VALUE_ENUM_HPP
 #define VALUABLE_VALUE_ENUM_HPP
 
-/// @cond
-
-#include <Valuable/AttributeInt.hpp>
+#include "AttributeNumeric.hpp"
+#include "AttributeFlags.hpp"
 
 namespace Valuable
 {
-
-  /// @todo document, use properly, finish implementation
-
   /**
    * Valuable enum. Similar to AttributeFlags, but only one value can be enabled
    * at a time.
    *
-   * @see AttributeFlags for more information and example
+   * This class also supports pure integer values in addition to enum values.
+   * In practice this means that you could write in CSS: "priority: low" or
+   * "priority: 15".
+   *
+   * @example
+   * @code
+   * /// FunnyWidget.hpp
+   *
+   * struct FunnyWidget {
+   *   FunnyWidget();
+   *
+   *   enum Mode {
+   *     ON = 1,
+   *     OFF = 0
+   *   };
+   *
+   *   enum {
+   *     PriorityLow = 10,
+   *     PriorityMedium = 50,
+   *     PriorityHigh = 90
+   *   };
+   *
+   *   /// m_mode is either ON or OFF
+   *   AttributeEnumT<Mode> m_mode;
+   *
+   *   /// m_priority is an integer, but has shortcuts low/medium/high
+   *   AttributeEnumT<int> m_priority;
+   * };
+   *
+   * //////////////////////////////////////////////////////////////////////////
+   *
+   * /// FunnyWidget.cpp
+   *
+   * /// In CSS/Script you can use keywords "on" or "enabled / "off" or "disabled"
+   * Valuable::Flags s_modes[] = {"on", FunnyWidget::ON, "enabled", FunnyWidget::ON,
+   *                              "off", FunnyWidget::OFF, "disabled", FunnyWidget::OFF,
+   *                              0, 0};
+   *
+   * Valuable::Flags s_priorities[] = {"low", FunnyWidget::PriorityLow,
+   *                                   "medium", FunnyWidget::PriorityMedium,
+   *                                   "high", FunnyWidget::PriorityHigh,
+   *                                    0, 0};
+   *
+   * FunnyWidget::FunnyWidget()
+   *  : m_mode(this, "mode", s_modes, ON)
+   *  , m_priority(this, "priority", s_priorities, PriorityMedium)
+   * {
+   *   m_priority.setAllowIntegers(true);
+   * }
+   *
+   * @endcode
    */
-  class AttributeEnum : public AttributeIntT<int32_t>
+  // We can't inherit from AttributeIntT, since T might be an enum
+  template <typename T>
+  class AttributeEnumT : public AttributeNumeric<T>
   {
   public:
-    /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
-    VALUABLE_API AttributeEnum(Valuable::Node * host, const char * name,
-              const char ** enumnames, int current);
-    VALUABLE_API virtual ~AttributeEnum();
+    AttributeEnumT(Node * host, const QString & name, const FlagNames * names,
+                  const T & v, bool transit = false)
+      : AttributeNumeric<T>(host, name, v, transit)
+      , m_allowIntegers(false)
+    {
+      for (const FlagNames * it = names; it->name; ++it) {
+        m_enumValues[QString(it->name).toLower()] = T(it->value);
+      }
+    }
 
-    VALUABLE_API virtual void processMessage(const QByteArray & id, Radiant::BinaryData & data) OVERRIDE;
+    inline virtual bool set(int v, Attribute::Layer layer = Attribute::USER,
+                            Attribute::ValueUnit = Attribute::VU_UNKNOWN) OVERRIDE
+    {
+      if (m_allowIntegers)
+        this->setValue(T(v), layer);
+      return m_allowIntegers;
+    }
+
+    virtual bool set(const StyleValue & v, Attribute::Layer layer = Attribute::USER) OVERRIDE
+    {
+      if (v.size() != 1)
+        return false;
+
+      if (v.unit(0) != Attribute::VU_UNKNOWN)
+        return false;
+
+      auto it = m_enumValues.find(v.asString().toLower());
+      if (it == m_enumValues.end())
+        return false;
+
+      setValue(*it, layer);
+      return true;
+    }
+
+    virtual const char * type() const OVERRIDE { return "enum"; }
+
+    virtual bool deserialize(const ArchiveElement &) OVERRIDE
+    {
+      /// @todo implement
+      return false;
+    }
+
+    virtual void processMessage(const QByteArray &, Radiant::BinaryData & data) OVERRIDE
+    {
+      QString str;
+      if (data.readString(str)) {
+        auto it = m_enumValues.find(str.toLower());
+        if (it != m_enumValues.end())
+          setValue(*it);
+      }
+    }
+
+    void setAllowIntegers(bool allow)
+    {
+      m_allowIntegers = true;
+    }
 
   private:
-    const char ** m_enumnames;
+    QMap<QString, T> m_enumValues;
+    bool m_allowIntegers;
   };
 
 }
-
-/// @endcond
 
 #endif // VALUEENUM_HPP

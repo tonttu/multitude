@@ -26,6 +26,7 @@ namespace Valuable
   /// A template base class for numeric values.
   /** The actual value classes are inherited from this template
       class. */
+  /// @todo Shouldn't this be named AttributeNumericT?
   template<class T>
   class AttributeNumeric : public AttributeT<T>
   {

@@ -53,7 +53,6 @@ SOURCES += Node.cpp
 SOURCES += Serializer.cpp
 SOURCES += StyleValue.cpp
 SOURCES += AttributeBool.cpp
-SOURCES += AttributeEnum.cpp
 SOURCES += AttributeObject.cpp
 SOURCES += AttributeRect.cpp
 SOURCES += AttributeString.cpp

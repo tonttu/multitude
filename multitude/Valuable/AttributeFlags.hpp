@@ -17,6 +17,7 @@
 #define VALUABLE_VALUEFLAGS_HPP
 
 #include "AttributeObject.hpp"
+#include "StyleValue.hpp"
 
 #include <Radiant/Flags.hpp>
 #include <Radiant/StringUtils.hpp>
@@ -91,19 +92,12 @@ namespace Valuable {
    * struct FunnyWidget {
    *   FunnyWidget();
    *
-   *   enum Mode {
-   *     ON = 1,
-   *     OFF = 0
-   *   };
-   *
    *   enum InputFlags {
    *     INPUT_MOTION_X = 1 << 1,
    *     INPUT_MOTION_Y = 1 << 2,
    *     INPUT_MOTION_XY = INPUT_MOTION_X | INPUT_MOTION_Y
    *   };
    *
-   *   /// m_mode is either ON or OFF
-   *   AttributeEnum<Mode> m_mode;
    *   /// m_flags is bitwise or of InputFlags values
    *   AttributeFlags<InputFlags> m_flags;
    * };
@@ -112,23 +106,17 @@ namespace Valuable {
    *
    * /// FunnyWidget.cpp
    *
-   * /// In CSS/Script you can use keywords "on" or "enabled / "off" or "disabled"
-   * Valuable::Flags s_modes[] = {"on", Widget::ON, "enabled", Widget::ON,
-   *                              "off", Widget::OFF, "disabled", Widget::OFF,
-   *                              0, 0};
-   *
    * /// In CSS/Script you can write "motion-x: true;" or "flags: motion-x motion-y;"
-   * Valuable::Flags s_flags[] = {"motion-x", Widget::INPUT_MOTION_X,
-   *                              "motion-y", Widget::INPUT_MOTION_Y,
-   *                              "motion-xy", Widget::INPUT_MOTION_XY,
-   *                              "INPUT_MOTION_X", Widget::INPUT_MOTION_X,
-   *                              "INPUT_MOTION_Y", Widget::INPUT_MOTION_Y,
-   *                              "INPUT_MOTION_XY", Widget::INPUT_MOTION_XY,
-   *                              0, 0};
+   * Valuable::FlagNames s_flags[] = {{"motion-x", FunnyWidget::INPUT_MOTION_X},
+   *                                  {"motion-y", FunnyWidget::INPUT_MOTION_Y},
+   *                                  {"motion-xy", FunnyWidget::INPUT_MOTION_XY},
+   *                                  {"INPUT_MOTION_X", FunnyWidget::INPUT_MOTION_X},
+   *                                  {"INPUT_MOTION_Y", FunnyWidget::INPUT_MOTION_Y},
+   *                                  {"INPUT_MOTION_XY", FunnyWidget::INPUT_MOTION_XY},
+   *                                  {0, 0}};
    *
    * FunnyWidget::FunnyWidget()
-   *  : m_mode(this, "mode", s_modes, ON),
-   *    m_flags(this, "flags", s_flags, INPUT_MOTION_XY)
+   *  : m_flags(this, "flags", s_flags, INPUT_MOTION_XY)
    * {
    *   m_flags.mask("input-motion")
    *     ("xy", INPUT_MOTION_XY)
