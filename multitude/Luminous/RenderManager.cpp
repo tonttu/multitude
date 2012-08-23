@@ -31,7 +31,7 @@ namespace Luminous
     ResourceMap s_resourceMap;
     Radiant::Mutex s_resourceMapMutex;
 
-    RenderResource::Id s_resourceId = 0;      // Next available resource ID
+    RenderResource::Id s_resourceId = 1;      // Next available resource ID
     std::vector<Luminous::RenderDriver*> s_drivers; // Currently used drivers
     Radiant::Mutex s_contextArraysMutex;
     Radiant::Timer s_timer;
@@ -58,6 +58,7 @@ namespace Luminous
 
   RenderResource::Id RenderManager::createResource(RenderResource * resource)
   {
+    assert(resource != nullptr);
     Radiant::Guard g(s_resourceMapMutex);
     auto id = s_resourceId++;
     s_resourceMap[id] = resource;
@@ -66,12 +67,15 @@ namespace Luminous
 
   void RenderManager::updateResource(RenderResource::Id id, RenderResource * resource)
   {
+    assert(id != 0);
+    assert(resource != nullptr);
     Radiant::Guard g(s_resourceMapMutex);
     s_resourceMap[id] = resource;
   }
 
   void RenderManager::destroyResource(RenderResource::Id id)
   {
+    assert(id != 0);
     /* Widgets can be destroyed in any thread, which can trigger this function call
        from any thread. */
     Radiant::Guard g(s_resourceMapMutex);
