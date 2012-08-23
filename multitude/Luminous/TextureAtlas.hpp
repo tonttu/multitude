@@ -78,6 +78,8 @@ namespace Luminous
     TextureAtlasGroup(const Luminous::PixelFormat & pixelFormat);
     ~TextureAtlasGroup() { }
 
+    void clear();
+
     Item & insert(Nimble::Vector2i size);
 
     void save(const QString & basename);
@@ -95,6 +97,13 @@ namespace Luminous
   TextureAtlasGroup<Item>::TextureAtlasGroup(const Luminous::PixelFormat & pixelFormat)
     : m_pixelFormat(pixelFormat)
   {
+  }
+
+  template <typename Item>
+  void TextureAtlasGroup<Item>::clear()
+  {
+    m_items.clear();
+    m_atlases.clear();
   }
 
   template <typename Item>

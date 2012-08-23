@@ -42,6 +42,8 @@ namespace Luminous
 
     LUMINOUS_API static FontCache & acquire(const QRawFont & rawFont);
 
+    LUMINOUS_API static void deinitialize();
+
   private:
     FontCache(const QRawFont & rawFont);
 

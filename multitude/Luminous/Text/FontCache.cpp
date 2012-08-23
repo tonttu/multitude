@@ -406,6 +406,18 @@ namespace Luminous
     return *ptr;
   }
 
+  void FontCache::deinitialize()
+  {
+    {
+      Radiant::Guard g(s_fontCacheMutex);
+      s_fontCache.clear();
+    }
+    {
+      Radiant::Guard g(s_atlasMutex);
+      s_atlas.clear();
+    }
+  }
+
   FontCache::Glyph * FontCache::glyph(quint32 glyph)
   {
     Radiant::Guard g(m_d->m_cacheMutex);
