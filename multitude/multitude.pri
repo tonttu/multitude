@@ -83,7 +83,8 @@ LIB_BOX2D = -lBox2D$${CORNERSTONE_LIB_SUFFIX}
 }
 
 LIB_OPENCL = -lOpenCL
-LIB_OPENGL = -lGL -lGLU
+LIB_OPENGL = -lglew -lGLU
+INCLUDEPATH += $$PWD/3rdparty/glew-1.9.0/include
 
 LIB_POETIC = -lPoetic$${CORNERSTONE_LIB_SUFFIX}
 LIB_FLUFFY = -lFluffy$${CORNERSTONE_LIB_SUFFIX}
@@ -132,8 +133,6 @@ linux-*{
 
   contains(USEGLEW,no) {
     DEFINES += MULTI_WITHOUT_GLEW=1
-  } else {
-    LIB_GLEW=-lGLEW
   }
 
   QMAKE_LIBDIR += /usr/lib/nvidia-current
@@ -173,7 +172,6 @@ macx*|mobile* {
 
   LIB_OPENCL = -framework,OpenCL
   LIB_OPENGL = -framework,OpenGL
-  # LIB_GLEW = -lGLEW
 
   !mobile* {
     LIB_POETIC = -framework,Poetic
@@ -227,16 +225,12 @@ win32 {
       QMAKE_LIBDIR += $$PWD\\Win32x\\lib32
     }
 
-    # DEFINES += GLEW_STATIC
-    INCLUDEPATH += $$PWD/../multitude/3rdparty/glew/glew-1.8.0/include
-    LIB_GLEW = -lglew
-
     LIB_PREFIX =
     SHARED_LIB_SUFFIX = dll
 
     DDK_PATH="C:\\WinDDK\\7600.16385.1"
 
-    LIB_OPENGL = -lopengl32 -lglu32
+    LIB_OPENGL = -lglew -lglu32
     # Make VS a bit less spammy
     QMAKE_CXXFLAGS += -D_SCL_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS
     # conversion from 'size_t' to 'type', possible loss of data
