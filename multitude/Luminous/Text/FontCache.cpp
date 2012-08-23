@@ -77,7 +77,6 @@ namespace Luminous
   private:
     FontCache::D & m_cache;
     Luminous::Image m_src;
-    const QString m_fontKey;
     /// These need to be created in the correct thread, and if all glyphs are
     /// found in file cache, these aren't created at all
     std::unique_ptr<QPainter> m_painter;
@@ -110,6 +109,7 @@ namespace Luminous
 
   public:
     QRawFont m_rawFont;
+    const QString m_rawFontKey;
 
     /// This locks m_cache, m_request, and m_taskRunning
     Radiant::Mutex m_cacheMutex;
@@ -127,7 +127,6 @@ namespace Luminous
 
   FontCache::FontGenerator::FontGenerator(FontCache::D & cache)
     : m_cache(cache)
-    , m_fontKey(makeKey(cache.m_rawFont))
   {
   }
 
@@ -180,7 +179,7 @@ namespace Luminous
     if (path.isEmpty()) {
       QSettings settings("MultiTouch", "GlyphCache");
 
-      settings.beginGroup(m_fontKey);
+      settings.beginGroup(m_cache.m_rawFontKey);
       settings.beginGroup(QString::number(glyphIndex));
       settings.setValue("rect", QRectF());
       settings.endGroup();
@@ -242,7 +241,7 @@ namespace Luminous
                                         br.top() - s_padding * glyphSize));
 
 
-    const QString file = cacheFileName(m_fontKey, glyphIndex);
+    const QString file = cacheFileName(m_cache.m_rawFontKey, glyphIndex);
 
     if (sdf.write(file.toUtf8().data())) {
       FontCache::D::FileCacheItem item(file, QRectF(glyph->location().x, glyph->location().y,
@@ -251,7 +250,7 @@ namespace Luminous
 
       QSettings settings("MultiTouch", "GlyphCache");
 
-      settings.beginGroup(m_fontKey);
+      settings.beginGroup(m_cache.m_rawFontKey);
       settings.beginGroup(QString::number(glyphIndex));
       settings.setValue("rect", item.rect);
       settings.setValue("src", file);
@@ -335,7 +334,7 @@ namespace Luminous
   {
     QSettings settings("MultiTouch", "GlyphCache");
 
-    settings.beginGroup(m_fontKey);
+    settings.beginGroup(m_cache.m_rawFontKey);
 
     foreach (const QString & index, settings.childGroups()) {
       settings.beginGroup(index);
@@ -382,6 +381,9 @@ namespace Luminous
 
   FontCache::D::D(const QRawFont & rawFont)
     : m_rawFont(rawFont)
+    // This needs to be created before calling setPixelSize(), since after that
+    // the font is in some weird state before rendering anything
+    , m_rawFontKey(makeKey(m_rawFont))
     , m_taskCreated(false)
     , m_fileCacheLoaded(false)
   {
