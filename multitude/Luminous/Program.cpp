@@ -107,10 +107,8 @@ namespace Luminous
     m_d->filename = QString();
   }
 
-  void ShaderGLSL::loadText(const QString & rawFilename)
+  void ShaderGLSL::loadText(const QString & filename)
   {
-    /// @todo implement qt resource locator api
-    const QString filename = Radiant::ResourceLocator::instance().locate(rawFilename);
     m_d->code = loadFromFile(filename);
     m_d->filename = filename;
   }

@@ -32,11 +32,6 @@ namespace Poetic
     /// @returns Currently this method tries to return the basic DejaVuSans font
     CPUWrapperFont * getDefaultFont();
 
-      /// Locates a file by searching through the FontManager's resource paths
-      QString locate(const QString & name);
-      /// Returns the ResourceLocator of the FontManager
-      Radiant::ResourceLocator & locator();
-
       /// @cond
       Luminous::VertexBuffer * fontVBO(GLuint textureId);
       /// @endcond
@@ -47,9 +42,6 @@ namespace Poetic
       // filename -> cpu font
       typedef std::map<QString, CPUManagedFont *> container;
       container m_managedFonts;
-
-      /// @todo remove this and use the global locator
-      Radiant::ResourceLocator m_locator;
 
       typedef std::map<GLuint, Luminous::VertexBuffer *> TextureVBOMap;
       TextureVBOMap m_vbos;

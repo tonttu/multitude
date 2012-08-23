@@ -15,70 +15,61 @@
 #ifndef RADIANT_RESOURCE_LOCATOR_HPP
 #define RADIANT_RESOURCE_LOCATOR_HPP
 
-#include <Radiant/Export.hpp>
+#include "Export.hpp"
+#include "Singleton.hpp"
 
 #include <QString>
+#include <QStringList>
 
 namespace Radiant
 {
 
-  /// Class for locating resources. Basically it searches for a given filename
-  /// through a set of paths and returns the first path that contains the given
-  /// file.
-
-  /// @todo Documentation, examples
+  /// This class provides resource location utilities. This class contains a
+  /// list of search paths that get searched for files whenever any Qt I/O
+  /// operation is performed. This includes QFile, QDir, QFileInfo, etc. Other I/O
+  /// APIs are not affected.
   class RADIANT_API ResourceLocator
   {
+    DECLARE_SINGLETON(ResourceLocator);
+
     public:
+      /// Constructs a new ResourceLocator
       ResourceLocator();
+      /// Destroys the ResourceLocator
       ~ResourceLocator();
 
-      /// Character that separates paths.
-      static QString  separator;
+      /// This enum describes filtering options available to ResourceLocator;
+      /// e.g. for ResourceLocator::locate(). The filter value is specified by
+      /// combining values from the following list using bitwise OR operator:
+      enum Filter {
+          Files     = (1 << 0)        ///< List files
+        , Dirs      = (1 << 1)        ///< List directories
+        , Writeable = (1 << 2)        ///< List files which the application has write access. Must be combined with Dirs or Files.
+        , AllEntries = Files & Dirs   ///< List directories and files
+      };
 
-      /// Return the paths.
-      const QString & paths() const { return  m_paths; }
+      /// Get the defined search paths in the resource locator
+      /// @return list of search paths
+      const QStringList & searchPaths() const;
 
-      /** Add a path to the list to search though.
+      /// Add a search path
+      /// @param path path to add
+      /// @param inFront if true, add to the front of the search list; otherwise add to the end
+      void addSearchPath(const QString & path, bool inFront = false);
+      /// Add a list of search paths
+      /// @param paths paths to add
+      /// @param inFront if true, add to the front of the search list; otherwise add to the end
+      void addSearchPaths(const QStringList & paths, bool inFront = false);
 
-          @param path The directory path to be added to the search paths.
-
-          @param front If true, then the new path is placed in front of the path list, and
-          future searches will start from it. Otherwise the new path is placed at the end
-          of the path list.
-       */
-      void addPath(const QString & path, bool front = false);
-      /** @copybrief addPath
-
-          @param module The name of the module for which we are looking for some data.
-
-          @param front If true, then the new path is placed in front of the path list, and
-          future searches will start from it. Otherwise the new path is placed at the end
-          of the path list.
-      **/
-      void addModuleDataPath(const QString & module, bool front = false);
-
-      /// Locate a file
-      QString locate(const QString & file) const;
-      /// Locate a directory
-      QString locateDirectory(const QString & dir) const;
-
-      /// Locate a directory
-      /// @return All directories found in search path with the matching name
-      QStringList locateDirectories(const QString & name) const;
-
-      /// Locate a file that can be written
-      QString locateWriteable(const QString & file) const;
-      /// Locate an existing file that can be written
-      QString locateOverWriteable(const QString & file) const;
-
-      /// Returns a ResourceLocator instance
-      static ResourceLocator & instance() { return s_instance; }
+      /// Locate a path. Returns a list of matching paths or an empty list if no matches are found.
+      /// @param path path to search for
+      /// @param filter filter the search results
+      /// @return list of matching paths or an empty list
+      QStringList locate(const QString & path, Filter filter = AllEntries) const;
 
     private:
-      QString m_paths;
-
-      static ResourceLocator s_instance;
+      class D;
+      D * m_d;
   };
 
 }

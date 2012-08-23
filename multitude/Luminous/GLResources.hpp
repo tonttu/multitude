@@ -54,7 +54,7 @@ namespace Luminous
   {
   public:
     /// Constructs a new resource collection
-    GLResources(Radiant::ResourceLocator & rl = Radiant::ResourceLocator::instance());
+    GLResources();
     virtual ~GLResources();
 
     /// Initialize the GLResources object.
@@ -110,9 +110,6 @@ namespace Luminous
     @param bytes number of bytes that can be safely consumed*/
     void setComfortableGPURAM(long bytes)
     { m_comfortableGPURAM = bytes; }
-
-    /// Returns the resource locator associated with this resource collection
-    Radiant::ResourceLocator & resourceLocator() { return m_resourceLocator; }
 
     // static void setThreadResources(GLResources *);
 
@@ -180,8 +177,6 @@ namespace Luminous
     long m_comfortableGPURAM;
     long m_frame;
     bool m_brokenProxyTexture2D;
-
-    Radiant::ResourceLocator & m_resourceLocator;
   };
 }
 

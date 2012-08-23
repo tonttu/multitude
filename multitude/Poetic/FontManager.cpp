@@ -17,10 +17,11 @@ namespace Poetic
   {
     Radiant::Guard g(m_mutex);
 
-    m_locator.addPath("../../share/MultiTouch/Fonts");
+    QStringList searchPaths;
+    searchPaths << "../../share/MultiTouch/Fonts";
 
     // Add platform specific paths
-    m_locator.addPath(
+    searchPaths <<
 #ifdef WIN32
     /// @todo Windows might not be installed on drive C...
     "C:/Windows/Fonts"
@@ -30,8 +31,9 @@ namespace Poetic
     // Mac OSX
     "/Library/Frameworks/MultiTouch.framework/data/Fonts"
 #endif
-  );
-    m_locator.addPath(".");
+    << ".";
+
+    Radiant::ResourceLocator::instance()->addSearchPaths(searchPaths);
 
     if (!Poetic::initialize())
       Radiant::error("Failed to initialize Poetic (%d)", Poetic::error());
@@ -65,12 +67,14 @@ namespace Poetic
 
     if(it == m_managedFonts.end()) {
 
-      const QString path = m_locator.locate(name);
-      if(path.isEmpty()) {
+      QStringList paths = Radiant::ResourceLocator::instance()->locate(name);
+      if(paths.isEmpty()) {
         Radiant::error("FontManager::getFont # failed to locate font \"%s\"",
            name.toUtf8().data());
         return 0;
       }
+
+      const QString path = paths.front();
 
       // Need to create a new managed font
       mfont = new CPUManagedFont();
@@ -94,20 +98,6 @@ namespace Poetic
   CPUWrapperFont * FontManager::getDefaultFont()
   {
     return getFont("DejaVuSans.ttf");
-  }
-
-  QString FontManager::locate(const QString & name)
-  {
-    Radiant::Guard g(m_mutex);
-
-    return m_locator.locate(name);
-  }
-
-  Radiant::ResourceLocator & FontManager::locator()
-  {
-    Radiant::Guard g(m_mutex);
-
-    return m_locator;
   }
 
   Luminous::VertexBuffer * FontManager::fontVBO(GLuint textureId)

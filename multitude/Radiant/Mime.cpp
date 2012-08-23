@@ -6,6 +6,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <cassert>
 
 #include <QStringList>
 #include <QSet>
@@ -25,12 +26,13 @@ namespace Radiant
   void MimeManager::initialize()
   {
     MULTI_ONCE {
-      const QString filename = Radiant::ResourceLocator::instance().locate("Mime/mime.types");
-      if (filename.isEmpty()) {
+      const QStringList filenames = Radiant::ResourceLocator::instance()->locate("Mime/mime.types");
+      if (filenames.isEmpty()) {
         Radiant::error("FileLoader : Could not find mime.types");
         return;
       }
 
+      const QString filename = filenames.front();
       std::ifstream fileStream(filename.toUtf8().data());
       if (!fileStream) {
         Radiant::info("FileLoader : Could not load mime.types");

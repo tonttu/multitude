@@ -99,12 +99,13 @@ namespace Luminous {
   SpriteRenderer::SpriteRenderer()
     : m_d(new D())
   {
-    QString shaderPath = Radiant::ResourceLocator::instance().locate("Luminous/GLSL150");
+    QStringList shaderPaths = Radiant::ResourceLocator::instance()->locate("Luminous/GLSL150");
 
-    if(shaderPath.isEmpty()) {
+    if(shaderPaths.isEmpty()) {
       Radiant::error("SpriteRenderer::SpriteRenderer # Could not locate shaders");
     }
     else {
+      const QString shaderPath = shaderPaths.front();
       m_d->m_program.loadShader(shaderPath + "/sprites.fs", Luminous::ShaderGLSL::Fragment);
       m_d->m_program.loadShader(shaderPath + "/sprites.vs", Luminous::ShaderGLSL::Vertex);
       m_d->m_program.loadShader(shaderPath + "/sprites.gs", Luminous::ShaderGLSL::Geometry);
