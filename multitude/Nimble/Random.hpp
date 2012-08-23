@@ -21,6 +21,8 @@
 
 #include <stdint.h>
 
+#include <random>
+
 namespace Nimble {
 
   /// Random number generator with uniform distribution
@@ -41,30 +43,27 @@ namespace Nimble {
   {
   public:
     /// Constructs a new random number generator with the given seed value
-    RandomUniform(uint32_t val = 0) : m_val(val) {}
+    RandomUniform(uint32_t val = 0) { m_rand.seed(val); }
     ~RandomUniform() {}
 
     /// Random numbers between 0 and 1
     inline float rand01()
     {
-      uint32_t tmp = m_val * m_randMul + 1;
-      m_val = tmp;
+      uint32_t tmp = m_dist(m_rand);
       return (float) tmp * (1.0f / (float) ((uint32_t) 0xffffffff));
     }
 
     /// Random numbers between 0 and x
     inline float rand0X(float x)
     {
-      uint32_t tmp = m_val * m_randMul + 1;
-      m_val = tmp;
+      uint32_t tmp = m_dist(m_rand);
       return (float) tmp * (x / (float) ((uint32_t) 0xffffffff));
     }
 
     /// Random numbers between 0 and x
     inline double rand0X(double x)
     {
-      uint32_t tmp = m_val * m_randMul + 1;
-      m_val = tmp;
+      uint32_t tmp = m_dist(m_rand);
       return (double) tmp * (x / (double) ((uint32_t) 0xffffffff));
     }
 
@@ -86,16 +85,14 @@ namespace Nimble {
     /// Random numbers between -1 and 1
     inline float rand11()
     {
-      uint32_t tmp = m_val * m_randMul + 1;
-      m_val = tmp;
+      uint32_t tmp = m_dist(m_rand);
       return (float) tmp * (2.0f / (float) ((uint32_t) 0xffffffff)) - 1.0f;
     }
 
     /// Random numbers between -x and x
     inline float randXX(float x)
     {
-      uint32_t tmp = m_val * m_randMul + 1;
-      m_val = tmp;
+      uint32_t tmp = m_dist(m_rand);
       return (float) tmp * (2.0f * x / (float) ((uint32_t) 0xffffffff)) - x;
     }
 
@@ -110,8 +107,7 @@ namespace Nimble {
     /// @return Generated random number
     inline uint32_t rand()
     {
-      m_val = m_val * m_randMul + 1;
-      return m_val;
+      return m_dist(m_rand);
     }
 
     /// A random number in range 0-2^24. All bits of the value should
@@ -119,8 +115,7 @@ namespace Nimble {
     /// @return Generated random number
     inline uint32_t rand24()
     {
-      m_val = m_val * m_randMul + 1;
-      return m_val >> 8;
+      return m_dist(m_rand) >> 8;
     }
 
     /// A random number in range 0-2^32. All bits of the value should
@@ -130,10 +125,7 @@ namespace Nimble {
     {
       /* Generate two random numbers are take the 16 higher bits from
          both. */
-      uint32_t v1 = m_val * m_randMul + 1;
-      uint32_t v2 = v1 * m_randMul + 1;
-      m_val = v2;
-      return (v1 & 0xFFFF0000) | (v2 >> 16);
+      return m_dist(m_rand);
     }
 
     /// Get random numbers between 0 and range-1.
@@ -141,8 +133,7 @@ namespace Nimble {
     /// @return Generated random number
     inline uint32_t randN24(uint32_t range)
     {
-      m_val = m_val * m_randMul + 1;
-      return (m_val >> 8) % range;
+      return m_dist(m_rand);
     }
 
     /// Random 2d vector inside a rectangle
@@ -178,8 +169,7 @@ namespace Nimble {
     inline bool randBool()
     {
       // count bits in 13 bit random value
-      return (rand0X(uint32_t(1 << 13)) * 0x200040008001ULL
-              & 0x111111111111111ULL) % 0xf < 7;
+      return std::uniform_int_distribution<uint32_t>(0,1)(m_rand);
     }
 
     /// Returns a reference to an instance
@@ -188,8 +178,8 @@ namespace Nimble {
     /// @todo add static members inside Nimble::Math ?
 
   private:
-    uint32_t m_val;
-    static const uint32_t m_randMul = 134695621;
+    std::mt19937 m_rand;
+    std::uniform_int_distribution<uint32_t> m_dist;
     static RandomUniform  m_instance;
   };
 
