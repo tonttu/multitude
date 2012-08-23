@@ -76,7 +76,7 @@ namespace Nimble {
       return rand32() % x;
     }
 
-    /// Random numbers between 0 and x-1
+    /// 64-bit random numbers between 0 and x-1
     inline uint64_t rand0X64(uint64_t x)
     {
       uint64_t tmp1 = rand();
@@ -105,29 +105,24 @@ namespace Nimble {
       return rand0X(max - min) + min;
     }
 
-    /// A random number in range 0-2^32. The lower bits of the random
-    /// number are not totally random.
+    /// A random number in range 0:2^32-1.
     /// @return Generated random number
     inline uint32_t rand()
     {
       return m_dist(m_rand);
     }
 
-    /// A random number in range 0-2^24. All bits of the value should
-    /// be fairly random.
+    /// A random number in range 0:2^24-1.
     /// @return Generated random number
     inline uint32_t rand24()
     {
-      return m_dist(m_rand) >> 8;
+      return std::uniform_int_distribution<uint32_t>(0,0xffffff)(m_rand);
     }
 
-    /// A random number in range 0-2^32. All bits of the value should
-    /// be fairly random.
+    /// A random number in range 0:2^32-1
     /// @return Generated random number
     inline uint32_t rand32()
     {
-      /* Generate two random numbers are take the 16 higher bits from
-         both. */
       return m_dist(m_rand);
     }
 
@@ -167,7 +162,6 @@ namespace Nimble {
     }
 
     /// Random boolean
-    /// @todo does this work with 32-bit computers too?
     /// @return True or false.
     inline bool randBool()
     {
@@ -178,8 +172,9 @@ namespace Nimble {
     /// Returns a reference to an instance
     static RandomUniform & instance() { return m_instance; }
 
-    /// @todo add static members inside Nimble::Math ?
-
+    /* Q: odo add static members inside Nimble::Math ?
+       A: There is no need to duplicate random numbers there.
+      */
   private:
     std::mt19937 m_rand;
     std::uniform_int_distribution<uint32_t> m_dist;
@@ -195,30 +190,20 @@ namespace Nimble {
       /// @param mean the mean of the normal distribution
       /// @param stdDev the standard deviation for the normal distribution
       /// @param seed seed value for the pseudo-random sequence
-      RandomGaussian(float mean = 0.0f, float stdDev = 1.0f, uint32_t seed = 0) : m_uniform(seed), m_mean(mean), m_stdDev(stdDev) {}
+      RandomGaussian(float mean = 0.0f, float stdDev = 1.0f, unsigned long val = std::mt19937::default_seed)
+        : m_rand(val), m_dist(mean, stdDev) {}
 
       /// Generate a random number from the distribution
       /// @return a pseudo-random number
-      inline float rand() {
-        float x1, x2, rsq;
-
-        do {
-          // Pick two uniform numbers within a unit-square and test if they are
-          // within a unit-circle, if not, try again
-          x1 = 2.0f * m_uniform.rand01() - 1.0f;
-          x2 = 2.0f * m_uniform.rand01() - 1.0f;
-          rsq = x1 * x1 + x2 * x2;
-        } while(rsq >= 1.0f || rsq == 0.0f);
-
-        // Box-Muller transformation and return the other number
-        float fac = sqrt((-2.0f * log(rsq)) / rsq);
-        return (x2 * fac) * m_stdDev + m_mean;
+      inline float rand()
+      {
+        return m_dist(m_rand);
       }
 
     private:
-      RandomUniform m_uniform;
-      float m_mean;
-      float m_stdDev;
+      std::mt19937 m_rand;
+      std::normal_distribution<float> m_dist;
+
   };
 }
 
