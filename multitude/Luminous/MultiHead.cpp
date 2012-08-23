@@ -26,11 +26,12 @@
 
 #include <Nimble/Matrix4.hpp>
 
-#include <Radiant/Functional.hpp>
 #include <Radiant/Trace.hpp>
 
 #include <Valuable/DOMElement.hpp>
 #include <Valuable/AttributeContainer.hpp>
+
+#include <functional>
 
 static const char* fs_shader =
 "#version 120\n"

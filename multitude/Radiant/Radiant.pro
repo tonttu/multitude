@@ -27,7 +27,6 @@ HEADERS += DateTime.hpp
 HEADERS += Directory.hpp
 HEADERS += Export.hpp
 HEADERS += FileUtils.hpp
-HEADERS += Functional.hpp
 HEADERS += Grid.hpp
 HEADERS += ImageConversion.hpp
 HEADERS += IODefs.hpp

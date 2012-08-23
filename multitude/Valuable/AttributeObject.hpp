@@ -13,7 +13,6 @@
 #include <Patterns/NotCopyable.hpp>
 
 #include <Radiant/BinaryData.hpp>
-#include <Radiant/Functional.hpp>
 #include <Radiant/MemCheck.hpp>
 
 #include <Valuable/Archive.hpp>
@@ -22,6 +21,8 @@
 #include <QString>
 #include <QList>
 #include <QMap>
+
+#include <functional>
 
 // new behavior: elements of array 'array' will be default initialized
 #if RADIANT_WINDOWS

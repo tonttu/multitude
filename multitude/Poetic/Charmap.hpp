@@ -20,26 +20,7 @@
 
 #include <Radiant/Platform.hpp>
 
-/// @cond
-
-// try to detect C++11
-#if defined(RADIANT_CXX11)
-  #include <unordered_map>
-#else
-  #if defined(__GNUC__) || defined(RADIANT_LINUX) || defined(RADIANT_OSX)
-    #include <tr1/unordered_map>
-  #elif defined(RADIANT_WINDOWS)
-    #include <unordered_map>
-  #else
-    #include <boost/tr1/unordered_map.hpp>
-  #endif
-  namespace std
-  {
-    using tr1::unordered_map;
-  }
-#endif
-
-/// @endcond
+#include <unordered_map>
 
 struct FT_FaceRec_;
 
