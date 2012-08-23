@@ -13,6 +13,7 @@ namespace Luminous
   class SimpleTextLayout : public TextLayout
   {
   public:
+    LUMINOUS_API SimpleTextLayout();
     LUMINOUS_API SimpleTextLayout(const QString & text, const Nimble::Vector2f & maximumSize,
                                   const QFont & font, const QTextOption & textOption);
     LUMINOUS_API virtual ~SimpleTextLayout();

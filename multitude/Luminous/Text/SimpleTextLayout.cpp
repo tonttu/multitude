@@ -88,6 +88,14 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
+  SimpleTextLayout::SimpleTextLayout()
+    : TextLayout(Nimble::Vector2f(100, 100))
+  {
+    QFont f;
+    f.setHintingPreference(QFont::PreferNoHinting);
+    m_d = new D(QString(), f, QTextOption());
+  }
+
   SimpleTextLayout::SimpleTextLayout(const QString & text, const Nimble::Vector2f & maximumSize,
                                      const QFont & font, const QTextOption & textOption)
     : TextLayout(maximumSize)
@@ -100,6 +108,16 @@ namespace Luminous
   SimpleTextLayout::~SimpleTextLayout()
   {
     delete m_d;
+  }
+
+  QTextLayout & SimpleTextLayout::layout()
+  {
+    return m_d->m_layout;
+  }
+
+  const QTextLayout & SimpleTextLayout::layout() const
+  {
+    return m_d->m_layout;
   }
 
   const SimpleTextLayout & SimpleTextLayout::cachedLayout(const QString & text,
