@@ -92,7 +92,7 @@ namespace Valuable
       }
     }
 
-    inline virtual bool set(int v, Attribute::Layer layer = Attribute::USER,
+    virtual bool set(int v, Attribute::Layer layer = Attribute::USER,
                             Attribute::ValueUnit = Attribute::VU_UNKNOWN) OVERRIDE
     {
       if (m_allowIntegers)
@@ -136,7 +136,7 @@ namespace Valuable
 
     void setAllowIntegers(bool allow)
     {
-      m_allowIntegers = true;
+      m_allowIntegers = allow;
     }
 
   private:
