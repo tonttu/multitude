@@ -230,7 +230,7 @@ win32 {
 
     DDK_PATH="C:\\WinDDK\\7600.16385.1"
 
-    LIB_OPENGL = -lglew -lglu32
+    LIB_OPENGL = -lglew -lglu32 -lopengl32
     # Make VS a bit less spammy
     QMAKE_CXXFLAGS += -D_SCL_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS
     # conversion from 'size_t' to 'type', possible loss of data
