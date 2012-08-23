@@ -26,8 +26,8 @@ namespace Luminous
     int generation() const { return m_generation; }
 
   private:
-    void setVertexAttributes(const VertexArray & vertexArray);
-    void setVertexDescription(const VertexDescription & description);
+    void setVertexAttributes(const VertexArray & vertexArray, ProgramGL * program);
+    void setVertexDescription(const VertexDescription & description, ProgramGL * program);
 
     int m_generation;
 

@@ -59,7 +59,7 @@ namespace Luminous
     // owns a copy of them, too.
     m_associatedBuffers.clear();
 
-    setVertexAttributes(vertexArray);
+    setVertexAttributes(vertexArray, program);
 
     const Buffer * index = RenderManager::getResource<Buffer>(vertexArray.indexBuffer());
     if (index != nullptr) {
@@ -72,7 +72,7 @@ namespace Luminous
     }
   }
 
-  void VertexArrayGL::setVertexAttributes(const VertexArray & vertexArray)
+  void VertexArrayGL::setVertexAttributes(const VertexArray & vertexArray, ProgramGL * program)
   {
     // Bind all vertex buffers
     for (size_t i = 0; i < vertexArray.bindingCount(); ++i) {
@@ -85,24 +85,22 @@ namespace Luminous
       auto & bufferGL = m_state.driver().handle(*buffer);
       bufferGL.bind();
 
-      setVertexDescription(b.description);
+      setVertexDescription(b.description, program);
 
       m_associatedBuffers.insert(m_state.driver().bufferPtr(*buffer));
     }
   }
 
-
-  void VertexArrayGL::setVertexDescription(const VertexDescription &description)
+  void VertexArrayGL::setVertexDescription(const VertexDescription &description, ProgramGL * program)
   {
     // Set buffer attributes from its bound VertexDescription
     for (size_t attrIndex = 0; attrIndex < description.attributeCount(); ++attrIndex) {
 
       VertexAttribute attr = description.attribute(attrIndex);
 
-      GLint location = glGetAttribLocation(m_state.program(), attr.name.toAscii().data());
-
+      GLint location = program->attributeLocation(attr.name);
       if (location == -1) {
-        Radiant::warning("Unable to bind vertex attribute %s", attr.name.toAscii().data());
+        Radiant::warning("Unable to bind vertex attribute %s", attr.name.data());
       } else {
 
         GLenum normalized = (attr.normalized ? GL_TRUE : GL_FALSE);

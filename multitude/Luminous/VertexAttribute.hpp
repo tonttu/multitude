@@ -29,7 +29,7 @@ namespace Luminous
     {
     }
 
-    QString name;
+    QByteArray name;
     Type type;
     uint count;
     uint offset;
