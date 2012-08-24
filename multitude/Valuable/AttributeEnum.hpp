@@ -81,7 +81,11 @@ namespace Valuable
   template <typename T>
   class AttributeEnumT : public AttributeNumeric<T>
   {
+    typedef AttributeNumeric<T> Base;
+
   public:
+    using Base::operator =;
+
     AttributeEnumT(Node * host, const QString & name, const FlagNames * names,
                   const T & v, bool transit = false)
       : AttributeNumeric<T>(host, name, v, transit)

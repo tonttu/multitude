@@ -156,7 +156,7 @@ namespace Luminous
     return m_d->m_maximumSize;
   }
 
-  Nimble::Rectf TextLayout::boundingBox() const
+  const Nimble::Rectf & TextLayout::boundingBox() const
   {
     return m_d->m_boundingBox;
   }

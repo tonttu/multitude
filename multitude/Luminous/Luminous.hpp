@@ -183,6 +183,8 @@ namespace Luminous
   class Texture;
   class TextureGL;
   class TextLayout;
+  class SimpleTextLayout;
+  class RichTextLayout;
 
   // Vertex data
   struct VertexAttribute;
