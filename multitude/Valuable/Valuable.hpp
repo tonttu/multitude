@@ -190,7 +190,7 @@
 
 namespace Valuable
 {
-
+  class StyleValue;
 }
 
 #endif

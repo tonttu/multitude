@@ -2,6 +2,8 @@
 
 #include <Radiant/Mutex.hpp>
 
+#include <Valuable/StyleValue.hpp>
+
 #include <QFontMetricsF>
 #include <QTextLayout>
 
@@ -50,6 +52,7 @@ namespace Luminous
     void layout(const Nimble::Vector2f & size);
 
   public:
+    Valuable::StyleValue m_lineHeight;
     QTextLayout m_layout;
   };
 
@@ -70,6 +73,19 @@ namespace Luminous
     const float lineWidth = size.x;
     const float leading = fontMetrics.leading();
 
+    bool forceHeight = false;
+    float height = 0.0f;
+    float heightFactor = 1.0f;
+    if (m_lineHeight.size() == 1) {
+      if (m_lineHeight.unit() == Valuable::Attribute::VU_PXS) {
+        forceHeight = true;
+        height = m_lineHeight.asFloat();
+      } else if (m_lineHeight.unit() == Valuable::Attribute::VU_UNKNOWN ||
+                 m_lineHeight.unit() == Valuable::Attribute::VU_PERCENTAGE) {
+        heightFactor = m_lineHeight.asFloat();
+      }
+    }
+
     float y = 0;
     m_layout.beginLayout();
     while (true) {
@@ -80,7 +96,10 @@ namespace Luminous
       line.setLineWidth(lineWidth);
       y += leading;
       line.setPosition(QPointF(0, y));
-      y += line.height();
+      if (forceHeight)
+        y += height;
+      else
+        y += line.height() * heightFactor;
     }
     m_layout.endLayout();
   }
@@ -108,6 +127,17 @@ namespace Luminous
   SimpleTextLayout::~SimpleTextLayout()
   {
     delete m_d;
+  }
+
+  void SimpleTextLayout::setLineHeight(const Valuable::StyleValue & height)
+  {
+    m_d->m_lineHeight = height;
+    setLayoutReady(false);
+  }
+
+  const Valuable::StyleValue & SimpleTextLayout::lineHeight() const
+  {
+    return m_d->m_lineHeight;
   }
 
   QTextLayout & SimpleTextLayout::layout()

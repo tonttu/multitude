@@ -1,6 +1,7 @@
 #ifndef LUMINOUS_SIMPLE_TEXT_LAYOUT_HPP
 #define LUMINOUS_SIMPLE_TEXT_LAYOUT_HPP
 
+#include <Valuable/Valuable.hpp>
 #include "TextLayout.hpp"
 
 class QTextOption;
@@ -17,6 +18,9 @@ namespace Luminous
     LUMINOUS_API SimpleTextLayout(const QString & text, const Nimble::Vector2f & maximumSize,
                                   const QFont & font, const QTextOption & textOption);
     LUMINOUS_API virtual ~SimpleTextLayout();
+
+    LUMINOUS_API void setLineHeight(const Valuable::StyleValue & height);
+    LUMINOUS_API const Valuable::StyleValue & lineHeight() const;
 
     /// If the QTextLayout is modified, it's required to call invalidate() manually
     LUMINOUS_API QTextLayout & layout();
