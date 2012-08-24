@@ -83,7 +83,7 @@ LIB_BOX2D = -lBox2D$${CORNERSTONE_LIB_SUFFIX}
 }
 
 LIB_OPENCL = -lOpenCL
-LIB_OPENGL = -lglew -lGLU
+LIB_OPENGL = -lglew -lGLU -lGL
 INCLUDEPATH += $$PWD/3rdparty/glew-1.9.0/include
 
 LIB_POETIC = -lPoetic$${CORNERSTONE_LIB_SUFFIX}
