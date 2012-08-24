@@ -62,6 +62,23 @@ namespace Luminous
     delete m_d;
   }
 
+  Texture::Texture(Texture & tex)
+    : RenderResource(tex)
+    , m_d(new Texture::D(*tex.m_d))
+  {
+  }
+
+  Texture & Texture::operator=(Texture & tex)
+  {
+    if(this != &tex)
+    {
+      RenderResource::operator=(tex);
+      assert(tex.m_d);
+      *m_d = *tex.m_d;
+    }
+    return *this;
+  }
+
   Texture::Texture(Texture && tex)
     : RenderResource(std::move(tex))
     , m_d(tex.m_d)

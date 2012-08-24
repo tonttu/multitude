@@ -54,6 +54,9 @@ namespace Luminous
     LUMINOUS_API Buffer(Type type = Unknown);
     LUMINOUS_API ~Buffer();
 
+    LUMINOUS_API Buffer(Buffer & b);
+    LUMINOUS_API Buffer & operator=(Buffer & b);
+
     LUMINOUS_API Buffer(Buffer && b);
     LUMINOUS_API Buffer & operator=(Buffer && b);
 

@@ -10,7 +10,7 @@
 
 namespace Luminous
 {
-  class LUMINOUS_API RenderResource : public Patterns::NotCopyable
+  class LUMINOUS_API RenderResource
   {
   public:
     struct Hash
@@ -42,8 +42,6 @@ namespace Luminous
     RenderResource(Type type);
     virtual ~RenderResource();
 
-    //RenderResource(RenderResource & res);
-
     RenderResource(RenderResource && rr);
     RenderResource & operator=(RenderResource && rr);
 
@@ -57,6 +55,10 @@ namespace Luminous
     inline void setExpiration(unsigned int seconds) { m_expiration = seconds; }
     // Returns resource expiration time
     inline unsigned int expiration() const { return m_expiration; }
+
+  protected:
+    RenderResource(RenderResource & rr);
+    RenderResource & operator=(RenderResource & rr);
 
   private:
     int m_generation;

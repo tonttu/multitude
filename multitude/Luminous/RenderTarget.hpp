@@ -17,6 +17,9 @@ namespace Luminous
     RenderBuffer();
     ~RenderBuffer();
 
+    RenderBuffer(RenderBuffer & rb);
+    RenderBuffer & operator=(RenderBuffer & rb);
+
     RenderBuffer(RenderBuffer && rb);
     RenderBuffer & operator=(RenderBuffer && rb);
 
@@ -34,7 +37,9 @@ namespace Luminous
   ////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////
 
-  class LUMINOUS_API RenderTarget : public RenderResource
+  /// @todo implement copying (note copying attachments)
+  class LUMINOUS_API RenderTarget
+      : public RenderResource, public Patterns::NotCopyable
   {
   public:
     enum RenderTargetType
@@ -46,6 +51,9 @@ namespace Luminous
 
     RenderTarget(RenderTargetType type = NORMAL);
     ~RenderTarget();
+
+    //RenderTarget(RenderTarget & rt);
+    //RenderTarget & operator=(RenderTarget & rt);
 
     RenderTarget(RenderTarget && rt);
     RenderTarget & operator=(RenderTarget && rt);

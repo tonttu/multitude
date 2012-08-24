@@ -50,13 +50,18 @@ namespace Luminous
   };
 
   /// A shader program, combining multiple ShaderGLSL objects into one runnable program
+  /// @todo implement copying
   class Program
     : public RenderResource
+    , public Patterns::NotCopyable
     //, public Valuable::Node
   {
   public:
     LUMINOUS_API Program();
     LUMINOUS_API ~Program();
+
+    /*LUMINOUS_API Program(Program & prog);
+    LUMINOUS_API Program & operator=(Program & prog);*/
 
     LUMINOUS_API Program(Program && prog);
     LUMINOUS_API Program & operator=(Program && prog);

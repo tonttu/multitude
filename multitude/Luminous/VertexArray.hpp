@@ -11,8 +11,10 @@
 namespace Luminous
 {
   /// VAO
+  /// @todo implement copying (note bindings)
   class VertexArray
     : public RenderResource
+    , public Patterns::NotCopyable
   {
   public:
     struct Binding

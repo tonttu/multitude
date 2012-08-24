@@ -31,6 +31,23 @@ namespace Luminous
     delete m_d;
   }
 
+  RenderBuffer::RenderBuffer(RenderBuffer & rb)
+    : RenderResource(rb)
+    , m_d(new RenderBuffer::D(*rb.m_d))
+  {
+  }
+
+  RenderBuffer & RenderBuffer::operator=(RenderBuffer & rb)
+  {
+    if(this != &rb)
+    {
+      RenderResource::operator=(rb);
+      assert(rb.m_d);
+      *m_d = *rb.m_d;
+    }
+    return *this;
+  }
+
   RenderBuffer::RenderBuffer(RenderBuffer && rb)
     : RenderResource(std::move(rb))
     , m_d(rb.m_d)

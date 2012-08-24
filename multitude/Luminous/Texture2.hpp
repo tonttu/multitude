@@ -29,6 +29,9 @@ namespace Luminous
     LUMINOUS_API Texture();
     LUMINOUS_API ~Texture();
 
+    LUMINOUS_API Texture(Texture & tex);
+    LUMINOUS_API Texture & operator=(Texture & tex);
+
     LUMINOUS_API Texture(Texture && tex);
     LUMINOUS_API Texture & operator=(Texture && tex);
 
