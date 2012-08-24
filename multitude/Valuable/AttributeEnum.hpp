@@ -116,7 +116,7 @@ namespace Valuable
       if (it == m_enumValues.end())
         return false;
 
-      setValue(*it, layer);
+      this->setValue(*it, layer);
       return true;
     }
 
@@ -134,7 +134,7 @@ namespace Valuable
       if (data.readString(str)) {
         auto it = m_enumValues.find(str.toLower());
         if (it != m_enumValues.end())
-          setValue(*it);
+          this->setValue(*it);
       }
     }
 
