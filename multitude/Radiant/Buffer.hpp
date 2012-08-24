@@ -32,7 +32,7 @@ namespace Radiant
   public:
     /// @param history length of history in seconds
     Buffer(const T & t, double history)
-      : m_history(Radiant::TimeStamp::createSecondsD(history)),
+      : m_history(Radiant::TimeStamp::createSeconds(history)),
         m_pos(-1),
         m_value(t),
         m_cached(true)
@@ -58,7 +58,7 @@ namespace Radiant
     void set(const T & t)
     {
       m_value = t;
-      for(size_t i = 0; i < m_data.size(); ++i) m_data[i].ts = 0;
+      for(size_t i = 0; i < m_data.size(); ++i) m_data[i].ts = Radiant::TimeStamp(0);
       m_cached = true;
     }
 
@@ -71,7 +71,7 @@ namespace Radiant
       for(size_t i = 1; i <= m_data.size(); ++i) {
         const int j = m_pos-i;
         const BufferValue & b = m_data[(j + m_data.size() * 2) % m_data.size()];
-        if(b.ts == 0 || ts-b.ts > m_history) break;
+        if(b.ts == Radiant::TimeStamp(0) || ts-b.ts > m_history) break;
         ++num;
         avg += b.value;
       }
