@@ -173,7 +173,7 @@ namespace Luminous
 
   void SimpleTextLayout::generate()
   {
-    if (!layoutReady()) {
+    if (!isLayoutReady()) {
       m_d->layout(maximumSize());
       setBoundingBox(m_d->m_layout.boundingRect());
       auto align = m_d->m_layout.textOption().alignment();

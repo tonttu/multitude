@@ -61,7 +61,7 @@ namespace Luminous
 
   void RichTextLayout::generate()
   {
-    if (!layoutReady()) {
+    if (!isLayoutReady()) {
       // trigger relayout in Qt
       m_d->disableHinting();
       m_d->m_doc.setTextWidth(maximumSize().x);

@@ -27,6 +27,7 @@ namespace Luminous {
     LUMINOUS_API Texture * texture(int groupIndex) const;
     LUMINOUS_API const std::vector<Item> & items(int groupIndex) const;
 
+    LUMINOUS_API bool isLayoutReady() const;
     LUMINOUS_API bool isComplete() const;
     LUMINOUS_API virtual void generate() = 0;
 
@@ -45,7 +46,6 @@ namespace Luminous {
     LUMINOUS_API void setRenderLocation(const Nimble::Vector2f & location);
     LUMINOUS_API void setBoundingBox(const Nimble::Rectf & bb);
     LUMINOUS_API void setLayoutReady(bool v);
-    LUMINOUS_API bool layoutReady() const;
     LUMINOUS_API void setGlyphsReady(bool v);
     LUMINOUS_API void clearGlyphs();
     LUMINOUS_API bool generateGlyphs(const Nimble::Vector2f & location,

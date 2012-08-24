@@ -181,7 +181,7 @@ namespace Luminous
     m_d->m_layoutReady = v;
   }
 
-  bool TextLayout::layoutReady() const
+  bool TextLayout::isLayoutReady() const
   {
     return m_d->m_layoutReady;
   }
