@@ -177,6 +177,7 @@ void helper(const char * app)
 
 int main(int argc, char ** argv)
 {
+  auto locator = Radiant::ResourceLocator::instance();
   int secs = 20;
   
   // float fps = -1.0f;
@@ -262,13 +263,12 @@ int main(int argc, char ** argv)
 
   if(defaultconfig) {
     // Try to find a default configuration
-    Radiant::ResourceLocator locator;
-    locator.addModuleDataPath("MultiTouch/");
-    locator.addPath(".", true);
-    configFile = locator.locate("config.txt");
+    Radiant::ResourceLocator::instance()->addSearchPath("MultiTouch/");
+    Radiant::ResourceLocator::instance()->addSearchPath(".", true);
+    configFile = Radiant::ResourceLocator::instance()->locate("config.txt").front();
 
     if(configFile.isEmpty()) {
-      Radiant::error("FireCapture: Could not locate the standard configuration file");
+      Radiant::error("FireCapture: Could not locate the standard configuration file 'config.txt'");
       return -1;
     }
   }
