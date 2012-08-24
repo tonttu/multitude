@@ -140,7 +140,6 @@ SOURCES += ScreenDetector.cpp
 SOURCES += Shader.cpp
 SOURCES += Program.cpp
 SOURCES += Spline.cpp
-SOURCES += Style.cpp
 SOURCES += Task.cpp
 SOURCES += Texture2.cpp
 SOURCES += Texture.cpp
