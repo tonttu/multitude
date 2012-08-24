@@ -22,6 +22,7 @@ namespace Valuable
   template<> VALUABLE_API const char * AttributeVector<Nimble::Vector2f>::type() const { return "vec2f"; }
   template<> VALUABLE_API const char * AttributeVector<Nimble::Vector3f>::type() const { return "vec3f"; }
   template<> VALUABLE_API const char * AttributeVector<Nimble::Vector4f>::type() const { return "vec4f"; }
+  template<> VALUABLE_API const char * AttributeVector<Radiant::Color>::type() const { return "color"; }
 /*
   template<> VALUABLE_API const char * AttributeVector<Nimble::Vector2d>::type() const { return "vec2d"; }
   template<> VALUABLE_API const char * AttributeVector<Nimble::Vector3d>::type() const { return "vec3d"; }

@@ -24,26 +24,26 @@
 namespace Valuable
 {
   /** A value object holding a #Radiant::Color value. */
-  class AttributeColor : public AttributeVector<Nimble::Vector4f>
+  class AttributeColor : public AttributeVector<Radiant::Color>
   {
   public:
+    using AttributeVector<Radiant::Color>::operator=;
+
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param c The color value
     AttributeColor(Node * host, const QString & name, const Radiant::Color & c, bool transit = false)
-      : AttributeVector<Nimble::Vector4f>(host, name, c, transit)
+      : AttributeVector<Radiant::Color>(host, name, c, transit)
     {}
 
     ~AttributeColor()
     {}
 
-    /// Copies a color
-    AttributeColor & operator = (const Radiant::Color & c)
-      { (* (AttributeVector<Nimble::Vector4f> *) this) = c; return *this; }
-    
-    const char * type() const OVERRIDE { return "color"; }
-    
-    /// Converts the value object to color
-    inline operator Radiant::Color () const { return asColor(); }
+    bool set(const Nimble::Vector4f & color, Layer layer = USER,
+             QList<ValueUnit> = QList<ValueUnit>())
+    {
+      this->setValue(color, layer);
+      return true;
+    }
 
     /// Converts the value object to color
     Radiant::Color asColor() const { return asVector(); }

@@ -22,6 +22,7 @@
 
 #include "Export.hpp"
 #include "TimeStamp.hpp"
+#include "Color.hpp"
 
 #include <stdint.h>
 #include <vector>
@@ -320,6 +321,7 @@ namespace Radiant {
   template <> inline Nimble::Vector2i BinaryData::read(bool * ok) { return readVector2Int32(ok); }
   template <> inline Nimble::Vector3i BinaryData::read(bool * ok) { return readVector3Int32(ok); }
   template <> inline Nimble::Vector4i BinaryData::read(bool * ok) { return readVector4Int32(ok); }
+  template <> inline Color BinaryData::read(bool * ok)            { return readVector4Float32(ok); }
 
   template <> inline QString BinaryData::read(bool * ok)
   {
