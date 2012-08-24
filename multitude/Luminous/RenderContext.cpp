@@ -1491,4 +1491,31 @@ namespace Luminous
     m_data->m_driverGL->setDefaultState();
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////
+
+#if defined(RADIANT_OSX)
+# include <DummyOpenGL.hpp>
+#endif
+
+  CustomOpenGL::CustomOpenGL(RenderContext & r)
+    : m_r(r)
+  {
+    // First, flush the current deferred render queues
+    r.flush2();
+
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+    glPointSize(1.f);
+
+    glEnable(GL_TEXTURE_2D);
+  }
+
+  CustomOpenGL::~CustomOpenGL()
+  {
+    m_r.setDefaultState();
+  }
+
+
 }

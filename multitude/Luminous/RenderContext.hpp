@@ -441,23 +441,11 @@ namespace Luminous
     Internal * m_data;
   };
 
-  class CustomOpenGL : Patterns::NotCopyable
+  class LUMINOUS_API CustomOpenGL : Patterns::NotCopyable
   {
   public:
-    CustomOpenGL(RenderContext & r) : m_r(r)
-    {
-      // First, flush the current deferred render queues
-      r.flush2();
-
-      glDisableClientState(GL_VERTEX_ARRAY);
-      glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-      glPointSize(1.f);
-
-      glEnable(GL_TEXTURE_2D);
-    }
-
-    ~CustomOpenGL() { m_r.setDefaultState(); }
+    CustomOpenGL(RenderContext & r);
+    ~CustomOpenGL();
 
   private:
     RenderContext & m_r;
