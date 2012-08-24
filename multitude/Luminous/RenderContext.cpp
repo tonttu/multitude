@@ -663,7 +663,7 @@ namespace Luminous
       const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
       auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleFan, 0, linesegments + 2, program, style.fillColor(), 1.f, style);
       // Center is the first vertex in a fan
-      b.vertex[0].location.make(center.x, center.y, 0.f);
+      b.vertex[0].location.make(center.x, center.y, b.depth);
       // Create the rest of the vertices
       fill(&b.vertex[1], b.depth);
     }
