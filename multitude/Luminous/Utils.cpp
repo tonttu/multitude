@@ -14,7 +14,6 @@
  */
 
 #include <Luminous/Utils.hpp>
-#include <Luminous/MatrixStep.hpp>
 #include <Luminous/DummyOpenGL.hpp>
 
 #include <Radiant/Trace.hpp>
