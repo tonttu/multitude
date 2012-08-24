@@ -134,17 +134,19 @@ namespace Valuable {
   public:
     typedef Radiant::FlagsT<T> Flags;
     AttributeFlagsT(Node * parent, const QString & name, const FlagNames * names,
-               Flags v = Flags(), bool transit = false)
+               Flags v = Flags(), bool createAliases = true, bool transit = false)
       : Attribute(parent, name, transit)
     {
       m_masks[DEFAULT] = ~Flags();
       m_values[DEFAULT] = v;
       m_cache = v;
 
-      if(parent && names) {
-        for(const FlagNames * it = names; it->name; ++it) {
+      assert(names);
+
+      for (const FlagNames * it = names; it->name; ++it) {
+        m_flags[QByteArray(it->name).toLower()] = Flags::fromInt(it->value);
+        if (parent && createAliases)
           m_aliases << new FlagAliasT<T>(parent, *this, it->name, Flags::fromInt(it->value));
-        }
       }
     }
 
@@ -243,15 +245,11 @@ namespace Valuable {
       foreach(const ValueUnit & vu, v.units())
         if(vu != VU_UNKNOWN) return false;
 
-      QMap<QByteArray, Flags> all;
-      foreach(const FlagAliasT<T>* alias, m_aliases)
-        all[alias->name().toUtf8()] = alias->flags();
-
       Flags newValue;
       foreach(const QVariant & var, v.values()) {
         if(var.type() != QVariant::ByteArray) return false;
-        typename QMap<QByteArray, Flags>::iterator it = all.find(var.toByteArray());
-        if(it == all.end()) return false;
+        auto it = m_flags.find(var.toByteArray().toLower());
+        if (it == m_flags.end()) return false;
         newValue |= *it;
       }
       setValue(newValue, layer);
@@ -279,6 +277,7 @@ namespace Valuable {
     Flags m_values[LAYER_COUNT];
     Flags m_masks[LAYER_COUNT];
     QList<FlagAliasT<T>*> m_aliases;
+    QMap<QByteArray, Flags> m_flags;
   };
 }
 
