@@ -14,6 +14,8 @@
 #include <QFont>
 #include <QTextOption>
 
+#include <map>
+
 namespace Luminous
 {
   class GLSLProgramObject;

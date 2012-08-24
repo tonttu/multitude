@@ -161,14 +161,14 @@ namespace Luminous
   Program & Program::operator=( Program && prog )
   {
     RenderResource::operator=(std::move(prog));
-    Valuable::Node::operator=(std::move(prog));
+    //Valuable::Node::operator=(std::move(prog));
     std::swap(m_d, prog.m_d);
     return *this;
   }
 
   Program::Program( Program && prog )
     : RenderResource(std::move(prog))
-    , Valuable::Node(std::move(prog))
+    //, Valuable::Node(std::move(prog))
     , m_d(prog.m_d)
   {
     prog.m_d = nullptr;
@@ -250,14 +250,14 @@ namespace Luminous
     m_d->uniforms.push_back(uniform); \
   }
 
-#define ADDSHADERUNIFORMATTR(ATTRTYPE) \
-  template <> LUMINOUS_API void Program::addShaderUniform(const QString & name, ATTRTYPE & value) \
-  { \
-    std::shared_ptr<ShaderUniform> uniform(new ShaderUniformT<ATTRTYPE>(name, value)); \
-    m_d->uniforms.push_back(uniform); \
-    /* Remove when the attribute is deleted */ \
-    value.addListener(this, [=](){ this->removeShaderUniform(name); }, DELETE_ROLE); \
-  }
+//#define ADDSHADERUNIFORMATTR(ATTRTYPE) \
+//  template <> LUMINOUS_API void Program::addShaderUniform(const QString & name, ATTRTYPE & value) \
+//  { \
+//    std::shared_ptr<ShaderUniform> uniform(new ShaderUniformT<ATTRTYPE>(name, value)); \
+//    m_d->uniforms.push_back(uniform); \
+//    /* Remove when the attribute is deleted */ \
+//    value.addListener(this, [=](){ this->removeShaderUniform(name); }, DELETE_ROLE); \
+//  }
 
   ADDSHADERUNIFORMCONST(int);
   ADDSHADERUNIFORMCONST(unsigned int);
@@ -272,24 +272,24 @@ namespace Luminous
   ADDSHADERUNIFORMCONST(Nimble::Matrix2f);
   ADDSHADERUNIFORMCONST(Nimble::Matrix3f);
   ADDSHADERUNIFORMCONST(Nimble::Matrix4f);
-  ADDSHADERUNIFORMATTR(Valuable::AttributeInt);
-  ADDSHADERUNIFORMATTR(Valuable::AttributeFloat);
+//  ADDSHADERUNIFORMATTR(Valuable::AttributeInt);
+//  ADDSHADERUNIFORMATTR(Valuable::AttributeFloat);
 
-  ADDSHADERUNIFORMATTR(Valuable::AttributeVector2i);
-  ADDSHADERUNIFORMATTR(Valuable::AttributeVector3i);
-  ADDSHADERUNIFORMATTR(Valuable::AttributeVector4i);
+//  ADDSHADERUNIFORMATTR(Valuable::AttributeVector2i);
+//  ADDSHADERUNIFORMATTR(Valuable::AttributeVector3i);
+//  ADDSHADERUNIFORMATTR(Valuable::AttributeVector4i);
   
-  ADDSHADERUNIFORMATTR(Valuable::AttributeVector2f);
-  ADDSHADERUNIFORMATTR(Valuable::AttributeVector3f);
-  ADDSHADERUNIFORMATTR(Valuable::AttributeVector4f);
-  ADDSHADERUNIFORMATTR(Valuable::AttributeColor);
+//  ADDSHADERUNIFORMATTR(Valuable::AttributeVector2f);
+//  ADDSHADERUNIFORMATTR(Valuable::AttributeVector3f);
+//  ADDSHADERUNIFORMATTR(Valuable::AttributeVector4f);
+//  ADDSHADERUNIFORMATTR(Valuable::AttributeColor);
 
-  ADDSHADERUNIFORMATTR(Valuable::AttributeMatrix2f);
-  ADDSHADERUNIFORMATTR(Valuable::AttributeMatrix3f);
-  ADDSHADERUNIFORMATTR(Valuable::AttributeMatrix4f);
+//  ADDSHADERUNIFORMATTR(Valuable::AttributeMatrix2f);
+//  ADDSHADERUNIFORMATTR(Valuable::AttributeMatrix3f);
+//  ADDSHADERUNIFORMATTR(Valuable::AttributeMatrix4f);
 
 #undef ADDSHADERUNIFORMCONST
-#undef ADDSHADERUNIFORMATTR
+//#undef ADDSHADERUNIFORMATTR
 
   void Program::removeShaderUniform(const QString & name)
   {

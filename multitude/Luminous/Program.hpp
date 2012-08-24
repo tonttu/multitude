@@ -5,7 +5,7 @@
 #include "Luminous/RenderResource.hpp"
 #include "Luminous/UniformDescription.hpp"
 
-#include <Valuable/Node.hpp>
+//#include <Valuable/Node.hpp>
 #include <memory>
 
 #include <QString>
@@ -52,7 +52,7 @@ namespace Luminous
   /// A shader program, combining multiple ShaderGLSL objects into one runnable program
   class Program
     : public RenderResource
-    , public Valuable::Node
+    //, public Valuable::Node
   {
   public:
     LUMINOUS_API Program();
@@ -74,7 +74,7 @@ namespace Luminous
     LUMINOUS_API Hash hash() const;
 
     template <typename T> void addShaderUniform(const QString & name, const T & value);
-    template <typename T> void addShaderUniform(const QString & name, T & value);
+    //template <typename T> void addShaderUniform(const QString & name, T & value);
 
     LUMINOUS_API void removeShaderUniform(const QString & name);
 

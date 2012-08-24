@@ -17,9 +17,11 @@
 #include "RenderDriver.hpp"
 #include "ContextArray.hpp"
 
+#include <Radiant/Mutex.hpp>
 #include <Radiant/Timer.hpp>
 
 #include <map>
+#include <set>
 
 
 
