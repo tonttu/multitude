@@ -653,7 +653,7 @@ namespace Luminous
       float angle = fromRadians;
       for (unsigned int i = 0; i <= linesegments; ++i) {
         Nimble::Vector2f c(std::cos(angle), std::sin(angle));
-        vertices[i].location = Nimble::Vector3f(center + c * radius, 0.f);
+        vertices[i].location = Nimble::Vector3f(center + c * radius, depth);
         angle += step;
       }
     };
@@ -676,7 +676,6 @@ namespace Luminous
     }
   }
 
-  /// @todo Not very efficient, generation should write directly to vertex buffers
   void RenderContext::drawDonut(const Nimble::Vector2f & center,
                                 float majorAxisLength,
                                 float minorAxisLength,
@@ -685,10 +684,8 @@ namespace Luminous
                                 unsigned int linesegments,
                                 float fromRadians, float toRadians)
   {
-
-    return;
-    /*
     if(linesegments == 0) {
+      /// @todo automagically determine divisions?
       linesegments = 32;
     }
 
@@ -699,7 +696,7 @@ namespace Luminous
     minorAxisLength -= style.strokeWidth();
 
     std::vector<BasicVertex> vertices(linesegments * 2);
-    std::vector<Nimble::Vector2f> innerStroke, outerStroke;
+    std::vector<BasicVertex> innerStroke, outerStroke;
 
     if(stroke) {
       innerStroke.resize(linesegments);
@@ -716,54 +713,49 @@ namespace Luminous
 
     float strokeRatio = (r + 0.5f*style.strokeWidth()) / r;
 
-    for (unsigned int i = 0; i < linesegments; ++i) {
-      Nimble::Vector2f p = Nimble::Vector2(std::cos(angle), std::sin(angle));
-      Nimble::Vector2f normal = Nimble::Vector2(-m1*p.y, m2*p.x).perpendicular().normalize(r);
-
-      p.x *= m1;
-      p.y *= m2;
-      p += center;
-
-      Nimble::Vector2 in = p + normal;
-      Nimble::Vector2 out = p - normal;
-
-      if(stroke) {
-        if(needInnerStroke)
-          innerStroke[i] = p + strokeRatio*normal;
-
-        outerStroke[i] = p - strokeRatio*normal;
-      }
-
-      vertices[2*i] = in;
-      vertices[2*i+1] = out;
-
-      angle += step;
-    }
-
     if (style.fillColor().w > 0.f) {
       if (style.fill().textures().empty()) {
+        // Generate untextured vertices for donut
         const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
-
         auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, 0, vertices.size(), program, style.fillColor(), 1.f, style);
-        std::copy(vertices.begin(), vertices.end(), b.vertex );
+        for (unsigned int i = 0; i < linesegments; ++i) {
+          Nimble::Vector2f p = Nimble::Vector2(std::cos(angle), std::sin(angle));
+          Nimble::Vector2f normal = Nimble::Vector2(-m1*p.y, m2*p.x).perpendicular().normalize(r);
+
+          p.x *= m1;
+          p.y *= m2;
+          p += center;
+
+          b.vertex[2*i].location.make(p + normal, b.depth);
+          b.vertex[2*i+1].location.make(p - normal, b.depth);
+
+          angle += step;
+        }
       }
       else {
-        float r = Nimble::Math::Max(majorAxisLength, minorAxisLength);
-
-        Nimble::Vector2f low = center - Nimble::Vector2(r, r);
-        float iSpan = 1.0f/(2.0f*r);
-
-        std::vector<BasicVertexUV> uvs(linesegments*2);
-
-        for(unsigned int i=0; i < vertices.size(); ++i) {
-          uvs[i].location = vertices[i].location;
-          uvs[i].texCoord = iSpan * (vertices[i]-low);
-          uvs[i].texCoord = iSpan * (vertices[i]-low);
-        }
-
+        // Generate untextured vertices for donut
         const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
+        float r = Nimble::Math::Max(majorAxisLength, minorAxisLength);
+        float iSpan = 1.0f/(2.0f*r);
+        Nimble::Vector2f low = center - Nimble::Vector2(r, r);
+
         auto b = drawPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, 0, vertices.size(), program, style.fillColor(), 1.f, style);
-        std::copy(uvs.begin(), uvs.end(), b.vertex);
+        for (unsigned int i = 0; i < linesegments; ++i) {
+          Nimble::Vector2f p = Nimble::Vector2(std::cos(angle), std::sin(angle));
+          Nimble::Vector2f normal = Nimble::Vector2(-m1*p.y, m2*p.x).perpendicular().normalize(r);
+
+          p.x *= m1;
+          p.y *= m2;
+          p += center;
+          Nimble::Vector2f in = p + normal;
+          Nimble::Vector2f out = p - normal;
+          b.vertex[2*i].location.make(in, b.depth);
+          b.vertex[2*i+1].location.make(out, b.depth);
+          b.vertex[i].texCoord = iSpan * (in-low);
+          b.vertex[i].texCoord = iSpan * (out-low);
+
+          angle += step;
+        }
       }
     }
 
@@ -771,13 +763,35 @@ namespace Luminous
       const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
 
       if(needInnerStroke) {
-        auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, 0, linesegments, program, style.strokeColor(), style.strokeWidth(), style);
-        std::copy(innerStroke.begin(), innerStroke.end(), b.vertex);
+        /// Generate innerstroke
+        auto inner = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, 0, linesegments, program, style.strokeColor(), style.strokeWidth(), style);
+        for (unsigned int i = 0; i < linesegments; ++i) {
+          Nimble::Vector2f p = Nimble::Vector2(std::cos(angle), std::sin(angle));
+          Nimble::Vector2f normal = Nimble::Vector2(-m1*p.y, m2*p.x).perpendicular().normalize(r);
+
+          p.x *= m1;
+          p.y *= m2;
+          p += center;
+
+          inner.vertex[i].location.make(p + strokeRatio*normal, 0.f);
+          angle += step;
+        }
       }
-      auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, 0, linesegments, program, style.strokeColor(), style.strokeWidth(), style);
-      std::copy(outerStroke.begin(), outerStroke.end(), b.vertex);
+
+      // Draw outer stroke
+      auto outer = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, 0, linesegments, program, style.strokeColor(), style.strokeWidth(), style);
+      for (unsigned int i = 0; i < linesegments; ++i) {
+        Nimble::Vector2f p = Nimble::Vector2(std::cos(angle), std::sin(angle));
+        Nimble::Vector2f normal = Nimble::Vector2(-m1*p.y, m2*p.x).perpendicular().normalize(r);
+
+        p.x *= m1;
+        p.y *= m2;
+        p += center;
+
+        outer.vertex[i].location.make(p - strokeRatio*normal, 0.f);
+        angle += step;
+      }
     }
-    */
   }
 
   void RenderContext::drawWedge(const Nimble::Vector2f & center, float radius1,
