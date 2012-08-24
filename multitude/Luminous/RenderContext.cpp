@@ -633,7 +633,7 @@ namespace Luminous
     float angle = fromRadians;
     for (unsigned int i = 0; i <= linesegments; ++i) {
       Nimble::Vector2f c(std::cos(angle), std::sin(angle));
-      b.vertex[i].location = Nimble::Vector3f(center + c * radius, 0.f);
+      b.vertex[i].location = Nimble::Vector3f(center + c * radius, b.depth);
       angle += step;
     }
   }
@@ -1013,7 +1013,7 @@ namespace Luminous
         b.vertex[4].location.make(hole.high(), b.depth);
         b.vertex[4].texCoord.make(0,0);
 
-        b.vertex[5].location.make(area.high(), 0);
+        b.vertex[5].location.make(area.high(), b.depth);
         b.vertex[5].texCoord.make(1,1);
 
         b.vertex[6].location.make(hole.lowHigh(), b.depth);
