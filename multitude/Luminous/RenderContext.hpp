@@ -351,8 +351,11 @@ namespace Luminous
     void flush() {}
 
 
+    /// Reset the OpenGL state to default
+    void setDefaultState();
     void flush2();
     void restart();
+
 
     //////////////////////////////////////////////////////////////////////////
     /// <Luminousv2>
@@ -443,11 +446,19 @@ namespace Luminous
   public:
     CustomOpenGL(RenderContext & r) : m_r(r)
     {
+      // First, flush the current deferred render queues
       r.flush2();
-      r.bindProgram(0);
-      // glDisable(GL_TEXTURE_2D);
+
+      glDisableClientState(GL_VERTEX_ARRAY);
+      glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+      glPointSize(1.f);
+
+      glEnable(GL_TEXTURE_2D);
     }
-    ~CustomOpenGL() { /*m_r.restart();*/ }
+
+    ~CustomOpenGL() { m_r.setDefaultState(); }
+
   private:
     RenderContext & m_r;
   };

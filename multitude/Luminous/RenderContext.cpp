@@ -1486,4 +1486,9 @@ namespace Luminous
     return m_data->m_opacityStack.top();
   }
 
+  void RenderContext::setDefaultState()
+  {
+    m_data->m_driverGL->setDefaultState();
+  }
+
 }

@@ -79,7 +79,7 @@ namespace Luminous
     LUMINOUS_API virtual void setTexture(unsigned int textureUnit, const Texture & texture) = 0;
 
     // Reset the renderstate to its default
-    LUMINOUS_API virtual void clearState() = 0;
+    LUMINOUS_API virtual void setDefaultState() = 0;
 
     // Enable/disable renderbuffers
     LUMINOUS_API virtual void setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer) = 0;

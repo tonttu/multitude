@@ -604,7 +604,7 @@ namespace Luminous
     handle(texture).upload(texture, textureUnit, true);
   }
 
-  void RenderDriverGL::clearState()
+  void RenderDriverGL::setDefaultState()
   {
     // Default modes
     setBlendMode(Luminous::BlendMode::Default());
@@ -613,6 +613,12 @@ namespace Luminous
 
     // Enable scissor test
     glEnable(GL_SCISSOR_TEST);
+
+    // Invalidate the current cached OpenGL state so it gets reset on the next
+    // draw command
+    m_d->m_stateGL.setProgram(0);
+    m_d->m_stateGL.setVertexArray(0);
+    m_d->m_stateGL.setFramebuffer(0);
   }
 
   void RenderDriverGL::setBlendMode( const BlendMode & mode )
@@ -697,7 +703,7 @@ namespace Luminous
     //m_d->debugOutputStats();
 
     // Reset the OpenGL state to default
-    clearState();
+    setDefaultState();
 
     // Iterate over the segments of the master render queue executing the
     // stored render commands

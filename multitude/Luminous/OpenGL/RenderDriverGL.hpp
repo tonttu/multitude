@@ -52,8 +52,6 @@ namespace Luminous
 
     LUMINOUS_API virtual void setTexture(unsigned int textureUnit, const Texture & texture) OVERRIDE;
 
-    LUMINOUS_API virtual void clearState() OVERRIDE;
-
     LUMINOUS_API virtual void setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer) OVERRIDE;
 
     //////////
@@ -70,6 +68,7 @@ namespace Luminous
                                                              const Luminous::Program & shader,
                                                              const std::map<QByteArray, const Texture *> & textures) OVERRIDE;
 
+    LUMINOUS_API virtual void setDefaultState() OVERRIDE;
     LUMINOUS_API virtual void flush() OVERRIDE;
 
     LUMINOUS_API ProgramGL & handle(const Program & program);
