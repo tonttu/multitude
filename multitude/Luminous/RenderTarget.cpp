@@ -95,6 +95,9 @@ namespace Luminous
     QMap<GLenum, RenderResource::Id> m_textureAttachments;
     QMap<GLenum, RenderResource::Id> m_renderBufferAttachments;
 
+    std::vector<std::unique_ptr<Luminous::Texture> > m_ownedTextureAttachments;
+    std::vector<std::unique_ptr<Luminous::RenderBuffer> > m_ownedRenderBufferAttachments;
+
     GLenum deduceBufferFormat(GLenum attachment) const
     {
       if(attachment == GL_DEPTH_ATTACHMENT)
@@ -105,20 +108,63 @@ namespace Luminous
         return GL_RGBA;
     }
 
+    void attach(GLenum attachment, Luminous::Texture &texture)
+    {
+      assert(m_targetType == RenderTarget::NORMAL);
+
+      texture.setData(m_size.width(), m_size.height(), texture.dataFormat(), 0);
+
+      m_textureAttachments[attachment] = texture.resourceId();
+    }
+
+    void attach(GLenum attachment, Luminous::RenderBuffer &buffer)
+    {
+      assert(m_targetType == RenderTarget::NORMAL);
+
+      // If no format is specified, try to use something sensible based on attachment
+      auto format = buffer.format();
+      if(format == 0)
+        format = deduceBufferFormat(attachment);
+
+      buffer.storageFormat(m_size, format, buffer.samples());
+
+      m_renderBufferAttachments[attachment] = buffer.resourceId();
+    }
+
+    Luminous::Texture & createTextureAttachment(GLenum attachment, const Luminous::PixelFormat & format)
+    {
+      auto tex = std::unique_ptr<Luminous::Texture>(new Luminous::Texture());
+      tex->setData(m_size.width(), m_size.height(), format, 0);
+
+      attach(attachment, *tex);
+
+      auto result = tex.get();
+
+      m_ownedTextureAttachments.push_back(std::move(tex));
+
+      return *result;
+    }
+
+    Luminous::RenderBuffer & createRenderBufferAttachment(GLenum attachment, GLenum storageFormat)
+    {
+      auto buf = std::unique_ptr<Luminous::RenderBuffer>(new Luminous::RenderBuffer());
+
+      /// @todo what samples?
+      buf->storageFormat(m_size, storageFormat, 0);
+
+      attach(attachment, *buf);
+
+      auto result = buf.get();
+
+      m_ownedRenderBufferAttachments.push_back(std::move(buf));
+
+      return *result;
+    }
+
   };
 
   ////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////
-
-  RenderTargetCopy::RenderTargetCopy(const RenderTarget & src, Type type)
-    : m_src(src)
-    , m_type(type)
-  {
-  }
-
-  ////////////////////////////////////////////////////////////////////////////////
-  ////////////////////////////////////////////////////////////////////////////////
-
 
   RenderTarget::RenderTarget(RenderTarget::RenderTargetType type)
     : RenderResource(RenderResource::FrameBuffer)
@@ -134,38 +180,59 @@ namespace Luminous
 
   RenderTarget::RenderTarget(const RenderTargetCopy &rt)
     : RenderResource(RenderResource::FrameBuffer)
-    , m_d(new D())
+    , m_d(rt.m_d)
   {
-    m_d->m_targetType = rt.m_src.m_d->m_targetType;
-    m_d->m_size = rt.m_src.m_d->m_size;
-
-    switch(rt.m_type) {
-    case RenderTargetCopy::SHALLOW_COPY:
-      m_d->m_textureAttachments = rt.m_src.m_d->m_textureAttachments;
-      m_d->m_renderBufferAttachments = rt.m_src.m_d->m_renderBufferAttachments;
-      break;
-    case RenderTargetCopy::SHALLOW_COPY_NO_ATTACHMENTS:
-      break;
-    case RenderTargetCopy::DEEP_COPY:
-      /// @todo implement
-      assert(0);
-      break;
-    };
   }
 
-  RenderTargetCopy RenderTarget::shallowCopy() const
+  RenderTarget::RenderTargetCopy RenderTarget::shallowCopyNoAttachments() const
   {
-    return RenderTargetCopy(*this, RenderTargetCopy::SHALLOW_COPY);
+    auto d = new RenderTarget::D();
+
+    d->m_targetType = m_d->m_targetType;
+    d->m_size = m_d->m_size;
+
+    return RenderTargetCopy(d);
   }
 
-  RenderTargetCopy RenderTarget::deepCopy() const
+  RenderTarget::RenderTargetCopy RenderTarget::shallowCopy() const
   {
-    return RenderTargetCopy(*this, RenderTargetCopy::DEEP_COPY);
+    // First, make a shallow copy with no attachments
+    auto d = shallowCopyNoAttachments();
+
+    // Make a shallow copy of the attachments (copy resource Ids)
+    d.m_d->m_textureAttachments = m_d->m_textureAttachments;
+    d.m_d->m_renderBufferAttachments = m_d->m_renderBufferAttachments;
+
+    return RenderTargetCopy(d);
   }
 
-  RenderTargetCopy RenderTarget::shallowCopyNoAttachments() const
+  RenderTarget::RenderTargetCopy RenderTarget::deepCopy() const
   {
-    return RenderTargetCopy(*this, RenderTargetCopy::SHALLOW_COPY_NO_ATTACHMENTS);
+    // First, make a shallow copy with no attachments
+    auto d = shallowCopyNoAttachments();
+
+    // Make a deep copy of attachments and attach the copies
+    for(auto i = m_d->m_textureAttachments.begin(); i != m_d->m_textureAttachments.end(); ++i) {
+
+      GLenum attachment = i.key();
+      RenderResource::Id resourceId = i.value();
+
+      Luminous::Texture * tex = RenderManager::getResource<Luminous::Texture>(resourceId);
+
+      d.m_d->createTextureAttachment(attachment, tex->dataFormat());
+    }
+
+    for(auto i = m_d->m_renderBufferAttachments.begin(); i != m_d->m_renderBufferAttachments.end(); ++i) {
+
+      GLenum attachment = i.key();
+      RenderResource::Id resourceId = i.value();
+
+      Luminous::RenderBuffer * buf = RenderManager::getResource<Luminous::RenderBuffer>(resourceId);
+
+      d.m_d->createRenderBufferAttachment(attachment, buf->format());
+    }
+
+    return RenderTargetCopy(d);
   }
 
   RenderTarget::RenderTarget(RenderTarget &&rt)
@@ -205,25 +272,12 @@ namespace Luminous
 
   void RenderTarget::attach(GLenum attachment, Luminous::RenderBuffer &buffer)
   {
-    assert(m_d->m_targetType == RenderTarget::NORMAL);
-
-    // If no format is specified, try to use something sensible based on attachment
-    auto format = buffer.format();
-    if(format == 0)
-      format = m_d->deduceBufferFormat(attachment);
-
-    buffer.storageFormat(size(), format, buffer.samples());
-
-    m_d->m_renderBufferAttachments[attachment] = buffer.resourceId();
+    m_d->attach(attachment, buffer);
   }
 
   void RenderTarget::attach(GLenum attachment, Luminous::Texture &texture)
   {
-    assert(m_d->m_targetType == RenderTarget::NORMAL);
-
-    texture.setData(size().width(), size().height(), texture.dataFormat(), 0);
-
-    m_d->m_textureAttachments[attachment] = texture.resourceId();
+    m_d->attach(attachment, texture);
   }
 
   Luminous::Texture * RenderTarget::texture(GLenum attachment) const
@@ -255,6 +309,16 @@ namespace Luminous
   RenderTarget::RenderTargetType RenderTarget::targetType() const
   {
     return m_d->m_targetType;
+  }
+
+  Texture & RenderTarget::createTextureAttachment(GLenum attachment, const Luminous::PixelFormat & format)
+  {
+    return m_d->createTextureAttachment(attachment, format);
+  }
+
+  RenderBuffer & RenderTarget::createRenderBufferAttachment(GLenum attachment, GLenum storageFormat)
+  {
+    return m_d->createRenderBufferAttachment(attachment, storageFormat);
   }
 
   ////////////////////////////////////////////////////////////////////////////////

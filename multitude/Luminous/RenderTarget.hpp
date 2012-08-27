@@ -37,30 +37,32 @@ namespace Luminous
   ////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////
 
-  class RenderTarget;
-
-  class LUMINOUS_API RenderTargetCopy
-  {
-  public:
-    enum Type {
-      DEEP_COPY,
-      SHALLOW_COPY,
-      SHALLOW_COPY_NO_ATTACHMENTS
-    };
-
-    RenderTargetCopy(const RenderTarget & src, Type type);
-
-  private:
-    const RenderTarget & m_src;
-    Type m_type;
-
-    friend class RenderTarget;
-  };
-
-  /// @todo implement copying (note copying attachments)
+  /// @todo document, add API to detach attachments
   class LUMINOUS_API RenderTarget
       : public RenderResource, public Patterns::NotCopyable
   {
+  private:
+    class D;
+    D * m_d;
+
+    /// This class is a helper used to implement copying RenderTarget classes.
+    /// You should never manually instantiate this class. It is also meant to be
+    /// used with RenderTarget::deepCopy, RenderTarget::shallowCopy, and
+    /// RenderTarget::shallowCopyNoAttachments functions.
+    /// @sa RenderTarget
+    class LUMINOUS_API RenderTargetCopy
+    {
+    private:
+      RenderTargetCopy(D * d) : m_d(d) {}
+
+      D * m_d;
+
+      friend class RenderTarget;
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////
+
   public:
     enum RenderTargetType
     {
@@ -78,15 +80,18 @@ namespace Luminous
     RenderTarget(RenderTarget && rt);
     RenderTarget & operator=(RenderTarget && rt);
 
-    RenderTargetCopy deepCopy() const;
-    RenderTargetCopy shallowCopy() const;
     RenderTargetCopy shallowCopyNoAttachments() const;
+    RenderTargetCopy shallowCopy() const;
+    RenderTargetCopy deepCopy() const;
 
     const Nimble::Size & size() const;
     void setSize(const Nimble::Size &size);
 
     void attach(GLenum attachment, Luminous::Texture & texture);
     void attach(GLenum attachment, Luminous::RenderBuffer & buffer);
+
+    Luminous::Texture & createTextureAttachment(GLenum attachment, const Luminous::PixelFormat & format);
+    Luminous::RenderBuffer & createRenderBufferAttachment(GLenum attachment, GLenum storageFormat);
 
     Luminous::Texture * texture(GLenum attachment) const;
     Luminous::RenderBuffer * renderBuffer(GLenum attachment) const;
@@ -95,10 +100,6 @@ namespace Luminous
     QList<GLenum> renderBufferAttachments() const;
 
     RenderTargetType targetType() const;
-
-  private:
-    class D;
-    D * m_d;
   };
 
   ////////////////////////////////////////////////////////////////////////////////
