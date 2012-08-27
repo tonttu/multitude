@@ -352,7 +352,7 @@ namespace Luminous {
 
   void Utils::glTexRectAA(const Nimble::Rect & r, const float * rgba)
   {
-    glTexRectAA(r.size(), Matrix3::translate2D(r.low()), rgba);
+    glTexRectAA(r.size(), Matrix3::makeTranslation(r.low()), rgba);
   }
 
   void Utils::glTexRectAA(Nimble::Vector2 size, const Nimble::Matrix3 & m,
@@ -1767,7 +1767,7 @@ namespace Luminous {
                  const float * rgba,
                  const Nimble::Matrix3 & m)
   {
-    Nimble::Matrix3 m2 = m * Matrix3::translate2D(x, y);
+    Nimble::Matrix3 m2 = m * Matrix3::makeTranslation(x, y);
     glCircularHalo(inside, outside, radians1, radians2,
            rings,  sectors, rgba, m2);
   }

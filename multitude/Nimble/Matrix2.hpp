@@ -100,9 +100,9 @@ namespace Nimble {
     static int         columns() { return 2; }
 
     /// Returns a rotation matrix
-    static Matrix2T rotation(T r) { T c = Math::Cos(r); T s = Math::Sin(r); return Matrix2T(c, -s, s, c); }
+    static Matrix2T makeRotation(T r) { T c = Math::Cos(r); T s = Math::Sin(r); return Matrix2T(c, -s, s, c); }
     /// Returns a scaling matrix
-    static Matrix2T scaling(T s)  { Matrix2T m; m.identity(); m.set(0, 0, s); m.set(1, 1, s); return m; }
+    static Matrix2T makeScale(T s)  { return Matrix2T<T>(s, 0, 0, s); }
 
     /** Identity matrix. */
     //static Matrix2T IDENTITY(1, 0, 0, 1);
@@ -189,16 +189,6 @@ namespace Nimble {
     Vector2T<T> res;
     for(int i = 0; i < 2; i++)
       res[i] = dot(m1.row(i),m2);
-    return res;
-  }
-
-  /// Multiply a matrix and a vector
-  template <class T>
-  inline Vector2T<T> operator*(const Vector2T<T>& m2, const Matrix2T<T>& m1)
-  {
-    Vector2T<T> res;
-    for(int i = 0; i < 2; i++)
-      res[i] = dot(m1.column(i),m2);
     return res;
   }
 

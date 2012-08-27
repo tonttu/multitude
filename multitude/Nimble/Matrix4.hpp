@@ -85,7 +85,7 @@ namespace Nimble {
     /// Replaces the upper-left 3x3 matrix
     inline void               setRotation(const Nimble::Matrix3T<T>& that);
     /// Returns the upper-left 3x3 matrix
-    inline Matrix3T<T>        getRotation() const;
+    inline Matrix3T<T>        rotation() const;
     /// Sets the translation part of a 4x4 transformation matrix
     void                      setTranslation(const Vector3T<T> & v)
     {
@@ -95,7 +95,7 @@ namespace Nimble {
     }
 
     /// Returns the translation part of a 4x4 matrix
-    Vector3T<T>               getTranslation() const
+    Vector3T<T>               translation() const
     {
       return Nimble::Vector3T<T>(m[0][3], m[1][3], m[2][3]);
     }
@@ -253,17 +253,6 @@ namespace Nimble {
     /// @return New translation matrix
     static Matrix4T<T> makeTranslation(const Vector3T<T> & v)
     {
-      Nimble::Matrix4T<T> mm;
-      mm.identity();
-
-      mm.setTranslation(v);
-      return mm;
-    }
-    /// Create a translation matrix
-    /// @param v Translation vector
-    /// @return New translation matrix
-    static Matrix4T<T> translate3D(const Vector3T<T> & v)
-    {
       return Matrix4T(1, 0, 0, v[0],
                       0, 1, 0, v[1],
                       0, 0, 1, v[2],
@@ -273,7 +262,7 @@ namespace Nimble {
     /// Create a non-uniform scaling matrix
     /// @param v XYZ scaling factors
     /// @return new Scaling matrix
-    static Matrix4T<T> scale3D(const Vector3T<T> & v)
+    static Matrix4T<T> makeScale(const Vector3T<T> & v)
     {
       return Matrix4T(v[0], 0, 0, 0,
                       0, v[1], 0, 0,
@@ -284,8 +273,8 @@ namespace Nimble {
     /// Create a uniform scaling matrix
     /// @param s Scaling factor
     /// @return new Scaling matrix
-    inline static Matrix4T<T> scaleUniform3D(const T & s)
-    { return scale3D(Vector3T<T>(s, s, s)); }
+    inline static Matrix4T<T> makeUniformScale(const T & s)
+    { return makeScale(Vector3T<T>(s, s, s)); }
 
     /// Creates a perspective projection matrix
     /// @param fovY field of view in degress in the Y direction
@@ -369,9 +358,9 @@ namespace Nimble {
   Matrix4T<T> Matrix4T<T>::transformation(T angle, const Vector3T<T> & axis, const Vector3T<T> & scale, const Vector3T<T> & translation)
   {
     return
-      Matrix4T<T>::translate3D(translation) *
+      Matrix4T<T>::makeTranslation(translation) *
       Matrix4T<T>::makeRotation(angle, axis) *
-      Matrix4T<T>::scale3D(scale);
+      Matrix4T<T>::makeScale(scale);
   }
 
   /// Swaps two matrices
@@ -392,7 +381,7 @@ namespace Nimble {
   }
 
   template <class T>
-  inline Matrix3T<T> Matrix4T<T>::getRotation() const
+  inline Matrix3T<T> Matrix4T<T>::rotation() const
   {
     Matrix3T<T> res;
     for(int i = 0; i < 3; i++)
@@ -511,13 +500,13 @@ namespace Nimble {
   template <class T> Matrix4T<T> Matrix4T<T>::ortho3D
     (T left, T right, T bottom, T top, T zNear, T zFar)
   {
-    Matrix4T m1 = scale3D(Nimble::Vector3T<T>(1.0 / (right - left),
+    Matrix4T m1 = makeScale(Nimble::Vector3T<T>(1.0 / (right - left),
       1.0 / (top - bottom),
       1.0 / (zFar - zNear)));
-    Matrix4T m2 = translate3D(Nimble::Vector3T<T>(-left, -bottom, -zNear));
+    Matrix4T m2 = makeTranslation(Nimble::Vector3T<T>(-left, -bottom, -zNear));
 
-    Matrix4T m3 = scale3D(Nimble::Vector3T<T>(2, 2, 2));
-    Matrix4T m4 = translate3D(Nimble::Vector3T<T>(-1, -1, -1));
+    Matrix4T m3 = makeScale(Nimble::Vector3T<T>(2, 2, 2));
+    Matrix4T m4 = makeTranslation(Nimble::Vector3T<T>(-1, -1, -1));
 
     return mul(mul(m4, m3), mul(m1, m2));
   }
@@ -653,26 +642,6 @@ namespace Nimble {
     Vector3T<T> res;
     for(int i = 0; i < 3; i++)
       res[i] = dot4(m1.row(i),m2);
-    return res;
-  }
-
-  /// @todo Vector4 * Matrix4 is not defined. This implicitly transposes the vector. This should not
-  /// operator should not be defined. Also check other Matrix classes.
-  template <class T>
-  inline Vector4T<T> operator*(const Vector4T<T> & m2, const Matrix4T<T> & m1)
-  {
-    Vector4T<T> res;
-    for(int i = 0; i < 4; i++)
-      res[i] = dot(m1.column(i),m2);
-    return res;
-  }
-
-  template <class T>
-  inline Vector3T<T> operator*(const Vector3T<T> & m2, const Matrix4T<T> & m1)
-  {
-    Vector3T<T> res;
-    for(int i = 0; i < 3; i++)
-      res[i] = dot4(m1.column(i),m2);
     return res;
   }
 

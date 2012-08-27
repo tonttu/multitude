@@ -406,7 +406,7 @@ namespace Nimble {
 
   Matrix3 KeyStone::projectionMatrix(const Vector2 vertices[4])
   {
-    return Nimble::Matrix3::projectionMatrix(vertices);
+    return Nimble::Matrix3::makeProjectionMatrix(vertices);
   }
 
 

@@ -288,12 +288,12 @@ namespace Luminous {
     if(m_method == METHOD_MATRIX_TRICK) {
       Nimble::Matrix4 km = m_keyStone.matrix();
 
-      Nimble::Matrix4 x1 = Nimble::Matrix4::scale3D(Nimble::Vector3(2, 2, 2));
+      Nimble::Matrix4 x1 = Nimble::Matrix4::makeScale(Nimble::Vector3(2, 2, 2));
 
-      Nimble::Matrix4 x2 = Nimble::Matrix4::translate3D(Nimble::Vector3(-1, -1, 0));
+      Nimble::Matrix4 x2 = Nimble::Matrix4::makeTranslation(Nimble::Vector3(-1, -1, 0));
 
-      Nimble::Matrix4 x3 = Nimble::Matrix4::translate3D(Nimble::Vector3(1, 1, 0));
-      Nimble::Matrix4 x4 = Nimble::Matrix4::scale3D(Nimble::Vector3(.5f, .5f, .5f));
+      Nimble::Matrix4 x3 = Nimble::Matrix4::makeTranslation(Nimble::Vector3(1, 1, 0));
+      Nimble::Matrix4 x4 = Nimble::Matrix4::makeScale(Nimble::Vector3(.5f, .5f, .5f));
 
       return x2 * x1 * km * x4 * x3 * m;
     } else {

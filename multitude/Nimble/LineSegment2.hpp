@@ -218,7 +218,7 @@ template <typename T>
     float angle = atan2(end.y, end.x);
 
     // translate and rotate control points so that we can check intersection against { y = 0 }
-    Matrix3T<T> m = Matrix3T<T>::rotate2D(-angle) * Matrix3T<T>::translate2D(-start);
+    Matrix3T<T> m = Matrix3T<T>::makeRotation(-angle) * Matrix3T<T>::makeTranslation(-start);
     Vector2T<T> cps[] = {
       m.project(cp[0]),
       m.project(cp[1]),

@@ -119,47 +119,44 @@ namespace Nimble {
     inline Matrix3T<T>        inverse23() const;
 
     /// Create a matrix that performs 2D translation
-    static Matrix3T<T> translation(const Vector2T<T> & t) { Matrix3T<T> m; m.identity(); m.set(0, 2, t.x); m.set(1, 2, t.y); return m; }
+    inline static Matrix3T<T> makeTranslation(const Vector2T<T> & v)
+    { return makeTranslation(v.x, v.y); }
     /// Create a matrix that performs 2D translation
-    static Matrix3T<T> translation(const T & x, const T & y) { Matrix3T<T> m; m.identity(); m.set(0, 2, x); m.set(1, 2, y); return m; }
-    /// Create a matrix that performs 2D translation
-    inline static Matrix3T<T> translate2D(const Vector2T<T> & t);
-    /// Create a matrix that performs 2D translation
-    inline static Matrix3T<T> translate2D(const T & x, const T & y)
-    { return translate2D(Vector2T<T>(x, y)); }
+    inline static Matrix3T<T> makeTranslation(const T & x, const T & y);
     /// Create a matrix that performs 2D scaling
-    inline static Matrix3T<T> scale2D(const Vector2T<T> & s);
+    inline static Matrix3T<T> makeScale(const Vector2T<T> & v)
+    { return makeScale(v.x, v.y); }
     /// Create a matrix that performs 2D scaling
-    inline static Matrix3T<T> scale2D(const T & xscale, const T & yscale);
+    inline static Matrix3T<T> makeScale(const T & xscale, const T & yscale);
     /// Create a matrix that performs 2D scaling
-    inline static Matrix3T<T> scaleUniform2D(const T & s)
-    { return scale2D(Vector2T<T>(s, s)); }
+    inline static Matrix3T<T> makeUniformScale(const T & s)
+    { return makeScale(s,s); }
     /// Create a matrix that performs uniform scaling around the given point
-    static Matrix3T<T> scaleUniformAroundPoint2D(Vector2T<T> p,
+    static Matrix3T<T> makeUniformScaleAroundPoint(Vector2T<T> p,
                                                      T s)
     {
-        return translate2D(p) * scaleUniform2D(s) * translate2D(-p);
+        return makeTranslation(p) * makeUniformScale(s) * makeTranslation(-p);
     }
 
     /// Create a matrix that performs uniform scaling around the given point
-    static Matrix3T<T> scaleAroundPoint2D(Vector2T<T> p,
+    static Matrix3T<T> makeScaleAroundPoint(Vector2T<T> p,
                                                      const T & xscale, const T & yscale)
     {
-      return translate2D(p) * scale2D(xscale, yscale) * translate2D(-p);
+      return makeTranslation(p) * makeScale(xscale, yscale) * makeTranslation(-p);
     }
 
     /// Create a matrix that performs 2D rotation
-    inline static Matrix3T<T> rotate2D(T radians);
+    inline static Matrix3T<T> makeRotation(T radians);
 
     /// Rotate around a given point
     /** @param p The center point of rotation
         @param radians The amount of roration, in radians
         @return New rotation matrix
     */
-    static Matrix3T<T> rotateAroundPoint2D(Vector2T<T> p,
+    static Matrix3T<T> makeRotationAroundPoint(Vector2T<T> p,
                                            T radians)
     {
-        return translate2D(p) * rotate2D(radians) * translate2D(-p);
+        return makeTranslation(p) * makeRotation(radians) * makeTranslation(-p);
     }
 
     /// Create a rotation matrix
@@ -183,7 +180,7 @@ namespace Nimble {
     /// @param tx x translate
     /// @param ty y translate
     /// @return New transformation matrix
-    inline static Matrix3T<T> transformation(float rad, float sx, float sy, float tx, float ty)
+    inline static Matrix3T<T> makeTransformation(float rad, float sx, float sy, float tx, float ty)
     {
       const T st = rad == 0.0f ? 0.0f : Nimble::Math::Sin(rad);
       const T ct = rad == 0.0f ? 1.0f : Nimble::Math::Cos(rad);
@@ -196,7 +193,7 @@ namespace Nimble {
     }
 
     /// Create a projection matrix which maps the unit square to given vertices
-    static Nimble::Matrix3T<T> projectionMatrix(const Nimble::Vector2T<T> vertices[4])
+    static Nimble::Matrix3T<T> makeProjectionMatrix(const Nimble::Vector2T<T> vertices[4])
     {
       float dx1 = vertices[1].x - vertices[2].x;
       float dx2 = vertices[3].x - vertices[2].x;
@@ -234,7 +231,7 @@ namespace Nimble {
                                                   const Nimble::Vector2T<T> to[4],
                                                   bool * ok = 0)
     {
-      return  projectionMatrix(to) * projectionMatrix(from).inverse(ok);
+      return  makeProjectionMatrix(to) * makeProjectionMatrix(from).inverse(ok);
     }
 
 
@@ -679,18 +676,6 @@ inline Nimble::Vector3T<T> operator*(const Nimble::Matrix3T<T>& m1,
   return res;
 }
 
-
-/// Multiply a matrix and a vector
-template <class T>
-inline Nimble::Vector3T<T> operator*(const Nimble::Vector3T<T>& m2,
-                   const Nimble::Matrix3T<T>& m1)
-{
-  Nimble::Vector3T<T> res;
-  for(int i = 0; i < 3; i++)
-    res[i] = dot(m1.column(i),m2);
-  return res;
-}
-
 /// Insert a 2x2 matrix to the upper-left corner of the 3x3 matrix
 /// @param b matrix to insert
 template<class T>
@@ -704,44 +689,26 @@ inline void Matrix3T<T>::insert(const Matrix2T<T>& b)
 }
 
 template<class T>
-inline Matrix3T<T> Matrix3T<T>::translate2D(const Vector2T<T> & t)
+inline Matrix3T<T> Matrix3T<T>::makeTranslation(const T & x, const T & y)
 {
-  Matrix3T<T> m;
-  m.identity();
-
-  m.set(0, 2, t.x);
-  m.set(1, 2, t.y);
-
-  return m;
+  return Matrix3T<T>(
+    1, 0, x,
+    0, 1, y,
+    0, 0, 1);
 }
 
 template<class T>
-inline Matrix3T<T> Matrix3T<T>::scale2D(const Vector2T<T> & s)
+inline Matrix3T<T> Matrix3T<T>::makeScale(const T & xscale, const T & yscale)
 {
-  Matrix3T<T> m;
-  m.identity();
-
-  m.set(0, 0, s.x);
-  m.set(1, 1, s.y);
-
-  return m;
-}
-
-template<class T>
-inline Matrix3T<T> Matrix3T<T>::scale2D(const T & xscale, const T & yscale)
-{
-  Matrix3T<T> m;
-  m.identity();
-
-  m.set(0, 0, xscale);
-  m.set(1, 1, yscale);
-
-  return m;
+  return Matrix3T<T>(
+    xscale, 0, 0,
+    0, yscale, 0,
+    0, 0, 1);
 }
 
 
 template<class T>
-inline Matrix3T<T> Matrix3T<T>::rotate2D(T radians)
+inline Matrix3T<T> Matrix3T<T>::makeRotation(T radians)
 {
   Matrix3T<T> m;
   m.rotateZ(radians);

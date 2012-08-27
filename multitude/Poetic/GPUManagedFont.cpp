@@ -36,7 +36,7 @@ namespace Poetic
     if(!computeRenderParams(m, pointSize, &gf, &sfix, minimumSize))
       return;
 
-    gf->render(text, m * Nimble::Matrix3::scale2D(Nimble::Vector2(sfix,sfix)));
+    gf->render(text, m * Nimble::Matrix3::makeScale(Nimble::Vector2(sfix,sfix)));
   }
 
   void GPUManagedFont::render(const char * str, int n, int pointSize,
@@ -50,7 +50,7 @@ namespace Poetic
       return;
 
     gf->render(str, n,
-               m * Nimble::Matrix3::scale2D(Nimble::Vector2(sfix,sfix)));
+               m * Nimble::Matrix3::makeScale(Nimble::Vector2(sfix,sfix)));
   }
 
   void GPUManagedFont::render(const wchar_t * str, int n, int pointSize,
@@ -63,7 +63,7 @@ namespace Poetic
       return;
 
     gf->render(str, n ,
-               m * Nimble::Matrix3::scale2D(Nimble::Vector2(sfix, sfix)));
+               m * Nimble::Matrix3::makeScale(Nimble::Vector2(sfix, sfix)));
   }
 
 

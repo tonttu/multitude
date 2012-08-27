@@ -283,7 +283,7 @@ namespace Poetic
 
       float offset = getLastAdvance();
 
-      trans *= Nimble::Matrix3::translate2D(offset, .0f);
+      trans *= Nimble::Matrix3::makeTranslation(offset, .0f);
       used += use;
     }
 #endif
@@ -369,7 +369,7 @@ namespace Poetic
 
       float offset = getLastAdvance();
 
-      trans *= Nimble::Matrix3::translate2D(offset, .0f);
+      trans *= Nimble::Matrix3::makeTranslation(offset, .0f);
       used += use;
     }
 

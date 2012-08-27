@@ -56,7 +56,7 @@ namespace Poetic
   {
     std::wstring wstr = str.toStdWString();
     internalRender(wstr.c_str(), (int) wstr.size(),
-           Nimble::Matrix3::translate2D(location));
+           Nimble::Matrix3::makeTranslation(location));
   }
 
   void GPUFont::render(const QString & str)
@@ -127,7 +127,7 @@ namespace Poetic
     cpuFont()->bbox(str, bb);
     Nimble::Vector2 center = bb.center();
 
-    render(str, transform * Nimble::Matrix3::translate2D(-center.x, center.y));
+    render(str, transform * Nimble::Matrix3::makeTranslation(-center.x, center.y));
   }
 
   void GPUFont::renderCentered(const wchar_t * str,
@@ -138,7 +138,7 @@ namespace Poetic
     cpuFont()->bbox(str, bb);
     Nimble::Vector2 center = bb.center();
 
-    render(str, transform * Nimble::Matrix3::translate2D(-center.x, center.y));
+    render(str, transform * Nimble::Matrix3::makeTranslation(-center.x, center.y));
   }
 
   void GPUFont::renderLines(const char * str, Nimble::Vector2 loc)
@@ -159,7 +159,7 @@ namespace Poetic
     while(left) {
 
       if(linelen) {
-        render(str, linelen, Nimble::Matrix3::translate2D(loc));
+        render(str, linelen, Nimble::Matrix3::makeTranslation(loc));
       }
 
       loc.y += lh;

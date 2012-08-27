@@ -151,7 +151,7 @@ namespace Nimble {
     /// Extracts the rotation part of a 4x4 matrix, and calculates the quaternion values from that
     void operator=(const Matrix4T<T> & m)
     {
-      *this = m.getRotation();
+      *this = m.rotation();
     }
 
     /// Calculates quaternion values from a 3x3 rotation matrix
