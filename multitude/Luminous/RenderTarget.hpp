@@ -37,6 +37,26 @@ namespace Luminous
   ////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////
 
+  class RenderTarget;
+
+  class LUMINOUS_API RenderTargetCopy
+  {
+  public:
+    enum Type {
+      DEEP_COPY,
+      SHALLOW_COPY,
+      SHALLOW_COPY_NO_ATTACHMENTS
+    };
+
+    RenderTargetCopy(const RenderTarget & src, Type type);
+
+  private:
+    const RenderTarget & m_src;
+    Type m_type;
+
+    friend class RenderTarget;
+  };
+
   /// @todo implement copying (note copying attachments)
   class LUMINOUS_API RenderTarget
       : public RenderResource, public Patterns::NotCopyable
@@ -52,11 +72,15 @@ namespace Luminous
     RenderTarget(RenderTargetType type = NORMAL);
     ~RenderTarget();
 
-    //RenderTarget(RenderTarget & rt);
-    //RenderTarget & operator=(RenderTarget & rt);
+    RenderTarget(const RenderTargetCopy & rt);
+    RenderTarget & operator=(const RenderTargetCopy & rt);
 
     RenderTarget(RenderTarget && rt);
     RenderTarget & operator=(RenderTarget && rt);
+
+    RenderTargetCopy deepCopy() const;
+    RenderTargetCopy shallowCopy() const;
+    RenderTargetCopy shallowCopyNoAttachments() const;
 
     const Nimble::Size & size() const;
     void setSize(const Nimble::Size &size);

@@ -123,6 +123,42 @@ namespace Luminous
     delete m_d;
   }
 
+  RenderTarget::RenderTarget(const RenderTargetCopy &rt)
+    : RenderResource(RenderResource::FrameBuffer)
+    , m_d(new D())
+  {
+    m_d->m_targetType = rt.m_src.m_d->m_targetType;
+    m_d->m_size = rt.m_src.m_d->m_size;
+
+    switch(rt.m_type) {
+    case RenderTargetCopy::SHALLOW_COPY:
+      m_d->m_textureAttachments = rt.m_src.m_d->m_textureAttachments;
+      m_d->m_renderBufferAttachments = rt.m_src.m_d->m_renderBufferAttachments;
+      break;
+    case RenderTargetCopy::SHALLOW_COPY_NO_ATTACHMENTS:
+      break;
+    case RenderTargetCopy::DEEP_COPY:
+      /// @todo implement
+      assert(0);
+      break;
+    };
+  }
+
+  RenderTargetCopy RenderTarget::shallowCopy() const
+  {
+    return RenderTargetCopy(*this, RenderTargetCopy::SHALLOW_COPY);
+  }
+
+  RenderTargetCopy RenderTarget::deepCopy() const
+  {
+    return RenderTargetCopy(*this, RenderTargetCopy::DEEP_COPY);
+  }
+
+  RenderTargetCopy RenderTarget::shallowCopyNoAttachments() const
+  {
+    return RenderTargetCopy(*this, RenderTargetCopy::SHALLOW_COPY_NO_ATTACHMENTS);
+  }
+
   RenderTarget::RenderTarget(RenderTarget &&rt)
     : RenderResource(std::move(rt))
     , m_d(rt.m_d)
