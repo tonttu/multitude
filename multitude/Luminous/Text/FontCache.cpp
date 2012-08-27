@@ -4,6 +4,7 @@
 #include <Luminous/BGThread.hpp>
 #include <Luminous/Image.hpp>
 #include <Luminous/DistanceFieldGenerator.hpp>
+#include <Luminous/RenderManager.hpp>
 
 #include <Radiant/PlatformUtils.hpp>
 
@@ -55,7 +56,7 @@ namespace
 
 namespace Luminous
 {
-  class FontCache::FontGenerator : public Luminous::Task
+  class FontCache::FontGenerator : public Luminous::Task, public Valuable::Node
   {
   public:
     FontGenerator(FontCache::D & cache);
@@ -128,6 +129,17 @@ namespace Luminous
   FontCache::FontGenerator::FontGenerator(FontCache::D & cache)
     : m_cache(cache)
   {
+    eventAddOut("glyph-ready");
+    eventAddListenerBd("glyph-ready", [&] (Radiant::BinaryData & bd) {
+      Texture * tex = RenderManager::getResource<Texture>(bd.read<int64_t>());
+      TextureAtlas::Node node;
+      node.m_location = bd.read<decltype(node.m_location)>();
+      node.m_size = bd.read<decltype(node.m_size)>();
+      if (tex) {
+        tex->addDirtyRect(QRect(node.m_location.x, node.m_location.y,
+                                node.m_size.x, node.m_size.y));
+      }
+    }, AFTER_UPDATE);
   }
 
   void FontCache::FontGenerator::initialize()
@@ -321,11 +333,7 @@ namespace Luminous
     }
 
     Texture & texture = glyph->m_atlas->texture();
-    {
-      Radiant::Guard g(glyph->m_atlas->textureMutex());
-      texture.addDirtyRect(QRect(glyph->m_node->m_location.x, glyph->m_node->m_location.y,
-                                 glyph->m_node->m_size.x, glyph->m_node->m_size.y));
-    }
+    eventSend("glyph-ready", (int64_t)texture.resourceId(), glyph->m_node->m_location, glyph->m_node->m_size);
 
     return glyph;
   }

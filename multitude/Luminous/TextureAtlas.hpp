@@ -47,8 +47,6 @@ namespace Luminous
     Luminous::Image & image();
     Luminous::Texture & texture();
 
-    Radiant::Mutex & textureMutex();
-
   private:
     class D;
     D * m_d;

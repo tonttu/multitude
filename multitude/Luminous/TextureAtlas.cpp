@@ -113,7 +113,6 @@ namespace Luminous
     int m_padding;
     Luminous::Image m_image;
     Luminous::Texture m_texture;
-    Radiant::Mutex m_textureMutex;
     std::shared_ptr<AtlasNode> m_root;
   };
 
@@ -184,11 +183,6 @@ namespace Luminous
   Luminous::Texture & TextureAtlas::texture()
   {
     return m_d->m_texture;
-  }
-
-  Radiant::Mutex & TextureAtlas::textureMutex()
-  {
-    return m_d->m_textureMutex;
   }
 
 } // namespace Luminous
