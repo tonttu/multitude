@@ -133,8 +133,8 @@ namespace Luminous
     eventAddListenerBd("glyph-ready", [&] (Radiant::BinaryData & bd) {
       Texture * tex = RenderManager::getResource<Texture>(bd.read<int64_t>());
       TextureAtlas::Node node;
-      node.m_location = bd.read<decltype(node.m_location)>();
-      node.m_size = bd.read<decltype(node.m_size)>();
+      node.m_location = bd.read<Nimble::Vector2i>();
+      node.m_size = bd.read<Nimble::Vector2i>();
       if (tex) {
         tex->addDirtyRect(QRect(node.m_location.x, node.m_location.y,
                                 node.m_size.x, node.m_size.y));
