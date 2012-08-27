@@ -71,11 +71,24 @@ namespace Luminous
     friend class Style;
   };
 
+  enum Overflow
+  {
+    /// "visible", content is not clipped, i.e., it may be rendered outside the content box
+    /// (default value)
+    OverflowVisible,
+    /// "hidden", content is clipped, no scrolling mechanism should be provided
+    OverflowHidden,
+    /// "scroll", content is clipped, scrolling mechanism is always visible
+    OverflowScroll,
+    /// "auto", content is clipped, scrolling mechanism is visible when needed
+    OverflowAuto,
+  };
+
   /// Style object for giving rendering parameters to the RenderContext
   class Style
   {
   public:
-    Style() {}
+    Style() : m_textOverflow(OverflowVisible) {}
 
     Stroke & stroke() { return m_stroke; }
     const Stroke & stroke() const { return m_stroke; }
@@ -123,6 +136,9 @@ namespace Luminous
     QTextOption & textOption() { return m_textOption; }
     const QTextOption & textOption() const { return m_textOption; }
 
+    Overflow textOverflow() const { return m_textOverflow; }
+    void setTextOverflow(Overflow overflow) { m_textOverflow = overflow; }
+
   private:
     Fill m_fill;
     Stroke m_stroke;
@@ -130,8 +146,10 @@ namespace Luminous
     BlendMode m_blendMode;
     DepthMode m_depthMode;
     StencilMode m_stencilMode;
+
     QFont m_font;
     QTextOption m_textOption;
+    Overflow m_textOverflow;
   };
 
   /////////////////////////////////////////////////////////////////////////////

@@ -1081,7 +1081,8 @@ namespace Luminous
       b.vertex[i].location.make(points[i], b.depth);
   }
 
-  void RenderContext::drawText(const TextLayout & layout, const Nimble::Vector2f & location, const Style & style)
+  void RenderContext::drawText(const TextLayout & layout, const Nimble::Vector2f & location,
+                               const Nimble::Rectf & viewRect, const Style & style)
   {
     const int maxGlyphsPerCmd = 1000;
 
@@ -1104,12 +1105,20 @@ namespace Luminous
 
         auto b = render<BasicVertexUV, FontUniformBlock>(
               true, PrimitiveType_TriangleStrip, count*6 - 2, count*4, 1, fontShader(), textures);
+        Nimble::Vector3f offset(renderLocation.x + location.x, renderLocation.y + location.y, b.depth);
+        if (style.textOverflow() == OverflowVisible) {
+          b.uniform->clip = layout.boundingBox();
+        } else {
+          b.uniform->clip = viewRect;
+          b.uniform->clip.move(-offset.vector2());
+        }
+
         b.uniform->color = style.fillColor();
         b.command->blendMode = style.blendMode();
         b.command->depthMode = d;
         b.command->stencilMode = style.stencilMode();
 
-        m.setTranslation(Nimble::Vector3f(renderLocation.x + location.x, renderLocation.y + location.y, b.depth));
+        m.setTranslation(offset);
         b.uniform->modelMatrix = transform4() * m;
         b.uniform->modelMatrix.transpose();
 
@@ -1142,11 +1151,11 @@ namespace Luminous
   {
     if (flags == TextStatic) {
       const SimpleTextLayout & layout = SimpleTextLayout::cachedLayout(text, rect.size(), style.font(), style.textOption());
-      drawText(layout, rect.low(), style);
+      drawText(layout, rect.low(), Nimble::Rectf(Nimble::Vector2f(0, 0), rect.size()), style);
     } else {
       SimpleTextLayout layout(text, rect.size(), style.font(), style.textOption());
       layout.generate();
-      drawText(layout, rect.low(), style);
+      drawText(layout, rect.low(), Nimble::Rectf(Nimble::Vector2f(0, 0), rect.size()), style);
     }
   }
 

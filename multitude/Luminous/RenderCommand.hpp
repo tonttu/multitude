@@ -1,10 +1,11 @@
 #ifndef LUMINOUS_RENDERCOMMAND_HPP
 #define LUMINOUS_RENDERCOMMAND_HPP
 
-#include "Nimble/Vector2.hpp"
-#include "Nimble/Vector3.hpp"
-#include "Nimble/Vector4.hpp"
-#include "Nimble/Matrix4.hpp"
+#include <Nimble/Vector2.hpp>
+#include <Nimble/Vector3.hpp>
+#include <Nimble/Vector4.hpp>
+#include <Nimble/Matrix4.hpp>
+#include <Nimble/Rect.hpp>
 
 #include "Luminous/Luminous.hpp"
 #include "Luminous/BlendMode.hpp"
@@ -57,6 +58,7 @@ namespace Luminous
 
   struct FontUniformBlock : public BasicUniformBlock
   {
+    Nimble::Rectf clip;
   };
 }
 

@@ -301,7 +301,7 @@ namespace Luminous
     void drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, const Style &style);
     void drawRect(const Nimble::Rectf & rect, const Style & style);
     void drawRect(const Nimble::Rectf & rect, const Nimble::Rectf & uvs, const Style & style);
-    void drawText(const TextLayout & layout, const Nimble::Vector2f & location, const Style & style);
+    void drawText(const TextLayout & layout, const Nimble::Vector2f & location, const Nimble::Rectf & viewRect, const Style & style);
     void drawText(const QString & text, const Nimble::Rectf & rect, const Style & style, TextFlags flags = TextStatic);
 
     /// Adds the render counter by one
