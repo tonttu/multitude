@@ -616,9 +616,9 @@ namespace Luminous
 
     // Invalidate the current cached OpenGL state so it gets reset on the next
     // draw command
-    m_d->m_stateGL.setProgram(0);
-    m_d->m_stateGL.setVertexArray(0);
-    m_d->m_stateGL.setFramebuffer(0);
+    m_d->m_stateGL.setProgram((unsigned)-1);
+    m_d->m_stateGL.setVertexArray((unsigned)-1);
+    m_d->m_stateGL.setFramebuffer((unsigned)-1);
   }
 
   void RenderDriverGL::setBlendMode( const BlendMode & mode )
