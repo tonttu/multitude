@@ -1253,18 +1253,21 @@ namespace Luminous
   {
     m_data->m_viewportStack.push(viewport);
 
-    glViewport(viewport.low().x, viewport.low().y, viewport.width(), viewport.height());
+    m_data->m_driver.setViewport(viewport);
 
-    glScissor(viewport.low().x, viewport.low().y, viewport.width(), viewport.height());
+    /// @todo this shouldn't probably be here, create separate scissor stack?
+    m_data->m_driver.setScissor(viewport);
   }
 
   void RenderContext::popViewport()
   {
+    /// @todo if stack gets empty, currentViewport() returns garbage and old viewport
+    /// remains in GL state
     m_data->m_viewportStack.pop();
 
     if(!m_data->m_viewportStack.empty()) {
       const Nimble::Recti & viewport = currentViewport();
-      glViewport(viewport.low().x, viewport.low().y, viewport.width(), viewport.height());
+      m_data->m_driver.setViewport(viewport);
     }
   }
 

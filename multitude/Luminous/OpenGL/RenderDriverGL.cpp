@@ -650,6 +650,17 @@ namespace Luminous
     GLERROR("RenderDriverGL::setStencilMode # glStencilOp");
   }
 
+  void RenderDriverGL::setViewport(const Nimble::Recti & rect)
+  {
+    m_d->newRenderQueueSegment(new CommandViewportGL(rect));
+  }
+
+  void RenderDriverGL::setScissor(const Nimble::Recti & rect)
+  {
+    glEnable(GL_SCISSOR_TEST);
+    m_d->newRenderQueueSegment(new CommandScissorGL(rect));
+  }
+
   void RenderDriverGL::setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer)
   {
     // Color buffers

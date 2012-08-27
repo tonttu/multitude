@@ -50,4 +50,31 @@ namespace Luminous
     m_renderTarget.bind();
   }
 
+  //////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////
+
+  CommandScissorGL::CommandScissorGL(const Nimble::Recti & rect)
+    : m_rect(rect)
+  {
+  }
+
+  void CommandScissorGL::execute()
+  {
+    glScissor(m_rect.low().x, m_rect.low().y, m_rect.width(), m_rect.height());
+    GLERROR("CommandScissorGL::execute glScissor");
+  }
+
+  //////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////
+
+  CommandViewportGL::CommandViewportGL(const Nimble::Recti & rect)
+    : m_rect(rect)
+  {
+  }
+
+  void CommandViewportGL::execute()
+  {
+    glViewport(m_rect.low().x, m_rect.low().y, m_rect.width(), m_rect.height());
+    GLERROR("CommandViewportGL::execute glViewport");
+  }
 }

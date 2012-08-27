@@ -49,6 +49,35 @@ namespace Luminous
     RenderTargetGL & m_renderTarget;
   };
 
+  //////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////
+
+  /// This command sets the scissor box.
+  class CommandScissorGL : public PipelineCommand
+  {
+  public:
+    CommandScissorGL(const Nimble::Recti & rect);
+
+    virtual void execute();
+
+  private:
+    Nimble::Recti m_rect;
+  };
+
+  //////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////
+
+  /// This command sets the current viewport transformation
+  class CommandViewportGL : public PipelineCommand
+  {
+  public:
+    CommandViewportGL(const Nimble::Recti & rect);
+
+    virtual void execute();
+
+  private:
+    Nimble::Recti m_rect;
+  };
 }
 
 #endif
