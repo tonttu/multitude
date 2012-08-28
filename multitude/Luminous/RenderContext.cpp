@@ -1187,7 +1187,7 @@ namespace Luminous
     Nimble::Matrix4f m;
     m.identity();
 
-    Nimble::Vector2f renderLocation = layout.renderLocation();
+    Nimble::Vector2f renderLocation = layout.renderLocation() - viewRect.low();
 
     const Nimble::Matrix4f model = transform4();
     // randomly generated value that looks nice
@@ -1208,7 +1208,7 @@ namespace Luminous
           b.uniform->clip = layout.boundingBox();
         } else {
           b.uniform->clip = viewRect;
-          b.uniform->clip.move(-offset.vector2());
+          b.uniform->clip.move(-layout.renderLocation());
         }
         b.uniform->color = style.fillColor();
         b.uniform->invscale = invscale;
