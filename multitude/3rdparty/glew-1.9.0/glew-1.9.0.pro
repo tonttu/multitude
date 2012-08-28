@@ -14,3 +14,5 @@ SOURCES += src/glew.c
 INCLUDEPATH += include
 
 DESTDIR = ../../lib
+
+include(../../library.pri)
