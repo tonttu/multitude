@@ -84,8 +84,10 @@ namespace Luminous
         item.vertices[1].location.make(location.x+size.x, location.y, 0);
         item.vertices[2].location.make(location.x, location.y+size.y, 0);
         item.vertices[3].location.make(location.x+size.x, location.y+size.y, 0);
-        for (int j = 0; j < 4; ++j)
+        for (int j = 0; j < 4; ++j) {
           item.vertices[j].texCoord = glyphCache->uv()[j];
+          item.vertices[j].invsize = 1.0f / size.y;
+        }
 
         g.items.push_back(item);
       } else {

@@ -17,7 +17,7 @@ namespace Luminous {
   public:
     struct LUMINOUS_API Item
     {
-      std::array<BasicVertexUV, 4> vertices;
+      std::array<FontVertex, 4> vertices;
     };
 
   public:

@@ -49,6 +49,11 @@ namespace Luminous
     Nimble::Vector2f texCoord;
   };
 
+  struct FontVertex : public BasicVertexUV
+  {
+    float invsize;
+  };
+
   struct BasicUniformBlock
   {
     Nimble::Matrix4f projMatrix;
@@ -59,6 +64,7 @@ namespace Luminous
   struct FontUniformBlock : public BasicUniformBlock
   {
     Nimble::Rectf clip;
+    float invscale;
   };
 }
 

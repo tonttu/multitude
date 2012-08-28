@@ -255,6 +255,7 @@ namespace Luminous
       desc = Luminous::VertexDescription();
       desc.addAttribute<Nimble::Vector3f>("vertex_position");
       desc.addAttribute<Nimble::Vector2>("vertex_uv");
+      desc.addAttribute<float>("vertex_invsize");
       m_fontShader.setVertexDescription(desc);
     }
 
@@ -1095,6 +1096,10 @@ namespace Luminous
 
     Nimble::Vector2f renderLocation = layout.renderLocation();
 
+    const Nimble::Matrix4f model = transform4();
+    //const float invscale = 3.5f / (transform4().upperLeft() * Nimble::Vector3f(0, 1, 0)).vector2().length();
+    const float invscale = 3.5f / Nimble::Vector2f(model[0][1], model[1][1]).length();
+
     for (int g = 0; g < layout.groupCount(); ++g) {
       textures["tex"] = layout.texture(g);
 
@@ -1103,7 +1108,7 @@ namespace Luminous
       for (int i = 0; i < items.size();) {
         const int count = std::min<int>(items.size() - i, maxGlyphsPerCmd);
 
-        auto b = render<BasicVertexUV, FontUniformBlock>(
+        auto b = render<FontVertex, FontUniformBlock>(
               true, PrimitiveType_TriangleStrip, count*6 - 2, count*4, 1, fontShader(), textures);
         Nimble::Vector3f offset(renderLocation.x + location.x, renderLocation.y + location.y, b.depth);
         if (style.textOverflow() == OverflowVisible) {
@@ -1112,14 +1117,14 @@ namespace Luminous
           b.uniform->clip = viewRect;
           b.uniform->clip.move(-offset.vector2());
         }
-
         b.uniform->color = style.fillColor();
+        b.uniform->invscale = invscale;
         b.command->blendMode = style.blendMode();
         b.command->depthMode = d;
         b.command->stencilMode = style.stencilMode();
 
         m.setTranslation(offset);
-        b.uniform->modelMatrix = transform4() * m;
+        b.uniform->modelMatrix = model * m;
         b.uniform->modelMatrix.transpose();
 
         int index = 0;
