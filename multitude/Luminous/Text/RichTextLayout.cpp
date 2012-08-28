@@ -7,22 +7,31 @@
 
 namespace Luminous
 {
-  class RichTextLayout::D
+  class RichTextLayout::D : public QObject
   {
+    Q_OBJECT
+
   public:
-    D();
+    D(RichTextLayout & host);
 
     void disableHinting();
 
   public:
+    RichTextLayout & m_host;
     QTextDocument m_doc;
+
+  private slots:
+    void changed();
   };
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  RichTextLayout::D::D()
-  {}
+  RichTextLayout::D::D(RichTextLayout & host)
+    : m_host(host)
+  {
+    connect(&m_doc, SIGNAL(documentLayoutChanged()), this, SLOT(changed()));
+  }
 
   void RichTextLayout::D::disableHinting()
   {
@@ -45,12 +54,17 @@ namespace Luminous
     }
   }
 
+  void RichTextLayout::D::changed()
+  {
+    m_host.setLayoutReady(false);
+  }
+
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
   RichTextLayout::RichTextLayout(const Nimble::Vector2f & size)
     : TextLayout(size)
-    , m_d(new D())
+    , m_d(new D(*this))
   {
   }
 
@@ -98,3 +112,5 @@ namespace Luminous
   }
 
 } // namespace Luminous
+
+#include "RichTextLayout.moc"

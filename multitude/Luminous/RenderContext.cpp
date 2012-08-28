@@ -1097,8 +1097,8 @@ namespace Luminous
     Nimble::Vector2f renderLocation = layout.renderLocation();
 
     const Nimble::Matrix4f model = transform4();
-    //const float invscale = 3.5f / (transform4().upperLeft() * Nimble::Vector3f(0, 1, 0)).vector2().length();
-    const float invscale = 3.5f / Nimble::Vector2f(model[0][1], model[1][1]).length();
+    // randomly generated value that looks nice
+    const float invscale = 4.2f / Nimble::Vector2f(model[0][1], model[1][1]).length();
 
     for (int g = 0; g < layout.groupCount(); ++g) {
       textures["tex"] = layout.texture(g);

@@ -11,7 +11,7 @@ namespace Luminous
   class RichTextLayout : public TextLayout
   {
   public:
-    LUMINOUS_API RichTextLayout(const Nimble::Vector2f & size);
+    LUMINOUS_API RichTextLayout(const Nimble::Vector2f & size = Nimble::Vector2f(100, 100));
     LUMINOUS_API virtual ~RichTextLayout();
 
     LUMINOUS_API virtual void generate() OVERRIDE;
