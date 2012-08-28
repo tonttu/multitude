@@ -19,10 +19,13 @@ namespace Luminous
 
     void sync(const RenderBuffer & buffer);
 
-    void storageFormat(const Nimble::Size &size, GLenum format, int samples);
+    void storageFormat(const RenderBuffer & buffer);
 
     void bind();
     void unbind();
+
+  private:
+    int m_generation;
   };
 
   ////////////////////////////////////////////////////////////////////////////////

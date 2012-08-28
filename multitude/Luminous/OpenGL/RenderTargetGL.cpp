@@ -12,6 +12,7 @@ namespace Luminous
 
   RenderBufferGL::RenderBufferGL(StateGL &state)
     : ResourceHandleGL(state)
+    , m_generation(0)
   {
     glGenRenderbuffers(1, &m_handle);
     GLERROR("RenderBufferGL::RenderBufferGL # glGenRenderbuffers");
@@ -19,6 +20,7 @@ namespace Luminous
 
   RenderBufferGL::RenderBufferGL(RenderBufferGL && buffer)
     : ResourceHandleGL(std::move(buffer))
+    , m_generation(buffer.m_generation)
   {
   }
 
@@ -43,20 +45,23 @@ namespace Luminous
     GLERROR("RenderBufferGL::unbind # glBindRenderbuffer");
   }
 
-  void RenderBufferGL::storageFormat(const Nimble::Size &size, GLenum format, int samples)
+  void RenderBufferGL::storageFormat(const RenderBuffer & buffer)
   {
     GLERROR("RenderBufferGL::storageFormat # zoo");
-
-    glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, format, size.width(), size.height());
-    GLERROR("RenderBufferGL::storageFormat # glRenderbufferStorageMultisample");
-
     touch();
+
+    if(m_generation != buffer.generation()) {
+      m_generation = buffer.generation();
+
+      glRenderbufferStorageMultisample(GL_RENDERBUFFER, buffer.samples(), buffer.format(), buffer.size().width(), buffer.size().height());
+      GLERROR("RenderBufferGL::storageFormat # glRenderbufferStorageMultisample");
+    }
   }
 
-  void RenderBufferGL::sync(const RenderBuffer &buffer)
+  void RenderBufferGL::sync(const RenderBuffer & buffer)
   {
     bind();
-    storageFormat(buffer.size(), buffer.format(), buffer.samples());
+    storageFormat(buffer);
   }
 
   ////////////////////////////////////////////////////////////////////////////////

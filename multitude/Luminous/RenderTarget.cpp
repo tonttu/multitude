@@ -64,9 +64,14 @@ namespace Luminous
 
   void RenderBuffer::storageFormat(const Nimble::Size &size, GLenum format, int samples)
   {
+    if(m_d->m_size == size &&
+       m_d->m_format == format &&
+       m_d->m_samples == samples)
+      return;
     m_d->m_size = size;
     m_d->m_format = format;
     m_d->m_samples = samples;
+    invalidate();
   }
 
   const Nimble::Size &RenderBuffer::size() const
