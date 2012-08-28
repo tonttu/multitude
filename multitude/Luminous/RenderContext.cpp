@@ -639,7 +639,7 @@ namespace Luminous
     }
   }
 
-  void RenderContext::drawCircle(const Nimble::Vector2f & center, float radius, Luminous::Style & style, unsigned int linesegments, float fromRadians, float toRadians)
+  void RenderContext::drawCircle(const Nimble::Vector2f & center, float radius, const Luminous::Style & style, unsigned int linesegments, float fromRadians, float toRadians)
   {
     if (linesegments == 0) {
       /// @todo Automagically determine the proper number of linesegments
@@ -670,16 +670,29 @@ namespace Luminous
     }
 
     // Draw stroke
-    if (style.strokeWidth() > 0.f) {
-      const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
-      auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, 0, linesegments+1, program, style.strokeColor(), style.strokeWidth(), style);
-      fill(b.vertex, b.depth);
+    if(style.strokeWidth() > 0.f && style.strokeColor().alpha() > 0.f) {
+      Luminous::Style s = style;
+      s.stroke() = Stroke();
+      s.setFillColor(style.strokeColor());
+      if(style.strokeProgram())
+        s.setFillProgram(*style.strokeProgram());
+      else
+        s.setDefaultFillProgram();
+
+      drawDonut(center,
+                Nimble::Vector2(radius, 0),
+                radius,
+                style.strokeWidth(),
+                s,
+                linesegments,
+                fromRadians,
+                toRadians);
     }
   }
 
   void RenderContext::drawDonut(const Nimble::Vector2f & center,
-                                float majorAxisLength,
-                                float minorAxisLength,
+                                Nimble::Vector2 axis,
+                                float otherAxisLength,
                                 float width,
                                 const Luminous::Style & style,
                                 unsigned int linesegments,
@@ -690,34 +703,38 @@ namespace Luminous
       linesegments = 32;
     }
 
-    bool stroke = style.strokeWidth() > 0.0f;
-    bool needInnerStroke = std::min(majorAxisLength, minorAxisLength) - width > 0.0f;
+    float rotation = axis.angle();
 
-    majorAxisLength -= style.strokeWidth();
-    minorAxisLength -= style.strokeWidth();
+    // Ellipse parameters
+    float a = axis.length();
+    float b = otherAxisLength;
+
+    pushTransformRightMul(Nimble::Matrix3::makeTranslation(center) * Nimble::Matrix3::makeRotation(rotation));
+
+    bool isFilled = style.fillColor().alpha() > 0.f;
+    bool stroke = style.strokeWidth() > 0.0f;
+
+    bool needInnerStroke = std::min(a, b) - width/2.0f > 0.0f;
 
     const float step = (toRadians - fromRadians) / (linesegments-1);
 
     float angle = fromRadians;
 
     float r = 0.5f * width;
-    float m1 = majorAxisLength - r;
-    float m2 = minorAxisLength - r;
 
-    float strokeRatio = (r + 0.5f*style.strokeWidth()) / r;
-
-    float maxLength = Nimble::Math::Max(majorAxisLength, minorAxisLength);
+    float maxLength = Nimble::Math::Max(a, b);
     float iSpan = 1.0f/(2.0f*r);
-    Nimble::Vector2f low = center - Nimble::Vector2(maxLength, maxLength);
+    Nimble::Vector2f low = Nimble::Vector2(maxLength, maxLength);
 
     RenderBuilder<BasicVertex, BasicUniformBlock> fill;
     RenderBuilder<BasicVertexUV, BasicUniformBlock> textured;
+
     RenderBuilder<BasicVertex, BasicUniformBlock> innerStroke;
     RenderBuilder<BasicVertex, BasicUniformBlock> outerStroke;
 
     /// Generate the fill builders
     bool isTextured = false;
-    if (style.fillColor().w > 0.f) {
+    if(isFilled) {
       if (style.fill().textures().empty()) {
         const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
         fill = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, 0, linesegments * 2, program, style.fillColor(), 1.f, style);
@@ -733,41 +750,60 @@ namespace Luminous
     if(stroke) {
       const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
       if(needInnerStroke)
-        innerStroke = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, 0, linesegments, program, style.strokeColor(), style.strokeWidth(), style);
-      outerStroke = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, 0, linesegments, program, style.strokeColor(), style.strokeWidth(), style);
+        innerStroke = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, 0, linesegments * 2, program, style.strokeColor(), 1.0f, style);
+      outerStroke = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, 0, linesegments * 2, program, style.strokeColor(), 1.0f, style);
     }
 
     /// Generate the vertex data
     for (unsigned int i = 0; i < linesegments; ++i) {
-      Nimble::Vector2f p = Nimble::Vector2(std::cos(angle), std::sin(angle));
-      Nimble::Vector2f normal = Nimble::Vector2(-m1*p.y, m2*p.x).perpendicular().normalize(r);
+      // Expand path of ellipse e(t) = (a cos(t), b sin(t)) along normals
 
-      p.x *= m1;
-      p.y *= m2;
-      p += center;
+      Nimble::Vector2f c = Nimble::Vector2(std::cos(angle), std::sin(angle));
+      Nimble::Vector2f normal = Nimble::Vector2(-b*c.x, -a*c.y).normalize(r);
 
-      Nimble::Vector2f in = p + normal;
-      Nimble::Vector2f out = p - normal;
+      Nimble::Vector2 e(a*c.x, b*c.y);
 
-      if (isTextured) {
+
+      Nimble::Vector2f in = e + normal;
+      Nimble::Vector2f out = e - normal;
+
+      if(isTextured) {
         textured.vertex[2*i].location.make(in, textured.depth);
         textured.vertex[2*i+1].location.make(out, textured.depth);
-        textured.vertex[i].texCoord = iSpan * (in-low);
-        textured.vertex[i].texCoord = iSpan * (out-low);
+        textured.vertex[2*i].texCoord = iSpan * (in-low);
+        textured.vertex[2*i+1].texCoord = iSpan * (out-low);
       }
-      else {
-        fill.vertex[2*i].location.make(p + normal, fill.depth);
-        fill.vertex[2*i+1].location.make(p - normal, fill.depth);
+      else if(isFilled) {
+        fill.vertex[2*i].location.make(in, fill.depth);
+        fill.vertex[2*i+1].location.make(out, fill.depth);
+      }
+      if(stroke) {
+        // For the stroke, we need to find normals for along the inner & outer edge:
+        //  s(t) = e(t) + g(t), g(t) = r * normal(e(t)) / ||normal(e(t)||
+
+        Nimble::Vector2 e_(-a*c.y, b*c.x);
+
+        // Calculate dg/dt
+        Nimble::Vector2 s_(a*a*b*c.y, -a*b*b*c.x);
+        s_ *= -r*Nimble::Math::Pow(e_.x*e_.x + e_.y*e_.y, -3/2.0f);
+
+        // Add de/dt
+        s_ += Nimble::Vector2(-a*c.y, b*c.x);
+
+        Nimble::Vector2 offset = s_.perpendicular().normalize(0.5f * style.strokeWidth());
+
+        if(needInnerStroke) {
+          innerStroke.vertex[2*i].location.make(in+offset, innerStroke.depth);
+          innerStroke.vertex[2*i+1].location.make(in-offset, innerStroke.depth);
+        }
+
+        outerStroke.vertex[2*i].location.make(out+offset, outerStroke.depth);
+        outerStroke.vertex[2*i+1].location.make(out-offset, outerStroke.depth);
       }
 
-      if (stroke) {
-        if (needInnerStroke)
-          innerStroke.vertex[i].location.make(p + strokeRatio*normal, innerStroke.depth);
-        outerStroke.vertex[i].location.make(p - strokeRatio*normal, outerStroke.depth);
-      }
       angle += step;
     }
-
+    popTransform();
   }
 
   void RenderContext::drawWedge(const Nimble::Vector2f & center, float radius1,
@@ -962,6 +998,22 @@ namespace Luminous
 
     // Draw the outline
     if (style.strokeWidth() > 0.f && style.strokeColor().w > 0.f) {
+
+      Luminous::Style s = style;
+      s.stroke() = Stroke();
+      s.setFillColor(style.strokeColor());
+      if(style.strokeProgram())
+        s.setFillProgram(*style.strokeProgram());
+      else
+        s.setDefaultFillProgram();
+
+      Nimble::Rect outer = rect;
+      Nimble::Rect inner = rect;
+      outer.increaseSize(0.5f*style.strokeWidth());
+      inner.smaller(0.5f*style.strokeWidth());
+
+      drawRectWithHole(outer, inner, s);
+      /*
       const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
       auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, 0, 5, program, style.strokeColor(), style.strokeWidth(), style);
       b.vertex[0].location.make(rect.low(), b.depth);
@@ -969,6 +1021,7 @@ namespace Luminous
       b.vertex[2].location.make(rect.high(), b.depth);
       b.vertex[3].location.make(rect.lowHigh(), b.depth);
       b.vertex[4].location.make(rect.low(), b.depth);
+      */
     }
   }
 
@@ -1033,24 +1086,25 @@ namespace Luminous
 
     // Draw the stroke
     if (style.strokeWidth() > 0.f && style.strokeColor().w > 0.f) {
-      const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
-      { // Draw innerstroke
-        auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, 0, 5, program, style.strokeColor(), style.strokeWidth(), style);
-        b.vertex[0].location.make(hole.low(), b.depth);
-        b.vertex[1].location.make(hole.highLow(), b.depth);
-        b.vertex[2].location.make(hole.high(), b.depth);
-        b.vertex[3].location.make(hole.lowHigh(), b.depth);
-        b.vertex[4].location.make(hole.low(), b.depth);
-      }
-      
-      { // Draw outerstroke
-        auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, 0, 5, program, style.strokeColor(), style.strokeWidth(), style);
-        b.vertex[0].location.make(area.low(), b.depth);
-        b.vertex[1].location.make(area.highLow(), b.depth);
-        b.vertex[2].location.make(area.high(), b.depth);
-        b.vertex[3].location.make(area.lowHigh(), b.depth);
-        b.vertex[4].location.make(area.low(), b.depth);
-      }
+      Luminous::Style s = style;
+      s.stroke() = Stroke();
+      s.setFillColor(style.strokeColor());
+      if(style.strokeProgram())
+        s.setFillProgram(*style.strokeProgram());
+      else
+        s.setDefaultFillProgram();
+
+      Nimble::Rect outer = area;
+      Nimble::Rect inner = area;
+      outer.increaseSize(0.5f*style.strokeWidth());
+      inner.smaller(0.5f*style.strokeWidth());
+      drawRectWithHole(outer, inner, s);
+
+      outer = hole;
+      inner = hole;
+      outer.increaseSize(0.5f*style.strokeWidth());
+      inner.smaller(0.5f*style.strokeWidth());
+      drawRectWithHole(outer, inner, s);
     }
   }
 
@@ -1062,6 +1116,45 @@ namespace Luminous
     auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, 0, 2, program, style.strokeColor(), style.strokeWidth(), style);
     b.vertex[0].location.make(p1,b.depth);
     b.vertex[1].location.make(p2,b.depth);
+  }
+
+
+  void RenderContext::drawEllipse(Nimble::Vector2f center,
+                   Nimble::Vector2f axis,
+                   float otherAxisLength,
+                   const Luminous::Style & style,
+                   unsigned int lineSegments,
+                   float fromRadians,
+                   float toRadians)
+  {
+
+
+    Nimble::Vector2 otherAxis = axis.perpendicular().normalize(otherAxisLength);
+
+    Nimble::Matrix3 m(axis.x, otherAxis.x, 0,
+                      axis.y, otherAxis.y, 0,
+                      0, 0, 1);
+
+    Luminous::Style s = style;
+    s.stroke() = Stroke();
+
+    // Fill is an affine transform of a circle
+    pushTransformRightMul(Nimble::Matrix3::makeTranslation(center) * m);
+    drawCircle(Nimble::Vector2(0, 0), 1.0f, s, lineSegments, fromRadians, toRadians);
+    popTransform();
+
+    // Stroke should be of constant width, so use drawDonut for the outline
+    if(style.strokeColor().alpha() > 0.f && style.strokeWidth() > 0.f) {
+      s.setFillColor(style.strokeColor());
+      drawDonut(center,
+                axis,
+                otherAxisLength,
+                style.strokeWidth(),
+                s,
+                lineSegments,
+                fromRadians,
+                toRadians);
+    }
   }
 
   //

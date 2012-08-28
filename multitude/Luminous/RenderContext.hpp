@@ -233,7 +233,15 @@ namespace Luminous
       @param style color and other parameters for the circle
       @param lineSegments number of steps
       */
-    void drawCircle(const Nimble::Vector2f & center, float radius, Luminous::Style & style, unsigned int lineSegments = 0, float fromRadians=0, float toRadians=Nimble::Math::TWO_PI);
+    void drawCircle(const Nimble::Vector2f & center, float radius, const Luminous::Style & style, unsigned int lineSegments = 0, float fromRadians=0, float toRadians=Nimble::Math::TWO_PI);
+
+
+    void drawEllipse(Nimble::Vector2f center,
+                     Nimble::Vector2f axis,
+                     float otherAxisLength,
+                     const Luminous::Style & style,
+                     unsigned int lineSegments = 0,
+                     float fromRadians = 0, float toRadians = Nimble::Math::TWO_PI);
 
     /** Draws a constant width donut.
       @param center center of the donut
@@ -246,8 +254,8 @@ namespace Luminous
       @param toRadians
      */
     void drawDonut(const Nimble::Vector2f & center,
-                   float majorAxisLength,
-                   float minorAxisLength,
+                   Nimble::Vector2 axis,
+                   float otherAxisLength,
                    float width,
                    const Luminous::Style & style,
                    unsigned int linesegments = 0,
