@@ -268,4 +268,4 @@ namespace Valuable
 
 }
 
-#include "moc_FileWatcher.cpp"
+#include "FileWatcher.moc"
