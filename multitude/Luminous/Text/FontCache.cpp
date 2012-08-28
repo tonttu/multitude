@@ -34,7 +34,7 @@ namespace
         arg(rawFont.style()).arg(rawFont.familyName(), rawFont.styleName());
   }
 
-  QString cacheFileName(QString fontKey, quint32 glyphIndex)
+  const QString & cacheBasePath()
   {
     static QString s_basePath;
 
@@ -47,10 +47,20 @@ namespace
       s_basePath = basePath;
     }
 
-    const QString path = s_basePath + "/" + fontKey.replace('/', '_');
+    return s_basePath;
+  }
+
+  QString cacheFileName(QString fontKey, quint32 glyphIndex)
+  {
+    const QString path = cacheBasePath() + "/" + fontKey.replace('/', '_');
     QDir().mkdir(path);
 
     return QString("%1/%2.tga").arg(path).arg(glyphIndex);
+  }
+
+  QString indexFileName()
+  {
+    return cacheBasePath() + "/index.ini";
   }
 }
 
@@ -189,7 +199,7 @@ namespace Luminous
 
     QPainterPath path = rawFont.pathForGlyph(glyphIndex);
     if (path.isEmpty()) {
-      QSettings settings("MultiTouch", "GlyphCache");
+      QSettings settings(indexFileName(), QSettings::IniFormat);
 
       settings.beginGroup(m_cache.m_rawFontKey);
       settings.beginGroup(QString::number(glyphIndex));
@@ -260,7 +270,7 @@ namespace Luminous
                                      glyph->size().x, glyph->size().y));
       m_cache.m_fileCache[glyphIndex] = item;
 
-      QSettings settings("MultiTouch", "GlyphCache");
+      QSettings settings(indexFileName(), QSettings::IniFormat);
 
       settings.beginGroup(m_cache.m_rawFontKey);
       settings.beginGroup(QString::number(glyphIndex));
@@ -340,7 +350,7 @@ namespace Luminous
 
   void FontCache::FontGenerator::loadFileCache()
   {
-    QSettings settings("MultiTouch", "GlyphCache");
+    QSettings settings(indexFileName(), QSettings::IniFormat);
 
     settings.beginGroup(m_cache.m_rawFontKey);
 
