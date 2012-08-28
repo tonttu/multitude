@@ -19,6 +19,8 @@
 #include "Luminous/Buffer.hpp"
 #include "Luminous/OpenGL/RenderDriverGL.hpp"
 #include "Luminous/Text/SimpleTextLayout.hpp"
+#include "Luminous/PostProcessChain.hpp"
+#include "Luminous/PostProcessFilter.hpp"
 
 #include <Nimble/Matrix4.hpp>
 
@@ -227,6 +229,7 @@ namespace Luminous
         , m_driverGL(dynamic_cast<RenderDriverGL*>(&renderDriver))
         , m_defaultRenderTarget(RenderTarget::WINDOW)
         , m_currentRenderTarget(0)
+        , m_postProcessInitList(0)
     {
       // Reset render call count
       m_renderCalls.push(0);
@@ -362,6 +365,24 @@ namespace Luminous
       glDrawBuffer(GL_BACK);
     }
 
+    void copyPostProcessFilters(RenderContext & rc, const PostProcess::InitList & chain)
+    {
+      for(PostProcess::InitList::const_iterator it = chain.begin(); it != chain.end(); ++it) {
+
+        int id = it->order;
+
+        if(m_postProcessChain.contains(id))
+          continue;
+
+        PostProcessFilterPtr ptr = it->func();
+        ptr->order = id;
+
+        // By default resizes new render targets to current context size
+        ptr->initialize(rc);
+        m_postProcessChain.add(ptr);
+      }
+    }
+
     size_t m_recursionLimit;
     size_t m_recursionDepth;
 
@@ -467,6 +488,9 @@ namespace Luminous
     // Default window framebuffer
     RenderTarget m_defaultRenderTarget;
     const RenderTarget * m_currentRenderTarget;
+
+    const PostProcess::InitList * m_postProcessInitList;
+    PostProcessChain m_postProcessChain;
 
     std::stack<float> m_opacityStack;
   };
@@ -1511,6 +1535,9 @@ namespace Luminous
 
   void RenderContext::beginFrame()
   {
+    if(m_data->m_postProcessInitList)
+      m_data->copyPostProcessFilters(*this, *m_data->m_postProcessInitList);
+
     pushClipStack();
 
     assert(stackSize() == 1);
@@ -1519,9 +1546,15 @@ namespace Luminous
 
     // Push the default render target. Don't use the RenderContext API to avoid
     // the guard.
-    assert(m_data->m_defaultRenderTarget.targetType() != RenderTarget::INVALID);
-    m_data->m_driverGL->pushRenderTarget(m_data->m_defaultRenderTarget);
-    m_data->m_currentRenderTarget = &m_data->m_defaultRenderTarget;
+    const PostProcessFilterPtr ppf = m_data->m_postProcessChain.front();
+
+    const Luminous::RenderTarget & renderTarget = ppf && ppf->enabled() ?
+          ppf->renderTarget() :
+          m_data->m_defaultRenderTarget;
+
+    assert(renderTarget.targetType() != RenderTarget::INVALID);
+    m_data->m_driverGL->pushRenderTarget(renderTarget);
+    m_data->m_currentRenderTarget = &renderTarget;
 
     // Push default opacity
     assert(m_data->m_opacityStack.empty());
@@ -1563,6 +1596,73 @@ namespace Luminous
   {
     assert(stackSize() == 1);
     assert(transform4() == Nimble::Matrix4::IDENTITY);
+  }
+
+  void RenderContext::initPostProcess(const PostProcess::InitList & filters)
+  {
+    m_data->m_postProcessInitList = &filters;
+  }
+
+  void RenderContext::beginPostProcess()
+  {
+    Nimble::Recti viewport(Nimble::Vector2i(0, 0), contextSize().cast<int>());
+    pushViewport(viewport);
+  }
+
+  void RenderContext::postProcess()
+  {
+    const PostProcessChain::FilterChain & chain = m_data->m_postProcessChain.filters();
+    const unsigned numFilters = chain.size();
+
+    if(numFilters == 0)
+      return;
+
+    if(numFilters > 100) {
+      Radiant::warning("Using over 100 post processing filters.");
+    }
+
+    assert(m_data->m_window);
+
+    // Apply filters in filter chain
+    for(PostProcessChain::FilterChain::const_iterator it(chain.begin()), next(it);
+        it != chain.end() && next++ != chain.end(); ++it) {
+
+      const PostProcessFilterPtr ppf = it->second;
+
+      /// @todo we really shouldn't have null pointers here..
+      assert(ppf);
+
+      if(!ppf->enabled())
+        continue;
+
+      // Note: if isLast is true, next is invalid
+      bool isLast = (next == chain.end());
+
+      // If this is the last filter, use the default render target,
+      // otherwise use the off-screen render target of the next filter
+      const RenderTarget & renderTarget = isLast ?
+            m_data->m_defaultRenderTarget :
+            next->second->renderTarget();
+
+      // Push the next auxilary render target
+      auto g = pushRenderTarget(renderTarget);
+
+      // Run each area through the filter
+      for(unsigned j = 0; j < m_data->m_window->areaCount(); j++) {
+        const MultiHead::Area & area = m_data->m_window->area(j);
+
+        m_data->m_driver.setScissor(area.viewport());
+
+        ppf->begin(*this);
+        // Apply/render current filter
+        ppf->end(*this);
+      }
+    }
+  }
+
+  void RenderContext::endPostProcess()
+  {
+    popViewport();
   }
 
   bool RenderContext::initialize()

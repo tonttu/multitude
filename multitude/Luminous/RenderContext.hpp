@@ -21,6 +21,7 @@
 #include <Luminous/FramebufferResource.hpp>
 #include <Luminous/Buffer.hpp>
 #include <Luminous/RenderCommand.hpp>
+#include <Luminous/PostProcess.hpp>
 #include "OpenGL/RenderTargetGL.hpp"
 #include "OpenGL/BufferGL.hpp"
 
@@ -176,6 +177,12 @@ namespace Luminous
     /// Called once for every area after rendering it. Can be
     /// called multiple times per frame depending on configuration.
     void endArea();
+
+    void initPostProcess(const PostProcess::InitList & filters);
+
+    void beginPostProcess();
+    void postProcess();
+    void endPostProcess();
 
     const Nimble::Matrix4 & viewTransform() const;
     void pushViewTransform(const Nimble::Matrix4 & m);
