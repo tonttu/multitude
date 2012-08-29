@@ -32,6 +32,7 @@
 
 namespace Luminous
 {
+  typedef std::shared_ptr<Task> TaskPtr;
 
   /** A class used to execute tasks in a separated threads.
 
@@ -69,7 +70,7 @@ namespace Luminous
 
         @param task The task that needs to be added.
     */
-    virtual void addTask(std::shared_ptr<Task> task);
+    virtual void addTask(TaskPtr task);
 
     /// Remove the task from the BGThread
     /** Generally you should not use this function. If you want to
@@ -82,20 +83,20 @@ namespace Luminous
         @sa Luminous::Task::setFinished
         @sa Luminous::Task::schedule
     */
-    virtual bool removeTask(std::shared_ptr<Task> task);
+    virtual bool removeTask(TaskPtr task);
 
     /// Update the changed task timestamp to queue
-    virtual void reschedule(std::shared_ptr<Task> task);
-    void reschedule(std::shared_ptr<Task> task, Priority p);
+    virtual void reschedule(TaskPtr task);
+    void reschedule(TaskPtr task, Priority p);
 
 
     /// Change the priority of a task
-    virtual void setPriority(std::shared_ptr<Task> task, Priority p);
+    virtual void setPriority(TaskPtr task, Priority p);
 
     /// Container for the tasks
-    typedef std::multimap<Priority, std::shared_ptr<Task>, std::greater<Priority> > container;
+    typedef std::multimap<Priority, TaskPtr, std::greater<Priority> > container;
     /// Objects stored in the task container
-    typedef std::pair<Priority, std::shared_ptr<Task> > contained;
+    typedef std::pair<Priority, TaskPtr > contained;
 
     /// Returns the number of tasks in the BGThread.
     unsigned taskCount();
@@ -114,9 +115,9 @@ namespace Luminous
   private:
     virtual void childLoop();
 
-    std::shared_ptr<Task> pickNextTask();
+    TaskPtr pickNextTask();
 
-    container::iterator findTask(std::shared_ptr<Task> task);
+    container::iterator findTask(TaskPtr task);
 
     void wakeThread();
     void wakeAll();
@@ -125,7 +126,7 @@ namespace Luminous
     container m_taskQueue;
 
     // a thread is already waiting for these tasks
-    std::set<std::shared_ptr<Task> > m_reserved;
+    std::set<TaskPtr > m_reserved;
 
     // number of idle threads, excluding ones that are reserving a task
     int m_idle;
