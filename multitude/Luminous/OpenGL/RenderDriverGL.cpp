@@ -953,7 +953,7 @@ namespace Luminous
 #elif defined (RADIANT_WINDOWS)
     const int interval = (vsync ? 1 : 0);
     wglSwapIntervalEXT(interval);
-#elif
+#else
 #  warning "setVSync not implemented on this platform"
 #endif
   }
