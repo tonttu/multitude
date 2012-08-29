@@ -26,8 +26,17 @@
 
 namespace Radiant
 {
+  class DropEvent;
+
+  class DropListener
+  {
+  public:
+
+    virtual bool dropEvent(const DropEvent & ) = 0;
+  };
+
   /// An object representing drop-data from a drag-and-drop operation.
-  class DropEvent : public Patterns::NotCopyable
+  class RADIANT_API DropEvent : public Patterns::NotCopyable
   {
   public:
     /// Creates a drop event that contains a collection of URLs
@@ -40,6 +49,9 @@ namespace Radiant
     bool hasUrls() const;
     /// Return the list of URLs
     QList<QUrl>	urls() const;
+
+    static void addDropListener(DropListener *);
+    static bool deliverDropToListeners(const DropEvent &);
 
   private:
     class D;

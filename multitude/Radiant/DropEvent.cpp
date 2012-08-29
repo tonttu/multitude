@@ -2,6 +2,8 @@
 
 #include <QUrl>
 
+#include <set>
+
 namespace Radiant
 {
 
@@ -44,5 +46,21 @@ namespace Radiant
     return m_d->m_urls;
   }
 
+  static std::set<DropListener *> s_listeners;
+
+  void DropEvent::addDropListener(DropListener * l)
+  {
+    s_listeners.insert(l);
+  }
+
+  bool DropEvent::deliverDropToListeners(const DropEvent & e)
+  {
+    for(auto it = s_listeners.begin(); it != s_listeners.end(); it++) {
+      if((*it)->dropEvent(e))
+        return true;
+    }
+
+    return false;
+  }
 
   }
