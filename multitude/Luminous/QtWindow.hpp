@@ -17,13 +17,13 @@ namespace Luminous
     QtWindow(const MultiHead::Window & window, const QString & windowTitle);
     ~QtWindow();
 
-    virtual void poll();
-    virtual void swapBuffers();
-    virtual void makeCurrent();
+    virtual void poll() OVERRIDE;
+    virtual void swapBuffers() OVERRIDE;
+    virtual void makeCurrent() OVERRIDE;
 
-    virtual void minimize();
-    virtual void maximize();
-    virtual void restore();
+    virtual void minimize() OVERRIDE;
+    virtual void maximize() OVERRIDE;
+    virtual void restore() OVERRIDE;
 
     void showCursor(bool visible) OVERRIDE;
 

@@ -21,8 +21,12 @@
 #include <memory>
 #include <Radiant/Timer.hpp>
 
-#ifdef RADIANT_OSX
-#include <OpenGL/gl3.h>
+#if defined (RADIANT_OSX)
+#  include <OpenGL/gl3.h>
+#elif defined (RADIANT_WINDOWS)
+#  include <GL/wglew.h>
+#elif defined (RADIANT_LINUX)
+#  include <GL/glxew.h>
 #endif
 
 #include <cassert>
@@ -936,6 +940,22 @@ namespace Luminous
     }
 
     return 0;
+  }
+
+  void RenderDriverGL::setVSync(bool vsync)
+  {
+#if defined(RADIANT_LINUX)
+    Display *dpy = glXGetCurrentDisplay();
+    GLXDrawable drawable = glXGetCurrentDrawable();
+    const int interval = (vsync ? 1 : 0);
+
+    glXSwapIntervalEXT(dpy, drawable, interval);
+#elif defined (RADIANT_WINDOWS)
+    const int interval = (vsync ? 1 : 0);
+    wglSwapIntervalEXT(interval);
+#elif
+#  warning "setVSync not implemented on this platform"
+#endif
   }
 }
 

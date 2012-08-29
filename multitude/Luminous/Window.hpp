@@ -67,6 +67,7 @@ namespace Luminous
     virtual void deinit() {}
 
     virtual void minimize() = 0;
+    virtual void maximize() = 0;
     virtual void restore() = 0;
 
     Nimble::Vector2i position() const { return m_pos; }

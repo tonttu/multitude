@@ -2,7 +2,6 @@
 
 #include "QtWindow.hpp"
 #include "WindowEventHook.hpp"
-#include "AdaptiveVSync.hpp"
 
 #include <Radiant/Sleep.hpp>
 #include <Radiant/Thread.hpp>
@@ -202,9 +201,6 @@ namespace Luminous
       if(glGetError() == GL_NO_ERROR) break;
       Radiant::Sleep::sleepMs(10);
     }
-
-    // Disabled as now drivers seem to support this
-    //AdaptiveVSync::enable();
   }
 
   void QtWindow::swapBuffers()

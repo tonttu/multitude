@@ -107,6 +107,8 @@ namespace Luminous
     LUMINOUS_API virtual unsigned long availableGPUMemory() const = 0;
     LUMINOUS_API virtual unsigned long maxGPUMemory() const = 0;
 
+    LUMINOUS_API virtual void setVSync(bool vsync) = 0;
+
     // Driver factory
     LUMINOUS_API static std::shared_ptr<RenderDriver> createInstance(unsigned int threadIndex);
 

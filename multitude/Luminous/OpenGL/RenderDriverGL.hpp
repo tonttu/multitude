@@ -96,6 +96,8 @@ namespace Luminous
 
     LUMINOUS_API unsigned long availableGPUMemory() const OVERRIDE;
     LUMINOUS_API unsigned long maxGPUMemory() const OVERRIDE;
+
+    LUMINOUS_API void setVSync(bool vsync) OVERRIDE;
   private:
     /// @todo hackish, is there a cleaner solution to access the shared_ptr ?
     std::shared_ptr<BufferGL> bufferPtr(const Buffer & buffer);

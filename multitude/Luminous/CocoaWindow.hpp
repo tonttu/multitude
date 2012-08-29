@@ -25,12 +25,13 @@ namespace Luminous
     CocoaWindow(const MultiHead::Window & window);
     ~CocoaWindow();
 
-    virtual void poll();
-    virtual void swapBuffers();
-    virtual void makeCurrent();
+    virtual void poll() OVERRIDE;
+    virtual void swapBuffers() OVERRIDE;
+    virtual void makeCurrent() OVERRIDE;
 
-    virtual void minimize();
-    virtual void restore();
+    virtual void minimize() OVERRIDE;
+    virtual void maximize() OVERRIDE;
+    virtual void restore() OVERRIDE;
 
     virtual void showCursor(bool visible);
 
