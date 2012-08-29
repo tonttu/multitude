@@ -28,9 +28,10 @@ namespace Radiant
 {
   class DropEvent;
 
-  class DropListener
+  class RADIANT_API DropListener
   {
   public:
+    virtual ~DropListener();
 
     virtual bool dropEvent(const Radiant::DropEvent & ) = 0;
   };

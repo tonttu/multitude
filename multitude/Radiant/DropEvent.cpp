@@ -8,6 +8,10 @@
 
 namespace Radiant
 {
+  DropListener::~DropListener()
+  {
+    DropEvent::removeDropListener(this);
+  }
 
   class DropEvent::D
   {
