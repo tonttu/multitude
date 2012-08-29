@@ -32,7 +32,7 @@ namespace Radiant
   {
   public:
 
-    virtual bool dropEvent(const DropEvent & ) = 0;
+    virtual bool dropEvent(const Radiant::DropEvent & ) = 0;
   };
 
   /// An object representing drop-data from a drag-and-drop operation.
