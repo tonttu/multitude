@@ -51,6 +51,7 @@ namespace Radiant
     QList<QUrl>	urls() const;
 
     static void addDropListener(DropListener *);
+    static void removeDropListener(DropListener *);
     static bool deliverDropToListeners(const DropEvent &);
 
   private:
