@@ -18,11 +18,6 @@ SUBDIRS += Resonant
 SUBDIRS += Box2D
 #SUBDIRS += Posh
 
-
-vivid {
-  SUBDIRS += Vivid
-}
-
 #exists(Examples/Examples.pro):SUBDIRS += Examples
 !mobile*{
 #  SUBDIRS += Applications

@@ -123,11 +123,6 @@ unix {
 # Platform specific: GNU Linux
 #
 linux-*{
-  vivid {
-    QMAKE_LIBDIR += $$(FBX_SDK)/lib/gcc4
-    LIB_VIVID = -lVivid -lfbxsdk_20113_1_x64
-  }
-
   LIB_PREFIX = lib
   SHARED_LIB_SUFFIX = so
 
