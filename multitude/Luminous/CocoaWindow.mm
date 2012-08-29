@@ -677,6 +677,11 @@ void CocoaWindow::minimize()
   Radiant::error("CocoaWindow::minimize # unimplemented");
 }
 
+void CocoaWindow::maximize()
+{
+  Radiant::error("CocoaWindow::maximize # unimplemented");
+}
+
 void CocoaWindow::restore()
 {
   Radiant::error("CocoaWindow::restore # unimplemented");

@@ -814,6 +814,7 @@ namespace Valuable
           /// @todo what is the correct receiver ("this" in the callback)?
           /// @todo should we set m_sender or something similar?
           /// @todo queueEvent?
+          /// @todo Instead of HandleScope use Scripting::Lock
           v8::HandleScope handle_scope;
           v8::Local<v8::Value> argv[10];
           argv[0] = v8::String::New(vp.m_to.utf16());

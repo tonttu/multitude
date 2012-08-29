@@ -123,11 +123,6 @@ unix {
 # Platform specific: GNU Linux
 #
 linux-*{
-  vivid {
-    QMAKE_LIBDIR += $$(FBX_SDK)/lib/gcc4
-    LIB_VIVID = -lVivid -lfbxsdk_20113_1_x64
-  }
-
   LIB_PREFIX = lib
   SHARED_LIB_SUFFIX = so
 
@@ -245,7 +240,9 @@ win32 {
     QMAKE_CXXFLAGS += -wd4305
     # Signed/unsigned mismatch
     QMAKE_CXXFLAGS += -wd4018
-
+    # Use the non-standard math defines from math.h
+    QMAKE_CXXFLAGS += -D_USE_MATH_DEFINES
+    
     # These libs have an extra extension for debug builds
     build_pass:CONFIG(debug,debug|release) {
       LIB_BOX2D = -lBox2D$${CORNERSTONE_LIB_SUFFIX}_d

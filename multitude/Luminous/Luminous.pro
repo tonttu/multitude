@@ -1,7 +1,6 @@
 include(../multitude.pri)
 
-HEADERS += OpenGL/ProgramGL.hpp \
-    AdaptiveVSync.hpp
+HEADERS += OpenGL/ProgramGL.hpp
 HEADERS += OpenGL/RenderDriverGL.hpp
 HEADERS += OpenGL/ResourceHandleGL.hpp
 HEADERS += OpenGL/StateGL.hpp
@@ -88,8 +87,7 @@ macx:OBJECTIVE_SOURCES += CocoaWindow.mm
 !mobile*:SOURCES += MipMapGenerator.cpp
 !mobile*:SOURCES += SpriteRenderer.cpp
 
-SOURCES += OpenGL/ProgramGL.cpp \
-    AdaptiveVSync.cpp
+SOURCES += OpenGL/ProgramGL.cpp
 SOURCES += OpenGL/RenderDriverGL.cpp
 SOURCES += OpenGL/TextureGL.cpp
 SOURCES += OpenGL/VertexArrayGL.cpp
