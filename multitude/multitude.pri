@@ -13,9 +13,12 @@ CONFIG += embed_manifest_exe
 !macx:*clang*:QMAKE_CXXFLAGS += -std=c++11 -Qunused-arguments
 macx {
 	QMAKE_MACOSX_DEPLOYMENT_TARGET=10.7
-	QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++
+  QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++ -Wno-self-assign -Wno-overloaded-virtual -Qunused-arguments
         QMAKE_CC = clang -std=c++11 -stdlib=libc++
         QMAKE_LFLAGS += -stdlib=libc++
+
+  QMAKE_CFLAGS_WARN_ON =
+  QMAKE_CXXFLAGS_WARN_ON =
 }
 
 iphone {
@@ -105,14 +108,17 @@ unix {
 
   # Use ccache if available
 
-  system(which ccache > /dev/null 2>&1) {
-    QMAKE_CXX=ccache $$QMAKE_CXX
-    QMAKE_CC=ccache $$QMAKE_CC
-  }
+
   exists(/opt/local/bin/ccache) {
     # For Macports + QtCreator users:
     QMAKE_CXX=/opt/local/bin/ccache $$QMAKE_CXX
     QMAKE_CC=/opt/local/bin/ccache $$QMAKE_CC
+  }
+  else {
+    system(which ccache > /dev/null 2>&1) {
+      QMAKE_CXX=ccache $$QMAKE_CXX
+      QMAKE_CC=ccache $$QMAKE_CC
+    }
   }
 
   exists(/opt/multitouch):INCLUDEPATH+=/opt/multitouch/include
