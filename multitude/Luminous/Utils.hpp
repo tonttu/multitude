@@ -284,14 +284,6 @@ namespace Luminous {
       // return Nimble::Vector4(xyw.x / xyw[2], xyw.y / xyw[2], 0, xyw[2]);
       return Nimble::Vector4(xyw.x, xyw.y, 0, xyw[2]);
     }
-
-    static void glRedYellowGreenRamp(float x0, float y0, float x1, float y1, const Nimble::Matrix3 & m);
-
-    /// Estimate of available GPU memory in kB.
-    static long availableGPUMemory();
-    /// Returns total video memory (in kB)
-    static long maxGPUMemory();
-
   };
 
   /// @endcond

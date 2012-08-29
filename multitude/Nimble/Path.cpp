@@ -14,14 +14,9 @@
  */
 
 #include <Nimble/Path.hpp>
-
 #include <Nimble/Random.hpp>
 
-#ifdef WIN32
-#define _USE_MATH_DEFINES
-#include <math.h>
-#endif
-
+#include <cmath>
 #include <numeric>
 
 namespace {
