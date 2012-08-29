@@ -714,7 +714,7 @@ namespace Luminous
     bool isFilled = style.fillColor().alpha() > 0.f;
     bool stroke = style.strokeWidth() > 0.0f;
 
-    bool needInnerStroke = std::min(a, b) - width/2.0f > 0.0f;
+    bool needInnerStroke = Nimble::Math::Min(a, b) - width/2.0f > 0.0f;
 
     const float step = (toRadians - fromRadians) / (linesegments-1);
 
@@ -758,7 +758,7 @@ namespace Luminous
     for (unsigned int i = 0; i < linesegments; ++i) {
       // Expand path of ellipse e(t) = (a cos(t), b sin(t)) along normals
 
-      Nimble::Vector2f c = Nimble::Vector2(std::cos(angle), std::sin(angle));
+      Nimble::Vector2f c = Nimble::Vector2(Nimble::Math::Cos(angle), Nimble::Math::Sin(angle));
       Nimble::Vector2f normal = Nimble::Vector2(-b*c.x, -a*c.y).normalize(r);
 
       Nimble::Vector2 e(a*c.x, b*c.y);

@@ -116,18 +116,6 @@ namespace Luminous
 
       glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, texture.getMinFilter());
       glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, texture.getMagFilter());
-
-// Swizzle is not supported in OpenGL 3.2 Core
-#if !defined(RADIANT_OSX)
-      GLint swizzles[] = {
-        texture.getSwizzle(0),
-        texture.getSwizzle(1),
-        texture.getSwizzle(2),
-        texture.getSwizzle(3)
-      };
-
-      glTexParameteriv(m_target, GL_TEXTURE_SWIZZLE_RGBA, swizzles);
-#endif
     }
 
     if(!bound && alwaysBind) {
