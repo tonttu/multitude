@@ -18,142 +18,148 @@
 
 #include <Nimble/Frame4.hpp>
 
+#include "AttributeFloat.hpp"
 #include "AttributeVector.hpp"
 
 namespace Valuable
 {
-  class AttributeFrame : public AttributeVector<Nimble::Frame4f>
+  class AttributeFrame : public Attribute
   {
   public:
-    using AttributeVector<Nimble::Frame4f>::operator =;
-    //using Base::value;
-
     AttributeFrame(Node * host, const QString & name,
                    const Nimble::Frame4f & v = Nimble::Frame4f(), bool transit = false)
-      : AttributeVector<Nimble::Frame4f>(host, name, v, transit)
+      : Attribute(host, name, transit)
     {
-      for(int i = 0; i < Attribute::LAYER_COUNT; ++i)
-        for(int j = 0; j < m_factors[i].Elements; ++j)
-          m_factors[i][j] = std::numeric_limits<float>::quiet_NaN();
+      m_values[0] = new AttributeFloat(host, name + "-top", v.top(), transit);
+      m_values[1] = new AttributeFloat(host, name + "-right", v.right(), transit);
+      m_values[2] = new AttributeFloat(host, name + "-bottom", v.bottom(), transit);
+      m_values[3] = new AttributeFloat(host, name + "-left", v.left(), transit);
+
+      for (int i = 0; i < 4; ++i)
+        m_values[i]->addListener(std::bind(&AttributeFrame::emitChange, this));
     }
 
-    virtual ~AttributeFrame() {}
+    virtual QString asString(bool * const ok = 0) const OVERRIDE
+    {
+      if (ok) *ok = true;
+      return QString("%1 %2 %3 %4").arg(*m_values[0]).arg(*m_values[1]).arg(*m_values[2]).arg(*m_values[3]);
+    }
 
-    /// @todo This should be fixed properly, but it's not important and just
-    ///       fills the compiler output with the same warning
+    virtual bool deserialize(const ArchiveElement & element) OVERRIDE
+    {
+      QStringList lst = element.get().split(QRegExp("\\s"), QString::SkipEmptyParts);
+      if (lst.size() == 4) {
+        Nimble::Frame4f frame;
+        for (int i = 0; i < 4; ++i) {
+          bool ok = false;
+          frame[i] = lst[i].toFloat(&ok);
+          if (!ok) return false;
+        }
+        *this = frame;
+        return true;
+      }
+      return false;
+    }
+
     virtual bool set(float v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE
     {
-      const Nimble::Frame4f f(v, v, v, v);
-      if(unit == VU_PERCENTAGE) {
-        m_factors[layer] = f;
-        setValue(f * m_src, layer);
-      } else {
-        for(int j = 0; j < m_factors[layer].Elements; ++j)
-          m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
-        setValue(f, layer);
-      }
+      for (int i = 0; i < 4; ++i)
+        m_values[i]->set(v, layer, unit);
       return true;
     }
 
-    virtual bool set(int v, Layer layer = USER, ValueUnit = VU_UNKNOWN) OVERRIDE
+    virtual bool set(int v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE
     {
-      for(int j = 0; j < m_factors[layer].Elements; ++j)
-        m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
-      setValue(Nimble::Frame4f(v, v, v, v), layer);
+      for (int i = 0; i < 4; ++i)
+        m_values[i]->set(v, layer, unit);
       return true;
     }
 
     virtual bool set(const Nimble::Vector2f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
     {
-      Nimble::Frame4f f(v.x, v.y, v.x, v.y);
-      if(units.size() == 2) {
-        for(int j = 0; j < m_factors[layer].Elements; ++j) {
-          if(units[j % 2] == VU_PERCENTAGE) {
-            m_factors[layer][j] = f[j];
-            f[j] *= m_src;
-          } else {
-            m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
-          }
-        }
-      } else {
-        for(int j = 0; j < m_factors[layer].Elements; ++j)
-          m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
-      }
-      setValue(f, layer);
+      for (int i = 0; i < 4; ++i)
+        m_values[i]->set(v[i % 2], layer, units[i % 2]);
       return true;
     }
 
     virtual bool set(const Nimble::Vector3f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
     {
-      Nimble::Frame4f f(v.x, v.y, v.z, v.x);
-      if(units.size() == 3) {
-        for(int j = 0; j < m_factors[layer].Elements; ++j) {
-          if(units[j % 3] == VU_PERCENTAGE) {
-            m_factors[layer][j] = f[j];
-            f[j] *= m_src;
-          } else {
-            m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
-          }
-        }
-      } else {
-        for(int j = 0; j < m_factors[layer].Elements; ++j)
-          m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
-      }
-      setValue(f, layer);
+      for (int i = 0; i < 4; ++i)
+        m_values[i]->set(v[i % 3], layer, units[i % 3]);
       return true;
     }
 
     virtual bool set(const Nimble::Vector4f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
     {
-      Nimble::Frame4f f(v);
-      if(units.size() == 4) {
-        for(int j = 0; j < m_factors[layer].Elements; ++j) {
-          if(units[j] == VU_PERCENTAGE) {
-            m_factors[layer][j] = f[j];
-            f[j] *= m_src;
-          } else {
-            m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
-          }
-        }
-      } else {
-        for(int j = 0; j < m_factors[layer].Elements; ++j)
-          m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
-      }
-      setValue(f, layer);
+      for (int i = 0; i < 4; ++i)
+        m_values[i]->set(v[i], layer, units[i]);
       return true;
+    }
+
+    virtual const char * type() const OVERRIDE
+    {
+      return "AttributeFrame";
+    }
+
+    virtual bool isChanged() const OVERRIDE
+    {
+      for (int i = 0; i < 4; ++i)
+        if (m_values[i]->isChanged())
+          return true;
+      return false;
+    }
+
+    virtual void clearValue(Layer layout) OVERRIDE
+    {
+      for (int i = 0; i < 4; ++i)
+        m_values[i]->clearValue(layout);
+    }
+
+    virtual void setAsDefaults() OVERRIDE
+    {
+      for (int i = 0; i < 4; ++i)
+        m_values[i]->setAsDefaults();
     }
 
     void setSrc(float src)
     {
-      m_src = src;
-      for(Attribute::Layer l = Attribute::DEFAULT; l < Attribute::LAYER_COUNT;
-          l = Attribute::Layer(l + 1)) {
-        if(!m_valueSet[l]) continue;
-        int count = 0;
-        Nimble::Frame4f f = value(l);
-        for(int j = 0; j < m_factors[l].Elements; ++j) {
-          if(!Nimble::Math::isNAN(m_factors[l][j])) {
-            ++count;
-            f[j] = m_factors[l][j] * src;
-          }
-        }
-        if(count)
-          this->setValue(f, l);
-      }
+      for (int i = 0; i < 4; ++i)
+        m_values[i]->setSrc(src);
     }
 
-    virtual void clearValue(Attribute::Layer layer) OVERRIDE
+    void setSrc(const Nimble::Vector4f & src)
     {
-      for(int j = 0; j < m_factors[layer].Elements; ++j)
-        m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
-      AttributeVector<Nimble::Frame4f>::clearValue(layer);
+      for (int i = 0; i < 4; ++i)
+        m_values[i]->setSrc(src[i]);
+    }
+
+    AttributeFrame & operator=(const AttributeFrame & frame)
+    {
+      for (int i = 0; i < 4; ++i)
+        *m_values[i] = **frame.m_values[i];
+      return *this;
+    }
+
+    AttributeFrame & operator=(const Nimble::Frame4f & frame)
+    {
+      for (int i = 0; i < 4; ++i)
+        *m_values[i] = frame[i];
+      return *this;
+    }
+
+    Nimble::Frame4f operator*() const
+    {
+      return value();
+    }
+
+    Nimble::Frame4f value() const
+    {
+      return Nimble::Frame4f(*m_values[0], *m_values[1], *m_values[2], *m_values[3]);
     }
 
   private:
-    Nimble::Vector4f m_factors[Attribute::LAYER_COUNT];
-    float m_src;
+    std::array<AttributeFloat *, 4> m_values;
   };
-
 }
 
 #endif // VALUABLE_ATTRIBUTE_FRAME_HPP
