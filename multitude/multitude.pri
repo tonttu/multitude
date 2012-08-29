@@ -245,7 +245,9 @@ win32 {
     QMAKE_CXXFLAGS += -wd4305
     # Signed/unsigned mismatch
     QMAKE_CXXFLAGS += -wd4018
-
+    # Use the non-standard math defines from math.h
+    QMAKE_CXXFLAGS += _USE_MATH_DEFINES
+    
     # These libs have an extra extension for debug builds
     build_pass:CONFIG(debug,debug|release) {
       LIB_BOX2D = -lBox2D$${CORNERSTONE_LIB_SUFFIX}_d
