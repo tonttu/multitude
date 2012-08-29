@@ -99,8 +99,9 @@ namespace Luminous
     {
       Radiant::info("dropEvent");
 
-      if(m_window.eventHook())
+      if(m_window.eventHook()) {
         m_window.eventHook()->handleDropEvent(Radiant::DropEvent(*de));
+      }
     }
 
     virtual void dragEnterEvent(QDragEnterEvent *e) OVERRIDE

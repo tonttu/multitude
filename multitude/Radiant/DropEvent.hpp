@@ -26,14 +26,19 @@
 
 namespace Radiant
 {
-
+  /// An object representing drop-data from a drag-and-drop operation.
   class DropEvent : public Patterns::NotCopyable
   {
   public:
+    /// Creates a drop event that contains a collection of URLs
     DropEvent(const QList<QUrl> & urls);
+    DropEvent(const QDropEvent & de);
+    /// Deletes the drop event
     ~DropEvent();
 
+    /// Returns true if the event contains URLs
     bool hasUrls() const;
+    /// Return the list of URLs
     QList<QUrl>	urls() const;
 
   private:

@@ -21,6 +21,14 @@ namespace Radiant
     m_d->m_urls = urls;
   }
 
+  DropEvent::DropEvent(const QDropEvent & de)
+    : m_d(new D())
+  {
+    if(de.mimeData()->hasUrls()) {
+      m_d->m_urls = de.mimeData()->urls();
+    }
+  }
+
   DropEvent::~DropEvent()
   {
     delete m_d;
