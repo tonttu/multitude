@@ -4,11 +4,12 @@
 #include "WindowEventHook.hpp"
 #include "AdaptiveVSync.hpp"
 
+#include <Radiant/DropEvent.hpp>
+#include <Radiant/KeyEvent.hpp>
 #include <Radiant/Sleep.hpp>
 #include <Radiant/Thread.hpp>
 #include <Radiant/Trace.hpp>
 #include <Radiant/TimeStamp.hpp>
-#include <Radiant/KeyEvent.hpp>
 
 #include <QApplication>
 #include <QGLWidget>
@@ -30,6 +31,8 @@ namespace Luminous
 
       // Make the widget receive mouse move events even if no buttons are pressed
       setMouseTracking(true);
+      // Allow drop-events, so that people can drop files on the widget
+      setAcceptDrops(true);
     }
 
     virtual void showCursor(bool visible)
@@ -92,6 +95,29 @@ namespace Luminous
       if(m_window.eventHook())
         m_window.eventHook()->handleKeyboardEvent(Radiant::KeyEvent(*e));
     }
+
+    virtual void dropEvent(QDropEvent *de) OVERRIDE
+    {
+      Radiant::info("dropEvent");
+
+      if(m_window.eventHook())
+        m_window.eventHook()->handleDropEvent(Radiant::DropEvent(*de));
+    }
+
+    virtual void dragEnterEvent(QDragEnterEvent *e) OVERRIDE
+    {
+      Radiant::info("dragEnterEvent");
+
+      // We accept all kinds of drops
+      e->acceptProposedAction();
+    }
+
+    /*
+    void dragMoveEvent(QDragMoveEvent *de) OVERRIDE
+    {
+      de->accept();
+    }
+    */
 
     QtWindow & m_window;
   };
