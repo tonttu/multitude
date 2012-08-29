@@ -1,7 +1,8 @@
 
 include(../multitude.pri)
 
-HEADERS += Flags.hpp
+HEADERS += Flags.hpp \
+    DropEvent.hpp
 HEADERS += Buffer.hpp
 HEADERS += Mime.hpp
 HEADERS += Timer.hpp
@@ -76,7 +77,8 @@ HEADERS += VideoCameraCMU.hpp
 HEADERS += VideoCamera1394.hpp
 HEADERS += VideoCameraPTGrey.hpp
 
-SOURCES += Mime.cpp
+SOURCES += Mime.cpp \
+    DropEvent.cpp
 SOURCES += CameraDriver.cpp
 SOURCES += SocketUtilPosix.cpp
 SOURCES += ThreadPoolQt.cpp
