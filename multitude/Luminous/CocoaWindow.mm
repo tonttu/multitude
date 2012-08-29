@@ -1,9 +1,12 @@
+#include <Radiant/DropEvent.hpp>
 #include "Radiant/KeyEvent.hpp"
 
 #if defined(RADIANT_OSX_LION) || defined(RADIANT_OSX_MOUNTAIN_LION)
 
 #import <Cocoa/Cocoa.h>
 #import "CocoaWindow.hpp"
+
+#include <QUrl>
 
 @interface CocoaView : NSOpenGLView
 {
@@ -43,6 +46,10 @@ m_window:(Luminous::CocoaWindow *)parent m_antiAliasing:(int)antiAliasing;
 
 - (void) hideCursor:(NSTimer *)theTimer;
 
+- (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender;
+- (BOOL)performDragOperation:(id <NSDraggingInfo>)sender;
+
+
 @end
 
 @implementation CocoaView
@@ -57,6 +64,9 @@ m_window = parent;
 m_antiAliasing = antiAliasing;
 depthBits = numDepthBits;
 runningFullScreen = runFullScreen;
+
+[self registerForDraggedTypes:[NSArray arrayWithObjects:
+            NSColorPboardType, NSFilenamesPboardType, nil]];
 
 pixelFormat = [self createPixelFormat:frame];
 
@@ -425,6 +435,55 @@ return self;
  [NSCursor setHiddenUntilMouseMoves:YES];
  timer = nil;
 }
+
+- (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender {
+    NSPasteboard *pboard;
+    NSDragOperation sourceDragMask;
+
+    sourceDragMask = [sender draggingSourceOperationMask];
+    pboard = [sender draggingPasteboard];
+
+    if ( [[pboard types] containsObject:NSFilenamesPboardType] ) {
+        if (sourceDragMask & NSDragOperationLink) {
+            return NSDragOperationLink;
+        } else if (sourceDragMask & NSDragOperationCopy) {
+            return NSDragOperationCopy;
+        }
+    }
+    return NSDragOperationNone;
+}
+
+- (BOOL)performDragOperation:(id <NSDraggingInfo>)sender {
+    NSPasteboard *pboard;
+    NSDragOperation sourceDragMask;
+
+    sourceDragMask = [sender draggingSourceOperationMask];
+    pboard = [sender draggingPasteboard];
+    Luminous::WindowEventHook * hook = m_window->eventHook();
+
+    if ( [[pboard types] containsObject:NSFilenamesPboardType] ) {
+        NSArray *files = [pboard propertyListForType:NSFilenamesPboardType];
+
+        QList<QUrl> urlList;
+
+        for(NSString * myStr in files) {
+          urlList.push_back(QUrl(QString::fromUtf8([myStr UTF8String])));
+        }
+
+        hook->handleDropEvent(Radiant::DropEvent(urlList));
+
+        // Depending on the dragging source and modifier keys,
+        // the file data may be copied or linked
+        /*if (sourceDragMask & NSDragOperationLink) {
+            [self addLinkToFiles:files];
+        } else {
+            [self addDataFromFiles:files];
+        }
+        */
+    }
+    return YES;
+}
+
 @end
 
 @interface CocoaWindow : NSWindow
