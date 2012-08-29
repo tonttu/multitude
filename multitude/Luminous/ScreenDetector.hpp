@@ -50,8 +50,8 @@ namespace Luminous
     QString displayGroup() const {return gpu()+"-"+QString("%1").arg(logicalScreen());}
     bool isMTDevice()
     {
-      //TODO check if name matches the name of  any MT device
-      return true;
+      //TODO find a better way to do this
+      return name()=="MultiTouchVM1";
     }
 
   private:

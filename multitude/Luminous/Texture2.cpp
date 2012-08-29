@@ -25,10 +25,6 @@ namespace Luminous
       , m_minFilter(Filter_Linear)
       , m_magFilter(Filter_Linear)
     {
-      m_swizzleTargets[0] = Target_Red;
-      m_swizzleTargets[1] = Target_Green;
-      m_swizzleTargets[2] = Target_Blue;
-      m_swizzleTargets[3] = Target_Alpha;
     }
 
     uint8_t dimensions;
@@ -39,8 +35,6 @@ namespace Luminous
     int internalFormat;
     const void * data;
     bool translucent;
-
-    SwizzleTarget m_swizzleTargets[4];
 
     unsigned int lineSizePixels;
 
@@ -234,19 +228,6 @@ namespace Luminous
     /// This is only used for batch rendering sorting optimization, no need to invalidate()
     m_d->translucent = translucency;
   }
-
-  void Texture::setSwizzle(unsigned channel, SwizzleTarget target)
-  {
-    m_d->m_swizzleTargets[channel] = target;
-    invalidate();
-  }
-
-  Texture::SwizzleTarget Texture::getSwizzle(unsigned channel) const
-  {
-    assert(channel <= 3);
-    return m_d->m_swizzleTargets[channel];
-  }
-
 
   Texture::Filter Texture::getMinFilter() const
   {

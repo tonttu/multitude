@@ -221,6 +221,11 @@ namespace Valuable
     const QString absoluteFilePath = fi.absoluteFilePath();
     const QString absolutePath = fi.absolutePath();
 
+    // Avoid adding the same file multiple times to suppress warnings from
+    // QFileSystemWatcher
+    if(files().contains(absoluteFilePath))
+      return;
+
     // Initialize file cache if needed
     if(!m_d->m_directoryFiles.contains(absolutePath)) {
       auto & cache = m_d->m_directoryFiles[absolutePath];
