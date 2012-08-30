@@ -18,12 +18,14 @@ namespace
   std::map<QString, std::unique_ptr<Luminous::FontCache>> s_fontCache;
   Radiant::Mutex s_fontCacheMutex;
 
-  Luminous::TextureAtlasGroup<Luminous::FontCache::Glyph> s_atlas(Luminous::PixelFormat::redUByte());
+  static Luminous::PixelFormat s_pixelFormat(Luminous::PixelFormat::LAYOUT_RED,
+                                             Luminous::PixelFormat::TYPE_USHORT);
+  Luminous::TextureAtlasGroup<Luminous::FontCache::Glyph> s_atlas(s_pixelFormat);
   Radiant::Mutex s_atlasMutex;
 
-  const int s_distanceFieldPixelSize = 160;
-  const int s_maxHiresSize = 2048;
-  const float s_padding = 1/16.0f;
+  const int s_distanceFieldPixelSize = 128;
+  const float s_padding = 60;
+  const int s_maxHiresSize = 3072;
 
   // space character etc
   static Luminous::FontCache::Glyph s_emptyGlyph;
@@ -55,12 +57,91 @@ namespace
     const QString path = cacheBasePath() + "/" + fontKey.replace('/', '_');
     QDir().mkdir(path);
 
-    return QString("%1/%2.tga").arg(path).arg(glyphIndex);
+    return QString("%1/%2.glyph").arg(path).arg(glyphIndex);
   }
 
   QString indexFileName()
   {
     return cacheBasePath() + "/index.ini";
+  }
+
+  /// for now, we use our own image format hack, since Luminous::Image doesn't support
+  /// saving or loading 16 bit grayscale images.
+  bool saveImage(const Luminous::Image & image, const QString & filename)
+  {
+    Radiant::BinaryData bd;
+    bd.write("cornerstone img");
+    bd.writeInt32(0); // version
+    bd.writeInt32(1); // compression
+    bd.writeInt32(image.width());
+    bd.writeInt32(image.height());
+    bd.writeInt32(image.pixelFormat().layout());
+    bd.writeInt32(image.pixelFormat().type());
+
+    QByteArray data = qCompress(image.data(), image.lineSize() * image.height());
+    bd.writeInt32(data.size());
+
+    QFile file(filename);
+    if (file.open(QFile::WriteOnly)) {
+      const int offset = bd.pos();
+      file.write((const char*)&offset, sizeof(offset));
+      qint64 total = file.write(bd.data(), offset);
+      total += file.write(data);
+      return total == offset + data.size();
+    } else {
+      Radiant::error("saveImage # Failed to open '%s': %s", filename.toUtf8().data(),
+                     file.errorString().toUtf8().data());
+      return false;
+    }
+  }
+
+  bool loadImage(Luminous::Image & image, const QString & filename)
+  {
+    QFile file(filename);
+    if (file.open(QFile::ReadOnly)) {
+      Radiant::BinaryData bd;
+      int offset = 0;
+      file.read((char*)&offset, sizeof(offset));
+
+      QByteArray buffer = file.read(offset);
+      bd.linkTo(buffer.data(), buffer.size());
+      bd.setTotal(buffer.size());
+
+      QString hdr;
+      if (bd.readString(hdr) && hdr != "cornerstone img") {
+        Radiant::warning("loadImage # header error: '%s'", hdr.toUtf8().data());
+        return false;
+      }
+
+      int version = bd.readInt32();
+      (void)version;
+      int compression = bd.readInt32();
+      int width = bd.readInt32();
+      int height = bd.readInt32();
+      int layout = bd.readInt32();
+      int type = bd.readInt32();
+      int dataSize = bd.readInt32();
+
+      image.allocate(width, height, Luminous::PixelFormat(Luminous::PixelFormat::ChannelLayout(layout),
+                                                          Luminous::PixelFormat::ChannelType(type)));
+      const int size = image.lineSize() * image.height();
+
+      if (compression == 0) {
+        return size == dataSize && size == file.read((char*)image.data(), size);
+      } else {
+        QByteArray data = qUncompress(file.read(dataSize));
+        if (data.size() != size) {
+          Radiant::warning("loadImage # uncompressed data size: %d (should be %d)", data.size(), size);
+          return false;
+        }
+        memcpy(image.data(), data.data(), size);
+        return true;
+      }
+    } else {
+      Radiant::error("loadImage # Failed to open '%s': %s", filename.toUtf8().data(),
+                     file.errorString().toUtf8().data());
+      return false;
+    }
   }
 }
 
@@ -213,32 +294,29 @@ namespace Luminous
     const QRectF br = path.boundingRect();
 
     const float glyphSize = std::max(br.width(), br.height());
-    const float distanceFieldSize = std::min<float>(s_distanceFieldPixelSize, glyphSize * (1.0f + s_padding * 2.0f));
-    const float hiresSize = std::min<float>(s_maxHiresSize, distanceFieldSize / s_distanceFieldPixelSize * s_maxHiresSize);
-    const float hiresPadding = s_padding * hiresSize;
-    const float dfPadding = s_padding * distanceFieldSize;
+    const float distanceFieldSize = glyphSize + 2.0 * s_padding;
+    const float hiresSize = Nimble::Math::Min<float>(s_maxHiresSize, s_maxHiresSize * glyphSize / s_distanceFieldPixelSize);
+    const float hiresPadding = hiresSize * s_padding / distanceFieldSize;
+    const float hiresFactor = hiresSize / distanceFieldSize;
 
-    const float hiresContentSize = (1.0 - s_padding * 2.0) * hiresSize;
-    const float dfContentSize = (1.0 - s_padding * 2.0) * distanceFieldSize;
+    const float hiresContentSize = hiresSize - hiresPadding * 2.0f;
+    const float hiresContentScale = hiresContentSize / glyphSize;
 
-    const float hiresScale = hiresContentSize / glyphSize;
-    const float dfScale = dfContentSize / glyphSize;
+    const Nimble::Vector2f translate(hiresPadding - br.left() * hiresContentScale,
+                                     hiresPadding - br.top() * hiresContentScale);
 
-    const Nimble::Vector2f translate(hiresPadding - br.left() * hiresScale,
-                                     hiresPadding - br.top() * hiresScale);
+    const Nimble::Vector2i sdfSize(Nimble::Math::Round(br.width() + 2.0f * s_padding),
+                                   Nimble::Math::Round(br.height() + 2.0f * s_padding));
 
-    const Nimble::Vector2i sdfSize(Nimble::Math::Round(br.width() * dfScale + 2.0f * dfPadding),
-                                   Nimble::Math::Round(br.height() * dfScale + 2.0f * dfPadding));
-
-    const Nimble::Vector2i srcSize(Nimble::Math::Round(br.width() * hiresScale + 2.0f * hiresPadding),
-                                   Nimble::Math::Round(br.height() * hiresScale + 2.0f * hiresPadding));
+    const Nimble::Vector2i srcSize(Nimble::Math::Round((br.width() + 2.0f * s_padding) * hiresFactor),
+                                   Nimble::Math::Round((br.height() + 2.0f * s_padding) * hiresFactor));
 
     // Scale & transform the path to fill image of the size (hiresSize x hiresSize)
     // while keeping the correct aspect ratio and having hiresPadding on every edge.
     // Also move the path to origin
     for (int i = 0; i < path.elementCount(); ++i) {
       const QPainterPath::Element & e = path.elementAt(i);
-      path.setElementPositionAt(i, e.x * hiresScale + translate.x, e.y * hiresScale + translate.y);
+      path.setElementPositionAt(i, e.x * hiresContentScale + translate.x, e.y * hiresContentScale + translate.y);
     }
 
     QImage & img = *static_cast<QImage*>(painter.device());
@@ -253,19 +331,19 @@ namespace Luminous
     }
 
     Image sdf;
-    sdf.allocate(sdfSize.x, sdfSize.y, Luminous::PixelFormat::redUByte());
-    DistanceFieldGenerator::generate(m_src, srcSize, sdf, hiresSize / 12);
+    sdf.allocate(sdfSize.x, sdfSize.y, s_pixelFormat);
+    DistanceFieldGenerator::generate(m_src, srcSize, sdf, hiresPadding);
 
     FontCache::Glyph * glyph = makeGlyph(sdf);
-    glyph->setSize(Nimble::Vector2f(2.0f * s_padding * glyphSize + br.width(),
-                                    2.0f * s_padding * glyphSize + br.height()));
-    glyph->setLocation(Nimble::Vector2f(br.left() - s_padding * glyphSize,
-                                        br.top() - s_padding * glyphSize));
+    glyph->setSize(Nimble::Vector2f(2.0f * s_padding + br.width(),
+                                    2.0f * s_padding + br.height()));
+    glyph->setLocation(Nimble::Vector2f(br.left() - s_padding,
+                                        br.top() - s_padding));
 
 
     const QString file = cacheFileName(m_cache.m_rawFontKey, glyphIndex);
 
-    if (sdf.write(file.toUtf8().data())) {
+    if (saveImage(sdf, file)) {
       FontCache::D::FileCacheItem item(file, QRectF(glyph->location().x, glyph->location().y,
                                      glyph->size().x, glyph->size().y));
       m_cache.m_fileCache[glyphIndex] = item;
@@ -280,24 +358,6 @@ namespace Luminous
       settings.endGroup();
     }
 
-    /*
-    Radiant::info("%f %f, size %f %f", br.left(), br.top(), br.width(), br.height());
-    Radiant::info("%f %f, size %f %f", path.boundingRect().left(), path.boundingRect().top(), path.boundingRect().width(), path.boundingRect().height());
-    Radiant::info("hiresScale %f", hiresScale);
-    Radiant::info("hiresPadding %f", hiresPadding);
-    Radiant::info("hiresContentSize %f", hiresContentSize);
-    Radiant::info("glyphSize %f", glyphSize);
-
-    Radiant::info("dfScale %f", dfScale);
-    Radiant::info("dfPadding %f", dfPadding);
-    Radiant::info("dfContentSize %f", dfContentSize);
-
-    Radiant::info("srcSize %d %d", srcSize.x, srcSize.y);
-    Radiant::info("sdfSize %d %d", sdfSize.x, sdfSize.y);
-    Radiant::info("glyph->m_size %f %f", glyph->m_size.x, glyph->m_size.y);
-    Radiant::info("left top %f %f", left, top);
-    */
-
     return glyph;
   }
 
@@ -310,7 +370,7 @@ namespace Luminous
         return &s_emptyGlyph;
 
       Luminous::Image img;
-      if (img.read(item.src.toUtf8().data())) {
+      if (loadImage(img, item.src)) {
         FontCache::Glyph * glyph = makeGlyph(img);
         glyph->setLocation(Nimble::Vector2f(item.rect.left(), item.rect.top()));
         glyph->setSize(Nimble::Vector2f(item.rect.width(), item.rect.height()));
@@ -332,13 +392,14 @@ namespace Luminous
     for (int y = 0; y < img.height(); ++y) {
       const unsigned char * from = img.line(y);
       if (glyph->m_node->m_rotated) {
+        const float toFloat = 1.0f / ((1l << (target.pixelFormat().bytesPerPixel() * 8)) - 1);
         for (int x = 0; x < img.width(); ++x) {
           target.setPixel(glyph->m_node->m_location.x+y, glyph->m_node->m_location.y+x,
-                          Nimble::Vector4f(from[x] / 255.0f, 0, 0, 0));
+                          Nimble::Vector4f(from[x] * toFloat, 0, 0, 0));
         }
       } else {
-        unsigned char * to = target.line(glyph->m_node->m_location.y+y) + glyph->m_node->m_location.x;
-        std::copy(from, from + img.width(), to);
+        unsigned char * to = target.line(glyph->m_node->m_location.y+y) + glyph->m_node->m_location.x * target.pixelFormat().bytesPerPixel();
+        std::copy(from, from + img.width() * target.pixelFormat().bytesPerPixel(), to);
       }
     }
 

@@ -1214,8 +1214,20 @@ namespace Luminous
     Nimble::Vector2f renderLocation = layout.renderLocation() - viewRect.low();
 
     const Nimble::Matrix4f model = transform4();
+
+    FontUniformBlock uniform;
+    uniform.textColor = style.fillColor();
+    uniform.borderColor = style.strokeColor();
+    uniform.outline.make(0.5f, 0.5f);
     // randomly generated value that looks nice
-    const float invscale = 4.2f / Nimble::Vector2f(model[0][1], model[1][1]).length();
+    uniform.invscale = 1.0f / Nimble::Vector2f(model[0][1], model[1][1]).length();
+    uniform.split = 0.0f;
+    if (style.strokeWidth() > 0.0f) {
+      /// @todo how to calculate this?
+      float width = Nimble::Math::Min(1.0f, style.strokeWidth() / 60.0f);
+      uniform.split = 0.5f + width * 0.5f;
+      uniform.outline.make(0.5f - width * 0.5f, 0.5f - width * 0.5f);
+    }
 
     for (int g = 0; g < layout.groupCount(); ++g) {
       textures["tex"] = layout.texture(g);
@@ -1227,6 +1239,9 @@ namespace Luminous
 
         auto b = render<FontVertex, FontUniformBlock>(
               true, PrimitiveType_TriangleStrip, count*6 - 2, count*4, 1, fontShader(), textures);
+        uniform.projMatrix = b.uniform->projMatrix;
+        *b.uniform = uniform;
+
         Nimble::Vector3f offset(renderLocation.x + location.x, renderLocation.y + location.y, b.depth);
         if (style.textOverflow() == OverflowVisible) {
           b.uniform->clip = layout.boundingBox();
@@ -1234,15 +1249,14 @@ namespace Luminous
           b.uniform->clip = viewRect;
           b.uniform->clip.move(-layout.renderLocation());
         }
-        b.uniform->color = style.fillColor();
-        b.uniform->invscale = invscale;
-        b.command->blendMode = style.blendMode();
-        b.command->depthMode = d;
-        b.command->stencilMode = style.stencilMode();
 
         m.setTranslation(offset);
         b.uniform->modelMatrix = model * m;
         b.uniform->modelMatrix.transpose();
+
+        b.command->blendMode = style.blendMode();
+        b.command->depthMode = d;
+        b.command->stencilMode = style.stencilMode();
 
         int index = 0;
 

@@ -61,10 +61,24 @@ namespace Luminous
     Nimble::Vector4f color;
   };
 
-  struct FontUniformBlock : public BasicUniformBlock
+  struct FontUniformBlock
   {
+    Nimble::Matrix4f projMatrix;
+    Nimble::Matrix4f modelMatrix;
+    Nimble::Vector4f textColor;
+    Nimble::Vector4f borderColor;
     Nimble::Rectf clip;
+    /// Start and stop locations of edge fading, default is (0.5, 0.5), that means
+    /// sharp edge at the correct glyph border. (0.0, 0.5) would generate a halo
+    /// or glow effect, (0.35, 0.35) would make really "bold" text.
+    Nimble::Vector2f outline;
     float invscale;
+    /// Location where border color ends and text color starts, default = 0.0,
+    /// meaning border color isn't used at all. Setting this to 0.5 and outline
+    /// to (0.4, 0.4) would create a sharp border from 0.4..0.5.
+    /// split = 0.5, outline = (0.3, 0.5) would create a halo from 0.3..0.5 with
+    /// border color, and sharp edge at 0.5 between border and text color
+    float split;
   };
 }
 

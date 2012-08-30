@@ -64,6 +64,7 @@ namespace Luminous
 
     FontCache & cache = FontCache::acquire(font);
     const float scale = float(font.pixelSize()) / cache.pixelSize();
+    const float invsize = 1.0f / float(font.pixelSize());
 
     for (int i = 0; i < glyphs.size(); ++i) {
       const quint32 glyph = glyphs[i];
@@ -86,7 +87,7 @@ namespace Luminous
         item.vertices[3].location.make(location.x+size.x, location.y+size.y, 0);
         for (int j = 0; j < 4; ++j) {
           item.vertices[j].texCoord = glyphCache->uv()[j];
-          item.vertices[j].invsize = 1.0f / size.y;
+          item.vertices[j].invsize = invsize;
         }
 
         g.items.push_back(item);
