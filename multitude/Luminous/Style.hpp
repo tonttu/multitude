@@ -144,7 +144,7 @@ namespace Luminous
   public:
     TextStyle()
       : m_fontRenderWidth(0.5f)
-      , m_glowWidth(0)
+      , m_glow(0)
       , m_glowColor(1.0f, 1.0f, 1.0f, 1.0f)
       , m_dropShadowBlur(0.0f)
       , m_dropShadowColor(0.0f, 0.0f, 0.0f, 0.0f)
@@ -162,14 +162,32 @@ namespace Luminous
     Overflow textOverflow() const { return m_textOverflow; }
     void setTextOverflow(Overflow overflow) { m_textOverflow = overflow; }
 
-
-    /// @todo accessors
-  //private:
     /// from 0 to 1, defaults to 0.5
+    float fontRenderWidth() const { return m_fontRenderWidth; }
+    void setFontRenderWidth(float width) { m_fontRenderWidth = width; }
+
+    /// from 0 to 1
+    float glow() const { return m_glow; }
+    void setGlow(float glow) { m_glow = glow; }
+
+    const Radiant::Color & glowColor() const { return m_glowColor; }
+    void setGlowColor(const Radiant::Color & glowColor) { m_glowColor = glowColor; }
+
+    /// from 0 to 1
+    float dropShadowBlur() const { return m_dropShadowBlur; }
+    void setDropShadowBlur(float blur) { m_dropShadowBlur = blur; }
+
+    const Radiant::Color & dropShadowColor() const { return m_dropShadowColor; }
+    void setDropShadowColor(const Radiant::Color & dropShadowColor) { m_dropShadowColor = dropShadowColor; }
+
+    const Nimble::Vector2f & dropShadowOffset() const { return m_dropShadowOffset; }
+    void setDropShadowOffset(const Nimble::Vector2f & offset) { m_dropShadowOffset = offset; }
+
+  private:
     float m_fontRenderWidth;
 
     /// from 0 to 1
-    float m_glowWidth;
+    float m_glow;
     Radiant::Color m_glowColor;
 
     /// from 0 to 1

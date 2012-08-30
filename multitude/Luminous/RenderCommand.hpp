@@ -65,8 +65,8 @@ namespace Luminous
   {
     Nimble::Matrix4f projMatrix;
     Nimble::Matrix4f modelMatrix;
-    Nimble::Vector4f textColor;
-    Nimble::Vector4f borderColor;
+    Nimble::Vector4f colorIn;
+    Nimble::Vector4f colorOut;
     Nimble::Rectf clip;
     /// Start and stop locations of edge fading, default is (0.5, 0.5), that means
     /// sharp edge at the correct glyph border. (0.0, 0.5) would generate a halo
