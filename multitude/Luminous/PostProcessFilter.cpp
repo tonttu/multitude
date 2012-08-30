@@ -9,10 +9,6 @@ namespace Luminous
   {
     m_renderTarget.attach(GL_COLOR_ATTACHMENT0, m_framebuffer);
     m_renderTarget.attach(GL_DEPTH_ATTACHMENT, m_depthBuffer);
-
-    static int init = 0;
-    init++;
-    Radiant::info("Init: %d", init);
   }
 
   PostProcessFilter::~PostProcessFilter()
@@ -22,7 +18,6 @@ namespace Luminous
   void PostProcessFilter::initialize(RenderContext & rc)
   {
     m_renderTarget.setSize(Nimble::Size(rc.contextSize().x, rc.contextSize().y));
-    Radiant::info("Initializing to size: %f, %f", rc.contextSize().x, rc.contextSize().y);
   }
 
   Luminous::Style PostProcessFilter::style() const
@@ -35,15 +30,14 @@ namespace Luminous
     return style;
   }
 
-  void PostProcessFilter::begin(RenderContext & rc)
+  void PostProcessFilter::begin(Luminous::RenderContext & rc)
   {
     rc.clear(Luminous::ClearMask_ColorDepth);
   }
 
-  bool PostProcessFilter::end(RenderContext & rc)
+  void PostProcessFilter::apply(RenderContext & rc)
   {
     const Luminous::Style & s = style();
-
     const Nimble::Vector2f size = rc.contextSize();
     const Luminous::Program & program = s.fillProgram() ? *s.fillProgram() : rc.texShader();
 
@@ -58,7 +52,5 @@ namespace Luminous
     b.vertex[2].texCoord.make(0, 1);
     b.vertex[3].location.make(size.x, size.y, 0);
     b.vertex[3].texCoord.make(1, 1);
-
-    return true;
   }
 }

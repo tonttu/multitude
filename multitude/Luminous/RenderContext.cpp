@@ -365,7 +365,7 @@ namespace Luminous
       glDrawBuffer(GL_BACK);
     }
 
-    void copyPostProcessFilters(RenderContext & rc, const PostProcess::InitList & chain)
+    void createPostProcessFilters(RenderContext & rc, const PostProcess::InitList & chain)
     {
       for(PostProcess::InitList::const_iterator it = chain.begin(); it != chain.end(); ++it) {
 
@@ -375,7 +375,7 @@ namespace Luminous
           continue;
 
         PostProcessFilterPtr ptr = it->func();
-        ptr->order = id;
+        ptr->setOrder(id);
 
         // By default resizes new render targets to current context size
         ptr->initialize(rc);
@@ -1536,7 +1536,7 @@ namespace Luminous
   void RenderContext::beginFrame()
   {
     if(m_data->m_postProcessInitList)
-      m_data->copyPostProcessFilters(*this, *m_data->m_postProcessInitList);
+      m_data->createPostProcessFilters(*this, *m_data->m_postProcessInitList);
 
     pushClipStack();
 
@@ -1603,12 +1603,6 @@ namespace Luminous
     m_data->m_postProcessInitList = &filters;
   }
 
-  void RenderContext::beginPostProcess()
-  {
-    Nimble::Recti viewport(Nimble::Vector2i(0, 0), contextSize().cast<int>());
-    pushViewport(viewport);
-  }
-
   void RenderContext::postProcess()
   {
     const PostProcessChain::FilterChain & chain = m_data->m_postProcessChain.filters();
@@ -1616,6 +1610,10 @@ namespace Luminous
 
     if(numFilters == 0)
       return;
+
+    // Set viewport to context size
+    const Nimble::Recti viewport(Nimble::Vector2i(0, 0), contextSize().cast<int>());
+    pushViewport(viewport);
 
     if(numFilters > 100) {
       Radiant::warning("Using over 100 post processing filters.");
@@ -1655,13 +1653,11 @@ namespace Luminous
 
         ppf->begin(*this);
         // Apply/render current filter
-        ppf->end(*this);
+        ppf->apply(*this);
       }
     }
-  }
 
-  void RenderContext::endPostProcess()
-  {
+    // Remember to restore the viewport
     popViewport();
   }
 

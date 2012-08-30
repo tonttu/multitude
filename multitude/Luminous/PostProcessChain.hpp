@@ -24,7 +24,6 @@ namespace Luminous
     void add(PostProcessFilterPtr filter);
 
     /// Inserts a filter at the given index
-    /// @return true if success, false otherwise
     void insert(PostProcessFilterPtr filter, int index);
 
     bool contains(int index) const;

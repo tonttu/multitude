@@ -178,11 +178,10 @@ namespace Luminous
     /// called multiple times per frame depending on configuration.
     void endArea();
 
+    /// @cond
     void initPostProcess(const PostProcess::InitList & filters);
-
-    void beginPostProcess();
     void postProcess();
-    void endPostProcess();
+    /// @endcond
 
     const Nimble::Matrix4 & viewTransform() const;
     void pushViewTransform(const Nimble::Matrix4 & m);
