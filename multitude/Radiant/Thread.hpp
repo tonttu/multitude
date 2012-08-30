@@ -168,7 +168,7 @@ namespace Radiant {
       return lst;
     }
 
-    /// Compare if two TLS variables are equal
+    /// Assign the underlying value
     TLS<T> & operator=(const T& t)
     {
       get() = t;
