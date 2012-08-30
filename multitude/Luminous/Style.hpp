@@ -146,6 +146,7 @@ namespace Luminous
       : m_fontEdgeOffset(0.0f)
       , m_glow(0)
       , m_glowColor(1.0f, 1.0f, 1.0f, 1.0f)
+      , m_textSharpness(1.0f)
       , m_dropShadowBlur(0.0f)
       , m_dropShadowColor(0.0f, 0.0f, 0.0f, 0.0f)
       , m_dropShadowOffset(0, 0)
@@ -172,6 +173,9 @@ namespace Luminous
     const Radiant::Color & glowColor() const { return m_glowColor; }
     void setGlowColor(const Radiant::Color & glowColor) { m_glowColor = glowColor; }
 
+    float textSharpness() const { return m_textSharpness; }
+    void setTextSharpness(float textSharpness) { m_textSharpness = textSharpness; }
+
     /// from 0 to 1
     float dropShadowBlur() const { return m_dropShadowBlur; }
     void setDropShadowBlur(float blur) { m_dropShadowBlur = blur; }
@@ -188,6 +192,8 @@ namespace Luminous
     /// from 0 to 1
     float m_glow;
     Radiant::Color m_glowColor;
+
+    float m_textSharpness;
 
     /// from 0 to 1
     float m_dropShadowBlur;

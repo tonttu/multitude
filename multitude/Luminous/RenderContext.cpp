@@ -1205,8 +1205,7 @@ namespace Luminous
     const Nimble::Matrix4f model = transform4();
 
     FontUniformBlock uniform;
-    // randomly generated value that looks nice
-    uniform.invscale = 1.0f / Nimble::Vector2f(model[0][1], model[1][1]).length();
+    uniform.invscale = 1.0f / Nimble::Vector2f(model[0][1], model[1][1]).length() / style.textSharpness();
     uniform.split = 0.0f;
 
     const float edge = 0.5f + style.fontEdgeOffset();
