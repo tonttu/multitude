@@ -1200,19 +1200,8 @@ namespace Luminous
   }
 
   void RenderContext::drawText(const TextLayout & layout, const Nimble::Vector2f & location,
-                               const Nimble::Rectf & viewRect, const Style & style)
+                               const Nimble::Rectf & viewRect, const TextStyle & style)
   {
-    const int maxGlyphsPerCmd = 1000;
-
-    std::map<QByteArray, const Texture *> textures = style.fill().textures();
-    DepthMode d;
-    d.setFunction(DepthMode::LessEqual);
-
-    Nimble::Matrix4f m;
-    m.identity();
-
-    Nimble::Vector2f renderLocation = layout.renderLocation() - viewRect.low();
-
     const Nimble::Matrix4f model = transform4();
 
     FontUniformBlock uniform;
@@ -1229,6 +1218,25 @@ namespace Luminous
       uniform.outline.make(0.5f - width * 0.5f, 0.5f - width * 0.5f);
     }
 
+    drawTextImpl(layout, location, viewRect, style, uniform, fontShader(), model);
+  }
+
+  void RenderContext::drawTextImpl(const TextLayout & layout, const Nimble::Vector2f & location,
+                                   const Nimble::Rectf & viewRect, const TextStyle & style,
+                                   FontUniformBlock & uniform, const Program & program,
+                                   const Nimble::Matrix4f & modelview)
+  {
+    const int maxGlyphsPerCmd = 1000;
+
+    std::map<QByteArray, const Texture *> textures = style.fill().textures();
+    DepthMode d;
+    d.setFunction(DepthMode::LessEqual);
+
+    Nimble::Matrix4f m;
+    m.identity();
+
+    Nimble::Vector2f renderLocation = layout.renderLocation() - viewRect.low();
+
     for (int g = 0; g < layout.groupCount(); ++g) {
       textures["tex"] = layout.texture(g);
 
@@ -1238,7 +1246,7 @@ namespace Luminous
         const int count = std::min<int>(items.size() - i, maxGlyphsPerCmd);
 
         auto b = render<FontVertex, FontUniformBlock>(
-              true, PrimitiveType_TriangleStrip, count*6 - 2, count*4, 1, fontShader(), textures);
+              true, PrimitiveType_TriangleStrip, count*6 - 2, count*4, 1, program, textures);
         uniform.projMatrix = b.uniform->projMatrix;
         *b.uniform = uniform;
 
@@ -1251,7 +1259,7 @@ namespace Luminous
         }
 
         m.setTranslation(offset);
-        b.uniform->modelMatrix = model * m;
+        b.uniform->modelMatrix = modelview * m;
         b.uniform->modelMatrix.transpose();
 
         b.command->blendMode = style.blendMode();
@@ -1283,7 +1291,7 @@ namespace Luminous
   }
 
   void RenderContext::drawText(const QString & text, const Nimble::Rectf & rect,
-                               const Style & style, TextFlags flags)
+                               const TextStyle & style, TextFlags flags)
   {
     if (flags == TextStatic) {
       const SimpleTextLayout & layout = SimpleTextLayout::cachedLayout(text, rect.size(), style.font(), style.textOption());

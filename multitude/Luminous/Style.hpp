@@ -88,7 +88,7 @@ namespace Luminous
   class Style
   {
   public:
-    Style() : m_textOverflow(OverflowVisible) {}
+    Style() {}
 
     Stroke & stroke() { return m_stroke; }
     const Stroke & stroke() const { return m_stroke; }
@@ -130,9 +130,30 @@ namespace Luminous
     void setStencilMode(const StencilMode & mode) { m_stencilMode = mode; }
     const StencilMode & stencilMode() const { return m_stencilMode; }
 
+  private:
+    Fill m_fill;
+    Stroke m_stroke;
+
+    BlendMode m_blendMode;
+    DepthMode m_depthMode;
+    StencilMode m_stencilMode;
+  };
+
+  class TextStyle : public Style
+  {
+  public:
+    TextStyle()
+      : m_fontRenderWidth(0.5f)
+      , m_glowWidth(0)
+      , m_glowColor(1.0f, 1.0f, 1.0f, 1.0f)
+      , m_dropShadowBlur(0.0f)
+      , m_dropShadowColor(0.0f, 0.0f, 0.0f, 0.0f)
+      , m_dropShadowOffset(0, 0)
+      , m_textOverflow(OverflowVisible)
+    {}
+
     QFont & font() { return m_font; }
     const QFont & font() const { return m_font; }
-
     void setFont(const QFont & font) { m_font = font; }
 
     QTextOption & textOption() { return m_textOption; }
@@ -141,13 +162,20 @@ namespace Luminous
     Overflow textOverflow() const { return m_textOverflow; }
     void setTextOverflow(Overflow overflow) { m_textOverflow = overflow; }
 
-  private:
-    Fill m_fill;
-    Stroke m_stroke;
 
-    BlendMode m_blendMode;
-    DepthMode m_depthMode;
-    StencilMode m_stencilMode;
+    /// @todo accessors
+  //private:
+    /// from 0 to 1, defaults to 0.5
+    float m_fontRenderWidth;
+
+    /// from 0 to 1
+    float m_glowWidth;
+    Radiant::Color m_glowColor;
+
+    /// from 0 to 1
+    float m_dropShadowBlur;
+    Radiant::Color m_dropShadowColor;
+    Nimble::Vector2f m_dropShadowOffset;
 
     QFont m_font;
     QTextOption m_textOption;
