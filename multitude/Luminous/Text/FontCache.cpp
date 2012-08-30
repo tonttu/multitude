@@ -474,6 +474,17 @@ namespace Luminous
 
   FontCache & FontCache::acquire(const QRawFont & rawFont)
   {
+    MULTI_ONCE {
+      QSettings settings(indexFileName(), QSettings::IniFormat);
+      /// Update this when something is changed with the generation code so that
+      /// the old cache needs to be invalidated
+      const int version = 1;
+      if (settings.value("cache-version").toInt() != version) {
+        settings.clear();
+        settings.setValue("cache-version", version);
+      }
+    }
+
     /// QRawFont doesn't work as a key, since it doesn't have operator== that works as expected.
     /// Also the pixelSize shouldn't matter
     const QString fontKey = makeKey(rawFont);
