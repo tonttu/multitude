@@ -86,10 +86,13 @@ namespace Luminous
         if(compressedFormat) {
           intFormat = texture.dataFormat().compression();
         } else {
-          if (texture.dataFormat().numChannels() == 1)      intFormat = GL_RED;
-          else if (texture.dataFormat().numChannels() == 2) intFormat = GL_RG;
-          else if (texture.dataFormat().numChannels() == 3) intFormat = GL_RGB;
-          else intFormat = GL_RGBA;
+          GLenum formats[] = { GL_RED, GL_RG, GL_RGB, GL_RGBA,
+                               GL_R16, GL_RG16, GL_RGB16, GL_RGBA16 };
+
+          int offset = texture.dataFormat().bytesPerPixel() > 1 ? 4 : 0;
+          int channels = texture.dataFormat().numChannels();
+          offset += channels < 1 || channels > 4 ? 3 : channels - 1;
+          intFormat = formats[offset];
         }
       }
 
