@@ -89,6 +89,8 @@ namespace Luminous
     if (isComplete())
       return;
 
+    clearGlyphs();
+
     bool missingGlyphs = false;
 
     for (QTextBlock block = m_d->m_doc.begin(); block.isValid(); block = block.next()) {
