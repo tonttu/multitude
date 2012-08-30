@@ -133,6 +133,8 @@ namespace Luminous
     QFont & font() { return m_font; }
     const QFont & font() const { return m_font; }
 
+    void setFont(const QFont & font) { m_font = font; }
+
     QTextOption & textOption() { return m_textOption; }
     const QTextOption & textOption() const { return m_textOption; }
 
