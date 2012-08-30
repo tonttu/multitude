@@ -1209,19 +1209,21 @@ namespace Luminous
     uniform.invscale = 1.0f / Nimble::Vector2f(model[0][1], model[1][1]).length();
     uniform.split = 0.0f;
 
+    const float edge = 0.5f + style.fontEdgeOffset();
+
     if (style.glow() > 0.0f) {
       uniform.colorIn = uniform.colorOut = style.glowColor();
-      uniform.outline.make(0.5f - style.glow() * 0.5f, 0.5f);
+      uniform.outline.make(edge * (1.0f - style.glow()), edge);
       drawTextImpl(layout, location, viewRect, style, uniform, fontShader(), model);
     }
 
     if (style.strokeWidth() > 0.0f) {
       /// @todo how to calculate this?
       float width = Nimble::Math::Min(1.0f, style.strokeWidth() / 60.0f);
-      uniform.split = 0.5f + width * 0.5f;
-      uniform.outline.make(0.5f - width * 0.5f, 0.5f - width * 0.5f);
+      uniform.split = edge + width * 0.5f;
+      uniform.outline.make(edge - width * 0.5f, edge - width * 0.5f);
     } else {
-      uniform.outline.make(0.5f, 0.5f);
+      uniform.outline.make(edge, edge);
     }
 
     uniform.colorIn = style.fillColor();

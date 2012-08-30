@@ -143,7 +143,7 @@ namespace Luminous
   {
   public:
     TextStyle()
-      : m_fontRenderWidth(0.5f)
+      : m_fontEdgeOffset(0.0f)
       , m_glow(0)
       , m_glowColor(1.0f, 1.0f, 1.0f, 1.0f)
       , m_dropShadowBlur(0.0f)
@@ -162,9 +162,8 @@ namespace Luminous
     Overflow textOverflow() const { return m_textOverflow; }
     void setTextOverflow(Overflow overflow) { m_textOverflow = overflow; }
 
-    /// from 0 to 1, defaults to 0.5
-    float fontRenderWidth() const { return m_fontRenderWidth; }
-    void setFontRenderWidth(float width) { m_fontRenderWidth = width; }
+    float fontEdgeOffset() const { return m_fontEdgeOffset; }
+    void setFontEdgeOffset(float offset) { m_fontEdgeOffset = offset; }
 
     /// from 0 to 1
     float glow() const { return m_glow; }
@@ -184,7 +183,7 @@ namespace Luminous
     void setDropShadowOffset(const Nimble::Vector2f & offset) { m_dropShadowOffset = offset; }
 
   private:
-    float m_fontRenderWidth;
+    float m_fontEdgeOffset;
 
     /// from 0 to 1
     float m_glow;
