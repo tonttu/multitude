@@ -95,6 +95,31 @@ retry:
                                    locs.data(), ranges.data());
       }
     }
+
+    template <typename T>
+    void writeImage(const float maxim, Luminous::Image & target,
+                    const Radiant::PtrGrid32u & distances_inv, const Radiant::PtrGrid32u & distances,
+                    const Nimble::Vector2f & scale)
+    {
+      const int theight = target.height(), twidth = target.width();
+      const float toInt = (1l << (sizeof(T) * 8)) - 1;
+
+      for (int ty = 0; ty < theight; ++ty) {
+        T * line = reinterpret_cast<T*>(target.line(ty));
+        const float sy = scale.y*ty;
+
+        for (int tx = 0; tx < twidth; ++tx) {
+          const float sx = scale.x * tx;
+
+          float distance = distances.getInterpolatedSafe<float>(Nimble::Vector2(sx, sy));
+          float distance_inv = distances_inv.getInterpolatedSafe<float>(Nimble::Vector2(sx, sy));
+          float v = distance-distance_inv;
+          float sgn = v < 0 ? -1 : 1;
+          float q = sgn*Nimble::Math::Sqrt(sgn*v) / maxim;
+          line[tx] = (0.5f + q) * toInt;
+        }
+      }
+    }
   }
 
   void DistanceFieldGenerator::generate(const Luminous::Image & src, Nimble::Vector2i srcSize, Luminous::Image & target, int radius)
@@ -104,7 +129,6 @@ retry:
     const Nimble::Vector2f scale(float(swidth)/twidth, float(sheight)/theight);
 
     assert(src.pixelFormat().bytesPerPixel() == 1);
-    assert(target.pixelFormat().bytesPerPixel() == 1);
 
 #if 1
     const int spixels = sheight*swidth;
@@ -152,23 +176,18 @@ retry:
     Radiant::PtrGrid32u distances(res.data(), swidth, sheight);
     Radiant::PtrGrid32u distances_inv(res_inverted.data(), swidth, sheight);
 
-    for (int ty = 0; ty < theight; ++ty) {
-      unsigned char * line = target.line(ty);
-      const float sy = scale.y*ty;
-
-      for (int tx = 0; tx < twidth; ++tx) {
-        const float sx = scale.x * tx;
-
-        float distance = distances.getInterpolatedSafe<float>(Nimble::Vector2(sx, sy));
-        float distance_inv = distances_inv.getInterpolatedSafe<float>(Nimble::Vector2(sx, sy));
-        float v = distance-distance_inv;
-        float sgn = v < 0 ? -1 : 1;
-        float q = sgn*Nimble::Math::Sqrt(sgn*v) / maxim;
-        line[tx] = (0.5f + q) * 255;
-      }
-    }
+    if (target.pixelFormat().bytesPerPixel() == 1)
+      writeImage<uint8_t>(maxim, target, distances_inv, distances, scale);
+    else if (target.pixelFormat().bytesPerPixel() == 2)
+      writeImage<uint16_t>(maxim, target, distances_inv, distances, scale);
+    else if (target.pixelFormat().bytesPerPixel() == 4)
+      writeImage<uint32_t>(maxim, target, distances_inv, distances, scale);
+    else
+      Radiant::error("DistanceFieldGenerator::generate # Unsupported pixel format");
 
 #else
+    assert(target.pixelFormat().bytesPerPixel() == 1);
+
     // Iterate all pixels in the target image
     for (int ty = 0; ty < theight; ++ty) {
       unsigned char * line = target.line(ty);
