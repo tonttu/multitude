@@ -1209,6 +1209,15 @@ namespace Luminous
     uniform.split = 0.0f;
 
     const float edge = 0.5f + style.fontEdgeOffset();
+    /// @todo how to calculate this?
+    const float strokeWidth = Nimble::Math::Min(1.0f, style.strokeWidth() / 60.0f);
+
+    if (style.dropShadowColor().alpha() > 0.0f) {
+      uniform.colorIn = uniform.colorOut = style.dropShadowColor();
+      const float blur = style.dropShadowBlur();
+      uniform.outline.make(edge - (blur + strokeWidth) * 0.5f, edge + (blur - strokeWidth) * 0.5f);
+      drawTextImpl(layout, location+style.dropShadowOffset(), viewRect, style, uniform, fontShader(), model);
+    }
 
     if (style.glow() > 0.0f) {
       uniform.colorIn = uniform.colorOut = style.glowColor();
@@ -1216,14 +1225,8 @@ namespace Luminous
       drawTextImpl(layout, location, viewRect, style, uniform, fontShader(), model);
     }
 
-    if (style.strokeWidth() > 0.0f) {
-      /// @todo how to calculate this?
-      float width = Nimble::Math::Min(1.0f, style.strokeWidth() / 60.0f);
-      uniform.split = edge + width * 0.5f;
-      uniform.outline.make(edge - width * 0.5f, edge - width * 0.5f);
-    } else {
-      uniform.outline.make(edge, edge);
-    }
+    uniform.split = edge + strokeWidth * 0.5f;
+    uniform.outline.make(edge - strokeWidth * 0.5f, edge - strokeWidth * 0.5f);
 
     uniform.colorIn = style.fillColor();
     uniform.colorOut = style.strokeColor();
