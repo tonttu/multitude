@@ -1208,14 +1208,15 @@ namespace Luminous
     uniform.invscale = 1.0f / Nimble::Vector2f(model[0][1], model[1][1]).length() / style.textSharpness();
     uniform.split = 0.0f;
 
-    const float edge = 0.5f + style.fontEdgeOffset();
-    /// @todo how to calculate this?
+    /// @todo how to calculate these?
+    const float edge = 0.5f + style.fontEdgeOffset() / 60.0f;
     const float strokeWidth = Nimble::Math::Min(1.0f, style.strokeWidth() / 60.0f);
 
     if (style.dropShadowColor().alpha() > 0.0f) {
       uniform.colorIn = uniform.colorOut = style.dropShadowColor();
       const float blur = style.dropShadowBlur();
-      uniform.outline.make(edge - (blur + strokeWidth) * 0.5f, edge + (blur - strokeWidth) * 0.5f);
+      //uniform.outline.make(edge - (blur + strokeWidth) * 0.5f, edge + (blur - strokeWidth) * 0.5f);
+      uniform.outline.make(edge - blur * 0.5f - strokeWidth, edge + blur * 0.5f - strokeWidth);
       drawTextImpl(layout, location+style.dropShadowOffset(), viewRect, style, uniform, fontShader(), model);
     }
 
@@ -1226,8 +1227,10 @@ namespace Luminous
     }
 
     // To remove color bleeding at the edge, ignore colorOut if there is no border
-    uniform.split = strokeWidth < 0.000001f ? 0 : edge + strokeWidth * 0.5f;
-    uniform.outline.make(edge - strokeWidth * 0.5f, edge - strokeWidth * 0.5f);
+    // uniform.split = strokeWidth < 0.000001f ? 0 : edge + strokeWidth * 0.5f;
+    // uniform.outline.make(edge - strokeWidth * 0.5f, edge - strokeWidth * 0.5f);
+    uniform.split = strokeWidth < 0.000001f ? 0 : edge;
+    uniform.outline.make(edge - strokeWidth, edge - strokeWidth);
 
     uniform.colorIn = style.fillColor();
     uniform.colorOut = style.strokeColor();
