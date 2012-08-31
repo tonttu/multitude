@@ -108,6 +108,7 @@ namespace Luminous
     m_d->depth = 1;
     m_d->dataFormat = dataFormat;
     m_d->data = data;
+    m_d->translucent = dataFormat.hasAlpha();
     invalidate();
   }
 
@@ -119,6 +120,7 @@ namespace Luminous
     m_d->depth = 1;
     m_d->dataFormat = dataFormat;
     m_d->data = data;
+    m_d->translucent = dataFormat.hasAlpha();
     for (int i = 0; i < m_d->dirtyRegions.size(); ++i)
       m_d->dirtyRegions[i] = QRegion();
     invalidate();
@@ -132,6 +134,7 @@ namespace Luminous
     m_d->depth = depth;
     m_d->dataFormat = dataFormat;
     m_d->data = data;
+    m_d->translucent = dataFormat.hasAlpha();
     invalidate();
   }
 
@@ -142,6 +145,7 @@ namespace Luminous
     m_d->height = 0;
     m_d->depth = 0;
     m_d->dataFormat = PixelFormat();
+    m_d->translucent = false;
     m_d->data = nullptr;
   }
 

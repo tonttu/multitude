@@ -38,9 +38,8 @@ namespace Luminous
     const Program & shader, const Radiant::Color & color, float width, const Luminous::Style & style)
   {
     /// @todo Should we be able to overrule this with Style::Translucent
-    bool translucent =
-      shader.translucent() |
-      (color.w < 0.99999999f);
+    bool translucent = shader.translucent() || (color.w * opacity() < 0.99999999f) ||
+        style.fill().hasTranslucentTextures();
 
     RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(translucent, primType, indexCount, vertexCount, width, shader, style.fill().textures());
 

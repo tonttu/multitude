@@ -10,6 +10,7 @@
 #include <Luminous/BlendMode.hpp>
 #include <Luminous/DepthMode.hpp>
 #include <Luminous/StencilMode.hpp>
+#include <Luminous/Texture2.hpp>
 
 #include <QFont>
 #include <QTextOption>
@@ -44,7 +45,7 @@ namespace Luminous
   class Fill
   {
   public:
-    Fill() : m_color(0.f, 0.f, 0.f, 0.f), m_program(nullptr) {}
+    Fill() : m_color(0.f, 0.f, 0.f, 0.f), m_program(nullptr), m_translucentTextures(false) {}
 
     const Radiant::Color & color() const { return m_color; }
     void setColor(const Radiant::Color & c) { m_color = c; }
@@ -62,11 +63,14 @@ namespace Luminous
 
     const std::map<QByteArray, const Texture *> & textures() const { return m_textures; }
 
+    bool hasTranslucentTextures() const { return m_translucentTextures; }
+
   private:
     Radiant::Color m_color;
     const Luminous::Program * m_program;
 
     std::map<QByteArray, const Texture *> m_textures;
+    bool m_translucentTextures;
 
     friend class Style;
   };
@@ -226,6 +230,7 @@ namespace Luminous
   void Fill::setTexture(const QByteArray & name, const Luminous::Texture & texture)
   {
     m_textures[name] = &texture;
+    m_translucentTextures = m_translucentTextures || texture.translucent();
   }
 }
 #endif // LUMINOUS_STYLE_HPP
