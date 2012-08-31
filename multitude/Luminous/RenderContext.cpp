@@ -1225,7 +1225,8 @@ namespace Luminous
       drawTextImpl(layout, location, viewRect, style, uniform, fontShader(), model);
     }
 
-    uniform.split = edge + strokeWidth * 0.5f;
+    // To remove color bleeding at the edge, ignore colorOut if there is no border
+    uniform.split = strokeWidth < 0.000001f ? 0 : edge + strokeWidth * 0.5f;
     uniform.outline.make(edge - strokeWidth * 0.5f, edge - strokeWidth * 0.5f);
 
     uniform.colorIn = style.fillColor();
