@@ -455,14 +455,16 @@ namespace Luminous {
   }
 
   Spline::Spline(Spline && spline)
-    : m_d(std::move(spline.m_d))
+    : m_d(spline.m_d)
   {
+    spline.m_d = nullptr;
   }
 
   Spline & Spline::operator=(Spline && spline)
   {
     delete m_d;
-    m_d = std::move(spline.m_d);
+    m_d = spline.m_d;
+    spline.m_d = nullptr;
     return *this;
   }
 
