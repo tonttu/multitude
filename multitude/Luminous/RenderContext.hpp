@@ -359,8 +359,8 @@ namespace Luminous
     static RenderContext * getThreadContext();
 
     /// @todo REMOVE US
-    void bindTexture(GLenum, GLenum, GLuint ) {}
-    void bindBuffer(GLenum, GLuint) {}
+    void bindTexture(GLenum target, GLenum unit, GLuint name) {glBindTexture(target, name);}
+    void bindBuffer(GLenum target, GLuint name) { glBindBuffer(target, name);}
     void bindProgram(GLSLProgramObject *) {}
     void flush() {}
 
