@@ -13,10 +13,7 @@ SUBDIRS += Valuable
 SUBDIRS += Luminous
 SUBDIRS += Poetic
 SUBDIRS += Resonant
-!mobile*:SUBDIRS += Screenplay
-!mobile*:SUBDIRS += VideoDisplay
 SUBDIRS += Box2D
-#SUBDIRS += Posh
 
 #exists(Examples/Examples.pro):SUBDIRS += Examples
 !mobile*{
