@@ -27,6 +27,7 @@ namespace Luminous
     int m_internalFormat;
     GLenum m_target;
     QRegion m_dirtyRegion;
+    QSize m_size;
   };
 
   /////////////////////////////////////////////////////////////////////////////

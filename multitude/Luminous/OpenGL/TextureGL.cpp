@@ -42,8 +42,6 @@ namespace Luminous
 
   void TextureGL::upload(const Texture & texture, int textureUnit, bool alwaysBind)
   {
-    GLERROR("TextureGL::upload");
-
     // Reset usage timer
     touch();
 
@@ -54,14 +52,19 @@ namespace Luminous
     if(m_generation != texture.generation()) {
       m_generation = texture.generation();
 
+      // Check if we need to reallocate the texture. We reallocate if the
+      // dimensions, size, or format has changed.
       bool recreate = (texture.dimensions() == 1 && m_target != GL_TEXTURE_1D) ||
           (texture.dimensions() == 2 && m_target != GL_TEXTURE_2D) ||
           (texture.dimensions() == 3 && m_target != GL_TEXTURE_3D);
+
+      recreate = recreate || (m_size.width() != texture.width() || m_size.height() != texture.height());
 
       recreate = recreate || (m_internalFormat != texture.internalFormat());
 
       if(recreate) {
         m_target = 0;
+        m_size = QSize(texture.width(), texture.height());
       } else {
         m_dirtyRegion = QRegion(0, 0, texture.width(), texture.height());
       }
@@ -118,7 +121,9 @@ namespace Luminous
       }
 
       glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, texture.getMinFilter());
+      GLERROR("TextureGL::upload # glTexParameteri");
       glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, texture.getMagFilter());
+      GLERROR("TextureGL::upload # glTexParameteri");
     }
 
     if(!bound && alwaysBind) {
@@ -141,13 +146,16 @@ namespace Luminous
         alignment >>= 1;
 
       glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
+      GLERROR("TextureGL::upload # glPixelStorei");
       glPixelStorei(GL_UNPACK_ROW_LENGTH, texture.lineSizePixels());
+      GLERROR("TextureGL::upload # glPixelStorei");
 
       int uploaded = 0;
 
       if (texture.dimensions() == 1) {
         /// @todo incremental upload
         glTexSubImage1D(GL_TEXTURE_1D, 0, 0, texture.width(), texture.dataFormat().layout(), texture.dataFormat().type(), texture.data());
+        GLERROR("TextureGL::upload # glTexSubImage1D");
         uploaded = texture.width() * texture.dataFormat().bytesPerPixel();
       }
       else if (texture.dimensions() == 2) {
@@ -159,6 +167,7 @@ namespace Luminous
           uploaded = texture.dataSize();
           glCompressedTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture.width(), texture.height(),
                                     texture.dataFormat().compression(), uploaded, texture.data());
+          GLERROR("TextureGL::upload # glCompressedTexSubImage2D");
           m_dirtyRegion = QRegion();
         } else {
           foreach(const QRect & rect, m_dirtyRegion.rects()) {
@@ -172,6 +181,7 @@ namespace Luminous
             // Upload data
             glTexSubImage2D(GL_TEXTURE_2D, 0, rect.left(), rect.top(), rect.width(), scanLines,
                             texture.dataFormat().layout(), texture.dataFormat().type(), data);
+            GLERROR("TextureGL::upload # glTexSubImage2D");
             uploaded += bytesPerScanline * scanLines;
             bytesFree -= uploaded;
 
@@ -189,6 +199,7 @@ namespace Luminous
         glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, texture.width(), texture.height(), texture.depth(),
                         texture.dataFormat().layout(), texture.dataFormat().type(), texture.data());
         uploaded = texture.width() * texture.height() * texture.depth() * texture.dataFormat().bytesPerPixel();
+        GLERROR("TextureGL::upload # glTexSubImage3D");
       }
 
       // Update upload-limiter
