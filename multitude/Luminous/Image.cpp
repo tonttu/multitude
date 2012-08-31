@@ -178,10 +178,14 @@ namespace Luminous
             ++count;
           }
         }
-        // Scale the color by the number of pixels that contribute
-        colorSum /= alphaCount;
-        // Scale the alpha by all the pixels
-        alphaSum = std::min<float>(alphaSum / count, 1.f);
+        if (alphaCount > 0) {
+          // Scale the alpha by all the pixels
+          alphaSum = std::min<float>(alphaSum / count, 1.f);
+          // Scale the color by the number of pixels that contribute
+          colorSum /= alphaCount * alphaSum;
+          // Round the color (setPixel just makes float -> int conversion wihtout rounding)
+          colorSum += Nimble::Vector3f(1/512.0f, 1/512.0f, 1/512.0f);
+        }
 
         setPixel(x0, y0, Nimble::Vector4(colorSum.x, colorSum.y, colorSum.z, alphaSum));
       }
