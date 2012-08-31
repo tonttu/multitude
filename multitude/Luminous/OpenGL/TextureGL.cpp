@@ -136,10 +136,11 @@ namespace Luminous
         bind(textureUnit);
 
       // Set proper alignment
-      int alignment = 8;
-      while (texture.width() % alignment)
+      int alignment = 1;
+      while ((texture.width() * texture.dataFormat().bytesPerPixel()) % alignment)
         alignment >>= 1;
-      glPixelStorei(GL_PACK_ALIGNMENT, alignment);
+
+      glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
       glPixelStorei(GL_UNPACK_ROW_LENGTH, texture.lineSizePixels());
 
       int uploaded = 0;

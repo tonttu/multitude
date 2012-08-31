@@ -713,8 +713,11 @@ namespace Luminous
 #if 0
   Image * Mipmap::image(unsigned int level) const
   {
-    if(m_d->m_haveCompressedImage)
+    if (m_d->m_sourceInfo.pf.compression() != PixelFormat::COMPRESSION_NONE ||
+        m_d->m_useCompressedMipmaps || !m_d->m_ready || !m_d->m_valid)
       return nullptr;
+    ImageTex3 & imageTex = m_d->m_levels[level];
+    return imageTex.image.get();
   }
 
 #ifndef LUMINOUS_OPENGLES
