@@ -251,6 +251,8 @@ win32 {
     
     # These libs have an extra extension for debug builds
     build_pass:CONFIG(debug,debug|release) {
+      # TODO There shouldn't be a glew_d library
+      LIB_OPENGL = -lglew_d -lglu32 -lopengl32
       LIB_BOX2D = -lBox2D$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_POETIC = -lPoetic$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_FLUFFY = -lFluffy$${CORNERSTONE_LIB_SUFFIX}_d
