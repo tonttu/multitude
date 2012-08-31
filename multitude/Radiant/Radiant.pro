@@ -68,7 +68,6 @@ HEADERS += VectorStorage.hpp
 HEADERS += VideoImage.hpp
 HEADERS += VideoInput.hpp
 HEADERS += WatchDog.hpp
-HEADERS += ClonablePtr.hpp
 HEADERS += VideoCamera.hpp
 HEADERS += SocketWrapper.hpp
 HEADERS += Singleton.hpp
