@@ -1603,7 +1603,7 @@ namespace Luminous
     m_data->m_driver.postFrame();
 
     /// @todo how do we generate this properly? Should we somehow linearize the depth buffer?
-    m_data->m_automaticDepthDiff = -1.0f / std::max(m_data->m_renderCalls.top(), 100000);
+    m_data->m_automaticDepthDiff = -1.0f / std::max(m_data->m_renderCalls.top(), 10000);
     assert(m_data->m_renderCalls.size() == 1);
     m_data->m_renderCalls.top() = 0;
 
