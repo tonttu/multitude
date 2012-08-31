@@ -21,9 +21,11 @@ namespace Luminous
   class GLThreadWidget : public QGLWidget
   {
   public:
-    GLThreadWidget(const QGLFormat & format, QWidget * host, QtWindow & window, Qt::WindowFlags flags)
+    GLThreadWidget(const QGLFormat & format, QWidget * host, QtWindow & window, Qt::WindowFlags flags,
+                   const MultiHead::Window & windowDef)
       : QGLWidget(format, host, 0, flags),
-      m_window(window)
+        m_window(window),
+        m_windowDef(windowDef)
     {
       // Needed for key events on Windows
       setFocusPolicy(Qt::StrongFocus);
@@ -100,7 +102,13 @@ namespace Luminous
       Radiant::info("dropEvent");
 
       if(m_window.eventHook()) {
-        m_window.eventHook()->handleDropEvent(Radiant::DropEvent(*de));
+        bool ok = true;
+
+        QPoint onWindow = de->pos();
+        Nimble::Vector2 ongraphics = m_windowDef.windowToGraphics
+            (Nimble::Vector2(onWindow.x(), onWindow.y()), ok);
+        if(ok)
+          m_window.eventHook()->handleDropEvent(Radiant::DropEvent(*de, ongraphics));
       }
     }
 
@@ -120,6 +128,7 @@ namespace Luminous
     */
 
     QtWindow & m_window;
+    const MultiHead::Window & m_windowDef;
   };
 
   ////////////////////////////////////////////////////////////
@@ -203,7 +212,7 @@ namespace Luminous
     QGLFormat format = QGLFormat::defaultFormat();
     format.setSamples(window.antiAliasingSamples());
 
-    m_d->m_mainWindow = new GLThreadWidget(format, m_d->m_hostWidget, *this, flags);
+    m_d->m_mainWindow = new GLThreadWidget(format, m_d->m_hostWidget, *this, flags, window);
 
     m_d->m_mainWindow->raise();
     m_d->m_mainWindow->show();

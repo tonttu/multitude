@@ -18,12 +18,15 @@
   NSOpenGLContext * context;
 
   Luminous::CocoaWindow * m_window;
+  const Luminous::MultiHead::Window * m_windowDef;
+
   int m_antiAliasing;
 }
 
 - (id) initWithFrame:(NSRect)frame
 colorBits:(int)numColorBits depthBits:(int)numDepthBits fullscreen:(bool)runFullScreen
-m_window:(Luminous::CocoaWindow *)parent m_antiAliasing:(int)antiAliasing;
+m_window:(Luminous::CocoaWindow *)parent m_antiAliasing:(int)antiAliasing
+m_windowDef:(const Luminous::MultiHead::Window *)windowDef;
 
 - (void) dealloc;
 
@@ -57,6 +60,7 @@ m_window:(Luminous::CocoaWindow *)parent m_antiAliasing:(int)antiAliasing;
 - (id) initWithFrame:(NSRect)frame
 colorBits:(int)numColorBits depthBits:(int)numDepthBits fullscreen:(bool)runFullScreen
 m_window:(Luminous::CocoaWindow *)parent  m_antiAliasing:(int)antiAliasing
+m_windowDef:(const Luminous::MultiHead::Window *)windowDef
 {
 NSOpenGLPixelFormat *pixelFormat;
 
@@ -64,6 +68,7 @@ m_window = parent;
 m_antiAliasing = antiAliasing;
 depthBits = numDepthBits;
 runningFullScreen = runFullScreen;
+m_windowDef = windowDef;
 
 [self registerForDraggedTypes:[NSArray arrayWithObjects:
             NSColorPboardType, NSFilenamesPboardType, nil]];
@@ -470,7 +475,12 @@ return self;
           urlList.push_back(QUrl(QString::fromUtf8([myStr UTF8String])));
         }
 
-        hook->handleDropEvent(Radiant::DropEvent(urlList));
+        NSPoint onwindow = [sender draggingLocation];
+        bool ok = true;
+        Nimble::Vector2 loc = m_windowDef->windowToGraphics(Nimble::Vector2f(onwindow.x, onwindow.y), ok);
+
+        if(ok)
+          hook->handleDropEvent(Radiant::DropEvent(urlList, loc));
 
         // Depending on the dragging source and modifier keys,
         // the file data may be copied or linked
@@ -584,7 +594,8 @@ return self;
 
   glView = [ [CocoaView alloc] initWithFrame:[glWindow frame]
       colorBits:8 depthBits:24 fullscreen:m_hint->fullscreen()
-      m_window:m_window m_antiAliasing:m_hint->antiAliasingSamples()];
+      m_window:m_window m_antiAliasing:m_hint->antiAliasingSamples()
+      m_windowDef:m_hint];
 
   if(glView != nil)
   {

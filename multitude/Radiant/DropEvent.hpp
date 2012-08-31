@@ -20,6 +20,8 @@
 
 #include "Defines.hpp"
 
+#include <Nimble/Vector2.hpp>
+
 #include <Patterns/NotCopyable.hpp>
 
 #include <QDropEvent>
@@ -41,8 +43,8 @@ namespace Radiant
   {
   public:
     /// Creates a drop event that contains a collection of URLs
-    DropEvent(const QList<QUrl> & urls);
-    DropEvent(const QDropEvent & de);
+    DropEvent(const QList<QUrl> & urls, Nimble::Vector2 loc);
+    DropEvent(const QDropEvent & de, Nimble::Vector2 loc);
     /// Deletes the drop event
     ~DropEvent();
 
@@ -50,6 +52,9 @@ namespace Radiant
     bool hasUrls() const;
     /// Return the list of URLs
     QList<QUrl>	urls() const;
+
+    /// Returns the location of the drop event
+    Nimble::Vector2 location() const;
 
     static void addDropListener(DropListener *);
     static void removeDropListener(DropListener *);
