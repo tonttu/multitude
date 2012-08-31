@@ -610,7 +610,7 @@ namespace Luminous {
 
   bool MultiHead::readElement(const Valuable::ArchiveElement & ce)
   {
-    const QString & name = ce.name();
+    // const QString & name = ce.name();
 
     const QString & type = ce.get("type");
 

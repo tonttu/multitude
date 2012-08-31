@@ -23,6 +23,8 @@
 #include <QCryptographicHash>
 #include <QDir>
 
+PUSH_IGNORE_DEPRECATION_WARNINGS
+
 namespace {
   // after first resize modify the dimensions so that we can resize
   // 5 times with quarterSize
@@ -771,3 +773,5 @@ namespace Luminous {
       schedule(next);
   }
 }
+
+POP_IGNORE_DEPRECATION_WARNINGS

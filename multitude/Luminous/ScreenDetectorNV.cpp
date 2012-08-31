@@ -38,33 +38,33 @@ namespace
     int posy = 0;
     int dwidth = 0;
     int dheight = 0;
-    if(ok = XNVCTRLQueryStringAttribute(display, screen, display_mask,
-                                NV_CTRL_STRING_XINERAMA_SCREEN_INFO, &ptr))
-    {
+    ok = XNVCTRLQueryStringAttribute(display, screen, display_mask,
+                                     NV_CTRL_STRING_XINERAMA_SCREEN_INFO, &ptr);
+    if (ok) {
       QString sinfo(ptr);
       QRegExp x_re("x=(\\d+)");
       QRegExp y_re("y=(\\d+)");
       QRegExp w_re("width=(\\d+)");
       QRegExp h_re("height=(\\d+)");
 
-      if(ok = ok && x_re.indexIn(sinfo)!=-1)
+      if (x_re.indexIn(sinfo)!=-1)
       {
         posx = x_re.cap(1).toInt();
       }
 
 
-      if(ok = ok && y_re.indexIn(sinfo)!=-1)
+      if (y_re.indexIn(sinfo)!=-1)
       {
         posy = y_re.cap(1).toInt();
       }
 
-      if(ok = ok && w_re.indexIn(sinfo)!=-1)
+      if (w_re.indexIn(sinfo)!=-1)
       {
         dwidth = w_re.cap(1).toInt();
       }
 
 
-      if(ok = ok && h_re.indexIn(sinfo)!=-1)
+      if (h_re.indexIn(sinfo)!=-1)
       {
         dheight = h_re.cap(1).toInt();
       }
@@ -84,8 +84,8 @@ namespace
     int posy = 0;
     int dwidth = 0;
     int dheight = 0;
-    if(ok = XNVCTRLQueryBinaryData(display, screen,display_mask, NV_CTRL_BINARY_DATA_DISPLAY_VIEWPORT, (unsigned char **)&bdata, &len))
-    {
+    ok = XNVCTRLQueryBinaryData(display, screen,display_mask, NV_CTRL_BINARY_DATA_DISPLAY_VIEWPORT, (unsigned char **)&bdata, &len);
+    if (ok) {
       posx = bdata[0];
       posy = bdata[1];
       dwidth = bdata[2];
@@ -108,7 +108,7 @@ namespace
     char * name = 0;
     QString display_port_device_name;
     bool xinerama_on = false;
-    bool twinview_on;
+    bool twinview_on = false;
     int query;
     int display_mask = 0;
     bool ok = true;
@@ -127,7 +127,7 @@ namespace
     }
     Radiant::debug("display/port mask for screen %d = 0X%x\n", screen, display_mask);
 
-    if (ok = ok && XNVCTRLQueryAttribute(display, screen, 0,
+    if (ok && XNVCTRLQueryAttribute(display, screen, 0,
                                     NV_CTRL_XINERAMA, &query))
     {
       xinerama_on = query == NV_CTRL_XINERAMA_ON;
@@ -138,7 +138,7 @@ namespace
       Radiant::error("couldn't query xinerama\n");
     }
 
-    if (ok = ok && XNVCTRLQueryAttribute(display, screen, 0, NV_CTRL_TWINVIEW, &query))
+    if (ok && XNVCTRLQueryAttribute(display, screen, 0, NV_CTRL_TWINVIEW, &query))
     {
       twinview_on = query == NV_CTRL_TWINVIEW_ENABLED;
       Radiant::debug("screen %d twinview is %d\n", screen, twinview_on);
@@ -150,7 +150,7 @@ namespace
 
 
 
-    if(ok = ok && XNVCTRLQueryBinaryData(display, screen,0, NV_CTRL_BINARY_DATA_GPUS_USED_BY_XSCREEN, (unsigned char **)&bdata, &len))
+    if(ok && XNVCTRLQueryBinaryData(display, screen,0, NV_CTRL_BINARY_DATA_GPUS_USED_BY_XSCREEN, (unsigned char **)&bdata, &len))
     {
       int num = bdata[0];
       Radiant::debug("NV_CTRL_BINARY_DATA_GPUS_USED_BY_XSCREEN for screen %d :  #gpus=%d:\n", screen, num);
@@ -251,7 +251,7 @@ namespace
       }
 
       //name of device (e.g. monitor, cell) connected to this display port (e.g. ViewSonic VX2260WM)
-      if(ok = ok && XNVCTRLQueryStringAttribute(display, screen, d,
+      if(ok && XNVCTRLQueryStringAttribute(display, screen, d,
         NV_CTRL_STRING_DISPLAY_DEVICE_NAME, &name))
       {
         Radiant::debug("monitor name attached to screen %d display/port 0X%x = %s\n",screen, d, name);

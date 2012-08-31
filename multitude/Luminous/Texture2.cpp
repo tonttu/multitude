@@ -119,7 +119,7 @@ namespace Luminous
     m_d->depth = 1;
     m_d->dataFormat = dataFormat;
     m_d->data = data;
-    for(unsigned int i = 0; i < m_d->dirtyRegions.size(); ++i)
+    for (int i = 0; i < m_d->dirtyRegions.size(); ++i)
       m_d->dirtyRegions[i] = QRegion();
     invalidate();
   }
@@ -214,7 +214,7 @@ namespace Luminous
   void Texture::addDirtyRect(const QRect & rect)
   {
     auto intersected = rect.intersected(QRect(0, 0, width(), height()));
-    for(unsigned int i = 0; i < m_d->dirtyRegions.size(); ++i)
+    for (int i = 0; i < m_d->dirtyRegions.size(); ++i)
       m_d->dirtyRegions[i] += intersected;
   }
 

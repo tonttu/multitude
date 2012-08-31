@@ -102,7 +102,7 @@ retry:
                     const Nimble::Vector2f & scale)
     {
       const int theight = target.height(), twidth = target.width();
-      const float toInt = (1l << (sizeof(T) * 8)) - 1;
+      const float toInt = (uint64_t(1) << (sizeof(T) * 8)) - 1;
 
       for (int ty = 0; ty < theight; ++ty) {
         T * line = reinterpret_cast<T*>(target.line(ty));

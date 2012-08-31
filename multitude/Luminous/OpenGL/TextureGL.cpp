@@ -174,7 +174,7 @@ namespace Luminous
             uploaded += bytesPerScanline * scanLines;
             bytesFree -= uploaded;
 
-            if(scanLines != rect.height()) {
+            if (int(scanLines) != rect.height()) {
               m_dirtyRegion -= QRegion(rect.left(), rect.top(), rect.width(), scanLines);
               break;
             } else {

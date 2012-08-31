@@ -250,14 +250,16 @@ namespace Luminous
     m_d->uniforms.push_back(uniform); \
   }
 
-//#define ADDSHADERUNIFORMATTR(ATTRTYPE) \
-//  template <> LUMINOUS_API void Program::addShaderUniform(const QString & name, ATTRTYPE & value) \
-//  { \
-//    std::shared_ptr<ShaderUniform> uniform(new ShaderUniformT<ATTRTYPE>(name, value)); \
-//    m_d->uniforms.push_back(uniform); \
-//    /* Remove when the attribute is deleted */ \
-//    value.addListener(this, [=](){ this->removeShaderUniform(name); }, DELETE_ROLE); \
-//  }
+#if 0
+#define ADDSHADERUNIFORMATTR(ATTRTYPE) \
+  template <> LUMINOUS_API void Program::addShaderUniform(const QString & name, ATTRTYPE & value) \
+  { \
+    std::shared_ptr<ShaderUniform> uniform(new ShaderUniformT<ATTRTYPE>(name, value)); \
+    m_d->uniforms.push_back(uniform); \
+    /* Remove when the attribute is deleted */ \
+    value.addListener(this, [=](){ this->removeShaderUniform(name); }, DELETE_ROLE); \
+  }
+#endif
 
   ADDSHADERUNIFORMCONST(int);
   ADDSHADERUNIFORMCONST(unsigned int);

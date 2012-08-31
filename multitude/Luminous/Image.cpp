@@ -917,6 +917,7 @@ namespace Luminous
 
   ImageTex * ImageTex::move()
   {
+    PUSH_IGNORE_DEPRECATION_WARNINGS
     ImageTex * t = new ImageTex;
     std::swap(t->m_width, m_width);
     std::swap(t->m_height, m_height);
@@ -925,6 +926,7 @@ namespace Luminous
     t->m_generation = ++m_generation;
 
     return t;
+    POP_IGNORE_DEPRECATION_WARNINGS
   }
 
   /////////////////////////////////////////////////////////////////////////////

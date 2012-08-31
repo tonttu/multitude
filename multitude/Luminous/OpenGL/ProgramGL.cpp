@@ -76,8 +76,8 @@ namespace Luminous
 
   ProgramGL::ProgramGL(StateGL & state, const Program & program)
     : ResourceHandleGL(state)
-    , m_linked(false)
     , m_vertexDescription(program.vertexDescription())
+    , m_linked(false)
   {
     m_handle = glCreateProgram();
   }

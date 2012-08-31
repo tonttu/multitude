@@ -885,7 +885,7 @@ namespace Luminous
     SharedBuffer * buffer = nullptr;
     std::size_t nextSize = 1 << 20;
     for(;;) {
-      if(pool.currentIndex >= pool.buffers.size()) {
+      if(pool.currentIndex >= int(pool.buffers.size())) {
         pool.buffers.emplace_back(type);
         buffer = &pool.buffers.back();
         buffer->buffer.setData(nullptr, std::max(requiredBytes, nextSize), Buffer::StreamDraw);
@@ -1254,7 +1254,7 @@ namespace Luminous
 
       auto & items = layout.items(g);
 
-      for (int i = 0; i < items.size();) {
+      for (int i = 0; i < int(items.size());) {
         const int count = std::min<int>(items.size() - i, maxGlyphsPerCmd);
 
         auto b = render<FontVertex, FontUniformBlock>(
