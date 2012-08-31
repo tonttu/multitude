@@ -12,6 +12,7 @@ SUBDIRS += Valuable
 !mobile*:SUBDIRS += Squish
 SUBDIRS += Luminous
 SUBDIRS += Poetic
+SUBDIRS += VideoDisplay
 SUBDIRS += Resonant
 SUBDIRS += Box2D
 
