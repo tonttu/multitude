@@ -901,7 +901,7 @@ namespace Luminous
     }
 
     char * data = mapBuffer<char>(buffer->buffer, Buffer::MapWrite | Buffer::MapUnsynchronized |
-                                  Buffer::MapInvalidateRange | Buffer::MapFlushExplicit);
+                                  Buffer::MapInvalidateBuffer | Buffer::MapFlushExplicit);
     assert(data);
     data += buffer->reservedBytes;
     offset = buffer->reservedBytes / vertexSize;
