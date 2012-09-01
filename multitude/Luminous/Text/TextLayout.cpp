@@ -81,10 +81,10 @@ namespace Luminous
         Group & g = findGroup(glyphCache->texture());
 
         TextLayout::Item item;
-        item.vertices[0].location.make(location.x, location.y, 0);
-        item.vertices[1].location.make(location.x+size.x, location.y, 0);
-        item.vertices[2].location.make(location.x, location.y+size.y, 0);
-        item.vertices[3].location.make(location.x+size.x, location.y+size.y, 0);
+        item.vertices[0].location.make(location.x, location.y);
+        item.vertices[1].location.make(location.x+size.x, location.y);
+        item.vertices[2].location.make(location.x, location.y+size.y);
+        item.vertices[3].location.make(location.x+size.x, location.y+size.y);
         for (int j = 0; j < 4; ++j) {
           item.vertices[j].texCoord = glyphCache->uv()[j];
           item.vertices[j].invsize = invsize;

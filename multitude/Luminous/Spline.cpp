@@ -32,13 +32,13 @@ namespace
   {
   public:
     Vertex()
-      : location(0, 0, 0)
+      : location(0, 0)
       , range(0, 10000)
       , color(0, 0, 0, 0)
     {
     }
 
-    Nimble::Vector3f location;
+    Nimble::Vector2f location;
     Nimble::Vector2f range;
     Nimble::Vector4f color;
   };
@@ -77,7 +77,7 @@ namespace Luminous {
       m_shader.loadShader("Luminous/GLSL150/spline.fs", Luminous::ShaderGLSL::Fragment);
       m_shader.loadShader("Luminous/GLSL150/spline.vs", Luminous::ShaderGLSL::Vertex);
 
-      m_descr.addAttribute<Nimble::Vector3f>("vertex_position");
+      m_descr.addAttribute<Nimble::Vector2f>("vertex_position");
       m_descr.addAttribute<Nimble::Vector2f>("vertex_range");
       m_descr.addAttribute<Nimble::Vector4f>("vertex_color");
       m_shader.setVertexDescription(m_descr);
@@ -297,7 +297,7 @@ namespace Luminous {
 
     Vertex v;
     v.color = points[0].m_color;
-    v.location = Nimble::Vector3f(cnow - avg, 0.f);
+    v.location = cnow - avg;
     v.range = points[0].m_range;
 
     if(!m_vertices.empty()) {
@@ -308,7 +308,7 @@ namespace Luminous {
 
     m_vertices.push_back(v);
 
-    v.location = Nimble::Vector3f(cnow + avg, 0.f);
+    v.location = cnow + avg;
     m_vertices.push_back(v);
 
     for (int i = 1; i < n; ++i) {
@@ -342,10 +342,10 @@ namespace Luminous {
       v.range = p.m_range;
       v.color = p.m_color;
 
-      v.location = Nimble::Vector3f(cnow - avg, 0.f);
+      v.location = cnow - avg;
       m_vertices.push_back(v);
 
-      v.location = Nimble::Vector3f(cnow + avg, 0.f);
+      v.location = cnow + avg;
       m_vertices.push_back(v);
 
       /// Doesn't really need the index on every vertex, lets do it every 50 vertex

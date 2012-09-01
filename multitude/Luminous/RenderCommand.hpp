@@ -40,12 +40,12 @@ namespace Luminous
   
   struct BasicVertex
   {
-    Nimble::Vector3f location;
+    Nimble::Vector2f location;
   };
 
   struct BasicVertexUV
   {
-    Nimble::Vector3f location;
+    Nimble::Vector2f location;
     Nimble::Vector2f texCoord;
   };
 
@@ -59,6 +59,7 @@ namespace Luminous
     Nimble::Matrix4f projMatrix;
     Nimble::Matrix4f modelMatrix;
     Nimble::Vector4f color;
+    float depth;
   };
 
   struct FontUniformBlock
@@ -79,6 +80,8 @@ namespace Luminous
     /// split = 0.5, outline = (0.3, 0.5) would create a halo from 0.3..0.5 with
     /// border color, and sharp edge at 0.5 between border and text color
     float split;
+    /// Vertex depth
+    float depth;
   };
 }
 
