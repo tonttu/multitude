@@ -11,7 +11,6 @@ namespace Luminous
     , m_size(buffer.size())
     , m_allocatedSize(0)
     , m_uploaded(0)
-    , m_target(buffer.type())
     , m_generation(0)
   {    
     glGenBuffers(1, &m_handle);
@@ -29,7 +28,6 @@ namespace Luminous
     , m_size(t.m_size)
     , m_allocatedSize(t.m_allocatedSize)
     , m_uploaded(t.m_size)
-    , m_target(t.m_target)
     , m_generation(t.m_generation)
   {
   }
@@ -40,14 +38,14 @@ namespace Luminous
     return *this;
   }
 
-  void BufferGL::bind()
+  void BufferGL::bind(Buffer::Type type)
   {
-    glBindBuffer(m_target, m_handle);
+    glBindBuffer(type, m_handle);
     GLERROR("BufferGL::bind # glBindBuffer");
 
     touch();
   }
-
+  /*
   void BufferGL::upload(Buffer & buffer)
   {
     // Reset usage timer
@@ -74,13 +72,9 @@ namespace Luminous
       m_usage = buffer.usage();
     }
   }
-
-  void * BufferGL::map(int offset, std::size_t length, Radiant::FlagsT<Buffer::MapAccess> access)
+  */
+  void * BufferGL::map(Buffer::Type type, int offset, std::size_t length, Radiant::FlagsT<Buffer::MapAccess> access)
   {
-    assert(m_target == Buffer::Vertex ||
-           m_target == Buffer::Index ||
-           m_target == Buffer::Uniform);
-
     touch();
 
     BufferMapping & mappings = m_state.bufferMaps()[m_handle];
@@ -91,18 +85,18 @@ namespace Luminous
         return mappings.data;
       }
 
-      bind();
-      glUnmapBuffer(m_target);
+      bind(type);
+      glUnmapBuffer(type);
       GLERROR("BufferGL::map # glUnmapBuffer");
     }
 
-    bind();
+    bind(type);
 
     if(m_allocatedSize < m_size)
-      allocate();
+      allocate(type);
 
     mappings.access = access.asInt();
-    mappings.target = m_target;
+    mappings.target = type;
     mappings.offset = offset;
     mappings.length = length;
 
@@ -118,7 +112,7 @@ namespace Luminous
     return mappings.data;
   }
 
-  void BufferGL::unmap(int offset, std::size_t length)
+  void BufferGL::unmap(Buffer::Type type, int offset, std::size_t length)
   {
     touch();
 
@@ -128,24 +122,24 @@ namespace Luminous
       return;
     }
 
-    bind();
+    bind(type);
 
     if(length != std::size_t(-1) && (it->second.access & GL_MAP_FLUSH_EXPLICIT_BIT)) {
-      glFlushMappedBufferRange(m_target, offset, length);
+      glFlushMappedBufferRange(type, offset, length);
       GLERROR("BufferGL::unmap # glFlushMappedBufferRange");
     }
 
-    glUnmapBuffer(m_target);
+    glUnmapBuffer(type);
     GLERROR("BufferGL::unmap # glUnmapBuffer");
 
     m_state.bufferMaps().erase(it);
   }
 
-  void BufferGL::allocate()
+  void BufferGL::allocate(Buffer::Type type)
   {
     touch();
 
-    glBufferData(m_target, m_size, nullptr, m_usage);
+    glBufferData(type, m_size, nullptr, m_usage);
     GLERROR("BufferGL::allocate # glBufferData");
     m_allocatedSize = m_size;
   }

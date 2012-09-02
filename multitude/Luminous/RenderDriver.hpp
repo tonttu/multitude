@@ -84,14 +84,14 @@ namespace Luminous
     // Enable/disable renderbuffers
     LUMINOUS_API virtual void setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer) = 0;
 
-    LUMINOUS_API virtual void * mapBuffer(const Buffer & buffer, int offset, std::size_t length,
+    LUMINOUS_API virtual void * mapBuffer(const Buffer & buffer, Buffer::Type type, int offset, std::size_t length,
                                           Radiant::FlagsT<Buffer::MapAccess> access) = 0;
-    LUMINOUS_API virtual void unmapBuffer(const Buffer & buffer, int offset = 0,
+    LUMINOUS_API virtual void unmapBuffer(const Buffer & buffer, Buffer::Type type, int offset = 0,
                                           std::size_t length = std::size_t(-1)) = 0;
 
     LUMINOUS_API virtual RenderCommand & createRenderCommand(bool translucent,
-                                                             VertexArray & vertexArray,
-                                                             Buffer & uniformBuffer,
+                                                             const VertexArray & vertexArray,
+                                                             const Buffer & uniformBuffer,
                                                              const Luminous::Program & shader,
                                                              const std::map<QByteArray, const Texture *> & textures) = 0;
 

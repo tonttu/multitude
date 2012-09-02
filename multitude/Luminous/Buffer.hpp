@@ -62,9 +62,6 @@ namespace Luminous
 
     LUMINOUS_API void setData(const char * data, size_t size, Usage usage);
 
-    LUMINOUS_API void setType(Type type);
-    LUMINOUS_API Type type() const;
-
     LUMINOUS_API size_t size() const;
     LUMINOUS_API const char * data() const;
     LUMINOUS_API Usage usage() const;

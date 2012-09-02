@@ -203,8 +203,8 @@ namespace Luminous
 
     RenderCommand & createRenderCommand(bool translucent,
                                         const Program & shader,
-                                        VertexArray & vertexArray,
-                                        Buffer & uniformBuffer,
+                                        const VertexArray & vertexArray,
+                                        const Buffer & uniformBuffer,
                                         const std::map<QByteArray,const Texture *> & textures);
 
     // Utility function for resource cleanup
@@ -348,8 +348,8 @@ namespace Luminous
   
   RenderCommand & RenderDriverGL::D::createRenderCommand(bool translucent,
                                                          const Program & shader,
-                                                         VertexArray & vertexArray,
-                                                         Buffer & uniformBuffer,
+                                                         const VertexArray & vertexArray,
+                                                         const Buffer & uniformBuffer,
                                                          const std::map<QByteArray,const Texture *> & textures)
   {
     m_state.program = &m_driver.handle(shader);
@@ -569,23 +569,20 @@ namespace Luminous
 
   void RenderDriverGL::setVertexBuffer(const Buffer & buffer)
   {
-    assert(buffer.type() == Buffer::Vertex);
     auto & bufferGL = handle(buffer);
-    bufferGL.bind();
+    bufferGL.bind(Buffer::Vertex);
   }
 
   void RenderDriverGL::setIndexBuffer(const Buffer & buffer)
   {
-    assert(buffer.type() == Buffer::Index);
     auto & bufferGL = handle(buffer);
-    bufferGL.bind();
+    bufferGL.bind(Buffer::Index);
   }
 
   void RenderDriverGL::setUniformBuffer(const Buffer & buffer)
   {
-    assert(buffer.type() == Buffer::Uniform);
     auto & bufferGL = handle(buffer);
-    bufferGL.bind();
+    bufferGL.bind(Buffer::Uniform);
   }
 
   ProgramGL & RenderDriverGL::handle(const Program & program)
@@ -693,24 +690,24 @@ namespace Luminous
     glStencilMaskSeparate(GL_FRONT_AND_BACK, stencil);
   }
 
-  void * RenderDriverGL::mapBuffer(const Buffer & buffer, int offset, std::size_t length,
+  void * RenderDriverGL::mapBuffer(const Buffer & buffer, Buffer::Type type, int offset, std::size_t length,
                                    Radiant::FlagsT<Buffer::MapAccess> access)
   {
     BufferGL & bufferGL = handle(buffer);
 
-    return bufferGL.map(offset, length, access);
+    return bufferGL.map(type, offset, length, access);
   }
 
-  void RenderDriverGL::unmapBuffer(const Buffer & buffer, int offset, std::size_t length)
+  void RenderDriverGL::unmapBuffer(const Buffer & buffer, Buffer::Type type, int offset, std::size_t length)
   {
     BufferGL & bufferGL = handle(buffer);
 
-    bufferGL.unmap(offset, length);
+    bufferGL.unmap(type, offset, length);
   }
 
   RenderCommand & RenderDriverGL::createRenderCommand(bool translucent,
-                                                      VertexArray & vertexArray,
-                                                      Buffer & uniformBuffer,
+                                                      const VertexArray & vertexArray,
+                                                      const Buffer & uniformBuffer,
                                                       const Luminous::Program & shader,
                                                       const std::map<QByteArray, const Texture *> &textures)
   {

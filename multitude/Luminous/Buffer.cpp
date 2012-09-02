@@ -19,7 +19,6 @@ namespace Luminous
     size_t size;
     const char * data;
     Buffer::Usage usage;
-    Buffer::Type type;
   };
 
   Buffer::Buffer(Type type)
@@ -71,16 +70,6 @@ namespace Luminous
     m_d->usage = usage;
 
     invalidate();
-  }
-
-  void Buffer::setType(Type type)
-  {
-    m_d->type = type;
-  }
-
-  Buffer::Type Buffer::type() const
-  {
-    return m_d->type;
   }
 
   const char * Buffer::data() const

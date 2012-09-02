@@ -375,20 +375,20 @@ namespace Luminous
     /// <Luminousv2>
     //////////////////////////////////////////////////////////////////////////
 
-    void setBuffer(Buffer::Type type, const Luminous::Buffer & buffer);
+    void setBuffer(const Luminous::Buffer & buffer, Buffer::Type type);
     void setVertexArray(const VertexArray & vertexArray);
     void setShaderProgram(const Program & program);
     template <typename T> bool setShaderUniform(const char * name, const T & value);
 
     template <typename T>
-    T * mapBuffer(const Buffer & buffer, int offset, std::size_t length,
+    T * mapBuffer(const Buffer & buffer, Buffer::Type type, int offset, std::size_t length,
                   Radiant::FlagsT<Buffer::MapAccess> access);
 
     template <typename T>
-    inline T * mapBuffer(const Buffer & buffer,
+    inline T * mapBuffer(const Buffer & buffer, Buffer::Type type,
                          Radiant::FlagsT<Buffer::MapAccess> access);
 
-    void unmapBuffer(const Buffer & buffer, int offset = 0, std::size_t length = std::size_t(-1));
+    void unmapBuffer(const Buffer & buffer, Buffer::Type type, int offset = 0, std::size_t length = std::size_t(-1));
 
     void draw(PrimitiveType primType, unsigned int offset, unsigned int primitives);
     void drawIndexed(PrimitiveType primType, unsigned int offset, unsigned int primitives);
@@ -470,21 +470,21 @@ namespace Luminous
   };
 
   template <>
-  void * RenderContext::mapBuffer<void>(const Buffer & buffer, int offset, std::size_t length,
+  void * RenderContext::mapBuffer<void>(const Buffer & buffer, Buffer::Type type, int offset, std::size_t length,
                                         Radiant::FlagsT<Buffer::MapAccess> access);
 
   template <typename T>
-  T * RenderContext::mapBuffer(const Buffer & buffer, int offset, std::size_t length,
+  T * RenderContext::mapBuffer(const Buffer & buffer, Buffer::Type type, int offset, std::size_t length,
                                Radiant::FlagsT<Buffer::MapAccess> access)
   {
-    return reinterpret_cast<T*>(mapBuffer<void>(buffer, offset, length, access));
+    return reinterpret_cast<T*>(mapBuffer<void>(buffer, type, offset, length, access));
   }
 
   template <typename T>
-  inline T * RenderContext::mapBuffer(const Buffer & buffer,
+  inline T * RenderContext::mapBuffer(const Buffer & buffer, Buffer::Type type,
                                       Radiant::FlagsT<Buffer::MapAccess> access)
   {
-    return mapBuffer<T>(buffer, 0, buffer.size(), access);
+    return mapBuffer<T>(buffer, type, 0, buffer.size(), access);
   }
 
   template <typename Vertex, typename Uniform>

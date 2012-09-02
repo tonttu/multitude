@@ -190,7 +190,7 @@ namespace Luminous
 
   struct RenderContext::SharedBuffer
   {
-    SharedBuffer(Buffer::Type type) : buffer(type), reservedBytes(0) {}
+    SharedBuffer(Buffer::Type type) : type(type), reservedBytes(0) {}
     SharedBuffer(SharedBuffer && shared)
       : buffer(std::move(shared.buffer)),
         reservedBytes(shared.reservedBytes)
@@ -198,11 +198,13 @@ namespace Luminous
     SharedBuffer & operator=(SharedBuffer && shared)
     {
       buffer = std::move(shared.buffer);
+      type = shared.type;
       reservedBytes = shared.reservedBytes;
       return *this;
     }
 
     Buffer buffer;
+    Buffer::Type type;
     std::size_t reservedBytes;
   };
 
@@ -473,7 +475,7 @@ namespace Luminous
         currentIndex = 0;
         for(auto it = buffers.begin(); it != buffers.end(); ++it) {
           if (it->reservedBytes > 0) {
-            ctx.unmapBuffer(it->buffer, 0, it->reservedBytes);
+            ctx.unmapBuffer(it->buffer, it->type, 0, it->reservedBytes);
             it->reservedBytes = 0;
           }
         }
@@ -906,7 +908,7 @@ namespace Luminous
       ++pool.currentIndex;
     }
 
-    char * data = mapBuffer<char>(buffer->buffer, Buffer::MapWrite | Buffer::MapUnsynchronized |
+    char * data = mapBuffer<char>(buffer->buffer, type, Buffer::MapWrite | Buffer::MapUnsynchronized |
                                   Buffer::MapInvalidateBuffer | Buffer::MapFlushExplicit);
     assert(data);
     data += buffer->reservedBytes;
@@ -916,15 +918,15 @@ namespace Luminous
   }
 
   template <>
-  void * RenderContext::mapBuffer<void>(const Buffer & buffer, int offset, std::size_t length,
+  void * RenderContext::mapBuffer<void>(const Buffer & buffer, Buffer::Type type, int offset, std::size_t length,
                                         Radiant::FlagsT<Buffer::MapAccess> access)
   {
-    return m_data->m_driver.mapBuffer(buffer, offset, length, access);
+    return m_data->m_driver.mapBuffer(buffer, type, offset, length, access);
   }
 
-  void RenderContext::unmapBuffer(const Buffer & buffer, int offset, std::size_t length)
+  void RenderContext::unmapBuffer(const Buffer & buffer, Buffer::Type type, int offset, std::size_t length)
   {
-    m_data->m_driver.unmapBuffer(buffer, offset, length);
+    m_data->m_driver.unmapBuffer(buffer, type, offset, length);
   }
 
 
@@ -932,7 +934,7 @@ namespace Luminous
   RenderCommand & RenderContext::createRenderCommand(bool translucent,
                                                      int indexCount, int vertexCount,
                                                      std::size_t vertexSize, std::size_t uniformSize,
-                                                     unsigned *& mappedIndexBuffer,
+                                                     unsigned int *& mappedIndexBuffer,
                                                      void *& mappedVertexBuffer,
                                                      void *& mappedUniformBuffer,
                                                      float & depth,
@@ -945,17 +947,20 @@ namespace Luminous
     uniformSize = Nimble::Math::Ceil(uniformSize / float(m_data->m_uniformBufferOffsetAlignment)) *
         m_data->m_uniformBufferOffsetAlignment;
 
-    SharedBuffer * ibuffer;
-    std::tie(mappedIndexBuffer, ibuffer) = sharedBuffer<unsigned int>(indexCount, Buffer::Index, indexOffset);
-
     SharedBuffer * vbuffer;
     std::tie(mappedVertexBuffer, vbuffer) = sharedBuffer(vertexSize, vertexCount, Buffer::Vertex, vertexOffset);
 
     SharedBuffer * ubuffer;
     std::tie(mappedUniformBuffer, ubuffer) = sharedBuffer(uniformSize, 1, Buffer::Uniform, uniformOffset);
 
-    // Get the matching vertexarray from cache or create a new one if needed
-    const auto key = std::make_tuple(vbuffer->buffer.resourceId(), ibuffer->buffer.resourceId(), &handle(shader));
+    SharedBuffer * ibuffer;
+    RenderResource::Id ibufferId = 0;
+    if (indexCount > 0) {
+      std::tie(mappedIndexBuffer, ibuffer) = sharedBuffer<unsigned int>(indexCount, Buffer::Index, indexOffset);
+      // Get the matching vertexarray from cache or create a new one if needed
+      ibufferId = ibuffer->buffer.resourceId();
+    }
+    auto key = std::make_tuple(vbuffer->buffer.resourceId(), ibufferId, &handle(shader));
 
     auto it = m_data->m_vertexArrayCache.find(key);
     if(it == m_data->m_vertexArrayCache.end()) {
@@ -1457,7 +1462,7 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////////
   // Luminousv2
 
-  void RenderContext::setBuffer(Buffer::Type type, const Luminous::Buffer & buffer)
+  void RenderContext::setBuffer(const Luminous::Buffer & buffer, Buffer::Type type)
   {
     switch (type)
     {

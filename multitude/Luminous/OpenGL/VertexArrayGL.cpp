@@ -64,9 +64,8 @@ namespace Luminous
     const Buffer * index = RenderManager::getResource<Buffer>(vertexArray.indexBuffer());
     if (index != nullptr) {
 
-      assert(index->type() == GL_ELEMENT_ARRAY_BUFFER);
       auto & bufferGL = m_state.driver().handle(*index);
-      bufferGL.bind();
+      bufferGL.bind(Buffer::Index);
 
       m_associatedBuffers.insert(m_state.driver().bufferPtr(*index));
     }
@@ -81,9 +80,8 @@ namespace Luminous
       auto * buffer = RenderManager::getResource<Buffer>(b.buffer);
       assert(buffer != nullptr);
 
-      assert(buffer->type() == GL_ARRAY_BUFFER);
       auto & bufferGL = m_state.driver().handle(*buffer);
-      bufferGL.bind();
+      bufferGL.bind(Buffer::Vertex);
 
       setVertexDescription(b.description, program);
 
