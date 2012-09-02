@@ -100,15 +100,8 @@ namespace Luminous
 
   public:
     /// Constructs a texture and adds it to the given resource collection
-    TextureT(RenderContext * res = 0)
-    : GLResource(res),
-      m_textureId(0),
-      m_width(0),
-      m_height(0),
-      m_internalFormat(0),
-      m_haveMipmaps(false),
-      m_consumed(0)
-    {}
+    TextureT(RenderContext * res = 0);
+
     virtual ~TextureT();
 
     /** Activate textureUnit and bind this texture to that unit.
@@ -197,7 +190,7 @@ namespace Luminous
   {
   public:
     /// Constructs a 1D texture and adds it to the given resource collection
-    Texture1D(RenderContext * context = 0) : TextureT<GL_TEXTURE_1D> (context) {}
+    MULTI_ATTR_DEPRECATED("Texture1D is deprecated. Use Luminous::Texture instead.", Texture1D(RenderContext * context = 0));
 
     /// Load the texture from from raw data, provided by the user
     bool loadBytes(GLenum internalFormat, int h,
@@ -215,6 +208,11 @@ namespace Luminous
                                 RenderContext * context = 0);
 
   };
+
+  inline Texture1D::Texture1D(RenderContext * context)
+    : TextureT<GL_TEXTURE_1D> (context)
+  {}
+
 #endif // LUMINOUS_OPENGLES
 
   /// A 2D texture
@@ -222,8 +220,7 @@ namespace Luminous
   {
   public:
     /// Constructs a 2D texture and adds it to the given resource collection
-    Texture2D(RenderContext * context = 0) :
-        TextureT<GL_TEXTURE_2D>(context), m_uploadedLines(0) {}
+    MULTI_ATTR_DEPRECATED("Texture2D is deprecated. Use Luminous::Texture instead.", Texture2D(RenderContext * context = 0));
 
     /// Get the aspect ratio of the texture
     /// Returns the aspect ratio of this texture, ie. the ratio of width to height
@@ -297,6 +294,11 @@ namespace Luminous
     friend class ImageTex;
   };
 
+  inline Texture2D::Texture2D(RenderContext * context)
+    : TextureT<GL_TEXTURE_2D>(context),
+      m_uploadedLines(0)
+  {}
+
 #ifndef LUMINOUS_OPENGLES
 
   /// A 3D texture
@@ -305,10 +307,7 @@ namespace Luminous
   public:
     /// Constructs a 3D texture and adds it to the given resource collection
     /// @param resources resource collection to own this texture
-    Texture3D(RenderContext * resources = 0)
-      : TextureT<GL_TEXTURE_3D> (resources),
-      m_depth(0)
-    {}
+    MULTI_ATTR_DEPRECATED("Texture3D is deprecated. Use Luminous::Texture instead.", Texture3D(RenderContext * resources = 0));
 
     /// Set the depth of the 3D texture (ie. the z dimension)
     /// @param d new depth
@@ -319,6 +318,11 @@ namespace Luminous
   private:
     int m_depth;
   };
+
+  inline Texture3D::Texture3D(RenderContext * resources)
+    : TextureT<GL_TEXTURE_3D> (resources),
+      m_depth(0)
+  {}
 
   /// A cubemap texture
   class LUMINOUS_API TextureCube : public TextureT<GL_TEXTURE_CUBE_MAP>

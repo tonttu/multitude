@@ -98,6 +98,17 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
 
+  template<GLenum TextureType>
+  TextureT<TextureType>::TextureT(RenderContext * res = 0)
+    : GLResource(res),
+      m_textureId(0),
+      m_width(0),
+      m_height(0),
+      m_internalFormat(0),
+      m_haveMipmaps(false),
+      m_consumed(0)
+  {}
+
   template <GLenum TextureType>
       TextureT<TextureType>::~TextureT()
   {
