@@ -970,7 +970,7 @@ namespace Luminous
       // Get the matching vertexarray from cache or create a new one if needed
       ibufferId = ibuffer->buffer.resourceId();
     }
-    auto key = std::make_tuple(vbuffer->buffer.resourceId(), ibufferId, &handle(shader));
+    const auto key = std::make_tuple(vbuffer->buffer.resourceId(), ibufferId, &handle(shader));
 
     auto it = m_data->m_vertexArrayCache.find(key);
     if(it == m_data->m_vertexArrayCache.end()) {

@@ -5,10 +5,7 @@
 #define LUMINOUS_RENDERCONTEXT_HPP
 
 #include <Luminous/Luminous.hpp>
-// <Luminousv2>
 #include <Luminous/RenderDriver.hpp>
-// </Luminousv2>
-
 #include <Luminous/FramebufferObject.hpp>
 #include <Luminous/Transformer.hpp>
 #include <Luminous/Style.hpp>
@@ -17,6 +14,7 @@
 #include <Luminous/RenderContext.hpp>
 #include <Luminous/Export.hpp>
 #include <Luminous/VertexBuffer.hpp>
+#include <Luminous/VertexArray.hpp>
 #include <Luminous/GLSLProgramObject.hpp>
 #include <Luminous/FramebufferResource.hpp>
 #include <Luminous/Buffer.hpp>
@@ -359,7 +357,7 @@ namespace Luminous
     static RenderContext * getThreadContext();
 
     /// @todo REMOVE US
-    void bindTexture(GLenum target, GLenum unit, GLuint name) {glBindTexture(target, name);}
+    void bindTexture(GLenum target, GLenum /*unit*/, GLuint name) {glBindTexture(target, name);}
     void bindBuffer(GLenum target, GLuint name) { glBindBuffer(target, name);}
     void bindProgram(GLSLProgramObject *) {}
     void flush() {}
