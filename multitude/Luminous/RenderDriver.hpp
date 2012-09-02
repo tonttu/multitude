@@ -106,6 +106,7 @@ namespace Luminous
 
     LUMINOUS_API virtual unsigned long availableGPUMemory() const = 0;
     LUMINOUS_API virtual unsigned long maxGPUMemory() const = 0;
+    LUMINOUS_API virtual int uniformBufferOffsetAlignment() const = 0;
 
     LUMINOUS_API virtual void setVSync(bool vsync) = 0;
 

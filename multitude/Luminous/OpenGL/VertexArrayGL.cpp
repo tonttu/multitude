@@ -61,11 +61,13 @@ namespace Luminous
 
     setVertexAttributes(vertexArray, program);
 
-    const Buffer * index = RenderManager::getResource<Buffer>(vertexArray.indexBuffer());
+    Buffer * index = RenderManager::getResource<Buffer>(vertexArray.indexBuffer());
     if (index != nullptr) {
 
       auto & bufferGL = m_state.driver().handle(*index);
       bufferGL.bind(Buffer::Index);
+      /// Upload new data if we need to
+      bufferGL.upload(*index, Buffer::Index);
 
       m_associatedBuffers.insert(m_state.driver().bufferPtr(*index));
     }
@@ -82,6 +84,8 @@ namespace Luminous
 
       auto & bufferGL = m_state.driver().handle(*buffer);
       bufferGL.bind(Buffer::Vertex);
+      /// Upload new data if we need to
+      bufferGL.upload(*buffer, Buffer::Vertex);
 
       setVertexDescription(b.description, program);
 

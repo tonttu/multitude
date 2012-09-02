@@ -16,7 +16,7 @@ namespace Luminous
     BufferGL & operator=(BufferGL && t);
 
     void bind(Buffer::Type type);
-    //void upload(Buffer &buffer);
+    void upload(const Buffer &buffer, Buffer::Type type);
 
     void * map(Buffer::Type type, int offset, std::size_t length, Radiant::FlagsT<Buffer::MapAccess> access);
     void unmap(Buffer::Type type, int offset = 0, std::size_t length = std::size_t(-1));

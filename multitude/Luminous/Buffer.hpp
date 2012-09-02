@@ -51,7 +51,7 @@ namespace Luminous
     };
 
   public:
-    LUMINOUS_API Buffer(Type type = Unknown);
+    LUMINOUS_API Buffer();
     LUMINOUS_API ~Buffer();
 
     LUMINOUS_API Buffer(Buffer & b);

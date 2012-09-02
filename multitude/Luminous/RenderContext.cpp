@@ -289,11 +289,7 @@ namespace Luminous
 
         m_viewFBO.reset(new Luminous::Framebuffer());
 
-        glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &m_uniformBufferOffsetAlignment);
-        if(m_uniformBufferOffsetAlignment < 1) {
-          Radiant::error("RenderContext::Internal # Couldn't get GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, assuming 256");
-          m_uniformBufferOffsetAlignment = 256;
-        }
+        m_uniformBufferOffsetAlignment = m_driver.uniformBufferOffsetAlignment();
 
         info("RenderContext::Internal # init ok");
       }
@@ -917,7 +913,7 @@ namespace Luminous
     return std::make_pair(data, buffer);
   }
 
-  template <>
+  template <> LUMINOUS_API 
   void * RenderContext::mapBuffer<void>(const Buffer & buffer, Buffer::Type type, int offset, std::size_t length,
                                         Radiant::FlagsT<Buffer::MapAccess> access)
   {
@@ -929,6 +925,21 @@ namespace Luminous
     m_data->m_driver.unmapBuffer(buffer, type, offset, length);
   }
 
+  // Create a render command using the shared buffers
+  RenderCommand & RenderContext::createRenderCommand(bool translucent,
+                                                     const Luminous::VertexArray & vertexArray,
+                                                     const Luminous::Buffer & uniformBuffer,
+                                                     float & depth,
+                                                     const Program & shader,
+                                                     const std::map<QByteArray,const Texture *> & textures)
+  {
+    RenderCommand & cmd = m_data->m_driver.createRenderCommand(translucent, vertexArray, uniformBuffer, shader, textures);
+
+    depth = 0.99999f + m_data->m_automaticDepthDiff * m_data->m_renderCalls.top();
+    ++(m_data->m_renderCalls.top());
+
+    return cmd;
+  }
 
   // Create a render command using the shared buffers
   RenderCommand & RenderContext::createRenderCommand(bool translucent,
@@ -944,8 +955,7 @@ namespace Luminous
     unsigned int indexOffset, vertexOffset, uniformOffset;
 
     // Align uniforms as required by OpenGL
-    uniformSize = Nimble::Math::Ceil(uniformSize / float(m_data->m_uniformBufferOffsetAlignment)) *
-        m_data->m_uniformBufferOffsetAlignment;
+    uniformSize = Nimble::Math::Ceil(uniformSize / float(uniformBufferOffsetAlignment())) * uniformBufferOffsetAlignment();
 
     SharedBuffer * vbuffer;
     std::tie(mappedVertexBuffer, vbuffer) = sharedBuffer(vertexSize, vertexCount, Buffer::Vertex, vertexOffset);
@@ -1462,7 +1472,7 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////////
   // Luminousv2
 
-  void RenderContext::setBuffer(const Luminous::Buffer & buffer, Buffer::Type type)
+  void RenderContext::setBuffer(Luminous::Buffer & buffer, Buffer::Type type)
   {
     switch (type)
     {
@@ -1539,6 +1549,11 @@ namespace Luminous
   const Program & RenderContext::fontShader() const
   {
     return m_data->m_fontShader;
+  }
+
+  int RenderContext::uniformBufferOffsetAlignment() const
+  {
+    return m_data->m_uniformBufferOffsetAlignment;
   }
 
   TextureGL & RenderContext::handle(const Texture & texture)

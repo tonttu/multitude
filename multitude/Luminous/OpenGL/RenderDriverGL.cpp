@@ -357,6 +357,9 @@ namespace Luminous
     m_state.vertexArray = &m_driver.handle(vertexArray, m_state.program);
     m_state.uniformBuffer = &m_driver.handle(uniformBuffer);
 
+    // In case of non-shared buffers, we'll re-upload if anything has changed
+    m_state.uniformBuffer->upload(uniformBuffer, Buffer::Uniform);
+
     int unit = 0;
     for(auto it = std::begin(textures), end = std::end(textures); it != end; ++it) {
       const Texture * texture = it->second;
@@ -571,18 +574,21 @@ namespace Luminous
   {
     auto & bufferGL = handle(buffer);
     bufferGL.bind(Buffer::Vertex);
+    bufferGL.upload(buffer, Buffer::Vertex);
   }
 
   void RenderDriverGL::setIndexBuffer(const Buffer & buffer)
   {
     auto & bufferGL = handle(buffer);
     bufferGL.bind(Buffer::Index);
+    bufferGL.upload(buffer, Buffer::Index);
   }
 
   void RenderDriverGL::setUniformBuffer(const Buffer & buffer)
   {
     auto & bufferGL = handle(buffer);
     bufferGL.bind(Buffer::Uniform);
+    bufferGL.upload(buffer, Buffer::Uniform);
   }
 
   ProgramGL & RenderDriverGL::handle(const Program & program)
@@ -937,6 +943,16 @@ namespace Luminous
     }
 
     return 0;
+  }
+
+  int RenderDriverGL::uniformBufferOffsetAlignment() const
+  {
+    int alignment;
+    glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &alignment);
+    if(glGetError() == GL_NO_ERROR)
+      return alignment;
+    Radiant::warning("RenderDriverGL::uniformBufferOffsetAlignment # Unable to get uniform buffer offset alignment: defaulting to 256");
+    return 256;
   }
 
   void RenderDriverGL::setVSync(bool vsync)

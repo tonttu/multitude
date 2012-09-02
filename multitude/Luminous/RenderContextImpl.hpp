@@ -5,9 +5,34 @@ namespace Luminous
 {
   template <typename Vertex, typename UniformBlock>
   RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::render(
-    bool translucent,
-    Luminous::PrimitiveType type, int indexCount, int vertexCount, float primitiveSize,
-    const Luminous::Program & program, const std::map<QByteArray, const Texture *> & textures)
+                            bool translucent,
+                            Luminous::PrimitiveType type,
+                            int offset, int vertexCount,
+                            float primitiveSize,
+                            const Luminous::VertexArray & vertexArray,
+                            const Luminous::Buffer & uniformBuffer, unsigned int uniformOffset,
+                            const Luminous::Program & program,
+                            const std::map<QByteArray, const Texture *> & textures)
+  {
+    RenderBuilder<Vertex, UniformBlock> builder;
+    RenderCommand & cmd = createRenderCommand(translucent, vertexArray, uniformBuffer, builder.depth, program, textures);
+    cmd.primitiveType = type;
+    cmd.primitiveSize = primitiveSize;
+    cmd.primitiveCount = vertexCount;
+    cmd.indexed = (vertexArray.indexBuffer() != 0);
+    cmd.indexOffset = offset;
+    /// @todo should we be able to use this?
+    cmd.vertexOffset = 0;
+
+    builder.command = &cmd;
+
+    return builder;
+  }
+
+  template <typename Vertex, typename UniformBlock>
+  RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::render(
+              bool translucent, Luminous::PrimitiveType type, int indexCount, int vertexCount, float primitiveSize,
+              const Luminous::Program & program, const std::map<QByteArray, const Texture *> & textures)
   {
     RenderBuilder<Vertex, UniformBlock> builder;
     RenderCommand & cmd = createRenderCommand(translucent,

@@ -375,7 +375,7 @@ namespace Luminous
     /// <Luminousv2>
     //////////////////////////////////////////////////////////////////////////
 
-    void setBuffer(const Luminous::Buffer & buffer, Buffer::Type type);
+    void setBuffer(Luminous::Buffer & buffer, Buffer::Type type);
     void setVertexArray(const VertexArray & vertexArray);
     void setShaderProgram(const Program & program);
     template <typename T> bool setShaderUniform(const char * name, const T & value);
@@ -396,6 +396,16 @@ namespace Luminous
     void clear(ClearMask mask, const Radiant::Color & color = Radiant::Color(0,0,0,0), double depth = 1.0, int stencil = 0);
 
     template <typename Vertex, typename UniformBlock>
+    RenderBuilder<Vertex, UniformBlock> render(bool translucent,
+                                               Luminous::PrimitiveType type,
+                                               int offset, int vertexCount,
+                                               float primitiveSize,
+                                               const Luminous::VertexArray & vertexArray,
+                                               const Luminous::Buffer & uniformBuffer, unsigned int uniformOffset,
+                                               const Luminous::Program & program,
+                                               const std::map<QByteArray, const Texture *> & textures);
+
+    template <typename Vertex, typename UniformBlock>
     RenderBuilder<Vertex, UniformBlock> render( bool translucent,
                                                 Luminous::PrimitiveType type, int indexCount, int vertexCount, float primitiveSize,
                                                 const Luminous::Program & program, const std::map<QByteArray, const Texture *> & textures);
@@ -410,7 +420,16 @@ namespace Luminous
     const Program & texShader() const;
     const Program & fontShader() const;
 
+    int uniformBufferOffsetAlignment() const;
+
   private:
+    RenderCommand & createRenderCommand(bool translucent,
+                                        const Luminous::VertexArray & vertexArray,
+                                        const Luminous::Buffer & uniformBuffer,
+                                        float & depth,
+                                        const Program & shader,
+                                        const std::map<QByteArray,const Texture *> & textures);
+
     RenderCommand & createRenderCommand(bool translucent,
                                         int indexCount, int vertexCount,
                                         std::size_t vertexSize, std::size_t uniformSize,
@@ -420,6 +439,15 @@ namespace Luminous
                                         float & depth,
                                         const Program & program,
                                         const std::map<QByteArray, const Texture *> & textures);
+
+    template <typename Vertex, typename Uniform>
+    RenderCommand & createRenderCommand(bool translucent,
+                                        const Luminous::VertexArray & vertexArray,
+                                        const Luminous::Buffer & uniformBuffer,
+                                        Uniform *& mappedUniformBuffer,
+                                        float & depth,
+                                        const Program & shader,
+                                        const std::map<QByteArray,const Texture *> & textures);
 
     template <typename Vertex, typename UniformBlock>
     RenderCommand & createRenderCommand(bool translucent,

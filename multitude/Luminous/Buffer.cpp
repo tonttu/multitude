@@ -8,11 +8,10 @@ namespace Luminous
   class Buffer::D
   {
   public:
-    D(Type t)
+    D()
       : size(0)
       , data(nullptr)
       , usage(Buffer::StaticDraw)
-      , type(t)
     {
     }
 
@@ -21,9 +20,9 @@ namespace Luminous
     Buffer::Usage usage;
   };
 
-  Buffer::Buffer(Type type)
+  Buffer::Buffer()
     : RenderResource(RenderResource::Buffer)
-    , m_d(new Buffer::D(type))
+    , m_d(new Buffer::D())
   {
   }
 
