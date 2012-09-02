@@ -14,15 +14,21 @@ namespace Luminous
                             const Luminous::Program & program,
                             const std::map<QByteArray, const Texture *> & textures)
   {
+    /// @todo Should return the command, since we're only using the builder for returning depth here
     RenderBuilder<Vertex, UniformBlock> builder;
     RenderCommand & cmd = createRenderCommand(translucent, vertexArray, uniformBuffer, builder.depth, program, textures);
-    cmd.primitiveType = type;
-    cmd.primitiveSize = primitiveSize;
-    cmd.primitiveCount = vertexCount;
-    cmd.indexed = (vertexArray.indexBuffer() != 0);
-    cmd.indexOffset = offset;
-    /// @todo should we be able to use this?
-    cmd.vertexOffset = 0;
+
+    /// Set some defaults
+    size_t uniformSize = Nimble::Math::Ceil(sizeof(UniformBlock) / float(uniformBufferOffsetAlignment())) * uniformBufferOffsetAlignment();
+
+    cmd.primitiveType = type;                         // Lines, points, vertices, etc
+    cmd.primitiveSize = primitiveSize;                // For lines/points
+    cmd.primitiveCount = vertexCount;                 // Number of vertices
+    cmd.indexed = (vertexArray.indexBuffer() != 0);   // Whether we should use indexed or non-indexed drawing
+    cmd.vertexOffset = 0;                             // Vertex offset (for indexed and non-indexed)
+    cmd.indexOffset = offset;                         // Index offset (for indexed drawing only)
+    cmd.uniformOffsetBytes = 0;                       // Start of active uniform in buffer
+    cmd.uniformSizeBytes = uniformSize;               // Size of uniform
 
     builder.command = &cmd;
 
