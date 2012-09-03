@@ -32,7 +32,7 @@
 #include <tuple>
 #include <vector>
 
-#define DEFAULT_RECURSION_LIMIT 8
+#define DEFAULT_RECURSION_LIMIT 1
 #define SHADER(str) #str
 
 namespace Luminous
