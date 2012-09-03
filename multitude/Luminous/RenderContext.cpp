@@ -1243,7 +1243,7 @@ namespace Luminous
     uniform.split = 0.0f;
 
     /// @todo how to calculate these?
-    const float edge = 0.5f + style.fontEdgeOffset() / 60.0f;
+    const float edge = 0.5f - style.fontRenderWidth() / 60.0f;
     const float strokeWidth = Nimble::Math::Min(1.0f, style.strokeWidth() / 60.0f);
 
     if (style.dropShadowColor().alpha() > 0.0f) {
@@ -1251,13 +1251,13 @@ namespace Luminous
       const float blur = style.dropShadowBlur();
       //uniform.outline.make(edge - (blur + strokeWidth) * 0.5f, edge + (blur - strokeWidth) * 0.5f);
       uniform.outline.make(edge - blur * 0.5f - strokeWidth, edge + blur * 0.5f - strokeWidth);
-      drawTextImpl(layout, location+style.dropShadowOffset(), viewRect, style, uniform, fontShader(), model);
+      drawTextImpl(layout, location, style.dropShadowOffset(), viewRect, style, uniform, fontShader(), model);
     }
 
     if (style.glow() > 0.0f) {
       uniform.colorIn = uniform.colorOut = style.glowColor();
       uniform.outline.make(edge * (1.0f - style.glow()), edge);
-      drawTextImpl(layout, location, viewRect, style, uniform, fontShader(), model);
+      drawTextImpl(layout, location, Nimble::Vector2f(0, 0), viewRect, style, uniform, fontShader(), model);
     }
 
     // To remove color bleeding at the edge, ignore colorOut if there is no border
@@ -1268,10 +1268,11 @@ namespace Luminous
 
     uniform.colorIn = style.fillColor();
     uniform.colorOut = style.strokeColor();
-    drawTextImpl(layout, location, viewRect, style, uniform, fontShader(), model);
+    drawTextImpl(layout, location, Nimble::Vector2f(0, 0), viewRect, style, uniform, fontShader(), model);
   }
 
   void RenderContext::drawTextImpl(const TextLayout & layout, const Nimble::Vector2f & location,
+                                   const Nimble::Vector2f & renderOffset,
                                    const Nimble::Rectf & viewRect, const TextStyle & style,
                                    FontUniformBlock & uniform, const Program & program,
                                    const Nimble::Matrix4f & modelview)
@@ -1285,7 +1286,7 @@ namespace Luminous
     Nimble::Matrix4f m;
     m.identity();
 
-    Nimble::Vector2f renderLocation = layout.renderLocation() - viewRect.low();
+    Nimble::Vector2f renderLocation = layout.renderLocation() - viewRect.low() + renderOffset;
 
     for (int g = 0; g < layout.groupCount(); ++g) {
       textures["tex"] = layout.texture(g);
@@ -1306,7 +1307,7 @@ namespace Luminous
                               std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
         } else {
           b.uniform->clip = viewRect;
-          b.uniform->clip.move(-layout.renderLocation());
+          b.uniform->clip.move(-layout.renderLocation() - renderOffset);
         }
 
         m.setTranslation(offset);

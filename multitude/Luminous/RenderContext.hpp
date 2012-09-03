@@ -474,6 +474,7 @@ namespace Luminous
     void drawCircleWithSegments(Nimble::Vector2f center, float radius, const float *rgba, int segments);
     void drawCircleImpl(Nimble::Vector2f center, float radius, const float *rgba);
     void drawTextImpl(const TextLayout & layout, const Nimble::Vector2f & location,
+                      const Vector2f & offset,
                       const Nimble::Rectf & viewRect, const TextStyle & style,
                       FontUniformBlock & uniform, const Program & program,
                       const Nimble::Matrix4f & modelview);
