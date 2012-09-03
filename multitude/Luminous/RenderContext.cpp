@@ -421,12 +421,15 @@ namespace Luminous
 
     bool m_initialized;
 
-    /// Viewports defined as x1,y1,x2,y2
+    // Viewports defined as x1,y1,x2,y2
     typedef std::stack<Nimble::Recti, std::vector<Nimble::Recti> > ViewportStack;
     ViewportStack m_viewportStack;
-    //RenderTargetManager m_rtm;
 
-    /// Cache for vertex array objects used in sharedbuffer rendering
+    // Scissor rectangles
+    typedef std::stack<Nimble::Recti, std::vector<Nimble::Recti> > ScissorStack;
+    ScissorStack m_scissorStack;
+
+    // Cache for vertex array objects used in sharedbuffer rendering
     // key is <vertex buffer id, shader>
     std::map<std::tuple<RenderResource::Id, RenderResource::Id, ProgramGL*>, VertexArray> m_vertexArrayCache;
 
@@ -1450,15 +1453,10 @@ namespace Luminous
     m_data->m_viewportStack.push(viewport);
 
     m_data->m_driver.setViewport(viewport);
-
-    /// @todo this shouldn't probably be here, create separate scissor stack?
-    m_data->m_driver.setScissor(viewport);
   }
 
   void RenderContext::popViewport()
   {
-    /// @todo if stack gets empty, currentViewport() returns garbage and old viewport
-    /// remains in GL state
     m_data->m_viewportStack.pop();
 
     if(!m_data->m_viewportStack.empty()) {
@@ -1469,6 +1467,7 @@ namespace Luminous
 
   const Nimble::Recti & RenderContext::currentViewport() const
   {
+    assert(!m_data->m_viewportStack.empty());
     return m_data->m_viewportStack.top();
   }
 
@@ -1596,6 +1595,16 @@ namespace Luminous
     pushTransform();
     setTransform(Nimble::Matrix4::IDENTITY);
 
+    const Nimble::Recti viewport(0, 0, target.size().width(), target.size().height());
+
+    // Push a scissor area that is the size of the render target. This is done
+    // because the currently defined scissor area might be smaller the viewport
+    // defined by the render target.
+    pushScissorRect(viewport);
+
+    // Push viewport
+    pushViewport(viewport);
+
     // Reset the render call count for this target
     m_data->m_renderCalls.push(0);
 
@@ -1604,6 +1613,12 @@ namespace Luminous
 
   void RenderContext::popRenderTarget()
   {
+    // Restore viewport
+    popViewport();
+
+    // Restore scissor area
+    popScissorRect();
+
     // Restore the matrix stack
     popTransform();
     popViewTransform();
@@ -1693,6 +1708,7 @@ namespace Luminous
     // Set viewport to context size
     const Nimble::Recti viewport(Nimble::Vector2i(0, 0), contextSize().cast<int>());
     pushViewport(viewport);
+    pushScissorRect(viewport);
 
     if(numFilters > 100) {
       Radiant::warning("Using over 100 post processing filters.");
@@ -1728,6 +1744,7 @@ namespace Luminous
       for(unsigned j = 0; j < m_data->m_window->areaCount(); j++) {
         const MultiHead::Area & area = m_data->m_window->area(j);
 
+        m_data->m_driver.setViewport(viewport);
         m_data->m_driver.setScissor(area.viewport());
 
         ppf->begin(*this);
@@ -1737,6 +1754,7 @@ namespace Luminous
     }
 
     // Remember to restore the viewport
+    popScissorRect();
     popViewport();
   }
 
@@ -1774,6 +1792,30 @@ namespace Luminous
   void RenderContext::setDefaultState()
   {
     m_data->m_driverGL->setDefaultState();
+  }
+
+  void RenderContext::pushScissorRect(const Nimble::Recti & scissorArea)
+  {
+    m_data->m_scissorStack.push(scissorArea);
+
+    m_data->m_driver.setScissor(scissorArea);
+  }
+
+  void RenderContext::popScissorRect()
+  {
+    assert(!m_data->m_scissorStack.empty());
+    m_data->m_scissorStack.pop();
+
+    if(!m_data->m_scissorStack.empty()) {
+      const Nimble::Recti & oldArea = currentScissorArea();
+      m_data->m_driver.setScissor(oldArea);
+    }
+  }
+
+  const Nimble::Recti & RenderContext::currentScissorArea() const
+  {
+    assert(!m_data->m_scissorStack.empty());
+    return m_data->m_scissorStack.top();
   }
 
   ////////////////////////////////////////////////////////////////////////////////

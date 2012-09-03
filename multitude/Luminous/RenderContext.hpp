@@ -350,6 +350,10 @@ namespace Luminous
     /// @return the viewport from the top of the viewport stack
     const Nimble::Recti & currentViewport() const;
 
+    void pushScissorRect(const Nimble::Recti & scissorArea);
+    void popScissorRect();
+    const Nimble::Recti & currentScissorArea() const;
+
     static void setThreadContext(RenderContext * rsc);
 
     /// Returns the RenderContext for the calling thread
