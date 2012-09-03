@@ -21,6 +21,10 @@
 #include "AttributeFloat.hpp"
 #include "AttributeVector.hpp"
 
+#include <QStringList>
+
+#include <array>
+
 namespace Valuable
 {
   class AttributeFrame : public Attribute
