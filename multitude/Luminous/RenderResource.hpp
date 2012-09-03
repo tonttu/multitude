@@ -49,6 +49,7 @@ namespace Luminous
     inline Type resourceType() const { return m_type; }
 
     inline int generation() const { return m_generation; }
+    inline void setGeneration(int generation) { m_generation = generation; }
     inline void invalidate() { ++m_generation ; }
 
     // Set resource expiration time. The resource will be released after it has not been used for this period

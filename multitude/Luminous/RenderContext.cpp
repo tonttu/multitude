@@ -893,6 +893,8 @@ namespace Luminous
         pool.buffers.emplace_back(type);
         buffer = &pool.buffers.back();
         buffer->buffer.setData(nullptr, std::max(requiredBytes, nextSize), Buffer::StreamDraw);
+        /// Fix the generation so it doesn't get automatically overwritten by an upload()
+        buffer->buffer.setGeneration(0);
         break;
       }
 
