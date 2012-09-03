@@ -9,6 +9,8 @@ namespace Valuable
   class AttributeStyleValue : public AttributeT<StyleValue>
   {
   public:
+    using AttributeT<StyleValue>::operator=;
+
     AttributeStyleValue() {}
     AttributeStyleValue(Node * host, const QString & name,
                         const StyleValue & v = StyleValue(), bool transit = false)

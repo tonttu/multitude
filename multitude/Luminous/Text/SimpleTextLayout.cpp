@@ -53,6 +53,7 @@ namespace Luminous
 
   public:
     Valuable::StyleValue m_lineHeight;
+    Valuable::StyleValue m_letterSpacing;
     QTextLayout m_layout;
   };
 
@@ -69,6 +70,17 @@ namespace Luminous
   void SimpleTextLayout::D::layout(const Nimble::Vector2f & size)
   {
     assert(m_layout.font().hintingPreference() == QFont::PreferNoHinting);
+
+    if (m_letterSpacing.size() == 1) {
+      QFont font = m_layout.font();
+      if (m_letterSpacing.unit() == Valuable::Attribute::VU_PERCENTAGE) {
+        font.setLetterSpacing(QFont::PercentageSpacing, m_letterSpacing.asFloat() * 100.0f);
+      } else {
+        font.setLetterSpacing(QFont::AbsoluteSpacing, m_letterSpacing.asFloat());
+      }
+      m_layout.setFont(font);
+    }
+
     QFontMetricsF fontMetrics(m_layout.font());
     const float lineWidth = size.x;
     const float leading = fontMetrics.leading();
@@ -131,6 +143,8 @@ namespace Luminous
 
   void SimpleTextLayout::setLineHeight(const Valuable::StyleValue & height)
   {
+    if (m_d->m_lineHeight == height)
+      return;
     m_d->m_lineHeight = height;
     setLayoutReady(false);
   }
@@ -138,6 +152,19 @@ namespace Luminous
   const Valuable::StyleValue & SimpleTextLayout::lineHeight() const
   {
     return m_d->m_lineHeight;
+  }
+
+  void SimpleTextLayout::setLetterSpacing(const Valuable::StyleValue & letterSpacing)
+  {
+    if (m_d->m_letterSpacing == letterSpacing)
+      return;
+    m_d->m_letterSpacing = letterSpacing;
+    setLayoutReady(false);
+  }
+
+  const Valuable::StyleValue & SimpleTextLayout::letterSpacing() const
+  {
+    return m_d->m_letterSpacing;
   }
 
   QTextLayout & SimpleTextLayout::layout()

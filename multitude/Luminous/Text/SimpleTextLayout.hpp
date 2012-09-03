@@ -22,6 +22,9 @@ namespace Luminous
     LUMINOUS_API void setLineHeight(const Valuable::StyleValue & height);
     LUMINOUS_API const Valuable::StyleValue & lineHeight() const;
 
+    LUMINOUS_API void setLetterSpacing(const Valuable::StyleValue & spacing);
+    LUMINOUS_API const Valuable::StyleValue & letterSpacing() const;
+
     /// If the QTextLayout is modified, it's required to call invalidate() manually
     LUMINOUS_API QTextLayout & layout();
     LUMINOUS_API const QTextLayout & layout() const;
