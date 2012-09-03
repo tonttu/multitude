@@ -89,13 +89,21 @@ namespace Luminous
         if(compressedFormat) {
           intFormat = texture.dataFormat().compression();
         } else {
-          GLenum formats[] = { GL_RED, GL_RG, GL_RGB, GL_RGBA,
-                               GL_R16, GL_RG16, GL_RGB16, GL_RGBA16 };
+          // The following code assumes that the formats in groups of 4
+          const GLenum formats[] = { GL_RED, GL_RG, GL_RGB, GL_RGBA,
+                                     GL_R16, GL_RG16, GL_RGB16, GL_RGBA16 };
 
-          int offset = texture.dataFormat().bytesPerPixel() > 1 ? 4 : 0;
           int channels = texture.dataFormat().numChannels();
-          offset += channels < 1 || channels > 4 ? 3 : channels - 1;
-          intFormat = formats[offset];
+          if (channels < 1) {
+            Radiant::warning("TextureGL::upload # Unknown texture layout: '%s'", texture.dataFormat().toString().toUtf8().data());
+            channels = 4;
+          }
+          const int bytesPerChannel = texture.dataFormat().bytesPerPixel() / channels;
+          if (bytesPerChannel > 1) {
+            intFormat = formats[4+channels-1];
+          } else {
+            intFormat = formats[channels-1];
+          }
         }
       }
 
