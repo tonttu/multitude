@@ -80,8 +80,6 @@ namespace Luminous
     /// split = 0.5, outline = (0.3, 0.5) would create a halo from 0.3..0.5 with
     /// border color, and sharp edge at 0.5 between border and text color
     float split;
-    /// Vertex depth
-    float depth;
   };
 }
 
