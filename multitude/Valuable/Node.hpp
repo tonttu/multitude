@@ -332,6 +332,8 @@ namespace Valuable
 
     static bool copyValues(const Node & from, Node & to);
 
+    virtual void setAsDefaults() OVERRIDE;
+
   protected:
 
     /// Sends an event to all listeners on this object
@@ -393,7 +395,6 @@ namespace Valuable
     /// The sender of the event, can be read in processMessage()
     Node * sender() { return m_sender; }
 
-    virtual void setAsDefaults() OVERRIDE;
 
   private:
 
