@@ -281,8 +281,8 @@ namespace Nimble {
   template <class T>
   void RectT<T>::expand(const Frame4f & b)
   {
-    m_low -= b.leftTop();
-    m_high += b.rightBottom();
+    m_low -= b.leftTop().cast<T>();
+    m_high += b.rightBottom().cast<T>();
   }
 
   template <class T>
