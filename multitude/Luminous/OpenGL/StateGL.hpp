@@ -123,8 +123,8 @@ namespace Luminous
     /// PCIe 1.0 x16: 4GB/sec (2001)
     /// PCIe 2.0 x16: 8GB/sec (2007)
     /// PCIe 3.0 x16: 15.8GB/sec (2011)
-    const int64_t upload_bytes_limit = ((uint64_t)4 << 30);
-    return std::max(int64_t(0), upload_bytes_limit - m_uploadedBytes);
+    const int64_t upload_bytes_limit_frame = ((uint64_t)4 << 30) / 60;
+    return std::max(int64_t(0), upload_bytes_limit_frame - m_uploadedBytes);
   }
 
   void StateGL::consumeUploadBytes(int64_t bytes)
@@ -134,6 +134,7 @@ namespace Luminous
 
   void StateGL::clearUploadedBytes()
   {
+    m_uploadedBytes = 0;
   }
 
   std::map<GLuint, BufferMapping> & StateGL::bufferMaps()
