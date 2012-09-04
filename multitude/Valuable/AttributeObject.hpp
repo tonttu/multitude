@@ -198,6 +198,8 @@ namespace Valuable
     */
     virtual void processMessage(const QByteArray &id, Radiant::BinaryData &data);
     /// Utility function for sending string message to the object
+    void processMessageString(const char * id, const QString &str);
+    /// Utility function for sending string message to the object
     void processMessageString(const char * id, const char * str);
     /// Utility function for sending a float message to the object
     void processMessageFloat(const char * id, float v);

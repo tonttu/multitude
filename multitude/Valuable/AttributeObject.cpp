@@ -118,12 +118,17 @@ namespace Valuable
                    typeid(*this).name());
   }
 
-  void Attribute::processMessageString(const char * id, const char * str)
+  void Attribute::processMessageString(const char * id, const QString & str)
   {
     Radiant::BinaryData bd;
     bd.writeString(str);
     bd.rewind();
     processMessage(id, bd);
+  }
+
+  void Attribute::processMessageString(const char *id, const char *str)
+  {
+    processMessageString(id, QString(str));
   }
 
   void Attribute::processMessageFloat(const char * id, float v)
