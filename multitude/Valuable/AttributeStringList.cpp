@@ -22,7 +22,10 @@ namespace Valuable
 
   bool AttributeStringList::set(const QString & v, Attribute::Layer layer, Attribute::ValueUnit)
   {
-    setValue(QStringList(v), layer);
+    if (v.isEmpty())
+      setValue(QStringList(), layer);
+    else
+      setValue(QStringList(v), layer);
     return true;
   }
 
@@ -43,7 +46,8 @@ namespace Valuable
   bool AttributeStringList::deserialize(const ArchiveElement & element)
   {
     /// @todo doesn't handle whitespace properly
-    setValue(element.get().split(" "));
+    const QString & tmp = element.get();
+    setValue(tmp.isEmpty() ? QStringList() : tmp.split(" "));
     return true;
   }
 } // namespace Valuable

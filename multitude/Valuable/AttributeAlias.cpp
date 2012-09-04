@@ -7,6 +7,7 @@ namespace Valuable
     , m_attribute(nullptr)
   {
     setAttribute(attribute);
+    setSerializable(false);
   }
 
   AttributeAlias::~AttributeAlias()

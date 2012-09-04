@@ -137,8 +137,10 @@ namespace Valuable
     QStringList out;
 
     for(int i = 0, s = m_values.size(); i < s; ++i) {
-      QVariant v = m_values[i];
-      int unit = m_units[i];
+      const QVariant v = m_values[i];
+      const int unit = m_units[i];
+      const Separator separator = m_separators[i];
+
       QString unitstr;
       if(unit == Attribute::VU_PXS)
         unitstr = "px";
@@ -164,6 +166,12 @@ namespace Valuable
                arg(c.alpha(), 2, 10, QLatin1Char('0'));
       } else {
         Radiant::error("StyleValue::stringify # Unknown variant type %d (%s)", t, v.typeName());
+        continue;
+      }
+      if (separator == Comma) {
+        out << ",";
+      } else if (separator == Slash) {
+        out << "/";
       }
     }
 

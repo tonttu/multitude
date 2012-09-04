@@ -68,10 +68,19 @@ namespace Valuable
       return true;
     }
 
-    virtual bool deserialize(const ArchiveElement &) OVERRIDE
+    virtual bool deserialize(const ArchiveElement & element) OVERRIDE
     {
-      /// @todo implement?
-      return false;
+      /// @todo implement this. Actually needs full CSS parser to parse everything properly..
+      if (element.get().isEmpty()) {
+        setValue(StyleValue());
+      }
+      return true;
+    }
+
+    virtual QString asString(bool * const ok) const OVERRIDE
+    {
+      if (ok) *ok = true;
+      return value().stringify();
     }
 
     virtual const char * type() const OVERRIDE { return "style-value"; }

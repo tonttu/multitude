@@ -41,6 +41,7 @@ namespace Valuable
   Attribute::Attribute()
   : m_host(0),
     m_changed(false),
+    m_serializable(true),
     m_transit(false),
     m_listenersId(0)
   {}
@@ -48,6 +49,7 @@ namespace Valuable
   Attribute::Attribute(Node * host, const QString & name, bool transit)
     : m_host(0),
       m_changed(false),
+      m_serializable(true),
       m_name(name),
       m_transit(transit),
       m_listenersId(0)
@@ -67,6 +69,7 @@ namespace Valuable
   Attribute::Attribute(const Attribute & o)
     : m_host(0)
     , m_changed(false)
+    , m_serializable(true)
     , m_listenersId(0)
   {
     *this = o;
@@ -316,6 +319,16 @@ namespace Valuable
   bool Attribute::shortcut() const
   {
     return false;
+  }
+
+  void Attribute::setSerializable(bool v)
+  {
+    m_serializable = v;
+  }
+
+  bool Attribute::serializable() const
+  {
+    return m_serializable;
   }
 
   bool Attribute::set(float, Layer, ValueUnit)

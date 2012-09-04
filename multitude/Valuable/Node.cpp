@@ -123,7 +123,9 @@ namespace Valuable
   public:
     Shortcut(Node * host, const QString & name)
       : Attribute(host, name)
-    {}
+    {
+      setSerializable(false);
+    }
     bool deserialize(const ArchiveElement &) { return false; }
     virtual bool shortcut() const { return true; }
     virtual const char * type() const { return "shortcut"; }
@@ -443,7 +445,8 @@ namespace Valuable
     for(container::const_iterator it = m_values.begin(); it != m_values.end(); it++) {
       Attribute * vo = it->second;
 
-      if(vo->shortcut())
+      /// @todo need to add new flag to Archive that controls how Attribute::serializable works
+      if (!vo->serializable())
         continue;
 
       if (!archive.checkFlag(Archive::ONLY_CHANGED) || vo->isChanged()) {

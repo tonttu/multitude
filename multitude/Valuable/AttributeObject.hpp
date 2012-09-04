@@ -272,6 +272,8 @@ namespace Valuable
     virtual void clearValue(Layer layout);
 
     virtual bool shortcut() const;
+    void setSerializable(bool v);
+    bool serializable() const;
 
 #ifdef MULTI_DOCUMENTER
     struct Doc
@@ -307,6 +309,7 @@ namespace Valuable
     // The object that holds this object
     Node * m_host;
     bool m_changed;
+    bool m_serializable;
     QString m_name;
     bool m_transit;
 

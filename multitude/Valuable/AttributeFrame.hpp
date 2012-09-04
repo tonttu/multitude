@@ -39,8 +39,10 @@ namespace Valuable
       m_values[2] = new AttributeFloat(host, name + "-bottom", v.bottom(), transit);
       m_values[3] = new AttributeFloat(host, name + "-left", v.left(), transit);
 
-      for (int i = 0; i < 4; ++i)
+      for (int i = 0; i < 4; ++i) {
         m_values[i]->addListener(std::bind(&AttributeFrame::emitChange, this));
+        m_values[i]->setSerializable(false);
+      }
     }
 
     virtual QString asString(bool * const ok = 0) const OVERRIDE
