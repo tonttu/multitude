@@ -177,11 +177,7 @@ namespace
         break;
     }
 
-#ifdef RADIANT_OSX
-    QString msg = QString("%1: %2").arg(s_src.get()).arg(buffer);
-#else
-    QString msg = QString("%1: %2").arg(s_src).arg(buffer);
-#endif
+    QString msg = QString("%1: %2").arg((const char*)s_src).arg(buffer);
 
     if(level > AV_LOG_WARNING) {
       Radiant::info("%s", msg.toUtf8().data());
