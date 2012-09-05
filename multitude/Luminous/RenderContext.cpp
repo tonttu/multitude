@@ -651,16 +651,20 @@ namespace Luminous
       linesegments = 32;
     }
 
+    /// The maximum supported linewidth is often quite low so we'll generate a triangle strip instead
     const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
-    auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, 0, linesegments + 1,
+    auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, 0, (linesegments + 1) * 2,
       program, style.strokeColor(), style.strokeWidth(), style);
 
     float step = (toRadians - fromRadians) / linesegments;
 
+    auto v = b.vertex;
     float angle = fromRadians;
     for (unsigned int i = 0; i <= linesegments; ++i) {
       Nimble::Vector2f c(std::cos(angle), std::sin(angle));
-      b.vertex[i].location = center + c * radius;
+      (v++)->location = center + c * (radius - style.strokeWidth());
+      (v++)->location = center + c * (radius + style.strokeWidth());
+
       angle += step;
     }
     b.uniform->depth = b.depth;
