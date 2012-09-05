@@ -65,12 +65,8 @@ namespace Luminous
     LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Matrix4f & value) = 0;
     LUMINOUS_API virtual void setShaderProgram(const Program & shader) = 0;
 
-    // Bind a hardwarebuffer for use as a vertex buffer
-    LUMINOUS_API virtual void setVertexBuffer(const Buffer & buffer) = 0;
-    // Bind a hardwarebuffer for use as an index buffer
-    LUMINOUS_API virtual void setIndexBuffer(const Buffer & buffer) = 0;
-    // Bind a hardwarebuffer for use as a uniform buffer
-    LUMINOUS_API virtual void setUniformBuffer(const Buffer & buffer) = 0;
+    // Bind a hardwarebuffer
+    LUMINOUS_API virtual void setBuffer(const Buffer & buffer, Buffer::Type type) = 0;
 
     // Setup the vertexbuffers and attributes
     LUMINOUS_API virtual void setVertexArray(const VertexArray & vertexArray) = 0;
