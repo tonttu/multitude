@@ -354,9 +354,13 @@ namespace Luminous
     void popScissorRect();
     const Nimble::Recti & currentScissorArea() const;
 
-    /// @todo REMOVE US
     static void setThreadContext(RenderContext * rsc);
+
+    /// Returns the RenderContext for the calling thread
+    /// @todo not really implemented on Windows
     static RenderContext * getThreadContext();
+
+    /// @todo REMOVE US
     void bindTexture(GLenum target, GLenum /*unit*/, GLuint name) {glBindTexture(target, name);}
     void bindBuffer(GLenum target, GLuint name) { glBindBuffer(target, name);}
     void bindProgram(GLSLProgramObject *) {}
@@ -368,29 +372,15 @@ namespace Luminous
     void flush2();
     void restart();
 
-  private:
+
     //////////////////////////////////////////////////////////////////////////
-    /// Direct mode API
+    /// <Luminousv2>
     //////////////////////////////////////////////////////////////////////////
-    friend class D;
-    friend class CustomOpenGL;
+
     void setBuffer(Luminous::Buffer & buffer, Buffer::Type type);
     void setVertexArray(const VertexArray & vertexArray);
-
     void setShaderProgram(const Program & program);
     template <typename T> bool setShaderUniform(const char * name, const T & value);
-
-    void draw(PrimitiveType primType, unsigned int offset, unsigned int primitives);
-    void drawIndexed(PrimitiveType primType, unsigned int offset, unsigned int primitives);
-
-    ProgramGL & handle(const Program & program);
-    TextureGL & handle(const Texture & texture);
-    RenderTargetGL & handle(const RenderTarget & target);
-    RenderBufferGL & handle(const RenderBuffer & buffer);
-    BufferGL & handle(const Buffer & buffer);
-    VertexArrayGL & handle(const VertexArray & vertexarray);
-
-  public:
 
     template <typename T>
     T * mapBuffer(const Buffer & buffer, Buffer::Type type, int offset, std::size_t length,
@@ -401,6 +391,9 @@ namespace Luminous
                          Radiant::FlagsT<Buffer::MapAccess> access);
 
     void unmapBuffer(const Buffer & buffer, Buffer::Type type, int offset = 0, std::size_t length = std::size_t(-1));
+
+    void draw(PrimitiveType primType, unsigned int offset, unsigned int primitives);
+    void drawIndexed(PrimitiveType primType, unsigned int offset, unsigned int primitives);
 
     void clear(ClearMask mask, const Radiant::Color & color = Radiant::Color(0,0,0,0), double depth = 1.0, int stencil = 0);
 
@@ -418,6 +411,12 @@ namespace Luminous
     RenderBuilder<Vertex, UniformBlock> render( bool translucent,
                                                 Luminous::PrimitiveType type, int indexCount, int vertexCount, float primitiveSize,
                                                 const Luminous::Program & program, const std::map<QByteArray, const Texture *> & textures);
+
+    ProgramGL & handle(const Program & program);
+    TextureGL & handle(const Texture & texture);
+    RenderTargetGL & handle(const RenderTarget & target);
+    BufferGL & handle(const Buffer & buffer);
+    VertexArrayGL & handle(const VertexArray & vertexarray);
 
     const Program & basicShader() const;
     const Program & texShader() const;
@@ -491,30 +490,11 @@ namespace Luminous
     Internal * m_data;
   };
 
-  class CustomOpenGL : Patterns::NotCopyable
+  class LUMINOUS_API CustomOpenGL : Patterns::NotCopyable
   {
   public:
-    LUMINOUS_API CustomOpenGL(RenderContext & r);
-    LUMINOUS_API ~CustomOpenGL();
-
-    /// @todo add functionality for use of uniform buffers
-    /// @todo add BlendMode, DepthMode, StencilMode etc
-    /// @todo add clear
-    inline void setBuffer(Luminous::Buffer & buffer, Buffer::Type type) { m_r.setBuffer(buffer, type); }
-    inline void setVertexArray(const VertexArray & vertexArray) { m_r.setVertexArray(vertexArray); }
-
-    inline void setShaderProgram(const Program & program) { m_r.setShaderProgram(program); }
-    template <typename T> inline bool setShaderUniform(const char * name, const T & value) { m_r.setShaderUniform(name, value); }
-
-    inline void draw(PrimitiveType primType, unsigned int offset, unsigned int primitives);
-    inline void drawIndexed(PrimitiveType primType, unsigned int offset, unsigned int primitives);
-
-    inline ProgramGL & handle(const Program & program) { return m_r.handle(program); }
-    inline TextureGL & handle(const Texture & texture) { return m_r.handle(texture); }
-    inline BufferGL & handle(const Buffer & buffer) { return m_r.handle(buffer); }
-    inline VertexArrayGL & handle(const VertexArray & vertexArray) { return m_r.handle(vertexArray); }
-    inline RenderBufferGL & handle(const RenderBuffer & buffer) { return m_r.handle(buffer); }
-    inline RenderTargetGL & handle(const RenderTarget & target) { return m_r.handle(target); }
+    CustomOpenGL(RenderContext & r);
+    ~CustomOpenGL();
 
   private:
     RenderContext & m_r;

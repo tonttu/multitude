@@ -549,6 +549,10 @@ namespace Luminous
   void RenderDriverGL::postFrame()
   {
     m_d->updateStatistics();
+
+    // No need to run this every frame
+    if((m_d->m_frame & 0x1f) != 0x1f)
+      return;
   }
 
   bool RenderDriverGL::initialize()
@@ -572,11 +576,26 @@ namespace Luminous
     m_d->m_masterRenderQueue.clear();
   }
 
-  void RenderDriverGL::setBuffer(const Buffer & buffer, Buffer::Type type)
+
+  void RenderDriverGL::setVertexBuffer(const Buffer & buffer)
   {
     auto & bufferGL = handle(buffer);
-    bufferGL.bind(type);
-    bufferGL.upload(buffer, type);
+    bufferGL.bind(Buffer::Vertex);
+    bufferGL.upload(buffer, Buffer::Vertex);
+  }
+
+  void RenderDriverGL::setIndexBuffer(const Buffer & buffer)
+  {
+    auto & bufferGL = handle(buffer);
+    bufferGL.bind(Buffer::Index);
+    bufferGL.upload(buffer, Buffer::Index);
+  }
+
+  void RenderDriverGL::setUniformBuffer(const Buffer & buffer)
+  {
+    auto & bufferGL = handle(buffer);
+    bufferGL.bind(Buffer::Uniform);
+    bufferGL.upload(buffer, Buffer::Uniform);
   }
 
   ProgramGL & RenderDriverGL::handle(const Program & program)
@@ -671,7 +690,6 @@ namespace Luminous
     m_d->newRenderQueueSegment(new CommandScissorGL(rect));
   }
 
-  /// @todo Warning when called outside of a CustomOpenGL guard
   void RenderDriverGL::setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer)
   {
     // Color buffers

@@ -1472,19 +1472,24 @@ namespace Luminous
   }
 
   //////////////////////////////////////////////////////////////////////////
-  // Luminousv2 direct-mode API
-  //
-  // These commands are executed directly.
-  // They are only called from the CustomOpenGL guard
-  //
-  //////////////////////////////////////////////////////////////////////////
+  // Luminousv2
+
   void RenderContext::setBuffer(Luminous::Buffer & buffer, Buffer::Type type)
   {
-    m_data->m_driver.setBuffer(buffer, type);
+    switch (type)
+    {
+    case Buffer::Vertex: m_data->m_driver.setVertexBuffer(buffer); break;
+    case Buffer::Index: m_data->m_driver.setIndexBuffer(buffer); break;
+    case Buffer::Uniform: m_data->m_driver.setUniformBuffer(buffer); break;
+    default:
+      assert(false);
+      Radiant::error("RenderContext::setBuffer - Buffertype %d not implemented", type);
+    }
   }
 
   void RenderContext::setVertexArray(const VertexArray & vertexArray)
   {
+    // Bind the VAO: Binds all the associated vertex buffers and sets the appropriate vertex attributes
     m_data->m_driver.setVertexArray(vertexArray);
   }
 
@@ -1501,6 +1506,11 @@ namespace Luminous
   void RenderContext::drawIndexed(PrimitiveType primType, unsigned int offset, unsigned int primitives)
   {
     m_data->m_driver.drawIndexed(primType, offset, primitives);
+  }
+
+  void RenderContext::clear(ClearMask mask, const Radiant::Color & color, double depth, int stencil)
+  {
+    m_data->m_driver.clear(mask, color, depth, stencil);
   }
 
   // Create all the setters for shader constants
@@ -1528,47 +1538,6 @@ namespace Luminous
     return m_data->m_driver.setShaderUniform(name, static_cast<Nimble::Vector4f>(value));
   }
 
-  TextureGL & RenderContext::handle(const Texture & texture)
-  {
-    assert(m_data->m_driverGL);
-    return m_data->m_driverGL->handle(texture);
-  }
-
-  BufferGL & RenderContext::handle(const Buffer & buffer)
-  {
-    assert(m_data->m_driverGL);
-    return m_data->m_driverGL->handle(buffer);
-  }
-
-  RenderTargetGL & RenderContext::handle(const RenderTarget & target)
-  {
-    assert(m_data->m_driverGL);
-    return m_data->m_driverGL->handle(target);
-  }
-
-  RenderBufferGL & RenderContext::handle(const RenderBuffer & buffer)
-  {
-    assert(m_data->m_driverGL);
-    return m_data->m_driverGL->handle(buffer);
-  }
-
-  ProgramGL & RenderContext::handle(const Program & program)
-  {
-    assert(m_data->m_driverGL);
-    return m_data->m_driverGL->handle(program);
-  }
-
-  //////////////////////////////////////////////////////////////////////////
-  // Deferred mode API
-  // 
-  // All these commands generate a RenderCommand that can be reordered
-  //
-  //////////////////////////////////////////////////////////////////////////
-  void RenderContext::clear(ClearMask mask, const Radiant::Color & color, double depth, int stencil)
-  {
-    m_data->m_driver.clear(mask, color, depth, stencil);
-  }
-
   const Program & RenderContext::basicShader() const
   {
     return m_data->m_basicShader;
@@ -1587,6 +1556,30 @@ namespace Luminous
   int RenderContext::uniformBufferOffsetAlignment() const
   {
     return m_data->m_uniformBufferOffsetAlignment;
+  }
+
+  TextureGL & RenderContext::handle(const Texture & texture)
+  {
+    assert(m_data->m_driverGL);
+    return m_data->m_driverGL->handle(texture);
+  }
+
+  BufferGL & RenderContext::handle(const Buffer & buffer)
+  {
+    assert(m_data->m_driverGL);
+    return m_data->m_driverGL->handle(buffer);
+  }
+
+  RenderTargetGL & RenderContext::handle(const RenderTarget & target)
+  {
+    assert(m_data->m_driverGL);
+    return m_data->m_driverGL->handle(target);
+  }
+
+  ProgramGL & RenderContext::handle(const Program & program)
+  {
+    assert(m_data->m_driverGL);
+    return m_data->m_driverGL->handle(program);
   }
 
   RenderTargetGuard RenderContext::pushRenderTarget(const RenderTarget &target)
