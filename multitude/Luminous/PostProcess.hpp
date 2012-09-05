@@ -2,6 +2,8 @@
 #define POSTPROCESSFACTORY_HPP
 
 #include <functional>
+#include <memory>
+#include <list>
 
 namespace Luminous
 {
