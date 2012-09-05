@@ -112,6 +112,8 @@ namespace Luminous
       for (int j = 0; j < lst->count(); ++j) {
         QTextBlock block = lst->item(j);
         QRectF rect = layout->blockBoundingRect(block);
+        const bool rtl = block.layout()->textOption().textDirection() == Qt::RightToLeft;
+
         QTextLayout textLayout("∙", block.charFormat().font());
         int size = textLayout.font().pixelSize();
 
@@ -123,9 +125,16 @@ namespace Luminous
         textLayout.endLayout();
         QRectF bullet = textLayout.boundingRect();
 
+        Nimble::Vector2f loc;
+        loc.y = rect.top() - bullet.top();
+        if (rtl) {
+          loc.x = rect.right() + bullet.right() * 1.5;
+        } else {
+          loc.x = rect.left() + indent - bullet.right() * 1.5;
+        }
+
         foreach (const QGlyphRun & glyphRun, textLayout.glyphRuns())
-          missingGlyphs |= generateGlyphs(Nimble::Vector2f(rect.left() + indent - bullet.right() * 1.5,
-                                                           rect.top() - bullet.top()), glyphRun);
+          missingGlyphs |= generateGlyphs(loc, glyphRun);
       }
     }
 
