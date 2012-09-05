@@ -135,7 +135,7 @@ namespace Valuable
   {
     return (m_listener == that.m_listener) && (m_from == that.m_from) &&
            (m_to == that.m_to)
-    #ifdef MULTI_WITH_V8
+    #ifdef CORNERSTONE_JS
         && (*m_funcv8 == *that.m_funcv8)
     #endif
         ;
@@ -171,7 +171,7 @@ namespace Valuable
 
       if(it->m_listener)
         it->m_listener->eventRemoveSource(this);
-#ifdef MULTI_WITH_V8
+#ifdef CORNERSTONE_JS
       else if(!it->m_funcv8.IsEmpty())
         it->m_funcv8.Dispose();
 #endif
@@ -329,7 +329,7 @@ namespace Valuable
     value->m_host = 0;
   }
 
-#ifdef MULTI_WITH_V8
+#ifdef CORNERSTONE_JS
 
   bool Node::setValue(const QString & name, v8::Handle<v8::Value> v)
   {
@@ -542,7 +542,7 @@ namespace Valuable
     }
   }
 
-#ifdef MULTI_WITH_V8
+#ifdef CORNERSTONE_JS
   void Node::eventAddListener(const QString & from,
                               const QString & to,
                               v8::Persistent<v8::Function> func,
@@ -729,7 +729,7 @@ namespace Valuable
     return m_eventListenNames.contains(id);
   }
 
-#ifdef MULTI_WITH_V8
+#ifdef CORNERSTONE_JS
   long Node::addListener(const QString & name, v8::Persistent<v8::Function> func, int role)
   {
     Attribute * attr = getValue(name);
@@ -812,7 +812,7 @@ namespace Valuable
             vp.m_listener->processMessage(vp.m_to, bdsend);
             vp.m_listener->m_sender = sender;
           }
-#ifdef MULTI_WITH_V8
+#ifdef CORNERSTONE_JS
         } else if(!vp.m_funcv8.IsEmpty()) {
           /// @todo what is the correct receiver ("this" in the callback)?
           /// @todo should we set m_sender or something similar?

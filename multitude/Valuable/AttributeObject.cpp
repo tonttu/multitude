@@ -221,7 +221,7 @@ namespace Valuable
     foreach(const AttributeListener & l, m_listeners) {
       if(l.role & CHANGE_ROLE) {
         if(!l.func) {
-#ifdef MULTI_WITH_V8
+#ifdef CORNERSTONE_JS
           /// @todo what is the correct receiver ("this" in the callback)?
           /// @todo is this legal without v8::HandleScope handle_scope;
           /// @todo is it legal to give null pointer to argv parameter?
@@ -239,7 +239,7 @@ namespace Valuable
     foreach(const AttributeListener & l, m_listeners) {
       if(l.role & DELETE_ROLE) {
         if(!l.func) {
-#ifdef MULTI_WITH_V8
+#ifdef CORNERSTONE_JS
           /// @todo what is the correct receiver ("this" in the callback)?
           l.scriptFunc->Call(v8::Context::GetCurrent()->Global(), 0, 0);
 #endif
@@ -272,7 +272,7 @@ namespace Valuable
     return id;
   }
 
-#ifdef MULTI_WITH_V8
+#ifdef CORNERSTONE_JS
   long Attribute::addListener(v8::Persistent<v8::Function> func, int role)
   {
     long id = m_listenersId++;

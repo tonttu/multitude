@@ -865,7 +865,7 @@ namespace Radiant {
     bzero(data(), m_size);
   }
 
-#ifdef MULTI_WITH_V8
+#ifdef CORNERSTONE_JS
 
   bool BinaryData::readTo(int & argc, v8::Handle<v8::Value> argv[])
   {

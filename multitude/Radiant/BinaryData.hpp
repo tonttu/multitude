@@ -29,7 +29,7 @@
 
 #include <QString>
 
-#ifdef MULTI_WITH_V8
+#ifdef CORNERSTONE_JS
 #include <v8.h>
 
 namespace v8 {
@@ -270,7 +270,7 @@ namespace Radiant {
     /// Copy a buffer object
     inline BinaryData & operator = (const BinaryData & that)
     { rewind(); append(that); return * this;}
-#ifdef MULTI_WITH_V8
+#ifdef CORNERSTONE_JS
     /// Copies the binary data stream to v8 value array
     /// v8 values have to be defined in stack, so we can't use std::vector etc
     /// @param argc in = size of argv, out = number of values filled

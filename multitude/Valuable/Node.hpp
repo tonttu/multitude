@@ -26,7 +26,7 @@
 #include <Radiant/Color.hpp>
 #include <Radiant/Trace.hpp>
 
-#ifdef MULTI_WITH_V8
+#ifdef CORNERSTONE_JS
 #include <v8.h>
 #endif
 
@@ -155,7 +155,7 @@ namespace Valuable
       return vo->set(v);
     }
 
-#ifdef MULTI_WITH_V8
+#ifdef CORNERSTONE_JS
 
     bool setValue(const QString & name, v8::Handle<v8::Value> v);
     bool setValue(const QString & name, v8::Local<v8::Value> v) {
@@ -234,7 +234,7 @@ namespace Valuable
       eventAddListener(from, to, obj, DIRECT, defaultData);
     }
 
-#ifdef MULTI_WITH_V8
+#ifdef CORNERSTONE_JS
     void eventAddListener(const QString & from,
                           const QString & to,
                           v8::Persistent<v8::Function> func,
@@ -324,7 +324,7 @@ namespace Valuable
     /// Returns set of all registered IN events
     const QSet<QString> & eventInNames() const { return m_eventListenNames; }
 
-#ifdef MULTI_WITH_V8
+#ifdef CORNERSTONE_JS
     long addListener(const QString & name, v8::Persistent<v8::Function> func,
                      int role = Attribute::CHANGE_ROLE);
 #endif
@@ -415,7 +415,7 @@ namespace Valuable
       Valuable::Node * m_listener;
       ListenerFunc m_func;
       ListenerFunc2 m_func2;
-#ifdef MULTI_WITH_V8
+#ifdef CORNERSTONE_JS
       v8::Persistent<v8::Function> m_funcv8;
 #endif
       Radiant::BinaryData   m_defaultData;
