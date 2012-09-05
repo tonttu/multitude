@@ -539,8 +539,8 @@ namespace Luminous
     m_d->removeResources();
 
     /// @todo Currently the RenderContext invalidates this cache every frame, even if it's not needed
-    m_d->m_stateGL.setProgram(0);
-    m_d->m_stateGL.setVertexArray(0);
+    //m_d->m_stateGL.setProgram(0);
+    //m_d->m_stateGL.setVertexArray(0);
 
     // Update the frame time in current state
     m_d->m_stateGL.setFrameTime(Radiant::TimeStamp::currentTime());
@@ -671,7 +671,6 @@ namespace Luminous
     m_d->newRenderQueueSegment(new CommandScissorGL(rect));
   }
 
-  /// @todo Warning when called outside of a CustomOpenGL guard
   void RenderDriverGL::setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer)
   {
     // Color buffers
