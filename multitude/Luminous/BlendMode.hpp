@@ -70,5 +70,16 @@ namespace Luminous
     Function m_srcFunction;
     Function m_dstFunction;
   };
+
+  inline bool operator!=(const BlendMode & lhs, const BlendMode & rhs)
+  {
+    return
+      lhs.equation() != rhs.equation()
+      || lhs.sourceFunction() != rhs.sourceFunction()
+      || lhs.destFunction() != rhs.destFunction()
+      || lhs.constantColor() != rhs.constantColor();
+  }
+
+  inline bool operator==(const BlendMode & lhs, const BlendMode & rhs) { return !(lhs!=rhs); }
 }
 #endif // LUMINOUS_BLENDMODE_HPP

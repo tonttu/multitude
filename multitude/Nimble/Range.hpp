@@ -67,6 +67,14 @@ namespace Nimble {
       return m_low == that.m_low && m_high == that.m_high;
     }
 
+    /// Compares two RangeT objects.
+    /// @param that Other range to compare to
+    /// @return This function returns true if the two ranges are different.
+    inline bool operator != (const RangeT & that) const
+    {
+      return !(*this == that);
+    }
+
     /// Expands the range to include the given value
     inline void expand(const T & v)
     {

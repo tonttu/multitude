@@ -36,5 +36,14 @@ namespace Luminous
     Function m_function;
     Nimble::Rangef m_range;
   };
+
+  inline bool operator!=(const DepthMode & lhs, const DepthMode & rhs)
+  {
+    return
+      lhs.function() != rhs.function()
+      || lhs.range() != rhs.range();
+  }
+
+  inline bool operator==(const DepthMode & lhs, const DepthMode & rhs) { return !(lhs!=rhs); }
 }
 #endif // LUMINOUS_DEPTHMODE_HPP

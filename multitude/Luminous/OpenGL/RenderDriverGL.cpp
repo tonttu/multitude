@@ -60,6 +60,9 @@ namespace Luminous
     VertexArrayGL * vertexArray;
     BufferGL * uniformBuffer;
     std::array<TextureGL*, 8> textures;
+    BlendMode blendMode;
+    StencilMode stencilMode;
+    DepthMode depthMode;
 
     bool operator<(const RenderState & o) const
     {
@@ -329,9 +332,12 @@ namespace Luminous
       GLERROR("RenderDriverGL::flush # glPointSize");
     }
 
-    m_driver.setBlendMode(cmd.blendMode);
-    m_driver.setDepthMode(cmd.depthMode);
-    m_driver.setStencilMode(cmd.stencilMode);
+    if (m_state.blendMode != cmd.blendMode)
+      m_driver.setBlendMode(cmd.blendMode);
+    if (m_state.depthMode != cmd.depthMode)
+      m_driver.setDepthMode(cmd.depthMode);
+    if (m_state.stencilMode != cmd.stencilMode)
+      m_driver.setStencilMode(cmd.stencilMode);
 
     if (cmd.indexed) {
       // Draw using the index buffer
@@ -551,6 +557,7 @@ namespace Luminous
 
   bool RenderDriverGL::initialize()
   {
+    setDefaultState();
     return true;
   }
 
@@ -642,6 +649,7 @@ namespace Luminous
 
   void RenderDriverGL::setBlendMode( const BlendMode & mode )
   {
+    m_d->m_state.blendMode = mode;
     glEnable(GL_BLEND);
     glBlendColor(mode.constantColor().red(), mode.constantColor().green(), mode.constantColor().blue(), mode.constantColor().alpha() );
     GLERROR("RenderDriverGL::setBlendMode # glBlendColor");
@@ -653,6 +661,7 @@ namespace Luminous
 
   void RenderDriverGL::setDepthMode(const DepthMode & mode)
   {
+    m_d->m_state.depthMode = mode;
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(mode.function());
     GLERROR("RenderDriverGL::setDepthMode # glDepthFunc");
@@ -662,6 +671,7 @@ namespace Luminous
 
   void RenderDriverGL::setStencilMode( const StencilMode & mode )
   {
+    m_d->m_state.stencilMode = mode;
     glEnable(GL_STENCIL_TEST);
     glStencilFunc(mode.function(), mode.refValue(), mode.maskValue());
     GLERROR("RenderDriverGL::setStencilMode # glStencilFunc");
@@ -732,8 +742,10 @@ namespace Luminous
     // Debug: output some render stats
     //m_d->debugOutputStats();
 
+    /// @note this shouldn't be needed and only results in unnecessary state changes.
+    /// Every state-change is tracked already or the state is reset by the customOpenGL guard
     // Reset the OpenGL state to default
-    setDefaultState();
+    // setDefaultState();
 
     // Iterate over the segments of the master render queue executing the
     // stored render commands

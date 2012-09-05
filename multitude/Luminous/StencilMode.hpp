@@ -65,5 +65,18 @@ namespace Luminous
     int m_refValue;
     unsigned int m_maskValue;
   };
+
+  inline bool operator!=(const StencilMode & lhs, const StencilMode & rhs)
+  {
+    return
+      lhs.stencilFailOperation() != rhs.stencilFailOperation()
+      || lhs.depthFailOperation() != rhs.depthFailOperation()
+      || lhs.passOperation() != rhs.passOperation()
+      || lhs.function() != rhs.function()
+      || lhs.refValue() != rhs.refValue()
+      || lhs.maskValue() != rhs.maskValue();
+  }
+
+  inline bool operator==(const StencilMode & lhs, const StencilMode & rhs) { return !(lhs!=rhs); }
 }
 #endif // LUMINOUS_STENCILMODE_HPP
