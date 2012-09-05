@@ -125,7 +125,7 @@ namespace Valuable
     virtual bool deserialize(const ArchiveElement &) OVERRIDE
     {
       /// @todo implement
-      return false;
+      return true;
     }
 
     virtual void processMessage(const QByteArray &, Radiant::BinaryData & data) OVERRIDE
