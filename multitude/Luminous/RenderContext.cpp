@@ -1271,6 +1271,10 @@ namespace Luminous
 
     uniform.colorIn = style.fillColor();
     uniform.colorOut = style.strokeColor();
+
+    uniform.colorIn.w *= opacity();
+    uniform.colorOut.w *= opacity();
+
     drawTextImpl(layout, location, Nimble::Vector2f(0, 0), viewRect, style, uniform, fontShader(), model);
   }
 
