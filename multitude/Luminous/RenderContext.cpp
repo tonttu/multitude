@@ -1226,6 +1226,7 @@ namespace Luminous
   {
     assert(style.strokeWidth() > 0.f);
     const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
+    /// @todo Can't rely on supported line sizes. Should just make triangle strips for values > 1
     auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, 0, numPoints, program, style.strokeColor(), style.strokeWidth(), style);
     for (size_t i = 0; i < numPoints; ++i)
       b.vertex[i].location = points[i];
@@ -1234,6 +1235,7 @@ namespace Luminous
 
   void RenderContext::drawPoints(const Nimble::Vector2f * points, size_t numPoints, const Luminous::Style & style)
   {
+    /// @todo Can't rely on supported point sizes. Should this just call drawCircle instead for values > 1
     const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
     auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_Point, 0, numPoints, program, style.strokeColor(), style.strokeWidth(), style);
     for (size_t i = 0; i < numPoints; ++i)
