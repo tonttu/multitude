@@ -193,6 +193,7 @@ namespace Luminous
     SharedBuffer(Buffer::Type type) : type(type), reservedBytes(0) {}
     SharedBuffer(SharedBuffer && shared)
       : buffer(std::move(shared.buffer)),
+        type(shared.type),
         reservedBytes(shared.reservedBytes)
     {}
     SharedBuffer & operator=(SharedBuffer && shared)
