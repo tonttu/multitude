@@ -4,6 +4,7 @@
 #include <QTextCursor>
 #include <QTextBlock>
 #include <QAbstractTextDocumentLayout>
+#include <QTextList>
 
 namespace Luminous
 {
@@ -98,6 +99,34 @@ namespace Luminous
       const Nimble::Vector2f layoutLocation(layout->position().x(), layout->position().y());
       foreach (const QGlyphRun & glyphRun, layout->glyphRuns())
         missingGlyphs |= generateGlyphs(layoutLocation, glyphRun);
+    }
+
+    QAbstractTextDocumentLayout * layout = m_d->m_doc.documentLayout();
+    for (int i = 0; ; ++i) {
+      QTextObject * obj = m_d->m_doc.object(i);
+      if (!obj) break;
+      QTextList * lst = dynamic_cast<QTextList*>(obj);
+      if (!lst) continue;
+
+      QTextListFormat fmt = lst->format();
+      for (int j = 0; j < lst->count(); ++j) {
+        QTextBlock block = lst->item(j);
+        QRectF rect = layout->blockBoundingRect(block);
+        QTextLayout textLayout("∙", block.charFormat().font());
+        int size = textLayout.font().pixelSize();
+
+        textLayout.beginLayout();
+        QTextLine line = textLayout.createLine();
+        int indent = m_d->m_doc.indentWidth() * fmt.indent();
+        line.setLineWidth(size);
+        line.setPosition(QPointF(0, 0));
+        textLayout.endLayout();
+        QRectF bullet = textLayout.boundingRect();
+
+        foreach (const QGlyphRun & glyphRun, textLayout.glyphRuns())
+          missingGlyphs |= generateGlyphs(Nimble::Vector2f(rect.left() + indent - bullet.right() * 1.5,
+                                                           rect.top() - bullet.top()), glyphRun);
+      }
     }
 
     setGlyphsReady(!missingGlyphs);
