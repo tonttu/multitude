@@ -6,6 +6,8 @@
 #include <QAbstractTextDocumentLayout>
 #include <QTextList>
 
+#include <memory>
+
 namespace Luminous
 {
   class RichTextLayout::D : public QObject
@@ -19,7 +21,9 @@ namespace Luminous
 
   public:
     RichTextLayout & m_host;
-    QTextDocument m_doc;
+    std::unique_ptr<QTextDocument> m_doc;
+
+    QTextDocument & doc();
 
   private slots:
     void changed();
@@ -31,13 +35,12 @@ namespace Luminous
   RichTextLayout::D::D(RichTextLayout & host)
     : m_host(host)
   {
-    connect(&m_doc, SIGNAL(documentLayoutChanged()), this, SLOT(changed()));
   }
 
   void RichTextLayout::D::disableHinting()
   {
-    QTextCursor cursor(&m_doc);
-    for (QTextBlock block = m_doc.begin(); block.isValid(); block = block.next()) {
+    QTextCursor cursor(&doc());
+    for (QTextBlock block = doc().begin(); block.isValid(); block = block.next()) {
       for (auto it = block.begin(); it != block.end(); ++it) {
         QTextFragment fragment = it.fragment();
         if (!fragment.isValid())
@@ -53,6 +56,16 @@ namespace Luminous
         cursor.setCharFormat(fmt);
       }
     }
+  }
+
+  QTextDocument & RichTextLayout::D::doc()
+  {
+    if (m_doc)
+      return *m_doc;
+
+    m_doc.reset(new QTextDocument());
+    connect(m_doc.get(), SIGNAL(documentLayoutChanged()), this, SLOT(changed()));
+    return *m_doc;
   }
 
   void RichTextLayout::D::changed()
@@ -79,8 +92,8 @@ namespace Luminous
     if (!isLayoutReady()) {
       // trigger relayout in Qt
       m_d->disableHinting();
-      m_d->m_doc.setTextWidth(maximumSize().x);
-      QSizeF size = m_d->m_doc.documentLayout()->documentSize();
+      m_d->doc().setTextWidth(maximumSize().x);
+      QSizeF size = m_d->doc().documentLayout()->documentSize();
       setBoundingBox(Nimble::Rectf(0, 0, size.width(), size.height()));
 
       setLayoutReady(true);
@@ -94,16 +107,16 @@ namespace Luminous
 
     bool missingGlyphs = false;
 
-    for (QTextBlock block = m_d->m_doc.begin(); block.isValid(); block = block.next()) {
+    for (QTextBlock block = m_d->doc().begin(); block.isValid(); block = block.next()) {
       QTextLayout * layout = block.layout();
       const Nimble::Vector2f layoutLocation(layout->position().x(), layout->position().y());
       foreach (const QGlyphRun & glyphRun, layout->glyphRuns())
         missingGlyphs |= generateGlyphs(layoutLocation, glyphRun);
     }
 
-    QAbstractTextDocumentLayout * layout = m_d->m_doc.documentLayout();
+    QAbstractTextDocumentLayout * layout = m_d->doc().documentLayout();
     for (int i = 0; ; ++i) {
-      QTextObject * obj = m_d->m_doc.object(i);
+      QTextObject * obj = m_d->doc().object(i);
       if (!obj) break;
       QTextList * lst = dynamic_cast<QTextList*>(obj);
       if (!lst) continue;
@@ -119,7 +132,7 @@ namespace Luminous
 
         textLayout.beginLayout();
         QTextLine line = textLayout.createLine();
-        int indent = m_d->m_doc.indentWidth() * fmt.indent();
+        int indent = m_d->doc().indentWidth() * fmt.indent();
         line.setLineWidth(size);
         line.setPosition(QPointF(0, 0));
         textLayout.endLayout();
@@ -143,12 +156,12 @@ namespace Luminous
 
   QTextDocument & RichTextLayout::document()
   {
-    return m_d->m_doc;
+    return m_d->doc();
   }
 
   const QTextDocument & RichTextLayout::document() const
   {
-    return m_d->m_doc;
+    return m_d->doc();
   }
 
 } // namespace Luminous
