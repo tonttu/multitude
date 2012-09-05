@@ -45,6 +45,10 @@ render_es2 {
   DEFINES += CORNERSTONE_RENDER_ES2=1
 }
 
+enable-js {
+  DEFINES += CORNERSTONE_JS=1
+}
+
 INCLUDEPATH += $$PWD
 !mobile:INCLUDEPATH += $$PWD/v8/include
 DEPENDPATH += $$PWD

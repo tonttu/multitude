@@ -543,8 +543,8 @@ namespace Valuable
   }
 
 #ifdef CORNERSTONE_JS
-  void Node::eventAddListener(const QString & from,
-                              const QString & to,
+  void Node::eventAddListener(const QByteArray & from,
+                              const QByteArray & to,
                               v8::Persistent<v8::Function> func,
                               const Radiant::BinaryData * defaultData)
   {
@@ -554,7 +554,7 @@ namespace Valuable
     vp.m_to = to;
 
     if(!m_eventSendNames.contains(from)) {
-      warning("Node::eventAddListener # Adding listener to nonexistent event '%s'", from.toUtf8().data());
+      warning("Node::eventAddListener # Adding listener to nonexistent event '%s'", from.data());
     }
 
     if(defaultData)
@@ -563,7 +563,7 @@ namespace Valuable
     if(std::find(m_elisteners.begin(), m_elisteners.end(), vp) !=
        m_elisteners.end())
       debug("Widget::eventAddListener # Already got item %s -> %s",
-            from.toUtf8().data(), to.toUtf8().data());
+            from.data(), to.data());
     else {
       m_elisteners.push_back(vp);
     }
@@ -820,7 +820,7 @@ namespace Valuable
           /// @todo Instead of HandleScope use Scripting::Lock
           v8::HandleScope handle_scope;
           v8::Local<v8::Value> argv[10];
-          argv[0] = v8::String::New(vp.m_to.utf16());
+          argv[0] = v8::String::New(vp.m_to.data(), vp.m_to.size());
           int argc = 9;
           bdsend.readTo(argc, argv + 1);
           vp.m_funcv8->Call(v8::Context::GetCurrent()->Global(), argc+1, argv);

@@ -235,11 +235,11 @@ namespace Valuable
     }
 
 #ifdef CORNERSTONE_JS
-    void eventAddListener(const QString & from,
-                          const QString & to,
+    void eventAddListener(const QByteArray & from,
+                          const QByteArray & to,
                           v8::Persistent<v8::Function> func,
                           const Radiant::BinaryData * defaultData = 0);
-    void eventAddListener(const QString & from,
+    void eventAddListener(const QByteArray & from,
                           v8::Persistent<v8::Function> func,
                           const Radiant::BinaryData * defaultData = 0)
     {
