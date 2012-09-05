@@ -504,7 +504,7 @@ namespace Luminous
     inline void setVertexArray(const VertexArray & vertexArray) { m_r.setVertexArray(vertexArray); }
 
     inline void setShaderProgram(const Program & program) { m_r.setShaderProgram(program); }
-    template <typename T> inline bool setShaderUniform(const char * name, const T & value) { m_r.setShaderUniform(name, value); }
+    template <typename T> inline bool setShaderUniform(const char * name, const T & value) { return m_r.setShaderUniform(name, value); }
 
     inline void draw(PrimitiveType primType, unsigned int offset, unsigned int primitives);
     inline void drawIndexed(PrimitiveType primType, unsigned int offset, unsigned int primitives);
