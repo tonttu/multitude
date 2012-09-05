@@ -1171,7 +1171,7 @@ namespace Luminous
   {
     assert(style.strokeWidth() > 0.f);
     const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
-    auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, 0, 2, program, style.strokeColor(), style.strokeWidth(), style);
+    auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_Line, 0, 2, program, style.strokeColor(), style.strokeWidth(), style);
     b.vertex[0].location = p1;
     b.vertex[1].location = p2;
     b.uniform->depth = b.depth;
