@@ -343,13 +343,14 @@ namespace Luminous
       // Draw using the index buffer
       glDrawElementsBaseVertex(cmd.primitiveType, cmd.primitiveCount, GL_UNSIGNED_INT,
                                (GLvoid *)((sizeof(uint) * cmd.indexOffset)), cmd.vertexOffset);
+      GLERROR("RenderDriverGL::flush # glDrawElementsBaseVertex");
     }
     else {
       // Draw non-indexed
       glDrawArrays(cmd.primitiveType, cmd.vertexOffset, cmd.primitiveCount);
+      GLERROR("RenderDriverGL::flush # glDrawArrays");
     }
 
-    GLERROR("RenderDriverGL::flush # glDrawElementsBaseVertex");
   }
   
   RenderCommand & RenderDriverGL::D::createRenderCommand(bool translucent,
