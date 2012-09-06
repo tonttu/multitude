@@ -227,7 +227,8 @@ namespace {
         Luminous::ScreenInfo screenInfo;
         screenInfo.setName(currentDisplay.strDisplayName);
         screenInfo.setGpuName(currentAdapter.strAdapterName);
-        screenInfo.setNumId(displayIdx);
+        //start at 1
+        screenInfo.setNumId(displayIdx+1);
 
         int gpuID = 0;
         ADL_Adapter_ID_Get(adapterInfo[adapterIdx].iAdapterIndex, &gpuID);
