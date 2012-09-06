@@ -167,7 +167,8 @@ namespace Radiant
         QFile::remove(filename);
       return QFile::rename(tmpname, filename);
     } else {
-      Radiant::warning("FileUtils::writeTextFile # Failed to write to %s", tmpname.toUtf8().data());
+      Radiant::warning("FileUtils::writeTextFile # Failed to write to %s: %s",
+                       tmpname.toUtf8().data(), tmp.errorString().toUtf8().data());
       if(file.open(QIODevice::WriteOnly)) {
         if(file.write(contents, len) != len) {
           /// @todo does this check actually fail on windows, when doing some line change conversions?
@@ -176,7 +177,8 @@ namespace Radiant
         }
         return true;
       } else {
-        Radiant::warning("FileUtils::writeTextFile # Failed to write to %s", filename);
+        Radiant::error("FileUtils::writeTextFile # Failed to write to %s: %s",
+                       filename, file.errorString().toUtf8().data());
         return false;
       }
     }
