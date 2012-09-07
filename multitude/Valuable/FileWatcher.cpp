@@ -275,8 +275,9 @@ namespace Valuable
 
   void FileWatcher::clear()
   {
-    m_d->m_watcher.removePaths(m_d->m_watcher.files());
-    m_d->m_watcher.removePaths(m_d->m_watcher.directories());
+    QStringList paths = m_d->m_watcher.files() + m_d->m_watcher.directories();
+    if (!paths.isEmpty())
+      m_d->m_watcher.removePaths(paths);
     m_d->m_directoryFiles.clear();
     m_d->m_delayedEvents.clear();
   }
