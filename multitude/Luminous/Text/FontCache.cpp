@@ -510,6 +510,16 @@ namespace Luminous
     }
   }
 
+  TextureAtlasGroup<FontCache::Glyph> & FontCache::atlas()
+  {
+    return s_atlas;
+  }
+
+  Radiant::Mutex & FontCache::atlasMutex()
+  {
+    return s_atlasMutex;
+  }
+
   FontCache::Glyph * FontCache::glyph(quint32 glyph)
   {
     Radiant::Guard g(m_d->m_cacheMutex);

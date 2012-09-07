@@ -70,17 +70,19 @@ namespace Luminous
   ///////////////////////////////////////////////////////////////////////////////
 
   template <typename Item>
-  class TextureAtlasGroup
+  class TextureAtlasGroup : public Valuable::Node
   {
   public:
     TextureAtlasGroup(const Luminous::PixelFormat & pixelFormat);
-    ~TextureAtlasGroup() { }
+    virtual ~TextureAtlasGroup() { }
 
     void clear();
 
     Item & insert(Nimble::Vector2i size);
 
     void save(const QString & basename);
+
+    const std::vector<std::unique_ptr<TextureAtlas>> & atlases() const { return m_atlases; }
 
   private:
     const Luminous::PixelFormat m_pixelFormat;
@@ -95,6 +97,7 @@ namespace Luminous
   TextureAtlasGroup<Item>::TextureAtlasGroup(const Luminous::PixelFormat & pixelFormat)
     : m_pixelFormat(pixelFormat)
   {
+    eventAddOut("changed");
   }
 
   template <typename Item>
@@ -109,7 +112,7 @@ namespace Luminous
   {
     /// @todo configure, check for hw limits
     /// @todo does the distance field shader anti-aliasing break if the texture size changes?
-    const int baseSize = 2048;
+    const int baseSize = 4096;
     const int maxSize = 8*1024;
 
     m_items.emplace_back(new Item());
@@ -119,6 +122,7 @@ namespace Luminous
       if (i == s) {
         int size = std::min(maxSize, baseSize << i);
         m_atlases.emplace_back(new TextureAtlas(Nimble::Vector2i(size, size), m_pixelFormat));
+        eventSend("changed");
       }
       TextureAtlas & atlas = *m_atlases[i];
       TextureAtlas::NodePtr node = atlas.insert(size);

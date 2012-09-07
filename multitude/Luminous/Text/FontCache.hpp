@@ -44,6 +44,11 @@ namespace Luminous
 
     LUMINOUS_API static void deinitialize();
 
+    /// @cond
+    LUMINOUS_API static TextureAtlasGroup<Glyph> & atlas();
+    LUMINOUS_API static Radiant::Mutex & atlasMutex();
+    /// @endcond
+
   private:
     FontCache(const QRawFont & rawFont);
 
