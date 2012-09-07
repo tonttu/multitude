@@ -182,6 +182,8 @@ namespace Luminous
             const int bytesPerScanline = rect.width() * texture.dataFormat().bytesPerPixel();
             // Number of scanlines to upload
             const size_t scanLines = std::min<int32_t>(rect.height(), bytesFree / bytesPerScanline);
+            if (scanLines == 0)
+              break;
 
             auto data = static_cast<const char *>(texture.data()) + (rect.left() + rect.top() * texture.width()) *
                 texture.dataFormat().bytesPerPixel();
@@ -191,7 +193,7 @@ namespace Luminous
                             texture.dataFormat().layout(), texture.dataFormat().type(), data);
             GLERROR("TextureGL::upload # glTexSubImage2D");
             uploaded += bytesPerScanline * scanLines;
-            bytesFree -= uploaded;
+            bytesFree -= bytesPerScanline * scanLines;
 
             if (int(scanLines) != rect.height()) {
               m_dirtyRegion -= QRegion(rect.left(), rect.top(), rect.width(), scanLines);
