@@ -64,6 +64,7 @@ namespace Luminous
       return *m_doc;
 
     m_doc.reset(new QTextDocument());
+    connect(m_doc.get(), SIGNAL(contentsChanged()), this, SLOT(changed()));
     connect(m_doc.get(), SIGNAL(documentLayoutChanged()), this, SLOT(changed()));
     return *m_doc;
   }
