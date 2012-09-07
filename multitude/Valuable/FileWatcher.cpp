@@ -271,6 +271,13 @@ namespace Valuable
     return m_d->m_watcher.removePaths(paths);
   }
 
+  void FileWatcher::clear()
+  {
+    m_d->m_watcher.removePaths(m_d->m_watcher.files());
+    m_d->m_watcher.removePaths(m_d->m_watcher.directories());
+    m_d->m_directoryFiles.clear();
+    m_d->m_delayedEvents.clear();
+  }
 }
 
 #include "FileWatcher.moc"

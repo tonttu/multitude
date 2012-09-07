@@ -40,6 +40,7 @@ namespace Valuable
 
     void removePath(const QString & path);
     void removePaths(const QStringList & paths);
+    void clear();
 
   private:
     class D;
