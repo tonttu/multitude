@@ -280,13 +280,14 @@ namespace Luminous
 
     QPainterPath path = rawFont.pathForGlyph(glyphIndex);
     if (path.isEmpty()) {
-      QSettings settings(indexFileName(), QSettings::IniFormat);
+      /// @todo sometimes glyph generation seems to fail, do not ever cache empty glyphs
+      /*QSettings settings(indexFileName(), QSettings::IniFormat);
 
       settings.beginGroup(m_cache.m_rawFontKey);
       settings.beginGroup(QString::number(glyphIndex));
       settings.setValue("rect", QRectF());
       settings.endGroup();
-      settings.endGroup();
+      settings.endGroup();*/
 
       return &s_emptyGlyph;
     }
@@ -367,7 +368,8 @@ namespace Luminous
     if (it != m_cache.m_fileCache.end()) {
       const FontCache::D::FileCacheItem & item = it->second;
       if (item.rect.isEmpty())
-        return &s_emptyGlyph;
+        //return &s_emptyGlyph;
+        return generateGlyph(glyphIndex);
 
       Luminous::Image img;
       if (loadImage(img, item.src)) {
