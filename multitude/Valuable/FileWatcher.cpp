@@ -162,6 +162,8 @@ namespace Valuable
     void fileChanged(const QString & relativePath)
     {
       const QString path = QFileInfo(relativePath).absoluteFilePath();
+      m_watcher.removePath(path);
+      m_watcher.addPath(path);
 
       // We can't assume that directory changed preceeds file changed event, so
       // we must always delay file changed events
