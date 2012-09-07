@@ -392,18 +392,18 @@ namespace Valuable
   }
 #endif
 
-  bool Node::saveToFileXML(const QString & filename)
+  bool Node::saveToFileXML(const QString & filename, unsigned int opts)
   {
-    bool ok = Serializer::serializeXML(filename, this);
+    bool ok = Serializer::serializeXML(filename, this, opts);
     if (!ok) {
       Radiant::error("Node::saveToFileXML # object failed to serialize (%s)", filename.toUtf8().data());
     }
     return ok;
   }
 
-  bool Node::saveToMemoryXML(QByteArray & buffer)
+  bool Node::saveToMemoryXML(QByteArray & buffer, unsigned int opts)
   {
-    XMLArchive archive;
+    XMLArchive archive(opts);
     archive.setRoot(serialize(archive));
 
     return archive.writeToMem(buffer);

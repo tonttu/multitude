@@ -164,9 +164,9 @@ namespace Valuable
 #endif
 
     /// Saves this object (and its children) to an XML file
-    bool saveToFileXML(const QString & filename);
+    bool saveToFileXML(const QString & filename, unsigned int opts = SerializationOptions::DEFAULTS);
     /// Saves this object (and its children) to binary data buffer
-    bool saveToMemoryXML(QByteArray & buffer);
+    bool saveToMemoryXML(QByteArray & buffer, unsigned int opts = SerializationOptions::DEFAULTS);
 
     /// Reads this object (and its children) from an XML file
     bool loadFromFileXML(const QString & filename);
