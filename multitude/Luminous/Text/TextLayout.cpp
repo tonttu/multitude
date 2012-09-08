@@ -52,7 +52,6 @@ namespace Luminous
     img.save("/tmp/qlayout.png");*/
   }
 
-  /// @todo what should be thread-safe?
   bool TextLayout::D::generate(const Nimble::Vector2f & layoutLocation,
                                const QGlyphRun & glyphRun)
   {

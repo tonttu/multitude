@@ -29,6 +29,7 @@ namespace Luminous {
 
     LUMINOUS_API bool isLayoutReady() const;
     LUMINOUS_API bool isComplete() const;
+    /// Not thread safe
     LUMINOUS_API virtual void generate() = 0;
 
     LUMINOUS_API void invalidate();
