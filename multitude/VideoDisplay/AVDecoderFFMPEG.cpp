@@ -9,6 +9,7 @@
 
 #include <Radiant/Allocators.hpp>
 #include <Radiant/Trace.hpp>
+#include <Radiant/ResourceLocator.hpp>
 #include <Radiant/Sleep.hpp>
 
 #include <Resonant/DSPNetwork.hpp>
@@ -517,7 +518,14 @@ namespace VideoPlayer2
     AVInputFormat * inputFormat = nullptr;
     AVDictionary * avoptions = nullptr;
 
-    QByteArray errorMsg("AVDecoderFFMPEG::D::open # " + options.src.toUtf8() + ":");
+    QString src(options.src);
+    QStringList srcs = Radiant::ResourceLocator::instance()->locate(options.src);
+
+    if(!srcs.empty())
+      src = srcs.front();
+
+
+    QByteArray errorMsg("AVDecoderFFMPEG::D::open # " + src.toUtf8() + ":");
 
     if(!options.demuxerOptions.isEmpty()) {
       for(auto it = options.demuxerOptions.begin(); it != options.demuxerOptions.end(); ++it) {
@@ -538,7 +546,7 @@ namespace VideoPlayer2
     }
 
     // Open the actual video, should be thread-safe
-    int err = avformat_open_input(&av.formatContext, options.src.toUtf8().data(),
+    int err = avformat_open_input(&av.formatContext, src.toUtf8().data(),
                                   inputFormat, &avoptions);
 
     {
