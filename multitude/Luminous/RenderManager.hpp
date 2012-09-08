@@ -45,6 +45,9 @@ namespace Luminous
     LUMINOUS_API static int frameTime();
     LUMINOUS_API static void updateFrameTime();
 
+    LUMINOUS_API static void setThreadIndex(unsigned idx);
+    LUMINOUS_API static unsigned threadIndex();
+
     template <typename T> static T * getResource( RenderResource::Id id );
 
   private:
