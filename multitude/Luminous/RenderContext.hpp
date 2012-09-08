@@ -62,68 +62,6 @@ namespace Luminous
     };
 
 /// @cond
-
-    class FBOPackage;
-
-    class LUMINOUS_API FBOPackage : public GLResource
-    {
-    public:
-      friend class FBOHolder;
-      friend class RenderContext;
-
-      FBOPackage(Luminous::RenderContext *res = 0) : GLResource(res), m_fbo(res), m_rbo(res), m_tex(res), m_users(0) {}
-      virtual ~FBOPackage();
-
-      void setSize(Nimble::Vector2i size);
-      void attach();
-
-      void activate(RenderContext & r);
-      void deactivate(RenderContext & r);
-
-      Luminous::Texture2D & texture() { return m_tex; }
-
-    private:
-
-      int userCount() const { return m_users; }
-
-      Luminous::Framebuffer   m_fbo;
-      Luminous::Renderbuffer  m_rbo;
-      Luminous::Texture2D     m_tex;
-      int m_users;
-    };
-
-/// @endcond
-
-/// @cond
-    /** Experimental support for getting temporary FBOs for this context.
-        */
-    class FBOHolder
-    {
-      friend class RenderContext;
-    public:
-
-      LUMINOUS_API FBOHolder();
-      LUMINOUS_API FBOHolder(RenderContext * context, std::shared_ptr<FBOPackage> package);
-      LUMINOUS_API FBOHolder(const FBOHolder & that);
-
-      LUMINOUS_API ~FBOHolder();
-
-      /** Copies the data pointers from the argument object. */
-      LUMINOUS_API FBOHolder & operator = (const FBOHolder & that);
-
-      LUMINOUS_API Luminous::Texture2D * finish();
-      /** The relative texture coordinates for this useful texture area. */
-      inline const Nimble::Vector2 & texUV() const { return m_texUV; }
-
-    private:
-
-      void release();
-
-      RenderContext * m_context;
-      std::shared_ptr<FBOPackage> m_package;
-      Nimble::Vector2 m_texUV;
-    };
-
     template <typename Vertex, typename UniformBlock>
     struct RenderBuilder
     {
@@ -213,10 +151,6 @@ namespace Luminous
     /// Checks if the given rectangle is visible (not clipped).
     bool isVisible(const Nimble::Rectangle & area);
 
-    /// @cond
-    void pushDrawBuffer(GLenum dest, FBOPackage * );
-    void popDrawBuffer();
-    
     // Render utility functions:
 
     /** Draws an arc
@@ -483,8 +417,6 @@ namespace Luminous
                       const Nimble::Rectf & viewRect, const TextStyle & style,
                       FontUniformBlock & uniform, const Program & program,
                       const Nimble::Matrix4f & modelview);
-
-    void clearTemporaryFBO(std::shared_ptr<FBOPackage> fbo);
 
     Luminous::RenderContext * m_resources;
     class Internal;

@@ -37,157 +37,6 @@
 
 namespace Luminous
 {
-  using namespace Nimble;
-  using namespace Radiant;
-
-
-  RenderContext::FBOPackage::~FBOPackage()
-  {}
-
-  void RenderContext::FBOPackage::setSize(Nimble::Vector2i size)
-
-  {
-    if(size == m_tex.size())
-      return;
-
-    GLint textureId = 0;
-    glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureId);
-
-    m_tex.bind();
-    m_tex.setWidth(size.x);
-    m_tex.setHeight(size.y);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0,
-                 GL_RGBA, GL_UNSIGNED_BYTE, 0);
-
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // <- essential on Nvidia
-
-    glBindTexture(GL_TEXTURE_2D, textureId);
-  }
-
-  void RenderContext::FBOPackage::attach()
-  {
-    m_fbo.attachTexture2D(&m_tex, GL_COLOR_ATTACHMENT0, 0);
-    m_fbo.check();
-  }
-
-  void RenderContext::FBOPackage::activate(RenderContext & r)
-  {
-    LUMINOUS_IN_FULL_OPENGL(glPushAttrib(GL_TRANSFORM_BIT | GL_VIEWPORT_BIT));
-
-    attach();
-    r.pushDrawBuffer(Luminous::COLOR0, this);
-    // Save and setup viewport to match the FBO
-    glViewport(0, 0, m_tex.width(), m_tex.height());
-    // error("RenderContext::FBOPackage::activate # unimplemented");
-    r.pushViewTransform(Nimble::Matrix4::ortho3D(0, m_tex.width(), 0, m_tex.height(), -1, 1));
-    /*
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrthof(0, m_tex.width(), 0, m_tex.height(), -1, 1);
-    */
-  }
-
-  void RenderContext::FBOPackage::deactivate(RenderContext & r)
-  {
-    Luminous::glErrorToString(__FILE__, __LINE__);
-    m_fbo.unbind();
-    Luminous::glErrorToString(__FILE__, __LINE__);
-    glPopAttrib();
-
-    Luminous::glErrorToString(__FILE__, __LINE__);
-    r.popDrawBuffer();
-    Luminous::glErrorToString(__FILE__, __LINE__);
-    // Restore matrix stack
-    /*
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-    */
-    r.popViewTransform();
-    Luminous::glErrorToString(__FILE__, __LINE__);
-  }
-
-  ///////////////////////////////////////////////////////////////////
-  ///////////////////////////////////////////////////////////////////
-
-  RenderContext::FBOHolder::FBOHolder()
-      : m_context(0),
-      m_texUV(1,1)
-  {
-  }
-
-  RenderContext::FBOHolder::FBOHolder(RenderContext * context, std::shared_ptr<FBOPackage> package)
-      : m_context(context), m_package(package),
-      m_texUV(1,1)
-  {
-    m_package->m_users++;
-  }
-
-  RenderContext::FBOHolder::FBOHolder(const FBOHolder & that)
-  {
-    FBOHolder * that2 = (FBOHolder *) & that;
-    m_context = that2->m_context;
-    m_package = that2->m_package;
-    m_texUV   = that2->m_texUV;
-    m_package->m_users++;
-  }
-
-  RenderContext::FBOHolder::~FBOHolder()
-  {
-    release();
-  }
-
-  /** Copies the data pointers from the argument object. */
-  RenderContext::FBOHolder & RenderContext::FBOHolder::operator =
-      (const RenderContext::FBOHolder & that)
-  {
-    release();
-    FBOHolder * that2 = (FBOHolder *) & that;
-    m_context = that2->m_context;
-    m_package = that2->m_package;
-    m_texUV   = that2->m_texUV;
-    m_package->m_users++;
-    return *this;
-  }
-
-
-  Luminous::Texture2D * RenderContext::FBOHolder::finish()
-  {
-    if(!m_package)
-      return 0;
-
-    Luminous::Texture2D * tex = & m_package->m_tex;
-
-    release();
-
-    return tex;
-  }
-
-  void RenderContext::FBOHolder::release()
-  {
-    if(m_package) {
-      m_package->m_users--;
-
-      if(!m_package->m_users) {
-        m_context->clearTemporaryFBO(m_package);
-      }
-
-      m_package.reset();
-      m_context = 0;
-    }
-  }
-
-  ///////////////////////////////////////////////////////////////////
-  ///////////////////////////////////////////////////////////////////
-
   struct RenderContext::SharedBuffer
   {
     SharedBuffer(Buffer::Type type) : type(type), reservedBytes(0) {}
@@ -269,17 +118,6 @@ namespace Luminous
     {
     }
 
-    void pushFBO(std::shared_ptr<RenderContext::FBOPackage> fbo)
-    {
-      m_fboStack.push(fbo);
-    }
-
-    std::shared_ptr<RenderContext::FBOPackage> popFBO()
-    {
-      m_fboStack.pop();
-
-      return m_fboStack.empty() ? std::shared_ptr<RenderContext::FBOPackage>() : m_fboStack.top();
-    }
 
     void initialize() {
 
@@ -292,15 +130,11 @@ namespace Luminous
 
         m_uniformBufferOffsetAlignment = m_driver.uniformBufferOffsetAlignment();
 
-        info("RenderContext::Internal # init ok");
+        Radiant::info("RenderContext::Internal # init ok");
       }
 
       memset(m_textures, 0, sizeof(m_textures));
       m_program = 0;
-
-      while(!m_drawBufferStack.empty())
-        m_drawBufferStack.pop();
-      m_drawBufferStack.push(DrawBuf(GL_BACK, 0)); // Start off by rendering to the back buffer
     }
 
     Nimble::Vector2f contextSize() const
@@ -386,25 +220,7 @@ namespace Luminous
     size_t m_recursionDepth;
 
     std::stack<Nimble::ClipStack> m_clipStacks;
-
-    typedef std::list<std::shared_ptr<RenderContext::FBOPackage> > FBOPackages;
-
-    FBOPackages m_fbos;
-
-
-    std::stack<std::shared_ptr<RenderContext::FBOPackage>, std::vector<std::shared_ptr<RenderContext::FBOPackage> > > m_fboStack;
-
-    class DrawBuf
-    {
-    public:
-      DrawBuf() : m_fbo(0), m_dest(GL_BACK) {}
-      DrawBuf(GLenum dest, RenderContext::FBOPackage * fbo) : m_fbo(fbo), m_dest(dest) {}
-      RenderContext::FBOPackage * m_fbo;
-      GLenum m_dest;
-    };
-
-    std::stack<DrawBuf, std::vector<DrawBuf> > m_drawBufferStack;
-
+ 
     unsigned long m_renderCount;
     unsigned long m_frameCount;
 
@@ -609,40 +425,7 @@ namespace Luminous
 
     return m_data->m_clipStacks.top().isVisible(area);
   }
-
-  void RenderContext::pushDrawBuffer(GLenum dest, FBOPackage * fbo)
-  {
-    if(m_data->m_drawBufferStack.size() > 1000) {
-      error("RenderContext::pushDrawBuffer # Stack is very deep %d",
-            (int) m_data->m_drawBufferStack.size());
-    }
-
-    m_data->m_drawBufferStack.push(Internal::DrawBuf(dest, fbo));
-    glDrawBuffer(dest);
-  }
-
-  void RenderContext::popDrawBuffer()
-  {
-    if(m_data->m_drawBufferStack.empty()) {
-      error("RenderContext::popDrawBuffer # empty stack");
-      glDrawBuffer(GL_BACK);
-      return;
-    }
-    m_data->m_drawBufferStack.pop();
-
-    if(m_data->m_drawBufferStack.empty()) {
-      error("RenderContext::popDrawBuffer # empty stack (phase 2)");
-      glDrawBuffer(GL_BACK);
-      return;
-    }
-    Internal::DrawBuf buf = m_data->m_drawBufferStack.top();
-    // info("DrawBuffer = %d %x", (int) buf.m_dest, (int) buf.m_dest);
-    if(buf.m_fbo)
-      buf.m_fbo->attach();
-
-    glDrawBuffer(buf.m_dest);
-  }
-
+  
   void RenderContext::drawArc(const Nimble::Vector2f & center, float radius,
                               float fromRadians, float toRadians, Luminous::Style & style, unsigned int linesegments)
   {
@@ -1384,30 +1167,6 @@ namespace Luminous
     m_data->popViewStack();
   }
 
-  void RenderContext::clearTemporaryFBO(std::shared_ptr<FBOPackage> fbo)
-  {
-    assert(fbo->userCount() == 0);
-
-    fbo->m_fbo.unbind();
-
-    fbo = m_data->popFBO();
-
-    if(fbo) {
-      fbo->attach();
-    }
-    popDrawBuffer();
-
-    glPopAttrib();
-
-    // Restore matrix stack
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-
-    popTransform();
-  }
-
   static RADIANT_TLS(RenderContext *) t_threadContext;
 
   void RenderContext::setThreadContext(RenderContext * rsc)
@@ -1418,7 +1177,7 @@ namespace Luminous
   RenderContext * RenderContext::getThreadContext()
   {
     if(!t_threadContext) {
-      debug("No OpenGL resources for current thread");
+      Radiant::debug("No OpenGL resources for current thread");
       return nullptr;
     }
 
