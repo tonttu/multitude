@@ -18,15 +18,16 @@
 #include "ContextArray.hpp"
 
 #include <Radiant/Mutex.hpp>
+#include <Radiant/Thread.hpp>
 #include <Radiant/Timer.hpp>
 
 #include <map>
 #include <set>
 
-
-
 namespace Luminous
 {
+  static RADIANT_TLS(unsigned) t_threadIndex = 0;
+
   typedef std::map<RenderResource::Id, RenderResource *> ResourceMap;
 
   namespace {
@@ -114,6 +115,16 @@ namespace Luminous
   void RenderManager::updateFrameTime()
   {
     s_frameTime = s_timer.time() * 10;
+  }
+
+  void RenderManager::setThreadIndex(unsigned idx)
+  {
+    t_threadIndex = idx;
+  }
+
+  unsigned RenderManager::threadIndex()
+  {
+    return t_threadIndex;
   }
 
   // Only specialize for valid types

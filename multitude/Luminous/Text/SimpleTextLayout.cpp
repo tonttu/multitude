@@ -4,6 +4,8 @@
 
 #include <Valuable/StyleValue.hpp>
 
+#include <Luminous/RenderManager.hpp>
+
 #include <QFontMetricsF>
 #include <QTextLayout>
 
@@ -11,16 +13,19 @@
 #include <memory>
 #include <tuple>
 
+typedef std::tuple<QString, Nimble::Vector2i, QFont, QTextOption, unsigned> LayoutCacheKey;
+typedef std::unique_ptr<Luminous::SimpleTextLayout> LayoutPtr;
+
 namespace std
 {
-  template<> struct hash<std::tuple<QString, Nimble::Vector2i, QFont, QTextOption>>
+  template<> struct hash<LayoutCacheKey>
   {
-    inline size_t operator()(const std::tuple<QString, Nimble::Vector2i, QFont, QTextOption> & tuple) const
+    inline size_t operator()(const LayoutCacheKey & tuple) const
     {
       std::hash<uint> hasher;
       return qHash(std::get<0>(tuple)) ^ hasher(std::get<1>(tuple).x) ^
           hasher(std::get<1>(tuple).y) ^ qHash(std::get<2>(tuple).key()) ^
-          hasher(std::get<3>(tuple).alignment());
+          hasher(std::get<3>(tuple).alignment()) ^ hasher(std::get<4>(tuple));
     }
   };
 }
@@ -38,8 +43,8 @@ bool operator==(const QTextOption & o1, const QTextOption & o2)
 
 namespace
 {
-  std::unordered_map<std::tuple<QString, Nimble::Vector2i, QFont, QTextOption>, std::unique_ptr<Luminous::SimpleTextLayout>> s_layoutCache;
   Radiant::Mutex s_layoutCacheMutex;
+  std::unordered_map<LayoutCacheKey, LayoutPtr> s_layoutCache;
 }
 
 namespace Luminous
@@ -186,8 +191,10 @@ namespace Luminous
 
     {
       /// @todo someone should also delete old layouts..
+      const auto & key = std::make_tuple(text, size.cast<int>(), font, option, RenderManager::threadIndex());
+
       Radiant::Guard g(s_layoutCacheMutex);
-      std::unique_ptr<SimpleTextLayout> & ptr = s_layoutCache[std::make_tuple(text, size.cast<int>(), font, option)];
+      std::unique_ptr<SimpleTextLayout> & ptr = s_layoutCache[key];
       if (!ptr)
         ptr.reset(new SimpleTextLayout(text, size, font, option));
       layout = ptr.get();
@@ -204,7 +211,6 @@ namespace Luminous
       m_d->layout(maximumSize());
       setBoundingBox(m_d->m_layout.boundingRect());
       auto align = m_d->m_layout.textOption().alignment();
-      /// @todo how about clipping?
       if (align & Qt::AlignBottom) {
         setRenderLocation(Nimble::Vector2f(0, maximumSize().y - boundingBox().height()));
       } else if (align & Qt::AlignVCenter) {

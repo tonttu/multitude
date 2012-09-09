@@ -51,7 +51,7 @@ namespace Luminous
     bool isMTDevice()
     {
       //TODO find a better way to do this
-      return name()=="MultiTouchVM1";
+      return name()=="MultiTouchVM1" || name()== "DDI Prisma2 1080p";
     }
 
   private:

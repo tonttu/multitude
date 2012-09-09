@@ -25,6 +25,12 @@ namespace Luminous
   public:
     inline ContextArrayT();
 
+    T * operator->() { return &(*this)[RenderManager::threadIndex()]; }
+    const T * operator->() const { return &(*this)[RenderManager::threadIndex()]; }
+
+    T & operator*() { return (*this)[RenderManager::threadIndex()]; }
+    const T & operator*() const { return (*this)[RenderManager::threadIndex()]; }
+
   private:
     virtual void resize(unsigned int threadCount) OVERRIDE;
   };
