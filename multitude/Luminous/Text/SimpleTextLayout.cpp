@@ -13,8 +13,45 @@
 #include <memory>
 #include <tuple>
 
-typedef std::tuple<QString, Nimble::Vector2i, QFont, QTextOption, unsigned> LayoutCacheKey;
 typedef std::unique_ptr<Luminous::SimpleTextLayout> LayoutPtr;
+
+/// MSVC2010 has something weird going on with tuples and pairs so we use the old-fashioned alternative here
+#if defined (RADIANT_MSVC10)
+struct LayoutCacheKey {
+  LayoutCacheKey(const QString & text, const Nimble::Vector2i & v, const QFont & font, const QTextOption & option, unsigned thread)
+    : text(text), v(v), font(font), option(option), thread(thread)
+  {
+  }
+
+  QString text;
+  Nimble::Vector2i v;
+  QFont font;
+  QTextOption option;
+  unsigned thread;
+};
+
+namespace std
+{
+  template<> struct hash<LayoutCacheKey>
+  {
+    inline size_t operator()(const LayoutCacheKey & tuple) const
+    {
+      std::hash<uint> hasher;
+      return qHash(tuple.text) ^ hasher(tuple.v.x) ^
+        hasher(tuple.v.y) ^ qHash(tuple.font.key()) ^
+        hasher(tuple.option.alignment()) ^ hasher(tuple.thread);
+    }
+  };
+}
+
+bool operator==(const LayoutCacheKey & lhs, const LayoutCacheKey & rhs)
+{
+  return std::hash<LayoutCacheKey>()(lhs) == std::hash<LayoutCacheKey>()(rhs);
+}
+
+#else
+typedef std::tuple<QString, Nimble::Vector2i, QFont, QTextOption, unsigned> LayoutCacheKey;
+
 
 namespace std
 {
@@ -29,6 +66,8 @@ namespace std
     }
   };
 }
+#endif
+
 
 bool operator==(const QTextOption & o1, const QTextOption & o2)
 {
@@ -191,7 +230,11 @@ namespace Luminous
 
     {
       /// @todo someone should also delete old layouts..
+#if defined (RADIANT_MSVC10)
+      const auto & key = LayoutCacheKey(text, size.cast<int>(), font, option, RenderManager::threadIndex());
+#else
       const auto & key = std::make_tuple(text, size.cast<int>(), font, option, RenderManager::threadIndex());
+#endif
 
       Radiant::Guard g(s_layoutCacheMutex);
       std::unique_ptr<SimpleTextLayout> & ptr = s_layoutCache[key];
