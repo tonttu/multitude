@@ -77,6 +77,8 @@
 #     error "Unsupported compiler: Must have Visual Studio 2010 or newer"
 #   elif _MSC_VER == 1600
 #     define RADIANT_MSVC10 1
+#   elif _MSC_VER == 1700
+#     define RADIANT_MSVC11 1
 #   endif
 
 #   define DLLEXPORT __declspec(dllexport)
