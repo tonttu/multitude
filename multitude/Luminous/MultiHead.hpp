@@ -470,10 +470,8 @@ namespace Luminous {
       m_windows.clear();
     }
 
-    /// @todo This should be in configuration file, and the accessor probably
-    ///       shouldn't be static. Maybe this class could be singletonish?
-    /// 96 is the static value used in CSS 2.1
-    static float dpi() { return 96.0f; }
+    float dpi() const;
+    void setDpi(float dpi);
 
   private:
     virtual bool readElement(const Valuable::ArchiveElement & ce);
@@ -484,6 +482,7 @@ namespace Luminous {
     Valuable::AttributeFloat m_gamma;
     Valuable::AttributeBool m_iconify;
     Valuable::AttributeVector3i m_dpms;
+    Valuable::AttributeFloat m_dpi;
     HardwareColorCorrection m_hwColorCorrection;
 
     bool m_edited;

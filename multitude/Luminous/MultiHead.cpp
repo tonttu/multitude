@@ -427,6 +427,7 @@ namespace Luminous {
       m_gamma(this, "gamma", 1.1f, true),
       m_iconify(this, "iconify", false),
       m_dpms(this, "dpms", Nimble::Vector3i(0, 0, 0)),
+      m_dpi(this, "dpi", 40.053), /* DPI for 55" */
       m_edited(false)
   {
     m_dpms.addListener(std::bind(&MultiHead::dpmsChanged, this));
@@ -575,6 +576,16 @@ namespace Luminous {
   void MultiHead::setDpms(const Nimble::Vector3i & dpms)
   {
     m_dpms = dpms;
+  }
+
+  float MultiHead::dpi() const
+  {
+    return m_dpi;
+  }
+
+  void MultiHead::setDpi(float dpi)
+  {
+    m_dpi = dpi;
   }
 
   bool MultiHead::deserialize(const Valuable::ArchiveElement & element)
