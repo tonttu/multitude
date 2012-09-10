@@ -169,7 +169,9 @@ namespace Radiant
 
   public:
 
+    template<typename Y, unsigned int BlockCount2>
     friend bool operator==(const block_allocator & lhs, const block_allocator & rhs);
+    template<typename Y, unsigned int BlockCount2>
     friend bool operator!=(const block_allocator & lhs, const block_allocator & rhs);
 
     class chunk
