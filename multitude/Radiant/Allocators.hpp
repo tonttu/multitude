@@ -4,6 +4,7 @@
 #include <Radiant/Memory.hpp>
 
 #include <cstddef>
+#include <cstring>
 
 #ifdef _MSC_VER
 #pragma warning(disable: 4100)  // destroy() gives a false positive in VS2010
