@@ -1041,6 +1041,8 @@ namespace Luminous
 
     if (style.dropShadowColor().alpha() > 0.0f) {
       uniform.colorIn = uniform.colorOut = style.dropShadowColor();
+      uniform.colorIn.w *= opacity();
+      uniform.colorOut.w *= opacity();
       const float blur = style.dropShadowBlur();
       //uniform.outline.make(edge - (blur + strokeWidth) * 0.5f, edge + (blur - strokeWidth) * 0.5f);
       uniform.outline.make(edge - blur * 0.5f - strokeWidth, edge + blur * 0.5f - strokeWidth);
@@ -1049,6 +1051,8 @@ namespace Luminous
 
     if (style.glow() > 0.0f) {
       uniform.colorIn = uniform.colorOut = style.glowColor();
+      uniform.colorIn.w *= opacity();
+      uniform.colorOut.w *= opacity();
       uniform.outline.make(edge * (1.0f - style.glow()), edge);
       drawTextImpl(layout, location, Nimble::Vector2f(0, 0), viewRect, style, uniform, fontShader(), model);
     }
