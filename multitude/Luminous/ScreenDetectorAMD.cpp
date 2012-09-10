@@ -411,13 +411,17 @@ namespace {
 namespace Luminous
 {
   static bool adlAvailable = false;
-
+  static Radiant::Mutex detector_mutex;
   bool ScreenDetectorAMD::detect(int screen, QList<ScreenInfo> & results)
   {
-    MULTI_ONCE { adlAvailable = initADL(); }
+
+    MULTI_ONCE {
+      Radiant::info("Multionce adlAvailable");
+      adlAvailable = initADL(); }
     if (!adlAvailable)
       return false;
 
+    Radiant::Guard g(detector_mutex);
     checkADL("ADL_Main_Control_Create", ADL_Main_Control_Create(adlAlloc, 1));
 
 #if defined (RADIANT_LINUX)
