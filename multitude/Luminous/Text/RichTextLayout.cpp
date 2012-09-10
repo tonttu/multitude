@@ -107,15 +107,17 @@ namespace Luminous
     clearGlyphs();
 
     bool missingGlyphs = false;
+    QAbstractTextDocumentLayout * layout = m_d->doc().documentLayout();
 
     for (QTextBlock block = m_d->doc().begin(); block.isValid(); block = block.next()) {
-      QTextLayout * layout = block.layout();
-      const Nimble::Vector2f layoutLocation(layout->position().x(), layout->position().y());
-      foreach (const QGlyphRun & glyphRun, layout->glyphRuns())
+      QTextLayout * textLayout = block.layout();
+      QRectF rect = layout->blockBoundingRect(block);
+
+      const Nimble::Vector2f layoutLocation(rect.left(), rect.top());
+      foreach (const QGlyphRun & glyphRun, textLayout->glyphRuns())
         missingGlyphs |= generateGlyphs(layoutLocation, glyphRun);
     }
 
-    QAbstractTextDocumentLayout * layout = m_d->doc().documentLayout();
     for (int i = 0; ; ++i) {
       QTextObject * obj = m_d->doc().object(i);
       if (!obj) break;
