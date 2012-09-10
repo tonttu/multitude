@@ -589,6 +589,12 @@ namespace VideoPlayer2
         assert(av.videoCodecContext);
         av.videoCodecContext->opaque = this;
         av.videoCodecContext->thread_count = 1;
+        /// @todo On slower computers having at least 4 threads is requirement for 4k videos.
+        ///       It is unknown if this adds too much overhead if there are ~100 low quality videos.
+        if (av.videoCodec && (av.videoCodec->capabilities & CODEC_CAP_SLICE_THREADS)) {
+          av.videoCodecContext->thread_count = (av.videoCodec->capabilities & CODEC_CAP_AUTO_THREADS)
+            ? 0 : 4;
+        }
       }
     }
 
@@ -1556,6 +1562,7 @@ namespace VideoPlayer2
       }
       ret = frame;
     }
+    // Radiant::warning("Frame is late");
     return ret;
   }
 
