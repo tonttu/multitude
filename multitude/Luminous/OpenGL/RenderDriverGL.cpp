@@ -956,6 +956,16 @@ namespace Luminous
     GLXDrawable drawable = glXGetCurrentDrawable();
     const int interval = (vsync ? 1 : 0);
 
+    // VirtuaGL means that the X server we are connected to is not the
+    // server that is actually connected to the display. Setting this
+    // might crash the server. For example on NVIDIA Optimus laptops
+    // we need to skip this.
+    const char * vendor = glXGetClientString(dpy, GLX_VENDOR);
+    if (vendor && std::string(vendor) == "VirtualGL") {
+      Radiant::warning("RenderDriverGL::setVSync # Not setting vsync on VirtualGL GLX");
+      return;
+    }
+
     glXSwapIntervalEXT(dpy, drawable, interval);
 #elif defined (RADIANT_WINDOWS)
     const int interval = (vsync ? 1 : 0);
