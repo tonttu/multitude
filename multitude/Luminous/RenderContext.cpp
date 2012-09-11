@@ -450,7 +450,6 @@ namespace Luminous
 
       angle += step;
     }
-    b.uniform->depth = b.depth;
   }
 
   void RenderContext::drawCircle(const Nimble::Vector2f & center, float radius, const Luminous::Style & style, unsigned int linesegments, float fromRadians, float toRadians)
@@ -481,7 +480,6 @@ namespace Luminous
       b.vertex[0].location = center;
       // Create the rest of the vertices
       fill(&b.vertex[1]);
-      b.uniform->depth = b.depth;
     }
 
     // Draw stroke
@@ -587,12 +585,10 @@ namespace Luminous
         textured.vertex[2*i+1].location = out;
         textured.vertex[2*i].texCoord = iSpan * (in-low);
         textured.vertex[2*i+1].texCoord = iSpan * (out-low);
-        textured.uniform->depth = textured.depth;
       }
       else if(isFilled) {
         fill.vertex[2*i].location = in;
         fill.vertex[2*i+1].location = out;
-        fill.uniform->depth = fill.depth;
       }
       if(stroke) {
         // For the stroke, we need to find normals for along the inner & outer edge:
@@ -612,12 +608,10 @@ namespace Luminous
         if(needInnerStroke) {
           innerStroke.vertex[2*i].location = in + offset;
           innerStroke.vertex[2*i+1].location = in - offset;
-          innerStroke.uniform->depth = innerStroke.depth;
         }
 
         outerStroke.vertex[2*i].location = out + offset; 
         outerStroke.vertex[2*i+1].location = out - offset;
-        outerStroke.uniform->depth = outerStroke.depth;
       }
 
       angle += step;
@@ -815,8 +809,6 @@ namespace Luminous
         b.vertex[1].location = rect.highLow();
         b.vertex[2].location = rect.lowHigh();
         b.vertex[3].location = rect.high();
-
-        b.uniform->depth = b.depth;
       }
       else {
         const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
@@ -833,8 +825,6 @@ namespace Luminous
 
         b.vertex[3].location = rect.high();
         b.vertex[3].texCoord = uvs.high();
-
-        b.uniform->depth = b.depth;
       }
     }
 
@@ -887,8 +877,6 @@ namespace Luminous
         b.vertex[7].location = area.lowHigh();
         b.vertex[8].location = hole.low();
         b.vertex[9].location = area.low();
-
-        b.uniform->depth = b.depth;
       }
       else {
         // Textured
@@ -925,8 +913,6 @@ namespace Luminous
 
         b.vertex[9].location = area.low();;
         b.vertex[9].texCoord.make(0,0);
-
-        b.uniform->depth = b.depth;
       }
     }
 
@@ -962,7 +948,6 @@ namespace Luminous
     auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_Line, 0, 2, program, style.strokeColor(), style.strokeWidth(), style);
     b.vertex[0].location = p1;
     b.vertex[1].location = p2;
-    b.uniform->depth = b.depth;
   }
 
 
@@ -1013,7 +998,6 @@ namespace Luminous
     auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, 0, numPoints, program, style.strokeColor(), style.strokeWidth(), style);
     for (size_t i = 0; i < numPoints; ++i)
       b.vertex[i].location = points[i];
-    b.uniform->depth = b.depth;
   }
 
   void RenderContext::drawPoints(const Nimble::Vector2f * points, size_t numPoints, const Luminous::Style & style)
@@ -1023,7 +1007,6 @@ namespace Luminous
     auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_Point, 0, numPoints, program, style.strokeColor(), style.strokeWidth(), style);
     for (size_t i = 0; i < numPoints; ++i)
       b.vertex[i].location = points[i];
-    b.uniform->depth = b.depth;
   }
 
   void RenderContext::drawText(const TextLayout & layout, const Nimble::Vector2f & location,

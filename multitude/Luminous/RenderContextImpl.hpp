@@ -78,6 +78,8 @@ namespace Luminous
     b.uniform->color = color;
     // Apply opacity
     b.uniform->color.w *= opacity();
+    // Set default depth
+    b.uniform->depth = b.depth;
 
     // Set draw modes
     b.command->blendMode = style.blendMode();
