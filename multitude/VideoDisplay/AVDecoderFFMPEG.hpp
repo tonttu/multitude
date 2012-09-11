@@ -28,6 +28,7 @@ namespace VideoPlayer2
     virtual double duration() const OVERRIDE;
 
     virtual Timestamp getTimestampAt(const Radiant::TimeStamp & ts) const OVERRIDE;
+    virtual Timestamp latestDecodedTimestamp() const OVERRIDE;
     virtual VideoFrame * getFrame(const Timestamp & ts) const OVERRIDE;
     virtual void releaseOldVideoFrames(const Timestamp & ts, bool * eof = nullptr) OVERRIDE;
 

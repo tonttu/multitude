@@ -1546,6 +1546,14 @@ namespace VideoPlayer2
     return Timestamp(ts.secondsD() + m_d->radiantTimestampToPts, m_d->seekGeneration);
   }
 
+  Timestamp AVDecoderFFMPEG::latestDecodedTimestamp() const
+  {
+    VideoFrameFFMPEG * frame = m_d->decodedVideoFrames.lastReadyItem();
+    if (frame) {
+      return frame->timestamp;
+    } else return Timestamp();
+  }
+
   VideoFrame * AVDecoderFFMPEG::getFrame(const Timestamp & ts) const
   {
     VideoFrameFFMPEG * ret = 0;
