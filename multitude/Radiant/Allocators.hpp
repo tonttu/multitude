@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstring>
 #include <cassert>
+#include <array>
 
 #ifdef _MSC_VER
 #pragma warning(disable: 4100)  // destroy() gives a false positive in VS2010
@@ -94,15 +95,15 @@ namespace Radiant
       m_activeChunk = m_topChunk.get();
     }
 
-    block_allocator(const block_allocator&&) throw()
+    block_allocator(const block_allocator&& rhs) throw()
     {
-      assert(false);
+      m_topChunk = std::move(rhs.m_topChunk);
     }
 
     template<typename U>
     block_allocator(const block_allocator<U,BlockCount> && rhs) throw()
     {
-      assert(false);
+      m_topChunk = std::move(rhs.m_topChunk);
     }
 
     block_allocator(const block_allocator& rhs) throw()
@@ -181,11 +182,11 @@ namespace Radiant
       chunk()
         : m_freeCount(0)
       {
-        memset(m_freeBits, 0, sizeof(m_freeBits));
+        std::fill(std::begin(m_freeBits), std::end(m_freeBits), 0);
 
 #if defined (RADIANT_DEBUG)
         // Fill with debug pattern
-        memset(m_data, 0xCC, sizeof(T));
+        std::fill(std::begin(m_data), std::end(m_data), 0xCC);
 #endif
       }
 
@@ -200,8 +201,8 @@ namespace Radiant
       bool tryDeallocate(void * ptr)
       {
         /// Test if we're in range
-        if (m_data <= ptr && ptr < m_data + poolsize_bytes) {
-          unsigned int index = (unsigned int)(((char *)ptr - m_data)) / sizeof(T);
+        if (m_data.data() <= ptr && ptr < m_data.data() + poolsize_bytes) {
+          unsigned int index = (unsigned int)(((char *)ptr - m_data.data())) / sizeof(T);
           unsigned int bit_index = index / 32;
           unsigned int bit = 1 << (index & 31);
 #if defined (RADIANT_DEBUG)
@@ -215,7 +216,7 @@ namespace Radiant
 
 #if defined (RADIANT_DEBUG)
           // Fill with debug pattern
-          memset(ptr, 0xCD, sizeof(T));
+          std::fill(std::begin(m_data), std::end(m_data), 0xCD);
 #endif
           return true;
         }
@@ -233,7 +234,7 @@ namespace Radiant
         assert((bitcheck & bit) == 0);
 #endif
         m_freeBits[bit_index] |= bit;
-        return m_data + index * sizeof(T);
+        return m_data.data() + index * sizeof(T);
       }
 
     public:
@@ -242,11 +243,12 @@ namespace Radiant
         poolsize_bytes = sizeof(T) * BlockCount,
         freebits_count = BlockCount / sizeof(unsigned int) + 1,
       };
-      char m_data[poolsize_bytes];
+
+      std::array<char, poolsize_bytes> m_data;
 
       unsigned int m_freeCount;
-      unsigned int m_freeBits[freebits_count];
-      unsigned short m_freeList[BlockCount];
+      std::array<unsigned int, freebits_count> m_freeBits;
+      std::array<unsigned short, BlockCount> m_freeList;
       std::unique_ptr<chunk> m_nextChunk;
     };
 
