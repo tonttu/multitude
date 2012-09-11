@@ -10,7 +10,7 @@ namespace Luminous
     : m_generation(0)
     , m_id(RenderManager::createResource(this))
     , m_type(type)
-    , m_expiration(300)   // Default expiration time: 5 minutes
+    , m_expiration(3)   // Default expiration time: 3 seconds
   {
   }
 
