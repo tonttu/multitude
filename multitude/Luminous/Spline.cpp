@@ -470,8 +470,7 @@ namespace Luminous {
     p.m_location = point;
     p.m_width = width;
     p.m_range[0] = std::max(time, 0.0f);
-    for(int i = 0; i < 4; ++i)
-      p.m_color[i] = Nimble::Math::Clamp<unsigned char>(color[i] * 255.0f, 0, 255);
+    p.m_color = color;
 
     if(!m_d)
       m_d = new D();
