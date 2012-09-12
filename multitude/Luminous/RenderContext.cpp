@@ -697,7 +697,7 @@ namespace Luminous
       ++pool.currentIndex;
     }
 
-    char * data = mapBuffer<char>(buffer->buffer, type, Buffer::MapWrite | Buffer::MapUnsynchronized |
+    char * data = mapBuffer<char>(buffer->buffer, type, Buffer::MapWrite |
                                   Buffer::MapInvalidateRange | Buffer::MapFlushExplicit);
     assert(data);
     data += buffer->reservedBytes;
