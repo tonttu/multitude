@@ -87,6 +87,8 @@ unix {
   # Make symbol export for shared libs compatible with MSVC
   !CONFIG(staticlib) {
     linux*:QMAKE_CXXFLAGS += -fvisibility-ms-compat
+    # *clang*:QMAKE_CXXFLAGS += -fvisibility=hidden
+    # The CLang -fvisibility=hidden causes linkage problems at the moment. To be used some later time
   }
 }
 
