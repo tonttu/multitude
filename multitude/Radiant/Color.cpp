@@ -59,22 +59,7 @@ namespace Radiant
     }
   }
 
-  Color::Color(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
-  {
-    setRGBA(r, g, b, a);
-  }
-
-  Color::Color(int r, int g, int b, int a)
-  {
-    setRGBA((unsigned char)r, (unsigned char)g, (unsigned char)b, (unsigned char)a);
-  }
-
   Color::Color(float r, float g, float b, float a)
-  {
-    setRGBA(r, g, b, a);
-  }
-
-  Color::Color(double r, double g, double b, double a)
   {
     setRGBA(r, g, b, a);
   }
@@ -91,20 +76,4 @@ namespace Radiant
   {
     make(r, g, b, a);
   }
-
-  void Color::setRGBA(double r, double g, double b, double a)
-  {
-    make(r, g, b, a);
-  }
-
-  void Color::setRGBA(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
-  {
-    float rf = (float)r / 255.f;
-    float gf = (float)g / 255.f;
-    float bf = (float)b / 255.f;
-    float af = (float)a / 255.f;
-
-    make(rf, gf, bf, af);
-  }
-
 }
