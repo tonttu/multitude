@@ -58,8 +58,6 @@ namespace VideoDisplay {
     return & (*it).second;
   }
 
-  using namespace Radiant;
-
   VideoInFFMPEG::VideoInFFMPEG()
       : m_channels(0),
       m_sampleRate(44100),

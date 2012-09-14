@@ -8,13 +8,8 @@
 #include <Radiant/FileUtils.hpp>
 #include <Radiant/Trace.hpp>
 
-using namespace std;
-
 namespace Luminous
 {
-
-  using namespace Radiant;
-
   GLSLProgramObject::GLSLProgramObject(RenderContext * resources)
       : GLResource(resources),
       m_isLinked(false),
@@ -56,7 +51,7 @@ namespace Luminous
 
   bool GLSLProgramObject::link()
   {
-    list<GLSLShaderObject*>::iterator i;
+    std::list<GLSLShaderObject*>::iterator i;
 
     if(m_isLinked) {
       Radiant::error("GLSLProgramObject::link # program already "

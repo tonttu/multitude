@@ -16,9 +16,6 @@
 
 namespace Luminous {
 
-  using namespace Radiant;
-  using namespace Valuable;
-
 #define SHADER_PARAM_CHECK(obj, type, target) \
   { \
     const type * tmp = dynamic_cast<const type *> (obj); \
@@ -108,14 +105,14 @@ namespace Luminous {
 
     void add(const Valuable::Attribute * obj)
     {
-      SHADER_PARAM_CHECK(obj, AttributeInt,   m_i1);
-      SHADER_PARAM_CHECK(obj, AttributeFloat, m_f1);
-      SHADER_PARAM_CHECK(obj, AttributeVector2f, m_vec2f);
-      SHADER_PARAM_CHECK(obj, AttributeVector3f, m_vec3f);
-      SHADER_PARAM_CHECK(obj, AttributeVector4f, m_vec4f);
-      SHADER_PARAM_CHECK(obj, AttributeMatrix2f, m_mat2f);
-      SHADER_PARAM_CHECK(obj, AttributeMatrix3f, m_mat3f);
-      SHADER_PARAM_CHECK(obj, AttributeMatrix4f, m_mat4f);
+      SHADER_PARAM_CHECK(obj, Valuable::AttributeInt,   m_i1);
+      SHADER_PARAM_CHECK(obj, Valuable::AttributeFloat, m_f1);
+      SHADER_PARAM_CHECK(obj, Valuable::AttributeVector2f, m_vec2f);
+      SHADER_PARAM_CHECK(obj, Valuable::AttributeVector3f, m_vec3f);
+      SHADER_PARAM_CHECK(obj, Valuable::AttributeVector4f, m_vec4f);
+      SHADER_PARAM_CHECK(obj, Valuable::AttributeMatrix2f, m_mat2f);
+      SHADER_PARAM_CHECK(obj, Valuable::AttributeMatrix3f, m_mat3f);
+      SHADER_PARAM_CHECK(obj, Valuable::AttributeMatrix4f, m_mat4f);
 
       Radiant::error("When adding shader parameter %s, type %s not supported",
             obj->name().toUtf8().data(), typeid(*obj).name());
@@ -124,14 +121,14 @@ namespace Luminous {
 
     void applyUniforms(GLSLProgramObject * glslprog)
     {
-      SHADER_PARAM_APPLY1(m_i1, AttributeInt, glUniform1i, glslprog, getUniformLoc);
-      SHADER_PARAM_APPLY1(m_f1, AttributeFloat, glUniform1f, glslprog, getUniformLoc);
-      SHADER_PARAM_APPLYN(m_vec2f, AttributeVector2f, glUniform2fv, glslprog, getUniformLoc);
-      SHADER_PARAM_APPLYN(m_vec3f, AttributeVector3f, glUniform3fv, glslprog, getUniformLoc);
-      SHADER_PARAM_APPLYN(m_vec4f, AttributeVector4f, glUniform4fv, glslprog, getUniformLoc);
-      SHADER_PARAM_APPLYMATRIX(m_mat2f, AttributeMatrix2f, glUniformMatrix2fv, glslprog, getUniformLoc);
-      SHADER_PARAM_APPLYMATRIX(m_mat3f, AttributeMatrix3f, glUniformMatrix3fv, glslprog, getUniformLoc);
-      SHADER_PARAM_APPLYMATRIX(m_mat4f, AttributeMatrix4f, glUniformMatrix4fv, glslprog, getUniformLoc);
+      SHADER_PARAM_APPLY1(m_i1, Valuable::AttributeInt, glUniform1i, glslprog, getUniformLoc);
+      SHADER_PARAM_APPLY1(m_f1, Valuable::AttributeFloat, glUniform1f, glslprog, getUniformLoc);
+      SHADER_PARAM_APPLYN(m_vec2f, Valuable::AttributeVector2f, glUniform2fv, glslprog, getUniformLoc);
+      SHADER_PARAM_APPLYN(m_vec3f, Valuable::AttributeVector3f, glUniform3fv, glslprog, getUniformLoc);
+      SHADER_PARAM_APPLYN(m_vec4f, Valuable::AttributeVector4f, glUniform4fv, glslprog, getUniformLoc);
+      SHADER_PARAM_APPLYMATRIX(m_mat2f, Valuable::AttributeMatrix2f, glUniformMatrix2fv, glslprog, getUniformLoc);
+      SHADER_PARAM_APPLYMATRIX(m_mat3f, Valuable::AttributeMatrix3f, glUniformMatrix3fv, glslprog, getUniformLoc);
+      SHADER_PARAM_APPLYMATRIX(m_mat4f, Valuable::AttributeMatrix4f, glUniformMatrix4fv, glslprog, getUniformLoc);
     }
 
   private:

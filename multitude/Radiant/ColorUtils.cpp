@@ -22,8 +22,6 @@
 namespace Radiant
 {
 
-  using namespace Nimble;
-
   void ColorUtils::rgbTohsv(float r, float g, float b, float & h, float & s, float & v)
   {
     h = s = v = 0.0f;
@@ -64,7 +62,7 @@ namespace Radiant
     }
   }
 
-  void ColorUtils::rgbTohsv(const Vector3f & rgb, Vector3f & hsv)
+  void ColorUtils::rgbTohsv(const Nimble::Vector3f & rgb, Nimble::Vector3f & hsv)
   {
     rgbTohsv(rgb[0], rgb[1], rgb[2], hsv[0], hsv[1], hsv[2]);
   }
@@ -109,7 +107,7 @@ namespace Radiant
     }
   }
 
-  void ColorUtils::hsvTorgb(const Vector3f & hsv, Vector3f & rgb)
+  void ColorUtils::hsvTorgb(const Nimble::Vector3f & hsv, Nimble::Vector3f & rgb)
   {
     hsvTorgb(hsv[0], hsv[1], hsv[2], rgb[0], rgb[1], rgb[2]);
   }

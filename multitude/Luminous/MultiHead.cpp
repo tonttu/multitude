@@ -50,8 +50,6 @@ static const char* fs_shader =
 
 namespace Luminous {
 
-  using namespace Radiant;
-
   MultiHead::Area::Area(Window * window)
       : Node(0, "Area"),
       m_window(window),

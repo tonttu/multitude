@@ -194,7 +194,6 @@ void ConfigDocument::writeConfig(std::ostream & output)
 
 void ConfigDocument::trimSpaces( std::string & str)
 {
-  using namespace std;
   size_t startpos = str.find_first_not_of(" \t\r");
   size_t endpos = str.find_last_not_of(" \t\r");
 

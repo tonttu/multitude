@@ -111,8 +111,6 @@ namespace
 
 namespace Valuable
 {
-  using namespace Radiant;
-
 #ifdef MULTI_DOCUMENTER
   VALUABLE_API std::map<QString, std::set<QString> > s_eventSendNames;
   VALUABLE_API std::map<QString, std::set<QString> > s_eventListenNames;
@@ -520,12 +518,12 @@ namespace Valuable
     vp.m_type = listenerType;
 
     if(!m_eventSendNames.contains(from)) {
-      warning("Node::eventAddListener # Adding listener to nonexistent event '%s'", from.data());
+      Radiant::warning("Node::eventAddListener # Adding listener to nonexistent event '%s'", from.data());
     }
 
     if(!obj->m_eventListenNames.contains(to)) {
       const QString & klass = Radiant::StringUtils::demangle(typeid(*obj).name());
-      warning("Node::eventAddListener # %s (%s %p) doesn't accept event '%s'",
+      Radiant::warning("Node::eventAddListener # %s (%s %p) doesn't accept event '%s'",
               klass.toUtf8().data(), obj->name().toUtf8().data(), obj, to.data());
     }
 
@@ -579,7 +577,7 @@ namespace Valuable
     vp.m_type = listenerType;
 
     if(!m_eventSendNames.contains(from)) {
-      warning("Node::eventAddListener # Adding listener to nonexistent event '%s'", from.data());
+      Radiant::warning("Node::eventAddListener # Adding listener to nonexistent event '%s'", from.data());
     }
 
     // No duplicate check, since there is no way to compare std::function objects
@@ -595,7 +593,7 @@ namespace Valuable
     vp.m_type = listenerType;
 
     if(!m_eventSendNames.contains(from)) {
-      warning("Node::eventAddListenerBd # Adding listener to nonexistent event '%s'", from.data());
+      Radiant::warning("Node::eventAddListenerBd # Adding listener to nonexistent event '%s'", from.data());
     }
 
     // No duplicate check, since there is no way to compare std::function objects
@@ -679,7 +677,7 @@ namespace Valuable
                   klass.c_str(), name().c_str(), this, id);*/
       } else {
         const QString klass = Radiant::StringUtils::demangle(typeid(*this).name());
-        warning("Node::processMessage # %s (%s %p): unhandled event '%s'",
+        Radiant::warning("Node::processMessage # %s (%s %p): unhandled event '%s'",
                 klass.toUtf8().data(), name().toUtf8().data(), this, id.data());
       }
     }
@@ -703,7 +701,7 @@ namespace Valuable
   void Node::eventAddOut(const QString & id)
   {
     if (m_eventSendNames.contains(id)) {
-      warning("Node::eventAddSend # Trying to register event '%s' that is already registered", id.toUtf8().data());
+      Radiant::warning("Node::eventAddSend # Trying to register event '%s' that is already registered", id.toUtf8().data());
     } else {
       m_eventSendNames.insert(id);
 #ifdef MULTI_DOCUMENTER
@@ -715,7 +713,7 @@ namespace Valuable
   void Node::eventAddIn(const QString & id)
   {
     if (m_eventListenNames.contains(id)) {
-      warning("Node::eventAddListen # Trying to register duplicate event handler for event '%s'", id.toUtf8().data());
+      Radiant::warning("Node::eventAddListen # Trying to register duplicate event handler for event '%s'", id.toUtf8().data());
     } else {
       m_eventListenNames.insert(id);
 #ifdef MULTI_DOCUMENTER
@@ -734,7 +732,7 @@ namespace Valuable
   {
     Attribute * attr = getValue(name);
     if(!attr) {
-      warning("Node::addListener # Failed to find attribute %s", name.toUtf8().data());
+      Radiant::warning("Node::addListener # Failed to find attribute %s", name.toUtf8().data());
       return -1;
     }
     return attr->addListener(func, role);
@@ -796,7 +794,7 @@ namespace Valuable
       }
       else if(vp.m_from == id) {
 
-        BinaryData & bdsend = vp.m_defaultData.total() ? vp.m_defaultData : bd;
+        Radiant::BinaryData & bdsend = vp.m_defaultData.total() ? vp.m_defaultData : bd;
 
         bdsend.rewind();
 

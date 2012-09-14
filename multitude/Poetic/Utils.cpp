@@ -8,8 +8,6 @@
 namespace Poetic
 {
 
-  using namespace Radiant;
-
 #if 0
 
   void Utils::breakToLines(const std::wstring & ws, const float width,

@@ -42,8 +42,6 @@
 
 namespace Luminous
 {
-  using namespace Radiant;
-
   /// @todo these are related to DummyOpenGL and should not be here!
   void dumymWarn(const char * funcname, const char * file, int line)
   {

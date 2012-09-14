@@ -26,8 +26,6 @@
 
 namespace Valuable
 {
-  using namespace Radiant;
-
   struct DOMDocument::Wrapped {
     Wrapped() : x("mtdoc")
     {}

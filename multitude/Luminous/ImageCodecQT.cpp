@@ -27,8 +27,6 @@
 
 namespace Luminous
 {
-  using namespace Radiant;
-
   ImageCodecQT::ImageCodecQT(const char * suffix)
     : m_suffix(suffix)
   {}

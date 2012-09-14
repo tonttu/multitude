@@ -24,17 +24,16 @@
 
 namespace
 {
-  using namespace Resonant;
   void s_streamStateCb(pa_stream * p, void * self)
   {
-    ModulePulseAudio * mpa = static_cast<ModulePulseAudio*>(self);
+    Resonant::ModulePulseAudio * mpa = static_cast<Resonant::ModulePulseAudio*>(self);
     mpa->streamState(pa_stream_get_state(p));
   }
 
   void s_streamRequestCb(pa_stream * p, size_t nbytes, void * self)
   {
     if(p && self) {
-      ModulePulseAudio * mpa = static_cast<ModulePulseAudio*>(self);
+      Resonant::ModulePulseAudio * mpa = static_cast<Resonant::ModulePulseAudio*>(self);
       mpa->dataAvailable(p, nbytes);
     }
   }

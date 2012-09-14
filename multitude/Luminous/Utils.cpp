@@ -23,8 +23,6 @@
 
 namespace Luminous {
 
-  using namespace Nimble;
-
 //  void Utils::fadeEdge(float w, float h, float seam,
 //               float gamma, Edge e, bool withGrid)
 //  {

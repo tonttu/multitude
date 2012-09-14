@@ -30,8 +30,6 @@ namespace
 
 namespace Luminous
 {
-  using namespace std;
-  using namespace Radiant;
 
   // tests show that 1.5GB/s is a pretty good guess for a lower limit of
   // upload rate with 500x500 RGBA images

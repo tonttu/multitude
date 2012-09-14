@@ -31,9 +31,6 @@
 
 namespace Resonant {
 
-  using namespace Nimble;
-  using namespace Radiant;
-
   ModulePanner::ModulePanner(Application * a, Mode mode)
       : Module(a),
       m_speakers(this, "speakers"),
@@ -167,12 +164,12 @@ namespace Resonant {
 
     LoudSpeaker * ls = new LoudSpeaker;
 
-    ls->m_location = Vector2(0, 540);
+    ls->m_location = Nimble::Vector2f(0, 540);
     m_speakers->push_back(std::shared_ptr<LoudSpeaker>(ls));
 
     ls = new LoudSpeaker;
 
-    ls->m_location = Vector2(1920, 540);
+    ls->m_location = Nimble::Vector2f(1920, 540);
     m_speakers->push_back(std::shared_ptr<LoudSpeaker>(ls));
 
     m_maxRadius = 1200;

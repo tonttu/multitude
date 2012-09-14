@@ -32,12 +32,10 @@
 
 namespace Resonant {
   
-  using namespace Radiant;
-  
   AudioFileHandler::Handle::Handle
   (AudioFileHandler * host, 
    const char * filename, 
-   IoMode mode, 
+   Radiant::IoMode mode, 
    long startFrame, 
    Radiant::AudioSampleFormat userFormat)
     : m_host(host),
@@ -173,7 +171,7 @@ namespace Resonant {
 
       // puts("Closing the file");
 
-      if(m_status == OPEN_DONE && m_ioMode == IO_OUTPUT)
+      if(m_status == OPEN_DONE && m_ioMode == Radiant::IO_OUTPUT)
 	flushWrite();
       
       close();
@@ -193,7 +191,7 @@ namespace Resonant {
     }
     else if(m_status == OPEN_DONE) {
 
-      if(m_ioMode == IO_INPUT) {
+      if(m_ioMode == Radiant::IO_INPUT) {
 
 	if(m_rewindTo >= 0) {
 	  moveReadHead(m_rewindTo);
@@ -228,7 +226,7 @@ namespace Resonant {
   {
     close();
 
-    int mode = (m_ioMode == IO_INPUT) ? SFM_READ : SFM_WRITE;
+    int mode = (m_ioMode == Radiant::IO_INPUT) ? SFM_READ : SFM_WRITE;
 
     m_file = sf_open(m_fileName.toUtf8().data(), mode, m_info);
 
@@ -394,7 +392,7 @@ namespace Resonant {
     assert(this);
     assert(userFormat == Radiant::ASF_FLOAT32 || userFormat == Radiant::ASF_INT32);
 
-    Handle * h = new Handle(this, filename, IO_INPUT, startFrame, userFormat);
+    Handle * h = new Handle(this, filename, Radiant::IO_INPUT, startFrame, userFormat);
 
     Radiant::Guard g(m_filesMutex);
     m_files.push_back(h);
@@ -421,7 +419,7 @@ namespace Resonant {
     assert(userFormat == Radiant::ASF_FLOAT32 || userFormat == Radiant::ASF_INT32);
 
 
-    Handle * h = new Handle(this, filename, IO_OUTPUT, 0, userFormat);
+    Handle * h = new Handle(this, filename, Radiant::IO_OUTPUT, 0, userFormat);
 
     h->m_info->channels   = channels;
     h->m_info->samplerate = samplerate;
@@ -500,7 +498,7 @@ namespace Resonant {
 
     while(!m_done) {
       if(!update()) {
-        Sleep::sleepMs(20);
+        Radiant::Sleep::sleepMs(20);
       }
     }
 

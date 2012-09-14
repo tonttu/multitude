@@ -27,8 +27,6 @@
 
 namespace VideoDisplay {
 
-  using namespace Radiant;
-
   SubTitles::SubTitles()
     : m_current(0),
     m_index(0)

@@ -32,9 +32,6 @@
 
 namespace Luminous
 {
-
-  using namespace Radiant;
-
   GLResources::GLResources()
     : m_deallocationSum(0),
       m_allocationSum(0),

@@ -27,8 +27,6 @@
 
 namespace Poetic
 {
-  using namespace Nimble;
-
   // GLuint GPUTextureGlyph::s_activeTexture = 0;
 
   GPUTextureGlyph::GPUTextureGlyph(const CPUBitmapGlyph * glyph, Luminous::Texture2D * tex, int xOff, int yOff, GLsizei width, GLsizei height)
@@ -74,15 +72,15 @@ namespace Poetic
     // }
 
 #ifdef POETIC_FLIP_Y
-    Nimble::Vector2f v0 = pen + Vector2f(m_pos.x,              -m_pos.y);
-    Nimble::Vector2f v1 = pen + Vector2f(m_pos.x,              -m_pos.y + m_height);
-    Nimble::Vector2f v2 = pen + Vector2f(m_width + m_pos.x,    -m_pos.y + m_height);
-    Nimble::Vector2f v3 = pen + Vector2f(m_width + m_pos.x,    -m_pos.y);
+    Nimble::Vector2f v0 = pen + Nimble::Vector2f(m_pos.x,              -m_pos.y);
+    Nimble::Vector2f v1 = pen + Nimble::Vector2f(m_pos.x,              -m_pos.y + m_height);
+    Nimble::Vector2f v2 = pen + Nimble::Vector2f(m_width + m_pos.x,    -m_pos.y + m_height);
+    Nimble::Vector2f v3 = pen + Nimble::Vector2f(m_width + m_pos.x,    -m_pos.y);
 #else
-    Nimble::Vector2f v0 = pen + Vector2f(m_pos.x,               m_pos.y);
-    Nimble::Vector2f v1 = pen + Vector2f(m_pos.x,               m_pos.y - m_height);
-    Nimble::Vector2f v2 = pen + Vector2f(m_width + m_pos.x,     m_pos.y - m_height);
-    Nimble::Vector2f v3 = pen + Vector2f(m_width + m_pos.x,     m_pos.y);
+    Nimble::Vector2f v0 = pen + Nimble::Vector2f(m_pos.x,               m_pos.y);
+    Nimble::Vector2f v1 = pen + Nimble::Vector2f(m_pos.x,               m_pos.y - m_height);
+    Nimble::Vector2f v2 = pen + Nimble::Vector2f(m_width + m_pos.x,     m_pos.y - m_height);
+    Nimble::Vector2f v3 = pen + Nimble::Vector2f(m_width + m_pos.x,     m_pos.y);
 #endif
 
 

@@ -73,8 +73,6 @@ namespace Luminous {
   // DXT support is tested in Luminous::initLuminous()
   bool CPUMipmaps::s_dxtSupported = true;
 
-  using namespace Radiant;
-
   static Radiant::Mutex s_storeMutex;
 
   static std::map<std::pair<QString, unsigned long>, std::weak_ptr<CPUMipmaps> > s_mipmaps;
@@ -254,7 +252,7 @@ namespace Luminous {
 
     m_filename = filename;
     m_compFilename.clear();
-    m_fileModified = FileUtils::lastModified(m_filename);
+    m_fileModified = Radiant::FileUtils::lastModified(m_filename);
     m_info = Luminous::ImageInfo();
     m_shouldSave.clear();
     m_stack.clear();
@@ -270,7 +268,7 @@ namespace Luminous {
 
       Radiant::TimeStamp ts(0);
       if(QFile::exists(m_compFilename))
-        ts = FileUtils::lastModified(m_compFilename);
+        ts = Radiant::FileUtils::lastModified(m_compFilename);
 
       if(ts == Radiant::TimeStamp(0)) {
         // Cache file does not exist. Check if we want to generate mipmaps for
@@ -693,7 +691,7 @@ namespace Luminous {
       QString filename = cacheFileName(m_filename, level);
 
       if(Radiant::FileUtils::fileReadable(filename) &&
-         FileUtils::lastModified(filename) > m_fileModified) {
+         Radiant::FileUtils::lastModified(filename) > m_fileModified) {
 
         Luminous::ImageTex * im = new ImageTex();
 
@@ -759,7 +757,7 @@ namespace Luminous {
 
     if(m_shouldSave.find(level) != m_shouldSave.end()) {
       QString filename = cacheFileName(m_filename, level);
-      Directory::mkdirRecursive(FileUtils::path(filename));
+      Radiant::Directory::mkdirRecursive(Radiant::FileUtils::path(filename));
       imdest->write(filename.toUtf8().data());
       // Radiant::info("wrote cache %s (%d)", filename.c_str(), level);
     }

@@ -31,8 +31,6 @@
 
 namespace Poetic
 {
-  using namespace Radiant;
-
 #define SHADER(str) #str
   static const char * g_fontVShaderSource = SHADER(
     uniform mat3   transform;

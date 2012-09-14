@@ -26,8 +26,6 @@
 
 namespace Poetic
 {
-  using namespace Nimble;
-
   CPUBitmapGlyph::CPUBitmapGlyph(FT_GlyphSlotRec_ * glyph)
   : Glyph(glyph),
     m_bitmap(0)

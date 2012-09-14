@@ -46,9 +46,6 @@
 #include <strings.h>	// strcasecmp()
 #endif
 
-using namespace std;
-using namespace Radiant;
-
 namespace Luminous
 {
 

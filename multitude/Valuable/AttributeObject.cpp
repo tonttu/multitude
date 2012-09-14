@@ -30,7 +30,6 @@ std::list<Valuable::Attribute::Doc> Valuable::Attribute::doc;
 
 namespace Valuable
 {
-  using namespace Radiant;
 
   bool Serializable::deserializeXML(const DOMElement &element)
   {

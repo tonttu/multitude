@@ -33,11 +33,10 @@
 
 namespace
 {
-  using namespace Resonant;
   void s_moduleInfoCb(pa_context * c, const pa_module_info * i, int eol, void * self)
   {
     if(c && self) {
-      PulseAudioCleaner * pac = static_cast<PulseAudioCleaner*>(self);
+      Resonant::PulseAudioCleaner * pac = static_cast<Resonant::PulseAudioCleaner*>(self);
       if(pac->context() == c) {
         pac->moduleInfo(i, eol);
       }
@@ -47,7 +46,7 @@ namespace
   void s_unloadSuccessCb(pa_context * c, int /*success*/, void * self)
   {
     if(c && self) {
-      PulseAudioCleaner * pac = static_cast<PulseAudioCleaner*>(self);
+      Resonant::PulseAudioCleaner * pac = static_cast<Resonant::PulseAudioCleaner*>(self);
       if(pac->context() == c) {
         pac->ready();
       }

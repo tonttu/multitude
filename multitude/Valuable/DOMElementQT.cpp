@@ -25,8 +25,6 @@
 
 namespace Valuable
 {
-  using namespace Radiant;
-
   struct DOMElement::Wrapped
   {
     QDomElement x;

@@ -24,8 +24,6 @@ namespace Radiant {
 
   static bool __verbose = true;
 
-  using namespace Nimble;
-
   static void badmarker(const char * func, int32_t marker)
   {
     if(!__verbose)
@@ -606,7 +604,7 @@ namespace Radiant {
       return Nimble::Vector2f(r.x, r.y);
     }
     else if(marker == STRING_MARKER) {
-      BD_STR_TO_VEC(Vector2f, 2, ok);
+      BD_STR_TO_VEC(Nimble::Vector2f, 2, ok);
       /*
       const char * source = & m_buf[m_current];
       Radiant::Variant v(source);
@@ -651,7 +649,7 @@ namespace Radiant {
       return Nimble::Vector3f(r.x, r.y, r.z);
     }
     else if(marker == STRING_MARKER) {
-      BD_STR_TO_VEC(Vector3f, 3, ok);
+      BD_STR_TO_VEC(Nimble::Vector3f, 3, ok);
     }
     else {
       skipParameter(marker);
@@ -775,7 +773,7 @@ namespace Radiant {
       return getRef<Nimble::Vector4f>();
     }
     else if(marker == STRING_MARKER) {
-      BD_STR_TO_VEC(Vector4f, 4, ok);
+      BD_STR_TO_VEC(Nimble::Vector4f, 4, ok);
     }
     else {
       skipParameter(marker);

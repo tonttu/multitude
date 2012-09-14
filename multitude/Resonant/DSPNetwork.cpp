@@ -33,8 +33,6 @@
 
 namespace Resonant {
 
-  using namespace Radiant;
-
   DSPNetwork::Item::Item()
     : m_module(0),
       m_compiled(false),
@@ -627,7 +625,7 @@ namespace Resonant {
       Item * oi = findItem(m_collect->id());
 
       if(!oi)
-        Radiant::trace(FATAL, "DSPNetwork::checkNewItems # No collector \"%s\"",
+        Radiant::fatal("DSPNetwork::checkNewItems # No collector \"%s\"",
             m_collect->id().toUtf8().data());
 
       m_controlData.rewind();

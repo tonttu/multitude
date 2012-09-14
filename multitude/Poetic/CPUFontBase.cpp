@@ -8,8 +8,6 @@
 
 namespace Poetic
 {
-  using namespace Radiant;
-
   CPUFontBase::CPUFontBase()
     : m_face(0),
       m_mutex(true),
