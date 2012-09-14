@@ -90,7 +90,7 @@ namespace Valuable
     assert(m_values.size() > idx && idx >= 0);
     if(m_values[idx].type() == QVariant::Color) {
       QColor color = m_values[idx].value<QColor>();
-      return Radiant::Color(color.red(), color.green(), color.blue(), color.alpha());
+      return Radiant::Color(color.redF(), color.greenF(), color.blueF(), color.alphaF());
     }
 
     Radiant::error("StyleValue::asColor # cannot convert %s to color", m_values[idx].typeName());
