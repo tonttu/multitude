@@ -124,7 +124,7 @@ namespace VideoDisplay {
         extralatency = atof(lat) * 0.001;
       }
       checked = true;
-      debug("VideoInFFMPEG::open # Extra latenty set to %.3f", extralatency);
+      Radiant::debug("VideoInFFMPEG::open # Extra latenty set to %.3f", extralatency);
     }
 
     const float bufferLengthInSeconds = 1.7f + Nimble::Math::Clamp(extralatency * 1.5f, 0.0f, 5.0f);

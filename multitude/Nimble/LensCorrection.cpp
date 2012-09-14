@@ -35,9 +35,9 @@ namespace Nimble {
     */
   }
 
-  Vector2 LensCorrection::correct(Vector2 loc) const
+  Nimble::Vector2f LensCorrection::correct(Vector2 loc) const
   {
-    Vector2 local  = loc - m_center;
+    Nimble::Vector2f local  = loc - m_center;
     float r1 = local.length() * m_radiusInv;
 
     if(r1 < 0.0001f)

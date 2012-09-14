@@ -34,8 +34,8 @@ namespace Nimble
   {
     // Transform the points
     m_origin = (m * Vector2f(0, 0)).vector2();
-    Vector2f c0 = (m * Vector2f(0.5f * size.x, 0.f)).vector2();
-    Vector2f c1 = (m * Vector2f(0.f, 0.5f * size.y)).vector2();
+    Nimble::Vector2f c0 = (m * Vector2f(0.5f * size.x, 0.f)).vector2();
+    Nimble::Vector2f c1 = (m * Vector2f(0.f, 0.5f * size.y)).vector2();
 
     // Compute the axii and extents
     m_axis0 = c0 - m_origin;
@@ -61,8 +61,8 @@ namespace Nimble
   {
     p -= m_origin;
 
-    float u = Math::Abs(dot(p, m_axis0));
-    float v = Math::Abs(dot(p, m_axis1));
+    float u = Nimble::Math::Abs(dot(p, m_axis0));
+    float v = Nimble::Math::Abs(dot(p, m_axis1));
 
     return (0 <= u && u <= m_extent0) && (0 <= v && v <= m_extent1);
   }
@@ -83,30 +83,30 @@ namespace Nimble
   bool Rectangle::intersects(const Rectangle & r) const
   {
     // Difference box centers
-    Vector2f d = r.m_origin - m_origin;
+    Nimble::Vector2f d = r.m_origin - m_origin;
 
     float absAdB[2][2];
 
-    absAdB[0][0] = Math::Abs(dot(m_axis0, r.m_axis0));
-    absAdB[0][1] = Math::Abs(dot(m_axis0, r.m_axis1));
-    float absAdD = Math::Abs(dot(m_axis0, d));
+    absAdB[0][0] = Nimble::Math::Abs(dot(m_axis0, r.m_axis0));
+    absAdB[0][1] = Nimble::Math::Abs(dot(m_axis0, r.m_axis1));
+    float absAdD = Nimble::Math::Abs(dot(m_axis0, d));
     float sum = m_extent0 + r.m_extent0 * absAdB[0][0] + r.m_extent1 * absAdB[0][1];
     if(absAdD > sum)
       return false;
 
-    absAdB[1][0] = Math::Abs(dot(m_axis1, r.m_axis0));
-    absAdB[1][1] = Math::Abs(dot(m_axis1, r.m_axis1));
-    absAdD = Math::Abs(dot(m_axis1, d));
+    absAdB[1][0] = Nimble::Math::Abs(dot(m_axis1, r.m_axis0));
+    absAdB[1][1] = Nimble::Math::Abs(dot(m_axis1, r.m_axis1));
+    absAdD = Nimble::Math::Abs(dot(m_axis1, d));
     sum = m_extent1 + r.m_extent0 * absAdB[1][0] + r.m_extent1 * absAdB[1][1];
     if(absAdD > sum)
       return false;
 
-    absAdD = Math::Abs(dot(r.m_axis0, d));
+    absAdD = Nimble::Math::Abs(dot(r.m_axis0, d));
     sum = r.m_extent0 + m_extent0 * absAdB[0][0] + m_extent1 * absAdB[1][0];
     if(absAdD > sum)
       return false;
 
-    absAdD = Math::Abs(dot(r.m_axis1, d));
+    absAdD = Nimble::Math::Abs(dot(r.m_axis1, d));
     sum = r.m_extent1 + m_extent0 * absAdB[0][1] + m_extent1 * absAdB[1][1];
     if(absAdD > sum)
       return false;  

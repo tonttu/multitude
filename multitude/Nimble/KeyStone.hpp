@@ -306,7 +306,7 @@ namespace Nimble {
     int            m_dpyWidth;
     int            m_dpyHeight;
 
-    Vector2        m_dpyCenter;
+    Nimble::Vector2f        m_dpyCenter;
 
     // Display area offset
     int            m_dpyX;

@@ -74,15 +74,15 @@ namespace Poetic
     // }
 
 #ifdef POETIC_FLIP_Y
-    Vector2f v0 = pen + Vector2f(m_pos.x,              -m_pos.y);
-    Vector2f v1 = pen + Vector2f(m_pos.x,              -m_pos.y + m_height);
-    Vector2f v2 = pen + Vector2f(m_width + m_pos.x,    -m_pos.y + m_height);
-    Vector2f v3 = pen + Vector2f(m_width + m_pos.x,    -m_pos.y);
+    Nimble::Vector2f v0 = pen + Vector2f(m_pos.x,              -m_pos.y);
+    Nimble::Vector2f v1 = pen + Vector2f(m_pos.x,              -m_pos.y + m_height);
+    Nimble::Vector2f v2 = pen + Vector2f(m_width + m_pos.x,    -m_pos.y + m_height);
+    Nimble::Vector2f v3 = pen + Vector2f(m_width + m_pos.x,    -m_pos.y);
 #else
-    Vector2f v0 = pen + Vector2f(m_pos.x,               m_pos.y);
-    Vector2f v1 = pen + Vector2f(m_pos.x,               m_pos.y - m_height);
-    Vector2f v2 = pen + Vector2f(m_width + m_pos.x,     m_pos.y - m_height);
-    Vector2f v3 = pen + Vector2f(m_width + m_pos.x,     m_pos.y);
+    Nimble::Vector2f v0 = pen + Vector2f(m_pos.x,               m_pos.y);
+    Nimble::Vector2f v1 = pen + Vector2f(m_pos.x,               m_pos.y - m_height);
+    Nimble::Vector2f v2 = pen + Vector2f(m_width + m_pos.x,     m_pos.y - m_height);
+    Nimble::Vector2f v3 = pen + Vector2f(m_width + m_pos.x,     m_pos.y);
 #endif
 
 

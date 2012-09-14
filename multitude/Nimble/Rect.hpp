@@ -306,8 +306,8 @@ namespace Nimble {
   {
     RectT<T> ret;
     for(int i = 0; i < 2; i++) {
-      ret.m_low[i] = Math::Max(m_low[i], b.m_low[i]);
-      ret.m_high[i] = Math::Min(m_high[i], b.m_high[i]);
+      ret.m_low[i] = Nimble::Math::Max(m_low[i], b.m_low[i]);
+      ret.m_high[i] = Nimble::Math::Min(m_high[i], b.m_high[i]);
     }
     return ret;
   }
@@ -407,8 +407,8 @@ namespace Nimble {
   template<class T>
   void RectT<T>::transform(const Matrix3T<T>& m)
   {
-    using Math::Min;
-    using Math::Max;
+    using Nimble::Math::Min;
+    using Nimble::Math::Max;
     Vector2T<T> v0(m_low.x, m_low.y);
     Vector2T<T> v1(m_high.x, m_low.y);
     Vector2T<T> v2(m_high.x, m_high.y);

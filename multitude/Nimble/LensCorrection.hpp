@@ -48,7 +48,7 @@ namespace Nimble {
     void setCameraResolution(int w, int h);
 
     /// Performs barrel distortion correction on the given vector
-    Vector2 correct(Vector2 loc) const;
+    Nimble::Vector2f correct(Vector2 loc) const;
 
     /// Set the correction mapping to identity
     void setIdentity()
@@ -77,7 +77,7 @@ namespace Nimble {
 
   private:
 
-    Vector2 m_center;
+    Nimble::Vector2f m_center;
     float   m_radiusInv;
     Vector4 m_params;
   };

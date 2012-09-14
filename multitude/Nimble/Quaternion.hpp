@@ -164,8 +164,8 @@ namespace Nimble {
       angle *= T(0.5);
       axis.normalize();
 
-      T si = Math::Sin(angle);
-      w = Math::Cos(angle);
+      T si = Nimble::Math::Sin(angle);
+      w = Nimble::Math::Cos(angle);
       x = axis.x * si;
       y = axis.y * si;
       z = axis.z * si;
@@ -283,7 +283,7 @@ namespace Nimble {
       T sinom, scale0, scale1, theta;
 
       // calc cosine
-      T cosom = Math::Clamp<T>(q1.x * q2.x + q1.y * q2.y + q1.z * q2.z + q1.w * q2.w,
+      T cosom = Nimble::Math::Clamp<T>(q1.x * q2.x + q1.y * q2.y + q1.z * q2.z + q1.w * q2.w,
                                -1.0, 1.0);
 
       // Check if the quaternions are on opposite hemispheres
@@ -301,10 +301,10 @@ namespace Nimble {
       if((T(1.0) - cosom) > T(1e-03)) {
         // The quaternions aren't very close, proceed with SLERP
 
-        theta = Math::ACos(cosom);
-        sinom =	T(1.0) / Math::Sin(theta);
-        scale0 = Math::Sin(theta * scale0) * sinom;
-        scale1 = Math::Sin(theta * scale1) * sinom;
+        theta = Nimble::Math::ACos(cosom);
+        sinom =	T(1.0) / Nimble::Math::Sin(theta);
+        scale0 = Nimble::Math::Sin(theta * scale0) * sinom;
+        scale1 = Nimble::Math::Sin(theta * scale1) * sinom;
       }
 
       // Do the interpolation
@@ -349,7 +349,7 @@ namespace Nimble {
     {
       angle *= 0.5;
       axis.normalize();
-      return QuaternionT(axis*Math::Sin(angle), Math::Cos(angle));
+      return QuaternionT(axis*Math::Sin(angle), Nimble::Math::Cos(angle));
     }
   };
 

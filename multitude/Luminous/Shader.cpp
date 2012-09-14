@@ -37,7 +37,7 @@ namespace Luminous {
       if(v.m_param == -1) {\
         int tmp = glslprog->glslfunc(((type*)v.m_obj)->name()); \
         if(tmp < 0) { \
-          error("Could not find location for %s", ((type*)v.m_obj)->name().toUtf8().data()); \
+          Radiant::error("Could not find location for %s", ((type*)v.m_obj)->name().toUtf8().data()); \
           v.m_param = -2; \
           continue; \
         } \
@@ -58,7 +58,7 @@ namespace Luminous {
       if(v.m_param == -1) {\
         int tmp = glslprog->glslfunc(((type*)v.m_obj)->name()); \
         if(tmp < 0) { \
-          error("Could not find location for %s", ((type*)v.m_obj)->name().toUtf8().data()); \
+          Radiant::error("Could not find location for %s", ((type*)v.m_obj)->name().toUtf8().data()); \
           v.m_param = -2; \
           continue; \
         } \
@@ -79,7 +79,7 @@ namespace Luminous {
       if(v.m_param == -1) {\
         int tmp = glslprog->glslfunc(((type*)v.m_obj)->name()); \
         if(tmp < 0) { \
-          error("Could not find location for %s", ((type*)v.m_obj)->name().toUtf8().data()); \
+          Radiant::error("Could not find location for %s", ((type*)v.m_obj)->name().toUtf8().data()); \
           v.m_param = -2; \
           continue; \
         } \
@@ -117,7 +117,7 @@ namespace Luminous {
       SHADER_PARAM_CHECK(obj, AttributeMatrix3f, m_mat3f);
       SHADER_PARAM_CHECK(obj, AttributeMatrix4f, m_mat4f);
 
-      error("When adding shader parameter %s, type %s not supported",
+      Radiant::error("When adding shader parameter %s, type %s not supported",
             obj->name().toUtf8().data(), typeid(*obj).name());
     }
 
@@ -267,11 +267,11 @@ namespace Luminous {
       bool ok = prog->link();
 
       if(!ok) {
-        error("Shader::program # Shader compilation failed: %s", prog->linkerLog());
+        Radiant::error("Shader::program # Shader compilation failed: %s", prog->linkerLog());
         return 0;
       }
       else {
-        // info("Compiled shader");
+        // Radiant::info("Compiled shader");
       }
 
     }
@@ -281,7 +281,7 @@ namespace Luminous {
     prog->bind();
 
     /*
-    info("Prog = %p handle = %d isLinked = %d valid = %d objs = %d",
+    Radiant::info("Prog = %p handle = %d isLinked = %d valid = %d objs = %d",
          &prog, (int) prog.handle(), (int) prog.isLinked(),
          (int) prog.validate(), prog.shaderObjectCount());
          */

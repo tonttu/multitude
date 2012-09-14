@@ -50,7 +50,7 @@ namespace Luminous
 
     if(m_shaderSource == 0)
     {
-      error("GLSLShaderObject::compile # attempt to compile a shader "
+      Radiant::error("GLSLShaderObject::compile # attempt to compile a shader "
             "with no source.");
       return false;
     }
@@ -72,7 +72,7 @@ namespace Luminous
   {
     if(m_handle == 0)
     {
-      error("GLSLShaderObject::compilerLog # attempt to query null object.");
+      Radiant::error("GLSLShaderObject::compilerLog # attempt to query null object.");
       return 0;
     }
 
@@ -137,13 +137,13 @@ namespace Luminous
     GLSLShaderObject * shader = new GLSLShaderObject(type);
 
     if(!shader->loadSourceFile(filename)) {
-      error("GLSLShaderObject::fromFile # Could not load \"%s\"", filename);
+      Radiant::error("GLSLShaderObject::fromFile # Could not load \"%s\"", filename);
       delete shader;
       return 0;
     }
 
     if(!shader->compile()) {
-      error("GLSLShaderObject::fromFile # %s\n%s", filename, shader->compilerLog());
+      Radiant::error("GLSLShaderObject::fromFile # %s\n%s", filename, shader->compilerLog());
       delete shader;
       return 0;
     }

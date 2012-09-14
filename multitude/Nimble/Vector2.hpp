@@ -82,7 +82,7 @@ namespace Nimble {
     inline bool	isZero		(void) const					      { return (x == (T) 0 && y == (T) 0); }
 
     /// Returns the length of the vector
-    auto length() const -> decltype(T() * 1.f)          { return Math::Sqrt(lengthSqr()); }
+    auto length() const -> decltype(T() * 1.f)          { return Nimble::Math::Sqrt(lengthSqr()); }
     /// Returns the squared length of the vector
     inline T      	lengthSqr	(void) const				      { return x*x+y*y; }
     /// Negates the vector
@@ -107,7 +107,7 @@ namespace Nimble {
     /// Clamps both components to the range [0,1]
     inline Vector2T&	clampUnit	(void)						{ return clamp(T(0.0), T(1.0)); }
     /// Clamps both components to the range [low, high]
-    inline Vector2T&	clamp (T low, T high)       { x = Math::Clamp(x, low, high); y = Math::Clamp(y, low, high); return * this; }
+    inline Vector2T&	clamp (T low, T high)       { x = Nimble::Math::Clamp(x, low, high); y = Nimble::Math::Clamp(y, low, high); return * this; }
 
     /// Returns the smaller component
     inline T           minimum         (void) const { return x < y ? x : y; }
@@ -137,7 +137,7 @@ namespace Nimble {
         @return True if the vector elements are finite, false if are non-finite
         (i.e. infinite or nan).
     */
-    inline bool isFinite() const { return Math::isFinite(x) && Math::isFinite(y); }
+    inline bool isFinite() const { return Nimble::Math::isFinite(x) && Nimble::Math::isFinite(y); }
 
     /// Less-than operator, with arbitrary internal logic. This method is used
     /// if you want to sort vectors.
@@ -237,7 +237,7 @@ namespace Nimble {
     template <class T>
     inline Vector2T<int> Round(const Vector2T<T>  & that)
     {
-      return Vector2T<int>(Math::Round(that.x), Math::Round(that.y));
+      return Vector2T<int>(Math::Round(that.x), Nimble::Math::Round(that.y));
     }
   }
 
@@ -265,10 +265,10 @@ namespace Nimble {
   /// @param lineStart Line starting point
   /// @param lineEnd Line end point
   /// @param slopeType reference to int to receive slope type.
-  /// @param delta reference to Vector2f to receive delta.
+  /// @param delta reference to Nimble::Vector2f to receive delta.
   /// @return Slope value.
-  inline float lineSlope(const Vector2f lineStart, const Vector2f lineEnd,
-    int & slopeType, Vector2f & delta)
+  inline float lineSlope(const Nimble::Vector2f lineStart, const Nimble::Vector2f lineEnd,
+    int & slopeType, Nimble::Vector2f & delta)
   {
     float   m = 0.0f;
 
@@ -307,12 +307,12 @@ namespace Nimble {
 
     // Get slope and deltas of first line
     int   slopeType1 = 0;
-    Vector2f  delta1;
+    Nimble::Vector2f  delta1;
     const float   m1 = lineSlope(line1Start, line1End, slopeType1, delta1);
 
     // Get slope and deltas of second line
     int   slopeType2 = 0;
-    Vector2f  delta2;
+    Nimble::Vector2f  delta2;
     const float   m2 = lineSlope(line2Start, line2End, slopeType2, delta2);
 
     // Determine whether infinite lines cross: if so compute line parameters

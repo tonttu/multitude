@@ -628,7 +628,7 @@ namespace Luminous
 
     FILE * file = fopen(filename, "rb");
     if(!file) {
-      error("Image::read # failed to open file '%s'", filename);
+      Radiant::error("Image::read # failed to open file '%s'", filename);
       // m_ready = true;
       return false;
     }
@@ -638,7 +638,7 @@ namespace Luminous
       result = codec->read(*this, file);
       // m_dataReady = result;
     } else {
-      error("Image::read # no suitable codec found for '%s'", filename);
+      Radiant::error("Image::read # no suitable codec found for '%s'", filename);
     }
 
     fclose(file);
@@ -661,7 +661,7 @@ namespace Luminous
 
     FILE * file = fopen(filename, "wb");
     if(!file) {
-      error("Image::write # failed to open file '%s'", filename);
+      Radiant::error("Image::write # failed to open file '%s'", filename);
       return false;
     }
 
@@ -987,7 +987,7 @@ namespace Luminous
 
     FILE * file = fopen(filename.toUtf8().data(), "rb");
     if(!file) {
-      error("CompressedImage::read # failed to open file '%s': %s", filename.toUtf8().data(), strerror(errno));
+      Radiant::error("CompressedImage::read # failed to open file '%s': %s", filename.toUtf8().data(), strerror(errno));
       return false;
     }
 
@@ -995,7 +995,7 @@ namespace Luminous
     if(codec) {
       result = codec->read(*this, file, level);
     } else {
-      error("CompressedImage::read # no suitable codec found for '%s'", filename.toUtf8().data());
+      Radiant::error("CompressedImage::read # no suitable codec found for '%s'", filename.toUtf8().data());
     }
     fclose(file);
 

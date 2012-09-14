@@ -17,7 +17,7 @@ namespace Poetic
   {
     // Ensure line list empty
     /*
-      info("breakToLines Comes line with size %d", (int) ws.size());
+      Radiant::info("breakToLines Comes line with size %d", (int) ws.size());
       for(unsigned i = 0; i < ws.size(); i++) {
     printf("%d ", (int) ws[i]);
       }
@@ -132,7 +132,7 @@ namespace Poetic
     /*
       for(WStringList::iterator itSub = lines.begin(); itSub != lines.end(); itSub++) {
 
-    info("breakToLines LINELEN = %d", (int) (*itSub).length());
+    Radiant::info("breakToLines LINELEN = %d", (int) (*itSub).length());
 
     for(unsigned i = 0; i < (*itSub).length(); i++) {
       printf("%d ", (int) (*itSub)[i]);

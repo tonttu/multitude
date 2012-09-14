@@ -270,7 +270,7 @@ namespace Luminous
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
 
     if(it == __resources.end()) {
-      error("No OpenGL resources for current thread");
+      Radiant::error("No OpenGL resources for current thread");
       return;
     }
 
@@ -287,7 +287,7 @@ namespace Luminous
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
 
     if(it == __resources.end()) {
-      error("No OpenGL resources for current thread");
+      Radiant::error("No OpenGL resources for current thread");
       return 0;
     }
 
@@ -301,7 +301,7 @@ namespace Luminous
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
 
     if(it == __resources.end()) {
-      error("No OpenGL resources for current thread");
+      Radiant::error("No OpenGL resources for current thread");
       return 0;
     }
 

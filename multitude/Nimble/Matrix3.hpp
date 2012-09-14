@@ -206,10 +206,10 @@ namespace Nimble {
       float sy = vertices[0].y - vertices[1].y +
                  vertices[2].y - vertices[3].y;
 
-      float del = Math::Det(dx1, dx2, dy1, dy2);
+      float del = Nimble::Math::Det(dx1, dx2, dy1, dy2);
 
-      float g = Math::Det(sx, dx2, sy, dy2) / del;
-      float h = Math::Det(dx1, sx, dy1, sy) / del;
+      float g = Nimble::Math::Det(sx, dx2, sy, dy2) / del;
+      float h = Nimble::Math::Det(dx1, sx, dy1, sy) / del;
 
       float a = vertices[1].x - vertices[0].x + g * vertices[1].x;
       float b = vertices[3].x - vertices[0].x + h * vertices[3].x;
@@ -363,8 +363,8 @@ namespace Nimble {
   template <class T>
   inline void Matrix3T<T>::rotateX(T a)
   {
-    T ca = Math::Cos(a);
-    T sa = Math::Sin(a);
+    T ca = Nimble::Math::Cos(a);
+    T sa = Nimble::Math::Sin(a);
     m[0].make(1.0, 0.0, 0.0);
     m[1].make(0.0, ca, -sa);
     m[2].make(0.0, sa, ca);
@@ -373,8 +373,8 @@ namespace Nimble {
   template <class T>
   inline void Matrix3T<T>::rotateY(T a)
   {
-    T ca = Math::Cos(a);
-    T sa = Math::Sin(a);
+    T ca = Nimble::Math::Cos(a);
+    T sa = Nimble::Math::Sin(a);
     m[0].make(ca,  0.0, sa);
     m[1].make(0.0, 1.0, 0.0);
     m[2].make(-sa, 0.0, ca);
@@ -384,8 +384,8 @@ namespace Nimble {
   template <class T>
   inline void Matrix3T<T>::rotateZ(T a)
   {
-    T ca = Math::Cos(a);
-    T sa = Math::Sin(a);
+    T ca = Nimble::Math::Cos(a);
+    T sa = Nimble::Math::Sin(a);
     m[0].make(ca, -sa, 0.0);
     m[1].make(sa, ca, 0.0);
     m[2].make(0.0, 0.0, 1.0);
@@ -418,10 +418,10 @@ namespace Nimble {
 
     T fTrace = data()[0] + data()[4] + data()[8];
     T fCos = ((T)0.5)*(fTrace-((T)1.0));
-    radians = Math::ACos(fCos);  // in [0,PI]
+    radians = Nimble::Math::ACos(fCos);  // in [0,PI]
 
     if ( radians > (T)0.0 ) {
-      if ( radians < Math::PI ) {
+      if ( radians < Nimble::Math::PI ) {
     axis[0] = data()[7]-data()[5];
     axis[1] = data()[2]-data()[6];
     axis[2] = data()[3]-data()[1];
@@ -484,8 +484,8 @@ namespace Nimble {
   template <class T>
   inline void Matrix3T<T>::rotateAroundAxis(const Vector3T<T>& axis, T radians)
   {
-    T ca = Math::Cos(radians);
-    T sa = Math::Sin(radians);
+    T ca = Nimble::Math::Cos(radians);
+    T sa = Nimble::Math::Sin(radians);
     // T fCos = cos(radians);
     // T sa = sin(radians);
     T fOneMinusCos = ((T) 1.0) -ca;
@@ -521,9 +521,9 @@ namespace Nimble {
       {
     if ( m[0][2] > -1.0f )
       {
-        xa = Math::ATan2(-m[1][2],m[2][2]);
+        xa = Nimble::Math::ATan2(-m[1][2],m[2][2]);
         ya = (T)asin(m[0][2]);
-        za = Math::ATan2(-m[0][1],m[0][0]);
+        za = Nimble::Math::ATan2(-m[0][1],m[0][0]);
         return true;
       }
         else
@@ -538,7 +538,7 @@ namespace Nimble {
     else
       {
     // WARNING.  Not unique.  XAngle + ZAngle = atan2(r10,r11)
-    xa = Math::ATan2(m[1][0],m[1][1]);
+    xa = Nimble::Math::ATan2(m[1][0],m[1][1]);
     ya = (T)Math::HALF_PI;
     za = 0.0f;
     return false;
@@ -721,7 +721,7 @@ T Matrix3T<T>::extractScale() const
 {
   Vector3T<T> u(T(1), T(0), T(0));
   Vector3T<T> v = *this * u;
-  T s = Math::Sqrt(v.x * v.x + v.y * v.y);
+  T s = Nimble::Math::Sqrt(v.x * v.x + v.y * v.y);
 
   return s;
 }

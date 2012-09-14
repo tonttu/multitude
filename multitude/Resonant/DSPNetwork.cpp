@@ -187,7 +187,7 @@ namespace Resonant {
       m_doneCount++;
     }
     else
-      error("DSPNetwork::markDone # Failed for \"%s\"", m.id().toUtf8().data());
+      Radiant::error("DSPNetwork::markDone # Failed for \"%s\"", m.id().toUtf8().data());
   }
 
   void DSPNetwork::send(Radiant::BinaryData & control)
@@ -224,7 +224,7 @@ namespace Resonant {
 
   void DSPNetwork::dumpInfo(FILE *f)
   {
-    info("DSPNetwork::dumpInfo # %p", f);
+    Radiant::info("DSPNetwork::dumpInfo # %p", f);
     Radiant::BinaryData control;
 
     control.writeString("/self/dump_info");
@@ -337,7 +337,7 @@ namespace Resonant {
       //memcpy(out, res, 4 * framesPerBuffer * outChannels);
     }
     else {
-      error("DSPNetwork::callback # No data to play");
+      Radiant::error("DSPNetwork::callback # No data to play");
       bzero(out, 4 * framesPerBuffer * outChannels);
     }
     if(streams > 1) m_d->m_sem.release();
@@ -391,7 +391,7 @@ namespace Resonant {
       buf[0] = 0;
 
       if(!m_incopy.readString(buf, 512)) {
-        error("DSPNetwork::checkNewControl # Could not read string");
+        Radiant::error("DSPNetwork::checkNewControl # Could not read string");
         continue;
       }
 
@@ -447,7 +447,7 @@ namespace Resonant {
       Item * itptr = & (*m_items.begin());
 
       if(!compile(*itptr, 0)) {
-        error("DSPNetwork::checkNewItems # Could not add module %s", type);
+        Radiant::error("DSPNetwork::checkNewItems # Could not add module %s", type);
         m_items.pop_front();
       }
       else {
@@ -609,7 +609,7 @@ namespace Resonant {
         return;
       }
     }
-    error("DSPNetwork::deliverControl # No module \"%s\"", moduleid.toUtf8().data());
+    Radiant::error("DSPNetwork::deliverControl # No module \"%s\"", moduleid.toUtf8().data());
   }
 
 
@@ -684,7 +684,7 @@ namespace Resonant {
     item.m_module->prepare(ins, outs);
 
     if(ins != (int) item.m_inputs.size()) {
-      fatal("DSPNetwork::compile # input size mismatch %d != %d",
+      Radiant::fatal("DSPNetwork::compile # input size mismatch %d != %d",
         ins, (int) item.m_inputs.size());
     }
 

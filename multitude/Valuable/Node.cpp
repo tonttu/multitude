@@ -562,7 +562,7 @@ namespace Valuable
 
     if(std::find(m_elisteners.begin(), m_elisteners.end(), vp) !=
        m_elisteners.end())
-      debug("Widget::eventAddListener # Already got item %s -> %s",
+      Radiant::debug("Widget::eventAddListener # Already got item %s -> %s",
             from.data(), to.data());
     else {
       m_elisteners.push_back(vp);
@@ -660,17 +660,17 @@ namespace Valuable
 
   void Node::processMessage(const QByteArray & id, Radiant::BinaryData & data)
   {
-    // info("Node::processMessage # %s %s", typeid(*this).name(), id);
+    // Radiant::info("Node::processMessage # %s %s", typeid(*this).name(), id);
 
     int idx = id.indexOf('/');
     QString n = idx == -1 ? id : id.left(idx);
 
-    // info("Node::processMessage # Child id = %s", key.c_str());
+    // Radiant::info("Node::processMessage # Child id = %s", key.c_str());
 
     Attribute * vo = getValue(n);
 
     if(vo) {
-      // info("Node::processMessage # Sending message \"%s\" to %s",
+      // Radiant::info("Node::processMessage # Sending message \"%s\" to %s",
       // id + skip, typeid(*vo).name());
       vo->processMessage(idx == -1 ? "" : id.mid(idx + 1), data);
     } else {
@@ -781,7 +781,7 @@ namespace Valuable
       return;
 
     if(!m_eventSendNames.contains(id)) {
-      error("Node::eventSend # Sending unknown event '%s'", id.data());
+      Radiant::error("Node::eventSend # Sending unknown event '%s'", id.data());
     }
 
     m_frame++;
@@ -863,13 +863,13 @@ namespace Valuable
     // Check that the value does not exist already
     iterator it = m_values.find(now);
     if(it != m_values.end()) {
-      error("Node::valueRenamed # Value '%s' already exist", now.toUtf8().data());
+      Radiant::error("Node::valueRenamed # Value '%s' already exist", now.toUtf8().data());
       return;
     }
 
     it = m_values.find(was);
     if(it == m_values.end()) {
-      error("Node::valueRenamed # No such value: %s", was.toUtf8().data());
+      Radiant::error("Node::valueRenamed # No such value: %s", was.toUtf8().data());
       return;
     }
 

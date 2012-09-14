@@ -120,7 +120,7 @@ namespace Resonant {
       avail = n;
 
     if(m_targetChannel >= host->channels()) {
-      error("ModuleSamplePlayer::SampleVoice::synthesize # channel count exceeded for %s "
+      Radiant::error("ModuleSamplePlayer::SampleVoice::synthesize # channel count exceeded for %s "
             "%ld >= %ld", m_sample->name().toUtf8().data(),
             m_targetChannel, host->channels());
       m_state = INACTIVE;
@@ -201,7 +201,7 @@ namespace Resonant {
     char name[buflen] = { '\0' };
 
     if(!data.readString(name, buflen)) {
-      error("ModuleSamplePlayer::SampleVoice::init # Invalid beginning");
+      Radiant::error("ModuleSamplePlayer::SampleVoice::init # Invalid beginning");
 
       return;
     }
@@ -223,13 +223,13 @@ namespace Resonant {
       else if(strcmp(name, "time") == 0)
         m_startTime = data.readTimeStamp( & ok);
       else {
-        error("ModuleSamplePlayer::SampleVoice::init # Invalid parameter \"%s\"",
+        Radiant::error("ModuleSamplePlayer::SampleVoice::init # Invalid parameter \"%s\"",
               name);
         break;
       }
 
       if(!ok) {
-        error("ModuleSamplePlayer::SampleVoice::init # Error parsing value for %s",
+        Radiant::error("ModuleSamplePlayer::SampleVoice::init # Error parsing value for %s",
               name);
       }
       else {
@@ -238,7 +238,7 @@ namespace Resonant {
 
       name[0] = '\0';
       if(!data.readString(name, buflen)) {
-        error("ModuleSamplePlayer::SampleVoice::init # Error reading parameter");
+        Radiant::error("ModuleSamplePlayer::SampleVoice::init # Error reading parameter");
         break;
       }
     }
@@ -256,7 +256,7 @@ namespace Resonant {
   {
     if(m_state != WAITING_FOR_SAMPLE) {
 
-      error("ModuleSamplePlayer::SampleVoice::setSample # Wrong state %p %d",
+      Radiant::error("ModuleSamplePlayer::SampleVoice::setSample # Wrong state %p %d",
             this, (int) m_state);
     }
     m_sample = s;
@@ -333,12 +333,12 @@ namespace Resonant {
           bool good = true;
 
           if(!s->load(it.m_name.c_str(), it.m_name.c_str())) {
-            error("ModuleSamplePlayer::BGLoader::childLoop # Could not load "
+            Radiant::error("ModuleSamplePlayer::BGLoader::childLoop # Could not load "
                   "\"%s\"", it.m_name.c_str());
             good = false;
           }
           else if(!m_host->addSample(s)) {
-            error("ModuleSamplePlayer::BGLoader::childLoop # Could not add "
+            Radiant::error("ModuleSamplePlayer::BGLoader::childLoop # Could not add "
                   "\"%s\"", it.m_name.c_str());
             good = false;
           }
@@ -425,14 +425,14 @@ namespace Resonant {
       int voiceind = findFreeVoice();
 
       if(voiceind < 0) {
-        error("ModuleSamplePlayer::control # Out of polyphony");
+        Radiant::error("ModuleSamplePlayer::control # Out of polyphony");
         return;
       }
 
       ok = data.readString(buf, bufsize);
 
       if(!ok) {
-        error("ModuleSamplePlayer::control # Could not get sample name ");
+        Radiant::error("ModuleSamplePlayer::control # Could not get sample name ");
         return;
       }
 
@@ -462,10 +462,10 @@ namespace Resonant {
       m_channels = data.readInt32( & ok);
     }
     else
-      error("ModuleSamplePlayer::control # Unknown message \"%s\"", id.data());
+      Radiant::error("ModuleSamplePlayer::control # Unknown message \"%s\"", id.data());
 
     if(!ok) {
-      error("ModuleSamplePlayer::control # When processing \"%s\"", id.data());
+      Radiant::error("ModuleSamplePlayer::control # When processing \"%s\"", id.data());
     }
   }
 
@@ -494,7 +494,7 @@ namespace Resonant {
 
 
     /* for(i = 0; i < m_channels; i++)
-       info("ModuleSamplePlayer::process # %d %p %f", i, out[i], *out[i]);
+       Radiant::info("ModuleSamplePlayer::process # %d %p %f", i, out[i], *out[i]);
     */
 
   }
@@ -545,7 +545,7 @@ namespace Resonant {
 #else
         sprintf(command, "mpg123 %s --wav %s", file.toUtf8().data(), wavname.c_str());
 #endif
-        info("Performing mp3 -> wav conversion with [%s]", command);
+        Radiant::info("Performing mp3 -> wav conversion with [%s]", command);
         int err = system(command);
         if(err != 0)
           Radiant::error("ModuleSamplePlayer::createAmbientBackground # '%s' failed", command);

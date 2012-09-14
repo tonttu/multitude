@@ -30,7 +30,7 @@ namespace Luminous
     : GLResource(resources),
     m_filled(0)
   {
-    // info("BufferObject<type>::BufferObject # %p", this);
+    // Radiant::info("BufferObject<type>::BufferObject # %p", this);
     glGenBuffers(1, &m_bufferId);
     setPersistent(true);
   }
@@ -38,7 +38,7 @@ namespace Luminous
   template<GLenum type>
   BufferObject<type>::~BufferObject()
   {
-    // info("BufferObject<type>::~BufferObject # %p", this);
+    // Radiant::info("BufferObject<type>::~BufferObject # %p", this);
     glDeleteBuffers(1, &m_bufferId);
   }
 

@@ -205,7 +205,7 @@ namespace Valuable
     void processMessageFloat(const char * id, float v);
     /// Utility function for sending an int message to the object
     void processMessageInt(const char * id, int v);
-    /// Utility function for sending a Vector2 message to the object
+    /// Utility function for sending a Nimble::Vector2f message to the object
     void processMessageVector2(const char * id, Nimble::Vector2);
     /// Utility function for sending a Vector3 message to the object
     void processMessageVector3(const char * id, Nimble::Vector3);

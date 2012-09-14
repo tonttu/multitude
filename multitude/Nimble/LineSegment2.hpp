@@ -90,7 +90,7 @@ template <typename T>
     inline bool intersects(const LineSegment2T & that,
                            Vector2T<T> * point = 0) const
     {
-      Vector2f tmp;
+      Nimble::Vector2f tmp;
 
       bool r = linesIntersect(m_points[0], m_points[1],
                               that.m_points[0], that.m_points[1], & tmp);

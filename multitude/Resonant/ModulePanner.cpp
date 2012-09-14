@@ -105,12 +105,12 @@ namespace Resonant {
         setSourceLocation(id, loc);
       }
       else {
-        error("ModulePanner::control # %s # Could not read source location",
+        Radiant::error("ModulePanner::control # %s # Could not read source location",
               id.toUtf8().data());
       }
     }
     else {
-      error("ModulePanner::control # Unknown command %s", id.data());
+      Radiant::error("ModulePanner::control # Unknown command %s", id.data());
     }
   }
 
@@ -233,7 +233,7 @@ namespace Resonant {
     }
 
     if(!s) {
-      error("ModulePanner::setSourceLocation # id \"%s\" is not known",
+      Radiant::error("ModulePanner::setSourceLocation # id \"%s\" is not known",
             id.toUtf8().data());
       return;
     }
@@ -303,7 +303,7 @@ namespace Resonant {
         }
 
         if(!found) {
-          error("Could not allocate pipe for a moving source");
+          Radiant::error("Could not allocate pipe for a moving source");
         }
       }
     }
@@ -323,7 +323,7 @@ namespace Resonant {
       }
     }
 
-    error("ModulePanner::removeSource # No such source: \"%s\"", id.toUtf8().data());
+    Radiant::error("ModulePanner::removeSource # No such source: \"%s\"", id.toUtf8().data());
   }
 
   void ModulePanner::addSoundRectangleSpeakers(SoundRectangle * r)

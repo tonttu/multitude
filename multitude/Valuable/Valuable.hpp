@@ -55,7 +55,7 @@
 
       void processFingers(MultiWidgets::GrabManager & gm, MultiWidgets::FingerArray & fingers, float dt)
       {
-        Vector2 delta = calculateDelta(gm, fingers);  // Calculate if any of the fingers have moved the slider
+        Nimble::Vector2f delta = calculateDelta(gm, fingers);  // Calculate if any of the fingers have moved the slider
         float newValue = calculateValue();            // Get the new value of the slider (in the range [minimum-value...maximum-value])
         m_currentValue = newValue;                    // Assign it to the ValueObject
       }

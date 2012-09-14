@@ -170,7 +170,7 @@ namespace Luminous
   {
     allocate();
     if(context() == 0)
-      fatal("TextureT::bind # NULL context");
+      Radiant::fatal("TextureT::bind # NULL context");
 
     context()->bindTexture(TextureType, textureUnit, m_textureId);
   }
@@ -211,7 +211,7 @@ namespace Luminous
 //      bool isPowerOfTwo = !((h - 1) & h);
 
 //      if(!isPowerOfTwo) {
-//        error("ERROR: non-power-of-two textures are not supported");
+//        Radiant::error("ERROR: non-power-of-two textures are not supported");
 //        return false;
 //      }
 //    }
@@ -332,7 +332,7 @@ namespace Luminous
 //      bool isPowerOfTwo2 = !((h - 1) & h);
 
 //      if(!(isPowerOfTwo1 && isPowerOfTwo2)) {
-//        error("ERROR: non-power-of-two textures are not supported");
+//        Radiant::error("ERROR: non-power-of-two textures are not supported");
 //        return false;
 //      }
 //    }
@@ -480,7 +480,7 @@ namespace Luminous
     if(m_haveMipmaps)
     {
       /// @todo mipmap support should be implemented
-      error("Texture2D::loadSubBytes # Cannot be used with mipmaps");
+      Radiant::error("Texture2D::loadSubBytes # Cannot be used with mipmaps");
     } else {
 
       int alignment = 1;
@@ -546,7 +546,7 @@ namespace Luminous
 //      bool isPowerOfTwo2 = !((h - 1) & h);
 
 //      if(!(isPowerOfTwo1 && isPowerOfTwo2)) {
-//        error("ERROR: non-power-of-two textures are not supported");
+//        Radiant::error("ERROR: non-power-of-two textures are not supported");
 //        return 0;
 //      }
 //    }

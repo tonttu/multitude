@@ -42,7 +42,7 @@ namespace Resonant {
     const char * subenv = getenv("RESONANT_SUBWOOFER");
     if(subenv) {
       m_subwooferChannel = atoi(subenv);
-      info("ModuleOutCollect::ModuleOutCollect # Subwoofer channel set to %d",
+      Radiant::info("ModuleOutCollect::ModuleOutCollect # Subwoofer channel set to %d",
            m_subwooferChannel);
     }
   }
@@ -82,7 +82,7 @@ namespace Resonant {
 
     ok = control.readString(tmp.sourceId);
 
-    // info("ModuleOutCollect::control # Now %d sources in the map", (int) m_map.size());
+    // Radiant::info("ModuleOutCollect::control # Now %d sources in the map", (int) m_map.size());
 
     if(id == "subwooferchannel") {
       m_subwooferChannel = control.readInt32();
@@ -107,7 +107,7 @@ namespace Resonant {
       debugResonant("ModuleOutCollect::control # %s", id.data());
 
       if(!ok) {
-        error("ModuleOutCollect::control # Could not parse control # %s",
+        Radiant::error("ModuleOutCollect::control # Could not parse control # %s",
               tmp.sourceId.toUtf8().data());
         return;
       }
@@ -123,11 +123,11 @@ namespace Resonant {
           m_map.erase(it);
         }
         else
-          error("ModuleOutCollect::control # Could not erase mapping # %s:%d -> %d",
+          Radiant::error("ModuleOutCollect::control # Could not erase mapping # %s:%d -> %d",
                 tmp.sourceId.toUtf8().data(), tmp.from, tmp.to);
       }
       else {
-        error("ModuleOutCollect::control # No param \"%s\"", id.data());
+        Radiant::error("ModuleOutCollect::control # No param \"%s\"", id.data());
       }
     }
   }
@@ -155,7 +155,7 @@ namespace Resonant {
       float * dest = & m_interleaved[to];
 
       /* if(i < 2)
-        info("ModuleOutCollect::process # %p %d %f", src, i, src[0]);
+        Radiant::info("ModuleOutCollect::process # %p %d %f", src, i, src[0]);
       */
 
       while(src < sentinel) {

@@ -100,7 +100,7 @@ namespace Nimble {
     static int         columns() { return 2; }
 
     /// Returns a rotation matrix
-    static Matrix2T makeRotation(T r) { T c = Math::Cos(r); T s = Math::Sin(r); return Matrix2T(c, -s, s, c); }
+    static Matrix2T makeRotation(T r) { T c = Nimble::Math::Cos(r); T s = Nimble::Math::Sin(r); return Matrix2T(c, -s, s, c); }
     /// Returns a scaling matrix
     static Matrix2T makeScale(T s)  { return Matrix2T<T>(s, 0, 0, s); }
 
@@ -139,8 +139,8 @@ namespace Nimble {
   template <class T>
   inline void Matrix2T<T>::rotate(T a)
   {
-    T ca = Math::Cos(a);
-    T sa = Math::Sin(a);
+    T ca = Nimble::Math::Cos(a);
+    T sa = Nimble::Math::Sin(a);
     m[0].make(ca, -sa);
     m[1].make(sa, ca);
   }

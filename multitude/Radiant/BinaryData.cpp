@@ -610,7 +610,7 @@ namespace Radiant {
       /*
       const char * source = & m_buf[m_current];
       Radiant::Variant v(source);
-      Vector2f vect(0,0);
+      Nimble::Vector2f vect(0,0);
       if(v.getFloats(vect.data(), 2) == 2)
         return vect;
       else {

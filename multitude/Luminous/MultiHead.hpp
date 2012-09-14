@@ -144,14 +144,14 @@ namespace Luminous {
       int height() const { return m_size[1]; }
 
       /// The offset of the graphics inside the area (virtual pixels)
-      const Vector2f graphicsLocation(bool withseams = true) const
+      const Nimble::Vector2f graphicsLocation(bool withseams = true) const
       {
         return withseams ?
             m_graphicsLocation.asVector() - Nimble::Vector2f(m_seams[0], m_seams[3]) :
             m_graphicsLocation.asVector();
       }
       /// The size of the graphics inside this area (virtual pixels)
-      const Vector2f graphicsSize(bool withseams = true) const
+      const Nimble::Vector2f graphicsSize(bool withseams = true) const
       {
         return withseams ?
             m_graphicsSize.asVector() + Nimble::Vector2f(m_seams[0] + m_seams[1],

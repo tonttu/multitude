@@ -218,9 +218,9 @@ namespace Poetic
 
     // GPUTextureGlyph::resetActiveTexture();
 
-    // info("GPUTextureFont::internalRender # in");
+    // Radiant::info("GPUTextureFont::internalRender # in");
     Luminous::GLSLProgramObject * shader = m_fontShader->bind();
-    // info("GPUTextureFont::internalRender # out");
+    // Radiant::info("GPUTextureFont::internalRender # out");
 
     shader->setUniformInt("fontTexture", 0);
 
@@ -301,9 +301,9 @@ namespace Poetic
 
     // GPUTextureGlyph::resetActiveTexture();
 
-    // info("GPUTextureFont::internalRender # in");
+    // Radiant::info("GPUTextureFont::internalRender # in");
     Luminous::GLSLProgramObject * shader = m_fontShader->bind();
-    // info("GPUTextureFont::internalRender # out");
+    // Radiant::info("GPUTextureFont::internalRender # out");
 
 //    Luminous::Utils::glCheck("GPUTextureFont::internalRender");
 

@@ -109,7 +109,7 @@ namespace Valuable
 
     if(!m_wrapped->x.setContent( & file, & errstr, & errline)) {
       file.close();
-      error("DOMDocument::readFromFile # Cannot read file %s, line %d: %s",
+      Radiant::error("DOMDocument::readFromFile # Cannot read file %s, line %d: %s",
             filename.toUtf8().data(), errline, errstr.toUtf8().data());
       return false;
     }
@@ -124,7 +124,7 @@ namespace Valuable
     int errline = 0;
 
     if(!m_wrapped->x.setContent(buffer, &errstr, &errline)) {
-      error("DOMDocument::readFromMem # Cannot parse line %d: %s",
+      Radiant::error("DOMDocument::readFromMem # Cannot parse line %d: %s",
             errline, errstr.toUtf8().data());
       return false;
     }

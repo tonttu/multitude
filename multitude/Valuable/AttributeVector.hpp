@@ -111,14 +111,14 @@ namespace Valuable
       }
   };
 
-  /// An integer vector2 value object
+  /// An integer Nimble::Vector2f value object
   typedef AttributeVector<Nimble::Vector2i> AttributeVector2i;
   /// An integer vector3 value object
   typedef AttributeVector<Nimble::Vector3i> AttributeVector3i;
   /// An integer vector4 value object
   typedef AttributeVector<Nimble::Vector4i> AttributeVector4i;
 
-  /// A float vector2 value object
+  /// A float Nimble::Vector2f value object
   typedef AttributeVector<Nimble::Vector2f> AttributeVector2f;
   /// A float vector3 value object
   typedef AttributeVector<Nimble::Vector3f> AttributeVector3f;

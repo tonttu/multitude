@@ -275,12 +275,12 @@ namespace Luminous {
 
     const int n = (int) points.size();
 
-    Vector2f cprev;
-    Vector2f cnow = points[0].m_location;
-    Vector2f cnext;
-    Vector2f avg;
-    Vector2f dirNext;
-    Vector2f dirPrev;
+    Nimble::Vector2f cprev;
+    Nimble::Vector2f cnow = points[0].m_location;
+    Nimble::Vector2f cnext;
+    Nimble::Vector2f avg;
+    Nimble::Vector2f dirNext;
+    Nimble::Vector2f dirPrev;
 
     cnext = points[1].m_location;
     dirNext = cnext - cnow;

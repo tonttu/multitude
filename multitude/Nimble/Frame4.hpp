@@ -38,9 +38,9 @@ namespace Nimble
     float width() const { return left() + right(); }
     float height() const { return top() + bottom(); }
 
-    Vector2f leftTop() const { return Vector2f(left(), top()); }
-    Vector2f rightBottom() const { return Vector2f(right(), bottom()); }
-    Vector2f size() const { return Vector2f(width(), height()); }
+    Nimble::Vector2f leftTop() const { return Vector2f(left(), top()); }
+    Nimble::Vector2f rightBottom() const { return Vector2f(right(), bottom()); }
+    Nimble::Vector2f size() const { return Vector2f(width(), height()); }
   };
 
 }

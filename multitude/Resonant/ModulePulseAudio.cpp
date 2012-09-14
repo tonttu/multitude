@@ -47,12 +47,12 @@ namespace Resonant
     m_sinkInput(sinkInput), m_buffer(0), m_bufferSize(0),
     m_syncCount(0), m_canSync(false)
   {
-    // info("ModulePulseAudio::ModulePulseAudio # %p", this);
+    // Radiant::info("ModulePulseAudio::ModulePulseAudio # %p", this);
   }
 
   ModulePulseAudio::~ModulePulseAudio()
   {
-    // info("ModulePulseAudio::~ModulePulseAudio # %p", this);
+    // Radiant::info("ModulePulseAudio::~ModulePulseAudio # %p", this);
   }
 
   void ModulePulseAudio::contextChange(pa_context_state_t state)

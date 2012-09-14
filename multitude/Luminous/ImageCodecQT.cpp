@@ -174,7 +174,7 @@ namespace Luminous
 
     if(image.pixelFormat() == PixelFormat::rgbUByte()) {
 
-      // info("File is almost written rbgUByte");
+      // Radiant::info("File is almost written rbgUByte");
 
       qi = QImage(image.width(), image.height(),
                   QImage::Format_RGB32);
@@ -191,7 +191,7 @@ namespace Luminous
       }
     }
     else if(image.pixelFormat() == PixelFormat::rgbaUByte()) {
-      // info("File is almost written rbgaUByte");
+      // Radiant::info("File is almost written rbgaUByte");
 
       qi = QImage(image.width(), image.height(),
                   QImage::Format_ARGB32);
@@ -236,16 +236,16 @@ namespace Luminous
         dest += 4;
       }
     } else {
-      error("ImageCodecQT::write # Unsupported pixel format");
+      Radiant::error("ImageCodecQT::write # Unsupported pixel format");
     }
 
-    // info("File is almost written");
+    // Radiant::info("File is almost written");
 
     QFile f;
     bool ok = f.open(file, QIODevice::ReadWrite);
 
     if(!ok) {
-      // error("Error in QFile.open()");
+      // Radiant::error("Error in QFile.open()");
       return false;
     }
 

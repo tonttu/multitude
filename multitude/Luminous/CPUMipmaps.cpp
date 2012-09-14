@@ -276,7 +276,7 @@ namespace Luminous {
         // Cache file does not exist. Check if we want to generate mipmaps for
         // this file, or does it have those already
         if(!Luminous::Image::ping(filename, m_info)) {
-          error("CPUMipmaps::startLoading # failed to query image size for %s", filename);
+          Radiant::error("CPUMipmaps::startLoading # failed to query image size for %s", filename);
           return false;
         }
         if(m_info.pf.compression() && (m_info.mipmaps > 1 ||
@@ -296,7 +296,7 @@ namespace Luminous {
 #endif // LUMINOUS_OPENGLES
 
     if(m_info.width == 0 && !Luminous::Image::ping(filename, m_info)) {
-      error("CPUMipmaps::startLoading # failed to query image size for %s", filename);
+      Radiant::error("CPUMipmaps::startLoading # failed to query image size for %s", filename);
       return false;
     }
 
@@ -460,7 +460,7 @@ namespace Luminous {
 
   int CPUMipmaps::pixelAlpha(Nimble::Vector2 relLoc)
   {
-    // info("CPUMipmaps::pixelAlpha # %f %f", relLoc.x, relLoc.y);
+    // Radiant::info("CPUMipmaps::pixelAlpha # %f %f", relLoc.x, relLoc.y);
 
     for(int i = 0; i <= m_maxLevel; ++i) {
 #ifndef LUMINOUS_OPENGLES
@@ -495,7 +495,7 @@ namespace Luminous {
         return pixels[loci.x + loci.y * im->width() + 3];
       }
       else {
-        error("CPUMipmaps::pixelAlpha # Unsupported pixel format");
+        Radiant::error("CPUMipmaps::pixelAlpha # Unsupported pixel format");
         return 255;
       }
     }
@@ -655,7 +655,7 @@ namespace Luminous {
       std::shared_ptr<Luminous::CompressedImageTex> im(new Luminous::CompressedImageTex);
       QString filename = m_compFilename.isEmpty() ? m_filename : m_compFilename;
       if(!im->read(filename, level)) {
-        error("CPUMipmaps::recursiveLoad # Could not read %s level %d", filename.toUtf8().data(), level);
+        Radiant::error("CPUMipmaps::recursiveLoad # Could not read %s level %d", filename.toUtf8().data(), level);
         item.m_state = FAILED;
       } else {
         /// @todo this is wrong, compressed images doesn't always have alpha channel
@@ -673,7 +673,7 @@ namespace Luminous {
       std::shared_ptr<Luminous::ImageTex> im(new ImageTex);
 
       if(!im->read(m_filename.toUtf8().data())) {
-        error("CPUMipmaps::recursiveLoad # Could not read %s", m_filename.toUtf8().data());
+        Radiant::error("CPUMipmaps::recursiveLoad # Could not read %s", m_filename.toUtf8().data());
         item.m_state = FAILED;
       } else {
         if(im->hasAlpha())
@@ -698,18 +698,18 @@ namespace Luminous {
         Luminous::ImageTex * im = new ImageTex();
 
         if(!im->read(filename.toUtf8().data())) {
-          error("CPUMipmaps::recursiveLoad # Could not read %s", filename.toUtf8().data());
+          Radiant::error("CPUMipmaps::recursiveLoad # Could not read %s", filename.toUtf8().data());
           delete im;
         } else if(mipmapSize(level) != im->size()) {
           // unexpected size (corrupted or just old image)
-          error("CPUMipmaps::recursiveLoad # Cache image '%s'' size was (%d, %d), expected (%d, %d)",
+          Radiant::error("CPUMipmaps::recursiveLoad # Cache image '%s'' size was (%d, %d), expected (%d, %d)",
                 filename.toUtf8().data(), im->width(), im->height(), mipmapSize(level).x, mipmapSize(level).y);
           delete im;
         } else {
           if(im->hasAlpha())
             m_hasAlpha = true;
 
-          // info("Loaded cache %s %d from file", m_filename.c_str(), level);
+          // Radiant::info("Loaded cache %s %d from file", m_filename.c_str(), level);
 
           item.m_image.reset(im);
           item.m_state = READY;
@@ -727,7 +727,7 @@ namespace Luminous {
       imsrc = level1.m_image;
     } else {
       if(stack[level-1].m_state != READY) {
-        error("Failed to get mipmap %d", level - 1);
+        Radiant::error("Failed to get mipmap %d", level - 1);
         item.m_state = FAILED;
         return;
       }
@@ -755,13 +755,13 @@ namespace Luminous {
     item.m_image = imdest;
     item.m_state = READY;
 
-    // info("Loaded image %s %d", m_filename.c_str(), is.x);
+    // Radiant::info("Loaded image %s %d", m_filename.c_str(), is.x);
 
     if(m_shouldSave.find(level) != m_shouldSave.end()) {
       QString filename = cacheFileName(m_filename, level);
       Directory::mkdirRecursive(FileUtils::path(filename));
       imdest->write(filename.toUtf8().data());
-      // info("wrote cache %s (%d)", filename.c_str(), level);
+      // Radiant::info("wrote cache %s (%d)", filename.c_str(), level);
     }
   }
 

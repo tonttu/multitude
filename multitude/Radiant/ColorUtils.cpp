@@ -29,10 +29,10 @@ namespace Radiant
     h = s = v = 0.0f;
 
     // Find the amount of white
-    const float   min = Math::Min(r, Math::Min(g, b));
+    const float   min = Nimble::Math::Min(r, Nimble::Math::Min(g, b));
 
     // Find the dominant primary
-    const float   max = Math::Max(r, Math::Max(g, b));
+    const float   max = Nimble::Math::Max(r, Nimble::Math::Max(g, b));
 
     // Compute saturation and value
     const float   delta = max - min;

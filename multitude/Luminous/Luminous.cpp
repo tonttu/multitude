@@ -108,7 +108,7 @@ namespace Luminous
           return false;
         }
 #else
-        info("OpenGL without GLEW # %s : %s", glvendor, glver);
+        Radiant::info("OpenGL without GLEW # %s : %s", glvendor, glver);
 #endif
 
         // Check for DXT support

@@ -194,7 +194,7 @@ namespace VideoDisplay {
     }
 
     if(!m_texts.empty())
-      info("Loaded subtitles with %d items", (int) m_texts.size());
+      Radiant::info("Loaded subtitles with %d items", (int) m_texts.size());
 
     return m_texts.size() != 0 && errors < 10;
   }

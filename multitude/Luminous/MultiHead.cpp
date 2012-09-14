@@ -122,7 +122,7 @@ namespace Luminous {
       Utils::glUsualBlend();
 
       if(tex->size() != m_size.asVector()) {
-        info("Area GL init");
+        Radiant::info("Area GL init");
         // Initialize the texture to the right size:
         tex->loadBytes(GL_RGB, width(), height(), 0,
                        Luminous::PixelFormat::rgbUByte(),

@@ -93,7 +93,7 @@ namespace Nimble {
     /// Clamps both components to the range [0,1]
     inline Vector4T&	clampUnit	(void)						{ return clamp(T(0.0), T(1.0)); }
     /// Clamps both components to the range [low, high]
-    inline Vector4T&	clamp (T low, T high)       { x = Math::Clamp(x, low, high); y = Math::Clamp(y, low, high); z = Math::Clamp(z, low, high); w = Math::Clamp(w, low, high); return * this; }
+    inline Vector4T&	clamp (T low, T high)       { x = Nimble::Math::Clamp(x, low, high); y = Nimble::Math::Clamp(y, low, high); z = Nimble::Math::Clamp(z, low, high); w = Nimble::Math::Clamp(w, low, high); return * this; }
 
     /// Returns a vector with components reordered.
     inline Vector4T    shuffle         (int i1, int i2, int i3, int i4) const { return Vector4T(get(i1), get(i2), get(i3), get(i4)); }
@@ -129,7 +129,7 @@ namespace Nimble {
     /// @return New vector2
     inline Vector2T<T> vector2() const { return Vector2T<T>(x, y); }
 
-    /// Makes a new vector2 of two freely selected components of vector4
+    /// Makes a new Nimble::Vector2f of two freely selected components of vector4
     /// @param i0 Index of the first component,  vec2.x = vec4[i0], 0..3
     /// @param i1 Index of the second component, vec2.y = vec4[i1], 0..3
     /// @return New vector2

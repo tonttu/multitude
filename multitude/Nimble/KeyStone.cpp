@@ -58,7 +58,7 @@ namespace Nimble {
 
     char * ptr = (char *) str;
 
-    Vector2 vertices[4];
+    Nimble::Vector2f vertices[4];
 
     float * corners = vertices[0].data();
     int i;
@@ -80,10 +80,10 @@ namespace Nimble {
 
     for(i = 0; i < 4; i++) {
 
-      Vector2 tmp = vertices[i];
+      Nimble::Vector2f tmp = vertices[i];
 
-      tmp.x = Math::Min(tmp.x, (float) (w - 1));
-      tmp.y = Math::Min(tmp.y, (float) (h - 1));
+      tmp.x = Nimble::Math::Min(tmp.x, (float) (w - 1));
+      tmp.y = Nimble::Math::Min(tmp.y, (float) (h - 1));
 
       m_originals[i] = tmp;
     }
@@ -95,8 +95,8 @@ namespace Nimble {
     /*
     for(i = 0; i < 4; i++) {
 
-      Vector2 vtmp1(vertices[i]);
-      Vector2 vtmp2 = project(vtmp1);
+      Nimble::Vector2f vtmp1(vertices[i]);
+      Nimble::Vector2f vtmp2 = project(vtmp1);
 
       printf("[%.6f %.6f] => [%.6f %.6f]\n",
        vtmp1.x, vtmp1.y, vtmp2.x, vtmp2.y);
@@ -127,7 +127,7 @@ namespace Nimble {
     // Formula from page 20.
 
     for(int i = 0; i < 4; i++) {
-      Vector2 tmp = m_lensCorrection.correct(m_originals[i]);
+      Nimble::Vector2f tmp = m_lensCorrection.correct(m_originals[i]);
       m_vertices[i].make(tmp.x / m_width, tmp.y / m_height);
     }
 
@@ -160,12 +160,12 @@ namespace Nimble {
   {
     // "p.z" is really "p.w", we need to do the "perspective" correction here.
     Vector3 p = m_matrixOut * m_lensCorrection.correct(v);
-    Vector2 res(p.x / p.z, p.y / p.z);
+    Nimble::Vector2f res(p.x / p.z, p.y / p.z);
     if(m_useCenterShift) {
       float dist = (res - m_dpyCenter).length();
       if(dist < m_centerShiftSpan) {
         float weight = 0.5f + 0.5f * cosf(Math::PI * dist / m_centerShiftSpan);
-        Vector2 move = powf(weight, 1.0f) * m_centerShift;
+        Nimble::Vector2f move = powf(weight, 1.0f) * m_centerShift;
         res += move;
 
         // printf("shifting by %f %f (%f)\n", move.x, move.y, weight);
@@ -353,7 +353,7 @@ namespace Nimble {
 
       rcnorm = project(m_matrix.inverse(), rcnorm);
 
-      Vector2 projcenter = project(m_matrixOut, rcnorm);
+      Nimble::Vector2f projcenter = project(m_matrixOut, rcnorm);
       m_centerShift = m_dpyCenter - projcenter;
       m_centerShiftSpan = (m_dpyCenter - targets[0]).length();
       printf("KeyStone::calibrateOutput # pc = [%.2f %.2f] offset = [%.2f %.2f] span = %f\n",
@@ -375,11 +375,11 @@ namespace Nimble {
   {
     updateLimits(m_limits);
 
-    Vector2 tl = topLeft();
-    Vector2 tr = topRight();
+    Nimble::Vector2f tl = topLeft();
+    Nimble::Vector2f tr = topRight();
 
-    Vector2 bl = bottomLeft();
-    Vector2 br = bottomRight();
+    Nimble::Vector2f bl = bottomLeft();
+    Nimble::Vector2f br = bottomRight();
 
     float ksw = (tr.x - tl.x + br.x - bl.x) * 0.5f;
     float ksh = (bl.y - tl.y + br.y - tr.y) * 0.5f;
@@ -404,7 +404,7 @@ namespace Nimble {
   /** Calculates the projection matrix. See Paul Heckbert's master's
    * thesis, pages 19-21. */
 
-  Matrix3 KeyStone::projectionMatrix(const Vector2 vertices[4])
+  Matrix3 KeyStone::projectionMatrix(const Nimble::Vector2f vertices[4])
   {
     return Nimble::Matrix3::makeProjectionMatrix(vertices);
   }
@@ -419,7 +419,7 @@ namespace Nimble {
 
     if(offsets) {
 
-      Vector2 tests[4] = {
+      Nimble::Vector2f tests[4] = {
         project(m_matrix, Vector2(float(m_width), float(m_height / 2))),
         project(m_matrix, Vector2(float(0), float(m_height / 2))),
         project(m_matrix, Vector2(float(m_width / 2), float(0))),
@@ -433,7 +433,7 @@ namespace Nimble {
         b2.expand(tests[i]);
 
       for(i = 0; i < 4; i++) {
-        Vector2 test = tests[i];
+        Nimble::Vector2f test = tests[i];
 
         if(test.y == b2.low().y)
           bounds.low().y -= (*offsets)[i];
@@ -467,7 +467,7 @@ namespace Nimble {
 
       for(int x = 0; x < m_width; x++) {
 
-        Vector2 v1 = m_lensCorrection.correct(Vector2(float(x), float(y)));
+        Nimble::Vector2f v1 = m_lensCorrection.correct(Vector2(float(x), float(y)));
         v1 = project(m_matrix, v1);
 
         bool in = bounds.contains(v1);
@@ -492,7 +492,7 @@ namespace Nimble {
         last = m_width - 1;
 
       int wid = last - first;
-      /* Vector2 v = project(Vector2(640, y));
+      /* Nimble::Vector2f v = project(Vector2(640, y));
       printf("Projection limits[%d] = %d - %d (%d %.3f %.3f)\n", y,
              first, last, wid, v.x, v.y);
       */
