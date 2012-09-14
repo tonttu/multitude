@@ -780,6 +780,13 @@ namespace Luminous
     return m_d->m_nativeSize;
   }
 
+  float Mipmap::aspect() const
+  {
+    Nimble::Vector2i native = m_d->m_nativeSize;
+
+    return native.y ? native.x / (float) native.y : 1.0f;
+  }
+
   bool Mipmap::isReady() const
   {
     return m_d->m_ready;

@@ -46,6 +46,9 @@ namespace Luminous
 
     /** @return Returns the native size of the image, in pixels. */
     LUMINOUS_API const Nimble::Vector2i & nativeSize() const;
+    /// Returns the aspect ratio of the image in its native size (width/height)
+    /** If the native height is zero (e.g. no file was loaded) this returns 1.*/
+    LUMINOUS_API float aspect() const;
 
     /// Mipmap is not ready, if it still has PingTask running/waiting
     /// After the mipmap is ready, nativeSize() returns the correct size
