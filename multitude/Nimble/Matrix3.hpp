@@ -236,8 +236,6 @@ namespace Nimble {
 
 
   private:
-    inline static void swap(T &a, T& b);
-
     Vector3T<T> m[3];
   };
 
@@ -325,19 +323,11 @@ namespace Nimble {
   typedef Matrix3T<double> Matrix3d;
 
   template <class T>
-  inline void Matrix3T<T>::swap(T &a, T& b)
-  {
-    T t = a;
-    a = b;
-    b = t;
-  }
-
-  template <class T>
   inline void Matrix3T<T>::transpose()
   {
-    swap(m[0][1],m[1][0]);
-    swap(m[0][2],m[2][0]);
-    swap(m[1][2],m[2][1]);
+    std::swap(m[0][1],m[1][0]);
+    std::swap(m[0][2],m[2][0]);
+    std::swap(m[1][2],m[2][1]);
   }
 
   template <class T>

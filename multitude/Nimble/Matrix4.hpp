@@ -343,8 +343,6 @@ namespace Nimble {
     inline static Matrix4T<T> transformation(T angle, const Vector3T<T> & axis, const Vector3T<T> &scale, const Vector3T<T> & translation);
 
   private:
-    inline static void swap(T &a, T& b);
-
     Vector4T<T> m[4];
   };
 
@@ -361,15 +359,6 @@ namespace Nimble {
       Matrix4T<T>::makeTranslation(translation) *
       Matrix4T<T>::makeRotation(angle, axis) *
       Matrix4T<T>::makeScale(scale);
-  }
-
-  /// Swaps two matrices
-  template <class T>
-  inline void Matrix4T<T>::swap(T &a, T& b)
-  {
-    T t = a;
-    a = b;
-    b = t;
   }
 
   template <class T>
@@ -393,12 +382,12 @@ namespace Nimble {
   template <class T>
   inline Matrix4T<T> & Matrix4T<T>::transpose()
   {
-    swap(m[0][1],m[1][0]);
-    swap(m[0][2],m[2][0]);
-    swap(m[0][3],m[3][0]);
-    swap(m[1][2],m[2][1]);
-    swap(m[1][3],m[3][1]);
-    swap(m[2][3],m[3][2]);
+    std::swap(m[0][1],m[1][0]);
+    std::swap(m[0][2],m[2][0]);
+    std::swap(m[0][3],m[3][0]);
+    std::swap(m[1][2],m[2][1]);
+    std::swap(m[1][3],m[3][1]);
+    std::swap(m[2][3],m[3][2]);
     return * this;
   }
 

@@ -62,7 +62,7 @@ namespace Nimble {
     const T *          data() const { return m[0].data(); }
 
     /// Transpose this matrix
-    void               transpose()            { swap(m[0][1],m[1][0]); }
+    void               transpose()            { std::swap(m[0][1],m[1][0]); }
     /// Transpose this matrix
     Matrix2T           transposed() const
     { return Matrix2T(m[0][0], m[1][0], m[0][1], m[1][1]); }
@@ -115,8 +115,6 @@ namespace Nimble {
     static const Matrix2T<T> IDENTITY;
 
   private:
-    inline static void swap(T &a, T& b);
-
     Vector2T<T> m[2];
   };
 
@@ -124,15 +122,6 @@ namespace Nimble {
   template<typename T> const Matrix2T<T> Matrix2T<T>::IDENTITY(
     1, 0,
     0, 1);
-
-  /// Swaps two matrices
-  template <class T>
-  inline void Matrix2T<T>::swap(T &a, T& b)
-  {
-    T t = a;
-    a = b;
-    b = t;
-  }
 
   /// Creates a rotation matrix
   /// @param a rotation in radians
