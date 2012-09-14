@@ -107,10 +107,12 @@ namespace Luminous
     m_d->filename = QString();
   }
 
-  void ShaderGLSL::loadText(const QString & filename)
+  bool ShaderGLSL::loadText(const QString & filename)
   {
     m_d->code = loadFromFile(filename);
     m_d->filename = filename;
+
+    return !m_d->code->text.isEmpty();
   }
 
   const QByteArray & ShaderGLSL::text() const
@@ -179,22 +181,27 @@ namespace Luminous
     delete m_d;
   }
 
-  ShaderGLSL & Program::addShader(const QByteArray & code, ShaderGLSL::Type type)
+  ShaderGLSL * Program::addShader(const QByteArray & code, ShaderGLSL::Type type)
   {
     auto shader = new ShaderGLSL(type);
     m_d->shaders.emplace_back(shader);
     shader->setText(code);
     m_d->needRehash = true;
-    return *shader;
+    return shader;
   }
 
-  ShaderGLSL & Program::loadShader(const QString & filename, ShaderGLSL::Type type)
+  ShaderGLSL * Program::loadShader(const QString & filename, ShaderGLSL::Type type)
   {
     auto shader = new ShaderGLSL(type);
-    m_d->shaders.emplace_back(shader);
-    shader->loadText(filename);
-    m_d->needRehash = true;
-    return *shader;
+    if(shader->loadText(filename)) {
+      m_d->needRehash = true;
+      m_d->shaders.emplace_back(shader);
+      return shader;
+    }
+    else {
+      delete shader;
+      return 0;
+    }
   }
 
   void Program::removeShader(const ShaderGLSL & shader)

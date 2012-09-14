@@ -29,7 +29,7 @@ namespace Luminous
     LUMINOUS_API ShaderGLSL(ShaderGLSL &&);
     LUMINOUS_API ShaderGLSL & operator=(ShaderGLSL &&);
 
-    LUMINOUS_API void loadText(const QString & filename);
+    LUMINOUS_API bool loadText(const QString & filename);
     LUMINOUS_API void setText(const QByteArray & text);
     LUMINOUS_API const QByteArray & text() const;
 
@@ -66,8 +66,13 @@ namespace Luminous
     LUMINOUS_API Program(Program && prog);
     LUMINOUS_API Program & operator=(Program && prog);
 
-    LUMINOUS_API ShaderGLSL & addShader(const QByteArray & code, ShaderGLSL::Type type);
-    LUMINOUS_API ShaderGLSL & loadShader(const QString & filename, ShaderGLSL::Type type);
+    LUMINOUS_API ShaderGLSL * addShader(const QByteArray & code, ShaderGLSL::Type type);
+    LUMINOUS_API ShaderGLSL * loadShader(const QString & filename, ShaderGLSL::Type type);
+    ShaderGLSL * loadFragmentShader(const QString & filename)
+    { return loadShader(filename, ShaderGLSL::Fragment); }
+
+    ShaderGLSL * loadVertexShader(const QString & filename)
+    { return loadShader(filename, ShaderGLSL::Vertex); }
 
     LUMINOUS_API void removeShader(const ShaderGLSL & shader);
 
