@@ -2,13 +2,13 @@
 
 #include "Luminous/Image.hpp"
 #include "Luminous/Texture2.hpp"
-#include "Luminous/BGThread.hpp"
 #include "Luminous/MipMapGenerator.hpp"
 #include "Luminous/RenderManager.hpp"
 
 #include <Radiant/FileUtils.hpp>
 #include <Radiant/PlatformUtils.hpp>
 #include <Radiant/Sleep.hpp>
+#include <Radiant/BGThread.hpp>
 
 #include <QFileInfo>
 #include <QCryptographicHash>
@@ -31,7 +31,7 @@ namespace
   const unsigned int s_defaultSaveSize2 = 512;
   const unsigned int s_defaultSaveSize3 = 2048;
   const unsigned int s_smallestImage = 32;
-  const Luminous::Priority s_defaultPingPriority = Luminous::Task::PRIORITY_HIGH + 2;
+  const Radiant::Priority s_defaultPingPriority = Radiant::Task::PRIORITY_HIGH + 2;
 
   bool s_dxtSupported = true;
 
@@ -114,10 +114,10 @@ namespace
 namespace Luminous
 {
   /// Loads uncompressed mipmaps from file to ImageTex3 / create them if necessary
-  class LoadImageTask : public Luminous::Task
+  class LoadImageTask : public Radiant::Task
   {
   public:
-    LoadImageTask(Luminous::MipmapPtr mipmap, Luminous::Priority priority,
+    LoadImageTask(Luminous::MipmapPtr mipmap, Radiant::Priority priority,
                   const QString & filename, int level);
 
   protected:
@@ -143,7 +143,7 @@ namespace Luminous
   {
   public:
     LoadCompressedImageTask(Luminous::MipmapPtr mipmap, ImageTex3 & tex,
-                            Luminous::Priority priority, const QString & filename, int level);
+                            Radiant::Priority priority, const QString & filename, int level);
 
   protected:
     virtual void doTask() OVERRIDE;
@@ -155,7 +155,7 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  class PingTask : public Luminous::Task
+  class PingTask : public Radiant::Task
   {
   public:
     PingTask(Luminous::Mipmap::D & mipmap, bool compressedMipmaps);
@@ -183,7 +183,7 @@ namespace Luminous
   /// doesn't slow down the application if the main thread is creating new
   /// Mipmap instances. The expiration checking is atomic operation without
   /// need to lock anything, so this will have no impact on rendering threads.
-  class MipmapReleaseTask : public Luminous::Task
+  class MipmapReleaseTask : public Radiant::Task
   {
   public:
     MipmapReleaseTask();
@@ -216,7 +216,7 @@ namespace Luminous
 
     QString m_compressedMipmapFile;
     bool m_useCompressedMipmaps;
-    Priority m_loadingPriority;
+    Radiant::Priority m_loadingPriority;
 
     ImageInfo m_sourceInfo;
     ImageInfo m_compressedMipmapInfo;
@@ -237,7 +237,7 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  LoadImageTask::LoadImageTask(Luminous::MipmapPtr mipmap, Luminous::Priority priority,
+  LoadImageTask::LoadImageTask(Luminous::MipmapPtr mipmap, Radiant::Priority priority,
                                const QString & filename, int level)
     : Task(priority)
     , m_mipmap(mipmap)
@@ -382,7 +382,7 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
 
   LoadCompressedImageTask::LoadCompressedImageTask(
-      Luminous::MipmapPtr mipmap, ImageTex3 & tex, Luminous::Priority priority,
+      Luminous::MipmapPtr mipmap, ImageTex3 & tex, Radiant::Priority priority,
       const QString & filename, int level)
     : LoadImageTask(mipmap, priority, filename, level)
     , m_tex(tex)
@@ -521,7 +521,7 @@ namespace Luminous
 
 #ifndef LUMINOUS_OPENGLES
     if(m_mipmap.m_mipmapGenerator) {
-      Luminous::BGThread::instance()->addTask(m_mipmap.m_mipmapGenerator);
+      Radiant::BGThread::instance()->addTask(m_mipmap.m_mipmapGenerator);
     } else
 #endif // LUMINOUS_OPENGLES
     {
@@ -592,13 +592,13 @@ namespace Luminous
     , m_level1Size(0, 0)
     , m_maxLevel(0)
     , m_useCompressedMipmaps(false)
-    , m_loadingPriority(Task::PRIORITY_NORMAL)
+    , m_loadingPriority(Radiant::Task::PRIORITY_NORMAL)
     , m_mipmapFormat("png")
     , m_expireSeconds(3.0f)
     , m_ready(nullptr, "", false)
     , m_valid(false)
   {
-    MULTI_ONCE { BGThread::instance()->addTask(std::make_shared<MipmapReleaseTask>()); }
+    MULTI_ONCE { Radiant::BGThread::instance()->addTask(std::make_shared<MipmapReleaseTask>()); }
   }
 
   Mipmap::D::~D()
@@ -606,7 +606,7 @@ namespace Luminous
     // Make a local copy, if PingTask is just finishing and removes m_d->m_ping
     std::shared_ptr<PingTask> ping = m_ping;
     if(ping) {
-      BGThread::instance()->removeTask(ping);
+      Radiant::BGThread::instance()->removeTask(ping);
       ping->finishAndWait();
     }
   }
@@ -638,10 +638,10 @@ namespace Luminous
 
         int newPriority = s_defaultPingPriority + priorityChange;
         if(ping && newPriority != ping->priority())
-          BGThread::instance()->reschedule(ping, newPriority);
+          Radiant::BGThread::instance()->reschedule(ping, newPriority);
 
         if(gen && newPriority != gen->priority())
-          BGThread::instance()->reschedule(gen, newPriority);
+          Radiant::BGThread::instance()->reschedule(gen, newPriority);
       }
       return nullptr;
     }
@@ -680,17 +680,17 @@ namespace Luminous
           if(imageTex.lastUsed.testAndSetOrdered(old, now)) {
             if(now == Loading) {
               if(m_d->m_useCompressedMipmaps) {
-                BGThread::instance()->addTask(std::make_shared<LoadCompressedImageTask>(
+                Radiant::BGThread::instance()->addTask(std::make_shared<LoadCompressedImageTask>(
                                                 shared_from_this(), imageTex,
                                                 m_d->m_loadingPriority + priorityChange,
                                                 m_d->m_compressedMipmapFile, level));
               } else if(m_d->m_sourceInfo.pf.compression() != PixelFormat::COMPRESSION_NONE) {
-                BGThread::instance()->addTask(std::make_shared<LoadCompressedImageTask>(
+                Radiant::BGThread::instance()->addTask(std::make_shared<LoadCompressedImageTask>(
                                                 shared_from_this(), imageTex,
                                                 m_d->m_loadingPriority + priorityChange,
                                                 m_d->m_filenameAbs, level));
               } else {
-                BGThread::instance()->addTask(std::make_shared<LoadImageTask>(
+                Radiant::BGThread::instance()->addTask(std::make_shared<LoadImageTask>(
                                                 shared_from_this(),
                                                 m_d->m_loadingPriority + priorityChange,
                                                 m_d->m_filenameAbs, level));
@@ -850,7 +850,7 @@ namespace Luminous
     return 1.0f;
   }
 
-  void Mipmap::setLoadingPriority(Priority priority)
+  void Mipmap::setLoadingPriority(Radiant::Priority priority)
   {
     m_d->m_loadingPriority = priority;
   }
@@ -952,6 +952,6 @@ namespace Luminous
   {
     assert(!m_d->m_ping);
     m_d->m_ping = std::make_shared<PingTask>(*m_d, compressedMipmaps);
-    BGThread::instance()->addTask(m_d->m_ping);
+    Radiant::BGThread::instance()->addTask(m_d->m_ping);
   }
 }

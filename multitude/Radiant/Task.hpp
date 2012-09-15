@@ -1,10 +1,10 @@
 /* COPYRIGHT
  *
- * This file is part of Luminous.
+ * This file is part of Radiant.
  *
  * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
  *
- * See file "Luminous.hpp" for authors and more details.
+ * See file "Radiant.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
  * License (LGPL), version 2.1. The LGPL conditions can be found in 
@@ -12,10 +12,10 @@
  * from the GNU organization (www.gnu.org).
  * 
  */
-#ifndef LUMINOUS_TASK_HPP
-#define LUMINOUS_TASK_HPP
+#ifndef RADIANT_TASK_HPP
+#define RADIANT_TASK_HPP
 
-#include <Luminous/Export.hpp>
+#include <Radiant/Export.hpp>
 
 #include <Patterns/NotCopyable.hpp>
 
@@ -28,7 +28,7 @@ namespace Radiant {
   class Mutex;
 }
 
-namespace Luminous
+namespace Radiant
 {
   class BGThread;
   class TaskDeleter;
@@ -39,7 +39,7 @@ namespace Luminous
   /// Task is a base class for tasks that can be executed within BGThread.
   /** The purpose of #Task is to make it easy to move time-consuing operations
       away from the main thread of the application. Tasks are placed in the
-      #Luminous::BGThread, that schedules and runs them as specified.
+      #Radiant::BGThread, that schedules and runs them as specified.
 
       Typical operations that can be implemented with tasks are:
 
@@ -61,7 +61,7 @@ namespace Luminous
       may stall for a while when closing down because the application will wait
       for any tasks to finish before it stops the BGThread running them.
     */
-  class LUMINOUS_API Task : Patterns::NotCopyable
+  class RADIANT_API Task : Patterns::NotCopyable
   {
     MEMCHECKED
   public:
@@ -139,7 +139,7 @@ namespace Luminous
   };
 
   /// This class executes the given function within BGThread.
-  class LUMINOUS_API FunctionTask : public Task
+  class RADIANT_API FunctionTask : public Task
   {
     public:
       /// Construct a new FunctionTask

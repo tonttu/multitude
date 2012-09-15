@@ -2,7 +2,7 @@
 #define LUMINOUS_MIPMAP_HPP
 
 #include "Luminous/Luminous.hpp"
-#include "Luminous/Task.hpp"
+#include "Radiant/Task.hpp"
 
 #include <Nimble/Vector2.hpp>
 #include <Nimble/Matrix4.hpp>
@@ -64,7 +64,7 @@ namespace Luminous
 
     /// Sets the loading priority for this set of mipmaps
     /// @param priority new priority
-    LUMINOUS_API void setLoadingPriority(Priority priority);
+    LUMINOUS_API void setLoadingPriority(Radiant::Priority priority);
 
     /// Returns the size of the mipmap level
     LUMINOUS_API Nimble::Vector2i mipmapSize(unsigned int level);

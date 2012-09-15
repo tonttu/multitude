@@ -1,8 +1,8 @@
 #include "VM1.hpp"
 
 #include "ColorCorrection.hpp"
-#include "BGThread.hpp"
 
+#include <Radiant/BGThread.hpp>
 #include <Radiant/SerialPort.hpp>
 #include <Radiant/Trace.hpp>
 #include <Radiant/Sleep.hpp>
@@ -54,7 +54,7 @@ namespace {
     return written;
   }
 
-  class BGWriter : public Luminous::Task
+  class BGWriter : public Radiant::Task
   {
   public:
     BGWriter(Luminous::VM1 & vm1) : m_vm1(vm1)
@@ -131,7 +131,7 @@ namespace Luminous
     bool createTask = m_data.isEmpty();
     m_data = ba;
     if(createTask)
-      Luminous::BGThread::instance()->addTask(std::make_shared<BGWriter>(*this));
+      Radiant::BGThread::instance()->addTask(std::make_shared<BGWriter>(*this));
   }
 
   QString VM1::info()

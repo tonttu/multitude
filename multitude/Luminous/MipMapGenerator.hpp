@@ -21,9 +21,10 @@
 #endif
 
 #include "Export.hpp"
-#include "Task.hpp"
 #include "PixelFormat.hpp"
 #include "Image.hpp"
+
+#include <Radiant/Task.hpp>
 
 #include <memory>
 
@@ -34,7 +35,7 @@ namespace Luminous {
   /// Task that generates mipmaps to global imagecache for source image.
   /// Will only create DDS/DXT mipmaps. CPUMipmaps uses this class if compressed
   /// mipmaps are requested, there is usually no need to use this class directly.
-  class MipMapGenerator : public Task
+  class MipMapGenerator : public Radiant::Task
   {
   public:
     /// Generates a new task for new image. Mipmaps will be saved with one of

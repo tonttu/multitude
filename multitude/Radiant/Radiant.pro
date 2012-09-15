@@ -1,8 +1,9 @@
 
 include(../multitude.pri)
 
-HEADERS += Flags.hpp \
-    DropEvent.hpp
+HEADERS += Flags.hpp
+HEADERS += DropEvent.hpp
+HEADERS += BGThread.hpp
 HEADERS += Buffer.hpp
 HEADERS += Mime.hpp
 HEADERS += Timer.hpp
@@ -46,6 +47,7 @@ HEADERS += RGBA.hpp
 HEADERS += RefObj.hpp
 HEADERS += IntrusivePtr.hpp
 HEADERS += ResourceLocator.hpp
+HEADERS += Task.hpp
 HEADERS += RingBuffer.hpp
 HEADERS += RingBufferImpl.hpp
 HEADERS += SafeBool.hpp
@@ -76,8 +78,9 @@ HEADERS += VideoCameraCMU.hpp
 HEADERS += VideoCamera1394.hpp
 HEADERS += VideoCameraPTGrey.hpp
 
-SOURCES += Mime.cpp \
-    DropEvent.cpp
+SOURCES += Mime.cpp
+SOURCES += DropEvent.cpp
+SOURCES += BGThread.cpp
 SOURCES += CameraDriver.cpp
 SOURCES += SocketUtilPosix.cpp
 SOURCES += ThreadPoolQt.cpp
@@ -88,6 +91,7 @@ SOURCES += Color.cpp
 SOURCES += ColorUtils.cpp
 SOURCES += MutexQt.cpp
 SOURCES += ThreadQt.cpp
+SOURCES += Task.cpp
 SOURCES += ConfigReader.cpp
 SOURCES += DateTime.cpp
 SOURCES += DirectoryCommon.cpp

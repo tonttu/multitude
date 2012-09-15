@@ -16,10 +16,10 @@
 #ifndef LUMINOUS_CPU_MIPMAPS_HPP
 #define LUMINOUS_CPU_MIPMAPS_HPP
 
-#include <Luminous/BGThread.hpp>
 #include <Luminous/Collectable.hpp>
 #include <Luminous/Image.hpp>
-#include <Luminous/Task.hpp>
+#include <Radiant/Task.hpp>
+#include <Radiant/BGThread.hpp>
 
 #include <Nimble/Matrix3.hpp>
 
@@ -52,7 +52,7 @@ namespace Luminous {
   */
   /// @todo examples
   /// @deprecated use Luminous::Mipmap instead
-  class LUMINOUS_API CPUMipmaps : public Luminous::Collectable, public Luminous::Task,
+  class LUMINOUS_API CPUMipmaps : public Luminous::Collectable, public Radiant::Task,
                                   public std::enable_shared_from_this<CPUMipmaps>
   {
     MEMCHECKED_USING(Luminous::Collectable);
@@ -120,7 +120,7 @@ namespace Luminous {
         This function call may take some time, since it will check that the
         image file exists, and obtain its resolution. If the most fluent
         interaction is required, then you should call this function in another
-        thread, for example using the #Luminous::BGThread background tasking
+        thread, for example using the #Radiant::BGThread background tasking
         framework.
 
         Optionally compressed mipmaps can be created. This will cause the
@@ -167,7 +167,7 @@ namespace Luminous {
 
     /// Sets the loading priority for this set of mipmaps
     /// @param priority new priority
-    void setLoadingPriority(Priority priority) { m_loadingPriority = priority; }
+    void setLoadingPriority(Radiant::Priority priority) { m_loadingPriority = priority; }
 
     /** Check if the mipmaps are still being loaded.
 
@@ -314,7 +314,7 @@ namespace Luminous {
     std::set<int>    m_shouldSave;
 
     // Priority using when loading mipmaps
-    Priority         m_loadingPriority;
+    Radiant::Priority         m_loadingPriority;
 
     // default save sizes
     enum {

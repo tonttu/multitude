@@ -13,7 +13,7 @@
  * 
  */
 
-#include <Luminous/BGThread.hpp>
+#include <Radiant/BGThread.hpp>
 
 #include <Nimble/Math.hpp>
 
@@ -26,7 +26,7 @@
 #include <cassert>
 #include <limits>
 
-namespace Luminous
+namespace Radiant
 {
 
   BGThread::BGThread()
@@ -276,4 +276,4 @@ namespace Luminous
   }
 }
 
-DEFINE_SINGLETON(Luminous::BGThread);
+DEFINE_SINGLETON(Radiant::BGThread);

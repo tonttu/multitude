@@ -13,11 +13,11 @@
  * 
  */
 
-#ifndef LUMINOUS_BGTHREAD_HPP
-#define LUMINOUS_BGTHREAD_HPP
+#ifndef RADIANT_BGTHREAD_HPP
+#define RADIANT_BGTHREAD_HPP
 
-#include <Luminous/Export.hpp>
-#include <Luminous/Task.hpp>
+#include <Radiant/Export.hpp>
+#include <Radiant/Task.hpp>
 
 #include <Radiant/Condition.hpp>
 #include <Radiant/Mutex.hpp>
@@ -30,7 +30,7 @@
 #include <set>
 #include <functional>
 
-namespace Luminous
+namespace Radiant
 {
   typedef std::shared_ptr<Task> TaskPtr;
 
@@ -44,9 +44,9 @@ namespace Luminous
 
     BGThread owns tasks added to it and handles their destruction and memory
     management for you. If you need to keep a pointer to a task in BGThread,
-    you should use the shared_ptr returned by Luminous::BGThread::addTask.
+    you should use the shared_ptr returned by Radiant::BGThread::addTask.
 
-    If you decide to hold an external pointer to any Luminous::Task running in a
+    If you decide to hold an external pointer to any Radiant::Task running in a
     BGThread, take special care if you decide to modify the task outside. You
     may not know if the Task is currently being executed in another thread.
 
@@ -57,7 +57,7 @@ namespace Luminous
   is running or not. This would be useful information especially when
   closing the application or if your tasks have external dependencies.
   **/
-  class LUMINOUS_API BGThread : public Radiant::ThreadPool
+  class RADIANT_API BGThread : public Radiant::ThreadPool
   {
     DECLARE_SINGLETON(BGThread);
   public:
@@ -75,13 +75,13 @@ namespace Luminous
     /// Remove the task from the BGThread
     /** Generally you should not use this function. If you want to
         remove/delete a task, you set its state to finished
-        (#Luminous::Task::setFinished) and schedule it for immediate processing
+        (#Radiant::Task::setFinished) and schedule it for immediate processing
         after which BGThread will remove it when it has a chance.
 
         @param task The task to be removed
         @return True if the task was successfully removes, false otherwise.
-        @sa Luminous::Task::setFinished
-        @sa Luminous::Task::schedule
+        @sa Radiant::Task::setFinished
+        @sa Radiant::Task::schedule
     */
     virtual bool removeTask(TaskPtr task);
 

@@ -1,11 +1,12 @@
 #include "FontCache.hpp"
 
 #include <Luminous/Texture2.hpp>
-#include <Luminous/BGThread.hpp>
+
 #include <Luminous/Image.hpp>
 #include <Luminous/DistanceFieldGenerator.hpp>
 #include <Luminous/RenderManager.hpp>
 
+#include <Radiant/BGThread.hpp>
 #include <Radiant/PlatformUtils.hpp>
 
 #include <QRawFont>
@@ -147,7 +148,7 @@ namespace
 
 namespace Luminous
 {
-  class FontCache::FontGenerator : public Luminous::Task, public Valuable::Node
+  class FontCache::FontGenerator : public Radiant::Task, public Valuable::Node
   {
   public:
     FontGenerator(FontCache::D & cache);
@@ -530,7 +531,7 @@ namespace Luminous
     m_d->m_request.insert(glyph);
     if (!m_d->m_taskCreated) {
       m_d->m_taskCreated = true;
-      Luminous::BGThread::instance()->addTask(std::make_shared<FontGenerator>(*m_d));
+      Radiant::BGThread::instance()->addTask(std::make_shared<FontGenerator>(*m_d));
     }
     return nullptr;
   }

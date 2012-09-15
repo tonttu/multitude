@@ -172,7 +172,7 @@ namespace Luminous {
       return bestlevel;
 
     reschedule();
-    BGThread::instance()->reschedule(shared_from_this(), m_loadingPriority);
+    Radiant::BGThread::instance()->reschedule(shared_from_this(), m_loadingPriority);
 
     // Scan for the best available mip-map.
 
@@ -332,10 +332,10 @@ namespace Luminous {
 
 #ifndef LUMINOUS_OPENGLES
     if(gen)
-      Luminous::BGThread::instance()->addTask(gen);
+      Radiant::BGThread::instance()->addTask(gen);
     else
 #endif // LUMINOUS_OPENGLES
-      Luminous::BGThread::instance()->addTask(shared_from_this());
+      Radiant::BGThread::instance()->addTask(shared_from_this());
 
     return true;
   }
@@ -530,7 +530,7 @@ namespace Luminous {
   void CPUMipmaps::mipmapsReady(const ImageInfo & info)
   {
     m_info = info;
-    BGThread::instance()->addTask(shared_from_this());
+    Radiant::BGThread::instance()->addTask(shared_from_this());
     reschedule();
   }
 
