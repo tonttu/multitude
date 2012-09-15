@@ -6,7 +6,6 @@
 
 #include <Luminous/Luminous.hpp>
 #include <Luminous/RenderDriver.hpp>
-#include <Luminous/FramebufferObject.hpp>
 #include <Luminous/Transformer.hpp>
 #include <Luminous/Style.hpp>
 #include <Luminous/GLResource.hpp>
@@ -16,7 +15,6 @@
 #include <Luminous/VertexBuffer.hpp>
 #include <Luminous/VertexArray.hpp>
 #include <Luminous/GLSLProgramObject.hpp>
-#include <Luminous/FramebufferResource.hpp>
 #include <Luminous/Buffer.hpp>
 #include <Luminous/RenderCommand.hpp>
 #include <Luminous/PostProcess.hpp>
@@ -33,7 +31,6 @@
 
 namespace Luminous
 {
-  class Texture2D;
   class GLSLProgramObject;
 
 
@@ -260,18 +257,6 @@ namespace Luminous
         @return If the window is null, then Nimble::Vector2(10,10) is returned.
     */
     Nimble::Vector2 contextSize() const;
-
-    /// @cond
-    void pushViewStack();
-    /// Pops view stack, leaves current texture attached
-    void popViewStack();
-
-    /// @endcond
-
-    /// Get a temporary texture render target
-    // RenderTargetObject pushRenderTarget(Nimble::Vector2 size, float scale);
-    /// Pop a temporary texture render target
-    // Luminous::Texture2D & popRenderTarget(RenderTargetObject & trt);
 
     /// Push a viewport to the viewport stack
     /// Pushes a viewport to the top of the viewport stack.

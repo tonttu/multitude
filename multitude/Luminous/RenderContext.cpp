@@ -5,7 +5,6 @@
 
 #include "OpenGL/Error.hpp"
 #include "Texture.hpp"
-#include "FramebufferObject.hpp"
 
 #include "Utils.hpp"
 #include "RenderCommand.hpp"
@@ -70,7 +69,6 @@ namespace Luminous
         , m_frameCount(0)
         , m_area(0)
         , m_window(win)
-        , m_viewStackPos(-1)
         , m_boundProgram(0)
         , m_initialized(false)
         , m_program(0)
@@ -126,8 +124,6 @@ namespace Luminous
       if(!m_initialized) {
         m_initialized = true;
 
-        m_viewFBO.reset(new Luminous::Framebuffer());
-
         m_uniformBufferOffsetAlignment = m_driver.uniformBufferOffsetAlignment();
 
         Radiant::info("RenderContext::Internal # init ok");
@@ -144,58 +140,6 @@ namespace Luminous
 
       /// @todo why not zero vector?
       return Nimble::Vector2f(10, 10);
-    }
-
-    void pushViewStack()
-    {
-      int w = m_window->size().x;
-      int h = m_window->size().y;
-      ++m_viewStackPos;
-      if ((int) m_viewTextures.size() == m_viewStackPos) {
-        m_viewTextures.push_back(new Luminous::Texture2D);
-        Luminous::Texture2D & tex = *m_viewTextures.back();
-        tex.setWidth(w);
-        tex.setHeight(h);
-        tex.bind();
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-      }
-      attachViewTexture();
-      glPushAttrib(GL_VIEWPORT_BIT);
-      glViewport(0, 0, w, h);
-      glClearColor(0, 0, 0, 1);
-      glClear(GL_COLOR_BUFFER_BIT);
-    }
-    void popViewStack()
-    {
-      glPopAttrib();
-      --m_viewStackPos;
-      // if wasn't last
-      if (m_viewStackPos >= 0) {
-        attachViewTexture();
-      } else {
-        unattachViewTexture();
-      }
-      assert(m_viewStackPos >= -1);
-      glEnable(GL_TEXTURE_2D);
-      m_viewTextures[m_viewStackPos+1]->bind();
-    }
-
-    void attachViewTexture()
-    {
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // <- essential on Nvidia
-
-      m_viewFBO->attachTexture2D(m_viewTextures[m_viewStackPos], Luminous::COLOR0);
-      m_viewFBO->check();
-      // attachTexture2D should do this as a side effect already?
-      glDrawBuffer(Luminous::COLOR0);
-    }
-    void unattachViewTexture() {
-      m_viewFBO->unbind();
-      glDrawBuffer(GL_BACK);
     }
 
     void createPostProcessFilters(RenderContext & rc, const PostProcess::InitList & chain)
@@ -226,11 +170,6 @@ namespace Luminous
 
     const Luminous::MultiHead::Area * m_area;
     const Luminous::MultiHead::Window * m_window;
-    /// fbo for views
-    std::shared_ptr<Luminous::Framebuffer> m_viewFBO;
-    /// fbo texture stack for views
-    std::vector<Luminous::Texture2D *> m_viewTextures;
-    int m_viewStackPos;
 
     Transformer m_viewTransformer;
 
@@ -1142,16 +1081,6 @@ namespace Luminous
   Nimble::Vector2 RenderContext::contextSize() const
   {
     return m_data->contextSize();
-  }
-
-  void RenderContext::pushViewStack()
-  {
-    m_data->pushViewStack();
-  }
-
-  void RenderContext::popViewStack()
-  {
-    m_data->popViewStack();
   }
 
   static RADIANT_TLS(RenderContext *) t_threadContext;
