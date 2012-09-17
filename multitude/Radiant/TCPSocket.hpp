@@ -49,6 +49,9 @@ namespace Radiant {
     TCPSocket(int fd);
     ~TCPSocket();
 
+    TCPSocket(TCPSocket && socket);
+    TCPSocket & operator=(TCPSocket && socket);
+
     /// Turn the Nagle algorithm on or off. This controls the queuing of
     /// messages to fill packets.
     /// @param noDelay if true, the queing is not used and packets are sent immediately
