@@ -20,9 +20,9 @@
 
 // Import by default
 #ifdef PATTERNS_EXPORT
-#define PATTERNS_API DLLEXPORT
+#define PATTERNS_API MULTI_DLLEXPORT
 #else
-#define PATTERNS_API DLLIMPORT
+#define PATTERNS_API MULTI_DLLIMPORT
 #endif
 
 #endif

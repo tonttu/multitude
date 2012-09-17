@@ -24,9 +24,9 @@
 
 // Import by default
 #ifdef NIMBLE_EXPORT
-#define NIMBLE_API DLLEXPORT
+#define NIMBLE_API MULTI_DLLEXPORT
 #else
-#define NIMBLE_API DLLIMPORT
+#define NIMBLE_API MULTI_DLLIMPORT
 #endif
 
 #endif

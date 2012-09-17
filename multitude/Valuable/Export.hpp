@@ -20,9 +20,9 @@
 
 // Import by default
 #ifdef VALUABLE_EXPORT
-#define VALUABLE_API DLLEXPORT
+#define VALUABLE_API MULTI_DLLEXPORT
 #else
-#define VALUABLE_API DLLIMPORT
+#define VALUABLE_API MULTI_DLLIMPORT
 #endif
 
 #endif

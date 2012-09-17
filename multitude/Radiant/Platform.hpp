@@ -41,35 +41,35 @@
 //
 #if defined (__clang__)
 #   define RADIANT_CLANG 1
-#   define DLLEXPORT __attribute__((visibility("default")))
-#   define DLLIMPORT __attribute__((visibility("default")))
+#   define MULTI_DLLEXPORT __attribute__((visibility("default")))
+#   define MULTI_DLLIMPORT __attribute__((visibility("default")))
 
 // Test if we have override
 #   if !__has_feature(cxx_override_control)
-#     define NO_OVERRIDE
-#     define NO_FINAL
+#     define MULTI_NO_OVERRIDE
+#     define MULTI_NO_FINAL
 #   endif
 
 // Test if we have alignas
 #   if !__has_feature(cxx_alignas)
-#     define NO_ALIGNAS
+#     define MULTI_NO_ALIGNAS
 #   endif
 // 
 // Detect GNU GCC/G++
 //
 #elif defined (__GNUC__)
 #   define RADIANT_GNUC 1
-#   define DLLEXPORT __attribute__((visibility("default")))
-#   define DLLIMPORT __attribute__((visibility("default")))
+#   define MULTI_DLLEXPORT __attribute__((visibility("default")))
+#   define MULTI_DLLIMPORT __attribute__((visibility("default")))
 
 //  Override and final are GCC4.7 and up features when compiling code as c++0x/c++11
 #   if !defined(RADIANT_CXX11) || ((__GNUC__ == 4 && __GNUC_MINOR__ < 7) || __GNUC__ < 4)
-#     define NO_OVERRIDE
-#     define NO_FINAL
+#     define MULTI_NO_OVERRIDE
+#     define MULTI_NO_FINAL
 #   endif
 
 // Current g++ does not have alignas
-#   define NO_ALIGNAS
+#   define MULTI_NO_ALIGNAS
 
 #   if !defined(RADIANT_CXX11)
 #     define nullptr 0
@@ -90,34 +90,37 @@
 #   endif
 
 // Current MSVC does not have alignas
-#   define NO_ALIGNAS
+#   define MULTI_NO_ALIGNAS
 
-#   define DLLEXPORT __declspec(dllexport)
-#   define DLLIMPORT __declspec(dllimport)
+#   define MULTI_DLLEXPORT __declspec(dllexport)
+#   define MULTI_DLLIMPORT __declspec(dllimport)
 
 // warning C4251: class X needs to have dll-interface to be used by clients of class Y
 #   pragma warning(disable:4251)
 #endif
 
-#if !defined (NO_ALIGNAS)
-#  define ALIGNED(type, var, alignment) type alignas(alignment) var;
+#if !defined (MULTI_NO_ALIGNAS)
+#  define MULTI_ALIGNED(type, var, alignment) type alignas(alignment) var;
 #else
 #  if defined (RADIANT_MSVC)
-#    define ALIGNED(type, var, alignment) type __declspec(align(alignment)) var
+#    define MULTI_ALIGNED(type, var, alignment) type __declspec(align(alignment)) var
 #  elif defined (RADIANT_GNUC)
-#    define ALIGNED(type, var, alignment) type __attribute__((aligned(alignment)) var
+#    define MULTI_ALIGNED(type, var, alignment) type __attribute__((aligned(alignment)) var
 #  else
-#    define ALIGNED(type, var, alignment) type var
+#    define MULTI_ALIGNED(type, var, alignment) type var
 #  endif
 #endif
+#undef MULTI_NO_ALIGNAS
 
-#if !defined(NO_OVERRIDE)
+#if !defined(MULTI_NO_OVERRIDE)
 #  define OVERRIDE override
 #else
 #  define OVERRIDE
 #endif
+#undef MULTI_NO_OVERRIDE
 
-#if !defined(NO_FINAL)
+
+#if !defined(MULTI_NO_FINAL)
 #  if RADIANT_MSVC10
 #    define FINAL sealed
 #  else
@@ -126,6 +129,8 @@
 #else
 #  define FINAL
 #endif
+#undef MULTI_NO_FINAL
+
 //
 // Detect OSX
 //

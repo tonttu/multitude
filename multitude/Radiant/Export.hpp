@@ -24,9 +24,9 @@
 
 // Import by default
 #ifdef RADIANT_EXPORT
-#define RADIANT_API DLLEXPORT
+#define RADIANT_API MULTI_DLLEXPORT
 #else
-#define RADIANT_API DLLIMPORT
+#define RADIANT_API MULTI_DLLIMPORT
 #endif
 
 #endif

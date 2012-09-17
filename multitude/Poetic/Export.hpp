@@ -20,9 +20,9 @@
 
 // Import by default
 #ifdef POETIC_EXPORT
-#define POETIC_API DLLEXPORT
+#define POETIC_API MULTI_DLLEXPORT
 #else
-#define POETIC_API DLLIMPORT
+#define POETIC_API MULTI_DLLIMPORT
 #endif
 
 #endif

@@ -20,9 +20,9 @@
 
 // Import by default
 #ifdef RESONANT_EXPORT
-#define RESONANT_API DLLEXPORT
+#define RESONANT_API MULTI_DLLEXPORT
 #else
-#define RESONANT_API DLLIMPORT
+#define RESONANT_API MULTI_DLLIMPORT
 #endif
 
 #endif

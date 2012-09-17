@@ -20,9 +20,9 @@
 
 // Import by default
 #ifdef LUMINOUS_EXPORT
-#define LUMINOUS_API DLLEXPORT
+#define LUMINOUS_API MULTI_DLLEXPORT
 #else
-#define LUMINOUS_API DLLIMPORT
+#define LUMINOUS_API MULTI_DLLIMPORT
 #endif
 
 #endif
