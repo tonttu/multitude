@@ -49,6 +49,11 @@
 #     define NO_OVERRIDE
 #     define NO_FINAL
 #   endif
+
+// Test if we have alignas
+#   if !__has_feature(cxx_alignas)
+#     define NO_ALIGNAS
+#   endif
 // 
 // Detect GNU GCC/G++
 //
@@ -62,6 +67,9 @@
 #     define NO_OVERRIDE
 #     define NO_FINAL
 #   endif
+
+// Current g++ does not have alignas
+#   define NO_ALIGNAS
 
 #   if !defined(RADIANT_CXX11)
 #     define nullptr 0
@@ -81,11 +89,24 @@
 #     define RADIANT_MSVC11 1
 #   endif
 
+// Current MSVC does not have alignas
+#   define NO_ALIGNAS
+
 #   define DLLEXPORT __declspec(dllexport)
 #   define DLLIMPORT __declspec(dllimport)
 
 // warning C4251: class X needs to have dll-interface to be used by clients of class Y
 #   pragma warning(disable:4251)
+#endif
+
+#if !defined (NO_ALIGNAS)
+#  define ALIGNED(type, var, alignment) type alignas(alignment) var ;
+#else
+#  if defined (RADIANT_MSVC)
+#    define ALIGNED(type, var, alignment) type __declspec(align(alignment)) var ;
+#  elif defined (RADIANT_GNUC)
+#    define ALIGNED(type, var, alignment) type var __attribute__((aligned(alignment));
+#  endif
 #endif
 
 #if !defined(NO_OVERRIDE)
