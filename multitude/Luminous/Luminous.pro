@@ -193,7 +193,7 @@ win32 {
   else:LIBS += -lnvapi
   LIBS += -lUser32
 }
-linux-*:LIBS += -lXNVCtrl -lXrandr
+linux-*:LIBS += -lXNVCtrl -lXrandr -lXext -lX11
 
 INCLUDEPATH += ../3rdparty/adl_sdk
 
