@@ -552,7 +552,7 @@ namespace Valuable
     vp.m_to = to;
 
     if(!m_eventSendNames.contains(from)) {
-      warning("Node::eventAddListener # Adding listener to nonexistent event '%s'", from.data());
+      Radiant::warning("Node::eventAddListener # Adding listener to nonexistent event '%s'", from.data());
     }
 
     if(defaultData)
