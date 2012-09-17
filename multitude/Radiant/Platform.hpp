@@ -100,12 +100,14 @@
 #endif
 
 #if !defined (NO_ALIGNAS)
-#  define ALIGNED(type, var, alignment) type alignas(alignment) var ;
+#  define ALIGNED(type, var, alignment) type alignas(alignment) var;
 #else
 #  if defined (RADIANT_MSVC)
-#    define ALIGNED(type, var, alignment) type __declspec(align(alignment)) var ;
+#    define ALIGNED(type, var, alignment) type __declspec(align(alignment)) var
 #  elif defined (RADIANT_GNUC)
-#    define ALIGNED(type, var, alignment) type var __attribute__((aligned(alignment));
+#    define ALIGNED(type, var, alignment) type __attribute__((aligned(alignment)) var
+#  else
+#    define ALIGNED(type, var, alignment) type var
 #  endif
 #endif
 
