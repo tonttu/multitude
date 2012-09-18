@@ -80,8 +80,22 @@ namespace Radiant
 
   TCPSocket::~TCPSocket()
   {
-    close();
-    delete m_d;
+    if (m_d) {
+      close();
+      delete m_d;
+    }
+  }
+
+  TCPSocket::TCPSocket(TCPSocket && socket)
+    : m_d(socket.m_d)
+  {
+    socket.m_d = nullptr;
+  }
+
+  TCPSocket & TCPSocket::operator=(TCPSocket && socket)
+  {
+    std::swap(m_d, socket.m_d);
+    return *this;
   }
 
   bool TCPSocket::setNoDelay(bool noDelay)
