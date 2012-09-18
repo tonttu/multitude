@@ -28,7 +28,7 @@
 #include <Radiant/Thread.hpp>
 
 #include <strings.h>
-#include <tuple>
+// #include <tuple>
 #include <vector>
 
 #define DEFAULT_RECURSION_LIMIT 1
@@ -187,8 +187,33 @@ namespace Luminous
 
     // Cache for vertex array objects used in sharedbuffer rendering
     // key is <vertex buffer id, shader>
-    std::map<std::tuple<RenderResource::Id, RenderResource::Id, ProgramGL*>, VertexArray> m_vertexArrayCache;
+    
+    struct VertexArrayKey
+    {
+      VertexArrayKey(RenderResource::Id id1 = 0,
+		     RenderResource::Id id2 = 0,
+		     const ProgramGL* program = 0)
+	: m_id1(id1), m_id2(id2), m_program(program) {}
 
+      inline bool operator = (const VertexArrayKey & that) const
+      {
+	return m_id1 == that.m_id1 && m_id2 == that.m_id2 && m_program == that.m_program;
+      }
+
+      inline bool operator < (const VertexArrayKey & that) const
+      {
+	return m_id1 < that.m_id1 || m_id2 < that.m_id2 || m_program < that.m_program;
+      }
+
+      const RenderResource::Id m_id1;
+      const RenderResource::Id m_id2;
+      const ProgramGL* m_program;
+    };
+
+    
+    typedef std::map<VertexArrayKey, VertexArray> VertexArrayCache;
+    VertexArrayCache m_vertexArrayCache;
+    
     // List of currently active textures, vbos etc.
     GLenum m_textures[MAX_TEXTURES];
     GLSLProgramObject * m_program;
@@ -696,17 +721,21 @@ namespace Luminous
       // Get the matching vertexarray from cache or create a new one if needed
       ibufferId = ibuffer->buffer.resourceId();
     }
-    const auto key = std::make_tuple(vbuffer->buffer.resourceId(), ibufferId, &handle(shader));
 
-    auto it = m_data->m_vertexArrayCache.find(key);
+    Internal::VertexArrayKey key(vbuffer->buffer.resourceId(), ibufferId, &handle(shader));
+    
+    Internal::VertexArrayCache::const_iterator it = m_data->m_vertexArrayCache.find(key);
+
     if(it == m_data->m_vertexArrayCache.end()) {
       // No array yet for this combination: Create a new vertexarray
       VertexArray vertexArray;
       vertexArray.addBinding(vbuffer->buffer, shader.vertexDescription());
       if (indexCount > 0)
         vertexArray.setIndexBuffer(ibuffer->buffer);
-
+      
       it = m_data->m_vertexArrayCache.insert(std::make_pair(key, std::move(vertexArray))).first;
+      // m_data->m_vertexArrayCache[key] = std::move(vertexArray);
+      // it = m_data->m_vertexArrayCache.find(key);
     }
 
     RenderCommand & cmd = m_data->m_driver.createRenderCommand(

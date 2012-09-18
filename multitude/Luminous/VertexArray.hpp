@@ -25,6 +25,9 @@ namespace Luminous
     };
 
   public:
+#ifdef RADIANT_DELETED_CONSTRUCTORS
+    VertexArray(const VertexArray &) = delete;
+#endif
     LUMINOUS_API VertexArray();
     LUMINOUS_API ~VertexArray();
 
