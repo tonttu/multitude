@@ -28,7 +28,7 @@
 #include <Radiant/Thread.hpp>
 
 #include <strings.h>
-// #include <tuple>
+#include <tuple>
 #include <vector>
 
 #define DEFAULT_RECURSION_LIMIT 1
