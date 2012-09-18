@@ -97,11 +97,16 @@ namespace Luminous
   public:
     RenderTargetType m_targetType;
     Nimble::Size m_size;
+    unsigned m_samples;
     QMap<GLenum, RenderResource::Id> m_textureAttachments;
     QMap<GLenum, RenderResource::Id> m_renderBufferAttachments;
 
     std::vector<std::unique_ptr<Luminous::Texture> > m_ownedTextureAttachments;
     std::vector<std::unique_ptr<Luminous::RenderBuffer> > m_ownedRenderBufferAttachments;
+
+    D()
+      : m_samples(0)
+    {}
 
     GLenum deduceBufferFormat(GLenum attachment) const
     {
@@ -131,7 +136,7 @@ namespace Luminous
       if(format == 0)
         format = deduceBufferFormat(attachment);
 
-      buffer.storageFormat(m_size, format, buffer.samples());
+      buffer.storageFormat(m_size, format, m_samples);
 
       m_renderBufferAttachments[attachment] = buffer.resourceId();
     }
@@ -154,8 +159,7 @@ namespace Luminous
     {
       auto buf = std::unique_ptr<Luminous::RenderBuffer>(new Luminous::RenderBuffer());
 
-      /// @todo what samples?
-      buf->storageFormat(m_size, storageFormat, 0);
+      buf->storageFormat(m_size, storageFormat, m_samples);
 
       attach(attachment, *buf);
 
@@ -195,6 +199,7 @@ namespace Luminous
 
     d->m_targetType = m_d->m_targetType;
     d->m_size = m_d->m_size;
+    d->m_samples = m_d->m_samples;
 
     return RenderTargetCopy(d);
   }
@@ -272,6 +277,22 @@ namespace Luminous
     foreach(GLenum attachment, m_d->m_textureAttachments.keys()) {
       auto t = texture(attachment);
       t->setData(size.width(), size.height(), t->dataFormat(), 0);
+    }
+  }
+
+  unsigned RenderTarget::samples() const
+  {
+    return m_d->m_samples;
+  }
+
+  void RenderTarget::setSamples(unsigned samples)
+  {
+    m_d->m_samples = samples;
+
+    // Change sample count for all render buffer attachments
+    foreach(GLenum attachment, m_d->m_renderBufferAttachments.keys()) {
+      auto rb = renderBuffer(attachment);
+      rb->storageFormat(rb->size(), rb->format(), rb->samples());
     }
   }
 
