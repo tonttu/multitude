@@ -68,6 +68,11 @@
 #     define MULTI_NO_FINAL
 #   endif
 
+#   if (__GNUC__ == 4 && __GNUC_MINOR__ >= 7) || __GNUC__ >= 5
+// Check if deleted constructors are available in the compiler
+#     define RADIANT_DELETED_CONSTRUCTORS 1
+#   endif
+
 // Current g++ does not have alignas
 #   define MULTI_NO_ALIGNAS
 
