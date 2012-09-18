@@ -273,6 +273,10 @@ namespace Luminous
     void popScissorRect();
     const Nimble::Recti & currentScissorArea() const;
 
+    /// Copies pixels from the read render target to the draw render target
+    /// @sa RenderTarget::setTargetBind
+    void blit(const Nimble::Recti & src, const Nimble::Recti & dst);
+
     /// @todo REMOVE US
     static void setThreadContext(RenderContext * rsc);
     static RenderContext * getThreadContext();

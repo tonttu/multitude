@@ -78,6 +78,7 @@ namespace Luminous
         , m_driver(renderDriver)
         , m_driverGL(dynamic_cast<RenderDriverGL*>(&renderDriver))
         , m_defaultRenderTarget(RenderTarget::WINDOW)
+        , m_defaultOffScreenRenderTarget(RenderTarget::NORMAL)
         , m_currentRenderTarget(0)
         , m_postProcessInitList(0)
     {
@@ -87,6 +88,16 @@ namespace Luminous
       // Initialize default render target size
       assert(win);
       m_defaultRenderTarget.setSize(Nimble::Size(win->size().x, win->size().y));
+
+      if(!win->directRendering()) {
+        m_defaultRenderTarget.setTargetBind(RenderTarget::BIND_DRAW);
+
+        m_defaultOffScreenRenderTarget.setSize(Nimble::Size(win->size().x, win->size().y));
+        m_defaultOffScreenRenderTarget.setSamples(win->antiAliasingSamples());
+
+        m_defaultOffScreenRenderTarget.createRenderBufferAttachment(GL_COLOR_ATTACHMENT0, GL_RGBA);
+        m_defaultOffScreenRenderTarget.createRenderBufferAttachment(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT);
+      }
 
       memset(m_textures, 0, sizeof(m_textures));
 
@@ -158,6 +169,13 @@ namespace Luminous
         ptr->initialize(rc);
         m_postProcessChain.add(ptr);
       }
+    }
+
+    RenderTarget & defaultRenderTarget()
+    {
+      return m_window->directRendering() ?
+            m_defaultRenderTarget :
+            m_defaultOffScreenRenderTarget;
     }
 
     size_t m_recursionLimit;
@@ -269,6 +287,7 @@ namespace Luminous
 
     // Default window framebuffer
     RenderTarget m_defaultRenderTarget;
+    RenderTarget m_defaultOffScreenRenderTarget;
     const RenderTarget * m_currentRenderTarget;
 
     const PostProcess::InitList * m_postProcessInitList;
@@ -1366,7 +1385,7 @@ namespace Luminous
 
     const Luminous::RenderTarget & renderTarget = ppf && ppf->enabled() ?
           ppf->renderTarget() :
-          m_data->m_defaultRenderTarget;
+          m_data->defaultRenderTarget();
 
     assert(renderTarget.targetType() != RenderTarget::INVALID);
     m_data->m_driverGL->pushRenderTarget(renderTarget);
@@ -1456,7 +1475,7 @@ namespace Luminous
       // If this is the last filter, use the default render target,
       // otherwise use the off-screen render target of the next filter
       const RenderTarget & renderTarget = isLast ?
-            m_data->m_defaultRenderTarget :
+            m_data->defaultRenderTarget() :
             next->second->renderTarget();
 
       // Push the next auxilary render target
@@ -1538,6 +1557,12 @@ namespace Luminous
   {
     assert(!m_data->m_scissorStack.empty());
     return m_data->m_scissorStack.top();
+  }
+
+  void RenderContext::blit(const Nimble::Recti & src, const Nimble::Recti & dst)
+  {
+    m_data->m_driverGL->pushRenderTarget(m_data->m_defaultRenderTarget);
+    m_data->m_driver.blit(src, dst);
   }
 
   ////////////////////////////////////////////////////////////////////////////////

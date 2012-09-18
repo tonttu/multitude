@@ -78,6 +78,27 @@ namespace Luminous
   private:
     Nimble::Recti m_rect;
   };
+
+  //////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////
+
+  /// Performs a blit operation from render target bound as READ to render
+  /// target bound as DRAW.
+  class CommandBlitGL : public PipelineCommand
+  {
+  public:
+    CommandBlitGL(const Nimble::Recti & src, const Nimble::Recti & dst,
+                  Luminous::ClearMask mask = Luminous::ClearMask_ColorDepth,
+                  Luminous::Texture::Filter filter = Luminous::Texture::Filter_Nearest);
+
+    virtual void execute();
+
+  private:
+    Nimble::Recti m_src;
+    Nimble::Recti m_dst;
+    Luminous::ClearMask m_mask;
+    Luminous::Texture::Filter m_filter;
+  };
 }
 
 #endif

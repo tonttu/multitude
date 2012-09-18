@@ -210,7 +210,9 @@ namespace Luminous
       m_d->m_hostWidget->showFullScreen();
 
     QGLFormat format = QGLFormat::defaultFormat();
-    format.setSamples(window.antiAliasingSamples());
+    // disable multisampling default framebuffer if we do our own multisampling
+    if(window.directRendering())
+      format.setSamples(window.antiAliasingSamples());
 
     m_d->m_mainWindow = new GLThreadWidget(format, m_d->m_hostWidget, *this, flags, window);
 

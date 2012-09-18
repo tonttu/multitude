@@ -349,6 +349,13 @@ namespace Luminous {
       void setAntiAliasingSamples(int samplesPerPixel)
       { m_fsaaSamplesPerPixel = samplesPerPixel; }
 
+      /// Direct rendering mode enabled
+      /// @return true if direct rendering is enabled, false is rendering
+      /// is done through an off-screen render target
+      bool directRendering() const { return m_directRendering; }
+      /// Set direct rendering mode
+      void setDirectRendering(bool enable) { m_directRendering = enable; }
+
       /// Sets the width of a pixel in centimeters to each area inside this window
       LUMINOUS_API void setPixelSizeCm(float sizeCm);
 
@@ -381,6 +388,7 @@ namespace Luminous {
       Valuable::AttributeBool       m_fullscreen;
       Valuable::AttributeBool       m_resizeable;
       Valuable::AttributeInt        m_fsaaSamplesPerPixel;
+      Valuable::AttributeBool       m_directRendering;
       Valuable::AttributeInt        m_displaynumber; // for X11
       Valuable::AttributeInt        m_screennumber; // for X11
       /// Pixel size in centimeters

@@ -77,4 +77,32 @@ namespace Luminous
     glViewport(m_rect.low().x, m_rect.low().y, m_rect.width(), m_rect.height());
     GLERROR("CommandViewportGL::execute glViewport");
   }
+
+  //////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////
+
+  CommandBlitGL::CommandBlitGL(const Nimble::Recti & src, const Nimble::Recti & dst,
+                               Luminous::ClearMask mask, Luminous::Texture::Filter filter)
+    : m_src(src)
+    , m_dst(dst)
+    , m_mask(mask)
+    , m_filter(filter)
+  {
+  }
+
+  void CommandBlitGL::execute()
+  {
+    GLbitfield glMask = 0;
+    if (m_mask & ClearMask_Color)
+      glMask |= GL_COLOR_BUFFER_BIT;
+    if (m_mask & ClearMask_Depth)
+      glMask |= GL_DEPTH_BUFFER_BIT;
+    if (m_mask & ClearMask_Stencil)
+      glMask |= GL_DEPTH_BUFFER_BIT;
+
+    glBlitFramebuffer(m_src.low().x, m_src.low().y, m_src.high().x, m_src.high().y,
+                      m_dst.low().x, m_dst.low().y, m_dst.high().x, m_dst.high().y,
+                      glMask, m_filter);
+    GLERROR("CommandBlitGL::execute glBlitFramebuffer");
+  }
 }

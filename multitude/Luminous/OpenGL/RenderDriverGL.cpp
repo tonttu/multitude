@@ -672,6 +672,11 @@ namespace Luminous
     m_d->newRenderQueueSegment(new CommandScissorGL(rect));
   }
 
+  void RenderDriverGL::blit(const Nimble::Recti & src, const Nimble::Recti & dst)
+  {
+    m_d->newRenderQueueSegment(new CommandBlitGL(src, dst));
+  }
+
   void RenderDriverGL::setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer)
   {
     // Color buffers
