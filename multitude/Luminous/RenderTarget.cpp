@@ -96,6 +96,7 @@ namespace Luminous
   {
   public:
     RenderTargetType m_targetType;
+    RenderTargetBind m_targetBind;
     Nimble::Size m_size;
     unsigned m_samples;
     QMap<GLenum, RenderResource::Id> m_textureAttachments;
@@ -105,7 +106,8 @@ namespace Luminous
     std::vector<std::unique_ptr<Luminous::RenderBuffer> > m_ownedRenderBufferAttachments;
 
     D()
-      : m_samples(0)
+      : m_targetBind(RenderTarget::BIND_DEFAULT)
+      , m_samples(0)
     {}
 
     GLenum deduceBufferFormat(GLenum attachment) const
@@ -335,6 +337,16 @@ namespace Luminous
   RenderTarget::RenderTargetType RenderTarget::targetType() const
   {
     return m_d->m_targetType;
+  }
+
+  RenderTarget::RenderTargetBind RenderTarget::targetBind() const
+  {
+    return m_d->m_targetBind;
+  }
+
+  void RenderTarget::setTargetBind(RenderTargetBind target)
+  {
+    m_d->m_targetBind = target;
   }
 
   Texture & RenderTarget::createTextureAttachment(GLenum attachment, const Luminous::PixelFormat & format)

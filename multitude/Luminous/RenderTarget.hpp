@@ -71,6 +71,13 @@ namespace Luminous
       , NORMAL
     };
 
+    enum RenderTargetBind
+    {
+        BIND_DEFAULT
+      , BIND_READ
+      , BIND_DRAW
+    };
+
     RenderTarget(RenderTargetType type = NORMAL);
     ~RenderTarget();
 
@@ -103,6 +110,9 @@ namespace Luminous
     QList<GLenum> renderBufferAttachments() const;
 
     RenderTargetType targetType() const;
+
+    RenderTargetBind targetBind() const;
+    void setTargetBind(RenderTargetBind bind);
   };
 
   ////////////////////////////////////////////////////////////////////////////////

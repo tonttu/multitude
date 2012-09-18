@@ -53,6 +53,7 @@ namespace Luminous
 
   private:
     RenderTarget::RenderTargetType m_type;
+    RenderTarget::RenderTargetBind m_bind;
     Nimble::Size m_size;
   };
 

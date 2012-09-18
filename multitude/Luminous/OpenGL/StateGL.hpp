@@ -49,8 +49,9 @@ namespace Luminous
 
     inline RenderDriverGL & driver() { return m_driver; }
 
-    inline bool setFramebuffer(GLuint handle);
-    inline GLuint framebuffer() const;
+    inline bool setFramebuffer(GLenum target, GLuint handle);
+    inline GLuint readFramebuffer() const;
+    inline GLuint drawFramebuffer() const;
 
     void setFrameTime(Radiant::TimeStamp t) { m_frameTime = t; }
     Radiant::TimeStamp frameTime() const { return m_frameTime; }
@@ -71,7 +72,8 @@ namespace Luminous
 
     RenderDriverGL & m_driver;
 
-    GLuint m_currentFrameBuffer;
+    GLuint m_currentReadFrameBuffer;
+    GLuint m_currentDrawFrameBuffer;
 
     Radiant::TimeStamp m_frameTime;
   };
@@ -84,7 +86,8 @@ namespace Luminous
     , m_threadIndex(threadIndex)
     , m_uploadedBytes(0)
     , m_driver(driver)
-    , m_currentFrameBuffer(0)
+    , m_currentReadFrameBuffer(0)
+    , m_currentDrawFrameBuffer(0)
   {}
 
   bool StateGL::setProgram(GLuint handle)
@@ -142,16 +145,31 @@ namespace Luminous
     return m_bufferMaps;
   }
 
-  bool StateGL::setFramebuffer(GLuint handle)
+  bool StateGL::setFramebuffer(GLenum target, GLuint handle)
   {
-    const bool changed = (m_currentFrameBuffer != handle);
-    m_currentFrameBuffer = handle;
+    bool changed = false;
+    if(target == GL_FRAMEBUFFER) {
+      changed = (m_currentReadFrameBuffer != handle || m_currentDrawFrameBuffer != handle);
+      m_currentReadFrameBuffer = handle;
+      m_currentDrawFrameBuffer = handle;
+    } else if(target == GL_READ_FRAMEBUFFER) {
+      changed = (m_currentReadFrameBuffer != handle);
+      m_currentReadFrameBuffer = handle;
+    } else if(target == GL_DRAW_FRAMEBUFFER) {
+      changed = (m_currentDrawFrameBuffer != handle);
+      m_currentDrawFrameBuffer = handle;
+    }
     return changed;
   }
 
-  GLuint StateGL::framebuffer() const
+  GLuint StateGL::readFramebuffer() const
   {
-    return m_currentFrameBuffer;
+    return m_currentReadFrameBuffer;
+  }
+
+  GLuint StateGL::drawFramebuffer() const
+  {
+    return m_currentDrawFrameBuffer;
   }
 
 }

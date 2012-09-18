@@ -67,9 +67,28 @@ namespace Luminous
   ////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////
 
+  namespace
+  {
+    GLenum bindTarget(RenderTarget::RenderTargetBind target)
+    {
+      switch(target)
+      {
+      case RenderTarget::BIND_DEFAULT:
+        return GL_FRAMEBUFFER;
+      case RenderTarget::BIND_DRAW:
+        return GL_DRAW_FRAMEBUFFER;
+      case RenderTarget::BIND_READ:
+        return GL_READ_FRAMEBUFFER;
+      default:
+        assert(false);
+      }
+    }
+  }
+
   RenderTargetGL::RenderTargetGL(StateGL &state)
     : ResourceHandleGL(state)
     , m_type(RenderTarget::INVALID)
+    , m_bind(RenderTarget::BIND_DEFAULT)
   {
     glGenFramebuffers(1, &m_handle);
     GLERROR("RenderTargetGL::RenderTargetGL # glGenFramebuffers");
@@ -78,6 +97,7 @@ namespace Luminous
   RenderTargetGL::RenderTargetGL(RenderTargetGL && target)
     : ResourceHandleGL(std::move(target))
     , m_type(std::move(target.m_type))
+    , m_bind(std::move(target.m_bind))
   {
   }
 
@@ -93,8 +113,8 @@ namespace Luminous
 
     if(m_type == RenderTarget::WINDOW)
       unbind();
-    else if(m_state.setFramebuffer(m_handle)) {
-      glBindFramebuffer(GL_FRAMEBUFFER, m_handle);
+    else if(m_state.setFramebuffer(bindTarget(m_bind), m_handle)) {
+      glBindFramebuffer(bindTarget(m_bind), m_handle);
       GLERROR("RenderTargetGL::bind # glBindFramebuffer");
     }
 
@@ -103,8 +123,8 @@ namespace Luminous
 
   void RenderTargetGL::unbind()
   {
-    if(m_state.setFramebuffer(0))
-      glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    if(m_state.setFramebuffer(bindTarget(m_bind), 0))
+      glBindFramebuffer(bindTarget(m_bind), 0);
     GLERROR("RenderTargetGL::unbind # glBindFramebuffer");
   }
 
@@ -168,6 +188,7 @@ namespace Luminous
   void RenderTargetGL::sync(const RenderTarget &target)
   {
     m_type = target.targetType();
+    m_bind = target.targetBind();
     m_size = target.size();
 
     bind();

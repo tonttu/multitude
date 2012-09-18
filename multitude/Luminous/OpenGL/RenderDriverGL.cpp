@@ -626,7 +626,7 @@ namespace Luminous
     // draw command
     m_d->m_stateGL.setProgram((unsigned)-1);
     m_d->m_stateGL.setVertexArray((unsigned)-1);
-    m_d->m_stateGL.setFramebuffer((unsigned)-1);
+    m_d->m_stateGL.setFramebuffer(GL_FRAMEBUFFER, (unsigned)-1);
   }
 
   void RenderDriverGL::setBlendMode( const BlendMode & mode )
