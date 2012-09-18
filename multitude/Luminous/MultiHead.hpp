@@ -364,7 +364,7 @@ namespace Luminous {
         m_areas.clear();
       }
 
-      Nimble::Recti getRect() {
+      Nimble::Recti getRect() const {
         return Nimble::Recti(location().x,
                              location().y,
                              location().x + width(),
