@@ -62,12 +62,12 @@ namespace Luminous
     virtual void unbind();
 
     /// Gets the location of the given uniform variable
-    int getUniformLoc(const QString & name);
+    int getUniformLoc(const QByteArray & name);
     /// Gets the location of the given uniform variable
     int getUniformLoc(const char * name);
 
     /// Gets the location of the given attribute variable
-    int getAttribLoc(const QString & name);
+    int getAttribLoc(const QByteArray & name);
     /// Gets the location of the given attribute variable
     int getAttribLoc(const char * name);
 

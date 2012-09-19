@@ -30,7 +30,7 @@ namespace Luminous
   class LUMINOUS_API ColorCorrection : public Valuable::Node
   {
   public:
-    ColorCorrection(Node * parent = 0, const QString & name = "", bool transit = false);
+    ColorCorrection(Node * parent = 0, const QByteArray &name = "", bool transit = false);
 
     void setOffset(int idx, const Nimble::Vector3 & offset);
     void setOffset(int idx, int channel, float value);

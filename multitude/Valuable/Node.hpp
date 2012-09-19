@@ -71,7 +71,7 @@ namespace Valuable
       @param name name of the object
       @param transit should the object changes be transmitted
     */
-    Node(Node * host, const QString & name = "", bool transit = false);
+    Node(Node * host, const QByteArray &name = "", bool transit = false);
     virtual ~Node();
 
     Node(Node && node);
@@ -84,16 +84,16 @@ namespace Valuable
     bool addValue(Attribute * const value);
 
     /// Adds a new Attribute to the list of attribute objects.
-    bool addAttribute(const QString & name, Attribute * const attribute);
+    bool addAttribute(const QByteArray &name, Attribute * const attribute);
     /// @deprecated This function will be removed in Cornerstone 2.1. Use addAttribute instead.
-    bool addValue(const QString & name, Attribute * const value);
+    bool addValue(const QByteArray &name, Attribute * const value);
 
     /// Gets an Attribute with the given name
     /// @param name Attribute name to search for
     /// @return Null if no object can be found
-    virtual Attribute * getAttribute(const QString & name) const;
+    virtual Attribute * getAttribute(const QByteArray & name) const;
     /// @deprecated This function will be removed in Cornerstone 2.1. Use getAttribute instead.
-    virtual Attribute * getValue(const QString & name) const;
+    virtual Attribute * getValue(const QByteArray & name) const;
 
     /// Removes an Attribute from the list of attribute objects.
     void removeAttribute(Attribute * const attribute);
@@ -118,18 +118,18 @@ namespace Valuable
     /// @return True if object was found and the value was set successfully.
     /// @todo implement similar to getValue (to avoid dynamic_cast)
     template<class T>
-    bool setValue(const QString & name, const T & v)
+    bool setValue(const QByteArray & name, const T & v)
     {
       int cut = name.indexOf("/");
-      QString next, rest;
+      QByteArray next, rest;
       if(cut > 0) {
         next = name.left(cut);
         rest = name.mid(cut + 1);
 
-        if(next == QString("..")) {
+        if(next == QByteArray("..")) {
           if(!m_host) {
             Radiant::error(
-                "Node::setValue # node '%s' has no host", m_name.toUtf8().data());
+                "Node::setValue # node '%s' has no host", m_name.data());
             return false;
           }
 
@@ -142,7 +142,7 @@ namespace Valuable
       container::iterator it = m_values.find(next);
       if(it == m_values.end()) {
         Radiant::error(
-            "Node::setValue # property '%s' not found", next.toUtf8().data());
+            "Node::setValue # property '%s' not found", next.data());
         return false;
       }
 
@@ -191,7 +191,7 @@ namespace Valuable
     void debugDump();
 
     /// Container for key-value object pairs
-    typedef std::map<QString, Attribute *> container;
+    typedef std::map<QByteArray, Attribute *> container;
     /// Iterator for the container
     typedef container::iterator iterator;
     typedef container::const_iterator const_iterator;
@@ -261,7 +261,7 @@ namespace Valuable
 
       // Remove selected event links between two widgets:
       myWidget1->eventRemoveListener("interactionbegin", myWidget3);
-      myWidget1->eventRemoveListener(QString(), "clear", myWidget4);
+      myWidget1->eventRemoveListener(QByteArray(), "clear", myWidget4);
 
       // Remove all selected events to any other widgets
       myWidget1->eventRemoveListener("singletap");
@@ -269,20 +269,20 @@ namespace Valuable
 
 
       @param from The name of the originating event that should be cleared. If this parameter
-      is null (QString()), then all originating events are matched.
+      is null (QByteArray()), then all originating events are matched.
 
       @param to The name of of the destination event that should be cleared. If this parameter
-      is null (QString()), then all destination events are matched.
+      is null (QByteArray()), then all destination events are matched.
 
       @param obj The target object for which the events should be cleared. If
                  this parameter is null, then all objects are matched.
 
       @return number of event listener links removed
       */
-    int eventRemoveListener(const QString & from = QString(), const QString & to = QString(), Valuable::Node * obj = 0);
+    int eventRemoveListener(const QByteArray & from = QByteArray(), const QByteArray & to = QByteArray(), Valuable::Node * obj = 0);
     int eventRemoveListener(Valuable::Node * obj)
     {
-      return eventRemoveListener(QString(), QString(), obj);
+      return eventRemoveListener(QByteArray(), QByteArray(), obj);
     }
 
     /// Adds an event source
@@ -390,7 +390,7 @@ namespace Valuable
       eventSend(id, bd);
     }
 
-    void defineShortcut(const QString & name);
+    void defineShortcut(const QByteArray &name);
 
     /// The sender of the event, can be read in processMessage()
     Node * sender() { return m_sender; }
@@ -402,7 +402,7 @@ namespace Valuable
 
     friend class Attribute; // So that Attribute can call the function below.
 
-    void valueRenamed(const QString & was, const QString & now);
+    void valueRenamed(const QByteArray &was, const QByteArray &now);
 
     container m_values;
 

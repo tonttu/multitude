@@ -41,7 +41,7 @@ namespace Valuable {
   {
   public:
     FlagAliasT(Node * parent, AttributeFlagsT<T> & master,
-               const QString & name, Radiant::FlagsT<T> flags)
+               const QByteArray & name, Radiant::FlagsT<T> flags)
       : Attribute(parent, name, false),
         m_master(master),
         m_flags(flags)
@@ -133,7 +133,7 @@ namespace Valuable {
   {
   public:
     typedef Radiant::FlagsT<T> Flags;
-    AttributeFlagsT(Node * parent, const QString & name, const FlagNames * names,
+    AttributeFlagsT(Node * parent, const QByteArray & name, const FlagNames * names,
                Flags v = Flags(), bool createAliases = true, bool transit = false)
       : Attribute(parent, name, transit)
     {

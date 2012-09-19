@@ -151,15 +151,15 @@ namespace Valuable
     is related to future uses, and can be largely ignored at the
     moment.
     */
-    Attribute(Node * host, const QString & name, bool transit = false);
+    Attribute(Node * host, const QByteArray & name, bool transit = false);
     virtual ~Attribute();
 
     /// Returns the name of the object.
-    const QString & name() const { return m_name; }
+    const QByteArray & name() const { return m_name; }
     /// Sets the name of the object
-    void setName(const QString & s);
+    void setName(const QByteArray & s);
     /// Returns the path (separated by '/'s) from the root
-    QString path() const;
+    QByteArray path() const;
 
     /// Process a message
     /** This method is a key element in the event-passing system.
@@ -312,7 +312,7 @@ namespace Valuable
     Node * m_host;
     bool m_changed;
     bool m_serializable;
-    QString m_name;
+    QByteArray m_name;
     bool m_transit;
 
     struct AttributeListener
@@ -350,7 +350,7 @@ namespace Valuable
     /// @param name name of the value
     /// @param v the default value of the object
     /// @param transit ignored
-    AttributeT(Node * host, const QString & name, const T & v = T(), bool transit = false)
+    AttributeT(Node * host, const QByteArray & name, const T & v = T(), bool transit = false)
       : Attribute(host, name, transit),
       m_current(DEFAULT),
       m_values(),

@@ -11,7 +11,7 @@ namespace Valuable
   public:
     using AttributeVector<Nimble::Vector2f>::operator =;
 
-    AttributeLocation2f(Node * host, const QString & name,
+    AttributeLocation2f(Node * host, const QByteArray & name,
                         const Nimble::Vector2f & v = Nimble::Vector2f(0, 0),
                         bool transit = false)
       : AttributeVector<Nimble::Vector2f>(host, name, v, transit)

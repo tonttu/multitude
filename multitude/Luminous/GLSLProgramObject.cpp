@@ -152,9 +152,9 @@ namespace Luminous
     context()->bindProgram(0);
   }
 
-  int GLSLProgramObject::getUniformLoc(const QString& name)
+  int GLSLProgramObject::getUniformLoc(const QByteArray& name)
   {
-    return glGetUniformLocation(m_handle, name.toUtf8().data());
+    return glGetUniformLocation(m_handle, name.data());
   }
 
   int GLSLProgramObject::getUniformLoc(const char * name)
@@ -162,9 +162,9 @@ namespace Luminous
     return glGetUniformLocation(m_handle, name);
   }
 
-  int GLSLProgramObject::getAttribLoc(const QString & name)
+  int GLSLProgramObject::getAttribLoc(const QByteArray & name)
   {
-    return glGetAttribLocation(m_handle, name.toUtf8().data());
+    return glGetAttribLocation(m_handle, name.data());
   }
 
   int GLSLProgramObject::getAttribLoc(const char * name)

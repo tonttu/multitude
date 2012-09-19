@@ -34,7 +34,7 @@ namespace Luminous {
       if(v.m_param == -1) {\
         int tmp = glslprog->glslfunc(((type*)v.m_obj)->name()); \
         if(tmp < 0) { \
-          Radiant::error("Could not find location for %s", ((type*)v.m_obj)->name().toUtf8().data()); \
+          Radiant::error("Could not find location for %s", ((type*)v.m_obj)->name().data()); \
           v.m_param = -2; \
           continue; \
         } \
@@ -55,7 +55,7 @@ namespace Luminous {
       if(v.m_param == -1) {\
         int tmp = glslprog->glslfunc(((type*)v.m_obj)->name()); \
         if(tmp < 0) { \
-          Radiant::error("Could not find location for %s", ((type*)v.m_obj)->name().toUtf8().data()); \
+          Radiant::error("Could not find location for %s", ((type*)v.m_obj)->name().data()); \
           v.m_param = -2; \
           continue; \
         } \
@@ -76,7 +76,7 @@ namespace Luminous {
       if(v.m_param == -1) {\
         int tmp = glslprog->glslfunc(((type*)v.m_obj)->name()); \
         if(tmp < 0) { \
-          Radiant::error("Could not find location for %s", ((type*)v.m_obj)->name().toUtf8().data()); \
+          Radiant::error("Could not find location for %s", ((type*)v.m_obj)->name().data()); \
           v.m_param = -2; \
           continue; \
         } \
@@ -115,7 +115,7 @@ namespace Luminous {
       SHADER_PARAM_CHECK(obj, Valuable::AttributeMatrix4f, m_mat4f);
 
       Radiant::error("When adding shader parameter %s, type %s not supported",
-            obj->name().toUtf8().data(), typeid(*obj).name());
+            obj->name().data(), typeid(*obj).name());
     }
 
 

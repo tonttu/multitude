@@ -12,7 +12,7 @@ namespace Valuable
     using AttributeT<StyleValue>::operator=;
 
     AttributeStyleValue() {}
-    AttributeStyleValue(Node * host, const QString & name,
+    AttributeStyleValue(Node * host, const QByteArray & name,
                         const StyleValue & v = StyleValue(), bool transit = false)
       : AttributeT<StyleValue>(host, name, v, transit)
     {}

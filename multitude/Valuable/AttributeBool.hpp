@@ -29,7 +29,7 @@ namespace Valuable
 
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param value The value of this object
-    AttributeBool(Node * host, const QString & name, bool value, bool transit = false);
+    AttributeBool(Node * host, const QByteArray &name, bool value, bool transit = false);
     virtual ~AttributeBool();
 
     virtual const char * type() const OVERRIDE { return "bool"; }

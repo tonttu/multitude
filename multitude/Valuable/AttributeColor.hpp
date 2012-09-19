@@ -31,7 +31,7 @@ namespace Valuable
 
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param c The color value
-    AttributeColor(Node * host, const QString & name, const Radiant::Color & c, bool transit = false)
+    AttributeColor(Node * host, const QByteArray & name, const Radiant::Color & c, bool transit = false)
       : AttributeVector<Radiant::Color>(host, name, c, transit)
     {}
 

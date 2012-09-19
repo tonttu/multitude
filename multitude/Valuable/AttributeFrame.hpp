@@ -30,7 +30,7 @@ namespace Valuable
   class AttributeFrame : public Attribute
   {
   public:
-    AttributeFrame(Node * host, const QString & name,
+    AttributeFrame(Node * host, const QByteArray & name,
                    const Nimble::Frame4f & v = Nimble::Frame4f(), bool transit = false)
       : Attribute(host, name, transit)
     {

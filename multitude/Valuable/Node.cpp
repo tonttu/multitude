@@ -119,7 +119,7 @@ namespace Valuable
   class Shortcut : public Attribute
   {
   public:
-    Shortcut(Node * host, const QString & name)
+    Shortcut(Node * host, const QByteArray & name)
       : Attribute(host, name)
     {
       setSerializable(false);
@@ -147,7 +147,7 @@ namespace Valuable
       m_frame(0)
   {}
 
-  Node::Node(Node * host, const QString & name, bool transit)
+  Node::Node(Node * host, const QByteArray & name, bool transit)
       : Attribute(host, name, transit),
       m_eventsEnabled(true),
       m_id(this, "id", generateId()),
@@ -232,12 +232,12 @@ namespace Valuable
     return *this;
   }
 
-  Attribute * Node::getValue(const QString & name) const
+  Attribute * Node::getValue(const QByteArray & name) const
   {
     return Node::getAttribute(name);
   }
 
-  Attribute * Node::getAttribute(const QString & name) const
+  Attribute * Node::getAttribute(const QByteArray & name) const
   {
     size_t slashIndex = name.indexOf('/');
 
@@ -247,8 +247,8 @@ namespace Valuable
       return it == m_values.end() ? 0 : it->second;
     }
     else {
-      const QString part1 = name.left(slashIndex);
-      const QString part2 = name.mid(slashIndex + 1);
+      const QByteArray part1 = name.left(slashIndex);
+      const QByteArray part2 = name.mid(slashIndex + 1);
 
       const Attribute * attribute = getValue(part1);
       if(attribute) {
@@ -269,12 +269,12 @@ namespace Valuable
     return Node::addAttribute(attribute->name(), attribute);
   }
 
-  bool Node::addValue(const QString & cname, Attribute * const value)
+  bool Node::addValue(const QByteArray & cname, Attribute * const value)
   {
     return Node::addAttribute(cname, value);
   }
 
-  bool Node::addAttribute(const QString & cname, Attribute * const value)
+  bool Node::addAttribute(const QByteArray & cname, Attribute * const value)
   {
     //    Radiant::trace("Node::addValue # adding %s", cname.c_str());
 
@@ -283,7 +283,7 @@ namespace Valuable
       Radiant::error(
           "Node::addValue # can not add value '%s' as '%s' "
           "already has a value with the same name.",
-          cname.toUtf8().data(), m_name.toUtf8().data());
+          cname.data(), m_name.data());
       return false;
     }
 
@@ -293,7 +293,7 @@ namespace Valuable
       Radiant::error(
           "Node::addValue # '%s' already has a host '%s'. "
           "Unlinking it to set new host.",
-          cname.toUtf8().data(), host->name().toUtf8().data());
+          cname.data(), host->name().data());
       value->removeHost();
     }
 
@@ -313,13 +313,13 @@ namespace Valuable
 
   void Node::removeAttribute(Attribute * const value)
   {
-    const QString & cname = value->name();
+    const QByteArray & cname = value->name();
 
     container::iterator it = m_values.find(cname);
     if(it == m_values.end()) {
       Radiant::error(
           "Node::removeValue # '%s' is not a child value of '%s'.",
-          cname.toUtf8().data(), m_name.toUtf8().data());
+          cname.data(), m_name.data());
       return;
     }
 
@@ -460,13 +460,13 @@ namespace Valuable
   bool Node::deserialize(const ArchiveElement & element)
   {
     // Name
-    m_name = element.name();
+    m_name = element.name().toUtf8();
 
     // Children
     for(ArchiveElement::Iterator it = element.children(); it; ++it) {
       ArchiveElement elem = *it;
 
-      QString name = elem.name();
+      QByteArray name = elem.name().toUtf8();
 
       Attribute * vo = getValue(name);
 
@@ -479,7 +479,7 @@ namespace Valuable
         ok = readElement(elem);
       if(!ok) {
         Radiant::error(
-            "Node::deserialize # (%s) don't know how to handle element '%s'", type(), name.toUtf8().data());
+            "Node::deserialize # (%s) don't know how to handle element '%s'", type(), name.data());
         return false;
       }
     }
@@ -488,7 +488,7 @@ namespace Valuable
   }
 
   void Node::debugDump() {
-    Radiant::trace(Radiant::DEBUG, "%s {", m_name.toUtf8().data());
+    Radiant::trace(Radiant::DEBUG, "%s {", m_name.data());
 
     for(container::iterator it = m_values.begin(); it != m_values.end(); it++) {
       Attribute * vo = it->second;
@@ -497,7 +497,7 @@ namespace Valuable
       if(hv) hv->debugDump();
       else {
         QString s = vo->asString();
-        Radiant::trace(Radiant::DEBUG, "\t%s = %s", vo->name().toUtf8().data(), s.toUtf8().data());
+        Radiant::trace(Radiant::DEBUG, "\t%s = %s", vo->name().data(), s.toUtf8().data());
       }
     }
 
@@ -524,7 +524,7 @@ namespace Valuable
     if(!obj->m_eventListenNames.contains(to)) {
       const QString & klass = Radiant::StringUtils::demangle(typeid(*obj).name());
       Radiant::warning("Node::eventAddListener # %s (%s %p) doesn't accept event '%s'",
-              klass.toUtf8().data(), obj->name().toUtf8().data(), obj, to.data());
+              klass.toUtf8().data(), obj->name().data(), obj, to.data());
     }
 
     if(defaultData)
@@ -600,7 +600,7 @@ namespace Valuable
     m_elisteners.push_back(vp);
   }
 
-  int Node::eventRemoveListener(const QString & from, const QString & to, Valuable::Node * obj)
+  int Node::eventRemoveListener(const QByteArray & from, const QByteArray & to, Valuable::Node * obj)
   {
     int removed = 0;
 
@@ -661,7 +661,7 @@ namespace Valuable
     // Radiant::info("Node::processMessage # %s %s", typeid(*this).name(), id);
 
     int idx = id.indexOf('/');
-    QString n = idx == -1 ? id : id.left(idx);
+    QByteArray n = idx == -1 ? id : id.left(idx);
 
     // Radiant::info("Node::processMessage # Child id = %s", key.c_str());
 
@@ -678,7 +678,7 @@ namespace Valuable
       } else {
         const QString klass = Radiant::StringUtils::demangle(typeid(*this).name());
         Radiant::warning("Node::processMessage # %s (%s %p): unhandled event '%s'",
-                klass.toUtf8().data(), name().toUtf8().data(), this, id.data());
+                klass.toUtf8().data(), name().data(), this, id.data());
       }
     }
   }
@@ -851,23 +851,23 @@ namespace Valuable
     eventSend(id, tmp);
   }
 
-  void Node::defineShortcut(const QString & name)
+  void Node::defineShortcut(const QByteArray & name)
   {
     new Shortcut(this, name);
   }
 
-  void Node::valueRenamed(const QString & was, const QString & now)
+  void Node::valueRenamed(const QByteArray & was, const QByteArray & now)
   {
     // Check that the value does not exist already
     iterator it = m_values.find(now);
     if(it != m_values.end()) {
-      Radiant::error("Node::valueRenamed # Value '%s' already exist", now.toUtf8().data());
+      Radiant::error("Node::valueRenamed # Value '%s' already exist", now.data());
       return;
     }
 
     it = m_values.find(was);
     if(it == m_values.end()) {
-      Radiant::error("Node::valueRenamed # No such value: %s", was.toUtf8().data());
+      Radiant::error("Node::valueRenamed # No such value: %s", was.data());
       return;
     }
 

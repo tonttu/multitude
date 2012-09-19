@@ -16,7 +16,7 @@ namespace Valuable
     using Base::operator =;
 
     AttributeStringList();
-    AttributeStringList(Node * host, const QString & name,
+    AttributeStringList(Node * host, const QByteArray & name,
                         const QStringList & v = QStringList(), bool transit = false);
 
     /// Returns the value as string

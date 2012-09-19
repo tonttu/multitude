@@ -86,7 +86,7 @@ namespace Valuable
   public:
     using Base::operator =;
 
-    AttributeEnumT(Node * host, const QString & name, const FlagNames * names,
+    AttributeEnumT(Node * host, const QByteArray & name, const FlagNames * names,
                   const T & v, bool transit = false)
       : AttributeNumeric<T>(host, name, v, transit)
       , m_allowIntegers(false)

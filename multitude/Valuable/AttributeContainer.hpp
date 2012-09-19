@@ -74,7 +74,7 @@ namespace Valuable
 
     virtual ArchiveElement serialize(Archive & archive) const OVERRIDE
     {
-      ArchiveElement elem = archive.createElement(name().isEmpty() ? type() : name());
+      ArchiveElement elem = archive.createElement(name().isEmpty() ? QByteArray(type()) : name());
       for(const_iterator it = m_container.begin(); it != m_container.end(); it++) {
         elem.add(Serializer::serialize(archive, *it));
       }
@@ -119,7 +119,7 @@ namespace Valuable
     /// Constructs a new container
     /// @param host host object
     /// @param name name of the value
-    AttributeContainerT(Node * host, const QString & name)
+    AttributeContainerT(Node * host, const QByteArray & name)
       : Attribute(host, name, false)
       , m_clearOnDeserialize(true)
     {}
@@ -153,7 +153,7 @@ namespace Valuable
     /// Constructs a new container
     /// @param host host object
     /// @param name name of the value
-    AttributeContainer(Node * host, const QString & name)
+    AttributeContainer(Node * host, const QByteArray & name)
       : AttributeContainerT<T>(host, name)
     {}
   };
@@ -170,7 +170,7 @@ namespace Valuable
     /// Constructs a new container
     /// @param host host object
     /// @param name name of the value
-    AttributeContainer(Node * host, const QString & name)
+    AttributeContainer(Node * host, const QByteArray & name)
       : Container(host, name)
     {}
 

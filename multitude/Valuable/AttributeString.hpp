@@ -38,9 +38,9 @@ namespace Valuable
     typedef QChar char_type;
 
     AttributeString();
-    /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
+    /// @copydoc Attribute::Attribute(Node *, const QByteArray &, bool transit)
     /// @param v The string to store in this object
-    AttributeString(Node * host, const QString & name,
+    AttributeString(Node * host, const QByteArray & name,
                 const QString & v = "", bool transit = false);
 
     virtual void processMessage(const QByteArray & id, Radiant::BinaryData & data) OVERRIDE;

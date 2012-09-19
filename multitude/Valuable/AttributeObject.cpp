@@ -45,7 +45,7 @@ namespace Valuable
     m_listenersId(0)
   {}
 
-  Attribute::Attribute(Node * host, const QString & name, bool transit)
+  Attribute::Attribute(Node * host, const QByteArray & name, bool transit)
     : m_host(0),
       m_changed(false),
       m_serializable(true),
@@ -95,7 +95,7 @@ namespace Valuable
 #endif
   }
 
-  void Attribute::setName(const QString & s)
+  void Attribute::setName(const QByteArray & s)
   {
     if(host())
       host()->valueRenamed(m_name, s);
@@ -103,7 +103,7 @@ namespace Valuable
     m_name = s;
   }
 
-  QString Attribute::path() const
+  QByteArray Attribute::path() const
   {
     if(m_host)
       return m_host->path() + "/" + m_name;
@@ -174,7 +174,7 @@ namespace Valuable
   {
     if(ok) *ok = false;
     Radiant::error(
-"Attribute::asFloat # %s : conversion not available", m_name.toUtf8().data());
+          "Attribute::asFloat # %s : conversion not available", m_name.data());
     return 0.0f;
   }
 
@@ -182,7 +182,7 @@ namespace Valuable
   {
     if(ok) *ok = false;
     Radiant::error(
-"Attribute::asInt # %s : conversion not available", m_name.toUtf8().data());
+"Attribute::asInt # %s : conversion not available", m_name.data());
     return 0;
   }
 
@@ -190,13 +190,13 @@ namespace Valuable
   {
     if(ok) *ok = false;
     Radiant::error(
-"Attribute::asString # %s : conversion not available", m_name.toUtf8().data());
+"Attribute::asString # %s : conversion not available", m_name.data());
     return "";
   }
 
   ArchiveElement Attribute::serialize(Archive & archive) const
   {
-    ArchiveElement elem = archive.createElement(m_name.isEmpty() ? "Attribute" : m_name.toUtf8().data());
+    ArchiveElement elem = archive.createElement(m_name.isEmpty() ? "Attribute" : m_name.data());
     elem.add("type", type());
     elem.set(asString());
 
@@ -215,7 +215,7 @@ namespace Valuable
 
   void Attribute::emitChange()
   {
-//    Radiant::trace("Attribute::emitChange # '%s'", m_name.toUtf8().data());
+//    Radiant::trace("Attribute::emitChange # '%s'", m_name.data());
     m_changed = true;
     foreach(const AttributeListener & l, m_listeners) {
       if(l.role & CHANGE_ROLE) {
@@ -338,49 +338,49 @@ namespace Valuable
   bool Attribute::set(float, Layer, ValueUnit)
   {
     Radiant::error("Attribute::set(float) # %s: conversion not available",
-                   m_name.toUtf8().data());
+                   m_name.data());
     return false;
   }
 
   bool Attribute::set(int, Layer, ValueUnit)
   {
     Radiant::error("Attribute::set(int) # %s: conversion not available",
-                   m_name.toUtf8().data());
+                   m_name.data());
     return false;
   }
 
   bool Attribute::set(const QString &, Layer, ValueUnit)
   {
     Radiant::error("Attribute::set(string) # %s: conversion not available",
-                   m_name.toUtf8().data());
+                   m_name.data());
     return false;
   }
 
   bool Attribute::set(const Nimble::Vector2f &, Layer, QList<ValueUnit>)
   {
     Radiant::error("Attribute::set(Vector2f) # %s: conversion not available",
-                   m_name.toUtf8().data());
+                   m_name.data());
     return false;
   }
 
   bool Attribute::set(const Nimble::Vector3f &, Layer, QList<ValueUnit>)
   {
     Radiant::error("Attribute::set(Vector3f) # %s: conversion not available",
-                   m_name.toUtf8().data());
+                   m_name.data());
     return false;
   }
 
   bool Attribute::set(const Nimble::Vector4f &, Layer, QList<ValueUnit>)
   {
     Radiant::error("Attribute::set(Vector4f) # %s: conversion not available",
-                   m_name.toUtf8().data());
+                   m_name.data());
     return false;
   }
 
   bool Attribute::set(const StyleValue &, Layer)
   {
     Radiant::error("Attribute::set(StyleValue) # %s: conversion not available",
-                   m_name.toUtf8().data());
+                   m_name.data());
     return false;
   }
 }

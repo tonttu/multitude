@@ -15,7 +15,7 @@ namespace Luminous {
   using Nimble::Vector2;
   using Nimble::Vector4;
 
-  GLKeyStone::GLKeyStone(Node * host, const QString & name)
+  GLKeyStone::GLKeyStone(Node * host, const QByteArray & name)
   : Node(host, name, false),
   m_selected(0),
   m_rotations(this, "rotations", false, 0)

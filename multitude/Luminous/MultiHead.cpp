@@ -398,7 +398,7 @@ namespace Luminous {
   bool MultiHead::Window::readElement(const Valuable::ArchiveElement & ce)
   {
     /// @todo Remove this function and use the correct serialization API
-    const QString & name = ce.name();
+    QByteArray name = ce.name().toUtf8();
 
     // Get the 'type' attribute
     const QString & type = ce.get("type");

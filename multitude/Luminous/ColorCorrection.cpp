@@ -3,7 +3,7 @@
 namespace Luminous
 {
 
-  ColorCorrection::ColorCorrection(Node * parent, const QString & name, bool transit)
+  ColorCorrection::ColorCorrection(Node * parent, const QByteArray & name, bool transit)
     : Valuable::Node(parent, name, transit),
       m_offsets(this, "offsets"),
       m_gamma(this, "gamma", Nimble::Vector3(1.0f, 1.0f, 1.0f)),

@@ -10,7 +10,7 @@ namespace Valuable
   class VALUABLE_API AttributeAlias : public Attribute
   {
   public:
-    AttributeAlias(Node * host, const QString & name, Attribute * attribute);
+    AttributeAlias(Node * host, const QByteArray & name, Attribute * attribute);
     virtual ~AttributeAlias();
 
     /// Calls the target processMessage-function

@@ -46,7 +46,7 @@ namespace Valuable
       }
       /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
       /// @param v The numeric value of this object
-      AttributeFloatT(Node * host, const QString & name, T v = T(0), bool transit = false)
+      AttributeFloatT(Node * host, const QByteArray & name, T v = T(0), bool transit = false)
       : AttributeNumeric<T>(host, name, v, transit),
         m_src(1)
       {

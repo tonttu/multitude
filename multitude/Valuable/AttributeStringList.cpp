@@ -8,7 +8,7 @@ namespace Valuable
   {
   }
 
-  AttributeStringList::AttributeStringList(Node * host, const QString & name,
+  AttributeStringList::AttributeStringList(Node * host, const QByteArray & name,
                                            const QStringList & v, bool transit)
     : Base(host, name, v, transit)
   {
