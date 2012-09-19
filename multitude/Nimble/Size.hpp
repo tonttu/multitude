@@ -214,6 +214,18 @@ namespace Nimble {
     return !(*this == o);
   }
 
+  template<typename T>
+  SizeT<T> & SizeT<T>::operator+(const SizeT<T> & o) const
+  {
+    return SizeT<T>(m_width + o.m_width, m_height + o.m_height);
+  }
+
+  template<typename T>
+  SizeT<T> & SizeT<T>::operator-(const SizeT<T> & o) const
+  {
+    return SizeT<T>(m_width - o.m_width, m_height - o.m_height);
+  }
+
   typedef SizeT<int> Size;
   typedef SizeT<float> SizeF;
   
