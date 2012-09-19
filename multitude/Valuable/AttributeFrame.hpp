@@ -33,6 +33,8 @@ namespace Valuable
     AttributeFrame(Node * host, const QByteArray & name,
                    const Nimble::Frame4f & v = Nimble::Frame4f(), bool transit = false)
       : Attribute(host, name, transit)
+      , m_inChangeTransaction(false)
+      , m_emitChangedAfterTransaction(false)
     {
       m_values[0] = new AttributeFloat(host, name + "-top", v.top(), transit);
       m_values[1] = new AttributeFloat(host, name + "-right", v.right(), transit);
@@ -40,7 +42,7 @@ namespace Valuable
       m_values[3] = new AttributeFloat(host, name + "-left", v.left(), transit);
 
       for (int i = 0; i < 4; ++i) {
-        m_values[i]->addListener(std::bind(&AttributeFrame::emitChange, this));
+        m_values[i]->addListener(std::bind(&AttributeFrame::valuesChanged, this));
         m_values[i]->setSerializable(false);
       }
     }
@@ -59,52 +61,87 @@ namespace Valuable
 
     virtual bool deserialize(const ArchiveElement & element) OVERRIDE
     {
+      beginChangeTransaction();
+
       QStringList lst = element.get().split(QRegExp("\\s"), QString::SkipEmptyParts);
       if (lst.size() == 4) {
         Nimble::Frame4f frame;
         for (int i = 0; i < 4; ++i) {
           bool ok = false;
           frame[i] = lst[i].toFloat(&ok);
-          if (!ok) return false;
+          if (!ok) {
+            endChangeTransaction();
+            return false;
+          }
         }
         *this = frame;
+        endChangeTransaction();
+
         return true;
       }
+
+      endChangeTransaction();
+
       return false;
     }
 
     virtual bool set(float v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE
     {
+      beginChangeTransaction();
+
       for (int i = 0; i < 4; ++i)
         m_values[i]->set(v, layer, unit);
+
+      endChangeTransaction();
+
       return true;
     }
 
     virtual bool set(int v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE
     {
+      beginChangeTransaction();
+
       for (int i = 0; i < 4; ++i)
         m_values[i]->set(v, layer, unit);
+
+      endChangeTransaction();
+
       return true;
     }
 
     virtual bool set(const Nimble::Vector2f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
     {
+      beginChangeTransaction();
+
       for (int i = 0; i < 4; ++i)
         m_values[i]->set(v[i % 2], layer, units[i % 2]);
+
+      endChangeTransaction();
+
       return true;
     }
 
     virtual bool set(const Nimble::Vector3f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
     {
+      beginChangeTransaction();
+
       for (int i = 0; i < 4; ++i)
         m_values[i]->set(v[i % 3], layer, units[i % 3]);
+
+      endChangeTransaction();
+
       return true;
     }
 
     virtual bool set(const Nimble::Vector4f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
     {
+      beginChangeTransaction();
+
       for (int i = 0; i < 4; ++i)
         m_values[i]->set(v[i], layer, units[i]);
+
+      endChangeTransaction();
+
       return true;
     }
 
@@ -123,39 +160,65 @@ namespace Valuable
 
     virtual void clearValue(Layer layout) OVERRIDE
     {
+      beginChangeTransaction();
+
       for (int i = 0; i < 4; ++i)
         m_values[i]->clearValue(layout);
+
+      endChangeTransaction();
     }
 
     virtual void setAsDefaults() OVERRIDE
     {
+      beginChangeTransaction();
+
       for (int i = 0; i < 4; ++i)
         m_values[i]->setAsDefaults();
+
+      endChangeTransaction();
     }
 
     void setSrc(float src)
     {
+      beginChangeTransaction();
+
       for (int i = 0; i < 4; ++i)
         m_values[i]->setSrc(src);
+
+      endChangeTransaction();
     }
 
     void setSrc(const Nimble::Vector4f & src)
     {
+      beginChangeTransaction();
+
       for (int i = 0; i < 4; ++i)
         m_values[i]->setSrc(src[i]);
+
+      endChangeTransaction();
     }
 
     AttributeFrame & operator=(const AttributeFrame & frame)
     {
+      beginChangeTransaction();
+
       for (int i = 0; i < 4; ++i)
         *m_values[i] = **frame.m_values[i];
+
+      endChangeTransaction();
+
       return *this;
     }
 
     AttributeFrame & operator=(const Nimble::Frame4f & frame)
     {
+      beginChangeTransaction();
+
       for (int i = 0; i < 4; ++i)
         *m_values[i] = frame[i];
+
+      endChangeTransaction();
+
       return *this;
     }
 
@@ -170,7 +233,36 @@ namespace Valuable
     }
 
   private:
+    void valuesChanged()
+    {
+      if(m_inChangeTransaction)
+        m_emitChangedAfterTransaction = true;
+      else
+        Attribute::emitChange();
+    }
+
+    void beginChangeTransaction()
+    {
+      assert(m_inChangeTransaction == false);
+      m_inChangeTransaction = true;
+    }
+
+    void endChangeTransaction()
+    {
+      assert(m_inChangeTransaction);
+
+      m_inChangeTransaction = false;
+
+      if(m_emitChangedAfterTransaction) {
+        m_emitChangedAfterTransaction = false;
+        Attribute::emitChange();
+      }
+    }
+
     std::array<AttributeFloat *, 4> m_values;
+
+    bool m_inChangeTransaction;
+    bool m_emitChangedAfterTransaction;
   };
 }
 
