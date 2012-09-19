@@ -176,6 +176,7 @@ namespace Luminous
 
     const Radiant::Color & glowColor() const { return m_glowColor; }
     void setGlowColor(const Radiant::Color & glowColor) { m_glowColor = glowColor; }
+    void setGlowColor(float r, float g, float b, float a) { m_glowColor.make(r, g, b, a); }
 
     float textSharpness() const { return m_textSharpness; }
     void setTextSharpness(float textSharpness) { m_textSharpness = textSharpness; }
@@ -186,6 +187,7 @@ namespace Luminous
 
     const Radiant::Color & dropShadowColor() const { return m_dropShadowColor; }
     void setDropShadowColor(const Radiant::Color & dropShadowColor) { m_dropShadowColor = dropShadowColor; }
+    void setDropShadowColor(float r, float g, float b, float a) { m_dropShadowColor.make(r, g, b, a); }
 
     const Nimble::Vector2f & dropShadowOffset() const { return m_dropShadowOffset; }
     void setDropShadowOffset(const Nimble::Vector2f & offset) { m_dropShadowOffset = offset; }
