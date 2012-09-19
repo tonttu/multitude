@@ -205,6 +205,7 @@ namespace Nimble {
   template<typename T>
   bool SizeT<T>::operator==(const SizeT<T> & o) const
   {
+    /// @todo should specialize for floating-point types (epsilon)
     return m_width == o.m_width && m_height == o.m_height;
   }
 
