@@ -75,7 +75,7 @@ namespace Valuable {
       beginChangeTransaction();
 
       for(int i = 0; i < 2; ++i)
-        m_values[i]->set(v[i], layer, units[i]);
+        m_values[i]->set(v[i], layer, i >= units.size() ? VU_UNKNOWN : units[i]);
 
       endChangeTransaction();
 
@@ -125,6 +125,9 @@ namespace Valuable {
       endChangeTransaction();
     }
 
+    const Nimble::SizeF operator * () const { return value(); }
+    operator const Nimble::SizeF () const { return value(); }
+
     AttributeSize & operator=(const AttributeSize & size)
     {
       beginChangeTransaction();
@@ -159,11 +162,6 @@ namespace Valuable {
       endChangeTransaction();
 
       return *this;
-    }
-
-    Nimble::SizeF operator*() const
-    {
-      return value();
     }
 
     Nimble::SizeF value() const
