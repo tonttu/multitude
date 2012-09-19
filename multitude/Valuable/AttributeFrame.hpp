@@ -45,6 +45,12 @@ namespace Valuable
       }
     }
 
+    ~AttributeFrame()
+    {
+      for(int i = 0; i < 4; ++i)
+        delete m_values[i];
+    }
+
     virtual QString asString(bool * const ok = 0) const OVERRIDE
     {
       if (ok) *ok = true;
