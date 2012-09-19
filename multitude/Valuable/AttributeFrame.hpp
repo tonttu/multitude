@@ -109,6 +109,7 @@ namespace Valuable
       return true;
     }
 
+    /// @todo all of the set() functions will crash if you call them with default arguments (units is empty)
     virtual bool set(const Nimble::Vector2f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
     {
       beginChangeTransaction();
