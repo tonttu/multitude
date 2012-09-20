@@ -15,7 +15,7 @@
 #include <array>
 #include <utility>
 
-//@cond
+/// @cond
 namespace Luminous
 {
   struct RenderCommand
@@ -83,5 +83,5 @@ namespace Luminous
   };
 }
 
-//@endcod
+/// @endcond
 #endif // LUMINOUS_RENDERCOMMAND_HPP

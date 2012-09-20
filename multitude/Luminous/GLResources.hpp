@@ -190,7 +190,7 @@ namespace Luminous
 
     @param name The variable name for this object (e.g. mytex etc.).
 
-    @param ey The object that this resource is related to. Often the
+    @param key The object that this resource is related to. Often the
     this-pointer is used as the key, but one can create other keys.
 
     @param resources The RenderContext object that is holding the OpenGL
