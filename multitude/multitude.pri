@@ -102,7 +102,7 @@ LIB_RADIANT = -lRadiant$${CORNERSTONE_LIB_SUFFIX} $$LIB_FTD2XX
 LIB_VALUABLE = -lValuable$${CORNERSTONE_LIB_SUFFIX}
 LIB_PATTERNS = -lPatterns$${CORNERSTONE_LIB_SUFFIX}
 LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}
-enable-js:LIB_V8 = -lv8
+enable-js:LIB_V8 = -lv8 -lnode
 
 #
 # Platform specific: Unix (OSX & linux)
@@ -273,7 +273,7 @@ win32 {
       LIB_VALUABLE = -lValuable$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_PATTERNS = -lPatterns$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}_d
-      enable-js:LIB_V8 = -lv8_d
+      enable-js:LIB_V8 = -lv8_d -lnode_d
 	}
 }
 
