@@ -177,7 +177,7 @@ namespace Valuable {
       return m_cache;
     }
 
-    void setFlags(const Flags & f, bool state = true, Layer layer = USER)
+    void setFlags(const Flags & f, bool state, Layer layer = USER)
     {
       if(state) m_values[layer] |= f;
       else m_values[layer] &= ~f;
