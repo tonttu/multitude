@@ -113,11 +113,6 @@ namespace Radiant {
     /// Write a string to the buffer
     /// @param str string to write
     void writeString(const QString & str) { writeString(str.toUtf8().data()); }
-    /** Writes a wide-string to the buffer. The string is internally
-    stored as 32-bit integers, since that is the typical
-    wchar_t.
-    @param str string to write*/
-    void writeWString(const std::wstring & str);
 
     /// Writes binary blob to the buffer.
     void writeBlob(const void * ptr, int n);
@@ -208,10 +203,6 @@ namespace Radiant {
     /// @param[out] str string to write to
     /// @return true on success
     bool readString(QString & str);
-    /// Reads a wide string from the buffer
-    /// @param[out] str string to write to
-    /// @return true on success
-    bool readWString(std::wstring & str);
     /// Reads a blob of expected size
     /// @param[out] ptr buffer to write to
     /// @param n bytes to read
@@ -327,15 +318,6 @@ namespace Radiant {
   {
     QString tmp;
     bool good = readString(tmp);
-    if(ok)
-      *ok = good;
-    return tmp;
-  }
-
-  template <> inline std::wstring BinaryData::read(bool * ok)
-  {
-    std::wstring tmp;
-    bool good = readWString(tmp);
     if(ok)
       *ok = good;
     return tmp;

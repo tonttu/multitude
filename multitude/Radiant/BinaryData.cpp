@@ -52,7 +52,6 @@ namespace Radiant {
   const int32_t INT64_MARKER  = makeMarker(',', 'l', '\0', '\0');
   const int32_t TS_MARKER     = makeMarker(',', 't', '\0', '\0');
   const int32_t STRING_MARKER = makeMarker(',', 's', '\0', '\0');
-  const int32_t WSTRING_MARKER = makeMarker(',', 'S', '\0', '\0');
   const int32_t BLOB_MARKER   = makeMarker(',', 'b', '\0', '\0');
 
   BinaryData::BinaryData()
@@ -125,18 +124,6 @@ namespace Radiant {
     char * ptr =  getPtr<char>(space);
     memcpy(ptr, s, len);
     memset(ptr + len, 0, space - len);
-  }
-
-  void BinaryData::writeWString(const std::wstring & str)
-  {
-    ensure(2*sizeof(int32_t) + str.size() * sizeof(int32_t));
-
-    getRef<int32_t>() = (int32_t) WSTRING_MARKER;
-    getRef<int32_t>() = (int32_t) str.size();
-
-    for(unsigned i = 0; i < str.size(); i++) {
-      getRef<int32_t>() = str[i];
-    }
   }
 
   void BinaryData::writeBlob(const void * ptr, int n)
@@ -453,57 +440,11 @@ namespace Radiant {
     if(marker == STRING_MARKER) {
       str = QString::fromUtf8(m_buf + m_current);
       skipParameter(marker);
-    } else if(marker == WSTRING_MARKER) {
-      int len = getRef<int32_t>();
-      str.resize(len);
-      QChar* data = str.data();
-
-      for(int i = 0; i < len; i++) {
-        data[i] = getRef<int32_t>();
-      }
     } else {
       skipParameter(marker);
       return false;
     }
     return true;
-  }
-
-  bool BinaryData::readWString(std::wstring & str)
-  {
-    if(!available(sizeof(int32_t))) {
-      str.clear();
-      return false;
-    }
-
-    int32_t marker = getRef<int32_t>();
-
-    if(marker == WSTRING_MARKER) {
-
-      int len = getRef<int32_t>();
-
-      str.resize(len);
-
-      for(int i = 0; i < len; i++) {
-        str[i] = getRef<int32_t>();
-      }
-
-      return true;
-    }
-    else if(marker == STRING_MARKER) {
-
-      const char * source = & m_buf[m_current];
-
-      skipParameter(marker);
-
-      QString tmp = QString::fromUtf8(source);
-      str = tmp.toStdWString();
-
-      return true;
-    }
-    else {
-      skipParameter(marker);
-      return false;
-    }
   }
 
   bool BinaryData::readBlob(void * ptr, int n)
@@ -879,7 +820,7 @@ namespace Radiant {
       } else if(marker == INT32_MARKER || marker == INT64_MARKER) {
         int v = readInt32(&ok);
         if(ok) argv[i++] = v8::Integer::New(v);
-      } else if(marker == STRING_MARKER || marker == WSTRING_MARKER) {
+      } else if(marker == STRING_MARKER) {
         QString v;
         if(readString(v)) argv[i++] = v8::String::New(v.utf16());
       } else {
@@ -952,10 +893,6 @@ namespace Radiant {
     else if(marker == STRING_MARKER) {
       const char * str = & m_buf[m_current];
       m_current += (unsigned) stringSpace(str);
-    }
-    else if(marker == WSTRING_MARKER) {
-      int len = getRef<int32_t>();
-      m_current += len * 4;
     }
     else if(marker == BLOB_MARKER) {
       int n = getRef<int32_t>();
