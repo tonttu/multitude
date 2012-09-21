@@ -213,7 +213,7 @@ namespace Luminous
 		     const ProgramGL* program = 0)
 	: m_id1(id1), m_id2(id2), m_program(program) {}
 
-      inline bool operator = (const VertexArrayKey & that) const
+      inline bool operator == (const VertexArrayKey & that) const
       {
 	return m_id1 == that.m_id1 && m_id2 == that.m_id2 && m_program == that.m_program;
       }
