@@ -220,7 +220,11 @@ namespace Luminous
 
       inline bool operator < (const VertexArrayKey & that) const
       {
-        return m_id1 < that.m_id1 || m_id2 < that.m_id2 || m_program < that.m_program;
+        /// Make sure we keep a strict ordering so we don't get (A < B && B < A) == true
+        return
+          (m_id1 < that.m_id1) || (!(that.m_id1 < m_id1) &&
+          (m_id2 < that.m_id2) || (!(that.m_id2 < m_id2) &&
+          m_program < that.m_program));
       }
 
       const RenderResource::Id m_id1;
