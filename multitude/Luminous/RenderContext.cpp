@@ -211,16 +211,16 @@ namespace Luminous
       VertexArrayKey(RenderResource::Id id1 = 0,
 		     RenderResource::Id id2 = 0,
 		     const ProgramGL* program = 0)
-	: m_id1(id1), m_id2(id2), m_program(program) {}
+	      : m_id1(id1), m_id2(id2), m_program(program) {}
 
       inline bool operator == (const VertexArrayKey & that) const
       {
-	return m_id1 == that.m_id1 && m_id2 == that.m_id2 && m_program == that.m_program;
+        return m_id1 == that.m_id1 && m_id2 == that.m_id2 && m_program == that.m_program;
       }
 
       inline bool operator < (const VertexArrayKey & that) const
       {
-	return m_id1 < that.m_id1 || m_id2 < that.m_id2 || m_program < that.m_program;
+        return m_id1 < that.m_id1 || m_id2 < that.m_id2 || m_program < that.m_program;
       }
 
       const RenderResource::Id m_id1;
