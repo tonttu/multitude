@@ -208,7 +208,7 @@ namespace Luminous
                                         const Program & shader,
                                         const VertexArray & vertexArray,
                                         const Buffer & uniformBuffer,
-                                        const std::map<QByteArray,const Texture *> & textures);
+                                        const std::map<QByteArray,const Texture *> * textures);
 
     // Utility function for resource cleanup
     template <typename ContainerType>
@@ -357,7 +357,7 @@ namespace Luminous
                                                          const Program & shader,
                                                          const VertexArray & vertexArray,
                                                          const Buffer & uniformBuffer,
-                                                         const std::map<QByteArray,const Texture *> & textures)
+                                                         const std::map<QByteArray,const Texture *> * textures)
   {
     m_state.program = &m_driver.handle(shader);
     m_state.program->link(shader);
@@ -368,20 +368,22 @@ namespace Luminous
     m_state.uniformBuffer->upload(uniformBuffer, Buffer::Uniform);
 
     int unit = 0;
-    for(auto it = std::begin(textures), end = std::end(textures); it != end; ++it) {
-      const Texture * texture = it->second;
-      if(!texture->isValid())
-        continue;
+    if (textures != nullptr) {
+      for(auto it = std::begin(*textures), end = std::end(*textures); it != end; ++it) {
+        const Texture * texture = it->second;
+        if(!texture->isValid())
+          continue;
 
-      TextureGL * textureGL;
+        TextureGL * textureGL;
 
-      translucent |= texture->translucent();
-      textureGL = &m_driver.handle(*texture);
-      textureGL->upload(*texture, unit, false);
+        translucent |= texture->translucent();
+        textureGL = &m_driver.handle(*texture);
+        textureGL->upload(*texture, unit, false);
 
-      m_state.textures[unit++] = textureGL;
+        m_state.textures[unit++] = textureGL;
+      }
+      m_state.textures[unit] = nullptr;
     }
-    m_state.textures[unit] = nullptr;
 
     RenderQueueSegment & rt = currentRenderQueueSegment();
 
@@ -402,8 +404,10 @@ namespace Luminous
 
     unit = 0;
     int slot = 0; // one day this will be different from unit
-    for(auto it = std::begin(textures), end = std::end(textures); it != end; ++it, ++unit, ++slot) {
-      cmd->samplers[slot] = std::make_pair(m_state.program->uniformLocation(it->first), unit);
+    if (textures != nullptr) {
+      for(auto it = std::begin(*textures), end = std::end(*textures); it != end; ++it, ++unit, ++slot) {
+        cmd->samplers[slot] = std::make_pair(m_state.program->uniformLocation(it->first), unit);
+      }
     }
     cmd->samplers[slot].first = -1;
 
@@ -712,7 +716,7 @@ namespace Luminous
                                                       const VertexArray & vertexArray,
                                                       const Buffer & uniformBuffer,
                                                       const Luminous::Program & shader,
-                                                      const std::map<QByteArray, const Texture *> &textures)
+                                                      const std::map<QByteArray, const Texture *> * textures)
   {
     return m_d->createRenderCommand(translucent, shader, vertexArray, uniformBuffer, textures);
   }

@@ -89,7 +89,7 @@ namespace Luminous
                                                              const VertexArray & vertexArray,
                                                              const Buffer & uniformBuffer,
                                                              const Luminous::Program & shader,
-                                                             const std::map<QByteArray, const Texture *> & textures) = 0;
+                                                             const std::map<QByteArray, const Texture *> * textures) = 0;
 
     LUMINOUS_API virtual void flush() = 0;
 

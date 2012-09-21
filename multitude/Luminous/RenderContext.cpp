@@ -701,7 +701,7 @@ namespace Luminous
                                                      const Luminous::Buffer & uniformBuffer,
                                                      float & depth,
                                                      const Program & shader,
-                                                     const std::map<QByteArray,const Texture *> & textures)
+                                                     const std::map<QByteArray,const Texture *> * textures)
   {
     RenderCommand & cmd = m_data->m_driver.createRenderCommand(translucent, vertexArray, uniformBuffer, shader, textures);
 
@@ -720,7 +720,7 @@ namespace Luminous
                                                      void *& mappedUniformBuffer,
                                                      float & depth,
                                                      const Program & shader,
-                                                     const std::map<QByteArray,const Texture *> & textures)
+                                                     const std::map<QByteArray,const Texture *> * textures)
   {
     unsigned int indexOffset, vertexOffset, uniformOffset;
 
@@ -1068,7 +1068,7 @@ namespace Luminous
         const int count = std::min<int>(items.size() - i, maxGlyphsPerCmd);
 
         auto b = render<FontVertex, FontUniformBlock>(
-              true, PrimitiveType_TriangleStrip, count*6 - 2, count*4, 1, program, textures);
+              true, PrimitiveType_TriangleStrip, count*6 - 2, count*4, 1, program, &textures);
         uniform.projMatrix = b.uniform->projMatrix;
         *b.uniform = uniform;
 

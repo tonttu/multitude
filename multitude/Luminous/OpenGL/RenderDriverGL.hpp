@@ -64,7 +64,7 @@ namespace Luminous
                                                              const VertexArray & vertexArray,
                                                              const Buffer & uniformBuffer,
                                                              const Luminous::Program & shader,
-                                                             const std::map<QByteArray, const Texture *> & textures) OVERRIDE;
+                                                             const std::map<QByteArray, const Texture *> * textures) OVERRIDE;
 
     LUMINOUS_API virtual void setDefaultState() OVERRIDE;
     LUMINOUS_API virtual void flush() OVERRIDE;

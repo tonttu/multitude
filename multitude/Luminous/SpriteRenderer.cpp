@@ -147,7 +147,7 @@ namespace Luminous {
     bool translucent = true;
 
     auto b = rc.render<Sprite, D::SpriteUniform>(translucent, Luminous::PrimitiveType_Point, 0, spriteCount(), 1.f,
-    m_d->m_program, m_d->m_texture);
+                                                  m_d->m_program, &m_d->m_texture);
 
     b.uniform->velocityScale = m_d->m_velocityScale;
     b.uniform->depth = b.depth;

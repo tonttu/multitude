@@ -12,7 +12,7 @@ namespace Luminous
                             const Luminous::VertexArray & vertexArray,
                             const Luminous::Buffer & uniformBuffer, unsigned int uniformOffset,
                             const Luminous::Program & program,
-                            const std::map<QByteArray, const Texture *> & textures)
+                            const std::map<QByteArray, const Texture *> * textures)
   {
     /// @todo Should return the command, since we're only using the builder for returning depth here
     RenderBuilder<Vertex, UniformBlock> builder;
@@ -38,7 +38,7 @@ namespace Luminous
   template <typename Vertex, typename UniformBlock>
   RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::render(
               bool translucent, Luminous::PrimitiveType type, int indexCount, int vertexCount, float primitiveSize,
-              const Luminous::Program & program, const std::map<QByteArray, const Texture *> & textures)
+              const Luminous::Program & program, const std::map<QByteArray, const Texture *> * textures)
   {
     RenderBuilder<Vertex, UniformBlock> builder;
     RenderCommand & cmd = createRenderCommand(translucent,
@@ -72,7 +72,7 @@ namespace Luminous
     bool translucent = shader.translucent() || (color.w * opacity() < 0.99999999f) ||
         style.fill().hasTranslucentTextures();
 
-    RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(translucent, primType, indexCount, vertexCount, width, shader, style.fill().textures());
+    RenderBuilder<Vertex, UniformBlock> b = render<Vertex, UniformBlock>(translucent, primType, indexCount, vertexCount, width, shader, &style.fill().textures());
 
     // Set the color
     b.uniform->color = color;
