@@ -20,9 +20,12 @@
 #include "Mutex.hpp"
 #include <memory>
 
-/*!
-    @page singleton Radiant::Singleton<T>
-    Implements singleton of object type T
+
+/// @file Singleton.hpp
+
+/** @ingroup macros
+    @def DEFINE_SINGLETON(T)
+    Implements singleton of object type T.
 
     Singleton is used when there is only one object of type T. The one object
     can be accessed with the function instance(). The object is created the
