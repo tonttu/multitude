@@ -3,6 +3,7 @@ include(../multitude.pri)
 
 HEADERS += Flags.hpp
 HEADERS += DropEvent.hpp
+HEADERS += TabletEvent.hpp
 HEADERS += BGThread.hpp
 HEADERS += Buffer.hpp
 HEADERS += Mime.hpp
@@ -80,6 +81,7 @@ HEADERS += VideoCameraPTGrey.hpp
 
 SOURCES += Mime.cpp
 SOURCES += DropEvent.cpp
+SOURCES += TabletEvent.cpp
 SOURCES += BGThread.cpp
 SOURCES += CameraDriver.cpp
 SOURCES += SocketUtilPosix.cpp

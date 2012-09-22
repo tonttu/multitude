@@ -5,6 +5,7 @@
 
 #include <Radiant/DropEvent.hpp>
 #include <Radiant/KeyEvent.hpp>
+#include <Radiant/TabletEvent.hpp>
 #include <Radiant/Sleep.hpp>
 #include <Radiant/Thread.hpp>
 #include <Radiant/Trace.hpp>
@@ -50,51 +51,77 @@ namespace Luminous
 
     virtual void resizeEvent ( QResizeEvent * e ) OVERRIDE
     {
-      if(m_window.eventHook())
+      if(m_window.eventHook()) {
         m_window.eventHook()->handleWindowMove( pos().x(), pos().y(), e->size().width(), e->size().height() );
+        e->accept();
+      }
     }
 
     virtual void moveEvent ( QMoveEvent * e ) OVERRIDE
     {
-      if(m_window.eventHook())
+      if(m_window.eventHook()) {
         m_window.eventHook()->handleWindowMove( e->pos().x(), e->pos().y(), size().width(), size().height() );
+        e->accept();
+      }
     }
 
     virtual void mouseMoveEvent(QMouseEvent * e) OVERRIDE
     {
-      if(m_window.eventHook())
+      if(m_window.eventHook()) {
         m_window.eventHook()->handleMouseEvent(*e);
+        e->accept();
+      }
     }
 
     virtual void mousePressEvent(QMouseEvent * e) OVERRIDE
     {
-      if(m_window.eventHook())
+      if(m_window.eventHook()) {
         m_window.eventHook()->handleMouseEvent(*e);
+        e->accept();
+      }
     }
 
     virtual void mouseReleaseEvent(QMouseEvent * e) OVERRIDE
     {
-      if(m_window.eventHook())
+      if(m_window.eventHook()) {
         m_window.eventHook()->handleMouseEvent(*e);
+        e->accept();
+      }
     }
 
     virtual void wheelEvent(QWheelEvent *e) OVERRIDE
     {
-      if(m_window.eventHook())
+      if(m_window.eventHook()) {
         m_window.eventHook()->handleMouseEvent(Radiant::MouseEvent(*e));
+        e->accept();
+      }
     }
 
     virtual void keyPressEvent(QKeyEvent * e) OVERRIDE
     {
       // All done if there's no hooks installed
-      if(m_window.eventHook())
+      if(m_window.eventHook()) {
         m_window.eventHook()->handleKeyboardEvent(Radiant::KeyEvent(*e));
+        e->accept();
+      }
     }
+
 
     virtual void keyReleaseEvent(QKeyEvent * e) OVERRIDE
     {
-      if(m_window.eventHook())
+      if(m_window.eventHook()) {
         m_window.eventHook()->handleKeyboardEvent(Radiant::KeyEvent(*e));
+        e->accept();
+      }
+    }
+
+    virtual void tabletEvent(QTabletEvent * e) OVERRIDE
+    {
+      // All done if there's no hooks installed
+      if(m_window.eventHook()) {
+        m_window.eventHook()->handleTabletEvent(Radiant::TabletEvent(*e));
+        e->accept();
+      }
     }
 
     virtual void dropEvent(QDropEvent *de) OVERRIDE
@@ -107,8 +134,10 @@ namespace Luminous
         QPoint onWindow = de->pos();
         Nimble::Vector2 ongraphics = m_windowDef.windowToGraphics
             (Nimble::Vector2(onWindow.x(), onWindow.y()), ok);
-        if(ok)
+        if(ok) {
           m_window.eventHook()->handleDropEvent(Radiant::DropEvent(*de, ongraphics));
+          de->accept();
+        }
       }
     }
 

@@ -21,6 +21,7 @@ namespace Radiant
   class DropEvent;
   class KeyEvent;
   class MouseEvent;
+  class TabletEvent;
 }
 
 namespace Luminous
@@ -48,6 +49,8 @@ namespace Luminous
     virtual void handleMouseEvent(const Radiant::MouseEvent & event) = 0;
     /// Callback to handle drop events
     virtual void handleDropEvent(const Radiant::DropEvent & event) = 0;
+    /// Used to handle tablet events
+    virtual void handleTabletEvent(const Radiant::TabletEvent & event) = 0;
     /// Handle resize events
     virtual void handleWindowMove(int x, int y, int width, int height) = 0;
     /// Time since last keyboard or mouse activity
