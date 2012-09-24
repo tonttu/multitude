@@ -68,16 +68,6 @@ namespace Luminous
       RenderCommand * command;
       float depth;
     };
-
-    enum {
-      FBO_EXACT_SIZE = 0x1,
-      /* these are just some big enough number, exact size is smaller */
-      VBO_VERBUF_SIZE = 2 * (8 + 3000) * sizeof(GL_FLOAT),
-      VBO_INDBUF_SIZE = 6000,
-      LOD_MINIMUM = 2,
-      LOD_MAXIMUM = 8
-    };
-
 /// @endcond
 
     /// Constructs a new render context and associates the given resources to it
