@@ -13,6 +13,7 @@ namespace Luminous
   class PipelineCommand
   {
   public:
+    virtual ~PipelineCommand() {}
     virtual void execute() = 0;
   };
 

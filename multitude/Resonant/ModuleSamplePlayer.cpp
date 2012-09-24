@@ -342,8 +342,8 @@ namespace Resonant {
           }
 
           if(!good) {
-            for(int j = 0; j < LoadItem::WAITING_COUNT; i++) {
-              SampleVoice * voice = it.m_waiting[i];
+            for(int j = 0; j < LoadItem::WAITING_COUNT; j++) {
+              SampleVoice * voice = it.m_waiting[j];
               if(!voice)
                 break;
               voice->loadFailed();

@@ -192,7 +192,7 @@ namespace Luminous
 
   ShaderGLSL * Program::loadShader(const QString & filename, ShaderGLSL::Type type)
   {
-    auto shader = new ShaderGLSL(type);
+    auto * shader = new ShaderGLSL(type);
     if(shader->loadText(filename)) {
       m_d->needRehash = true;
       m_d->shaders.emplace_back(shader);

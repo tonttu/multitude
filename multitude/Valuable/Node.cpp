@@ -609,7 +609,7 @@ namespace Valuable
     for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); ) {
 
       // match obj if specified
-      if((!obj || it->m_listener == obj)) {
+      if(!obj || it->m_listener == obj) {
         // match from & to if specified
         if((from.isNull() || it->m_from == from) &&
            (to.isNull() || it->m_to == to)) {

@@ -117,7 +117,6 @@ namespace VideoDisplay {
 
     char buf[LEN];
 
-    m_texts.clear();
     m_index = 0;
     m_current = 0;
 

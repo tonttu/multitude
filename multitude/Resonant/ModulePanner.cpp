@@ -383,7 +383,7 @@ namespace Resonant {
       float gainY = iy.interpolate(local.y);
 
       // Compute gain in x direction
-      float rectMidX = r->location().x + r->size().x / 2;
+      float rectMidX = (float)(r->location().x) + r->size().x * 0.5f;
       Nimble::LinearInterpolator<float> ix;
 
       if(ls->m_location.x() < rectMidX) {
