@@ -60,8 +60,7 @@ namespace Radiant {
         Sleep::sleepS(1);
         Guard g( m_mutex);
 
-        for(container::iterator it = m_messages.begin();
-        it != m_messages.end(); it++) {
+        for(container::iterator it = m_messages.begin(); it != m_messages.end(); ++it) {
 
           if(m_file) {
             DateTime dt((*it).m_time);

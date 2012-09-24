@@ -152,13 +152,10 @@ namespace Luminous
         // Radiant::trace("GLResources::eraseResources # Removing old");
 
         delete (*it).second;
-        iterator tmp = it;
-        tmp++;
-        m_resources.erase(it);
-        it = tmp;
+        it = m_resources.erase(it);
       }
       else
-        it++;
+        ++it;
     }
   }
 

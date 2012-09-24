@@ -43,9 +43,9 @@ namespace Poetic
   {
     Radiant::Guard g(m_mutex);
 
-    for(TextureVBOMap::iterator it = m_vbos.begin(); it != m_vbos.end(); it++)
+    for(TextureVBOMap::iterator it = m_vbos.begin(); it != m_vbos.end(); ++it)
       delete it->second;
-    for(container::iterator it = m_managedFonts.begin(); it != m_managedFonts.end(); it++)
+    for(container::iterator it = m_managedFonts.begin(); it != m_managedFonts.end(); ++it)
       delete it->second;
 
     if (!Poetic::finalize())

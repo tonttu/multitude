@@ -75,7 +75,7 @@ namespace Valuable
     virtual ArchiveElement serialize(Archive & archive) const OVERRIDE
     {
       ArchiveElement elem = archive.createElement(name().isEmpty() ? QByteArray(type()) : name());
-      for(const_iterator it = m_container.begin(); it != m_container.end(); it++) {
+      for(const_iterator it = m_container.begin(); it != m_container.end(); ++it) {
         elem.add(Serializer::serialize(archive, *it));
       }
       return elem;

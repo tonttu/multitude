@@ -213,7 +213,7 @@ namespace Nimble {
   // Just brute force
   bool Path::intersect(const Path & p1, const Nimble::Matrix3f & m1, const Path & p2, const Nimble::Matrix3f & m2)
   {
-    for(container::const_iterator i1 = p1.m_points.begin(); i1 != p1.m_points.end() - 1; i1++) {
+    for(container::const_iterator i1 = p1.m_points.begin(); i1 != p1.m_points.end() - 1; ++i1) {
 
       Nimble::Vector2f v0 = *i1;
       Nimble::Vector2f v1 = *(i1 + 1);
@@ -223,7 +223,7 @@ namespace Nimble {
 
       Segment s1 = { v0, v1 };
 
-      for(container::const_iterator i2 = p2.m_points.begin(); i2 != p2.m_points.end() - 1; i2++) {
+      for(container::const_iterator i2 = p2.m_points.begin(); i2 != p2.m_points.end() - 1; ++i2) {
 
         Nimble::Vector2f w0 = *i2;
         Nimble::Vector2f w1 = *(i2 + 1);

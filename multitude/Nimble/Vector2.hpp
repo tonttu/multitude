@@ -267,7 +267,7 @@ namespace Nimble {
   /// @param slopeType reference to int to receive slope type.
   /// @param delta reference to Nimble::Vector2f to receive delta.
   /// @return Slope value.
-  inline float lineSlope(const Nimble::Vector2f lineStart, const Nimble::Vector2f lineEnd,
+  inline float lineSlope(const Nimble::Vector2f & lineStart, const Nimble::Vector2f & lineEnd,
     int & slopeType, Nimble::Vector2f & delta)
   {
     float   m = 0.0f;

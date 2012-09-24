@@ -77,7 +77,7 @@ namespace VideoDisplay {
 
       in.getline(buf, maxn);
 
-      if(strlen(buf) != 0 && buf[0] > 23)
+      if(buf[0] > 23)
         return true;
     }
 

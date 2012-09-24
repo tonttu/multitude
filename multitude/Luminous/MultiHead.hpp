@@ -272,7 +272,7 @@ namespace Luminous {
       }
 
       /// Sets the size of this Window
-      void setSize(const Nimble::Vector2i newSize) { m_size = newSize; }
+      void setSize(const Nimble::Vector2i &newSize) { m_size = newSize; }
 
       /// Resize the window, and automatically one child area
       /** This method is used when the window contains only one child

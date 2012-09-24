@@ -27,7 +27,7 @@ namespace Luminous {
 
 #define SHADER_PARAM_APPLY1(objs, type, func, glslprog, glslfunc) \
   { \
-    for(std::vector<Item>::iterator it = objs.begin(); it != objs.end(); it++) { \
+    for(std::vector<Item>::iterator it = objs.begin(); it != objs.end(); ++it) { \
       Item & v = (*it); \
       if(v.m_param == -2) \
         continue; \
@@ -48,7 +48,7 @@ namespace Luminous {
 
 #define SHADER_PARAM_APPLYN(objs, type, func, glslprog, glslfunc) \
   { \
-    for(std::vector<Item>::iterator it = objs.begin(); it != objs.end(); it++) { \
+    for(std::vector<Item>::iterator it = objs.begin(); it != objs.end(); ++it) { \
       Item & v = (*it); \
       if(v.m_param == -2) \
         continue; \
@@ -69,7 +69,7 @@ namespace Luminous {
 
 #define SHADER_PARAM_APPLYMATRIX(objs, type, func, glslprog, glslfunc) \
   { \
-    for(std::vector<Item>::iterator it = objs.begin(); it != objs.end(); it++) { \
+    for(std::vector<Item>::iterator it = objs.begin(); it != objs.end(); ++it) { \
       Item & v = (*it); \
       if(v.m_param == -2) \
         continue; \

@@ -400,8 +400,7 @@ void convert(ConfigElement & to, DOMElement from)
 
   DOMElement::NodeList nodes = from.getChildNodes();
 
-  for(DOMElement::NodeList::iterator it = nodes.begin();
-      it != nodes.end(); it++) {
+  for(DOMElement::NodeList::iterator it = nodes.begin(); it != nodes.end(); ++it) {
 
     DOMElement de = (*it);
 

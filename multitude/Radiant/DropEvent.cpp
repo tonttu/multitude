@@ -81,7 +81,7 @@ namespace Radiant
   {
     Radiant::Guard g(s_mutex);
 
-    for(auto it = s_listeners.begin(); it != s_listeners.end(); it++) {
+    for(auto it = s_listeners.begin(); it != s_listeners.end(); ++it) {
       if((*it)->dropEvent(e))
         return true;
     }

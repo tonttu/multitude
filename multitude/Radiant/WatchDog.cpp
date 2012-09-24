@@ -92,7 +92,7 @@ namespace Radiant {
       bool ok = true;
       {
         Radiant::Guard g(m_mutex);
-        for(container::iterator it = m_items.begin(); it != m_items.end(); it++) {
+        for(container::iterator it = m_items.begin(); it != m_items.end(); ++it) {
           Item & item = it->second;
           if(item.m_check == false)
             ok = false;

@@ -49,7 +49,7 @@ namespace Radiant
 
   CameraDriverFactory::~CameraDriverFactory()
   {
-    for(DriverMap::iterator it = m_drivers.begin(); it != m_drivers.end(); it++)
+    for(DriverMap::iterator it = m_drivers.begin(); it != m_drivers.end(); ++it)
       delete it->second;
   }
 

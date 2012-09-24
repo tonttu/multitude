@@ -100,7 +100,7 @@ namespace Resonant {
         it = m_connections.erase(it);
       }
       else
-        it++;
+        ++it;
     }
 
     for(unsigned i = 0; i < m_inputs.size(); ) {
@@ -139,7 +139,7 @@ namespace Resonant {
     for(size_t i = 0; i < m_buffers.size(); i++)
       m_buffers[i].clear();
 
-    for(container::iterator i = m_items.begin(); i != m_items.end(); i++)
+    for(container::iterator i = m_items.begin(); i != m_items.end(); ++i)
       i->deleteModule();
   }
 
@@ -356,7 +356,7 @@ namespace Resonant {
     checkNewItems();
     checkNewControl();
 
-    for(iterator it = m_items.begin(); it != m_items.end(); it++) {
+    for(iterator it = m_items.begin(); it != m_items.end(); ++it) {
       Item & item = (*it);
       /*
          Module * m = item.m_module;
@@ -582,12 +582,10 @@ namespace Resonant {
         item.m_module->stop();
         item.deleteModule();
 
-        iterator tmp = it;
-        it++;
-        m_items.erase(tmp);
+        it = m_items.erase(it);
       }
       else
-        it++;
+        ++it;
     }
 
     m_doneCount = 0;
@@ -600,7 +598,7 @@ namespace Resonant {
     debugResonant("DSPNetwork::deliverControl # %p %s %s %d", this, moduleid.toUtf8().data(), commandid,
           data.total());
 
-    for(iterator it = m_items.begin(); it != m_items.end(); it++) {
+    for(iterator it = m_items.begin(); it != m_items.end(); ++it) {
       Module * m = (*it).m_module;
       if(m->id() == moduleid) {
         m->processMessage(commandid, data);
@@ -646,7 +644,7 @@ namespace Resonant {
   {
     int i = 0;
 
-    for(iterator it = m_items.begin(); it != m_items.end(); it++) {
+    for(iterator it = m_items.begin(); it != m_items.end(); ++it) {
       if(& (*it) == & item)
         return compile(item, i);
       i++;
@@ -667,8 +665,7 @@ namespace Resonant {
 
     std::list<Item *> affected;
 
-    for(conit = item.m_connections.begin(); conit != item.m_connections.end();
-        conit++) {
+    for(conit = item.m_connections.begin(); conit != item.m_connections.end(); ++conit) {
       NewConnection & nc = *conit;
       if(nc.m_targetId == item.m_module->id()) {
         item.m_inputs.push_back(Connection(nc.m_sourceId,
@@ -751,7 +748,7 @@ namespace Resonant {
     int i;
 
     for(i = 0; i <= location; i++)
-      it++;
+      ++it;
 
     float * ptr = m_buffers[channel].m_data;
 
@@ -761,7 +758,7 @@ namespace Resonant {
     iterator other = it;
 
     for(size_t i = 0; i < m_items.size(); i++) {
-      other++;
+      ++other;
       if(other == m_items.end())
         other = m_items.begin();
 
@@ -778,7 +775,7 @@ namespace Resonant {
 
   DSPNetwork::Item * DSPNetwork::findItem(const QString & id)
   {
-    for(iterator it = m_items.begin(); it != m_items.end(); it++) {
+    for(iterator it = m_items.begin(); it != m_items.end(); ++it) {
       Item & item = (*it);
       if(item.m_module->id() == id) {
         return & item;
@@ -852,7 +849,7 @@ namespace Resonant {
     fprintf(f, "DSPNetwork %p on frame %ld\n", this, m_frames);
 
     int index = 0;
-    for(container::iterator it = m_items.begin(); it != m_items.end(); it++) {
+    for(container::iterator it = m_items.begin(); it != m_items.end(); ++it) {
       Item & item = *it;
 
       fprintf(f, "  DSP ITEM [%d] %s %s %p\n",

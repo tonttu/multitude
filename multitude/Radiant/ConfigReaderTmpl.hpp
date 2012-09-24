@@ -118,7 +118,7 @@ namespace Radiant {
       os << ws << "}\n";
     }
 
-    for(const_iterator it = m_variants.begin();it != m_variants.end(); it++) {
+    for(const_iterator it = m_variants.begin();it != m_variants.end(); ++it) {
       os << ws << (*it).first << " {\n";
       (*it).second.dump(os, indent+2);
       os << ws << "}\n\n";

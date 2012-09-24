@@ -152,7 +152,7 @@ namespace Radiant
     if(!f)
       f = stdout;
 
-    for(container::iterator it = m_taskQueue.begin(); it != m_taskQueue.end(); it++) {
+    for(container::iterator it = m_taskQueue.begin(); it != m_taskQueue.end(); ++it) {
       Radiant::FileUtils::indent(f, indent);
       std::shared_ptr<Task> t = it->second;
       fprintf(f, "TASK %s %p\n", Radiant::StringUtils::demangle(typeid(*t).name()).toUtf8().data(), t.get());
@@ -209,7 +209,7 @@ namespace Radiant
       container::iterator nextTask = m_taskQueue.end();
       const Radiant::TimeStamp now = Radiant::TimeStamp::currentTime();
 
-      for(container::iterator it = m_taskQueue.begin(); it != m_taskQueue.end(); it++) {
+      for(container::iterator it = m_taskQueue.begin(); it != m_taskQueue.end(); ++it) {
         std::shared_ptr<Task> task = it->second;
         Radiant::TimeStamp next = task->scheduled() - now;
 

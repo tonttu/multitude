@@ -503,7 +503,7 @@ namespace Resonant {
     }
 
     Radiant::Guard g(m_filesMutex);
-    for(iterator it = m_files.begin(); it != m_files.end(); it++) {
+    for(iterator it = m_files.begin(); it != m_files.end(); ++it) {
       Handle * h = (*it);
       h->m_userDone = true;
       h->update();
@@ -533,7 +533,7 @@ namespace Resonant {
           delete h;
           it = m_files.erase(it);
         } else
-          it++;
+          ++it;
       }
     }
 

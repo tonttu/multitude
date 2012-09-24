@@ -97,7 +97,7 @@ namespace Resonant {
           it = m_map.erase(it);
         }
         else
-          it++;
+          ++it;
       }
     }
     else {

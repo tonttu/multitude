@@ -136,7 +136,7 @@ namespace Valuable
   {
     NodeList nodes = getChildNodes();
     
-    for(NodeList::iterator it = nodes.begin(); it != nodes.end(); it++) {
+    for(NodeList::iterator it = nodes.begin(); it != nodes.end(); ++it) {
       DOMElement e = *it;
       if(e.getTagName() == tagname)
         return e;
@@ -175,7 +175,7 @@ namespace Valuable
 
     fflush(f);
 
-    for(NodeList::iterator it = nodes.begin(); it != nodes.end(); it++) {
+    for(NodeList::iterator it = nodes.begin(); it != nodes.end(); ++it) {
       addSpace(f, recursion);
       fprintf(f, "Child %d/%d\n", i, (int) nodes.size());
       (*it).dumpInfo(f, recursion + 1);

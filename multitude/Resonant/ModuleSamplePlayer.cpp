@@ -659,8 +659,7 @@ namespace Resonant {
   {
     m_samples.clear();
 
-    for(std::list<SampleInfo>::iterator it = m_sampleList.begin();
-    it != m_sampleList.end(); it++) {
+    for(std::list<SampleInfo>::iterator it = m_sampleList.begin(); it != m_sampleList.end(); ++it) {
       std::shared_ptr<Sample> s(new Sample());
       if(s->load((*it).m_filename.toUtf8().data(), (*it).m_name.toUtf8().data()))
         m_samples.push_back(s);

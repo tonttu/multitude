@@ -44,8 +44,7 @@ namespace Poetic
 
     gpuFont->m_cpuFont = 0;
 
-    for(container::iterator it = m_gpuFonts.begin();
-    it != m_gpuFonts.end(); it++) {
+    for(container::iterator it = m_gpuFonts.begin(); it != m_gpuFonts.end(); ++it) {
       if(*it == gpuFont) {
         m_gpuFonts.erase(it);
         return;
@@ -76,8 +75,7 @@ namespace Poetic
     m_glyphList = new GlyphContainer(m_face);
 
     // Notify all GPUFonts of the size change
-    for(container::iterator it = m_gpuFonts.begin();
-        it != m_gpuFonts.end(); it++) {
+    for(container::iterator it = m_gpuFonts.begin(); it != m_gpuFonts.end(); ++it) {
       (*it)->faceSizeChanged();
     }
 

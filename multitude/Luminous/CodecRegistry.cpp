@@ -55,7 +55,7 @@ namespace Luminous
 
       // No codec matched the extension, go through all registered codecs and
       // see if they match
-      for(Codecs::iterator it = m_codecs.begin(); it != m_codecs.end(); it++) {
+      for(Codecs::iterator it = m_codecs.begin(); it != m_codecs.end(); ++it) {
         auto candidate = *it;
 
         // We already tried this

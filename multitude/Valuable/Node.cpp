@@ -165,7 +165,7 @@ namespace Valuable
       (*m_eventSources.begin())->eventRemoveListener(this);
     }
 
-    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); it++) {
+    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); ++it) {
 
       if(it->m_listener)
         it->m_listener->eventRemoveSource(this);
@@ -440,7 +440,7 @@ namespace Valuable
 
     elem.add("type", type());
 
-    for(container::const_iterator it = m_values.begin(); it != m_values.end(); it++) {
+    for(container::const_iterator it = m_values.begin(); it != m_values.end(); ++it) {
       Attribute * vo = it->second;
 
       /// @todo need to add new flag to Archive that controls how Attribute::serializable works
@@ -490,7 +490,7 @@ namespace Valuable
   void Node::debugDump() {
     Radiant::trace(Radiant::DEBUG, "%s {", m_name.data());
 
-    for(container::iterator it = m_values.begin(); it != m_values.end(); it++) {
+    for(container::iterator it = m_values.begin(); it != m_values.end(); ++it) {
       Attribute * vo = it->second;
 
       Node * hv = dynamic_cast<Node *> (vo);
@@ -629,7 +629,7 @@ namespace Valuable
 
       // Count number of references left to the objects
       QMap<Node *, size_t> count;
-      for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); it++) {
+      for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); ++it) {
         if(nodes.contains(it->m_listener))
           ++count[it->m_listener];
       }

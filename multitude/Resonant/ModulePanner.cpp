@@ -309,8 +309,7 @@ namespace Resonant {
   void ModulePanner::removeSource(const QString & id)
   {
 
-    for(Sources::iterator it = m_sources.begin();
-    it != m_sources.end(); it++) {
+    for(Sources::iterator it = m_sources.begin(); it != m_sources.end(); ++it) {
       Source & s = * (*it);
       if(s.m_id == id) {
         m_sources.erase(it);
@@ -428,7 +427,7 @@ namespace Resonant {
     if(!found)
       return 0;
 
-    for(Rectangles::const_iterator it = m_rectangles->begin(); it != m_rectangles->end(); it++) {
+    for(Rectangles::const_iterator it = m_rectangles->begin(); it != m_rectangles->end(); ++it) {
       const SoundRectangle * r = *it;
 
       if(channel == r->leftChannel() || channel == r->rightChannel())

@@ -30,7 +30,7 @@ namespace Poetic
 
   CPUManagedFont::~CPUManagedFont()
   {
-    for(container::iterator it = m_fonts.begin(); it != m_fonts.end(); it++)
+    for(container::iterator it = m_fonts.begin(); it != m_fonts.end(); ++it)
       delete *it;
     delete m_metricFont;
   }

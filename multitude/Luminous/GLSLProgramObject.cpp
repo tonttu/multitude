@@ -56,12 +56,12 @@ namespace Luminous
     if(m_isLinked) {
       Radiant::error("GLSLProgramObject::link # program already "
             "linked, trying to re-link");
-      for(i = m_shaderObjects.begin(); i != m_shaderObjects.end(); i++) {
+      for(i = m_shaderObjects.begin(); i != m_shaderObjects.end(); ++i) {
         glDetachShader(m_handle, (*i)->m_handle);
       }
     }
 
-    for(i = m_shaderObjects.begin(); i != m_shaderObjects.end(); i++) {
+    for(i = m_shaderObjects.begin(); i != m_shaderObjects.end(); ++i) {
       glAttachShader(m_handle, (*i)->m_handle);
     }
 
@@ -88,7 +88,7 @@ namespace Luminous
   void GLSLProgramObject::clear()
   {
     std::list<GLSLShaderObject*>::iterator i;
-    for(i = m_shaderObjects.begin(); i != m_shaderObjects.end(); i++) {
+    for(i = m_shaderObjects.begin(); i != m_shaderObjects.end(); ++i) {
       glDetachShader(m_handle, (*i)->m_handle);
       delete (*i);
     }

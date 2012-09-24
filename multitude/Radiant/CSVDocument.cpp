@@ -57,7 +57,7 @@ namespace Radiant {
 
   CSVDocument::Row * CSVDocument::findRow(const QString & key, unsigned col)
   {
-    for(Rows::iterator it = m_rows.begin(); it != m_rows.end(); it++) {
+    for(Rows::iterator it = m_rows.begin(); it != m_rows.end(); ++it) {
       Row & r = (*it);
       if(col < r.size()) {
         if(r[col] == key) {
@@ -75,7 +75,7 @@ namespace Radiant {
       return 0;
 
     unsigned n = 0;
-    for(Rows::iterator it = begin(); it != end(); it++, n++) {
+    for(Rows::iterator it = begin(); it != end(); ++it, n++) {
       if(n == index)
         return & (*it);
     }

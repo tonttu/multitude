@@ -144,7 +144,7 @@ namespace Luminous
       {
         debugLuminous("Qt image support (read):");
         QList<QByteArray> formats = QImageReader::supportedImageFormats ();
-        for(QList<QByteArray>::iterator it = formats.begin(); it != formats.end(); it++) {
+        for(QList<QByteArray>::iterator it = formats.begin(); it != formats.end(); ++it) {
           QString format(*it);
           debugLuminous("%s", format.toUtf8().data());
         }
@@ -153,7 +153,7 @@ namespace Luminous
       {
         debugLuminous("Qt image support (write):");
         QList<QByteArray> formats = QImageWriter::supportedImageFormats ();
-        for(QList<QByteArray>::iterator it = formats.begin(); it != formats.end(); it++) {
+        for(QList<QByteArray>::iterator it = formats.begin(); it != formats.end(); ++it) {
           QString format(*it);
           debugLuminous("%s", format.toUtf8().data());
         }
@@ -164,7 +164,7 @@ namespace Luminous
       Image::codecs()->registerCodec(std::make_shared<ImageCodecTGA>());
 
       QList<QByteArray> formats = QImageWriter::supportedImageFormats ();
-      for(QList<QByteArray>::iterator it = formats.begin(); it != formats.end(); it++) {
+      for(QList<QByteArray>::iterator it = formats.begin(); it != formats.end(); ++it) {
         QByteArray & format = (*it);
         Image::codecs()->registerCodec(std::make_shared<ImageCodecQT>(format.data()));
       }
