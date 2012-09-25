@@ -61,7 +61,7 @@ namespace Nimble {
     /// Returns the logarithm in base 10
     inline float Log10(float v)  { return std::log10(v); }
     /// Returns the logarithm in base 2
-#ifdef RADIANT_CXX11
+#if defined(RADIANT_CXX11) && !defined(CLANG_XML)
     inline float Log2(float v) { return std::log2(v); }
 #else
     inline float Log2(float v) { return Log(v) / Log(2.f); }
@@ -95,7 +95,7 @@ namespace Nimble {
     /// Returns the logarithm in base 10
     inline double Log10(double v)  { return std::log10(v); }
     /// Returns the logarithm in base 2
-#ifdef RADIANT_CXX11
+#if defined(RADIANT_CXX11) && !defined(CLANG_XML)
     inline double Log2(double v) { return std::log2(v); }
 #else
     inline double Log2(double v) { return Log(v) / Log(2.0); }
@@ -127,11 +127,12 @@ namespace Nimble {
     /// Checks if the given value if finite
     inline bool isFinite(float v)
     {
-      // return v == v && (v == 0 || v != 2*v);
 #if defined(__APPLE__)
       return std::isfinite(v);
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && !defined(CLANG_XML)
       return _finite(v) != 0;
+#elif defined(_MSC_VER) && defined(CLANG_XML)
+      return v == v && (v == 0 || v != 2*v);
 #else
       return finite(v);
 #endif
@@ -141,9 +142,10 @@ namespace Nimble {
     /// @return Check result
     inline bool isNAN(float v)
     {
-      // return v != v;
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(CLANG_XML)
       return _isnan(v) != 0;
+#elif defined(_MSC_VER) && defined(CLANG_XML)
+      return v != v;
 #else
       return std::isnan(v);
 #endif
