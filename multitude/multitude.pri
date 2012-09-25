@@ -227,6 +227,7 @@ win32 {
       INCLUDEPATH += $$PWD\\Win64x\\include
       INCLUDEPATH += $$PWD/../multitude/Win64x/include/ffmpeg
       QMAKE_LIBDIR += $$PWD/Win64x/lib64
+      enable-js:INCLUDEPATH += $$PWD\\Win64x\\include\\v8
     } else {
       WINPORT_INCLUDE = $$PWD\\Win32x\\include
       INCLUDEPATH += $$PWD\\Win32x\\include
