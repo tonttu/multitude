@@ -310,19 +310,19 @@ namespace Valuable
     Uuid id() const;
 
     /// Registers a new event this class can send with eventSend
-    void eventAddOut(const QString & id);
+    void eventAddOut(const QByteArray &id);
 
     /// Registers a new event that this class handles in processMessage
-    void eventAddIn(const QString & id);
+    void eventAddIn(const QByteArray & id);
 
     /// Returns true if this object accepts event 'id' in processMessage
-    bool acceptsEvent(const QString & id) const;
+    bool acceptsEvent(const QByteArray &id) const;
 
     /// Returns set of all registered OUT events
-    const QSet<QString> & eventOutNames() const { return m_eventSendNames; }
+    const QSet<QByteArray> & eventOutNames() const { return m_eventSendNames; }
 
     /// Returns set of all registered IN events
-    const QSet<QString> & eventInNames() const { return m_eventListenNames; }
+    const QSet<QByteArray> & eventInNames() const { return m_eventListenNames; }
 
 #ifdef CORNERSTONE_JS
     long addListener(const QByteArray & name, v8::Persistent<v8::Function> func,
@@ -439,8 +439,8 @@ namespace Valuable
     // For invalidating the too new ValuePass objects
     int m_frame;
 
-    QSet<QString> m_eventSendNames;
-    QSet<QString> m_eventListenNames;
+    QSet<QByteArray> m_eventSendNames;
+    QSet<QByteArray> m_eventListenNames;
   };
 
 }

@@ -698,10 +698,10 @@ namespace Valuable
     return m_id;
   }
 
-  void Node::eventAddOut(const QString & id)
+  void Node::eventAddOut(const QByteArray & id)
   {
     if (m_eventSendNames.contains(id)) {
-      Radiant::warning("Node::eventAddSend # Trying to register event '%s' that is already registered", id.toUtf8().data());
+      Radiant::warning("Node::eventAddSend # Trying to register event '%s' that is already registered", id.data());
     } else {
       m_eventSendNames.insert(id);
 #ifdef MULTI_DOCUMENTER
@@ -710,10 +710,10 @@ namespace Valuable
     }
   }
 
-  void Node::eventAddIn(const QString & id)
+  void Node::eventAddIn(const QByteArray &id)
   {
     if (m_eventListenNames.contains(id)) {
-      Radiant::warning("Node::eventAddListen # Trying to register duplicate event handler for event '%s'", id.toUtf8().data());
+      Radiant::warning("Node::eventAddListen # Trying to register duplicate event handler for event '%s'", id.data());
     } else {
       m_eventListenNames.insert(id);
 #ifdef MULTI_DOCUMENTER
@@ -722,7 +722,7 @@ namespace Valuable
     }
   }
 
-  bool Node::acceptsEvent(const QString & id) const
+  bool Node::acceptsEvent(const QByteArray & id) const
   {
     return m_eventListenNames.contains(id);
   }
