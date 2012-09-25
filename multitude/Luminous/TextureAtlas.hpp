@@ -21,7 +21,7 @@ namespace Luminous
     class Node : public Patterns::NotCopyable
     {
     public:
-      Node();
+      LUMINOUS_API Node();
 
     public:
       Nimble::Vector2i m_location;

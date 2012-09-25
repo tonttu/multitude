@@ -110,7 +110,7 @@ namespace Luminous {
     /// Sets the texture that is used in the rendering process
     void setImage(const Luminous::Image & image);
 
-    const Luminous::Image & image() const;
+    // const Luminous::Image & image() const;
 
     /// Create a blurry texture
     /// Creates a basic square texture with radial gradient pattern

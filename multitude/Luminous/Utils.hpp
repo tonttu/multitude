@@ -43,8 +43,8 @@ namespace Luminous {
       BOTTOM
     };
 
-    static void fadeEdge(float w, float h, float seam,
-             float gamma, Edge e, bool withGrid);
+    /*static void fadeEdge(float w, float h, float seam,
+             float gamma, Edge e, bool withGrid);*/
 
 
 //    /** Check that there are no OpenGL errors. If there has been an

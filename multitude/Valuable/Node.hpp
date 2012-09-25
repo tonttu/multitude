@@ -157,8 +157,8 @@ namespace Valuable
 
 #ifdef CORNERSTONE_JS
 
-    bool setValue(const QString & name, v8::Handle<v8::Value> v);
-    bool setValue(const QString & name, v8::Local<v8::Value> v) {
+    bool setValue(const QByteArray & name, v8::Handle<v8::Value> v);
+    bool setValue(const QByteArray & name, v8::Local<v8::Value> v) {
       return setValue(name, static_cast<v8::Handle<v8::Value> >(v));
     }
 #endif
@@ -325,7 +325,7 @@ namespace Valuable
     const QSet<QString> & eventInNames() const { return m_eventListenNames; }
 
 #ifdef CORNERSTONE_JS
-    long addListener(const QString & name, v8::Persistent<v8::Function> func,
+    long addListener(const QByteArray & name, v8::Persistent<v8::Function> func,
                      int role = Attribute::CHANGE_ROLE);
 #endif
     static int processQueue();

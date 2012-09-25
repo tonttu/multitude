@@ -329,7 +329,7 @@ namespace Valuable
 
 #ifdef CORNERSTONE_JS
 
-  bool Node::setValue(const QString & name, v8::Handle<v8::Value> v)
+  bool Node::setValue(const QByteArray & name, v8::Handle<v8::Value> v)
   {
     using namespace v8;
     HandleScope handle_scope;
@@ -728,11 +728,11 @@ namespace Valuable
   }
 
 #ifdef CORNERSTONE_JS
-  long Node::addListener(const QString & name, v8::Persistent<v8::Function> func, int role)
+  long Node::addListener(const QByteArray & name, v8::Persistent<v8::Function> func, int role)
   {
     Attribute * attr = getValue(name);
     if(!attr) {
-      Radiant::warning("Node::addListener # Failed to find attribute %s", name.toUtf8().data());
+      Radiant::warning("Node::addListener # Failed to find attribute %s", name.data());
       return -1;
     }
     return attr->addListener(func, role);

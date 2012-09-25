@@ -50,7 +50,6 @@ enable-js {
 }
 
 INCLUDEPATH += $$PWD
-!mobile:INCLUDEPATH += $$PWD/v8/include
 DEPENDPATH += $$PWD
 
 withbundles = $$(MULTI_BUNDLES)
