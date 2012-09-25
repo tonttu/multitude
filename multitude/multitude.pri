@@ -93,7 +93,7 @@ LIB_OPENGL = -lglew -lGLU -lGL
 INCLUDEPATH += $$PWD/3rdparty/glew-1.9.0/include
 
 LIB_POETIC = -lPoetic$${CORNERSTONE_LIB_SUFFIX}
-LIB_FLUFFY = -lFluffy$${CORNERSTONE_LIB_SUFFIX}
+LIB_STYLISH = -lStylish$${CORNERSTONE_LIB_SUFFIX}
 LIB_LUMINOUS = -lLuminous$${CORNERSTONE_LIB_SUFFIX}
 LIB_NIMBLE = -lNimble$${CORNERSTONE_LIB_SUFFIX}
 LIB_RADIANT = -lRadiant$${CORNERSTONE_LIB_SUFFIX} $$LIB_FTD2XX
@@ -184,7 +184,7 @@ macx*|mobile* {
 
   !mobile* {
     LIB_POETIC = -framework,Poetic
-    LIB_FLUFFY = -framework,Fluffy
+    LIB_STYLISH = -framework,Stylish
     LIB_LUMINOUS = -framework,Luminous
     LIB_NIMBLE = -framework,Nimble
     LIB_RADIANT = -framework,Radiant
@@ -264,7 +264,7 @@ win32 {
       LIB_OPENGL = -lglew_d -lglu32 -lopengl32
       LIB_BOX2D = -lBox2D$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_POETIC = -lPoetic$${CORNERSTONE_LIB_SUFFIX}_d
-      LIB_FLUFFY = -lFluffy$${CORNERSTONE_LIB_SUFFIX}_d
+      LIB_STYLISH = -lStylish$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_LUMINOUS = -lLuminous$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_NIMBLE = -lNimble$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_RADIANT = -lRadiant$${CORNERSTONE_LIB_SUFFIX}_d
