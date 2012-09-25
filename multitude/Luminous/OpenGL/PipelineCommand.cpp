@@ -53,6 +53,31 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////
 
+  CommandChangeRenderBuffersGL::CommandChangeRenderBuffersGL(bool colorBuffer, bool stencilBuffer, bool depthBuffer)
+    : m_colorBuffer(colorBuffer)
+    , m_stencilBuffer(stencilBuffer)
+    , m_depthBuffer(depthBuffer)
+  {
+  }
+
+  void CommandChangeRenderBuffersGL::execute()
+  {
+    // Color buffers
+    GLboolean color = (m_colorBuffer ? GL_TRUE : GL_FALSE);
+    glColorMask( color, color, color, color);
+
+    // Depth buffer
+    GLboolean depth = (m_depthBuffer ? GL_TRUE : GL_FALSE);
+    glDepthMask(depth);
+
+    // Stencil buffer
+    GLuint stencil = (m_stencilBuffer ? 0xff : 0x00);
+    glStencilMask(stencil);
+  }
+
+  //////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////
+
   CommandScissorGL::CommandScissorGL(const Nimble::Recti & rect)
     : m_rect(rect)
   {

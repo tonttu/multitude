@@ -111,6 +111,11 @@ namespace Luminous
     RenderQueueSegment()
     {}
 
+    RenderQueueSegment(PipelineCommand * cmd)
+      : pipelineCommand(cmd)
+    {
+    }
+
     RenderQueueSegment(RenderQueueSegment && o)
       : pipelineCommand(o.pipelineCommand)
       , opaqueQueue(o.opaqueQueue)
@@ -226,12 +231,8 @@ namespace Luminous
     /// Allocate a new render queue segment defined by the given pipeline command
     void newRenderQueueSegment(PipelineCommand * cmd)
     {
-      /// @todo use a pool allocator to improve performance
-
-      RenderQueueSegment queues;
-      queues.pipelineCommand = cmd;
-      //m_renderTargetStack.push(std::move(queues));
-      m_masterRenderQueue.push_back(std::move(queues));
+      /// @todo Maybe look into a pool allocator to improve performance. Should profile more
+      m_masterRenderQueue.emplace_back(cmd);
     }
 
     void debugOutputStats()
@@ -683,18 +684,7 @@ namespace Luminous
 
   void RenderDriverGL::setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer)
   {
-    // Color buffers
-    GLboolean color = (colorBuffer ? GL_TRUE : GL_FALSE);
-    glColorMask( color, color, color, color);
-
-    // Depth buffer
-    GLboolean depth = (depthBuffer ? GL_TRUE : GL_FALSE);
-    glDepthMask(depth);
-
-    // Stencil buffer
-    /// @todo Should we only draw for front-facing?
-    GLuint stencil = (stencilBuffer ? 0xff : 0x00);
-    glStencilMaskSeparate(GL_FRONT_AND_BACK, stencil);
+    m_d->newRenderQueueSegment(new CommandChangeRenderBuffersGL(colorBuffer, depthBuffer, stencilBuffer));
   }
 
   void * RenderDriverGL::mapBuffer(const Buffer & buffer, Buffer::Type type, int offset, std::size_t length,

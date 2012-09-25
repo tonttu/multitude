@@ -26,7 +26,7 @@ namespace Luminous
   public:
     CommandClearGL(Luminous::ClearMask clearMask, const Radiant::Color & clearColor, float clearDepth, int clearStencil);
 
-    virtual void execute();
+    virtual void execute() OVERRIDE;
 
   private:
     Luminous::ClearMask m_clearMask;
@@ -44,12 +44,26 @@ namespace Luminous
   public:
     CommandChangeRenderTargetGL(RenderTargetGL & rt);
 
-    virtual void execute();
+    virtual void execute() OVERRIDE;
 
   private:
     RenderTargetGL & m_renderTarget;
   };
 
+  //////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////
+
+  class CommandChangeRenderBuffersGL : public PipelineCommand
+  {
+  public:
+    CommandChangeRenderBuffersGL(bool colorBuffer, bool stencilBuffer, bool depthBuffer);
+
+    virtual void execute() OVERRIDE;
+  private:
+    bool m_colorBuffer;
+    bool m_stencilBuffer;
+    bool m_depthBuffer;
+  };
   //////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////
 
@@ -59,7 +73,7 @@ namespace Luminous
   public:
     CommandScissorGL(const Nimble::Recti & rect);
 
-    virtual void execute();
+    virtual void execute() OVERRIDE;
 
   private:
     Nimble::Recti m_rect;
@@ -74,7 +88,7 @@ namespace Luminous
   public:
     CommandViewportGL(const Nimble::Recti & rect);
 
-    virtual void execute();
+    virtual void execute() OVERRIDE;
 
   private:
     Nimble::Recti m_rect;
@@ -92,7 +106,7 @@ namespace Luminous
                   Luminous::ClearMask mask = Luminous::ClearMask_ColorDepth,
                   Luminous::Texture::Filter filter = Luminous::Texture::Filter_Nearest);
 
-    virtual void execute();
+    virtual void execute() OVERRIDE;
 
   private:
     Nimble::Recti m_src;
