@@ -81,11 +81,6 @@ namespace Luminous
     // Set default depth
     b.uniform->depth = b.depth;
 
-    // Set draw modes
-    b.command->blendMode = style.blendMode();
-    b.command->depthMode = style.depthMode();
-    b.command->stencilMode = style.stencilMode();
-
     return b;
   }
 }

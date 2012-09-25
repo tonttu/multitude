@@ -333,13 +333,6 @@ namespace Luminous
       GLERROR("RenderDriverGL::flush # glPointSize");
     }
 
-    if (m_state.blendMode != cmd.blendMode)
-      m_driver.setBlendMode(cmd.blendMode);
-    if (m_state.depthMode != cmd.depthMode)
-      m_driver.setDepthMode(cmd.depthMode);
-    if (m_state.stencilMode != cmd.stencilMode)
-      m_driver.setStencilMode(cmd.stencilMode);
-
     if (cmd.indexed) {
       // Draw using the index buffer
       glDrawElementsBaseVertex(cmd.primitiveType, cmd.primitiveCount, GL_UNSIGNED_INT,
@@ -636,34 +629,17 @@ namespace Luminous
 
   void RenderDriverGL::setBlendMode( const BlendMode & mode )
   {
-    m_d->m_state.blendMode = mode;
-    glEnable(GL_BLEND);
-    glBlendColor(mode.constantColor().red(), mode.constantColor().green(), mode.constantColor().blue(), mode.constantColor().alpha() );
-    GLERROR("RenderDriverGL::setBlendMode # glBlendColor");
-    glBlendEquation(mode.equation());
-    GLERROR("RenderDriverGL::setBlendMode # glBlendEquation");
-    glBlendFunc(mode.sourceFunction(), mode.destFunction());
-    GLERROR("RenderDriverGL::setBlendMode # glBlendFunc");
+    m_d->newRenderQueueSegment(new CommandSetBlendMode(mode));
   }
 
   void RenderDriverGL::setDepthMode(const DepthMode & mode)
   {
-    m_d->m_state.depthMode = mode;
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(mode.function());
-    GLERROR("RenderDriverGL::setDepthMode # glDepthFunc");
-    glDepthRange(mode.range().low(), mode.range().high());
-    GLERROR("RenderDriverGL::setDepthMode # glDepthRange");
+    m_d->newRenderQueueSegment(new CommandSetDepthMode(mode));
   }
 
   void RenderDriverGL::setStencilMode( const StencilMode & mode )
   {
-    m_d->m_state.stencilMode = mode;
-    glEnable(GL_STENCIL_TEST);
-    glStencilFunc(mode.function(), mode.refValue(), mode.maskValue());
-    GLERROR("RenderDriverGL::setStencilMode # glStencilFunc");
-    glStencilOp(mode.stencilFailOperation(), mode.depthFailOperation(), mode.passOperation());
-    GLERROR("RenderDriverGL::setStencilMode # glStencilOp");
+    m_d->newRenderQueueSegment(new CommandSetStencilMode(mode));
   }
 
   void RenderDriverGL::setViewport(const Nimble::Recti & rect)

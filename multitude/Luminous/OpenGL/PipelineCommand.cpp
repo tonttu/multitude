@@ -53,6 +53,59 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////
 
+  CommandSetBlendMode::CommandSetBlendMode(const BlendMode & mode)
+    : m_mode(mode)
+  {
+
+  }
+
+  void CommandSetBlendMode::execute()
+  {
+    glEnable(GL_BLEND);
+    glBlendColor(m_mode.constantColor().red(), m_mode.constantColor().green(), m_mode.constantColor().blue(), m_mode.constantColor().alpha() );
+    GLERROR("CommandSetBlendMode::execute # glBlendColor");
+    glBlendEquation(m_mode.equation());
+    GLERROR("CommandSetBlendMode::execute # glBlendEquation");
+    glBlendFunc(m_mode.sourceFunction(), m_mode.destFunction());
+    GLERROR("CommandSetBlendMode::execute # glBlendFunc");
+  }
+
+  //////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////
+  CommandSetDepthMode::CommandSetDepthMode(const DepthMode & mode)
+    : m_mode(mode)
+  {
+
+  }
+
+  void CommandSetDepthMode::execute()
+  {
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(m_mode.function());
+    GLERROR("RenderDriverGL::setDepthMode # glDepthFunc");
+    glDepthRange(m_mode.range().low(), m_mode.range().high());
+    GLERROR("RenderDriverGL::setDepthMode # glDepthRange");
+  }
+
+  //////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////
+  CommandSetStencilMode::CommandSetStencilMode(const StencilMode & mode)
+    : m_mode(mode)
+  {
+
+  }
+
+  void CommandSetStencilMode::execute()
+  {
+    glEnable(GL_STENCIL_TEST);
+    glStencilFunc(m_mode.function(), m_mode.refValue(), m_mode.maskValue());
+    GLERROR("RenderDriverGL::setStencilMode # glStencilFunc");
+    glStencilOp(m_mode.stencilFailOperation(), m_mode.depthFailOperation(), m_mode.passOperation());
+    GLERROR("RenderDriverGL::setStencilMode # glStencilOp");
+  }
+  //////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////
+
   CommandChangeRenderBuffersGL::CommandChangeRenderBuffersGL(bool colorBuffer, bool stencilBuffer, bool depthBuffer)
     : m_colorBuffer(colorBuffer)
     , m_stencilBuffer(stencilBuffer)

@@ -267,6 +267,21 @@ namespace Luminous
     /// @sa RenderTarget::setTargetBind
     void blit(const Nimble::Recti & src, const Nimble::Recti & dst);
 
+    /// Set the active render buffers
+    /// @param colorBuffer enables drawing to colorbuffer if set to true
+    /// @param depthBuffer enables drawing to depthbuffer if set to true
+    /// @param stencilBuffer enables drawing to stencilbuffer if set to true
+    void setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer);
+
+    /// Set the active blendmode
+    void RenderContext::setBlendMode(const BlendMode & mode);
+
+    /// Set the active depthmode
+    void RenderContext::setDepthMode(const DepthMode & mode);
+
+    /// Set the active stencilmode
+    void RenderContext::setStencilMode(const StencilMode & mode);
+
     /// @todo REMOVE US
     static void setThreadContext(RenderContext * rsc);
     static RenderContext * getThreadContext();

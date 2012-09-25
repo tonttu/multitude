@@ -1060,9 +1060,11 @@ namespace Luminous
     std::map<QByteArray, const Texture *> textures = style.fill().textures();
     DepthMode d;
     d.setFunction(DepthMode::LessEqual);
+    setDepthMode(d);
 
     Nimble::Matrix4f m;
     m.identity();
+
 
     Nimble::Vector2f renderLocation = layout.renderLocation() - viewRect.low() + renderOffset;
 
@@ -1092,10 +1094,6 @@ namespace Luminous
         b.uniform->modelMatrix = modelview * m;
         b.uniform->modelMatrix.transpose();
 
-        b.command->blendMode = style.blendMode();
-        b.command->depthMode = d;
-        b.command->stencilMode = style.stencilMode();
-
         int index = 0;
 
         const int first = i;
@@ -1118,6 +1116,9 @@ namespace Luminous
         }
       }
     }
+
+    // Restore depth mode
+    setDepthMode(DepthMode::Default());
   }
 
   void RenderContext::drawText(const QString & text, const Nimble::Rectf & rect,
@@ -1570,6 +1571,26 @@ namespace Luminous
   {
     m_data->m_driverGL->pushRenderTarget(m_data->m_defaultRenderTarget);
     m_data->m_driver.blit(src, dst);
+  }
+
+  void RenderContext::setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer)
+  {
+    m_data->m_driverGL->setRenderBuffers(colorBuffer, depthBuffer, stencilBuffer);
+  }
+
+  void RenderContext::setBlendMode(const BlendMode & mode)
+  {
+    m_data->m_driverGL->setBlendMode(mode);
+  }
+
+  void RenderContext::setDepthMode(const DepthMode & mode)
+  {
+    m_data->m_driverGL->setDepthMode(mode);
+  }
+
+  void RenderContext::setStencilMode(const StencilMode & mode)
+  {
+    m_data->m_driverGL->setStencilMode(mode);
   }
 
   ////////////////////////////////////////////////////////////////////////////////

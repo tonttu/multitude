@@ -125,22 +125,9 @@ namespace Luminous
     void setTexture(const Luminous::Texture & texture) { m_fill.setTexture(texture); }
     void setTexture(const QByteArray & name, const Luminous::Texture & texture) { m_fill.setTexture(name, texture); }
 
-    void setBlendMode(const BlendMode & mode) { m_blendMode = mode; }
-    const BlendMode & blendMode() const { return m_blendMode; }
-
-    void setDepthMode(const DepthMode & mode) { m_depthMode = mode; }
-    const DepthMode & depthMode() const { return m_depthMode; }
-
-    void setStencilMode(const StencilMode & mode) { m_stencilMode = mode; }
-    const StencilMode & stencilMode() const { return m_stencilMode; }
-
   private:
     Fill m_fill;
     Stroke m_stroke;
-
-    BlendMode m_blendMode;
-    DepthMode m_depthMode;
-    StencilMode m_stencilMode;
   };
 
   class TextStyle : public Style

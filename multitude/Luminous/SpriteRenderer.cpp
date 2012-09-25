@@ -146,18 +146,22 @@ namespace Luminous {
     /// @todo If this gets too slow we can always convert this to use a persistent vertex buffer instead of always creating this anew
     bool translucent = true;
 
+    rc.setBlendMode(m_d->m_blendMode);
+    rc.setDepthMode(m_d->m_depthMode);
+
     auto b = rc.render<Sprite, D::SpriteUniform>(translucent, Luminous::PrimitiveType_Point, 0, spriteCount(), 1.f,
                                                   m_d->m_program, &m_d->m_texture);
 
     b.uniform->velocityScale = m_d->m_velocityScale;
     b.uniform->depth = b.depth;
 
-    b.command->blendMode = m_d->m_blendMode;
-    b.command->depthMode = m_d->m_depthMode;
     auto v = b.vertex;
 
     // Copy vertex data
     std::copy(m_d->m_sprites.begin(), m_d->m_sprites.end(), v);
+
+    rc.setBlendMode(Luminous::BlendMode::Default());
+    rc.setDepthMode(Luminous::DepthMode::Default());
   }
 
   void SpriteRenderer::setImage(const Luminous::Image & image)

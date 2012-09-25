@@ -24,9 +24,6 @@ namespace Luminous
     std::size_t primitiveCount;
 
     float primitiveSize;    // Used for points and lines
-    BlendMode blendMode;
-    DepthMode depthMode;
-    StencilMode stencilMode;
 
     bool indexed;
     unsigned int indexOffset;
