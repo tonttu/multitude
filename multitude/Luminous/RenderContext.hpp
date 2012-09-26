@@ -274,13 +274,13 @@ namespace Luminous
     void setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer);
 
     /// Set the active blendmode
-    void RenderContext::setBlendMode(const BlendMode & mode);
+    void setBlendMode(const BlendMode & mode);
 
     /// Set the active depthmode
-    void RenderContext::setDepthMode(const DepthMode & mode);
+    void setDepthMode(const DepthMode & mode);
 
     /// Set the active stencilmode
-    void RenderContext::setStencilMode(const StencilMode & mode);
+    void setStencilMode(const StencilMode & mode);
 
     /// @todo REMOVE US
     static void setThreadContext(RenderContext * rsc);
