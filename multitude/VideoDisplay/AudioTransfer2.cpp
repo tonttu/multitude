@@ -1,5 +1,7 @@
 #include "AudioTransfer2.hpp"
 
+#include "AVDecoderFFMPEG.hpp"
+
 #include <Resonant/AudioLoop.hpp>
 
 namespace
@@ -55,8 +57,9 @@ namespace VideoPlayer2
   class AudioTransfer::D
   {
   public:
-    D(int channels)
-      : channels(channels)
+    D(AVDecoderFFMPEG * avff, int channels)
+      : m_avff(avff)
+      , channels(channels)
       , seekGeneration(0)
       , playMode(AVDecoder::Pause)
       , seeking(false)
@@ -70,6 +73,7 @@ namespace VideoPlayer2
       /*, samplesProcessed(0)*/
     {}
 
+    AVDecoderFFMPEG * m_avff;
     const int channels;
     int seekGeneration;
     AVDecoder::PlayMode playMode;
@@ -126,15 +130,19 @@ namespace VideoPlayer2
     ++buffersReader;
   }
 
-  AudioTransfer::AudioTransfer(int channels)
+  AudioTransfer::AudioTransfer(AVDecoderFFMPEG * avff, int channels)
     : Module(0)
-    , m_d(new D(channels))
+    , m_d(new D(avff, channels))
   {
     assert(channels > 0);
   }
 
   AudioTransfer::~AudioTransfer()
   {
+    if(m_d->m_avff) {
+      m_d->m_avff->audioTransferDeleted();
+    }
+    // Radiant::info("AudioTransfer::~AudioTransfer # %p", this);
     delete m_d;
   }
 

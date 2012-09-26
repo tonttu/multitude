@@ -306,8 +306,9 @@ namespace VideoPlayer2
       bool dr1;
     };
 
-    D()
-      : seekGeneration(0)
+    D(AVDecoderFFMPEG * host)
+      : m_host(host)
+      , seekGeneration(0)
       , running(true)
       , finished(false)
       , av()
@@ -317,13 +318,14 @@ namespace VideoPlayer2
       , audioFilter()
       , radiantTimestampToPts(std::numeric_limits<double>::quiet_NaN())
       , loopOffset(0)
-      , audioTransfer(nullptr)
+      , m_audioTransfer(nullptr)
     {
       av.videoStreamIndex = -1;
       av.audioStreamIndex = -1;
       av.videoSize.clear();
     }
 
+    AVDecoderFFMPEG * m_host;
     int seekGeneration;
 
     bool running;
@@ -353,7 +355,7 @@ namespace VideoPlayer2
 
     double loopOffset;
 
-    AudioTransfer * audioTransfer;
+    AudioTransfer * m_audioTransfer;
 
     /// From main thread to decoder thread, list of BufferRefs that should be
     /// released. Can't run that in the main thread without locking.
@@ -789,16 +791,16 @@ namespace VideoPlayer2
     }
 
     if(av.audioCodec) {
-      audioTransfer = new AudioTransfer(options.audioChannels);
-      audioTransfer->setSeekGeneration(seekGeneration);
-      audioTransfer->setPlayMode(options.playMode);
+      m_audioTransfer = new AudioTransfer(m_host, options.audioChannels);
+      m_audioTransfer->setSeekGeneration(seekGeneration);
+      m_audioTransfer->setPlayMode(options.playMode);
 
       static QAtomicInt counter;
       int value = counter.fetchAndAddRelease(1);
-      audioTransfer->setId(QString("VideoPlayer2.AudioTransfer.%1").arg(value));
+      m_audioTransfer->setId(QString("VideoPlayer2.AudioTransfer.%1").arg(value));
 
       auto item = Resonant::DSPNetwork::Item();
-      item.setModule(audioTransfer);
+      item.setModule(m_audioTransfer);
       item.setTargetChannel(0);
 
       Resonant::DSPNetwork::instance()->addModule(item);
@@ -834,9 +836,9 @@ namespace VideoPlayer2
 
     av_free(av.frame);
 
-    if(audioTransfer)
-      Resonant::DSPNetwork::instance()->markDone(*audioTransfer);
-    audioTransfer = nullptr;
+    if(m_audioTransfer)
+      Resonant::DSPNetwork::instance()->markDone(*m_audioTransfer);
+    m_audioTransfer = nullptr;
   }
 
   bool AVDecoderFFMPEG::D::seekToBeginning()
@@ -882,8 +884,8 @@ namespace VideoPlayer2
       bool ok = seekToBeginning();
       if(ok) {
         ++seekGeneration;
-        if(audioTransfer)
-          audioTransfer->setSeekGeneration(seekGeneration);
+        if(m_audioTransfer)
+          m_audioTransfer->setSeekGeneration(seekGeneration);
         radiantTimestampToPts = std::numeric_limits<double>::quiet_NaN();
         if(options.playMode == Pause)
           pauseTimestamp = Radiant::TimeStamp::currentTime();
@@ -967,8 +969,8 @@ namespace VideoPlayer2
     if(av.videoCodecContext)
       avcodec_flush_buffers(av.videoCodecContext);
     ++seekGeneration;
-    if(audioTransfer)
-      audioTransfer->setSeekGeneration(seekGeneration);
+    if(m_audioTransfer)
+      m_audioTransfer->setSeekGeneration(seekGeneration);
     radiantTimestampToPts = std::numeric_limits<double>::quiet_NaN();
     if(options.playMode == Pause)
       pauseTimestamp = Radiant::TimeStamp::currentTime();
@@ -993,7 +995,7 @@ namespace VideoPlayer2
       // we need to resize the video buffer, otherwise we could starve.
       // Growing the video buffer is safe, as long as the buffer size
       // doesn't grow over the hard-limit (setSize checks that)
-      if(audioTransfer && audioTransfer->bufferStateSeconds() < options.audioBufferSeconds * 0.15f) {
+      if(m_audioTransfer && m_audioTransfer->bufferStateSeconds() < options.audioBufferSeconds * 0.15f) {
         if(decodedVideoFrames.setSize(decodedVideoFrames.size() + 1)) {
           options.videoBufferFrames = decodedVideoFrames.size();
           continue;
@@ -1252,7 +1254,7 @@ namespace VideoPlayer2
 
               if(output) {
                 while(true) {
-                  decodedAudioBuffer = audioTransfer->takeFreeBuffer(
+                  decodedAudioBuffer = m_audioTransfer->takeFreeBuffer(
                         av.decodedAudioBufferSamples - output->audio->nb_samples);
                   if(decodedAudioBuffer) break;
                   if(!running) return gotFrames;
@@ -1269,7 +1271,7 @@ namespace VideoPlayer2
                 decodedAudioBuffer->fillPlanar(Timestamp(dpts + loopOffset, seekGeneration),
                                                options.audioChannels, output->audio->nb_samples,
                                                (const float **)(output->data));
-                audioTransfer->putReadyBuffer(output->audio->nb_samples);
+                m_audioTransfer->putReadyBuffer(output->audio->nb_samples);
                 avfilter_unref_buffer(output);
               }
             }
@@ -1280,7 +1282,7 @@ namespace VideoPlayer2
           }
         } else {
           while(true) {
-            decodedAudioBuffer = audioTransfer->takeFreeBuffer(
+            decodedAudioBuffer = m_audioTransfer->takeFreeBuffer(
                   av.decodedAudioBufferSamples - av.frame->nb_samples);
             if(decodedAudioBuffer) break;
             if(!running) return gotFrames;
@@ -1290,7 +1292,7 @@ namespace VideoPlayer2
           decodedAudioBuffer->fill(Timestamp(dpts + loopOffset, seekGeneration),
                                    av.audioCodecContext->channels, av.frame->nb_samples,
                                    reinterpret_cast<const int16_t *>(av.frame->data[0]));
-          audioTransfer->putReadyBuffer(av.frame->nb_samples);
+          m_audioTransfer->putReadyBuffer(av.frame->nb_samples);
         }
       } else {
         flush = false;
@@ -1482,7 +1484,7 @@ namespace VideoPlayer2
   }
 
   AVDecoderFFMPEG::AVDecoderFFMPEG()
-    : m_d(new D())
+    : m_d(new D(this))
   {
     Thread::setName("AVDecoderFFMPEG");
   }
@@ -1514,8 +1516,8 @@ namespace VideoPlayer2
       return;
 
     m_d->options.playMode = mode;
-    if(m_d->audioTransfer)
-      m_d->audioTransfer->setPlayMode(mode);
+    if(m_d->m_audioTransfer)
+      m_d->m_audioTransfer->setPlayMode(mode);
     if(mode == Pause)
       m_d->pauseTimestamp = Radiant::TimeStamp::currentTime();
     if(mode == Play)
@@ -1530,8 +1532,8 @@ namespace VideoPlayer2
         return Timestamp(frame->timestamp.pts + 0.0001, m_d->seekGeneration);
     }
 
-    if(m_d->audioTransfer) {
-      Timestamp t = m_d->audioTransfer->toPts(ts);
+    if(m_d->m_audioTransfer) {
+      Timestamp t = m_d->m_audioTransfer->toPts(ts);
       if(t.seekGeneration < m_d->seekGeneration)
         return Timestamp();
       return t;
@@ -1612,7 +1614,7 @@ namespace VideoPlayer2
     }
 
     if(eof) {
-      *eof = m_d->finished && (!m_d->audioTransfer || m_d->audioTransfer->bufferStateSeconds() <= 0.0f)
+      *eof = m_d->finished && (!m_d->m_audioTransfer || m_d->m_audioTransfer->bufferStateSeconds() <= 0.0f)
           && m_d->decodedVideoFrames.itemCount() <= 1;
     }
   }
@@ -1643,7 +1645,12 @@ namespace VideoPlayer2
         a, 0.0f, c[0], -b*a - 0.5f * c[0],
         a, c[1], c[2], -b*a - 0.5f * (c[2]+c[1]),
         a, c[3],    0, -b*a - 0.5f * c[3],
-        0,    0,    0, 1);
+          0,    0,    0, 1);
+  }
+
+  void AVDecoderFFMPEG::audioTransferDeleted()
+  {
+    m_d->m_audioTransfer = nullptr;
   }
 
   void AVDecoderFFMPEG::load(const Options & options)
@@ -1680,8 +1687,8 @@ namespace VideoPlayer2
   void AVDecoderFFMPEG::setRealTimeSeeking(bool value)
   {
     m_d->realTimeSeeking = value;
-    if(m_d->audioTransfer)
-      m_d->audioTransfer->setSeeking(value);
+    if(m_d->m_audioTransfer)
+      m_d->m_audioTransfer->setSeeking(value);
   }
 
   void AVDecoderFFMPEG::childLoop()

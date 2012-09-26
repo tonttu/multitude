@@ -34,6 +34,8 @@ namespace VideoPlayer2
 
     virtual Nimble::Matrix4f yuvMatrix() const OVERRIDE;
 
+
+    void audioTransferDeleted();
   protected:
     virtual void load(const Options & options) OVERRIDE;
 

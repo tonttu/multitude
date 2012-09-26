@@ -43,10 +43,12 @@ namespace VideoPlayer2
     std::vector<AlignedFloatVector> m_data;
   };
 
+  class AVDecoderFFMPEG;
+
   class AudioTransfer : public Resonant::Module
   {
   public:
-    AudioTransfer(int channels);
+    AudioTransfer(AVDecoderFFMPEG *, int channels);
     virtual ~AudioTransfer();
 
     virtual bool prepare(int & channelsIn, int & channelsOut);
