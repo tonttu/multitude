@@ -38,6 +38,18 @@ namespace Radiant
   {
     Radiant::info("Waiting for all background threads to finish...");
     stop();
+    Radiant::debug("Deleting %d & %d background tasks...",
+                  (int) m_taskQueue.size(), (int) m_reserved.size());
+    while(!m_taskQueue.empty()) {
+      Task * t = &* m_taskQueue.begin()->second;
+      Radiant::debug("BGThread::~BGThread # Removing task %p %s", t, typeid(*t).name());
+      m_taskQueue.erase(m_taskQueue.begin());
+    }
+
+    m_taskQueue.clear();
+
+    m_reserved.clear();
+    Radiant::info("Background tasks and threads cleared");
   }
 
   void BGThread::addTask(std::shared_ptr<Task> task)
