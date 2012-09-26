@@ -7,7 +7,7 @@
 #include <Radiant/BinaryStream.hpp>
 
 #include <QString>
-#include <stdint.h>
+#include <cstdint>
 
 
 namespace Radiant

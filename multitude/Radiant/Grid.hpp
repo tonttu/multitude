@@ -12,7 +12,6 @@
 #include <cassert>
 
 #include <string.h>
-#include <strings.h>
 
 #include <algorithm>
 
@@ -368,8 +367,8 @@ namespace Radiant {
     inline const T * line(int y) const
     { return & this->m_data[this->m_width * y]; }
 
-    /// Writes zeroes over the memory buffer (using bzero)
-    inline void zero() { bzero(this->data(), size() * sizeof(T)); }
+    /// Writes zeroes over the memory buffer (using memset)
+    inline void zero() { memset(this->data(), 0, size() * sizeof(T)); }
 
     /// Fills the grid with the given value
     /// @param val Value to fill with

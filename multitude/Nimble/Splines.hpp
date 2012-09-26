@@ -41,7 +41,7 @@ namespace Nimble
     // We need at least four control points to interpolate
     if(cp.size() < 4) {
       T zero;
-      bzero(&zero, sizeof(zero));
+      memset(&zero, 0, sizeof(zero));
       return zero;
     }
 

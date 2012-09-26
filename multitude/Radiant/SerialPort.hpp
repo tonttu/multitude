@@ -6,7 +6,7 @@
 
 #include <Radiant/BinaryStream.hpp>
 
-#include <stdint.h>
+#include <cstdint>
 
 #ifdef WIN32
 # define NOMINMAX

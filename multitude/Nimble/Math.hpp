@@ -12,7 +12,7 @@
 #ifdef WIN32
 # include <float.h>
 #endif
-#include <stdint.h>
+#include <cstdint>
 
 namespace Nimble {
 

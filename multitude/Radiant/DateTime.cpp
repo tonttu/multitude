@@ -18,7 +18,6 @@
 #include <cassert>
 
 #include <string.h>
-#include <strings.h>
 
 #ifndef WIN32
 #include <sys/time.h>
@@ -172,7 +171,7 @@ namespace Radiant {
   {
     struct tm tms;
 
-    bzero( & tms, sizeof(tms));
+    memset( & tms, 0, sizeof(tms));
 
     tms.tm_year = m_year - 1900;
     tms.tm_mon  = m_month;

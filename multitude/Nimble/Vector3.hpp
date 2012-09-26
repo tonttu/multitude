@@ -10,7 +10,7 @@
 #include <limits>
 #include <iostream>
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace Nimble {
 

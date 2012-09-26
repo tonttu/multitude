@@ -6,7 +6,7 @@
 
 #include <iostream>
 #include <cassert>
-#include <stdint.h>
+#include <cstdint>
 
 #ifdef RADIANT_WINDOWS
   typedef uint64_t stackptr_t;

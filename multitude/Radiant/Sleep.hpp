@@ -20,7 +20,7 @@
 #include <Radiant/Types.hpp>
 #include <Radiant/Timer.hpp>
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace Radiant {
 

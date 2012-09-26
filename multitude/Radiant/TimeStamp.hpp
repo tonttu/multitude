@@ -7,7 +7,7 @@
 #include "Export.hpp"
 #include "Defines.hpp"
 
-#include <stdint.h>
+#include <cstdint>
 #include <stdio.h>
 #include <QString>
 

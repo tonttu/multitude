@@ -7,7 +7,6 @@
 #include "Trace.hpp"
 
 #include <sys/types.h>
-#include <strings.h>
 
 namespace Radiant
 {

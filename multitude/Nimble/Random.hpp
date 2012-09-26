@@ -19,7 +19,7 @@
 #include "Export.hpp"
 #include "Rect.hpp"
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <random>
 

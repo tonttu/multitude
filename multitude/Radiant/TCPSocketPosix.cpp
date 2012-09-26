@@ -20,7 +20,6 @@
 #include "Trace.hpp"
 
 #include <sys/types.h>
-#include <strings.h>
 
 #include "signal.h"
 
@@ -244,7 +243,7 @@ namespace Radiant
       return true;
 
     struct pollfd pfd;
-    bzero( & pfd, sizeof(pfd));
+    memset( & pfd, 0, sizeof(pfd));
     pfd.fd = m_d->m_fd;
     pfd.events = POLLWRNORM;
     int status = SocketWrapper::poll(&pfd, 1, 0);
@@ -261,7 +260,7 @@ namespace Radiant
       return false;
 
     struct pollfd pfd;
-    bzero( & pfd, sizeof(pfd));
+    memset( & pfd, 0, sizeof(pfd));
 
     pfd.fd = m_d->m_fd;
     pfd.events = POLLRDNORM;

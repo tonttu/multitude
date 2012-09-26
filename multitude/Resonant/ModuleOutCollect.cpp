@@ -25,8 +25,6 @@
 
 #include <algorithm>
 
-#include <strings.h>
-
 namespace Resonant {
 
   using Radiant::debug;
@@ -140,7 +138,7 @@ namespace Resonant {
 
     // Set to zero
     if(!m_interleaved.empty())
-      bzero( & m_interleaved[0], sizeof(float) * n * chans);
+      memset( & m_interleaved[0], 0, sizeof(float) * n * chans);
 
     for(size_t i = 0; i < m_map.size(); i++) {
 

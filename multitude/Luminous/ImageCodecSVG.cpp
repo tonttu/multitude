@@ -17,7 +17,7 @@
 
 #include <Luminous/Image.hpp>
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <QFile>
 #include <QImageReader>

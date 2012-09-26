@@ -13,7 +13,6 @@
 #include <Nimble/Math.hpp>
 
 #include <string.h>
-#include <strings.h>
 #include <stdlib.h>
 
 #ifdef WIN32
@@ -757,7 +756,7 @@ namespace Radiant {
       // m_size = s;
     }
 
-    bzero(&m_buf[0], m_size);
+    memset(&m_buf[0], 0, m_size);
 
     int n = stream.read( & m_buf[0], s);
     if(n != (int) s) {
@@ -801,7 +800,7 @@ namespace Radiant {
   {
     rewind();
 
-    bzero(data(), m_size);
+    memset(data(), 0, m_size);
   }
 
 #ifdef CORNERSTONE_JS

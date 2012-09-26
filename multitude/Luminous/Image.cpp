@@ -29,7 +29,7 @@
 #include <cassert>
 #include <cmath>
 #include <iostream>
-#include <stdint.h>
+#include <cstdint>
 #include <stdlib.h>
 #include <QString>
 #include <string.h>
@@ -40,10 +40,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/mman.h>
-#endif
-
-#ifdef WIN32
-#include <strings.h>	// strcasecmp()
 #endif
 
 namespace Luminous

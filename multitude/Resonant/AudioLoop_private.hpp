@@ -14,15 +14,13 @@
 #include <list>
 #include <set>
 
-#include <strings.h>
-
 /// @cond
 namespace Resonant {
 
   struct Stream {
     Stream() : stream(0), streamInfo(0), startTime(0) {
-      bzero( &inParams,  sizeof(inParams));
-      bzero( &outParams, sizeof(outParams));
+      memset( &inParams,  0, sizeof(inParams));
+      memset( &outParams, 0, sizeof(outParams));
     }
     PaStreamParameters inParams;
     PaStreamParameters outParams;

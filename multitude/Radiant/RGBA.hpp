@@ -17,8 +17,7 @@
 #define RADIANT_RGBA_HPP
 
 #include "Export.hpp"
-
-#include <stdint.h>
+#include <cstdint>
 
 /// @todo combine with Radiant::Color (template data type)
 

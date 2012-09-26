@@ -15,8 +15,6 @@
 #include <QString>
 #include <vector>
 
-#include <strings.h>
-
 namespace Resonant {
 
   class DSPNetwork;
@@ -215,7 +213,7 @@ namespace Resonant {
 
       void init(const char * filename, SampleVoice * waiting)
       {
-        bzero(m_waiting, sizeof(m_waiting));
+        memset(m_waiting, 0, sizeof(m_waiting));
         m_waiting[0] = waiting;
         m_name = filename;
         m_free = false;

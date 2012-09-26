@@ -7,7 +7,7 @@
 
 #include <map>
 #include <algorithm>
-#include <stdint.h>
+#include <cstdint>
 
 namespace Luminous
 {

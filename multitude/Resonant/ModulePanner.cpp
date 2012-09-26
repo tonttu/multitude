@@ -27,7 +27,6 @@
 
 #include <assert.h>
 #include <string.h>
-#include <strings.h>
 
 namespace Resonant {
 
@@ -117,7 +116,7 @@ namespace Resonant {
 
     // Zero the output channels
     for(unsigned i = 0; i < m_speakers->size(); i++) {
-      bzero(out[i], bufferbytes);
+      memset(out[i], 0, bufferbytes);
     }
 
     for(int i = 0; i < (int) m_sources.size(); i++) {

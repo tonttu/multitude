@@ -24,7 +24,7 @@
 #include "TimeStamp.hpp"
 #include "Color.hpp"
 
-#include <stdint.h>
+#include <cstdint>
 #include <vector>
 
 #include <QString>

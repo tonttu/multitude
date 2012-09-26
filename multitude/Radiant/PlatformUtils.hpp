@@ -17,7 +17,7 @@
 
 #include <Radiant/Export.hpp>
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <QString>
 

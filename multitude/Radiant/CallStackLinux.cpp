@@ -6,7 +6,7 @@
 #include "Mutex.hpp"
 #include "Trace.hpp"
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <execinfo.h>
 #include <dlfcn.h>

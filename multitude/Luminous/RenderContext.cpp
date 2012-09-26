@@ -27,7 +27,6 @@
 #include <Radiant/PlatformUtils.hpp>
 #include <Radiant/Thread.hpp>
 
-#include <strings.h>
 #include <tuple>
 #include <vector>
 

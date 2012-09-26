@@ -32,8 +32,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
-
 
 #define FRAMES_PER_BUFFER 128
 

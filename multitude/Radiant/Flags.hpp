@@ -1,7 +1,7 @@
 #ifndef RADIANT_FLAGS_HPP
 #define RADIANT_FLAGS_HPP
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace Radiant
 {

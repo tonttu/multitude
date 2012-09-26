@@ -23,8 +23,6 @@
 
 #include <Radiant/Trace.hpp>
 
-#include <strings.h>
-
 #include <algorithm>
 #include <typeinfo>
 #include <cstdio>
@@ -336,7 +334,7 @@ namespace Resonant {
     }
     else {
       Radiant::error("DSPNetwork::callback # No data to play");
-      bzero(out, 4 * framesPerBuffer * outChannels);
+      memset(out, 0, 4 * framesPerBuffer * outChannels);
     }
     if(streams > 1) m_d->m_sem.release();
 
@@ -686,7 +684,7 @@ namespace Resonant {
     item.m_ins.resize(ins);
 
     if(!item.m_ins.empty())
-      bzero( & item.m_ins[0], item.m_ins.size() * sizeof(float *));
+      memset( & item.m_ins[0], 0, item.m_ins.size() * sizeof(float *));
 
     if(item.m_outs.size() > (unsigned) outs) {
       item.m_outs.resize(outs);

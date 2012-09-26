@@ -20,7 +20,6 @@
 #include "Trace.hpp"
 
 #include <sys/types.h>
-#include <strings.h>
 #include <stdio.h>
 
 namespace Radiant
@@ -109,7 +108,7 @@ namespace Radiant
       return false;
 
     struct pollfd pfd;
-    bzero( & pfd, sizeof(pfd));
+    memset( & pfd, 0, sizeof(pfd));
     pfd.fd = m_d->m_fd;
     pfd.events = POLLRDNORM;
     int status = SocketWrapper::poll(&pfd, 1, waitMicroSeconds / 1000);
@@ -128,7 +127,7 @@ namespace Radiant
     sockaddr newAddress;
     socklen_t addressLength(sizeof(newAddress));
 
-    bzero( & newAddress, sizeof(newAddress));
+    memset( & newAddress, 0, sizeof(newAddress));
 
     for(;;) {
       SocketWrapper::clearErr();

@@ -23,7 +23,7 @@
 #include <QImageReader>
 #include <QImage>
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace Luminous
 {

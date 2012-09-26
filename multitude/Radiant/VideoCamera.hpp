@@ -21,7 +21,7 @@
 
 #include <Nimble/Rect.hpp>
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <QString>
 

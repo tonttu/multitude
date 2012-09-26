@@ -26,7 +26,6 @@
 #endif
 
 #include <string.h>
-#include <strings.h>
 
 #include <cassert>
 
@@ -51,7 +50,7 @@ namespace Resonant {
       m_userDone(false)
   {
     m_info = new SF_INFO();
-    bzero( m_info, sizeof(SF_INFO));
+    memset( m_info, 0, sizeof(SF_INFO));
   }
 
   AudioFileHandler::Handle::~Handle()
@@ -241,7 +240,7 @@ namespace Resonant {
     m_data.resize(buffersamples);
 
     if(!m_data.empty())
-      bzero( & m_data[0], buffersamples * sizeof(float));
+      memset( & m_data[0], 0, buffersamples * sizeof(float));
 
     m_fileFrames = 0;
     m_userFrames = 0;

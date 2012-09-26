@@ -22,7 +22,7 @@
 #include <Nimble/Rect.hpp>
 
 #include <QString>
-#include <stdint.h>
+#include <cstdint>
 #include <dc1394/control.h>
 
 namespace Radiant {

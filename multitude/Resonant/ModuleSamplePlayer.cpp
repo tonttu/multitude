@@ -22,7 +22,7 @@ namespace Resonant {
   {
   public:
     Internal()
-    { bzero( & m_info, sizeof(m_info)); };
+    { memset( & m_info, 0, sizeof(m_info)); };
 
     SF_INFO m_info;
   };
@@ -53,7 +53,7 @@ namespace Resonant {
 
     m_name = name;
 
-    bzero(&m_d->m_info, sizeof(m_d->m_info));
+    memset(&m_d->m_info, 0, sizeof(m_d->m_info));
 
     SNDFILE * sndf = sf_open(filename, SFM_READ, & m_d->m_info);
 
@@ -62,7 +62,7 @@ namespace Resonant {
 
     m_data.resize(m_d->m_info.channels * m_d->m_info.frames);
     if(!m_data.empty())
-      bzero( & m_data[0], m_data.size() * sizeof(float));
+      memset( & m_data[0], 0, m_data.size() * sizeof(float));
 
     size_t block = 1000;
 
@@ -267,7 +267,7 @@ namespace Resonant {
   ModuleSamplePlayer::LoadItem::LoadItem()
       : m_free(true)
   {
-    bzero(m_waiting, sizeof(m_waiting));
+    memset(m_waiting, 0, sizeof(m_waiting));
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -386,7 +386,7 @@ namespace Resonant {
     m_voices.resize(256);
     m_voiceptrs.resize(m_voices.size());
     if(!m_voiceptrs.empty())
-      bzero( & m_voiceptrs[0], m_voiceptrs.size() * sizeof(SampleVoice *));
+      memset( & m_voiceptrs[0], 0, m_voiceptrs.size() * sizeof(SampleVoice *));
     m_samples.resize(2048);
 
     m_loader = new BGLoader(this);
@@ -474,7 +474,7 @@ namespace Resonant {
 
     // First zero the outputs
     for(i = 0; i < m_channels; i++)
-      bzero(out[i], n * 4);
+      memset(out[i], 0, n * 4);
 
     // Then fill the outputs with audio
     for(i = 0; i < m_active; ) {

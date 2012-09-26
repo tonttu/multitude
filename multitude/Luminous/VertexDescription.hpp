@@ -6,7 +6,7 @@
 
 #include <QString>
 #include <vector>
-#include <stdint.h>
+#include <cstdint>
 
 namespace Luminous
 {

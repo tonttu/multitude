@@ -688,7 +688,7 @@ namespace Radiant {
 
     dc1394format7modeset_t modeset;
 
-    bzero( & modeset, sizeof(modeset));
+    memset( & modeset, 0, sizeof(modeset));
 
     err = dc1394_format7_get_modeset(m_camera, & modeset);
 
@@ -793,7 +793,7 @@ namespace Radiant {
     int err;
     dc1394format7modeset_t modeset;
 
-    bzero( & modeset, sizeof(modeset));
+    memset( & modeset, 0, sizeof(modeset));
 
     err = dc1394_format7_get_modeset(m_camera, & modeset);
 
