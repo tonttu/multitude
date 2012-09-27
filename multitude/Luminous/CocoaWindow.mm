@@ -131,6 +131,8 @@ return self;
   attributes[ index++ ] = (NSOpenGLPixelFormatAttribute) colorBits;
   attributes[ index++ ] = NSOpenGLPFADepthSize;
   attributes[ index++ ] = (NSOpenGLPixelFormatAttribute) depthBits;
+  attributes[ index++ ] = NSOpenGLPFAStencilSize;
+  attributes[ index++ ] = (NSOpenGLPixelFormatAttribute) 8;
 
   if(m_antiAliasing) {
     attributes[ index++ ] = NSOpenGLPFASupersample;
