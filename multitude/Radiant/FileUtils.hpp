@@ -69,8 +69,6 @@ namespace Radiant
     /// Check if a given file is readable.
     /// @param filename Name of file
     /// @returns true if the specified file is readable
-    static bool fileReadable(const char* filename);
-    /// @copydoc fileReadable
     static bool fileReadable(const QString & filename);
 
     /// Check if the user can append to a given file.

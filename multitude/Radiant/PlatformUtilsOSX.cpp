@@ -88,15 +88,6 @@ namespace Radiant
       return buf;
     }
 
-    bool fileReadable(const char * filename)
-    {
-      FILE * f = fopen(filename, "r");
-      if(!f)
-        return false;
-      fclose(f);
-      return true;
-    }
-
     void * openPlugin(const char * path)
     {
       return dlopen(path, RTLD_NOW | RTLD_GLOBAL);
@@ -118,13 +109,6 @@ namespace Radiant
 
     }
 
-    void setEnv(const char * name, const char * value)
-    {
-      if(value)
-        setenv(name, value, 1);
-      else
-        unsetenv(name);
-    }
   }
 
 }

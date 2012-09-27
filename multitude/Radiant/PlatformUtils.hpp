@@ -25,8 +25,6 @@ namespace Radiant
 {
   /** Small utility functions to help handle platform-specific functions. */
 
-    /// @todo check that these actually work
-
   namespace PlatformUtils
   {
 
@@ -45,12 +43,6 @@ namespace Radiant
     /// Return path to the user data directory of the given module.
     RADIANT_API QString getModuleUserDataPath(const char * module, bool isapplication);
 
-    /// Determine whether file or directory is readable.
-    /// @todo shouldn't this be in FileUtils?
-    /// @param filename Filename to test for readability
-    /// @returns true if the given file is found and readable
-    RADIANT_API bool fileReadable(const char * filename);
-
     /// Open a dynamic library
     /// @param path Full path to plugin
     /// @returns Handle to plugin or NULL if failed
@@ -60,9 +52,6 @@ namespace Radiant
     /** This function is not implemented for all platforms. */
     /// @returns Size of memory usage (in bytes)
     RADIANT_API uint64_t processMemoryUsage();
-
-    /// Setup an environment variable
-    RADIANT_API void setEnv(const char * name, const char * value);
   }
 
 }

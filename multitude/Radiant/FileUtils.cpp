@@ -105,14 +105,11 @@ namespace Radiant
     return getFileLen(file);
   }
 
-  bool FileUtils::fileReadable(const char* filename)
-  {
-    return PlatformUtils::fileReadable(filename);
-  }
-
   bool FileUtils::fileReadable(const QString & filename)
   {
-    return PlatformUtils::fileReadable(filename.toUtf8().data());
+    QFileInfo fi(filename);
+
+    return fi.exists() && fi.isReadable();
   }
 
   bool FileUtils::fileAppendable(const QString & filename)

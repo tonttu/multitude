@@ -131,14 +131,6 @@ namespace Radiant
       return path;
     }
 
-    bool fileReadable(const char * filename)
-    {
-      struct _stat  buf;
-      memset(& buf, 0, sizeof(struct _stat));
-
-      return ((_stat(filename, & buf) != -1) && (buf.st_mode & _S_IREAD));
-    }
-
     void * openPlugin(const char * path)
     {
       return (void *)(LoadLibraryA(path));
@@ -163,11 +155,6 @@ namespace Radiant
       CloseHandle( hProcess );
 
       return pmc.WorkingSetSize;
-    }
-
-    void setEnv(const char * name, const char * value)
-    {
-      SetEnvironmentVariableA((char *) name, (char *) value);
     }
 
   }
