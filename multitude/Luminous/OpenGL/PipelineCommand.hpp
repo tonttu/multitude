@@ -96,7 +96,7 @@ namespace Luminous
   class CommandChangeRenderBuffersGL : public PipelineCommand
   {
   public:
-    CommandChangeRenderBuffersGL(bool colorBuffer, bool stencilBuffer, bool depthBuffer);
+    CommandChangeRenderBuffersGL(bool colorBuffer, bool depthBuffer, bool stencilBuffer);
 
     virtual void execute() OVERRIDE;
   private:

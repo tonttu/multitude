@@ -30,7 +30,7 @@ namespace Luminous
     // Clear stencil buffer
     if (m_clearMask & ClearMask_Stencil) {
       glClearStencil(m_clearStencil);
-      glMask |= GL_DEPTH_BUFFER_BIT;
+      glMask |= GL_STENCIL_BUFFER_BIT;
     }
 
     glClear(glMask);
@@ -106,10 +106,10 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////
 
-  CommandChangeRenderBuffersGL::CommandChangeRenderBuffersGL(bool colorBuffer, bool stencilBuffer, bool depthBuffer)
+  CommandChangeRenderBuffersGL::CommandChangeRenderBuffersGL(bool colorBuffer, bool depthBuffer, bool stencilBuffer)
     : m_colorBuffer(colorBuffer)
-    , m_stencilBuffer(stencilBuffer)
     , m_depthBuffer(depthBuffer)
+    , m_stencilBuffer(stencilBuffer)
   {
   }
 
