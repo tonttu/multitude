@@ -15,4 +15,12 @@ INCLUDEPATH += include
 
 DESTDIR = ../../lib
 
+header_install.path = /include/GL
+header_install.files = \
+    include/GL/glew.h \
+    include/GL/glxew.h \
+    include/GL/wglew.h
+
+INSTALLS += header_install
+
 include(../../library.pri)
