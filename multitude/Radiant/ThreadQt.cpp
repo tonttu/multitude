@@ -20,7 +20,6 @@
 #include <errno.h>
 #include <signal.h>
 #include <string.h>
-#include <unistd.h>
 #include <iostream>
 #include <cassert>
 
