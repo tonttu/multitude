@@ -18,7 +18,7 @@ namespace Poetic
     Radiant::Guard g(m_mutex);
 
     QStringList searchPaths;
-    searchPaths << "../../share/MultiTouch/Fonts";
+    searchPaths << "../../data/Fonts";
 
     // Add platform specific paths
     searchPaths <<

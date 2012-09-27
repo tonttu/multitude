@@ -74,12 +74,7 @@ CORNERSTONE_VERSION_MINOR = $$section(CORNERSTONE_VERSION, ".", 1, 1)
 # 2
 CORNERSTONE_VERSION_PATCH = $$section(CORNERSTONE_VERSION, ".", 2, 2)
 
-win32 {
-  CORNERSTONE_LIB_SUFFIX = .$${CORNERSTONE_VERSION}
-}
-!win32 {
-  CORNERSTONE_LIB_SUFFIX =
-}
+CORNERSTONE_LIB_SUFFIX = .$${CORNERSTONE_VERSION}
 
 LIB_RESONANT = -lResonant$${CORNERSTONE_LIB_SUFFIX}
 LIB_BOX2D = -lBox2D$${CORNERSTONE_LIB_SUFFIX}
@@ -114,11 +109,7 @@ enable-js:LIB_V8 = -lv8 -lnode
 # Platform specific: Unix (OSX & linux)
 #
 unix {
-  VERSION = $${CORNERSTONE_VERSION}
-
   # Use ccache if available
-
-
   exists(/opt/local/bin/ccache) {
     # For Macports + QtCreator users:
     QMAKE_CXX=/opt/local/bin/ccache $$QMAKE_CXX
@@ -304,6 +295,7 @@ CONFIG(release, debug|release) {
 }
 
 DEFINES += USING_V8_SHARED
+VERSION=
 
 # Tommi's hack
 exists(/opt/local/libexec/llvm-3.2/bin/clang_not) {

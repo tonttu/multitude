@@ -1,6 +1,8 @@
 # Common rules to build libraries
 TEMPLATE = lib
 
+CONFIG += plugin
+
 PROJECT_FILE = $$join(TARGET, "", "", ".pro")
 
 # Make sure we don't override this if it has been set already
@@ -37,11 +39,11 @@ INSTALLS += target
 # Source code & headers go with the framework on OS X
 INSTALLS += includes src_code extra_inc
 
+TARGET=$$join(TARGET,,,$${CORNERSTONE_LIB_SUFFIX})
+
 # On Windows, put DLLs into /bin with the exes
 win32 {
     DLLDESTDIR = $$PWD/bin
-
-  TARGET=$$join(TARGET,,,$${CORNERSTONE_LIB_SUFFIX})
 
   # Debug libraries have an extra extension
   build_pass:CONFIG(debug,debug|release) {
