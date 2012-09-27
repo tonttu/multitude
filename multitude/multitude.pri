@@ -45,6 +45,13 @@ render_es2 {
   DEFINES += CORNERSTONE_RENDER_ES2=1
 }
 
+# Enable js by default on Linux
+linux-* {
+  !disable-js {
+    CONFIG += enable-js
+  }
+}
+
 enable-js {
   DEFINES += CORNERSTONE_JS=1
 }
