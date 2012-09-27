@@ -1,7 +1,8 @@
 # Common rules to build libraries
 TEMPLATE = lib
 
-CONFIG += plugin
+# This will disable generation of .so version symlinks on Linux
+linux*:CONFIG += plugin
 
 PROJECT_FILE = $$join(TARGET, "", "", ".pro")
 

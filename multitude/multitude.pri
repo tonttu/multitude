@@ -181,17 +181,15 @@ macx*|mobile* {
   LIB_OPENGL = -framework,OpenGL
 
   !mobile* {
-    LIB_POETIC = -framework,Poetic
-    LIB_STYLISH = -framework,Stylish
-    LIB_LUMINOUS = -framework,Luminous
-    LIB_NIMBLE = -framework,Nimble
-    LIB_RADIANT = -framework,Radiant
-    LIB_RESONANT = -framework,Resonant -lsndfile
-    LIB_VALUABLE = -framework,Valuable
-    LIB_VIDEODISPLAY = -framework,VideoDisplay
-    LIB_PATTERNS = -framework,Patterns
-
-    DEFINES += QT_MAC_USE_COCOA Q_OS_MAC64
+    LIB_POETIC = -framework,Poetic$${CORNERSTONE_LIB_SUFFIX}
+    LIB_STYLISH = -framework,Stylish$${CORNERSTONE_LIB_SUFFIX}
+    LIB_LUMINOUS = -framework,Luminous$${CORNERSTONE_LIB_SUFFIX}
+    LIB_NIMBLE = -framework,Nimble$${CORNERSTONE_LIB_SUFFIX}
+    LIB_RADIANT = -framework,Radiant$${CORNERSTONE_LIB_SUFFIX}
+    LIB_RESONANT = -framework,Resonant$${CORNERSTONE_LIB_SUFFIX} -lsndfile
+    LIB_VALUABLE = -framework,Valuable$${CORNERSTONE_LIB_SUFFIX}
+    LIB_VIDEODISPLAY = -framework,VideoDisplay$${CORNERSTONE_LIB_SUFFIX}
+    LIB_PATTERNS = -framework,Patterns$${CORNERSTONE_LIB_SUFFIX}
 
     DEFINES += QT_MAC_USE_COCOA Q_OS_MAC64
 
