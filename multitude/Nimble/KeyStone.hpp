@@ -22,6 +22,7 @@
 #include "Rect.hpp"
 #include "Vector4.hpp"
 
+#include <cstring>
 #include <vector>
 
 namespace Nimble {
