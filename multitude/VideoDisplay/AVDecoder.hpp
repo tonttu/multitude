@@ -18,6 +18,15 @@
 #include <array>
 #include <cassert>
 
+/** VideoPlayer2 is a video player library.
+
+  \b Copyright: All rights reserved, MultiTouch Oy. You may use this
+  library only for purposes for which you have a specific, written
+  license from MultiTouch Oy.
+
+
+ */
+
 namespace VideoPlayer2
 {
   struct Timestamp
