@@ -69,7 +69,8 @@ namespace Luminous
     m_stack.push(m * m_stack.top());
 #if defined(RADIANT_DEBUG)
     if(m_stack.size() > 200)
-      Radiant::warning("Transformer::pushTransformLeftMul # stack is very deep (%d)", m_stack.size());
+      Radiant::warning("Transformer::pushTransformLeftMul # stack is very deep (%d)",
+                       (int) m_stack.size());
 #endif
   }
   void Transformer::pushTransformLeftMul(const Nimble::Matrix3 & m)
@@ -83,7 +84,8 @@ namespace Luminous
     m_stack.push(m_stack.top() * m);
 #if defined(RADIANT_DEBUG)
     if(m_stack.size() > 200)
-      Radiant::warning("Transformer::pushTransformLeftMul # stack is very deep (%d)", m_stack.size());
+      Radiant::warning("Transformer::pushTransformLeftMul # stack is very deep (%d)",
+                       (int) m_stack.size());
 #endif
   }
 
