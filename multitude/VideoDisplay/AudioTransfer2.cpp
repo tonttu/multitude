@@ -241,6 +241,11 @@ namespace VideoPlayer2
     return m_d->samplesInBuffers / 44100.0f;
   }
 
+  void AudioTransfer::shutdown()
+  {
+    m_d->m_avff = nullptr;
+  }
+
   DecodedAudioBuffer * AudioTransfer::takeFreeBuffer(int samples)
   {
     if(m_d->readyBuffers >= int(m_d->decodedBuffers.size()))

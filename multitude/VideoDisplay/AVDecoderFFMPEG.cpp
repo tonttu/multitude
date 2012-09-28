@@ -836,8 +836,11 @@ namespace VideoPlayer2
 
     av_free(av.frame);
 
-    if(m_audioTransfer)
+    if(m_audioTransfer) {
+      m_audioTransfer->shutdown();
       Resonant::DSPNetwork::instance()->markDone(*m_audioTransfer);
+    }
+    
     m_audioTransfer = nullptr;
   }
 

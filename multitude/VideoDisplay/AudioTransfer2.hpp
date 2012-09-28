@@ -60,6 +60,8 @@ namespace VideoPlayer2
 
     float bufferStateSeconds() const;
 
+    void shutdown();
+
     DecodedAudioBuffer * takeFreeBuffer(int samples);
     void putReadyBuffer(int samples);
 
