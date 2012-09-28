@@ -69,6 +69,7 @@ namespace Luminous
   };
 }
 
+/// @cond
 namespace std
 {
   template<> struct hash<Luminous::RenderResource::Hash>
@@ -80,5 +81,6 @@ namespace std
     }
   };
 }
+/// @endcond
 
 #endif // LUMINOUS_RENDERRESOURCE_HPP

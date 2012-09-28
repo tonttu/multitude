@@ -171,7 +171,7 @@ namespace Luminous
     return m_d->m_root->insert(size, padding());
   }
 
-  void TextureAtlas::remove(TextureAtlas::NodePtr node)
+  void TextureAtlas::remove(TextureAtlas::NodePtr)
   {
   }
 

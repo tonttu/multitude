@@ -108,8 +108,8 @@ namespace Luminous
 
   CommandChangeRenderBuffersGL::CommandChangeRenderBuffersGL(bool colorBuffer, bool depthBuffer, bool stencilBuffer)
     : m_colorBuffer(colorBuffer)
-    , m_depthBuffer(depthBuffer)
     , m_stencilBuffer(stencilBuffer)
+    , m_depthBuffer(depthBuffer)
   {
   }
 
