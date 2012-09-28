@@ -16,6 +16,8 @@
 #ifndef RADIANT_RADIANT_HPP
 #define RADIANT_RADIANT_HPP
 
+#include <type_traits>
+
 /** Radiant library is a collection of C++ utility classes.
 
     Radiant is a collection of C++ classes geared at wrapping
@@ -35,7 +37,18 @@
     Jari Kleimola, George Whale
 */
 namespace Radiant {
+  /// @todo what is proper place for these?
+  template<typename Y>
+  typename std::enable_if<std::is_arithmetic<Y>::value, Y>::type createNull()
+  {
+    return Y(0);
+  }
 
+  template<typename Y>
+  typename std::enable_if<!std::is_arithmetic<Y>::value, Y>::type createNull()
+  {
+    return Y::null();
+  }
 }
 
 #define debugRadiant(...) (Radiant::trace("Radiant", Radiant::DEBUG, __VA_ARGS__))

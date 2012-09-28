@@ -4,6 +4,7 @@
 #ifndef RADIANT_GRID_HPP
 #define RADIANT_GRID_HPP
 
+#include "Radiant.hpp"
 #include "Export.hpp"
 #include "RGBA.hpp"
 
@@ -271,12 +272,12 @@ namespace Radiant {
     /// @param v Coordinate of element
     /// @returns The requested element from the grid or zero if the coordinate is outside of the grid
     inline T getSafe(const Nimble::Vector2i & v) const
-    { if(isInside(v)) return this->m_data[this->m_width * v.y + v.x];return 0;}
+    { if(isInside(v)) return this->m_data[this->m_width * v.y + v.x];return createNull<T>();}
     /// @param x X-coordinate of element
     /// @param y Y-coordinate of element
     /// @returns The requested element from the grid or zero if the coordinate is outside of the grid
     inline T getSafe(int x, int y) const
-    { if(isInside(x, y)) return this->m_data[this->m_width * y + x];return 0;}
+    { if(isInside(x, y)) return this->m_data[this->m_width * y + x];return createNull<T>();}
 
     /** Returns a reference to the grid element that is closest to the
     argument vector. */
