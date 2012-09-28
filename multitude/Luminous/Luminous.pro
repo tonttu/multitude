@@ -1,15 +1,15 @@
 include(../multitude.pri)
 
-HEADERS += OpenGL/ProgramGL.hpp
-HEADERS += OpenGL/RenderDriverGL.hpp
-HEADERS += OpenGL/ResourceHandleGL.hpp
-HEADERS += OpenGL/StateGL.hpp
-HEADERS += OpenGL/TextureGL.hpp
-HEADERS += OpenGL/VertexArrayGL.hpp
-HEADERS += OpenGL/BufferGL.hpp
-HEADERS += OpenGL/Error.hpp
-HEADERS += OpenGL/RenderTargetGL.hpp
-HEADERS += OpenGL/PipelineCommand.hpp
+HEADERS += ProgramGL.hpp
+HEADERS += RenderDriverGL.hpp
+HEADERS += ResourceHandleGL.hpp
+HEADERS += StateGL.hpp
+HEADERS += TextureGL.hpp
+HEADERS += VertexArrayGL.hpp
+HEADERS += BufferGL.hpp
+HEADERS += Error.hpp
+HEADERS += RenderTargetGL.hpp
+HEADERS += PipelineCommand.hpp
 
 HEADERS += FontCache.hpp
 HEADERS += RichTextLayout.hpp
@@ -86,14 +86,14 @@ macx:OBJECTIVE_SOURCES += CocoaWindow.mm
 !mobile*:SOURCES += MipMapGenerator.cpp
 !mobile*:SOURCES += SpriteRenderer.cpp
 
-SOURCES += OpenGL/ProgramGL.cpp
-SOURCES += OpenGL/RenderDriverGL.cpp
-SOURCES += OpenGL/TextureGL.cpp
-SOURCES += OpenGL/VertexArrayGL.cpp
-SOURCES += OpenGL/BufferGL.cpp
-SOURCES += OpenGL/Error.cpp
-SOURCES += OpenGL/RenderTargetGL.cpp
-SOURCES += OpenGL/PipelineCommand.cpp
+SOURCES += ProgramGL.cpp
+SOURCES += RenderDriverGL.cpp
+SOURCES += TextureGL.cpp
+SOURCES += VertexArrayGL.cpp
+SOURCES += BufferGL.cpp
+SOURCES += Error.cpp
+SOURCES += RenderTargetGL.cpp
+SOURCES += PipelineCommand.cpp
 
 SOURCES += FontCache.cpp
 SOURCES += RichTextLayout.cpp

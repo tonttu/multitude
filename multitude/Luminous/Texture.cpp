@@ -11,7 +11,7 @@
 #include <iostream>
 #include <cstring>
 
-#include "OpenGL/Error.hpp"
+#include "Error.hpp"
 
 #include <Radiant/Trace.hpp>
 #include <Radiant/Platform.hpp>

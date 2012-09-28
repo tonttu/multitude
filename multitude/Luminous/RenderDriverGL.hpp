@@ -3,9 +3,9 @@
 
 #include "Luminous/Luminous.hpp"
 #include "Luminous/RenderDriver.hpp"
-#include "Luminous/OpenGL/BufferGL.hpp"
-#include "Luminous/OpenGL/VertexArrayGL.hpp"
-#include "Luminous/OpenGL/RenderTargetGL.hpp"
+#include "Luminous/BufferGL.hpp"
+#include "Luminous/VertexArrayGL.hpp"
+#include "Luminous/RenderTargetGL.hpp"
 
 #include <Radiant/Flags.hpp>
 

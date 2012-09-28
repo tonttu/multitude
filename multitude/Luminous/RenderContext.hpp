@@ -18,8 +18,8 @@
 #include <Luminous/Buffer.hpp>
 #include <Luminous/RenderCommand.hpp>
 #include <Luminous/PostProcess.hpp>
-#include "OpenGL/RenderTargetGL.hpp"
-#include "OpenGL/BufferGL.hpp"
+#include "RenderTargetGL.hpp"
+#include "BufferGL.hpp"
 
 #include <Nimble/Rectangle.hpp>
 #include <Nimble/Vector2.hpp>

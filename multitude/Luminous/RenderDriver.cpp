@@ -1,5 +1,5 @@
 #include "Luminous/RenderDriver.hpp"
-#include "Luminous/OpenGL/RenderDriverGL.hpp"
+#include "Luminous/RenderDriverGL.hpp"
 
 #include "Radiant/Platform.hpp"
 

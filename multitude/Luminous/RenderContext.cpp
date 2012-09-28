@@ -3,7 +3,7 @@
 
 #include "RenderContext.hpp"
 
-#include "OpenGL/Error.hpp"
+#include "Error.hpp"
 #include "Texture.hpp"
 
 #include "Utils.hpp"
@@ -16,7 +16,7 @@
 #include "Luminous/VertexArray.hpp"
 #include "Luminous/VertexDescription.hpp"
 #include "Luminous/Buffer.hpp"
-#include "Luminous/OpenGL/RenderDriverGL.hpp"
+#include "Luminous/RenderDriverGL.hpp"
 #include "Luminous/SimpleTextLayout.hpp"
 #include "Luminous/PostProcessChain.hpp"
 #include "Luminous/PostProcessFilter.hpp"
