@@ -5,6 +5,7 @@
 
 #include <Nimble/Vector2.hpp>
 
+/// @cond
 namespace Luminous
 {
   class DistanceFieldGenerator
@@ -17,5 +18,6 @@ namespace Luminous
                                Luminous::Image & target, int radius);
   };
 }
+/// @endcond
 
 #endif // LUMINOUS_DISTANCE_FIELD_GENERATOR_HPP

@@ -5,6 +5,7 @@
 #include <memory>
 #include <list>
 
+/// @cond
 namespace Luminous
 {
   class PostProcessFilter;
@@ -22,5 +23,6 @@ namespace Luminous
     typedef std::list<Creator> InitList;
   }
 }
+/// @endcond
 
 #endif // POSTPROCESSFACTORY_HPP
