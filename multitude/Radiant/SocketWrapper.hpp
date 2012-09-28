@@ -1,6 +1,8 @@
 #ifndef SOCKETWRAPPER_HPP
 #define SOCKETWRAPPER_HPP
 
+/// @cond
+
 #include "Export.hpp"
 
 #ifdef RADIANT_WINDOWS
@@ -90,5 +92,7 @@ namespace SocketWrapper
 }
 
 #endif
+
+/// @endcond
 
 #endif // SOCKETWRAPPER_HPP
