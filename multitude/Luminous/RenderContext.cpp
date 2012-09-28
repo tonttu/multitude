@@ -17,7 +17,7 @@
 #include "Luminous/VertexDescription.hpp"
 #include "Luminous/Buffer.hpp"
 #include "Luminous/OpenGL/RenderDriverGL.hpp"
-#include "Luminous/Text/SimpleTextLayout.hpp"
+#include "Luminous/SimpleTextLayout.hpp"
 #include "Luminous/PostProcessChain.hpp"
 #include "Luminous/PostProcessFilter.hpp"
 

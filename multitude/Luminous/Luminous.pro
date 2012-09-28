@@ -11,10 +11,10 @@ HEADERS += OpenGL/Error.hpp
 HEADERS += OpenGL/RenderTargetGL.hpp
 HEADERS += OpenGL/PipelineCommand.hpp
 
-HEADERS += Text/FontCache.hpp
-HEADERS += Text/RichTextLayout.hpp
-HEADERS += Text/SimpleTextLayout.hpp
-HEADERS += Text/TextLayout.hpp
+HEADERS += FontCache.hpp
+HEADERS += RichTextLayout.hpp
+HEADERS += SimpleTextLayout.hpp
+HEADERS += TextLayout.hpp
 
 HEADERS += CocoaWindow.hpp
 HEADERS += CodecRegistry.hpp
@@ -95,10 +95,10 @@ SOURCES += OpenGL/Error.cpp
 SOURCES += OpenGL/RenderTargetGL.cpp
 SOURCES += OpenGL/PipelineCommand.cpp
 
-SOURCES += Text/FontCache.cpp
-SOURCES += Text/RichTextLayout.cpp
-SOURCES += Text/SimpleTextLayout.cpp
-SOURCES += Text/TextLayout.cpp
+SOURCES += FontCache.cpp
+SOURCES += RichTextLayout.cpp
+SOURCES += SimpleTextLayout.cpp
+SOURCES += TextLayout.cpp
 
 HEADERS += BlendMode.hpp
 SOURCES += BlendMode.cpp

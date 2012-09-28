@@ -1,6 +1,6 @@
 #include "TextLayout.hpp"
 
-#include <Luminous/Text/FontCache.hpp>
+#include <Luminous/FontCache.hpp>
 
 #include <QGlyphRun>
 
