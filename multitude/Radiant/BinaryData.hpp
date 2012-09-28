@@ -152,6 +152,9 @@ namespace Radiant {
     /// Write a string to the buffer
     /// @param str string to write
     inline void write(const QString & str) { writeString(str); }
+    /// Write a string to the buffer
+    /// @param str string to write
+    inline void write(const QByteArray & str) { writeString(str.data()); }
     /// Writes a 2D 32-bit floating point vector to the data buffer
     inline void write(Nimble::Vector2f v) { writeVector2Float32(v); }
     /// Writes a 3D 32-bit floating point vector to the data buffer

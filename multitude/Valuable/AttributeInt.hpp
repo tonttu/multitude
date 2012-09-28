@@ -43,6 +43,10 @@ namespace Valuable
     using Base::m_valueSet;
     using Base::operator =;
 
+#ifdef CLANG_XML
+    virtual int asInt(bool * const ok = 0) const OVERRIDE { if(ok) *ok = true; return static_cast<int> (value()); }
+#endif
+
     AttributeIntT() : Base() {}
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param v The numeric value of this object
