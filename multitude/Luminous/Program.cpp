@@ -112,7 +112,7 @@ namespace Luminous
     m_d->code = loadFromFile(filename);
     m_d->filename = filename;
 
-    return !m_d->code->text.isEmpty();
+    return m_d->code && !m_d->code->text.isEmpty();
   }
 
   const QByteArray & ShaderGLSL::text() const
