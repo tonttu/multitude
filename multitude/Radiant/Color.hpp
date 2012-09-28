@@ -55,6 +55,8 @@ namespace Radiant
 
       /// Make RGBA color from floats. Valid range is [0, 1]
       RADIANT_API void setRGBA(float r, float g, float b, float a);
+      /// Make HSVA color from floats.
+      RADIANT_API void setHSVA(float h, float s, float v, float a);
 
       /// Returns the red color component
       float red()   const { return get(0); }

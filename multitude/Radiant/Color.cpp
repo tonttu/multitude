@@ -15,6 +15,7 @@
 
 #include "Color.hpp"
 #include "Trace.hpp"
+#include "ColorUtils.hpp"
 
 #include <wctype.h>
 
@@ -74,6 +75,13 @@ namespace Radiant
 
   void Color::setRGBA(float r, float g, float b, float a)
   {
+    make(r, g, b, a);
+  }
+
+  void Color::setHSVA(float h, float s, float v, float a)
+  {
+    float r, g, b;
+    ColorUtils::hsvTorgb(h, s, v, r, g, b);
     make(r, g, b, a);
   }
 }
