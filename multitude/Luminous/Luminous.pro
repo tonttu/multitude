@@ -201,10 +201,5 @@ DEFINES += LUMINOUS_EXPORT
 
 CONFIG += qt
 QT += gui opengl
-# QT += svg
 
 include(../library.pri)
-
-
-
-

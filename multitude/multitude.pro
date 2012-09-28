@@ -23,7 +23,7 @@ SUBDIRS += Box2D
 CONFIG += ordered
 
 # Install some build files to the source package
-stuff.path = /src/MultiTouch/multitude
+stuff.path = /src/multitude
 stuff.files = LGPL.txt multitude.pro multitude.pri library.pri
 
 INSTALLS += stuff
@@ -32,5 +32,3 @@ win32 {
     win64:include(Win64x/Win64x.pri)
     else:include(Win32x/Win32x.pri)
 }
-
-# message(Config is $${CONFIG})
