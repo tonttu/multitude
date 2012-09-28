@@ -143,6 +143,10 @@ namespace Luminous {
   
   void SpriteRenderer::render(Luminous::RenderContext & rc) const
   {
+    /// Nothing to render
+    if (m_d->m_sprites.empty())
+      return;
+
     /// @todo If this gets too slow we can always convert this to use a persistent vertex buffer instead of always creating this anew
     bool translucent = true;
 
