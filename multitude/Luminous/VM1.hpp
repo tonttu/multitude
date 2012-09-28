@@ -18,6 +18,7 @@ namespace Luminous
 
     bool detected() const;
     void setColorCorrection(const ColorCorrection & cc);
+    void setLCDPower(bool enable);
 
     QString info();
 

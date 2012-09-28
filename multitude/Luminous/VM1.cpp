@@ -57,6 +57,8 @@ namespace {
   class BGWriter : public Luminous::Task
   {
   public:
+    /// @todo This breaks if VM1 is destroyed before the task is finished
+    /// (for exmaple when it is created from the stack)
     BGWriter(Luminous::VM1 & vm1) : m_vm1(vm1)
     {
       /// VM1 Firmware version 2.4 turns off the "Color gamma" mode
@@ -126,6 +128,23 @@ namespace Luminous
 
     // Enable gamma
     ba += 'g';
+
+    Radiant::Guard g(m_dataMutex);
+    bool createTask = m_data.isEmpty();
+    m_data = ba;
+    if(createTask)
+      Luminous::BGThread::instance()->addTask(new BGWriter(*this));
+  }
+
+  void VM1::setLCDPower(bool enable)
+  {
+    QByteArray ba;
+    ba.reserve(1);
+
+    if(enable)
+      ba += 'o';
+    else
+      ba += 'f';
 
     Radiant::Guard g(m_dataMutex);
     bool createTask = m_data.isEmpty();
