@@ -81,6 +81,7 @@ namespace Luminous
         return GL_READ_FRAMEBUFFER;
       default:
         assert(false);
+        return GL_FRAMEBUFFER;
       }
     }
   }
