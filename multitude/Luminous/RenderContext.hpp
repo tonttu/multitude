@@ -288,12 +288,10 @@ namespace Luminous
     void bindTexture(GLenum target, GLenum /*unit*/, GLuint name) {glBindTexture(target, name);}
     void bindBuffer(GLenum target, GLuint name) { glBindBuffer(target, name);}
     void bindProgram(GLSLProgramObject *) {}
-    void flush() {}
-
 
     /// Reset the OpenGL state to default
     void setDefaultState();
-    void flush2();
+    void flush();
     void restart();
 
   private:

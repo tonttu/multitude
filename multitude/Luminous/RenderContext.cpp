@@ -1155,7 +1155,7 @@ namespace Luminous
     return t_threadContext;
   }
 
-  void RenderContext::flush2()
+  void RenderContext::flush()
   {
     m_data->m_indexBuffers.flush(*this);
 
@@ -1405,7 +1405,7 @@ namespace Luminous
 
   void RenderContext::endFrame()
   {
-    flush2();
+    flush();
 
     m_data->m_driver.postFrame();
 
@@ -1603,7 +1603,7 @@ namespace Luminous
     : m_r(r)
   {
     // First, flush the current deferred render queues
-    r.flush2();
+    r.flush();
 
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);

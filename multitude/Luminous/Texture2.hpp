@@ -16,6 +16,13 @@ namespace Luminous
       Filter_Linear = GL_LINEAR
     };
 
+    enum Wrap {
+      Wrap_Repeat,
+      Wrap_Mirror,
+      Wrap_Clamp,
+      Wrap_Border,
+    };
+
   public:
     LUMINOUS_API Texture();
     LUMINOUS_API ~Texture();
@@ -66,6 +73,8 @@ namespace Luminous
     LUMINOUS_API Filter getMagFilter() const;
     LUMINOUS_API void setMagFilter(Filter filter);
 
+    LUMINOUS_API void setWrap(Wrap s, Wrap t, Wrap r);
+    LUMINOUS_API void getWrap(Wrap & s, Wrap & t, Wrap & r) const;
   private:
     class D;
     D * m_d;

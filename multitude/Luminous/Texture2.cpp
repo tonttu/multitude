@@ -25,6 +25,10 @@ namespace Luminous
       , m_minFilter(Filter_Linear)
       , m_magFilter(Filter_Linear)
     {
+      // Set default texture wrap modes
+      m_wrap[0] = Wrap_Repeat;
+      m_wrap[1] = Wrap_Repeat;
+      m_wrap[2] = Wrap_Repeat;
     }
 
     uint8_t dimensions;
@@ -40,6 +44,7 @@ namespace Luminous
 
     ContextArrayT<QRegion> dirtyRegions;
     Filter m_minFilter, m_magFilter;
+    Wrap m_wrap[3];
 
   public:
     void rehash();
@@ -253,5 +258,20 @@ namespace Luminous
   {
     m_d->m_magFilter = filter;
     invalidate();
+  }
+
+  void Texture::setWrap(Wrap s, Wrap t, Wrap r)
+  {
+    m_d->m_wrap[0] = s;
+    m_d->m_wrap[1] = t;
+    m_d->m_wrap[2] = r;
+    invalidate();
+  }
+
+  void Texture::getWrap(Wrap & s, Wrap & t, Wrap & r) const
+  {
+    s = m_d->m_wrap[0];
+    t = m_d->m_wrap[1];
+    r = m_d->m_wrap[2];
   }
 }

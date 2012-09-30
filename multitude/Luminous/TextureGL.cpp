@@ -4,6 +4,23 @@
 
 #include <QVector>
 
+namespace
+{
+  GLenum getWrapMode(Luminous::Texture::Wrap wrapMode)
+  {
+    switch (wrapMode)
+    {
+    case Luminous::Texture::Wrap_Border: return GL_CLAMP_TO_BORDER;
+    case Luminous::Texture::Wrap_Clamp: return GL_CLAMP_TO_EDGE;
+    case Luminous::Texture::Wrap_Mirror: return GL_MIRRORED_REPEAT;
+    case Luminous::Texture::Wrap_Repeat: return GL_REPEAT;
+    default:
+      Radiant::error("TextureGL: Invalid wrapmode %d - Assuming default (repeat)", wrapMode);
+      return GL_REPEAT;
+    }
+  }
+}
+
 namespace Luminous
 {
   TextureGL::TextureGL(StateGL & state)
@@ -131,6 +148,15 @@ namespace Luminous
       glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, texture.getMinFilter());
       GLERROR("TextureGL::upload # glTexParameteri");
       glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, texture.getMagFilter());
+      GLERROR("TextureGL::upload # glTexParameteri");
+
+      Texture::Wrap s, t, r;
+      texture.getWrap(s,t,r);
+      glTexParameteri(m_target, GL_TEXTURE_WRAP_S, getWrapMode(s) );
+      GLERROR("TextureGL::upload # glTexParameteri");
+      glTexParameteri(m_target, GL_TEXTURE_WRAP_T, getWrapMode(t) );
+      GLERROR("TextureGL::upload # glTexParameteri");
+      glTexParameteri(m_target, GL_TEXTURE_WRAP_R, getWrapMode(r) );
       GLERROR("TextureGL::upload # glTexParameteri");
     }
 
