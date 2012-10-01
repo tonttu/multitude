@@ -92,12 +92,6 @@ namespace Radiant
     Directory(const QString & pathname, const QString & suffixlist,
         int filters = AllEntries | NoDotAndDotDot, SortFlag sortFlag = Name);
 
-#ifdef RADIANT_CLANG
-    /// FIXME: this should not be needed. Wrapper generator has some bug, compiler generated copy constructors
-    /// are sometimes not visible
-    Directory(const Directory & dir) = default;
-#endif
- 
     /// Deallocates the list
     virtual ~Directory();
 

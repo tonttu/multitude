@@ -48,11 +48,6 @@ namespace Nimble {
     /// Constructs a vector initializing it to given values
     inline Vector2T (T cx, T cy) : x(cx), y(cy) {}
 
-#ifdef CLANG_XML
-    /// @todo ClangXML doesn't work properly with automatically generated copy constructors
-    Vector2T(const Vector2T<T> &) = default;
-#endif
-
     /// Fill the vector with zeroes
     inline void clear		(void)					{ x = (T)(0); y = (T)(0); }
     /// Set the vector to given values
