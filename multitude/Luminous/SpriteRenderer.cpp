@@ -50,7 +50,7 @@ namespace Luminous {
     void createFuzzyTexture(int dim, float centerDotSize,
                             float haloweight, float halodescent)
     {
-      m_defaultImage.allocate(dim, dim, Luminous::PixelFormat::rgbaUByte());
+      m_image.allocate(dim, dim, Luminous::PixelFormat::rgbaUByte());
       Nimble::Vector2 center(dim * 0.5f, dim * 0.5f);
       float invscale = 1.0f / center.x;
 
@@ -71,15 +71,15 @@ namespace Luminous {
               pixel.w = ((haloweight *
                 powf((cosf(d * Nimble::Math::PI) * 0.5f + 0.5f), halodescent))) / 255.f;
           }
-          m_defaultImage.setPixel(x,y, pixel);
+          m_image.setPixel(x,y, pixel);
         }
       }
 
-      m_texture["tex"] = &m_defaultImage.texture();
+      m_texture["tex"] = &m_image.texture();
     }
 
     std::map<QByteArray, const Texture *> m_texture;
-    Luminous::Image m_defaultImage;
+    Luminous::Image m_image;
 
     SpriteRenderer::SpriteVector m_sprites;
 
@@ -170,7 +170,8 @@ namespace Luminous {
 
   void SpriteRenderer::setImage(const Luminous::Image & image)
   {
-    m_d->m_texture["tex"] = &image.texture();
+    m_d->m_image = image;
+    m_d->m_texture["tex"] = & m_d->m_image.texture();
   }
 
   void SpriteRenderer::createFuzzyTexture(int dim, float centerDotSize,
