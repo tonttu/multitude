@@ -34,18 +34,7 @@ namespace Radiant
     ~SafeBool() {}
   };
 
-  template<> class SafeBool<void> : public SafeBoolBase {
-  public:
-    operator bool_type() const {
-      return boolean_test()==true ? 
-        &SafeBool<void>::this_type_does_not_support_comparisons : 0;
-    }
-  protected:
-    virtual bool boolean_test() const=0;
-    virtual ~SafeBool() {}
-  };
-
-  template <typename T, typename U> 
+  template <typename T, typename U>
   bool operator==(const SafeBool<T>& lhs,const SafeBool<U>& rhs) {
     lhs.this_type_does_not_support_comparisons();	
     return false;
