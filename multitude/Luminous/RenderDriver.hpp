@@ -23,7 +23,7 @@
 
 namespace Luminous
 {
-  class RenderDriver
+  class RenderDriver : public Patterns::NotCopyable
   {
   public:
     virtual ~RenderDriver() {}

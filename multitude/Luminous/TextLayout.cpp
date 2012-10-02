@@ -121,6 +121,29 @@ namespace Luminous
     delete m_d;
   }
 
+  TextLayout::TextLayout(const TextLayout & t)
+    : m_d(new D(*t.m_d))
+  {
+  }
+
+  TextLayout::TextLayout(TextLayout && t)
+    : m_d(t.m_d)
+  {
+    t.m_d = nullptr;
+  }
+
+  TextLayout & TextLayout::operator=(const TextLayout & t)
+  {
+    *m_d = *t.m_d;
+    return *this;
+  }
+
+  TextLayout & TextLayout::operator=(TextLayout && t)
+  {
+    std::swap(m_d, t.m_d);
+    return *this;
+  }
+
   int TextLayout::groupCount() const
   {
     return m_d->m_groups.size();

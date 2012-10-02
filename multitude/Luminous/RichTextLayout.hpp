@@ -3,16 +3,21 @@
 
 #include "TextLayout.hpp"
 
+#include <Patterns/NotCopyable.hpp>
+
 class QTextDocument;
 
 namespace Luminous
 {
   /// Rich text document layout
-  class RichTextLayout : public TextLayout
+  class RichTextLayout : public TextLayout, public Patterns::NotCopyable
   {
   public:
     LUMINOUS_API RichTextLayout(const Nimble::Vector2f & size = Nimble::Vector2f(100, 100));
     LUMINOUS_API virtual ~RichTextLayout();
+
+    LUMINOUS_API RichTextLayout(RichTextLayout && t);
+    LUMINOUS_API RichTextLayout & operator=(RichTextLayout && t);
 
     LUMINOUS_API virtual void generate() OVERRIDE;
 

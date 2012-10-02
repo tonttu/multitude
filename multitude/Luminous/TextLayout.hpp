@@ -23,6 +23,12 @@ namespace Luminous {
   public:
     LUMINOUS_API virtual ~TextLayout();
 
+    LUMINOUS_API TextLayout(const TextLayout & t);
+    LUMINOUS_API TextLayout(TextLayout && t);
+
+    LUMINOUS_API TextLayout & operator=(const TextLayout & t);
+    LUMINOUS_API TextLayout & operator=(TextLayout && t);
+
     LUMINOUS_API int groupCount() const;
     LUMINOUS_API Texture * texture(int groupIndex) const;
     LUMINOUS_API const std::vector<Item> & items(int groupIndex) const;

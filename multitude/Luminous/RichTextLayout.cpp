@@ -88,6 +88,20 @@ namespace Luminous
     delete m_d;
   }
 
+  RichTextLayout::RichTextLayout(RichTextLayout && t)
+    : TextLayout(std::move(t))
+    , m_d(t.m_d)
+  {
+    t.m_d = nullptr;
+  }
+
+  RichTextLayout & RichTextLayout::operator=(RichTextLayout && t)
+  {
+    TextLayout::operator=(std::move(t));
+    std::swap(m_d, t.m_d);
+    return *this;
+  }
+
   void RichTextLayout::generate()
   {
     if (!isLayoutReady()) {
