@@ -265,7 +265,7 @@ namespace Radiant
       }
     }
 
-    virtual ~IntrusivePtr()
+    ~IntrusivePtr()
     {
       deref();
     }
