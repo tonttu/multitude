@@ -129,11 +129,7 @@ namespace Luminous
     // Enable gamma
     ba += 'g';
 
-    Radiant::Guard g(m_dataMutex);
-    bool createTask = m_data.isEmpty();
-    m_data = ba;
-    if(createTask)
-      Luminous::BGThread::instance()->addTask(new BGWriter(*this));
+    sendCommand(ba);
   }
 
   void VM1::setLCDPower(bool enable)
@@ -146,6 +142,24 @@ namespace Luminous
     else
       ba += 'f';
 
+    sendCommand(ba);
+  }
+
+  void VM1::setVideoAutoselect()
+  {
+    sendCommand("a");
+  }
+
+  void VM1::setVideoInput(int input)
+  {
+    if(input <= 0 || input > 4)
+      Radiant::error("VM1::setVideoInput # allowed inputs [1-4]");
+    else
+      sendCommand(QByteArray::number(input));
+  }
+
+  void VM1::sendCommand(const QByteArray & ba)
+  {
     Radiant::Guard g(m_dataMutex);
     bool createTask = m_data.isEmpty();
     m_data = ba;

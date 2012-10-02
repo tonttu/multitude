@@ -19,6 +19,8 @@ namespace Luminous
     bool detected() const;
     void setColorCorrection(const ColorCorrection & cc);
     void setLCDPower(bool enable);
+    void setVideoAutoselect();
+    void setVideoInput(int input);
 
     QString info();
 
@@ -28,6 +30,8 @@ namespace Luminous
     Radiant::SerialPort & open(bool & ok);
 
   private:
+    void sendCommand(const QByteArray & ba);
+
     QByteArray m_data;
     Radiant::Mutex m_dataMutex;
     Radiant::SerialPort m_port;
