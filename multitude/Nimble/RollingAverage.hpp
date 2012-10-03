@@ -20,13 +20,12 @@
 
 namespace Nimble {
 
-  /** Rolling average calculation.
-
-  This class uses simple first-order IIR filter to provide rolling average calculation.
-  The first sample will define the value of the average instantly, while input of
-  subsequent samples will have cause slow reaction to the input value.
-
-      */
+  /// Rolling average calculation.
+  ///
+  /// This class uses simple first-order IIR filter to provide rolling average
+  /// calculation. The first sample will define the value of the average
+  /// instantly, while input of subsequent samples will have a slower reaction
+  /// to the input value.
   template <class T>
   class RollingAverageT
   {
@@ -34,19 +33,26 @@ namespace Nimble {
     /// Data type of the vector
     typedef T type;
 
+    /// Construct a new RollingAverage
     RollingAverageT() : m_any(false) {}
 
+    /// Reset the average to the given value
+    /// @param value value to reset to
     void reset(const T & value)
     {
       m_value = value;
       m_any = true;
     }
 
+    /// Reset the average to invalid state, i.e. isValid() will return false.
     void reset()
     {
       m_any = false;
     }
 
+    /// Add a sample to the average weighted by given smoothing.
+    /// @param value sample to add
+    /// @param smoothing history weight, ranging from [0,1]. The actual sample is weighted by 1-smoothing.
     void putSample(const T & value, float smoothing)
     {
       if(m_any) {
@@ -58,8 +64,12 @@ namespace Nimble {
       }
     }
 
+    /// Check if the average is valid, i.e. it has at least one sample in it.
+    /// @return true if the average is valid; otherwise false
     bool isValid() const { return m_any; }
 
+    /// Get the current value of the average
+    /// @return current average value
     const T & value() const { return m_value; }
 
   private:
@@ -67,11 +77,15 @@ namespace Nimble {
     bool m_any;
   };
 
-
+  /// Rolling average of floats
   typedef RollingAverageT<float> RollingAverageFloat;
+  /// Rolling average of doubles
   typedef RollingAverageT<double> RollingAverageDouble;
+  /// Rolling average of Vector2s
   typedef RollingAverageT<Vector2> RollingAverageVector2;
+  /// Rolling average of Vector3s
   typedef RollingAverageT<Vector3> RollingAverageVector3;
+  /// Rolling average of Vector4s
   typedef RollingAverageT<Vector4> RollingAverageVector4;
 }
 
