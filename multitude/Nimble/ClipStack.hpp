@@ -20,6 +20,7 @@ namespace Nimble
     ClipStack(const ClipStack & other);
     /// Copy a ClipStack
     /// @param other ClipStack to copy
+    /// @return reference to the ClipStack
     ClipStack & operator=(const ClipStack & other);
     /// Destroy a ClipStack
     ~ClipStack();
@@ -40,7 +41,7 @@ namespace Nimble
     bool isVisible(const Nimble::Rectangle & r) const;
     /// Check if the given point is visible
     /// @param p point to check
-    /// @param true if the point is visible: otherwise false
+    /// @return true if the point is visible: otherwise false
     bool isVisible(const Nimble::Vector2 & p) const;
 
   private:
