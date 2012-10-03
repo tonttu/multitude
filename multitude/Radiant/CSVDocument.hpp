@@ -49,7 +49,7 @@ namespace Radiant {
         @param filename filename to read
         @param delimiter column delimiter
         @return number of rows read */
-    int load(const char * filename, const char * delimiter = ",");
+    int load(const QString & filename, const char * delimiter = ",");
     /** Finds a row in the document. For each row in the document,
         this function checks if the text in the cell at that column
         matches the argument key.

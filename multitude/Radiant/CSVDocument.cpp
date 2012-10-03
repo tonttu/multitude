@@ -31,14 +31,14 @@ namespace Radiant {
   {
   }
 
-  int CSVDocument::load(const char * filename, const char * delimiter)
+  int CSVDocument::load(const QString &filename, const char * delimiter)
   {
     m_rows.clear();
 
     QString contents = Radiant::FileUtils::loadTextFile(filename);
 
     if(contents.isEmpty()) {
-      error("CSVParser::load # Empty file %s", filename);
+      error("CSVParser::load # Empty file %s", filename.toUtf8().data());
       return -1;
     }
 
