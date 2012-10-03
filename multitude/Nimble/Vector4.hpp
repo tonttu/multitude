@@ -152,6 +152,8 @@ namespace Nimble {
       return Vector3T<T>(get(i0), get(i1), get(i2));
     }
 
+    /// Zero vector
+    /// @return a zero vector
     static inline Vector4T<T> null() { return Vector4T<T>(0, 0, 0, 0); }
 
     /// Cast the vector to another type
@@ -167,7 +169,10 @@ namespace Nimble {
   /// Subtract two vectors
   template <class T> inline	Vector4T<T>	operator-	(const Vector4T<T>& v1, const Vector4T<T>& v2)	{ Vector4T<T> t(v1); t-=v2; return t; }
 
-  // Multiply vector with a scalar (v * s)
+  /// Multiply vector with a scalar (v * s)
+  /// @param v vector to multiply
+  /// @param s scalar to multiply with
+  /// @return scaled vector
   template<class T, class S>
   auto operator* (const Nimble::Vector4T<T> & v, S s) -> Nimble::Vector4T<decltype(T()*S())>
   {
@@ -175,7 +180,10 @@ namespace Nimble {
     return Nimble::Vector4T<decltype(T()*S())>(v.x * s, v.y * s, v.z * s, v.w * s);
   }
 
-  // Multiply vector with a scalar (s * v)
+  /// Multiply vector with a scalar (s * v)
+  /// @param v vector to multiply
+  /// @param s scalar to multiply with
+  /// @return scaled vector
   template<class T, class S>
   auto operator* (S s, const Nimble::Vector4T<T> & v) -> Nimble::Vector4T<decltype(T()*S())>
   {
@@ -209,6 +217,9 @@ namespace Nimble {
     }
   }
 
+  /// Get the length of the vector
+  /// @param t vector whose length to get
+  /// @return length of the vector
   template <class T>
   inline T abs(Vector4T<T> t)
   {
@@ -222,6 +233,10 @@ namespace Nimble {
     return a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3];
   }
 
+  /// Compute the projection of v onto u
+  /// @param u vector to project onto
+  /// @param v vector to project
+  /// @return the projection of v onto u
   template <class T>
   inline Vector4T<T> projection(const Vector4T<T> & u, const Vector4T<T> & v)
   {

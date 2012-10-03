@@ -47,6 +47,8 @@ namespace Nimble {
       /// @param m transformation matrix defining the center of the rectangle
       Rectangle(Nimble::Vector2f size, const Nimble::Matrix3 & m);
 
+      /// Construct a copy of the given rectangle
+      /// @param rect rectangle to copy
       Rectangle(const Nimble::Rectf & rect);
 
       /// Test if a point is inside the rectangle

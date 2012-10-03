@@ -190,8 +190,8 @@ namespace Nimble {
       /// @param mean the mean of the normal distribution
       /// @param stdDev the standard deviation for the normal distribution
       /// @param seed seed value for the pseudo-random sequence
-      RandomGaussian(float mean = 0.0f, float stdDev = 1.0f, unsigned long val = std::mt19937::default_seed)
-        : m_rand(val), m_dist(mean, stdDev) {}
+      RandomGaussian(float mean = 0.0f, float stdDev = 1.0f, unsigned long seed = std::mt19937::default_seed)
+        : m_rand(seed), m_dist(mean, stdDev) {}
 
       /// Generate a random number from the distribution
       /// @return a pseudo-random number

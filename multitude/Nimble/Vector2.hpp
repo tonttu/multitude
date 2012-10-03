@@ -148,6 +148,8 @@ namespace Nimble {
       return x == v2.x ? y < v2.y : x < v2.x;
     }
 
+    /// Zero vector
+    /// @return a zero vector
     static inline Vector2T<T> null() { return Vector2T<T>(0, 0); }
 
     /// Cast the vector to another type
@@ -215,7 +217,10 @@ namespace Nimble {
     return is;
   }
 
-  // Multiply vector with a scalar (v * s)
+  /// Multiply vector with a scalar (v * s)
+  /// @param v vector to multiply
+  /// @param s scalar to multiply with
+  /// @return scaled vector
   template<class T, class S>
   auto operator* (const Nimble::Vector2T<T> & v, S s) -> Nimble::Vector2T<decltype(T()*S())>
   {
@@ -223,7 +228,10 @@ namespace Nimble {
     return Nimble::Vector2T<decltype(T()*S())>(v.x * s, v.y * s);
   }
 
-  // Multiply vector with a scalar (s * v)
+  /// Multiply vector with a scalar (s * v)
+  /// @param v vector to multiply
+  /// @param s scalar to multiply with
+  /// @return scaled vector
   template<class T, class S>
   auto operator* (S s, const Nimble::Vector2T<T> & v) -> Nimble::Vector2T<decltype(T()*S())>
   {
@@ -418,6 +426,10 @@ namespace Nimble {
     return(t1 >= 0.0f && t1 <= 1.0f && t2 >= 0.0f && t2 <= 1.0f);
   }
 
+  /// Output the given vector to a stream
+  /// @param os stream to output to
+  /// @param t vector to output
+  /// @return reference to the stream
   template <class K, class T>
   inline K &operator<<(K &os, const Nimble::Vector2T<T> &t)
   {

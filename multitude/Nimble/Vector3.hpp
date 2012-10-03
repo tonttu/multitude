@@ -136,6 +136,8 @@ namespace Nimble {
       return Vector2T<T>(get(i0), get(i1));
     }
 
+    /// Zero vector
+    /// @return a zero vector
     static inline Vector3T<T> null() { return Vector3T<T>(0, 0, 0); }
 
     /// Cast the vector to another type
@@ -157,7 +159,10 @@ namespace Nimble {
   /// Vector of three doubles
   typedef Vector3T<double> Vector3d;
 
-  // Multiply vector with a scalar (v * s)
+  /// Multiply vector with a scalar (v * s)
+  /// @param v vector to multiply
+  /// @param s scalar to multiply with
+  /// @return scaled vector
   template<class T, class S>
   auto operator* (const Nimble::Vector3T<T> & v, S s) -> Nimble::Vector3T<decltype(T()*S())>
   {
@@ -165,7 +170,10 @@ namespace Nimble {
     return Nimble::Vector3T<decltype(v.x*s)>(v.x * s, v.y * s, v.z * s);
   }
 
-  // Multiply vector with a scalar (s * v)
+  /// Multiply vector with a scalar (s * v)
+  /// @param v vector to multiply
+  /// @param s scalar to multiply with
+  /// @return scaled vector
   template<class T, class S>
   auto operator* (S s, const Nimble::Vector3T<T> & v) -> Nimble::Vector3T<decltype(T()*S())>
   {
@@ -191,6 +199,10 @@ namespace Nimble {
     return t.length();
   }
 
+  /// Compute the dot product of two vectors
+  /// @param a first vector
+  /// @param b second vector
+  /// @return the dot product of the given vectors
   template <class K, class T>
   inline T dot(const Nimble::Vector3T<K>& a, const Nimble::Vector3T<T>& b)
   {
@@ -210,6 +222,10 @@ namespace Nimble {
     return v;
   }
 
+  /// Output the given vector to a stream
+  /// @param os stream to output to
+  /// @param t vector to output
+  /// @return reference to the stream
   template <class T>
   inline std::ostream &operator<<(std::ostream &os, const Nimble::Vector3T<T> &t)
   {
@@ -217,6 +233,10 @@ namespace Nimble {
     return os;
   }
 
+  /// Read the given vector from a stream
+  /// @param is stream to read from
+  /// @param t vector to read
+  /// @return reference to the stream
   template <class T>
   inline std::istream &operator>>(std::istream &is, Nimble::Vector3T<T> &t)
   {
@@ -226,6 +246,10 @@ namespace Nimble {
     return is;
   }
 
+  /// Output the given vector to a stream
+  /// @param os stream to output to
+  /// @param t vector to output
+  /// @return reference to the stream
   template <>
   inline std::ostream &operator<<(std::ostream &os, const Nimble::Vector3T<uint8_t> &t)
   {
@@ -233,6 +257,10 @@ namespace Nimble {
     return os;
   }
 
+  /// Read the given vector from a stream
+  /// @param is stream to read from
+  /// @param t vector to read
+  /// @return reference to the stream
   template <>
   inline std::istream &operator>>(std::istream &is, Nimble::Vector3T<uint8_t> &t)
   {

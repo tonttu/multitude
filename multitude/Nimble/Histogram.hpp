@@ -187,10 +187,8 @@ namespace Nimble {
     }
 
     /// Returns the number of bins in the histogram
-    /** This function returns the value of template parameter N. In your code, it is recommended that
-        you use this parameter rather than writing the magic value of N directly in your code, since
-        calling this function keeps you code working even if you change N in you code.  */
-    size_t size() const { return (size_t) N; }
+    /// @return number of bins in the histogram
+    size_t size() const { return static_cast<size_t> (N); }
 
     /// Returns a reference to a given bin
     T & operator [] (int i) { return m_data[i]; }

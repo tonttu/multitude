@@ -208,24 +208,34 @@ namespace Nimble {
     inline RectT fitContent(float aspectRatio) const;
 
     /// Check if two rectangles are identical
+    /// @param o rect to compare
+    /// @return true if the rects are equal; otherwise false
     inline bool operator == (const RectT<T> & o) const {
       return m_low == o.m_low && m_high == o.m_high;
     }
 
+    /// Check if two rects are not equal
+    /// @param o rect to compare
+    /// @return true if the rectangles are not equal; otherwise false
     inline bool operator != (const RectT<T> & o) const {
-      return m_low != o.m_low || m_high != o.m_high;
+      return !(*this == o);
     }
 
-    /// Returns a const pointer to the rectangle corner data
-    const T * data() const { return m_low.data(); }
     /// Returns a pointer to the rectangle corner data
+    /// @return pointer to the corner data
+    const T * data() const { return m_low.data(); }
+    /// @copydoc data
     T * data() { return m_low.data(); }
 
+    /// Convert the rect to floating-point precision
+    /// @return converted rect
     QRectF toQRectF() const
     {
       return QRectF(float(m_low.x), float(m_low.y), float(width()), float(height()));
     }
 
+    /// Convert the rect to QRect
+    /// @return QRect matching the rect
     /// @todo add some enable_if magic?
     /// typename std::enable_if<std::is_integral<T>::value, QRect>::type toQRect() const
     /// doesn't work but maybe something similar

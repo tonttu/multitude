@@ -19,9 +19,8 @@ namespace Nimble {
   class Matrix3T
   {
   public:
+    /// Data-type of the matrix
     typedef T type;
-
-    enum { Elements = 9 };
 
     /// Constructs the matrix without initializing any values.
     Matrix3T() {}
@@ -111,11 +110,17 @@ namespace Nimble {
     inline Matrix2T<T> upperLeft() const {
       return Matrix2T<T>(get(0, 0), get(0, 1), get(1, 0), get(1, 1));
     }
-    /** Calculates the inverse of this matrix.
-      @param ok Returns the success value of the inversion operation
-      @param tolerance if determinant smaller than tolerance, abort
-      @return the inverted matrix */
+
+    /// Calculates the inverse of this matrix.
+    /// @param ok Returns the success value of the inversion operation
+    /// @param tolerance if determinant smaller than tolerance, abort
+    /// @return the inverted matrix
     inline Matrix3T<T>        inverse(bool * ok = 0, T tolerance = 1.0e-8) const;
+
+    /// Calculate the inverse of this matrix. This function is an optimized
+    /// version of inverse() that assumes the bottom row of the matrix is 0 0
+    /// 1.
+    /// @return inverted matrix
     inline Matrix3T<T>        inverse23() const;
 
     /// Create a matrix that performs 2D translation
@@ -227,6 +232,8 @@ namespace Nimble {
     /// Create a projective matrix which maps from[i] to to[i] for i=0..3
     /// @param from The four source points
     /// @param to The four targets points
+    /// @param ok if defined; set to true if the projection could be created
+    /// @return projection matrix
     static Nimble::Matrix3T<T> mapCorrespondingPoints(const Nimble::Vector2T<T> from[4],
                                                   const Nimble::Vector2T<T> to[4],
                                                   bool * ok = 0)
@@ -759,6 +766,10 @@ inline Vector2T<T> Matrix3T<T>::project(const T & x, const T & y) const
   return Vector2T<T>(p.x / p.z, p.y / p.z);
 }
 
+/// Output the given matrix to a stream
+/// @param os stream to output to
+/// @param m matrix to output
+/// @return reference to the stream
 template <class T>
 inline std::ostream& operator<<(std::ostream& os, const Nimble::Matrix3T<T>& m)
 {

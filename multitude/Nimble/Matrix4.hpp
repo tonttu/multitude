@@ -19,9 +19,11 @@
 
 namespace Nimble {
 
+  /// Compute the product of two matrices
   template <class T>
   inline Matrix4T<T> operator*(const Matrix4T<T> &, const Matrix4T<T> &);
 
+  /// Compute the product of the given matrix and vector
   template <class T>
   inline Vector4T<T> operator*(const Matrix4T<T> &, const Vector4T<T> &);
 
@@ -32,9 +34,8 @@ namespace Nimble {
   class Matrix4T
   {
   public:
+    /// Data-type of the matrix
     typedef T type;
-
-    enum { Elements = 4 };
 
     /// Constructs a matrix and fills it from memory
     template <class K>
@@ -325,10 +326,16 @@ namespace Nimble {
       return result;
     }
 
-    /// Creates an orthogonal projection matrix in 3D
-    /** This function works in a way similar to glOrtho
-        (http://lmb.informatik.uni-freiburg.de/people/reisert/opengl/doc/glOrtho.html).
-    */
+    /// Creates an orthogonal projection matrix in 3D This function works in a
+    /// way similar to glOrtho
+    /// (http://lmb.informatik.uni-freiburg.de/people/reisert/opengl/doc/glOrtho.html).
+    /// @param left left clipping plane
+    /// @param right right clipping plane
+    /// @param bottom bottom clipping plane
+    /// @param top top clipping plane
+    /// @param near near clipping plane
+    /// @param far far clipping plane
+    /// @return orthogonal projection matrix
     static Matrix4T<T> ortho3D(T left, T right, T bottom, T top, T near, T far);
 
     /** Identity matrix. */
@@ -609,6 +616,10 @@ namespace Nimble {
     return res;
   }
 
+  /// Multiply two matrices
+  /// @param m1 first matrix
+  /// @param m2 second matrix
+  /// @return product of the two matrices
   template <class T>
   inline Matrix4T<T> mul(const Matrix4T<T> & m1, const Matrix4T<T> & m2)
   {
@@ -625,6 +636,10 @@ namespace Nimble {
   }
 
 
+  /// Compute the product of the given matrix and vector
+  /// @param m1 matrix to multiply
+  /// @param m2 vector to multiply with
+  /// @return product of the matrix and vector
   template <class T>
   inline Vector3T<T> operator*(const Matrix4T<T> & m1, const Vector3T<T> & m2)
   {
@@ -634,6 +649,10 @@ namespace Nimble {
     return res;
   }
 
+  /// Output the given matrix to a stream
+  /// @param os stream to output to
+  /// @param m matrix to output
+  /// @return reference to the stream
   template <class T>
   inline std::ostream& operator<<(std::ostream& os, const Matrix4T<T>& m)
   {
