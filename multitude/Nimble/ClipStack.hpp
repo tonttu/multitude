@@ -6,18 +6,41 @@
 
 namespace Nimble
 {
+  /// This class provides an implementation of a clipping stack. The stack is
+  /// defined by a list of rectangles. Each rectangle defines the visible area
+  /// on that stack level. The ClipStack is used, for example, by the rendering
+  /// algorithm to determine which widgets are visible and need to be drawn.
   class NIMBLE_API ClipStack
   {
   public:
+    /// Construct a new ClipStack
     ClipStack();
+    /// Construct a copy of a ClipStack
+    /// @param other ClipStack to copy
     ClipStack(const ClipStack & other);
+    /// Copy a ClipStack
+    /// @param other ClipStack to copy
     ClipStack & operator=(const ClipStack & other);
+    /// Destroy a ClipStack
     ~ClipStack();
 
+    /// Push a rectangle to the top of the ClipStack
+    /// @param r rectangle to push
+    /// @return reference to the ClipStack
     ClipStack & push(const Rectangle & r);
+    /// Pop a rectangle from the top of the ClipStack
+    /// @return reference to the ClipStack
     ClipStack & pop();
 
+    /// Check if the given rectangle is visible. A rectangle is visible, if the
+    /// intersection of the given rectangle and every rectangle in stack is
+    /// non-empty.
+    /// @param r rectangle to check
+    /// @return true if the rectangle is visible; otherwise false
     bool isVisible(const Nimble::Rectangle & r) const;
+    /// Check if the given point is visible
+    /// @param p point to check
+    /// @param true if the point is visible: otherwise false
     bool isVisible(const Nimble::Vector2 & p) const;
 
   private:
