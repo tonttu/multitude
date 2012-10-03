@@ -29,7 +29,6 @@ namespace Valuable
    * In practice this means that you could write in CSS: "priority: low" or
    * "priority: 15".
    *
-   * @example
    * @code
    * /// FunnyWidget.hpp
    *

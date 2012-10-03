@@ -85,7 +85,6 @@ namespace Valuable {
   /**
    * Valuable Flags, bitmask of enum values.
    *
-   * @example
    * @code
    * /// FunnyWidget.hpp
    *
