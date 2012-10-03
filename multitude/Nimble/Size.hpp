@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <type_traits>
+#include <cassert>
 
 namespace Nimble {
   
