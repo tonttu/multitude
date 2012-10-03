@@ -3,12 +3,14 @@
 
 #include <QSize>
 
+#include <Nimble/Math.hpp>
+
 #include <algorithm>
 #include <type_traits>
 
 namespace Nimble {
   
-  /// This class defines the size of a two-dimensional object using integer point precision.
+  /// This class defines the size of a two-dimensional object.
   template<typename T>
   class SizeT
   {
@@ -17,40 +19,63 @@ namespace Nimble {
     SizeT();
 
     /// Constructs a size with the given width and height
-    SizeT(int width, int height);
+    /// @param width width to initialize the size to
+    /// @param height height to initialize the size to
+    SizeT(T width, T height);
 
     /// Returns a size holding the minimum width and height of this and the given size
+    /// @param size size to compare to
+    /// @return bounded size
     SizeT boundedTo(const SizeT & size) const;
     /// Returns a size holding the maximum width and height of this and the given size
+    /// @param size size to compare to
+    /// @return expanded size
     SizeT expandedTo(const SizeT & size) const;
 
-    /// Returns true if both the width and height is 0; otherwise false
+    /// Check if the size is zero
+    /// @return true if both the width and height is 0; otherwise false
     bool isNull() const;
-    /// Returns true if both the width and height is equal to or greater than 0; otherwise false
+    /// Check if the size is invalid
+    /// @return true if both the width and height is equal to or greater than 0; otherwise false
     bool isValid() const;
-    /// Returns true if either of the width and height is less than or equal to 0; otherwise false
+    /// Check if the size is empty
+    /// @return true if either of the width and height is less than or equal to 0; otherwise false
     bool isEmpty() const;
 
     /// Get the width
+    /// @return width of the size
     T width() const { return m_width; }
     ///  Get the height
+    /// @return height of the size
     T height() const { return m_height; }
 
     /// Fits the size to the given size
-    /// @param mode
-    void fit(int width, int height, Qt::AspectRatioMode mode);
+    /// @param width width to fit to
+    /// @param height height to fit to
+    /// @param mode either Qt::IgnoreAspectRatio or Qt::KeepAspectRatio
+    void fit(T width, T height, Qt::AspectRatioMode mode);
+    /// Fits the size to the given size
+    /// @param size size to fit to
+    /// @param mode either Qt::IgnoreAspectRatio or Qt::KeepAspectRatio
     void fit(const SizeT & size, Qt::AspectRatioMode mode);
 
-//    SizeT scaled(int width, int height, Qt::AspectRatioMode mode) const;
-//    SizeT scaled(const SizeT & size, Qt::AspectRatioMode mode) const;
-
+    /// Set the width of the size
+    /// @param width new width
     void setWidth(T width);
+    /// Set the height of the size
+    /// @param height new height
     void setHeight(T height);
 
+    /// Transpose the size, i.e. swap the width and height
     void transpose();
-//    SizeT transposed() const;
 
+    /// Add the given size to this size
+    /// @param s size to add
+    /// @return reference to this size
     SizeT<T> & operator+=(const SizeT<T> & s);
+    /// Subtract the given size from this size
+    /// @param s size to subtract
+    /// @return reference to this size
     SizeT<T> & operator-=(const SizeT<T> & s);
 
     /// @todo fix these. for some reason forward declaration doesn't match the definition
@@ -59,10 +84,22 @@ namespace Nimble {
 //    template<typename U>
 //    SizeT<T> & operator/=(U c);
 
+    /// Return the sum of two sizes. Each component is added separately.
+    /// @param o size to add
+    /// @return sum of sizes
     SizeT<T> & operator+(const SizeT<T> & o) const;
+    /// Return the subtraction of two sizes. Each component is subtracted separately.
+    /// @param o size to add
+    /// @return subtraction of two sizes
     SizeT<T> & operator-(const SizeT<T> & o) const;
 
+    /// Compare if two sizes are equal
+    /// @param o size to compare
+    /// @return true if the sizes are equal; otherwise false
     bool operator==(const SizeT<T> & o) const;
+    /// Compare if two sizes are not equal
+    /// @param o size to compare
+    /// @return true if the sizes are not equal; otherwise false
     bool operator!=(const SizeT<T> & o) const;
 
   private:
@@ -80,7 +117,7 @@ namespace Nimble {
   {}
 
   template<typename T>
-  SizeT<T>::SizeT(int width, int height)
+  SizeT<T>::SizeT(T width, T height)
     : m_width(width)
     , m_height(height)
   {}
@@ -116,7 +153,7 @@ namespace Nimble {
   }
 
   template<typename T>
-  void SizeT<T>::fit(int width, int height, Qt::AspectRatioMode mode)
+  void SizeT<T>::fit(T width, T height, Qt::AspectRatioMode mode)
   {
     fit(SizeT(width, height), mode);
   }
@@ -124,6 +161,8 @@ namespace Nimble {
   template<typename T>
   void SizeT<T>::fit(const SizeT &size, Qt::AspectRatioMode mode)
   {
+    assert(mode == Qt::IgnoreAspectRatio || mode == Qt::KeepAspectRatio);
+
     if(mode == Qt::IgnoreAspectRatio || m_width == 0 || m_height == 0) {
       m_width = size.width();
       m_height = size.height();
@@ -205,8 +244,8 @@ namespace Nimble {
   template<typename T>
   bool SizeT<T>::operator==(const SizeT<T> & o) const
   {
-    /// @todo should specialize for floating-point types (epsilon)
-    return m_width == o.m_width && m_height == o.m_height;
+    return Nimble::Math::fuzzyCompare(m_width, o.m_width) &&
+           Nimble::Math::fuzzyCompare(m_height, o.m_height);
   }
 
   template<typename T>
@@ -227,7 +266,9 @@ namespace Nimble {
     return SizeT<T>(m_width - o.m_width, m_height - o.m_height);
   }
 
+  /// Two-dimensional size using integer precision
   typedef SizeT<int> Size;
+  /// Two-dimensional size using floating-point precision
   typedef SizeT<float> SizeF;
   
 } // namespace Nimble
