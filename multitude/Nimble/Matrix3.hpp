@@ -662,7 +662,7 @@ inline Nimble::Vector3T<T> operator*(const Nimble::Matrix3T<T>& m1,
 {
   Nimble::Vector3T<T> res;
   for(int i = 0; i < 3; i++)
-    res[i] = dot3(m1.row(i),m2);
+    res[i] = dot(m1.row(i), Nimble::Vector3T<T>(m2.x, m2.y, T(1)));
   return res;
 }
 

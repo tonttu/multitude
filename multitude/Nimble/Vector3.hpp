@@ -182,6 +182,9 @@ namespace Nimble {
     }
   }
 
+  /// Return the length of the vector
+  /// @param t vector whose length to get
+  /// @return length of the vector
   template <class T>
   inline T abs(Nimble::Vector3T<T> t)
   {
@@ -194,18 +197,10 @@ namespace Nimble {
     return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
   }
 
-  template <class K, class T>
-  inline T dot2(const Nimble::Vector3T<K>& a, const Nimble::Vector2T<T>& b)
-  {
-    return a[0]*b[0] + a[1]*b[1];
-  }
-
-  template <class K, class T>
-  inline T dot3(const Nimble::Vector3T<K>& a, const Nimble::Vector2T<T>& b)
-  {
-    return a[0]*b[0] + a[1]*b[1] + a[2];
-  }
-
+  /// Return the cross-product of two vectors
+  /// @param a first vector
+  /// @param b second vector
+  /// @return cross-product of the two vectors
   template <class T>
   inline Nimble::Vector3T<T> cross(const Nimble::Vector3T<T>& a, const Nimble::Vector3T<T>& b)
   {

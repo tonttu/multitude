@@ -222,32 +222,6 @@ namespace Nimble {
     return a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3];
   }
 
-  /// Returns 3D dot product of Vector4T and Vector3T objects.
-  template <class T>
-  inline T dot3(const Vector4T<T> & a, const Vector3T<T> & b)
-  {
-    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
-  }
-
-  /// Returns 3D dot product of Vector3T and Vector4T objects.
-  template <class T>
-  inline T dot3(const Vector3T<T> & a, const Vector4T<T> & b)
-  {
-    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
-  }
-
-  template <class T>
-  inline T dot4(const Vector3T<T> & a, const Vector4T<T> & b)
-  {
-    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + b[3];
-  }
-
-  template <class T>
-  inline T dot4(const Vector4T<T> & a, const Vector3T<T> & b)
-  {
-    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3];
-  }
-
   template <class T>
   inline Vector4T<T> projection(const Vector4T<T> & u, const Vector4T<T> & v)
   {
