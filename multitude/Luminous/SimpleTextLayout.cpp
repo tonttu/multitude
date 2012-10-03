@@ -171,6 +171,15 @@ namespace Luminous
     m_d = new D(QString(), f, QTextOption());
   }
 
+  SimpleTextLayout::SimpleTextLayout(const SimpleTextLayout &that)
+    : TextLayout(that.maximumSize())
+  {
+    QFont f(that.m_d->m_layout.font());
+    f.setHintingPreference(QFont::PreferNoHinting);
+
+    m_d = new D(that.m_d->m_layout.text(), f, that.m_d->m_layout.textOption());
+  }
+
   SimpleTextLayout::SimpleTextLayout(const QString & text, const Nimble::Vector2f & maximumSize,
                                      const QFont & font, const QTextOption & textOption)
     : TextLayout(maximumSize)
