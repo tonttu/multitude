@@ -12,7 +12,9 @@
 #ifdef WIN32
 # include <float.h>
 #endif
+
 #include <cstdint>
+#include <limits>
 
 namespace Nimble {
 
@@ -199,6 +201,16 @@ namespace Nimble {
     bool IsClose(const T & a, const T & b, const T & limit)
     {
       return Abs(a - b) < limit;
+    }
+
+    /// Compare two values
+    /// @param a first value to compare
+    /// @param b second value to compare
+    /// @return true if the values are close to identical; otherwise false
+    template<typename T>
+    bool fuzzyCompare(const T & a, const T & b)
+    {
+      return std::abs(a - b) < std::numeric_limits<T>::epsilon();
     }
 
     /// Rounds the given number to nearest integer
@@ -447,7 +459,6 @@ namespace Nimble {
       }
     }
   }
-
 
 }
 
