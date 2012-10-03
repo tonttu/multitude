@@ -55,7 +55,6 @@ namespace Luminous
     void setDefaultProgram() { m_program = nullptr; }
 
     inline const Luminous::Texture * texture(const QByteArray & name);
-    inline Luminous::TextureGL * textureGL(const QByteArray & name);
     inline void findTexture(const QByteArray & name, const Texture *&texture);
 
     inline void setTexture(const Luminous::Texture & texture) { setTexture("tex", texture); }
