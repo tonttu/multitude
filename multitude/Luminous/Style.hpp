@@ -11,6 +11,7 @@
 #include <Luminous/DepthMode.hpp>
 #include <Luminous/StencilMode.hpp>
 #include <Luminous/Texture2.hpp>
+#include <Luminous/ShaderUniform.hpp>
 
 #include <QFont>
 #include <QTextOption>
