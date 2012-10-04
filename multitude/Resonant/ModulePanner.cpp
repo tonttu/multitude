@@ -357,7 +357,7 @@ namespace Resonant {
 
     float inv = 1.0f - rel;
 
-    return Nimble::Math::Min(inv * 2.0f, 1.0f);
+    return std::min(inv * 2.0f, 1.0f);
   }
 
   float ModulePanner::computeGainRectangle(const LoudSpeaker * ls, Nimble::Vector2 srcLocation) const

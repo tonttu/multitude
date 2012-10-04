@@ -187,8 +187,8 @@ namespace Nimble {
     /// @return New transformation matrix
     inline static Matrix3T<T> makeTransformation(float rad, float sx, float sy, float tx, float ty)
     {
-      const T st = rad == 0.0f ? 0.0f : Nimble::Math::Sin(rad);
-      const T ct = rad == 0.0f ? 1.0f : Nimble::Math::Cos(rad);
+      const T st = rad == 0.0f ? 0.0f : std::sin(rad);
+      const T ct = rad == 0.0f ? 1.0f : std::cos(rad);
 
       return Matrix3T<T>(
           sx*ct, -sy*st, tx,
@@ -360,8 +360,8 @@ namespace Nimble {
   template <class T>
   inline void Matrix3T<T>::rotateX(T a)
   {
-    T ca = Nimble::Math::Cos(a);
-    T sa = Nimble::Math::Sin(a);
+    T ca = std::cos(a);
+    T sa = std::sin(a);
     m[0].make(1.0, 0.0, 0.0);
     m[1].make(0.0, ca, -sa);
     m[2].make(0.0, sa, ca);
@@ -370,8 +370,8 @@ namespace Nimble {
   template <class T>
   inline void Matrix3T<T>::rotateY(T a)
   {
-    T ca = Nimble::Math::Cos(a);
-    T sa = Nimble::Math::Sin(a);
+    T ca = std::cos(a);
+    T sa = std::sin(a);
     m[0].make(ca,  0.0, sa);
     m[1].make(0.0, 1.0, 0.0);
     m[2].make(-sa, 0.0, ca);
@@ -381,8 +381,8 @@ namespace Nimble {
   template <class T>
   inline void Matrix3T<T>::rotateZ(T a)
   {
-    T ca = Nimble::Math::Cos(a);
-    T sa = Nimble::Math::Sin(a);
+    T ca = std::cos(a);
+    T sa = std::sin(a);
     m[0].make(ca, -sa, 0.0);
     m[1].make(sa, ca, 0.0);
     m[2].make(0.0, 0.0, 1.0);
@@ -415,7 +415,7 @@ namespace Nimble {
 
     T fTrace = data()[0] + data()[4] + data()[8];
     T fCos = ((T)0.5)*(fTrace-((T)1.0));
-    radians = Nimble::Math::ACos(fCos);  // in [0,PI]
+    radians = std::acos(fCos);  // in [0,PI]
 
     if ( radians > (T)0.0 ) {
       if ( radians < Nimble::Math::PI ) {
@@ -431,7 +431,7 @@ namespace Nimble {
       // r00 >= r11
       if ( data()[0] >= data()[8] ) {
         // r00 is maximum diagonal term
-        axis[0] = ((T)0.5)*Math::Sqrt(data()[0] -
+        axis[0] = ((T)0.5)*std::sqrt(data()[0] -
                       data()[4] - data()[8] + (T)1.0);
         fHalfInverse = ((T)0.5)/axis[0];
         axis[1] = fHalfInverse*data()[1];
@@ -439,7 +439,7 @@ namespace Nimble {
       }
       else {
         // r22 is maximum diagonal term
-        axis[2] = ((T)0.5)*Math::Sqrt(data()[8] -
+        axis[2] = ((T)0.5)*std::sqrt(data()[8] -
                       data()[0] - data()[4] + (T)1.0);
         fHalfInverse = ((T)0.5)/axis[2];
         axis[0] = fHalfInverse*data()[2];
@@ -450,7 +450,7 @@ namespace Nimble {
       // r11 > r00
       if ( data()[4] >= data()[8] ) {
         // r11 is maximum diagonal term
-        axis[1] = ((T)0.5)*Math::Sqrt(data()[4] -
+        axis[1] = ((T)0.5)*std::sqrt(data()[4] -
                       data()[0] - data()[8] + (T)1.0);
         fHalfInverse  = ((T)0.5)/axis[1];
         axis[0] = fHalfInverse*data()[1];
@@ -458,7 +458,7 @@ namespace Nimble {
       }
       else {
         // r22 is maximum diagonal term
-        axis[2] = ((T)0.5)*Math::Sqrt(data()[8] -
+        axis[2] = ((T)0.5)*std::sqrt(data()[8] -
                       data()[0] - data()[4] + (T)1.0);
         fHalfInverse = ((T)0.5)/axis[2];
         axis[0] = fHalfInverse*data()[2];
@@ -481,8 +481,8 @@ namespace Nimble {
   template <class T>
   inline void Matrix3T<T>::rotateAroundAxis(const Vector3T<T>& axis, T radians)
   {
-    T ca = Nimble::Math::Cos(radians);
-    T sa = Nimble::Math::Sin(radians);
+    T ca = std::cos(radians);
+    T sa = std::sin(radians);
     // T fCos = cos(radians);
     // T sa = sin(radians);
     T fOneMinusCos = ((T) 1.0) -ca;
@@ -518,15 +518,15 @@ namespace Nimble {
       {
     if ( m[0][2] > -1.0f )
       {
-        xa = Nimble::Math::ATan2(-m[1][2],m[2][2]);
+        xa = std::atan2(-m[1][2],m[2][2]);
         ya = (T)asin(m[0][2]);
-        za = Nimble::Math::ATan2(-m[0][1],m[0][0]);
+        za = std::atan2(-m[0][1],m[0][0]);
         return true;
       }
         else
       {
             // WARNING.  Not unique.  XA - ZA = -atan2(r10,r11)
-            xa = -Math::ATan2(m[1][0],m[1][1]);
+            xa = -std::atan2(m[1][0],m[1][1]);
             ya = -(T)Math::HALF_PI;
             za = 0.0f;
             return false;
@@ -535,7 +535,7 @@ namespace Nimble {
     else
       {
     // WARNING.  Not unique.  XAngle + ZAngle = atan2(r10,r11)
-    xa = Nimble::Math::ATan2(m[1][0],m[1][1]);
+    xa = std::atan2(m[1][0],m[1][1]);
     ya = (T)Math::HALF_PI;
     za = 0.0f;
     return false;
@@ -588,7 +588,7 @@ namespace Nimble {
 
     T fDet = m[0][0] * res[0][0] + m[0][1] * res[1][0] + m[0][2] * res[2][0];
 
-    if(Math::Abs(fDet) <= tolerance ) {
+    if(std::abs(fDet) <= tolerance ) {
       if(ok)
     *ok = false;
       return res;
@@ -718,7 +718,7 @@ T Matrix3T<T>::extractScale() const
 {
   Vector3T<T> u(T(1), T(0), T(0));
   Vector3T<T> v = *this * u;
-  T s = Nimble::Math::Sqrt(v.x * v.x + v.y * v.y);
+  T s = std::sqrt(v.x * v.x + v.y * v.y);
 
   return s;
 }

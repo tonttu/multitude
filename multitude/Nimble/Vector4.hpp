@@ -80,7 +80,7 @@ namespace Nimble {
     /// Checks if all components are zero
     inline bool		isZero	    (void) const		       { return (x == 0.0f && y == 0.0f && z == 0.0f && w == 0.0f); }
     /// Returns the length of the vector
-    inline double	length	    (void) const		       { return sqrt(double(x*x+y*y+z*z+w*w)); }
+    inline double	length	    (void) const		       { return std::sqrt(double(x*x+y*y+z*z+w*w)); }
    /// Returns the squared length of the vector
     inline double	lengthSqr   (void) const		       { return x*x+y*y+z*z+w*w; }
     /// Normalizes the vector to given length
@@ -209,21 +209,11 @@ namespace Nimble {
   /// Vector of four doubles
   typedef Vector4T<double> Vector4d;
 
-
-  namespace Math {
-    /// Specialize Abs
-    template <class T>
-    inline T Abs(const Vector4T<T>& t)
-    {
-      return t.length();
-    }
-  }
-
   /// Get the length of the vector
   /// @param t vector whose length to get
   /// @return length of the vector
   template <class T>
-  inline T abs(Vector4T<T> t)
+  inline T abs(const Vector4T<T> & t)
   {
     return t.length();
   }
@@ -265,4 +255,13 @@ namespace Nimble {
   }
 } // namespace
 
+namespace std
+{
+  // Define std::abs for Vector4T
+  template <typename T>
+  inline T abs(const Nimble::Vector4T<T> & v)
+  {
+    return Nimble::abs(v);
+  }
+} 
 #endif

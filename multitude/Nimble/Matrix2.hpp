@@ -99,7 +99,7 @@ namespace Nimble {
     static int         columns() { return 2; }
 
     /// Returns a rotation matrix
-    static Matrix2T makeRotation(T r) { T c = Nimble::Math::Cos(r); T s = Nimble::Math::Sin(r); return Matrix2T(c, -s, s, c); }
+    static Matrix2T makeRotation(T r) { T c = std::cos(r); T s = std::sin(r); return Matrix2T(c, -s, s, c); }
     /// Returns a scaling matrix
     static Matrix2T makeScale(T s)  { return Matrix2T<T>(s, 0, 0, s); }
 
@@ -127,8 +127,8 @@ namespace Nimble {
   template <class T>
   inline void Matrix2T<T>::rotate(T a)
   {
-    T ca = Nimble::Math::Cos(a);
-    T sa = Nimble::Math::Sin(a);
+    T ca = std::cos(a);
+    T sa = std::sin(a);
     m[0].make(ca, -sa);
     m[1].make(sa, ca);
   }
@@ -142,7 +142,7 @@ namespace Nimble {
     // Code from WidMagic4
 
     T fDet = det();
-    if (Math::Abs(fDet) > tolerance) {
+    if (std::abs(fDet) > tolerance) {
       T fInvDet = ((T)1.0)/fDet;
       inv.data()[0] =  data()[3]*fInvDet;
       inv.data()[1] = -data()[1]*fInvDet;

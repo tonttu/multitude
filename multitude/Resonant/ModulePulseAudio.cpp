@@ -161,7 +161,7 @@ namespace Resonant
       }
     }
 
-    int pos = Nimble::Math::Min<int>(n, m_bufferSize);
+    int pos = std::min<int>(n, m_bufferSize);
     if(pos)
       memcpy(out[0], m_buffer, pos*4);
 
@@ -187,7 +187,7 @@ namespace Resonant
         m_bufferSize /= 4;
 
         if(m_bufferSize) {
-          int tmp = Nimble::Math::Min<int>(n, m_bufferSize);
+          int tmp = std::min<int>(n, m_bufferSize);
           memcpy(out[0] + pos, m_buffer, tmp*4);
           m_bufferSize -= tmp;
           m_buffer += tmp;

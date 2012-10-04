@@ -20,7 +20,7 @@ namespace Luminous
     RenderCommand & cmd = createRenderCommand(translucent, vertexArray, uniformBuffer, builder.depth, program, textures, uniforms);
 
     /// Set some defaults
-    size_t uniformSize = Nimble::Math::Ceil(sizeof(UniformBlock) / float(uniformBufferOffsetAlignment())) * uniformBufferOffsetAlignment();
+    size_t uniformSize = std::ceil(sizeof(UniformBlock) / float(uniformBufferOffsetAlignment())) * uniformBufferOffsetAlignment();
 
     cmd.primitiveType = type;                         // Lines, points, vertices, etc
     cmd.primitiveSize = primitiveSize;                // For lines/points

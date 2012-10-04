@@ -173,7 +173,7 @@ namespace Luminous
         }
         if (alphaCount > 0) {
           // Scale the alpha by all the pixels
-          alphaSum = std::min<float>(alphaSum / count, 1.f);
+          alphaSum = std::min(alphaSum / count, 1.f);
           // Scale the color by the number of pixels that contribute
           colorSum /= alphaCount * alphaSum;
           // Round the color (setPixel just makes float -> int conversion wihtout rounding)
@@ -240,7 +240,7 @@ namespace Luminous
             float val =
                 (*v00) * fw00 +  (*v10) * fw10 +  (*v01) * fw01 + (*v11) * fw11;
 
-            *dest = uint8_t(Nimble::Math::Min((int) (val + 0.5f), 255));
+            *dest = uint8_t(std::min((int) (val + 0.5f), 255));
 
             dest++;
 
@@ -308,7 +308,7 @@ namespace Luminous
                 ((*v00) * fw00 * a00 +  (*v10) * fw10 * a10 +
                  (*v01) * fw01 * a01 +  (*v11) * fw11 * a11) * ascale;
 
-            *dest = uint8_t(Nimble::Math::Min((int) (val + 0.5f), 255));
+            *dest = uint8_t(std::min((int) (val + 0.5f), 255));
 
             dest++;
 
@@ -318,7 +318,7 @@ namespace Luminous
             v11++;
           }
 
-          *dest = uint8_t(Nimble::Math::Min((int) asum, 255));
+          *dest = uint8_t(std::min((int) asum, 255));
 
           /* if(*dest > 128)
              printf("."); */

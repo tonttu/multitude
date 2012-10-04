@@ -464,7 +464,7 @@ namespace Radiant {
 
     m_current += recv;
 
-    memcpy( ptr, source, Nimble::Math::Min(n, recv));
+    memcpy( ptr, source, std::min(n, recv));
 
     return n == recv;
   }

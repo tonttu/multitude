@@ -501,11 +501,11 @@ namespace Luminous {
       Nimble::Vector2i low2 = w->location();
       Nimble::Vector2i high2 = w->location() + w->size();
 
-      low.x = Nimble::Math::Min(low.x, low2.x);
-      low.y = Nimble::Math::Min(low.y, low2.y);
+      low.x = std::min(low.x, low2.x);
+      low.y = std::min(low.y, low2.y);
 
-      high.x = Nimble::Math::Max(high.x, high2.x);
-      high.y = Nimble::Math::Max(high.y, high2.y);
+      high.x = std::max(high.x, high2.x);
+      high.y = std::max(high.y, high2.y);
     }
 
     return high - low;
@@ -543,8 +543,8 @@ namespace Luminous {
       float wleft  = a.graphicsLocation().x;
       float wright = wleft + a.graphicsSize().x;
 
-      left  = Nimble::Math::Min(left,  wleft);
-      right = Nimble::Math::Max(right, wright);
+      left  = std::min(left,  wleft);
+      right = std::max(right, wright);
 
 //      debugLuminous("lr = %f %f", left, right);
     }
@@ -565,8 +565,8 @@ namespace Luminous {
       float wtop = a.graphicsLocation().y;
       float wbot = wtop + a.graphicsSize().y;
 
-      top = Nimble::Math::Min(top, wtop);
-      bottom = Nimble::Math::Max(bottom, wbot);
+      top = std::min(top, wtop);
+      bottom = std::max(bottom, wbot);
     }
 
     return (int) (bottom - top);

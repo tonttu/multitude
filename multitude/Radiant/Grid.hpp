@@ -448,11 +448,11 @@ namespace Radiant {
   template <typename T, class Base>
   void GridT<T, Base>::fillCircle(const T & val, Nimble::Vector2 center, float radius)
   {
-    int ylow = Nimble::Math::Max((int) (center.y - radius), 0);
-    int yhigh = Nimble::Math::Min((int) (center.y + radius + 1), (int) height());
+    int ylow = std::max((int) (center.y - radius), 0);
+    int yhigh = std::min((int) (center.y + radius + 1), (int) height());
 
-    int xlow = Nimble::Math::Max((int) (center.x - radius), 0);
-    int xhigh = Nimble::Math::Min((int) (center.x + radius + 1), (int) width());
+    int xlow = std::max((int) (center.x - radius), 0);
+    int xhigh = std::min((int) (center.x + radius + 1), (int) width());
 
     for(int y = ylow; y < yhigh; y++) {
       for(int x = xlow; x < xhigh; x++) {

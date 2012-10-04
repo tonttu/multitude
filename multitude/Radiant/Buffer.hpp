@@ -37,7 +37,7 @@ namespace Radiant
         m_value(t),
         m_cached(true)
     {
-      m_data.resize(Nimble::Math::Max(10, int(history*120)));
+      m_data.resize(std::max(10, int(history*120)));
     }
 
     void add(const T & t, Radiant::TimeStamp ts = Radiant::TimeStamp::currentTime())

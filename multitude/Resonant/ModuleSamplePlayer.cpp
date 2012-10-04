@@ -69,7 +69,7 @@ namespace Resonant {
     size_t pos = 0;
 
     while(pos < static_cast<size_t> (m_d->m_info.frames)) {
-      size_t get = Nimble::Math::Min((size_t) (m_d->m_info.frames - pos), block);
+      size_t get = std::min((size_t) (m_d->m_info.frames - pos), block);
       size_t n = get * m_d->m_info.channels;
 
       sf_read_float(sndf, & m_data[pos * m_d->m_info.channels], n);

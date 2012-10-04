@@ -229,8 +229,8 @@ bool ImageCodecDDS::read(CompressedImage & image, FILE * file, int level)
     if(l == level) break;
 
     offset += size;
-    info.width = Nimble::Math::Max(1, info.width >> 1);
-    info.height = Nimble::Math::Max(1, info.height >> 1);
+    info.width = std::max(1, info.width >> 1);
+    info.height = std::max(1, info.height >> 1);
   }
 
   fseek(file, offset, SEEK_SET);

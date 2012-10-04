@@ -44,7 +44,7 @@ namespace Luminous
 
     if(envgp) {
 
-      m_comfortableGPURAM = Nimble::Math::Max(atol(envgp) * (1 << 20),
+      m_comfortableGPURAM = std::max(atol(envgp) * (1 << 20),
                           m_comfortableGPURAM);
     }
 

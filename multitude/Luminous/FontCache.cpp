@@ -297,7 +297,7 @@ namespace Luminous
 
     const float glyphSize = std::max(br.width(), br.height());
     const float distanceFieldSize = glyphSize + 2.0 * s_padding;
-    const float hiresSize = Nimble::Math::Min<float>(s_maxHiresSize, s_maxHiresSize * glyphSize / s_distanceFieldPixelSize);
+    const float hiresSize = std::min((float)s_maxHiresSize, s_maxHiresSize * glyphSize / s_distanceFieldPixelSize);
     const float hiresPadding = hiresSize * s_padding / distanceFieldSize;
     const float hiresFactor = hiresSize / distanceFieldSize;
 

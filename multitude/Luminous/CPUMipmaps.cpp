@@ -147,7 +147,7 @@ namespace Luminous {
     if(ask <= (int(first) >> m_maxLevel))
       return m_maxLevel;
 
-    int bestlevel = Nimble::Math::Floor(log(ask / first) / log(0.5)) + 1;
+    int bestlevel = std::floor(log(ask / first) / log(0.5)) + 1;
 
     if(bestlevel > m_maxLevel)
       bestlevel = m_maxLevel;
@@ -315,7 +315,7 @@ namespace Luminous {
     m_maxLevel = std::numeric_limits<int>::max();
     m_maxLevel = getOptimal(Nimble::Vector2f(SMALLEST_IMAGE, SMALLEST_IMAGE));
     if(m_info.pf.compression()) {
-      m_maxLevel = Nimble::Math::Min(m_maxLevel, m_info.mipmaps - 1);
+      m_maxLevel = std::min(m_maxLevel, m_info.mipmaps - 1);
     }
 
     m_shouldSave.insert(getOptimal(Nimble::Vector2f(SMALLEST_IMAGE, SMALLEST_IMAGE)));

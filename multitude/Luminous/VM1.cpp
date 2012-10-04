@@ -37,7 +37,7 @@ namespace {
       if(r < 0) {
         int e = errno;
         if(e == EAGAIN && timeoutMS > 0) {
-          Radiant::Sleep::sleepMs(Nimble::Math::Max(1, timeoutMS));
+          Radiant::Sleep::sleepMs(std::max(1, timeoutMS));
           --timeoutMS;
           continue;
         } else {

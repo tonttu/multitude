@@ -331,8 +331,8 @@ namespace Radiant
     Nimble::Vector2i avail(f7info.maxWidth, f7info.maxHeight);
     avail -= roi.low();
 
-    f7s.width = Nimble::Math::Min(roi.width(), avail.x);
-    f7s.height = Nimble::Math::Min(roi.height(), avail.y);
+    f7s.width = std::min(roi.width(), avail.x);
+    f7s.height = std::min(roi.height(), avail.y);
     f7s.pixelFormat = FlyCapture2::PIXEL_FORMAT_MONO8;
     f7s.mode = FlyCapture2::Mode(mode);
 

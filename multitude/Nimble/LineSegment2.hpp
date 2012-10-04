@@ -156,7 +156,7 @@ template <typename T>
 
       float denom = a1*b2 - a2*b1;
 
-      if(Math::Abs(denom) > 1.0e-6) {
+      if(std::abs(denom) > 1.0e-6) {
         if(point) {
           point->x = (b1*c2 - b2*c1)/denom;
           point->y = (a2*c1 - a1*c2)/denom;
@@ -178,7 +178,7 @@ template <typename T>
     {
       Nimble::Vector2T<T> perp = directionNormalized().perpendicular();
 
-      return Nimble::Math::Abs(dot(perp, point - m_points[0]));
+      return std::abs(dot(perp, point - m_points[0]));
     }
 
     /// Returns true if the line segment intersects with the given bezier curve
@@ -215,7 +215,7 @@ template <typename T>
     Vector2T<T> end = m_points[0].x < m_points[1].x ? m_points[1] : m_points[0];
     end -= start;
 
-    float angle = atan2(end.y, end.x);
+    float angle = std::atan2(end.y, end.x);
 
     // translate and rotate control points so that we can check intersection against { y = 0 }
     Matrix3T<T> m = Matrix3T<T>::makeRotation(-angle) * Matrix3T<T>::makeTranslation(-start);

@@ -55,10 +55,10 @@ namespace Luminous
 
     v += x * contrast() + 0.5f * (Nimble::Vector3f(1.f, 1.f, 1.f) - contrast());
 
-    return Nimble::Vector3(
-          Nimble::Math::Pow(v[0], m_gamma[0]) + m_brightness[0],
-          Nimble::Math::Pow(v[1], m_gamma[1]) + m_brightness[1],
-          Nimble::Math::Pow(v[2], m_gamma[2]) + m_brightness[2]).clampUnit();
+    return Nimble::Vector3f(
+      std::pow(v[0], m_gamma[0]) + m_brightness[0],
+      std::pow(v[1], m_gamma[1]) + m_brightness[1],
+      std::pow(v[2], m_gamma[2]) + m_brightness[2]).clampUnit();
   }
 
   bool ColorCorrection::isIdentity() const

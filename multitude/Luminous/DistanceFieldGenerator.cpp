@@ -71,11 +71,11 @@ retry:
       if(rowTransformed.size() < w*h)
         rowTransformed.resize(w*h);
 
-      if(locs.size() < Nimble::Math::Max(w,h))
-        locs.resize(Nimble::Math::Max(w, h));
+      if(locs.size() < std::max(w,h))
+        locs.resize(std::max(w, h));
 
-      if(ranges.size() < Nimble::Math::Max(w,h)+1)
-        ranges.resize(Nimble::Math::Max(w,h)+1);
+      if(ranges.size() < std::max(w,h)+1)
+        ranges.resize(std::max(w,h)+1);
 
 
       for(size_t y=0; y < h; ++y) {
@@ -115,7 +115,7 @@ retry:
           float distance_inv = distances_inv.getInterpolatedSafe<float>(Nimble::Vector2(sx, sy));
           float v = distance-distance_inv;
           float sgn = v < 0 ? -1 : 1;
-          float q = sgn*Nimble::Math::Sqrt(sgn*v) / maxim;
+          float q = sgn*std::sqrt(sgn*v) / maxim;
           line[tx] = (0.5f + q) * toInt;
         }
       }
@@ -209,9 +209,9 @@ retry:
         // vm/um would be much smaller in most cases
 
         // Iterate the neighbourhood in the source image
-        for (int v = Nimble::Math::Max(0, sy-radius), vm = std::min(sheight, sy+radius); v < vm; ++v) {
+        for (int v = std::max(0, sy-radius), vm = std::min(sheight, sy+radius); v < vm; ++v) {
           const unsigned char * testLine = src.line(v);
-          for (int u = Nimble::Math::Max(0, sx-radius), um = std::min(swidth, sx+radius); u < um; ++u) {
+          for (int u = std::max(0, sx-radius), um = std::min(swidth, sx+radius); u < um; ++u) {
 
             // Test if we found border
             bool testIn = testLine[u] > 0x7f;
@@ -229,8 +229,8 @@ retry:
               best1 = currentLength1;
               vm = std::min(sheight, sy+currentLength1);
               um = std::min(swidth, sx+currentLength1);
-              v = Nimble::Math::Max(v, sy-currentLength1);
-              u = Nimble::Math::Max(u, sx-currentLength1);
+              v = std::max(v, sy-currentLength1);
+              u = std::max(u, sx-currentLength1);
             }
           }
         }

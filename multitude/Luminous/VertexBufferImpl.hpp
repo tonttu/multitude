@@ -76,7 +76,7 @@ namespace Luminous
     bind();
 
     glBufferSubData(type, offsetInBytes, bytes, data);
-    m_filled = Nimble::Math::Max(m_filled, offsetInBytes + bytes);
+    m_filled = std::max(m_filled, offsetInBytes + bytes);
   }
 
 #ifndef LUMINOUS_OPENGLES

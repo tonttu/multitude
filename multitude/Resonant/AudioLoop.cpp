@@ -193,7 +193,7 @@ namespace Resonant {
         }
       }
 
-      // int minchans = Nimble::Math::Min(info->maxInputChannels, info->maxOutputChannels);
+      // int minchans = std::min(info->maxInputChannels, info->maxOutputChannels);
       int minchans = info->maxOutputChannels;
 
       if(forcechans > 0) {

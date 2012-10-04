@@ -526,7 +526,7 @@ namespace Radiant
     if(!m_data) return 0;
     uint32_t avail = writeAvailable();
 
-    n = Nimble::Math::Min<uint32_t>(n, avail);
+    n = std::min<uint32_t>(n, avail);
 
     if(m_data->written + n > size()) {
       int n1 = size() - m_data->written;

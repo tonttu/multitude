@@ -211,11 +211,11 @@ namespace Nimble {
     static Matrix4T<T> simpleProjection(T width, T height, T fovy = Nimble::Math::PI*0.5)
     {
       // Camera distance to the center widget center point (assuming it's resting).
-      T dist = height * T(.5) / Nimble::Math::Tan(fovy * T(.5));
+      T dist = height * T(.5) / std::tan(fovy * T(.5));
       T aspect = width/height;
 
       // we won't be needing depth, so the third column is just zero unlike normally
-      T f = T(1.0) / Nimble::Math::Tan(fovy*T(.5));
+      T f = T(1.0) / std::tan(fovy*T(.5));
       Nimble::Matrix4T<T> projection(f/aspect, 0, 0, 0,
                                      0, f, 0, 0,
                                      0, 0, 0, 0,
@@ -437,7 +437,7 @@ namespace Nimble {
     T fB5 = my[10]*my[15] - my[11]*my[14];
 
     T fDet = fA0*fB5-fA1*fB4+fA2*fB3+fA3*fB2-fA4*fB1+fA5*fB0;
-    if ( Nimble::Math::Abs(fDet) <= 1.0e-10 ) {
+    if ( std::abs(fDet) <= 1.0e-10 ) {
       if(ok) *ok = false;
       Matrix4T<T> tmp;
       tmp.identity();

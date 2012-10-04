@@ -164,22 +164,22 @@ namespace Nimble {
       angle *= T(0.5);
       axis.normalize();
 
-      T si = Nimble::Math::Sin(angle);
-      w = Nimble::Math::Cos(angle);
+      T si = std::sin(angle);
+      w = std::cos(angle);
       x = axis.x * si;
       y = axis.y * si;
       z = axis.z * si;
 
     }
 
-    /// The squared length of this quaterion
+    /// The squared length of this quaternion
     /// @return x*x+y*y+z*z+w*w
     T lensq() const
     {
       return(x*x+y*y+z*z+w*w);
     }
 
-    /// Returns dot product between this quatertion and the argument quaternion
+    /// Returns dot product between this quaternion and the argument quaternion
     T dotp(const QuaternionT & v) const
     {
       return(x*v.x+y*v.y+z*v.z+w*v.w);
@@ -301,10 +301,10 @@ namespace Nimble {
       if((T(1.0) - cosom) > T(1e-03)) {
         // The quaternions aren't very close, proceed with SLERP
 
-        theta = Nimble::Math::ACos(cosom);
-        sinom =	T(1.0) / Nimble::Math::Sin(theta);
-        scale0 = Nimble::Math::Sin(theta * scale0) * sinom;
-        scale1 = Nimble::Math::Sin(theta * scale1) * sinom;
+        theta = std::acos(cosom);
+        sinom =	T(1.0) / std::sin(theta);
+        scale0 = std::sin(theta * scale0) * sinom;
+        scale1 = std::sin(theta * scale1) * sinom;
       }
 
       // Do the interpolation
@@ -331,7 +331,7 @@ namespace Nimble {
       T len = x*x + y*y + z*z;
       if(len > T(0.0)) {
         T ilen = Nimble::Math::InvSqrt(len);
-        angle = T(2.0) * Nimble::Math::ACos(w);
+        angle = T(2.0) * std::acos(w);
         axis.x = x*ilen;
         axis.y = y*ilen;
         axis.z = z*ilen;
@@ -349,7 +349,7 @@ namespace Nimble {
     {
       angle *= 0.5;
       axis.normalize();
-      return QuaternionT(axis*Math::Sin(angle), Nimble::Math::Cos(angle));
+      return QuaternionT(axis*std::sin(angle), std::cos(angle));
     }
   };
 

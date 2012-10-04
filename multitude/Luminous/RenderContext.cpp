@@ -317,7 +317,7 @@ namespace Luminous
   {
     debugLuminous("Closing OpenGL context. Rendered %lu things in %lu frames, %lu things per frame",
          m_data->m_renderCount, m_data->m_frameCount,
-         m_data->m_renderCount / Nimble::Math::Max(m_data->m_frameCount, (unsigned long) 1));
+         m_data->m_renderCount / std::max(m_data->m_frameCount, (unsigned long) 1));
     delete m_data;
   }
 
@@ -516,7 +516,7 @@ namespace Luminous
     bool isFilled = style.fillColor().alpha() > 0.f;
     bool stroke = style.strokeWidth() > 0.0f;
 
-    bool needInnerStroke = Nimble::Math::Min(a, b) - width/2.0f > 0.0f;
+    bool needInnerStroke = std::min(a, b) - width/2.0f > 0.0f;
 
     const float step = (toRadians - fromRadians) / (linesegments-1);
 
@@ -524,7 +524,7 @@ namespace Luminous
 
     float r = 0.5f * width;
 
-    float maxLength = Nimble::Math::Max(a, b);
+    float maxLength = std::max(a, b);
     float iSpan = 1.0f/(2.0f*r);
     Nimble::Vector2f low = Nimble::Vector2(maxLength, maxLength);
 
@@ -560,7 +560,7 @@ namespace Luminous
     for (unsigned int i = 0; i < linesegments; ++i) {
       // Expand path of ellipse e(t) = (a cos(t), b sin(t)) along normals
 
-      Nimble::Vector2f c = Nimble::Vector2(Nimble::Math::Cos(angle), Nimble::Math::Sin(angle));
+      Nimble::Vector2f c = Nimble::Vector2(std::cos(angle), std::sin(angle));
       Nimble::Vector2f normal = Nimble::Vector2(-b*c.x, -a*c.y).normalize(r);
 
       Nimble::Vector2 e(a*c.x, b*c.y);
@@ -587,7 +587,7 @@ namespace Luminous
 
         // Calculate dg/dt
         Nimble::Vector2 s_(a*a*b*c.y, -a*b*b*c.x);
-        s_ *= -r*Nimble::Math::Pow(e_.x*e_.x + e_.y*e_.y, -3/2.0f);
+        s_ *= -r*std::pow(e_.x*e_.x + e_.y*e_.y, -3/2.0f);
 
         // Add de/dt
         s_ += Nimble::Vector2(-a*c.y, b*c.x);
@@ -733,7 +733,7 @@ namespace Luminous
     unsigned int indexOffset, vertexOffset, uniformOffset;
 
     // Align uniforms as required by OpenGL
-    uniformSize = Nimble::Math::Ceil(uniformSize / float(uniformBufferOffsetAlignment())) * uniformBufferOffsetAlignment();
+    uniformSize = std::ceil(uniformSize / float(uniformBufferOffsetAlignment())) * uniformBufferOffsetAlignment();
 
     SharedBuffer * vbuffer;
     std::tie(mappedVertexBuffer, vbuffer) = sharedBuffer(vertexSize, vertexCount, Buffer::Vertex, vertexOffset);
@@ -1015,7 +1015,7 @@ namespace Luminous
 
     /// @todo how to calculate these?
     const float edge = 0.5f - style.fontRenderWidth() / 60.0f;
-    const float strokeWidth = Nimble::Math::Min(1.0f, style.strokeWidth() / 60.0f);
+    const float strokeWidth = std::min(1.0f, style.strokeWidth() / 60.0f);
 
     if (style.dropShadowColor().alpha() > 0.0f) {
       uniform.colorIn = uniform.colorOut = style.dropShadowColor();

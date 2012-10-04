@@ -32,10 +32,10 @@ namespace Radiant {
   FrameRate closestFrameRate(float fps)
   {
     int best = 0;
-    float diff = Nimble::Math::Abs(fps - table[0]);
+    float diff = std::abs(fps - table[0]);
 
     for(int i = 0; i < FPS_COUNT; i++) {
-      float diff2 = Nimble::Math::Abs(fps - table[i]);
+      float diff2 = std::abs(fps - table[i]);
       if(diff > diff2) {
 	diff = diff2;
 	best = i;

@@ -83,7 +83,7 @@ namespace Nimble {
     /// Check if all components are zero
     inline bool		isZero		(void) const			   { return (x == 0.0f && y == 0.0f && z == 0.0f); }
     /// Returns the length of the vector
-    inline double	length		(void) const			   { return (double)Math::Sqrt(x*x+y*y+z*z); }
+    inline double	length		(void) const			   { return (double)std::sqrt(x*x+y*y+z*z); }
     /// Returns the squared length of the vector
     inline double	lengthSqr	(void) const			   { return x*x+y*y+z*z; }
     /// Returns the negation of the vector
@@ -183,24 +183,14 @@ namespace Nimble {
     return v * s;
   }
 
-  namespace Math {
-    /// Specialize Abs
-    template <class T>
-    inline T Abs(const Vector3T<T>& t)
-    {
-      return t.length();
-    }
-  }
-
   /// Return the length of the vector
   /// @param t vector whose length to get
   /// @return length of the vector
   template <class T>
-  inline T abs(Nimble::Vector3T<T> t)
+  inline T abs(const Nimble::Vector3T<T> & t)
   {
     return t.length();
   }
-
   /// Compute the dot product of two vectors
   /// @param a first vector
   /// @param b second vector
@@ -275,5 +265,15 @@ namespace Nimble {
   }
 
 } // namespace
+
+namespace std
+{
+  // Define std::abs for Vector3T
+  template <typename T>
+  inline T abs(const Nimble::Vector3T<T> & v)
+  {
+    return Nimble::abs(v);
+  }
+} 
 
 #endif

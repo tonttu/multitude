@@ -82,7 +82,7 @@ namespace Nimble {
     inline bool	isZero		(void) const					      { return (x == (T) 0 && y == (T) 0); }
 
     /// Returns the length of the vector
-    auto length() const -> decltype(T() * 1.f)          { return Nimble::Math::Sqrt(lengthSqr()); }
+    auto length() const -> decltype(T() * 1.f)          { return std::sqrt(lengthSqr()); }
     /// Returns the squared length of the vector
     inline T      	lengthSqr	(void) const				      { return x*x+y*y; }
     /// Negates the vector
@@ -103,7 +103,7 @@ namespace Nimble {
     /// Rotate the vector by given radians
     inline Vector2T&	rotate		(double angle)					{ return rotate(sin(angle), cos(angle)); }
     /// Returns atan2(y/x)
-    inline double	angle		(void) const				        { return atan2(double(y), double(x)); }
+    inline double	angle		(void) const				        { return std::atan2(double(y), double(x)); }
     /// Clamps both components to the range [0,1]
     inline Vector2T&	clampUnit	(void)						{ return clamp(T(0.0), T(1.0)); }
     /// Clamps both components to the range [low, high]
@@ -173,15 +173,14 @@ namespace Nimble {
   /// Returns the negation of a vector
   template <class T> inline	Vector2T<T>	operator-	(const Vector2T<T>& v) { return Vector2T<T>(-v.x, -v.y); }
 
-  namespace Math {
-    /// Specialize Abs
-    template <class T>
-    inline T Abs(const Vector2T<T>& t)
-    {
-      return t.length();
-    }
+  /// Return the length of the vector
+  /// @param t vector whose length to get
+  /// @return length of the vector
+  template <class T>
+  inline T abs(const Nimble::Vector2T<T> & t)
+  {
+    return t.length();
   }
-
   /// Compute the dot product of two vectors
   /// @param t1 first dot product vector
   /// @param t2 second dot product vector
@@ -441,4 +440,13 @@ namespace Nimble {
 
 } // namespace
 
+namespace std
+{
+  // Define std::abs for Vector2T
+  template <typename T>
+  inline T abs(const Nimble::Vector2T<T> & v)
+  {
+    return Nimble::abs(v);
+  }
+} 
 #endif

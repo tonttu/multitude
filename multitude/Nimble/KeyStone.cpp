@@ -81,8 +81,8 @@ namespace Nimble {
 
       Nimble::Vector2f tmp = vertices[i];
 
-      tmp.x = Nimble::Math::Min(tmp.x, (float) (w - 1));
-      tmp.y = Nimble::Math::Min(tmp.y, (float) (h - 1));
+      tmp.x = std::min(tmp.x, (float) (w - 1));
+      tmp.y = std::min(tmp.y, (float) (h - 1));
 
       m_originals[i] = tmp;
     }
