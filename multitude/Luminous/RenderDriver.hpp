@@ -46,34 +46,6 @@ namespace Luminous
     // Called when the rendering thread stops
     LUMINOUS_API virtual void deInitialize() = 0;
 
-    // Shaders
-    /// @note Can't do this with templates since they're pure virtual and require different implementation per datatype
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const int & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const unsigned int & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const float & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector2i & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector3i & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector4i & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector2T<unsigned int> & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector3T<unsigned int> & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector4T<unsigned int> & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector2f & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector3f & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector4f & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Matrix2f & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Matrix3f & value) = 0;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Matrix4f & value) = 0;
-    LUMINOUS_API virtual void setShaderProgram(const Program & shader) = 0;
-
-    // Bind a hardwarebuffer
-    LUMINOUS_API virtual void setBuffer(const Buffer & buffer, Buffer::Type type) = 0;
-
-    // Setup the vertexbuffers and attributes
-    LUMINOUS_API virtual void setVertexArray(const VertexArray & vertexArray) = 0;
-
-    // Texturing
-    LUMINOUS_API virtual void setTexture(unsigned int textureUnit, const Texture & texture) = 0;
-
     // Reset the renderstate to its default
     LUMINOUS_API virtual void setDefaultState() = 0;
 
@@ -89,7 +61,8 @@ namespace Luminous
                                                              const VertexArray & vertexArray,
                                                              const Buffer & uniformBuffer,
                                                              const Luminous::Program & shader,
-                                                             const std::map<QByteArray, const Texture *> * textures) = 0;
+                                                             const std::map<QByteArray, const Texture *> * textures,
+                                                             const std::map<QByteArray, ShaderUniform> * uniforms) = 0;
 
     LUMINOUS_API virtual void flush() = 0;
 

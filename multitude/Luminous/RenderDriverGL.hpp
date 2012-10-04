@@ -21,34 +21,11 @@ namespace Luminous
     LUMINOUS_API virtual void draw(PrimitiveType type, unsigned int offset, unsigned int primitives) OVERRIDE;
     LUMINOUS_API virtual void drawIndexed(PrimitiveType type, unsigned int offset, unsigned int primitives) OVERRIDE;
 
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const int & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const unsigned int & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const float & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector2i & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector3i & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector4i & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector2T<unsigned int> & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector3T<unsigned int> & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector4T<unsigned int> & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector2f & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector3f & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Vector4f & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Matrix2f & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Matrix3f & value) OVERRIDE;
-    LUMINOUS_API virtual bool setShaderUniform(const char * name, const Nimble::Matrix4f & value) OVERRIDE;
-    LUMINOUS_API virtual void setShaderProgram(const Program & shader) OVERRIDE;
-
     LUMINOUS_API virtual void preFrame() OVERRIDE;
     LUMINOUS_API virtual void postFrame() OVERRIDE;
 
     LUMINOUS_API virtual bool initialize() OVERRIDE;
     LUMINOUS_API virtual void deInitialize() OVERRIDE;
-
-    LUMINOUS_API virtual void setBuffer(const Buffer & buffer, Buffer::Type type) OVERRIDE;
-
-    LUMINOUS_API virtual void setVertexArray(const VertexArray & vertexArray) OVERRIDE;
-
-    LUMINOUS_API virtual void setTexture(unsigned int textureUnit, const Texture & texture) OVERRIDE;
 
     LUMINOUS_API virtual void setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer) OVERRIDE;
 
@@ -64,7 +41,8 @@ namespace Luminous
                                                              const VertexArray & vertexArray,
                                                              const Buffer & uniformBuffer,
                                                              const Luminous::Program & shader,
-                                                             const std::map<QByteArray, const Texture *> * textures) OVERRIDE;
+                                                             const std::map<QByteArray, const Texture *> * textures,
+                                                             const std::map<QByteArray, ShaderUniform> * uniforms) OVERRIDE;
 
     LUMINOUS_API virtual void setDefaultState() OVERRIDE;
     LUMINOUS_API virtual void flush() OVERRIDE;

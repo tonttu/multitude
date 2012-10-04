@@ -16,8 +16,7 @@
 #include "Nimble/Matrix3.hpp"
 #include "Nimble/Matrix4.hpp"
 
-#include <QString>
-#include <vector>
+#include <algorithm>
 
 namespace Luminous
 {
@@ -25,6 +24,7 @@ namespace Luminous
   {
     enum Type
     {
+      Unknown,
       Int,
       Int2,
       Int3,
@@ -41,92 +41,34 @@ namespace Luminous
       Float3x3,
       Float4x4,
     };
+    ShaderUniform() { m_type = Unknown; };
 
-    ShaderUniform(const QString & name)
-      : name(name), index(-1)
-    {
-    }
+    ShaderUniform(int data) { m_type = Int; m_data.i[0] = data; }
+    ShaderUniform(unsigned int data) { m_type = UnsignedInt; m_data.u[0] = data; }
+    ShaderUniform(float data) { m_type = Float; m_data.f[0] = data; }
 
-    virtual const char * data() const = 0;
-    virtual Type type() const = 0;
+    ShaderUniform(const Nimble::Vector2i & data) { m_type = Int2; memcpy(m_data.i, &data, sizeof(data)); }
+    ShaderUniform(const Nimble::Vector3i & data) { m_type = Int3; memcpy(m_data.i, &data, sizeof(data)); }
+    ShaderUniform(const Nimble::Vector4i & data) { m_type = Int4; memcpy(m_data.i, &data, sizeof(data)); }
+    ShaderUniform(const Nimble::Vector2u & data) { m_type = UnsignedInt2; memcpy(m_data.u, &data, sizeof(data)); }
+    ShaderUniform(const Nimble::Vector3u & data) { m_type = UnsignedInt3; memcpy(m_data.u, &data, sizeof(data)); }
+    ShaderUniform(const Nimble::Vector4u & data) { m_type = UnsignedInt4; memcpy(m_data.u, &data, sizeof(data)); }
+    ShaderUniform(const Nimble::Vector2f & data) { m_type = Float2; memcpy(m_data.i, &data, sizeof(data)); }
+    ShaderUniform(const Nimble::Vector3f & data) { m_type = Float3; memcpy(m_data.i, &data, sizeof(data)); }
+    ShaderUniform(const Nimble::Vector4f & data) { m_type = Float4; memcpy(m_data.i, &data, sizeof(data)); }
+    ShaderUniform(const Nimble::Matrix2f & data) { m_type = Float2x2; memcpy(m_data.i, &data, sizeof(data)); }
+    ShaderUniform(const Nimble::Matrix3f & data) { m_type = Float3x3; memcpy(m_data.i, &data, sizeof(data)); }
+    ShaderUniform(const Nimble::Matrix4f & data) { m_type = Float4x4; memcpy(m_data.i, &data, sizeof(data)); }
+
+    virtual const char * data() const { return reinterpret_cast<const char *>(&m_data); }
+    virtual Type type() const { return m_type; }
   
-    QString name;
-    int index;        // Cached shader index location
+    union {
+      unsigned int u[16];
+      int i[16];
+      float f[16];
+    } m_data;
+    Type m_type;
   };
-
-  // Empty base
-  template <typename T>
-  class ShaderUniformT : public ShaderUniform
-  {
-  public:
-  };
-
-
-#define UNIFORMCONST(TYPE, TYPENAME) \
-  template <> \
-  class ShaderUniformT<TYPE> : public ShaderUniform \
-  { \
-  public: \
-    ShaderUniformT(const QString & name, const TYPE & value) : ShaderUniform(name), m_value(value) {} \
-    virtual ShaderUniform::Type type() const { return TYPENAME; }; \
-    virtual const char * data() const OVERRIDE { return (const char *)&m_value; } \
-  private: \
-    TYPE m_value; \
-  };
-
-#define UNIFORMATTR(ATTRTYPE, TYPENAME) \
-  template <> \
-  class ShaderUniformT< ATTRTYPE > : public ShaderUniform \
-  { \
-  public: \
-    ShaderUniformT(const QString & name, const ATTRTYPE & value) : ShaderUniform(name), m_value(value) {} \
-    virtual ShaderUniform::Type type() const { return TYPENAME; }; \
-    virtual const char * data() const OVERRIDE { return (const char *)&m_value.value(); } \
-  private: \
-    const ATTRTYPE & m_value; \
-  };
-
-  // Only define the ones that are supported
-  UNIFORMCONST(int, ShaderUniform::Int);
-  UNIFORMCONST(unsigned int, ShaderUniform::UnsignedInt);
-  UNIFORMCONST(float, ShaderUniform::Float);
-
-  UNIFORMCONST(Nimble::Vector2i, ShaderUniform::Int2);
-  UNIFORMCONST(Nimble::Vector3i, ShaderUniform::Int3);
-  UNIFORMCONST(Nimble::Vector4i, ShaderUniform::Int4);
-
-  UNIFORMCONST(Nimble::Vector2T<unsigned int>, ShaderUniform::UnsignedInt2);
-  UNIFORMCONST(Nimble::Vector3T<unsigned int>, ShaderUniform::UnsignedInt3);
-  UNIFORMCONST(Nimble::Vector4T<unsigned int>, ShaderUniform::UnsignedInt4);
-
-  UNIFORMCONST(Nimble::Vector2f, ShaderUniform::Float2);
-  UNIFORMCONST(Nimble::Vector3f, ShaderUniform::Float3);
-  UNIFORMCONST(Nimble::Vector4f, ShaderUniform::Float4);
-  UNIFORMCONST(Radiant::Color, ShaderUniform::Float4);
-
-  UNIFORMCONST(Nimble::Matrix2f, ShaderUniform::Float2x2);
-  UNIFORMCONST(Nimble::Matrix3f, ShaderUniform::Float3x3);
-  UNIFORMCONST(Nimble::Matrix4f, ShaderUniform::Float4x4);
-
-  /// Attributes
-  UNIFORMATTR(Valuable::AttributeInt, ShaderUniform::Int);
-  UNIFORMATTR(Valuable::AttributeUInt32, ShaderUniform::UnsignedInt);
-  UNIFORMATTR(Valuable::AttributeFloat, ShaderUniform::Float);
-
-  UNIFORMATTR(Valuable::AttributeVector2i, ShaderUniform::Int2);
-  UNIFORMATTR(Valuable::AttributeVector3i, ShaderUniform::Int3);
-  UNIFORMATTR(Valuable::AttributeVector4i, ShaderUniform::Int4);
-  
-  UNIFORMATTR(Valuable::AttributeVector2f, ShaderUniform::Float2);
-  UNIFORMATTR(Valuable::AttributeVector3f, ShaderUniform::Float3);
-  UNIFORMATTR(Valuable::AttributeVector4f, ShaderUniform::Float4);
-  UNIFORMATTR(Valuable::AttributeColor, ShaderUniform::Float4);
-
-  UNIFORMATTR(Valuable::AttributeMatrix2f, ShaderUniform::Float2x2);
-  UNIFORMATTR(Valuable::AttributeMatrix3f, ShaderUniform::Float3x3);
-  UNIFORMATTR(Valuable::AttributeMatrix4f, ShaderUniform::Float4x4);
-  
-#undef UNIFORMCONST
-#undef UNIFORMATTR
 }
 #endif // LUMINOUS_SHADERUNIFORM_HPP

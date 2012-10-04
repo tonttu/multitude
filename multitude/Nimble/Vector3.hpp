@@ -156,6 +156,8 @@ namespace Nimble {
   typedef Vector3T<unsigned char> Vector3ub;
   /// Vector of three ints
   typedef Vector3T<int> Vector3i;
+  /// Vector of three unsigned ints
+  typedef Vector3T<unsigned int> Vector3u;
   /// Vector of three doubles
   typedef Vector3T<double> Vector3d;
 

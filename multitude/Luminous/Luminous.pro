@@ -53,6 +53,7 @@ HEADERS += RenderResource.hpp
 HEADERS += RenderTarget.hpp
 HEADERS += ScreenDetector.hpp
 HEADERS += Shader.hpp
+HEADERS += ShaderUniform.hpp
 HEADERS += Program.hpp
 HEADERS += Spline.hpp
 HEADERS += Style.hpp

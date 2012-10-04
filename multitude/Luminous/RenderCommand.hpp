@@ -9,6 +9,7 @@
 
 #include "Luminous/Luminous.hpp"
 #include "Luminous/BlendMode.hpp"
+#include "Luminous/ShaderUniform.hpp"
 #include "Luminous/DepthMode.hpp"
 #include "Luminous/StencilMode.hpp"
 
@@ -33,6 +34,7 @@ namespace Luminous
     unsigned int uniformOffsetBytes;
 
     std::array<std::pair<int, int>, 8> samplers;
+    std::array<std::pair<int, ShaderUniform>, 8> uniforms;
   };
   
   struct BasicVertex

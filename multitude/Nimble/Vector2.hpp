@@ -257,6 +257,8 @@ namespace Nimble {
   typedef Vector2T<unsigned char> Vector2ub;
   /// Vector of two ints
   typedef Vector2T<int> Vector2i;
+  /// Vector of two unsigned ints
+  typedef Vector2T<unsigned int> Vector2u;
   /// Vector of two doubles
   typedef Vector2T<double> Vector2d;
 

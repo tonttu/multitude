@@ -4,6 +4,7 @@
 
 #include <QByteArray>
 #include <QStringList>
+#include <cassert>
 
 /// @todo this file contains some (almost blindly) copy-pasted code from RenderDriverGL,
 ///       need to go through everything
@@ -165,6 +166,37 @@ namespace Luminous
       m_uniformBlocks.clear();
       m_uniforms.clear();
       // m_baseDescription = uniformDescription(programHandle, "BaseBlock");
+
+      GLchar name[128]; // Name of variable
+      GLsizei length;   // length of name
+      GLint size;       // Size of variable
+      GLenum type;      // Type of variable
+
+      GLint count;      // Number of variables
+
+      // Query all names of the vertex attributes
+      /// @todo store size/type data in ShaderVariable
+      glGetProgramiv(m_handle, GL_ACTIVE_ATTRIBUTES, &count);
+      for (GLint i = 0; i < count; ++i) {
+        glGetActiveAttrib(m_handle, i, sizeof(name), &length, &size, &type, name);
+        m_attributes[name] = glGetAttribLocation(m_handle, name);
+      }
+
+      // Query all names of the uniform
+      /// @todo store size/type data in ShaderVariable
+      glGetProgramiv(m_handle, GL_ACTIVE_UNIFORMS, &count);
+      for (GLint i = 0; i < count; ++i) {
+        glGetActiveUniform(m_handle, i, sizeof(name), &length, &size, &type, name);
+        m_uniforms[name] = glGetUniformLocation(m_handle, name);
+      }
+
+      // Query all names of the uniform blocks
+      glGetProgramiv(m_handle, GL_ACTIVE_UNIFORM_BLOCKS, &count);
+      for (GLint i = 0; i < count; ++i) {
+        glGetActiveUniformBlockName(m_handle, i, sizeof(name), &length, name);
+        m_uniformBlocks[name] = glGetUniformBlockIndex(m_handle, name);
+        /// @todo get more info with glGetActiveUniformBlock
+      }
     }
     m_vertexDescription = program.vertexDescription();
     m_linked = true;
@@ -173,77 +205,28 @@ namespace Luminous
   int ProgramGL::attributeLocation(const QByteArray & name)
   {
     auto it = m_attributes.find(name);
-    if(it == m_attributes.end()) {
-      GLint loc = glGetAttribLocation(m_handle, name.data());
-      m_attributes[name] = loc;
-      return loc;
-    } else {
-      return it->second;
-    }
+    if(it == m_attributes.end())
+      return -1;
+    return it->second;
   }
 
   int ProgramGL::uniformLocation(const QByteArray & name)
   {
     auto it = m_uniforms.find(name);
-    if(it == m_uniforms.end()) {
-      GLint loc = glGetUniformLocation(m_handle, name.data());
-      m_uniforms[name] = loc;
-      return loc;
-    } else {
-      return it->second;
-    }
+    if(it == m_uniforms.end())
+      return -1;
+    return it->second;
   }
 
   int ProgramGL::uniformBlockLocation(const QByteArray & name)
   {
     auto it = m_uniformBlocks.find(name);
-    if(it == m_uniformBlocks.end()) {
-      GLint loc = glGetUniformBlockIndex (m_handle, name.data());
-      m_uniformBlocks[name] = loc;
-      return loc;
-    } else {
-      return it->second;
-    }
+    if(it == m_uniformBlocks.end())
+      return -1;
+    return it->second;
   }
 
 #if 0
-  void applyShaderUniforms(const Program & program)
-  {
-    auto & programHandle = m_programs[program.hash()];
-
-    // Set all shader uniforms attached to this shader
-    for (size_t i = 0; i < program.uniformCount(); ++i) {
-      ShaderUniform & uniform = program.uniform(i);
-
-      // Update location cache if necessary
-      if (uniform.index == -1)
-        uniform.index = glGetUniformLocation(programHandle.handle, uniform.name.toAscii().data());
-
-      // Set the uniform
-      switch (uniform.type())
-      {
-      case ShaderUniform::Int: glUniform1iv(uniform.index, 1, (const int*)uniform.data()); break;
-      case ShaderUniform::Int2: glUniform2iv(uniform.index, 1, (const int*)uniform.data()); break;
-      case ShaderUniform::Int3: glUniform3iv(uniform.index, 1, (const int*)uniform.data()); break;
-      case ShaderUniform::Int4: glUniform4iv(uniform.index, 1, (const int*)uniform.data()); break;
-      case ShaderUniform::UnsignedInt: glUniform1uiv(uniform.index, 1, (const unsigned int*)uniform.data()); break;
-      case ShaderUniform::UnsignedInt2: glUniform2uiv(uniform.index, 1, (const unsigned int*)uniform.data()); break;
-      case ShaderUniform::UnsignedInt3: glUniform3uiv(uniform.index, 1, (const unsigned int*)uniform.data()); break;
-      case ShaderUniform::UnsignedInt4: glUniform4uiv(uniform.index, 1, (const unsigned int*)uniform.data()); break;
-      case ShaderUniform::Float: glUniform1fv(uniform.index, 1, (const float*)uniform.data()); break;
-      case ShaderUniform::Float2: glUniform2fv(uniform.index, 1, (const float*)uniform.data()); break;
-      case ShaderUniform::Float3: glUniform3fv(uniform.index, 1, (const float*)uniform.data()); break;
-      case ShaderUniform::Float4: glUniform4fv(uniform.index, 1, (const float*)uniform.data()); break;
-      case ShaderUniform::Float2x2: glUniformMatrix2fv(uniform.index, 1, GL_TRUE, (const float*)uniform.data()); break;
-      case ShaderUniform::Float3x3: glUniformMatrix3fv(uniform.index, 1, GL_TRUE, (const float*)uniform.data()); break;
-      case ShaderUniform::Float4x4: glUniformMatrix4fv(uniform.index, 1, GL_TRUE, (const float*)uniform.data()); break;
-      default:
-        Radiant::error("RenderDriverGL: Unknown shader uniform type %d", uniform.type());
-        assert(false);
-      }
-    }
-  }
-
   UniformDescription uniformDescription(const ProgramHandle & programHandle, const QByteArray & blockName)
   {
     /// @todo error checking/handling

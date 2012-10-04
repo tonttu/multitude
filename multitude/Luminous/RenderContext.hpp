@@ -300,12 +300,6 @@ namespace Luminous
     //////////////////////////////////////////////////////////////////////////
     friend class D;
     friend class CustomOpenGL;
-    void setBuffer(Luminous::Buffer & buffer, Buffer::Type type);
-    void setVertexArray(const VertexArray & vertexArray);
-
-    void setShaderProgram(const Program & program);
-    template <typename T> bool setShaderUniform(const char * name, const T & value);
-
     void draw(PrimitiveType primType, unsigned int offset, unsigned int primitives);
     void drawIndexed(PrimitiveType primType, unsigned int offset, unsigned int primitives);
 
@@ -338,12 +332,15 @@ namespace Luminous
                                                const Luminous::VertexArray & vertexArray,
                                                const Luminous::Buffer & uniformBuffer, unsigned int uniformOffset,
                                                const Luminous::Program & program,
-                                               const std::map<QByteArray, const Texture *> * textures = nullptr);
+                                               const std::map<QByteArray, const Texture *> * textures = nullptr,
+                                               const std::map<QByteArray, ShaderUniform> * uniforms = nullptr);
 
     template <typename Vertex, typename UniformBlock>
     RenderBuilder<Vertex, UniformBlock> render( bool translucent,
                                                 Luminous::PrimitiveType type, int indexCount, int vertexCount, float primitiveSize,
-                                                const Luminous::Program & program, const std::map<QByteArray, const Texture *> * textures = nullptr);
+                                                const Luminous::Program & program,
+                                                const std::map<QByteArray, const Texture *> * textures = nullptr,
+                                                const std::map<QByteArray, ShaderUniform> * uniforms = nullptr);
 
     const Program & basicShader() const;
     const Program & texShader() const;
@@ -357,7 +354,8 @@ namespace Luminous
                                         const Luminous::Buffer & uniformBuffer,
                                         float & depth,
                                         const Program & shader,
-                                        const std::map<QByteArray,const Texture *> * textures);
+                                        const std::map<QByteArray,const Texture *> * textures = nullptr,
+                                        const std::map<QByteArray, ShaderUniform> * uniforms = nullptr);
 
     RenderCommand & createRenderCommand(bool translucent,
                                         int indexCount, int vertexCount,
@@ -367,7 +365,8 @@ namespace Luminous
                                         void *& mappedUniformBuffer,
                                         float & depth,
                                         const Program & program,
-                                        const std::map<QByteArray, const Texture *> * textures);
+                                        const std::map<QByteArray, const Texture *> * textures = nullptr,
+                                        const std::map<QByteArray, ShaderUniform> * uniforms = nullptr);
 
     template <typename Vertex, typename Uniform>
     RenderCommand & createRenderCommand(bool translucent,
@@ -376,7 +375,8 @@ namespace Luminous
                                         Uniform *& mappedUniformBuffer,
                                         float & depth,
                                         const Program & shader,
-                                        const std::map<QByteArray,const Texture *> * textures = nullptr);
+                                        const std::map<QByteArray,const Texture *> * textures = nullptr,
+                                        const std::map<QByteArray, ShaderUniform> * uniforms = nullptr);
 
     template <typename Vertex, typename UniformBlock>
     RenderCommand & createRenderCommand(bool translucent,
@@ -386,7 +386,8 @@ namespace Luminous
                                         UniformBlock *& mappedUniformBuffer,
                                         float & depth,
                                         const Program & program,
-                                        const std::map<QByteArray, const Texture *> * textures = nullptr);
+                                        const std::map<QByteArray, const Texture *> * textures = nullptr,
+                                        const std::map<QByteArray, ShaderUniform> * uniforms = nullptr);
 
     struct SharedBuffer;
     template <typename T>
@@ -421,15 +422,7 @@ namespace Luminous
     LUMINOUS_API CustomOpenGL(RenderContext & r);
     LUMINOUS_API ~CustomOpenGL();
 
-    /// @todo add functionality for use of uniform buffers
-    /// @todo add BlendMode, DepthMode, StencilMode etc
-    /// @todo add clear
-    inline void setBuffer(Luminous::Buffer & buffer, Buffer::Type type) { m_r.setBuffer(buffer, type); }
-    inline void setVertexArray(const VertexArray & vertexArray) { m_r.setVertexArray(vertexArray); }
-
-    inline void setShaderProgram(const Program & program) { m_r.setShaderProgram(program); }
-    template <typename T> inline bool setShaderUniform(const char * name, const T & value) { return m_r.setShaderUniform(name, value); }
-
+    /// @todo add more proper support for direct GL calls
     inline void draw(PrimitiveType primType, unsigned int offset, unsigned int primitives);
     inline void drawIndexed(PrimitiveType primType, unsigned int offset, unsigned int primitives);
 
@@ -470,14 +463,15 @@ namespace Luminous
                                                      Uniform *& mappedUniformBuffer,
                                                      float & depth,
                                                      const Program & program,
-                                                     const std::map<QByteArray, const Texture *> * textures)
+                                                     const std::map<QByteArray, const Texture *> * textures,
+                                                     const std::map<QByteArray, ShaderUniform> * uniforms)
   {
     return createRenderCommand(translucent,
                                indexCount, vertexCount,
                                sizeof(Vertex), sizeof(Uniform),
                                mappedIndexBuffer, reinterpret_cast<void *&>(mappedVertexBuffer),
                                reinterpret_cast<void *&>(mappedUniformBuffer),
-                               depth, program, textures);
+                               depth, program, textures, uniforms);
   }
 
   template <typename T>

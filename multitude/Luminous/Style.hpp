@@ -19,8 +19,6 @@
 
 namespace Luminous
 {
-  class GLSLProgramObject;
-
   class Stroke
   {
   public:
@@ -35,10 +33,16 @@ namespace Luminous
 
     void setColor(const Radiant::Color & color) { m_color = color; }
     const Radiant::Color & color() const { return m_color; }
+
+    // Shader uniforms
+    template <typename T> void setShaderUniform(const QByteArray & name, const T & value) { m_uniforms[name] = ShaderUniform(value); }
+    void removeShaderUniform(const QByteArray & name) { m_uniforms.erase(name); }
+    const std::map<QByteArray, ShaderUniform> & uniforms() const { return m_uniforms; }
+
   private:
     Radiant::Color m_color;
     Luminous::Program * m_program;
-
+    std::map<QByteArray, ShaderUniform> m_uniforms;
     float m_width;
   };
 
@@ -64,27 +68,20 @@ namespace Luminous
 
     bool hasTranslucentTextures() const { return m_translucentTextures; }
 
+    // Shader uniforms
+    template <typename T> void setShaderUniform(const QByteArray & name, const T & value) { m_uniforms[name] = ShaderUniform(value); }
+    void removeShaderUniform(const QByteArray & name) { m_uniforms.erase(name); }
+    const std::map<QByteArray, ShaderUniform> & uniforms() const { return m_uniforms; }
+
   private:
     Radiant::Color m_color;
     const Luminous::Program * m_program;
 
     std::map<QByteArray, const Texture *> m_textures;
+    std::map<QByteArray, ShaderUniform> m_uniforms;
     bool m_translucentTextures;
 
     friend class Style;
-  };
-
-  enum Overflow
-  {
-    /// "visible", content is not clipped, i.e., it may be rendered outside the content box
-    /// (default value)
-    OverflowVisible,
-    /// "hidden", content is clipped, no scrolling mechanism should be provided
-    OverflowHidden,
-    /// "scroll", content is clipped, scrolling mechanism is always visible
-    OverflowScroll,
-    /// "auto", content is clipped, scrolling mechanism is visible when needed
-    OverflowAuto,
   };
 
   /// Style object for giving rendering parameters to the RenderContext
@@ -110,6 +107,9 @@ namespace Luminous
     void setFillProgram(const Luminous::Program & program) { m_fill.setProgram(program); }
     void setDefaultFillProgram() { m_fill.setDefaultProgram(); }
 
+    template <typename T> void setFillShaderUniform(const QByteArray & name, const T & value) { m_fill.setShaderUniform(name, value); }
+    template <typename T> void setStrokeShaderUniform(const QByteArray & name, const T & value) { m_stroke.setShaderUniform(name, value); }
+
     Luminous::Program * strokeProgram() const { return m_stroke.program(); }
     void setStrokeProgram(Luminous::Program & program) { m_stroke.setProgram(program); }
     void setDefaultStrokeProgram() { m_stroke.setDefaultProgram(); }
@@ -125,8 +125,26 @@ namespace Luminous
     void setTexture(const QByteArray & name, const Luminous::Texture & texture) { m_fill.setTexture(name, texture); }
 
   private:
+    typedef std::vector< std::shared_ptr<ShaderUniform> > UniformList;
+    UniformList m_uniforms;
+
     Fill m_fill;
     Stroke m_stroke;
+  };
+
+
+  //////////////////////////////////////////////////////////////////////////
+  enum Overflow
+  {
+    /// "visible", content is not clipped, i.e., it may be rendered outside the content box
+    /// (default value)
+    OverflowVisible,
+    /// "hidden", content is clipped, no scrolling mechanism should be provided
+    OverflowHidden,
+    /// "scroll", content is clipped, scrolling mechanism is always visible
+    OverflowScroll,
+    /// "auto", content is clipped, scrolling mechanism is visible when needed
+    OverflowAuto,
   };
 
   class TextStyle : public Style

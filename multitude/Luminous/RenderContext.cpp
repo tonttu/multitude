@@ -707,9 +707,10 @@ namespace Luminous
                                                      const Luminous::Buffer & uniformBuffer,
                                                      float & depth,
                                                      const Program & shader,
-                                                     const std::map<QByteArray,const Texture *> * textures)
+                                                     const std::map<QByteArray,const Texture *> * textures,
+                                                     const std::map<QByteArray, ShaderUniform> * uniforms)
   {
-    RenderCommand & cmd = m_data->m_driver.createRenderCommand(translucent, vertexArray, uniformBuffer, shader, textures);
+    RenderCommand & cmd = m_data->m_driver.createRenderCommand(translucent, vertexArray, uniformBuffer, shader, textures, uniforms);
 
     depth = 0.99999f + m_data->m_automaticDepthDiff * m_data->m_renderCalls.top();
     ++(m_data->m_renderCalls.top());
@@ -726,7 +727,8 @@ namespace Luminous
                                                      void *& mappedUniformBuffer,
                                                      float & depth,
                                                      const Program & shader,
-                                                     const std::map<QByteArray,const Texture *> * textures)
+                                                     const std::map<QByteArray,const Texture *> * textures,
+                                                     const std::map<QByteArray, ShaderUniform> * uniforms)
   {
     unsigned int indexOffset, vertexOffset, uniformOffset;
 
@@ -764,7 +766,7 @@ namespace Luminous
     }
 
     RenderCommand & cmd = m_data->m_driver.createRenderCommand(
-          translucent, it->second, ubuffer->buffer, shader, textures);
+          translucent, it->second, ubuffer->buffer, shader, textures, uniforms);
     cmd.primitiveCount = ( indexCount > 0 ? indexCount : vertexCount );
     cmd.indexed = (indexCount > 0);
     cmd.indexOffset = indexOffset;
@@ -1219,21 +1221,6 @@ namespace Luminous
   // They are only called from the CustomOpenGL guard
   //
   //////////////////////////////////////////////////////////////////////////
-  void RenderContext::setBuffer(Luminous::Buffer & buffer, Buffer::Type type)
-  {
-    m_data->m_driver.setBuffer(buffer, type);
-  }
-
-  void RenderContext::setVertexArray(const VertexArray & vertexArray)
-  {
-    m_data->m_driver.setVertexArray(vertexArray);
-  }
-
-  void RenderContext::setShaderProgram(const Program & program)
-  {
-    m_data->m_driver.setShaderProgram(program);
-  }
-
   void RenderContext::draw(PrimitiveType primType, unsigned int offset, unsigned int primitives)
   {
     m_data->m_driver.draw(primType, offset, primitives);
@@ -1243,32 +1230,7 @@ namespace Luminous
   {
     m_data->m_driver.drawIndexed(primType, offset, primitives);
   }
-
-  // Create all the setters for shader constants
-#define SETSHADERUNIFORM(TYPE) \
-  template<> LUMINOUS_API bool RenderContext::setShaderUniform(const char * name, const TYPE & value) \
-  { \
-    return m_data->m_driver.setShaderUniform(name, value); \
-  }
-  SETSHADERUNIFORM(int);
-  SETSHADERUNIFORM(float);
-  SETSHADERUNIFORM(Nimble::Vector2i);
-  SETSHADERUNIFORM(Nimble::Vector3i);
-  SETSHADERUNIFORM(Nimble::Vector4i);
-  SETSHADERUNIFORM(Nimble::Vector2f);
-  SETSHADERUNIFORM(Nimble::Vector3f);
-  SETSHADERUNIFORM(Nimble::Vector4f);
-  SETSHADERUNIFORM(Nimble::Matrix2f);
-  SETSHADERUNIFORM(Nimble::Matrix3f);
-  SETSHADERUNIFORM(Nimble::Matrix4f);
-#undef SETSHADERUNIFORM
-
-  // Manual conversion: Radiant::Color > Nimble::Vector4f
-  template<> LUMINOUS_API bool RenderContext::setShaderUniform(const char * name, const Radiant::Color & value)
-  {
-    return m_data->m_driver.setShaderUniform(name, static_cast<Nimble::Vector4f>(value));
-  }
-
+  
   TextureGL & RenderContext::handle(const Texture & texture)
   {
     assert(m_data->m_driverGL);

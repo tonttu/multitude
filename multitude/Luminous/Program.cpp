@@ -1,22 +1,9 @@
 #include "Luminous/Program.hpp"
-#include "Luminous/ShaderUniform.hpp"
 #include "Luminous/RenderManager.hpp"
 #include "Luminous/VertexDescription.hpp"
 
-#include <Nimble/Vector2.hpp>
-#include <Nimble/Vector3.hpp>
-#include <Nimble/Vector4.hpp>
-#include <Nimble/Matrix2.hpp>
-#include <Nimble/Matrix3.hpp>
-#include <Nimble/Matrix4.hpp>
-
 #include <Radiant/Color.hpp>
 #include <Radiant/ResourceLocator.hpp>
-
-#include <Valuable/AttributeFloat.hpp>
-#include <Valuable/AttributeVector.hpp>
-#include <Valuable/AttributeColor.hpp>
-#include <Valuable/AttributeMatrix.hpp>
 
 #include <QFile>
 #include <QCryptographicHash>
@@ -25,6 +12,7 @@
 #include <vector>
 #include <cassert>
 #include <algorithm>
+#include <map>
 
 namespace
 {
@@ -144,9 +132,7 @@ namespace Luminous
 
   public:
     typedef std::vector<std::unique_ptr<ShaderGLSL>> ShaderList;
-    typedef std::vector< std::shared_ptr<ShaderUniform> > UniformList;
     ShaderList shaders;
-    UniformList uniforms;
     VertexDescription vertexDescription;
     UniformDescription uniformDescription;
     RenderResource::Hash hash;
@@ -248,74 +234,6 @@ namespace Luminous
   {
     assert(index < shaderCount());
     return *m_d->shaders[index];
-  }
-
-#define ADDSHADERUNIFORMCONST(TYPE) \
-  template <> LUMINOUS_API void Program::addShaderUniform(const QString & name, const TYPE & value) \
-  { \
-    std::shared_ptr<ShaderUniform> uniform(new ShaderUniformT<TYPE>(name, value)); \
-    m_d->uniforms.push_back(uniform); \
-  }
-
-#if 0
-#define ADDSHADERUNIFORMATTR(ATTRTYPE) \
-  template <> LUMINOUS_API void Program::addShaderUniform(const QString & name, ATTRTYPE & value) \
-  { \
-    std::shared_ptr<ShaderUniform> uniform(new ShaderUniformT<ATTRTYPE>(name, value)); \
-    m_d->uniforms.push_back(uniform); \
-    /* Remove when the attribute is deleted */ \
-    value.addListener(this, [=](){ this->removeShaderUniform(name); }, DELETE_ROLE); \
-  }
-#endif
-
-  ADDSHADERUNIFORMCONST(int);
-  ADDSHADERUNIFORMCONST(unsigned int);
-  ADDSHADERUNIFORMCONST(float);
-  ADDSHADERUNIFORMCONST(Nimble::Vector2i);
-  ADDSHADERUNIFORMCONST(Nimble::Vector3i);
-  ADDSHADERUNIFORMCONST(Nimble::Vector4i);
-  ADDSHADERUNIFORMCONST(Nimble::Vector2f);
-  ADDSHADERUNIFORMCONST(Nimble::Vector3f);
-  ADDSHADERUNIFORMCONST(Nimble::Vector4f);
-  ADDSHADERUNIFORMCONST(Radiant::Color);
-  ADDSHADERUNIFORMCONST(Nimble::Matrix2f);
-  ADDSHADERUNIFORMCONST(Nimble::Matrix3f);
-  ADDSHADERUNIFORMCONST(Nimble::Matrix4f);
-//  ADDSHADERUNIFORMATTR(Valuable::AttributeInt);
-//  ADDSHADERUNIFORMATTR(Valuable::AttributeFloat);
-
-//  ADDSHADERUNIFORMATTR(Valuable::AttributeVector2i);
-//  ADDSHADERUNIFORMATTR(Valuable::AttributeVector3i);
-//  ADDSHADERUNIFORMATTR(Valuable::AttributeVector4i);
-  
-//  ADDSHADERUNIFORMATTR(Valuable::AttributeVector2f);
-//  ADDSHADERUNIFORMATTR(Valuable::AttributeVector3f);
-//  ADDSHADERUNIFORMATTR(Valuable::AttributeVector4f);
-//  ADDSHADERUNIFORMATTR(Valuable::AttributeColor);
-
-//  ADDSHADERUNIFORMATTR(Valuable::AttributeMatrix2f);
-//  ADDSHADERUNIFORMATTR(Valuable::AttributeMatrix3f);
-//  ADDSHADERUNIFORMATTR(Valuable::AttributeMatrix4f);
-
-#undef ADDSHADERUNIFORMCONST
-//#undef ADDSHADERUNIFORMATTR
-
-  void Program::removeShaderUniform(const QString & name)
-  {
-    m_d->uniforms.erase(
-      std::remove_if(std::begin(m_d->uniforms), std::end(m_d->uniforms), [&](const std::shared_ptr<ShaderUniform> & u) { return u->name == name; }),
-      std::end(m_d->uniforms));
-  }
-
-  size_t Program::uniformCount() const
-  {
-    return m_d->uniforms.size();
-  }
-
-  ShaderUniform & Program::uniform(size_t index) const
-  {
-    assert(index <m_d->uniforms.size());
-    return *m_d->uniforms[index];
   }
 
   const VertexDescription & Program::vertexDescription() const

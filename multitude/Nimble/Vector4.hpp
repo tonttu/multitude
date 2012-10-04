@@ -204,6 +204,8 @@ namespace Nimble {
   typedef Vector4T<unsigned char> Vector4ub;
   /// Vector of four ints
   typedef Vector4T<int> Vector4i;
+  /// Vector of four unsigned ints
+  typedef Vector4T<unsigned int> Vector4u;
   /// Vector of four doubles
   typedef Vector4T<double> Vector4d;
 

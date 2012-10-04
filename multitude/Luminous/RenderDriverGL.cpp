@@ -206,6 +206,8 @@ namespace Luminous
 
     void setState(const RenderState & state);
 
+    void applyUniform(GLint location, const Luminous::ShaderUniform & uniform);
+
     void render(const RenderCommand & cmd, GLint uniformHandle, GLint uniformBlockIndex);
 
 
@@ -213,7 +215,8 @@ namespace Luminous
                                         const Program & shader,
                                         const VertexArray & vertexArray,
                                         const Buffer & uniformBuffer,
-                                        const std::map<QByteArray,const Texture *> * textures);
+                                        const std::map<QByteArray,const Texture *> * textures,
+                                        const std::map<QByteArray, ShaderUniform> * uniforms);
 
     // Utility function for resource cleanup
     template <typename ContainerType>
@@ -309,11 +312,47 @@ namespace Luminous
       state.vertexArray->bind();
   }
 
+  void RenderDriverGL::D::applyUniform(GLint location, const Luminous::ShaderUniform & uniform)
+  {
+    assert (location >= 0);
+    
+    // Set the uniform
+    switch (uniform.type())
+    {
+    case ShaderUniform::Int:          glUniform1iv(location, 1, (const int*)uniform.data()); break;
+    case ShaderUniform::Int2:         glUniform2iv(location, 1, (const int*)uniform.data()); break;
+    case ShaderUniform::Int3:         glUniform3iv(location, 1, (const int*)uniform.data()); break;
+    case ShaderUniform::Int4:         glUniform4iv(location, 1, (const int*)uniform.data()); break;
+    case ShaderUniform::UnsignedInt:  glUniform1uiv(location, 1, (const unsigned int*)uniform.data()); break;
+    case ShaderUniform::UnsignedInt2: glUniform2uiv(location, 1, (const unsigned int*)uniform.data()); break;
+    case ShaderUniform::UnsignedInt3: glUniform3uiv(location, 1, (const unsigned int*)uniform.data()); break;
+    case ShaderUniform::UnsignedInt4: glUniform4uiv(location, 1, (const unsigned int*)uniform.data()); break;
+    case ShaderUniform::Float:        glUniform1fv(location, 1, (const float*)uniform.data()); break;
+    case ShaderUniform::Float2:       glUniform2fv(location, 1, (const float*)uniform.data()); break;
+    case ShaderUniform::Float3:       glUniform3fv(location, 1, (const float*)uniform.data()); break;
+    case ShaderUniform::Float4:       glUniform4fv(location, 1, (const float*)uniform.data()); break;
+    case ShaderUniform::Float2x2:     glUniformMatrix2fv(location, 1, GL_TRUE, (const float*)uniform.data()); break;
+    case ShaderUniform::Float3x3:     glUniformMatrix3fv(location, 1, GL_TRUE, (const float*)uniform.data()); break;
+    case ShaderUniform::Float4x4:     glUniformMatrix4fv(location, 1, GL_TRUE, (const float*)uniform.data()); break;
+    default:
+      Radiant::error("RenderDriverGL: Unknown shader uniform type %d", uniform.type());
+      assert(false);
+    }
+    GLERROR("RenderDriverGL::applyUniform # glUniform");
+  }
+
   void RenderDriverGL::D::render(const RenderCommand & cmd, GLint uniformHandle, GLint uniformBlockIndex)
   {
+    // Set texture samplers
     for(auto uit = cmd.samplers.begin(); uit != cmd.samplers.end(); ++uit) {
       if(uit->first < 0) break;
       glUniform1i(uit->first, uit->second);
+    }
+
+    // Apply style-uniforms
+    for(auto uniform : cmd.uniforms) {
+      if (uniform.first < 0) break;
+      applyUniform(uniform.first, uniform.second);
     }
 
     glBindBufferRange(GL_UNIFORM_BUFFER, uniformBlockIndex, uniformHandle,
@@ -323,11 +362,13 @@ namespace Luminous
 
     GLERROR("RenderDriverGL::flush # glBindBufferRange");
 
+    // Set linewidth
     if (cmd.primitiveType == Luminous::PrimitiveType_Line || cmd.primitiveType == Luminous::PrimitiveType_LineStrip) {
       glLineWidth(cmd.primitiveSize);
       GLERROR("RenderDriverGL::flush # glLineWidth");
     }
 
+    // Set point width
     if (cmd.primitiveType == Luminous::PrimitiveType_Point) {
       glPointSize(cmd.primitiveSize);
       GLERROR("RenderDriverGL::flush # glPointSize");
@@ -351,7 +392,8 @@ namespace Luminous
                                                          const Program & shader,
                                                          const VertexArray & vertexArray,
                                                          const Buffer & uniformBuffer,
-                                                         const std::map<QByteArray,const Texture *> * textures)
+                                                         const std::map<QByteArray,const Texture *> * textures,
+                                                         const std::map<QByteArray, ShaderUniform> * uniforms)
   {
     m_state.program = &m_driver.handle(shader);
     m_state.program->link(shader);
@@ -382,6 +424,7 @@ namespace Luminous
     RenderQueueSegment & rt = currentRenderQueueSegment();
 
     RenderCommand * cmd;
+
     if(translucent) {
       TranslucentRenderQueue & translucentQueue = rt.translucentQueue;
       if(translucentQueue.usedSize >= translucentQueue.queue.size())
@@ -392,18 +435,44 @@ namespace Luminous
     } else {
       OpaqueRenderQueue & queue = rt.opaqueQueue[m_state];
       if(queue.usedSize >= queue.queue.size())
-        queue.queue.push_back(RenderCommand());
+        queue.queue.emplace_back();
       cmd = &queue.queue[queue.usedSize++];
     }
 
-    unit = 0;
-    int slot = 0; // one day this will be different from unit
-    if (textures != nullptr) {
-      for(auto it = std::begin(*textures), end = std::end(*textures); it != end; ++it, ++unit, ++slot) {
-        cmd->samplers[slot] = std::make_pair(m_state.program->uniformLocation(it->first), unit);
+
+    // Assign the samplers
+    {
+      /// @todo Prevent overflow if more than cmd->samplers.size() textures
+      unit = 0;
+      int slot = 0; // one day this will be different from unit
+      if (textures != nullptr) {
+        for(auto it = std::begin(*textures), end = std::end(*textures); it != end; ++it, ++unit, ++slot) {
+          cmd->samplers[slot] = std::make_pair(m_state.program->uniformLocation(it->first), unit);
+        }
       }
+      cmd->samplers[slot].first = -1;
     }
-    cmd->samplers[slot].first = -1;
+
+    // Assign the uniforms
+    {
+      /// @todo Prevent overflow if more than cmd->uniforms.size() uniforms
+      size_t slot = 0;
+      if (uniforms) {
+        for (auto it = std::begin(*uniforms), end = std::end(*uniforms); it != end; ++it, ++slot) {
+          GLint location = m_state.program->uniformLocation(it->first);
+          if (location == -1) {
+            Radiant::warning("RenderDriverGL - Cannot bind uniform %s - No such uniform", it->first.data());
+            continue;
+          }
+          assert(it->second.type() != ShaderUniform::Unknown);
+          cmd->uniforms[slot] = std::make_pair(location, it->second);
+        }
+      }
+      cmd->uniforms[slot].first = -1;
+    }
+
+    if (shader.vertexDescription().attributeCount() == 0)
+      Radiant::warning("Shader %d (%s) has no vertex attributes defined. Did you forget to assign a vertex description?", m_state.program->handle(), shader.shaderFilenames().join(",").toUtf8().data());
 
     return *cmd;
   }
@@ -484,54 +553,7 @@ namespace Luminous
     glDrawElements(type, (GLsizei) primitives, GL_UNSIGNED_INT, (const GLvoid *)((sizeof(uint) * offset)));
     GLERROR("RenderDriverGL::draw glDrawElements");
   }
-
-#define SETUNIFORM(TYPE, FUNCTION) \
-  bool RenderDriverGL::setShaderUniform(const char * name, const TYPE & value) { \
-    /* @todo These locations should be cached in the program handle for performance reasons */ \
-    GLint location = glGetUniformLocation(m_d->m_stateGL.program(), name); \
-    if (location != -1) FUNCTION(location, value); \
-    return (location != -1); \
-  }
-#define SETUNIFORMVECTOR(TYPE, FUNCTION) \
-  bool RenderDriverGL::setShaderUniform(const char * name, const TYPE & value) { \
-    /* @todo These locations should be cached in the program handle for performance reasons */ \
-    GLint location = glGetUniformLocation(m_d->m_stateGL.program(), name); \
-    if (location != -1) FUNCTION(location, 1, value.data()); \
-    return (location != -1); \
-  }
-#define SETUNIFORMMATRIX(TYPE, FUNCTION) \
-  bool RenderDriverGL::setShaderUniform(const char * name, const TYPE & value) { \
-    /* @todo These locations should be cached in the program handle for performance reasons */ \
-    GLint location = glGetUniformLocation(m_d->m_stateGL.program(), name); \
-    if (location != -1) FUNCTION(location, 1, GL_TRUE, value.data()); \
-    return (location != -1); \
-  }
-
-  SETUNIFORM(int, glUniform1i);
-  SETUNIFORM(unsigned int, glUniform1ui);
-  SETUNIFORM(float, glUniform1f);
-  SETUNIFORMVECTOR(Nimble::Vector2i, glUniform2iv);
-  SETUNIFORMVECTOR(Nimble::Vector3i, glUniform3iv);
-  SETUNIFORMVECTOR(Nimble::Vector4i, glUniform4iv);
-  SETUNIFORMVECTOR(Nimble::Vector2T<unsigned int>, glUniform2uiv);
-  SETUNIFORMVECTOR(Nimble::Vector3T<unsigned int>, glUniform3uiv);
-  SETUNIFORMVECTOR(Nimble::Vector4T<unsigned int>, glUniform4uiv);
-  SETUNIFORMVECTOR(Nimble::Vector2f, glUniform2fv);
-  SETUNIFORMVECTOR(Nimble::Vector3f, glUniform3fv);
-  SETUNIFORMVECTOR(Nimble::Vector4f, glUniform4fv);
-  SETUNIFORMMATRIX(Nimble::Matrix2f, glUniformMatrix2fv);
-  SETUNIFORMMATRIX(Nimble::Matrix3f, glUniformMatrix3fv);
-  SETUNIFORMMATRIX(Nimble::Matrix4f, glUniformMatrix4fv);
-#undef SETUNIFORM
-#undef SETUNIFORMVECTOR
-#undef SETUNIFORMMATRIX
-
-  void RenderDriverGL::setShaderProgram(const Program & program)
-  {
-    handle(program).bind(program);
-    /// @todo apply uniforms
-  }
-
+  
   void RenderDriverGL::preFrame()
   {
     m_d->resetStatistics();
@@ -570,14 +592,7 @@ namespace Luminous
 
     m_d->m_masterRenderQueue.clear();
   }
-
-  void RenderDriverGL::setBuffer(const Buffer & buffer, Buffer::Type type)
-  {
-    auto & bufferGL = handle(buffer);
-    bufferGL.bind(type);
-    bufferGL.upload(buffer, type);
-  }
-
+  
   ProgramGL & RenderDriverGL::handle(const Program & program)
   {
     auto it = m_d->m_programs.find(program.hash());
@@ -603,11 +618,6 @@ namespace Luminous
     it->second.upload(texture, 0, false);
 
     return it->second;
-  }
-
-  void RenderDriverGL::setTexture(unsigned int textureUnit, const Texture & texture)
-  {
-    handle(texture).upload(texture, textureUnit, true);
   }
 
   void RenderDriverGL::setDefaultState()
@@ -682,9 +692,10 @@ namespace Luminous
                                                       const VertexArray & vertexArray,
                                                       const Buffer & uniformBuffer,
                                                       const Luminous::Program & shader,
-                                                      const std::map<QByteArray, const Texture *> * textures)
+                                                      const std::map<QByteArray, const Texture *> * textures,
+                                                      const std::map<QByteArray, ShaderUniform> * uniforms)
   {
-    return m_d->createRenderCommand(translucent, shader, vertexArray, uniformBuffer, textures);
+    return m_d->createRenderCommand(translucent, shader, vertexArray, uniformBuffer, textures, uniforms);
   }
 
   void RenderDriverGL::flush()
@@ -802,13 +813,6 @@ namespace Luminous
       vertexArrayGL.upload(vertexArray, program);
 
     return vertexArrayGL;
-  }
-
-  void RenderDriverGL::setVertexArray(const VertexArray & vertexArray)
-  {
-    auto & vertexArrayGL = handle(vertexArray);
-
-    vertexArrayGL.bind();
   }
 
   RenderBufferGL & RenderDriverGL::handle(const RenderBuffer &buffer)

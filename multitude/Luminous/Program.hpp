@@ -83,14 +83,6 @@ namespace Luminous
 
     LUMINOUS_API Hash hash() const;
 
-    template <typename T> void addShaderUniform(const QString & name, const T & value);
-    //template <typename T> void addShaderUniform(const QString & name, T & value);
-
-    LUMINOUS_API void removeShaderUniform(const QString & name);
-
-    LUMINOUS_API size_t uniformCount() const;
-    LUMINOUS_API ShaderUniform & uniform(size_t index) const;
-
     LUMINOUS_API const VertexDescription & vertexDescription() const;
     LUMINOUS_API void setVertexDescription(const VertexDescription & description);
 
