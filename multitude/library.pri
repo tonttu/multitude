@@ -2,7 +2,7 @@
 TEMPLATE = lib
 
 # This will disable generation of .so version symlinks on Linux
-linux*:CONFIG += plugin
+unix:CONFIG += plugin
 
 PROJECT_FILE = $$join(TARGET, "", "", ".pro")
 
@@ -98,22 +98,8 @@ unix {
 macx {
   # Dynamic lookup is the best so that circular references do not matter so much
   LIBS += -undefined dynamic_lookup
-  !mobile* {
-    CONFIG += lib_bundle
 
-    FRAMEWORK_HEADERS.version = Versions
-    FRAMEWORK_HEADERS.files = $$EXPORT_HEADERS $$EXTRA_HEADERS
-    FRAMEWORK_HEADERS.path = Headers
-
-    QMAKE_BUNDLE_DATA += FRAMEWORK_HEADERS
-
-    !isEmpty(EXPORT_SOURCES) {
-
-      FRAMEWORK_SOURCES.version = Versions
-      FRAMEWORK_SOURCES.files = $$EXPORT_SOURCES $$EXTRA_SOURCES
-      FRAMEWORK_SOURCES.path = Source
-
-      QMAKE_BUNDLE_DATA += FRAMEWORK_SOURCES
-    }
-  }
+  # Define @rpath install_name for libraries
+  QMAKE_LFLAGS += -Wl,-install_name,@rpath/$$join(TARGET, "", "lib", ".dylib")
 }
+

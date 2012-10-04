@@ -12,6 +12,7 @@ CONFIG += embed_manifest_exe
 !macx:*g++*:QMAKE_CXXFLAGS += -std=c++0x
 !macx:*clang*:QMAKE_CXXFLAGS += -std=c++11 -Qunused-arguments
 macx {
+	QMAKE_LFLAGS += -Wl,-rpath,/opt/cornerstone-2.0/lib
 	QMAKE_MACOSX_DEPLOYMENT_TARGET=10.7
   QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++ -Wno-self-assign -Wno-overloaded-virtual -Qunused-arguments
         QMAKE_CC = clang -std=c++11 -stdlib=libc++
@@ -163,38 +164,13 @@ contains(MEMCHECK,yes) {
 }
 
 macx*|mobile* {
-  LIB_PREFIX = lib
-  !mobile*:SHARED_LIB_SUFFIX = dylib
-  # Fake SHARED_LIB_SUFFIX, since iOS does not accept shared libs
-  mobile*:SHARED_LIB_SUFFIX = a
-  # For Deft (which depends on MultiTouch)
-  # LIBS += -undefined dynamic_lookup
-
-  # Frameworks on OS X don't respect QMAKE_LIBDIR
-  !mobile:QMAKE_LFLAGS += -F$$PWD/lib -L$$PWD/OSX/lib
-
-  # withbundles = $$(MULTI_BUNDLES)
-  withbundles = YES
+  QMAKE_LIBDIR += $$PWD/OSX/lib
 
   LIB_OPENCL = -framework,OpenCL
   LIB_OPENGL = -framework,OpenGL
 
   !mobile* {
-    LIB_POETIC = -framework,Poetic$${CORNERSTONE_LIB_SUFFIX}
-    LIB_STYLISH = -framework,Stylish$${CORNERSTONE_LIB_SUFFIX}
-    LIB_LUMINOUS = -framework,Luminous$${CORNERSTONE_LIB_SUFFIX}
-    LIB_NIMBLE = -framework,Nimble$${CORNERSTONE_LIB_SUFFIX}
-    LIB_RADIANT = -framework,Radiant$${CORNERSTONE_LIB_SUFFIX}
-    LIB_RESONANT = -framework,Resonant$${CORNERSTONE_LIB_SUFFIX} -lsndfile
-    LIB_VALUABLE = -framework,Valuable$${CORNERSTONE_LIB_SUFFIX}
-    LIB_VIDEODISPLAY = -framework,VideoDisplay$${CORNERSTONE_LIB_SUFFIX}
-    LIB_PATTERNS = -framework,Patterns$${CORNERSTONE_LIB_SUFFIX}
-
     DEFINES += QT_MAC_USE_COCOA Q_OS_MAC64
-
-    # DEFINES += __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__=1050
-
-    contains(withbundles,YES) {
 
   # change architecture to x86_64 if snow leopard
   system([ `uname -r | cut -d . -f1` -gt 9 ] )  {
@@ -205,7 +181,6 @@ macx*|mobile* {
   system([ `uname -r | cut -d . -f1` -eq 10 ] ):DEFINES+=RADIANT_OSX_SNOW_LEOPARD
   system([ `uname -r | cut -d . -f1` -eq 11 ] ):DEFINES+=RADIANT_OSX_LION
   system([ `uname -r | cut -d . -f1` -eq 12 ] ):DEFINES+=RADIANT_OSX_MOUNTAIN_LION
-}
 }
 }
 
@@ -293,23 +268,6 @@ CONFIG(release, debug|release) {
 
 DEFINES += USING_V8_SHARED
 VERSION=
-
-# Tommi's hack
-exists(/opt/local/libexec/llvm-3.2/bin/clang_not) {
-  # This section overrides g++, and selects clang instead. Warning flags are modified to
-  # reduce the error spam. Without these we get a constant stream of warnings for
-  # each Q_OBJECT macro (which is many).
-  REDUCE_CLANG_WARNINGS = -Wno-self-assign -Wno-overloaded-virtual -Qunused-arguments
-  QMAKE_CC  = /opt/local//libexec/llvm-3.2/bin/clang -std=c++11 $$REDUCE_CLANG_WARNINGS
-  QMAKE_CXX = /opt/local//libexec/llvm-3.2/bin/clang++ -std=c++11 $$REDUCE_CLANG_WARNINGS
-  QMAKE_LINK       = $$QMAKE_CXX /opt/local//lib/gcc47/libstdc++.6.dylib
-  QMAKE_CFLAGS_WARN_ON =
-  QMAKE_CXXFLAGS_WARN_ON =
-  CLANG_INCLUDEPATH += -I/opt/local//include/gcc47/c++/ -I/opt/local//include/gcc47/c++/x86_64-apple-darwin11/
-  QMAKE_CXX += $$CLANG_INCLUDEPATH
-  QMAKE_CC  += $$CLANG_INCLUDEPATH
-}
-
 
 # Enable memchecking
 contains(MEMCHECK,yes) {
