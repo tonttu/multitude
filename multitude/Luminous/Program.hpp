@@ -74,6 +74,7 @@ namespace Luminous
     ShaderGLSL * loadVertexShader(const QString & filename)
     { return loadShader(filename, ShaderGLSL::Vertex); }
 
+    LUMINOUS_API void removeAllShaders();
     LUMINOUS_API void removeShader(const ShaderGLSL & shader);
 
     LUMINOUS_API QStringList shaderFilenames() const;

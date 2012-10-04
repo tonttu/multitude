@@ -190,6 +190,12 @@ namespace Luminous
     }
   }
 
+  void Program::removeAllShaders()
+  {
+    m_d->shaders.clear();
+    m_d->needRehash = true;
+  }
+
   void Program::removeShader(const ShaderGLSL & shader)
   {
     auto it = std::remove_if(m_d->shaders.begin(), m_d->shaders.end(), [&](const std::unique_ptr<ShaderGLSL> & s) {
