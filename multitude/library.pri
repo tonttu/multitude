@@ -30,7 +30,7 @@ extra_inc.files = $$EXTRA_HEADERS
 extra_inc.CONFIG += no_check_exist
 
 # Installation target for source code
-src_code.path = /src/MultiTouch/multitude/$$TARGET
+src_code.path = /src/multitude/$$TARGET
 src_code.files = $$EXPORT_SOURCES $$EXPORT_HEADERS
 src_code.files += $$FLEXSOURCES $$BISONSOURCES
 src_code.files += $$PROJECT_FILE
@@ -74,11 +74,11 @@ win32 {
 	
 	!isEmpty(WINDOWS_INSTALL_SDK_LIB) {
 		# For some reason DESTDIR_TARGET doesn't work here
-		sdk_lib.path = /src/MultiTouch/lib
+		sdk_lib.path = /src/lib
 		sdk_lib.files += $$join(TARGET, "", "$(DESTDIR)", ".lib")
 		sdk_lib.CONFIG += no_check_exist
 	
-		sdk_dll.path = /src/MultiTouch/lib
+		sdk_dll.path = /src/lib
 		sdk_dll.files += $$join(TARGET, "", "$(DESTDIR)", ".dll")
 		sdk_dll.CONFIG += no_check_exist
 		
@@ -95,22 +95,11 @@ unix {
   }
 }
 
-#ios {
-#  message(This is for iOS)
-#}
-
-mobile* {
-  message(This is for iPhone)
-  CONFIG += static
-}
-
 macx {
   # Dynamic lookup is the best so that circular references do not matter so much
   LIBS += -undefined dynamic_lookup
   !mobile* {
     CONFIG += lib_bundle
-
-    target.path = /Library/Frameworks
 
     FRAMEWORK_HEADERS.version = Versions
     FRAMEWORK_HEADERS.files = $$EXPORT_HEADERS $$EXTRA_HEADERS
