@@ -9,6 +9,7 @@
 #include <Radiant/Platform.hpp>
 
 #include <cmath>
+#include <algorithm>
 #ifdef WIN32
 # include <float.h>
 #endif
