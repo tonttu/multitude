@@ -1,6 +1,6 @@
 include(../multitude.pri)
 
-PKGCONFIG += sndfile
+PKGCONFIG += sndfile portaudio-2.0
 
 HEADERS += Application.hpp
 HEADERS += AudioFileHandler.hpp
