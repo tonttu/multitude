@@ -1,5 +1,7 @@
 include(../multitude.pri)
 
+PKGCONFIG += sndfile
+
 HEADERS += Application.hpp
 HEADERS += AudioFileHandler.hpp
 HEADERS += AudioLoop.hpp
@@ -36,7 +38,6 @@ SOURCES += SoundRectangle.cpp
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_VALUABLE
 
 linux-*:LIBS += -lpulse
-unix:LIBS += -lportaudio -lsndfile
 
 include(../library.pri)
 
