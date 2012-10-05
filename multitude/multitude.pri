@@ -12,7 +12,7 @@ CONFIG += embed_manifest_exe
 !macx:*g++*:QMAKE_CXXFLAGS += -std=c++0x
 !macx:*clang*:QMAKE_CXXFLAGS += -std=c++11 -Qunused-arguments
 macx {
-	QMAKE_LFLAGS += -Wl,-rpath,/opt/cornerstone-2.0/lib
+	QMAKE_LFLAGS += -Wl,-rpath,/opt/cornerstone-2.0.0-beta1/lib
 	QMAKE_MACOSX_DEPLOYMENT_TARGET=10.7
   QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++ -Wno-self-assign -Wno-overloaded-virtual -Qunused-arguments
         QMAKE_CC = clang -std=c++11 -stdlib=libc++
