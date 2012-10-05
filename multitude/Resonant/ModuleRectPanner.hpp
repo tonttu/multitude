@@ -30,7 +30,7 @@ namespace Resonant
   {
   public:
     /// Constructs a new module
-    ModuleRectPanner(Resonant::Application * app = 0);
+    ModuleRectPanner();
   };
 
 }

@@ -20,9 +20,8 @@
 
 namespace Resonant {
 
-  ModuleGain::ModuleGain(Application * app)
-    : Module(app),
-    m_channels(1)
+  ModuleGain::ModuleGain()
+    : m_channels(1)
   {
     m_gain.reset(1.0f);
   }

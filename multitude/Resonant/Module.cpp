@@ -23,8 +23,7 @@ namespace Resonant {
 
   using Radiant::error;
 
-  Module::Module(Application * app)
-    : m_application(app)
+  Module::Module()
   {
   }
 

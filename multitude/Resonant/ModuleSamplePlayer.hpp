@@ -37,7 +37,7 @@ namespace Resonant {
   public:
 
     /// Audio sample player module
-    ModuleSamplePlayer(Application *);
+    ModuleSamplePlayer();
     /// Delete the sample player
     virtual ~ModuleSamplePlayer();
 

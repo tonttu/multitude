@@ -131,8 +131,7 @@ namespace VideoPlayer2
   }
 
   AudioTransfer::AudioTransfer(AVDecoderFFMPEG * avff, int channels)
-    : Module(0)
-    , m_d(new D(avff, channels))
+    : m_d(new D(avff, channels))
   {
     assert(channels > 0);
   }

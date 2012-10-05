@@ -30,8 +30,8 @@
 
 namespace Resonant {
 
-  ModulePanner::ModulePanner(Application * a, Mode mode)
-      : Module(a),
+  ModulePanner::ModulePanner(Mode mode)
+      : Module(),
       m_speakers(this, "speakers"),
       m_generation(0),
       m_maxRadius(this, "max-radius", 1500),

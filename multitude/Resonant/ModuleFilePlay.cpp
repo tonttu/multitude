@@ -17,8 +17,7 @@
 
 namespace Resonant {
 
-  ModuleFilePlay::ModuleFilePlay(Application * a)
-    : Module(a)
+  ModuleFilePlay::ModuleFilePlay()
   {}
 
   ModuleFilePlay::~ModuleFilePlay()

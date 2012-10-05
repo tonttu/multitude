@@ -20,8 +20,8 @@
 namespace Resonant
 {
 
-  ModuleRectPanner::ModuleRectPanner(Resonant::Application * app)
-    : ModulePanner(app, RECTANGLES)
+  ModuleRectPanner::ModuleRectPanner()
+    : ModulePanner(RECTANGLES)
   {
   }
 }

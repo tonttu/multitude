@@ -31,10 +31,9 @@ namespace Resonant {
   using Radiant::info;
   using Radiant::error;
 
-  ModuleOutCollect::ModuleOutCollect(Application * a , DSPNetwork * host)
-    : Module(a),
-    m_subwooferChannel(-1),
-    m_host(host)
+  ModuleOutCollect::ModuleOutCollect(DSPNetwork * host)
+    : m_subwooferChannel(-1)
+    , m_host(host)
   {
     /* A hack to get the subwoofer channel information in without message passing etc. */
     const char * subenv = getenv("RESONANT_SUBWOOFER");

@@ -47,7 +47,7 @@ namespace Resonant {
 /// @endcond
 
     /// Creates a new ModuleOutCollect
-    ModuleOutCollect(Application *, DSPNetwork *);
+    ModuleOutCollect(DSPNetwork *);
     virtual ~ModuleOutCollect();
 
     virtual bool prepare(int & channelsIn, int & channelsOut);

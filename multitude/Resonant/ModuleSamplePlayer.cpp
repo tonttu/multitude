@@ -377,9 +377,8 @@ namespace Resonant {
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  ModuleSamplePlayer::ModuleSamplePlayer(Application * a)
-      : Module(a),
-      m_channels(1),
+  ModuleSamplePlayer::ModuleSamplePlayer()
+      : m_channels(1),
       m_active(0),
       m_masterGain(1.0f)
   {

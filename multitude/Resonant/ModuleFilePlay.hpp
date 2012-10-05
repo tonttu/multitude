@@ -27,7 +27,7 @@ namespace Resonant {
   {
   public:
     /// Constructs a new audio file player
-    ModuleFilePlay(Application *);
+    ModuleFilePlay();
     virtual ~ModuleFilePlay();
 
     virtual bool prepare(int & channelsIn, int & channelsOut);

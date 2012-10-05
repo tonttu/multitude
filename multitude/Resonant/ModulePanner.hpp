@@ -59,7 +59,7 @@ namespace Resonant {
 
 
     /// Constructs the panner module
-    ModulePanner(Application * = 0, Mode mode=RADIAL);
+    ModulePanner(Mode mode=RADIAL);
     virtual ~ModulePanner();
 
     virtual bool deserialize(const Valuable::ArchiveElement & element);

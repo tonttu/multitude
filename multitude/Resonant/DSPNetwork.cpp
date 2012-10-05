@@ -121,7 +121,7 @@ namespace Resonant {
     m_doneCount(0),
     m_syncinfo()
   {
-    m_collect = new ModuleOutCollect(0, this);
+    m_collect = new ModuleOutCollect(this);
     m_collect->setId("outcollect");
 
     Item tmp;
@@ -202,7 +202,7 @@ namespace Resonant {
       return dynamic_cast<ModuleSamplePlayer *>(m);
 
     Resonant::DSPNetwork::Item item;
-    Resonant::ModuleSamplePlayer * player = new Resonant::ModuleSamplePlayer(0);
+    Resonant::ModuleSamplePlayer * player = new Resonant::ModuleSamplePlayer();
     item.setModule(player);
     player->setId("sampleplayer");
     item.setUsePanner(false);

@@ -28,7 +28,6 @@ namespace  Radiant {
 
 namespace Resonant {
 
-  class Application;
   struct CallbackTime;
 
   /** Base class for #Resonant signal processing blocks. */
@@ -44,7 +43,7 @@ namespace Resonant {
     };
 
     /// Constructs a new module base object.s
-    Module(Application *);
+    Module();
     virtual ~Module();
 
     /** Prepare for signal processing.
@@ -95,7 +94,6 @@ namespace Resonant {
     const QString & id() const { return m_id; }
 
   private:
-    Application * m_application;
     QString m_id;
   };
 

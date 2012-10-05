@@ -17,7 +17,7 @@ namespace Resonant {
   {
   public:
     /// Constructs a new gain controller module
-    ModuleGain(Application *);
+    ModuleGain();
     virtual ~ModuleGain();
 
     virtual bool prepare(int & channelsIn, int & channelsOut);

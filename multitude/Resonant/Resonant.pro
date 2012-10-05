@@ -2,7 +2,6 @@ include(../multitude.pri)
 
 unix: PKGCONFIG += sndfile portaudio-2.0
 
-HEADERS += Application.hpp
 HEADERS += AudioFileHandler.hpp
 HEADERS += AudioLoop.hpp
 HEADERS += AudioLoop_private.hpp
@@ -20,7 +19,6 @@ HEADERS += PulseAudioCore.hpp
 HEADERS += Resonant.hpp
 HEADERS += SoundRectangle.hpp
 
-SOURCES += Application.cpp
 SOURCES += AudioFileHandler.cpp
 SOURCES += AudioLoop.cpp
 SOURCES += DSPNetwork.cpp
