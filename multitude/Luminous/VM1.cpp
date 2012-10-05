@@ -145,6 +145,18 @@ namespace Luminous
     sendCommand(ba);
   }
 
+  void VM1::setLogoTimeout(int timeout)
+  {
+    QByteArray ba;
+    ba.reserve(2);
+
+    ba += 'x';
+    ba += QByteArray::number(Nimble::Math::Clamp(timeout, 1, 99));
+    ba += '\n';
+
+    sendCommand(ba);
+  }
+
   void VM1::setVideoAutoselect()
   {
     sendCommand("a");
@@ -156,6 +168,22 @@ namespace Luminous
       Radiant::error("VM1::setVideoInput # allowed inputs [1-4]");
     else
       sendCommand(QByteArray::number(input));
+  }
+
+  void VM1::setVideoInputPriority(int input)
+  {
+    QByteArray ba;
+    ba.reserve(1);
+
+    if(input == 1)
+      ba += 'y';
+    else if (input == 2)
+      ba += 'u';
+    else
+      Radiant::error("VM1::setVideoInputPriority # allowed inputs [1-2]");
+
+    if(ba.length() > 0)
+      sendCommand(ba);
   }
 
   void VM1::sendCommand(const QByteArray & ba)

@@ -19,8 +19,10 @@ namespace Luminous
     bool detected() const;
     void setColorCorrection(const ColorCorrection & cc);
     void setLCDPower(bool enable);
+    void setLogoTimeout(int timeout);
     void setVideoAutoselect();
     void setVideoInput(int input);
+    void setVideoInputPriority(int input);
 
     QString info();
 
