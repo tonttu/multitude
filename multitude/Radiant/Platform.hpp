@@ -102,6 +102,8 @@
 
 // warning C4251: class X needs to have dll-interface to be used by clients of class Y
 #   pragma warning(disable:4251)
+// Inconsistent DLL linking
+#   pragma warning(error:4273)
 #endif
 
 #if !defined (MULTI_NO_ALIGNAS)
