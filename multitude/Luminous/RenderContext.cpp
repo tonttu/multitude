@@ -156,17 +156,18 @@ namespace Luminous
     {
       for(PostProcess::InitList::const_iterator it = chain.begin(); it != chain.end(); ++it) {
 
-        int id = it->order;
+        const int id = it->order;
 
         if(m_postProcessChain.contains(id))
           continue;
 
         PostProcessFilterPtr ptr = it->func();
-        ptr->setOrder(id);
 
-        // By default resizes new render targets to current context size
-        ptr->initialize(rc);
-        m_postProcessChain.add(ptr);
+        if(ptr) {
+          // By default resizes new render targets to current context size
+          ptr->initialize(rc);
+          m_postProcessChain.insert(ptr, id);
+        }
       }
     }
 

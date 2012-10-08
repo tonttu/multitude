@@ -43,9 +43,6 @@ namespace Luminous
     /// Sets the enabled state of the filter
     void setEnabled(bool enabled);
 
-    int order() const;
-    void setOrder(int order);
-
     Luminous::RenderTarget & renderTarget();
     const Luminous::RenderTarget & renderTarget() const;
 

@@ -9,11 +9,9 @@ namespace Luminous
   public:
     D()
       : m_enabled(true)
-      , m_order(0)
     {}
 
     bool m_enabled;
-    int m_order;
 
     Luminous::RenderTarget m_renderTarget;
 
@@ -84,16 +82,6 @@ namespace Luminous
   void PostProcessFilter::setEnabled(bool enabled)
   {
     m_d->m_enabled = enabled;
-  }
-
-  int PostProcessFilter::order() const
-  {
-    return m_d->m_order;
-  }
-
-  void PostProcessFilter::setOrder(int order)
-  {
-    m_d->m_order = order;
   }
 
   Luminous::RenderTarget & PostProcessFilter::renderTarget()
