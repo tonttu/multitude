@@ -1,6 +1,8 @@
 #ifndef LUMINOUS_RENDER_CONTEXT_IMPL_HPP
 #define LUMINOUS_RENDER_CONTEXT_IMPL_HPP
 
+#include <Radiant/Platform.hpp>
+
 namespace Luminous
 {
   template <typename Vertex, typename UniformBlock>
@@ -15,6 +17,11 @@ namespace Luminous
                             const std::map<QByteArray, const Texture *> * textures,
                             const std::map<QByteArray, ShaderUniform> * uniforms)
   {
+#ifdef RADIANT_DEBUG
+    for(auto & tex: *textures)
+      assert(tex.second->isValid());
+#endif
+
     /// @todo Should return the command, since we're only using the builder for returning depth here
     RenderBuilder<Vertex, UniformBlock> builder;
     RenderCommand & cmd = createRenderCommand(translucent, vertexArray, uniformBuffer, builder.depth, program, textures, uniforms);
@@ -43,6 +50,11 @@ namespace Luminous
               const std::map<QByteArray, const Texture *> * textures,
               const std::map<QByteArray, ShaderUniform> * uniforms)
   {
+#ifdef RADIANT_DEBUG
+    for(auto & tex: *textures)
+      assert(tex.second->isValid());
+#endif
+
     RenderBuilder<Vertex, UniformBlock> builder;
     RenderCommand & cmd = createRenderCommand(translucent,
                                               indexCount, vertexCount,
