@@ -81,7 +81,7 @@ LIB_RESONANT = -lResonant$${CORNERSTONE_LIB_SUFFIX}
 LIB_BOX2D = -lBox2D$${CORNERSTONE_LIB_SUFFIX}
 
 !mobile {
-  # exists(/usr/local/lib/libftd2xx.so)|exists(/opt/multitouch/lib/libftd2xx.dylib) {
+  # exists(/usr/local/lib/libftd2xx.so)|exists(/opt/multitouch-$$CORNERSTONE_VERSION_STR/lib/libftd2xx.dylib) {
   # message(FTD2XX support detected.)
   # !win32:CONFIG += with-ftd2xx
   with-ftd2xx {
@@ -122,8 +122,8 @@ unix {
     }
   }
 
-  exists(/opt/multitouch):INCLUDEPATH+=/opt/multitouch/include
-  exists(/opt/multitouch):LIBS+=-L/opt/multitouch/lib
+  exists(/opt/multitouch-$$CORNERSTONE_VERSION_STR):INCLUDEPATH+=/opt/multitouch-$$CORNERSTONE_VERSION_STR/include
+  exists(/opt/multitouch-$$CORNERSTONE_VERSION_STR):LIBS+=-L/opt/multitouch-$$CORNERSTONE_VERSION_STR/lib
 }
 
 #
