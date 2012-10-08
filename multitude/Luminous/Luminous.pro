@@ -20,6 +20,7 @@ HEADERS += CocoaWindow.hpp
 HEADERS += CodecRegistry.hpp
 HEADERS += Collectable.hpp
 HEADERS += ColorCorrection.hpp
+HEADERS += RGBCube.hpp
 HEADERS += ContextArray.hpp
 HEADERS += ContextVariable.hpp
 HEADERS += CPUMipmaps.hpp
@@ -110,6 +111,7 @@ SOURCES += StencilMode.cpp
 
 SOURCES += CodecRegistry.cpp
 SOURCES += ColorCorrection.cpp
+SOURCES += RGBCube.cpp
 SOURCES += CPUMipmaps.cpp
 SOURCES += DistanceFieldGenerator.cpp
 SOURCES += GarbageCollector.cpp

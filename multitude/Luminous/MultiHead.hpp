@@ -22,6 +22,7 @@
 #include "GLKeyStone.hpp"
 #include "HardwareColorCorrection.hpp"
 #include "ColorCorrection.hpp"
+#include "RGBCube.hpp"
 
 #include <Nimble/Rect.hpp>
 #include <Nimble/Vector4.hpp>
@@ -205,6 +206,16 @@ namespace Luminous {
       /// Returns a pointer to the window that holds this area
       const Window * window() const { return m_window; }
 
+      RGBCube & rgbCube()
+      {
+        return m_rgbCube;
+      }
+
+      const RGBCube & rgbCube() const
+      {
+        return m_rgbCube;
+      }
+
       ColorCorrection & colorCorrection()
       {
         return m_colorCorrection;
@@ -249,6 +260,7 @@ namespace Luminous {
       Shader * m_colorCorrectionShader;
       Collectable m_colorCorrectionTextureKey;
       ColorCorrection m_colorCorrection;
+      RGBCube m_rgbCube;
     };
 
     /** One OpenGL window.

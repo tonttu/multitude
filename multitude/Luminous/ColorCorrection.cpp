@@ -3,6 +3,12 @@
 namespace Luminous
 {
 
+  enum {
+    /// @todo still 256 hard-coded somewhere
+    CORRECTION_POINTS = 256
+    //CORRECTION_POINTS = 32
+  };
+
   ColorCorrection::ColorCorrection(Node * parent, const QByteArray & name, bool transit)
     : Valuable::Node(parent, name, transit),
       m_offsets(this, "offsets"),
@@ -13,7 +19,7 @@ namespace Luminous
   {
     eventAddOut("changed");
 
-    m_offsets->resize(256);
+    m_offsets->resize(CORRECTION_POINTS);
     setIdentity();
     m_offsets.addListener(std::bind(&ColorCorrection::setChanged, this));
     m_gamma.addListener(std::bind(&ColorCorrection::setChanged, this));
@@ -68,8 +74,8 @@ namespace Luminous
 
   void ColorCorrection::setIdentity()
   {
-    for (int i=0; i < 256; ++i) {
-      m_offsets->at(i).make( 0 * i/255.0f);
+    for (int i=0; i < CORRECTION_POINTS; ++i) {
+      m_offsets->at(i).make( 0 * i/ (float) (m_offsets->size() - 1));
     }
     m_gamma = Nimble::Vector3(1.f, 1.f, 1.f);
     m_contrast = Nimble::Vector3(1.f, 1.f, 1.f);
@@ -81,7 +87,7 @@ namespace Luminous
   // Change every value if given channel by v
   void ColorCorrection::changeUniform(int channel, float v)
   {
-    for (int i=0; i < 256; ++i) {
+    for (int i=0; i < m_offsets->size(); ++i) {
       (*m_offsets)[i][channel] = Nimble::Math::Clamp((*m_offsets)[i][channel] + v, 0.0f, 1.0f);
     }
     setChanged();
@@ -123,7 +129,7 @@ namespace Luminous
 
   void ColorCorrection::fillAsBytes(Nimble::Vector3T<uint8_t> * to) const
   {
-    for (int i=0; i < 256; ++i) {
+    for (int i=0; i < m_offsets->size(); ++i) {
       Nimble::Vector3 v = getValue(i);
       for (int c=0; c < 3; ++c) {
         (*to)[c] = Nimble::Math::Clamp(Nimble::Math::Round(v[c] * 255.0f), 0, 255);

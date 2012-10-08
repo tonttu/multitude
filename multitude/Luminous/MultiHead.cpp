@@ -62,6 +62,7 @@ namespace Luminous {
       m_active(this, "active", true),
       m_method(this, "method", METHOD_MATRIX_TRICK),
       m_comment(this, "comment"),
+      m_rgbCube(this, "rgb-cube"),
       m_graphicsBounds(0, 0, 100, 100),
       m_pixelSizeCm(0.1f),
       m_colorCorrection(this, "colorcorrection")
@@ -164,7 +165,18 @@ namespace Luminous {
 
       glColor3f(1, 1, 1);
 
-      if(useColorCorrection) {
+      if(m_rgbCube->isDefined() && m_rgbCube->bind(GLResources::getThreadResources(), GL_TEXTURE1)) {
+
+        tex->bind(GL_TEXTURE0);
+
+        // Radiant::info("RGB COLOR FIX");
+
+        GLSLProgramObject * program = s_rgbCorrectionShader.bind();
+        assert(program);
+        program->setUniformInt("tex", 0);
+        program->setUniformInt("lut", 1);
+      }
+      else if(useColorCorrection) {
         GLRESOURCE_ENSURE2(Texture1D, colorCorrectionTexture, &m_colorCorrectionTextureKey);
         colorCorrectionTexture->bind(GL_TEXTURE1);
 
@@ -191,6 +203,7 @@ namespace Luminous {
       glBindTexture(GL_TEXTURE_2D, 0);
 
       glDisable(GL_TEXTURE_2D);
+      glDisable(GL_TEXUTRE_3D);
     }
     else {
       glLoadIdentity();
