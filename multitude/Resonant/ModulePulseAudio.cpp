@@ -42,7 +42,7 @@ namespace
 namespace Resonant
 {
   ModulePulseAudio::ModulePulseAudio(const QString & monitorName, uint32_t sinkInput)
-    : Module(0), m_ready(false), m_stream(0), m_monitorName(monitorName),
+    : m_ready(false), m_stream(0), m_monitorName(monitorName),
     m_sinkInput(sinkInput), m_buffer(0), m_bufferSize(0),
     m_syncCount(0), m_canSync(false)
   {
