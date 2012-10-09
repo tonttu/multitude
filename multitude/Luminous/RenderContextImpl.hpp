@@ -1,8 +1,6 @@
 #ifndef LUMINOUS_RENDER_CONTEXT_IMPL_HPP
 #define LUMINOUS_RENDER_CONTEXT_IMPL_HPP
 
-#include <Radiant/Platform.hpp>
-
 namespace Luminous
 {
   template <typename Vertex, typename UniformBlock>
@@ -17,17 +15,12 @@ namespace Luminous
                             const std::map<QByteArray, const Texture *> * textures,
                             const std::map<QByteArray, ShaderUniform> * uniforms)
   {
-#ifdef RADIANT_DEBUG
-    for(auto & tex: *textures)
-      assert(tex.second->isValid());
-#endif
-
     /// @todo Should return the command, since we're only using the builder for returning depth here
     RenderBuilder<Vertex, UniformBlock> builder;
     RenderCommand & cmd = createRenderCommand(translucent, vertexArray, uniformBuffer, builder.depth, program, textures, uniforms);
 
     /// Set some defaults
-    size_t uniformSize = std::ceil(sizeof(UniformBlock) / float(uniformBufferOffsetAlignment())) * uniformBufferOffsetAlignment();
+    unsigned int uniformSize = std::ceil(sizeof(UniformBlock) / float(uniformBufferOffsetAlignment())) * uniformBufferOffsetAlignment();
 
     cmd.primitiveType = type;                         // Lines, points, vertices, etc
     cmd.primitiveSize = primitiveSize;                // For lines/points
@@ -35,7 +28,7 @@ namespace Luminous
     cmd.indexed = (vertexArray.indexBuffer() != 0);   // Whether we should use indexed or non-indexed drawing
     cmd.vertexOffset = offset;                        // Vertex offset (for indexed and non-indexed)
     cmd.indexOffset = offset;                         // Index offset (for indexed drawing only)
-    cmd.uniformOffsetBytes = 0;                       // Start of active uniform in buffer
+    cmd.uniformOffsetBytes = uniformOffset;           // Start of active uniform in buffer
     cmd.uniformSizeBytes = uniformSize;               // Size of uniform
 
     builder.command = &cmd;
@@ -50,11 +43,6 @@ namespace Luminous
               const std::map<QByteArray, const Texture *> * textures,
               const std::map<QByteArray, ShaderUniform> * uniforms)
   {
-#ifdef RADIANT_DEBUG
-    for(auto & tex: *textures)
-      assert(tex.second->isValid());
-#endif
-
     RenderBuilder<Vertex, UniformBlock> builder;
     RenderCommand & cmd = createRenderCommand(translucent,
                                               indexCount, vertexCount,

@@ -20,6 +20,7 @@
 #include <Nimble/Matrix4.hpp>
 #include <memory>
 #include <Radiant/Timer.hpp>
+#include <Radiant/Platform.hpp>
 
 #if defined (RADIANT_OSX)
 #  include <OpenGL/gl3.h>
@@ -405,6 +406,12 @@ namespace Luminous
 
     int unit = 0;
     if (textures != nullptr) {
+
+#if defined(RADIANT_DEBUG)
+      for(auto & tex: *textures)
+        assert(tex.second->isValid());
+#endif
+
       for(auto it = std::begin(*textures), end = std::end(*textures); it != end; ++it) {
         const Texture * texture = it->second;
         if(!texture->isValid())
