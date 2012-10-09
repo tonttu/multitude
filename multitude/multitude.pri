@@ -249,16 +249,6 @@ MULTI_VIDEO_LIBS = $$LIB_RESONANT $$LIB_VIDEODISPLAY
 
 QMAKE_LIBDIR += $$PWD/lib
 
-# message(QT version is $${QT_MAJOR_VERSION}.$${QT_MINOR_VERSION}.$${QT_PATCH_VERSION})
-# mobile*:DEFINES += __IPHONE_OS_VERSION_MIN_REQUIRED=40100
-
-contains(QT_MAJOR_VERSION,4) {
-
-  contains(QT_MINOR_VERSION,5) || contains(QT_MINOR_VERSION,6) || contains(QT_MINOR_VERSION,7) {
-    HAS_QT_45=YES
-    DEFINES += USE_QT45
-  }
-}
 # Disable asserts in release mode
 CONFIG(release, debug|release) {
   DEFINES += NDEBUG

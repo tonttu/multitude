@@ -164,32 +164,19 @@ LIBS += $$LIB_RADIANT \
     $$LIB_PATTERNS
 
 DEFINES += LUMINOUS_COMPILE
-# mobile*:HAS_QT_45 = NO
-unix:!contains(HAS_QT_45,YES) {
-    HEADERS += ImageCodecJPEG.hpp
-    HEADERS += ImageCodecPNG.hpp
-    SOURCES += ImageCodecJPEG.cpp
-    SOURCES += ImageCodecPNG.cpp
-    LIBS += -ljpeg \
-        -lpng
-}
 win32:DEFINES += LUMINOUS_EXPORT
-contains(HAS_QT_45,YES) {
-    message(Including QT Image codecs)
-    HEADERS += ImageCodecQT.hpp
-    !mobile*:HEADERS += ImageCodecSVG.hpp
-    SOURCES += ImageCodecQT.cpp
-    !mobile*:SOURCES += ImageCodecSVG.cpp
-    CONFIG += qt
-    QT += gui
-    !mobile*:QT += svg
+HEADERS += ImageCodecQT.hpp
+!mobile*:HEADERS += ImageCodecSVG.hpp
+SOURCES += ImageCodecQT.cpp
+!mobile*:SOURCES += ImageCodecSVG.cpp
+QT += gui
+!mobile*:QT += svg
 
-    # On Windows we need to install the Qt plugins
-    win32 {
-        qt_plugin_install.path += /bin
-        qt_plugin_install.files = $$[QT_INSTALL_PLUGINS]
-        INSTALLS += qt_plugin_install
-    }
+# On Windows we need to install the Qt plugins
+win32 {
+    qt_plugin_install.path += /bin
+    qt_plugin_install.files = $$[QT_INSTALL_PLUGINS]
+    INSTALLS += qt_plugin_install
 }
 
 win32 {

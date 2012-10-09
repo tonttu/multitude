@@ -27,13 +27,10 @@
 #include "ImageCodecDDS.hpp"
 #endif // LUMINOUS_OPENGLES
 
-#if defined(USE_QT45)
-//&& !defined(RADIANT_IOS)
 #include <Luminous/ImageCodecQT.hpp>
 #include <QImageWriter>
 #include <QImageReader>
 #include <QCoreApplication>
-#endif
 
 #include <Radiant/Trace.hpp>
 
