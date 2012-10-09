@@ -65,7 +65,7 @@ namespace Luminous
 
     void upSample(RGBCube & dest) const;
 
-    int rgbCount() const { return m_rgbs->size(); }
+    size_t rgbCount() const { return m_rgbs->size(); }
 
   private:
 
