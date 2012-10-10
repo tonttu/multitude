@@ -8,15 +8,34 @@ CONFIG += thread
 
 CONFIG += embed_manifest_exe
 
+# 1.9.2-rc2
+CORNERSTONE_VERSION_STR = $$cat(../VERSION)
+# 1.9.2
+CORNERSTONE_VERSION = $$section(CORNERSTONE_VERSION_STR, "-", 0, 0)
+# 1
+CORNERSTONE_VERSION_MAJOR = $$section(CORNERSTONE_VERSION, ".", 0, 0)
+# 9
+CORNERSTONE_VERSION_MINOR = $$section(CORNERSTONE_VERSION, ".", 1, 1)
+# 2
+CORNERSTONE_VERSION_PATCH = $$section(CORNERSTONE_VERSION, ".", 2, 2)
+
+macx {
+  CORNERSTONE_DEPS_DIR = /opt/multitouch
+  exists(/opt/multitouch-$$CORNERSTONE_VERSION_MAJOR/include):CORNERSTONE_DEPS_DIR=/opt/multitouch-$$CORNERSTONE_VERSION_MAJOR
+  exists(/opt/multitouch-$${CORNERSTONE_VERSION_MAJOR}.$${CORNERSTONE_VERSION_MINOR}/include):CORNERSTONE_DEPS_DIR=/opt/multitouch-$${CORNERSTONE_VERSION_MAJOR}.$${CORNERSTONE_VERSION_MINOR}
+  exists(/opt/multitouch-$$CORNERSTONE_VERSION/include):CORNERSTONE_DEPS_DIR=/opt/multitouch-$$CORNERSTONE_VERSION
+  exists(/opt/multitouch-$$CORNERSTONE_VERSION_STR/include):CORNERSTONE_DEPS_DIR=/opt/multitouch-$$CORNERSTONE_VERSION_STR
+}
+
 # We need C++11 to compile
 !macx:*g++*:QMAKE_CXXFLAGS += -std=c++0x
 !macx:*clang*:QMAKE_CXXFLAGS += -std=c++11 -Qunused-arguments
 macx {
-	QMAKE_LFLAGS += -Wl,-rpath,/opt/cornerstone-2.0.0-beta1/lib
-	QMAKE_MACOSX_DEPLOYMENT_TARGET=10.7
+  QMAKE_LFLAGS += -Wl,-rpath,/opt/cornerstone-$$CORNERSTONE_VERSION_STR/lib
+  QMAKE_MACOSX_DEPLOYMENT_TARGET=10.7
   QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++ -Wno-self-assign -Wno-overloaded-virtual -Qunused-arguments
-        QMAKE_CC = clang -std=c++11 -stdlib=libc++
-        QMAKE_LFLAGS += -stdlib=libc++
+  QMAKE_CC = clang -std=c++11 -stdlib=libc++
+  QMAKE_LFLAGS += -stdlib=libc++
 
   QMAKE_CFLAGS_WARN_ON =
   QMAKE_CXXFLAGS_WARN_ON =
@@ -61,17 +80,6 @@ DEPENDPATH += $$PWD
 withbundles = $$(MULTI_BUNDLES)
 
 !mobile*:MULTI_FFMPEG_LIBS = -lavdevice -lavcodec -lavutil -lavformat -lavfilter -lswscale
-
-# 1.9.2-rc2
-CORNERSTONE_VERSION_STR = $$cat(../VERSION)
-# 1.9.2
-CORNERSTONE_VERSION = $$section(CORNERSTONE_VERSION_STR, "-", 0, 0)
-# 1
-CORNERSTONE_VERSION_MAJOR = $$section(CORNERSTONE_VERSION, ".", 0, 0)
-# 9
-CORNERSTONE_VERSION_MINOR = $$section(CORNERSTONE_VERSION, ".", 1, 1)
-# 2
-CORNERSTONE_VERSION_PATCH = $$section(CORNERSTONE_VERSION, ".", 2, 2)
 
 CORNERSTONE_LIB_SUFFIX = .$${CORNERSTONE_VERSION}
 
@@ -120,8 +128,8 @@ unix {
     }
   }
 
-  exists(/opt/multitouch-$$CORNERSTONE_VERSION_STR):INCLUDEPATH+=/opt/multitouch-$$CORNERSTONE_VERSION_STR/include
-  exists(/opt/multitouch-$$CORNERSTONE_VERSION_STR):LIBS+=-L/opt/multitouch-$$CORNERSTONE_VERSION_STR/lib
+  exists($$CORNERSTONE_DEPS_DIR):INCLUDEPATH+=$$CORNERSTONE_DEPS_DIR/include
+  exists($$CORNERSTONE_DEPS_DIR):LIBS+=-L$$CORNERSTONE_DEPS_DIR/lib
 }
 
 #
