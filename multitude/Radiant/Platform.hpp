@@ -104,6 +104,8 @@
 #   pragma warning(disable:4251)
 // Inconsistent DLL linking
 #   pragma warning(error:4273)
+// default template arguments are only allowed on a class template
+#   pragma warning(disable:4519)
 #endif
 
 #if !defined (MULTI_NO_ALIGNAS)
