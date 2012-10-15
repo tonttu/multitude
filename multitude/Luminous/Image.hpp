@@ -54,6 +54,8 @@ namespace Luminous
     Image();
     /// Constructs a deep copy
     Image(const Image& img);
+    /// Move constructor
+    Image(Image && img);
     virtual ~Image();
 
     /// Allocates memory, for an image of given size and format
@@ -160,6 +162,11 @@ namespace Luminous
     @param img image to copy
     @return reference to this image */
     Image & operator = (const Image& img);
+
+    /// Move operator
+    /// @param img image to move
+    /// @return reference to this image
+    Image & operator = (Image && img);
 
     /// Returns a pointer to the file-format codecs.
     /// @return pointer to the codec registry

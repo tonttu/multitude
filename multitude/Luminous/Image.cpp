@@ -107,6 +107,11 @@ namespace Luminous
     memcpy(m_data, img.m_data, bytes);
   }
 
+  Image::Image(Image && img)
+  {
+    operator=(std::move(img));
+  }
+
   Image::~Image()
   {
     clear();
@@ -563,6 +568,25 @@ namespace Luminous
 
     if(m_texture)
       m_texture->setData(width(), height(), pixelFormat(), m_data);
+
+    return *this;
+  }
+
+  Image & Image::operator = (Image && img)
+  {
+    m_width = img.m_width;
+    m_height = img.m_height;
+    m_pixelFormat = img.m_pixelFormat;
+    m_data = img.m_data;
+    m_generation = img.m_generation;
+    m_texture = std::move(img.m_texture);
+
+    /// Invalidate the old
+    img.m_width = 0;
+    img.m_height = 0;
+    img.m_pixelFormat = Luminous::PixelFormat();
+    img.m_data = nullptr;
+    img.m_generation = 0;
 
     return *this;
   }
