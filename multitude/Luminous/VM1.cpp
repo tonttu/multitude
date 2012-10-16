@@ -115,8 +115,8 @@ namespace Luminous
     // Load gamma
     ba += 'd';
 
-    Nimble::Vector3T<uint8_t> tmp[256];
-    cc.fillAsBytes(tmp);
+    std::vector<Nimble::Vector3ub> tmp(256);
+    cc.fill(tmp);
     for(int i = 0; i < 256; ++i)
       ba += tmp[i].x;
     for(int i = 0; i < 256; ++i)

@@ -133,8 +133,8 @@ namespace Luminous {
           !window()->screen()->hwColorCorrection().ok());
 
       if(useColorCorrection) {
-        Nimble::Vector3T<uint8_t> tmp[256];
-        m_colorCorrection.fillAsBytes(&tmp[0]);
+        std::vector<Nimble::Vector3ub> tmp(256);
+        m_colorCorrection.fill(tmp);
 
         GLRESOURCE_ENSURE2(Texture1D, colorCorrectionTexture, &m_colorCorrectionTextureKey);
         colorCorrectionTexture->loadBytes(GL_RGB, 256,

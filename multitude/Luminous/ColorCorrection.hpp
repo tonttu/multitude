@@ -31,17 +31,18 @@ namespace Luminous
   {
   public:
     ColorCorrection(Node * parent = 0, const QByteArray &name = "", bool transit = false);
+    virtual ~ColorCorrection();
 
-    void setOffset(int idx, const Nimble::Vector3 & offset);
-    void setOffset(int idx, int channel, float value);
-    const Nimble::Vector3 & getOffset(int idx) const;
+    int nearestControlPoint(float x, int channel, bool modifiers, Nimble::Vector2f & controlPointOut) const;
+    /// @returns the new control point index
+    int addControlPoint(float x, float y, int channel, bool modifiers);
+    void removeControlPoint(int index, int channel);
+    const std::vector<Nimble::Vector2f> & controlPoints(int channel) const;
+    std::vector<Nimble::Vector2f> controlPoints(int channel, bool modifiers) const;
 
-    const std::vector<Nimble::Vector3> & offsets() const { return *m_offsets; }
-    void setOffsets(const std::vector<Nimble::Vector3f> & offsets);
-
-    Nimble::Vector3 getValue(int idx) const;
-
-    //const Nimble::Vector3T<float>* getLUT() const;
+    /// @param modifiers include gamma, brightness and contrast
+    float value(float x, int channel, bool clamp, bool modifiers) const;
+    Nimble::Vector3f valueRGB(float x) const;
 
     bool isIdentity() const;
     void setIdentity();
@@ -50,28 +51,27 @@ namespace Luminous
     void encode(Radiant::BinaryData & bd) const;
     bool decode(Radiant::BinaryData & bd);
 
-    void fillAsBytes(Nimble::Vector3T<uint8_t> * to) const;
+    void fill(std::vector<Nimble::Vector3ub> & to) const;
 
-    Nimble::Vector3 gamma() const { return m_gamma; }
-    void setGamma(const Nimble::Vector3 & gamma) { m_gamma = gamma; }
+    Nimble::Vector3 gamma() const;
+    void setGamma(const Nimble::Vector3 & gamma);
 
-    Nimble::Vector3 contrast() const { return m_contrast; }
-    void setContrast(const Nimble::Vector3 & contrast) { m_contrast = contrast; }
+    Nimble::Vector3 contrast() const;
+    void setContrast(const Nimble::Vector3 & contrast);
 
-    Nimble::Vector3 brightness() const { return m_brightness; }
-    void setBrightness(const Nimble::Vector3 & brightness) { m_brightness = brightness; }
+    Nimble::Vector3 brightness() const;
+    void setBrightness(const Nimble::Vector3 & brightness);
 
-    void setChanged();
+    virtual Valuable::ArchiveElement serialize(Valuable::Archive & archive) const;
+    virtual bool readElement(const Valuable::ArchiveElement &);
 
   private:
-    /// If this is changed outside the class, setChanged must be called
-    Valuable::AttributeContainer< std::vector<Nimble::Vector3> > m_offsets;
-    Valuable::AttributeVector3f m_gamma;
-    Valuable::AttributeVector3f m_contrast;
-    Valuable::AttributeVector3f m_brightness;
-    bool m_identity;
+    void changed();
+    void checkChanged();
 
-    std::vector<Nimble::Vector3T<uint8_t> > m_prev;
+  private:
+    class D;
+    D * m_d;
   };
 }
 
