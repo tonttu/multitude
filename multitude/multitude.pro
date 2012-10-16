@@ -3,7 +3,7 @@ TEMPLATE = subdirs
 include(multitude.pri)
 include(Externals.pri)
 
-!macx:SUBDIRS += 3rdparty/glew-1.9.0
+!macx:SUBDIRS += ThirdParty/glew
 SUBDIRS += Patterns
 SUBDIRS += Nimble
 SUBDIRS += Radiant
