@@ -465,14 +465,14 @@ namespace Luminous
       /// @todo Prevent overflow if more than cmd->uniforms.size() uniforms
       size_t slot = 0;
       if (uniforms) {
-        for (auto it = std::begin(*uniforms), end = std::end(*uniforms); it != end; ++it, ++slot) {
+        for (auto it = std::begin(*uniforms), end = std::end(*uniforms); it != end; ++it) {
           GLint location = m_state.program->uniformLocation(it->first);
           if (location == -1) {
             Radiant::warning("RenderDriverGL - Cannot bind uniform %s - No such uniform", it->first.data());
             continue;
           }
           assert(it->second.type() != ShaderUniform::Unknown);
-          cmd->uniforms[slot] = std::make_pair(location, it->second);
+          cmd->uniforms[slot++] = std::make_pair(location, it->second);
         }
       }
       cmd->uniforms[slot].first = -1;

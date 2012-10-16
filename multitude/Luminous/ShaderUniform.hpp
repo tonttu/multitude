@@ -53,12 +53,12 @@ namespace Luminous
     ShaderUniform(const Nimble::Vector2u & data) { m_type = UnsignedInt2; memcpy(m_data.u, &data, sizeof(data)); }
     ShaderUniform(const Nimble::Vector3u & data) { m_type = UnsignedInt3; memcpy(m_data.u, &data, sizeof(data)); }
     ShaderUniform(const Nimble::Vector4u & data) { m_type = UnsignedInt4; memcpy(m_data.u, &data, sizeof(data)); }
-    ShaderUniform(const Nimble::Vector2f & data) { m_type = Float2; memcpy(m_data.i, &data, sizeof(data)); }
-    ShaderUniform(const Nimble::Vector3f & data) { m_type = Float3; memcpy(m_data.i, &data, sizeof(data)); }
-    ShaderUniform(const Nimble::Vector4f & data) { m_type = Float4; memcpy(m_data.i, &data, sizeof(data)); }
-    ShaderUniform(const Nimble::Matrix2f & data) { m_type = Float2x2; memcpy(m_data.i, &data, sizeof(data)); }
-    ShaderUniform(const Nimble::Matrix3f & data) { m_type = Float3x3; memcpy(m_data.i, &data, sizeof(data)); }
-    ShaderUniform(const Nimble::Matrix4f & data) { m_type = Float4x4; memcpy(m_data.i, &data, sizeof(data)); }
+    ShaderUniform(const Nimble::Vector2f & data) { m_type = Float2; memcpy(m_data.f, &data, sizeof(data)); }
+    ShaderUniform(const Nimble::Vector3f & data) { m_type = Float3; memcpy(m_data.f, &data, sizeof(data)); }
+    ShaderUniform(const Nimble::Vector4f & data) { m_type = Float4; memcpy(m_data.f, &data, sizeof(data)); }
+    ShaderUniform(const Nimble::Matrix2f & data) { m_type = Float2x2; memcpy(m_data.f, &data, sizeof(data)); }
+    ShaderUniform(const Nimble::Matrix3f & data) { m_type = Float3x3; memcpy(m_data.f, &data, sizeof(data)); }
+    ShaderUniform(const Nimble::Matrix4f & data) { m_type = Float4x4; memcpy(m_data.f, &data, sizeof(data)); }
 
     virtual const char * data() const { return reinterpret_cast<const char *>(&m_data); }
     virtual Type type() const { return m_type; }
