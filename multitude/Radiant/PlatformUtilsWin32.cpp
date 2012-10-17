@@ -67,7 +67,7 @@ namespace Radiant
 
     QString getUserHomePath()
     {
-      // Typically this retrieves "C:\Documents and Settings\(username)"
+      // Typically this retrieves "C:\Users\(username)"
 
       QString   path;
 
@@ -90,7 +90,7 @@ namespace Radiant
 
       assert(strlen(module) < 128);
 
-      // Typically this retrieves "C:\Documents and Settings\All Users\Application Data"
+      // Typically this retrieves "C:\ProgramData"
       // which by most accounts is the safest place to store application data
 
       QString   path;
@@ -114,7 +114,7 @@ namespace Radiant
 
       assert(strlen(module) < 128);
 
-      // Typically this retrieves "C:\Documents and Settings\(username)\Application Data"
+      // Typically this retrieves "C:\Users\(username)\Application Data"
 
       QString   path;
 
