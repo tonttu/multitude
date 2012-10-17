@@ -40,12 +40,15 @@ namespace Luminous
     const std::vector<Nimble::Vector2f> & controlPoints(int channel) const;
     std::vector<Nimble::Vector2f> controlPoints(int channel, bool modifiers) const;
 
+    void setControlPoint(size_t index, const Nimble::Vector3 & rgbvalue);
+
     /// @param modifiers include gamma, brightness and contrast
     float value(float x, int channel, bool clamp, bool modifiers) const;
     Nimble::Vector3f valueRGB(float x) const;
 
     bool isIdentity() const;
     void setIdentity();
+    void setIdentity(const std::vector<float> & points);
     void changeUniform(int channel, float v);
 
     void encode(Radiant::BinaryData & bd) const;

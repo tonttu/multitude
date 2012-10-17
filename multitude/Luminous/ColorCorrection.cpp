@@ -82,6 +82,7 @@ namespace {
     void update();
 
   private:
+
     std::vector<Nimble::Vector2f> m_points;
     std::vector<Nimble::Vector2f> m_intermediatePoints;
   };
@@ -334,6 +335,16 @@ namespace Luminous
     return points;
   }
 
+  void ColorCorrection::setControlPoint(size_t index, const Nimble::Vector3 &rgbvalue)
+  {
+    for(int c = 0; c < 3; c++) {
+      std::vector<Nimble::Vector2f> points = m_d->m_splines[c].points();
+      points.at(index).y = rgbvalue[c];
+      m_d->m_splines[c].setPoints(points);
+    }
+    checkChanged();
+  }
+
   float ColorCorrection::value(float x, int channel, bool clamp, bool modifiers) const
   {
     float y;
@@ -364,6 +375,22 @@ namespace Luminous
       m_d->m_splines[c].clear();
       m_d->m_splines[c].insert(0, 0);
       m_d->m_splines[c].insert(1, 1);
+    }
+    m_d->m_gamma = Nimble::Vector3f(1.f, 1.f, 1.f);
+    m_d->m_contrast = Nimble::Vector3(1.f, 1.f, 1.f);
+    m_d->m_brightness = Nimble::Vector3(0.f, 0.f, 0.f);
+    checkChanged();
+  }
+
+  void Luminous::ColorCorrection::setIdentity(const std::vector<float> & points)
+  {
+    for (int c = 0; c < 3; ++c) {
+      m_d->m_splines[c].clear();
+      for(size_t j = 0; j < points.size(); j++) {
+        float v = points[j];
+        m_d->m_splines[c].insert(v, v);
+      }
+
     }
     m_d->m_gamma = Nimble::Vector3f(1.f, 1.f, 1.f);
     m_d->m_contrast = Nimble::Vector3(1.f, 1.f, 1.f);
