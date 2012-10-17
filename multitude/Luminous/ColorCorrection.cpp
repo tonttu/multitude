@@ -345,6 +345,20 @@ namespace Luminous
     checkChanged();
   }
 
+  void ColorCorrection::multiplyRGBValues(float mul, bool clamp)
+  {
+    for(int c = 0; c < 3; c++) {
+      std::vector<Nimble::Vector2f> points = m_d->m_splines[c].points();
+      for(size_t i = 0; i < points.size(); i++) {
+        Nimble::Vector2f & p = points[i];
+        p.y *= mul;
+        if(clamp)
+          p.y = Nimble::Math::Clamp(p.y, 0.0f, 1.0f);
+      }
+      m_d->m_splines[c].setPoints(points);
+    }
+  }
+
   float ColorCorrection::value(float x, int channel, bool clamp, bool modifiers) const
   {
     float y;
@@ -357,11 +371,11 @@ namespace Luminous
     return clamp ? Nimble::Math::Clamp(y, 0.f, 1.f) : y;
   }
 
-  Nimble::Vector3f ColorCorrection::valueRGB(float x) const
+  Nimble::Vector3f ColorCorrection::valueRGB(float x, bool clamp, bool modifiers) const
   {
-    return Nimble::Vector3f(value(x, 0, true, true),
-                            value(x, 1, true, true),
-                            value(x, 2, true, true));
+    return Nimble::Vector3f(value(x, 0, clamp, modifiers),
+                            value(x, 1, clamp, modifiers),
+                            value(x, 2, clamp, modifiers));
   }
 
   bool ColorCorrection::isIdentity() const

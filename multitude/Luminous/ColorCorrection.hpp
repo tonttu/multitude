@@ -41,10 +41,11 @@ namespace Luminous
     std::vector<Nimble::Vector2f> controlPoints(int channel, bool modifiers) const;
 
     void setControlPoint(size_t index, const Nimble::Vector3 & rgbvalue);
+    void multiplyRGBValues(float mul, bool clamp);
 
     /// @param modifiers include gamma, brightness and contrast
     float value(float x, int channel, bool clamp, bool modifiers) const;
-    Nimble::Vector3f valueRGB(float x) const;
+    Nimble::Vector3f valueRGB(float x, bool clamp = true, bool modifiers = true) const;
 
     bool isIdentity() const;
     void setIdentity();
