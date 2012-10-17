@@ -5,6 +5,8 @@
 
 #include <QTextStream>
 
+#include <algorithm>
+
 namespace {
   static bool cmpx(float a, const Nimble::Vector2f & b)
   {
@@ -195,7 +197,7 @@ namespace {
     QByteArray out;
     QTextStream stream(&out);
     stream.setRealNumberPrecision(3);
-    for (int i = 0; i < m_points.size(); ++i)
+    for (size_t i = 0; i < m_points.size(); ++i)
       stream << m_points[i].x << " " << m_points[i].y << " ";
     return out;
   }
@@ -328,7 +330,7 @@ namespace Luminous
   {
     std::vector<Nimble::Vector2f> points = m_d->m_splines[channel].points();
     if (modifiers) {
-      for (int i = 0; i < points.size(); ++i) {
+      for (size_t i = 0; i < points.size(); ++i) {
         points[i].y = applyModifiers(points[i].x, points[i].y, m_d->m_contrast[channel], m_d->m_gamma[channel], m_d->m_brightness[channel]);
       }
     }
