@@ -249,6 +249,7 @@ namespace {
 
         screenInfo.setConnection(type + QString::number(currentDisplay.displayID.iDisplayLogicalIndex));
         screenInfo.setLogicalScreen(screen);
+        screenInfo.setLogicalDisplay(currentDisplay.displayID.iDisplayLogicalAdapterIndex);
 
         // Get geometry from XRandr
         char name[256];
@@ -283,6 +284,7 @@ namespace {
       return false;
 
     Luminous::ScreenInfo screeninfo;
+    screeninfo.setLogicalDisplay(0); // Windows doesn't have a logical display
     screeninfo.setLogicalScreen(0); // Windows doesn't have a logical screen
 
     for (int adapterIdx = 0; adapterIdx < adapterInfo.size(); ++adapterIdx) {

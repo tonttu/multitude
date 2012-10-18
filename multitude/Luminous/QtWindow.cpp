@@ -185,10 +185,9 @@ namespace Luminous
   ////////////////////////////////////////////////////////////
 
   QtWindow::QtWindow(const MultiHead::Window & window, const QString & windowTitle)
-    : Window()
-    , m_d(new D())
+    : m_d(new D())
   {
-    /* The code below opens a new OpenGL window at desired loation. Extra steps
+    /* The code below opens a new OpenGL window at desired location. Extra steps
        are taken to ensure that the window creation happens so that:
 
        1) A dummy window is created, and moved to the right location,

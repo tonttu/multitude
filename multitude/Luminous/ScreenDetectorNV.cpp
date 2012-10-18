@@ -267,6 +267,7 @@ namespace
       info.setGpu(gpu_ids.join(","));
       info.setGpuName(gpu_names.join(","));
       info.setConnection(connectionName(port));
+      info.setLogicalDisplay(display);
       if(logical_screen != -1)
         info.setLogicalScreen(logical_screen);
       else
@@ -405,6 +406,7 @@ namespace
       // Write the screen information
       Luminous::ScreenInfo info;
       info.setLogicalScreen(0);
+      info.setLogicalDisplay(0);
 
       // Screen device name
       info.setName(dd.DeviceString);

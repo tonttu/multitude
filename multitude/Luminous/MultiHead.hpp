@@ -348,7 +348,7 @@ namespace Luminous {
       /// X11 display number for threaded rendering, -1 if not specified
       int displaynumber() const { return m_displaynumber.asInt(); }
       /// Sets X11 display number for threaded rendering, -1 disables
-      void setSisplaynumber(int s) { m_displaynumber = s; }
+      void setDisplaynumber(int s) { m_displaynumber = s; }
       /// X11 screen number for threaded rendering, -1 if not specified
       int screennumber() const { return m_screennumber.asInt(); }
       /// Sets X11 screen number for threaded rendering, -1 disables
