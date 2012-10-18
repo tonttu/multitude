@@ -345,10 +345,6 @@ namespace Luminous {
       /// Should the window be resizeable
       bool resizeable() const { return m_resizeable; }
 
-      /// X11 display number for threaded rendering, -1 if not specified
-      int displaynumber() const { return m_displaynumber.asInt(); }
-      /// Sets X11 display number for threaded rendering, -1 disables
-      void setDisplaynumber(int s) { m_displaynumber = s; }
       /// X11 screen number for threaded rendering, -1 if not specified
       int screennumber() const { return m_screennumber.asInt(); }
       /// Sets X11 screen number for threaded rendering, -1 disables
@@ -401,7 +397,6 @@ namespace Luminous {
       Valuable::AttributeBool       m_resizeable;
       Valuable::AttributeInt        m_fsaaSamplesPerPixel;
       Valuable::AttributeBool       m_directRendering;
-      Valuable::AttributeInt        m_displaynumber; // for X11
       Valuable::AttributeInt        m_screennumber; // for X11
       /// Pixel size in centimeters
       float      m_pixelSizeCm;

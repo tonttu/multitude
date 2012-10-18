@@ -337,7 +337,6 @@ namespace Luminous {
       m_resizeable(this, "resizeable", false),
       m_fsaaSamplesPerPixel(this, "fsaa-samples", 4),
       m_directRendering(this, "direct-rendering", true),
-      m_displaynumber(this, "displaynumber", -1),
       m_screennumber(this, "screennumber", 0),
       m_pixelSizeCm(0.1f)
   {

@@ -14,7 +14,7 @@ namespace Luminous
   class ScreenInfo
   {
   public:
-    ScreenInfo() : m_logicalDisplay(0), m_logicalScreen(0),m_numid(-1) {}
+    ScreenInfo() : m_logicalScreen(0),m_numid(-1) {}
 
     /// For example "GPU-0.DFP-3"
     QString id() const { return m_gpu + "." + m_connection; }
@@ -34,10 +34,6 @@ namespace Luminous
     /// For example "DFP-0"
     const QString & connection() const { return m_connection; }
     void setConnection(const QString & connection) { m_connection = connection; }
-
-    /// With X11 this is the X display number
-    int logicalDisplay() const { return m_logicalDisplay; }
-    void setLogicalDisplay(int logicalDisplay) { m_logicalDisplay = logicalDisplay; }
 
     /// With X11 this is the X screen number
     int logicalScreen() const { return m_logicalScreen; }
@@ -63,8 +59,7 @@ namespace Luminous
     QString m_gpu;
     QString m_gpuName;
     QString m_connection;
-    int m_logicalDisplay;   // X11 display
-    int m_logicalScreen;    // X11 screen
+    int m_logicalScreen;
     Nimble::Recti m_geometry;
     int m_numid;
   };
