@@ -267,7 +267,8 @@ namespace
       info.setGpu(gpu_ids.join(","));
       info.setGpuName(gpu_names.join(","));
       info.setConnection(connectionName(port));
-      info.setLogicalDisplay(display);
+      /// @todo
+      info.setLogicalDisplay(0);
       if(logical_screen != -1)
         info.setLogicalScreen(logical_screen);
       else
