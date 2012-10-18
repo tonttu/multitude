@@ -568,11 +568,8 @@ return self;
 
 - (void) newWindow
 {
-  /// @todo is this correct? Do we want to use the display number or screen number?
-  int display = m_hint->displaynumber();
-  // If display is -1 (undefined), just use the first display
-  if(display < 0)
-    display = 0;
+  // Use the first display
+  int display = 0;
 
   unsigned int styleMask = 0;
 
