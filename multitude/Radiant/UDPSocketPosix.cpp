@@ -138,6 +138,8 @@ namespace Radiant
         if(!readAll) return pos;
       } else if(tmp == 0 || m_d->m_fd == -1) {
         return pos;
+      } else if(SocketWrapper::err() == EINTR) {
+        continue;
       } else if(SocketWrapper::err() == EAGAIN || SocketWrapper::err() == EWOULDBLOCK) {
         if(readAll || (waitfordata && pos == 0)) {
           struct pollfd pfd;
@@ -177,6 +179,8 @@ namespace Radiant
       int tmp = send(m_d->m_fd, data + pos, max, 0);
       if(tmp > 0) {
         pos += tmp;
+      } else if(SocketWrapper::err() == EINTR) {
+        continue;
       } else if(SocketWrapper::err() == EAGAIN || SocketWrapper::err() == EWOULDBLOCK) {
         struct pollfd pfd;
         pfd.fd = m_d->m_fd;
