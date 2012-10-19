@@ -63,6 +63,7 @@ namespace Luminous
     void setBrightness(const Nimble::Vector3 & brightness);
 
     virtual Valuable::ArchiveElement serialize(Valuable::Archive & archive) const;
+    virtual bool deserialize(const Valuable::ArchiveElement & element);
     virtual bool readElement(const Valuable::ArchiveElement &);
 
   private:

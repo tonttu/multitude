@@ -475,6 +475,13 @@ namespace Luminous
     return element;
   }
 
+  bool ColorCorrection::deserialize(const Valuable::ArchiveElement & element)
+  {
+    bool b = Node::deserialize(element);
+    checkChanged();
+    return b;
+  }
+
   bool ColorCorrection::readElement(const Valuable::ArchiveElement & element)
   {
     if (element.name() == "offsets") {
