@@ -17,14 +17,14 @@ namespace Luminous
   class ShaderGL
   {
   public:
-    ShaderGL();
-    ~ShaderGL();
+    LUMINOUS_API ShaderGL();
+    LUMINOUS_API ~ShaderGL();
 
-    ShaderGL(ShaderGL && shader);
-    ShaderGL & operator=(ShaderGL && shader);
+    LUMINOUS_API ShaderGL(ShaderGL && shader);
+    LUMINOUS_API ShaderGL & operator=(ShaderGL && shader);
 
-    inline GLuint handle() const { return m_handle; }
-    bool compile(const ShaderGLSL & shader);
+    LUMINOUS_API inline GLuint handle() const { return m_handle; }
+    LUMINOUS_API bool compile(const ShaderGLSL & shader);
 
   private:
     GLuint m_handle;
@@ -40,21 +40,21 @@ namespace Luminous
   class ProgramGL : public ResourceHandleGL
   {
   public:
-    ProgramGL(StateGL & state, const Program & program);
-    ~ProgramGL();
+    LUMINOUS_API ProgramGL(StateGL & state, const Program & program);
+    LUMINOUS_API ~ProgramGL();
 
-    ProgramGL(ProgramGL && program);
-    ProgramGL & operator=(ProgramGL && program);
+    LUMINOUS_API ProgramGL(ProgramGL && program);
+    LUMINOUS_API ProgramGL & operator=(ProgramGL && program);
 
-    void bind();
-    void bind(const Program & program);
-    void link(const Program & program);
+    LUMINOUS_API void bind();
+    LUMINOUS_API void bind(const Program & program);
+    LUMINOUS_API void link(const Program & program);
 
-    int attributeLocation(const QByteArray & name);
-    int uniformLocation(const QByteArray & name);
-    int uniformBlockLocation(const QByteArray & blockname);
+    LUMINOUS_API int attributeLocation(const QByteArray & name);
+    LUMINOUS_API int uniformLocation(const QByteArray & name);
+    LUMINOUS_API int uniformBlockLocation(const QByteArray & blockname);
 
-    const VertexDescription & vertexDescription() const { return m_vertexDescription; }
+    LUMINOUS_API const VertexDescription & vertexDescription() const { return m_vertexDescription; }
 
   private:
     std::vector<ShaderGL> m_shaders;

@@ -10,16 +10,16 @@ namespace Luminous
   class TextureGL : public ResourceHandleGL
   {
   public:
-    TextureGL(StateGL & state);
-    ~TextureGL();
+    LUMINOUS_API TextureGL(StateGL & state);
+    LUMINOUS_API ~TextureGL();
 
-    TextureGL(TextureGL && t);
-    TextureGL & operator=(TextureGL && t);
+    LUMINOUS_API TextureGL(TextureGL && t);
+    LUMINOUS_API TextureGL & operator=(TextureGL && t);
 
     inline QRegion & dirtyRegion();
 
     /// @param textureUnit Texture unit, starting from 0
-    void upload(const Texture & texture, int textureUnit, bool alwaysBind);
+    LUMINOUS_API void upload(const Texture & texture, int textureUnit, bool alwaysBind);
     inline void bind(int textureUnit);
 
   private:

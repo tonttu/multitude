@@ -13,16 +13,16 @@ namespace Luminous
   class RenderBufferGL : public ResourceHandleGL
   {
   public:
-    RenderBufferGL(StateGL & state);
-    RenderBufferGL(RenderBufferGL && buffer);
-    ~RenderBufferGL();
+    LUMINOUS_API RenderBufferGL(StateGL & state);
+    LUMINOUS_API RenderBufferGL(RenderBufferGL && buffer);
+    LUMINOUS_API ~RenderBufferGL();
 
-    void sync(const RenderBuffer & buffer);
+    LUMINOUS_API void sync(const RenderBuffer & buffer);
 
-    void storageFormat(const RenderBuffer & buffer);
+    LUMINOUS_API void storageFormat(const RenderBuffer & buffer);
 
-    void bind();
-    void unbind();
+    LUMINOUS_API void bind();
+    LUMINOUS_API void unbind();
 
   private:
     int m_generation;
@@ -34,22 +34,22 @@ namespace Luminous
   class RenderTargetGL : public ResourceHandleGL
   {
   public:
-    RenderTargetGL(StateGL & state);
-    RenderTargetGL(RenderTargetGL && target);
+    LUMINOUS_API RenderTargetGL(StateGL & state);
+    LUMINOUS_API RenderTargetGL(RenderTargetGL && target);
 
-    ~RenderTargetGL();
+    LUMINOUS_API ~RenderTargetGL();
 
-    void sync(const RenderTarget & target);
+    LUMINOUS_API void sync(const RenderTarget & target);
 
-    void attach(GLenum attachment, RenderBufferGL & renderBuffer);
-    void attach(GLenum attachment, TextureGL & texture);
+    LUMINOUS_API void attach(GLenum attachment, RenderBufferGL & renderBuffer);
+    LUMINOUS_API void attach(GLenum attachment, TextureGL & texture);
 
-    void detach(GLenum attachment);
+    LUMINOUS_API void detach(GLenum attachment);
 
-    void bind();
-    void unbind();
+    LUMINOUS_API void bind();
+    LUMINOUS_API void unbind();
 
-    bool check();
+    LUMINOUS_API bool check();
 
   private:
     RenderTarget::RenderTargetType m_type;

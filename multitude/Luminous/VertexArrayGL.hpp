@@ -13,17 +13,17 @@ namespace Luminous
   class VertexArrayGL : public ResourceHandleGL
   {
   public:
-    VertexArrayGL(StateGL & state);
-    ~VertexArrayGL();
+    LUMINOUS_API VertexArrayGL(StateGL & state);
+    LUMINOUS_API ~VertexArrayGL();
 
-    VertexArrayGL(VertexArrayGL && t);
-    VertexArrayGL & operator=(VertexArrayGL && t);
+    LUMINOUS_API VertexArrayGL(VertexArrayGL && t);
+    LUMINOUS_API VertexArrayGL & operator=(VertexArrayGL && t);
 
-    void bind();
+    LUMINOUS_API void bind();
 
-    void upload(const VertexArray & vertexArray, ProgramGL * program);
+    LUMINOUS_API void upload(const VertexArray & vertexArray, ProgramGL * program);
 
-    int generation() const { return m_generation; }
+    LUMINOUS_API int generation() const { return m_generation; }
 
   private:
     void setVertexAttributes(const VertexArray & vertexArray, ProgramGL * program);
