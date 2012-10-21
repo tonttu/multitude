@@ -16,7 +16,7 @@ namespace Luminous
     }
 
     size_t size;
-    const char * data;
+    const void * data;
     Buffer::Usage usage;
   };
 
@@ -62,7 +62,7 @@ namespace Luminous
     return *this;
   }
 
-  void Buffer::setData(const char * data, size_t size, Buffer::Usage usage)
+  void Buffer::setData(const void *data, size_t size, Buffer::Usage usage)
   {
     m_d->data = data;
     m_d->size = size;
@@ -71,7 +71,7 @@ namespace Luminous
     invalidate();
   }
 
-  const char * Buffer::data() const
+  const void * Buffer::data() const
   {
     return m_d->data;
   }

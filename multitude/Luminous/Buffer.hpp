@@ -60,10 +60,10 @@ namespace Luminous
     LUMINOUS_API Buffer(Buffer && b);
     LUMINOUS_API Buffer & operator=(Buffer && b);
 
-    LUMINOUS_API void setData(const char * data, size_t size, Usage usage);
+    LUMINOUS_API void setData(const void * data, size_t size, Usage usage);
 
     LUMINOUS_API size_t size() const;
-    LUMINOUS_API const char * data() const;
+    LUMINOUS_API const void * data() const;
     LUMINOUS_API Usage usage() const;
 
   private:
