@@ -199,6 +199,10 @@ namespace Luminous
       }
     }
     m_vertexDescription = program.vertexDescription();
+
+    if (m_vertexDescription.attributeCount() == 0)
+      Radiant::warning("ProgramGL::link # shader %d (%s) has no vertex attributes defined. Did you forget to assign a vertex description?", handle(), program.shaderFilenames().join(", ").toUtf8().data());
+
     m_linked = true;
   }
 
