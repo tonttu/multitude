@@ -308,7 +308,7 @@ namespace Luminous
     RenderTargetGL & handle(const RenderTarget & target);
     RenderBufferGL & handle(const RenderBuffer & buffer);
     BufferGL & handle(const Buffer & buffer);
-    VertexArrayGL & handle(const VertexArray & vertexarray);
+    VertexArrayGL & handle(const VertexArray & vertexarray, ProgramGL * program);
 
   public:
 
@@ -429,7 +429,7 @@ namespace Luminous
     inline ProgramGL & handle(const Program & program) { return m_r.handle(program); }
     inline TextureGL & handle(const Texture & texture) { return m_r.handle(texture); }
     inline BufferGL & handle(const Buffer & buffer) { return m_r.handle(buffer); }
-    inline VertexArrayGL & handle(const VertexArray & vertexArray) { return m_r.handle(vertexArray); }
+    inline VertexArrayGL & handle(const VertexArray & vertexArray, ProgramGL * program) { return m_r.handle(vertexArray, program); }
     inline RenderBufferGL & handle(const RenderBuffer & buffer) { return m_r.handle(buffer); }
     inline RenderTargetGL & handle(const RenderTarget & target) { return m_r.handle(target); }
 

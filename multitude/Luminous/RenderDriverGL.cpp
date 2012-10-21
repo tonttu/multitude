@@ -478,9 +478,6 @@ namespace Luminous
       cmd->uniforms[slot].first = -1;
     }
 
-    if (shader.vertexDescription().attributeCount() == 0)
-      Radiant::warning("Shader %d (%s) has no vertex attributes defined. Did you forget to assign a vertex description?", m_state.program->handle(), shader.shaderFilenames().join(",").toUtf8().data());
-
     return *cmd;
   }
 

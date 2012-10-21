@@ -1262,6 +1262,12 @@ namespace Luminous
     return m_data->m_driverGL->handle(program);
   }
 
+  VertexArrayGL & RenderContext::handle(const VertexArray & vao, Luminous::ProgramGL * program)
+  {
+    assert(m_data->m_driverGL);
+    return m_data->m_driverGL->handle(vao, program);
+  }
+
   //////////////////////////////////////////////////////////////////////////
   // Deferred mode API
   // 

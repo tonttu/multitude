@@ -50,7 +50,7 @@ namespace Luminous
     LUMINOUS_API ProgramGL & handle(const Program & program);
     LUMINOUS_API TextureGL & handle(const Texture & texture);
     LUMINOUS_API BufferGL & handle(const Buffer & buffer);
-    LUMINOUS_API VertexArrayGL & handle(const VertexArray & vertexArray, ProgramGL * program = nullptr);
+    LUMINOUS_API VertexArrayGL & handle(const VertexArray & vertexArray, ProgramGL * program);
     LUMINOUS_API RenderBufferGL & handle(const RenderBuffer & buffer);
     LUMINOUS_API RenderTargetGL & handle(const RenderTarget & target);
 
