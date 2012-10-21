@@ -9,17 +9,17 @@ namespace Luminous
   class BufferGL : public ResourceHandleGL
   {
   public:
-    BufferGL(StateGL & state, const Buffer & buffer);
-    ~BufferGL();
+    LUMINOUS_API BufferGL(StateGL & state, const Buffer & buffer);
+    LUMINOUS_API ~BufferGL();
 
-    BufferGL(BufferGL && t);
-    BufferGL & operator=(BufferGL && t);
+    LUMINOUS_API BufferGL(BufferGL && t);
+    LUMINOUS_API BufferGL & operator=(BufferGL && t);
 
-    void bind(Buffer::Type type);
-    void upload(const Buffer &buffer, Buffer::Type type);
+    LUMINOUS_API void bind(Buffer::Type type);
+    LUMINOUS_API void upload(const Buffer &buffer, Buffer::Type type);
 
-    void * map(Buffer::Type type, int offset, std::size_t length, Radiant::FlagsT<Buffer::MapAccess> access);
-    void unmap(Buffer::Type type, int offset = 0, std::size_t length = std::size_t(-1));
+    LUMINOUS_API void * map(Buffer::Type type, int offset, std::size_t length, Radiant::FlagsT<Buffer::MapAccess> access);
+    LUMINOUS_API void unmap(Buffer::Type type, int offset = 0, std::size_t length = std::size_t(-1));
 
   private:
     void allocate(Buffer::Type type);
