@@ -81,6 +81,12 @@ namespace Valuable
       }
     }
 
+    void setSrc(Nimble::Vector2f src)
+    {
+      setSrcx(src.x);
+      setSrcy(src.y);
+    }
+
     virtual void clearValue(Attribute::Layer layer = USER) OVERRIDE
     {
       for(int j = 0; j < m_factors[layer].Elements; ++j)
