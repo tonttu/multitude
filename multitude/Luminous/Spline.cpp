@@ -580,8 +580,16 @@ namespace Luminous {
     for(long i = 0; i < paths; ++i) {
       qint64 size = 0;
       in >> size;
+      if (in.status() != QDataStream::Ok) {
+        spline.clear();
+        return in;
+      }
       points.resize(size);
       in.readRawData(reinterpret_cast<char*>(points.data()), size * sizeof(points[0]));
+      if (in.status() != QDataStream::Ok) {
+        spline.clear();
+        return in;
+      }
       for(std::size_t j = 0; j < points.size(); ++j)
         spline.m_d->addPoint(points[j]);
       spline.m_d->endPath();
