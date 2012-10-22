@@ -4,6 +4,7 @@
 #include <QSize>
 
 #include <Nimble/Math.hpp>
+#include <Nimble/Vector2.hpp>
 
 #include <algorithm>
 #include <type_traits>
@@ -102,6 +103,8 @@ namespace Nimble {
     /// @param o size to compare
     /// @return true if the sizes are not equal; otherwise false
     bool operator!=(const SizeT<T> & o) const;
+
+    Vector2T<T> toVector() const;
 
   private:
     T m_width;
@@ -265,6 +268,12 @@ namespace Nimble {
   SizeT<T> & SizeT<T>::operator-(const SizeT<T> & o) const
   {
     return SizeT<T>(m_width - o.m_width, m_height - o.m_height);
+  }
+
+  template<typename T>
+  Vector2T<T> SizeT<T>::toVector() const
+  {
+    return Vector2T<T>(m_width, m_height);
   }
 
   /// Two-dimensional size using integer precision
