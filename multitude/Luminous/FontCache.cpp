@@ -219,7 +219,8 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
 
   FontCache::FontGenerator::FontGenerator(FontCache::D & cache)
-    : m_cache(cache)
+    : Radiant::Task(PRIORITY_HIGH)
+    , m_cache(cache)
   {
     eventAddOut("glyph-ready");
     eventAddListenerBd("glyph-ready", [&] (Radiant::BinaryData & bd) {
