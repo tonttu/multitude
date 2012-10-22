@@ -361,30 +361,30 @@ namespace Luminous
 
     //Radiant::warning("RenderDriverGL::D::render # OFFSET %d SIZE: %d", cmd.uniformOffsetBytes, cmd.uniformSizeBytes);
 
-    GLERROR("RenderDriverGL::flush # glBindBufferRange");
+    GLERROR("RenderDriverGL::render # glBindBufferRange");
 
     // Set linewidth
     if (cmd.primitiveType == Luminous::PrimitiveType_Line || cmd.primitiveType == Luminous::PrimitiveType_LineStrip) {
       glLineWidth(cmd.primitiveSize);
-      GLERROR("RenderDriverGL::flush # glLineWidth");
+      GLERROR("RenderDriverGL::render # glLineWidth");
     }
 
     // Set point width
     if (cmd.primitiveType == Luminous::PrimitiveType_Point) {
       glPointSize(cmd.primitiveSize);
-      GLERROR("RenderDriverGL::flush # glPointSize");
+      GLERROR("RenderDriverGL::render # glPointSize");
     }
 
     if (cmd.indexed) {
       // Draw using the index buffer
       glDrawElementsBaseVertex(cmd.primitiveType, cmd.primitiveCount, GL_UNSIGNED_INT,
                                (GLvoid *)((sizeof(uint) * cmd.indexOffset)), cmd.vertexOffset);
-      GLERROR("RenderDriverGL::flush # glDrawElementsBaseVertex");
+      GLERROR("RenderDriverGL::render # glDrawElementsBaseVertex");
     }
     else {
       // Draw non-indexed
       glDrawArrays(cmd.primitiveType, cmd.vertexOffset, cmd.primitiveCount);
-      GLERROR("RenderDriverGL::flush # glDrawArrays");
+      GLERROR("RenderDriverGL::render # glDrawArrays");
     }
 
   }

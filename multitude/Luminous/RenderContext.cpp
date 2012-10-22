@@ -8,7 +8,6 @@
 
 #include "Utils.hpp"
 #include "RenderCommand.hpp"
-#include "GLSLProgramObject.hpp"
 
 #include <Nimble/ClipStack.hpp>
 
@@ -47,10 +46,7 @@ namespace Luminous
         , m_frameCount(0)
         , m_area(0)
         , m_window(win)
-        , m_boundProgram(0)
         , m_initialized(false)
-        , m_program(0)
-        , m_vbo(0)
         , m_uniformBufferOffsetAlignment(0)
         , m_automaticDepthDiff(-1.0f/100000.0f)
         , m_driver(renderDriver)
@@ -76,8 +72,6 @@ namespace Luminous
         m_defaultOffScreenRenderTarget.createRenderBufferAttachment(GL_COLOR_ATTACHMENT0, GL_RGBA);
         m_defaultOffScreenRenderTarget.createRenderBufferAttachment(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT);
       }
-
-      memset(m_textures, 0, sizeof(m_textures));
 
       m_basicShader.loadShader("Luminous/GLSL150/basic.vs", ShaderGLSL::Vertex);
       m_basicShader.loadShader("Luminous/GLSL150/basic.fs", ShaderGLSL::Fragment);
@@ -117,9 +111,6 @@ namespace Luminous
 
         Radiant::info("RenderContext::Internal # init ok");
       }
-
-      memset(m_textures, 0, sizeof(m_textures));
-      m_program = 0;
     }
 
     Nimble::Vector2f contextSize() const
@@ -170,8 +161,6 @@ namespace Luminous
 
     Transformer m_viewTransformer;
 
-    GLSLProgramObject * m_boundProgram;
-
     bool m_initialized;
 
     // Viewports defined as x1,y1,x2,y2
@@ -219,9 +208,6 @@ namespace Luminous
     VertexArrayCache m_vertexArrayCache;
     
     // List of currently active textures, vbos etc.
-    GLenum m_textures[MAX_TEXTURES];
-    GLSLProgramObject * m_program;
-    GLuint              m_vbo;
 
     int m_uniformBufferOffsetAlignment;
 
@@ -1154,14 +1140,6 @@ namespace Luminous
     m_data->m_driver.flush();
   }
 
-  void RenderContext::restart()
-  {
-    m_data->m_program = 0;
-    m_data->m_vbo = 0;
-
-    memset(m_data->m_textures, 0, sizeof(m_data->m_textures));
-  }
-
   void RenderContext::beforeTransformChange()
   {
     // flush();
@@ -1246,7 +1224,7 @@ namespace Luminous
     return m_data->m_driverGL->handle(program);
   }
 
-  VertexArrayGL & RenderContext::handle(const VertexArray & vao, Luminous::ProgramGL * program)
+  VertexArrayGL & RenderContext::handle(const VertexArray & vao, ProgramGL * program)
   {
     assert(m_data->m_driverGL);
     return m_data->m_driverGL->handle(vao, program);
@@ -1568,12 +1546,10 @@ namespace Luminous
     // First, flush the current deferred render queues
     r.flush();
 
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
     glPointSize(1.f);
+    glLineWidth(1.f);
 
-    glEnable(GL_TEXTURE_2D);
+    glDisable(GL_DEPTH_TEST);
   }
 
   CustomOpenGL::~CustomOpenGL()
