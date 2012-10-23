@@ -10,17 +10,22 @@ namespace Luminous
                             int offset, int vertexCount,
                             float primitiveSize,
                             const Luminous::VertexArray & vertexArray,
-                            const Luminous::Buffer & uniformBuffer, unsigned int uniformOffset,
                             const Luminous::Program & program,
                             const std::map<QByteArray, const Texture *> * textures,
                             const std::map<QByteArray, ShaderUniform> * uniforms)
   {
     /// @todo Should return the command, since we're only using the builder for returning depth here
     RenderBuilder<Vertex, UniformBlock> builder;
-    RenderCommand & cmd = createRenderCommand(translucent, vertexArray, uniformBuffer, builder.depth, program, textures, uniforms);
 
-    /// Set some defaults
-    unsigned int uniformSize = std::ceil(sizeof(UniformBlock) / float(uniformBufferOffsetAlignment())) * uniformBufferOffsetAlignment();
+    std::size_t uniformSize = alignUniform(sizeof(UniformBlock));
+    unsigned int uniformOffset;
+
+    SharedBuffer * ubuffer;
+    void * uniformData;
+    std::tie(uniformData, ubuffer) = sharedBuffer(uniformSize, 1, Buffer::Uniform, uniformOffset);
+    builder.uniform = static_cast<UniformBlock*>(uniformData);
+
+    RenderCommand & cmd = createRenderCommand(translucent, vertexArray, ubuffer->buffer, builder.depth, program, textures, uniforms);
 
     cmd.primitiveType = type;                         // Lines, points, vertices, etc
     cmd.primitiveSize = primitiveSize;                // For lines/points
@@ -28,7 +33,7 @@ namespace Luminous
     cmd.indexed = (vertexArray.indexBuffer() != 0);   // Whether we should use indexed or non-indexed drawing
     cmd.vertexOffset = offset;                        // Vertex offset (for indexed and non-indexed)
     cmd.indexOffset = offset;                         // Index offset (for indexed drawing only)
-    cmd.uniformOffsetBytes = uniformOffset;           // Start of active uniform in buffer
+    cmd.uniformOffsetBytes = uniformOffset * uniformSize; // Start of active uniform in buffer
     cmd.uniformSizeBytes = uniformSize;               // Size of uniform
 
     builder.command = &cmd;

@@ -62,13 +62,35 @@ namespace Luminous
     template <typename Vertex, typename UniformBlock>
     struct RenderBuilder
     {
+      RenderBuilder() : idx(), uniform(), vertex(), command(), depth(0.0f) {}
       unsigned int * idx;
       UniformBlock * uniform;
       Vertex * vertex;
       RenderCommand * command;
       float depth;
     };
-/// @endcond
+
+    struct SharedBuffer
+    {
+      SharedBuffer(Buffer::Type type) : type(type), reservedBytes(0) {}
+      SharedBuffer(SharedBuffer && shared)
+        : buffer(std::move(shared.buffer)),
+          type(shared.type),
+          reservedBytes(shared.reservedBytes)
+      {}
+      SharedBuffer & operator=(SharedBuffer && shared)
+      {
+        buffer = std::move(shared.buffer);
+        type = shared.type;
+        reservedBytes = shared.reservedBytes;
+        return *this;
+      }
+
+      Buffer buffer;
+      Buffer::Type type;
+      std::size_t reservedBytes;
+    };
+    /// @endcond
 
     /// Constructs a new render context and associates the given resources to it
     /// @param resources OpenGL resource container to associate with the context
@@ -330,7 +352,6 @@ namespace Luminous
                                                int offset, int vertexCount,
                                                float primitiveSize,
                                                const Luminous::VertexArray & vertexArray,
-                                               const Luminous::Buffer & uniformBuffer, unsigned int uniformOffset,
                                                const Luminous::Program & program,
                                                const std::map<QByteArray, const Texture *> * textures = nullptr,
                                                const std::map<QByteArray, ShaderUniform> * uniforms = nullptr);
@@ -348,6 +369,7 @@ namespace Luminous
 
     int uniformBufferOffsetAlignment() const;
 
+    std::size_t alignUniform(std::size_t uniformSize) const;
   private:
     RenderCommand & createRenderCommand(bool translucent,
                                         const Luminous::VertexArray & vertexArray,
@@ -389,7 +411,6 @@ namespace Luminous
                                         const std::map<QByteArray, const Texture *> * textures = nullptr,
                                         const std::map<QByteArray, ShaderUniform> * uniforms = nullptr);
 
-    struct SharedBuffer;
     template <typename T>
     std::pair<T *, SharedBuffer *> sharedBuffer(
         std::size_t maxVertexCount, Buffer::Type type, unsigned int & offset);
@@ -421,10 +442,6 @@ namespace Luminous
   public:
     LUMINOUS_API CustomOpenGL(RenderContext & r);
     LUMINOUS_API ~CustomOpenGL();
-
-    /// @todo add more proper support for direct GL calls
-    inline void draw(PrimitiveType primType, unsigned int offset, unsigned int primitives);
-    inline void drawIndexed(PrimitiveType primType, unsigned int offset, unsigned int primitives);
 
     inline ProgramGL & handle(const Program & program) { return m_r.handle(program); }
     inline TextureGL & handle(const Texture & texture) { return m_r.handle(texture); }

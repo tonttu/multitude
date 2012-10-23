@@ -35,27 +35,6 @@
 
 namespace Luminous
 {
-  struct RenderContext::SharedBuffer
-  {
-    SharedBuffer(Buffer::Type type) : type(type), reservedBytes(0) {}
-    SharedBuffer(SharedBuffer && shared)
-      : buffer(std::move(shared.buffer)),
-        type(shared.type),
-        reservedBytes(shared.reservedBytes)
-    {}
-    SharedBuffer & operator=(SharedBuffer && shared)
-    {
-      buffer = std::move(shared.buffer);
-      type = shared.type;
-      reservedBytes = shared.reservedBytes;
-      return *this;
-    }
-
-    Buffer buffer;
-    Buffer::Type type;
-    std::size_t reservedBytes;
-  };
-
   class RenderContext::Internal
   {
   public:
@@ -720,6 +699,11 @@ namespace Luminous
   }
 
   // Create a render command using the shared buffers
+  std::size_t RenderContext::alignUniform(std::size_t uniformSize) const
+  {
+    return std::ceil(uniformSize / float(uniformBufferOffsetAlignment())) * uniformBufferOffsetAlignment();
+  }
+
   RenderCommand & RenderContext::createRenderCommand(bool translucent,
                                                      int indexCount, int vertexCount,
                                                      std::size_t vertexSize, std::size_t uniformSize,
@@ -734,7 +718,7 @@ namespace Luminous
     unsigned int indexOffset, vertexOffset, uniformOffset;
 
     // Align uniforms as required by OpenGL
-    uniformSize = std::ceil(uniformSize / float(uniformBufferOffsetAlignment())) * uniformBufferOffsetAlignment();
+    uniformSize = alignUniform(uniformSize);
 
     SharedBuffer * vbuffer;
     std::tie(mappedVertexBuffer, vbuffer) = sharedBuffer(vertexSize, vertexCount, Buffer::Vertex, vertexOffset);
