@@ -112,6 +112,15 @@ namespace Valuable
   void StyleValue::append(const StyleValue & v, Separator sep)
   {
     assert(v.size() == 1);
+
+    if (m_values.isEmpty()) {
+      m_uniform = v.m_uniform;
+      m_values = v.m_values;
+      m_units = v.m_units;
+      m_separators << sep;
+      return;
+    }
+
     const QVariant & v1 = v.m_values[0];
     if(m_uniform) {
       const QVariant & v2 = m_values.last();
