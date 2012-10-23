@@ -115,17 +115,19 @@ namespace Luminous
   {
     assert(m_layout.font().hintingPreference() == QFont::PreferNoHinting);
 
+    QFont font = m_layout.font();
     if (m_letterSpacing.size() == 1) {
-      QFont font = m_layout.font();
       if (m_letterSpacing.unit() == Valuable::Attribute::VU_PERCENTAGE) {
         font.setLetterSpacing(QFont::PercentageSpacing, m_letterSpacing.asFloat() * 100.0f);
       } else {
         font.setLetterSpacing(QFont::AbsoluteSpacing, m_letterSpacing.asFloat());
       }
-      m_layout.setFont(font);
+    } else {
+      font.setLetterSpacing(QFont::PercentageSpacing, 100.0f);
     }
+    m_layout.setFont(font);
 
-    QFontMetricsF fontMetrics(m_layout.font());
+    QFontMetricsF fontMetrics(font);
     const float lineWidth = size.x;
     const float leading = fontMetrics.leading();
 
