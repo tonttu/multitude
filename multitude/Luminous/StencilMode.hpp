@@ -56,6 +56,14 @@ namespace Luminous
 
     void setPassOperation(Operation op) { m_pass = op;}
     Operation passOperation() const { return m_pass; }
+
+    void setOperation(Operation stencilFail, Operation depthFail, Operation pass)
+    {
+      m_stencilFail = stencilFail;
+      m_depthFail = depthFail;
+      m_pass = pass;
+    }
+
   private:
     Operation m_stencilFail;
     Operation m_depthFail;
