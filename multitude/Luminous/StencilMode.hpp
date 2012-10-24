@@ -3,11 +3,20 @@
 
 #include "Luminous/Luminous.hpp"
 
+#include <map>
+
 namespace Luminous
 {
   class StencilMode
   {
   public:
+    enum Face
+    {
+      Front = GL_FRONT,
+      Back = GL_BACK,
+      FrontAndBack = GL_FRONT_AND_BACK
+    };
+
     enum Operation
     {
       Keep            = GL_KEEP,
@@ -37,54 +46,52 @@ namespace Luminous
 
     LUMINOUS_API StencilMode();
 
-    void setFunction(Function function, int ref, unsigned int mask)
-    {
-      m_function = function;
-      m_refValue = ref;
-      m_maskValue = mask;
-    }
+    LUMINOUS_API void setFunction(Face face, Function function, int ref, unsigned int mask);
 
-    Function function() const { return m_function; }
-    int refValue() const { return m_refValue; }
-    unsigned int maskValue() const { return m_maskValue; }
+    LUMINOUS_API void setOperation(Face face, Operation stencilFail, Operation depthFail, Operation pass);
 
-    void setStencilFailOperation(Operation op) { m_stencilFail = op; }
-    Operation stencilFailOperation() const { return m_stencilFail; }
+    Function frontFunction() const { return m_frontFunction; }
+    int frontRefValue() const { return m_frontRefValue; }
+    unsigned int frontMaskValue() const { return m_frontMaskValue; }
 
-    void setDepthFailOperation(Operation op) { m_depthFail = op; }
-    Operation depthFailOperation() const { return m_depthFail; }
+    Operation frontStencilFailOp() const { return m_frontStencilFail; }
+    Operation frontDepthFailOp() const { return m_frontDepthFail; }
+    Operation frontPassOp() const { return m_frontPass; }
 
-    void setPassOperation(Operation op) { m_pass = op;}
-    Operation passOperation() const { return m_pass; }
+    Function backFunction() const { return m_backFunction; }
+    int backRefValue() const { return m_backRefValue; }
+    unsigned int backMaskValue() const { return m_backMaskValue; }
 
-    void setOperation(Operation stencilFail, Operation depthFail, Operation pass)
-    {
-      m_stencilFail = stencilFail;
-      m_depthFail = depthFail;
-      m_pass = pass;
-    }
+    Operation backStencilFailOp() const { return m_backStencilFail; }
+    Operation backDepthFailOp() const { return m_backDepthFail; }
+    Operation backPassOp() const { return m_backPass; }
+
+    LUMINOUS_API bool equal(const StencilMode & o) const;
 
   private:
-    Operation m_stencilFail;
-    Operation m_depthFail;
-    Operation m_pass;
+    Operation m_frontStencilFail;
+    Operation m_frontDepthFail;
+    Operation m_frontPass;
 
-    Function m_function;
-    int m_refValue;
-    unsigned int m_maskValue;
+    Function m_frontFunction;
+    int m_frontRefValue;
+    unsigned int m_frontMaskValue;
+
+    Operation m_backStencilFail;
+    Operation m_backDepthFail;
+    Operation m_backPass;
+
+    Function m_backFunction;
+    int m_backRefValue;
+    unsigned int m_backMaskValue;
   };
 
   inline bool operator!=(const StencilMode & lhs, const StencilMode & rhs)
   {
-    return
-      lhs.stencilFailOperation() != rhs.stencilFailOperation()
-      || lhs.depthFailOperation() != rhs.depthFailOperation()
-      || lhs.passOperation() != rhs.passOperation()
-      || lhs.function() != rhs.function()
-      || lhs.refValue() != rhs.refValue()
-      || lhs.maskValue() != rhs.maskValue();
+    return !lhs.equal(rhs);
   }
 
-  inline bool operator==(const StencilMode & lhs, const StencilMode & rhs) { return !(lhs!=rhs); }
+  inline bool operator==(const StencilMode & lhs, const StencilMode & rhs) { return lhs.equal(rhs); }
 }
+
 #endif // LUMINOUS_STENCILMODE_HPP

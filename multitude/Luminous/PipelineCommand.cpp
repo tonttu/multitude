@@ -98,10 +98,15 @@ namespace Luminous
   void CommandSetStencilMode::execute()
   {
     glEnable(GL_STENCIL_TEST);
-    glStencilFunc(m_mode.function(), m_mode.refValue(), m_mode.maskValue());
-    GLERROR("RenderDriverGL::setStencilMode # glStencilFunc");
-    glStencilOp(m_mode.stencilFailOperation(), m_mode.depthFailOperation(), m_mode.passOperation());
-    GLERROR("RenderDriverGL::setStencilMode # glStencilOp");
+    glStencilFuncSeparate(GL_FRONT, m_mode.frontFunction(), m_mode.frontRefValue(), m_mode.frontMaskValue());
+    GLERROR("RenderDriverGL::setStencilMode # glStencilFuncSeparate");
+    glStencilOpSeparate(GL_FRONT, m_mode.frontStencilFailOp(), m_mode.frontDepthFailOp(), m_mode.frontPassOp());
+    GLERROR("RenderDriverGL::setStencilMode # glStencilOpSeparate");
+
+    glStencilFuncSeparate(GL_BACK, m_mode.backFunction(), m_mode.backRefValue(), m_mode.backMaskValue());
+    GLERROR("RenderDriverGL::setStencilMode # glStencilFuncSeparate");
+    glStencilOpSeparate(GL_BACK, m_mode.backStencilFailOp(), m_mode.backDepthFailOp(), m_mode.backPassOp());
+    GLERROR("RenderDriverGL::setStencilMode # glStencilOpSeparate");
   }
   //////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////
