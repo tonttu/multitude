@@ -435,7 +435,7 @@ namespace Luminous
     if(translucent) {
       TranslucentRenderQueue & translucentQueue = rt.translucentQueue;
       if(translucentQueue.usedSize >= translucentQueue.queue.size())
-        translucentQueue.queue.resize(translucentQueue.queue.size()+1);
+        translucentQueue.queue.emplace_back();
       auto & pair = translucentQueue.queue[translucentQueue.usedSize++];
       pair.first = m_state;
       cmd = &pair.second;
