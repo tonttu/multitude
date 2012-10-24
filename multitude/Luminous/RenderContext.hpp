@@ -20,6 +20,7 @@
 #include <Luminous/PostProcess.hpp>
 #include "RenderTargetGL.hpp"
 #include "BufferGL.hpp"
+#include "CullMode.hpp"
 
 #include <Nimble/Rectangle.hpp>
 #include <Nimble/Vector2.hpp>
@@ -303,6 +304,12 @@ namespace Luminous
 
     /// Set the active stencilmode
     void setStencilMode(const StencilMode & mode);
+
+    /// Set the active cull mode
+    void setCullMode(const CullMode mode);
+
+    /// Specify front-facing polygons
+    void setFrontFace(enum FaceWinding winding);
 
     /// @todo REMOVE US
     static void setThreadContext(RenderContext * rsc);

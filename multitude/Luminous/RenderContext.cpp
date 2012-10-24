@@ -1545,6 +1545,16 @@ namespace Luminous
     m_data->m_driverGL->setStencilMode(mode);
   }
 
+  void RenderContext::setCullMode(const CullMode mode)
+  {
+    m_data->m_driverGL->setCullMode(mode);
+  }
+
+  void RenderContext::setFrontFace(FaceWinding winding)
+  {
+    m_data->m_driverGL->setFrontFace(winding);
+  }
+
   ////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////
 

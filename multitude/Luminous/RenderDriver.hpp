@@ -7,6 +7,7 @@
 #include "Luminous/Style.hpp"
 #include "Luminous/Buffer.hpp"
 #include "Luminous/RenderTarget.hpp"
+#include "CullMode.hpp"
 
 #include <Radiant/Color.hpp>
 #include <memory>
@@ -69,6 +70,8 @@ namespace Luminous
     LUMINOUS_API virtual void setBlendMode(const BlendMode & mode) = 0;
     LUMINOUS_API virtual void setDepthMode(const DepthMode & mode) = 0;
     LUMINOUS_API virtual void setStencilMode(const StencilMode & mode) = 0;
+    LUMINOUS_API virtual void setCullMode(const CullMode & mode) = 0;
+    LUMINOUS_API virtual void setFrontFace(FaceWinding winding) = 0;
 
     LUMINOUS_API virtual void setViewport(const Nimble::Recti & rect) = 0;
     LUMINOUS_API virtual void setScissor(const Nimble::Recti & rect) = 0;

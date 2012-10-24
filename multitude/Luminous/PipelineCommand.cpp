@@ -188,4 +188,34 @@ namespace Luminous
                       glMask, m_filter);
     GLERROR("CommandBlitGL::execute glBlitFramebuffer");
   }
+
+  //////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////
+
+  CommandCullMode::CommandCullMode(CullMode mode)
+    : m_mode(mode)
+  {}
+
+  void CommandCullMode::execute()
+  {
+    if(m_mode.enabled())
+      glEnable(GL_CULL_FACE);
+    else
+      glDisable(GL_CULL_FACE);
+
+    glCullFace(m_mode.face());
+  }
+
+  //////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////
+
+  CommandFrontFace::CommandFrontFace(FaceWinding winding)
+    : m_winding(winding)
+  {}
+
+  void CommandFrontFace::execute()
+  {
+    glFrontFace(m_winding);
+  }
+
 }

@@ -66,6 +66,8 @@ namespace Luminous
     LUMINOUS_API virtual void setBlendMode(const BlendMode & mode) OVERRIDE;
     LUMINOUS_API virtual void setDepthMode(const DepthMode & mode) OVERRIDE;
     LUMINOUS_API virtual void setStencilMode(const StencilMode & mode) OVERRIDE;
+    LUMINOUS_API virtual void setCullMode(const CullMode & mode) OVERRIDE;
+    LUMINOUS_API virtual void setFrontFace(FaceWinding winding) OVERRIDE;
 
     LUMINOUS_API virtual void setViewport(const Nimble::Recti & rect) OVERRIDE;
     LUMINOUS_API virtual void setScissor(const Nimble::Recti & rect) OVERRIDE;

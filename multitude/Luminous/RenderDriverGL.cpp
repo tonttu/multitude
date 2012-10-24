@@ -656,6 +656,16 @@ namespace Luminous
     m_d->newRenderQueueSegment(new CommandSetStencilMode(mode));
   }
 
+  void RenderDriverGL::setCullMode(const CullMode & mode)
+  {
+    m_d->newRenderQueueSegment(new CommandCullMode(mode));
+  }
+
+  void RenderDriverGL::setFrontFace(FaceWinding winding)
+  {
+    m_d->newRenderQueueSegment(new CommandFrontFace(winding));
+  }
+
   void RenderDriverGL::setViewport(const Nimble::Recti & rect)
   {
     m_d->newRenderQueueSegment(new CommandViewportGL(rect));

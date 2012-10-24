@@ -1,7 +1,8 @@
 #if !defined (LUMINOUS_STENCILMODE_HPP)
 #define LUMINOUS_STENCILMODE_HPP
 
-#include "Luminous/Luminous.hpp"
+#include "Luminous.hpp"
+#include "RenderDefines.hpp"
 
 #include <map>
 
@@ -10,12 +11,6 @@ namespace Luminous
   class StencilMode
   {
   public:
-    enum Face
-    {
-      Front = GL_FRONT,
-      Back = GL_BACK,
-      FrontAndBack = GL_FRONT_AND_BACK
-    };
 
     enum Operation
     {

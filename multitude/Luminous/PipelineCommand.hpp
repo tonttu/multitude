@@ -3,6 +3,7 @@
 
 #include "RenderTargetGL.hpp"
 #include "RenderDriverGL.hpp"
+#include "CullMode.hpp"
 
 namespace Luminous
 {
@@ -153,6 +154,34 @@ namespace Luminous
     Nimble::Recti m_dst;
     Luminous::ClearMask m_mask;
     Luminous::Texture::Filter m_filter;
+  };
+
+  //////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////
+
+  class CommandCullMode : public PipelineCommand
+  {
+  public:
+    CommandCullMode(Luminous::CullMode mode);
+
+    virtual void execute() OVERRIDE;
+
+  private:
+    Luminous::CullMode m_mode;
+  };
+
+  //////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////
+
+  class CommandFrontFace : public PipelineCommand
+  {
+  public:
+    CommandFrontFace(FaceWinding winding);
+
+    virtual void execute() OVERRIDE;
+
+  private:
+    FaceWinding m_winding;
   };
 }
 

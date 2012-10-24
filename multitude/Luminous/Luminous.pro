@@ -1,6 +1,8 @@
 include(../multitude.pri)
 
-HEADERS += ProgramGL.hpp
+HEADERS += ProgramGL.hpp \
+    CullMode.hpp \
+    RenderDefines.hpp
 HEADERS += RenderDriverGL.hpp
 HEADERS += ResourceHandleGL.hpp
 HEADERS += StateGL.hpp
@@ -89,7 +91,8 @@ macx:OBJECTIVE_SOURCES += CocoaWindow.mm
 !mobile*:SOURCES += MipMapGenerator.cpp
 !mobile*:SOURCES += SpriteRenderer.cpp
 
-SOURCES += ProgramGL.cpp
+SOURCES += ProgramGL.cpp \
+    CullMode.cpp
 SOURCES += RenderDriverGL.cpp
 SOURCES += TextureGL.cpp
 SOURCES += VertexArrayGL.cpp
