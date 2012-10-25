@@ -11,8 +11,8 @@ namespace Luminous
   public:
     static CullMode Default() { return CullMode(); }
 
-    CullMode();
-    CullMode(bool enabled, Luminous::Face face);
+    LUMINOUS_API CullMode();
+    LUMINOUS_API CullMode(bool enabled, Luminous::Face face);
 
     bool enabled() const { return m_enabled; }
     Luminous::Face face() const { return m_face; }
