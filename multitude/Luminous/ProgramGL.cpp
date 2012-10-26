@@ -217,8 +217,13 @@ namespace Luminous
   int ProgramGL::uniformLocation(const QByteArray & name)
   {
     auto it = m_uniforms.find(name);
-    if(it == m_uniforms.end())
-      return -1;
+    if(it == m_uniforms.end()) {
+      /// Uniforms that have an array index / different kind of notation
+      /// (foo vs foo[0]) might not be in the m_uniforms-map, yet
+      int loc = glGetUniformLocation(m_handle, name.data());
+      m_uniforms[name] = loc;
+      return loc;
+    }
     return it->second;
   }
 
