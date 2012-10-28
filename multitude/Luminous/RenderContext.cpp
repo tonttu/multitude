@@ -245,6 +245,8 @@ namespace Luminous
         currentIndex = 0;
         for(auto it = buffers.begin(); it != buffers.end(); ++it) {
           if (it->reservedBytes > 0) {
+            // @todo Investigate if orphaning is any faster on multi-screen/multi-GPU setups
+            // it->buffer.setData(nullptr, it->buffer.size(), Buffer::StreamDraw);
             ctx.unmapBuffer(it->buffer, it->type, 0, it->reservedBytes);
             it->reservedBytes = 0;
           }

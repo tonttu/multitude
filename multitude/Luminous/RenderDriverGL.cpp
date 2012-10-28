@@ -434,15 +434,13 @@ namespace Luminous
 
     if(translucent) {
       TranslucentRenderQueue & translucentQueue = rt.translucentQueue;
-      if(translucentQueue.usedSize >= translucentQueue.queue.size())
-        translucentQueue.queue.emplace_back();
+      translucentQueue.queue.emplace_back();
       auto & pair = translucentQueue.queue[translucentQueue.usedSize++];
       pair.first = m_state;
       cmd = &pair.second;
     } else {
       OpaqueRenderQueue & queue = rt.opaqueQueue[m_state];
-      if(queue.usedSize >= queue.queue.size())
-        queue.queue.emplace_back();
+      queue.queue.emplace_back();
       cmd = &queue.queue[queue.usedSize++];
     }
 
