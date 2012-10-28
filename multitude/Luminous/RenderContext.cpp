@@ -1063,8 +1063,7 @@ namespace Luminous
         }
 
         m.setTranslation(offset);
-        b.uniform->modelMatrix = modelview * m;
-        b.uniform->modelMatrix.transpose();
+        b.uniform->modelMatrix = (modelview * m).transpose();
 
         int index = 0;
 
