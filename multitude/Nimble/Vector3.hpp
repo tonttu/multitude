@@ -102,17 +102,17 @@ namespace Nimble {
     inline Vector3T    shuffle         (int i1, int i2, int i3) const { return Vector3T(get(i1), get(i2), get(i3)); }
 
     /// Returns the ith component
-    inline const	T&	operator[]	(int i) const	                   { return ((T*)this)[i]; }
+    inline const	T&	operator[]	(size_t i) const  { return ((T*)this)[i]; }
     /// Multiply component-wise
-    inline T&		operator[]	(int i)				   { return ((T*)this)[i]; }
+    inline T&		operator[]	(size_t i)            { return ((T*)this)[i]; }
 
     /// Multiply component-wise
-    inline T&            get(int i)        { return ((T*)this)[i]; }
+    inline T&            get(size_t i)                { return ((T*)this)[i]; }
     /// Multiply component-wise
-    inline const T&      get(int i) const  { return ((T*)this)[i]; }
+    inline const T&      get(size_t i) const          { return ((T*)this)[i]; }
 
     /// Sets the ith component
-    inline void		set(int i, T v)              			   { ((T*)this)[i] = v; }
+    inline void		set(size_t i, T v)                { ((T*)this)[i] = v; }
 
     /// Returns the largest component
     inline T             maximum() const { T t = x > y ? x : y; return t > z ? t : z; }

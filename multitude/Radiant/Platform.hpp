@@ -20,7 +20,9 @@
   #define RADIANT_CXX11 1
 #endif
 
+//////////////////////////////////////////////////////////////////////////
 // Discover the architecture
+//////////////////////////////////////////////////////////////////////////
 #if defined(__amd64__) || defined(_M_X64)
 #   define RADIANT_AMD64 1
 #elif defined (__i386__) || defined (_M_IX86)
@@ -36,6 +38,57 @@
 #   define RADIANT_DEBUG 1
 #endif
 
+
+//////////////////////////////////////////////////////////////////////////
+// Discover the platform
+//////////////////////////////////////////////////////////////////////////
+//
+// Detect OSX
+//
+#if defined (__APPLE__)
+// && defined (__MACH__)
+#   define RADIANT_OSX 1
+#   define RADIANT_UNIX 1
+
+#if defined(__IPHONE_OS_VERSION_MIN_REQUIRED)
+# define RADIANT_IOS 1
+# define RADIANT_OS_MOBILE 1
+#endif
+//
+// Detect Windows
+//
+#elif defined(_WIN32)
+#	include <yvals.h>
+#   define RADIANT_WINDOWS 1
+#   ifdef _WIN64
+#     define RADIANT_WIN64 1
+#   else
+#     define RADIANT_WIN32 1
+#   endif
+
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+
+// Grmblrgrmbl, weird windows CRT stuffs
+#define snprintf _snprintf
+
+//
+// Detect linux
+//
+#elif __linux__
+#   define RADIANT_LINUX 1
+#   define RADIANT_UNIX 1
+#else
+//
+// Unsupported
+//
+#   error "Unsupported platform!"
+#endif
+
+
+//////////////////////////////////////////////////////////////////////////
+// Discover the compiler
+//////////////////////////////////////////////////////////////////////////
 //
 // Detect LLVM/CLANG
 //
@@ -81,6 +134,23 @@
 #   endif
 
 //
+// Detect Intel C++
+//
+#elif defined (__INTEL_COMPILER)
+#   define RADIANT_ICC 1
+
+#   define MULTI_NO_FINAL
+#   define MULTI_NO_ALIGNAS
+
+#  if RADIANT_WINDOWS
+#   define MULTI_DLLEXPORT __declspec(dllexport)
+#   define MULTI_DLLIMPORT __declspec(dllimport)
+#  else
+#   define MULTI_DLLEXPORT __attribute__((visibility("default")))
+#   define MULTI_DLLIMPORT __attribute__((visibility("default")))
+#  endif
+
+//
 // Detect Microsoft Visual C++
 //
 #elif defined (_MSC_VER)
@@ -108,6 +178,9 @@
 #   pragma warning(disable:4519)
 #endif
 
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
 #if !defined (MULTI_NO_ALIGNAS)
 #  define MULTI_ALIGNED(type, var, alignment) type alignas(alignment) var;
 #else
@@ -140,48 +213,7 @@
 #endif
 #undef MULTI_NO_FINAL
 
-//
-// Detect OSX
-//
-#if defined (__APPLE__)
-// && defined (__MACH__)
-#   define RADIANT_OSX 1
-#   define RADIANT_UNIX 1
-
-#if defined(__IPHONE_OS_VERSION_MIN_REQUIRED)
-# define RADIANT_IOS 1
-# define RADIANT_OS_MOBILE 1
-#endif
-//
-// Detect Windows
-//
-#elif defined(_WIN32)
-#	include <yvals.h>
-#   define RADIANT_WINDOWS 1
-#   ifdef _WIN64
-#     define RADIANT_WIN64 1
-#   else
-#     define RADIANT_WIN32 1
-#   endif
-
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-
-// Grmblrgrmbl, weird windows CRT stuffs
-#define snprintf _snprintf
-
-//
-// Detect linux
-//
-#elif __linux__
-#   define RADIANT_LINUX 1
-#   define RADIANT_UNIX 1
-#else
-//
-// Unsupported
-//
-#   error "Unsupported platform!"
-#endif
+//////////////////////////////////////////////////////////////////////////
 
 #ifdef RADIANT_GNUC
 #  define PUSH_IGNORE_DEPRECATION_WARNINGS _Pragma ("GCC diagnostic push") \

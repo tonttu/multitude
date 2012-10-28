@@ -655,7 +655,7 @@ namespace Luminous
     return std::make_pair(data, buffer);
   }
 
-  template <> LUMINOUS_API 
+  template <> 
   void * RenderContext::mapBuffer<void>(const Buffer & buffer, Buffer::Type type, int offset, std::size_t length,
                                         Radiant::FlagsT<Buffer::MapAccess> access)
   {

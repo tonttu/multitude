@@ -21,9 +21,6 @@
 
 namespace Nimble {
 
-  using Nimble::Vector2;
-  using Nimble::Vector4;
-
   /// Camera distortion correction
   /** Correct camera lens distortion. Uses simple and fast polynomial
       correction to transform coordinates in the distorted input image

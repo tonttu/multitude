@@ -459,7 +459,7 @@ namespace Luminous
     RenderContext & m_r;
   };
 
-  template <>
+  template <> LUMINOUS_API
   void * RenderContext::mapBuffer<void>(const Buffer & buffer, Buffer::Type type, int offset, std::size_t length,
                                         Radiant::FlagsT<Buffer::MapAccess> access);
 

@@ -99,7 +99,7 @@ namespace Nimble {
     /// Scales the vector with inverse of v
     inline Vector2T&	descale		(const Vector2T& v)			{ x /= v.x; y /= v.y; return *this; }
     /// Rotates the vector given the sine and cosine of the rotation angle
-    inline Vector2T&	rotate		(double s, double c)		{ T t = x; x = (T)(x*c+y*-s); y = (T)(t*s+y*c); return *this; }
+    inline Vector2T&	rotate		(double s, double c)		{ T t = x; x = (T)((x*c)+(y*-s)); y = (T)((t*s)+(y*c)); return *this; }
     /// Rotate the vector by given radians
     inline Vector2T&	rotate		(double angle)					{ return rotate(sin(angle), cos(angle)); }
     /// Returns atan2(y/x)
@@ -121,14 +121,17 @@ namespace Nimble {
     inline Vector2T    perpendicular   () const { return Vector2T(-y, x); }
 
     /// Returns the ith component
-    inline T&            get(int i)        { return ((T*)this)[i]; }
+    inline T&            get(size_t i)        { return ((T*)this)[i]; }
     /// Returns the ith component
-    inline const T&      get(int i) const  { return ((T*)this)[i]; }
+    inline const T&      get(size_t i) const  { return ((T*)this)[i]; }
+
+    /// Sets the ith component
+    inline void		set(size_t i, T v)              			   { ((T*)this)[i] = v; }
 
     /// Returns the ith component
-    inline const	T&			operator[]	(int i) const		{ return ((T*)this)[i]; }
+    inline const	T&			operator[]	(size_t i) const		{ return ((T*)this)[i]; }
     /// Returns the ith component
-    inline T&			        operator[]	(int i)				{ return ((T*)this)[i]; }
+    inline T&			        operator[]	(size_t i)				{ return ((T*)this)[i]; }
 
     /// Check that vector elements are finite
     /** This function can be useful if you suspect that contents of the
@@ -283,11 +286,11 @@ namespace Nimble {
 
     delta = lineEnd - lineStart;
 
-    if(delta.x == 0.0f)
+    if(std::abs(delta.x) < std::numeric_limits<float>::epsilon())
     {
       slopeType = LS_VERTICAL;
     }
-    else if(delta.y == 0.0f)
+    else if(std::abs(delta.y) < std::numeric_limits<float>::epsilon())
     {
       slopeType = LS_HORIZONTAL;
     }

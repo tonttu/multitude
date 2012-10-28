@@ -99,9 +99,9 @@ namespace Nimble {
     inline Vector4T    shuffle         (int i1, int i2, int i3, int i4) const { return Vector4T(get(i1), get(i2), get(i3), get(i4)); }
 
     /// Returns the ith component
-    inline const	T&	operator[]	(int i) const		       { return ((T*)this)[i]; }
+    inline const	T&	operator[]	(size_t i) const { return ((T*)this)[i]; }
     /// Returns the ith component
-    inline T&		operator[]	(int i)			       { return ((T*)this)[i]; }
+    inline T&		operator[]	(size_t i)           { return ((T*)this)[i]; }
 
     /// Sets the vector to given values
     inline Nimble::Vector4T<T> & make(const Vector2T<T> & v, T cz, T cw)                   { x = v.x; y = v.y; z = cz; w = cw; return *this; }
@@ -118,9 +118,12 @@ namespace Nimble {
     inline const T *     data() const { return &x; }
 
     /// Returns the ith component
-    inline T&            get(int i)        { return ((T*)this)[i]; }
+    inline T&            get(size_t i)        { return ((T*)this)[i]; }
     /// Returns the ith component
-    inline const T&      get(int i) const  { return ((T*)this)[i]; }
+    inline const T&      get(size_t i) const  { return ((T*)this)[i]; }
+
+    /// Sets the ith component
+    inline void		set(size_t i, T v)        { ((T*)this)[i] = v; }
 
     /// Returns the largest component
     inline T             maximum() const { T q = x>y?x:y; T a = z>w?z:w; return q>a?q:a; }
@@ -133,7 +136,7 @@ namespace Nimble {
     /// @param i0 Index of the first component,  vec2.x = vec4[i0], 0..3
     /// @param i1 Index of the second component, vec2.y = vec4[i1], 0..3
     /// @return New vector2
-    inline Vector2T<T> vector2(int i0, int i1) const
+    inline Vector2T<T> vector2(size_t i0, size_t i1) const
     {
       return Vector2T<T>(get(i0), get(i1));
     }
@@ -147,7 +150,7 @@ namespace Nimble {
     /// @param i1 Index of the second component, vec3.y = vec4[i1], 0..3
     /// @param i2 Index of the third component,  vec3.z = vec4[i2], 0..3
     /// @return New vector2
-    inline Vector3T<T> vector3(int i0, int i1, int i2) const
+    inline Vector3T<T> vector3(size_t i0, size_t i1, size_t i2) const
     {
       return Vector3T<T>(get(i0), get(i1), get(i2));
     }

@@ -278,14 +278,14 @@ namespace Nimble {
         inline void calculateMeanVariance(const T * values, int n, T * mean, T * variance)
     {
       T ave = 0;
-      for(int i = 0; i < n; i++)
+      for(size_t i = 0; i < n; i++)
         ave += values[i];
 
       ave /= (double) n;
       *mean = ave;
 
       T vari = 0;
-      for(int i = 0; i < n; i++) {
+      for(size_t i = 0; i < n; i++) {
         T tmp = values[i] - ave;
         vari += tmp * tmp;
       }
@@ -300,7 +300,7 @@ namespace Nimble {
     inline T calculateAbsSum(const T * values, int n)
     {
       T sum = 0;
-      for(int i = 0; i < n; i++)
+      for(size_t i = 0; i < n; i++)
         sum += std::abs(values[i]);
 
       return sum;
@@ -320,7 +320,7 @@ namespace Nimble {
     {
       double mean[] = { 0, 0 };
 
-      for(int i=0; i < n; ++i) {
+      for(size_t i=0; i < n; ++i) {
         mean[0] += values[i][0];
         mean[1] += values[i][1];
       }
@@ -330,7 +330,7 @@ namespace Nimble {
       float covariance[3] = { 0, 0, 0 };
 
 
-      for(int i=0; i < n; ++i) {
+      for(size_t i=0; i < n; ++i) {
         double vx = values[i][0] - mean[0];
         double vy = values[i][1] - mean[1];
 
@@ -365,7 +365,7 @@ namespace Nimble {
         double b = -covariance[0] - covariance[2];
         double c = -covariance[1]*covariance[1] + covariance[0]*covariance[2];
 
-        double discr = std::sqrt(b*b - 4*c);
+        double discr = std::sqrt(b*b - 4.0*c);
         double q = -0.5*(b + Nimble::Math::Sign(b)*discr);
 
         double eigs[] = { q, c/q };
