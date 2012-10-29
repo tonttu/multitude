@@ -419,7 +419,7 @@ namespace Luminous
 
     settings.beginGroup(m_cache.m_rawFontKey);
 
-    foreach (const QString & index, settings.childGroups()) {
+    for (const QString & index : settings.childGroups()) {
       settings.beginGroup(index);
       const quint32 glyphIndex = index.toUInt();
       const QRectF r = settings.value("rect").toRectF();

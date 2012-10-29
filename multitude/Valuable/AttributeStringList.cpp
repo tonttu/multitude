@@ -31,13 +31,13 @@ namespace Valuable
 
   bool AttributeStringList::set(const StyleValue & v, Attribute::Layer layer)
   {
-    foreach (auto u, v.units())
+    for (auto u : v.units())
       if (u != VU_UNKNOWN)
         return false;
 
     QStringList lst;
     lst.reserve(v.size());
-    foreach (const QVariant & var, v.values())
+    for (const QVariant & var : v.values())
       lst << var.toString();
     setValue(lst, layer);
     return true;

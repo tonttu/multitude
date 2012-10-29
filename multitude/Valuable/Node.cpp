@@ -743,7 +743,7 @@ namespace Valuable
   {
     /// The queue must be locked during the whole time when calling the callback
     Radiant::Guard g(s_queueMutex);
-    foreach(QueueItem* item, s_queue) {
+    for(QueueItem* item : s_queue) {
       if(item->target) {
         std::swap(item->target->m_sender, item->sender);
         item->target->processMessage(item->to, item->data);
@@ -756,7 +756,7 @@ namespace Valuable
       // can't call "delete item" here, because that processMessage call could
       // call some destructors that iterate s_queue
     }
-    foreach(QueueItem* item, s_queue)
+    for(QueueItem* item : s_queue)
       delete item;
     int r = s_queue.size();
     s_queue.clear();

@@ -217,6 +217,9 @@ namespace Valuable
   {
 //    Radiant::trace("Attribute::emitChange # '%s'", m_name.data());
     m_changed = true;
+    // We use foreach here because the callback functions might
+    // remove themselves from the listeners. Since foreach makes a
+    // copy of the containers this doesn't present a problem
     foreach(const AttributeListener & l, m_listeners) {
       if(l.role & CHANGE_ROLE) {
         if(!l.func) {
@@ -235,6 +238,9 @@ namespace Valuable
   void Attribute::emitDelete()
   {
     //Radiant::trace("Attribute::emitDelete");
+    // We use foreach here because the callback functions might
+    // remove themselves from the listeners. Since foreach makes a
+    // copy of the containers this doesn't present a problem
     foreach(const AttributeListener & l, m_listeners) {
       if(l.role & DELETE_ROLE) {
         if(!l.func) {
@@ -294,9 +300,9 @@ namespace Valuable
       } else ++it;
     }
 
-    foreach(Node * listener, listeners) {
+    for(Node * listener : listeners) {
       bool found = false;
-      foreach(const AttributeListener & l, m_listeners)
+      for(const AttributeListener & l : m_listeners)
         if(l.listener == listener) { found = true; break; }
       if(!found)
         listener->m_valueListening.remove(this);

@@ -271,12 +271,12 @@ namespace Luminous
     m_d->m_size= size;
 
     // Resize all attachments
-    foreach(GLenum attachment, m_d->m_renderBufferAttachments.keys()) {
+    for(GLenum attachment : m_d->m_renderBufferAttachments.keys()) {
       auto rb = renderBuffer(attachment);
       rb->storageFormat(size, rb->format(), rb->samples());
     }
 
-    foreach(GLenum attachment, m_d->m_textureAttachments.keys()) {
+    for(GLenum attachment : m_d->m_textureAttachments.keys()) {
       auto t = texture(attachment);
       t->setData(size.width(), size.height(), t->dataFormat(), 0);
     }
@@ -292,7 +292,7 @@ namespace Luminous
     m_d->m_samples = samples;
 
     // Change sample count for all render buffer attachments
-    foreach(GLenum attachment, m_d->m_renderBufferAttachments.keys()) {
+    for(GLenum attachment : m_d->m_renderBufferAttachments.keys()) {
       auto rb = renderBuffer(attachment);
       rb->storageFormat(rb->size(), rb->format(), rb->samples());
     }

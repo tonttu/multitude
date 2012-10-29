@@ -199,10 +199,10 @@ namespace Luminous
 
     /// @todo should also detach removed attachments
 
-    foreach(GLenum attachment, texAttachments)
+    for(GLenum attachment : texAttachments)
       attach(attachment, m_state.driver().handle(*target.texture(attachment)));
 
-    foreach(GLenum attachment, bufAttachments)
+    for(GLenum attachment : bufAttachments)
       attach(attachment, m_state.driver().handle(*target.renderBuffer(attachment)));
 
     check();

@@ -241,11 +241,11 @@ namespace Valuable {
 
     virtual bool set(const StyleValue & v, Layer layer = USER) OVERRIDE
     {
-      foreach(const ValueUnit & vu, v.units())
+      for(const ValueUnit & vu : v.units())
         if(vu != VU_UNKNOWN) return false;
 
       Flags newValue;
-      foreach(const QVariant & var, v.values()) {
+      for(const QVariant & var : v.values()) {
         if(var.type() != QVariant::ByteArray) return false;
         auto it = m_flags.find(var.toByteArray().toLower());
         if (it == m_flags.end()) return false;

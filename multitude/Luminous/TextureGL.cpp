@@ -204,7 +204,7 @@ namespace Luminous
           GLERROR("TextureGL::upload # glCompressedTexSubImage2D");
           m_dirtyRegion = QRegion();
         } else {
-          foreach(const QRect & rect, m_dirtyRegion.rects()) {
+          for(const QRect & rect : m_dirtyRegion.rects()) {
             const int bytesPerScanline = rect.width() * texture.dataFormat().bytesPerPixel();
             // Number of scanlines to upload
             const size_t scanLines = std::min<int32_t>(rect.height(), bytesFree / bytesPerScanline);
