@@ -98,14 +98,16 @@ namespace Radiant
     block_allocator(const block_allocator&& rhs) throw()
     {
       m_topChunk = std::move(rhs.m_topChunk);
+      m_activeChunk = m_topChunk.get();
     }
 
     template<typename U>
     block_allocator(const block_allocator<U,BlockCount> && rhs) throw()
     {
       m_topChunk = std::move(rhs.m_topChunk);
+      m_activeChunk = m_topChunk.get();
     }
-
+  private:
     block_allocator(const block_allocator& rhs) throw()
     {
       assert(false);
