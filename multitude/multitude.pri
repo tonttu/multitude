@@ -233,6 +233,8 @@ win32 {
     QMAKE_CXXFLAGS += -wd4018
     # Use the non-standard math defines from math.h
     QMAKE_CXXFLAGS += -D_USE_MATH_DEFINES
+    # Use multiprocessor compilation
+    QMAKE_CXXFLAGS += -MP
     
     # These libs have an extra extension for debug builds
     build_pass:CONFIG(debug,debug|release) {
