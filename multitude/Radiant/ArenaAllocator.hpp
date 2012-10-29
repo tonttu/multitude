@@ -1,6 +1,7 @@
 #if !defined (RADIANT_ARENA_ALLOCATOR_HPP)
 #define RADIANT_ARENA_ALLOCATOR_HPP
 
+#if 0
 namespace Radiant
 {
   template <size_t PoolSize>
@@ -148,4 +149,5 @@ namespace Radiant
     std::list<MemoryPool<PoolSize>> m_pools;
   };
 }
+#endif
 #endif // RADIANT_ARENA_ALLOCATOR_HPP
