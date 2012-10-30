@@ -101,6 +101,11 @@ namespace Valuable
     return m_element.getTagName();
   }
 
+  void XMLArchiveElement::setName(const QString & name)
+  {
+    m_element.setTagName(name);
+  }
+
   const DOMElement * XMLArchiveElement::xml() const
   {
     return &m_element;

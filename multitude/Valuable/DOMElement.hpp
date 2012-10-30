@@ -25,6 +25,7 @@ namespace Valuable
 {
 
   /// An element in DOMDocument
+  /// @todo why does this class exist? Remove and replace with Qt version
   class VALUABLE_API DOMElement
   {
   public:
@@ -35,6 +36,8 @@ namespace Valuable
     DOMElement();
     /// Constructs a copy
     DOMElement(const DOMElement &);
+    DOMElement(DOMElement &&);
+    DOMElement& operator=(DOMElement &&);
     ~DOMElement();
 
     /// Copies an element
@@ -45,6 +48,7 @@ namespace Valuable
 
     /// Gets the tag name of the element
     QString getTagName() const;
+    void setTagName(const QString & name);
 
     /// Appends another element as a child
     void appendChild(const DOMElement & element);

@@ -116,6 +116,12 @@ namespace Valuable
     return m_impl->name();
   }
 
+  void ArchiveElement::setName(const QString & name)
+  {
+    assert(m_impl);
+    m_impl->setName(name);
+  }
+
   bool ArchiveElement::isNull() const
   {
     return !m_impl;

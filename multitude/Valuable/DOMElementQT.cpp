@@ -45,6 +45,18 @@ namespace Valuable
     m_wrapped->x = that.m_wrapped->x;
   }
 
+  DOMElement::DOMElement(DOMElement && that)
+    : m_wrapped(that.m_wrapped)
+  {
+    that.m_wrapped = nullptr;
+  }
+
+  DOMElement & DOMElement::operator=(DOMElement && that)
+  {
+    std::swap(m_wrapped, that.m_wrapped);
+    return *this;
+  }
+
   DOMElement::~DOMElement()
   {
     delete m_wrapped;
@@ -67,6 +79,11 @@ namespace Valuable
       return QString();
     
     return m_wrapped->x.tagName();
+  }
+
+  void DOMElement::setTagName(const QString & name)
+  {
+    m_wrapped->x.setTagName(name);
   }
 
   void DOMElement::appendChild(const DOMElement & element)

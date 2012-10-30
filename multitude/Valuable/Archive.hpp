@@ -90,6 +90,9 @@ namespace Valuable
     /// Reads the element name
     /// @return The name of the element
     virtual QString name() const = 0;
+    /// Sets the element name
+    /// @param name The new name of the element
+    virtual void setName(const QString & name) = 0;
   };
 
   /// Classes that implement this interface provide the functionality for
@@ -201,6 +204,9 @@ namespace Valuable
     /// Reads the element name
     /// @return The name of the element
     QString name() const;
+    /// Sets the element name
+    /// @param name The new name of the element
+    void setName(const QString & name);
     /// Is this a NULL element, created by the default constructor
     /// @return True if this element has no implementation.
     bool isNull() const;
