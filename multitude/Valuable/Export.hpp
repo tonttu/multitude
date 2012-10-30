@@ -25,4 +25,13 @@
 #define VALUABLE_API MULTI_DLLIMPORT
 #endif
 
+// Needed by std::istream & operator>>(std::istream & is, StyleValue & value);
+#ifndef STYLISH_API
+#ifdef STYLISH_EXPORT
+#define STYLISH_API MULTI_DLLEXPORT
+#else
+#define STYLISH_API MULTI_DLLIMPORT
+#endif
+#endif
+
 #endif

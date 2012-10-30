@@ -26,7 +26,7 @@
 namespace Valuable
 {
   /// The base interface for different value types
-  class VALUABLE_API StyleValue : public Serializable
+  class VALUABLE_API StyleValue
   {
   public:
     enum Separator
@@ -83,9 +83,6 @@ namespace Valuable
 
     QList<Group> groups(Separator sep) const;
 
-    virtual ArchiveElement serialize(Archive & archive) const OVERRIDE;
-    virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
-
   private:
     bool m_uniform;
     /// QVariants in the list can be ints, floats, strings and colors
@@ -94,6 +91,9 @@ namespace Valuable
     QList<Separator> m_separators;
   };
 
+  VALUABLE_API std::ostream & operator<<(std::ostream & os, const StyleValue & value);
+  /// This needs full CSS parser to work, so its implemented in Stylish
+  STYLISH_API std::istream & operator>>(std::istream & is, StyleValue & value);
 }
 
 #endif

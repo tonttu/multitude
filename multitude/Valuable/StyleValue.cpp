@@ -226,15 +226,8 @@ namespace Valuable
     return all;
   }
 
-  ArchiveElement StyleValue::serialize(Archive & archive) const
+  std::ostream & operator<<(std::ostream & os, const StyleValue & value)
   {
-    /// @todo implement
-    return ArchiveElement();
-  }
-
-  bool StyleValue::deserialize(const ArchiveElement & element)
-  {
-    /// @todo implement
-    return true;
+    return os << value.stringify().toUtf8().data();
   }
 }
