@@ -42,12 +42,4 @@ namespace Valuable
     setValue(lst, layer);
     return true;
   }
-
-  bool AttributeStringList::deserialize(const ArchiveElement & element)
-  {
-    /// @todo doesn't handle whitespace properly
-    const QString & tmp = element.get();
-    setValue(tmp.isEmpty() ? QStringList() : tmp.split(" "));
-    return true;
-  }
 } // namespace Valuable

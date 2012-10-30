@@ -77,7 +77,6 @@ namespace Valuable
       { return value().data(); }
 
       virtual void processMessage(const QByteArray & id, Radiant::BinaryData & data) OVERRIDE;
-      virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
 
       virtual const char * type() const OVERRIDE;
 
@@ -126,27 +125,10 @@ namespace Valuable
   typedef AttributeVector<Nimble::Vector4f> AttributeVector4f;
 
   template<class VectorType>
-  bool AttributeVector<VectorType>::deserialize(const ArchiveElement & element) {
-    std::stringstream in(element.get().toUtf8().data());
-
-    VectorType vector;
-    for(int i = 0; i < N; i++)
-      in >> vector[i];
-
-    *this = vector;
-    return true;
-  }
-
-  template<class VectorType>
   QString AttributeVector<VectorType>::asString(bool * const ok) const {
     if(ok) *ok = true;
 
-    QString r = Radiant::StringUtils::stringify(value()[0]);
-
-    for(int i = 1; i < N; i++)
-      r += QString(" ") + Radiant::StringUtils::stringify(value()[i]);
-
-    return r;
+    return Radiant::StringUtils::toString(value());
   }
 
   template<class VectorType>

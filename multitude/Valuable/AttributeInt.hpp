@@ -137,8 +137,6 @@ namespace Valuable
       if(ok)
         *this = v;
     }
-
-    virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
   };
 
   /// 32-bit integer value object.
@@ -151,15 +149,6 @@ namespace Valuable
   typedef AttributeIntT<int64_t> AttributeInt64;
   /// 64-bit unsigned integer value object.
   typedef AttributeIntT<uint64_t> AttributeUInt64;
-
-  template<class T>
-  bool AttributeIntT<T>::deserialize(const ArchiveElement & e)
-  {
-    *this = Radiant::StringUtils::fromString<T>(e.get().toUtf8().data());
-    
-    return true;
-  }
-
 }
 
 #endif

@@ -121,12 +121,6 @@ namespace Valuable
 
     virtual const char * type() const OVERRIDE { return "enum"; }
 
-    virtual bool deserialize(const ArchiveElement &) OVERRIDE
-    {
-      /// @todo implement
-      return true;
-    }
-
     virtual void processMessage(const QByteArray &, Radiant::BinaryData & data) OVERRIDE
     {
       QString str;

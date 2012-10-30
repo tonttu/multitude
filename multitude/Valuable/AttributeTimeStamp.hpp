@@ -28,17 +28,6 @@ namespace Valuable
         : Base(host, name, v, transit)
     {}
 
-    virtual bool deserialize(const ArchiveElement & element) OVERRIDE
-    {
-      bool ok = false;
-
-      int64_t tmp = static_cast<Radiant::TimeStamp::type>(element.get().toLongLong(&ok));
-
-      *this = Radiant::TimeStamp(tmp);
-
-      return ok;
-    }
-
     virtual QString asString(bool * const ok) const OVERRIDE
     {
       if(ok) *ok = true;

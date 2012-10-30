@@ -26,7 +26,7 @@
 namespace Valuable
 {
   /// The base interface for different value types
-  class VALUABLE_API StyleValue
+  class VALUABLE_API StyleValue : public Serializable
   {
   public:
     enum Separator
@@ -82,6 +82,9 @@ namespace Valuable
     bool operator==(const StyleValue & v) const;
 
     QList<Group> groups(Separator sep) const;
+
+    virtual ArchiveElement serialize(Archive & archive) const OVERRIDE;
+    virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
 
   private:
     bool m_uniform;

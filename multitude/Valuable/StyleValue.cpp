@@ -225,4 +225,16 @@ namespace Valuable
     }
     return all;
   }
+
+  ArchiveElement StyleValue::serialize(Archive & archive) const
+  {
+    /// @todo implement
+    return ArchiveElement();
+  }
+
+  bool StyleValue::deserialize(const ArchiveElement & element)
+  {
+    /// @todo implement
+    return true;
+  }
 }

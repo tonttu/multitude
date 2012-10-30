@@ -17,6 +17,7 @@
 
 #include <Valuable/Archive.hpp>
 #include <Valuable/Export.hpp>
+#include <Valuable/Serializer.hpp>
 
 #include <QString>
 #include <QList>
@@ -434,6 +435,23 @@ namespace Valuable
       const T current = value(USER);
       clearValue(USER);
       setValue(current, DEFAULT);
+    }
+
+    virtual ArchiveElement serialize(Archive & archive) const OVERRIDE
+    {
+      ArchiveElement e = Serializer::serialize(archive, value());
+      if (e.isNull())
+        return e;
+      if (!name().isEmpty())
+        e.setName(name());
+      e.add("type", type());
+      return e;
+    }
+
+    virtual bool deserialize(const ArchiveElement & element) OVERRIDE
+    {
+      setValue(Serializer::deserialize<T>(element));
+      return true;
     }
 
   protected:

@@ -72,8 +72,6 @@ namespace Valuable
 
     virtual const char * type() const OVERRIDE { return VO_TYPE_STRING; }
 
-    virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
-
     /// Makes the string empty
     void clear();
 

@@ -86,12 +86,6 @@ namespace Valuable
 
       virtual const char * type() const OVERRIDE { return VO_TYPE_FLOAT; }
 
-      virtual bool deserialize(const ArchiveElement & element) OVERRIDE
-      {
-        *this = static_cast<T>(element.get().toDouble());
-        return true;
-      }
-
       void setSrc(float src)
       {
         m_src = src;

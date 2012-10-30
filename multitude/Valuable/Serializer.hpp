@@ -18,12 +18,13 @@
 
 #include "DOMElement.hpp"
 #include "DOMDocument.hpp"
-#include "AttributeObject.hpp"
 #include "XMLArchive.hpp"
 
 #include <Radiant/IntrusivePtr.hpp>
 #include <Radiant/StringUtils.hpp>
 #include <Radiant/Trace.hpp>
+
+#include <QStringList>
 
 #include <typeinfo>
 
@@ -188,11 +189,7 @@ namespace Valuable
 
       inline static typename remove_const<T>::Type deserialize(const ArchiveElement & element)
       {
-        /// @todo should use something else than stringstream
-        std::istringstream is(element.get().toUtf8().data());
-        typename remove_const<T>::Type t;
-        is >> t;
-        return t;
+        return Radiant::StringUtils::fromString<typename remove_const<T>::Type>(element.get().toUtf8());
       }
     };
 
@@ -200,9 +197,9 @@ namespace Valuable
     template < >
     struct Impl<QString>
     {
-      inline static ArchiveElement serialize(Archive &archive, const QString & t)
+      inline static ArchiveElement serialize(Archive & archive, const QString & t)
       {
-        ArchiveElement elem = archive.createElement("QString");
+        ArchiveElement elem = archive.createElement("string");
         elem.set(t);
         return elem;
       }
@@ -210,6 +207,36 @@ namespace Valuable
       inline static QString deserialize(const ArchiveElement & element)
       {
         return element.get();
+      }
+    };
+
+    /// Template specialization for QStringList.
+    template < >
+    struct Impl<QStringList>
+    {
+      inline static ArchiveElement serialize(Archive & archive, const QStringList & t)
+      {
+        Valuable::ArchiveElement strlist = archive.createElement("string-list");
+        for (const QString & str: t) {
+          Valuable::ArchiveElement e = archive.createElement("string");
+          e.set(str);
+          strlist.add(e);
+        }
+        return strlist;
+      }
+
+      inline static QStringList deserialize(const ArchiveElement & element)
+      {
+        QStringList lst;
+        for (auto it = element.children(); it; ++it) {
+          if ((*it).name() == "string") {
+            lst << (*it).get();
+          } else {
+            /// @todo ArchiveElement should have some deserialization flags, like "warnings as errors" or similar
+            Radiant::warning("deserialize # Unknown tag %s", (*it).name().toUtf8().data());
+          }
+        }
+        return lst;
       }
     };
 
@@ -334,7 +361,8 @@ namespace Valuable
     template <typename T>
     inline ArchiveElement serialize(Archive & archive, const T * t)
     {
-      return Impl<T*>::serialize(archive, t);
+      if(!t) return ArchiveElement();
+      return Impl<T>::serialize(archive, *t);
     }
 
     template <typename T>

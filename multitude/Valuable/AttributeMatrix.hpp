@@ -50,7 +50,6 @@ namespace Valuable
     { return this->value().data(); }
 
     // virtual void processMessage(const QByteArray & id, Radiant::BinaryData & data);
-    virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
     virtual const char * type() const OVERRIDE { return "Matrix"; }
     virtual QString asString(bool * const ok = 0) const OVERRIDE;
   };
@@ -95,28 +94,10 @@ namespace Valuable
   */
 
   template<class MatrixType, typename ElementType, int N>
-  bool AttributeMatrix<MatrixType, ElementType, N>::deserialize(const ArchiveElement & element) {
-    std::stringstream in(element.get().toStdString());
-
-    MatrixType m;
-    for(int i = 0; i < N; i++)
-      in >> m.data()[i];
-
-    *this = m;
-    return true;
-  }
-
-  template<class MatrixType, typename ElementType, int N>
   QString AttributeMatrix<MatrixType, ElementType, N>::asString(bool * const ok) const {
     if(ok) *ok = true;
 
-    const ElementType * buf = data();
-    QString r = Radiant::StringUtils::stringify(buf[0]);
-
-    for(int i = 1; i < N; i++)
-      r += " " + Radiant::StringUtils::stringify(buf[i]);
-
-    return r;
+    return Radiant::StringUtils::toString(this->value());
   }
 
   /// A float Matrix2 value object

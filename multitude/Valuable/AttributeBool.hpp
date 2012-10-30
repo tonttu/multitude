@@ -33,7 +33,6 @@ namespace Valuable
     virtual ~AttributeBool();
 
     virtual const char * type() const OVERRIDE { return "bool"; }
-    bool deserialize(const ArchiveElement & element) OVERRIDE;
 
     /// @cond
     virtual void processMessage(const QByteArray &, Radiant::BinaryData & data) OVERRIDE;

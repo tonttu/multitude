@@ -28,12 +28,6 @@ namespace Valuable
 
   AttributeBool::~AttributeBool() {}
 
-  bool AttributeBool::deserialize(const ArchiveElement & e)
-  {
-    *this = Radiant::StringUtils::fromString<int32_t>(e.get().toUtf8().data()) != 0;
-    return true;
-  }
-
   void AttributeBool::processMessage(const QByteArray &, Radiant::BinaryData & data)
   {
     bool ok = true;

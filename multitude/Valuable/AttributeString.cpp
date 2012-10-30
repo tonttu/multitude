@@ -31,12 +31,6 @@ namespace Valuable
       *this = tmp;
   }
 
-  bool AttributeString::deserialize(const ArchiveElement & element)
-  {
-    *this = element.get();
-    return true;
-  }
-
   float AttributeString::asFloat(bool * const ok) const
   {
     return value().toFloat(ok);
