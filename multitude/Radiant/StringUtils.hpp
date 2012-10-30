@@ -16,9 +16,11 @@
 #define RADIANT_STRING_UTILS_HPP
 
 #include "Export.hpp"
+#include "Defines.hpp"
 
 #include <sstream>
 #include <QString>
+#include <type_traits>
 
 #include <stdlib.h>
 
@@ -33,29 +35,59 @@ namespace Radiant
     RADIANT_API void eraseNonVisibles(QString & s);
 
     /// Converts to string
-    /// @todo Rename to toString
     /// @param x Value to convert
     /// @returns Value as a string
     template<class T>
-    inline QString stringify(const T & x) {
-        /// @todo fix to use qt string utils
-        std::ostringstream os;
-        os << x;
-        return QString::fromUtf8(os.str().c_str());
+    inline QString toString(const T & x)
+    {
+      std::ostringstream os;
+      os << x;
+      return QString::fromUtf8(os.str().c_str());
     }
 
-    /// Convert string to integer
-    template <class T>
-    inline T fromString(const char * str)
-#ifdef _MSC_VER
-    { return T(_atoi64(str)); }
-#else
-    { return T(atoll(str)); }
-#endif
+    template <> inline QString toString<bool>(const bool & b) { return b ? "1" : "0"; }
 
-    template <long>
-    inline long fromString(const char * str)
-    { return atol(str); }
+    /// @cond
+    MULTI_ATTR_DEPRECATED("stringify will be removed in Cornerstone 2.1, use toString instead",
+                          template <typename T> inline QString stringify(const T & x));
+
+    template <typename T>
+    inline QString stringify(const T & x)
+    {
+      return toString(x);
+    }
+    /// @endcond
+
+    /// Convert string to T
+    template <typename T>
+    inline typename std::enable_if<!std::is_enum<T>::value, T>::type fromString(const QByteArray & str)
+    {
+      std::istringstream is(str.data());
+      T t;
+      is >> t;
+      return t;
+    }
+
+    template <typename T>
+    inline typename std::enable_if<std::is_enum<T>::value, T>::type fromString(const QByteArray & str)
+    {
+      std::istringstream is(str.data());
+      long t;
+      is >> t;
+      return (T)t;
+    }
+
+    template <> inline short fromString<short>(const QByteArray & str) { return str.toShort(); }
+    template <> inline unsigned short fromString<unsigned short>(const QByteArray & str) { return str.toUShort(); }
+    template <> inline int fromString<int>(const QByteArray & str) { return str.toInt(); }
+    template <> inline unsigned int fromString<unsigned int>(const QByteArray & str) { return str.toUInt(); }
+    template <> inline long fromString<long>(const QByteArray & str) { return str.toLong(); }
+    template <> inline unsigned long fromString<unsigned long>(const QByteArray & str) { return str.toULong(); }
+    template <> inline long long fromString<long long>(const QByteArray & str) { return str.toLongLong(); }
+    template <> inline unsigned long long fromString<unsigned long long>(const QByteArray & str) { return str.toULongLong(); }
+    template <> inline float fromString<float>(const QByteArray & str) { return str.toFloat(); }
+    template <> inline double fromString<double>(const QByteArray & str) { return str.toDouble(); }
+    template <> inline bool fromString<bool>(const QByteArray & str) { return str.toInt(); }
 
 #ifdef WIN32
     RADIANT_API QString getLastErrorMessage();

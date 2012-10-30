@@ -182,7 +182,7 @@ namespace Valuable
       inline static ArchiveElement serialize(Archive &archive, const T & t)
       {
         ArchiveElement elem = archive.createElement(tagName<T>());
-        elem.set(Radiant::StringUtils::stringify(t));
+        elem.set(Radiant::StringUtils::toString(t));
         return elem;
       }
 
@@ -220,7 +220,7 @@ namespace Valuable
       {
         if(!t) return ArchiveElement();
         ArchiveElement elem = archive.createElement(tagName<T>());
-        elem.set(Radiant::StringUtils::stringify(*t));
+        elem.set(Radiant::StringUtils::toString(*t));
         return elem;
       }
 

@@ -48,7 +48,7 @@ namespace Valuable
       /// Converts the numeric value to integer
       virtual int asInt(bool * const ok = 0) const OVERRIDE { if(ok) *ok = true; return static_cast<int> (value()); }
       /// Converts the numeric value to string
-      virtual QString asString(bool * const ok = 0) const OVERRIDE { if(ok) *ok = true; return Radiant::StringUtils::stringify(value()); }
+      virtual QString asString(bool * const ok = 0) const OVERRIDE { if(ok) *ok = true; return Radiant::StringUtils::toString(value()); }
   };
 
 }

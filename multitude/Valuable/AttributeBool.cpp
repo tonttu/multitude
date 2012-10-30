@@ -50,7 +50,7 @@ namespace Valuable
   QString AttributeBool::asString(bool * const ok) const
   {
     if(ok) *ok = true;
-    return Radiant::StringUtils::stringify((int32_t)value());
+    return Radiant::StringUtils::toString(value());
   }
 
   bool AttributeBool::set(int value, Layer layer, ValueUnit)

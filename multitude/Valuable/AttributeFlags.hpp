@@ -212,7 +212,7 @@ namespace Valuable {
     virtual bool deserialize(const ArchiveElement & element) OVERRIDE
     {
       /// @todo Should we serialize all layers?
-      *this = Radiant::StringUtils::fromString<T>(element.get().toUtf8().data());
+      *this = Radiant::StringUtils::fromString<T>(element.get().toUtf8());
       return true;
     }
 
