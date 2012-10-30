@@ -66,19 +66,6 @@ namespace Valuable
 
     /// @endcond
 
-    /// Removes const from type: remove_const<const Foo>::Type == Foo
-    /// Works also with non-const types, remove_const<Foo>::Type == Foo
-    template <typename T> struct remove_const {
-      /// The original type without const
-      typedef T Type;
-    };
-    /// Removes const from type: remove_const<const Foo>::Type == Foo
-    /// Works also with non-const types, remove_const<Foo>::Type == Foo
-    template <typename T> struct remove_const<const T> {
-      /// The original type without const
-      typedef T Type;
-    };
-
     /// Trait class for compile time separation of different kinds of serializable objects
     /** \code
         Trait<int>::type == Type::other
@@ -164,14 +151,14 @@ namespace Valuable
     /// @param element Serialized element that holds the data that should be deserialized.
     /// @return Deserialized type
     template <typename T>
-    typename remove_const<T>::Type deserialize(const ArchiveElement & element);
+    typename std::remove_cv<T>::type deserialize(const ArchiveElement & element);
 
     /// Compatibility function that deserializes DOMElement.
     /// Use deserialize(const ArchiveElement&) instead.
     /// @param element XML element that is deserialized
     /// @return Deserialized type
     template <typename T>
-    typename remove_const<T>::Type deserializeXML(const DOMElement & element);
+    typename std::remove_cv<T>::type deserializeXML(const DOMElement & element);
 
     /// @cond
 
@@ -187,9 +174,9 @@ namespace Valuable
         return elem;
       }
 
-      inline static typename remove_const<T>::Type deserialize(const ArchiveElement & element)
+      inline static typename std::remove_cv<T>::type deserialize(const ArchiveElement & element)
       {
-        return Radiant::StringUtils::fromString<typename remove_const<T>::Type>(element.get().toUtf8());
+        return Radiant::StringUtils::fromString<typename std::remove_cv<T>::type>(element.get().toUtf8());
       }
     };
 
@@ -253,7 +240,7 @@ namespace Valuable
 
       inline static T * deserialize(const ArchiveElement & element)
       {
-        typedef typename remove_const<T>::Type T2;
+        typedef typename std::remove_cv<T>::type T2;
         std::istringstream is(element.get().toStdString());
         T2 * t = new T2;
         is >> *t;
@@ -270,7 +257,7 @@ namespace Valuable
         return Serializer::serialize(archive, t.get());
       }
 
-      inline static typename remove_const<T>::Type deserialize(const ArchiveElement & element)
+      inline static typename std::remove_cv<T>::type deserialize(const ArchiveElement & element)
       {
         return T(Serializer::deserialize<typename T::element_type*>(element));
       }
@@ -366,13 +353,13 @@ namespace Valuable
     }
 
     template <typename T>
-    inline typename remove_const<T>::Type deserialize(const ArchiveElement & element)
+    inline typename std::remove_cv<T>::type deserialize(const ArchiveElement & element)
     {
-      return Impl<typename remove_const<T>::Type>::deserialize(element);
+      return Impl<typename std::remove_cv<T>::type>::deserialize(element);
     }
 
     template <typename T>
-    inline typename remove_const<T>::Type deserializeXML(const DOMElement & element)
+    inline typename std::remove_cv<T>::type deserializeXML(const DOMElement & element)
     {
       XMLArchiveElement e(element);
       return deserialize<T>(e);
