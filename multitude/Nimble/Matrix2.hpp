@@ -198,11 +198,18 @@ namespace Nimble {
   /// @param os stream to output to
   /// @param t matrix to output
   /// @return reference to the stream
-  template <class K, class T>
-  inline K &operator<<(K &os, const Nimble::Matrix2T<T> &t)
+  template <class T>
+  inline std::ostream & operator<<(std::ostream & os, const Nimble::Matrix2T<T> & m)
   {
-    os << t[0].x << ' ' << t[0].y << " ; " << t[1].x << ' ' << t[1].y;
+    os << m[0] << std::endl << m[1];
     return os;
+  }
+
+  template <class T>
+  inline std::istream & operator>>(std::istream & is, Nimble::Matrix2T<T> & m)
+  {
+    is >> m[0] >> m[1];
+    return is;
   }
 
   /// 2x2 matrix of floats

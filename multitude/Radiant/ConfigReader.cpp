@@ -316,7 +316,7 @@ namespace Radiant {
   template <>
   void ChunkT<Variant>::dump(std::ostream& os, int indent) const
   {
-    QString ws(indent, ' ');
+    std::string ws(indent, ' ');
 
     for(auto it = m_chunks->begin(); it != m_chunks->end(); ++it) {
       os << ws << it->first << " {\n";

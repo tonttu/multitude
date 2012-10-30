@@ -59,8 +59,10 @@ namespace Radiant {
 
     /// Returns a reference to the current timestamp native value
     type & value() { return m_val; }
-    /// Returns a const reference to the current timestamp native value
-    const type & value() const { return m_val; }
+    /// Returns the current timestamp native value
+    type value() const { return m_val; }
+    /// Sets the current native timestamp value
+    void setValue(type val) { m_val = val; }
 
     /// Sets the timestamp to s seconds.
     /// @param s number of seconds
@@ -240,7 +242,8 @@ namespace Radiant {
   private:
     type m_val;
   };
-
+  RADIANT_API std::ostream & operator<<(std::ostream & os, const TimeStamp & ts);
+  RADIANT_API std::istream & operator>>(std::istream & is, TimeStamp & ts);
 }
 
 

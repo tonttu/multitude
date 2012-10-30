@@ -200,6 +200,17 @@ namespace Radiant {
 
   }
 
+  std::ostream & operator<<(std::ostream & os, const TimeStamp & ts)
+  {
+    return os << ts.value();
+  }
 
+  std::istream & operator>>(std::istream & is, TimeStamp & ts)
+  {
+    TimeStamp::type t;
+    is >> t;
+    ts.setValue(t);
+    return is;
+  }
 
 }

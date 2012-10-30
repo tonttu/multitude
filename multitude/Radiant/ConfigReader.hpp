@@ -279,18 +279,16 @@ namespace Radiant {
   /// Write the given configuration into a file
   bool RADIANT_API writeConfig(Config *c, const char *filename);
 
+  /**
+   * Output operator for Radiant::Variant
+   */
+
+  inline std::ostream & operator <<
+  (std::ostream & os, const Variant & v)
+  {
+    v.dump(os);
+    return os;
+  }
 } // namespace
-
-/**
- * Output operator for Radiant::Variant
- */
-
-inline std::ostream & operator <<
-(std::ostream & os, const Radiant::Variant & v)
-{
-  v.dump(os);
-  return os;
-}
-
 
 #endif

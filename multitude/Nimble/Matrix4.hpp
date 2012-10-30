@@ -656,8 +656,15 @@ namespace Nimble {
   template <class T>
   inline std::ostream& operator<<(std::ostream& os, const Matrix4T<T>& m)
   {
-    os << m[0] << std::endl << m[1] << std::endl << m[2] << std::endl << m[3] << std::endl;
+    os << m[0] << std::endl << m[1] << std::endl << m[2] << std::endl << m[3];
     return os;
+  }
+
+  template <class T>
+  inline std::istream& operator>>(std::istream& is, Matrix4T<T> & m)
+  {
+    is >> m[0] >> m[1] >> m[2] >> m[3];
+    return is;
   }
 } // namespace Nimble
 

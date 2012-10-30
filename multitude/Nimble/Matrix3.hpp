@@ -773,8 +773,15 @@ inline Vector2T<T> Matrix3T<T>::project(const T & x, const T & y) const
 template <class T>
 inline std::ostream& operator<<(std::ostream& os, const Nimble::Matrix3T<T>& m)
 {
-  os << m[0] << ", " << m[1] << ", " << m[2];
+  os << m[0] << std::endl << m[1] << std::endl << m[2];
   return os;
+}
+
+template <class T>
+inline std::istream & operator>>(std::istream & is, Nimble::Matrix3T<T> & m)
+{
+  is >> m[0] >> m[1] >> m[2];
+  return is;
 }
 
 } // namespace
