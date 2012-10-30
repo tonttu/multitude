@@ -28,6 +28,7 @@ namespace Luminous
     , m_generation(0)
     , m_internalFormat(0)
     , m_target(0)
+    , m_size(0, 0, 0)
   {
     glGenTextures(1, &m_handle);
   }
@@ -43,7 +44,8 @@ namespace Luminous
     , m_generation(t.m_generation)
     , m_internalFormat(t.m_internalFormat)
     , m_target(t.m_target)
-    , m_dirtyRegion(t.m_dirtyRegion)
+    , m_dirtyRegion2D(t.m_dirtyRegion2D)
+    , m_size(0, 0, 0)
   {
   }
 
@@ -53,7 +55,8 @@ namespace Luminous
     m_target = t.m_target;
     m_generation = t.m_generation;
     m_internalFormat = t.m_internalFormat;
-    m_dirtyRegion = t.m_dirtyRegion;
+    m_dirtyRegion2D = t.m_dirtyRegion2D;
+    m_size = t.m_size;
     return *this;
   }
 
@@ -71,29 +74,29 @@ namespace Luminous
 
       // Check if we need to reallocate the texture. We reallocate if the
       // dimensions, size, or format has changed.
-      bool recreate = (texture.dimensions() == 1 && m_target != GL_TEXTURE_1D) ||
-          (texture.dimensions() == 2 && m_target != GL_TEXTURE_2D) ||
+      bool recreate = ((texture.dimensions() == 1 || texture.dimensions() == 2)
+                       && m_target != GL_TEXTURE_2D) ||
           (texture.dimensions() == 3 && m_target != GL_TEXTURE_3D);
 
-      recreate = recreate || (m_size.width() != texture.width() || m_size.height() != texture.height());
+      recreate = recreate || (m_size[0] != texture.width() || m_size[1] != texture.height() || m_size[2] != texture.depth());
 
       recreate = recreate || (m_internalFormat != texture.internalFormat());
 
       if(recreate) {
         m_target = 0;
-        m_size = QSize(texture.width(), texture.height());
+        m_size.make(texture.width(), texture.height(), texture.depth());
       } else {
-        m_dirtyRegion = QRegion(0, 0, texture.width(), texture.height());
+        m_dirtyRegion2D = QRegion(0, 0, texture.width(), texture.height());
       }
     }
 
-    m_dirtyRegion += texture.takeDirtyRegion(m_state.threadIndex());
+    m_dirtyRegion2D += texture.takeDirtyRegion(m_state.threadIndex());
 
     if(m_target == 0) {
       // Mark the whole texture dirty
-      m_dirtyRegion = QRegion(0, 0, texture.width(), texture.height());
+      m_dirtyRegion2D = QRegion(0, 0, texture.width(), texture.height());
 
-      if (texture.dimensions() == 1)      m_target = GL_TEXTURE_1D;
+      if (texture.dimensions() == 1)      m_target = GL_TEXTURE_2D;
       else if (texture.dimensions() == 2) m_target = GL_TEXTURE_2D;
       else if (texture.dimensions() == 3) m_target = GL_TEXTURE_3D;
 
@@ -128,13 +131,9 @@ namespace Luminous
         glCompressedTexImage2D(GL_TEXTURE_2D, 0, intFormat, texture.width(),
                                texture.height(), 0, texture.dataSize(), texture.data());
         GLERROR("TextureGL::upload # glCompressedTexImage2D");
-        m_dirtyRegion = QRegion();
+        m_dirtyRegion2D = QRegion();
       } else {
-        if(texture.dimensions() == 1) {
-          glTexImage1D(GL_TEXTURE_1D, 0, intFormat, texture.width(), 0,
-                       texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
-          GLERROR("TextureGL::upload # glTexImage1D");
-        } else if(texture.dimensions() == 2) {
+        if (texture.dimensions() == 1 || texture.dimensions() == 2) {
           glTexImage2D(GL_TEXTURE_2D, 0, intFormat, texture.width(), texture.height(), 0,
                        texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
           GLERROR("TextureGL::upload # glTexImage2D");
@@ -169,8 +168,8 @@ namespace Luminous
     if(!texture.data())
       return;
 
-    /// @todo 1D / 3D textures don't work atm
-    if(!m_dirtyRegion.isEmpty()) {
+    /// @todo 3D textures don't work atm
+    if(!m_dirtyRegion2D.isEmpty()) {
       if(!bound)
         bind(textureUnit);
 
@@ -186,13 +185,7 @@ namespace Luminous
 
       int uploaded = 0;
 
-      if (texture.dimensions() == 1) {
-        /// @todo incremental upload
-        glTexSubImage1D(GL_TEXTURE_1D, 0, 0, texture.width(), texture.dataFormat().layout(), texture.dataFormat().type(), texture.data());
-        GLERROR("TextureGL::upload # glTexSubImage1D");
-        uploaded = texture.width() * texture.dataFormat().bytesPerPixel();
-      }
-      else if (texture.dimensions() == 2) {
+      if (texture.dimensions() == 1 || texture.dimensions() == 2) {
         // See how much of the bytes we can upload in this frame
         int64_t bytesFree = m_state.availableUploadBytes();
 
@@ -202,9 +195,9 @@ namespace Luminous
           glCompressedTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture.width(), texture.height(),
                                     texture.dataFormat().compression(), uploaded, texture.data());
           GLERROR("TextureGL::upload # glCompressedTexSubImage2D");
-          m_dirtyRegion = QRegion();
+          m_dirtyRegion2D = QRegion();
         } else {
-          for(const QRect & rect : m_dirtyRegion.rects()) {
+          for(const QRect & rect : m_dirtyRegion2D.rects()) {
             const int bytesPerScanline = rect.width() * texture.dataFormat().bytesPerPixel();
             // Number of scanlines to upload
             const size_t scanLines = std::min<int32_t>(rect.height(), bytesFree / bytesPerScanline);
@@ -222,10 +215,10 @@ namespace Luminous
             bytesFree -= bytesPerScanline * scanLines;
 
             if (int(scanLines) != rect.height()) {
-              m_dirtyRegion -= QRegion(rect.left(), rect.top(), rect.width(), scanLines);
+              m_dirtyRegion2D -= QRegion(rect.left(), rect.top(), rect.width(), scanLines);
               break;
             } else {
-              m_dirtyRegion -= rect;
+              m_dirtyRegion2D -= rect;
             }
           }
         }
