@@ -42,8 +42,6 @@ namespace Valuable {
 
     virtual bool deserialize(const ArchiveElement &element) OVERRIDE
     {
-      beginChangeTransaction();
-
       QStringList lst = element.get().split(QRegExp("\\s"), QString::SkipEmptyParts);
 
       if(lst.size() == 2) {
@@ -53,19 +51,13 @@ namespace Valuable {
         for(int i = 0; i < 2; ++i) {
           bool ok = false;
           size[i] = lst[i].toFloat(&ok);
-          if(!ok) {
-            endChangeTransaction();
+          if(!ok)
             return false;
-          }
         }
 
         *this = size;
-        endChangeTransaction();
-
         return true;
       }
-
-      endChangeTransaction();
 
       return false;
     }

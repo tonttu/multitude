@@ -61,26 +61,19 @@ namespace Valuable
 
     virtual bool deserialize(const ArchiveElement & element) OVERRIDE
     {
-      beginChangeTransaction();
-
       QStringList lst = element.get().split(QRegExp("\\s"), QString::SkipEmptyParts);
       if (lst.size() == 4) {
         Nimble::Frame4f frame;
         for (int i = 0; i < 4; ++i) {
           bool ok = false;
           frame[i] = lst[i].toFloat(&ok);
-          if (!ok) {
-            endChangeTransaction();
+          if (!ok)
             return false;
-          }
         }
         *this = frame;
-        endChangeTransaction();
 
         return true;
       }
-
-      endChangeTransaction();
 
       return false;
     }
