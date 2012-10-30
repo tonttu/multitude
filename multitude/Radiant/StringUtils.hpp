@@ -48,8 +48,8 @@ namespace Radiant
     template <> inline QString toString<bool>(const bool & b) { return b ? "1" : "0"; }
 
     /// @cond
-    MULTI_ATTR_DEPRECATED("stringify will be removed in Cornerstone 2.1, use toString instead",
-                          template <typename T> inline QString stringify(const T & x));
+    template <typename T> MULTI_ATTR_DEPRECATED("stringify will be removed in Cornerstone 2.1, use toString instead",
+                          inline QString stringify(const T & x));
 
     template <typename T>
     inline QString stringify(const T & x)
