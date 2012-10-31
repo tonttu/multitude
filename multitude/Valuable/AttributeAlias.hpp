@@ -67,8 +67,6 @@ namespace Valuable
     /// @param name Attribute name to search for
     /// @return Null if no object can be found
     virtual Attribute * getAttribute(const QByteArray &name);
-    /// @deprecated This function will be removed in Cornerstone 2.1. Use getAttribute instead.
-    virtual Attribute * getValue(const QByteArray &name);
 
   private:
     Attribute * m_attribute;
