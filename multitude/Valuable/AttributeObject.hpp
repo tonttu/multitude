@@ -293,9 +293,9 @@ namespace Valuable
     /// Gets an Attribute with the given name
     /// @param name Attribute name to search for
     /// @return Null if no object can be found
-    virtual Attribute * getAttribute(const QString & name) const;
+    virtual Attribute * getAttribute(const QByteArray & name) const;
     /// @deprecated This function will be removed in Cornerstone 2.1. Use getAttribute instead.
-    virtual Attribute * getValue(const QString & name) const;
+    virtual Attribute * getValue(const QByteArray & name) const;
 
     /// Sets the current USER attribute value as the default value
     /// and clears the USER value.

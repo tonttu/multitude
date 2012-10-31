@@ -203,14 +203,14 @@ namespace Valuable
     return elem;
   }
 
-  Attribute * Attribute::getValue(const QString & name) const
+  Attribute * Attribute::getValue(const QByteArray & name) const
   {
-    return Attribute::getAttribute(name);
+    return getAttribute(name);
   }
 
-  Attribute * Attribute::getAttribute(const QString & ) const
+  Attribute * Attribute::getAttribute(const QByteArray & ) const
   {
-    return 0;
+    return nullptr;
   }
 
   void Attribute::emitChange()

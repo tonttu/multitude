@@ -156,15 +156,10 @@ namespace Valuable
     return m_attribute->shortcut();
   }
 
-  Attribute * AttributeAlias::getValue(const QString & name)
-  {
-    return AttributeAlias::getAttribute(name);
-  }
-
-  Attribute * AttributeAlias::getAttribute(const QString & name)
+  Attribute * AttributeAlias::getAttribute(const QByteArray & name)
   {
     if(!m_attribute)
       return nullptr;
-    return m_attribute->getValue(name);
+    return m_attribute->getAttribute(name);
   }
 }
