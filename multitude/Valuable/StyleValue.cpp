@@ -161,7 +161,7 @@ namespace Valuable
       QVariant::Type t = v.type();
       if(unit == Attribute::VU_PERCENTAGE) {
         out << QString::number(v.toDouble() * 100.0) + "%";
-      } else if(t == QVariant::Bool || t == QVariant::Int || t == QVariant::Double) {
+      } else if(t == QVariant::Bool || t == QVariant::Int || t == QVariant::Double || t == QMetaType::Float) {
         out << v.toString() + unitstr;
       } else if(t == QVariant::ByteArray) {
         out << v.toByteArray();
