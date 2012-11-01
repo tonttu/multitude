@@ -404,6 +404,7 @@ namespace Valuable
 
     void valueRenamed(const QByteArray &was, const QByteArray &now);
 
+    /// @todo rename to m_attributes
     container m_values;
 
     class ValuePass {

@@ -326,6 +326,12 @@ namespace Valuable
   {
   }
 
+  bool Attribute::handleShorthand(const StyleValue & value,
+                                  QMap<Attribute *, StyleValue> & expandedShorthand)
+  {
+    return false;
+  }
+
   bool Attribute::shortcut() const
   {
     return false;

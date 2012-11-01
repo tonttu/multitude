@@ -20,6 +20,7 @@
 
 #include "AttributeFloat.hpp"
 #include "AttributeVector.hpp"
+#include "StyleValue.hpp"
 
 #include <QStringList>
 
@@ -224,6 +225,17 @@ namespace Valuable
     Nimble::Frame4f value() const
     {
       return Nimble::Frame4f(*m_values[0], *m_values[1], *m_values[2], *m_values[3]);
+    }
+
+    bool handleShorthand(const StyleValue & value,
+                         QMap<Attribute *, StyleValue> & expandedShorthand) OVERRIDE
+    {
+      if (value.size() > 0 && value.size() < 5) {
+        for (int i = 0; i < 4; ++i)
+          expandedShorthand[m_values[i]] = value[i % value.size()];
+        return true;
+      }
+      return false;
     }
 
   private:

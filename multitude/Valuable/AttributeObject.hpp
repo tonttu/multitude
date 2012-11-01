@@ -274,6 +274,9 @@ namespace Valuable
 
     virtual void clearValue(Layer layout);
 
+    virtual bool handleShorthand(const Valuable::StyleValue & value,
+                                 QMap<Valuable::Attribute*, Valuable::StyleValue> & expandedShorthand);
+
     virtual bool shortcut() const;
     void setSerializable(bool v);
     bool serializable() const;
