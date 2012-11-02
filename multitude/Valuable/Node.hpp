@@ -390,8 +390,6 @@ namespace Valuable
       eventSend(id, bd);
     }
 
-    void defineShortcut(const QByteArray &name);
-
     /// The sender of the event, can be read in processMessage()
     Node * sender() { return m_sender; }
 

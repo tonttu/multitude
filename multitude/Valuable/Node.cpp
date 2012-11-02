@@ -116,19 +116,6 @@ namespace Valuable
   VALUABLE_API std::map<QString, std::set<QString> > s_eventListenNames;
 #endif
 
-  class Shortcut : public Attribute
-  {
-  public:
-    Shortcut(Node * host, const QByteArray & name)
-      : Attribute(host, name)
-    {
-      setSerializable(false);
-    }
-    bool deserialize(const ArchiveElement &) { return false; }
-    virtual bool shortcut() const { return true; }
-    virtual const char * type() const { return "shortcut"; }
-  };
-
   inline bool Node::ValuePass::operator == (const ValuePass & that) const
   {
     return (m_listener == that.m_listener) && (m_from == that.m_from) &&
@@ -849,11 +836,6 @@ namespace Valuable
   {
     Radiant::BinaryData tmp;
     eventSend(id, tmp);
-  }
-
-  void Node::defineShortcut(const QByteArray & name)
-  {
-    new Shortcut(this, name);
   }
 
   void Node::valueRenamed(const QByteArray & was, const QByteArray & now)

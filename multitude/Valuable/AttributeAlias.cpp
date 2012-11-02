@@ -149,11 +149,11 @@ namespace Valuable
       m_attribute->clearValue(layout);
   }
 
-  bool AttributeAlias::shortcut() const
+  bool AttributeAlias::handleShorthand(const StyleValue & value, QMap<Attribute *, StyleValue> & expanded)
   {
-    if(!m_attribute)
-      return false;
-    return m_attribute->shortcut();
+    if (m_attribute)
+      return m_attribute->handleShorthand(value, expanded);
+    return false;
   }
 
   Attribute * AttributeAlias::getAttribute(const QByteArray & name)

@@ -40,13 +40,14 @@ namespace Valuable
     {
       QVariantList values;
       QList<Attribute::ValueUnit> units;
+      QList<Separator> separators;
     };
 
   public:
     StyleValue();
     StyleValue(float v, Attribute::ValueUnit unit = Attribute::VU_UNKNOWN);
     StyleValue(int v);
-    StyleValue(QVariant v);
+    StyleValue(QVariant v, Attribute::ValueUnit unit = Attribute::VU_UNKNOWN);
     virtual ~StyleValue();
 
     virtual int asInt(int idx = 0) const;

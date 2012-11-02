@@ -61,7 +61,7 @@ namespace Valuable
 
     virtual void clearValue(Layer layout);
 
-    virtual bool shortcut() const;
+    virtual bool handleShorthand(const StyleValue & value, QMap<Attribute *, StyleValue> & expanded);
 
     /// Gets an Attribute with the given name
     /// @param name Attribute name to search for

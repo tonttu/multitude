@@ -332,11 +332,6 @@ namespace Valuable
     return false;
   }
 
-  bool Attribute::shortcut() const
-  {
-    return false;
-  }
-
   void Attribute::setSerializable(bool v)
   {
     m_serializable = v;

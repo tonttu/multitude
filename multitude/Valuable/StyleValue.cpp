@@ -42,10 +42,10 @@ namespace Valuable
     m_separators << WhiteSpace;
   }
 
-  StyleValue::StyleValue(QVariant v) : m_uniform(true)
+  StyleValue::StyleValue(QVariant v, Attribute::ValueUnit unit) : m_uniform(true)
   {
     m_values << v;
-    m_units << Attribute::VU_UNKNOWN;
+    m_units << unit;
     m_separators << WhiteSpace;
   }
 
@@ -111,24 +111,29 @@ namespace Valuable
 
   void StyleValue::append(const StyleValue & v, Separator sep)
   {
-    assert(v.size() == 1);
+    assert(v.size() >= 1);
 
     if (m_values.isEmpty()) {
       m_uniform = v.m_uniform;
       m_values = v.m_values;
       m_units = v.m_units;
-      m_separators << sep;
+      m_separators = v.m_separators;
+      m_separators[0] = sep;
       return;
     }
 
     const QVariant & v1 = v.m_values[0];
-    if(m_uniform) {
+    if(m_uniform && v.m_uniform) {
       const QVariant & v2 = m_values.last();
       m_uniform = v2.canConvert(v1.type()) && (isNumber(m_values.size() - 1) == v.isNumber());
+    } else {
+      m_uniform = false;
     }
-    m_values << v1;
-    m_units << v.m_units[0];
-    m_separators << sep;
+    for (int i = 0; i < v.m_values.size(); ++i) {
+      m_values << v.m_values[i];
+      m_units << v.m_units[i];
+      m_separators << (i == 0 ? sep : v.m_separators[i]);
+    }
   }
 
   int StyleValue::size() const
@@ -161,7 +166,7 @@ namespace Valuable
       QVariant::Type t = v.type();
       if(unit == Attribute::VU_PERCENTAGE) {
         out << QString::number(v.toDouble() * 100.0) + "%";
-      } else if(t == QVariant::Bool || t == QVariant::Int || t == QVariant::Double || t == QMetaType::Float) {
+      } else if(t == QVariant::Bool || t == QVariant::Int || t == QVariant::Double || int(t) == QMetaType::Float) {
         out << v.toString() + unitstr;
       } else if(t == QVariant::ByteArray) {
         out << v.toByteArray();
@@ -169,10 +174,10 @@ namespace Valuable
         out << "\"" + v.toString() + "\"";
       } else if(t == QVariant::Color) {
         QColor c = v.value<QColor>();
-        out << QString("#%1%2%3%4").arg(c.red(), 2, 10, QLatin1Char('0')).
-               arg(c.green(), 2, 10, QLatin1Char('0')).
-               arg(c.blue(), 2, 10, QLatin1Char('0')).
-               arg(c.alpha(), 2, 10, QLatin1Char('0'));
+        out << QString("#%1%2%3%4").arg(c.red(), 2, 16, QLatin1Char('0')).
+               arg(c.green(), 2, 16, QLatin1Char('0')).
+               arg(c.blue(), 2, 16, QLatin1Char('0')).
+               arg(c.alpha(), 2, 16, QLatin1Char('0'));
       } else {
         Radiant::error("StyleValue::stringify # Unknown variant type %d (%s)", t, v.typeName());
         continue;
@@ -217,10 +222,12 @@ namespace Valuable
         Group g;
         g.units << m_units[i];
         g.values << m_values[i];
+        g.separators << m_separators[i];
         all << g;
       } else {
         all.back().units << m_units[i];
         all.back().values << m_values[i];
+        all.back().separators << m_separators[i];
       }
     }
     return all;
