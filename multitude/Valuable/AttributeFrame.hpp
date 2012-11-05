@@ -228,11 +228,11 @@ namespace Valuable
     }
 
     bool handleShorthand(const StyleValue & value,
-                         QMap<Attribute *, StyleValue> & expandedShorthand) OVERRIDE
+                         QMap<Attribute *, StyleValue> & expanded) OVERRIDE
     {
       if (value.size() > 0 && value.size() < 5) {
         for (int i = 0; i < 4; ++i)
-          expandedShorthand[m_values[i]] = value[i % value.size()];
+          expanded[m_values[i]] = value[i % value.size()];
         return true;
       }
       return false;

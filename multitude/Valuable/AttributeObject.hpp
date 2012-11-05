@@ -275,7 +275,7 @@ namespace Valuable
     virtual void clearValue(Layer layout);
 
     virtual bool handleShorthand(const Valuable::StyleValue & value,
-                                 QMap<Valuable::Attribute*, Valuable::StyleValue> & expandedShorthand);
+                                 QMap<Valuable::Attribute*, Valuable::StyleValue> & expanded);
 
     void setSerializable(bool v);
     bool serializable() const;
