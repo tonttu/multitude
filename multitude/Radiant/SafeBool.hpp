@@ -1,18 +1,19 @@
 #if !defined (RADIANT_SAFEBOOL_HPP)
 #define RADIANT_SAFEBOOL_HPP
 
-/* Class for the safe bool idiom implementation
- * NOTE: This class will be obsolete once all compilers implement C++11 explicit bool operator()
- *
- * Usage:
- * class Foo : public SafeBool<Foo>
- * {
- * public:
- *   bool boolean_test() const { }
- * };
- */
 namespace Radiant
 {
+  /// @cond
+
+  /// Class for the safe bool idiom implementation
+  /// NOTE: This class will be obsolete once all compilers implement C++11 explicit bool operator()
+  ///
+  /// Usage:
+  /// class Foo : public SafeBool<Foo>
+  /// {
+  /// public:
+  ///   bool boolean_test() const { }
+  /// };
   class SafeBoolBase {
   protected:
     typedef void (SafeBoolBase::*bool_type)() const;
@@ -45,5 +46,7 @@ namespace Radiant
     lhs.this_type_does_not_support_comparisons();
     return false;	
   }
+
+  /// @endcond
 }
 #endif // RADIANT_SAFEBOOL_HPP

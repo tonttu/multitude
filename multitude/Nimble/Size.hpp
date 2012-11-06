@@ -104,6 +104,9 @@ namespace Nimble {
     /// @return true if the sizes are not equal; otherwise false
     bool operator!=(const SizeT<T> & o) const;
 
+    /// Convert the size to a vector
+    /// @return vector representing the size with the components set to width
+    /// and height of the size
     Vector2T<T> toVector() const;
 
   private:

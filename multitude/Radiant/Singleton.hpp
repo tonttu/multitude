@@ -95,7 +95,7 @@
 
 namespace Radiant {
 
-  /// Shared mutex for all the @ref singleton macros
+  /// Shared mutex for all the singleton macros
   extern RADIANT_API Radiant::Mutex s_singletonMutex;
 }
 

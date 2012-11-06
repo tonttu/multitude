@@ -58,6 +58,7 @@ namespace Nimble
     return b1 * cp[i1] + b2 * cp[i2] + b3 * cp[i3] + b4 * cp[i4];
   }
 
+  /// Evaluate the derivative of a Catmull-Rom spline at the given position
   template<class T>
   T evalCatmullRomDerivate(float t, const std::vector<T> & cp, size_t index)
   {

@@ -237,8 +237,8 @@ namespace Nimble {
     /// Convert the rect to QRect
     /// @return QRect matching the rect
     /// @todo add some enable_if magic?
-    /// typename std::enable_if<std::is_integral<T>::value, QRect>::type toQRect() const
-    /// doesn't work but maybe something similar
+    // typename std::enable_if<std::is_integral<T>::value, QRect>::type toQRect() const
+    // doesn't work but maybe something similar?
     QRect toQRect() const
     {
       return QRect(int(m_low.x), int(m_low.y), int(width()), int(height()));

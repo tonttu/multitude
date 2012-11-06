@@ -30,6 +30,7 @@ namespace Radiant
 {
   class DropEvent;
 
+  /// Interface for DropEvent listeners
   class RADIANT_API DropListener
   {
   public:

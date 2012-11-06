@@ -9,7 +9,7 @@
 
 namespace Radiant
 {
-  /// see RFC 2046
+  /// See RFC 2046
   class RADIANT_API MimeType
   {
   public:
@@ -51,6 +51,7 @@ namespace Radiant
     const QString m_subtype; // plain
   };
 
+  /// This class keeps track of matching file extensions to mime types.
   class RADIANT_API MimeManager
   {
   protected:
@@ -66,7 +67,9 @@ namespace Radiant
     MimeManager();
     virtual ~MimeManager();
 
-    /// add or replace a shared mapping from file extension to mime type
+    /// Add or replace a shared mapping from file extension to mime type
+    /// @param extension file extension
+    /// @param type mime type
     static void insertSharedExtension(const QString & extension, const MimeType & type);
 
     /// Add or replace a shared mapping from file extension to mime type
@@ -79,6 +82,9 @@ namespace Radiant
     /// @return The matching MimeType, or NULL if not found
     const MimeType * mimeTypeByExtension(const QString & ext) const;
 
+    /// Get a list of file extensions that match the given mime type
+    /// @param mime mime type to query
+    /// @return list of file extensions
     QStringList extensionsByMimeRegexp(const QString & mime) const;
   };
 }

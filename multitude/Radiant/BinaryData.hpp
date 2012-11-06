@@ -144,7 +144,7 @@ namespace Radiant {
     /// Write a 64-bit time-stamp to the data buffer
     /// The timestamp uses Radiant::TimeStamp internal structure (40+24
     /// bit fixed-point value).
-    /// @param v time-stamp to write
+    /// @param ts time-stamp to write
     inline void write(const Radiant::TimeStamp & ts) { writeTimeStamp(ts); }
 
     /// Write a null-terminated string to the buffer
@@ -212,7 +212,7 @@ namespace Radiant {
     /// @return true on success
     bool readBlob(void * ptr, int n);
     /// Reads a blob of expected size
-    /// @param[out] bug buffer to write to. The buffer will be resized to fit the data
+    /// @param[out] buf buffer to write to. The buffer will be resized to fit the data
     /// @return true on success
     bool readBlob(std::vector<uint8_t> & buf);
 

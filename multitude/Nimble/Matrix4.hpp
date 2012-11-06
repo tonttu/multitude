@@ -660,6 +660,10 @@ namespace Nimble {
     return os;
   }
 
+  /// Read a matrix from a stream
+  /// @param is stream to read from
+  /// @param m matrix to read to
+  /// @return reference to the input stream
   template <class T>
   inline std::istream& operator>>(std::istream& is, Matrix4T<T> & m)
   {

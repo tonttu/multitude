@@ -18,13 +18,12 @@
 
 #include <Radiant/Export.hpp>
 #include <Radiant/Task.hpp>
-
 #include <Radiant/Condition.hpp>
 #include <Radiant/Mutex.hpp>
 #include <Radiant/Singleton.hpp>
 #include <Radiant/ThreadPool.hpp>
-#include <memory>
 
+#include <memory>
 #include <list>
 #include <map>
 #include <set>
@@ -32,6 +31,7 @@
 
 namespace Radiant
 {
+  /// Shared pointer to a Task
   typedef std::shared_ptr<Task> TaskPtr;
 
   /** A class used to execute tasks in a separated threads.
@@ -85,12 +85,18 @@ namespace Radiant
     */
     virtual bool removeTask(TaskPtr task);
 
-    /// Update the changed task timestamp to queue
+    /// Notify the BGThread that a task execution time has been rescheduled.
+    /// This function should always be called after modifying the time-stamp of a
+    /// task.
+    /// @param task task to reschedule
     virtual void reschedule(TaskPtr task);
+    /// @copydoc reschedule
+    /// @param p new task priority
     void reschedule(TaskPtr task, Priority p);
 
-
     /// Change the priority of a task
+    /// @param task task to modify
+    /// @param p task priority
     virtual void setPriority(TaskPtr task, Priority p);
 
     /// Container for the tasks
@@ -103,11 +109,13 @@ namespace Radiant
 
     /// Get the number of tasks right now in doTask().
     /// This function is lock-free and O(1).
+    /// @return number of running tasks
     unsigned int runningTasks() const;
 
     /// Get the number of tasks that should be running right now but are not
     /// yet processed. This function is slow: O(N), needs a mutex lock and
     /// calls TimeStamp::currentTime().
+    /// @return number of overdue tasks
     unsigned int overdueTasks() const;
 
     /// Dump information about the tasks at hand

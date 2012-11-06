@@ -29,6 +29,9 @@ class QMouseEvent;
 
 namespace Radiant
 {
+
+  /// This class describes a key event. Key events are sent from virtual
+  /// keyboard or actual keyboard.
   class RADIANT_API KeyEvent
   {
   public:
@@ -88,33 +91,63 @@ namespace Radiant
     D * m_d;
   };
 
+  /// This class describes a mouse event. Mouse events are produced when the
+  /// application has input focus and a mouse is either moved, or a button is
+  /// pressed or relesed.
   class RADIANT_API MouseEvent
   {
   public:
+    /// Construct a MouseEvent
+    /// @param event QMouseEvent to copy
     MouseEvent(const QMouseEvent & event);
+    /// Construct a MouseEvent
+    /// @param event QWheelEvent to copy
     MouseEvent(const QWheelEvent & event);
+    /// Construct a MouseEvent
+    /// @param type must be one of QEvent::MouseButtonPress, QEvent::MouseButtonRelease, QEvent::MouseButtonDblClick, or QEvent::MouseMove
+    /// @param location mouse cursor's location
+    /// @param button the button that caused the event. If the event type is QEvent::MouseMove, the appropriate button for the event is Qt::NoButton
+    /// @param buttons state of the mouse buttons
+    /// @param modifiers state of keyboard modifiers
     MouseEvent(QEvent::Type type, const Nimble::Vector2f & location, Qt::MouseButton button,
                 Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers);
 
-    MouseEvent(const MouseEvent &);
-    MouseEvent & operator=(const MouseEvent &);
+    /// Construct a copy of a MouseEvent
+    /// @param e event to copy
+    MouseEvent(const MouseEvent & e);
+    /// Construct a copy of a MouseEvent
+    /// @param ev event to copy
+    MouseEvent & operator=(const MouseEvent & ev);
 
     virtual ~MouseEvent();
 
     MULTI_ATTR_DEPRECATED("Use location() instead", int x() const ) { return location().x; }
     MULTI_ATTR_DEPRECATED("Use location() instead", int y() const ) { return location().y; }
 
+    /// Get the location of the mouse cursor at the time of the event
+    /// @return location of the mouse cursor
     Nimble::Vector2f location() const;
+    /// Set the location of the mouse cursor at the time of the event
+    /// @param location location to set
     void setLocation(const Nimble::Vector2f & location);
 
+    /// Return the distance the mouse wheel is rotated, in eights of a degree.
+    /// @return distance the wheel is rotated
     int delta() const;
 
-    /// @todo should use our own enums
+    /// Get the type of the event
+    /// @return event type
     QEvent::Type type() const;
 
+    /// Return the button that generated the event
+    /// @return button that generated the event
     Qt::MouseButton button() const;
+    /// Return the button state when the event was generated
+    /// @return state of the buttons
     Qt::MouseButtons buttons() const;
 
+    /// Return the keyboard modifiers at the time of the event
+    /// @return keyboard modifiers
     Qt::KeyboardModifiers modifiers() const;
   private:
     class D;

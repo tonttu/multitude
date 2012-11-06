@@ -224,6 +224,7 @@ namespace Radiant {
     /// @return time-stamp as string
     QString asString() const;
 
+    /// @cond
     TimeStamp operator+(const TimeStamp & o) const { return TimeStamp(m_val + o.m_val); }
     TimeStamp operator-(const TimeStamp & o) const { return TimeStamp(m_val - o.m_val); }
 
@@ -238,14 +239,25 @@ namespace Radiant {
 
     bool operator==(const TimeStamp & o) const { return m_val == o.m_val; }
     bool operator!=(const TimeStamp & o) const { return m_val != o.m_val; }
+    /// @endcond
 
   private:
     type m_val;
   };
-  RADIANT_API std::ostream & operator<<(std::ostream & os, const TimeStamp & ts);
-  RADIANT_API std::istream & operator>>(std::istream & is, TimeStamp & ts);
-}
 
+  /// Output a timestamp to a stream
+  /// @param os stream to write to
+  /// @param ts timestamp to write
+  /// @return reference to the output stream
+  RADIANT_API std::ostream & operator<<(std::ostream & os, const TimeStamp & ts);
+
+  /// Read a timestamp from a stream
+  /// @param is stream to read from
+  /// @param ts timestamp to read
+  /// @return reference to the input stream
+  RADIANT_API std::istream & operator>>(std::istream & is, TimeStamp & ts);
+
+}
 
 #endif
 

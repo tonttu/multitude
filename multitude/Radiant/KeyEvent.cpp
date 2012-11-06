@@ -129,8 +129,8 @@ namespace Radiant
     m_d->delta = 0;
   }
 
-  MouseEvent::MouseEvent(const MouseEvent & ev)
-    : m_d(new D(*ev.m_d))
+  MouseEvent::MouseEvent(const MouseEvent & e)
+    : m_d(new D(*e.m_d))
   {
   }
 

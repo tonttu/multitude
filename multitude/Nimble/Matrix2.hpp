@@ -196,7 +196,7 @@ namespace Nimble {
 
   /// Output the given matrix to a stream
   /// @param os stream to output to
-  /// @param t matrix to output
+  /// @param m matrix to output
   /// @return reference to the stream
   template <class T>
   inline std::ostream & operator<<(std::ostream & os, const Nimble::Matrix2T<T> & m)
@@ -205,6 +205,10 @@ namespace Nimble {
     return os;
   }
 
+  /// Read a matrix from a stream
+  /// @param is stream to read from
+  /// @param m matrix to read to
+  /// @return reference to the input stream
   template <class T>
   inline std::istream & operator>>(std::istream & is, Nimble::Matrix2T<T> & m)
   {
