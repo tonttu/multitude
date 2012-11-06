@@ -22,12 +22,12 @@ namespace VideoDisplay {
     /// Gets the audio parameters of the movie
     virtual void getAudioParameters(int * channels,
                     int * sample_rate,
-                    Radiant::AudioSampleFormat * format) const;
+                    Radiant::AudioSampleFormat * format) const OVERRIDE;
     /// Returns the nominal fps of the movie
-    virtual float fps() const;
+    virtual float fps() const OVERRIDE;
 
-    virtual double durationSeconds() const;
-    virtual double runtimeSeconds() const;
+    virtual double durationSeconds() const OVERRIDE;
+    virtual double runtimeSeconds() const OVERRIDE;
 
     /// Seek to some time in the movie
     // virtual bool seekTo(double seconds);

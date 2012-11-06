@@ -30,12 +30,12 @@ namespace Luminous
   public:
     ImageCodecQT(const char * suffix);
     virtual ~ImageCodecQT();
-    virtual bool canRead(FILE * file);
-    virtual QString extensions() const;
-    virtual QString name() const;
-    virtual bool ping(ImageInfo & image, FILE * file);
-    virtual bool read(Image & image, FILE * file);
-    virtual bool write(const Image & image, FILE * file);
+    virtual bool canRead(FILE * file) OVERRIDE;
+    virtual QString extensions() const OVERRIDE;
+    virtual QString name() const OVERRIDE;
+    virtual bool ping(ImageInfo & image, FILE * file) OVERRIDE;
+    virtual bool read(Image & image, FILE * file) OVERRIDE;
+    virtual bool write(const Image & image, FILE * file) OVERRIDE;
 
   private:
     QString m_suffix;

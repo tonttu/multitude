@@ -53,7 +53,7 @@ namespace Luminous {
 
     /// Run the task. Generate the mipmap file and inform the listener when the
     /// task is ready.
-    LUMINOUS_API virtual void doTask();
+    LUMINOUS_API virtual void doTask() OVERRIDE;
 
     /// Set a listener to this task. Listener is called when the mipmaps are ready.
     /// @param func the listener

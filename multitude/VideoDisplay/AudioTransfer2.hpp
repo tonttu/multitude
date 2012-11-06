@@ -51,8 +51,8 @@ namespace VideoPlayer2
     AudioTransfer(AVDecoderFFMPEG *, int channels);
     virtual ~AudioTransfer();
 
-    virtual bool prepare(int & channelsIn, int & channelsOut);
-    virtual void process(float ** in, float ** out, int n, const Resonant::CallbackTime & time);
+    virtual bool prepare(int & channelsIn, int & channelsOut) OVERRIDE;
+    virtual void process(float ** in, float ** out, int n, const Resonant::CallbackTime & time) OVERRIDE;
 
     Timestamp toPts(const Radiant::TimeStamp & ts) const;
 
