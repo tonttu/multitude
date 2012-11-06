@@ -102,23 +102,24 @@ namespace Luminous
     return *this;
   }
 
-  void RichTextLayout::generate()
+  void RichTextLayout::generateInternal() const
   {
+    RichTextLayout *nonConst = const_cast<RichTextLayout*>(this);
     if (!isLayoutReady()) {
       // trigger relayout in Qt
       m_d->disableHinting();
       m_d->doc().setTextWidth(maximumSize().x);
       QSizeF size = m_d->doc().documentLayout()->documentSize();
-      setBoundingBox(Nimble::Rectf(0, 0, size.width(), size.height()));
+      nonConst->setBoundingBox(Nimble::Rectf(0, 0, size.width(), size.height()));
 
-      setLayoutReady(true);
-      clearGlyphs();
+      nonConst->setLayoutReady(true);
+      nonConst->clearGlyphs();
     }
 
     if (isComplete())
       return;
 
-    clearGlyphs();
+    nonConst->clearGlyphs();
 
     bool missingGlyphs = false;
     QAbstractTextDocumentLayout * layout = m_d->doc().documentLayout();
@@ -129,7 +130,7 @@ namespace Luminous
 
       const Nimble::Vector2f layoutLocation(rect.left(), rect.top());
       foreach (const QGlyphRun & glyphRun, textLayout->glyphRuns())
-        missingGlyphs |= generateGlyphs(layoutLocation, glyphRun);
+        missingGlyphs |= nonConst->generateGlyphs(layoutLocation, glyphRun);
     }
 
     for (int i = 0; ; ++i) {
@@ -164,11 +165,11 @@ namespace Luminous
         }
 
         foreach (const QGlyphRun & glyphRun, textLayout.glyphRuns())
-          missingGlyphs |= generateGlyphs(loc, glyphRun);
+          missingGlyphs |= nonConst->generateGlyphs(loc, glyphRun);
       }
     }
 
-    setGlyphsReady(!missingGlyphs);
+    nonConst->setGlyphsReady(!missingGlyphs);
   }
 
   QTextDocument & RichTextLayout::document()

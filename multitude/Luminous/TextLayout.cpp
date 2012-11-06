@@ -169,6 +169,11 @@ namespace Luminous
     m_d->m_layoutReady = false;
   }
 
+  void TextLayout::generate()
+  {
+    generateInternal();
+  }
+
   void TextLayout::setMaximumSize(const Nimble::Vector2f & size)
   {
     m_d->m_maximumSize = size;
@@ -183,6 +188,7 @@ namespace Luminous
 
   const Nimble::Rectf & TextLayout::boundingBox() const
   {
+    generateInternal();
     return m_d->m_boundingBox;
   }
 

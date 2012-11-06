@@ -35,7 +35,7 @@ namespace Luminous
                                                               const QFont & font,
                                                               const QTextOption & option);
 
-    LUMINOUS_API virtual void generate() OVERRIDE;
+    LUMINOUS_API virtual void generateInternal() const OVERRIDE;
 
   private:
     class D;

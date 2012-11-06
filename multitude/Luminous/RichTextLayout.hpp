@@ -19,7 +19,7 @@ namespace Luminous
     LUMINOUS_API RichTextLayout(RichTextLayout && t);
     LUMINOUS_API RichTextLayout & operator=(RichTextLayout && t);
 
-    LUMINOUS_API virtual void generate() OVERRIDE;
+    LUMINOUS_API virtual void generateInternal() const OVERRIDE;
 
     LUMINOUS_API QTextDocument & document();
     LUMINOUS_API const QTextDocument & document() const;

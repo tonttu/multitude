@@ -36,7 +36,7 @@ namespace Luminous {
     LUMINOUS_API bool isLayoutReady() const;
     LUMINOUS_API bool isComplete() const;
     /// Not thread safe
-    LUMINOUS_API virtual void generate() = 0;
+    LUMINOUS_API void generate();
 
     LUMINOUS_API void invalidate();
 
@@ -48,6 +48,8 @@ namespace Luminous {
     LUMINOUS_API const Nimble::Vector2f & renderLocation() const;
 
   protected:
+    LUMINOUS_API virtual void generateInternal() const = 0;
+
     LUMINOUS_API TextLayout(const Nimble::Vector2f & maximumSize);
 
     LUMINOUS_API void setRenderLocation(const Nimble::Vector2f & location);

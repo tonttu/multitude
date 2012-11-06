@@ -259,34 +259,35 @@ namespace Luminous
     return *layout;
   }
 
-  void SimpleTextLayout::generate()
+  void SimpleTextLayout::generateInternal() const
   {
+    SimpleTextLayout *nonConst = const_cast<SimpleTextLayout*>(this);
     if (!isLayoutReady()) {
       m_d->layout(maximumSize());
-      setBoundingBox(m_d->m_layout.boundingRect());
+      nonConst->setBoundingBox(m_d->m_layout.boundingRect());
       auto align = m_d->m_layout.textOption().alignment();
       if (align & Qt::AlignBottom) {
-        setRenderLocation(Nimble::Vector2f(0, maximumSize().y - boundingBox().height()));
+        nonConst->setRenderLocation(Nimble::Vector2f(0, maximumSize().y - boundingBox().height()));
       } else if (align & Qt::AlignVCenter) {
-        setRenderLocation(Nimble::Vector2f(0, 0.5f * (maximumSize().y - boundingBox().height())));
+        nonConst->setRenderLocation(Nimble::Vector2f(0, 0.5f * (maximumSize().y - boundingBox().height())));
       } else {
-        setRenderLocation(Nimble::Vector2f(0, 0));
+        nonConst->setRenderLocation(Nimble::Vector2f(0, 0));
       }
-      setLayoutReady(true);
-      clearGlyphs();
+      nonConst->setLayoutReady(true);
+      nonConst->clearGlyphs();
     }
 
     if (isComplete())
       return;
 
-    clearGlyphs();
+    nonConst->clearGlyphs();
 
     const Nimble::Vector2f layoutLocation(m_d->m_layout.position().x(), m_d->m_layout.position().y());
     bool missingGlyphs = false;
 
     foreach (const QGlyphRun & glyphRun, m_d->m_layout.glyphRuns())
-      missingGlyphs |= generateGlyphs(layoutLocation, glyphRun);
+      missingGlyphs |= nonConst->generateGlyphs(layoutLocation, glyphRun);
 
-    setGlyphsReady(!missingGlyphs);
+    nonConst->setGlyphsReady(!missingGlyphs);
   }
 } // namespace Luminous
