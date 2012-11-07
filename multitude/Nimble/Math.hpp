@@ -140,7 +140,7 @@ namespace Nimble {
     template <class T>
     bool IsClose(const T & a, const T & b, const T & limit)
     {
-      return Abs(a - b) < limit;
+      return std::abs(a - b) < limit;
     }
 
     /// Compare two values
