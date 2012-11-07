@@ -206,13 +206,15 @@ namespace Radiant {
     /// @returns true if the given coordinates are inside the grid
     inline bool isInside(unsigned x, unsigned y) const
     { return (x < this->m_width) && (y < this->m_height); }
-    /// @copybrief isInside(unsigned x, unsigned y)
+    /// Checks if the given point is inside the grid
     /// @param v Point coordinate
     /// @returns true if the given coordinates are inside the grid
     inline bool isInside(const Nimble::Vector2i & v) const
     { return ((unsigned) v.x < this->m_width) &&
         ((unsigned) v.y < this->m_height); }
-    /// @copydoc isInside(const Nimble::Vector2i & v)
+    /// Checks if the given point is inside the grid
+    /// @param v Point coordinate
+    /// @returns true if the given coordinates are inside the grid
     inline bool isInside(const Nimble::Vector2f & v) const
     { return ((unsigned) v.x < this->m_width) &&
         ((unsigned) v.y < this->m_height); }

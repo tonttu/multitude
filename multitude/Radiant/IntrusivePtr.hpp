@@ -41,8 +41,8 @@ namespace Radiant
 
 namespace Radiant
 {
-  /// This is also declared in <cstddef> in std-namespace, but if you /
-  /// any other library (Xlib!) happen to include <stddef.h>, then it isn't
+  /// This is also declared in &lt;cstddef&gt; in std-namespace, but if you /
+  /// any other library (Xlib!) happen to include &lt;stddef.h&gt;, then it isn't
   /// found anymore. Use this to be safe.
   typedef decltype(nullptr) nullptr_t;
 

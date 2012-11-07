@@ -41,10 +41,12 @@ namespace Luminous {
     /// Generates a new task for new image. Mipmaps will be saved with one of
     /// the DXT image formats, depending on the source image format.
     /// @param src The filename of the original image, for example a PNG file
+    /// @param target The filename of the target image
     LUMINOUS_API MipMapGenerator(const QString & src, const QString & target);
 
     /// Generates a new task for new image with explicit mipmap pixelformat.
     /// @param src The filename of the original image, for example a PNG file
+    /// @param target The filename of the target image
     /// @param mipmapFormat The mipmap output format. Only DXT compressed formats are supported.
     LUMINOUS_API MipMapGenerator(const QString & src, const QString & target,
                     const PixelFormat & mipmapFormat);

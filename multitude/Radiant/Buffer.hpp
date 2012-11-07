@@ -30,7 +30,9 @@ namespace Radiant
   class Buffer
   {
   public:
-    /// @param history length of history in seconds
+    /// Construct a new buffer
+    /// @param t initial value
+    /// @param history history length in seconds
     Buffer(const T & t, double history)
       : m_history(Radiant::TimeStamp::createSeconds(history)),
         m_pos(-1),

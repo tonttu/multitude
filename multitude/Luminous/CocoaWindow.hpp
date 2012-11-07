@@ -15,13 +15,12 @@
 namespace Luminous
 {
 
-  /// A Cocoa OpenGL Window class
+  /// This class represents an OpenGL window using Cocoa on OS X.
   class CocoaWindow : public Window
   {
   public:
     /// Constructs a new window
-    /// @param hint window configuration
-    /// @param caption window caption
+    /// @param window window configuration
     CocoaWindow(const MultiHead::Window & window);
     ~CocoaWindow();
 

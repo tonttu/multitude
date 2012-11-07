@@ -31,7 +31,7 @@ namespace Luminous
 
   /** The general usage pattern is as follows:
 
-      <pre>
+      @code
 
       // Application main loop:
       while(true) {
@@ -58,12 +58,11 @@ namespace Luminous
     rsc2->eraseResources();
     renderOpenGL();
       }
-      </pre>
+      @endcode
 
       This code snippet is for the single-threaded case, with two
       OpenGL contexts.
    */
-  /// @todo Rename??
   class LUMINOUS_API GarbageCollector
   {
   public:

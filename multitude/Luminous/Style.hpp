@@ -135,6 +135,8 @@ namespace Luminous
 
 
   //////////////////////////////////////////////////////////////////////////
+
+  /// Control how text content overflow is handled.
   enum Overflow
   {
     /// "visible", content is not clipped, i.e., it may be rendered outside the content box
@@ -145,7 +147,7 @@ namespace Luminous
     /// "scroll", content is clipped, scrolling mechanism is always visible
     OverflowScroll,
     /// "auto", content is clipped, scrolling mechanism is visible when needed
-    OverflowAuto,
+    OverflowAuto
   };
 
   class TextStyle : public Style

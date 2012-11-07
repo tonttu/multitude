@@ -51,10 +51,13 @@ namespace Luminous
       RenderContext * m_rc;
     };
 
+    /// TextFlags can be used to give performance hint to RenderContext about
+    /// the layout of the text.
     enum TextFlags
     {
-      /// Text changes usually every frame
+      /// Text layout changes usually every frame
       TextDynamic,
+      /// Text layout does not change often
       TextStatic
     };
 
@@ -93,7 +96,7 @@ namespace Luminous
     /// @endcond
 
     /// Constructs a new render context and associates the given resources to it
-    /// @param resources OpenGL resource container to associate with the context
+    /// @param driver render driver to use
     /// @param window window to associate this context with
     RenderContext(Luminous::RenderDriver & driver, const Luminous::MultiHead::Window * window = 0);
     virtual ~RenderContext();
@@ -162,10 +165,9 @@ namespace Luminous
 
     // Render utility functions:
 
-    /** Draws an arc
+    /** Draw an arc
       @param center center of the arc
       @param radius radius of the arc
-      @param width width of the arc
       @param fromRadians start angle in radians
       @param toRadians end angle in radians
       @param style color and other parameters for the arc
@@ -173,12 +175,13 @@ namespace Luminous
       */
     void drawArc(const Nimble::Vector2f & center, float radius, float fromRadians, float toRadians, Luminous::Style & style, unsigned int lineSegments = 0);
 
-    /** Draws a circle
+    /** Draw a circle
       @param center center of the circle
       @param radius radius of the circle
-      @param width width of the circle
       @param style color and other parameters for the circle
       @param lineSegments number of steps
+      @param fromRadians start angle in radians
+      @param toRadians end angle in radians
       */
     void drawCircle(const Nimble::Vector2f & center, float radius, const Luminous::Style & style, unsigned int lineSegments = 0, float fromRadians=0, float toRadians=Nimble::Math::TWO_PI);
 
@@ -192,13 +195,13 @@ namespace Luminous
 
     /** Draws a constant width donut.
       @param center center of the donut
-      @param majorAxisLength length of the major axis
-      @param minorAxisLength length of the minor axis
+      @param axis axis of the ellipse
+      @param otherAxisLength axis of the ellipse
       @param width width of the donut
       @param style color and other parameters for the donut
       @param linesegments number of steps to use
-      @param fromRadians
-      @param toRadians
+      @param fromRadians start angle in radians
+      @param toRadians end angle in radians
      */
     void drawDonut(const Nimble::Vector2f & center,
                    Nimble::Vector2 axis,
@@ -214,10 +217,8 @@ namespace Luminous
       @param radius2 outer radius
       @param fromRadians start angle in radians
       @param toRadians end angle in radians
-      @param width width of the wedge edge
-      @param blendWidth width of the blending region
-      @param rgba color of the wedge
       @param segments number of segments to use
+      @param style color and other parameters for the wedge
       */
     void drawWedge(const Nimble::Vector2f & center, float radius1, float radius2, float fromRadians, float toRadians, Style & style, int segments);
 
@@ -424,7 +425,7 @@ namespace Luminous
         std::size_t vertexSize, std::size_t maxVertexCount, Buffer::Type type, unsigned int & offset);
 
     //////////////////////////////////////////////////////////////////////////
-    /// </Luminousv2>
+    // <Luminousv2>
     //////////////////////////////////////////////////////////////////////////
   protected:
     virtual void beforeTransformChange();

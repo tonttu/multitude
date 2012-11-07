@@ -61,10 +61,18 @@ namespace Luminous {
       return *obj;
     }
 
-    /** @copydoc ref
-        @param rs Pointer to the OpenGL resource container
+    /// Gets a reference to the OpenGL resource
+    /** Before calling this function you should have a valid OpenGL context, with
+        the right RenderContext main object set for this thread.
+
+        Since this function
+        gets a direct pointer to the RenderContext object, it is slightly faster than
+        the function without this argument.
+
         @param wasCreated true if the resource was created, false if it already existed
-        */
+        @param rs Pointer to the OpenGL resource container
+        @return Returns a reference to the OpenGL resource.
+    */
     inline T & ref(RenderContext * rs, bool * wasCreated = 0) const
     {
       if(!rs) {

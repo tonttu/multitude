@@ -26,6 +26,8 @@
 
 #include <Valuable/Node.hpp>
 
+/// @cond
+
 namespace Luminous
 {
   class PixelFormat;
@@ -336,5 +338,7 @@ namespace Luminous
 #endif // LUMINOUS_OPENGLES
 
 }
+
+/// @endcond
 
 #endif

@@ -224,7 +224,8 @@ namespace Nimble {
     /// Returns a pointer to the rectangle corner data
     /// @return pointer to the corner data
     const T * data() const { return m_low.data(); }
-    /// @copydoc data
+    /// Returns a pointer to the rectangle corner data
+    /// @return pointer to the corner data
     T * data() { return m_low.data(); }
 
     /// Convert the rect to floating-point precision
