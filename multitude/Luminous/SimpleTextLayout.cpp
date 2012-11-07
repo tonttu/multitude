@@ -264,12 +264,14 @@ namespace Luminous
     SimpleTextLayout *nonConst = const_cast<SimpleTextLayout*>(this);
     if (!isLayoutReady()) {
       m_d->layout(maximumSize());
-      nonConst->setBoundingBox(m_d->m_layout.boundingRect());
+      // We need to avoid calling bounding box here, becourse it calls generateInternal
+      auto boundingBox = m_d->m_layout.boundingRect();
+      nonConst->setBoundingBox(boundingBox);
       auto align = m_d->m_layout.textOption().alignment();
       if (align & Qt::AlignBottom) {
-        nonConst->setRenderLocation(Nimble::Vector2f(0, maximumSize().y - boundingBox().height()));
+        nonConst->setRenderLocation(Nimble::Vector2f(0, maximumSize().y - boundingBox.height()));
       } else if (align & Qt::AlignVCenter) {
-        nonConst->setRenderLocation(Nimble::Vector2f(0, 0.5f * (maximumSize().y - boundingBox().height())));
+        nonConst->setRenderLocation(Nimble::Vector2f(0, 0.5f * (maximumSize().y - boundingBox.height())));
       } else {
         nonConst->setRenderLocation(Nimble::Vector2f(0, 0));
       }

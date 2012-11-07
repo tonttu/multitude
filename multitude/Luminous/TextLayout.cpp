@@ -188,6 +188,8 @@ namespace Luminous
 
   const Nimble::Rectf & TextLayout::boundingBox() const
   {
+    // Updates the internal state if needed so the user gets
+    // always the current state
     generateInternal();
     return m_d->m_boundingBox;
   }
