@@ -45,7 +45,7 @@ namespace Valuable
     /// Check if given flag is enabled
     /// @param flag Flag to test
     /// @return True if given flag is enabled in the options.
-    inline bool checkFlag(Options flag) { return (m_options & unsigned(flag)) == unsigned(flag); }
+    inline bool checkFlags(Options flag) { return (m_options & unsigned(flag)) == unsigned(flag); }
   protected:
     /// Actual bitmask of flags
     unsigned int m_options;
