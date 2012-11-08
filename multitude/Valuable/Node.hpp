@@ -58,10 +58,19 @@ namespace Valuable
     typedef std::function<void ()> ListenerFunc;
     typedef std::function<void (Radiant::BinaryData &)> ListenerFunc2;
 
+    /// Types of event listeners
     enum ListenerType
     {
+      /// Listener will activate immediately when an event is sent. Listener is
+      /// executed in the thread the event is sent.
       DIRECT,
+
+      /// Listener activation is delayed to happen after update. Listener is
+      /// executed in the main thread.
       AFTER_UPDATE,
+      /// Listener activation is delayed to happen after update. Duplicate
+      /// events are merged, so the listener activates only once even if multiple
+      /// events were sent. Listener is executed in the main thread.
       AFTER_UPDATE_ONCE
     };
 
