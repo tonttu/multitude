@@ -217,49 +217,55 @@ namespace Valuable
     /** Add an event listener to this object.
 
         This function is part of the experimental event passing
-        framework.
+        framework. After calling this, @a listener will get the messages
+        with id @a messageId whenever this object has events with @a eventId.
 
-        @param from The event id to match when in the eventSend.
+        @param eventId The event id to match when in the @ref eventSend. Corresponds
+                       to the first parameter in @ref eventSend.
 
-        @param to The event id to to use when delivering the event
+        @param messageId The event id to use when delivering the event to listener.
+                         This is the first parameter in @ref processMessage.
 
-        @param obj The listening object
+        @param listener The listening object. Receives events and handles them
+                        in @ref processMessage -function.
+
+        @param listenerType Defines when to send events to listener.
 
         @param defaultData The default binary data to be used when
         delivering the message.
 
     */
     /// @todo the raw pointer in these should be fixed!
-    void eventAddListener(const QByteArray & from,
-                          const QByteArray & to,
-                          Valuable::Node * obj,
+    void eventAddListener(const QByteArray & eventId,
+                          const QByteArray & messageId,
+                          Valuable::Node * listener,
                           ListenerType listenerType,
                           const Radiant::BinaryData * defaultData = 0);
-    void eventAddListener(const QByteArray & from,
-                          const QByteArray & to,
-                          Valuable::Node * obj,
+    void eventAddListener(const QByteArray & eventId,
+                          const QByteArray & messageId,
+                          Valuable::Node * listener,
                           const Radiant::BinaryData * defaultData = 0)
     {
-      eventAddListener(from, to, obj, DIRECT, defaultData);
+      eventAddListener(eventId, messageId, listener, DIRECT, defaultData);
     }
 
 #ifdef CORNERSTONE_JS
-    void eventAddListener(const QByteArray & from,
-                          const QByteArray & to,
+    void eventAddListener(const QByteArray & eventId,
+                          const QByteArray & messageId,
                           v8::Persistent<v8::Function> func,
                           const Radiant::BinaryData * defaultData = 0);
-    void eventAddListener(const QByteArray & from,
+    void eventAddListener(const QByteArray & eventId,
                           v8::Persistent<v8::Function> func,
                           const Radiant::BinaryData * defaultData = 0)
     {
-      eventAddListener(from, from, func, defaultData);
+      eventAddListener(eventId, eventId, func, defaultData);
     }
 #endif
 
-    void eventAddListener(const QByteArray & from, ListenerFunc func,
+    void eventAddListener(const QByteArray & eventId, ListenerFunc func,
                           ListenerType listenerType = DIRECT);
 
-    void eventAddListenerBd(const QByteArray & from, ListenerFunc2 func,
+    void eventAddListenerBd(const QByteArray & eventId, ListenerFunc2 func,
                             ListenerType listenerType = DIRECT);
 
     /** Removes event listeners from this object.
@@ -288,10 +294,10 @@ namespace Valuable
 
       @return number of event listener links removed
       */
-    int eventRemoveListener(const QByteArray & from = QByteArray(), const QByteArray & to = QByteArray(), Valuable::Node * obj = 0);
-    int eventRemoveListener(Valuable::Node * obj)
+    int eventRemoveListener(const QByteArray & eventId = QByteArray(), const QByteArray & messageId = QByteArray(), Valuable::Node * listener = 0);
+    int eventRemoveListener(Valuable::Node * listener)
     {
-      return eventRemoveListener(QByteArray(), QByteArray(), obj);
+      return eventRemoveListener(QByteArray(), QByteArray(), listener);
     }
 
     /// Adds an event source
@@ -308,7 +314,7 @@ namespace Valuable
     void eventPassingEnable(bool enable) { m_eventsEnabled = enable; }
 
     /// @cond
-    virtual void processMessage(const QByteArray & type, Radiant::BinaryData & data);
+    virtual void processMessage(const QByteArray & messageId, Radiant::BinaryData & data);
 
     /// @endcond
 
@@ -319,13 +325,13 @@ namespace Valuable
     Uuid id() const;
 
     /// Registers a new event this class can send with eventSend
-    void eventAddOut(const QByteArray &id);
+    void eventAddOut(const QByteArray & eventId);
 
     /// Registers a new event that this class handles in processMessage
-    void eventAddIn(const QByteArray & id);
+    void eventAddIn(const QByteArray & messageId);
 
     /// Returns true if this object accepts event 'id' in processMessage
-    bool acceptsEvent(const QByteArray &id) const;
+    bool acceptsEvent(const QByteArray & messageId) const;
 
     /// Returns set of all registered OUT events
     const QSet<QByteArray> & eventOutNames() const { return m_eventSendNames; }
@@ -345,50 +351,51 @@ namespace Valuable
 
   protected:
 
-    /// Sends an event to all listeners on this object
-    void eventSend(const QByteArray & id, Radiant::BinaryData &);
-    void eventSend(const QByteArray & id);
+    /// Sends an event and bd to all listeners on this eventId
+    void eventSend(const QByteArray & eventId, Radiant::BinaryData & bd);
+    /// Sends an event to all listeners on this eventId
+    void eventSend(const QByteArray & eventId);
 
     template <typename P1>
-    void eventSend(const QByteArray & id, const P1 & p1)
+    void eventSend(const QByteArray & eventId, const P1 & p1)
     {
       Radiant::BinaryData bd;
       bd.write(p1);
-      eventSend(id, bd);
+      eventSend(eventId, bd);
     }
 
     template <typename P1, typename P2>
-    void eventSend(const QByteArray & id, const P1 & p1, const P2 & p2)
+    void eventSend(const QByteArray & eventId, const P1 & p1, const P2 & p2)
     {
       Radiant::BinaryData bd;
       bd.write(p1);
       bd.write(p2);
-      eventSend(id, bd);
+      eventSend(eventId, bd);
     }
 
     template <typename P1, typename P2, typename P3>
-    void eventSend(const QByteArray & id, const P1 & p1, const P2 & p2, const P3 & p3)
+    void eventSend(const QByteArray & eventId, const P1 & p1, const P2 & p2, const P3 & p3)
     {
       Radiant::BinaryData bd;
       bd.write(p1);
       bd.write(p2);
       bd.write(p3);
-      eventSend(id, bd);
+      eventSend(eventId, bd);
     }
 
     template <typename P1, typename P2, typename P3, typename P4>
-    void eventSend(const QByteArray & id, const P1 & p1, const P2 & p2, const P3 & p3, const P4 & p4)
+    void eventSend(const QByteArray & eventId, const P1 & p1, const P2 & p2, const P3 & p3, const P4 & p4)
     {
       Radiant::BinaryData bd;
       bd.write(p1);
       bd.write(p2);
       bd.write(p3);
       bd.write(p4);
-      eventSend(id, bd);
+      eventSend(eventId, bd);
     }
 
     template <typename P1, typename P2, typename P3, typename P4, typename P5>
-    void eventSend(const QByteArray & id, const P1 & p1, const P2 & p2, const P3 & p3, const P4 & p4, const P5 & p5)
+    void eventSend(const QByteArray & eventId, const P1 & p1, const P2 & p2, const P3 & p3, const P4 & p4, const P5 & p5)
     {
       Radiant::BinaryData bd;
       bd.write(p1);
@@ -396,7 +403,7 @@ namespace Valuable
       bd.write(p3);
       bd.write(p4);
       bd.write(p5);
-      eventSend(id, bd);
+      eventSend(eventId, bd);
     }
 
     /// The sender of the event, can be read in processMessage()
