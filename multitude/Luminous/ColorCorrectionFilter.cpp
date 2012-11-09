@@ -48,10 +48,17 @@ namespace Luminous
   void ColorCorrectionFilter::apply(RenderContext & rc)
   {
     Luminous::Style style;
-    style.setFillProgram(m_d->m_shader);
     style.setFillColor(1.0f, 1.0f, 1.0f, 1.0f);
     style.setTexture("tex", texture());
-    style.setTexture("lut", rc.area()->rgbCube().asTexture());
+
+    if(rc.area()->rgbCube().isDefined()) {
+      style.setFillProgram(m_d->m_shader);
+      style.setTexture("lut", rc.area()->rgbCube().asTexture());
+    } else {
+      debugLuminous("ColorCorrectionFilter # No RGBCube defined for current area. "
+                    "Using default shader");
+      style.setFillProgram(rc.texShader());
+    }
 
     const Nimble::Vector2f size = rc.contextSize();
     const Luminous::Program & program = *style.fillProgram();

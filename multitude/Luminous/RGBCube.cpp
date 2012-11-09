@@ -194,9 +194,11 @@ namespace Luminous
       m_texture.setGeneration(m_generation);
     }
 
-    if(!m_texture.isValid())
+    if(!m_texture.isValid()) {
       Radiant::warning("RGBCube # Texture is not valid! "
                        "The color correction configuration might be broken or missing.");
+    }
+
     return m_texture;
   }
 
