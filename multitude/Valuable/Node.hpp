@@ -24,6 +24,7 @@
 #include <Patterns/NotCopyable.hpp>
 
 #include <Radiant/Color.hpp>
+#include <Radiant/IntrusivePtr.hpp>
 #include <Radiant/Trace.hpp>
 
 #ifdef CORNERSTONE_JS
@@ -235,7 +236,28 @@ namespace Valuable
         delivering the message.
 
     */
-    /// @todo the raw pointer in these should be fixed!
+    template <typename Widget>
+    void eventAddListener(const QByteArray &eventId,
+                          const QByteArray &messageId,
+                          Radiant::IntrusivePtr<Widget>& listener,
+                          ListenerType listenerType,
+                          const Radiant::BinaryData *defaultData = 0)
+    {
+      eventAddListener(eventId, messageId, &*listener, listenerType, defaultData);
+    }
+
+
+    /// Add an event listener to this object.
+    template <typename Widget>
+    void eventAddListener(const QByteArray &eventId,
+                          const QByteArray &messageId,
+                          Radiant::IntrusivePtr<Widget>& listener,
+                          const Radiant::BinaryData *defaultData = 0)
+    {
+      eventAddListener(eventId, messageId, &*listener, DIRECT, defaultData);
+    }
+
+    /// @todo the raw pointers in these should be fixed!
     void eventAddListener(const QByteArray & eventId,
                           const QByteArray & messageId,
                           Valuable::Node * listener,
@@ -268,6 +290,20 @@ namespace Valuable
     void eventAddListenerBd(const QByteArray & eventId, ListenerFunc2 func,
                             ListenerType listenerType = DIRECT);
 
+    template <typename Widget>
+    int eventRemoveListener(Radiant::IntrusivePtr<Widget>& listener)
+    {
+      return eventRemoveListener(QByteArray(), QByteArray(), &*listener);
+    }
+
+    template <typename Widget>
+    int eventRemoveListener(const QByteArray & eventId = QByteArray(),
+                            const QByteArray & messageId = QByteArray(),
+                            Radiant::IntrusivePtr<Widget>& listener=Radiant::IntrusivePtr<Widget>())
+    {
+      return eventRemoveListener(eventId, messageId, &*listener);
+    }
+
     /** Removes event listeners from this object.
 
       @code
@@ -283,13 +319,13 @@ namespace Valuable
       @endcode
 
 
-      @param from The name of the originating event that should be cleared. If this parameter
+      @param eventId The name of the originating event that should be cleared. If this parameter
       is null (QByteArray()), then all originating events are matched.
 
-      @param to The name of of the destination event that should be cleared. If this parameter
+      @param messageId The name of of the destination event that should be cleared. If this parameter
       is null (QByteArray()), then all destination events are matched.
 
-      @param obj The target object for which the events should be cleared. If
+      @param listener The target object for which the events should be cleared. If
                  this parameter is null, then all objects are matched.
 
       @return number of event listener links removed
@@ -298,6 +334,20 @@ namespace Valuable
     int eventRemoveListener(Valuable::Node * listener)
     {
       return eventRemoveListener(QByteArray(), QByteArray(), listener);
+    }
+
+    /// Adds an event source
+    template <typename Widget>
+    void eventAddSource(Radiant::IntrusivePtr<Widget>& source)
+    {
+      eventAddSource(&*source);
+    }
+
+    /// Removes an event source
+    template <typename Widget>
+    void eventRemoveSource(Radiant::IntrusivePtr<Widget>& source)
+    {
+      eventRemoveSource(&*source);
     }
 
     /// Adds an event source
