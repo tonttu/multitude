@@ -17,7 +17,7 @@ namespace Luminous
     struct Creator
     {
       InitFunc func;
-      int order;
+      unsigned index;
     };
 
     typedef std::list<Creator> InitList;

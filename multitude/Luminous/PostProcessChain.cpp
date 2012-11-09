@@ -2,44 +2,84 @@
 
 namespace Luminous
 {
+  class PostProcessChain::D
+  {
+  public:
+    PostProcessChain::FilterChain m_chain;
+  };
+
   PostProcessChain::PostProcessChain()
+    : m_d(new D())
   {
   }
 
   PostProcessChain::~PostProcessChain()
   {
+    delete m_d;
   }
 
-  void PostProcessChain::add(PostProcessFilterPtr filter)
+  bool PostProcessChain::add(PostProcessFilterPtr filter)
   {
-    if(m_chain.empty()) {
-      m_chain.insert(std::make_pair(FilterChain::key_type(0), filter));
+    std::pair<FilterChain::iterator,bool> result;
+    if(m_d->m_chain.empty()) {
+      result = m_d->m_chain.insert(std::make_pair(FilterChain::key_type(0), filter));
     } else {
-      FilterChain::key_type key = m_chain.rbegin()->first;
-      m_chain.insert(std::make_pair(key+1, filter));
+      FilterChain::key_type key = m_d->m_chain.rbegin()->first;
+      result = m_d->m_chain.insert(std::make_pair(key+1, filter));
     }
+    return result.second;
   }
 
-  void PostProcessChain::insert(PostProcessFilterPtr filter, int index)
+  bool PostProcessChain::insert(PostProcessFilterPtr filter, unsigned index)
   {
-    m_chain.insert(std::make_pair(index, filter));
+    std::pair<FilterChain::iterator,bool> result =
+        m_d->m_chain.insert(std::make_pair(index, filter));
+    return result.second;
   }
 
-  bool PostProcessChain::contains(int order) const
+  bool PostProcessChain::contains(unsigned index) const
   {
-    return m_chain.find(order) != m_chain.end();
+    return m_d->m_chain.find(index) != m_d->m_chain.end();
   }
 
-  const PostProcessFilterPtr PostProcessChain::front() const
+  PostProcessChain::FilterIterator PostProcessChain::begin()
   {
-    if(m_chain.empty())
-      return PostProcessFilterPtr();
-
-    return m_chain.begin()->second;
+    return FilterIterator(m_d->m_chain.begin(), m_d->m_chain.end());
   }
 
-  const PostProcessChain::FilterChain & PostProcessChain::filters() const
+  PostProcessChain::ConstFilterIterator PostProcessChain::begin() const
   {
-    return m_chain;
+    return ConstFilterIterator(m_d->m_chain.begin(), m_d->m_chain.end());
+  }
+
+  PostProcessChain::FilterIterator PostProcessChain::end()
+  {
+    return FilterIterator(m_d->m_chain.end(), m_d->m_chain.end());
+  }
+
+  PostProcessChain::ConstFilterIterator PostProcessChain::end() const
+  {
+    return ConstFilterIterator(m_d->m_chain.end(), m_d->m_chain.end());
+  }
+
+  bool PostProcessChain::empty() const
+  {
+    return begin() == end();
+  }
+
+  size_t PostProcessChain::numEnabledFilters() const
+  {
+    ConstFilterIterator it = begin();
+    size_t i = 0;
+    while(it != end()) {
+      ++it;
+      i++;
+    }
+    return i;
+  }
+
+  size_t PostProcessChain::size() const
+  {
+    return m_d->m_chain.size();
   }
 }

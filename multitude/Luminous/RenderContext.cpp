@@ -126,9 +126,9 @@ namespace Luminous
     {
       for(PostProcess::InitList::const_iterator it = chain.begin(); it != chain.end(); ++it) {
 
-        const int id = it->order;
+        const unsigned index = it->index;
 
-        if(m_postProcessChain.contains(id))
+        if(m_postProcessChain.contains(index))
           continue;
 
         PostProcessFilterPtr ptr = it->func();
@@ -136,7 +136,7 @@ namespace Luminous
         if(ptr) {
           // By default resizes new render targets to current context size
           ptr->initialize(rc);
-          m_postProcessChain.insert(ptr, id);
+          m_postProcessChain.insert(ptr, index);
         }
       }
     }
@@ -1320,9 +1320,9 @@ namespace Luminous
 
     // Push the default render target. Don't use the RenderContext API to avoid
     // the guard.
-    const PostProcessFilterPtr ppf = m_data->m_postProcessChain.front();
+    PostProcessChain::FilterIterator ppf = m_data->m_postProcessChain.begin();
 
-    const Luminous::RenderTarget & renderTarget = ppf && ppf->enabled() ?
+    const Luminous::RenderTarget & renderTarget = ppf != m_data->m_postProcessChain.end() ?
           ppf->renderTarget() :
           m_data->defaultRenderTarget();
 
@@ -1379,8 +1379,8 @@ namespace Luminous
 
   void RenderContext::postProcess()
   {
-    const PostProcessChain::FilterChain & chain = m_data->m_postProcessChain.filters();
-    const unsigned numFilters = chain.size();
+    const PostProcessChain & chain = m_data->m_postProcessChain;
+    const unsigned numFilters = chain.numEnabledFilters();
 
     if(numFilters == 0)
       return;
@@ -1397,16 +1397,11 @@ namespace Luminous
     assert(m_data->m_window);
 
     // Apply filters in filter chain
-    for(PostProcessChain::FilterChain::const_iterator it(chain.begin()), next(it);
+    for(PostProcessChain::ConstFilterIterator it(chain.begin()), next(it);
         it != chain.end() && next++ != chain.end(); ++it) {
 
-      const PostProcessFilterPtr ppf = it->second;
-
-      /// @todo we really shouldn't have null pointers here..
-      assert(ppf);
-
-      if(!ppf->enabled())
-        continue;
+      const PostProcessFilterPtr ppf = *it;
+      assert(ppf && ppf->enabled());
 
       // Note: if isLast is true, next is invalid
       bool isLast = (next == chain.end());
@@ -1415,7 +1410,7 @@ namespace Luminous
       // otherwise use the off-screen render target of the next filter
       const RenderTarget & renderTarget = isLast ?
             m_data->defaultRenderTarget() :
-            next->second->renderTarget();
+            next->renderTarget();
 
       // Push the next auxilary render target
       auto g = pushRenderTarget(renderTarget);
