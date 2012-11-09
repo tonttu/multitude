@@ -215,10 +215,13 @@
 
 //////////////////////////////////////////////////////////////////////////
 
-#ifdef RADIANT_GNUC
+#if defined (RADIANT_GNUC)
 #  define PUSH_IGNORE_DEPRECATION_WARNINGS _Pragma ("GCC diagnostic push") \
   _Pragma ("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
 #  define POP_IGNORE_DEPRECATION_WARNINGS _Pragma ("GCC diagnostic pop")
+#elif defined (RADIANT_MSVC)
+#  define PUSH_IGNORE_DEPRECATION_WARNINGS __pragma(warning(disable:4996))
+#  define POP_IGNORE_DEPRECATION_WARNINGS __pragma(warning(default:4996))
 #else
 #  define PUSH_IGNORE_DEPRECATION_WARNINGS
 #  define POP_IGNORE_DEPRECATION_WARNINGS
