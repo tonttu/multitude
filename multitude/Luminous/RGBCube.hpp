@@ -21,21 +21,19 @@ namespace Luminous
 
     Nimble::Vector3 getRGB(int rindex, int gindex, int bindex) const;
 
-    void setIndex(size_t index, Nimble::Vector3 rgb)
-    { m_rgbs->at(index).make(rgb.x, rgb.y, rgb.z, -1); m_generation++; }
-    void setError(size_t index, float error)
-    { m_rgbs->at(index).w = error; }
+    void setIndex(size_t index, Nimble::Vector3 rgb);
+    void setError(size_t index, float error);
     void setRGB(int rindex, int gindex, int bindex, Nimble::Vector3 rgb);
 
     /// The index is relative (0-1)
     Nimble::Vector3 interpolateRGB(Nimble::Vector3 index) const;
 
-
     int division() const { return m_division; }
     void setDivision(int division)
     {
-      m_division = division;
       m_rgbs->resize(division * division * division + division - 1);
+      m_division = division;
+      changed();
     }
 
     void setAll(Nimble::Vector3 rgb)
@@ -43,16 +41,20 @@ namespace Luminous
       Nimble::Vector4 tmp(rgb.x, rgb.y, rgb.z, 0.0f);
       for(size_t i = 0; i < m_rgbs->size(); i++)
         m_rgbs->at(i) = tmp;
+      changed();
     }
 
     void createDefault(int division);
 
     void fill3DTexture(uint8_t * rgbvals, int npixels) const;
-    void updateTexture();
+
+    void changed() { m_generation++; }
 
     const Luminous::Texture & asTexture() const;
 
     bool isDefined() const { return !m_rgbs->empty(); }
+
+    bool deserialize(const Valuable::ArchiveElement & element) OVERRIDE;
 
     Nimble::Vector3 white() const
     {
@@ -61,21 +63,22 @@ namespace Luminous
       return m_rgbs->at(m_division * m_division * m_division - 1).vector3();
     }
 
-    int findClosestRGBIndex(Nimble::Vector3 color);
+    int findClosestRGBIndex(Nimble::Vector3 color) const;
 
     void upSample(RGBCube & dest) const;
 
     size_t rgbCount() const { return m_rgbs->size(); }
-
   private:
 
     // The fourth vector element is the error, if relevant
     typedef Valuable::AttributeContainer<std::vector<Nimble::Vector4> > Rgbs;
     Valuable::AttributeInt m_division;
+    Valuable::AttributeInt m_dimension;
     Rgbs m_rgbs;
-    size_t m_generation;
-    Collectable m_key;
-    Luminous::Texture m_texture;
+
+    int m_generation;
+    mutable Luminous::Texture m_texture;
+    mutable std::vector<uint8_t> m_textureData;
   };
 }
 #endif // RGBCUBE_HPP

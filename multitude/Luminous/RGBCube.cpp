@@ -9,14 +9,40 @@ namespace Luminous
   RGBCube::RGBCube(Node * host, const QByteArray & name)
     : Node(host, name),
       m_division(this, "division", 0),
+      m_dimension(this, "dimension", 32),
       m_rgbs(this, "rgb-table")
   {
-    m_division.addListener(std::bind(&RGBCube::updateTexture, this));
-    m_rgbs.addListener(std::bind(&RGBCube::updateTexture, this));
+    m_texture.setWrap(Texture::Wrap_Clamp, Texture::Wrap_Clamp, Texture::Wrap_Clamp);
+    m_generation = m_texture.generation();
+
+    // Invalidate cached texture if either of these are edited
+    m_division.addListener([this] { changed(); });
+    m_dimension.addListener([this] { changed(); });
   }
 
   RGBCube::~RGBCube()
   {}
+
+  bool RGBCube::deserialize(const Valuable::ArchiveElement & element)
+  {
+    /// @todo actually check if contents of rgb-table changes
+    bool ok = Node::deserialize(element);
+    if(ok)
+      changed();
+    return ok;
+  }
+
+  void RGBCube::setIndex(size_t index, Nimble::Vector3 rgb)
+  {
+    m_rgbs->at(index).make(rgb.x, rgb.y, rgb.z, -1);
+    changed();
+  }
+
+  void RGBCube::setError(size_t index, float error)
+  {
+    m_rgbs->at(index).w = error;
+    changed();
+  }
 
   Nimble::Vector3 RGBCube::getRGB(int rindex, int gindex, int bindex) const
   {
@@ -146,21 +172,31 @@ namespace Luminous
     }
   }
 
-  void RGBCube::updateTexture()
-  {
-    const int dim = 32;
-
-    std::vector<uint8_t> texrgb;
-    texrgb.resize(3 * dim * dim * dim);
-
-    fill3DTexture(& texrgb[0], dim);
-
-    m_texture.setData(dim, dim, dim, Luminous::PixelFormat::rgbUByte(), &texrgb[0]);
-  }
-
   const Luminous::Texture & RGBCube::asTexture() const
   {
-    Radiant::info("is defined: %d", isDefined());
+    if(m_generation != m_texture.generation()) {
+
+      debugLuminous("RGBCube # Updating texture");
+
+      const RGBCube * cube = this;
+
+      RGBCube tmp;
+      if(m_rgbs->size() > size_t(m_division * m_division * m_division)) {
+        Radiant::info("RGBCube::updateTexture # Upsampling");
+        upSample(tmp);
+        cube = &tmp;
+      }
+
+      m_textureData.resize(3 * m_dimension * m_dimension * m_dimension);
+      cube->fill3DTexture(&m_textureData[0], m_dimension);
+
+      m_texture.setData(m_dimension, m_dimension, m_dimension, Luminous::PixelFormat::rgbUByte(), &m_textureData[0]);
+      m_texture.setGeneration(m_generation);
+    }
+
+    if(!m_texture.isValid())
+      Radiant::warning("RGBCube # Texture is not valid! "
+                       "The color correction configuration might be broken or missing.");
     return m_texture;
   }
 
@@ -213,7 +249,7 @@ namespace Luminous
   return tex;
 }*/
 
-  int RGBCube::findClosestRGBIndex(Nimble::Vector3 color)
+  int RGBCube::findClosestRGBIndex(Nimble::Vector3 color) const
   {
     float error = 1000.0f;
 
