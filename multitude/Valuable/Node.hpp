@@ -98,6 +98,13 @@ namespace Valuable
     /// @deprecated This function will be removed in Cornerstone 2.1. Use addAttribute instead.
     bool addValue(const QByteArray &name, Attribute * const value);
 
+    /// @copydoc addAttribute
+    template<typename Widget>
+    bool addAttribute(const QByteArray &name, const Radiant::IntrusivePtr<Widget>& attribute)
+    {
+      return addAttribute(name, &*attribute);
+    }
+
     /// Gets an Attribute with the given name
     /// @param name Attribute name to search for
     /// @return Null if no object can be found
