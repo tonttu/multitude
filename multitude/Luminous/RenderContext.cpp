@@ -63,15 +63,13 @@ namespace Luminous
       assert(win);
       m_defaultRenderTarget.setSize(Nimble::Size(win->size().x, win->size().y));
 
-      if(!win->directRendering()) {
-        m_defaultRenderTarget.setTargetBind(RenderTarget::BIND_DRAW);
+      // Set initial data for an off-screen render target
+      // The hardware resource is not created if this is actually never bound
+      m_defaultOffScreenRenderTarget.setSize(Nimble::Size(win->size().x, win->size().y));
+      m_defaultOffScreenRenderTarget.setSamples(win->antiAliasingSamples());
 
-        m_defaultOffScreenRenderTarget.setSize(Nimble::Size(win->size().x, win->size().y));
-        m_defaultOffScreenRenderTarget.setSamples(win->antiAliasingSamples());
-
-        m_defaultOffScreenRenderTarget.createRenderBufferAttachment(GL_COLOR_ATTACHMENT0, GL_RGBA);
-        m_defaultOffScreenRenderTarget.createRenderBufferAttachment(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT);
-      }
+      m_defaultOffScreenRenderTarget.createRenderBufferAttachment(GL_COLOR_ATTACHMENT0, GL_RGBA);
+      m_defaultOffScreenRenderTarget.createRenderBufferAttachment(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT);
 
       m_basicShader.loadShader("Luminous/GLSL150/basic.vs", ShaderGLSL::Vertex);
       m_basicShader.loadShader("Luminous/GLSL150/basic.fs", ShaderGLSL::Fragment);
@@ -1318,12 +1316,12 @@ namespace Luminous
 
     m_data->m_driver.preFrame();
 
-    // Push the default render target. Don't use the RenderContext API to avoid
-    // the guard.
-    PostProcessChain::FilterIterator ppf = m_data->m_postProcessChain.begin();
-
-    const Luminous::RenderTarget & renderTarget = ppf != m_data->m_postProcessChain.end() ?
-          ppf->renderTarget() :
+    // Push the render target for drawing the scene. Use an off-screen render
+    // target if we have post-process filters. Don't use the RenderContext API
+    // to avoid the guard.
+    const Luminous::RenderTarget & renderTarget =
+        m_data->m_postProcessChain.numEnabledFilters() > 0 ?
+          m_data->m_defaultOffScreenRenderTarget :
           m_data->defaultRenderTarget();
 
     assert(renderTarget.targetType() != RenderTarget::INVALID);
@@ -1337,6 +1335,19 @@ namespace Luminous
 
   void RenderContext::endFrame()
   {
+    if(!m_data->m_window->directRendering()) {
+      // Push window render target
+      m_data->m_defaultRenderTarget.setTargetBind(RenderTarget::BIND_DRAW);
+      m_data->m_driverGL->pushRenderTarget(m_data->m_defaultRenderTarget);
+      m_data->m_currentRenderTarget = &m_data->m_defaultRenderTarget;
+
+      // Blit individual areas (from currently bound FBO)
+      for(size_t i = 0; i < m_data->m_window->areaCount(); i++) {
+        const Luminous::MultiHead::Area & area = m_data->m_window->area(i);
+        blit(area.viewport(), area.viewport());
+      }
+    }
+
     flush();
 
     m_data->m_driver.postFrame();
@@ -1379,14 +1390,28 @@ namespace Luminous
 
   void RenderContext::postProcess()
   {
-    const PostProcessChain & chain = m_data->m_postProcessChain;
+    PostProcessChain & chain = m_data->m_postProcessChain;
     const unsigned numFilters = chain.numEnabledFilters();
 
     if(numFilters == 0)
       return;
 
-    // Set viewport to context size
     const Nimble::Recti viewport(Nimble::Vector2i(0, 0), contextSize().cast<int>());
+
+    // Copy off-screen buffers to use as the source of the first filter.
+    // This is done because the off-screen target contains multisampled depth
+    // and color buffers and usually filters are only interested in resolved
+    // color data. By blitting to an FBO that only contains a non-multisampled
+    // color buffer (default) the multisample resolution happens automatically.
+    PostProcessFilterPtr first = *chain.begin();
+    first->renderTarget().setTargetBind(RenderTarget::BIND_DRAW);
+    {
+      auto g = pushRenderTarget(first->renderTarget());
+      blit(viewport, viewport);
+    }
+    first->renderTarget().setTargetBind(RenderTarget::BIND_DEFAULT);
+
+    // Set viewport to context size
     pushViewport(viewport);
     pushScissorRect(viewport);
 
@@ -1397,7 +1422,7 @@ namespace Luminous
     assert(m_data->m_window);
 
     // Apply filters in filter chain
-    for(PostProcessChain::ConstFilterIterator it(chain.begin()), next(it);
+    for(PostProcessChain::FilterIterator it(chain.begin()), next(it);
         it != chain.end() && next++ != chain.end(); ++it) {
 
       const PostProcessFilterPtr ppf = *it;
@@ -1407,7 +1432,7 @@ namespace Luminous
       bool isLast = (next == chain.end());
 
       // If this is the last filter, use the default render target,
-      // otherwise use the off-screen render target of the next filter
+      // otherwise use the auxiliary off-screen render target of the next filter
       const RenderTarget & renderTarget = isLast ?
             m_data->defaultRenderTarget() :
             next->renderTarget();
@@ -1493,10 +1518,10 @@ namespace Luminous
     return m_data->m_scissorStack.top();
   }
 
-  void RenderContext::blit(const Nimble::Recti & src, const Nimble::Recti & dst)
+  void RenderContext::blit(const Nimble::Recti & src, const Nimble::Recti & dst,
+                           ClearMask mask, Texture::Filter filter)
   {
-    m_data->m_driverGL->pushRenderTarget(m_data->m_defaultRenderTarget);
-    m_data->m_driver.blit(src, dst);
+    m_data->m_driver.blit(src, dst, mask, filter);
   }
 
   void RenderContext::setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer)

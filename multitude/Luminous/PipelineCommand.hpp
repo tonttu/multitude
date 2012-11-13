@@ -144,8 +144,7 @@ namespace Luminous
   {
   public:
     CommandBlitGL(const Nimble::Recti & src, const Nimble::Recti & dst,
-                  Luminous::ClearMask mask = Luminous::ClearMask_ColorDepth,
-                  Luminous::Texture::Filter filter = Luminous::Texture::Filter_Nearest);
+                  Luminous::ClearMask mask, Luminous::Texture::Filter filter);
 
     virtual void execute() OVERRIDE;
 

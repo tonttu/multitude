@@ -288,7 +288,9 @@ namespace Luminous
 
     /// Copies pixels from the read render target to the draw render target
     /// @sa RenderTarget::setTargetBind
-    void blit(const Nimble::Recti & src, const Nimble::Recti & dst);
+    void blit(const Nimble::Recti & src, const Nimble::Recti & dst,
+              ClearMask mask = ClearMask_ColorDepth,
+              Texture::Filter filter = Texture::Filter_Nearest);
 
     /// Set the active render buffers
     /// @param colorBuffer enables drawing to colorbuffer if set to true

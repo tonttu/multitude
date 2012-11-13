@@ -294,7 +294,7 @@ namespace Luminous
     // Change sample count for all render buffer attachments
     for(GLenum attachment : m_d->m_renderBufferAttachments.keys()) {
       auto rb = renderBuffer(attachment);
-      rb->storageFormat(rb->size(), rb->format(), rb->samples());
+      rb->storageFormat(rb->size(), rb->format(), samples);
     }
   }
 

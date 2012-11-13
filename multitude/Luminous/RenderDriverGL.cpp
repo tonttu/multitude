@@ -675,9 +675,10 @@ namespace Luminous
     m_d->newRenderQueueSegment(new CommandScissorGL(rect));
   }
 
-  void RenderDriverGL::blit(const Nimble::Recti & src, const Nimble::Recti & dst)
+  void RenderDriverGL::blit(const Nimble::Recti &src, const Nimble::Recti &dst,
+                            Luminous::ClearMask mask, Luminous::Texture::Filter filter)
   {
-    m_d->newRenderQueueSegment(new CommandBlitGL(src, dst));
+    m_d->newRenderQueueSegment(new CommandBlitGL(src, dst, mask, filter));
   }
 
   void RenderDriverGL::setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer)
