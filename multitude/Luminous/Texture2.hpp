@@ -64,6 +64,9 @@ namespace Luminous
     LUMINOUS_API QRegion takeDirtyRegion(unsigned int threadIndex) const;
     LUMINOUS_API void addDirtyRect(const QRect & rect);
 
+    LUMINOUS_API unsigned int samples() const;
+    LUMINOUS_API void setSamples(unsigned int samples);
+
     LUMINOUS_API bool translucent() const;
     LUMINOUS_API void setTranslucency(bool translucency);
 

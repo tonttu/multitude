@@ -30,6 +30,7 @@ namespace Luminous
     GLenum m_target;
     QRegion m_dirtyRegion2D;
     Nimble::Vector3u m_size;
+    unsigned int m_samples;
   };
 
   /////////////////////////////////////////////////////////////////////////////

@@ -29,6 +29,7 @@ namespace Luminous
     , m_internalFormat(0)
     , m_target(0)
     , m_size(0, 0, 0)
+    , m_samples(0)
   {
     glGenTextures(1, &m_handle);
   }
@@ -46,6 +47,7 @@ namespace Luminous
     , m_target(t.m_target)
     , m_dirtyRegion2D(t.m_dirtyRegion2D)
     , m_size(0, 0, 0)
+    , m_samples(t.m_samples)
   {
   }
 
@@ -57,6 +59,7 @@ namespace Luminous
     m_internalFormat = t.m_internalFormat;
     m_dirtyRegion2D = t.m_dirtyRegion2D;
     m_size = t.m_size;
+    m_samples = t.m_samples;
     return *this;
   }
 
@@ -74,17 +77,20 @@ namespace Luminous
 
       // Check if we need to reallocate the texture. We reallocate if the
       // dimensions, size, or format has changed.
-      bool recreate = ((texture.dimensions() == 1 || texture.dimensions() == 2)
-                       && m_target != GL_TEXTURE_2D) ||
-          (texture.dimensions() == 3 && m_target != GL_TEXTURE_3D);
+      bool recreate = (((texture.dimensions() == 1 || texture.dimensions() == 2)
+                       && (m_target != GL_TEXTURE_2D || m_target != GL_TEXTURE_2D_MULTISAMPLE)) ||
+          (texture.dimensions() == 3 && (m_target != GL_TEXTURE_3D || m_target != GL_TEXTURE_2D_MULTISAMPLE_ARRAY)));
 
       recreate = recreate || (m_size[0] != texture.width() || m_size[1] != texture.height() || m_size[2] != texture.depth());
 
       recreate = recreate || (m_internalFormat != texture.internalFormat());
 
+      recreate = recreate || (m_samples != texture.samples());
+
       if(recreate) {
         m_target = 0;
         m_size.make(texture.width(), texture.height(), texture.depth());
+        m_samples = texture.samples();
       } else {
         m_dirtyRegion2D = QRegion(0, 0, texture.width(), texture.height());
       }
@@ -96,9 +102,12 @@ namespace Luminous
       // Mark the whole texture dirty
       m_dirtyRegion2D = QRegion(0, 0, texture.width(), texture.height());
 
-      if (texture.dimensions() == 1)      m_target = GL_TEXTURE_2D;
-      else if (texture.dimensions() == 2) m_target = GL_TEXTURE_2D;
-      else if (texture.dimensions() == 3) m_target = GL_TEXTURE_3D;
+      if(texture.dimensions() == 1)
+        m_target = texture.samples() == 0 ? GL_TEXTURE_2D : GL_TEXTURE_2D_MULTISAMPLE;
+      else if(texture.dimensions() == 2)
+        m_target = texture.samples() == 0 ? GL_TEXTURE_2D : GL_TEXTURE_2D_MULTISAMPLE;
+      else if(texture.dimensions() == 3)
+        m_target = texture.samples() == 0 ? GL_TEXTURE_3D : GL_TEXTURE_2D_MULTISAMPLE_ARRAY;
 
       bind(textureUnit);
       bound = true;
@@ -134,29 +143,42 @@ namespace Luminous
         m_dirtyRegion2D = QRegion();
       } else {
         if (texture.dimensions() == 1 || texture.dimensions() == 2) {
-          glTexImage2D(GL_TEXTURE_2D, 0, intFormat, texture.width(), texture.height(), 0,
+          if(texture.samples() > 0) {
+            glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, texture.samples(), intFormat,
+                                    texture.width(), texture.height(), GL_FALSE);
+          } else {
+            glTexImage2D(GL_TEXTURE_2D, 0, intFormat, texture.width(), texture.height(), 0,
                        texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
+          }
           GLERROR("TextureGL::upload # glTexImage2D");
         } else if(texture.dimensions() == 3) {
-          glTexImage3D(GL_TEXTURE_3D, 0, intFormat, texture.width(), texture.height(), texture.depth(),
+          if(texture.samples() > 0) {
+            glTexImage3DMultisample(GL_TEXTURE_2D_MULTISAMPLE_ARRAY, texture.samples(), intFormat,
+                                    texture.width(), texture.height(), texture.depth(), GL_FALSE);
+          } else {
+            glTexImage3D(GL_TEXTURE_3D, 0, intFormat, texture.width(), texture.height(), texture.depth(),
                        0, texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
+          }
           GLERROR("TextureGL::upload # glTexImage3D");
         }
       }
 
-      glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, texture.getMinFilter());
-      GLERROR("TextureGL::upload # glTexParameteri");
-      glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, texture.getMagFilter());
-      GLERROR("TextureGL::upload # glTexParameteri");
+      // These are not supported by multisampled textures
+      if(texture.samples() == 0) {
+        glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, texture.getMinFilter());
+        GLERROR("TextureGL::upload # glTexParameteri");
+        glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, texture.getMagFilter());
+        GLERROR("TextureGL::upload # glTexParameteri");
 
-      Texture::Wrap s, t, r;
-      texture.getWrap(s,t,r);
-      glTexParameteri(m_target, GL_TEXTURE_WRAP_S, getWrapMode(s) );
-      GLERROR("TextureGL::upload # glTexParameteri");
-      glTexParameteri(m_target, GL_TEXTURE_WRAP_T, getWrapMode(t) );
-      GLERROR("TextureGL::upload # glTexParameteri");
-      glTexParameteri(m_target, GL_TEXTURE_WRAP_R, getWrapMode(r) );
-      GLERROR("TextureGL::upload # glTexParameteri");
+        Texture::Wrap s, t, r;
+        texture.getWrap(s,t,r);
+        glTexParameteri(m_target, GL_TEXTURE_WRAP_S, getWrapMode(s) );
+        GLERROR("TextureGL::upload # glTexParameteri");
+        glTexParameteri(m_target, GL_TEXTURE_WRAP_T, getWrapMode(t) );
+        GLERROR("TextureGL::upload # glTexParameteri");
+        glTexParameteri(m_target, GL_TEXTURE_WRAP_R, getWrapMode(r) );
+        GLERROR("TextureGL::upload # glTexParameteri");
+      }
     }
 
     if(!bound && alwaysBind) {
@@ -167,6 +189,11 @@ namespace Luminous
     /// @todo should we touch the dirty region if data is null?
     if(!texture.data())
       return;
+
+    if(texture.samples() > 0) {
+      Radiant::error("TextureGL::upload # Trying to upload data to multisampled texture");
+      return;
+    }
 
     /// @todo 3D textures don't work atm
     if(!m_dirtyRegion2D.isEmpty()) {

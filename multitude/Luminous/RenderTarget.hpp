@@ -95,7 +95,7 @@ namespace Luminous
     void setSize(const Nimble::Size &size);
 
     unsigned samples() const;
-    void setSamples(unsigned samples);
+    void setSamples(unsigned int samples);
 
     void attach(GLenum attachment, Luminous::Texture & texture);
     void attach(GLenum attachment, Luminous::RenderBuffer & buffer);

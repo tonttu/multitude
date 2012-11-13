@@ -15,6 +15,7 @@ namespace Luminous
       , width()
       , height()
       , depth()
+      , samples()
       // This is set to a valid format to avoid errors even if no data is specified for the texture
       , dataFormat(PixelFormat::rgbUByte())
       , internalFormat()
@@ -35,6 +36,7 @@ namespace Luminous
     unsigned int width;
     unsigned int height;
     unsigned int depth;
+    unsigned int samples;
     PixelFormat dataFormat;
     int internalFormat;
     const void * data;
@@ -149,6 +151,7 @@ namespace Luminous
     m_d->width = 0;
     m_d->height = 0;
     m_d->depth = 0;
+    m_d->samples = 0;
     m_d->dataFormat = PixelFormat();
     m_d->translucent = false;
     m_d->data = nullptr;
@@ -225,6 +228,17 @@ namespace Luminous
     auto intersected = rect.intersected(QRect(0, 0, width(), height()));
     for (int i = 0; i < m_d->dirtyRegions.size(); ++i)
       m_d->dirtyRegions[i] += intersected;
+  }
+
+  unsigned int Texture::samples() const
+  {
+    return m_d->samples;
+  }
+
+  void Texture::setSamples(unsigned int samples)
+  {
+    m_d->samples = samples;
+    invalidate();
   }
 
   bool Texture::translucent() const

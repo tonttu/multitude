@@ -287,7 +287,7 @@ namespace Luminous
     return m_d->m_samples;
   }
 
-  void RenderTarget::setSamples(unsigned samples)
+  void RenderTarget::setSamples(unsigned int samples)
   {
     m_d->m_samples = samples;
 
@@ -295,6 +295,12 @@ namespace Luminous
     for(GLenum attachment : m_d->m_renderBufferAttachments.keys()) {
       auto rb = renderBuffer(attachment);
       rb->storageFormat(rb->size(), rb->format(), samples);
+    }
+
+    // Change sample count for all texture attachments
+    for(GLenum attachment : m_d->m_textureAttachments.keys()) {
+      auto t = texture(attachment);
+      t->setSamples(samples);
     }
   }
 
