@@ -96,8 +96,17 @@
 #   else
 #     define RADIANT_WIN32 1
 #   endif
-#   ifndef _HAS_TR1
-#     error "Compiler TR1 support was not found. Please install Visual Studio 2008 Service Pack 1 or use a newer compiler."
+#
+#   if _MSC_VER < 1600
+#     error "Unsupported compiler: Must have Visual Studio 2010 or newer"
+#   elif _MSC_VER == 1600
+#     define RADIANT_MSVC10 1
+#     if !defined(_HAS_TR1)
+#       error "Compiler TR1 support was not found. Please install Visual Studio 2008 Service Pack 1 or use a newer compiler."
+#     endif
+#   elif _MSC_VER == 1700
+#     define RADIANT_MSVC11 1
+#     define RADIANT_CXX11 1
 #   endif
 
 #define WIN32_LEAN_AND_MEAN

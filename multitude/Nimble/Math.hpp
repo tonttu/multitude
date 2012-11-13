@@ -6,6 +6,8 @@
 
 #include "Export.hpp"
 
+#define _USE_MATH_DEFINES
+
 #include <cmath>
 #ifdef WIN32
 #	include <float.h>
@@ -60,7 +62,7 @@ namespace Nimble {
     /// Returns the logarithm in base 10
     inline float Log10(float v)  { return std::log10(v); }
     /// Returns the logarithm in base 2
-#ifdef RADIANT_CXX11
+#if defined(RADIANT_CXX11) && !defined(RADIANT_WINDOWS)
     inline float Log2(float v) { return std::log2(v); }
 #else
     inline float Log2(float v) { return Log(v) / Log(2.f); }
@@ -94,7 +96,7 @@ namespace Nimble {
     /// Returns the logarithm in base 10
     inline double Log10(double v)  { return std::log10(v); }
     /// Returns the logarithm in base 2
-#ifdef RADIANT_CXX11
+#if defined(RADIANT_CXX11) && !defined(RADIANT_WINDOWS)
     inline double Log2(double v) { return std::log2(v); }
 #else
     inline double Log2(double v) { return Log(v) / Log(2.0); }
