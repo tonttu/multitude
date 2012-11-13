@@ -27,18 +27,18 @@
 #include <vector>
 
 #include <QString>
-
+#if 0
 #include <v8.h>
-
+#endif
 namespace Radiant {
   class BinaryStream;
 }
-
+#if 0
 namespace v8 {
   class Value;
   template <class T> class Handle;
 }
-
+#endif
 namespace Radiant {
 
   /// OSC-like binary data storage
@@ -266,13 +266,13 @@ namespace Radiant {
     /// Copy a buffer object
     inline BinaryData & operator = (const BinaryData & that)
     { rewind(); append(that); return * this;}
-
+#if 0
     /// Copies the binary data stream to v8 value array
     /// v8 values have to be defined in stack, so we can't use std::vector etc
     /// @param argc in = size of argv, out = number of values filled
     /// @todo isn't implemented fully
     bool readTo(int & argc, v8::Handle<v8::Value> argv[]);
-
+#endif
     /// Saves this buffer to the given file
     bool saveToFile(const char * filename) const;
     /// Reads data from a file

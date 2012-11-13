@@ -853,7 +853,7 @@ namespace Radiant {
 
     bzero(data(), m_size);
   }
-
+#if 0
   bool BinaryData::readTo(int & argc, v8::Handle<v8::Value> argv[])
   {
     int i = 0;
@@ -882,7 +882,7 @@ namespace Radiant {
     argc = i;
     return m_current == m_total;
   }
-
+#endif
   bool BinaryData::saveToFile(const char * filename) const
   {
     FILE * f = fopen(filename, "wb");

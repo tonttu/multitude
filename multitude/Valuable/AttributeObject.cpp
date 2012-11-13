@@ -206,7 +206,9 @@ namespace Valuable
           /// @todo what is the correct receiver ("this" in the callback)?
           /// @todo is this legal without v8::HandleScope handle_scope;
           /// @todo is it legal to give null pointer to argv parameter?
+#if 0
           l.scriptFunc->Call(v8::Context::GetCurrent()->Global(), 0, 0);
+#endif
         } else l.func();
       }
     }
@@ -220,7 +222,9 @@ namespace Valuable
       if(l.role & DELETE_ROLE) {
         if(!l.func) {
           /// @todo what is the correct receiver ("this" in the callback)?
+#if 0
           l.scriptFunc->Call(v8::Context::GetCurrent()->Global(), 0, 0);
+#endif
         } else l.func();
       }
       if(l.listener) l.listener->m_valueListening.remove(this);
@@ -249,13 +253,14 @@ namespace Valuable
     if(listener) listener->m_valueListening << this;
     return id;
   }
-
+#if 0
   long Attribute::addListener(v8::Persistent<v8::Function> func, int role)
   {
     long id = m_listenersId++;
     m_listeners[id] = AttributeListener(func, role);
     return id;
   }
+#endif
 
   void Attribute::removeListeners(int role)
   {

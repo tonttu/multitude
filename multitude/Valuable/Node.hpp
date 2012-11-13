@@ -24,9 +24,9 @@
 
 #include <Radiant/Color.hpp>
 #include <Radiant/Trace.hpp>
-
+#if 0
 #include <v8.h>
-
+#endif
 #include <map>
 #include <set>
 
@@ -130,12 +130,12 @@ namespace Valuable
       Attribute * vo = it->second;
       return vo->set(v);
     }
-
+#if 0
     bool setValue(const QString & name, v8::Handle<v8::Value> v);
     bool setValue(const QString & name, v8::Local<v8::Value> v) {
       return setValue(name, static_cast<v8::Handle<v8::Value> >(v));
     }
-
+#endif
     /// Saves this object (and its children) to an XML file
     bool saveToFileXML(const QString & filename);
     /// Saves this object (and its children) to binary data buffer
@@ -202,7 +202,7 @@ namespace Valuable
     {
       eventAddListener(from, to, obj, DIRECT, defaultData);
     }
-
+#if 0
     void eventAddListener(const QString & from,
                           const QString & to,
                           v8::Persistent<v8::Function> func,
@@ -213,7 +213,7 @@ namespace Valuable
     {
       eventAddListener(from, from, func, defaultData);
     }
-
+#endif
     void eventAddListener(const QString & from, ListenerFunc func,
                           ListenerType listenerType = DIRECT);
 
@@ -290,10 +290,10 @@ namespace Valuable
 
     /// Returns set of all registered IN events
     const QSet<QString> & eventInNames() const { return m_eventListenNames; }
-
+#if 0
     long addListener(const QString & name, v8::Persistent<v8::Function> func,
                      int role = Attribute::CHANGE_ROLE);
-
+#endif
     static int processQueue();
 
     static bool copyValues(const Node & from, Node & to);
@@ -375,7 +375,9 @@ namespace Valuable
       Valuable::Node * m_listener;
       ListenerFunc m_func;
       ListenerFunc2 m_func2;
+#if 0
       v8::Persistent<v8::Function> m_funcv8;
+#endif
       Radiant::BinaryData   m_defaultData;
       QString m_from;
       QString m_to;

@@ -9,7 +9,7 @@ CONFIG += thread
 CONFIG += embed_manifest_exe
 
 INCLUDEPATH += $$PWD
-INCLUDEPATH += $$PWD/v8/include
+enable-js:INCLUDEPATH += $$PWD/v8/include
 DEPENDPATH += $$PWD
 
 withbundles = $$(MULTI_BUNDLES)
@@ -61,7 +61,7 @@ LIB_VIDEODISPLAY = -lVideoDisplay$${CORNERSTONE_LIB_SUFFIX}
 LIB_VALUABLE = -lValuable$${CORNERSTONE_LIB_SUFFIX}
 LIB_PATTERNS = -lPatterns$${CORNERSTONE_LIB_SUFFIX}
 LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}
-LIB_V8 = -lv8
+enable-js:LIB_V8 = -lv8
 
 #
 # Platform specific: Unix (OSX & linux)
@@ -204,7 +204,7 @@ win32 {
       LIB_VALUABLE = -lValuable$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_PATTERNS = -lPatterns$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}_d
-      LIB_V8 = -lv8_d
+      enable-js:LIB_V8 = -lv8_d
 	}
 }
 

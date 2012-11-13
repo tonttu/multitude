@@ -133,7 +133,11 @@ namespace Valuable
   {
     return m_valid && that.m_valid &&
         (m_listener == that.m_listener) && (m_from == that.m_from) &&
-        (m_to == that.m_to) && (*m_funcv8 == *that.m_funcv8);
+#if 0
+            (m_to == that.m_to) && (*m_funcv8 == *that.m_funcv8);
+#else
+            (m_to == that.m_to);
+#endif
   }
 
   Node::Node()
@@ -167,8 +171,10 @@ namespace Valuable
       if(it->m_valid) {
         if(it->m_listener)
           it->m_listener->eventRemoveSource(this);
+#if 0
         else if(!it->m_funcv8.IsEmpty())
           it->m_funcv8.Dispose();
+#endif
       }
     }
 
@@ -266,7 +272,7 @@ namespace Valuable
     m_values.erase(it);
     value->m_host = 0;
   }
-
+#if 0
   bool Node::setValue(const QString & name, v8::Handle<v8::Value> v)
   {
     using namespace v8;
@@ -326,7 +332,7 @@ namespace Valuable
     }
     return false;
   }
-
+#endif
   bool Node::saveToFileXML(const QString & filename)
   {
     bool ok = Serializer::serializeXML(filename, this);
@@ -462,7 +468,7 @@ namespace Valuable
       obj->eventAddSource(this);
     }
   }
-
+#if 0
   void Node::eventAddListener(const QString & from,
                               const QString & to,
                               v8::Persistent<v8::Function> func,
@@ -488,7 +494,7 @@ namespace Valuable
       m_elisteners.push_back(vp);
     }
   }
-
+#endif
   void Node::eventAddListener(const QString & from, ListenerFunc func,
                               ListenerType listenerType)
   {
@@ -643,7 +649,7 @@ namespace Valuable
   {
     return m_eventListenNames.contains(id);
   }
-
+#if 0
   long Node::addListener(const QString & name, v8::Persistent<v8::Function> func, int role)
   {
     Attribute * attr = getValue(name);
@@ -653,7 +659,7 @@ namespace Valuable
     }
     return attr->addListener(func, role);
   }
-
+#endif
   int Node::processQueue()
   {
     /// The queue must be locked during the whole time when calling the callback
@@ -727,6 +733,7 @@ namespace Valuable
             vp.m_listener->processMessage(vp.m_to, bdsend);
             vp.m_listener->m_sender = sender;
           }
+#if 0
         } else if(!vp.m_funcv8.IsEmpty()) {
           /// @todo what is the correct receiver ("this" in the callback)?
           /// @todo should we set m_sender or something similar?
@@ -737,6 +744,7 @@ namespace Valuable
           int argc = 9;
           bdsend.readTo(argc, argv + 1);
           vp.m_funcv8->Call(v8::Context::GetCurrent()->Global(), argc+1, argv);
+#endif
         } else if(vp.m_func) {
           if(vp.m_type == AFTER_UPDATE_ONCE) {
             queueEvent(this, vp.m_func, &vp);
