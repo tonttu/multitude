@@ -20,6 +20,8 @@
 
 #if defined (RADIANT_UNIX)
 #include <stdlib.h>
+#elif defined (RADIANT_WINDOWS)
+#include <malloc.h>
 #endif
 
 namespace Radiant

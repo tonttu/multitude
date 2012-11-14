@@ -20,18 +20,7 @@
 
 #include <Patterns/NotCopyable.hpp>
 
-// Required for __GLIBC__
-#include <cstdlib>
-
 #include <vector>
-
-#if defined(_MSC_VER)
-#include <intrin.h> // For _ReadBarrier/_WriteBarrier
-#endif
-
-#if defined(__APPLE__)
-#include <libkern/OSAtomic.h>
-#endif
 
 namespace Radiant {
 

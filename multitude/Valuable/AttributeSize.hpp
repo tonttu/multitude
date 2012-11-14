@@ -22,10 +22,12 @@ namespace Valuable {
       m_values[0] = new AttributeFloat(host, "width", size.width(), transit);
       m_values[1] = new AttributeFloat(host, "height", size.height(), transit);
 
+#ifndef CLANG_XML
       for(int i = 0; i < 2; ++i) {
         m_values[i]->addListener(std::bind(&AttributeSize::valuesChanged, this));
         m_values[i]->setSerializable(false);
       }
+#endif
     }
 
     ~AttributeSize()

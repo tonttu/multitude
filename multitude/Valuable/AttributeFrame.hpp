@@ -42,10 +42,12 @@ namespace Valuable
       m_values[2] = new AttributeFloat(host, name + "-bottom", v.bottom(), transit);
       m_values[3] = new AttributeFloat(host, name + "-left", v.left(), transit);
 
+#ifndef CLANG_XML
       for (int i = 0; i < 4; ++i) {
         m_values[i]->addListener(std::bind(&AttributeFrame::valuesChanged, this));
         m_values[i]->setSerializable(false);
       }
+#endif
     }
 
     ~AttributeFrame()
