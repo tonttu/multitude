@@ -456,6 +456,14 @@ namespace Valuable
       return true;
     }
 
+    /// Check if the given layer defines a value
+    /// @param layer layer to check
+    /// @return true if the given value defines a layer; otherwise false
+    bool isValueDefinedOnLayer(Layer layer) const
+    {
+      return m_valueSet[layer];
+    }
+
   protected:
     Layer m_current;
     T m_values[LAYER_COUNT];
