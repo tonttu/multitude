@@ -21,6 +21,7 @@
 #include <Patterns/NotCopyable.hpp>
 
 #include <vector>
+#include <cstdlib>
 
 namespace Radiant {
 
