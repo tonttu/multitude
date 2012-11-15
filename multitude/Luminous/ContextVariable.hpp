@@ -19,6 +19,8 @@
 #include "Collectable.hpp"
 #include "RenderContext.hpp"
 
+/// @cond
+
 namespace Luminous {
 
   class RenderContext;
@@ -97,5 +99,7 @@ namespace Luminous {
   };
 
 } // namespace
+
+/// @endcond
 
 #endif // CONTEXTVARIABLE_HPP

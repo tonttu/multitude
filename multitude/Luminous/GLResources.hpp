@@ -23,6 +23,8 @@
 
 #include <map>
 
+/// @cond
+
 namespace Luminous
 {
   class Collectable;
@@ -50,6 +52,7 @@ namespace Luminous
       For example setting MULTI_GPU_RAM to 200, GLResources starts to
       drop old resources from GPU as the GPU RAM usage exceeds 200MB.
   */
+  /// @deprecated this class is deprecated and will be removed in Cornerstone 2.1
   class LUMINOUS_API GLResources
   {
   public:
@@ -218,5 +221,7 @@ namespace Luminous
     name = new type(grs);	\
     grs->addResource(key, name); \
   }
+
+/// @endcond
 
 #endif

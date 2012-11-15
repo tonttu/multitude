@@ -13,6 +13,8 @@
 
 #include <stdlib.h> // size_t
 
+/// @cond
+
 #define BUFFER_OFFSET(bytes) ((GLubyte *)0 + (bytes))
 
 namespace Luminous
@@ -21,6 +23,7 @@ namespace Luminous
   /// Abstraction of the OpenGL Buffer Objects.
   /// BufferObject provides an abstraction for the Buffer Objects (vertex
   /// buffers, index buffers) in OpenGL.
+  /// @deprecated this class is deprecated will be removed in Cornerstone 2.1
   template<GLenum type>
   class LUMINOUS_API BufferObject : public Luminous::GLResource
     {
@@ -181,5 +184,7 @@ namespace Luminous
   }
       //@endcond
 }
+
+/// @endcond
 
 #endif

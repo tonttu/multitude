@@ -223,6 +223,8 @@ namespace Luminous
     mutable std::unique_ptr<Texture> m_texture;
   };
 
+  /// @cond
+
   /** ImageTex is a utility class for rendering images.
 
   ImageTex provides an easy way to create OpenGL textures from image files in a
@@ -278,6 +280,8 @@ namespace Luminous
     ImageTex * move();
   };
 
+  /// @endcond
+
 #ifndef LUMINOUS_OPENGLES
 
   /// A compressed image. Currently supports DXT format.
@@ -330,6 +334,8 @@ namespace Luminous
 /// @endcond
   };
 
+  /// @cond
+
   /// CompressedImageTex provides an easy way to access textures generated from
   /// compressed images. @sa Luminous::ImageTex
   class LUMINOUS_API CompressedImageTex : public CompressedImage, public Luminous::ContextVariableT<Luminous::Texture2D>
@@ -349,6 +355,8 @@ namespace Luminous
     CompressedImageTex * move();
   };
 #endif // LUMINOUS_OPENGLES
+
+/// @endcond
 }
 
 #endif

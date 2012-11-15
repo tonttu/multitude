@@ -27,6 +27,8 @@
 
 #include <limits>
 
+/// @cond
+
 // #define CPUMIPMAPS_PROFILING
 
 #ifdef CPUMIPMAPS_PROFILING
@@ -336,5 +338,7 @@ namespace Luminous {
   };
 
 }
+
+/// @endcond
 
 #endif

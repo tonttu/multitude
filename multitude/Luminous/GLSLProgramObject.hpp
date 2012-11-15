@@ -28,6 +28,8 @@
 #include <QString>
 #include <vector>
 
+/// @cond
+
 namespace Luminous
 {
 
@@ -35,6 +37,7 @@ namespace Luminous
   /// OpenGL program object. If you want to use OpenGL shader, you will likely
   /// want to use Luminous::Shader instead which provides a higher level
   /// abstraction for shader. @sa Luminous::Shader
+  /// @deprecated this class is deprecated and will be removed in Cornerstone 2.1. Use Luminous::Program instead.
   class LUMINOUS_API GLSLProgramObject : public GLResource, public Patterns::NotCopyable
   {
   public:
@@ -201,6 +204,8 @@ namespace Luminous
   };
 
 }
+
+/// @endcond
 
 #endif
 

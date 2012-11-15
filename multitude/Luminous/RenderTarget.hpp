@@ -11,6 +11,9 @@
 namespace Luminous
 {
 
+
+  /// This class represents an off-screen render target that is optimized for use as a render target. This class should be used if you
+  /// do not need to sample (e.g. use as a texture) your rendered image.
   class LUMINOUS_API RenderBuffer : public RenderResource
   {
   public:
@@ -37,7 +40,9 @@ namespace Luminous
   ////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////
 
-  /// @todo document, add API to detach attachments
+  /// This class is an abstraction of a generic render target. It provides an
+  /// abstraction of the OpenGL FrameBufferObject API.
+  /// @todo document, add API to detach attachments, rename to framebuffer
   class LUMINOUS_API RenderTarget
       : public RenderResource, public Patterns::NotCopyable
   {

@@ -21,12 +21,15 @@
 
 #include <Patterns/NotCopyable.hpp>
 
+/// @cond
+
 namespace Luminous
 {
 
   /** OpenGL shading language shader object. Usually shader programs consist of
   multiple shader objects that are first compiled and then linked together to
   create the final shader program that can be executed.*/
+  /// @deprecated this class is deprecated and will be removed in Cornerstone 2.1. Use Luminous::ShaderGLSL instead.
   class LUMINOUS_API GLSLShaderObject : public GLResource, public Patterns::NotCopyable
   {
   public:
@@ -69,6 +72,8 @@ namespace Luminous
   };
 
 }
+
+/// @endcond
 
 #endif
 

@@ -11,6 +11,7 @@
 #include <Luminous/GLSLProgramObject.hpp>
 #include <Valuable/Node.hpp>
 
+/// @cond
 
 namespace Luminous {
 
@@ -20,6 +21,7 @@ namespace Luminous {
       GLSLProgramObject that is bound to this Shader handler.
 
       @see ShaderExample demo application
+      /// @deprecated this class is deprecated and will be removed in Cornerstone 2.1. Use Luminous::Program instead.
 */
   class LUMINOUS_API Shader : public ContextVariableT<GLSLProgramObject>,
   public Valuable::Node
@@ -117,5 +119,7 @@ namespace Luminous {
   };
 
 }
+
+/// @endcond
 
 #endif // SHADER_HPP

@@ -21,6 +21,8 @@
 
 #include <cstddef>
 
+/// @cond
+
 namespace Luminous
 {
   class RenderContext;
@@ -112,6 +114,7 @@ namespace Luminous
       };
      </PRE>
   */
+  /// @deprecated this class is deprecated and will be removed in Cornerstone 2.1
   class LUMINOUS_API GLResource
   {
     enum { PERSISTENT = -2 };
@@ -167,5 +170,7 @@ namespace Luminous
     size_t m_generation;
   };
 }
+
+/// @endcond
 
 #endif
