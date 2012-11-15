@@ -10,7 +10,6 @@ SUBDIRS += Radiant
 SUBDIRS += Valuable
 !mobile*:SUBDIRS += Squish
 SUBDIRS += Luminous
-#SUBDIRS += Poetic
 SUBDIRS += Resonant
 SUBDIRS += VideoDisplay
 SUBDIRS += Box2D
