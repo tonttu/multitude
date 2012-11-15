@@ -158,7 +158,7 @@ namespace Luminous
   class PingTask : public Radiant::Task
   {
   public:
-    PingTask(Luminous::Mipmap::D & mipmap, bool compressedMipmaps);
+    PingTask(const MipmapPtr & mipmap, bool compressedMipmaps);
 
     void finishAndWait();
 
@@ -166,11 +166,11 @@ namespace Luminous
     virtual void doTask() OVERRIDE;
 
   private:
-    bool ping();
+    bool ping(Luminous::Mipmap::D & mipmap);
 
   private:
     bool m_preferCompressedMipmaps;
-    Mipmap::D & m_mipmap;
+    std::weak_ptr<Luminous::Mipmap> m_mipmap;
     QSemaphore m_users;
   };
 
@@ -405,7 +405,7 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  PingTask::PingTask(Mipmap::D & mipmap, bool compressedMipmaps)
+  PingTask::PingTask(const MipmapPtr & mipmap, bool compressedMipmaps)
     : Task(s_defaultPingPriority)
     , m_preferCompressedMipmaps(compressedMipmaps)
     , m_mipmap(mipmap)
@@ -422,113 +422,116 @@ namespace Luminous
   void PingTask::doTask()
   {
     setFinished();
+    auto mipmap = m_mipmap.lock();
+    assert(mipmap);
+
     if(!m_users.tryAcquire()) {
       // The only explanation for this is that Mipmap already called finishAndWait()
 
       // BGThread keeps one copy of shared_ptr to this alive during doTask(),
       // so we can manually remove this from Mipmap::D
-      m_mipmap.m_ping.reset();
+      mipmap->m_d->m_ping.reset();
       return;
     }
 
-    ping();
+    ping(*mipmap->m_d);
 
-    m_mipmap.m_ping.reset();
+    mipmap->m_d->m_ping.reset();
     m_users.release();
   }
 
-  bool PingTask::ping()
+  bool PingTask::ping(Luminous::Mipmap::D & mipmap)
   {
-    QFileInfo fi(m_mipmap.m_filenameAbs);
+    QFileInfo fi(mipmap.m_filenameAbs);
     QDateTime lastModified = fi.lastModified();
-    m_mipmap.m_fileModified = lastModified;
+    mipmap.m_fileModified = lastModified;
 
-    if(!Luminous::Image::ping(m_mipmap.m_filenameAbs, m_mipmap.m_sourceInfo)) {
+    if(!Luminous::Image::ping(mipmap.m_filenameAbs, mipmap.m_sourceInfo)) {
       Radiant::error("PingTask::doPing # failed to query image size for %s",
-                     m_mipmap.m_filenameAbs.toUtf8().data());
-      m_mipmap.m_valid = false;
-      m_mipmap.m_ready = true;
+                     mipmap.m_filenameAbs.toUtf8().data());
+      mipmap.m_valid = false;
+      mipmap.m_ready = true;
       return false;
     }
 
-    if(!s_dxtSupported && m_mipmap.m_sourceInfo.pf.compression() != Luminous::PixelFormat::COMPRESSION_NONE) {
+    if(!s_dxtSupported && mipmap.m_sourceInfo.pf.compression() != Luminous::PixelFormat::COMPRESSION_NONE) {
       Radiant::error("PingTask::doPing # Image %s has unsupported format",
-                     m_mipmap.m_filenameAbs.toUtf8().data());
-      m_mipmap.m_valid = false;
-      m_mipmap.m_ready = true;
+                     mipmap.m_filenameAbs.toUtf8().data());
+      mipmap.m_valid = false;
+      mipmap.m_ready = true;
       return false;
     }
 
-    m_mipmap.m_nativeSize.make(m_mipmap.m_sourceInfo.width, m_mipmap.m_sourceInfo.height);
-    m_mipmap.m_level1Size = m_mipmap.m_nativeSize / 2;
-    m_mipmap.m_maxLevel = 0;
-    for(int s = m_mipmap.m_nativeSize.maximum(); s > 4; s >>= 1)
-      ++m_mipmap.m_maxLevel;
+    mipmap.m_nativeSize.make(mipmap.m_sourceInfo.width, mipmap.m_sourceInfo.height);
+    mipmap.m_level1Size = mipmap.m_nativeSize / 2;
+    mipmap.m_maxLevel = 0;
+    for(int s = mipmap.m_nativeSize.maximum(); s > 4; s >>= 1)
+      ++mipmap.m_maxLevel;
 
     // Use DXT compression if it is requested and supported
-    m_mipmap.m_useCompressedMipmaps = m_preferCompressedMipmaps && s_dxtSupported;
+    mipmap.m_useCompressedMipmaps = m_preferCompressedMipmaps && s_dxtSupported;
 
 #ifndef LUMINOUS_OPENGLES
 
-    if(m_mipmap.m_sourceInfo.pf.compression() && (
-         m_mipmap.m_sourceInfo.mipmaps > 1 ||
-         (m_mipmap.m_sourceInfo.width < 5 && m_mipmap.m_sourceInfo.height < 5))) {
+    if(mipmap.m_sourceInfo.pf.compression() && (
+         mipmap.m_sourceInfo.mipmaps > 1 ||
+         (mipmap.m_sourceInfo.width < 5 && mipmap.m_sourceInfo.height < 5))) {
       // We already have compressed image with mipmaps, no need to generate more
-      m_mipmap.m_useCompressedMipmaps = false;
+      mipmap.m_useCompressedMipmaps = false;
     }
 
-    if(m_mipmap.m_useCompressedMipmaps) {
-      m_mipmap.m_compressedMipmapFile = Luminous::Mipmap::cacheFileName(m_mipmap.m_filenameAbs, -1, "dds");
-      QFileInfo compressedMipmap(m_mipmap.m_compressedMipmapFile);
+    if(mipmap.m_useCompressedMipmaps) {
+      mipmap.m_compressedMipmapFile = Luminous::Mipmap::cacheFileName(mipmap.m_filenameAbs, -1, "dds");
+      QFileInfo compressedMipmap(mipmap.m_compressedMipmapFile);
       QDateTime compressedMipmapTs;
       if(compressedMipmap.exists())
         compressedMipmapTs = compressedMipmap.lastModified();
 
-      if(compressedMipmapTs.isValid() && compressedMipmapTs < m_mipmap.m_fileModified) {
-        if(!Luminous::Image::ping(m_mipmap.m_compressedMipmapFile, m_mipmap.m_compressedMipmapInfo))
+      if(compressedMipmapTs.isValid() && compressedMipmapTs < mipmap.m_fileModified) {
+        if(!Luminous::Image::ping(mipmap.m_compressedMipmapFile, mipmap.m_compressedMipmapInfo))
           compressedMipmapTs = QDateTime();
       }
       if(!compressedMipmapTs.isValid()) {
-        m_mipmap.m_mipmapGenerator.reset(new MipMapGenerator(m_mipmap.m_filenameAbs, m_mipmap.m_compressedMipmapFile));
-        auto ptr = m_mipmap.m_mipmap.shared_from_this();
-        m_mipmap.m_mipmapGenerator->setListener([=] (const ImageInfo & imginfo) { ptr->mipmapReady(imginfo); } );
+        mipmap.m_mipmapGenerator.reset(new MipMapGenerator(mipmap.m_filenameAbs, mipmap.m_compressedMipmapFile));
+        auto ptr = mipmap.m_mipmap.shared_from_this();
+        mipmap.m_mipmapGenerator->setListener([=] (const ImageInfo & imginfo) { ptr->mipmapReady(imginfo); } );
       }
     }
     else
 #endif // LUMINOUS_OPENGLES
-    if(m_mipmap.m_sourceInfo.pf.compression() == Luminous::PixelFormat::COMPRESSION_NONE) {
+    if(mipmap.m_sourceInfo.pf.compression() == Luminous::PixelFormat::COMPRESSION_NONE) {
       // Make sure that we can make "s_resizes" amount of resizes with quarterSize
       // after first resize
       const int mask = (1 << s_resizes) - 1;
-      m_mipmap.m_level1Size.x += ((~(m_mipmap.m_level1Size.x & mask) & mask) + 1) & mask;
-      m_mipmap.m_level1Size.y += ((~(m_mipmap.m_level1Size.y & mask) & mask) + 1) & mask;
+      mipmap.m_level1Size.x += ((~(mipmap.m_level1Size.x & mask) & mask) + 1) & mask;
+      mipmap.m_level1Size.y += ((~(mipmap.m_level1Size.y & mask) & mask) + 1) & mask;
 
       // m_maxLevel, m_firstLevelSize and m_nativeSize have to be set before running level()
-      m_mipmap.m_maxLevel = m_mipmap.m_mipmap.level(Nimble::Vector2f(s_smallestImage, s_smallestImage));
+      mipmap.m_maxLevel = mipmap.m_mipmap.level(Nimble::Vector2f(s_smallestImage, s_smallestImage));
 
 /*      for (int i = 1; i <= m_mipmap.m_mipmap.level(Nimble::Vector2f(s_smallestImage, s_smallestImage)); ++i)
         m_mipmap.m_shouldSave.insert(i);*/
 
-      m_mipmap.m_shouldSave.insert(m_mipmap.m_mipmap.level(Nimble::Vector2f(s_smallestImage, s_smallestImage)));
-      m_mipmap.m_shouldSave.insert(m_mipmap.m_mipmap.level(Nimble::Vector2f(s_defaultSaveSize1, s_defaultSaveSize1)));
-      m_mipmap.m_shouldSave.insert(m_mipmap.m_mipmap.level(Nimble::Vector2f(s_defaultSaveSize2, s_defaultSaveSize2)));
-      m_mipmap.m_shouldSave.insert(m_mipmap.m_mipmap.level(Nimble::Vector2f(s_defaultSaveSize3, s_defaultSaveSize3)));
+      mipmap.m_shouldSave.insert(mipmap.m_mipmap.level(Nimble::Vector2f(s_smallestImage, s_smallestImage)));
+      mipmap.m_shouldSave.insert(mipmap.m_mipmap.level(Nimble::Vector2f(s_defaultSaveSize1, s_defaultSaveSize1)));
+      mipmap.m_shouldSave.insert(mipmap.m_mipmap.level(Nimble::Vector2f(s_defaultSaveSize2, s_defaultSaveSize2)));
+      mipmap.m_shouldSave.insert(mipmap.m_mipmap.level(Nimble::Vector2f(s_defaultSaveSize3, s_defaultSaveSize3)));
       // Don't save the original image as mipmap
-      m_mipmap.m_shouldSave.erase(0);
+      mipmap.m_shouldSave.erase(0);
     }
 
-    m_mipmap.m_levels.resize(m_mipmap.m_maxLevel+1);
+    mipmap.m_levels.resize(mipmap.m_maxLevel+1);
 
 #ifndef LUMINOUS_OPENGLES
-    if(m_mipmap.m_mipmapGenerator) {
-      Radiant::BGThread::instance()->addTask(m_mipmap.m_mipmapGenerator);
+    if(mipmap.m_mipmapGenerator) {
+      Radiant::BGThread::instance()->addTask(mipmap.m_mipmapGenerator);
     } else
 #endif // LUMINOUS_OPENGLES
     {
-      m_mipmap.m_valid = true;
-      m_mipmap.m_ready = true;
+      mipmap.m_valid = true;
+      mipmap.m_ready = true;
       // preload the maximum level mipmap image
-      m_mipmap.m_mipmap.texture(m_mipmap.m_maxLevel);
+      mipmap.m_mipmap.texture(mipmap.m_maxLevel);
     }
 
     return true;
@@ -951,7 +954,7 @@ namespace Luminous
   void Mipmap::startLoading(bool compressedMipmaps)
   {
     assert(!m_d->m_ping);
-    m_d->m_ping = std::make_shared<PingTask>(*m_d, compressedMipmaps);
+    m_d->m_ping = std::make_shared<PingTask>(shared_from_this(), compressedMipmaps);
     Radiant::BGThread::instance()->addTask(m_d->m_ping);
   }
 }
