@@ -332,6 +332,11 @@ namespace Valuable
     return false;
   }
 
+  bool Attribute::isValueDefinedOnLayer(Attribute::Layer) const
+  {
+    return false;
+  }
+
   void Attribute::setSerializable(bool v)
   {
     m_serializable = v;

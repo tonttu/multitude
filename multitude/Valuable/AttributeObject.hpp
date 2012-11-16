@@ -277,6 +277,8 @@ namespace Valuable
     virtual bool handleShorthand(const Valuable::StyleValue & value,
                                  QMap<Valuable::Attribute*, Valuable::StyleValue> & expanded);
 
+    virtual bool isValueDefinedOnLayer(Layer layer) const;
+
     void setSerializable(bool v);
     bool serializable() const;
 
@@ -459,7 +461,7 @@ namespace Valuable
     /// Check if the given layer defines a value
     /// @param layer layer to check
     /// @return true if the given value defines a layer; otherwise false
-    bool isValueDefinedOnLayer(Layer layer) const
+    virtual bool isValueDefinedOnLayer(Layer layer) const FINAL
     {
       return m_valueSet[layer];
     }
