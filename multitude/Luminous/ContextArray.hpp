@@ -7,6 +7,7 @@
 
 namespace Luminous
 {
+  /// @todo document, used by textures for dirty regions
   class ContextArray
   {
   public:

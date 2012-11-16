@@ -20,6 +20,9 @@
 
 namespace Luminous
 {
+
+  /// Defines the stroke parameters for drawn objects.
+  /// @sa Fill
   class Stroke
   {
   public:
@@ -47,6 +50,8 @@ namespace Luminous
     float m_width;
   };
 
+  /// Defines the fill parameters for drawn objects.
+  /// @sa Stroke
   class Fill
   {
   public:

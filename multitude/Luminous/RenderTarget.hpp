@@ -125,9 +125,13 @@ namespace Luminous
 
   class RenderContext;
 
+  /// This class is an utility class that automatically pops a render target
+  /// from the given RenderContext when destroyed.
   class LUMINOUS_API RenderTargetGuard
   {
   public:
+    /// Construct a new guard
+    /// @param r render context to pop a target from
     RenderTargetGuard(RenderContext & r);
     ~RenderTargetGuard();
 
