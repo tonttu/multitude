@@ -137,6 +137,8 @@ namespace Radiant {
     inline void write(float v) { writeFloat32(v); }
     /// Writes a 32-bit floating point number to the data buffer
     inline void write(double v) { writeFloat64(v); }
+    /// Writes a bool to the data buffer
+    inline void write(bool v) { writeInt32(v); }
     /// Writes a 32-bit integer to the data buffer
     inline void write(int32_t v) { writeInt32(v); }
     /// Writes a 64-bit integer to the data buffer
@@ -305,6 +307,7 @@ namespace Radiant {
   template <> inline double BinaryData::read(bool * ok)           { return readFloat64(ok); }
   template <> inline int BinaryData::read(bool * ok)              { return readInt32(ok); }
   template <> inline unsigned int BinaryData::read(bool * ok)     { return readInt32(ok); }
+  template <> inline bool BinaryData::read(bool * ok)             { return readInt32(ok); }
   template <> inline int64_t BinaryData::read(bool * ok)          { return readInt64(ok); }
   template <> inline TimeStamp BinaryData::read(bool * ok)        { return readTimeStamp(ok); }
   template <> inline uint64_t BinaryData::read(bool * ok)         { return readInt64(ok); }
