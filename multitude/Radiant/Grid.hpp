@@ -32,6 +32,16 @@ namespace Radiant {
     {
       resize(w, h);
     }
+    /// Constructs a new grid with the given size
+    /// @param w The width of the grid
+    /// @param h The height of the grid
+    GridMemT(void * data, unsigned w, unsigned h)
+      : m_data(0), m_width(w), m_height(h), m_size(0)
+    {
+      resize(w, h);
+      if(data != nullptr)
+        memcpy(m_data, data, sizeof(T) * w * h);
+    }
     /// Constructs a copy
     GridMemT(const GridMemT & that) : m_data(0), m_width(0), m_height(0), m_size(0)
     { *this = that; }
