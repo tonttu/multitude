@@ -5,11 +5,13 @@
 
 namespace Radiant
 {
+  /// @cond
   template <int T> struct IntOfSize { typedef uint32_t Type; };
   template <> struct IntOfSize<1> { typedef uint8_t Type; };
   template <> struct IntOfSize<2> { typedef uint16_t Type; };
   template <> struct IntOfSize<4> { typedef uint32_t Type; };
   template <> struct IntOfSize<8> { typedef uint64_t Type; };
+  /// @endcond
 
   template <typename T, typename S = typename IntOfSize<sizeof(T)>::Type>
   class FlagsT

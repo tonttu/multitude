@@ -8,6 +8,8 @@
 
 namespace Luminous
 {
+
+  /// This class defines the stencil buffer operation mode.
   class StencilMode
   {
   public:

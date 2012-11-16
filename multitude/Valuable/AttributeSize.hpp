@@ -11,6 +11,7 @@
 
 namespace Valuable {
 
+  /// This class defines an attribute that stores a floating-point precision size.
   class AttributeSize : public Valuable::Attribute
   {
   public:

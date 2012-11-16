@@ -13,6 +13,9 @@
 
 namespace Luminous
 {
+  /// This class represents a general unformatted linear memory stored on the
+  /// graphics card. It can be used to store vertex data, pixel data retrieved
+  /// from images or the framebuffer, etc.
   class Buffer : public RenderResource
   {
   public:

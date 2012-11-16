@@ -24,6 +24,8 @@
 
 namespace Luminous
 {
+
+  /// The base class for different render drivers.
   class RenderDriver : public Patterns::NotCopyable
   {
   public:
