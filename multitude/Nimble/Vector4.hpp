@@ -112,6 +112,13 @@ namespace Nimble {
     /// Sets the vector to given values
     inline Nimble::Vector4T<T> & make(T cx, T cy, T cz, T cw)                   { x = cx; y = cy; z = cz; w = cw; return *this; }
 
+    /// Returns the largest component
+    inline T             maximum() const { return std::max(std::max(x,y),std::max(y,w)); }
+    /// Returns the smallest component
+    inline T             minimum() const { return std::min(std::min(x,y),std::min(y,w)); }
+    /// Sum of all components
+    inline T             sum() const { return x + y + z + w; }
+
     /// Returns a pointer to the first component
     inline T *           data() { return &x; }
     /// Returns a pointer to the first component
@@ -124,9 +131,6 @@ namespace Nimble {
 
     /// Sets the ith component
     inline void		set(size_t i, T v)        { ((T*)this)[i] = v; }
-
-    /// Returns the largest component
-    inline T             maximum() const { T q = x>y?x:y; T a = z>w?z:w; return q>a?q:a; }
 
     /// Returns a copy of the first two components as a Vector2
     /// @return New vector2
