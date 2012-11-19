@@ -17,6 +17,8 @@ namespace Poetic
   {
     Radiant::Guard g(m_mutex);
 
+    m_locator.addPath(Radiant::ResourceLocator::instance().paths());
+
     m_locator.addPath("../../share/MultiTouch/Fonts");
 
     // Add platform specific paths
