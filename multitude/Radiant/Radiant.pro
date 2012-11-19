@@ -44,7 +44,6 @@ HEADERS += Mutex.hpp
 HEADERS += Platform.hpp
 HEADERS += PlatformUtils.hpp
 HEADERS += Radiant.hpp
-HEADERS += RGBA.hpp
 HEADERS += RefObj.hpp
 HEADERS += IntrusivePtr.hpp
 HEADERS += ResourceLocator.hpp

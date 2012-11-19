@@ -6,7 +6,6 @@
 
 #include "Radiant.hpp"
 #include "Export.hpp"
-#include "RGBA.hpp"
 
 #include <Nimble/Vector4.hpp>
 
@@ -510,11 +509,6 @@ namespace Radiant {
   /// A grid of Vector4s with memory management
   typedef GridT<Nimble::Vector4, GridMemT<Nimble::Vector4> >   MemGridVector4;
 
-  /// A grid of color values without memory management
-  typedef GridT<RGBAu8, GridNoMemT<RGBAu8> > PtrGridRGBAu8;
-  /// A grid of color values with memory management
-  typedef GridT<RGBAu8, GridMemT<RGBAu8> >   MemGridRGBAu8;
-
 #ifdef WIN32
     #ifdef RADIANT_EXPORT
         template class GridT<uint8_t, GridNoMemT<uint8_t>>;
@@ -537,9 +531,6 @@ namespace Radiant {
 
         template class GridT<Nimble::Vector4, GridNoMemT<Nimble::Vector4>>;
         template class GridT<Nimble::Vector4, GridMemT<Nimble::Vector4>>;
-
-        template class GridT<RGBAu8, GridNoMemT<RGBAu8>>;
-        template class GridT<RGBAu8, GridMemT<RGBAu8>>;
     #endif
 #endif
 
