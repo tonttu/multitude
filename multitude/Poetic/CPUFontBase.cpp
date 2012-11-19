@@ -100,7 +100,7 @@ namespace Poetic
       return true;
     }
 
-     Radiant::error("CPUFontBase::load # loading font '%s' failed (error code: %d)", fontFilePath, m_error);
+    Radiant::error("CPUFontBase::load # loading font '%s' failed (error code: %d)", fontFilePath, m_error);
     return false;
   }
 
