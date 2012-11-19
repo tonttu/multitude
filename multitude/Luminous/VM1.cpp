@@ -317,6 +317,11 @@ namespace Luminous
   Radiant::SerialPort & VM1::open(bool & ok)
   {
     QString dev = findVM1();
+    if (dev.isEmpty()) {
+      ok = false;
+      return m_port;
+    }
+
     if(!m_port.isOpen() && !m_port.open(dev.toUtf8().data(), false, false, 115200, 8, 1, 10000)) {
       Radiant::error("Failed to open %s", dev.toUtf8().data());
       ok = false;
