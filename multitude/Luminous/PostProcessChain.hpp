@@ -20,6 +20,11 @@ namespace Luminous
   class LUMINOUS_API PostProcessChain
   {
   public:
+    /// Reserved filter indices for the system
+    enum SystemFilters {
+      Color_Correction = (1 << 20)
+    };
+
     PostProcessChain();
     virtual ~PostProcessChain();
 

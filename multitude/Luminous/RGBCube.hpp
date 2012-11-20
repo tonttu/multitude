@@ -11,7 +11,7 @@
 
 namespace Luminous
 {
-  class RGBCube : public Valuable::Node
+  class LUMINOUS_API RGBCube : public Valuable::Node
   {
   public:
     RGBCube(Node * host = 0, const QByteArray & name = "rgbcube");

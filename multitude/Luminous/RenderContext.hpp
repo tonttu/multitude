@@ -127,7 +127,7 @@ namespace Luminous
     void endArea();
 
     /// @cond
-    void initPostProcess(const PostProcess::InitList & filters);
+    void initPostProcess(PostProcess::InitList & filters);
     void postProcess();
     /// @endcond
 

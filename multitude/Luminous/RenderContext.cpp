@@ -17,6 +17,7 @@
 #include "Luminous/Buffer.hpp"
 #include "Luminous/RenderDriverGL.hpp"
 #include "Luminous/SimpleTextLayout.hpp"
+#include "Luminous/ColorCorrectionFilter.hpp"
 #include "Luminous/PostProcessChain.hpp"
 #include "Luminous/PostProcessFilter.hpp"
 
@@ -262,6 +263,7 @@ namespace Luminous
     RenderTarget m_defaultOffScreenRenderTarget;
     const RenderTarget * m_currentRenderTarget;
 
+    // owned by Application
     const PostProcess::InitList * m_postProcessInitList;
     PostProcessChain m_postProcessChain;
 
@@ -1383,8 +1385,22 @@ namespace Luminous
     assert(transform4() == Nimble::Matrix4::IDENTITY);
   }
 
-  void RenderContext::initPostProcess(const PostProcess::InitList & filters)
+  void RenderContext::initPostProcess(PostProcess::InitList & filters)
   {
+    // Add color correction filter if any of the areas have a RGBCube defined
+    for(size_t i = 0; i < m_data->m_window->areaCount(); ++i) {
+      const MultiHead::Area & area = m_data->m_window->area(i);
+
+      if(area.rgbCube().isDefined()) {
+        Radiant::info("Enabling color correction for area %lu", i);
+        Luminous::PostProcess::Creator creator;
+        creator.func = [] { return std::make_shared<Luminous::ColorCorrectionFilter>(); };
+        creator.index = PostProcessChain::Color_Correction;
+        filters.push_back(creator);
+        break;
+      }
+    }
+
     m_data->m_postProcessInitList = &filters;
   }
 
@@ -1446,6 +1462,9 @@ namespace Luminous
 
         m_data->m_driver.setViewport(viewport);
         m_data->m_driver.setScissor(area.viewport());
+
+        // Sets the current area to be rendered
+        setArea(&area);
 
         ppf->begin(*this);
         // Apply/render current filter

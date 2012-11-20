@@ -1,5 +1,5 @@
-#ifndef POSTPROCESSFACTORY_HPP
-#define POSTPROCESSFACTORY_HPP
+#ifndef POSTPROCESS_HPP
+#define POSTPROCESS_HPP
 
 #include <functional>
 #include <memory>
@@ -25,4 +25,4 @@ namespace Luminous
 }
 /// @endcond
 
-#endif // POSTPROCESSFACTORY_HPP
+#endif // POSTPROCESS_HPP

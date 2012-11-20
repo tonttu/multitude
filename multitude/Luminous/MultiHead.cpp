@@ -62,7 +62,7 @@ namespace Luminous {
       m_active(this, "active", true),
       m_method(this, "method", METHOD_MATRIX_TRICK),
       m_comment(this, "comment"),
-      m_rgbCube(this, "rgb-cube"),
+      m_rgbCube(this, "rgbcube"),
       m_graphicsBounds(0, 0, 100, 100),
       m_pixelSizeCm(0.1f),
       m_colorCorrection(this, "colorcorrection")
