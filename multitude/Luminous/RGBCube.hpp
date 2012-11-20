@@ -1,84 +1,83 @@
 #ifndef RGBCUBE_HPP
 #define RGBCUBE_HPP
 
-#include <Luminous/Collectable.hpp>
 #include <Luminous/Texture2.hpp>
 
 #include <Nimble/Vector3.hpp>
 
-#include <Valuable/AttributeContainer.hpp>
 #include <Valuable/Node.hpp>
 
 namespace Luminous
 {
+  /**
+    This class is used to perform RGB color correction using 3D color lookup
+    grid. This means that the whole RGB color cube can be remapped to attain
+    desired color changes.
+  */
   class LUMINOUS_API RGBCube : public Valuable::Node
   {
   public:
-    RGBCube(Node * host = 0, const QByteArray & name = "rgbcube");
+    RGBCube(Node * host = 0, const QByteArray & name = "");
     virtual ~RGBCube();
 
-    Nimble::Vector3 getIndex(size_t index) const { return m_rgbs->at(index).vector3(); }
+    /// Creates a default lookup grid with the specified division
+    /// @param division Grid division
+    void createDefault(int division = 3);
 
-    Nimble::Vector3 getRGB(int rindex, int gindex, int bindex) const;
+    /// Returns the division of the lookup grid. The parameter describes how
+    /// many sample points are used per dimension.
+    /// @return number of divisions
+    int division() const;
+    /// Sets the number of divisions. Calling this will resize the lookup grid
+    /// but not populate it with any data.
+    /// @param division Number of divisions
+    void setDivision(int division);
 
-    void setIndex(size_t index, Nimble::Vector3 rgb);
-    void setError(size_t index, float error);
-    void setRGB(int rindex, int gindex, int bindex, Nimble::Vector3 rgb);
+    /// Checks if the RGBCube is defined, ie. if it contains any valid samples.
+    /// @return true if the cube is defined, false otherwise
+    bool isDefined() const;
 
-    /// The index is relative (0-1)
-    Nimble::Vector3 interpolateRGB(Nimble::Vector3 index) const;
+    /// Returns the number of values in the lookup grid.
+    size_t rgbCount() const;
 
-    int division() const { return m_division; }
-    void setDivision(int division)
-    {
-      m_rgbs->resize(division * division * division + division - 1);
-      m_division = division;
-      changed();
-    }
+    /// Returns the white color of the color lookup grid.
+    Nimble::Vector3 white() const;
 
-    void setAll(Nimble::Vector3 rgb)
-    {
-      Nimble::Vector4 tmp(rgb.x, rgb.y, rgb.z, 0.0f);
-      for(size_t i = 0; i < m_rgbs->size(); i++)
-        m_rgbs->at(i) = tmp;
-      changed();
-    }
-
-    void createDefault(int division);
-
-    void fill3DTexture(uint8_t * rgbvals, int npixels) const;
-
-    void changed() { m_generation++; }
-
+    /// Returns a 3D texture that represents the color lookup grid.
+    /// @return 3D texture
     const Luminous::Texture & asTexture() const;
 
-    bool isDefined() const { return !m_rgbs->empty(); }
+    /// Sets all sample points of the grid to the specified color
+    /// @param rgb Color to populate the grid with
+    void setAll(Nimble::Vector3 rgb);
 
-    bool deserialize(const Valuable::ArchiveElement & element) OVERRIDE;
+    /// Sets the color for the specified index.
+    /// @param index Linear index for the lookup grid
+    /// @param rgb Color for the index
+    void setIndex(size_t index, Nimble::Vector3 rgb);
+    /// Returns the color at the specified linear index
+    /// @param index Linear index for the lookup grid
+    /// @return Color at index
+    Nimble::Vector3 getIndex(size_t index) const;
 
-    Nimble::Vector3 white() const
-    {
-      if(!isDefined())
-        return Nimble::Vector3(0,0,0);
-      return m_rgbs->at(m_division * m_division * m_division - 1).vector3();
-    }
+    /// Sets the color for the specified index
+    void setRGB(int rindex, int gindex, int bindex, Nimble::Vector3 rgb);
+    /// Returns the color with the specified index
+    Nimble::Vector3 getRGB(int rindex, int gindex, int bindex) const;
 
+    /// Sets the error for the sample at the specified index
+    void setError(size_t index, float error);
+
+    /// Finds the linear index to the color that most closely resembles the
+    /// specified color
+    /// @return Linear index to the lookup grid
     int findClosestRGBIndex(Nimble::Vector3 color) const;
 
-    void upSample(RGBCube & dest) const;
-
-    size_t rgbCount() const { return m_rgbs->size(); }
+    /// Checks if the configuration has changed
+    bool deserialize(const Valuable::ArchiveElement & element) OVERRIDE;
   private:
-
-    // The fourth vector element is the error, if relevant
-    typedef Valuable::AttributeContainer<std::vector<Nimble::Vector4> > Rgbs;
-    Valuable::AttributeInt m_division;
-    Valuable::AttributeInt m_dimension;
-    Rgbs m_rgbs;
-
-    int m_generation;
-    mutable Luminous::Texture m_texture;
-    mutable std::vector<uint8_t> m_textureData;
+    class D;
+    D * m_d;
   };
 }
 #endif // RGBCUBE_HPP

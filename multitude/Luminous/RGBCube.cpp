@@ -2,61 +2,99 @@
 
 #include <Luminous/PixelFormat.hpp>
 
+#include <Valuable/AttributeContainer.hpp>
 #include <Valuable/Node.hpp>
 
 namespace Luminous
 {
-  RGBCube::RGBCube(Node * host, const QByteArray & name)
-    : Node(host, name),
-      m_division(this, "division", 0),
-      m_dimension(this, "dimension", 32),
-      m_rgbs(this, "rgb-table")
+  class RGBCube::D
   {
-    m_texture.setWrap(Texture::Wrap_Clamp, Texture::Wrap_Clamp, Texture::Wrap_Clamp);
-    m_generation = m_texture.generation();
+  public:
+    D(RGBCube & cube)
+      : m_rgbs(&cube, "rgb-table")
+      , m_division(&cube, "division", 0)
+      , m_dimension(&cube, "dimension", 32)
+      , m_cube(cube)
+    {
+      m_texture.setWrap(Texture::Wrap_Clamp, Texture::Wrap_Clamp, Texture::Wrap_Clamp);
+      m_generation = m_texture.generation();
 
-    // Invalidate cached texture if either of these are edited
-    m_division.addListener([this] { changed(); });
-    m_dimension.addListener([this] { changed(); });
-  }
+      // Invalidate cached texture if either of these are edited
+      m_division.addListener([this] { invalidate(); });
+      m_dimension.addListener([this] { invalidate(); });
+    }
 
-  RGBCube::~RGBCube()
-  {}
+    void setIndex(size_t index, Nimble::Vector3 rgb);
+    Nimble::Vector3 getIndex(size_t index) const;
 
-  bool RGBCube::deserialize(const Valuable::ArchiveElement & element)
-  {
-    /// @todo actually check if contents of rgb-table changes
-    bool ok = Node::deserialize(element);
-    if(ok)
-      changed();
-    return ok;
-  }
+    void setRGB(int rindex, int gindex, int bindex, Nimble::Vector3 rgb);
+    Nimble::Vector3 getRGB(int rindex, int gindex, int bindex) const;
 
-  void RGBCube::setIndex(size_t index, Nimble::Vector3 rgb)
+    void setError(size_t index, float error);
+
+    size_t rgbCount() const;
+
+    /// The index is relative (0-1)
+    Nimble::Vector3 interpolateRGB(Nimble::Vector3 relindex) const;
+    void upSample(RGBCube & dest) const;
+
+    void invalidate();
+
+    void fill3DTexture(uint8_t * rgbvals, int npixels) const;
+    const Luminous::Texture & asTexture() const;
+
+  public:
+    // The fourth vector element is the error, if relevant
+    typedef Valuable::AttributeContainer<std::vector<Nimble::Vector4> > Rgbs;
+    Rgbs m_rgbs;
+
+    Valuable::AttributeInt m_division;
+    Valuable::AttributeInt m_dimension;
+
+  private:
+    int m_generation;
+
+    mutable Luminous::Texture m_texture;
+    mutable std::vector<uint8_t> m_textureData;
+
+    RGBCube & m_cube;
+  };
+
+  void RGBCube::D::setIndex(size_t index, Nimble::Vector3 rgb)
   {
     m_rgbs->at(index).make(rgb.x, rgb.y, rgb.z, -1);
-    changed();
+    invalidate();
   }
 
-  void RGBCube::setError(size_t index, float error)
+  Nimble::Vector3 RGBCube::D::getIndex(size_t index) const
   {
-    m_rgbs->at(index).w = error;
-    changed();
+    return m_rgbs->at(index).vector3();
   }
 
-  Nimble::Vector3 RGBCube::getRGB(int rindex, int gindex, int bindex) const
-  {
-    int index = rindex + gindex * m_division + bindex * m_division * m_division;
-    return getIndex(index);
-  }
-
-  void RGBCube::setRGB(int rindex, int gindex, int bindex, Nimble::Vector3 rgb)
+  void RGBCube::D::setRGB(int rindex, int gindex, int bindex, Nimble::Vector3 rgb)
   {
     int index = rindex + gindex * m_division + bindex * m_division * m_division;
     setIndex(index, rgb);
   }
 
-  Nimble::Vector3 RGBCube::interpolateRGB(Nimble::Vector3 relindex) const
+  Nimble::Vector3 RGBCube::D::getRGB(int rindex, int gindex, int bindex) const
+  {
+    int index = rindex + gindex * m_division + bindex * m_division * m_division;
+    return getIndex(index);
+  }
+
+  void RGBCube::D::setError(size_t index, float error)
+  {
+    m_rgbs->at(index).w = error;
+    invalidate();
+  }
+
+  size_t RGBCube::D::rgbCount() const
+  {
+    return m_rgbs->size();
+  }
+
+  Nimble::Vector3 RGBCube::D::interpolateRGB(Nimble::Vector3 relindex) const
   {
     Nimble::Vector3f realindex = relindex * (float) (m_division - 1);
     Nimble::Vector3i realbase(realindex.x, realindex.y, realindex.z); // round down
@@ -111,10 +149,143 @@ namespace Luminous
                           llh * wllh + hlh * whlh + lhh * wlhh + hhh * whhh) / wtotal;
 
     /* if(relindex.x > 0.99f && relindex.y > 0.99f && relindex.x > 0.99f)
-    Radiant::info("RGBCube::interpolateRGB # FINAL %f %f %f TO %f %f %f",
-                  hhh.x, hhh.y, hhh.z, r.x, r.y, r.z);
-                  */
+      Radiant::info("RGBCube::interpolateRGB # FINAL %f %f %f TO %f %f %f",
+                    hhh.x, hhh.y, hhh.z, r.x, r.y, r.z);
+                    */
     return r;
+  }
+
+  /// @todo does this actually work?
+  void RGBCube::D::upSample(RGBCube & dest) const
+  {
+    int updiv = m_division * 2 - 1;
+    // int upend = updiv - 1;
+    dest.setDivision(updiv);
+    dest.setAll(Nimble::Vector3(-1, -1, -1));
+
+    // Fill dest with interpolated values
+    float step = 1.0f / (updiv - 1);
+
+    for(int bi = 0; bi < updiv; bi++) {
+      for(int gi = 0; gi < updiv; gi++) {
+        for(int ri = 0; ri < updiv; ri++) {
+          Nimble::Vector3 rgb = interpolateRGB( Nimble::Vector3(ri, gi, bi) * step);
+          dest.setRGB(ri, gi, bi, rgb);
+        }
+      }
+    }
+
+    // Then set the diagonal values
+
+    int mybase = m_division * m_division * m_division;
+    for(int i = 0; i < m_division - 1; i++) {
+      int di = i * 2 + 1;
+      Nimble::Vector3 rgb = getIndex(mybase + i);
+      dest.setRGB(di, di, di, rgb);
+    }
+
+    // Then expand around the diagonal values
+    /*
+  for(int i = 1; i < upend; i++) {
+
+  }
+  */
+
+  }
+
+  void RGBCube::D::invalidate()
+  {
+    m_generation++;
+  }
+
+  void RGBCube::D::fill3DTexture(uint8_t * rgbvals, int npixels) const
+  {
+    debugLuminous("RGBCube::fill3DTexture # %d %d %f",
+                  (int) m_division, (int) m_rgbs->size(), m_rgbs->at(7).x);
+
+    float inv = 1.0f / (npixels - 1.0f);
+
+    for(int b = 0; b < npixels; b++) {
+      for(int g = 0; g < npixels; g++) {
+        for(int r = 0; r < npixels; r++) {
+
+          Nimble::Vector3 rgb = interpolateRGB(Nimble::Vector3(r, g, b) * inv);
+          rgb *= 255.5f;
+
+          rgbvals[0] = Nimble::Math::Clamp((int) (rgb[0] + 0.5f), 0, 255);
+          rgbvals[1] = Nimble::Math::Clamp((int) (rgb[1] + 0.5f), 0, 255);
+          rgbvals[2] = Nimble::Math::Clamp((int) (rgb[2] + 0.5f), 0, 255);
+
+          rgbvals += 3;
+
+        }
+      }
+    }
+  }
+
+  const Luminous::Texture & RGBCube::D::asTexture() const
+  {
+    if(m_generation != m_texture.generation()) {
+
+      debugLuminous("RGBCube # Updating texture");
+
+      const RGBCube * cube = &m_cube;
+
+      RGBCube tmp;
+      if(m_rgbs->size() > size_t(m_division * m_division * m_division)) {
+        debugLuminous("RGBCube::updateTexture # Upsampling");
+        upSample(tmp);
+        cube = &tmp;
+      }
+
+      m_textureData.resize(3 * m_dimension * m_dimension * m_dimension);
+      cube->m_d->fill3DTexture(&m_textureData[0], m_dimension);
+
+      m_texture.setData(m_dimension, m_dimension, m_dimension, Luminous::PixelFormat::rgbUByte(), &m_textureData[0]);
+      m_texture.setGeneration(m_generation);
+    }
+
+    if(!m_texture.isValid()) {
+      Radiant::warning("RGBCube # Texture is not valid! "
+                       "The color correction configuration might be broken or missing.");
+    }
+
+    return m_texture;
+  }
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+  RGBCube::RGBCube(Node * host, const QByteArray & name)
+    : Node(host, name)
+    , m_d(new D(*this))
+  {
+  }
+
+  RGBCube::~RGBCube()
+  {
+    delete m_d;
+  }
+
+  bool RGBCube::deserialize(const Valuable::ArchiveElement & element)
+  {
+    /// @todo actually check if contents of rgb-table changes
+    bool ok = Node::deserialize(element);
+    if(ok)
+      m_d->invalidate();
+    return ok;
+  }
+
+  int RGBCube::division() const
+  {
+    return m_d->m_division;
+  }
+
+  void RGBCube::setDivision(int division)
+  {
+    m_d->m_rgbs->resize(division * division * division + division - 1);
+    m_d->m_division = division;
+    m_d->invalidate();
   }
 
   void RGBCube::createDefault(int division)
@@ -139,117 +310,60 @@ namespace Luminous
     }
   }
 
-  void RGBCube::fill3DTexture(uint8_t * rgbvals, int npixels) const
+  bool RGBCube::isDefined() const
   {
-    Radiant::info("RGBCube::fill3DTexture # %d %d %f",
-                  (int) m_division, (int) m_rgbs->size(), m_rgbs->at(7).x);
+    return !m_d->m_rgbs->empty();
+  }
 
-    float inv = 1.0f / (npixels - 1.0f);
+  size_t RGBCube::rgbCount() const
+  {
+    return m_d->rgbCount();
+  }
 
-    for(int b = 0; b < npixels; b++) {
-      for(int g = 0; g < npixels; g++) {
-        for(int r = 0; r < npixels; r++) {
-
-          Nimble::Vector3 rgb = interpolateRGB(Nimble::Vector3(r, g, b) * inv);
-          rgb *= 255.5f;
-
-          rgbvals[0] = Nimble::Math::Clamp((int) (rgb[0] + 0.5f), 0, 255);
-          rgbvals[1] = Nimble::Math::Clamp((int) (rgb[1] + 0.5f), 0, 255);
-          rgbvals[2] = Nimble::Math::Clamp((int) (rgb[2] + 0.5f), 0, 255);
-
-          // if(r == npixels - 1) {
-          /*
-        if(r == g && r == b && (r % 4) == 0) {
-          printf("of %d [%.2d %.2d %.2d]=%.3d %.3d %.3d\n", npixels, r, g, b,
-                 (int) rgbvals[0], (int) rgbvals[1], (int) rgbvals[2]);
-          fflush(0);
-        }
-        */
-          rgbvals += 3;
-
-        }
-      }
-    }
+  Nimble::Vector3 RGBCube::white() const
+  {
+    if(!isDefined())
+      return Nimble::Vector3(0,0,0);
+    return getIndex(m_d->m_division * m_d->m_division * m_d->m_division - 1);
   }
 
   const Luminous::Texture & RGBCube::asTexture() const
   {
-    if(m_generation != m_texture.generation()) {
-
-      debugLuminous("RGBCube # Updating texture");
-
-      const RGBCube * cube = this;
-
-      RGBCube tmp;
-      if(m_rgbs->size() > size_t(m_division * m_division * m_division)) {
-        Radiant::info("RGBCube::updateTexture # Upsampling");
-        upSample(tmp);
-        cube = &tmp;
-      }
-
-      m_textureData.resize(3 * m_dimension * m_dimension * m_dimension);
-      cube->fill3DTexture(&m_textureData[0], m_dimension);
-
-      m_texture.setData(m_dimension, m_dimension, m_dimension, Luminous::PixelFormat::rgbUByte(), &m_textureData[0]);
-      m_texture.setGeneration(m_generation);
-    }
-
-    if(!m_texture.isValid()) {
-      Radiant::warning("RGBCube # Texture is not valid! "
-                       "The color correction configuration might be broken or missing.");
-    }
-
-    return m_texture;
+    return m_d->asTexture();
   }
 
-  /*Texture3D * RGBCube::bind(GLResources * r, int texunit) const
-{
-  if(!m_division) {
-    return 0;
+  void RGBCube::setAll(Nimble::Vector3 rgb)
+  {
+    Nimble::Vector4 tmp(rgb.x, rgb.y, rgb.z, 0.0f);
+    for(size_t i = 0; i < m_d->m_rgbs->size(); i++)
+      m_d->m_rgbs->at(i) = tmp;
+    m_d->invalidate();
   }
 
-  GLRESOURCE_ENSURE(Texture3D, tex, & m_key, r);
-
-  tex->bind(texunit);
-
-  const int dim = 32;
-
-  if(tex->generation() != m_generation || tex->width() != dim) {
-
-    // Radiant::info("RGBCube::bind # Loading 3D color correction texture for %p", this);
-
-    const RGBCube * cube = this;
-
-    RGBCube tmp;
-    if(m_rgbs->size() > m_division * m_division * m_division) {
-      Radiant::info("RGBCube::bind # Upsampling");
-      upSample(tmp);
-      cube = & tmp;
-    }
-
-
-    std::vector<uint8_t> texrgb;
-    texrgb.resize(3 * dim * dim * dim);
-    cube->fill3DTexture(& texrgb[0], dim);
-    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB, dim, dim, dim, 0, GL_RGB, GL_UNSIGNED_BYTE, & texrgb[0]);
-
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-    tex->setGeneration(m_generation);
-    tex->setWidth(dim);
-    tex->setHeight(dim);
-    tex->setDepth(dim);
-    Luminous::Utils::glCheck("RGBCube::bind");
-    // Radiant::info("RGBCube::bind # Loading 3D color correction texture for %p LOADED", this);
+  void RGBCube::setIndex(size_t index, Nimble::Vector3 rgb)
+  {
+    m_d->setIndex(index, rgb);
   }
 
-  return tex;
-}*/
+  Nimble::Vector3 RGBCube::getIndex(size_t index) const
+  {
+    return m_d->getIndex(index);
+  }
+
+  void RGBCube::setRGB(int rindex, int gindex, int bindex, Nimble::Vector3 rgb)
+  {
+    m_d->setRGB(rindex, gindex, bindex, rgb);
+  }
+
+  Nimble::Vector3 RGBCube::getRGB(int rindex, int gindex, int bindex) const
+  {
+    return m_d->getRGB(rindex, gindex, bindex);
+  }
+
+  void RGBCube::setError(size_t index, float error)
+  {
+    m_d->setError(index, error);
+  }
 
   int RGBCube::findClosestRGBIndex(Nimble::Vector3 color) const
   {
@@ -257,8 +371,8 @@ namespace Luminous
 
     int index = -1;
 
-    for(size_t i = 0; i < m_rgbs->size(); i++) {
-      float d = (color - m_rgbs->at(i).vector3()).length();
+    for(size_t i = 0; i < m_d->rgbCount(); i++) {
+      float d = (color - m_d->getIndex(i)).length();
       if(error > d) {
         error = d;
         index = i;
@@ -267,43 +381,4 @@ namespace Luminous
 
     return index;
   }
-
-  void RGBCube::upSample(RGBCube & dest) const
-  {
-    int updiv = m_division * 2 - 1;
-    // int upend = updiv - 1;
-    dest.setDivision(updiv);
-    dest.setAll(Nimble::Vector3(-1, -1, -1));
-
-    // Fill dest with interpolated values
-    float step = 1.0f / (updiv - 1);
-
-    for(int bi = 0; bi < updiv; bi++) {
-      for(int gi = 0; gi < updiv; gi++) {
-        for(int ri = 0; ri < updiv; ri++) {
-          Nimble::Vector3 rgb = interpolateRGB( Nimble::Vector3(ri, gi, bi) * step);
-          dest.setRGB(ri, gi, bi, rgb);
-        }
-      }
-    }
-
-    // Then set the diagonal values
-
-
-    int mybase = m_division * m_division * m_division;
-    for(int i = 0; i < m_division - 1; i++) {
-      int di = i * 2 + 1;
-      Nimble::Vector3 rgb = getIndex(mybase + i);
-      dest.setRGB(di, di, di, rgb);
-    }
-
-    // Then expand around the diagonal values
-    /*
-  for(int i = 1; i < upend; i++) {
-
-  }
-  */
-
-  }
-
 }
