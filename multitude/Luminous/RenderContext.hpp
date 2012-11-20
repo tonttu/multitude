@@ -61,18 +61,30 @@ namespace Luminous
       TextStatic
     };
 
-/// @cond
+
+    /** Proxy object for building rendering command.
+
+        When created contains abstraction of the actual rendering command including
+        shader program and the placeholders for the data to be rendered (vertices, indices
+        and uniforms).
+    */
     template <typename Vertex, typename UniformBlock>
     struct RenderBuilder
     {
       RenderBuilder() : idx(), uniform(), vertex(), command(), depth(0.0f) {}
+      /// Indices for rendering
       unsigned int * idx;
+      /// Uniform block for uniforms
       UniformBlock * uniform;
+      /// Vertices for rendering
       Vertex * vertex;
+      /// Abstraction of the rendering command
       RenderCommand * command;
+      /// Depth of rendering
       float depth;
     };
 
+/// @cond
     struct SharedBuffer
     {
       SharedBuffer(Buffer::Type type) : type(type), reservedBytes(0) {}
@@ -246,6 +258,19 @@ namespace Luminous
 
     //////////////////////////////////////////////////////////////////////////
     // Implementation
+
+    /** Returns RenderBuilder for the given program. Assumes that UniformBlock has at least fields: @c projMatrix (Nimble::Matrix4),
+        @c modelMatrix (Nimble::Matrix4), @c color (Nimble::Vector4) and @c depth (float).
+        @todo rest of the documentation
+
+        @param primType Primitives to render
+        @param indexCount How many indices are to be specified. If zero, indices are effectively set to 0,1,...,vertexCount-1
+        @param vertexCount How many vertices are to be specified.
+        @param shader GLSL-program to use.
+        @param color Color for the corresponding uniform.
+        @param width Width for the rendered primitive.
+        @param style Style for the rendering.
+      */
     template <typename Vertex, typename UniformBlock>
     RenderBuilder<Vertex, UniformBlock> drawPrimitiveT(Luminous::PrimitiveType primType, unsigned int indexCount, unsigned int vertexCount,
       const Luminous::Program & shader, const Radiant::Color & color, float width, const Luminous::Style & style);
