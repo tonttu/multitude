@@ -158,6 +158,8 @@ namespace Valuable
     {}
   };
 
+  /// This class handles container attributes. It allows us to use
+  /// std-containers and Qt containers as attributes.
   template <typename Key, typename T, typename Compare, typename Allocator>
   class AttributeContainer<std::map<Key, T, Compare, Allocator> >
     : public AttributeContainerT<std::map<Key, T, Compare, Allocator> >
@@ -165,6 +167,7 @@ namespace Valuable
   public:
     typedef AttributeContainerT<std::map<Key, T, Compare, Allocator> > Container;
 
+    /// Constructs a new container
     AttributeContainer() {}
 
     /// Constructs a new container

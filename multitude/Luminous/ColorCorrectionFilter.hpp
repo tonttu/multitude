@@ -5,6 +5,9 @@
 
 namespace Luminous
 {
+
+  /// This class implements the built-in color-correction in Cornerstone. It is
+  /// implemented as a post-processing filter.
   class LUMINOUS_API ColorCorrectionFilter : public Luminous::PostProcessFilter
   {
   public:

@@ -8,6 +8,7 @@
 
 namespace Luminous
 {
+  /// @cond
   class UniformDescription
   {
   public:
@@ -27,6 +28,7 @@ namespace Luminous
   private:
     std::vector<UniformVar> m_attributes;
   };
+  /// @endcond
 }
 
 #endif // LUMINOUS_UNIFORM_DESCRIPTION_HPP

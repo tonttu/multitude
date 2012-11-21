@@ -15,6 +15,7 @@ namespace Luminous {
   class TextLayout
   {
   public:
+    /// The bounds for a single glyph in the layout
     struct LUMINOUS_API Item
     {
       std::array<FontVertex, 4> vertices;

@@ -56,6 +56,14 @@ namespace Radiant
   template <typename T>
   class IntrusivePtr;
 
+  /// This class implements weak pointers for the IntrisuvePtr class. The weak
+  /// associated to an intrusive pointer. Whenever the contents of the weak
+  /// pointer are accessed, it must be converted to an intrusive pointer with
+  /// the lock() method or a special constructor. If the intrusive pointer
+  /// associated with this weak pointer is released, the conversion will fail
+  /// and an intrusive pointer to nullptr is returned. In order to use
+  /// intrusive pointers with custom objects, a single function @em
+  /// intrusivePtrGetCounter must be defined for the wrapped object type.
   template <typename T>
   class IntrusiveWeakPtr
   {
@@ -185,6 +193,12 @@ namespace Radiant
     IntrusivePtrCounter * m_counter;
   };
 
+  /// This class implements an intrusive pointer. Intrusive pointer is a light
+  /// version of a shared pointer. The dynamically allocated object the pointer
+  /// points to handles the reference counter. Thus the reference count is
+  /// stored in a single location and the pointer size is kept to a minimum. In
+  /// case of Cornerstone it also makes it possible to share objects between
+  /// C++ and JavaScript.
   template <typename T>
   class IntrusivePtr : public SafeBool< IntrusivePtr<T> >
   {

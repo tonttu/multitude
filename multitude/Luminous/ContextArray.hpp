@@ -7,7 +7,11 @@
 
 namespace Luminous
 {
-  /// @todo document, used by textures for dirty regions
+  /// This class is a utility class that provides easier handling of OpenGL
+  /// context-specific variables. To the developer it looks and acts like a
+  /// single variable, but internally it stores a unique value for every
+  /// rendering thread. This class is usually not used directly, but the
+  /// templated ContextArrayT instead.
   class ContextArray
   {
   public:
@@ -15,11 +19,14 @@ namespace Luminous
     inline virtual ~ContextArray();
 
   private:
+    /// Resize the context array to the given number of threads
+    /// @param threadCount number of threads
     virtual void resize(unsigned int threadCount) = 0;
     friend class RenderManager;
   };
 
-
+  /// This class is a utility for handling variables specific to rendering threads.
+  /// @sa ContextArray
   template <typename T>
   class ContextArrayT : public QVector<T>, public ContextArray
   {

@@ -18,6 +18,7 @@ namespace Luminous
   class LUMINOUS_API TextureAtlas : public Patterns::NotCopyable
   {
   public:
+    /// A node in the TextureAtlas binary tree
     class Node : public Patterns::NotCopyable
     {
     public:
@@ -55,6 +56,7 @@ namespace Luminous
   ///////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
 
+  /// The actual texture data associated with binary tree nodes in the texture atlas.
   struct TextureAtlasItem
   {
     TextureAtlasItem() : m_atlas(nullptr) {}
@@ -69,19 +71,33 @@ namespace Luminous
   ///////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
 
+  /// This class provides the high-level API for the texture atlas. It
+  /// allocates fixed-size large textures to use for storing smaller textures. If
+  /// more space is required to fit all contents, new textures are allocated.
   template <typename Item>
   class TextureAtlasGroup : public Valuable::Node
   {
   public:
+    /// Construct a new texture atlas group with the given pixel format
+    /// @param pixelFormat pixel format for the textures
     TextureAtlasGroup(const Luminous::PixelFormat & pixelFormat);
     virtual ~TextureAtlasGroup() { }
 
+    /// Clears all atlases and items from the group
     void clear();
 
+    /// Reserve space for an item from the atlas. This function will return an
+    /// item that can be used to store a texture of the requested size. If all
+    /// current atlas textures are full, a new one is allocated automatically.
+    /// @param size requested space
     Item & insert(Nimble::Vector2i size);
 
+    /// Store the texture atlases on disk. This function can be useful for debugging.
+    /// @param basename base filename to use for the atlases
     void save(const QString & basename);
 
+    /// Get the atlases in the group
+    /// @return vector of atlases in this texture atlas group
     const std::vector<std::unique_ptr<TextureAtlas>> & atlases() const { return m_atlases; }
 
   private:

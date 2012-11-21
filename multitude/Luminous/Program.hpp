@@ -87,8 +87,10 @@ namespace Luminous
     LUMINOUS_API const VertexDescription & vertexDescription() const;
     LUMINOUS_API void setVertexDescription(const VertexDescription & description);
 
+    /// @cond
     LUMINOUS_API const UniformDescription & uniformDescription() const;
     LUMINOUS_API void setUniformDescription(const UniformDescription & description);
+    /// @endcond
 
     LUMINOUS_API bool translucent() const;
     LUMINOUS_API void setTranslucency(bool translucency);

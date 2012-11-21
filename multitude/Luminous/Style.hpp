@@ -155,6 +155,7 @@ namespace Luminous
     OverflowAuto
   };
 
+  /// This class stores the style information needed to render text.
   class TextStyle : public Style
   {
   public:
@@ -169,39 +170,60 @@ namespace Luminous
       , m_textOverflow(OverflowVisible)
     {}
 
+    /// Get the font for the style
     QFont & font() { return m_font; }
+    /// @copydoc font
     const QFont & font() const { return m_font; }
+    /// Set the font for the style
     void setFont(const QFont & font) { m_font = font; }
 
+    /// Get the text options for the style. The options are used to define things like wrapping and alignment.
     QTextOption & textOption() { return m_textOption; }
+    /// @copydoc textOption
     const QTextOption & textOption() const { return m_textOption; }
 
+    /// Get the text overflow for the style
     Overflow textOverflow() const { return m_textOverflow; }
+    /// Set the text overflow for the style
     void setTextOverflow(Overflow overflow) { m_textOverflow = overflow; }
 
+    /// Get the relative width of the rendered font
     float fontRenderWidth() const { return m_fontRenderWidth; }
+    /// Set the relative width of the rendered font
     void setFontRenderWidth(float offset) { m_fontRenderWidth = offset; }
 
-    /// from 0 to 1
+    /// Get the text glow
     float glow() const { return m_glow; }
+    /// Set the text glow amount. Values should be from 0 to 1.
     void setGlow(float glow) { m_glow = glow; }
 
+    /// Get the text glow color
     const Radiant::Color & glowColor() const { return m_glowColor; }
+    /// Set text glow color
     void setGlowColor(const Radiant::Color & glowColor) { m_glowColor = glowColor; }
+    /// Set text glow color
     void setGlowColor(float r, float g, float b, float a) { m_glowColor.make(r, g, b, a); }
 
+    /// Get text sharpness
     float textSharpness() const { return m_textSharpness; }
+    /// Set text sharpness. Can be used to blur the text.
     void setTextSharpness(float textSharpness) { m_textSharpness = textSharpness; }
 
-    /// from 0 to 1
+    /// Get the amount of drop-shadow blur
     float dropShadowBlur() const { return m_dropShadowBlur; }
+    /// Set the amount of drop-shadow blur. Values from 0 to 1.
     void setDropShadowBlur(float blur) { m_dropShadowBlur = blur; }
 
+    /// Get the drop-shadow color
     const Radiant::Color & dropShadowColor() const { return m_dropShadowColor; }
+    /// Set the drop-shadow color
     void setDropShadowColor(const Radiant::Color & dropShadowColor) { m_dropShadowColor = dropShadowColor; }
+    /// Set the drop-shadow color
     void setDropShadowColor(float r, float g, float b, float a) { m_dropShadowColor.make(r, g, b, a); }
 
+    /// Get the drop-shadow offset
     const Nimble::Vector2f & dropShadowOffset() const { return m_dropShadowOffset; }
+    /// Set the drop-shadow offset
     void setDropShadowOffset(const Nimble::Vector2f & offset) { m_dropShadowOffset = offset; }
 
   private:

@@ -86,6 +86,7 @@ namespace VideoPlayer2
     VideoFrame& operator=(VideoFrame &&);
   };
 
+  /// This class provices the actual audio/video decoder for the video player.
   class VIDEODISPLAY_API AVDecoder : public Radiant::Thread, public Valuable::Node
   {
   public:
