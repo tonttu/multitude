@@ -470,10 +470,15 @@ namespace Luminous
     Internal * m_data;
   };
 
+  /** Guard for executing plain OpenGL commands.
+    *
+    * When using more exotic states, user should set the state of
+    * OpenGL state machine to the state it was before.
+    */
   class CustomOpenGL : Patterns::NotCopyable
   {
   public:
-    LUMINOUS_API CustomOpenGL(RenderContext & r);
+    LUMINOUS_API CustomOpenGL(RenderContext & r, bool reset=false);
     LUMINOUS_API ~CustomOpenGL();
 
     inline ProgramGL & handle(const Program & program) { return m_r.handle(program); }

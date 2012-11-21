@@ -1580,16 +1580,18 @@ namespace Luminous
 # include <DummyOpenGL.hpp>
 #endif
 
-  CustomOpenGL::CustomOpenGL(RenderContext & r)
+  CustomOpenGL::CustomOpenGL(RenderContext & r, bool reset)
     : m_r(r)
   {
     // First, flush the current deferred render queues
     r.flush();
 
-    glPointSize(1.f);
-    glLineWidth(1.f);
-
-    glDisable(GL_DEPTH_TEST);
+    if(reset) {
+      glPointSize(1.f);
+      glLineWidth(1.f);
+      glUseProgram(0);
+      glDisable(GL_DEPTH_TEST);
+    }
   }
 
   CustomOpenGL::~CustomOpenGL()
