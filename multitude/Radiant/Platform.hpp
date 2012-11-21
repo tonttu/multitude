@@ -159,9 +159,9 @@
 #   if _MSC_VER < 1600
 #     error "Unsupported compiler: Must have Visual Studio 2010 or newer"
 #   elif _MSC_VER == 1600
-#     define RADIANT_MSVC10 1
+#     define RADIANT_MSVC10
 #   elif _MSC_VER == 1700
-#     define RADIANT_MSVC11 1
+#     define RADIANT_MSVC11
 #   endif
 
 // Current MSVC does not have alignas
@@ -203,7 +203,7 @@
 
 
 #if !defined(MULTI_NO_FINAL)
-#  if RADIANT_MSVC10
+#  ifdef RADIANT_MSVC10
 #    define FINAL sealed
 #  else
 #    define FINAL final
