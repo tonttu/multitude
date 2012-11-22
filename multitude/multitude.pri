@@ -198,18 +198,11 @@ win32 {
     COMPILER_OUTPUT=$$system(cl 2>&1)
     contains(COMPILER_OUTPUT,x64):CONFIG+=win64
 
-    win64 {
-      WINPORT_INCLUDE = $$PWD\\Win64x\\include
-      INCLUDEPATH += $$PWD\\Win64x\\include
-      INCLUDEPATH += $$PWD/../multitude/Win64x/include/ffmpeg
-      QMAKE_LIBDIR += $$PWD/Win64x/lib64
-      enable-js:INCLUDEPATH += $$PWD\\Win64x\\include\\v8
-    } else {
-      WINPORT_INCLUDE = $$PWD\\Win32x\\include
-      INCLUDEPATH += $$PWD\\Win32x\\include
-      INCLUDEPATH += $$PWD/../multitude/Win32x/include/ffmpeg
-      QMAKE_LIBDIR += $$PWD\\Win32x\\lib32
-    }
+    WINPORT_INCLUDE = $$PWD\\Win64x\\include
+    INCLUDEPATH += $$PWD\\Win64x\\include
+    INCLUDEPATH += $$PWD/../multitude/Win64x/include/ffmpeg
+    QMAKE_LIBDIR += $$PWD/Win64x/lib64
+    enable-js:INCLUDEPATH += $$PWD\\Win64x\\include\\v8
 
     LIB_PREFIX =
     SHARED_LIB_SUFFIX = dll

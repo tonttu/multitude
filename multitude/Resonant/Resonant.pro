@@ -41,15 +41,8 @@ include(../library.pri)
 
 DEFINES += RESONANT_EXPORT
 
-win32 {
-  win64 {
-    QMAKE_LIBDIR += $$DDK_PATH\\lib\\win7\\amd64
-    INCLUDEPATH += ..\\Win64x\\include\\portaudio
-    LIBS += -llibsndfile-1 -lportaudio -lOle32 -lUser32
-  }
-  else {
-    QMAKE_LIBDIR += $$DDK_PATH\\lib\\win7\\i386
-    INCLUDEPATH += ..\\Win32x\\include\\portaudio ..\\Win32x\\include\\libsndfile
-    LIBS += -llibsndfile-1 -lportaudio_x86
-  }
+win* {
+  QMAKE_LIBDIR += $$DDK_PATH\\lib\\win7\\amd64
+  INCLUDEPATH += ..\\Win64x\\include\\portaudio
+  LIBS += -llibsndfile-1 -lportaudio -lOle32 -lUser32
 }

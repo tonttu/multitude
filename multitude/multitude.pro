@@ -27,7 +27,6 @@ stuff.files = LGPL.txt multitude.pro multitude.pri library.pri
 
 INSTALLS += stuff
 
-win32 {
-    win64:include(Win64x/Win64x.pri)
-    else:include(Win32x/Win32x.pri)
+win* {
+    include(Win64x/Win64x.pri)
 }
