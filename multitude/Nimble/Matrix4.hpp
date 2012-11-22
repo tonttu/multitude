@@ -155,6 +155,12 @@ namespace Nimble {
                          get(2, 0), get(2, 1), get(2, 2));
     }
 
+    /// Get the 2x2 upper-left matrix
+    inline Matrix2T<T> upperLeft2() const {
+      return Matrix2T<T>(get(0, 0), get(0, 1),
+                         get(1, 0), get(1, 1));
+    }
+
         /// Returns an orthonormalized version of this matrix.
         /// @todo could improve numerical stability easily etc.
         /// @return Normalized matrix
@@ -197,6 +203,24 @@ namespace Nimble {
     inline Vector3T<T> project(const Vector3T<T> & v) const
     {
       return project(Vector4T<T>(v.x, v.y, v.z, T(1.0)));
+    }
+
+    /// Apply the matrix on a 2D vector which is interpreted as [x y 0 1]
+    /// @param v 2D vector
+    /// @return transformed 2D vector
+    inline Vector2T<T> project(const Vector2T<T> & v) const
+    {
+      T x = get(0,0)*v.x + get(0,1)*v.y + get(0,3);
+      T y = get(1,0)*v.x + get(1,1)*v.y + get(1,3);
+      T z = get(3,0)*v.x + get(3,1)*v.y + get(3,3);
+      return Nimble::Vector2T<T>(x/z, y/z);
+    }
+
+    T extractScale() const
+    {
+        Vector2T<T> v(get(0,0), get(1,1));
+        T s = std::sqrt(v.x * v.x + v.y * v.y);
+        return s;
     }
 
     /// Creates a new WPCV-matrix (window-projection-camera-view -matrix)

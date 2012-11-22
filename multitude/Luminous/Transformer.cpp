@@ -39,20 +39,20 @@ namespace Luminous
   Transformer::~Transformer()
   {}
 
-  Nimble::Matrix3 Transformer::transform() const
+  Nimble::Matrix3 Transformer::transform3() const
   {
-    return mat3(transform4());
+    return mat3(transform());
   }
 
-  Nimble::Vector2 Transformer::project(Nimble::Vector2 v) const
+  Nimble::Vector2 Transformer::project(const Nimble::Vector2 & v) const
   {
     return transform().project(v);
   }
 
   /// @todo what? rename
-  Nimble::Vector2 Transformer::unproject(Nimble::Vector2 v) const
+  Nimble::Vector2 Transformer::unproject(const Nimble::Vector2 & v) const
   {
-    Nimble::Matrix3 m = transform().inverse();
+    Nimble::Matrix3 m = transform3().inverse();
     Nimble::Vector3 p = m * v;
 
     return Nimble::Vector2(p.x / p.z, p.y / p.z);

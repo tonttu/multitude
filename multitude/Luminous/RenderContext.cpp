@@ -318,7 +318,7 @@ namespace Luminous
 
   const Nimble::Matrix4 & RenderContext::viewTransform() const
   {
-    return m_data->m_viewTransformer.transform4();
+    return m_data->m_viewTransformer.transform();
   }
 
   const RenderTarget & RenderContext::currentRenderTarget() const
@@ -980,7 +980,7 @@ namespace Luminous
   void RenderContext::drawText(const TextLayout & layout, const Nimble::Vector2f & location,
                                const Nimble::Rectf & viewRect, const TextStyle & style)
   {
-    const Nimble::Matrix4f model = transform4();
+    const Nimble::Matrix4f model = transform();
 
     FontUniformBlock uniform;
     uniform.invscale = 1.0f / Nimble::Vector2f(model[0][1], model[1][1]).length() / style.textSharpness();
@@ -1376,13 +1376,13 @@ namespace Luminous
   void RenderContext::beginArea()
   {
     assert(stackSize() == 1);
-    assert(transform4() == Nimble::Matrix4::IDENTITY);
+    assert(transform() == Nimble::Matrix4::IDENTITY);
   }
 
   void RenderContext::endArea()
   {
     assert(stackSize() == 1);
-    assert(transform4() == Nimble::Matrix4::IDENTITY);
+    assert(transform() == Nimble::Matrix4::IDENTITY);
   }
 
   void RenderContext::initPostProcess(PostProcess::InitList & filters)

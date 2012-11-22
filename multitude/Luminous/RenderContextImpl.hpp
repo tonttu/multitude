@@ -62,7 +62,7 @@ namespace Luminous
     /// feature at all. For GLES this also makes things easier.
     /// This happens at least on Ubuntu 12.04, AMD drivers 12-6, OpenGL 4.2.11733
     builder.uniform->projMatrix = viewTransform().transposed();
-    builder.uniform->modelMatrix = transform4().transposed();
+    builder.uniform->modelMatrix = transform().transposed();
 
     builder.command = &cmd;
 

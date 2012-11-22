@@ -37,14 +37,14 @@ namespace Luminous
 
     /// Get the top matrix of the stack
     /// @todo rename to transform
-    const Nimble::Matrix4 & transform4() const { return m_stack.top(); }
+    const Nimble::Matrix4 & transform() const { return m_stack.top(); }
     /// Get the top matrix of the stack as 3x3-matrix
-    Nimble::Matrix3 transform() const;
+    Nimble::Matrix3 transform3() const;
 
     /// Apply the current transformation matrix on a 2D vector.
-    Nimble::Vector2 project(Nimble::Vector2) const;
+    Nimble::Vector2 project(const Nimble::Vector2&) const;
     /// Apply inverse of the current transformation matrix on a 2D vector.
-    Nimble::Vector2 unproject(Nimble::Vector2) const;
+    Nimble::Vector2 unproject(const Nimble::Vector2&) const;
 
     /// Extracts the scaling from the transform. Only valid for uniform scaling.
     float scale() const;
