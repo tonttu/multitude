@@ -30,7 +30,11 @@ namespace Radiant
   /// APIs are not affected.
   class RADIANT_API ResourceLocator
   {
+    /// @cond
+
     DECLARE_SINGLETON(ResourceLocator);
+
+    /// @endcond
 
     public:
       /// Constructs a new ResourceLocator

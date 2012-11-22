@@ -55,13 +55,19 @@ namespace Radiant
   class RADIANT_API MimeManager
   {
   protected:
+    /// Map from file extensions to mime types
     typedef std::map<QString, MimeType> ExtensionMap;
 
-    /// shared extension map
+    /// Global extension map shared by all instances
     static ExtensionMap s_sharedExtensions;
+    /// Extension map specific for this instance
     ExtensionMap m_extensions;
 
+    /// @cond
+
     static void initialize();
+
+    /// @endcond
 
   public:
     MimeManager();

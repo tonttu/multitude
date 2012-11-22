@@ -63,6 +63,7 @@ namespace Radiant
     /// Read bytes from the port
     /// @param[out] buf output buffer
     /// @param bytes max bytes to read
+    /// @param waitfordata ignored
     /// @return number of bytes read
     virtual int read(void * buf, int bytes, bool waitfordata = true);
 
